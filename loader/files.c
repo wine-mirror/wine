@@ -66,6 +66,7 @@ FindFileInPath(char *buffer, int buflen, char *rootname,
 			strncpy(buffer, dirname, buflen);
 			strncat(buffer, "/", buflen - strlen(buffer));
 			strncat(buffer, f->d_name, buflen - strlen(buffer));
+			closedir(d);
 			return buffer;
 		    }
 		}

@@ -74,16 +74,20 @@ LONG COMBOBOX_ComboBoxWndProc( HWND hwnd, WORD message,
     WND  	*wndPtr;
     LPHEADCOMBO lphc;
     char	str[128];
+    PAINTSTRUCT paintstruct;
     static RECT rectsel;
     switch(message)
     {
     case WM_CREATE:
 	CreateComboStruct(hwnd);
 	wndPtr = WIN_FindWndPtr(hwnd);
-	width = wndPtr->rectClient.right - wndPtr->rectClient.left;
-	height = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
 	lphc = ComboGetStorageHeader(hwnd);
 	if (lphc == NULL) return 0;
+#ifdef DEBUG_COMBO
+        printf("Combo WM_CREATE %lX !\n", lphc);
+#endif
+	width = wndPtr->rectClient.right - wndPtr->rectClient.left;
+	height = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
 	lphc->hWndDrop = CreateWindow("BUTTON", "", 
         	WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
         	width - 16, 0, 16, 16, hwnd, 1, wndPtr->hInstance, 0L);
@@ -94,25 +98,23 @@ LONG COMBOBOX_ComboBoxWndProc( HWND hwnd, WORD message,
         	WS_CHILD | WS_CLIPCHILDREN | WS_BORDER | WS_VSCROLL | LBS_NOTIFY,
         	wndPtr->rectClient.left, wndPtr->rectClient.top + 16, width, height, 
         	wndPtr->hwndParent, 1, wndPtr->hInstance, (LPSTR)MAKELONG(0, hwnd));
-/*
         ShowWindow(lphc->hWndLBox, SW_HIDE);
-*/
-        InvalidateRect(lphc->hWndEdit, NULL, TRUE);
-        UpdateWindow(lphc->hWndEdit);
-        InvalidateRect(lphc->hWndDrop, NULL, TRUE);
-        UpdateWindow(lphc->hWndDrop);
 #ifdef DEBUG_COMBO
         printf("Combo Creation Drop=%X LBox=%X!\n", lphc->hWndDrop, lphc->hWndLBox);
 #endif
 	return 0;
     case WM_DESTROY:
 	lphc = ComboGetStorageHeader(hwnd);
+	if (lphc == 0) return 0;
 	DestroyWindow(lphc->hWndDrop);
 	DestroyWindow(lphc->hWndEdit);
+/*
 	DestroyWindow(lphc->hWndLBox);
+*/
 	free(lphc);
+	*((LPHEADCOMBO *)&wndPtr->wExtra[1]) = 0;
 #ifdef DEBUG_COMBO
-        printf("Combo WM_DESTROY !\n");
+        printf("Combo WM_DESTROY %lX !\n", lphc);
 #endif
 	return 0;
 	
@@ -128,24 +130,33 @@ LONG COMBOBOX_ComboBoxWndProc( HWND hwnd, WORD message,
 	    lphc->dwState = lphc->dwState ^ CB_SHOWDROPDOWN;
 	    if ((lphc->dwState & CB_SHOWDROPDOWN) == CB_SHOWDROPDOWN) {
 		ShowWindow(lphc->hWndLBox, SW_SHOW);
+/*
+		SetFocus(lphc->hWndLBox);
+*/
 		}
 	    else {
+/*
+		SetFocus(lphc->hWndEdit);
+*/
 		ShowWindow(lphc->hWndLBox, SW_HIDE);
 		y = SendMessage(lphc->hWndLBox, LB_GETCURSEL, 0, 0L);
-		SendMessage(lphc->hWndLBox, LB_GETTEXT, (WORD)y, (LPARAM)str);
-		SendMessage(lphc->hWndEdit, WM_SETTEXT, (WORD)y, (LPARAM)str);
-		printf("combo hide\n");
+		if (y != LB_ERR) {
+		    SendMessage(lphc->hWndLBox, LB_GETTEXT, (WORD)y, (LPARAM)str);
+		    SendMessage(lphc->hWndEdit, WM_SETTEXT, (WORD)y, (LPARAM)str);
+		    }
 		}
             }
         if (LOWORD(lParam) == lphc->hWndLBox) {
             switch(HIWORD(lParam))
         	{
         	case LBN_SELCHANGE:
-		    lphc->dwState = lphc->dwState ^ CB_SHOWDROPDOWN;
+		    lphc->dwState = lphc->dwState & (CB_SHOWDROPDOWN ^ 0xFFFF);
 		    ShowWindow(lphc->hWndLBox, SW_HIDE);
 		    y = SendMessage(lphc->hWndLBox, LB_GETCURSEL, 0, 0L);
-		    SendMessage(lphc->hWndLBox, LB_GETTEXT, (WORD)y, (LPARAM)str);
-		    SendMessage(lphc->hWndEdit, WM_SETTEXT, (WORD)y, (LPARAM)str);
+		    if (y != LB_ERR) {
+		    	SendMessage(lphc->hWndLBox, LB_GETTEXT, (WORD)y, (LPARAM)str);
+		    	SendMessage(lphc->hWndEdit, WM_SETTEXT, (WORD)y, (LPARAM)str);
+		    	}
 		    SendMessage(GetParent(hwnd), WM_COMMAND, wndPtr->wIDmenu,
 			        	MAKELONG(hwnd, CBN_SELCHANGE));
         	    break;
@@ -165,6 +176,8 @@ LONG COMBOBOX_ComboBoxWndProc( HWND hwnd, WORD message,
     case WM_CTLCOLOR:
     	return(SendMessage(GetParent(hwnd), WM_CTLCOLOR, wParam, lParam));
     case WM_PAINT:
+	BeginPaint( hwnd, &paintstruct );
+	EndPaint( hwnd, &paintstruct );
 	lphc = ComboGetStorageHeader(hwnd);
         InvalidateRect(lphc->hWndEdit, NULL, TRUE);
         UpdateWindow(lphc->hWndEdit);
@@ -175,17 +188,6 @@ LONG COMBOBOX_ComboBoxWndProc( HWND hwnd, WORD message,
 	    UpdateWindow(lphc->hWndLBox);
 	    }
 	break;
-    case WM_MOUSEMOVE:
-        if ((wParam & MK_LBUTTON) != 0) {
-            y = HIWORD(lParam);
-	    if (y < 4) {
-		lphc = ComboGetStorageHeader(hwnd);
-		}
-	    GetClientRect(hwnd, &rect);
-	    if (y > (rect.bottom - 4)) {
-		lphc = ComboGetStorageHeader(hwnd);
-		}
-	    }
     case CB_ADDSTRING:
 #ifdef DEBUG_COMBO
         printf("CB_ADDSTRING '%s' !\n", (LPSTR)lParam);
@@ -196,6 +198,10 @@ LONG COMBOBOX_ComboBoxWndProc( HWND hwnd, WORD message,
         printf("CB_GETLBTEXT #%u !\n", wParam);
 	lphc = ComboGetStorageHeader(hwnd);
         return(SendMessage(lphc->hWndLBox, LB_GETTEXT, wParam, lParam));
+    case CB_GETLBTEXTLEN:
+        printf("CB_GETLBTEXTLEN !\n");
+	lphc = ComboGetStorageHeader(hwnd);
+        return(SendMessage(lphc->hWndLBox, LB_GETTEXTLEN, wParam, lParam));
     case CB_INSERTSTRING:
         printf("CB_INSERTSTRING '%s' !\n", (LPSTR)lParam);
 	lphc = ComboGetStorageHeader(hwnd);
@@ -210,17 +216,65 @@ LONG COMBOBOX_ComboBoxWndProc( HWND hwnd, WORD message,
         return(SendMessage(lphc->hWndLBox, LB_RESETCONTENT, 0, 0L));
     case CB_DIR:
         printf("ComboBox CB_DIR !\n");
+	lphc = ComboGetStorageHeader(hwnd);
         return(SendMessage(lphc->hWndLBox, LB_DIR, wParam, lParam));
     case CB_FINDSTRING:
+	lphc = ComboGetStorageHeader(hwnd);
         return(SendMessage(lphc->hWndLBox, LB_FINDSTRING, wParam, lParam));
     case CB_GETCOUNT:
+	lphc = ComboGetStorageHeader(hwnd);
         return(SendMessage(lphc->hWndLBox, LB_GETCOUNT, 0, 0L));
     case CB_GETCURSEL:
         printf("ComboBox CB_GETCURSEL !\n");
-        return(SendMessage(lphc->hWndLBox, LB_GETCOUNT, 0, 0L));
+	lphc = ComboGetStorageHeader(hwnd);
+        return(SendMessage(lphc->hWndLBox, LB_GETCURSEL, 0, 0L));
     case CB_SETCURSEL:
-        printf("ComboBox CB_SETCURSEL wParam=%x !\n", wParam);
-        return(SendMessage(lphc->hWndLBox, LB_GETCOUNT, wParam, 0L));
+        printf("ComboBox CB_SETCURSEL wParam=%X !\n", wParam);
+	lphc = ComboGetStorageHeader(hwnd);
+        return(SendMessage(lphc->hWndLBox, LB_SETCURSEL, wParam, 0L));
+    case CB_GETEDITSEL:
+        printf("ComboBox CB_GETEDITSEL !\n");
+	lphc = ComboGetStorageHeader(hwnd);
+/*        return(SendMessage(lphc->hWndEdit, EM_GETSEL, 0, 0L)); */
+        break;
+     case CB_SETEDITSEL:
+        printf("ComboBox CB_SETEDITSEL lParam=%lX !\n", lParam);
+	lphc = ComboGetStorageHeader(hwnd);
+/*        return(SendMessage(lphc->hWndEdit, EM_SETSEL, 0, lParam)); */
+	break;
+    case CB_SELECTSTRING:
+        printf("ComboBox CB_SELECTSTRING !\n");
+	lphc = ComboGetStorageHeader(hwnd);
+        break;
+    case CB_SHOWDROPDOWN:
+        printf("ComboBox CB_SHOWDROPDOWN !\n");
+	lphc = ComboGetStorageHeader(hwnd);
+	lphc->dwState = lphc->dwState | CB_SHOWDROPDOWN;
+	if (wParam != 0) {
+	    ShowWindow(lphc->hWndLBox, SW_SHOW);
+	    }
+	else {
+	    lphc->dwState = lphc->dwState ^ CB_SHOWDROPDOWN;
+	    ShowWindow(lphc->hWndLBox, SW_HIDE);
+	    SendMessage(GetParent(hwnd), WM_COMMAND, wndPtr->wIDmenu,
+			        	MAKELONG(hwnd, CBN_DROPDOWN));
+	    }
+        break;
+    case CB_GETITEMDATA:
+        printf("ComboBox CB_GETITEMDATA wParam=%X !\n", wParam);
+	lphc = ComboGetStorageHeader(hwnd);
+        return(SendMessage(lphc->hWndLBox, LB_GETITEMDATA, wParam, 0L));
+        break;
+    case CB_SETITEMDATA:
+        printf("ComboBox CB_SETITEMDATA wParam=%X lParam=%lX !\n", wParam, lParam);
+	lphc = ComboGetStorageHeader(hwnd);
+        return(SendMessage(lphc->hWndLBox, LB_SETITEMDATA, wParam, lParam));
+        break;
+    case CB_LIMITTEXT:
+        printf("ComboBox CB_LIMITTEXT !\n");
+	lphc = ComboGetStorageHeader(hwnd);
+/*        return(SendMessage(lphc->hWndEdit, EM_LIMITTEXT, wParam, 0L)); */
+        break;
 	
     default:
 	return DefWindowProc( hwnd, message, wParam, lParam );
@@ -235,6 +289,10 @@ LPHEADCOMBO ComboGetStorageHeader(HWND hwnd)
     WND  *wndPtr;
     LPHEADCOMBO lphc;
     wndPtr = WIN_FindWndPtr(hwnd);
+    if (wndPtr == 0) {
+    	printf("Bad Window handle on ComboBox !\n");
+    	return 0;
+    	}
     lphc = *((LPHEADCOMBO *)&wndPtr->wExtra[1]);
     return lphc;
 }
@@ -246,6 +304,10 @@ int CreateComboStruct(HWND hwnd)
     WND  *wndPtr;
     LPHEADCOMBO lphc;
     wndPtr = WIN_FindWndPtr(hwnd);
+    if (wndPtr == 0) {
+    	printf("Bad Window handle on ComboBox !\n");
+    	return 0;
+    	}
     lphc = (LPHEADCOMBO)malloc(sizeof(HEADCOMBO));
     *((LPHEADCOMBO *)&wndPtr->wExtra[1]) = lphc;
     lphc->dwState = 0;

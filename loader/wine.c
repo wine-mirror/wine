@@ -38,10 +38,12 @@ int Argc;
 struct mz_header_s *CurrentMZHeader;
 struct ne_header_s *CurrentNEHeader;
 int CurrentNEFile;
+HINSTANCE hSysRes;
 
 static char *dllExtensions[] = { "dll", "exe", NULL };
 static char *exeExtensions[] = { "exe", NULL };
 static char *WinePath = NULL;
+
 
 /**********************************************************************
  *					DebugPrintString
@@ -99,7 +101,7 @@ GetFileInfo(unsigned short instance)
  *					LoadImage
  * Load one NE format executable into memory
  */
-LoadImage(char * filename,  char * modulename)
+HINSTANCE LoadImage(char * filename,  char * modulename)
 {
     unsigned int read_size;
     int i;
@@ -236,6 +238,7 @@ LoadImage(char * filename,  char * modulename)
 
       fprintf(stderr,"Unable to load:%s\n",  buff);
     }
+return(wpnt->hinstance);
 }
 
 
@@ -278,6 +281,7 @@ _WinMain(int argc, char **argv)
 	}
 	
 	LoadImage(exe_path, NULL);
+    	hSysRes = LoadImage("sysres.dll", NULL);
 	
 	if(ran_out) exit(1);
 #ifdef DEBUG

@@ -1,6 +1,6 @@
 ######################################################################
 # These variables are inherited by the sub-makefiles
-DEBUGOPTS=-DDEBUG_RESOURCE
+DEBUGOPTS=
 COPTS=-O2 -m486
 INCLUDE_DIR=include
 LDFLAGS=

@@ -15,11 +15,12 @@ return_value:
 /**********************************************************************
  *	Places to keep info about the current 32-bit stack frame.
  */
-saved_esp:
+	.globl	_IF1632_Saved32_esp,_IF1632_Saved32_ebp,_IF1632_Saved32_ss
+_IF1632_Saved32_esp:
 	.long	0
-saved_ebp:
+_IF1632_Saved32_ebp:
 	.long	0
-saved_ss:
+_IF1632_Saved32_ss:
 	.word	0
 
 /**********************************************************************
@@ -64,9 +65,9 @@ _CallToInit16:
  	 * Save our registers
 	 */
 	pushal
-	pushl	saved_esp
-	pushl	saved_ebp
-	pushw	saved_ss
+	pushl	_IF1632_Saved32_esp
+	pushl	_IF1632_Saved32_ebp
+	pushw	_IF1632_Saved32_ss
 
 	/*
 	 * Get target address.
@@ -78,9 +79,9 @@ _CallToInit16:
 	/*
 	 * Put stack registers where we can get them after stack switch.
 	 */
-	movw	%ss,saved_ss
-	movl	%esp,saved_esp
-	movl	%ebp,saved_ebp
+	movw	%ss,_IF1632_Saved32_ss
+	movl	%esp,_IF1632_Saved32_esp
+	movl	%ebp,_IF1632_Saved32_ebp
 
 	/*
 	 * Load initial registers
@@ -130,16 +131,16 @@ _CallToInit16:
 	movw	%ax,%fs
 	movw	%ax,%gs
 	popl	%eax
-	movw	saved_ss,%ss
-	movl	saved_esp,%esp
-	movl	saved_ebp,%ebp
+	movw	_IF1632_Saved32_ss,%ss
+	movl	_IF1632_Saved32_esp,%esp
+	movl	_IF1632_Saved32_ebp,%ebp
 
 	/*
  	 * Restore registers, but do not destroy return value.
 	 */
-	popw	saved_ss
-	popl	saved_ebp
-	popl	saved_esp
+	popw	_IF1632_Saved32_ss
+	popl	_IF1632_Saved32_ebp
+	popl	_IF1632_Saved32_esp
 	movl	%eax,return_value
 	popal
 	movl	return_value,%eax
@@ -173,13 +174,13 @@ _CallTo16:
 	/*
 	 * Switch to 16-bit stack
 	 */
-	pushl	saved_esp
-	pushl	saved_ebp
-	pushw	saved_ss
+	pushl	_IF1632_Saved32_esp
+	pushl	_IF1632_Saved32_ebp
+	pushw	_IF1632_Saved32_ss
 
-	movw	%ss,saved_ss
-	movl	%esp,saved_esp
-	movl	%ebp,saved_ebp
+	movw	%ss,_IF1632_Saved32_ss
+	movl	%esp,_IF1632_Saved32_esp
+	movl	%ebp,_IF1632_Saved32_ebp
 
 	movw	_IF1632_Saved16_ss,%ss
 	movl	_IF1632_Saved16_esp,%esp
@@ -215,13 +216,13 @@ _CallTo16:
 	movl	%esp,_IF1632_Saved16_esp
 	movl	%ebp,_IF1632_Saved16_ebp
 
-	movw	saved_ss,%ss
-	movl	saved_esp,%esp
-	movl	saved_ebp,%ebp
+	movw	_IF1632_Saved32_ss,%ss
+	movl	_IF1632_Saved32_esp,%esp
+	movl	_IF1632_Saved32_ebp,%ebp
 
-	popw	saved_ss
-	popl	saved_ebp
-	popl	saved_esp
+	popw	_IF1632_Saved32_ss
+	popl	_IF1632_Saved32_ebp
+	popl	_IF1632_Saved32_esp
 
 	movl	%eax,return_value
 	movw	return_value+2,%dx
@@ -276,9 +277,9 @@ _CallTo32:
 	movl	%esp,_IF1632_Saved16_esp
 	movl	%ebp,_IF1632_Saved16_ebp
 
-	movw	saved_ss,%ss
-	movl	saved_esp,%esp
-	movl	saved_ebp,%ebp
+	movw	_IF1632_Saved32_ss,%ss
+	movl	_IF1632_Saved32_esp,%esp
+	movl	_IF1632_Saved32_ebp,%ebp
 
 	/*
 	 * Call entry point

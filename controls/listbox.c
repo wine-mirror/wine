@@ -107,6 +107,9 @@ LONG LISTBOX_ListBoxWndProc( HWND hwnd, WORD message,
     case WM_CREATE:
 	CreateListBoxStruct(hwnd);
 	lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
+#ifdef DEBUG_LISTBOX
+        printf("ListBox WM_CREATE %lX !\n", lphl);
+#endif
 	createStruct = (CREATESTRUCT *)lParam;
      	if (HIWORD(createStruct->lpCreateParams) != 0)
 	    lphl->hWndLogicParent = (HWND)HIWORD(createStruct->lpCreateParams);
@@ -122,10 +125,14 @@ LONG LISTBOX_ListBoxWndProc( HWND hwnd, WORD message,
 	return 0;
     case WM_DESTROY:
         lphl = ListBoxGetStorageHeader(hwnd);
+        if (lphl == 0) return 0;
 	ListBoxResetContent(hwnd);
 	DestroyWindow(lphl->hWndScroll);
 	free(lphl);
-        printf("ListBox WM_DESTROY !\n");
+	*((LPHEADLIST *)&wndPtr->wExtra[1]) = 0;
+#ifdef DEBUG_LISTBOX
+        printf("ListBox WM_DESTROY %lX !\n", lphl);
+#endif
 	return 0;
 
     case WM_VSCROLL:
@@ -164,6 +171,10 @@ LONG LISTBOX_ListBoxWndProc( HWND hwnd, WORD message,
 	return 0;
 	
     case WM_LBUTTONDOWN:
+/*
+	SetFocus(hwnd);
+*/
+	SetCapture(hwnd);
         lphl = ListBoxGetStorageHeader(hwnd);
         if (lphl == NULL) return 0;
 	lphl->PrevSelected = lphl->ItemSelected;
@@ -174,6 +185,7 @@ LONG LISTBOX_ListBoxWndProc( HWND hwnd, WORD message,
         UpdateWindow(hwnd);
 	return 0;
     case WM_LBUTTONUP:
+	ReleaseCapture();
 	lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
         if (lphl == NULL) return 0;
 	if (lphl->PrevSelected != lphl->ItemSelected)
@@ -248,8 +260,10 @@ LONG LISTBOX_ListBoxWndProc( HWND hwnd, WORD message,
     case LB_DIR:
         printf("ListBox LB_DIR !\n");
 	wRet = ListBoxDirectory(hwnd, wParam, (LPSTR)lParam);
-        InvalidateRect(hwnd, NULL, TRUE);
-        UpdateWindow(hwnd);
+	if (IsWindowVisible(hwnd)) {
+	    InvalidateRect(hwnd, NULL, TRUE);
+	    UpdateWindow(hwnd);
+	    }
 	return wRet;
     case LB_ADDSTRING:
 	wRet = ListBoxAddString(hwnd, (LPSTR)lParam);
@@ -315,30 +329,38 @@ LONG LISTBOX_ListBoxWndProc( HWND hwnd, WORD message,
         printf("ListBox LB_SETCURSEL wParam=%x !\n", wParam);
 #endif
 	wRet = ListBoxSetCurSel(hwnd, wParam);
-        InvalidateRect(hwnd, NULL, TRUE);
-        UpdateWindow(hwnd);
+	if (IsWindowVisible(hwnd)) {
+	    InvalidateRect(hwnd, NULL, TRUE);
+	    UpdateWindow(hwnd);
+	    }
 	return wRet;
     case LB_SETSEL:
         printf("ListBox LB_SETSEL wParam=%x lParam=%lX !\n", wParam, lParam);
 	wRet = ListBoxSetSel(hwnd, wParam);
-        InvalidateRect(hwnd, NULL, TRUE);
-        UpdateWindow(hwnd);
+	if (IsWindowVisible(hwnd)) {
+	    InvalidateRect(hwnd, NULL, TRUE);
+	    UpdateWindow(hwnd);
+	    }
 	return wRet;
     case LB_SETTOPINDEX:
         printf("ListBox LB_SETTOPINDEX wParam=%x !\n", wParam);
         lphl = ListBoxGetStorageHeader(hwnd);
 	lphl->FirstVisible = wParam;
 	SetScrollPos(lphl->hWndScroll, WM_VSCROLL, lphl->FirstVisible, TRUE);
-        InvalidateRect(hwnd, NULL, TRUE);
-        UpdateWindow(hwnd);
+	if (IsWindowVisible(hwnd)) {
+	    InvalidateRect(hwnd, NULL, TRUE);
+	    UpdateWindow(hwnd);
+	    }
 	break;
     case LB_SETITEMHEIGHT:
 #ifdef DEBUG_LISTBOX
         printf("ListBox LB_SETITEMHEIGHT wParam=%x lParam=%lX !\n", wParam, lParam);
 #endif
 	wRet = ListBoxSetItemHeight(hwnd, wParam, lParam);
-        InvalidateRect(hwnd, NULL, TRUE);
-        UpdateWindow(hwnd);
+	if (IsWindowVisible(hwnd)) {
+	    InvalidateRect(hwnd, NULL, TRUE);
+	    UpdateWindow(hwnd);
+	    }
 	return wRet;
 	
     default:
@@ -381,6 +403,10 @@ void StdDrawListBox(HWND hwnd)
 	char	C[128];
 	h = 0;
 	hdc = BeginPaint( hwnd, &ps );
+    	if (!IsWindowVisible(hwnd)) {
+	    EndPaint( hwnd, &ps );
+	    return;
+	    }
 	GetClientRect(hwnd, &rect);
         lphl = ListBoxGetStorageHeader(hwnd);
 	if (lphl == NULL) goto EndOfPaint;
@@ -425,7 +451,6 @@ void OwnerDrawListBox(HWND hwnd)
 {
 	LPHEADLIST  lphl;
 	LPLISTSTRUCT lpls;
-	HANDLE	hTemp;
 	PAINTSTRUCT ps;
 	HBRUSH 	hBrush;
 	HWND	hWndParent;
@@ -435,6 +460,10 @@ void OwnerDrawListBox(HWND hwnd)
 	char	C[128];
 	h = 0;
 	hdc = BeginPaint( hwnd, &ps );
+    	if (!IsWindowVisible(hwnd)) {
+	    EndPaint( hwnd, &ps );
+	    return;
+	    }
 	GetClientRect(hwnd, &rect);
         lphl = ListBoxGetStorageHeader(hwnd);
 	if (lphl == NULL) goto EndOfPaint;
@@ -465,11 +494,9 @@ void OwnerDrawListBox(HWND hwnd)
 			lpls->dis.rcItem.right, lpls->dis.rcItem.bottom);
 		printf("LBOX WM_DRAWITEM Parent=%X &dis=%lX CtlID=%u !\n", 
 			hWndParent, (LONG)&lpls->dis, lpls->dis.CtlID);
-#endif
 		printf("LBOX WM_DRAWITEM '%s' !\n", lpls->dis.itemData);
+#endif
 		SendMessage(lphl->hWndLogicParent, WM_DRAWITEM, i, (LPARAM)&lpls->dis);
-		GlobalUnlock(hTemp);
-		GlobalFree(hTemp);
 		if (lpls->dis.itemState != 0) {
 		    InvertRect(hdc, &lpls->dis.rcItem);
 		    }
@@ -575,7 +602,8 @@ int ListBoxAddString(HWND hwnd, LPSTR newstr)
     lplsnew->dis.itemID = lphl->ItemsCount;
     lplsnew->dis.itemData = (DWORD)newstr;
     lplsnew->hData = hTemp;
-    SetScrollRange(lphl->hWndScroll, WM_VSCROLL, 1, lphl->ItemsCount, TRUE);
+    SetScrollRange(lphl->hWndScroll, WM_VSCROLL, 1, lphl->ItemsCount, 
+    	(lphl->FirstVisible != 1));
     if (lphl->FirstVisible >= (lphl->ItemsCount - lphl->ItemsVisible)) {
         InvalidateRect(hwnd, NULL, TRUE);
         UpdateWindow(hwnd);
@@ -625,7 +653,8 @@ int ListBoxInsertString(HWND hwnd, UINT uIndex, LPSTR newstr)
     lplsnew->dis.itemID = lphl->ItemsCount;
     lplsnew->dis.itemData = (DWORD)newstr;
     lplsnew->hData = hTemp;
-    SetScrollRange(lphl->hWndScroll, WM_VSCROLL, 1, lphl->ItemsCount, TRUE);
+    SetScrollRange(lphl->hWndScroll, WM_VSCROLL, 1, lphl->ItemsCount, 
+    	(lphl->FirstVisible != 1));
     if (((lphl->ItemsCount - lphl->FirstVisible) == lphl->ItemsVisible) && 
         (lphl->ItemsVisible != 0)) 
     	ShowWindow(lphl->hWndScroll, SW_NORMAL);
@@ -768,10 +797,10 @@ int ListBoxSetCurSel(HWND hwnd, WORD wIndex)
     lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
     if (lphl == NULL) return LB_ERR;
     lphl->ItemSelected = LB_ERR;
-    if (wIndex < 1 || wIndex > lphl->ItemsCount) return LB_ERR;
+    if (wIndex < 0 || wIndex >= lphl->ItemsCount) return LB_ERR;
     lpls = lphl->lpFirst;
     if (lpls == NULL) return LB_ERR;
-    for(i = 1; i <= lphl->ItemsCount; i++) {
+    for(i = 0; i < lphl->ItemsCount; i++) {
 	lpls2 = lpls;
 	lpls = (LPLISTSTRUCT)lpls->lpNext;
 	if (i == wIndex)
@@ -797,10 +826,10 @@ int ListBoxSetSel(HWND hwnd, WORD wIndex)
     UINT	i;
     lphl = ListBoxGetStorageHeader(hwnd);
     if (lphl == NULL) return LB_ERR;
-    if (wIndex < 1 || wIndex > lphl->ItemsCount) return LB_ERR;
+    if (wIndex < 0 || wIndex >= lphl->ItemsCount) return LB_ERR;
     lpls = lphl->lpFirst;
     if (lpls == NULL) return LB_ERR;
-    for(i = 1; i <= lphl->ItemsCount; i++) {
+    for(i = 0; i < lphl->ItemsCount; i++) {
 	lpls2 = lpls;
 	lpls = (LPLISTSTRUCT)lpls->lpNext;
 	if (i == wIndex) {

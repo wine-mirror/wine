@@ -53,11 +53,6 @@ void main(int argc, char **argv)
  */
 
 
-int MessageBox( HWND hwnd, LPSTR str, LPSTR title, WORD type )
-{
-    printf( "MessageBox: '%s'\n", str );
-}
-
 void MessageBeep( WORD i )
 {
     XBell(XT_display, 100);
@@ -101,12 +96,6 @@ void AdjustWindowRect( LPRECT rect, DWORD style, BOOL menu )
 	   rect->right, rect->bottom, style, menu );
 }
 
-
-BOOL IsIconic( HWND hwnd )
-{
-    printf( "IsIconic: returning FALSE\n" );
-    return FALSE;
-}
 
 HMENU CreateMenu() { return 0; }
 

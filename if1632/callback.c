@@ -5,10 +5,16 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "callback.h"
 #include "wine.h"
 #include "segmem.h"
+#include <setjmp.h>
 
 extern unsigned short SelectorOwners[];
 extern unsigned short IF1632_Saved16_ss;
+extern unsigned long  IF1632_Saved16_ebp;
 extern unsigned long  IF1632_Saved16_esp;
+extern unsigned short IF1632_Saved32_ss;
+extern unsigned long  IF1632_Saved32_ebp;
+extern unsigned long  IF1632_Saved32_esp;
+
 extern struct segment_descriptor_s *MakeProcThunks;
 
 struct thunk_s
@@ -168,4 +174,78 @@ void CallLineDDAProc(FARPROC func, short xPos, short yPos, long lParam)
     {
 	(*func)(xPos, yPos, lParam);
     }
+}
+
+/* ------------------------------------------------------------------------ */
+/*
+ * The following functions realize the Catch/Throw functionality.
+ * My thought is to use the setjmp, longjmp combination to do the
+ * major part of this one. All I have to remember, in addition to
+ * whatever the jmp_buf contains, is the contents of the 16-bit
+ * sp, bp and ss. I do this by storing them in the structure passed
+ * to me by the 16-bit program (including my own jmp_buf...). 
+ * Hopefully there isn't any program that modifies the contents!
+ * Bad thing: I have to save part of the stack, since this will 
+ * get reused on the next call after my return, leaving it in an
+ * undefined state.
+ */
+#define	STACK_DEPTH_16 	28
+
+struct special_buffer {
+	jmp_buf buffer;
+	long 	regs [6];
+	char 	stack_part [STACK_DEPTH_16];
+} *sb;
+
+int Catch (LPCATCHBUF cbuf)
+{
+	WORD retval;
+	jmp_buf *tmp_jmp;
+	char *stack16 =  (char *) (((unsigned int)IF1632_Saved16_ss << 16) +
+		(IF1632_Saved16_esp & 0xffff));
+
+	sb = malloc (sizeof (struct special_buffer));
+	
+	sb -> regs [0] = IF1632_Saved16_esp;
+	sb -> regs [1] = IF1632_Saved16_ebp;
+	sb -> regs [2] = IF1632_Saved16_ss & 0xffff;
+	sb -> regs [3] = IF1632_Saved32_esp;
+	sb -> regs [4] = IF1632_Saved32_ebp;
+	sb -> regs [5] = IF1632_Saved32_ss & 0xffff;
+	memcpy (sb -> stack_part, stack16, STACK_DEPTH_16);
+	tmp_jmp = &sb -> buffer;
+	*((struct special_buffer **)cbuf) = sb;
+	
+	if ((retval = setjmp (*tmp_jmp)))
+	{
+		IF1632_Saved16_esp = sb -> regs [0];
+		IF1632_Saved16_ebp = sb -> regs [1];
+		IF1632_Saved16_ss = sb -> regs [2] & 0xffff;
+		IF1632_Saved32_esp = sb -> regs [3];
+		IF1632_Saved32_ebp = sb -> regs [4];
+		IF1632_Saved32_ss = sb -> regs [5] & 0xffff;
+		stack16 = (char *) (((unsigned int)IF1632_Saved16_ss << 16) +
+				(IF1632_Saved16_esp & 0xffff));
+
+		memcpy (stack16, sb -> stack_part, STACK_DEPTH_16);
+#ifdef	DEBUG_CATCH
+		printf ("Been thrown here: %d, retval = %d\n", sb, retval);
+#endif
+		free ((void *) sb);
+		return (retval);
+	} else {
+#ifdef	DEBUG_CATCH
+		printf ("Will somtime get thrown here: %d\n", sb);
+#endif
+		return (retval);
+	}
+}
+
+void Throw (LPCATCHBUF cbuf, int val)
+{
+	sb = *((struct special_buffer **)cbuf);
+#ifdef	DEBUG_CATCH
+	printf ("Throwing to: %d\n", sb);
+#endif
+	longjmp (sb -> buffer, val);
 }

@@ -38,52 +38,260 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #define UTEXTSEL 0x1f
 #endif
 
-#define MAX_SELECTORS	512
-
 static struct segment_descriptor_s * EnvironmentSelector =  NULL;
 static struct segment_descriptor_s * PSP_Selector = NULL;
 struct segment_descriptor_s * MakeProcThunks = NULL;
 unsigned short PSPSelector;
 unsigned char ran_out = 0;
 unsigned short SelectorOwners[MAX_SELECTORS];
+unsigned short SelectorMap[MAX_SELECTORS];
+unsigned short SelectorLimits[MAX_SELECTORS];
+unsigned char  SelectorTypes[MAX_SELECTORS];
+int LastUsedSelector = FIRST_SELECTOR - 1;
 
-static int next_unused_selector = FIRST_SELECTOR;
+#ifdef DEV_ZERO
+    static FILE *zfile = NULL;
+#endif    
+
 extern void KERNEL_Ordinal_102();
 extern void UNIXLIB_Ordinal_0();
 
 extern char **Argv;
 extern int Argc;
-
+
 /**********************************************************************
- *					GetNextSegment
+ *					FindUnusedSelector
+ */
+int
+FindUnusedSelector(void)
+{
+    int i;
+    
+    for (i = LastUsedSelector + 1; i != LastUsedSelector; i++)
+    {
+	if (i >= MAX_SELECTORS)
+	    i = FIRST_SELECTOR;
+	
+	if (!SelectorMap[i])
+	    break;
+    }
+    
+    if (i == LastUsedSelector)
+	return 0;
+
+    LastUsedSelector = i;
+    return i;
+}
+
+/**********************************************************************
+ *					AllocSelector
+ *
+ * This is very bad!!!  This function is implemented for Windows
+ * compatibility only.  Do not call this from the emulation library.
+ */
+unsigned int
+AllocSelector(unsigned int old_selector)
+{
+    int i_new, i_old;
+    long base;
+    
+    i_new = FindUnusedSelector();
+    if (old_selector)
+    {
+	i_old = (old_selector >> 3);
+	SelectorMap[i_new] = i_old;
+	base = SAFEMAKEPTR(old_selector, 0);
+	if (set_ldt_entry(i_new, base, 
+			  SelectorLimits[i_old], 0, 
+			  SelectorTypes[i_old], 0, 0) < 0)
+	{
+	    return 0;
+	}
+
+	SelectorLimits[i_new] = SelectorLimits[i_old];
+	SelectorTypes[i_new]  = SelectorTypes[i_old];
+	SelectorMap[i_new]    = SelectorMap[i_old];
+    }
+    else
+    {
+	SelectorMap[i_new] = i_new;
+    }
+
+    return i_new;
+}
+
+/**********************************************************************
+ *					PrestoChangoSelector
+ *
+ * This is very bad!!!  This function is implemented for Windows
+ * compatibility only.  Do not call this from the emulation library.
+ */
+unsigned int PrestoChangoSelector(unsigned src_selector, unsigned dst_selector)
+{
+    long dst_base, src_base;
+    char *p;
+    int src_idx, dst_idx;
+    int alias_count;
+    int i;
+    
+    src_idx = (SelectorMap[src_selector >> 3]);
+    dst_idx = dst_selector >> 3;
+    src_base = (src_idx << 19) | 0x70000;
+    dst_base = (dst_idx << 19) | 0x70000;
+
+    alias_count = 0;
+    for (i = FIRST_SELECTOR; i < MAX_SELECTORS; i++)
+	if (SelectorMap[i] == src_idx)
+	    alias_count++;
+    
+    if (SelectorTypes[src_idx] == MODIFY_LDT_CONTENTS_DATA 
+	|| alias_count > 1 || src_idx == dst_idx)
+    {
+	if (SelectorTypes[src_idx] == MODIFY_LDT_CONTENTS_DATA)
+	    SelectorTypes[dst_idx] = MODIFY_LDT_CONTENTS_CODE;
+	else
+	    SelectorTypes[dst_idx] = MODIFY_LDT_CONTENTS_DATA;
+
+	SelectorMap[dst_idx] = SelectorMap[src_idx];
+	SelectorLimits[dst_idx] = SelectorLimits[src_idx];
+	if (set_ldt_entry(dst_idx, src_base,
+			  SelectorLimits[dst_idx], 0, 
+			  SelectorTypes[dst_idx], 0, 0) < 0)
+	{
+	    return 0;
+	}
+    }
+    else
+    {
+	/*
+	 * We're changing an unaliased code segment into a data
+	 * segment.  The SAFEST (but ugliest) way to deal with 
+	 * this is to map the new segment and copy all the contents.
+	 */
+	SelectorTypes[dst_idx] = MODIFY_LDT_CONTENTS_DATA;
+	SelectorMap[dst_idx] = SelectorMap[src_idx];
+	SelectorLimits[dst_idx] = SelectorLimits[src_idx];
+#ifdef DEV_ZERO
+	if (zfile == NULL)
+	    zfile = fopen("/dev/zero","r");
+	p = (void *) mmap((char *) dst_base,
+			  ((SelectorLimits[dst_idx] + PAGE_SIZE) 
+			   & ~(PAGE_SIZE - 1)),
+			  PROT_EXEC | PROT_READ | PROT_WRITE,
+			  MAP_FIXED | MAP_PRIVATE, fileno(zfile), 0);
+#else
+	p = (void *) mmap((char *) dst_base,
+			  ((SelectorLimits[dst_idx] + PAGE_SIZE) 
+			   & ~(PAGE_SIZE - 1)),
+			  PROT_EXEC | PROT_READ | PROT_WRITE,
+			  MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
+#endif
+	if (p == NULL)
+	    return 0;
+	
+	memcpy((void *) dst_base, (void *) src_base, 
+	       SelectorLimits[dst_idx] + 1);
+	if (set_ldt_entry(src_idx, dst_base,
+			  SelectorLimits[dst_idx], 0, 
+			  SelectorTypes[dst_idx], 0, 0) < 0)
+	{
+	    return 0;
+	}
+	if (set_ldt_entry(dst_idx, dst_base,
+			  SelectorLimits[dst_idx], 0, 
+			  SelectorTypes[dst_idx], 0, 0) < 0)
+	{
+	    return 0;
+	}
+    }
+
+    return (dst_idx << 3) | 0x0007;
+}
+
+/**********************************************************************
+ *					AllocCStoDSAlias
+ */
+AllocDStoCSAlias(unsigned int ds_selector)
+{
+    unsigned int cs_selector;
+    
+    if (ds_selector == 0)
+	return 0;
+    
+    cs_selector = AllocSelector(0);
+    return PrestoChangoSelector(ds_selector, cs_selector);
+}
+
+/**********************************************************************
+ *					FreeSelector
+ */
+unsigned int FreeSelector(unsigned int sel)
+{
+    int sel_idx;
+    int alias_count;
+    int i;
+    
+    sel_idx = SelectorMap[sel >> 3];
+
+    if (sel_idx != (sel >> 3))
+    {
+	SelectorMap[sel >> 3] = 0;
+	return 0;
+    }
+    
+    alias_count = 0;
+    for (i = FIRST_SELECTOR; i < MAX_SELECTORS; i++)
+	if (SelectorMap[i] == sel_idx)
+	    alias_count++;
+
+    if (alias_count == 1)
+    {
+	munmap((char *) (sel << 16), 
+	       ((SelectorLimits[sel_idx] + PAGE_SIZE) & ~(PAGE_SIZE - 1)));
+	SelectorMap[sel >> 3] = 0;
+    }
+
+    return 0;
+}
+
+/**********************************************************************
+ *					CreateNewSegment
  */
 struct segment_descriptor_s *
-GetNextSegment(unsigned int flags, unsigned int limit)
+CreateNewSegment(int code_flag, int read_only, int length)
 {
-    struct segment_descriptor_s *selectors, *s;
-    int sel_idx;
-#ifdef DEV_ZERO
-    FILE *zfile;
-#endif
-
-    sel_idx = next_unused_selector++;
+    struct segment_descriptor_s *s;
+    int contents;
+    int i;
+    
+    i = FindUnusedSelector();
 
     /*
      * Fill in selector info.
      */
     s = malloc(sizeof(*s));
-    s->flags = NE_SEGFLAGS_DATA;
-    s->selector = (sel_idx << 3) | 0x0007;
-    s->length = limit;
+    if (code_flag)
+    {
+	contents = MODIFY_LDT_CONTENTS_CODE;
+	s->flags = 0;
+    }
+    else
+    {
+	contents = MODIFY_LDT_CONTENTS_DATA;
+	s->flags = NE_SEGFLAGS_DATA;
+    }
+    
+    s->selector = (i << 3) | 0x0007;
+    s->length = length;
 #ifdef DEV_ZERO
-    zfile = fopen("/dev/zero","r");
+    if (zfile == NULL)
+	zfile = fopen("/dev/zero","r");
     s->base_addr = (void *) mmap((char *) (s->selector << 16),
 				 ((s->length + PAGE_SIZE - 1) & 
 				  ~(PAGE_SIZE - 1)),
 				 PROT_EXEC | PROT_READ | PROT_WRITE,
 				 MAP_FIXED | MAP_PRIVATE, fileno(zfile), 0);
 
-    fclose(zfile);
 #else
     s->base_addr = (void *) mmap((char *) (s->selector << 16),
 				 ((s->length + PAGE_SIZE - 1) & 
@@ -93,18 +301,30 @@ GetNextSegment(unsigned int flags, unsigned int limit)
 
 #endif
 
-    if (set_ldt_entry(sel_idx, (unsigned long) s->base_addr, 
+    if (set_ldt_entry(i, (unsigned long) s->base_addr, 
 		      (s->length - 1) & 0xffff, 0, 
-		      MODIFY_LDT_CONTENTS_DATA, 0, 0) < 0)
+		      contents, read_only, 0) < 0)
     {
-	next_unused_selector--;
 	free(s);
 	return NULL;
     }
 
+    SelectorMap[i] = (unsigned short) i;
+    SelectorLimits[i] = s->length - 1;
+    SelectorTypes[i] = contents;
+    
     return s;
 }
-
+
+/**********************************************************************
+ *					GetNextSegment
+ */
+struct segment_descriptor_s *
+GetNextSegment(unsigned int flags, unsigned int limit)
+{
+    return CreateNewSegment(0, 0, limit);
+}
+
 /**********************************************************************
  *					GetEntryPointFromOrdinal
  */
@@ -275,37 +495,14 @@ GetDOSEnvironment()
  *					CreateEnvironment
  */
 static struct segment_descriptor_s *
-#ifdef DEV_ZERO
-CreateEnvironment(FILE *zfile)
-#else
 CreateEnvironment(void)
-#endif
 {
     char *p;
-    int sel_idx;
     struct segment_descriptor_s * s;
 
-    s = (struct segment_descriptor_s *) 
-	    malloc(sizeof(struct segment_descriptor_s));
-
-    sel_idx =  next_unused_selector++;
-    /*
-     * Create memory to hold environment.
-     */
-    s->flags = NE_SEGFLAGS_DATA;
-    s->selector = (sel_idx << 3) | 0x0007;
-    s->length = PAGE_SIZE;
-#ifdef DEV_ZERO
-    s->base_addr = (void *) mmap((char *) (s->selector << 16),
-				 PAGE_SIZE,
-				 PROT_EXEC | PROT_READ | PROT_WRITE,
-				 MAP_FIXED | MAP_PRIVATE, fileno(zfile), 0);
-#else
-    s->base_addr = (void *) mmap((char *) (s->selector << 16),
-				 PAGE_SIZE,
-				 PROT_EXEC | PROT_READ | PROT_WRITE,
-				 MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
-#endif
+    s = CreateNewSegment(0, 0, PAGE_SIZE);
+    if (s == NULL)
+	return NULL;
 
     /*
      * Fill environment with meaningless babble.
@@ -318,63 +515,6 @@ CreateEnvironment(void)
     *p++ = 0;
     strcpy(p, "C:\\TEST.EXE");
 
-    /*
-     * Create entry in LDT for this segment.
-     */
-    if (set_ldt_entry(sel_idx, (unsigned long) s->base_addr, 
-		      (s->length - 1) & 0xffff, 0, 
-		      MODIFY_LDT_CONTENTS_DATA, 0, 0) < 0)
-    {
-	myerror("Could not create LDT entry for environment");
-    }
-    return  s;
-}
-
-/**********************************************************************
- *					CreateThunks
- */
-static struct segment_descriptor_s *
-#ifdef DEV_ZERO
-CreateThunks(FILE *zfile)
-#else
-CreateThunks(void)
-#endif
-{
-    int sel_idx;
-    struct segment_descriptor_s * s;
-
-    s = (struct segment_descriptor_s *) 
-	    malloc(sizeof(struct segment_descriptor_s));
-
-    sel_idx =  next_unused_selector++;
-    /*
-     * Create memory to hold environment.
-     */
-    s->flags = 0;
-    s->selector = (sel_idx << 3) | 0x0007;
-    s->length = 0x10000;
-#ifdef DEV_ZERO
-    s->base_addr = (void *) mmap((char *) (s->selector << 16),
-				 s->length,
-				 PROT_EXEC | PROT_READ | PROT_WRITE,
-				 MAP_FIXED | MAP_PRIVATE, fileno(zfile), 0);
-#else
-    s->base_addr = (void *) mmap((char *) (s->selector << 16),
-				 s->length,
-				 PROT_EXEC | PROT_READ | PROT_WRITE,
-				 MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
-#endif
-
-
-    /*
-     * Create entry in LDT for this segment.
-     */
-    if (set_ldt_entry(sel_idx, (unsigned long) s->base_addr, 
-		      (s->length - 1) & 0xffff, 0, 
-		      MODIFY_LDT_CONTENTS_CODE, 0, 0) < 0)
-    {
-	myerror("Could not create LDT entry for thunks");
-    }
     return  s;
 }
 
@@ -382,40 +522,15 @@ CreateThunks(void)
  *					CreatePSP
  */
 static struct segment_descriptor_s *
-#ifdef DEV_ZERO
-CreatePSP(FILE *zfile)
-#else
 CreatePSP(void)
-#endif
 {
     struct dos_psp_s *psp;
     unsigned short *usp;
-    int sel_idx;
     struct segment_descriptor_s * s;
     char *p1, *p2;
     int i;
 
-    s = (struct segment_descriptor_s *) 
-	    malloc(sizeof(struct segment_descriptor_s));
-    
-    sel_idx =  next_unused_selector++;
-    /*
-     * Create memory to hold PSP.
-     */
-    s->flags = NE_SEGFLAGS_DATA;
-    s->selector = (sel_idx << 3) | 0x0007;
-    s->length = PAGE_SIZE;
-#ifdef DEV_ZERO
-    s->base_addr = (void *) mmap((char *) (s->selector << 16),
-				 PAGE_SIZE,
-				 PROT_EXEC | PROT_READ | PROT_WRITE,
-				 MAP_FIXED | MAP_PRIVATE, fileno(zfile), 0);
-#else
-    s->base_addr = (void *) mmap((char *) (s->selector << 16),
-				 PAGE_SIZE,
-				 PROT_EXEC | PROT_READ | PROT_WRITE,
-				 MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
-#endif
+    s = CreateNewSegment(0, 0, PAGE_SIZE);
 
     /*
      * Fill PSP
@@ -451,15 +566,6 @@ CreatePSP(void)
     *p1 = '\0';
     psp->pspCommandTailCount = strlen(psp->pspCommandTail);
 
-    /*
-     * Create entry in LDT for this segment.
-     */
-    if (set_ldt_entry(sel_idx, (unsigned long) s->base_addr, 
-		      (s->length - 1) & 0xffff, 0, 
-		      MODIFY_LDT_CONTENTS_DATA, 0, 0) < 0)
-    {
-	myerror("Could not create LDT entry for PSP");
-    }
     return s;
 }
 
@@ -472,15 +578,12 @@ CreateSelectors(struct  w_files * wpnt)
     int fd = wpnt->fd;
     struct ne_segment_table_entry_s *seg_table = wpnt->seg_table;
     struct ne_header_s *ne_header = wpnt->ne_header;
-    struct segment_descriptor_s *selectors, *s;
-    unsigned short *sp;
+    struct segment_descriptor_s *selectors, *s, *stmp;
+    unsigned short auto_data_sel;
     int contents, read_only;
     int SelectorTableLength;
     int i;
     int status;
-#ifdef DEV_ZERO
-    FILE * zfile;
-#endif
     int old_length, file_image_length;
 
     /*
@@ -495,24 +598,12 @@ CreateSelectors(struct  w_files * wpnt)
      * Step through the segment table in the exe header.
      */
     s = selectors;
-#ifdef DEV_ZERO
-    zfile = fopen("/dev/zero","r");
-#endif
     for (i = 0; i < ne_header->n_segment_tab; i++, s++)
     {
-#ifdef DEBUG_SEGMENT
-	printf("  %2d: OFFSET %04.4x, LENGTH %04.4x, ",
-	       i + 1, seg_table[i].seg_data_offset, 
-	       seg_table[i].seg_data_length);
-	printf("FLAGS %04.4x, MIN ALLOC %04.4x\n",
-	       seg_table[i].seg_flags, seg_table[i].min_alloc);
-#endif
-
 	/*
 	 * Store the flags in our table.
 	 */
 	s->flags = seg_table[i].seg_flags;
-	s->selector = ((next_unused_selector + i) << 3) | 0x0007;
 
 	/*
 	 * Is there an image for this segment in the file?
@@ -570,19 +661,12 @@ CreateSelectors(struct  w_files * wpnt)
 	    if (s->flags & NE_SEGFLAGS_EXECUTEONLY)
 		read_only = 1;
 	}
-#ifdef DEV_ZERO        
-	s->base_addr =
-	  (void *) mmap((char *) (s->selector << 16),
-			(s->length + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1),
-			PROT_EXEC | PROT_READ | PROT_WRITE,
-			MAP_FIXED | MAP_PRIVATE, fileno(zfile), 0);
-#else
-	s->base_addr =
-	  (void *) mmap((char *) (s->selector << 16),
-			(s->length + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1),
-			PROT_EXEC | PROT_READ | PROT_WRITE,
-			MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
-#endif
+
+	stmp = CreateNewSegment(!(s->flags & NE_SEGFLAGS_DATA), read_only,
+				s->length);
+	s->base_addr = stmp->base_addr;
+	s->selector = stmp->selector;
+	
 	if (seg_table[i].seg_data_offset != 0)
 	{
 	    /*
@@ -593,56 +677,28 @@ CreateSelectors(struct  w_files * wpnt)
 	    if(read(fd, s->base_addr, file_image_length) != file_image_length)
 		myerror("Unable to read segment from file");
 	}
-	/*
-	 * Create entry in LDT for this segment.
-	 */
-	if (set_ldt_entry(s->selector >> 3, (unsigned long) s->base_addr, 
-			  (s->length - 1) & 0xffff, 0, 
-			  contents, read_only, 0) < 0)
-	{
-	    free(selectors);
-	    fprintf(stderr,"Ran out of ldt  entries.\n");
-	    ran_out++;
-	    return NULL;
-	}
-#ifdef DEBUG_SEGMENT
-	printf("      SELECTOR %04.4x, %s\n",
-	       s->selector, 
-	       contents == MODIFY_LDT_CONTENTS_CODE ? "CODE" : "DATA");
-#endif
+
 	/*
 	 * If this is the automatic data segment, then we must initialize
 	 * the local heap.
 	 */
 	if (i + 1 == ne_header->auto_data_seg)
 	{
+	    auto_data_sel = s->selector;
 	    HEAP_LocalInit(s->base_addr + old_length, 
 			   ne_header->local_heap_length);
 	}
     }
 
-    sp = &SelectorOwners[next_unused_selector];
-    for (i = 0; i < ne_header->n_segment_tab; i++)
-	*sp++ = (((next_unused_selector + ne_header->auto_data_seg - 1) << 3)
-		 | 0x0007);
-
-    next_unused_selector += ne_header->n_segment_tab;
+    s = selectors;
+    for (i = 0; i < ne_header->n_segment_tab; i++, s++)
+	SelectorOwners[s->selector >> 3] = auto_data_sel;
 
     if(!EnvironmentSelector) {
-#ifdef DEV_ZERO
-	    EnvironmentSelector = CreateEnvironment(zfile);
-	    PSP_Selector = CreatePSP(zfile);
-	    MakeProcThunks = CreateThunks(zfile);
-#else
 	    EnvironmentSelector = CreateEnvironment();
 	    PSP_Selector = CreatePSP();
-	    MakeProcThunks = CreateThunks();
-#endif
+	    MakeProcThunks = CreateNewSegment(1, 0, 0x10000);
     };
-
-#ifdef DEV_ZERO
-    fclose(zfile);
-#endif
 
     return selectors;
 }

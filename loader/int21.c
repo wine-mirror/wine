@@ -665,6 +665,7 @@ void GetFileDateTime(struct sigcontext_struct *context)
 	struct stat filestat;
 	struct tm *now;
 
+	dirname = (char *) pointer(DS,DX);
 	ParseDOSFileName(unixname, dirname, &drive);
 
 	{
@@ -872,7 +873,7 @@ int do_int21(struct sigcontext_struct * context){
 	case 0x12: /* FIND NEXT MATCHING FILE USING FCB */
 	case 0x13: /* DELETE FILE USING FCB */
 	case 0x14: /* SEQUENTIAL READ FROM FCB FILE */		
-	case 0x15: /* SEQUENTIAL WRITE TO FCB FILE
+	case 0x15: /* SEQUENTIAL WRITE TO FCB FILE */
 	case 0x16: /* CREATE OR TRUNCATE FILE USING FCB */
 	case 0x17: /* RENAME FILE USING FCB */
 	case 0x1a: /* SET DISK TRANSFER AREA ADDRESS */
@@ -888,7 +889,7 @@ int do_int21(struct sigcontext_struct * context){
 	case 0x2e: /* SET VERIFY FLAG */
 		break;
 
-	case 0x18: /* NULL FUNCTIONS FOR CP/M COMPATIBILITY *
+	case 0x18: /* NULL FUNCTIONS FOR CP/M COMPATIBILITY */
 	case 0x1d:
 	case 0x1e:
 	case 0x20:

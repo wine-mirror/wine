@@ -10,7 +10,8 @@
 #include <linux/sched.h>
 #include <asm/system.h>
 #endif
-#include <wine.h>
+#include "wine.h"
+#include "segmem.h"
  
 char * cstack[4096];
 struct sigaction segv_act;
@@ -64,7 +65,7 @@ static void win_fault(int signal, int code, struct sigcontext *scp){
 
 	/*  Now take a look at the actual instruction where the program
 	    bombed */
-	instr = (char *) ((scp->sc_cs << 16) | (scp->sc_eip & 0xffff));
+	instr = (char *) SAFEMAKEPTR(scp->sc_cs, scp->sc_eip);
 
 	if(*instr != 0xcd) {
 		fprintf(stderr,

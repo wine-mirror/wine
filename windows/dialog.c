@@ -6,10 +6,9 @@
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
-#include <stdlib.h>
-
 #include "windows.h"
 #include "dialog.h"
+#include "prototypes.h"
 #include "win.h"
 
 
@@ -29,7 +28,7 @@ BOOL DIALOG_Init()
     
       /* Calculate the dialog base units */
 
-    if (!(hdc = GetDC( 0 ))) return FALSE;
+    if (!(hdc = GetDC(GetDesktopWindow()))) return FALSE;
     GetTextMetrics( hdc, &tm );
     ReleaseDC( 0, hdc );
     xBaseUnit = tm.tmAveCharWidth;
@@ -79,15 +78,17 @@ static DLGCONTROLHEADER * DIALOG_GetControl( DLGCONTROLHEADER * ptr,
 /***********************************************************************
  *           DIALOG_ParseTemplate
  *
- * Fill a DLGTEMPLATE structure from the dialog template.
+ * Fill a DLGTEMPLATE structure from the dialog template, and return
+ * a pointer to the first control.
  */
-static void DIALOG_ParseTemplate( LPCSTR template, DLGTEMPLATE * result )
+static DLGCONTROLHEADER * DIALOG_ParseTemplate( LPCSTR template,
+					        DLGTEMPLATE * result )
 {
-    int i;
     unsigned char * p = (unsigned char *)template;
  
     result->header = (DLGTEMPLATEHEADER *)p;
     p += 13;
+
     result->menuName = p;
     if (*p == 0xff) p += 3;
     else p += strlen(p) + 1;
@@ -104,18 +105,8 @@ static void DIALOG_ParseTemplate( LPCSTR template, DLGTEMPLATE * result )
 	result->pointSize = *(WORD *)p;	p += sizeof(WORD);
 	result->faceName = p;           p += strlen(p) + 1;
     }
-    result->controls = NULL;
-    if (!result->header->nbItems) return;
-    result->controls = (DLGCONTROL *) malloc( result->header->nbItems * sizeof(DLGCONTROL) );
-    if (!result->controls) return;
 
-    for (i = 0; i < result->header->nbItems; i++)
-    {
-	result->controls[i].header = (DLGCONTROLHEADER *)p;
-	p = (char *)DIALOG_GetControl( result->controls[i].header,
-				      &result->controls[i].class,
-				      &result->controls[i].text );	
-    }
+    return (DLGCONTROLHEADER *)p;
 }
 
 
@@ -125,9 +116,6 @@ static void DIALOG_ParseTemplate( LPCSTR template, DLGTEMPLATE * result )
 #ifdef DEBUG_DIALOG
 static void DIALOG_DisplayTemplate( DLGTEMPLATE * result )
 {
-    int i;
-    DLGCONTROL * ctrl = result->controls;
-    
     printf( "DIALOG %d, %d, %d, %d\n", result->header->x, result->header->y,
 	    result->header->cx, result->header->cy );
     printf( " STYLE %08x\n", result->header->style );
@@ -138,18 +126,6 @@ static void DIALOG_DisplayTemplate( DLGTEMPLATE * result )
     else printf( " MENU '%s'\n", result->menuName );
     if (result->header->style & DS_SETFONT)
 	printf( " FONT %d,'%s'\n", result->pointSize, result->faceName );
-
-    printf( " BEGIN\n" );
-
-    for (i = 0; i < result->header->nbItems; i++, ctrl++)
-    {
-	printf( "   %s '%s' %d, %d, %d, %d, %d, %08x\n",
-	        ctrl->class, ctrl->text, ctrl->header->id,
-	        ctrl->header->x, ctrl->header->y, ctrl->header->cx,
-	        ctrl->header->cy, ctrl->header->style );
-    }
-    
-    printf( " END\n" );
 }
 #endif  /* DEBUG_DIALOG */
 
@@ -187,7 +163,7 @@ HWND CreateDialogParam( HINSTANCE hInst, LPCSTR dlgTemplate,
     else hwnd = CreateDialogIndirectParam(hInst, data, owner, dlgProc, param);
     FreeResource( hmem );
 #else
-    hmem = RSC_LoadResource( hInst, dlgTemplate, 0x8005, &size );
+    hmem = RSC_LoadResource( hInst, dlgTemplate, NE_RSCTYPE_DIALOG, &size );
     data = (LPCSTR) GlobalLock( hmem );
     hwnd = CreateDialogIndirectParam( hInst, data, owner, dlgProc, param );
     GlobalFree( hmem );
@@ -212,31 +188,39 @@ HWND CreateDialogIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 			        HWND owner, FARPROC dlgProc, LPARAM param )
 {
-    HMENU hMenu = 0;
+    HMENU hMenu;
     HFONT hFont = 0;
     HWND hwnd;
     WND * wndPtr;
+    int i;
     DLGTEMPLATE template;
+    DLGCONTROLHEADER * header;
     DIALOGINFO * dlgInfo;
     WORD xUnit = xBaseUnit;
     WORD yUnit = yBaseUnit;
-    
-    if (!dlgTemplate) return 0;
-    DIALOG_ParseTemplate( dlgTemplate, &template );
 
+      /* Parse dialog template */
+
+    if (!dlgTemplate) return 0;
+    header = DIALOG_ParseTemplate( dlgTemplate, &template );
 #ifdef DEBUG_DIALOG
     DIALOG_DisplayTemplate( &template );
 #endif    
 
       /* Load menu */
 
-    if (template.menuName[0])
+    switch (template.menuName[0])
     {
-	if (template.menuName[0] != 0xff) 
-	    hMenu = LoadMenu( hInst, template.menuName );
-	else
-	    hMenu = LoadMenu( hInst, MAKEINTRESOURCE( template.menuName[1] +
+      case 0x00:
+	  hMenu = 0;
+	  break;
+      case 0xff:
+	  hMenu = LoadMenu( hInst, MAKEINTRESOURCE( template.menuName[1] +
 						   256*template.menuName[2] ));
+	  break;
+      default:
+	  hMenu = LoadMenu( hInst, template.menuName );
+	  break;
     }
 
       /* Create custom font if needed */
@@ -252,7 +236,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 	    HFONT oldFont;
 	    HDC hdc;
 
-	    hdc = GetDC( 0 );
+	    hdc = GetDC(GetDesktopWindow());
 	    oldFont = SelectObject( hdc, hFont );
 	    GetTextMetrics( hdc, &tm );
 	    SelectObject( hdc, oldFont );
@@ -261,11 +245,11 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 	    yUnit = tm.tmHeight;
 	}
     }
-
+    
       /* Create dialog main window */
 
     hwnd = CreateWindow( template.className, template.caption,
-			 template.header->style & ~WS_VISIBLE,
+			 template.header->style,
 			 template.header->x * xUnit / 4,
 			 template.header->y * yUnit / 8,
 			 template.header->cx * xUnit / 4,
@@ -276,27 +260,42 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
     {
 	if (hFont) DeleteObject( hFont );
 	if (hMenu) DestroyMenu( hMenu );
-	if (template.controls) free( template.controls );
 	return 0;
     }
 
       /* Create control windows */
 
-    if (hwnd && template.header->nbItems)
+#ifdef DEBUG_DIALOG
+    printf( " BEGIN\n" );
+#endif	
+
+    for (i = 0; i < template.header->nbItems; i++)
     {
-	int i;
-	DLGCONTROL * ctrl = template.controls;
-	for (i = 0; i < template.header->nbItems; i++, ctrl++)
-	{
-	    CreateWindowEx( WS_EX_NOPARENTNOTIFY, 
-			    ctrl->class, ctrl->text, ctrl->header->style,
-			    ctrl->header->x * xUnit / 4,
-			    ctrl->header->y * yUnit / 8,
-			    ctrl->header->cx * xUnit / 4,
-			    ctrl->header->cy * yUnit / 8,
-			    hwnd, ctrl->header->id, hInst, NULL );
-	}
-    }
+	DLGCONTROLHEADER * next_header;
+	LPSTR class, text;
+	next_header = DIALOG_GetControl( header, &class, &text );
+
+#ifdef DEBUG_DIALOG
+	printf( "   %s '%s' %d, %d, %d, %d, %d, %08x\n",
+	        class, text, header->id, header->x, header->y, header->cx,
+	        header->cy, header->style );
+#endif
+	if ((strcmp(class, "STATIC") == 0) & ((header->style & SS_ICON) == SS_ICON)) {
+	    header->cx = 32;
+	    header->cy = 32;
+	    }
+	header->style |= WS_CHILD;
+	CreateWindowEx( WS_EX_NOPARENTNOTIFY, 
+		        class, text, header->style,
+		        header->x * xUnit / 4, header->y * yUnit / 8,
+		        header->cx * xUnit / 4, header->cy * yUnit / 8,
+		        hwnd, header->id, hInst, NULL );
+	header = next_header;
+    }    
+
+#ifdef DEBUG_DIALOG
+    printf( " END\n" );
+#endif	
     
       /* Initialise dialog extra data */
 
@@ -318,35 +317,24 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
     if (SendMessage( hwnd, WM_INITDIALOG, dlgInfo->hwndFocus, param ))
 	SetFocus( dlgInfo->hwndFocus );
 
-      /* Display dialog */
-
-    if (template.header->style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
-    
-    if (template.controls) free( template.controls );
     return hwnd;
 }
 
 
 /***********************************************************************
- *           DialogBox   (USER.87)
+ *           DIALOG_DoDialogBox
  */
-int DialogBox( HINSTANCE hInst, LPCSTR dlgTemplate,
-	       HWND owner, FARPROC dlgProc )
+static int DIALOG_DoDialogBox( HWND hwnd )
 {
-    HWND hwnd;
     WND * wndPtr;
     DIALOGINFO * dlgInfo;
     MSG msg;
     int retval;
 
-#ifdef DEBUG_DIALOG
-    printf( "DialogBox: %d,'%s',%d,%p\n", hInst, dlgTemplate, owner, dlgProc );
-#endif
-
-    hwnd = CreateDialog( hInst, dlgTemplate, owner, dlgProc );
-    if (!hwnd) return -1;
-    wndPtr = WIN_FindWndPtr( hwnd );
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return -1;
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
+    ShowWindow( hwnd, SW_SHOW );
+
     while (GetMessage (&msg, 0, 0, 0))
     {
 	if (!IsDialogMessage( hwnd, &msg))
@@ -359,6 +347,61 @@ int DialogBox( HINSTANCE hInst, LPCSTR dlgTemplate,
     retval = dlgInfo->msgResult;
     DestroyWindow( hwnd );
     return retval;
+}
+
+
+/***********************************************************************
+ *           DialogBox   (USER.87)
+ */
+int DialogBox( HINSTANCE hInst, LPCSTR dlgTemplate,
+	       HWND owner, FARPROC dlgProc )
+{
+    return DialogBoxParam( hInst, dlgTemplate, owner, dlgProc, 0 );
+}
+
+
+/***********************************************************************
+ *           DialogBoxParam   (USER.239)
+ */
+int DialogBoxParam( HINSTANCE hInst, LPCSTR dlgTemplate,
+		    HWND owner, FARPROC dlgProc, LPARAM param )
+{
+    HWND hwnd;
+    
+#ifdef DEBUG_DIALOG
+    printf( "DialogBoxParam: %d,'%s',%d,%p,%d\n",
+	    hInst, dlgTemplate, owner, dlgProc, param );
+#endif
+    hwnd = CreateDialogParam( hInst, dlgTemplate, owner, dlgProc, param );
+    if (hwnd) return DIALOG_DoDialogBox( hwnd );
+    return -1;
+}
+
+
+/***********************************************************************
+ *           DialogBoxIndirect   (USER.218)
+ */
+int DialogBoxIndirect( HINSTANCE hInst, HANDLE dlgTemplate,
+		       HWND owner, FARPROC dlgProc )
+{
+    return DialogBoxIndirectParam( hInst, dlgTemplate, owner, dlgProc, 0 );
+}
+
+
+/***********************************************************************
+ *           DialogBoxIndirectParam   (USER.240)
+ */
+int DialogBoxIndirectParam( HINSTANCE hInst, HANDLE dlgTemplate,
+			    HWND owner, FARPROC dlgProc, LPARAM param )
+{
+    HWND hwnd;
+    LPCSTR ptr;
+
+    if (!(ptr = GlobalLock( dlgTemplate ))) return -1;
+    hwnd = CreateDialogIndirectParam( hInst, ptr, owner, dlgProc, param );
+    GlobalUnlock( dlgTemplate );
+    if (hwnd) return DIALOG_DoDialogBox( hwnd );
+    return -1;
 }
 
 

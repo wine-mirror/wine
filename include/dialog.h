@@ -54,15 +54,6 @@ typedef struct
 } DLGCONTROLHEADER;
 
 
-  /* Dialog control data */
-typedef struct
-{
-    DLGCONTROLHEADER * header;
-    LPSTR              class;
-    LPSTR              text;
-} DLGCONTROL;
-
-
   /* Dialog template */
 typedef struct
 {
@@ -72,7 +63,6 @@ typedef struct
     LPSTR               caption;
     WORD                pointSize;
     LPSTR               faceName;
-    DLGCONTROL *        controls;
 } DLGTEMPLATE;
 
 

@@ -166,9 +166,16 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
 	    break;
 	    
 	  case DLL_ARGTYPE_LONG:
-	  case DLL_ARGTYPE_FARPTR:
 	    ip = (int *) ((char *) arg_ptr + offset);
 	    arg_table[i] = *ip;
+	    break;
+
+	  case DLL_ARGTYPE_FARPTR:
+	    ip = (int *) ((char *) arg_ptr + offset);
+	    if (*ip & 0xffff0000)
+		arg_table[i] = SAFEMAKEPTR((unsigned) *ip >> 16, *ip);
+	    else
+		arg_table[i] = *ip;
 	    break;
 	}
     }

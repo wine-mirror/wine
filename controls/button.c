@@ -9,6 +9,7 @@ static char Copyright2[] = "Copyright David Metcalfe, 1993";
 
 #include <windows.h>
 #include "win.h"
+#include "user.h"
 
 LONG ButtonWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam);
 
@@ -48,6 +49,10 @@ static LONG UB_Paint(HWND hWnd);
 static LONG UB_LButtonDown(HWND hWnd, WORD wParam, LONG lParam);
 static LONG UB_LButtonUp(HWND hWnd, WORD wParam, LONG lParam);
 static LONG UB_KillFocus(HWND hWnd);
+static LONG OB_Paint(HWND hWnd);
+static LONG OB_LButtonDown(HWND hWnd, WORD wParam, LONG lParam);
+static LONG OB_LButtonUp(HWND hWnd, WORD wParam, LONG lParam);
+static LONG OB_KillFocus(HWND hWnd);
 
 typedef struct
 {
@@ -60,7 +65,7 @@ typedef struct
     LONG (*getCheckfn)();
 } BTNFN;
 
-#define MAX_BTN_TYPE  10
+#define MAX_BTN_TYPE  12
 
 static BTNFN btnfn[MAX_BTN_TYPE] =
 {
@@ -153,7 +158,25 @@ static BTNFN btnfn[MAX_BTN_TYPE] =
 	(LONG(*)())RB_KillFocus,
 	(LONG(*)())RB_SetCheck,
 	(LONG(*)())RB_GetCheck
-    }
+    },
+    {
+	(LONG(*)())NULL,                           /* Not defined */
+	(LONG(*)())NULL,
+	(LONG(*)())NULL,
+	(LONG(*)())NULL,
+	(LONG(*)())NULL,
+	(LONG(*)())NULL,
+	(LONG(*)())NULL
+    },
+    { 
+	(LONG(*)())OB_Paint,                       /* BS_OWNERDRAW */
+	(LONG(*)())OB_LButtonDown,
+	(LONG(*)())OB_LButtonUp,
+	(LONG(*)())NULL,
+	(LONG(*)())OB_KillFocus,
+	(LONG(*)())NULL,
+	(LONG(*)())NULL
+    },
 };
 
 
@@ -239,7 +262,7 @@ LONG ButtonWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 
 	case BM_GETCHECK:
 		if (btnfn[style].getCheckfn)
-		    (btnfn[style].getCheckfn)(hWnd);
+		    return (btnfn[style].getCheckfn)(hWnd);
 		break;
 
 	default:
@@ -949,6 +972,94 @@ static LONG UB_LButtonUp(HWND hWnd, WORD wParam, LONG lParam)
 }
 
 static LONG UB_KillFocus(HWND hWnd)
+{
+    InvalidateRect(hWnd, NULL, FALSE);
+    UpdateWindow(hWnd);
+}
+
+
+/**********************************************************************
+ *       Ownerdrawn Button Functions
+ */
+
+static LONG OB_Paint(HWND hWnd)
+{
+    PAINTSTRUCT ps;
+    HDC 	hDC;
+    RECT 	rc;
+    HANDLE	hDis;
+    LPDRAWITEMSTRUCT lpdis;
+    WND *wndPtr = WIN_FindWndPtr(hWnd);
+    hDC = BeginPaint(hWnd, &ps);
+    GetClientRect(hWnd, &rc);
+    hDis = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(DRAWITEMSTRUCT));
+    lpdis = (LPDRAWITEMSTRUCT)USER_HEAP_ADDR(hDis);
+    lpdis->hDC = hDC;
+    lpdis->itemID = 0;
+    CopyRect(&lpdis->rcItem, &rc);
+    lpdis->CtlID = wndPtr->wIDmenu;
+    lpdis->CtlType = ODT_BUTTON;
+    lpdis->itemAction = ODA_DRAWENTIRE;
+/*    printf("ownerdrawn button WM_DRAWITEM CtrlID=%X\n", lpdis->CtlID);*/
+    SendMessage(GetParent(hWnd), WM_DRAWITEM, 1, (LPARAM)lpdis); 
+    USER_HEAP_FREE(hDis);
+    EndPaint(hWnd, &ps);
+}
+
+static LONG OB_LButtonDown(HWND hWnd, WORD wParam, LONG lParam)
+{
+    HDC 	hDC;
+    RECT 	rc;
+    HANDLE	hDis;
+    LPDRAWITEMSTRUCT lpdis;
+    WND *wndPtr = WIN_FindWndPtr(hWnd);
+/*    SetFocus(hWnd); */
+    SetCapture(hWnd);
+    hDC = GetDC(hWnd);
+    GetClientRect(hWnd, &rc);
+    if (PtInRect(&rc, MAKEPOINT(lParam)))
+	NOTIFY_PARENT(hWnd, BN_CLICKED);
+    GetClientRect(hWnd, &rc);
+    hDis = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(DRAWITEMSTRUCT));
+    lpdis = (LPDRAWITEMSTRUCT)USER_HEAP_ADDR(hDis);
+    lpdis->hDC = hDC;
+    lpdis->itemID = 0;
+    CopyRect(&lpdis->rcItem, &rc);
+    lpdis->CtlID = wndPtr->wIDmenu;
+    lpdis->CtlType = ODT_BUTTON;
+    lpdis->itemAction = ODA_SELECT;
+    SendMessage(GetParent(hWnd), WM_DRAWITEM, 1, (LPARAM)lpdis); 
+    USER_HEAP_FREE(hDis);
+    ReleaseDC(hWnd, hDC);
+}
+
+static LONG OB_LButtonUp(HWND hWnd, WORD wParam, LONG lParam)
+{
+    HDC 	hDC;
+    RECT 	rc;
+    HANDLE	hDis;
+    LPDRAWITEMSTRUCT lpdis;
+    WND *wndPtr = WIN_FindWndPtr(hWnd);
+    ReleaseCapture();
+    hDC = GetDC(hWnd);
+    GetClientRect(hWnd, &rc);
+    if (PtInRect(&rc, MAKEPOINT(lParam)))
+	NOTIFY_PARENT(hWnd, BN_CLICKED);
+    GetClientRect(hWnd, &rc);
+    hDis = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(DRAWITEMSTRUCT));
+    lpdis = (LPDRAWITEMSTRUCT)USER_HEAP_ADDR(hDis);
+    lpdis->hDC = hDC;
+    lpdis->itemID = 0;
+    CopyRect(&lpdis->rcItem, &rc);
+    lpdis->CtlID = wndPtr->wIDmenu;
+    lpdis->CtlType = ODT_BUTTON;
+    lpdis->itemAction = ODA_SELECT;
+    SendMessage(GetParent(hWnd), WM_DRAWITEM, 1, (LPARAM)lpdis); 
+    USER_HEAP_FREE(hDis);
+    ReleaseDC(hWnd, hDC);
+}
+
+static LONG OB_KillFocus(HWND hWnd)
 {
     InvalidateRect(hWnd, NULL, FALSE);
     UpdateWindow(hWnd);

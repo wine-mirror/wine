@@ -66,6 +66,14 @@ typedef int *LPCATCHBUF;
 
 #define MAKELONG(low, high) ((LONG)(((WORD)(low)) | (((DWORD)((WORD)(high))) << 16)))
 
+#ifndef max
+#define max(a,b) (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef min
+#define min(a,b) (((a) < (b)) ? (a) : (b))
+#endif
+
 /*
 typedef long LONG;
 typedef WORD HANDLE;
@@ -135,6 +143,8 @@ typedef struct {
 	LPSTR	lpszMenuName __attribute__ ((packed));
 	LPSTR   lpszClassName __attribute__ ((packed));
 } WNDCLASS, *LPWNDCLASS;
+
+typedef LONG	(* WNDPROC)() __attribute__ ((packed));
 
 #define CS_VREDRAW          0x0001
 #define CS_HREDRAW          0x0002
@@ -229,6 +239,15 @@ typedef struct {
 #define DLGC_WANTCHARS       0x0080
 #define DLGC_STATIC          0x0100
 #define DLGC_BUTTON          0x2000
+
+/* Standard dialog button IDs */
+#define IDOK                1
+#define IDCANCEL            2
+#define IDABORT             3
+#define IDRETRY             4
+#define IDIGNORE            5
+#define IDYES               6
+#define IDNO                7
 
 
 typedef struct { short x, y; } POINT;
@@ -735,17 +754,17 @@ typedef struct { BYTE rgbtBlue, rgbtGreen, rgbtRed; } RGBTRIPLE;
 
 typedef struct tagBITMAPINFOHEADER
 {
-    unsigned long biSize;
-    unsigned long biWidth;
-    unsigned long biHeight;
-    unsigned short biPlanes;
-    unsigned short biBitCount;
-    unsigned long biCompression;
-    unsigned long biSizeImage;
-    unsigned long biXPelsPerMeter;
-    unsigned long biYPelsPerMeter;
-    unsigned long biClrUsed;
-    unsigned long biClrImportant;
+    DWORD 	biSize;
+    DWORD 	biWidth;
+    DWORD 	biHeight;
+    WORD 	biPlanes;
+    WORD 	biBitCount;
+    DWORD 	biCompression;
+    DWORD 	biSizeImage;
+    DWORD 	biXPelsPerMeter;
+    DWORD 	biYPelsPerMeter;
+    DWORD 	biClrUsed;
+    DWORD 	biClrImportant;
 } BITMAPINFOHEADER;
 
 typedef BITMAPINFOHEADER * LPBITMAPINFOHEADER;
@@ -1021,8 +1040,34 @@ enum { SW_HIDE, SW_SHOWNORMAL, SW_NORMAL, SW_SHOWMINIMIZED, SW_SHOWMAXIMIZED,
 #define GCW_HBRBACKGROUND (-10)
 #endif
 
-#define MB_OK 0
-#define MB_ICONINFORMATION 0x0040
+#define MB_OK               0x0000
+#define MB_OKCANCEL         0x0001
+#define MB_ABORTRETRYIGNORE 0x0002
+#define MB_YESNOCANCEL      0x0003
+#define MB_YESNO            0x0004
+#define MB_RETRYCANCEL      0x0005
+#define MB_TYPEMASK         0x000F
+
+#define MB_ICONHAND         0x0010
+#define MB_ICONQUESTION     0x0020
+#define MB_ICONEXCLAMATION  0x0030
+#define MB_ICONASTERISK     0x0040
+#define MB_ICONMASK         0x00F0
+
+#define MB_ICONINFORMATION  MB_ICONASTERISK
+#define MB_ICONSTOP         MB_ICONHAND
+
+#define MB_DEFBUTTON1       0x0000
+#define MB_DEFBUTTON2       0x0100
+#define MB_DEFBUTTON3       0x0200
+#define MB_DEFMASK          0x0F00
+
+#define MB_APPLMODAL        0x0000
+#define MB_SYSTEMMODAL      0x1000
+#define MB_TASKMODAL        0x2000
+
+#define MB_NOFOCUS          0x8000
+
 
 #define DT_TOP 0
 #define DT_LEFT 0
@@ -1078,6 +1123,11 @@ enum { SW_HIDE, SW_SHOWNORMAL, SW_NORMAL, SW_SHOWMINIMIZED, SW_SHOWMAXIMIZED,
 #define WS_EX_TOPMOST          0x00000008L
 #define WS_EX_ACCEPTFILES      0x00000010L
 #define WS_EX_TRANSPARENT      0x00000020L
+
+/* Window scrolling */
+#define SW_SCROLLCHILDREN      0x0001
+#define SW_INVALIDATE          0x0002
+#define SW_ERASE               0x0003
 
 /* Button control styles */
 #define BS_PUSHBUTTON          0x00000000L
@@ -1319,6 +1369,70 @@ enum { SW_HIDE, SW_SHOWNORMAL, SW_NORMAL, SW_SHOWMINIMIZED, SW_SHOWMAXIMIZED,
 #define ODS_CHECKED     0x0008
 #define ODS_FOCUS       0x0010
 
+/* Edit control styles */
+#define ES_LEFT         0x00000000L
+#define ES_CENTER       0x00000001L
+#define ES_RIGHT        0x00000002L
+#define ES_MULTILINE    0x00000004L
+#define ES_UPPERCASE    0x00000008L
+#define ES_LOWERCASE    0x00000010L
+#define ES_PASSWORD     0x00000020L
+#define ES_AUTOVSCROLL  0x00000040L
+#define ES_AUTOHSCROLL  0x00000080L
+#define ES_NOHISESEL    0x00000100L
+#define ES_OEMCONVERT   0x00000400L
+#define ES_READONLY     0x00000800L
+#define ES_WANTRETURN   0x00001000L
+
+/* Edit control messages */
+#define EM_GETSEL              (WM_USER+0)
+#define EM_SETSEL              (WM_USER+1)
+#define EM_GETRECT             (WM_USER+2)
+#define EM_SETRECT             (WM_USER+3)
+#define EM_SETRECTNP           (WM_USER+4)
+#define EM_LINESCROLL          (WM_USER+6)
+#define EM_GETMODIFY           (WM_USER+8)
+#define EM_SETMODIFY           (WM_USER+9)
+#define EM_GETLINECOUNT        (WM_USER+10)
+#define EM_LINEINDEX           (WM_USER+11)
+#define EM_SETHANDLE           (WM_USER+12)
+#define EM_GETHANDLE           (WM_USER+13)
+#define EM_LINELENGTH          (WM_USER+17)
+#define EM_REPLACESEL          (WM_USER+18)
+#define EM_GETLINE             (WM_USER+20)
+#define EM_LIMITTEXT           (WM_USER+21)
+#define EM_CANUNDO             (WM_USER+22)
+#define EM_UNDO                (WM_USER+23)
+#define EM_FMTLINES            (WM_USER+24)
+#define EM_LINEFROMCHAR        (WM_USER+25)
+#define EM_SETTABSTOPS         (WM_USER+27)
+#define EM_SETPASSWORDCHAR     (WM_USER+28)
+#define EM_EMPTYUNDOBUFFER     (WM_USER+29)
+#define EM_GETFIRSTVISIBLELINE (WM_USER+30)
+#define EM_SETREADONLY         (WM_USER+31)
+#define EM_SETWORDBREAKPROC    (WM_USER+32)
+#define EM_GETWORDBREAKPROC    (WM_USER+33)
+#define EM_GETPASSWORDCHAR     (WM_USER+34)
+
+typedef int (CALLBACK *EDITWORDBREAKPROC)(LPSTR lpch, int ichCurrent,
+					  int cch, int code);
+
+/* EDITWORDBREAKPROC code values */
+#define WB_LEFT         0
+#define WB_RIGHT        1
+#define WB_ISDELIMITER  2
+
+/* Edit control notification codes */
+#define EN_SETFOCUS     0x0100
+#define EN_KILLFOCUS    0x0200
+#define EN_CHANGE       0x0300
+#define EN_UPDATE       0x0400
+#define EN_ERRSPACE     0x0500
+#define EN_MAXTEXT      0x0501
+#define EN_HSCROLL      0x0601
+#define EN_VSCROLL      0x0602
+
+
 #define WM_DRAWITEM         0x002B
 
 typedef struct tagDRAWITEMSTRUCT
@@ -1485,12 +1599,12 @@ Fb(int,_lopen,LPSTR,a,int,b)
 Fa(int,lstrlen,LPCSTR,a)
 Fa(LONG,DispatchMessage,LPMSG,msg)
 Fa(void,UpdateWindow,HWND,a)
-Fa(ATOM,AddAtom,LPSTR,a)
+Fa(ATOM,AddAtom,LPCSTR,a)
 Fa(ATOM,DeleteAtom,ATOM,a)
-Fa(ATOM,FindAtom,LPSTR,a)
-Fa(ATOM,GlobalAddAtom,LPSTR,a)
+Fa(ATOM,FindAtom,LPCSTR,a)
+Fa(ATOM,GlobalAddAtom,LPCSTR,a)
 Fa(ATOM,GlobalDeleteAtom,ATOM,a)
-Fa(ATOM,GlobalFindAtom,LPSTR,a)
+Fa(ATOM,GlobalFindAtom,LPCSTR,a)
 Fa(BOOL,DeleteDC,HDC,a)
 Fa(BOOL,DeleteMetaFile,HANDLE,a)
 Fa(BOOL,DeleteObject,HANDLE,a)
@@ -1504,7 +1618,7 @@ Fa(BOOL,FreeResource,HANDLE,a)
 Fa(BOOL,GlobalUnWire,HANDLE,a)
 Fa(BOOL,GlobalUnfix,HANDLE,a)
 Fa(BOOL,GlobalUnlock,HANDLE,a)
-Fa(BOOL,InitAtomTable,int,a)
+Fa(BOOL,InitAtomTable,WORD,a)
 Fa(BOOL,IsClipboardFormatAvailable,WORD,a)
 Fa(BOOL,IsIconic,HWND,a)
 Fa(BOOL,IsRectEmpty,LPRECT,a)
@@ -1858,10 +1972,10 @@ Fc(LONG,GetBitmapBits,HBITMAP,a,LONG,b,LPSTR,c)
 Fc(LONG,SetBitmapBits,HBITMAP,a,LONG,b,LPSTR,c)
 Fc(LONG,SetClassLong,HWND,a,short,b,LONG,c)
 Fc(LONG,SetWindowLong,HWND,a,short,b,LONG,c)
-Fc(WORD,GetAtomName,ATOM,a,LPSTR,b,int,c)
+Fc(WORD,GetAtomName,ATOM,a,LPSTR,b,short,c)
 Fc(WORD,GetMenuState,HMENU,a,WORD,b,WORD,c)
 Fc(WORD,GetProfileInt,LPSTR,a,LPSTR,b,int,c)
-Fc(WORD,GlobalGetAtomName,ATOM,a,LPSTR,b,int,c)
+Fc(WORD,GlobalGetAtomName,ATOM,a,LPSTR,b,short,c)
 Fc(WORD,SetClassWord,HWND,a,short,b,WORD,c)
 Fc(WORD,SetWindowWord,HWND,a,short,b,WORD,c)
 Fb(WORD,SetBkMode,HDC,a,WORD,b)
@@ -1911,7 +2025,7 @@ Fd(BOOL,PostMessage,HWND,a,WORD,b,WORD,c,LONG,d)
 Fd(LONG,SendMessage,HWND,a,WORD,b,WORD,c,LONG,d)
 Fd(BOOL,GetMessage,LPMSG,msg,HWND,b,WORD,c,WORD,d)
 Fd(BOOL,GetTextExtentPoint,HDC,a,LPSTR,b,short,c,LPSIZE,d)
-Fd(BOOL,DrawIcon,HDC,a,int,b,int,c,HICON,d)
+Fd(BOOL,DrawIcon,HDC,a,short,b,short,c,HICON,d)
 Fd(BOOL,EnumMetaFile,HDC,a,LOCALHANDLE,b,FARPROC,c,BYTE FAR*,d)
 Fd(BOOL,FloodFill,HDC,a,int,b,int,c,DWORD,d)
 Fd(BOOL,GetCharWidth,HDC,a,WORD,b,WORD,c,LPINT,d)
@@ -1986,7 +2100,7 @@ Fe(HWND,CreateDialogParam,HANDLE,a,LPCSTR,b,HWND,c,FARPROC,d,LPARAM,e)
 Fe(LONG,DefFrameProc,HWND,a,HWND,b,WORD,c,WORD,d,LONG,e)
 Fe(LONG,SendDlgItemMessage,HWND,a,WORD,b,WORD,c,WORD,d,LONG,e)
 Fe(int,DialogBoxIndirectParam,HANDLE,a,HANDLE,b,HWND,c,FARPROC,d,LONG,e)
-Fe(int,DialogBoxParam,HANDLE,a,LPSTR,b,HWND,c,FARPROC,d,LONG,e)
+Fe(int,DialogBoxParam,HANDLE,a,LPCSTR,b,HWND,c,FARPROC,d,LONG,e)
 Fe(int,DlgDirList,HWND,a,LPSTR,b,int,c,int,d,WORD,e)
 Fe(int,DlgDirListComboBox,HWND,a,LPSTR,b,int,c,int,d,WORD,e)
 Fe(int,Escape,HDC,a,int,b,int,c,LPSTR,d,LPSTR,e)
@@ -1999,7 +2113,7 @@ Fe(int,IntersectVisRect,HDC,a,short,b,short,c,short,d,short,e)
 Fe(int,SetVoiceAccent,int,a,int,b,int,c,int,d,int,e)
 Fe(int,ToAscii,WORD,wVirtKey,WORD,wScanCode,LPSTR,lpKeyState,LPVOID,lpChar,WORD,wFlags)
 Fe(void,PaintRect,HWND,a,HWND,b,HDC,c,HBRUSH,d,LPRECT,e)
-Fe(void,ScrollWindow,HWND,a,int,b,int,c,LPRECT,d,LPRECT,e)
+Fe(void,ScrollWindow,HWND,a,short,b,short,c,LPRECT,d,LPRECT,e)
 Fe(void,SetRect,LPRECT,a,short,b,short,c,short,d,short,e)
 Fe(void,SetRectRgn,HRGN,a,short,b,short,c,short,d,short,e)
 Fe(void,SetScrollRange,HWND,a,int,b,int,c,int,d,BOOL,e)
@@ -2012,7 +2126,7 @@ Ff(void,MoveWindow,HWND,a,short,b,short,c,short,d,short,e,BOOL,f)
 Ff(BOOL,ScaleViewportExtEx,HDC,a,short,b,short,c,short,d,short,e,LPSIZE,f)
 Ff(BOOL,ScaleWindowExtEx,HDC,a,short,b,short,c,short,d,short,e,LPSIZE,f)
 Fg(BOOL,RoundRect,HDC,a,short,b,short,c,short,d,short,e,short,f,short,g)
-Fg(BOOL,ScrollDC,HDC,a,int,b,int,c,LPRECT,d,LPRECT,e,HRGN,f,LPRECT,g)
+Fg(BOOL,ScrollDC,HDC,a,short,b,short,c,LPRECT,d,LPRECT,e,HRGN,f,LPRECT,g)
 Fg(BOOL,TrackPopupMenu,HMENU,a,WORD,b,int,c,int,d,int,e,HWND,f,LPRECT,g)
 Fg(HCURSOR,CreateCursor,HANDLE,a,int,b,int,c,int,d,int,e,LPSTR,f,LPSTR,g)
 Fg(HICON,CreateIcon,HANDLE,a,int,b,int,c,BYTE,d,BYTE,e,LPSTR,f,LPSTR,g)
@@ -2022,6 +2136,7 @@ Fg(void,SetWindowPos,HWND,a,HWND,b,short,c,short,d,short,e,short,f,WORD,g)
 Fh(BOOL,ExtTextOut,HDC,a,int,b,int,c,WORD,d,LPRECT,e,LPSTR,f,WORD,g,LPINT,h)
 Fh(HANDLE,DeferWindowPos,HANDLE,hWinPosInfo,HWND,hWnd,HWND,hWndInsertAfter,int,x,int,y,int,cx,int,cy,WORD,wFlags)
 Fh(LONG,TabbedTextOut,HDC,a,int,b,int,c,LPSTR,d,int,e,int,f,LPINT,g,int,h)
+Fh(int,ScrollWindowEx,HWND,a,short,b,short,c,LPRECT,d,LPRECT,e,HRGN,f,LPRECT,g,WORD,h)
 Fi(BOOL,Arc,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom,int,xStart,int,yStart,int,xEnd,int,yEnd)
 Fi(BOOL,Chord,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom,int,xStart,int,yStart,int,xEnd,int,yEnd)
 Fi(BOOL,BitBlt,HDC,a,short,b,short,c,short,d,short,e,HDC,f,short,g,short,h,DWORD,i)

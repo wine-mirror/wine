@@ -16,6 +16,8 @@ LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam);
 static LONG PaintTextfn(HWND hwnd);
 static LONG PaintRectfn(HWND hwnd);
 static LONG PaintFramefn(HWND hwnd);
+static LONG PaintIconfn(HWND hwnd);
+
 
 static COLORREF color_windowframe, color_background, color_window,
                                                      color_windowtext;
@@ -37,7 +39,7 @@ static STATICFN staticfn[MAX_STATIC_TYPE] =
     { (LONG(*)())PaintTextfn },                    /* SS_LEFT */
     { (LONG(*)())PaintTextfn },                    /* SS_CENTER */
     { (LONG(*)())PaintTextfn },                    /* SS_RIGHT */
-    { (LONG(*)())NULL        },                    /* SS_ICON */
+    { (LONG(*)())PaintIconfn },                    /* SS_ICON */
     { (LONG(*)())PaintRectfn },                    /* SS_BLACKRECT */
     { (LONG(*)())PaintRectfn },                    /* SS_GRAYRECT */
     { (LONG(*)())PaintRectfn },                    /* SS_WHITERECT */
@@ -65,17 +67,22 @@ LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 	    break;
 
 	case WM_CREATE:
-	    if (style < 0L || style >= (LONG)DIM(staticfn))
+	    if (style < 0L || style >= (LONG)DIM(staticfn)) {
 		lResult = -1L;
-	    else
-	    {
-		/* initialise colours */
-		color_windowframe  = GetSysColor(COLOR_WINDOWFRAME);
-		color_background   = GetSysColor(COLOR_BACKGROUND);
-		color_window       = GetSysColor(COLOR_WINDOW);
-		color_windowtext   = GetSysColor(COLOR_WINDOWTEXT);
-		lResult = 0L;
-	    }
+		break;
+		}
+	    /* initialise colours */
+	    color_windowframe  = GetSysColor(COLOR_WINDOWFRAME);
+	    color_background   = GetSysColor(COLOR_BACKGROUND);
+	    color_window       = GetSysColor(COLOR_WINDOW);
+	    color_windowtext   = GetSysColor(COLOR_WINDOWTEXT);
+	    lResult = 0L;
+	    if (style == SS_ICON) {
+/*
+		SetWindowPos(hWnd, (HWND)NULL, 0, 0, 32, 32,
+				SWP_NOZORDER | SWP_NOMOVE);
+*/
+		}
 	    break;
 
 	case WM_PAINT:
@@ -258,6 +265,35 @@ static LONG PaintFramefn(HWND hwnd)
     EndPaint(hwnd, &ps);
 }
 
+
+static LONG PaintIconfn(HWND hwnd)
+{
+    WND 	*wndPtr;
+    PAINTSTRUCT ps;
+    RECT 	rc;
+    HDC 	hdc;
+    LPSTR	textPtr;
+    HICON	hIcon;
+
+    wndPtr = WIN_FindWndPtr(hwnd);
+    hdc = BeginPaint(hwnd, &ps);
+    GetClientRect(hwnd, &rc);
+    FillRect(hdc, &rc, GetStockObject(WHITE_BRUSH));
+    textPtr = (LPSTR)USER_HEAP_ADDR(wndPtr->hText);
+    printf("SS_ICON : textPtr='%s' / left=%d top=%d right=%d bottom=%d \n", 
+    		textPtr, rc.left, rc.top, rc.right, rc.bottom);
+/*
+    SetWindowPos(hwnd, (HWND)NULL, 0, 0, 32, 32,
+		SWP_NOZORDER | SWP_NOMOVE);
+    GetClientRect(hwnd, &rc);
+    printf("SS_ICON : textPtr='%s' / left=%d top=%d right=%d bottom=%d \n", 
+    		textPtr, rc.left, rc.top, rc.right, rc.bottom);
+*/
+    hIcon = LoadIcon(wndPtr->hInstance, textPtr);
+    DrawIcon(hdc, rc.left, rc.top, hIcon);
+    EndPaint(hwnd, &ps);
+    GlobalUnlock(hwnd);
+}
 
 
 

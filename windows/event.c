@@ -16,8 +16,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 
 #define NB_BUTTONS      3     /* Windows can handle 3 buttons */
-#define DBLCLICK_TIME   300   /* Max. time for a double click (milliseconds) */
-
+static WORD dblclick_time = 300; /* Max. time for a double click (milliseconds) */
 
   /* Event handlers */
 static void EVENT_expose();
@@ -191,7 +190,7 @@ static void EVENT_mouse_button( Widget w, int hwnd, XButtonEvent *event,
     {  /* Check if double-click */
 	prevTime = lastClickTime[buttonNum];
 	lastClickTime[buttonNum] = event->time;
-	if (event->time - prevTime < DBLCLICK_TIME)
+	if (event->time - prevTime < dblclick_time)
 	{
 	    WND * wndPtr;
 	    CLASS * classPtr;
@@ -329,3 +328,24 @@ void ReleaseCapture()
 
     captureWnd = 0;
 }
+
+/**********************************************************************
+ *		SetDoubleClickTime  (USER.20)
+ */
+void SetDoubleClickTime (WORD interval)
+{
+	if (interval == 0)
+		dblclick_time = 500;
+	else
+		dblclick_time = interval;
+}		
+
+/**********************************************************************
+ *		GetDoubleClickTime  (USER.21)
+ */
+WORD GetDoubleClickTime ()
+{
+	return ((WORD)dblclick_time);
+}		
+
+

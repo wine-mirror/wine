@@ -31,6 +31,19 @@ For example, to run Windows' solitaire:
 Have a nice game of solitaire, but be careful.  Emulation isn't perfect.
 So, occassionally it will crash.
 
+WHAT'S NEW with version 0.4.10: (see ChangeLog for details)
+	- Bug fixes
+	- More scroll bar functions
+	- More icon and cursor handling
+
+WHAT'S NEW with version 0.4.9: (see ChangeLog for details)
+	- Bug fixes
+	- real MessageBox()
+	- New resource functions
+	- Icon functions
+	- Selector manipulation functions
+	- Catch()/Throw()
+
 WHAT'S NEW with version 0.4.7: (see ChangeLog for details)
 	- More dialog box functions
 	- More DOS interrupts

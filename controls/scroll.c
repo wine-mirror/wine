@@ -86,11 +86,15 @@ LONG SCROLLBAR_ScrollBarWndProc( HWND hwnd, WORD message,
 #endif
 	return 0;
     case WM_DESTROY:
-	lphs = ScrollBarGetStorageHeader(hwnd);
+	lphs = ScrollBarGetWindowAndStorage(hwnd, &wndPtr);
+	if (lphs == 0) return 0;
+#ifdef DEBUG_SCROLL
+        printf("ScrollBar WM_DESTROY %lX !\n", lphs);
+#endif
 	DestroyWindow(lphs->hWndUp);
 	DestroyWindow(lphs->hWndDown);
 	free(lphs);
-        printf("ScrollBar WM_DESTROY !\n");
+	*((LPHEADSCROLL *)&wndPtr->wExtra[1]) = 0;
 	return 0;
 	
     case WM_COMMAND:
@@ -105,10 +109,17 @@ LONG SCROLLBAR_ScrollBarWndProc( HWND hwnd, WORD message,
         if (LOWORD(lParam) == lphs->hWndDown)
             SendMessage(wndPtr->hwndParent, lphs->Direction, 
             	SB_LINEDOWN, MAKELONG(0, hwnd));
+/*
+	SetFocus(hwnd);
+*/
 	return 0;
 
     case WM_LBUTTONDOWN:
 	lphs = ScrollBarGetWindowAndStorage(hwnd, &wndPtr);
+/*
+	SetFocus(hwnd);
+*/
+	SetCapture(hwnd);
 	GetClientRect(hwnd, &rect);
 	if (lphs->Direction == WM_VSCROLL) {
 	    y = HIWORD(lParam);
@@ -152,11 +163,13 @@ LONG SCROLLBAR_ScrollBarWndProc( HWND hwnd, WORD message,
 	    }
 	break;
     case WM_LBUTTONUP:
+	lphs = ScrollBarGetStorageHeader(hwnd);
         lphs->ThumbActive = FALSE;
+	ReleaseCapture();
 	break;
 
     case WM_KEYDOWN:
-        printf("ScrollBar WM_KEYDOWN wParam %X!\n", wParam);
+        printf("ScrollBar WM_KEYDOWN wParam %X !\n", wParam);
 	break;
     case WM_PAINT:
 	StdDrawScrollBar(hwnd);
@@ -192,6 +205,10 @@ LPHEADSCROLL ScrollBarGetWindowAndStorage(HWND hwnd, WND **wndPtr)
     WND  *Ptr;
     LPHEADSCROLL lphs;
     *(wndPtr) = Ptr = WIN_FindWndPtr(hwnd);
+    if (Ptr == 0) {
+    	printf("Bad Window handle on ScrollBar !\n");
+    	return 0;
+    	}
     lphs = *((LPHEADSCROLL *)&Ptr->wExtra[1]);
     return lphs;
 }
@@ -202,6 +219,10 @@ LPHEADSCROLL ScrollBarGetStorageHeader(HWND hwnd)
     WND  *wndPtr;
     LPHEADSCROLL lphs;
     wndPtr = WIN_FindWndPtr(hwnd);
+    if (wndPtr == 0) {
+    	printf("Bad Window handle on ScrollBar !\n");
+    	return 0;
+    	}
     lphs = *((LPHEADSCROLL *)&wndPtr->wExtra[1]);
     return lphs;
 }
@@ -209,49 +230,53 @@ LPHEADSCROLL ScrollBarGetStorageHeader(HWND hwnd)
 
 void StdDrawScrollBar(HWND hwnd)
 {
-	LPHEADSCROLL lphs;
-	PAINTSTRUCT ps;
-	HBRUSH hBrush;
-	HDC hdc;
-	RECT rect;
-	UINT  i, w, h, siz;
-	char	C[128];
-	hdc = BeginPaint( hwnd, &ps );
-	hBrush = SendMessage(GetParent(hwnd), WM_CTLCOLOR, (WORD)hdc,
-		    MAKELONG(hwnd, CTLCOLOR_SCROLLBAR));
-	if (hBrush == (HBRUSH)NULL)  hBrush = GetStockObject(LTGRAY_BRUSH);
-	lphs = ScrollBarGetStorageHeader(hwnd);
-	if (lphs == NULL) goto EndOfPaint;
-	GetClientRect(hwnd, &rect);
-	w = rect.right - rect.left;
-	h = rect.bottom - rect.top;
-	if (lphs->Direction == WM_VSCROLL) {
-	    rect.top += w;
-	    rect.bottom -= w;
-	    }
-	else {
-	    rect.left += h;
-	    rect.right -= h;
-	    }
-	FillRect(hdc, &rect, hBrush);
-	if (lphs->Direction == WM_VSCROLL)
-	    SetRect(&rect, 0, lphs->CurPix + w, 
-	    		w, lphs->CurPix + (w << 1));
-	else
-	    SetRect(&rect, lphs->CurPix + h, 
-	    		0, lphs->CurPix + (h << 1), h);
-	FrameRect(hdc, &rect, GetStockObject(BLACK_BRUSH));
-	InflateRect(&rect, -1, -1);
-	FillRect(hdc, &rect, GetStockObject(LTGRAY_BRUSH));
-	DrawReliefRect(hdc, rect, 2, 0);
-	InflateRect(&rect, -3, -3);
-	DrawReliefRect(hdc, rect, 1, 1);
-EndOfPaint:
+    LPHEADSCROLL lphs;
+    PAINTSTRUCT ps;
+    HBRUSH hBrush;
+    HDC hdc;
+    RECT rect;
+    UINT  i, w, h, siz;
+    char	C[128];
+    hdc = BeginPaint( hwnd, &ps );
+    if (!IsWindowVisible(hwnd)) {
 	EndPaint( hwnd, &ps );
-        InvalidateRect(lphs->hWndUp, NULL, TRUE);
-        UpdateWindow(lphs->hWndUp);
-        InvalidateRect(lphs->hWndDown, NULL, TRUE);
-        UpdateWindow(lphs->hWndDown);
+	return;
+	}
+    hBrush = SendMessage(GetParent(hwnd), WM_CTLCOLOR, (WORD)hdc,
+			MAKELONG(hwnd, CTLCOLOR_SCROLLBAR));
+    if (hBrush == (HBRUSH)NULL)  hBrush = GetStockObject(LTGRAY_BRUSH);
+    lphs = ScrollBarGetStorageHeader(hwnd);
+    if (lphs == NULL) goto EndOfPaint;
+    GetClientRect(hwnd, &rect);
+    w = rect.right - rect.left;
+    h = rect.bottom - rect.top;
+    if (lphs->Direction == WM_VSCROLL) {
+	rect.top += w;
+	rect.bottom -= w;
+	}
+    else {
+	rect.left += h;
+	rect.right -= h;
+	}
+    FillRect(hdc, &rect, hBrush);
+    if (lphs->Direction == WM_VSCROLL)
+	SetRect(&rect, 0, lphs->CurPix + w, w, lphs->CurPix + (w << 1));
+    else
+	SetRect(&rect, lphs->CurPix + h, 0, lphs->CurPix + (h << 1), h);
+    FrameRect(hdc, &rect, GetStockObject(BLACK_BRUSH));
+    InflateRect(&rect, -1, -1);
+    FillRect(hdc, &rect, GetStockObject(LTGRAY_BRUSH));
+    DrawReliefRect(hdc, rect, 2, 0);
+    InflateRect(&rect, -3, -3);
+    DrawReliefRect(hdc, rect, 1, 1);
+    if (!lphs->ThumbActive) {
+	InvalidateRect(lphs->hWndUp, NULL, TRUE);
+	UpdateWindow(lphs->hWndUp);
+	InvalidateRect(lphs->hWndDown, NULL, TRUE);
+	UpdateWindow(lphs->hWndDown);
+	}
+EndOfPaint:
+    EndPaint( hwnd, &ps );
 }
 
 
@@ -264,16 +289,22 @@ int CreateScrollBarStruct(HWND hwnd)
     LPHEADSCROLL lphs;
     wndPtr = WIN_FindWndPtr(hwnd);
     lphs = (LPHEADSCROLL)malloc(sizeof(HEADSCROLL));
+    if (lphs == 0) {
+    	printf("Bad Memory Alloc on ScrollBar !\n");
+    	return 0;
+    	}
+
+#ifdef DEBUG_SCROLL
+        printf("CreateScrollBarStruct %lX !\n", lphs);
+#endif
     *((LPHEADSCROLL *)&wndPtr->wExtra[1]) = lphs;
-    lphs->ThumbActive;
+    lphs->ThumbActive = FALSE;
     lphs->MinVal = 0;
     lphs->MaxVal = 100;
     lphs->CurVal = 0;
     lphs->CurPix = 0;
     width = wndPtr->rectClient.right - wndPtr->rectClient.left;
     height = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
-    lphs = ScrollBarGetStorageHeader(hwnd);
-    if (lphs == NULL) return 0;
     if (width <= height)
 	{
 	lphs->MaxPix = height - 3 * width;
@@ -308,7 +339,7 @@ int GetScrollPos(HWND hwnd, int nBar)
 {
     LPHEADSCROLL lphs;
     lphs = ScrollBarGetStorageHeader(hwnd);
-    if (lphs == NULL) return;
+    if (lphs == NULL) return 0;
     return lphs->CurVal;
 }
 
@@ -330,7 +361,7 @@ int SetScrollPos(HWND hwnd, int nBar, int nPos, BOOL bRedraw)
     int nRet;
     LPHEADSCROLL lphs;
     lphs = ScrollBarGetStorageHeader(hwnd);
-    if (lphs == NULL) return;
+    if (lphs == NULL) return 0;
     nRet = lphs->CurVal;
     lphs->CurVal = (short)nPos;
     if (lphs->MaxVal != lphs->MinVal)
@@ -343,7 +374,7 @@ int SetScrollPos(HWND hwnd, int nBar, int nPos, BOOL bRedraw)
     printf("SetScrollPos min=%d max=%d\n", 
 	    lphs->MinVal, lphs->MaxVal);
 #endif
-    if (bRedraw) {
+    if ((bRedraw) && (IsWindowVisible(hwnd))) {
         InvalidateRect(hwnd, NULL, TRUE);
         UpdateWindow(hwnd);
         }
@@ -367,7 +398,7 @@ void SetScrollRange(HWND hwnd, int nBar, int MinPos, int MaxPos, BOOL bRedraw)
 #ifdef DEBUG_SCROLL
     printf("SetScrollRange min=%d max=%d\n", lphs->MinVal, lphs->MaxVal);
 #endif
-    if (bRedraw) {
+    if ((bRedraw) && (IsWindowVisible(hwnd))) {
         InvalidateRect(hwnd, NULL, TRUE);
         UpdateWindow(hwnd);
         }

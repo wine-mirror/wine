@@ -1,3 +1,126 @@
+Mon Nov 22 13:58:56 1993  David Metcalfe <david@prism.demon.co.uk>
+
+        * [windows/scroll.c]
+	Preliminary implementations of ScrollWindow, ScrollDC and
+        ScrollWindowEx.
+
+Nov 21, 93 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [controls/listbox.c]
+	Optimization of redraw during 'Add' or 'Insert'.
+
+	* [controls/scroll.c]
+	Optimization of WM_PAINT during 'thumbtracking'.
+
+	* [controls/button.c]
+	Add of beta implement of 'BS_OWNERDRAW'
+
+	* [controls/static.c]
+	Style 'SS_ICON' new supported.
+
+	* [misc/message.c]
+	Begin of implemantation of MB_XXX styles.
+
+	* [loader/resource.c]
+	Function LoadIcon() : now prepare transparency Bitmap mask.
+	Function LoadCursor() : now prepare a 'X pixmapcursor'.
+	New function SetCursor() : not finished.
+	New function ShowCursor() : not finished.
+	New function AccessResource() : stub.
+
+	* [obj/dib.c]
+	Function DrawIcon(): deugging phase of icon transparency mask.
+
+	* [loader/library.c]
+	new file for news functions LoadLibrary() & FreeLibrary().
+
+	* [sysres.dll]
+	Resources only 16bits DLL for System Resources, icons, etc...
+
+----------------------------------------------------------------------
+Sun Nov 14 14:39:06 1993  julliard@di.epfl.ch (Alexandre Julliard)
+
+	* [include/dialog.h] [windows/dialog.c]
+	Simplified dialog template parsing.
+	Implemented DialogBoxIndirect().
+
+	* [windows/win.c]
+	Fixed bug in CreateWindow() when aborting window creation.
+	Modified UpdateWindow() to only update visible windows.
+	Implemented IsWindow().
+
+Nov 14, 93 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [controls/listbox.c]
+	Listbox control window : new messages.
+
+	* [controls/combo.c]
+	Combo box control window : new messages.
+
+	* [misc/message.c]
+	Moved stub MessageBox() to this new file.
+	Implemented of a callback, now MessageBox show a window.
+
+	* [loader/resource.c]
+	New function DestroyIcon()
+	New function DestroyCursor()
+	Filled stub LoadIcon()
+	Filled stub LoadCursor()
+	Bug fixed in FindResourceByName() : missing lseek().
+
+	* [obj/dib.c]
+	New function DrawIcon()
+
+	* [windows/win.c]
+	New function CloseWindow()
+	New function OpenIcon()
+	New function IsIconic()
+	New Function FindWindow()
+
+Sun Nov 14 08:27:19 1993  Karl Guenter Wuensch (hz225wu@unidui.uni-duisburg.de)
+
+	* [loader/selector.c]
+	Wrote AllocCStoDSAlias() and AllocDStoCSAlias()
+
+Sun Nov 14 08:27:19 1993  Bob Amstadt  (bob at amscons)
+
+	* [loader/selector.c]
+	Wrote AllocSelector() and PrestoChangoSelector().  YUK!
+
+Sat Nov 13 13:56:42 1993  Bob Amstadt  (bob at amscons)
+
+	* [loader/resource.c]
+	Wrote FindResource(), LoadResource(), LockResource(),
+	and FreeResource()
+
+	* [include/segmem.h] [loader/selector.c] [loader/signal.h]
+	Changed selector allocation method.
+
+Sun Nov 10 08:27:19 1993  Karl Guenter Wuensch (hz225wu@unidui.uni-duisburg.de)
+
+	* [if1632/callback.c if1632/call.S if1632/user.spec] 
+	added Catch (KERNEL.55) and Throw (KERNEL.56)
+	
+Nov 7, 93 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [controls/scroll.c]
+	Scroll bar control window
+		Bug resolved : Painting message before scroll visible.
+
+	* [controls/listbox.c]
+	Listbox control window
+		Destroy cleanup.
+
+	* [controls/combo.c]
+	Combo box control window
+		Destroy cleanup.
+
+	* [controls/button.c]
+		GetCheck Message now return is state.
+
+	* [windows/win.c]
+	New function IsWindowVisible()
+
 Mon Nov  1 14:40:21 1993  julliard@di.epfl.ch (Alexandre Julliard)
 
 	* [if1632/user.spec]

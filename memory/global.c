@@ -555,7 +555,7 @@ GlobalReAlloc(unsigned int block, unsigned int new_size, unsigned int flags)
      * reallocate the block.  If this fails, call GlobalAlloc() to get
      * a new block.
      */
-    if (g->sequence = 0)
+    if (g->sequence == 0)
     {
 	MDESC **free_list;
 	void *p;

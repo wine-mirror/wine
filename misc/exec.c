@@ -41,7 +41,7 @@ WORD WinExec(LPSTR lpCmdLine, WORD nCmdShow)
    }  
    switch(fork()) {
       case -1:
-         printf("Can'k 'fork' process !\n");
+         printf("Can't 'fork' process !\n");
          break;
       case 0:
          printf("New process started !\n");
@@ -68,7 +68,7 @@ BOOL WinHelp(HWND hWnd, LPSTR lpHelpFile, WORD wCommand, DWORD dwData)
    printf("WinHelp(%s, %u, %lu)\n", lpHelpFile, wCommand, dwData);
    switch(fork()) {
       case -1:
-         printf("Can'k 'fork' process !\n");
+         printf("Can't 'fork' process !\n");
          break;
       case 0:
          printf("New process started !\n");

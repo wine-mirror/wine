@@ -1,7 +1,7 @@
 CFLAGS=$(COPTS) $(DEBUGOPTS) -I$(INCLUDE_DIR)
 
 OBJS=dos.o kernel.o user.o xt.o rect.o file.o sound.o emulate.o \
-     keyboard.o profile.o lstr.o exec.o
+     keyboard.o profile.o lstr.o exec.o message.o
 
 default: misc.o
 

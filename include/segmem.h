@@ -7,6 +7,19 @@
 #define SEGMEM_H
 
 /*
+ * Array to track selector allocation.
+ */
+#define MAX_SELECTORS		512
+#define SELECTOR_ISFREE		0x8000
+#define SELECTOR_INDEXMASK	0x0fff
+
+extern unsigned short SelectorMap[MAX_SELECTORS];
+
+#define SAFEMAKEPTR(s, o) \
+    (((int) SelectorMap[SelectorMap[(s) >> 3] & SELECTOR_INDEXMASK] << 19) \
+     | 0x70000 | ((o) & 0xffff))
+
+/*
  * Structure to hold info about each selector we create.
  */
 

@@ -19,7 +19,7 @@ extern Screen * XT_screen;
  * We try to use a private color map if possible, because Windows programs
  * assume that palette(0) == Black and palette(max-1) == White.
  */
-#define USE_PRIVATE_MAP
+#undef USE_PRIVATE_MAP
 
 Colormap COLOR_WinColormap = 0;
 

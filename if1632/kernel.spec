@@ -32,11 +32,14 @@ length	415
 50  pascal GetProcAddress(word ptr) GetProcAddress(1 2)
 51  pascal MakeProcInstance(ptr word) CALLBACK_MakeProcInstance(1 2)
 52  pascal FreeProcInstance(ptr) FreeProcInstance(1)
+55  pascal Catch(ptr) Catch (1)
+56  pascal Throw(ptr word) Throw(1 2)
 59  pascal WriteProfileString(ptr ptr ptr) WriteProfileString(1 2 3)
 60  pascal FindResource(word ptr ptr) FindResource(1 2 3)
 61  pascal LoadResource(word word) LoadResource(1 2)
 62  pascal LockResource(word) LockResource(1)
 63  pascal FreeResource(word) FreeResource(1)
+64  pascal AccessResource(word word) AccessResource(1 2)
 74  pascal OpenFile(ptr ptr word) KERNEL_OpenFile(1 2 3)
 81  pascal _lclose(word) KERNEL__lclose(1)
 82  pascal _lread(word ptr word) KERNEL__lread(1 2 3)
@@ -48,6 +51,8 @@ length	415
 91  register InitTask(word word word word word
 		      word word word word word) 
 	     KERNEL_InitTask()
+95  pascal LoadLibrary(ptr) LoadLibrary(1)
+96  pascal FreeLibrary(word) FreeLibrary(1)
 102 register DOS3Call(word word word word word
 		      word word word word word) 
 	     KERNEL_DOS3Call()
@@ -67,6 +72,11 @@ length	415
 163 pascal GlobalLRUOldest(word) ReturnArg(1)
 164 pascal GlobalLRUNewest(word) ReturnArg(1)
 166 pascal WinExec(ptr word) WinExec(1 2)
+170 pascal AllocCStoDSAlias(word) AllocDStoCSAlias(1)
+171 pascal AllocDStoCSAlias(word) AllocDStoCSAlias(1)
+175 pascal AllocSelector(word) AllocSelector(1)
+176 pascal FreeSelector(word) FreeSelector(1)
+177 pascal PrestoChangoSelector(word word) PrestoChangoSelector(1 2)
 178 equate __WINFLAGS 0x413
 184 return GlobalDOSAlloc 4 0
 185 return GlobalDOSFree 2 0

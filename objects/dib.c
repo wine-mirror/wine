@@ -6,9 +6,11 @@
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "gdi.h"
+#include "icon.h"
 
 
 extern XImage * BITMAP_BmpToImage( BITMAP *, void * );
@@ -201,3 +203,45 @@ HBITMAP CreateDIBitmap( HDC hdc, BITMAPINFOHEADER * header, DWORD init,
 				    bits, data, coloruse );
     return handle;
 }
+
+/***********************************************************************
+ *           DrawIcon    (USER.84)
+ */
+BOOL DrawIcon(HDC hDC, short x, short y, HICON hIcon)
+{
+    ICONALLOC	*lpico;
+    BITMAP	bm;
+    HBITMAP	hBitTemp;
+    HDC		hMemDC;
+    HDC		hMemDC2;
+#ifdef DEBUG_ICON
+    printf("DrawIcon(%04X, %d, %d, %04X) \n", hDC, x, y, hIcon);
+#endif
+    if (hIcon == (HICON)NULL) return FALSE;
+    lpico = (ICONALLOC *)GlobalLock(hIcon);
+    GetObject(lpico->hBitmap, sizeof(BITMAP), (LPSTR)&bm);
+#ifdef DEBUG_ICON
+    printf("DrawIcon / x=%d y=%d\n", x, y);
+    printf("DrawIcon / icon Width=%d\n", (int)lpico->descriptor.Width);
+    printf("DrawIcon / icon Height=%d\n", (int)lpico->descriptor.Height);
+    printf("DrawIcon / icon ColorCount=%d\n", (int)lpico->descriptor.ColorCount);
+    printf("DrawIcon / icon icoDIBSize=%lX\n", (DWORD)lpico->descriptor.icoDIBSize);
+    printf("DrawIcon / icon icoDIBOffset=%lX\n", (DWORD)lpico->descriptor.icoDIBOffset);
+    printf("DrawIcon / bitmap bmWidth=%d bmHeight=%d\n", bm.bmWidth, bm.bmHeight);
+#endif
+    hMemDC = CreateCompatibleDC(hDC);
+#ifdef DEBUG_ICON
+    SelectObject(hMemDC, lpico->hBitmap);
+    BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+    SelectObject(hMemDC, lpico->hBitMask);
+    BitBlt(hDC, x, y + bm.bmHeight, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+#else
+    SelectObject(hMemDC, lpico->hBitMask);
+    BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCAND);
+    SelectObject(hMemDC, lpico->hBitmap);
+    BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCPAINT);
+#endif
+    DeleteDC(hMemDC);
+    return TRUE;
+}
+
