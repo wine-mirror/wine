@@ -223,11 +223,6 @@ $(MAKEDEP) check_makedep:
 $(BUILD) check_winebuild:
 	cd $(TOPOBJDIR)/tools/winebuild && $(MAKE) winebuild
 
-# Rule for main module
-
-$(MODULE).o: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
-	$(LDCOMBINE) $(OBJS) -o $(MODULE).o
-
 # Rules for makefile
 
 Makefile: Makefile.in $(TOPSRCDIR)/configure

@@ -21,4 +21,7 @@ wineclipsrv: wineclipsrv.c
 
 @MAKE_RULES@
 
+$(MODULE).o: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
+	$(LDCOMBINE) $(OBJS) -o $@
+
 ### Dependencies:

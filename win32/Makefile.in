@@ -20,4 +20,7 @@ all: $(MODULE).o
 
 @MAKE_RULES@
 
+$(MODULE).o: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
+	$(LDCOMBINE) $(OBJS) -o $@
+
 ### Dependencies:
