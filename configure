@@ -12203,7 +12203,7 @@ EXTRACFLAGS=""
 
 if test "x${GCC}" = "xyes"
 then
-  EXTRACFLAGS=-Wall
+  EXTRACFLAGS="-Wall -pipe"
 
     echo "$as_me:$LINENO: checking for gcc strength-reduce bug" >&5
 echo $ECHO_N "checking for gcc strength-reduce bug... $ECHO_C" >&6

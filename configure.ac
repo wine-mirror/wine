@@ -706,7 +706,7 @@ dnl **** Check for gcc specific options ****
 AC_SUBST(EXTRACFLAGS,"")
 if test "x${GCC}" = "xyes"
 then
-  EXTRACFLAGS=-Wall
+  EXTRACFLAGS="-Wall -pipe"
 
   dnl Check for strength-reduce bug
   AC_CACHE_CHECK( [for gcc strength-reduce bug], ac_cv_c_gcc_strength_bug,
