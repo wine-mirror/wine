@@ -299,11 +299,18 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
 
 static void RPCRT4_new_client(RpcConnection* conn)
 {
-  conn->thread = CreateThread(NULL, 0, RPCRT4_io_thread, conn, 0, NULL);
-  if (!conn->thread) {
+  HANDLE thread = CreateThread(NULL, 0, RPCRT4_io_thread, conn, 0, NULL);
+  if (!thread) {
     DWORD err = GetLastError();
     ERR("failed to create thread, error=%08lx\n", err);
+    RPCRT4_DestroyConnection(conn);
   }
+  /* we could set conn->thread, but then we'd have to make the io_thread wait
+   * for that, otherwise the thread might finish, destroy the connection, and
+   * free the memory we'd write to before we did, causing crashes and stuff -
+   * so let's implement that later, when we really need conn->thread */
+
+  CloseHandle( thread );
 }
 
 static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
@@ -329,7 +336,7 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
       }
       cps = cps->Next;
     }
-    /* make array of connings */
+    /* make array of connections */
     objs = HeapReAlloc(GetProcessHeap(), 0, objs, count*sizeof(HANDLE));
     objs[0] = m_event;
     count = 1;
