@@ -403,7 +403,9 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_SETTOGGLEKEYS);		/*     53 */
     WINE_SPI_FIXME(SPI_GETMOUSEKEYS);		/*     54 */
     WINE_SPI_FIXME(SPI_SETMOUSEKEYS);		/*     55 */
-    WINE_SPI_FIXME(SPI_GETSHOWSOUNDS);		/*     56 */
+    case SPI_GETSHOWSOUNDS:			/*     56 */
+      *(INT *)pvParam = GetSystemMetrics( SM_SHOWSOUNDS );
+      break;
     WINE_SPI_FIXME(SPI_SETSHOWSOUNDS);		/*     57 */
     WINE_SPI_FIXME(SPI_GETSTICKYKEYS);		/*     58 */
     WINE_SPI_FIXME(SPI_SETSTICKYKEYS);		/*     59 */
