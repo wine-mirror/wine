@@ -724,7 +724,7 @@ Main_IDirect3DDeviceImpl_7_GetInfo(LPDIRECT3DDEVICE7 iface,
                                    DWORD dwSize)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p/%p)->(%08lx,%p,%08lx): stub!\n", This, iface, dwDevInfoID, pDevInfoStruct, dwSize);
+    TRACE("(%p/%p)->(%08lx,%p,%08lx)\n", This, iface, dwDevInfoID, pDevInfoStruct, dwSize);
 
     if (TRACE_ON(ddraw)) {
         TRACE(" info requested : ");

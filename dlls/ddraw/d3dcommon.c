@@ -230,23 +230,20 @@ dump_D3DMATRIX(D3DMATRIX *mat)
 }
 
 
-DWORD get_flexible_vertex_size(DWORD d3dvtVertexType, DWORD *elements)
+DWORD get_flexible_vertex_size(DWORD d3dvtVertexType)
 {
     DWORD size = 0;
-    DWORD elts = 0;
     
-    if (d3dvtVertexType & D3DFVF_NORMAL) { size += 3 * sizeof(D3DVALUE); elts += 1; }
-    if (d3dvtVertexType & D3DFVF_DIFFUSE) { size += sizeof(DWORD); elts += 1; }
-    if (d3dvtVertexType & D3DFVF_SPECULAR) { size += sizeof(DWORD); elts += 1; }
+    if (d3dvtVertexType & D3DFVF_NORMAL) size += 3 * sizeof(D3DVALUE);
+    if (d3dvtVertexType & D3DFVF_DIFFUSE) size += sizeof(DWORD);
+    if (d3dvtVertexType & D3DFVF_SPECULAR) size += sizeof(DWORD);
+    if (d3dvtVertexType & D3DFVF_RESERVED1) size += sizeof(DWORD);
     switch (d3dvtVertexType & D3DFVF_POSITION_MASK) {
-        case D3DFVF_XYZ: size += 3 * sizeof(D3DVALUE); elts += 1; break;
-        case D3DFVF_XYZRHW: size += 4 * sizeof(D3DVALUE); elts += 1; break;
+        case D3DFVF_XYZ: size += 3 * sizeof(D3DVALUE); break;
+        case D3DFVF_XYZRHW: size += 4 * sizeof(D3DVALUE); break;
 	default: TRACE(" matrix weighting not handled yet...\n");
     }
     size += 2 * sizeof(D3DVALUE) * ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT);
-    elts += (d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
-
-    if (elements) *elements = elts;
 
     return size;
 }
@@ -289,4 +286,65 @@ void dump_flexible_vertex(DWORD d3dvtVertexType)
         DPRINTF(" T%d-s%ld", i + 1, (((d3dvtVertexType >> (16 + (2 * i))) + 1) & 0x03) + 1);
     }
     DPRINTF("\n");
+}
+
+void
+convert_FVF_to_strided_data(DWORD d3dvtVertexType, LPVOID lpvVertices, D3DDRAWPRIMITIVESTRIDEDDATA *strided)
+{
+    int current_offset = 0;
+    int tex_index;
+    
+    if ((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZ) {
+        strided->position.lpvData = lpvVertices;
+        current_offset += 3 * sizeof(D3DVALUE);
+    } else {
+        strided->position.lpvData  = lpvVertices;
+        current_offset += 4 * sizeof(D3DVALUE);
+    }
+    if (d3dvtVertexType & D3DFVF_RESERVED1) {
+        current_offset += sizeof(DWORD);
+    }
+    if (d3dvtVertexType & D3DFVF_NORMAL) { 
+        strided->normal.lpvData  = ((char *) lpvVertices) + current_offset;
+        current_offset += 3 * sizeof(D3DVALUE);
+    }
+    if (d3dvtVertexType & D3DFVF_DIFFUSE) { 
+        strided->diffuse.lpvData  = ((char *) lpvVertices) + current_offset;
+        current_offset += sizeof(DWORD);
+    }
+    if (d3dvtVertexType & D3DFVF_SPECULAR) {
+        strided->specular.lpvData  = ((char *) lpvVertices) + current_offset;
+        current_offset += sizeof(DWORD);
+    }
+    for (tex_index = 0; tex_index < ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); tex_index++) {
+        strided->textureCoords[tex_index].lpvData  = ((char *) lpvVertices) + current_offset;
+        current_offset += 2 * sizeof(D3DVALUE);
+    }
+    strided->position.dwStride = current_offset;
+    strided->normal.dwStride   = current_offset;
+    strided->diffuse.dwStride  = current_offset;
+    strided->specular.dwStride = current_offset;
+    for (tex_index = 0; tex_index < ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); tex_index++)
+        strided->textureCoords[tex_index].dwStride  = current_offset;   
+}
+
+void
+dump_D3DVOP(DWORD dwVertexOp)
+{
+    static const flag_info flags[] =
+    {
+        FE(D3DVOP_LIGHT),
+	FE(D3DVOP_CLIP),
+	FE(D3DVOP_EXTENTS),
+	FE(D3DVOP_TRANSFORM)
+    };
+    DDRAW_dump_flags(dwVertexOp, flags, sizeof(flags)/sizeof(flags[0]));
+}
+
+void
+dump_D3DPV(DWORD dwFlags)
+{
+    if (dwFlags == D3DPV_DONOTCOPYDATA) DPRINTF("D3DPV_DONOTCOPYDATA\n");
+    else if (dwFlags != 0) DPRINTF("Unknown !!!\n");
+    else DPRINTF("\n");
 }

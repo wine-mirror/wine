@@ -238,43 +238,34 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		        /* This time, there is lighting */
 		        glEnable(GL_LIGHTING);
 			
-			/* Use given matrixes */
-			glMatrixMode(GL_MODELVIEW);
-			glLoadIdentity(); /* The model transformation was done during the
-					     transformation phase */
-			glMatrixMode(GL_PROJECTION);
-			TRACE("  Projection Matrix : (%p)\n", lpDevice->proj_mat);
-			dump_D3DMATRIX(lpDevice->proj_mat);
-			TRACE("  View       Matrix : (%p)\n", lpDevice->view_mat);
-			dump_D3DMATRIX(lpDevice->view_mat);
+			if (TRACE_ON(ddraw)) {
+			    TRACE("  Projection Matrix : (%p)\n", lpDevice->proj_mat);
+			    dump_D3DMATRIX(lpDevice->proj_mat);
+			    TRACE("  View       Matrix : (%p)\n", lpDevice->view_mat);
+			    dump_D3DMATRIX(lpDevice->view_mat);
+			}
 
-			/* Although z axis is inverted between OpenGL and Direct3D, the z projected coordinates
-			   are always 0.0 at the front viewing volume and 1.0 at the back with Direct 3D and with
-			   the default behaviour of OpenGL. So, no additional transformation is required. */
-			glLoadMatrixf((float *) lpDevice->proj_mat);
-			glMultMatrixf((float *) lpDevice->view_mat);
+			/* Using the identity matrix as the world matrix as the world transformation was
+			   already done. */
+			lpDevice->set_matrices(lpDevice, VIEWMAT_CHANGED|WORLDMAT_CHANGED|PROJMAT_CHANGED,
+					       (D3DMATRIX *) id_mat, lpDevice->view_mat, lpDevice->proj_mat);
 			break;
 
 		    case D3DVT_LVERTEX:
 			/* No lighting */
 			glDisable(GL_LIGHTING);
 
-			/* Use given matrixes */
-			glMatrixMode(GL_MODELVIEW);
-			glLoadIdentity(); /* The model transformation was done during the
-					     transformation phase */
-			glMatrixMode(GL_PROJECTION);
-			
-			TRACE("  Projection Matrix : (%p)\n", lpDevice->proj_mat);
-			dump_D3DMATRIX(lpDevice->proj_mat);
-			TRACE("  View       Matrix : (%p)\n", lpDevice->view_mat);
-			dump_D3DMATRIX(lpDevice->view_mat);
-			
-			/* Although z axis is inverted between OpenGL and Direct3D, the z projected coordinates
-			   are always 0 at the front viewing volume and 1 at the back with Direct 3D and with
-			   the default behaviour of OpenGL. So, no additional transformation is required. */
-			glLoadMatrixf((float *) lpDevice->proj_mat);
-			glMultMatrixf((float *) lpDevice->view_mat);
+			if (TRACE_ON(ddraw)) {
+			    TRACE("  Projection Matrix : (%p)\n", lpDevice->proj_mat);
+			    dump_D3DMATRIX(lpDevice->proj_mat);
+			    TRACE("  View       Matrix : (%p)\n", lpDevice->view_mat);
+			    dump_D3DMATRIX(lpDevice->view_mat);
+			}
+
+			/* Using the identity matrix as the world matrix as the world transformation was
+			   already done. */
+			lpDevice->set_matrices(lpDevice, VIEWMAT_CHANGED|WORLDMAT_CHANGED|PROJMAT_CHANGED,
+					       (D3DMATRIX *) id_mat, lpDevice->view_mat, lpDevice->proj_mat);
 			break;
 
 		    case D3DVT_TLVERTEX: {

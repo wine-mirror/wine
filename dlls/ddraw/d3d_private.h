@@ -226,6 +226,8 @@ struct IDirect3DVertexBufferImpl
     D3DVERTEXBUFFERDESC desc;
     LPVOID *vertices;
     DWORD vertex_buffer_size;
+
+    BOOLEAN processed;
 };
 
 /* Various dump and helper functions */
@@ -237,6 +239,11 @@ extern void dump_DPFLAGS(DWORD dwFlags);
 extern void dump_D3DMATRIX(D3DMATRIX *mat);
 extern void dump_D3DVECTOR(D3DVECTOR *lpVec);
 extern void dump_flexible_vertex(DWORD d3dvtVertexType);
-extern DWORD get_flexible_vertex_size(DWORD d3dvtVertexType, DWORD *elements);
+extern DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
+extern void convert_FVF_to_strided_data(DWORD d3dvtVertexType, LPVOID lpvVertices, D3DDRAWPRIMITIVESTRIDEDDATA *strided);
+extern void dump_D3DVOP(DWORD dwVertexOp);
+extern void dump_D3DPV(DWORD dwFlags);
+
+extern const float id_mat[16];
 
 #endif /* __GRAPHICS_WINE_D3D_PRIVATE_H */

@@ -237,22 +237,40 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 	       RGB Textures
 	       ************ */
         if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 8) {
+	    if ((src_d->ddpfPixelFormat.u2.dwRBitMask == 0xE0) &&
+		(src_d->ddpfPixelFormat.u3.dwGBitMask == 0x1C) &&
+		(src_d->ddpfPixelFormat.u4.dwBBitMask == 0x03)) {
 	        /* **********************
 		   GL_UNSIGNED_BYTE_3_3_2
 		   ********************** */
-	    format = GL_RGB;
-	    pixel_format = GL_UNSIGNED_BYTE_3_3_2;
+	        format = GL_RGB;
+		pixel_format = GL_UNSIGNED_BYTE_3_3_2;
+	    } else {
+	        error = TRUE;
+	    }
 	} else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 16) {
-  	    if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000) {
+	    if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0xF800) &&
+		(src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x07E0) &&
+		(src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x001F) &&
+		(src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000)) {
 	        format = GL_RGB;
 		pixel_format = GL_UNSIGNED_SHORT_5_6_5;
-	    } else if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000001) {
+	    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0xF800) &&
+		       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x07C0) &&
+		       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x003E) &&
+		       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0001)) {
 	        format = GL_RGBA;
 		pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
-	    } else if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000000F) {
+	    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0xF000) &&
+		       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x0F00) &&
+		       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x00F0) &&
+		       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x000F)) {
 	        format = GL_RGBA;
 		pixel_format = GL_UNSIGNED_SHORT_4_4_4_4;	      
-	    } else if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000F000) {
+	    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x0F00) &&
+		       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x00F0) &&
+		       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000F) &&
+		       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0xF000)) {
 	        /* Move the four Alpha bits... */
 		DWORD i;
 		WORD *src = (WORD *) src_d->lpSurface, *dst;
@@ -268,7 +286,10 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 
 	        format = GL_RGBA;
 		pixel_format = GL_UNSIGNED_SHORT_4_4_4_4; 		
-	    } else if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00008000) {
+	    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x7C00) &&
+		       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x03E0) &&
+		       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x001F) &&
+		       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x8000)) {
 	        /* Converting the 1555 format in 5551 packed */
 		DWORD i;
 		WORD *src = (WORD *) src_d->lpSurface, *dst;
@@ -284,21 +305,47 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 	        format = GL_RGBA;
 		pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
 	    } else {
-	        ERR("Unhandled texture format (bad Aplha channel for a 16 bit texture)\n");
 		error = TRUE;
 	    }
 	} else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 24) {
-	    format = GL_RGB;
-	    pixel_format = GL_UNSIGNED_BYTE;
+	    if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x00FF0000) &&
+		(src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x0000FF00) &&
+		(src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000000FF) &&
+		(src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000)) {
+	        format = GL_BGR;
+		pixel_format = GL_UNSIGNED_BYTE;
+	    } else {
+	        error = TRUE;
+	    }
 	} else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 32) {
-	    format = GL_RGBA;
-	    pixel_format = GL_UNSIGNED_BYTE;
+	    if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0xFF000000) &&
+		(src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x00FF0000) &&
+		(src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x0000FF00) &&
+		(src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x000000FF)) {
+	        format = GL_RGBA;
+		pixel_format = GL_UNSIGNED_INT_8_8_8_8;
+	    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x00FF0000) &&
+		       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x0000FF00) &&
+		       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000000FF) &&
+		       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000)) {
+	        /* Just add an alpha component... */
+		DWORD i;
+		DWORD *src = (DWORD *) src_d->lpSurface, *dst;
+		
+		surface = (DWORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+		dst = (DWORD *) surface;
+		for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		    *dst++ = (*src++ << 8) | 0xFF;
+		}
+	        format = GL_RGBA;
+		pixel_format = GL_UNSIGNED_INT_8_8_8_8;
+	    } else {
+		error = TRUE;
+	    }
 	} else {
-	    ERR("Unhandled texture format (bad RGB count)\n");
 	    error = TRUE;
 	}
     } else {
-        ERR("Unhandled texture format (neither RGB nor INDEX)\n");
 	error = TRUE;
     } 
 
@@ -321,6 +368,11 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 			    pixel_format,
 			    surface == NULL ? src_d->lpSurface : surface);
 	if (surface) HeapFree(GetProcessHeap(), 0, surface);
+    } else if (error == TRUE) {
+	if (ERR_ON(ddraw)) {
+	    ERR("Unsupported pixel format for textures : \n");
+	    DDRAW_dump_pixelformat(&src_d->ddpfPixelFormat);
+	}
     }
 
     glBindTexture(GL_TEXTURE_2D, current_texture);

@@ -137,6 +137,15 @@ typedef struct IDirect3DDeviceGLImpl
     Drawable drawable;
 } IDirect3DDeviceGLImpl;
 
+/* This is for the OpenGL additions... */
+typedef struct {
+    struct IDirect3DVertexBufferImpl parent;
+
+    DWORD dwVertexTypeDesc;
+    D3DMATRIX world_mat, view_mat, proj_mat;
+    LPVOID vertices;
+} IDirect3DVertexBufferGLImpl;
+
 /* All non-static functions 'exported' by various sub-objects */
 extern HRESULT direct3d_create(IDirect3DImpl **obj, IDirectDrawImpl *ddraw);
 extern HRESULT d3dtexture_create(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOLEAN at_creation, IDirectDrawSurfaceImpl *main_surf);
