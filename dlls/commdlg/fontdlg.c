@@ -1129,7 +1129,6 @@ INT_PTR CALLBACK FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
         LPARAM lParam)
 {
     LPCHOOSEFONTW lpcf32w;
-    LPCHOOSEFONTA lpcf32a;
     INT_PTR res = FALSE;
     if (uMsg!=WM_INITDIALOG)
     {
@@ -1144,8 +1143,7 @@ INT_PTR CALLBACK FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
     else
     {
         lpcf32w=(LPCHOOSEFONTW)lParam;
-        lpcf32a=(LPCHOOSEFONTA)lpcf32w->lpTemplateName;
-        if (!CFn_WMInitDialog(hDlg, wParam, lParam, lpcf32a))
+        if (!CFn_WMInitDialog(hDlg, wParam, lParam, (LPCHOOSEFONTA)lpcf32w))
         {
             TRACE("CFn_WMInitDialog returned FALSE\n");
             return FALSE;
@@ -1153,7 +1151,6 @@ INT_PTR CALLBACK FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
         if (CFn_HookCallChk32((LPCHOOSEFONTA)lpcf32w))
             return CallWindowProcW((WNDPROC)lpcf32w->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
     }
-    lpcf32a=(LPCHOOSEFONTA)lpcf32w->lpTemplateName;
     switch (uMsg)
     {
     case WM_MEASUREITEM:
@@ -1161,7 +1158,7 @@ INT_PTR CALLBACK FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
     case WM_DRAWITEM:
         return CFn_WMDrawItem(hDlg, wParam, lParam);
     case WM_COMMAND:
-        return CFn_WMCommand(hDlg, wParam, lParam, lpcf32a);
+        return CFn_WMCommand(hDlg, wParam, lParam, (LPCHOOSEFONTW)lpcf32w);
     case WM_DESTROY:
         return CFn_WMDestroy(hDlg, wParam, lParam);
     case WM_CHOOSEFONT_GETLOGFONT:
