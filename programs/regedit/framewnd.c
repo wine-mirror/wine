@@ -518,6 +518,20 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case ID_HELP_ABOUT:
         ShowAboutBox(hWnd);
         break;
+    case ID_VIEW_SPLIT: {
+        RECT rt;
+        POINT pt, pts;
+        GetClientRect(g_pChildWnd->hWnd, &rt);
+        pt.x = rt.left + g_pChildWnd->nSplitPos;
+        pt.y = (rt.bottom / 2);
+        pts = pt;
+        if(ClientToScreen(g_pChildWnd->hWnd, &pts)) {
+            SetCursorPos(pts.x, pts.y);
+            SetCursor(LoadCursor(0, IDC_SIZEWE));
+            SendMessage(g_pChildWnd->hWnd, WM_LBUTTONDOWN, 0, MAKELPARAM(pt.x, pt.y));
+        }
+        return TRUE;
+    }
     default:
         result = FALSE;
     }
