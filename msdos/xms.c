@@ -53,10 +53,11 @@ void WINAPI XMS_Handler( CONTEXT *context )
         TRACE(int31, "query free extended memory\n");
 	mmi.dwSize = sizeof(mmi);
 	MemManInfo(&mmi);
-	AX_reg(context) = mmi.dwFreePages>>10;
-	DX_reg(context) = mmi.dwLargestFreeBlock>>10;
-        break;
+        AX_reg(context) = mmi.dwLargestFreeBlock >> 10;
+	    DX_reg(context) = (mmi.dwFreePages * VIRTUAL_GetPageSize()) >> 10;
+        TRACE(int31, "returning largest %dK, total %dK\n", AX_reg(context), DX_reg(context));
     }
+    break;
     case 0x09:   /* Allocate Extended Memory Block */
         TRACE(int31, "allocate extended memory block (%dK)\n",
             DX_reg(context));
