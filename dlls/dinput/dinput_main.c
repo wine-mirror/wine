@@ -259,7 +259,7 @@ static ICOM_VTABLE(IDirectInputA) ddiavt =
 };
 
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)	(typeof(ddi7avt.fn##fun))
+# define XCAST(fun)	(typeof(ddi7avt.fun))
 #else
 # define XCAST(fun)	(void*)
 #endif

@@ -1737,7 +1737,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_WaitForConnectionSettings
 
 /* Note: Hack so we can reuse the old functions without compiler warnings */
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlayLobbyAVT.fn##fun))
+# define XCAST(fun)     (typeof(directPlayLobbyAVT.fun))
 #else
 # define XCAST(fun)     (void*)
 #endif
@@ -1769,7 +1769,7 @@ static struct ICOM_VTABLE(IDirectPlayLobby) directPlayLobbyAVT =
 
 /* Note: Hack so we can reuse the old functions without compiler warnings */
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlayLobbyWVT.fn##fun))
+# define XCAST(fun)     (typeof(directPlayLobbyWVT.fun))
 #else
 # define XCAST(fun)     (void*)
 #endif
@@ -1799,7 +1799,7 @@ static ICOM_VTABLE(IDirectPlayLobby) directPlayLobbyWVT =
 
 /* Note: Hack so we can reuse the old functions without compiler warnings */
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlayLobby2AVT.fn##fun))
+# define XCAST(fun)     (typeof(directPlayLobby2AVT.fun))
 #else
 # define XCAST(fun)     (void*)
 #endif
@@ -1831,7 +1831,7 @@ static ICOM_VTABLE(IDirectPlayLobby2) directPlayLobby2AVT =
 
 /* Note: Hack so we can reuse the old functions without compiler warnings */
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlayLobby2AVT.fn##fun))
+# define XCAST(fun)     (typeof(directPlayLobby2AVT.fun))
 #else
 # define XCAST(fun)     (void*)
 #endif
@@ -1865,7 +1865,7 @@ static ICOM_VTABLE(IDirectPlayLobby2) directPlayLobby2WVT =
 
 /* Note: Hack so we can reuse the old functions without compiler warnings */
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlayLobby3AVT.fn##fun))
+# define XCAST(fun)     (typeof(directPlayLobby3AVT.fun))
 #else
 # define XCAST(fun)     (void*)
 #endif
@@ -1902,7 +1902,7 @@ static ICOM_VTABLE(IDirectPlayLobby3) directPlayLobby3AVT =
 
 /* Note: Hack so we can reuse the old functions without compiler warnings */
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlayLobby3WVT.fn##fun))
+# define XCAST(fun)     (typeof(directPlayLobby3WVT.fun))
 #else
 # define XCAST(fun)     (void*)
 #endif

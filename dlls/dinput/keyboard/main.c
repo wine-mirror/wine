@@ -266,7 +266,7 @@ static ICOM_VTABLE(IDirectInputDevice2A) SysKeyboardAvt =
 };
 
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)	(typeof(SysKeyboard7Avt.fn##fun))
+# define XCAST(fun)	(typeof(SysKeyboard7Avt.fun))
 #else
 # define XCAST(fun)	(void*)
 #endif

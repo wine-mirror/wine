@@ -166,29 +166,29 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
  *        IDirect3DVtbl* lpVtbl;
  *    };
  *    struct IDirect3DVtbl {
- *        HRESULT (*fnQueryInterface)(IDirect3D* me, REFIID riid, LPVOID* ppvObj);
- *        ULONG (*fnQueryInterface)(IDirect3D* me);
- *        ULONG (*fnQueryInterface)(IDirect3D* me);
- *        HRESULT (*fnInitialize)(IDirect3D* me, REFIID a);
- *        HRESULT (*fnEnumDevices)(IDirect3D* me, LPD3DENUMDEVICESCALLBACK a, LPVOID b);
- *        HRESULT (*fnCreateLight)(IDirect3D* me, LPDIRECT3DLIGHT* a, IUnknown* b);
- *        HRESULT (*fnCreateMaterial)(IDirect3D* me, LPDIRECT3DMATERIAL* a, IUnknown* b);
- *        HRESULT (*fnCreateViewport)(IDirect3D* me, LPDIRECT3DVIEWPORT* a, IUnknown* b);
- *        HRESULT (*fnFindDevice)(IDirect3D* me, LPD3DFINDDEVICESEARCH a, LPD3DFINDDEVICERESULT b);
+ *        HRESULT (*QueryInterface)(IDirect3D* me, REFIID riid, LPVOID* ppvObj);
+ *        ULONG (*QueryInterface)(IDirect3D* me);
+ *        ULONG (*QueryInterface)(IDirect3D* me);
+ *        HRESULT (*Initialize)(IDirect3D* me, REFIID a);
+ *        HRESULT (*EnumDevices)(IDirect3D* me, LPD3DENUMDEVICESCALLBACK a, LPVOID b);
+ *        HRESULT (*CreateLight)(IDirect3D* me, LPDIRECT3DLIGHT* a, IUnknown* b);
+ *        HRESULT (*CreateMaterial)(IDirect3D* me, LPDIRECT3DMATERIAL* a, IUnknown* b);
+ *        HRESULT (*CreateViewport)(IDirect3D* me, LPDIRECT3DVIEWPORT* a, IUnknown* b);
+ *        HRESULT (*FindDevice)(IDirect3D* me, LPD3DFINDDEVICESEARCH a, LPD3DFINDDEVICERESULT b);
  *    }; 
  *
  *    #ifdef ICOM_CINTERFACE
  *    // *** IUnknown methods *** //
- *    #define IDirect3D_QueryInterface(p,a,b) (p)->lpVtbl->fnQueryInterface(p,a,b)
- *    #define IDirect3D_AddRef(p)             (p)->lpVtbl->fnAddRef(p)
- *    #define IDirect3D_Release(p)            (p)->lpVtbl->fnRelease(p)
+ *    #define IDirect3D_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+ *    #define IDirect3D_AddRef(p)             (p)->lpVtbl->AddRef(p)
+ *    #define IDirect3D_Release(p)            (p)->lpVtbl->Release(p)
  *    // *** IDirect3D methods *** //
- *    #define IDirect3D_Initialize(p,a)       (p)->lpVtbl->fnInitialize(p,a)
- *    #define IDirect3D_EnumDevices(p,a,b)    (p)->lpVtbl->fnEnumDevice(p,a,b)
- *    #define IDirect3D_CreateLight(p,a,b)    (p)->lpVtbl->fnCreateLight(p,a,b)
- *    #define IDirect3D_CreateMaterial(p,a,b) (p)->lpVtbl->fnCreateMaterial(p,a,b)
- *    #define IDirect3D_CreateViewport(p,a,b) (p)->lpVtbl->fnCreateViewport(p,a,b)
- *    #define IDirect3D_FindDevice(p,a,b)     (p)->lpVtbl->fnFindDevice(p,a,b)
+ *    #define IDirect3D_Initialize(p,a)       (p)->lpVtbl->Initialize(p,a)
+ *    #define IDirect3D_EnumDevices(p,a,b)    (p)->lpVtbl->EnumDevice(p,a,b)
+ *    #define IDirect3D_CreateLight(p,a,b)    (p)->lpVtbl->CreateLight(p,a,b)
+ *    #define IDirect3D_CreateMaterial(p,a,b) (p)->lpVtbl->CreateMaterial(p,a,b)
+ *    #define IDirect3D_CreateViewport(p,a,b) (p)->lpVtbl->CreateViewport(p,a,b)
+ *    #define IDirect3D_FindDevice(p,a,b)     (p)->lpVtbl->FindDevice(p,a,b)
  *    #endif
  *
  * Comments:
@@ -212,23 +212,23 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
  * And in C++ (with gcc's g++):
  *
  *    typedef struct IDirect3D: public IUnknown {
- *        private: HRESULT (*fnInitialize)(IDirect3D* me, REFIID a);
- *        public: inline HRESULT Initialize(REFIID a) { return ((IDirect3D*)t.lpVtbl)->fnInitialize(this,a); };
- *        private: HRESULT (*fnEnumDevices)(IDirect3D* me, LPD3DENUMDEVICESCALLBACK a, LPVOID b);
+ *        private: HRESULT (*Initialize)(IDirect3D* me, REFIID a);
+ *        public: inline HRESULT Initialize(REFIID a) { return ((IDirect3D*)t.lpVtbl)->Initialize(this,a); };
+ *        private: HRESULT (*EnumDevices)(IDirect3D* me, LPD3DENUMDEVICESCALLBACK a, LPVOID b);
  *        public: inline HRESULT EnumDevices(LPD3DENUMDEVICESCALLBACK a, LPVOID b)
- *            { return ((IDirect3D*)t.lpVtbl)->fnEnumDevices(this,a,b); };
- *        private: HRESULT (*fnCreateLight)(IDirect3D* me, LPDIRECT3DLIGHT* a, IUnknown* b);
+ *            { return ((IDirect3D*)t.lpVtbl)->EnumDevices(this,a,b); };
+ *        private: HRESULT (*freateLight)(IDirect3D* me, LPDIRECT3DLIGHT* a, IUnknown* b);
  *        public: inline HRESULT CreateLight(LPDIRECT3DLIGHT* a, IUnknown* b)
- *            { return ((IDirect3D*)t.lpVtbl)->fnCreateLight(this,a,b); };
- *        private: HRESULT (*fnCreateMaterial)(IDirect3D* me, LPDIRECT3DMATERIAL* a, IUnknown* b);
+ *            { return ((IDirect3D*)t.lpVtbl)->CreateLight(this,a,b); };
+ *        private: HRESULT (*CreateMaterial)(IDirect3D* me, LPDIRECT3DMATERIAL* a, IUnknown* b);
  *        public: inline HRESULT CreateMaterial(LPDIRECT3DMATERIAL* a, IUnknown* b)
- *            { return ((IDirect3D*)t.lpVtbl)->fnCreateMaterial(this,a,b); };
- *        private: HRESULT (*fnCreateViewport)(IDirect3D* me, LPDIRECT3DVIEWPORT* a, IUnknown* b);
+ *            { return ((IDirect3D*)t.lpVtbl)->CreateMaterial(this,a,b); };
+ *        private: HRESULT (*CreateViewport)(IDirect3D* me, LPDIRECT3DVIEWPORT* a, IUnknown* b);
  *        public: inline HRESULT CreateViewport(LPDIRECT3DVIEWPORT* a, IUnknown* b)
- *            { return ((IDirect3D*)t.lpVtbl)->fnCreateViewport(this,a,b); };
- *        private:  HRESULT (*fnFindDevice)(IDirect3D* me, LPD3DFINDDEVICESEARCH a, LPD3DFINDDEVICERESULT b);
+ *            { return ((IDirect3D*)t.lpVtbl)->CreateViewport(this,a,b); };
+ *        private:  HRESULT (*FindDevice)(IDirect3D* me, LPD3DFINDDEVICESEARCH a, LPD3DFINDDEVICERESULT b);
  *        public: inline HRESULT FindDevice(LPD3DFINDDEVICESEARCH a, LPD3DFINDDEVICERESULT b)
- *            { return ((IDirect3D*)t.lpVtbl)->fnFindDevice(this,a,b); };
+ *            { return ((IDirect3D*)t.lpVtbl)->FindDevice(this,a,b); };
  *    }; 
  *
  * Comments:
@@ -238,7 +238,7 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
  *    class. Here one macro can generate both. This means though that the first pointer, t.lpVtbl 
  *    defined in IUnknown,  must be interpreted as the jump table pointer if we interpret the 
  *    structure as the the interface class, and as the function pointer to the QueryInterface 
- *    method, t.fnQueryInterface, if we interpret the structure as the jump table. Fortunately this 
+ *    method, t.QueryInterface, if we interpret the structure as the jump table. Fortunately this 
  *    gymnastic is entirely taken care of in the header of IUnknown.
  *  - Of course in C++ we use inheritance so that we don't have to duplicate the method definitions. 
  *  - Since IDirect3D does double duty, each ICOM_METHOD macro defines both a function pointer and 
@@ -271,7 +271,7 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
  *
  *    // implement the IDirect3D methods here
  *
- *    int IDirect3D_fnQueryInterface(IDirect3D* me)
+ *    int IDirect3D_QueryInterface(IDirect3D* me)
  *    {
  *        ICOM_THIS(IDirect3D,me);
  *        // ...
@@ -281,11 +281,11 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
  *
  *    static ICOM_VTABLE(IDirect3D) d3dvt = {
  *        ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
- *        IDirect3D_fnQueryInterface,
- *        IDirect3D_fnAdd,
- *        IDirect3D_fnAdd2,
- *        IDirect3D_fnInitialize,
- *        IDirect3D_fnSetWidth
+ *        IDirect3D_QueryInterface,
+ *        IDirect3D_Add,
+ *        IDirect3D_Add2,
+ *        IDirect3D_Initialize,
+ *        IDirect3D_SetWidth
  *    };
  *
  * Comments:
@@ -376,67 +376,60 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
 
 #endif /* ICOM_USE_COM_INTERFACE_ATTRIBUTE */
 
-#define ICOM_FN(xfn)             xfn
 #define ICOM_VTBL(iface)         (iface)
 
 #else
 /* C interface */
 
-#ifdef __WINE__
-#define ICOM_FN(xfn)             fn##xfn
-#else
-#define ICOM_FN(xfn)             xfn
-#endif
-
 #define ICOM_METHOD(ret,xfn) \
-    ret CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me);
+    ret CALLBACK (*xfn)(ICOM_INTERFACE* me);
 #define ICOM_METHOD1(ret,xfn,ta,na) \
-    ret CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a);
+    ret CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a);
 #define ICOM_METHOD2(ret,xfn,ta,na,tb,nb) \
-    ret CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b);
+    ret CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b);
 #define ICOM_METHOD3(ret,xfn,ta,na,tb,nb,tc,nc) \
-    ret CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b,tc c);
+    ret CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c);
 #define ICOM_METHOD4(ret,xfn,ta,na,tb,nb,tc,nc,td,nd) \
-    ret CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b,tc c,td d);
+    ret CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d);
 #define ICOM_METHOD5(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne) \
-    ret CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e);
+    ret CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e);
 #define ICOM_METHOD6(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf) \
-    ret CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f);
+    ret CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f);
 #define ICOM_METHOD7(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng) \
-    ret CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g);
+    ret CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g);
 #define ICOM_METHOD8(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh) \
-    ret CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h);
+    ret CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h);
 #define ICOM_METHOD9(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni) \
-    ret CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i);
+    ret CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i);
 #define ICOM_METHOD10(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj) \
-    ret CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j);
+    ret CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j);
 #define ICOM_METHOD11(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk) \
-    ret CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k);
+    ret CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k);
 
 #define ICOM_VMETHOD(xfn) \
-    void CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me);
+    void CALLBACK (*xfn)(ICOM_INTERFACE* me);
 #define ICOM_VMETHOD1(xfn,ta,na) \
-    void CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a);
+    void CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a);
 #define ICOM_VMETHOD2(xfn,ta,na,tb,nb) \
-    void CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b);
+    void CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b);
 #define ICOM_VMETHOD3(xfn,ta,na,tb,nb,tc,nc) \
-    void CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b,tc c);
+    void CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c);
 #define ICOM_VMETHOD4(xfn,ta,na,tb,nb,tc,nc,td,nd) \
-    void CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b,tc c,td d);
+    void CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d);
 #define ICOM_VMETHOD5(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne) \
-    void CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e);
+    void CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e);
 #define ICOM_VMETHOD6(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf) \
-    void CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f);
+    void CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f);
 #define ICOM_VMETHOD7(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng) \
-    void CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g);
+    void CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g);
 #define ICOM_VMETHOD8(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,nh) \
-    void CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h);
+    void CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h);
 #define ICOM_VMETHOD9(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ni) \
-    void CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i);
+    void CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i);
 #define ICOM_VMETHOD10(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,nj) \
-    void CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j);
+    void CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j);
 #define ICOM_VMETHOD11(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,nk) \
-    void CALLBACK (*ICOM_FN(##xfn))(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k);
+    void CALLBACK (*xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k);
 
 
 #define ICOM_VTABLE(iface)       iface##Vtbl
@@ -476,18 +469,18 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
 
 #endif /*ICOM_CINTERFACE  */
 
-#define ICOM_CALL(xfn, p)                         ICOM_VTBL(p)->ICOM_FN(##xfn)(p)
-#define ICOM_CALL1(xfn, p,a)                      ICOM_VTBL(p)->ICOM_FN(##xfn)(p,a)
-#define ICOM_CALL2(xfn, p,a,b)                    ICOM_VTBL(p)->ICOM_FN(##xfn)(p,a,b)
-#define ICOM_CALL3(xfn, p,a,b,c)                  ICOM_VTBL(p)->ICOM_FN(##xfn)(p,a,b,c)
-#define ICOM_CALL4(xfn, p,a,b,c,d)                ICOM_VTBL(p)->ICOM_FN(##xfn)(p,a,b,c,d)
-#define ICOM_CALL5(xfn, p,a,b,c,d,e)              ICOM_VTBL(p)->ICOM_FN(##xfn)(p,a,b,c,d,e)
-#define ICOM_CALL6(xfn, p,a,b,c,d,e,f)            ICOM_VTBL(p)->ICOM_FN(##xfn)(p,a,b,c,d,e,f)
-#define ICOM_CALL7(xfn, p,a,b,c,d,e,f,g)          ICOM_VTBL(p)->ICOM_FN(##xfn)(p,a,b,c,d,e,f,g)
-#define ICOM_CALL8(xfn, p,a,b,c,d,e,f,g,h)        ICOM_VTBL(p)->ICOM_FN(##xfn)(p,a,b,c,d,e,f,g,h)
-#define ICOM_CALL9(xfn, p,a,b,c,d,e,f,g,h,i)      ICOM_VTBL(p)->ICOM_FN(##xfn)(p,a,b,c,d,e,f,g,h,i)
-#define ICOM_CALL10(xfn, p,a,b,c,d,e,f,g,h,i,j)   ICOM_VTBL(p)->ICOM_FN(##xfn)(p,a,b,c,d,e,f,g,h,i,j)
-#define ICOM_CALL11(xfn, p,a,b,c,d,e,f,g,h,i,j,k) ICOM_VTBL(p)->ICOM_FN(##xfn)(p,a,b,c,d,e,f,g,h,i,j,k)
+#define ICOM_CALL(xfn, p)                         ICOM_VTBL(p)->xfn(p)
+#define ICOM_CALL1(xfn, p,a)                      ICOM_VTBL(p)->xfn(p,a)
+#define ICOM_CALL2(xfn, p,a,b)                    ICOM_VTBL(p)->xfn(p,a,b)
+#define ICOM_CALL3(xfn, p,a,b,c)                  ICOM_VTBL(p)->xfn(p,a,b,c)
+#define ICOM_CALL4(xfn, p,a,b,c,d)                ICOM_VTBL(p)->xfn(p,a,b,c,d)
+#define ICOM_CALL5(xfn, p,a,b,c,d,e)              ICOM_VTBL(p)->xfn(p,a,b,c,d,e)
+#define ICOM_CALL6(xfn, p,a,b,c,d,e,f)            ICOM_VTBL(p)->xfn(p,a,b,c,d,e,f)
+#define ICOM_CALL7(xfn, p,a,b,c,d,e,f,g)          ICOM_VTBL(p)->xfn(p,a,b,c,d,e,f,g)
+#define ICOM_CALL8(xfn, p,a,b,c,d,e,f,g,h)        ICOM_VTBL(p)->xfn(p,a,b,c,d,e,f,g,h)
+#define ICOM_CALL9(xfn, p,a,b,c,d,e,f,g,h,i)      ICOM_VTBL(p)->xfn(p,a,b,c,d,e,f,g,h,i)
+#define ICOM_CALL10(xfn, p,a,b,c,d,e,f,g,h,i,j)   ICOM_VTBL(p)->xfn(p,a,b,c,d,e,f,g,h,i,j)
+#define ICOM_CALL11(xfn, p,a,b,c,d,e,f,g,h,i,j,k) ICOM_VTBL(p)->xfn(p,a,b,c,d,e,f,g,h,i,j,k)
 
 
 /*****************************************************************************

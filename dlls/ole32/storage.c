@@ -1097,11 +1097,11 @@ HRESULT WINAPI IStream16_fnWrite(
 static void _create_istream16(LPSTREAM16 *str) {
 	IStream16Impl*	lpst;
 
-	if (!strvt16.fnQueryInterface) {
+	if (!strvt16.QueryInterface) {
 		HMODULE16	wp = GetModuleHandle16("STORAGE");
 		if (wp>=32) {
 		  /* FIXME: what is This GetProcAddress16. Should the name be IStream16_QueryInterface of IStream16_fnQueryInterface */
-#define VTENT(xfn)  strvt16.fn##xfn = (void*)GetProcAddress16(wp,"IStream16_"#xfn);assert(strvt16.fn##xfn)
+#define VTENT(xfn)  strvt16.xfn = (void*)GetProcAddress16(wp,"IStream16_"#xfn);assert(strvt16.xfn)
 			VTENT(QueryInterface);
 			VTENT(AddRef);
 			VTENT(Release);
@@ -1121,7 +1121,7 @@ static void _create_istream16(LPSTREAM16 *str) {
 			memcpy(segstrvt16,&strvt16,sizeof(strvt16));
 			segstrvt16 = (ICOM_VTABLE(IStream16)*)SEGPTR_GET(segstrvt16);
 		} else {
-#define VTENT(xfn) strvt16.fn##xfn = IStream16_fn##xfn;
+#define VTENT(xfn) strvt16.xfn = IStream16_fn##xfn;
 			VTENT(QueryInterface);
 			VTENT(AddRef);
 			VTENT(Release);
@@ -1497,10 +1497,10 @@ HRESULT WINAPI IStorage16_fnOpenStream(
 static void _create_istorage16(LPSTORAGE16 *stg) {
 	IStorage16Impl*	lpst;
 
-	if (!stvt16.fnQueryInterface) {
+	if (!stvt16.QueryInterface) {
 		HMODULE16	wp = GetModuleHandle16("STORAGE");
 		if (wp>=32) {
-#define VTENT(xfn)  stvt16.fn##xfn = (void*)GetProcAddress16(wp,"IStorage16_"#xfn);
+#define VTENT(xfn)  stvt16.xfn = (void*)GetProcAddress16(wp,"IStorage16_"#xfn);
 			VTENT(QueryInterface)
 			VTENT(AddRef)
 			VTENT(Release)
@@ -1524,7 +1524,7 @@ static void _create_istorage16(LPSTORAGE16 *stg) {
 			memcpy(segstvt16,&stvt16,sizeof(stvt16));
 			segstvt16 = (ICOM_VTABLE(IStorage16)*)SEGPTR_GET(segstvt16);
 		} else {
-#define VTENT(xfn) stvt16.fn##xfn = IStorage16_fn##xfn;
+#define VTENT(xfn) stvt16.xfn = IStorage16_fn##xfn;
 			VTENT(QueryInterface)
 			VTENT(AddRef)
 			VTENT(Release)

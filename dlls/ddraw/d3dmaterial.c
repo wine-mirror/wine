@@ -217,7 +217,7 @@ static HRESULT WINAPI IDirect3DMaterialImpl_Initialize(LPDIRECT3DMATERIAL iface,
  *				IDirect3DMaterial VTable
  */
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)	(typeof(material_vtable.fn##fun))
+# define XCAST(fun)	(typeof(material_vtable.fun))
 #else
 # define XCAST(fun)	(void*)
 #endif

@@ -201,7 +201,7 @@ IMalloc16_Constructor() {
         if (!msegvt16) {
             msegvt16 = SEGPTR_NEW(ICOM_VTABLE(IMalloc16));
 
-#define VTENT(x) msegvt16->fn##x = (void*)GetProcAddress16(hcomp,"IMalloc16_"#x);assert(msegvt16->fn##x)
+#define VTENT(x) msegvt16->x = (void*)GetProcAddress16(hcomp,"IMalloc16_"#x);assert(msegvt16->x)
             VTENT(QueryInterface);
             VTENT(AddRef);
             VTENT(Release);
@@ -360,7 +360,7 @@ BOOL WINAPI IsValidInterface(
 	return !(
 		IsBadReadPtr(punk,4)					||
 		IsBadReadPtr(ICOM_VTBL(punk),4)				||
-		IsBadReadPtr(ICOM_VTBL(punk)->fnQueryInterface,9)	||
-		IsBadCodePtr(ICOM_VTBL(punk)->fnQueryInterface)
+		IsBadReadPtr(ICOM_VTBL(punk)->QueryInterface,9)	||
+		IsBadCodePtr((FARPROC)ICOM_VTBL(punk)->QueryInterface)
 	);
 }

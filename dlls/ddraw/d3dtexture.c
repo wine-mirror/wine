@@ -611,7 +611,7 @@ ICOM_VTABLE(IDirect3DTexture2) mesa_texture2_vtable =
  *				IDirect3DTexture VTable
  */
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)	(typeof(mesa_texture_vtable.fn##fun))
+# define XCAST(fun)	(typeof(mesa_texture_vtable.fun))
 #else
 # define XCAST(fun)	(void*)
 #endif

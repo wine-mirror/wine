@@ -598,7 +598,7 @@ HRESULT WINAPI StringFromCLSID16(
     if (!K32WOWCallback16Ex(
     	(DWORD)((ICOM_VTABLE(IMalloc16)*)MapSL(
             (SEGPTR)ICOM_VTBL(((LPMALLOC16)MapSL((SEGPTR)mllc))))
-	)->fnAlloc,
+	)->Alloc,
 	WCB16_CDECL,
 	2*sizeof(DWORD),
 	(LPVOID)args,

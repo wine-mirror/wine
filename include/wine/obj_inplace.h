@@ -409,6 +409,10 @@ ICOM_DEFINE(IOleContainer,IParseDisplayName)
 /*****************************************************************************
  * IOleItemContainer interface
  */
+#ifdef __WINE__
+#undef GetObject
+#endif
+
 #define ICOM_INTERFACE IOleItemContainer
 #define IOleItemContainer_METHODS \
 	ICOM_METHOD5(HRESULT,GetObject, LPOLESTR,pszItem, DWORD,dwSpeedNeeded, IBindCtx*,pbc, REFIID,riid, void**,ppvObject) \

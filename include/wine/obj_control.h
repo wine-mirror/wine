@@ -408,6 +408,10 @@ ICOM_DEFINE(IViewObjectEx,IViewObject2)
 /*****************************************************************************
  * IProvideClassInfo interface
  */
+#ifdef __WINE__
+#undef GetClassInfo
+#endif
+
 #define ICOM_INTERFACE IProvideClassInfo
 #define IProvideClassInfo_METHODS \
 	ICOM_METHOD1(HRESULT,GetClassInfo, ITypeInfo**,ppTI) 

@@ -4540,7 +4540,7 @@ static HRESULT WINAPI DirectPlay4WImpl_CancelPriority
 
 /* Note: Hack so we can reuse the old functions without compiler warnings */
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlay2WVT.fn##fun))
+# define XCAST(fun)     (typeof(directPlay2WVT.fun))
 #else
 # define XCAST(fun)     (void*)
 #endif
@@ -4586,7 +4586,7 @@ static ICOM_VTABLE(IDirectPlay2) directPlay2WVT =
 
 /* Note: Hack so we can reuse the old functions without compiler warnings */
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlay2AVT.fn##fun))
+# define XCAST(fun)     (typeof(directPlay2AVT.fun))
 #else
 # define XCAST(fun)     (void*)
 #endif
@@ -4633,7 +4633,7 @@ static ICOM_VTABLE(IDirectPlay2) directPlay2AVT =
 
 /* Note: Hack so we can reuse the old functions without compiler warnings */
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlay3AVT.fn##fun))
+# define XCAST(fun)     (typeof(directPlay3AVT.fun))
 #else
 # define XCAST(fun)     (void*)
 #endif
@@ -4695,7 +4695,7 @@ static ICOM_VTABLE(IDirectPlay3) directPlay3AVT =
 
 /* Note: Hack so we can reuse the old functions without compiler warnings */
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlay3WVT.fn##fun))
+# define XCAST(fun)     (typeof(directPlay3WVT.fun))
 #else
 # define XCAST(fun)     (void*)
 #endif
@@ -4756,7 +4756,7 @@ static ICOM_VTABLE(IDirectPlay3) directPlay3WVT =
 
 /* Note: Hack so we can reuse the old functions without compiler warnings */
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlay4WVT.fn##fun))
+# define XCAST(fun)     (typeof(directPlay4WVT.fun))
 #else
 # define XCAST(fun)     (void*)
 #endif
@@ -4825,7 +4825,7 @@ static ICOM_VTABLE(IDirectPlay4) directPlay4WVT =
 
 /* Note: Hack so we can reuse the old functions without compiler warnings */
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
-# define XCAST(fun)     (typeof(directPlay4AVT.fn##fun))
+# define XCAST(fun)     (typeof(directPlay4AVT.fun))
 #else
 # define XCAST(fun)     (void*)
 #endif

@@ -298,6 +298,10 @@ ICOM_DEFINE(IRunnableObject,IUnknown)
 /*****************************************************************************
  * IRunningObjectTable interface
  */
+#ifdef __WINE__
+#undef GetObject
+#endif
+
 #define ICOM_INTERFACE IRunningObjectTable
 #define IRunningObjectTable_METHODS \
     ICOM_METHOD4(HRESULT,Register,            DWORD,grfFlags, IUnknown*,punkObject, IMoniker*,pmkObjectName, DWORD*,pdwRegister) \
