@@ -757,6 +757,7 @@ HRESULT WINAPI IDirectSoundImpl_Create(
 
     if (found == FALSE) {
         WARN("No device found matching given ID!\n");
+        *ppDS = NULL;
         return DSERR_NODRIVER;
     }
 
@@ -1641,7 +1642,7 @@ HRESULT WINAPI DSOUND_Create(
     } else {
         LPDIRECTSOUND8 pDS;
         hr = IDirectSoundImpl_Create(&devGuid, &pDS);
-        if (pDS) {
+        if (hr == DS_OK) {
             hr = DSOUND_PrimaryCreate((IDirectSoundImpl*)pDS);
             if (hr == DS_OK) {
                 hr = IDirectSound_IDirectSound_Create(pDS, ppDS);
@@ -1746,7 +1747,7 @@ HRESULT WINAPI DSOUND_Create8(
     } else {
         LPDIRECTSOUND8 pDS;
         hr = IDirectSoundImpl_Create(&devGuid, &pDS);
-        if (pDS) {
+        if (hr == DS_OK) {
             hr = DSOUND_PrimaryCreate((IDirectSoundImpl*)pDS);
             if (hr == DS_OK) {
                 hr = IDirectSound8_IDirectSound8_Create(pDS, ppDS);
