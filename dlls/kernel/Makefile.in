@@ -59,6 +59,7 @@ C_SRCS = \
 	time.c \
 	toolhelp.c \
 	utthunk.c \
+	vxd.c \
 	win87em.c \
 	windebug.c \
 	wowthunk.c
