@@ -511,9 +511,7 @@ HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
     const DC_FUNCTIONS *funcs;
     char buf[300];
 
-    if (device) {
-	if(!DRIVER_GetDriverName( device, buf, sizeof(buf) )) return 0;
-    } else
+    if (!device || !DRIVER_GetDriverName( device, buf, sizeof(buf) ))
         strcpy(buf, driver);
 
     if (!(funcs = DRIVER_FindDriver( buf ))) return 0;
