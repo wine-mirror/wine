@@ -1789,6 +1789,23 @@ HRESULT WINAPI CoSetState(LPDWORD state)
     return S_OK;
 }
 
+
+/***********************************************************************
+ *           DllGetClassObject [OLE32.63]
+ */
+HRESULT WINAPI OLE32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv)
+{	
+	char xclsid[50],xiid[50];
+	WINE_StringFromCLSID((LPCLSID)rclsid,xclsid);
+	WINE_StringFromCLSID((LPCLSID)iid,xiid);
+	FIXME("\n\tCLSID:\t%s,\n\tIID:\t%s\n",xclsid,xiid);
+	
+	*ppv = NULL;
+
+	return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+
 /***
  * COM_RevokeAllClasses
  *
