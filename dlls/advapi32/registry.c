@@ -42,11 +42,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
 
 /* check if value type needs string conversion (Ansi<->Unicode) */
-static inline int is_string( DWORD type )
+inline static int is_string( DWORD type )
 {
     return (type == REG_SZ) || (type == REG_EXPAND_SZ) || (type == REG_MULTI_SZ);
 }
 
+/* check if current version is NT or Win95 */
+inline static int is_version_nt(void)
+{
+    return !(GetVersion() & 0x80000000);
+}
 
 /******************************************************************************
  *           RegCreateKeyExW   [ADVAPI32.@]
@@ -102,7 +107,8 @@ DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR clas
     NTSTATUS status;
 
     if (reserved) return ERROR_INVALID_PARAMETER;
-    if (!(access & KEY_ALL_ACCESS) || (access & ~KEY_ALL_ACCESS)) return ERROR_ACCESS_DENIED;
+    if (!is_version_nt()) access = KEY_ALL_ACCESS;  /* Win95 ignores the access mask */
+    else if (!(access & KEY_ALL_ACCESS) || (access & ~KEY_ALL_ACCESS)) return ERROR_ACCESS_DENIED;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = hkey;
@@ -194,6 +200,8 @@ DWORD WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM acces
     OBJECT_ATTRIBUTES attr;
     STRING nameA;
     NTSTATUS status;
+
+    if (!is_version_nt()) access = KEY_ALL_ACCESS;  /* Win95 ignores the access mask */
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = hkey;
@@ -445,8 +453,7 @@ DWORD WINAPI RegQueryInfoKeyW( HKEY hkey, LPWSTR class, LPDWORD class_len, LPDWO
     TRACE( "(0x%x,%p,%ld,%p,%p,%p,%p,%p,%p,%p,%p)\n", hkey, class, class_len ? *class_len : 0,
            reserved, subkeys, max_subkey, values, max_value, max_data, security, modif );
 
-    if (class && !class_len && !(GetVersion() & 0x80000000 /*NT*/))
-        return ERROR_INVALID_PARAMETER;
+    if (class && !class_len && is_version_nt()) return ERROR_INVALID_PARAMETER;
 
     status = NtQueryKey( hkey, KeyFullInformation, buffer, sizeof(buffer), &total_size );
     if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
@@ -508,8 +515,7 @@ DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDWOR
     TRACE( "(0x%x,%p,%ld,%p,%p,%p,%p,%p,%p,%p,%p)\n", hkey, class, class_len ? *class_len : 0,
            reserved, subkeys, max_subkey, values, max_value, max_data, security, modif );
 
-    if (class && !class_len && !(GetVersion() & 0x80000000 /*NT*/))
-        return ERROR_INVALID_PARAMETER;
+    if (class && !class_len && is_version_nt()) return ERROR_INVALID_PARAMETER;
 
     status = NtQueryKey( hkey, KeyFullInformation, buffer, sizeof(buffer), &total_size );
     if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
@@ -647,7 +653,7 @@ DWORD WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
 {
     UNICODE_STRING nameW;
 
-    if (GetVersion() & 0x80000000)  /* win95 */
+    if (!is_version_nt())  /* win95 */
     {
         if (type == REG_SZ) count = (strlenW( (WCHAR *)data ) + 1) * sizeof(WCHAR);
     }
@@ -674,7 +680,7 @@ DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
     WCHAR *dataW = NULL;
     NTSTATUS status;
 
-    if (GetVersion() & 0x80000000)  /* win95 */
+    if (!is_version_nt())  /* win95 */
     {
         if (type == REG_SZ) count = strlen(data) + 1;
     }
