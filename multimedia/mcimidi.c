@@ -37,7 +37,7 @@ typedef struct {
 	                wLastCommand : 8;
 } MCI_MIDITRACK;
 
-typedef struct {
+typedef struct tagWINE_MCIMIDI {
     UINT16		wDevID;
     UINT16		wMidiID;
     int			nUseCount;          	/* Incremented for each shared open          */
@@ -59,8 +59,6 @@ typedef struct {
     DWORD		dwStartTicks;
 } WINE_MCIMIDI;
 
-#define MAX_MCIMIDIDRV 	(1)
-static WINE_MCIMIDI	MCIMidiDev[MAX_MCIMIDIDRV];
 
 /*======================================================================*
  *                  	    MCI MIDI implemantation			*
@@ -71,36 +69,20 @@ static WINE_MCIMIDI	MCIMidiDev[MAX_MCIMIDIDRV];
 static DWORD MIDI_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms);
 
 /**************************************************************************
- * 				MIDI_drvGetDrv		[internal]	
- */
-static WINE_MCIMIDI*  MIDI_drvGetDrv(UINT16 wDevID)
-{
-    int	i;
-
-    for (i = 0; i < MAX_MCIMIDIDRV; i++) {
-	if (MCIMidiDev[i].wDevID == wDevID) {
-	    return &MCIMidiDev[i];
-	}
-    }
-    return 0;
-}
-
-/**************************************************************************
  * 				MIDI_drvOpen			[internal]	
  */
 static	DWORD	MIDI_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
 {
-    int	i;
+    WINE_MCIMIDI*	wmm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MCIMIDI));
 
-    for (i = 0; i < MAX_MCIMIDIDRV; i++) {
-	if (MCIMidiDev[i].wDevID == 0) {
-	    MCIMidiDev[i].wDevID = modp->wDeviceID;
-	    modp->wCustomCommandTable = -1;
-	    modp->wType = MCI_DEVTYPE_CD_AUDIO;
-	    return modp->wDeviceID;
-	}
-    }
-    return 0;
+    if (!wmm)
+	return 0;
+
+    wmm->wDevID = modp->wDeviceID;
+    mciSetDriverData(wmm->wDevID, (DWORD)wmm);
+    modp->wCustomCommandTable = -1;
+    modp->wType = MCI_DEVTYPE_SEQUENCER;
+    return modp->wDeviceID;
 }
 
 /**************************************************************************
@@ -108,10 +90,11 @@ static	DWORD	MIDI_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
  */
 static	DWORD	MIDI_drvClose(DWORD dwDevID)
 {
-    WINE_MCIMIDI*  wmm = MIDI_drvGetDrv(dwDevID);
+    WINE_MCIMIDI*  wmm = (WINE_MCIMIDI*)mciGetDriverData(dwDevID);
 
     if (wmm) {
-	wmm->wDevID = 0;
+	HeapFree(GetProcessHeap(), 0, wmm);	
+	mciSetDriverData(dwDevID, 0);
 	return 1;
     }
     return 0;
@@ -122,7 +105,7 @@ static	DWORD	MIDI_drvClose(DWORD dwDevID)
  */
 static WINE_MCIMIDI*  MIDI_mciGetOpenDev(UINT16 wDevID)
 {
-    WINE_MCIMIDI*	wmm = MIDI_drvGetDrv(wDevID);
+    WINE_MCIMIDI*	wmm = (WINE_MCIMIDI*)mciGetDriverData(wDevID);
     
     if (wmm == NULL || wmm->nUseCount == 0) {
 	WARN("Invalid wDevID=%u\n", wDevID);
@@ -427,7 +410,7 @@ static DWORD MIDI_mciReadMThd(WINE_MCIMIDI* wmm, DWORD dwOffset)
 	wmm->nTracks = 0x7FFF;
     }
     
-    if ((wmm->tracks = malloc(sizeof(MCI_MIDITRACK) * wmm->nTracks)) == NULL) {
+    if ((wmm->tracks = HeapAlloc(GetProcessHeap(), 0, sizeof(MCI_MIDITRACK) * wmm->nTracks)) == NULL) {
 	return MCIERR_OUT_OF_MEMORY;
     }
     
@@ -590,10 +573,9 @@ static	DWORD	MIDI_GetMThdLengthMS(WINE_MCIMIDI* wmm)
  */
 static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpParms)
 {
-    MIDIOPENDESC 	midiOpenDesc;
     DWORD		dwRet = 0;
     DWORD		dwDeviceID;
-    WINE_MCIMIDI*	wmm = MIDI_drvGetDrv(wDevID);
+    WINE_MCIMIDI*	wmm = (WINE_MCIMIDI*)mciGetDriverData(wDevID);
     
     TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
     
@@ -625,9 +607,9 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpParm
 	TRACE("MCI_OPEN_ELEMENT '%s' !\n", lpstrElementName);
 	if (lpstrElementName && strlen(lpstrElementName) > 0) {
 	    wmm->hFile = mmioOpenA(lpstrElementName, NULL, 
-				     MMIO_ALLOCBUF | MMIO_READWRITE | MMIO_DENYWRITE);
+				   MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
 	    if (wmm->hFile == 0) {
-		WARN("Can't find file='%s' !\n", lpstrElementName);
+		WARN("Can't find file '%s' !\n", lpstrElementName);
 		wmm->nUseCount--;
 		return MCIERR_FILE_NOT_FOUND;
 	    }
@@ -644,8 +626,6 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpParm
     /* spec says it should be the default format from the MIDI file... */
     wmm->dwMciTimeFormat = MCI_FORMAT_MILLISECONDS;
     
-    midiOpenDesc.hMidi = 0;
-    
     if (wmm->hFile != 0) {
 	MMCKINFO	ckMainRIFF;
 	MMCKINFO	mmckInfo;
@@ -659,6 +639,7 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpParm
 	    
 	    if (ckMainRIFF.ckid == FOURCC_RIFF && ckMainRIFF.fccType == mmioFOURCC('R', 'M', 'I', 'D')) {
 		mmckInfo.ckid = mmioFOURCC('d', 'a', 't', 'a');
+		mmioSeek(wmm->hFile, ckMainRIFF.dwDataOffset + ((ckMainRIFF.cksize + 1) & ~1), SEEK_SET);
 		if (mmioDescend(wmm->hFile, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK) == 0) {
 		    TRACE("... is a 'RMID' file \n");
 		    dwOffset = mmckInfo.dwDataOffset;
@@ -686,9 +667,6 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpParm
 	wmm->dwPositionMS = 0;
 	wmm->dwStatus = MCI_MODE_STOP;
 	wmm->hMidiHdr = USER_HEAP_ALLOC(sizeof(MIDIHDR16));
-	
-	dwRet = modMessage(wmm->wMidiID, MODM_OPEN, 0, (DWORD)&midiOpenDesc, CALLBACK_NULL);
-	/*	dwRet = midMessage(wmm->wMidiID, MIDM_OPEN, 0, (DWORD)&midiOpenDesc, CALLBACK_NULL);*/
     }
     return dwRet;
 }
@@ -704,9 +682,12 @@ static DWORD MIDI_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
     
     if (wmm == NULL)	return MCIERR_INVALID_DEVICE_ID;
     
-    wmm->dwStatus = MCI_MODE_STOP;
-    TRACE("wmm->dwStatus=%d\n", wmm->dwStatus);
-    
+    if (wmm->dwStatus != MCI_MODE_STOP) {
+	wmm->dwStatus = MCI_MODE_STOP;
+	modMessage(wmm->wMidiID, MODM_CLOSE, 0, 0L, 0L);
+    }
+    TRACE("wmm->dwStatus=%d\n", wmm->dwStatus);    
+
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
@@ -720,7 +701,6 @@ static DWORD MIDI_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
  */
 static DWORD MIDI_mciClose(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
-    DWORD		dwRet;
     WINE_MCIMIDI*	wmm = MIDI_mciGetOpenDev(wDevID);
     
     TRACE("(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
@@ -740,13 +720,7 @@ static DWORD MIDI_mciClose(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
 	    TRACE("hFile closed !\n");
 	}
 	USER_HEAP_FREE(wmm->hMidiHdr);
-	free(wmm->tracks);
-	dwRet = modMessage(wmm->wMidiID, MODM_CLOSE, 0, 0L, 0L);
-	if (dwRet != MMSYSERR_NOERROR) return MCIERR_INTERNAL;
-	/*
-	  dwRet = midMessage(wmm->wMidiID, MIDM_CLOSE, 0, 0L, 0L);
-	  if (dwRet != MMSYSERR_NOERROR) return MCIERR_INTERNAL;
-	*/
+	HeapFree(GetProcessHeap(), 0, wmm->tracks);
     } else {
 	TRACE("Shouldn't happen... nUseCount=%d\n", wmm->nUseCount);
 	return MCIERR_INTERNAL;
@@ -794,6 +768,7 @@ static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     MCI_MIDITRACK*	mmt;
     DWORD		hiPulse;
     WINE_MCIMIDI*	wmm = MIDI_mciGetOpenDev(wDevID);
+    MIDIOPENDESC 	midiOpenDesc;
     
     TRACE("(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
@@ -852,6 +827,10 @@ static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     wmm->dwPositionMS = 0;
     wmm->wStartedPlaying = FALSE;
     
+    midiOpenDesc.hMidi = 0;
+    dwRet = modMessage(wmm->wMidiID, MODM_OPEN, 0, (DWORD)&midiOpenDesc, CALLBACK_NULL);
+    /*	dwRet = midMessage(wmm->wMidiID, MIDM_OPEN, 0, (DWORD)&midiOpenDesc, CALLBACK_NULL);*/
+
     while (wmm->dwStatus != MCI_MODE_STOP) {
 	/* it seems that in case of multi-threading, gcc is optimizing just a little bit 
 	 * too much. Tell gcc not to optimize status value using volatile. 
@@ -1055,6 +1034,7 @@ static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 	    modMessage(wmm->wMidiID, MODM_DATA, 0, 0x78B0 | chn, 0);
     }
     
+    dwRet = modMessage(wmm->wMidiID, MODM_CLOSE, 0, 0L, 0L);
     wmm->dwStatus = MCI_MODE_STOP;
     
     /* to restart playing at beginning when it's over */
@@ -1097,7 +1077,7 @@ static DWORD MIDI_mciRecord(UINT16 wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpP
 	TRACE("MCI_TO=%d \n", end);
     }
     lpMidiHdr = USER_HEAP_LIN_ADDR(wmm->hMidiHdr);
-    lpMidiHdr->lpData = (LPSTR) malloc(1200);
+    lpMidiHdr->lpData = (LPSTR) HeapAlloc(GetProcessHeap(), 0, 1200);
     if (!lpMidiHdr)
 	return MCIERR_OUT_OF_MEMORY;
     lpMidiHdr->dwBufferLength = 1024;
@@ -1119,7 +1099,7 @@ static DWORD MIDI_mciRecord(UINT16 wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpP
     dwRet = midMessage(wmm->wMidiID, MIDM_UNPREPARE, 0, (DWORD)lpMidiHdr, sizeof(MIDIHDR16));
     TRACE("After MIDM_UNPREPARE \n");
     if (lpMidiHdr->lpData != NULL) {
-	free(lpMidiHdr->lpData);
+	HeapFree(GetProcessHeap(), 0, lpMidiHdr->lpData);
 	lpMidiHdr->lpData = NULL;
     }
     wmm->dwStatus = MCI_MODE_STOP;
