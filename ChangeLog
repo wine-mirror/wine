@@ -1,4 +1,455 @@
 ----------------------------------------------------------------
+Mon Nov 15 00:46:30 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* memory/virtual.c: Fixed allocation rounding for MEM_RESERVE.
+
+	* server/file.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Fixed hash function.
+
+Sun Nov 14 23:59:01 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/winmm/mmio.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	The adwInfo[0] field was no longer used on mmioOpen (may contain file
+	handle).
+
+	* dlls/ole32/ole2stubs.c, dlls/ole32/ole32.spec:
+	Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Added stubs for SetErrorInfo, PropVariantClear, PropVariantCopy,
+	FreePropVariantArray.
+
+	* dlls/dsound/dsound_main.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Removed suicide code when playback thread's father dies.
+
+	* dlls/shell32/pidl.c, dlls/shell32/shell32_De.rc, dlls/shell32/shell32_En.rc, dlls/shell32/shell32_main.h, dlls/shell32/shellole.c, dlls/shell32/shlfolder.c, dlls/shell32/shlview.c, dlls/shell32/shres.rc, dlls/shell32/shresdef.h:
+	Juergen Schmied <juergen.schmied@metronet.de>
+	- the colums in the shellview are now created depending on the
+	  attributes of the folder object shown
+	- get all attributes from the shellfolder instead directly from the idlist
+	- header fields localized (only engl. and german till now)
+	- small fixes
+
+	* dlls/commdlg/cdlg_En.rc, dlls/commdlg/filedlg95.c:
+	Juergen Schmied <juergen.schmied@metronet.de>
+	- corrected control positions
+	- use the icons from comctl32 for the buttons
+
+	* relay32/kernel32.spec, relay32/relay386.c, relay32/snoop.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Bugfix: relay/snoop debugging was broken by last patch ...
+
+	* server/Makefile.in, server/process.c, server/ptrace.c, server/thread.c, server/thread.h:
+	Moved ptrace support to ptrace.c. Tried to improve portability.
+
+	* server/debugger.c: Bug fixes.
+
+	* if1632/relay.c: Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Fixed some unresolved externals on non-Intel archs.
+
+	* relay32/snoop.c: Rein Klazes <rklazes@casema.net>
+	Added missing WINAPI attribute to two forward declarations.
+
+	* dlls/icmp/icmp_main.c: Francois Gouget <fgouget@psn.net>
+	Removed leftover #undefs.
+
+	* dlls/winmm/mcicda/mcicda.c:
+	Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	Ignore MCI_OPEN_ELEMENT in CDAUDIO_mciOpen.
+
+	* dlls/crtdll/wcstring.c: Marcus Meissner <marcus@jet.franken.de>
+	Work around glibc bug, that does not handle latin-1 umlauts.
+
+Sat Nov 13 23:54:05 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* loader/ne/module.c, memory/selector.c, relay32/kernel32.spec, relay32/relay386.c, relay32/snoop.c, win32/device.c, win32/kernel32.c, win32/ordinals.c, dlls/ntdll/exception.c, dlls/ntdll/ntdll.spec, dlls/ntdll/rtl.c, dlls/ntdll/signal_i386.c, dlls/ntdll/signal_sparc.c, if1632/kernel.spec, include/ntddk.h, include/wine/exception.h, loader/dos/dosvm.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Adapted to new register function handling.
+
+	* tools/build.c, include/stackframe.h, include/winnt.h:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Modified Win32 register function handling.
+
+	* configure, configure.in, dlls/icmp/icmp_main.c, dlls/icmp/ip.h, dlls/icmp/ip_icmp.h, include/config.h.in:
+	Francois Gouget <fgouget@psn.net>
+	Use BSD headers for ICMP portability.
+
+	* dlls/comctl32/rsrc.rc, dlls/commdlg/cdlg_xx.rc, dlls/shell32/shres.rc:
+	Juergen Schmied <juergen.schmied@debitel.net>
+	- inserted markers for the bin2res tool
+	- reformated hexdump in shres.rc
+
+	* documentation/resources, tools/.cvsignore, tools/Makefile.in, tools/bin2res.c:
+	Juergen Schmied <juergen.schmied@debitel.net>
+	New tool to convert the binary resources in *.rc files (hexdumps) from
+	and to a binary.
+
+	* include/wine/port.h, misc/port.c, misc/winsock.c, misc/winsock_async.c, scheduler/sysdeps.c, configure, configure.in, files/drive.c, include/config.h.in:
+	Patrik Stridvall <ps@leissner.se>
+	Added better missing function emulation.
+
+	* include/debugger.h, debugger/break.c, debugger/db_disasm.c, debugger/dbg.y, debugger/expr.c, debugger/hash.c, debugger/memory.c, debugger/registers.c, debugger/source.c, debugger/stack.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Made debugger compile and marginally work on non-Intel archs.
+
+	* dlls/ntdll/exception.c, include/winnt.h:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Moved GET_IP macro to winnt.h
+
+	* documentation/printing, documentation/psdriver, documentation/psdrv.reg, graphics/psdrv/README:
+	Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Move PostScript driver docs to documentation/ .  Add instructions on
+	how to use regapi to get information into the registry.  Supply sample
+	input to regapi.
+
+	* dlls/commdlg/cdlg_En.rc, dlls/commdlg/printdlg.c:
+	Klaas van Gend <klaas@vangend.demon.nl>
+	Implemented the PrintSetup dialog box for the PrintDlgA.
+
+	* dlls/comctl32/propsheet.c: Adrian Thurston <adriant@corel.com>
+	Added validations for page index before using it.
+
+	* dlls/commdlg/filedlg95.c: Adrian Thurston <adriant@corel.com>
+	- fixed the index of the item chosen in the filter combo box
+	- added support for the OFN_OVERWRITEPROMPT flag
+	- fixed positioning of controls in the user-defined templates
+
+	* include/server.h, scheduler/process.c, server/process.c, server/request.h, server/trace.c:
+	Added support for WriteProcessMemory through the server.
+
+	* server/mapping.c, server/object.h: Added get_page_size function.
+
+Fri Nov 12 21:39:15 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* server/file.c, server/process.c, server/request.h, server/thread.c, server/thread.h, server/trace.c, include/server.h, scheduler/process.c:
+	Added support for ReadProcessMemory through the server.
+
+	* include/server.h, loader/module.c, scheduler/process.c, server/process.c, server/process.h, server/request.h, server/thread.c, server/trace.c:
+	Added support for CREATE_SUSPENDED flag in CreateProcess.
+
+	* win32/device.c: Ian Schmidt <ischmidt@cfl.rr.com>
+	Implemented VWin32 VxDCall mechanism and 2 calls.
+
+	* dlls/winmm/joystick.c: <jodaman@cegt201.bradley.edu>
+	Fixed joystick scaling.
+
+	* dlls/commdlg/cdlg_Ca.rc, dlls/commdlg/cdlg_Cs.rc, dlls/commdlg/cdlg_Da.rc, dlls/commdlg/cdlg_De.rc, dlls/commdlg/cdlg_Eo.rc, dlls/commdlg/cdlg_Es.rc, dlls/commdlg/cdlg_Fi.rc, dlls/commdlg/cdlg_Hu.rc, dlls/commdlg/cdlg_It.rc, dlls/commdlg/cdlg_Ko.rc, dlls/commdlg/cdlg_Nl.rc, dlls/commdlg/cdlg_No.rc, dlls/commdlg/cdlg_Pl.rc, dlls/commdlg/cdlg_Pt.rc, dlls/commdlg/cdlg_Ru.rc, dlls/commdlg/cdlg_Sv.rc, dlls/commdlg/cdlg_Wa.rc, dlls/shell32/shell32_Ca.rc, dlls/shell32/shell32_Cs.rc, dlls/shell32/shell32_Da.rc, dlls/shell32/shell32_De.rc, dlls/shell32/shell32_En.rc, dlls/shell32/shell32_Es.rc, dlls/shell32/shell32_Fi.rc, dlls/shell32/shell32_Hu.rc, dlls/shell32/shell32_It.rc, dlls/shell32/shell32_Nl.rc, dlls/shell32/shell32_No.rc, dlls/shell32/shell32_Pl.rc, dlls/shell32/shell32_Pt.rc, dlls/shell32/shell32_Ru.rc, dlls/shell32/shell32_Sv.rc, dlls/shell32/shell32_Wa.rc:
+	Gustavo Junior Alves <twinfo@bestway.com.br>
+	Use constants IDOK and IDCANCEL in .rc files.
+
+	* server/thread.c: Gerald Pfeifer <pfeifer@dbai.tuwien.ac.at>
+	Portability fix: renamed PTRACE_* into PT_*.
+
+	* relay32/kernel32.spec, win32/device.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Allow for buggy apps that call the wrong VxDCall routine.
+
+	* dlls/rasapi32/rasapi.c: Gerard Patel <g.patel@wanadoo.fr>
+	Complete stub for RasEnumEntries by saying we have 0 entries.
+
+	* include/debugstr.h, misc/debugstr.c:
+	Jeremy White <jwhite@codeweavers.com>
+	Add debugstr_hex_dump to allow display hex dumps of data in any
+	debugging message.
+
+	* server/thread.c:
+	Added use_ptrace flag to disable ptrace usage. Should eventually be
+	made into an option.
+
+	* dlls/commdlg/cdlg.h, dlls/commdlg/filedlg95.c, dlls/commdlg/filedlgbrowser.c, dlls/commdlg/filedlgbrowser.h, dlls/commdlg/rsrc.rc, dlls/shell32/shlview.c, include/dlgs.h, include/wine/obj_shellview.h:
+	Juergen Schmied <juergen.schmied@debitel.net>
+	Made the buttons in the filedlg change when selecting a different
+	view type by the context menu, cleanup.
+
+	* dlls/winmm/winmm_Es.rc, dlls/winmm/winmm_res.rc:
+	Julio Cesar Gazquez <jgazquez@dld.net>
+	Added Spanish (pure Castillan) MM error string translation.
+
+	* dlls/ntdll/Makefile.in, dlls/ntdll/signal_sparc.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Added signal handling for SPARC / Solaris.
+
+	* programs/regapi/regapi.c: Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Comment out explicit call to SHELL_SaveRegistry since winelib programs
+	now exit properly.  Change several NULLs to '\0's.  Fix some spelling.
+
+	* windows/x11drv/event.c: Ove Kaaven <ovek@arcticnet.no>
+	Fixed XShm completion event leak.
+
+	* dlls/winmm/mmsystem.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Fixed recursion count while calling midiStream(Pause|Restart).
+
+	* misc/registry.c: Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Fix save_check_tainted to properly scan the tree so that all tainted
+	branches get saved.
+
+	* dlls/crtdll/crtdll.spec, dlls/crtdll/crtdll_main.c:
+	Bernd Paysan <bernd.paysan@gmx.de>
+	Added a stub for setjmp.
+
+Wed Nov 10 20:25:19 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* server/thread.c:
+	Don't crash when we get a SIGCHLD for a removed thread.
+
+	* dlls/icmp/icmp_main.c: Patrik Stridvall <ps@leissner.se>
+	Solaris compile fixes.
+
+	* dlls/ntdll/exception.c, include/winnt.h:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	(Preliminary) CONTEXT structure for SPARC added.
+
+	* include/process.h, loader/module.c, scheduler/debugger.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Bugfix: LOAD_DLL_DEBUG_EVENT lpImageName parameter was incorrect.
+
+	* memory/virtual.c: Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	When decommitting, remap zero pages using MAP_FIXED.
+
+	* dlls/ole32/compobj.c: Rein Klazes <rklazes@casema.net>
+	CoGetClassObject should complain about not being able to do
+	out-of-process servers *only* if the application doesn't include the
+	in-process options.
+
+	* misc/version.c, controls/edit.c, include/winversion.h:
+	Rein Klazes <rklazes@casema.net>
+	Send WM_CTLCOLOREDIT not WM_CTLCOLORSTATIC messages to parent of a
+	disabled edit control if the application expects a windows version
+	before WIN95 and NT40.
+
+	* include/winbase.h, relay32/kernel32.spec, files/file.c:
+	Moshe Vainer <moshev@easybase.com>
+	Stub for GetOverlappedResult.
+
+	* relay32/builtin32.c, tools/build.c, include/module.h, include/pe_image.h, loader/dos/module.c, loader/main.c, loader/module.c, loader/ne/module.c, loader/pe_image.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Determine expected_version of PE buddies from the SubsystemVersion.
+
+	* dlls/ntdll/exception.c, include/wine/exception.h, include/winnt.h, win32/except.c:
+	Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+	Bugfix: Exception handlers are *not* WINAPI.
+
+Mon Nov  8 05:31:47 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* server/process.c, server/select.c, server/thread.c, server/thread.h:
+	Preliminary ptrace support.
+
+	* memory/virtual.c:
+	Remap zero-pages when decomitting a page range (based on a patch by
+	Gerard Patel).
+
+	* Makefile.in, scheduler/Makefile.in, scheduler/client.c, server/main.c:
+	Install the wine server in $(bindir) and exec it from there.
+
+Sun Nov  7 23:59:08 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* server/debugger.c:
+	Do not free the handles once they have been sent to the client (thanks
+	to Jeremy White).
+
+	* windows/msgbox.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Fixed crash when asked to use strings identified by resource id
+	instead of pointer.
+
+	* windows/dce.c: Jim Aston <jima@corel.ca>
+	When window class has CS_CLASSDC style we should not remove the DC
+	when destroying the window.
+
+	* dlls/rasapi32/rasapi32.spec, dlls/win32s/w32skrnl.c:
+	Patrik Stridvall <ps@leissner.se>
+	Minor fixes.
+
+	* tools/winapi_check/nativeapi.pm, tools/winapi_check/output.pm, tools/winapi_check/win32api.dat, tools/winapi_check/winapi_check, tools/winapi_check/winapi_options.pm:
+	Patrik Stridvall <ps@leissner.se>
+	Minor fixes and reorganizations.
+
+	* dlls/shell32/if_macros.h, include/bit_array.h, include/ntdll.h, include/oleobj.h:
+	Patrik Stridvall <ps@leissner.se>
+	Removed obsolete files no longer in use.
+
+	* tsx11/X11_calls, tsx11/ts_xlib.c, windows/x11drv/event.c, graphics/ddraw.c, graphics/ddraw_private.h, include/ts_xlib.h, include/x11drv.h:
+	Ove Kaaven <ovek@arcticnet.no>
+	DirectX-XShm now waits for the X server to finish the previous frame
+	before sending another frame down its pipe, avoiding the X server
+	overload and resulting slowness that used to be.
+
+	* dlls/comctl32/toolbar.c, dlls/commdlg/cdlg_En.rc, dlls/commdlg/cdlg_xx.rc, dlls/commdlg/filedlg95.c, dlls/commdlg/filedlgbrowser.h, include/dlgs.h:
+	Juergen Schmied <juergen.schmied@debitel.net>
+	- unified templates for the open and the save dlg
+	- replaced buttons with a toolbar
+
+	* dlls/shell32/shlfolder.c, dlls/shell32/shlview.c, include/wine/obj_shellfolder.h:
+	Juergen Schmied <juergen.schmied@debitel.net>
+	- new interface declaration for IShellfolder2
+	- added this interface to all shell folders
+	- small fixes to shellview (crash with native comdlg32)
+
+	* loader/pe_image.c: Marcus Meissner <marcus@jet.franken.de>
+	Fixed the relocation hack in PE_InitTls. Added some more for the other
+	pointerfields in the TLS entry. (With testing help from Jussi
+	Jumppanen <jussij@zeusedit.com>).
+
+	* relay32/user32.spec, windows/user.c, include/winuser.h:
+	Marcus Meissner <marcus@jet.franken.de>
+	Added ChangeDisplaySettingsExA stub and some flag defines.
+
+	* include/console.h: Robert 'Admiral' Coeyman <admiral@corner.net>
+	Added the hex triplets to the console color definitions.
+
+	* windows/ttydrv/event.c, windows/ttydrv/init.c, windows/ttydrv/mouse.c, windows/x11drv/event.c, windows/x11drv/init.c, windows/x11drv/mouse.c, include/input.h, include/message.h, include/mouse.h, include/ttydrv.h, include/x11drv.h, objects/cursoricon.c, windows/dinput.c, windows/event.c, windows/input.c, windows/mouse.c, windows/winpos.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	Added the possibility to have mouse movements reported relative to
+	Wine's mouse driver.
+
+	* Makefile.in, configure, configure.in, dlls/Makefile.in, dlls/icmp/.cvsignore, dlls/icmp/Makefile.in, dlls/icmp/icmp.spec, dlls/icmp/icmp_main.c, include/debugdefs.h, include/wine/icmpapi.h, include/wine/ipexport.h, loader/loadorder.c, relay32/builtin32.c, wine.ini:
+	Francois Gouget <fgouget@psn.net>
+	Added ICMP DLL implementation.
+
+	* tools/wrc/dumpres.c, tools/wrc/genres.c, tools/wrc/newstruc.c, tools/wrc/newstruc.h, tools/wrc/parser.y, tools/wrc/wrc.h, tools/wrc/wrctypes.h, tools/wrc/CHANGES:
+	Juergen.Schmied@debitel.net
+	- Bugfix: Styles were evaluated as expressions. The NOT in combination
+	  with style flags was not overwriting the default styles like WS_VISIBLE.
+	  Solved by introducing own rules for parsing styles.
+
+	* controls/combo.c: Jim Aston <jima@corel.ca>
+	Fixed the height of the ComboBox drop list.
+
+	* windows/dialog.c: David Grant <davidgra@corel.ca>
+	Windows sends WM_GETDLGCODE only in response to keyboard messages
+	(WM_KEYDOWN, WM_CHAR, WM_SYSCHAR).
+
+	* include/wine/obj_base.h: Peter Hunnisett <hunnise@nortelnetworks.com>
+	- Added missing __attribute__ ((com_interface)) for IUnknown with.
+	  ICOM_USE_COM_INTERFACE_ATTRIBUTE
+	- Small addition to comments surrounding
+	  ICOM_USE_COM_INTERFACE_ATTRIBUTE "option".
+
+	* ole/ole2nls.c, if1632/ole2nls.spec:
+	Andreas Mohr <mohr@elektron.ikp.physik.tu-darmstadt.de>
+	Implementation of RegisterNLSInfoChanged.
+
+	* scheduler/critsection.c, windows/queue.c, memory/heap.c:
+	James Abbatiello <abbeyj@wpi.edu>
+	Addresses issues with multiple processes accessing non-global critical
+	sections.
+
+	* server/sock.c: Jeremy White <jwhite@codeweavers.com>
+	Fixed bug in WINSOCK_accept when no event is present.
+
+	* dlls/rasapi32/rasapi.c, include/lmcons.h, include/ras.h:
+	Rein Klazes <rklazes@casema.net>
+	Added stubs for RasEnumEntriesA and RasGetEntryDialParamsA.
+
+	* dlls/commdlg/filedlg95.c, dlls/commdlg/filedlgbrowser.c, dlls/commdlg/filedlgbrowser.h:
+	Ulrich Czekalla <ulrichc@corel.ca>
+	Implementation of custom dialog messages and notifications.
+
+	* dlls/comctl32/treeview.c: David Grant <davidgra@corel.ca>
+	- Proper initialization of cchTextMax field was added for
+	  TVN_GETDISPINFO notification message.
+	- TVM_SETITEM should update 'mask' field to synchronize it with
+	  current item state.
+
+	* graphics/psdrv/ppd.c: Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	If PageSize/InputSlot entry doesn't contain an options translation
+	string use the option name instead.
+
+	* dlls/comctl32/propsheet.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Fixed SetTitleA when string resources were to be loaded.
+
+	* dlls/comctl32/listview.c: Pierre Mageau <pierre@macadamian.com>
+	- Fixed an error for scrolling in Listview (sometimes a column would
+	  not be visible) due to my last checkin.
+	- Fixed an error for the header control when the Listview is resized with WM_SIZE
+	- Fixed the scrolling for small and large icon (this broke because of
+	  the use of SB_PAGE in scrollInfo)
+	- Added a patch made by Noomen Hamza to update the item width when
+	  adding a new item
+
+	* server/sock.c: Ove Kaaven <ovek@arcticnet.no>
+	Handle socket creation errors.
+
+	* controls/menu.c: Karl Lessard <karll@corel.com>
+	When a popupmenu is currently active on the screen, it shouldn't
+	remove mouse click messages that don't belong to it from the queue.
+
+	* windows/x11drv/clipboard.c: Juergen Lock <nox@jelal.kn-bremen.de>
+	Exec `wineclipsrv' not `wineclipsvr', and don't inherit wine's X
+	sockets to it (otherwise windows stay around when wine hangs).
+
+Thu Nov  4 02:51:24 1999  Alexandre Julliard  <julliard@winehq.com>
+
+	* loader/main.c: Fixed -debugmsg +server.
+
+	* scheduler/handle.c:
+	Added special handling for the stdio handles in CloseHandle.
+
+	* server/handle.c:
+	Made all handles multiple of 4. Fixed semantics for pseudo-handles.
+
+	* server/debugger.c:
+	Free the handles of the event structure in the right process (thanks
+	to Jeremy White).
+
+	* dlls/dplayx/Makefile.in, dlls/dplayx/dplay.c, dlls/dplayx/dplayx.spec, dlls/dplayx/dplayx_global.c, dlls/dplayx/dplayx_global.h, dlls/dplayx/dplayx_main.c, dlls/dplayx/dplobby.c, documentation/status/directplay, include/dplay.h, include/dplobby.h:
+	Peter Hunnisett <hunnise@nortelnetworks.com>
+	- Added dplayx LibMain for initialization of all dplayx 'global' data
+	- Added start for global data manipulation
+	- TODO list updated
+	- Added some missing header file definitions
+	- Added the ansi versions of dplay and dplobby
+	- Fixed invalid macro for IDirectPlay4
+	- Cleaned up compiler warnings
+	- More implementation, bug fixes and critical region protection
+
+	* windows/x11drv/event.c: Karl Lessard <karll@corel.com>
+	Never send a WM_CLOSE message  to a popup window.
+
+	* windows/x11drv/wnd.c: Karl Lessard <karll@corel.com>
+	Check if the window is managed before trying to give it focus.
+
+	* configure, configure.in: Marcus Meissner <marcus@jet.franken.de>
+	Enhanced linux joystick api detection slightly.
+
+	* windows/x11drv/keyboard.c:
+	Jaroslaw Piotr Sobieszek <jsobiesz@elka.pw.edu.pl>
+	Added Polish keyboard support.
+
+	* graphics/win16drv/prtdrv.c:
+	Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Add DC_VERSION and DC_TRUETYPE to win16drv DeviceCapabilities.
+
+	* graphics/psdrv/ppd.c: Huw D M Davies <h.davies1@physics.ox.ac.uk>
+	Add `Cassette' to PPD -> windows printer-bin mapping.
+
+	* memory/string.c: Michael McCormack <mccormac@aals27.alcatel.com.au>
+	Modified lstrcpynWtoA to put terminating null at end of string, not
+	end of buffer.
+
+	* include/wine/obj_storage.h: Francois Gouget <fgouget@psn.net>
+	Removed duplicate macro definitions for the IStorage and IStream COM
+	interfaces.
+
+	* windows/defwnd.c: Karl Lessard <karll@corel.com>
+	Fixed COLOR_MAX definition for new Win32 values.
+
+	* objects/gdiobj.c: Ian Schmidt <ischmidt@cfl.rr.com>
+	Removed unnecessary USER call from GetFontMetrics. Fixes native USER.
+
+	* dlls/comctl32/listview.c, include/listview.h:
+	Ulrich Czekalla <ulrichc@corel.ca>
+	Set proper item focus on DeleteItem.
+	Clean up edit label implementation.
+
+	* files/drive.c: Peter Schlaile <udbz@rz.uni-karlsruhe.de>
+	Fixed a long standing (and annoying) typo, that prevented
+	GetDiskFreeSpaceA from working...
+
+	* misc/registry.c: Eric Pouech <Eric.Pouech@wanadoo.fr>
+	Enable safe reading of registry file, even if file is broken.
+
+	* win32/newfns.c: Ian Schmidt <ischmidt@cfl.rr.com>
+	Changed OpenDesktop stub to Win9x behavior for QuickTime 4.
+
+----------------------------------------------------------------
 Sun Oct 31 22:26:35 1999  Alexandre Julliard  <julliard@winehq.com>
 
 	* scheduler/client.c: Set close-on-exec flag on server socket.
