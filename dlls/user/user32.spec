@@ -607,7 +607,7 @@ import	ntdll.dll
 @ stub MapVirtualKeyExW
 @ stub RegisterServicesProcess
 @ stdcall SetWindowRgn(long long long) SetWindowRgn
-@ stub ToUnicodeEx
+@ stdcall ToUnicodeEx(long long ptr wstr long long long) ToUnicodeEx
 @ stdcall DrawCaptionTempA(long long ptr long long str long) DrawCaptionTempA
 @ stub RegisterNetworkCapabilities
 @ stub WNDPROC_CALLBACK
