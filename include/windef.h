@@ -51,6 +51,8 @@ typedef LONG            LRESULT;
 typedef WORD            ATOM;
 typedef WORD            CATCHBUF[9];
 typedef WORD           *LPCATCHBUF;
+typedef DWORD           COLORREF, *LPCOLORREF;
+
 
 /* Handle types that exist both in Win16 and Win32. */
 
@@ -191,7 +193,7 @@ typedef const RECT *LPCRECT;
 typedef struct tagRECTL
 {
     LONG left;
-    LONG top;  
+    LONG top;
     LONG right;
     LONG bottom;
 } RECTL, *PRECTL, *LPRECTL;

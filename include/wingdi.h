@@ -399,8 +399,6 @@ DECL_WINELIB_TYPE_AW(LOGCOLORSPACE)
 
   /* Colors */
 
-typedef DWORD COLORREF, *LPCOLORREF;
-
 #define RGB(r,g,b)          ((COLORREF)((r) | ((g) << 8) | ((b) << 16)))
 #define PALETTERGB(r,g,b)   (0x02000000 | RGB(r,g,b))
 #define PALETTEINDEX(i)     ((COLORREF)(0x01000000 | (WORD)(i)))
@@ -3106,6 +3104,7 @@ BOOL      WINAPI FlattenPath(HDC);
 BOOL      WINAPI FloodFill(HDC,INT,INT,COLORREF);
 BOOL      WINAPI FrameRgn(HDC,HRGN,HBRUSH,INT,INT);
 BOOL      WINAPI GdiComment(HDC,UINT,const BYTE *);
+BOOL      WINAPI GdiFlush(void);
 INT       WINAPI GetArcDirection(HDC);
 BOOL      WINAPI GetAspectRatioFilterEx(HDC,LPSIZE);
 LONG      WINAPI GetBitmapBits(HBITMAP,LONG,LPVOID);
