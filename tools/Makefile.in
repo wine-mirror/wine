@@ -9,14 +9,14 @@ PROGRAMS = \
 	bin2res \
 	fnt2bdf \
 	makedep \
-	mingwrap \
+	winegcc \
 	winewrap
 
 C_SRCS = \
 	bin2res.c \
 	fnt2bdf.c \
 	makedep.c \
-	mingwrap.c \
+	winegcc.c \
 	winewrap.c
 
 SUBDIRS = \
@@ -48,8 +48,8 @@ fnt2bdf: fnt2bdf.o
 bin2res: bin2res.o
 	$(CC) $(CFLAGS) -o bin2res bin2res.o
 
-mingwrap: mingwrap.o
-	$(CC) $(CFLAGS) -o mingwrap mingwrap.o
+winegcc: winegcc.o
+	$(CC) $(CFLAGS) -o winegcc winegcc.o
 
 winewrap: winewrap.o
 	$(CC) $(CFLAGS) -o winewrap winewrap.o
@@ -57,11 +57,11 @@ winewrap: winewrap.o
 install::
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
 	$(INSTALL_SCRIPT) $(SRCDIR)/winemaker $(bindir)/winemaker
-	$(INSTALL_PROGRAM) mingwrap $(bindir)/mingwrap
+	$(INSTALL_PROGRAM) winegcc $(bindir)/winegcc
 	$(INSTALL_PROGRAM) winewrap $(bindir)/winewrap
 	$(INSTALL_DATA) $(SRCDIR)/winemaker.man $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 
 uninstall::
-	$(RM) $(bindir)/winemaker $(bindir)/mingwrap $(bindir)/winewrap $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
+	$(RM) $(bindir)/winemaker $(bindir)/winegcc $(bindir)/winewrap $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 
 ### Dependencies:

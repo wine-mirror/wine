@@ -124,7 +124,6 @@ int main(int argc, char **argv)
 	{
 	    if (use_msvcrt) gcc_argv[i++] = "-I" INCLUDEDIR "/msvcrt";
 	    gcc_argv[i++] = "-I" INCLUDEDIR "/windows";
-	    gcc_argv[i++] = "-DWINE_DEFINE_WCHAR_T";
 	}
 	gcc_argv[i++] = "-D__int8=char";
 	gcc_argv[i++] = "-D__int16=short";
