@@ -493,6 +493,7 @@ static void build(struct options* opts)
     strarray_add(spec_args, winebuild);
     strarray_add(spec_args, "--ld-cmd");
     strarray_add(spec_args, LD);
+    strarray_addall(spec_args, strarray_fromstring(DLLFLAGS, " "));
     strarray_add(spec_args, "-o");
     strarray_add(spec_args, spec_c_name);
     if (opts->shared)
