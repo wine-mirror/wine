@@ -1,124 +1,25 @@
   <chapter id="portability-issues">
     <title id="portability-issues.title">Portability issues</title>
 
-    <sect1 id="anon">
-      <title id="anon.title">Anonymous unions/structs</title>
-      <para>
-        Anonymous structs and unions support depends heavily on the compiler.
-        The best support is provided by gcc/g++ 2.96 and later. But these
-        versions of gcc come from the development branch so you may want to
-        hold off before using them in production. g++ 2.95 supports anonymous
-        unions but not anonymous structs and gcc 2.95 supports neither. Older
-        versions of gcc/g++ have no support for either.
-        since it is anonymous unions that are the most frequent in the
-        windows headers, you should at least try to use gcc/g++ 2.95.
-      </para>
-      <para>
-        But you are stuck with a compiler that does not support anonymous
-        structs/unions all is not lost. The Wine headers should detect this
-        automatically and define <varname>NONAMELESSUNION</varname> /
-        <varname>NONAMELESSSTRUCT</varname>. Then any anonymous union will
-        be given a name
-        <literal>u</literal> or <literal>u2</literal>, <literal>u3</literal>,
-        etc. to avoid name clashes. You will then have to modify your code to
-        include those names where appropriate.
-      </para>
-      <para>
-        The name that Wine adds to anonymous unions should match that used
-        by the Windows headers. So all you have to do to compile your
-        modified code in Windows is to explicitly define the
-        <varname>NONAMELESSUNION</varname> macro. Note that it would be wise
-        to also explicitly define this macro on in your Unix makefile
-        (<filename>Makefile.in</filename>) to make sure your code will
-        compile even if the compiler does support anonymous unions.
-      </para>
-      <para>
-        Things are not as nice when dealing with anonymous structs.
-        Unfortunately the Windows headers make no provisions for compilers
-        that do not support anonymous structs. So you will need to be more
-        subtle when modifying your code if you still want it to compile in
-        Windows. Here's a way to do it:
-      </para>
-      <programlisting>
-#ifdef WINELIB
-#define ANONS .s
-#else
-#define ANONS
-#endif
-
-. . .
-
-{
-SYSTEM_INFO si;
-GetSystemInfo(&amp;si);
-printf("Processor architecture=%d\n",si ANONS .wProcessorArchitecture);
-}
-      </programlisting>
-      <para>
-        You may put the <literal>#define</literal> directive directly in the
-        source if only few files are impacted. Otherwise it's probably best
-        to put it in one of your project's widely used headers.
-        Fortunately usage of an anonymous struct is much rarer than usage of
-        an anonymous union so these modifications should not be too much work.
-      </para>
-    </sect1>
-
     <sect1 id="unicode">
       <title id="unicode.title">Unicode</title>
 
       <para>
-        Because gcc and glibc use 4 byte unicode characters, the
-        compiler intrinsic <literal>L"foo"</literal> generates unicode
-        strings which cannot be used by Winelib (Win32 code expects 16
-        bit unicode characters). There are 3 workarounds for this:
+	The <literal>wchar_t</literal> type has different standard
+	sizes in Unix (4 bytes) and Windows (2 bytes). Recent versions
+	of gcc (2.9.7 or later) support the 
+	<parameter>-fshort-wchar</parameter> option to set the
+	size of <literal>wchar_t</literal> to the one expected
+	by Windows applications. Pass this option to every file
+	that is built.
       </para>
-
-      <orderedlist>
-        <listitem>
-          <para>
-            Use the latest gcc version (2.9.7 or later), and pass the
-            <parameter>-fshort-wchar</parameter> option to every file
-            that is built.
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            Use the <function>__TEXT("foo")</function> macro, define
-            <constant>WINE_UNICODE_REWRITE</constant> for each file
-            that is built, and add
-            <parameter>-fwritable-strings</parameter> to the compiler
-            command line. You should replace all occurrences of
-            <type>wchar_t</type> with <type>WCHAR</type> also, since
-            <type>wchar_t</type> is the native (32 bit) type. These
-            changes allow Wine to modify the native unicode strings
-            created by the compiler in place, so that they are 16 bit
-            by the time any functions get to use them. This scheme
-            works with older versions of gcc (2.95.x+).
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            Use the compiler default, but don't call any Win32 unicode
-            function without converting the strings first!
-          </para>
-        </listitem>
-      </orderedlist>
 
       <para>
         If you are using Unicode and you want to be able to use
         standard library calls (e.g. <function>wcslen</function>,
-        <function>wsprintf</function>) as well as Win32 unicode calls
-        (API functions ending in W, or having
-        <constant>_UNICODE</constant> defined), then you should use
+        <function>wsprintf</function>), then you must use
         the msvcrt runtime library instead of glibc. The functions in
         glibc will not work correctly with 16 bit strings.
-      </para>
-      <para>
-        If you need a Unicode string even when
-        _<constant>UNICODE</constant> isn't defined, use
-        <function>WINE_UNICODE_TEXT("foo")</function>. This will need
-        to be wrapped in <function>#ifdef WINELIB</function> to
-        prevent breaking your source for windows compiles.
       </para>
       <para>
         To prevent warnings when declaring a single unicode character
@@ -141,27 +42,9 @@ printf("Processor architecture=%d\n",si ANONS .wProcessorArchitecture);
       -->
 
       <para>
-        There are 3 choices available to you regarding which C library
-        to use:
+        There are 2 choices available to you regarding which C library
+        to use: the native glibc C library or the msvcrt C library.
       </para>
-
-      <orderedlist>
-        <listitem>
-          <para>
-            Use the glibc native C library.
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            Use the msvcrt C library.
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            Use a custom mixture of both.
-          </para>
-        </listitem>
-      </orderedlist>
 
       <para>
         Note that under Wine, the crtdll library is implemented using
@@ -169,9 +52,8 @@ printf("Processor architecture=%d\n",si ANONS .wProcessorArchitecture);
       </para>
       <para>
         Using glibc in general has the lowest overhead, but this is
-        really only important for file I/O. Many of the functions in
-        msvcrt are simply resolved to glibc, so in reality options 2
-        and 3 are fairly similar choices.
+        really only important for file I/O, as many of the functions
+        in msvcrt are simply resolved to glibc.
       </para>
       <para>
         To use glibc, you don't need to make changes to your
@@ -204,7 +86,7 @@ printf("Processor architecture=%d\n",si ANONS .wProcessorArchitecture);
       </orderedlist>
       <para>
         In these cases you should use msvcrt to provide your C runtime
-        calls. To do this, add a line:
+        calls.
       </para>
 
       <programlisting>import msvcrt.dll</programlisting>
