@@ -750,7 +750,7 @@ static inline LRESULT CallWindowProcT(WNDPROC proc, HWND hwnd, UINT uMsg,
 } while (0)
 
 #define LISTVIEW_InvalidateList(infoPtr)\
-    LISTVIEW_InvalidateRect(infoPtr, NULL)
+    LISTVIEW_InvalidateRect(infoPtr, &infoPtr->rcList)
 
 static inline BOOL LISTVIEW_GetItemW(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL internal)
 {
@@ -1008,6 +1008,8 @@ static void LISTVIEW_UpdateHeaderSize(LISTVIEW_INFO *infoPtr, INT nNewScrollPos)
 {
     RECT winRect;
     POINT point[2];
+
+    TRACE("nNewScrollPos=%d", nNewScrollPos);
 
     GetWindowRect(infoPtr->hwndHeader, &winRect);
     point[0].x = winRect.left;
@@ -2937,12 +2939,10 @@ static INT LISTVIEW_GetTopIndex(LISTVIEW_INFO *infoPtr)
 static inline BOOL LISTVIEW_FillBkgnd(LISTVIEW_INFO *infoPtr, HDC hdc, const RECT* lprcBox)
 {
     if (!infoPtr->hBkBrush) return FALSE;
-    FillRect(hdc, lprcBox, infoPtr->hBkBrush);
-    TRACE("filling (%d,%d)-(%d,%d) using brush %x\n",
-	  lprcBox->left, lprcBox->top, lprcBox->right, lprcBox->bottom,
-	  infoPtr->hBkBrush);
 
-    return TRUE;
+    TRACE("(hdc=%x, lprcBox=%s, hBkBrush=%x)\n", hdc, debugrect(lprcBox), infoPtr->hBkBrush);
+
+    return FillRect(hdc, lprcBox, infoPtr->hBkBrush);
 }
 
 /***
@@ -4379,143 +4379,76 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
  */
 static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPartial)
 {
-  UINT uView = LISTVIEW_GetType(infoPtr);
-  INT nScrollPosHeight = 0;
-  INT nScrollPosWidth = 0;
-  SCROLLINFO scrollInfo;
-  RECT rcItem;
-  BOOL bRedraw = FALSE;
+    UINT uView = LISTVIEW_GetType(infoPtr);
+    INT nScrollPosHeight = 0;
+    INT nScrollPosWidth = 0;
+    INT nPartialAdjust = 0;
+    INT nHorzDiff = 0;
+    INT nVertDiff = 0;
+    RECT rcItem;
 
-  scrollInfo.cbSize = sizeof(SCROLLINFO);
-  scrollInfo.fMask = SIF_POS;
+    /* FIXME: ALWAYS bPartial == FALSE, FOR NOW! */
 
-  /* ALWAYS bPartial == FALSE, FOR NOW! */
-
-  rcItem.left = LVIR_BOUNDS;
-  if (LISTVIEW_GetItemRect(infoPtr, nItem, &rcItem))
-  {
-    if (rcItem.left < infoPtr->rcList.left)
+    rcItem.left = LVIR_BOUNDS;
+    if (!LISTVIEW_GetItemRect(infoPtr, nItem, &rcItem)) return FALSE;
+    
+    if (rcItem.left < infoPtr->rcList.left || rcItem.right > infoPtr->rcList.right)
     {
-      if (GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo))
-      {
-        /* scroll left */
-        bRedraw = TRUE;
+        /* scroll left/right, but in LVS_REPORT mode */
         if (uView == LVS_LIST)
-        {
-          nScrollPosWidth = infoPtr->nItemWidth;
-          rcItem.left += infoPtr->rcList.left;
-        }
+            nScrollPosWidth = infoPtr->nItemWidth;
         else if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
-        {
-          nScrollPosWidth = 1;
-          rcItem.left += infoPtr->rcList.left;
-        }
+            nScrollPosWidth = 1;
 
-	/* When in LVS_REPORT view, the scroll position should
-	   not be updated. */
-	if (nScrollPosWidth != 0)
+	if (rcItem.left < infoPtr->rcList.left)
 	{
-	  if (rcItem.left % nScrollPosWidth == 0)
-	    scrollInfo.nPos += rcItem.left / nScrollPosWidth;
-	  else
-	    scrollInfo.nPos += rcItem.left / nScrollPosWidth - 1;
-
-	  SetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo, TRUE);
+	    nPartialAdjust = -1;
+	    if (uView != LVS_REPORT) nHorzDiff = rcItem.left + infoPtr->rcList.left;
 	}
-      }
-    }
-    else if (rcItem.right > infoPtr->rcList.right)
-    {
-      if (GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo))
-      {
-        /* scroll right */
-	bRedraw = TRUE;
-        if (uView == LVS_LIST)
-        {
-          rcItem.right -= infoPtr->rcList.right;
-          nScrollPosWidth = infoPtr->nItemWidth;
-        }
-        else if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
-        {
-          rcItem.right -= infoPtr->rcList.right;
-          nScrollPosWidth = 1;
-        }
-
-	/* When in LVS_REPORT view, the scroll position should
-	   not be updated. */
-	if (nScrollPosWidth != 0)
+	else
 	{
-	  if (rcItem.right % nScrollPosWidth == 0)
-	    scrollInfo.nPos += rcItem.right / nScrollPosWidth;
-	  else
-	    scrollInfo.nPos += rcItem.right / nScrollPosWidth + 1;
-
-	  SetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo, TRUE);
+	    nPartialAdjust = 1;
+	    if (uView != LVS_REPORT) nHorzDiff = rcItem.right - infoPtr->rcList.right;
 	}
-      }
     }
 
-    if (rcItem.top < infoPtr->rcList.top)
+    if (rcItem.top < infoPtr->rcList.top || rcItem.bottom > infoPtr->rcList.bottom)
     {
-      /* scroll up */
-      bRedraw = TRUE;
-      if (GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo))
-      {
+	/* scroll up/down, but not in LVS_LIST mode */
         if (uView == LVS_REPORT)
-        {
-          rcItem.top -= infoPtr->rcList.top;
-          nScrollPosHeight = infoPtr->nItemHeight;
-        }
+            nScrollPosHeight = infoPtr->nItemHeight;
         else if ((uView == LVS_ICON) || (uView == LVS_SMALLICON))
-        {
-          nScrollPosHeight = 1;
-          rcItem.top += infoPtr->rcList.top;
-        }
+            nScrollPosHeight = 1;
 
-	if (nScrollPosHeight)
+	if (rcItem.top < infoPtr->rcList.top)
 	{
-	    if (rcItem.top % nScrollPosHeight == 0)
-		scrollInfo.nPos += rcItem.top / nScrollPosHeight;
-	    else
-		scrollInfo.nPos += rcItem.top / nScrollPosHeight - 1;
-
-	    SetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo, TRUE);
+	    nPartialAdjust = -1;
+	    if (uView != LVS_LIST) nVertDiff = rcItem.top + infoPtr->rcList.top;
 	}
-      }
+	else
+	{
+	    nPartialAdjust = 1;
+	    if (uView != LVS_LIST) nVertDiff = rcItem.bottom - infoPtr->rcList.bottom;
+	}
     }
-    else if (rcItem.bottom > infoPtr->rcList.bottom)
+
+    if (!nScrollPosWidth && !nScrollPosHeight) return TRUE;
+
+    if (nScrollPosWidth)
     {
-      /* scroll down */
-      bRedraw = TRUE;
-      if (GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo))
-      {
-        if (uView == LVS_REPORT)
-        {
-          rcItem.bottom -= infoPtr->rcList.bottom;
-          nScrollPosHeight = infoPtr->nItemHeight;
-        }
-        else if ((uView == LVS_ICON) || (uView == LVS_SMALLICON))
-        {
-          nScrollPosHeight = 1;
-          rcItem.bottom -= infoPtr->rcList.bottom;
-        }
-
-	if (nScrollPosHeight)
-	{
-	    if (rcItem.bottom % nScrollPosHeight == 0)
-		scrollInfo.nPos += rcItem.bottom / nScrollPosHeight;
-	    else
-		scrollInfo.nPos += rcItem.bottom / nScrollPosHeight + 1;
-
-	    SetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo, TRUE);
-	}
-      }
+	INT diff = nHorzDiff / nScrollPosWidth;
+	if (rcItem.left % nScrollPosWidth) diff += nPartialAdjust;
+	LISTVIEW_HScroll(infoPtr, SB_INTERNAL, diff, 0);
     }
-  }
 
-  if(bRedraw) LISTVIEW_InvalidateList(infoPtr);
-  
-  return TRUE;
+    if (nScrollPosHeight)
+    {
+	INT diff = nVertDiff / nScrollPosHeight;
+	if (rcItem.top % nScrollPosHeight) diff += nPartialAdjust;
+	LISTVIEW_VScroll(infoPtr, SB_INTERNAL, diff, 0);
+    }
+
+    return TRUE;
 }
 
 /***
