@@ -18,6 +18,7 @@ extern BOOL MSG_InternalGetMessage( MSG *msg, HWND hwnd,
                                       WORD flags, BOOL sendIdle );
 
 /* timer.c */
+extern BOOL TIMER_Init( void );
 extern void TIMER_RemoveWindowTimers( HWND hwnd );
 extern void TIMER_RemoveQueueTimers( HQUEUE16 hqueue );
 extern void TIMER_SwitchQueue( HQUEUE16 hOldQueue, HQUEUE16 hNewQueue );

@@ -210,6 +210,9 @@ BOOL WINAPI MAIN_UserInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserve
     /* Create the DCEs */
     DCE_Init();
 
+    /* Initialize timers */
+    if (!TIMER_Init()) return FALSE;
+    
     /* Initialize window procedures */
     if (!WINPROC_Init()) return FALSE;
 

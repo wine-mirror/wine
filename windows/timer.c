@@ -30,9 +30,25 @@ static TIMER TimersArray[NB_TIMERS];
 
 static TIMER * pNextTimer = NULL;  /* Next timer to expire */
 
+static CRITICAL_SECTION csTimer;
+
   /* Duration from 'time' until expiration of the timer */
 #define EXPIRE_TIME(pTimer,time) \
           (((pTimer)->expires <= (time)) ? 0 : (pTimer)->expires - (time))
+
+
+/***********************************************************************
+ *           TIMER_Init
+ *
+ * Initialize critical section for the timer.
+ */
+BOOL TIMER_Init( void )
+{
+    InitializeCriticalSection( &csTimer );
+    MakeCriticalSectionGlobal( &csTimer );
+
+    return TRUE;
+}
 
 
 /***********************************************************************
@@ -42,6 +58,8 @@ static TIMER * pNextTimer = NULL;  /* Next timer to expire */
  */
 static void TIMER_InsertTimer( TIMER * pTimer )
 {
+    EnterCriticalSection( &csTimer );
+    
     if (!pNextTimer || (pTimer->expires < pNextTimer->expires))
     {
 	pTimer->next = pNextTimer;
@@ -55,6 +73,8 @@ static void TIMER_InsertTimer( TIMER * pTimer )
 	pTimer->next = ptr->next;
 	ptr->next = pTimer;
     }
+    
+    LeaveCriticalSection( &csTimer );
 }
 
 
@@ -67,9 +87,14 @@ static void TIMER_RemoveTimer( TIMER * pTimer )
 {
     TIMER **ppTimer = &pNextTimer;
 
+    EnterCriticalSection( &csTimer );
+    
     while (*ppTimer && (*ppTimer != pTimer)) ppTimer = &(*ppTimer)->next;
     if (*ppTimer) *ppTimer = pTimer->next;
     pTimer->next = NULL;
+    
+    LeaveCriticalSection( &csTimer );
+    
     if (!pTimer->expires) QUEUE_DecTimerCount( pTimer->hq );
 }
 
@@ -95,13 +120,18 @@ static void TIMER_ClearTimer( TIMER * pTimer )
  */
 void TIMER_SwitchQueue( HQUEUE16 old, HQUEUE16 new )
 {
-    TIMER * pT = pNextTimer;
+    TIMER * pT;
 
+    EnterCriticalSection( &csTimer );
+
+    pT = pNextTimer;
     while (pT)
     {
         if (pT->hq == old) pT->hq = new;
         pT = pT->next;
     }
+    
+    LeaveCriticalSection( &csTimer );
 }
 
 
@@ -115,9 +145,13 @@ void TIMER_RemoveWindowTimers( HWND hwnd )
     int i;
     TIMER *pTimer;
 
+    EnterCriticalSection( &csTimer );
+    
     for (i = NB_TIMERS, pTimer = TimersArray; i > 0; i--, pTimer++)
 	if ((pTimer->hwnd == hwnd) && pTimer->timeout)
             TIMER_ClearTimer( pTimer );
+    
+    LeaveCriticalSection( &csTimer );
 }
 
 
@@ -131,9 +165,13 @@ void TIMER_RemoveQueueTimers( HQUEUE16 hqueue )
     int i;
     TIMER *pTimer;
 
+    EnterCriticalSection( &csTimer );
+    
     for (i = NB_TIMERS, pTimer = TimersArray; i > 0; i--, pTimer++)
 	if ((pTimer->hq == hqueue) && pTimer->timeout)
             TIMER_ClearTimer( pTimer );
+    
+    LeaveCriticalSection( &csTimer );
 }
 
 
@@ -157,7 +195,13 @@ static void TIMER_RestartTimer( TIMER * pTimer, DWORD curTime )
  */
 LONG TIMER_GetNextExpiration(void)
 {
-    return pNextTimer ? EXPIRE_TIME( pNextTimer, GetTickCount() ) : -1;
+    LONG retValue;
+    
+    EnterCriticalSection( &csTimer );
+    retValue = pNextTimer ? EXPIRE_TIME( pNextTimer, GetTickCount() ) : -1;
+    LeaveCriticalSection( &csTimer );
+
+    return retValue;
 }
 
 
@@ -168,9 +212,13 @@ LONG TIMER_GetNextExpiration(void)
  */
 void TIMER_ExpireTimers(void)
 {
-    TIMER *pTimer = pNextTimer;
+    TIMER *pTimer;
     DWORD curTime = GetTickCount();
 
+    EnterCriticalSection( &csTimer );
+    
+    pTimer = pNextTimer;
+    
     while (pTimer && !pTimer->expires)  /* Skip already expired timers */
         pTimer = pTimer->next;
     while (pTimer && (pTimer->expires <= curTime))
@@ -179,6 +227,8 @@ void TIMER_ExpireTimers(void)
         QUEUE_IncTimerCount( pTimer->hq );
         pTimer = pTimer->next;
     }
+    
+    LeaveCriticalSection( &csTimer );
 }
 
 
@@ -190,15 +240,24 @@ void TIMER_ExpireTimers(void)
 BOOL TIMER_GetTimerMsg( MSG *msg, HWND hwnd,
                           HQUEUE16 hQueue, BOOL remove )
 {
-    TIMER *pTimer = pNextTimer;
+    TIMER *pTimer;
     DWORD curTime = GetTickCount();
 
+    EnterCriticalSection( &csTimer );
+
+    pTimer = pNextTimer;
+    
     if (hwnd)  /* Find first timer for this window */
 	while (pTimer && (pTimer->hwnd != hwnd)) pTimer = pTimer->next;
     else   /* Find first timer for this queue */
 	while (pTimer && (pTimer->hq != hQueue)) pTimer = pTimer->next;
 
-    if (!pTimer || (pTimer->expires > curTime)) return FALSE; /* No timer */
+    if (!pTimer || (pTimer->expires > curTime))
+    {
+        LeaveCriticalSection( &csTimer );
+        return FALSE; /* No timer */
+    }
+    
     if (remove)	TIMER_RestartTimer( pTimer, curTime );  /* Restart it */
 
     TRACE(timer, "Timer expired: %04x, %04x, %04x, %08lx\n", 
@@ -210,6 +269,9 @@ BOOL TIMER_GetTimerMsg( MSG *msg, HWND hwnd,
     msg->wParam  = pTimer->id;
     msg->lParam  = (LONG)pTimer->proc;
     msg->time    = curTime;
+
+    LeaveCriticalSection( &csTimer );
+    
     return TRUE;
 }
 
@@ -225,6 +287,8 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
 
     if (!timeout) return 0;
 
+    EnterCriticalSection( &csTimer );
+    
       /* Check if there's already a timer with the same hwnd and id */
 
     for (i = 0, pTimer = TimersArray; i < NB_TIMERS; i++, pTimer++)
@@ -240,6 +304,7 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
                                        type, WIN_PROC_TIMER );
             pTimer->expires = GetTickCount() + timeout;
             TIMER_InsertTimer( pTimer );
+            LeaveCriticalSection( &csTimer );
             return id;
         }
 
@@ -248,8 +313,13 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
     for (i = 0, pTimer = TimersArray; i < NB_TIMERS; i++, pTimer++)
 	if (!pTimer->timeout) break;
 
-    if (i >= NB_TIMERS) return 0;
-    if (!sys && (i >= NB_TIMERS-NB_RESERVED_TIMERS)) return 0;
+    if ( (i >= NB_TIMERS) ||
+         (!sys && (i >= NB_TIMERS-NB_RESERVED_TIMERS)) )
+    {
+        LeaveCriticalSection( &csTimer );
+        return 0;
+    }
+    
     if (!hwnd) id = i + 1;
     
       /* Add the timer */
@@ -267,6 +337,9 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
 		   pTimer, pTimer->hwnd, pTimer->msg, pTimer->id,
                    (DWORD)pTimer->proc );
     TIMER_InsertTimer( pTimer );
+    
+    LeaveCriticalSection( &csTimer );
+    
     if (!id) return TRUE;
     else return id;
 }
@@ -280,19 +353,29 @@ static BOOL TIMER_KillTimer( HWND hwnd, UINT id, BOOL sys )
     int i;
     TIMER * pTimer;
     
+    EnterCriticalSection( &csTimer );
+    
     /* Find the timer */
     
     for (i = 0, pTimer = TimersArray; i < NB_TIMERS; i++, pTimer++)
 	if ((pTimer->hwnd == hwnd) && (pTimer->id == id) &&
 	    (pTimer->timeout != 0)) break;
-    if (i >= NB_TIMERS) return FALSE;
-    if (!sys && (i >= NB_TIMERS-NB_RESERVED_TIMERS)) return FALSE;
-    if (!sys && (pTimer->msg != WM_TIMER)) return FALSE;
-    else if (sys && (pTimer->msg != WM_SYSTIMER)) return FALSE;    
+
+    if ( (i >= NB_TIMERS) ||
+         (!sys && (i >= NB_TIMERS-NB_RESERVED_TIMERS)) ||
+         (!sys && (pTimer->msg != WM_TIMER)) ||
+         (sys && (pTimer->msg != WM_SYSTIMER)) )
+    {
+        LeaveCriticalSection( &csTimer );
+        return FALSE;
+    }
 
     /* Delete the timer */
 
     TIMER_ClearTimer( pTimer );
+    
+    LeaveCriticalSection( &csTimer );
+    
     return TRUE;
 }
 
