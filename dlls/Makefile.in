@@ -19,6 +19,7 @@ SUBDIRS = \
 	advapi32 \
 	avicap32 \
 	avifil32 \
+	comcat \
 	comctl32 \
 	commdlg \
 	crtdll \
@@ -111,6 +112,7 @@ all: \
 	avicap32.dll$(DLLEXT) \
 	avifil32.dll$(DLLEXT) \
 	avifile.dll$(DLLEXT) \
+	comcat.dll$(DLLEXT) \
 	comctl32.dll$(DLLEXT) \
 	comdlg32.dll$(DLLEXT) \
 	comm.dll$(DLLEXT) \
@@ -247,6 +249,9 @@ avicap32.dll$(DLLEXT): avicap32/avicap32.dll$(DLLEXT)
 
 avifil32.dll$(DLLEXT) avifile.dll$(DLLEXT): avifil32/avifil32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) avifil32/avifil32.dll$(DLLEXT) $@
+
+comcat.dll$(DLLEXT): comcat/comcat.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) comcat/comcat.dll$(DLLEXT) $@
 
 comctl32.dll$(DLLEXT): comctl32/comctl32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) comctl32/comctl32.dll$(DLLEXT) $@
@@ -520,6 +525,10 @@ avicap32/avicap32.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
 avifil32/avifil32.dll$(DLLEXT): dummy msvfw32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
   ntdll.dll$(DLLEXT)
 	@cd avifil32 && $(MAKE) avifil32.dll$(DLLEXT)
+
+comcat/comcat.dll$(DLLEXT): dummy ole32.dll$(DLLEXT) advapi32.dll$(DLLEXT) \
+  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+	@cd comcat && $(MAKE) comcat.dll$(DLLEXT)
 
 comctl32/comctl32.dll$(DLLEXT): dummy user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
   advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT) winmm.dll$(DLLEXT)

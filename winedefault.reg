@@ -200,6 +200,18 @@
 @=""
 
 #
+# Entries for COMCAT (Component Category Manager)
+#
+
+# The Component Category Manager
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{0002E005-0000-0000-C000-000000000046}]
+@="StdComponentCategoriesMgr"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{0002E005-0000-0000-C000-000000000046}\InProcServer32]
+@="comcat.dll"
+"ThreadingModel"="Both"
+
+#
 # Entries for DirectX. Used by high-performance multimedia applications, like games.
 #
 

@@ -1,0 +1,21 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = comcat.dll
+IMPORTS   = ole32 advapi32 kernel32 ntdll
+EXTRALIBS = $(LIBUUID)
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
+
+C_SRCS = \
+	comcat_main.c \
+	factory.c \
+	manager.c \
+	register.c \
+	information.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

@@ -1,0 +1,68 @@
+/*
+ *	exported dll functions for comcat.dll
+ *
+ * Copyright (C) 2002 John K. Hohm
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#include "comcat.h"
+
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(ole);
+
+DWORD dll_ref = 0;
+
+/***********************************************************************
+ *		DllGetClassObject (COMCAT.@)
+ */
+HRESULT WINAPI COMCAT_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
+{
+    *ppv = NULL;
+    if (IsEqualGUID(rclsid, &CLSID_StdComponentCategoriesMgr)) {
+	return IClassFactory_QueryInterface((LPCLASSFACTORY)&COMCAT_ClassFactory, iid, ppv);
+    }
+    FIXME("\n\tCLSID:\t%s,\n\tIID:\t%s\n",debugstr_guid(rclsid),debugstr_guid(iid));
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+/***********************************************************************
+ *		DllCanUnloadNow (COMCAT.@)
+ */
+HRESULT WINAPI COMCAT_DllCanUnloadNow()
+{
+    return dll_ref != 0 ? S_FALSE : S_OK;
+}
+
+/***********************************************************************
+ *		DllRegisterServer (COMCAT.@)
+ */
+
+HRESULT WINAPI COMCAT_DllRegisterServer()
+{
+    FIXME("(): stub\n");
+    return E_FAIL;
+}
+
+/***********************************************************************
+ *		DllUnregisterServer (COMCAT.@)
+ */
+
+HRESULT WINAPI COMCAT_DllUnregisterServer()
+{
+    FIXME("(): stub\n");
+    return E_FAIL;
+}
