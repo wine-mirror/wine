@@ -68,6 +68,7 @@ typedef struct _DOSEVENT {
 
 static struct _DOSEVENT *pending_event, *current_event;
 static int sig_sent, entered;
+static CONTEXT86 *current_context;
 
 /* from module.c */
 extern int read_pipe, write_pipe;
@@ -267,7 +268,7 @@ void WINAPI DOSVM_QueueEvent( int irq, int priority, void (*relay)(CONTEXT86*,vo
 
 static int DOSVM_Process( int fn, int sig, struct vm86plus_struct*VM86 )
 {
- CONTEXT86 context;
+ CONTEXT86 context, *old_context;
  int ret=0;
 
 #define CP(x,y) context.y = VM86->regs.x
@@ -291,6 +292,9 @@ static int DOSVM_Process( int fn, int sig, struct vm86plus_struct*VM86 )
    SET_PEND(&context);
  }
 #endif
+
+ old_context = current_context;
+ current_context = &context;
 
  switch (VM86_TYPE(fn)) {
   case VM86_SIGNAL:
@@ -342,6 +346,8 @@ static int DOSVM_Process( int fn, int sig, struct vm86plus_struct*VM86 )
    DOSVM_Dump(fn,sig,VM86);
    ret=-1;
  }
+
+ current_context = old_context;
 
 #define CP(x,y) VM86->regs.x = context.y
  CV;
@@ -430,6 +436,7 @@ void WINAPI DOSVM_Wait( int read_pipe, HANDLE hObject )
             got_msg = TRUE;
         }
     }
+chk_console_input:
     if (!got_msg) {
       /* check for console input */
       INPUT_RECORD msg;
@@ -440,6 +447,13 @@ void WINAPI DOSVM_Wait( int read_pipe, HANDLE hObject )
       }
     }
     if (read_pipe == -1) {
+      /* dispatch pending events */
+      if (SHOULD_PEND(pending_event)) {
+        CONTEXT86 context = *current_context;
+        IF_SET(&context);
+        SET_PEND(&context);
+        DOSVM_SendQueuedEvents(&context);
+      }
       if (got_msg) break;
     } else {
       fd_set readfds;
@@ -462,9 +476,8 @@ void WINAPI DOSVM_Wait( int read_pipe, HANDLE hObject )
     if ((read_pipe != -1) && hObject) {
       if (waitret==(WAIT_OBJECT_0+1)) break;
     }
-    if (waitret==WAIT_OBJECT_0) {
-      DOSVM_ProcessConsole();
-    }
+    if (waitret==WAIT_OBJECT_0)
+      goto chk_console_input;
   } while (TRUE);
 }
 
