@@ -52,8 +52,9 @@
 #include "message.h"
 #include "winerror.h"
 
-DECLARE_DEBUG_CHANNEL(cursor)
-DECLARE_DEBUG_CHANNEL(icon)
+DECLARE_DEBUG_CHANNEL(cursor);
+DECLARE_DEBUG_CHANNEL(icon);
+DECLARE_DEBUG_CHANNEL(resource);
 
 static HCURSOR hActiveCursor = 0;  /* Active cursor */
 static INT CURSOR_ShowCount = 0;   /* Cursor display count */
@@ -2015,4 +2016,247 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
     if (hB_off) DeleteObject(hB_off);
     GlobalUnlock16( hIcon );
     return result;
+}
+
+/**********************************************************************
+ *       BITMAP_Load
+ */
+static HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
+{
+    HBITMAP hbitmap = 0;
+    HDC hdc;
+    HRSRC hRsrc;
+    HGLOBAL handle;
+    char *ptr = NULL;
+    BITMAPINFO *info, *fix_info=NULL;
+    HGLOBAL hFix;
+    int size;
+
+    if (!(loadflags & LR_LOADFROMFILE)) {
+      if (!instance)  /* OEM bitmap */
+      {
+          HDC hdc;
+	  DC *dc;
+
+	  if (HIWORD((int)name)) return 0;
+	  hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
+	  dc = DC_GetDCPtr( hdc );
+	  if(dc->funcs->pLoadOEMResource)
+	      hbitmap = dc->funcs->pLoadOEMResource( LOWORD((int)name), 
+						     OEM_BITMAP );
+	  GDI_HEAP_UNLOCK( hdc );
+	  DeleteDC( hdc );
+	  return hbitmap;
+      }
+
+      if (!(hRsrc = FindResourceW( instance, name, RT_BITMAPW ))) return 0;
+      if (!(handle = LoadResource( instance, hRsrc ))) return 0;
+
+      if ((info = (BITMAPINFO *)LockResource( handle )) == NULL) return 0;
+    }
+    else
+    {
+        if (!(ptr = (char *)VIRTUAL_MapFileW( name ))) return 0;
+        info = (BITMAPINFO *)(ptr + sizeof(BITMAPFILEHEADER));
+    }
+    size = DIB_BitmapInfoSize(info, DIB_RGB_COLORS);
+    if ((hFix = GlobalAlloc(0, size))) fix_info=GlobalLock(hFix);
+    if (fix_info) {
+      BYTE pix;
+
+      memcpy(fix_info, info, size);
+      pix = *((LPBYTE)info+DIB_BitmapInfoSize(info, DIB_RGB_COLORS));
+      DIB_FixColorsToLoadflags(fix_info, loadflags, pix);
+      if ((hdc = GetDC(0)) != 0) {
+        char *bits = (char *)info + size;
+	if (loadflags & LR_CREATEDIBSECTION) {
+          DIBSECTION dib;
+	  hbitmap = CreateDIBSection(hdc, fix_info, DIB_RGB_COLORS, NULL, 0, 0);
+          GetObjectA(hbitmap, sizeof(DIBSECTION), &dib);
+          SetDIBits(hdc, hbitmap, 0, dib.dsBm.bmHeight, bits, info, 
+                    DIB_RGB_COLORS);
+        }
+        else {
+          hbitmap = CreateDIBitmap( hdc, &fix_info->bmiHeader, CBM_INIT,
+                                      bits, fix_info, DIB_RGB_COLORS );
+	}
+        ReleaseDC( 0, hdc );
+      }
+      GlobalUnlock(hFix);
+      GlobalFree(hFix);
+    }
+    if (loadflags & LR_LOADFROMFILE) UnmapViewOfFile( ptr );
+    return hbitmap;
+}
+
+
+/***********************************************************************
+ * LoadImage16 [USER.389]
+ *
+ */
+HANDLE16 WINAPI LoadImage16( HINSTANCE16 hinst, LPCSTR name, UINT16 type,
+                             INT16 desiredx, INT16 desiredy, UINT16 loadflags)
+{
+    LPCSTR nameStr = HIWORD(name)? PTR_SEG_TO_LIN(name) : (LPCSTR)name;
+    return LoadImageA( hinst, nameStr, type, 
+                       desiredx, desiredy, loadflags );
+}
+
+/**********************************************************************
+ *	    LoadImageA    (USER32.365)
+ * 
+ * FIXME: implementation lacks some features, see LR_ defines in windows.h
+ */
+
+HANDLE WINAPI LoadImageA( HINSTANCE hinst, LPCSTR name, UINT type,
+                              INT desiredx, INT desiredy, UINT loadflags)
+{
+    HANDLE res;
+    LPWSTR u_name;
+
+    if (HIWORD(name)) u_name = HEAP_strdupAtoW(GetProcessHeap(), 0, name);
+    else u_name=(LPWSTR)name;
+    res = LoadImageW(hinst, u_name, type, desiredx, desiredy, loadflags);
+    if (HIWORD(name)) HeapFree(GetProcessHeap(), 0, u_name);
+    return res;
+}
+
+
+/******************************************************************************
+ * LoadImageW [USER32.366]  Loads an icon, cursor, or bitmap
+ *
+ * PARAMS
+ *    hinst     [I] Handle of instance that contains image
+ *    name      [I] Name of image
+ *    type      [I] Type of image
+ *    desiredx  [I] Desired width
+ *    desiredy  [I] Desired height
+ *    loadflags [I] Load flags
+ *
+ * RETURNS
+ *    Success: Handle to newly loaded image
+ *    Failure: NULL
+ *
+ * FIXME: Implementation lacks some features, see LR_ defines in windows.h
+ */
+HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
+                INT desiredx, INT desiredy, UINT loadflags )
+{
+    if (HIWORD(name)) {
+        TRACE_(resource)("(0x%04x,%p,%d,%d,%d,0x%08x)\n",
+	      hinst,name,type,desiredx,desiredy,loadflags);
+    } else {
+        TRACE_(resource)("(0x%04x,%p,%d,%d,%d,0x%08x)\n",
+	      hinst,name,type,desiredx,desiredy,loadflags);
+    }
+    if (loadflags & LR_DEFAULTSIZE) {
+        if (type == IMAGE_ICON) {
+	    if (!desiredx) desiredx = GetSystemMetrics(SM_CXICON);
+	    if (!desiredy) desiredy = GetSystemMetrics(SM_CYICON);
+	} else if (type == IMAGE_CURSOR) {
+            if (!desiredx) desiredx = GetSystemMetrics(SM_CXCURSOR);
+	    if (!desiredy) desiredy = GetSystemMetrics(SM_CYCURSOR);
+	}
+    }
+    if (loadflags & LR_LOADFROMFILE) loadflags &= ~LR_SHARED;
+    switch (type) {
+    case IMAGE_BITMAP:
+        return BITMAP_Load( hinst, name, loadflags );
+
+    case IMAGE_ICON:
+        {
+	HDC hdc = GetDC(0);
+	UINT palEnts = GetSystemPaletteEntries(hdc, 0, 0, NULL);
+	if (palEnts == 0)
+	    palEnts = 256;
+	ReleaseDC(0, hdc);
+
+	return CURSORICON_Load(hinst, name, desiredx, desiredy,
+				 palEnts, FALSE, loadflags);
+	}
+
+    case IMAGE_CURSOR:
+        return CURSORICON_Load(hinst, name, desiredx, desiredy,
+				 1, TRUE, loadflags);
+    }
+    return 0;
+}
+
+
+/******************************************************************************
+ * CopyImage16 [USER.390]  Creates new image and copies attributes to it
+ *
+ */
+HICON16 WINAPI CopyImage16( HANDLE16 hnd, UINT16 type, INT16 desiredx,
+                             INT16 desiredy, UINT16 flags )
+{
+    return (HICON16)CopyImage((HANDLE)hnd, (UINT)type, (INT)desiredx,
+                                (INT)desiredy, (UINT)flags);
+}
+
+/******************************************************************************
+ * CopyImage32 [USER32.61]  Creates new image and copies attributes to it
+ *
+ * PARAMS
+ *    hnd      [I] Handle to image to copy
+ *    type     [I] Type of image to copy
+ *    desiredx [I] Desired width of new image
+ *    desiredy [I] Desired height of new image
+ *    flags    [I] Copy flags
+ *
+ * RETURNS
+ *    Success: Handle to newly created image
+ *    Failure: NULL
+ *
+ * FIXME: implementation still lacks nearly all features, see LR_*
+ * defines in windows.h
+ */
+HICON WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
+                             INT desiredy, UINT flags )
+{
+    switch (type)
+    {
+	case IMAGE_BITMAP:
+		return BITMAP_CopyBitmap(hnd);
+	case IMAGE_ICON:
+		return CURSORICON_ExtCopy(hnd,type, desiredx, desiredy, flags);
+	case IMAGE_CURSOR:
+		/* Should call CURSORICON_ExtCopy but more testing
+		 * needs to be done before we change this
+		 */
+		return CopyCursor(hnd);
+    }
+    return 0;
+}
+
+
+/******************************************************************************
+ * LoadBitmapW [USER32.358]  Loads bitmap from the executable file
+ *
+ * RETURNS
+ *    Success: Handle to specified bitmap
+ *    Failure: NULL
+ */
+HBITMAP WINAPI LoadBitmapW(
+    HINSTANCE instance, /* [in] Handle to application instance */
+    LPCWSTR name)         /* [in] Address of bitmap resource name */
+{
+    return LoadImageW( instance, name, IMAGE_BITMAP, 0, 0, 0 );
+}
+
+/**********************************************************************
+ *	    LoadBitmapA   (USER32.357)
+ */
+HBITMAP WINAPI LoadBitmapA( HINSTANCE instance, LPCSTR name )
+{
+    return LoadImageA( instance, name, IMAGE_BITMAP, 0, 0, 0 );
+}
+
+/**********************************************************************
+ *	    LoadBitmap16    (USER.175)
+ */
+HBITMAP16 WINAPI LoadBitmap16( HINSTANCE16 instance, SEGPTR name )
+{
+    LPCSTR nameStr = HIWORD(name)? PTR_SEG_TO_LIN(name) : (LPCSTR)name;
+    return LoadBitmapA( instance, nameStr );
 }
