@@ -3,7 +3,7 @@
 
 #include "winbase.h"     /* for CRITICAL_SECTION */
 #include "mmsystem.h"
-#include "d3d.h"			/*FIXME: Need to break out d3dtypes.h */
+#include "d3dtypes.h"
 
 #ifdef __cplusplus
 extern "C" {
