@@ -16,7 +16,7 @@ C_SRCS = \
 	ldt.c \
 	loader.c
 
-all: libwine.$(LIBEXT)
+all: $(MODULE) $(MODULE:.dll=.a)
 
 @MAKE_RULES@
 
@@ -26,8 +26,11 @@ libwine.so.$(SOVERSION): $(OBJS) Makefile.in
 libwine.so: libwine.so.$(SOVERSION)
 	$(RM) $@ && $(LN_S) libwine.so.$(SOVERSION) $@
 
-libwine.dll libwine.a: $(OBJS) Makefile.in
-	$(DLLWRAP) --export-all --implib libwine.a -o libwine.dll $(OBJS) $(EXTRALIBS)
+libwine.a: wine.def
+	$(DLLTOOL) -l $@ -d $(SRCDIR)/wine.def
+
+libwine.dll: $(OBJS) wine.def Makefile.in
+	$(DLLWRAP) --def $(SRCDIR)/wine.def -o $@ $(OBJS) $(EXTRALIBS)
 
 .PHONY: install-lib-so install-lib-dll install-dev-so install-dev-dll
 
