@@ -3600,4 +3600,14 @@ typedef struct _RTL_CRITICAL_SECTION {
 
 typedef VOID (NTAPI * WAITORTIMERCALLBACKFUNC) (PVOID, BOOLEAN );
 
+typedef struct _IO_COUNTERS {
+    ULONGLONG   ReadOperationCount;
+    ULONGLONG   WriteOperationCount;
+    ULONGLONG   OtherOperationCount;
+    ULONGLONG   ReadTransferCount;
+    ULONGLONG   WriteTransferCount;
+    ULONGLONG   OtherTransferCount;
+} IO_COUNTERS;
+typedef IO_COUNTERS *PIO_COUNTERS;
+
 #endif  /* __WINE_WINNT_H */

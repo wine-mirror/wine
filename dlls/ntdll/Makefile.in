@@ -51,6 +51,7 @@ C_SRCS = \
 	nt.c \
 	om.c \
 	path.c \
+	process.c \
 	reg.c \
 	resource.c \
 	rtl.c \

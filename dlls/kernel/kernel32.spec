@@ -452,7 +452,7 @@
 @ stdcall GetProcessFlags(long)
 @ stdcall GetProcessHeap()
 @ stdcall GetProcessHeaps(long ptr)
-@ stub GetProcessIoCounters
+@ stdcall GetProcessIoCounters(long ptr)
 @ stdcall GetProcessShutdownParameters(ptr ptr)
 @ stdcall GetProcessTimes(long ptr ptr ptr ptr)
 @ stdcall GetProcessVersion(long)

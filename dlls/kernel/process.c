@@ -2024,6 +2024,20 @@ BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPCVOID buffer, SIZ
     return !status;
 }
 
+/******************************************************************
+ *		GetProcessIoCounters (KERNEL32.@)
+ *
+ *
+ */
+BOOL WINAPI GetProcessIoCounters(HANDLE hProcess, PIO_COUNTERS ioc)
+{
+    NTSTATUS    status;
+
+    status = NtQueryInformationProcess(hProcess, ProcessIoCounters, 
+                                       ioc, sizeof(*ioc), NULL);
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
+}
 
 /***********************************************************************
  * ProcessIdToSessionId   (KERNEL32.@)
