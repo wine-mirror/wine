@@ -484,9 +484,14 @@ DWORD    WINAPI ImmGetCandidateListCountA(HIMC, LPDWORD);
 DWORD    WINAPI ImmGetCandidateListCountW(HIMC, LPDWORD);
 #define  ImmGetCandidateListCount WINELIB_NAME_AW(ImmGetCandidateListCount)
 BOOL   WINAPI ImmGetCandidateWindow(HIMC, DWORD, LPCANDIDATEFORM);
+#ifndef NOGDI
 BOOL   WINAPI ImmGetCompositionFontA(HIMC, LPLOGFONTA);
 BOOL   WINAPI ImmGetCompositionFontW(HIMC, LPLOGFONTW);
 #define  ImmGetCompositionFont WINELIB_NAME_AW(ImmGetCompositionFont)
+BOOL   WINAPI ImmSetCompositionFontA(HIMC, LPLOGFONTA);
+BOOL   WINAPI ImmSetCompositionFontW(HIMC, LPLOGFONTW);
+#define  ImmSetCompositionFont WINELIB_NAME_AW(ImmSetCompositionFont)
+#endif
 LONG     WINAPI ImmGetCompositionStringA(HIMC, DWORD, LPVOID, DWORD);
 LONG     WINAPI ImmGetCompositionStringW(HIMC, DWORD, LPVOID, DWORD);
 #define  ImmGetCompositionString WINELIB_NAME_AW(ImmGetCompositionString)
@@ -526,9 +531,6 @@ BOOL   WINAPI ImmRegisterWordW(HKL, LPCWSTR, DWORD, LPCWSTR);
 #define  ImmRegisterWord WINELIB_NAME_AW(ImmRegisterWord)
 BOOL   WINAPI ImmReleaseContext(HWND, HIMC);
 BOOL   WINAPI ImmSetCandidateWindow(HIMC, LPCANDIDATEFORM);
-BOOL   WINAPI ImmSetCompositionFontA(HIMC, LPLOGFONTA);
-BOOL   WINAPI ImmSetCompositionFontW(HIMC, LPLOGFONTW);
-#define  ImmSetCompositionFont WINELIB_NAME_AW(ImmSetCompositionFont)
 BOOL   WINAPI ImmSetCompositionStringA(HIMC, DWORD, LPCVOID, DWORD, LPCVOID, DWORD);
 BOOL   WINAPI ImmSetCompositionStringW(HIMC, DWORD, LPCVOID, DWORD, LPCVOID, DWORD);
 #define  ImmSetCompositionString WINELIB_NAME_AW(ImmSetCompositionString)
