@@ -3134,7 +3134,7 @@ TREEVIEW_Collapse(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
     if (!(wineItem->state & TVIS_EXPANDED))
 	return FALSE;
 
-    if (bUser)
+    if (bUser || !(wineItem->state & TVIS_EXPANDEDONCE))
 	TREEVIEW_SendExpanding(infoPtr, wineItem, action);
 
     if (wineItem->firstChild == NULL)
@@ -3142,7 +3142,7 @@ TREEVIEW_Collapse(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 
     wineItem->state &= ~TVIS_EXPANDED;
 
-    if (bUser)
+    if (bUser || !(wineItem->state & TVIS_EXPANDEDONCE))
 	TREEVIEW_SendExpanded(infoPtr, wineItem, action);
 
     bSetSelection = (infoPtr->selectedItem != NULL
@@ -3153,9 +3153,11 @@ TREEVIEW_Collapse(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 
     if (bRemoveChildren)
     {
+        INT old_cChildren = wineItem->cChildren;
 	TRACE("TVE_COLLAPSERESET\n");
 	wineItem->state &= ~TVIS_EXPANDEDONCE;
 	TREEVIEW_RemoveAllChildren(infoPtr, wineItem);
+        wineItem->cChildren = old_cChildren;
     }
 
     if (wineItem->firstChild)
