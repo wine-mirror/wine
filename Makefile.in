@@ -39,6 +39,7 @@ LIBRARIES = \
 
 # Libraries symlinks to create at the top level
 LIBSYMLINKS = \
+	libuuid.a \
 	libwine.$(LIBEXT) \
 	libwine_tsx11.$(LIBEXT) \
 	libwine_unicode.$(LIBEXT)
@@ -102,6 +103,9 @@ libwine_tsx11.$(LIBEXT): tsx11/libwine_tsx11.$(LIBEXT)
 
 libwine_unicode.$(LIBEXT): unicode/libwine_unicode.$(LIBEXT)
 	$(RM) $@ && $(LN_S) unicode/libwine_unicode.$(LIBEXT) $@
+
+libuuid.a: ole/libuuid.a
+	$(RM) $@ && $(LN_S) ole/libuuid.a $@
 
 # Dependencies between directories
 
