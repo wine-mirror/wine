@@ -477,34 +477,6 @@ void WINAPI Copy16( LPVOID src, LPVOID dst, WORD size )
     memcpy( dst, src, size );
 }
 
-
-/***********************************************************************
- *           RtlFillMemory   (KERNEL32.441)
- */
-VOID WINAPI RtlFillMemory( LPVOID ptr, UINT len, UINT fill )
-{
-    memset( ptr, fill, len );
-}
-
-
-/***********************************************************************
- *           RtlMoveMemory   (KERNEL32.442)
- */
-VOID WINAPI RtlMoveMemory( LPVOID dst, LPCVOID src, UINT len )
-{
-    memmove( dst, src, len );
-}
-
-
-/***********************************************************************
- *           RtlZeroMemory   (KERNEL32.444)
- */
-VOID WINAPI RtlZeroMemory( LPVOID ptr, UINT len )
-{
-    memset( ptr, 0, len );
-}
-
-
 /***********************************************************************
  *           AnsiToOem16   (KEYBOARD.5)
  */

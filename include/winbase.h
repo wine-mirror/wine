@@ -1439,14 +1439,6 @@ BOOL        WINAPI ReportEventW(HANDLE,WORD,WORD,DWORD,PSID,WORD,DWORD,LPCWSTR *
 #define     ReportEvent WINELIB_NAME_AW(ReportEvent)
 BOOL      WINAPI ResetEvent(HANDLE);
 DWORD       WINAPI ResumeThread(HANDLE);
-VOID        WINAPI RtlFillMemory(LPVOID,UINT,UINT);
-#define     FillMemory RtlFillMemory
-VOID        WINAPI RtlMoveMemory(LPVOID,LPCVOID,UINT);
-#define     MoveMemory RtlMoveMemory
-VOID        WINAPI RtlZeroMemory(LPVOID,UINT);
-#define     ZeroMemory RtlZeroMemory
-VOID        WINAPI RtlCopyMemory(LPVOID,const VOID*, DWORD);
-#define     CopyMemory RtlCopyMemory
 BOOL        WINAPI RevertToSelf(void);
 DWORD       WINAPI SearchPathA(LPCSTR,LPCSTR,LPCSTR,DWORD,LPSTR,LPSTR*);
 DWORD       WINAPI SearchPathW(LPCWSTR,LPCWSTR,LPCWSTR,DWORD,LPWSTR,LPWSTR*);
@@ -1765,6 +1757,11 @@ INT       WINAPI lstrcmpiA(LPCSTR,LPCSTR);
 INT       WINAPI lstrcmpiW(LPCWSTR,LPCWSTR);
 #define     lstrcmpi WINELIB_NAME_AW(lstrcmpi)
 
+/* compatibility macros */
+#define     FillMemory RtlFillMemory
+#define     MoveMemory RtlMoveMemory
+#define     ZeroMemory RtlZeroMemory
+#define     CopyMemory RtlCopyMemory
 
 /* the following may be macros when compiling Wine */
 #ifndef SetLastError

@@ -503,6 +503,53 @@ NTSTATUS WINAPI RtlClearBits(DWORD x1,DWORD x2,DWORD x3)
 }
 
 /******************************************************************************
+ *  RtlCopyMemory   [NTDLL] 
+ * 
+ */
+#undef RtlCopyMemory
+VOID WINAPI RtlCopyMemory( VOID *Destination, CONST VOID *Source, SIZE_T Length )
+{
+    memcpy(Destination, Source, Length);
+}	
+
+/******************************************************************************
+ *  RtlMoveMemory   [NTDLL] 
+ */
+#undef RtlMoveMemory
+VOID WINAPI RtlMoveMemory( VOID *Destination, CONST VOID *Source, SIZE_T Length )
+{
+    memmove(Destination, Source, Length);
+}
+
+/******************************************************************************
+ *  RtlFillMemory   [NTDLL] 
+ */
+#undef RtlFillMemory
+VOID WINAPI RtlFillMemory( VOID *Destination, SIZE_T Length, BYTE Fill )
+{
+    memset(Destination, Fill, Length);
+}
+
+/******************************************************************************
+ *  RtlZeroMemory   [NTDLL] 
+ */
+#undef RtlZeroMemory
+VOID WINAPI RtlZeroMemory( VOID *Destination, SIZE_T Length )
+{
+    memset(Destination, 0, Length);
+}
+
+/******************************************************************************
+ *  RtlCompareMemory   [NTDLL] 
+ */
+SIZE_T WINAPI RtlCompareMemory( const VOID *Source1, const VOID *Source2, SIZE_T Length)
+{
+    int i;
+    for(i=0; (i<Length) && (((LPBYTE)Source1)[i]==((LPBYTE)Source2)[i]); i++);
+    return i;
+}
+
+/******************************************************************************
  *  RtlAssert                           [NTDLL]
  *
  * Not implemented in non-debug versions.

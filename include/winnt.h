@@ -1625,6 +1625,12 @@ typedef enum tagSID_NAME_USE {
 #define DACL_SECURITY_INFORMATION   0x00000004
 #define SACL_SECURITY_INFORMATION   0x00000008
 
+#define RtlEqualMemory(Destination, Source, Length) (!memcmp((Destination),(Source),(Length)))
+#define RtlMoveMemory(Destination, Source, Length) memmove((Destination),(Source),(Length))
+#define RtlCopyMemory(Destination, Source, Length) memcpy((Destination),(Source),(Length))
+#define RtlFillMemory(Destination, Length, Fill) memset((Destination),(Fill),(Length))
+#define RtlZeroMemory(Destination, Length) memset((Destination),0,(Length))
+
 #include "poppack.h"
 
 #endif  /* __WINE_WINNT_H */

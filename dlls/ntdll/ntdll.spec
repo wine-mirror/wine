@@ -291,7 +291,7 @@ type	win32
 @ stub RtlClearAllBits
 @ stdcall RtlClearBits(long long long) RtlClearBits
 @ stub RtlCompactHeap
-@ stub RtlCompareMemory
+@ stdcall RtlCompareMemory(ptr ptr long) RtlCompareMemory
 @ stub RtlCompareMemoryUlong
 @ stub RtlCompareString
 @ stdcall RtlCompareUnicodeString (ptr ptr long) RtlCompareUnicodeString
