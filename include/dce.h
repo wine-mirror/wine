@@ -28,8 +28,6 @@
 #define DCX_DCEBUSY		0x00001000
 #define DCX_DCEDIRTY		0x00002000
 #define DCX_WINDOWPAINT		0x00020000
-#define DCX_KEEPCLIPRGN		0x00040000
-#define DCX_NOCLIPCHILDREN      0x00080000
 
 typedef enum
 {
@@ -53,7 +51,6 @@ typedef struct tagDCE
 extern DCE*  DCE_AllocDCE( HWND hWnd, DCE_TYPE type );
 extern DCE*  DCE_FreeDCE( DCE *dce );
 extern void  DCE_FreeWindowDCE( HWND );
-extern INT  DCE_ExcludeRgn( HDC, HWND, HRGN );
 extern BOOL DCE_InvalidateDCE( HWND, const RECT* );
 
 #endif  /* __WINE_DCE_H */

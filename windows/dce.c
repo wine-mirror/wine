@@ -27,7 +27,6 @@
  * DCX_DCEEMPTY    - dce is uninitialized
  * DCX_DCEBUSY     - dce is in use
  * DCX_DCEDIRTY    - ReleaseDC() should wipe instead of caching
- * DCX_KEEPCLIPRGN - ReleaseDC() should not delete the clipping region
  * DCX_WINDOWPAINT - BeginPaint() is in effect
  */
 
@@ -143,8 +142,7 @@ DCE* DCE_FreeDCE( DCE *dce )
     SetDCHook(dce->hDC, NULL, 0L);
 
     DeleteDC( dce->hDC );
-    if( dce->hClipRgn && !(dce->DCXflags & DCX_KEEPCLIPRGN) )
-	DeleteObject(dce->hClipRgn);
+    if (dce->hClipRgn) DeleteObject(dce->hClipRgn);
     HeapFree( GetProcessHeap(), 0, dce );
 
     return ret;
@@ -216,12 +214,7 @@ static void DCE_DeleteClipRgn( DCE* dce )
 {
     dce->DCXflags &= ~(DCX_EXCLUDERGN | DCX_INTERSECTRGN | DCX_WINDOWPAINT);
 
-    if( dce->DCXflags & DCX_KEEPCLIPRGN )
-	dce->DCXflags &= ~DCX_KEEPCLIPRGN;
-    else
-	if( dce->hClipRgn > (HRGN)1 )
-	    DeleteObject( dce->hClipRgn );
-
+    if (dce->hClipRgn) DeleteObject( dce->hClipRgn );
     dce->hClipRgn = 0;
 
     /* make it dirty so that the vis rgn gets recomputed next time */
@@ -333,34 +326,6 @@ BOOL DCE_InvalidateDCE(HWND hwnd, const RECT* pRectUpdate)
 	} /* dce list */
     }
     return bRet;
-}
-
-
-/***********************************************************************
- *           DCE_ExcludeRgn
- *
- *  Translate given region from the wnd client to the DC coordinates
- *  and add it to the clipping region.
- */
-INT DCE_ExcludeRgn( HDC hDC, HWND hwnd, HRGN hRgn )
-{
-  POINT  pt = {0, 0};
-  DCE     *dce = firstDCE;
-
-  while (dce && (dce->hDC != hDC)) dce = dce->next;
-  if (!dce) return ERROR;
-
-  MapWindowPoints( hwnd, dce->hwndCurrent, &pt, 1);
-  if( dce->DCXflags & DCX_WINDOW )
-  {
-      WND *wnd = WIN_FindWndPtr(dce->hwndCurrent);
-      pt.x += wnd->rectClient.left - wnd->rectWindow.left;
-      pt.y += wnd->rectClient.top - wnd->rectWindow.top;
-      WIN_ReleaseWndPtr(wnd);
-  }
-  OffsetRgn(hRgn, pt.x, pt.y);
-
-  return ExtSelectClipRgn( hDC, hRgn, RGN_DIFF );
 }
 
 
@@ -514,7 +479,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     dce->hClipRgn = hrgnClip;
     dce->DCXflags = flags & (DCX_PARENTCLIP | DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
                              DCX_CACHE | DCX_WINDOW | DCX_WINDOWPAINT |
-                             DCX_KEEPCLIPRGN | DCX_INTERSECTRGN | DCX_EXCLUDERGN);
+                             DCX_INTERSECTRGN | DCX_EXCLUDERGN);
     dce->DCXflags |= DCX_DCEBUSY;
     dce->DCXflags &= ~DCX_DCEDIRTY;
     hdc = dce->hDC;
@@ -540,9 +505,8 @@ END:
  *	Success: Handle to the device context
  *	Failure: NULL.
  */
-HDC WINAPI GetDC(
-	     HWND hwnd /* [in] handle of window - may be NULL */
-) {
+HDC WINAPI GetDC( HWND hwnd )
+{
     if (!hwnd)
         return GetDCEx( 0, 0, DCX_CACHE | DCX_WINDOW );
     return GetDCEx( hwnd, 0, DCX_USESTYLE );
@@ -567,10 +531,8 @@ HDC WINAPI GetWindowDC( HWND hwnd )
  *	Success: Non-zero. Resources used by hdc are released.
  *	Failure: 0.
  */
-INT WINAPI ReleaseDC(
-             HWND hwnd, /* [in] Handle of window - ignored */
-             HDC hdc   /* [in] Handle of device context */
-) {
+INT WINAPI ReleaseDC( HWND hwnd, HDC hdc )
+{
     DCE * dce;
     INT nRet = 0;
 
