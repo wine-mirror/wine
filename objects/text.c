@@ -54,6 +54,7 @@ BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
 {
     DC * dc = DC_GetDCUpdate( hdc );
     LPWSTR p;
+    UINT codepage = CP_ACP; /* FIXME: get codepage of font charset */
     BOOL ret = FALSE;
     LPINT lpDxW = NULL;
 
@@ -61,7 +62,7 @@ BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
 
     if (dc->funcs->pExtTextOut)
     {
-        UINT wlen = MultiByteToWideChar(dc->w.codepage,0,str,count,NULL,0);
+        UINT wlen = MultiByteToWideChar(codepage,0,str,count,NULL,0);
         if (lpDx)
         {
             int i = 0, j = 0;
@@ -69,7 +70,7 @@ BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
             lpDxW = (LPINT)HeapAlloc( GetProcessHeap(), 0, wlen*sizeof(INT));
             while(i < count)
             {
-                if(IsDBCSLeadByteEx(dc->w.codepage, str[i]))
+                if(IsDBCSLeadByteEx(codepage, str[i]))
                 {
                     lpDxW[j++] = lpDx[i] + lpDx[i+1];
                     i = i + 2;
@@ -83,7 +84,7 @@ BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
         }
         if ((p = HeapAlloc( GetProcessHeap(), 0, wlen * sizeof(WCHAR) )))
         {
-            wlen = MultiByteToWideChar(dc->w.codepage,0,str,count,p,wlen);
+            wlen = MultiByteToWideChar(codepage,0,str,count,p,wlen);
             ret = dc->funcs->pExtTextOut( dc, x, y, flags, lprect, p, wlen, lpDxW );
             HeapFree( GetProcessHeap(), 0, p );
         }

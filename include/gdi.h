@@ -134,7 +134,6 @@ typedef struct
     XFORM         xformWorld2Vport;  /* World-to-viewport transformation */
     XFORM         xformVport2World;  /* Inverse of the above transformation */
     BOOL          vport2WorldValid;  /* Is xformVport2World valid? */
-    WORD          codepage;          /* codepage of the selected font */
 } WIN_DC_INFO;
 
 
