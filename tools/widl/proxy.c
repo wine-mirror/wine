@@ -35,6 +35,8 @@
 #include "parser.h"
 #include "header.h"
 
+static FILE* proxy;
+
 /* FIXME: support generation of stubless proxies */
 
 static void write_stubdesc(void)
@@ -218,34 +220,19 @@ static int write_stub_methods(type_t *iface)
   return i;
 }
 
-typedef struct _if_list if_list;
-struct _if_list {
-  type_t *iface;
-  DECL_LINK(if_list)
-};
-
-if_list *if_first;
-
-void write_proxy(type_t *iface)
+static void write_proxy(type_t *iface)
 {
   int midx = -1, stubs;
   func_t *cur = iface->funcs;
-  if_list *if_cur;
 
   if (!cur) return;
-  if (header_only) return;
+  if (!do_everything) return;
 
   while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
 
   /* FIXME: check for [oleautomation], shouldn't generate proxies/stubs if specified */
 
   init_proxy();
-
-  if_cur = xmalloc(sizeof(if_list));
-  if_cur->iface = iface;
-  INIT_LINK(if_cur);
-  LINK(if_cur, if_first);
-  if_first = if_cur;
 
   fprintf(proxy, "/*****************************************************************************\n");
   fprintf(proxy, " * %s interface\n", iface->name);
@@ -296,15 +283,24 @@ void write_proxy(type_t *iface)
   fprintf(proxy, "\n");
 }
 
-void finish_proxy(void)
+void write_proxies(ifref_t *ifaces)
 {
-  if_list *lcur = if_first;
-  if_list *cur;
+  ifref_t *lcur = ifaces;
+  ifref_t *cur;
   char *file_id = proxy_token;
   int c;
 
   if (!lcur) return;
   while (NEXT_LINK(lcur)) lcur = NEXT_LINK(lcur);
+
+  cur = lcur;
+  while (cur) {
+    if (is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
+      write_proxy(cur->iface);
+    cur = PREV_LINK(cur);
+  }
+
+  if (!proxy) return;
 
   fprintf(proxy, "const CInterfaceProxyVtbl* _%s_ProxyVtblList[] = {\n", file_id);
   cur = lcur;

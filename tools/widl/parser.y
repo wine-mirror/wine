@@ -35,6 +35,8 @@
 #include "utils.h"
 #include "parser.h"
 #include "header.h"
+#include "proxy.h"
+#include "typelib.h"
 
 #if defined(YYBYACC)
 	/* Berkeley yacc (byacc) doesn't seem to know about these */
@@ -75,8 +77,10 @@ static typeref_t *make_tref(char *name, type_t *ref);
 static typeref_t *uniq_tref(typeref_t *ref);
 static type_t *type_ref(typeref_t *ref);
 static void set_type(var_t *v, typeref_t *ref, expr_t *arr);
+static ifref_t *make_ifref(type_t *iface);
 static var_t *make_var(char *name);
 static func_t *make_func(var_t *def, var_t *args);
+static class_t *make_class(char *name);
 
 static type_t *reg_type(type_t *type, char *name, int t);
 static type_t *reg_types(type_t *type, var_t *names, int t);
@@ -105,6 +109,8 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 	typeref_t *tref;
 	var_t *var;
 	func_t *func;
+	ifref_t *ifref;
+	class_t *clas;
 	char *str;
 	UUID *uuid;
 	unsigned int num;
@@ -123,28 +129,35 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tCONST tCONTEXTHANDLE tCONTEXTHANDLENOSERIALIZE
 %token tCONTEXTHANDLESERIALIZE tCONTROL tCPPQUOTE
 %token tDEFAULT
-%token tDOUBLE
-%token tENUM tERRORSTATUST
+%token tDISPINTERFACE
+%token tDLLNAME tDOUBLE tDUAL
+%token tENTRY tENUM tERRORSTATUST
 %token tEXTERN
 %token tFLOAT
 %token tHANDLET
-%token tHYPER
-%token tIDEMPOTENT
+%token tHELPSTRING
+%token tHYPER tID tIDEMPOTENT
 %token tIIDIS
 %token tIMPORT tIMPORTLIB
 %token tIN tINCLUDE tINLINE
 %token tINT tINT64
 %token tINTERFACE
-%token tLENGTHIS
+%token tLENGTHIS tLIBRARY
 %token tLOCAL
 %token tLONG
+%token tMETHODS
+%token tMODULE
 %token tOBJECT tODL tOLEAUTOMATION
 %token tOUT
 %token tPOINTERDEFAULT
-%token tREF
+%token tPROPERTIES
+%token tPUBLIC
+%token tREADONLY tREF
+%token tRETVAL
 %token tSHORT
 %token tSIGNED
 %token tSIZEIS tSIZEOF
+%token tSOURCE
 %token tSTDCALL
 %token tSTRING tSTRUCT
 %token tSWITCH tSWITCHIS tSWITCHTYPE
@@ -164,15 +177,22 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %type <attr> m_attributes attributes attrib_list attribute
 %type <expr> m_exprs /* exprs expr_list */ m_expr expr expr_list_const expr_const
 %type <expr> array array_list
-%type <type> inherit interface interfacehdr interfacedef lib_statements
+%type <type> inherit interface interfacehdr interfacedef interfacedec
+%type <type> dispinterface dispinterfacehdr dispinterfacedef
+%type <type> module modulehdr moduledef
 %type <type> base_type int_std
 %type <type> enumdef structdef typedef uniondef
+%type <ifref> gbl_statements coclass_ints coclass_int
 %type <tref> type
 %type <var> m_args no_args args arg
 %type <var> fields field s_field cases case enums enum_list enum constdef externdef
 %type <var> m_ident t_ident ident p_ident pident pident_list
+%type <var> dispint_props
 %type <func> funcdef int_statements
+%type <func> dispint_meths
+%type <clas> coclass coclasshdr coclassdef
 %type <num> pointer_type version
+%type <str> libraryhdr
 
 %left ','
 %left '|'
@@ -187,19 +207,29 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 
 %%
 
-input:	  lib_statements			{ /* FIXME */ }
+input:	  gbl_statements			{ write_proxies($1); }
 	;
 
-lib_statements:					{ $$ = NULL; }
-	| lib_statements interface ';'		{ if (!parse_only) write_forward($2); }
-	| lib_statements interfacedef		{ LINK($2, $1); $$ = $2; }
-/*	| lib_statements librarydef (when implemented) */
-	| lib_statements statement
+gbl_statements:					{ $$ = NULL; }
+	| gbl_statements interfacedec		{ $$ = $1; }
+	| gbl_statements interfacedef		{ $$ = make_ifref($2); LINK($$, $1); }
+	| gbl_statements coclassdef		{ $$ = $1; add_coclass($2); }
+	| gbl_statements moduledef		{ $$ = $1; add_module($2); }
+	| gbl_statements librarydef		{ $$ = $1; }
+	| gbl_statements statement		{ $$ = $1; }
+	;
+
+imp_statements:					{}
+	| imp_statements interfacedec		{ add_interface($2); }
+	| imp_statements interfacedef		{ add_interface($2); }
+	| imp_statements coclassdef		{ add_coclass($2); }
+	| imp_statements moduledef		{ add_module($2); }
+	| imp_statements statement		{}
 	;
 
 int_statements:					{ $$ = NULL; }
-	| int_statements funcdef ';'		{ LINK($2, $1); $$ = $2; }
-	| int_statements statement
+	| int_statements funcdef ';'		{ $$ = $2; LINK($$, $1); }
+	| int_statements statement		{ $$ = $1; }
 	;
 
 statement: ';'					{}
@@ -208,19 +238,24 @@ statement: ';'					{}
 	| enumdef ';'				{ if (!parse_only) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n\n"); } }
 	| externdef ';'				{ if (!parse_only) { write_externdef($1); } }
 	| import				{}
-/*	| interface ';'				{} */
-/*	| interfacedef				{} */
 	| structdef ';'				{ if (!parse_only) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n\n"); } }
 	| typedef ';'				{}
 	| uniondef ';'				{ if (!parse_only) { write_type(header, $1, NULL, NULL); fprintf(header, ";\n\n"); } }
 	;
 
-cppquote:	tCPPQUOTE '(' aSTRING ')'	{ if (!parse_only) fprintf(header, "%s\n", $3); }
+cppquote: tCPPQUOTE '(' aSTRING ')'		{ if (!parse_only) fprintf(header, "%s\n", $3); }
 	;
-import_start:	tIMPORT aSTRING ';'		{ assert(yychar == YYEMPTY);
+import_start: tIMPORT aSTRING ';'		{ assert(yychar == YYEMPTY);
 						  if (!do_import($2)) yychar = aEOF; }
 	;
-import:		import_start input aEOF		{}
+import:   import_start imp_statements aEOF	{}
+	;
+
+libraryhdr: tLIBRARY aIDENTIFIER		{ $$ = $2; }
+	;
+library_start: attributes libraryhdr '{'	{ start_typelib($2, $1); }
+	;
+librarydef: library_start imp_statements '}'	{ end_typelib(); }
 	;
 
 m_args:						{ $$ = NULL; }
@@ -287,16 +322,27 @@ attribute:
 	| tCONTEXTHANDLENOSERIALIZE		{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); /* RPC_CONTEXT_HANDLE_DONT_SERIALIZE */ }
 	| tCONTEXTHANDLESERIALIZE		{ $$ = make_attrv(ATTR_CONTEXTHANDLE, 0); /* RPC_CONTEXT_HANDLE_SERIALIZE */ }
 	| tDEFAULT				{ $$ = make_attr(ATTR_DEFAULT); }
+	| tDLLNAME '(' aSTRING ')'		{ $$ = make_attrp(ATTR_DLLNAME, $3); }
+	| tDUAL					{ $$ = make_attr(ATTR_DUAL); }
+	| tENTRY '(' aSTRING ')'		{ $$ = make_attrp(ATTR_ENTRY_STRING, $3); }
+	| tENTRY '(' expr_const ')'		{ $$ = make_attrp(ATTR_ENTRY_ORDINAL, $3); }
+	| tHELPSTRING '(' aSTRING ')'		{ $$ = make_attrp(ATTR_HELPSTRING, $3); }
+	| tID '(' expr_const ')'		{ $$ = make_attrp(ATTR_ID, $3); }
 	| tIDEMPOTENT				{ $$ = make_attr(ATTR_IDEMPOTENT); }
 	| tIIDIS '(' ident ')'			{ $$ = make_attrp(ATTR_IIDIS, $3); }
 	| tIN					{ $$ = make_attr(ATTR_IN); }
 	| tLENGTHIS '(' m_exprs ')'		{ $$ = make_attrp(ATTR_LENGTHIS, $3); }
 	| tLOCAL				{ $$ = make_attr(ATTR_LOCAL); }
 	| tOBJECT				{ $$ = make_attr(ATTR_OBJECT); }
+	| tODL					{ $$ = make_attr(ATTR_ODL); }
 	| tOLEAUTOMATION			{ $$ = make_attr(ATTR_OLEAUTOMATION); }
 	| tOUT					{ $$ = make_attr(ATTR_OUT); }
 	| tPOINTERDEFAULT '(' pointer_type ')'	{ $$ = make_attrv(ATTR_POINTERDEFAULT, $3); }
+	| tPUBLIC				{ $$ = make_attr(ATTR_PUBLIC); }
+	| tREADONLY				{ $$ = make_attr(ATTR_READONLY); }
+	| tRETVAL				{ $$ = make_attr(ATTR_RETVAL); }
 	| tSIZEIS '(' m_exprs ')'		{ $$ = make_attrp(ATTR_SIZEIS, $3); }
+	| tSOURCE				{ $$ = make_attr(ATTR_SOURCE); }
 	| tSTRING				{ $$ = make_attr(ATTR_STRING); }
 	| tSWITCHIS '(' expr ')'		{ $$ = make_attrp(ATTR_SWITCHIS, $3); }
 	| tSWITCHTYPE '(' type ')'		{ $$ = make_attrp(ATTR_SWITCHTYPE, type_ref($3)); }
@@ -446,6 +492,8 @@ t_ident:					{ $$ = NULL; }
 
 ident:	  aIDENTIFIER				{ $$ = make_var($1); }
 /* some "reserved words" used in attributes are also used as field names in some MS IDL files */
+	| tID					{ $$ = make_var($<str>1); }
+	| tRETVAL				{ $$ = make_var($<str>1); }
 	| tVERSION				{ $$ = make_var($<str>1); }
 	;
 
@@ -483,6 +531,67 @@ int_std:  tINT					{ $$ = make_type(RPC_FC_LONG, &std_int); } /* win32 only */
 	| tCHAR					{ $$ = make_type(RPC_FC_CHAR, NULL); }
 	;
 
+coclass:  tCOCLASS aIDENTIFIER			{ $$ = make_class($2); }
+	| tCOCLASS aKNOWNTYPE			{ $$ = make_class($2); }
+	;
+
+coclasshdr: attributes coclass			{ $$ = $2;
+						  $$->attrs = $1;
+						}
+	;
+
+coclassdef: coclasshdr '{' coclass_ints '}'	{ $$ = $1;
+						  $$->ifaces = $3;
+						}
+	;
+
+coclass_ints:					{ $$ = NULL; }
+	| coclass_ints coclass_int		{ LINK($2, $1); $$ = $2; }
+	;
+
+coclass_int:
+	  m_attributes interfacedec		{ $$ = make_ifref($2); $$->attrs = $1; }
+	;
+
+dispinterface: tDISPINTERFACE aIDENTIFIER	{ $$ = get_type(0, $2, 0); }
+	|      tDISPINTERFACE aKNOWNTYPE	{ $$ = get_type(0, $2, 0); }
+	;
+
+dispinterfacehdr: attributes dispinterface	{ $$ = $2;
+						  if ($$->defined) yyerror("multiple definition error\n");
+						  $$->attrs = $1;
+						/*  $$->attrs = make_attr(ATTR_DISPINTERFACE); */
+						/*  LINK($$->attrs, $1); */
+						  $$->ref = find_type("IDispatch", 0);
+						  if (!$$->ref) yyerror("IDispatch is undefined\n");
+						  $$->defined = TRUE;
+						  if (!parse_only) write_forward($$);
+						}
+	;
+
+dispint_props: tPROPERTIES ':'			{ $$ = NULL; }
+	| dispint_props s_field ';'		{ LINK($2, $1); $$ = $2; }
+	;
+
+dispint_meths: tMETHODS ':'			{ $$ = NULL; }
+	| dispint_meths funcdef ';'		{ LINK($2, $1); $$ = $2; }
+	;
+
+dispinterfacedef: dispinterfacehdr '{'
+	  dispint_props
+	  dispint_meths
+	  '}'					{ $$ = $1;
+						  $$->fields = $3;
+						  $$->funcs = $4;
+						  if (!parse_only) write_interface($$);
+						}
+/* FIXME: not sure how to handle this yet
+	| dispinterfacehdr '{' interface '}'	{ $$ = $1;
+						  if (!parse_only) write_interface($$);
+						}
+*/
+	;
+
 inherit:					{ $$ = NULL; }
 	| ':' aKNOWNTYPE			{ $$ = find_type2($2, 0); }
 	;
@@ -513,6 +622,27 @@ interfacedef: interfacehdr inherit
 						  if (!$$->ref) yyerror("base class %s not found in import\n", $3);
 						  $$->funcs = $6;
 						  if (!parse_only) write_interface($$);
+						}
+	| dispinterfacedef			{ $$ = $1; }
+	;
+
+interfacedec:
+	  interface ';'				{ $$ = $1; if (!parse_only) write_forward($$); }
+	| dispinterface ';'			{ $$ = $1; if (!parse_only) write_forward($$); }
+	;
+
+module:   tMODULE aIDENTIFIER			{ $$ = make_type(0, NULL); $$->name = $2; }
+	| tMODULE aKNOWNTYPE			{ $$ = make_type(0, NULL); $$->name = $2; }
+	;
+
+modulehdr: attributes module			{ $$ = $2;
+						  $$->attrs = $1;
+						}
+	;
+
+moduledef: modulehdr '{' int_statements '}'	{ $$ = $1;
+						  $$->funcs = $3;
+						  /* FIXME: if (!parse_only) write_module($$); */
 						}
 	;
 
@@ -810,6 +940,15 @@ static void set_type(var_t *v, typeref_t *ref, expr_t *arr)
   v->array = arr;
 }
 
+static ifref_t *make_ifref(type_t *iface)
+{
+  ifref_t *l = xmalloc(sizeof(ifref_t));
+  l->iface = iface;
+  l->attrs = NULL;
+  INIT_LINK(l);
+  return l;
+}
+
 static var_t *make_var(char *name)
 {
   var_t *v = xmalloc(sizeof(var_t));
@@ -834,6 +973,16 @@ static func_t *make_func(var_t *def, var_t *args)
   f->idx = -1;
   INIT_LINK(f);
   return f;
+}
+
+static class_t *make_class(char *name)
+{
+  class_t *c = xmalloc(sizeof(class_t));
+  c->name = name;
+  c->attrs = NULL;
+  c->ifaces = NULL;
+  INIT_LINK(c);
+  return c;
 }
 
 #define HASHMAX 64

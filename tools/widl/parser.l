@@ -207,8 +207,13 @@ static struct keyword {
 /* ... */
 	{"default",			tDEFAULT},
 /* ... */
-	{"double",			tDOUBLE},
+	{"dispinterface",		tDISPINTERFACE},
 /* ... */
+	{"dllname",			tDLLNAME},
+	{"double",			tDOUBLE},
+	{"dual",			tDUAL},
+/* ... */
+	{"entry",			tENTRY},
 	{"enum",			tENUM},
 	{"error_status_t",		tERRORSTATUST},
 /* ... */
@@ -218,8 +223,10 @@ static struct keyword {
 /* ... */
 	{"handle_t",			tHANDLET},
 /* ... */
-	{"hyper",			tHYPER},
+	{"helpstring",			tHELPSTRING},
 /* ... */
+	{"hyper",			tHYPER},
+	{"id",				tID},
 	{"idempotent",			tIDEMPOTENT},
 /* ... */
 	{"iid_is",			tIIDIS},
@@ -234,9 +241,14 @@ static struct keyword {
 	{"interface",			tINTERFACE},
 /* ... */
 	{"length_is",			tLENGTHIS},
+	{"library",			tLIBRARY},
 /* ... */
 	{"local",			tLOCAL},
 	{"long",			tLONG},
+/* ... */
+	{"methods",			tMETHODS},
+/* ... */
+	{"module",			tMODULE},
 /* ... */
 	{"object",			tOBJECT},
 	{"odl",				tODL},
@@ -246,13 +258,22 @@ static struct keyword {
 /* ... */
 	{"pointer_default",		tPOINTERDEFAULT},
 /* ... */
+	{"properties",			tPROPERTIES},
+/* ... */
+	{"public",			tPUBLIC},
+/* ... */
+	{"readonly",			tREADONLY},
 	{"ref",				tREF},
+/* ... */
+	{"retval",			tRETVAL},
 /* ... */
 	{"short",			tSHORT},
 	{"signed",			tSIGNED},
 	{"size_is",			tSIZEIS},
 	{"sizeof",			tSIZEOF},
 /* ... */
+	{"source",			tSOURCE},
+/* ... */	
 	{"string",			tSTRING},
 	{"struct",			tSTRUCT},
 	{"switch",			tSWITCH},

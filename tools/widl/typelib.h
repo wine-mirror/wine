@@ -1,7 +1,7 @@
 /*
  * IDL Compiler
  *
- * Copyright 2002 Ove Kaaven
+ * Copyright 2004 Ove Kaaven
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,41 +18,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WIDL_WIDL_H
-#define __WIDL_WIDL_H
+#ifndef __WIDL_TYPELIB_H
+#define __WIDL_TYPELIB_H
 
-#include "widltypes.h"
-
-#include <time.h>
-
-#define WIDL_FULLVERSION "0.1"
-
-extern int debuglevel;
-#define DEBUGLEVEL_NONE		0x0000
-#define DEBUGLEVEL_CHAT		0x0001
-#define DEBUGLEVEL_DUMP		0x0002
-#define DEBUGLEVEL_TRACE	0x0004
-#define DEBUGLEVEL_PPMSG	0x0008
-#define DEBUGLEVEL_PPLEX	0x0010
-#define DEBUGLEVEL_PPTRACE	0x0020
-
-extern int win32;
-extern int pedantic;
-extern int do_everything;
-extern int header_only;
-extern int typelib_only;
-extern int compat_icom;
-
-extern char *input_name;
-extern char *header_name;
-extern char *typelib_name;
-extern char *proxy_name;
-extern char *proxy_token;
-extern time_t now;
-
-extern int line_number;
-extern int char_number;
-
-extern FILE* header;
+extern int in_typelib;
+extern void start_typelib(char *name, attr_t *attrs);
+extern void end_typelib(void);
+extern void add_interface(type_t *iface);
+extern void add_coclass(class_t *cls);
+extern void add_module(type_t *module);
 
 #endif

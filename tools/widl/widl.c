@@ -50,8 +50,6 @@
 /* P = proxy filename */
 /* s = server stub only? */
 /* S = server stub filename */
-/* t = typelib only? */
-/* T = typelib filename */
 /* u = UUID file only? */
 /* U = UUID filename */
 /* w = select win16/win32 output (?) */
@@ -66,6 +64,8 @@ static char usage[] =
 "   -H file     Name of header file (default is infile.h)\n"
 "   -I path     Set include search dir to path (multiple -I allowed)\n"
 "   -N          Do not preprocess input\n"
+"   -t          Generate typelib only\n"
+"   -T file     Name of typelib file (default is infile.tlb)\n"
 "   -V          Print version and exit\n"
 "   -W          Enable pedantic warnings\n"
 "Debug level 'n' is a bitmask with following meaning:\n"
@@ -84,14 +84,17 @@ int win32 = 1;
 int debuglevel = DEBUGLEVEL_NONE;
 
 int pedantic = 0;
+int do_everything = 1;
 int preprocess_only = 0;
 int header_only = 0;
+int typelib_only = 0;
 int no_preprocess = 0;
 int compat_icom = 0;
 
 char *input_name;
 char *header_name;
 char *header_token;
+char *typelib_name;
 char *proxy_name;
 char *proxy_token;
 char *temp_name;
@@ -135,7 +138,7 @@ int main(int argc,char *argv[])
 
   now = time(NULL);
 
-  while((optc = getopt(argc, argv, "bd:D:EhH:I:NVW")) != EOF) {
+  while((optc = getopt(argc, argv, "bd:D:EhH:I:NtT:VW")) != EOF) {
     switch(optc) {
     case 'b':
       compat_icom = 1;
@@ -147,9 +150,11 @@ int main(int argc,char *argv[])
       wpp_add_cmdline_define(optarg);
       break;
     case 'E':
+      do_everything = 0;
       preprocess_only = 1;
       break;
     case 'h':
+      do_everything = 0;
       header_only = 1;
       break;
     case 'H':
@@ -160,6 +165,13 @@ int main(int argc,char *argv[])
       break;
     case 'N':
       no_preprocess = 1;
+      break;
+    case 't':
+      do_everything = 0;
+      typelib_only = 1;
+      break;
+    case 'T':
+      typelib_name = strdup(optarg);
       break;
     case 'V':
       printf(version_string);
@@ -197,6 +209,11 @@ int main(int argc,char *argv[])
   if (!header_name) {
     header_name = dup_basename(input_name, ".idl");
     strcat(header_name, ".h");
+  }
+
+  if (!typelib_name) {
+    typelib_name = dup_basename(input_name, ".idl");
+    strcat(typelib_name, ".tlb");
   }
 
   if (!proxy_name) {
@@ -249,7 +266,6 @@ int main(int argc,char *argv[])
 
   ret = yyparse();
 
-  finish_proxy();
   fprintf(header, "#ifdef __cplusplus\n");
   fprintf(header, "}\n");
   fprintf(header, "#endif\n");

@@ -21,7 +21,6 @@
 #ifndef __WIDL_PROXY_H
 #define __WIDL_PROXY_H
 
-extern void write_proxy(type_t *iface);
-extern void finish_proxy(void);
+extern void write_proxies(ifref_t *ifaces);
 
 #endif

@@ -34,7 +34,6 @@
 #include "utils.h"
 #include "parser.h"
 #include "header.h"
-#include "proxy.h"
 
 static int indentation = 0;
 
@@ -409,7 +408,11 @@ void write_externdef(var_t *v)
 
 int is_object(attr_t *a)
 {
-  return is_attr(a, ATTR_OBJECT);
+  while (a) {
+    if (a->type == ATTR_OBJECT || a->type == ATTR_ODL) return 1;
+    a = NEXT_LINK(a);
+  }
+  return 0;
 }
 
 int is_local(attr_t *a)
@@ -772,11 +775,7 @@ void write_com_interface(type_t *iface)
       fprintf(header, "\n\n");
   }
   write_method_proto(iface);
-  fprintf(header, "\n");
-
-  if (!is_local(iface->attrs))
-    write_proxy(iface);
-  fprintf(header,"#endif  /* __%s_INTERFACE_DEFINED__ */\n\n", iface->name);
+  fprintf(header,"\n#endif  /* __%s_INTERFACE_DEFINED__ */\n\n", iface->name);
 }
 
 void write_rpc_interface(type_t *iface)

@@ -38,6 +38,8 @@ typedef struct _type_t type_t;
 typedef struct _typeref_t typeref_t;
 typedef struct _var_t var_t;
 typedef struct _func_t func_t;
+typedef struct _ifref_t ifref_t;
+typedef struct _class_t class_t;
 
 #define DECL_LINK(type) \
   type *l_next; \
@@ -56,17 +58,28 @@ enum attr_type
     ATTR_CASE,
     ATTR_CONTEXTHANDLE,
     ATTR_DEFAULT,
+    ATTR_DLLNAME,
+    ATTR_DUAL,
+    ATTR_ENTRY_STRING,
+    ATTR_ENTRY_ORDINAL,
+    ATTR_HELPSTRING,
+    ATTR_ID,
     ATTR_IDEMPOTENT,
     ATTR_IIDIS,
     ATTR_IN,
     ATTR_LENGTHIS,
     ATTR_LOCAL,
     ATTR_OBJECT,
+    ATTR_ODL,
     ATTR_OLEAUTOMATION,
     ATTR_OUT,
     ATTR_POINTERDEFAULT,
     ATTR_POINTERTYPE,
+    ATTR_PUBLIC,
+    ATTR_READONLY,
+    ATTR_RETVAL,
     ATTR_SIZEIS,
+    ATTR_SOURCE,
     ATTR_STRING,
     ATTR_SWITCHIS,
     ATTR_SWITCHTYPE,
@@ -165,6 +178,23 @@ struct _func_t {
 
   /* parser-internal */
   DECL_LINK(func_t)
+};
+
+struct _ifref_t {
+  type_t *iface;
+  attr_t *attrs;
+
+  /* parser-internal */
+  DECL_LINK(ifref_t)
+};
+
+struct _class_t {
+  char *name;
+  attr_t *attrs;
+  ifref_t *ifaces;
+
+  /* parser-internal */
+  DECL_LINK(class_t)
 };
 
 #endif

@@ -12,6 +12,7 @@ MODULE   = none
 C_SRCS = \
 	header.c \
 	proxy.c \
+	typelib.c \
 	utils.c \
 	widl.c
 
