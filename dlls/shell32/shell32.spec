@@ -159,7 +159,7 @@
  169 stdcall SHDestroyPropSheetExtArray(long)
  170 stdcall SHReplaceFromPropSheetExtArray(long long long long)
  171 stdcall PathCleanupSpec(ptr ptr) PathCleanupSpecAW
- 172 stub SHCreateLinks
+ 172 stdcall SHCreateLinks(long str ptr long ptr)
  173 stdcall SHValidateUNC(long long long)
  174 stdcall SHCreateShellFolderViewEx (ptr ptr)
  175 stdcall SHGetSpecialFolderPath(long long long long) SHGetSpecialFolderPathAW

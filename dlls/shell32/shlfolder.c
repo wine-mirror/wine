@@ -446,3 +446,15 @@ HRESULT SHELL32_CompareIDs (IShellFolder * iface, LPARAM lParam, LPCITEMIDLIST p
     ILFree (firstpidl);
     return nReturn;
 }
+
+/***********************************************************************
+ *  SHCreateLinks
+ *
+ *   Undocumented.
+ */
+HRESULT WINAPI SHCreateLinks( HWND hWnd, LPCSTR lpszDir, LPDATAOBJECT lpDataObject,
+                              UINT uFlags, LPITEMIDLIST *lppidlLinks)
+{
+    FIXME("%p %s %p %08x %p\n",hWnd,lpszDir,lpDataObject,uFlags,lppidlLinks);
+    return E_NOTIMPL;
+}
