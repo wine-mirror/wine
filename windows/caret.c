@@ -3,6 +3,7 @@
  *
  * Copyright 1993 David Metcalfe
  * Copyright 1996 Frans van Dorsselaer
+ * Copyright 2001 Eric Pouech
  */
 
 #include "windef.h"
@@ -25,7 +26,7 @@ typedef struct
     INT      y;
     INT      width;
     INT      height;
-    HBRUSH   hBrush;
+    HBITMAP  hBmp;
     UINT     timeout;
     UINT     timerid;
 } CARET;
@@ -62,7 +63,7 @@ void CARET_GetRect(LPRECT lprc)
 static void CARET_DisplayCaret( DISPLAY_CARET status )
 {
     HDC hdc;
-    HBRUSH hPrevBrush;
+    HDC hCompDC;
 
     if (Caret.on && (status == CARET_ON)) return;
     if (!Caret.on && (status == CARET_OFF)) return;
@@ -72,9 +73,16 @@ static void CARET_DisplayCaret( DISPLAY_CARET status )
     Caret.on = !Caret.on;
     /* do not use DCX_CACHE here, for x,y,width,height are in logical units */
     if (!(hdc = GetDCEx( Caret.hwnd, 0, DCX_USESTYLE /*| DCX_CACHE*/ ))) return;
-    hPrevBrush = SelectObject( hdc, Caret.hBrush );
-    PatBlt( hdc, Caret.x, Caret.y, Caret.width, Caret.height, PATINVERT );
-    SelectObject( hdc, hPrevBrush );
+    hCompDC = CreateCompatibleDC(hdc);
+    if (hCompDC)
+    {
+	HBITMAP	hPrevBmp;
+
+	hPrevBmp = SelectObject(hCompDC, Caret.hBmp);
+	BitBlt(hdc, Caret.x, Caret.y, Caret.width, Caret.height, hCompDC, 0, 0, SRCINVERT);
+	SelectObject(hCompDC, hPrevBmp);
+	DeleteDC(hCompDC);
+    }
     ReleaseDC( Caret.hwnd, hdc );
 }
 
@@ -147,16 +155,49 @@ BOOL WINAPI CreateCaret( HWND hwnd, HBITMAP bitmap,
         if (!GetObjectA( bitmap, sizeof(bmp), &bmp )) return FALSE;
         Caret.width = bmp.bmWidth;
         Caret.height = bmp.bmHeight;
-        /* FIXME: we should make a copy of the bitmap instead of a brush */
-        Caret.hBrush = CreatePatternBrush( bitmap );
+	bmp.bmBits = NULL;
+	Caret.hBmp = CreateBitmapIndirect(&bmp);
+ 
+	if (Caret.hBmp) 
+	{
+	    /* copy the bitmap */
+	    LPBYTE buf = HeapAlloc(GetProcessHeap(), 0, bmp.bmWidthBytes * bmp.bmHeight);
+	    GetBitmapBits(bitmap, bmp.bmWidthBytes * bmp.bmHeight, buf);
+	    SetBitmapBits(Caret.hBmp, bmp.bmWidthBytes * bmp.bmHeight, buf);
+	    HeapFree(GetProcessHeap(), 0, buf);
+	}
     }
     else
     {
+	HDC	hdc;
+
         Caret.width = width ? width : GetSystemMetrics(SM_CXBORDER);
         Caret.height = height ? height : GetSystemMetrics(SM_CYBORDER);
-        Caret.hBrush = CreateSolidBrush(bitmap ?
-                                          GetSysColor(COLOR_GRAYTEXT) :
-                                          GetSysColor(COLOR_WINDOW) );
+	Caret.hBmp = 0;
+
+	/* create the uniform bitmap on the fly */
+	hdc = GetDC(hwnd);
+	if (hdc)
+	{
+	    HDC		hMemDC = CreateCompatibleDC(hdc);
+
+	    if (hMemDC)
+	    {
+		RECT	r;
+		r.left = r.top = 0;
+		r.right = Caret.width;
+		r.bottom = Caret.height;
+		    
+		if ((Caret.hBmp = CreateCompatibleBitmap(hMemDC, Caret.width, Caret.height)))
+		{
+		    HBITMAP hPrevBmp = SelectObject(hMemDC, Caret.hBmp);
+		    FillRect(hMemDC, &r, (bitmap ? COLOR_GRAYTEXT : COLOR_WINDOW) + 1);
+		    SelectObject(hMemDC, hPrevBmp);
+		}
+		DeleteDC(hMemDC);
+	    }
+	    ReleaseDC(hwnd, hdc);
+	}
     }
 
     Caret.hwnd = WIN_GetFullHandle( hwnd );
@@ -191,7 +232,7 @@ BOOL WINAPI DestroyCaret(void)
 
     CARET_KillTimer();
     CARET_DisplayCaret(CARET_OFF);
-    DeleteObject( Caret.hBrush );
+    DeleteObject( Caret.hBmp );
     Caret.hwnd = 0;
     return TRUE;
 }
