@@ -311,7 +311,7 @@ MMRESULT32 WINAPI acmDriverPriority32(
 
   for(dwPriorityCounter = 1; ; dwPriorityCounter++)
   {
-    snprintf(szSubKey, 17, "Priorty%ld", dwPriorityCounter);
+    wsnprintf32A(szSubKey, 17, "Priorty%ld", dwPriorityCounter);
     lError = RegQueryValue32A(hPriorityKey, szSubKey, szBuffer, &lBufferLength);
     if(lError != ERROR_SUCCESS)
       break;
