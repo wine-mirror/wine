@@ -75,6 +75,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(cdrom);
 #  define IDE7_MAJOR 89
 # endif
 
+# ifdef CDROM_SEND_PACKET
 /* structure for CDROM_PACKET_COMMAND ioctl */
 /* not all Linux versions have all the fields, so we define the
  * structure ourselves to make sure */
@@ -90,6 +91,7 @@ struct linux_cdrom_generic_command
     int                    timeout;
     void                  *reserved[1];
 };
+# endif  /* CDROM_SEND_PACKET */
 
 #endif  /* linux */
 
@@ -116,10 +118,12 @@ static int CDROM_GetIdeInterface(int dev, int* iface, int* device)
 #if defined(linux)
     {
         struct stat st;
+#ifdef SG_EMULATED_HOST
         if (ioctl(dev, SG_EMULATED_HOST) != -1) {
             FIXME("not implemented for true scsi drives\n");
             return 0;
         }
+#endif
         if ( fstat(dev, &st) == -1 || ! S_ISBLK(st.st_mode)) {
             FIXME("cdrom not a block device!!!\n");
             return 0;
@@ -134,7 +138,8 @@ static int CDROM_GetIdeInterface(int dev, int* iface, int* device)
             case IDE6_MAJOR: *iface = 6; break;
             case IDE7_MAJOR: *iface = 7; break;
             default:
-                             FIXME("CD-ROM device with major ID %d not supported\n", major(st.st_rdev));
+                FIXME("CD-ROM device with major ID %d not supported\n", major(st.st_rdev));
+                break;
         }
         *device = (minor(st.st_rdev) == 63 ? 1 : 0);
         return 1;
@@ -1066,7 +1071,7 @@ static DWORD CDROM_RawRead(int dev, const RAW_READ_INFO* raw, void* buffer, DWOR
 static DWORD CDROM_ScsiPassThroughDirect(int dev, PSCSI_PASS_THROUGH_DIRECT pPacket)
 {
     int ret = STATUS_NOT_SUPPORTED;
-#if defined(linux)
+#if defined(linux) && defined(CDROM_SEND_PACKET)
     struct linux_cdrom_generic_command cmd;
     struct request_sense sense;
     int io;
@@ -1129,7 +1134,7 @@ static DWORD CDROM_ScsiPassThroughDirect(int dev, PSCSI_PASS_THROUGH_DIRECT pPac
 static DWORD CDROM_ScsiPassThrough(int dev, PSCSI_PASS_THROUGH pPacket)
 {
     int ret = STATUS_NOT_SUPPORTED;
-#if defined(linux)
+#if defined(linux) && defined(CDROM_SEND_PACKET)
     struct linux_cdrom_generic_command cmd;
     struct request_sense sense;
     int io;
