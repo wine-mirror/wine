@@ -63,6 +63,7 @@ typedef struct tagLINEDEF {
 	INT net_length;	/* netto length of a line in visible characters */
 	LINE_END ending;
 	INT width;		/* width of the line in pixels */
+	INT index; /* line index into the buffer */
 	struct tagLINEDEF *next;
 } LINEDEF;
 
@@ -172,7 +173,7 @@ static inline void	EDIT_WM_Cut(WND *wnd, EDITSTATE *es);
 /*
  *	Helper functions only valid for one type of control
  */
-static void	EDIT_BuildLineDefs_ML(WND *wnd, EDITSTATE *es);
+static void	EDIT_BuildLineDefs_ML(WND *wnd, EDITSTATE *es, INT iStart, INT iEnd, INT delta, HRGN hrgn);
 static void	EDIT_CalcLineWidth_SL(WND *wnd, EDITSTATE *es);
 static LPWSTR	EDIT_GetPasswordPointer_SL(EDITSTATE *es);
 static void	EDIT_MoveDown_ML(WND *wnd, EDITSTATE *es, BOOL extend);
@@ -263,6 +264,7 @@ static LRESULT	EDIT_WM_SysKeyDown(WND *wnd, EDITSTATE *es, INT key, DWORD key_da
 static void	EDIT_WM_Timer(WND *wnd, EDITSTATE *es);
 static LRESULT	EDIT_WM_VScroll(WND *wnd, EDITSTATE *es, INT action, INT pos);
 static void EDIT_UpdateText(WND *wnd, LPRECT rc, BOOL bErase);
+static void EDIT_UpdateTextRegion(WND *wnd, HRGN hrgn, BOOL bErase);
 
 LRESULT WINAPI EditWndProcA(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI EditWndProcW(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -1132,100 +1134,250 @@ LRESULT WINAPI EditWndProcA(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
  *	a soft return '\r\r\n' or a hard return '\r\n'
  *
  */
-static void EDIT_BuildLineDefs_ML(WND *wnd, EDITSTATE *es)
+static void EDIT_BuildLineDefs_ML(WND *wnd, EDITSTATE *es, INT istart, INT iend, INT delta, HRGN hrgn)
 {
 	HDC dc;
 	HFONT old_font = 0;
-	LPWSTR start, cp;
+	LPWSTR current_position, cp;
 	INT fw;
-	LINEDEF *current_def;
-	LINEDEF **previous_next;
+	LINEDEF *current_line;
+	LINEDEF *previous_line;
+	LINEDEF *start_line;
+	INT line_index = 0, nstart_line = 0, nstart_index = 0;
+	INT line_count = es->line_count;
+	INT orig_net_length;
+	RECT rc;
 
-	current_def = es->first_line_def;
-	do {
-		LINEDEF *next_def = current_def->next;
-		HeapFree(GetProcessHeap(), 0, current_def);
-		current_def = next_def;
-	} while (current_def);
-	es->line_count = 0;
-	es->text_width = 0;
+	if (istart == iend && delta == 0)
+		return;
 
 	dc = GetDC(wnd->hwndSelf);
 	if (es->font)
 		old_font = SelectObject(dc, es->font);
 
-	fw = es->format_rect.right - es->format_rect.left;
-	start = es->text;
-	previous_next = &es->first_line_def;
+	previous_line = NULL;
+	current_line = es->first_line_def;
+
+	/* Find starting line. istart must lie inside an existing line or
+	 * at the end of buffer */
 	do {
-		current_def = HeapAlloc(GetProcessHeap(), 0, sizeof(LINEDEF));
-		current_def->next = NULL;
-		cp = start;
+		if (istart < current_line->index + current_line->length || 
+				current_line->ending == END_0)
+			break;
+		
+		previous_line = current_line;	
+		current_line = current_line->next;
+		line_index++;
+	} while (current_line);
+
+	if (!current_line) /* Error occurred start is not inside previous buffer */
+	{
+		FIXME(" modification occurred outside buffer\n");
+		return;
+	}
+
+	/* Remember start of modifications in order to calculate update region */
+	nstart_line = line_index;
+	nstart_index = current_line->index;
+
+	/* We must start to reformat from the previous line since the modifications
+	 * may have caused the line to wrap upwards. */
+	if (!(es->style & ES_AUTOHSCROLL) && line_index > 0)
+	{
+		line_index--;
+		current_line = previous_line;
+	}
+	start_line = current_line;
+
+	fw = es->format_rect.right - es->format_rect.left;
+	current_position = es->text + current_line->index;
+	do {
+		if (current_line != start_line)
+		{
+			if (!current_line || current_line->index + delta > current_position - es->text)
+			{
+				/* The buffer has been expanded, create a new line and 
+				   insert it into the link list */
+				LINEDEF *new_line = HeapAlloc(GetProcessHeap(), 0, sizeof(LINEDEF));
+				new_line->next = previous_line->next;
+				previous_line->next = new_line;
+				current_line = new_line;
+				es->line_count++;
+			}
+			else if (current_line->index + delta < current_position - es->text)
+			{
+				/* The previous line merged with this line so we delete this extra entry */
+				previous_line->next = current_line->next;
+				HeapFree(GetProcessHeap(), 0, current_line);
+				current_line = previous_line->next;
+				es->line_count--;
+				continue;
+			}
+			else /* current_line->index + delta == current_position */
+			{
+				if (current_position - es->text > iend)
+					break; /* We reached end of line modifications */
+				/* else recalulate this line */
+			}
+		}
+
+		current_line->index = current_position - es->text;
+		orig_net_length = current_line->net_length;
+
+		/* Find end of line */
+		cp = current_position;
 		while (*cp) {
 			if ((*cp == '\r') && (*(cp + 1) == '\n'))
 				break;
 			cp++;
 		}
+
+		/* Mark type of line termination */
 		if (!(*cp)) {
-			current_def->ending = END_0;
-			current_def->net_length = strlenW(start);
-		} else if ((cp > start) && (*(cp - 1) == '\r')) {
-			current_def->ending = END_SOFT;
-			current_def->net_length = cp - start - 1;
+			current_line->ending = END_0;
+			current_line->net_length = strlenW(current_position);
+		} else if ((cp > current_position) && (*(cp - 1) == '\r')) {
+			current_line->ending = END_SOFT;
+			current_line->net_length = cp - current_position - 1;
 		} else {
-			current_def->ending = END_HARD;
-			current_def->net_length = cp - start;
+			current_line->ending = END_HARD;
+			current_line->net_length = cp - current_position;
 		}
-		current_def->width = (INT)LOWORD(GetTabbedTextExtentW(dc,
-					start, current_def->net_length,
+
+		/* Calculate line width */
+		current_line->width = (INT)LOWORD(GetTabbedTextExtentW(dc,
+					current_position, current_line->net_length,
 					es->tabs_count, es->tabs));
+
 		/* FIXME: check here for lines that are too wide even in AUTOHSCROLL (> 32767 ???) */
-		if ((!(es->style & ES_AUTOHSCROLL)) && (current_def->width > fw)) {
+		if ((!(es->style & ES_AUTOHSCROLL)) && (current_line->width > fw)) {
 			INT next = 0;
 			INT prev;
 			do {
 				prev = next;
-				next = EDIT_CallWordBreakProc(es, start - es->text,
-						prev + 1, current_def->net_length, WB_RIGHT);
-				current_def->width = (INT)LOWORD(GetTabbedTextExtentW(dc,
-							start, next, es->tabs_count, es->tabs));
-			} while (current_def->width <= fw);
-			if (!prev) {
+				next = EDIT_CallWordBreakProc(es, current_position - es->text,
+						prev + 1, current_line->net_length, WB_RIGHT);
+				current_line->width = (INT)LOWORD(GetTabbedTextExtentW(dc,
+							current_position, next, es->tabs_count, es->tabs));
+			} while (current_line->width <= fw);
+			if (!prev) { /* Didn't find a line break so force a break */
 				next = 0;
 				do {
 					prev = next;
 					next++;
-					current_def->width = (INT)LOWORD(GetTabbedTextExtentW(dc,
-								start, next, es->tabs_count, es->tabs));
-				} while (current_def->width <= fw);
+					current_line->width = (INT)LOWORD(GetTabbedTextExtentW(dc,
+								current_position, next, es->tabs_count, es->tabs));
+				} while (current_line->width <= fw);
 				if (!prev)
 					prev = 1;
 			}
-			current_def->net_length = prev;
-			current_def->ending = END_WRAP;
-			current_def->width = (INT)LOWORD(GetTabbedTextExtentW(dc, start,
-						current_def->net_length, es->tabs_count, es->tabs));
+
+			/* If the first line we are calculating, wrapped before istart, we must 
+			 * adjust istart in order for this to be reflected in the update region. */
+			if (current_line->index == nstart_index && istart > current_line->index + prev)
+				istart = current_line->index + prev;
+			/* else if we are updating the previous line before the first line we
+			 * are re-caulculating and it expanded */
+			else if (current_line == start_line && 
+					current_line->index != nstart_index && orig_net_length < prev)
+			{ 
+			  /* Line expanded due to an upwards line wrap so we must partially include
+			   * previous line in update region */
+				nstart_line = line_index;
+				nstart_index = current_line->index;
+				istart = current_line->index + orig_net_length;
+			}
+
+			current_line->net_length = prev;
+			current_line->ending = END_WRAP;
+			current_line->width = (INT)LOWORD(GetTabbedTextExtentW(dc, current_position,
+					current_line->net_length, es->tabs_count, es->tabs));
 		}
-		switch (current_def->ending) {
+
+
+		/* Adjust length to include line termination */
+		switch (current_line->ending) {
 		case END_SOFT:
-			current_def->length = current_def->net_length + 3;
+			current_line->length = current_line->net_length + 3;
 			break;
 		case END_HARD:
-			current_def->length = current_def->net_length + 2;
+			current_line->length = current_line->net_length + 2;
 			break;
 		case END_WRAP:
 		case END_0:
-			current_def->length = current_def->net_length;
+			current_line->length = current_line->net_length;
 			break;
 		}
-		es->text_width = max(es->text_width, current_def->width);
-		start += current_def->length;
-		*previous_next = current_def;
-		previous_next = &current_def->next;
-		es->line_count++;
-	} while (current_def->ending != END_0);
+		es->text_width = max(es->text_width, current_line->width);
+		current_position += current_line->length;
+		previous_line = current_line;
+		current_line = current_line->next;
+		line_index++;
+	} while (previous_line->ending != END_0);
+
+	/* Finish adjusting line index's by delta or remove hanging lines */
+	if (previous_line->ending == END_0)
+	{
+		LINEDEF *pnext = NULL;
+
+		previous_line->next = NULL;
+		while (current_line)
+		{
+			pnext = current_line->next;
+			HeapFree(GetProcessHeap(), 0, current_line);
+			current_line = pnext;
+			es->line_count--;
+		}
+	}
+	else
+	{
+		while (current_line)
+		{
+			current_line->index += delta;
+			current_line = current_line->next;
+		}
+	}
+
+	/* Calculate rest of modification rectangle */
+	if (hrgn)
+	{
+		HRGN tmphrgn;
+	   /* 
+		* We calculate two rectangles. One for the first line which may have
+		* an indent with respect to the format rect. The other is a format-width
+		* rectangle that spans the rest of the lines that changed or moved.
+		*/
+		rc.top = es->format_rect.top + nstart_line * es->line_height - 
+			(es->y_offset * es->line_height); /* Adjust for vertical scrollbar */
+		rc.bottom = rc.top + es->line_height;
+		rc.left = es->format_rect.left + (INT)LOWORD(GetTabbedTextExtentW(dc, 
+					es->text + nstart_index, istart - nstart_index, 
+					es->tabs_count, es->tabs)) - es->x_offset; /* Adjust for horz scroll */
+		rc.right = es->format_rect.right;
+		SetRectRgn(hrgn, rc.left, rc.top, rc.right, rc.bottom);
+
+		rc.top = rc.bottom;
+		rc.left = es->format_rect.left;
+		rc.right = es->format_rect.right;
+	   /* 
+		* If lines were added or removed we must re-paint the remainder of the 
+	    * lines since the remaining lines were either shifted up or down. 
+		*/
+		if (line_count < es->line_count) /* We added lines */
+			rc.bottom = es->line_count * es->line_height;
+		else if (line_count > es->line_count) /* We removed lines */
+			rc.bottom = line_count * es->line_height;
+		else
+			rc.bottom = line_index * es->line_height;
+		rc.bottom -= (es->y_offset * es->line_height); /* Adjust for vertical scrollbar */
+		tmphrgn = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
+		CombineRgn(hrgn, hrgn, tmphrgn, RGN_OR);
+		DeleteObject(tmphrgn);
+	}
+
 	if (es->font)
 		SelectObject(dc, old_font);
+
 	ReleaseDC(wnd->hwndSelf, dc);
 }
 
@@ -2140,7 +2292,7 @@ static void EDIT_SetRectNP(WND *wnd, EDITSTATE *es, LPRECT rc)
 		es->format_rect.bottom = es->format_rect.top + es->line_height;
 
 	if ((es->style & ES_MULTILINE) && !(es->style & ES_AUTOHSCROLL))
-		EDIT_BuildLineDefs_ML(wnd, es);
+		EDIT_BuildLineDefs_ML(wnd, es, 0, strlenW(es->text), 0, (HRGN)0);
 }
 
 
@@ -2836,6 +2988,7 @@ static void EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCWSTR l
 	UINT e;
 	UINT i;
 	LPWSTR p;
+	HRGN hrgn = 0;
 
 	TRACE("%s, can_undo %d, send_update %d\n",
 	    debugstr_w(lpsz_replace), can_undo, send_update);
@@ -2916,9 +3069,14 @@ static void EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCWSTR l
 			CharLowerBuffW(p, strl);
 		s += strl;
 	}
-	/* FIXME: really inefficient */
 	if (es->style & ES_MULTILINE)
-		EDIT_BuildLineDefs_ML(wnd, es);
+	{
+		INT s = min(es->selection_start, es->selection_end);
+
+		hrgn = CreateRectRgn(0, 0, 0, 0);
+		EDIT_BuildLineDefs_ML(wnd, es, s, s + strl, 
+				strl - (es->selection_end - es->selection_start), hrgn);
+	}
 	else
 	    EDIT_CalcLineWidth_SL(wnd, es);
 
@@ -2930,7 +3088,12 @@ static void EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCWSTR l
 	/* force scroll info update */
 	EDIT_UpdateScrollInfo(wnd, es);
 
-	/* FIXME: really inefficient */
+	if (hrgn)
+	{
+		EDIT_UpdateTextRegion(wnd, hrgn, TRUE);
+		DeleteObject(hrgn);
+	}
+	else
 	EDIT_UpdateText(wnd, NULL, TRUE);
 
 	if(es->flags & EF_UPDATE)
@@ -3134,7 +3297,7 @@ static void EDIT_EM_SetHandle(WND *wnd, EDITSTATE *es, HLOCAL hloc)
 	EDIT_EM_EmptyUndoBuffer(es);
 	es->flags &= ~EF_MODIFIED;
 	es->flags &= ~EF_UPDATE;
-	EDIT_BuildLineDefs_ML(wnd, es);
+	EDIT_BuildLineDefs_ML(wnd, es, 0, strlenW(es->text), 0, (HRGN)0);
 	EDIT_UpdateText(wnd, NULL, TRUE);
 	EDIT_EM_ScrollCaret(wnd, es);
 	/* force scroll info update */
@@ -3200,7 +3363,7 @@ static void EDIT_EM_SetHandle16(WND *wnd, EDITSTATE *es, HLOCAL16 hloc)
 	EDIT_EM_EmptyUndoBuffer(es);
 	es->flags &= ~EF_MODIFIED;
 	es->flags &= ~EF_UPDATE;
-	EDIT_BuildLineDefs_ML(wnd, es);
+	EDIT_BuildLineDefs_ML(wnd, es, 0, strlenW(es->text), 0, (HRGN)0);
 	EDIT_UpdateText(wnd, NULL, TRUE);
 	EDIT_EM_ScrollCaret(wnd, es);
 	/* force scroll info update */
@@ -3403,7 +3566,7 @@ static void EDIT_EM_SetWordBreakProc(WND *wnd, EDITSTATE *es, LPARAM lParam)
 	es->word_break_proc16 = NULL;
 
 	if ((es->style & ES_MULTILINE) && !(es->style & ES_AUTOHSCROLL)) {
-		EDIT_BuildLineDefs_ML(wnd, es);
+		EDIT_BuildLineDefs_ML(wnd, es, 0, strlenW(es->text), 0, (HRGN)0);
 		EDIT_UpdateText(wnd, NULL, TRUE);
 	}
 }
@@ -3422,7 +3585,7 @@ static void EDIT_EM_SetWordBreakProc16(WND *wnd, EDITSTATE *es, EDITWORDBREAKPRO
 	es->word_break_proc = NULL;
 	es->word_break_proc16 = wbp;
 	if ((es->style & ES_MULTILINE) && !(es->style & ES_AUTOHSCROLL)) {
-		EDIT_BuildLineDefs_ML(wnd, es);
+		EDIT_BuildLineDefs_ML(wnd, es, 0, strlenW(es->text), 0, (HRGN)0);
 		EDIT_UpdateText(wnd, NULL, TRUE);
 	}
 }
@@ -3683,6 +3846,8 @@ static LRESULT EDIT_WM_Create(WND *wnd, EDITSTATE *es, LPCWSTR name)
  */
 static void EDIT_WM_Destroy(WND *wnd, EDITSTATE *es)
 {
+	LINEDEF *pc, *pp;
+
 	if (es->hloc32W) {
 		while (LocalUnlock(es->hloc32W)) ;
 		LocalFree(es->hloc32W);
@@ -3695,6 +3860,15 @@ static void EDIT_WM_Destroy(WND *wnd, EDITSTATE *es)
 		while (LOCAL_Unlock(wnd->hInstance, es->hloc16)) ;
 		LOCAL_Free(wnd->hInstance, es->hloc16);
 	}
+
+	pc = es->first_line_def;
+	while (pc)
+	{
+		pp = pc->next;
+		HeapFree(GetProcessHeap(), 0, pc);
+		pc = pp;
+	}
+
 	HeapFree(GetProcessHeap(), 0, es);
 	*(EDITSTATE **)wnd->wExtra = NULL;
 }
@@ -4447,7 +4621,7 @@ static void EDIT_WM_SetFont(WND *wnd, EDITSTATE *es, HFONT font, BOOL redraw)
 	EDIT_SetRectNP(wnd, es, &r);
 
 	if (es->style & ES_MULTILINE)
-		EDIT_BuildLineDefs_ML(wnd, es);
+		EDIT_BuildLineDefs_ML(wnd, es, 0, strlenW(es->text), 0, (HRGN)0);
 	else
 	    EDIT_CalcLineWidth_SL(wnd, es);
 
@@ -4678,6 +4852,21 @@ static LRESULT EDIT_WM_VScroll(WND *wnd, EDITSTATE *es, INT action, INT pos)
 	if (dy)
 		EDIT_EM_LineScroll(wnd, es, 0, dy);
 	return 0;
+}
+
+/*********************************************************************
+ *
+ *	EDIT_UpdateText
+ *
+ */
+static void EDIT_UpdateTextRegion(WND *wnd, HRGN hrgn, BOOL bErase)
+{
+    EDITSTATE *es = *(EDITSTATE **)((wnd)->wExtra);
+
+    if (es->flags & EF_UPDATE)
+	EDIT_NOTIFY_PARENT(es, EN_UPDATE, "EN_UPDATE");
+
+    InvalidateRgn(wnd->hwndSelf, hrgn, bErase);
 }
 
 
