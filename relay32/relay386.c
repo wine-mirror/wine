@@ -184,7 +184,9 @@ static int RELAY_CallFrom32( int ret_addr, ... )
     RELAY_PrintArgs( args, nb_args, relay->argtypes );
     DPRINTF( ") ret=%08x fs=%04x\n", ret_addr, __get_fs() );
 
-    SYSLEVEL_CheckNotLevel( 2 );
+    /* the user driver functions may be called with the window lock held */
+    if (memcmp( buffer, "x11drv.", 7 ) && memcmp( buffer, "ttydrv.", 7 ))
+      SYSLEVEL_CheckNotLevel( 2 );
 
     if (relay->ret == 0xc3) /* cdecl */
     {
@@ -275,7 +277,8 @@ static int RELAY_CallFrom32( int ret_addr, ... )
     DPRINTF( "Ret  %s() retval=%08x ret=%08x fs=%04x\n",
              buffer, ret, ret_addr, __get_fs() );
 
-    SYSLEVEL_CheckNotLevel( 2 );
+    if (memcmp( buffer, "x11drv.", 7 ) && memcmp( buffer, "ttydrv.", 7 ))
+      SYSLEVEL_CheckNotLevel( 2 );
 
     return ret;
 }
