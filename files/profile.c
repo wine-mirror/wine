@@ -80,6 +80,7 @@ static LPCWSTR wininiW = NULL;
 
 static CRITICAL_SECTION PROFILE_CritSect;
 
+static const char hex[16] = "0123456789ABCDEF";
 
 /***********************************************************************
  *           PROFILE_GetConfigDir
@@ -205,8 +206,8 @@ static void PROFILE_Free( PROFILESECTION *section )
     }
 }
 
-static int
-PROFILE_isspace(char c) {
+static inline int PROFILE_isspace(char c)
+{
 	if (isspace(c)) return 1;
 	if (c=='\r' || c==0x1a) return 1;
 	/* CR and ^Z (DOS EOF) are spaces too  (found on CD-ROMs) */
@@ -360,14 +361,31 @@ static PROFILEKEY *PROFILE_Find( PROFILESECTION **section,
                                  const char *section_name,
                                  const char *key_name, int create )
 {
+    const char *p;
+    int seclen, keylen;
+
+    while (PROFILE_isspace(*section_name)) section_name++;
+    p = section_name + strlen(section_name) - 1;
+    while ((p > section_name) && PROFILE_isspace(*p)) p--;
+    seclen = p - section_name + 1;
+    
+    while (PROFILE_isspace(*key_name)) key_name++;
+    p = key_name + strlen(key_name) - 1;
+    while ((p > key_name) && PROFILE_isspace(*p)) p--;
+    keylen = p - key_name + 1;
+
     while (*section)
     {
-        if ((*section)->name && !strcasecmp( (*section)->name, section_name ))
+        if ( ((*section)->name)
+	  && (!(strncasecmp( (*section)->name, section_name, seclen )))
+	  && (((*section)->name)[seclen] == '\0') )
         {
             PROFILEKEY **key = &(*section)->key;
             while (*key)
             {
-                if (!strcasecmp( (*key)->name, key_name )) return *key;
+                if ( (!(strncasecmp( (*key)->name, key_name, keylen )))
+		  && (((*key)->name)[keylen] == '\0') )
+		    return *key;
                 key = &(*key)->next;
             }
             if (!create) return NULL;
@@ -1495,6 +1513,8 @@ BOOL16 WINAPI GetPrivateProfileStruct16(LPCSTR section, LPCSTR key,
 
 /***********************************************************************
  *           GetPrivateProfileStruct32A (KERNEL32.370)
+ *
+ * Should match Win95's behaviour pretty much
  */
 BOOL WINAPI GetPrivateProfileStructA (LPCSTR section, LPCSTR key, 
 				      LPVOID buf, UINT len, LPCSTR filename)
@@ -1506,13 +1526,64 @@ BOOL WINAPI GetPrivateProfileStructA (LPCSTR section, LPCSTR key,
     if (PROFILE_Open( filename )) {
         PROFILEKEY *k = PROFILE_Find ( &CurProfile->section, section, key, FALSE);
 	if (k) {
-	   lstrcpynA( buf, k->value, strlen(k->value));
-	   ret = TRUE;
+	    TRACE("value (at %p): '%s'\n", k->value, k->value);
+	    if (((strlen(k->value) - 2) / 2) == len)
+	    {
+		LPSTR end, p;
+		BOOL valid = TRUE;
+		CHAR c;
+		DWORD chksum = 0;
+
+	        end  = k->value + strlen(k->value); /* -> '\0' */
+	        /* check for invalid chars in ASCII coded hex string */
+	        for (p=k->value; p < end; p++)
+		{
+                    if (!isxdigit(*p))
+		    {
+			WARN("invalid char '%c' in file '%s'->'[%s]'->'%s' !\n",
+                             *p, filename, section, key);
+		        valid = FALSE;
+		        break;
+		    }
+		}
+		if (valid)
+		{
+		    BOOL highnibble = TRUE;
+		    BYTE b = 0, val;
+		    LPBYTE binbuf = (LPBYTE)buf;
+		    
+	            end -= 2; /* don't include checksum in output data */
+	            /* translate ASCII hex format into binary data */
+                    for (p=k->value; p < end; p++)
+            	    {
+	        	c = toupper(*p);
+			val = (c > '9') ?
+				(c - 'A' + 10) : (c - '0');
+
+			if (highnibble)
+		    	    b = val << 4;
+			else
+			{
+		    	    b += val;
+		    	    *binbuf++ = b; /* feed binary data into output */
+		    	    chksum += b; /* calculate checksum */
+			}
+			highnibble ^= 1; /* toggle */
+            	    }
+		    /* retrieve stored checksum value */
+		    c = toupper(*p++);
+		    b = ( (c > '9') ? (c - 'A' + 10) : (c - '0') ) << 4;
+		    c = toupper(*p);
+		    b +=  (c > '9') ? (c - 'A' + 10) : (c - '0');
+	            if (b == (chksum & 0xff)) /* checksums match ? */
+                        ret = TRUE;
+                }
+            }
 	}
     }
     LeaveCriticalSection( &PROFILE_CritSect );
 
-    return FALSE;
+    return ret;
 }
 
 /***********************************************************************
@@ -1555,16 +1626,34 @@ BOOL WINAPI WritePrivateProfileStructA (LPCSTR section, LPCSTR key,
                                         LPVOID buf, UINT bufsize, LPCSTR filename)
 {
     BOOL ret = FALSE;
+    LPBYTE binbuf;
+    LPSTR outstring, p;
+    DWORD sum = 0;
 
     if (!section && !key && !buf)  /* flush the cache */
         return WritePrivateProfileStringA( NULL, NULL, NULL, filename );
 
+    /* allocate string buffer for hex chars + checksum hex char + '\0' */
+    outstring = HeapAlloc( SystemHeap, 0, bufsize*2 + 2 + 1);
+    p = outstring;
+    for (binbuf = (LPBYTE)buf; binbuf < (LPBYTE)buf+bufsize; binbuf++) {
+      *p++ = hex[*binbuf >> 4];
+      *p++ = hex[*binbuf & 0xf];
+      sum += *binbuf;
+    }
+    /* checksum is sum & 0xff */
+    *p++ = hex[(sum & 0xf0) >> 4];
+    *p++ = hex[sum & 0xf];
+    *p++ = '\0';
+
     EnterCriticalSection( &PROFILE_CritSect );
 
     if (PROFILE_Open( filename )) 
-        ret = PROFILE_SetString( section, key, buf );
+        ret = PROFILE_SetString( section, key, outstring );
 
     LeaveCriticalSection( &PROFILE_CritSect );
+
+    HeapFree( SystemHeap, 0, outstring );
 
     return ret;
 }
