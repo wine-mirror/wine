@@ -124,7 +124,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSURFAC
     *(pDesc->Type)               = This->currentDesc.Type;
     *(pDesc->Usage)              = This->currentDesc.Usage;
     *(pDesc->Pool)               = This->currentDesc.Pool;
-    *(pDesc->Size)               = This->currentDesc_size;   /* dx8 only */
+    *(pDesc->Size)               = This->currentDesc.Size;   /* dx8 only */
     *(pDesc->MultiSampleType)    = This->currentDesc.MultiSampleType;
     *(pDesc->MultiSampleQuality) = This->currentDesc.MultiSampleQuality;
     *(pDesc->Width)              = This->currentDesc.Width;
@@ -569,7 +569,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
                   This->currentDesc.Width, 
                   This->currentDesc.Height, 
                   0, 
-                  This->currentDesc_size,
+                  This->currentDesc.Size,
                   This->allocatedMemory);
 
             ENTER_GL();
@@ -580,7 +580,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
                                                   This->currentDesc.Width,
                                                   This->currentDesc.Height,
                                                   0,
-                                                  This->currentDesc_size,
+                                                  This->currentDesc.Size,
                                                   This->allocatedMemory);
             checkGLcall("glCommpressedTexTexImage2D");
 

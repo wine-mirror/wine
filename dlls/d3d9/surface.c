@@ -192,25 +192,3 @@ IDirect3DSurface9Vtbl Direct3DSurface9_Vtbl =
     IDirect3DSurface9Impl_GetDC,
     IDirect3DSurface9Impl_ReleaseDC
 };
-
-/* Internal function called back during the CreateTexture and CreateCubeTextures to create the surface(s) */
-HRESULT WINAPI D3D9CB_CreateSurface(IUnknown  *pDevice,
-                                    UINT       Width, 
-                                    UINT       Height, 
-                                    D3DFORMAT  Format, 
-                                    D3DPOOL    Pool,
-                                    IWineD3DSurface **ppSurface, 
-                                    HANDLE   * pSharedHandle) {
-    
-    HRESULT res = D3D_OK;
-    IDirect3DSurface9Impl *d3dSurface = NULL;
-
-    res = IDirect3DDevice9_CreateOffscreenPlainSurface((IDirect3DDevice9 *)pDevice, Width, Height, 
-                                         Format, Pool, (IDirect3DSurface9 **)&d3dSurface, pSharedHandle);
-    if (res == D3D_OK) {
-        *ppSurface = d3dSurface->wineD3DSurface;
-    } else {
-        *ppSurface = NULL;
-    }
-    return res;
-}

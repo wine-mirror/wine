@@ -1130,15 +1130,13 @@ extern HRESULT  WINAPI     IDirect3DQuery9Impl_Issue(LPDIRECT3DQUERY9 iface, DWO
 extern HRESULT  WINAPI     IDirect3DQuery9Impl_GetData(LPDIRECT3DQUERY9 iface, void* pData, DWORD dwSize, DWORD dwGetDataFlags);
 
 /* Callbacks */
-extern HRESULT WINAPI D3D9CB_CreateSurface(IUnknown  *pDevice,
-                                           UINT       Width, 
-                                           UINT       Height, 
-                                           D3DFORMAT  Format, 
-                                           D3DPOOL    Pool,
-                                           IWineD3DSurface **ppSurface, 
-                                           HANDLE   * pSharedHandle);
+extern HRESULT WINAPI D3D9CB_CreateSurface(IUnknown *device, UINT Width, UINT Height, 
+                                         D3DFORMAT Format, DWORD Usage, D3DPOOL Pool, UINT Level,
+                                         IWineD3DSurface** ppSurface, HANDLE* pSharedHandle);
+
 extern HRESULT WINAPI D3D9CB_CreateVolume(IUnknown  *pDevice, UINT Width, UINT Height, UINT Depth, 
                                           D3DFORMAT  Format, D3DPOOL Pool, DWORD Usage,
                                           IWineD3DVolume **ppVolume, 
                                           HANDLE   * pSharedHandle);
+
 #endif /* __WINE_D3D9_PRIVATE_H */

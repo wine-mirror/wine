@@ -89,6 +89,7 @@ IDirect3DVertexDeclaration9Vtbl Direct3DVertexDeclaration9_Vtbl =
 
 /* IDirect3DDevice9 IDirect3DVertexDeclaration9 Methods follow: */
 HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9 iface, CONST D3DVERTEXELEMENT9* pVertexElements, IDirect3DVertexDeclaration9** ppDecl) {
+    
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     IDirect3DVertexDeclaration9Impl *object = NULL;
     HRESULT hr = D3D_OK;
@@ -106,7 +107,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9 
 
     object->lpVtbl = &Direct3DVertexDeclaration9_Vtbl;
     object->ref = 1;
-    hr = IWineD3DDevice_CreateVertexDeclaration(This->WineD3DDevice, 9, pVertexElements, &(object->wineD3DVertexDeclaration));
+    hr = IWineD3DDevice_CreateVertexDeclaration(This->WineD3DDevice, pVertexElements, &object->wineD3DVertexDeclaration, (IUnknown *)object);
 
     if (FAILED(hr)) {
       /* free up object */ 

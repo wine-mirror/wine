@@ -356,10 +356,10 @@ typedef struct IWineD3DDeviceImpl
     BOOL                    last_was_rhw;      /* true iff last draw_primitive was in xyzrhw mode */
     GLenum                  tracking_parm;     /* Which source is tracking current colour         */
     LONG                    tracking_color;    /* used iff GL_COLOR_MATERIAL was enabled          */
-      #define                         DISABLED_TRACKING  0  /* Disabled                                 */
-      #define                         IS_TRACKING        1  /* tracking_parm is tracking diffuse color  */
-      #define                         NEEDS_TRACKING     2  /* Tracking needs to be enabled when needed */
-      #define                         NEEDS_DISABLE      3  /* Tracking needs to be disabled when needed*/
+#define                         DISABLED_TRACKING  0  /* Disabled                                 */
+#define                         IS_TRACKING        1  /* tracking_parm is tracking diffuse color  */
+#define                         NEEDS_TRACKING     2  /* Tracking needs to be enabled when needed */
+#define                         NEEDS_DISABLE      3  /* Tracking needs to be disabled when needed*/
     UINT                    srcBlend;
     UINT                    dstBlend;
     UINT                    alphafunc;
@@ -392,8 +392,18 @@ typedef struct IWineD3DDeviceImpl
     /* For rendering to a texture using glCopyTexImage */
     BOOL                          renderUpsideDown;
 
+    /* Cursor management */
+    BOOL                    bCursorVisible;
+    UINT                    xHotSpot;
+    UINT                    yHotSpot;
+    UINT                    xScreenSpace;
+    UINT                    yScreenSpace;
+
     /* Textures for when no other textures are mapped */
     UINT                          dummyTextureName[8];
+
+    /* Debug stream management */
+    BOOL                     debug;
 
 } IWineD3DDeviceImpl;
 
@@ -571,6 +581,20 @@ typedef struct IWineD3DVolumeTextureImpl
 
 extern IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl;
 
+typedef struct _WINED3DSURFACET_DESC
+{
+    D3DFORMAT           Format;
+    D3DRESOURCETYPE     Type;
+    DWORD               Usage;
+    D3DPOOL             Pool;
+    UINT                Size;
+    UINT                Level;
+    D3DMULTISAMPLE_TYPE MultiSampleType;
+    DWORD               MultiSampleQuality;
+    UINT                Width;
+    UINT                Height;
+} WINED3DSURFACET_DESC;
+
 /*****************************************************************************
  * IWineD3DSurface implementation structure
  */
@@ -582,18 +606,20 @@ struct IWineD3DSurfaceImpl
 
     /* IWineD3DSurface fields */
     IUnknown                 *container;
-    D3DSURFACE_DESC           currentDesc;
-    UINT                      currentDesc_size; 
+    WINED3DSURFACET_DESC      currentDesc;
     BYTE                     *allocatedMemory;
 
     UINT                      textureName;
     UINT                      bytesPerPixel;
     
     BOOL                      lockable;
+    BOOL                      discard;
     BOOL                      locked;
+    
     RECT                      lockedRect;
     RECT                      dirtyRect;
     BOOL                      Dirty;
+    
     BOOL                      inTexture;
     BOOL                      inPBuffer;
 };
@@ -608,6 +634,7 @@ typedef struct IWineD3DVertexDeclarationImpl {
   IWineD3DVertexDeclarationVtbl *lpVtbl;
   DWORD                   ref;     /* Note: Ref counting not required */
 
+  IUnknown               *parent;
   /** precomputed fvf if simple declaration */
   IWineD3DDeviceImpl     *wineD3DDevice;
   DWORD   fvf[MAX_STREAMS];
@@ -643,6 +670,8 @@ typedef struct SAVEDSTATES {
         BOOL                      textureState[8][HIGHEST_TEXTURE_STATE];
         BOOL                      clipplane[MAX_CLIPPLANES];
         BOOL                      vertexDecl;
+        BOOL                      pixelShader;
+        BOOL                      vertexShader;        
 } SAVEDSTATES;
 
 struct IWineD3DStateBlockImpl
@@ -782,41 +811,57 @@ GLint  D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt);
     extern BOOL WINAPI IWineD3DBaseTextureImpl_GetDirty(IWineD3DBaseTexture *iface);
 
 
-#if 0 /* Needs fixing during rework */
-
 /*****************************************************************************
  * IDirect3DVertexShader implementation structure
  */
-struct IDirect3DVertexShaderImpl {
-  /* The device */
-  /*IDirect3DDeviceImpl* device;*/
+typedef struct IWineD3DVertexShaderImpl {
+    /* IUnknown parts*/   
+    IWineD3DVertexShaderVtbl    *lpVtbl;
+    DWORD                       ref;     /* Note: Ref counting not required */
 
-  DWORD* function;
-  UINT functionLength;
-  DWORD usage;
-  DWORD version;
-  /* run time datas */
-  VSHADERDATA* data;
-  VSHADERINPUTDATA input;
-  VSHADEROUTPUTDATA output;
-};
+    IUnknown                    *parent;
+    IWineD3DDeviceImpl          *wineD3DDevice;
 
+    /* IWineD3DVertexShaderImpl*/
+    CONST DWORD                 *function;
+    UINT                         functionLength;
+
+#if 0 /* needs reworking */
+    DWORD usage;
+    DWORD version;
+    /* run time datas */
+    VSHADERDATA* data;
+    VSHADERINPUTDATA input;
+    VSHADEROUTPUTDATA output;
+#endif
+} IWineD3DVertexShaderImpl;
+extern IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl;
 
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure
  */
-struct IDirect3DPixelShaderImpl { 
-  /* The device */
-  /*IDirect3DDeviceImpl* device;*/
+typedef struct IWineD3DPixelShaderImpl {
+    /* IUnknown parts*/   
+    IWineD3DPixelShaderVtbl    *lpVtbl;
+    DWORD                       ref;     /* Note: Ref counting not required */
+    
+    IUnknown                   *parent;
+    IWineD3DDeviceImpl         *wineD3DDevice;
 
-  DWORD* function;
-  UINT functionLength;
-  DWORD version;
-  /* run time datas */
-  PSHADERDATA* data;
-  PSHADERINPUTDATA input;
-  PSHADEROUTPUTDATA output;
-};
+    
+    /* IWineD3DPixelShaderImpl*/
+    CONST DWORD                *function;
+    UINT                        functionLength;
 
-#endif /* Needs fixing during rework */
+#if 0 /* needs reworking */
+    UINT functionLength;
+    DWORD version;
+    /* run time datas */
+    PSHADERDATA* data;
+    PSHADERINPUTDATA input;
+    PSHADEROUTPUTDATA output;
+#endif
+} IWineD3DPixelShaderImpl;
+
+extern IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl;
 #endif

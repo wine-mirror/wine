@@ -3,6 +3,7 @@
  *
  * Copyright 2002-2003 The wine-d3d team
  * Copyright 2002-2003 Raphael Junqueira
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -39,6 +40,25 @@
 /*****************************************************************************
  * WineD3D Structures to be used when d3d8 and d3d9 are incompatible
  */
+
+typedef enum _WINED3DSAMPLERSTATETYPE {
+    WINED3DSAMP_ADDRESSU       = 1,
+    WINED3DSAMP_ADDRESSV       = 2,
+    WINED3DSAMP_ADDRESSW       = 3,
+    WINED3DSAMP_BORDERCOLOR    = 4,
+    WINED3DSAMP_MAGFILTER      = 5,
+    WINED3DSAMP_MINFILTER      = 6,
+    WINED3DSAMP_MIPFILTER      = 7,
+    WINED3DSAMP_MIPMAPLODBIAS  = 8,
+    WINED3DSAMP_MAXMIPLEVEL    = 9,
+    WINED3DSAMP_MAXANISOTROPY  = 10,
+    WINED3DSAMP_SRGBTEXTURE    = 11,
+    WINED3DSAMP_ELEMENTINDEX   = 12,
+    WINED3DSAMP_DMAPOFFSET     = 13,
+                                
+    WINED3DSAMP_FORCE_DWORD   = 0x7fffffff,
+} WINED3DSAMPLERSTATETYPE;
+
 typedef struct _WINED3DADAPTER_IDENTIFIER {
     char           *Driver;
     char           *Description;
@@ -96,27 +116,55 @@ typedef struct _WINED3DVOLUME_DESC
     UINT                *Depth;
 } WINED3DVOLUME_DESC;
 
+typedef struct _WINED3DVERTEXELEMENT {
+  WORD    Stream;
+  WORD    Offset;
+  BYTE    Type;
+  BYTE    Method;
+  BYTE    Usage;
+  BYTE    UsageIndex;
+} WINED3DVERTEXELEMENT, *LPWINED3DVERTEXELEMENT;
+
+
+typedef enum _WINED3DQUERYTYPE {
+    WINED3DQUERYTYPE_VCACHE             = 4,
+    WINED3DQUERYTYPE_RESOURCEMANAGER    = 5,
+    WINED3DQUERYTYPE_VERTEXSTATS        = 6,
+    WINED3DQUERYTYPE_EVENT              = 8,
+    WINED3DQUERYTYPE_OCCLUSION          = 9,
+    WINED3DQUERYTYPE_TIMESTAMP          = 10,
+    WINED3DQUERYTYPE_TIMESTAMPDISJOINT  = 11,
+    WINED3DQUERYTYPE_TIMESTAMPFREQ      = 12,
+    WINED3DQUERYTYPE_PIPELINETIMINGS    = 13,
+    WINED3DQUERYTYPE_INTERFACETIMINGS   = 14,
+    WINED3DQUERYTYPE_VERTEXTIMINGS      = 15,
+    WINED3DQUERYTYPE_PIXELTIMINGS       = 16,
+    WINED3DQUERYTYPE_BANDWIDTHTIMINGS   = 17,
+    WINED3DQUERYTYPE_CACHEUTILIZATION   = 18
+} WINED3DQUERYTYPE;
+
 /* The following have differing names, but actually are the same layout. */
 /* Also, D3DCAPS8 is a subset of D3DCAPS9 so can be typecase as long as
      none of the 9 fields are accessed when the device is d3d8           */
+/* TODO: remove the d3d8/d3d9 dependencies by making a all inclusive WINED3D version */
 #if defined( __WINE_D3D8_H )
  /* Identical: */ 
- #define WINED3DLIGHT           D3DLIGHT8
- #define WINED3DCLIPSTATUS      D3DCLIPSTATUS8
- #define WINED3DMATERIAL        D3DMATERIAL8
- #define WINED3DVIEWPORT        D3DVIEWPORT8
- 
+# define WINED3DLIGHT           D3DLIGHT8
+# define WINED3DCLIPSTATUS      D3DCLIPSTATUS8
+# define WINED3DMATERIAL        D3DMATERIAL8
+# define WINED3DVIEWPORT        D3DVIEWPORT8
+
  /* Subset: */
- #define WINED3DCAPS            D3DCAPS8
+# define WINED3DCAPS            D3DCAPS8
 #else
  /* Identical: */ 
- #define WINED3DLIGHT           D3DLIGHT9
- #define WINED3DCLIPSTATUS      D3DCLIPSTATUS9
- #define WINED3DMATERIAL        D3DMATERIAL9
- #define WINED3DVIEWPORT        D3DVIEWPORT9
- 
+# define WINED3DLIGHT           D3DLIGHT9
+# define WINED3DCLIPSTATUS      D3DCLIPSTATUS9
+# define WINED3DMATERIAL        D3DMATERIAL9
+# define WINED3DVIEWPORT        D3DVIEWPORT9
+
  /* Subsets: */
- #define WINED3DCAPS            D3DCAPS9
+# define WINED3DCAPS            D3DCAPS9
 #endif
 
 typedef struct IWineD3D               IWineD3D;
@@ -132,13 +180,13 @@ typedef struct IWineD3DStateBlock     IWineD3DStateBlock;
 typedef struct IWineD3DSurface        IWineD3DSurface;
 typedef struct IWineD3DVolume         IWineD3DVolume;
 typedef struct IWineD3DVertexDeclaration   IWineD3DVertexDeclaration;
-typedef struct IWineD3DVertexShader        IWineD3DVertexShader;
-typedef struct IWineD3DPixelShader         IWineD3DPixelShader;
+typedef struct IWineD3DVertexShader   IWineD3DVertexShader;
+typedef struct IWineD3DPixelShader    IWineD3DPixelShader;
 
 /*****************************************************************************
  * Callback functions required for predefining surfaces / stencils
  */
-typedef HRESULT WINAPI (*D3DCB_CREATERENDERTARGETFN) (IUnknown  *pDevice,
+typedef HRESULT WINAPI (*D3DCB_CREATERENDERTARGETFN) (IUnknown *pDevice,
                                                UINT       Width, 
                                                UINT       Height, 
                                                D3DFORMAT  Format, 
@@ -146,17 +194,30 @@ typedef HRESULT WINAPI (*D3DCB_CREATERENDERTARGETFN) (IUnknown  *pDevice,
                                                DWORD      MultisampleQuality, 
                                                BOOL       Lockable, 
                                                IWineD3DSurface **ppSurface, 
-                                               HANDLE   * pSharedHandle);
+                                               HANDLE    *pSharedHandle);
 
-typedef HRESULT WINAPI (*D3DCB_CREATESURFACEFN) (IUnknown  *pDevice,
+typedef HRESULT WINAPI (*D3DCB_CREATESURFACEFN) (IUnknown *pDevice,
+                                               UINT       Width, 
+                                               UINT       Height,
+                                               D3DFORMAT Format,
+                                               DWORD      Usage,
+                                               D3DPOOL    Pool,            
+                                               UINT       Level,
+                                               IWineD3DSurface **ppSurface, 
+                                               HANDLE    *pSharedHandle);
+
+typedef HRESULT WINAPI (*D3DCB_CREATEDEPTHSTENCILSURFACEFN) (IUnknown *pDevice,
                                                UINT       Width, 
                                                UINT       Height, 
                                                D3DFORMAT  Format, 
-                                               D3DPOOL    Pool,
+                                               D3DMULTISAMPLE_TYPE MultiSample, 
+                                               DWORD      MultisampleQuality, 
+                                               BOOL       Discard, 
                                                IWineD3DSurface **ppSurface, 
-                                               HANDLE   * pSharedHandle);
+                                               HANDLE    *pSharedHandle);
 
-typedef HRESULT WINAPI (*D3DCB_CREATEVOLUMEFN) (IUnknown  *pDevice,
+
+typedef HRESULT WINAPI (*D3DCB_CREATEVOLUMEFN) (IUnknown *pDevice,
                                                UINT       Width, 
                                                UINT       Height, 
                                                UINT       Depth, 
@@ -164,7 +225,12 @@ typedef HRESULT WINAPI (*D3DCB_CREATEVOLUMEFN) (IUnknown  *pDevice,
                                                D3DPOOL    Pool,
                                                DWORD      Usage,
                                                IWineD3DVolume **ppVolume, 
-                                               HANDLE   * pSharedHandle);
+                                               HANDLE    *pSharedHandle);
+                                               
+typedef HRESULT WINAPI (*D3DCB_CREATEADDITIONALSWAPCHAIN) (IUnknown *pDevice,
+                                               WINED3DPRESENT_PARAMETERS *pPresentationParameters,
+                                               void **pSwapChain
+                                               );   
 
 /*****************************************************************************
  * IWineD3D interface 
@@ -174,7 +240,7 @@ typedef HRESULT WINAPI (*D3DCB_CREATEVOLUMEFN) (IUnknown  *pDevice,
 DECLARE_INTERFACE_(IWineD3D,IUnknown)
 {
     /*** IUnknown methods ***/
-    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void **ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IWineD3D methods ***/
@@ -184,14 +250,14 @@ DECLARE_INTERFACE_(IWineD3D,IUnknown)
     STDMETHOD_(HMONITOR,GetAdapterMonitor)(THIS_ UINT Adapter) PURE;
     STDMETHOD_(UINT,GetAdapterModeCount)(THIS_ UINT Adapter, D3DFORMAT Format) PURE;
     STDMETHOD(EnumAdapterModes)(THIS_ UINT  Adapter, UINT  Mode, D3DFORMAT Format, D3DDISPLAYMODE * pMode) PURE;
-    STDMETHOD(GetAdapterDisplayMode)(THIS_ UINT  Adapter, D3DDISPLAYMODE * pMode) PURE;
+    STDMETHOD(GetAdapterDisplayMode)(THIS_ UINT  Adapter, D3DDISPLAYMODE *pMode) PURE;
     STDMETHOD(GetAdapterIdentifier)(THIS_ UINT Adapter, DWORD Flags, WINED3DADAPTER_IDENTIFIER* pIdentifier) PURE;
     STDMETHOD(CheckDeviceMultiSampleType)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, D3DFORMAT  SurfaceFormat, BOOL  Windowed, D3DMULTISAMPLE_TYPE  MultiSampleType, DWORD *pQuality) PURE;
     STDMETHOD(CheckDepthStencilMatch)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, D3DFORMAT  AdapterFormat, D3DFORMAT  RenderTargetFormat, D3DFORMAT  DepthStencilFormat) PURE;
     STDMETHOD(CheckDeviceType)(THIS_ UINT  Adapter, D3DDEVTYPE  CheckType, D3DFORMAT  DisplayFormat, D3DFORMAT  BackBufferFormat, BOOL  Windowed) PURE;
     STDMETHOD(CheckDeviceFormat)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, D3DFORMAT  AdapterFormat, DWORD  Usage, D3DRESOURCETYPE  RType, D3DFORMAT  CheckFormat) PURE;
     STDMETHOD(CheckDeviceFormatConversion)(THIS_ UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SourceFormat, D3DFORMAT TargetFormat) PURE;
-    STDMETHOD(GetDeviceCaps)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, WINED3DCAPS* pCaps) PURE;
+    STDMETHOD(GetDeviceCaps)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, WINED3DCAPS *pCaps) PURE;
     STDMETHOD(CreateDevice)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType,HWND  hFocusWindow, DWORD  BehaviorFlags, WINED3DPRESENT_PARAMETERS * pPresentationParameters, IWineD3DDevice ** ppReturnedDeviceInterface, IUnknown *parent, D3DCB_CREATERENDERTARGETFN pFn) PURE;
 };
 #undef INTERFACE
@@ -237,42 +303,101 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD(CreateVertexBuffer)(THIS_ UINT  Length,DWORD  Usage,DWORD  FVF,D3DPOOL  Pool,IWineD3DVertexBuffer **ppVertexBuffer, HANDLE *sharedHandle, IUnknown *parent) PURE;
     STDMETHOD(CreateIndexBuffer)(THIS_ UINT Length, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IWineD3DIndexBuffer** ppIndexBuffer, HANDLE* pSharedHandle, IUnknown *parent) PURE;
     STDMETHOD(CreateStateBlock)(THIS_ D3DSTATEBLOCKTYPE Type, IWineD3DStateBlock **ppStateBlock, IUnknown *parent) PURE;
-    STDMETHOD(CreateRenderTarget)(THIS_ UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality, BOOL Lockable, IWineD3DSurface** ppSurface, HANDLE* pSharedHandle, IUnknown *parent) PURE;
-    STDMETHOD(CreateOffscreenPlainSurface)(THIS_ UINT Width, UINT Height, D3DFORMAT Format, D3DPOOL Pool, IWineD3DSurface** ppSurface, HANDLE* pSharedHandle, IUnknown *parent) PURE;
+    STDMETHOD(CreateSurface)(THIS_ UINT Width, UINT Height, D3DFORMAT Format,  BOOL Lockable, BOOL Discard, UINT Level,  IWineD3DSurface** ppSurface, D3DRESOURCETYPE Type, DWORD Usage, D3DPOOL Pool, D3DMULTISAMPLE_TYPE MultiSample ,DWORD MultisampleQuality,  HANDLE* pSharedHandle, IUnknown *parent) PURE;    
     STDMETHOD(CreateTexture)(THIS_ UINT Width, UINT Height, UINT Levels, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IWineD3DTexture** ppTexture, HANDLE* pSharedHandle, IUnknown *parent, D3DCB_CREATESURFACEFN pFn) PURE;
     STDMETHOD(CreateVolumeTexture)(THIS_ UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IWineD3DVolumeTexture** ppVolumeTexture, HANDLE* pSharedHandle, IUnknown *parent, D3DCB_CREATEVOLUMEFN pFn) PURE;
     STDMETHOD(CreateVolume)(THIS_ UINT Width, UINT Height, UINT Depth, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IWineD3DVolume** ppVolumeTexture, HANDLE* pSharedHandle, IUnknown *parent) PURE;
     STDMETHOD(CreateCubeTexture)(THIS_ UINT EdgeLength, UINT Levels, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IWineD3DCubeTexture** ppCubeTexture, HANDLE* pSharedHandle, IUnknown *parent, D3DCB_CREATESURFACEFN pFn) PURE;
-    STDMETHOD(SetFVF)(THIS_ DWORD  fvf) PURE;
-    STDMETHOD(GetFVF)(THIS_ DWORD * pfvf) PURE;
-    STDMETHOD(SetStreamSource)(THIS_ UINT  StreamNumber,IWineD3DVertexBuffer * pStreamData,UINT Offset,UINT  Stride) PURE;
-    STDMETHOD(GetStreamSource)(THIS_ UINT  StreamNumber,IWineD3DVertexBuffer ** ppStreamData,UINT *pOffset, UINT * pStride) PURE;
-    STDMETHOD(SetTransform)(THIS_ D3DTRANSFORMSTATETYPE  State,CONST D3DMATRIX * pMatrix) PURE;
-    STDMETHOD(GetTransform)(THIS_ D3DTRANSFORMSTATETYPE  State,D3DMATRIX * pMatrix) PURE;
-    STDMETHOD(MultiplyTransform)(THIS_ D3DTRANSFORMSTATETYPE  State, CONST D3DMATRIX * pMatrix) PURE;
-    STDMETHOD(SetLight)(THIS_ DWORD  Index,CONST WINED3DLIGHT * pLight) PURE;
-    STDMETHOD(GetLight)(THIS_ DWORD  Index,WINED3DLIGHT * pLight) PURE;
-    STDMETHOD(SetLightEnable)(THIS_ DWORD  Index,BOOL  Enable) PURE;
-    STDMETHOD(GetLightEnable)(THIS_ DWORD  Index,BOOL * pEnable) PURE;
+    STDMETHOD(CreateQuery)(THIS_ WINED3DQUERYTYPE Type, void **ppQuery, IUnknown *pParent);
+    STDMETHOD(CreateAdditionalSwapChain)(THIS_ WINED3DPRESENT_PARAMETERS* pPresentationParameters, void** pSwapChain, IUnknown* pParent, D3DCB_CREATERENDERTARGETFN pFn, D3DCB_CREATEDEPTHSTENCILSURFACEFN pFn2);
+    STDMETHOD(CreateVertexDeclaration)(THIS_ CONST VOID* pDeclaration, IWineD3DVertexDeclaration** ppDecl, IUnknown* pParent) PURE;
+    STDMETHOD(CreateVertexShader)(THIS_ CONST DWORD* pFunction, IWineD3DVertexShader** ppShader, IUnknown *pParent) PURE;
+    STDMETHOD(CreatePixelShader)(THIS_ CONST DWORD* pFunction, IWineD3DPixelShader** ppShader, IUnknown *pParent) PURE;
+    STDMETHOD(EvictManagedResources)(THIS) PURE;
+    STDMETHOD_(UINT, GetAvailableTextureMem)(THIS) PURE;
+    STDMETHOD(GetBackBuffer)(THIS_ UINT iSwapChain, UINT BackBuffer, D3DBACKBUFFER_TYPE, IWineD3DSurface** ppBackBuffer) PURE;
+    STDMETHOD(GetCreationParameters)(THIS_ D3DDEVICE_CREATION_PARAMETERS *pParameters) PURE;
+    STDMETHOD(GetDeviceCaps)(THIS_ WINED3DCAPS* pCaps) PURE;
+    STDMETHOD(GetDirect3D)(THIS_ IWineD3D** ppD3D) PURE;
+    STDMETHOD(GetDisplayMode)(THIS_ UINT iSwapChain, D3DDISPLAYMODE* pMode) PURE;
+    STDMETHOD_(UINT, GetNumberOfSwapChains)(THIS) PURE;
+    STDMETHOD(GetRasterStatus)(THIS_ UINT iSwapChain, D3DRASTER_STATUS* pRasterStatus) PURE;
+    STDMETHOD(GetSwapChain)(THIS_ UINT iSwapChain, void** pSwapChain) PURE;
+    STDMETHOD(Reset)(THIS_ WINED3DPRESENT_PARAMETERS* pPresentationParameters) PURE;
+    STDMETHOD(SetDialogBoxMode)(THIS_ BOOL bEnableDialogs) PURE;
+    STDMETHOD(SetCursorProperties)(THIS_ UINT XHotSpot, UINT YHotSpot, IWineD3DSurface* pCursorBitmap) PURE;
+    STDMETHOD_(void, SetCursorPosition)(THIS_ int XScreenSpace, int YScreenSpace, DWORD Flags) PURE;
+    STDMETHOD_(BOOL, ShowCursor)(THIS_ BOOL bShow) PURE;
+    STDMETHOD(TestCooperativeLevel)(THIS) PURE;
     STDMETHOD(SetClipPlane)(THIS_ DWORD  Index,CONST float * pPlane) PURE;
     STDMETHOD(GetClipPlane)(THIS_ DWORD  Index,float * pPlane) PURE;
     STDMETHOD(SetClipStatus)(THIS_ CONST WINED3DCLIPSTATUS * pClipStatus) PURE;
     STDMETHOD(GetClipStatus)(THIS_ WINED3DCLIPSTATUS * pClipStatus) PURE;
-    STDMETHOD(SetMaterial)(THIS_ CONST WINED3DMATERIAL * pMaterial) PURE;
-    STDMETHOD(GetMaterial)(THIS_ WINED3DMATERIAL *pMaterial) PURE;
+    STDMETHOD(SetCurrentTexturePalette)(THIS_ UINT PaletteNumber) PURE;
+    STDMETHOD(GetCurrentTexturePalette)(THIS_ UINT *PaletteNumber) PURE;
+    STDMETHOD(SetDepthStencilSurface)(THIS_ IWineD3DSurface* pNewZStencil) PURE;
+    STDMETHOD(GetDepthStencilSurface)(THIS_ IWineD3DSurface** ppZStencilSurface) PURE;
+    STDMETHOD(SetFVF)(THIS_ DWORD  fvf) PURE;
+    STDMETHOD(GetFVF)(THIS_ DWORD * pfvf) PURE;
+    STDMETHOD_(void, SetGammaRamp)(THIS_ UINT iSwapChain, DWORD Flags, CONST D3DGAMMARAMP* pRamp) PURE;
+    STDMETHOD_(void, GetGammaRamp)(THIS_ UINT iSwapChain, D3DGAMMARAMP* pRamp) PURE;
     STDMETHOD(SetIndices)(THIS_ IWineD3DIndexBuffer * pIndexData,UINT  BaseVertexIndex) PURE;
     STDMETHOD(GetIndices)(THIS_ IWineD3DIndexBuffer ** ppIndexData,UINT * pBaseVertexIndex) PURE;
-    STDMETHOD(SetViewport)(THIS_ CONST WINED3DVIEWPORT * pViewport) PURE;
-    STDMETHOD(GetViewport)(THIS_ WINED3DVIEWPORT * pViewport) PURE;
+    STDMETHOD(SetLight)(THIS_ DWORD  Index,CONST WINED3DLIGHT * pLight) PURE;
+    STDMETHOD(GetLight)(THIS_ DWORD  Index,WINED3DLIGHT * pLight) PURE;
+    STDMETHOD(SetLightEnable)(THIS_ DWORD  Index,BOOL  Enable) PURE;
+    STDMETHOD(GetLightEnable)(THIS_ DWORD  Index,BOOL * pEnable) PURE;
+    STDMETHOD(SetMaterial)(THIS_ CONST WINED3DMATERIAL * pMaterial) PURE;
+    STDMETHOD(GetMaterial)(THIS_ WINED3DMATERIAL *pMaterial) PURE;
+    STDMETHOD(SetNPatchMode)(THIS_ float nSegments) PURE;
+    STDMETHOD_(float, GetNPatchMode)(THIS) PURE;
+    STDMETHOD(SetPaletteEntries)(THIS_ UINT PaletteNumber, CONST PALETTEENTRY* pEntries) PURE;
+    STDMETHOD(GetPaletteEntries)(THIS_ UINT PaletteNumber,PALETTEENTRY* pEntries) PURE;
+    STDMETHOD(SetPixelShader)(THIS_ IWineD3DPixelShader  *pShader) PURE;
+    STDMETHOD(GetPixelShader)(THIS_ IWineD3DPixelShader **ppShader) PURE;
+    STDMETHOD(SetPixelShaderConstantB)(THIS_ UINT StartRegister, CONST BOOL* pConstantData, UINT  BoolCount) PURE;
+    STDMETHOD(GetPixelShaderConstantB)(THIS_ UINT StartRegister, BOOL* pConstantData, UINT BoolCount) PURE;
+    STDMETHOD(SetPixelShaderConstantI)(THIS_ UINT StartRegister, CONST int* pConstantData, UINT Vector4iCount) PURE;
+    STDMETHOD(GetPixelShaderConstantI)(THIS_ UINT StartRegister, int* pConstantData, UINT Vector4iCount) PURE;
+    STDMETHOD(SetPixelShaderConstantF)(THIS_ UINT StartRegister, CONST float* pConstantData, UINT Vector4fCount) PURE;
+    STDMETHOD(GetPixelShaderConstantF)(THIS_ UINT StartRegister, float* pConstantData, UINT Vector4fCount) PURE;
     STDMETHOD(SetRenderState)(THIS_ D3DRENDERSTATETYPE  State,DWORD  Value) PURE;
     STDMETHOD(GetRenderState)(THIS_ D3DRENDERSTATETYPE  State,DWORD * pValue) PURE;
-    STDMETHOD(SetTextureStageState)(THIS_ DWORD  Stage,D3DTEXTURESTAGESTATETYPE  Type,DWORD  Value) PURE;
-    STDMETHOD(GetTextureStageState)(THIS_ DWORD  Stage,D3DTEXTURESTAGESTATETYPE  Type,DWORD * pValue) PURE;
+    STDMETHOD(SetRenderTarget)(THIS_ DWORD RenderTargetIndex, IWineD3DSurface* pRenderTarget) PURE;
+    STDMETHOD(GetRenderTarget)(THIS_ DWORD RenderTargetIndex, IWineD3DSurface** ppRenderTarget) PURE;
+    STDMETHOD(SetSamplerState)(THIS_ DWORD Sampler, WINED3DSAMPLERSTATETYPE Type, DWORD Value) PURE;
+    STDMETHOD(GetSamplerState)(THIS_ DWORD Sampler, WINED3DSAMPLERSTATETYPE Type, DWORD* Value) PURE;
+    STDMETHOD(SetScissorRect)(THIS_ CONST RECT* pRect) PURE;
+    STDMETHOD(GetScissorRect)(THIS_ RECT* pRect) PURE;
+    STDMETHOD(SetSoftwareVertexProcessing)(THIS_ BOOL bSoftware) PURE;
+    STDMETHOD_(BOOL, GetSoftwareVertexProcessing)(THIS) PURE;
+    STDMETHOD(SetStreamSource)(THIS_ UINT  StreamNumber,IWineD3DVertexBuffer * pStreamData,UINT Offset,UINT  Stride) PURE;
+    STDMETHOD(GetStreamSource)(THIS_ UINT  StreamNumber,IWineD3DVertexBuffer ** ppStreamData,UINT *pOffset, UINT * pStride) PURE;
+    STDMETHOD(SetStreamSourceFreq)(THIS_ UINT StreamNumber, UINT Divider) PURE;
+    STDMETHOD(GetStreamSourceFreq)(THIS_ UINT StreamNumber, UINT* Divider) PURE;
     STDMETHOD(SetTexture)(THIS_ DWORD Stage, IWineD3DBaseTexture* pTexture) PURE;
     STDMETHOD(GetTexture)(THIS_ DWORD Stage, IWineD3DBaseTexture** ppTexture) PURE;
-    STDMETHOD(GetBackBuffer)(THIS_ UINT iSwapChain, UINT iBackBuffer, D3DBACKBUFFER_TYPE Type, IWineD3DSurface** ppBackBuffer) PURE;
-    STDMETHOD(GetDeviceCaps)(THIS_ WINED3DCAPS* pCaps) PURE;
-    STDMETHOD(GetDisplayMode)(THIS_ UINT iSwapChain, D3DDISPLAYMODE* pMode) PURE;
+    STDMETHOD(SetTextureStageState)(THIS_ DWORD  Stage,D3DTEXTURESTAGESTATETYPE  Type,DWORD  Value) PURE;
+    STDMETHOD(GetTextureStageState)(THIS_ DWORD  Stage,D3DTEXTURESTAGESTATETYPE  Type,DWORD * pValue) PURE;
+    STDMETHOD(SetTransform)(THIS_ D3DTRANSFORMSTATETYPE  State,CONST D3DMATRIX * pMatrix) PURE;
+    STDMETHOD(GetTransform)(THIS_ D3DTRANSFORMSTATETYPE  State,D3DMATRIX * pMatrix) PURE;
+    STDMETHOD(SetVertexDeclaration)(THIS_ IWineD3DVertexDeclaration* pDecl) PURE;
+    STDMETHOD(GetVertexDeclaration)(THIS_ IWineD3DVertexDeclaration** ppDecl) PURE;
+    STDMETHOD(SetVertexShader)(THIS_ IWineD3DVertexShader* pShader) PURE;
+    STDMETHOD(GetVertexShader)(THIS_ IWineD3DVertexShader** ppShader) PURE;
+    STDMETHOD(SetVertexShaderConstantB)(THIS_ UINT StartRegister, CONST BOOL*  pConstantData, UINT BoolCount) PURE;
+    STDMETHOD(GetVertexShaderConstantB)(THIS_ UINT StartRegister, BOOL*        pConstantData, UINT BoolCount) PURE;
+    STDMETHOD(SetVertexShaderConstantI)(THIS_ UINT StartRegister, CONST int*   pConstantData, UINT Vector4iCount) PURE;
+    STDMETHOD(GetVertexShaderConstantI)(THIS_ UINT StartRegister, int*         pConstantData, UINT Vector4iCount) PURE;
+    STDMETHOD(SetVertexShaderConstantF)(THIS_ UINT StartRegister, CONST float* pConstantData, UINT Vector4fCount) PURE;
+    STDMETHOD(GetVertexShaderConstantF)(THIS_ UINT StartRegister, float*       pConstantData, UINT Vector4fCount) PURE;
+    STDMETHOD(SetViewport)(THIS_ CONST WINED3DVIEWPORT * pViewport) PURE;
+    STDMETHOD(GetViewport)(THIS_ WINED3DVIEWPORT * pViewport) PURE;
+    STDMETHOD(MultiplyTransform)(THIS_ D3DTRANSFORMSTATETYPE  State, CONST D3DMATRIX * pMatrix) PURE;
+    STDMETHOD(ValidateDevice)(THIS_ DWORD* pNumPasses) PURE;
+    STDMETHOD(ProcessVertices)(THIS_ UINT SrcStartIndex, UINT DestIndex, UINT VertexCount, IWineD3DVertexBuffer* pDestBuffer, IWineD3DVertexBuffer* pVertexDecl, DWORD Flags) PURE;
+    STDMETHOD(BeginStateBlock)(THIS) PURE;
+    STDMETHOD(EndStateBlock)(THIS_ IWineD3DStateBlock** ppStateBlock) PURE;    
     STDMETHOD(BeginScene)(THIS) PURE;
     STDMETHOD(EndScene)(THIS) PURE;
     STDMETHOD(Present)(THIS_ CONST RECT * pSourceRect,CONST RECT * pDestRect,HWND  hDestWindowOverride,CONST RGNDATA * pDirtyRegion) PURE;
@@ -281,10 +406,16 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD(DrawIndexedPrimitive)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,INT baseVIdx, UINT  minIndex,UINT  NumVertices,UINT  startIndex,UINT  primCount) PURE;
     STDMETHOD(DrawPrimitiveUP)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,UINT  PrimitiveCount,CONST void * pVertexStreamZeroData,UINT  VertexStreamZeroStride) PURE;
     STDMETHOD(DrawIndexedPrimitiveUP)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,UINT  MinVertexIndex,UINT  NumVertexIndices,UINT  PrimitiveCount,CONST void * pIndexData,D3DFORMAT  IndexDataFormat,CONST void * pVertexStreamZeroData,UINT  VertexStreamZeroStride) PURE;
-    STDMETHOD(CreateVertexDeclaration)(THIS_ UINT iDeclVersion, CONST VOID* pDeclaration, IWineD3DVertexDeclaration** ppDecl) PURE;
-    STDMETHOD(SetVertexDeclaration)(THIS_ IWineD3DVertexDeclaration* pDecl) PURE;
-    STDMETHOD(GetVertexDeclaration)(THIS_ IWineD3DVertexDeclaration** ppDecl) PURE;
-    /*** Internal use IWineD3D methods ***/
+    STDMETHOD(DrawRectPatch)(THIS_ UINT Handle, CONST float* pNumSegs, CONST D3DRECTPATCH_INFO* pRectPatchInfo) PURE;
+    STDMETHOD(DrawTriPatch)(THIS_ UINT Handle, CONST float* pNumSegs, CONST D3DTRIPATCH_INFO* pTriPatchInfo) PURE;
+    STDMETHOD(DeletePatch)(THIS_ UINT Handle) PURE;
+    STDMETHOD(ColorFill)(THIS_ IWineD3DSurface* pSurface, CONST D3DRECT* pRect, D3DCOLOR color) PURE;
+    STDMETHOD(UpdateTexture)(THIS_ IWineD3DBaseTexture *pSourceTexture,  IWineD3DBaseTexture *pDestinationTexture) PURE;
+    STDMETHOD(UpdateSurface)(THIS_ IWineD3DSurface* pSourceSurface, CONST RECT* pSourceRect, IWineD3DSurface* pDestinationSurface, CONST POINT* pDestPoint) PURE;
+    STDMETHOD(StretchRect)(THIS_ IWineD3DSurface* pSourceSurface, CONST RECT* pSourceRect, IWineD3DSurface* pDestinationSurface, CONST RECT* pDestRect, D3DTEXTUREFILTERTYPE Filter) PURE;
+    STDMETHOD(GetRenderTargetData)(THIS_ IWineD3DSurface* pRenderTarget, IWineD3DSurface* pSurface) PURE;
+    STDMETHOD(GetFrontBufferData)(THIS_ UINT iSwapChain,IWineD3DSurface* pSurface) PURE;    
+    /*** Internal use IWineD3Device methods ***/
     STDMETHOD_(void, SetupTextureStates)(THIS_ DWORD Stage, DWORD Flags);
 };
 #undef INTERFACE
@@ -299,42 +430,101 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
 #define IWineD3DDevice_CreateVertexBuffer(p,a,b,c,d,e,f,g)      (p)->lpVtbl->CreateVertexBuffer(p,a,b,c,d,e,f,g)
 #define IWineD3DDevice_CreateIndexBuffer(p,a,b,c,d,e,f,g)       (p)->lpVtbl->CreateIndexBuffer(p,a,b,c,d,e,f,g)
 #define IWineD3DDevice_CreateStateBlock(p,a,b,c)                (p)->lpVtbl->CreateStateBlock(p,a,b,c)
-#define IWineD3DDevice_CreateRenderTarget(p,a,b,c,d,e,f,g,h,i)  (p)->lpVtbl->CreateRenderTarget(p,a,b,c,d,e,f,g,h,i)
-#define IWineD3DDevice_CreateOffscreenPlainSurface(p,a,b,c,d,e,f,g) (p)->lpVtbl->CreateOffscreenPlainSurface(p,a,b,c,d,e,f,g)
+#define IWineD3DDevice_CreateSurface(p,a,b,c,d,e,f,g,h,i,j,k,l,m,n)      (p)->lpVtbl->CreateSurface(p,a,b,c,d,e,f,g,h,i,j,k,l,m,n)
 #define IWineD3DDevice_CreateTexture(p,a,b,c,d,e,f,g,h,i,j)     (p)->lpVtbl->CreateTexture(p,a,b,c,d,e,f,g,h,i,j)
-#define IWineD3DDevice_CreateVolumeTexture(p,a,b,c,d,e,f,g,h,i,j,k) (p)->lpVtbl->CreateVolumeTexture(p,a,b,c,d,e,f,g,h,i,j,k)
+#define IWineD3DDevice_CreateVolumeTexture(p,a,b,c,d,e,f,g,h,i,j,k)    (p)->lpVtbl->CreateVolumeTexture(p,a,b,c,d,e,f,g,h,i,j,k)
 #define IWineD3DDevice_CreateVolume(p,a,b,c,d,e,f,g,h,i)        (p)->lpVtbl->CreateVolume(p,a,b,c,d,e,f,g,h,i)
 #define IWineD3DDevice_CreateCubeTexture(p,a,b,c,d,e,f,g,h,i)   (p)->lpVtbl->CreateCubeTexture(p,a,b,c,d,e,f,g,h,i)
+#define IWineD3DDevice_CreateQuery(p,a,b,c)                     (p)->lpVtbl->CreateQuery(p,a,b,c)
+#define IWineD3DDevice_CreateAdditionalSwapChain(p,a,b,c,d,e)   (p)->lpVtbl->CreateAdditionalSwapChain(p,a,b,c,d,e)
+#define IWineD3DDevice_CreateVertexDeclaration(p,b,c,d)         (p)->lpVtbl->CreateVertexDeclaration(p,b,c,d)
+#define IWineD3DDevice_CreateVertexShader(p,a,b,c)              (p)->lpVtbl->CreateVertexShader(p,a,b,c)
+#define IWineD3DDevice_CreatePixelShader(p,a,b,c)               (p)->lpVtbl->CreatePixelShader(p,a,b,c)
+#define IWineD3DDevice_EvictManagedResources(p)                 (p)->lpVtbl->EvictManagedResources(p)
+#define IWineD3DDevice_GetAvailableTextureMem(p)                (p)->lpVtbl->GetAvailableTextureMem(p)
+#define IWineD3DDevice_GetBackBuffer(p,a,b,c,d)                 (p)->lpVtbl->GetBackBuffer(p,a,b,c,d)
+#define IWineD3DDevice_GetCreationParameters(p,a)               (p)->lpVtbl->GetCreationParameters(p,a)
+#define IWineD3DDevice_GetDeviceCaps(p,a)                       (p)->lpVtbl->GetDeviceCaps(p,a)
+#define IWineD3DDevice_GetDirect3D(p,a)                         (p)->lpVtbl->GetDirect3D(p,a)
+#define IWineD3DDevice_GetDisplayMode(p,a,b)                    (p)->lpVtbl->GetDisplayMode(p,a,b)
+#define IWineD3DDevice_GetNumberOfSwapChains(p)                 (p)->lpVtbl->GetNumberOfSwapChains(p)
+#define IWineD3DDevice_Reset(p,a)                               (p)->lpVtbl->Reset(p,a)
+#define IWineD3DDevice_SetDialogBoxMode(p,a)                    (p)->lpVtbl->SetDialogBoxMode(p,a)
+#define IWineD3DDevice_SetCursorProperties(p,a,b,c)             (p)->lpVtbl->SetCursorProperties(p,a,b,c)
+#define IWineD3DDevice_SetCursorPosition(p,a,b,c)               (p)->lpVtbl->SetCursorPosition(p,a,b,c)
+#define IWineD3DDevice_ShowCursor(p,a)                          (p)->lpVtbl->ShowCursor(p,a)
+#define IWineD3DDevice_TestCooperativeLevel(p)                  (p)->lpVtbl->TestCooperativeLevel(p)
 #define IWineD3DDevice_SetFVF(p,a)                              (p)->lpVtbl->SetFVF(p,a)
 #define IWineD3DDevice_GetFVF(p,a)                              (p)->lpVtbl->GetFVF(p,a)
-#define IWineD3DDevice_SetStreamSource(p,a,b,c,d)               (p)->lpVtbl->SetStreamSource(p,a,b,c,d)
-#define IWineD3DDevice_GetStreamSource(p,a,b,c,d)               (p)->lpVtbl->GetStreamSource(p,a,b,c,d)
-#define IWineD3DDevice_SetTransform(p,a,b)                      (p)->lpVtbl->SetTransform(p,a,b)
-#define IWineD3DDevice_GetTransform(p,a,b)                      (p)->lpVtbl->GetTransform(p,a,b)
-#define IWineD3DDevice_MultiplyTransform(p,a,b)                 (p)->lpVtbl->MultiplyTransform(p,a,b)
-#define IWineD3DDevice_SetLight(p,a,b)                          (p)->lpVtbl->SetLight(p,a,b)
-#define IWineD3DDevice_GetLight(p,a,b)                          (p)->lpVtbl->GetLight(p,a,b)
-#define IWineD3DDevice_SetLightEnable(p,a,b)                    (p)->lpVtbl->SetLightEnable(p,a,b)
-#define IWineD3DDevice_GetLightEnable(p,a,b)                    (p)->lpVtbl->GetLightEnable(p,a,b)
 #define IWineD3DDevice_SetClipPlane(p,a,b)                      (p)->lpVtbl->SetClipPlane(p,a,b)
 #define IWineD3DDevice_GetClipPlane(p,a,b)                      (p)->lpVtbl->GetClipPlane(p,a,b)
 #define IWineD3DDevice_SetClipStatus(p,a)                       (p)->lpVtbl->SetClipStatus(p,a)
 #define IWineD3DDevice_GetClipStatus(p,a)                       (p)->lpVtbl->GetClipStatus(p,a)
-#define IWineD3DDevice_SetMaterial(p,a)                         (p)->lpVtbl->SetMaterial(p,a)
-#define IWineD3DDevice_GetMaterial(p,a)                         (p)->lpVtbl->GetMaterial(p,a)
+#define IWineD3DDevice_SetCurrentTexturePalette(p,a)            (p)->lpVtbl->SetCurrentTexturePalette(p,a)
+#define IWineD3DDevice_GetCurrentTexturePalette(p,a)            (p)->lpVtbl->GetCurrentTexturePalette(p,a)
+#define IWineD3DDevice_SetDepthStencilSurface(p,a)              (p)->lpVtbl->SetDepthStencilSurface(p,a)
+#define IWineD3DDevice_GetDepthStencilSurface(p,a)              (p)->lpVtbl->GetDepthStencilSurface(p,a)
+#define IWineD3DDevice_SetGammaRamp(p,a,b,c)                    (p)->lpVtbl->SetGammaRamp(p,a,b,c)
+#define IWineD3DDevice_GetGammaRamp(p,a,b)                      (p)->lpVtbl->GetGammaRamp(p,a,b)
 #define IWineD3DDevice_SetIndices(p,a,b)                        (p)->lpVtbl->SetIndices(p,a,b)
 #define IWineD3DDevice_GetIndices(p,a,b)                        (p)->lpVtbl->GetIndices(p,a,b)
-#define IWineD3DDevice_SetViewport(p,a)                         (p)->lpVtbl->SetViewport(p,a)
-#define IWineD3DDevice_GetViewport(p,a)                         (p)->lpVtbl->GetViewport(p,a)
+#define IWineD3DDevice_SetLight(p,a,b)                          (p)->lpVtbl->SetLight(p,a,b)
+#define IWineD3DDevice_GetLight(p,a,b)                          (p)->lpVtbl->GetLight(p,a,b)
+#define IWineD3DDevice_SetLightEnable(p,a,b)                    (p)->lpVtbl->SetLightEnable(p,a,b)
+#define IWineD3DDevice_GetLightEnable(p,a,b)                    (p)->lpVtbl->GetLightEnable(p,a,b)
+#define IWineD3DDevice_SetMaterial(p,a)                         (p)->lpVtbl->SetMaterial(p,a)
+#define IWineD3DDevice_GetMaterial(p,a)                         (p)->lpVtbl->GetMaterial(p,a)
+#define IWineD3DDevice_SetNPatchMode(p,a)                       (p)->lpVtbl->SetNPatchMode(p,a)
+#define IWineD3DDevice_GetNPatchMode(p)                         (p)->lpVtbl->GetNPatchMode(p)
+#define IWineD3DDevice_SetPaletteEntries(p,a,b)                 (p)->lpVtbl->SetPaletteEntries(p,a,b)
+#define IWineD3DDevice_GetPaletteEntries(p,a,b)                 (p)->lpVtbl->GetPaletteEntries(p,a,b)
+#define IWineD3DDevice_SetPixelShader(p,a)                      (p)->lpVtbl->SetPixelShader(p,a)
+#define IWineD3DDevice_GetPixelShader(p,a)                      (p)->lpVtbl->GetPixelShader(p,a)
+#define IWineD3DDevice_SetPixelShaderConstantB(p,a,b,c)         (p)->lpVtbl->SetPixelShaderConstantB(p,a,b,c)
+#define IWineD3DDevice_GetPixelShaderConstantB(p,a,b,c)         (p)->lpVtbl->GetPixelShaderConstantB(p,a,b,c)
+#define IWineD3DDevice_SetPixelShaderConstantI(p,a,b,c)         (p)->lpVtbl->SetPixelShaderConstantI(p,a,b,c)
+#define IWineD3DDevice_GetPixelShaderConstantI(p,a,b,c)         (p)->lpVtbl->GetPixelShaderConstantI(p,a,b,c)
+#define IWineD3DDevice_SetPixelShaderConstantF(p,a,b,c)         (p)->lpVtbl->SetPixelShaderConstantF(p,a,b,c)
+#define IWineD3DDevice_GetPixelShaderConstantF(p,a,b,c)         (p)->lpVtbl->GetPixelShaderConstantF(p,a,b,c)
+#define IWineD3DDevice_GetRasterStatus(p,a,b)                   (p)->lpVtbl->GetRasterStatus(p,a,b)
 #define IWineD3DDevice_SetRenderState(p,a,b)                    (p)->lpVtbl->SetRenderState(p,a,b)
 #define IWineD3DDevice_GetRenderState(p,a,b)                    (p)->lpVtbl->GetRenderState(p,a,b)
+#define IWineD3DDevice_SetRenderTarget(p,a,b)                   (p)->lpVtbl->SetRenderTarget(p,a,b)
+#define IWineD3DDevice_GetRenderTarget(p,a,b)                   (p)->lpVtbl->GetRenderTarget(p,a,b)
+#define IWineD3DDevice_SetSamplerState(p,a,b,c)                 (p)->lpVtbl->SetSamplerState(p,a,b,c)
+#define IWineD3DDevice_GetSamplerState(p,a,b,c)                 (p)->lpVtbl->GetSamplerState(p,a,b,c)
+#define IWineD3DDevice_SetScissorRect(p,a)                      (p)->lpVtbl->SetScissorRect(p,a)
+#define IWineD3DDevice_GetScissorRect(p,a)                      (p)->lpVtbl->GetScissorRect(p,a)
+#define IWineD3DDevice_SetSoftwareVertexProcessing(p,a)         (p)->lpVtbl->SetSoftwareVertexProcessing(p,a)
+#define IWineD3DDevice_GetSoftwareVertexProcessing(p)           (p)->lpVtbl->GetSoftwareVertexProcessing(p)
+#define IWineD3DDevice_SetStreamSource(p,a,b,c,d)               (p)->lpVtbl->SetStreamSource(p,a,b,c,d)
+#define IWineD3DDevice_GetStreamSource(p,a,b,c,d)               (p)->lpVtbl->GetStreamSource(p,a,b,c,d)
+#define IWineD3DDevice_SetStreamSourceFreq(p,a,b)               (p)->lpVtbl->SetStreamSourceFreq(p,a,b)
+#define IWineD3DDevice_GetStreamSourceFreq(p,a,b)               (p)->lpVtbl->GetStreamSourceFreq(p,a,b)
+#define IWineD3DDevice_GetSwapChain(p,a,b)                      (p)->lpVtbl->GetSwapChain(p,a,b)
 #define IWineD3DDevice_SetTextureStageState(p,a,b,c)            (p)->lpVtbl->SetTextureStageState(p,a,b,c)
 #define IWineD3DDevice_GetTextureStageState(p,a,b,c)            (p)->lpVtbl->GetTextureStageState(p,a,b,c)
 #define IWineD3DDevice_SetTexture(p,a,b)                        (p)->lpVtbl->SetTexture(p,a,b)
 #define IWineD3DDevice_GetTexture(p,a,b)                        (p)->lpVtbl->GetTexture(p,a,b)
-#define IWineD3DDevice_GetBackBuffer(p,a,b,c,d)                 (p)->lpVtbl->GetBackBuffer(p,a,b,c,d)
-#define IWineD3DDevice_GetDeviceCaps(p,a)                       (p)->lpVtbl->GetDeviceCaps(p,a)
-#define IWineD3DDevice_GetDisplayMode(p,a,b)                    (p)->lpVtbl->GetDisplayMode(p,a,b)
+#define IWineD3DDevice_SetTransform(p,a,b)                      (p)->lpVtbl->SetTransform(p,a,b)
+#define IWineD3DDevice_GetTransform(p,a,b)                      (p)->lpVtbl->GetTransform(p,a,b)
+#define IWineD3DDevice_SetVertexDeclaration(p,a)                (p)->lpVtbl->SetVertexDeclaration(p,a)
+#define IWineD3DDevice_GetVertexDeclaration(p,a)                (p)->lpVtbl->GetVertexDeclaration(p,a)
+#define IWineD3DDevice_SetVertexShader(p,a)                     (p)->lpVtbl->SetVertexShader(p,a)
+#define IWineD3DDevice_GetVertexShader(p,a)                     (p)->lpVtbl->GetVertexShader(p,a)
+#define IWineD3DDevice_SetVertexShaderConstantB(p,a,b,c)        (p)->lpVtbl->SetVertexShaderConstantB(p,a,b,c)
+#define IWineD3DDevice_GetVertexShaderConstantB(p,a,b,c)        (p)->lpVtbl->GetVertexShaderConstantB(p,a,b,c)
+#define IWineD3DDevice_SetVertexShaderConstantI(p,a,b,c)        (p)->lpVtbl->SetVertexShaderConstantI(p,a,b,c)
+#define IWineD3DDevice_GetVertexShaderConstantI(p,a,b,c)        (p)->lpVtbl->GetVertexShaderConstantI(p,a,b,c)
+#define IWineD3DDevice_SetVertexShaderConstantF(p,a,b,c)        (p)->lpVtbl->SetVertexShaderConstantF(p,a,b,c)
+#define IWineD3DDevice_GetVertexShaderConstantF(p,a,b,c)        (p)->lpVtbl->GetVertexShaderConstantF(p,a,b,c)
+#define IWineD3DDevice_SetViewport(p,a)                         (p)->lpVtbl->SetViewport(p,a)
+#define IWineD3DDevice_GetViewport(p,a)                         (p)->lpVtbl->GetViewport(p,a)
+#define IWineD3DDevice_MultiplyTransform(p,a,b)                 (p)->lpVtbl->MultiplyTransform(p,a,b)
+#define IWineD3DDevice_ValidateDevice(p,a)                      (p)->lpVtbl->ValidateDevice(p,a)
+#define IWineD3DDevice_ProcessVertices(p,a,b,c,d,e,f)           (p)->lpVtbl->ProcessVertices(p,a,b,c,d,e,f)
+#define IWineD3DDevice_BeginStateBlock(p)                       (p)->lpVtbl->BeginStateBlock(p)
+#define IWineD3DDevice_EndStateBlock(p,a)                       (p)->lpVtbl->EndStateBlock(p,a)
 #define IWineD3DDevice_BeginScene(p)                            (p)->lpVtbl->BeginScene(p)
 #define IWineD3DDevice_EndScene(p)                              (p)->lpVtbl->EndScene(p)
 #define IWineD3DDevice_Present(p,a,b,c,d)                       (p)->lpVtbl->Present(p,a,b,c,d)
@@ -343,9 +533,15 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
 #define IWineD3DDevice_DrawIndexedPrimitive(p,a,b,c,d,e,f)      (p)->lpVtbl->DrawIndexedPrimitive(p,a,b,c,d,e,f)
 #define IWineD3DDevice_DrawPrimitiveUP(p,a,b,c,d)               (p)->lpVtbl->DrawPrimitiveUP(p,a,b,c,d)
 #define IWineD3DDevice_DrawIndexedPrimitiveUP(p,a,b,c,d,e,f,g,h) (p)->lpVtbl->DrawIndexedPrimitiveUP(p,a,b,c,d,e,f,g,h)
-#define IWineD3DDevice_CreateVertexDeclaration(p,a,b,c)         (p)->lpVtbl->CreateVertexDeclaration(p,a,b,c)
-#define IWineD3DDevice_SetVertexDeclaration(p,a)                (p)->lpVtbl->SetVertexDeclaration(p,a)
-#define IWineD3DDevice_GetVertexDeclaration(p,a)                (p)->lpVtbl->GetVertexDeclaration(p,a)
+#define IWineD3DDevice_DrawRectPatch(p,a,b,c)                   (p)->lpVtbl->DrawRectPatch(p,a,b,c)
+#define IWineD3DDevice_DrawTriPatch(p,a,b,c)                    (p)->lpVtbl->DrawTriPatch(p,a,b,c)
+#define IWineD3DDevice_DeletePatch(p,a)                         (p)->lpVtbl->DeletePatch(p,a)
+#define IWineD3DDevice_ColorFill(p,a,b,c)                       (p)->lpVtbl->ColorFill(p,a,b,c)
+#define IWineD3DDevice_UpdateTexture(p,a,b)                     (p)->lpVtbl->UpdateTexture(p,a,b)
+#define IWineD3DDevice_UpdateSurface(p,a,b,c,d)                 (p)->lpVtbl->UpdateSurface(p,a,b,c,d)
+#define IWineD3DDevice_StretchRect(p,a,b,c,d,e)                 (p)->lpVtbl->StretchRect(p,a,b,c,d,e)
+#define IWineD3DDevice_GetRenderTargetData(p,a,b)               (p)->lpVtbl->GetRenderTargetData(p,a,b)
+#define IWineD3DDevice_GetFrontBufferData(p,a,b)                (p)->lpVtbl->GetFrontBufferData(p,a,b)
 #define IWineD3DDevice_SetupTextureStates(p,a,b)                (p)->lpVtbl->SetupTextureStates(p,a,b)
 #endif
 
@@ -931,6 +1127,8 @@ DECLARE_INTERFACE_(IWineD3DVertexShader,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IWineD3DVertexShader methods ***/
+    STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    STDMETHOD(GetDevice)(THIS_ IWineD3DDevice** ppDevice) PURE;    
     STDMETHOD(GetFunction)(THIS_ VOID* pData, UINT* pSizeOfData) PURE;
     STDMETHOD(SetConstantB)(THIS_ UINT StartRegister, CONST BOOL*  pConstantData, UINT BoolCount) PURE;
     STDMETHOD(SetConstantI)(THIS_ UINT StartRegister, CONST INT*   pConstantData, UINT Vector4iCount) PURE;
@@ -945,18 +1143,20 @@ DECLARE_INTERFACE_(IWineD3DVertexShader,IUnknown)
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
-#define IWineD3DVertexShader_QueryInterface(p,a,b)                (p)->lpVtbl->QueryInterface(p,a,b)
-#define IWineD3DVertexShader_AddRef(p)                            (p)->lpVtbl->AddRef(p)
-#define IWineD3DVertexShader_Release(p)                           (p)->lpVtbl->Release(p)
+#define IWineD3DVertexShader_QueryInterface(p,a,b)     (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWineD3DVertexShader_AddRef(p)                 (p)->lpVtbl->AddRef(p)
+#define IWineD3DVertexShader_Release(p)                (p)->lpVtbl->Release(p)
 /*** IWineD3DVertexShader methods ***/
-#define IWineD3DVertexShader_GetFunction(p,a,b)                   (p)->lpVtbl->GetFunction(p,a,b)
-#define IWineD3DVertexShader_SetConstantB(p,a,b,c)                (p)->lpVtbl->SetConstantB(p,a,b,c)
-#define IWineD3DVertexShader_SetConstantI(p,a,b,c)                (p)->lpVtbl->SetConstantI(p,a,b,c)
-#define IWineD3DVertexShader_SetConstantF(p,a,b,c)                (p)->lpVtbl->SetConstantF(p,a,b,c)
-#define IWineD3DVertexShader_GetConstantB(p,a,b,c)                (p)->lpVtbl->GetConstantB(p,a,b,c)
-#define IWineD3DVertexShader_GetConstantI(p,a,b,c)                (p)->lpVtbl->GetConstantI(p,a,b,c)
-#define IWineD3DVertexShader_GetConstantF(p,a,b,c)                (p)->lpVtbl->GetConstantF(p,a,b,c)
-#define IWineD3DVertexShader_GetVersion(p)                        (p)->lpVtbl->GetVersion(p)
+#define IWineD3DVertexShader_GetParent(p,a)            (p)->lpVtbl->GetParent(p,a)
+#define IWineD3DVertexShader_GetDevice(p,a)            (p)->lpVtbl->GetDevice(p,a)
+#define IWineD3DVertexShader_GetFunction(p,a,b)        (p)->lpVtbl->GetFunction(p,a,b)
+#define IWineD3DVertexShader_SetConstantB(p,a,b,c)     (p)->lpVtbl->SetConstantB(p,a,b,c)
+#define IWineD3DVertexShader_SetConstantI(p,a,b,c)     (p)->lpVtbl->SetConstantI(p,a,b,c)
+#define IWineD3DVertexShader_SetConstantF(p,a,b,c)     (p)->lpVtbl->SetConstantF(p,a,b,c)
+#define IWineD3DVertexShader_GetConstantB(p,a,b,c)     (p)->lpVtbl->GetConstantB(p,a,b,c)
+#define IWineD3DVertexShader_GetConstantI(p,a,b,c)     (p)->lpVtbl->GetConstantI(p,a,b,c)
+#define IWineD3DVertexShader_GetConstantF(p,a,b,c)     (p)->lpVtbl->GetConstantF(p,a,b,c)
+#define IWineD3DVertexShader_GetVersion(p)             (p)->lpVtbl->GetVersion(p)
 #endif
 
 /*****************************************************************************
@@ -970,6 +1170,8 @@ DECLARE_INTERFACE_(IWineD3DPixelShader,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IWineD3DPixelShader methods ***/
+    STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    STDMETHOD(GetDevice)(THIS_ IWineD3DDevice** ppDevice) PURE;
     STDMETHOD(GetFunction)(THIS_ VOID* pData, UINT* pSizeOfData) PURE;
     STDMETHOD(SetConstantF)(THIS_ UINT StartRegister, CONST FLOAT* pConstantData, UINT Vector4fCount) PURE;
     STDMETHOD(GetConstantF)(THIS_ UINT StartRegister, FLOAT* pConstantData, UINT Vector4fCount) PURE;
@@ -980,14 +1182,16 @@ DECLARE_INTERFACE_(IWineD3DPixelShader,IUnknown)
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
-#define IWineD3DPixelShader_QueryInterface(p,a,b)                (p)->lpVtbl->QueryInterface(p,a,b)
-#define IWineD3DPixelShader_AddRef(p)                            (p)->lpVtbl->AddRef(p)
-#define IWineD3DPixelShader_Release(p)                           (p)->lpVtbl->Release(p)
+#define IWineD3DPixelShader_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWineD3DPixelShader_AddRef(p)                  (p)->lpVtbl->AddRef(p)
+#define IWineD3DPixelShader_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IWineD3DPixelShader methods ***/
-#define IWineD3DPixelShader_GetFunction(p,a,b)                   (p)->lpVtbl->GetFunction(p,a,b)
-#define IWineD3DPixelShader_SetConstantF(p,a,b,c)                (p)->lpVtbl->SetConstantF(p,a,b,c)
-#define IWineD3DPixelShader_GetConstantF(p,a,b,c)                (p)->lpVtbl->GetConstantF(p,a,b,c)
-#define IWineD3DPixelShader_GetVersion(p)                        (p)->lpVtbl->GetVersion(p)
+#define IWineD3DPixelShader_GetParent(p,a)             (p)->lpVtbl->GetParent(p,a)
+#define IWineD3DPixelShader_GetDevice(p,a)             (p)->lpVtbl->GetDevice(p,a)
+#define IWineD3DPixelShader_GetFunction(p,a,b)         (p)->lpVtbl->GetFunction(p,a,b)
+#define IWineD3DPixelShader_SetConstantF(p,a,b,c)      (p)->lpVtbl->SetConstantF(p,a,b,c)
+#define IWineD3DPixelShader_GetConstantF(p,a,b,c)      (p)->lpVtbl->GetConstantF(p,a,b,c)
+#define IWineD3DPixelShader_GetVersion(p)              (p)->lpVtbl->GetVersion(p)
 #endif
 
 #if 0 /* FIXME: During porting in from d3d8 - the following will be used */
