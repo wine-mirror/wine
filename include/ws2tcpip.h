@@ -28,6 +28,30 @@
 /* FIXME: This gets defined by some Unix (Linux) header and messes things */
 #undef s6_addr
 
+/*
+ * Multicast group information
+ */
+
+struct WS(ip_mreq)
+{
+    struct WS(in_addr) imr_multiaddr;
+    struct WS(in_addr) imr_interface;
+};
+
+struct WS(ip_mreq_source) {
+    struct WS(in_addr) imr_multiaddr;
+    struct WS(in_addr) imr_sourceaddr;
+    struct WS(in_addr) imr_interface;
+};
+
+struct WS(ip_msfilter) {
+    struct WS(in_addr) imsf_multiaddr;
+    struct WS(in_addr) imsf_interface;
+    u_long             imsf_fmode;
+    u_long             imsf_numsrc;
+    struct WS(in_addr) imsf_slist[1];
+};
+
 typedef struct WS(in_addr6)
 {
    u_char s6_addr[16];   /* IPv6 address */

@@ -596,11 +596,13 @@ typedef struct WS(sockaddr_in)
  * Multicast group information
  */
 
+#if !defined(__WINE_WINSOCK2__)
 struct WS(ip_mreq)
 {
     struct WS(in_addr) imr_multiaddr;
     struct WS(in_addr) imr_interface;
 };
+#endif
 
 /*
  * WSAStartup
