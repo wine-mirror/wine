@@ -4701,7 +4701,7 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
         sz = 0x100;
         MSI_RecordGetStringW(row,3,buffer,&sz);
         reduce_to_longfilename(buffer);
-        if (!strchrW(buffer,'.'))
+        if (!strchrW(buffer,'.') || strcmpiW(strchrW(buffer,'.'),szlnk))
             strcatW(buffer,szlnk);
         target_file = build_directory_name(2, target_folder, buffer);
         HeapFree(GetProcessHeap(),0,target_folder);
