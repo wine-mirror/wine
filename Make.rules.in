@@ -134,7 +134,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 	$(WINEBUILD) $(DEFS) -o $@ --main-module $(MODULE) --dll $<
 
 .spec.spec.def:
-	$(WINEBUILD) $(DEFS) -o $@ --def $<
+	$(WINEBUILD) -w $(DEFS) -o $@ --def $<
 
 .c.ln:
 	$(LINT) -c $(ALLLINTFLAGS) $< || ( $(RM) $@ && exit 1 )
