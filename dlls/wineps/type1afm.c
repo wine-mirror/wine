@@ -388,6 +388,7 @@ static BOOL ReadBBox(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
 static const struct { LPCSTR keyword; INT weight; } afm_weights[] =
 {
     { "REGULAR",	FW_NORMAL },
+    { "NORMAL",         FW_NORMAL },
     { "ROMAN",	    	FW_NORMAL },
     { "BOLD",	    	FW_BOLD },
     { "BOOK",	    	FW_NORMAL },
