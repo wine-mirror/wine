@@ -81,7 +81,7 @@ import	kernel32.dll
 @ stdcall HttpQueryInfoA(ptr long ptr ptr ptr) HttpQueryInfoA
 @ stub HttpQueryInfoW
 @ stdcall HttpSendRequestA(ptr str long ptr long) HttpSendRequestA
-@ stub HttpSendRequestExA
+@ stdcall HttpSendRequestExA(long ptr ptr long long) HttpSendRequestExA
 @ stub HttpSendRequestExW
 @ stub HttpSendRequestW
 @ stub IncrementUrlCacheHeaderData

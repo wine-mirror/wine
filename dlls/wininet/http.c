@@ -456,6 +456,23 @@ lend:
     return bSuccess;
 }
 
+
+/***********************************************************************
+ *           HttpSendRequestExA (WININET)
+ *
+ * Sends the specified request to the HTTP server and allows chunked
+ * transfers
+ */
+BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
+			       LPINTERNET_BUFFERSA lpBuffersIn,
+			       LPINTERNET_BUFFERSA lpBuffersOut,
+			       DWORD dwFlags, DWORD dwContext)
+{
+  FIXME("(%p, %p, %p, %08lx, %08lx): stub\n", hRequest, lpBuffersIn,
+	lpBuffersOut, dwFlags, dwContext);
+  return FALSE;
+}
+
 /***********************************************************************
  *           HttpSendRequestA (WININET.76)
  *

@@ -7,9 +7,9 @@ SOVERSION = 1.0
 IMPORTS   = user32 kernel32
 
 C_SRCS = \
+	ftp.c \
 	http.c \
 	internet.c \
-	ftp.c \
 	utility.c \
 	wininet_main.c
 
