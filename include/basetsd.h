@@ -39,12 +39,24 @@ extern "C" {
  */
 
 /* Type model indepent typedefs */
-
+/* The __intXX types are native types defined by the MS C compiler.
+ * Apps that make use of them before they get defined here, can
+ * simply add to the command line:
+ *    -D__int8=char -D__int16=short -D__int32=int "-D__int64=long long"
+ */
 #ifndef _MSC_VER
-#define __int8  char
-#define __int16 short
-#define __int32 int
-#define __int64 long long
+#  ifndef __int8
+#    define __int8  char
+#  endif
+#  ifndef __int16
+#    define __int16 short
+#  endif
+#  ifndef __int32
+#    define __int32 int
+#  endif
+#  ifndef __int64
+#    define __int64 long long
+#  endif
 #endif /* !defined(_MSC_VER) */
 
 typedef signed __int8    INT8, *PINT8;
