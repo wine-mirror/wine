@@ -97,3 +97,114 @@ likely to get answered and fixed):
 	out, or think could be explained better, or that should have been
 	included, please post to comp.emulators.ms-windows.wine to let us know
 	how this document can be improved.
+
+
+
+How to do regression testing using Cvs
+-------------------------------------
+
+A problem that can happen sometimes is 'it used to work before,
+now it doesn't anymore...'. Here is a step by step procedure to
+try to pinpoint when the problem occured. This is *NOT* for casual
+users.
+
+1) get the 'full cvs' archive from winehq.
+This archive is the cvs tree but with the tags controling the versioning
+system. It's a big file (> 15 meg) with a name like full-cvs-<last update date>
+(it's more than 100mb when uncompressed, you can't very well do this 
+with small, old computers or slow Internet connections)
+
+2) untar it into a repository directory :
+
+cd /home/gerard
+tar -zxffull-cvs-2000-05-20.tar.gz
+mv wine repository
+
+3) extract a new destination directory
+This directory must not be in a subdirectory of the repository else
+cvs will think it's part of the repository and deny you an extraction
+in the repository :
+
+cd /home/gerard
+mv wine wine_current (-> this protects your current wine sandbox, if any)
+export CVSROOT=/home/gerard/repository
+cd /home/gerard
+cvs -d $CVSROOT checkout wine
+
+Note that it's not possible to do a checkout at a given date; you
+always do the checkout for the last date where the full-cvs-xxx snapshot
+was generated.
+
+4) you will have now in the ~/wine directory an image of the cvs tree,
+on the client side.
+Now update this image to the date you want :
+
+cd /home/gerard/wine
+cvs -d $CVSROOT update -D "1999-06-01"   
+
+The date format is YYYY-MM-DD.
+
+Many messages will inform you that more recent files have been
+deleted to set back the client cvs tree to the date you asked,
+for example :
+
+cvs update: tsx11/ts_xf86dga2.c is no longer in the repository
+
+Cvs update is not limited to upgrade to a *newer* version as
+I have believed for far too long :-(
+
+5) Now proceed as for a normal update :
+
+./configure
+make depend && make
+
+When you have found the exact date when a bug was
+added to Cvs, use something like :
+
+cvs -d $CVSROOT diff -D "1999-07-10" -D "1999-07-12"
+
+to get all the differences between the last cvs version
+known to work and code that first displayed the misbehavior.
+
+ [ I did not include flags for diff since they are in my .cvsrc file :
+   cvs -z 3
+   update -dPA
+   diff -u
+ ]
+
+From this diff file, particularly  the file names, and the
+ChangeLog, it's usually possible to find the different individual
+patches that were done at this time. 
+
+If any non-programmer reads this, the fasted method to get
+at the point where the problem occured is to use a binary
+search, that is, if the problem occured in 1999, start at mid-year,
+then is the problem is already here, back to 1st avril, if not,
+to 1st october, and so on.
+
+6) The next step is to start from the last working version
+and to dig the individual contributions from
+http://www.integrita.com/cgi-local/lwgate.pl/WINE-PATCHES/
+(where the Wine patches mailing list is archived)
+
+If the patch was done by the Wine maintainer or if it was
+sent directly to his mail address without going first through
+wine-patches, you are out of luck as you will never find the
+patch in the archive.
+If it is, it's often possible to apply the patches one by
+one to last working Cvs, compile and test. If you have saved
+the next candidate as /home/gerard/buggedpatch1.txt :
+
+cd /home/gerard/wine
+patch -p 0 </home/gerard/buggedpatch1.txt
+
+Beware that the committed patch is not always identical to
+the patch that the author sent to wine-patches, as sometimes
+the Wine maintainer changes things a bit.
+
+If you find one patch that is getting the Cvs to reproduce the problem,
+you have almost won; post the problem on 
+comp.emulators.windows.wine
+and there is a chance that the author will jump in to suggest a fix;
+or there is always the possibility to look hard at the patch until it
+is coerced to reveal where is the bug :-) 
