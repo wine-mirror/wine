@@ -670,7 +670,7 @@ static LRESULT ShellView_OnCreate(IShellViewImpl * This)
 	if (ppf2)
 	{
 	  IPersistFolder2_GetCurFolder(ppf2, (LPITEMIDLIST*)&ntreg.pidl);
-	  ntreg.fRecursive = FALSE;
+	  ntreg.fRecursive = TRUE;
 	  This->hNotify = SHChangeNotifyRegister(This->hWnd, SHCNF_IDLIST, SHCNE_ALLEVENTS, SHV_CHANGE_NOTIFY, 1, &ntreg);
 	  SHFree((LPITEMIDLIST)ntreg.pidl);
 	  IPersistFolder2_Release(ppf2);
