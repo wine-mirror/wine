@@ -96,6 +96,8 @@ static void PROFILE_CopyEntry( char *buffer, const char *value, int len,
     char quote = '\0';
     const char *p;
 
+    if(!buffer) return;
+
     if ((*value == '\'') || (*value == '\"'))
     {
         if (value[1] && (value[strlen(value)-1] == *value)) quote = *value++;
@@ -761,6 +763,9 @@ static INT PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
 			       BOOL return_values )
 {
     PROFILEKEY *key;
+
+    if(!buffer) return 0;
+
     while (section)
     {
         if (section->name && !strcasecmp( section->name, section_name ))
@@ -808,6 +813,8 @@ static INT PROFILE_GetSectionNames( LPSTR buffer, UINT len )
     WORD l, cursize = 0;
     PROFILESECTION *section;
 
+    if(!buffer) return 0;
+
     for (section = CurProfile->section; section; section = section->next)
 	if (section->name) {
 	    l = strlen(section->name);
@@ -851,6 +858,8 @@ static INT PROFILE_GetString( LPCSTR section, LPCSTR key_name,
 			      LPCSTR def_val, LPSTR buffer, UINT len )
 {
     PROFILEKEY *key = NULL;
+
+    if(!buffer) return 0;
 
     if (!def_val) def_val = "";
     if (key_name && key_name[0])
