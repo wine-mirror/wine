@@ -360,39 +360,46 @@ LCID WINAPI GetSystemDefaultLCID()
  */
 LANGID WINAPI GetUserDefaultLangID()
 {
-	char *buf=NULL;
-	char *lang,*country,*charset,*dialect,*next;
-	int ret=0;
+	/* caching result, if defined from environment, which should (?) not change during a WINE session */
+	static	LANGID	userLCID = 0;
 
-	if (Options.language) return Languages[Options.language].langid;
-
-	buf=getenv("LANGUAGE");
-	if (!buf) buf=getenv("LANG");
-	if (!buf) buf=getenv("LC_ALL");
-	if (!buf) buf=getenv("LC_MESSAGES");
-	if (!buf) return MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT );
-
-	if (!strcmp(buf,"POSIX") || !strcmp(buf,"C")) {
-		free(buf);
-		return MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT );
+	if (Options.language) {
+		return Languages[Options.language].langid;
 	}
 
-	lang=buf;
-
-	do {
-		next=strchr(lang,':'); if (next) *next++='\0';
-		dialect=strchr(lang,'@'); if (dialect) *dialect++='\0';
-		charset=strchr(lang,'.'); if (charset) *charset++='\0';
-		country=strchr(lang,'_'); if (country) *country++='\0';
-
-		ret=MAIN_GetLanguageID(lang, country, charset, dialect);
-
-		lang=next;
-
-	} while (lang && !ret);
-
-	free(buf);
-	return (LANGID)ret;
+	if (userLCID == 0) {
+		char *buf=NULL;
+		char *lang,*country,*charset,*dialect,*next;
+		int 	ret=0;
+		
+		buf=getenv("LANGUAGE");
+		if (!buf) buf=getenv("LANG");
+		if (!buf) buf=getenv("LC_ALL");
+		if (!buf) buf=getenv("LC_MESSAGES");
+		if (!buf) return userLCID = MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT );
+		
+		if (!strcmp(buf,"POSIX") || !strcmp(buf,"C")) {
+			return MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT );
+		}
+		
+		lang=buf;
+		
+		do {
+			next=strchr(lang,':'); if (next) *next++='\0';
+			dialect=strchr(lang,'@'); if (dialect) *dialect++='\0';
+			charset=strchr(lang,'.'); if (charset) *charset++='\0';
+			country=strchr(lang,'_'); if (country) *country++='\0';
+			
+			ret=MAIN_GetLanguageID(lang, country, charset, dialect);
+			
+			lang=next;
+			
+		} while (lang && !ret);
+		
+		/* FIXME : are strings returned by getenv() to be free()'ed ? */
+		userLCID = (LANGID)ret;
+	}
+	return userLCID;
 }
 
 /***********************************************************************
@@ -494,6 +501,10 @@ LANG_END
 
 LANG_BEGIN (LANG_FINNISH, SUBLANG_DEFAULT)	/*0x040B*/
 #include "nls/fin.nls"
+LANG_END
+
+LANG_BEGIN (LANG_FRENCH, SUBLANG_DEFAULT)	/*0x040C*/
+#include "nls/fra.nls"
 LANG_END
 
 LANG_BEGIN (LANG_ITALIAN, SUBLANG_ITALIAN)	/*0x410*/
