@@ -17,6 +17,7 @@
 #include "debug.h"
 #include "winreg.h"
 #include "authors.h"
+#include "winversion.h"
 
 #include "shell.h"
 #include "shellapi.h"
@@ -356,23 +357,31 @@ static BOOL __get_dropline( HWND hWnd, LPRECT lprect )
  * SHAppBarMessage32			[SHELL32.207]
  */
 UINT WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
-{ FIXME(shell,"(0x%08lx,%p): stub\n", msg, data);
-#if 0
-  switch (msg)
-  { case ABM_ACTIVATE:
-        case ABM_GETAUTOHIDEBAR:
-        case ABM_GETSTATE:
-        case ABM_GETTASKBARPOS:
-        case ABM_NEW:
-        case ABM_QUERYPOS:
-        case ABM_REMOVE:
-        case ABM_SETAUTOHIDEBAR:
-        case ABM_SETPOS:
-        case ABM_WINDOWPOSCHANGED:
-	    ;
-    }
-#endif
-    return 0;
+{
+	FIXME(shell,"(0x%08lx,%p hwnd=0x%08x): stub\n", msg, data, data->hWnd);
+
+	switch (msg)
+	{ case ABM_GETSTATE:
+		return ABS_ALWAYSONTOP | ABS_AUTOHIDE;
+	  case ABM_GETTASKBARPOS:
+		/* fake a taskbar on the bottom of the desktop */
+		{ RECT rec;
+		  GetWindowRect(GetDesktopWindow(), &rec);
+		  rec.left = 0;
+		  rec.top = rec.bottom - 2;
+		}
+		return TRUE;
+	  case ABM_ACTIVATE:
+	  case ABM_GETAUTOHIDEBAR:
+	  case ABM_NEW:
+	  case ABM_QUERYPOS:
+	  case ABM_REMOVE:
+	  case ABM_SETAUTOHIDEBAR:
+	  case ABM_SETPOS:
+	  case ABM_WINDOWPOSCHANGED:
+		return FALSE;
+	}
+	return 0;
 }
 
 
@@ -417,14 +426,6 @@ DWORD WINAPI SHGetDesktopFolder(LPSHELLFOLDER *shellfolder)
 
   TRACE(shell,"-- %p->(%p)\n",shellfolder, *shellfolder);
 	return hres;
-}
-
-/*************************************************************************
- * SHGetPathFromIDList		[SHELL32.221][NT 4.0: SHELL32.219]
- */
-BOOL WINAPI SHGetPathFromIDListAW(LPCITEMIDLIST pidl,LPSTR pszPath)     
-{ TRACE(shell,"(pidl=%p,%p)\n",pidl,pszPath);
-  return SHGetPathFromIDListA(pidl,pszPath);
 }
 
 /*************************************************************************
@@ -990,6 +991,52 @@ DWORD WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath)
 }
 
 /*************************************************************************
+ * SHGetPathFromIDListAW		[SHELL32.221][NT 4.0: SHELL32.219]
+ */
+BOOL WINAPI SHGetPathFromIDListAW(LPCITEMIDLIST pidl,LPVOID pszPath)     
+{
+	TRACE(shell,"(pidl=%p,%p)\n",pidl,pszPath);
+
+	if (VERSION_OsIsUnicode())
+	  return SHGetPathFromIDListW(pidl,pszPath);
+	return SHGetPathFromIDListA(pidl,pszPath);
+}
+
+/***********************************************************************
+ * DllGetVersion [COMCTL32.25]
+ *
+ * Retrieves version information of the 'SHELL32.DLL'
+ *
+ * PARAMS
+ *     pdvi [O] pointer to version information structure.
+ *
+ * RETURNS
+ *     Success: S_OK
+ *     Failure: E_INVALIDARG
+ *
+ * NOTES
+ *     Returns version of a shell32.dll from IE4.01 SP1.
+ */
+
+HRESULT WINAPI SHELL32_DllGetVersion (DLLVERSIONINFO *pdvi)
+{
+	if (pdvi->cbSize != sizeof(DLLVERSIONINFO)) 
+	{ WARN (shell, "wrong DLLVERSIONINFO size from app");
+	  return E_INVALIDARG;
+	}
+
+	pdvi->dwMajorVersion = 4;
+	pdvi->dwMinorVersion = 72;
+	pdvi->dwBuildNumber = 3110;
+	pdvi->dwPlatformID = 1;
+
+	TRACE (shell, "%lu.%lu.%lu.%lu\n",
+	   pdvi->dwMajorVersion, pdvi->dwMinorVersion,
+	   pdvi->dwBuildNumber, pdvi->dwPlatformID);
+
+	return S_OK;
+}
+/*************************************************************************
  * global variables of the shell32.dll
  *
  */
@@ -1088,6 +1135,8 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	      if (pdesktopfolder) 
 	      { pdesktopfolder->lpvtbl->fnRelease(pdesktopfolder);
 	      }
+
+	      SIC_Destroy();
 
 	      /* this one is here to check if AddRef/Release is balanced */
 	      if (shell32_ObjCount)
