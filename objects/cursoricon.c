@@ -227,6 +227,29 @@ BOOL32 CURSORICON_SimulateLoadingFromResourceW( LPWSTR filename, BOOL32 fCursor,
     *res = NULL;
     *ptr = NULL;
     if (!(bits = (CURSORICONFILEDIR *)VIRTUAL_MapFileW( filename ))) return FALSE;
+
+    /* FIXME: test for inimated icons
+     * hack to load the first icon from the *.ani file
+     */
+    if ( *(LPDWORD)bits==0x46464952 ) /* "RIFF" */
+    { LPBYTE pos = (LPBYTE) bits;
+      FIXME (cursor,"Animated icons not correctly implemented! %p \n", bits);
+	
+      for (;;)
+      { if (*(LPDWORD)pos==0x6e6f6369)		/* "icon" */
+        { FIXME (cursor,"icon entry found! %p\n", bits);
+	  pos+=4;
+	  if ( !*(LPWORD) pos==0x2fe)		/* iconsize */
+	  { goto fail;
+	  }
+	  bits+=2;
+	  FIXME (cursor,"icon size ok %p \n", bits);
+	  break;
+	}
+        pos+=2;
+        if (pos>=(LPBYTE)bits+766) goto fail;
+      }
+    }
     if (!(entries = bits->idCount)) goto fail;
     (int)_free = size = sizeof(CURSORICONDIR) + sizeof(CURSORICONDIRENTRY) * 
                                                 (entries - 1);
