@@ -1532,6 +1532,7 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
     char *dstbits, *data;
     int y;
     POINT pts[2];
+    BOOL top_down = FALSE;
 
     if(!X11DRV_XRender_Installed) {
         FIXME("Unable to AlphaBlend without Xrender\n");
@@ -1577,10 +1578,15 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
         return FALSE;
     }
     dstbits = data = HeapAlloc(GetProcessHeap(), 0, heightSrc * widthSrc * 4);
+
+    if(bmp->dib->dsBmih.biHeight < 0) { /* top-down dib */
+        top_down = TRUE;
+        dstbits += widthSrc * (heightSrc - 1) * 4;
+    }
     for(y = ySrc + heightSrc - 1; y >= ySrc; y--) {
         memcpy(dstbits, (char *)bmp->dib->dsBm.bmBits + y * bmp->dib->dsBm.bmWidthBytes + xSrc * 4,
                widthSrc * 4);
-        dstbits += widthSrc * 4;
+        dstbits += (top_down ? -1 : 1) * widthSrc * 4;
     }
 
     wine_tsx11_lock();
