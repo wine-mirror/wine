@@ -39,6 +39,10 @@
 "Personal"="C:\My Documents"
 "Favorites"="C:\WINDOWS\Favorites"
 
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion]
+"ProgramFilesDir"="C:\Program Files"
+
+
 #
 # SHELL32 entrys base classes of the desktop/ shelllinks
 # Used by common dialogs, programs creating and may others
