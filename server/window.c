@@ -346,9 +346,9 @@ int make_window_active( user_handle_t window )
 /* find child of 'parent' that contains the given point (in parent-relative coords) */
 static struct window *child_window_from_point( struct window *parent, int x, int y )
 {
-    struct window *ptr, *ret = NULL;
+    struct window *ptr;
 
-    for (ptr = parent->first_child; ptr && !ret; ptr = ptr->next)
+    for (ptr = parent->first_child; ptr; ptr = ptr->next)
     {
         if (!(ptr->style & WS_VISIBLE)) continue; /* not visible -> skip */
         if ((ptr->style & (WS_POPUP|WS_CHILD|WS_DISABLED)) == (WS_CHILD|WS_DISABLED))
