@@ -3,6 +3,7 @@
  *
  * Copyright 2000 Alexandre Julliard
  * Copyright 2000 Jon Griffiths
+ * Copyright 2003 Thomas Mertes
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -338,53 +339,294 @@ INT __cdecl NTDLL_iswalpha( WCHAR wc )
 
 
 /*********************************************************************
- *           _ultow    (NTDLL.@)
- * Like _ultoa, but for wide character strings.
+ *      _ultow   (NTDLL.@)
+ *
+ * Converts an unsigned long integer to an unicode string.
+ *
+ * Assigns a '\0' terminated string to str and returns str.
+ * Does not check if radix is in the range of 2 to 36 (as native DLL).
+ * For str == NULL just returns NULL (as native DLL).
  */
-LPWSTR __cdecl _ultow(ULONG value, LPWSTR string, INT radix)
+LPWSTR __cdecl _ultow( unsigned long value, LPWSTR str, INT radix )
 {
-    WCHAR tmp[33];
-    LPWSTR tp = tmp;
-    LPWSTR sp;
-    LONG i;
-    ULONG v = value;
+    WCHAR buffer[33];
+    PWCHAR pos;
+    WCHAR digit;
 
-    if (radix > 36 || radix <= 1)
-	return 0;
+    pos = &buffer[32];
+    *pos = '\0';
 
-    while (v || tp == tmp)
-    {
-	i = v % radix;
-	v = v / radix;
-	if (i < 10)
-	    *tp++ = i + '0';
-	else
-	    *tp++ = i + 'a' - 10;
-    }
+    do {
+	digit = value % radix;
+	value = value / radix;
+	if (digit < 10) {
+	    *--pos = '0' + digit;
+	} else {
+	    *--pos = 'a' + digit - 10;
+	} /* if */
+    } while (value != 0L);
 
-    sp = string;
-    while (tp > tmp)
-	*sp++ = *--tp;
-    *sp = 0;
-    return string;
+    if (str != NULL) {
+	memcpy(str, pos, (&buffer[32] - pos + 1) * sizeof(WCHAR));
+    } /* if */
+    return str;
 }
+
 
 /*********************************************************************
- *           _wtol    (NTDLL.@)
- * Like atol, but for wide character strings.
+ *      _ltow   (NTDLL.@)
+ *
+ * Converts a long integer to an unicode string.
+ *
+ * Assigns a '\0' terminated string to str and returns str. If radix
+ * is 10 and value is negative, the value is converted with sign.
+ * Does not check if radix is in the range of 2 to 36 (as native DLL).
+ * For str == NULL just returns NULL (as native DLL).
  */
-LONG __cdecl NTDLL__wtol(LPWSTR string)
+LPWSTR __cdecl _ltow( long value, LPWSTR str, INT radix )
 {
-    return strtolW( string, NULL, 10 );
+    unsigned long val;
+    int negative;
+    WCHAR buffer[33];
+    PWCHAR pos;
+    WCHAR digit;
+
+    if (value < 0 && radix == 10) {
+	negative = 1;
+        val = -value;
+    } else {
+	negative = 0;
+        val = value;
+    } /* if */
+
+    pos = &buffer[32];
+    *pos = '\0';
+
+    do {
+	digit = val % radix;
+	val = val / radix;
+	if (digit < 10) {
+	    *--pos = '0' + digit;
+	} else {
+	    *--pos = 'a' + digit - 10;
+	} /* if */
+    } while (val != 0L);
+
+    if (negative) {
+	*--pos = '-';
+    } /* if */
+
+    if (str != NULL) {
+	memcpy(str, pos, (&buffer[32] - pos + 1) * sizeof(WCHAR));
+    } /* if */
+    return str;
 }
 
+
 /*********************************************************************
- *           _wtoi    (NTDLL.@)
+ *      _itow    (NTDLL.@)
+ *
+ * Converts an integer to an unicode string.
+ *
+ * Assigns a '\0' terminated wstring to str and returns str. If radix
+ * is 10 and value is negative, the value is converted with sign.
+ * Does not check if radix is in the range of 2 to 36 (as native DLL).
+ * For str == NULL just returns NULL (as native DLL).
+ *
+ * Difference:
+ * - The native DLL crashes when the string is longer than 19 chars.
+ *   This function does not have this bug.
  */
-INT __cdecl NTDLL__wtoi(LPWSTR string)
+LPWSTR __cdecl _itow( int value, LPWSTR str, INT radix )
 {
-    return NTDLL__wtol(string);
+    return _ltow(value, str, radix);
 }
+
+
+/*********************************************************************
+ *      _ui64tow   (NTDLL.@)
+ *
+ * Converts a large unsigned integer to an unicode string.
+ *
+ * Assigns a '\0' terminated wstring to str and returns str.
+ * Does not check if radix is in the range of 2 to 36 (as native DLL).
+ * For str == NULL just returns NULL (as native DLL).
+ *
+ * Difference:
+ * - This function does not exist in the native DLL (but in msvcrt).
+ *   But since the maintenance of all these functions is better done
+ *   in one place we implement it here.
+ */
+LPWSTR __cdecl _ui64tow( ULONGLONG value, LPWSTR str, INT radix )
+{
+    WCHAR buffer[65];
+    PWCHAR pos;
+    WCHAR digit;
+
+    pos = &buffer[64];
+    *pos = '\0';
+
+    do {
+	digit = value % radix;
+	value = value / radix;
+	if (digit < 10) {
+	    *--pos = '0' + digit;
+	} else {
+	    *--pos = 'a' + digit - 10;
+	} /* if */
+    } while (value != 0L);
+
+    if (str != NULL) {
+	memcpy(str, pos, (&buffer[64] - pos + 1) * sizeof(WCHAR));
+    } /* if */
+    return str;
+}
+
+
+/*********************************************************************
+ *      _i64tow   (NTDLL.@)
+ *
+ * Converts a large integer to an unicode string.
+ *
+ * Assigns a '\0' terminated wstring to str and returns str. If radix
+ * is 10 and value is negative, the value is converted with sign.
+ * Does not check if radix is in the range of 2 to 36 (as native DLL).
+ * For str == NULL just returns NULL (as native DLL).
+ *
+ * Difference:
+ * - The native DLL converts negative values (for base 10) wrong:
+ *                     -1 is converted to -18446744073709551615
+ *                     -2 is converted to -18446744073709551614
+ *   -9223372036854775807 is converted to  -9223372036854775809
+ *   -9223372036854775808 is converted to  -9223372036854775808
+ *   The native msvcrt _i64tow function and our ntdll function do
+ *   not have this bug.
+ */
+LPWSTR __cdecl _i64tow( LONGLONG value, LPWSTR str, INT radix )
+{
+    ULONGLONG val;
+    int negative;
+    WCHAR buffer[65];
+    PWCHAR pos;
+    WCHAR digit;
+
+    if (value < 0 && radix == 10) {
+	negative = 1;
+        val = -value;
+    } else {
+	negative = 0;
+        val = value;
+    } /* if */
+
+    pos = &buffer[64];
+    *pos = '\0';
+
+    do {
+	digit = val % radix;
+	val = val / radix;
+	if (digit < 10) {
+	    *--pos = '0' + digit;
+	} else {
+	    *--pos = 'a' + digit - 10;
+	} /* if */
+    } while (val != 0L);
+
+    if (negative) {
+	*--pos = '-';
+    } /* if */
+
+    if (str != NULL) {
+	memcpy(str, pos, (&buffer[64] - pos + 1) * sizeof(WCHAR));
+    } /* if */
+    return str;
+}
+
+
+/*********************************************************************
+ *      _wtol    (NTDLL.@)
+ *
+ * Converts an unicode string to a long integer.
+ *
+ * On success it returns the integer value otherwise it returns 0.
+ * Accepts: {whitespace} [+|-] {digits}
+ * No check of overflow: Just assigns lower 32 bits (as native DLL).
+ * Does not check for str != NULL (as native DLL).
+ */
+LONG __cdecl _wtol( LPWSTR str )
+{
+    ULONG RunningTotal = 0;
+    char bMinus = 0;
+
+    while (isspaceW(*str)) {
+	str++;
+    } /* while */
+
+    if (*str == '+') {
+	str++;
+    } else if (*str == '-') {
+	bMinus = 1;
+	str++;
+    } /* if */
+
+    while (*str >= '0' && *str <= '9') {
+	RunningTotal = RunningTotal * 10 + *str - '0';
+	str++;
+    } /* while */
+
+    return bMinus ? -RunningTotal : RunningTotal;
+}
+
+
+/*********************************************************************
+ *      _wtoi    (NTDLL.@)
+ *
+ * Converts an unicode string to an integer.
+ *
+ * On success it returns the integer value otherwise it returns 0.
+ * Accepts: {whitespace} [+|-] {digits}
+ * No check of overflow: Just assigns lower 32 bits (as native DLL).
+ * Does not check for str != NULL (as native DLL).
+ */
+int __cdecl _wtoi( LPWSTR string )
+{
+    return _wtol(string);
+}
+
+
+/*********************************************************************
+ *      _wtoi64   (NTDLL.@)
+ *
+ * Converts an unicode string to a large integer.
+ *
+ * On success it returns the integer value otherwise it returns 0.
+ * Accepts: {whitespace} [+|-] {digits}
+ * No check of overflow: Just assigns lower 64 bits (as native DLL).
+ * Does not check for str != NULL (as native DLL).
+ */
+LONGLONG  __cdecl _wtoi64( LPWSTR str )
+{
+    ULONGLONG RunningTotal = 0;
+    char bMinus = 0;
+
+    while (isspaceW(*str)) {
+	str++;
+    } /* while */
+
+    if (*str == '+') {
+	str++;
+    } else if (*str == '-') {
+	bMinus = 1;
+	str++;
+    } /* if */
+
+    while (*str >= '0' && *str <= '9') {
+	RunningTotal = RunningTotal * 10 + *str - '0';
+	str++;
+    } /* while */
+
+    return bMinus ? -RunningTotal : RunningTotal;
+}
+
 
 /* INTERNAL: Wide char snprintf
  * If you fix a bug in this function, fix it in msvcrt/wcs.c also!

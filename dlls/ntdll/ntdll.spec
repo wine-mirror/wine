@@ -889,14 +889,18 @@
 @ stdcall -ret64 _allmul(long long long long) _allmul
 @ stdcall -register -i386 _alloca_probe() NTDLL_alloca_probe
 @ stdcall -ret64 _allrem(long long long long) _allrem
+@ cdecl -ret64 _atoi64(str) _atoi64
 @ stdcall -ret64 _aulldiv(long long long long) _aulldiv
 @ stdcall -ret64 _aullrem(long long long long) _aullrem
 @ stdcall -register -i386 _chkstk() NTDLL_chkstk
 @ stub _fltused
 @ cdecl _ftol() NTDLL__ftol
+@ cdecl _i64toa(long long ptr long) _i64toa
+@ cdecl _i64tow(long long ptr long) _i64tow
 @ cdecl _itoa(long ptr long) _itoa
-@ stub _itow #(long ptr long) _itow
+@ cdecl _itow(long ptr long) _itow
 @ cdecl _ltoa(long ptr long) _ltoa
+@ cdecl _ltow(long ptr long) _ltow
 @ cdecl _memccpy(ptr ptr long long) memccpy
 @ cdecl _memicmp(str str long) NTDLL__memicmp
 @ varargs _snprintf(ptr long ptr) snprintf
@@ -907,6 +911,8 @@
 @ cdecl _strlwr(str) _strlwr
 @ cdecl _strnicmp(str str long) strncasecmp
 @ cdecl _strupr(str) _strupr
+@ cdecl _ui64toa(long long ptr long) _ui64toa
+@ cdecl _ui64tow(long long ptr long) _ui64tow
 @ cdecl _ultoa(long ptr long) _ultoa
 @ cdecl _ultow(long ptr long) _ultow
 @ cdecl _vsnprintf(ptr long ptr ptr) vsnprintf
@@ -914,8 +920,9 @@
 @ cdecl _wcslwr(wstr) NTDLL__wcslwr
 @ cdecl _wcsnicmp(wstr wstr long) NTDLL__wcsnicmp
 @ cdecl _wcsupr(wstr) NTDLL__wcsupr
-@ cdecl _wtoi(wstr) NTDLL__wtoi
-@ cdecl _wtol(wstr) NTDLL__wtol
+@ cdecl _wtoi(wstr) _wtoi
+@ cdecl _wtoi64(wstr) _wtoi64
+@ cdecl _wtol(wstr) _wtol
 @ cdecl abs(long) abs
 @ cdecl atan(double) atan
 @ cdecl atoi(str) atoi

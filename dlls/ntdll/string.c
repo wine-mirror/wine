@@ -3,6 +3,7 @@
  *
  * Copyright 2000 Alexandre Julliard
  * Copyright 2000 Jon Griffiths
+ * Copyright 2003 Thomas Mertes
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,6 +26,8 @@
 #include <string.h>
 
 #include "windef.h"
+#include "winternl.h"
+
 
 /*********************************************************************
  *                  _memicmp   (NTDLL.@)
@@ -41,6 +44,7 @@ INT __cdecl NTDLL__memicmp( LPCSTR s1, LPCSTR s2, DWORD len )
     return ret;
 }
 
+
 /*********************************************************************
  *                  _strupr   (NTDLL.@)
  */
@@ -50,6 +54,7 @@ LPSTR __cdecl _strupr( LPSTR str )
     for ( ; *str; str++) *str = toupper(*str);
     return ret;
 }
+
 
 /*********************************************************************
  *                  _strlwr   (NTDLL.@)
@@ -65,47 +70,224 @@ LPSTR __cdecl _strlwr( LPSTR str )
 
 
 /*********************************************************************
- *                  _ultoa   (NTDLL.@)
+ *      _ultoa   (NTDLL.@)
+ *
+ * Converts an unsigned long integer to a string.
+ *
+ * Assigns a '\0' terminated string to str and returns str.
+ * Does not check if radix is in the range of 2 to 36 (as native DLL).
+ * For str == NULL just crashes (as native DLL).
  */
-LPSTR  __cdecl _ultoa( unsigned long x, LPSTR buf, INT radix )
+char * __cdecl _ultoa( unsigned long value, char *str, int radix )
 {
-    char *p, buffer[8*sizeof(unsigned long) + 1];  /* assume 8-bit chars */
+    char buffer[33];
+    char *pos;
+    int digit;
 
-    p = buffer + sizeof(buffer);
-    *--p = 0;
-    do
-    {
-        int rem = x % radix;
-        *--p = (rem <= 9) ? rem + '0' : rem + 'a' - 10;
-        x /= radix;
-    } while (x);
-    strcpy( buf, p );
-    return buf;
+    pos = &buffer[32];
+    *pos = '\0';
+
+    do {
+	digit = value % radix;
+	value = value / radix;
+	if (digit < 10) {
+	    *--pos = '0' + digit;
+	} else {
+	    *--pos = 'a' + digit - 10;
+	} /* if */
+    } while (value != 0L);
+
+    memcpy(str, pos, &buffer[32] - pos + 1);
+    return str;
 }
 
 
 /*********************************************************************
- *                  _ltoa   (NTDLL.@)
+ *      _ltoa   (NTDLL.@)
+ *
+ * Converts a long integer to a string.
+ *
+ * Assigns a '\0' terminated string to str and returns str. If radix
+ * is 10 and value is negative, the value is converted with sign.
+ * Does not check if radix is in the range of 2 to 36 (as native DLL).
+ * For str == NULL just crashes (as native DLL).
  */
-LPSTR  __cdecl _ltoa( long x, LPSTR buf, INT radix )
+char * __cdecl _ltoa( long value, char *str, int radix )
 {
-    LPSTR p = buf;
-    if (x < 0)
-    {
-        *p++ = '-';
-        x = -x;
-    }
-    _ultoa( x, p, radix );
-    return buf;
+    unsigned long val;
+    int negative;
+    char buffer[33];
+    char *pos;
+    int digit;
+
+    if (value < 0 && radix == 10) {
+	negative = 1;
+        val = -value;
+    } else {
+	negative = 0;
+        val = value;
+    } /* if */
+
+    pos = &buffer[32];
+    *pos = '\0';
+
+    do {
+	digit = val % radix;
+	val = val / radix;
+	if (digit < 10) {
+	    *--pos = '0' + digit;
+	} else {
+	    *--pos = 'a' + digit - 10;
+	} /* if */
+    } while (val != 0L);
+
+    if (negative) {
+	*--pos = '-';
+    } /* if */
+
+    memcpy(str, pos, &buffer[32] - pos + 1);
+    return str;
 }
 
 
 /*********************************************************************
- *                  _itoa           (NTDLL.@)
+ *      _itoa    (NTDLL.@)
+ *
+ * Converts an integer to a string.
+ *
+ * Assigns a '\0' terminated wstring to str and returns str. If radix
+ * is 10 and value is negative, the value is converted with sign.
+ * Does not check if radix is in the range of 2 to 36 (as native DLL).
+ * For str == NULL just crashes (as native DLL).
  */
-LPSTR  __cdecl _itoa( int x, LPSTR buf, INT radix )
+char * __cdecl _itoa( int value, char *str, int radix )
 {
-    return _ltoa( x, buf, radix );
+    return _ltoa(value, str, radix);
+}
+
+
+/*********************************************************************
+ *      _ui64toa   (NTDLL.@)
+ *
+ * Converts a large unsigned integer to a string.
+ *
+ * Assigns a '\0' terminated string to str and returns str.
+ * Does not check if radix is in the range of 2 to 36 (as native DLL).
+ * For str == NULL just crashes (as native DLL).
+ */
+char * __cdecl _ui64toa( ULONGLONG value, char *str, int radix )
+{
+    char buffer[65];
+    char *pos;
+    int digit;
+
+    pos = &buffer[64];
+    *pos = '\0';
+
+    do {
+	digit = value % radix;
+	value = value / radix;
+	if (digit < 10) {
+	    *--pos = '0' + digit;
+	} else {
+	    *--pos = 'a' + digit - 10;
+	} /* if */
+    } while (value != 0L);
+
+    memcpy(str, pos, &buffer[64] - pos + 1);
+    return str;
+}
+
+
+/*********************************************************************
+ *      _i64toa   (NTDLL.@)
+ *
+ * Converts a large integer to a string.
+ *
+ * Assigns a '\0' terminated string to str and returns str. If radix
+ * is 10 and value is negative, the value is converted with sign.
+ * Does not check if radix is in the range of 2 to 36 (as native DLL).
+ * For str == NULL just crashes (as native DLL).
+ *
+ * Difference:
+ * - The native DLL converts negative values (for base 10) wrong:
+ *                     -1 is converted to -18446744073709551615
+ *                     -2 is converted to -18446744073709551614
+ *   -9223372036854775807 is converted to  -9223372036854775809
+ *   -9223372036854775808 is converted to  -9223372036854775808
+ *   The native msvcrt _i64toa function and our ntdll function do
+ *   not have this bug.
+ */
+char * __cdecl _i64toa( LONGLONG value, char *str, int radix )
+{
+    ULONGLONG val;
+    int negative;
+    char buffer[65];
+    char *pos;
+    int digit;
+
+    if (value < 0 && radix == 10) {
+	negative = 1;
+        val = -value;
+    } else {
+	negative = 0;
+        val = value;
+    } /* if */
+
+    pos = &buffer[64];
+    *pos = '\0';
+
+    do {
+	digit = val % radix;
+	val = val / radix;
+	if (digit < 10) {
+	    *--pos = '0' + digit;
+	} else {
+	    *--pos = 'a' + digit - 10;
+	} /* if */
+    } while (val != 0L);
+
+    if (negative) {
+	*--pos = '-';
+    } /* if */
+
+    memcpy(str, pos, &buffer[64] - pos + 1);
+    return str;
+}
+
+
+/*********************************************************************
+ *      _atoi64   (NTDLL.@)
+ *
+ * Converts a string to a large integer.
+ *
+ * On success it returns the integer value otherwise it returns 0.
+ * Accepts: {whitespace} [+|-] {digits}
+ * No check of overflow: Just assigns lower 64 bits (as native DLL).
+ * Does not check for str != NULL (as native DLL).
+ */
+LONGLONG __cdecl _atoi64( char *str )
+{
+    ULONGLONG RunningTotal = 0;
+    char bMinus = 0;
+
+    while (*str == ' ' || (*str >= '\011' && *str <= '\015')) {
+	str++;
+    } /* while */
+
+    if (*str == '+') {
+	str++;
+    } else if (*str == '-') {
+	bMinus = 1;
+	str++;
+    } /* if */
+
+    while (*str >= '0' && *str <= '9') {
+	RunningTotal = RunningTotal * 10 + *str - '0';
+	str++;
+    } /* while */
+
+    return bMinus ? -RunningTotal : RunningTotal;
 }
 
 
