@@ -878,6 +878,8 @@ extern int WIN32_LastError;
 #define ERROR_SUCCESS_REBOOT_REQUIRED                      3010
 #define ERROR_SUCCESS_RESTART_REQUIRED                     3011
 #define ERROR_PRINTER_NOT_FOUND                            3012
+#define ERROR_PRINTER_DRIVER_WARNED                        3013
+#define ERROR_PRINTER_DRIVER_BLOCKED                       3014
 #define ERROR_WINS_INTERNAL                                4000
 #define ERROR_CAN_NOT_DEL_LOCAL_WINS                       4001
 #define ERROR_STATIC_INIT                                  4002
