@@ -124,15 +124,9 @@ MFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 
 
     TRACE("cp == %d\n", cp);
-    if(cp != CP_SYMBOL) {
-        len = WideCharToMultiByte(cp, 0, str, count, NULL, 0, NULL, NULL);
-	ascii = HeapAlloc(GetProcessHeap(), 0, len);
-	WideCharToMultiByte(cp, 0, str, count, ascii, len, NULL, NULL);
-    } else {
-        len = count;
-	ascii = HeapAlloc(GetProcessHeap(), 0, len);
-	for(i = 0; i < count; i++) ascii[i] = (BYTE)(str[i] & 0xff);
-    }
+    len = WideCharToMultiByte(cp, 0, str, count, NULL, 0, NULL, NULL);
+    ascii = HeapAlloc(GetProcessHeap(), 0, len);
+    WideCharToMultiByte(cp, 0, str, count, ascii, len, NULL, NULL);
     TRACE("mapped %s -> %s\n", debugstr_wn(str, count), debugstr_an(ascii, len));
 
 

@@ -43,14 +43,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(text);
  * number of bytes to convert.  If plenW is non-NULL, on return it
  * will point to the number of WCHARs (excluding the '\0') that have
  * been written.  If pCP is non-NULL, on return it will point to the
- * codepage used in the conversion (NB, this may be CP_SYMBOL so watch
- * out).  The caller should free the returned LPWSTR from the process
+ * codepage used in the conversion.
+ * The caller should free the returned LPWSTR from the process
  * heap itself.
  */
 LPWSTR FONT_mbtowc(HDC hdc, LPCSTR str, INT count, INT *plenW, UINT *pCP)
 {
     UINT cp = CP_ACP;
-    INT lenW, i;
+    INT lenW;
     LPWSTR strW;
     CHARSETINFO csi;
     int charset = GetTextCharset(hdc);
@@ -94,15 +94,9 @@ LPWSTR FONT_mbtowc(HDC hdc, LPCSTR str, INT count, INT *plenW, UINT *pCP)
     TRACE("cp == %d\n", cp);
 
     if(count == -1) count = strlen(str);
-    if(cp != CP_SYMBOL) {
-        lenW = MultiByteToWideChar(cp, 0, str, count, NULL, 0);
-	strW = HeapAlloc(GetProcessHeap(), 0, (lenW + 1) * sizeof(WCHAR));
-	MultiByteToWideChar(cp, 0, str, count, strW, lenW);
-    } else {
-        lenW = count;
-	strW = HeapAlloc(GetProcessHeap(), 0, (lenW + 1) * sizeof(WCHAR));
-	for(i = 0; i < count; i++) strW[i] = (BYTE)str[i];
-    }
+    lenW = MultiByteToWideChar(cp, 0, str, count, NULL, 0);
+    strW = HeapAlloc(GetProcessHeap(), 0, (lenW + 1) * sizeof(WCHAR));
+    MultiByteToWideChar(cp, 0, str, count, strW, lenW);
     strW[lenW] = '\0';
     TRACE("mapped %s -> %s\n", debugstr_an(str, count), debugstr_wn(strW, lenW));
     if(plenW) *plenW = lenW;

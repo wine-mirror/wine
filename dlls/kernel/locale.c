@@ -1190,8 +1190,6 @@ UINT WINAPI GetOEMCP(void)
 BOOL WINAPI IsValidCodePage( UINT codepage )
 {
     switch(codepage) {
-    case CP_SYMBOL:
-        return FALSE;
     case CP_UTF7:
     case CP_UTF8:
         return TRUE;
@@ -1425,6 +1423,14 @@ INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
 
     switch(page)
     {
+    case CP_SYMBOL:
+        if( flags)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        ret = wine_cpsymbol_mbstowcs( src, srclen, dst, dstlen );
+        break;
     case CP_UTF7:
         FIXME("UTF-7 not supported\n");
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
@@ -1503,6 +1509,14 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
 
     switch(page)
     {
+    case CP_SYMBOL:
+        if( flags || defchar || used)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        ret = wine_cpsymbol_wcstombs( src, srclen, dst, dstlen );
+        break;
     case CP_UTF7:
         FIXME("UTF-7 not supported\n");
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
@@ -1530,9 +1544,13 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
         break;
     }
 
-    if (ret == -1)
+    if (ret < 0)
     {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        switch(ret)
+        {
+        case -1: SetLastError( ERROR_INSUFFICIENT_BUFFER ); break;
+        case -2: SetLastError( ERROR_NO_UNICODE_TRANSLATION ); break;
+        }
         ret = 0;
     }
     TRACE("cp %d %s -> %s\n", page, debugstr_w(src), debugstr_a(dst));

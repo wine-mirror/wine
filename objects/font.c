@@ -1992,7 +1992,7 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
 			 DWORD dwFlags)
 {
     WCHAR *lpStringW;
-    INT uCountW, i;
+    INT uCountW;
     GCP_RESULTSW resultsW;
     DWORD ret;
     UINT font_cp;
@@ -2010,12 +2010,8 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
     ret = GetCharacterPlacementW(hdc, lpStringW, uCountW, nMaxExtent, &resultsW, dwFlags);
 
     if(lpResults->lpOutString) {
-        if(font_cp != CP_SYMBOL)
-            WideCharToMultiByte(font_cp, 0, resultsW.lpOutString, uCountW,
-                                lpResults->lpOutString, uCount, NULL, NULL );
-        else
-            for(i = 0; i < uCount; i++)
-                lpResults->lpOutString[i] = (CHAR)resultsW.lpOutString[i];
+        WideCharToMultiByte(font_cp, 0, resultsW.lpOutString, uCountW,
+                            lpResults->lpOutString, uCount, NULL, NULL );
     }
 
     HeapFree(GetProcessHeap(), 0, lpStringW);
