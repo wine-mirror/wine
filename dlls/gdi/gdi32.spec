@@ -94,8 +94,8 @@ init    MAIN_GdiInit
 @ stdcall EndPath(long) EndPath
 @ stdcall EnumEnhMetaFile(long long ptr ptr ptr) EnumEnhMetaFile
 @ stdcall EnumFontFamiliesA(long str ptr long) EnumFontFamiliesA
-@ stdcall EnumFontFamiliesExA(long str ptr long long) EnumFontFamiliesExA
-@ stdcall EnumFontFamiliesExW(long wstr ptr long long) EnumFontFamiliesExW
+@ stdcall EnumFontFamiliesExA(long ptr ptr long long) EnumFontFamiliesExA
+@ stdcall EnumFontFamiliesExW(long ptr ptr long long) EnumFontFamiliesExW
 @ stdcall EnumFontFamiliesW(long wstr ptr long) EnumFontFamiliesW
 @ stdcall EnumFontsA(long str ptr long) EnumFontsA
 @ stdcall EnumFontsW(long wstr ptr long) EnumFontsW
