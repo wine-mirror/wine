@@ -41,8 +41,14 @@
 #define WINE_UNUSED    /* nothing */
 #endif
 
-#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_IA64) || defined(_M_AMD64)) && !defined(MIDL_PASS)
-# define DECLSPEC_IMPORT __declspec(dllimport)
+#if (defined(_M_IX86) || defined(_M_IA64) || defined(_M_AMD64) || defined(__MINGW32__)) && !defined(MIDL_PASS)
+# if defined(_MSC_VER)
+#  define DECLSPEC_IMPORT __declspec(dllimport)
+# elif defined(__MINGW32__)
+#  define DECLSPEC_IMPORT __attribute__((dllimport))
+# else
+#  define DECLSPEC_IMPORT
+# endif
 #else
 # define DECLSPEC_IMPORT
 #endif

@@ -27,6 +27,10 @@
 #include <winbase.h>
 #include <winnls.h>
 
+#ifndef WINE_UNICODE_API
+#define WINE_UNICODE_API DECLSPEC_IMPORT
+#endif
+
 /* code page info common to SBCS and DBCS */
 struct cp_info
 {
@@ -95,13 +99,13 @@ static inline int is_dbcs_leadbyte( const union cptable *table, unsigned char ch
 
 static inline WCHAR tolowerW( WCHAR ch )
 {
-    extern const WCHAR wine_casemap_lower[];
+    extern WINE_UNICODE_API const WCHAR wine_casemap_lower[];
     return ch + wine_casemap_lower[wine_casemap_lower[ch >> 8] + (ch & 0xff)];
 }
 
 static inline WCHAR toupperW( WCHAR ch )
 {
-    extern const WCHAR wine_casemap_upper[];
+    extern WINE_UNICODE_API const WCHAR wine_casemap_upper[];
     return ch + wine_casemap_upper[wine_casemap_upper[ch >> 8] + (ch & 0xff)];
 }
 
@@ -109,7 +113,7 @@ static inline WCHAR toupperW( WCHAR ch )
 /* and the C2_* type in the high 4 bits */
 static inline unsigned short get_char_typeW( WCHAR ch )
 {
-    extern const unsigned short wine_wctype_table[];
+    extern WINE_UNICODE_API const unsigned short wine_wctype_table[];
     return wine_wctype_table[wine_wctype_table[ch >> 8] + (ch & 0xff)];
 }
 
