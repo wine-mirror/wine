@@ -39,14 +39,14 @@ BOOL TTYDRV_GDI_Initialize(void)
 /***********************************************************************
  *	     TTYDRV_DC_CreateDC
  */
-BOOL TTYDRV_DC_CreateDC(DC *dc, TTYDRV_PDEVICE **pdev, LPCSTR driver, LPCSTR device,
-			LPCSTR output, const DEVMODEA *initData)
+BOOL TTYDRV_DC_CreateDC(DC *dc, TTYDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR device,
+			LPCWSTR output, const DEVMODEW *initData)
 {
   TTYDRV_PDEVICE *physDev;
 
   TRACE("(%p, %s, %s, %s, %p)\n",
-    dc, debugstr_a(driver), debugstr_a(device),
-    debugstr_a(output), initData);
+    dc, debugstr_w(driver), debugstr_w(device),
+    debugstr_w(output), initData);
 
   physDev = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(TTYDRV_PDEVICE));
   if(!physDev) {

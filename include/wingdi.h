@@ -3228,6 +3228,7 @@ BOOL      WINAPI FlattenPath(HDC);
 BOOL      WINAPI FloodFill(HDC,INT,INT,COLORREF);
 BOOL      WINAPI FrameRgn(HDC,HRGN,HBRUSH,INT,INT);
 BOOL      WINAPI GdiComment(HDC,UINT,const BYTE *);
+DEVMODEW * WINAPI GdiConvertToDevmodeW(const DEVMODEA *);
 BOOL      WINAPI GdiFlush(void);
 INT       WINAPI GetArcDirection(HDC);
 BOOL      WINAPI GetAspectRatioFilterEx(HDC,LPSIZE);

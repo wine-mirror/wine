@@ -87,8 +87,8 @@ void X11DRV_GDI_Finalize(void)
 /**********************************************************************
  *	     X11DRV_CreateDC
  */
-BOOL X11DRV_CreateDC( DC *dc, X11DRV_PDEVICE **pdev, LPCSTR driver, LPCSTR device,
-                      LPCSTR output, const DEVMODEA* initData )
+BOOL X11DRV_CreateDC( DC *dc, X11DRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR device,
+                      LPCWSTR output, const DEVMODEW* initData )
 {
     X11DRV_PDEVICE *physDev;
 

@@ -26,6 +26,7 @@
 #include "winreg.h"
 
 #include "gdi.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(driver);
@@ -232,22 +233,23 @@ static struct graphics_driver *load_display_driver(void)
 /**********************************************************************
  *	     DRIVER_load_driver
  */
-const DC_FUNCTIONS *DRIVER_load_driver( LPCSTR name )
+const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name )
 {
     HMODULE module;
     struct graphics_driver *driver;
+    static const WCHAR displayW[] = { 'd','i','s','p','l','a','y',0 };
 
     EnterCriticalSection( &driver_section );
 
     /* display driver is a special case */
-    if (!strcasecmp( name, "display" ))
+    if (!strcmpiW( name, displayW ))
     {
         driver = load_display_driver();
         LeaveCriticalSection( &driver_section );
         return &driver->funcs;
     }
 
-    if ((module = GetModuleHandleA( name )))
+    if ((module = GetModuleHandleW( name )))
     {
         for (driver = first_driver; driver; driver = driver->next)
         {
@@ -260,7 +262,7 @@ const DC_FUNCTIONS *DRIVER_load_driver( LPCSTR name )
         }
     }
 
-    if (!(module = LoadLibraryA( name )))
+    if (!(module = LoadLibraryW( name )))
     {
         LeaveCriticalSection( &driver_section );
         return NULL;
@@ -273,7 +275,7 @@ const DC_FUNCTIONS *DRIVER_load_driver( LPCSTR name )
         return NULL;
     }
 
-    TRACE( "loaded driver %p for %s\n", driver, name );
+    TRACE( "loaded driver %p for %s\n", driver, debugstr_w(name) );
     LeaveCriticalSection( &driver_section );
     return &driver->funcs;
 }
@@ -332,32 +334,73 @@ void DRIVER_release_driver( const DC_FUNCTIONS *funcs )
  *      DRIVER_GetDriverName
  *
  */
-BOOL DRIVER_GetDriverName( LPCSTR device, LPSTR driver, DWORD size )
+BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size )
 {
-    char *p;
+    static const WCHAR displayW[] = { 'd','i','s','p','l','a','y',0 };
+    static const WCHAR devicesW[] = { 'd','e','v','i','c','e','s',0 };
+    static const WCHAR empty_strW[] = { 0 };
+    WCHAR *p;
 
     /* display is a special case */
-    if (!strcasecmp( device, "display" ))
+    if (!strcmpiW( device, displayW ))
     {
-        lstrcpynA( driver, "display", size );
+        lstrcpynW( driver, displayW, size );
         return TRUE;
     }
 
-    size = GetProfileStringA("devices", device, "", driver, size);
+    size = GetProfileStringW(devicesW, device, empty_strW, driver, size);
     if(!size) {
-        WARN("Unable to find '%s' in [devices] section of win.ini\n", device);
+        WARN("Unable to find %s in [devices] section of win.ini\n", debugstr_w(device));
         return FALSE;
     }
-    p = strchr(driver, ',');
+    p = strchrW(driver, ',');
     if(!p)
     {
-        WARN("'%s' entry in [devices] section of win.ini is malformed.\n", device);
+        WARN("%s entry in [devices] section of win.ini is malformed.\n", debugstr_w(device));
         return FALSE;
     }
-    *p = '\0';
-    TRACE("Found '%s' for '%s'\n", driver, device);
+    *p = 0;
+    TRACE("Found %s for %s\n", debugstr_w(driver), debugstr_w(device));
     return TRUE;
 }
+
+
+/***********************************************************************
+ *           GdiConvertToDevmodeW    (GDI32.@)
+ */
+DEVMODEW * WINAPI GdiConvertToDevmodeW(const DEVMODEA *dmA)
+{
+    DEVMODEW *dmW;
+    WORD dmW_size;
+
+    dmW_size = dmA->dmSize + CCHDEVICENAME;
+    if (dmA->dmSize >= (char *)dmA->dmFormName - (char *)dmA + CCHFORMNAME)
+        dmW_size += CCHFORMNAME;
+
+    dmW = HeapAlloc(GetProcessHeap(), 0, dmW_size + dmA->dmDriverExtra);
+    if (!dmW) return NULL;
+
+    MultiByteToWideChar(CP_ACP, 0, dmA->dmDeviceName, CCHDEVICENAME,
+                                   dmW->dmDeviceName, CCHDEVICENAME);
+    /* copy slightly more, to avoid long computations */
+    memcpy(&dmW->dmSpecVersion, &dmA->dmSpecVersion, dmA->dmSize - CCHDEVICENAME);
+
+    if (dmA->dmSize >= (char *)dmA->dmFormName - (char *)dmA + CCHFORMNAME)
+    {
+        MultiByteToWideChar(CP_ACP, 0, dmA->dmFormName, CCHFORMNAME,
+                                       dmW->dmFormName, CCHFORMNAME);
+        if (dmA->dmSize > (char *)&dmA->dmLogPixels - (char *)dmA)
+            memcpy(&dmW->dmLogPixels, &dmA->dmLogPixels, dmA->dmSize - ((char *)&dmA->dmLogPixels - (char *)dmA));
+    }
+
+    if (dmA->dmDriverExtra)
+        memcpy((char *)dmW + dmW_size, (char *)dmA + dmA->dmSize, dmA->dmDriverExtra);
+
+    dmW->dmSize = dmW_size;
+
+    return dmW;
+}
+
 
 /*****************************************************************************
  *      @ [GDI32.100]
@@ -400,12 +443,16 @@ INT WINAPI GDI_CallExtDeviceModePropSheet16( HWND hWnd, LPCSTR lpszDevice,
  *
  * This should load the correct driver for lpszDevice and calls this driver's
  * ExtDeviceMode proc.
+ *
+ * FIXME: convert ExtDeviceMode to unicode in the driver interface
  */
 INT WINAPI GDI_CallExtDeviceMode16( HWND hwnd,
                                     LPDEVMODEA lpdmOutput, LPSTR lpszDevice,
                                     LPSTR lpszPort, LPDEVMODEA lpdmInput,
                                     LPSTR lpszProfile, DWORD fwMode )
 {
+    WCHAR deviceW[300];
+    WCHAR bufW[300];
     char buf[300];
     HDC hdc;
     DC *dc;
@@ -415,7 +462,12 @@ INT WINAPI GDI_CallExtDeviceMode16( HWND hwnd,
     TRACE("(%p, %p, %s, %s, %p, %s, %ld)\n",
           hwnd, lpdmOutput, lpszDevice, lpszPort, lpdmInput, lpszProfile, fwMode );
 
-    if(!DRIVER_GetDriverName( lpszDevice, buf, sizeof(buf) )) return -1;
+    if (!lpszDevice) return -1;
+    if (!MultiByteToWideChar(CP_ACP, 0, lpszDevice, -1, deviceW, 300)) return -1;
+
+    if(!DRIVER_GetDriverName( deviceW, bufW, 300 )) return -1;
+
+    if (!WideCharToMultiByte(CP_ACP, 0, bufW, -1, buf, 300, NULL, NULL)) return -1;
 
     if (!(hdc = CreateICA( buf, lpszDevice, lpszPort, NULL ))) return -1;
 
@@ -449,11 +501,15 @@ INT WINAPI GDI_CallAdvancedSetupDialog16( HWND hwnd, LPSTR lpszDevice,
  *
  * This should load the correct driver for lpszDevice and calls this driver's
  * DeviceCapabilities proc.
+ *
+ * FIXME: convert DeviceCapabilities to unicode in the driver interface
  */
 DWORD WINAPI GDI_CallDeviceCapabilities16( LPCSTR lpszDevice, LPCSTR lpszPort,
                                            WORD fwCapability, LPSTR lpszOutput,
                                            LPDEVMODEA lpdm )
 {
+    WCHAR deviceW[300];
+    WCHAR bufW[300];
     char buf[300];
     HDC hdc;
     DC *dc;
@@ -461,7 +517,12 @@ DWORD WINAPI GDI_CallDeviceCapabilities16( LPCSTR lpszDevice, LPCSTR lpszPort,
 
     TRACE("(%s, %s, %d, %p, %p)\n", lpszDevice, lpszPort, fwCapability, lpszOutput, lpdm );
 
-    if(!DRIVER_GetDriverName( lpszDevice, buf, sizeof(buf) )) return -1;
+    if (!lpszDevice) return -1;
+    if (!MultiByteToWideChar(CP_ACP, 0, lpszDevice, -1, deviceW, 300)) return -1;
+
+    if(!DRIVER_GetDriverName( deviceW, bufW, 300 )) return -1;
+
+    if (!WideCharToMultiByte(CP_ACP, 0, bufW, -1, buf, 300, NULL, NULL)) return -1;
 
     if (!(hdc = CreateICA( buf, lpszDevice, lpszPort, NULL ))) return -1;
 

@@ -516,27 +516,6 @@ static LPDEVMODEW DEVMODEcpyAtoW(DEVMODEW *dmW, const DEVMODEA *dmA)
 }
 
 /***********************************************************
- *      DEVMODEdupAtoW
- * Creates a unicode copy of supplied devmode on heap
- */
-static LPDEVMODEW DEVMODEdupAtoW(HANDLE heap, const DEVMODEA *dmA)
-{
-    LPDEVMODEW dmW;
-    DWORD size;
-    BOOL Formname;
-    ptrdiff_t off_formname;
-
-    TRACE("\n");
-    if(!dmA) return NULL;
-
-    off_formname = (char *)dmA->dmFormName - (char *)dmA;
-    Formname = (dmA->dmSize > off_formname);
-    size = dmA->dmSize + CCHDEVICENAME + (Formname ? CCHFORMNAME : 0);
-    dmW = HeapAlloc(heap, HEAP_ZERO_MEMORY, size + dmA->dmDriverExtra);
-    return DEVMODEcpyAtoW(dmW, dmA);
-}
-
-/***********************************************************
  *      DEVMODEdupWtoA
  * Creates an ascii copy of supplied devmode on heap
  */
@@ -590,7 +569,7 @@ static LPPRINTER_INFO_2W PRINTER_INFO_2AtoW(HANDLE heap, LPPRINTER_INFO_2A piA)
     piW->pDriverName = asciitounicode(&usBuffer,piA->pDriverName);
     piW->pComment = asciitounicode(&usBuffer,piA->pComment);
     piW->pLocation = asciitounicode(&usBuffer,piA->pLocation);
-    piW->pDevMode = DEVMODEdupAtoW(heap, piA->pDevMode);
+    piW->pDevMode = GdiConvertToDevmodeW(piA->pDevMode);
     piW->pSepFile = asciitounicode(&usBuffer,piA->pSepFile);
     piW->pPrintProcessor = asciitounicode(&usBuffer,piA->pPrintProcessor);
     piW->pDatatype = asciitounicode(&usBuffer,piA->pDatatype);
@@ -711,6 +690,7 @@ INT WINAPI DeviceCapabilitiesW(LPCWSTR pDevice, LPCWSTR pPort,
 /******************************************************************
  *              DocumentPropertiesA   [WINSPOOL.@]
  *
+ * FIXME: implement DocumentPropertiesA via DocumentPropertiesW, not vice versa
  */
 LONG WINAPI DocumentPropertiesA(HWND hWnd,HANDLE hPrinter,
                                 LPSTR pDeviceName, LPDEVMODEA pDevModeOutput,
@@ -752,6 +732,8 @@ LONG WINAPI DocumentPropertiesA(HWND hWnd,HANDLE hPrinter,
 
 /*****************************************************************************
  *          DocumentPropertiesW (WINSPOOL.@)
+ *
+ * FIXME: implement DocumentPropertiesA via DocumentPropertiesW, not vice versa
  */
 LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
 				LPWSTR pDeviceName,
@@ -802,8 +784,7 @@ BOOL WINAPI OpenPrinterA(LPSTR lpPrinterName,HANDLE *phPrinter,
 
     if(pDefault) {
         DefaultW.pDatatype = asciitounicode(&usBuffer,pDefault->pDatatype);
-	DefaultW.pDevMode = DEVMODEdupAtoW(GetProcessHeap(),
-					   pDefault->pDevMode);
+	DefaultW.pDevMode = GdiConvertToDevmodeW(pDefault->pDevMode);
 	DefaultW.DesiredAccess = pDefault->DesiredAccess;
 	pDefaultW = &DefaultW;
     }
@@ -1565,7 +1546,7 @@ static void WINSPOOL_GetDefaultDevMode(
 
     if(unicode) {
 	if(buflen >= sizeof(DEVMODEW)) {
-	    DEVMODEW *pdmW = DEVMODEdupAtoW(GetProcessHeap(), &dm );
+	    DEVMODEW *pdmW = GdiConvertToDevmodeW(&dm);
 	    memcpy(ptr, pdmW, sizeof(DEVMODEW));
 	    HeapFree(GetProcessHeap(),0,pdmW);
 	}
@@ -1608,7 +1589,7 @@ static BOOL WINSPOOL_GetDevModeFromReg(HKEY hkey, LPCWSTR ValueName,
     if(unicode) {
 	sz += (CCHDEVICENAME + CCHFORMNAME);
 	if(buflen >= sz) {
-	    DEVMODEW *dmW = DEVMODEdupAtoW(GetProcessHeap(), (DEVMODEA*)ptr);
+	    DEVMODEW *dmW = GdiConvertToDevmodeW((DEVMODEA*)ptr);
 	    memcpy(ptr, dmW, sz);
 	    HeapFree(GetProcessHeap(),0,dmW);
 	}

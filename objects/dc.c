@@ -24,11 +24,13 @@
 #include <string.h>
 #include "windef.h"
 #include "wingdi.h"
+#include "winternl.h"
 #include "winerror.h"
 #include "wownt32.h"
 #include "wine/winuser16.h"
 #include "gdi.h"
 #include "heap.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dc);
@@ -565,27 +567,27 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
 
 
 /***********************************************************************
- *           CreateDCA    (GDI32.@)
+ *           CreateDCW    (GDI32.@)
  */
-HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
-                          const DEVMODEA *initData )
+HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
+                      const DEVMODEW *initData )
 {
     HDC hdc;
     DC * dc;
     const DC_FUNCTIONS *funcs;
-    char buf[300];
+    WCHAR buf[300];
 
     GDI_CheckNotLock();
 
-    if (!device || !DRIVER_GetDriverName( device, buf, sizeof(buf) ))
+    if (!device || !DRIVER_GetDriverName( device, buf, 300 ))
     {
         if (!driver) return 0;
-        strcpy(buf, driver);
+        strcpyW(buf, driver);
     }
 
     if (!(funcs = DRIVER_load_driver( buf )))
     {
-        ERR( "no driver found for %s\n", buf );
+        ERR( "no driver found for %s\n", debugstr_w(buf) );
         return 0;
     }
     if (!(dc = DC_AllocDC( funcs, DC_MAGIC )))
@@ -597,7 +599,7 @@ HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
     dc->hBitmap = GetStockObject( DEFAULT_BITMAP );
 
     TRACE("(driver=%s, device=%s, output=%s): returning %p\n",
-          debugstr_a(driver), debugstr_a(device), debugstr_a(output), dc->hSelf );
+          debugstr_w(driver), debugstr_w(device), debugstr_w(output), dc->hSelf );
 
     if (dc->funcs->pCreateDC &&
         !dc->funcs->pCreateDC( dc, &dc->physDev, buf, device, output, initData ))
@@ -622,20 +624,31 @@ HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
 
 
 /***********************************************************************
- *           CreateDCW    (GDI32.@)
+ *           CreateDCA    (GDI32.@)
  */
-HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
-                          const DEVMODEW *initData )
+HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
+                      const DEVMODEA *initData )
 {
-    LPSTR driverA = HEAP_strdupWtoA( GetProcessHeap(), 0, driver );
-    LPSTR deviceA = HEAP_strdupWtoA( GetProcessHeap(), 0, device );
-    LPSTR outputA = HEAP_strdupWtoA( GetProcessHeap(), 0, output );
-    HDC res = CreateDCA( driverA, deviceA, outputA,
-                            (const DEVMODEA *)initData /*FIXME*/ );
-    HeapFree( GetProcessHeap(), 0, driverA );
-    HeapFree( GetProcessHeap(), 0, deviceA );
-    HeapFree( GetProcessHeap(), 0, outputA );
-    return res;
+    UNICODE_STRING driverW, deviceW, outputW;
+    HDC ret;
+
+    if (driver) RtlCreateUnicodeStringFromAsciiz(&driverW, driver);
+    else driverW.Buffer = NULL;
+
+    if (device) RtlCreateUnicodeStringFromAsciiz(&deviceW, device);
+    else deviceW.Buffer = NULL;
+
+    if (output) RtlCreateUnicodeStringFromAsciiz(&outputW, output);
+    else outputW.Buffer = NULL;
+
+
+    ret = CreateDCW( driverW.Buffer, deviceW.Buffer, outputW.Buffer,
+                     (const DEVMODEW *)initData /*FIXME*/ );
+
+    RtlFreeUnicodeString(&driverW);
+    RtlFreeUnicodeString(&deviceW);
+    RtlFreeUnicodeString(&outputW);
+    return ret;
 }
 
 
@@ -681,7 +694,8 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     }
     else
     {
-        funcs = DRIVER_load_driver( "DISPLAY" );
+        static const WCHAR displayW[] = { 'd','i','s','p','l','a','y',0 };
+        funcs = DRIVER_load_driver( displayW );
         physDev = NULL;
     }
 

@@ -130,6 +130,7 @@
 @ stub GdiConvertMetaFilePict
 @ stub GdiConvertPalette
 @ stub GdiConvertRegion
+@ stdcall GdiConvertToDevmodeW(ptr)
 @ stub GdiCreateLocalBitmap
 @ stub GdiCreateLocalBrush
 @ stub GdiCreateLocalEnhMetaFile

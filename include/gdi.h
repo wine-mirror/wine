@@ -181,7 +181,7 @@ typedef struct tagDC_FUNCS
     BOOL     (*pChord)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
     BOOL     (*pCloseFigure)(PHYSDEV);
     BOOL     (*pCreateBitmap)(PHYSDEV,HBITMAP);
-    BOOL     (*pCreateDC)(DC *,PHYSDEV *,LPCSTR,LPCSTR,LPCSTR,const DEVMODEA*);
+    BOOL     (*pCreateDC)(DC *,PHYSDEV *,LPCWSTR,LPCWSTR,LPCWSTR,const DEVMODEW*);
     HBITMAP  (*pCreateDIBSection)(PHYSDEV,BITMAPINFO *,UINT,LPVOID *,HANDLE,DWORD,DWORD);
     BOOL     (*pDeleteBitmap)(HBITMAP);
     BOOL     (*pDeleteDC)(PHYSDEV);
@@ -451,10 +451,10 @@ extern void *GDI_GetObjPtr( HGDIOBJ, WORD );
 extern void GDI_ReleaseObj( HGDIOBJ );
 extern void GDI_CheckNotLock(void);
 
-extern const DC_FUNCTIONS *DRIVER_load_driver( LPCSTR name );
+extern const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name );
 extern const DC_FUNCTIONS *DRIVER_get_driver( const DC_FUNCTIONS *funcs );
 extern void DRIVER_release_driver( const DC_FUNCTIONS *funcs );
-extern BOOL DRIVER_GetDriverName( LPCSTR device, LPSTR driver, DWORD size );
+extern BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size );
 
 extern POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut );
 

@@ -35,6 +35,7 @@
 #include "winreg.h"
 #include "winspool.h"
 #include "winerror.h"
+#include "heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
@@ -251,14 +252,53 @@ static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
 }
 
 
+/***********************************************************
+ *      DEVMODEdupWtoA
+ *
+ * Creates an ascii copy of supplied devmode on heap
+ *
+ * Copied from dlls/winspool/info.c until full unicodification
+ */
+static LPDEVMODEA DEVMODEdupWtoA(HANDLE heap, const DEVMODEW *dmW)
+{
+    LPDEVMODEA dmA;
+    DWORD size;
+    BOOL Formname;
+    ptrdiff_t off_formname = (char *)dmW->dmFormName - (char *)dmW;
+
+    if(!dmW) return NULL;
+    Formname = (dmW->dmSize > off_formname);
+    size = dmW->dmSize - CCHDEVICENAME - (Formname ? CCHFORMNAME : 0);
+    dmA = HeapAlloc(heap, HEAP_ZERO_MEMORY, size + dmW->dmDriverExtra);
+    WideCharToMultiByte(CP_ACP, 0, dmW->dmDeviceName, -1, dmA->dmDeviceName,
+			CCHDEVICENAME, NULL, NULL);
+    if(!Formname) {
+      memcpy(&dmA->dmSpecVersion, &dmW->dmSpecVersion,
+	     dmW->dmSize - CCHDEVICENAME * sizeof(WCHAR));
+    } else {
+      memcpy(&dmA->dmSpecVersion, &dmW->dmSpecVersion,
+	     off_formname - CCHDEVICENAME * sizeof(WCHAR));
+      WideCharToMultiByte(CP_ACP, 0, dmW->dmFormName, -1, dmA->dmFormName,
+			  CCHFORMNAME, NULL, NULL);
+      memcpy(&dmA->dmLogPixels, &dmW->dmLogPixels, dmW->dmSize -
+	     (off_formname + CCHFORMNAME * sizeof(WCHAR)));
+    }
+    dmA->dmSize = size;
+    memcpy((char *)dmA + dmA->dmSize, (char *)dmW + dmW->dmSize,
+	   dmW->dmDriverExtra);
+    return dmA;
+}
+
+
 /**********************************************************************
  *	     PSDRV_CreateDC
  */
-BOOL PSDRV_CreateDC( DC *dc, PSDRV_PDEVICE **pdev, LPCSTR driver, LPCSTR device,
-                     LPCSTR output, const DEVMODEA* initData )
+BOOL PSDRV_CreateDC( DC *dc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR device,
+                     LPCWSTR output, const DEVMODEW* initData )
 {
     PSDRV_PDEVICE *physDev;
     PRINTERINFO *pi;
+    char deviceA[CCHDEVICENAME];
 
     /* If no device name was specified, retrieve the device name
      * from the DEVMODE structure from the DC's physDev.
@@ -266,11 +306,14 @@ BOOL PSDRV_CreateDC( DC *dc, PSDRV_PDEVICE **pdev, LPCSTR driver, LPCSTR device,
     if ( !device && *pdev )
     {
         physDev = *pdev;
-        device = physDev->Devmode->dmPublic.dmDeviceName;
+        strcpy(deviceA, physDev->Devmode->dmPublic.dmDeviceName);
     }
-    pi = PSDRV_FindPrinterInfo(device);
+    else
+        WideCharToMultiByte(CP_ACP, 0, device, -1, deviceA, sizeof(deviceA), NULL, NULL);
+    pi = PSDRV_FindPrinterInfo(deviceA);
 
-    TRACE("(%s %s %s %p)\n", driver, device, output, initData);
+    TRACE("(%s %s %s %p)\n", debugstr_w(driver), debugstr_w(device),
+                             debugstr_w(output), initData);
 
     if(!pi) return FALSE;
 
@@ -301,14 +344,15 @@ BOOL PSDRV_CreateDC( DC *dc, PSDRV_PDEVICE **pdev, LPCSTR driver, LPCSTR device,
     physDev->logPixelsY = physDev->pi->ppd->DefaultResolution;
 
     if (output) {
-        physDev->job.output = HeapAlloc( PSDRV_Heap, 0, strlen(output)+1 );
-        strcpy( physDev->job.output, output );
+        physDev->job.output = HEAP_strdupWtoA( PSDRV_Heap, 0, output );
     } else
         physDev->job.output = NULL;
     physDev->job.hJob = 0;
 
     if(initData) {
-        PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODEA *)initData, pi);
+        DEVMODEA *devmodeA = DEVMODEdupWtoA(PSDRV_Heap, initData);
+        PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODEA *)devmodeA, pi);
+        HeapFree(PSDRV_Heap, 0, devmodeA);
     }
 
     PSDRV_UpdateDevCaps(physDev);
