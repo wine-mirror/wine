@@ -148,6 +148,40 @@ static char *get_dos_device_path( LPCWSTR name )
 }
 
 
+/* open a handle to a device root */
+static BOOL open_device_root( LPCWSTR root, HANDLE *handle )
+{
+    static const WCHAR default_rootW[] = {'\\',0};
+    UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    if (!root) root = default_rootW;
+    if (!RtlDosPathNameToNtPathName_U( root, &nt_name, NULL, NULL ))
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return FALSE;
+    }
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nt_name;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = NtOpenFile( handle, 0, &attr, &io, 0,
+                         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
+    RtlFreeUnicodeString( &nt_name );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
 /* create symlinks for the DOS drives; helper for VOLUME_CreateDevices */
 static int create_drives(void)
 {
@@ -1204,5 +1238,136 @@ DWORD WINAPI QueryDosDeviceA( LPCSTR devname, LPSTR target, DWORD bufsize )
 
     RtlFreeUnicodeString(&devnameW);
     HeapFree(GetProcessHeap(), 0, targetW);
+    return ret;
+}
+
+
+/***********************************************************************
+ *           GetDiskFreeSpaceExW   (KERNEL32.@)
+ *
+ *  This function is used to acquire the size of the available and
+ *  total space on a logical volume.
+ *
+ * RETURNS
+ *
+ *  Zero on failure, nonzero upon success. Use GetLastError to obtain
+ *  detailed error information.
+ *
+ */
+BOOL WINAPI GetDiskFreeSpaceExW( LPCWSTR root, PULARGE_INTEGER avail,
+                                 PULARGE_INTEGER total, PULARGE_INTEGER totalfree )
+{
+    FILE_FS_SIZE_INFORMATION info;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE handle;
+    UINT units;
+
+    TRACE( "%s,%p,%p,%p\n", debugstr_w(root), avail, total, totalfree );
+
+    if (!open_device_root( root, &handle )) return FALSE;
+
+    status = NtQueryVolumeInformationFile( handle, &io, &info, sizeof(info), FileFsSizeInformation );
+    NtClose( handle );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+
+    units = info.SectorsPerAllocationUnit * info.BytesPerSector;
+    if (total) total->QuadPart = info.TotalAllocationUnits.QuadPart * units;
+    if (totalfree) totalfree->QuadPart = info.AvailableAllocationUnits.QuadPart * units;
+    /* FIXME: this one should take quotas into account */
+    if (avail) avail->QuadPart = info.AvailableAllocationUnits.QuadPart * units;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetDiskFreeSpaceExA   (KERNEL32.@)
+ */
+BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root, PULARGE_INTEGER avail,
+                                 PULARGE_INTEGER total, PULARGE_INTEGER totalfree )
+{
+    UNICODE_STRING rootW;
+    BOOL ret;
+
+    if (root) RtlCreateUnicodeStringFromAsciiz(&rootW, root);
+    else rootW.Buffer = NULL;
+
+    ret = GetDiskFreeSpaceExW( rootW.Buffer, avail, total, totalfree);
+
+    RtlFreeUnicodeString(&rootW);
+    return ret;
+}
+
+
+/***********************************************************************
+ *           GetDiskFreeSpaceW   (KERNEL32.@)
+ */
+BOOL WINAPI GetDiskFreeSpaceW( LPCWSTR root, LPDWORD cluster_sectors,
+                               LPDWORD sector_bytes, LPDWORD free_clusters,
+                               LPDWORD total_clusters )
+{
+    FILE_FS_SIZE_INFORMATION info;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE handle;
+    UINT units;
+
+    TRACE( "%s,%p,%p,%p,%p\n", debugstr_w(root),
+           cluster_sectors, sector_bytes, free_clusters, total_clusters );
+
+    if (!open_device_root( root, &handle )) return FALSE;
+
+    status = NtQueryVolumeInformationFile( handle, &io, &info, sizeof(info), FileFsSizeInformation );
+    NtClose( handle );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+
+    units = info.SectorsPerAllocationUnit * info.BytesPerSector;
+
+    /* cap the size and available at 2GB as per specs */
+    if (info.AvailableAllocationUnits.QuadPart * units > 0x7fffffff)
+        info.AvailableAllocationUnits.QuadPart = 0x7fffffff / units;
+    if (info.TotalAllocationUnits.QuadPart * units > 0x7fffffff)
+        info.TotalAllocationUnits.QuadPart = 0x7fffffff / units;
+
+    if (cluster_sectors) *cluster_sectors = info.SectorsPerAllocationUnit;
+    if (sector_bytes) *sector_bytes = info.BytesPerSector;
+    if (free_clusters) *free_clusters = info.AvailableAllocationUnits.u.LowPart;
+    if (total_clusters) *total_clusters = info.TotalAllocationUnits.u.LowPart;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetDiskFreeSpaceA   (KERNEL32.@)
+ */
+BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
+                               LPDWORD sector_bytes, LPDWORD free_clusters,
+                               LPDWORD total_clusters )
+{
+    UNICODE_STRING rootW;
+    BOOL ret = FALSE;
+
+    if (root)
+    {
+        if(!RtlCreateUnicodeStringFromAsciiz(&rootW, root))
+        {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            return FALSE;
+        }
+    }
+    else rootW.Buffer = NULL;
+
+    ret = GetDiskFreeSpaceW(rootW.Buffer, cluster_sectors, sector_bytes,
+                            free_clusters, total_clusters );
+    RtlFreeUnicodeString(&rootW);
+
     return ret;
 }
