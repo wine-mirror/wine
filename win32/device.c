@@ -1407,8 +1407,10 @@ static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
     }
 
     case VWIN32_DIOC_DOS_IOCTL:
+    case 0x10: /* Int 0x21 call, call it VWIN_DIOC_INT21 ? */
     case VWIN32_DIOC_DOS_INT25:
     case VWIN32_DIOC_DOS_INT26:
+    case 0x29: /* Int 0x31 call, call it VWIN_DIOC_INT31 ? */
     case VWIN32_DIOC_DOS_DRIVEINFO:
     {
         CONTEXT86 cxt;
@@ -1430,8 +1432,13 @@ static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
         switch (dwIoControlCode)
         {
         case VWIN32_DIOC_DOS_IOCTL: DOS3Call( &cxt ); break; /* Call int 21h */
+        case VWIN32_DIOC_DOS_INT13: INT_Int13Handler( &cxt ); break;
+        case 0x10: /* Int 0x21 call, call it VWIN_DIOC_INT21 ? */
+				    DOS3Call( &cxt ); break;
         case VWIN32_DIOC_DOS_INT25: INT_Int25Handler( &cxt ); break;
         case VWIN32_DIOC_DOS_INT26: INT_Int26Handler( &cxt ); break;
+        case 0x29: /* Int 0x31 call, call it VWIN_DIOC_INT31 ? */
+				    INT_Int31Handler( &cxt ); break;
         case VWIN32_DIOC_DOS_DRIVEINFO:	DOS3Call( &cxt ); break; /* Call int 21h 730x */
         }
 
@@ -1527,11 +1534,16 @@ static BOOL DeviceIo_PCCARD (DWORD dwIoControlCode,
 
 /***********************************************************************
  *		OpenVxDHandle (KERNEL32.@)
+ *
+ *	This function is supposed to return the corresponding Ring 0
+ *	("kernel") handle for a Ring 3 handle in Win9x.
+ *	Evidently, Wine will have problems with this. But we try anyway,
+ *	maybe it helps...
  */
-DWORD	WINAPI	OpenVxDHandle(DWORD pmt)
+HANDLE	WINAPI	OpenVxDHandle(HANDLE hHandleRing3)
 {
-	FIXME( "(0x%08lx) stub!\n", pmt);
-	return 0;
+	FIXME( "(0x%08lx), stub! (returning Ring 3 handle instead of Ring 0)\n", hHandleRing3);
+	return hHandleRing3;
 }
 
 static BOOL DeviceIo_HASP(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuffer,
