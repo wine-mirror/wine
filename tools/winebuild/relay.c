@@ -200,8 +200,8 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
         fprintf( outfile, "\tcall *%d(%%edx)\n", STACK16OFFSET(entry_point) );
 
         /* Switch stack back */
-        /* fprintf( outfile, "\t.byte 0x64\n\tlssw (%d), %%sp\n", STACKOFFSET ); */
-        fprintf( outfile, "\t.byte 0x64,0x66,0x0f,0xb2,0x25\n\t.long %d\n", STACKOFFSET );
+        fprintf( outfile, "\t.byte 0x64\n\tmovw (%d), %%ss\n", STACKOFFSET+2 );
+        fprintf( outfile, "\t.byte 0x64\n\tmovzwl (%d), %%esp\n", STACKOFFSET );
         fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
 
         /* Restore registers and return directly to caller */
@@ -350,8 +350,8 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
         fprintf( outfile, "\tmovl %%esp, %%ebx\n" );
 
         /* Switch stack back */
-        /* fprintf( outfile, "\t.byte 0x64\n\tlssw (%d), %%sp\n", STACKOFFSET ); */
-        fprintf( outfile, "\t.byte 0x64,0x66,0x0f,0xb2,0x25\n\t.long %d\n", STACKOFFSET );
+        fprintf( outfile, "\t.byte 0x64\n\tmovw (%d), %%ss\n", STACKOFFSET+2 );
+        fprintf( outfile, "\t.byte 0x64\n\tmovzwl (%d), %%esp\n", STACKOFFSET );
         fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
 
         /* Get return address to CallFrom16 stub */
@@ -390,8 +390,8 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
     else
     {
         /* Switch stack back */
-        /* fprintf( outfile, "\t.byte 0x64\n\tlssw (%d), %%sp\n", STACKOFFSET ); */
-        fprintf( outfile, "\t.byte 0x64,0x66,0x0f,0xb2,0x25\n\t.long %d\n", STACKOFFSET );
+        fprintf( outfile, "\t.byte 0x64\n\tmovw (%d), %%ss\n", STACKOFFSET+2 );
+        fprintf( outfile, "\t.byte 0x64\n\tmovzwl (%d), %%esp\n", STACKOFFSET );
         fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
 
         /* Restore registers */
