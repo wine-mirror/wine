@@ -1,4 +1,0 @@
-*.spec.c
-*.spec.glue.s
-Makefile
-libwindebug.so.1.0

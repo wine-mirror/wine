@@ -1,4 +1,0 @@
-*.spec.c
-*.spec.glue.s
-Makefile
-libwin87em.so.1.0

@@ -1004,7 +1004,6 @@ dlls/kernel/Makefile
 dlls/lzexpand/Makefile
 dlls/mpr/Makefile
 dlls/msacm/Makefile
-dlls/msacm32/Makefile
 dlls/msnet32/Makefile
 dlls/msvideo/Makefile
 dlls/ntdll/Makefile
@@ -1035,9 +1034,7 @@ dlls/urlmon/Makefile
 dlls/user/Makefile
 dlls/version/Makefile
 dlls/win32s/Makefile
-dlls/win87em/Makefile
 dlls/winaspi/Makefile
-dlls/windebug/Makefile
 dlls/wineps/Makefile
 dlls/wing/Makefile
 dlls/wininet/Makefile

@@ -4,10 +4,12 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = kernel32
 SOVERSION = 1.0
-ALTNAMES  = comm kernel system toolhelp wprocs
+ALTNAMES  = comm kernel system toolhelp windebug win87em wprocs
 
 C_SRCS = \
-	kernel_main.c
+	kernel_main.c \
+	win87em.c \
+	windebug.c
 
 RC_SRCS = \
 	locale_rc.rc

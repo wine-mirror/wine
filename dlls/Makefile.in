@@ -29,8 +29,7 @@ DLLFILES = \
 	kernel/libkernel32.@LIBEXT@ \
 	lzexpand/liblz32.@LIBEXT@ \
 	mpr/libmpr.@LIBEXT@ \
-	msacm/libmsacm.@LIBEXT@ \
-	msacm32/libmsacm32.@LIBEXT@ \
+	msacm/libmsacm32.@LIBEXT@ \
 	msnet32/libmsnet32.@LIBEXT@ \
 	msvideo/libmsvfw32.@LIBEXT@ \
 	odbc32/libodbc32.@LIBEXT@ \
@@ -58,9 +57,7 @@ DLLFILES = \
 	user/libuser32.@LIBEXT@ \
 	version/libversion.@LIBEXT@ \
 	win32s/libw32skrnl.@LIBEXT@ \
-	win87em/libwin87em.@LIBEXT@ \
 	winaspi/libwnaspi32.@LIBEXT@ \
-	windebug/libwindebug.@LIBEXT@ \
 	wineps/libwineps.@LIBEXT@ \
 	wing/libwing.@LIBEXT@ \
 	wininet/libwininet.@LIBEXT@ \
@@ -94,6 +91,7 @@ EXTRADLLNAMES = \
 	lzexpand \
 	mmsystem \
 	mouse \
+	msacm \
 	msvideo \
 	ole2 \
 	ole2conv \
@@ -113,7 +111,9 @@ EXTRADLLNAMES = \
 	ver \
 	w32sys \
 	win32s16 \
+	win87em \
 	winaspi \
+	windebug \
 	winsock \
 	wprocs
 
@@ -136,7 +136,6 @@ SUBDIRS = \
 	lzexpand \
 	mpr \
 	msacm \
-	msacm32 \
 	msnet32 \
 	msvideo \
 	odbc32 \
@@ -152,6 +151,7 @@ SUBDIRS = \
 	richedit \
 	rpcrt4 \
 	serialui \
+	setupapi \
 	setupx \
 	shell32 \
 	shfolder \
@@ -164,9 +164,7 @@ SUBDIRS = \
 	user \
 	version \
 	win32s \
-	win87em \
 	winaspi \
-	windebug \
 	wineps \
 	wing \
 	wininet \
@@ -225,7 +223,9 @@ libimagehlp.@LIBEXT@: imagehlp/libimagehlp.@LIBEXT@
 libimm32.@LIBEXT@: imm32/libimm32.@LIBEXT@
 	$(RM) $@ && $(LN_S) imm32/libimm32.@LIBEXT@ $@
 
-libkernel32.@LIBEXT@ libcomm.@LIBEXT@ libkernel.@LIBEXT@ libsystem.@LIBEXT@ libtoolhelp.@LIBEXT@ libwprocs.@LIBEXT@: kernel/libkernel32.@LIBEXT@
+libkernel32.@LIBEXT@ libcomm.@LIBEXT@ libkernel.@LIBEXT@ libsystem.@LIBEXT@ \
+  libtoolhelp.@LIBEXT@ libwin87em.@LIBEXT@ libwindebug.@LIBEXT@ \
+  libwprocs.@LIBEXT@: kernel/libkernel32.@LIBEXT@
 	$(RM) $@ && $(LN_S) kernel/libkernel32.@LIBEXT@ $@
 
 libjoystick.drv.@LIBEXT@: winmm/joystick/libjoystick.drv.@LIBEXT@
@@ -255,14 +255,11 @@ libmidimap.drv.@LIBEXT@: winmm/midimap/libmidimap.drv.@LIBEXT@
 libmpr.@LIBEXT@: mpr/libmpr.@LIBEXT@
 	$(RM) $@ && $(LN_S) mpr/libmpr.@LIBEXT@ $@
 
-libmsacm.@LIBEXT@: msacm/libmsacm.@LIBEXT@
-	$(RM) $@ && $(LN_S) msacm/libmsacm.@LIBEXT@ $@
-
 libmsacm.drv.@LIBEXT@: winmm/wavemap/libmsacm.drv.@LIBEXT@
 	$(RM) $@ && $(LN_S) winmm/wavemap/libmsacm.drv.@LIBEXT@ $@
 
-libmsacm32.@LIBEXT@: msacm32/libmsacm32.@LIBEXT@
-	$(RM) $@ && $(LN_S) msacm32/libmsacm32.@LIBEXT@ $@
+libmsacm32.@LIBEXT@ libmsacm.@LIBEXT@: msacm/libmsacm32.@LIBEXT@
+	$(RM) $@ && $(LN_S) msacm/libmsacm32.@LIBEXT@ $@
 
 libmsnet32.@LIBEXT@: msnet32/libmsnet32.@LIBEXT@
 	$(RM) $@ && $(LN_S) msnet32/libmsnet32.@LIBEXT@ $@
@@ -347,12 +344,6 @@ libversion.@LIBEXT@ libver.@LIBEXT@: version/libversion.@LIBEXT@
 
 libw32skrnl.@LIBEXT@ libw32sys.@LIBEXT@ libwin32s16.@LIBEXT@: win32s/libw32skrnl.@LIBEXT@
 	$(RM) $@ && $(LN_S) win32s/libw32skrnl.@LIBEXT@ $@
-
-libwin87em.@LIBEXT@: win87em/libwin87em.@LIBEXT@
-	$(RM) $@ && $(LN_S) win87em/libwin87em.@LIBEXT@ $@
-
-libwindebug.@LIBEXT@: windebug/libwindebug.@LIBEXT@
-	$(RM) $@ && $(LN_S) windebug/libwindebug.@LIBEXT@ $@
 
 libwineoss.drv.@LIBEXT@: winmm/wineoss/libwineoss.drv.@LIBEXT@
 	$(RM) $@ && $(LN_S) winmm/wineoss/libwineoss.drv.@LIBEXT@ $@

@@ -116,7 +116,6 @@ DLLS = \
 	mciwave.drv \
 	midimap.drv \
 	mpr \
-	msacm \
 	msacm.drv \
 	msacm32 \
 	msnet32 \
@@ -146,8 +145,6 @@ DLLS = \
 	user32 \
 	version \
 	w32skrnl \
-	win87em \
-	windebug \
 	wineoss.drv \
 	wineps \
 	wing \
