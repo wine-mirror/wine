@@ -494,15 +494,19 @@ static int TIME_GetBias(time_t utc, int *pdaylight)
     struct tm *ptm;
     static time_t last_utc;
     static int last_bias;
+    static int last_daylight;
     int ret;
 
     RtlEnterCriticalSection( &TIME_GetBias_section );
     if(utc == last_utc)
+    {
+        *pdaylight = last_daylight;
         ret = last_bias;	
-    else
+    } else
     {
         ptm = localtime(&utc);
-	*pdaylight = ptm->tm_isdst; /* daylight for local timezone */
+	*pdaylight = last_daylight =
+            ptm->tm_isdst; /* daylight for local timezone */
 	ptm = gmtime(&utc);
 	ptm->tm_isdst = *pdaylight; /* use local daylight, not that of Greenwich */
 	last_utc = utc;
