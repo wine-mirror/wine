@@ -128,6 +128,11 @@
 #include "wine/server.h"
 #include "wine/debug.h"
 
+#ifdef HAVE_IPX
+# include "wsnwlink.h"
+#endif
+
+
 #ifdef __FreeBSD__
 # define sipx_network    sipx_addr.x_net
 # define sipx_node       sipx_addr.x_host.c_host
@@ -1099,6 +1104,27 @@ static int WS2_send ( int fd, struct iovec* iov, int count,
             WSASetLastError ( WSAEFAULT );
             goto out;
         }
+
+#ifdef HAVE_IPX
+        if(to->sa_family == WS_AF_IPX)
+        {
+            struct sockaddr_ipx* uipx = (struct sockaddr_ipx*)hdr.msg_name;
+            int val=0;
+            int len=sizeof(int);
+
+            /* The packet type is stored at the ipx socket level; Atleast the linux kernel seems
+             *  to do something with it in case hdr.msg_name is NULL. Nonetheless can we use it to store
+             *  the packet type and then we can retrieve it using getsockopt. After that we can set the
+             *  ipx type in the sockaddr_opx structure with the stored value.
+             */
+            if(getsockopt(fd, SOL_IPX, IPX_TYPE, &val, &len) != -1)
+            {
+                TRACE("ptype: %d (fd:%d)\n", val, fd);
+                uipx->sipx_type = val;
+            }
+        }
+#endif
+
     }
     else
         hdr.msg_namelen = 0;
@@ -1544,6 +1570,60 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         TRACE("getting global SO_OPENTYPE = 0x%x\n", *((int*)optval) );
         return 0;
     }
+
+#ifdef HAVE_IPX
+    if(level == NSPROTO_IPX)
+    {
+    	struct WS_sockaddr_ipx addr;
+	IPX_ADDRESS_DATA *data;
+	int namelen;
+	switch(optname)
+	{
+	    case IPX_PTYPE:
+		fd = get_sock_fd( s, 0, NULL );
+		
+		if(getsockopt(fd, SOL_IPX, IPX_TYPE, optval, optlen) == -1)
+		{
+		    return SOCKET_ERROR;
+		}
+		TRACE("ptype: %d (fd: %d)\n", *(int*)optval, fd);
+    		release_sock_fd( s, fd );
+	
+		return 0;
+		break;	    
+	    case IPX_ADDRESS:
+		/*
+		*  On a Win2000 system with one network card there are useally three ipx devices one with a speed of 28.8kbps, 10Mbps and 100Mbps.
+		*  Using this call you can then retrieve info about this all. In case of Linux it is a bit different. Useally you have
+		*  only "one" device active and further it is not possible to query things like the linkspeed.
+		*/
+		FIXME("IPX_ADDRESS\n");
+		namelen = sizeof(struct WS_sockaddr);
+		memset(&addr, 0, sizeof(struct WS_sockaddr));
+		WS_getsockname(s, (struct WS_sockaddr*)&addr, &namelen);
+
+		data = (IPX_ADDRESS_DATA*)optval;
+                memcpy(data->nodenum,&addr.sa_nodenum,sizeof(data->nodenum));
+                memcpy(data->netnum,&addr.sa_netnum,sizeof(data->netnum));
+		data->adapternum = 0;
+		data->wan = FALSE; /* We are not on a wan for now .. */
+		data->status = FALSE; /* Since we are not on a wan, the wan link isn't up */
+		data->maxpkt = 1467; /* This value is the default one on atleast Win2k/WinXP */
+		data->linkspeed = 100000; /* Set the line speed in 100bit/s to 10 Mbit; note 1MB = 1000kB in this case */
+		return 0;	
+		break;
+	    case IPX_MAX_ADAPTER_NUM:
+		FIXME("IPX_MAX_ADAPTER_NUM\n");
+    		*(int*)optval = 1; /* As noted under IPX_ADDRESS we have just one card. */
+
+		return 0;
+		break;
+	    default:
+		FIXME("IPX optname:%x\n", optname);
+		return SOCKET_ERROR;
+	}
+    }
+#endif
 
     fd = get_sock_fd( s, 0, NULL );
     if (fd != -1)
@@ -2218,6 +2298,39 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         FIXME("Does windows ignore SO_DONTROUTE?\n");
         return 0;
     }
+
+#ifdef HAVE_IPX
+    if(level == NSPROTO_IPX)
+    {
+	switch(optname)
+	{
+	    case IPX_PTYPE:
+		fd = get_sock_fd( s, 0, NULL );
+		TRACE("trying to set IPX_PTYPE: %d (fd: %d)\n", *(int*)optval, fd);
+		
+		/* We try to set the ipx type on ipx socket level. */
+		if(setsockopt(fd, SOL_IPX, IPX_TYPE, optval, optlen) == -1)
+		{
+		    ERR("IPX: could not set ipx option type; expect weird behaviour\n");
+		    return SOCKET_ERROR;
+		}
+    		release_sock_fd( s, fd );
+		return 0;
+		break;
+	    case IPX_FILTERPTYPE:
+		/* Sets the receive filter packet type, at the moment we don't support it */
+		FIXME("IPX_FILTERPTYPE: %x\n", *optval);
+		
+		/* Returning 0 is better for now than returning a SOCKET_ERROR */
+		return 0;
+		break;
+	    default:
+		FIXME("opt_name:%x\n", optname);
+		return SOCKET_ERROR;
+	}
+	return 0;
+    }
+#endif
 
     /* Is a privileged and useless operation, so we don't. */
     if ((optname == WS_SO_DEBUG) && (level == WS_SOL_SOCKET))

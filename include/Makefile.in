@@ -239,6 +239,7 @@ WINDOWS_INCLUDES = \
 	ws2tcpip.h \
 	wshisotp.h \
 	wsipx.h \
+	wsnwlink.h \
 	xcmc.h \
 	zmouse.h \
 	$(IDL_INCLUDES) \
