@@ -183,25 +183,25 @@ HANDLE32 WINAPI CreateToolhelp32Snapshot(DWORD dwFlags, DWORD
   int			i;
   PDB32*		pdb;
 
-  printf ("%x & TH32CS_INHERIT (%x) = %x %s\n", dwFlags, 
-	  TH32CS_INHERIT, TH32CS_INHERIT, 
+  TRACE(toolhelp, "%lx & TH32CS_INHERIT (%x) = %lx %s\n", dwFlags, 
+	  TH32CS_INHERIT,
 	  dwFlags & TH32CS_INHERIT, 
 	  dwFlags & TH32CS_INHERIT ? "TRUE" : "FALSE");  
-  printf ("%x & TH32CS_SNAPHEAPLIST (%x) = %x %s\n", dwFlags, 
-	  TH32CS_SNAPHEAPLIST, TH32CS_SNAPHEAPLIST, 
+  TRACE(toolhelp, "%lx & TH32CS_SNAPHEAPLIST (%x) = %lx %s\n", dwFlags, 
+	  TH32CS_SNAPHEAPLIST,
 	  dwFlags & TH32CS_SNAPHEAPLIST, 
 	  dwFlags & TH32CS_SNAPHEAPLIST ? "TRUE" : "FALSE");  
-  printf ("%x & TH32CS_SNAPMODULE (%x) = %x %s\n", dwFlags, 
-	  TH32CS_SNAPMODULE, TH32CS_SNAPMODULE, 
+  TRACE(toolhelp, "%lx & TH32CS_SNAPMODULE (%x) = %lx %s\n", dwFlags, 
+	  TH32CS_SNAPMODULE,
 	  dwFlags & TH32CS_SNAPMODULE, 
 	  dwFlags & TH32CS_SNAPMODULE ? "TRUE" : "FALSE");  
-  printf ("%x & TH32CS_SNAPPROCESS (%x) = %x %s\n", dwFlags, 
-	  TH32CS_SNAPPROCESS, TH32CS_SNAPPROCESS, 
+  TRACE(toolhelp, "%lx & TH32CS_SNAPPROCESS (%x) = %lx %s\n", dwFlags, 
+	  TH32CS_SNAPPROCESS,
 	  dwFlags & TH32CS_SNAPPROCESS, 
 	  dwFlags & TH32CS_SNAPPROCESS ? "TRUE" : "FALSE");  
-  printf ("%x & TH32CS_SNAPTHREAD (%x) = %x %s\n", dwFlags, 
-	  TH32CS_SNAPTHREAD, TH32CS_SNAPTHREAD, 
-	  dwFlags & TH32CS_SNAPTHREAD, 
+  TRACE(toolhelp, "%lx & TH32CS_SNAPTHREAD (%x) = %lx %s\n", dwFlags, 
+	  TH32CS_SNAPTHREAD,
+	  dwFlags & TH32CS_SNAPTHREAD,
 	  dwFlags & TH32CS_SNAPTHREAD ? "TRUE" : "FALSE");  
 
   /**** FIXME: Not implmented ***/
