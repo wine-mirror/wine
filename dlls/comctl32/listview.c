@@ -306,6 +306,7 @@ typedef struct tagLISTVIEW_INFO
  *   ICON_TOP_PADDING_HITABLE - spacing between above and icon.
  *   ICON_TOP_PADDING - sum of the two above.
  *   ICON_BOTTOM_PADDING - between bottom of icon and top of text
+ *   LABEL_HOR_PADDING - between text and sides of box
  *   LABEL_VERT_PADDING - between bottom of text and end of box
  *
  *   ICON_LR_PADDING - additional width above icon size.
@@ -315,6 +316,7 @@ typedef struct tagLISTVIEW_INFO
 #define ICON_TOP_PADDING_HITABLE     2
 #define ICON_TOP_PADDING (ICON_TOP_PADDING_NOTHITABLE + ICON_TOP_PADDING_HITABLE)
 #define ICON_BOTTOM_PADDING          4
+#define LABEL_HOR_PADDING            5
 #define LABEL_VERT_PADDING           7
 #define ICON_LR_PADDING              16
 #define ICON_LR_HALF                 (ICON_LR_PADDING/2)
@@ -332,7 +334,8 @@ typedef struct tagLISTVIEW_INFO
 #define IMAGE_PADDING  2
 
 /* Padding behind the label */
-#define TRAILING_PADDING  5
+#define TRAILING_LABEL_PADDING  12
+#define TRAILING_HEADER_PADDING  11
 
 /* Border for the icon caption */
 #define CAPTION_BORDER  2
@@ -1684,7 +1687,7 @@ static void LISTVIEW_GetItemOrigin(LISTVIEW_INFO *infoPtr, INT nItem, LPPOINT lp
     }
     else /* LVS_REPORT */
     {
-	lpptPosition->x = REPORT_MARGINX;
+	lpptPosition->x = 0;
 	lpptPosition->y = nItem * infoPtr->nItemHeight;
     }
 }
@@ -1788,9 +1791,9 @@ static void LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVI
 	    State.left = Box.left;
 	    if (uView == LVS_REPORT) 
 	    {
-		State.left += REPORT_MARGINX;
 		if (lpLVItem->iSubItem == 0)
 		{
+		    State.left += REPORT_MARGINX;
 		    assert(lpLVItem->mask & LVIF_INDENT);
 		    State.left += infoPtr->iconSize.cx * lpLVItem->iIndent;
 		}
@@ -1830,7 +1833,6 @@ static void LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVI
 	else /* LVS_SMALLICON, LVS_LIST or LVS_REPORT */
 	{
 	    Icon.left = State.right;
-	    if (!IsRectEmpty(&State)) Icon.left += IMAGE_PADDING;
 	    Icon.top    = Box.top;
 	    Icon.right  = Icon.left;
 	    if (infoPtr->himlSmall && (!lpColumnInfo || lpLVItem->iSubItem == 0 || (lpColumnInfo->fmt & LVCFMT_IMAGE)))
@@ -1853,7 +1855,6 @@ static void LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVI
 	if (uView == LVS_REPORT)
 	{
 	    if (lpLVItem->iSubItem == 0) Label = lpColumnInfo->rcHeader;
-	    Label.right -= REPORT_MARGINX;
 	}
 
 	if (lpLVItem->iSubItem || ((infoPtr->dwStyle & LVS_OWNERDRAWFIXED) && uView == LVS_REPORT))
@@ -1875,7 +1876,7 @@ static void LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVI
 
 	    /* compute rough rectangle where the label will go */
 	    SetRectEmpty(&rcText);
-	    rcText.right = infoPtr->nItemWidth - TRAILING_PADDING;
+	    rcText.right = infoPtr->nItemWidth - TRAILING_LABEL_PADDING;
 	    rcText.bottom = infoPtr->nItemHeight;
 	    if (uView == LVS_ICON) 
 		rcText.bottom -= ICON_TOP_PADDING + infoPtr->iconSize.cy + ICON_BOTTOM_PADDING;
@@ -1888,7 +1889,7 @@ static void LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVI
 	    
     	    DrawTextW (hdc, lpLVItem->pszText, -1, &rcText, uFormat | DT_CALCRECT);
 
-	    labelSize.cx = min(rcText.right - rcText.left + TRAILING_PADDING, infoPtr->nItemWidth);
+	    labelSize.cx = min(rcText.right - rcText.left + TRAILING_LABEL_PADDING, infoPtr->nItemWidth);
 	    labelSize.cy = rcText.bottom - rcText.top;
 
     	    SelectObject(hdc, hOldFont);
@@ -1915,7 +1916,6 @@ calc_label:
 	else /* LVS_SMALLICON, LVS_LIST or LVS_REPORT */
 	{
 	    Label.left = Icon.right;
-	    if (!IsRectEmpty(&Icon) || !IsRectEmpty(&State)) Label.left += IMAGE_PADDING;
 	    Label.top = Box.top;
 	    Label.right = min(Label.left + labelSize.cx, Label.right);
 	    Label.bottom = Label.top + infoPtr->nItemHeight;
@@ -2259,8 +2259,8 @@ static INT LISTVIEW_CalculateItemWidth(LISTVIEW_INFO *infoPtr)
 	for (i = 0; i < infoPtr->nItemCount; i++)
 	    nItemWidth = max(LISTVIEW_GetLabelWidth(infoPtr, i), nItemWidth);
 
-        if (infoPtr->himlSmall) nItemWidth += infoPtr->iconSize.cx + IMAGE_PADDING; 
-        if (infoPtr->himlState) nItemWidth += infoPtr->iconStateSize.cx + IMAGE_PADDING;
+        if (infoPtr->himlSmall) nItemWidth += infoPtr->iconSize.cx; 
+        if (infoPtr->himlState) nItemWidth += infoPtr->iconStateSize.cx;
 
 	nItemWidth = max(DEFAULT_COLUMN_WIDTH, nItemWidth + WIDTH_PADDING);
     }
@@ -3556,7 +3556,12 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
 	default:            uFormat |= DT_LEFT;
 	}
     }
-    if (!(uFormat & (DT_RIGHT | DT_CENTER))) rcLabel.left += 2;
+    if (!(uFormat & (DT_RIGHT | DT_CENTER)))
+    {
+        if (himl && lvItem.iImage >= 0 && !IsRectEmpty(&rcIcon)) rcLabel.left += IMAGE_PADDING;
+        else rcLabel.left += LABEL_HOR_PADDING;
+    }
+    else if (uFormat & DT_RIGHT) rcLabel.right -= LABEL_HOR_PADDING;
     DrawTextW(hdc, lvItem.pszText, -1, &rcLabel, uFormat);
 
 postpaint:
@@ -5204,14 +5209,16 @@ static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
  */
 static BOOL LISTVIEW_GetSubItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
 {
-    POINT Position, Origin;
+    POINT Position;
     LVITEMW lvItem;
     
     if (!lprc || (infoPtr->dwStyle & LVS_TYPEMASK) != LVS_REPORT) return FALSE;
     
     TRACE("(nItem=%d, nSubItem=%d)\n", nItem, lprc->top);
+    /* On WinNT, a subitem of '0' calls LISTVIEW_GetItemRect */
+    if (lprc->top == 0)
+        return LISTVIEW_GetItemRect(infoPtr, nItem, lprc);
 
-    LISTVIEW_GetOrigin(infoPtr, &Origin);
     if (!LISTVIEW_GetItemPosition(infoPtr, nItem, &Position)) return FALSE;
 
     lvItem.mask = lprc->top == 0 ? LVIF_INDENT : 0;
@@ -5235,7 +5242,7 @@ static BOOL LISTVIEW_GetSubItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lp
 	return FALSE;
     }
 
-    OffsetRect(lprc, Position.x + Origin.x, Position.y + Origin.y);
+    OffsetRect(lprc, Position.x, Position.y);
     return TRUE;
 }
 
@@ -6267,8 +6274,8 @@ static BOOL LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn, INT cx)
 	    if (max_cx < nLabelWidth) max_cx = nLabelWidth;
 	}
 	if (infoPtr->himlSmall && (nColumn == 0 || (LISTVIEW_GetColumnInfo(infoPtr, nColumn)->fmt & LVCFMT_IMAGE)))
-	    max_cx += infoPtr->iconSize.cx + IMAGE_PADDING;
-	max_cx += REPORT_MARGINX + TRAILING_PADDING;
+	    max_cx += infoPtr->iconSize.cx;
+	max_cx += TRAILING_LABEL_PADDING;
     }
 
     /* autosize based on listview items width */
@@ -6307,7 +6314,7 @@ static BOOL LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn, INT cx)
 		SIZE size;
 
 		if (GetTextExtentPoint32W(hdc, hdi.pszText, lstrlenW(hdi.pszText), &size))
-		    cx = size.cx;
+		    cx = size.cx + TRAILING_HEADER_PADDING;
 		/* FIXME: Take into account the header image, if one is present */
 		SelectObject(hdc, old_font);
 		ReleaseDC(infoPtr->hwndSelf, hdc);
