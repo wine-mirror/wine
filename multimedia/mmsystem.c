@@ -30,11 +30,11 @@
 #include "file.h"
 #include "mmsystem.h"
 #include "multimedia.h"
-#include "debug.h"
 #include "xmalloc.h"
 #include "callback.h"
 #include "module.h"
 #include "selectors.h"
+#include "debug.h"
 
 int	mciInstalledCount;
 int	mciInstalledListLen;

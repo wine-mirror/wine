@@ -168,6 +168,9 @@ typedef struct _CONTEXT		/* Note 1 */
 #else
 #define ESP_sig(context)     ((context)->uc_mcontext.gregs[ESP])
 #endif
+#ifdef TRAPNO
+#define TRAP_sig(context)     ((context)->uc_mcontext.gregs[TRAPNO])
+#endif
 
 #endif  /* svr4 || SCO_DS */
                             

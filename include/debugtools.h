@@ -59,6 +59,8 @@ extern short debug_msg_enabled[][DEBUG_CLASS_COUNT];
 #endif /* NO_DEBUG_MSGS */
 
 /* define error macro regardless of what is configured */
+/* Solaris got an 'ERR' define in <sys/reg.h> */
+#undef ERR
 #define ERR(ch, fmt, args...)   DPRINTF_(err, ch, fmt, ## args)
 #define MSG(format, args...)    fprintf(stderr, format, ## args)
 

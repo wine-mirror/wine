@@ -6,13 +6,13 @@
 
 #include <assert.h>
 #include <stdio.h>
-#include "debug.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "heap.h"
 #include "process.h"
 #include "server.h"
 #include "thread.h"
+#include "debug.h"
 
 #define HTABLE_SIZE  0x30  /* Handle table initial size */
 #define HTABLE_INC   0x10  /* Handle table increment */

@@ -19,8 +19,8 @@
 #include "task.h"
 #include "except.h"
 #include "win.h"
-#include "debug.h"
 #include "flatthunk.h"
+#include "debug.h"
 
 
 /* List of the 16-bit callback functions. This list is used  */
@@ -706,7 +706,7 @@ UINT32 WINAPI ThunkConnect16(
         DWORD dwReason,              /* [in] initialisation argument */
         struct ThunkDataCommon *TD,  /* [in/out] thunkbuffer */
         LPSTR thunkfun32,            /* [in] win32 thunkfunction */
-        WORD CS                      /* [in] CS of win16 dll */
+        WORD cs                      /* [in] CS of win16 dll */
 ) {
     BOOL32 directionSL;
 
