@@ -84,91 +84,93 @@
  84 stub    ODBCGetTryWaitValue
  85 stub    CursorLibTransact
  86 stub    ODBSetTryWaitValue
- 87 stub    LockHandle
- 88 stub    ODBCInternalConnectW
  89 stub    ODBCSharedPerfMon
  90 stub    ODBCSharedVSFlag
- 91 stub    OpenODBCPerfData
- 92 stub    PostComponentError
- 93 stub    PostODBCComponentError
- 94 stub    PostODBCError
- 95 stub    SearchStatusCode
- 96 stub    VFreeErrors
- 97 stub    VRetrieveDriverErrorsRowCol
- 98 stub    ValidateErrorQueue
- 99 stub    SQLColAttributesW
-100 stub    SQLConnectW
-101 stub    SQLDescribeColW
-102 stub    SQLErrorW
-103 stub    SQLExecDirectW
-104 stub    SQLGetCursorNameW
-105 stub    SQLPrepareW
-106 stub    SQLSetCursorNameW
-107 stub    SQLColAttributeW
-108 stub    SQLGetConnectAttrW
-109 stub    SQLGetDescFieldW
-110 stub    SQLGetDescRecW
-111 stub    SQLGetDiagFieldW
-112 stub    SQLGetDiagRecW
-113 stub    SQLGetStmtAttrW
-114 stub    SQLSetConnectAttrW
-115 stub    SQLColumnsW
-116 stub    SQLDriverConnectW
-117 stub    SQLGetConnectOptionW
-118 stub    SQLGetInfoW
-119 stub    SQLGetTypeInfoW
-120 stub    SQLSetConnectOptionW
-121 stub    SQLSpecialColumnsW
-122 stub    SQLStatisticsW
-123 stub    SQLTablesW
-124 stub    SQLBrowseConnectW
-125 stub    SQLDataSourcesW
-126 stub    SQLColumnPrivilegesW
-127 stub    SQLForeignKeysW
-128 stub    SQLNativeSqlW
-129 stub    SQLPrimaryKeysW
-130 stub    SQLProcedureColumnsW
-131 stub    SQLProceduresW
-132 stub    SQLTablePrivilegesW
-133 stub    SQLDriversW
-134 stub    SQLSetDescFieldW
-135 stub    SQLSetStmtAttrW
-136 stub    SQLColAttributesA
-137 stub    SQLConnectA
-138 stub    SQLDescribeColA
-139 stub    SQLErrorA
-140 stub    SQLExecDirectA
-141 stub    SQLGetCursorNameA
-142 stub    SQLPrepareA
-143 stub    SQLSetCursorNameA
-144 stub    SQLColAttributeA
-145 stub    SQLGetConnectAttrA
-146 stub    SQLGetDescFieldA
-147 stub    SQLGetDescRecA
-148 stub    SQLGetDiagFieldA
-149 stub    SQLGetDiagRecA
-150 stub    SQLGetStmtAttrA
-151 stub    SQLSetConnectAttrA
-152 stub    SQLColumnsA
-153 stub    SQLDriverConnectA
-154 stub    SQLGetConnectOptionA
-155 stub    SQLGetInfoA
-156 stub    SQLGetTypeInfoA
-157 stub    SQLSetConnectOptionA
-158 stub    SQLSpecialColumnsA
-159 stub    SQLStatisticsA
-160 stub    SQLTablesA
-161 stub    SQLBrowseConnectA
-162 stub    SQLColumnPrivilegesA
-163 stub    SQLDataSourcesA
-164 stub    SQLForeignKeysA
-165 stub    SQLNativeSqlA
-166 stub    SQLPrimaryKeysA
-167 stub    SQLProcedureColumnsA
-168 stub    SQLProceduresA
-169 stub    SQLTablePrivilegesA
-170 stub    SQLDriversA
-171 stub    SQLSetDescFieldA
-172 stub    SQLSetStmtAttrA
-173 stub    ODBCSharedTraceFlag
-174 stub    ODBCQualifyFileDSNW
+106 stub    SQLColAttributesW
+107 stub    SQLConnectW
+108 stub    SQLDescribeColW
+110 stub    SQLErrorW
+111 stub    SQLExecDirectW
+117 stub    SQLGetCursorNameW
+119 stub    SQLPrepareW
+121 stub    SQLSetCursorNameW
+127 stub    SQLColAttributeW
+132 stub    SQLGetConnectAttrW
+133 stub    SQLGetDescFieldW
+134 stub    SQLGetDescRecW
+135 stub    SQLGetDiagFieldW
+136 stub    SQLGetDiagRecW
+138 stub    SQLGetStmtAttrW
+139 stub    SQLSetConnectAttrW
+140 stub    SQLColumnsW
+141 stub    SQLDriverConnectW
+142 stub    SQLGetConnectOptionW
+145 stub    SQLGetInfoW
+147 stub    SQLGetTypeInfoW
+150 stub    SQLSetConnectOptionW
+152 stub    SQLSpecialColumnsW
+153 stub    SQLStatisticsW
+154 stub    SQLTablesW
+155 stub    SQLBrowseConnectW
+156 stub    SQLColumnPrivilegesW
+157 stub    SQLDataSourcesW
+160 stub    SQLForeignKeysW
+162 stub    SQLNativeSqlW
+165 stub    SQLPrimaryKeysW
+166 stub    SQLProcedureColumnsW
+167 stub    SQLProceduresW
+170 stub    SQLTablePrivilegesW
+171 stub    SQLDriversW
+173 stub    SQLSetDescFieldW
+176 stub    SQLSetStmtAttrW
+206 stub    SQLColAttributesA
+207 stub    SQLConnectA
+208 stub    SQLDescribeColA
+210 stub    SQLErrorA
+211 stub    SQLExecDirectA
+217 stub    SQLGetCursorNameA
+219 stub    SQLPrepareA
+221 stub    SQLSetCursorNameA
+227 stub    SQLColAttributeA
+232 stub    SQLGetConnectAttrA
+233 stub    SQLGetDescFieldA
+234 stub    SQLGetDescRecA
+235 stub    SQLGetDiagFieldA
+236 stub    SQLGetDiagRecA
+238 stub    SQLGetStmtAttrA
+239 stub    SQLSetConnectAttrA
+240 stub    SQLColumnsA
+241 stub    SQLDriverConnectA
+242 stub    SQLGetConnectOptionA
+245 stub    SQLGetInfoA
+247 stub    SQLGetTypeInfoA
+250 stub    SQLSetConnectOptionA
+252 stub    SQLSpecialColumnsA
+253 stub    SQLStatisticsA
+254 stub    SQLTablesA
+255 stub    SQLBrowseConnectA
+256 stub    SQLColumnPrivilegesA
+257 stub    SQLDataSourcesA
+260 stub    SQLForeignKeysA
+262 stub    SQLNativeSqlA
+265 stub    SQLPrimaryKeysA
+266 stub    SQLProcedureColumnsA
+267 stub    SQLProceduresA
+270 stub    SQLTablePrivilegesA
+271 stub    SQLDriversA
+273 stub    SQLSetDescFieldA
+276 stub    SQLSetStmtAttrA
+300 stub    ODBCSharedTraceFlag
+301 stub    ODBCQualifyFileDSNW
+
+
+ @ stub    LockHandle
+ @ stub    ODBCInternalConnectW
+ @ stub    OpenODBCPerfData
+ @ stub    PostComponentError
+ @ stub    PostODBCComponentError
+ @ stub    PostODBCError
+ @ stub    SearchStatusCode
+ @ stub    VFreeErrors
+ @ stub    VRetrieveDriverErrorsRowCol
+ @ stub    ValidateErrorQueue
