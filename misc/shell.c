@@ -875,7 +875,38 @@ HICON16 WINAPI ExtractIcon16( HINSTANCE16 hInstance, LPCSTR lpszExeFileName,
     return ExtractIcon32A( hInstance, lpszExeFileName, nIconIndex );
 }
 
+/*************************************************************************
+ *             ExtractIconEx16   (SHELL.40)
+ */
+HICON16 WINAPI ExtractIconEx16(
+	LPCSTR lpszFile, INT16 nIconIndex, HICON16 *phiconLarge,
+	HICON16 *phiconSmall, UINT16 nIcons
+) {
+    HICON32	*ilarge,*ismall;
+    UINT16	ret;
+    int		i;
 
+    if (phiconLarge)
+    	ilarge = (HICON32*)HeapAlloc(GetProcessHeap(),0,nIcons*sizeof(HICON32));
+    else
+    	ilarge = NULL;
+    if (phiconSmall)
+    	ismall = (HICON32*)HeapAlloc(GetProcessHeap(),0,nIcons*sizeof(HICON32));
+    else
+    	ismall = NULL;
+    ret = ExtractIconEx32A(lpszFile,nIconIndex,ilarge,ismall,nIcons);
+    if (ilarge) {
+    	for (i=0;i<nIcons;i++)
+	    phiconLarge[i]=ilarge[i];
+	HeapFree(GetProcessHeap(),0,ilarge);
+    }
+    if (ismall) {
+    	for (i=0;i<nIcons;i++)
+	    phiconSmall[i]=ismall[i];
+	HeapFree(GetProcessHeap(),0,ismall);
+    }
+    return ret;
+}
 
 /*************************************************************************
  *				ExtractAssociatedIcon	[SHELL.36]

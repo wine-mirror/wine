@@ -21,7 +21,7 @@ type	win16
  37 pascal   DoEnvironmentSubst(ptr word) DoEnvironmentSubst
  38 pascal   FindEnvironmentString(ptr) FindEnvironmentString
  39 pascal16 InternalExtractIcon(word ptr s_word word) InternalExtractIcon
- 40 stub ExtractIconEx
+ 40 pascal16 ExtractIconEx(str word ptr ptr word) ExtractIconEx16
 # 98 stub SHL3216_THUNKDATA16
 # 99 stub SHL1632_THUNKDATA16
 

@@ -706,7 +706,7 @@ INT32 WINAPI Shell_GetCachedImageIndex32AW(LPCVOID szPath, INT32 nIndex, DWORD z
 /*************************************************************************
 *	ExtracticonEx32		[shell32.189]
 */
-HICON32 WINAPI ExtractIconEx32AW ( LPVOID lpszFile, INT32 nIconIndex, HICON32 * phiconLarge, HICON32 * phiconSmall, UINT32 nIcons )
+HICON32 WINAPI ExtractIconEx32AW ( LPCVOID lpszFile, INT32 nIconIndex, HICON32 * phiconLarge, HICON32 * phiconSmall, UINT32 nIcons )
 {	if (VERSION_OsIsUnicode())
 	  return ExtractIconEx32W ( lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
 	return ExtractIconEx32A ( lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
@@ -718,7 +718,7 @@ HICON32 WINAPI ExtractIconEx32AW ( LPVOID lpszFile, INT32 nIconIndex, HICON32 * 
 *  1 file is not valid
 *  HICON32 handle of a icon (phiconLarge/Small == NULL)
 */
-HICON32 WINAPI ExtractIconEx32A ( LPSTR lpszFile, INT32 nIconIndex, HICON32 * phiconLarge, HICON32 * phiconSmall, UINT32 nIcons )
+HICON32 WINAPI ExtractIconEx32A ( LPCSTR lpszFile, INT32 nIconIndex, HICON32 * phiconLarge, HICON32 * phiconSmall, UINT32 nIcons )
 {	HICON32 ret=0;
 	
 	TRACE(shell,"file=%s idx=%i %p %p num=%i\n", lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons );
@@ -750,7 +750,7 @@ HICON32 WINAPI ExtractIconEx32A ( LPSTR lpszFile, INT32 nIconIndex, HICON32 * ph
 /*************************************************************************
 *	ExtracticonEx32W	[shell32.191]
 */
-HICON32 WINAPI ExtractIconEx32W ( LPWSTR lpszFile, INT32 nIconIndex, HICON32 * phiconLarge, HICON32 * phiconSmall, UINT32 nIcons )
+HICON32 WINAPI ExtractIconEx32W ( LPCWSTR lpszFile, INT32 nIconIndex, HICON32 * phiconLarge, HICON32 * phiconSmall, UINT32 nIcons )
 {	LPSTR sFile;
 	DWORD ret;
 	
