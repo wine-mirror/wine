@@ -968,7 +968,8 @@ static INT XFONT_GetAvgCharWidth( LPIFONTINFO16 pFI, const XFontStruct* x_fs,
 		    chars++;
 		}
 	}
-	avg = (width + (chars>>1))/ chars;
+	if (chars) avg = (width + (chars>>1))/ chars;
+	else       avg = 0; /* No characters exist at all */ 
     }
     else /* uniform width */
 	avg = x_fs->min_bounds.width;
