@@ -78,7 +78,7 @@ ps: $(ALLBOOKS:%=%.ps)
 	$(DB2HTML) -d $(SRCDIR)/default.dsl -o $* $<
 
 .sgml.pdf:
-	$(DB2PDF) -d $(SRCDIR)/print.dsl $< >/dev/null
+	$(DB2PDF) $< >/dev/null
 
 .sgml.ps:
 	$(DB2PS) $< >/dev/null
