@@ -1369,9 +1369,9 @@ static char KEYBOARD_MapDeadKeysym(KeySym keysym)
 }
 
 /***********************************************************************
- *		X11DRV_ToAscii
+ *		X11DRV_ToUnicode
  *
- * The ToAscii function translates the specified virtual-key code and keyboard
+ * The ToUnicode function translates the specified virtual-key code and keyboard
  * state to the corresponding Windows character or characters.
  *
  * If the specified key is a dead key, the return value is negative. Otherwise,
@@ -1386,14 +1386,14 @@ static char KEYBOARD_MapDeadKeysym(KeySym keysym)
  * FIXME : should do the above (return 2 for non matching deadchar+char combinations)
  *
  */
-INT16 X11DRV_ToAscii(
-    UINT16 virtKey,UINT16 scanCode, LPBYTE lpKeyState, 
-    LPVOID lpChar, UINT16 flags)
+INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
+		     LPWSTR bufW, int bufW_size, UINT flags)
 {
     XKeyEvent e;
     KeySym keysym;
     INT ret;
     int keyc;
+    BYTE lpChar[2];
 
     if (scanCode==0) {
         /* This happens when doing Alt+letter : a fake 'down arrow' key press
@@ -1453,13 +1453,12 @@ INT16 X11DRV_ToAscii(
     ret = TSXLookupString(&e, (LPVOID)lpChar, 2, &keysym, NULL);
     if (ret == 0)
 	{
-	BYTE dead_char = 0;
+	BYTE dead_char;
 
-	((char*)lpChar)[1] = '\0';
 	dead_char = KEYBOARD_MapDeadKeysym(keysym);
 	if (dead_char)
 	    {
-	    *(char*)lpChar = dead_char;
+	    MultiByteToWideChar(main_key_tab[kbd_layout].layout_cp, 0, &dead_char, 1, bufW, bufW_size);
 	    ret = -1;
 	    }
 	else
@@ -1478,9 +1477,7 @@ INT16 X11DRV_ToAscii(
 		}
 	    }
 	}
-    else {  /* ret = 1 */
-	UINT ansi_cp = GetACP();
-
+    else {  /* ret != 0 */
         /* We have a special case to handle : Shift + arrow, shift + home, ...
            X returns a char for it, but Windows doesn't. Let's eat it. */
         if (!(lpKeyState[VK_NUMLOCK] & 0x01)  /* NumLock is off */
@@ -1499,27 +1496,24 @@ INT16 X11DRV_ToAscii(
             ret = 0;
         }
 
-	/* perform translation to the current ansi code page */
-	if(ret && ansi_cp != main_key_tab[kbd_layout].layout_cp)
+	/* perform translation to unicode */
+	if(ret)
 	{
-	    WCHAR uni_char;
-	    TRACE_(key)("Translating char 0x%02x from cp %d to cp %d\n",
-		*(BYTE *)lpChar, main_key_tab[kbd_layout].layout_cp, ansi_cp);
-	    MultiByteToWideChar(main_key_tab[kbd_layout].layout_cp, 0, lpChar, 1, &uni_char, 1);
-	    ret = WideCharToMultiByte(ansi_cp, 0, &uni_char, 1, lpChar, 2, NULL, NULL);
-	    TRACE_(key)("Translation result: 0x%04x, 0x%02x (%d)\n", uni_char, *(BYTE *)lpChar, ret);
+	    TRACE_(key)("Translating char 0x%02x from code page %d to unicode\n",
+		*(BYTE *)lpChar, main_key_tab[kbd_layout].layout_cp);
+	    ret = MultiByteToWideChar(main_key_tab[kbd_layout].layout_cp, 0, (LPCSTR)lpChar, ret, bufW, bufW_size);
 	}
     }
 
-    TRACE_(key)("ToAscii about to return %d with char %x\n",
-		ret, *(BYTE *)lpChar);
+    TRACE_(key)("ToUnicode about to return %d with char %x %s\n",
+		ret, bufW ? bufW[1] : 0, bufW ? "" : "(no buffer)");
     return ret;
 }
 
 /***********************************************************************
  *		X11DRV_GetBeepActive
  */
-BOOL X11DRV_GetBeepActive()
+BOOL X11DRV_GetBeepActive(void)
 {
   XKeyboardState  keyboard_state;
 
@@ -1546,7 +1540,7 @@ void X11DRV_SetBeepActive(BOOL bActivate)
 /***********************************************************************
  *		X11DRV_Beep
  */
-void X11DRV_Beep()
+void X11DRV_Beep(void)
 {
   TSXBell(display, 0);
 }

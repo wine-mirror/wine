@@ -971,12 +971,38 @@ INT WINAPI GetKeyNameTextW(LONG lParam, LPWSTR lpBuffer, INT nSize)
 }
 
 /****************************************************************************
+ *	ToUnicode      (USER32.@)
+ */
+INT WINAPI ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
+		     LPWSTR lpwStr, int size, UINT flags)
+{
+    return USER_Driver.pToUnicode(virtKey, scanCode, lpKeyState, lpwStr, size, flags);
+}
+
+/****************************************************************************
+ *	ToUnicodeEx      (USER32.@)
+ */
+INT WINAPI ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
+		       LPWSTR lpwStr, int size, UINT flags, HKL hkl)
+{
+    /* FIXME: need true implementation */
+    return ToUnicode(virtKey, scanCode, lpKeyState, lpwStr, size, flags);
+}
+
+/****************************************************************************
  *	ToAscii      (USER32.546)
  */
 INT WINAPI ToAscii( UINT virtKey,UINT scanCode,LPBYTE lpKeyState,
                         LPWORD lpChar,UINT flags )
 {
-    return ToAscii16(virtKey,scanCode,lpKeyState,lpChar,flags);
+    WCHAR uni_chars[2];
+    INT ret, n_ret;
+
+    ret = ToUnicode(virtKey, scanCode, lpKeyState, uni_chars, 2, flags);
+    if(ret < 0) n_ret = 1; /* FIXME: make ToUnicode return 2 for dead chars */
+    else n_ret = ret;
+    WideCharToMultiByte(CP_ACP, 0, uni_chars, n_ret, (LPSTR)lpChar, 2, NULL, NULL);
+    return ret;
 }
 
 /****************************************************************************
@@ -985,8 +1011,8 @@ INT WINAPI ToAscii( UINT virtKey,UINT scanCode,LPBYTE lpKeyState,
 INT WINAPI ToAsciiEx( UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
                       LPWORD lpChar, UINT flags, HKL dwhkl )
 {
-		/* FIXME: need true implementation */
-    return ToAscii16(virtKey,scanCode,lpKeyState,lpChar,flags);
+    /* FIXME: need true implementation */
+    return ToAscii(virtKey, scanCode, lpKeyState, lpChar, flags);
 }
 
 /**********************************************************************
@@ -1037,22 +1063,6 @@ BOOL WINAPI RegisterHotKey(HWND hwnd,INT id,UINT modifiers,UINT vk) {
 BOOL WINAPI UnregisterHotKey(HWND hwnd,INT id) {
 	FIXME_(keyboard)("(0x%08x,%d): stub\n",hwnd,id);
 	return TRUE;
-}
-
-
-/***********************************************************************
- *           ToUnicode                       (USER32.548)
- */
-INT WINAPI ToUnicode(
-  UINT wVirtKey,
-  UINT wScanCode,
-  PBYTE  lpKeyState,
-  LPWSTR pwszBuff,
-  INT    cchBuff,
-  UINT wFlags) {
-
-       FIXME_(keyboard)(": stub\n");
-       return 0;
 }
 
 /***********************************************************************

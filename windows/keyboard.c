@@ -252,7 +252,7 @@ INT16 WINAPI GetKeyNameText16(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 INT16 WINAPI ToAscii16(UINT16 virtKey,UINT16 scanCode, LPBYTE lpKeyState, 
                        LPVOID lpChar, UINT16 flags) 
 {
-    return USER_Driver.pToAscii( virtKey, scanCode, lpKeyState, lpChar, flags );
+    return ToAscii( virtKey, scanCode, lpKeyState, lpChar, flags );
 }
 
 /***********************************************************************

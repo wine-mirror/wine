@@ -368,7 +368,6 @@ extern void X11DRV_InitKeyboard(void);
 extern WORD X11DRV_VkKeyScan(CHAR cChar);
 extern UINT16 X11DRV_MapVirtualKey(UINT16 wCode, UINT16 wMapType);
 extern INT16 X11DRV_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize);
-extern INT16 X11DRV_ToAscii(UINT16 virtKey, UINT16 scanCode, LPBYTE lpKeyState, LPVOID lpChar, UINT16 flags);
 extern BOOL X11DRV_GetDIState(DWORD len, LPVOID ptr);
 extern BOOL X11DRV_GetDIData(BYTE *keystate, DWORD dodsize, struct DIDEVICEOBJECTDATA *dod, LPDWORD entries, DWORD flags);
 extern void X11DRV_GetKeyboardConfig(struct tagKEYBOARD_CONFIG *cfg);

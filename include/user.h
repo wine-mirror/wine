@@ -51,7 +51,7 @@ typedef struct tagUSER_DRIVER {
     WORD   (*pVkKeyScan)(CHAR);
     UINT16 (*pMapVirtualKey)(UINT16, UINT16);
     INT16  (*pGetKeyNameText)(LONG, LPSTR, INT16);
-    INT16  (*pToAscii)(UINT16, UINT16, LPBYTE, LPVOID, UINT16);
+    INT    (*pToUnicode)(UINT, UINT, LPBYTE, LPWSTR, int, UINT);
     BOOL   (*pGetBeepActive)(void);
     void   (*pSetBeepActive)(BOOL);
     void   (*pBeep)(void);

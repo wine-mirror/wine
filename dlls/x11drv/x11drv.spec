@@ -15,7 +15,7 @@ import	kernel32.dll
 @ cdecl VkKeyScan(long) X11DRV_VkKeyScan
 @ cdecl MapVirtualKey(long long) X11DRV_MapVirtualKey
 @ cdecl GetKeyNameText(long str long) X11DRV_GetKeyNameText
-@ cdecl ToAscii(long long ptr ptr long) X11DRV_ToAscii
+@ cdecl ToUnicode(long long ptr ptr long long) X11DRV_ToUnicode
 @ cdecl GetBeepActive() X11DRV_GetBeepActive
 @ cdecl SetBeepActive(long) X11DRV_SetBeepActive
 @ cdecl Beep() X11DRV_Beep

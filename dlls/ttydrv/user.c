@@ -70,10 +70,10 @@ INT16 TTYDRV_GetKeyNameText( LONG lParam, LPSTR lpBuffer, INT16 nSize )
 }
 
 /***********************************************************************
- *		TTYDRV_ToAscii
+ *		TTYDRV_ToUnicode
  */
-INT16 TTYDRV_ToAscii( UINT16 virtKey, UINT16 scanCode,
-                      LPBYTE lpKeyState, LPVOID lpChar, UINT16 flags )
+INT TTYDRV_ToUnicode( UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
+		      LPWSTR pwszBuff, int cchBuff, UINT flags )
 {
   return 0;
 }

@@ -15,7 +15,7 @@ import	kernel32.dll
 @ cdecl VkKeyScan(long) TTYDRV_VkKeyScan
 @ cdecl MapVirtualKey(long long) TTYDRV_MapVirtualKey
 @ cdecl GetKeyNameText(long str long) TTYDRV_GetKeyNameText
-@ cdecl ToAscii(long long ptr ptr long) TTYDRV_ToAscii
+@ cdecl ToUnicode(long long ptr ptr long long) TTYDRV_ToUnicode
 @ cdecl GetBeepActive() TTYDRV_GetBeepActive
 @ cdecl SetBeepActive(long) TTYDRV_SetBeepActive
 @ cdecl Beep() TTYDRV_Beep
