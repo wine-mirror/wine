@@ -416,7 +416,50 @@ static BOOL registry_callback( HINF hinf, PCWSTR field, void *arg )
 
 static BOOL update_ini_callback( HINF hinf, PCWSTR field, void *arg )
 {
-    FIXME( "should update ini %s\n", debugstr_w(field) );
+    INFCONTEXT context;
+
+    BOOL ok = SetupFindFirstLineW( hinf, field, NULL, &context );
+
+    for (; ok; ok = SetupFindNextLine( &context, &context ))
+    {
+        WCHAR buffer[MAX_INF_STRING_LENGTH];
+        WCHAR  filename[MAX_INF_STRING_LENGTH];
+        WCHAR  section[MAX_INF_STRING_LENGTH];
+        WCHAR  entry[MAX_INF_STRING_LENGTH];
+        WCHAR  string[MAX_INF_STRING_LENGTH];
+        LPWSTR divider;
+
+        if (!SetupGetStringFieldW( &context, 1, filename,
+                                   sizeof(filename)/sizeof(WCHAR), NULL ))
+            continue;
+
+        if (!SetupGetStringFieldW( &context, 2, section,
+                                   sizeof(section)/sizeof(WCHAR), NULL ))
+            continue;
+
+        if (!SetupGetStringFieldW( &context, 4, buffer,
+                                   sizeof(buffer)/sizeof(WCHAR), NULL ))
+            continue;
+
+        divider = strchrW(buffer,'=');
+        if (divider)
+        {
+            *divider = 0;
+            strcpyW(entry,buffer);
+            divider++;
+            strcpyW(string,divider);
+        }
+        else
+        {
+            strcpyW(entry,buffer);
+            string[0]=0;
+        }
+
+        TRACE("Writing %s = %s in %s of file %s\n",debugstr_w(entry),
+               debugstr_w(string),debugstr_w(section),debugstr_w(filename));
+        WritePrivateProfileStringW(section,entry,string,filename);
+
+    }
     return TRUE;
 }
 
@@ -610,11 +653,11 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
         struct registry_callback_info info;
 
         info.default_root = key_root;
-        info.delete = FALSE;
-        if (!iterate_section_fields( hinf, section, AddReg, registry_callback, &info ))
-            return FALSE;
         info.delete = TRUE;
         if (!iterate_section_fields( hinf, section, DelReg, registry_callback, &info ))
+            return FALSE;
+        info.delete = FALSE;
+        if (!iterate_section_fields( hinf, section, AddReg, registry_callback, &info ))
             return FALSE;
     }
     if (flags & (SPINST_BITREG|SPINST_REGSVR|SPINST_UNREGSVR|SPINST_PROFILEITEMS|SPINST_COPYINF))
