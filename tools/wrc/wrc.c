@@ -1,6 +1,7 @@
 /*
- * Copyright  Martin von Loewis, 1994
+ * Copyright 1994 Martin von Loewis
  * Copyrignt 1998 Bertho A. Stultiens (BS)
+ * Copyright 2003 Dimitrie O. Paun
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,35 +16,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * History:
- * 30-Apr-2000 BS	- Integrated a new preprocessor (-E and -N)
- * 20-Jun-1998 BS	- Added -L option to prevent case conversion
- *			  of embedded filenames.
- *
- * 08-Jun-1998 BS	- Added -A option to generate autoregister code
- *			  for winelib operation.
- *
- * 21-May-1998 BS	- Removed the CPP option. Its internal now.
- *			- Added implementations for defines and includes
- *			  on the commandline.
- *
- * 30-Apr-1998 BS	- The options now contain nearly the entire alphabet.
- *			  Seems to be a sign for too much freedom. I implemeted
- *			  most of them as a user choice possibility for things
- *			  that I do not know what to put there by default.
- *			- -l and -L options are now known as -t and -T.
- *
- * 23-Apr-1998 BS	- Finally gave up on backward compatibility on the
- *			  commandline (after a blessing from the newsgroup).
- *			  So, I changed the lot.
- *
- * 17-Apr-1998 BS	- Added many new command-line options but took care
- *			  that it would not break old scripts (sigh).
- *
- * 16-Apr-1998 BS	- There is not much left of the original source...
- *			  I had to rewrite most of it because the parser
- *			  changed completely with all the types etc..
  *
  */
 
@@ -90,12 +62,12 @@ static char usage[] =
 	"   -C cp       Set the resource's codepage to cp (default is 0)\n"
 	"   -d n        Set debug level to 'n'\n"
 	"   -D id[=val] Define preprocessor identifier id=val\n"
-	"   -e          Disable recognition of win32 keywords in 16bit compile\n"
 	"   -E          Preprocess only\n"
 	"   -F target	Ignored for compatibility with windres\n"
 	"   -h		Prints this summary.\n"
 	"   -i file	The name of the input file.\n"
 	"   -I path     Set include search dir to path (multiple -I allowed)\n"
+	"   -J format	The input format (either `rc' or `rc16')\n"
 	"   -l lan      Set default language to lan (default is neutral {0, 0})\n"
 	"   -m          Do not remap numerical resource IDs\n"
 	"   -o file     Output to file (default is infile.res)\n"
@@ -105,6 +77,7 @@ static char usage[] =
 	"   -W          Enable pedantic warnings\n"
 	"The following long options are supported:\n"
 	"   --input		Synonym for -i.\n"
+	"   --input-format	Synonym for -J.\n"
 	"   --output		Synonym for -o.\n"
 	"   --output-format	Synonym for -O.\n"
 	"   --target		Synonym for -F.\n"
@@ -221,6 +194,7 @@ static const char* short_options =
 	"a:AB:cC:d:D:eEF:hH:i:I:l:LmnNo:O:P:rtTvVw:W";
 static struct option long_options[] = {
 	{ "input", 1, 0, 'i' },
+	{ "input-format", 1, 0, 'J' },
 	{ "output", 1, 0, 'o' },
 	{ "output-format", 1, 0, 'O' },
 	{ "target", 1, 0, 'F' },
@@ -320,9 +294,6 @@ int main(int argc,char *argv[])
 		case 'D':
 			wpp_add_cmdline_define(optarg);
 			break;
-		case 'e':
-			extensions = 0;
-			break;
 		case 'E':
 			preprocess_only = 1;
 			break;
@@ -337,8 +308,11 @@ int main(int argc,char *argv[])
 			else error("Too many input files.\n");
 			break;
 		case 'I':
-			if (strcmp(optarg, "-") == 0) stdinc = 0;
-			else wpp_add_include_path(optarg);
+			wpp_add_include_path(optarg);
+			break;
+		case 'J':
+			if (strcmp(optarg, "rc16") == 0)  extensions = 0;
+			else if (strcmp(optarg, "rc")) error("Output format %s not supported.", optarg);
 			break;
 		case 'l':
 			{

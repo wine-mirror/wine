@@ -44,11 +44,6 @@ See also
 .B PREPROCESSOR
 below.
 .TP
-.I \-e
-Win16 only; disable recognition of win32 keywords in 16bit compile.
-Normally, all keywords are recognized in win16 compilation mode. Use
-this switch if old sources use win32 reserved names as resource names.
-.TP
 .I \-E
 Preprocess only. The output is written to standard output if no
 outputfile was selected. The output is compatible with what gcc would
@@ -67,6 +62,10 @@ The search is compatible with gcc, in which '<>' quoted filenames are
 searched exclusively via the \fI\-I\fR set path, whereas the '""' quoted
 filenames are first tried to be opened in the current directory. Also
 resource statements with file references are located in the same way.
+.TP
+.I \fB\-J\fR, \fB\-\-input\-format\fR=\fIformat\fR
+Sets the input format. Valid options are 'rc' or 'rc16'. Setting the
+input to 'rc16' disables the recognition of win32 keywords.
 .TP
 .I \-l lan
 Set default language to \fIlan\fR. Default is the neutral language 0
