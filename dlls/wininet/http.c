@@ -953,9 +953,9 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
            }
            size += delim;
 
-           if (size + 1 > *lpdwBufferLength)
+           if (size + 1 > *lpdwBufferLength/sizeof(WCHAR))
            {
-              *lpdwBufferLength = size + 1;
+              *lpdwBufferLength = (size + 1) * sizeof(WCHAR);
               INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
               goto lend;
            }
@@ -988,9 +988,9 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 
             strcpyW((WCHAR*)lpBuffer + cnt, index == HTTP_QUERY_RAW_HEADERS_CRLF ? szcrlf : sznul);
 
-           *lpdwBufferLength = cnt + delim;
-           bSuccess = TRUE;
-	        goto lend;
+            *lpdwBufferLength = (cnt + delim) * sizeof(WCHAR);
+            bSuccess = TRUE;
+            goto lend;
         }
 	else if (index >= 0 && index <= HTTP_QUERY_MAX && lpwhr->StdHeaders[index].lpszValue)
 	{
@@ -1055,18 +1055,17 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
     }
     else
     {
-        INT len = strlenW(lphttpHdr->lpszValue);
+        INT len = (strlenW(lphttpHdr->lpszValue) + 1) * sizeof(WCHAR);
 
-        if (len + 1 > *lpdwBufferLength)
+        if (len > *lpdwBufferLength)
         {
-            *lpdwBufferLength = len + 1;
+            *lpdwBufferLength = len;
             INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
             goto lend;
         }
 
-        strncpyW(lpBuffer, lphttpHdr->lpszValue, len);
-        ((WCHAR*)lpBuffer)[len]=0;
-        *lpdwBufferLength = len;
+        memcpy(lpBuffer, lphttpHdr->lpszValue, len);
+        *lpdwBufferLength = len - sizeof(WCHAR);
         bSuccess = TRUE;
 
 	TRACE(" returning string : '%s'\n", debugstr_w(lpBuffer));
