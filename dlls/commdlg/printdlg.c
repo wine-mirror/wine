@@ -2006,12 +2006,12 @@ BOOL WINAPI PrintDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
     LRESULT res=FALSE;
 
     if (uMsg!=WM_INITDIALOG) {
-        PrintStructures = (PRINT_PTRA*) GetWindowLongA(hDlg, DWL_USER);
+        PrintStructures = (PRINT_PTRA*)GetPropA(hDlg,"__WINE_PRINTDLGDATA");
 	if (!PrintStructures)
 	    return FALSE;
     } else {
         PrintStructures = (PRINT_PTRA*) lParam;
-	SetWindowLongA(hDlg, DWL_USER, lParam);
+	SetPropA(hDlg,"__WINE_PRINTDLGDATA",lParam);
 	res = PRINTDLG_WMInitDialog(hDlg, wParam, PrintStructures);
 
 	if(PrintStructures->dlg.lpPrintDlg->Flags & PD_ENABLEPRINTHOOK)
@@ -3466,12 +3466,12 @@ LRESULT WINAPI PrintDlgProc16(HWND16 hDlg, UINT16 uMsg, WPARAM16 wParam,
     LRESULT res=FALSE;
 
     if (uMsg!=WM_INITDIALOG) {
-        PrintStructures = (PRINT_PTRA*) GetWindowLongA(hDlg, DWL_USER);
+        PrintStructures = (PRINT_PTRA*)GetPropA(hDlg,"__WINE_PRINTDLGDATA");
 	if (!PrintStructures)
 	    return FALSE;
     } else {
         PrintStructures = (PRINT_PTRA*) lParam;
-	SetWindowLongA(hDlg, DWL_USER, lParam);
+	SetPropA(hDlg,"__WINE_PRINTDLGDATA",lParam);
 	res = PRINTDLG_WMInitDialog16(hDlg, wParam, PrintStructures);
 
 	if(PrintStructures->dlg.lpPrintDlg16->Flags & PD_ENABLEPRINTHOOK) {
