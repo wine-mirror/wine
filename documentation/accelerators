@@ -1,0 +1,38 @@
+Some notes concerning accelerators.
+
+There are _three_ differently sized accelerator structures exposed to the
+user. The general layout is:
+
+	BYTE   fVirt;
+	WORD   key;
+	WORD   cmd;
+
+We now have three different appearances:
+
+- Accelerators in NE resources. These have a size of 5 byte and do not have
+  any padding. This is also the internal layout of the global handle HACCEL
+  (16 and 32) in Windows 95 and WINE. Exposed to the user as Win16 global
+  handles HACCEL16 and HACCEL32 by the Win16/Win32 API.
+
+- Accelerators in PE resources. These have a size of 8 byte. Layout is:
+	BYTE   fVirt;
+	BYTE   pad0;
+	WORD   key;
+	WORD   cmd;
+	WORD   pad1;
+  They are exposed to the user only by direct accessing PE resources.
+
+- Accelerators in the Win32 API. These have a size of 6 byte. Layout is:
+	BYTE   fVirt;
+	BYTE   pad0;
+	WORD   key;
+	WORD   cmd;
+  These are exposed to the user by the CopyAcceleratorTable and
+  CreateAcceleratorTable in the Win32 API.
+
+Why two types of accelerators in the Win32 API? We can only guess, but
+my best bet is that the Win32 resource compiler can/does not handle struct
+packing. Win32 ACCEL is defined using #pragma(2) for the compiler but without
+any packing for RC, so it will assume #pragma(4).
+
+Findings researched by Uwe Bonnes, Ulrich Weigand and Marcus Meissner.

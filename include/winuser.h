@@ -119,6 +119,16 @@ typedef struct {
 	HBITMAP32	hbmColor;
 } ICONINFO,*LPICONINFO;
 
+/* this is the 6 byte accel struct used in Win32 when presented to the user */
+typedef struct
+{
+    BYTE   fVirt;
+    BYTE   pad0;
+    WORD   key;
+    WORD   cmd;
+} ACCEL32, *LPACCEL32;
+
+/* this is the 8 byte accel struct used in Win32 resources (internal only) */
 typedef struct
 {
     BYTE   fVirt;
@@ -126,7 +136,7 @@ typedef struct
     WORD   key;
     WORD   cmd;
     WORD   pad1;
-} ACCEL32, *LPACCEL32;
+} PE_ACCEL, *LPPE_ACCEL;
 
 DECL_WINELIB_TYPE(ACCEL)
 DECL_WINELIB_TYPE(LPACCEL)

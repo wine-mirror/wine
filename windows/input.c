@@ -603,7 +603,8 @@ static BOOL32 KBD_translate_accelerator(HWND32 hWnd,LPMSG32 msg,
  */
 INT32 WINAPI TranslateAccelerator32(HWND32 hWnd, HACCEL32 hAccel, LPMSG32 msg)
 {
-    LPACCEL32	lpAccelTbl = (LPACCEL32)LockResource32(hAccel);
+    /* YES, Accel16! */
+    LPACCEL16	lpAccelTbl = (LPACCEL16)LockResource16(hAccel);
     int 	i;
 
     TRACE(accel,"hwnd=0x%x hacc=0x%x msg=0x%x wp=0x%x lp=0x%lx\n", hWnd, hAccel, msg->message, msg->wParam, msg->lParam);
