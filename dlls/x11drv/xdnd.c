@@ -77,148 +77,156 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION xdnd_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+
 /**************************************************************************
- * X11DRV_XDND_Event
+ * X11DRV_XDND_EnterEvent
  *
- * Entry point for X11 XDND events. Returns FALSE if event is not handled.
+ * Handle an XdndEnter event.
  */
-int X11DRV_XDND_Event(HWND hWnd, XClientMessageEvent *event)
+void X11DRV_XDND_EnterEvent( HWND hWnd, XClientMessageEvent *event )
 {
-    int isXDNDMsg = 1;
+    Atom *xdndtypes;
+    unsigned long count = 0;
 
-    TRACE("0x%p\n", hWnd);
+    TRACE("ver(%ld) check-XdndTypeList(%ld) data=%ld,%ld,%ld,%ld,%ld\n",
+          (event->data.l[1] & 0xFF000000) >> 24, (event->data.l[1] & 1),
+          event->data.l[0], event->data.l[1], event->data.l[2],
+          event->data.l[3], event->data.l[4]);
 
-    if (event->message_type == x11drv_atom(XdndEnter))
+    /* If the source supports more than 3 data types we retrieve
+     * the entire list. */
+    if (event->data.l[1] & 1)
     {
-        Atom *xdndtypes;
-        unsigned long count = 0;
+        Atom acttype;
+        int actfmt;
+        unsigned long bytesret;
 
-        TRACE("XDNDEnter: ver(%ld) check-XdndTypeList(%ld) data=%ld,%ld,%ld,%ld,%ld\n",
-            (event->data.l[1] & 0xFF000000) >> 24, (event->data.l[1] & 1),
-             event->data.l[0], event->data.l[1], event->data.l[2],
-             event->data.l[3], event->data.l[4]);
+        /* Request supported formats from source window */
+        wine_tsx11_lock();
+        XGetWindowProperty(event->display, event->data.l[0], x11drv_atom(XdndTypeList),
+                           0, 65535, FALSE, AnyPropertyType, &acttype, &actfmt, &count,
+                           &bytesret, (unsigned char**)&xdndtypes);
+        wine_tsx11_unlock();
+    }
+    else
+    {
+        count = 3;
+        xdndtypes = &event->data.l[2];
+    }
 
-        /* If the source supports more than 3 data types we retrieve
-         * the entire list. */
-        if (event->data.l[1] & 1)
+    if (TRACE_ON(xdnd))
+    {
+        unsigned int i = 0;
+
+        wine_tsx11_lock();
+        for (; i < count; i++)
         {
-            Atom acttype;
-            int actfmt;
-            unsigned long bytesret;
-
-            /* Request supported formats from source window */
-            wine_tsx11_lock();
-            XGetWindowProperty(event->display, event->data.l[0], x11drv_atom(XdndTypeList),
-                               0, 65535, FALSE, AnyPropertyType, &acttype, &actfmt, &count,
-                               &bytesret, (unsigned char**)&xdndtypes);
-            wine_tsx11_unlock();
-        }
-        else
-        {
-            count = 3;
-            xdndtypes = &event->data.l[2];
-        }
-
-        if (TRACE_ON(xdnd))
-        {
-            unsigned int i = 0;
-
-            wine_tsx11_lock();
-            for (; i < count; i++)
+            if (xdndtypes[i] != 0)
             {
-                if (xdndtypes[i] != 0)
-                {
-                    char * pn = XGetAtomName(event->display, xdndtypes[i]);
-                    TRACE("XDNDEnterAtom %ld: %s\n", xdndtypes[i], pn);
-                    XFree(pn);
-                }
+                char * pn = XGetAtomName(event->display, xdndtypes[i]);
+                TRACE("XDNDEnterAtom %ld: %s\n", xdndtypes[i], pn);
+                XFree(pn);
             }
-            wine_tsx11_unlock();
         }
-
-        /* Do a one-time data read and cache results */
-        X11DRV_XDND_ResolveProperty(event->display, event->window,
-            event->data.l[1], xdndtypes, &count);
-
-        if (event->data.l[1] & 1)
-            XFree(xdndtypes);
-    }
-    else if (event->message_type == x11drv_atom(XdndPosition))
-    {
-        XClientMessageEvent e;
-        int accept = 0; /* Assume we're not accepting */
-
-        XDNDxy.x = event->data.l[2] >> 16;
-        XDNDxy.y = event->data.l[2] & 0xFFFF;
-
-        /* FIXME: Notify OLE of DragEnter. Result determines if we accept */
-
-        if (GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)
-            accept = 1;
-
-        TRACE("XDNDPosition. action req: %ld accept(%d) at x(%ld),y(%ld)\n",
-                 event->data.l[4], accept, XDNDxy.x, XDNDxy.y);
-
-        /*
-         * Let source know if we're accepting the drop by
-         * sending a status message.
-         */
-        e.type = ClientMessage;
-        e.display = event->display;
-        e.window = event->data.l[0];
-        e.message_type = x11drv_atom(XdndStatus);
-        e.format = 32;
-        e.data.l[0] = event->window;
-        e.data.l[1] = accept;
-        e.data.l[2] = 0; /* Empty Rect */
-        e.data.l[3] = 0; /* Empty Rect */
-        if (accept)
-            e.data.l[4] = event->data.l[4];
-        else
-            e.data.l[4] = None;
-        wine_tsx11_lock();
-        XSendEvent(event->display, event->data.l[0], False, NoEventMask, (XEvent*)&e);
-        wine_tsx11_unlock();
-
-        /* FIXME: if drag accepted notify OLE of DragOver */
-    }
-    else if (event->message_type == x11drv_atom(XdndDrop))
-    {
-        XClientMessageEvent e;
-
-        TRACE("XDNDDrop\n");
-
-        /* If we have a HDROP type we send a WM_ACCEPTFILES.*/
-        if (GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)
-            X11DRV_XDND_SendDropFiles( hWnd );
-
-        /* FIXME: Notify OLE of Drop */
-        X11DRV_XDND_FreeDragDropOp();
-
-        /* Tell the target we are finished. */
-        memset(&e, 0, sizeof(e));
-        e.type = ClientMessage;
-        e.display = event->display;
-        e.window = event->data.l[0];
-        e.message_type = x11drv_atom(XdndFinished);
-        e.format = 32;
-        e.data.l[0] = event->window;
-        wine_tsx11_lock();
-        XSendEvent(event->display, event->data.l[0], False, NoEventMask, (XEvent*)&e);
         wine_tsx11_unlock();
     }
-    else if (event->message_type == x11drv_atom(XdndLeave))
-    {
-        TRACE("DND Operation canceled\n");
 
-        X11DRV_XDND_FreeDragDropOp();
+    /* Do a one-time data read and cache results */
+    X11DRV_XDND_ResolveProperty(event->display, event->window,
+                                event->data.l[1], xdndtypes, &count);
 
-        /* FIXME: Notify OLE of DragLeave */
-    }
-    else /* Not an XDND message */
-        isXDNDMsg = 0;
+    if (event->data.l[1] & 1)
+        XFree(xdndtypes);
+}
 
-    return isXDNDMsg;
+/**************************************************************************
+ * X11DRV_XDND_PositionEvent
+ *
+ * Handle an XdndPosition event.
+ */
+void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event )
+{
+    XClientMessageEvent e;
+    int accept = 0; /* Assume we're not accepting */
+
+    XDNDxy.x = event->data.l[2] >> 16;
+    XDNDxy.y = event->data.l[2] & 0xFFFF;
+
+    /* FIXME: Notify OLE of DragEnter. Result determines if we accept */
+
+    if (GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)
+        accept = 1;
+
+    TRACE("action req: %ld accept(%d) at x(%ld),y(%ld)\n",
+          event->data.l[4], accept, XDNDxy.x, XDNDxy.y);
+
+    /*
+     * Let source know if we're accepting the drop by
+     * sending a status message.
+     */
+    e.type = ClientMessage;
+    e.display = event->display;
+    e.window = event->data.l[0];
+    e.message_type = x11drv_atom(XdndStatus);
+    e.format = 32;
+    e.data.l[0] = event->window;
+    e.data.l[1] = accept;
+    e.data.l[2] = 0; /* Empty Rect */
+    e.data.l[3] = 0; /* Empty Rect */
+    if (accept)
+        e.data.l[4] = event->data.l[4];
+    else
+        e.data.l[4] = None;
+    wine_tsx11_lock();
+    XSendEvent(event->display, event->data.l[0], False, NoEventMask, (XEvent*)&e);
+    wine_tsx11_unlock();
+
+    /* FIXME: if drag accepted notify OLE of DragOver */
+}
+
+/**************************************************************************
+ * X11DRV_XDND_DropEvent
+ *
+ * Handle an XdndDrop event.
+ */
+void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
+{
+    XClientMessageEvent e;
+
+    TRACE("\n");
+
+    /* If we have a HDROP type we send a WM_ACCEPTFILES.*/
+    if (GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)
+        X11DRV_XDND_SendDropFiles( hWnd );
+
+    /* FIXME: Notify OLE of Drop */
+    X11DRV_XDND_FreeDragDropOp();
+
+    /* Tell the target we are finished. */
+    memset(&e, 0, sizeof(e));
+    e.type = ClientMessage;
+    e.display = event->display;
+    e.window = event->data.l[0];
+    e.message_type = x11drv_atom(XdndFinished);
+    e.format = 32;
+    e.data.l[0] = event->window;
+    wine_tsx11_lock();
+    XSendEvent(event->display, event->data.l[0], False, NoEventMask, (XEvent*)&e);
+    wine_tsx11_unlock();
+}
+
+/**************************************************************************
+ * X11DRV_XDND_LeaveEvent
+ *
+ * Handle an XdndLeave event.
+ */
+void X11DRV_XDND_LeaveEvent( HWND hWnd, XClientMessageEvent *event )
+{
+    TRACE("DND Operation canceled\n");
+
+    X11DRV_XDND_FreeDragDropOp();
+
+    /* FIXME: Notify OLE of DragLeave */
 }
 
 

@@ -243,7 +243,10 @@ extern XIC X11DRV_CreateIC(XIM xim, Display *display, Window win);
 extern XIM X11DRV_SetupXIM(Display *display, const char *input_style);
 extern void X11DRV_XIMLookupChars( const char *str, DWORD count );
 
-extern int X11DRV_XDND_Event(HWND hWnd, XClientMessageEvent *event);
+extern void X11DRV_XDND_EnterEvent( HWND hWnd, XClientMessageEvent *event );
+extern void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event );
+extern void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event );
+extern void X11DRV_XDND_LeaveEvent( HWND hWnd, XClientMessageEvent *event );
 
 /* exported dib functions for now */
 

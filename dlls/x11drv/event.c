@@ -347,9 +347,9 @@ static void set_focus( HWND hwnd, Time time )
 
 
 /**********************************************************************
- *              handle_wm_protocols_message
+ *              handle_wm_protocols
  */
-static void handle_wm_protocols_message( HWND hwnd, XClientMessageEvent *event )
+static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
 {
     Atom protocol = (Atom)event->data.l[0];
 
@@ -837,57 +837,68 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 }
 
 /**********************************************************************
+ *              handle_dnd_protocol
+ */
+static void handle_dnd_protocol( HWND hwnd, XClientMessageEvent *event )
+{
+    Window root, child;
+    int root_x, root_y, child_x, child_y;
+    unsigned int u;
+
+    /* query window (drag&drop event contains only drag window) */
+    wine_tsx11_lock();
+    XQueryPointer( event->display, root_window, &root, &child,
+                   &root_x, &root_y, &child_x, &child_y, &u);
+    if (XFindContext( event->display, child, winContext, (char **)&hwnd ) != 0) hwnd = 0;
+    wine_tsx11_unlock();
+    if (!hwnd) return;
+    if (event->data.l[0] == DndFile || event->data.l[0] == DndFiles)
+        EVENT_DropFromOffiX(hwnd, event);
+    else if (event->data.l[0] == DndURL)
+        EVENT_DropURLs(hwnd, event);
+}
+
+
+struct client_message_handler
+{
+    int    atom;                                  /* protocol atom */
+    void (*handler)(HWND, XClientMessageEvent *); /* corresponding handler function */
+};
+
+static const struct client_message_handler client_messages[] =
+{
+    { XATOM_WM_PROTOCOLS, handle_wm_protocols },
+    { XATOM_DndProtocol,  handle_dnd_protocol },
+    { XATOM_XdndEnter,    X11DRV_XDND_EnterEvent },
+    { XATOM_XdndPosition, X11DRV_XDND_PositionEvent },
+    { XATOM_XdndDrop,     X11DRV_XDND_DropEvent },
+    { XATOM_XdndLeave,    X11DRV_XDND_LeaveEvent }
+};
+
+
+/**********************************************************************
  *           EVENT_ClientMessage
  */
-static void EVENT_ClientMessage( HWND hWnd, XEvent *xev )
+static void EVENT_ClientMessage( HWND hwnd, XEvent *xev )
 {
     XClientMessageEvent *event = &xev->xclient;
+    unsigned int i;
 
-    if (!hWnd) return;
+    if (!hwnd) return;
 
-  if (event->message_type != None && event->format == 32) {
-    if (event->message_type == x11drv_atom(WM_PROTOCOLS))
-        handle_wm_protocols_message( hWnd, event );
-    else if (event->message_type == x11drv_atom(DndProtocol))
+    if (event->format != 32)
     {
-        /* query window (drag&drop event contains only drag window) */
-        Window root, child;
-        int root_x, root_y, child_x, child_y;
-        unsigned int u;
+        WARN( "Don't know how to handle format %d\n", event->format );
+        return;
+    }
 
-        wine_tsx11_lock();
-        XQueryPointer( event->display, root_window, &root, &child,
-                       &root_x, &root_y, &child_x, &child_y, &u);
-        if (XFindContext( event->display, child, winContext, (char **)&hWnd ) != 0) hWnd = 0;
-        wine_tsx11_unlock();
-        if (!hWnd) return;
-        if (event->data.l[0] == DndFile || event->data.l[0] == DndFiles)
-            EVENT_DropFromOffiX(hWnd, event);
-        else if (event->data.l[0] == DndURL)
-            EVENT_DropURLs(hWnd, event);
-    }
-    else if (!X11DRV_XDND_Event(hWnd, event))
+    for (i = 0; i < sizeof(client_messages)/sizeof(client_messages[0]); i++)
     {
-#if 0
-      /* enable this if you want to see the message */
-      unsigned char* p_data = NULL;
-      union {
-	unsigned long	l;
-	int            	i;
-	Atom		atom;
-      } u; /* unused */
-      wine_tsx11_lock();
-      XGetWindowProperty( event->display, DefaultRootWindow(event->display),
-			    dndSelection, 0, 65535, FALSE,
-			    AnyPropertyType, &u.atom, &u.i,
-			    &u.l, &u.l, &p_data);
-      wine_tsx11_unlock();
-      TRACE("message_type=%ld, data=%ld,%ld,%ld,%ld,%ld, msg=%s\n",
-	    event->message_type, event->data.l[0], event->data.l[1],
-	    event->data.l[2], event->data.l[3], event->data.l[4],
-	    p_data);
-#endif
-      TRACE("unrecognized ClientMessage\n" );
+        if (event->message_type == X11DRV_Atoms[client_messages[i].atom - FIRST_XATOM])
+        {
+            client_messages[i].handler( hwnd, event );
+            return;
+        }
     }
-  }
+    TRACE( "no handler found for %ld\n", event->message_type );
 }
