@@ -40,7 +40,9 @@
 #ifdef HAVE_LIBUTIL_H
 # include <libutil.h>
 #endif
-
+#ifdef HAVE_STDINT_H
+# include <stdint.h>
+#endif
 
 /***********************************************************************
  *		usleep
@@ -397,9 +399,9 @@ int getrlimit (int resource, struct rlimit *rlim)
 #endif /* HAVE_GETRLIMIT */
 
 
-#ifdef __svr4__
+#if defined(__svr4__) || defined(__NetBSD__)
 /***********************************************************************
- *             solaris_try_mmap
+ *             try_mmap_fixed
  *
  * The purpose of this routine is to emulate the behaviour of
  * the Linux mmap() routine if a non-NULL address is passed,
@@ -415,8 +417,8 @@ int getrlimit (int resource, struct rlimit *rlim)
  * address range is still available, and placing the mapping there
  * using MAP_FIXED if so.
  */
-static int solaris_try_mmap (void *addr, size_t len, int prot, int flags,
-                            int fildes, off_t off)
+static int try_mmap_fixed (void *addr, size_t len, int prot, int flags,
+                           int fildes, off_t off)
 {
     char * volatile result = NULL;
     int pagesize = getpagesize();
@@ -442,7 +444,7 @@ static int solaris_try_mmap (void *addr, size_t len, int prot, int flags,
 
     if ( (pid = vfork()) == -1 )
     {
-        perror("solaris_try_mmap: vfork");
+        perror("try_mmap_fixed: vfork");
         exit(1);
     }
     if ( pid == 0 )
@@ -508,8 +510,8 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
     flags |= MAP_PRIVATE;
 #endif
 
-#ifdef __svr4__
-    if ( solaris_try_mmap( start, size, prot, flags, fdzero, 0 ) )
+#if defined(__svr4__) || defined(__NetBSD__)
+    if ( try_mmap_fixed( start, size, prot, flags, fdzero, 0 ) )
         return start;
 #endif
 
