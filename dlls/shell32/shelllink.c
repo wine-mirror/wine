@@ -155,6 +155,7 @@ typedef struct
 #define _ICOM_THIS_From_IPersistStream(class, name) class* This = (class*)(((char*)name)-_IPersistStream_Offset)
 #define _IPersistStream_From_ICOM_THIS(class, name) class* StreamThis = (class*)(((char*)name)+_IPersistStream_Offset)
 
+static HRESULT ShellLink_UpdatePath(LPWSTR sPathRel, LPCWSTR path, LPCWSTR sWorkDir, LPWSTR* psPath);
 
 /* strdup on the process heap */
 inline static LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str)
@@ -231,6 +232,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFile
         if( SUCCEEDED( r ) )
         {
             r = IPersistStream_Load(StreamThis, stm);
+            ShellLink_UpdatePath(This->sPathRel, pszFileName, This->sWorkDir, &This->sPath);
             IStream_Release( stm );
         }
 
@@ -815,32 +817,24 @@ static BOOL SHELL_ExistsFileW(LPCWSTR path)
 }
 
 /**************************************************************************
- *  SHELL_ShellLink_UpdatePath
+ *  ShellLink_UpdatePath
  *	update absolute path in sPath using relative path in sPathRel
  */
-static HRESULT SHELL_ShellLink_UpdatePath(LPWSTR sPathRel, LPCWSTR path, LPCWSTR sWorkDir, LPWSTR* psPath)
+static HRESULT ShellLink_UpdatePath(LPWSTR sPathRel, LPCWSTR path, LPCWSTR sWorkDir, LPWSTR* psPath)
 {
     if (!path || !psPath)
 	return E_INVALIDARG;
 
     if (!*psPath && sPathRel) {
 	WCHAR buffer[2*MAX_PATH], abs_path[2*MAX_PATH];
+	LPWSTR final = NULL;
 
 	/* first try if [directory of link file] + [relative path] finds an existing file */
-	LPCWSTR src = path;
-	LPWSTR last_slash = NULL;
-	LPWSTR dest = buffer;
-	LPWSTR final;
 
-	/* copy path without file name to buffer */
-	while(*src) {
-	    if (*src=='/' || *src=='\\')
-		last_slash = dest;
-
-	    *dest++ = *src++;
-	}
-
-	lstrcpyW(last_slash? last_slash+1: buffer, sPathRel);
+        GetFullPathNameW( path, MAX_PATH*2, buffer, &final );
+        if( !final )
+            final = buffer;
+	lstrcpyW(final, sPathRel);
 
 	*abs_path = '\0';
 
@@ -897,28 +891,10 @@ HRESULT WINAPI IShellLink_ConstructFromFile (
 	if (SUCCEEDED(hr)) {
 	    WCHAR path[MAX_PATH];
 
-	    if (SHGetPathFromIDListW(pidl, path)) {
+	    if (SHGetPathFromIDListW(pidl, path)) 
 		hr = IPersistFile_Load(ppf, path, 0);
-
-		if (SUCCEEDED(hr)) {
-		    *ppv = (IUnknown*) psl;
-
-		    /*
-			The following code is here, not in IPersistStream_fnLoad() because
-			to be able to convert the relative path into the absolute path,
-			we need to know the path of the shell link file.
-		    */
-		    if (IsEqualIID(riid, &IID_IShellLinkW)) {
-			_ICOM_THIS_From_IShellLinkW(IShellLinkImpl, psl);
-
-			hr = SHELL_ShellLink_UpdatePath(This->sPathRel, path, This->sWorkDir, &This->sPath);
-		    } else {
-			ICOM_THIS(IShellLinkImpl, psl);
-
-			hr = SHELL_ShellLink_UpdatePath(This->sPathRel, path, This->sWorkDir, &This->sPath);
-		    }
-		}
-	    }
+            else
+                hr = E_FAIL;
 
 	    IPersistFile_Release(ppf);
 	}
