@@ -380,7 +380,7 @@ BOOL WINAPI CryptSetProviderW (LPCWSTR pszProvName, DWORD dwProvType)
 }
 
 /******************************************************************************
- * CryptSetProviderEx (ADVAPI32.@)
+ * CryptSetProviderExA (ADVAPI32.@)
  */
 BOOL WINAPI CryptSetProviderExA (LPCSTR pszProvName, DWORD dwProvType, DWORD *pdwReserved, DWORD dwFlags)
 {
