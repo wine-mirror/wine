@@ -300,19 +300,7 @@ HRESULT WINAPI StorageBaseImpl_SetClass(
  */
 struct StorageImpl
 {
-  IStorageVtbl *lpVtbl;  /* Needs to be the first item in the struct
-			  * since we want to cast this in a Storage32 pointer */
-
-  IPropertySetStorageVtbl *pssVtbl; /* interface for adding a properties stream */
-
-  /*
-   * Declare the member of the Storage32BaseImpl class to allow
-   * casting as a Storage32BaseImpl
-   */
-  ULONG		        ref;
-  struct StorageImpl* ancestorStorage;
-  ULONG                 rootPropertySetIndex;
-  void (*v_destructor)(struct StorageImpl*);
+  struct StorageBaseImpl base;
 
   /*
    * The following data members are specific to the Storage32Impl
@@ -409,7 +397,7 @@ HRESULT WINAPI StorageImpl_Stat(IStorage* iface,
                                 DWORD     grfStatFlag); /* [in] */
 
 void StorageImpl_Destroy(
-	    StorageImpl* This);
+	    StorageBaseImpl* This);
 
 HRESULT StorageImpl_Construct(
             StorageImpl* This,
@@ -502,17 +490,7 @@ void Storage32Impl_SetExtDepotBlock(StorageImpl* This,
  */
 struct StorageInternalImpl
 {
-  IStorageVtbl *lpVtbl;         /* Needs to be the first item in the struct
-				 * since we want to cast this in a Storage32 pointer */
-
-  /*
-   * Declare the member of the Storage32BaseImpl class to allow
-   * casting as a Storage32BaseImpl
-   */
-  ULONG		             ref;
-  struct StorageImpl* ancestorStorage;
-  ULONG                    rootPropertySetIndex;
-  void (*v_destructor)(struct StorageInternalImpl*);
+  struct StorageBaseImpl base;
 
   /*
    * There is no specific data for this class.
@@ -527,7 +505,7 @@ StorageInternalImpl* StorageInternalImpl_Construct(
 	    ULONG          rootTropertyIndex);
 
 void StorageInternalImpl_Destroy(
-       	    StorageInternalImpl* This);
+       	    StorageBaseImpl* This);
 
 HRESULT WINAPI StorageInternalImpl_Commit(
 	    IStorage*            iface,

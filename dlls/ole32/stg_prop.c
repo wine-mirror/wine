@@ -46,7 +46,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(storage);
 
-#define _IPropertySetStorage_Offset ((int)(&(((StorageImpl*)0)->pssVtbl)))
+#define _IPropertySetStorage_Offset ((int)(&(((StorageImpl*)0)->base.pssVtbl)))
 #define _ICOM_THIS_From_IPropertySetStorage(class, name) \
     class* This = (class*)(((char*)name)-_IPropertySetStorage_Offset)
 

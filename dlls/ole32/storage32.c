@@ -1093,8 +1093,8 @@ HRESULT WINAPI StorageImpl_CreateStorage(
   /*
    * Create a property enumeration and search the properties
    */
-  propertyEnumeration = IEnumSTATSTGImpl_Construct( This->ancestorStorage,
-                                                    This->rootPropertySetIndex);
+  propertyEnumeration = IEnumSTATSTGImpl_Construct( This->base.ancestorStorage,
+                                                    This->base.rootPropertySetIndex);
 
   foundPropertyIndex = IEnumSTATSTGImpl_FindProperty(propertyEnumeration,
                                                      pwcsName,
@@ -1145,13 +1145,13 @@ HRESULT WINAPI StorageImpl_CreateStorage(
   /*
    * Obtain a free property in the property chain
    */
-  newPropertyIndex = getFreeProperty(This->ancestorStorage);
+  newPropertyIndex = getFreeProperty(This->base.ancestorStorage);
 
   /*
    * Save the new property into the new property spot
    */
   StorageImpl_WriteProperty(
-    This->ancestorStorage,
+    This->base.ancestorStorage,
     newPropertyIndex,
     &newProperty);
 
@@ -1204,7 +1204,7 @@ static ULONG getFreeProperty(
     /*
      * Start by reading the root property
      */
-    readSuccessful = StorageImpl_ReadProperty(storage->ancestorStorage,
+    readSuccessful = StorageImpl_ReadProperty(storage->base.ancestorStorage,
                                                currentPropertyIndex,
                                                &currentProperty);
     if (readSuccessful)
@@ -1243,7 +1243,7 @@ static ULONG getFreeProperty(
      * obtain the new count of property blocks
      */
     blockCount = BlockChainStream_GetCount(
-                   storage->ancestorStorage->rootBlockChain)+1;
+                   storage->base.ancestorStorage->rootBlockChain)+1;
 
     /*
      * initialize the size used by the property stream
@@ -1254,7 +1254,7 @@ static ULONG getFreeProperty(
     /*
      * add a property block to the property chain
      */
-    BlockChainStream_SetSize(storage->ancestorStorage->rootBlockChain, newSize);
+    BlockChainStream_SetSize(storage->base.ancestorStorage->rootBlockChain, newSize);
 
     /*
      * memset the empty property in order to initialize the unused newly
@@ -1273,7 +1273,7 @@ static ULONG getFreeProperty(
       propertyIndex++)
     {
       StorageImpl_WriteProperty(
-        storage->ancestorStorage,
+        storage->base.ancestorStorage,
         propertyIndex,
         &emptyProperty);
     }
@@ -1326,8 +1326,8 @@ static void updatePropertyChain(
   /*
    * Read the root property
    */
-  StorageImpl_ReadProperty(storage->ancestorStorage,
-                             storage->rootPropertySetIndex,
+  StorageImpl_ReadProperty(storage->base.ancestorStorage,
+                             storage->base.rootPropertySetIndex,
                              &currentProperty);
 
   if (currentProperty.dirProperty != PROPERTY_NULL)
@@ -1347,7 +1347,7 @@ static void updatePropertyChain(
     /*
      * Read
      */
-    StorageImpl_ReadProperty(storage->ancestorStorage,
+    StorageImpl_ReadProperty(storage->base.ancestorStorage,
                                currentProperty.dirProperty,
                                &currentProperty);
 
@@ -1363,7 +1363,7 @@ static void updatePropertyChain(
       {
         if (previous != PROPERTY_NULL)
         {
-          StorageImpl_ReadProperty(storage->ancestorStorage,
+          StorageImpl_ReadProperty(storage->base.ancestorStorage,
                                      previous,
                                      &currentProperty);
           current = previous;
@@ -1371,7 +1371,7 @@ static void updatePropertyChain(
         else
         {
           currentProperty.previousProperty = newPropertyIndex;
-          StorageImpl_WriteProperty(storage->ancestorStorage,
+          StorageImpl_WriteProperty(storage->base.ancestorStorage,
                                       current,
                                       &currentProperty);
           found = 1;
@@ -1381,7 +1381,7 @@ static void updatePropertyChain(
       {
         if (next != PROPERTY_NULL)
         {
-          StorageImpl_ReadProperty(storage->ancestorStorage,
+          StorageImpl_ReadProperty(storage->base.ancestorStorage,
                                      next,
                                      &currentProperty);
           current = next;
@@ -1389,7 +1389,7 @@ static void updatePropertyChain(
         else
         {
           currentProperty.nextProperty = newPropertyIndex;
-          StorageImpl_WriteProperty(storage->ancestorStorage,
+          StorageImpl_WriteProperty(storage->base.ancestorStorage,
                                       current,
                                       &currentProperty);
           found = 1;
@@ -1414,8 +1414,8 @@ static void updatePropertyChain(
      * The root storage is empty, link the new property to it's dir property
      */
     currentProperty.dirProperty = newPropertyIndex;
-    StorageImpl_WriteProperty(storage->ancestorStorage,
-                                storage->rootPropertySetIndex,
+    StorageImpl_WriteProperty(storage->base.ancestorStorage,
+                                storage->base.rootPropertySetIndex,
                                 &currentProperty);
   }
 }
@@ -1661,8 +1661,8 @@ HRESULT WINAPI StorageImpl_DestroyElement(
    * Create a property enumeration to search the property with the given name
    */
   propertyEnumeration = IEnumSTATSTGImpl_Construct(
-    This->ancestorStorage,
-    This->rootPropertySetIndex);
+    This->base.ancestorStorage,
+    This->base.rootPropertySetIndex);
 
   foundPropertyIndexToDelete = IEnumSTATSTGImpl_FindProperty(
     propertyEnumeration,
@@ -1686,8 +1686,8 @@ HRESULT WINAPI StorageImpl_DestroyElement(
    * First, read This's StgProperty..
    */
   res = StorageImpl_ReadProperty(
-          This->ancestorStorage,
-          This->rootPropertySetIndex,
+          This->base.ancestorStorage,
+          This->base.rootPropertySetIndex,
           &parentProperty);
 
   assert(res);
@@ -1702,7 +1702,7 @@ HRESULT WINAPI StorageImpl_DestroyElement(
      * Set data as it would have been done in the else part...
      */
     typeOfRelation   = PROPERTY_RELATION_DIR;
-    parentPropertyId = This->rootPropertySetIndex;
+    parentPropertyId = This->base.rootPropertySetIndex;
   }
   else
   {
@@ -1713,8 +1713,8 @@ HRESULT WINAPI StorageImpl_DestroyElement(
     IEnumSTATSTGImpl* propertyEnumeration2;
 
     propertyEnumeration2 = IEnumSTATSTGImpl_Construct(
-      This->ancestorStorage,
-      This->rootPropertySetIndex);
+      This->base.ancestorStorage,
+      This->base.rootPropertySetIndex);
 
     typeOfRelation = IEnumSTATSTGImpl_FindParentProperty(
       propertyEnumeration2,
@@ -1851,7 +1851,7 @@ static HRESULT deleteStorageProperty(
    */
   propertyToDelete.sizeOfNameString = 0;
 
-  StorageImpl_WriteProperty(parentStorage->ancestorStorage,
+  StorageImpl_WriteProperty(parentStorage->base.ancestorStorage,
                             indexOfPropertyToDelete,
                             &propertyToDelete);
 
@@ -1918,7 +1918,7 @@ static HRESULT deleteStreamProperty(
    * but since we are here to zap it, I don't do it...
    */
   StorageImpl_WriteProperty(
-    parentStorage->ancestorStorage,
+    parentStorage->base.ancestorStorage,
     indexOfPropertyToDelete,
     &propertyToDelete);
 
@@ -1946,7 +1946,7 @@ static HRESULT findPlaceholder(
    * Read the storage property
    */
   res = StorageImpl_ReadProperty(
-          storage->ancestorStorage,
+          storage->base.ancestorStorage,
           storePropertyIndex,
           &storeProperty);
 
@@ -2002,7 +2002,7 @@ static HRESULT findPlaceholder(
   }
 
   hr = StorageImpl_WriteProperty(
-         storage->ancestorStorage,
+         storage->base.ancestorStorage,
          storePropertyIndex,
          &storeProperty);
 
@@ -2144,7 +2144,7 @@ static HRESULT adjustPropertyChain(
    * Write back the parent property
    */
   res = StorageImpl_WriteProperty(
-          This->ancestorStorage,
+          This->base.ancestorStorage,
           parentPropertyId,
           &parentProperty);
   if(! res)
@@ -2217,15 +2217,15 @@ HRESULT StorageImpl_Construct(
   /*
    * Initialize the virtual function table.
    */
-  This->lpVtbl = &Storage32Impl_Vtbl;
-  This->pssVtbl = &IPropertySetStorage_Vtbl;
-  This->v_destructor = &StorageImpl_Destroy;
+  This->base.lpVtbl = &Storage32Impl_Vtbl;
+  This->base.pssVtbl = &IPropertySetStorage_Vtbl;
+  This->base.v_destructor = &StorageImpl_Destroy;
 
   /*
    * This is the top-level storage so initialize the ancestor pointer
    * to this.
    */
-  This->ancestorStorage = This;
+  This->base.ancestorStorage = This;
 
   /*
    * Initialize the physical support of the storage.
@@ -2377,13 +2377,13 @@ HRESULT StorageImpl_Construct(
       if ( (currentProperty.sizeOfNameString != 0 ) &&
            (currentProperty.propertyType     == PROPTYPE_ROOT) )
       {
-        This->rootPropertySetIndex = currentPropertyIndex;
+        This->base.rootPropertySetIndex = currentPropertyIndex;
       }
     }
 
     currentPropertyIndex++;
 
-  } while (readSuccessful && (This->rootPropertySetIndex == PROPERTY_NULL) );
+  } while (readSuccessful && (This->base.rootPropertySetIndex == PROPERTY_NULL) );
 
   if (!readSuccessful)
   {
@@ -2395,15 +2395,15 @@ HRESULT StorageImpl_Construct(
    * Create the block chain abstraction for the small block root chain.
    */
   if(!(This->smallBlockRootChain =
-       BlockChainStream_Construct(This, NULL, This->rootPropertySetIndex)))
+       BlockChainStream_Construct(This, NULL, This->base.rootPropertySetIndex)))
     return STG_E_READFAULT;
 
   return hr;
 }
 
-void StorageImpl_Destroy(
-  StorageImpl* This)
+void StorageImpl_Destroy(StorageBaseImpl* iface)
 {
+  StorageImpl *This = (StorageImpl*) iface;
   TRACE("(%p)\n", This);
 
   HeapFree(GetProcessHeap(), 0, This->pwcsName);
@@ -3143,7 +3143,7 @@ BOOL StorageImpl_ReadProperty(
   if (readSuccessful)
   {
     /* replace the name of root entry (often "Root Entry") by the file name */
-    WCHAR *propName = (index == This->rootPropertySetIndex) ?
+    WCHAR *propName = (index == This->base.rootPropertySetIndex) ?
 	    		This->filename : (WCHAR *)currentProperty+OFFSET_PS_NAME;
 
     memset(buffer->name, 0, sizeof(buffer->name));
@@ -3489,19 +3489,19 @@ StorageInternalImpl* StorageInternalImpl_Construct(
     /*
      * Initialize the virtual function table.
      */
-    newStorage->lpVtbl = &Storage32InternalImpl_Vtbl;
-    newStorage->v_destructor = &StorageInternalImpl_Destroy;
+    newStorage->base.lpVtbl = &Storage32InternalImpl_Vtbl;
+    newStorage->base.v_destructor = &StorageInternalImpl_Destroy;
 
     /*
      * Keep the ancestor storage pointer and nail a reference to it.
      */
-    newStorage->ancestorStorage = ancestorStorage;
-    StorageBaseImpl_AddRef((IStorage*)(newStorage->ancestorStorage));
+    newStorage->base.ancestorStorage = ancestorStorage;
+    StorageBaseImpl_AddRef((IStorage*)(newStorage->base.ancestorStorage));
 
     /*
      * Keep the index of the root property set for this storage,
      */
-    newStorage->rootPropertySetIndex = rootPropertyIndex;
+    newStorage->base.rootPropertySetIndex = rootPropertyIndex;
 
     return newStorage;
   }
@@ -3509,10 +3509,11 @@ StorageInternalImpl* StorageInternalImpl_Construct(
   return 0;
 }
 
-void StorageInternalImpl_Destroy(
-  StorageInternalImpl* This)
+void StorageInternalImpl_Destroy( StorageBaseImpl *iface)
 {
-  StorageBaseImpl_Release((IStorage*)This->ancestorStorage);
+  StorageInternalImpl* This = (StorageInternalImpl*) iface;
+
+  StorageBaseImpl_Release((IStorage*)This->base.ancestorStorage);
   HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -4943,7 +4944,7 @@ ULONG SmallBlockChainStream_GetNextFreeBlock(
 
         StorageImpl_ReadProperty(
           This->parentStorage,
-          This->parentStorage->rootPropertySetIndex,
+          This->parentStorage->base.rootPropertySetIndex,
           &rootProp);
 
         rootProp.startingBlock = sbStartIndex;
@@ -4952,7 +4953,7 @@ ULONG SmallBlockChainStream_GetNextFreeBlock(
 
         StorageImpl_WriteProperty(
           This->parentStorage,
-          This->parentStorage->rootPropertySetIndex,
+          This->parentStorage->base.rootPropertySetIndex,
           &rootProp);
       }
     }
@@ -4971,7 +4972,7 @@ ULONG SmallBlockChainStream_GetNextFreeBlock(
 
     StorageImpl_ReadProperty(
       This->parentStorage,
-      This->parentStorage->rootPropertySetIndex,
+      This->parentStorage->base.rootPropertySetIndex,
       &rootProp);
 
     if (rootProp.size.u.LowPart <
@@ -4985,7 +4986,7 @@ ULONG SmallBlockChainStream_GetNextFreeBlock(
 
       StorageImpl_WriteProperty(
         This->parentStorage,
-        This->parentStorage->rootPropertySetIndex,
+        This->parentStorage->base.rootPropertySetIndex,
         &rootProp);
     }
   }
