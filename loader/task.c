@@ -1074,6 +1074,16 @@ void WINAPI Yield16(void)
     else OldYield();
 }
 
+/***********************************************************************
+ *           KERNEL_490  (KERNEL.490)
+ */
+HTASK16 WINAPI KERNEL_490( HTASK16 someTask )
+{
+    if ( !someTask ) return 0;
+
+    FIXME( task, "(%04x): stub\n", someTask );
+    return 0;
+}
 
 /***********************************************************************
  *           MakeProcInstance16  (KERNEL.51)
@@ -1511,6 +1521,22 @@ HINSTANCE16 WINAPI GetTaskDS(void)
     return pTask->hInstance;
 }
 
+/***********************************************************************
+ *           GetDummyModuleHandleDS   (KERNEL.602)
+ */
+VOID WINAPI GetDummyModuleHandleDS( CONTEXT *context )
+{
+    TDB *pTask;
+    WORD selector;
+
+    AX_reg( context ) = 0;
+    if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return;
+    if (!(pTask->flags & TDBF_WIN32)) return;
+
+    selector = GlobalHandleToSel( pTask->hModule );
+    DS_reg( context ) = selector;
+    AX_reg( context ) = selector;
+}
 
 /***********************************************************************
  *           IsTask   (KERNEL.320)

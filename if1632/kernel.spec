@@ -394,7 +394,7 @@ file	krnl386.exe
 487 stub MapProcessHandle
 488 pascal GetModuleHandle32(str) GetModuleHandle32A
 489 stub KERNEL_489  # VWin32_BoostWithDecay
-490 stub KERNEL_490
+490 pascal16 KERNEL_490(word) KERNEL_490
 491 pascal RegisterServiceProcess(long long) RegisterServiceProcess
 492 stub WOAAbort
 493 stub UTInit
@@ -469,7 +469,7 @@ file	krnl386.exe
 
 600 stub KERNEL_600  # AllocSelector (?)
 601 stub KERNEL_601  # FreeSelector (?)
-602 stub GetCurrentHInstanceDS
+602 register GetDummyModuleHandleDS() GetDummyModuleHandleDS
 603 stub KERNEL_603  # OutputDebugString (?)
 604 register CBClientGlueSL() CBClientGlueSL
 605 pascal AllocSLThunkletCallback(long long) AllocSLThunkletCallback
