@@ -96,7 +96,6 @@ static void *ft_handle = NULL;
 MAKE_FUNCPTR(FT_Vector_Unit);
 MAKE_FUNCPTR(FT_Done_Face);
 MAKE_FUNCPTR(FT_Get_Char_Index);
-MAKE_FUNCPTR(FT_Get_First_Char);
 MAKE_FUNCPTR(FT_Get_Sfnt_Table);
 MAKE_FUNCPTR(FT_Init_FreeType);
 MAKE_FUNCPTR(FT_Load_Glyph);
@@ -111,6 +110,7 @@ MAKE_FUNCPTR(FT_Set_Pixel_Sizes);
 MAKE_FUNCPTR(FT_Vector_Transform);
 static void (*pFT_Library_Version)(FT_Library,FT_Int*,FT_Int*,FT_Int*);
 static FT_Error (*pFT_Load_Sfnt_Table)(FT_Face,FT_ULong,FT_Long,FT_Byte*,FT_ULong*);
+static FT_ULong (*pFT_Get_First_Char)(FT_Face,FT_UInt*);
 
 #ifdef HAVE_FONTCONFIG_FONTCONFIG_H
 #include <fontconfig/fontconfig.h>
@@ -401,7 +401,9 @@ static BOOL AddFontFileToList(const char *file, char *fake_family)
 
         if(pOS2->version == 0) {
             FT_UInt dummy;
-            if(pFT_Get_First_Char( ft_face, &dummy ) < 0x100)
+	
+	    /* If the function is not there, we assume the font is ok */
+            if(!pFT_Get_First_Char || (pFT_Get_First_Char( ft_face, &dummy ) < 0x100))
                 (*insertface)->fs.fsCsb[0] |= 1;
             else
                 (*insertface)->fs.fsCsb[0] |= 1L << 31;
@@ -778,7 +780,6 @@ BOOL WineEngInit(void)
     LOAD_FUNCPTR(FT_Vector_Unit)
     LOAD_FUNCPTR(FT_Done_Face)
     LOAD_FUNCPTR(FT_Get_Char_Index)
-    LOAD_FUNCPTR(FT_Get_First_Char)
     LOAD_FUNCPTR(FT_Get_Sfnt_Table)
     LOAD_FUNCPTR(FT_Init_FreeType)
     LOAD_FUNCPTR(FT_Load_Glyph)
@@ -796,6 +797,7 @@ BOOL WineEngInit(void)
     /* Don't warn if this one is missing */
     pFT_Library_Version = wine_dlsym(ft_handle, "FT_Library_Version", NULL, 0);
     pFT_Load_Sfnt_Table = wine_dlsym(ft_handle, "FT_Load_Sfnt_Table", NULL, 0);
+    pFT_Get_First_Char = wine_dlsym(ft_handle, "FT_Get_First_Char", NULL, 0);
 
       if(!wine_dlsym(ft_handle, "FT_Get_Postscript_Name", NULL, 0) &&
 	 !wine_dlsym(ft_handle, "FT_Sqrt64", NULL, 0)) {
