@@ -88,7 +88,7 @@ static void queue_raw_hardware_message( UINT message, WPARAM wParam, LPARAM lPar
     {
         req->kind   = RAW_HW_MESSAGE;
         req->id     = (void *)GetCurrentThreadId();
-        req->type   = QMSG_HARDWARE;
+        req->type   = 0;
         req->win    = 0;
         req->msg    = message;
         req->wparam = wParam;

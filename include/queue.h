@@ -14,21 +14,6 @@
 #include "thread.h"
 
 
-  /* Message as stored in the queue (contains the extraInfo field) */
-typedef struct tagQMSG
-{
-    int   kind;   /* message kind (sent,posted,hardware) */
-    int   type;
-    MSG   msg;
-    DWORD extraInfo;  /* Only in 3.1 */
-} QMSG;
-
-#define QMSG_WIN16    0
-#define QMSG_WIN32A   1
-#define QMSG_WIN32W   2
-#define QMSG_HARDWARE 3
-
-
 /* Per-queue data for the message queue
  * Note that we currently only store the current values for
  * Active, Capture and Focus windows currently.
@@ -82,10 +67,8 @@ extern MESSAGEQUEUE *QUEUE_Lock( HQUEUE16 hQueue );
 extern void QUEUE_Unlock( MESSAGEQUEUE *queue );
 extern BOOL QUEUE_IsExitingQueue( HQUEUE16 hQueue );
 extern void QUEUE_SetExitingQueue( HQUEUE16 hQueue );
-extern int QUEUE_WaitBits( WORD bits, DWORD timeout );
 extern BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue );
 extern HTASK16 QUEUE_GetQueueTask( HQUEUE16 hQueue );
-extern BOOL QUEUE_FindMsg( HWND hwnd, UINT first, UINT last, BOOL remove, QMSG *msg );
 extern void QUEUE_CleanupWindow( HWND hwnd );
 
 extern HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags );

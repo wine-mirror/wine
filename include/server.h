@@ -1377,9 +1377,9 @@ struct get_message_request
     OUT unsigned int    time;      /* message time */
     OUT unsigned int    info;      /* extra info */
 };
-#define GET_MSG_REMOVE 1     /* remove the message */
-#define GET_MSG_SENT_ONLY 2  /* only get sent messages */
-
+#define GET_MSG_REMOVE      1  /* remove the message */
+#define GET_MSG_SENT_ONLY   2  /* only get sent messages */
+#define GET_MSG_REMOVE_LAST 4  /* remove last message returned before checking for a new one */
 
 /* Reply to a sent message */
 struct reply_message_request

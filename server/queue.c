@@ -73,6 +73,8 @@ struct msg_queue
     struct message_list    msg_list[NB_MSG_KINDS];  /* lists of messages */
     struct message_result *send_result;   /* stack of sent messages waiting for result */
     struct message_result *recv_result;   /* stack of received messages waiting for result */
+    struct message        *last_msg;      /* last msg returned to the app and not removed */
+    enum message_kind      last_msg_kind; /* message kind of last_msg */
     struct timer          *first_timer;   /* head of timer list */
     struct timer          *last_timer;    /* tail of timer list */
     struct timer          *next_timer;    /* next timer to expire */
@@ -118,6 +120,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread )
         queue->paint_count     = 0;
         queue->send_result     = NULL;
         queue->recv_result     = NULL;
+        queue->last_msg        = NULL;
         queue->first_timer     = NULL;
         queue->last_timer      = NULL;
         queue->next_timer      = NULL;
@@ -208,6 +211,7 @@ static void remove_queue_message( struct msg_queue *queue, struct message *msg,
     int clr_bit;
     struct message *other;
 
+    if (queue->last_msg == msg) queue->last_msg = NULL;
     unlink_message( &queue->msg_list[kind], msg );
     switch(kind)
     {
@@ -708,6 +712,26 @@ inline static void put_req_message( struct get_message_request *req, const struc
     req->info   = msg->info;
 }
 
+/* return a message to the application, removing it from the queue if needed */
+static void return_message_to_app( struct msg_queue *queue, struct get_message_request *req,
+                                   struct message *msg, enum message_kind kind )
+{
+    req->kind = kind;
+    put_req_message( req, msg );
+    /* raw messages always get removed */
+    if ((kind == RAW_HW_MESSAGE) || (req->flags & GET_MSG_REMOVE))
+    {
+        queue->last_msg = NULL;
+        remove_queue_message( queue, msg, kind );
+    }
+    else  /* remember it as the last returned message */
+    {
+        queue->last_msg = msg;
+        queue->last_msg_kind = kind;
+    }
+}
+
+
 inline static struct message *find_matching_message( const struct message_list *list, handle_t win,
                                                      unsigned int first, unsigned int last )
 {
@@ -716,6 +740,7 @@ inline static struct message *find_matching_message( const struct message_list *
     for (msg = list->first; msg; msg = msg->next)
     {
         /* check against the filters */
+        if (msg->msg == WM_QUIT) break;  /* WM_QUIT is never filtered */
         if (win && msg->win && msg->win != win) continue;
         if (msg->msg < first) continue;
         if (msg->msg > last) continue;
@@ -744,13 +769,19 @@ DECL_HANDLER(get_message)
     }
     if (req->flags & GET_MSG_SENT_ONLY) goto done;  /* nothing else to check */
 
+    /* if requested, remove the last returned but not yet removed message */
+    if ((req->flags & GET_MSG_REMOVE_LAST) && queue->last_msg)
+        remove_queue_message( queue, queue->last_msg, queue->last_msg_kind );
+    queue->last_msg = NULL;
+
+    /* clear changed bits so we can wait on them if we don't find a message */
+    queue->changed_bits = 0;
+
     /* then check for posted messages */
     if ((msg = find_matching_message( &queue->msg_list[POST_MESSAGE], req->get_win,
                                       req->get_first, req->get_last )))
     {
-        req->kind = POST_MESSAGE;
-        put_req_message( req, msg );
-        if (req->flags & GET_MSG_REMOVE) remove_queue_message( queue, msg, POST_MESSAGE );
+        return_message_to_app( queue, req, msg, POST_MESSAGE );
         return;
     }
 
@@ -758,19 +789,14 @@ DECL_HANDLER(get_message)
     if ((msg = find_matching_message( &queue->msg_list[COOKED_HW_MESSAGE], req->get_win,
                                       req->get_first, req->get_last )))
     {
-        req->kind = COOKED_HW_MESSAGE;
-        put_req_message( req, msg );
-        if (req->flags & GET_MSG_REMOVE) remove_queue_message( queue, msg, COOKED_HW_MESSAGE );
+        return_message_to_app( queue, req, msg, COOKED_HW_MESSAGE );
         return;
     }
 
     /* then check for any raw hardware message */
     if ((msg = queue->msg_list[RAW_HW_MESSAGE].first))
     {
-        req->kind = RAW_HW_MESSAGE;
-        put_req_message( req, msg );
-        /* raw messages always get removed */
-        remove_queue_message( queue, msg, RAW_HW_MESSAGE );
+        return_message_to_app( queue, req, msg, RAW_HW_MESSAGE );
         return;
     }
 

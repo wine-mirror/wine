@@ -36,7 +36,108 @@ DECLARE_DEBUG_CHANNEL(key);
 #define WM_NCMOUSEFIRST         WM_NCMOUSEMOVE
 #define WM_NCMOUSELAST          WM_NCMBUTTONDBLCLK
 
+#define QMSG_WIN16    1
+#define QMSG_WIN32A   2
+#define QMSG_WIN32W   3
+
 static UINT doubleClickSpeed = 452;
+
+static BOOL MSG_ConvertMsg( MSG *msg, int srcType, int dstType );
+
+
+
+/* flag for messages that contain pointers */
+/* 16 messages per entry, messages 0..15 map to bits 0..15 */
+
+#define SET(msg) (1 << ((msg) & 15))
+
+static const unsigned short message_pointer_flags[] =
+{
+    /* 0x00 - 0x0f */
+    SET(WM_CREATE) | SET(WM_GETTEXT) | SET(WM_SETTEXT),
+    /* 0x10 - 0x1f */
+    SET(WM_WININICHANGE),
+    /* 0x20 - 0x2f */
+    SET(WM_GETMINMAXINFO) | SET(WM_DRAWITEM) | SET(WM_MEASUREITEM) | SET(WM_DELETEITEM),
+    /* 0x30 - 0x3f */
+    SET(WM_COMPAREITEM),
+    /* 0x40 - 0x4f */
+    SET(WM_WINDOWPOSCHANGING) | SET(WM_WINDOWPOSCHANGED) | SET(WM_COPYDATA) | SET(WM_NOTIFY),
+    /* 0x50 - 0x5f */
+    SET(WM_HELP),
+    /* 0x60 - 0x6f */
+    0,
+    /* 0x70 - 0x7f */
+    SET(WM_STYLECHANGING) | SET(WM_STYLECHANGED),
+    /* 0x80 - 0x8f */
+    SET(WM_NCCREATE) | SET(WM_NCCALCSIZE) | SET(WM_GETDLGCODE),
+    /* 0x90 - 0x9f */
+    0,
+    /* 0xa0 - 0xaf */
+    0,
+    /* 0xb0 - 0xbf */
+    SET(EM_GETSEL) | SET(EM_GETRECT) | SET(EM_SETRECT) | SET(EM_SETRECTNP),
+    /* 0xc0 - 0xcf */
+    SET(EM_REPLACESEL) | SET(EM_GETLINE) | SET(EM_SETTABSTOPS),
+    /* 0xd0 - 0xdf */
+    0,
+    /* 0xe0 - 0xef */
+    0,
+    /* 0xf0 - 0xff */
+    0,
+    /* 0x100 - 0x10f */
+    0,
+    /* 0x110 - 0x11f */
+    0,
+    /* 0x120 - 0x12f */
+    0,
+    /* 0x130 - 0x13f */
+    0,
+    /* 0x140 - 0x14f */
+    SET(CB_ADDSTRING) | SET(CB_DIR) | SET(CB_GETLBTEXT) | SET(CB_INSERTSTRING) |
+    SET(CB_FINDSTRING) | SET(CB_SELECTSTRING),
+    /* 0x150 - 0x15f */
+    SET(CB_GETDROPPEDCONTROLRECT) | SET(CB_FINDSTRINGEXACT),
+    /* 0x160 - 0x16f */
+    0,
+    /* 0x170 - 0x17f */
+    0,
+    /* 0x180 - 0x18f */
+    SET(LB_ADDSTRING) | SET(LB_INSERTSTRING) | SET(LB_GETTEXT) | SET(LB_SELECTSTRING) |
+    SET(LB_DIR) | SET(LB_FINDSTRING),
+    /* 0x190 - 0x19f */
+    SET(LB_GETSELITEMS) | SET(LB_SETTABSTOPS) | SET(LB_ADDFILE) | SET(LB_GETITEMRECT),
+    /* 0x1a0 - 0x1af */
+    SET(LB_FINDSTRINGEXACT),
+    /* 0x1b0 - 0x1bf */
+    0,
+    /* 0x1c0 - 0x1cf */
+    0,
+    /* 0x1d0 - 0x1df */
+    0,
+    /* 0x1e0 - 0x1ef */
+    0,
+    /* 0x1f0 - 0x1ff */
+    0,
+    /* 0x200 - 0x20f */
+    0,
+    /* 0x210 - 0x21f */
+    0,
+    /* 0x220 - 0x22f */
+    SET(WM_MDICREATE) | SET(WM_MDIGETACTIVE) | SET(WM_DROPOBJECT) |
+    SET(WM_QUERYDROPOBJECT) | SET(WM_DRAGSELECT) | SET(WM_DRAGMOVE)
+};
+
+#undef SET
+
+/***********************************************************************
+ *           is_pointer_message
+ */
+inline static int is_pointer_message( UINT message )
+{
+    if (message >= 8*sizeof(message_pointer_flags)) return FALSE;
+    return (message_pointer_flags[message / 16] & (1 << (message & 15))) != 0;
+}
 
 
 /***********************************************************************
@@ -76,6 +177,54 @@ inline static BOOL check_message_filter( const MSG *msg, HWND hwnd, UINT first, 
 
 
 /***********************************************************************
+ *		map_wparam_AtoW
+ *
+ * Convert the wparam of an ASCII message to Unicode.
+ */
+static WPARAM map_wparam_AtoW( UINT message, WPARAM wparam )
+{
+    if (message == WM_CHARTOITEM ||
+        message == EM_SETPASSWORDCHAR ||
+        message == WM_CHAR ||
+        message == WM_DEADCHAR ||
+        message == WM_SYSCHAR ||
+        message == WM_SYSDEADCHAR ||
+        message == WM_MENUCHAR)
+    {
+        char ch = LOWORD(wparam);
+        WCHAR wch;
+        MultiByteToWideChar(CP_ACP, 0, &ch, 1, &wch, 1);
+        wparam = MAKEWPARAM( wch, HIWORD(wparam) );
+    }
+    return wparam;
+}
+
+
+/***********************************************************************
+ *		map_wparam_WtoA
+ *
+ * Convert the wparam of a Unicode message to ASCII.
+ */
+static WPARAM map_wparam_WtoA( UINT message, WPARAM wparam )
+{
+    if (message == WM_CHARTOITEM ||
+        message == EM_SETPASSWORDCHAR ||
+        message == WM_CHAR ||
+        message == WM_DEADCHAR ||
+        message == WM_SYSCHAR ||
+        message == WM_SYSDEADCHAR ||
+        message == WM_MENUCHAR)
+    {
+        WCHAR wch = LOWORD(wparam);
+        char ch;
+        WideCharToMultiByte( CP_ACP, 0, &wch, 1, &ch, 1, NULL, NULL );
+        wparam = MAKEWPARAM( ch, HIWORD(wparam) );
+    }
+    return wparam;
+}
+
+
+/***********************************************************************
  *           queue_hardware_message
  *
  * store a hardware message in the thread queue
@@ -86,7 +235,7 @@ static void queue_hardware_message( MSG *msg, ULONG_PTR extra_info, enum message
     {
         req->kind   = kind;
         req->id     = (void *)GetWindowThreadProcessId( msg->hwnd, NULL );
-        req->type   = QMSG_HARDWARE;
+        req->type   = 0;
         req->win    = msg->hwnd;
         req->msg    = msg->message;
         req->wparam = msg->wParam;
@@ -476,44 +625,291 @@ static BOOL process_cooked_mouse_message( MSG *msg, BOOL remove )
  *
  * returns TRUE if the contents of 'msg' should be passed to the application
  */
-static BOOL process_hardware_message( QMSG *qmsg, HWND hwnd_filter,
-                                      UINT first, UINT last, BOOL remove )
+static BOOL process_raw_hardware_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd_filter,
+                                          UINT first, UINT last, BOOL remove )
 {
-    if (qmsg->kind == RAW_HW_MESSAGE)
+    if (is_keyboard_message( msg->message ))
     {
-        /* if it is raw, try to cook it first */
-        if (is_keyboard_message( qmsg->msg.message ))
-        {
-            if (!process_raw_keyboard_message( &qmsg->msg, qmsg->extraInfo )) return FALSE;
-        }
-        else if (is_mouse_message( qmsg->msg.message ))
-        {
-            if (!process_raw_mouse_message( &qmsg->msg, qmsg->extraInfo )) return FALSE;
-        }
-        else goto invalid;
-
-        /* check destination thread and filters */
-        if (!check_message_filter( &qmsg->msg, hwnd_filter, first, last ) ||
-            GetWindowThreadProcessId( qmsg->msg.hwnd, NULL ) != GetCurrentThreadId())
-        {
-            /* queue it for later, or for another thread */
-            queue_hardware_message( &qmsg->msg, qmsg->extraInfo, COOKED_HW_MESSAGE );
-            return FALSE;
-        }
-
-        /* save the message in the cooked queue if we didn't want to remove it */
-        if (!remove) queue_hardware_message( &qmsg->msg, qmsg->extraInfo, COOKED_HW_MESSAGE );
+        if (!process_raw_keyboard_message( msg, extra_info )) return FALSE;
+    }
+    else if (is_mouse_message( msg->message ))
+    {
+        if (!process_raw_mouse_message( msg, extra_info )) return FALSE;
+    }
+    else
+    {
+        ERR( "unknown message type %x\n", msg->message );
+        return FALSE;
     }
 
-    if (is_keyboard_message( qmsg->msg.message ))
-        return process_cooked_keyboard_message( &qmsg->msg, remove );
+    /* check destination thread and filters */
+    if (!check_message_filter( msg, hwnd_filter, first, last ) ||
+        GetWindowThreadProcessId( msg->hwnd, NULL ) != GetCurrentThreadId())
+    {
+        /* queue it for later, or for another thread */
+        queue_hardware_message( msg, extra_info, COOKED_HW_MESSAGE );
+        return FALSE;
+    }
 
-    if (is_mouse_message( qmsg->msg.message ))
-        return process_cooked_mouse_message( &qmsg->msg, remove );
+    /* save the message in the cooked queue if we didn't want to remove it */
+    if (!remove) queue_hardware_message( msg, extra_info, COOKED_HW_MESSAGE );
+    return TRUE;
+}
 
- invalid:
-    ERR( "unknown message type %x\n", qmsg->msg.message );
+
+/***********************************************************************
+ *          process_cooked_hardware_message
+ *
+ * returns TRUE if the contents of 'msg' should be passed to the application
+ */
+static BOOL process_cooked_hardware_message( MSG *msg, BOOL remove )
+{
+    if (is_keyboard_message( msg->message ))
+        return process_cooked_keyboard_message( msg, remove );
+
+    if (is_mouse_message( msg->message ))
+        return process_cooked_mouse_message( msg, remove );
+
+    ERR( "unknown message type %x\n", msg->message );
     return FALSE;
+}
+
+
+/***********************************************************************
+ *           handle_sent_message
+ *
+ * Handle the reception of a sent message by calling the corresponding window proc
+ */
+static void handle_sent_message( MSG *msg, int type, ULONG_PTR extra_info )
+{
+    LRESULT result = 0;
+    MESSAGEQUEUE *queue = QUEUE_Lock( GetFastQueue16() );
+    ULONG_PTR old_extra_info = queue->GetMessageExtraInfoVal; /* save ExtraInfo */
+    WND *wndPtr = WIN_FindWndPtr( msg->hwnd );
+
+    TRACE( "got hwnd %x msg %x (%s) wp %x lp %lx\n",
+           msg->hwnd, msg->message, SPY_GetMsgName(msg->message),
+           msg->wParam, msg->lParam );
+
+    queue->GetMessageExtraInfoVal = extra_info;
+
+    /* call the right version of CallWindowProcXX */
+    switch(type)
+    {
+    case QMSG_WIN16:
+        result = CallWindowProc16( (WNDPROC16)wndPtr->winproc,
+                                   (HWND16) msg->hwnd,
+                                   (UINT16) msg->message,
+                                   LOWORD(msg->wParam),
+                                   msg->lParam );
+        break;
+    case QMSG_WIN32A:
+        result = CallWindowProcA( wndPtr->winproc, msg->hwnd, msg->message,
+                                  msg->wParam, msg->lParam );
+        break;
+    case QMSG_WIN32W:
+        result = CallWindowProcW( wndPtr->winproc, msg->hwnd, msg->message,
+                                  msg->wParam, msg->lParam );
+        break;
+    }
+
+    queue->GetMessageExtraInfoVal = old_extra_info;  /* Restore extra info */
+    WIN_ReleaseWndPtr(wndPtr);
+    QUEUE_Unlock( queue );
+
+    SERVER_START_REQ( reply_message )
+    {
+        req->result = result;
+        req->remove = 1;
+        SERVER_CALL();
+    }
+    SERVER_END_REQ;
+}
+
+
+/***********************************************************************
+ *           process_sent_messages
+ *
+ * Process all pending sent messages
+ */
+static void process_sent_messages(void)
+{
+    MSG msg;
+    int type;
+    unsigned int res;
+    ULONG_PTR extra_info;
+
+    for (;;)
+    {
+        SERVER_START_REQ( get_message )
+        {
+            req->flags = GET_MSG_REMOVE | GET_MSG_SENT_ONLY;
+            req->get_win   = 0;
+            req->get_first = 0;
+            req->get_last  = ~0;
+            if (!(res = SERVER_CALL()))
+            {
+                type        = req->type;
+                msg.hwnd    = req->win;
+                msg.message = req->msg;
+                msg.wParam  = req->wparam;
+                msg.lParam  = req->lparam;
+                msg.time    = req->time;
+                msg.pt.x    = req->x;
+                msg.pt.y    = req->y;
+                extra_info  = req->info;
+            }
+        }
+        SERVER_END_REQ;
+
+        if (res) break;
+        handle_sent_message( &msg, type, extra_info );
+    }
+}
+
+
+
+/***********************************************************************
+ *           peek_message
+ *
+ * Peek for a message matching the given parameters. Return FALSE if none available.
+ */
+static BOOL peek_message( HWND hwnd, UINT first, UINT last, int flags, int type,
+                          MSG *msg, ULONG_PTR *extra_info )
+{
+    BOOL ret = FALSE;
+    enum message_kind kind;
+    int msg_type;
+
+    if (!first && !last) last = ~0;
+
+    for (;;)
+    {
+        SERVER_START_REQ( get_message )
+        {
+            req->flags     = flags;
+            req->get_win   = hwnd;
+            req->get_first = first;
+            req->get_last  = last;
+            if ((ret = !SERVER_CALL()))
+            {
+                kind         = req->kind;
+                msg_type     = req->type;
+                msg->hwnd    = req->win;
+                msg->message = req->msg;
+                msg->wParam  = req->wparam;
+                msg->lParam  = req->lparam;
+                msg->time    = req->time;
+                msg->pt.x    = req->x;
+                msg->pt.y    = req->y;
+                *extra_info  = req->info;
+            }
+        }
+        SERVER_END_REQ;
+
+        if (!ret) return FALSE;
+
+        switch(kind)
+        {
+        case SEND_MESSAGE:
+            handle_sent_message( msg, msg_type, *extra_info );
+            continue;
+        case POST_MESSAGE:
+            /* try to convert message to requested type */
+            if (!MSG_ConvertMsg( msg, msg_type, type ))
+            {
+                ERR( "Message %s of wrong type contains pointer parameters. Skipped!\n",
+                     SPY_GetMsgName(msg->message));
+                /* remove it */
+                flags |= GET_MSG_REMOVE_LAST;
+                continue;
+            }
+            break;
+        case RAW_HW_MESSAGE:
+            if (!process_raw_hardware_message( msg, *extra_info,
+                                               hwnd, first, last, flags & GET_MSG_REMOVE ))
+                continue;
+            /* fall through */
+        case COOKED_HW_MESSAGE:
+            if (!process_cooked_hardware_message( msg, flags & GET_MSG_REMOVE ))
+            {
+                flags |= GET_MSG_REMOVE_LAST;
+                continue;
+            }
+            break;
+        }
+
+        /* now we got something */
+        TRACE( "got hwnd %x msg %x (%s) wp %x lp %lx\n",
+               msg->hwnd, msg->message, SPY_GetMsgName(msg->message),
+               msg->wParam, msg->lParam );
+        return TRUE;
+    }
+}
+
+
+/***********************************************************************
+ *           wait_queue_bits
+ *
+ * See "Windows Internals", p.447
+ *
+ * return values:
+ *    0 if exit with timeout
+ *    1 otherwise
+ */
+static int wait_queue_bits( WORD bits, DWORD timeout )
+{
+    MESSAGEQUEUE *queue;
+    HQUEUE16 hQueue;
+
+    TRACE_(msg)("q %04x waiting for %04x\n", GetFastQueue16(), bits);
+
+    hQueue = GetFastQueue16();
+    if (!(queue = QUEUE_Lock( hQueue ))) return 0;
+
+    for (;;)
+    {
+        unsigned int wake_bits = 0, changed_bits = 0;
+        DWORD dwlc;
+
+        SERVER_START_REQ( set_queue_mask )
+        {
+            req->wake_mask    = QS_SENDMESSAGE;
+            req->changed_mask = bits | QS_SENDMESSAGE;
+            req->skip_wait    = 1;
+            if (!SERVER_CALL())
+            {
+                wake_bits    = req->wake_bits;
+                changed_bits = req->changed_bits;
+            }
+        }
+        SERVER_END_REQ;
+
+        if (changed_bits & bits)
+        {
+            /* One of the bits is set; we can return */
+            QUEUE_Unlock( queue );
+            return 1;
+        }
+        if (wake_bits & QS_SENDMESSAGE)
+        {
+            /* Process the sent message immediately */
+            process_sent_messages();
+            continue;  /* nested sm crux */
+        }
+
+        TRACE_(msg)("(%04x) mask=%08x, bits=%08x, changed=%08x, waiting\n",
+                    queue->self, bits, wake_bits, changed_bits );
+
+        ReleaseThunkLock( &dwlc );
+        if (dwlc) TRACE_(msg)("had win16 lock\n");
+
+        if (USER_Driver.pMsgWaitForMultipleObjectsEx)
+            USER_Driver.pMsgWaitForMultipleObjectsEx( 1, &queue->server_queue, timeout, 0, 0 );
+        else
+            WaitForSingleObject( queue->server_queue, timeout );
+        if (dwlc) RestoreThunkLock( dwlc );
+    }
 }
 
 
@@ -594,7 +990,7 @@ static LRESULT MSG_SendMessageInterThread( DWORD dest_tid, HWND hwnd, UINT msg,
     iWndsLocks = WIN_SuspendWndsLock();
 
     /* wait for the result */
-    QUEUE_WaitBits( QS_SMRESULT, timeout );
+    wait_queue_bits( QS_SMRESULT, timeout );
 
     SERVER_START_REQ( get_message_reply )
     {
@@ -648,105 +1044,62 @@ BOOL WINAPI ReplyMessage( LRESULT result )
  */
 static BOOL MSG_ConvertMsg( MSG *msg, int srcType, int dstType )
 {
-    UINT16 msg16;
-    MSGPARAM16 mp16;
-
-    switch ( MAKELONG( srcType, dstType ) )
+    if (srcType == QMSG_WIN32A || dstType == QMSG_WIN32A)
     {
-    case MAKELONG( QMSG_WIN16,  QMSG_WIN16 ):
-    case MAKELONG( QMSG_WIN32A, QMSG_WIN32A ):
-    case MAKELONG( QMSG_WIN32W, QMSG_WIN32W ):
-        return TRUE;
-
-    case MAKELONG( QMSG_WIN16, QMSG_WIN32A ):
-        switch ( WINPROC_MapMsg16To32A( msg->message, msg->wParam,
-                                       &msg->message, &msg->wParam, &msg->lParam ) )
-        {
-        case 0:
-            return TRUE;
-        case 1:
-            /* Pointer messages were mapped --> need to free allocated memory and fail */
-            WINPROC_UnmapMsg16To32A( msg->hwnd, msg->message, msg->wParam, msg->lParam, 0 );
-        default:
-            return FALSE;
-        }
-
-    case MAKELONG( QMSG_WIN16, QMSG_WIN32W ):
-        switch ( WINPROC_MapMsg16To32W( msg->hwnd, msg->message, msg->wParam,
-                                       &msg->message, &msg->wParam, &msg->lParam ) )
-        {
-        case 0:
-            return TRUE;
-        case 1:
-            /* Pointer messages were mapped --> need to free allocated memory and fail */
-            WINPROC_UnmapMsg16To32W( msg->hwnd, msg->message, msg->wParam, msg->lParam, 0 );
-        default:
-            return FALSE;
-        }
-
-    case MAKELONG( QMSG_WIN32A, QMSG_WIN16 ):
-        mp16.lParam = msg->lParam;
-        switch ( WINPROC_MapMsg32ATo16( msg->hwnd, msg->message, msg->wParam,
-                                        &msg16, &mp16.wParam, &mp16.lParam ) )
-        {
-        case 0:
-            msg->message = msg16; 
-            msg->wParam  = mp16.wParam;
-            msg->lParam  = mp16.lParam;
-            return TRUE;
-        case 1:
-            /* Pointer messages were mapped --> need to free allocated memory and fail */
-            WINPROC_UnmapMsg32ATo16( msg->hwnd, msg->message, msg->wParam, msg->lParam, &mp16 );
-        default:
-            return FALSE;
-        }
-
-    case MAKELONG( QMSG_WIN32W, QMSG_WIN16 ):
-        mp16.lParam = msg->lParam;
-        switch ( WINPROC_MapMsg32WTo16( msg->hwnd, msg->message, msg->wParam,
-                                        &msg16, &mp16.wParam, &mp16.lParam ) )
-        {
-        case 0:
-            msg->message = msg16; 
-            msg->wParam  = mp16.wParam;
-            msg->lParam  = mp16.lParam;
-            return TRUE;
-        case 1:
-            /* Pointer messages were mapped --> need to free allocated memory and fail */
-            WINPROC_UnmapMsg32WTo16( msg->hwnd, msg->message, msg->wParam, msg->lParam, &mp16 );
-        default:
-            return FALSE;
-        }
-
-    case MAKELONG( QMSG_WIN32A, QMSG_WIN32W ):
-        switch ( WINPROC_MapMsg32ATo32W( msg->hwnd, msg->message, &msg->wParam, &msg->lParam ) )
-        {
-        case 0:
-            return TRUE;
-        case 1:
-            /* Pointer messages were mapped --> need to free allocated memory and fail */
-            WINPROC_UnmapMsg32ATo32W( msg->hwnd, msg->message, msg->wParam, msg->lParam );
-        default:
-            return FALSE;
-        }
-
-    case MAKELONG( QMSG_WIN32W, QMSG_WIN32A ):
-        switch ( WINPROC_MapMsg32WTo32A( msg->hwnd, msg->message, &msg->wParam, &msg->lParam ) )
-        {
-        case 0:
-            return TRUE;
-        case 1:
-            /* Pointer messages were mapped --> need to free allocated memory and fail */
-            WINPROC_UnmapMsg32WTo32A( msg->hwnd, msg->message, msg->wParam, msg->lParam );
-        default:
-            return FALSE;
-        }
-
-    default:    
-        FIXME( "Invalid message type(s): %d / %d\n", srcType, dstType );
+        /* posted messages are always either Win16 or Unicode Win32,
+         * QMSG_WIN32A is only for sent messages */
+        ERR( "invalid type %d/%d\n", srcType, dstType );
         return FALSE;
     }
+
+    if (!srcType || srcType == dstType) return TRUE;
+
+    if (srcType == QMSG_WIN16)
+    {
+        if (dstType == QMSG_WIN32W)
+        {
+            switch ( WINPROC_MapMsg16To32W( msg->hwnd, msg->message, msg->wParam,
+                                            &msg->message, &msg->wParam, &msg->lParam ) )
+            {
+            case 0:
+                return TRUE;
+            case 1:
+                /* Pointer messages were mapped --> need to free allocated memory and fail */
+                WINPROC_UnmapMsg16To32W( msg->hwnd, msg->message, msg->wParam, msg->lParam, 0 );
+            default:
+                return FALSE;
+            }
+        }
+    }
+    else if (srcType == QMSG_WIN32W)
+    {
+        if (dstType == QMSG_WIN16)
+        {
+            UINT16 msg16;
+            MSGPARAM16 mp16;
+
+            mp16.lParam = msg->lParam;
+            switch ( WINPROC_MapMsg32WTo16( msg->hwnd, msg->message, msg->wParam,
+                                            &msg16, &mp16.wParam, &mp16.lParam ) )
+            {
+            case 0:
+                msg->message = msg16;
+                msg->wParam  = mp16.wParam;
+                msg->lParam  = mp16.lParam;
+                return TRUE;
+            case 1:
+                /* Pointer messages were mapped --> need to free allocated memory and fail */
+                WINPROC_UnmapMsg32WTo16( msg->hwnd, msg->message, msg->wParam, msg->lParam, &mp16 );
+            default:
+                return FALSE;
+            }
+        }
+    }
+
+    FIXME( "Invalid message type(s): %d / %d\n", srcType, dstType );
+    return FALSE;
 }
+
 
 /***********************************************************************
  *           MSG_PeekMessage
@@ -754,10 +1107,11 @@ static BOOL MSG_ConvertMsg( MSG *msg, int srcType, int dstType )
 static BOOL MSG_PeekMessage( int type, LPMSG msg_out, HWND hwnd, 
                              DWORD first, DWORD last, WORD flags, BOOL peek )
 {
-    int mask;
+    int mask, msg_flags = 0;
     MESSAGEQUEUE *msgQueue;
     int iWndsLocks;
-    QMSG qmsg;
+    MSG msg;
+    ULONG_PTR extra_info;
 
     mask = QS_POSTMESSAGE | QS_SENDMESSAGE;  /* Always selected */
     if (first || last)
@@ -779,46 +1133,26 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg_out, HWND hwnd,
     if (USER_Driver.pMsgWaitForMultipleObjectsEx)
         USER_Driver.pMsgWaitForMultipleObjectsEx( 0, NULL, 0, 0, 0 );
 
+    if (flags & PM_REMOVE) msg_flags |= GET_MSG_REMOVE;
+
     while(1)
     {
-        /* FIXME: should remove this */
-        WORD wakeBits = HIWORD(GetQueueStatus( mask ));
-
-  retry:
-        if (QUEUE_FindMsg( hwnd, first, last, flags & PM_REMOVE, &qmsg ))
+        if (peek_message( hwnd, first, last, msg_flags, type, &msg, &extra_info ))
         {
-            if (qmsg.kind == RAW_HW_MESSAGE || qmsg.kind == COOKED_HW_MESSAGE)
-            {
-                if (!process_hardware_message( &qmsg, hwnd, first, last, flags & PM_REMOVE ))
-                    goto retry;
-            }
-            else
-            {
-                /* Try to convert message to requested type */
-                if ( !MSG_ConvertMsg( &qmsg.msg, qmsg.type, type ) )
-                {
-                    ERR( "Message %s of wrong type contains pointer parameters. Skipped!\n",
-                         SPY_GetMsgName(qmsg.msg.message));
-                    /* remove it (FIXME) */
-                    if (!(flags & PM_REMOVE)) QUEUE_FindMsg( hwnd, first, last, TRUE, &qmsg );
-                    goto retry;
-                }
-            }
-
             /* need to fill the window handle for WM_PAINT message */
-            if (qmsg.msg.message == WM_PAINT)
+            if (msg.message == WM_PAINT)
             {
-                if ((qmsg.msg.hwnd = WIN_FindWinToRepaint( hwnd )))
+                if ((msg.hwnd = WIN_FindWinToRepaint( hwnd )))
                 {
-                    if (IsIconic( qmsg.msg.hwnd ) && GetClassLongA( qmsg.msg.hwnd, GCL_HICON ))
+                    if (IsIconic( msg.hwnd ) && GetClassLongA( msg.hwnd, GCL_HICON ))
                     {
-                        qmsg.msg.message = WM_PAINTICON;
-                        qmsg.msg.wParam = 1;
+                        msg.message = WM_PAINTICON;
+                        msg.wParam = 1;
                     }
-                    if( !hwnd || qmsg.msg.hwnd == hwnd || IsChild(hwnd,qmsg.msg.hwnd) )
+                    if( !hwnd || msg.hwnd == hwnd || IsChild(hwnd,msg.hwnd) )
                     {
                         /* clear internal paint flag */
-                        RedrawWindow( qmsg.msg.hwnd, NULL, 0,
+                        RedrawWindow( msg.hwnd, NULL, 0,
                                       RDW_NOINTERNALPAINT | RDW_NOCHILDREN );
                         break;
                     }
@@ -839,46 +1173,44 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg_out, HWND hwnd,
             return FALSE;
         }
 
-        QUEUE_WaitBits( mask, INFINITE );
+        wait_queue_bits( mask, INFINITE );
     }
 
     WIN_RestoreWndsLock(iWndsLocks);
 
     if ((msgQueue = QUEUE_Lock( GetFastQueue16() )))
     {
-        msgQueue->GetMessageTimeVal      = qmsg.msg.time;
-        msgQueue->GetMessagePosVal       = MAKELONG( qmsg.msg.pt.x, qmsg.msg.pt.y );
-        msgQueue->GetMessageExtraInfoVal = qmsg.extraInfo;
+        msgQueue->GetMessageTimeVal      = msg.time;
+        msgQueue->GetMessagePosVal       = MAKELONG( msg.pt.x, msg.pt.y );
+        msgQueue->GetMessageExtraInfoVal = extra_info;
         QUEUE_Unlock( msgQueue );
     }
 
       /* We got a message */
     if (flags & PM_REMOVE)
     {
-	WORD message = qmsg.msg.message;
-
-	if (message == WM_KEYDOWN || message == WM_SYSKEYDOWN)
+	if (msg.message == WM_KEYDOWN || msg.message == WM_SYSKEYDOWN)
 	{
-	    BYTE *p = &QueueKeyStateTable[qmsg.msg.wParam & 0xff];
+	    BYTE *p = &QueueKeyStateTable[msg.wParam & 0xff];
 
 	    if (!(*p & 0x80))
 		*p ^= 0x01;
 	    *p |= 0x80;
 	}
-	else if (message == WM_KEYUP || message == WM_SYSKEYUP)
-	    QueueKeyStateTable[qmsg.msg.wParam & 0xff] &= ~0x80;
+	else if (msg.message == WM_KEYUP || msg.message == WM_SYSKEYUP)
+	    QueueKeyStateTable[msg.wParam & 0xff] &= ~0x80;
     }
 
     /* copy back our internal safe copy of message data to msg_out.
      * msg_out is a variable from the *program*, so it can't be used
      * internally as it can get "corrupted" by our use of SendMessage()
      * (back to the program) inside the message handling itself. */
-    *msg_out = qmsg.msg;
+    *msg_out = msg;
     if (peek)
         return TRUE;
 
     else
-        return (qmsg.msg.message != WM_QUIT);
+        return (msg.message != WM_QUIT);
 }
 
 /***********************************************************************
@@ -896,7 +1228,7 @@ BOOL MSG_InternalGetMessage( MSG *msg, HWND hwnd, HWND hwndOwner, UINT first, UI
     {
 	if (sendIdle)
 	{
-	    if (!MSG_PeekMessage( QMSG_WIN32A, msg, 0, first, last, flags, TRUE ))
+	    if (!MSG_PeekMessage( QMSG_WIN32W, msg, 0, first, last, flags, TRUE ))
 	    {
 		  /* No message present -> send ENTERIDLE and wait */
                 if (IsWindow(hwndOwner))
@@ -907,38 +1239,29 @@ BOOL MSG_InternalGetMessage( MSG *msg, HWND hwnd, HWND hwndOwner, UINT first, UI
 		    if (idleSent!=NULL)
 		      *idleSent=TRUE;
 		}
-		MSG_PeekMessage( QMSG_WIN32A, msg, 0, first, last, flags, FALSE );
+		MSG_PeekMessage( QMSG_WIN32W, msg, 0, first, last, flags, FALSE );
 	    }
 	}
 	else  /* Always wait for a message */
-	    MSG_PeekMessage( QMSG_WIN32A, msg, 0, first, last, flags, FALSE );
+	    MSG_PeekMessage( QMSG_WIN32W, msg, 0, first, last, flags, FALSE );
 
         /* Call message filters */
 
         if (HOOK_IsHooked( WH_SYSMSGFILTER ) || HOOK_IsHooked( WH_MSGFILTER ))
         {
-            MSG *pmsg = HeapAlloc( GetProcessHeap(), 0, sizeof(MSG) );
-            if (pmsg)
+            MSG tmp_msg = *msg;
+
+            if (HOOK_CallHooksW( WH_SYSMSGFILTER, code, 0, (LPARAM)&tmp_msg ) ||
+                HOOK_CallHooksW( WH_MSGFILTER, code, 0, (LPARAM)&tmp_msg ))
             {
-                BOOL ret;
-                *pmsg = *msg;
-                ret = (HOOK_CallHooksA( WH_SYSMSGFILTER, code, 0,
-                                          (LPARAM) pmsg ) ||
-                       HOOK_CallHooksA( WH_MSGFILTER, code, 0,
-                                          (LPARAM) pmsg ));
-                       
-                HeapFree( GetProcessHeap(), 0, pmsg );
-                if (ret)
-                {
-                    /* Message filtered -> remove it from the queue */
-                    /* if it's still there. */
-                    if (!(flags & PM_REMOVE))
-                        MSG_PeekMessage( QMSG_WIN32A, msg, 0, first, last, PM_REMOVE, TRUE );
-                    continue;
-                }
+                /* Message filtered -> remove it from the queue if it's still there. */
+                if (!(flags & PM_REMOVE))
+                    MSG_PeekMessage( QMSG_WIN32W, msg, 0, first, last, PM_REMOVE, TRUE );
+                continue;
             }
         }
-
+        /* need to return an ASCII message (FIXME) */
+        msg->wParam = map_wparam_WtoA( msg->message, msg->wParam );
         return (msg->message != WM_QUIT);
     }
 }
@@ -984,16 +1307,10 @@ BOOL16 WINAPI PeekMessage16( SEGPTR msg, HWND16 hwnd,
 /***********************************************************************
  *		PeekMessageA (USER32.@)
  */
-BOOL WINAPI PeekMessageA( LPMSG lpmsg, HWND hwnd,
-                          UINT min, UINT max, UINT wRemoveMsg)
+BOOL WINAPI PeekMessageA( LPMSG lpmsg, HWND hwnd, UINT min, UINT max, UINT flags )
 {
-    BOOL ret = MSG_PeekMessage( QMSG_WIN32A, lpmsg, hwnd, min, max, wRemoveMsg, TRUE );
-
-    TRACE( "peekmessage %04x, hwnd %04x, filter(%04x - %04x)\n", 
-           lpmsg->message, hwnd, min, max );
-
-    if (ret) HOOK_CallHooksA( WH_GETMESSAGE, HC_ACTION,
-                              wRemoveMsg & PM_REMOVE, (LPARAM)lpmsg );
+    BOOL ret = PeekMessageW( lpmsg, hwnd, min, max, flags );
+    if (ret) lpmsg->wParam = map_wparam_WtoA( lpmsg->message, lpmsg->wParam );
     return ret;
 }
 
@@ -1081,12 +1398,8 @@ BOOL16 WINAPI GetMessage16( SEGPTR msg, HWND16 hwnd, UINT16 first, UINT16 last)
  */
 BOOL WINAPI GetMessageA( MSG *lpmsg, HWND hwnd, UINT min, UINT max )
 {
-    MSG_PeekMessage( QMSG_WIN32A, lpmsg, hwnd, min, max, PM_REMOVE, FALSE );
-    
-    TRACE( "message %04x, hwnd %04x, filter(%04x - %04x)\n", 
-           lpmsg->message, hwnd, min, max );
-    
-    HOOK_CallHooksA( WH_GETMESSAGE, HC_ACTION, PM_REMOVE, (LPARAM)lpmsg );
+    GetMessageW( lpmsg, hwnd, min, max );
+    lpmsg->wParam = map_wparam_WtoA( lpmsg->message, lpmsg->wParam );
     return lpmsg->message != WM_QUIT;
 }
 
@@ -1172,99 +1485,12 @@ static BOOL MSG_PostToQueue( DWORD tid, int type, HWND hwnd,
 
 
 /***********************************************************************
- *           MSG_IsPointerMessage
- *
- * Check whether this message (may) contain pointers. 
- * Those messages may not be PostMessage()d or GetMessage()d, but are dropped.
- *
- * FIXME: list of pointer messages might be incomplete.
- *
- * (We could do a generic !IsBadWritePtr() check, but this would cause too
- *  much slow down I think. MM20010206)
- */
-static BOOL MSG_IsPointerMessage(UINT message, WPARAM wParam, LPARAM lParam) {
-    switch (message) {
-    case WM_CREATE:
-    case WM_NCCREATE:
-    case WM_COMPAREITEM:
-    case WM_DELETEITEM:
-    case WM_MEASUREITEM:
-    case WM_DRAWITEM:
-    case WM_GETMINMAXINFO:
-    case WM_GETTEXT:
-    case WM_SETTEXT:
-    case WM_MDICREATE:
-    case WM_MDIGETACTIVE:
-    case WM_NCCALCSIZE:
-    case WM_WINDOWPOSCHANGING:
-    case WM_WINDOWPOSCHANGED:
-    case WM_NOTIFY:
-    case WM_GETDLGCODE:
-    case WM_WININICHANGE:
-    case WM_HELP:
-    case WM_COPYDATA:
-    case WM_STYLECHANGING:
-    case WM_STYLECHANGED:
-    case WM_DROPOBJECT:
-    case WM_DRAGMOVE:
-    case WM_DRAGSELECT:
-    case WM_QUERYDROPOBJECT:
-
-    case CB_DIR:
-    case CB_ADDSTRING:
-    case CB_INSERTSTRING:
-    case CB_FINDSTRING:
-    case CB_FINDSTRINGEXACT:
-    case CB_SELECTSTRING:
-    case CB_GETLBTEXT:
-    case CB_GETDROPPEDCONTROLRECT:
-
-    case LB_DIR:
-    case LB_ADDFILE:
-    case LB_ADDSTRING:
-    case LB_INSERTSTRING:
-    case LB_GETTEXT:
-    case LB_GETITEMRECT:
-    case LB_FINDSTRING:
-    case LB_FINDSTRINGEXACT:
-    case LB_SELECTSTRING:
-    case LB_GETSELITEMS:
-    case LB_SETTABSTOPS:
-
-    case EM_REPLACESEL:
-    case EM_GETSEL:
-    case EM_GETRECT:
-    case EM_SETRECT:
-    case EM_SETRECTNP:
-    case EM_GETLINE:
-    case EM_SETTABSTOPS:
-	    return TRUE;
-    default:
-	    return FALSE;
-    }
-}
-
-/***********************************************************************
  *           MSG_PostMessage
  */
 static BOOL MSG_PostMessage( int type, HWND hwnd, UINT message, 
                              WPARAM wParam, LPARAM lParam )
 {
     WND *wndPtr;
-
-    /* See thread on wine-devel around 6.2.2001. Basically posted messages
-     * that are known to contain pointers are dropped by the Windows 32bit
-     * PostMessage() with return FALSE; and invalid parameter last error.
-     * (tested against NT4 by Gerard Patel)
-     * 16 bit does not care, so we don't either.
-     */
-    if ( (type!=QMSG_WIN16) && MSG_IsPointerMessage(message,wParam,lParam)) {
-	FIXME("Ignoring posted pointer message 0x%04x to hwnd 0x%04x.\n",
-		message,hwnd
-	);
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return FALSE;
-    }
 
     if (hwnd == HWND_BROADCAST)
     {
@@ -1290,6 +1516,7 @@ static BOOL MSG_PostMessage( int type, HWND hwnd, UINT message,
                             type, hwnd, message, wParam, lParam );
 }
 
+
 /***********************************************************************
  *		PostMessage (USER.110)
  */
@@ -1305,7 +1532,7 @@ BOOL16 WINAPI PostMessage16( HWND16 hwnd, UINT16 message, WPARAM16 wParam,
 BOOL WINAPI PostMessageA( HWND hwnd, UINT message, WPARAM wParam,
                           LPARAM lParam )
 {
-    return MSG_PostMessage( QMSG_WIN32A, hwnd, message, wParam, lParam );
+    return PostMessageW( hwnd, message, map_wparam_AtoW( message, wParam ), lParam );
 }
 
 /***********************************************************************
@@ -1314,6 +1541,16 @@ BOOL WINAPI PostMessageA( HWND hwnd, UINT message, WPARAM wParam,
 BOOL WINAPI PostMessageW( HWND hwnd, UINT message, WPARAM wParam,
                           LPARAM lParam )
 {
+    /* See thread on wine-devel around 6.2.2001. Basically posted messages
+     * that are known to contain pointers are dropped by the Windows 32bit
+     * PostMessage() with return FALSE; and invalid parameter last error.
+     * (tested against NT4 by Gerard Patel)
+     */
+    if (is_pointer_message(message))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
     return MSG_PostMessage( QMSG_WIN32W, hwnd, message, wParam, lParam );
 }
 
@@ -1335,7 +1572,7 @@ BOOL16 WINAPI PostAppMessage16( HTASK16 hTask, UINT16 message,
 BOOL WINAPI PostThreadMessageA( DWORD idThread, UINT message,
                                 WPARAM wParam, LPARAM lParam )
 {
-    return MSG_PostToQueue( idThread, QMSG_WIN32A, 0, message, wParam, lParam );
+    return PostThreadMessageW( idThread, message, map_wparam_AtoW( message, wParam ), lParam );
 }
 
 /**********************************************************************
@@ -1344,6 +1581,11 @@ BOOL WINAPI PostThreadMessageA( DWORD idThread, UINT message,
 BOOL WINAPI PostThreadMessageW( DWORD idThread, UINT message,
                                  WPARAM wParam, LPARAM lParam )
 {
+    if (is_pointer_message( message ))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
     return MSG_PostToQueue( idThread, QMSG_WIN32W, 0, message, wParam, lParam );
 }
 
@@ -1699,6 +1941,68 @@ DWORD WINAPI MsgWaitForMultipleObjects16( DWORD count, CONST HANDLE *handles,
 {
     return MsgWaitForMultipleObjectsEx( count, handles, timeout, mask,
                                         wait_all ? MWMO_WAITALL : 0 );
+}
+
+
+/***********************************************************************
+ *		WaitForInputIdle (USER32.@)
+ */
+DWORD WINAPI WaitForInputIdle( HANDLE hProcess, DWORD dwTimeOut )
+{
+    DWORD cur_time, ret;
+    HANDLE idle_event = -1;
+
+    SERVER_START_REQ( wait_input_idle )
+    {
+        req->handle = hProcess;
+        req->timeout = dwTimeOut;
+        if (!(ret = SERVER_CALL_ERR())) idle_event = req->event;
+    }
+    SERVER_END_REQ;
+    if (ret) return 0xffffffff;  /* error */
+    if (!idle_event) return 0;  /* no event to wait on */
+
+    cur_time = GetTickCount();
+
+    TRACE("waiting for %x\n", idle_event );
+    while ( dwTimeOut > GetTickCount() - cur_time || dwTimeOut == INFINITE )
+    {
+        ret = MsgWaitForMultipleObjects ( 1, &idle_event, FALSE, dwTimeOut, QS_SENDMESSAGE );
+        if ( ret == ( WAIT_OBJECT_0 + 1 ))
+        {
+            process_sent_messages();
+            continue;
+        }
+        if ( ret == WAIT_TIMEOUT || ret == 0xFFFFFFFF )
+        {
+            TRACE("timeout or error\n");
+            return ret;
+        }
+        else
+        {
+            TRACE("finished\n");
+            return 0;
+        }
+    }
+
+    return WAIT_TIMEOUT;
+}
+
+
+/***********************************************************************
+ *		UserYield (USER.332)
+ *		UserYield16 (USER32.@)
+ */
+void WINAPI UserYield16(void)
+{
+    /* Handle sent messages */
+    process_sent_messages();
+
+    /* Yield */
+    OldYield16();
+
+    /* Handle sent messages again */
+    process_sent_messages();
 }
 
 
