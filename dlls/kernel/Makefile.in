@@ -1,0 +1,20 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = kernel32
+SOVERSION = 1.0
+ALTNAMES  = wow32 comm kernel system toolhelp wprocs
+
+SPEC_SRCS = \
+	kernel32.spec \
+	wow32.spec \
+	comm.spec \
+	kernel.spec \
+	system.spec \
+	toolhelp.spec \
+	wprocs.spec
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

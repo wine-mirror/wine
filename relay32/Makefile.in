@@ -5,10 +5,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = relay32
 
-SPEC_SRCS = \
-	kernel32.spec \
-	wow32.spec
-
 C_SRCS = \
 	builtin32.c \
 	relay386.c \

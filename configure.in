@@ -1001,6 +1001,7 @@ dlls/gdi/Makefile
 dlls/icmp/Makefile
 dlls/imagehlp/Makefile
 dlls/imm32/Makefile
+dlls/kernel/Makefile
 dlls/lzexpand/Makefile
 dlls/mouse/Makefile
 dlls/mpr/Makefile

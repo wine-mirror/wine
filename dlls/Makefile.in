@@ -24,6 +24,7 @@ DLLFILES = \
 	icmp/libicmp.@LIBEXT@ \
 	imagehlp/libimagehlp.@LIBEXT@ \
 	imm32/libimm32.@LIBEXT@ \
+	kernel/libkernel32.@LIBEXT@ \
 	lzexpand/liblz32.@LIBEXT@ \
 	mpr/libmpr.@LIBEXT@ \
 	msacm/libmsacm.@LIBEXT@ \
@@ -72,11 +73,14 @@ DLLFILES = \
 # extra names for dlls containing multiple spec files
 EXTRADLLNAMES = \
 	avifile \
+	comm \
 	commdlg \
 	compobj \
 	ddeml \
+	dispdib \
 	dplay \
 	gdi \
+	kernel \
 	keyboard \
 	lzexpand \
 	mmsystem \
@@ -93,13 +97,17 @@ EXTRADLLNAMES = \
 	shell \
 	shlwapi \
 	storage \
+	system \
+	toolhelp \
 	typelib \
 	user \
 	ver \
 	w32sys \
 	win32s16 \
 	winaspi \
-	winsock
+	winsock \
+	wow32 \
+	wprocs
 
 SUBDIRS = \
 	avifil32 \
@@ -114,6 +122,7 @@ SUBDIRS = \
 	icmp \
 	imagehlp \
 	imm32 \
+	kernel \
 	lzexpand \
 	mpr \
 	msacm \
@@ -182,7 +191,7 @@ libdplayx.@LIBEXT@ libdplay.@LIBEXT@: dplayx/libdplayx.@LIBEXT@
 libdsound.@LIBEXT@: dsound/libdsound.@LIBEXT@
 	$(RM) $@ && $(LN_S) dsound/libdsound.@LIBEXT@ $@
 
-libgdi32.@LIBEXT@ libgdi.@LIBEXT@: gdi/libgdi32.@LIBEXT@
+libgdi32.@LIBEXT@ libgdi.@LIBEXT@ libdispdib.@LIBEXT@: gdi/libgdi32.@LIBEXT@
 	$(RM) $@ && $(LN_S) gdi/libgdi32.@LIBEXT@ $@
 
 libicmp.@LIBEXT@: icmp/libicmp.@LIBEXT@
@@ -193,6 +202,9 @@ libimagehlp.@LIBEXT@: imagehlp/libimagehlp.@LIBEXT@
 
 libimm32.@LIBEXT@: imm32/libimm32.@LIBEXT@
 	$(RM) $@ && $(LN_S) imm32/libimm32.@LIBEXT@ $@
+
+libkernel32.@LIBEXT@ libwow32.@LIBEXT@ libcomm.@LIBEXT@ libkernel.@LIBEXT@ libsystem.@LIBEXT@ libtoolhelp.@LIBEXT@ libwprocs.@LIBEXT@: kernel/libkernel32.@LIBEXT@
+	$(RM) $@ && $(LN_S) kernel/libkernel32.@LIBEXT@ $@
 
 libjoystick.drv.@LIBEXT@: winmm/joystick/libjoystick.drv.@LIBEXT@
 	$(RM) $@ && $(LN_S) winmm/joystick/libjoystick.drv.@LIBEXT@ $@

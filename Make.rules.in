@@ -104,6 +104,7 @@ DLLS = \
 	imagehlp \
 	imm32 \
 	joystick.drv \
+	kernel32 \
 	lz32 \
 	mcianim.drv \
 	mciavi.drv \

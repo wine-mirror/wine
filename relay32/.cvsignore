@@ -1,4 +1,2 @@
 Makefile
 call32.s
-kernel32.spec.c
-wow32.spec.c
