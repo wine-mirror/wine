@@ -102,6 +102,47 @@ typedef struct _PDB
 #define PDB32_FILE_APIS_OEM 0x0040  /* File APIs are OEM */
 #define PDB32_WIN32S_PROC   0x8000  /* Win32s process */
 
+/* USER signal proc flags and codes */
+/* See PROCESS_CallUserSignalProc for comments */
+#define USIG_FLAGS_WIN32          0x0001
+#define USIG_FLAGS_GUI            0x0002
+#define USIG_FLAGS_FEEDBACK       0x0004
+#define USIG_FLAGS_FAULT          0x0008
+
+#define USIG_DLL_UNLOAD_WIN16     0x0001
+#define USIG_DLL_UNLOAD_WIN32     0x0002
+#define USIG_FAULT_DIALOG_PUSH    0x0003
+#define USIG_FAULT_DIALOG_POP     0x0004
+#define USIG_DLL_UNLOAD_ORPHANS   0x0005
+#define USIG_THREAD_INIT          0x0010
+#define USIG_THREAD_EXIT          0x0020
+#define USIG_PROCESS_CREATE       0x0100
+#define USIG_PROCESS_INIT         0x0200
+#define USIG_PROCESS_EXIT         0x0300
+#define USIG_PROCESS_DESTROY      0x0400
+#define USIG_PROCESS_RUNNING      0x0500
+#define USIG_PROCESS_LOADED       0x0600
+
+/* [GS]etProcessDword offsets */
+#define  GPD_APP_COMPAT_FLAGS    (-56)
+#define  GPD_LOAD_DONE_EVENT     (-52)
+#define  GPD_HINSTANCE16         (-48)
+#define  GPD_WINDOWS_VERSION     (-44)
+#define  GPD_THDB                (-40)
+#define  GPD_PDB                 (-36)
+#define  GPD_STARTF_SHELLDATA    (-32)
+#define  GPD_STARTF_HOTKEY       (-28)
+#define  GPD_STARTF_SHOWWINDOW   (-24)
+#define  GPD_STARTF_SIZE         (-20)
+#define  GPD_STARTF_POSITION     (-16)
+#define  GPD_STARTF_FLAGS        (-12)
+#define  GPD_PARENT_PDB          (- 8)
+#define  GPD_FLAGS               (- 4)
+#define  GPD_USERDATA            (  0)
+
+extern DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset );
+void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value );
+
 /* scheduler/environ.c */
 extern BOOL ENV_BuildEnvironment( PDB *pdb );
 extern BOOL ENV_InheritEnvironment( PDB *pdb, LPCSTR env );
@@ -113,6 +154,7 @@ extern PDB *PROCESS_Current(void);
 extern BOOL PROCESS_IsCurrent( HANDLE handle );
 extern PDB *PROCESS_Initial(void);
 extern PDB *PROCESS_IdToPDB( DWORD id );
+extern void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule );
 extern PDB *PROCESS_Create( struct _NE_MODULE *pModule, 
                             LPCSTR cmd_line, LPCSTR env, 
                             HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance, 

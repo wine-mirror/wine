@@ -617,15 +617,10 @@ static BOOL NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
     if (!(pModule->flags & NE_FFLAGS_LIBMODULE) ||
         (pModule->flags & NE_FFLAGS_WIN32)) return TRUE; /*not a library*/
 
-    /* Call USER signal handler. This is necessary to install a
-     * proper loader for HICON and HCURSOR resources that this DLL 
-     * may contain. InitApp() does this for task modules. */
-
+    /* Call USER signal handler for Win3.1 compatibility. */
     if (pTask && pTask->userhandler)
-    {
-        pTask->userhandler( pModule->self, USIG_DLL_LOAD, 0, pTask->hInstance,
-                            pTask->hQueue );
-    }
+        pTask->userhandler( pModule->self, USIG16_DLL_LOAD, 0, 
+                            pTask->hInstance, pTask->hQueue );
 
     if (!pModule->cs) return TRUE;  /* no initialization code */
 

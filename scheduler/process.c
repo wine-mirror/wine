@@ -22,6 +22,7 @@
 #include "pe_image.h"
 #include "task.h"
 #include "server.h"
+#include "callback.h"
 #include "debug.h"
 
 
@@ -98,6 +99,123 @@ PDB *PROCESS_IdToPDB( DWORD id )
     return NULL;
 }
 
+
+/***********************************************************************
+ *           PROCESS_CallUserSignalProc
+ *
+ * FIXME:  Some of the signals aren't sent correctly!
+ *
+ * The exact meaning of the USER signals is undocumented, but this 
+ * should cover the basic idea:
+ *
+ * USIG_DLL_UNLOAD_WIN16
+ *     This is sent when a 16-bit module is unloaded.
+ *
+ * USIG_DLL_UNLOAD_WIN32
+ *     This is sent when a 32-bit module is unloaded.
+ *
+ * USIG_DLL_UNLOAD_ORPHANS
+ *     This is sent after the last Win3.1 module is unloaded,
+ *     to allow removal of orphaned menus.
+ *
+ * USIG_FAULT_DIALOG_PUSH
+ * USIG_FAULT_DIALOG_POP
+ *     These are called to allow USER to prepare for displaying a
+ *     fault dialog, even though the fault might have happened while
+ *     inside a USER critical section.
+ *
+ * USIG_THREAD_INIT
+ *     This is called from the context of a new thread, as soon as it
+ *     has started to run.
+ *
+ * USIG_THREAD_EXIT
+ *     This is called, still in its context, just before a thread is
+ *     about to terminate.
+ *
+ * USIG_PROCESS_CREATE
+ *     This is called, in the parent process context, after a new process
+ *     has been created.
+ *
+ * USIG_PROCESS_INIT
+ *     This is called in the new process context, just after the main thread
+ *     has started execution (after the main thread's USIG_THREAD_INIT has
+ *     been sent).
+ *
+ * USIG_PROCESS_LOADED
+ *     This is called after the executable file has been loaded into the
+ *     new process context.
+ *
+ * USIG_PROCESS_RUNNING
+ *     This is called immediately before the main entry point is called.
+ *
+ * USIG_PROCESS_EXIT
+ *     This is called in the context of a process that is about to
+ *     terminate (but before the last thread's USIG_THREAD_EXIT has
+ *     been sent).
+ *
+ * USIG_PROCESS_DESTROY
+ *     This is called after a process has terminated.
+ *
+ *
+ * The meaning of the dwFlags bits is as follows:
+ *
+ * USIG_FLAGS_WIN32
+ *     Current process is 32-bit.
+ *
+ * USIG_FLAGS_GUI
+ *     Current process is a (Win32) GUI process.
+ *
+ * USIG_FLAGS_FEEDBACK 
+ *     Current process needs 'feedback' (determined from the STARTUPINFO
+ *     flags STARTF_FORCEONFEEDBACK / STARTF_FORCEOFFFEEDBACK).
+ *
+ * USIG_FLAGS_FAULT
+ *     The signal is being sent due to a fault.
+ */
+void PROCESS_CallUserSignalProc( UINT uCode, HMODULE hModule )
+{
+    PDB *pdb = PROCESS_Current();
+    STARTUPINFOA *startup = pdb->env_db? pdb->env_db->startup_info : NULL;
+    DWORD dwFlags = 0, dwThreadOrProcessID;
+
+    /* Determine dwFlags */
+
+    if ( !(pdb->flags & PDB32_WIN16_PROC) )
+        dwFlags |= USIG_FLAGS_WIN32;
+
+    if ( !(pdb->flags & PDB32_CONSOLE_PROC) )
+        dwFlags |= USIG_FLAGS_GUI;
+
+    if ( dwFlags & USIG_FLAGS_GUI )
+    {
+        /* Feedback defaults to ON */
+        if ( !(startup && (startup->dwFlags & STARTF_FORCEOFFFEEDBACK)) )
+            dwFlags |= USIG_FLAGS_FEEDBACK;
+    }
+    else
+    {
+        /* Feedback defaults to OFF */
+        if ( startup && (startup->dwFlags & STARTF_FORCEONFEEDBACK) )
+            dwFlags |= USIG_FLAGS_FEEDBACK;
+    }
+
+    /* Get thread or process ID */
+
+    if ( uCode == USIG_THREAD_INIT || uCode == USIG_THREAD_EXIT )
+        dwThreadOrProcessID = GetCurrentThreadId();
+    else
+        dwThreadOrProcessID = GetCurrentProcessId();
+
+    /* Convert module handle to 16-bit */
+
+    if ( HIWORD( hModule ) )
+        hModule = MapHModuleLS( hModule );
+
+    /* Call USER signal proc */
+
+    if ( Callout.UserSignalProc )
+        Callout.UserSignalProc( uCode, dwThreadOrProcessID, dwFlags, hModule );
+}
 
 
 /***********************************************************************
@@ -332,6 +450,8 @@ void PROCESS_Start(void)
     NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
     OFSTRUCT *ofs = (OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo);
 
+    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );  /* for initial thread */
+
 #if 0
     /* Initialize the critical section */
 
@@ -354,6 +474,8 @@ void PROCESS_Start(void)
 
 #endif
 
+    PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0 );
+
     /* Map system DLLs into this process (from initial process) */
     /* FIXME: this is a hack */
     pdb->modref_list = PROCESS_Initial()->modref_list;
@@ -361,16 +483,21 @@ void PROCESS_Start(void)
     /* Create 32-bit MODREF */
     if (!PE_CreateModule( pModule->module32, ofs, 0, FALSE )) goto error;
 
+    PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0 );   /* FIXME: correct location? */
+
     /* Initialize thread-local storage */
 
     PE_InitTls();
 
-    if (PE_HEADER(pModule->module32)->OptionalHeader.Subsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI)
+    if ( pdb->flags & PDB32_CONSOLE_PROC )
         AllocConsole();
 
     /* Now call the entry point */
 
     MODULE_InitializeDLLs( 0, DLL_PROCESS_ATTACH, (LPVOID)1 );
+
+    PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
+
     entry = (LPTHREAD_START_ROUTINE)RVA_PTR(pModule->module32,
                                             OptionalHeader.AddressOfEntryPoint);
     TRACE(relay, "(entryproc=%p)\n", entry );
@@ -432,6 +559,15 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
 
     InitializeCriticalSection( &pdb->crit_section );
 
+    /* Setup process flags */
+
+    if ( !pModule->module32 )
+        pdb->flags |= PDB32_WIN16_PROC;
+
+    else if ( PE_HEADER(pModule->module32)->OptionalHeader.Subsystem
+              == IMAGE_SUBSYSTEM_WINDOWS_CUI )
+        pdb->flags |= PDB32_CONSOLE_PROC;
+
     /* Create the heap */
 
     if (pModule->module32)
@@ -443,7 +579,6 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     {
 	size = 0x10000;
 	commit = 0;
-        pdb->flags |= PDB32_WIN16_PROC;  /* This is a Win16 process */
     }
     if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, size, commit ))) goto error;
     pdb->heap_list = pdb->heap;
@@ -530,6 +665,126 @@ BOOL WINAPI TerminateProcess( HANDLE handle, DWORD exit_code )
     CLIENT_SendRequest( REQ_TERMINATE_PROCESS, -1, 1, &req, sizeof(req) );
     return !CLIENT_WaitReply( NULL, NULL, 0 );
 }
+
+
+/***********************************************************************
+ *           GetProcessDword    (KERNEL32.18) (KERNEL.485)
+ * 'Of course you cannot directly access Windows internal structures'
+ */
+DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
+{
+    PDB *process = PROCESS_IdToPDB( dwProcessID );
+    TDB *pTask;
+    DWORD x, y;
+
+    TRACE( win32, "(%ld, %d)\n", dwProcessID, offset );
+    if ( !process ) return 0;
+
+    switch ( offset ) 
+    {
+    case GPD_APP_COMPAT_FLAGS:
+        pTask = (TDB *)GlobalLock16( process->task );
+        return pTask? pTask->compat_flags : 0;
+
+    case GPD_LOAD_DONE_EVENT:
+        return process->load_done_evt;
+
+    case GPD_HINSTANCE16:
+        pTask = (TDB *)GlobalLock16( process->task );
+        return pTask? pTask->hInstance : 0;
+
+    case GPD_WINDOWS_VERSION:
+        pTask = (TDB *)GlobalLock16( process->task );
+        return pTask? pTask->version : 0;
+
+    case GPD_THDB:
+        if ( process != PROCESS_Current() ) return 0;
+        return (DWORD)THREAD_Current();
+
+    case GPD_PDB:
+        return (DWORD)process;
+
+    case GPD_STARTF_SHELLDATA: /* return stdoutput handle from startupinfo ??? */
+        return process->env_db->startup_info->hStdOutput;
+
+    case GPD_STARTF_HOTKEY: /* return stdinput handle from startupinfo ??? */
+        return process->env_db->startup_info->hStdInput;
+
+    case GPD_STARTF_SHOWWINDOW:
+        return process->env_db->startup_info->wShowWindow;
+
+    case GPD_STARTF_SIZE:
+        x = process->env_db->startup_info->dwXSize;
+        if ( x == CW_USEDEFAULT ) x = CW_USEDEFAULT16;
+        y = process->env_db->startup_info->dwYSize;
+        if ( y == CW_USEDEFAULT ) y = CW_USEDEFAULT16;
+        return MAKELONG( x, y );
+
+    case GPD_STARTF_POSITION:
+        x = process->env_db->startup_info->dwX;
+        if ( x == CW_USEDEFAULT ) x = CW_USEDEFAULT16;
+        y = process->env_db->startup_info->dwY;
+        if ( y == CW_USEDEFAULT ) y = CW_USEDEFAULT16;
+        return MAKELONG( x, y );
+
+    case GPD_STARTF_FLAGS:
+        return process->env_db->startup_info->dwFlags;
+
+    case GPD_PARENT_PDB:
+        return (DWORD)process->parent;
+
+    case GPD_FLAGS:
+        return process->flags;
+
+    case GPD_USERDATA:
+        return process->process_dword;
+
+    default:
+        ERR( win32, "Unknown offset %d\n", offset );
+        return 0;
+    }
+}
+
+/***********************************************************************
+ *           SetProcessDword    (KERNEL.484)
+ * 'Of course you cannot directly access Windows internal structures'
+ */
+void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value )
+{
+    PDB *process = PROCESS_IdToPDB( dwProcessID );
+
+    TRACE( win32, "(%ld, %d)\n", dwProcessID, offset );
+    if ( !process ) return;
+
+    switch ( offset ) 
+    {
+    case GPD_APP_COMPAT_FLAGS:
+    case GPD_LOAD_DONE_EVENT:
+    case GPD_HINSTANCE16:
+    case GPD_WINDOWS_VERSION:
+    case GPD_THDB:
+    case GPD_PDB:
+    case GPD_STARTF_SHELLDATA:
+    case GPD_STARTF_HOTKEY:
+    case GPD_STARTF_SHOWWINDOW:
+    case GPD_STARTF_SIZE:
+    case GPD_STARTF_POSITION:
+    case GPD_STARTF_FLAGS:
+    case GPD_PARENT_PDB:
+    case GPD_FLAGS:
+        ERR( win32, "Not allowed to modify offset %d\n", offset );
+        break;
+
+    case GPD_USERDATA:
+        process->process_dword = value; 
+        break;
+
+    default:
+        ERR( win32, "Unknown offset %d\n", offset );
+        break;
+    }
+}
+
 
 /***********************************************************************
  *           GetCurrentProcess   (KERNEL32.198)

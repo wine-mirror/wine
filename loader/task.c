@@ -238,6 +238,12 @@ static void TASK_CallToStart(void)
     /* Terminate the stack frame chain */
     memset(THREAD_STACK16( pTask->thdb ), '\0', sizeof(STACK16FRAME));
 
+    /* Call USER signal proc */
+    PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );  /* for initial thread */
+    PROCESS_CallUserSignalProc( USIG_PROCESS_INIT, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_LOADED, 0 );
+    PROCESS_CallUserSignalProc( USIG_PROCESS_RUNNING, 0 );
+
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
         ERR( task, "Called for Win32 task!\n" );
@@ -297,7 +303,7 @@ BOOL TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
                   HINSTANCE16 hPrevInstance, UINT16 cmdShow)
 {
     HTASK16 hTask;
-    TDB *pTask, *pInitialTask;
+    TDB *pTask;
     LPSTR cmd_line;
     WORD sp;
     char *stack32Top;
@@ -395,12 +401,6 @@ BOOL TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
 
     pTask->dta = PTR_SEG_OFF_TO_SEGPTR( pTask->hPDB, 
                                 (int)&pTask->pdb.cmdLine - (int)&pTask->pdb );
-
-    /* Inherit default UserSignalHandler from initial process */
-
-    pInitialTask = (TDB *)GlobalLock16( PROCESS_Initial()->task );
-    if ( pInitialTask )
-        pTask->userhandler = pInitialTask->userhandler;
 
     /* If we have a DGROUP/hInstance, use it for 16-bit stack */
  
@@ -571,8 +571,12 @@ void TASK_KillTask( HTASK16 hTask )
     /* Perform USER cleanup */
 
     if (pTask->userhandler)
-        pTask->userhandler( hCurrentTask, USIG_TERMINATION, 0,
+        pTask->userhandler( hTask, USIG16_TERMINATION, 0,
                             pTask->hInstance, pTask->hQueue );
+
+    PROCESS_CallUserSignalProc( USIG_PROCESS_EXIT, 0 );
+    PROCESS_CallUserSignalProc( USIG_THREAD_EXIT, 0 );     /* FIXME */
+    PROCESS_CallUserSignalProc( USIG_PROCESS_DESTROY, 0 );
 
     if (nTaskCount <= 1)
     {
