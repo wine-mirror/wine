@@ -38,7 +38,6 @@
 #include "wine/debug.h"
 #include "wine/library.h"
 #include "flatthunk.h"
-#include "heap.h"
 #include "module.h"
 #include "miscemu.h"
 #include "selectors.h"

@@ -27,7 +27,6 @@
 #include "winreg.h"
 #include "wine/debug.h"
 #include "winnls.h"
-#include "heap.h"
 
 #include "shellapi.h"
 #include "shlguid.h"

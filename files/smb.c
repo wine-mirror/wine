@@ -103,8 +103,8 @@
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "file.h"
-#include "heap.h"
 
 #include "smb.h"
 

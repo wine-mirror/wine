@@ -29,7 +29,6 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
-#include "heap.h"
 #include "commdlg.h"
 #include "wine/debug.h"
 #include "cderr.h"

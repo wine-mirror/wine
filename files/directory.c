@@ -44,7 +44,6 @@
 #include "wine/unicode.h"
 #include "drive.h"
 #include "file.h"
-#include "heap.h"
 #include "msdos.h"
 #include "wine/debug.h"
 

@@ -156,7 +156,6 @@
 
 #include "winbase.h"
 #include "winnt.h"
-#include "heap.h"
 #include "commctrl.h"
 #include "comctl32.h"
 

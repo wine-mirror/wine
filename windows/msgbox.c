@@ -26,7 +26,6 @@
 #include "wine/winuser16.h"
 #include "winternl.h"
 #include "dlgs.h"
-#include "heap.h"
 #include "user.h"
 #include "wine/debug.h"
 

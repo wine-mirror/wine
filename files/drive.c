@@ -65,7 +65,6 @@
 #include "ntddcdrm.h"
 #include "drive.h"
 #include "file.h"
-#include "heap.h"
 #include "msdos.h"
 #include "task.h"
 #include "wine/unicode.h"

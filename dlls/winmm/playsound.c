@@ -27,7 +27,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "heap.h"
 #include "winreg.h"
 #include "winemm.h"
 #include "winternl.h"

@@ -36,7 +36,6 @@
 #include "wine/server.h"
 #include "controls.h"
 #include "dde.h"
-#include "heap.h"
 #include "message.h"
 #include "thread.h"
 #include "user.h"

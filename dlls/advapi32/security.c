@@ -23,7 +23,6 @@
 #include "windef.h"
 #include "winerror.h"
 #include "rpcnterr.h"
-#include "heap.h"
 #include "winternl.h"
 #include "ntsecapi.h"
 #include "accctrl.h"

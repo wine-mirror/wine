@@ -21,7 +21,6 @@
 #include "winbase.h"
 #include "windef.h"
 #include "winerror.h"
-#include "heap.h"
 #include "winternl.h"
 
 #include "wine/debug.h"
