@@ -40,7 +40,7 @@ all: $(PROGRAMS) $(SUBDIRS)
 widl wrc: wpp
 
 makedep: makedep.o
-	$(CC) $(CFLAGS) -o makedep makedep.o $(LIBPORT)
+	$(CC) $(CFLAGS) -o makedep makedep.o
 
 fnt2bdf: fnt2bdf.o
 	$(CC) $(CFLAGS) -o fnt2bdf fnt2bdf.o $(LIBPORT)

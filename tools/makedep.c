@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#define NO_LIBWINE_PORT
 #include "wine/port.h"
 
 #include <ctype.h>
