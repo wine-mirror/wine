@@ -54,16 +54,6 @@ HRESULT WINAPI OleDuplicateData(HANDLE hSrc, CLIPFORMAT cfFormat,
 
 
 /***********************************************************************
- *               WriteFmtUserTypeStg (OLE32.160)
- */
-HRESULT WINAPI WriteFmtUserTypeStg(
-	  LPSTORAGE pstg, CLIPFORMAT cf, LPOLESTR lpszUserType)
-{
-    FIXME("(%p,%x,%s) stub!\n",pstg,cf,debugstr_w(lpszUserType));
-    return E_NOTIMPL;
-}
-
-/***********************************************************************
  *             OleTranslateAccelerator [OLE32.130]
  */
 HRESULT WINAPI OleTranslateAccelerator (LPOLEINPLACEFRAME lpFrame,
@@ -159,14 +149,6 @@ HGLOBAL WINAPI OleGetIconOfClass(REFCLSID rclsid, LPOLESTR lpszLabel, BOOL fUseT
   return NULL;
 }
 
-/******************************************************************************
- *              ReadFmtUserTypeStg        [OLE32.136]
- */
-HRESULT WINAPI ReadFmtUserTypeStg (LPSTORAGE pstg, CLIPFORMAT* pcf, LPOLESTR* lplpszUserType)
-{
-  FIXME("(%p,%p,%p), stub!\n", pstg, pcf, lplpszUserType);
-  return E_NOTIMPL;
-}
 
 /******************************************************************************
  *              OleCreateStaticFromData        [OLE32.98]

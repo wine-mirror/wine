@@ -33,6 +33,7 @@
 #define NONAMELESSSTRUCT
 #include "winbase.h" /* for lstrlenW() and the likes */
 #include "winnls.h"
+#include "winuser.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -6541,6 +6542,285 @@ void OLECONVERT_CreateOleStream(LPSTORAGE pStorage)
         hRes = IStream_Write(pStream, pOleStreamHeader, sizeof(pOleStreamHeader), NULL);
         IStream_Release(pStream);
     }
+}
+
+/* write a string to a stream, preceded by its length */
+static HRESULT STREAM_WriteString( IStream *stm, LPCWSTR string )
+{
+    HRESULT r;
+    LPSTR str;
+    DWORD len = 0;
+
+    if( string )
+        len = WideCharToMultiByte( CP_ACP, 0, string, -1, NULL, 0, NULL, NULL);
+    r = IStream_Write( stm, &len, sizeof len, NULL);
+    if( FAILED( r ) )
+        return r;
+    if(len == 0)
+        return r;
+    str = CoTaskMemAlloc( len );
+    WideCharToMultiByte( CP_ACP, 0, string, -1, str, len, NULL, NULL);
+    r = IStream_Write( stm, str, len, NULL);
+    CoTaskMemFree( str );
+    return r;
+}
+
+/* read a string preceded by its length from a stream */
+static HRESULT STREAM_ReadString( IStream *stm, LPWSTR *string )
+{
+    HRESULT r;
+    DWORD len, count = 0;
+    LPSTR str;
+    LPWSTR wstr;
+
+    r = IStream_Read( stm, &len, sizeof len, &count );
+    if( FAILED( r ) )
+        return r;
+    if( count != sizeof len )
+        return E_OUTOFMEMORY;
+
+    TRACE("%ld bytes\n",len);
+    
+    str = CoTaskMemAlloc( len );
+    if( !str )
+        return E_OUTOFMEMORY;
+    count = 0;
+    r = IStream_Read( stm, str, len, &count );
+    if( FAILED( r ) )
+        return r;
+    if( count != len )
+    {
+        CoTaskMemFree( str );
+        return E_OUTOFMEMORY;
+    }
+
+    TRACE("Read string %s\n",debugstr_an(str,len));
+
+    len = MultiByteToWideChar( CP_ACP, 0, str, count, NULL, 0 );
+    wstr = CoTaskMemAlloc( (len + 1)*sizeof (WCHAR) );
+    if( wstr )
+         MultiByteToWideChar( CP_ACP, 0, str, count, wstr, len );
+    CoTaskMemFree( str );
+
+    *string = wstr;
+
+    return r;
+}
+
+
+static HRESULT STORAGE_WriteCompObj( LPSTORAGE pstg, CLSID *clsid,
+    LPCWSTR lpszUserType, LPCWSTR szClipName, LPCWSTR szProgIDName )
+{
+    IStream *pstm;
+    HRESULT r = S_OK;
+    WCHAR szwStreamName[] = {1, 'C', 'o', 'm', 'p', 'O', 'b', 'j', 0};
+
+    static const BYTE unknown1[12] =
+       { 0x01, 0x00, 0xFE, 0xFF, 0x03, 0x0A, 0x00, 0x00,
+         0xFF, 0xFF, 0xFF, 0xFF};
+    static const BYTE unknown2[16] =
+       { 0xF4, 0x39, 0xB2, 0x71, 0x00, 0x00, 0x00, 0x00,
+         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+    TRACE("%p %s %s %s %s\n", pstg, debugstr_guid(clsid),
+           debugstr_w(lpszUserType), debugstr_w(szClipName),
+           debugstr_w(szProgIDName));
+
+    /*  Create a CompObj stream if it doesn't exist */
+    r = IStorage_CreateStream(pstg, szwStreamName,
+        STGM_WRITE  | STGM_SHARE_EXCLUSIVE, 0, 0, &pstm );
+    if( FAILED (r) )
+        return r;
+
+    /* Write CompObj Structure to stream */
+    r = IStream_Write(pstm, unknown1, sizeof unknown1, NULL);
+
+    if( SUCCEEDED( r ) )
+        r = WriteClassStm( pstm, clsid );
+
+    if( SUCCEEDED( r ) )
+        r = STREAM_WriteString( pstm, lpszUserType );
+    if( SUCCEEDED( r ) )
+        r = STREAM_WriteString( pstm, szClipName );
+    if( SUCCEEDED( r ) )
+        r = STREAM_WriteString( pstm, szProgIDName );
+    if( SUCCEEDED( r ) )
+        r = IStream_Write(pstm, unknown2, sizeof unknown2, NULL);
+
+    IStream_Release( pstm );
+
+    return r;
+}
+
+/* enumerate HKEY_CLASSES_ROOT\\CLSID looking for a CLSID whose name matches */
+static HRESULT CLSIDFromUserType(LPCWSTR lpszUserType, CLSID *clsid)
+{
+    LONG r, count, i, len;
+    WCHAR szKey[0x40];
+    HKEY hkey, hkeyclsid;
+    LPWSTR buffer = NULL;
+    BOOL found = FALSE;
+    const WCHAR szclsid[] = { 'C','L','S','I','D',0 };
+
+    TRACE("Finding CLSID for %s\n", debugstr_w(lpszUserType));
+
+    r = RegOpenKeyW( HKEY_CLASSES_ROOT, szclsid, &hkeyclsid );
+    if( r )
+        return E_INVALIDARG;
+
+    len = lstrlenW( lpszUserType ) + 1;
+    buffer = CoTaskMemAlloc( len * sizeof (WCHAR) );
+    if( !buffer )
+        goto end;
+
+    for(i=0; !found; i++ )
+    {
+        r = RegEnumKeyW( hkeyclsid, i, szKey, sizeof szKey/sizeof(WCHAR));
+        if( r != ERROR_SUCCESS )
+            break;
+        hkey = 0;
+        r = RegOpenKeyW( hkeyclsid, szKey, &hkey );
+        if( r != ERROR_SUCCESS )
+            break;
+        count = len * sizeof (WCHAR);
+        r = RegQueryValueW( hkey, NULL, buffer, &count );
+        found = ( r == ERROR_SUCCESS ) &&
+                ( count == len*sizeof(WCHAR) ) && 
+                !lstrcmpW( buffer, lpszUserType ) ;
+        RegCloseKey( hkey );
+    }
+
+end:
+    if( buffer )
+        CoTaskMemFree( buffer );
+    RegCloseKey( hkeyclsid );
+
+    if ( !found )
+        return E_INVALIDARG;
+
+    TRACE("clsid is %s\n", debugstr_w( szKey ) );
+
+    r = CLSIDFromString( szKey, clsid );
+
+    return r;
+}
+
+
+/***********************************************************************
+ *               WriteFmtUserTypeStg (OLE32.160)
+ */
+HRESULT WINAPI WriteFmtUserTypeStg(
+	  LPSTORAGE pstg, CLIPFORMAT cf, LPOLESTR lpszUserType)
+{
+    HRESULT r;
+    WCHAR szwClipName[0x40];
+    WCHAR szCLSIDName[OLESTREAM_MAX_STR_LEN];
+    CLSID clsid;
+    LPWSTR wstrProgID;
+    DWORD n;
+    LPMALLOC allocator = NULL;
+
+    TRACE("(%p,%x,%s)\n",pstg,cf,debugstr_w(lpszUserType));
+
+    r = CoGetMalloc(0, &allocator);
+    if( FAILED( r) )
+        return E_OUTOFMEMORY;
+
+    /* get the clipboard format name */
+    n = GetClipboardFormatNameW( cf, szwClipName, sizeof szwClipName );
+    szwClipName[n]=0;
+
+    TRACE("Clipboard name is %s\n", debugstr_w(szwClipName));
+
+    /* Get the CLSID */
+    szCLSIDName[0]=0;
+    r = CLSIDFromUserType(lpszUserType, &clsid);
+    if( FAILED( r ) )
+        return r;
+
+    TRACE("CLSID is %s\n",debugstr_guid(&clsid));
+
+    /* get the real program ID */
+    r = ProgIDFromCLSID( &clsid, &wstrProgID);
+    if( FAILED( r ) )
+        return r;
+
+    TRACE("progid is %s\n",debugstr_w(wstrProgID));
+
+    /* if we have a good string, write the stream */
+    if( wstrProgID )
+        r = STORAGE_WriteCompObj( pstg, &clsid, 
+                lpszUserType, szwClipName, wstrProgID );
+    else
+        r = E_OUTOFMEMORY;
+
+    IMalloc_Free( allocator, wstrProgID);
+
+    return r;
+}
+
+
+/******************************************************************************
+ *              ReadFmtUserTypeStg        [OLE32.136]
+ */
+HRESULT WINAPI ReadFmtUserTypeStg (LPSTORAGE pstg, CLIPFORMAT* pcf, LPOLESTR* lplpszUserType)
+{
+    HRESULT r;
+    IStream *stm = 0;
+    const WCHAR szCompObj[] = { 1, 'C','o','m','p','O','b','j', 0 };
+    unsigned char unknown1[12];
+    unsigned char unknown2[16];
+    DWORD count;
+    LPWSTR szProgIDName = NULL, szCLSIDName = NULL, szOleTypeName = NULL;
+    CLSID clsid;
+
+    TRACE("(%p,%p,%p)\n", pstg, pcf, lplpszUserType);
+
+    r = IStorage_OpenStream( pstg, szCompObj, NULL, 
+                    STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stm );
+    if( FAILED ( r ) )
+    {
+        ERR("Failed to open stream\n");
+        return r;
+    }
+
+    /* read the various parts of the structure */
+    r = IStream_Read( stm, unknown1, sizeof unknown1, &count );
+    if( FAILED( r ) || ( count != sizeof unknown1 ) )
+        goto end;
+    r = ReadClassStm( stm, &clsid );
+    if( FAILED( r ) )
+        goto end;
+
+    r = STREAM_ReadString( stm, &szCLSIDName );
+    if( FAILED( r ) )
+        goto end;
+
+    r = STREAM_ReadString( stm, &szOleTypeName );
+    if( FAILED( r ) )
+        goto end;
+
+    r = STREAM_ReadString( stm, &szProgIDName );
+    if( FAILED( r ) )
+        goto end;
+
+    r = IStream_Read( stm, unknown2, sizeof unknown2, &count );
+    if( FAILED( r ) || ( count != sizeof unknown2 ) )
+        goto end;
+
+    /* ok, success... now we just need to store what we found */
+    if( pcf )
+        *pcf = RegisterClipboardFormatW( szOleTypeName );
+    CoTaskMemFree( szOleTypeName );
+
+    if( lplpszUserType )
+        *lplpszUserType = szCLSIDName;
+    CoTaskMemFree( szProgIDName );
+
+end:
+    IStream_Release( stm );
+
+    return r;
 }
 
 
