@@ -25,7 +25,7 @@ init	Shell32LibMain
   17 stdcall ILRemoveLastID(ptr) ILRemoveLastID
   18 stdcall ILClone(ptr) ILClone
   19 stdcall ILCloneFirst (ptr) ILCloneFirst
-  20 stub ILGlobalClone@4
+  20 stdcall ILGlobalClone (ptr) ILGlobalClone
   21 stdcall ILIsEqual (ptr ptr) ILIsEqual
   22 stdcall Control_RunDLL(long long long long) Control_RunDLL # exported by name
   23 stdcall ILIsParent (long long long) ILIsParent
@@ -160,8 +160,8 @@ init	Shell32LibMain
  152 stdcall ILGetSize(ptr) ILGetSize
  153 stdcall ILGetNext(ptr) ILGetNext
  154 stdcall ILAppend (long long long) ILAppend
- 155 stdcall ILFree(ptr) ILFree
- 156 stub ILGlobalFree
+ 155 stdcall ILFree (ptr) ILFree
+ 156 stdcall ILGlobalFree (ptr) ILGlobalFree
  157 stdcall ILCreateFromPath (ptr) ILCreateFromPath
  158 stdcall PathGetExtension(str long long) PathGetExtension32AW
  159 stub PathIsDirectory

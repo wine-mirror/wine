@@ -136,6 +136,28 @@ LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl)
   	return newpidl;
 }
 /*************************************************************************
+ * ILGlobalClone [SHELL32.97]
+ *
+ */
+LPITEMIDLIST WINAPI ILGlobalClone(LPCITEMIDLIST pidl)
+{	DWORD    len;
+	LPITEMIDLIST  newpidl;
+
+	if (!pidl)
+	  return NULL;
+    
+	len = ILGetSize(pidl);
+	newpidl = (LPITEMIDLIST)pCOMCTL32_Alloc(len);
+	if (newpidl)
+	  memcpy(newpidl,pidl,len);
+
+	TRACE(pidl,"pidl=%p newpidl=%p\n",pidl, newpidl);
+	pdump(pidl);
+
+	return newpidl;
+}
+
+/*************************************************************************
  * ILIsEqual [SHELL32.21]
  *
  */
@@ -394,11 +416,25 @@ LPITEMIDLIST WINAPI ILAppend(LPITEMIDLIST pidl,LPCITEMIDLIST item,BOOL32 bEnd)
  *     allocated by SHMalloc allocator
  *     exported by ordinal
  */
-DWORD WINAPI ILFree(LPVOID pidl) 
+DWORD WINAPI ILFree(LPITEMIDLIST pidl) 
 {	TRACE(pidl,"(pidl=0x%08lx)\n",(DWORD)pidl);
+
 	if (!pidl)
-	  return 0;
+	  return FALSE;
+
 	return SHFree(pidl);
+}
+/*************************************************************************
+ * ILGlobalFree [SHELL32.156]
+ *
+ */
+DWORD WINAPI ILGlobalFree( LPITEMIDLIST pidl)
+{	TRACE(pidl,"%p\n",pidl);
+
+	if (!pidl)
+	  return FALSE;
+
+	return pCOMCTL32_Free (pidl);
 }
 /*************************************************************************
  * ILCreateFromPath [SHELL32.157]
