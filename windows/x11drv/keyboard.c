@@ -258,6 +258,16 @@ static const char main_key_HU[MAIN_LEN][4] =
  "íÍ<"
 };
 
+/*** Polish (programmer's) keyboard layout ***/
+static const char main_key_PL[MAIN_LEN][4] =
+{
+ "`~","1!","2@","3#","4$","5%","6^","7&§","8*","9(","0)","-_","=+",
+ "qQ","wW","eEêÊ","rR","tT","yY","uU","iI","oOóÓ","pP","[{","]}",
+ "aA±¡","sS¶¦","dD","fF","gG","hH","jJ","kK","lL³£",";:","'\"","\\|",
+ "zZ¿¯","xX¼¬","cCæÆ","vV","bB","nNñÑ","mM",",<",".>","/?",
+ "<>|"
+};
+
 /*** Layout table. Add your keyboard mappings to this list */
 static struct {
  WORD lang, ansi_codepage, oem_codepage;
@@ -284,6 +294,7 @@ static struct {
  {MAKELANGID(LANG_ITALIAN,SUBLANG_DEFAULT),        1252, 850, &main_key_IT},
  {MAKELANGID(LANG_ICELANDIC,SUBLANG_DEFAULT),      1252, 850, &main_key_IS},
  {MAKELANGID(LANG_HUNGARIAN,SUBLANG_DEFAULT),      1252, 850, &main_key_HU},
+ {MAKELANGID(LANG_POLISH,SUBLANG_DEFAULT),         1250, 852, &main_key_PL},
 
  {0} /* sentinel */
 };
