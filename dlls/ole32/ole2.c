@@ -20,7 +20,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "wingdi.h"
 #include "winuser.h"
 #include "winreg.h"
 

@@ -19,7 +19,6 @@
 #include "ole2.h"
 #include "ole2ver.h"
 #include "rpc.h"
-#include "wingdi.h"
 #include "winerror.h"
 #include "winreg.h"
 #include "wownt32.h"

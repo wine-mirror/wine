@@ -17,7 +17,6 @@
 #include "winerror.h"
 #include "wine/winbase16.h"
 #include "wine/unicode.h"
-#include "wingdi.h"
 #include "wtypes.h"
 #include "wine/obj_base.h"
 #include "wine/obj_storage.h"
