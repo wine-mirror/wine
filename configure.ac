@@ -1253,7 +1253,7 @@ AC_CACHE_CHECK([whether linux/input.h is for real],
 
 AC_CACHE_CHECK([whether we can use re-entrant gethostbyname_r Linux style],
    	wine_cv_linux_gethostbyname_r_6,
-	AC_TRY_COMPILE([
+	AC_TRY_LINK([
 #include <netdb.h>
 	], [
     char *name=NULL;
