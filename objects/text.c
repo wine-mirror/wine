@@ -158,7 +158,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
             FIXME("called on an open path\n");
         else if(dc->funcs->pExtTextOut)
         {
-            if( !(flags&(ETO_GLYPH_INDEX|ETO_IGNORELANGUAGE)) && BidiAvail )
+            if( !(flags&(ETO_GLYPH_INDEX|ETO_IGNORELANGUAGE)) && BidiAvail && count>0 )
             {
                 /* The caller did not specify that language processing was already done.
                  */
