@@ -1067,7 +1067,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 
     case SPI_SETFASTTASKSWITCH:                 /*     36 */
         /* the action is disabled */
-        fWinIni = 0;
+        ret = FALSE;
         break;
     
     case SPI_SETDRAGFULLWINDOWS:                /*     37  WINVER >= 0x0400 */
