@@ -56,8 +56,7 @@ static void setup_main_key(void)
 {
     if (RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkey_main )) delete_key( hkey_main );
 
-    assert (!RegCreateKeyExA( HKEY_CURRENT_USER, "Software\\Wine\\Test", 0, NULL,
-                              REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey_main, NULL ));
+    assert (!RegCreateKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkey_main ));
 }
 
 static void create_test_entries(void)
