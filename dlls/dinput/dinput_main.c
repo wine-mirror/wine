@@ -107,6 +107,7 @@ HRESULT WINAPI DirectInputCreateEx(
 	  This = (IDirectInputAImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputAImpl));
 	  This->lpVtbl = &ddi7avt;
 	  This->ref = 1;
+	  This->version = 1;
 	  *ppDI = This;
 
 	  return DI_OK;
@@ -117,6 +118,7 @@ HRESULT WINAPI DirectInputCreateEx(
 	  This = (IDirectInputAImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputAImpl));
 	  This->lpVtbl = &ddi8avt;
 	  This->ref = 1;
+	  This->version = 8;
 	  *ppDI = This;
 
 	  return DI_OK;
@@ -157,7 +159,7 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
 
 	for (i = 0; i < nrof_dinput_devices; i++) {
 	  devInstance.dwSize = sizeof(devInstance);
-	  if (dinput_devices[i]->enum_device(dwDevType, dwFlags, &devInstance)) {
+	  if (dinput_devices[i]->enum_device(dwDevType, dwFlags, &devInstance, This->version)) {
 	    if (lpCallback(&devInstance,pvRef) == DIENUM_STOP)
 	      return 0;
 	  }

@@ -146,7 +146,7 @@ static GUID DInput_Wine_Mouse_GUID = { /* 9e573ed8-7734-11d2-8d4a-23903fb6bdf7 *
   {0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7}
 };
 
-static void fill_mouse_dideviceinstancea(LPDIDEVICEINSTANCEA lpddi) {
+static void fill_mouse_dideviceinstancea(LPDIDEVICEINSTANCEA lpddi, int version) {
     DWORD dwSize;
     DIDEVICEINSTANCEA ddi;
     
@@ -160,19 +160,24 @@ static void fill_mouse_dideviceinstancea(LPDIDEVICEINSTANCEA lpddi) {
     ddi.dwSize = dwSize;
     ddi.guidInstance = GUID_SysMouse;/* DInput's GUID */
     ddi.guidProduct = DInput_Wine_Mouse_GUID; /* Vendor's GUID */
-    ddi.dwDevType = DIDEVTYPE_MOUSE | (DIDEVTYPEMOUSE_UNKNOWN << 8);
+    if (version >= 8)
+        ddi.dwDevType = DI8DEVTYPE_MOUSE | (DI8DEVTYPEMOUSE_TRADITIONAL << 8);
+    else
+        ddi.dwDevType = DIDEVTYPE_MOUSE | (DIDEVTYPEMOUSE_TRADITIONAL << 8);
     strcpy(ddi.tszInstanceName, "Mouse");
     strcpy(ddi.tszProductName, "Wine Mouse");
 
     memcpy(lpddi, &ddi, (dwSize < sizeof(ddi) ? dwSize : sizeof(ddi)));
 }
 
-static BOOL mousedev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi)
+static BOOL mousedev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, int version)
 {
-  if ((dwDevType == 0) || (dwDevType == DIDEVTYPE_MOUSE)) {
+  if ((dwDevType == 0) ||
+      ((dwDevType == DIDEVTYPE_MOUSE) && (version < 8)) ||
+      ((dwDevType == DI8DEVTYPE_MOUSE) && (version >= 8))) {
     TRACE("Enumerating the mouse device\n");
 
-    fill_mouse_dideviceinstancea(lpddi);
+    fill_mouse_dideviceinstancea(lpddi, version);
 
     return TRUE;
   }
@@ -269,7 +274,7 @@ static ULONG WINAPI SysMouseAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 	}
 
 	HeapFree(GetProcessHeap(),0,This);
-	return 0;
+	return DI_OK;
 }
 
 
@@ -296,7 +301,7 @@ static HRESULT WINAPI SysMouseAImpl_SetCooperativeLevel(
   This->win = hwnd;
   This->dwCoopLevel = dwflags;
 
-  return 0;
+  return DI_OK;
 }
 
 
@@ -344,7 +349,7 @@ static HRESULT WINAPI SysMouseAImpl_SetDataFormat(
   /* Prepare all the data-conversion filters */
   This->wine_df = create_DataFormat(&(Wine_InternalMouseFormat), df, This->offset_array);
 
-  return 0;
+  return DI_OK;
 }
 
 /* low-level mouse hook */
@@ -639,7 +644,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
 	This->m_state.lX, This->m_state.lY,
 	This->m_state.rgbButtons[0], This->m_state.rgbButtons[2], This->m_state.rgbButtons[1]);
 
-  return 0;
+  return DI_OK;
 }
 
 /******************************************************************************
@@ -716,7 +721,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
     This->need_warp = WARP_STARTED;
 #endif
   }
-  return 0;
+  return DI_OK;
 }
 
 /******************************************************************************
@@ -756,7 +761,7 @@ static HRESULT WINAPI SysMouseAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
     }
   }
 
-  return 0;
+  return DI_OK;
 }
 
 /******************************************************************************
@@ -848,7 +853,10 @@ static HRESULT WINAPI SysMouseAImpl_GetCapabilities(
 
   if (lpDIDevCaps->dwSize == sizeof(DIDEVCAPS)) {
     lpDIDevCaps->dwFlags = DIDC_ATTACHED;
-    lpDIDevCaps->dwDevType = DIDEVTYPE_MOUSE;
+    if (This->dinput->version >= 8)
+        lpDIDevCaps->dwDevType = DI8DEVTYPE_MOUSE | (DI8DEVTYPEMOUSE_TRADITIONAL << 8);
+    else
+        lpDIDevCaps->dwDevType = DIDEVTYPE_MOUSE | (DIDEVTYPEMOUSE_TRADITIONAL << 8);
     lpDIDevCaps->dwAxes = 3;
     lpDIDevCaps->dwButtons = 3;
     lpDIDevCaps->dwPOVs = 0;
@@ -961,7 +969,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceInfo(
 	return DI_OK;
     }
 
-    fill_mouse_dideviceinstancea(pdidi);
+    fill_mouse_dideviceinstancea(pdidi, This->dinput->version);
     
     return DI_OK;
 }

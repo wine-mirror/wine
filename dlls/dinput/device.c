@@ -291,7 +291,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetDataFormat(
     TRACE("dwType 0x%02x,dwInstance %d\n",DIDFT_GETTYPE(df->rgodf[i].dwType),DIDFT_GETINSTANCE(df->rgodf[i].dwType));
     TRACE("df.rgodf[%d].dwFlags 0x%08lx\n",i,df->rgodf[i].dwFlags);
   }
-  return 0;
+  return DI_OK;
 }
 
 HRESULT WINAPI IDirectInputDevice2AImpl_SetCooperativeLevel(
@@ -303,7 +303,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetCooperativeLevel(
 	    TRACE(" cooperative level : ");
 	    _dump_cooperativelevel_DI(dwflags);
 	}
-	return 0;
+	return DI_OK;
 }
 
 HRESULT WINAPI IDirectInputDevice2AImpl_SetEventNotification(
@@ -311,7 +311,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetEventNotification(
 ) {
 	ICOM_THIS(IDirectInputDevice2AImpl,iface);
 	FIXME("(this=%p,0x%08lx): stub\n",This,(DWORD)hnd);
-	return 0;
+	return DI_OK;
 }
 
 ULONG WINAPI IDirectInputDevice2AImpl_Release(LPDIRECTINPUTDEVICE8A iface)
@@ -321,7 +321,7 @@ ULONG WINAPI IDirectInputDevice2AImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 	if (This->ref)
 		return This->ref;
 	HeapFree(GetProcessHeap(),0,This);
-	return 0;
+	return DI_OK;
 }
 
 HRESULT WINAPI IDirectInputDevice2AImpl_QueryInterface(
@@ -334,22 +334,22 @@ HRESULT WINAPI IDirectInputDevice2AImpl_QueryInterface(
 	if (IsEqualGUID(&IID_IUnknown,riid)) {
 		IDirectInputDevice2_AddRef(iface);
 		*ppobj = This;
-		return 0;
+		return DI_OK;
 	}
 	if (IsEqualGUID(&IID_IDirectInputDeviceA,riid)) {
 		IDirectInputDevice2_AddRef(iface);
 		*ppobj = This;
-		return 0;
+		return DI_OK;
 	}
 	if (IsEqualGUID(&IID_IDirectInputDevice2A,riid)) {
 		IDirectInputDevice2_AddRef(iface);
 		*ppobj = This;
-		return 0;
+		return DI_OK;
 	}
 	if (IsEqualGUID(&IID_IDirectInputDevice7A,riid)) {
 		IDirectInputDevice7_AddRef(iface);
 		*ppobj = This;
-		return 0;
+		return DI_OK;
 	}
 	TRACE("Unsupported interface !\n");
 	return E_FAIL;

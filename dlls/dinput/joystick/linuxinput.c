@@ -122,7 +122,7 @@ static GUID DInput_Wine_Joystick_GUID = { /* 9e573eda-7734-11d2-8d4a-23903fb6bdf
 
 #define test_bit(arr,bit) (((BYTE*)arr)[bit>>3]&(1<<(bit&7)))
 
-static BOOL joydev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi)
+static BOOL joydev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, int version)
 {
   int i, fd, havejoy = 0;
 

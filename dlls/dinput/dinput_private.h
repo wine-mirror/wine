@@ -31,12 +31,14 @@ struct IDirectInputAImpl
 
    /* Used to have an unique sequence number for all the events */
    DWORD evsequence;
+
+   int version;
 };
 
 /* Function called by all devices that Wine supports */
 typedef struct dinput_device {
   INT pref;
-  BOOL (*enum_device)(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi);
+  BOOL (*enum_device)(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, int version);
   HRESULT (*create_device)(IDirectInputAImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEA* pdev);
 } dinput_device;
 
