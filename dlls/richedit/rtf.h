@@ -1518,7 +1518,7 @@ void		RTFRead (RTF_Info *);
 int		RTFGetToken (RTF_Info *);	/* writer should rarely need this */
 void		RTFUngetToken (RTF_Info *);
 int		RTFPeekToken (RTF_Info *);
-void		RTFSetToken (RTF_Info *, int, int, int, int, char *);
+void		RTFSetToken (RTF_Info *, int, int, int, int, const char *);
 void		RTFSetReadHook (RTF_Info *, RTFFuncPtr);
 RTFFuncPtr	RTFGetReadHook (RTF_Info *);
 void		RTFRouteToken (RTF_Info *);
@@ -1546,14 +1546,14 @@ void		RTFSetPanicProc ( RTF_Info *, RTFFuncPtr);
  * stdarg.h.
  */
 
-void	RTFMsg (RTF_Info *, char *fmt, ...);
-void	RTFPanic (RTF_Info *, char *fmt, ...);
+void	RTFMsg (RTF_Info *, const char *fmt, ...);
+void	RTFPanic (RTF_Info *, const char *fmt, ...);
 
 int 	    	RTFReadOutputMap ( RTF_Info *, char *[], int);
 int		RTFReadCharSetMap ( RTF_Info *, int);
 void		RTFSetCharSetMap ( RTF_Info *, char *, int);
-int		RTFStdCharCode ( RTF_Info *, char *);
-char		*RTFStdCharName ( RTF_Info *, int);
+int		RTFStdCharCode ( RTF_Info *, const char *);
+const char	*RTFStdCharName ( RTF_Info *, int);
 int		RTFMapChar ( RTF_Info *, int);
 int		RTFGetCharSet( RTF_Info * );
 void		RTFSetCharSet( RTF_Info *, int);

@@ -778,7 +778,7 @@ int	oldBumpLine;
  * part of the token text.
  */
 
-void RTFSetToken(RTF_Info *info, int class, int major, int minor, int param, char *text)
+void RTFSetToken(RTF_Info *info, int class, int major, int minor, int param, const char *text)
 {
     TRACE("\n");
 
@@ -942,7 +942,7 @@ int RTFReadCharSetMap(RTF_Info *info, int csId)
  * Return -1 if name is unknown.
  */
 
-int RTFStdCharCode(RTF_Info *info, char *name)
+int RTFStdCharCode(RTF_Info *info, const char *name)
 {
 int	i;
 
@@ -962,7 +962,7 @@ int	i;
  * Return NULL if code is unknown.
  */
 
-char *RTFStdCharName(RTF_Info *info, int code)
+const char *RTFStdCharName(RTF_Info *info, int code)
 {
 	if (code < 0 || code >= rtfSC_MaxChar)
 		return ((char *) NULL);
@@ -1065,10 +1065,10 @@ int RTFGetCharSet(RTF_Info *info)
 
 static void ReadFontTbl(RTF_Info *info)
 {
-RTFFont	*fp = NULL;
-char	buf[rtfBufSiz], *bp;
-int	old = -1;
-char	*fn = "ReadFontTbl";
+RTFFont		*fp = NULL;
+char		buf[rtfBufSiz], *bp;
+int		old = -1;
+const char	*fn = "ReadFontTbl";
 
     TRACE("\n");
 
@@ -1219,7 +1219,7 @@ static void ReadColorTbl(RTF_Info *info)
 {
 RTFColor	*cp;
 int		cnum = 0;
-char		*fn = "ReadColorTbl";
+const char	*fn = "ReadColorTbl";
 
     TRACE("\n");
 
@@ -1261,7 +1261,7 @@ static void ReadStyleSheet(RTF_Info *info)
 RTFStyle	*sp;
 RTFStyleElt	*sep, *sepLast;
 char		buf[rtfBufSiz], *bp;
-char		*fn = "ReadStyleSheet";
+const char	*fn = "ReadStyleSheet";
 
     TRACE("\n");
 
@@ -1544,10 +1544,10 @@ typedef struct RTFKey	RTFKey;
 
 struct RTFKey
 {
-	int	rtfKMajor;	/* major number */
-	int	rtfKMinor;	/* minor number */
-	char	*rtfKStr;	/* symbol name */
-	int	rtfKHash;	/* symbol name hash value */
+	int        rtfKMajor;	/* major number */
+	int        rtfKMinor;	/* minor number */
+	const char *rtfKStr;	/* symbol name */
+	int        rtfKHash;	/* symbol name hash value */
 };
 
 /*
@@ -2459,7 +2459,7 @@ RTFKey	*rp;
 	if (inited == 0)
 	{
 		for (rp = rtfKey; rp->rtfKStr != (char *) NULL; rp++)
-			rp->rtfKHash = Hash (rp->rtfKStr);
+			rp->rtfKHash = Hash ((char*)rp->rtfKStr);
 		++inited;
 	}
 }
@@ -2621,7 +2621,6 @@ int RTFReadOutputMap(RTF_Info *info, char *outMap[], int reinit)
 {
     unsigned int  i;
     int  stdCode;
-    char *name, *seq;
 
     if (reinit)
     {
@@ -2633,10 +2632,10 @@ int RTFReadOutputMap(RTF_Info *info, char *outMap[], int reinit)
 
     for (i=0 ;i< sizeof(text_map)/sizeof(char*); i+=2)
     {
-    	name = text_map[i];
-    	seq  = text_map[i+1];
+    	const char *name = text_map[i];
+    	const char *seq  = text_map[i+1];
     	stdCode = RTFStdCharCode( info, name );
-    	outMap[stdCode] = seq;
+    	outMap[stdCode] = (char*)seq;
     }
 
     return (1);
@@ -2676,7 +2675,7 @@ FILE *RTFOpenLibFile (RTF_Info *info, char *file, char *mode)
  */
 
 
-void RTFMsg (RTF_Info *info, char *fmt, ...)
+void RTFMsg (RTF_Info *info, const char *fmt, ...)
 {
 char	buf[rtfBufSiz];
 
@@ -2706,7 +2705,7 @@ static void DefaultPanicProc(RTF_Info *info, char *s)
 
 
 
-void RTFPanic(RTF_Info *info, char *fmt, ...)
+void RTFPanic(RTF_Info *info, const char *fmt, ...)
 {
 char	buf[rtfBufSiz];
 

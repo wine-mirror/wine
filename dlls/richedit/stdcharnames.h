@@ -1,4 +1,4 @@
-static char     *stdCharName[] =
+const char *stdCharName[] =
 {
 	"nothing",
 	"space",

@@ -11,7 +11,7 @@
  *  characters in ASCII range (32-127
  */
 
-char *text_map[] = {
+const char *text_map[] = {
   "space"	      ," ",
   "exclam"	      ,"!",
   "quotedbl"	      ,"\"",
