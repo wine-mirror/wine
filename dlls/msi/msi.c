@@ -701,15 +701,15 @@ UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
     return hr;
 }
 
-UINT WINAPI MsiDatabaseImportA(LPCSTR szFolderPath, LPCSTR szFilename)
+UINT WINAPI MsiDatabaseImportA(MSIHANDLE handle, LPCSTR szFolderPath, LPCSTR szFilename)
 {
-    FIXME("%s %s\n",debugstr_a(szFolderPath), debugstr_a(szFilename));
+    FIXME("%lx %s %s\n",handle,debugstr_a(szFolderPath), debugstr_a(szFilename));
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-UINT WINAPI MsiDatabaseImportW(LPCWSTR szFolderPath, LPCWSTR szFilename)
+UINT WINAPI MsiDatabaseImportW(MSIHANDLE handle, LPCWSTR szFolderPath, LPCWSTR szFilename)
 {
-    FIXME("%s %s\n",debugstr_w(szFolderPath), debugstr_w(szFilename));
+    FIXME("%lx %s %s\n",handle,debugstr_w(szFolderPath), debugstr_w(szFilename));
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
@@ -1580,9 +1580,9 @@ UINT WINAPI MsiCollectUserInfoA(LPCSTR szProduct)
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-UINT WINAPI MsiCreateAndVerifyInstallerDirectory(void)
+UINT WINAPI MsiCreateAndVerifyInstallerDirectory(DWORD dwReserved)
 {
-    FIXME("\n");
+    FIXME("%ld\n", dwReserved);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
