@@ -82,8 +82,8 @@ ICOM_DEFINE(IConnectionPointContainer,IUnknown)
 #define IConnectionPointContainer_AddRef(p)                  ICOM_CALL (AddRef,p)
 #define IConnectionPointContainer_Release(p)                 ICOM_CALL (Release,p)
 /*** IConnectionPointContainer methods ***/
-#define IConnectionPointContainer_EnumConnectionPoints(p,a)  ICOM_CALL1(CreateInstance,p,a)
-#define IConnectionPointContainer_FindConnectionPoint(p,a,b) ICOM_CALL2(LockServer,p,a,b)
+#define IConnectionPointContainer_EnumConnectionPoints(p,a)  ICOM_CALL1(EnumConnectionPoints,p,a)
+#define IConnectionPointContainer_FindConnectionPoint(p,a,b) ICOM_CALL2(FindConnectionPoint,p,a,b)
 
 
 /*****************************************************************************
