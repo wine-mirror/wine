@@ -195,7 +195,7 @@ static void	EDIT_ConfinePoint(EDITSTATE *es, LPINT x, LPINT y);
 static void	EDIT_GetLineRect(EDITSTATE *es, INT line, INT scol, INT ecol, LPRECT rc);
 static void	EDIT_InvalidateText(EDITSTATE *es, INT start, INT end);
 static void	EDIT_LockBuffer(EDITSTATE *es);
-static BOOL	EDIT_MakeFit(EDITSTATE *es, UINT size);
+static BOOL	EDIT_MakeFit(EDITSTATE *es, UINT size, BOOL honor_limit);
 static BOOL	EDIT_MakeUndoFit(EDITSTATE *es, UINT size);
 static void	EDIT_MoveBackward(EDITSTATE *es, BOOL extend);
 static void	EDIT_MoveEnd(EDITSTATE *es, BOOL extend);
@@ -226,7 +226,7 @@ static INT	EDIT_EM_LineLength(EDITSTATE *es, INT index);
 static BOOL	EDIT_EM_LineScroll(EDITSTATE *es, INT dx, INT dy);
 static BOOL	EDIT_EM_LineScroll_internal(EDITSTATE *es, INT dx, INT dy);
 static LRESULT	EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap);
-static void	EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replace, BOOL send_update);
+static void	EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replace, BOOL send_update, BOOL honor_limit);
 static LRESULT	EDIT_EM_Scroll(EDITSTATE *es, INT action);
 static void	EDIT_EM_ScrollCaret(EDITSTATE *es);
 static void	EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc);
@@ -327,7 +327,7 @@ static inline void EDIT_WM_Clear(EDITSTATE *es)
 	if(es->style & ES_READONLY)
 	    return;
 
-	EDIT_EM_ReplaceSel(es, TRUE, empty_stringW, TRUE);
+	EDIT_EM_ReplaceSel(es, TRUE, empty_stringW, TRUE, TRUE);
 }
 
 
@@ -591,7 +591,7 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 			MultiByteToWideChar(CP_ACP, 0, textA, -1, textW, countW);
 		}
 
-		EDIT_EM_ReplaceSel(es, (BOOL)wParam, textW, TRUE);
+		EDIT_EM_ReplaceSel(es, (BOOL)wParam, textW, TRUE, TRUE);
 		result = 1;
 
 		if(!unicode)
@@ -1687,21 +1687,20 @@ static void EDIT_InvalidateText(EDITSTATE *es, INT start, INT end)
  *
  *	EDIT_MakeFit
  *
- *	Try to fit size + 1 characters in the buffer. Constrain to limits.
- *
+ * Try to fit size + 1 characters in the buffer.
+ * Constrain to limits if honor_limit is TRUE.
  */
-static BOOL EDIT_MakeFit(EDITSTATE *es, UINT size)
+static BOOL EDIT_MakeFit(EDITSTATE *es, UINT size, BOOL honor_limit)
 {
 	HLOCAL hNew32W;
 
 	if (size <= es->buffer_size)
 		return TRUE;
-	if ((es->buffer_limit > 0) && (size > es->buffer_limit)) {
+
+	if ((honor_limit) && (es->buffer_limit > 0) && (size > es->buffer_limit)) {
 		EDIT_NOTIFY_PARENT(es, EN_MAXTEXT, "EN_MAXTEXT");
 		return FALSE;
 	}
-	if ((es->buffer_limit > 0) && (size > es->buffer_limit))
-		size = es->buffer_limit;
 
 	TRACE("trying to ReAlloc to %d+1 characters\n", size);
 
@@ -2862,7 +2861,7 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
  *	FIXME: handle ES_NUMBER and ES_OEMCONVERT here
  *
  */
-static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replace, BOOL send_update)
+static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replace, BOOL send_update, BOOL honor_limit)
 {
 	UINT strl = strlenW(lpsz_replace);
 	UINT tl = strlenW(es->text);
@@ -2884,7 +2883,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 
 	ORDER_UINT(s, e);
 
-	if (!EDIT_MakeFit(es, tl - (e - s) + strl))
+	if (!EDIT_MakeFit(es, tl - (e - s) + strl, honor_limit))
 		return;
 
 	if (e != s) {
@@ -3510,7 +3509,7 @@ static BOOL EDIT_EM_Undo(EDITSTATE *es)
 
 	EDIT_EM_SetSel(es, es->undo_position, es->undo_position + es->undo_insert_count, FALSE);
 	EDIT_EM_EmptyUndoBuffer(es);
-	EDIT_EM_ReplaceSel(es, TRUE, utext, FALSE);
+	EDIT_EM_ReplaceSel(es, TRUE, utext, FALSE, TRUE);
 	EDIT_EM_SetSel(es, es->undo_position, es->undo_position + es->undo_insert_count, FALSE);
         /* send the notification after the selection start and end are set */
         EDIT_NOTIFY_PARENT(es, EN_CHANGE, "EN_CHANGE");
@@ -3550,7 +3549,7 @@ static void EDIT_WM_Char(EDITSTATE *es, WCHAR c)
 				EDIT_MoveDown_ML(es, FALSE);
 			} else {
 				static const WCHAR cr_lfW[] = {'\r','\n',0};
-				EDIT_EM_ReplaceSel(es, TRUE, cr_lfW, TRUE);
+				EDIT_EM_ReplaceSel(es, TRUE, cr_lfW, TRUE, TRUE);
 			}
 		}
 		break;
@@ -3558,7 +3557,7 @@ static void EDIT_WM_Char(EDITSTATE *es, WCHAR c)
 		if ((es->style & ES_MULTILINE) && !(es->style & ES_READONLY))
 		{
 			static const WCHAR tabW[] = {'\t',0};
-			EDIT_EM_ReplaceSel(es, TRUE, tabW, TRUE);
+			EDIT_EM_ReplaceSel(es, TRUE, tabW, TRUE, TRUE);
 		}
 		break;
 	case VK_BACK:
@@ -3588,7 +3587,7 @@ static void EDIT_WM_Char(EDITSTATE *es, WCHAR c)
 			WCHAR str[2];
  			str[0] = c;
  			str[1] = '\0';
- 			EDIT_EM_ReplaceSel(es, TRUE, str, TRUE);
+ 			EDIT_EM_ReplaceSel(es, TRUE, str, TRUE, TRUE);
  		}
 		break;
 	}
@@ -3720,7 +3719,7 @@ static LRESULT EDIT_WM_Create(EDITSTATE *es, LPCWSTR name)
         EDIT_EM_EmptyUndoBuffer(es);
 
        if (name && *name) {
-	   EDIT_EM_ReplaceSel(es, FALSE, name, FALSE);
+	   EDIT_EM_ReplaceSel(es, FALSE, name, FALSE, TRUE);
 	   /* if we insert text to the editline, the text scrolls out
             * of the window, as the caret is placed after the insert
             * pos normally; thus we reset es->selection... to 0 and
@@ -4469,7 +4468,7 @@ static void EDIT_WM_Paste(EDITSTATE *es)
 	OpenClipboard(es->hwndSelf);
 	if ((hsrc = GetClipboardData(CF_UNICODETEXT))) {
 		src = (LPWSTR)GlobalLock(hsrc);
-		EDIT_EM_ReplaceSel(es, TRUE, src, TRUE);
+		EDIT_EM_ReplaceSel(es, TRUE, src, TRUE, TRUE);
 		GlobalUnlock(hsrc);
 	}
 	CloseClipboard();
@@ -4574,13 +4573,13 @@ static void EDIT_WM_SetText(EDITSTATE *es, LPARAM lParam, BOOL unicode)
 	EDIT_EM_SetSel(es, 0, (UINT)-1, FALSE);
 	if (text) {
 		TRACE("%s\n", debugstr_w(text));
-		EDIT_EM_ReplaceSel(es, FALSE, text, FALSE);
+		EDIT_EM_ReplaceSel(es, FALSE, text, FALSE, FALSE);
 		if(!unicode)
 		    HeapFree(GetProcessHeap(), 0, text);
 	} else {
 		static const WCHAR empty_stringW[] = {0};
 		TRACE("<NULL>\n");
-		EDIT_EM_ReplaceSel(es, FALSE, empty_stringW, FALSE);
+		EDIT_EM_ReplaceSel(es, FALSE, empty_stringW, FALSE, FALSE);
 	}
 	es->x_offset = 0;
 	es->flags &= ~EF_MODIFIED;
