@@ -18,6 +18,7 @@
 #include "winmm_Pt.rc"
 #include "winmm_Es.rc"
 #include "winmm_Ru.rc"
+#include "winmm_Sk.rc"
 
 /* do not add NLS specific stuff below that line */
 

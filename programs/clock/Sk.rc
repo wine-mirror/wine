@@ -1,0 +1,39 @@
+/*
+ * Clock (English resources)
+ *
+ * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
+ * FIXME: Weak translation !
+ */
+
+#define LANGUAGE_ID                  Sk
+#define LANGUAGE_NUMBER              10
+
+
+/* System Menu */
+
+#define MENU_ON_TOP                  "&Vždy na vrchu"
+
+/* Window Menu */
+
+#define MENU_PROPERTIES              "&Vlastnosti"
+#define MENU_ANALOG                  "Ana&lógové"
+#define MENU_DIGITAL                 "Digi&tálne"
+#define MENU_FONT                    "&Font..."
+#define MENU_WITHOUT_TITLE           "&Bez titulkového pruhu"
+
+#define MENU_SECONDS                 "&Sekundy"
+#define MENU_DATE                    "&Dátum"
+
+#define MENU_LANGUAGE                "&Jazyk"
+#define LANGUAGE_MENU_ITEM           "&Slovensky"
+
+#define MENU_INFO                    "Inf&o..."
+#define MENU_INFO_LICENSE            "&Licencia"
+#define MENU_INFO_NO_WARRANTY        "&BEZ ZÁRUKY"
+#define MENU_INFO_ABOUT_WINE         "&O hodinách..."
+
+/* Window Caption */
+#define STRING_CLOCK                 "Hodiny"
+
+
+#include "clock.rc"

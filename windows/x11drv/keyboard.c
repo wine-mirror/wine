@@ -364,6 +364,38 @@ static const char main_key_PT_br[MAIN_LEN][4] =
  "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?"
 };
 
+/*** Slovak keyboard layout (see cssk_ibm(sk_qwerty) in xkbsel)
+  - dead_abovering replaced with degree - no symbol in iso8859-2
+  - brokenbar replaced with bar					*/
+static const char main_key_SK[MAIN_LEN][4] =
+{
+ ";°`'","+1","µ2","¹3","è4","»5","¾6","ı7","á8","í9","é0)","=%","",
+ "qQ\\","wW|","eE","rR","tT","yY","uU","iI","oO","pP","ú/÷","ä(×",
+ "aA","sSğ","dDĞ","fF[","gG]","hH","jJ","kK³","lL£","ô\"$","§!ß","ò)¤",
+ "zZ>","xX#","cC&","vV@","bB{","nN}","mM",",?<",".:>","-_*",
+ "<>\\|"
+};
+
+/*** Slovak and Czech (programmer's) keyboard layout (see cssk_dual(cs_sk_ucw)) */
+static const char main_key_SK_prog[MAIN_LEN][4] =
+{
+ "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
+ "qQäÄ","wWìÌ","eEéÉ","rRøØ","tT»«","yYıİ","uUùÙ","iIíÍ","oOóÓ","pPöÖ","[{","]}",
+ "aAáÁ","sS¹©","dDïÏ","fFëË","gGàÀ","hHúÚ","jJüÜ","kKôÔ","lLµ¥",";:","'\"","\\|",
+ "zZ¾®","xX¤","cCèÈ","vVçÇ","bB","nNòÒ","mMåÅ",",<",".>","/?",
+ "<>"
+};
+
+/*** Czech keyboard layout (see cssk_ibm(cs_qwerty) in xkbsel) */
+static const char main_key_CS[MAIN_LEN][4] =
+{
+ ";","+1","ì2","¹3","è4","ø5","¾6","ı7","á8","í9","é0½)","=%","",
+ "qQ\\","wW|","eE","rR","tT","yY","uU","iI","oO","pP","ú/[{",")(]}",
+ "aA","sSğ","dDĞ","fF[","gG]","hH","jJ","kK³","lL£","ù\"$","§!ß","¨'",
+ "zZ>","xX#","cC&","vV@","bB{","nN}","mM",",?<",".:>","-_*",
+ "<>\\|"
+};
+
 
 /*** Layout table. Add your keyboard mappings to this list */
 static const struct {
@@ -400,6 +432,9 @@ static const struct {
  {"Croatian keyboard layout (specific)", 28592, &main_key_HR_jelly, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Japanese 106 keyboard layout", 932, &main_key_JA_jp106, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Japanese pc98x1 keyboard layout", 932, &main_key_JA_pc98x1, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Slovak keyboard layout", 28592, &main_key_SK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Slovak and Czech keyboard layout without dead keys", 28592, &main_key_SK_prog, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Czech keyboard layout", 28592, &main_key_CS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
 
  {NULL, 0, NULL, NULL, NULL} /* sentinel */
 };

@@ -19,6 +19,7 @@
 #include "Fi.rc"
 #include "Fr.rc"
 #include "Pt.rc"
+#include "Sk.rc"
 #include "Sw.rc"
 #include "Wa.rc"
 

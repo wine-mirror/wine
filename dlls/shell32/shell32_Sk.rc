@@ -9,6 +9,17 @@ FONT 10, "System"
  LISTBOX 99, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
  ICON "", 1088, 189, 10, 14, 16
  LTEXT "", 100, 8, 10, 137, 33
- LTEXT "Wine v·m bol prinesen˝ t˝mito æuÔmi:", 98, 8, 55, 137, 10
+ LTEXT "VÌno pre v·s pripravili:", 98, 8, 55, 137, 10
 }
 
+/*      columns in the shellview        */
+STRINGTABLE LANGUAGE LANG_SLOVAK, SUBLANG_NEUTRAL
+BEGIN
+        IDS_SHV_COLUMN1         "S˙bor"
+        IDS_SHV_COLUMN2         "Veækosù"
+        IDS_SHV_COLUMN3         "Typ"
+        IDS_SHV_COLUMN4         "Modifikovan˝"
+        IDS_SHV_COLUMN5         "Atrib˙ty"
+        IDS_SHV_COLUMN6         "Veækosù"
+        IDS_SHV_COLUMN7         "Veækosù k dispozÌcii"
+END

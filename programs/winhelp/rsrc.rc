@@ -22,6 +22,7 @@
 #include "It.rc"
 #include "Ko.rc"
 #include "Pt.rc"
+#include "Sk.rc"
 #include "Sw.rc"
 #include "Va.rc"
 #include "Wa.rc"

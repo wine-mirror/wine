@@ -1,0 +1,48 @@
+/*
+ * Help Viewer
+ *
+ * Copyright 1996 Ulrich Schmid
+ */
+
+/* This file is not yet complete !! */
+
+#define LANGUAGE_ID                  Sk
+#define LANGUAGE_NUMBER              10
+
+/* Menu */
+
+#define MENU_FILE                    "&S˙bor"
+#define MENU_FILE_OPEN               "&Otvoriù..."
+#define MENU_FILE_PRINT              "&TlaËiù"
+#define MENU_FILE_PRINTER_SETUP      "&Nastavenie tlaËe..."
+#define MENU_FILE_EXIT               "U&konËiù"
+
+#define MENU_EDIT                    "&Upraviù"
+#define MENU_EDIT_COPY_DIALOG        "KopÌ&rovaù..."
+#define MENU_EDIT_ANNOTATE           "&Skomentovaù..."
+
+#define MENU_BOOKMARK                "&Z·loûka"
+#define MENU_BOOKMARK_DEFINE         "&Definovaù..."
+
+#define MENU_HELP                    "&Pomoc"
+#define MENU_HELP_ON_HELP            "Pomoc &na pomoci"
+#define MENU_HELP_ON_TOP             "Vûdy na &vrchu"
+#define MENU_HELP_INFO               "&Info..."
+#define MENU_HELP_ABOUT_WINE         "O& WINE"
+
+/* Strings */
+
+#define STRING_WINE_HELP             "WINE Pomoc"
+#define STRING_ERROR                 "CHYBA"
+#define STRING_WARNING               "VAROVANIE"
+#define STRING_INFO                  "Inform·cie"
+#define STRING_NOT_IMPLEMENTED       "NeimplementovanÈ"
+#define STRING_HLPFILE_ERROR_s       "Chyba poËas ËÌtania s˙boru `%s'"
+#define STRING_CONTENTS              "&Obsah"
+#define STRING_SEARCH                "&Hæadaù"
+#define STRING_BACK                  "&Sp‰ù"
+#define STRING_HISTORY               "&HistÛria"
+#define STRING_ALL_FILES             "Vöetky s˙bory (*.*)"
+#define STRING_HELP_FILES_HLP        "S˙bory pomoci (*.hlp)"
+
+#include "Xx.rc"
