@@ -461,6 +461,10 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 			WARN("Option %d ignored.\n", uAction);
 			break;
 
+                case SPI_GETWINDOWSEXTENSION:
+			WARN("pretend no support for Win9x Plus! for now.\n");
+			return FALSE; /* yes, this is the result value */
+			
                 case SPI_GETWORKAREA:
                     SetRect16( (RECT16 *)lpvParam, 0, 0,
                                GetSystemMetrics( SM_CXSCREEN ),
