@@ -141,6 +141,7 @@ extern INT32 X11DRV_DeviceBitmapBits( struct tagDC *dc, HBITMAP32 hbitmap,
 
 extern BOOL32 X11DRV_BITMAP_Init(void);
 extern BOOL32 X11DRV_BRUSH_Init(void);
+extern BOOL32 X11DRV_DIB_Init(void);
 extern BOOL32 X11DRV_FONT_Init( struct tagDeviceCaps* );
 
 struct tagBITMAPOBJ;
@@ -162,6 +163,39 @@ extern void _XInitImageFuncPtrs(XImage *);
                            (bpp), ZPixmap, 0, xcalloc( (height)*width_bytes ),\
                            (width), (height), 32, width_bytes ); \
 }
+
+
+/* exported dib functions for now */
+
+/* This structure holds the arguments for DIB_SetImageBits() */
+typedef struct
+{
+    struct tagDC     *dc;
+    LPCVOID           bits;
+    XImage           *image;
+    int               lines;
+    DWORD             infoWidth;
+    WORD              depth;
+    WORD              infoBpp;
+    WORD              compression;
+    int              *colorMap;
+    int               nColorMap;
+    Drawable          drawable;
+    GC                gc;
+    int               xSrc;
+    int               ySrc;
+    int               xDest;
+    int               yDest;
+    int               width;
+    int               height;
+} DIB_SETIMAGEBITS_DESCR;
+
+extern int X11DRV_DIB_GetImageBits( const DIB_SETIMAGEBITS_DESCR *descr );
+extern int X11DRV_DIB_SetImageBits( const DIB_SETIMAGEBITS_DESCR *descr );
+extern int *X11DRV_DIB_BuildColorMap( struct tagDC *dc, WORD coloruse,
+				      WORD depth, const BITMAPINFO *info,
+				      int *nColors );
+
 
 #endif  /* __WINE_X11DRV_H */
 

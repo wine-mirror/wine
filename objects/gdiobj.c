@@ -244,8 +244,6 @@ BOOL32 GDI_Init(void)
 
     /* Initialize drivers */
 
-    DIB_Init();	/* always before X11DRV_Init() */
-
     if( ! X11DRV_Init() )
         return FALSE;
 

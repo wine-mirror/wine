@@ -66,7 +66,7 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     X11DRV_SetBkColor,               /* pSetBkColor */
     NULL,                            /* pSetBkMode */
     X11DRV_SetDeviceClipping,        /* pSetDeviceClipping */
-    NULL,                            /* pSetDIBitsToDevice */
+    X11DRV_SetDIBitsToDevice,        /* pSetDIBitsToDevice */
     NULL,                            /* pSetMapMode (optional) */
     NULL,                            /* pSetMapperFlags */
     X11DRV_SetPixel,                 /* pSetPixel */
@@ -114,6 +114,8 @@ static DeviceCaps X11DRV_DevCaps = {
 BOOL32 X11DRV_Init(void)
 {
     /* FIXME: colormap management should be merged with the X11DRV */
+
+    if( !X11DRV_DIB_Init() ) return FALSE;
 
     if( !COLOR_Init() ) return FALSE;
 

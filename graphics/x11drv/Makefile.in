@@ -10,12 +10,13 @@ C_SRCS = \
 	bitmap.c \
 	brush.c \
 	clipping.c \
-	xfont.c \
+	dib.c \
 	graphics.c \
 	init.c \
 	objects.c \
 	pen.c \
-	text.c
+	text.c \
+	xfont.c
 
 all: $(MODULE).o
 
