@@ -1077,11 +1077,24 @@ static void write_value(msft_typeinfo_t* typeinfo, int *out, var_t *arg, int typ
         return;
       }
     case VT_BSTR:
-        warning("default value BSTR %s\n", (char*)value);
-        break;
+      {
+        char *s = (char *) value;
+        int len = strlen(s), seg_len = (len + 6 + 3) & ~0x3;
+        int offset = ctl2_alloc_segment(typeinfo->typelib, MSFT_SEG_CUSTDATA, seg_len, 0);
+        *((unsigned short *)&typeinfo->typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset]) = vt;
+        *((unsigned int *)&typeinfo->typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+2]) = len;        
+        memcpy(&typeinfo->typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+6], value, len);
+        len += 6;
+        while(len < seg_len) {
+            *((char *)&typeinfo->typelib->typelib_segment_data[MSFT_SEG_CUSTDATA][offset+len]) = 0x57;
+            len++;
+        }
+        *out = offset;
+        return;
+      }
 
-      default:
-          warning("can't write value of type %d yet\n", vt);
+    default:
+        warning("can't write value of type %d yet\n", vt);
     }
     return;
 }
