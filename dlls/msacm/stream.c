@@ -147,7 +147,12 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 	  pwfxDst->wFormatTag, pwfxDst->nChannels, pwfxDst->nSamplesPerSec, pwfxDst->nAvgBytesPerSec,
 	  pwfxDst->nBlockAlign, pwfxDst->wBitsPerSample, pwfxDst->cbSize);
 
-    if ((fdwOpen & ACM_STREAMOPENF_QUERY) && phas) return MMSYSERR_INVALPARAM;
+    /* (WS) In query mode, phas should be NULL. If it is not, then instead
+     * of returning an error we are making sure it is NULL, preventing some
+     * applications that pass garbage for phas from crashing.
+     */
+    if (fdwOpen & ACM_STREAMOPENF_QUERY) phas = NULL;
+
     if (pwfltr && (pwfxSrc->wFormatTag != pwfxDst->wFormatTag)) return MMSYSERR_INVALPARAM;
 
     wfxSrcSize = wfxDstSize = sizeof(WAVEFORMATEX);
