@@ -4,8 +4,10 @@
  *   To be distributed under the Wine license
  */
 
-#include <win.h>
-#include <shell.h>
+#include <stdio.h>
+#include <string.h>
+#include <windows.h>
+#include <shellapi.h>
 #include "params.h"
 
 void launch(char what[255])
