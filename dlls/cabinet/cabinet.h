@@ -21,6 +21,8 @@
 #define __WINE_CABINET_H
 
 #include "winnt.h"
+#include "fdi.h"
+#include "fci.h"
 
 #define CAB_SPLITMAX (10)
 
@@ -284,6 +286,50 @@ typedef struct cds_forward {
     struct LZXstate lzx;
   } methods;
 } cab_decomp_state;
+
+/* _Int as in "Internal" fyi */
+
+typedef struct {
+  unsigned int     FCI_Intmagic;
+} FCI_Int, *PFCI_Int;
+
+typedef struct {
+  unsigned int FDI_Intmagic;
+  PFNALLOC pfnalloc;
+  PFNFREE  pfnfree;
+  PFNOPEN  pfnopen;
+  PFNREAD  pfnread;
+  PFNWRITE pfnwrite;
+  PFNCLOSE pfnclose;
+  PFNSEEK  pfnseek;
+  PERF     perf;
+} FDI_Int, *PFDI_Int;
+
+/* cast an HFCI into a PFCI_Int */
+#define PFCI_INT(hfci) ((PFDI_Int)(hfci))
+
+/* cast an HFDI into a PFDI_Int */
+#define PFDI_INT(hfdi) ((PFDI_Int)(hfdi))
+
+/* quickie pfdi method invokers */
+#define PFDI_ALLOC(hfdi, size)            ((*PFDI_INT(hfdi)->pfnalloc) (size))
+#define PFDI_FREE(hfdi, ptr)              ((*PFDI_INT(hfdi)->pfnfree)  (ptr))
+#define PFDI_OPEN(hfdi, file, flag, mode) ((*PFDI_INT(hfdi)->pfnopen)  (file, flag, mode))
+#define PFDI_READ(hfdi, hf, pv, cb)       ((*PFDI_INT(hfdi)->pfnread)  (hf, pv, cb))
+#define PFDI_WRITE(hfdi, hf, pv, cb)      ((*PFDI_INT(hfdi)->pfnwrite) (hf, pv, cb))
+#define PFDI_CLOSE(hfdi, hf)              ((*PFDI_INT(hfdi)->pfnclose) (hf))
+#define PFDI_SEEK(hfdi, hf, dist, type)   ((*PFDI_INT(hfdi)->pfnseek)  (hf, dist, type))
+
+#define FCI_INT_MAGIC 0xfcfcfc05
+#define FDI_INT_MAGIC 0xfdfdfd05
+
+#define REALLY_IS_FCI(hfci) ( \
+  (((void *) hfci) != NULL) && \
+  (PFCI_INT(hfci)->FCI_Intmagic == FCI_INT_MAGIC) )
+
+#define REALLY_IS_FDI(hfdi) ( \
+  (((void *) hfdi) != NULL) && \
+  (PFDI_INT(hfdi)->FDI_Intmagic == FDI_INT_MAGIC) )
 
 /* from cabextract.c */
 BOOL process_cabinet(LPCSTR cabname, LPCSTR dir, BOOL fix, BOOL lower);
