@@ -128,50 +128,52 @@ const int dbch_seh = 116;
 const int dbch_selector = 117;
 const int dbch_sendmsg = 118;
 const int dbch_server = 119;
-const int dbch_shell = 120;
-const int dbch_snoop = 121;
-const int dbch_sound = 122;
-const int dbch_static = 123;
-const int dbch_statusbar = 124;
-const int dbch_storage = 125;
-const int dbch_stress = 126;
-const int dbch_string = 127;
-const int dbch_syscolor = 128;
-const int dbch_system = 129;
-const int dbch_tab = 130;
-const int dbch_tape = 131;
-const int dbch_tapi = 132;
-const int dbch_task = 133;
-const int dbch_text = 134;
-const int dbch_thread = 135;
-const int dbch_thunk = 136;
-const int dbch_timer = 137;
-const int dbch_toolbar = 138;
-const int dbch_toolhelp = 139;
-const int dbch_tooltips = 140;
-const int dbch_trackbar = 141;
-const int dbch_treeview = 142;
-const int dbch_ttydrv = 143;
-const int dbch_tweak = 144;
-const int dbch_typelib = 145;
-const int dbch_updown = 146;
-const int dbch_ver = 147;
-const int dbch_virtual = 148;
-const int dbch_vxd = 149;
-const int dbch_wave = 150;
-const int dbch_win = 151;
-const int dbch_win16drv = 152;
-const int dbch_win32 = 153;
-const int dbch_wing = 154;
-const int dbch_winsock = 155;
-const int dbch_winspool = 156;
-const int dbch_wnet = 157;
-const int dbch_x11 = 158;
-const int dbch_x11drv = 159;
+const int dbch_setupx = 120;
+const int dbch_shell = 121;
+const int dbch_snoop = 122;
+const int dbch_sound = 123;
+const int dbch_static = 124;
+const int dbch_statusbar = 125;
+const int dbch_storage = 126;
+const int dbch_stress = 127;
+const int dbch_string = 128;
+const int dbch_syscolor = 129;
+const int dbch_system = 130;
+const int dbch_tab = 131;
+const int dbch_tape = 132;
+const int dbch_tapi = 133;
+const int dbch_task = 134;
+const int dbch_text = 135;
+const int dbch_thread = 136;
+const int dbch_thunk = 137;
+const int dbch_timer = 138;
+const int dbch_toolbar = 139;
+const int dbch_toolhelp = 140;
+const int dbch_tooltips = 141;
+const int dbch_trackbar = 142;
+const int dbch_treeview = 143;
+const int dbch_ttydrv = 144;
+const int dbch_tweak = 145;
+const int dbch_typelib = 146;
+const int dbch_updown = 147;
+const int dbch_ver = 148;
+const int dbch_virtual = 149;
+const int dbch_vxd = 150;
+const int dbch_wave = 151;
+const int dbch_win = 152;
+const int dbch_win16drv = 153;
+const int dbch_win32 = 154;
+const int dbch_wing = 155;
+const int dbch_winsock = 156;
+const int dbch_winspool = 157;
+const int dbch_wnet = 158;
+const int dbch_x11 = 159;
+const int dbch_x11drv = 160;
 
-#define DEBUG_CHANNEL_COUNT 160
+#define DEBUG_CHANNEL_COUNT 161
 
 char __debug_msg_enabled[DEBUG_CHANNEL_COUNT][DEBUG_CLASS_COUNT] = {
+{1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
@@ -455,6 +457,7 @@ const char * const debug_ch_name[DEBUG_CHANNEL_COUNT] = {
 "selector",
 "sendmsg",
 "server",
+"setupx",
 "shell",
 "snoop",
 "sound",

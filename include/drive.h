@@ -35,6 +35,7 @@ extern int DRIVE_FindDriveRoot( const char **path );
 extern const char * DRIVE_GetRoot( int drive );
 extern const char * DRIVE_GetDosCwd( int drive );
 extern const char * DRIVE_GetUnixCwd( int drive );
+extern const char * DRIVE_GetDevice( int drive );
 extern const char * DRIVE_GetLabel( int drive );
 extern DWORD DRIVE_GetSerialNumber( int drive );
 extern int DRIVE_SetSerialNumber( int drive, DWORD serial );

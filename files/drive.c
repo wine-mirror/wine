@@ -3,6 +3,11 @@
  *
  * Copyright 1993 Erik Bos
  * Copyright 1996 Alexandre Julliard
+ *
+ * Label & serial number read support.
+ *  (c) 1999 Petr Tomasek <tomasek@etf.cuni.cz>
+ *  (c) 2000 Andreas Mohr (changes)
+ *
  */
 
 #include "config.h"
@@ -37,6 +42,7 @@
 #include "wine/winestring.h"  /* for lstrcpyAtoW */
 #include "winerror.h"
 #include "drive.h"
+#include "cdrom.h"
 #include "file.h"
 #include "heap.h"
 #include "msdos.h"
@@ -54,8 +60,10 @@ typedef struct
     char     *dos_cwd;   /* cwd in DOS format without leading or trailing \ */
     char     *unix_cwd;  /* cwd in Unix format without leading or trailing / */
     char     *device;    /* raw device path */
-    char      label[12]; /* drive label */
-    DWORD     serial;    /* drive serial number */
+    BOOL      read_volinfo; /* read the volume info from the device ? */
+    char      label_conf[12]; /* drive label as cfg'd in wine.conf */
+    char      label_read[12]; /* drive label as read from device */
+    DWORD     serial_conf;    /* drive serial number as cfg'd in wine.conf */
     DRIVETYPE type;      /* drive type */
     UINT    flags;     /* drive flags */
     dev_t     dev;       /* unix device number */
@@ -111,7 +119,8 @@ static DRIVETYPE DRIVE_GetDriveType( const char *name )
     {
         if (!strcasecmp( buffer, DRIVE_Types[i] )) return (DRIVETYPE)i;
     }
-    MESSAGE("%s: unknown type '%s', defaulting to 'hd'.\n", name, buffer );
+    MESSAGE("%s: unknown drive type '%s', defaulting to 'hd'.\n",
+	name, buffer );
     return TYPE_HD;
 }
 
@@ -175,18 +184,18 @@ int DRIVE_Init(void)
             drive->ino      = drive_stat_buffer.st_ino;
 
             /* Get the drive label */
-            PROFILE_GetWineIniString( name, "Label", name, drive->label, 12 );
-            if ((len = strlen(drive->label)) < 11)
+            PROFILE_GetWineIniString( name, "Label", name, drive->label_conf, 12 );
+            if ((len = strlen(drive->label_conf)) < 11)
             {
                 /* Pad label with spaces */
-                memset( drive->label + len, ' ', 11 - len );
-                drive->label[12] = '\0';
+                memset( drive->label_conf + len, ' ', 11 - len );
+                drive->label_conf[11] = '\0';
             }
 
             /* Get the serial number */
             PROFILE_GetWineIniString( name, "Serial", "12345678",
                                       buffer, sizeof(buffer) );
-            drive->serial = strtoul( buffer, NULL, 16 );
+            drive->serial_conf = strtoul( buffer, NULL, 16 );
 
             /* Get the filesystem type */
             PROFILE_GetWineIniString( name, "Filesystem", "win95",
@@ -197,7 +206,13 @@ int DRIVE_Init(void)
             PROFILE_GetWineIniString( name, "Device", "",
                                       buffer, sizeof(buffer) );
             if (buffer[0])
+	    {
                 drive->device = HEAP_strdupA( SystemHeap, 0, buffer );
+		drive->read_volinfo =
+		(BOOL)PROFILE_GetWineIniInt( name, "ReadVolInfo", 1);
+	    }
+	    else
+		drive->read_volinfo = FALSE;
 
             /* Make the first hard disk the current drive */
             if ((DRIVE_CurDrive == -1) && (drive->type == TYPE_HD))
@@ -207,7 +222,7 @@ int DRIVE_Init(void)
             TRACE("%s: path=%s type=%s label='%s' serial=%08lx "
                   "flags=%08x dev=%x ino=%x\n",
                   name, path, DRIVE_Types[drive->type],
-                  drive->label, drive->serial, drive->flags,
+                  drive->label_conf, drive->serial_conf, drive->flags,
                   (int)drive->dev, (int)drive->ino );
         }
         else WARN("%s: not defined\n", name );
@@ -220,8 +235,8 @@ int DRIVE_Init(void)
         DOSDrives[2].root     = HEAP_strdupA( SystemHeap, 0, "/" );
         DOSDrives[2].dos_cwd  = HEAP_strdupA( SystemHeap, 0, "" );
         DOSDrives[2].unix_cwd = HEAP_strdupA( SystemHeap, 0, "" );
-        strcpy( DOSDrives[2].label, "Drive C    " );
-        DOSDrives[2].serial   = 0x12345678;
+        strcpy( DOSDrives[2].label_conf, "Drive C    " );
+        DOSDrives[2].serial_conf   = 12345678;
         DOSDrives[2].type     = TYPE_HD;
         DOSDrives[2].flags    = 0;
         DRIVE_CurDrive = 2;
@@ -396,22 +411,161 @@ const char * DRIVE_GetUnixCwd( int drive )
 
 
 /***********************************************************************
+ *           DRIVE_GetDevice
+ */
+const char * DRIVE_GetDevice( int drive )
+{
+    return (DRIVE_IsValid( drive )) ? DOSDrives[drive].device : NULL;
+}
+
+
+/***********************************************************************
+ *           DRIVE_ReadSuperblock
+ *
+ * Used in DRIVE_GetLabel
+ */
+int DRIVE_ReadSuperblock (int drive, char * buff)
+{
+#define DRIVE_SUPER 96
+    int fd;
+    off_t offs;
+
+    if (memset(buff,0,DRIVE_SUPER)!=buff) return -1;
+    if ((fd=open(DOSDrives[drive].device,O_RDONLY)) == -1)
+    {
+	struct stat st;
+	if (!DOSDrives[drive].device)
+	    ERR("No device configured for drive %c: !\n", 'A'+drive);
+	else
+	    ERR("Couldn't open device '%s' for drive %c: ! (%s)\n", DOSDrives[drive].device, 'A'+drive,
+		 (stat(DOSDrives[drive].device, &st)) ?
+			"not available or symlink not valid ?" : "no permission");
+	ERR("Can't read drive volume info ! Either pre-set it or make sure the device to read it from is accessible !\n");
+	PROFILE_UsageWineIni();
+	return -1;
+    }
+
+    switch(DOSDrives[drive].type)
+    {
+	case TYPE_FLOPPY:
+	case TYPE_HD:
+	    offs = 0;
+	    break;
+	case TYPE_CDROM:
+	/* FIXME: Maybe we should search for the first data track on the CD,
+		  not just assume that it is the first track */
+	    offs = (off_t)2048*(16+0);
+	    break;
+		default:
+		    offs = 0;
+		    break;
+    }
+
+    if ((offs) && (lseek(fd,offs,SEEK_SET)!=offs)) return -4;
+    if (read(fd,buff,DRIVE_SUPER)!=DRIVE_SUPER) return -2;
+
+    switch(DOSDrives[drive].type)
+    {
+	case TYPE_FLOPPY:
+	case TYPE_HD:
+	    if (buff[0x26]!=0x29) /* Check for FAT present */
+		return -3;
+		break;
+	case TYPE_CDROM:
+	    if (strncmp(&buff[1],"CD001",5)) /* Check for iso9660 present */
+		return -3;
+	    /* FIXME: do we need to check for "CDROM", too ? (high sierra) */
+		break;
+	default:
+		return -3;
+		break;
+    }
+
+    return close(fd);
+}
+
+
+/***********************************************************************
  *           DRIVE_GetLabel
  */
 const char * DRIVE_GetLabel( int drive )
 {
+    int read = 0;
+    char buff[DRIVE_SUPER];
+    int offs = -1;
+
     if (!DRIVE_IsValid( drive )) return NULL;
-    return DOSDrives[drive].label;
+    if (DRIVE_GetType(drive) == TYPE_CDROM)
+    {
+	WINE_CDAUDIO wcda;
+
+	if (!(CDAUDIO_Open(&wcda, drive)))
+	{
+	    int media = CDAUDIO_GetMediaType(&wcda);
+
+	    if (media == CDS_AUDIO)
+	    {
+		strcpy(DOSDrives[drive].label_read, "Audio CD   ");
+		read = 1;
+	    }
+	    else
+	    if (media == CDS_NO_INFO)
+	    {
+		strcpy(DOSDrives[drive].label_read, "           ");
+		read = 1;
+	    }
+
+	    CDAUDIO_Close(&wcda);
+}
+    }
+    if ((!read) && (DOSDrives[drive].read_volinfo))
+    {
+	if (DRIVE_ReadSuperblock(drive,(char *) buff))
+	    ERR("Invalid or unreadable superblock on %s (%c:).\n",
+		DOSDrives[drive].device, (char)(drive+'A'));
+	else {
+	    if (DOSDrives[drive].type == TYPE_CDROM)
+		offs = 40;
+	    else
+	    if (DOSDrives[drive].type == TYPE_FLOPPY ||
+		DOSDrives[drive].type == TYPE_HD)
+		offs = 0x2b;
+
+	    /* FIXME: ISO9660 uses 32-bytes long label. Should we do also? */
+	    if (offs != -1) memcpy(DOSDrives[drive].label_read,buff+offs,11);
+	    DOSDrives[drive].label_read[11]='\0';
+	    read = 1;
+	}
+    }
+
+    return (read) ?
+	DOSDrives[drive].label_read : DOSDrives[drive].label_conf;
 }
 
 
 /***********************************************************************
  *           DRIVE_GetSerialNumber
+ *
+ * FIXME: apparently Win 9x (not DOS !) gives serial numbers to CD-ROMs, too.
+ * How to calculate them ?
  */
 DWORD DRIVE_GetSerialNumber( int drive )
 {
+char buff[DRIVE_SUPER];
+
     if (!DRIVE_IsValid( drive )) return 0;
-    return DOSDrives[drive].serial;
+    if ( (DOSDrives[drive].read_volinfo) &&
+        ((DOSDrives[drive].type == TYPE_FLOPPY) ||
+         (DOSDrives[drive].type == TYPE_HD)))
+    {
+      if (DRIVE_ReadSuperblock(drive,(char *) buff))
+
+        MESSAGE("Invalid or unreadable superblock on %s (%c:)."
+           " Maybe not FAT?\n" ,DOSDrives[drive].device,(char)(drive+'A'));
+      else
+        return *((DWORD*)(buff+0x27));
+    }
+    return DOSDrives[drive].serial_conf;
 }
 
 
@@ -421,7 +575,10 @@ DWORD DRIVE_GetSerialNumber( int drive )
 int DRIVE_SetSerialNumber( int drive, DWORD serial )
 {
     if (!DRIVE_IsValid( drive )) return 0;
-    DOSDrives[drive].serial = serial;
+    if ((DOSDrives[drive].read_volinfo) &&
+	(DOSDrives[drive].type != TYPE_CDROM))
+	FIXME("Setting the serial number is useless for drive %c: until writing it is properly implemented, as this drive reads it from the device.\n", 'A'+drive);
+    DOSDrives[drive].serial_conf = serial;
     return 1;
 }
 
@@ -556,8 +713,8 @@ int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive )
     new->root = HEAP_strdupA( SystemHeap, 0, old->root );
     new->dos_cwd = HEAP_strdupA( SystemHeap, 0, old->dos_cwd );
     new->unix_cwd = HEAP_strdupA( SystemHeap, 0, old->unix_cwd );
-    memcpy ( new->label, old->label, 12 );
-    new->serial = old->serial;
+    memcpy ( new->label_conf, old->label_conf, 12 );
+    new->serial_conf = old->serial_conf;
     new->type = old->type;
     new->flags = old->flags;
     new->dev = old->dev;
@@ -922,7 +1079,7 @@ BOOL WINAPI GetDiskFreeSpaceExW( LPCWSTR root, PULARGE_INTEGER avail,
 
 /***********************************************************************
  *           GetDriveType16   (KERNEL.136)
- * This functions returns the drivetype of a drive in Win16. 
+ * This function returns the type of a drive in Win16. 
  * Note that it returns DRIVE_REMOTE for CD-ROMs, since MSCDEX uses the
  * remote drive API. The returnvalue DRIVE_REMOTE for CD-ROMs has been
  * verified on Win3.11 and Windows 95. Some programs rely on it, so don't
@@ -972,7 +1129,7 @@ UINT16 WINAPI GetDriveType16(
  *
  *  Currently returns DRIVE_DOESNOTEXIST and DRIVE_CANNOTDETERMINE
  *  when it really should return DRIVE_NO_ROOT_DIR and DRIVE_UNKNOWN.
- *  Why where the former defines used?
+ *  Why were the former defines used?
  *
  *  DRIVE_RAMDISK is unsupported.
  */
@@ -1173,7 +1330,11 @@ DWORD WINAPI GetLogicalDrives(void)
     int drive;
 
     for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
-        if (DRIVE_IsValid(drive)) ret |= (1 << drive);
+    {
+        if ( (DRIVE_IsValid(drive)) ||
+            (DOSDrives[drive].type == TYPE_CDROM)) /* audio CD is also valid */
+            ret |= (1 << drive);
+    }
     return ret;
 }
 
@@ -1189,7 +1350,7 @@ BOOL WINAPI GetVolumeInformationA( LPCSTR root, LPSTR label,
     int drive;
     char *cp;
 
-    /* FIXME, SetLastErrors missing */
+    /* FIXME, SetLastError()s missing */
 
     if (!root) drive = DRIVE_GetCurrentDrive();
     else
@@ -1212,7 +1373,7 @@ BOOL WINAPI GetVolumeInformationA( LPCSTR root, LPSTR label,
     if (serial) *serial = DRIVE_GetSerialNumber(drive);
 
     /* Set the filesystem information */
-    /* Note: we only emulate a FAT fs at the present */
+    /* Note: we only emulate a FAT fs at present */
 
     if (filename_len) {
     	if (DOSDrives[drive].flags & DRIVE_SHORT_NAMES)

@@ -1,60 +1,70 @@
-*** VOLUME LABEL
+               Drive labels and serial numbers with wine
+               -----------------------------------------
 
-If a program depends on the correct label and/or serial number for the
-CD-Rom, you can use the following command to extract that information:
+       Until now, your only possibility of specifying drive volume labels
+and serial numbers was to set them manually in the wine config file.
+By now, wine can read them directly from the device as well. This may be
+useful for many Win 9x games or for setup programs distributed on CD-ROMs
+that check for volume label.
 
-      dd if=<your cdrom device> bs=1 skip=32808 count=32
+WHAT'S SUPPORTED ?
 
-You need read access to the device, so perhaps you have to do it as root.
-Put the resulting string (without trailing blanks) into your
-wine.ini/.winerc file like:
-Label=<the label>
+    *  FAT systems (types 'hd' and 'floppy'): reads labels and serial num's.
+    *  Iso9660 ('cdrom'):                     reads labels only.
 
-*** SERIAL NUMBER
+HOW TO SET UP ?
 
-[FIXME: if someone knows how to get the serial number in Linux, please
-        put this information here].
+	Reading labels and serial numbers just works automagically if
+you specify a 'Device=' line in the [Drive X] section in your wine.conf.
+Note that the device has to exist and must be accessible if you do this,
+though.
+If you don't do that, then you should give fixed 'Label=' or 'Serial=' entries
+in wine.conf, as Wine returns these entries instead if no device is given.
+If they don't exist, then Wine will return default values (label "Drive X"
+and serial 12345678).
 
-If you have access to a Win32 system and C-compiler, you can compile the
-following program to extract this information:
+Now a seldom needed one:
+If you want to give a 'Device=' entry *only* for drive raw sector accesses, but
+not for reading the volume info from the device (i.e. you want a *fixed*,
+preconfigured label), you need to specify 'ReadVolInfo=0' to tell Wine to skip
+the volume reading.
 
-------------------------- begin volinfo.c ---------------------------
-#include <windows.h>
-#include <stdio.h>
+EXAMPLES
 
-int main(int argc,char **argv[])
-{
-    char  drive, root[]="C:\\", label[1002], fsname[1002];
-    DWORD serial, flags, filenamelen, labellen = 1000, fsnamelen = 1000;
+*** Simple example of cdrom and floppy; labels will be read from the device on
+both cdrom and floppy; serial numbers on floppy only:
 
-    printf("Drive Serial     Flags      Filename-Length "
-           "Label                 Fsname\n");
-    for (drive = 'C'; drive <= 'Z'; drive++)
-    {
-        root[0] = drive;
-        if (GetVolumeInformationA(root,label,labellen,&serial,
-                                  &filenamelen,&flags,fsname,fsnamelen))
-        {
-            strcat(label,"\""); strcat (fsname,"\"");
-            printf("%c:\\   0x%08lx 0x%08lx %15ld \"%-20s \"%-20s\n",
-                   drive, (long) serial, (long) flags, (long) filenamelen,
-                   label, fsname);
-        }
-    }
-    return 0;
-}
+[Drive A]
+Path=/mnt/floppy
+Type=floppy
+Device=/dev/fd0
+Filesystem=msdos
 
-Probably you can get that information also from the File Manager in
-Windows.
+[Drive R]
+Path=/mnt/cdrom
+Type=cdrom
+Device=/dev/hda1
+Filesystem=win95
 
-------------------------- end volinfo.c -----------------------------
+*** CD-ROM. We want to override the label:
 
+[Drive J]
+Path=/mnt/cdrom
+Type=cdrom
+Label=X234GCDSE
+; note that the device isn't really needed here as we have a fixed label
+Device=/dev/cdrom
+Filesystem=msdos
 
-*** DRIVE LETTER
+TODO / OPEN ISSUES
 
-Some installed programs only look for the CD-Rom in the drive letter
-that the CD-Rom had when the program was installed. In this case, make
-sure you use the correct letter, especially if you installed the
-program under Windows and are now trying to run it in Wine.
-Some programs reportedly store the drive letter in their .INI file,
-so you might look there and try to change it.
+ - The cdrom label can be read only if the data track of the disk resides in
+the first track and the cdrom is iso9660.
+ - Better checking for FAT superblock (it now check's only one byte).
+ - Support for labels/serial num's WRITING.
+ - Can the label be longer than 11 chars? (iso9660 has 32 chars).
+ - What about reading ext2 volume label? ....
+
+Petr Tomasek				changes by:	Andreas Mohr
+<tomasek@etf.cuni.cz>					<a.mohr@mailto.de>
+Nov 14 1999						Jan 25 2000

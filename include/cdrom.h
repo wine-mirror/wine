@@ -54,7 +54,8 @@ typedef struct {
 #define	WINE_CDA_STOP			0x04
 #define	WINE_CDA_PAUSE			0x05
 
-int	CDAUDIO_Open(WINE_CDAUDIO* wcda);
+int	CDAUDIO_Open(WINE_CDAUDIO* wcda, int drive);
+int	CDAUDIO_GetMediaType(WINE_CDAUDIO* wcda);
 int	CDAUDIO_Close(WINE_CDAUDIO* wcda);
 int	CDAUDIO_Reset(WINE_CDAUDIO* wcda);
 int	CDAUDIO_Play(WINE_CDAUDIO* wcda, DWORD start, DWORD stop);
@@ -73,6 +74,10 @@ BOOL	CDAUDIO_GetCDStatus(WINE_CDAUDIO* wcda);
 #ifndef CDROM_DATA_TRACK
 #define CDROM_DATA_TRACK 0x04
 #endif
+
+/* values borrowed from Linux 2.2.x cdrom.h */
+#define CDS_NO_INFO			0
+#define CDS_AUDIO			100
 
 #endif
 

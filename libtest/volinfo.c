@@ -13,7 +13,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     printf("Drive Serial     Flags      Filename-Length "
            "Label                 Fsname\n");
-    for (drive = 'C'; drive <= 'Z'; drive++)
+    for (drive = 'A'; drive <= 'Z'; drive++)
     {
         root[0] = drive;
         if (GetVolumeInformation(root,label,labellen,&serial,

@@ -490,7 +490,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	TRACE("Get drive letters\n");
 	break;
 	
-    case 0x10: /* direct driver acces */
+    case 0x10: /* direct driver access */
 	{
 	    static 	WINE_CDAUDIO	wcda;
 	    BYTE* 	driver_request;
@@ -511,12 +511,12 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		driver_request[3] = 5;	/* bad request length */
 		return;
 	    }
-	    /* FIXME - would be better to open the device at the begining of the wine session...
+	    /* FIXME - would be better to open the device at the beginning of the wine session...
 	     *       - the device is also never closed...
 	     *       - the current implementation only supports a single CD ROM
 	     */
 	    if (wcda.unixdev <= 0) 
-		CDAUDIO_Open(&wcda);
+		CDAUDIO_Open(&wcda, -1);
 	    TRACE("CDROM device driver -> command <%d>\n", (unsigned char)driver_request[2]);
 	    
 	    for (drive = 0; 

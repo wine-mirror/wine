@@ -242,7 +242,7 @@ static DWORD CDAUDIO_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpe
     }
 
     wmcda->wNotifyDeviceID = dwDeviceID;
-    if (CDAUDIO_Open(&wmcda->wcda) == -1) {
+    if (CDAUDIO_Open(&wmcda->wcda, -1) == -1) {
 	--wmcda->nUseCount;
 	return MCIERR_HARDWARE;
     }

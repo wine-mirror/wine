@@ -11,29 +11,53 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include "cdrom.h"
+#include "drive.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(cdaudio)
-
-#if defined(__NetBSD__)
-# define CDAUDIO_DEV "/dev/rcd0d"
-#elif defined(__FreeBSD__)
-# define CDAUDIO_DEV "/dev/rcd0c"
-#else
-# define CDAUDIO_DEV "/dev/cdrom"
-#endif
 
 #define MAX_CDAUDIO_TRACKS 	256
 
 /**************************************************************************
  * 				CDAUDIO_Open			[internal]
+ *
+ * drive = 0, 1, ...
+ *      or -1 (figure it out)
  */
-int	CDAUDIO_Open(WINE_CDAUDIO* wcda)
+int	CDAUDIO_Open(WINE_CDAUDIO* wcda, int drive)
 {
-#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
-    wcda->unixdev = open(CDAUDIO_DEV, O_RDONLY | O_NONBLOCK, 0);
+    int i;
+    BOOL avail = FALSE;
+    const char *dev;
+
+    if (drive == -1)
+    {
+	for (i=0; i < MAX_DOS_DRIVES; i++)
+	    if (DRIVE_GetType(i) == TYPE_CDROM)
+	    {
+		drive = i;
+		avail = TRUE;
+		break;
+	    }
+    }
+    else
+	avail = TRUE;
+    
+    if (avail == FALSE)
+    {
+	WARN("No CD-ROM #%d found !\n", drive);
+	return -1;
+    }
+    if ((dev = DRIVE_GetDevice(drive)) == NULL)
+{
+	WARN("No device entry for CD-ROM #%d (drive %c:) found !\n",
+		drive, 'A' + drive);
+	return -1;
+    }
+
+    wcda->unixdev = open(dev, O_RDONLY | O_NONBLOCK, 0);
     if (wcda->unixdev == -1) {
-	WARN("can't open '%s'!.  errno=%d\n", CDAUDIO_DEV, errno);
+	WARN("can't open '%s'!.  errno=%d\n", dev, errno);
 	return -1;
     }
     wcda->cdaMode = WINE_CDA_OPEN;	/* to force reading tracks info */
@@ -45,8 +69,16 @@ int	CDAUDIO_Open(WINE_CDAUDIO* wcda)
     wcda->lpdwTrackPos = NULL;
     wcda->lpbTrackFlags = NULL;
     return 0;
+}
+
+/**************************************************************************
+ * 				CDAUDIO_GetMediaType		[internal]
+ */
+int	CDAUDIO_GetMediaType(WINE_CDAUDIO* wcda)
+{
+#ifdef linux
+    return ioctl(wcda->unixdev, CDROM_DISC_STATUS);
 #else
-    wcda->unixdev = -1;
     return -1;
 #endif
 }
