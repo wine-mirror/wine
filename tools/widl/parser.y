@@ -596,7 +596,7 @@ dispinterfacehdr: attributes dispinterface	{ $$ = $2;
 						  if ($$->defined) yyerror("multiple definition error\n");
 						  $$->attrs = $1;
 						  $$->attrs = make_attr(ATTR_DISPINTERFACE);
-						/*  LINK($$->attrs, $1); */
+						  LINK($$->attrs, $1);
 						  $$->ref = find_type("IDispatch", 0);
 						  if (!$$->ref) yyerror("IDispatch is undefined\n");
 						  $$->defined = TRUE;
