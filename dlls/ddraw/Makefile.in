@@ -46,7 +46,7 @@ C_SRCS = \
 	helper.c \
 	main.c
 
-SUBDIRS = \
+EXTRASUBDIRS = \
 	d3ddevice \
 	dclipper \
 	ddraw \
@@ -55,8 +55,5 @@ SUBDIRS = \
 	dsurface
 
 @MAKE_DLL_RULES@
-
-clean::
-	for i in $(SUBDIRS); do (cd $$i && $(RM) $(CLEAN_FILES)); done
 
 ### Dependencies:

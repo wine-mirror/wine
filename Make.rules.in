@@ -1,19 +1,23 @@
 # Global rules shared by all makefiles     -*-Makefile-*-
 #
-# Each individual makefile should define the following variables:
+# Each individual makefile must define the following variables:
 # TOPSRCDIR    : top-level source directory
 # TOPOBJDIR    : top-level object directory
 # SRCDIR       : source directory for this module
 # MODULE       : name of the module being built
-# C_SRCS       : C sources for the module (optional)
-# ASM_SRCS     : assembly sources (optional)
-# GEN_ASM_SRCS : generated assembly sources (optional)
-# RC_SRCS      : resource source files (optional)
-# SPEC_SRCS    : interface definition files (optional)
-# GLUE         : C sources for which glue code needs to be generated (optional)
-# EXTRA_SRCS   : extra source files for make depend (optional)
-# EXTRA_OBJS   : extra object files (optional)
-# WRCEXTRA     : extra wrc flags (e.g. '-p _SysRes') (optional)
+#
+# Each individual makefile may define the following additional variables:
+# C_SRCS       : C sources for the module
+# ASM_SRCS     : assembly sources
+# GEN_ASM_SRCS : generated assembly sources
+# RC_SRCS      : resource source files
+# SPEC_SRCS    : interface definition files
+# GLUE         : C sources for which glue code needs to be generated
+# EXTRA_SRCS   : extra source files for make depend
+# EXTRA_OBJS   : extra object files
+# WRCEXTRA     : extra wrc flags (e.g. '-p _SysRes')
+# SUBDIRS      : subdirectories that contain a Makefile
+# EXTRASUBDIRS : subdirectories that do not contain a Makefile
 
 # First some useful definitions
 
@@ -241,6 +245,25 @@ lint:: $(MODULE).ln
 winapi_check::
 	$(WINAPI_CHECK) $(WINAPI_CHECK_FLAGS) $(WINAPI_CHECK_EXTRA_FLAGS) .
 
+# Rules for dependencies
+
+$(SUBDIRS:%=%/__depend__): $(MAKEDEP) dummy
+	cd `dirname $@` && $(MAKE) depend
+
+depend: $(MAKEDEP) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS) $(SUBDIRS:%=%/__depend__)
+	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)
+
+# Rules for cleaning
+
+$(SUBDIRS:%=%/__clean__): dummy
+	cd `dirname $@` && $(MAKE) clean
+
+$(EXTRASUBDIRS:%=%/__clean__): dummy
+	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
+
+clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
+	$(RM) $(CLEAN_FILES) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.s) $(RC_SRCS:.rc=.h) $(PROGRAMS)
+
 # Misc. rules
 
 $(SPEC_SRCS:.spec=.spec.c): $(BUILD) $(TOPSRCDIR)/include/builtin16.h $(TOPSRCDIR)/include/builtin32.h
@@ -249,11 +272,8 @@ $(GLUE:.c=.glue.c): $(BUILD) $(TOPSRCDIR)/include/builtin16.h $(TOPSRCDIR)/inclu
 
 $(RC_SRCS:.rc=.s): $(WRC)
 
-depend:: $(MAKEDEP) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)
-	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)
-
-clean::
-	$(RM) $(CLEAN_FILES) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.s) $(RC_SRCS:.rc=.h) $(PROGRAMS)
+$(SUBDIRS): dummy
+	@cd $@ && $(MAKE)
 
 dummy:
 

@@ -10,6 +10,8 @@ INSTALLED_INCLUDES = \
 	wingdi.h \
 	winuser.h
 
+EXTRASUBDIRS = bitmaps wine
+
 @MAKE_RULES@
 
 install::

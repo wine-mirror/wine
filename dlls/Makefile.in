@@ -84,6 +84,52 @@ EXTRADLLNAMES = \
 	winaspi \
 	winsock
 
+SUBDIRS = \
+	avifil32 \
+	comctl32 \
+	commdlg \
+	dciman32 \
+	ddraw \
+	dinput \
+	dplayx \
+	dsound \
+	gdi \
+	icmp \
+	imagehlp \
+	imm32 \
+	lzexpand \
+	mpr \
+	msacm \
+	msacm32 \
+	msnet32 \
+	msvideo \
+	odbc32 \
+	ole32 \
+	oleaut32 \
+	olecli \
+	oledlg \
+	olepro32 \
+	olesvr \
+	psapi \
+	rasapi32 \
+	setupx \
+	shell32 \
+	sound \
+	stress \
+	tapi32 \
+	ttydrv \
+	user \
+	version \
+	win32s \
+	win87em \
+	winaspi \
+	windebug \
+	wing \
+	winmm \
+	winsock \
+	winspool \
+	x11drv
+
 @MAKE_RULES@
 
 all: $(DLLS:%=lib%.@LIBEXT@) $(EXTRADLLNAMES:%=lib%.@LIBEXT@)
@@ -252,9 +298,6 @@ libx11drv.@LIBEXT@: x11drv/libx11drv.@LIBEXT@
 $(DLLFILES): dummy
 	@cd `dirname $@` && $(MAKE)
 
-$(DLLFILES:%=%_depend_): dummy
-	@cd `dirname $@` && $(MAKE) depend
-
 $(DLLFILES:%=%_install_): dummy
 	@cd `dirname $@` && $(MAKE) install
 
@@ -264,15 +307,8 @@ $(DLLFILES:%=%_uninstall_): dummy
 $(DLLFILES:%=%_checklink_): dummy
 	@cd `dirname $@` && $(MAKE) checklink
 
-$(DLLFILES:%=%_clean_): dummy
-	@cd `dirname $@` && $(MAKE) clean
-
-depend:: $(DLLFILES:%=%_depend_)
-
 install:: $(DLLFILES:%=%_install_)
 
 uninstall:: $(DLLFILES:%=%_uninstall_)
 
 checklink:: $(DLLFILES:%=%_checklink_)
-
-clean:: $(DLLFILES:%=%_clean_)

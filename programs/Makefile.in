@@ -1,3 +1,9 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = none
+
 SUBDIRS = \
 	avitools \
 	clock \
@@ -16,19 +22,12 @@ SUBDIRS = \
 
 all: $(SUBDIRS)
 
-$(SUBDIRS): dummy
-	@cd $@; $(MAKE)
+@MAKE_RULES@
 
-depend:
-	for i in $(SUBDIRS); do (cd $$i; $(MAKE) depend) || exit 1; done
-
-install:
+install::
 	for i in $(SUBDIRS); do (cd $$i; $(MAKE) install) || exit 1; done
 
-uninstall:
+uninstall::
 	for i in $(SUBDIRS); do (cd $$i; $(MAKE) uninstall) || exit 1; done
 
-clean:
-	for i in $(SUBDIRS); do (cd $$i; $(MAKE) clean) || exit 1; done
-
-dummy:
+### Dependencies:

@@ -9,6 +9,8 @@ C_SRCS = \
 	guid.c \
 	ole2nls.c 
 
+EXTRASUBDIRS = nls
+
 all: $(MODULE).o
 
 @MAKE_RULES@

@@ -9,6 +9,16 @@ MODULE   = none
 
 C_SRCS = build.c makedep.c fnt2bdf.c bin2res.c
 
+SUBDIRS = \
+	cvdump \
+	wrc
+
+EXTRASUBDIRS = \
+	winapi_check \
+	winapi_check/win16 \
+	winapi_check/win32 \
+	wineconf.libs
+
 all: $(PROGRAMS)
 
 @MAKE_RULES@

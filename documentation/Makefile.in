@@ -24,6 +24,7 @@ HTMLFILES = \
 
 DVIFILES = wine.dvi
 
+EXTRASUBDIRS = samples status
 
 all: $(INFOFILES) $(DVIFILES) $(HTMLFILES)
 

@@ -23,7 +23,7 @@ RC_SRCS = rsrc.rc
 
 all: check_wrc check_winestub $(PROGRAMS)
 
-depend:: y.tab.h
+depend: y.tab.h
 
 @MAKE_RULES@
 

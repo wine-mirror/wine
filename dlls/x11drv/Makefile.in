@@ -25,11 +25,4 @@ SUBDIRS = \
 $(EXTRA_OBJS): $(TOOLSUBDIRS) dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
 
-depend::
-	for i in $(SUBDIRS); do (cd $$i && $(MAKE) depend) || exit 1; done
-
-clean::
-	for i in $(SUBDIRS); do (cd $$i && $(MAKE) clean) || exit 1; done
-
 ### Dependencies:
-
