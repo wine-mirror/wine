@@ -978,7 +978,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND hwndOwner )
     {
 	lpitem = &lppop->items[start];
 	orgX = maxX;
-	orgY = 2;
+	orgY = 3;
 
 	maxTab = maxTabWidth = 0;
 
