@@ -19,10 +19,10 @@
  15 stdcall DrawInsert(long long long)
  16 stdcall CreateUpDownControl(long long long long long long long long long long long long)
  17 stdcall InitCommonControls()
- 71 stdcall -noname Alloc(long) COMCTL32_Alloc
- 72 stdcall -noname ReAlloc(ptr long) COMCTL32_ReAlloc
- 73 stdcall -noname Free(ptr) COMCTL32_Free
- 74 stdcall -noname GetSize(ptr) COMCTL32_GetSize
+ 71 stdcall -noname Alloc(long)
+ 72 stdcall -noname ReAlloc(ptr long)
+ 73 stdcall -noname Free(ptr)
+ 74 stdcall -noname GetSize(ptr)
 151 stdcall -noname CreateMRUListA(ptr)
 152 stdcall -noname FreeMRUList(long)
 153 stdcall -noname AddMRUStringA(long str)
@@ -59,24 +59,24 @@
 338 stdcall -noname DPA_Sort(ptr ptr long)
 339 stdcall -noname DPA_Search(ptr ptr long ptr long long)
 340 stdcall -noname DPA_CreateEx(long long)
-341 stdcall -noname SendNotify(long long long ptr) COMCTL32_SendNotify
-342 stdcall -noname SendNotifyEx(long long long ptr long) COMCTL32_SendNotifyEx
-350 stdcall -noname StrChrA(str str) COMCTL32_StrChrA
-351 stdcall -noname StrRChrA(str str long) COMCTL32_StrRChrA
-352 stdcall -noname StrCmpNA(str str long) COMCTL32_StrCmpNA
-353 stdcall -noname StrCmpNIA(str str long) COMCTL32_StrCmpNIA
-354 stdcall -noname StrStrA(str str) COMCTL32_StrStrA
-355 stdcall -noname StrStrIA(str str) COMCTL32_StrStrIA
-356 stdcall -noname StrCSpnA(str str) COMCTL32_StrCSpnA
-357 stdcall -noname StrToIntA(str) COMCTL32_StrToIntA
-358 stdcall -noname StrChrW(wstr long) COMCTL32_StrChrW
-359 stdcall -noname StrRChrW(wstr wstr long) COMCTL32_StrRChrW
-360 stdcall -noname StrCmpNW(wstr wstr long) COMCTL32_StrCmpNW
-361 stdcall -noname StrCmpNIW(wstr wstr long) COMCTL32_StrCmpNIW
-362 stdcall -noname StrStrW(wstr wstr) COMCTL32_StrStrW
-363 stdcall -noname StrStrIW(wstr wstr) COMCTL32_StrStrIW
-364 stdcall -noname StrSpnW(wstr wstr) COMCTL32_StrSpnW
-365 stdcall -noname StrToIntW(wstr) COMCTL32_StrToIntW
+341 stdcall -noname SendNotify(long long long ptr)
+342 stdcall -noname SendNotifyEx(long long long ptr long)
+350 stdcall -noname StrChrA(str str)
+351 stdcall -noname StrRChrA(str str long)
+352 stdcall -noname StrCmpNA(str str long)
+353 stdcall -noname StrCmpNIA(str str long)
+354 stdcall -noname StrStrA(str str)
+355 stdcall -noname StrStrIA(str str)
+356 stdcall -noname StrCSpnA(str str)
+357 stdcall -noname StrToIntA(str)
+358 stdcall -noname StrChrW(wstr long)
+359 stdcall -noname StrRChrW(wstr wstr long)
+360 stdcall -noname StrCmpNW(wstr wstr long)
+361 stdcall -noname StrCmpNIW(wstr wstr long)
+362 stdcall -noname StrStrW(wstr wstr)
+363 stdcall -noname StrStrIW(wstr wstr)
+364 stdcall -noname StrSpnW(wstr wstr)
+365 stdcall -noname StrToIntW(wstr)
 366 stub -noname StrChrIA
 367 stub -noname StrChrIW
 368 stub -noname StrRChrIA

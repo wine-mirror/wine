@@ -155,14 +155,17 @@ typedef struct
    WNDPROC origproc;
 } SUBCLASS_INFO, *LPSUBCLASS_INFO;
 
-/* private heap memory functions */
-
-LPVOID WINAPI COMCTL32_Alloc (DWORD);
-LPVOID WINAPI COMCTL32_ReAlloc (LPVOID, DWORD);
-BOOL WINAPI COMCTL32_Free (LPVOID);
-DWORD  WINAPI COMCTL32_GetSize (LPVOID);
-
 /* undocumented functions */
+
+LPVOID WINAPI Alloc (DWORD);
+LPVOID WINAPI ReAlloc (LPVOID, DWORD);
+BOOL   WINAPI Free (LPVOID);
+DWORD  WINAPI GetSize (LPVOID);
+
+/* for compatibility with old code */
+#define COMCTL32_Alloc(size) Alloc(size)
+#define COMCTL32_ReAlloc(ptr,size) ReAlloc(ptr,size)
+#define COMCTL32_Free(ptr) Free(ptr)
 
 INT  WINAPI Str_GetPtrA (LPCSTR, LPSTR, INT);
 INT  WINAPI Str_GetPtrW (LPCWSTR, LPWSTR, INT);

@@ -368,8 +368,7 @@ DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
  *     Failure: NULL
  */
 
-LPVOID WINAPI
-COMCTL32_Alloc (DWORD dwSize)
+LPVOID WINAPI Alloc (DWORD dwSize)
 {
     LPVOID lpPtr;
 
@@ -398,12 +397,11 @@ COMCTL32_Alloc (DWORD dwSize)
  *     Failure: NULL
  *
  * NOTES
- *     If lpSrc is a NULL-pointer, then COMCTL32_ReAlloc allocates a memory
- *     block like COMCTL32_Alloc.
+ *     If lpSrc is a NULL-pointer, then ReAlloc allocates a memory
+ *     block like Alloc.
  */
 
-LPVOID WINAPI
-COMCTL32_ReAlloc (LPVOID lpSrc, DWORD dwSize)
+LPVOID WINAPI ReAlloc (LPVOID lpSrc, DWORD dwSize)
 {
     LPVOID lpDest;
 
@@ -433,8 +431,7 @@ COMCTL32_ReAlloc (LPVOID lpSrc, DWORD dwSize)
  *     Failure: FALSE
  */
 
-BOOL WINAPI
-COMCTL32_Free (LPVOID lpMem)
+BOOL WINAPI Free (LPVOID lpMem)
 {
     TRACE("(%p)\n", lpMem);
 
@@ -456,8 +453,7 @@ COMCTL32_Free (LPVOID lpMem)
  *     Failure: 0
  */
 
-DWORD WINAPI
-COMCTL32_GetSize (LPVOID lpMem)
+DWORD WINAPI GetSize (LPVOID lpMem)
 {
     TRACE("(%p)\n", lpMem);
 
@@ -616,12 +612,12 @@ FreeMRUList (HANDLE hMRUList)
 
     for(i=0; i<mp->extview.nMaxItems; i++) {
 	if (mp->array[i])
-	    COMCTL32_Free(mp->array[i]);
+	    Free(mp->array[i]);
     }
-    COMCTL32_Free(mp->realMRU);
-    COMCTL32_Free(mp->array);
-    COMCTL32_Free((LPWSTR)mp->extview.lpszSubKey);
-    return COMCTL32_Free(mp);
+    Free(mp->realMRU);
+    Free(mp->array);
+    Free((LPWSTR)mp->extview.lpszSubKey);
+    return Free(mp);
 }
 
 
@@ -656,7 +652,7 @@ FindMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData, LPINT lpRegNum)
     if(!(mp->extview.dwFlags & MRUF_BINARY_LIST) && !mp->isUnicode) {
         DWORD len = WideCharToMultiByte(CP_ACP, 0, lpData, -1,
 					NULL, 0, NULL, NULL);
-	dataA = COMCTL32_Alloc(len);
+	dataA = Alloc(len);
 	WideCharToMultiByte(CP_ACP, 0, lpData, -1, dataA, len, NULL, NULL);
     }
 
@@ -674,20 +670,20 @@ FindMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData, LPINT lpRegNum)
 	        DWORD len = WideCharToMultiByte(CP_ACP, 0,
 						(LPWSTR)&mp->array[i]->datastart, -1,
 						NULL, 0, NULL, NULL);
-		LPSTR itemA = COMCTL32_Alloc(len);
+		LPSTR itemA = Alloc(len);
 		INT cmp;
 		WideCharToMultiByte(CP_ACP, 0, (LPWSTR)&mp->array[i]->datastart, -1,
 				    itemA, len, NULL, NULL);
 
 	        cmp = mp->extview.lpfnCompare(dataA, itemA);
-		COMCTL32_Free(itemA);
+		Free(itemA);
 		if(!cmp)
 		    break;
 	    }
 	}
     }
     if(dataA)
-        COMCTL32_Free(dataA);
+        Free(dataA);
     if (i < mp->cursize)
 	ret = i;
     else
@@ -735,17 +731,16 @@ AddMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData)
 	else {
 	    /* get the oldest entry and replace data */
 	    replace = mp->realMRU[mp->cursize - 1] - 'a';
-	    COMCTL32_Free(mp->array[replace]);
+	    Free(mp->array[replace]);
 	}
     }
     else {
 	/* free up the old data */
-	COMCTL32_Free(mp->array[replace]);
+	Free(mp->array[replace]);
     }
 
     /* Allocate space for new item and move in the data */
-    mp->array[replace] = witem = (LPWINEMRUITEM)COMCTL32_Alloc(cbData +
-							       sizeof(WINEMRUITEM));
+    mp->array[replace] = witem = Alloc(cbData + sizeof(WINEMRUITEM));
     witem->itemFlag |= WMRUIF_CHANGED;
     witem->size = cbData;
     memcpy( &witem->datastart, lpData, cbData);
@@ -850,12 +845,12 @@ INT WINAPI
 FindMRUStringA (HANDLE hList, LPCSTR lpszString, LPINT lpRegNum)
 {
     DWORD len = MultiByteToWideChar(CP_ACP, 0, lpszString, -1, NULL, 0);
-    LPWSTR stringW = COMCTL32_Alloc(len * sizeof(WCHAR));
+    LPWSTR stringW = Alloc(len * sizeof(WCHAR));
     INT ret;
 
     MultiByteToWideChar(CP_ACP, 0, lpszString, -1, stringW, len);
     ret = FindMRUData(hList, stringW, len * sizeof(WCHAR), lpRegNum);
-    COMCTL32_Free(stringW);
+    Free(stringW);
     return ret;
 }
 
@@ -875,13 +870,12 @@ HANDLE CreateMRUListLazy_common(LPWINEMRULIST mp)
     /* get space to save indices that will turn into names
      * but in order of most to least recently used
      */
-    mp->realMRU = (LPSTR) COMCTL32_Alloc(mp->extview.nMaxItems + 2);
+    mp->realMRU = Alloc(mp->extview.nMaxItems + 2);
 
     /* get space to save pointers to actual data in order of
      * 'a' to 'z' (0 to n).
      */
-    mp->array = (LPVOID) COMCTL32_Alloc(mp->extview.nMaxItems *
-					sizeof(LPVOID));
+    mp->array = Alloc(mp->extview.nMaxItems * sizeof(LPVOID));
 
     /* open the sub key */
     if ((err = RegCreateKeyExW( mp->extview.hKey, mp->extview.lpszSubKey,
@@ -923,8 +917,7 @@ HANDLE CreateMRUListLazy_common(LPWINEMRULIST mp)
 		/* not present - what to do ??? */
 		ERR("Key %s not found 1\n", debugstr_w(realname));
 	    }
-	    mp->array[i] = witem = (LPWINEMRUITEM)COMCTL32_Alloc(datasize +
-								 sizeof(WINEMRUITEM));
+	    mp->array[i] = witem = Alloc(datasize + sizeof(WINEMRUITEM));
 	    witem->size = datasize;
 	    if(RegQueryValueExW( newkey, realname, 0, &type,
 				 &witem->datastart, &datasize)) {
@@ -958,10 +951,9 @@ CreateMRUListLazyW (LPCREATEMRULISTW lpcml, DWORD dwParam2, DWORD dwParam3, DWOR
     if (lpcml->cbSize < sizeof(CREATEMRULISTW))
 	return 0;
 
-    mp = (LPWINEMRULIST) COMCTL32_Alloc(sizeof(WINEMRULIST));
+    mp = Alloc(sizeof(WINEMRULIST));
     memcpy(&mp->extview, lpcml, sizeof(CREATEMRULISTW));
-    mp->extview.lpszSubKey = COMCTL32_Alloc((strlenW(lpcml->lpszSubKey) + 1) *
-					    sizeof(WCHAR));
+    mp->extview.lpszSubKey = Alloc((strlenW(lpcml->lpszSubKey) + 1) * sizeof(WCHAR));
     strcpyW((LPWSTR)mp->extview.lpszSubKey, lpcml->lpszSubKey);
     mp->isUnicode = TRUE;
 
@@ -983,10 +975,10 @@ CreateMRUListLazyA (LPCREATEMRULISTA lpcml, DWORD dwParam2, DWORD dwParam3, DWOR
     if (lpcml->cbSize < sizeof(CREATEMRULISTA))
 	return 0;
 
-    mp = (LPWINEMRULIST) COMCTL32_Alloc(sizeof(WINEMRULIST));
+    mp = Alloc(sizeof(WINEMRULIST));
     memcpy(&mp->extview, lpcml, sizeof(CREATEMRULISTW));
     len = MultiByteToWideChar(CP_ACP, 0, lpcml->lpszSubKey, -1, NULL, 0);
-    mp->extview.lpszSubKey = COMCTL32_Alloc(len * sizeof(WCHAR));
+    mp->extview.lpszSubKey = Alloc(len * sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP, 0, lpcml->lpszSubKey, -1,
 			(LPWSTR)mp->extview.lpszSubKey, len);
     mp->isUnicode = FALSE;
@@ -1146,7 +1138,7 @@ Str_SetPtrA (LPSTR *lppDest, LPCSTR lpSrc)
     TRACE("(%p %p)\n", lppDest, lpSrc);
 
     if (lpSrc) {
-	LPSTR ptr = COMCTL32_ReAlloc (*lppDest, strlen (lpSrc) + 1);
+	LPSTR ptr = ReAlloc (*lppDest, strlen (lpSrc) + 1);
 	if (!ptr)
 	    return FALSE;
 	strcpy (ptr, lpSrc);
@@ -1154,7 +1146,7 @@ Str_SetPtrA (LPSTR *lppDest, LPCSTR lpSrc)
     }
     else {
 	if (*lppDest) {
-	    COMCTL32_Free (*lppDest);
+	    Free (*lppDest);
 	    *lppDest = NULL;
 	}
     }
@@ -1220,7 +1212,7 @@ Str_SetPtrW (LPWSTR *lppDest, LPCWSTR lpSrc)
 
     if (lpSrc) {
 	INT len = strlenW (lpSrc) + 1;
-	LPWSTR ptr = COMCTL32_ReAlloc (*lppDest, len * sizeof(WCHAR));
+	LPWSTR ptr = ReAlloc (*lppDest, len * sizeof(WCHAR));
 	if (!ptr)
 	    return FALSE;
 	strcpyW (ptr, lpSrc);
@@ -1228,7 +1220,7 @@ Str_SetPtrW (LPWSTR *lppDest, LPCWSTR lpSrc)
     }
     else {
 	if (*lppDest) {
-	    COMCTL32_Free (*lppDest);
+	    Free (*lppDest);
 	    *lppDest = NULL;
 	}
     }
@@ -1305,7 +1297,7 @@ Str_SetPtrAtoW (LPWSTR *lppDest, LPCSTR lpSrc)
 
     if (lpSrc) {
 	INT len = MultiByteToWideChar(CP_ACP,0,lpSrc,-1,NULL,0);
-	LPWSTR ptr = COMCTL32_ReAlloc (*lppDest, len*sizeof(WCHAR));
+	LPWSTR ptr = ReAlloc (*lppDest, len*sizeof(WCHAR));
 
 	if (!ptr)
 	    return FALSE;
@@ -1314,7 +1306,7 @@ Str_SetPtrAtoW (LPWSTR *lppDest, LPCSTR lpSrc)
     }
     else {
 	if (*lppDest) {
-	    COMCTL32_Free (*lppDest);
+	    Free (*lppDest);
 	    *lppDest = NULL;
 	}
     }
@@ -1348,7 +1340,7 @@ DSA_Create (INT nSize, INT nGrow)
 
     TRACE("(size=%d grow=%d)\n", nSize, nGrow);
 
-    hdsa = (HDSA)COMCTL32_Alloc (sizeof(*hdsa));
+    hdsa = Alloc (sizeof(*hdsa));
     if (hdsa)
     {
 	hdsa->nItemCount = 0;
@@ -1381,10 +1373,10 @@ DSA_Destroy (const HDSA hdsa)
     if (!hdsa)
 	return FALSE;
 
-    if (hdsa->pData && (!COMCTL32_Free (hdsa->pData)))
+    if (hdsa->pData && (!Free (hdsa->pData)))
 	return FALSE;
 
-    return COMCTL32_Free (hdsa);
+    return Free (hdsa);
 }
 
 
@@ -1492,7 +1484,7 @@ DSA_SetItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 		hdsa->nGrow * ((INT)(((nIndex + 1) - 1) / hdsa->nGrow) + 1);
 	    nSize = hdsa->nItemSize * nNewItems;
 
-	    lpTemp = (LPVOID)COMCTL32_ReAlloc (hdsa->pData, nSize);
+	    lpTemp = ReAlloc (hdsa->pData, nSize);
 	    if (!lpTemp)
 		return FALSE;
 
@@ -1545,7 +1537,7 @@ DSA_InsertItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 	nNewItems = hdsa->nMaxCount + hdsa->nGrow;
 	nSize = hdsa->nItemSize * nNewItems;
 
-	lpTemp = (LPVOID)COMCTL32_ReAlloc (hdsa->pData, nSize);
+	lpTemp = ReAlloc (hdsa->pData, nSize);
 	if (!lpTemp)
 	    return -1;
 
@@ -1615,7 +1607,7 @@ DSA_DeleteItem (const HDSA hdsa, INT nIndex)
     if ((hdsa->nMaxCount - hdsa->nItemCount) >= hdsa->nGrow) {
 	nSize = hdsa->nItemSize * hdsa->nItemCount;
 
-	lpDest = (LPVOID)COMCTL32_ReAlloc (hdsa->pData, nSize);
+	lpDest = ReAlloc (hdsa->pData, nSize);
 	if (!lpDest)
 	    return -1;
 
@@ -1647,7 +1639,7 @@ DSA_DeleteAllItems (const HDSA hdsa)
 
     if (!hdsa)
 	return FALSE;
-    if (hdsa->pData && (!COMCTL32_Free (hdsa->pData)))
+    if (hdsa->pData && (!Free (hdsa->pData)))
 	return FALSE;
 
     hdsa->nItemCount = 0;
@@ -1681,13 +1673,12 @@ DPA_Create (INT nGrow)
 
     TRACE("(%d)\n", nGrow);
 
-    hdpa = (HDPA)COMCTL32_Alloc (sizeof(*hdpa));
+    hdpa = Alloc (sizeof(*hdpa));
     if (hdpa) {
 	hdpa->nGrow = max(8, nGrow);
 	hdpa->hHeap = COMCTL32_hHeap;
 	hdpa->nMaxCount = hdpa->nGrow * 2;
-	hdpa->ptrs =
-	    (LPVOID*)COMCTL32_Alloc (hdpa->nMaxCount * sizeof(LPVOID));
+	hdpa->ptrs = Alloc (hdpa->nMaxCount * sizeof(LPVOID));
     }
 
     TRACE("-- %p\n", hdpa);
@@ -2257,7 +2248,7 @@ DPA_CreateEx (INT nGrow, HANDLE hHeap)
     if (hHeap)
 	hdpa = (HDPA)HeapAlloc (hHeap, HEAP_ZERO_MEMORY, sizeof(*hdpa));
     else
-	hdpa = (HDPA)COMCTL32_Alloc (sizeof(*hdpa));
+	hdpa = Alloc (sizeof(*hdpa));
 
     if (hdpa) {
 	hdpa->nGrow = min(8, nGrow);
@@ -2347,9 +2338,7 @@ DoNotify (LPNOTIFYDATA lpNotify, UINT uCode, LPNMHDR lpHdr)
  *     Failure: 0
  */
 
-LRESULT WINAPI
-COMCTL32_SendNotify (HWND hwndTo, HWND hwndFrom,
-		     UINT uCode, LPNMHDR lpHdr)
+LRESULT WINAPI SendNotify (HWND hwndTo, HWND hwndFrom, UINT uCode, LPNMHDR lpHdr)
 {
     NOTIFYDATA notify;
 
@@ -2380,9 +2369,8 @@ COMCTL32_SendNotify (HWND hwndTo, HWND hwndFrom,
  *     Failure: 0
  */
 
-LRESULT WINAPI
-COMCTL32_SendNotifyEx (HWND hwndTo, HWND hwndFrom, UINT uCode,
-		       LPNMHDR lpHdr, DWORD dwParam5)
+LRESULT WINAPI SendNotifyEx (HWND hwndTo, HWND hwndFrom, UINT uCode,
+                             LPNMHDR lpHdr, DWORD dwParam5)
 {
     NOTIFYDATA notify;
     HWND hwndNotify;
@@ -2413,8 +2401,7 @@ COMCTL32_SendNotifyEx (HWND hwndTo, HWND hwndFrom, UINT uCode,
  *
  */
 
-LPSTR WINAPI
-COMCTL32_StrChrA (LPCSTR lpString, CHAR cChar)
+LPSTR WINAPI StrChrA (LPCSTR lpString, CHAR cChar)
 {
     return strchr (lpString, cChar);
 }
@@ -2424,8 +2411,7 @@ COMCTL32_StrChrA (LPCSTR lpString, CHAR cChar)
  * StrStrIA [COMCTL32.355]
  */
 
-LPSTR WINAPI
-COMCTL32_StrStrIA (LPCSTR lpStr1, LPCSTR lpStr2)
+LPSTR WINAPI StrStrIA (LPCSTR lpStr1, LPCSTR lpStr2)
 {
     INT len1, len2, i;
     CHAR  first;
@@ -2456,8 +2442,7 @@ COMCTL32_StrStrIA (LPCSTR lpStr1, LPCSTR lpStr2)
  * StrToIntA [COMCTL32.357] Converts a string to a signed integer.
  */
 
-INT WINAPI
-COMCTL32_StrToIntA (LPSTR lpString)
+INT WINAPI StrToIntA (LPSTR lpString)
 {
     return atoi(lpString);
 }
@@ -2466,8 +2451,7 @@ COMCTL32_StrToIntA (LPSTR lpString)
  * StrStrIW [COMCTL32.363]
  */
 
-LPWSTR WINAPI
-COMCTL32_StrStrIW (LPCWSTR lpStr1, LPCWSTR lpStr2)
+LPWSTR WINAPI StrStrIW (LPCWSTR lpStr1, LPCWSTR lpStr2)
 {
     INT len1, len2, i;
     WCHAR  first;
@@ -2498,8 +2482,7 @@ COMCTL32_StrStrIW (LPCWSTR lpStr1, LPCWSTR lpStr2)
  * StrToIntW [COMCTL32.365] Converts a wide char string to a signed integer.
  */
 
-INT WINAPI
-COMCTL32_StrToIntW (LPWSTR lpString)
+INT WINAPI StrToIntW (LPWSTR lpString)
 {
     return atoiW(lpString);
 }
@@ -2627,7 +2610,8 @@ DSA_DestroyCallback (HDSA hdsa, PFNDSAENUMCALLBACK enumProc, LPVOID lParam)
  * StrCSpnA [COMCTL32.356]
  *
  */
-INT WINAPI COMCTL32_StrCSpnA( LPCSTR lpStr, LPCSTR lpSet) {
+INT WINAPI StrCSpnA( LPCSTR lpStr, LPCSTR lpSet)
+{
   return strcspn(lpStr, lpSet);
 }
 
@@ -2635,7 +2619,8 @@ INT WINAPI COMCTL32_StrCSpnA( LPCSTR lpStr, LPCSTR lpSet) {
  * StrChrW [COMCTL32.358]
  *
  */
-LPWSTR WINAPI COMCTL32_StrChrW( LPCWSTR lpStart, WORD wMatch) {
+LPWSTR WINAPI StrChrW( LPCWSTR lpStart, WORD wMatch)
+{
   return strchrW(lpStart, wMatch);
 }
 
@@ -2643,7 +2628,8 @@ LPWSTR WINAPI COMCTL32_StrChrW( LPCWSTR lpStart, WORD wMatch) {
  * StrCmpNA [COMCTL32.352]
  *
  */
-INT WINAPI COMCTL32_StrCmpNA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar) {
+INT WINAPI StrCmpNA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar)
+{
   return strncmp(lpStr1, lpStr2, nChar);
 }
 
@@ -2651,7 +2637,8 @@ INT WINAPI COMCTL32_StrCmpNA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar) {
  * StrCmpNIA [COMCTL32.353]
  *
  */
-INT WINAPI COMCTL32_StrCmpNIA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar) {
+INT WINAPI StrCmpNIA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar)
+{
   return strncasecmp(lpStr1, lpStr2, nChar);
 }
 
@@ -2659,7 +2646,8 @@ INT WINAPI COMCTL32_StrCmpNIA( LPCSTR lpStr1, LPCSTR lpStr2, int nChar) {
  * StrCmpNW [COMCTL32.360]
  *
  */
-INT WINAPI COMCTL32_StrCmpNW( LPCWSTR lpStr1, LPCWSTR lpStr2, int nChar) {
+INT WINAPI StrCmpNW( LPCWSTR lpStr1, LPCWSTR lpStr2, int nChar)
+{
   return strncmpW(lpStr1, lpStr2, nChar);
 }
 
@@ -2667,7 +2655,8 @@ INT WINAPI COMCTL32_StrCmpNW( LPCWSTR lpStr1, LPCWSTR lpStr2, int nChar) {
  * StrCmpNIW [COMCTL32.361]
  *
  */
-INT WINAPI COMCTL32_StrCmpNIW( LPCWSTR lpStr1, LPCWSTR lpStr2, int nChar) {
+INT WINAPI StrCmpNIW( LPCWSTR lpStr1, LPCWSTR lpStr2, int nChar)
+{
   FIXME("(%s, %s, %i): stub\n", debugstr_w(lpStr1), debugstr_w(lpStr2), nChar);
   return 0;
 }
@@ -2676,7 +2665,7 @@ INT WINAPI COMCTL32_StrCmpNIW( LPCWSTR lpStr1, LPCWSTR lpStr2, int nChar) {
  * StrRChrA [COMCTL32.351]
  *
  */
-LPSTR WINAPI COMCTL32_StrRChrA( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch )
+LPSTR WINAPI StrRChrA( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch )
 {
     LPCSTR lpGotIt = NULL;
     BOOL dbcs = IsDBCSLeadByte( LOBYTE(wMatch) );
@@ -2699,7 +2688,7 @@ LPSTR WINAPI COMCTL32_StrRChrA( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch )
  * StrRChrW [COMCTL32.359]
  *
  */
-LPWSTR WINAPI COMCTL32_StrRChrW( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch)
+LPWSTR WINAPI StrRChrW( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch)
 {
     LPCWSTR lpGotIt = NULL;
 
@@ -2717,7 +2706,8 @@ LPWSTR WINAPI COMCTL32_StrRChrW( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch)
  * StrStrA [COMCTL32.354]
  *
  */
-LPSTR WINAPI COMCTL32_StrStrA( LPCSTR lpFirst, LPCSTR lpSrch) {
+LPSTR WINAPI StrStrA( LPCSTR lpFirst, LPCSTR lpSrch)
+{
   return strstr(lpFirst, lpSrch);
 }
 
@@ -2725,7 +2715,8 @@ LPSTR WINAPI COMCTL32_StrStrA( LPCSTR lpFirst, LPCSTR lpSrch) {
  * StrStrW [COMCTL32.362]
  *
  */
-LPWSTR WINAPI COMCTL32_StrStrW( LPCWSTR lpFirst, LPCWSTR lpSrch) {
+LPWSTR WINAPI StrStrW( LPCWSTR lpFirst, LPCWSTR lpSrch)
+{
   return strstrW(lpFirst, lpSrch);
 }
 
@@ -2733,7 +2724,8 @@ LPWSTR WINAPI COMCTL32_StrStrW( LPCWSTR lpFirst, LPCWSTR lpSrch) {
  * StrSpnW [COMCTL32.364]
  *
  */
-INT WINAPI COMCTL32_StrSpnW( LPWSTR lpStr, LPWSTR lpSet) {
+INT WINAPI StrSpnW( LPWSTR lpStr, LPWSTR lpSet)
+{
   LPWSTR lpLoop = lpStr;
 
   /* validate ptr */
