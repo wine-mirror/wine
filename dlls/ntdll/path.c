@@ -316,6 +316,62 @@ ULONG WINAPI RtlDosSearchPath_U(LPCWSTR paths, LPCWSTR search, LPCWSTR ext,
     return len;
 }
 
+
+/******************************************************************
+ *		collapse_path
+ *
+ * Helper for RtlGetFullPathName_U.
+ * Get rid of . and .. components in the path.
+ */
+static inline void collapse_path( WCHAR *path )
+{
+    WCHAR *p, *next;
+
+    p = path;
+
+    while (*p)
+    {
+        if (*p == '.')
+        {
+            switch(p[1])
+            {
+            case '\\': /* .\ component */
+                next = p + 2;
+                while (*next == '\\') next++;
+                memmove( p, next, (strlenW(next) + 1) * sizeof(WCHAR) );
+                continue;
+            case 0:  /* final . */
+                while (p > path && p[-1] == '\\') p--;
+                *p = 0;
+                continue;
+            case '.':
+                if (p[2] == '\\')  /* ..\ component */
+                {
+                    next = p + 3;
+                    while (*next == '\\') next++;
+                    while (p > path && p[-1] == '\\') p--;
+                    while (p > path && p[-1] != '\\') p--;
+                    memmove( p, next, (strlenW(next) + 1) * sizeof(WCHAR) );
+                    continue;
+                }
+                else if (!p[2])  /* final .. */
+                {
+                    while (p > path && p[-1] == '\\') p--;
+                    while (p > path && p[-1] != '\\') p--;
+                    while (p > path && p[-1] == '\\') p--;
+                    *p = 0;
+                    continue;
+                }
+                break;
+            }
+        }
+        /* skip to the next component */
+        while (*p && *p != '\\') p++;
+        while (*p == '\\') p++;
+    }
+}
+
+
 /******************************************************************
  *		get_full_path_helper
  *
@@ -326,10 +382,11 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
 {
     ULONG                       reqsize = 0, mark = 0, dep = 0, deplen;
     DOS_PATHNAME_TYPE           type;
-    LPWSTR                      ptr, ins_str = NULL;
+    LPWSTR                      p, ins_str = NULL;
+    LPCWSTR                     ptr;
     const UNICODE_STRING*       cd;
     WCHAR                       tmp[4];
-    
+
     RtlAcquirePebLock();
 
     cd = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectoryName;
@@ -337,7 +394,15 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
     switch (type = RtlDetermineDosPathNameType_U(name))
     {
     case UNC_PATH:              /* \\foo   */
+        ptr = name + 2;
+        while (*ptr && !IS_SEPARATOR(*ptr)) ptr++;  /* share name */
+        while (*ptr && IS_SEPARATOR(*ptr)) ptr++;
+        while (*ptr && !IS_SEPARATOR(*ptr)) ptr++;  /* dir name */
+        mark = (ptr - name);
+        break;
+
     case DEVICE_PATH:           /* \\.\foo */
+        mark = 4;
         break;
 
     case ABSOLUTE_DRIVE_PATH:   /* c:\foo  */
@@ -345,6 +410,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
         tmp[0] = toupperW(name[0]);
         ins_str = tmp;
         dep = 1;
+        mark = 3;
         break;
 
     case RELATIVE_DRIVE_PATH:   /* c:foo   */
@@ -389,6 +455,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
                 ERR("Unsupported status code\n");
                 break;
             }
+            mark = 3;
             break;
         }
         /* fall through */
@@ -403,6 +470,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
             if (!ptr) ptr = cd->Buffer + strlenW(cd->Buffer);
             mark = ptr - cd->Buffer;
         }
+        else mark = 3;
         break;
 
     case ABSOLUTE_PATH:         /* \xxx    */
@@ -412,6 +480,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
             tmp[0] = cd->Buffer[0];
             tmp[1] = ':';
             ins_str = tmp;
+            mark = 3;
         }
         else
         {
@@ -432,6 +501,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
         tmp[2] = '.';
         tmp[3] = '\\';
         ins_str = tmp;
+        mark = 4;
         break;
 
     case INVALID_PATH:
@@ -455,48 +525,10 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
         RtlFreeHeap(GetProcessHeap(), 0, ins_str);
 
     /* convert every / into a \ */
-    for (ptr = buffer; *ptr; ptr++) if (*ptr == '/') *ptr = '\\';
+    for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
 
-    /* mark is non NULL for UNC names, so start path collapsing after server & share name
-     * otherwise, it's a fully qualified DOS name, so start after the drive designation
-     */
-    for (ptr = buffer + (mark ? mark : 2); ptr < buffer + reqsize / sizeof(WCHAR); )
-    {
-        LPWSTR  prev, p = strchrW(ptr, '\\');
-
-        if (!p) break;
-
-        p++;
-        if (p[0] == '.')
-        {
-            switch (p[1])
-            {
-            case '.':
-                switch (p[2])
-                {
-                case '\\':
-                    prev = p - 2;
-                    while (prev >= buffer + mark && *prev != '\\') prev--;
-                    /* either collapse \foo\.. into \ or \.. into \ */
-                    if (prev < buffer + mark) prev = p - 1;
-                    reqsize -= (p + 2 - prev) * sizeof(WCHAR);
-                    memmove(prev, p + 2, reqsize + sizeof(WCHAR) - (prev - buffer) * sizeof(WCHAR));
-                    p = prev;
-                    break;
-                case '\0':
-                    reqsize -= 2 * sizeof(WCHAR);
-                    *p = 0;
-                    break;
-                }
-                break;
-            case '\\':
-                reqsize -= 2 * sizeof(WCHAR);
-                memmove(p, p + 2, reqsize + sizeof(WCHAR) - (p - buffer) * sizeof(WCHAR));
-                break;
-            }
-        }
-        ptr = p;
-    }
+    collapse_path( buffer + mark );
+    reqsize = strlenW(buffer) * sizeof(WCHAR);
 
 done:
     RtlReleasePebLock();
