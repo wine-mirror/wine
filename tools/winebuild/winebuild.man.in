@@ -101,6 +101,12 @@ Win16 modules); default is no local heap.
 .BI \-I\  directory
 Ignored for compatibility with the C compiler.
 .TP
+.BI \-i\  symbol[,symbol]
+Specify a list of symbols that should be ignored when resolving
+undefined symbols against the imported libraries. This forces these
+symbols to be resolved from the Unix C library (or from another Unix
+library linked with the application).
+.TP
 .BI \-K\  flags
 Ignored for compatibility with the C compiler.
 .TP
@@ -171,12 +177,8 @@ option will also work for Win32 files).
 Turn on warnings.
 .SH "SPEC FILE SYNTAX"
 .SS "General syntax"
-A spec file should contain a number of optional directives, and then a
-list of ordinal declarations. The general syntax is the following:
-.PP
-.RB [ ignore\ (\  [ \fIsymbols...\fR ]\  )\  ]
-.br
-.BI #\  comments
+A spec file should contain a list of ordinal declarations. The general
+syntax is the following:
 .PP
 .I ordinal functype
 .RI [ flags ]\  exportname \ \fB(\fR\ [ args... ] \ \fB)\fI\ handler
@@ -195,15 +197,13 @@ list of ordinal declarations. The general syntax is the following:
 .br
 .IB ordinal\  forward
 .RI [ flags ]\  exportname\ forwardname
-.SS "Optional directives"
-.B ignore
-specifies a list of symbols that should be ignored when
-resolving undefined symbols against the imported libraries.
+.br
+.BI #\  comments
 .PP
 Lines whose first character is a
 .B #
 will be ignored as comments.
-.SS "Ordinal specifications"
+.PP
 .I ordinal
 specifies the ordinal number corresponding to the entry point, or '@'
 for automatic ordinal allocation (Win32 only).
