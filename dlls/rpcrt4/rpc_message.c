@@ -49,6 +49,7 @@ RPC_STATUS WINAPI I_RpcGetBuffer(PRPC_MESSAGE pMsg)
   void* buf;
 
   TRACE("(%p)\n", pMsg);
+  /* FIXME: pfnAllocate? */
   buf = HeapReAlloc(GetProcessHeap(), 0, pMsg->Buffer, pMsg->BufferLength);
   if (buf) pMsg->Buffer = buf;
   /* FIXME: which errors to return? */
@@ -61,6 +62,7 @@ RPC_STATUS WINAPI I_RpcGetBuffer(PRPC_MESSAGE pMsg)
 RPC_STATUS WINAPI I_RpcFreeBuffer(PRPC_MESSAGE pMsg)
 {
   TRACE("(%p)\n", pMsg);
+  /* FIXME: pfnFree? */
   HeapFree(GetProcessHeap(), 0, pMsg->Buffer);
   pMsg->Buffer = NULL;
   return S_OK;

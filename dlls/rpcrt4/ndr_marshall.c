@@ -74,6 +74,7 @@ unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg, u
 
   TRACE("(pStubMsg == ^%p, pszMessage == ^%p, pFormat == ^%p)\n", pStubMsg, pszMessage, pFormat);
   
+  assert(pFormat);
   if (*pFormat == RPC_FC_C_CSTRING) {
     len = strlen(pszMessage);
     assert( (pStubMsg->BufferLength > (len + 13)) && (pStubMsg->Buffer != NULL) );
@@ -88,7 +89,7 @@ unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg, u
       *(c++) = *(pszMessage++); /* copy the string itself into the remaining space */
   } else {
     ERR("Unhandled string type: %#x\n", *pFormat); 
-    /* FIXME what to do here? */
+    /* FIXME: raise an exception. */
     return NULL;
   }
   
@@ -104,12 +105,13 @@ void WINAPI NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned 
 {
   TRACE("(pStubMsg == ^%p, pMemory == ^%p, pFormat == ^%p)\n", pStubMsg, pMemory, pFormat);
 
+  assert(pFormat);
   if (*pFormat == RPC_FC_C_CSTRING) {
     /* we need 12 octets for the [maxlen, offset, len] DWORDS, + 1 octet for '\0' */
     pStubMsg->BufferLength = strlen(pMemory) + 13 + BUFFER_PARANOIA;
   } else {
     ERR("Unhandled string type: %#x\n", *pFormat); 
-    /* FIXME what to do here? */
+    /* FIXME: raise an exception */
   }
 }
 
@@ -128,9 +130,77 @@ unsigned long WINAPI NdrConformantStringMemorySize( PMIDL_STUB_MESSAGE pStubMsg,
 unsigned char *WINAPI NdrConformantStringUnmarshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char** ppMemory,
   PFORMAT_STRING pFormat, unsigned char fMustAlloc )
 {
-  FIXME("(pStubMsg == ^%p, *pMemory == ^%p, pFormat == ^%p, fMustAlloc == %u): stub.\n",
+  UINT32 len;
+
+  TRACE("(pStubMsg == ^%p, *pMemory == ^%p, pFormat == ^%p, fMustAlloc == %u)\n",
     pStubMsg, *ppMemory, pFormat, fMustAlloc);
-  return NULL;
+
+  assert(pFormat && ppMemory && pStubMsg);
+
+  /* get the length and check that we handle the format string...
+     FIXME: this is probably what NdrConformantStringMemorySize is for... so move code there? */
+
+  if (*pFormat == RPC_FC_C_CSTRING) {
+    /* What we should have here is a varying conformant string (of single-octet-chars):
+     * [
+     *   maxlen: DWORD
+     *   offset: DWORD
+     *   length: DWORD
+     *   [ 
+     *     data: char[], null terminated.
+     *   ] 
+     * ]
+     * I think what we want to do is advance the buffer pointer in the pStubMsg
+     * up to the point of the char after the last marshalled char.
+     * FIXME: it is probably supposed to really advance either length or maxlength
+     *        chars... but which?  For now I have ignored the issue and just positioned
+     *        after the terminating '\0'; this is (probably) wrong and will (probably)
+     *        cause problems until its fixed.
+     */
+
+     pStubMsg->Buffer += 8; /* FIXME: do we care about maxlen? */
+     len = LITTLE_ENDIAN_32_READ(pStubMsg->Buffer);
+     pStubMsg->Buffer += 4;
+  } else {
+    ERR("Unhandled string type: %#x\n", *pFormat);
+    /* FIXME: raise an exception. */
+    return NULL;
+  }
+
+  /* now the actual length (in bytes) that we need to store
+     the unmarshalled string is in len, including terminating '\0' */
+
+  if ( fMustAlloc || (!(*ppMemory)) || (pStubMsg->Memory != *ppMemory) || 
+       (pStubMsg->MemorySize < (len+BUFFER_PARANOIA)) ) {
+    /* crap, looks like we need to do something about the Memory.  I don't
+       understand, it doesn't look like Microsoft is doing this the same
+       way... but then how do they do it?  AFAICS the Memory is never deallocated by
+       the stub code so where does it go?... anyhow, I guess we'll just do it
+       our own way for now... */
+    pStubMsg->MemorySize = len;
+    pStubMsg->Memory = *ppMemory;
+    /* FIXME: pfnAllocate? or does that not apply to these "Memory" parts? */
+    *ppMemory = pStubMsg->Memory = HeapReAlloc(GetProcessHeap(), 0, pStubMsg->Memory, pStubMsg->MemorySize);   
+  } 
+
+  if (!(pStubMsg->Memory)) {
+    ERR("Memory Allocation Failure\n");
+    /* FIXME: raise an exception */
+    return NULL;
+  }
+
+  /* OK, we've got our ram.  now do the real unmarshalling */
+  if (*pFormat == RPC_FC_C_CSTRING) {
+    char *c = *ppMemory;
+
+    while (*c != '\0')
+      *c++ = *(pStubMsg->Buffer++);
+    pStubMsg->Buffer++; /* advance past the '\0' */
+
+  } else 
+    assert(FALSE);
+
+  return NULL; /*is this always right? */
 }
 
 /***********************************************************************

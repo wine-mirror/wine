@@ -213,6 +213,8 @@ unsigned char* WINAPI NdrServerInitializeNew( PRPC_MESSAGE pRpcMsg, PMIDL_STUB_M
   pStubMsg->pfnAllocate = pStubDesc->pfnAllocate;
   pStubMsg->pfnFree = pStubDesc->pfnFree;
   pStubMsg->RpcMsg = pRpcMsg;
+  pStubMsg->Buffer = pRpcMsg->Buffer;
+  pStubMsg->BufferLength = pRpcMsg->BufferLength;
 
   /* FIXME: determine the proper return value */
   return NULL;
