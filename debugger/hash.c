@@ -143,7 +143,10 @@ DEBUG_ResortSymbols()
     {
         for (nh = name_hash_table[i]; nh; nh = nh->next)
 	  {
-	    nsym++;
+	    if( (nh->flags & SYM_INVALID) == 0 )
+	       nsym++;
+	    else
+	       fprintf( stderr, "Symbol %s is invalid\n", nh->name );
 	  }
     }
 
@@ -161,7 +164,8 @@ DEBUG_ResortSymbols()
     {
         for (nh = name_hash_table[i]; nh; nh = nh->next)
 	  {
-	    addr_sorttab[nsym++] = nh;
+	    if( (nh->flags & SYM_INVALID) == 0 )
+	       addr_sorttab[nsym++] = nh;
 	  }
     }
 
@@ -198,7 +202,13 @@ DEBUG_AddSymbol( const char * name, const DBG_ADDR *addr, const char * source,
             {
  		nh->addr.type = addr->type;
             }
- 	    nh->flags &= ~SYM_INVALID;
+	    /* it may happen that the same symbol is defined in several compilation
+	     * units, but the linker decides to merge it into a single instance.
+	     * in that case, we don't clear the invalid flag for all the compilation
+	     * units (N_GSYM), and wait to get the symbol from the symtab
+	     */
+ 	    if ((flags & SYM_INVALID) == 0)
+	       nh->flags &= ~SYM_INVALID;
  	    return nh;
         }
  	if (nh->addr.seg == addr->seg &&
