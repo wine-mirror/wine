@@ -561,7 +561,9 @@ foreach my $file (@c_files) {
 
 		if($check_protection && $header) {
 		    if((-e "$wine_dir/include/$header" || -e "$wine_dir/$file_dir/$header")) {
-			if($header !~ /^(oleauto\.h|win(?:base|def|error|gdi|nls|nt|user)\.h)$/) {
+			if($header !~ /^(oleauto\.h|win(?:base|def|error|gdi|nls|nt|user)\.h)$/ &&
+			   $file_dir !~ /tests$/)
+			{
 			    $output->write("$file: #include \<$header\> is a local include\n");
 			}
 		    }
@@ -577,6 +579,7 @@ foreach my $file (@c_files) {
 			    } elsif($macro =~ /^HAVE_(.*?)_H$/) {
 				my $name = $1;
 				if($header !~ /^alloca\.h|sys\/time\.h|unistd\.h$/ &&
+				   $file_dir !~ /tests$/ &&
 				   !$preprocessor->is_def("STATFS_DEFINED_BY_$name"))
 				{
 				    $output->write("$file: #$directive $argument: is a conditional include, " .

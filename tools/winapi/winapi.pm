@@ -250,7 +250,7 @@ sub parse_spec_file {
 	my $ordinal;
 	if(/^(\d+|@)\s+
 	   (pascal|pascal16|stdcall|cdecl|varargs)\s+
-	   ((?:(?:-noimport|-norelay|-i386|-ret64|-register|-interrupt)\s+)*)(\S+)\s*\(\s*(.*?)\s*\)\s*(\S+)$/x)
+	   ((?:(?:-noimport|-noname|-norelay|-i386|-ret64|-register|-interrupt)\s+)*)(\S+)\s*\(\s*(.*?)\s*\)\s*(\S+)$/x)
 	{
 	    my $calling_convention = $2;
 	    my $flags = $3;
@@ -261,6 +261,10 @@ sub parse_spec_file {
 	    $ordinal = $1;
 
 	    $flags =~ s/\s+/ /g;
+
+	    if($flags =~ /-noname/) {
+		# $external_name = "@";
+	    }
 
 	    if($flags =~ /(?:-register|-interrupt)/) {
 		if($arguments) { $arguments .= " "; }
@@ -338,10 +342,17 @@ sub parse_spec_file {
 		    }
 		}
 	    }
-	} elsif(/^(\d+|@)\s+stub(?:\s+(?:-noimport|-norelay|-i386|-ret64))?\s+(\S+)$/) {
-	    my $external_name = $2;
-
+	} elsif(/^(\d+|@)\s+stub(?:\s+(-noimport|-noname|-norelay|-i386|-ret64))?\s+(\S+)$/) {
 	    $ordinal = $1;
+
+	    my $flags = $2;
+	    my $external_name = $3;
+
+	    $flags = "" if !defined($flags);
+
+	    if($flags =~ /-noname/) {
+		# $external_name = "@";
+	    }
 
 	    my $internal_name = $external_name;
 

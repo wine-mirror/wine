@@ -284,6 +284,8 @@ LPWSTR
 %long
 
 int
+size_t
+unsigned int
 
 %ptr
 
@@ -1187,6 +1189,8 @@ ULONGLONG
 
 %ptr
 
+EXCEPTION_FRAME *
+EXCEPTION_FRAME **
 MSVCRT_EXCEPTION_FRAME *
 MSVCRT_FILE *
 MSVCRT_compar_fn_t
@@ -1220,11 +1224,10 @@ bad_typeid *
 char *
 char **
 char ***
+cxx_exception_type *
 exception *
 int *
 struct MSVCRT_tm *
-struct __EXCEPTION_FRAME *
-struct __EXCEPTION_FRAME **
 struct _diskfree_t *
 struct _finddata_t *
 struct _stat *
@@ -1429,6 +1432,7 @@ VOID *
 struct _TEB *
 union cptable *
 void *
+wine_signal_handler
 
 %ptr --extension
 
@@ -1541,6 +1545,7 @@ LPFORMATETC
 LPGUID
 LPLOCKBYTES *
 LPMALLOC *
+LPMALLOCSPY
 LPMARSHAL *
 LPMESSAGEFILTER
 LPMESSAGEFILTER *
@@ -2220,7 +2225,6 @@ IUnknown **
 LPBROWSEINFOW
 LPBYTE
 LPCITEMIDLIST
-LPCLSID
 LPCSHLWAPI_CLIST
 LPCSTR *
 LPCVOID
@@ -2233,17 +2237,17 @@ LPITEMIDLIST
 LPOPENFILENAMEW
 LPPAGESETUPDLGW
 LPPRINTDLGW
+LPSECURITY_ATTRIBUTES
 LPSHELLEXECUTEINFOW
 LPSHFILEOPSTRUCTW
 LPSHLWAPI_CLIST
 LPSHLWAPI_CLIST *
 LPSTRRET
-LPUNKNOWN *
+LPTHREAD_START_ROUTINE
 LPVOID
 LPVOID *
 LPWORD
 LPWSTR *
-PACL
 PHUSKEY
 PLONG
 PSECURITY_DESCRIPTOR
@@ -2253,6 +2257,7 @@ REFIID
 SHFILEINFOW *
 UINT *
 ULARGE_INTEGER *
+VOID *
 WNDCLASSA *
 unsigned char *
 va_list
@@ -2671,6 +2676,16 @@ LONG
 UINT
 WORD
 
+%%wineaudioio.drv
+
+%long
+
+DWORD
+HDRVR
+LONG
+UINT
+WORD
+
 %%winedos.dll
 
 %long
@@ -2701,6 +2716,16 @@ DWORD
 HDRVR
 LPARAM
 LRESULT
+UINT
+
+%%winenas.drv
+
+%long
+
+DWORD
+HDRVR
+LONG
+WORD
 UINT
 
 %%wineoss.drv
@@ -2777,6 +2802,7 @@ FILETIME
 HANDLE
 HINTERNET
 HRESULT
+HWND
 INTERNET_PORT
 
 %ptr

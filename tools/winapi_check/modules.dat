@@ -535,6 +535,14 @@ dlls/winmm/winearts
 
 dlls/winmm/winealsa
 
+% dlls/winmm/wineaudioio/wineaudioio.drv.spec
+
+dlls/winmm/wineaudioio
+
+% dlls/winmm/winenas/winenas.drv.spec
+
+dlls/winmm/winenas
+
 % dlls/winmm/wineoss/wineoss.drv.spec
 
 dlls/winmm/wineoss
