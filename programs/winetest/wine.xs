@@ -29,8 +29,7 @@ enum ret_type
 
 extern unsigned long perl_call_wine
 (
-    char           *module,
-    char           *function,
+    FARPROC        function,
     int            n_args,
     unsigned long  *args,
     unsigned int   *last_error,
@@ -57,6 +56,7 @@ struct thunk
     void   *func;
     BYTE    leave;
     BYTE    ret;
+    short   arg_size;
     BYTE    arg_types[MAX_ARGS];
 };
 #pragma pack(4)
@@ -96,7 +96,7 @@ static const struct thunk thunk_template =
     /* pushl (code ref)  */  0x68, NULL,
     /* call (func)       */  0xe8, NULL,
     /* leave             */  0xc9,
-    /* ret               */  0xc3,
+    /* ret $arg_size     */  0xc2, 0,
     /* arg_types         */  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -194,8 +194,7 @@ MODULE = wine     PACKAGE = wine
     # --------------------------------------------------------------------
     # Purpose:     Call perl_call_wine(), which calls a wine API function
     #
-    # Parameters:  module   -- module (dll) to get function from
-    #              function -- API function to call
+    # Parameters:  function -- API function to call
     #              ret_type -- return type
     #              debug    -- debug flag
     #              ...      -- args to pass to API function
@@ -204,13 +203,12 @@ MODULE = wine     PACKAGE = wine
     #              value returned by the API function
     # --------------------------------------------------------------------
 void
-call_wine_API(module, function, ret_type, debug, ...)
-    char  *module;
-    char  *function;
+call_wine_API(function, ret_type, debug, ...)
+    unsigned long function;
     int   ret_type;
     int   debug;
 
-    PROTOTYPE: $$$$@
+    PROTOTYPE: $$$@
 
     PPCODE:
     /*--------------------------------------------------------------
@@ -225,7 +223,7 @@ call_wine_API(module, function, ret_type, debug, ...)
     };
 
     /* Locals */
-    int            n_fixed = 4;
+    int            n_fixed = 3;
     int            n_args = (items - n_fixed);
     struct arg     args[MAX_ARGS+1];
     unsigned long  f_args[MAX_ARGS+1];
@@ -240,7 +238,7 @@ call_wine_API(module, function, ret_type, debug, ...)
     /*--------------------------------------------------------------
     | Prepare function args
     --------------------------------------------------------------*/
-    if (debug)
+    if (debug > 1)
     {
         fprintf( stderr, "    [wine.xs/call_wine_API()]\n");
     }
@@ -266,7 +264,7 @@ call_wine_API(module, function, ret_type, debug, ...)
             {
                 args[i].ival = SvIV (sv);
                 f_args[i] = (unsigned long) &(args[i].ival);
-                if (debug)
+                if (debug > 1)
                 {
                     fprintf( stderr, "        [RV->IV] 0x%lx\n", f_args[i]);
                 }
@@ -279,7 +277,7 @@ call_wine_API(module, function, ret_type, debug, ...)
             {
                 args[i].ival = (unsigned long) SvNV (sv);
                 f_args[i] = (unsigned long) &(args[i].ival);
-                if (debug)
+                if (debug > 1)
                 {
                     fprintf( stderr, "        [RV->NV] 0x%lx\n", f_args[i]);
                 }
@@ -291,7 +289,7 @@ call_wine_API(module, function, ret_type, debug, ...)
             else if (SvPOK (sv))
             {
                 f_args[i] = (unsigned long) ((char *) SvPV (sv, PL_na));
-                if (debug)
+                if (debug > 1)
                 {
                     fprintf( stderr, "        [RV->PV] 0x%lx\n", f_args[i]);
                 }
@@ -310,7 +308,7 @@ call_wine_API(module, function, ret_type, debug, ...)
             if (SvIOK (sv))
             {
                 f_args[i] = (unsigned long) SvIV (sv);
-                if (debug)
+                if (debug > 1)
                 {
                     fprintf( stderr, "        [IV]     %ld (0x%lx)\n", f_args[i], f_args[i]);
                 }
@@ -322,7 +320,7 @@ call_wine_API(module, function, ret_type, debug, ...)
             else if (SvNOK (sv))
             {
                 f_args[i] = (unsigned long) SvNV (sv);
-                if (debug)
+                if (debug > 1)
                 {
                     fprintf( stderr, "        [NV]     %ld (0x%lx)\n", f_args[i], f_args[i]);
                 }
@@ -340,7 +338,7 @@ call_wine_API(module, function, ret_type, debug, ...)
                     ((char *)(args[i].pval))[n] = 0;  /* add final NULL */
                     ((char *)(args[i].pval))[n+1] = 0;  /* and another one for Unicode too */
                     f_args[i] = (unsigned long) args[i].pval;
-                    if (debug)
+                    if (debug > 1)
                     {
                         fprintf( stderr, "        [PV]     0x%lx\n", f_args[i]);
                     }
@@ -353,15 +351,7 @@ call_wine_API(module, function, ret_type, debug, ...)
     /*--------------------------------------------------------------
     | Here we go
     --------------------------------------------------------------*/
-    r = perl_call_wine
-    (
-        module,
-        function,
-        n_args,
-        f_args,
-        &last_error,
-        debug
-    );
+    r = perl_call_wine( (FARPROC)function, n_args, f_args, &last_error, debug );
 
     /*--------------------------------------------------------------
     | Handle modified parameter values
@@ -439,6 +429,24 @@ load_library(module)
 
 
     # --------------------------------------------------------------------
+    # Function:    get_proc_address
+    # --------------------------------------------------------------------
+    # Purpose:     Retrive a function address
+    #
+    # Parameters:  module   -- module handle
+    # --------------------------------------------------------------------
+void
+get_proc_address(module,func)
+    unsigned long module;
+    char  *func;
+    PROTOTYPE: $$
+
+    PPCODE:
+    ST(0) = newSViv( (I32)GetProcAddress( (HMODULE)module, func ) );
+    XSRETURN(1);
+
+
+    # --------------------------------------------------------------------
     # Function:    alloc_thunk
     # --------------------------------------------------------------------
     # Purpose:     Allocate a thunk for a wine API callback
@@ -504,6 +512,7 @@ alloc_thunk(...)
     thunk->nb_args  = items - 1;
     thunk->code_ref = SvRV (ST (0));
     thunk->func     = (void *)((char *) callback_bridge - (char *) &thunk->leave);
+    thunk->arg_size = thunk->nb_args * sizeof(int);
 
     /* Stash callback arg types */
     for (i = 1; i < items; i++) thunk->arg_types[i - 1] = SvIV (ST (i));

@@ -34,6 +34,8 @@ bootstrap wine $VERSION;
 $wine::err = 0;
 $wine::debug = 0;
 
+%loaded_modules = ();
+
 # --------------------------------------------------------------
 # | Return-type constants                                      |
 # |                                                            |
@@ -85,8 +87,7 @@ sub AUTOLOAD
     # --------------------------------------------------------------
     if (defined($prototypes{$func}))
     {
-        my ($module,$ret_type) = @{$prototypes{$func}};
-        return call( $module, $func, $ret_type, $wine::debug, @_ );
+        return call( $func, $wine::debug, @_ );
     }
     die "Function '$func' not declared";
 } # End AUTOLOAD
@@ -98,74 +99,41 @@ sub AUTOLOAD
 # | -------------------------------------------------------------------- |
 # | Purpose:     Call a wine API function                                |
 # |                                                                      |
-# | Usage:       call MODULE, FUNCTION, RET_TYPE, DEBUG, [ARGS ...]      |
+# | Usage:       call FUNCTION, DEBUG, [ARGS ...]
 # |                                                                      |
 # | Returns:     value returned by API function called                   |
 # ------------------------------------------------------------------------
 sub call
 {
-    # ----------------------------------------------
-    # | Locals                                     |
-    # ----------------------------------------------
-    my ($module,$function,$ret_type,$debug,@args) = @_;
+    my ($function,$debug,@args) = @_;
+    my ($funcptr,$ret_type) = @{$prototypes{$function}};
 
-# Begin call
-
-    $ret_type = $return_types{$ret_type};
-
-    # --------------------------------------------------------------
-    # | Debug                                                      |
-    # --------------------------------------------------------------
     if ($debug)
     {
-        my $z = "[$module.$function() / " . scalar (@args) . " arg(s)]";
-        print STDERR "=== $z ", ("=" x (75 - length ($z))), "\n";
-        print STDERR "    [wine.pm/obj->call()]\n";
+        print STDERR "==== [$function() / " . scalar (@args) . " arg(s)]";
         for (@args)
         {
-            print STDERR "        ", +(ref () ? ("(" . ${$_} . ")") : "$_"), "\n";
+            print STDERR " ", +(ref () ? ("(" . ${$_} . ")") : "$_");
         }
+        print STDERR " ====\n";
     }
 
-    # --------------------------------------------------------------
-    # | Now call call_wine_API(), which will turn around and call  |
-    # | the appropriate wine API function.  Arguments to           |
-    # | call_wine_API() are:                                       |
-    # |                                                            |
-    # |     module_name                                            |
-    # |     function_name                                          |
-    # |     return_type                                            |
-    # |     debug_flag                                             |
-    # |     [args to pass through to wine API function]            |
-    # --------------------------------------------------------------
-    my ($err,$r) = call_wine_API
-    (
-        $module,
-        $function,
-        $ret_type,
-        $debug,
-        @args
-    );
+    # Now call call_wine_API(), which will turn around and call
+    # the appropriate wine API function.
+    my ($err,$r) = call_wine_API( $funcptr, $ret_type, $debug, @args );
 
-    # --------------------------------------------------------------
-    # | Debug                                                      |
-    # --------------------------------------------------------------
     if ($debug)
     {
-        my $z = "[$module.$function()] -> ";
+        my $z = "[$function()] -> ";
         $z .= defined($r) ? sprintf("[0x%x/%d]", $r, $r) : "[void]";
         if (defined($err)) { $z .= sprintf " err=%d", $err; }
-        print STDERR "=== $z ", ("=" x (75 - length ($z))), "\n";
+        print STDERR "==== $z ====\n";
     }
 
-
-    # --------------------------------------------------------------
-    # | Pass the return value back                                 |
-    # --------------------------------------------------------------
+    # Pass the return value back
     $wine::err = $err;
     return ($r);
-
-} # End call
+}
 
 
 # ----------------------------------------------------------------------
@@ -188,7 +156,9 @@ sub declare
 
     foreach $func (keys %list)
     {
-        $prototypes{$func} = [ $module, $list{$func} ];
+        my $ptr = get_proc_address( $handle, $func ) or die "Could not find '$func' in '$module'";
+        my $ret_type = $return_types{$list{$func}};
+        $prototypes{$func} = [ $ptr, $ret_type ];
     }
 }
 

@@ -2,6 +2,7 @@
  * Perl interpreter for running Wine tests
  */
 
+#include <assert.h>
 #include <stdio.h>
 
 #include "windef.h"
@@ -9,6 +10,8 @@
 
 #include <EXTERN.h>
 #include <perl.h>
+
+static FARPROC pGetLastError;
 
 /*----------------------------------------------------------------------
 | Function:    call_wine_func                                          |
@@ -82,74 +85,41 @@ static unsigned long call_wine_func
 
 
 /*----------------------------------------------------------------------
-| Function:    perl_call_wine                                          |
-| -------------------------------------------------------------------- |
-| Purpose:     Fetch and call a wine API function from a library       |
-|                                                                      |
-| Parameters:                                                          |
-|                                                                      |
-|     module    -- module in function (ostensibly) resides             |
-|     function  -- function name                                       |
-|     n_args    -- number of args                                      |
-|     args      -- args                                                |
+| Function:    perl_call_wine
+| --------------------------------------------------------------------
+| Purpose:     Fetch and call a wine API function from a library
+|
+| Parameters:
+|
+|     proc       -- function address
+|     n_args     -- number of args
+|     args       -- args
 |     last_error -- returns the last error code
-|     debug     -- debug flag                                          |
-|                                                                      |
-| Returns:     Return value from API function called                   |
+|     debug      -- debug flag
+|
+| Returns:     Return value from API function called
 ----------------------------------------------------------------------*/
 unsigned long perl_call_wine
 (
-    char           *module,
-    char           *function,
+    FARPROC        proc,
     int            n_args,
     unsigned long  *args,
     unsigned int   *last_error,
     int            debug
 )
 {
-    /* Locals */
-    HMODULE        hmod;
-    FARPROC        proc;
-    int            i;
-    unsigned long ret, error, old_error;
+    unsigned long ret;
+    DWORD error, old_error;
 
-    static FARPROC pGetLastError;
-
-    /*--------------------------------------------------------------
-    | Debug
-    --------------------------------------------------------------*/
     if (debug)
     {
-        fprintf(stderr,"    perl_call_wine(");
-        for (i = 0; (i < n_args); i++)
-            fprintf( stderr, "0x%lx%c", args[i], (i < n_args-1) ? ',' : ')' );
-        fputc( '\n', stderr );
+        int i;
+        fprintf(stderr,"    perl_call_wine(func=%p", proc);
+        for (i = 0; i < n_args; i++) fprintf( stderr, ",0x%lx", args[i] );
+        fprintf( stderr, ")\n" );
     }
 
-    /*--------------------------------------------------------------
-    | See if we can load specified module
-    --------------------------------------------------------------*/
-    if (!(hmod = GetModuleHandleA(module)))
-    {
-        fprintf( stderr, "GetModuleHandleA(%s) failed\n", module);
-        exit(1);
-    }
-
-    /*--------------------------------------------------------------
-    | See if we can get address of specified function from it
-    --------------------------------------------------------------*/
-    if ((proc = GetProcAddress (hmod, function)) == NULL)
-    {
-        fprintf (stderr, "    GetProcAddress(%s.%s) failed\n", module, function);
-        exit(1);
-    }
-
-    /*--------------------------------------------------------------
-    | Righty then; call the function ...
-    --------------------------------------------------------------*/
-    if (!pGetLastError)
-        pGetLastError = GetProcAddress( GetModuleHandleA("kernel32"), "GetLastError" );
-
+    /* special case to allow testing GetLastError without messing up the last error code */
     if (proc == pGetLastError)
         ret = call_wine_func (proc, n_args, args);
     else
@@ -179,6 +149,9 @@ int main( int argc, char **argv, char **envp )
     int status;
 
     envp = environ;  /* envp is not valid (yet) in Winelib */
+
+    pGetLastError = GetProcAddress( GetModuleHandleA("kernel32"), "GetLastError" );
+    assert( pGetLastError );
 
     if (!(perl = perl_alloc ()))
     {

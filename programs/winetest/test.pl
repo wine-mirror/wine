@@ -16,6 +16,8 @@ wine::declare( "kernel32",
                GlobalGetAtomNameA => "int",
                GetCurrentThread   => "int",
                GetExitCodeThread  => "int",
+               GetModuleHandleA   => "int",
+               GetProcAddress     => "int",
                lstrcatA           => "ptr"
 );
 
@@ -59,8 +61,12 @@ assert( $ret == 123 );
 eval { SetLastError(1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7); };
 assert( $@ =~ /Too many arguments at/ );
 
-eval { wine::call_wine_API( "kernel32", "SetLastError", 10, $wine::debug, 0); };
+my $funcptr = GetProcAddress( GetModuleHandleA("kernel32"), "SetLastError" );
+assert( $funcptr );
+eval { wine::call_wine_API( $funcptr, 10, $wine::debug, 0); };
 assert( $@ =~ /Bad return type 10 at/ );
 
 eval { foobar(1,2,3); };
 assert( $@ =~ /Function 'foobar' not declared at/ );
+
+print "OK\n";
