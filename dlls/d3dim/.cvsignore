@@ -1,0 +1,5 @@
+Makefile
+d3dim.dll.dbg.c
+d3dim.spec.c
+d3dim.spec.def
+version.res

@@ -25,6 +25,7 @@ BASEDIRS = \
 	crtdll \
 	crypt32 \
 	ctl3d \
+	d3dim \
 	dciman32 \
 	devenum \
 	dinput \
@@ -191,6 +192,7 @@ all: \
 	crtdll.dll$(DLLEXT) \
 	crypt32.dll$(DLLEXT) \
 	ctl3d32.dll$(DLLEXT) \
+	d3dim.dll$(DLLEXT) \
 	dciman32.dll$(DLLEXT) \
 	devenum.dll$(DLLEXT) \
 	dinput.dll$(DLLEXT) \
@@ -311,6 +313,9 @@ ctl3d32.dll$(DLLEXT) ctl3d.dll$(DLLEXT) ctl3dv2.dll$(DLLEXT): ctl3d/ctl3d32.dll$
 
 d3d8.dll$(DLLEXT): d3d8/d3d8.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) d3d8/d3d8.dll$(DLLEXT) $@
+
+d3dim.dll$(DLLEXT): d3dim/d3dim.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) d3dim/d3dim.dll$(DLLEXT) $@
 
 d3dx8.dll$(DLLEXT): d3dx8/d3dx8.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) d3dx8/d3dx8.dll$(DLLEXT) $@
@@ -603,6 +608,7 @@ IMPORT_LIBS = \
 	libcrypt32 \
 	libctl3d32 \
 	libd3d8 \
+	libd3dim \
 	libd3dx8 \
 	libdciman32 \
 	libddraw \
@@ -729,6 +735,11 @@ libd3d8.def: d3d8/d3d8.spec.def
 	$(RM) $@ && $(LN_S) d3d8/d3d8.spec.def $@
 libd3d8.a: d3d8/d3d8.spec.def
 	$(DLLTOOL) -k -l $@ -d d3d8/d3d8.spec.def
+
+libd3dim.def: d3dim/d3dim.spec.def
+	$(RM) $@ && $(LN_S) d3dim/d3dim.spec.def $@
+libd3dim.a: d3dim/d3dim.spec.def
+	$(DLLTOOL) -k -l $@ -d d3dim/d3dim.spec.def
 
 libd3dx8.def: d3dx8/d3dx8.spec.def
 	$(RM) $@ && $(LN_S) d3dx8/d3dx8.spec.def $@
@@ -1096,6 +1107,7 @@ crtdll/crtdll.spec.def: $(WINEBUILD)
 crypt32/crypt32.spec.def: $(WINEBUILD)
 ctl3d/ctl3d32.spec.def: $(WINEBUILD)
 d3d8/d3d8.spec.def: $(WINEBUILD)
+d3dim/d3dim.spec.def: $(WINEBUILD)
 d3dx8/d3dx8.spec.def: $(WINEBUILD)
 dciman32/dciman32.spec.def: $(WINEBUILD)
 ddraw/ddraw.spec.def: $(WINEBUILD)
@@ -1184,6 +1196,7 @@ crtdll/crtdll.dll$(DLLEXT): crtdll
 crypt32/crypt32.dll$(DLLEXT): crypt32
 ctl3d/ctl3d32.dll$(DLLEXT): ctl3d
 d3d8/d3d8.dll$(DLLEXT): d3d8
+d3dim/d3dim.dll$(DLLEXT): d3dim
 d3dx8/d3dx8.dll$(DLLEXT): d3dx8
 dciman32/dciman32.dll$(DLLEXT): dciman32
 ddraw/ddraw.dll$(DLLEXT): ddraw
@@ -1288,6 +1301,7 @@ crtdll/__install__: crtdll.dll$(DLLEXT)
 crypt32/__install__: crypt32.dll$(DLLEXT)
 ctl3d/__install__: ctl3d32.dll$(DLLEXT)
 d3d8/__install__: d3d8.dll$(DLLEXT)
+d3dim/__install__: d3dim.dll$(DLLEXT)
 d3dx8/__install__: d3dx8.dll$(DLLEXT)
 dciman32/__install__: dciman32.dll$(DLLEXT)
 ddraw/__install__: ddraw.dll$(DLLEXT)
