@@ -103,6 +103,9 @@ SNOOP16_RegisterDLL(NE_MODULE *pModule,LPCSTR name) {
 	char		*s;
 
 	if (!TRACE_ON(snoop)) return;
+
+        TRACE("hmod=%x, name=%s\n", pModule->self, name);
+
 	if (!snr) {
 		xsnr=GLOBAL_Alloc(GMEM_ZEROINIT,2*sizeof(*snr),0,WINE_LDT_FLAGS_CODE|WINE_LDT_FLAGS_32BIT);
 		snr = GlobalLock16(xsnr);
@@ -128,10 +131,15 @@ SNOOP16_RegisterDLL(NE_MODULE *pModule,LPCSTR name) {
 	}
 	while (*dll) {
 		if ((*dll)->hmod == pModule->self)
-			return; /* already registered */
+                {
+                    /* another dll, loaded at the same address */
+                    GlobalUnlock16((*dll)->funhandle);
+                    GlobalFree16((*dll)->funhandle);
+                    break;
+                }
 		dll = &((*dll)->next);
 	}
-	*dll = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SNOOP16_DLL)+strlen(name));
+	*dll = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *dll, sizeof(SNOOP16_DLL)+strlen(name));
 	(*dll)->next	= NULL;
 	(*dll)->hmod	= pModule->self;
 	if ((s=strrchr(name,'\\')))
@@ -340,4 +348,3 @@ FARPROC16 SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfu
 	return origfun;
 }
 #endif	/* !__i386__ */
-
