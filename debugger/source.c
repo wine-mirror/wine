@@ -430,6 +430,27 @@ DEBUG_List(struct list_id * source1, struct list_id * source2,
 
 DBG_ADDR DEBUG_LastDisassemble={NULL,0,0};
 
+void DEBUG_GetCurrentAddress( DBG_ADDR *addr )
+{
+#ifdef __i386__
+    TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
+
+    addr->type = NULL;
+    addr->seg  = CS_reg(&DEBUG_context);
+    addr->off  = EIP_reg(&DEBUG_context);
+
+    if (ISV86(&DEBUG_context)) addr->seg |= (DWORD)(pTask? pTask->hModule : 0) << 16; 
+    else if (IS_SELECTOR_SYSTEM(addr->seg)) addr->seg = 0;
+
+    GlobalUnlock16( GetCurrentTask() );
+#else
+    addr->type = NULL;
+    addr->seg  = 0;
+    addr->off  = (DWORD)GET_IP(&DEBUG_context);
+#endif
+}
+
+
 static int
 _disassemble(DBG_ADDR *addr)
 {
@@ -494,14 +515,8 @@ DEBUG_Disassemble(const DBG_ADDR *xstart,const DBG_ADDR *xend,int offset)
   if (!xstart && !xend) {
     last = DEBUG_LastDisassemble;
     if (!last.seg && !last.off)
-    {
-        TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
-        last.seg = CS_reg(&DEBUG_context);
-        last.off = EIP_reg(&DEBUG_context);
-        if (ISV86(&DEBUG_context)) last.seg |= (DWORD)(pTask?(pTask->hModule):0)<<16; else
-        if (IS_SELECTOR_SYSTEM(last.seg)) last.seg = 0;
-        GlobalUnlock16( GetCurrentTask() );
-    }
+      DEBUG_GetCurrentAddress( &last );
+
     for (i=0;i<offset;i++)
       if (!_disassemble(&last)) break;
     memcpy(&DEBUG_LastDisassemble,&last,sizeof(last));

@@ -417,10 +417,12 @@ DEBUG_EvalExpr(struct expr * exp)
       rtn.type = DEBUG_TypeIntConst;
       exp->un.rgister.result = DEBUG_GetRegister(exp->un.rgister.reg);
       rtn.off = (unsigned int) &exp->un.rgister.result;
+#ifdef __i386__
       if( exp->un.rgister.reg == REG_EIP )
 	  rtn.seg = CS_reg(&DEBUG_context);
       else
 	  rtn.seg = DS_reg(&DEBUG_context);
+#endif
       DBG_FIX_ADDR_SEG( &rtn, 0 );
       break;
     case EXPR_TYPE_BINOP:
@@ -494,11 +496,13 @@ DEBUG_EvalExpr(struct expr * exp)
 	case EXP_OP_SEG:
 	  rtn.seg = VAL(exp1);
           exp->un.binop.result = VAL(exp2);
+#ifdef __i386__
           if (ISV86(&DEBUG_context)) {
             TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
             rtn.seg |= (DWORD)(pTask?(pTask->hModule):0)<<16;
             GlobalUnlock16( GetCurrentTask() );
           }
+#endif
 	  break;
 	case EXP_OP_LOR:
 	  rtn.seg = 0;

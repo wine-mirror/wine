@@ -19,6 +19,7 @@ CONTEXT DEBUG_context;
  */
 void DEBUG_SetRegister( enum debug_regs reg, int val )
 {
+#ifdef __i386__
     switch(reg)
     {
         case REG_EAX: EAX_reg(&DEBUG_context) = val; break;
@@ -48,12 +49,14 @@ void DEBUG_SetRegister( enum debug_regs reg, int val )
         case REG_IP:  SET_LOWORD(EIP_reg(&DEBUG_context),val); break;
         case REG_SP:  SET_LOWORD(ESP_reg(&DEBUG_context),val); break;
     }
+#endif
 }
 
 
 int
 DEBUG_PrintRegister(enum debug_regs reg)
 {
+#ifdef __i386__
     switch(reg)
     {
         case REG_EAX: fprintf(stderr, "%%eax"); break;
@@ -84,6 +87,9 @@ DEBUG_PrintRegister(enum debug_regs reg)
         case REG_GS:  fprintf(stderr, "%%gs"); break;
     }
     return TRUE;
+#else
+    return FALSE;
+#endif
 }
 
 /***********************************************************************
@@ -93,6 +99,7 @@ DEBUG_PrintRegister(enum debug_regs reg)
  */
 int DEBUG_GetRegister( enum debug_regs reg )
 {
+#ifdef __i386__
     switch(reg)
     {
         case REG_EAX: return EAX_reg(&DEBUG_context);
@@ -122,6 +129,7 @@ int DEBUG_GetRegister( enum debug_regs reg )
         case REG_IP:  return LOWORD(EIP_reg(&DEBUG_context));
         case REG_SP:  return LOWORD(ESP_reg(&DEBUG_context));
     }
+#endif
     return 0;  /* should not happen */
 }
 
@@ -187,10 +195,9 @@ char *DEBUG_Flags( DWORD flag, char *buf )
  */
 void DEBUG_InfoRegisters(void)
 {
-    char flag[33];
-
     fprintf(stderr,"Register dump:\n");
 
+#ifdef __i386__
     /* First get the segment registers out of the way */
     fprintf( stderr," CS:%04x SS:%04x DS:%04x ES:%04x FS:%04x GS:%04x",
              (WORD)CS_reg(&DEBUG_context), (WORD)SS_reg(&DEBUG_context),
@@ -198,6 +205,8 @@ void DEBUG_InfoRegisters(void)
              (WORD)FS_reg(&DEBUG_context), (WORD)GS_reg(&DEBUG_context) );
     if (dbg_mode == 16)
     {
+        char flag[33];
+
         fprintf( stderr,"\n IP:%04x SP:%04x BP:%04x FLAGS:%04x(%s)\n",
                  LOWORD(EIP_reg(&DEBUG_context)), LOWORD(ESP_reg(&DEBUG_context)),
                  LOWORD(EBP_reg(&DEBUG_context)), LOWORD(EFL_reg(&DEBUG_context)),
@@ -209,6 +218,8 @@ void DEBUG_InfoRegisters(void)
     }
     else  /* 32-bit mode */
     {
+        char flag[33];
+
         fprintf( stderr, "\n EIP:%08lx ESP:%08lx EBP:%08lx EFLAGS:%08lx(%s)\n", 
                  EIP_reg(&DEBUG_context), ESP_reg(&DEBUG_context),
                  EBP_reg(&DEBUG_context), EFL_reg(&DEBUG_context),
@@ -219,6 +230,7 @@ void DEBUG_InfoRegisters(void)
 	fprintf( stderr, " ESI:%08lx EDI:%08lx\n",
                  ESI_reg(&DEBUG_context), EDI_reg(&DEBUG_context) );
     }
+#endif
 }
 
 
@@ -230,6 +242,7 @@ void DEBUG_InfoRegisters(void)
  */
 BOOL DEBUG_ValidateRegisters(void)
 {
+#ifdef __i386__
     WORD cs, ds;
 
     if (ISV86(&DEBUG_context)) return TRUE;
@@ -270,4 +283,7 @@ BOOL DEBUG_ValidateRegisters(void)
     }
     return TRUE;
 #undef CHECK_SEG
+#else
+    return TRUE;
+#endif
 }

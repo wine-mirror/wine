@@ -23,6 +23,7 @@
 #define PATH_MAX _MAX_PATH
 #endif
 
+#ifdef __i386__
 static char * reg_name[] =
 {
   "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"
@@ -35,6 +36,10 @@ static unsigned reg_ofs[] =
   FIELD_OFFSET(CONTEXT, Esp), FIELD_OFFSET(CONTEXT, Ebp),
   FIELD_OFFSET(CONTEXT, Esi), FIELD_OFFSET(CONTEXT, Edi)
 };
+#else
+static char * reg_name[] = { NULL };   /* FIXME */
+static unsigned reg_ofs[] = { 0 };
+#endif
 
 
 struct name_hash

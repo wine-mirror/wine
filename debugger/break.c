@@ -76,6 +76,7 @@ static void DEBUG_SetOpcode( const DBG_ADDR *addr, BYTE op )
  */
 static BOOL DEBUG_IsStepOverInstr()
 {
+#ifdef __i386__
     BYTE *instr = (BYTE *)CTX_SEG_OFF_TO_LIN( &DEBUG_context,
                                               CS_reg(&DEBUG_context),
                                               EIP_reg(&DEBUG_context) );
@@ -133,6 +134,9 @@ static BOOL DEBUG_IsStepOverInstr()
             return FALSE;
         }
     }
+#else
+    return FALSE;
+#endif
 }
 
 
@@ -144,6 +148,7 @@ static BOOL DEBUG_IsStepOverInstr()
  */
 BOOL DEBUG_IsFctReturn(void)
 {
+#ifdef __i386__
     BYTE *instr = (BYTE *)CTX_SEG_OFF_TO_LIN( &DEBUG_context,
                                               CS_reg(&DEBUG_context),
                                               EIP_reg(&DEBUG_context) );
@@ -159,6 +164,9 @@ BOOL DEBUG_IsFctReturn(void)
             return FALSE;
         }
     }
+#else
+    return FALSE;
+#endif
 }
 
 
@@ -391,18 +399,13 @@ BOOL DEBUG_ShouldContinue( enum exec_mode mode, int * count )
     DBG_ADDR cond_addr;
     int bpnum;
     struct list_id list;
-    TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
 
+#ifdef __i386__
       /* If not single-stepping, back up over the int3 instruction */
     if (!(EFL_reg(&DEBUG_context) & STEP_FLAG)) EIP_reg(&DEBUG_context)--;
+#endif
 
-    addr.seg = CS_reg(&DEBUG_context);
-    addr.off = EIP_reg(&DEBUG_context);
-    if (ISV86(&DEBUG_context)) addr.seg |= (DWORD)(pTask?(pTask->hModule):0)<<16; else
-    if (IS_SELECTOR_SYSTEM(addr.seg)) addr.seg = 0;
-
-    GlobalUnlock16( GetCurrentTask() );
-
+    DEBUG_GetCurrentAddress( &addr );
     bpnum = DEBUG_FindBreakpoint( &addr );
     breakpoints[0].enabled = 0;  /* disable the step-over breakpoint */
 
@@ -493,10 +496,12 @@ BOOL DEBUG_ShouldContinue( enum exec_mode mode, int * count )
 	  }
       }
 
+#ifdef __i386__
     /* If there's no breakpoint and we are not single-stepping, then we     */
     /* must have encountered an int3 in the Windows program; let's skip it. */
     if ((bpnum == -1) && !(EFL_reg(&DEBUG_context) & STEP_FLAG))
         EIP_reg(&DEBUG_context)++;
+#endif
 
       /* no breakpoint, continue if in continuous mode */
     return (mode == EXEC_CONT || mode == EXEC_PASS || mode == EXEC_FINISH);
@@ -516,17 +521,10 @@ enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count )
     int bp;
     int	delta;
     int status;
-    unsigned int * value;
     enum exec_mode ret_mode;
     BYTE *instr;
-    TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
 
-    addr.seg = CS_reg(&DEBUG_context);
-    addr.off = EIP_reg(&DEBUG_context);
-    if (ISV86(&DEBUG_context)) addr.seg |= (DWORD)(pTask?(pTask->hModule):0)<<16; else
-    if (IS_SELECTOR_SYSTEM(addr.seg)) addr.seg = 0;
-
-    GlobalUnlock16( GetCurrentTask() );
+    DEBUG_GetCurrentAddress( &addr );
 
     /*
      * This is the mode we will be running in after we finish.  We would like
@@ -559,9 +557,7 @@ enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count )
 	mode = ret_mode = EXEC_STEPI_INSTR;
       }
 
-    instr = (BYTE *)CTX_SEG_OFF_TO_LIN( &DEBUG_context,
-					CS_reg(&DEBUG_context),
-					EIP_reg(&DEBUG_context) );
+    instr = DBG_ADDR_TO_LIN( &addr );
     /*
      * See if the function we are stepping into has debug info
      * and line numbers.  If not, then we step over it instead.
@@ -615,7 +611,9 @@ enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count )
     {
     case EXEC_CONT: /* Continuous execution */
     case EXEC_PASS: /* Continue, passing exception */
+#ifdef __i386__
         EFL_reg(&DEBUG_context) &= ~STEP_FLAG;
+#endif
         DEBUG_SetBreakpoints( TRUE );
         break;
 
@@ -626,9 +624,10 @@ enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count )
        * off the stack, and we set the breakpoint there instead of the
        * address just after the call.
        */
-      value = (unsigned int *) ESP_reg(&DEBUG_context) + 2;
-      addr.off = *value;
+#ifdef __i386__
+      addr.off = *((unsigned int *) ESP_reg(&DEBUG_context) + 2);
       EFL_reg(&DEBUG_context) &= ~STEP_FLAG;
+#endif
       breakpoints[0].addr    = addr;
       breakpoints[0].enabled = TRUE;
       breakpoints[0].in_use  = TRUE;
@@ -642,7 +641,9 @@ enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count )
     case EXEC_STEP_OVER:  /* Stepping over a call */
         if (DEBUG_IsStepOverInstr())
         {
+#ifdef __i386__
             EFL_reg(&DEBUG_context) &= ~STEP_FLAG;
+#endif
             DEBUG_Disasm(&addr, FALSE);
             breakpoints[0].addr    = addr;
             breakpoints[0].enabled = TRUE;
@@ -656,7 +657,9 @@ enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count )
 
     case EXEC_STEP_INSTR: /* Single-stepping an instruction */
     case EXEC_STEPI_INSTR: /* Single-stepping an instruction */
+#ifdef __i386__
         EFL_reg(&DEBUG_context) |= STEP_FLAG;
+#endif
         break;
     }
     return ret_mode;

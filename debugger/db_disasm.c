@@ -65,6 +65,8 @@
 #include <stdio.h>
 #include "debugger.h"
 
+#ifdef __i386__
+
 /*
  * Switch to disassemble 16-bit code.
  */
@@ -1611,3 +1613,12 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 	    }
 	}
 }
+
+#else  /* __i386__ */
+
+void DEBUG_Disasm( DBG_ADDR *addr, int display )
+{
+}
+
+#endif  /* __i386__ */
+

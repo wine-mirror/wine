@@ -115,6 +115,7 @@ BOOL DEBUG_checkmap_bad( const char *addr, size_t size, int rwflag)
  */
 BOOL DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size )
 {
+#ifdef __i386__
     if (!IS_SELECTOR_V86(address->seg))
     if (address->seg)  /* segmented addr */
     {
@@ -122,6 +123,7 @@ BOOL DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size )
                                               (WORD)address->seg ), size ))
             return TRUE;
     }
+#endif
     return DEBUG_checkmap_bad( DBG_ADDR_TO_LIN(address), size, 1);
 }
 
@@ -133,6 +135,7 @@ BOOL DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size )
  */
 BOOL DEBUG_IsBadWritePtr( const DBG_ADDR *address, int size )
 {
+#ifdef __i386__
     if (!IS_SELECTOR_V86(address->seg))
     if (address->seg)  /* segmented addr */
     {
@@ -142,6 +145,7 @@ BOOL DEBUG_IsBadWritePtr( const DBG_ADDR *address, int size )
                                               (WORD)address->seg ), size ))
             return TRUE;
     }
+#endif
     return DEBUG_checkmap_bad( DBG_ADDR_TO_LIN(address), size, 0);
 }
 

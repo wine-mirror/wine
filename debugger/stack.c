@@ -53,6 +53,7 @@ typedef struct
  */
 void DEBUG_InfoStack(void)
 {
+#ifdef __i386__
     DBG_ADDR addr;
 
     addr.type = NULL;
@@ -70,9 +71,10 @@ void DEBUG_InfoStack(void)
         DEBUG_ExamineMemory( &addr, 24, 'w' );
     }
     fprintf(stderr,"\n");
+#endif
 }
 
-
+#ifdef __i386__
 static void DEBUG_ForceFrame(DBG_ADDR *stack, DBG_ADDR *code, int frameno, int bits, int noisy)
 {
     int theframe = nframe++;
@@ -333,6 +335,9 @@ static void DEBUG_DoBackTrace(int noisy)
     }
     if (noisy) fprintf( stderr, "\n" );
 }
+#endif
+
+
 
 /***********************************************************************
  *           DEBUG_BackTrace
@@ -341,7 +346,9 @@ static void DEBUG_DoBackTrace(int noisy)
  */
 void DEBUG_BackTrace(void)
 {
+#ifdef __i386__
     DEBUG_DoBackTrace( TRUE );
+#endif
 }
 
 /***********************************************************************
@@ -351,7 +358,9 @@ void DEBUG_BackTrace(void)
  */
 void DEBUG_SilentBackTrace(void)
 {
+#ifdef __i386__
     DEBUG_DoBackTrace( FALSE );
+#endif
 }
 
 int

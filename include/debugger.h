@@ -84,6 +84,8 @@ struct  wine_locals {
 typedef struct wine_locals WineLocals;
 
 
+#ifdef __i386__
+
 #define DBG_V86_MODULE(seg) ((seg)>>16)
 #define IS_SELECTOR_V86(seg) DBG_V86_MODULE(seg)
 
@@ -98,6 +100,13 @@ typedef struct wine_locals WineLocals;
          ((((addr)->seg)&0xFFFF)<<4)+(addr)->off) : \
     (IS_SELECTOR_SYSTEM((addr)->seg) ? (char *)(addr)->off \
       : (char *)PTR_SEG_OFF_TO_LIN((addr)->seg,(addr)->off)))
+
+#else /* __i386__ */
+
+#define DBG_FIX_ADDR_SEG(addr,default)
+#define DBG_ADDR_TO_LIN(addr) ((char *)(addr)->off)
+
+#endif /* __386__ */
 
 #define DBG_CHECK_READ_PTR(addr,len) \
     (!DEBUG_IsBadReadPtr((addr),(len)) || \
@@ -313,6 +322,7 @@ extern void DEBUG_AddPath(const char * path);
 extern void DEBUG_List(struct list_id * line1, struct list_id * line2,  
 		       int delta);
 extern void DEBUG_NukePath(void);
+extern void DEBUG_GetCurrentAddress( DBG_ADDR * );
 extern void DEBUG_Disassemble( const DBG_ADDR *, const DBG_ADDR*, int offset );
 
   /* debugger/dbg.y */

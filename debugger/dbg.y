@@ -252,16 +252,7 @@ break_command:
 				}
     | tBREAK tNUM tEOL	       { struct name_hash *nh;
 				 DBG_ADDR addr;
-				 TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
-
-				 addr.type = NULL;
-				 addr.seg = CS_reg(&DEBUG_context);
-				 addr.off = EIP_reg(&DEBUG_context);
-
-				 if (ISV86(&DEBUG_context))
-				     addr.seg |= (DWORD)(pTask?(pTask->hModule):0)<<16;
-				 DBG_FIX_ADDR_SEG( &addr, CS_reg(&DEBUG_context) );
-				 GlobalUnlock16( GetCurrentTask() );
+				 DEBUG_GetCurrentAddress( &addr );
 				 DEBUG_FindNearestSymbol(&addr, TRUE,
 							 &nh, 0, NULL);
 				 if( nh != NULL )
@@ -277,15 +268,7 @@ break_command:
                                }
 
     | tBREAK tEOL              { DBG_ADDR addr;
-				 TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
-
-				 addr.type = NULL;
-				 addr.seg = CS_reg(&DEBUG_context);
-				 addr.off = EIP_reg(&DEBUG_context);
-
-				 if (ISV86(&DEBUG_context))
-				     addr.seg |= (DWORD)(pTask?(pTask->hModule):0)<<16;
-				 GlobalUnlock16( GetCurrentTask() );
+				 DEBUG_GetCurrentAddress( &addr );
                                  DEBUG_AddBreakpoint( &addr );
                                }
 
@@ -495,11 +478,15 @@ static void DEBUG_Main( BOOL is_debug )
 
     if (!is_debug)
     {
+#ifdef __i386__
         if (IS_SELECTOR_SYSTEM(CS_reg(&DEBUG_context)))
             fprintf( stderr, " in 32-bit code (0x%08lx).\n", EIP_reg(&DEBUG_context));
         else
             fprintf( stderr, " in 16-bit code (%04x:%04lx).\n",
                      (WORD)CS_reg(&DEBUG_context), EIP_reg(&DEBUG_context) );
+#else
+        fprintf( stderr, " (%p).\n", GET_IP(&DEBUG_context) );
+#endif
     }
 
     if (!loaded_symbols)
@@ -562,22 +549,18 @@ static void DEBUG_Main( BOOL is_debug )
     if (!is_debug || !DEBUG_ShouldContinue( dbg_exec_mode, &dbg_exec_count ))
     {
         DBG_ADDR addr;
-        TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
-
-        addr.seg = CS_reg(&DEBUG_context);
-        addr.off = EIP_reg(&DEBUG_context);
-        if (ISV86(&DEBUG_context)) addr.seg |= (DWORD)(pTask?(pTask->hModule):0)<<16;
-	addr.type = NULL;
-        DBG_FIX_ADDR_SEG( &addr, 0 );
-
-        GlobalUnlock16( GetCurrentTask() );
+        DEBUG_GetCurrentAddress( &addr );
 
         DEBUG_Freeze( TRUE );
 
         /* Put the display in a correct state */
 	USER_Driver->pBeginDebugging();
 
+#ifdef __i386__
         newmode = ISV86(&DEBUG_context) ? 16 : IS_SELECTOR_32BIT(addr.seg) ? 32 : 16;
+#else
+        newmode = 32;
+#endif
         if (newmode != dbg_mode)
             fprintf(stderr,"In %d bit mode.\n", dbg_mode = newmode);
 
@@ -587,6 +570,7 @@ static void DEBUG_Main( BOOL is_debug )
         {
             DEBUG_InfoRegisters();
             DEBUG_InfoStack();
+#ifdef __i386__
             if (dbg_mode == 16)
             {
                 LDT_Print( SELECTOR_TO_ENTRY(DS_reg(&DEBUG_context)), 1 );
@@ -594,6 +578,7 @@ static void DEBUG_Main( BOOL is_debug )
                     LDT_Print( SELECTOR_TO_ENTRY(ES_reg(&DEBUG_context)), 1 );
             }
             LDT_Print( SELECTOR_TO_ENTRY(FS_reg(&DEBUG_context)), 1 );
+#endif
             DEBUG_BackTrace();
         }
 	else
@@ -626,9 +611,8 @@ static void DEBUG_Main( BOOL is_debug )
             issue_prompt();
             yyparse();
             flush_symbols();
-            addr.seg = CS_reg(&DEBUG_context) | (addr.seg&0xffff0000);
-            addr.off = EIP_reg(&DEBUG_context);
-            DBG_FIX_ADDR_SEG( &addr, 0 );
+
+            DEBUG_GetCurrentAddress( &addr );
             ret_ok = DEBUG_ValidateRegisters();
             if (ret_ok) ret_ok = DBG_CHECK_READ_PTR( &addr, 1 );
         } while (!ret_ok);
