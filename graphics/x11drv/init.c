@@ -241,7 +241,7 @@ static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     {
         BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( dc->w.hBitmap,
                                                       BITMAP_MAGIC );
-	X11DRV_CreateBitmap( dc->w.hBitmap );
+	if (!bmp->physBitmap) X11DRV_CreateBitmap( dc->w.hBitmap );
         physDev->drawable  = (Pixmap)bmp->physBitmap;
         physDev->gc        = TSXCreateGC(display, physDev->drawable, 0, NULL);
         dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
