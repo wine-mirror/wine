@@ -71,9 +71,9 @@ type	win32
 068 stub NtConnectPort
 069 stub NtContinue
 070 stub NtCreateDirectoryObject
-071 stub NtCreateEvent
+071 stdcall NtCreateEvent(long long long long long) NtCreateEvent
 072 stub NtCreateEventPair
-073 stub NtCreateFile
+073 stdcall NtCreateFile(ptr long ptr ptr long long long ptr long long ptr) NtCreateFile
 074 stub NtCreateIoCompletion
 075 stub NtCreateKey
 076 stub NtCreateMailslotFile
@@ -87,14 +87,14 @@ type	win32
 084 stub NtCreateSemaphore
 085 stub NtCreateSymbolicLinkObject
 086 stub NtCreateThread
-087 stub NtCreateTimer
+087 stdcall NtCreateTimer(long long long) NtCreateTimer
 088 stub NtCreateToken
 089 stdcall NtCurrentTeb() NtCurrentTeb
 090 stub NtDelayExecution
 091 stub NtDeleteFile
 092 stub NtDeleteKey
 093 stub NtDeleteValueKey
-094 stub NtDeviceIoControlFile
+094 stdcall NtDeviceIoControlFile(long long long long long long long long long long) NtDeviceIoControlFile
 095 stub NtDisplayString
 096 stub NtDuplicateObject
 097 stub NtDuplicateToken
@@ -108,7 +108,7 @@ type	win32
 105 stub NtFlushVirtualMemory
 106 stub NtFlushWriteBuffer
 107 stub NtFreeVirtualMemory
-108 stdcall NtFsControlFile() NtFsControlFile
+108 stdcall NtFsControlFile(long long long long long long long long long long) NtFsControlFile
 109 stub NtGetContextThread
 110 stub NtGetPlugPlayEvent
 111 stub NtGetTickCount
@@ -155,8 +155,8 @@ type	win32
 152 stub NtQueryInformationFile
 153 stub NtQueryInformationPort
 154 stdcall NtQueryInformationProcess(long long long long long) NtQueryInformationProcess
-155 stub NtQueryInformationThread
-156 stub NtQueryInformationToken
+155 stdcall NtQueryInformationThread (long long long long long) NtQueryInformationThread
+156 stdcall NtQueryInformationToken (long long long long long) NtQueryInformationToken
 157 stub NtQueryIntervalProfile
 158 stub NtQueryIoCompletion
 159 stub NtQueryKey
@@ -221,7 +221,7 @@ type	win32
 218 stub NtSetSystemInformation
 219 stub NtSetSystemPowerState
 220 stub NtSetSystemTime
-221 stub NtSetTimer
+221 stdcall NtSetTimer(long long long long long long) NtSetTimer
 222 stub NtSetTimerResolution
 223 stub NtSetValueKey
 224 stub NtSetVolumeInformationFile
@@ -265,7 +265,7 @@ type	win32
 262 stub RtlAddAttributeActionToRXact
 263 stub RtlAddAuditAccessAce
 264 stub RtlAdjustPrivilege
-265 stdcall RtlAllocateAndInitializeSid(ptr long long long long long long long long long ptr) AllocateAndInitializeSid
+265 stdcall RtlAllocateAndInitializeSid (ptr long long long long long long long long long ptr) RtlAllocateAndInitializeSid
 266 stdcall RtlAllocateHeap(long long long) HeapAlloc
 267 stub RtlAnsiCharToUnicodeChar
 268 stub RtlAnsiStringToUnicodeSize
@@ -352,7 +352,7 @@ type	win32
 349 stub RtlEqualDomainName
 350 stub RtlEqualLuid
 351 stub RtlEqualPrefixSid
-352 stub RtlEqualSid
+352 stdcall RtlEqualSid (long long) RtlEqualSid
 353 stub RtlEqualString
 354 stub RtlEqualUnicodeString
 355 stub RtlEraseUnicodeString
@@ -376,7 +376,7 @@ type	win32
 373 stdcall RtlFreeAnsiString(long) RtlFreeAnsiString
 374 stdcall RtlFreeHeap(long long long) HeapFree
 375 stub RtlFreeOemString
-376 stub RtlFreeSid
+376 stdcall RtlFreeSid (long) RtlFreeSid
 377 stdcall RtlFreeUnicodeString(ptr) RtlFreeUnicodeString
 378 stub RtlGenerate8dot3Name
 379 stub RtlGetAce
