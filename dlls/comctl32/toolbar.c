@@ -892,6 +892,9 @@ TOOLBAR_CalcStrings (HWND hwnd, LPSIZE lpSize)
 * takes place in TOOLBAR_CalcToolbar. If the program wants to manage 
 * the toolbar wrapping on its own, it can use the TBSTYLE_WRAPABLE 
 * flag, and set the TBSTATE_WRAP flags manually on the appropriate items.
+*
+* Note: TBSTYLE_WRAPABLE or CCS_VERT can be used also to allow vertical
+* toolbar lists. 
 */ 
 
 static void
@@ -906,7 +909,7 @@ TOOLBAR_WrapToolbar( HWND hwnd, DWORD dwStyle )
     /* 	When the toolbar window style is not TBSTYLE_WRAPABLE,	*/ 
     /*	no layout is necessary. Applications may use this style */
     /*	to perform their own layout on the toolbar. 		*/
-    if( !(dwStyle & TBSTYLE_WRAPABLE) )
+    if( !(dwStyle & TBSTYLE_WRAPABLE) && !(dwStyle & CCS_VERT) )
 	return;
 
     btnPtr = infoPtr->buttons;
@@ -3217,24 +3220,18 @@ TOOLBAR_InsertButtonW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     TOOLBAR_DumpButton(infoPtr, (TBUTTON_INFO *)lpTbb, nIndex, FALSE);
 
-    if (nIndex < 0)
-	return FALSE;
-
-    TRACE("inserting button index=%d\n", nIndex);
-    if (nIndex > infoPtr->nNumButtons) {
+    if (nIndex == -1) {
+       /* EPP: this seems to be an undocumented call (from my IE4)
+	* I assume in that case that:
+	* - lpTbb->iString is a string pointer (not a string index in strings[] table
+	* - index of insertion is at the end of existing buttons
+	* I only see this happen with nIndex == -1, but it could have a special
+	* meaning (like -nIndex (or ~nIndex) to get the real position of insertion).
+	*/
 	nIndex = infoPtr->nNumButtons;
-	TRACE("adjust index=%d\n", nIndex);
-    }
 
-    oldButtons = infoPtr->buttons;
-    infoPtr->nNumButtons++;
-    infoPtr->buttons = COMCTL32_Alloc (sizeof (TBUTTON_INFO) * infoPtr->nNumButtons);
-    /* pre insert copy */
-    if (nIndex > 0) {
-	memcpy (&infoPtr->buttons[0], &oldButtons[0],
-		nIndex * sizeof(TBUTTON_INFO));
-    }
-
+    } else if (nIndex < 0)
+       return FALSE;
 
     /* If the string passed is not an index, assume address of string 
        and do our own AddString */
@@ -3250,6 +3247,21 @@ TOOLBAR_InsertButtonW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	ptr[len - 1] = 0; /* ended by two '\0' */
 	lpTbb->iString = TOOLBAR_AddStringW(hwnd, 0, (LPARAM)ptr);
 	COMCTL32_Free(ptr);
+    }
+
+    TRACE("inserting button index=%d\n", nIndex);
+    if (nIndex > infoPtr->nNumButtons) {
+	nIndex = infoPtr->nNumButtons;
+	TRACE("adjust index=%d\n", nIndex);
+    }
+
+    oldButtons = infoPtr->buttons;
+    infoPtr->nNumButtons++;
+    infoPtr->buttons = COMCTL32_Alloc (sizeof (TBUTTON_INFO) * infoPtr->nNumButtons);
+    /* pre insert copy */
+    if (nIndex > 0) {
+	memcpy (&infoPtr->buttons[0], &oldButtons[0],
+		nIndex * sizeof(TBUTTON_INFO));
     }
 
     /* insert new button */
@@ -3286,6 +3298,8 @@ TOOLBAR_InsertButtonW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
 
     COMCTL32_Free (oldButtons);
+
+    TOOLBAR_CalcToolbar (hwnd);
 
     InvalidateRect (hwnd, NULL, TRUE);
 
