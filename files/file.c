@@ -584,9 +584,16 @@ DWORD WINAPI GetFileAttributesA( LPCSTR name )
     DOS_FULL_NAME full_name;
     BY_HANDLE_FILE_INFORMATION info;
 
-    if (name == NULL || *name=='\0') return -1;
-
-    if (!DOSFS_GetFullName( name, TRUE, &full_name )) return -1;
+    if (name == NULL)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return -1;
+    }
+    if (!*name || !DOSFS_GetFullName( name, TRUE, &full_name ))
+    {
+        SetLastError( ERROR_BAD_PATHNAME );
+        return -1;
+    }
     if (!FILE_Stat( full_name.long_name, &info )) return -1;
     return info.dwFileAttributes;
 }
