@@ -382,7 +382,9 @@ static DWORD MSG_TranslateKbdMsg( HWND hTopWnd, DWORD first, DWORD last,
 	if( message < WM_SYSKEYDOWN )
 	    message += WM_SYSKEYDOWN - WM_KEYDOWN;
     }
+    if ( !hWnd ) return SYSQ_MSG_ABANDON;
     pWnd = WIN_FindWndPtr( hWnd );
+
     if (pWnd && (pWnd->hmemTaskQ != GetFastQueue16()))
     {
         /* Not for the current task */
