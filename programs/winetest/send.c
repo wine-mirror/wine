@@ -112,7 +112,7 @@ send_file (const char *name)
     char *str;
     int ret;
 
-    /* RFC 2068 */
+    /* RFC 2616 */
 #define SEP "--8<--cut-here--8<--"
     static const char head[] = "POST /submit HTTP/1.0\r\n"
         "Host: test.winehq.org\r\n"
@@ -123,7 +123,7 @@ send_file (const char *name)
         "Content-Disposition: form-data; name=\"reportfile\"; filename=\"%s\"\r\n"
         "Content-Type: application/octet-stream\r\n\r\n";
     static const char body2[] = "\r\n--" SEP "\r\n"
-        "Content-Disposition: form-data; name=submit\r\n\r\n"
+        "Content-Disposition: form-data; name=\"submit\"\r\n\r\n"
         "Upload File\r\n"
         "--" SEP "--\r\n";
 
