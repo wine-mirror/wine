@@ -32,8 +32,8 @@
 #include <stddef.h>
 #ifdef HAVE_CUPS_CUPS_H
 # include <cups/cups.h>
-# ifndef CUPS_SONAME
-#  define CUPS_SONAME "libcups.so"
+# ifndef SONAME_LIBCUPS
+#  define SONAME_LIBCUPS "libcups.so"
 # endif
 #endif
 
@@ -157,7 +157,7 @@ CUPS_LoadPrinters(void) {
     PWSTR pwstrNameW;
     HKEY hkeyPrinters, hkeyPrinter;
 
-    cupshandle = wine_dlopen(CUPS_SONAME, RTLD_NOW, NULL, 0);
+    cupshandle = wine_dlopen(SONAME_LIBCUPS, RTLD_NOW, NULL, 0);
     if (!cupshandle) 
 	return FALSE;
 

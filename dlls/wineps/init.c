@@ -41,8 +41,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 #ifdef HAVE_CUPS_CUPS_H
 #include <cups/cups.h>
 
-#ifndef CUPS_SONAME
-#define CUPS_SONAME "libcups.so"
+#ifndef SONAME_LIBCUPS
+#define SONAME_LIBCUPS "libcups.so"
 #endif
 
 static void *cupshandle = NULL;
@@ -139,7 +139,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 #ifdef HAVE_CUPS_CUPS_H
 	    /* dynamically load CUPS if not yet loaded */
 	    if (!cupshandle) {
-		cupshandle = wine_dlopen(CUPS_SONAME, RTLD_NOW, NULL, 0);
+		cupshandle = wine_dlopen(SONAME_LIBCUPS, RTLD_NOW, NULL, 0);
 		if (!cupshandle) cupshandle = (void*)-1;
 	    }
 #endif
