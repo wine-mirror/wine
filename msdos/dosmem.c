@@ -72,6 +72,13 @@ typedef struct
     BYTE  ComTimeout[4];             /* 7c: Timeouts for serial ports */
     WORD  KbdBufferStart;            /* 80: Keyboard buffer start */
     WORD  KbdBufferEnd;              /* 82: Keyboard buffer end */
+    BYTE  RowsOnScreenMinus1;        /* 84: EGA only */
+    WORD  BytesPerChar;              /* 85: EGA only */
+    BYTE  ModeOptions;               /* 87: EGA only */
+    BYTE  FeatureBitsSwitches;       /* 88: EGA only */
+    BYTE  unknown;                   /* 89: ??? */
+    BYTE  DisplayCombination;        /* 8A: VGA display combinations */
+    BYTE  DiskDataRate;              /* 8B: Last disk data rate selected */
 } BIOSDATA;
 
 #pragma pack(4)
@@ -216,11 +223,11 @@ static void DOSMEM_FillBiosSegments(void)
 
     /* FIXME: should check the number of configured drives and ports */
 
-    pBiosData->Com1Addr             = 0x3e8;
-    pBiosData->Com2Addr             = 0x2e8;
+    pBiosData->Com1Addr             = 0x3f8;
+    pBiosData->Com2Addr             = 0x2f8;
     pBiosData->Lpt1Addr             = 0x378;
     pBiosData->Lpt2Addr             = 0x278;
-    pBiosData->InstalledHardware    = 0x8443;
+    pBiosData->InstalledHardware    = 0x5463;
     pBiosData->MemSize              = 640;
     pBiosData->NextKbdCharPtr       = 0x1e;
     pBiosData->FirstKbdCharPtr      = 0x1e;
@@ -233,6 +240,13 @@ static void DOSMEM_FillBiosSegments(void)
     pBiosData->NbHardDisks          = 2;
     pBiosData->KbdBufferStart       = 0x1e;
     pBiosData->KbdBufferEnd         = 0x3e;
+    pBiosData->RowsOnScreenMinus1   = 23;
+    pBiosData->BytesPerChar         = 0x10;
+    pBiosData->ModeOptions          = 0x64;
+    pBiosData->FeatureBitsSwitches  = 0xf9;
+    pBiosData->unknown              = 0x51;
+    pBiosData->DisplayCombination   = 0x08;
+    pBiosData->DiskDataRate         = 0;
 
     /* fill ROM configuration table (values from Award) */
     *(WORD *)(pBiosROMTable)= 0x08; /* number of bytes following */
