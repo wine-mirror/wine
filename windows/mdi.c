@@ -463,7 +463,7 @@ static LRESULT MDIRefreshMenu( HWND hwnd, HMENU hmenuFrame,
 /**********************************************************************
  *					MDICreateChild
  */
-static HWND MDICreateChild( WND *w, MDICLIENTINFO *ci, HWND parent, 
+static HWND MDICreateChild( WND *wndParent, MDICLIENTINFO *ci,
 			    LPMDICREATESTRUCTA cs, BOOL unicode )
 {
     POINT          pos[2]; 
@@ -475,7 +475,7 @@ static HWND MDICreateChild( WND *w, MDICLIENTINFO *ci, HWND parent,
     TRACE("origin %i,%i - dim %i,%i, style %08lx\n", 
                 cs->x, cs->y, cs->cx, cs->cy, cs->style);
     /* calculate placement */
-    MDI_CalcDefaultChildPos(w, ci->nTotalCreated++, pos, 0);
+    MDI_CalcDefaultChildPos(wndParent, ci->nTotalCreated++, pos, 0);
 
     if (cs->cx == CW_USEDEFAULT || !cs->cx) cs->cx = pos[1].x;
     if (cs->cy == CW_USEDEFAULT || !cs->cy) cs->cy = pos[1].y;
@@ -491,11 +491,11 @@ static HWND MDICreateChild( WND *w, MDICLIENTINFO *ci, HWND parent,
     {
 	TRACE("Restoring current maximized child %04x\n", ci->hwndChildMaximized);
 	if( style & WS_MAXIMIZE )
-	    SendMessageW(w->hwndSelf, WM_SETREDRAW, FALSE, 0L);
+	    SendMessageW(wndParent->hwndSelf, WM_SETREDRAW, FALSE, 0L);
 	hwndMax = ci->hwndChildMaximized;
 	ShowWindow( hwndMax, SW_SHOWNOACTIVATE );
 	if( style & WS_MAXIMIZE )
-	    SendMessageW(w->hwndSelf, WM_SETREDRAW, TRUE, 0L);
+	    SendMessageW(wndParent->hwndSelf, WM_SETREDRAW, TRUE, 0L);
     }
 
     if (ci->nActiveChildren <= MDI_MOREWINDOWSLIMIT)
@@ -506,7 +506,7 @@ static HWND MDICreateChild( WND *w, MDICLIENTINFO *ci, HWND parent,
     ci->nActiveChildren++;
 
     /* fix window style */
-    if( !(w->dwStyle & MDIS_ALLCHILDSTYLES) )
+    if( !(wndParent->dwStyle & MDIS_ALLCHILDSTYLES) )
     {
 	TRACE("MDIS_ALLCHILDSTYLES is missing, fixing window style\n");
         style &= (WS_CHILD | WS_CLIPSIBLINGS | WS_MINIMIZE | WS_MAXIMIZE |
@@ -514,18 +514,18 @@ static HWND MDICreateChild( WND *w, MDICLIENTINFO *ci, HWND parent,
         style |= (WS_VISIBLE | WS_OVERLAPPEDWINDOW);
     }
 
-    if( w->flags & WIN_ISWIN32 )
+    if( wndParent->flags & WIN_ISWIN32 )
     {
 	if(unicode)
 	{
 	    MDICREATESTRUCTW *csW = (MDICREATESTRUCTW *)cs;
 	    hwnd = CreateWindowW( csW->szClass, csW->szTitle, style, 
-                                csW->x, csW->y, csW->cx, csW->cy, parent, 
+                                csW->x, csW->y, csW->cx, csW->cy, wndParent->hwndSelf,
                                 (HMENU)wIDmenu, csW->hOwner, csW );
 	}
 	else
 	    hwnd = CreateWindowA( cs->szClass, cs->szTitle, style, 
-                                cs->x, cs->y, cs->cx, cs->cy, parent, 
+                                cs->x, cs->y, cs->cx, cs->cy, wndParent->hwndSelf,
                                 (HMENU)wIDmenu, cs->hOwner, cs );
     }
     else
@@ -541,7 +541,7 @@ static HWND MDICreateChild( WND *w, MDICLIENTINFO *ci, HWND parent,
         cs16->szClass = SEGPTR_GET(cls);
 
 	hwnd = CreateWindow16( cs->szClass, cs->szTitle, style, 
-			       cs16->x, cs16->y, cs16->cx, cs16->cy, parent, 
+			       cs16->x, cs16->y, cs16->cx, cs16->cy, wndParent->hwndSelf, 
 			       (HMENU)wIDmenu, cs16->hOwner,
                                (LPVOID)SEGPTR_GET(cs16) );
         SEGPTR_FREE( title );
@@ -564,7 +564,7 @@ static HWND MDICreateChild( WND *w, MDICLIENTINFO *ci, HWND parent,
         if (ci->nActiveChildren > MDI_MOREWINDOWSLIMIT)
             MDI_SwapMenuItems(wnd->parent, wnd->wIDmenu, ci->idFirstChild + MDI_MOREWINDOWSLIMIT - 1);
 
-	MDI_MenuModifyItem(w ,hwnd); 
+	MDI_MenuModifyItem(wndParent, hwnd);
 
         /* Have we hit the "More Windows..." limit? If so, we must 
          * add a "More Windows..." option 
@@ -691,8 +691,7 @@ END:
  *                                      MDIDestroyChild
  */
 static LRESULT MDIDestroyChild( WND *w_parent, MDICLIENTINFO *ci,
-                                HWND parent, HWND child,
-                                BOOL flagDestroy )
+                                HWND child, BOOL flagDestroy )
 {
     WND         *childPtr = WIN_FindWndPtr(child);
 
@@ -700,7 +699,7 @@ static LRESULT MDIDestroyChild( WND *w_parent, MDICLIENTINFO *ci,
     {
         if( child == ci->hwndActiveChild )
         {
-	    MDI_SwitchActiveChild(parent, child, TRUE);
+	    MDI_SwitchActiveChild(w_parent->hwndSelf, child, TRUE);
 
 	    if( child == ci->hwndActiveChild )
 	    {
@@ -709,7 +708,7 @@ static LRESULT MDIDestroyChild( WND *w_parent, MDICLIENTINFO *ci,
 		{
 		    MDI_RestoreFrameMenu(w_parent->parent, child);
 		    ci->hwndChildMaximized = 0;
-		    MDI_UpdateFrameText(w_parent->parent,parent,TRUE,NULL);
+		    MDI_UpdateFrameText(w_parent->parent, w_parent->hwndSelf, TRUE, NULL);
 		}
 
                 MDI_ChildActivate(w_parent, 0);
@@ -1343,13 +1342,13 @@ static LRESULT WINAPI MDIClientWndProc_locked( WND *wndPtr, UINT message,
         goto END;
 
       case WM_MDICREATE:
-        if (lParam) retvalue = MDICreateChild( wndPtr, ci, wndPtr->hwndSelf,
+        if (lParam) retvalue = MDICreateChild( wndPtr, ci,
 				    (MDICREATESTRUCTA *)lParam, unicode );
         else retvalue = 0;
         goto END;
 
       case WM_MDIDESTROY:
-	retvalue = MDIDestroyChild( wndPtr, ci, wndPtr->hwndSelf, (HWND)wParam, TRUE );
+	retvalue = MDIDestroyChild( wndPtr, ci, (HWND)wParam, TRUE );
         goto END;
 
       case WM_MDIGETACTIVE:
@@ -2072,15 +2071,16 @@ HWND WINAPI CreateMDIWindowA(
 {
     MDICLIENTINFO* pCi;
     MDICREATESTRUCTA cs;
-    WND *pWnd=WIN_FindWndPtr(hWndParent);
+    WND *pWndParent = WIN_FindWndPtr(hWndParent);
     HWND retvalue;
 
     TRACE("(%s,%s,%ld,%d,%d,%d,%d,%x,%d,%ld)\n",
           debugstr_a(lpClassName),debugstr_a(lpWindowName),dwStyle,X,Y,
           nWidth,nHeight,hWndParent,hInstance,lParam);
 
-    if(!pWnd){
-        ERR(" bad hwnd for MDI-client: %d\n",hWndParent);
+    if(!pWndParent)
+    {
+        ERR("bad hwnd for MDI-client: %04x\n", hWndParent);
         return 0;
     }
     cs.szClass=lpClassName;
@@ -2093,10 +2093,10 @@ HWND WINAPI CreateMDIWindowA(
     cs.style=dwStyle;
     cs.lParam=lParam;
 
-    pCi=(MDICLIENTINFO *)pWnd->wExtra;
+    pCi = (MDICLIENTINFO *)pWndParent->wExtra;
     
-    retvalue = MDICreateChild(pWnd, pCi, hWndParent, &cs, FALSE);
-    WIN_ReleaseWndPtr(pWnd);
+    retvalue = MDICreateChild(pWndParent, pCi, &cs, FALSE);
+    WIN_ReleaseWndPtr(pWndParent);
     return retvalue;
 }
 
@@ -2121,16 +2121,16 @@ HWND WINAPI CreateMDIWindowW(
 {
     MDICLIENTINFO *pCi;
     MDICREATESTRUCTW cs;
-    WND *pWnd = WIN_FindWndPtr(hWndParent);
+    WND *pWndParent = WIN_FindWndPtr(hWndParent);
     HWND retvalue;
 
     TRACE("(%s,%s,%ld,%d,%d,%d,%d,%x,%d,%ld)\n",
           debugstr_w(lpClassName), debugstr_w(lpWindowName), dwStyle, X, Y,
           nWidth, nHeight, hWndParent, hInstance, lParam);
 
-    if(!pWnd)
+    if(!pWndParent)
     {
-        ERR(" bad hwnd for MDI-client: %d\n", hWndParent);
+        ERR("bad hwnd for MDI-client: %04x\n", hWndParent);
         return 0;
     }
     cs.szClass = lpClassName;
@@ -2143,10 +2143,10 @@ HWND WINAPI CreateMDIWindowW(
     cs.style = dwStyle;
     cs.lParam = lParam;
 
-    pCi = (MDICLIENTINFO *)pWnd->wExtra;
+    pCi = (MDICLIENTINFO *)pWndParent->wExtra;
     
-    retvalue = MDICreateChild(pWnd, pCi, hWndParent, (MDICREATESTRUCTA *)&cs, TRUE);
-    WIN_ReleaseWndPtr(pWnd);
+    retvalue = MDICreateChild(pWndParent, pCi, (MDICREATESTRUCTA *)&cs, TRUE);
+    WIN_ReleaseWndPtr(pWndParent);
     return retvalue;
 }
 
