@@ -1365,8 +1365,6 @@ static LRESULT LISTBOX_SelectItemRange( LB_DESCR *descr, INT first,
     if (last == -1) last = descr->nb_items - 1;
     if ((first < 0) || (first >= descr->nb_items)) return LB_ERR;
     if ((last < 0) || (last >= descr->nb_items)) return LB_ERR;
-    /* selected_item reflects last selected/unselected item on multiple sel */
-    descr->selected_item = last;
 
     if (on)  /* Turn selection on */
     {
@@ -1376,7 +1374,6 @@ static LRESULT LISTBOX_SelectItemRange( LB_DESCR *descr, INT first,
             descr->items[i].selected = TRUE;
             LISTBOX_InvalidateItemRect(descr, i);
         }
-        LISTBOX_SetCaretIndex( descr, last, TRUE );
     }
     else  /* Turn selection off */
     {

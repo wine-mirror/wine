@@ -64,6 +64,7 @@ struct listbox_test {
   struct listbox_stat  init,  init_todo;
   struct listbox_stat click, click_todo;
   struct listbox_stat  step,  step_todo;
+  struct listbox_stat   sel,   sel_todo;
 };
 
 void
@@ -133,6 +134,13 @@ check (const struct listbox_test test)
   listbox_query (hLB, &answer);
   listbox_ok (test, step, answer);
 
+  DestroyWindow (hLB);
+  hLB=create_listbox (test.prop.add_style);
+
+  SendMessage (hLB, LB_SELITEMRANGE, TRUE, MAKELPARAM(1, 2));
+  listbox_query (hLB, &answer);
+  listbox_ok (test, sel, answer);
+  
   WAIT;
   DestroyWindow (hLB);
 }
@@ -155,6 +163,8 @@ void check_item_height()
 
     itemHeight = SendMessageW(hLB, LB_GETITEMHEIGHT, 0, 0);
     ok (itemHeight == tm.tmHeight, "Item height wrong, got %d, expecting %ld\n", itemHeight, tm.tmHeight);
+
+    DestroyWindow (hLB);
 }
 
 START_TEST(listbox)
@@ -164,43 +174,51 @@ START_TEST(listbox)
     {{0},
      {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
      {     1,      1,      1, LB_ERR}, {0,0,0,0},
-     {     2,      2,      2, LB_ERR}, {0,0,0,0}};
+     {     2,      2,      2, LB_ERR}, {0,0,0,0},
+     {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0}};
 /* {selected, anchor,  caret, selcount}{TODO fields} */
   const struct listbox_test SS_NS =
     {{LBS_NOSEL},
      {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
      {     1,      1,      1, LB_ERR}, {0,0,0,0},
-     {     2,      2,      2, LB_ERR}, {0,0,0,0}};
+     {     2,      2,      2, LB_ERR}, {0,0,0,0},
+     {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0}};
   const struct listbox_test MS =
     {{LBS_MULTIPLESEL},
      {     0, LB_ERR,      0,      0}, {0,0,0,0},
      {     1,      1,      1,      1}, {0,0,0,0},
-     {     2,      1,      2,      1}, {0,0,0,0}};
+     {     2,      1,      2,      1}, {0,0,0,0},
+     {     0, LB_ERR,      0,      2}, {0,0,0,0}};
   const struct listbox_test MS_NS =
     {{LBS_MULTIPLESEL | LBS_NOSEL},
      {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
      {     1,      1,      1, LB_ERR}, {0,0,0,0},
-     {     2,      2,      2, LB_ERR}, {0,0,0,0}};
+     {     2,      2,      2, LB_ERR}, {0,0,0,0},
+     {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0}};
   const struct listbox_test ES =
     {{LBS_EXTENDEDSEL},
      {     0, LB_ERR,      0,      0}, {0,0,0,0},
      {     1,      1,      1,      1}, {0,0,0,0},
-     {     2,      2,      2,      1}, {0,0,0,0}};
+     {     2,      2,      2,      1}, {0,0,0,0},
+     {     0, LB_ERR,      0,      2}, {0,0,0,0}};
   const struct listbox_test ES_NS =
     {{LBS_EXTENDEDSEL | LBS_NOSEL},
      {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
      {     1,      1,      1, LB_ERR}, {0,0,0,0},
-     {     2,      2,      2, LB_ERR}, {0,0,0,0}};
+     {     2,      2,      2, LB_ERR}, {0,0,0,0},
+     {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0}};
   const struct listbox_test EMS =
     {{LBS_EXTENDEDSEL | LBS_MULTIPLESEL},
      {     0, LB_ERR,      0,      0}, {0,0,0,0},
      {     1,      1,      1,      1}, {0,0,0,0},
-     {     2,      2,      2,      1}, {0,0,0,0}};
+     {     2,      2,      2,      1}, {0,0,0,0},
+     {     0, LB_ERR,      0,      2}, {0,0,0,0}};
   const struct listbox_test EMS_NS =
     {{LBS_EXTENDEDSEL | LBS_MULTIPLESEL | LBS_NOSEL},
      {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
      {     1,      1,      1, LB_ERR}, {0,0,0,0},
-     {     2,      2,      2, LB_ERR}, {0,0,0,0}};
+     {     2,      2,      2, LB_ERR}, {0,0,0,0},
+     {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0}};
 
   trace (" Testing single selection...\n");
   check (SS);
