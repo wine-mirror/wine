@@ -305,16 +305,29 @@ DWORD COM_ApartmentRelease(struct apartment *apt)
 
     if (ret == 0)
     {
+        struct list *cursor, *cursor2;
+
         TRACE("destroying apartment %p, oxid %s\n", apt, wine_dbgstr_longlong(apt->oxid));
 
         MARSHAL_Disconnect_Proxies(apt);
 
         if (apt->win) DestroyWindow(apt->win);
 
-        if (!list_empty(&apt->stubmgrs))
+        LIST_FOR_EACH_SAFE(cursor, cursor2, &apt->stubmgrs)
         {
-            FIXME("Destroy outstanding stubs\n");
+            struct stub_manager *stubmgr = LIST_ENTRY(cursor, struct stub_manager, entry);
+            /* release the implicit reference given by the fact that the
+             * stub has external references (it must do since it is in the
+             * stub manager list in the apartment and all non-apartment users
+             * must have a ref on the apartment and so it cannot be destroyed).
+             */
+            stub_manager_int_release(stubmgr);
         }
+
+        /* if this assert fires, then another thread took a reference to a
+         * stub manager without taking a reference to the containing
+         * apartment, which it must do. */
+        assert(list_empty(&apt->stubmgrs));
 
         if (apt->filter) IUnknown_Release(apt->filter);
 
