@@ -577,14 +577,14 @@ DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
 
     if (DOSFS_GetFullName( name, TRUE, full_name )) goto done;
 
-    /* Try the Windows directory */
-
-    if (DIR_TryPath( &DIR_Windows, name, full_name ))
-        goto done;
-
     /* Try the Windows system directory */
 
     if (DIR_TryPath( &DIR_System, name, full_name ))
+        goto done;
+
+    /* Try the Windows directory */
+
+    if (DIR_TryPath( &DIR_Windows, name, full_name ))
         goto done;
 
     /* Try the path of the current executable (for Win16 search order) */
