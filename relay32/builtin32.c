@@ -15,6 +15,7 @@
 #endif
 
 #include "windef.h"
+#include "wine/winbase16.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "builtin32.h"

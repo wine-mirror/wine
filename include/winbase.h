@@ -532,7 +532,7 @@ typedef struct tagMEMORYSTATUS
 /* Debugging support (DEBUG SYSTEM ONLY) */
 typedef struct
 {
-    UINT16  flags;
+    WORD    flags;
     DWORD   dwOptions WINE_PACKED;
     DWORD   dwFilter WINE_PACKED;
     CHAR    achAllocModule[8] WINE_PACKED;
@@ -750,7 +750,7 @@ typedef struct
 
 typedef struct _SYSTEM_POWER_STATUS
 {
-  BOOL16  ACLineStatus;
+  BYTE    ACLineStatus;
   BYTE    BatteryFlag;
   BYTE    BatteryLifePercent;
   BYTE    reserved;
@@ -1541,8 +1541,7 @@ BOOL      WINAPI FindNextFileW(HANDLE,LPWIN32_FIND_DATAW);
 HRSRC     WINAPI FindResourceA(HMODULE,LPCSTR,LPCSTR);
 HRSRC     WINAPI FindResourceW(HMODULE,LPCWSTR,LPCWSTR);
 #define     FindResource WINELIB_NAME_AW(FindResource)
-VOID        WINAPI FreeLibrary16(HINSTANCE16);
-BOOL      WINAPI FreeLibrary(HMODULE);
+BOOL        WINAPI FreeLibrary(HMODULE);
 #define     FreeModule(handle) FreeLibrary(handle)
 #define     FreeProcInstance(proc) /*nothing*/
 BOOL      WINAPI FreeResource(HGLOBAL);
@@ -1659,14 +1658,12 @@ BOOL      WINAPI IsBadStringPtrW(LPCWSTR,UINT);
 BOOL        WINAPI IsBadWritePtr(LPVOID,UINT);
 BOOL        WINAPI IsDBCSLeadByte(BYTE);
 BOOL        WINAPI IsDebuggerPresent(void);
-HINSTANCE16 WINAPI LoadLibrary16(LPCSTR);
-HMODULE   WINAPI LoadLibraryA(LPCSTR);
-HMODULE   WINAPI LoadLibraryW(LPCWSTR);
+HMODULE     WINAPI LoadLibraryA(LPCSTR);
+HMODULE     WINAPI LoadLibraryW(LPCWSTR);
 #define     LoadLibrary WINELIB_NAME_AW(LoadLibrary)
-HMODULE   WINAPI LoadLibraryExA(LPCSTR,HANDLE,DWORD);
-HMODULE   WINAPI LoadLibraryExW(LPCWSTR,HANDLE,DWORD);
+HMODULE     WINAPI LoadLibraryExA(LPCSTR,HANDLE,DWORD);
+HMODULE     WINAPI LoadLibraryExW(LPCWSTR,HANDLE,DWORD);
 #define     LoadLibraryEx WINELIB_NAME_AW(LoadLibraryEx)
-HINSTANCE16 WINAPI LoadModule16(LPCSTR,LPVOID);
 HINSTANCE WINAPI LoadModule(LPCSTR,LPVOID);
 HGLOBAL   WINAPI LoadResource(HMODULE,HRSRC);
 HLOCAL    WINAPI LocalAlloc(UINT,DWORD);

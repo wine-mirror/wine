@@ -48,6 +48,7 @@
 #endif
 #include "windef.h"
 #include "winbase.h"
+#include "wine/winbase16.h"
 #include "winerror.h"
 #include "callback.h"
 #include "file.h"
@@ -63,12 +64,12 @@
 #include "server.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(win32)
-DECLARE_DEBUG_CHANNEL(delayhlp)
-DECLARE_DEBUG_CHANNEL(fixup)
-DECLARE_DEBUG_CHANNEL(module)
-DECLARE_DEBUG_CHANNEL(relay)
-DECLARE_DEBUG_CHANNEL(segment)
+DEFAULT_DEBUG_CHANNEL(win32);
+DECLARE_DEBUG_CHANNEL(delayhlp);
+DECLARE_DEBUG_CHANNEL(fixup);
+DECLARE_DEBUG_CHANNEL(module);
+DECLARE_DEBUG_CHANNEL(relay);
+DECLARE_DEBUG_CHANNEL(segment);
 
 
 /* convert PE image VirtualAddress to Real Address */

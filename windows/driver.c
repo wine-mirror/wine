@@ -11,6 +11,7 @@
 #include <string.h>
 #include "heap.h"
 #include "windef.h"
+#include "wine/winbase16.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "driver.h"
@@ -19,7 +20,7 @@
 #include "mmddk.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(driver)
+DEFAULT_DEBUG_CHANNEL(driver);
 
 /* The following definitions are WINE internals */
 /* FIXME: This is a WINE internal struct and should be moved in include/wine directory

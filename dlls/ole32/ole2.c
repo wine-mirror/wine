@@ -19,12 +19,13 @@
 #include "process.h"
 #include "commctrl.h"
 #include "wine/obj_clientserver.h"
+#include "wine/winbase16.h"
 #include "wine/wingdi16.h"
 #include "debugtools.h"
 #include "ole2ver.h"
 #include "winreg.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
 
 /******************************************************************************
  * These are static/global variables and internal data structures that the 
