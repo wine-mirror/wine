@@ -21,10 +21,6 @@
 #ifndef __WINE_DBGHELP_H
 #define __WINE_DBGHELP_H
 
-#include <windef.h>
-#include <winbase.h>
-#include <ver.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

@@ -19,8 +19,6 @@
 #ifndef __WINE_WINIOCTL_H
 #define __WINE_WINIOCTL_H
 
-#include <winnt.h>
-
 #define CTL_CODE( DeviceType, Function, Method, Access ) (                 \
     (DWORD)((DeviceType) << 16) | ((Access) << 14) | ((Function) << 2) | (Method) \
 )
