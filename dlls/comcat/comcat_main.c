@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "comcat.h"
+#include "comcat_private.h"
 #include "regsvr.h"
 
 #include "wine/debug.h"

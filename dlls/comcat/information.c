@@ -19,7 +19,7 @@
  */
 
 #include <string.h>
-#include "comcat.h"
+#include "comcat_private.h"
 
 #include "wine/debug.h"
 

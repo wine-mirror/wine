@@ -19,7 +19,7 @@
 #ifndef __WINE_OLE_IFS_H
 #define __WINE_OLE_IFS_H
 
-#include "wine/obj_base.h"
+#include "objbase.h"
 
 /***********************************************************************
  * IMalloc16 interface

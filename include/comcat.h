@@ -28,7 +28,7 @@
 #ifndef __WINE_COMCAT_H
 #define __WINE_COMCAT_H
 
-#include "wine/obj_base.h"
+#include "unknwn.h"
 #include "wine/obj_enumguid.h"
 #include "wine/obj_comcat.h"
 

@@ -25,9 +25,7 @@
 #include "winerror.h"
 
 #include "ole2.h"
-#include "wine/obj_base.h"
-#include "wine/obj_enumguid.h"
-#include "wine/obj_comcat.h"
+#include "comcat.h"
 #include "wine/unicode.h"
 
 /**********************************************************************

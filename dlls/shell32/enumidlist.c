@@ -25,8 +25,7 @@
 #include "undocshell.h"
 #include "shlwapi.h"
 #include "winerror.h"
-#include "wine/obj_base.h"
-#include "wine/obj_enumidlist.h"
+#include "objbase.h"
 
 #include "pidl.h"
 #include "shlguid.h"
