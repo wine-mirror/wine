@@ -278,9 +278,9 @@ static BOOL process_init( char *argv[] )
 	/* no parent, and no new console requested, create a simple console with bare handles to
 	 * unix stdio input & output streams (aka simple console)
 	 */
-	SetStdHandle( STD_INPUT_HANDLE,  FILE_DupUnixHandle( 0, GENERIC_READ, TRUE ));
-	SetStdHandle( STD_OUTPUT_HANDLE, FILE_DupUnixHandle( 1, GENERIC_WRITE, TRUE ));
-	SetStdHandle( STD_ERROR_HANDLE,  FILE_DupUnixHandle( 1, GENERIC_WRITE, TRUE ));
+	SetStdHandle( STD_INPUT_HANDLE,  FILE_DupUnixHandle( 0, GENERIC_READ|SYNCHRONIZE, TRUE ));
+	SetStdHandle( STD_OUTPUT_HANDLE, FILE_DupUnixHandle( 1, GENERIC_WRITE|SYNCHRONIZE, TRUE ));
+	SetStdHandle( STD_ERROR_HANDLE,  FILE_DupUnixHandle( 1, GENERIC_WRITE|SYNCHRONIZE, TRUE ));
     }
     else if (!(create_flags & (DETACHED_PROCESS|CREATE_NEW_CONSOLE)))
     {
