@@ -104,7 +104,7 @@ type	win32
 096 stdcall NtDuplicateObject(long long long long long long long) NtDuplicateObject
 097 stdcall NtDuplicateToken(long long long long long long) NtDuplicateToken
 098 stub NtEnumerateBus
-099 stub NtEnumerateKey
+099 stdcall NtEnumerateKey (long long long long long long) NtEnumerateKey
 100 stdcall NtEnumerateValueKey (long long long long long long) NtEnumerateValueKey
 101 stub NtExtendSection
 102 stub NtFlushBuffersFile
@@ -141,7 +141,7 @@ type	win32
 133 stdcall NtOpenProcessToken(long long long) NtOpenProcessToken
 134 stdcall NtOpenSection(long long long) NtOpenSection
 135 stub NtOpenSemaphore
-136 stub NtOpenSymbolicLinkObject
+136 stdcall NtOpenSymbolicLinkObject (long long long) NtOpenSymbolicLinkObject
 137 stub NtOpenThread
 138 stdcall NtOpenThreadToken(long long long long) NtOpenThreadToken
 139 stub NtOpenTimer
@@ -164,7 +164,7 @@ type	win32
 156 stdcall NtQueryInformationToken (long long long long long) NtQueryInformationToken
 157 stub NtQueryIntervalProfile
 158 stub NtQueryIoCompletion
-159 stub NtQueryKey
+159 stdcall NtQueryKey (long long long long) NtQueryKey
 160 stub NtQueryMutant
 161 stdcall NtQueryObject(long long long long long) NtQueryObject
 162 stdcall NtQueryPerformanceCounter (long long) NtQueryPerformanceCounter
@@ -180,7 +180,7 @@ type	win32
 172 stdcall NtQueryValueKey(long long long long long long) NtQueryValueKey
 173 stub NtQueryVirtualMemory
 174 stub NtQueryVolumeInformationFile
-175 stub NtRaiseException
+175 stdcall NtRaiseException(long long long ptr) NtRaiseException
 176 stub NtRaiseHardError
 177 stdcall NtReadFile(long long long long long long long long long) NtReadFile
 178 stub NtReadRequestData
@@ -469,7 +469,7 @@ type	win32
 461 stub RtlQuerySecurityObject
 462 stub RtlQueryTagHeap
 463 stub RtlQueryTimeZoneInformation
-464 stub RtlRaiseException
+464 stdcall RtlRaiseException (long) RtlRaiseException
 465 stub RtlRaiseStatus
 466 stub RtlRandom
 467 stub RtlReAllocateHeap

@@ -2,9 +2,7 @@
  * NT basis DLL
  * 
  * This file contains the Nt* API functions of NTDLL.DLL.
- * In the original ntdll.dll they all seem to just call int 0x2e (down to the
- * HAL), so parameter counts/parameters are just guesswork from -debugmsg
- * +relay.
+ * In the original ntdll.dll they all seem to just call int 0x2e (down to the HAL)
  *
  * Copyright 1996-1998 Marcus Meissner
  */
@@ -16,122 +14,255 @@
 #include "file.h"
 #include "windows.h"
 #include "winnls.h"
-#include "ntdll.h"
 #include "heap.h"
 #include "debug.h"
 #include "module.h"
 #include "debugstr.h"
-#include "winreg.h"
+
+#include "winnt.h"
+#include "windef.h"
+#include "ntdef.h"
+#include "ntddk.h"
+
+/* move to winbase.h */
+typedef VOID (CALLBACK *PTIMERAPCROUTINE)(LPVOID lpArgToCompletionRoutine,DWORD dwTimerLowValue,DWORD dwTimerHighValue);   
+
+/* move to somewhere */
+typedef void * POBJDIR_INFORMATION;
 
 /**************************************************************************
  *                 NtOpenFile				[NTDLL.127]
+ * FUNCTION: Opens a file
+ * ARGUMENTS:
+ *  FileHandle		Variable that receives the file handle on return
+ *  DesiredAccess	Access desired by the caller to the file
+ *  ObjectAttributes	Structue describing the file to be opened
+ *  IoStatusBlock	Receives details about the result of the operation
+ *  ShareAccess		Type of shared access the caller requires
+ *  OpenOptions		Options for the file open
  */
 NTSTATUS WINAPI NtOpenFile(
-	DWORD x1, DWORD flags, DWORD x3, DWORD x4, DWORD alignment, DWORD x6
-) {
-	FIXME(ntdll,"(%08lx,0x%08lx,%08lx,%08lx,%08lx,%08lx): stub\n",
-	      x1,flags,x3,x4,alignment,x6);
+	OUT PHANDLE FileHandle,
+	ACCESS_MASK DesiredAccess,
+	POBJECT_ATTRIBUTES ObjectAttributes,
+	OUT PIO_STATUS_BLOCK IoStatusBlock,
+	ULONG ShareAccess,
+	ULONG OpenOptions)
+{
+	FIXME(ntdll,"(%p,0x%08lx,%p(%s),%p,0x%08lx,0x%08lx) stub\n",
+	FileHandle, DesiredAccess, ObjectAttributes, debugstr_w(ObjectAttributes->ObjectName->Buffer),
+	IoStatusBlock, ShareAccess, OpenOptions);
 	return 0;
 }
-
 /**************************************************************************
  *		NtCreateFile				[NTDLL.73]
+ * FUNCTION: Either causes a new file or directory to be created, or it opens
+ *  an existing file, device, directory or volume, giving the caller a handle
+ *  for the file object. This handle can be used by subsequent calls to
+ *  manipulate data within the file or the file object's state of attributes.
+ * ARGUMENTS:
+ *	FileHandle		Points to a variable which receives the file handle on return
+ *	DesiredAccess		Desired access to the file
+ *	ObjectAttributes	Structure describing the file
+ *	IoStatusBlock		Receives information about the operation on return
+ *	AllocationSize		Initial size of the file in bytes
+ *	FileAttributes		Attributes to create the file with
+ *	ShareAccess		Type of shared access the caller would like to the file
+ *	CreateDisposition	Specifies what to do, depending on whether the file already exists
+ *	CreateOptions		Options for creating a new file
+ *	EaBuffer		Undocumented
+ *	EaLength		Undocumented
  */
 NTSTATUS WINAPI NtCreateFile(
-	PHANDLE filehandle, DWORD access, LPLONG attributes, LPLONG status,
-	LPVOID x5, DWORD x6, DWORD x7, LPLONG x8, DWORD x9, DWORD x10, 
-	LPLONG x11
-) {
-	FIXME(ntdll,"(%p,%lx,%lx,%lx,%p,%08lx,%08lx,%p,%08lx,%08lx,%p): empty stub\n",
-	filehandle,access,*attributes,*status,x5,x6,x7,x8,x9,x10,x11);
+	OUT PHANDLE FileHandle,
+	ACCESS_MASK DesiredAccess,
+	POBJECT_ATTRIBUTES ObjectAttributes,
+	OUT PIO_STATUS_BLOCK IoStatusBlock,
+	PLARGE_INTEGER AllocateSize,
+	ULONG FileAttributes,
+	ULONG ShareAccess,
+	ULONG CreateDisposition,
+	ULONG CreateOptions,
+	PVOID EaBuffer,
+	ULONG EaLength)  
+{
+	FIXME(ntdll,"(%p,0x%08lx,%p(%s),%p,%p,0x%08lx,0x%08lx,0x%08lx,0x%08lx,%p,0x%08lx) stub\n",
+	FileHandle,DesiredAccess,ObjectAttributes,debugstr_w(ObjectAttributes->ObjectName->Buffer),
+	IoStatusBlock,AllocateSize,FileAttributes,
+	ShareAccess,CreateDisposition,CreateOptions,EaBuffer,EaLength);
 	return 0;
 }
 /**************************************************************************
  *		NtCreateTimer				[NTDLL.87]
  */
-NTSTATUS WINAPI NtCreateTimer(DWORD x1, DWORD x2, DWORD x3)
+NTSTATUS WINAPI NtCreateTimer(
+	OUT PHANDLE TimerHandle,
+	IN ACCESS_MASK DesiredAccess,
+	IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
+	IN TIMER_TYPE TimerType)
 {
-	FIXME(ntdll,"(%08lx,%08lx,%08lx), empty stub\n",x1,x2,x3);
+	FIXME(ntdll,"(%p,0x%08lx,%p(%s),0x%08x) stub\n",
+	TimerHandle,DesiredAccess,ObjectAttributes,debugstr_w(ObjectAttributes->ObjectName->Buffer),
+	TimerType);
 	return 0;
 }
 /**************************************************************************
  *		NtSetTimer				[NTDLL.221]
  */
-NTSTATUS WINAPI NtSetTimer(DWORD x1,DWORD x2,DWORD x3,DWORD x4, DWORD x5,DWORD x6)
+NTSTATUS WINAPI NtSetTimer(
+	IN HANDLE32 TimerHandle,
+	IN PLARGE_INTEGER DueTime,
+	IN PTIMERAPCROUTINE TimerApcRoutine,
+	IN PVOID TimerContext,
+	IN BOOL WakeTimer,
+	IN ULONG Period OPTIONAL,
+	OUT PBOOLEAN PreviousState OPTIONAL)
 {
-	FIXME(ntdll,"(%08lx,%08lx,%08lx,%08lx,%08lx,%08lx): empty stub\n",
-		x1,x2,x3,x4,x5,x6);
+	FIXME(ntdll,"(0x%08x,%p,%p,%p,%08lx,0x%08lx,%p) stub\n",
+	TimerHandle,DueTime,TimerApcRoutine,TimerContext,WakeTimer,Period,PreviousState);
 	return 0;
 }
 
 /**************************************************************************
  *		NtCreateEvent				[NTDLL.71]
  */
-NTSTATUS WINAPI NtCreateEvent(PHANDLE eventhandle, DWORD desiredaccess, 
-	DWORD attributes, DWORD eventtype, DWORD initialstate)
+NTSTATUS WINAPI NtCreateEvent(
+	OUT PHANDLE EventHandle,
+	IN ACCESS_MASK DesiredAccess,
+	IN POBJECT_ATTRIBUTES ObjectAttributes,
+	IN BOOLEAN ManualReset,
+	IN BOOLEAN InitialState)
 {
-	FIXME(ntdll,"(%p,%08lx,%08lx,%08lx,%08lx): empty stub\n",
-		eventhandle,desiredaccess,attributes,eventtype,initialstate);
+	FIXME(ntdll,"(%p,0x%08lx,%p(%s),%08x,%08x): empty stub\n",
+	EventHandle,DesiredAccess,ObjectAttributes,debugstr_w(ObjectAttributes->ObjectName->Buffer),
+	ManualReset,InitialState);
 	return 0;
 }
 /**************************************************************************
  *		NtDeviceIoControlFile			[NTDLL.94]
  */
-NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE32 filehandle, HANDLE32 event, 
-	DWORD x3, DWORD x4, DWORD x5, UINT32 iocontrolcode,
-	LPVOID inputbuffer,  DWORD inputbufferlength,
-	LPVOID outputbuffer, DWORD outputbufferlength)
+NTSTATUS WINAPI NtDeviceIoControlFile(
+	IN HANDLE32 DeviceHandle,
+	IN HANDLE32 Event OPTIONAL,
+	IN PIO_APC_ROUTINE UserApcRoutine OPTIONAL,
+	IN PVOID UserApcContext OPTIONAL,
+	OUT PIO_STATUS_BLOCK IoStatusBlock,
+	IN ULONG IoControlCode,
+	IN PVOID InputBuffer,
+	IN ULONG InputBufferSize,
+	OUT PVOID OutputBuffer,
+	IN ULONG OutputBufferSize)
 {
-	FIXME(ntdll,"(%x,%x,%08lx,%08lx,%08lx,%08x,%lx,%lx): empty stub\n",
-		filehandle,event,x3,x4,x5,iocontrolcode,inputbufferlength,outputbufferlength);
+	FIXME(ntdll,"(0x%08x,0x%08x,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx): empty stub\n",
+	DeviceHandle, Event, UserApcRoutine, UserApcContext,
+	IoStatusBlock, IoControlCode, InputBuffer, InputBufferSize, OutputBuffer, OutputBufferSize);
 	return 0;
 }
 
 /**************************************************************************
  * NtOpenDirectoryObject [NTDLL.124]
+ * FUNCTION: Opens a namespace directory object
+ * ARGUMENTS:
+ *  DirectoryHandle	Variable which receives the directory handle
+ *  DesiredAccess	Desired access to the directory
+ *  ObjectAttributes	Structure describing the directory
+ * RETURNS: Status
  */
-NTSTATUS WINAPI NtOpenDirectoryObject(DWORD x1,DWORD x2,LPUNICODE_STRING name)
+NTSTATUS WINAPI NtOpenDirectoryObject(
+	PHANDLE DirectoryHandle,
+	ACCESS_MASK DesiredAccess,
+	POBJECT_ATTRIBUTES ObjectAttributes)
 {
-    FIXME(ntdll,"(0x%08lx,0x%08lx,%s): stub\n",x1,x2,debugstr_w(name->Buffer));
+    FIXME(ntdll,"(%p,0x%08lx,%p(%s)): stub\n", 
+    DirectoryHandle, DesiredAccess, ObjectAttributes,debugstr_w(ObjectAttributes->ObjectName->Buffer));
     return 0;
 }
 
 
 /******************************************************************************
- * NtQueryDirectoryObject [NTDLL.149]
+ * NtQueryDirectoryObject [NTDLL.149] 
+ * FUNCTION: Reads information from a namespace directory
+ * ARGUMENTS:
+ *  DirObjInformation	Buffer to hold the data read
+ *  BufferLength	Size of the buffer in bytes
+ *  GetNextIndex	If TRUE then set ObjectIndex to the index of the next object
+ *			If FALSE then set ObjectIndex to the number of objects in the directory
+ *  IgnoreInputIndex	If TRUE start reading at index 0
+ *			If FALSE start reading at the index specified by object index
+ *  ObjectIndex		Zero based index into the directory, interpretation depends on IgnoreInputIndex and GetNextIndex
+ *  DataWritten		Caller supplied storage for the number of bytes written (or NULL)
  */
-NTSTATUS WINAPI NtQueryDirectoryObject( DWORD x1, DWORD x2, DWORD x3, DWORD x4,
-                                     DWORD x5, DWORD x6, DWORD x7 )
+NTSTATUS WINAPI NtQueryDirectoryObject(
+	IN HANDLE32 DirObjHandle,
+	OUT POBJDIR_INFORMATION DirObjInformation,
+	IN ULONG BufferLength,
+	IN BOOLEAN GetNextIndex,
+	IN BOOLEAN IgnoreInputIndex,
+	IN OUT PULONG ObjectIndex,
+	OUT PULONG DataWritten OPTIONAL)
 {
-    FIXME(ntdll,"(%lx,%lx,%lx,%lx,%lx,%lx,%lx): stub\n",x1,x2,x3,x4,x5,x6,x7);
+	FIXME(ntdll,"(0x%08x,%p,0x%08lx,0x%08x,0x%08x,%p,%p) stub\n",
+		DirObjHandle, DirObjInformation, BufferLength, GetNextIndex,
+		IgnoreInputIndex, ObjectIndex, DataWritten);
     return 0xc0000000; /* We don't have any. Whatever. (Yet.) */
 }
 
 /******************************************************************************
  * NtQuerySystemInformation [NTDLL.168]
+ *
+ * ARGUMENTS:
+ *  SystemInformationClass	Index to a certain information structure
+ *	SystemTimeAdjustmentInformation       SYSTEM_TIME_ADJUSTMENT
+ *	SystemCacheInformation                SYSTEM_CACHE_INFORMATION
+ *	SystemConfigurationInformation        CONFIGURATION_INFORMATION
+ *	observed (class/len): 
+ *		0x0/0x2c
+ *		0x12/0x18
+ *		0x2/0x138
+ *		0x8/0x600
+ *  SystemInformation	caller supplies storage for the information structure
+ *  Length		size of the structure
+ *  ResultLength	Data written
  */
-NTSTATUS WINAPI NtQuerySystemInformation( DWORD x1, DWORD x2, DWORD x3, DWORD x4 )
+NTSTATUS WINAPI NtQuerySystemInformation(
+	IN SYSTEM_INFORMATION_CLASS SystemInformationClass,
+	OUT PVOID SystemInformation,
+	IN ULONG Length,
+	OUT PULONG ResultLength)
 {
-    FIXME(ntdll,"(%lx,%lx,%lx,%lx): stub\n",x1,x2,x3,x4);
-    return 0;
+	FIXME(ntdll,"(0x%08x,%p,0x%08lx,%p) stub\n",
+	SystemInformationClass,SystemInformation,Length,ResultLength);
+	ZeroMemory (SystemInformation, Length);
+	return 0;
 }
 
 /******************************************************************************
  * NtQueryObject [NTDLL.161]
  */
-NTSTATUS WINAPI NtQueryObject( DWORD x1, DWORD x2 ,DWORD x3, DWORD x4, DWORD x5 )
+NTSTATUS WINAPI NtQueryObject(
+	IN HANDLE32 ObjectHandle,
+	IN OBJECT_INFORMATION_CLASS ObjectInformationClass,
+	OUT PVOID ObjectInformation,
+	IN ULONG Length,
+	OUT PULONG ResultLength)
 {
-    FIXME(ntdll,"(0x%lx,%lx,%lx,%lx,%lx): stub\n",x1,x2,x3,x4,x5);
-    return 0;
+	FIXME(ntdll,"(0x%08x,0x%08x,%p,0x%08lx,%p): stub\n",
+	ObjectHandle, ObjectInformationClass, ObjectInformation, Length, ResultLength);
+	return 0;
 }
 
 
 /******************************************************************************
  * NtSetInformationProcess [NTDLL.207]
  */
-NTSTATUS WINAPI NtSetInformationProcess( DWORD x1, DWORD x2, DWORD x3, DWORD x4 )
+NTSTATUS WINAPI NtSetInformationProcess(
+	IN HANDLE32 ProcessHandle,
+	IN PROCESSINFOCLASS ProcessInformationClass,
+	IN PVOID ProcessInformation,
+	IN ULONG ProcessInformationLength)
 {
-    FIXME(ntdll,"(%lx,%lx,%lx,%lx): stub\n",x1,x2,x3,x4);
+	FIXME(ntdll,"(0x%08x,0x%08x,%p,0x%08lx) stub\n",
+	ProcessHandle,ProcessInformationClass,ProcessInformation,ProcessInformationLength);
     return 0;
 }
 
@@ -139,89 +270,115 @@ NTSTATUS WINAPI NtSetInformationProcess( DWORD x1, DWORD x2, DWORD x3, DWORD x4 
  * NtFsControlFile [NTDLL.108]
  */
 NTSTATUS WINAPI NtFsControlFile(
-	DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7,DWORD x8,
-	DWORD x9,DWORD x10
-) {
-    FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx): stub\n",x1,x2,x3,x4,x5,x6,x7,x8,x9,x10);
-    return 0;
-}
-
-/******************************************************************************
- * NtOpenKey [NTDLL.129]
- */
-NTSTATUS WINAPI NtOpenKey(DWORD x1,DWORD x2,LPUNICODE_STRING key) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,%s),stub!\n",x1,x2,debugstr_w(key->Buffer));
-	return RegOpenKey32W(HKEY_LOCAL_MACHINE,key->Buffer,(LPHKEY)x1);
-}
-
-/******************************************************************************
- * NtQueryValueKey [NTDLL.129]
- */
-NTSTATUS WINAPI NtQueryValueKey(DWORD x1,LPUNICODE_STRING key,DWORD x3,DWORD x4,DWORD x5,DWORD x6) {
-	FIXME(ntdll,"(%08lx,%s,%08lx,%08lx,%08lx,%08lx),stub!\n",
-		x1,debugstr_w(key->Buffer),x3,x4,x5,x6
-	);
+	IN HANDLE32 DeviceHandle,
+	IN HANDLE32 Event OPTIONAL,
+	IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
+	IN PVOID ApcContext OPTIONAL,
+	OUT PIO_STATUS_BLOCK IoStatusBlock,
+	IN ULONG IoControlCode,
+	IN PVOID InputBuffer,
+	IN ULONG InputBufferSize,
+	OUT PVOID OutputBuffer,
+	IN ULONG OutputBufferSize)
+{
+	FIXME(ntdll,"(0x%08x,0x%08x,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx): stub\n",
+	DeviceHandle,Event,ApcRoutine,ApcContext,IoStatusBlock,IoControlCode,
+	InputBuffer,InputBufferSize,OutputBuffer,OutputBufferSize);
 	return 0;
 }
 
-NTSTATUS WINAPI NtQueryTimerResolution(DWORD x1,DWORD x2,DWORD x3) {
+/******************************************************************************
+ * NtQueryTimerResolution [NTDLL.129]
+ */
+NTSTATUS WINAPI NtQueryTimerResolution(DWORD x1,DWORD x2,DWORD x3) 
+{
 	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx), stub!\n",x1,x2,x3);
 	return 1;
 }
-
 /**************************************************************************
  *                 NtClose				[NTDLL.65]
+ * FUNCTION: Closes a handle reference to an object
+ * ARGUMENTS:
+ *	Handle	handle to close
  */
-NTSTATUS WINAPI NtClose(DWORD x1) {
-	FIXME(ntdll,"(0x%08lx),stub!\n",x1);
+NTSTATUS WINAPI NtClose(
+	HANDLE32 Handle) 
+{
+	FIXME(ntdll,"(0x%08x),stub!\n",Handle);
 	return 1;
 }
 /******************************************************************************
 *  NtQueryInformationProcess		[NTDLL.] 
 *
 */
-NTSTATUS WINAPI NtQueryInformationProcess(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",
-		x1,x2,x3,x4,x5
-	);
+NTSTATUS WINAPI NtQueryInformationProcess(
+	IN HANDLE32 ProcessHandle,
+	IN PROCESSINFOCLASS ProcessInformationClass,
+	OUT PVOID ProcessInformation,
+	IN ULONG ProcessInformationLength,
+	OUT PULONG ReturnLength)
+{
+	FIXME(ntdll,"(0x%08x,0x%08x,%p,0x%08lx,%p),stub!\n",
+	ProcessHandle,ProcessInformationClass,ProcessInformation,ProcessInformationLength,ReturnLength);
 	return 0;
 }
 /******************************************************************************
 *  NtQueryInformationThread		[NTDLL.] 
 *
 */
-NTSTATUS WINAPI NtQueryInformationThread(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",
-		x1,x2,x3,x4,x5
-	);
+NTSTATUS WINAPI NtQueryInformationThread(
+	IN HANDLE32 ThreadHandle,
+	IN THREADINFOCLASS ThreadInformationClass,
+	OUT PVOID ThreadInformation,
+	IN ULONG ThreadInformationLength,
+	OUT PULONG ReturnLength)
+{
+	FIXME(ntdll,"(0x%08x,0x%08x,%p,0x%08lx,%p),stub!\n",
+		ThreadHandle, ThreadInformationClass, ThreadInformation,
+		ThreadInformationLength, ReturnLength);
 	return 0;
 }
 /******************************************************************************
 *  NtQueryInformationToken		[NTDLL.156] 
 *
 */
-NTSTATUS WINAPI NtQueryInformationToken(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) {
+NTSTATUS WINAPI NtQueryInformationToken(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) 
+{
 	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",
-		x1,x2,x3,x4,x5
-	);
+		x1,x2,x3,x4,x5);
 	return 0;
 }
 
 /******************************************************************************
  *  NtCreatePagingFile		[NTDLL] 
  */
-NTSTATUS WINAPI NtCreatePagingFile(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
+NTSTATUS WINAPI NtCreatePagingFile(
+	IN PUNICODE_STRING PageFileName,
+	IN ULONG MiniumSize,
+	IN ULONG MaxiumSize,
+	OUT PULONG ActualSize)
+{
+	FIXME(ntdll,"(%p,0x%08lx,0x%08lx,%p),stub!\n",
+	PageFileName,MiniumSize,MaxiumSize,ActualSize);
 	return 0;
 }
 
 /******************************************************************************
  *  NtDuplicateObject		[NTDLL] 
  */
-NTSTATUS WINAPI NtDuplicateObject(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,
-	DWORD x6,DWORD x7
-) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6,x7);
+NTSTATUS WINAPI NtDuplicateObject(
+	IN HANDLE32 SourceProcessHandle,
+	IN PHANDLE SourceHandle,
+	IN HANDLE32 TargetProcessHandle,
+	OUT PHANDLE TargetHandle,
+	IN ACCESS_MASK DesiredAccess,
+	IN BOOLEAN InheritHandle,
+	ULONG Options)
+{
+	FIXME(ntdll,"(0x%08x,%p,0x%08x,%p,0x%08lx,0x%08x,0x%08lx) stub!\n",
+	SourceProcessHandle,SourceHandle,TargetProcessHandle,TargetHandle,
+	DesiredAccess,InheritHandle,Options);
+	*TargetHandle = 0;
 	return 0;
 }
 
@@ -237,11 +394,19 @@ NTSTATUS WINAPI NtDuplicateToken(
 
 /******************************************************************************
  *  NtAdjustPrivilegesToken		[NTDLL] 
+ *
+ * FIXME: parameters unsafe
  */
 NTSTATUS WINAPI NtAdjustPrivilegesToken(
-	DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6
-) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6);
+	IN HANDLE32 TokenHandle,
+	IN BOOL32 DisableAllPrivileges,
+	IN PTOKEN_PRIVILEGES NewState,
+	IN DWORD BufferLength,
+	OUT PTOKEN_PRIVILEGES PreviousState,
+	OUT PDWORD ReturnLength)
+{
+	FIXME(ntdll,"(0x%08x,0x%08lx,%p,0x%08lx,%p,%p),stub!\n",
+	TokenHandle, DisableAllPrivileges, NewState, BufferLength, PreviousState, ReturnLength);
 	return 0;
 }
 
@@ -256,8 +421,14 @@ NTSTATUS WINAPI NtOpenProcessToken(DWORD x1,DWORD x2,DWORD x3) {
 /******************************************************************************
  *  NtSetInformationThread		[NTDLL] 
  */
-NTSTATUS WINAPI NtSetInformationThread(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
+NTSTATUS WINAPI NtSetInformationThread(
+	HANDLE32 ThreadHandle,
+	THREADINFOCLASS ThreadInformationClass,
+	PVOID ThreadInformation,
+	ULONG ThreadInformationLength)
+{
+	FIXME(ntdll,"(0x%08x,0x%08x,%p,0x%08lx),stub!\n",
+	ThreadHandle, ThreadInformationClass, ThreadInformation, ThreadInformationLength);
 	return 0;
 }
 
@@ -265,24 +436,29 @@ NTSTATUS WINAPI NtSetInformationThread(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
  *  NtOpenThreadToken		[NTDLL] 
  */
 NTSTATUS WINAPI NtOpenThreadToken(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
+	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx) stub\n",x1,x2,x3,x4);
 	return 0;
 }
 
 /******************************************************************************
  *  NtSetVolumeInformationFile		[NTDLL] 
  */
-NTSTATUS WINAPI NtSetVolumeInformationFile(DWORD x1,DWORD x2,DWORD x3,DWORD x4,
-	DWORD x5
-) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5);
+NTSTATUS WINAPI NtSetVolumeInformationFile(
+	IN HANDLE32 FileHandle,
+	IN PVOID VolumeInformationClass,
+	PVOID VolumeInformation,
+	ULONG Length) 
+{
+	FIXME(ntdll,"(0x%08x,%p,%p,0x%08lx) stub\n",
+	FileHandle,VolumeInformationClass,VolumeInformation,Length);
 	return 0;
 }
 
 /******************************************************************************
  *  NtCreatePort		[NTDLL] 
  */
-NTSTATUS WINAPI NtCreatePort(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) {
+NTSTATUS WINAPI NtCreatePort(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) 
+{
 	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5);
 	return 0;
 }
@@ -290,63 +466,75 @@ NTSTATUS WINAPI NtCreatePort(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) {
 /******************************************************************************
  *  NtSetInformationFile		[NTDLL] 
  */
-NTSTATUS WINAPI NtSetInformationFile(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx)\n",x1,x2,x3,x4,x5);
+NTSTATUS WINAPI NtSetInformationFile(
+	HANDLE32 FileHandle,
+	PIO_STATUS_BLOCK IoStatusBlock,
+	PVOID FileInformation,
+	ULONG Length,
+	FILE_INFORMATION_CLASS FileInformationClass)
+{
+	FIXME(ntdll,"(0x%08x,%p,%p,0x%08lx,0x%08x)\n",
+	FileHandle,IoStatusBlock,FileInformation,Length,FileInformationClass);
 	return 0;
 }
 
 /******************************************************************************
  *  NtSetEvent		[NTDLL] 
  */
-NTSTATUS WINAPI NtSetEvent(DWORD x1,DWORD x2) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx)\n",x1,x2);
+NTSTATUS WINAPI NtSetEvent(
+	IN HANDLE32 EventHandle,
+	PULONG NumberOfThreadsReleased)
+{
+	FIXME(ntdll,"(0x%08x,%p)\n",
+	EventHandle, NumberOfThreadsReleased);
 	return 0;
 }
 
-/******************************************************************************
- *  NtCreateKey		[NTDLL] 
- */
-NTSTATUS WINAPI NtCreateKey(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6,x7);
-	return 0;
-}
 
 /******************************************************************************
  *  NtQueryInformationFile		[NTDLL] 
  */
-NTSTATUS WINAPI NtQueryInformationFile(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5);
-	return 0;
-}
-
-/******************************************************************************
- *  NtSetValueKey		[NTDLL] 
- */
-NTSTATUS WINAPI NtSetValueKey(DWORD x1,LPUNICODE_STRING key,DWORD x3,DWORD x4,DWORD x5,DWORD x6) {
-	FIXME(ntdll,"(0x%08lx,%s,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,debugstr_w(key->Buffer),x3,x4,x5,x6);
+NTSTATUS WINAPI NtQueryInformationFile(
+	HANDLE32 FileHandle,
+	PIO_STATUS_BLOCK IoStatusBlock,
+	PVOID FileInformation,
+	ULONG Length,
+	FILE_INFORMATION_CLASS FileInformationClass)
+{
+	FIXME(ntdll,"(0x%08x,%p,%p,0x%08lx,0x%08x),stub!\n",
+	FileHandle,IoStatusBlock,FileInformation,Length,FileInformationClass);
 	return 0;
 }
 
 /******************************************************************************
  *  NtOpenEvent		[NTDLL] 
  */
-NTSTATUS WINAPI NtOpenEvent(DWORD x1,DWORD x2,DWORD x3) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3);
+NTSTATUS WINAPI NtOpenEvent(
+	OUT PHANDLE EventHandle,
+	IN ACCESS_MASK DesiredAccess,
+	IN POBJECT_ATTRIBUTES ObjectAttributes)
+{
+	FIXME(ntdll,"(%p,0x%08lx,%p(%s)),stub!\n",
+	EventHandle,DesiredAccess,ObjectAttributes,debugstr_w(ObjectAttributes->ObjectName->Buffer));
 	return 0;
 }
 
 /******************************************************************************
  *  NtWaitForSingleObject		[NTDLL] 
  */
-NTSTATUS WINAPI NtWaitForSingleObject(DWORD x1,DWORD x2,DWORD x3) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3);
+NTSTATUS WINAPI NtWaitForSingleObject(
+	IN PHANDLE Object,
+	IN BOOLEAN Alertable,
+	IN PLARGE_INTEGER Time)
+{
+	FIXME(ntdll,"(%p,0x%08x,%p),stub!\n",Object,Alertable,Time);
 	return 0;
 }
 
 /******************************************************************************
  *  NtConnectPort		[NTDLL] 
  */
-NTSTATUS WINAPI NtConnectPort(DWORD x1,LPUNICODE_STRING uni,DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7,DWORD x8) {
+NTSTATUS WINAPI NtConnectPort(DWORD x1,PUNICODE_STRING uni,DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7,DWORD x8) {
 	FIXME(ntdll,"(0x%08lx,%s,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,debugstr_w(uni->Buffer),x3,x4,x5,x6,x7,x8);
 	return 0;
 }
@@ -370,19 +558,50 @@ NTSTATUS WINAPI NtRequestWaitReplyPort(DWORD x1,DWORD x2,DWORD x3) {
 /******************************************************************************
  *  NtCreateDirectoryObject	[NTDLL] 
  */
-NTSTATUS WINAPI NtCreateDirectoryObject(DWORD x1,DWORD x2,DWORD x3) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3);
+NTSTATUS WINAPI NtCreateDirectoryObject(
+	PHANDLE DirectoryHandle,
+	ACCESS_MASK DesiredAccess,
+	POBJECT_ATTRIBUTES ObjectAttributes) 
+{
+	FIXME(ntdll,"(%p,0x%08lx,%p(%s)),stub!\n",
+	DirectoryHandle,DesiredAccess,ObjectAttributes,debugstr_w(ObjectAttributes->ObjectName->Buffer));
 	return 0;
 }
 
 /******************************************************************************
- *  NtMapViewOfSection	[NTDLL] 
+ * NtMapViewOfSection	[NTDLL] 
+ * FUNCTION: Maps a view of a section into the virtual address space of a process
+ *
+ * ARGUMENTS:
+ *  SectionHandle	Handle of the section
+ *  ProcessHandle	Handle of the process
+ *  BaseAddress		Desired base address (or NULL) on entry
+ *			Actual base address of the view on exit
+ *  ZeroBits		Number of high order address bits that must be zero
+ *  CommitSize		Size in bytes of the initially committed section of the view
+ *  SectionOffset	Offset in bytes from the beginning of the section to the beginning of the view
+ *  ViewSize		Desired length of map (or zero to map all) on entry 
+ 			Actual length mapped on exit
+ *  InheritDisposition	Specified how the view is to be shared with
+ *			child processes
+ *  AllocateType	Type of allocation for the pages
+ *  Protect		Protection for the committed region of the view
  */
 NTSTATUS WINAPI NtMapViewOfSection(
-	DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7,
-	DWORD x8,DWORD x9,DWORD x10
-) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6,x7,x8,x9,x10);
+	HANDLE32 SectionHandle,
+	HANDLE32 ProcessHandle,
+	PVOID* BaseAddress,
+	ULONG ZeroBits,
+	ULONG CommitSize,
+	PLARGE_INTEGER SectionOffset,
+	PULONG ViewSize,
+	SECTION_INHERIT InheritDisposition,
+	ULONG AllocationType,
+	ULONG Protect)
+{
+	FIXME(ntdll,"(0x%08x,0x%08x,%p,0x%08lx,0x%08lx,%p,%p,0x%08x,0x%08lx,0x%08lx) stub\n",
+	SectionHandle,ProcessHandle,BaseAddress,ZeroBits,CommitSize,SectionOffset,
+	ViewSize,InheritDisposition,AllocationType,Protect);
 	return 0;
 }
 
@@ -395,13 +614,32 @@ NTSTATUS WINAPI NtCreateMailslotFile(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x
 }
 
 /******************************************************************************
- *  NtReadFile	[NTDLL] 
+ *  NtReadFile/ZwReadFile			[NTDLL] 
+ *
+ * Parameters
+ *   HANDLE32 		FileHandle
+ *   HANDLE32 		Event 		OPTIONAL
+ *   PIO_APC_ROUTINE 	ApcRoutine 	OPTIONAL
+ *   PVOID 		ApcContext 	OPTIONAL
+ *   PIO_STATUS_BLOCK 	IoStatusBlock
+ *   PVOID 		Buffer
+ *   ULONG 		Length
+ *   PLARGE_INTEGER 	ByteOffset 	OPTIONAL
+ *   PULONG 		Key 		OPTIONAL
  */
-NTSTATUS WINAPI NtReadFile(
-	DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7,
-	DWORD x8,DWORD x9
-) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6,x7,x8,x9);
+NTSTATUS WINAPI NtReadFile (
+	HANDLE32 FileHandle,
+	HANDLE32 EventHandle,
+	PIO_APC_ROUTINE ApcRoutine,
+	PVOID ApcContext,
+	PIO_STATUS_BLOCK IoStatusBlock,
+	PVOID Buffer,
+	ULONG Length,
+	PLARGE_INTEGER ByteOffset,
+	PULONG Key)
+{
+	FIXME(ntdll,"(0x%08x,0x%08x,%p,%p,%p,%p,0x%08lx,%p,%p),stub!\n",
+	FileHandle,EventHandle,ApcRoutine,ApcContext,IoStatusBlock,Buffer,Length,ByteOffset,Key);
 	return 0;
 }
 
@@ -410,17 +648,29 @@ NTSTATUS WINAPI NtReadFile(
  *  NtCreateSection	[NTDLL] 
  */
 NTSTATUS WINAPI NtCreateSection(
-	DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7
-) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6,x7);
+	OUT PHANDLE SectionHandle,
+	IN ACCESS_MASK DesiredAccess,
+	IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
+	IN PLARGE_INTEGER MaximumSize OPTIONAL,
+	IN ULONG SectionPageProtection OPTIONAL,
+	IN ULONG AllocationAttributes,
+	IN HANDLE32 FileHandle OPTIONAL)
+{
+	FIXME(ntdll,"(%p,0x%08lx,%p(%s),%p,0x%08lx,0x%08lx,0x%08x) stub\n",
+	SectionHandle,DesiredAccess,ObjectAttributes,debugstr_w(ObjectAttributes->ObjectName->Buffer),
+	MaximumSize,SectionPageProtection,AllocationAttributes,FileHandle);
 	return 0;
 }
 
 /******************************************************************************
  *  NtResumeThread	[NTDLL] 
  */
-NTSTATUS WINAPI NtResumeThread(DWORD x1,DWORD x2) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx),stub!\n",x1,x2);
+NTSTATUS WINAPI NtResumeThread(
+	IN HANDLE32 ThreadHandle,
+	IN PULONG SuspendCount) 
+{
+	FIXME(ntdll,"(0x%08x,%p),stub!\n",
+	ThreadHandle,SuspendCount);
 	return 0;
 }
 
@@ -459,8 +709,11 @@ NTSTATUS WINAPI NtRegisterThreadTerminatePort(DWORD x1) {
 /******************************************************************************
  *  NtTerminateThread	[NTDLL] 
  */
-NTSTATUS WINAPI NtTerminateThread(HANDLE32 hThread,DWORD exitcode) {
-	BOOL32	ret = TerminateThread(hThread,exitcode);
+NTSTATUS WINAPI NtTerminateThread(
+	IN HANDLE32 ThreadHandle,
+	IN NTSTATUS ExitStatus)
+{
+	BOOL32	ret = TerminateThread(ThreadHandle,ExitStatus);
 
 	if (ret)
 		return 0;
@@ -478,22 +731,38 @@ NTSTATUS WINAPI NtSetIntervalProfile(DWORD x1,DWORD x2) {
 /******************************************************************************
  *  NtOpenSection	[NTDLL] 
  */
-NTSTATUS WINAPI NtOpenSection(DWORD x1,DWORD x2,DWORD x3) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3);
+NTSTATUS WINAPI NtOpenSection(
+	PHANDLE SectionHandle,
+	ACCESS_MASK DesiredAccess,
+	POBJECT_ATTRIBUTES ObjectAttributes)
+{
+	FIXME(ntdll,"(%p,0x%08lx,%p(%s)),stub!\n",
+	SectionHandle,DesiredAccess,ObjectAttributes,debugstr_w(ObjectAttributes->ObjectName->Buffer));
 	return 0;
 }
 /******************************************************************************
  *  NtQueryPerformanceCounter	[NTDLL] 
  */
-BOOL32 WINAPI NtQueryPerformanceCounter(DWORD x1,DWORD x2) {
-	FIXME(ntdll,"(0x%08lx, 0x%08lx) stub!\n",x1,x2);
+BOOL32 WINAPI NtQueryPerformanceCounter(
+	IN PLARGE_INTEGER Counter,
+	IN PLARGE_INTEGER Frequency) 
+{
+	FIXME(ntdll,"(%p, 0%p) stub\n",
+	Counter, Frequency);
 	return 0;
 }
 /******************************************************************************
  *  NtQuerySection	[NTDLL] 
  */
-NTSTATUS WINAPI NtQuerySection(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx) stub!\n",x1,x2,x3,x4,x5);
+NTSTATUS WINAPI NtQuerySection(
+	IN HANDLE32 SectionHandle,
+	IN PVOID SectionInformationClass,
+	OUT PVOID SectionInformation,
+	IN ULONG Length,
+	OUT PULONG ResultLength)
+{
+	FIXME(ntdll,"(0x%08x,%p,%p,0x%08lx,%p) stub!\n",
+	SectionHandle,SectionInformationClass,SectionInformation,Length,ResultLength);
 	return 0;
 }
 
@@ -505,18 +774,96 @@ NTSTATUS WINAPI NtQuerySecurityObject(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD 
 	return 0;
 }
 /******************************************************************************
- *  NtQuerySemaphore	[NTDLL] 
+ *  NtCreateSemaphore	[NTDLL] 
  */
-NTSTATUS WINAPI NtQuerySemaphore(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx) stub!\n",x1,x2,x3,x4,x5);
+NTSTATUS WINAPI NtCreateSemaphore(
+	OUT PHANDLE SemaphoreHandle,
+	IN ACCESS_MASK DesiredAccess,
+	IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
+	IN ULONG InitialCount,
+	IN ULONG MaximumCount) 
+{
+	FIXME(ntdll,"(%p,0x%08lx,%p(%s),0x%08lx,0x%08lx) stub!\n",
+	SemaphoreHandle, DesiredAccess, ObjectAttributes, debugstr_w(ObjectAttributes->ObjectName->Buffer),
+	InitialCount, MaximumCount);
+	return 0;
+}
+/******************************************************************************
+ *  NtOpenSemaphore	[NTDLL] 
+ */
+NTSTATUS WINAPI NtOpenSemaphore(
+	IN HANDLE32 SemaphoreHandle,
+	IN ACCESS_MASK DesiredAcces,
+	IN POBJECT_ATTRIBUTES ObjectAttributes)
+{
+	FIXME(ntdll,"(0x%08x,0x%08lx,%p(%s)) stub!\n",
+	SemaphoreHandle, DesiredAcces, ObjectAttributes,debugstr_w(ObjectAttributes->ObjectName->Buffer));
 	return 0;
 }
 
 /******************************************************************************
- *  NtEnumerateValueKey	[NTDLL] 
+ *  NtQuerySemaphore	[NTDLL] 
  */
-NTSTATUS WINAPI NtEnumerateValueKey(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5, DWORD x6) {
-	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx) stub!\n",x1,x2,x3,x4,x5, x6);
-	return 1;
+NTSTATUS WINAPI NtQuerySemaphore(
+	HANDLE32 SemaphoreHandle,
+	PVOID SemaphoreInformationClass,
+	OUT PVOID SemaphoreInformation,
+	ULONG Length,
+	PULONG ReturnLength) 
+{
+	FIXME(ntdll,"(0x%08x,%p,%p,0x%08lx,%p) stub!\n",
+	SemaphoreHandle, SemaphoreInformationClass, SemaphoreInformation, Length, ReturnLength);
+	return 0;
+}
+/******************************************************************************
+ *  NtQuerySemaphore	[NTDLL] 
+ */
+NTSTATUS WINAPI NtReleaseSemaphore(
+	IN HANDLE32 SemaphoreHandle,
+	IN ULONG ReleaseCount,
+	IN PULONG PreviousCount)
+{
+	FIXME(ntdll,"(0x%08x,0x%08lx,%p,) stub!\n",
+	SemaphoreHandle, ReleaseCount, PreviousCount);
+	return 0;
 }
 
+/******************************************************************************
+ *  NtCreateSymbolicLinkObject	[NTDLL] 
+ */
+NTSTATUS WINAPI NtCreateSymbolicLinkObject(
+	OUT PHANDLE SymbolicLinkHandle,
+	IN ACCESS_MASK DesiredAccess,
+	IN POBJECT_ATTRIBUTES ObjectAttributes,
+	IN PUNICODE_STRING Name)
+{
+	FIXME(ntdll,"(%p,0x%08lx,%p(%s), %p) stub\n",
+	SymbolicLinkHandle, DesiredAccess, ObjectAttributes, debugstr_w(ObjectAttributes->ObjectName->Buffer), Name);
+	return 0;
+}
+
+/******************************************************************************
+ *  NtOpenSymbolicLinkObject	[NTDLL] 
+ */
+NTSTATUS WINAPI NtOpenSymbolicLinkObject(
+	OUT PHANDLE LinkHandle,
+	IN ACCESS_MASK DesiredAccess,
+	IN POBJECT_ATTRIBUTES ObjectAttributes)
+{
+	FIXME(ntdll,"(%p,0x%08lx,%p(%s)) stub\n",
+	LinkHandle, DesiredAccess, ObjectAttributes,debugstr_w(ObjectAttributes->ObjectName->Buffer));
+	return 0;
+}
+/******************************************************************************
+ *  NtQuerySymbolicLinkObject	[NTDLL] 
+ */
+NTSTATUS NtQuerySymbolicLinkObject(
+	IN HANDLE32 LinkHandle,
+	IN OUT PUNICODE_STRING LinkTarget,
+	OUT PULONG ReturnedLength OPTIONAL)
+{
+	FIXME(ntdll,"(0x%08x,%p,%p) stub\n",
+	LinkHandle, LinkTarget, ReturnedLength);
+
+	return 0;
+}
