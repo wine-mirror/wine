@@ -175,6 +175,31 @@ static SuffixCharset sufch_koi8[] = {
     { "u", RUSSIAN_CHARSET, 20866 },
     { NULL, RUSSIAN_CHARSET, 20866 }};
 
+/* FIXME: DBCS charsets need 2 or more fonts */
+static SuffixCharset sufch_jisx0201[] = {
+    { "0", ANSI_CHARSET, 932 },
+    { NULL, ANSI_CHARSET, 932 }};
+
+static SuffixCharset sufch_jisx0208[] = {
+    { "0", SHIFTJIS_CHARSET, 932 },
+    { NULL, SHIFTJIS_CHARSET, 932 }};
+
+static SuffixCharset sufch_ksc5601[] = {
+    { "0", HANGEUL_CHARSET, 949 },
+    { NULL, HANGEUL_CHARSET, 949 }};
+
+static SuffixCharset sufch_gb2312[] = {
+    { "0", GB2312_CHARSET, 936 },
+    { NULL, GB2312_CHARSET, 936 }};
+
+static SuffixCharset sufch_big5[] = {
+    { "0", CHINESEBIG5_CHARSET, 950 },
+    { NULL, CHINESEBIG5_CHARSET, 950 }};
+
+static SuffixCharset sufch_unicode[] = {
+    { "0", DEFAULT_CHARSET, 0 },
+    { NULL, DEFAULT_CHARSET, 0 }};
+
 /* Each of these must be matched explicitly */
 static SuffixCharset sufch_any[] = {
     { "fontspecific", SYMBOL_CHARSET, CP_SYMBOL },
@@ -201,7 +226,15 @@ static fontEncodingTemplate __fETTable[] = {
 			{ "tis620.2533",  sufch_tis620,       &__fETTable[7] },
 			{ "viscii1.1",    sufch_viscii,       &__fETTable[8] },
 			{ "windows",      sufch_windows,      &__fETTable[9] },
-			{ "koi8",         sufch_koi8,         &__fETTable[10] },
+			{ "koi8",         sufch_koi8,         &__fETTable[10]},
+			{ "jisx0201.1976",sufch_jisx0201,     &__fETTable[11]},
+			{ "jisc6226.1978",sufch_jisx0208,     &__fETTable[12]},
+			{ "jisx0208.1983",sufch_jisx0208,     &__fETTable[13]},
+			{ "jisx0208.1990",sufch_jisx0208,     &__fETTable[14]},
+			{ "ksc5601.1987", sufch_ksc5601,      &__fETTable[15]},
+			{ "gb2312.1980",  sufch_gb2312,       &__fETTable[16]},
+			{ "big5.et",      sufch_big5,         &__fETTable[17]},
+			{ "unicode",      sufch_unicode,      &__fETTable[18]},
 			/* NULL prefix matches anything so put it last */
 			{   NULL,         sufch_any,          NULL },
 };
@@ -606,14 +639,13 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
 
 /* charset registry, charset encoding - */
    lpstr = lfd->charset_registry;
-   if( strstr(lpstr, "jisx") || 
+   if( strstr(lpstr, "jisx") ||
+       strstr(lpstr, "jisc") || 
        strstr(lpstr, "ksc") || 
        strstr(lpstr, "gb2312") ||
-       strstr(lpstr, "big5") ||
-       strstr(lpstr, "unicode") )
+       strstr(lpstr, "big5") )
    {
-       TRACE(" 2-byte fonts like '%s' are not supported\n", fullname);
-       return FALSE;
+       FIXME("DBCS fonts like '%s' are not worked correctly now.\n", fullname);
    }
 
    fi->df.dfCharSet = ANSI_CHARSET;
@@ -2244,12 +2276,21 @@ static UINT XFONT_Match( fontMatch* pfm )
    pfm->flags &= FO_MATCH_MASK;
 
 /* Charset */
-   if( plf->lfCharSet == DEFAULT_CHARSET )
+   if (pfi->df.dfCharSet == DEFAULT_CHARSET)
    {
-       if( (pfi->df.dfCharSet != ANSI_CHARSET) && (pfi->df.dfCharSet != DEFAULT_CHARSET) ) 
-	    penalty += 0x200;
+      /* special case(unicode font) */
+      /* priority: unmatched charset < unicode < matched charset */
+      penalty += 0x50;
    }
-   else if (plf->lfCharSet != pfi->df.dfCharSet) penalty += 0x200;
+   else
+   {
+     if( plf->lfCharSet == DEFAULT_CHARSET )
+     {
+         if (pfi->df.dfCharSet != ANSI_CHARSET)
+	    penalty += 0x200;
+     }
+     else if (plf->lfCharSet != pfi->df.dfCharSet) penalty += 0x200;
+   }
 
 /* Height */
    height = -1;
