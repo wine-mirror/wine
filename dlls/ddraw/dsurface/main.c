@@ -272,6 +272,8 @@ HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
 	case WHITENESS:
 	    ret = _Blt_ColorFill(dbuf,dstwidth,dstheight,bpp,ddesc.lPitch,~0);
 	    break;
+	case SRCCOPY: /* well, we do that below ? */
+	    break;
 	default: 
 	    FIXME("Unsupported raster op: %08lx  Pattern: %p\n", lpbltfx->dwROP, lpbltfx->u4.lpDDSPattern);
 	    goto error;
