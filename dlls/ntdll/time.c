@@ -264,10 +264,11 @@ VOID WINAPI RtlTimeToElapsedTimeFields(
  */
 void WINAPI NtQuerySystemTime( LARGE_INTEGER *time )
 {
-    LONGLONG secs;
+    ULONGLONG secs;
     struct timeval now;
 
     gettimeofday( &now, 0 );
-    secs = now.tv_sec + SECS_1601_TO_1970;
-    time->QuadPart = RtlExtendedIntegerMultiply( secs, 10000000 ) + now.tv_usec * 10;
+    secs = RtlExtendedIntegerMultiply( now.tv_sec+SECS_1601_TO_1970, 10000000 ) + now.tv_usec * 10;
+    time->s.LowPart  = (DWORD)secs;
+    time->s.HighPart = (DWORD)(secs >> 32);
 }
