@@ -392,13 +392,14 @@ HRESULT WINAPI OleRegGetUserType(
 	DWORD dwFormOfType,
 	LPOLESTR* pszUserType)
 {
-  char  xclsid[50];
-  char  keyName[60];
-  DWORD dwKeyType;
-  DWORD cbData;
-  HKEY  clsidKey;
-  LONG  hres;
-
+  char    xclsid[50];
+  char    keyName[60];
+  DWORD   dwKeyType;
+  DWORD   cbData;
+  HKEY    clsidKey;
+  LONG    hres;
+  LPBYTE  buffer;
+  HRESULT retVal;
   /*
    * Initialize the out parameter.
    */
@@ -446,7 +447,7 @@ HRESULT WINAPI OleRegGetUserType(
   /*
    * Allocate a buffer for the registry value.
    */
-  *pszUserType = CoTaskMemAlloc(cbData);
+  *pszUserType = CoTaskMemAlloc(cbData*2);
 
   if (*pszUserType==NULL)
   {
@@ -454,24 +455,41 @@ HRESULT WINAPI OleRegGetUserType(
     return E_OUTOFMEMORY;
   }
 
+  buffer = HeapAlloc(GetProcessHeap(), 0, cbData);
+
+  if (buffer == NULL)
+  {
+    RegCloseKey(clsidKey);
+    CoTaskMemFree(*pszUserType);
+    *pszUserType=NULL;
+    return E_OUTOFMEMORY;
+  }
+
   hres = RegQueryValueExA(clsidKey,
 			  "",
 			  NULL,
 			  &dwKeyType,
-			  (LPBYTE)*pszUserType,
+			  buffer,
 			  &cbData);
 
   RegCloseKey(clsidKey);
+
   
   if (hres!=ERROR_SUCCESS)
   {
     CoTaskMemFree(*pszUserType);
     *pszUserType=NULL;
 
-    return REGDB_E_READREGDB;
+    retVal = REGDB_E_READREGDB;
   }
+  else
+  {
+    lstrcpyAtoW(*pszUserType, buffer);
+    retVal = S_OK;
+  }
+  HeapFree(GetProcessHeap(), 0, buffer);
 
-  return S_OK;
+  return retVal;
 }
 
 /***********************************************************************
