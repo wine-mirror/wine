@@ -1150,11 +1150,13 @@ void* MSVCRT___RTDynamicCast(type_info *cppobj, int unknown,
                              type_info *src, type_info *dst,
                              int do_throw)
 {
-  const rtti_object_locator *obj_locator = RTTI_GetObjectLocator(cppobj);
+  const rtti_object_locator *obj_locator;
 
   /* Note: cppobj _isn't_ a type_info, we use that struct for its vtable ptr */
   TRACE("(%p,%d,%p,%p,%d)\n", cppobj, unknown, src, dst, do_throw);
-
+  if (!cppobj)
+    return 0;
+  obj_locator= RTTI_GetObjectLocator(cppobj);
   if (unknown)
     FIXME("Unknown parameter is non-zero: please report\n");
 
