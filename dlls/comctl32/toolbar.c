@@ -3372,7 +3372,7 @@ TOOLBAR_SetHotItem (HWND hwnd, WPARAM wParam)
     {
 
     	infoPtr->nHotItem = (INT)wParam;
-        if (wParam >=0)
+        if ((INT)wParam >=0)
         {
             btnPtr = &infoPtr->buttons[(INT)wParam];
             btnPtr->bHot = TRUE;
