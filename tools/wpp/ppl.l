@@ -143,6 +143,7 @@
 %x pp_macexp
 %x pp_if
 %x pp_ifd
+%x pp_endif
 %x pp_line
 %x pp_defined
 %x pp_ignore
@@ -321,8 +322,8 @@ includelogicentry_t *pp_includelogiclist = NULL;
 <pp_pp>{ws}*ifndef{ws}*		pp_incl_state.seen_junk--; yy_pp_state(pp_ifd);	return tIFNDEF;
 <pp_pp>{ws}*if{ws}*		yy_pp_state(pp_if);	return tIF;
 <pp_pp>{ws}*elif{ws}*		yy_pp_state(pp_if);	return tELIF;
-<pp_pp>{ws}*else{ws}*		return tELSE;
-<pp_pp>{ws}*endif{ws}*		return tENDIF;
+<pp_pp>{ws}*else{ws}*		yy_pp_state(pp_endif);  return tELSE;
+<pp_pp>{ws}*endif{ws}*		yy_pp_state(pp_endif);  return tENDIF;
 <pp_pp>{ws}*line{ws}*		if(yy_top_state() != pp_ignore) {yy_pp_state(pp_line); return tLINE;} else {yy_pp_state(pp_eol);}
 <pp_pp>{ws}+			if(yy_top_state() != pp_ignore) {yy_pp_state(pp_line); return tGCCLINE;} else {yy_pp_state(pp_eol);}
 <pp_pp>{ws}*[a-z]+		pperror("Invalid preprocessor token '%s'", pptext);
@@ -388,6 +389,14 @@ includelogicentry_t *pp_includelogiclist = NULL;
 <pp_ifd>\n		newline(1); yy_pop_state(); return tNL;
 <pp_ifd>\\\r?\n		newline(0);
 <pp_ifd>(\\\r?)|(.)	pperror("Identifier expected");
+
+	/*
+	 * Handle #else and #endif.
+	 */
+<pp_endif>{ws}+		;
+<pp_endif>\n		newline(1); yy_pop_state(); return tNL;
+<pp_endif>\\\r?\n	newline(0);
+<pp_endif>.		pperror("Garbage after #else or #endif.");
 
 	/*
 	 * Handle the special 'defined' keyword.
@@ -514,7 +523,7 @@ includelogicentry_t *pp_includelogiclist = NULL;
 	/*
 	 * Comment handling (almost all start-conditions)
 	 */
-<INITIAL,pp_pp,pp_ignore,pp_eol,pp_inc,pp_if,pp_ifd,pp_defined,pp_def,pp_define,pp_macro,pp_mbody,RCINCL>"/*" yy_push_state(pp_comment);
+<INITIAL,pp_pp,pp_ignore,pp_eol,pp_inc,pp_if,pp_ifd,pp_endif,pp_defined,pp_def,pp_define,pp_macro,pp_mbody,RCINCL>"/*" yy_push_state(pp_comment);
 <pp_comment>[^*\n]*|"*"+[^*/\n]*	;
 <pp_comment>\n				newline(0);
 <pp_comment>"*"+"/"			yy_pop_state();
