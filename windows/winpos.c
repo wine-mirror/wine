@@ -1593,6 +1593,9 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
         /* check if something happened during message processing
          * (global active queue may have changed)
          */
+	if (hActiveQueue==0)
+	  goto CLEANUP;
+
         pTempActiveQueue = QUEUE_Lock( hActiveQueue );
         hwndActive = PERQDATA_GetActiveWnd( pTempActiveQueue->pQData );
         QUEUE_Unlock( pTempActiveQueue );
@@ -1637,7 +1640,8 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
     {
         WND **list, **ppWnd;
 
-        if ((list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL )))
+        if ( (hNewActiveQueue!=0) && 
+	     (list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL )))
         {
             for (ppWnd = list; *ppWnd; ppWnd++)
             {
@@ -1652,7 +1656,8 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
 
 	hActiveQueue = hNewActiveQueue;
 
-        if ((list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL )))
+        if ( (hOldActiveQueue!=0) &&
+	     (list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL )))
         {
             for (ppWnd = list; *ppWnd; ppWnd++)
             {
