@@ -598,9 +598,9 @@ init    MSVCRT_Init
 @ cdecl fflush(ptr) MSVCRT_fflush
 @ cdecl fgetc(ptr) MSVCRT_fgetc
 @ cdecl fgetpos(ptr ptr) MSVCRT_fgetpos
-@ cdecl fgets(str long ptr) MSVCRT_fgets
+@ cdecl fgets(ptr long ptr) MSVCRT_fgets
 @ cdecl fgetwc(ptr) MSVCRT_fgetwc
-@ cdecl fgetws(wstr long ptr) MSVCRT_fgetws
+@ cdecl fgetws(ptr long ptr) MSVCRT_fgetws
 @ forward -noimport floor ntdll.floor
 @ cdecl fmod(double double) fmod
 @ cdecl fopen(str str) MSVCRT_fopen
