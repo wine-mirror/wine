@@ -2228,8 +2228,13 @@ LRESULT WINAPI ListBoxWndProc( HWND hwnd, UINT msg,
 
     case LB_GETCURSEL16:
     case LB_GETCURSEL:
-        retvalue = descr->selected_item;
-        if (retvalue == -1) retvalue = descr->focus_item;
+        if (descr->nb_items==0)
+	  retvalue = LB_ERR;
+	else
+	{
+	  retvalue = descr->selected_item;
+	  if (retvalue == -1) retvalue = descr->focus_item;
+	}
         /* otherwise, if the user tries to move the selection with the    */
         /* arrow keys, we will give the application something to choke on */
         goto END;
