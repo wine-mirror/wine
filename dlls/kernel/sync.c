@@ -911,7 +911,11 @@ BOOL WINAPI ConnectNamedPipe(HANDLE hPipe, LPOVERLAPPED overlapped)
     TRACE("(%p,%p)\n",hPipe, overlapped);
 
     if(overlapped)
-        return SYNC_ConnectNamedPipe(hPipe,overlapped);
+    {
+        if(SYNC_ConnectNamedPipe(hPipe,overlapped))
+            SetLastError( ERROR_IO_PENDING );
+        return FALSE;
+    }
 
     memset(&ov,0,sizeof ov);
     ov.hEvent = CreateEventA(NULL,0,0,NULL);
