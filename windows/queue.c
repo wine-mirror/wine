@@ -85,6 +85,8 @@ PERQUEUEDATA * PERQDATA_CreateInstance( )
      * since this may be shared by different threads. see AttachThreadInput()
      */
     InitializeCriticalSection( &pQData->cSection );
+    /* FIXME: not all per queue data critical sections should be global */
+    MakeCriticalSectionGlobal( &pQData->cSection );
 
     /* Save perQData globally for 16 bit tasks */
     if ( bIsWin16 )

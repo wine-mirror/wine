@@ -64,6 +64,12 @@ void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
     	FIXME_(win32)("entering uninitialized section(%p)?\n",crit);
     	InitializeCriticalSection(crit);
     }
+    if ( crit->Reserved && crit->Reserved != GetCurrentProcessId() )
+    {
+	FIXME_(win32)("Crst %p belongs to process %ld, current is %ld!\n", 
+		      crit, crit->Reserved, GetCurrentProcessId() );
+	return;
+    }
     if (InterlockedIncrement( &crit->LockCount ))
     {
         if (crit->OwningThread == GetCurrentThreadId())
@@ -71,15 +77,8 @@ void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
             crit->RecursionCount++;
             return;
         }
+
         /* Now wait for it */
-
-        if ( crit->Reserved && crit->Reserved != GetCurrentProcessId() )
-        {
-            FIXME_(win32)("Crst %p belongs to process %ld, current is %ld!\n", 
-                          crit, crit->Reserved, GetCurrentProcessId() );
-            return;
-        }
-
         res = WaitForSingleObject( crit->LockSemaphore, 5000L );
         if ( res == WAIT_TIMEOUT )
         {
