@@ -3413,27 +3413,6 @@ typedef enum tagSID_NAME_USE {
 /* ------------------------------ end registry ------------------------------ */
 
 
-typedef struct _RTL_CRITICAL_SECTION_DEBUG 
-{
-  WORD   Type;
-  WORD   CreatorBackTraceIndex;
-  struct _RTL_CRITICAL_SECTION *CriticalSection;
-  LIST_ENTRY ProcessLocksList;
-  DWORD EntryCount;
-  DWORD ContentionCount;
-  DWORD Spare[ 2 ];
-} RTL_CRITICAL_SECTION_DEBUG, *PRTL_CRITICAL_SECTION_DEBUG, RTL_RESOURCE_DEBUG, *PRTL_RESOURCE_DEBUG;
-
-typedef struct _RTL_CRITICAL_SECTION {
-    PRTL_CRITICAL_SECTION_DEBUG DebugInfo;
-    LONG LockCount;
-    LONG RecursionCount;
-    HANDLE OwningThread;
-    HANDLE LockSemaphore;
-    ULONG_PTR SpinCount;
-} RTL_CRITICAL_SECTION, *PRTL_CRITICAL_SECTION;
-
-
 #define EVENTLOG_SUCCESS                0x0000
 #define EVENTLOG_ERROR_TYPE             0x0001
 #define EVENTLOG_WARNING_TYPE           0x0002
@@ -3509,5 +3488,25 @@ typedef enum _CM_ERROR_CONTROL_TYPE
 #include "guiddef.h"
 
 #include "poppack.h"
+
+typedef struct _RTL_CRITICAL_SECTION_DEBUG 
+{
+  WORD   Type;
+  WORD   CreatorBackTraceIndex;
+  struct _RTL_CRITICAL_SECTION *CriticalSection;
+  LIST_ENTRY ProcessLocksList;
+  DWORD EntryCount;
+  DWORD ContentionCount;
+  DWORD Spare[ 2 ];
+} RTL_CRITICAL_SECTION_DEBUG, *PRTL_CRITICAL_SECTION_DEBUG, RTL_RESOURCE_DEBUG, *PRTL_RESOURCE_DEBUG;
+
+typedef struct _RTL_CRITICAL_SECTION {
+    PRTL_CRITICAL_SECTION_DEBUG DebugInfo;
+    LONG LockCount;
+    LONG RecursionCount;
+    HANDLE OwningThread;
+    HANDLE LockSemaphore;
+    ULONG_PTR SpinCount;
+}  RTL_CRITICAL_SECTION, *PRTL_CRITICAL_SECTION;
 
 #endif  /* __WINE_WINNT_H */
