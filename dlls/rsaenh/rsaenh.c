@@ -240,6 +240,15 @@ RSAENH_CPImportKey(
     HCRYPTKEY *phKey
 );
 
+BOOL WINAPI 
+RSAENH_CPHashData(
+    HCRYPTPROV hProv, 
+    HCRYPTHASH hHash, 
+    CONST BYTE *pbData, 
+    DWORD dwDataLen, 
+    DWORD dwFlags
+);
+
 /******************************************************************************
  * CSP's handle table (used by all acquired key containers)
  */
@@ -1317,9 +1326,6 @@ BOOL WINAPI RSAENH_CPDuplicateKey(HCRYPTPROV hUID, HCRYPTKEY hKey, DWORD *pdwRes
  *  This is useful for message signatures.
  *
  *  This function uses the standard WINAPI protocol for querying data of dynamic length. 
- * 
- * FIXME
- *  Parallel hashing not yet implemented.
  */
 BOOL WINAPI RSAENH_CPEncrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash, BOOL Final, 
                              DWORD dwFlags, BYTE *pbData, DWORD *pdwDataLen, DWORD dwBufLen)
@@ -1359,6 +1365,10 @@ BOOL WINAPI RSAENH_CPEncrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
         return FALSE;
     }
 
+    if (is_valid_handle(&handle_table, hHash, RSAENH_MAGIC_HASH)) {
+        if (!RSAENH_CPHashData(hProv, hHash, pbData, *pdwDataLen, 0)) return FALSE;
+    }
+    
     if (GET_ALG_TYPE(pCryptKey->aiAlgid) == ALG_TYPE_BLOCK) {
         if (!Final && (*pdwDataLen % pCryptKey->dwBlockLen)) {
             SetLastError(NTE_BAD_DATA);
@@ -1438,9 +1448,6 @@ BOOL WINAPI RSAENH_CPEncrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
  *  This is useful for message signatures.
  *
  *  This function uses the standard WINAPI protocol for querying data of dynamic length. 
- * 
- * FIXME
- *  Parallel hashing not yet implemented.
  */
 BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash, BOOL Final, 
                              DWORD dwFlags, BYTE *pbData, DWORD *pdwDataLen)
@@ -1520,6 +1527,10 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
     }
     if (Final) setup_key(pCryptKey);
 
+    if (is_valid_handle(&handle_table, hHash, RSAENH_MAGIC_HASH)) {
+        if (!RSAENH_CPHashData(hProv, hHash, pbData, *pdwDataLen, 0)) return FALSE;
+    }
+    
     return TRUE;
 }
 
@@ -2533,12 +2544,50 @@ BOOL WINAPI RSAENH_CPHashData(HCRYPTPROV hProv, HCRYPTHASH hHash, CONST BYTE *pb
 
 /******************************************************************************
  * CPHashSessionKey (RSAENH.@)
+ *
+ * Updates a hash object with the binary representation of a symmetric key.
+ *
+ * PARAMS
+ *  hProv     [I] Key container to which the hash object belongs.
+ *  hHash     [I] Hash object which is to be updated.
+ *  hKey      [I] The symmetric key, whose binary value will be added to the hash.
+ *  dwFlags   [I] CRYPT_LITTLE_ENDIAN, if the binary key value shall be interpreted as little endian.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE.
  */
 BOOL WINAPI RSAENH_CPHashSessionKey(HCRYPTPROV hProv, HCRYPTHASH hHash, HCRYPTKEY hKey, 
                                     DWORD dwFlags)
 {
-    FIXME("(stub)\n");
-    return FALSE;
+    BYTE abKeyValue[RSAENH_MAX_KEY_SIZE], bTemp;
+    CRYPTKEY *pKey;
+    DWORD i;
+
+    TRACE("(hProv=%08lx, hHash=%08lx, hKey=%08lx, dwFlags=%08lx)\n", hProv, hHash, hKey, dwFlags);
+
+    if (!lookup_handle(&handle_table, (unsigned int)hKey, RSAENH_MAGIC_KEY, (OBJECTHDR**)&pKey) ||
+        (GET_ALG_CLASS(pKey->aiAlgid) != ALG_CLASS_DATA_ENCRYPT)) 
+    {
+        SetLastError(NTE_BAD_KEY);
+        return FALSE;
+    }
+
+    if (dwFlags & ~CRYPT_LITTLE_ENDIAN) {
+        SetLastError(NTE_BAD_FLAGS);
+        return FALSE;
+    }
+
+    memcpy(abKeyValue, pKey->abKeyValue, pKey->dwKeyLen);
+    if (!(dwFlags & CRYPT_LITTLE_ENDIAN)) {
+        for (i=0; i<pKey->dwKeyLen/2; i++) {
+            bTemp = abKeyValue[i];
+            abKeyValue[i] = abKeyValue[pKey->dwKeyLen-i-1];
+            abKeyValue[pKey->dwKeyLen-i-1] = bTemp;
+        }
+    }
+
+    return RSAENH_CPHashData(hProv, hHash, abKeyValue, pKey->dwKeyLen, 0);
 }
 
 /******************************************************************************

@@ -748,9 +748,14 @@ static const WCHAR MS_SCARD_PROV_W[] =           { 'M','i','c','r','o','s','o','
 #define CRYPT_NO_SALT           0x00000010
 #define CRYPT_PREGEN            0x00000040
 #define CRYPT_ARCHIVABLE        0x00004000
+
+/* CryptExportKey */
 #define CRYPT_SSL2_FALLBACK     0x00000002
 #define CRYPT_DESTROYKEY        0x00000004
 #define CRYPT_OAEP              0x00000040
+
+/* CryptHashSessionKey */
+#define CRYPT_LITTLE_ENDIAN     0x00000001
 
 /* Blob Types */
 #define SIMPLEBLOB              0x1
