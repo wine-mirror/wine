@@ -261,16 +261,36 @@ int _fpclass(double num)
 #if defined(HAVE_FPCLASS) || defined(fpclass)
   switch (fpclass( num ))
   {
+#ifdef FP_SNAN
   case FP_SNAN:  return _FPCLASS_SNAN;
+#endif
+#ifdef FP_QNAN
   case FP_QNAN:  return _FPCLASS_QNAN;
+#endif
+#ifdef FP_NINF
   case FP_NINF:  return _FPCLASS_NINF;
+#endif
+#ifdef FP_PINF
   case FP_PINF:  return _FPCLASS_PINF;
+#endif
+#ifdef FP_NDENORM
   case FP_NDENORM: return _FPCLASS_ND;
+#endif
+#ifdef FP_PDENORM
   case FP_PDENORM: return _FPCLASS_PD;
+#endif
+#ifdef FP_NZERO
   case FP_NZERO: return _FPCLASS_NZ;
+#endif
+#ifdef FP_PZERO
   case FP_PZERO: return _FPCLASS_PZ;
+#endif
+#ifdef FP_NNORM
   case FP_NNORM: return _FPCLASS_NN;
+#endif
+#ifdef FP_PNORM
   case FP_PNORM: return _FPCLASS_PN;
+#endif
   }
   return _FPCLASS_PN;
 #elif defined (fpclassify)
