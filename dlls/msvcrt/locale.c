@@ -540,7 +540,7 @@ int __crtLCMapStringA(
   LCID lcid, DWORD mapflags, const char* src, int srclen, char* dst,
   int dstlen, unsigned int codepage, int xflag
 ) {
-  FIXME("(lcid %x, flags %lx, %s(%d), %p(%d), %x, %d), partial stub!\n",
+  FIXME("(lcid %lx, flags %lx, %s(%d), %p(%d), %x, %d), partial stub!\n",
         lcid,mapflags,src,srclen,dst,dstlen,codepage,xflag);
   /* FIXME: A bit incorrect. But msvcrt itself just converts its
    * arguments to wide strings and then calls LCMapStringW
