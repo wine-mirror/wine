@@ -21,7 +21,7 @@
 *  global SHELL32.DLL variables
 */
 extern HINSTANCE shell32_hInstance;
-extern INT	  shell32_ObjCount;
+extern LONG	  shell32_ObjCount;
 extern HIMAGELIST	ShellSmallIconList;
 extern HIMAGELIST	ShellBigIconList;
 extern HDPA		sic_hdpa;
@@ -82,11 +82,6 @@ BOOL HCR_GetFolderAttributes (REFIID riid, LPDWORD szDest);
 
 DWORD 	WINAPI ParseFieldA(LPCSTR src,DWORD field,LPSTR dst,DWORD len);
 
-HGLOBAL	WINAPI SHAllocShared(LPVOID psrc, DWORD size, DWORD procID);
-LPVOID	WINAPI SHLockShared(HANDLE hmem, DWORD procID);
-BOOL	WINAPI SHUnlockShared(HANDLE pmem);
-HANDLE	WINAPI SHFreeShared(HANDLE hmem, DWORD procID);
-
 /****************************************************************************
  * Class constructors
  */
@@ -114,7 +109,6 @@ HRESULT		CreateStreamOnFile (LPCSTR pszFilename, IStream ** ppstm);
 /* fixme: rename the functions when the shell32.dll has it's own exports namespace */
 HRESULT WINAPI  SHELL32_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID * ppv);
 HRESULT WINAPI  SHELL32_DllCanUnloadNow(void);
-LRESULT WINAPI SHCoCreateInstance(LPSTR,REFCLSID,LPUNKNOWN,REFIID,LPVOID *);
 
 /* fixme: move away */
 #define ResultFromShort(i) MAKE_SCODE(SEVERITY_SUCCESS, 0, (USHORT)(i))
@@ -169,5 +163,5 @@ void InitChangeNotifications(void);
 void FreeChangeNotifications(void);
 
 /* file operation */
-BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir);
+BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir, BOOL bShowUI);
 #endif

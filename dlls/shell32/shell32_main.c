@@ -24,11 +24,11 @@
 #include "shellapi.h"
 #include "pidl.h"
 
-#include "shlobj.h"
 #include "shell32_main.h"
-#include "shlguid.h"
 #include "wine/undocshell.h"
-#include "shpolicy.h"
+#include "shlobj.h"
+#include "shlguid.h"
+#include "shlwapi.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -97,7 +97,7 @@ void WINAPI Control_RunDLL( HWND hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4 )
 }
 
 /*************************************************************************
- * SHGetFileInfoA			[SHELL32.254]
+ * SHGetFileInfoA			[SHELL32.@]
  */
 
 DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
@@ -109,15 +109,12 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	DWORD ret = TRUE, dwAttributes = 0;
 	IShellFolder * psfParent = NULL;
 	IExtractIconA * pei = NULL;
-	LPITEMIDLIST	pidlLast, pidl = NULL;
+	LPITEMIDLIST	pidlLast = NULL, pidl = NULL;
 	HRESULT hr = S_OK;
 
-	TRACE("(%s,0x%lx,%p,0x%x,0x%x)\n", 
-	  (flags & SHGFI_PIDL)? "pidl" : path, dwFileAttributes, psfi, sizeofpsfi, flags);
+	TRACE("(%s fattr=0x%lx sfi=%p(attr=0x%08lx) size=0x%x flags=0x%x)\n", 
+	  (flags & SHGFI_PIDL)? "pidl" : path, dwFileAttributes, psfi, psfi->dwAttributes, sizeofpsfi, flags);
 
-#ifdef MORE_DEBUG
-	ZeroMemory(psfi, sizeof(SHFILEINFOA));
-#endif
 	if ((flags & SHGFI_USEFILEATTRIBUTES) && (flags & (SHGFI_ATTRIBUTES|SHGFI_EXETYPE|SHGFI_PIDL)))
 	  return FALSE;
 	
@@ -159,7 +156,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	{ 
 	  if (flags & SHGFI_USEFILEATTRIBUTES)
 	  {
-	    strcpy (psfi->szDisplayName, PathFindFilenameA(path));
+	    strcpy (psfi->szDisplayName, PathFindFileNameA(path));
 	  }
 	  else
 	  {
@@ -264,6 +261,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	if (hr != S_OK)
 	  ret = FALSE;
 
+	if(pidlLast) SHFree(pidlLast);
 #ifdef MORE_DEBUG
 	TRACE ("icon=0x%08x index=0x%08x attr=0x%08lx name=%s type=%s ret=0x%08lx\n", 
 		psfi->hIcon, psfi->iIcon, psfi->dwAttributes, psfi->szDisplayName, psfi->szTypeName, ret);
@@ -272,7 +270,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 }
 
 /*************************************************************************
- * SHGetFileInfoW			[SHELL32.255]
+ * SHGetFileInfoW			[SHELL32.@]
  */
 
 DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
@@ -281,6 +279,21 @@ DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
 {	FIXME("(%s,0x%lx,%p,0x%x,0x%x)\n",
 	      debugstr_w(path),dwFileAttributes,psfi,sizeofpsfi,flags);
 	return 0;
+}
+
+/*************************************************************************
+ * SHGetFileInfoAW			[SHELL32.@]
+ */
+DWORD WINAPI SHGetFileInfoAW(
+	LPCVOID path,
+	DWORD dwFileAttributes,
+	LPVOID psfi,
+	UINT sizeofpsfi,
+	UINT flags)
+{
+	if(VERSION_OsIsUnicode())
+	  return SHGetFileInfoW(path, dwFileAttributes, psfi, sizeofpsfi, flags );
+	return SHGetFileInfoA(path, dwFileAttributes, psfi, sizeofpsfi, flags );
 }
 
 /*************************************************************************
@@ -755,7 +768,7 @@ HICON (WINAPI *pCreateIconFromResourceEx)(LPBYTE bits,UINT cbSize, BOOL bIcon, D
 static HINSTANCE	hComctl32;
 static INT		shell32_RefCount = 0;
 
-INT		shell32_ObjCount = 0;
+LONG		shell32_ObjCount = 0;
 HINSTANCE	shell32_hInstance; 
 HIMAGELIST	ShellSmallIconList = 0;
 HIMAGELIST	ShellBigIconList = 0;
@@ -777,16 +790,12 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	{
 	  case DLL_PROCESS_ATTACH:
 	    shell32_RefCount++;
-	    if (shell32_hInstance)
-	    {
-	      ERR("shell32.dll instantiated twice in one address space!\n"); 
-	      break;
-	    }
+	    if (shell32_hInstance) return TRUE;
 
 	    shell32_hInstance = hinstDLL;
-
-	    hComctl32 = LoadLibraryA("COMCTL32.DLL");	
+	    hComctl32 = GetModuleHandleA("COMCTL32.DLL");	
 	    hUser32 = GetModuleHandleA("USER32");
+	    DisableThreadLibraryCalls(shell32_hInstance);
 
 	    if (!hComctl32 || !hUser32)
 	    {
@@ -855,13 +864,11 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	      /* this one is here to check if AddRef/Release is balanced */
 	      if (shell32_ObjCount)
 	      {
-	        WARN("leaving with %u objects left (memory leak)\n", shell32_ObjCount);
+	        WARN("leaving with %lu objects left (memory leak)\n", shell32_ObjCount);
 	      }
 	    }
 
-	    FreeLibrary(hComctl32);
-
-	    TRACE("refcount=%u objcount=%u \n", shell32_RefCount, shell32_ObjCount);
+	    TRACE("refcount=%u objcount=%lu \n", shell32_RefCount, shell32_ObjCount);
 	    break;
 	}
 	return TRUE;
