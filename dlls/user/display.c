@@ -29,7 +29,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(cursor);
 
 #include "pshpack1.h"
-typedef struct tagCURSORINFO
+typedef struct tagCURSORINFO16
 {
     WORD wXMickeys;
     WORD wYMickeys;
