@@ -740,49 +740,6 @@ void X11DRV_register_window( Display *display, HWND hwnd, struct x11drv_win_data
 }
 
 
-/***********************************************************************
- *           X11DRV_set_window_rectangles
- *
- * Set the window and client rectangles.
- */
-void X11DRV_set_window_rectangles( HWND hwnd, const RECT *rectWindow, const RECT *rectClient )
-{
-    WND *win = WIN_GetPtr( hwnd );
-    BOOL ret;
-
-    if (!win) return;
-    if (win == WND_OTHER_PROCESS)
-    {
-        if (IsWindow( hwnd )) ERR( "cannot set rectangles of other process window %p\n", hwnd );
-        return;
-    }
-    SERVER_START_REQ( set_window_rectangles )
-    {
-        req->handle        = hwnd;
-        req->window.left   = rectWindow->left;
-        req->window.top    = rectWindow->top;
-        req->window.right  = rectWindow->right;
-        req->window.bottom = rectWindow->bottom;
-        req->client.left   = rectClient->left;
-        req->client.top    = rectClient->top;
-        req->client.right  = rectClient->right;
-        req->client.bottom = rectClient->bottom;
-        ret = !wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    if (ret)
-    {
-        win->rectWindow = *rectWindow;
-        win->rectClient = *rectClient;
-
-        TRACE( "win %p window (%ld,%ld)-(%ld,%ld) client (%ld,%ld)-(%ld,%ld)\n", hwnd,
-               rectWindow->left, rectWindow->top, rectWindow->right, rectWindow->bottom,
-               rectClient->left, rectClient->top, rectClient->right, rectClient->bottom );
-    }
-    WIN_ReleasePtr( win );
-}
-
-
 /**********************************************************************
  *		create_desktop
  */
@@ -1013,6 +970,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     Display *display = thread_display();
     WND *wndPtr;
     struct x11drv_win_data *data;
+    HWND insert_after;
     RECT rect;
     CBT_CREATEWNDA cbtc;
     BOOL ret = FALSE;
@@ -1041,7 +999,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
     /* initialize the dimensions before sending WM_GETMINMAXINFO */
     SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
-    X11DRV_set_window_rectangles( hwnd, &rect, &rect );
+    X11DRV_set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER, 0 );
 
     if (!wndPtr->parent)
     {
@@ -1082,8 +1040,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
         if (!(wndPtr = WIN_GetPtr( hwnd ))) return FALSE;
         SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
-        X11DRV_set_window_rectangles( hwnd, &rect, &rect );
-        X11DRV_sync_whole_window_position( display, wndPtr, 0 );
+        X11DRV_set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER, 0 );
     }
     WIN_ReleasePtr( wndPtr );
 
@@ -1109,9 +1066,16 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     SendMessageW( hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&rect );
 
     if (!(wndPtr = WIN_GetPtr(hwnd))) return FALSE;
+    if (rect.left < wndPtr->rectWindow.left) rect.left = wndPtr->rectWindow.left;
+    if (rect.right > wndPtr->rectWindow.right) rect.right = wndPtr->rectWindow.right;
+    if (rect.top < wndPtr->rectWindow.top) rect.top = wndPtr->rectWindow.top;
+    if (rect.bottom > wndPtr->rectWindow.bottom) rect.bottom = wndPtr->rectWindow.bottom;
     if (rect.left > rect.right || rect.top > rect.bottom) rect = wndPtr->rectWindow;
-    X11DRV_set_window_rectangles( hwnd, &wndPtr->rectWindow, &rect );
-    X11DRV_sync_client_window_position( display, wndPtr );
+
+    /* yes, even if the CBT hook was called with HWND_TOP */
+    insert_after = ((wndPtr->dwStyle & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
+
+    X11DRV_set_window_pos( hwnd, insert_after, &wndPtr->rectWindow, &rect, 0, 0 );
     X11DRV_register_window( display, hwnd, data );
 
     TRACE( "win %p window %ld,%ld,%ld,%ld client %ld,%ld,%ld,%ld whole %ld,%ld,%ld,%ld X client %ld,%ld,%ld,%ld xwin %x/%x\n",
@@ -1124,12 +1088,6 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
            data->client_rect.left, data->client_rect.top,
            data->client_rect.right, data->client_rect.bottom,
            (unsigned int)data->whole_window, (unsigned int)data->client_window );
-
-    /* yes, even if the CBT hook was called with HWND_TOP */
-    if ((wndPtr->dwStyle & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD)
-        WIN_LinkWindow( hwnd, wndPtr->parent, HWND_BOTTOM );
-    else
-        WIN_LinkWindow( hwnd, wndPtr->parent, HWND_TOP );
 
     WIN_ReleasePtr( wndPtr );
 

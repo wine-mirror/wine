@@ -2149,14 +2149,23 @@ static void dump_get_window_tree_reply( const struct get_window_tree_reply *req 
     fprintf( stderr, " last_child=%p", req->last_child );
 }
 
-static void dump_set_window_rectangles_request( const struct set_window_rectangles_request *req )
+static void dump_set_window_pos_request( const struct set_window_pos_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " top_win=%p,", req->top_win );
+    fprintf( stderr, " previous=%p,", req->previous );
+    fprintf( stderr, " flags=%08x,", req->flags );
+    fprintf( stderr, " redraw_flags=%08x,", req->redraw_flags );
     fprintf( stderr, " window=" );
     dump_rectangle( &req->window );
     fprintf( stderr, "," );
     fprintf( stderr, " client=" );
     dump_rectangle( &req->client );
+}
+
+static void dump_set_window_pos_reply( const struct set_window_pos_reply *req )
+{
+    fprintf( stderr, " new_style=%08x", req->new_style );
 }
 
 static void dump_get_window_rectangles_request( const struct get_window_rectangles_request *req )
@@ -2189,12 +2198,6 @@ static void dump_set_window_text_request( const struct set_window_text_request *
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " text=" );
     dump_varargs_unicode_str( cur_size );
-}
-
-static void dump_inc_window_paint_count_request( const struct inc_window_paint_count_request *req )
-{
-    fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " incr=%d", req->incr );
 }
 
 static void dump_get_windows_offset_request( const struct get_windows_offset_request *req )
@@ -2238,6 +2241,29 @@ static void dump_get_window_region_reply( const struct get_window_region_reply *
 static void dump_set_window_region_request( const struct set_window_region_request *req )
 {
     fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " region=" );
+    dump_varargs_rectangles( cur_size );
+}
+
+static void dump_get_update_region_request( const struct get_update_region_request *req )
+{
+    fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " flags=%08x", req->flags );
+}
+
+static void dump_get_update_region_reply( const struct get_update_region_reply *req )
+{
+    fprintf( stderr, " child=%p,", req->child );
+    fprintf( stderr, " flags=%08x,", req->flags );
+    fprintf( stderr, " total_size=%d,", req->total_size );
+    fprintf( stderr, " region=" );
+    dump_varargs_rectangles( cur_size );
+}
+
+static void dump_redraw_window_request( const struct redraw_window_request *req )
+{
+    fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " flags=%08x,", req->flags );
     fprintf( stderr, " region=" );
     dump_varargs_rectangles( cur_size );
 }
@@ -2706,15 +2732,16 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_window_children_request,
     (dump_func)dump_get_window_children_from_point_request,
     (dump_func)dump_get_window_tree_request,
-    (dump_func)dump_set_window_rectangles_request,
+    (dump_func)dump_set_window_pos_request,
     (dump_func)dump_get_window_rectangles_request,
     (dump_func)dump_get_window_text_request,
     (dump_func)dump_set_window_text_request,
-    (dump_func)dump_inc_window_paint_count_request,
     (dump_func)dump_get_windows_offset_request,
     (dump_func)dump_get_visible_region_request,
     (dump_func)dump_get_window_region_request,
     (dump_func)dump_set_window_region_request,
+    (dump_func)dump_get_update_region_request,
+    (dump_func)dump_redraw_window_request,
     (dump_func)dump_set_window_property_request,
     (dump_func)dump_remove_window_property_request,
     (dump_func)dump_get_window_property_request,
@@ -2886,14 +2913,15 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_window_children_reply,
     (dump_func)dump_get_window_children_from_point_reply,
     (dump_func)dump_get_window_tree_reply,
-    (dump_func)0,
+    (dump_func)dump_set_window_pos_reply,
     (dump_func)dump_get_window_rectangles_reply,
     (dump_func)dump_get_window_text_reply,
-    (dump_func)0,
     (dump_func)0,
     (dump_func)dump_get_windows_offset_reply,
     (dump_func)dump_get_visible_region_reply,
     (dump_func)dump_get_window_region_reply,
+    (dump_func)0,
+    (dump_func)dump_get_update_region_reply,
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_remove_window_property_reply,
@@ -3066,15 +3094,16 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_window_children",
     "get_window_children_from_point",
     "get_window_tree",
-    "set_window_rectangles",
+    "set_window_pos",
     "get_window_rectangles",
     "get_window_text",
     "set_window_text",
-    "inc_window_paint_count",
     "get_windows_offset",
     "get_visible_region",
     "get_window_region",
     "set_window_region",
+    "get_update_region",
+    "redraw_window",
     "set_window_property",
     "remove_window_property",
     "get_window_property",

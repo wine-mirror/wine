@@ -2551,16 +2551,21 @@ struct get_window_tree_reply
 };
 
 
-struct set_window_rectangles_request
+struct set_window_pos_request
 {
     struct request_header __header;
     user_handle_t  handle;
+    user_handle_t  top_win;
+    user_handle_t  previous;
+    unsigned int   flags;
+    unsigned int   redraw_flags;
     rectangle_t    window;
     rectangle_t    client;
 };
-struct set_window_rectangles_reply
+struct set_window_pos_reply
 {
     struct reply_header __header;
+    unsigned int   new_style;
 };
 
 
@@ -2599,19 +2604,6 @@ struct set_window_text_request
     /* VARARG(text,unicode_str); */
 };
 struct set_window_text_reply
-{
-    struct reply_header __header;
-};
-
-
-
-struct inc_window_paint_count_request
-{
-    struct request_header __header;
-    user_handle_t  handle;
-    int             incr;
-};
-struct inc_window_paint_count_reply
 {
     struct reply_header __header;
 };
@@ -2670,6 +2662,44 @@ struct set_window_region_request
     /* VARARG(region,rectangles); */
 };
 struct set_window_region_reply
+{
+    struct reply_header __header;
+};
+
+
+
+struct get_update_region_request
+{
+    struct request_header __header;
+    user_handle_t  window;
+    unsigned int   flags;
+};
+struct get_update_region_reply
+{
+    struct reply_header __header;
+    user_handle_t  child;
+    unsigned int   flags;
+    size_t         total_size;
+    /* VARARG(region,rectangles); */
+};
+#define UPDATE_NONCLIENT       0x01
+#define UPDATE_ERASE           0x02
+#define UPDATE_PAINT           0x04
+#define UPDATE_INTERNALPAINT   0x08
+#define UPDATE_ALLCHILDREN     0x10
+#define UPDATE_NOCHILDREN      0x20
+#define UPDATE_NOREGION        0x40
+
+
+
+struct redraw_window_request
+{
+    struct request_header __header;
+    user_handle_t  window;
+    unsigned int   flags;
+    /* VARARG(region,rectangles); */
+};
+struct redraw_window_reply
 {
     struct reply_header __header;
 };
@@ -3246,15 +3276,16 @@ enum request
     REQ_get_window_children,
     REQ_get_window_children_from_point,
     REQ_get_window_tree,
-    REQ_set_window_rectangles,
+    REQ_set_window_pos,
     REQ_get_window_rectangles,
     REQ_get_window_text,
     REQ_set_window_text,
-    REQ_inc_window_paint_count,
     REQ_get_windows_offset,
     REQ_get_visible_region,
     REQ_get_window_region,
     REQ_set_window_region,
+    REQ_get_update_region,
+    REQ_redraw_window,
     REQ_set_window_property,
     REQ_remove_window_property,
     REQ_get_window_property,
@@ -3430,15 +3461,16 @@ union generic_request
     struct get_window_children_request get_window_children_request;
     struct get_window_children_from_point_request get_window_children_from_point_request;
     struct get_window_tree_request get_window_tree_request;
-    struct set_window_rectangles_request set_window_rectangles_request;
+    struct set_window_pos_request set_window_pos_request;
     struct get_window_rectangles_request get_window_rectangles_request;
     struct get_window_text_request get_window_text_request;
     struct set_window_text_request set_window_text_request;
-    struct inc_window_paint_count_request inc_window_paint_count_request;
     struct get_windows_offset_request get_windows_offset_request;
     struct get_visible_region_request get_visible_region_request;
     struct get_window_region_request get_window_region_request;
     struct set_window_region_request set_window_region_request;
+    struct get_update_region_request get_update_region_request;
+    struct redraw_window_request redraw_window_request;
     struct set_window_property_request set_window_property_request;
     struct remove_window_property_request remove_window_property_request;
     struct get_window_property_request get_window_property_request;
@@ -3612,15 +3644,16 @@ union generic_reply
     struct get_window_children_reply get_window_children_reply;
     struct get_window_children_from_point_reply get_window_children_from_point_reply;
     struct get_window_tree_reply get_window_tree_reply;
-    struct set_window_rectangles_reply set_window_rectangles_reply;
+    struct set_window_pos_reply set_window_pos_reply;
     struct get_window_rectangles_reply get_window_rectangles_reply;
     struct get_window_text_reply get_window_text_reply;
     struct set_window_text_reply set_window_text_reply;
-    struct inc_window_paint_count_reply inc_window_paint_count_reply;
     struct get_windows_offset_reply get_windows_offset_reply;
     struct get_visible_region_reply get_visible_region_reply;
     struct get_window_region_reply get_window_region_reply;
     struct set_window_region_reply set_window_region_reply;
+    struct get_update_region_reply get_update_region_reply;
+    struct redraw_window_reply redraw_window_reply;
     struct set_window_property_reply set_window_property_reply;
     struct remove_window_property_reply remove_window_property_reply;
     struct get_window_property_reply get_window_property_reply;
@@ -3648,6 +3681,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 151
+#define SERVER_PROTOCOL_VERSION 152
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -38,11 +38,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
     (SWP_AGG_NOPOSCHANGE | SWP_FRAMECHANGED | SWP_HIDEWINDOW | SWP_SHOWWINDOW)
 
 /***********************************************************************
- *           set_window_rectangles
+ *           set_window_pos
  *
- * Set the window and client rectangles.
+ * Set a window position and Z order.
  */
-static void set_window_rectangles( HWND hwnd, const RECT *rectWindow, const RECT *rectClient )
+static void set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
+                            const RECT *rectClient, UINT swp_flags, UINT wvr_flags )
 {
     WND *win = WIN_GetPtr( hwnd );
     BOOL ret;
@@ -53,9 +54,13 @@ static void set_window_rectangles( HWND hwnd, const RECT *rectWindow, const RECT
         if (IsWindow( hwnd )) ERR( "cannot set rectangles of other process window %p\n", hwnd );
         return;
     }
-    SERVER_START_REQ( set_window_rectangles )
+    SERVER_START_REQ( set_window_pos )
     {
         req->handle        = hwnd;
+        req->top_win       = 0;
+        req->previous      = insert_after;
+        req->flags         = swp_flags;
+        req->redraw_flags  = wvr_flags;
         req->window.left   = rectWindow->left;
         req->window.top    = rectWindow->top;
         req->window.right  = rectWindow->right;
@@ -95,7 +100,7 @@ BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
     /* initialize the dimensions before sending WM_GETMINMAXINFO */
     SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
-    set_window_rectangles( hwnd, &rect, &rect );
+    set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER, 0 );
 
     if (!wndPtr->parent)  /* desktop window */
     {
@@ -483,6 +488,7 @@ BOOL TTYDRV_SetWindowPos( WINDOWPOS *winpos )
 {
     WND *wndPtr;
     RECT newWindowRect, newClientRect;
+    UINT wvrFlags = 0;
     BOOL retvalue;
     HWND hwndActive = GetForegroundWindow();
 
@@ -620,7 +626,7 @@ BOOL TTYDRV_SetWindowPos( WINDOWPOS *winpos )
         params.lppos = &winposCopy;
         winposCopy = *winpos;
 
-        SendMessageW( winpos->hwnd, WM_NCCALCSIZE, TRUE, (LPARAM)&params );
+        wvrFlags = SendMessageW( winpos->hwnd, WM_NCCALCSIZE, TRUE, (LPARAM)&params );
 
         TRACE( "%ld,%ld-%ld,%ld\n", params.rgrc[0].left, params.rgrc[0].top,
                params.rgrc[0].right, params.rgrc[0].bottom );
@@ -643,15 +649,10 @@ BOOL TTYDRV_SetWindowPos( WINDOWPOS *winpos )
             winpos->flags &= ~SWP_NOCLIENTSIZE;
     }
 
-    if(!(winpos->flags & SWP_NOZORDER) && winpos->hwnd != winpos->hwndInsertAfter)
-    {
-        HWND parent = GetAncestor( winpos->hwnd, GA_PARENT );
-        if (parent) WIN_LinkWindow( winpos->hwnd, parent, winpos->hwndInsertAfter );
-    }
-
     /* FIXME: actually do something with WVR_VALIDRECTS */
 
-    set_window_rectangles( winpos->hwnd, &newWindowRect, &newClientRect );
+    set_window_pos( winpos->hwnd, winpos->hwndInsertAfter,
+                    &newWindowRect, &newClientRect, winpos->flags, wvrFlags );
 
     if( winpos->flags & SWP_SHOWWINDOW )
         WIN_SetStyle( winpos->hwnd, wndPtr->dwStyle | WS_VISIBLE );

@@ -246,15 +246,16 @@ DECL_HANDLER(get_window_parents);
 DECL_HANDLER(get_window_children);
 DECL_HANDLER(get_window_children_from_point);
 DECL_HANDLER(get_window_tree);
-DECL_HANDLER(set_window_rectangles);
+DECL_HANDLER(set_window_pos);
 DECL_HANDLER(get_window_rectangles);
 DECL_HANDLER(get_window_text);
 DECL_HANDLER(set_window_text);
-DECL_HANDLER(inc_window_paint_count);
 DECL_HANDLER(get_windows_offset);
 DECL_HANDLER(get_visible_region);
 DECL_HANDLER(get_window_region);
 DECL_HANDLER(set_window_region);
+DECL_HANDLER(get_update_region);
+DECL_HANDLER(redraw_window);
 DECL_HANDLER(set_window_property);
 DECL_HANDLER(remove_window_property);
 DECL_HANDLER(get_window_property);
@@ -429,15 +430,16 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_window_children,
     (req_handler)req_get_window_children_from_point,
     (req_handler)req_get_window_tree,
-    (req_handler)req_set_window_rectangles,
+    (req_handler)req_set_window_pos,
     (req_handler)req_get_window_rectangles,
     (req_handler)req_get_window_text,
     (req_handler)req_set_window_text,
-    (req_handler)req_inc_window_paint_count,
     (req_handler)req_get_windows_offset,
     (req_handler)req_get_visible_region,
     (req_handler)req_get_window_region,
     (req_handler)req_set_window_region,
+    (req_handler)req_get_update_region,
+    (req_handler)req_redraw_window,
     (req_handler)req_set_window_property,
     (req_handler)req_remove_window_property,
     (req_handler)req_get_window_property,

@@ -563,7 +563,8 @@ extern Window X11DRV_create_desktop( XVisualInfo *desktop_vi, const char *geomet
 extern void X11DRV_sync_window_style( Display *display, WND *win );
 extern int X11DRV_sync_whole_window_position( Display *display, WND *win, int zorder );
 extern int X11DRV_sync_client_window_position( Display *display, WND *win );
-extern void X11DRV_set_window_rectangles( HWND hwnd, const RECT *rectWindow, const RECT *rectClient );
+extern BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
+                                   const RECT *rectClient, UINT swp_flags, UINT wvr_flags );
 extern void X11DRV_set_wm_hints( Display *display, WND *win );
 
 extern void X11DRV_handle_desktop_resize(unsigned int width, unsigned int height);

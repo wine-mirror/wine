@@ -52,7 +52,6 @@ typedef struct tagWND
     void          *pVScroll;      /* Vertical scroll-bar info */
     void          *pHScroll;      /* Horizontal scroll-bar info */
     struct tagDCE *dce;           /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
-    HRGN           hrgnUpdate;    /* Update region */
     DWORD          dwStyle;       /* Window style (from CreateWindow) */
     DWORD          dwExStyle;     /* Extended style (from CreateWindowEx) */
     DWORD          clsStyle;      /* Class style at window creation */
@@ -78,17 +77,14 @@ typedef struct
 } INTERNALPOS, *LPINTERNALPOS;
 
   /* WND flags values */
-#define WIN_NEEDS_ERASEBKGND   0x0002 /* WM_ERASEBKGND must be sent to window*/
-#define WIN_NEEDS_NCPAINT      0x0004 /* WM_NCPAINT must be sent to window */
-#define WIN_RESTORE_MAX        0x0008 /* Maximize when restoring */
-#define WIN_INTERNAL_PAINT     0x0010 /* Internal WM_PAINT message pending */
-#define WIN_NEED_SIZE          0x0040 /* Internal WM_SIZE is needed */
-#define WIN_NCACTIVATED        0x0080 /* last WM_NCACTIVATE was positive */
-#define WIN_ISMDICLIENT        0x0100 /* Window is an MDIClient */
-#define WIN_ISDIALOG           0x0200 /* Window is a dialog */
-#define WIN_ISWIN32            0x0400 /* Understands Win32 messages */
-#define WIN_NEEDS_SHOW_OWNEDPOPUP 0x0800 /* WM_SHOWWINDOW:SC_SHOW must be sent in the next ShowOwnedPopup call */
-#define WIN_NEEDS_INTERNALSOP  0x1000 /* Window was hidden by WIN_InternalShowOwnedPopups */
+#define WIN_RESTORE_MAX           0x0001 /* Maximize when restoring */
+#define WIN_NEED_SIZE             0x0002 /* Internal WM_SIZE is needed */
+#define WIN_NCACTIVATED           0x0004 /* last WM_NCACTIVATE was positive */
+#define WIN_ISMDICLIENT           0x0008 /* Window is an MDIClient */
+#define WIN_ISDIALOG              0x0010 /* Window is a dialog */
+#define WIN_ISWIN32               0x0020 /* Understands Win32 messages */
+#define WIN_NEEDS_SHOW_OWNEDPOPUP 0x0040 /* WM_SHOWWINDOW:SC_SHOW must be sent in the next ShowOwnedPopup call */
+#define WIN_NEEDS_INTERNALSOP     0x0080 /* Window was hidden by WIN_InternalShowOwnedPopups */
 
   /* Window functions */
 extern WND *WIN_GetPtr( HWND hwnd );

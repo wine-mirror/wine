@@ -698,7 +698,6 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->parent            = 0;
     pWndDesktop->owner             = 0;
     pWndDesktop->text              = NULL;
-    pWndDesktop->hrgnUpdate        = 0;
     pWndDesktop->pVScroll          = NULL;
     pWndDesktop->pHScroll          = NULL;
     pWndDesktop->helpContext       = 0;
@@ -738,7 +737,6 @@ BOOL WIN_CreateDesktopWindow(void)
         return FALSE;
     }
 
-    pWndDesktop->flags |= WIN_NEEDS_ERASEBKGND;
     WIN_ReleaseWndPtr( pWndDesktop );
     return TRUE;
 }
@@ -1110,7 +1108,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->parent         = parent;
     wndPtr->hInstance      = cs->hInstance;
     wndPtr->text           = NULL;
-    wndPtr->hrgnUpdate     = 0;
     wndPtr->dwStyle        = cs->style & ~WS_VISIBLE;
     wndPtr->dwExStyle      = cs->dwExStyle;
     wndPtr->wIDmenu        = 0;
@@ -3125,19 +3122,13 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
 
     if (wndPtr->dwStyle & WS_MINIMIZE)
     {
+        RedrawWindow( hWnd, 0, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_FRAME );
         if (bInvert && !(wndPtr->flags & WIN_NCACTIVATED))
         {
-            HDC hDC = GetDC(hWnd);
-
-            if (!SendMessageW( hWnd, WM_ERASEBKGND, (WPARAM)hDC, 0 ))
-                wndPtr->flags |= WIN_NEEDS_ERASEBKGND;
-
-            ReleaseDC( hWnd, hDC );
             wndPtr->flags |= WIN_NCACTIVATED;
         }
         else
         {
-            RedrawWindow( hWnd, 0, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_FRAME );
             wndPtr->flags &= ~WIN_NCACTIVATED;
         }
         WIN_ReleaseWndPtr(wndPtr);
