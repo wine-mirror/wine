@@ -1607,6 +1607,34 @@ static void test_SetFocus(HWND hwnd)
     DestroyWindow( child );
 }
 
+static void test_SetActiveWindow(HWND hwnd)
+{
+    HWND hwnd2;
+
+    ShowWindow(hwnd, SW_SHOW);
+    SetActiveWindow(0);
+    SetActiveWindow(hwnd);
+    ok( GetActiveWindow() == hwnd, "Failed to set focus to visible window %p\n", hwnd );
+    SetWindowPos(hwnd,0,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_HIDEWINDOW);
+    ok( GetActiveWindow() == hwnd, "Window %p no longer active\n", hwnd );
+    SetWindowPos(hwnd,0,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_SHOWWINDOW);
+    ShowWindow(hwnd, SW_HIDE);
+    ok( GetActiveWindow() != hwnd, "Window %p is still active\n", hwnd );
+    ShowWindow(hwnd, SW_SHOW);
+
+    hwnd2 = CreateWindowExA(0, "static", NULL, WS_POPUP|WS_VISIBLE, 0, 0, 0, 0, hwnd, 0, 0, NULL);
+    ok( GetActiveWindow() == hwnd2, "Window %p is not active\n", hwnd2 );
+    DestroyWindow(hwnd2);
+    ok( GetActiveWindow() != hwnd2, "Window %p is still active\n", hwnd2 );
+
+    hwnd2 = CreateWindowExA(0, "static", NULL, WS_POPUP|WS_VISIBLE, 0, 0, 0, 0, hwnd, 0, 0, NULL);
+    ok( GetActiveWindow() == hwnd2, "Window %p is not active\n", hwnd2 );
+    SetWindowPos(hwnd2,0,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_HIDEWINDOW);
+    ok( GetActiveWindow() == hwnd2, "Window %p no longer active (%p)\n", hwnd2, GetActiveWindow() );
+    DestroyWindow(hwnd2);
+    ok( GetActiveWindow() != hwnd2, "Window %p is still active\n", hwnd2 );
+}
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -1653,6 +1681,7 @@ START_TEST(win)
     test_SetWindowPos(hwndMain);
     test_SetMenu(hwndMain);
     test_SetFocus(hwndMain);
+    test_SetActiveWindow(hwndMain);
 
     test_children_zorder(hwndMain);
 
