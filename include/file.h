@@ -94,9 +94,6 @@ extern DWORD DIR_SearchPath( LPCWSTR path, LPCWSTR name, LPCWSTR ext,
                              DOS_FULL_NAME *full_name, BOOL win32 );
 
 /* files/dos_fs.c */
-extern void DOSFS_UnixTimeToFileTime( time_t unixtime, LPFILETIME ft,
-                                      DWORD remainder );
-extern time_t DOSFS_FileTimeToUnixTime( const FILETIME *ft, DWORD *remainder );
 extern BOOL DOSFS_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer );
 extern const DOS_DEVICE *DOSFS_GetDevice( LPCWSTR name );
 extern const DOS_DEVICE *DOSFS_GetDeviceByHandle( HANDLE hFile );
