@@ -3519,12 +3519,15 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
     /* nothing to draw */
     if(infoPtr->nItemCount == 0) goto enddraw;
 
-    if (infoPtr->dwStyle & LVS_OWNERDRAWFIXED)
-	LISTVIEW_RefreshOwnerDraw(infoPtr, hdc);
-    else if (uView == LVS_ICON)
+    if (uView == LVS_ICON)
 	LISTVIEW_RefreshIcon(infoPtr, hdc, cdmode);
     else if (uView == LVS_REPORT)
-	LISTVIEW_RefreshReport(infoPtr, hdc, cdmode);
+    {
+        if (infoPtr->dwStyle & LVS_OWNERDRAWFIXED)
+            LISTVIEW_RefreshOwnerDraw(infoPtr, hdc);
+        else
+            LISTVIEW_RefreshReport(infoPtr, hdc, cdmode);
+    }
     else /* LVS_LIST or LVS_SMALLICON */
 	LISTVIEW_RefreshList(infoPtr, hdc, cdmode);
 
