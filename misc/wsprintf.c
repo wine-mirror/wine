@@ -462,6 +462,7 @@ INT WINAPI wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec,
     LPWSTR p = buffer;
     UINT i, len;
     CHAR number[20];
+    WPRINTF_DATA argData;
 
     while (*spec && (maxlen > 1))
     {
@@ -469,7 +470,8 @@ INT WINAPI wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec,
         spec++;
         if (*spec == '%') { *p++ = *spec++; maxlen--; continue; }
         spec += WPRINTF_ParseFormatW( spec, &format );
-        len = WPRINTF_GetLen( &format, args, number, maxlen - 1 );
+        argData = WPRINTF_ExtractVAPtr( &format, &args );
+        len = WPRINTF_GetLen( &format, &argData, number, maxlen - 1 );
         if (!(format.flags & WPRINTF_LEFTALIGN))
             for (i = format.precision; i < format.width; i++, maxlen--)
                 *p++ = ' ';

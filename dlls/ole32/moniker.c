@@ -10,6 +10,7 @@
 #include "wine/obj_moniker.h"
 #include "debugtools.h"
 #include "heap.h"
+#include "ole2.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)
 
@@ -498,7 +499,7 @@ HRESULT MkParseDisplayName(	LPBC pbc, LPCOLESTR szUserName,
 				LPDWORD pchEaten, LPMONIKER *ppmk)
 {
     FIXME("(%p, %s, %p, %p): stub.\n", pbc, debugstr_w(szUserName), pchEaten, *ppmk);
-    if (!(IsValidInterface(pbc)))
+    if (!(IsValidInterface((LPUNKNOWN) pbc)))
 	return E_INVALIDARG;
 
     return MK_E_SYNTAX;

@@ -106,6 +106,7 @@ HRESULT     WINAPI OleCreateDefaultHandler(REFCLSID  clsid,
 HRESULT     WINAPI CreateOleAdviseHolder (LPOLEADVISEHOLDER *ppOAHolder);
 HRESULT     WINAPI OleInitialize(LPVOID pvReserved);
 void        WINAPI OleUninitialize(void);
+BOOL        WINAPI IsValidInterface(LPUNKNOWN punk);
 
 /*
  *  OLE version conversion declarations

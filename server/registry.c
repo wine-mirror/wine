@@ -857,7 +857,7 @@ static struct key *create_root_key( int hkey )
             if (pwd) p = pwd->pw_name;
             else
             {
-                sprintf( buffer, "%d", getuid() );
+                sprintf( buffer, "%ld", (long) getuid() );
                 p = buffer;
             }
             len = strlen(p);

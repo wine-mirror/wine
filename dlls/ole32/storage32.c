@@ -12,6 +12,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "winbase.h" /* for lstrlenW() and the likes */
@@ -6223,7 +6224,7 @@ void OLECONVERT_GetOLE20FromOLE10(LPSTORAGE pDestStorage, BYTE *pBuffer, DWORD n
     /* Create a temp File */
     GetTempPathW(MAX_PATH, wstrTempDir);
     GetTempFileNameW(wstrTempDir, wstrPrefix, 0, wstrTempFile);
-    hFile = CreateFileW(wstrTempFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    hFile = CreateFileW(wstrTempFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 
     if(hFile != INVALID_HANDLE_VALUE)
     {
@@ -6235,7 +6236,7 @@ void OLECONVERT_GetOLE20FromOLE10(LPSTORAGE pDestStorage, BYTE *pBuffer, DWORD n
         hRes = StgOpenStorage(wstrTempFile, NULL, STGM_READ, NULL, 0, &pTempStorage);
         if(hRes == S_OK)
         {
-            hRes = StorageImpl_CopyTo(pTempStorage, NULL,NULL,NULL, pDestStorage);
+            hRes = StorageImpl_CopyTo(pTempStorage, 0, NULL, NULL, pDestStorage);
             StorageBaseImpl_Release(pTempStorage);
         }
         DeleteFileW(wstrTempFile);
@@ -6275,16 +6276,16 @@ DWORD OLECONVERT_WriteOLE20ToBuffer(LPSTORAGE pStorage, BYTE **pData)
     /* Create temp Storage */
     GetTempPathW(MAX_PATH, wstrTempDir);
     GetTempFileNameW(wstrTempDir, wstrPrefix, 0, wstrTempFile);
-    hRes = StgCreateDocfile(wstrTempFile, STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE, NULL, &pTempStorage);
+    hRes = StgCreateDocfile(wstrTempFile, STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &pTempStorage);
 
     if(hRes == S_OK)
     {
         /* Copy Src Storage to the Temp Storage */
-        StorageImpl_CopyTo(pStorage, NULL,NULL,NULL, pTempStorage);
+        StorageImpl_CopyTo(pStorage, 0, NULL, NULL, pTempStorage);
         StorageBaseImpl_Release(pTempStorage);
 
         /* Open Temp Storage as a file and copy to memory */
-        hFile = CreateFileW(wstrTempFile, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        hFile = CreateFileW(wstrTempFile, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
         if(hFile != INVALID_HANDLE_VALUE)
         {
             nDataLength = GetFileSize(hFile, NULL);

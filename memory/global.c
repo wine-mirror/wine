@@ -1461,7 +1461,9 @@ VOID WINAPI GlobalMemoryStatus(
 ) {
     static MEMORYSTATUS	cached_memstatus;
     static int cache_lastchecked = 0;
+#ifdef linux
     FILE *f;
+#endif
 
     if (time(NULL)==cache_lastchecked) {
 	memcpy(lpmem,&cached_memstatus,sizeof(MEMORYSTATUS));
