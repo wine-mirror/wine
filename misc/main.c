@@ -4,6 +4,7 @@
  * Copyright 1994 Alexandre Julliard
  */
 
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -979,6 +980,12 @@ static void called_at_exit(void)
     DeleteCriticalSection( HEAP_SystemLock );
 }
 
+static int WINE_X11_ErrorHandler(Display *display,XErrorEvent *error_evt)
+{
+    kill( getpid(), SIGHUP ); /* force an entry in the debugger */
+    return 0;
+}
+
 /***********************************************************************
  *           MAIN_WineInit
  *
@@ -1020,6 +1027,8 @@ BOOL32 MAIN_WineInit( int *argc, char *argv[] )
     putenv("XKB_DISABLE="); /* Disable XKB extension if present. */
 
     MAIN_ParseOptions( argc, argv );
+
+    if (Options.synchronous) XSetErrorHandler( WINE_X11_ErrorHandler );
 
     if (Options.desktopGeometry && Options.managed)
     {
