@@ -159,9 +159,19 @@ void X11DRV_Expose( HWND hwnd, XEvent *xev )
         rect.right > data->client_rect.right ||
         rect.bottom > data->client_rect.bottom) flags |= RDW_FRAME;
 
+    SERVER_START_REQ( update_window_zorder )
+    {
+        req->window      = hwnd;
+        req->rect.left   = rect.left + data->whole_rect.left;
+        req->rect.top    = rect.top + data->whole_rect.top;
+        req->rect.right  = rect.right + data->whole_rect.left;
+        req->rect.bottom = rect.bottom + data->whole_rect.top;
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
     /* make position relative to client area instead of window */
     OffsetRect( &rect, -data->client_rect.left, -data->client_rect.top );
-
     RedrawWindow( hwnd, &rect, 0, flags );
 }
 
@@ -1606,7 +1616,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     BOOL grab;
     Window parent_win, whole_win;
     Display *old_gdi_display = NULL;
-    Display *display = thread_display();
+    struct x11drv_thread_data *thread_data = x11drv_thread_data();
     struct x11drv_win_data *data;
 
     pt.x = (short)LOWORD(dwPoint);
@@ -1732,21 +1742,22 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     {
         wine_tsx11_lock();
         XSync( gdi_display, False );
-        XGrabServer( display );
-        XSync( display, False );
+        XGrabServer( thread_data->display );
+        XSync( thread_data->display, False );
         /* switch gdi display to the thread display, since the server is grabbed */
         old_gdi_display = gdi_display;
-        gdi_display = display;
+        gdi_display = thread_data->display;
         wine_tsx11_unlock();
     }
     whole_win = X11DRV_get_whole_window( GetAncestor(hwnd,GA_ROOT) );
     parent_win = parent ? X11DRV_get_whole_window( GetAncestor(parent,GA_ROOT) ) : root_window;
 
     wine_tsx11_lock();
-    XGrabPointer( display, whole_win, False,
+    XGrabPointer( thread_data->display, whole_win, False,
                   PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
                   GrabModeAsync, GrabModeAsync, parent_win, None, CurrentTime );
     wine_tsx11_unlock();
+    thread_data->grab_window = whole_win;
 
     while(1)
     {
@@ -1846,15 +1857,16 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     ReleaseDC( parent, hdc );
 
     wine_tsx11_lock();
-    XUngrabPointer( display, CurrentTime );
+    XUngrabPointer( thread_data->display, CurrentTime );
     if (grab)
     {
-        XSync( display, False );
-        XUngrabServer( display );
-        XSync( display, False );
+        XSync( thread_data->display, False );
+        XUngrabServer( thread_data->display );
+        XSync( thread_data->display, False );
         gdi_display = old_gdi_display;
     }
     wine_tsx11_unlock();
+    thread_data->grab_window = None;
 
     if (HOOK_CallHooks( WH_CBT, HCBT_MOVESIZE, (WPARAM)hwnd, (LPARAM)&sizingRect, TRUE ))
         moved = FALSE;

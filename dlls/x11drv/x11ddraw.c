@@ -62,7 +62,7 @@ static void SetPrimaryDIB(HBITMAP hBmp)
 
 static LRESULT WINAPI GrabWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-  Display *display = thread_display();
+  struct x11drv_thread_data *data = x11drv_thread_data();
 
   if(message != X11DRV_DD_GrabMessage)
     return CallWindowProcA(X11DRV_DD_GrabOldProcedure, hWnd, message, wParam, lParam);
@@ -80,14 +80,16 @@ static LRESULT WINAPI GrabWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
     }
 
     wine_tsx11_lock();
-    XGrabPointer(display, win, True, 0, GrabModeAsync, GrabModeAsync, win, None, CurrentTime);
+    XGrabPointer(data->display, win, True, 0, GrabModeAsync, GrabModeAsync, win, None, CurrentTime);
     wine_tsx11_unlock();
+    data->grab_window = win;
   }
   else
   {
     wine_tsx11_lock();
-    XUngrabPointer(display, CurrentTime);
+    XUngrabPointer(data->display, CurrentTime);
     wine_tsx11_unlock();
+    data->grab_window = None;
   }
 
   return 0;
@@ -98,7 +100,11 @@ static void GrabPointer(BOOL grab)
   if(grab) {
     Window window = X11DRV_get_whole_window(GetFocus());
     if(window)
+    {
+      wine_tsx11_lock();
       XSetInputFocus(thread_display(), window, RevertToParent, CurrentTime);
+      wine_tsx11_unlock();
+    }
   }
 
   if(!X11DRV_DD_GrabMessage)
@@ -107,7 +113,7 @@ static void GrabPointer(BOOL grab)
   X11DRV_DD_GrabOldProcedure = (WNDPROC)SetWindowLongPtrA(X11DRV_DD_PrimaryWnd,
                                                        GWLP_WNDPROC, (LONG_PTR)GrabWndProc);
 
-  SendMessageA(X11DRV_DD_PrimaryWnd, X11DRV_DD_GrabMessage, grab ? 1 : 0, 0);
+  SendMessageW(X11DRV_DD_PrimaryWnd, X11DRV_DD_GrabMessage, grab, 0);
 
   if(SetWindowLongPtrA(X11DRV_DD_PrimaryWnd, GWLP_WNDPROC,
                     (LONG_PTR)X11DRV_DD_GrabOldProcedure) != (LONG_PTR)GrabWndProc)

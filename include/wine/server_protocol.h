@@ -2720,6 +2720,19 @@ struct get_update_region_reply
 
 
 
+struct update_window_zorder_request
+{
+    struct request_header __header;
+    user_handle_t  window;
+    rectangle_t    rect;
+};
+struct update_window_zorder_reply
+{
+    struct reply_header __header;
+};
+
+
+
 struct redraw_window_request
 {
     struct request_header __header;
@@ -3372,6 +3385,7 @@ enum request
     REQ_get_window_region,
     REQ_set_window_region,
     REQ_get_update_region,
+    REQ_update_window_zorder,
     REQ_redraw_window,
     REQ_set_window_property,
     REQ_remove_window_property,
@@ -3562,6 +3576,7 @@ union generic_request
     struct get_window_region_request get_window_region_request;
     struct set_window_region_request set_window_region_request;
     struct get_update_region_request get_update_region_request;
+    struct update_window_zorder_request update_window_zorder_request;
     struct redraw_window_request redraw_window_request;
     struct set_window_property_request set_window_property_request;
     struct remove_window_property_request remove_window_property_request;
@@ -3750,6 +3765,7 @@ union generic_reply
     struct get_window_region_reply get_window_region_reply;
     struct set_window_region_reply set_window_region_reply;
     struct get_update_region_reply get_update_region_reply;
+    struct update_window_zorder_reply update_window_zorder_reply;
     struct redraw_window_reply redraw_window_reply;
     struct set_window_property_reply set_window_property_reply;
     struct remove_window_property_reply remove_window_property_reply;
@@ -3781,6 +3797,6 @@ union generic_reply
     struct duplicate_token_reply duplicate_token_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 161
+#define SERVER_PROTOCOL_VERSION 162
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

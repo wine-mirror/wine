@@ -257,6 +257,7 @@ DECL_HANDLER(get_visible_region);
 DECL_HANDLER(get_window_region);
 DECL_HANDLER(set_window_region);
 DECL_HANDLER(get_update_region);
+DECL_HANDLER(update_window_zorder);
 DECL_HANDLER(redraw_window);
 DECL_HANDLER(set_window_property);
 DECL_HANDLER(remove_window_property);
@@ -446,6 +447,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_window_region,
     (req_handler)req_set_window_region,
     (req_handler)req_get_update_region,
+    (req_handler)req_update_window_zorder,
     (req_handler)req_redraw_window,
     (req_handler)req_set_window_property,
     (req_handler)req_remove_window_property,

@@ -488,6 +488,7 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     data->process_event_count = 0;
     data->cursor = None;
     data->cursor_window = None;
+    data->grab_window = None;
     data->last_focus = 0;
     data->selection_wnd = 0;
     NtCurrentTeb()->driver_data = data;

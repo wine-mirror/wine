@@ -504,6 +504,7 @@ struct x11drv_thread_data
     int      process_event_count;  /* recursion count for event processing */
     Cursor   cursor;               /* current cursor */
     Window   cursor_window;        /* current window that contains the cursor */
+    Window   grab_window;          /* window that currentl grabs the mouse */
     HWND     last_focus;           /* last window that had focus */
     XIM      xim;                  /* input method */
     Window   selection_wnd;        /* window used for selection interactions */

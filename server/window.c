@@ -645,15 +645,23 @@ static struct region *clip_children( struct window *parent, struct window *last,
 }
 
 
+/* compute the intersection of two rectangles; return 0 if the result is empty */
+static inline int intersect_rect( rectangle_t *dst, const rectangle_t *src1, const rectangle_t *src2 )
+{
+    dst->left   = max( src1->left, src2->left );
+    dst->top    = max( src1->top, src2->top );
+    dst->right  = min( src1->right, src2->right );
+    dst->bottom = min( src1->bottom, src2->bottom );
+    return (dst->left < dst->right && dst->top < dst->bottom);
+}
+
+
 /* set the region to the client rect clipped by the window rect, in parent-relative coordinates */
 static void set_region_client_rect( struct region *region, struct window *win )
 {
     rectangle_t rect;
 
-    rect.left   = max( win->window_rect.left, win->client_rect.left );
-    rect.top    = max( win->window_rect.top, win->client_rect.top );
-    rect.right  = min( win->window_rect.right, win->client_rect.right );
-    rect.bottom = min( win->window_rect.bottom, win->client_rect.bottom );
+    intersect_rect( &rect, &win->window_rect, &win->client_rect );
     set_region_rect( region, &rect );
 }
 
@@ -1663,6 +1671,29 @@ DECL_HANDLER(get_update_region)
             /* desktop window only gets erased, not repainted */
             if (win == top_window) validate_whole_window( win );
         }
+    }
+}
+
+
+/* update the z order of a window so that a given rectangle is fully visible */
+DECL_HANDLER(update_window_zorder)
+{
+    rectangle_t tmp;
+    struct window *ptr, *win = get_window( req->window );
+
+    if (!win || !win->parent || !is_visible( win )) return;  /* nothing to do */
+
+    LIST_FOR_EACH_ENTRY( ptr, &win->parent->children, struct window, entry )
+    {
+        if (ptr == win) break;
+        if (!(ptr->style & WS_VISIBLE)) continue;
+        if (ptr->ex_style & WS_EX_TRANSPARENT) continue;
+        if (!intersect_rect( &tmp, &ptr->visible_rect, &req->rect )) continue;
+        if (ptr->win_region && !rect_in_region( ptr->win_region, &req->rect )) continue;
+        /* found a window obscuring the rectangle, now move win above this one */
+        list_remove( &win->entry );
+        list_add_before( &ptr->entry, &win->entry );
+        break;
     }
 }
 

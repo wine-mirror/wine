@@ -1916,6 +1916,13 @@ enum message_type
 #define UPDATE_NOREGION        0x40  /* don't return a region, only the flags */
 
 
+/* Update the z order of a window so that a given rectangle is fully visible */
+@REQ(update_window_zorder)
+    user_handle_t  window;        /* handle to the window */
+    rectangle_t    rect;          /* rectangle that must be visible */
+@END
+
+
 /* Mark parts of a window as needing a redraw */
 @REQ(redraw_window)
     user_handle_t  window;        /* handle to the window */

@@ -2302,6 +2302,13 @@ static void dump_get_update_region_reply( const struct get_update_region_reply *
     dump_varargs_rectangles( cur_size );
 }
 
+static void dump_update_window_zorder_request( const struct update_window_zorder_request *req )
+{
+    fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " rect=" );
+    dump_rectangle( &req->rect );
+}
+
 static void dump_redraw_window_request( const struct redraw_window_request *req )
 {
     fprintf( stderr, " window=%p,", req->window );
@@ -2839,6 +2846,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_window_region_request,
     (dump_func)dump_set_window_region_request,
     (dump_func)dump_get_update_region_request,
+    (dump_func)dump_update_window_zorder_request,
     (dump_func)dump_redraw_window_request,
     (dump_func)dump_set_window_property_request,
     (dump_func)dump_remove_window_property_request,
@@ -3027,6 +3035,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_update_region_reply,
     (dump_func)0,
     (dump_func)0,
+    (dump_func)0,
     (dump_func)dump_remove_window_property_reply,
     (dump_func)dump_get_window_property_reply,
     (dump_func)dump_get_window_properties_reply,
@@ -3211,6 +3220,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_window_region",
     "set_window_region",
     "get_update_region",
+    "update_window_zorder",
     "redraw_window",
     "set_window_property",
     "remove_window_property",

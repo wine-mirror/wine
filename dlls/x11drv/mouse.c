@@ -68,7 +68,7 @@ POINT cursor_pos;
  *
  * get the coordinates of a mouse event
  */
-static inline void get_coords( HWND hwnd, Window window, int x, int y, POINT *pt )
+static inline void get_coords( HWND hwnd, int x, int y, POINT *pt )
 {
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
 
@@ -84,7 +84,7 @@ static inline void get_coords( HWND hwnd, Window window, int x, int y, POINT *pt
  *
  * Update the button state with what X provides us
  */
-static void update_button_state( unsigned int state )
+static inline void update_button_state( unsigned int state )
 {
     key_state_table[VK_LBUTTON] = (state & Button1Mask ? 0x80 : 0);
     key_state_table[VK_MBUTTON] = (state & Button2Mask ? 0x80 : 0);
@@ -97,10 +97,52 @@ static void update_button_state( unsigned int state )
  *
  * Update the key state with what X provides us
  */
-static void update_key_state( unsigned int state )
+static inline void update_key_state( unsigned int state )
 {
     key_state_table[VK_SHIFT]   = (state & ShiftMask   ? 0x80 : 0);
     key_state_table[VK_CONTROL] = (state & ControlMask ? 0x80 : 0);
+}
+
+
+/***********************************************************************
+ *		update_mouse_state
+ *
+ * Update the various window states on a mouse event.
+ */
+static void update_mouse_state( HWND hwnd, Window window, int x, int y, unsigned int state, POINT *pt )
+{
+    struct x11drv_thread_data *data = x11drv_thread_data();
+
+    get_coords( hwnd, x, y, pt );
+    update_key_state( state );
+
+    /* update the cursor */
+
+    if (data->cursor_window != window)
+    {
+        data->cursor_window = window;
+        wine_tsx11_lock();
+        if (data->cursor) XDefineCursor( data->display, window, data->cursor );
+        wine_tsx11_unlock();
+    }
+
+    /* update the wine server Z-order */
+
+    if (window != data->grab_window &&
+        /* ignore event if a button is pressed, since the mouse is then grabbed too */
+        !(state & (Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask)))
+    {
+        SERVER_START_REQ( update_window_zorder )
+        {
+            req->window      = hwnd;
+            req->rect.left   = pt->x;
+            req->rect.top    = pt->y;
+            req->rect.right  = pt->x + 1;
+            req->rect.bottom = pt->y + 1;
+            wine_server_call( req );
+        }
+        SERVER_END_REQ;
+    }
 }
 
 
@@ -282,25 +324,6 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
     {
         queue_raw_mouse_message( WM_MOUSEWHEEL, hwnd, pt.x, pt.y, data, time,
                                  extra_info, injected_flags );
-    }
-}
-
-
-/***********************************************************************
- *		update_cursor
- *
- * Update the cursor of a window on a mouse event.
- */
-static void update_cursor( HWND hwnd, Window win )
-{
-    struct x11drv_thread_data *data = x11drv_thread_data();
-
-    if (data->cursor_window != win)
-    {
-        data->cursor_window = win;
-        wine_tsx11_lock();
-        if (data->cursor) XDefineCursor( data->display, win, data->cursor );
-        wine_tsx11_unlock();
     }
 }
 
@@ -693,9 +716,6 @@ void X11DRV_ButtonPress( HWND hwnd, XEvent *xev )
     if (buttonNum >= NB_BUTTONS) return;
     if (!hwnd) return;
 
-    update_cursor( hwnd, event->window );
-    get_coords( hwnd, event->window, event->x, event->y, &pt );
-
     switch (buttonNum)
     {
     case 3:
@@ -705,7 +725,9 @@ void X11DRV_ButtonPress( HWND hwnd, XEvent *xev )
         wData = -WHEEL_DELTA;
         break;
     }
-    update_key_state( event->state );
+
+    update_mouse_state( hwnd, event->window, event->x, event->y, event->state, &pt );
+
     X11DRV_send_mouse_input( hwnd, button_down_flags[buttonNum] | MOUSEEVENTF_ABSOLUTE,
                              pt.x, pt.y, wData, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
 }
@@ -723,9 +745,8 @@ void X11DRV_ButtonRelease( HWND hwnd, XEvent *xev )
     if (buttonNum >= NB_BUTTONS || !button_up_flags[buttonNum]) return;
     if (!hwnd) return;
 
-    update_cursor( hwnd, event->window );
-    get_coords( hwnd, event->window, event->x, event->y, &pt );
-    update_key_state( event->state );
+    update_mouse_state( hwnd, event->window, event->x, event->y, event->state, &pt );
+
     X11DRV_send_mouse_input( hwnd, button_up_flags[buttonNum] | MOUSEEVENTF_ABSOLUTE,
                              pt.x, pt.y, 0, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
 }
@@ -743,9 +764,8 @@ void X11DRV_MotionNotify( HWND hwnd, XEvent *xev )
 
     if (!hwnd) return;
 
-    update_cursor( hwnd, event->window );
-    get_coords( hwnd, event->window, event->x, event->y, &pt );
-    update_key_state( event->state );
+    update_mouse_state( hwnd, event->window, event->x, event->y, event->state, &pt );
+
     X11DRV_send_mouse_input( hwnd, MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,
                              pt.x, pt.y, 0, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
 }
@@ -765,9 +785,8 @@ void X11DRV_EnterNotify( HWND hwnd, XEvent *xev )
     if (event->detail == NotifyVirtual || event->detail == NotifyNonlinearVirtual) return;
 
     /* simulate a mouse motion event */
-    update_cursor( hwnd, event->window );
-    get_coords( hwnd, event->window, event->x, event->y, &pt );
-    update_key_state( event->state );
+    update_mouse_state( hwnd, event->window, event->x, event->y, event->state, &pt );
+
     X11DRV_send_mouse_input( hwnd, MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,
                              pt.x, pt.y, 0, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
 }
