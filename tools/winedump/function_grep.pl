@@ -92,7 +92,7 @@ foreach my $file (@files) {
 
 	# remove preprocessor directives
 	if(s/^\s*\#/\#/m) {
-	    if(/^\#.*?\\$/m) {
+	    if(/^\#[.\n\r]*?\\$/m) {
 		$lookahead = 1;
 		next;
 	    } elsif(s/^\#\s*(.*?)(\s+(.*?))?\s*$//m) {
