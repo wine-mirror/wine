@@ -98,6 +98,7 @@ enum attr_type
     ATTR_V1ENUM,
     ATTR_VERSION,
     ATTR_WIREMARSHAL,
+    ATTR_DISPINTERFACE
 };
 
 enum expr_type

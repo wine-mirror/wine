@@ -682,7 +682,8 @@ void write_forward(type_t *iface)
    * attributes - however, if we don't have a full definition at this point
    * (i.e. this is an IDL forward), then we also assume that it is an object
    * interface, since non-object interfaces shouldn't need forwards */
-  if ((!iface->defined || is_object(iface->attrs)) && !iface->written) {
+  if ((!iface->defined || is_object(iface->attrs) || is_attr(iface->attrs, ATTR_DISPINTERFACE))
+        && !iface->written) {
     fprintf(header,"#ifndef __%s_FWD_DEFINED__\n", iface->name);
     fprintf(header,"#define __%s_FWD_DEFINED__\n", iface->name);
     fprintf(header, "typedef struct %s %s;\n", iface->name, iface->name);
