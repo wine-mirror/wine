@@ -1,0 +1,7 @@
+%long
+
+POLICY_INFORMATION_CLASS
+
+%long --extension
+
+LSA_HANDLE

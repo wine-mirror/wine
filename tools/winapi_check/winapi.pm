@@ -46,6 +46,7 @@ sub parse_api_file {
     my $module = shift;
 
     my $kind;
+    my $extension = 0;
     my $forbidden = 0;
 
     $$output->progress("$file");
@@ -60,10 +61,13 @@ sub parse_api_file {
 	if(s/^%(\S+)\s*//) {
 	    $kind = $1;
 	    $forbidden = 0;
+	    $extension = 0;
 
 	    $$allowed_kind{$kind} = 1;
 	    if(/^--forbidden/) {
 		$forbidden = 1;
+	    } elsif(/^--extension/) {
+		$extension = 1;
 	    }
 	} elsif(defined($kind)) {
 	    my $type = $_;
