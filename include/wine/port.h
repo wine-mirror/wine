@@ -113,6 +113,12 @@ int statfs(const char *name, struct statfs *info);
 int strncasecmp(const char *str1, const char *str2, size_t n);
 #endif /* !defined(HAVE_STRNCASECMP) */
 
+#ifndef HAVE_OPENPTY
+struct termios;
+struct winsize;
+int openpty(int *master, int *slave, char *name, struct termios *term, struct winsize *winsize);
+#endif  /* HAVE_OPENPTY */
+
 #ifndef HAVE_STRERROR
 const char *strerror(int err);
 #endif /* !defined(HAVE_STRERROR) */

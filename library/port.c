@@ -34,12 +34,6 @@
 #ifdef HAVE_SYSCALL_H
 # include <syscall.h>
 #endif
-#ifdef HAVE_PTY_H
-# include <pty.h>
-#endif
-#ifdef HAVE_LIBUTIL_H
-# include <libutil.h>
-#endif
 #ifdef HAVE_STDINT_H
 # include <stdint.h>
 #endif
@@ -197,7 +191,7 @@ int strncasecmp( const char *str1, const char *str2, size_t n )
 #endif /* HAVE_STRNCASECMP */
 
 /***********************************************************************
- *		wine_openpty
+ *		openpty
  * NOTE
  *   It looks like the openpty that comes with glibc in RedHat 5.0
  *   is buggy (second call returns what looks like a dup of 0 and 1
@@ -206,12 +200,9 @@ int strncasecmp( const char *str1, const char *str2, size_t n )
  * FIXME
  *   We should have a autoconf check for this.
  */
-int wine_openpty(int *master, int *slave, char *name,
-                 struct termios *term, struct winsize *winsize)
+#ifndef HAVE_OPENPTY
+int openpty(int *master, int *slave, char *name, struct termios *term, struct winsize *winsize)
 {
-#ifdef HAVE_OPENPTY
-    return openpty(master, slave, name, term, winsize);
-#else
     const char *ptr1, *ptr2;
     char pts_name[512];
 
@@ -246,8 +237,8 @@ int wine_openpty(int *master, int *slave, char *name,
     }
     errno = EMFILE;
     return -1;
-#endif
 }
+#endif  /* HAVE_OPENPTY */
 
 /***********************************************************************
  *		getnetbyaddr

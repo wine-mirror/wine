@@ -106,11 +106,14 @@ dnl Check for -lxpg4 for FreeBSD
 AC_CHECK_LIB(xpg4,_xpg4_setrunelocale)
 dnl Check for -lmmap for OS/2
 AC_CHECK_LIB(mmap,mmap)
+
 dnl Check for openpty
+UTILLIBS=""
+AC_SUBST(UTILLIBS)
 AC_CHECK_FUNCS(openpty,,
 	[AC_CHECK_LIB(util,openpty,
 		[AC_DEFINE(HAVE_OPENPTY)
-		LIBS="$LIBS -lutil"]
+		UTILLIBS="-lutil"]
 	)])
 
 DLLIBS=""

@@ -9,6 +9,7 @@
 */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -17,6 +18,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <termios.h>
+#ifdef HAVE_LIBUTIL_H
+# include <libutil.h>
+#endif
+#ifdef HAVE_PTY_H
+# include <pty.h>
+#endif
 
 #include "console.h"
 #include "options.h"
@@ -27,8 +34,6 @@ DEFAULT_DEBUG_CHANNEL(console);
 char console_xterm_prog[80];
 
 static BOOL wine_create_console(FILE **master, FILE **slave, pid_t *pid);
-int wine_openpty(int *master, int *slave, char *name,
-		 struct termios *term, struct winsize *winsize);
 
 /* The console -- I chose to keep the master and slave
  * (UNIX) file descriptors around in case they are needed for
@@ -129,7 +134,7 @@ static BOOL wine_create_console(FILE **master, FILE **slave, pid_t *pid)
         if (tcgetattr(0, &term) < 0) return FALSE;
         term.c_lflag |= ICANON;
         term.c_lflag &= ~ECHO;
-        if (wine_openpty(&tmaster, &tslave, NULL, &term, NULL) < 0)
+        if (openpty(&tmaster, &tslave, NULL, &term, NULL) < 0)
            return FALSE;
         *master = fdopen(tmaster, "r+");
         *slave = fdopen(tslave, "r+");
