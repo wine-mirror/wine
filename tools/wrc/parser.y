@@ -4,6 +4,8 @@
  * Copyright 1998-2000	Bertho A. Stultiens (BS)
  *           1999	Juergen Schmied (JS)
  *
+ * 24-Jul-2000 BS	- Made a fix for broken Berkeley yacc on
+ *			  non-terminals (see cjunk rule).
  * 21-May-2000 BS	- Partial implementation of font resources.
  *			- Corrected language propagation for binary
  *			  resources such as bitmaps, isons, cursors,
@@ -124,6 +126,31 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
+
+#if defined(YYBYACC)
+	/* Berkeley yacc (byacc) doesn't seem to know about these */
+	/* Some *BSD supplied versions do define these though */
+# ifndef YYEMPTY
+#  define YYEMPTY	(-1)	/* Empty lookahead value of yychar */
+# endif
+# ifndef YYLEX
+#  define YYLEX		yylex()
+# endif
+
+#elif defined(YYBISON)
+	/* Bison was used for original development */
+	/* #define YYEMPTY -2 */
+	/* #define YYLEX   yylex() */
+
+#else	
+	/* No yacc we know yet */
+# if !defined(YYEMPTY) || !defined(YYLEX)
+#  error Yacc version/type unknown. This version needs to be verified for settings of YYEMPTY and YYLEX.
+# elif defined(__GNUC__)	/* gcc defines the #warning directive */
+#  warning Yacc version/type unknown. It defines YYEMPTY and YYLEX, but is not tested
+  /* #else we just take a chance that it works... */
+# endif
+#endif
 
 int want_nl = 0;	/* Signal flex that we need the next newline */
 int want_id = 0;	/* Signal flex that we need the next identifier */
@@ -411,6 +438,31 @@ cjunk	: tTYPEDEF			{ strip_til_semicolon(); }
 	| tIDENT tIDENT '('		{ strip_til_parenthesis(); }
 /*	| tIDENT '('			{ strip_til_parenthesis(); } */
 	| tIDENT '*'			{ strip_til_semicolon(); }
+	| tNL	/*
+		 * This newline rule will never get reduced because we never
+		 * get the tNL token, unless we explicitely set the 'want_nl'
+		 * flag, which we don't.
+		 * The *ONLY* reason for this to be here is because Berkeley
+		 * yacc (byacc), at least version 1.9, has a bug.
+		 * (identified in the generated parser on the second
+		 *  line with:
+		 *  static char yysccsid[] = "@(#)yaccpar   1.9 (Berkeley) 02/21/93";
+		 * )
+		 * This extra rule fixes it.
+		 * The problem is that the expression handling rule "expr: xpr"
+		 * is not reduced on non-terminal tokens, defined above in the
+		 * %token declarations. Token tNL is the only non-terminal that
+		 * can occur. The error becomes visible in the language parsing
+		 * rule below, which looks at the look-ahead token and tests it
+		 * for tNL. However, byacc already generates an error upon reading
+		 * the token instead of keeping it as a lookahead. The reason
+		 * lies in the lack of a $default transition in the "expr : xpr . "
+		 * state (currently state 25). It is probably ommitted because tNL
+		 * is a non-terminal and the state contains 2 s/r conflicts. The
+		 * state enumerates all possible transitions instead of using a
+		 * $default transition.
+		 * All in all, it is a bug in byacc. (period)
+		 */
 	;
 
 /* Parse top level resource definitions etc. */
@@ -459,7 +511,8 @@ resource
 			dont_want_id = 1;
 
 		if(yychar == tNL)
-			yychar = YYEMPTY;
+			yychar = YYEMPTY;	/* Could use 'yyclearin', but we already need the*/
+						/* direct access to yychar in rule 'usrcvt' below. */
 		else if(yychar == tIDENT)
 			yywarning("LANGUAGE statement not delimited with newline; next identifier might be wrong");
 

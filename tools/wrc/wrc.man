@@ -1,4 +1,4 @@
-.TH WRC 1 "July 05, 2000" "Version 1.1.6" "Wine Resource Compiler"
+.TH WRC 1 "July 24, 2000" "Version 1.1.7" "Wine Resource Compiler"
 .SH NAME
 wrc \- Wine Resource Compiler
 .SH SYNOPSIS
@@ -44,9 +44,9 @@ Create an assembly file from a binary \fB.res\fR file.
 .TP
 .I \-B x
 Win32 only; set output byte\-ordering, where \fIx\fR is one of n[ative],
-l[ittle] or b[ig].  Only resource in source-form can be reorderd. Native
+l[ittle] or b[ig].  Only resources in source-form can be reorderd. Native
 ordering depends on the system on which \fBwrc\fR was built. You can see
-the native ordering by typing \fI\"wrc \-?\"\fR.
+the native ordering by typing \fIwrc \-?\fR.
 .TP
 .I \-c
 Add 'const' prefix to C constants when writing header files.
@@ -182,6 +182,16 @@ Win32 compilation mode also sets __WIN32__ to 1 and __FLAT__ to 1.
 .PP
 Special macros __FILE__, __LINE__, __TIME__ and __DATE__ are also
 recognized and expand to their respective equivalent.
+.SH "ERROR REPORTING"
+All errors and warnings are written to standard error and report:
+.br
+\fIfilename\fR:\fIline\-number\fR:\fIcharacter\-pos\fR:\fI{Error,Warning}\fR:\fI<message>\fR
+.br
+The character\-position is always at the next token. I.e. the error
+or warning happened before. The line\-number suffers from the same
+problem if the error occurred at the last token of the previous line.
+The line\-number will be several lines off when the error was followed
+by several empry lines. See also \fBBUGS\fR.
 .SH AUTHORS
 .B wrc
 was written by Bertho A. Stultiens and is a nearly complete rewrite of
@@ -191,6 +201,8 @@ den Haan. Bugfixes have been contributed by many wine developpers.
 .SH BUGS
 \- The preprocessor recognizes variable argument macros, but does not
 expanded them correctly
+.br
+\- Error reporting should be more to the point (and verbose)
 .br
 \- Codepage/UNICODE translations are not/not correct implemented
 .br

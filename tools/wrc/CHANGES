@@ -1,4 +1,16 @@
 ---------------------------------------------------------------------------
+Version 1.1.7 (24-Jul-2000)
+
+Bertho Stultiens <bertho@akhphd.au.dk>
+- Implemented a bug-work-arround for Berkeley yacc (byacc) which
+  does not generate proper default transition rules for non-terminals.
+  See comments in parser.y how the fix works.
+- Changed the error-line/char position to make emacs happy parsing
+  the position of the error.
+- Added comments in the documentation in which order the line-numer
+  and character-position of the error is written.
+
+---------------------------------------------------------------------------
 Version 1.1.6 (05-Jun-2000)
 
 Bertho Stultiens <bertho@akhphd.au.dk>

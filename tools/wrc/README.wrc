@@ -1,4 +1,4 @@
-Release 1.1.6 of wrc (05-Jul-2000), the wine resource compiler.
+Release 1.1.7 of wrc (24-Jul-2000), the wine resource compiler.
 
 See the file CHANGES for differences between the version and what has been
 corrected in the current version.
@@ -112,8 +112,8 @@ __TIME__       | "23:59:59"    | Timestring of compilation
 __DATE__       | "May  1 2000" | Datestring of compilation
 __WRC__         1             | Wrc's major version
 __WRC_MINOR__  | 1             | Wrc's minor version
-__WRC_MICRO__  | 6             | Wrc's minor version
-__WRC_PATCH__  | 6             | Alias of __WRC_MICRO__
+__WRC_MICRO__  | 7             | Wrc's minor version
+__WRC_PATCH__  | 7             | Alias of __WRC_MICRO__
 
 Include-files are not read twice if they are protected with this scheme:
 #ifndef SOME_DEFINE

@@ -45,7 +45,7 @@ lex.ppl.c: ppl.l
 	$(LEX) $(LEXOPT) -d -Ppp -8 -olex.ppl.c $(SRCDIR)/ppl.l
 
 clean::
-	$(RM) ppy.tab.h ppy.output lex.backup y.output
+	$(RM) ppy.tab.h ppy.output parser.output parser.tab.h lex.backup y.output
 
 install:: $(PROGRAMS)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
