@@ -250,7 +250,7 @@ void SYSMETRICS_Init(void)
     /* FIXME: Should perform a check */
     sysMetrics[SM_MIDEASTENABLED] = 0;
 
-    sysMetrics[SM_MOUSEWHEELPRESENT] = 0;
+    sysMetrics[SM_MOUSEWHEELPRESENT] = 1;
 
     sysMetrics[SM_CXVIRTUALSCREEN] = sysMetrics[SM_CXSCREEN];
     sysMetrics[SM_CYVIRTUALSCREEN] = sysMetrics[SM_CYSCREEN];
