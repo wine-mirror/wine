@@ -11,8 +11,6 @@
 
 struct tagMSG;
 
-extern DWORD MSG_WineStartTicks;  /* Ticks at Wine startup */
-
 /* message.c */
 extern BOOL MSG_InternalGetMessage( int type, struct tagMSG *msg, HWND hwnd,
                                     HWND hwndOwner, WPARAM code,

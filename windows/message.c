@@ -43,8 +43,6 @@ typedef enum { SYSQ_MSG_ABANDON, SYSQ_MSG_SKIP,
 
 extern HQUEUE16 hCursorQueue;			 /* queue.c */
 
-DWORD MSG_WineStartTicks; /* Ticks at Wine startup */
-
 static UINT doubleClickSpeed = 452;
 
 /***********************************************************************

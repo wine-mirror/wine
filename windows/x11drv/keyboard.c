@@ -596,7 +596,7 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 
     INT event_x = (pWnd? pWnd->rectWindow.left : 0) + event->x;
     INT event_y = (pWnd? pWnd->rectWindow.top  : 0) + event->y;
-    DWORD event_time = event->time - MSG_WineStartTicks;
+    DWORD event_time = event->time;
 
     /* this allows support for dead keys */
     if ((event->keycode >> 8) == 0x10)

@@ -646,8 +646,6 @@ void MAIN_WineInit(void)
 
     setlocale(LC_CTYPE,"");
     gettimeofday( &tv, NULL);
-    MSG_WineStartTicks = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
-    
     atexit(called_at_exit);
 }
 
@@ -700,5 +698,5 @@ DWORD WINAPI GetTickCount(void)
 {
     struct timeval t;
     gettimeofday( &t, NULL );
-    return ((t.tv_sec * 1000) + (t.tv_usec / 1000)) - MSG_WineStartTicks;
+    return (t.tv_sec * 1000) + (t.tv_usec / 1000);
 }

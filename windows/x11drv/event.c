@@ -697,14 +697,12 @@ static void EVENT_MotionNotify( HWND hWnd, XMotionEvent *event )
     MOUSE_SendEvent( MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE, 
 		     xOffset + event->x, yOffset + event->y,
 		     X11DRV_EVENT_XStateToKeyState( event->state ), 
-		     event->time - MSG_WineStartTicks,
-		     hWnd);
+		     event->time, hWnd);
   } else {
     MOUSE_SendEvent( MOUSEEVENTF_MOVE,
                      event->x_root, event->y_root,
                      X11DRV_EVENT_XStateToKeyState( event->state ), 
-                     event->time - MSG_WineStartTicks,
-                     hWnd);
+                     event->time, hWnd);
   }
 }
 
@@ -758,8 +756,7 @@ static void EVENT_ButtonPress( HWND hWnd, XButtonEvent *event )
   MOUSE_SendEvent( statusCodes[buttonNum], 
 		   xOffset + event->x, yOffset + event->y,
 		   MAKEWPARAM(keystate,wData),
-		   event->time - MSG_WineStartTicks,
-		   hWnd);
+		   event->time, hWnd);
 }
 
 
@@ -806,9 +803,7 @@ static void EVENT_ButtonRelease( HWND hWnd, XButtonEvent *event )
 
   MOUSE_SendEvent( statusCodes[buttonNum], 
 		   xOffset + event->x, yOffset + event->y,
-		   keystate, 
-		   event->time - MSG_WineStartTicks,
-		   hWnd);
+		   keystate, event->time, hWnd);
 }
 
 
@@ -1927,8 +1922,7 @@ static void EVENT_DGAMotionEvent( XDGAMotionEvent *event )
   MOUSE_SendEvent( MOUSEEVENTF_MOVE, 
 		   event->dx, event->dy,
 		   X11DRV_EVENT_XStateToKeyState( event->state ), 
-		   event->time - MSG_WineStartTicks,
-		   DGAhwnd );
+		   event->time, DGAhwnd );
 }
 
 static void EVENT_DGAButtonPressEvent( XDGAButtonEvent *event )
@@ -1956,11 +1950,7 @@ static void EVENT_DGAButtonPressEvent( XDGAButtonEvent *event )
       break;
   }
   
-  MOUSE_SendEvent( statusCodes[buttonNum], 
-		   0, 0, 
-		   keystate, 
-		   event->time - MSG_WineStartTicks,
-		   DGAhwnd );
+  MOUSE_SendEvent( statusCodes[buttonNum], 0, 0, keystate, event->time, DGAhwnd );
 }
 
 static void EVENT_DGAButtonReleaseEvent( XDGAButtonEvent *event )
@@ -1988,11 +1978,7 @@ static void EVENT_DGAButtonReleaseEvent( XDGAButtonEvent *event )
       break;
   }
   
-  MOUSE_SendEvent( statusCodes[buttonNum], 
-		   0, 0, 
-		   keystate, 
-		   event->time - MSG_WineStartTicks,
-		   DGAhwnd );
+  MOUSE_SendEvent( statusCodes[buttonNum], 0, 0, keystate, event->time, DGAhwnd );
 }
 
 #endif
