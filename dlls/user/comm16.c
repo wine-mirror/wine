@@ -1068,6 +1068,9 @@ INT16 WINAPI ReadComm16(INT16 cid,LPSTR lpvBuf,INT16 cbRead)
 		return -1;
 	}	
 
+	if(0==comm_inbuf(ptr))
+		WaitForSingleObjectEx( COM[cid].read_ov.hEvent, 1, TRUE);
+
 	/* read unget character */
 	if (ptr->unget>=0) {
 		*lpvBuf++ = ptr->unget;
