@@ -1466,6 +1466,7 @@ dlls/winnls/Makefile
 dlls/winsock/Makefile
 dlls/winsock/tests/Makefile
 dlls/winspool/Makefile
+dlls/wintab32/Makefile
 dlls/wintrust/Makefile
 dlls/wow32/Makefile
 dlls/wsock32/Makefile

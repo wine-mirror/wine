@@ -1,0 +1,21 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = wintab32.dll
+IMPORTS   = kernel32
+ALTNAMES  = wintab.dll
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
+
+C_SRCS = \
+	context.c \
+	manager.c
+
+C_SRCS16 = \
+	wintab16.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

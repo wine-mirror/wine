@@ -105,6 +105,7 @@ BASEDIRS = \
 	winnls \
 	winsock \
 	winspool \
+	wintab32 \
 	wintrust \
 	wow32 \
 	wsock32
@@ -171,6 +172,7 @@ WIN16_FILES = \
 	wing.dll$(DLLEXT) \
 	winnls.dll$(DLLEXT) \
 	winsock.dll$(DLLEXT) \
+	wintab.dll$(DLLEXT) \
 	wprocs.dll$(DLLEXT)
 
 all: \
@@ -264,6 +266,7 @@ all: \
 	winmm.dll$(DLLEXT) \
 	winnls32.dll$(DLLEXT) \
 	winspool.drv$(DLLEXT) \
+	wintab32.dll$(DLLEXT) \
 	wintrust.dll$(DLLEXT) \
 	wnaspi32.dll$(DLLEXT) \
 	wow32.dll$(DLLEXT) \
@@ -557,6 +560,9 @@ winnls32.dll$(DLLEXT) winnls.dll$(DLLEXT): winnls/winnls32.dll$(DLLEXT)
 winspool.drv$(DLLEXT): winspool/winspool.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winspool/winspool.drv$(DLLEXT) $@
 
+wintab32.dll$(DLLEXT) wintab.dll$(DLLEXT): wintab32/wintab32.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) wintab32/wintab32.dll$(DLLEXT) $@
+
 wintrust.dll$(DLLEXT): wintrust/wintrust.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) wintrust/wintrust.dll$(DLLEXT) $@
 
@@ -653,6 +659,7 @@ IMPORT_LIBS = \
 	libwinmm \
 	libwinnls32 \
 	libwinspool \
+	libwintab32 \
 	libwintrust \
 	libwnaspi32 \
 	libwow32 \
@@ -1030,6 +1037,11 @@ libwinspool.def: winspool/winspool.drv.spec.def
 libwinspool.a: winspool/winspool.drv.spec.def
 	$(DLLTOOL) -k -l $@ -d winspool/winspool.drv.spec.def
 
+libwintab32.def: wintab32/wintab32.spec.def
+	$(RM) $@ && $(LN_S) wintab32/wintab32.spec.def $@
+libwintab32.a: wintab32/wintab32.spec.def
+	$(DLLTOOL) -k -l $@ -d wintab32/wintab32.spec.def
+
 libwintrust.def: wintrust/wintrust.spec.def
 	$(RM) $@ && $(LN_S) wintrust/wintrust.spec.def $@
 libwintrust.a: wintrust/wintrust.spec.def
@@ -1134,6 +1146,7 @@ wininet/wininet.spec.def: $(WINEBUILD)
 winmm/winmm.spec.def: $(WINEBUILD)
 winnls/winnls32.spec.def: $(WINEBUILD)
 winspool/winspool.drv.spec.def: $(WINEBUILD)
+wintab32/wintab32.spec.def: $(WINEBUILD)
 wintrust/wintrust.spec.def: $(WINEBUILD)
 winaspi/wnaspi32.spec.def: $(WINEBUILD)
 wow32/wow32.spec.def: $(WINEBUILD)
@@ -1239,6 +1252,7 @@ wininet/wininet.dll$(DLLEXT): wininet
 winmm/winmm.dll$(DLLEXT): winmm
 winnls/winnls32.dll$(DLLEXT): winnls
 winspool/winspool.drv$(DLLEXT): winspool
+wintab32/wintab32.dll$(DLLEXT): wintab32
 wintrust/wintrust.dll$(DLLEXT): wintrust
 winaspi/wnaspi32.dll$(DLLEXT): winaspi
 wow32/wow32.dll$(DLLEXT): wow32
@@ -1341,6 +1355,7 @@ wininet/__install__: wininet.dll$(DLLEXT)
 winmm/__install__: winmm.dll$(DLLEXT)
 winnls/__install__: winnls32.dll$(DLLEXT)
 winspool/__install__: winspool.drv$(DLLEXT)
+wintab32/__install__: wintab32.dll$(DLLEXT)
 wintrust/__install__: wintrust.dll$(DLLEXT)
 winaspi/__install__: wnaspi32.dll$(DLLEXT)
 wow32/__install__: wow32.dll$(DLLEXT)

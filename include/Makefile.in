@@ -96,6 +96,7 @@ WINDOWS_INCLUDES = \
 	olectl.h \
 	oledlg.h \
 	oleidl.h \
+	pktdef.h \
 	poppack.h \
 	prsht.h \
 	psapi.h \
@@ -152,6 +153,8 @@ WINDOWS_INCLUDES = \
 	winsock2.h \
 	winspool.h \
 	winsvc.h \
+	wintab.h \
+	wintabx.h \
 	winternl.h \
 	winuser.h \
 	winver.h \
