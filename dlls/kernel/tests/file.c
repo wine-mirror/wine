@@ -738,14 +738,12 @@ static void test_MoveFileA(void)
     lstrcpyA(dest, tempdir);
     lstrcatA(dest, "\\wild?.*");
     /* FIXME: if we create a file with wildcards we can't delete it now that DeleteFile works correctly */
-#if 0
     ret = MoveFileA(source, dest);
-    todo_wine {
-      ok(!ret, "MoveFileA: shouldn't move to wildcard file\n");
-      ok(GetLastError() == ERROR_INVALID_NAME,
-              "MoveFileA: with wildcards, unexpected error %ld\n", GetLastError());
-      if (ret || (GetLastError() != ERROR_INVALID_NAME))
-      {
+    ok(!ret, "MoveFileA: shouldn't move to wildcard file\n");
+    ok(GetLastError() == ERROR_INVALID_NAME,
+       "MoveFileA: with wildcards, unexpected error %ld\n", GetLastError());
+    if (ret || (GetLastError() != ERROR_INVALID_NAME))
+    {
         WIN32_FIND_DATAA fd;
         char temppath[MAX_PATH];
         HANDLE hFind;
@@ -766,14 +764,11 @@ static void test_MoveFileA(void)
           while (FindNextFileA(hFind, &fd));
           FindClose(hFind);
         }
-      }
-      ret = DeleteFileA(source);
-      ok(ret, "DeleteFileA: error %ld\n", GetLastError());
-      ret = DeleteFileA(dest);
-      ok(!ret, "DeleteFileA: error %ld\n", GetLastError());
     }
-#endif
-
+    ret = DeleteFileA(source);
+    ok(ret, "DeleteFileA: error %ld\n", GetLastError());
+    ret = DeleteFileA(dest);
+    ok(!ret, "DeleteFileA: error %ld\n", GetLastError());
     ret = RemoveDirectoryA(tempdir);
     ok(ret, "DeleteDirectoryA: error %ld\n", GetLastError());
 }
