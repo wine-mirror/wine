@@ -1833,12 +1833,10 @@ int TLB_ReadTypeLib(LPCWSTR pszFileName, INT index, ITypeLib2 **ppTypeLib)
           if ( dwSignature == MSFT_SIGNATURE)
           {
             *ppTypeLib = ITypeLib2_Constructor_MSFT(pBase, dwTLBLength);
-            ITypeLib2_AddRef(*ppTypeLib);
           }
 	  else if ( dwSignature == SLTG_SIGNATURE)
           {
             *ppTypeLib = ITypeLib2_Constructor_SLTG(pBase, dwTLBLength);
-            ITypeLib2_AddRef(*ppTypeLib);
 	  }
           UnmapViewOfFile(pBase);
         }
@@ -1871,12 +1869,10 @@ int TLB_ReadTypeLib(LPCWSTR pszFileName, INT index, ITypeLib2 **ppTypeLib)
               if ( dwSignature == MSFT_SIGNATURE)
               {
                   *ppTypeLib = ITypeLib2_Constructor_MSFT(pBase, dwTLBLength);
-                  ITypeLib2_AddRef(*ppTypeLib);
 	      }
 	      else if ( dwSignature == SLTG_SIGNATURE)
 	      {
                   *ppTypeLib = ITypeLib2_Constructor_SLTG(pBase, dwTLBLength);
-                  ITypeLib2_AddRef(*ppTypeLib);
 	      }
               else
               {
