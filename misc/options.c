@@ -248,6 +248,7 @@ static void parse_options( char *argv[] )
 
     for (i = 0; argv[i]; i++)
     {
+        const char *equalarg = NULL;
         char *p = argv[i];
         if (*p++ != '-') continue;  /* not an option */
         if (*p && !p[1]) /* short name */
@@ -257,14 +258,31 @@ static void parse_options( char *argv[] )
         }
         else  /* long name */
         {
+	    const char *equal = strchr  (p, '=');
             if (*p == '-') p++;
             /* check for the long name */
-            for (opt = option_table; opt->longname; opt++)
+            for (opt = option_table; opt->longname; opt++) {
+	        /* Plain --option */
                 if (!strcmp( p, opt->longname )) break;
+
+		/* --option=value */
+		if (opt->has_arg &&
+		    equal &&
+		    strlen (opt->longname) == equal - p &&
+		    !strncmp (p, opt->longname, equal - p)) {
+		        equalarg = equal + 1;
+		        break;
+		    }
+	    }
         }
         if (!opt->longname) continue;
 
-        if (opt->has_arg && argv[i+1])
+	if (equalarg)
+	{
+            opt->func( equalarg );
+            remove_options( argv, i, 1, opt->inherit );
+	}
+        else if (opt->has_arg && argv[i+1])
         {
             opt->func( argv[i+1] );
             remove_options( argv, i, 2, opt->inherit );
