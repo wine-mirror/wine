@@ -1384,7 +1384,7 @@ static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className,
     }
 
 
-    while (pWnd)
+    for ( ; pWnd ; WIN_UpdateWndPtr(&pWnd,pWnd->next))
     {
         if (className && !(pWnd->dwStyle & WS_CHILD))
         {
@@ -1401,13 +1401,12 @@ static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className,
         {
             retvalue = pWnd->hwndSelf;
             goto end;
-    }
+        }
         if (pWnd->text && !strcmp( pWnd->text, title ))
         {
             retvalue = pWnd->hwndSelf;
             goto end;
-}
-        WIN_UpdateWndPtr(&pWnd,pWnd->next);
+        }
     }
     retvalue = 0;
 end:
