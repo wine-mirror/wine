@@ -564,7 +564,16 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_SetAllParameters(
 	LPCDS3DLISTENER lpcDS3DL,
 	DWORD dwApply)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DListenerImpl,iface);
+	TRACE("setting: all parameters; dwApply = %ld\n", dwApply);
+	This->ds3dl = *lpcDS3DL;
+	if (dwApply == DS3D_IMMEDIATE)
+	{
+		FIXME("nothing happens yet...\n");
+		/* TRACE("recalculating...\n"); */
+		/* place function for recalculation here */
+	}
+	FIXME("DS3D_DEFERRED flag not supported yet\n");
 	return DS_OK;
 }
 
@@ -573,7 +582,16 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_SetDistanceFactor(
 	D3DVALUE fDistanceFactor,
 	DWORD dwApply)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DListenerImpl,iface);
+	TRACE("setting: Distance Factor = %f; dwApply = %ld\n", fDistanceFactor, dwApply);
+	This->ds3dl.flDistanceFactor = fDistanceFactor;
+	if (dwApply == DS3D_IMMEDIATE)
+	{
+		FIXME("nothing happens yet...\n");
+		/* TRACE("recalculating...\n"); */
+		/* place function for recalculation here */
+	}
+	FIXME("DS3D_DEFERRED flag not supported yet\n");
 	return DS_OK;
 }
 
@@ -582,7 +600,16 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_SetDopplerFactor(
 	D3DVALUE fDopplerFactor,
 	DWORD dwApply)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DListenerImpl,iface);
+	TRACE("setting: Doppler Factor = %f; dwApply = %ld\n", fDopplerFactor, dwApply);
+	This->ds3dl.flDopplerFactor = fDopplerFactor;
+	if (dwApply == DS3D_IMMEDIATE)
+	{
+		FIXME("nothing happens yet...\n");
+		/* TRACE("recalculating...\n"); */
+		/* place function for recalculation here */
+	}
+	FIXME("DS3D_DEFERRED flag not supported yet\n");
 	return DS_OK;
 }
 
@@ -592,7 +619,22 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_SetOrientation(
 	D3DVALUE xTop, D3DVALUE yTop, D3DVALUE zTop,
 	DWORD dwApply)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DListenerImpl,iface);
+	TRACE("setting: Front vector = (%f,%f,%f); Top vector = (%f,%f,%f); dwApply = %ld\n", \
+	xFront, yFront, zFront, xTop, yTop, zTop, dwApply);
+	This->ds3dl.vOrientFront.u1.x = xFront;
+	This->ds3dl.vOrientFront.u2.y = yFront;
+	This->ds3dl.vOrientFront.u3.z = zFront;
+	This->ds3dl.vOrientTop.u1.x = xTop;
+	This->ds3dl.vOrientTop.u2.y = yTop;
+	This->ds3dl.vOrientTop.u3.z = zTop;
+	if (dwApply == DS3D_IMMEDIATE)
+	{
+		FIXME("nothing happens yet...\n");
+		/* TRACE("recalculating...\n"); */
+		/* place function for recalculation here */
+	}
+	FIXME("DS3D_DEFERRED flag not supported yet\n");
 	return DS_OK;
 }
 
@@ -601,7 +643,18 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_SetPosition(
 	D3DVALUE x, D3DVALUE y, D3DVALUE z,
 	DWORD dwApply)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DListenerImpl,iface);
+	TRACE("setting: Position vector = (%f,%f,%f); dwApply = %ld\n", x, y, z, dwApply);
+	This->ds3dl.vPosition.u1.x = x;
+	This->ds3dl.vPosition.u2.y = y;
+	This->ds3dl.vPosition.u3.z = z;
+	if (dwApply == DS3D_IMMEDIATE)
+	{
+		FIXME("nothing happens yet...\n");
+		/* TRACE("recalculating...\n"); */
+		/* place function for recalculation here */
+	}
+	FIXME("DS3D_DEFERRED flag not supported yet\n");
 	return DS_OK;
 }
 
@@ -610,7 +663,16 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_SetRolloffFactor(
 	D3DVALUE fRolloffFactor,
 	DWORD dwApply)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DListenerImpl,iface);
+	TRACE("setting: Rolloff Factor = %f; dwApply = %ld\n", fRolloffFactor, dwApply);
+	This->ds3dl.flRolloffFactor = fRolloffFactor;
+	if (dwApply == DS3D_IMMEDIATE)
+	{
+		FIXME("nothing happens yet...\n");
+		/* TRACE("recalculating...\n"); */
+		/* place function for recalculation here */
+	}
+	FIXME("DS3D_DEFERRED flag not supported yet\n");
 	return DS_OK;
 }
 
@@ -619,7 +681,18 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_SetVelocity(
 	D3DVALUE x, D3DVALUE y, D3DVALUE z,
 	DWORD dwApply)
 {
-	FIXME("stub\n");
+	ICOM_THIS(IDirectSound3DListenerImpl,iface);
+	TRACE("setting: Velocity vector = (%f,%f,%f); dwApply = %ld\n", x, y, z, dwApply);
+	This->ds3dl.vVelocity.u1.x = x;
+	This->ds3dl.vVelocity.u2.y = y;
+	This->ds3dl.vVelocity.u3.z = z;
+	if (dwApply == DS3D_IMMEDIATE)
+	{
+		FIXME("nothing happens yet...\n");
+		/* TRACE("recalculating...\n"); */
+		/* place function for recalculation here */
+	}
+	FIXME("DS3D_DEFERRED flag not supported yet\n");
 	return DS_OK;
 }
 
@@ -627,7 +700,7 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_CommitDeferredSettings(
 	LPDIRECTSOUND3DLISTENER iface)
 
 {
-	FIXME("stub\n");
+	FIXME("stub; deferred settings not used yet\n");
 	return DS_OK;
 }
 
