@@ -339,7 +339,7 @@ HRESULT WINAPI CreateDispTypeInfo16(
 }
 
 /******************************************************************************
- * CreateDispTypeInfo [OLE2DISP.31]
+ * CreateDispTypeInfo [OLEAUT32.31]
  */
 HRESULT WINAPI CreateDispTypeInfo(
 	INTERFACEDATA *pidata,
@@ -365,7 +365,7 @@ HRESULT WINAPI CreateStdDispatch16(
 }
 
 /******************************************************************************
- * CreateStdDispatch [OLE2DISP.32]
+ * CreateStdDispatch [OLEAUT32.32]
  */
 HRESULT WINAPI CreateStdDispatch(
         IUnknown* punkOuter,

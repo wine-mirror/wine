@@ -111,6 +111,7 @@ NTSTATUS WINAPI NtReleaseSemaphore( HANDLE handle, ULONG count, PULONG previous 
  
 /**************************************************************************
  * NtCreateEvent (NTDLL.@)
+ * ZwCreateEvent (NTDLL.@)
  */
 NTSTATUS WINAPI NtCreateEvent(
 	OUT PHANDLE EventHandle,
@@ -137,6 +138,7 @@ NTSTATUS WINAPI NtCreateEvent(
 
 /******************************************************************************
  *  NtOpenEvent (NTDLL.@)
+ *  ZwOpenEvent (NTDLL.@)
  */
 NTSTATUS WINAPI NtOpenEvent(
 	OUT PHANDLE EventHandle,
@@ -161,6 +163,7 @@ NTSTATUS WINAPI NtOpenEvent(
 
 /******************************************************************************
  *  NtSetEvent (NTDLL.@)
+ *  ZwSetEvent (NTDLL.@)
  */
 NTSTATUS WINAPI NtSetEvent( HANDLE handle, PULONG NumberOfThreadsReleased )
 {

@@ -832,6 +832,7 @@ INT16 WINAPI GetKeyboardLayoutName16(LPSTR pwszKLID)
 
 /***********************************************************************
  *		GetKeyboardLayout (USER32.@)
+ *		GetKeyboardLayout (USER.651)
  *
  * FIXME: - device handle for keyboard layout defaulted to 
  *          the language id. This is the way Windows default works.
@@ -937,6 +938,7 @@ INT WINAPI ToAsciiEx( UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 
 /**********************************************************************
  *		ActivateKeyboardLayout (USER32.@)
+ *		ActivateKeyboardLayout (USER.650)
  *
  * Call ignored. WINE supports only system default keyboard layout.
  */
@@ -950,6 +952,7 @@ HKL WINAPI ActivateKeyboardLayout(HKL hLayout, UINT flags)
 
 /***********************************************************************
  *		GetKeyboardLayoutList (USER32.@)
+ *		GetKeyboardLayoutList (USER.652)
  *
  * FIXME: Supports only the system default language and layout and 
  *          returns only 1 value.

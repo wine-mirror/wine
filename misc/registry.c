@@ -1574,7 +1574,6 @@ void SHELL_LoadRegistry( void )
 /***************************************************************************/
 
 /******************************************************************************
- * RegFlushKey [KERNEL.227]
  * RegFlushKey [ADVAPI32.@]
  * Immediately writes key to registry.
  * Only returns after data has been written to disk.

@@ -1382,7 +1382,7 @@ DWORD WINAPI GetFullPathNameW( LPCWSTR name, DWORD len, LPWSTR buffer,
 
 
 /***********************************************************************
- *           wine_get_unix_file_name   (Not a Windows API, but exported from KERNEL32)
+ *           wine_get_unix_file_name (KERNEL32.@) Not a Windows API
  *
  * Return the full Unix file name for a given path.
  */
@@ -2118,6 +2118,7 @@ BOOL WINAPI LocalFileTimeToFileTime( const FILETIME *localft,
 
 /***********************************************************************
  *           FileTimeToLocalFileTime   (KERNEL32.@)
+ *           FileTimeToLocalFileTime   (KERNEL.432)
  */
 BOOL WINAPI FileTimeToLocalFileTime( const FILETIME *utcft,
                                        LPFILETIME localft )

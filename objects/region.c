@@ -899,6 +899,7 @@ DWORD WINAPI GetRegionData16(HRGN16 hrgn, DWORD count, LPRGNDATA rgndata)
 
 /***********************************************************************
  *           ExtCreateRegion   (GDI32.@)
+ *           ExtCreateRegion   (GDI.608)
  * 
  */
 HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA* rgndata)
@@ -976,6 +977,7 @@ BOOL WINAPI PtInRegion( HRGN hrgn, INT x, INT y )
 
 /***********************************************************************
  *           RectInRegion    (GDI.466)
+ *           RectInRegionOld (GDI.181)
  */
 BOOL16 WINAPI RectInRegion16( HRGN16 hrgn, const RECT16 *rect )
 {
@@ -2925,6 +2927,7 @@ HRGN WINAPI CreatePolygonRgn( const POINT *points, INT count,
 
 /***********************************************************************
  * GetRandomRgn [GDI32.@]
+ * GetRandomRgn [GDI.611]
  *
  * NOTES
  *     This function is documented in MSDN online
@@ -3227,7 +3230,6 @@ done:
 }
 
 /***********************************************************************
- *           GetMetaRgn    (GDI.328)
  *           GetMetaRgn    (GDI32.@)
  */
 INT WINAPI GetMetaRgn( HDC hdc, HRGN hRgn )
@@ -3239,7 +3241,6 @@ INT WINAPI GetMetaRgn( HDC hdc, HRGN hRgn )
 
 
 /***********************************************************************
- *           SetMetaRgn    (GDI.506)
  *           SetMetaRgn    (GDI32.@)
  */
 INT WINAPI SetMetaRgn( HDC hdc )

@@ -224,7 +224,7 @@ static DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
 #endif
 
 /**************************************************************************
- *		OSS_auxMessage				[sample driver]
+ *		auxMessage (WINEOSS.2)
  */
 DWORD WINAPI OSS_auxMessage(UINT wDevID, UINT wMsg, DWORD dwUser, 
 			    DWORD dwParam1, DWORD dwParam2)

@@ -175,7 +175,7 @@ static BOOL MFDRV_DeleteDC( DC *dc )
 }
 
 /**********************************************************************
- *	     CreateMetaFile16   (GDI.125)
+ *	     CreateMetaFile     (GDI.125)
  *	     CreateMetaFile16   (GDI32.@)
  *
  *  Create a new DC and associate it with a metafile. Pass a filename
@@ -297,7 +297,7 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
 }
 
 /******************************************************************
- *	     CloseMetaFile16   (GDI.126)
+ *	     CloseMetaFile     (GDI.126)
  *	     CloseMetaFile16   (GDI32.@)
  */
 HMETAFILE16 WINAPI CloseMetaFile16( 

@@ -12,6 +12,7 @@
 #include "ole2.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
+
 /***********************************************************************
  *           OleUIAddVerbMenuA (OLEDLG.1)
  */
@@ -196,10 +197,7 @@ BOOL WINAPI OleUIUpdateLinksA(
 }
 
 /***********************************************************************
- *           OleUIUpdateLinksW (OLEDLG.?)
- * FIXME
- *     I haven't been able to find the ordinal for this function,
- *     This means it can't be called from outside the DLL.
+ *           OleUIUpdateLinksW (OLEDLG.23)
  */
 BOOL WINAPI OleUIUpdateLinksW(
   LPOLEUILINKCONTAINERW lpOleUILinkCntr,

@@ -242,6 +242,7 @@ VOID WINAPI RtlTimeToElapsedTimeFields(
 
 /***********************************************************************
  *      NtQuerySystemTime   (NTDLL.@)
+ *      ZwQuerySystemTime   (NTDLL.@)
  */
 void WINAPI NtQuerySystemTime( LARGE_INTEGER *time )
 {

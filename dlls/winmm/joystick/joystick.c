@@ -336,7 +336,7 @@ static LONG	JSTCK_GetPos(DWORD dwDevID, LPJOYINFO lpInfo)
 }
 
 /**************************************************************************
- * 				DriverProc		[internal]
+ * 				DriverProc (JOYSTICK.@)
  */
 LONG CALLBACK	JSTCK_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 				 DWORD dwParam1, DWORD dwParam2)
@@ -370,7 +370,7 @@ LONG CALLBACK	JSTCK_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 #else
 
 /**************************************************************************
- * 				DriverProc		[internal]
+ * 				DriverProc (JOYSTICK.@)
  */
 LONG CALLBACK	JSTCK_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 				 DWORD dwParam1, DWORD dwParam2)

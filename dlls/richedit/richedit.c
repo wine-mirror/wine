@@ -148,9 +148,9 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 }
 
 /***********************************************************************
- * DllGetVersion [COMCTL32.25]
+ * DllGetVersion [RICHED32.2]
  *
- * Retrieves version information of the 'COMCTL32.DLL'
+ * Retrieves version information of the 'RICHED32.DLL'
  *
  * PARAMS
  *     pdvi [O] pointer to version information structure.

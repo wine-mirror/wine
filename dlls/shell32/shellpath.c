@@ -1094,7 +1094,7 @@ BOOL WINAPI SHGetSpecialFolderPathAW (
 }
 
 /*************************************************************************
- * SHGetFolderPathA			[SHFOLDER.@]
+ * SHGetFolderPathA			[SHELL32.@]
  */
 HRESULT WINAPI SHGetFolderPathA(
 	HWND hwndOwner,
@@ -1111,7 +1111,7 @@ HRESULT WINAPI SHGetFolderPathA(
 }
 
 /*************************************************************************
- * SHGetFolderPathW			[SHFOLDER.@]
+ * SHGetFolderPathW			[SHELL32.@]
  */
 HRESULT WINAPI SHGetFolderPathW(
 	HWND hwndOwner,

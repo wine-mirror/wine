@@ -43,6 +43,7 @@ char* _strdec(const char* str1, const char* str2)
 }
 
 /*********************************************************************
+ *		_mbsdup (MSVCRT.@)
  *		_strdup (MSVCRT.@)
  */
 char* _strdup(const char* str)

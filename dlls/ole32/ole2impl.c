@@ -18,7 +18,8 @@ DEFAULT_DEBUG_CHANNEL(ole);
 #define MAX_CLIPFORMAT_NAME   80
 
 /******************************************************************************
- * Function : OleQueryCreateFromData [OLE32.117]
+ *		OleQueryCreateFromData [OLE32.117]
+ *
  * Author   : Abey George
  * Checks whether an object can become an embedded object.
  * the clipboard or OLE drag and drop.
@@ -65,7 +66,8 @@ HRESULT WINAPI OleQueryCreateFromData(LPDATAOBJECT pSrcDataObject)
 }
 
 /******************************************************************************
- * Function : OleCreateFromData        [OLE32.92]
+ *		OleCreateFromData        [OLE32.92]
+ *
  * Author   : Abey George
  * Creates an embedded object from data transfer object retrieved from
  * the clipboard or OLE drag and drop.

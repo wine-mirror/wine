@@ -276,7 +276,7 @@ static LPSTR SETUPX_GetSectionEntries(LPCSTR filename, LPCSTR section)
 
 
 /***********************************************************************
- *		InstallHinfSection
+ *		InstallHinfSection (SETUPX.527)
  *
  * hwnd = parent window
  * hinst = instance of SETUPX.DLL
@@ -978,7 +978,7 @@ static BOOL SETUPX_IP_TranslateLDID(int ldid, LPSTR *p, HINF16 hInf)
 }
 
 /***********************************************************************
- *		GenFormStrWithoutPlaceHolders
+ *		GenFormStrWithoutPlaceHolders (SETUPX.103)
  *
  * ought to be pretty much implemented, I guess...
  */
@@ -1154,7 +1154,7 @@ static BOOL SETUPX_CopyFiles(LPSTR *pSub, HINF16 hInf)
 }
 
 /***********************************************************************
- *		GenInstall
+ *		GenInstall (SETUPX.101)
  *
  * generic installer function for .INF file sections
  *

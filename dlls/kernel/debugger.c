@@ -120,7 +120,6 @@ BOOL WINAPI WaitForDebugEvent(
 
 /**********************************************************************
  *           ContinueDebugEvent   (KERNEL32.@)
- *           ContinueDebugEvent   (WIN32S16.5)
  *
  *  Enables a thread that previously produced a debug event to continue.
  *

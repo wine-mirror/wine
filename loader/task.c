@@ -1157,13 +1157,16 @@ void WINAPI GetTaskQueueES16(void)
 
 
 /***********************************************************************
- *           GetCurrentTask   (KERNEL.36)
+ *           GetCurrentTask   (KERNEL32.@)
  */
 HTASK16 WINAPI GetCurrentTask(void)
 {
     return NtCurrentTeb()->htask16;
 }
 
+/***********************************************************************
+ *           GetCurrentTask   (KERNEL.36)
+ */
 DWORD WINAPI WIN16_GetCurrentTask(void)
 {
     /* This is the version used by relay code; the first task is */

@@ -313,7 +313,8 @@ static HGLOBAL RES_LoadResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
 }
 
 /**********************************************************************
- *          FindResource16   (KERNEL.60)
+ *          FindResource     (KERNEL.60)
+ *          FindResource16   (KERNEL32.@)
  */
 HRSRC16 WINAPI FindResource16( HMODULE16 hModule, LPCSTR name, LPCSTR type )
 {
@@ -360,7 +361,8 @@ HRSRC WINAPI FindResourceW(HINSTANCE hModule, LPCWSTR name, LPCWSTR type)
 }
 
 /**********************************************************************
- *          LoadResource16   (KERNEL.61)
+ *          LoadResource     (KERNEL.61)
+ *          LoadResource16   (KERNEL32.@)
  */
 HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 {
@@ -386,7 +388,7 @@ SEGPTR WINAPI WIN16_LockResource16( HGLOBAL16 handle )
 }
 
 /**********************************************************************
- *          LockResource16   (KERNEL but also exported from KERNEL32 in Wine)
+ *          LockResource16 (KERNEL32.@)
  */
 LPVOID WINAPI LockResource16( HGLOBAL16 handle )
 {
@@ -408,7 +410,8 @@ LPVOID WINAPI LockResource( HGLOBAL handle )
 }
 
 /**********************************************************************
- *          FreeResource16   (KERNEL.63)
+ *          FreeResource     (KERNEL.63)
+ *          FreeResource16   (KERNEL32.@)
  */
 BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
 {
@@ -444,7 +447,8 @@ BOOL WINAPI FreeResource( HGLOBAL handle )
 }
 
 /**********************************************************************
- *          SizeofResource16 (KERNEL.65)
+ *          SizeofResource   (KERNEL.65)
+ *          SizeofResource16 (KERNEL32.@)
  */
 DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 {

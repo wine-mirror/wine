@@ -383,7 +383,7 @@ static  DWORD	wodMapperStatus(WAVEMAPDATA* wom, DWORD flags, LPVOID ptr)
 }
 
 /**************************************************************************
- * 				WAVEMAP_wodMessage	[sample driver]
+ * 				wodMessage (MSACMMAP.@)
  */
 DWORD WINAPI WAVEMAP_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser, 
 				DWORD dwParam1, DWORD dwParam2)
@@ -736,7 +736,7 @@ static  DWORD	widMapperStatus(WAVEMAPDATA* wim, DWORD flags, LPVOID ptr)
 }
 
 /**************************************************************************
- * 				WAVEMAP_widMessage	[sample driver]
+ * 				widMessage (MSACMMAP.@)
  */
 DWORD WINAPI WAVEMAP_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 				DWORD dwParam1, DWORD dwParam2)
@@ -803,7 +803,7 @@ static	DWORD	WAVEMAP_drvClose(DWORD dwDevID)
 }
 
 /**************************************************************************
- * 				DriverProc		[internal]
+ * 				DriverProc (MSACMMAP.@)
  */
 LONG CALLBACK	WAVEMAP_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 				   DWORD dwParam1, DWORD dwParam2)

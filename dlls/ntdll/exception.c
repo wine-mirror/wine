@@ -163,7 +163,7 @@ static void EXC_DefaultHandling( EXCEPTION_RECORD *rec, CONTEXT *context )
 
 
 /***********************************************************************
- *            EXC_RtlRaiseException / RtlRaiseException (NTDLL.464)
+ *		RtlRaiseException (NTDLL.@)
  */
 DEFINE_REGS_ENTRYPOINT_1( RtlRaiseException, EXC_RtlRaiseException, EXCEPTION_RECORD * )
 void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
@@ -231,7 +231,7 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 
 
 /*******************************************************************
- *         EXC_RtlUnwind / RtlUnwind  (KERNEL32.590) (NTDLL.518)
+ *		RtlUnwind (NTDLL.@)
  */
 DEFINE_REGS_ENTRYPOINT_4( RtlUnwind, EXC_RtlUnwind, 
                           PEXCEPTION_FRAME, LPVOID, PEXCEPTION_RECORD, DWORD )
@@ -308,7 +308,7 @@ void WINAPI EXC_RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
 
 
 /*******************************************************************
- *            EXC_NtRaiseException / NtRaiseException  (NTDLL.175)
+ *		NtRaiseException (NTDLL.@)
  */
 DEFINE_REGS_ENTRYPOINT_3( NtRaiseException, EXC_NtRaiseException,
                           EXCEPTION_RECORD *, CONTEXT *, BOOL )

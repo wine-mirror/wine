@@ -10,7 +10,7 @@ typedef const GLubyte * GLstring;
 DEFAULT_DEBUG_CHANNEL(opengl);
 
 /***********************************************************************
- *              glAccum
+ *              glAccum (OPENGL32.@)
  */
 void WINAPI wine_glAccum( GLenum op, GLfloat value ) {
   TRACE("(%d, %f)\n", op, value );
@@ -20,7 +20,7 @@ void WINAPI wine_glAccum( GLenum op, GLfloat value ) {
 }
 
 /***********************************************************************
- *              glActiveTextureARB
+ *              glActiveTextureARB (OPENGL32.@)
  */
 void WINAPI wine_glActiveTextureARB( GLenum texture ) {
   TRACE("(%d)\n", texture );
@@ -30,7 +30,7 @@ void WINAPI wine_glActiveTextureARB( GLenum texture ) {
 }
 
 /***********************************************************************
- *              glAlphaFunc
+ *              glAlphaFunc (OPENGL32.@)
  */
 void WINAPI wine_glAlphaFunc( GLenum func, GLclampf ref ) {
   TRACE("(%d, %f)\n", func, ref );
@@ -40,7 +40,7 @@ void WINAPI wine_glAlphaFunc( GLenum func, GLclampf ref ) {
 }
 
 /***********************************************************************
- *              glAreTexturesResident
+ *              glAreTexturesResident (OPENGL32.@)
  */
 GLboolean WINAPI wine_glAreTexturesResident( GLsizei n, GLuint* textures, GLboolean* residences ) {
   GLboolean ret_value;
@@ -52,7 +52,7 @@ GLboolean WINAPI wine_glAreTexturesResident( GLsizei n, GLuint* textures, GLbool
 }
 
 /***********************************************************************
- *              glArrayElement
+ *              glArrayElement (OPENGL32.@)
  */
 void WINAPI wine_glArrayElement( GLint i ) {
   TRACE("(%d)\n", i );
@@ -62,7 +62,7 @@ void WINAPI wine_glArrayElement( GLint i ) {
 }
 
 /***********************************************************************
- *              glBegin
+ *              glBegin (OPENGL32.@)
  */
 void WINAPI wine_glBegin( GLenum mode ) {
   TRACE("(%d)\n", mode );
@@ -72,7 +72,7 @@ void WINAPI wine_glBegin( GLenum mode ) {
 }
 
 /***********************************************************************
- *              glBindTexture
+ *              glBindTexture (OPENGL32.@)
  */
 void WINAPI wine_glBindTexture( GLenum target, GLuint texture ) {
   TRACE("(%d, %d)\n", target, texture );
@@ -82,7 +82,7 @@ void WINAPI wine_glBindTexture( GLenum target, GLuint texture ) {
 }
 
 /***********************************************************************
- *              glBitmap
+ *              glBitmap (OPENGL32.@)
  */
 void WINAPI wine_glBitmap( GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, GLubyte* bitmap ) {
   TRACE("(%d, %d, %f, %f, %f, %f, %p)\n", width, height, xorig, yorig, xmove, ymove, bitmap );
@@ -92,7 +92,7 @@ void WINAPI wine_glBitmap( GLsizei width, GLsizei height, GLfloat xorig, GLfloat
 }
 
 /***********************************************************************
- *              glBlendColor
+ *              glBlendColor (OPENGL32.@)
  */
 void WINAPI wine_glBlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha ) {
   TRACE("(%f, %f, %f, %f)\n", red, green, blue, alpha );
@@ -102,7 +102,7 @@ void WINAPI wine_glBlendColor( GLclampf red, GLclampf green, GLclampf blue, GLcl
 }
 
 /***********************************************************************
- *              glBlendEquation
+ *              glBlendEquation (OPENGL32.@)
  */
 void WINAPI wine_glBlendEquation( GLenum mode ) {
   TRACE("(%d)\n", mode );
@@ -112,7 +112,7 @@ void WINAPI wine_glBlendEquation( GLenum mode ) {
 }
 
 /***********************************************************************
- *              glBlendFunc
+ *              glBlendFunc (OPENGL32.@)
  */
 void WINAPI wine_glBlendFunc( GLenum sfactor, GLenum dfactor ) {
   TRACE("(%d, %d)\n", sfactor, dfactor );
@@ -122,7 +122,7 @@ void WINAPI wine_glBlendFunc( GLenum sfactor, GLenum dfactor ) {
 }
 
 /***********************************************************************
- *              glCallList
+ *              glCallList (OPENGL32.@)
  */
 void WINAPI wine_glCallList( GLuint list ) {
   TRACE("(%d)\n", list );
@@ -132,7 +132,7 @@ void WINAPI wine_glCallList( GLuint list ) {
 }
 
 /***********************************************************************
- *              glCallLists
+ *              glCallLists (OPENGL32.@)
  */
 void WINAPI wine_glCallLists( GLsizei n, GLenum type, GLvoid* lists ) {
   TRACE("(%d, %d, %p)\n", n, type, lists );
@@ -142,7 +142,7 @@ void WINAPI wine_glCallLists( GLsizei n, GLenum type, GLvoid* lists ) {
 }
 
 /***********************************************************************
- *              glClear
+ *              glClear (OPENGL32.@)
  */
 void WINAPI wine_glClear( GLbitfield mask ) {
   TRACE("(%d)\n", mask );
@@ -152,7 +152,7 @@ void WINAPI wine_glClear( GLbitfield mask ) {
 }
 
 /***********************************************************************
- *              glClearAccum
+ *              glClearAccum (OPENGL32.@)
  */
 void WINAPI wine_glClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) {
   TRACE("(%f, %f, %f, %f)\n", red, green, blue, alpha );
@@ -162,7 +162,7 @@ void WINAPI wine_glClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat
 }
 
 /***********************************************************************
- *              glClearColor
+ *              glClearColor (OPENGL32.@)
  */
 void WINAPI wine_glClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha ) {
   TRACE("(%f, %f, %f, %f)\n", red, green, blue, alpha );
@@ -172,7 +172,7 @@ void WINAPI wine_glClearColor( GLclampf red, GLclampf green, GLclampf blue, GLcl
 }
 
 /***********************************************************************
- *              glClearDepth
+ *              glClearDepth (OPENGL32.@)
  */
 void WINAPI wine_glClearDepth( GLclampd depth ) {
   TRACE("(%f)\n", depth );
@@ -182,7 +182,7 @@ void WINAPI wine_glClearDepth( GLclampd depth ) {
 }
 
 /***********************************************************************
- *              glClearIndex
+ *              glClearIndex (OPENGL32.@)
  */
 void WINAPI wine_glClearIndex( GLfloat c ) {
   TRACE("(%f)\n", c );
@@ -192,7 +192,7 @@ void WINAPI wine_glClearIndex( GLfloat c ) {
 }
 
 /***********************************************************************
- *              glClearStencil
+ *              glClearStencil (OPENGL32.@)
  */
 void WINAPI wine_glClearStencil( GLint s ) {
   TRACE("(%d)\n", s );
@@ -202,7 +202,7 @@ void WINAPI wine_glClearStencil( GLint s ) {
 }
 
 /***********************************************************************
- *              glClientActiveTextureARB
+ *              glClientActiveTextureARB (OPENGL32.@)
  */
 void WINAPI wine_glClientActiveTextureARB( GLenum texture ) {
   TRACE("(%d)\n", texture );
@@ -212,7 +212,7 @@ void WINAPI wine_glClientActiveTextureARB( GLenum texture ) {
 }
 
 /***********************************************************************
- *              glClipPlane
+ *              glClipPlane (OPENGL32.@)
  */
 void WINAPI wine_glClipPlane( GLenum plane, GLdouble* equation ) {
   TRACE("(%d, %p)\n", plane, equation );
@@ -222,7 +222,7 @@ void WINAPI wine_glClipPlane( GLenum plane, GLdouble* equation ) {
 }
 
 /***********************************************************************
- *              glColor3b
+ *              glColor3b (OPENGL32.@)
  */
 void WINAPI wine_glColor3b( GLbyte red, GLbyte green, GLbyte blue ) {
   TRACE("(%d, %d, %d)\n", red, green, blue );
@@ -232,7 +232,7 @@ void WINAPI wine_glColor3b( GLbyte red, GLbyte green, GLbyte blue ) {
 }
 
 /***********************************************************************
- *              glColor3bv
+ *              glColor3bv (OPENGL32.@)
  */
 void WINAPI wine_glColor3bv( GLbyte* v ) {
   TRACE("(%p)\n", v );
@@ -242,7 +242,7 @@ void WINAPI wine_glColor3bv( GLbyte* v ) {
 }
 
 /***********************************************************************
- *              glColor3d
+ *              glColor3d (OPENGL32.@)
  */
 void WINAPI wine_glColor3d( GLdouble red, GLdouble green, GLdouble blue ) {
   TRACE("(%f, %f, %f)\n", red, green, blue );
@@ -252,7 +252,7 @@ void WINAPI wine_glColor3d( GLdouble red, GLdouble green, GLdouble blue ) {
 }
 
 /***********************************************************************
- *              glColor3dv
+ *              glColor3dv (OPENGL32.@)
  */
 void WINAPI wine_glColor3dv( GLdouble* v ) {
   TRACE("(%p)\n", v );
@@ -262,7 +262,7 @@ void WINAPI wine_glColor3dv( GLdouble* v ) {
 }
 
 /***********************************************************************
- *              glColor3f
+ *              glColor3f (OPENGL32.@)
  */
 void WINAPI wine_glColor3f( GLfloat red, GLfloat green, GLfloat blue ) {
   TRACE("(%f, %f, %f)\n", red, green, blue );
@@ -272,7 +272,7 @@ void WINAPI wine_glColor3f( GLfloat red, GLfloat green, GLfloat blue ) {
 }
 
 /***********************************************************************
- *              glColor3fv
+ *              glColor3fv (OPENGL32.@)
  */
 void WINAPI wine_glColor3fv( GLfloat* v ) {
   TRACE("(%p)\n", v );
@@ -282,7 +282,7 @@ void WINAPI wine_glColor3fv( GLfloat* v ) {
 }
 
 /***********************************************************************
- *              glColor3i
+ *              glColor3i (OPENGL32.@)
  */
 void WINAPI wine_glColor3i( GLint red, GLint green, GLint blue ) {
   TRACE("(%d, %d, %d)\n", red, green, blue );
@@ -292,7 +292,7 @@ void WINAPI wine_glColor3i( GLint red, GLint green, GLint blue ) {
 }
 
 /***********************************************************************
- *              glColor3iv
+ *              glColor3iv (OPENGL32.@)
  */
 void WINAPI wine_glColor3iv( GLint* v ) {
   TRACE("(%p)\n", v );
@@ -302,7 +302,7 @@ void WINAPI wine_glColor3iv( GLint* v ) {
 }
 
 /***********************************************************************
- *              glColor3s
+ *              glColor3s (OPENGL32.@)
  */
 void WINAPI wine_glColor3s( GLshort red, GLshort green, GLshort blue ) {
   TRACE("(%d, %d, %d)\n", red, green, blue );
@@ -312,7 +312,7 @@ void WINAPI wine_glColor3s( GLshort red, GLshort green, GLshort blue ) {
 }
 
 /***********************************************************************
- *              glColor3sv
+ *              glColor3sv (OPENGL32.@)
  */
 void WINAPI wine_glColor3sv( GLshort* v ) {
   TRACE("(%p)\n", v );
@@ -322,7 +322,7 @@ void WINAPI wine_glColor3sv( GLshort* v ) {
 }
 
 /***********************************************************************
- *              glColor3ub
+ *              glColor3ub (OPENGL32.@)
  */
 void WINAPI wine_glColor3ub( GLubyte red, GLubyte green, GLubyte blue ) {
   TRACE("(%d, %d, %d)\n", red, green, blue );
@@ -332,7 +332,7 @@ void WINAPI wine_glColor3ub( GLubyte red, GLubyte green, GLubyte blue ) {
 }
 
 /***********************************************************************
- *              glColor3ubv
+ *              glColor3ubv (OPENGL32.@)
  */
 void WINAPI wine_glColor3ubv( GLubyte* v ) {
   TRACE("(%p)\n", v );
@@ -342,7 +342,7 @@ void WINAPI wine_glColor3ubv( GLubyte* v ) {
 }
 
 /***********************************************************************
- *              glColor3ui
+ *              glColor3ui (OPENGL32.@)
  */
 void WINAPI wine_glColor3ui( GLuint red, GLuint green, GLuint blue ) {
   TRACE("(%d, %d, %d)\n", red, green, blue );
@@ -352,7 +352,7 @@ void WINAPI wine_glColor3ui( GLuint red, GLuint green, GLuint blue ) {
 }
 
 /***********************************************************************
- *              glColor3uiv
+ *              glColor3uiv (OPENGL32.@)
  */
 void WINAPI wine_glColor3uiv( GLuint* v ) {
   TRACE("(%p)\n", v );
@@ -362,7 +362,7 @@ void WINAPI wine_glColor3uiv( GLuint* v ) {
 }
 
 /***********************************************************************
- *              glColor3us
+ *              glColor3us (OPENGL32.@)
  */
 void WINAPI wine_glColor3us( GLushort red, GLushort green, GLushort blue ) {
   TRACE("(%d, %d, %d)\n", red, green, blue );
@@ -372,7 +372,7 @@ void WINAPI wine_glColor3us( GLushort red, GLushort green, GLushort blue ) {
 }
 
 /***********************************************************************
- *              glColor3usv
+ *              glColor3usv (OPENGL32.@)
  */
 void WINAPI wine_glColor3usv( GLushort* v ) {
   TRACE("(%p)\n", v );
@@ -382,7 +382,7 @@ void WINAPI wine_glColor3usv( GLushort* v ) {
 }
 
 /***********************************************************************
- *              glColor4b
+ *              glColor4b (OPENGL32.@)
  */
 void WINAPI wine_glColor4b( GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha ) {
   TRACE("(%d, %d, %d, %d)\n", red, green, blue, alpha );
@@ -392,7 +392,7 @@ void WINAPI wine_glColor4b( GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha 
 }
 
 /***********************************************************************
- *              glColor4bv
+ *              glColor4bv (OPENGL32.@)
  */
 void WINAPI wine_glColor4bv( GLbyte* v ) {
   TRACE("(%p)\n", v );
@@ -402,7 +402,7 @@ void WINAPI wine_glColor4bv( GLbyte* v ) {
 }
 
 /***********************************************************************
- *              glColor4d
+ *              glColor4d (OPENGL32.@)
  */
 void WINAPI wine_glColor4d( GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha ) {
   TRACE("(%f, %f, %f, %f)\n", red, green, blue, alpha );
@@ -412,7 +412,7 @@ void WINAPI wine_glColor4d( GLdouble red, GLdouble green, GLdouble blue, GLdoubl
 }
 
 /***********************************************************************
- *              glColor4dv
+ *              glColor4dv (OPENGL32.@)
  */
 void WINAPI wine_glColor4dv( GLdouble* v ) {
   TRACE("(%p)\n", v );
@@ -422,7 +422,7 @@ void WINAPI wine_glColor4dv( GLdouble* v ) {
 }
 
 /***********************************************************************
- *              glColor4f
+ *              glColor4f (OPENGL32.@)
  */
 void WINAPI wine_glColor4f( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) {
   TRACE("(%f, %f, %f, %f)\n", red, green, blue, alpha );
@@ -432,7 +432,7 @@ void WINAPI wine_glColor4f( GLfloat red, GLfloat green, GLfloat blue, GLfloat al
 }
 
 /***********************************************************************
- *              glColor4fv
+ *              glColor4fv (OPENGL32.@)
  */
 void WINAPI wine_glColor4fv( GLfloat* v ) {
   TRACE("(%p)\n", v );
@@ -442,7 +442,7 @@ void WINAPI wine_glColor4fv( GLfloat* v ) {
 }
 
 /***********************************************************************
- *              glColor4i
+ *              glColor4i (OPENGL32.@)
  */
 void WINAPI wine_glColor4i( GLint red, GLint green, GLint blue, GLint alpha ) {
   TRACE("(%d, %d, %d, %d)\n", red, green, blue, alpha );
@@ -452,7 +452,7 @@ void WINAPI wine_glColor4i( GLint red, GLint green, GLint blue, GLint alpha ) {
 }
 
 /***********************************************************************
- *              glColor4iv
+ *              glColor4iv (OPENGL32.@)
  */
 void WINAPI wine_glColor4iv( GLint* v ) {
   TRACE("(%p)\n", v );
@@ -462,7 +462,7 @@ void WINAPI wine_glColor4iv( GLint* v ) {
 }
 
 /***********************************************************************
- *              glColor4s
+ *              glColor4s (OPENGL32.@)
  */
 void WINAPI wine_glColor4s( GLshort red, GLshort green, GLshort blue, GLshort alpha ) {
   TRACE("(%d, %d, %d, %d)\n", red, green, blue, alpha );
@@ -472,7 +472,7 @@ void WINAPI wine_glColor4s( GLshort red, GLshort green, GLshort blue, GLshort al
 }
 
 /***********************************************************************
- *              glColor4sv
+ *              glColor4sv (OPENGL32.@)
  */
 void WINAPI wine_glColor4sv( GLshort* v ) {
   TRACE("(%p)\n", v );
@@ -482,7 +482,7 @@ void WINAPI wine_glColor4sv( GLshort* v ) {
 }
 
 /***********************************************************************
- *              glColor4ub
+ *              glColor4ub (OPENGL32.@)
  */
 void WINAPI wine_glColor4ub( GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha ) {
   TRACE("(%d, %d, %d, %d)\n", red, green, blue, alpha );
@@ -492,7 +492,7 @@ void WINAPI wine_glColor4ub( GLubyte red, GLubyte green, GLubyte blue, GLubyte a
 }
 
 /***********************************************************************
- *              glColor4ubv
+ *              glColor4ubv (OPENGL32.@)
  */
 void WINAPI wine_glColor4ubv( GLubyte* v ) {
   TRACE("(%p)\n", v );
@@ -502,7 +502,7 @@ void WINAPI wine_glColor4ubv( GLubyte* v ) {
 }
 
 /***********************************************************************
- *              glColor4ui
+ *              glColor4ui (OPENGL32.@)
  */
 void WINAPI wine_glColor4ui( GLuint red, GLuint green, GLuint blue, GLuint alpha ) {
   TRACE("(%d, %d, %d, %d)\n", red, green, blue, alpha );
@@ -512,7 +512,7 @@ void WINAPI wine_glColor4ui( GLuint red, GLuint green, GLuint blue, GLuint alpha
 }
 
 /***********************************************************************
- *              glColor4uiv
+ *              glColor4uiv (OPENGL32.@)
  */
 void WINAPI wine_glColor4uiv( GLuint* v ) {
   TRACE("(%p)\n", v );
@@ -522,7 +522,7 @@ void WINAPI wine_glColor4uiv( GLuint* v ) {
 }
 
 /***********************************************************************
- *              glColor4us
+ *              glColor4us (OPENGL32.@)
  */
 void WINAPI wine_glColor4us( GLushort red, GLushort green, GLushort blue, GLushort alpha ) {
   TRACE("(%d, %d, %d, %d)\n", red, green, blue, alpha );
@@ -532,7 +532,7 @@ void WINAPI wine_glColor4us( GLushort red, GLushort green, GLushort blue, GLusho
 }
 
 /***********************************************************************
- *              glColor4usv
+ *              glColor4usv (OPENGL32.@)
  */
 void WINAPI wine_glColor4usv( GLushort* v ) {
   TRACE("(%p)\n", v );
@@ -542,7 +542,7 @@ void WINAPI wine_glColor4usv( GLushort* v ) {
 }
 
 /***********************************************************************
- *              glColorMask
+ *              glColorMask (OPENGL32.@)
  */
 void WINAPI wine_glColorMask( GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha ) {
   TRACE("(%d, %d, %d, %d)\n", red, green, blue, alpha );
@@ -552,7 +552,7 @@ void WINAPI wine_glColorMask( GLboolean red, GLboolean green, GLboolean blue, GL
 }
 
 /***********************************************************************
- *              glColorMaterial
+ *              glColorMaterial (OPENGL32.@)
  */
 void WINAPI wine_glColorMaterial( GLenum face, GLenum mode ) {
   TRACE("(%d, %d)\n", face, mode );
@@ -562,7 +562,7 @@ void WINAPI wine_glColorMaterial( GLenum face, GLenum mode ) {
 }
 
 /***********************************************************************
- *              glColorPointer
+ *              glColorPointer (OPENGL32.@)
  */
 void WINAPI wine_glColorPointer( GLint size, GLenum type, GLsizei stride, GLvoid* pointer ) {
   TRACE("(%d, %d, %d, %p)\n", size, type, stride, pointer );
@@ -572,7 +572,7 @@ void WINAPI wine_glColorPointer( GLint size, GLenum type, GLsizei stride, GLvoid
 }
 
 /***********************************************************************
- *              glColorSubTable
+ *              glColorSubTable (OPENGL32.@)
  */
 void WINAPI wine_glColorSubTable( GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, GLvoid* data ) {
   TRACE("(%d, %d, %d, %d, %d, %p)\n", target, start, count, format, type, data );
@@ -582,7 +582,7 @@ void WINAPI wine_glColorSubTable( GLenum target, GLsizei start, GLsizei count, G
 }
 
 /***********************************************************************
- *              glColorTable
+ *              glColorTable (OPENGL32.@)
  */
 void WINAPI wine_glColorTable( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, GLvoid* table ) {
   TRACE("(%d, %d, %d, %d, %d, %p)\n", target, internalformat, width, format, type, table );
@@ -592,7 +592,7 @@ void WINAPI wine_glColorTable( GLenum target, GLenum internalformat, GLsizei wid
 }
 
 /***********************************************************************
- *              glColorTableParameterfv
+ *              glColorTableParameterfv (OPENGL32.@)
  */
 void WINAPI wine_glColorTableParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -602,7 +602,7 @@ void WINAPI wine_glColorTableParameterfv( GLenum target, GLenum pname, GLfloat* 
 }
 
 /***********************************************************************
- *              glColorTableParameteriv
+ *              glColorTableParameteriv (OPENGL32.@)
  */
 void WINAPI wine_glColorTableParameteriv( GLenum target, GLenum pname, GLint* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -612,7 +612,7 @@ void WINAPI wine_glColorTableParameteriv( GLenum target, GLenum pname, GLint* pa
 }
 
 /***********************************************************************
- *              glConvolutionFilter1D
+ *              glConvolutionFilter1D (OPENGL32.@)
  */
 void WINAPI wine_glConvolutionFilter1D( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, GLvoid* image ) {
   TRACE("(%d, %d, %d, %d, %d, %p)\n", target, internalformat, width, format, type, image );
@@ -622,7 +622,7 @@ void WINAPI wine_glConvolutionFilter1D( GLenum target, GLenum internalformat, GL
 }
 
 /***********************************************************************
- *              glConvolutionFilter2D
+ *              glConvolutionFilter2D (OPENGL32.@)
  */
 void WINAPI wine_glConvolutionFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* image ) {
   TRACE("(%d, %d, %d, %d, %d, %d, %p)\n", target, internalformat, width, height, format, type, image );
@@ -632,7 +632,7 @@ void WINAPI wine_glConvolutionFilter2D( GLenum target, GLenum internalformat, GL
 }
 
 /***********************************************************************
- *              glConvolutionParameterf
+ *              glConvolutionParameterf (OPENGL32.@)
  */
 void WINAPI wine_glConvolutionParameterf( GLenum target, GLenum pname, GLfloat params ) {
   TRACE("(%d, %d, %f)\n", target, pname, params );
@@ -642,7 +642,7 @@ void WINAPI wine_glConvolutionParameterf( GLenum target, GLenum pname, GLfloat p
 }
 
 /***********************************************************************
- *              glConvolutionParameterfv
+ *              glConvolutionParameterfv (OPENGL32.@)
  */
 void WINAPI wine_glConvolutionParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -652,7 +652,7 @@ void WINAPI wine_glConvolutionParameterfv( GLenum target, GLenum pname, GLfloat*
 }
 
 /***********************************************************************
- *              glConvolutionParameteri
+ *              glConvolutionParameteri (OPENGL32.@)
  */
 void WINAPI wine_glConvolutionParameteri( GLenum target, GLenum pname, GLint params ) {
   TRACE("(%d, %d, %d)\n", target, pname, params );
@@ -662,7 +662,7 @@ void WINAPI wine_glConvolutionParameteri( GLenum target, GLenum pname, GLint par
 }
 
 /***********************************************************************
- *              glConvolutionParameteriv
+ *              glConvolutionParameteriv (OPENGL32.@)
  */
 void WINAPI wine_glConvolutionParameteriv( GLenum target, GLenum pname, GLint* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -672,7 +672,7 @@ void WINAPI wine_glConvolutionParameteriv( GLenum target, GLenum pname, GLint* p
 }
 
 /***********************************************************************
- *              glCopyColorSubTable
+ *              glCopyColorSubTable (OPENGL32.@)
  */
 void WINAPI wine_glCopyColorSubTable( GLenum target, GLsizei start, GLint x, GLint y, GLsizei width ) {
   TRACE("(%d, %d, %d, %d, %d)\n", target, start, x, y, width );
@@ -682,7 +682,7 @@ void WINAPI wine_glCopyColorSubTable( GLenum target, GLsizei start, GLint x, GLi
 }
 
 /***********************************************************************
- *              glCopyColorTable
+ *              glCopyColorTable (OPENGL32.@)
  */
 void WINAPI wine_glCopyColorTable( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width ) {
   TRACE("(%d, %d, %d, %d, %d)\n", target, internalformat, x, y, width );
@@ -692,7 +692,7 @@ void WINAPI wine_glCopyColorTable( GLenum target, GLenum internalformat, GLint x
 }
 
 /***********************************************************************
- *              glCopyConvolutionFilter1D
+ *              glCopyConvolutionFilter1D (OPENGL32.@)
  */
 void WINAPI wine_glCopyConvolutionFilter1D( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width ) {
   TRACE("(%d, %d, %d, %d, %d)\n", target, internalformat, x, y, width );
@@ -702,7 +702,7 @@ void WINAPI wine_glCopyConvolutionFilter1D( GLenum target, GLenum internalformat
 }
 
 /***********************************************************************
- *              glCopyConvolutionFilter2D
+ *              glCopyConvolutionFilter2D (OPENGL32.@)
  */
 void WINAPI wine_glCopyConvolutionFilter2D( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height ) {
   TRACE("(%d, %d, %d, %d, %d, %d)\n", target, internalformat, x, y, width, height );
@@ -712,7 +712,7 @@ void WINAPI wine_glCopyConvolutionFilter2D( GLenum target, GLenum internalformat
 }
 
 /***********************************************************************
- *              glCopyPixels
+ *              glCopyPixels (OPENGL32.@)
  */
 void WINAPI wine_glCopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum type ) {
   TRACE("(%d, %d, %d, %d, %d)\n", x, y, width, height, type );
@@ -722,7 +722,7 @@ void WINAPI wine_glCopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, 
 }
 
 /***********************************************************************
- *              glCopyTexImage1D
+ *              glCopyTexImage1D (OPENGL32.@)
  */
 void WINAPI wine_glCopyTexImage1D( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border ) {
   TRACE("(%d, %d, %d, %d, %d, %d, %d)\n", target, level, internalformat, x, y, width, border );
@@ -732,7 +732,7 @@ void WINAPI wine_glCopyTexImage1D( GLenum target, GLint level, GLenum internalfo
 }
 
 /***********************************************************************
- *              glCopyTexImage2D
+ *              glCopyTexImage2D (OPENGL32.@)
  */
 void WINAPI wine_glCopyTexImage2D( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border ) {
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d)\n", target, level, internalformat, x, y, width, height, border );
@@ -742,7 +742,7 @@ void WINAPI wine_glCopyTexImage2D( GLenum target, GLint level, GLenum internalfo
 }
 
 /***********************************************************************
- *              glCopyTexSubImage1D
+ *              glCopyTexSubImage1D (OPENGL32.@)
  */
 void WINAPI wine_glCopyTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width ) {
   TRACE("(%d, %d, %d, %d, %d, %d)\n", target, level, xoffset, x, y, width );
@@ -752,7 +752,7 @@ void WINAPI wine_glCopyTexSubImage1D( GLenum target, GLint level, GLint xoffset,
 }
 
 /***********************************************************************
- *              glCopyTexSubImage2D
+ *              glCopyTexSubImage2D (OPENGL32.@)
  */
 void WINAPI wine_glCopyTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height ) {
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d)\n", target, level, xoffset, yoffset, x, y, width, height );
@@ -762,7 +762,7 @@ void WINAPI wine_glCopyTexSubImage2D( GLenum target, GLint level, GLint xoffset,
 }
 
 /***********************************************************************
- *              glCopyTexSubImage3D
+ *              glCopyTexSubImage3D (OPENGL32.@)
  */
 void WINAPI wine_glCopyTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height ) {
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d)\n", target, level, xoffset, yoffset, zoffset, x, y, width, height );
@@ -772,7 +772,7 @@ void WINAPI wine_glCopyTexSubImage3D( GLenum target, GLint level, GLint xoffset,
 }
 
 /***********************************************************************
- *              glCullFace
+ *              glCullFace (OPENGL32.@)
  */
 void WINAPI wine_glCullFace( GLenum mode ) {
   TRACE("(%d)\n", mode );
@@ -782,7 +782,7 @@ void WINAPI wine_glCullFace( GLenum mode ) {
 }
 
 /***********************************************************************
- *              glDeleteLists
+ *              glDeleteLists (OPENGL32.@)
  */
 void WINAPI wine_glDeleteLists( GLuint list, GLsizei range ) {
   TRACE("(%d, %d)\n", list, range );
@@ -792,7 +792,7 @@ void WINAPI wine_glDeleteLists( GLuint list, GLsizei range ) {
 }
 
 /***********************************************************************
- *              glDeleteTextures
+ *              glDeleteTextures (OPENGL32.@)
  */
 void WINAPI wine_glDeleteTextures( GLsizei n, GLuint* textures ) {
   TRACE("(%d, %p)\n", n, textures );
@@ -802,7 +802,7 @@ void WINAPI wine_glDeleteTextures( GLsizei n, GLuint* textures ) {
 }
 
 /***********************************************************************
- *              glDepthFunc
+ *              glDepthFunc (OPENGL32.@)
  */
 void WINAPI wine_glDepthFunc( GLenum func ) {
   TRACE("(%d)\n", func );
@@ -812,7 +812,7 @@ void WINAPI wine_glDepthFunc( GLenum func ) {
 }
 
 /***********************************************************************
- *              glDepthMask
+ *              glDepthMask (OPENGL32.@)
  */
 void WINAPI wine_glDepthMask( GLboolean flag ) {
   TRACE("(%d)\n", flag );
@@ -822,7 +822,7 @@ void WINAPI wine_glDepthMask( GLboolean flag ) {
 }
 
 /***********************************************************************
- *              glDepthRange
+ *              glDepthRange (OPENGL32.@)
  */
 void WINAPI wine_glDepthRange( GLclampd near, GLclampd far ) {
   TRACE("(%f, %f)\n", near, far );
@@ -832,7 +832,7 @@ void WINAPI wine_glDepthRange( GLclampd near, GLclampd far ) {
 }
 
 /***********************************************************************
- *              glDisable
+ *              glDisable (OPENGL32.@)
  */
 void WINAPI wine_glDisable( GLenum cap ) {
   TRACE("(%d)\n", cap );
@@ -842,7 +842,7 @@ void WINAPI wine_glDisable( GLenum cap ) {
 }
 
 /***********************************************************************
- *              glDisableClientState
+ *              glDisableClientState (OPENGL32.@)
  */
 void WINAPI wine_glDisableClientState( GLenum array ) {
   TRACE("(%d)\n", array );
@@ -852,7 +852,7 @@ void WINAPI wine_glDisableClientState( GLenum array ) {
 }
 
 /***********************************************************************
- *              glDrawArrays
+ *              glDrawArrays (OPENGL32.@)
  */
 void WINAPI wine_glDrawArrays( GLenum mode, GLint first, GLsizei count ) {
   TRACE("(%d, %d, %d)\n", mode, first, count );
@@ -862,7 +862,7 @@ void WINAPI wine_glDrawArrays( GLenum mode, GLint first, GLsizei count ) {
 }
 
 /***********************************************************************
- *              glDrawBuffer
+ *              glDrawBuffer (OPENGL32.@)
  */
 void WINAPI wine_glDrawBuffer( GLenum mode ) {
   TRACE("(%d)\n", mode );
@@ -872,7 +872,7 @@ void WINAPI wine_glDrawBuffer( GLenum mode ) {
 }
 
 /***********************************************************************
- *              glDrawElements
+ *              glDrawElements (OPENGL32.@)
  */
 void WINAPI wine_glDrawElements( GLenum mode, GLsizei count, GLenum type, GLvoid* indices ) {
   TRACE("(%d, %d, %d, %p)\n", mode, count, type, indices );
@@ -882,7 +882,7 @@ void WINAPI wine_glDrawElements( GLenum mode, GLsizei count, GLenum type, GLvoid
 }
 
 /***********************************************************************
- *              glDrawPixels
+ *              glDrawPixels (OPENGL32.@)
  */
 void WINAPI wine_glDrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels ) {
   TRACE("(%d, %d, %d, %d, %p)\n", width, height, format, type, pixels );
@@ -892,7 +892,7 @@ void WINAPI wine_glDrawPixels( GLsizei width, GLsizei height, GLenum format, GLe
 }
 
 /***********************************************************************
- *              glDrawRangeElements
+ *              glDrawRangeElements (OPENGL32.@)
  */
 void WINAPI wine_glDrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, GLvoid* indices ) {
   TRACE("(%d, %d, %d, %d, %d, %p)\n", mode, start, end, count, type, indices );
@@ -902,7 +902,7 @@ void WINAPI wine_glDrawRangeElements( GLenum mode, GLuint start, GLuint end, GLs
 }
 
 /***********************************************************************
- *              glEdgeFlag
+ *              glEdgeFlag (OPENGL32.@)
  */
 void WINAPI wine_glEdgeFlag( GLboolean flag ) {
   TRACE("(%d)\n", flag );
@@ -912,7 +912,7 @@ void WINAPI wine_glEdgeFlag( GLboolean flag ) {
 }
 
 /***********************************************************************
- *              glEdgeFlagPointer
+ *              glEdgeFlagPointer (OPENGL32.@)
  */
 void WINAPI wine_glEdgeFlagPointer( GLsizei stride, GLvoid* pointer ) {
   TRACE("(%d, %p)\n", stride, pointer );
@@ -922,7 +922,7 @@ void WINAPI wine_glEdgeFlagPointer( GLsizei stride, GLvoid* pointer ) {
 }
 
 /***********************************************************************
- *              glEdgeFlagv
+ *              glEdgeFlagv (OPENGL32.@)
  */
 void WINAPI wine_glEdgeFlagv( GLboolean* flag ) {
   TRACE("(%p)\n", flag );
@@ -932,7 +932,7 @@ void WINAPI wine_glEdgeFlagv( GLboolean* flag ) {
 }
 
 /***********************************************************************
- *              glEnable
+ *              glEnable (OPENGL32.@)
  */
 void WINAPI wine_glEnable( GLenum cap ) {
   TRACE("(%d)\n", cap );
@@ -942,7 +942,7 @@ void WINAPI wine_glEnable( GLenum cap ) {
 }
 
 /***********************************************************************
- *              glEnableClientState
+ *              glEnableClientState (OPENGL32.@)
  */
 void WINAPI wine_glEnableClientState( GLenum array ) {
   TRACE("(%d)\n", array );
@@ -952,7 +952,7 @@ void WINAPI wine_glEnableClientState( GLenum array ) {
 }
 
 /***********************************************************************
- *              glEnd
+ *              glEnd (OPENGL32.@)
  */
 void WINAPI wine_glEnd( ) {
   TRACE("()\n");
@@ -962,7 +962,7 @@ void WINAPI wine_glEnd( ) {
 }
 
 /***********************************************************************
- *              glEndList
+ *              glEndList (OPENGL32.@)
  */
 void WINAPI wine_glEndList( ) {
   TRACE("()\n");
@@ -972,7 +972,7 @@ void WINAPI wine_glEndList( ) {
 }
 
 /***********************************************************************
- *              glEvalCoord1d
+ *              glEvalCoord1d (OPENGL32.@)
  */
 void WINAPI wine_glEvalCoord1d( GLdouble u ) {
   TRACE("(%f)\n", u );
@@ -982,7 +982,7 @@ void WINAPI wine_glEvalCoord1d( GLdouble u ) {
 }
 
 /***********************************************************************
- *              glEvalCoord1dv
+ *              glEvalCoord1dv (OPENGL32.@)
  */
 void WINAPI wine_glEvalCoord1dv( GLdouble* u ) {
   TRACE("(%p)\n", u );
@@ -992,7 +992,7 @@ void WINAPI wine_glEvalCoord1dv( GLdouble* u ) {
 }
 
 /***********************************************************************
- *              glEvalCoord1f
+ *              glEvalCoord1f (OPENGL32.@)
  */
 void WINAPI wine_glEvalCoord1f( GLfloat u ) {
   TRACE("(%f)\n", u );
@@ -1002,7 +1002,7 @@ void WINAPI wine_glEvalCoord1f( GLfloat u ) {
 }
 
 /***********************************************************************
- *              glEvalCoord1fv
+ *              glEvalCoord1fv (OPENGL32.@)
  */
 void WINAPI wine_glEvalCoord1fv( GLfloat* u ) {
   TRACE("(%p)\n", u );
@@ -1012,7 +1012,7 @@ void WINAPI wine_glEvalCoord1fv( GLfloat* u ) {
 }
 
 /***********************************************************************
- *              glEvalCoord2d
+ *              glEvalCoord2d (OPENGL32.@)
  */
 void WINAPI wine_glEvalCoord2d( GLdouble u, GLdouble v ) {
   TRACE("(%f, %f)\n", u, v );
@@ -1022,7 +1022,7 @@ void WINAPI wine_glEvalCoord2d( GLdouble u, GLdouble v ) {
 }
 
 /***********************************************************************
- *              glEvalCoord2dv
+ *              glEvalCoord2dv (OPENGL32.@)
  */
 void WINAPI wine_glEvalCoord2dv( GLdouble* u ) {
   TRACE("(%p)\n", u );
@@ -1032,7 +1032,7 @@ void WINAPI wine_glEvalCoord2dv( GLdouble* u ) {
 }
 
 /***********************************************************************
- *              glEvalCoord2f
+ *              glEvalCoord2f (OPENGL32.@)
  */
 void WINAPI wine_glEvalCoord2f( GLfloat u, GLfloat v ) {
   TRACE("(%f, %f)\n", u, v );
@@ -1042,7 +1042,7 @@ void WINAPI wine_glEvalCoord2f( GLfloat u, GLfloat v ) {
 }
 
 /***********************************************************************
- *              glEvalCoord2fv
+ *              glEvalCoord2fv (OPENGL32.@)
  */
 void WINAPI wine_glEvalCoord2fv( GLfloat* u ) {
   TRACE("(%p)\n", u );
@@ -1052,7 +1052,7 @@ void WINAPI wine_glEvalCoord2fv( GLfloat* u ) {
 }
 
 /***********************************************************************
- *              glEvalMesh1
+ *              glEvalMesh1 (OPENGL32.@)
  */
 void WINAPI wine_glEvalMesh1( GLenum mode, GLint i1, GLint i2 ) {
   TRACE("(%d, %d, %d)\n", mode, i1, i2 );
@@ -1062,7 +1062,7 @@ void WINAPI wine_glEvalMesh1( GLenum mode, GLint i1, GLint i2 ) {
 }
 
 /***********************************************************************
- *              glEvalMesh2
+ *              glEvalMesh2 (OPENGL32.@)
  */
 void WINAPI wine_glEvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 ) {
   TRACE("(%d, %d, %d, %d, %d)\n", mode, i1, i2, j1, j2 );
@@ -1072,7 +1072,7 @@ void WINAPI wine_glEvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j
 }
 
 /***********************************************************************
- *              glEvalPoint1
+ *              glEvalPoint1 (OPENGL32.@)
  */
 void WINAPI wine_glEvalPoint1( GLint i ) {
   TRACE("(%d)\n", i );
@@ -1082,7 +1082,7 @@ void WINAPI wine_glEvalPoint1( GLint i ) {
 }
 
 /***********************************************************************
- *              glEvalPoint2
+ *              glEvalPoint2 (OPENGL32.@)
  */
 void WINAPI wine_glEvalPoint2( GLint i, GLint j ) {
   TRACE("(%d, %d)\n", i, j );
@@ -1092,7 +1092,7 @@ void WINAPI wine_glEvalPoint2( GLint i, GLint j ) {
 }
 
 /***********************************************************************
- *              glFeedbackBuffer
+ *              glFeedbackBuffer (OPENGL32.@)
  */
 void WINAPI wine_glFeedbackBuffer( GLsizei size, GLenum type, GLfloat* buffer ) {
   TRACE("(%d, %d, %p)\n", size, type, buffer );
@@ -1102,7 +1102,7 @@ void WINAPI wine_glFeedbackBuffer( GLsizei size, GLenum type, GLfloat* buffer ) 
 }
 
 /***********************************************************************
- *              glFinish
+ *              glFinish (OPENGL32.@)
  */
 void WINAPI wine_glFinish( ) {
   TRACE("()\n");
@@ -1112,7 +1112,7 @@ void WINAPI wine_glFinish( ) {
 }
 
 /***********************************************************************
- *              glFlush
+ *              glFlush (OPENGL32.@)
  */
 void WINAPI wine_glFlush( ) {
   TRACE("()\n");
@@ -1122,7 +1122,7 @@ void WINAPI wine_glFlush( ) {
 }
 
 /***********************************************************************
- *              glFogf
+ *              glFogf (OPENGL32.@)
  */
 void WINAPI wine_glFogf( GLenum pname, GLfloat param ) {
   TRACE("(%d, %f)\n", pname, param );
@@ -1132,7 +1132,7 @@ void WINAPI wine_glFogf( GLenum pname, GLfloat param ) {
 }
 
 /***********************************************************************
- *              glFogfv
+ *              glFogfv (OPENGL32.@)
  */
 void WINAPI wine_glFogfv( GLenum pname, GLfloat* params ) {
   TRACE("(%d, %p)\n", pname, params );
@@ -1142,7 +1142,7 @@ void WINAPI wine_glFogfv( GLenum pname, GLfloat* params ) {
 }
 
 /***********************************************************************
- *              glFogi
+ *              glFogi (OPENGL32.@)
  */
 void WINAPI wine_glFogi( GLenum pname, GLint param ) {
   TRACE("(%d, %d)\n", pname, param );
@@ -1152,7 +1152,7 @@ void WINAPI wine_glFogi( GLenum pname, GLint param ) {
 }
 
 /***********************************************************************
- *              glFogiv
+ *              glFogiv (OPENGL32.@)
  */
 void WINAPI wine_glFogiv( GLenum pname, GLint* params ) {
   TRACE("(%d, %p)\n", pname, params );
@@ -1162,7 +1162,7 @@ void WINAPI wine_glFogiv( GLenum pname, GLint* params ) {
 }
 
 /***********************************************************************
- *              glFrontFace
+ *              glFrontFace (OPENGL32.@)
  */
 void WINAPI wine_glFrontFace( GLenum mode ) {
   TRACE("(%d)\n", mode );
@@ -1172,7 +1172,7 @@ void WINAPI wine_glFrontFace( GLenum mode ) {
 }
 
 /***********************************************************************
- *              glFrustum
+ *              glFrustum (OPENGL32.@)
  */
 void WINAPI wine_glFrustum( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar ) {
   TRACE("(%f, %f, %f, %f, %f, %f)\n", left, right, bottom, top, zNear, zFar );
@@ -1182,7 +1182,7 @@ void WINAPI wine_glFrustum( GLdouble left, GLdouble right, GLdouble bottom, GLdo
 }
 
 /***********************************************************************
- *              glGenLists
+ *              glGenLists (OPENGL32.@)
  */
 GLuint WINAPI wine_glGenLists( GLsizei range ) {
   GLuint ret_value;
@@ -1194,7 +1194,7 @@ GLuint WINAPI wine_glGenLists( GLsizei range ) {
 }
 
 /***********************************************************************
- *              glGenTextures
+ *              glGenTextures (OPENGL32.@)
  */
 void WINAPI wine_glGenTextures( GLsizei n, GLuint* textures ) {
   TRACE("(%d, %p)\n", n, textures );
@@ -1204,7 +1204,7 @@ void WINAPI wine_glGenTextures( GLsizei n, GLuint* textures ) {
 }
 
 /***********************************************************************
- *              glGetBooleanv
+ *              glGetBooleanv (OPENGL32.@)
  */
 void WINAPI wine_glGetBooleanv( GLenum pname, GLboolean* params ) {
   TRACE("(%d, %p)\n", pname, params );
@@ -1214,7 +1214,7 @@ void WINAPI wine_glGetBooleanv( GLenum pname, GLboolean* params ) {
 }
 
 /***********************************************************************
- *              glGetClipPlane
+ *              glGetClipPlane (OPENGL32.@)
  */
 void WINAPI wine_glGetClipPlane( GLenum plane, GLdouble* equation ) {
   TRACE("(%d, %p)\n", plane, equation );
@@ -1224,7 +1224,7 @@ void WINAPI wine_glGetClipPlane( GLenum plane, GLdouble* equation ) {
 }
 
 /***********************************************************************
- *              glGetColorTable
+ *              glGetColorTable (OPENGL32.@)
  */
 void WINAPI wine_glGetColorTable( GLenum target, GLenum format, GLenum type, GLvoid* table ) {
   TRACE("(%d, %d, %d, %p)\n", target, format, type, table );
@@ -1234,7 +1234,7 @@ void WINAPI wine_glGetColorTable( GLenum target, GLenum format, GLenum type, GLv
 }
 
 /***********************************************************************
- *              glGetColorTableParameterfv
+ *              glGetColorTableParameterfv (OPENGL32.@)
  */
 void WINAPI wine_glGetColorTableParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -1244,7 +1244,7 @@ void WINAPI wine_glGetColorTableParameterfv( GLenum target, GLenum pname, GLfloa
 }
 
 /***********************************************************************
- *              glGetColorTableParameteriv
+ *              glGetColorTableParameteriv (OPENGL32.@)
  */
 void WINAPI wine_glGetColorTableParameteriv( GLenum target, GLenum pname, GLint* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -1254,7 +1254,7 @@ void WINAPI wine_glGetColorTableParameteriv( GLenum target, GLenum pname, GLint*
 }
 
 /***********************************************************************
- *              glGetConvolutionFilter
+ *              glGetConvolutionFilter (OPENGL32.@)
  */
 void WINAPI wine_glGetConvolutionFilter( GLenum target, GLenum format, GLenum type, GLvoid* image ) {
   TRACE("(%d, %d, %d, %p)\n", target, format, type, image );
@@ -1264,7 +1264,7 @@ void WINAPI wine_glGetConvolutionFilter( GLenum target, GLenum format, GLenum ty
 }
 
 /***********************************************************************
- *              glGetConvolutionParameterfv
+ *              glGetConvolutionParameterfv (OPENGL32.@)
  */
 void WINAPI wine_glGetConvolutionParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -1274,7 +1274,7 @@ void WINAPI wine_glGetConvolutionParameterfv( GLenum target, GLenum pname, GLflo
 }
 
 /***********************************************************************
- *              glGetConvolutionParameteriv
+ *              glGetConvolutionParameteriv (OPENGL32.@)
  */
 void WINAPI wine_glGetConvolutionParameteriv( GLenum target, GLenum pname, GLint* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -1284,7 +1284,7 @@ void WINAPI wine_glGetConvolutionParameteriv( GLenum target, GLenum pname, GLint
 }
 
 /***********************************************************************
- *              glGetDoublev
+ *              glGetDoublev (OPENGL32.@)
  */
 void WINAPI wine_glGetDoublev( GLenum pname, GLdouble* params ) {
   TRACE("(%d, %p)\n", pname, params );
@@ -1294,7 +1294,7 @@ void WINAPI wine_glGetDoublev( GLenum pname, GLdouble* params ) {
 }
 
 /***********************************************************************
- *              glGetError
+ *              glGetError (OPENGL32.@)
  */
 GLenum WINAPI wine_glGetError( ) {
   GLenum ret_value;
@@ -1306,7 +1306,7 @@ GLenum WINAPI wine_glGetError( ) {
 }
 
 /***********************************************************************
- *              glGetFloatv
+ *              glGetFloatv (OPENGL32.@)
  */
 void WINAPI wine_glGetFloatv( GLenum pname, GLfloat* params ) {
   TRACE("(%d, %p)\n", pname, params );
@@ -1316,7 +1316,7 @@ void WINAPI wine_glGetFloatv( GLenum pname, GLfloat* params ) {
 }
 
 /***********************************************************************
- *              glGetHistogram
+ *              glGetHistogram (OPENGL32.@)
  */
 void WINAPI wine_glGetHistogram( GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid* values ) {
   TRACE("(%d, %d, %d, %d, %p)\n", target, reset, format, type, values );
@@ -1326,7 +1326,7 @@ void WINAPI wine_glGetHistogram( GLenum target, GLboolean reset, GLenum format, 
 }
 
 /***********************************************************************
- *              glGetHistogramParameterfv
+ *              glGetHistogramParameterfv (OPENGL32.@)
  */
 void WINAPI wine_glGetHistogramParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -1336,7 +1336,7 @@ void WINAPI wine_glGetHistogramParameterfv( GLenum target, GLenum pname, GLfloat
 }
 
 /***********************************************************************
- *              glGetHistogramParameteriv
+ *              glGetHistogramParameteriv (OPENGL32.@)
  */
 void WINAPI wine_glGetHistogramParameteriv( GLenum target, GLenum pname, GLint* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -1346,7 +1346,7 @@ void WINAPI wine_glGetHistogramParameteriv( GLenum target, GLenum pname, GLint* 
 }
 
 /***********************************************************************
- *              glGetIntegerv
+ *              glGetIntegerv (OPENGL32.@)
  */
 void WINAPI wine_glGetIntegerv( GLenum pname, GLint* params ) {
   TRACE("(%d, %p)\n", pname, params );
@@ -1356,7 +1356,7 @@ void WINAPI wine_glGetIntegerv( GLenum pname, GLint* params ) {
 }
 
 /***********************************************************************
- *              glGetLightfv
+ *              glGetLightfv (OPENGL32.@)
  */
 void WINAPI wine_glGetLightfv( GLenum light, GLenum pname, GLfloat* params ) {
   TRACE("(%d, %d, %p)\n", light, pname, params );
@@ -1366,7 +1366,7 @@ void WINAPI wine_glGetLightfv( GLenum light, GLenum pname, GLfloat* params ) {
 }
 
 /***********************************************************************
- *              glGetLightiv
+ *              glGetLightiv (OPENGL32.@)
  */
 void WINAPI wine_glGetLightiv( GLenum light, GLenum pname, GLint* params ) {
   TRACE("(%d, %d, %p)\n", light, pname, params );
@@ -1376,7 +1376,7 @@ void WINAPI wine_glGetLightiv( GLenum light, GLenum pname, GLint* params ) {
 }
 
 /***********************************************************************
- *              glGetMapdv
+ *              glGetMapdv (OPENGL32.@)
  */
 void WINAPI wine_glGetMapdv( GLenum target, GLenum query, GLdouble* v ) {
   TRACE("(%d, %d, %p)\n", target, query, v );
@@ -1386,7 +1386,7 @@ void WINAPI wine_glGetMapdv( GLenum target, GLenum query, GLdouble* v ) {
 }
 
 /***********************************************************************
- *              glGetMapfv
+ *              glGetMapfv (OPENGL32.@)
  */
 void WINAPI wine_glGetMapfv( GLenum target, GLenum query, GLfloat* v ) {
   TRACE("(%d, %d, %p)\n", target, query, v );
@@ -1396,7 +1396,7 @@ void WINAPI wine_glGetMapfv( GLenum target, GLenum query, GLfloat* v ) {
 }
 
 /***********************************************************************
- *              glGetMapiv
+ *              glGetMapiv (OPENGL32.@)
  */
 void WINAPI wine_glGetMapiv( GLenum target, GLenum query, GLint* v ) {
   TRACE("(%d, %d, %p)\n", target, query, v );
@@ -1406,7 +1406,7 @@ void WINAPI wine_glGetMapiv( GLenum target, GLenum query, GLint* v ) {
 }
 
 /***********************************************************************
- *              glGetMaterialfv
+ *              glGetMaterialfv (OPENGL32.@)
  */
 void WINAPI wine_glGetMaterialfv( GLenum face, GLenum pname, GLfloat* params ) {
   TRACE("(%d, %d, %p)\n", face, pname, params );
@@ -1416,7 +1416,7 @@ void WINAPI wine_glGetMaterialfv( GLenum face, GLenum pname, GLfloat* params ) {
 }
 
 /***********************************************************************
- *              glGetMaterialiv
+ *              glGetMaterialiv (OPENGL32.@)
  */
 void WINAPI wine_glGetMaterialiv( GLenum face, GLenum pname, GLint* params ) {
   TRACE("(%d, %d, %p)\n", face, pname, params );
@@ -1426,7 +1426,7 @@ void WINAPI wine_glGetMaterialiv( GLenum face, GLenum pname, GLint* params ) {
 }
 
 /***********************************************************************
- *              glGetMinmax
+ *              glGetMinmax (OPENGL32.@)
  */
 void WINAPI wine_glGetMinmax( GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid* values ) {
   TRACE("(%d, %d, %d, %d, %p)\n", target, reset, format, type, values );
@@ -1436,7 +1436,7 @@ void WINAPI wine_glGetMinmax( GLenum target, GLboolean reset, GLenum format, GLe
 }
 
 /***********************************************************************
- *              glGetMinmaxParameterfv
+ *              glGetMinmaxParameterfv (OPENGL32.@)
  */
 void WINAPI wine_glGetMinmaxParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -1446,7 +1446,7 @@ void WINAPI wine_glGetMinmaxParameterfv( GLenum target, GLenum pname, GLfloat* p
 }
 
 /***********************************************************************
- *              glGetMinmaxParameteriv
+ *              glGetMinmaxParameteriv (OPENGL32.@)
  */
 void WINAPI wine_glGetMinmaxParameteriv( GLenum target, GLenum pname, GLint* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -1456,7 +1456,7 @@ void WINAPI wine_glGetMinmaxParameteriv( GLenum target, GLenum pname, GLint* par
 }
 
 /***********************************************************************
- *              glGetPixelMapfv
+ *              glGetPixelMapfv (OPENGL32.@)
  */
 void WINAPI wine_glGetPixelMapfv( GLenum map, GLfloat* values ) {
   TRACE("(%d, %p)\n", map, values );
@@ -1466,7 +1466,7 @@ void WINAPI wine_glGetPixelMapfv( GLenum map, GLfloat* values ) {
 }
 
 /***********************************************************************
- *              glGetPixelMapuiv
+ *              glGetPixelMapuiv (OPENGL32.@)
  */
 void WINAPI wine_glGetPixelMapuiv( GLenum map, GLuint* values ) {
   TRACE("(%d, %p)\n", map, values );
@@ -1476,7 +1476,7 @@ void WINAPI wine_glGetPixelMapuiv( GLenum map, GLuint* values ) {
 }
 
 /***********************************************************************
- *              glGetPixelMapusv
+ *              glGetPixelMapusv (OPENGL32.@)
  */
 void WINAPI wine_glGetPixelMapusv( GLenum map, GLushort* values ) {
   TRACE("(%d, %p)\n", map, values );
@@ -1486,7 +1486,7 @@ void WINAPI wine_glGetPixelMapusv( GLenum map, GLushort* values ) {
 }
 
 /***********************************************************************
- *              glGetPointerv
+ *              glGetPointerv (OPENGL32.@)
  */
 void WINAPI wine_glGetPointerv( GLenum pname, GLvoid** params ) {
   TRACE("(%d, %p)\n", pname, params );
@@ -1496,7 +1496,7 @@ void WINAPI wine_glGetPointerv( GLenum pname, GLvoid** params ) {
 }
 
 /***********************************************************************
- *              glGetPolygonStipple
+ *              glGetPolygonStipple (OPENGL32.@)
  */
 void WINAPI wine_glGetPolygonStipple( GLubyte* mask ) {
   TRACE("(%p)\n", mask );
@@ -1506,7 +1506,7 @@ void WINAPI wine_glGetPolygonStipple( GLubyte* mask ) {
 }
 
 /***********************************************************************
- *              glGetSeparableFilter
+ *              glGetSeparableFilter (OPENGL32.@)
  */
 void WINAPI wine_glGetSeparableFilter( GLenum target, GLenum format, GLenum type, GLvoid* row, GLvoid* column, GLvoid* span ) {
   TRACE("(%d, %d, %d, %p, %p, %p)\n", target, format, type, row, column, span );
@@ -1516,7 +1516,7 @@ void WINAPI wine_glGetSeparableFilter( GLenum target, GLenum format, GLenum type
 }
 
 /***********************************************************************
- *              glGetString
+ *              glGetString (OPENGL32.@)
  */
 GLstring WINAPI wine_glGetString( GLenum name ) {
   GLstring ret_value;
@@ -1528,7 +1528,7 @@ GLstring WINAPI wine_glGetString( GLenum name ) {
 }
 
 /***********************************************************************
- *              glGetTexEnvfv
+ *              glGetTexEnvfv (OPENGL32.@)
  */
 void WINAPI wine_glGetTexEnvfv( GLenum target, GLenum pname, GLfloat* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -1538,7 +1538,7 @@ void WINAPI wine_glGetTexEnvfv( GLenum target, GLenum pname, GLfloat* params ) {
 }
 
 /***********************************************************************
- *              glGetTexEnviv
+ *              glGetTexEnviv (OPENGL32.@)
  */
 void WINAPI wine_glGetTexEnviv( GLenum target, GLenum pname, GLint* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -1548,7 +1548,7 @@ void WINAPI wine_glGetTexEnviv( GLenum target, GLenum pname, GLint* params ) {
 }
 
 /***********************************************************************
- *              glGetTexGendv
+ *              glGetTexGendv (OPENGL32.@)
  */
 void WINAPI wine_glGetTexGendv( GLenum coord, GLenum pname, GLdouble* params ) {
   TRACE("(%d, %d, %p)\n", coord, pname, params );
@@ -1558,7 +1558,7 @@ void WINAPI wine_glGetTexGendv( GLenum coord, GLenum pname, GLdouble* params ) {
 }
 
 /***********************************************************************
- *              glGetTexGenfv
+ *              glGetTexGenfv (OPENGL32.@)
  */
 void WINAPI wine_glGetTexGenfv( GLenum coord, GLenum pname, GLfloat* params ) {
   TRACE("(%d, %d, %p)\n", coord, pname, params );
@@ -1568,7 +1568,7 @@ void WINAPI wine_glGetTexGenfv( GLenum coord, GLenum pname, GLfloat* params ) {
 }
 
 /***********************************************************************
- *              glGetTexGeniv
+ *              glGetTexGeniv (OPENGL32.@)
  */
 void WINAPI wine_glGetTexGeniv( GLenum coord, GLenum pname, GLint* params ) {
   TRACE("(%d, %d, %p)\n", coord, pname, params );
@@ -1578,7 +1578,7 @@ void WINAPI wine_glGetTexGeniv( GLenum coord, GLenum pname, GLint* params ) {
 }
 
 /***********************************************************************
- *              glGetTexImage
+ *              glGetTexImage (OPENGL32.@)
  */
 void WINAPI wine_glGetTexImage( GLenum target, GLint level, GLenum format, GLenum type, GLvoid* pixels ) {
   TRACE("(%d, %d, %d, %d, %p)\n", target, level, format, type, pixels );
@@ -1588,7 +1588,7 @@ void WINAPI wine_glGetTexImage( GLenum target, GLint level, GLenum format, GLenu
 }
 
 /***********************************************************************
- *              glGetTexLevelParameterfv
+ *              glGetTexLevelParameterfv (OPENGL32.@)
  */
 void WINAPI wine_glGetTexLevelParameterfv( GLenum target, GLint level, GLenum pname, GLfloat* params ) {
   TRACE("(%d, %d, %d, %p)\n", target, level, pname, params );
@@ -1598,7 +1598,7 @@ void WINAPI wine_glGetTexLevelParameterfv( GLenum target, GLint level, GLenum pn
 }
 
 /***********************************************************************
- *              glGetTexLevelParameteriv
+ *              glGetTexLevelParameteriv (OPENGL32.@)
  */
 void WINAPI wine_glGetTexLevelParameteriv( GLenum target, GLint level, GLenum pname, GLint* params ) {
   TRACE("(%d, %d, %d, %p)\n", target, level, pname, params );
@@ -1608,7 +1608,7 @@ void WINAPI wine_glGetTexLevelParameteriv( GLenum target, GLint level, GLenum pn
 }
 
 /***********************************************************************
- *              glGetTexParameterfv
+ *              glGetTexParameterfv (OPENGL32.@)
  */
 void WINAPI wine_glGetTexParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -1618,7 +1618,7 @@ void WINAPI wine_glGetTexParameterfv( GLenum target, GLenum pname, GLfloat* para
 }
 
 /***********************************************************************
- *              glGetTexParameteriv
+ *              glGetTexParameteriv (OPENGL32.@)
  */
 void WINAPI wine_glGetTexParameteriv( GLenum target, GLenum pname, GLint* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -1628,7 +1628,7 @@ void WINAPI wine_glGetTexParameteriv( GLenum target, GLenum pname, GLint* params
 }
 
 /***********************************************************************
- *              glHint
+ *              glHint (OPENGL32.@)
  */
 void WINAPI wine_glHint( GLenum target, GLenum mode ) {
   TRACE("(%d, %d)\n", target, mode );
@@ -1638,7 +1638,7 @@ void WINAPI wine_glHint( GLenum target, GLenum mode ) {
 }
 
 /***********************************************************************
- *              glHistogram
+ *              glHistogram (OPENGL32.@)
  */
 void WINAPI wine_glHistogram( GLenum target, GLsizei width, GLenum internalformat, GLboolean sink ) {
   TRACE("(%d, %d, %d, %d)\n", target, width, internalformat, sink );
@@ -1648,7 +1648,7 @@ void WINAPI wine_glHistogram( GLenum target, GLsizei width, GLenum internalforma
 }
 
 /***********************************************************************
- *              glIndexMask
+ *              glIndexMask (OPENGL32.@)
  */
 void WINAPI wine_glIndexMask( GLuint mask ) {
   TRACE("(%d)\n", mask );
@@ -1658,7 +1658,7 @@ void WINAPI wine_glIndexMask( GLuint mask ) {
 }
 
 /***********************************************************************
- *              glIndexPointer
+ *              glIndexPointer (OPENGL32.@)
  */
 void WINAPI wine_glIndexPointer( GLenum type, GLsizei stride, GLvoid* pointer ) {
   TRACE("(%d, %d, %p)\n", type, stride, pointer );
@@ -1668,7 +1668,7 @@ void WINAPI wine_glIndexPointer( GLenum type, GLsizei stride, GLvoid* pointer ) 
 }
 
 /***********************************************************************
- *              glIndexd
+ *              glIndexd (OPENGL32.@)
  */
 void WINAPI wine_glIndexd( GLdouble c ) {
   TRACE("(%f)\n", c );
@@ -1678,7 +1678,7 @@ void WINAPI wine_glIndexd( GLdouble c ) {
 }
 
 /***********************************************************************
- *              glIndexdv
+ *              glIndexdv (OPENGL32.@)
  */
 void WINAPI wine_glIndexdv( GLdouble* c ) {
   TRACE("(%p)\n", c );
@@ -1688,7 +1688,7 @@ void WINAPI wine_glIndexdv( GLdouble* c ) {
 }
 
 /***********************************************************************
- *              glIndexf
+ *              glIndexf (OPENGL32.@)
  */
 void WINAPI wine_glIndexf( GLfloat c ) {
   TRACE("(%f)\n", c );
@@ -1698,7 +1698,7 @@ void WINAPI wine_glIndexf( GLfloat c ) {
 }
 
 /***********************************************************************
- *              glIndexfv
+ *              glIndexfv (OPENGL32.@)
  */
 void WINAPI wine_glIndexfv( GLfloat* c ) {
   TRACE("(%p)\n", c );
@@ -1708,7 +1708,7 @@ void WINAPI wine_glIndexfv( GLfloat* c ) {
 }
 
 /***********************************************************************
- *              glIndexi
+ *              glIndexi (OPENGL32.@)
  */
 void WINAPI wine_glIndexi( GLint c ) {
   TRACE("(%d)\n", c );
@@ -1718,7 +1718,7 @@ void WINAPI wine_glIndexi( GLint c ) {
 }
 
 /***********************************************************************
- *              glIndexiv
+ *              glIndexiv (OPENGL32.@)
  */
 void WINAPI wine_glIndexiv( GLint* c ) {
   TRACE("(%p)\n", c );
@@ -1728,7 +1728,7 @@ void WINAPI wine_glIndexiv( GLint* c ) {
 }
 
 /***********************************************************************
- *              glIndexs
+ *              glIndexs (OPENGL32.@)
  */
 void WINAPI wine_glIndexs( GLshort c ) {
   TRACE("(%d)\n", c );
@@ -1738,7 +1738,7 @@ void WINAPI wine_glIndexs( GLshort c ) {
 }
 
 /***********************************************************************
- *              glIndexsv
+ *              glIndexsv (OPENGL32.@)
  */
 void WINAPI wine_glIndexsv( GLshort* c ) {
   TRACE("(%p)\n", c );
@@ -1748,7 +1748,7 @@ void WINAPI wine_glIndexsv( GLshort* c ) {
 }
 
 /***********************************************************************
- *              glIndexub
+ *              glIndexub (OPENGL32.@)
  */
 void WINAPI wine_glIndexub( GLubyte c ) {
   TRACE("(%d)\n", c );
@@ -1758,7 +1758,7 @@ void WINAPI wine_glIndexub( GLubyte c ) {
 }
 
 /***********************************************************************
- *              glIndexubv
+ *              glIndexubv (OPENGL32.@)
  */
 void WINAPI wine_glIndexubv( GLubyte* c ) {
   TRACE("(%p)\n", c );
@@ -1768,7 +1768,7 @@ void WINAPI wine_glIndexubv( GLubyte* c ) {
 }
 
 /***********************************************************************
- *              glInitNames
+ *              glInitNames (OPENGL32.@)
  */
 void WINAPI wine_glInitNames( ) {
   TRACE("()\n");
@@ -1778,7 +1778,7 @@ void WINAPI wine_glInitNames( ) {
 }
 
 /***********************************************************************
- *              glInterleavedArrays
+ *              glInterleavedArrays (OPENGL32.@)
  */
 void WINAPI wine_glInterleavedArrays( GLenum format, GLsizei stride, GLvoid* pointer ) {
   TRACE("(%d, %d, %p)\n", format, stride, pointer );
@@ -1788,7 +1788,7 @@ void WINAPI wine_glInterleavedArrays( GLenum format, GLsizei stride, GLvoid* poi
 }
 
 /***********************************************************************
- *              glIsEnabled
+ *              glIsEnabled (OPENGL32.@)
  */
 GLboolean WINAPI wine_glIsEnabled( GLenum cap ) {
   GLboolean ret_value;
@@ -1800,7 +1800,7 @@ GLboolean WINAPI wine_glIsEnabled( GLenum cap ) {
 }
 
 /***********************************************************************
- *              glIsList
+ *              glIsList (OPENGL32.@)
  */
 GLboolean WINAPI wine_glIsList( GLuint list ) {
   GLboolean ret_value;
@@ -1812,7 +1812,7 @@ GLboolean WINAPI wine_glIsList( GLuint list ) {
 }
 
 /***********************************************************************
- *              glIsTexture
+ *              glIsTexture (OPENGL32.@)
  */
 GLboolean WINAPI wine_glIsTexture( GLuint texture ) {
   GLboolean ret_value;
@@ -1824,7 +1824,7 @@ GLboolean WINAPI wine_glIsTexture( GLuint texture ) {
 }
 
 /***********************************************************************
- *              glLightModelf
+ *              glLightModelf (OPENGL32.@)
  */
 void WINAPI wine_glLightModelf( GLenum pname, GLfloat param ) {
   TRACE("(%d, %f)\n", pname, param );
@@ -1834,7 +1834,7 @@ void WINAPI wine_glLightModelf( GLenum pname, GLfloat param ) {
 }
 
 /***********************************************************************
- *              glLightModelfv
+ *              glLightModelfv (OPENGL32.@)
  */
 void WINAPI wine_glLightModelfv( GLenum pname, GLfloat* params ) {
   TRACE("(%d, %p)\n", pname, params );
@@ -1844,7 +1844,7 @@ void WINAPI wine_glLightModelfv( GLenum pname, GLfloat* params ) {
 }
 
 /***********************************************************************
- *              glLightModeli
+ *              glLightModeli (OPENGL32.@)
  */
 void WINAPI wine_glLightModeli( GLenum pname, GLint param ) {
   TRACE("(%d, %d)\n", pname, param );
@@ -1854,7 +1854,7 @@ void WINAPI wine_glLightModeli( GLenum pname, GLint param ) {
 }
 
 /***********************************************************************
- *              glLightModeliv
+ *              glLightModeliv (OPENGL32.@)
  */
 void WINAPI wine_glLightModeliv( GLenum pname, GLint* params ) {
   TRACE("(%d, %p)\n", pname, params );
@@ -1864,7 +1864,7 @@ void WINAPI wine_glLightModeliv( GLenum pname, GLint* params ) {
 }
 
 /***********************************************************************
- *              glLightf
+ *              glLightf (OPENGL32.@)
  */
 void WINAPI wine_glLightf( GLenum light, GLenum pname, GLfloat param ) {
   TRACE("(%d, %d, %f)\n", light, pname, param );
@@ -1874,7 +1874,7 @@ void WINAPI wine_glLightf( GLenum light, GLenum pname, GLfloat param ) {
 }
 
 /***********************************************************************
- *              glLightfv
+ *              glLightfv (OPENGL32.@)
  */
 void WINAPI wine_glLightfv( GLenum light, GLenum pname, GLfloat* params ) {
   TRACE("(%d, %d, %p)\n", light, pname, params );
@@ -1884,7 +1884,7 @@ void WINAPI wine_glLightfv( GLenum light, GLenum pname, GLfloat* params ) {
 }
 
 /***********************************************************************
- *              glLighti
+ *              glLighti (OPENGL32.@)
  */
 void WINAPI wine_glLighti( GLenum light, GLenum pname, GLint param ) {
   TRACE("(%d, %d, %d)\n", light, pname, param );
@@ -1894,7 +1894,7 @@ void WINAPI wine_glLighti( GLenum light, GLenum pname, GLint param ) {
 }
 
 /***********************************************************************
- *              glLightiv
+ *              glLightiv (OPENGL32.@)
  */
 void WINAPI wine_glLightiv( GLenum light, GLenum pname, GLint* params ) {
   TRACE("(%d, %d, %p)\n", light, pname, params );
@@ -1904,7 +1904,7 @@ void WINAPI wine_glLightiv( GLenum light, GLenum pname, GLint* params ) {
 }
 
 /***********************************************************************
- *              glLineStipple
+ *              glLineStipple (OPENGL32.@)
  */
 void WINAPI wine_glLineStipple( GLint factor, GLushort pattern ) {
   TRACE("(%d, %d)\n", factor, pattern );
@@ -1914,7 +1914,7 @@ void WINAPI wine_glLineStipple( GLint factor, GLushort pattern ) {
 }
 
 /***********************************************************************
- *              glLineWidth
+ *              glLineWidth (OPENGL32.@)
  */
 void WINAPI wine_glLineWidth( GLfloat width ) {
   TRACE("(%f)\n", width );
@@ -1924,7 +1924,7 @@ void WINAPI wine_glLineWidth( GLfloat width ) {
 }
 
 /***********************************************************************
- *              glListBase
+ *              glListBase (OPENGL32.@)
  */
 void WINAPI wine_glListBase( GLuint base ) {
   TRACE("(%d)\n", base );
@@ -1934,7 +1934,7 @@ void WINAPI wine_glListBase( GLuint base ) {
 }
 
 /***********************************************************************
- *              glLoadIdentity
+ *              glLoadIdentity (OPENGL32.@)
  */
 void WINAPI wine_glLoadIdentity( ) {
   TRACE("()\n");
@@ -1944,7 +1944,7 @@ void WINAPI wine_glLoadIdentity( ) {
 }
 
 /***********************************************************************
- *              glLoadMatrixd
+ *              glLoadMatrixd (OPENGL32.@)
  */
 void WINAPI wine_glLoadMatrixd( GLdouble* m ) {
   TRACE("(%p)\n", m );
@@ -1954,7 +1954,7 @@ void WINAPI wine_glLoadMatrixd( GLdouble* m ) {
 }
 
 /***********************************************************************
- *              glLoadMatrixf
+ *              glLoadMatrixf (OPENGL32.@)
  */
 void WINAPI wine_glLoadMatrixf( GLfloat* m ) {
   TRACE("(%p)\n", m );
@@ -1964,7 +1964,7 @@ void WINAPI wine_glLoadMatrixf( GLfloat* m ) {
 }
 
 /***********************************************************************
- *              glLoadName
+ *              glLoadName (OPENGL32.@)
  */
 void WINAPI wine_glLoadName( GLuint name ) {
   TRACE("(%d)\n", name );
@@ -1974,7 +1974,7 @@ void WINAPI wine_glLoadName( GLuint name ) {
 }
 
 /***********************************************************************
- *              glLogicOp
+ *              glLogicOp (OPENGL32.@)
  */
 void WINAPI wine_glLogicOp( GLenum opcode ) {
   TRACE("(%d)\n", opcode );
@@ -1984,7 +1984,7 @@ void WINAPI wine_glLogicOp( GLenum opcode ) {
 }
 
 /***********************************************************************
- *              glMap1d
+ *              glMap1d (OPENGL32.@)
  */
 void WINAPI wine_glMap1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, GLdouble* points ) {
   TRACE("(%d, %f, %f, %d, %d, %p)\n", target, u1, u2, stride, order, points );
@@ -1994,7 +1994,7 @@ void WINAPI wine_glMap1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride,
 }
 
 /***********************************************************************
- *              glMap1f
+ *              glMap1f (OPENGL32.@)
  */
 void WINAPI wine_glMap1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, GLfloat* points ) {
   TRACE("(%d, %f, %f, %d, %d, %p)\n", target, u1, u2, stride, order, points );
@@ -2004,7 +2004,7 @@ void WINAPI wine_glMap1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride, G
 }
 
 /***********************************************************************
- *              glMap2d
+ *              glMap2d (OPENGL32.@)
  */
 void WINAPI wine_glMap2d( GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, GLdouble* points ) {
   TRACE("(%d, %f, %f, %d, %d, %f, %f, %d, %d, %p)\n", target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points );
@@ -2014,7 +2014,7 @@ void WINAPI wine_glMap2d( GLenum target, GLdouble u1, GLdouble u2, GLint ustride
 }
 
 /***********************************************************************
- *              glMap2f
+ *              glMap2f (OPENGL32.@)
  */
 void WINAPI wine_glMap2f( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, GLfloat* points ) {
   TRACE("(%d, %f, %f, %d, %d, %f, %f, %d, %d, %p)\n", target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points );
@@ -2024,7 +2024,7 @@ void WINAPI wine_glMap2f( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, 
 }
 
 /***********************************************************************
- *              glMapGrid1d
+ *              glMapGrid1d (OPENGL32.@)
  */
 void WINAPI wine_glMapGrid1d( GLint un, GLdouble u1, GLdouble u2 ) {
   TRACE("(%d, %f, %f)\n", un, u1, u2 );
@@ -2034,7 +2034,7 @@ void WINAPI wine_glMapGrid1d( GLint un, GLdouble u1, GLdouble u2 ) {
 }
 
 /***********************************************************************
- *              glMapGrid1f
+ *              glMapGrid1f (OPENGL32.@)
  */
 void WINAPI wine_glMapGrid1f( GLint un, GLfloat u1, GLfloat u2 ) {
   TRACE("(%d, %f, %f)\n", un, u1, u2 );
@@ -2044,7 +2044,7 @@ void WINAPI wine_glMapGrid1f( GLint un, GLfloat u1, GLfloat u2 ) {
 }
 
 /***********************************************************************
- *              glMapGrid2d
+ *              glMapGrid2d (OPENGL32.@)
  */
 void WINAPI wine_glMapGrid2d( GLint un, GLdouble u1, GLdouble u2, GLint vn, GLdouble v1, GLdouble v2 ) {
   TRACE("(%d, %f, %f, %d, %f, %f)\n", un, u1, u2, vn, v1, v2 );
@@ -2054,7 +2054,7 @@ void WINAPI wine_glMapGrid2d( GLint un, GLdouble u1, GLdouble u2, GLint vn, GLdo
 }
 
 /***********************************************************************
- *              glMapGrid2f
+ *              glMapGrid2f (OPENGL32.@)
  */
 void WINAPI wine_glMapGrid2f( GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1, GLfloat v2 ) {
   TRACE("(%d, %f, %f, %d, %f, %f)\n", un, u1, u2, vn, v1, v2 );
@@ -2064,7 +2064,7 @@ void WINAPI wine_glMapGrid2f( GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloa
 }
 
 /***********************************************************************
- *              glMaterialf
+ *              glMaterialf (OPENGL32.@)
  */
 void WINAPI wine_glMaterialf( GLenum face, GLenum pname, GLfloat param ) {
   TRACE("(%d, %d, %f)\n", face, pname, param );
@@ -2074,7 +2074,7 @@ void WINAPI wine_glMaterialf( GLenum face, GLenum pname, GLfloat param ) {
 }
 
 /***********************************************************************
- *              glMaterialfv
+ *              glMaterialfv (OPENGL32.@)
  */
 void WINAPI wine_glMaterialfv( GLenum face, GLenum pname, GLfloat* params ) {
   TRACE("(%d, %d, %p)\n", face, pname, params );
@@ -2084,7 +2084,7 @@ void WINAPI wine_glMaterialfv( GLenum face, GLenum pname, GLfloat* params ) {
 }
 
 /***********************************************************************
- *              glMateriali
+ *              glMateriali (OPENGL32.@)
  */
 void WINAPI wine_glMateriali( GLenum face, GLenum pname, GLint param ) {
   TRACE("(%d, %d, %d)\n", face, pname, param );
@@ -2094,7 +2094,7 @@ void WINAPI wine_glMateriali( GLenum face, GLenum pname, GLint param ) {
 }
 
 /***********************************************************************
- *              glMaterialiv
+ *              glMaterialiv (OPENGL32.@)
  */
 void WINAPI wine_glMaterialiv( GLenum face, GLenum pname, GLint* params ) {
   TRACE("(%d, %d, %p)\n", face, pname, params );
@@ -2104,7 +2104,7 @@ void WINAPI wine_glMaterialiv( GLenum face, GLenum pname, GLint* params ) {
 }
 
 /***********************************************************************
- *              glMatrixMode
+ *              glMatrixMode (OPENGL32.@)
  */
 void WINAPI wine_glMatrixMode( GLenum mode ) {
   TRACE("(%d)\n", mode );
@@ -2114,7 +2114,7 @@ void WINAPI wine_glMatrixMode( GLenum mode ) {
 }
 
 /***********************************************************************
- *              glMinmax
+ *              glMinmax (OPENGL32.@)
  */
 void WINAPI wine_glMinmax( GLenum target, GLenum internalformat, GLboolean sink ) {
   TRACE("(%d, %d, %d)\n", target, internalformat, sink );
@@ -2124,7 +2124,7 @@ void WINAPI wine_glMinmax( GLenum target, GLenum internalformat, GLboolean sink 
 }
 
 /***********************************************************************
- *              glMultMatrixd
+ *              glMultMatrixd (OPENGL32.@)
  */
 void WINAPI wine_glMultMatrixd( GLdouble* m ) {
   TRACE("(%p)\n", m );
@@ -2134,7 +2134,7 @@ void WINAPI wine_glMultMatrixd( GLdouble* m ) {
 }
 
 /***********************************************************************
- *              glMultMatrixf
+ *              glMultMatrixf (OPENGL32.@)
  */
 void WINAPI wine_glMultMatrixf( GLfloat* m ) {
   TRACE("(%p)\n", m );
@@ -2144,7 +2144,7 @@ void WINAPI wine_glMultMatrixf( GLfloat* m ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord1dARB
+ *              glMultiTexCoord1dARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord1dARB( GLenum target, GLdouble s ) {
   TRACE("(%d, %f)\n", target, s );
@@ -2154,7 +2154,7 @@ void WINAPI wine_glMultiTexCoord1dARB( GLenum target, GLdouble s ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord1dvARB
+ *              glMultiTexCoord1dvARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord1dvARB( GLenum target, GLdouble* v ) {
   TRACE("(%d, %p)\n", target, v );
@@ -2164,7 +2164,7 @@ void WINAPI wine_glMultiTexCoord1dvARB( GLenum target, GLdouble* v ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord1fARB
+ *              glMultiTexCoord1fARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord1fARB( GLenum target, GLfloat s ) {
   TRACE("(%d, %f)\n", target, s );
@@ -2174,7 +2174,7 @@ void WINAPI wine_glMultiTexCoord1fARB( GLenum target, GLfloat s ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord1fvARB
+ *              glMultiTexCoord1fvARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord1fvARB( GLenum target, GLfloat* v ) {
   TRACE("(%d, %p)\n", target, v );
@@ -2184,7 +2184,7 @@ void WINAPI wine_glMultiTexCoord1fvARB( GLenum target, GLfloat* v ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord1iARB
+ *              glMultiTexCoord1iARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord1iARB( GLenum target, GLint s ) {
   TRACE("(%d, %d)\n", target, s );
@@ -2194,7 +2194,7 @@ void WINAPI wine_glMultiTexCoord1iARB( GLenum target, GLint s ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord1ivARB
+ *              glMultiTexCoord1ivARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord1ivARB( GLenum target, GLint* v ) {
   TRACE("(%d, %p)\n", target, v );
@@ -2204,7 +2204,7 @@ void WINAPI wine_glMultiTexCoord1ivARB( GLenum target, GLint* v ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord1sARB
+ *              glMultiTexCoord1sARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord1sARB( GLenum target, GLshort s ) {
   TRACE("(%d, %d)\n", target, s );
@@ -2214,7 +2214,7 @@ void WINAPI wine_glMultiTexCoord1sARB( GLenum target, GLshort s ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord1svARB
+ *              glMultiTexCoord1svARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord1svARB( GLenum target, GLshort* v ) {
   TRACE("(%d, %p)\n", target, v );
@@ -2224,7 +2224,7 @@ void WINAPI wine_glMultiTexCoord1svARB( GLenum target, GLshort* v ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord2dARB
+ *              glMultiTexCoord2dARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord2dARB( GLenum target, GLdouble s, GLdouble t ) {
   TRACE("(%d, %f, %f)\n", target, s, t );
@@ -2234,7 +2234,7 @@ void WINAPI wine_glMultiTexCoord2dARB( GLenum target, GLdouble s, GLdouble t ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord2dvARB
+ *              glMultiTexCoord2dvARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord2dvARB( GLenum target, GLdouble* v ) {
   TRACE("(%d, %p)\n", target, v );
@@ -2244,7 +2244,7 @@ void WINAPI wine_glMultiTexCoord2dvARB( GLenum target, GLdouble* v ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord2fARB
+ *              glMultiTexCoord2fARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord2fARB( GLenum target, GLfloat s, GLfloat t ) {
   TRACE("(%d, %f, %f)\n", target, s, t );
@@ -2254,7 +2254,7 @@ void WINAPI wine_glMultiTexCoord2fARB( GLenum target, GLfloat s, GLfloat t ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord2fvARB
+ *              glMultiTexCoord2fvARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord2fvARB( GLenum target, GLfloat* v ) {
   TRACE("(%d, %p)\n", target, v );
@@ -2264,7 +2264,7 @@ void WINAPI wine_glMultiTexCoord2fvARB( GLenum target, GLfloat* v ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord2iARB
+ *              glMultiTexCoord2iARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord2iARB( GLenum target, GLint s, GLint t ) {
   TRACE("(%d, %d, %d)\n", target, s, t );
@@ -2274,7 +2274,7 @@ void WINAPI wine_glMultiTexCoord2iARB( GLenum target, GLint s, GLint t ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord2ivARB
+ *              glMultiTexCoord2ivARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord2ivARB( GLenum target, GLint* v ) {
   TRACE("(%d, %p)\n", target, v );
@@ -2284,7 +2284,7 @@ void WINAPI wine_glMultiTexCoord2ivARB( GLenum target, GLint* v ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord2sARB
+ *              glMultiTexCoord2sARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord2sARB( GLenum target, GLshort s, GLshort t ) {
   TRACE("(%d, %d, %d)\n", target, s, t );
@@ -2294,7 +2294,7 @@ void WINAPI wine_glMultiTexCoord2sARB( GLenum target, GLshort s, GLshort t ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord2svARB
+ *              glMultiTexCoord2svARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord2svARB( GLenum target, GLshort* v ) {
   TRACE("(%d, %p)\n", target, v );
@@ -2304,7 +2304,7 @@ void WINAPI wine_glMultiTexCoord2svARB( GLenum target, GLshort* v ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord3dARB
+ *              glMultiTexCoord3dARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord3dARB( GLenum target, GLdouble s, GLdouble t, GLdouble r ) {
   TRACE("(%d, %f, %f, %f)\n", target, s, t, r );
@@ -2314,7 +2314,7 @@ void WINAPI wine_glMultiTexCoord3dARB( GLenum target, GLdouble s, GLdouble t, GL
 }
 
 /***********************************************************************
- *              glMultiTexCoord3dvARB
+ *              glMultiTexCoord3dvARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord3dvARB( GLenum target, GLdouble* v ) {
   TRACE("(%d, %p)\n", target, v );
@@ -2324,7 +2324,7 @@ void WINAPI wine_glMultiTexCoord3dvARB( GLenum target, GLdouble* v ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord3fARB
+ *              glMultiTexCoord3fARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord3fARB( GLenum target, GLfloat s, GLfloat t, GLfloat r ) {
   TRACE("(%d, %f, %f, %f)\n", target, s, t, r );
@@ -2334,7 +2334,7 @@ void WINAPI wine_glMultiTexCoord3fARB( GLenum target, GLfloat s, GLfloat t, GLfl
 }
 
 /***********************************************************************
- *              glMultiTexCoord3fvARB
+ *              glMultiTexCoord3fvARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord3fvARB( GLenum target, GLfloat* v ) {
   TRACE("(%d, %p)\n", target, v );
@@ -2344,7 +2344,7 @@ void WINAPI wine_glMultiTexCoord3fvARB( GLenum target, GLfloat* v ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord3iARB
+ *              glMultiTexCoord3iARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord3iARB( GLenum target, GLint s, GLint t, GLint r ) {
   TRACE("(%d, %d, %d, %d)\n", target, s, t, r );
@@ -2354,7 +2354,7 @@ void WINAPI wine_glMultiTexCoord3iARB( GLenum target, GLint s, GLint t, GLint r 
 }
 
 /***********************************************************************
- *              glMultiTexCoord3ivARB
+ *              glMultiTexCoord3ivARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord3ivARB( GLenum target, GLint* v ) {
   TRACE("(%d, %p)\n", target, v );
@@ -2364,7 +2364,7 @@ void WINAPI wine_glMultiTexCoord3ivARB( GLenum target, GLint* v ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord3sARB
+ *              glMultiTexCoord3sARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord3sARB( GLenum target, GLshort s, GLshort t, GLshort r ) {
   TRACE("(%d, %d, %d, %d)\n", target, s, t, r );
@@ -2374,7 +2374,7 @@ void WINAPI wine_glMultiTexCoord3sARB( GLenum target, GLshort s, GLshort t, GLsh
 }
 
 /***********************************************************************
- *              glMultiTexCoord3svARB
+ *              glMultiTexCoord3svARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord3svARB( GLenum target, GLshort* v ) {
   TRACE("(%d, %p)\n", target, v );
@@ -2384,7 +2384,7 @@ void WINAPI wine_glMultiTexCoord3svARB( GLenum target, GLshort* v ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord4dARB
+ *              glMultiTexCoord4dARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord4dARB( GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q ) {
   TRACE("(%d, %f, %f, %f, %f)\n", target, s, t, r, q );
@@ -2394,7 +2394,7 @@ void WINAPI wine_glMultiTexCoord4dARB( GLenum target, GLdouble s, GLdouble t, GL
 }
 
 /***********************************************************************
- *              glMultiTexCoord4dvARB
+ *              glMultiTexCoord4dvARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord4dvARB( GLenum target, GLdouble* v ) {
   TRACE("(%d, %p)\n", target, v );
@@ -2404,7 +2404,7 @@ void WINAPI wine_glMultiTexCoord4dvARB( GLenum target, GLdouble* v ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord4fARB
+ *              glMultiTexCoord4fARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord4fARB( GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q ) {
   TRACE("(%d, %f, %f, %f, %f)\n", target, s, t, r, q );
@@ -2414,7 +2414,7 @@ void WINAPI wine_glMultiTexCoord4fARB( GLenum target, GLfloat s, GLfloat t, GLfl
 }
 
 /***********************************************************************
- *              glMultiTexCoord4fvARB
+ *              glMultiTexCoord4fvARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord4fvARB( GLenum target, GLfloat* v ) {
   TRACE("(%d, %p)\n", target, v );
@@ -2424,7 +2424,7 @@ void WINAPI wine_glMultiTexCoord4fvARB( GLenum target, GLfloat* v ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord4iARB
+ *              glMultiTexCoord4iARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord4iARB( GLenum target, GLint s, GLint t, GLint r, GLint q ) {
   TRACE("(%d, %d, %d, %d, %d)\n", target, s, t, r, q );
@@ -2434,7 +2434,7 @@ void WINAPI wine_glMultiTexCoord4iARB( GLenum target, GLint s, GLint t, GLint r,
 }
 
 /***********************************************************************
- *              glMultiTexCoord4ivARB
+ *              glMultiTexCoord4ivARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord4ivARB( GLenum target, GLint* v ) {
   TRACE("(%d, %p)\n", target, v );
@@ -2444,7 +2444,7 @@ void WINAPI wine_glMultiTexCoord4ivARB( GLenum target, GLint* v ) {
 }
 
 /***********************************************************************
- *              glMultiTexCoord4sARB
+ *              glMultiTexCoord4sARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord4sARB( GLenum target, GLshort s, GLshort t, GLshort r, GLshort q ) {
   TRACE("(%d, %d, %d, %d, %d)\n", target, s, t, r, q );
@@ -2454,7 +2454,7 @@ void WINAPI wine_glMultiTexCoord4sARB( GLenum target, GLshort s, GLshort t, GLsh
 }
 
 /***********************************************************************
- *              glMultiTexCoord4svARB
+ *              glMultiTexCoord4svARB (OPENGL32.@)
  */
 void WINAPI wine_glMultiTexCoord4svARB( GLenum target, GLshort* v ) {
   TRACE("(%d, %p)\n", target, v );
@@ -2464,7 +2464,7 @@ void WINAPI wine_glMultiTexCoord4svARB( GLenum target, GLshort* v ) {
 }
 
 /***********************************************************************
- *              glNewList
+ *              glNewList (OPENGL32.@)
  */
 void WINAPI wine_glNewList( GLuint list, GLenum mode ) {
   TRACE("(%d, %d)\n", list, mode );
@@ -2474,7 +2474,7 @@ void WINAPI wine_glNewList( GLuint list, GLenum mode ) {
 }
 
 /***********************************************************************
- *              glNormal3b
+ *              glNormal3b (OPENGL32.@)
  */
 void WINAPI wine_glNormal3b( GLbyte nx, GLbyte ny, GLbyte nz ) {
   TRACE("(%d, %d, %d)\n", nx, ny, nz );
@@ -2484,7 +2484,7 @@ void WINAPI wine_glNormal3b( GLbyte nx, GLbyte ny, GLbyte nz ) {
 }
 
 /***********************************************************************
- *              glNormal3bv
+ *              glNormal3bv (OPENGL32.@)
  */
 void WINAPI wine_glNormal3bv( GLbyte* v ) {
   TRACE("(%p)\n", v );
@@ -2494,7 +2494,7 @@ void WINAPI wine_glNormal3bv( GLbyte* v ) {
 }
 
 /***********************************************************************
- *              glNormal3d
+ *              glNormal3d (OPENGL32.@)
  */
 void WINAPI wine_glNormal3d( GLdouble nx, GLdouble ny, GLdouble nz ) {
   TRACE("(%f, %f, %f)\n", nx, ny, nz );
@@ -2504,7 +2504,7 @@ void WINAPI wine_glNormal3d( GLdouble nx, GLdouble ny, GLdouble nz ) {
 }
 
 /***********************************************************************
- *              glNormal3dv
+ *              glNormal3dv (OPENGL32.@)
  */
 void WINAPI wine_glNormal3dv( GLdouble* v ) {
   TRACE("(%p)\n", v );
@@ -2514,7 +2514,7 @@ void WINAPI wine_glNormal3dv( GLdouble* v ) {
 }
 
 /***********************************************************************
- *              glNormal3f
+ *              glNormal3f (OPENGL32.@)
  */
 void WINAPI wine_glNormal3f( GLfloat nx, GLfloat ny, GLfloat nz ) {
   TRACE("(%f, %f, %f)\n", nx, ny, nz );
@@ -2524,7 +2524,7 @@ void WINAPI wine_glNormal3f( GLfloat nx, GLfloat ny, GLfloat nz ) {
 }
 
 /***********************************************************************
- *              glNormal3fv
+ *              glNormal3fv (OPENGL32.@)
  */
 void WINAPI wine_glNormal3fv( GLfloat* v ) {
   TRACE("(%p)\n", v );
@@ -2534,7 +2534,7 @@ void WINAPI wine_glNormal3fv( GLfloat* v ) {
 }
 
 /***********************************************************************
- *              glNormal3i
+ *              glNormal3i (OPENGL32.@)
  */
 void WINAPI wine_glNormal3i( GLint nx, GLint ny, GLint nz ) {
   TRACE("(%d, %d, %d)\n", nx, ny, nz );
@@ -2544,7 +2544,7 @@ void WINAPI wine_glNormal3i( GLint nx, GLint ny, GLint nz ) {
 }
 
 /***********************************************************************
- *              glNormal3iv
+ *              glNormal3iv (OPENGL32.@)
  */
 void WINAPI wine_glNormal3iv( GLint* v ) {
   TRACE("(%p)\n", v );
@@ -2554,7 +2554,7 @@ void WINAPI wine_glNormal3iv( GLint* v ) {
 }
 
 /***********************************************************************
- *              glNormal3s
+ *              glNormal3s (OPENGL32.@)
  */
 void WINAPI wine_glNormal3s( GLshort nx, GLshort ny, GLshort nz ) {
   TRACE("(%d, %d, %d)\n", nx, ny, nz );
@@ -2564,7 +2564,7 @@ void WINAPI wine_glNormal3s( GLshort nx, GLshort ny, GLshort nz ) {
 }
 
 /***********************************************************************
- *              glNormal3sv
+ *              glNormal3sv (OPENGL32.@)
  */
 void WINAPI wine_glNormal3sv( GLshort* v ) {
   TRACE("(%p)\n", v );
@@ -2574,7 +2574,7 @@ void WINAPI wine_glNormal3sv( GLshort* v ) {
 }
 
 /***********************************************************************
- *              glNormalPointer
+ *              glNormalPointer (OPENGL32.@)
  */
 void WINAPI wine_glNormalPointer( GLenum type, GLsizei stride, GLvoid* pointer ) {
   TRACE("(%d, %d, %p)\n", type, stride, pointer );
@@ -2584,7 +2584,7 @@ void WINAPI wine_glNormalPointer( GLenum type, GLsizei stride, GLvoid* pointer )
 }
 
 /***********************************************************************
- *              glOrtho
+ *              glOrtho (OPENGL32.@)
  */
 void WINAPI wine_glOrtho( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar ) {
   TRACE("(%f, %f, %f, %f, %f, %f)\n", left, right, bottom, top, zNear, zFar );
@@ -2594,7 +2594,7 @@ void WINAPI wine_glOrtho( GLdouble left, GLdouble right, GLdouble bottom, GLdoub
 }
 
 /***********************************************************************
- *              glPassThrough
+ *              glPassThrough (OPENGL32.@)
  */
 void WINAPI wine_glPassThrough( GLfloat token ) {
   TRACE("(%f)\n", token );
@@ -2604,7 +2604,7 @@ void WINAPI wine_glPassThrough( GLfloat token ) {
 }
 
 /***********************************************************************
- *              glPixelMapfv
+ *              glPixelMapfv (OPENGL32.@)
  */
 void WINAPI wine_glPixelMapfv( GLenum map, GLint mapsize, GLfloat* values ) {
   TRACE("(%d, %d, %p)\n", map, mapsize, values );
@@ -2614,7 +2614,7 @@ void WINAPI wine_glPixelMapfv( GLenum map, GLint mapsize, GLfloat* values ) {
 }
 
 /***********************************************************************
- *              glPixelMapuiv
+ *              glPixelMapuiv (OPENGL32.@)
  */
 void WINAPI wine_glPixelMapuiv( GLenum map, GLint mapsize, GLuint* values ) {
   TRACE("(%d, %d, %p)\n", map, mapsize, values );
@@ -2624,7 +2624,7 @@ void WINAPI wine_glPixelMapuiv( GLenum map, GLint mapsize, GLuint* values ) {
 }
 
 /***********************************************************************
- *              glPixelMapusv
+ *              glPixelMapusv (OPENGL32.@)
  */
 void WINAPI wine_glPixelMapusv( GLenum map, GLint mapsize, GLushort* values ) {
   TRACE("(%d, %d, %p)\n", map, mapsize, values );
@@ -2634,7 +2634,7 @@ void WINAPI wine_glPixelMapusv( GLenum map, GLint mapsize, GLushort* values ) {
 }
 
 /***********************************************************************
- *              glPixelStoref
+ *              glPixelStoref (OPENGL32.@)
  */
 void WINAPI wine_glPixelStoref( GLenum pname, GLfloat param ) {
   TRACE("(%d, %f)\n", pname, param );
@@ -2644,7 +2644,7 @@ void WINAPI wine_glPixelStoref( GLenum pname, GLfloat param ) {
 }
 
 /***********************************************************************
- *              glPixelStorei
+ *              glPixelStorei (OPENGL32.@)
  */
 void WINAPI wine_glPixelStorei( GLenum pname, GLint param ) {
   TRACE("(%d, %d)\n", pname, param );
@@ -2654,7 +2654,7 @@ void WINAPI wine_glPixelStorei( GLenum pname, GLint param ) {
 }
 
 /***********************************************************************
- *              glPixelTransferf
+ *              glPixelTransferf (OPENGL32.@)
  */
 void WINAPI wine_glPixelTransferf( GLenum pname, GLfloat param ) {
   TRACE("(%d, %f)\n", pname, param );
@@ -2664,7 +2664,7 @@ void WINAPI wine_glPixelTransferf( GLenum pname, GLfloat param ) {
 }
 
 /***********************************************************************
- *              glPixelTransferi
+ *              glPixelTransferi (OPENGL32.@)
  */
 void WINAPI wine_glPixelTransferi( GLenum pname, GLint param ) {
   TRACE("(%d, %d)\n", pname, param );
@@ -2674,7 +2674,7 @@ void WINAPI wine_glPixelTransferi( GLenum pname, GLint param ) {
 }
 
 /***********************************************************************
- *              glPixelZoom
+ *              glPixelZoom (OPENGL32.@)
  */
 void WINAPI wine_glPixelZoom( GLfloat xfactor, GLfloat yfactor ) {
   TRACE("(%f, %f)\n", xfactor, yfactor );
@@ -2684,7 +2684,7 @@ void WINAPI wine_glPixelZoom( GLfloat xfactor, GLfloat yfactor ) {
 }
 
 /***********************************************************************
- *              glPointSize
+ *              glPointSize (OPENGL32.@)
  */
 void WINAPI wine_glPointSize( GLfloat size ) {
   TRACE("(%f)\n", size );
@@ -2694,7 +2694,7 @@ void WINAPI wine_glPointSize( GLfloat size ) {
 }
 
 /***********************************************************************
- *              glPolygonMode
+ *              glPolygonMode (OPENGL32.@)
  */
 void WINAPI wine_glPolygonMode( GLenum face, GLenum mode ) {
   TRACE("(%d, %d)\n", face, mode );
@@ -2704,7 +2704,7 @@ void WINAPI wine_glPolygonMode( GLenum face, GLenum mode ) {
 }
 
 /***********************************************************************
- *              glPolygonOffset
+ *              glPolygonOffset (OPENGL32.@)
  */
 void WINAPI wine_glPolygonOffset( GLfloat factor, GLfloat units ) {
   TRACE("(%f, %f)\n", factor, units );
@@ -2714,7 +2714,7 @@ void WINAPI wine_glPolygonOffset( GLfloat factor, GLfloat units ) {
 }
 
 /***********************************************************************
- *              glPolygonStipple
+ *              glPolygonStipple (OPENGL32.@)
  */
 void WINAPI wine_glPolygonStipple( GLubyte* mask ) {
   TRACE("(%p)\n", mask );
@@ -2724,7 +2724,7 @@ void WINAPI wine_glPolygonStipple( GLubyte* mask ) {
 }
 
 /***********************************************************************
- *              glPopAttrib
+ *              glPopAttrib (OPENGL32.@)
  */
 void WINAPI wine_glPopAttrib( ) {
   TRACE("()\n");
@@ -2734,7 +2734,7 @@ void WINAPI wine_glPopAttrib( ) {
 }
 
 /***********************************************************************
- *              glPopClientAttrib
+ *              glPopClientAttrib (OPENGL32.@)
  */
 void WINAPI wine_glPopClientAttrib( ) {
   TRACE("()\n");
@@ -2744,7 +2744,7 @@ void WINAPI wine_glPopClientAttrib( ) {
 }
 
 /***********************************************************************
- *              glPopMatrix
+ *              glPopMatrix (OPENGL32.@)
  */
 void WINAPI wine_glPopMatrix( ) {
   TRACE("()\n");
@@ -2754,7 +2754,7 @@ void WINAPI wine_glPopMatrix( ) {
 }
 
 /***********************************************************************
- *              glPopName
+ *              glPopName (OPENGL32.@)
  */
 void WINAPI wine_glPopName( ) {
   TRACE("()\n");
@@ -2764,7 +2764,7 @@ void WINAPI wine_glPopName( ) {
 }
 
 /***********************************************************************
- *              glPrioritizeTextures
+ *              glPrioritizeTextures (OPENGL32.@)
  */
 void WINAPI wine_glPrioritizeTextures( GLsizei n, GLuint* textures, GLclampf* priorities ) {
   TRACE("(%d, %p, %p)\n", n, textures, priorities );
@@ -2774,7 +2774,7 @@ void WINAPI wine_glPrioritizeTextures( GLsizei n, GLuint* textures, GLclampf* pr
 }
 
 /***********************************************************************
- *              glPushAttrib
+ *              glPushAttrib (OPENGL32.@)
  */
 void WINAPI wine_glPushAttrib( GLbitfield mask ) {
   TRACE("(%d)\n", mask );
@@ -2784,7 +2784,7 @@ void WINAPI wine_glPushAttrib( GLbitfield mask ) {
 }
 
 /***********************************************************************
- *              glPushClientAttrib
+ *              glPushClientAttrib (OPENGL32.@)
  */
 void WINAPI wine_glPushClientAttrib( GLbitfield mask ) {
   TRACE("(%d)\n", mask );
@@ -2794,7 +2794,7 @@ void WINAPI wine_glPushClientAttrib( GLbitfield mask ) {
 }
 
 /***********************************************************************
- *              glPushMatrix
+ *              glPushMatrix (OPENGL32.@)
  */
 void WINAPI wine_glPushMatrix( ) {
   TRACE("()\n");
@@ -2804,7 +2804,7 @@ void WINAPI wine_glPushMatrix( ) {
 }
 
 /***********************************************************************
- *              glPushName
+ *              glPushName (OPENGL32.@)
  */
 void WINAPI wine_glPushName( GLuint name ) {
   TRACE("(%d)\n", name );
@@ -2814,7 +2814,7 @@ void WINAPI wine_glPushName( GLuint name ) {
 }
 
 /***********************************************************************
- *              glRasterPos2d
+ *              glRasterPos2d (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos2d( GLdouble x, GLdouble y ) {
   TRACE("(%f, %f)\n", x, y );
@@ -2824,7 +2824,7 @@ void WINAPI wine_glRasterPos2d( GLdouble x, GLdouble y ) {
 }
 
 /***********************************************************************
- *              glRasterPos2dv
+ *              glRasterPos2dv (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos2dv( GLdouble* v ) {
   TRACE("(%p)\n", v );
@@ -2834,7 +2834,7 @@ void WINAPI wine_glRasterPos2dv( GLdouble* v ) {
 }
 
 /***********************************************************************
- *              glRasterPos2f
+ *              glRasterPos2f (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos2f( GLfloat x, GLfloat y ) {
   TRACE("(%f, %f)\n", x, y );
@@ -2844,7 +2844,7 @@ void WINAPI wine_glRasterPos2f( GLfloat x, GLfloat y ) {
 }
 
 /***********************************************************************
- *              glRasterPos2fv
+ *              glRasterPos2fv (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos2fv( GLfloat* v ) {
   TRACE("(%p)\n", v );
@@ -2854,7 +2854,7 @@ void WINAPI wine_glRasterPos2fv( GLfloat* v ) {
 }
 
 /***********************************************************************
- *              glRasterPos2i
+ *              glRasterPos2i (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos2i( GLint x, GLint y ) {
   TRACE("(%d, %d)\n", x, y );
@@ -2864,7 +2864,7 @@ void WINAPI wine_glRasterPos2i( GLint x, GLint y ) {
 }
 
 /***********************************************************************
- *              glRasterPos2iv
+ *              glRasterPos2iv (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos2iv( GLint* v ) {
   TRACE("(%p)\n", v );
@@ -2874,7 +2874,7 @@ void WINAPI wine_glRasterPos2iv( GLint* v ) {
 }
 
 /***********************************************************************
- *              glRasterPos2s
+ *              glRasterPos2s (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos2s( GLshort x, GLshort y ) {
   TRACE("(%d, %d)\n", x, y );
@@ -2884,7 +2884,7 @@ void WINAPI wine_glRasterPos2s( GLshort x, GLshort y ) {
 }
 
 /***********************************************************************
- *              glRasterPos2sv
+ *              glRasterPos2sv (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos2sv( GLshort* v ) {
   TRACE("(%p)\n", v );
@@ -2894,7 +2894,7 @@ void WINAPI wine_glRasterPos2sv( GLshort* v ) {
 }
 
 /***********************************************************************
- *              glRasterPos3d
+ *              glRasterPos3d (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos3d( GLdouble x, GLdouble y, GLdouble z ) {
   TRACE("(%f, %f, %f)\n", x, y, z );
@@ -2904,7 +2904,7 @@ void WINAPI wine_glRasterPos3d( GLdouble x, GLdouble y, GLdouble z ) {
 }
 
 /***********************************************************************
- *              glRasterPos3dv
+ *              glRasterPos3dv (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos3dv( GLdouble* v ) {
   TRACE("(%p)\n", v );
@@ -2914,7 +2914,7 @@ void WINAPI wine_glRasterPos3dv( GLdouble* v ) {
 }
 
 /***********************************************************************
- *              glRasterPos3f
+ *              glRasterPos3f (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos3f( GLfloat x, GLfloat y, GLfloat z ) {
   TRACE("(%f, %f, %f)\n", x, y, z );
@@ -2924,7 +2924,7 @@ void WINAPI wine_glRasterPos3f( GLfloat x, GLfloat y, GLfloat z ) {
 }
 
 /***********************************************************************
- *              glRasterPos3fv
+ *              glRasterPos3fv (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos3fv( GLfloat* v ) {
   TRACE("(%p)\n", v );
@@ -2934,7 +2934,7 @@ void WINAPI wine_glRasterPos3fv( GLfloat* v ) {
 }
 
 /***********************************************************************
- *              glRasterPos3i
+ *              glRasterPos3i (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos3i( GLint x, GLint y, GLint z ) {
   TRACE("(%d, %d, %d)\n", x, y, z );
@@ -2944,7 +2944,7 @@ void WINAPI wine_glRasterPos3i( GLint x, GLint y, GLint z ) {
 }
 
 /***********************************************************************
- *              glRasterPos3iv
+ *              glRasterPos3iv (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos3iv( GLint* v ) {
   TRACE("(%p)\n", v );
@@ -2954,7 +2954,7 @@ void WINAPI wine_glRasterPos3iv( GLint* v ) {
 }
 
 /***********************************************************************
- *              glRasterPos3s
+ *              glRasterPos3s (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos3s( GLshort x, GLshort y, GLshort z ) {
   TRACE("(%d, %d, %d)\n", x, y, z );
@@ -2964,7 +2964,7 @@ void WINAPI wine_glRasterPos3s( GLshort x, GLshort y, GLshort z ) {
 }
 
 /***********************************************************************
- *              glRasterPos3sv
+ *              glRasterPos3sv (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos3sv( GLshort* v ) {
   TRACE("(%p)\n", v );
@@ -2974,7 +2974,7 @@ void WINAPI wine_glRasterPos3sv( GLshort* v ) {
 }
 
 /***********************************************************************
- *              glRasterPos4d
+ *              glRasterPos4d (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w ) {
   TRACE("(%f, %f, %f, %f)\n", x, y, z, w );
@@ -2984,7 +2984,7 @@ void WINAPI wine_glRasterPos4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w )
 }
 
 /***********************************************************************
- *              glRasterPos4dv
+ *              glRasterPos4dv (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos4dv( GLdouble* v ) {
   TRACE("(%p)\n", v );
@@ -2994,7 +2994,7 @@ void WINAPI wine_glRasterPos4dv( GLdouble* v ) {
 }
 
 /***********************************************************************
- *              glRasterPos4f
+ *              glRasterPos4f (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {
   TRACE("(%f, %f, %f, %f)\n", x, y, z, w );
@@ -3004,7 +3004,7 @@ void WINAPI wine_glRasterPos4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {
 }
 
 /***********************************************************************
- *              glRasterPos4fv
+ *              glRasterPos4fv (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos4fv( GLfloat* v ) {
   TRACE("(%p)\n", v );
@@ -3014,7 +3014,7 @@ void WINAPI wine_glRasterPos4fv( GLfloat* v ) {
 }
 
 /***********************************************************************
- *              glRasterPos4i
+ *              glRasterPos4i (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos4i( GLint x, GLint y, GLint z, GLint w ) {
   TRACE("(%d, %d, %d, %d)\n", x, y, z, w );
@@ -3024,7 +3024,7 @@ void WINAPI wine_glRasterPos4i( GLint x, GLint y, GLint z, GLint w ) {
 }
 
 /***********************************************************************
- *              glRasterPos4iv
+ *              glRasterPos4iv (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos4iv( GLint* v ) {
   TRACE("(%p)\n", v );
@@ -3034,7 +3034,7 @@ void WINAPI wine_glRasterPos4iv( GLint* v ) {
 }
 
 /***********************************************************************
- *              glRasterPos4s
+ *              glRasterPos4s (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos4s( GLshort x, GLshort y, GLshort z, GLshort w ) {
   TRACE("(%d, %d, %d, %d)\n", x, y, z, w );
@@ -3044,7 +3044,7 @@ void WINAPI wine_glRasterPos4s( GLshort x, GLshort y, GLshort z, GLshort w ) {
 }
 
 /***********************************************************************
- *              glRasterPos4sv
+ *              glRasterPos4sv (OPENGL32.@)
  */
 void WINAPI wine_glRasterPos4sv( GLshort* v ) {
   TRACE("(%p)\n", v );
@@ -3054,7 +3054,7 @@ void WINAPI wine_glRasterPos4sv( GLshort* v ) {
 }
 
 /***********************************************************************
- *              glReadBuffer
+ *              glReadBuffer (OPENGL32.@)
  */
 void WINAPI wine_glReadBuffer( GLenum mode ) {
   TRACE("(%d)\n", mode );
@@ -3064,7 +3064,7 @@ void WINAPI wine_glReadBuffer( GLenum mode ) {
 }
 
 /***********************************************************************
- *              glReadPixels
+ *              glReadPixels (OPENGL32.@)
  */
 void WINAPI wine_glReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels ) {
   TRACE("(%d, %d, %d, %d, %d, %d, %p)\n", x, y, width, height, format, type, pixels );
@@ -3074,7 +3074,7 @@ void WINAPI wine_glReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, 
 }
 
 /***********************************************************************
- *              glRectd
+ *              glRectd (OPENGL32.@)
  */
 void WINAPI wine_glRectd( GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2 ) {
   TRACE("(%f, %f, %f, %f)\n", x1, y1, x2, y2 );
@@ -3084,7 +3084,7 @@ void WINAPI wine_glRectd( GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2 ) {
 }
 
 /***********************************************************************
- *              glRectdv
+ *              glRectdv (OPENGL32.@)
  */
 void WINAPI wine_glRectdv( GLdouble* v1, GLdouble* v2 ) {
   TRACE("(%p, %p)\n", v1, v2 );
@@ -3094,7 +3094,7 @@ void WINAPI wine_glRectdv( GLdouble* v1, GLdouble* v2 ) {
 }
 
 /***********************************************************************
- *              glRectf
+ *              glRectf (OPENGL32.@)
  */
 void WINAPI wine_glRectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 ) {
   TRACE("(%f, %f, %f, %f)\n", x1, y1, x2, y2 );
@@ -3104,7 +3104,7 @@ void WINAPI wine_glRectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 ) {
 }
 
 /***********************************************************************
- *              glRectfv
+ *              glRectfv (OPENGL32.@)
  */
 void WINAPI wine_glRectfv( GLfloat* v1, GLfloat* v2 ) {
   TRACE("(%p, %p)\n", v1, v2 );
@@ -3114,7 +3114,7 @@ void WINAPI wine_glRectfv( GLfloat* v1, GLfloat* v2 ) {
 }
 
 /***********************************************************************
- *              glRecti
+ *              glRecti (OPENGL32.@)
  */
 void WINAPI wine_glRecti( GLint x1, GLint y1, GLint x2, GLint y2 ) {
   TRACE("(%d, %d, %d, %d)\n", x1, y1, x2, y2 );
@@ -3124,7 +3124,7 @@ void WINAPI wine_glRecti( GLint x1, GLint y1, GLint x2, GLint y2 ) {
 }
 
 /***********************************************************************
- *              glRectiv
+ *              glRectiv (OPENGL32.@)
  */
 void WINAPI wine_glRectiv( GLint* v1, GLint* v2 ) {
   TRACE("(%p, %p)\n", v1, v2 );
@@ -3134,7 +3134,7 @@ void WINAPI wine_glRectiv( GLint* v1, GLint* v2 ) {
 }
 
 /***********************************************************************
- *              glRects
+ *              glRects (OPENGL32.@)
  */
 void WINAPI wine_glRects( GLshort x1, GLshort y1, GLshort x2, GLshort y2 ) {
   TRACE("(%d, %d, %d, %d)\n", x1, y1, x2, y2 );
@@ -3144,7 +3144,7 @@ void WINAPI wine_glRects( GLshort x1, GLshort y1, GLshort x2, GLshort y2 ) {
 }
 
 /***********************************************************************
- *              glRectsv
+ *              glRectsv (OPENGL32.@)
  */
 void WINAPI wine_glRectsv( GLshort* v1, GLshort* v2 ) {
   TRACE("(%p, %p)\n", v1, v2 );
@@ -3154,7 +3154,7 @@ void WINAPI wine_glRectsv( GLshort* v1, GLshort* v2 ) {
 }
 
 /***********************************************************************
- *              glRenderMode
+ *              glRenderMode (OPENGL32.@)
  */
 GLint WINAPI wine_glRenderMode( GLenum mode ) {
   GLint ret_value;
@@ -3166,7 +3166,7 @@ GLint WINAPI wine_glRenderMode( GLenum mode ) {
 }
 
 /***********************************************************************
- *              glResetHistogram
+ *              glResetHistogram (OPENGL32.@)
  */
 void WINAPI wine_glResetHistogram( GLenum target ) {
   TRACE("(%d)\n", target );
@@ -3176,7 +3176,7 @@ void WINAPI wine_glResetHistogram( GLenum target ) {
 }
 
 /***********************************************************************
- *              glResetMinmax
+ *              glResetMinmax (OPENGL32.@)
  */
 void WINAPI wine_glResetMinmax( GLenum target ) {
   TRACE("(%d)\n", target );
@@ -3186,7 +3186,7 @@ void WINAPI wine_glResetMinmax( GLenum target ) {
 }
 
 /***********************************************************************
- *              glRotated
+ *              glRotated (OPENGL32.@)
  */
 void WINAPI wine_glRotated( GLdouble angle, GLdouble x, GLdouble y, GLdouble z ) {
   TRACE("(%f, %f, %f, %f)\n", angle, x, y, z );
@@ -3196,7 +3196,7 @@ void WINAPI wine_glRotated( GLdouble angle, GLdouble x, GLdouble y, GLdouble z )
 }
 
 /***********************************************************************
- *              glRotatef
+ *              glRotatef (OPENGL32.@)
  */
 void WINAPI wine_glRotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z ) {
   TRACE("(%f, %f, %f, %f)\n", angle, x, y, z );
@@ -3206,7 +3206,7 @@ void WINAPI wine_glRotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z ) {
 }
 
 /***********************************************************************
- *              glScaled
+ *              glScaled (OPENGL32.@)
  */
 void WINAPI wine_glScaled( GLdouble x, GLdouble y, GLdouble z ) {
   TRACE("(%f, %f, %f)\n", x, y, z );
@@ -3216,7 +3216,7 @@ void WINAPI wine_glScaled( GLdouble x, GLdouble y, GLdouble z ) {
 }
 
 /***********************************************************************
- *              glScalef
+ *              glScalef (OPENGL32.@)
  */
 void WINAPI wine_glScalef( GLfloat x, GLfloat y, GLfloat z ) {
   TRACE("(%f, %f, %f)\n", x, y, z );
@@ -3226,7 +3226,7 @@ void WINAPI wine_glScalef( GLfloat x, GLfloat y, GLfloat z ) {
 }
 
 /***********************************************************************
- *              glScissor
+ *              glScissor (OPENGL32.@)
  */
 void WINAPI wine_glScissor( GLint x, GLint y, GLsizei width, GLsizei height ) {
   TRACE("(%d, %d, %d, %d)\n", x, y, width, height );
@@ -3236,7 +3236,7 @@ void WINAPI wine_glScissor( GLint x, GLint y, GLsizei width, GLsizei height ) {
 }
 
 /***********************************************************************
- *              glSelectBuffer
+ *              glSelectBuffer (OPENGL32.@)
  */
 void WINAPI wine_glSelectBuffer( GLsizei size, GLuint* buffer ) {
   TRACE("(%d, %p)\n", size, buffer );
@@ -3246,7 +3246,7 @@ void WINAPI wine_glSelectBuffer( GLsizei size, GLuint* buffer ) {
 }
 
 /***********************************************************************
- *              glSeparableFilter2D
+ *              glSeparableFilter2D (OPENGL32.@)
  */
 void WINAPI wine_glSeparableFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* row, GLvoid* column ) {
   TRACE("(%d, %d, %d, %d, %d, %d, %p, %p)\n", target, internalformat, width, height, format, type, row, column );
@@ -3256,7 +3256,7 @@ void WINAPI wine_glSeparableFilter2D( GLenum target, GLenum internalformat, GLsi
 }
 
 /***********************************************************************
- *              glShadeModel
+ *              glShadeModel (OPENGL32.@)
  */
 void WINAPI wine_glShadeModel( GLenum mode ) {
   TRACE("(%d)\n", mode );
@@ -3266,7 +3266,7 @@ void WINAPI wine_glShadeModel( GLenum mode ) {
 }
 
 /***********************************************************************
- *              glStencilFunc
+ *              glStencilFunc (OPENGL32.@)
  */
 void WINAPI wine_glStencilFunc( GLenum func, GLint ref, GLuint mask ) {
   TRACE("(%d, %d, %d)\n", func, ref, mask );
@@ -3276,7 +3276,7 @@ void WINAPI wine_glStencilFunc( GLenum func, GLint ref, GLuint mask ) {
 }
 
 /***********************************************************************
- *              glStencilMask
+ *              glStencilMask (OPENGL32.@)
  */
 void WINAPI wine_glStencilMask( GLuint mask ) {
   TRACE("(%d)\n", mask );
@@ -3286,7 +3286,7 @@ void WINAPI wine_glStencilMask( GLuint mask ) {
 }
 
 /***********************************************************************
- *              glStencilOp
+ *              glStencilOp (OPENGL32.@)
  */
 void WINAPI wine_glStencilOp( GLenum fail, GLenum zfail, GLenum zpass ) {
   TRACE("(%d, %d, %d)\n", fail, zfail, zpass );
@@ -3296,7 +3296,7 @@ void WINAPI wine_glStencilOp( GLenum fail, GLenum zfail, GLenum zpass ) {
 }
 
 /***********************************************************************
- *              glTexCoord1d
+ *              glTexCoord1d (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord1d( GLdouble s ) {
   TRACE("(%f)\n", s );
@@ -3306,7 +3306,7 @@ void WINAPI wine_glTexCoord1d( GLdouble s ) {
 }
 
 /***********************************************************************
- *              glTexCoord1dv
+ *              glTexCoord1dv (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord1dv( GLdouble* v ) {
   TRACE("(%p)\n", v );
@@ -3316,7 +3316,7 @@ void WINAPI wine_glTexCoord1dv( GLdouble* v ) {
 }
 
 /***********************************************************************
- *              glTexCoord1f
+ *              glTexCoord1f (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord1f( GLfloat s ) {
   TRACE("(%f)\n", s );
@@ -3326,7 +3326,7 @@ void WINAPI wine_glTexCoord1f( GLfloat s ) {
 }
 
 /***********************************************************************
- *              glTexCoord1fv
+ *              glTexCoord1fv (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord1fv( GLfloat* v ) {
   TRACE("(%p)\n", v );
@@ -3336,7 +3336,7 @@ void WINAPI wine_glTexCoord1fv( GLfloat* v ) {
 }
 
 /***********************************************************************
- *              glTexCoord1i
+ *              glTexCoord1i (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord1i( GLint s ) {
   TRACE("(%d)\n", s );
@@ -3346,7 +3346,7 @@ void WINAPI wine_glTexCoord1i( GLint s ) {
 }
 
 /***********************************************************************
- *              glTexCoord1iv
+ *              glTexCoord1iv (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord1iv( GLint* v ) {
   TRACE("(%p)\n", v );
@@ -3356,7 +3356,7 @@ void WINAPI wine_glTexCoord1iv( GLint* v ) {
 }
 
 /***********************************************************************
- *              glTexCoord1s
+ *              glTexCoord1s (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord1s( GLshort s ) {
   TRACE("(%d)\n", s );
@@ -3366,7 +3366,7 @@ void WINAPI wine_glTexCoord1s( GLshort s ) {
 }
 
 /***********************************************************************
- *              glTexCoord1sv
+ *              glTexCoord1sv (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord1sv( GLshort* v ) {
   TRACE("(%p)\n", v );
@@ -3376,7 +3376,7 @@ void WINAPI wine_glTexCoord1sv( GLshort* v ) {
 }
 
 /***********************************************************************
- *              glTexCoord2d
+ *              glTexCoord2d (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord2d( GLdouble s, GLdouble t ) {
   TRACE("(%f, %f)\n", s, t );
@@ -3386,7 +3386,7 @@ void WINAPI wine_glTexCoord2d( GLdouble s, GLdouble t ) {
 }
 
 /***********************************************************************
- *              glTexCoord2dv
+ *              glTexCoord2dv (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord2dv( GLdouble* v ) {
   TRACE("(%p)\n", v );
@@ -3396,7 +3396,7 @@ void WINAPI wine_glTexCoord2dv( GLdouble* v ) {
 }
 
 /***********************************************************************
- *              glTexCoord2f
+ *              glTexCoord2f (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord2f( GLfloat s, GLfloat t ) {
   TRACE("(%f, %f)\n", s, t );
@@ -3406,7 +3406,7 @@ void WINAPI wine_glTexCoord2f( GLfloat s, GLfloat t ) {
 }
 
 /***********************************************************************
- *              glTexCoord2fv
+ *              glTexCoord2fv (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord2fv( GLfloat* v ) {
   TRACE("(%p)\n", v );
@@ -3416,7 +3416,7 @@ void WINAPI wine_glTexCoord2fv( GLfloat* v ) {
 }
 
 /***********************************************************************
- *              glTexCoord2i
+ *              glTexCoord2i (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord2i( GLint s, GLint t ) {
   TRACE("(%d, %d)\n", s, t );
@@ -3426,7 +3426,7 @@ void WINAPI wine_glTexCoord2i( GLint s, GLint t ) {
 }
 
 /***********************************************************************
- *              glTexCoord2iv
+ *              glTexCoord2iv (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord2iv( GLint* v ) {
   TRACE("(%p)\n", v );
@@ -3436,7 +3436,7 @@ void WINAPI wine_glTexCoord2iv( GLint* v ) {
 }
 
 /***********************************************************************
- *              glTexCoord2s
+ *              glTexCoord2s (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord2s( GLshort s, GLshort t ) {
   TRACE("(%d, %d)\n", s, t );
@@ -3446,7 +3446,7 @@ void WINAPI wine_glTexCoord2s( GLshort s, GLshort t ) {
 }
 
 /***********************************************************************
- *              glTexCoord2sv
+ *              glTexCoord2sv (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord2sv( GLshort* v ) {
   TRACE("(%p)\n", v );
@@ -3456,7 +3456,7 @@ void WINAPI wine_glTexCoord2sv( GLshort* v ) {
 }
 
 /***********************************************************************
- *              glTexCoord3d
+ *              glTexCoord3d (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord3d( GLdouble s, GLdouble t, GLdouble r ) {
   TRACE("(%f, %f, %f)\n", s, t, r );
@@ -3466,7 +3466,7 @@ void WINAPI wine_glTexCoord3d( GLdouble s, GLdouble t, GLdouble r ) {
 }
 
 /***********************************************************************
- *              glTexCoord3dv
+ *              glTexCoord3dv (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord3dv( GLdouble* v ) {
   TRACE("(%p)\n", v );
@@ -3476,7 +3476,7 @@ void WINAPI wine_glTexCoord3dv( GLdouble* v ) {
 }
 
 /***********************************************************************
- *              glTexCoord3f
+ *              glTexCoord3f (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord3f( GLfloat s, GLfloat t, GLfloat r ) {
   TRACE("(%f, %f, %f)\n", s, t, r );
@@ -3486,7 +3486,7 @@ void WINAPI wine_glTexCoord3f( GLfloat s, GLfloat t, GLfloat r ) {
 }
 
 /***********************************************************************
- *              glTexCoord3fv
+ *              glTexCoord3fv (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord3fv( GLfloat* v ) {
   TRACE("(%p)\n", v );
@@ -3496,7 +3496,7 @@ void WINAPI wine_glTexCoord3fv( GLfloat* v ) {
 }
 
 /***********************************************************************
- *              glTexCoord3i
+ *              glTexCoord3i (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord3i( GLint s, GLint t, GLint r ) {
   TRACE("(%d, %d, %d)\n", s, t, r );
@@ -3506,7 +3506,7 @@ void WINAPI wine_glTexCoord3i( GLint s, GLint t, GLint r ) {
 }
 
 /***********************************************************************
- *              glTexCoord3iv
+ *              glTexCoord3iv (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord3iv( GLint* v ) {
   TRACE("(%p)\n", v );
@@ -3516,7 +3516,7 @@ void WINAPI wine_glTexCoord3iv( GLint* v ) {
 }
 
 /***********************************************************************
- *              glTexCoord3s
+ *              glTexCoord3s (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord3s( GLshort s, GLshort t, GLshort r ) {
   TRACE("(%d, %d, %d)\n", s, t, r );
@@ -3526,7 +3526,7 @@ void WINAPI wine_glTexCoord3s( GLshort s, GLshort t, GLshort r ) {
 }
 
 /***********************************************************************
- *              glTexCoord3sv
+ *              glTexCoord3sv (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord3sv( GLshort* v ) {
   TRACE("(%p)\n", v );
@@ -3536,7 +3536,7 @@ void WINAPI wine_glTexCoord3sv( GLshort* v ) {
 }
 
 /***********************************************************************
- *              glTexCoord4d
+ *              glTexCoord4d (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord4d( GLdouble s, GLdouble t, GLdouble r, GLdouble q ) {
   TRACE("(%f, %f, %f, %f)\n", s, t, r, q );
@@ -3546,7 +3546,7 @@ void WINAPI wine_glTexCoord4d( GLdouble s, GLdouble t, GLdouble r, GLdouble q ) 
 }
 
 /***********************************************************************
- *              glTexCoord4dv
+ *              glTexCoord4dv (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord4dv( GLdouble* v ) {
   TRACE("(%p)\n", v );
@@ -3556,7 +3556,7 @@ void WINAPI wine_glTexCoord4dv( GLdouble* v ) {
 }
 
 /***********************************************************************
- *              glTexCoord4f
+ *              glTexCoord4f (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord4f( GLfloat s, GLfloat t, GLfloat r, GLfloat q ) {
   TRACE("(%f, %f, %f, %f)\n", s, t, r, q );
@@ -3566,7 +3566,7 @@ void WINAPI wine_glTexCoord4f( GLfloat s, GLfloat t, GLfloat r, GLfloat q ) {
 }
 
 /***********************************************************************
- *              glTexCoord4fv
+ *              glTexCoord4fv (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord4fv( GLfloat* v ) {
   TRACE("(%p)\n", v );
@@ -3576,7 +3576,7 @@ void WINAPI wine_glTexCoord4fv( GLfloat* v ) {
 }
 
 /***********************************************************************
- *              glTexCoord4i
+ *              glTexCoord4i (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord4i( GLint s, GLint t, GLint r, GLint q ) {
   TRACE("(%d, %d, %d, %d)\n", s, t, r, q );
@@ -3586,7 +3586,7 @@ void WINAPI wine_glTexCoord4i( GLint s, GLint t, GLint r, GLint q ) {
 }
 
 /***********************************************************************
- *              glTexCoord4iv
+ *              glTexCoord4iv (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord4iv( GLint* v ) {
   TRACE("(%p)\n", v );
@@ -3596,7 +3596,7 @@ void WINAPI wine_glTexCoord4iv( GLint* v ) {
 }
 
 /***********************************************************************
- *              glTexCoord4s
+ *              glTexCoord4s (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord4s( GLshort s, GLshort t, GLshort r, GLshort q ) {
   TRACE("(%d, %d, %d, %d)\n", s, t, r, q );
@@ -3606,7 +3606,7 @@ void WINAPI wine_glTexCoord4s( GLshort s, GLshort t, GLshort r, GLshort q ) {
 }
 
 /***********************************************************************
- *              glTexCoord4sv
+ *              glTexCoord4sv (OPENGL32.@)
  */
 void WINAPI wine_glTexCoord4sv( GLshort* v ) {
   TRACE("(%p)\n", v );
@@ -3616,7 +3616,7 @@ void WINAPI wine_glTexCoord4sv( GLshort* v ) {
 }
 
 /***********************************************************************
- *              glTexCoordPointer
+ *              glTexCoordPointer (OPENGL32.@)
  */
 void WINAPI wine_glTexCoordPointer( GLint size, GLenum type, GLsizei stride, GLvoid* pointer ) {
   TRACE("(%d, %d, %d, %p)\n", size, type, stride, pointer );
@@ -3626,7 +3626,7 @@ void WINAPI wine_glTexCoordPointer( GLint size, GLenum type, GLsizei stride, GLv
 }
 
 /***********************************************************************
- *              glTexEnvf
+ *              glTexEnvf (OPENGL32.@)
  */
 void WINAPI wine_glTexEnvf( GLenum target, GLenum pname, GLfloat param ) {
   TRACE("(%d, %d, %f)\n", target, pname, param );
@@ -3636,7 +3636,7 @@ void WINAPI wine_glTexEnvf( GLenum target, GLenum pname, GLfloat param ) {
 }
 
 /***********************************************************************
- *              glTexEnvfv
+ *              glTexEnvfv (OPENGL32.@)
  */
 void WINAPI wine_glTexEnvfv( GLenum target, GLenum pname, GLfloat* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -3646,7 +3646,7 @@ void WINAPI wine_glTexEnvfv( GLenum target, GLenum pname, GLfloat* params ) {
 }
 
 /***********************************************************************
- *              glTexEnvi
+ *              glTexEnvi (OPENGL32.@)
  */
 void WINAPI wine_glTexEnvi( GLenum target, GLenum pname, GLint param ) {
   TRACE("(%d, %d, %d)\n", target, pname, param );
@@ -3656,7 +3656,7 @@ void WINAPI wine_glTexEnvi( GLenum target, GLenum pname, GLint param ) {
 }
 
 /***********************************************************************
- *              glTexEnviv
+ *              glTexEnviv (OPENGL32.@)
  */
 void WINAPI wine_glTexEnviv( GLenum target, GLenum pname, GLint* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -3666,7 +3666,7 @@ void WINAPI wine_glTexEnviv( GLenum target, GLenum pname, GLint* params ) {
 }
 
 /***********************************************************************
- *              glTexGend
+ *              glTexGend (OPENGL32.@)
  */
 void WINAPI wine_glTexGend( GLenum coord, GLenum pname, GLdouble param ) {
   TRACE("(%d, %d, %f)\n", coord, pname, param );
@@ -3676,7 +3676,7 @@ void WINAPI wine_glTexGend( GLenum coord, GLenum pname, GLdouble param ) {
 }
 
 /***********************************************************************
- *              glTexGendv
+ *              glTexGendv (OPENGL32.@)
  */
 void WINAPI wine_glTexGendv( GLenum coord, GLenum pname, GLdouble* params ) {
   TRACE("(%d, %d, %p)\n", coord, pname, params );
@@ -3686,7 +3686,7 @@ void WINAPI wine_glTexGendv( GLenum coord, GLenum pname, GLdouble* params ) {
 }
 
 /***********************************************************************
- *              glTexGenf
+ *              glTexGenf (OPENGL32.@)
  */
 void WINAPI wine_glTexGenf( GLenum coord, GLenum pname, GLfloat param ) {
   TRACE("(%d, %d, %f)\n", coord, pname, param );
@@ -3696,7 +3696,7 @@ void WINAPI wine_glTexGenf( GLenum coord, GLenum pname, GLfloat param ) {
 }
 
 /***********************************************************************
- *              glTexGenfv
+ *              glTexGenfv (OPENGL32.@)
  */
 void WINAPI wine_glTexGenfv( GLenum coord, GLenum pname, GLfloat* params ) {
   TRACE("(%d, %d, %p)\n", coord, pname, params );
@@ -3706,7 +3706,7 @@ void WINAPI wine_glTexGenfv( GLenum coord, GLenum pname, GLfloat* params ) {
 }
 
 /***********************************************************************
- *              glTexGeni
+ *              glTexGeni (OPENGL32.@)
  */
 void WINAPI wine_glTexGeni( GLenum coord, GLenum pname, GLint param ) {
   TRACE("(%d, %d, %d)\n", coord, pname, param );
@@ -3716,7 +3716,7 @@ void WINAPI wine_glTexGeni( GLenum coord, GLenum pname, GLint param ) {
 }
 
 /***********************************************************************
- *              glTexGeniv
+ *              glTexGeniv (OPENGL32.@)
  */
 void WINAPI wine_glTexGeniv( GLenum coord, GLenum pname, GLint* params ) {
   TRACE("(%d, %d, %p)\n", coord, pname, params );
@@ -3726,7 +3726,7 @@ void WINAPI wine_glTexGeniv( GLenum coord, GLenum pname, GLint* params ) {
 }
 
 /***********************************************************************
- *              glTexImage1D
+ *              glTexImage1D (OPENGL32.@)
  */
 void WINAPI wine_glTexImage1D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, GLvoid* pixels ) {
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, border, format, type, pixels );
@@ -3736,7 +3736,7 @@ void WINAPI wine_glTexImage1D( GLenum target, GLint level, GLint internalformat,
 }
 
 /***********************************************************************
- *              glTexImage2D
+ *              glTexImage2D (OPENGL32.@)
  */
 void WINAPI wine_glTexImage2D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, GLvoid* pixels ) {
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, height, border, format, type, pixels );
@@ -3746,7 +3746,7 @@ void WINAPI wine_glTexImage2D( GLenum target, GLint level, GLint internalformat,
 }
 
 /***********************************************************************
- *              glTexImage3D
+ *              glTexImage3D (OPENGL32.@)
  */
 void WINAPI wine_glTexImage3D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, GLvoid* pixels ) {
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, height, depth, border, format, type, pixels );
@@ -3756,7 +3756,7 @@ void WINAPI wine_glTexImage3D( GLenum target, GLint level, GLint internalformat,
 }
 
 /***********************************************************************
- *              glTexParameterf
+ *              glTexParameterf (OPENGL32.@)
  */
 void WINAPI wine_glTexParameterf( GLenum target, GLenum pname, GLfloat param ) {
   TRACE("(%d, %d, %f)\n", target, pname, param );
@@ -3766,7 +3766,7 @@ void WINAPI wine_glTexParameterf( GLenum target, GLenum pname, GLfloat param ) {
 }
 
 /***********************************************************************
- *              glTexParameterfv
+ *              glTexParameterfv (OPENGL32.@)
  */
 void WINAPI wine_glTexParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -3776,7 +3776,7 @@ void WINAPI wine_glTexParameterfv( GLenum target, GLenum pname, GLfloat* params 
 }
 
 /***********************************************************************
- *              glTexParameteri
+ *              glTexParameteri (OPENGL32.@)
  */
 void WINAPI wine_glTexParameteri( GLenum target, GLenum pname, GLint param ) {
   TRACE("(%d, %d, %d)\n", target, pname, param );
@@ -3786,7 +3786,7 @@ void WINAPI wine_glTexParameteri( GLenum target, GLenum pname, GLint param ) {
 }
 
 /***********************************************************************
- *              glTexParameteriv
+ *              glTexParameteriv (OPENGL32.@)
  */
 void WINAPI wine_glTexParameteriv( GLenum target, GLenum pname, GLint* params ) {
   TRACE("(%d, %d, %p)\n", target, pname, params );
@@ -3796,7 +3796,7 @@ void WINAPI wine_glTexParameteriv( GLenum target, GLenum pname, GLint* params ) 
 }
 
 /***********************************************************************
- *              glTexSubImage1D
+ *              glTexSubImage1D (OPENGL32.@)
  */
 void WINAPI wine_glTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, GLvoid* pixels ) {
   TRACE("(%d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, width, format, type, pixels );
@@ -3806,7 +3806,7 @@ void WINAPI wine_glTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLs
 }
 
 /***********************************************************************
- *              glTexSubImage2D
+ *              glTexSubImage2D (OPENGL32.@)
  */
 void WINAPI wine_glTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels ) {
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, width, height, format, type, pixels );
@@ -3816,7 +3816,7 @@ void WINAPI wine_glTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLi
 }
 
 /***********************************************************************
- *              glTexSubImage3D
+ *              glTexSubImage3D (OPENGL32.@)
  */
 void WINAPI wine_glTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLvoid* pixels ) {
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels );
@@ -3826,7 +3826,7 @@ void WINAPI wine_glTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLi
 }
 
 /***********************************************************************
- *              glTranslated
+ *              glTranslated (OPENGL32.@)
  */
 void WINAPI wine_glTranslated( GLdouble x, GLdouble y, GLdouble z ) {
   TRACE("(%f, %f, %f)\n", x, y, z );
@@ -3836,7 +3836,7 @@ void WINAPI wine_glTranslated( GLdouble x, GLdouble y, GLdouble z ) {
 }
 
 /***********************************************************************
- *              glTranslatef
+ *              glTranslatef (OPENGL32.@)
  */
 void WINAPI wine_glTranslatef( GLfloat x, GLfloat y, GLfloat z ) {
   TRACE("(%f, %f, %f)\n", x, y, z );
@@ -3846,7 +3846,7 @@ void WINAPI wine_glTranslatef( GLfloat x, GLfloat y, GLfloat z ) {
 }
 
 /***********************************************************************
- *              glVertex2d
+ *              glVertex2d (OPENGL32.@)
  */
 void WINAPI wine_glVertex2d( GLdouble x, GLdouble y ) {
   TRACE("(%f, %f)\n", x, y );
@@ -3856,7 +3856,7 @@ void WINAPI wine_glVertex2d( GLdouble x, GLdouble y ) {
 }
 
 /***********************************************************************
- *              glVertex2dv
+ *              glVertex2dv (OPENGL32.@)
  */
 void WINAPI wine_glVertex2dv( GLdouble* v ) {
   TRACE("(%p)\n", v );
@@ -3866,7 +3866,7 @@ void WINAPI wine_glVertex2dv( GLdouble* v ) {
 }
 
 /***********************************************************************
- *              glVertex2f
+ *              glVertex2f (OPENGL32.@)
  */
 void WINAPI wine_glVertex2f( GLfloat x, GLfloat y ) {
   TRACE("(%f, %f)\n", x, y );
@@ -3876,7 +3876,7 @@ void WINAPI wine_glVertex2f( GLfloat x, GLfloat y ) {
 }
 
 /***********************************************************************
- *              glVertex2fv
+ *              glVertex2fv (OPENGL32.@)
  */
 void WINAPI wine_glVertex2fv( GLfloat* v ) {
   TRACE("(%p)\n", v );
@@ -3886,7 +3886,7 @@ void WINAPI wine_glVertex2fv( GLfloat* v ) {
 }
 
 /***********************************************************************
- *              glVertex2i
+ *              glVertex2i (OPENGL32.@)
  */
 void WINAPI wine_glVertex2i( GLint x, GLint y ) {
   TRACE("(%d, %d)\n", x, y );
@@ -3896,7 +3896,7 @@ void WINAPI wine_glVertex2i( GLint x, GLint y ) {
 }
 
 /***********************************************************************
- *              glVertex2iv
+ *              glVertex2iv (OPENGL32.@)
  */
 void WINAPI wine_glVertex2iv( GLint* v ) {
   TRACE("(%p)\n", v );
@@ -3906,7 +3906,7 @@ void WINAPI wine_glVertex2iv( GLint* v ) {
 }
 
 /***********************************************************************
- *              glVertex2s
+ *              glVertex2s (OPENGL32.@)
  */
 void WINAPI wine_glVertex2s( GLshort x, GLshort y ) {
   TRACE("(%d, %d)\n", x, y );
@@ -3916,7 +3916,7 @@ void WINAPI wine_glVertex2s( GLshort x, GLshort y ) {
 }
 
 /***********************************************************************
- *              glVertex2sv
+ *              glVertex2sv (OPENGL32.@)
  */
 void WINAPI wine_glVertex2sv( GLshort* v ) {
   TRACE("(%p)\n", v );
@@ -3926,7 +3926,7 @@ void WINAPI wine_glVertex2sv( GLshort* v ) {
 }
 
 /***********************************************************************
- *              glVertex3d
+ *              glVertex3d (OPENGL32.@)
  */
 void WINAPI wine_glVertex3d( GLdouble x, GLdouble y, GLdouble z ) {
   TRACE("(%f, %f, %f)\n", x, y, z );
@@ -3936,7 +3936,7 @@ void WINAPI wine_glVertex3d( GLdouble x, GLdouble y, GLdouble z ) {
 }
 
 /***********************************************************************
- *              glVertex3dv
+ *              glVertex3dv (OPENGL32.@)
  */
 void WINAPI wine_glVertex3dv( GLdouble* v ) {
   TRACE("(%p)\n", v );
@@ -3946,7 +3946,7 @@ void WINAPI wine_glVertex3dv( GLdouble* v ) {
 }
 
 /***********************************************************************
- *              glVertex3f
+ *              glVertex3f (OPENGL32.@)
  */
 void WINAPI wine_glVertex3f( GLfloat x, GLfloat y, GLfloat z ) {
   TRACE("(%f, %f, %f)\n", x, y, z );
@@ -3956,7 +3956,7 @@ void WINAPI wine_glVertex3f( GLfloat x, GLfloat y, GLfloat z ) {
 }
 
 /***********************************************************************
- *              glVertex3fv
+ *              glVertex3fv (OPENGL32.@)
  */
 void WINAPI wine_glVertex3fv( GLfloat* v ) {
   TRACE("(%p)\n", v );
@@ -3966,7 +3966,7 @@ void WINAPI wine_glVertex3fv( GLfloat* v ) {
 }
 
 /***********************************************************************
- *              glVertex3i
+ *              glVertex3i (OPENGL32.@)
  */
 void WINAPI wine_glVertex3i( GLint x, GLint y, GLint z ) {
   TRACE("(%d, %d, %d)\n", x, y, z );
@@ -3976,7 +3976,7 @@ void WINAPI wine_glVertex3i( GLint x, GLint y, GLint z ) {
 }
 
 /***********************************************************************
- *              glVertex3iv
+ *              glVertex3iv (OPENGL32.@)
  */
 void WINAPI wine_glVertex3iv( GLint* v ) {
   TRACE("(%p)\n", v );
@@ -3986,7 +3986,7 @@ void WINAPI wine_glVertex3iv( GLint* v ) {
 }
 
 /***********************************************************************
- *              glVertex3s
+ *              glVertex3s (OPENGL32.@)
  */
 void WINAPI wine_glVertex3s( GLshort x, GLshort y, GLshort z ) {
   TRACE("(%d, %d, %d)\n", x, y, z );
@@ -3996,7 +3996,7 @@ void WINAPI wine_glVertex3s( GLshort x, GLshort y, GLshort z ) {
 }
 
 /***********************************************************************
- *              glVertex3sv
+ *              glVertex3sv (OPENGL32.@)
  */
 void WINAPI wine_glVertex3sv( GLshort* v ) {
   TRACE("(%p)\n", v );
@@ -4006,7 +4006,7 @@ void WINAPI wine_glVertex3sv( GLshort* v ) {
 }
 
 /***********************************************************************
- *              glVertex4d
+ *              glVertex4d (OPENGL32.@)
  */
 void WINAPI wine_glVertex4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w ) {
   TRACE("(%f, %f, %f, %f)\n", x, y, z, w );
@@ -4016,7 +4016,7 @@ void WINAPI wine_glVertex4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w ) {
 }
 
 /***********************************************************************
- *              glVertex4dv
+ *              glVertex4dv (OPENGL32.@)
  */
 void WINAPI wine_glVertex4dv( GLdouble* v ) {
   TRACE("(%p)\n", v );
@@ -4026,7 +4026,7 @@ void WINAPI wine_glVertex4dv( GLdouble* v ) {
 }
 
 /***********************************************************************
- *              glVertex4f
+ *              glVertex4f (OPENGL32.@)
  */
 void WINAPI wine_glVertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {
   TRACE("(%f, %f, %f, %f)\n", x, y, z, w );
@@ -4036,7 +4036,7 @@ void WINAPI wine_glVertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {
 }
 
 /***********************************************************************
- *              glVertex4fv
+ *              glVertex4fv (OPENGL32.@)
  */
 void WINAPI wine_glVertex4fv( GLfloat* v ) {
   TRACE("(%p)\n", v );
@@ -4046,7 +4046,7 @@ void WINAPI wine_glVertex4fv( GLfloat* v ) {
 }
 
 /***********************************************************************
- *              glVertex4i
+ *              glVertex4i (OPENGL32.@)
  */
 void WINAPI wine_glVertex4i( GLint x, GLint y, GLint z, GLint w ) {
   TRACE("(%d, %d, %d, %d)\n", x, y, z, w );
@@ -4056,7 +4056,7 @@ void WINAPI wine_glVertex4i( GLint x, GLint y, GLint z, GLint w ) {
 }
 
 /***********************************************************************
- *              glVertex4iv
+ *              glVertex4iv (OPENGL32.@)
  */
 void WINAPI wine_glVertex4iv( GLint* v ) {
   TRACE("(%p)\n", v );
@@ -4066,7 +4066,7 @@ void WINAPI wine_glVertex4iv( GLint* v ) {
 }
 
 /***********************************************************************
- *              glVertex4s
+ *              glVertex4s (OPENGL32.@)
  */
 void WINAPI wine_glVertex4s( GLshort x, GLshort y, GLshort z, GLshort w ) {
   TRACE("(%d, %d, %d, %d)\n", x, y, z, w );
@@ -4076,7 +4076,7 @@ void WINAPI wine_glVertex4s( GLshort x, GLshort y, GLshort z, GLshort w ) {
 }
 
 /***********************************************************************
- *              glVertex4sv
+ *              glVertex4sv (OPENGL32.@)
  */
 void WINAPI wine_glVertex4sv( GLshort* v ) {
   TRACE("(%p)\n", v );
@@ -4086,7 +4086,7 @@ void WINAPI wine_glVertex4sv( GLshort* v ) {
 }
 
 /***********************************************************************
- *              glVertexPointer
+ *              glVertexPointer (OPENGL32.@)
  */
 void WINAPI wine_glVertexPointer( GLint size, GLenum type, GLsizei stride, GLvoid* pointer ) {
   TRACE("(%d, %d, %d, %p)\n", size, type, stride, pointer );
@@ -4096,7 +4096,7 @@ void WINAPI wine_glVertexPointer( GLint size, GLenum type, GLsizei stride, GLvoi
 }
 
 /***********************************************************************
- *              glViewport
+ *              glViewport (OPENGL32.@)
  */
 void WINAPI wine_glViewport( GLint x, GLint y, GLsizei width, GLsizei height ) {
   TRACE("(%d, %d, %d, %d)\n", x, y, width, height );

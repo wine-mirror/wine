@@ -103,7 +103,7 @@ static	void MULTIMEDIA_DeleteIData(void)
 }
 
 /**************************************************************************
- * 			WINMM_LibMain				[EntryPoint]
+ *		DllEntryPoint (WINMM.init)
  *
  * WINMM DLL entry point
  *
@@ -132,7 +132,7 @@ BOOL WINAPI WINMM_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 }
 
 /**************************************************************************
- * 			DllEntryPoint			[EntryPoint]
+ * 			DllEntryPoint (MMSYSTEM.2046)
  *
  * MMSYSTEM DLL entry point
  *
@@ -472,7 +472,8 @@ static DWORD WINAPI PlaySound_Thread(LPVOID arg)
 }
 
 /**************************************************************************
- * 				PlaySound 		[MMSYSTEM.3]
+ * 				@			[WINMM.1]
+ * 				PlaySound		[WINMM.@]
  * 				PlaySoundA		[WINMM.@]
  */
 BOOL WINAPI PlaySoundA(LPCSTR pszSound, HMODULE hmod, DWORD fdwSound)
@@ -578,7 +579,7 @@ BOOL16 WINAPI PlaySound16(LPCSTR pszSound, HMODULE16 hmod, DWORD fdwSound)
 }
 
 /**************************************************************************
- * 				sndPlaySoundA		[WINMM135]
+ * 				sndPlaySoundA		[WINMM.@]
  */
 BOOL WINAPI sndPlaySoundA(LPCSTR lpszSoundName, UINT uFlags)
 {
@@ -630,7 +631,7 @@ UINT16 WINAPI mmsystemGetVersion16(void)
 }
 
 /**************************************************************************
- * 				DriverCallback			[MMSYSTEM.31]
+ * 				DriverCallback			[WINMM.@]
  */
 BOOL WINAPI DriverCallback(DWORD dwCallBack, UINT uFlags, HDRVR hDev, 
 			   UINT wMsg, DWORD dwUser, DWORD dwParam1, 
@@ -924,7 +925,7 @@ UINT WINAPI mixerGetID(HMIXEROBJ hmix, LPUINT lpid, DWORD fdwID)
 }
 
 /**************************************************************************
- * 				mixerGetID
+ * 				mixerGetID (MMSYSTEM.806)
  */
 UINT16 WINAPI mixerGetID16(HMIXEROBJ16 hmix, LPUINT16 lpid, DWORD fdwID) 
 {
@@ -1476,7 +1477,7 @@ UINT16 WINAPI auxSetVolume16(UINT16 uDeviceID, DWORD dwVolume)
 }
 
 /**************************************************************************
- * 				auxOutMessage		[MMSYSTEM.354]
+ * 				auxOutMessage		[WINMM.@]
  */
 DWORD WINAPI auxOutMessage(UINT uDeviceID, UINT uMessage, DWORD dw1, DWORD dw2)
 {
@@ -3677,7 +3678,7 @@ static	UINT WINAPI MMSYSTEM_waveOpen(HANDLE* lphndl, UINT uDeviceID, UINT uType,
 }
 
 /**************************************************************************
- * 				waveOutGetNumDevs		[MMSYSTEM.401]
+ * 				waveOutGetNumDevs		[WINMM.@]
  */
 UINT WINAPI waveOutGetNumDevs(void) 
 {
@@ -3685,7 +3686,7 @@ UINT WINAPI waveOutGetNumDevs(void)
 }
 
 /**************************************************************************
- * 				waveOutGetNumDevs		[WINMM.@]
+ * 				waveOutGetNumDevs		[MMSYSTEM.401]
  */
 UINT16 WINAPI waveOutGetNumDevs16(void)
 {
@@ -3963,7 +3964,7 @@ UINT16 WINAPI waveOutUnprepareHeader16(HWAVEOUT16 hWaveOut,       /* [in] */
 }
 
 /**************************************************************************
- * 				waveOutWrite		[MMSYSTEM.408]
+ * 				waveOutWrite		[WINMM.@]
  */
 UINT WINAPI waveOutWrite(HWAVEOUT hWaveOut, LPWAVEHDR lpWaveOutHdr,
 			 UINT uSize)
@@ -4273,7 +4274,7 @@ UINT16 WINAPI waveOutSetVolume16(UINT16 devid, DWORD dw)
 }
     
 /**************************************************************************
- * 				waveOutGetID	 	[MMSYSTEM.420]
+ * 				waveOutGetID		[WINMM.@]
  */
 UINT WINAPI waveOutGetID(HWAVEOUT hWaveOut, UINT* lpuDeviceID)
 {
@@ -5231,7 +5232,7 @@ extern LONG CALLBACK MMSYSTEM_CallTo16_long_l    (FARPROC16,LONG);
 /* ### stop build ### */
 
 /**************************************************************************
- * 				__wine_mmThreadEntryPoint		[internal]
+ * 				__wine_mmThreadEntryPoint (MMSYSTEM.2047)
  */
 void WINAPI WINE_mmThreadEntryPoint(DWORD _pmt)
 {

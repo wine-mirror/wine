@@ -234,6 +234,7 @@ WORD WINAPI PrestoChangoSelector16( WORD selSrc, WORD selDst )
 
 /***********************************************************************
  *           AllocCStoDSAlias   (KERNEL.170)
+ *           AllocAlias         (KERNEL.172)
  */
 WORD WINAPI AllocCStoDSAlias16( WORD sel )
 {
@@ -518,6 +519,7 @@ DWORD WINAPI MemoryWrite16( WORD sel, DWORD offset, void *buffer, DWORD count )
 
 /***********************************************************************
  *           MapSL   (KERNEL32.@)
+ *           MapSL   (KERNEL.357)
  *
  * Maps fixed segmented pointer to linear.
  */

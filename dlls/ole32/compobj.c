@@ -166,6 +166,7 @@ static void COM_RevokeAllClasses();
 
 /******************************************************************************
  *           CoBuildVersion [COMPOBJ.1]
+ *           CoBuildVersion [OLE32.4]
  *
  * RETURNS
  *	Current build version, hiword is majornumber, loword is minornumber
@@ -375,6 +376,7 @@ HRESULT WINAPI CoCreateStandardMalloc16(DWORD dwMemContext,
 
 /******************************************************************************
  *		CoDisconnectObject	[COMPOBJ.15]
+ *		CoDisconnectObject	[OLE32.8]
  */
 HRESULT WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
 {
@@ -503,6 +505,7 @@ HRESULT WINAPI CoCreateGuid(
 
 /******************************************************************************
  *		CLSIDFromString	[OLE32.3]
+ *		IIDFromString   [OLE32.74]
  * Converts a unique identifier from its string representation into 
  * the GUID struct.
  *
@@ -612,6 +615,7 @@ HRESULT WINAPI StringFromCLSID16(
 
 /******************************************************************************
  *		StringFromCLSID	[OLE32.151]
+ *		StringFromIID   [OLE32.153]
  * Converts a GUID into the respective string representation.
  * The target string is allocated using the OLE IMalloc.
  * RETURNS
@@ -1165,6 +1169,7 @@ HRESULT WINAPI CoRevokeClassObject(
 
 /***********************************************************************
  *           CoGetClassObject [COMPOBJ.7]
+ *           CoGetClassObject [OLE32.16]
  */
 HRESULT WINAPI CoGetClassObject(
     REFCLSID rclsid, DWORD dwClsContext, COSERVERINFO *pServerInfo,
@@ -1377,7 +1382,8 @@ HRESULT WINAPI CoRegisterMessageFilter16(
 }
 
 /***********************************************************************
- *           CoCreateInstance [COMPOBJ.13, OLE32.7]
+ *           CoCreateInstance [COMPOBJ.13]
+ *           CoCreateInstance [OLE32.7]
  */
 HRESULT WINAPI CoCreateInstance(
 	REFCLSID rclsid,
@@ -1497,7 +1503,7 @@ HRESULT WINAPI CoCreateInstanceEx(
 }
 
 /***********************************************************************
- *           CoFreeLibrary [COMPOBJ.13]
+ *           CoFreeLibrary [OLE32.13]
  */
 void WINAPI CoFreeLibrary(HINSTANCE hLibrary)
 {
@@ -1535,7 +1541,7 @@ void WINAPI CoFreeLibrary(HINSTANCE hLibrary)
 
 
 /***********************************************************************
- *           CoFreeAllLibraries [COMPOBJ.12]
+ *           CoFreeAllLibraries [OLE32.12]
  */
 void WINAPI CoFreeAllLibraries(void)
 {
@@ -1552,6 +1558,7 @@ void WINAPI CoFreeAllLibraries(void)
 
 /***********************************************************************
  *           CoFreeUnusedLibraries [COMPOBJ.17]
+ *           CoFreeUnusedLibraries [OLE32.14]
  */
 void WINAPI CoFreeUnusedLibraries(void)
 {
@@ -1575,7 +1582,9 @@ void WINAPI CoFreeUnusedLibraries(void)
 }
 
 /***********************************************************************
- *           CoFileTimeNow [COMPOBJ.82, OLE32.10]
+ *           CoFileTimeNow [COMPOBJ.82]
+ *           CoFileTimeNow [OLE32.10]
+ *
  * RETURNS
  *	the current system time in lpFileTime
  */

@@ -292,6 +292,7 @@ static struct ICOM_VTABLE(IStream) rstvt =
 
 /*************************************************************************
  * SHOpenRegStreamA				[SHLWAPI.@]
+ * SHOpenRegStream2A				[SHLWAPI.@]
  */
 IStream * WINAPI SHOpenRegStreamA(
 	HKEY hkey,
@@ -307,6 +308,7 @@ IStream * WINAPI SHOpenRegStreamA(
 
 /*************************************************************************
  * SHOpenRegStreamW				[SHLWAPI.@]
+ * SHOpenRegStream2W				[SHLWAPI.@]
  */
 IStream * WINAPI SHOpenRegStreamW(
 	HKEY hkey,

@@ -897,6 +897,7 @@ SEGPTR HEAP_GetSegptr( HANDLE heap, DWORD flags, LPCVOID ptr )
 
 /***********************************************************************
  *           MapLS   (KERNEL32.@)
+ *           MapLS   (KERNEL.358)
  *
  * Maps linear pointer to segmented.
  */
@@ -925,6 +926,7 @@ SEGPTR WINAPI MapLS( LPCVOID ptr )
 
 /***********************************************************************
  *           UnMapLS   (KERNEL32.@)
+ *           UnMapLS   (KERNEL.359)
  *
  * Free mapped selector.
  */

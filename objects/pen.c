@@ -84,6 +84,7 @@ HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
 
 /***********************************************************************
  *           ExtCreatePen    (GDI32.@)
+ *           ExtCreatePen    (GDI.523)
  *
  * FIXME: PS_USERSTYLE not handled
  */

@@ -1237,7 +1237,6 @@ BOOL WINAPI SetProcessPriorityBoost(HANDLE hprocess,BOOL disableboost)
 
 /***********************************************************************
  *		ReadProcessMemory (KERNEL32.@)
- *		ReadProcessMemory (WIN32S16.6)
  */
 BOOL WINAPI ReadProcessMemory( HANDLE process, LPCVOID addr, LPVOID buffer, DWORD size,
                                LPDWORD bytes_read )

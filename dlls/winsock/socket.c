@@ -638,6 +638,7 @@ INT WINAPI WSAStartup(UINT wVersionRequested, LPWSADATA lpWSAData)
 
 /***********************************************************************
  *      WSACleanup			(WINSOCK.116)
+ *      WSACleanup			(WS2_32.116)
  */
 INT WINAPI WSACleanup(void)
 {
@@ -1830,7 +1831,7 @@ INT16 WINAPI WINSOCK_select16(INT16 nfds, ws_fd_set16 *ws_readfds,
 }
 
 /***********************************************************************
- *		select			(WINSOCK.18)
+ *		select			(WS2_32.18)
  */
 INT WINAPI WSOCK32_select(INT nfds, ws_fd_set32 *ws_readfds,
                               ws_fd_set32 *ws_writefds, ws_fd_set32 *ws_exceptfds,
@@ -2877,7 +2878,7 @@ FARPROC16 WINAPI WSASetBlockingHook16(FARPROC16 lpBlockFunc)
 
 
 /***********************************************************************
- *      WSASetBlockingHook()
+ *      WSASetBlockingHook (WS2_32.109)
  */
 FARPROC WINAPI WSASetBlockingHook(FARPROC lpBlockFunc)
 {
@@ -2899,7 +2900,7 @@ INT16 WINAPI WSAUnhookBlockingHook16(void)
 
 
 /***********************************************************************
- *      WSAUnhookBlockingHook()
+ *      WSAUnhookBlockingHook (WS2_32.110)
  */
 INT WINAPI WSAUnhookBlockingHook(void)
 {

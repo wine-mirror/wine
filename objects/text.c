@@ -21,7 +21,6 @@ DEFAULT_DEBUG_CHANNEL(text);
 
 
 /***********************************************************************
- *           ExtTextOut    (DISPLAY.351)
  *           ExtTextOut    (GDI.351)
  */
 BOOL16 WINAPI ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
@@ -204,7 +203,6 @@ UINT WINAPI GetTextCharsetInfo(
 }
 
 /***********************************************************************
- *		PolyTextOutA (GDI.402)
  *		PolyTextOutA (GDI32.@)
  *
  * Draw several Strings
@@ -223,7 +221,6 @@ BOOL WINAPI PolyTextOutA (
 
 
 /***********************************************************************
- *		PolyTextOutW (GDI.403)
  *		PolyTextOutW (GDI32.@)
  *
  * Draw several Strings

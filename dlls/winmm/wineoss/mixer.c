@@ -638,7 +638,7 @@ static	DWORD	MIX_Init(void)
 #endif /* HAVE_OSS */
 
 /**************************************************************************
- * 				OSS_mixMessage		[sample driver]
+ * 				mixMessage (WINEOSS.3)
  */
 DWORD WINAPI OSS_mixMessage(UINT wDevID, UINT wMsg, DWORD dwUser, 
 			    DWORD dwParam1, DWORD dwParam2)

@@ -65,6 +65,8 @@ VOID WINAPI MOUSE_Enable(LPMOUSE_EVENT_PROC lpMouseEventProc)
     USER_Driver.pInitMouse( lpMouseEventProc );
 }
 
+/**********************************************************************/
+
 static VOID WINAPI MOUSE_CallMouseEventProc( FARPROC16 proc,
                                              DWORD dwFlags, DWORD dx, DWORD dy,
                                              DWORD cButtons, DWORD dwExtraInfo )
@@ -83,6 +85,8 @@ static VOID WINAPI MOUSE_CallMouseEventProc( FARPROC16 proc,
 
     wine_call_to_16_regs_short( &context, 0 );
 }
+
+/**********************************************************************/
 
 VOID WINAPI WIN16_MOUSE_Enable( FARPROC16 proc )
 {

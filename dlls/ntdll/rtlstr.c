@@ -599,6 +599,7 @@ NTSTATUS WINAPI RtlUpcaseUnicodeToOemN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
 
 /**************************************************************************
  *      RtlOemStringToUnicodeSize   (NTDLL.@)
+ *      RtlxOemStringToUnicodeSize  (NTDLL.@)
  *
  * Return the size in bytes necessary for the Unicode conversion of 'str',
  * including the terminating NULL.
@@ -612,6 +613,7 @@ UINT WINAPI RtlOemStringToUnicodeSize(PSTRING str)
 
 /**************************************************************************
  *      RtlAnsiStringToUnicodeSize   (NTDLL.@)
+ *      RtlxAnsiStringToUnicodeSize  (NTDLL.@)
  *
  * Return the size in bytes necessary for the Unicode conversion of 'str',
  * including the terminating NULL.
@@ -651,6 +653,7 @@ NTSTATUS WINAPI RtlUnicodeToMultiByteSize( DWORD *size, LPCWSTR str, UINT len )
 
 /**************************************************************************
  *      RtlUnicodeStringToAnsiSize   (NTDLL.@)
+ *      RtlxUnicodeStringToAnsiSize  (NTDLL.@)
  *
  * Return the size in bytes necessary for the Ansi conversion of 'str',
  * including the terminating NULL.
@@ -664,6 +667,7 @@ DWORD WINAPI RtlUnicodeStringToAnsiSize( const UNICODE_STRING *str )
 
 /**************************************************************************
  *      RtlUnicodeStringToOemSize   (NTDLL.@)
+ *      RtlxUnicodeStringToOemSize  (NTDLL.@)
  *
  * Return the size in bytes necessary for the OEM conversion of 'str',
  * including the terminating NULL.

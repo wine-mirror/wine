@@ -163,7 +163,6 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
 }
   
 /*********************************************************************
- *      PlgBlt [GDI.267]
  *      PlgBlt [GDI32.@]
  *
  */

@@ -28,7 +28,7 @@ DEFAULT_DEBUG_CHANNEL(reg);
 
 /******************************************************************************
  * NtCreateKey [NTDLL.@]
- * ZwCreateKey
+ * ZwCreateKey [NTDLL.@]
  */
 NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
                              ULONG TitleIndex, const UNICODE_STRING *class, ULONG options,
@@ -75,7 +75,8 @@ NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
 
 /******************************************************************************
  * NtOpenKey [NTDLL.@]
- * ZwOpenKey
+ * ZwOpenKey [NTDLL.@]
+ *
  *   OUT	PHANDLE			retkey (returns 0 when failure)
  *   IN		ACCESS_MASK		access
  *   IN		POBJECT_ATTRIBUTES 	attr 
@@ -107,7 +108,7 @@ NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTR
 
 /******************************************************************************
  * NtDeleteKey [NTDLL.@]
- * ZwDeleteKey
+ * ZwDeleteKey [NTDLL.@]
  */
 NTSTATUS WINAPI NtDeleteKey( HANDLE hkey )
 {
@@ -127,7 +128,7 @@ NTSTATUS WINAPI NtDeleteKey( HANDLE hkey )
 
 /******************************************************************************
  * NtDeleteValueKey [NTDLL.@]
- * ZwDeleteValueKey
+ * ZwDeleteValueKey [NTDLL.@]
  */
 NTSTATUS WINAPI NtDeleteValueKey( HANDLE hkey, const UNICODE_STRING *name )
 {
@@ -238,7 +239,7 @@ static NTSTATUS fill_key_info( KEY_INFORMATION_CLASS info_class, void *info, DWO
 
 /******************************************************************************
  * NtEnumerateKey [NTDLL.@]
- * ZwEnumerateKey
+ * ZwEnumerateKey [NTDLL.@]
  *
  * NOTES
  *  the name copied into the buffer is NOT 0-terminated 
@@ -268,7 +269,7 @@ NTSTATUS WINAPI NtEnumerateKey( HANDLE handle, ULONG index, KEY_INFORMATION_CLAS
 
 /******************************************************************************
  * NtQueryKey [NTDLL.@]
- * ZwQueryKey
+ * ZwQueryKey [NTDLL.@]
  */
 NTSTATUS WINAPI NtQueryKey( HANDLE handle, KEY_INFORMATION_CLASS info_class,
                             void *info, DWORD length, DWORD *result_len )
@@ -336,7 +337,7 @@ static void copy_key_value_info( KEY_VALUE_INFORMATION_CLASS info_class, void *i
 
 /******************************************************************************
  *  NtEnumerateValueKey	[NTDLL.@]
- *  ZwEnumerateValueKey
+ *  ZwEnumerateValueKey [NTDLL.@]
  */
 NTSTATUS WINAPI NtEnumerateValueKey( HANDLE handle, ULONG index,
                                      KEY_VALUE_INFORMATION_CLASS info_class,
@@ -438,7 +439,7 @@ NTSTATUS WINAPI NtEnumerateValueKey( HANDLE handle, ULONG index,
 
 /******************************************************************************
  * NtQueryValueKey [NTDLL.@]
- * ZwQueryValueKey
+ * ZwQueryValueKey [NTDLL.@]
  *
  * NOTES
  *  the name in the KeyValueInformation is never set
@@ -519,7 +520,7 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
 
 /******************************************************************************
  *  NtFlushKey	[NTDLL.@]
- *  ZwFlushKey
+ *  ZwFlushKey  [NTDLL.@]
  */
 NTSTATUS WINAPI NtFlushKey(HANDLE KeyHandle)
 {
@@ -530,7 +531,7 @@ NTSTATUS WINAPI NtFlushKey(HANDLE KeyHandle)
 
 /******************************************************************************
  *  NtLoadKey	[NTDLL.@]
- *  ZwLoadKey
+ *  ZwLoadKey   [NTDLL.@]
  */
 NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, const OBJECT_ATTRIBUTES *file )
 {
@@ -542,7 +543,7 @@ NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, const OBJECT_ATTRIBUTE
 
 /******************************************************************************
  *  NtNotifyChangeKey	[NTDLL.@]
- *  ZwNotifyChangeKey
+ *  ZwNotifyChangeKey   [NTDLL.@]
  */
 NTSTATUS WINAPI NtNotifyChangeKey(
 	IN HANDLE KeyHandle,
@@ -583,7 +584,7 @@ NTSTATUS WINAPI NtQueryMultipleValueKey(
 
 /******************************************************************************
  * NtReplaceKey [NTDLL.@]
- * ZwReplaceKey
+ * ZwReplaceKey [NTDLL.@]
  */
 NTSTATUS WINAPI NtReplaceKey(
 	IN POBJECT_ATTRIBUTES ObjectAttributes,
@@ -597,7 +598,7 @@ NTSTATUS WINAPI NtReplaceKey(
 }
 /******************************************************************************
  * NtRestoreKey [NTDLL.@]
- * ZwRestoreKey
+ * ZwRestoreKey [NTDLL.@]
  */
 NTSTATUS WINAPI NtRestoreKey(
 	HANDLE KeyHandle,
@@ -610,7 +611,7 @@ NTSTATUS WINAPI NtRestoreKey(
 }
 /******************************************************************************
  * NtSaveKey [NTDLL.@]
- * ZwSaveKey
+ * ZwSaveKey [NTDLL.@]
  */
 NTSTATUS WINAPI NtSaveKey(
 	IN HANDLE KeyHandle,
@@ -622,7 +623,7 @@ NTSTATUS WINAPI NtSaveKey(
 }
 /******************************************************************************
  * NtSetInformationKey [NTDLL.@]
- * ZwSetInformationKey
+ * ZwSetInformationKey [NTDLL.@]
  */
 NTSTATUS WINAPI NtSetInformationKey(
 	IN HANDLE KeyHandle,
@@ -638,7 +639,7 @@ NTSTATUS WINAPI NtSetInformationKey(
 
 /******************************************************************************
  * NtSetValueKey [NTDLL.@]
- * ZwSetValueKey
+ * ZwSetValueKey [NTDLL.@]
  *
  * NOTES
  *   win95 does not care about count for REG_SZ and finds out the len by itself (js) 
@@ -683,7 +684,7 @@ NTSTATUS WINAPI NtSetValueKey( HANDLE hkey, const UNICODE_STRING *name, ULONG Ti
 
 /******************************************************************************
  * NtUnloadKey [NTDLL.@]
- * ZwUnloadKey
+ * ZwUnloadKey [NTDLL.@]
  */
 NTSTATUS WINAPI NtUnloadKey(
 	IN HANDLE KeyHandle)

@@ -276,7 +276,7 @@ static	WORD	timeSetEventInternal(UINT wDelay, UINT wResol,
 }
 
 /**************************************************************************
- * 				timeSetEvent		[MMSYSTEM.602]
+ * 				timeSetEvent		[WINMM.@]
  */
 MMRESULT WINAPI timeSetEvent(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
 			     DWORD dwUser, UINT wFlags)

@@ -1088,7 +1088,8 @@ static void INT21_GetExtendedError( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *           DOS3Call  (KERNEL.102)
+ *           DOS3Call         (KERNEL.102)
+ *           INT_Int21Handler (WPROCS.133)
  */
 void WINAPI DOS3Call( CONTEXT86 *context )
 {
@@ -2458,7 +2459,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 }
 
 /***********************************************************************
- *		GetSetKernelDOSProc
+ *		GetSetKernelDOSProc (KERNEL.311)
  */
 FARPROC16 WINAPI GetSetKernelDOSProc16(FARPROC16 DosProc)
 {

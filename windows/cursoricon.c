@@ -1608,7 +1608,7 @@ INT WINAPI LookupIconIdFromDirectoryEx( LPBYTE dir, BOOL bIcon,
 }
 
 /**********************************************************************
- *		LookupIconIdFromDirectory (USER.???)
+ *		LookupIconIdFromDirectory (USER.?)
  */
 INT16 WINAPI LookupIconIdFromDirectory16( LPBYTE dir, BOOL16 bIcon )
 {

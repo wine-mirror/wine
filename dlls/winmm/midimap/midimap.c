@@ -424,7 +424,7 @@ static	DWORD	modReset(MIDIMAPDATA* mom)
 }
 
 /**************************************************************************
- * 				MIDIMAP_modMessage	[sample driver]
+ * 				modMessage (MIDIMAP.@)
  */
 DWORD WINAPI MIDIMAP_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser, 
 				DWORD dwParam1, DWORD dwParam2)
@@ -514,7 +514,7 @@ static	DWORD	MIDIMAP_drvClose(DWORD dwDevID)
 }
 
 /**************************************************************************
- * 				DriverProc		[internal]
+ * 				DriverProc (MIDIMAP.@)
  */
 LONG CALLBACK	MIDIMAP_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 				   DWORD dwParam1, DWORD dwParam2)

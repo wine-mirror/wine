@@ -484,7 +484,7 @@ DWORD WINAPI CharUpperBuffW( LPWSTR str, DWORD len )
 
 
 /***********************************************************************
- *           IsCharLowerA   (USER.436)
+ *           IsCharLower    (USER.436)
  *           IsCharLowerA   (USER32.@)
  */
 BOOL WINAPI IsCharLowerA(CHAR x)
@@ -505,7 +505,7 @@ BOOL WINAPI IsCharLowerW(WCHAR x)
 
 
 /***********************************************************************
- *           IsCharUpperA   (USER.435)
+ *           IsCharUpper    (USER.435)
  *           IsCharUpperA   (USER32.@)
  */
 BOOL WINAPI IsCharUpperA(CHAR x)

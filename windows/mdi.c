@@ -2366,6 +2366,7 @@ void WINAPI ScrollChildren(HWND hWnd, UINT uMsg, WPARAM wParam,
 
 /******************************************************************************
  *		CascadeWindows (USER32.@) Cascades MDI child windows
+ *		CascadeWindows (USER.429)
  *
  * RETURNS
  *    Success: Number of cascaded windows.
@@ -2384,6 +2385,7 @@ CascadeWindows (HWND hwndParent, UINT wFlags, const LPRECT lpRect,
 
 /******************************************************************************
  *		TileWindows (USER32.@) Tiles MDI child windows
+ *		TileWindows (USER.428)
  *
  * RETURNS
  *    Success: Number of tiled windows.

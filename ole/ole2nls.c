@@ -146,7 +146,6 @@ static char *GetLocaleSubkeyName( DWORD lctype );
 
 /***********************************************************************
  *		GetUserDefaultLCID (KERNEL32.@)
- *		GetUserDefaultLCID (OLE2NLS.1)
  */
 LCID WINAPI GetUserDefaultLCID(void)
 {
@@ -155,7 +154,6 @@ LCID WINAPI GetUserDefaultLCID(void)
 
 /***********************************************************************
  *		GetSystemDefaultLCID (KERNEL32.@)
- *		GetSystemDefaultLCID (OLE2NLS.2)
  */
 LCID WINAPI GetSystemDefaultLCID(void)
 {
@@ -333,7 +331,6 @@ END:
 
 /***********************************************************************
  *		GetUserDefaultLangID (KERNEL32.@)
- *		GetUserDefaultLangID (OLE2NLS.3)
  */
 LANGID WINAPI GetUserDefaultLangID(void)
 {
@@ -382,7 +379,6 @@ LANGID WINAPI GetUserDefaultLangID(void)
 
 /***********************************************************************
  *		GetSystemDefaultLangID (KERNEL32.@)
- *		GetSystemDefaultLangID (OLE2NLS.4)
  */
 LANGID WINAPI GetSystemDefaultLangID(void)
 {
@@ -1403,7 +1399,6 @@ BOOL WINAPI GetStringTypeExA(LCID locale,DWORD dwInfoType,LPCSTR src,
 
 /***********************************************************************
  *           VerLanguageNameA              [KERNEL32.@]
- *           VerLanguageNameA              [VERSION.9]
  */
 DWORD WINAPI VerLanguageNameA( UINT wLang, LPSTR szLang, UINT nSize )
 {
@@ -1415,7 +1410,6 @@ DWORD WINAPI VerLanguageNameA( UINT wLang, LPSTR szLang, UINT nSize )
 
 /***********************************************************************
  *           VerLanguageNameW              [KERNEL32.@]
- *           VerLanguageNameW              [VERSION.10]
  */
 DWORD WINAPI VerLanguageNameW( UINT wLang, LPWSTR szLang, UINT nSize )
 {

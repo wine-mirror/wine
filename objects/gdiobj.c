@@ -1278,6 +1278,7 @@ BOOL WINAPI GetColorAdjustment(HDC hdc, LPCOLORADJUSTMENT lpca)
 
 /*******************************************************************
  *      GetMiterLimit [GDI32.@]
+ *      GetMiterLimit [GDI.526]
  *
  *
  */
@@ -1289,6 +1290,7 @@ BOOL WINAPI GetMiterLimit(HDC hdc, PFLOAT peLimit)
 
 /*******************************************************************
  *      SetMiterLimit [GDI32.@]
+ *      SetMiterLimit [GDI.527]
  *
  *
  */

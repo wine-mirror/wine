@@ -1243,7 +1243,7 @@ static	DWORD	wodGetNumDevs(void)
 }
 
 /**************************************************************************
- * 				OSS_wodMessage		[sample driver]
+ * 				wodMessage (WINEOSS.7)
  */
 DWORD WINAPI OSS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser, 
 			    DWORD dwParam1, DWORD dwParam2)
@@ -2275,7 +2275,7 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 }
 
 /**************************************************************************
- * 				OSS_widMessage			[sample driver]
+ * 				widMessage (WINEOSS.6)
  */
 DWORD WINAPI OSS_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 			    DWORD dwParam1, DWORD dwParam2)
@@ -2310,7 +2310,7 @@ DWORD WINAPI OSS_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 #else /* !HAVE_OSS */
 
 /**************************************************************************
- * 				OSS_wodMessage			[sample driver]
+ * 				wodMessage (WINEOSS.7)
  */
 DWORD WINAPI OSS_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 			    DWORD dwParam1, DWORD dwParam2)
@@ -2320,7 +2320,7 @@ DWORD WINAPI OSS_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 }
 
 /**************************************************************************
- * 				OSS_widMessage			[sample driver]
+ * 				widMessage (WINEOSS.6)
  */
 DWORD WINAPI OSS_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 			    DWORD dwParam1, DWORD dwParam2)

@@ -716,7 +716,7 @@ BOOL WINAPI DAD_ShowDragImage(BOOL bShow)
 	return 0;
 }
 /*************************************************************************
- * ReadCabinetState				[NT 4.0:SHELL32.651]
+ * ReadCabinetState				[SHELL32.651] NT 4.0
  *
  */
 HRESULT WINAPI ReadCabinetState(DWORD u, DWORD v)
@@ -724,7 +724,7 @@ HRESULT WINAPI ReadCabinetState(DWORD u, DWORD v)
 	return 0;
 }
 /*************************************************************************
- * WriteCabinetState				[NT 4.0:SHELL32.652]
+ * WriteCabinetState				[SHELL32.652] NT 4.0
  *
  */
 HRESULT WINAPI WriteCabinetState(DWORD u)
@@ -740,7 +740,7 @@ BOOL WINAPI FileIconInit(BOOL bFullInit)
 	return 0;
 }
 /*************************************************************************
- * IsUserAdmin					[NT 4.0:SHELL32.680]
+ * IsUserAdmin					[SHELL32.680] NT 4.0
  *
  */
 HRESULT WINAPI IsUserAdmin(void)
@@ -987,7 +987,7 @@ DWORD WINAPI SHCreatePropSheetExtArray(DWORD a, LPCSTR b, DWORD c)
 }
 
 /*************************************************************************
- *      SHReplaceFromPropSheetExtArray	[SHELL]
+ *      SHReplaceFromPropSheetExtArray	[SHELL32.170]
  */
 DWORD WINAPI SHReplaceFromPropSheetExtArray(DWORD a, DWORD b, DWORD c, DWORD d)
 {

@@ -145,6 +145,7 @@ static DWORD OLEDD_GetButtonState();
 
 /******************************************************************************
  *		OleBuildVersion	[OLE2.1]
+ *		OleBuildVersion [OLE32.84]
  */
 DWORD WINAPI OleBuildVersion(void)
 {
@@ -2195,7 +2196,7 @@ static void OLEUTL_ReadRegistryDWORDValue(
 }
 
 /******************************************************************************
- * OleMetaFilePictFromIconAndLabel
+ * OleMetaFilePictFromIconAndLabel (OLE2.56)
  *
  * Returns a global memory handle to a metafile which contains the icon and
  * label given.

@@ -437,7 +437,7 @@ static ATOM ATOM_AddAtomA( LPCSTR str, BOOL local )
 
 
 /***********************************************************************
- *           GlobalAddAtomA   (USER.268)
+ *           GlobalAddAtom    (USER.268)
  *           GlobalAddAtomA   (KERNEL32.@)
  *
  * Adds a character string to the global atom table and returns a unique
@@ -584,7 +584,7 @@ static ATOM ATOM_FindAtomA( LPCSTR str, BOOL local )
 
 
 /***********************************************************************
- *           GlobalFindAtomA   (USER.270)
+ *           GlobalFindAtom    (USER.270)
  *           GlobalFindAtomA   (KERNEL32.@)
  *
  * Searches the atom table for the string and returns the atom
@@ -707,7 +707,7 @@ static UINT ATOM_GetAtomNameA( ATOM atom, LPSTR buffer, INT count, BOOL local )
 
 
 /***********************************************************************
- *           GlobalGetAtomNameA   (USER.271)
+ *           GlobalGetAtomName    (USER.271)
  *           GlobalGetAtomNameA   (KERNEL32.@)
  *
  * Retrieves a copy of the string associated with an atom.

@@ -1047,7 +1047,7 @@ LONG WINAPI mmioWrite16(HMMIO16 hmmio, HPCSTR pch, LONG cch)
 }
 
 /**************************************************************************
- * 				mmioSeek       		[MMSYSTEM.1214]
+ * 				mmioSeek		[WINMM.@]
  */
 LONG WINAPI mmioSeek(HMMIO hmmio, LONG lOffset, INT iOrigin)
 {
@@ -1288,7 +1288,7 @@ UINT16 WINAPI mmioFlush16(HMMIO16 hmmio, UINT16 uFlags)
 }
 
 /**************************************************************************
- * 				mmioAdvance    		[MMSYSTEM.1219]
+ * 				mmioAdvance      	[WINMM.@]
  */
 UINT WINAPI mmioAdvance(HMMIO hmmio, MMIOINFO* lpmmioinfo, UINT uFlags)
 {
@@ -1464,7 +1464,7 @@ LRESULT WINAPI mmioSendMessage(HMMIO hmmio, UINT uMessage,
 }
 
 /**************************************************************************
- * 				mmioDescend	       	[MMSYSTEM.1223]
+ * 				mmioDescend         	[WINMM.@]
  */
 UINT WINAPI mmioDescend(HMMIO hmmio, LPMMCKINFO lpck,
 			const MMCKINFO* lpckParent, UINT uFlags)

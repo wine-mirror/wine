@@ -233,7 +233,8 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner, unsigned cha
 }
 
 /***********************************************************************
- *           GlobalAlloc16   (KERNEL.15)
+ *           GlobalAlloc     (KERNEL.15)
+ *           GlobalAlloc16   (KERNEL32.24)
  * RETURNS
  *	Handle: Success
  *	NULL: Failure
@@ -251,7 +252,8 @@ HGLOBAL16 WINAPI GlobalAlloc16(
 
 
 /***********************************************************************
- *           GlobalReAlloc16   (KERNEL.16)
+ *           GlobalReAlloc     (KERNEL.16)
+ *           GlobalReAlloc16   (KERNEL32.@)
  * RETURNS
  *	Handle: Success
  *	NULL: Failure
@@ -365,7 +367,8 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
 
 
 /***********************************************************************
- *           GlobalFree16   (KERNEL.17)
+ *           GlobalFree     (KERNEL.17)
+ *           GlobalFree16   (KERNEL32.31)
  * RETURNS
  *	NULL: Success
  *	Handle: Failure
@@ -418,7 +421,6 @@ SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
 
 
 /**********************************************************************
- *           K32WOWGlobalLock16         (WOW32.11)
  *           K32WOWGlobalLock16         (KERNEL32.60)
  */
 SEGPTR WINAPI K32WOWGlobalLock16( HGLOBAL16 hMem )
@@ -428,7 +430,7 @@ SEGPTR WINAPI K32WOWGlobalLock16( HGLOBAL16 hMem )
 
 
 /***********************************************************************
- *           GlobalLock16   (KERNEL.18)
+ *           GlobalLock16   (KERNEL32.25)
  *
  * This is the GlobalLock16() function used by 32-bit code.
  * 
@@ -448,7 +450,8 @@ LPVOID WINAPI GlobalLock16(
 
 
 /***********************************************************************
- *           GlobalUnlock16   (KERNEL.19)
+ *           GlobalUnlock     (KERNEL.19)
+ *           GlobalUnlock16   (KERNEL32.26)
  * NOTES
  *	Should the return values be cast to booleans?
  *
@@ -488,7 +491,8 @@ void WINAPI GlobalChangeLockCount16( HGLOBAL16 handle, INT16 delta,
 }
 
 /***********************************************************************
- *           GlobalSize16   (KERNEL.20)
+ *           GlobalSize     (KERNEL.20)
+ *           GlobalSize16   (KERNEL32.32)
  * RETURNS
  *	Size in bytes of object
  *	0: Failure
@@ -539,7 +543,8 @@ DWORD WINAPI GlobalHandleNoRIP16( WORD sel )
 
 
 /***********************************************************************
- *           GlobalFlags16   (KERNEL.22)
+ *           GlobalFlags     (KERNEL.22)
+ *           GlobalFlags16   (KERNEL32.@)
  * NOTES
  *	Should this return GMEM_INVALID_HANDLE instead of 0 on invalid
  *	handle?
@@ -624,7 +629,8 @@ void WINAPI GlobalFreeAll16( HGLOBAL16 owner )
 
 
 /***********************************************************************
- *           GlobalWire16   (KERNEL.111)
+ *           GlobalWire     (KERNEL.111)
+ *           GlobalWire16   (KERNEL32.29)
  */
 SEGPTR WINAPI GlobalWire16( HGLOBAL16 handle )
 {
@@ -633,7 +639,8 @@ SEGPTR WINAPI GlobalWire16( HGLOBAL16 handle )
 
 
 /***********************************************************************
- *           GlobalUnWire16   (KERNEL.112)
+ *           GlobalUnWire     (KERNEL.112)
+ *           GlobalUnWire16   (KERNEL32.30)
  */
 BOOL16 WINAPI GlobalUnWire16( HGLOBAL16 handle )
 {
@@ -733,6 +740,7 @@ WORD WINAPI GlobalDOSFree16(
 
 /***********************************************************************
  *           GlobalPageLock   (KERNEL.191)
+ *           GlobalSmartPageLock(KERNEL.230)
  */
 WORD WINAPI GlobalPageLock16( HGLOBAL16 handle )
 {
@@ -747,6 +755,7 @@ WORD WINAPI GlobalPageLock16( HGLOBAL16 handle )
 
 /***********************************************************************
  *           GlobalPageUnlock   (KERNEL.192)
+ *           GlobalSmartPageUnlock(KERNEL.231)
  */
 WORD WINAPI GlobalPageUnlock16( HGLOBAL16 handle )
 {
@@ -760,7 +769,8 @@ WORD WINAPI GlobalPageUnlock16( HGLOBAL16 handle )
 
 
 /***********************************************************************
- *           GlobalFix16   (KERNEL.197)
+ *           GlobalFix     (KERNEL.197)
+ *           GlobalFix16   (KERNEL32.27)
  */
 WORD WINAPI GlobalFix16( HGLOBAL16 handle )
 {
@@ -776,7 +786,8 @@ WORD WINAPI GlobalFix16( HGLOBAL16 handle )
 
 
 /***********************************************************************
- *           GlobalUnfix16   (KERNEL.198)
+ *           GlobalUnfix     (KERNEL.198)
+ *           GlobalUnfix16   (KERNEL32.28)
  */
 void WINAPI GlobalUnfix16( HGLOBAL16 handle )
 {
@@ -1548,6 +1559,7 @@ VOID WINAPI GlobalMemoryStatus(
 
 /***********************************************************************
  *           A20Proc   (KERNEL.165)
+ *           A20_Proc  (SYSTEM.20)
  */
 void WINAPI A20Proc16( WORD unused )
 {

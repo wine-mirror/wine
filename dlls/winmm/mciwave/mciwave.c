@@ -1563,7 +1563,7 @@ static DWORD WAVE_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
 }
 
 /**************************************************************************
- * 				MCIWAVE_DriverProc		[sample driver]
+ * 				DriverProc (MCIWAVE.@)
  */
 LONG CALLBACK	MCIWAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 				   DWORD dwParam1, DWORD dwParam2)

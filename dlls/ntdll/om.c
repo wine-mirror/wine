@@ -22,6 +22,7 @@ typedef void * POBJDIR_INFORMATION;
  
 /******************************************************************************
  * NtQueryObject [NTDLL.@]
+ * ZwQueryObject [NTDLL.@]
  */
 NTSTATUS WINAPI NtQueryObject(
 	IN HANDLE ObjectHandle,
@@ -191,6 +192,7 @@ NtQuerySecurityObject(
 }
 /******************************************************************************
  *  NtDuplicateObject		[NTDLL.@]
+ *  ZwDuplicateObject		[NTDLL.@]
  */
 NTSTATUS WINAPI NtDuplicateObject(
 	IN HANDLE SourceProcessHandle,
@@ -229,6 +231,7 @@ NTSTATUS WINAPI NtClose( HANDLE Handle )
 
 /******************************************************************************
  *  NtWaitForSingleObject		[NTDLL.@]
+ *  ZwWaitForSingleObject		[NTDLL.@]
  */
 NTSTATUS WINAPI NtWaitForSingleObject(
 	IN PHANDLE Object,
@@ -245,6 +248,7 @@ NTSTATUS WINAPI NtWaitForSingleObject(
 
 /**************************************************************************
  * NtOpenDirectoryObject [NTDLL.@]
+ * ZwOpenDirectoryObject [NTDLL.@]
  * FUNCTION: Opens a namespace directory object
  * ARGUMENTS:
  *  DirectoryHandle	Variable which receives the directory handle
@@ -265,6 +269,7 @@ NTSTATUS WINAPI NtOpenDirectoryObject(
 
 /******************************************************************************
  *  NtCreateDirectoryObject	[NTDLL.@]
+ *  ZwCreateDirectoryObject	[NTDLL.@]
  */
 NTSTATUS WINAPI NtCreateDirectoryObject(
 	PHANDLE DirectoryHandle,
@@ -279,6 +284,7 @@ NTSTATUS WINAPI NtCreateDirectoryObject(
 
 /******************************************************************************
  * NtQueryDirectoryObject [NTDLL.@]
+ * ZwQueryDirectoryObject [NTDLL.@]
  * FUNCTION: Reads information from a namespace directory
  * ARGUMENTS:
  *  DirObjInformation	Buffer to hold the data read

@@ -25,6 +25,7 @@ DEFAULT_DEBUG_CHANNEL(ntdll);
  
 /**************************************************************************
  *		NtCreateTimer				[NTDLL.@]
+ *		ZwCreateTimer				[NTDLL.@]
  */
 NTSTATUS WINAPI NtCreateTimer(
 	OUT PHANDLE TimerHandle,
@@ -39,6 +40,7 @@ NTSTATUS WINAPI NtCreateTimer(
 }
 /**************************************************************************
  *		NtSetTimer				[NTDLL.@]
+ *		ZwSetTimer				[NTDLL.@]
  */
 NTSTATUS WINAPI NtSetTimer(
 	IN HANDLE TimerHandle,
@@ -90,6 +92,7 @@ NTSTATUS WINAPI NtTerminateProcess( HANDLE handle, LONG exit_code )
 
 /******************************************************************************
 *  NtQueryInformationProcess		[NTDLL.@]
+*  ZwQueryInformationProcess		[NTDLL.@]
 *
 */
 NTSTATUS WINAPI NtQueryInformationProcess(
@@ -112,6 +115,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
 
 /******************************************************************************
  * NtSetInformationProcess [NTDLL.@]
+ * ZwSetInformationProcess [NTDLL.@]
  */
 NTSTATUS WINAPI NtSetInformationProcess(
 	IN HANDLE ProcessHandle,
@@ -130,6 +134,7 @@ NTSTATUS WINAPI NtSetInformationProcess(
 
 /******************************************************************************
  *  NtResumeThread	[NTDLL.@]
+ *  ZwResumeThread	[NTDLL.@]
  */
 NTSTATUS WINAPI NtResumeThread(
 	IN HANDLE ThreadHandle,
@@ -143,6 +148,7 @@ NTSTATUS WINAPI NtResumeThread(
 
 /******************************************************************************
  *  NtTerminateThread	[NTDLL.@]
+ *  ZwTerminateThread	[NTDLL.@]
  */
 NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code )
 {
@@ -170,6 +176,7 @@ NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code )
 
 /******************************************************************************
 *  NtQueryInformationThread		[NTDLL.@]
+*  ZwQueryInformationThread		[NTDLL.@]
 *
 */
 NTSTATUS WINAPI NtQueryInformationThread(
@@ -187,6 +194,7 @@ NTSTATUS WINAPI NtQueryInformationThread(
 
 /******************************************************************************
  *  NtSetInformationThread		[NTDLL.@]
+ *  ZwSetInformationThread		[NTDLL.@]
  */
 NTSTATUS WINAPI NtSetInformationThread(
 	HANDLE ThreadHandle,
@@ -205,6 +213,7 @@ NTSTATUS WINAPI NtSetInformationThread(
 
 /******************************************************************************
  *  NtDuplicateToken		[NTDLL.@]
+ *  ZwDuplicateToken		[NTDLL.@]
  */
 NTSTATUS WINAPI NtDuplicateToken(
         IN HANDLE ExistingToken,
@@ -223,6 +232,7 @@ NTSTATUS WINAPI NtDuplicateToken(
 
 /******************************************************************************
  *  NtOpenProcessToken		[NTDLL.@]
+ *  ZwOpenProcessToken		[NTDLL.@]
  */
 NTSTATUS WINAPI NtOpenProcessToken(
 	HANDLE ProcessHandle,
@@ -237,6 +247,7 @@ NTSTATUS WINAPI NtOpenProcessToken(
 
 /******************************************************************************
  *  NtOpenThreadToken		[NTDLL.@]
+ *  ZwOpenThreadToken		[NTDLL.@]
  */
 NTSTATUS WINAPI NtOpenThreadToken(
 	HANDLE ThreadHandle,
@@ -252,6 +263,7 @@ NTSTATUS WINAPI NtOpenThreadToken(
 
 /******************************************************************************
  *  NtAdjustPrivilegesToken		[NTDLL.@]
+ *  ZwAdjustGroupsToken		[NTDLL.@]
  *
  * FIXME: parameters unsafe
  */
@@ -270,6 +282,7 @@ NTSTATUS WINAPI NtAdjustPrivilegesToken(
 
 /******************************************************************************
 *  NtQueryInformationToken		[NTDLL.@]
+*  ZwQueryInformationToken		[NTDLL.@]
 *
 * NOTES
 *  Buffer for TokenUser:
@@ -373,6 +386,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
  
 /******************************************************************************
  *  NtCreateSection	[NTDLL.@]
+ *  ZwCreateSection	[NTDLL.@]
  */
 NTSTATUS WINAPI NtCreateSection(
 	OUT PHANDLE SectionHandle,
@@ -392,6 +406,7 @@ NTSTATUS WINAPI NtCreateSection(
 
 /******************************************************************************
  *  NtOpenSection	[NTDLL.@]
+ *  ZwOpenSection	[NTDLL.@]
  */
 NTSTATUS WINAPI NtOpenSection(
 	PHANDLE SectionHandle,
@@ -421,6 +436,7 @@ NTSTATUS WINAPI NtQuerySection(
 
 /******************************************************************************
  * NtMapViewOfSection	[NTDLL.@]
+ * ZwMapViewOfSection	[NTDLL.@]
  * FUNCTION: Maps a view of a section into the virtual address space of a process
  *
  * ARGUMENTS:
@@ -462,6 +478,7 @@ NTSTATUS WINAPI NtMapViewOfSection(
 
 /******************************************************************************
  *  NtCreatePort		[NTDLL.@]
+ *  ZwCreatePort		[NTDLL.@]
  */
 NTSTATUS WINAPI NtCreatePort(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) 
 {
@@ -471,6 +488,7 @@ NTSTATUS WINAPI NtCreatePort(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5)
 
 /******************************************************************************
  *  NtConnectPort		[NTDLL.@]
+ *  ZwConnectPort		[NTDLL.@]
  */
 NTSTATUS WINAPI NtConnectPort(DWORD x1,PUNICODE_STRING uni,DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7,DWORD x8) 
 {
@@ -481,6 +499,7 @@ NTSTATUS WINAPI NtConnectPort(DWORD x1,PUNICODE_STRING uni,DWORD x3,DWORD x4,DWO
 
 /******************************************************************************
  *  NtListenPort		[NTDLL.@]
+ *  ZwListenPort		[NTDLL.@]
  */
 NTSTATUS WINAPI NtListenPort(DWORD x1,DWORD x2) 
 {
@@ -490,6 +509,7 @@ NTSTATUS WINAPI NtListenPort(DWORD x1,DWORD x2)
 
 /******************************************************************************
  *  NtAcceptConnectPort	[NTDLL.@]
+ *  ZwAcceptConnectPort	[NTDLL.@]
  */
 NTSTATUS WINAPI NtAcceptConnectPort(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6) 
 {
@@ -499,6 +519,7 @@ NTSTATUS WINAPI NtAcceptConnectPort(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5
 
 /******************************************************************************
  *  NtCompleteConnectPort	[NTDLL.@]
+ *  ZwCompleteConnectPort	[NTDLL.@]
  */
 NTSTATUS WINAPI NtCompleteConnectPort(DWORD x1) 
 {
@@ -508,6 +529,7 @@ NTSTATUS WINAPI NtCompleteConnectPort(DWORD x1)
 
 /******************************************************************************
  *  NtRegisterThreadTerminatePort	[NTDLL.@]
+ *  ZwRegisterThreadTerminatePort	[NTDLL.@]
  */
 NTSTATUS WINAPI NtRegisterThreadTerminatePort(DWORD x1) 
 {
@@ -517,6 +539,7 @@ NTSTATUS WINAPI NtRegisterThreadTerminatePort(DWORD x1)
 
 /******************************************************************************
  *  NtRequestWaitReplyPort		[NTDLL.@]
+ *  ZwRequestWaitReplyPort		[NTDLL.@]
  */
 NTSTATUS WINAPI NtRequestWaitReplyPort(DWORD x1,DWORD x2,DWORD x3) 
 {
@@ -526,6 +549,7 @@ NTSTATUS WINAPI NtRequestWaitReplyPort(DWORD x1,DWORD x2,DWORD x3)
 
 /******************************************************************************
  *  NtReplyWaitReceivePort	[NTDLL.@]
+ *  ZwReplyWaitReceivePort	[NTDLL.@]
  */
 NTSTATUS WINAPI NtReplyWaitReceivePort(DWORD x1,DWORD x2,DWORD x3,DWORD x4) 
 {
@@ -539,6 +563,7 @@ NTSTATUS WINAPI NtReplyWaitReceivePort(DWORD x1,DWORD x2,DWORD x3,DWORD x4)
 
  /******************************************************************************
  *  NtSetIntervalProfile	[NTDLL.@]
+ *  ZwSetIntervalProfile	[NTDLL.@]
  */
 NTSTATUS WINAPI NtSetIntervalProfile(DWORD x1,DWORD x2) {
 	FIXME("(0x%08lx,0x%08lx),stub!\n",x1,x2);
@@ -559,6 +584,7 @@ NTSTATUS WINAPI NtQueryPerformanceCounter(
 
 /******************************************************************************
  *  NtCreateMailslotFile	[NTDLL.@]
+ *  ZwCreateMailslotFile	[NTDLL.@]
  */
 NTSTATUS WINAPI NtCreateMailslotFile(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7,DWORD x8) 
 {
@@ -568,6 +594,7 @@ NTSTATUS WINAPI NtCreateMailslotFile(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x
 
 /******************************************************************************
  * NtQuerySystemInformation [NTDLL.@]
+ * ZwQuerySystemInformation [NTDLL.@]
  *
  * ARGUMENTS:
  *  SystemInformationClass	Index to a certain information structure
@@ -617,6 +644,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
 
 /******************************************************************************
  *  NtCreatePagingFile		[NTDLL.@]
+ *  ZwCreatePagingFile		[NTDLL.@]
  */
 NTSTATUS WINAPI NtCreatePagingFile(
 	IN PUNICODE_STRING PageFileName,

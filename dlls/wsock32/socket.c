@@ -57,7 +57,7 @@ DEFAULT_DEBUG_CHANNEL(winsock);
 
 
 /***********************************************************************
- *      WsControl()
+ *		WsControl (WSOCK32.1001)
  *
  * WsControl seems to be an undocumented Win95 function. A lot of 
  * discussion about WsControl can be found on the net, e.g.

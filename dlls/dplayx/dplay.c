@@ -5326,7 +5326,6 @@ static BOOL CALLBACK cbDPCreateEnumConnections(
 
 /***************************************************************************
  *  DirectPlayCreate [DPLAYX.1]
- *  DirectPlayCreate [DPLAY.1]
  *
  */
 HRESULT WINAPI DirectPlayCreate

@@ -292,7 +292,7 @@ WORD NE_GetOrdinal( HMODULE16 hModule, const char *name )
 
 
 /***********************************************************************
- *           NE_GetEntryPoint / EntryAddrProc16   (KERNEL Wine-specific export)
+ *		EntryAddrProc (KERNEL.667) Wine-specific export
  *
  * Return the entry point for a given ordinal.
  */
@@ -302,10 +302,18 @@ FARPROC16 WINAPI EntryAddrProc16( HMODULE16 hModule, WORD ordinal )
     CURRENT_STACK16->ecx = hModule; /* FIXME: might be incorrect value */
     return ret;
 }
+
+/***********************************************************************
+ *		NE_GetEntryPoint
+ */
 FARPROC16 WINAPI NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal )
 {
     return NE_GetEntryPointEx( hModule, ordinal, TRUE );
 }
+
+/***********************************************************************
+ *		NE_GetEntryPointEx
+ */
 FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop )
 {
     NE_MODULE *pModule;
@@ -1013,7 +1021,8 @@ static HINSTANCE16 NE_CreateThread( NE_MODULE *pModule, WORD cmdShow, LPCSTR cmd
 
 
 /**********************************************************************
- *          LoadModule16    (KERNEL.45)
+ *          LoadModule      (KERNEL.45)
+ *          LoadModule16    (KERNEL32.@)
  */
 HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 {
@@ -1200,7 +1209,8 @@ DWORD NE_StartTask(void)
 }
 
 /***********************************************************************
- *           LoadLibrary16   (KERNEL.95)
+ *           LoadLibrary     (KERNEL.95)
+ *           LoadLibrary16   (KERNEL32.35)
  */
 HINSTANCE16 WINAPI LoadLibrary16( LPCSTR libname )
 {
@@ -1302,7 +1312,8 @@ BOOL16 WINAPI FreeModule16( HMODULE16 hModule )
 
 
 /***********************************************************************
- *           FreeLibrary16   (KERNEL.96)
+ *           FreeLibrary     (KERNEL.96)
+ *           FreeLibrary16   (KERNEL32.36)
  */
 void WINAPI FreeLibrary16( HINSTANCE16 handle )
 {
@@ -1369,7 +1380,8 @@ WORD WINAPI GetExpWinVer16( HMODULE16 hModule )
 
 
 /**********************************************************************
- *	    GetModuleFileName16    (KERNEL.49)
+ *	    GetModuleFileName      (KERNEL.49)
+ *	    GetModuleFileName16    (KERNEL32.@)
  *
  * Comment: see GetModuleFileNameA
  *
@@ -1419,7 +1431,7 @@ DWORD WINAPI WIN16_GetModuleHandle( SEGPTR name )
 }
 
 /***********************************************************************
- *		GetModuleHandle16   (KERNEL but also exported from KERNEL32 in Wine)
+ *          GetModuleHandle16 (KERNEL32.@)
  */
 HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 {

@@ -833,7 +833,6 @@ static	DWORD	MCI_HandleReturnValues(LPWINE_MM_IDATA iData, DWORD dwRet,
 }
 
 /**************************************************************************
- * 				mciSendStringA		[MMSYSTEM.702]
  * 				mciSendStringA		[WINMM.@]
  */
 DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet, 
@@ -1045,6 +1044,7 @@ DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrRet,
 
 /**************************************************************************
  * 				mciExecute			[WINMM.@]
+ * 				mciExecute			[MMSYSTEM.712]
  */
 DWORD WINAPI mciExecute(LPCSTR lpstrCommand)
 {

@@ -47,7 +47,7 @@ static	DWORD	OSS_drvClose(DWORD dwDevID)
 
 
 /**************************************************************************
- * 				DriverProc			[internal]
+ * 				DriverProc (WINEOSS.1)
  */
 LONG CALLBACK	OSS_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 			       DWORD dwParam1, DWORD dwParam2)

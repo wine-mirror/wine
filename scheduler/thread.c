@@ -556,7 +556,6 @@ BOOL WINAPI TerminateThread( HANDLE handle,    /* [in] Handle to thread */
 
 /**********************************************************************
  *		GetExitCodeThread (KERNEL32.@)
- *		GetExitCodeThread (WIN32S16.13)
  *
  * Gets termination status of thread.
  * 
@@ -798,7 +797,6 @@ void WINAPI SetLastError( DWORD error ) /* [in] Per-thread error code */
 /**********************************************************************
  *		GetLastError (KERNEL.148)
  *              GetLastError (KERNEL32.@)
- *              GetLastError (WIN32S16.10)
  *
  * Returns last-error code.
  */

@@ -432,6 +432,7 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
 
 /***********************************************************************
  *           RectVisible    (GDI.465)
+ *           RectVisibleOld (GDI.104)
  */
 BOOL16 WINAPI RectVisible16( HDC16 hdc, const RECT16* rect16 )
 {

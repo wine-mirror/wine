@@ -131,6 +131,7 @@ BOOL WINAPI IsDBCSLeadByteEx( UINT codepage, BYTE testchar )
 
 /***********************************************************************
  *           IsDBCSLeadByte   (KERNEL32.@)
+ *           IsDBCSLeadByte   (KERNEL.207)
  */
 BOOL WINAPI IsDBCSLeadByte( BYTE testchar )
 {

@@ -1535,7 +1535,7 @@ static DWORD modReset(WORD wDevID)
  *======================================================================*/
 
 /**************************************************************************
- * 			OSS_midMessage			[sample driver]
+ * 			midMessage (WINEOSS.4)
  */
 DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser, 
 			    DWORD dwParam1, DWORD dwParam2)
@@ -1577,7 +1577,7 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 }
 
 /**************************************************************************
- * 				OSS_modMessage		[sample driver]
+ * 				modMessage (WINEOSS.5)
  */
 DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser, 
 			    DWORD dwParam1, DWORD dwParam2)

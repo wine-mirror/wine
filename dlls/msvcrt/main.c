@@ -151,20 +151,27 @@ const char* msvcrt_get_reason(DWORD reason)
 
 
 /*********************************************************************
- *                  Fixup functions
- *
- * Anything not really understood but needed to make the DLL work
+ *		$I10_OUTPUT (MSVCRT.@)
+ * Function not really understood but needed to make the DLL work
  */
 void MSVCRT_I10_OUTPUT(void)
 {
   /* FIXME: This is probably data, not a function */
 }
 
+/*********************************************************************
+ *		__unDName (MSVCRT.@)
+ * Function not really understood but needed to make the DLL work
+ */
 void MSVCRT___unDName(void)
 {
   /* Called by all VC compiled progs on startup. No idea what it does */
 }
 
+/*********************************************************************
+ *		__unDNameEx (MSVCRT.@)
+ * Function not really understood but needed to make the DLL work
+ */
 void MSVCRT___unDNameEx(void)
 {
   /* As above */

@@ -914,7 +914,7 @@ static	DWORD	MCIAVI_mciRestore(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RESTORE_PAR
  *======================================================================*/
 
 /**************************************************************************
- * 				MCIAVI_DriverProc	[sample driver]
+ * 				DriverProc (MCIAVI.@)
  */
 LONG CALLBACK	MCIAVI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 				  DWORD dwParam1, DWORD dwParam2)

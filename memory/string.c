@@ -49,6 +49,7 @@ SEGPTR WINAPI lstrcat16( SEGPTR dst, LPCSTR src )
 
 
 /***********************************************************************
+ *           lstrcat    (KERNEL32.@)
  *           lstrcatA   (KERNEL32.@)
  */
 LPSTR WINAPI lstrcatA( LPSTR dst, LPCSTR src )
@@ -102,7 +103,8 @@ SEGPTR WINAPI lstrcatn16( SEGPTR dst, LPCSTR src, INT16 n )
 
 
 /***********************************************************************
- *           lstrcmpA   (KERNEL.602)
+ *           lstrcmp    (KERNEL32.@)
+ *           lstrcmpA   (KERNEL32.@)
  */
 INT WINAPI lstrcmpA( LPCSTR str1, LPCSTR str2 )
 {
@@ -111,7 +113,7 @@ INT WINAPI lstrcmpA( LPCSTR str1, LPCSTR str2 )
 
 
 /***********************************************************************
- *           lstrcmpW   (KERNEL.603)
+ *           lstrcmpW   (KERNEL32.@)
  * FIXME : should call CompareStringW, when it is implemented.
  *    This implementation is not "word sort", as it should.
  */
@@ -162,6 +164,7 @@ SEGPTR WINAPI lstrcpy16( SEGPTR dst, LPCSTR src )
 
 
 /***********************************************************************
+ *           lstrcpy    (KERNEL32.@)
  *           lstrcpyA   (KERNEL32.@)
  */
 LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
@@ -267,6 +270,7 @@ INT16 WINAPI lstrlen16( LPCSTR str )
 
 
 /***********************************************************************
+ *           lstrlen    (KERNEL32.@)
  *           lstrlenA   (KERNEL32.@)
  */
 INT WINAPI lstrlenA( LPCSTR str )

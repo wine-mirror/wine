@@ -1820,7 +1820,7 @@ void WINAPI WriteOutProfiles16(void)
 }
 
 /***********************************************************************
- *           CloseProfileUserMapping   (KERNEL.138)
+ *           CloseProfileUserMapping   (KERNEL32.@)
  */
 BOOL WINAPI CloseProfileUserMapping(void) {
     FIXME("(), stub!\n");

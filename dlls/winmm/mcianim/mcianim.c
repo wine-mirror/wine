@@ -631,7 +631,7 @@ static DWORD MCIANIM_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParm
 }
 
 /**************************************************************************
- * 				MCIANIM_DriverProc	[sample driver]
+ * 				DriverProc (MCIANIM.@)
  */
 LONG WINAPI MCIANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 			       DWORD dwParam1, DWORD dwParam2)

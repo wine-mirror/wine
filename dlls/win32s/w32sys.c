@@ -59,7 +59,7 @@ WORD WINAPI GetPEResourceTable16(
 }
 
 /***********************************************************************
- *           LoadPeResource
+ *           LoadPeResource (W32SYS.11)
  */
 DWORD WINAPI LoadPeResource16(WORD x,SEGPTR y) {
 	FIXME("(0x%04x,0x%08lx),stub!\n",x,y);

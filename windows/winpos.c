@@ -217,6 +217,7 @@ BOOL WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
 
 /***********************************************************************
  *		GetWindowRgn (USER32.@)
+ *		GetWindowRgn (USER.669)
  */
 int WINAPI GetWindowRgn ( HWND hwnd, HRGN hrgn )
 {

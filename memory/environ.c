@@ -225,7 +225,7 @@ LPWSTR WINAPI GetCommandLineW(void)
 
 
 /***********************************************************************
- *           GetEnvironmentStringsA   (KERNEL32.@)
+ *           GetEnvironmentStrings    (KERNEL32.@)
  *           GetEnvironmentStringsA   (KERNEL32.@)
  */
 LPSTR WINAPI GetEnvironmentStringsA(void)
@@ -487,7 +487,8 @@ DWORD WINAPI ExpandEnvironmentStringsW( LPCWSTR src, LPWSTR dst, DWORD len )
 
 
 /***********************************************************************
- *           GetDOSEnvironment16   (KERNEL.131)
+ *           GetDOSEnvironment     (KERNEL.131)
+ *           GetDOSEnvironment16   (KERNEL32.@)
  */
 SEGPTR WINAPI GetDOSEnvironment16(void)
 {

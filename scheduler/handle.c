@@ -15,9 +15,8 @@
 DEFAULT_DEBUG_CHANNEL(win32);
 
 /*********************************************************************
- *           CloseHandle   (KERNEL.11)
- *           CloseHandle   (WIN32S16.11)
- *           CloseHandle   (KERNEL32.@)
+ *           CloseW32Handle (KERNEL.474)
+ *           CloseHandle    (KERNEL32.@)
  */
 BOOL WINAPI CloseHandle( HANDLE handle )
 {

@@ -9,6 +9,7 @@ DEFAULT_DEBUG_CHANNEL(ntdll);
 
 /**************************************************************************
  *                 NtOpenFile				[NTDLL.@]
+ *                 ZwOpenFile				[NTDLL.@]
  * FUNCTION: Opens a file
  * ARGUMENTS:
  *  FileHandle		Variable that receives the file handle on return
@@ -35,6 +36,7 @@ NTSTATUS WINAPI NtOpenFile(
 
 /**************************************************************************
  *		NtCreateFile				[NTDLL.@]
+ *		ZwCreateFile				[NTDLL.@]
  * FUNCTION: Either causes a new file or directory to be created, or it opens
  *  an existing file, device, directory or volume, giving the caller a handle
  *  for the file object. This handle can be used by subsequent calls to
@@ -75,7 +77,7 @@ NTSTATUS WINAPI NtCreateFile(
 
 /******************************************************************************
  *  NtReadFile					[NTDLL.@]
- *  ZwReadFile
+ *  ZwReadFile					[NTDLL.@]
  *
  * Parameters
  *   HANDLE32 		FileHandle
@@ -106,6 +108,7 @@ NTSTATUS WINAPI NtReadFile (
 
 /**************************************************************************
  *		NtDeviceIoControlFile			[NTDLL.@]
+ *		ZwDeviceIoControlFile			[NTDLL.@]
  */
 NTSTATUS WINAPI NtDeviceIoControlFile(
 	IN HANDLE DeviceHandle,
@@ -127,6 +130,7 @@ NTSTATUS WINAPI NtDeviceIoControlFile(
 
 /******************************************************************************
  * NtFsControlFile [NTDLL.@]
+ * ZwFsControlFile [NTDLL.@]
  */
 NTSTATUS WINAPI NtFsControlFile(
 	IN HANDLE DeviceHandle,
@@ -148,6 +152,7 @@ NTSTATUS WINAPI NtFsControlFile(
 
 /******************************************************************************
  *  NtSetVolumeInformationFile		[NTDLL.@]
+ *  ZwSetVolumeInformationFile		[NTDLL.@]
  */
 NTSTATUS WINAPI NtSetVolumeInformationFile(
 	IN HANDLE FileHandle,
@@ -163,6 +168,7 @@ NTSTATUS WINAPI NtSetVolumeInformationFile(
 
 /******************************************************************************
  *  NtQueryInformationFile		[NTDLL.@]
+ *  ZwQueryInformationFile		[NTDLL.@]
  */
 NTSTATUS WINAPI NtQueryInformationFile(
 	HANDLE FileHandle,
@@ -178,6 +184,7 @@ NTSTATUS WINAPI NtQueryInformationFile(
 
 /******************************************************************************
  *  NtSetInformationFile		[NTDLL.@]
+ *  ZwSetInformationFile		[NTDLL.@]
  */
 NTSTATUS WINAPI NtSetInformationFile(
 	HANDLE FileHandle,
@@ -193,6 +200,7 @@ NTSTATUS WINAPI NtSetInformationFile(
 
 /******************************************************************************
  *  NtQueryDirectoryFile	[NTDLL.@]
+ *  ZwQueryDirectoryFile	[NTDLL.@]
  *  ZwQueryDirectoryFile
  */
 NTSTATUS WINAPI NtQueryDirectoryFile(
@@ -217,6 +225,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile(
 
 /******************************************************************************
  *  NtQueryVolumeInformationFile		[NTDLL.@]
+ *  ZwQueryVolumeInformationFile		[NTDLL.@]
  */
 NTSTATUS WINAPI NtQueryVolumeInformationFile (
 	IN HANDLE FileHandle,

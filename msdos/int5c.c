@@ -11,7 +11,8 @@ DEFAULT_DEBUG_CHANNEL(int);
 
 
 /***********************************************************************
- *           NetBIOSCall  (KERNEL.103)
+ *           NetBIOSCall      (KERNEL.103)
+ *           INT_Int5cHandler (WPROCS.192)
  *
  * Also handler for interrupt 5c. 
  */

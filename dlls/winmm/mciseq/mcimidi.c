@@ -1626,7 +1626,7 @@ static DWORD MIDI_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
  *======================================================================*/
 
 /**************************************************************************
- * 				MCIMIDI_DriverProc	     [sample driver]
+ * 				DriverProc (MCISEQ.@)
  */
 LONG CALLBACK	MCIMIDI_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
 				   DWORD dwParam1, DWORD dwParam2)

@@ -29,7 +29,7 @@ HRESULT WINAPI SHRegOpenKeyA(
 }
 
 /*************************************************************************
- * SHRegOpenKeyW				[NT4.0:SHELL32.507]
+ * SHRegOpenKeyW				[SHELL32.507] NT 4.0
  *
  */
 HRESULT WINAPI SHRegOpenKeyW (
@@ -58,7 +58,7 @@ HRESULT WINAPI SHRegQueryValueExA(
 }
 
 /*************************************************************************
- * SHRegQueryValueW				[NT4.0:SHELL32.510]
+ * SHRegQueryValueW				[SHELL32.510] NT4.0
  *
  */
 HRESULT WINAPI SHRegQueryValueW(
@@ -73,7 +73,7 @@ HRESULT WINAPI SHRegQueryValueW(
 }
 
 /*************************************************************************
- * SHRegQueryValueExW	[NT4.0:SHELL32.511]
+ * SHRegQueryValueExW	[SHELL32.511] NT4.0
  *
  * FIXME 
  *  if the datatype REG_EXPAND_SZ then expand the string and change
@@ -95,7 +95,7 @@ HRESULT WINAPI SHRegQueryValueExW (
 }
 
 /*************************************************************************
- * SHRegDeleteKeyA   [SHELL32]
+ * SHRegDeleteKeyA   [SHELL32.?]
  */
 HRESULT WINAPI SHRegDeleteKeyA(
 	HKEY hkey,
@@ -117,7 +117,7 @@ HRESULT WINAPI SHRegDeleteKeyW(
 }
 
 /*************************************************************************
- * SHRegCloseKey			[NT4.0:SHELL32.505]
+ * SHRegCloseKey			[SHELL32.505] NT 4.0
  *
  */
 HRESULT WINAPI SHRegCloseKey (HKEY hkey)

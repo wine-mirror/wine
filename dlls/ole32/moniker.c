@@ -464,7 +464,7 @@ HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPRUNNINGOBJECTTABLE *ppr
 }
 
 /***********************************************************************
- *           GetRunningObjectTable (OLE2.30)
+ *           GetRunningObjectTable (OLE32.73)
  */
 HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot)
 {

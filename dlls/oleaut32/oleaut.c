@@ -121,7 +121,7 @@ UINT WINAPI OaBuildVersion()
 }
 
 /***********************************************************************
- *		DllRegisterServer
+ *		DllRegisterServer (OLEAUT32.320)
  */
 HRESULT WINAPI OLEAUT32_DllRegisterServer() { 
     FIXME("stub!\n");
@@ -129,7 +129,7 @@ HRESULT WINAPI OLEAUT32_DllRegisterServer() {
 }
 
 /***********************************************************************
- *		DllUnregisterServer
+ *		DllUnregisterServer (OLEAUT32.321)
  */
 HRESULT WINAPI OLEAUT32_DllUnregisterServer() {
     FIXME("stub!\n");

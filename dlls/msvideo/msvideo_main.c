@@ -148,8 +148,9 @@ BOOL VFWAPI ICInfo(
 	return FALSE;
 }
 
-/**********************************************************************/
-
+/***********************************************************************
+ *		ICInfo				[MSVIDEO.200]
+ */
 BOOL16 VFWAPI ICInfo16(
 	DWORD     fccType,    /* [in] */
 	DWORD     fccHandler, /* [in] */
@@ -455,8 +456,9 @@ errout:
 	return 0;
 }
 
-/**********************************************************************/
-
+/***********************************************************************
+ *		ICGetDisplayFormat			[MSVIDEO.239]
+ */
 HIC16 VFWAPI ICGetDisplayFormat16(HIC16 hic, LPBITMAPINFOHEADER lpbiIn,
 								  LPBITMAPINFOHEADER lpbiOut, INT16 depth, INT16 dx, INT16 dy) {
 	return (HIC16)ICGetDisplayFormat(hic,lpbiIn,lpbiOut,depth,dx,dy);

@@ -215,6 +215,7 @@ static LRESULT inline DRIVER_SendMessage(LPWINE_DRIVER lpDrv, UINT msg,
 
 /**************************************************************************
  *				SendDriverMessage		[WINMM.@]
+ *				DrvSendMessage			[WINMM.@]
  */
 LRESULT WINAPI SendDriverMessage(HDRVR hDriver, UINT msg, LPARAM lParam1,
 				 LPARAM lParam2)
@@ -395,6 +396,7 @@ static	LPWINE_DRIVER	DRIVER_TryOpenDriver16(LPCSTR fn, LPCSTR sn, LPARAM lParam2
 
 /**************************************************************************
  *				OpenDriverA		        [WINMM.@]
+ *				DrvOpenA			[WINMM.@]
  * (0,1,DRV_LOAD  ,0       ,0)
  * (0,1,DRV_ENABLE,0       ,0)
  * (0,1,DRV_OPEN  ,buf[256],0)
@@ -442,6 +444,7 @@ HDRVR WINAPI OpenDriverW(LPCWSTR lpDriverName, LPCWSTR lpSectionName, LPARAM lPa
 
 /**************************************************************************
  *			CloseDriver				[WINMM.@]
+ *			DrvClose				[WINMM.@]
  */
 LRESULT WINAPI CloseDriver(HDRVR hDrvr, LPARAM lParam1, LPARAM lParam2)
 {
@@ -491,6 +494,7 @@ DWORD	WINAPI GetDriverFlags(HDRVR hDrvr)
 
 /**************************************************************************
  *				GetDriverModuleHandle	[WINMM.@]
+ *				DrvGetModuleHandle	[WINMM.@]
  */
 HMODULE WINAPI GetDriverModuleHandle(HDRVR hDrvr)
 {
@@ -551,6 +555,7 @@ LRESULT WINAPI DrvDefDriverProc16(DWORD dwDriverID, HDRVR16 hDrv, WORD wMsg,
 
 /**************************************************************************
  * 				DefDriverProc			  [WINMM.@]
+ * 				DrvDefDriverProc		  [WINMM.@]
  */
 LRESULT WINAPI DefDriverProc(DWORD dwDriverIdentifier, HDRVR hDrv,
 			     UINT Msg, LPARAM lParam1, LPARAM lParam2)

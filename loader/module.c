@@ -672,6 +672,7 @@ static BOOL MODULE_GetBinaryType( HANDLE hfile, LPCSTR filename, LPDWORD lpBinar
 
 /***********************************************************************
  *             GetBinaryTypeA                     [KERNEL32.@]
+ *             GetBinaryType                      [KERNEL32.@]
  */
 BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
 {
@@ -736,7 +737,8 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
 
 
 /***********************************************************************
- *           WinExec16   (KERNEL.166)
+ *           WinExec     (KERNEL.166)
+ *           WinExec16   (KERNEL32.@)
  */
 HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
 {
@@ -1171,6 +1173,7 @@ BOOL WINAPI CreateProcessW( LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 
 /***********************************************************************
  *              GetModuleHandleA         (KERNEL32.@)
+ *              GetModuleHandle32        (KERNEL.488)
  */
 HMODULE WINAPI GetModuleHandleA(LPCSTR module)
 {
@@ -1199,6 +1202,7 @@ HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
 
 /***********************************************************************
  *              GetModuleFileNameA      (KERNEL32.@)
+ *              GetModuleFileName32     (KERNEL.487)
  *
  * GetModuleFileNameA seems to *always* return the long path;
  * it's only GetModuleFileName16 that decides between short/long path
@@ -1531,7 +1535,8 @@ static void MODULE_FlushModrefs(void)
 }
 
 /***********************************************************************
- *           FreeLibrary (KERNEL32.@)
+ *           FreeLibrary   (KERNEL32.@)
+ *           FreeLibrary32 (KERNEL.486)
  */
 BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
 {

@@ -543,7 +543,7 @@ static void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
 
 
 /***********************************************************************
- *           PatchCodeHandle
+ *           PatchCodeHandle (KERNEL.110)
  *
  * Needed for self-loading modules.
  */
@@ -882,7 +882,7 @@ static WORD NE_Ne2MemFlags(WORD flags)
 }
 
 /***********************************************************************
- *           MyAlloc16   (KERNEL Wine-specific export)
+ *           MyAlloc   (KERNEL.668) Wine-specific export
  *
  * MyAlloc() function for self-loading apps.
  */

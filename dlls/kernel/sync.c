@@ -171,7 +171,7 @@ BOOL WINAPI PulseEvent( HANDLE handle )
 
 
 /***********************************************************************
- *           SetEvent    (KERNEL.458)
+ *           SetW32Event (KERNEL.458)
  *           SetEvent    (KERNEL32.@)
  */
 BOOL WINAPI SetEvent( HANDLE handle )
@@ -181,7 +181,7 @@ BOOL WINAPI SetEvent( HANDLE handle )
 
 
 /***********************************************************************
- *           ResetEvent    (KERNEL.459)
+ *           ResetW32Event (KERNEL.459)
  *           ResetEvent    (KERNEL32.@)
  */
 BOOL WINAPI ResetEvent( HANDLE handle )

@@ -1352,7 +1352,6 @@ UINT WINAPI GetOutlineTextMetricsW(
 
 /***********************************************************************
  *           GetCharWidth    (GDI.350)
- *           GetCharWidth    (DISPLAY.350)
  */
 BOOL16 WINAPI GetCharWidth16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
                               LPINT16 buffer )
@@ -1681,6 +1680,7 @@ DWORD WINAPI GetKerningPairsW( HDC hDC, DWORD cPairs,
 
 /*************************************************************************
  * TranslateCharsetInfo [GDI32.@]
+ * TranslateCharsetInfo [USER32.@]
  *
  * Fills a CHARSETINFO structure for a character set, code page, or
  * font. This allows making the correspondance between different labelings

@@ -93,8 +93,8 @@ static int testFileExistenceW( const WCHAR *path, const WCHAR *file, BOOL excl )
 }
 
 /*****************************************************************************
+ *   VerFindFileA [VERSION.@]
  *
- *   VerFindFileA [VER.8]
  *   Determines where to install a file based on whether it locates another
  *   version of the file in the system.  The values VerFindFile returns are
  *   used in a subsequent call to the VerInstallFile function.
