@@ -2608,7 +2608,7 @@ static inline BOOL LISTVIEW_SetItemFocus(LISTVIEW_INFO *infoPtr, INT nItem)
     
     lvItem.state =  nItem == -1 ? 0 : LVIS_FOCUSED;
     lvItem.stateMask = LVIS_FOCUSED;
-    LISTVIEW_SetItemState(infoPtr, nItem, &lvItem);
+    LISTVIEW_SetItemState(infoPtr, nItem == -1 ? infoPtr->nFocusedItem : nItem, &lvItem);
 
     return oldFocus != infoPtr->nFocusedItem;
 }
