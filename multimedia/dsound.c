@@ -1001,7 +1001,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 	TRACE("(%p,%p,%p)\n",This,playpos,writepos);
 	if (playpos) *playpos = This->playpos;
 	if (writepos) *writepos = This->writepos;
-	TRACE("playpos = %ld, writepos = %ld\n", *playpos, *writepos);
+	TRACE("playpos = %ld, writepos = %ld\n", playpos?*playpos:0, writepos?*writepos:0);
 	return DS_OK;
 }
 
