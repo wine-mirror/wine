@@ -693,7 +693,7 @@ static void PB_Paint( HWND hwnd, HDC hDC, UINT action )
     /* Send WM_CTLCOLOR to allow changing the font (the colors are fixed) */
     if ((hFont = get_button_font( hwnd ))) SelectObject( hDC, hFont );
     SendMessageW( GetParent(hwnd), WM_CTLCOLORBTN, hDC, (LPARAM)hwnd );
-    hOldPen = (HPEN)SelectObject(hDC, GetSysColorPen(COLOR_WINDOWFRAME));
+    hOldPen = (HPEN)SelectObject(hDC, SYSCOLOR_GetPen(COLOR_WINDOWFRAME));
     hOldBrush =(HBRUSH)SelectObject(hDC,GetSysColorBrush(COLOR_BTNFACE));
     oldBkMode = SetBkMode(hDC, TRANSPARENT);
 
@@ -972,7 +972,7 @@ static void GB_Paint( HWND hwnd, HDC hDC, UINT action )
     GetClientRect( hwnd, &rc);
     if (TWEAK_WineLook == WIN31_LOOK) {
         HPEN hPrevPen = SelectObject( hDC,
-					  GetSysColorPen(COLOR_WINDOWFRAME));
+					  SYSCOLOR_GetPen(COLOR_WINDOWFRAME));
 	HBRUSH hPrevBrush = SelectObject( hDC,
 					      GetStockObject(NULL_BRUSH) );
 

@@ -591,7 +591,7 @@ static void SCROLL_DrawInterior_9x( HWND hwnd, HDC hdc, INT nBar,
       hBrush = DEFWND_ControlColor( hdc, CTLCOLOR_SCROLLBAR );
     }
 
-    hSavePen = SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
+    hSavePen = SelectObject( hdc, SYSCOLOR_GetPen(COLOR_WINDOWFRAME) );
     hSaveBrush = SelectObject( hdc, hBrush );
 
     /* Calculate the scroll rectangle */
@@ -692,7 +692,7 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
             hBrush = DEFWND_ControlColor( hdc, CTLCOLOR_SCROLLBAR ); 
         }
     }
-    hSavePen = SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
+    hSavePen = SelectObject( hdc, SYSCOLOR_GetPen(COLOR_WINDOWFRAME) );
     hSaveBrush = SelectObject( hdc, hBrush );
 
       /* Calculate the scroll rectangle */

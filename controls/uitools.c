@@ -179,8 +179,8 @@ static BOOL UITOOLS95_DrawDiagEdge(HDC hdc, LPRECT rc,
         }
     }
 
-    if(InnerI != -1) InnerPen = GetSysColorPen(InnerI);
-    if(OuterI != -1) OuterPen = GetSysColorPen(OuterI);
+    if(InnerI != -1) InnerPen = SYSCOLOR_GetPen(InnerI);
+    if(OuterI != -1) OuterPen = SYSCOLOR_GetPen(OuterI);
 
     MoveToEx(hdc, 0, 0, &SavePoint);
 
@@ -331,7 +331,7 @@ static BOOL UITOOLS95_DrawDiagEdge(HDC hdc, LPRECT rc,
         HBRUSH hb = GetSysColorBrush(uFlags & BF_MONO ? COLOR_WINDOW
 					 :COLOR_BTNFACE);
         HPEN hpsave;
-        HPEN hp = GetSysColorPen(uFlags & BF_MONO ? COLOR_WINDOW
+        HPEN hp = SYSCOLOR_GetPen(uFlags & BF_MONO ? COLOR_WINDOW
 				     : COLOR_BTNFACE);
         hbsave = (HBRUSH)SelectObject(hdc, hb);
         hpsave = (HPEN)SelectObject(hdc, hp);
@@ -493,10 +493,10 @@ static BOOL UITOOLS95_DrawRectEdge(HDC hdc, LPRECT rc,
     if((uFlags & BF_BOTTOMRIGHT) == BF_BOTTOMRIGHT) RBpenplus = 1;
     if((uFlags & BF_TOPLEFT) == BF_TOPLEFT)         LTpenplus = 1;
 
-    if(LTInnerI != -1) LTInnerPen = GetSysColorPen(LTInnerI);
-    if(LTOuterI != -1) LTOuterPen = GetSysColorPen(LTOuterI);
-    if(RBInnerI != -1) RBInnerPen = GetSysColorPen(RBInnerI);
-    if(RBOuterI != -1) RBOuterPen = GetSysColorPen(RBOuterI);
+    if(LTInnerI != -1) LTInnerPen = SYSCOLOR_GetPen(LTInnerI);
+    if(LTOuterI != -1) LTOuterPen = SYSCOLOR_GetPen(LTOuterI);
+    if(RBInnerI != -1) RBInnerPen = SYSCOLOR_GetPen(RBInnerI);
+    if(RBOuterI != -1) RBOuterPen = SYSCOLOR_GetPen(RBOuterI);
 
     MoveToEx(hdc, 0, 0, &SavePoint);
 
@@ -807,7 +807,7 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
     {
         if(uFlags & (DFCS_FLAT|DFCS_MONO))
         {
-            hpsave = (HPEN)SelectObject(dc, GetSysColorPen(COLOR_WINDOWFRAME));
+            hpsave = (HPEN)SelectObject(dc, SYSCOLOR_GetPen(COLOR_WINDOWFRAME));
             hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(COLOR_WINDOWFRAME));
             Ellipse(dc, myr.left, myr.top, myr.right, myr.bottom);
             SelectObject(dc, hbsave);
@@ -815,11 +815,11 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
         }
         else
         {
-            hpsave = (HPEN)SelectObject(dc, GetSysColorPen(COLOR_BTNHIGHLIGHT));
+            hpsave = (HPEN)SelectObject(dc, SYSCOLOR_GetPen(COLOR_BTNHIGHLIGHT));
             hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(COLOR_BTNHIGHLIGHT));
             Pie(dc, myr.left, myr.top, myr.right+1, myr.bottom+1, myr.left-1, myr.bottom, myr.right+1, myr.top);
 
-            SelectObject(dc, GetSysColorPen(COLOR_BTNSHADOW));
+            SelectObject(dc, SYSCOLOR_GetPen(COLOR_BTNSHADOW));
             SelectObject(dc, GetSysColorBrush(COLOR_BTNSHADOW));
             Pie(dc, myr.left, myr.top, myr.right+1, myr.bottom+1, myr.right+1, myr.top, myr.left-1, myr.bottom);
 
@@ -828,11 +828,11 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
             myr.top    += BorderShrink;
             myr.bottom -= BorderShrink;
 
-            SelectObject(dc, GetSysColorPen(COLOR_3DLIGHT));
+            SelectObject(dc, SYSCOLOR_GetPen(COLOR_3DLIGHT));
             SelectObject(dc, GetSysColorBrush(COLOR_3DLIGHT));
             Pie(dc, myr.left, myr.top, myr.right+1, myr.bottom+1, myr.left-1, myr.bottom, myr.right+1, myr.top);
 
-            SelectObject(dc, GetSysColorPen(COLOR_3DDKSHADOW));
+            SelectObject(dc, SYSCOLOR_GetPen(COLOR_3DDKSHADOW));
             SelectObject(dc, GetSysColorBrush(COLOR_3DDKSHADOW));
             Pie(dc, myr.left, myr.top, myr.right+1, myr.bottom+1, myr.right+1, myr.top, myr.left-1, myr.bottom);
             SelectObject(dc, hbsave);
@@ -845,7 +845,7 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
         myr.top    = yc - i+i/2;
         myr.bottom = yc + i/2;
         i= !(uFlags & (DFCS_INACTIVE|DFCS_PUSHED)) ? COLOR_WINDOW : COLOR_BTNFACE;
-        hpsave = (HPEN)SelectObject(dc, GetSysColorPen(i));
+        hpsave = (HPEN)SelectObject(dc, SYSCOLOR_GetPen(i));
         hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(i));
         Ellipse(dc, myr.left, myr.top, myr.right, myr.bottom);
         SelectObject(dc, hbsave);
@@ -863,7 +863,7 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
 
         i = uFlags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_WINDOWTEXT;
         hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(i));
-        hpsave = (HPEN)SelectObject(dc, GetSysColorPen(i));
+        hpsave = (HPEN)SelectObject(dc, SYSCOLOR_GetPen(i));
         Ellipse(dc, myr.left, myr.top, myr.right, myr.bottom);
         SelectObject(dc, hpsave);
         SelectObject(dc, hbsave);
@@ -965,7 +965,7 @@ static BOOL UITOOLS95_DrawFrameCaption(HDC dc, LPRECT r, UINT uFlags)
         INT height = myr.bottom - myr.top - 6;
         INT numLines = (width / 6) + 1;
 
-        hpsave = (HPEN)SelectObject(dc, GetSysColorPen(colorIdx));
+        hpsave = (HPEN)SelectObject(dc, SYSCOLOR_GetPen(colorIdx));
 
         start.x = myr.left + 2;
         start.y = myr.top + 2;
@@ -1090,7 +1090,7 @@ static BOOL UITOOLS95_DrawFrameCaption(HDC dc, LPRECT r, UINT uFlags)
     {
         /* If we have an inactive button, then you see a shadow */
         hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(COLOR_BTNHIGHLIGHT));
-        hpsave = (HPEN)SelectObject(dc, GetSysColorPen(COLOR_BTNHIGHLIGHT));
+        hpsave = (HPEN)SelectObject(dc, SYSCOLOR_GetPen(COLOR_BTNHIGHLIGHT));
         Polygon(dc, Line1, Line1N);
         if(Line2N > 0)
             Polygon(dc, Line2, Line2N);
@@ -1115,7 +1115,7 @@ static BOOL UITOOLS95_DrawFrameCaption(HDC dc, LPRECT r, UINT uFlags)
 
     /* Make the final picture */
     hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(colorIdx));
-    hpsave = (HPEN)SelectObject(dc, GetSysColorPen(colorIdx));
+    hpsave = (HPEN)SelectObject(dc, SYSCOLOR_GetPen(colorIdx));
 
     Polygon(dc, Line1, Line1N);
     if(Line2N > 0)
@@ -1193,13 +1193,13 @@ static BOOL UITOOLS95_DrawFrameScroll(HDC dc, LPRECT r, UINT uFlags)
         hbsave = (HBRUSH)SelectObject(dc, GetStockObject(NULL_BRUSH));
         if(uFlags & (DFCS_MONO|DFCS_FLAT))
         {
-            hp = hp2 = GetSysColorPen(COLOR_WINDOWFRAME);
+            hp = hp2 = SYSCOLOR_GetPen(COLOR_WINDOWFRAME);
             hb = hb2 = GetSysColorBrush(COLOR_WINDOWFRAME);
         }
         else
         {
-            hp  = GetSysColorPen(COLOR_BTNHIGHLIGHT);
-            hp2 = GetSysColorPen(COLOR_BTNSHADOW);
+            hp  = SYSCOLOR_GetPen(COLOR_BTNHIGHLIGHT);
+            hp2 = SYSCOLOR_GetPen(COLOR_BTNSHADOW);
             hb  = GetSysColorBrush(COLOR_BTNHIGHLIGHT);
             hb2 = GetSysColorBrush(COLOR_BTNSHADOW);
         }
@@ -1276,7 +1276,7 @@ static BOOL UITOOLS95_DrawFrameScroll(HDC dc, LPRECT r, UINT uFlags)
     if(uFlags & DFCS_INACTIVE)
     {
         hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(COLOR_BTNHIGHLIGHT));
-        hpsave = (HPEN)SelectObject(dc, GetSysColorPen(COLOR_BTNHIGHLIGHT));
+        hpsave = (HPEN)SelectObject(dc, SYSCOLOR_GetPen(COLOR_BTNHIGHLIGHT));
         Polygon(dc, Line, 3);
         SelectObject(dc, hpsave);
         SelectObject(dc, hbsave);
@@ -1291,7 +1291,7 @@ static BOOL UITOOLS95_DrawFrameScroll(HDC dc, LPRECT r, UINT uFlags)
 
     i = uFlags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_BTNTEXT;
     hbsave = (HBRUSH)SelectObject(dc, GetSysColorBrush(i));
-    hpsave = (HPEN)SelectObject(dc, GetSysColorPen(i));
+    hpsave = (HPEN)SelectObject(dc, SYSCOLOR_GetPen(i));
     Polygon(dc, Line, 3);
     SelectObject(dc, hpsave);
     SelectObject(dc, hbsave);

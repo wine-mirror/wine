@@ -467,7 +467,10 @@ static void
 TOOLBAR_DrawArrow (HDC hdc, INT left, INT top, INT colorRef)
 {
     INT x, y;
-    SelectObject ( hdc, GetSysColorPen (colorRef));
+    HPEN hPen, hOldPen;
+
+    if (!(hPen = CreatePen( PS_SOLID, 1, GetSysColor( colorRef )))) return;
+    hOldPen = SelectObject ( hdc, hPen );
     x = left + 2;
     y = top + 8;
     MoveToEx (hdc, x, y, NULL);
@@ -476,6 +479,8 @@ TOOLBAR_DrawArrow (HDC hdc, INT left, INT top, INT colorRef)
     LineTo (hdc, x+3, y++); x++;
     MoveToEx (hdc, x, y, NULL);
     LineTo (hdc, x+1, y++);
+    SelectObject( hdc, hOldPen );
+    DeleteObject( hPen );
 }
 
 /*
@@ -1986,7 +1991,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		LPDRAWITEMSTRUCT lpdis = (LPDRAWITEMSTRUCT)lParam;
 		RECT rcButton;
 		RECT rcText;
-		HPEN hOldPen;
+		HPEN hPen, hOldPen;
 		HBRUSH hOldBrush;
 		COLORREF oldText = 0;
 		COLORREF oldBk = 0;
@@ -2005,7 +2010,9 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		   oldText = SetTextColor (lpdis->hDC, comctl32_color.clrGrayText);
 		else
 		   oldText = SetTextColor (lpdis->hDC, (lpdis->itemState & ODS_FOCUS)?comctl32_color.clrHighlightText:comctl32_color.clrWindowText);
-		hOldPen = SelectObject (lpdis->hDC, GetSysColorPen ((lpdis->itemState & ODS_SELECTED)?COLOR_HIGHLIGHT:COLOR_WINDOW));
+                hPen = CreatePen( PS_SOLID, 1,
+                     GetSysColor( (lpdis->itemState & ODS_SELECTED)?COLOR_HIGHLIGHT:COLOR_WINDOW));
+		hOldPen = SelectObject (lpdis->hDC, hPen );
 		hOldBrush = SelectObject (lpdis->hDC, GetSysColorBrush ((lpdis->itemState & ODS_FOCUS)?COLOR_HIGHLIGHT:COLOR_WINDOW));
 
 		/* fill background rectangle */
@@ -2038,7 +2045,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SelectObject (lpdis->hDC, hOldPen);
 		SetBkColor (lpdis->hDC, oldBk);
 		SetTextColor (lpdis->hDC, oldText);
-
+                DeleteObject( hPen );
 		return TRUE;
 	    }
 	    return FALSE;

@@ -1317,7 +1317,7 @@ TAB_DrawItemInterior
 
   RECT localRect;
 
-  HPEN   htextPen   = GetSysColorPen (COLOR_BTNTEXT);
+  HPEN   htextPen;
   HPEN   holdPen;
   INT    oldBkMode;
 
@@ -1368,6 +1368,7 @@ TAB_DrawItemInterior
   /*
    * Text pen
    */
+  htextPen = CreatePen( PS_SOLID, 1, GetSysColor(COLOR_BTNTEXT) );
   holdPen = SelectObject(hdc, htextPen);
 
   oldBkMode = SetBkMode(hdc, TRANSPARENT);
@@ -1603,6 +1604,7 @@ TAB_DrawItemInterior
   */
   SetBkMode(hdc, oldBkMode);
   SelectObject(hdc, holdPen);
+  DeleteObject( htextPen );
 }
 
 /******************************************************************************
@@ -1634,9 +1636,9 @@ static void TAB_DrawItem(
   if (isVisible)
   {
     HBRUSH hbr       = CreateSolidBrush (GetSysColor(COLOR_BTNFACE));    
-    HPEN   hwPen     = GetSysColorPen (COLOR_3DHILIGHT);
-    HPEN hbPen  = GetSysColorPen (COLOR_3DDKSHADOW);
-    HPEN hShade = GetSysColorPen (COLOR_BTNSHADOW);
+    HPEN hwPen = CreatePen( PS_SOLID, 1, GetSysColor(COLOR_3DHILIGHT) );
+    HPEN hbPen = CreatePen( PS_SOLID, 1, GetSysColor(COLOR_3DDKSHADOW) );
+    HPEN hShade = CreatePen( PS_SOLID, 1, GetSysColor(COLOR_BTNSHADOW) );
 
     HPEN   holdPen;
     BOOL   deleteBrush = TRUE;
@@ -1885,6 +1887,9 @@ static void TAB_DrawItem(
 
     /* Cleanup */
     SelectObject(hdc, holdPen);
+    DeleteObject( hwPen );
+    DeleteObject( hbPen );
+    DeleteObject( hShade );
     if (deleteBrush) DeleteObject(hbr);
   }
 }
@@ -1899,9 +1904,9 @@ static void TAB_DrawBorder (HWND hwnd, HDC hdc)
 {
   TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
   HPEN htmPen;
-  HPEN hwPen  = GetSysColorPen (COLOR_3DHILIGHT);
-  HPEN hbPen  = GetSysColorPen (COLOR_3DDKSHADOW);
-  HPEN hShade = GetSysColorPen (COLOR_BTNSHADOW);
+  HPEN hwPen = CreatePen( PS_SOLID, 1, GetSysColor(COLOR_3DHILIGHT) );
+  HPEN hbPen = CreatePen( PS_SOLID, 1, GetSysColor(COLOR_3DDKSHADOW) );
+  HPEN hShade = CreatePen( PS_SOLID, 1, GetSysColor(COLOR_BTNSHADOW) );
   RECT rect;
   DWORD lStyle = GetWindowLongA(hwnd, GWL_STYLE);
 
@@ -1957,6 +1962,9 @@ static void TAB_DrawBorder (HWND hwnd, HDC hdc)
   LineTo   (hdc, rect.left,    rect.bottom - 1);
 
   SelectObject(hdc, htmPen);
+  DeleteObject( hwPen );
+  DeleteObject( hbPen );
+  DeleteObject( hShade );
 }
 
 /******************************************************************************

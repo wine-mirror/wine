@@ -1313,7 +1313,7 @@ static void  NC_DrawCaption95(
     HPEN  hPrevPen;
     HMENU hSysMenu;
 
-    hPrevPen = SelectObject( hdc, GetSysColorPen(
+    hPrevPen = SelectObject( hdc, SYSCOLOR_GetPen(
                      ((exStyle & (WS_EX_STATICEDGE|WS_EX_CLIENTEDGE|
                                  WS_EX_DLGMODALFRAME)) == WS_EX_STATICEDGE) ?
                       COLOR_WINDOWFRAME : COLOR_3DFACE) );
@@ -1427,7 +1427,7 @@ static void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
     rect.right  = rectWindow.right - rectWindow.left;
     rect.bottom = rectWindow.bottom - rectWindow.top;
 
-    SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
+    SelectObject( hdc, SYSCOLOR_GetPen(COLOR_WINDOWFRAME) );
 
     if (HAS_ANYFRAME( dwStyle, dwExStyle ))
     {
@@ -1568,7 +1568,7 @@ static void  NC_DoNCPaint95(
 	rectClip = rect;
     }
 
-    SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
+    SelectObject( hdc, SYSCOLOR_GetPen(COLOR_WINDOWFRAME) );
 
     if (HAS_STATICOUTERFRAME(dwStyle, dwExStyle)) {
         DrawEdge (hdc, &rect, BDR_SUNKENOUTER, BF_RECT | BF_ADJUST);

@@ -1027,7 +1027,7 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC hParamDC)
 	 */
 	if (TWEAK_WineLook == WIN31_LOOK)
 	{
-	  HPEN hPrevPen = SelectObject( hDC, GetSysColorPen(COLOR_WINDOWFRAME) );
+	  HPEN hPrevPen = SelectObject( hDC, SYSCOLOR_GetPen(COLOR_WINDOWFRAME) );
 	  
 	  Rectangle( hDC, 
 		     lphc->textRect.left, lphc->textRect.top,

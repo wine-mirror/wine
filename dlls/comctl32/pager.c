@@ -79,14 +79,15 @@ static void
 PAGER_DrawHorzArrow (HDC hdc, RECT r, INT colorRef, BOOL left)
 {
     INT x, y, w, h;
-    HPEN hOldPen;
-    
+    HPEN hPen, hOldPen;
+
     w = r.right - r.left + 1;
     h = r.bottom - r.top + 1;
     if ((h < MIN_ARROW_WIDTH) || (w < MIN_ARROW_HEIGHT))
         return;  /* refuse to draw partial arrow */
 
-    hOldPen = SelectObject ( hdc, GetSysColorPen (colorRef));
+    if (!(hPen = CreatePen( PS_SOLID, 1, GetSysColor( colorRef )))) return;
+    hOldPen = SelectObject ( hdc, hPen );
     if (left)
     {
         x = r.left + ((w - MIN_ARROW_HEIGHT) / 2) + 3;
@@ -111,6 +112,7 @@ PAGER_DrawHorzArrow (HDC hdc, RECT r, INT colorRef, BOOL left)
     }
 
     SelectObject( hdc, hOldPen );
+    DeleteObject( hPen );
 }
 
 /* the vertical arrows are: 
@@ -126,14 +128,15 @@ static void
 PAGER_DrawVertArrow (HDC hdc, RECT r, INT colorRef, BOOL up)
 {
     INT x, y, w, h;
-    HPEN hOldPen;
-    
+    HPEN hPen, hOldPen;
+
     w = r.right - r.left + 1;
     h = r.bottom - r.top + 1;
     if ((h < MIN_ARROW_WIDTH) || (w < MIN_ARROW_HEIGHT))
         return;  /* refuse to draw partial arrow */
 
-    hOldPen = SelectObject ( hdc, GetSysColorPen (colorRef));
+    if (!(hPen = CreatePen( PS_SOLID, 1, GetSysColor( colorRef )))) return;
+    hOldPen = SelectObject ( hdc, hPen );
     if (up)
     {
         x = r.left + ((w - MIN_ARROW_HEIGHT) / 2) + 1;
@@ -158,6 +161,7 @@ PAGER_DrawVertArrow (HDC hdc, RECT r, INT colorRef, BOOL up)
     }
 
     SelectObject( hdc, hOldPen );
+    DeleteObject( hPen );
 }
 
 static void

@@ -386,13 +386,9 @@ HBRUSH WINAPI GetSysColorBrush( INT index )
 
 
 /***********************************************************************
- *		GetSysColorPen (USER32.@) (Not a Windows API)
- *
- * This function is new to the Wine lib -- it does not exist in 
- * Windows. However, it is a natural complement for GetSysColorBrush
- * in the Win32 API and is needed quite a bit inside Wine.
+ *		SYSCOLOR_GetPen
  */
-HPEN WINAPI GetSysColorPen( INT index )
+HPEN SYSCOLOR_GetPen( INT index )
 {
     /* We can assert here, because this function is internal to Wine */
     assert (0 <= index && index < NUM_SYS_COLORS);

@@ -82,7 +82,7 @@ static inline LPCSTR debugstr_t(LPCWSTR text, BOOL isW)
 static void
 STATUSBAR_DrawSizeGrip (HDC hdc, LPRECT lpRect)
 {
-    HPEN hOldPen;
+    HPEN hPenFace, hPenShadow, hPenHighlight, hOldPen;
     POINT pt;
     INT i;
 
@@ -91,7 +91,8 @@ STATUSBAR_DrawSizeGrip (HDC hdc, LPRECT lpRect)
     pt.x = lpRect->right - 1;
     pt.y = lpRect->bottom - 1;
 
-    hOldPen = SelectObject (hdc, GetSysColorPen (COLOR_3DFACE));
+    hPenFace = CreatePen( PS_SOLID, 1, GetSysColor( COLOR_3DFACE ));
+    hOldPen = SelectObject( hdc, hPenFace );
     MoveToEx (hdc, pt.x - 12, pt.y, NULL);
     LineTo (hdc, pt.x, pt.y);
     LineTo (hdc, pt.x, pt.y - 13);
@@ -99,7 +100,8 @@ STATUSBAR_DrawSizeGrip (HDC hdc, LPRECT lpRect)
     pt.x--;
     pt.y--;
 
-    SelectObject (hdc, GetSysColorPen (COLOR_3DSHADOW));
+    hPenShadow = CreatePen( PS_SOLID, 1, GetSysColor( COLOR_3DSHADOW ));
+    SelectObject( hdc, hPenShadow );
     for (i = 1; i < 11; i += 4) {
 	MoveToEx (hdc, pt.x - i, pt.y, NULL);
 	LineTo (hdc, pt.x + 1, pt.y - i - 1);
@@ -108,13 +110,17 @@ STATUSBAR_DrawSizeGrip (HDC hdc, LPRECT lpRect)
 	LineTo (hdc, pt.x + 1, pt.y - i - 2);
     }
 
-    SelectObject (hdc, GetSysColorPen (COLOR_3DHIGHLIGHT));
+    hPenHighlight = CreatePen( PS_SOLID, 1, GetSysColor( COLOR_3DHIGHLIGHT ));
+    SelectObject( hdc, hPenHighlight );
     for (i = 3; i < 13; i += 4) {
 	MoveToEx (hdc, pt.x - i, pt.y, NULL);
 	LineTo (hdc, pt.x + 1, pt.y - i - 1);
     }
 
-    SelectObject (hdc, hOldPen);	
+    SelectObject (hdc, hOldPen);
+    DeleteObject( hPenFace );
+    DeleteObject( hPenShadow );
+    DeleteObject( hPenHighlight );
 }
 
 

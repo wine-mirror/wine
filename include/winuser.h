@@ -4243,7 +4243,6 @@ HRESULT     WINAPI PrivateExtractIconsW(LPCWSTR,INT,DWORD,DWORD,HICON*,DWORD,UIN
 
 /* Extra functions that don't exist in the Windows API */
 
-HPEN        WINAPI GetSysColorPen(INT);
 INT         WINAPI wvsnprintfA(LPSTR,UINT,LPCSTR,va_list);
 INT         WINAPI wvsnprintfW(LPWSTR,UINT,LPCWSTR,va_list);
 #define     wvsnprintf WINELIB_NAME_AW(wvsnprintf)

@@ -675,6 +675,5 @@ init	UserClientDllInitialize
 ################################################################
 # Wine extensions: extra useful functions not exported under Windows
 #
-@ stdcall GetSysColorPen(long) GetSysColorPen
 @ stdcall wvsnprintfA(ptr long str ptr) wvsnprintfA
 @ stdcall wvsnprintfW(ptr long wstr ptr) wvsnprintfW
