@@ -1,3 +1,6 @@
+	*** This file is obsolete. Changes are listed in the main
+	*** ChangeLog now. Please do not edit.
+
 Mon Mar 23 17:00:36 1998  Marcel Baur <mbaur@g26.ethz.ch>
 
         * Added preliminary Print() dialog in [macro.c]

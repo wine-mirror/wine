@@ -1,36 +1,5 @@
-Mon Mar 11 00:20:00 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
-	* Major rewrite for use of NLS
-
-Tue Oct 12 20:31:00 1999  Gustavo Junior Alves <alves@correionet.com.br>
-	* [Pt.rc] [Makefile.in]
-	Added Portuguese language support.
-
-Fri Mar  5 22:14:13 1999  Marcel Baur <mbaur@g26.ethz.ch>
-        * NEW [search.c]
-        - Added Boyer-Moore text search
-        
-Sat Feb  6 20:25:25 1999  Marcel Baur <mbaur@g26.ethz.ch>
-        - Added new IDS_NOTSAVED ressource (needs translation in *.rc)
-        - Improved printing support (not yet complete)
-        - Improved file drag and drop (should now work)
-        - General code cleanup
-
-Thu Jan 28 18:17:08 1999  Jukka Iivonen  <iivonen@iki.fi>
-
-        * [Fi.rc] [main.c] [Makefile.in]
-        - Added Finnish language support.
-        
-Sun Oct 18 14:11:42 1998  Marcel Baur <mbaur@g26.ethz.ch>
-
-        * [??.rc], [TODO], [dialog.c], [dialog.h], [language.c],
-        [language.h], [license.c], [license.h], [main.c], [main.h],
-        [notepad.rc]:
-
-        - Fixed GetOpenFileName and GetSaveFileName dialogs.
-        - Fixed Print dialog and introduced PrinterSetup dialog.
-        - Fixed PageSetup dialog: values are now correctly initialized
-          (had to change all *.rc files)
-        - Preliminary file drag and drop support.
+	*** This file is obsolete. Changes are listed in the main
+	*** ChangeLog now. Please do not edit.
 
 Fri Jun 12 23:29:44 1998  Marcel Baur  <mbaur@g26.ethz.ch>
         - Fixed GetDateFormat()->GetTimeFormat() for locale time.

@@ -1,20 +1,5 @@
-Tue Mar 26 19:15:00 2002  Sylvain Petreolle <spetreolle@yahoo.fr>
-	* [*.rc] [clock_res.h] [main.?] [language.?]
-	Rewrite for NLS use.
-
-Tue Oct 12 20:31:00 1999  Gustavo Junior Alves <alves@correionet.com.br>
-	* [Pt.rc] [Makefile.in]
-	Added Portuguese language support.
-
-Thu Jan 28 17:17:28 1999  Jukka Iivonen  <iivonen@iki.fi>
-
-	* [Fi.rc] [main.c] [Makefile.in]
-	Added Finnish language support.
-
-Mon Nov  2 19:52:22 1998  Robert Pouliot <krynos@clic.net>
-       * [Fr.rc] [main.c] [Makefile.in]
-         Added French language support.
-	 Fixes for other languages.
+	*** This file is obsolete. Changes are listed in the main
+	*** ChangeLog now. Please do not edit.
 
 Sun Jul  5 20:10:53 1998  Marcel Baur <mbaur@g26.ethz.ch>
        * Moved "Always on top" menu into system menu (as in Windows)

@@ -1,17 +1,5 @@
-Fri Nov 17 20:39:00 2000  Vasily I. Volchenko <FoodTechnologist@pisem.net>
-	* [dialog.c]
-	Fixed bug of file browsing operation (filepath length corrected).
-Thu Nov 16 23:13:00 2000  Vasily I. Volchenko <FoodTechnologist@pisem.net>
-	* [Ru.rc]
-	Added Russian language support. 
-	TODO:Test all other languages for correct writing their high characters
-Tue Oct 12 20:31:00 1999  Gustavo Junior Alves <alves@correionet.com.br>
-	* [Pt.rc] [Makefile.in]
-	Added Portuguese language support.
-
-Sun Jan 18 23:05:04 1998  Karl Backström <karl_b@geocities.com>
-        * [Sw.rc]
-        Added Swedish language support.
+	*** This file is obsolete. Changes are listed in the main
+	*** ChangeLog now. Please do not edit.
 
 Mon Jul 28 18:28:14 1997  Peter Schlaile <up9n@rz.uni-karlsruhe.de>
 
