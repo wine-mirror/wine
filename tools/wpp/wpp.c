@@ -28,6 +28,8 @@
 #include "wpp_private.h"
 #include "wpp.h"
 
+int ppdebug;
+
 static void add_special_defines(void)
 {
     time_t now = time(NULL);
