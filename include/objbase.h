@@ -487,6 +487,8 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(ILockBytes *plkbyt, IStorage *pstgPrio
 }
 #endif
 
+/* FIXME: #include <urlmon.h> */
+#include <propidl.h>
 
 #ifndef __WINESRC__
 

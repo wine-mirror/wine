@@ -20,6 +20,7 @@ IDL_SRCS = \
 	objidl.idl \
 	ocidl.idl \
 	oleidl.idl \
+	propidl.idl \
 	pstore.idl \
 	servprov.idl \
 	shldisp.idl \

@@ -19,10 +19,6 @@
  */
 
 #include "windows.h"
-/* not present in Wine yet */
-/*#include "propidl.h"*/
-WINOLEAPI PropVariantClear(PROPVARIANT*);
-WINOLEAPI PropVariantCopy(PROPVARIANT*, const PROPVARIANT*);
 
 #include "wine/test.h"
 

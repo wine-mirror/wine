@@ -1,0 +1,311 @@
+/*
+ * Copyright 2002 Ove Kaaven
+ * Copyright 2004 Francois Gouget
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+import "objidl.idl";
+import "oaidl.idl";
+
+
+/******************** Property Storage ********************/
+
+interface IEnumSTATPROPSTG;
+interface IEnumSTATPROPSETSTG;
+
+[
+  object,
+  uuid(00000138-0000-0000-C000-000000000046),
+  pointer_default(unique)
+]
+interface IPropertyStorage : IUnknown
+{
+  typedef [unique] IPropertyStorage *LPPROPERTYSTORAGE;
+
+  const DWORD PROPSETFLAG_DEFAULT = 0;
+  const DWORD PROPSETFLAG_NONSIMPLE = 1;
+  const DWORD PROPSETFLAG_ANSI = 2;
+  const DWORD PROPSETFLAG_UNBUFFERED = 4;
+
+  typedef struct tagPROPVARIANT PROPVARIANT;
+
+  #define TYPEDEF_CA(type, name) \
+    typedef struct tag##name { \
+      ULONG cElems; \
+      [size_is(cElems)] \
+      type *pElems; \
+    } name
+
+  TYPEDEF_CA(unsigned char, CAUB);
+  TYPEDEF_CA(short, CAI);
+  TYPEDEF_CA(USHORT, CAUI);
+  TYPEDEF_CA(long, CAL);
+  TYPEDEF_CA(ULONG, CAUL);
+  TYPEDEF_CA(float, CAFLT);
+  TYPEDEF_CA(double, CADBL);
+  TYPEDEF_CA(CY, CACY);
+  TYPEDEF_CA(DATE, CADATE);
+  TYPEDEF_CA(BSTR, CABSTR);
+  TYPEDEF_CA(BSTRBLOB, CABSTRBLOB);
+  TYPEDEF_CA(VARIANT_BOOL, CABOOL);
+  TYPEDEF_CA(SCODE,  CASCODE);
+  TYPEDEF_CA(PROPVARIANT, CAPROPVARIANT);
+  TYPEDEF_CA(LARGE_INTEGER, CAH);
+  TYPEDEF_CA(ULARGE_INTEGER, CAUH);
+  TYPEDEF_CA(LPSTR, CALPSTR);
+  TYPEDEF_CA(LPWSTR, CALPWSTR);
+  TYPEDEF_CA(FILETIME, CAFILETIME);
+  TYPEDEF_CA(CLIPDATA, CACLIPDATA);
+  TYPEDEF_CA(CLSID, CACLSID);
+
+  struct tagPROPVARIANT {
+    VARTYPE vt;
+    WORD wReserved1;
+    WORD wReserved2;
+    WORD wReserved3;
+    [switch_is(vt & 0x1fff)] union {
+    [case(VT_EMPTY, VT_NULL)]             ;
+    [case(VT_I1)]                         char cVal;
+    [case(VT_UI1)]                        UCHAR bVal;
+    [case(VT_I2)]                         short iVal;
+    [case(VT_UI2)]                        USHORT uiVal;
+    [case(VT_BOOL)]                       VARIANT_BOOL boolVal;
+#if 0 /* illegal in C++ */
+    [case(VT_ILLEGAL)]                    _VARIANT_BOOL bool;
+#endif
+    [case(VT_I4)]                         long lVal;
+    [case(VT_UI4)]                        ULONG ulVal;
+    [case(VT_R4)]                         float fltVal;
+    [case(VT_ERROR)]                      SCODE scode;
+    [case(VT_I8)]                         LARGE_INTEGER hVal;
+    [case(VT_UI8)]                        ULARGE_INTEGER uhVal;
+    [case(VT_R8)]                         double dblVal;
+    [case(VT_CY)]                         CY cyVal;
+    [case(VT_DATE)]                       DATE date;
+    [case(VT_FILETIME)]                   FILETIME filetime;
+    [case(VT_CLSID)]                      CLSID *puuid;
+    [case(VT_BLOB, VT_BLOB_OBJECT)]       BLOB blob;
+    [case(VT_CF)]                         CLIPDATA *pclipdata;
+    [case(VT_STREAM, VT_STREAMED_OBJECT)] IStream *pStream;
+    [case(VT_STORAGE, VT_STORED_OBJECT)]  IStorage *pStorage;
+    [case(VT_BSTR)]                       BSTR bstrVal;
+    [case(VT_BSTR_BLOB)]                  BSTRBLOB bstrblobVal;
+    [case(VT_LPSTR)]                      LPSTR pszVal;
+    [case(VT_LPWSTR)]                     LPWSTR pwszVal;
+    [case(VT_UI1|VT_VECTOR)]              CAUB caub;
+    [case(VT_I2|VT_VECTOR)]               CAI cai;
+    [case(VT_UI2|VT_VECTOR)]              CAUI caui;
+    [case(VT_BOOL|VT_VECTOR)]             CABOOL cabool;
+    [case(VT_I4|VT_VECTOR)]               CAL cal;
+    [case(VT_UI4|VT_VECTOR)]              CAUL caul;
+    [case(VT_R4|VT_VECTOR)]               CAFLT caflt;
+    [case(VT_ERROR|VT_VECTOR)]            CASCODE cascode;
+    [case(VT_I8|VT_VECTOR)]               CAH cah;
+    [case(VT_UI8|VT_VECTOR)]              CAUH cauh;
+    [case(VT_R8|VT_VECTOR)]               CADBL cadbl;
+    [case(VT_CY|VT_VECTOR)]               CACY cacy;
+    [case(VT_DATE|VT_VECTOR)]             CADATE cadate;
+    [case(VT_FILETIME|VT_VECTOR)]         CAFILETIME cafiletime;
+    [case(VT_CLSID|VT_VECTOR)]            CACLSID cauuid;
+    [case(VT_CF|VT_VECTOR)]               CACLIPDATA caclipdata;
+    [case(VT_BSTR|VT_VECTOR)]             CABSTR cabstr;
+    [case(VT_BSTR_BLOB|VT_VECTOR)]        CABSTRBLOB cabstrblob;
+    [case(VT_LPSTR|VT_VECTOR)]            CALPSTR calpstr;
+    [case(VT_LPWSTR|VT_VECTOR)]           CALPWSTR calpwstr;
+    [case(VT_VARIANT|VT_VECTOR)]          CAPROPVARIANT capropvar;
+    };
+  };
+
+  typedef struct tagPROPVARIANT *LPPROPVARIANT;
+
+  /* FIXME: bunches of property IDs */
+
+  const ULONG PRSPEC_INVALID = 0xffffffff;
+  const ULONG PRSPEC_LPWSTR = 0;
+  const ULONG PRSPEC_PROPID = 1;
+
+  typedef struct tagPROPSPEC {
+    ULONG ulKind;
+    [switch_is(ulKind)] union {
+    [case(PRSPEC_PROPID)] PROPID propid;
+    [case(PRSPEC_LPWSTR)] LPOLESTR lpwstr;
+    [default]             ;
+    };
+  } PROPSPEC;
+
+  typedef struct tagSTATPROPSTG {
+    LPOLESTR lpwstrName;
+    PROPID propid;
+    VARTYPE vt;
+  } STATPROPSTG;
+
+  /* FIXME: macros */
+
+  typedef struct tagSTATPROPSETSTG {
+    FMTID fmtid;
+    CLSID clsid;
+    DWORD grfFlags;
+    FILETIME mtime;
+    FILETIME ctime;
+    FILETIME atime;
+    DWORD dwOSVersion;
+  } STATPROPSETSTG;
+
+  HRESULT ReadMultiple(
+    [in] ULONG cpspec,
+    [in, size_is(cpspec)] const PROPSPEC rgpspec[],
+    [out, size_is(cpspec)] PROPVARIANT rgpropvar[]);
+
+  HRESULT WriteMultiple(
+    [in] ULONG cpspec,
+    [in, size_is(cpspec)] const PROPSPEC rgpspec[],
+    [in, size_is(cpspec)] const PROPVARIANT rgpropvar[],
+    [in] PROPID propidNameFirst);
+
+  HRESULT DeleteMultiple(
+    [in] ULONG cpspec,
+    [in, size_is(cpspec)] const PROPSPEC rgpspec[]);
+
+  HRESULT ReadPropertyNames(
+    [in] ULONG cpropid,
+    [in, size_is(cpropid)] const PROPID rgpropid[],
+    [out, size_is(cpropid)] LPOLESTR rglpwstrName[]);
+
+  HRESULT WritePropertyNames(
+    [in] ULONG cpropid,
+    [in, size_is(cpropid)] const PROPID rgpropid[],
+    [in, size_is(cpropid)] const LPOLESTR rglpwstrName[]);
+
+  HRESULT DeletePropertyNames(
+    [in] ULONG cpropid,
+    [in, size_is(cpropid)] const PROPID rgpropid[]);
+
+  HRESULT Commit(
+    [in] DWORD grfCommitFlags);
+
+  HRESULT Revert();
+
+  HRESULT Enum(
+    [out] IEnumSTATPROPSTG **ppenum);
+
+  HRESULT SetTimes(
+    [in] const FILETIME *pctime,
+    [in] const FILETIME *patime,
+    [in] const FILETIME *pmtime);
+
+  HRESULT SetClass(
+    [in] REFCLSID clsid);
+
+  HRESULT Stat(
+    [out] STATPROPSETSTG *statpsstg);
+}
+
+[
+  object,
+  uuid(0000013A-0000-0000-C000-000000000046),
+  pointer_default(unique)
+]
+interface IPropertySetStorage : IUnknown
+{
+  typedef [unique] IPropertySetStorage *LPPROPERTYSETSTORAGE;
+
+  HRESULT Create(
+    [in] REFFMTID rfmtid,
+    [in, unique] const CLSID *pclsid,
+    [in] DWORD grfFlags,
+    [in] DWORD grfMode,
+    [out] IPropertyStorage **ppprstg);
+
+  HRESULT Open(
+    [in] REFFMTID rfmtid,
+    [in] DWORD grfMode,
+    [out] IPropertyStorage **ppprstg);
+
+  HRESULT Delete(
+    [in] REFFMTID rfmtid);
+
+  HRESULT Enum(
+    [out] IEnumSTATPROPSETSTG **ppenum);
+}
+
+[
+  object,
+  uuid(00000139-0000-0000-C000-000000000046),
+  pointer_default(unique)
+]
+interface IEnumSTATPROPSTG : IUnknown
+{
+  typedef [unique] IEnumSTATPROPSTG *LPENUMSTATPROPSTG;
+
+  [local]
+  HRESULT Next(
+    [in] ULONG celt,
+    [out, size_is(celt), length_is(*pceltFetched)]
+    STATPROPSTG *rgelt,
+    [out] ULONG *pceltFetched);
+
+  [call_as(Next)]
+  HRESULT RemoteNext(
+    [in] ULONG celt,
+    [out, size_is(celt), length_is(*pceltFetched)]
+    STATPROPSTG *rgelt,
+    [out] ULONG *pceltFetched);
+
+  HRESULT Skip(
+    [in] ULONG celt);
+
+  HRESULT Reset();
+
+  HRESULT Clone(
+    [out] IEnumSTATPROPSTG **ppenum);
+}
+
+[
+  object,
+  uuid(0000013B-0000-0000-C000-000000000046),
+  pointer_default(unique)
+]
+interface IEnumSTATPROPSETSTG : IUnknown
+{
+  typedef [unique] IEnumSTATPROPSETSTG *LPENUMSTATPROPSETSTG;
+
+  [local]
+  HRESULT Next(
+    [in] ULONG celt,
+    [out, size_is(celt), length_is(*pceltFetched)]
+    STATPROPSETSTG *rgelt,
+    [out] ULONG *pceltFetched);
+
+  [call_as(Next)]
+  HRESULT RemoteNext(
+    [in] ULONG celt,
+    [out, size_is(celt), length_is(*pceltFetched)]
+    STATPROPSETSTG *rgelt,
+    [out] ULONG *pceltFetched);
+
+  HRESULT Skip(
+    [in] ULONG celt);
+
+  HRESULT Reset();
+
+  HRESULT Clone(
+    [out] IEnumSTATPROPSETSTG **ppenum);
+}
+
+
+cpp_quote("HRESULT WINAPI FreePropVariantArray(ULONG,PROPVARIANT*);");
+cpp_quote("HRESULT WINAPI PropVariantClear(PROPVARIANT*);");
+cpp_quote("HRESULT WINAPI PropVariantCopy(PROPVARIANT*,const PROPVARIANT*);");

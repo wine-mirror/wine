@@ -13,6 +13,7 @@ extern "C" {
 #include <shtypes.h>
 #include <servprov.h>
 #include <comcat.h>
+#include <propidl.h>
 #ifndef __IPersistFolder_FWD_DEFINED__
 #define __IPersistFolder_FWD_DEFINED__
 typedef struct IPersistFolder IPersistFolder;

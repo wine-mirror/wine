@@ -2326,8 +2326,6 @@ static void OLE_FreeClipDataArray(ULONG count, CLIPDATA * pClipDataArray)
             CoTaskMemFree(pClipDataArray[i].pClipData);
 }
 
-HRESULT WINAPI FreePropVariantArray(ULONG,PROPVARIANT*);
-
 /******************************************************************************
  * Check if a PROPVARIANT's type is valid.
  */
