@@ -2195,7 +2195,7 @@ static HWND SWP_DoOwnedPopups(WND* pDesktop, WND* wndPtr, HWND hwndInsertAfter, 
 
 	if( hwndInsertAfter != HWND_TOP )
 	{
-	    while( w != wndPtr->owner )
+	    while( w && w != wndPtr->owner )
 	    {
 		if (w != wndPtr) hwndLocalPrev = w->hwndSelf;
 		if( hwndLocalPrev == hwndInsertAfter ) break;
