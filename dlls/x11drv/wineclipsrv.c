@@ -174,20 +174,6 @@ static PCACHEENTRY g_pClipboardCache = NULL;   /* Clipboard selection cache */
 static unsigned long g_cPrimaryTargets = 0;    /* Number of TARGETS reported by PRIMARY selection */
 static unsigned long g_cClipboardTargets = 0;  /* Number of TARGETS reported by CLIPBOARD selection */
 
-/* Event names */
-static const char * const event_names[] =
-{
-  "", "", "KeyPress", "KeyRelease", "ButtonPress", "ButtonRelease",
-  "MotionNotify", "EnterNotify", "LeaveNotify", "FocusIn", "FocusOut",
-  "KeymapNotify", "Expose", "GraphicsExpose", "NoExpose", "VisibilityNotify",
-  "CreateNotify", "DestroyNotify", "UnmapNotify", "MapNotify", "MapRequest",
-  "ReparentNotify", "ConfigureNotify", "ConfigureRequest", "GravityNotify",
-  "ResizeRequest", "CirculateNotify", "CirculateRequest", "PropertyNotify",
-  "SelectionClear", "SelectionRequest", "SelectionNotify", "ColormapNotify",
-  "ClientMessage", "MappingNotify"
-};
-
-
 /*
  * Prototypes
  */
@@ -805,6 +791,18 @@ void EmptyCache(PCACHEENTRY pCache, int nItems)
 void EVENT_ProcessEvent( XEvent *event )
 {
   /*
+  static const char * const event_names[] =
+  {
+  "", "", "KeyPress", "KeyRelease", "ButtonPress", "ButtonRelease",
+  "MotionNotify", "EnterNotify", "LeaveNotify", "FocusIn", "FocusOut",
+  "KeymapNotify", "Expose", "GraphicsExpose", "NoExpose", "VisibilityNotify",
+  "CreateNotify", "DestroyNotify", "UnmapNotify", "MapNotify", "MapRequest",
+  "ReparentNotify", "ConfigureNotify", "ConfigureRequest", "GravityNotify",
+  "ResizeRequest", "CirculateNotify", "CirculateRequest", "PropertyNotify",
+  "SelectionClear", "SelectionRequest", "SelectionNotify", "ColormapNotify",
+  "ClientMessage", "MappingNotify"
+  };
+
   TRACE(" event %s for Window %08lx\n", event_names[event->type], event->xany.window );
   */
 
