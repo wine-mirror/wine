@@ -3787,23 +3787,18 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	if (!(btnPtr->fsState & TBSTATE_ENABLED))
 	    return 0;
 
-	SetCapture (hwnd);
-	infoPtr->bCaptured = TRUE;
-	infoPtr->nButtonDown = nHit;
 	infoPtr->nOldHit = nHit;
-
-	btnPtr->fsState |= TBSTATE_PRESSED;
-        btnPtr->bHot = FALSE;
 
 	CopyRect(&arrowRect, &btnPtr->rect);
 	arrowRect.left = max(btnPtr->rect.left, btnPtr->rect.right - DDARROW_WIDTH);
-	
+
 	/* for EX_DRAWDDARROWS style,  click must be in the drop-down arrow rect */
 	if ((btnPtr->fsStyle & TBSTYLE_DROPDOWN) &&
-	     !(TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle) && !PtInRect(&arrowRect, pt))) 
+	     ((TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle) && PtInRect(&arrowRect, pt)) ||
+	      (!TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle))))
 	{
 	    NMTOOLBARA nmtb;
-	    /* 
+	    /*
 	     * this time we must force a Redraw, so the btn is
 	     * painted down before CaptureChanged repaints it up
 	     */
@@ -3819,8 +3814,17 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 			  (WPARAM)nmtb.hdr.idFrom, (LPARAM)&nmtb);
 	}
 	else
-        InvalidateRect(hwnd, &btnPtr->rect, TOOLBAR_HasText(infoPtr,
-            btnPtr));
+	{
+	    SetCapture (hwnd);
+	    infoPtr->bCaptured = TRUE;
+	    infoPtr->nButtonDown = nHit;
+
+	    btnPtr->fsState |= TBSTATE_PRESSED;
+	    btnPtr->bHot = FALSE;
+
+	    InvalidateRect(hwnd, &btnPtr->rect,
+			   TOOLBAR_HasText(infoPtr, btnPtr));
+	}
     }
 
     return 0;
