@@ -40,24 +40,23 @@ HPEN X11DRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
     {
       case PS_DASH:
 	physDev->pen.dashes = (char *)PEN_dash;
-	physDev->pen.dash_len = 2;
+	physDev->pen.dash_len = sizeof(PEN_dash)/sizeof(*PEN_dash);
 	break;
       case PS_DOT:
 	physDev->pen.dashes = (char *)PEN_dot;
-	physDev->pen.dash_len = 2;
+	physDev->pen.dash_len = sizeof(PEN_dot)/sizeof(*PEN_dot);
 	break;
       case PS_DASHDOT:
 	physDev->pen.dashes = (char *)PEN_dashdot;
-	physDev->pen.dash_len = 4;
+	physDev->pen.dash_len = sizeof(PEN_dashdot)/sizeof(*PEN_dashdot);
 	break;
       case PS_DASHDOTDOT:
 	physDev->pen.dashes = (char *)PEN_dashdotdot;
-	physDev->pen.dash_len = 6;
+	physDev->pen.dash_len = sizeof(PEN_dashdotdot)/sizeof(*PEN_dashdotdot);
 	break;
       case PS_ALTERNATE:
-	/* FIXME: should be alternating _pixels_ that are set */
 	physDev->pen.dashes = (char *)PEN_alternate;
-	physDev->pen.dash_len = 2;
+	physDev->pen.dash_len = sizeof(PEN_alternate)/sizeof(*PEN_alternate);
 	break;
       case PS_USERSTYLE:
 	/* FIXME */
