@@ -342,7 +342,7 @@ static BOOL32 MAIN_ParseDebugOptions(char *options)
  * RETURNS:
  *	the numeric code of the language used by Windows (or 0x00)
  */
-int MAIN_GetLanguageID(char *Lang, char *Country, char *Charset, char *Dialect)
+int MAIN_GetLanguageID(LPCSTR Lang,LPCSTR Country,LPCSTR Charset,LPCSTR Dialect)
 {
     char lang[3]="??", country[3]={0,0,0};
     char *charset=NULL, *dialect=NULL;
@@ -671,8 +671,8 @@ int MAIN_GetLanguageID(char *Lang, char *Country, char *Charset, char *Dialect)
 	ret = LANG_NEUTRAL;
 
 end_MAIN_GetLanguageID:
-	if (Charset) free(Charset);
-	if (Dialect) free(Dialect);
+	if (Charset) free(charset);
+	if (Dialect) free(dialect);
 
 	return ret;
 }
