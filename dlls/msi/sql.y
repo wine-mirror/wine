@@ -63,6 +63,9 @@ static MSIVIEW *do_one_select( MSIDATABASE *db, MSIVIEW *in,
 static MSIVIEW *do_order_by( MSIDATABASE *db, MSIVIEW *in, 
                                struct string_list *columns );
 
+static BOOL SQL_MarkPrimaryKeys( create_col_info *cols,
+                                 struct string_list *keys);
+
 static struct expr * EXPR_complex( struct expr *l, UINT op, struct expr *r );
 static struct expr * EXPR_column( LPWSTR column );
 static struct expr * EXPR_ival( INT ival );
@@ -76,34 +79,36 @@ static struct expr * EXPR_sval( LPWSTR string );
 {
     LPWSTR string;
     struct string_list *column_list;
-    MSIVIEW *table;
+    MSIVIEW *query;
     struct expr *expr;
+    USHORT column_type;
+    create_col_info *column_info;
 }
 
 %token TK_ABORT TK_AFTER TK_AGG_FUNCTION TK_ALL TK_AND TK_AS TK_ASC
 %token TK_BEFORE TK_BEGIN TK_BETWEEN TK_BITAND TK_BITNOT TK_BITOR TK_BY
-%token TK_CASCADE TK_CASE TK_CHECK TK_CLUSTER TK_COLLATE TK_COLUMN TK_COMMA
-%token TK_COMMENT TK_COMMIT TK_CONCAT TK_CONFLICT 
+%token TK_CASCADE TK_CASE TK_CHAR TK_CHECK TK_CLUSTER TK_COLLATE TK_COLUMN
+%token TK_COMMA TK_COMMENT TK_COMMIT TK_CONCAT TK_CONFLICT 
 %token TK_CONSTRAINT TK_COPY TK_CREATE
 %token TK_DEFAULT TK_DEFERRABLE TK_DEFERRED TK_DELETE TK_DELIMITERS TK_DESC
 %token TK_DISTINCT TK_DOT TK_DROP TK_EACH
 %token TK_ELSE TK_END TK_END_OF_FILE TK_EQ TK_EXCEPT TK_EXPLAIN
 %token TK_FAIL TK_FLOAT TK_FOR TK_FOREIGN TK_FROM TK_FUNCTION
 %token TK_GE TK_GLOB TK_GROUP TK_GT
-%token TK_HAVING
+%token TK_HAVING TK_HOLD
 %token TK_IGNORE TK_ILLEGAL TK_IMMEDIATE TK_IN TK_INDEX TK_INITIALLY
 %token <string> TK_ID 
-%token TK_INSERT TK_INSTEAD TK_INTEGER TK_INTERSECT TK_INTO TK_IS TK_ISNULL
+%token TK_INSERT TK_INSTEAD TK_INT TK_INTEGER TK_INTERSECT TK_INTO TK_IS TK_ISNULL
 %token TK_JOIN TK_JOIN_KW
 %token TK_KEY
-%token TK_LE TK_LIKE TK_LIMIT TK_LP TK_LSHIFT TK_LT
+%token TK_LE TK_LIKE TK_LIMIT TK_LONG TK_LONGCHAR TK_LP TK_LSHIFT TK_LT
 %token TK_MATCH TK_MINUS
 %token TK_NE TK_NOT TK_NOTNULL TK_NULL
-%token TK_OF TK_OFFSET TK_ON TK_OR TK_ORACLE_OUTER_JOIN TK_ORDER
+%token TK_OBJECT TK_OF TK_OFFSET TK_ON TK_OR TK_ORACLE_OUTER_JOIN TK_ORDER
 %token TK_PLUS TK_PRAGMA TK_PRIMARY
 %token TK_RAISE TK_REFERENCES TK_REM TK_REPLACE TK_RESTRICT TK_ROLLBACK
 %token TK_ROW TK_RP TK_RSHIFT
-%token TK_SELECT TK_SEMI TK_SET TK_SLASH TK_SPACE TK_STAR TK_STATEMENT 
+%token TK_SELECT TK_SEMI TK_SET TK_SHORT TK_SLASH TK_SPACE TK_STAR TK_STATEMENT 
 %token <string> TK_STRING
 %token TK_TABLE TK_TEMP TK_THEN TK_TRANSACTION TK_TRIGGER
 %token TK_UMINUS TK_UNCLOSED_STRING TK_UNION TK_UNIQUE
@@ -120,13 +125,138 @@ static struct expr * EXPR_sval( LPWSTR string );
 %nonassoc END_OF_FILE ILLEGAL SPACE UNCLOSED_STRING COMMENT FUNCTION
           COLUMN AGG_FUNCTION.
 
-%type <query> oneselect
 %type <string> column table string_or_id
 %type <column_list> selcollist
-%type <table> from unorderedsel
+%type <query> from unorderedsel oneselect onequery onecreate
 %type <expr> expr val column_val
+%type <column_type> column_type data_type data_count
+%type <column_info> column_def table_def
 
 %%
+
+onequery:
+    oneselect
+    {
+        SQL_input* sql = (SQL_input*) info;
+        *sql->view = $1;
+    }
+  | onecreate
+    {
+        SQL_input* sql = (SQL_input*) info;
+        *sql->view = $1;
+    }
+    ;
+
+onecreate:
+    TK_CREATE TK_TABLE table TK_LP table_def TK_RP
+        {
+            SQL_input* sql = (SQL_input*) info;
+            MSIVIEW *create; 
+
+            if( !$5 )
+                YYABORT;
+            CREATE_CreateView( sql->db, &create, $3, $5, FALSE );
+            $$ = create;
+        }
+  | TK_CREATE TK_TABLE table TK_LP table_def TK_RP TK_HOLD
+        {
+            SQL_input* sql = (SQL_input*) info;
+            MSIVIEW *create; 
+
+            if( !$5 )
+                YYABORT;
+            CREATE_CreateView( sql->db, &create, $3, $5, TRUE );
+            $$ = create;
+        }
+    ;
+
+table_def:
+    column_def TK_PRIMARY TK_KEY selcollist
+        {
+            if( SQL_MarkPrimaryKeys( $1, $4 ) )
+                $$ = $1;
+            else
+                $$ = NULL;
+        }
+    ;
+
+column_def:
+    column_def TK_COMMA column column_type
+        {
+            $$ = HeapAlloc( GetProcessHeap(), 0, sizeof *$$ );
+            if( $$ )
+            {
+                $$->colname = $3;
+                $$->type = $4;
+                $$->next = $1;
+            }
+            else if( $1 )
+                HeapFree( GetProcessHeap(), 0, $1 );
+        }
+  | column column_type
+        {
+            $$ = HeapAlloc( GetProcessHeap(), 0, sizeof *$$ );
+            if( $$ )
+            {
+                $$->colname = $1;
+                $$->type = $2;
+                $$->next = NULL;
+            }
+        }
+    ;
+
+column_type:
+    data_type
+        {
+            $$ |= MSITYPE_NULLABLE;
+        }
+  | data_type TK_NOT TK_NULL
+        {
+            $$ = $1;
+        }
+    ;
+
+data_type:
+    TK_CHAR
+        {
+            $$ = MSITYPE_STRING | 1;
+        }
+  | TK_CHAR TK_LP data_count TK_RP
+        {
+            $$ = MSITYPE_STRING | $3;
+        }
+  | TK_LONGCHAR
+        {
+            $$ = 2;
+        }
+  | TK_SHORT
+        {
+            $$ = 2;
+        }
+  | TK_INT
+        {
+            $$ = 2;
+        }
+  | TK_LONG
+        {
+            $$ = 4;
+        }
+  | TK_OBJECT
+        {
+            $$ = 0;
+        }
+    ;
+
+data_count:
+    TK_INTEGER
+        {
+            SQL_input* sql = (SQL_input*) info;
+            int val = SQL_getint(sql);
+            if( ( val > 255 ) || ( val < 0 ) )
+                YYABORT;
+            $$ = val;
+        }
+    ;
 
 oneselect:
     unorderedsel TK_ORDER TK_BY selcollist
@@ -136,16 +266,11 @@ oneselect:
             if( !$1 )
                 YYABORT;
             if( $4 )
-                *sql->view = do_order_by( sql->db, $1, $4 );
+                $$ = do_order_by( sql->db, $1, $4 );
             else
-                *sql->view = $1;
+                $$ = $1;
         }
   | unorderedsel
-        {
-            SQL_input* sql = (SQL_input*) info;
-
-            *sql->view = $1;
-        }
     ;
 
 unorderedsel:
@@ -489,6 +614,29 @@ static struct expr * EXPR_sval( LPWSTR string )
         e->u.sval = string;
     }
     return e;
+}
+
+static BOOL SQL_MarkPrimaryKeys( create_col_info *cols,
+                                 struct string_list *keys )
+{
+    struct string_list *k;
+    BOOL found = TRUE;
+
+    for( k = keys; k && found; k = k->next )
+    {
+        create_col_info *c;
+
+        found = FALSE;
+        for( c = cols; c && !found; c = c->next )
+        {
+             if( lstrcmpW( k->string, c->colname ) )
+                 continue;
+             c->type |= MSITYPE_KEY;
+             found = TRUE;
+        }
+    }
+
+    return found;
 }
 
 UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phview )

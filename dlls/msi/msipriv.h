@@ -60,6 +60,7 @@ typedef struct tagMSIDATABASE
 {
     IStorage *storage;
     string_table strings;
+    LPWSTR mode;
     MSITABLE *first_table, *last_table;
 } MSIDATABASE;
 

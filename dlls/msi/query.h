@@ -70,6 +70,12 @@ struct expr
     } u;
 };
 
+typedef struct _create_col_info
+{
+    LPWSTR colname;
+    UINT   type;
+    struct _create_col_info *next;
+} create_col_info;
 
 UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phView);
 
@@ -85,6 +91,9 @@ UINT ORDER_AddColumn( MSIVIEW *group, LPWSTR name );
 
 UINT WHERE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table );
 UINT WHERE_AddCondition( MSIVIEW *view, struct expr *condition );
+
+UINT CREATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
+                        create_col_info *col_info, BOOL temp );
 
 int sqliteGetToken(const WCHAR *z, int *tokenType);
 

@@ -36,6 +36,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
+/*
+ * The MSVC headers define the MSIDBOPEN_* macros cast to LPCTSTR,
+ *  which is a problem because LPCTSTR isn't defined when compiling wine.
+ * To work around this problem, we need to define LPCTSTR as LPCWSTR here,
+ *  and make sure to only use it in W functions.
+ */
+#define LPCTSTR LPCWSTR
+
 const WCHAR szInstaller[] = {
 'S','o','f','t','w','a','r','e','\\',
 'M','i','c','r','o','s','o','f','t','\\',
@@ -179,13 +187,42 @@ UINT WINAPI MsiOpenDatabaseW(
     MSIHANDLE handle;
     MSIDATABASE *db;
     UINT ret;
+    LPWSTR szMode;
 
     TRACE("%s %s %p\n",debugstr_w(szDBPath),debugstr_w(szPersist), phDB);
 
     if( !phDB )
         return ERROR_INVALID_PARAMETER;
 
-    r = StgOpenStorage( szDBPath, NULL, STGM_DIRECT|STGM_READ|STGM_SHARE_DENY_WRITE, NULL, 0, &stg);
+    szMode = (LPWSTR) szPersist;
+    if( HIWORD( szPersist ) )
+    {
+        /* UINT len = lstrlenW( szPerist ) + 1; */
+        FIXME("don't support persist files yet\b");
+        return ERROR_INVALID_PARAMETER;
+        /* szMode = HeapAlloc( GetProcessHeap(), 0, len * sizeof (DWORD) ); */
+    }
+    else if( szPersist == MSIDBOPEN_READONLY )
+    {
+        r = StgOpenStorage( szDBPath, NULL,
+              STGM_DIRECT|STGM_READ|STGM_SHARE_DENY_WRITE, NULL, 0, &stg);
+    }
+    else if( szPersist == MSIDBOPEN_CREATE )
+    {
+        r = StgCreateDocfile( szDBPath, 
+              STGM_DIRECT|STGM_READWRITE|STGM_SHARE_EXCLUSIVE, 0, &stg);
+    }
+    else if( szPersist == MSIDBOPEN_TRANSACT )
+    {
+        r = StgOpenStorage( szDBPath, NULL,
+              STGM_DIRECT|STGM_READWRITE|STGM_SHARE_EXCLUSIVE, NULL, 0, &stg);
+    }
+    else
+    {
+        ERR("unknown flag %p\n",szPersist);
+        return ERROR_INVALID_PARAMETER;
+    }
+
     if( FAILED( r ) )
     {
         FIXME("open failed r = %08lx!\n",r);
@@ -208,6 +245,7 @@ UINT WINAPI MsiOpenDatabaseW(
         goto end;
     }
     db->storage = stg;
+    db->mode = szMode;
     ret = load_string_table( db, &db->strings);
     if( ret != ERROR_SUCCESS )
         goto end;
