@@ -110,9 +110,9 @@ DEFINE_GUID( GUID_Miscellaneous2Callbacks,	0x406B2F00,0x3E5A,0x11D1,0xB6,0x40,0x
 /*****************************************************************************
  * driver->ddraw callbacks
  */
-typedef BOOL	DDAPI (*LPDDHAL_SETINFO)(LPDDHALINFO lpDDHalInfo, BOOL reset);
-typedef FLATPTR	DDAPI (*LPDDHAL_VIDMEMALLOC)(LPDDRAWI_DIRECTDRAW_GBL lpDD, int heap, DWORD dwWidth, DWORD dwHeight);
-typedef void	DDAPI (*LPDDHAL_VIDMEMFREE)(LPDDRAWI_DIRECTDRAW_GBL lpDD, int heap, FLATPTR fpMem);
+typedef BOOL    (DDAPI *LPDDHAL_SETINFO)(LPDDHALINFO lpDDHalInfo, BOOL reset);
+typedef FLATPTR (DDAPI *LPDDHAL_VIDMEMALLOC)(LPDDRAWI_DIRECTDRAW_GBL lpDD, int heap, DWORD dwWidth, DWORD dwHeight);
+typedef void    (DDAPI *LPDDHAL_VIDMEMFREE)(LPDDRAWI_DIRECTDRAW_GBL lpDD, int heap, FLATPTR fpMem);
 
 typedef struct {
     DWORD		dwSize;
