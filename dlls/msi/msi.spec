@@ -47,15 +47,15 @@
 47 stub MsiEvaluateConditionW
 48 stub MsiGetLastErrorRecord
 49 stub MsiGetActiveDatabase
-50 stub MsiGetComponentStateA
-51 stub MsiGetComponentStateW
+50 stdcall MsiGetComponentStateA(long str ptr ptr)
+51 stdcall MsiGetComponentStateW(long wstr ptr ptr)
 52 stub MsiGetDatabaseState
 53 stub MsiGetFeatureCostA
 54 stub MsiGetFeatureCostW
 55 stub MsiGetFeatureInfoA
 56 stub MsiGetFeatureInfoW
-57 stub MsiGetFeatureStateA
-58 stub MsiGetFeatureStateW
+57 stdcall MsiGetFeatureStateA(long str ptr ptr)
+58 stdcall MsiGetFeatureStateW(long wstr ptr ptr)
 59 stub MsiGetFeatureUsageA
 60 stub MsiGetFeatureUsageW
 61 stub MsiGetFeatureValidStatesA
@@ -68,8 +68,8 @@
 68 stub MsiGetProductInfoFromScriptA
 69 stub MsiGetProductInfoFromScriptW
 70 stdcall MsiGetProductInfoW(wstr wstr wstr long)
-71 stub MsiGetProductPropertyA
-72 stub MsiGetProductPropertyW
+71 stdcall MsiGetProductPropertyA(long str ptr ptr)
+72 stdcall MsiGetProductPropertyW(long wstr ptr ptr)
 73 stub MsiGetPropertyA
 74 stub MsiGetPropertyW
 75 stub MsiGetSourcePathA

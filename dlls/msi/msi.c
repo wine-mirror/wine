@@ -222,8 +222,25 @@ end:
 
 UINT WINAPI MsiOpenProductA(LPCSTR szProduct, MSIHANDLE *phProduct)
 {
-    FIXME("%s %p\n",debugstr_a(szProduct), phProduct);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    UINT len, ret;
+    LPWSTR szwProd = NULL;
+
+    TRACE("%s %p\n",debugstr_a(szProduct), phProduct);
+
+    if( szProduct )
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, szProduct, -1, NULL, 0 );
+        szwProd = HeapAlloc( GetProcessHeap(), 0, len * sizeof (WCHAR) );
+        if( szwProd )
+            MultiByteToWideChar( CP_ACP, 0, szProduct, -1, szwProd, len );
+    }
+
+    ret = MsiOpenProductW( szwProd, phProduct );
+
+    if( szwProd )
+        HeapFree( GetProcessHeap(), 0, szwProd );
+
+    return ret;
 }
 
 UINT WINAPI MsiOpenProductW(LPCWSTR szProduct, MSIHANDLE *phProduct)
@@ -718,6 +735,20 @@ HRESULT WINAPI MsiGetFileSignatureInformationW(
   LPCWSTR szSignedObjectPath, DWORD dwFlags, PCCERT_CONTEXT* ppcCertContext, BYTE* pbHashData, DWORD* pcbHashData)
 {
     FIXME("%s 0x%08lx %p %p %p\n", debugstr_w(szSignedObjectPath), dwFlags, ppcCertContext, pbHashData, pcbHashData);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiGetProductPropertyA( MSIHANDLE hProduct, LPCSTR szProperty,
+                                    LPSTR szValue, DWORD *pccbValue )
+{
+    FIXME("%ld %s %p %p\n", hProduct, debugstr_a(szProperty), szValue, pccbValue);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiGetProductPropertyW( MSIHANDLE hProduct, LPCWSTR szProperty,
+                                    LPWSTR szValue, DWORD *pccbValue )
+{
+    FIXME("%ld %s %p %p\n", hProduct, debugstr_w(szProperty), szValue, pccbValue);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 

@@ -80,6 +80,10 @@ UINT WINAPI MsiOpenPackageA(LPCSTR, MSIHANDLE*);
 UINT WINAPI MsiOpenPackageW(LPCWSTR, MSIHANDLE*);
 #define     MsiOpenPackage WINELIB_NAME_AW(MsiOpenPackage)
 
+UINT WINAPI MsiOpenProductA(LPCSTR, MSIHANDLE*);
+UINT WINAPI MsiOpenProductW(LPCWSTR, MSIHANDLE*);
+#define     MsiOpenProduct WINELIB_NAME_AW(MsiOpenProduct)
+
 UINT WINAPI MsiGetSummaryInformationA(MSIHANDLE, LPCSTR, UINT, MSIHANDLE *);
 UINT WINAPI MsiGetSummaryInformationW(MSIHANDLE, LPCWSTR, UINT, MSIHANDLE *);
 #define     MsiGetSummaryInformation WINELIB_NAME_AW(MsiGetSummaryInformation)
