@@ -1000,15 +1000,27 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     {
 	PEMREXTTEXTOUTA pExtTextOutA = (PEMREXTTEXTOUTA)mr;
 	RECT rc;
+        INT *dx = NULL;
 
 	rc.left = pExtTextOutA->emrtext.rcl.left;
 	rc.top = pExtTextOutA->emrtext.rcl.top;
 	rc.right = pExtTextOutA->emrtext.rcl.right;
 	rc.bottom = pExtTextOutA->emrtext.rcl.bottom;
+        TRACE("EMR_EXTTEXTOUTA: x,y = %ld, %ld. rect = %ld, %ld - %ld, %ld. flags %08lx\n",
+              pExtTextOutA->emrtext.ptlReference.x, pExtTextOutA->emrtext.ptlReference.y,
+              rc.left, rc.top, rc.right, rc.bottom, pExtTextOutA->emrtext.fOptions);
+
+        /* Linux version of pstoedit produces EMFs with offDx set to 0.
+         * These files can be enumerated and played under Win98 just
+         * fine, but at least Win2k chokes on them.
+         */
+        if (pExtTextOutA->emrtext.offDx)
+            dx = (INT *)((BYTE *)mr + pExtTextOutA->emrtext.offDx);
+
 	ExtTextOutA(hdc, pExtTextOutA->emrtext.ptlReference.x, pExtTextOutA->emrtext.ptlReference.y,
 	    pExtTextOutA->emrtext.fOptions, &rc,
 	    (LPSTR)((BYTE *)mr + pExtTextOutA->emrtext.offString), pExtTextOutA->emrtext.nChars,
-	    (INT *)((BYTE *)mr + pExtTextOutA->emrtext.offDx));
+	    dx);
 	break;
     }
 
@@ -1016,6 +1028,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     {
 	PEMREXTTEXTOUTW pExtTextOutW = (PEMREXTTEXTOUTW)mr;
 	RECT rc;
+        INT *dx = NULL;
 
 	rc.left = pExtTextOutW->emrtext.rcl.left;
 	rc.top = pExtTextOutW->emrtext.rcl.top;
@@ -1025,10 +1038,17 @@ BOOL WINAPI PlayEnhMetaFileRecord(
               pExtTextOutW->emrtext.ptlReference.x, pExtTextOutW->emrtext.ptlReference.y,
               rc.left, rc.top, rc.right, rc.bottom, pExtTextOutW->emrtext.fOptions);
 
+        /* Linux version of pstoedit produces EMFs with offDx set to 0.
+         * These files can be enumerated and played under Win98 just
+         * fine, but at least Win2k chokes on them.
+         */
+        if (pExtTextOutW->emrtext.offDx)
+            dx = (INT *)((BYTE *)mr + pExtTextOutW->emrtext.offDx);
+
 	ExtTextOutW(hdc, pExtTextOutW->emrtext.ptlReference.x, pExtTextOutW->emrtext.ptlReference.y,
 	    pExtTextOutW->emrtext.fOptions, &rc,
 	    (LPWSTR)((BYTE *)mr + pExtTextOutW->emrtext.offString), pExtTextOutW->emrtext.nChars,
-	    (INT *)((BYTE *)mr + pExtTextOutW->emrtext.offDx));
+	    dx);
 	break;
     }
 
