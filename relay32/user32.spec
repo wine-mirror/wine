@@ -1,5 +1,6 @@
 name	user32
 type	win32
+init	MAIN_UserInit
 
   1 stub ActivateKeyboardLayout
   2 stdcall AdjustWindowRect(ptr long long) AdjustWindowRect32

@@ -1,5 +1,6 @@
 name	kernel32
 type	win32
+init	MAIN_KernelInit
 
 # Functions exported by the Win95 kernel32.dll 
 # (these need to have these exact ordinals, for some win95 dlls 

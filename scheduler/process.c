@@ -254,7 +254,7 @@ BOOL32 PROCESS_Init(void)
 
     /* Create the initial process and thread structures */
     if (!(pdb = PROCESS_CreatePDB( NULL ))) return FALSE;
-    if (!(thdb = THREAD_Create( pdb, 0, TRUE, NULL, NULL, NULL, NULL ))) return FALSE;
+    if (!(thdb = THREAD_Create( pdb, 0, FALSE, NULL, NULL, NULL, NULL ))) return FALSE;
     thdb->unix_pid = getpid();
 
     PROCESS_InitialProcessID = PDB_TO_PROCESS_ID(pdb);
@@ -345,6 +345,12 @@ PDB32 *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
 
     pdb->task = TASK_Create( thdb, pModule, hInstance, hPrevInstance, cmdShow);
     if (!pdb->task) goto error;
+
+
+    /* Map system DLLs into this process (from initial process) */
+    /* FIXME: this is a hack */
+    pdb->modref_list = PROCESS_Initial()->modref_list;
+    
 
     return pdb;
 

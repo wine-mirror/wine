@@ -32,19 +32,22 @@
 #include "spy.h"
 #include "tweak.h"
 #include "user.h"
+#include "global.h"
 #include "dce.h"
 #include "shell.h"
 #include "winproc.h"
 #include "syslevel.h"
+#include "thread.h"
+#include "task.h"
 #include "debug.h"
 
 
 int __winelib = 1;  /* Winelib run-time flag */
 
 /***********************************************************************
- *           Kernel initialisation routine
+ *           Main initialisation routine
  */
-BOOL32 MAIN_KernelInit(void)
+BOOL32 MAIN_MainInit(void)
 {
     /* Initialize syslevel handling */
     SYSLEVEL_Init();
@@ -73,27 +76,123 @@ BOOL32 MAIN_KernelInit(void)
     /* Initialize IO-port permissions */
     IO_port_init();
 
+    /* registry initialisation */
+    SHELL_LoadRegistry();
+    
     return TRUE;
 }
 
+/***********************************************************************
+ *           KERNEL initialisation routine
+ */
+BOOL32 WINAPI MAIN_KernelInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+    static BOOL32 initDone = FALSE;
+
+    NE_MODULE *pModule;
+    HMODULE16 hModule;
+
+    if ( initDone ) return TRUE;
+    initDone = TRUE;
+
+    /* Create and switch to initial task */
+    pModule = NE_GetPtr( GetModuleHandle16( "KERNEL32" ) );
+    if ( pModule )
+    {
+        THDB *thdb = THREAD_Current();
+        HINSTANCE16 hInstance = NE_CreateInstance( pModule, NULL, TRUE );
+        thdb->process->task = TASK_Create( thdb, pModule, hInstance, 0, FALSE );
+
+        TASK_StartTask( thdb->process->task );
+    }
+
+    /* Initialize special KERNEL entry points */
+    hModule = GetModuleHandle16( "KERNEL" );
+    if ( hModule )
+    {
+        WORD cs, ds;
+
+        /* Initialize KERNEL.178 (__WINFLAGS) with the correct flags value */
+        NE_SetEntryPoint( hModule, 178, GetWinFlags() );
+
+        /* Initialize KERNEL.454/455 (__FLATCS/__FLATDS) */
+        GET_CS(cs); GET_DS(ds);
+        NE_SetEntryPoint( hModule, 454, cs );
+        NE_SetEntryPoint( hModule, 455, ds );
+
+        /* Initialize KERNEL.THHOOK */
+        TASK_InstallTHHook((THHOOK *)PTR_SEG_TO_LIN(
+                                  (SEGPTR)NE_GetEntryPoint( hModule, 332 )));
+
+        /* Initialize the real-mode selector entry points */
+#define SET_ENTRY_POINT( num, addr ) \
+        NE_SetEntryPoint( hModule, (num), GLOBAL_CreateBlock( GMEM_FIXED, \
+                          DOSMEM_MapDosToLinear(addr), 0x10000, hModule, \
+                          FALSE, FALSE, FALSE, NULL ))
+
+        SET_ENTRY_POINT( 183, 0x00000 );  /* KERNEL.183: __0000H */
+        SET_ENTRY_POINT( 174, 0xa0000 );  /* KERNEL.174: __A000H */
+        SET_ENTRY_POINT( 181, 0xb0000 );  /* KERNEL.181: __B000H */
+        SET_ENTRY_POINT( 182, 0xb8000 );  /* KERNEL.182: __B800H */
+        SET_ENTRY_POINT( 195, 0xc0000 );  /* KERNEL.195: __C000H */
+        SET_ENTRY_POINT( 179, 0xd0000 );  /* KERNEL.179: __D000H */
+        SET_ENTRY_POINT( 190, 0xe0000 );  /* KERNEL.190: __E000H */
+        SET_ENTRY_POINT( 173, 0xf0000 );  /* KERNEL.173: __ROMBIOS */
+        SET_ENTRY_POINT( 194, 0xf0000 );  /* KERNEL.194: __F000H */
+        NE_SetEntryPoint( hModule, 193, DOSMEM_BiosSeg ); /* KERNEL.193: __0040H */
+#undef SET_ENTRY_POINT
+    }
+
+    return TRUE;
+}
 
 /***********************************************************************
- *           USER (and GDI) initialisation routine
+ *           GDI initialisation routine
  */
-BOOL32 MAIN_UserInit(void)
+BOOL32 WINAPI MAIN_GdiInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
+    NE_MODULE *pModule;
+
+    if ( GDI_HeapSel ) return TRUE;
+
+    /* Create GDI heap */
+    pModule = NE_GetPtr( GetModuleHandle16( "GDI" ) );
+    if ( pModule )
+    {
+        GDI_HeapSel = GlobalHandleToSel( (NE_SEG_TABLE( pModule ) + 
+                                          pModule->dgroup - 1)->hSeg );
+    }
+    else
+    {
+        GDI_HeapSel = GlobalAlloc16( GMEM_FIXED, GDI_HEAP_SIZE );
+        LocalInit( GDI_HeapSel, 0, GDI_HEAP_SIZE-1 );
+    }
+
+    /* GDI initialisation */
+    return GDI_Init();
+}
+
+/***********************************************************************
+ *           USER initialisation routine
+ */
+BOOL32 WINAPI MAIN_UserInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+    NE_MODULE *pModule;
     int queueSize;
 
-    /* Create USER and GDI heap */
-    if (!USER_HeapSel)
+    if ( USER_HeapSel ) return TRUE;
+
+    /* Create USER heap */
+    pModule = NE_GetPtr( GetModuleHandle16( "USER" ) );
+    if ( pModule )
+    {
+        USER_HeapSel = GlobalHandleToSel( (NE_SEG_TABLE( pModule ) + 
+                                           pModule->dgroup - 1)->hSeg );
+    }
+    else
     {
         USER_HeapSel = GlobalAlloc16( GMEM_FIXED, 0x10000 );
         LocalInit( USER_HeapSel, 0, 0xffff );
-    }
-    if (!GDI_HeapSel)
-    {
-        GDI_HeapSel  = GlobalAlloc16( GMEM_FIXED, GDI_HEAP_SIZE );
-        LocalInit( GDI_HeapSel, 0, GDI_HEAP_SIZE-1 );
     }
 
     /* Initialize Wine tweaks */
@@ -102,14 +201,8 @@ BOOL32 MAIN_UserInit(void)
     /* Initialize OEM Bitmaps */
     if (!OBM_Init()) return FALSE;
 
-    /* registry initialisation */
-    SHELL_LoadRegistry();
-    
     /* Global atom table initialisation */
-    if (!ATOM_Init()) return FALSE;
-
-    /* GDI initialisation */
-    if (!GDI_Init()) return FALSE;
+    if (!ATOM_Init( USER_HeapSel )) return FALSE;
 
     /* Initialize system colors and metrics*/
     SYSMETRICS_Init();
@@ -152,6 +245,13 @@ BOOL32 MAIN_UserInit(void)
     /* Set double click time */
     SetDoubleClickTime32( GetProfileInt32A("windows","DoubleClickSpeed",452) );
 
+    /* Create task message queue for the initial task */
+    if ( GetCurrentTask() )
+    {
+        queueSize = GetProfileInt32A( "windows", "DefaultQueueSize", 8 );
+        if (!SetMessageQueue32( queueSize )) return FALSE;
+    }
+
     return TRUE;
 }
 
@@ -159,19 +259,50 @@ BOOL32 MAIN_UserInit(void)
 /***********************************************************************
  *           Winelib initialisation routine
  */
-BOOL32 MAIN_WinelibInit( int *argc, char *argv[] )
+HINSTANCE32 MAIN_WinelibInit( int *argc, char *argv[] )
 {
+    WINE_MODREF *wm;
+    NE_MODULE *pModule;
+    OFSTRUCT ofs;
+    HMODULE16 hModule;
+    HINSTANCE16 hInstance;
+
     /* Create the initial process */
-    if (!PROCESS_Init()) return FALSE;
+    if (!PROCESS_Init()) return 0;
 
     /* Parse command line arguments */
     MAIN_WineInit( argc, argv );
 
-    /* Initialize the kernel */
-    if (!MAIN_KernelInit()) return FALSE;
+    /* Main initialization */
+    if (!MAIN_MainInit()) return 0;
 
-    /* Initialize all the USER stuff */
-    if (!MAIN_UserInit()) return FALSE;
+    /* Initialize KERNEL */
+    if (!MAIN_KernelInit(0, 0, NULL)) return 0;
 
-    return TRUE;
+    /* Initialize GDI */
+    if (!MAIN_GdiInit(0, 0, NULL)) return 0;
+
+    /* Initialize USER */
+    if (!MAIN_UserInit(0, 0, NULL)) return 0;
+
+    /* Create and switch to initial task */
+    if (!(wm = ELF_CreateDummyModule( argv[0], argv[0], PROCESS_Current() )))
+        return 0;
+    PROCESS_Current()->exe_modref = wm;
+
+    strcpy( ofs.szPathName, wm->modname );
+    if ((hModule = MODULE_CreateDummyModule( &ofs )) < 32) return 0;
+    pModule = (NE_MODULE *)GlobalLock16( hModule );
+    pModule->flags = NE_FFLAGS_WIN32;
+    pModule->module32 = wm->module;
+
+    hInstance = NE_CreateInstance( pModule, NULL, TRUE );
+    PROCESS_Current()->task = TASK_Create( THREAD_Current(), pModule, hInstance, 0, FALSE );
+
+    TASK_StartTask( PROCESS_Current()->task );
+
+    InitApp( hInstance );
+
+    return wm->module;
 }
+

@@ -3,6 +3,7 @@
  *
  */
 
+#include <assert.h>
 #include "callback.h"
 #include "debug.h"
 #include "debugger.h"
@@ -13,6 +14,7 @@
 #include "process.h"
 #include "win16drv.h"
 #include "psdrv.h"
+#include "thread.h"
 #include "windows.h"
 
 
@@ -21,13 +23,13 @@
  */
 BOOL32 MAIN_EmulatorInit(void)
 {
-    /* Initialize the kernel */
-    if (!MAIN_KernelInit()) return FALSE;
+    /* Main initialization */
+    if (!MAIN_MainInit()) return FALSE;
 
     /* Initialize relay code */
     if (!RELAY_Init()) return FALSE;
 
-      /* Initialize signal handling */
+    /* Initialize signal handling */
     if (!SIGNAL_InitEmulator()) return FALSE;
 
     /* Create the Win16 printer driver */
@@ -36,8 +38,46 @@ BOOL32 MAIN_EmulatorInit(void)
     /* Create the Postscript printer driver (FIXME: should be in Winelib) */
     if (!PSDRV_Init()) return FALSE;
 
-    /* Initialize all the USER stuff */
-    return MAIN_UserInit();
+    /* Load system DLLs into the initial process (and initialize them) */
+    if (!LoadLibrary16(  "KERNEL" )) return FALSE;         /* always built-in */
+    if (!LoadLibrary32A( "KERNEL32" )) return FALSE;       /* always built-in */
+
+    if (!LoadLibrary16(  "GDI.EXE" )) return FALSE;
+    if (!LoadLibrary32A( "GDI32.DLL" )) return FALSE;
+
+    if (!LoadLibrary16(  "USER.EXE" )) return FALSE;
+    if (!LoadLibrary32A( "USER32.DLL" )) return FALSE;
+    
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           Main loop of initial task
+ */
+void MAIN_EmulatorRun( void )
+{
+    BOOL32 (*WINAPI pGetMessage)(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max);
+    BOOL32 (*WINAPI pTranslateMessage)( const MSG32* msg );
+    LONG   (*WINAPI pDispatchMessage)( const MSG32* msg );
+    MSG32 msg;
+
+    HMODULE32 hModule = GetModuleHandle32A( "USER32" );
+    pGetMessage       = GetProcAddress32( hModule, "GetMessageA" ); 
+    pTranslateMessage = GetProcAddress32( hModule, "TranslateMessage" ); 
+    pDispatchMessage  = GetProcAddress32( hModule, "DispatchMessageA" ); 
+
+    assert( pGetMessage );
+    assert( pTranslateMessage );
+    assert( pDispatchMessage );
+
+    while ( GetNumTasks() > 1 && pGetMessage( &msg, 0, 0, 0 ) )
+    {
+        pTranslateMessage( &msg );
+        pDispatchMessage( &msg );
+    }
+
+    ExitProcess( 0 );
 }
 
 
@@ -131,8 +171,10 @@ int main( int argc, char *argv[] )
     if (Options.debug) DEBUG_AddModuleBreakpoints();
 
     ctx_debug_call = ctx_debug;
+#if 0  /* FIXME!! */
     IF1632_CallLargeStack = (int (*)(int (*func)(), void *arg))CALL32_Init();
-    Yield16();  /* Start the first task */
+#endif
+    MAIN_EmulatorRun();
     MSG("WinMain: Should never happen: returned from Yield16()\n" );
     return 0;
 }

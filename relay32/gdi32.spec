@@ -1,5 +1,6 @@
 name	gdi32
 type	win32
+init	MAIN_GdiInit
 
   0 stub AbortDoc
   1 stdcall AbortPath(long) AbortPath32

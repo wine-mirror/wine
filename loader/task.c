@@ -425,9 +425,8 @@ HTASK16 TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
 
     if (!(sp = pModule->sp))
         sp = pSegTable[pModule->ss-1].minsize + pModule->stack_size;
-    sp &= ~1;
+    sp &= ~1;  sp -= 2*sizeof(STACK16FRAME);
     pTask->thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( pTask->hInstance, sp );
-    pTask->thdb->cur_stack -= 2*sizeof(STACK16FRAME);
     frame16 = (STACK16FRAME *)PTR_SEG_TO_LIN( pTask->thdb->cur_stack );
     frame16->ebp = sp + (int)&((STACK16FRAME *)0)->bp;
     frame16->bp = LOWORD(frame16->ebp);
@@ -450,9 +449,6 @@ HTASK16 TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
     frame32->ebx     = 0;
     frame32->retaddr = (DWORD)TASK_CallToStart;
     /* The remaining fields will be initialized in TASK_Reschedule */
-
-    if (!THREAD_Current()->cur_stack)
-        THREAD_Current()->cur_stack = pTask->thdb->cur_stack;
 
 
     TRACE(task, "module='%s' cmdline='%s' task=%04x\n",
@@ -483,11 +479,10 @@ void TASK_StartTask( HTASK16 hTask )
        we simply Yield(). If we are 32-bit however, we need to signal
        the main process somehow (NOT YET IMPLEMENTED!) */
 
-    if ( GetCurrentTask() )
-        if ( THREAD_IsWin16( THREAD_Current() ) )
-            Yield16();
-        else
-            FIXME(task, "Don't know how to start 16-bit task from 32-bit thread. Move the mouse!\n");
+    if ( THREAD_IsWin16( THREAD_Current() ) )
+        OldYield();
+    else
+        FIXME(task, "Don't know how to start 16-bit task from 32-bit thread. Move the mouse!\n");
 }
 
 
@@ -584,7 +579,7 @@ void TASK_KillCurrentTask( INT16 exitCode )
         TASK_DeleteTask( hTaskToKill );
     }
 
-    if (nTaskCount <= 1)
+    if (nTaskCount <= 2)    /* FIXME */
     {
         TRACE(task, "this is the last task, exiting\n" );
         USER_ExitWindows();
@@ -629,6 +624,34 @@ void TASK_Reschedule(void)
     TDB *pOldTask = NULL, *pNewTask;
     HTASK16 hTask = 0;
     STACK16FRAME *newframe16;
+
+    /* Get the initial task up and running */
+    if (!hCurrentTask && GetCurrentTask())
+    {
+        /* We need to remove one pair of stackframes (exept for Winelib) */
+        STACK16FRAME *oldframe16 = CURRENT_STACK16;
+        STACK32FRAME *oldframe32 = oldframe16->frame32;
+        STACK16FRAME *newframe16 = PTR_SEG_TO_LIN( oldframe32->frame16 );
+        STACK32FRAME *newframe32 = newframe16->frame32;
+        if (newframe32)
+        {
+            newframe16->entry_ip     = oldframe16->entry_ip;
+            newframe16->entry_cs     = oldframe16->entry_cs;
+            newframe16->ip           = oldframe16->ip;
+            newframe16->cs           = oldframe16->cs;
+            newframe32->ebp          = oldframe32->ebp;
+            newframe32->restore_addr = oldframe32->restore_addr;
+            newframe32->codeselector = oldframe32->codeselector;
+            newframe32->retaddr      = oldframe32->retaddr;  /* don't call TASK_CallToStart */
+
+            THREAD_Current()->cur_stack = oldframe32->frame16;
+        }
+
+        hCurrentTask = GetCurrentTask();
+        pNewTask = (TDB *)GlobalLock16( hCurrentTask );
+        pNewTask->ss_sp = pNewTask->thdb->cur_stack;
+        return;
+    }
 
     /* NOTE: As we are entered from 16-bit code, we hold the Win16Lock.
              We hang onto it thoughout most of this routine, so that accesses
@@ -1227,6 +1250,13 @@ HANDLE32 WINAPI GetFastQueue( void )
 {
     THDB *thdb = THREAD_Current();
     if (!thdb) return 0;
+
+    if (!(thdb->teb.queue))
+    {
+        HMODULE16 hModule = GetModuleHandle16( "USER" );
+        FARPROC16 proc = WIN32_GetProcAddress16( hModule, "InitThreadInput" );
+        Callbacks->CallBootAppProc( proc, 0, 4 );  /* FIXME! */
+    }
 
     if (!(thdb->teb.queue))
         FIXME( task, "(): should initialize thread-local queue, expect failure!\n" );

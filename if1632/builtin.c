@@ -93,9 +93,9 @@ extern const WIN16_DESCRIPTOR WPROCS_Descriptor;
 
 static BUILTIN16_DLL BuiltinDLLs[] =
 {
-    { &KERNEL_Descriptor,   DLL_FLAG_ALWAYS_USED },
-    { &USER_Descriptor,     DLL_FLAG_ALWAYS_USED },
-    { &GDI_Descriptor,      DLL_FLAG_ALWAYS_USED },
+    { &KERNEL_Descriptor,   0 },
+    { &USER_Descriptor,     0 },
+    { &GDI_Descriptor,      0 },
     { &SYSTEM_Descriptor,   DLL_FLAG_ALWAYS_USED },
     { &DISPLAY_Descriptor,  DLL_FLAG_ALWAYS_USED },
     { &WPROCS_Descriptor,   DLL_FLAG_ALWAYS_USED },
@@ -202,10 +202,8 @@ static HMODULE16 BUILTIN_DoLoadModule16( const WIN16_DESCRIPTOR *descr )
 BOOL32 BUILTIN_Init(void)
 {
     BUILTIN16_DLL *dll;
-    NE_MODULE *pModule;
     WORD vector;
     HMODULE16 hModule;
-    WORD cs, ds;
 
     fnBUILTIN_LoadModule = BUILTIN_LoadModule;
 
@@ -214,48 +212,6 @@ BOOL32 BUILTIN_Init(void)
         if (dll->flags & DLL_FLAG_ALWAYS_USED)
             if (!BUILTIN_DoLoadModule16( dll->descr )) return FALSE;
     }
-
-    /* Set the USER and GDI heap selectors */
-
-    pModule      = NE_GetPtr( GetModuleHandle16( "USER" ));
-    USER_HeapSel = pModule ? GlobalHandleToSel((NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->hSeg) : 0;
-    pModule      = NE_GetPtr( GetModuleHandle16( "GDI" ));
-    GDI_HeapSel  = pModule ? GlobalHandleToSel((NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->hSeg) : 0;
-
-    /* Initialize KERNEL.178 (__WINFLAGS) with the correct flags value */
-
-    hModule = GetModuleHandle16( "KERNEL" );
-    NE_SetEntryPoint( hModule, 178, GetWinFlags() );
-
-    /* Initialize KERNEL.454/455 (__FLATCS/__FLATDS) */
-
-    GET_CS(cs); GET_DS(ds);
-    NE_SetEntryPoint( hModule, 454, cs );
-    NE_SetEntryPoint( hModule, 455, ds );
-
-    /* Initialize KERNEL.THHOOK */
-
-    TASK_InstallTHHook((THHOOK *)PTR_SEG_TO_LIN( 
-                                  (SEGPTR)NE_GetEntryPoint( hModule, 332 )));
-  
-    /* Initialize the real-mode selector entry points */
-
-#define SET_ENTRY_POINT( num, addr ) \
-    NE_SetEntryPoint( hModule, (num), GLOBAL_CreateBlock( GMEM_FIXED, \
-                      DOSMEM_MapDosToLinear(addr), 0x10000, hModule, \
-                      FALSE, FALSE, FALSE, NULL ))
-
-    SET_ENTRY_POINT( 183, 0x00000 );  /* KERNEL.183: __0000H */
-    SET_ENTRY_POINT( 174, 0xa0000 );  /* KERNEL.174: __A000H */
-    SET_ENTRY_POINT( 181, 0xb0000 );  /* KERNEL.181: __B000H */
-    SET_ENTRY_POINT( 182, 0xb8000 );  /* KERNEL.182: __B800H */
-    SET_ENTRY_POINT( 195, 0xc0000 );  /* KERNEL.195: __C000H */
-    SET_ENTRY_POINT( 179, 0xd0000 );  /* KERNEL.179: __D000H */
-    SET_ENTRY_POINT( 190, 0xe0000 );  /* KERNEL.190: __E000H */
-    SET_ENTRY_POINT( 173, 0xf0000 );  /* KERNEL.173: __ROMBIOS */
-    SET_ENTRY_POINT( 194, 0xf0000 );  /* KERNEL.194: __F000H */
-    NE_SetEntryPoint( hModule, 193, DOSMEM_BiosSeg ); /* KERNEL.193: __0040H */
-#undef SET_ENTRY_POINT
 
     /* Set interrupt vectors from entry points in WPROCS.DLL */
 
