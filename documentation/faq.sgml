@@ -91,13 +91,31 @@
         <para>
           There are two free x86 hardware emulators:
           <ulink url="http://bochs.sourceforge.net"> bochs</ulink>, and 
-          <ulink url="http://savannah.nongnu.org/projects/plex86"> plex86</ulink>
-          that allow use of hardware other than x86 to run x86 programs. Both 
-          use the GPL. Bochs is older than plex86, seems to be easier to 
-          install, but plex86 will run faster because plex86 uses a real
-          time binary compiler. The drawback of all emulators is that you
-          need a version of Windows in order to run Windows.
+          <ulink url="http://savannah.nongnu.org/projects/plex86"> plex86</ulink>.
        </para>
+
+       <para>
+          Plex86 is the opensource free-software alternative for VMWare,
+	  VirtualPC, and other IA-32 on IA-32 "Virtual PC products." It
+          can only run on the IA-32 architecture.
+       </para>
+
+       <para>
+          Bochs is a highly portable open source IA-32 (x86) PC emulator 
+          written in C++, that runs on most popular platforms. It includes emulation
+          of the Intel x86 CPU, common I/O devices, and a custom BIOS. Currently, 
+          bochs can be compiled to emulate a 386, 486 or Pentium CPU. Bochs is capable 
+          of running most Operating Systems inside the emulation including Linux, 
+          Windows® 95, DOS, and recently Windows® NT 4.
+       </para>
+
+       <para>
+          Both are licensed under the GPL. Bochs is older than plex86, seems to be 
+          easier to install, but plex86 will run faster because plex86 uses a real 
+          time binary compiler. The drawback of all emulators is that you need a version 
+          of Windows in order to run Windows.
+       </para>
+
       </answer>
       </qandaentry>
 
@@ -818,7 +836,7 @@
       </qandaentry>
       
     </qandadiv>
-    <qandadiv id="Getting-Wine-faq">
+    <qandadiv id="Getting-Wine">
       <title>Getting Wine</title>
       <qandaentry>
       <question id="Where-can-I-get-Wine">
@@ -1039,6 +1057,19 @@ wine
           http://www.winehq.com/source/README</ulink>) that will be located in
           the base Wine directory after you gunzip and untar the distribution
           file.
+        </para>
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
+      <question id="How-do-I-upgrade-configuration">
+        <para>How do I upgrade Wine without losing my working configuration?</para>
+      </question>
+      <answer>
+        <para>
+          Upgrading the wine installation does not affect the existing wine
+          configuration. So after upgrading wine you still have the old (working )
+          wine configuration.
         </para>
       </answer>
       </qandaentry>
@@ -1612,9 +1643,9 @@ rm -fR \[/path/\]Wine*
           </listitem>
           <listitem>
           <para>
-            Deneba's Canvas 7 
-            (<ulink url="http://www.deneba.com/dazroot/softlibs/cv7_linux/default.html">
-             http://www.deneba.com/dazroot/softlibs/cv7_linux/default.html</ulink>)
+            Ability Office
+            (<ulink url="http://www.ability.com/linux/abilitylinux.php">
+             http://www.ability.com/linux/abilitylinux.php</ulink>)
           </para>
           </listitem>
           <listitem>
