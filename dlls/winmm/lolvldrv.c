@@ -392,7 +392,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
     case MODM_CACHEPATCHES:
     case MODM_CACHEDRUMPATCHES:
     default:
-	FIXME("NIY: no conversion yet for %u\n", wMsg);
+	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -443,7 +443,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPD
     case MODM_CACHEPATCHES:
     case MODM_CACHEDRUMPATCHES:
     default:
-	FIXME("NIY: no conversion yet for %u\n", wMsg);
+	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -487,7 +487,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
     case MODM_CACHEPATCHES:
     case MODM_CACHEDRUMPATCHES:
     default:
-	FIXME("NIY: no conversion yet for %u\n", wMsg);
+	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -537,7 +537,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
     case MODM_CACHEPATCHES:
     case MODM_CACHEDRUMPATCHES:
     default:
-	FIXME("NIY: no conversion yet for %u\n", wMsg);
+	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -678,7 +678,8 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDW
 	}
 	break;
     default:
-	FIXME("NIY: no conversion yet for %u\n", wMsg);
+	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
+	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -749,7 +750,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDW
 	}
 	break;
     default:
-	FIXME("NIY: no conversion yet for %u\n", wMsg);
+	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -901,7 +902,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 	}
 	break;
     default:
-	FIXME("NIY: no conversion yet for %u\n", wMsg);
+	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -993,7 +994,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDW
 	}
 	break;
     default:
-	FIXME("NIY: no conversion yet for %u\n", wMsg);
+	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -1145,7 +1146,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
 	}
 	break;
     default:
-	FIXME("NIY: no conversion yet for %u\n", wMsg);
+	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -1227,7 +1228,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPD
 	}
 	break;
     default:
-	FIXME("NIY: no conversion yet for %u\n", wMsg);
+	FIXME("NIY: no conversion yet for %u [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -1764,7 +1765,7 @@ DWORD	MMDRV_Open(LPWINE_MLD mld, UINT wMsg, DWORD dwParam1, DWORD dwFlags)
 		    }
 		}
 	    } else {
-		mld->uDeviceID = (UINT16)0/*-1*/;
+		mld->uDeviceID = (UINT16)-1;
 		mld->mmdIndex = llType->lpMlds[-1].mmdIndex;
 		TRACE("Setting mmdIndex to %u\n", mld->mmdIndex);
 		dwRet = MMDRV_Message(mld, wMsg, dwParam1, dwFlags, TRUE);
@@ -1791,12 +1792,15 @@ DWORD	MMDRV_Close(LPWINE_MLD mld, UINT wMsg)
 }
 
 /**************************************************************************
- * 				MMDRV_GetVByID			[internal]
+ * 				MMDRV_GetByID			[internal]
  */
 LPWINE_MLD	MMDRV_GetByID(UINT uDevID, UINT type)
 {
-    return (uDevID < llTypes[type].wMaxId) ?
-	&llTypes[type].lpMlds[uDevID] : NULL;
+    if (uDevID < llTypes[type].wMaxId)
+	return &llTypes[type].lpMlds[uDevID];
+    if ((uDevID == (UINT16)-1 || uDevID == (UINT)-1) && llTypes[type].nMapper != -1)
+	return &llTypes[type].lpMlds[-1];
+    return NULL;
 }
 
 /**************************************************************************
@@ -1811,8 +1815,9 @@ LPWINE_MLD	MMDRV_Get(HANDLE hndl, UINT type, BOOL bCanBeID)
     if ((UINT)hndl >= llTypes[type].wMaxId) {
 	mld = (LPWINE_MLD)USER_HEAP_LIN_ADDR(hndl);
 	
-	if (mld && mld->type != type) mld = NULL;
-    } else if (bCanBeID) {
+	if (!IsBadWritePtr(mld, sizeof(*mld)) && mld->type != type) mld = NULL;
+    }
+    if (mld == NULL && bCanBeID) {
 	mld = MMDRV_GetByID((UINT)hndl, type);
     }
     return mld;
@@ -1846,23 +1851,23 @@ UINT	MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1,
 
     /* all those function calls are undocumented */
     switch (uMsg) {
-    case 0x801:
+    case 0x801: /* DRV_QUERYDRVENTRY */
 	strncpy((LPSTR)dwParam1, lpDrv->name, LOWORD(dwParam2));
 	break;
-    case 0x802:
+    case 0x802: /* DRV_QUERYDEVNODE */
 	*(LPDWORD)dwParam1 = 0L; /* should be DevNode */
 	break;
-    case 0x803:	/* dont know */
+    case 0x803:	/* DRV_QUERYNAME */
 	WARN("NIY 0x803\n");
 	break;
-    case 0x804:
+    case 0x804: /* DRV_QUERYDRIVERIDS */
 	WARN("NIY call VxD\n");
 	/* should call VxD MMDEVLDR with (DevNode, dwParam1 and dwParam2) as pmts
 	 * dwParam1 is buffer and dwParam2 is sizeof buffer
 	 * I don't know where the result is stored though
 	 */
 	break;
-    case 0x805:
+    case 0x805: /* DRV_QUERYMAPPABLE */
 	return (lpDrv->bIsMapper) ? 2 : 0;
     default:
 	WARN("Unknown call %04x\n", uMsg);
@@ -1937,7 +1942,7 @@ static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT num,
     /* re-build the translation table */
     if (llTypes[type].nMapper != -1) {
 	TRACE("%s:Trans[%d] -> %s\n", llTypes[type].name, -1, MMDrvs[llTypes[type].nMapper].name);
-	llTypes[type].lpMlds[-1].uDeviceID = -1;
+	llTypes[type].lpMlds[-1].uDeviceID = (UINT16)-1;
 	llTypes[type].lpMlds[-1].type = type;
 	llTypes[type].lpMlds[-1].mmdIndex = llTypes[type].nMapper;
 	llTypes[type].lpMlds[-1].dwDriverInstance = 0;

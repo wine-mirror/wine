@@ -13,8 +13,14 @@
 DEFAULT_DEBUG_CHANNEL(msacm)
 
 typedef	struct tagMIDIMAPDATA {
+    struct tagMIDIMAPDATA*	self;
     HMIDI	hMidi;
 } MIDIMAPDATA;
+
+static	BOOL	MIDIMAP_IsData(MIDIMAPDATA* mm)
+{
+    return (!IsBadReadPtr(mm, sizeof(MIDIMAPDATA)) && mm->self == mm);
+}
 
 /*======================================================================*
  *                  MIDI OUT part                                       *
@@ -68,19 +74,41 @@ static	DWORD	modUnprepare(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD dwParam2)
     return midiOutUnprepareHeader(mom->hMidi, lpMidiHdr, dwParam2);
 }
 
-static	DWORD	modGetDevCaps(MIDIMAPDATA* mom, LPMIDIOUTCAPSA lpMidiCaps, DWORD dwParam2)
+static	DWORD	modGetDevCaps(UINT wDevID, MIDIMAPDATA* mom, LPMIDIOUTCAPSA lpMidiCaps, DWORD dwParam2)
 {
-    return midiOutGetDevCapsA(mom->hMidi, lpMidiCaps, dwParam2);
+    /* if opened low driver, forward message */
+    if (MIDIMAP_IsData(mom))
+	return midiOutGetDevCapsA(mom->hMidi, lpMidiCaps, dwParam2);
+    /* otherwise, return caps of mapper itself */
+    if (wDevID == (UINT)-1 || wDevID == (UINT16)-1) {
+	lpMidiCaps->wMid = 0x00FF;
+	lpMidiCaps->wPid = 0x0001;
+	lpMidiCaps->vDriverVersion = 0x0100;
+	strcpy(lpMidiCaps->szPname, "Wine midi out mapper");
+	lpMidiCaps->wTechnology = MOD_MAPPER;
+	lpMidiCaps->wVoices = 0;
+	lpMidiCaps->wNotes = 0;
+	lpMidiCaps->wChannelMask = 0xFFFF;
+	lpMidiCaps->dwSupport = MIDICAPS_LRVOLUME | MIDICAPS_VOLUME;
+
+	return MMSYSERR_NOERROR;
+    }
+    ERR("This shouldn't happen\n");
+    return MMSYSERR_ERROR; 
 }
 
-static	DWORD	modGetVolume(MIDIMAPDATA* mom, LPDWORD lpVol)
+static	DWORD	modGetVolume(UINT wDevID, MIDIMAPDATA* mom, LPDWORD lpVol)
 {
-    return midiOutGetVolume(mom->hMidi, lpVol);
+    if (MIDIMAP_IsData(mom))
+	return midiOutGetVolume(mom->hMidi, lpVol);
+    return MMSYSERR_ERROR;
 }
 
-static	DWORD	modSetVolume(MIDIMAPDATA* mom, DWORD vol)
+static	DWORD	modSetVolume(UINT wDevID, MIDIMAPDATA* mom, DWORD vol)
 {
-    return midiOutSetVolume(mom->hMidi, vol);
+    if (MIDIMAP_IsData(mom))
+	return midiOutSetVolume(mom->hMidi, vol);
+    return MMSYSERR_ERROR;
 }
 
 static	DWORD	modReset(MIDIMAPDATA* mom)
@@ -113,10 +141,10 @@ DWORD WINAPI MIDIMAP_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case MODM_PREPARE:	 	return modPrepare	((MIDIMAPDATA*)dwUser, (LPMIDIHDR)dwParam1, 	dwParam2);
     case MODM_UNPREPARE: 	return modUnprepare	((MIDIMAPDATA*)dwUser, (LPMIDIHDR)dwParam1, 	dwParam2);
 
-    case MODM_GETDEVCAPS:	return modGetDevCaps	((MIDIMAPDATA*)dwUser, (LPMIDIOUTCAPSA)dwParam1,dwParam2);
+    case MODM_GETDEVCAPS:	return modGetDevCaps	(wDevID, (MIDIMAPDATA*)dwUser, (LPMIDIOUTCAPSA)dwParam1,dwParam2);
     case MODM_GETNUMDEVS:	return 1;
-    case MODM_GETVOLUME:	return modGetVolume	((MIDIMAPDATA*)dwUser, (LPDWORD)dwParam1);
-    case MODM_SETVOLUME:	return modSetVolume	((MIDIMAPDATA*)dwUser, dwParam1);
+    case MODM_GETVOLUME:	return modGetVolume	(wDevID, (MIDIMAPDATA*)dwUser, (LPDWORD)dwParam1);
+    case MODM_SETVOLUME:	return modSetVolume	(wDevID, (MIDIMAPDATA*)dwUser, dwParam1);
     case MODM_RESET:		return modReset		((MIDIMAPDATA*)dwUser);
     default:
 	FIXME("unknown message %d!\n", wMsg);
@@ -132,63 +160,77 @@ static	DWORD	midOpen(LPDWORD lpdwUser, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 {
     UINT 		nd = midiInGetNumDevs();
     UINT		i;
-    MIDIMAPDATA*	wim = HeapAlloc(GetProcessHeap(), 0, sizeof(MIDIMAPDATA));
+    MIDIMAPDATA*	mim = HeapAlloc(GetProcessHeap(), 0, sizeof(MIDIMAPDATA));
 
     TRACE("(%p %p %08lx\n", lpdwUser, lpDesc, dwFlags);
 
     for (i = 0; i < nd; i++) {
-	if (midiInOpen(&wim->hMidi, i, lpDesc->dwCallback, 
+	if (midiInOpen(&mim->hMidi, i, lpDesc->dwCallback, 
 			lpDesc->dwInstance, dwFlags) == MMSYSERR_NOERROR) {
-	    lpDesc->hMidi = wim->hMidi;
-	    *lpdwUser = (DWORD)wim;
+	    lpDesc->hMidi = mim->hMidi;
+	    *lpdwUser = (DWORD)mim;
 	    return MMSYSERR_NOERROR;
 	}
     }
-    HeapFree(GetProcessHeap(), 0, wim);
+    HeapFree(GetProcessHeap(), 0, mim);
     return MMSYSERR_ALLOCATED;
 }
 
-static	DWORD	midClose(MIDIMAPDATA* wim)
+static	DWORD	midClose(MIDIMAPDATA* mim)
 {
-    DWORD ret = midiInClose(wim->hMidi);
+    DWORD ret = midiInClose(mim->hMidi);
     if (ret == MMSYSERR_NOERROR)
-	HeapFree(GetProcessHeap(), 0, wim);
+	HeapFree(GetProcessHeap(), 0, mim);
     return ret;
 }
 
-static	DWORD	midAddBuffer(MIDIMAPDATA* wim, LPMIDIHDR lpMidiHdr, DWORD dwParam2)
+static	DWORD	midAddBuffer(MIDIMAPDATA* mim, LPMIDIHDR lpMidiHdr, DWORD dwParam2)
 {
-    return midiInAddBuffer(wim->hMidi, lpMidiHdr, dwParam2);
+    return midiInAddBuffer(mim->hMidi, lpMidiHdr, dwParam2);
 }
 
-static	DWORD	midPrepare(MIDIMAPDATA* wim, LPMIDIHDR lpMidiHdr, DWORD dwParam2)
+static	DWORD	midPrepare(MIDIMAPDATA* mim, LPMIDIHDR lpMidiHdr, DWORD dwParam2)
 {
-    return midiInPrepareHeader(wim->hMidi, lpMidiHdr, dwParam2);
+    return midiInPrepareHeader(mim->hMidi, lpMidiHdr, dwParam2);
 }
 
-static	DWORD	midUnprepare(MIDIMAPDATA* wim, LPMIDIHDR lpMidiHdr, DWORD dwParam2)
+static	DWORD	midUnprepare(MIDIMAPDATA* mim, LPMIDIHDR lpMidiHdr, DWORD dwParam2)
 {
-    return midiInUnprepareHeader(wim->hMidi, lpMidiHdr, dwParam2);
+    return midiInUnprepareHeader(mim->hMidi, lpMidiHdr, dwParam2);
 }
 
-static	DWORD	midGetDevCaps(MIDIMAPDATA* wim, LPMIDIINCAPSA lpMidiCaps, DWORD dwParam2)
+static	DWORD	midGetDevCaps(UINT wDevID, MIDIMAPDATA* mim, LPMIDIINCAPSA lpMidiCaps, DWORD dwParam2)
 {
-    return midiInGetDevCapsA(wim->hMidi, lpMidiCaps, dwParam2);
+    /* if opened low driver, forward message */
+    if (MIDIMAP_IsData(mim))
+	return midiInGetDevCapsA(mim->hMidi, lpMidiCaps, dwParam2);
+    /* otherwise, return caps of mapper itself */
+    if (wDevID == (UINT)-1 || wDevID == (UINT16)-1) {
+	lpMidiCaps->wMid = 0x00FF;
+	lpMidiCaps->wPid = 0x0001;
+	lpMidiCaps->vDriverVersion = 0x0100;
+	strcpy(lpMidiCaps->szPname, "Wine midi int mapper");
+	lpMidiCaps->dwSupport = 0;
+
+	return MMSYSERR_NOERROR;
+    }
+    ERR("This shouldn't happen\n");
+    return MMSYSERR_ERROR; 
 }
 
-static	DWORD	midStop(MIDIMAPDATA* wim)
+static	DWORD	midStop(MIDIMAPDATA* mim)
 {
-    return midiInStop(wim->hMidi);
+    return midiInStop(mim->hMidi);
 }
 
-static	DWORD	midStart(MIDIMAPDATA* wim)
+static	DWORD	midStart(MIDIMAPDATA* mim)
 {
-    return midiInStart(wim->hMidi);
+    return midiInStart(mim->hMidi);
 }
 
-static	DWORD	midReset(MIDIMAPDATA* wim)
+static	DWORD	midReset(MIDIMAPDATA* mim)
 {
-    return midiInReset(wim->hMidi);
+    return midiInReset(mim->hMidi);
 }
 
 /**************************************************************************
@@ -214,7 +256,7 @@ DWORD WINAPI MIDIMAP_midMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     case MIDM_ADDBUFFER:	return midAddBuffer     ((MIDIMAPDATA*)dwUser, (LPMIDIHDR)dwParam1, dwParam2);
     case MIDM_PREPARE:		return midPrepare       ((MIDIMAPDATA*)dwUser, (LPMIDIHDR)dwParam1, dwParam2);
     case MIDM_UNPREPARE:	return midUnprepare     ((MIDIMAPDATA*)dwUser, (LPMIDIHDR)dwParam1, dwParam2);
-    case MIDM_GETDEVCAPS:	return midGetDevCaps    ((MIDIMAPDATA*)dwUser, (LPMIDIINCAPSA)dwParam1, dwParam2);
+    case MIDM_GETDEVCAPS:	return midGetDevCaps    (wDevID, (MIDIMAPDATA*)dwUser, (LPMIDIINCAPSA)dwParam1, dwParam2);
     case MIDM_GETNUMDEVS:	return 1;
     case MIDM_RESET:		return midReset         ((MIDIMAPDATA*)dwUser);
     case MIDM_START:		return midStart         ((MIDIMAPDATA*)dwUser);

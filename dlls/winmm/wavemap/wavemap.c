@@ -20,6 +20,7 @@
 DEFAULT_DEBUG_CHANNEL(msacm)
 
 typedef	struct tagWAVEMAPDATA {
+    struct tagWAVEMAPDATA*	self;
     HWAVE	hWave;
     HACMSTREAM	hAcmStream;
     /* needed data to filter callbacks. Only needed when hAcmStream is not 0 */
@@ -33,6 +34,11 @@ typedef	struct tagWAVEMAPDATA {
     MMRESULT (WINAPI *acmStreamPrepareHeader)(HACMSTREAM, PACMSTREAMHEADER, DWORD);
     MMRESULT (WINAPI *acmStreamUnprepareHeader)(HACMSTREAM, PACMSTREAMHEADER, DWORD);
 } WAVEMAPDATA;
+
+static	BOOL	WAVEMAP_IsData(WAVEMAPDATA* wm)
+{
+    return (!IsBadReadPtr(wm, sizeof(WAVEMAPDATA)) && wm->self == wm);
+}
 
 /*======================================================================*
  *                  WAVE OUT part                                       *
@@ -96,6 +102,8 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     if (!wom)
 	return MMSYSERR_NOMEM;
+
+    wom->self = wom;
 
     for (i = 0; i < nd; i++) {
 	/* if no ACM stuff is involved, no need to handle callbacks at this
@@ -265,19 +273,42 @@ static	DWORD	wodGetPosition(WAVEMAPDATA* wom, LPMMTIME lpTime, DWORD dwParam2)
     return waveOutGetPosition(wom->hWave, lpTime, dwParam2);
 }
 
-static	DWORD	wodGetDevCaps(WAVEMAPDATA* wom, LPWAVEOUTCAPSA lpWaveCaps, DWORD dwParam2)
+static	DWORD	wodGetDevCaps(UINT wDevID, WAVEMAPDATA* wom, LPWAVEOUTCAPSA lpWaveCaps, DWORD dwParam2)
 {
-    return waveOutGetDevCapsA(wom->hWave, lpWaveCaps, dwParam2);
+    /* if opened low driver, forward message */
+    if (WAVEMAP_IsData(wom))
+	return waveOutGetDevCapsA(wom->hWave, lpWaveCaps, dwParam2);
+    /* otherwise, return caps of mapper itself */
+    if (wDevID == (UINT)-1 || wDevID == (UINT16)-1) {
+	lpWaveCaps->wMid = 0x00FF;
+	lpWaveCaps->wPid = 0x0001;
+	lpWaveCaps->vDriverVersion = 0x0100;
+	strcpy(lpWaveCaps->szPname, "Wine wave out mapper");
+	lpWaveCaps->dwFormats = 
+	    WAVE_FORMAT_4M08 | WAVE_FORMAT_4S08 | WAVE_FORMAT_4M16 | WAVE_FORMAT_4S16 |
+	    WAVE_FORMAT_2M08 | WAVE_FORMAT_2S08 | WAVE_FORMAT_2M16 | WAVE_FORMAT_2S16 |
+	    WAVE_FORMAT_1M08 | WAVE_FORMAT_1S08 | WAVE_FORMAT_1M16 | WAVE_FORMAT_1S16;
+	lpWaveCaps->wChannels = 2;
+	lpWaveCaps->dwSupport = WAVECAPS_VOLUME | WAVECAPS_LRVOLUME;
+
+	return MMSYSERR_NOERROR;
+    }
+    ERR("This shouldn't happen\n");
+    return MMSYSERR_ERROR; 
 }
 
-static	DWORD	wodGetVolume(WAVEMAPDATA* wom, LPDWORD lpVol)
+static	DWORD	wodGetVolume(UINT wDevID, WAVEMAPDATA* wom, LPDWORD lpVol)
 {
-    return waveOutGetVolume(wom->hWave, lpVol);
+    if (WAVEMAP_IsData(wom))
+	return waveOutGetVolume(wom->hWave, lpVol);
+    return MMSYSERR_NOERROR;
 }
 
-static	DWORD	wodSetVolume(WAVEMAPDATA* wom, DWORD vol)
+static	DWORD	wodSetVolume(UINT wDevID, WAVEMAPDATA* wom, DWORD vol)
 {
-    return waveOutSetVolume(wom->hWave, vol);
+    if (WAVEMAP_IsData(wom))
+	return waveOutSetVolume(wom->hWave, vol);
+    return MMSYSERR_NOERROR;
 }
 
 static	DWORD	wodPause(WAVEMAPDATA* wom)
@@ -319,14 +350,14 @@ DWORD WINAPI WAVEMAP_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_BREAKLOOP: 	return MMSYSERR_NOTSUPPORTED;
     case WODM_PREPARE:	 	return wodPrepare	((WAVEMAPDATA*)dwUser, (LPWAVEHDR)dwParam1, 	dwParam2);
     case WODM_UNPREPARE: 	return wodUnprepare	((WAVEMAPDATA*)dwUser, (LPWAVEHDR)dwParam1, 	dwParam2);
-    case WODM_GETDEVCAPS:	return wodGetDevCaps	((WAVEMAPDATA*)dwUser, (LPWAVEOUTCAPSA)dwParam1,dwParam2);
+    case WODM_GETDEVCAPS:	return wodGetDevCaps	(wDevID, (WAVEMAPDATA*)dwUser, (LPWAVEOUTCAPSA)dwParam1,dwParam2);
     case WODM_GETNUMDEVS:	return 1;
     case WODM_GETPITCH:	 	return MMSYSERR_NOTSUPPORTED;
     case WODM_SETPITCH:	 	return MMSYSERR_NOTSUPPORTED;
     case WODM_GETPLAYBACKRATE:	return MMSYSERR_NOTSUPPORTED;
     case WODM_SETPLAYBACKRATE:	return MMSYSERR_NOTSUPPORTED;
-    case WODM_GETVOLUME:	return wodGetVolume	((WAVEMAPDATA*)dwUser, (LPDWORD)dwParam1);
-    case WODM_SETVOLUME:	return wodSetVolume	((WAVEMAPDATA*)dwUser, dwParam1);
+    case WODM_GETVOLUME:	return wodGetVolume	(wDevID, (WAVEMAPDATA*)dwUser, (LPDWORD)dwParam1);
+    case WODM_SETVOLUME:	return wodSetVolume	(wDevID, (WAVEMAPDATA*)dwUser, dwParam1);
     case WODM_RESTART:		return wodRestart	((WAVEMAPDATA*)dwUser);
     case WODM_RESET:		return wodReset		((WAVEMAPDATA*)dwUser);
     default:
@@ -346,6 +377,8 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     WAVEMAPDATA*	wim = HeapAlloc(GetProcessHeap(), 0, sizeof(WAVEMAPDATA));
 
     TRACE("(%p %p %08lx\n", lpdwUser, lpDesc, dwFlags);
+
+    wim->self = wim;
 
     for (i = 0; i < nd; i++) {
 	if (waveInOpen(&wim->hWave, i, lpDesc->lpFormat, lpDesc->dwCallback, 
@@ -387,9 +420,26 @@ static	DWORD	widGetPosition(WAVEMAPDATA* wim, LPMMTIME lpTime, DWORD dwParam2)
     return waveInGetPosition(wim->hWave, lpTime, dwParam2);
 }
 
-static	DWORD	widGetDevCaps(WAVEMAPDATA* wim, LPWAVEINCAPSA lpWaveCaps, DWORD dwParam2)
+static	DWORD	widGetDevCaps(UINT wDevID, WAVEMAPDATA* wim, LPWAVEINCAPSA lpWaveCaps, DWORD dwParam2)
 {
-    return waveInGetDevCapsA(wim->hWave, lpWaveCaps, dwParam2);
+    /* if opened low driver, forward message */
+    if (WAVEMAP_IsData(wim))
+	return waveInGetDevCapsA(wim->hWave, lpWaveCaps, dwParam2);
+    /* otherwise, return caps of mapper itself */
+    if (wDevID == (UINT)-1 || wDevID == (UINT16)-1) {
+	lpWaveCaps->wMid = 0x00FF;
+	lpWaveCaps->wPid = 0x0001;
+	lpWaveCaps->vDriverVersion = 0x0001;
+	strcpy(lpWaveCaps->szPname, "Wine wave in mapper");
+	lpWaveCaps->dwFormats = 
+	    WAVE_FORMAT_4M08 | WAVE_FORMAT_4S08 | WAVE_FORMAT_4M16 | WAVE_FORMAT_4S16 |
+	    WAVE_FORMAT_2M08 | WAVE_FORMAT_2S08 | WAVE_FORMAT_2M16 | WAVE_FORMAT_2S16 |
+	    WAVE_FORMAT_1M08 | WAVE_FORMAT_1S08 | WAVE_FORMAT_1M16 | WAVE_FORMAT_1S16;    
+	lpWaveCaps->wChannels = 2;
+	return MMSYSERR_NOERROR;
+    }
+    ERR("This shouldn't happen\n");
+    return MMSYSERR_ERROR; 
 }
 
 static	DWORD	widStop(WAVEMAPDATA* wim)
@@ -430,7 +480,7 @@ DWORD WINAPI WAVEMAP_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     case WIDM_ADDBUFFER:	return widAddBuffer     ((WAVEMAPDATA*)dwUser, (LPWAVEHDR)dwParam1, 	dwParam2);
     case WIDM_PREPARE:		return widPrepare       ((WAVEMAPDATA*)dwUser, (LPWAVEHDR)dwParam1, 	dwParam2);
     case WIDM_UNPREPARE:	return widUnprepare     ((WAVEMAPDATA*)dwUser, (LPWAVEHDR)dwParam1, 	dwParam2);
-    case WIDM_GETDEVCAPS:	return widGetDevCaps    ((WAVEMAPDATA*)dwUser, (LPWAVEINCAPSA)dwParam1, dwParam2);
+    case WIDM_GETDEVCAPS:	return widGetDevCaps    (wDevID, (WAVEMAPDATA*)dwUser, (LPWAVEINCAPSA)dwParam1, dwParam2);
     case WIDM_GETNUMDEVS:	return 1;
     case WIDM_GETPOS:		return widGetPosition   ((WAVEMAPDATA*)dwUser, (LPMMTIME)dwParam1, 	dwParam2);
     case WIDM_RESET:		return widReset         ((WAVEMAPDATA*)dwUser);
