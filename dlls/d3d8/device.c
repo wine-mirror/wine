@@ -3226,36 +3226,51 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
             DWORD ValueMIP = This->StateBlock->texture_state[Stage][D3DTSS_MIPFILTER];
             GLint realVal = GL_LINEAR;
 
-            if (ValueMIN == D3DTEXF_POINT) {
+            if (ValueMIN == D3DTEXF_NONE) {
+	      /* Doesn't really make sense - Windows just seems to disable
+		 mipmapping when this occurs                              */
+	      FIXME("Odd - minfilter of none, just disabling mipmaps\n");
+	      realVal = GL_LINEAR;
+	    } else if (ValueMIN == D3DTEXF_POINT) {
                 /* GL_NEAREST_* */
-                if (ValueMIP == D3DTEXF_POINT) {
+	      if (ValueMIP == D3DTEXF_NONE) {
+                    realVal = GL_NEAREST;
+                } else if (ValueMIP == D3DTEXF_POINT) {
                     realVal = GL_NEAREST_MIPMAP_NEAREST;
                 } else if (ValueMIP == D3DTEXF_LINEAR) {
                     realVal = GL_NEAREST_MIPMAP_LINEAR;
-                } else if (ValueMIP == D3DTEXF_NONE) {
-                    realVal = GL_NEAREST;
                 } else {
                     FIXME("Unhandled D3DTSS_MIPFILTER value of %ld\n", ValueMIP);
-                    realVal = GL_NEAREST_MIPMAP_LINEAR;
+                    realVal = GL_NEAREST;
                 }
             } else if (ValueMIN == D3DTEXF_LINEAR) {
                 /* GL_LINEAR_* */
-                if (ValueMIP == D3DTEXF_POINT) {
+                if (ValueMIP == D3DTEXF_NONE) {
+                    realVal = GL_LINEAR;
+                } else if (ValueMIP == D3DTEXF_POINT) {
                     realVal = GL_LINEAR_MIPMAP_NEAREST;
                 } else if (ValueMIP == D3DTEXF_LINEAR) {
                     realVal = GL_LINEAR_MIPMAP_LINEAR;
-                } else if (ValueMIP == D3DTEXF_NONE) {
-                    realVal = GL_LINEAR;
                 } else {
                     FIXME("Unhandled D3DTSS_MIPFILTER value of %ld\n", ValueMIP);
-                    realVal = GL_LINEAR_MIPMAP_LINEAR;
+                    realVal = GL_LINEAR;
                 }
-            } else if (ValueMIN == D3DTEXF_NONE) {
-                /* Doesn't really make sense - Windows just seems to disable
-                   mipmapping when this occurs                              */
-                FIXME("Odd - minfilter of none, just disabling mipmaps\n");
-                realVal = GL_LINEAR;
-
+	    } else if (ValueMIN == D3DTEXF_ANISOTROPIC) {
+	      if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
+		if (ValueMIP == D3DTEXF_NONE) {
+		  realVal = GL_LINEAR_MIPMAP_LINEAR;		  
+                } else if (ValueMIP == D3DTEXF_POINT) {
+		  realVal = GL_LINEAR_MIPMAP_NEAREST;
+                } else if (ValueMIP == D3DTEXF_LINEAR) {
+                    realVal = GL_LINEAR_MIPMAP_LINEAR;
+                } else {
+		  FIXME("Unhandled D3DTSS_MIPFILTER value of %ld\n", ValueMIP);
+		  realVal = GL_LINEAR;
+                }
+	      } else {
+		WARN("Trying to use ANISOTROPIC_FILTERING for D3DTSS_MINFILTER. But not supported by OpenGL driver\n");
+		realVal = GL_LINEAR;
+	      }
             } else {
                 FIXME("Unhandled D3DTSS_MINFILTER value of %ld\n", ValueMIN);
                 realVal = GL_LINEAR_MIPMAP_LINEAR;
@@ -3263,30 +3278,89 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 
             TRACE("ValueMIN=%ld, ValueMIP=%ld, setting MINFILTER to %x\n", ValueMIN, ValueMIP, realVal);
             glTexParameteri(This->StateBlock->textureDimensions[Stage], GL_TEXTURE_MIN_FILTER, realVal);
-            checkGLcall("glTexParameter GL_TEXTURE_MINFILTER, ...");
+            checkGLcall("glTexParameter GL_TEXTURE_MIN_FILTER, ...");
+	    /**
+	     * if we juste choose to use ANISOTROPIC filtering, refresh openGL state
+	     */
+	    if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC) && D3DTEXF_ANISOTROPIC == ValueMIN) {
+	      glTexParameteri(This->StateBlock->textureDimensions[Stage], 
+			      GL_TEXTURE_MAX_ANISOTROPY_EXT, 
+			      This->StateBlock->texture_state[Stage][D3DTSS_MAXANISOTROPY]);
+	      checkGLcall("glTexParameter GL_TEXTURE_MAX_ANISOTROPY_EXT, ...");
+	    }
         }
         break;
+
+    case D3DTSS_MAGFILTER             :
+      {
+	DWORD ValueMAG = This->StateBlock->texture_state[Stage][D3DTSS_MAGFILTER];
+	GLint realVal = GL_NEAREST;
+
+        if (ValueMAG == D3DTEXF_POINT) {
+	  realVal = GL_NEAREST;
+        } else if (ValueMAG == D3DTEXF_LINEAR) {
+	  realVal = GL_LINEAR;
+	} else if (ValueMAG == D3DTEXF_ANISOTROPIC) {
+	  if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
+	    realVal = GL_LINEAR;
+	  } else {
+	    FIXME("Trying to use ANISOTROPIC_FILTERING for D3DTSS_MAGFILTER. But not supported by current OpenGL driver\n");
+	    realVal = GL_NEAREST;
+	  }
+	} else {
+	  FIXME("Unhandled D3DTSS_MAGFILTER value of %ld\n", ValueMAG);
+	  realVal = GL_NEAREST;
+        }
+	TRACE("ValueMAG=%ld setting MAGFILTER to %x\n", ValueMAG, realVal);
+	glTexParameteri(This->StateBlock->textureDimensions[Stage], GL_TEXTURE_MAG_FILTER, realVal);
+	checkGLcall("glTexParameter GL_TEXTURE_MAG_FILTER, ...");
+	/**
+	 * if we juste choose to use ANISOTROPIC filtering, refresh openGL state
+	 */
+	if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC) && D3DTEXF_ANISOTROPIC == ValueMAG) {
+	  glTexParameteri(This->StateBlock->textureDimensions[Stage], 
+			  GL_TEXTURE_MAX_ANISOTROPY_EXT, 
+			  This->StateBlock->texture_state[Stage][D3DTSS_MAXANISOTROPY]);
+	  checkGLcall("glTexParameter GL_TEXTURE_MAX_ANISOTROPY_EXT, ...");
+	}
+      }
+      break;
+
+    case D3DTSS_MAXMIPLEVEL           :
+      {
+	/**
+	 * Not really the same, but the more apprioprate than nothing
+	 */
+	glTexParameteri(This->StateBlock->textureDimensions[Stage], 
+			GL_TEXTURE_BASE_LEVEL, 
+			This->StateBlock->texture_state[Stage][D3DTSS_MAXMIPLEVEL]);
+	checkGLcall("glTexParameteri GL_TEXTURE_BASE_LEVEL ...");
+      }
+      break;
 
     case D3DTSS_MAXANISOTROPY         :
       {	
 	if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
-	  glTexParameteri(This->StateBlock->textureDimensions[Stage], GL_TEXTURE_MAX_ANISOTROPY_EXT, This->StateBlock->texture_state[Stage][D3DTSS_MAXANISOTROPY]);
+	  glTexParameteri(This->StateBlock->textureDimensions[Stage], 
+			  GL_TEXTURE_MAX_ANISOTROPY_EXT, 
+			  This->StateBlock->texture_state[Stage][D3DTSS_MAXANISOTROPY]);
 	  checkGLcall("glTexParameteri GL_TEXTURE_MAX_ANISOTROPY_EXT ...");
 	}
       }
       break;
 
-    case D3DTSS_MAGFILTER             :
-        if (Value == D3DTEXF_POINT) {
-            glTexParameteri(This->StateBlock->textureDimensions[Stage], GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            checkGLcall("glTexParameter GL_TEXTURE_MAGFILTER, GL_NEAREST");
-        } else if (Value == D3DTEXF_LINEAR) {
-            glTexParameteri(This->StateBlock->textureDimensions[Stage], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            checkGLcall("glTexParameter GL_TEXTURE_MAGFILTER, GL_LINEAR");
-        } else {
-            FIXME("Unhandled D3DTSS_MAGFILTER value of %ld\n", Value);
-        }
-        break;
+    case D3DTSS_MIPMAPLODBIAS         :
+      {	
+	if (GL_SUPPORT(EXT_TEXTURE_LOD_BIAS)) {
+	  float f = *(float*) &Value;
+	  glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, 
+		    GL_TEXTURE_LOD_BIAS_EXT,
+		    f);
+	  checkGLcall("glTexEnvi GL_TEXTURE_LOD_BIAS_EXT ...");
+	}
+      }
+      break;
+
 
     case D3DTSS_ALPHAOP               :
     case D3DTSS_COLOROP               :
@@ -3570,8 +3644,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
         set_texture_matrix((float *)&This->StateBlock->transforms[D3DTS_TEXTURE0 + Stage].u.m[0][0], Value);
         break; 
 
-    case D3DTSS_MIPMAPLODBIAS         :
-    case D3DTSS_MAXMIPLEVEL           :
     case D3DTSS_BUMPENVLSCALE         :
     case D3DTSS_BUMPENVLOFFSET        :
     case D3DTSS_RESULTARG             :

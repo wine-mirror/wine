@@ -129,7 +129,12 @@ typedef void (APIENTRY * PGLFNGLPOINTPARAMETERFVEXTPROC) (GLenum pname, const GL
 #define GL_DOT3_RGB_EXT			  0x8740
 #define GL_DOT3_RGBA_EXT		  0x8741
 #endif
-
+/* GL_EXT_texture_lod_bias */
+#ifndef GL_EXT_texture_lod_bias
+#define GL_MAX_TEXTURE_LOD_BIAS_EXT       0x84FD
+#define GL_TEXTURE_FILTER_CONTROL_EXT     0x8500
+#define GL_TEXTURE_LOD_BIAS_EXT           0x8501
+#endif
 
 /*******
  * OpenGL Official Version 
