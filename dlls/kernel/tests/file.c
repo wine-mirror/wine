@@ -124,7 +124,7 @@ static void test__hwrite( void )
     srand( (unsigned)time( NULL ) );
     for (blocks = 0; blocks < 100; blocks++)
     {
-        for (i = 0; i < sizeof( buffer ); i++)
+        for (i = 0; i < (long)sizeof( buffer ); i++)
         {
             buffer[i] = rand(  );
             checksum[0] = checksum[0] + buffer[i];
@@ -459,7 +459,7 @@ static void test__lwrite( void )
     srand( (unsigned)time( NULL ) );
     for (blocks = 0; blocks < 100; blocks++)
     {
-        for (i = 0; i < sizeof( buffer ); i++)
+        for (i = 0; i < (long)sizeof( buffer ); i++)
         {
             buffer[i] = rand(  );
             checksum[0] = checksum[0] + buffer[i];
