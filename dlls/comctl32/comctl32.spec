@@ -75,7 +75,7 @@ debug_channels (animate comboex commctrl datetime header hotkey imagelist ipaddr
  55 stdcall ImageList_EndDrag() ImageList_EndDrag
  56 stdcall ImageList_GetBkColor(ptr) ImageList_GetBkColor
  57 stdcall ImageList_GetDragImage(ptr ptr) ImageList_GetDragImage
- 58 stub ImageList_GetFlags
+ 58 stdcall ImageList_GetFlags(ptr) ImageList_GetFlags
  59 stdcall ImageList_GetIcon(ptr long long) ImageList_GetIcon
  60 stdcall ImageList_GetIconSize(ptr ptr ptr) ImageList_GetIconSize
  61 stdcall ImageList_GetImageCount(ptr) ImageList_GetImageCount
@@ -96,7 +96,7 @@ debug_channels (animate comboex commctrl datetime header hotkey imagelist ipaddr
  76 stdcall ImageList_SetBkColor(ptr long) ImageList_SetBkColor
  77 stdcall ImageList_SetDragCursorImage(ptr long long long) ImageList_SetDragCursorImage
  78 stdcall ImageList_SetFilter(ptr long long) ImageList_SetFilter
- 79 stub ImageList_SetFlags
+ 79 stdcall ImageList_SetFlags(ptr long) ImageList_SetFlags
  80 stdcall ImageList_SetIconSize(ptr long long) ImageList_SetIconSize
  81 stdcall ImageList_SetImageCount(ptr long) ImageList_SetImageCount
  82 stdcall ImageList_SetOverlayImage(ptr long long) ImageList_SetOverlayImage

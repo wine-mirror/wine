@@ -1551,6 +1551,21 @@ ImageList_GetDragImage (POINT *ppt, POINT *pptHotspot)
 
 
 /*************************************************************************
+ * ImageList_GetFlags [COMCTL32.58]
+ *
+ * BUGS
+ *    Stub.
+ */
+
+DWORD WINAPI
+ImageList_GetFlags(HIMAGELIST himl)
+{
+    FIXME("(%p):empty stub\n", himl);
+    return 0;
+}
+
+
+/*************************************************************************
  * ImageList_GetIcon [COMCTL32.59] 
  *
  * Creates an icon from a masked image of an image list.
@@ -2647,6 +2662,21 @@ ImageList_SetFilter (HIMAGELIST himl, INT i, DWORD dwFilter)
 	   himl, i, dwFilter);
 
     return FALSE;
+}
+
+
+/*************************************************************************
+ * ImageList_SetFlags [COMCTL32.79]
+ *
+ * BUGS
+ *    Stub.
+ */
+
+DWORD WINAPI
+ImageList_SetFlags(HIMAGELIST himl, DWORD flags)
+{
+    FIXME("(%p %08lx):empty stub\n", himl, flags);
+    return 0;
 }
 
 
