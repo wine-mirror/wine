@@ -512,7 +512,7 @@ static int check_unused( const struct import* imp, const DLLSPEC *spec )
 static const char *ldcombine_files( char **argv )
 {
     int i, len = 0;
-    char *cmd, *ldcmd;
+    char *cmd;
     int fd, err;
 
     if (output_file_name && output_file_name[0])
@@ -527,14 +527,12 @@ static const char *ldcombine_files( char **argv )
     close( fd );
     atexit( remove_ld_tmp_file );
 
-    ldcmd = getenv("LD");
-    if (!ldcmd) ldcmd = "ld";
     for (i = 0; argv[i]; i++) len += strlen(argv[i]) + 1;
-    cmd = xmalloc( len + strlen(ld_tmp_file) + 8 + strlen(ldcmd)  );
-    sprintf( cmd, "%s -r -o %s", ldcmd, ld_tmp_file );
+    cmd = xmalloc( len + strlen(ld_tmp_file) + 8 + strlen(ld_command)  );
+    sprintf( cmd, "%s -r -o %s", ld_command, ld_tmp_file );
     for (i = 0; argv[i]; i++) sprintf( cmd + strlen(cmd), " %s", argv[i] );
     err = system( cmd );
-    if (err) fatal_error( "ld -r failed with status %d\n", err );
+    if (err) fatal_error( "%s -r failed with status %d\n", ld_command, err );
     free( cmd );
     return ld_tmp_file;
 }
@@ -545,7 +543,7 @@ void read_undef_symbols( char **argv )
     static const char name_prefix[] = __ASM_NAME("");
     static const int prefix_len = sizeof(name_prefix) - 1;
     FILE *f;
-    char buffer[1024];
+    char *cmd, buffer[1024];
     int err;
     const char *name;
 
@@ -557,9 +555,10 @@ void read_undef_symbols( char **argv )
     if (argv[1]) name = ldcombine_files( argv );
     else name = argv[0];
 
-    sprintf( buffer, "nm -u %s", name );
-    if (!(f = popen( buffer, "r" )))
-        fatal_error( "Cannot execute '%s'\n", buffer );
+    cmd = xmalloc( strlen(nm_command) + strlen(name) + 5 );
+    sprintf( cmd, "%s -u %s", nm_command, name );
+    if (!(f = popen( cmd, "r" )))
+        fatal_error( "Cannot execute '%s'\n", cmd );
 
     while (fgets( buffer, sizeof(buffer), f ))
     {
@@ -572,7 +571,8 @@ void read_undef_symbols( char **argv )
         if (prefix_len && !strncmp( p, name_prefix, prefix_len )) p += prefix_len;
         add_undef_symbol( p );
     }
-    if ((err = pclose( f ))) warning( "nm -u %s error %d\n", name, err );
+    if ((err = pclose( f ))) warning( "%s failed with status %d\n", cmd, err );
+    free( cmd );
 }
 
 static void remove_ignored_symbols(void)

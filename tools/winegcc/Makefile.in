@@ -6,7 +6,8 @@ DEFS = \
 	-DLDDLLFLAGS="\"@LDDLLFLAGS@\"" \
 	-DCC="\"$(CC)\"" \
 	-DCPP="\"@CPPBIN@\"" \
-	-DCXX="\"$(CXX)\""
+	-DCXX="\"$(CXX)\"" \
+	-DLD="\"$(LD)\""
 
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
