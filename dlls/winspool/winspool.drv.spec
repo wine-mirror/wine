@@ -7,7 +7,7 @@
 @ stdcall AddJobW(long long ptr long ptr)
 @ stdcall AddMonitorA(str long ptr)
 @ stub AddMonitorW
-@ stub AddPortA
+@ stdcall AddPortA(str ptr str)
 @ stub AddPortExA
 @ stub AddPortExW
 @ stub AddPortW

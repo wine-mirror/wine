@@ -3490,3 +3490,12 @@ DWORD WINAPI EnumPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
 
     return ERROR_SUCCESS;
 }
+
+/******************************************************************************
+ *		AddPortA (WINSPOOL.@)
+ */
+BOOL WINAPI AddPortA(LPSTR pName ,HWND hWnd, LPSTR pMonitorName)
+{
+    FIXME("(%s, %p, %s\n), stub!\n",pName,hWnd,pMonitorName);
+    return FALSE;
+}
