@@ -64,6 +64,17 @@ initGeneralDlg (HWND hDlg)
     char *curDOSVer = getConfigValue("Version", "DOS", "6.22");
     char *curWineLook = getConfigValue("Tweak.Layout", "WineLook", "win95");
 
+    /* normalize the version strings */
+    if (!strcmp(curWinVer, "win2000") || !strcmp(curWinVer, "nt2k") || !strcmp(curWinVer, "nt2000")) {
+	free(curWinVer);
+	curWinVer = strdup("win2k");
+    }
+
+    if (!strcmp(curWinVer, "win2k3")) {
+	free(curWinVer);
+	curWinVer = strdup("win2003");
+    }
+    
     if ((pVer = getWinVersions ()))
     {
 	for (i = 0; *pVer->szVersion; i++, pVer++)
