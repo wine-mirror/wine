@@ -150,15 +150,15 @@ pid_t PTHREAD_FORK(void)
 
     EnterCriticalSection( &atfork_section );
     /* prepare handlers are called in reverse insertion order */
-    for (i = atfork_count - 1; i >= 0; i--) atfork_prepare[i]();
+    for (i = atfork_count - 1; i >= 0; i--) if (atfork_prepare[i]) atfork_prepare[i]();
     if (!(pid = LIBC_FORK()))
     {
         InitializeCriticalSection( &atfork_section );
-        for (i = 0; i < atfork_count; i++) atfork_child[i]();
+        for (i = 0; i < atfork_count; i++) if (atfork_child[i]) atfork_child[i]();
     }
     else
     {
-        for (i = 0; i < atfork_count; i++) atfork_parent[i]();
+        for (i = 0; i < atfork_count; i++) if (atfork_parent[i]) atfork_parent[i]();
         LeaveCriticalSection( &atfork_section );
     }
     return pid;
