@@ -1391,14 +1391,14 @@ static int get_prefix_len( struct key *key, const char *name, struct file_load_i
 }
 
 /* load all the keys from the input file */
-static void load_keys( struct key *key, FILE *f )
+/* prefix_len is the number of key name prefixes to skip, or -1 for autodetection */
+static void load_keys( struct key *key, FILE *f, int prefix_len )
 {
     struct key *subkey = NULL;
     struct file_load_info info;
     char *p;
     int default_modif = time(NULL);
     int flags = (key->flags & KEY_VOLATILE) ? KEY_VOLATILE : KEY_DIRTY;
-    int prefix_len = -1;  /* number of key name prefixes to skip */
 
     info.file   = f;
     info.len    = 4;
@@ -1465,7 +1465,7 @@ static void load_registry( struct key *key, obj_handle_t handle )
         FILE *f = fdopen( fd, "r" );
         if (f)
         {
-            load_keys( key, f );
+            load_keys( key, f, -1 );
             fclose( f );
         }
         else file_set_error();
@@ -1505,7 +1505,7 @@ void init_registry(void)
             fatal_error( "could not create config key\n" );
         key->flags |= KEY_VOLATILE;
 
-        load_keys( key, f );
+        load_keys( key, f, 0 );
         fclose( f );
         if (get_error() == STATUS_NOT_REGISTRY_FILE)
             fatal_error( "%s is not a valid registry file\n", filename );
