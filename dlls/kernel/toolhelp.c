@@ -45,7 +45,7 @@ BOOL16 WINAPI NotifyRegister16( HTASK16 htask, FARPROC16 lpfnCallback,
 {
     int	i;
 
-    TRACE("(%x,%lx,%x) called.\n",
+    FIXME("(%x,%lx,%x), semi-stub.\n",
                       htask, (DWORD)lpfnCallback, wFlags );
     if (!htask) htask = GetCurrentTask();
     for (i=0;i<nrofnotifys;i++)
@@ -74,7 +74,7 @@ BOOL16 WINAPI NotifyUnregister16( HTASK16 htask )
 {
     int	i;
     
-    TRACE("(%x) called.\n", htask );
+    FIXME("(%x), semi-stub.\n", htask );
     if (!htask) htask = GetCurrentTask();
     for (i=nrofnotifys;i--;)
         if (notifys[i].htask==htask)
@@ -93,6 +93,7 @@ BOOL16 WINAPI NotifyUnregister16( HTASK16 htask )
  */
 BOOL16 WINAPI StackTraceCSIPFirst16(STACKTRACEENTRY *ste, WORD wSS, WORD wCS, WORD wIP, WORD wBP)
 {
+    FIXME("(%p, ss %04x, cs %04x, ip %04x, bp %04x): stub.\n", ste, wSS, wCS, wIP, wBP);
     return TRUE;
 }
 
@@ -101,6 +102,7 @@ BOOL16 WINAPI StackTraceCSIPFirst16(STACKTRACEENTRY *ste, WORD wSS, WORD wCS, WO
  */
 BOOL16 WINAPI StackTraceFirst16(STACKTRACEENTRY *ste, HTASK16 Task)
 {
+    FIXME("(%p, %04x), stub.\n", ste, Task);
     return TRUE;
 }
 
@@ -109,6 +111,7 @@ BOOL16 WINAPI StackTraceFirst16(STACKTRACEENTRY *ste, HTASK16 Task)
  */
 BOOL16 WINAPI StackTraceNext16(STACKTRACEENTRY *ste)
 {
+    FIXME("(%p), stub.\n", ste);
     return TRUE;
 }
 
@@ -117,6 +120,7 @@ BOOL16 WINAPI StackTraceNext16(STACKTRACEENTRY *ste)
  */
 BOOL16 WINAPI InterruptRegister16( HTASK16 task, FARPROC callback )
 {
+    FIXME("(%04x, %p), stub.\n", task, callback);
     return TRUE;
 }
 
@@ -125,6 +129,7 @@ BOOL16 WINAPI InterruptRegister16( HTASK16 task, FARPROC callback )
  */
 BOOL16 WINAPI InterruptUnRegister16( HTASK16 task )
 {
+    FIXME("(%04x), stub.\n", task);
     return TRUE;
 }
 
@@ -171,7 +176,9 @@ BOOL16 WINAPI SystemHeapInfo16( SYSHEAPINFO *pHeapInfo )
  */
 FARPROC16 WINAPI ToolHelpHook16(FARPROC16 lpfnNotifyHandler)
 {
-FARPROC16 tmp;
+	FARPROC16 tmp;
+
+	FIXME("(%p), stub.\n", lpfnNotifyHandler);
 	tmp = HookNotify;
 	HookNotify = lpfnNotifyHandler;
 	/* just return previously installed notification function */
