@@ -97,6 +97,66 @@ INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField);
 BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, INT index);
 
 /***********************************************************************
+ *           HTTP_Tokenize (internal)
+ *
+ *  Tokenize a string, allocating memory for the tokens.
+ */
+static LPWSTR * HTTP_Tokenize(LPCWSTR string, LPCWSTR token_string)
+{
+    LPWSTR * token_array;
+    int tokens = 0;
+    int i;
+    LPCWSTR next_token;
+
+    /* empty string has no tokens */
+    if (*string)
+        tokens++;
+    /* count tokens */
+    for (i = 0; string[i]; i++)
+        if (!strncmpW(string+i, token_string, strlenW(token_string)))
+        {
+            int j;
+            tokens++;
+            /* we want to skip over separators, but not the null terminator */
+            for (j = 0; j < strlenW(token_string) - 1; j++)
+                if (!string[i+j])
+                    break;
+            i += j;
+        }
+
+    /* add 1 for terminating NULL */
+    token_array = HeapAlloc(GetProcessHeap(), 0, (tokens+1) * sizeof(*token_array));
+    token_array[tokens] = NULL;
+    if (!tokens)
+        return token_array;
+    for (i = 0; i < tokens; i++)
+    {
+        int len;
+        next_token = strstrW(string, token_string);
+        if (!next_token) next_token = string+strlenW(string);
+        len = next_token - string;
+        token_array[i] = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
+        memcpy(token_array[i], string, len*sizeof(WCHAR));
+        token_array[i][len] = '\0';
+        string = next_token+strlenW(token_string);
+    }
+    return token_array;
+}
+
+/***********************************************************************
+ *           HTTP_FreeTokens (internal)
+ *
+ *  Frees memory returned from HTTP_Tokenize.
+ */
+static void HTTP_FreeTokens(LPWSTR * token_array)
+{
+    int i;
+    for (i = 0; token_array[i]; i++)
+        HeapFree(GetProcessHeap(), 0, token_array[i]);
+    HeapFree(GetProcessHeap(), 0, token_array);
+}
+
+/***********************************************************************
  *           HTTP_HttpAddRequestHeadersW (internal)
  */
 static BOOL WINAPI HTTP_HttpAddRequestHeadersW(LPWININETHTTPREQW lpwhr,
@@ -789,141 +849,6 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(HINTERNET hHttpSession,
 }
 
 /***********************************************************************
- *           HTTP_build_resp_header (internal)
- *
- *   This function reconstructs the response header.  It takes an array
- *  of strings in the response buffer, and the count of those strings.
- *  A null pointer in the array represents a separator.
- *
- *  RETURNS:
- *    a buffer allocated and initialized with the reconstructed response
- *    *pSize is set to the number of wide characters in the returned buffer
- */
-static LPWSTR HTTP_build_resp_header( 
-          LPCWSTR *str, DWORD count, BOOL bUseCrlf, DWORD *pSize )
-{
-    static const WCHAR szcrlf[] = { '\r','\n',0 };
-    DWORD len, i;
-    LPWSTR ret;
-
-    /* calculate the length of the response buffer */
-    len = 0;
-    for( i=0; i<count; i++ )
-    {
-        if( str[i] )
-            len += strlenW( str[i] );
-        else if( bUseCrlf )
-            len += 2;
-        else
-            len ++;
-    }
-    len++;
-
-    /* fill the buffer in */
-    ret = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
-    len = 0;
-    for( i=0; i<count; i++ )
-    {
-        if( str[i] )
-        {
-            strcpyW( &ret[len], str[i] );
-            len += strlenW( str[i] );
-        }
-        else if( bUseCrlf )
-        {
-            strcpyW( &ret[len], szcrlf );
-            len += 2;
-        }
-        else
-            ret[len++] = 0;
-    }
-    ret[len++] = 0;
-    *pSize = len;
-    return ret;
-}
-
-/***********************************************************************
- *           HTTP_query_raw_headers (internal)
- *
- *  Reconstruct the raw HTTP header and copy it into the buffer provided
- */
-static BOOL HTTP_query_raw_headers( LPWININETHTTPREQW lpwhr, BOOL bUseCrlf,
-	                     LPVOID lpBuffer, LPDWORD lpdwBufferLength )
-{
-    static const WCHAR szColonSpace[] = { ':',' ',0 };
-    static const WCHAR szSpace[] = { ' ',0 };
-    BOOL bSuccess = FALSE;
-    LPCWSTR *str;
-    DWORD i, n, size = 0;
-    LPWSTR hdr;
-
-    n = 7 + ( HTTP_QUERY_MAX + 1 + lpwhr->nCustHeaders )*4 ;
-    str = HeapAlloc( GetProcessHeap(), 0, sizeof(LPCWSTR)*n );
-    n = 0;
-
-    /* reconstruct the status line */
-    str[n++] = lpwhr->StdHeaders[HTTP_QUERY_VERSION].lpszValue;
-    str[n++] = szSpace;
-    str[n++] = lpwhr->StdHeaders[HTTP_QUERY_STATUS_CODE].lpszValue;
-    str[n++] = szSpace;
-    str[n++] = lpwhr->StdHeaders[HTTP_QUERY_STATUS_TEXT].lpszValue;
-    str[n++] = NULL;
-
-    /* Append standard request heades */
-    for (i = 0; i <= HTTP_QUERY_MAX; i++)
-    {
-        if( lpwhr->StdHeaders[i].wFlags & HDR_ISREQUEST )
-            continue;
-        if( !lpwhr->StdHeaders[i].lpszField )
-            continue;
-        if( !lpwhr->StdHeaders[i].lpszValue )
-            continue;
-        /* ignore the stuff that's in the status line */
-        if( ( i == HTTP_QUERY_VERSION ) ||
-            ( i == HTTP_QUERY_STATUS_CODE ) ||
-            ( i == HTTP_QUERY_STATUS_TEXT ) )
-            continue;
-        str[n++] = lpwhr->StdHeaders[i].lpszField;
-        str[n++] = szColonSpace;
-        str[n++] = lpwhr->StdHeaders[i].lpszValue,
-        str[n++] = NULL;
-    }
-
-    /* Append custom request heades */
-    for (i = 0; i < lpwhr->nCustHeaders; i++)
-    {
-        if( lpwhr->pCustHeaders[i].wFlags & HDR_ISREQUEST)
-            continue;
-        if( !lpwhr->pCustHeaders[i].lpszField )
-            continue;
-        if( !lpwhr->pCustHeaders[i].lpszValue )
-            continue;
-        str[n++] = lpwhr->pCustHeaders[i].lpszField;
-        str[n++] = szColonSpace;
-        str[n++] = lpwhr->pCustHeaders[i].lpszValue;
-        str[n++] = NULL;
-    }
-    str[n++] = NULL;
-
-    /* concatenate all the strings together */
-    hdr = HTTP_build_resp_header( str, n, bUseCrlf, &size );
-    HeapFree( GetProcessHeap(), 0, str );
-
-    /* check that the target buffer is big enough */
-    if ( size > (*lpdwBufferLength/sizeof(WCHAR)) )
-        INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-    else
-    {
-        memcpy( lpBuffer, hdr, size*sizeof(WCHAR) );
-        bSuccess = TRUE;
-    }
-    HeapFree( GetProcessHeap(), 0, hdr );
-    *lpdwBufferLength = size*sizeof(WCHAR);
-
-    return bSuccess;
-}
-
-/***********************************************************************
  *           HTTP_HttpQueryInfoW (internal)
  */
 BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLevel,
@@ -947,9 +872,52 @@ BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLevel,
         INT index = dwInfoLevel & ~HTTP_QUERY_MODIFIER_FLAGS_MASK;
 
         if (index == HTTP_QUERY_RAW_HEADERS_CRLF)
-            return HTTP_query_raw_headers(lpwhr, TRUE, lpBuffer, lpdwBufferLength );
-        if (index == HTTP_QUERY_RAW_HEADERS)
-            return HTTP_query_raw_headers(lpwhr, FALSE, lpBuffer, lpdwBufferLength );
+        {
+            int len = strlenW(lpwhr->lpszRawHeaders);
+            if (len + 1 > *lpdwBufferLength/sizeof(WCHAR))
+            {
+                *lpdwBufferLength = (len + 1) * sizeof(WCHAR);
+                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                return FALSE;
+            }
+            memcpy(lpBuffer, lpwhr->lpszRawHeaders, (len+1)*sizeof(WCHAR));
+            *lpdwBufferLength = (len + 1) * sizeof(WCHAR);
+            return TRUE;
+        }
+        else if (index == HTTP_QUERY_RAW_HEADERS)
+        {
+            static const WCHAR szCrLf[] = {'\r','\n',0};
+            LPWSTR * ppszRawHeaderLines = HTTP_Tokenize(lpwhr->lpszRawHeaders, szCrLf);
+            int size = 0;
+            int i;
+            LPWSTR pszString = (WCHAR*)lpBuffer;
+
+            for (i = 0; ppszRawHeaderLines[i]; i++)
+                size += strlenW(ppszRawHeaderLines[i]) + 1;
+
+            if (size + 1 > *lpdwBufferLength/sizeof(WCHAR))
+            {
+                HTTP_FreeTokens(ppszRawHeaderLines);
+                *lpdwBufferLength = (size + 1) * sizeof(WCHAR);
+                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                return FALSE;
+            }
+
+            for (i = 0; ppszRawHeaderLines[i]; i++)
+            {
+                int len = strlenW(ppszRawHeaderLines[i]);
+                memcpy(pszString, ppszRawHeaderLines[i], (len+1)*sizeof(WCHAR));
+                pszString += len+1;
+            }
+            *pszString = '\0';
+
+            TRACE("returning data: %s\n", debugstr_wn((WCHAR*)lpBuffer, size));
+
+            *lpdwBufferLength = (size + 1) * sizeof(WCHAR);
+            HTTP_FreeTokens(ppszRawHeaderLines);
+
+            return TRUE;
+        }
 	else if (index >= 0 && index <= HTTP_QUERY_MAX && lpwhr->StdHeaders[index].lpszValue)
 	{
 	    lphttpHdr = &lpwhr->StdHeaders[index];
@@ -2011,8 +1979,12 @@ BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
     INT  rc = 0;
     WCHAR value[MAX_FIELD_VALUE_LEN], field[MAX_FIELD_LEN];
     static const WCHAR szHttp[] = { 'H','T','T','P',0 };
+    static const WCHAR szCrLf[] = {'\r','\n',0};
     char bufferA[MAX_REPLY_LEN];
     LPWSTR status_code, status_text;
+    int cchMaxRawHeaders = 1024;
+    LPWSTR lpszRawHeaders = HeapAlloc(GetProcessHeap(), 0, (cchMaxRawHeaders+1)*sizeof(WCHAR));
+    int cchRawHeaders = 0;
 
     TRACE("-->\n");
 
@@ -2038,6 +2010,18 @@ BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
 
     if (strncmpW(buffer, szHttp, 4) != 0)
         goto lend;
+
+    /* regenerate raw headers */
+    while (cchRawHeaders + buflen + strlenW(szCrLf) > cchMaxRawHeaders)
+    {
+        cchMaxRawHeaders *= 2;
+        lpszRawHeaders = HeapReAlloc(GetProcessHeap(), 0, lpszRawHeaders, (cchMaxRawHeaders+1)*sizeof(WCHAR));
+    }
+    memcpy(lpszRawHeaders+cchRawHeaders, buffer, (buflen-1)*sizeof(WCHAR));
+    cchRawHeaders += (buflen-1);
+    memcpy(lpszRawHeaders+cchRawHeaders, szCrLf, sizeof(szCrLf));
+    cchRawHeaders += sizeof(szCrLf)/sizeof(szCrLf[0])-1;
+    lpszRawHeaders[cchRawHeaders] = '\0';
 
     /* split the version from the status code */
     status_code = strchrW( buffer, ' ' );
@@ -2065,6 +2049,18 @@ BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
 	{
             TRACE("got line %s, now interpretting\n", debugstr_a(bufferA));
             MultiByteToWideChar( CP_ACP, 0, bufferA, buflen, buffer, MAX_REPLY_LEN );
+
+            while (cchRawHeaders + buflen + strlenW(szCrLf) > cchMaxRawHeaders)
+            {
+                cchMaxRawHeaders *= 2;
+                lpszRawHeaders = HeapReAlloc(GetProcessHeap(), 0, lpszRawHeaders, (cchMaxRawHeaders+1)*sizeof(WCHAR));
+            }
+            memcpy(lpszRawHeaders+cchRawHeaders, buffer, (buflen-1)*sizeof(WCHAR));
+            cchRawHeaders += (buflen-1);
+            memcpy(lpszRawHeaders+cchRawHeaders, szCrLf, sizeof(szCrLf));
+            cchRawHeaders += sizeof(szCrLf)/sizeof(szCrLf[0])-1;
+            lpszRawHeaders[cchRawHeaders] = '\0';
+
             if (!HTTP_InterpretHttpHeader(buffer, field, MAX_FIELD_LEN, value, MAX_FIELD_VALUE_LEN))
                 break;
 
@@ -2078,6 +2074,9 @@ BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
 	}
     }while(1);
 
+    if (lpwhr->lpszRawHeaders) HeapFree(GetProcessHeap(), 0, lpszRawHeaders);
+    lpwhr->lpszRawHeaders = lpszRawHeaders;
+    TRACE("raw headers: %s\n", debugstr_w(lpszRawHeaders));
     bSuccess = TRUE;
 
 lend:
@@ -2468,6 +2467,8 @@ void HTTP_CloseHTTPRequestHandle(LPWININETHTTPREQW lpwhr)
         HeapFree(GetProcessHeap(), 0, lpwhr->lpszVerb);
     if (lpwhr->lpszHostName)
         HeapFree(GetProcessHeap(), 0, lpwhr->lpszHostName);
+    if (lpwhr->lpszRawHeaders)
+        HeapFree(GetProcessHeap(), 0, lpwhr->lpszRawHeaders);
 
     for (i = 0; i <= HTTP_QUERY_MAX; i++)
     {

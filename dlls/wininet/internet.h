@@ -173,6 +173,7 @@ typedef struct
     LPWSTR lpszPath;
     LPWSTR lpszVerb;
     LPWSTR lpszHostName;
+    LPWSTR lpszRawHeaders;
     WININET_NETCONNECTION netConnection;
     HTTPHEADERW StdHeaders[HTTP_QUERY_MAX+1];
     HTTPHEADERW *pCustHeaders;
