@@ -181,19 +181,19 @@ void test_rename()
     set_curr_dir_path(to, "test4.txt\0");
     ok(SHFileOperationA(&shfo), "File is not renamed moving to other directory "
        "when specifying directory name only\n");
-    ok(file_exists(".\\test1.txt"), "The file is not removed\n");
+    ok(file_exists(".\\test1.txt"), "The file is removed\n");
 
     set_curr_dir_path(from, "test3.txt\0");
     set_curr_dir_path(to, "test4.txt\\test1.txt\0");
     ok(!SHFileOperationA(&shfo), "File is renamed moving to other directory\n");
-    ok(file_exists(".\\test4.txt\\test1.txt"), "The file is renamed\n");
+    ok(file_exists(".\\test4.txt\\test1.txt"), "The file is not renamed\n");
 
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
     retval = SHFileOperationA(&shfo); /* W98 returns 0, W2K and newer returns ERROR_GEN_FAILURE, both do nothing */
-    ok(!retval || retval == ERROR_GEN_FAILURE || retval == ERROR_REDIR_PAUSED,
-       "Can't rename many files, retval = %lx\n", retval);
-    ok(file_exists(".\\test1.txt"), "The file is not renamed - many files are specified\n");
+    ok(!retval || retval == ERROR_GEN_FAILURE || retval == ERROR_INVALID_TARGET_HANDLE,
+       "Can't rename many files, retval = %ld\n", retval);
+    ok(file_exists(".\\test1.txt"), "The file is renamed - many files are specified\n");
 
     memcpy(&shfo2, &shfo, sizeof(SHFILEOPSTRUCTA));
     shfo2.fFlags |= FOF_MULTIDESTFILES;
@@ -201,27 +201,33 @@ void test_rename()
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
     retval = SHFileOperationA(&shfo2); /* W98 returns 0, W2K and newer returns ERROR_GEN_FAILURE, both do nothing */
-    ok(!retval || retval == ERROR_GEN_FAILURE || retval == ERROR_REDIR_PAUSED,
-       "Can't rename many files, retval = %lx\n", retval);
+    ok(!retval || retval == ERROR_GEN_FAILURE || retval == ERROR_INVALID_TARGET_HANDLE,
+       "Can't rename many files, retval = %ld\n", retval);
     ok(file_exists(".\\test1.txt"), "The file is not renamed - many files are specified\n");
 
     set_curr_dir_path(from, "test1.txt\0");
     set_curr_dir_path(to, "test6.txt\0");
-    ok(!SHFileOperationA(&shfo), "Rename file\n");
-    ok(!file_exists(".\\test1.txt"), "The file is renamed\n");
-    ok(file_exists(".\\test6.txt"), "The file is renamed\n");
+    retval = SHFileOperationA(&shfo);
+    ok(!retval, "Rename file failed, retval = %ld\n", retval);
+    ok(!file_exists(".\\test1.txt"), "The file is not renamed\n");
+    ok(file_exists(".\\test6.txt"), "The file is not renamed\n");
+
     set_curr_dir_path(from, "test6.txt\0");
     set_curr_dir_path(to, "test1.txt\0");
-    ok(!SHFileOperationA(&shfo), "Rename file back\n");
+    retval = SHFileOperationA(&shfo);
+    ok(!retval, "Rename file back failed, retval = %ld\n", retval);
 
     set_curr_dir_path(from, "test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0");
-    ok(!SHFileOperationA(&shfo), "Rename dir\n");
-    ok(!file_exists(".\\test4.txt"), "The dir is renamed\n");
-    ok(file_exists(".\\test6.txt"), "The dir is renamed\n");
+    retval = SHFileOperationA(&shfo);
+    ok(!retval, "Rename dir failed, retval = %ld\n", retval);
+    ok(!file_exists(".\\test4.txt"), "The dir is not renamed\n");
+    ok(file_exists(".\\test6.txt"), "The dir is not renamed\n");
+
     set_curr_dir_path(from, "test6.txt\0");
     set_curr_dir_path(to, "test4.txt\0");
-    ok(!SHFileOperationA(&shfo), "Rename dir back\n");
+    retval = SHFileOperationA(&shfo);
+    ok(!retval, "Rename dir back failed, retval = %ld\n", retval);
 }
 
 /* tests the FO_COPY action */
