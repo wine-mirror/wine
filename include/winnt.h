@@ -347,12 +347,18 @@ typedef const WCHAR    *PCWSTR,     *LPCWSTR;
  */
 #ifndef __WINESRC__
 # ifdef UNICODE
+# ifndef _TCHAR_DEFINED
 typedef WCHAR           TCHAR,      *PTCHAR;
+# define _TCHAR_DEFINED
+#endif
 typedef LPWSTR          PTSTR,       LPTSTR;
 typedef LPCWSTR         PCTSTR,      LPCTSTR;
 #  define __TEXT(string) L##string
 # else  /* UNICODE */
+# ifndef _TCHAR_DEFINED
 typedef CHAR            TCHAR,      *PTCHAR;
+# define _TCHAR_DEFINED
+# endif
 typedef LPSTR           PTSTR,       LPTSTR;
 typedef LPCSTR          PCTSTR,      LPCTSTR;
 #  define __TEXT(string) string
