@@ -1849,15 +1849,35 @@ DWORD WINAPI RegFlushKey( HKEY hkey )
 LONG WINAPI RegConnectRegistryW( LPCWSTR lpMachineName, HKEY hKey,
                                    PHKEY phkResult )
 {
+    LONG ret;
+
     TRACE("(%s,%p,%p): stub\n",debugstr_w(lpMachineName),hKey,phkResult);
 
     if (!lpMachineName || !*lpMachineName) {
         /* Use the local machine name */
-        return RegOpenKeyW( hKey, NULL, phkResult );
+        ret = RegOpenKeyW( hKey, NULL, phkResult );
     }
+    else if (lpMachineName[0] != '\\' || lpMachineName[1] != '\\')
+        ret = ERROR_BAD_NETPATH;
+    else
+    {
+        WCHAR compName[MAX_COMPUTERNAME_LENGTH + 1];
+        DWORD len = sizeof(compName) / sizeof(WCHAR);
 
-    FIXME("Cannot connect to %s\n",debugstr_w(lpMachineName));
-    return ERROR_BAD_NETPATH;
+        if (GetComputerNameW(compName, &len))
+        {
+            if (!strcmpiW(lpMachineName + 2, compName))
+                ret = RegOpenKeyW(hKey, NULL, phkResult);
+            else
+            {
+                FIXME("Cannot connect to %s\n",debugstr_w(lpMachineName));
+                ret = ERROR_BAD_NETPATH;
+            }
+        }
+        else
+            ret = GetLastError();
+    }
+    return ret;
 }
 
 
