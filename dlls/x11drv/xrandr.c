@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -35,9 +36,39 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "ddrawi.h"
+#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xrandr);
+
+static void *xrandr_handle;
+
+/* some default values just in case */
+#ifndef SONAME_LIBX11
+#define SONAME_LIBX11 "libX11.so"
+#endif
+#ifndef SONAME_LIBXEXT
+#define SONAME_LIBXEXT "libXext.so"
+#endif
+#ifndef SONAME_LIBXRENDER
+#define SONAME_LIBXRENDER "libXrender.so"
+#endif
+#ifndef SONAME_LIBXRANDR
+#define SONAME_LIBXRANDR "libXrandr.so"
+#endif
+
+#define MAKE_FUNCPTR(f) static typeof(f) * p##f;
+MAKE_FUNCPTR(XRRConfigCurrentConfiguration)
+MAKE_FUNCPTR(XRRConfigCurrentRate)
+MAKE_FUNCPTR(XRRFreeScreenConfigInfo)
+MAKE_FUNCPTR(XRRGetScreenInfo)
+MAKE_FUNCPTR(XRRQueryExtension)
+MAKE_FUNCPTR(XRRQueryVersion)
+MAKE_FUNCPTR(XRRRates)
+MAKE_FUNCPTR(XRRSetScreenConfig)
+MAKE_FUNCPTR(XRRSetScreenConfigAndRate)
+MAKE_FUNCPTR(XRRSizes)
+#undef MAKE_FUNCPTR
 
 extern int usexrandr;
 
@@ -50,6 +81,41 @@ static short **real_xrandr_rates;
 static unsigned int real_xrandr_sizes_count;
 static int *real_xrandr_rates_count;
 static unsigned int real_xrandr_modes_count;
+
+int load_xrandr(void)
+{
+    int r = 0;
+
+    if (wine_dlopen(SONAME_LIBX11, RTLD_NOW|RTLD_GLOBAL, NULL, 0) &&
+        wine_dlopen(SONAME_LIBXEXT, RTLD_NOW|RTLD_GLOBAL, NULL, 0) &&
+        wine_dlopen(SONAME_LIBXRENDER, RTLD_NOW|RTLD_GLOBAL, NULL, 0) &&
+        (xrandr_handle = wine_dlopen(SONAME_LIBXRANDR, RTLD_NOW, NULL, 0)))
+    {
+
+#define LOAD_FUNCPTR(f) \
+        if((p##f = wine_dlsym(xrandr_handle, #f, NULL, 0)) == NULL) \
+            goto sym_not_found;
+
+        LOAD_FUNCPTR(XRRConfigCurrentConfiguration)
+        LOAD_FUNCPTR(XRRConfigCurrentRate)
+        LOAD_FUNCPTR(XRRFreeScreenConfigInfo)
+        LOAD_FUNCPTR(XRRGetScreenInfo)
+        LOAD_FUNCPTR(XRRQueryExtension)
+        LOAD_FUNCPTR(XRRQueryVersion)
+        LOAD_FUNCPTR(XRRRates)
+        LOAD_FUNCPTR(XRRSetScreenConfig)
+        LOAD_FUNCPTR(XRRSetScreenConfigAndRate)
+        LOAD_FUNCPTR(XRRSizes)
+
+#undef LOAD_FUNCPTR
+
+        r = 1;   /* success */
+
+sym_not_found:
+        if (!r)  TRACE("Unable to load function ptrs from XRandR library\n");
+    }
+    return r;
+}
 
 static int XRandRErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
 {
@@ -93,9 +159,9 @@ static int X11DRV_XRandR_GetCurrentMode(void)
     
     wine_tsx11_lock();
     root = RootWindow (gdi_display, DefaultScreen(gdi_display));
-    sc = XRRGetScreenInfo (gdi_display, root);
-    size = XRRConfigCurrentConfiguration (sc, &rot);
-    rate = XRRConfigCurrentRate (sc);
+    sc = pXRRGetScreenInfo (gdi_display, root);
+    size = pXRRConfigCurrentConfiguration (sc, &rot);
+    rate = pXRRConfigCurrentRate (sc);
     for (i = 0; i < real_xrandr_modes_count; i++)
     {
         if ( (dd_modes[i].dwWidth      == real_xrandr_sizes[size].width ) &&
@@ -105,7 +171,7 @@ static int X11DRV_XRandR_GetCurrentMode(void)
               res = i;
           }
     }
-    XRRFreeScreenConfigInfo(sc);
+    pXRRFreeScreenConfigInfo(sc);
     wine_tsx11_unlock();
     if (res == -1)
     {
@@ -129,8 +195,8 @@ static void X11DRV_XRandR_SetCurrentMode(int mode)
     
     wine_tsx11_lock();
     root = RootWindow (gdi_display, DefaultScreen(gdi_display));
-    sc = XRRGetScreenInfo (gdi_display, root);
-    size = XRRConfigCurrentConfiguration (sc, &rot);
+    sc = pXRRGetScreenInfo (gdi_display, root);
+    size = pXRRConfigCurrentConfiguration (sc, &rot);
     if (dwBpp != dd_modes[mode].dwBPP)
     {
         FIXME("Cannot change screen BPP from %ld to %ld\n", dwBpp, dd_modes[mode].dwBPP);
@@ -151,7 +217,7 @@ static void X11DRV_XRandR_SetCurrentMode(int mode)
                         rate = real_xrandr_rates[i][j];
                         TRACE("Resizing X display to %ldx%ld @%d Hz\n", 
                               dd_modes[mode].dwWidth, dd_modes[mode].dwHeight, rate);
-                        stat = XRRSetScreenConfigAndRate (gdi_display, sc, root, 
+                        stat = pXRRSetScreenConfigAndRate (gdi_display, sc, root, 
                                                           size, rot, rate, CurrentTime);
                     }
                 }
@@ -160,12 +226,12 @@ static void X11DRV_XRandR_SetCurrentMode(int mode)
             {
                 TRACE("Resizing X display to %ldx%ld\n", 
                       dd_modes[mode].dwWidth, dd_modes[mode].dwHeight);
-                stat = XRRSetScreenConfig (gdi_display, sc, root, 
+                stat = pXRRSetScreenConfig (gdi_display, sc, root, 
                                            size, rot, CurrentTime);
             }
         }
     }
-    XRRFreeScreenConfigInfo(sc);
+    pXRRFreeScreenConfigInfo(sc);
     wine_tsx11_unlock();
     if (stat == RRSetConfigSuccess)
         X11DRV_handle_desktop_resize( dd_modes[mode].dwWidth, dd_modes[mode].dwHeight );
@@ -182,21 +248,22 @@ void X11DRV_XRandR_Init(void)
     if (xrandr_major) return; /* already initialized? */
     if (!usexrandr) return; /* disabled in config */
     if (using_wine_desktop) return; /* not compatible with desktop mode */
+    if (!load_xrandr()) return;  /* can't load the Xrandr library */
 
     /* see if Xrandr is available */
     wine_tsx11_lock();
-    ok = XRRQueryExtension(gdi_display, &xrandr_event, &xrandr_error);
+    ok = pXRRQueryExtension(gdi_display, &xrandr_event, &xrandr_error);
     if (ok)
     {
         X11DRV_expect_error(gdi_display, XRandRErrorHandler, NULL);
-        ok = XRRQueryVersion(gdi_display, &xrandr_major, &xrandr_minor);
+        ok = pXRRQueryVersion(gdi_display, &xrandr_major, &xrandr_minor);
         if (X11DRV_check_error()) ok = FALSE;
     }
     if (ok)
     {
         TRACE("Found XRandR - major: %d, minor: %d\n", xrandr_major, xrandr_minor);
         /* retrieve modes */
-        real_xrandr_sizes = XRRSizes(gdi_display, DefaultScreen(gdi_display), &real_xrandr_sizes_count);
+        real_xrandr_sizes = pXRRSizes(gdi_display, DefaultScreen(gdi_display), &real_xrandr_sizes_count);
         ok = (real_xrandr_sizes_count>0);
     }
     if (ok)
@@ -205,7 +272,7 @@ void X11DRV_XRandR_Init(void)
         real_xrandr_rates_count = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(int) * real_xrandr_sizes_count);
         for (i=0; i < real_xrandr_sizes_count; i++)
         {
-            real_xrandr_rates[i] = XRRRates (gdi_display, DefaultScreen(gdi_display), i, &(real_xrandr_rates_count[i]));
+            real_xrandr_rates[i] = pXRRRates (gdi_display, DefaultScreen(gdi_display), i, &(real_xrandr_rates_count[i]));
             if (real_xrandr_rates_count[i])
             {
                 nmodes += real_xrandr_rates_count[i];

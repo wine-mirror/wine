@@ -253,11 +253,9 @@ then
         dnl *** Check for X RandR extension
         if test "$ac_cv_header_X11_extensions_Xrandr_h" = "yes"
         then
-                AC_CHECK_LIB(Xrandr, XRRSetScreenConfigAndRate,
-                  [ AC_DEFINE(HAVE_LIBXRANDR, 1, [Define if you have the Xrandr library])
-                     X_PRE_LIBS="$X_PRE_LIBS -lXrandr -lXrender"
-                  ],,
-                  $X_LIBS -lXrender -lXext -lX11 $X_EXTRA_LIBS)
+                AC_TRY_COMPILE([#include <X11/Xlib.h>
+#include <X11/extensions/Xrandr.h>],[static typeof(XRRSetScreenConfigAndRate) * func;],
+                  [AC_DEFINE(HAVE_LIBXRANDR, 1, [Define if you have the Xrandr library])])
         fi
 
         dnl *** Check for XVideo extension supporting XvImages
@@ -999,6 +997,7 @@ then
   WINE_GET_SONAME(Xext,XextCreateExtension,[$X_LIBS -lX11 $X_EXTRA_LIBS])
   WINE_GET_SONAME(Xi,XOpenDevice,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
   WINE_GET_SONAME(Xrender,XRenderQueryExtension,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
+  WINE_GET_SONAME(Xrandr,XRRQueryExtension,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
   WINE_GET_SONAME(freetype,FT_Init_FreeType,[$X_LIBS])
   WINE_GET_SONAME(GL,glXQueryExtension,[$X_LIBS $X_EXTRA_LIBS])
   WINE_GET_SONAME(cups,cupsGetDefault)
