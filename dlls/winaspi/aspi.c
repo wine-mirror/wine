@@ -36,9 +36,14 @@ HKEY_DYN_DATA
 		(default)=number of host adapters
 		hHHcCCtTTdDD=linux device name
 */
+
+#include "config.h"
+
 #include <stdio.h>
 #include <sys/types.h>
+#ifdef HAVE_SYS_IOCTL_H 
 #include <sys/ioctl.h>
+#endif
 #include <fcntl.h>
 #include <dirent.h>
 #include <unistd.h>
