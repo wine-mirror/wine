@@ -627,9 +627,9 @@ HWND WINAPI ChildWindowFromPointEx( HWND hwndParent, POINT pt,
                     retvalue = wnd->hwndSelf;
                     goto end;
 	        }
-                WIN_UpdateWndPtr(&wnd,wnd->next);
                 
 	}
+	WIN_UpdateWndPtr(&wnd,wnd->next);
     }
     retvalue = hwndParent;
 end:
