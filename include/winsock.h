@@ -423,12 +423,43 @@ INT32     WINAPI WSAAsyncSelect32(SOCKET32 s, HWND32 hWnd, UINT32 uMsg, UINT32 l
 #define   WSAAsyncSelect WINELIB_NAME(WSAAsyncSelect)
 
 
-#ifdef HAVE_LINUX_IPX_H
-
 /*
- * socket domains
+ * Address families
  */
-#define WS_AF_IPX	6
+#define WS_AF_UNSPEC       0               /* unspecified */
+#define WS_AF_UNIX         1               /* local to host (pipes, portals) */
+#define WS_AF_INET         2               /* internetwork: UDP, TCP, etc. */
+#define WS_AF_IMPLINK      3               /* arpanet imp addresses */
+#define WS_AF_PUP          4               /* pup protocols: e.g. BSP */
+#define WS_AF_CHAOS        5               /* mit CHAOS protocols */
+#define WS_AF_NS           6               /* XEROX NS protocols */
+#define WS_AF_IPX          WS_AF_NS        /* IPX protocols: IPX, SPX, etc. */
+#define WS_AF_ISO          7               /* ISO protocols */
+#define WS_AF_OSI          AF_ISO          /* OSI is ISO */
+#define WS_AF_ECMA         8               /* european computer manufacturers */
+#define WS_AF_DATAKIT      9               /* datakit protocols */
+#define WS_AF_CCITT        10              /* CCITT protocols, X.25 etc */
+#define WS_AF_SNA          11              /* IBM SNA */
+#define WS_AF_DECnet       12              /* DECnet */
+#define WS_AF_DLI          13              /* Direct data link interface */
+#define WS_AF_LAT          14              /* LAT */
+#define WS_AF_HYLINK       15              /* NSC Hyperchannel */
+#define WS_AF_APPLETALK    16              /* AppleTalk */
+#define WS_AF_NETBIOS      17              /* NetBios-style addresses */
+#define WS_AF_VOICEVIEW    18              /* VoiceView */
+#define WS_AF_FIREFOX      19              /* Protocols from Firefox */
+#define WS_AF_UNKNOWN1     20              /* Somebody is using this! */
+#define WS_AF_BAN          21              /* Banyan */
+#define WS_AF_ATM          22              /* Native ATM Services */
+#define WS_AF_INET6        23              /* Internetwork Version 6 */
+#define WS_AF_CLUSTER      24              /* Microsoft Wolfpack */
+#define WS_AF_12844        25              /* IEEE 1284.4 WG AF */
+#define WS_AF_IRDA         26              /* IrDA */
+
+#define WS_AF_MAX          27
+
+
+#ifdef HAVE_LINUX_IPX_H
 
 struct ws_sockaddr_ipx
 {
