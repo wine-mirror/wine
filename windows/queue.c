@@ -1510,8 +1510,10 @@ void WINAPI UserYield16(void)
         OldYield16();
     else
     {
-        SYSLEVEL_LeaveWin16Lock();
-        SYSLEVEL_EnterWin16Lock();
+        DWORD  count;
+
+       ReleaseThunkLock(&count);
+       RestoreThunkLock(count);
     }
 
     /* Handle sent messages again */
