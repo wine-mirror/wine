@@ -395,7 +395,7 @@ pp_constant
 
 /* C ignore stuff */
 cjunk	: tTYPEDEF			{ strip_til_semicolon(); }
-	| tEXTERN			{ strip_til_semicolon(); }
+	| tEXTERN			{ strip_extern(); }
 	| IDENT IDENT			{ strip_til_semicolon(); }
 	| IDENT '('			{ strip_til_parenthesis(); }
 	| IDENT '*'			{ strip_til_semicolon(); }
@@ -730,7 +730,7 @@ ctrls	: /* Empty */				{ $$ = NULL; }
 	| ctrls CTEXT		lab_ctrl	{ $$=ins_ctrl(CT_STATIC, SS_CENTER, $3, $1); }
 	| ctrls RTEXT		lab_ctrl	{ $$=ins_ctrl(CT_STATIC, SS_RIGHT, $3, $1); }
 	/* special treatment for icons, as the extent is optional */
-	| ctrls ICON nameid_s ',' expr ',' expr ',' expr iconinfo {
+	| ctrls ICON nameid_s opt_comma expr ',' expr ',' expr iconinfo {
 		$10->title = $3;
 		$10->id = $5;
 		$10->x = $7;
@@ -740,7 +740,7 @@ ctrls	: /* Empty */				{ $$ = NULL; }
 	;
 
 lab_ctrl
-	: tSTRING ',' expr ',' expr ',' expr ',' expr ',' expr optional_style {
+	: tSTRING opt_comma expr ',' expr ',' expr ',' expr ',' expr optional_style {
 		$$=new_control();
 		$$->title = new_name_id();
 		$$->title->type = name_str;
@@ -800,7 +800,7 @@ iconinfo: /* Empty */
 		}
 	;
 
-gen_ctrl: nameid_s ',' expr ',' ctlclass ',' style ',' expr ',' expr ',' expr ',' expr ',' style {
+gen_ctrl: nameid_s opt_comma expr ',' ctlclass ',' style ',' expr ',' expr ',' expr ',' expr ',' style {
 		$$=new_control();
 		$$->title = $1;
 		$$->id = $3;
@@ -814,7 +814,7 @@ gen_ctrl: nameid_s ',' expr ',' ctlclass ',' style ',' expr ',' expr ',' expr ',
 		$$->exstyle = $17;
 		$$->gotexstyle = TRUE;
 		}
-	| nameid_s ',' expr ',' ctlclass ',' style ',' expr ',' expr ',' expr ',' expr {
+	| nameid_s opt_comma expr ',' ctlclass ',' style ',' expr ',' expr ',' expr ',' expr {
 		$$=new_control();
 		$$->title = $1;
 		$$->id = $3;
@@ -943,7 +943,7 @@ exctrls	: /* Empty */				{ $$ = NULL; }
 	| exctrls CTEXT		lab_exctrl	{ $$=ins_ctrl(CT_STATIC, SS_CENTER, $3, $1); }
 	| exctrls RTEXT		lab_exctrl	{ $$=ins_ctrl(CT_STATIC, SS_RIGHT, $3, $1); }
 	/* special treatment for icons, as the extent is optional */
-	| exctrls ICON nameid_s ',' expr ',' expr ',' expr iconinfo {
+	| exctrls ICON nameid_s opt_comma expr ',' expr ',' expr iconinfo {
 		$10->title = $3;
 		$10->id = $5;
 		$10->x = $7;
@@ -953,7 +953,7 @@ exctrls	: /* Empty */				{ $$ = NULL; }
 	;
 
 gen_exctrl
-	: nameid_s ',' expr ',' ctlclass ',' style ',' expr ',' expr ',' expr ','
+	: nameid_s opt_comma expr ',' ctlclass ',' style ',' expr ',' expr ',' expr ','
 	  expr ',' style helpid opt_data {
 		$$=new_control();
 		$$->title = $1;
@@ -978,7 +978,7 @@ gen_exctrl
 		}
 		$$->extra = $19;
 		}
-	| nameid_s ',' expr ',' ctlclass ',' style ',' expr ',' expr ',' expr ',' expr opt_data {
+	| nameid_s opt_comma expr ',' ctlclass ',' style ',' expr ',' expr ',' expr ',' expr opt_data {
 		$$=new_control();
 		$$->title = $1;
 		$$->id = $3;
@@ -994,7 +994,7 @@ gen_exctrl
 	;
 
 lab_exctrl
-	: tSTRING ',' expr ',' expr ',' expr ',' expr ',' expr optional_style_pair opt_data {
+	: tSTRING opt_comma expr ',' expr ',' expr ',' expr ',' expr optional_style_pair opt_data {
 		$$=new_control();
 		$$->title = new_name_id();
 		$$->title->type = name_str;
@@ -1094,7 +1094,7 @@ menu_body
 
 item_definitions
 	: /* Empty */	{$$ = NULL;}
-	| item_definitions MENUITEM tSTRING ',' expr item_options {
+	| item_definitions MENUITEM tSTRING opt_comma expr item_options {
 		$$=new_menu_item();
 		$$->prev = $1;
 		if($1)
