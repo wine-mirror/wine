@@ -1,16 +1,13 @@
-This is release 20040121 of Wine, a free implementation of Windows on
+This is release 20040213 of Wine, a free implementation of Windows on
 Unix.  This is still a developers only release.  There are many bugs
 and unimplemented features.  Most applications still do not work
 correctly.
 
-WHAT'S NEW with Wine-20040121: (see ChangeLog for details)
-        - Many improvements in the shell32 dll.
-        - Better support for constructors in C++ Winelib apps.
-        - Improved Regedit tool.
-        - Full support for graphic tablets.
-        - Lots of DirectMusic improvements.
-        - Better support for video playback.
-        - Full IME support for Asian locales.
+WHAT'S NEW with Wine-20040213: (see ChangeLog for details)
+        - Improved support for screen resolution changes.
+        - More shell32 improvements.
+        - Several Winelib compatibility fixes.
+        - Beginnings of support for typelib creation.
         - Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -19,8 +16,8 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20040121.tar.gz
-  http://prdownloads.sourceforge.net/wine/Wine-20040121.tar.gz
+  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20040213.tar.gz
+  http://prdownloads.sourceforge.net/wine/Wine-20040213.tar.gz
 
 It should also be available from any other site that mirrors ibiblio.org.
 These locations also hold pre-built documentation packages in various
