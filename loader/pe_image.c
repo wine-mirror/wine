@@ -97,32 +97,29 @@ void dump_exports( HMODULE hModule )
   IMAGE_EXPORT_DIRECTORY *pe_exports = (IMAGE_EXPORT_DIRECTORY*)RVA(rva_start);
 
   Module = (char*)RVA(pe_exports->Name);
-  TRACE("*******EXPORT DATA*******\n");
-  TRACE("Module name is %s, %ld functions, %ld names\n",
-        Module, pe_exports->NumberOfFunctions, pe_exports->NumberOfNames);
+  DPRINTF("*******EXPORT DATA*******\n");
+  DPRINTF("Module name is %s, %ld functions, %ld names\n",
+          Module, pe_exports->NumberOfFunctions, pe_exports->NumberOfNames);
 
   ordinal = RVA(pe_exports->AddressOfNameOrdinals);
   functions = function = RVA(pe_exports->AddressOfFunctions);
   name = RVA(pe_exports->AddressOfNames);
 
-  TRACE(" Ord    RVA     Addr   Name\n" );
+  DPRINTF(" Ord    RVA     Addr   Name\n" );
   for (i=0;i<pe_exports->NumberOfFunctions;i++, function++)
   {
       if (!*function) continue;  /* No such function */
-      if (TRACE_ON(win32))
-      {
-	DPRINTF( "%4ld %08lx %p", i + pe_exports->Base, *function, RVA(*function) );
-	/* Check if we have a name for it */
-	for (j = 0; j < pe_exports->NumberOfNames; j++)
+      DPRINTF( "%4ld %08lx %p", i + pe_exports->Base, *function, RVA(*function) );
+      /* Check if we have a name for it */
+      for (j = 0; j < pe_exports->NumberOfNames; j++)
           if (ordinal[j] == i)
           {
               DPRINTF( "  %s", (char*)RVA(name[j]) );
               break;
           }
-	if ((*function >= rva_start) && (*function <= rva_end))
+      if ((*function >= rva_start) && (*function <= rva_end))
 	  DPRINTF(" (forwarded -> %s)", (char *)RVA(*function));
-	DPRINTF("\n");
-      }
+      DPRINTF("\n");
   }
 }
 
@@ -642,7 +639,7 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
 
     /* Dump Exports */
 
-    if ( pe_export )
+    if (pe_export && TRACE_ON(win32))
         dump_exports( hModule );
 
     /* Fixup Imports */
