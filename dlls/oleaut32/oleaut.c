@@ -13,8 +13,33 @@
 
 DEFAULT_DEBUG_CHANNEL(ole)
 
-HRESULT WINAPI RegisterActiveObject(DWORD x1,DWORD x2,DWORD x3,DWORD x4)
+HRESULT WINAPI RegisterActiveObject(
+	LPUNKNOWN punk,REFCLSID rcid,DWORD dwFlags,LPDWORD pdwRegister
+) {
+	char buf[80];
+
+	if (rcid)
+		WINE_StringFromCLSID(rcid,buf);
+	else
+		sprintf(buf,"<clsid-%p>",rcid);
+	FIXME("(%p,%s,0x%08lx,%p), stub!\n",punk,buf,dwFlags,pdwRegister);
+	return E_FAIL;
+}
+
+HRESULT WINAPI RevokeActiveObject(DWORD xregister,LPVOID reserved)
 {
-	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx), stub!\n",x1,x2,x3,x4);
+	FIXME("(0x%08lx,%p),stub!\n",xregister,reserved);
+	return E_FAIL;
+}
+
+HRESULT WINAPI GetActiveObject(REFCLSID rcid,LPVOID preserved,LPUNKNOWN *ppunk)
+{
+	char buf[80];
+
+	if (rcid)
+		WINE_StringFromCLSID(rcid,buf);
+	else
+		sprintf(buf,"<clsid-%p>",rcid);
+	FIXME("(%s,%p,%p),stub!\n",buf,preserved,ppunk);
 	return E_FAIL;
 }
