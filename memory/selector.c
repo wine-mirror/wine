@@ -168,7 +168,7 @@ static void SELECTOR_SetEntries( WORD sel, const void *base, DWORD size, unsigne
     for (i = 0; i < count; i++)
     {
         wine_ldt_set_entry( sel + (i << __AHSHIFT), &entry );
-        wine_ldt_set_base( &entry, wine_ldt_get_base(&entry) + 0x10000 );
+        wine_ldt_set_base( &entry, (char*)wine_ldt_get_base(&entry) + 0x10000);
         /* yep, Windows sets limit like that, not 64K sel units */
         wine_ldt_set_limit( &entry, wine_ldt_get_limit(&entry) - 0x10000 );
     }

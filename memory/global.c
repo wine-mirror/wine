@@ -1621,7 +1621,7 @@ VOID WINAPI GlobalMemoryStatus(
 #endif
     /* FIXME: should do something for other systems */
     GetSystemInfo(&si);
-    lpmem->dwTotalVirtual  = si.lpMaximumApplicationAddress-si.lpMinimumApplicationAddress;
+    lpmem->dwTotalVirtual  = (char*)si.lpMaximumApplicationAddress-(char*)si.lpMinimumApplicationAddress;
     /* FIXME: we should track down all the already allocated VM pages and substract them, for now arbitrarily remove 64KB so that it matches NT */
     lpmem->dwAvailVirtual  = lpmem->dwTotalVirtual-64*1024;
     memcpy(&cached_memstatus,lpmem,sizeof(MEMORYSTATUS));

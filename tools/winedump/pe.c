@@ -81,8 +81,8 @@ void*	PRD(unsigned long prd, unsigned long len)
 unsigned long Offset(void* ptr)
 {
     if (ptr < base) {printf("<<<<<ptr below\n");return 0;}
-    if (ptr >= base + total_len) {printf("<<<<<ptr above\n");return 0;}
-    return ptr - base;
+    if ((char *)ptr >= (char*)base + total_len) {printf("<<<<<ptr above\n");return 0;}
+    return (char*)ptr - (char*)base;
 }
 
 void*	RVA(unsigned long rva, unsigned long len)

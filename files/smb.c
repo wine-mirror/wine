@@ -1111,7 +1111,7 @@ BOOL WINAPI SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD
         if(!read)
             break;
         total += read;
-        buffer += read;
+        buffer = (char*)buffer + read;
         offset += read;
         if(total>=bytesToRead)
             break;

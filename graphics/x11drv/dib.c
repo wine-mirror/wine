@@ -353,8 +353,8 @@ static void X11DRV_DIB_Convert_any_asis(int width, int height,
     width*=bytes_per_pixel;
     for (y=0; y<height; y++) {
         memcpy(dstbits, srcbits, width);
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -389,8 +389,8 @@ static void X11DRV_DIB_Convert_555_reverse(int width, int height,
                                ( srcval        & 0x03e0) | /* g */
                                ((srcval >> 10) & 0x001f);  /* l */
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -421,8 +421,8 @@ static void X11DRV_DIB_Convert_555_to_565_asis(int width, int height,
                                ((srcval >> 4) & 0x0020) | /* g - 1 bit */
                                 (srcval       & 0x001f);  /* l */
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -455,8 +455,8 @@ static void X11DRV_DIB_Convert_555_to_565_reverse(int width, int height,
                                ((srcval >>  4) & 0x0020) | /* g - 1 bit */
                                ((srcval << 11) & 0xf800);  /* l */
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -482,8 +482,8 @@ static void X11DRV_DIB_Convert_555_to_888_asis(int width, int height,
                         ((srcval >> 12) & 0x07);  /* h - 3 bits */
             dstpixel+=3;
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -509,8 +509,8 @@ static void X11DRV_DIB_Convert_555_to_888_reverse(int width, int height,
                         ((srcval >>  2) & 0x07);  /* l - 3 bits */
             dstpixel+=3;
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -535,8 +535,8 @@ static void X11DRV_DIB_Convert_555_to_0888_asis(int width, int height,
                         ((srcval << 3) & 0x0000f8) | /* l */
                         ((srcval >> 2) & 0x000007);  /* l - 3 bits */
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -561,8 +561,8 @@ static void X11DRV_DIB_Convert_555_to_0888_reverse(int width, int height,
                         ((srcval << 19) & 0xf80000) | /* l */
                         ((srcval << 14) & 0x070000);  /* l - 3 bits */
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -622,8 +622,8 @@ static void X11DRV_DIB_Convert_5x5_to_any0888(int width, int height,
                         (green << gLeftShift) |
                         (blue  << bLeftShift);
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -658,8 +658,8 @@ static void X11DRV_DIB_Convert_565_reverse(int width, int height,
                                ( srcval        & 0x07e0) | /* g */
                                ((srcval >> 11) & 0x001f);  /* l */
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -688,8 +688,8 @@ static void X11DRV_DIB_Convert_565_to_555_asis(int width, int height,
             *((WORD*)dstpixel)=((srcval >> 1) & 0x7fe0) | /* h, g */
                                ( srcval       & 0x001f);  /* l */
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -720,8 +720,8 @@ static void X11DRV_DIB_Convert_565_to_555_reverse(int width, int height,
                                ((srcval >>  1) & 0x03e0) | /* g */
                                ((srcval << 10) & 0x7c00);  /* l */
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -747,8 +747,8 @@ static void X11DRV_DIB_Convert_565_to_888_asis(int width, int height,
                         ((srcval >> 13) & 0x07);  /* h - 3 bits */
             dstpixel+=3;
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -774,8 +774,8 @@ static void X11DRV_DIB_Convert_565_to_888_reverse(int width, int height,
                         ((srcval >>  2) & 0x07);  /* l - 3 bits */
             dstpixel+=3;
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -800,8 +800,8 @@ static void X11DRV_DIB_Convert_565_to_0888_asis(int width, int height,
                         ((srcval << 3) & 0x0000f8) | /* l */
                         ((srcval >> 2) & 0x000007);  /* l - 3 bits */
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -826,8 +826,8 @@ static void X11DRV_DIB_Convert_565_to_0888_reverse(int width, int height,
                         ((srcval << 19) & 0xf80000) | /* l */
                         ((srcval << 14) & 0x070000);  /* l - 3 bits */
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -853,8 +853,8 @@ static void X11DRV_DIB_Convert_888_reverse(int width, int height,
             srcpixel+=3;
             dstpixel+=3;
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -904,8 +904,8 @@ static void X11DRV_DIB_Convert_888_to_555_asis(int width, int height,
             *dstpixel++=dstval;
             srcbyte+=3;
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -954,9 +954,9 @@ static void X11DRV_DIB_Convert_888_to_555_reverse(int width, int height,
             dstval|=((srcbyte[2] >> 3) & 0x001f);    /* h */
             *dstpixel++=dstval;
             srcbyte+=3;
-       }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        }
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -1006,8 +1006,8 @@ static void X11DRV_DIB_Convert_888_to_565_asis(int width, int height,
             *dstpixel++=dstval;
             srcbyte+=3;
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -1057,8 +1057,8 @@ static void X11DRV_DIB_Convert_888_to_565_reverse(int width, int height,
             *dstpixel++=dstval;
             srcbyte+=3;
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -1098,8 +1098,8 @@ static void X11DRV_DIB_Convert_888_to_0888_asis(int width, int height,
             srcpixel=(LPDWORD)(((char*)srcpixel)+3);
             *dstpixel++=( srcval         & 0x00ffffff); /* h, g, l */
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -1148,8 +1148,8 @@ static void X11DRV_DIB_Convert_888_to_0888_reverse(int width, int height,
                         ( srcval         & 0x00ff00) | /* g */
                         ((srcval  << 16) & 0xff0000);  /* l */
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -1175,8 +1175,8 @@ static void X11DRV_DIB_Convert_rgb888_to_any0888(int width, int height,
                         (srcpixel[2] << rLeftShift);  /* r */
             srcpixel+=3;
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -1202,8 +1202,8 @@ static void X11DRV_DIB_Convert_bgr888_to_any0888(int width, int height,
                         (srcpixel[2] << bLeftShift);  /* b */
             srcpixel+=3;
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -1229,8 +1229,8 @@ static void X11DRV_DIB_Convert_0888_reverse(int width, int height,
                         ( srcval        & 0x0000ff00) | /* g */
                         ((srcval >> 16) & 0x000000ff);  /* l */
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -1262,8 +1262,8 @@ static void X11DRV_DIB_Convert_0888_any(int width, int height,
                         (((srcval >> gRightShift) & 0xff) << gLeftShift) |
                         (((srcval >> bRightShift) & 0xff) << bLeftShift);
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -1285,8 +1285,8 @@ static void X11DRV_DIB_Convert_0888_to_555_asis(int width, int height,
                         ((srcval >> 6) & 0x03e0) | /* g */
                         ((srcval >> 3) & 0x001f);  /* l */
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -1308,8 +1308,8 @@ static void X11DRV_DIB_Convert_0888_to_555_reverse(int width, int height,
                         ((srcval >>  6) & 0x03e0) | /* g */
                         ((srcval <<  7) & 0x7c00);  /* l */
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -1331,8 +1331,8 @@ static void X11DRV_DIB_Convert_0888_to_565_asis(int width, int height,
                         ((srcval >> 5) & 0x07e0) | /* g */
                         ((srcval >> 3) & 0x001f);  /* l */
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -1354,8 +1354,8 @@ static void X11DRV_DIB_Convert_0888_to_565_reverse(int width, int height,
                         ((srcval >>  5) & 0x07e0) | /* g */
                         ((srcval <<  8) & 0xf800);  /* l */
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -1404,8 +1404,8 @@ static void X11DRV_DIB_Convert_any0888_to_5x5(int width, int height,
                         (((srcval >> gRightShift) & gdst) << gLeftShift) |
                         (((srcval >> bRightShift) & bdst) << bLeftShift);
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -1442,8 +1442,8 @@ static void X11DRV_DIB_Convert_0888_to_888_asis(int width, int height,
             *((WORD*)dstbyte)++=srcval;                 /* h, g */
             *dstbyte++=srcval >> 16;                    /* l */
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -1494,8 +1494,8 @@ static void X11DRV_DIB_Convert_0888_to_888_reverse(int width, int height,
                                 (srcval         & 0xff00);  /* g */
             *dstbyte++=srcval;                              /* l */
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -1523,8 +1523,8 @@ static void X11DRV_DIB_Convert_any0888_to_rgb888(int width, int height,
             dstpixel[2]=(srcval >> rRightShift); /* r */
             dstpixel+=3;
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -1552,8 +1552,8 @@ static void X11DRV_DIB_Convert_any0888_to_bgr888(int width, int height,
             dstpixel[2]=(srcval >> bRightShift); /* b */
             dstpixel+=3;
         }
-        srcbits += srclinebytes;
-        dstbits += dstlinebytes;
+        srcbits = (char*)srcbits + srclinebytes;
+        dstbits = (char*)dstbits + dstlinebytes;
     }
 }
 
@@ -1697,7 +1697,7 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
                 if ((dstwidth&7)!=0) {
                     *dstbyte=dstval;
                 }
-                srcbits -= bmpImage->bytes_per_line;
+                srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                 dstbits += linebytes;
             }
         } else {
@@ -1741,7 +1741,7 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
                         if ((dstwidth&7)!=0) {
                             *dstbyte=dstval;
                         }
-                        srcbits -= bmpImage->bytes_per_line;
+                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else if (bmpImage->blue_mask==0x7c00) {
@@ -1770,7 +1770,7 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
                         if ((dstwidth&7)!=0) {
                             *dstbyte=dstval;
                         }
-                        srcbits -= bmpImage->bytes_per_line;
+                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else {
@@ -1803,7 +1803,7 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
                         if ((dstwidth&7)!=0) {
                             *dstbyte=dstval;
                         }
-                        srcbits -= bmpImage->bytes_per_line;
+                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else if (bmpImage->blue_mask==0xf800) {
@@ -1832,7 +1832,7 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
                         if ((dstwidth&7)!=0) {
                             *dstbyte=dstval;
                         }
-                        srcbits -= bmpImage->bytes_per_line;
+                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else {
@@ -1880,7 +1880,7 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
                     if ((dstwidth&7)!=0) {
                         *dstbyte=dstval;
                     }
-                    srcbits -= bmpImage->bytes_per_line;
+                    srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                     dstbits += linebytes;
                 }
             } else {
@@ -1905,7 +1905,7 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
                     if ((dstwidth&7)!=0) {
                         *dstbyte=dstval;
                     }
-                    srcbits -= bmpImage->bytes_per_line;
+                    srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                     dstbits += linebytes;
                 }
             }
@@ -2071,7 +2071,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                 if ((dstwidth&1)!=0) {
                     *dstbyte=dstval;
                 }
-                srcbits -= bmpImage->bytes_per_line;
+                srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                 dstbits += linebytes;
             }
         } else {
@@ -2115,7 +2115,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                         if ((dstwidth&1)!=0) {
                             *dstbyte=dstval;
                         }
-                        srcbits -= bmpImage->bytes_per_line;
+                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else if (bmpImage->blue_mask==0x7c00) {
@@ -2144,7 +2144,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                         if ((dstwidth&1)!=0) {
                             *dstbyte=dstval;
                         }
-                        srcbits -= bmpImage->bytes_per_line;
+                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else {
@@ -2177,7 +2177,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                         if ((dstwidth&1)!=0) {
                             *dstbyte=dstval;
                         }
-                        srcbits -= bmpImage->bytes_per_line;
+                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else if (bmpImage->blue_mask==0xf800) {
@@ -2206,7 +2206,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                         if ((dstwidth&1)!=0) {
                             *dstbyte=dstval;
                         }
-                        srcbits -= bmpImage->bytes_per_line;
+                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else {
@@ -2256,7 +2256,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                                      srcbyte[1],
                                      srcbyte[0]) << 4);
                     }
-                    srcbits -= bmpImage->bytes_per_line;
+                    srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                     dstbits += linebytes;
                 }
             } else {
@@ -2286,7 +2286,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                                      srcbyte[1],
                                      srcbyte[2]) << 4);
                     }
-                    srcbits -= bmpImage->bytes_per_line;
+                    srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                     dstbits += linebytes;
                 }
             }
@@ -2332,7 +2332,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                                      srcbyte[1],
                                      srcbyte[0]) << 4);
                     }
-                    srcbits -= bmpImage->bytes_per_line;
+                    srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                     dstbits += linebytes;
                 }
             } else {
@@ -2362,7 +2362,7 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
                                      srcbyte[1],
                                      srcbyte[2]) << 4);
                     }
-                    srcbits -= bmpImage->bytes_per_line;
+                    srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                     dstbits += linebytes;
                 }
             }
@@ -2631,7 +2631,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
                                                          srcval.peGreen,
                                                          srcval.peBlue);
                }
-               srcbits -= bmpImage->bytes_per_line;
+               srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                dstbits += linebytes;
            }
        } else {
@@ -2666,7 +2666,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
                                  ((srcval <<  3) & 0xf8) | /* b */
                                  ((srcval >>  2) & 0x07) );
                         }
-                        srcbits -= bmpImage->bytes_per_line;
+                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else if (bmpImage->blue_mask==0x7c00) {
@@ -2686,7 +2686,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
                                  ((srcval >>  7) & 0xf8) | /* b */
                                  ((srcval >> 12) & 0x07) );
                         }
-                        srcbits -= bmpImage->bytes_per_line;
+                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else {
@@ -2710,7 +2710,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
                                  ((srcval <<  3) & 0xf8) | /* b */
                                  ((srcval >>  2) & 0x07) );
                         }
-                        srcbits -= bmpImage->bytes_per_line;
+                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else if (bmpImage->blue_mask==0xf800) {
@@ -2730,7 +2730,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
                                  ((srcval >>  8) & 0xf8) | /* b */
                                  ((srcval >> 13) & 0x07) );
                         }
-                        srcbits -= bmpImage->bytes_per_line;
+                        srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                         dstbits += linebytes;
                     }
                 } else {
@@ -2769,7 +2769,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
                              srcbyte[0]);
                         srcbyte+=bytes_per_pixel;
                     }
-                    srcbits -= bmpImage->bytes_per_line;
+                    srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                     dstbits += linebytes;
                 }
             } else {
@@ -2785,7 +2785,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
                              srcbyte[2]);
                         srcbyte+=bytes_per_pixel;
                     }
-                    srcbits -= bmpImage->bytes_per_line;
+                    srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                     dstbits += linebytes;
                 }
             }
@@ -3857,7 +3857,7 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
                     dstbyte[2]=srcval.peRed;
                     dstbyte+=3;
                 }
-                srcbits -= bmpImage->bytes_per_line;
+                srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                 dstbits += linebytes;
             }
         } else {
@@ -4436,7 +4436,7 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
                                 (srcval.peGreen << gShift) |
                                 (srcval.peBlue  << bShift);
                 }
-                srcbits -= bmpImage->bytes_per_line;
+                srcbits = (char*)srcbits - bmpImage->bytes_per_line;
                 dstbits += linebytes;
             }
         } else {

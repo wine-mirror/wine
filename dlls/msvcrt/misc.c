@@ -68,7 +68,7 @@ void* _lfind(const void* match, const void* start,
     {
       if (cf(match, start) == 0)
         return (void *)start; /* found */
-      start += elem_size;
+      start = (char*)start + elem_size;
     } while (--size);
   return NULL;
 }
@@ -86,7 +86,7 @@ void* _lsearch(const void* match, void* start,
     {
       if (cf(match, start) == 0)
         return start; /* found */
-      start += elem_size;
+      start = (char*)start + elem_size;
     } while (--size);
 
   /* not found, add to end */

@@ -1771,7 +1771,7 @@ MSVCRT_size_t MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nmemb, M
 	file->_ptr += pcnt;
 	read += pcnt ;
 	rcnt -= pcnt ;
-	ptr += pcnt;
+       ptr = (char*)ptr + pcnt;
   } else if(!(file->_flag & MSVCRT__IOREAD )) {
 	if(file->_flag & MSVCRT__IORW) {
 		file->_flag |= MSVCRT__IOREAD;
@@ -2164,7 +2164,7 @@ MSVCRT_size_t MSVCRT_fwrite(const void *ptr, MSVCRT_size_t size, MSVCRT_size_t n
 	file->_ptr += pcnt;
 	written = pcnt;
 	wrcnt -= pcnt;
-	ptr += pcnt;
+       ptr = (char*)ptr + pcnt;
   } else if(!(file->_flag & MSVCRT__IOWRT)) {
 	if(file->_flag & MSVCRT__IORW) {
 		file->_flag |= MSVCRT__IOWRT;

@@ -90,7 +90,7 @@ void DPLAYX_PrivHeapFree( LPVOID addr )
     return;
   }
 
-  lpAddrStart = addr - sizeof(DWORD); /* Find block header */
+  lpAddrStart = (char*)addr - sizeof(DWORD); /* Find block header */
   dwBlockUsed =  ((BYTE*)lpAddrStart - (BYTE*)lpMemArea)/dwBlockSize;
 
   lpMemArea[ dwBlockUsed ].used = 0;
@@ -1342,4 +1342,3 @@ LPCSTR DPLAYX_HresultToString(HRESULT hr)
       return szTempStr;
   }
 }
-

@@ -690,7 +690,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	    if (ptr) {
                 SEGPTR segptr = MapLS(ptr);
 		*(LPMIDIOPENDESC*)ptr = mod32;
-		*(LPDWORD)(ptr + sizeof(LPMIDIOPENDESC)) = *lpdwUser;
+		*(LPDWORD)((char*)ptr + sizeof(LPMIDIOPENDESC)) = *lpdwUser;
 		mod16 = (LPMIDIOPENDESC16)((LPSTR)ptr + sizeof(LPMIDIOPENDESC) + 2*sizeof(DWORD));
 
 		mod16->hMidi = mod32->hMidi;
@@ -1067,7 +1067,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 	    if (ptr) {
                 SEGPTR seg_ptr = MapLS( ptr );
 		*(LPWAVEOPENDESC*)ptr = wod32;
-		*(LPDWORD)(ptr + sizeof(LPWAVEOPENDESC)) = *lpdwUser;
+		*(LPDWORD)((char*)ptr + sizeof(LPWAVEOPENDESC)) = *lpdwUser;
 		wod16 = (LPWAVEOPENDESC16)((LPSTR)ptr + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD));
 
 		wod16->hWave = wod32->hWave;
@@ -1626,7 +1626,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	    if (ptr) {
                 SEGPTR seg_ptr = MapLS( ptr );
 		*(LPWAVEOPENDESC*)ptr = wod32;
-		*(LPDWORD)(ptr + sizeof(LPWAVEOPENDESC)) = *lpdwUser;
+		*(LPDWORD)((char*)ptr + sizeof(LPWAVEOPENDESC)) = *lpdwUser;
 		wod16 = (LPWAVEOPENDESC16)((LPSTR)ptr + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD));
 
 		wod16->hWave = wod32->hWave;

@@ -519,8 +519,8 @@ static const char*      DEBUG_GetDbgInfo(enum DbgInfoLoad dil)
  */
 static int	DEBUG_ModuleCompare(const void* p1, const void* p2)
 {
-    return (*((const DBG_MODULE**)p1))->load_addr -
-	   (*((const DBG_MODULE**)p2))->load_addr;
+    return (char*)(*((const DBG_MODULE**)p1))->load_addr -
+	   (char*)(*((const DBG_MODULE**)p2))->load_addr;
 }
 
 /***********************************************************************
@@ -641,4 +641,3 @@ void DEBUG_WalkModules(void)
     }
     DBG_free(amod);
 }
-

@@ -1973,7 +1973,7 @@ BOOL  WINAPI SHLWAPI_351 (
 	LPVOID z)   /* [in/out] buffer (+0x208 sent to GetFileVersionInfoA) */
 {
     GET_FUNC(pGetFileVersionInfoW, version, "GetFileVersionInfoW", 0);
-    return pGetFileVersionInfoW(w, x, y-0x208, z+0x208);
+    return pGetFileVersionInfoW(w, x, y-0x208, (char*)z+0x208);
 }
 
 /*************************************************************************
@@ -1989,7 +1989,7 @@ WORD WINAPI SHLWAPI_352 (
 	UINT*  z)   /* [in]   ver length - passed to VerQueryValueA as #4 */
 {
     GET_FUNC(pVerQueryValueW, version, "VerQueryValueW", 0);
-    return pVerQueryValueW(w+0x208, x, y, z);
+    return pVerQueryValueW((char*)w+0x208, x, y, z);
 }
 
 /**************************************************************************

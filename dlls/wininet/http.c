@@ -427,7 +427,7 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 					   lpwhr->StdHeaders[i].lpszField &&
 					   lpwhr->StdHeaders[i].lpszValue)
                {
-                   cnt += sprintf(lpBuffer + cnt, "%s: %s%s", lpwhr->StdHeaders[i].lpszField, lpwhr->StdHeaders[i].lpszValue,
+                   cnt += sprintf((char*)lpBuffer + cnt, "%s: %s%s", lpwhr->StdHeaders[i].lpszField, lpwhr->StdHeaders[i].lpszValue,
                           index == HTTP_QUERY_RAW_HEADERS_CRLF ? "\r\n" : "\0");
                }
             }
@@ -439,13 +439,13 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 						lpwhr->pCustHeaders[i].lpszField &&
 						lpwhr->pCustHeaders[i].lpszValue)
                 {
-                   cnt += sprintf(lpBuffer + cnt, "%s: %s%s",
+                   cnt += sprintf((char*)lpBuffer + cnt, "%s: %s%s",
                     lpwhr->pCustHeaders[i].lpszField, lpwhr->pCustHeaders[i].lpszValue,
 					index == HTTP_QUERY_RAW_HEADERS_CRLF ? "\r\n" : "\0");
                 }
             }
 
-            strcpy(lpBuffer + cnt, index == HTTP_QUERY_RAW_HEADERS_CRLF ? "\r\n" : "");
+            strcpy((char*)lpBuffer + cnt, index == HTTP_QUERY_RAW_HEADERS_CRLF ? "\r\n" : "");
 
            *lpdwBufferLength = cnt + delim;
            bSuccess = TRUE;

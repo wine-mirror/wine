@@ -328,9 +328,9 @@ DWORD WINAPI SetSysColorsTemp( const COLORREF *pPens, const HBRUSH *pBrushes, DW
 	    /* allocate our structure to remember old colors */
 	    LPVOID pOldCol = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD)+n*sizeof(HPEN)+n*sizeof(HBRUSH));
 	    LPVOID p = pOldCol;
-	    *(DWORD *)p = n; p += sizeof(DWORD);
-	    memcpy(p, SysColorPens, n*sizeof(HPEN)); p += n*sizeof(HPEN);
-	    memcpy(p, SysColorBrushes, n*sizeof(HBRUSH)); p += n*sizeof(HBRUSH);
+           *(DWORD *)p = n; p = (char*)p + sizeof(DWORD);
+           memcpy(p, SysColorPens, n*sizeof(HPEN)); p = (char*)p + n*sizeof(HPEN);
+           memcpy(p, SysColorBrushes, n*sizeof(HBRUSH)); p = (char*)p + n*sizeof(HBRUSH);
 
 	    for (i=0; i < n; i++)
 	    {
@@ -345,16 +345,16 @@ DWORD WINAPI SetSysColorsTemp( const COLORREF *pPens, const HBRUSH *pBrushes, DW
 	    LPVOID pOldCol = (LPVOID)n;
 	    LPVOID p = pOldCol;
 	    DWORD nCount = *(DWORD *)p;
-	    p += sizeof(DWORD);
+           p = (char*)p + sizeof(DWORD);
 
 	    for (i=0; i < nCount; i++)
 	    {
 		DeleteObject(SysColorPens[i]);
-		SysColorPens[i] = *(HPEN *)p; p += sizeof(HPEN);
+               SysColorPens[i] = *(HPEN *)p; p = (char*)p + sizeof(HPEN);
 	    }
 	    for (i=0; i < nCount; i++)
 	    {
-		SysColorBrushes[i] = *(HBRUSH *)p; p += sizeof(HBRUSH);
+               SysColorBrushes[i] = *(HBRUSH *)p; p = (char*)p + sizeof(HBRUSH);
 	    }
 	    /* get rid of storage structure */
 	    HeapFree(GetProcessHeap(), 0, pOldCol);
@@ -395,5 +395,3 @@ HPEN SYSCOLOR_GetPen( INT index )
     return SysColorPens[index];
 
 }
-
-

@@ -221,7 +221,7 @@ static FILE_VIEW *VIRTUAL_FindView( const void *addr ) /* [in] Address */
             view = NULL;
             break;
         }
-        if (view->base + view->size > addr) break;
+        if ((char*)view->base + view->size > (char*)addr) break;
         view = view->next;
     }
     LeaveCriticalSection(&csVirtual);
