@@ -18,6 +18,7 @@
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
 #include "hook.h"
+#include "win.h"
 #include "queue.h"
 #include "task.h"
 #include "user.h"
@@ -977,6 +978,7 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT fromtype, INT code,
     HANDLE16 prevHook;
     HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook);
     LRESULT ret;
+    int iWndsLocks;
 
     WPARAM wParamOrig = wParam;
     LPARAM lParamOrig = lParam;
@@ -999,6 +1001,9 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT fromtype, INT code,
     TRACE(hook, "Calling hook %04x: %d %08x %08lx\n",
                   hook, code, wParam, lParam );
 
+    /* Suspend window structure locks before calling user code */
+    iWndsLocks = WIN_SuspendWndsLock();
+
     ret = data->proc(code, wParam, lParam);
 
     /* Grrr. While the hook procedure is supposed to have an LRESULT return
@@ -1009,6 +1014,8 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT fromtype, INT code,
     if (    (data->flags & HOOK_MAPTYPE) == HOOK_WIN16 
          && data->id != WH_JOURNALPLAYBACK )
         ret = LOWORD( ret );
+
+    WIN_RestoreWndsLock(iWndsLocks);
 
     TRACE(hook, "Ret hook %04x = %08lx\n", hook, ret );
 
