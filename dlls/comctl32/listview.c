@@ -724,7 +724,6 @@ static inline LRESULT CallWindowProcT(WNDPROC proc, HWND hwnd, UINT uMsg,
     InvalidateRect(infoPtr->hwndSelf, rect, TRUE); \
 } while (0)
 
-/* FIXME: what if we show the focus on a large item in ICON mode? */
 #define LISTVIEW_InvalidateItem(infoPtr, nItem) do { \
     RECT rcItem; \
     rcItem.left = LVIR_BOUNDS; \
@@ -1206,37 +1205,26 @@ static void LISTVIEW_UnsupportedStyles(LONG lStyle)
  * [I] infoPtr : valid pointer to the listview structure
  * [I] nItem  : item number
  * [O] lpptPosition : ptr to Position point
- *                the Position point is relative to infoPtr->rcList
- *                (has *NOT* been adjusted by the origin)
- * [O] lprcBoundary : ptr to Boundary rectangle
- *                the Boundary rectangle is relative to infoPtr->rcList
- *                (has *NOT* been adjusted by the origin)
+ * 		  Same as LVM_GETITEMPOSITION
+ * [O] lprcBounds : ptr to Bounds rectangle
+ *                Same as LVM_GETITEMRECT with LVIR_BOUNDS
  * [O] lprcIcon : ptr to Icon rectangle
- *                the Icon rectangle is relative to infoPtr->rcView
- *                (has already been adjusted by the origin)
+ *                Same as LVM_GETITEMRECT with LVIR_ICON
  * [O] lprcLabel : ptr to Label rectangle
- *              - the Label rectangle is relative to infoPtr->rcView
- *                (has already been adjusted by the origin)
- *              - the Label rectangle encloses the label text only
- * [O] lprcText : ptr to FullText rectangle
- *              - the FullText rectangle is relative to infoPtr->rcView
- *                (has already been adjusted by the origin)
- *              - the FullText rectangle contains the Label rectangle
- *                but may be bigger. Used for filling the background.
+ *                Same as LVM_GETITEMRECT with LVIR_LABEL
  *
  * RETURN:
  *   TRUE if computations OK
  *   FALSE otherwise
  */
 static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
-				    LPPOINT lpptPosition,
-				    LPRECT lprcBoundary, LPRECT lprcIcon,
-				    LPRECT lprcLabel, LPRECT lprcText)
+				    LPPOINT lpptPosition, LPRECT lprcBounds,
+				    LPRECT lprcIcon, LPRECT lprcLabel)
 {
     LONG lStyle = infoPtr->dwStyle;
     UINT uView = lStyle & LVS_TYPEMASK;
     POINT Origin, Position, TopLeft;
-    RECT Icon, Boundary, Label, FullText;
+    RECT Icon, Bounds, Label;
     INT nIndent = 0;
 
     if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return FALSE;
@@ -1399,10 +1387,7 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	      Label.bottom = Label.top + infoPtr->nItemHeight + HEIGHT_PADDING;
 	      LISTVIEW_UpdateLargeItemLabelRect (infoPtr, nItem, &Label);
 	  }
-	  FullText = Label;
-	  InflateRect(&FullText, 2, 0);
 	  if (lprcLabel) *lprcLabel = Label;
-	  if (lprcText) *lprcText = FullText;
       }
       else return FALSE;
   }
@@ -1427,7 +1412,6 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
       else
 	  Label.right = nLeftPos + infoPtr->nItemWidth;
       if (lprcLabel) *lprcLabel = Label;
-      if (lprcText) *lprcText = Label;
   }
   else /* LVS_LIST or LVS_REPORT */
   {
@@ -1450,34 +1434,32 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	if (Label.right - Position.x > infoPtr->nItemWidth)
 	    Label.right = Position.x + infoPtr->nItemWidth;
         if (lprcLabel) *lprcLabel = Label;
-        if (lprcText) *lprcText = Label;
   }
   
-    TRACE("hwnd=%x, item=%d, label=%s, fulltext=%s\n",
-	  infoPtr->hwndSelf, nItem, debugrect(&Label), debugrect(lprcText));
+    TRACE("hwnd=%x, item=%d, label=%s\n", infoPtr->hwndSelf, nItem, debugrect(&Label));
 
     /***********************************************************/
-    /* compute boundary box for the item (ala LVM_GETITEMRECT) */
+    /* compute bounds box for the item (ala LVM_GETITEMRECT) */
     /***********************************************************/
 
     if (uView == LVS_REPORT)
     {
-	Boundary.left = TopLeft.x;
-	Boundary.top = TopLeft.y;
-	Boundary.right = Boundary.left + infoPtr->nItemWidth;
-	Boundary.bottom = Boundary.top + infoPtr->nItemHeight;
+	Bounds.left = TopLeft.x;
+	Bounds.top = TopLeft.y;
+	Bounds.right = Bounds.left + infoPtr->nItemWidth;
+	Bounds.bottom = Bounds.top + infoPtr->nItemHeight;
 	if (!(infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))
-	    Boundary.left += nIndent;
-	Boundary.right -= REPORT_MARGINX;
-	if (Boundary.right < Boundary.left) Boundary.right = Boundary.left;
+	    Bounds.left += nIndent;
+	Bounds.right -= REPORT_MARGINX;
+	if (Bounds.right < Bounds.left) Bounds.right = Bounds.left;
     }
     else
     {
-	UnionRect(&Boundary, &Icon, &Label);
+	UnionRect(&Bounds, &Icon, &Label);
     }
 
-    TRACE("hwnd=%x, item=%d, boundary=%s\n", infoPtr->hwndSelf, nItem, debugrect(&Boundary));
-    if (lprcBoundary) *lprcBoundary = Boundary;
+    TRACE("hwnd=%x, item=%d, bounds=%s\n", infoPtr->hwndSelf, nItem, debugrect(&Bounds));
+    if (lprcBounds) *lprcBounds = Bounds;
 
     return TRUE;
 }
@@ -3087,7 +3069,7 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
   WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
   LVITEMW lvItem;
   UINT uFormat = LISTVIEW_DTFLAGS;
-  RECT rcIcon, rcFocus, rcFullText, rcLabel, *lprcFocus;
+  RECT rcIcon, rcFocus, rcLabel, *lprcFocus;
   POINT ptOrg;
 
   TRACE("(hdc=%x, nItem=%d, rcItem=%s)\n", hdc, nItem, debugrect(&rcItem));
@@ -3106,7 +3088,7 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
   /* now check if we need to update the focus rectangle */
   lprcFocus = infoPtr->bFocus && (lvItem.state & LVIS_FOCUSED) ? &infoPtr->rcFocus : 0;
   
-  LISTVIEW_GetItemMeasures(infoPtr, nItem, &ptOrg, NULL, &rcIcon, &rcLabel, &rcFullText);
+  LISTVIEW_GetItemMeasures(infoPtr, nItem, &ptOrg, NULL, &rcIcon, &rcLabel);
 
   /* Set the item to the boundary box for now */
   TRACE("iconSize.cx=%ld, nItemWidth=%d\n", infoPtr->iconSize.cx, infoPtr->nItemWidth);
@@ -3222,18 +3204,8 @@ static BOOL LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
    * that the background is complete
    */
   rcFocus = rcLabel;  /* save for focus */
-  if ((uFormat & DT_NOCLIP) || (lvItem.state & LVIS_SELECTED))
-  {
-      /* FIXME: why do we need this??? */
-      HBRUSH hBrush = CreateSolidBrush(GetBkColor (hdc));
-
-      FillRect(hdc, &rcFullText, hBrush);
-      rcFocus = rcFullText;
-      DeleteObject(hBrush);
-
-      /* Save size of item drawing for next InvalidateRect */
-      TRACE("focused/selected, rcFocus=%s\n", debugrect(&rcFocus));
-  }
+  if (lvItem.state & LVIS_SELECTED)
+      ExtTextOutW(hdc, rcLabel.left, rcLabel.top, ETO_OPAQUE, &rcLabel, 0, 0, 0);
   /* else ? What if we are losing the focus? will we not get a complete
    * background?
    */
@@ -4982,35 +4954,7 @@ static BOOL LISTVIEW_GetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, LPPOINT 
 
     if (!lpptPosition || nItem < 0 || nItem >= infoPtr->nItemCount) return FALSE;
 
-    return LISTVIEW_GetItemMeasures(infoPtr, nItem, lpptPosition, NULL, NULL, NULL, NULL);
-}
-
-/***
- *  Adjust a text rectangle to an integral number of text lines.
- */
-static void LISTVIEW_GetIntegralLines(
-	const LISTVIEW_INFO *infoPtr,
-	RECT *rcText)
-{
-    INT i, j, k, l;
-
-    /*
-     * We need to have the bottom to be an intergal number of
-     * text lines (ntmHeight) below text top that is less than
-     * or equal to the nItemHeight.
-	     */
-    i = infoPtr->nItemHeight - infoPtr->iconSize.cy -
-	ICON_TOP_PADDING - ICON_BOTTOM_PADDING;
-    j = i / infoPtr->ntmHeight;
-    k = j * infoPtr->ntmHeight;
-    l = rcText->top + k;
-    rcText->bottom = min(rcText->bottom, l);
-    rcText->bottom += 1;
-
-    TRACE("integral lines, nitemH=%d, ntmH=%d, icon.cy=%ld, i=%d, j=%d, k=%d, rect=(%d,%d)-(%d,%d)\n",
-	  infoPtr->nItemHeight, infoPtr->ntmHeight, infoPtr->iconSize.cy,
-	  i, j, k,
-	  rcText->left, rcText->top, rcText->right, rcText->bottom);
+    return LISTVIEW_GetItemMeasures(infoPtr, nItem, lpptPosition, NULL, NULL, NULL);
 }
 
 
@@ -5085,10 +5029,20 @@ static BOOL LISTVIEW_UpdateLargeItemLabelRect (LISTVIEW_INFO *infoPtr, int nItem
     if (focused)
     {
 	rcText.bottom += 2;
+	InflateRect(&rcText, 2, 0);
     }
     else /* not focused, may or may not be selected */
     {
-	LISTVIEW_GetIntegralLines(infoPtr, &rcText);
+        /*
+         * We need to have the bottom to be an intergal number of
+         * text lines (ntmHeight) below text top that is less than
+         * or equal to the nItemHeight.
+         */
+        INT lh = infoPtr->nItemHeight - infoPtr->iconSize.cy - 
+		 ICON_TOP_PADDING - ICON_BOTTOM_PADDING;
+        INT ih = (lh / infoPtr->ntmHeight) * infoPtr->ntmHeight;
+        rcText.bottom = min(rcText.bottom, rcText.top + ih);
+        rcText.bottom += 1;
     }
     *rect = rcText;
 
@@ -5166,7 +5120,7 @@ static BOOL LISTVIEW_UpdateLargeItemLabelRect (LISTVIEW_INFO *infoPtr, int nItem
  */
 static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
 {
-    RECT label_rect, icon_rect;
+    RECT label_rect;
 
     TRACE("(hwnd=%x, nItem=%d, lprc=%p)\n", infoPtr->hwndSelf, nItem, lprc);
 
@@ -5175,20 +5129,22 @@ static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
     switch(lprc->left)
     {
     case LVIR_ICON:
-	if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, NULL, NULL, lprc, NULL, NULL)) return FALSE;
+	if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, NULL, NULL, lprc, NULL)) return FALSE;
         break;
 
     case LVIR_LABEL:
-	if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, NULL, NULL, NULL, lprc, NULL)) return FALSE;
+	if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, NULL, NULL, NULL, lprc)) return FALSE;
         break;
 
     case LVIR_BOUNDS:
-	if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, NULL, lprc, NULL, NULL, NULL)) return FALSE;
+	if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, NULL, lprc, NULL, NULL)) return FALSE;
         break;
 
     case LVIR_SELECTBOUNDS:
-	if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, NULL, NULL, &icon_rect, &label_rect, NULL)) return FALSE;
-	UnionRect (lprc, &icon_rect, &label_rect);
+	if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, NULL, lprc, NULL, &label_rect)) return FALSE;
+	if ( (infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT && 
+	     (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) )
+	    lprc->right = label_rect.right;
         break;
 
     default:
@@ -7629,12 +7585,12 @@ static LRESULT LISTVIEW_KillFocus(LISTVIEW_INFO *infoPtr)
     /* if we have a focus rectagle, get rid of it */
     LISTVIEW_ShowFocusRect(infoPtr, infoPtr->nFocusedItem, FALSE);
     
-    /* invalidate the selected items before reseting focus flag */
-    LISTVIEW_InvalidateSelectedItems(infoPtr);
-    
     /* set window focus flag */
     infoPtr->bFocus = FALSE;
 
+    /* invalidate the selected items before reseting focus flag */
+    LISTVIEW_InvalidateSelectedItems(infoPtr);
+    
     return 0;
 }
 
@@ -8155,11 +8111,11 @@ static LRESULT LISTVIEW_SetFocus(LISTVIEW_INFO *infoPtr, HWND hwndLoseFocus)
     /* send NM_SETFOCUS notification */
     notify_setfocus(infoPtr);
 
-    /* put the focus rect back on */
-    LISTVIEW_ShowFocusRect(infoPtr, infoPtr->nFocusedItem, TRUE);
-
     /* set window focus flag */
     infoPtr->bFocus = TRUE;
+
+    /* put the focus rect back on */
+    LISTVIEW_ShowFocusRect(infoPtr, infoPtr->nFocusedItem, TRUE);
 
     /* redraw all visible selected items */
     LISTVIEW_InvalidateSelectedItems(infoPtr);
