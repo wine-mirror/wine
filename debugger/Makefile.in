@@ -37,4 +37,6 @@ y.tab.c y.tab.h: dbg.y
 @LEX_OUTPUT_ROOT@.c: debug.l
 	$(LEX) -8 -I $(SRCDIR)/debug.l
 
+@LEX_OUTPUT_ROOT@.o: y.tab.h
+
 ### Dependencies:

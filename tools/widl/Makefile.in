@@ -36,6 +36,8 @@ y.tab.c y.tab.h: parser.y
 @LEX_OUTPUT_ROOT@.c: parser.l
 	$(LEX) $(LEXOPT) -d -8 $(SRCDIR)/parser.l
 
+@LEX_OUTPUT_ROOT@.o: y.tab.h
+
 clean::
 	$(RM) parser.output parser.tab.h lex.backup y.output
 

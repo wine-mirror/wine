@@ -31,4 +31,6 @@ y.tab.c y.tab.h: macro.yacc.y
 @LEX_OUTPUT_ROOT@.c: macro.lex.l
 	$(LEX) -8 -i $(SRCDIR)/macro.lex.l
 
+@LEX_OUTPUT_ROOT@.o: y.tab.h
+
 ### Dependencies:

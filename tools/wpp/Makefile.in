@@ -29,4 +29,6 @@ y.tab.c y.tab.h: ppy.y
 @LEX_OUTPUT_ROOT@.c: ppl.l
 	$(LEX) $(LEXOPT) -d -Ppp -o$@ -8 $(SRCDIR)/ppl.l
 
+@LEX_OUTPUT_ROOT@.o: y.tab.h
+
 ### Dependencies:
