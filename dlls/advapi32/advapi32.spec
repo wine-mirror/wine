@@ -4,7 +4,7 @@ type	win32
 import	kernel32.dll
 import	ntdll.dll
 
-debug_channels (advapi reg)
+debug_channels (advapi crypt reg)
 
 @ stub AbortSystemShutdownA
 @ stub AbortSystemShutdownW
@@ -44,7 +44,7 @@ debug_channels (advapi reg)
 @ stdcall CryptDecrypt(long long long long ptr ptr) CryptDecrypt
 @ stdcall CryptDeriveKey(long long long long ptr) CryptDeriveKey
 @ stdcall CryptDestroyHash(long) CryptDestroyHash
-@ stdcall CryptDestroyKey(long) CryptDestroyHash
+@ stdcall CryptDestroyKey(long) CryptDestroyKey
 @ stdcall CryptDuplicateHash(long ptr long ptr) CryptDuplicateHash
 @ stdcall CryptDuplicateKey(long ptr long ptr) CryptDuplicateKey
 @ stdcall CryptEncrypt(long long long long ptr ptr long) CryptEncrypt
@@ -65,8 +65,8 @@ debug_channels (advapi reg)
 @ stdcall CryptHashSessionKey(long long long) CryptHashSessionKey
 @ stdcall CryptImportKey(long ptr long long long ptr) CryptImportKey
 @ stdcall CryptReleaseContext(long long) CryptReleaseContext
-@ stdcall CryptSignHashA(long long str long ptr ptr) CryptSignHashA
-@ stdcall CryptSignHashW(long long wstr long ptr ptr) CryptSignHashW
+@ stdcall CryptSignHashA(long long ptr long ptr ptr) CryptSignHashA
+@ stdcall CryptSignHashW(long long ptr long ptr ptr) CryptSignHashA
 @ stdcall CryptSetHashParam(long long ptr long) CryptSetHashParam
 @ stdcall CryptSetKeyParam(long long ptr long) CryptSetKeyParam
 @ stdcall CryptSetProviderA(str long) CryptSetProviderA
@@ -74,8 +74,8 @@ debug_channels (advapi reg)
 @ stdcall CryptSetProviderExA(str long ptr long) CryptSetProviderExA
 @ stdcall CryptSetProviderExW(wstr long ptr long) CryptSetProviderExW
 @ stdcall CryptSetProvParam(long long ptr long) CryptSetProvParam
-@ stdcall CryptVerifySignatureA(long ptr long long str long) CryptVerifySignatureA
-@ stdcall CryptVerifySignatureW(long ptr long long wstr long) CryptVerifySignatureW
+@ stdcall CryptVerifySignatureA(long ptr long long ptr long) CryptVerifySignatureA
+@ stdcall CryptVerifySignatureW(long ptr long long ptr long) CryptVerifySignatureA
 @ stub DeleteAce
 @ stdcall DeleteService(long) DeleteService
 @ stdcall DeregisterEventSource(long) DeregisterEventSource

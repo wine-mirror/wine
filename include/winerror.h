@@ -1897,5 +1897,41 @@ extern int WIN32_LastError;
 #define MEM_E_INVALID_LINK                                 0x80080010L
 #define MEM_E_INVALID_SIZE                                 0x80080011L
 
+/*Cryptographic Error Codes */
+#define NTE_BAD_UID                                        0x80090001L
+#define NTE_BAD_HASH                                       0x80090002L
+#define NTE_BAD_KEY                                        0x80090003L
+#define NTE_BAD_LEN                                        0x80090004L
+#define NTE_BAD_DATA                                       0x80090005L
+#define NTE_BAD_SIGNATURE                                  0x80090006L
+#define NTE_BAD_VER                                        0x80090007L
+#define NTE_BAD_ALGID                                      0x80090008L
+#define NTE_BAD_FLAGS                                      0x80090009L
+#define NTE_BAD_TYPE                                       0x8009000AL
+#define NTE_BAD_KEY_STATE                                  0x8009000BL
+#define NTE_BAD_HASH_STATE                                 0x8009000CL
+#define NTE_NO_KEY                                         0x8009000DL
+#define NTE_NO_MEMORY                                      0x8009000EL
+#define NTE_EXISTS                                         0x8009000FL
+#define NTE_PERM                                           0x80090010L
+#define NTE_NOT_FOUND                                      0x80090011L
+#define NTE_DOUBLE_ENCRYPT                                 0x80090012L
+#define NTE_BAD_PROVIDER                                   0x80090013L
+#define NTE_BAD_PROV_TYPE                                  0x80090014L
+#define NTE_BAD_PUBLIC_KEY                                 0x80090015L
+#define NTE_BAD_KEYSET                                     0x80090016L
+#define NTE_PROV_TYPE_NOT_DEF                              0x80090017L
+#define NTE_PROV_TYPE_ENTRY_BAD                            0x80090018L
+#define NTE_KEYSET_NOT_DEF                                 0x80090019L
+#define NTE_KEYSET_ENTRY_BAD                               0x8009001AL
+#define NTE_PROV_TYPE_NO_MATCH                             0x8009001BL
+#define NTE_SIGNATURE_FILE_BAD                             0x8009001CL
+#define NTE_PROVIDER_DLL_FAIL                              0x8009001DL
+#define NTE_PROV_DLL_NOT_FOUND                             0x8009001EL
+#define NTE_BAD_KEYSET_PARAM                               0x8009001FL
+#define NTE_FAIL                                           0x80090020L
+#define NTE_SYS_ERR                                        0x80090021L
+#define NTE_OP_OK                                          0
+
 
 #endif  /* __WINE_WINERROR_H */
