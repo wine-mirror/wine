@@ -36,6 +36,15 @@
 /* Define if libc is not reentrant  */
 #undef NO_REENTRANT_LIBC
 
+/* Define if libc uses __errno_location for reentrant errno */
+#undef HAVE__ERRNO_LOCATION
+
+/* Define if libc uses __error for reentrant errno */
+#undef HAVE__ERROR
+
+/* Define if libc uses ___errno for reentrant errno */
+#undef HAVE___ERRNO
+
 /* Define if all debug messages are to be compiled out */
 #undef NO_DEBUG_MSGS
 

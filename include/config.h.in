@@ -48,6 +48,15 @@
 /* Define if libc is not reentrant  */
 #undef NO_REENTRANT_LIBC
 
+/* Define if libc uses __errno_location for reentrant errno */
+#undef HAVE__ERRNO_LOCATION
+
+/* Define if libc uses __error for reentrant errno */
+#undef HAVE__ERROR
+
+/* Define if libc uses ___errno for reentrant errno */
+#undef HAVE___ERRNO
+
 /* Define if all debug messages are to be compiled out */
 #undef NO_DEBUG_MSGS
 
@@ -90,8 +99,14 @@
 /* The number of bytes in a long long.  */
 #undef SIZEOF_LONG_LONG
 
+/* Define if you have the _lwp_create function.  */
+#undef HAVE__LWP_CREATE
+
 /* Define if you have the clone function.  */
 #undef HAVE_CLONE
+
+/* Define if you have the connect function.  */
+#undef HAVE_CONNECT
 
 /* Define if you have the gethostbyname function.  */
 #undef HAVE_GETHOSTBYNAME
@@ -210,6 +225,9 @@
 /* Define if you have the <sys/filio.h> header file.  */
 #undef HAVE_SYS_FILIO_H
 
+/* Define if you have the <sys/lwp.h> header file.  */
+#undef HAVE_SYS_LWP_H
+
 /* Define if you have the <sys/modem.h> header file.  */
 #undef HAVE_SYS_MODEM_H
 
@@ -239,6 +257,9 @@
 
 /* Define if you have the <syscall.h> header file.  */
 #undef HAVE_SYSCALL_H
+
+/* Define if you have the <ucontext.h> header file.  */
+#undef HAVE_UCONTEXT_H
 
 /* Define if you have the <unistd.h> header file.  */
 #undef HAVE_UNISTD_H

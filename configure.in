@@ -89,6 +89,12 @@ if test "$ac_cv_func_gethostbyname" = "no"
 then
     AC_CHECK_LIB(nsl,gethostbyname)
 fi
+dnl Check for -lsocket for Solaris
+AC_CHECK_FUNCS(connect)
+if test "$ac_cv_func_connect" = "no"
+then
+    AC_CHECK_LIB(socket,connect)
+fi
 dnl Check for -lxpg4 for FreeBSD
 AC_CHECK_LIB(xpg4,setrunelocale)
 dnl Check for -ldl
@@ -342,29 +348,55 @@ dnl
 dnl For cross-compiling we blindly assume that libc is reentrant. This is
 dnl ok since non-reentrant libc is quite rare (mostly old libc5 versions).
 
+wine_cv_libc_reentrant=no 
 dnl 
 dnl Linux style errno location
 dnl 
-AC_CACHE_CHECK("for reentrant libc", wine_cv_libc_reentrant,
+AC_CACHE_CHECK("for reentrant libc: __errno_location", wine_cv_libc_r__errno_location,
   [AC_TRY_RUN([int myerrno = 0;
 char buf[256];
 int *__errno_location(){return &myerrno;}
 main(){connect(0,buf,255); exit(!myerrno);}],
-  wine_cv_libc_reentrant=yes, wine_cv_libc_reentrant=no,
-  wine_cv_libc_reentrant=yes )
+  wine_cv_libc_r__errno_location=yes, wine_cv_libc_r__errno_location=no,
+  wine_cv_libc_r__errno_location=yes )
+])
+if test "$wine_cv_libc_r__errno_location" = "yes"
+then
+    AC_DEFINE(HAVE__ERRNO_LOCATION)
+    wine_cv_libc_reentrant=__errno_location 
+fi
 dnl
 dnl FreeBSD style errno location
 dnl 
-  if test "$wine_cv_libc_reentrant" = "no" 
-  then
-    AC_TRY_RUN([int myerrno = 0;
+AC_CACHE_CHECK("for reentrant libc: __error", wine_cv_libc_r__error,
+  [AC_TRY_RUN([int myerrno = 0;
 char buf[256];
 int *__error(){return &myerrno;}
 main(){connect(0,buf,255); exit(!myerrno);}],
-    wine_cv_libc_reentrant=yes, wine_cv_libc_reentrant=no,
-    wine_cv_libc_reentrant=yes )
-  fi
+    wine_cv_libc_r__error=yes, wine_cv_libc_r__error=no,
+    wine_cv_libc_r__error=yes )
 ])
+if test "$wine_cv_libc_r__error" = "yes"
+then
+    AC_DEFINE(HAVE__ERROR)
+    wine_cv_libc_reentrant=__error 
+fi
+dnl
+dnl Solaris style errno location
+dnl 
+AC_CACHE_CHECK("for reentrant libc: ___errno", wine_cv_libc_r___errno,
+  [AC_TRY_RUN([int myerrno = 0;
+char buf[256];
+int *___errno(){return &myerrno;}
+main(){connect(0,buf,255); exit(!myerrno);}],
+    wine_cv_libc_r___errno=yes, wine_cv_libc_r___errno=no,
+    wine_cv_libc_r___errno=yes )
+])
+if test "$wine_cv_libc_r___errno" = "yes"
+then
+    AC_DEFINE(HAVE___ERRNO)
+    wine_cv_libc_reentrant=___errno 
+fi
 if test "$wine_cv_libc_reentrant" = "no" 
 then
   AC_DEFINE(NO_REENTRANT_LIBC)
@@ -376,14 +408,14 @@ dnl This may fail to determine whether X libraries are reentrant if
 dnl AC_PATH_XTRA does not set x_libraries. In this case manual configuration
 dnl is possible with the --without-reentrant-x option.
 
-if test "$have_x" = "yes"
+if test "$have_x" = "yes" -a "$wine_cv_libc_reentrant" != "no"
 then
 AC_CACHE_CHECK( "for reentrant X libraries", wine_cv_x_reentrant,
-  [ if test "x$with_reentrant_x" = "xno"
+  [ if test "x$with_reentrant_x" = "xno" 
     then
         wine_cv_x_reentrant=no
     else
-	libX11_ckeck=none
+	libX11_check=none
 	for dir in "$x_libraries" /usr/lib /usr/local/lib /lib; do
 	    if test -r $dir/libX11.so; then
 		libX11_check="-D $dir/libX11.so"
@@ -395,7 +427,7 @@ AC_CACHE_CHECK( "for reentrant X libraries", wine_cv_x_reentrant,
 	    fi
 	done
 	if test "$libX11_check" != "none"; then
-	    if nm $libX11_check | grep __errno_location >/dev/null 2>&1
+	    if nm $libX11_check | grep $wine_cv_libc_reentrant >/dev/null 2>&1
 	    then
 		wine_cv_x_reentrant=yes
 	    else
@@ -415,8 +447,8 @@ fi
 
 dnl **** Check for functions and header files ****
 
-AC_CHECK_FUNCS(rfork clone getpagesize memmove sendmsg sigaltstack strerror stricmp tcgetattr timegm usleep wait4 waitpid vfscanf)
-AC_CHECK_HEADERS(wctype.h sys/syscall.h syscall.h sys/param.h sys/vfs.h sys/mount.h sys/statfs.h float.h linux/cdrom.h linux/ucdrom.h sys/cdio.h sys/filio.h sys/modem.h strings.h sys/strtio.h dlfcn.h unistd.h sys/sockio.h net/if.h netinet/in.h sys/file.h libio.h curses.h ncurses.h elf.h arpa/nameser.h resolv.h)
+AC_CHECK_FUNCS(rfork clone _lwp_create getpagesize memmove sendmsg sigaltstack strerror stricmp tcgetattr timegm usleep wait4 waitpid vfscanf)
+AC_CHECK_HEADERS(wctype.h sys/syscall.h syscall.h sys/param.h sys/vfs.h sys/mount.h sys/statfs.h float.h linux/cdrom.h linux/ucdrom.h sys/cdio.h sys/filio.h sys/modem.h strings.h sys/strtio.h dlfcn.h unistd.h sys/sockio.h net/if.h netinet/in.h sys/file.h libio.h curses.h ncurses.h elf.h arpa/nameser.h resolv.h sys/lwp.h ucontext.h)
 AC_HEADER_STAT()
 AC_C_CONST()
 AC_TYPE_SIZE_T()
