@@ -45,7 +45,11 @@ extern COLORREF	WCUSER_ColorMap[16];
 extern BOOL WCUSER_GetProperties(struct inner_data*, BOOL);
 extern BOOL WCUSER_SetFont(struct inner_data* data, const LOGFONT* font);
 extern BOOL WCUSER_ValidateFont(const struct inner_data* data, const LOGFONT* lf);
-extern BOOL WCUSER_ValidateFontMetric(const struct inner_data* data, const TEXTMETRIC* tm);
-extern BOOL WCUSER_AreFontsEqual(const struct config_data* config, const LOGFONT* lf);
-extern void WCUSER_CopyFont(struct config_data* config, const LOGFONT* lf);
+extern BOOL WCUSER_ValidateFontMetric(const struct inner_data* data, 
+                                      const TEXTMETRIC* tm, DWORD fontType);
+extern BOOL WCUSER_AreFontsEqual(const struct config_data* config, 
+                                 const LOGFONT* lf);
+extern HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONT* lf);
+extern void WCUSER_FillLogFont(LOGFONT* lf, const WCHAR* name, 
+                               UINT height, UINT weight);
 

@@ -258,57 +258,166 @@ static void	WCUSER_SetTitle(const struct inner_data* data)
 BOOL WCUSER_AreFontsEqual(const struct config_data* config, const LOGFONT* lf)
 {
     return lf->lfHeight == config->cell_height &&
-        lf->lfWidth  == config->cell_width &&
         lf->lfWeight == config->font_weight &&
         !lf->lfItalic && !lf->lfUnderline && !lf->lfStrikeOut &&
-        !lstrcmpW(lf->lfFaceName, config->face_name);
+        !lstrcmp(lf->lfFaceName, config->face_name);
+}
+
+struct font_chooser {
+    struct inner_data*	data;
+    int			done;
+};
+
+/******************************************************************
+ *		WCUSER_ValidateFontMetric
+ *
+ * Returns true if the font described in tm is usable as a font for the renderer
+ */
+BOOL	WCUSER_ValidateFontMetric(const struct inner_data* data, const TEXTMETRIC* tm, DWORD fontType)
+{
+    BOOL        ret = TRUE;
+
+    if (fontType & RASTER_FONTTYPE)
+        ret = (tm->tmMaxCharWidth * data->curcfg.win_width < GetSystemMetrics(SM_CXSCREEN) &&
+               tm->tmHeight * data->curcfg.win_height < GetSystemMetrics(SM_CYSCREEN));
+    return ret && !tm->tmItalic && !tm->tmUnderlined && !tm->tmStruckOut &&
+        (tm->tmCharSet == DEFAULT_CHARSET /*|| tm->tmCharSet == ANSI_CHARSET*/);
+}
+
+/******************************************************************
+ *		WCUSER_ValidateFont
+ *
+ * Returns true if the font family described in lf is usable as a font for the renderer
+ */
+BOOL	WCUSER_ValidateFont(const struct inner_data* data, const LOGFONT* lf)
+{
+    return (lf->lfPitchAndFamily & 3) == FIXED_PITCH && 
+        /* (lf->lfPitchAndFamily & 0xF0) == FF_MODERN && */
+        (lf->lfCharSet == DEFAULT_CHARSET || lf->lfCharSet == ANSI_CHARSET);
+}
+
+/******************************************************************
+ *		get_first_font_enum_2
+ *		get_first_font_enum
+ *
+ * Helper functions to get a decent font for the renderer
+ */
+static int CALLBACK get_first_font_enum_2(const LOGFONT* lf, const TEXTMETRIC* tm, 
+					  DWORD FontType, LPARAM lParam)
+{
+    struct font_chooser*	fc = (struct font_chooser*)lParam;
+
+    if (WCUSER_ValidateFontMetric(fc->data, tm, FontType))
+    {
+	WCUSER_SetFont(fc->data, lf);
+	fc->done = 1;
+	return 0;
+    }
+    return 1;
+}
+
+static int CALLBACK get_first_font_enum(const LOGFONT* lf, const TEXTMETRIC* tm, 
+					DWORD FontType, LPARAM lParam)
+{
+    struct font_chooser*	fc = (struct font_chooser*)lParam;
+
+    if (WCUSER_ValidateFont(fc->data, lf))
+    {
+	EnumFontFamilies(PRIVATE(fc->data)->hMemDC, lf->lfFaceName, get_first_font_enum_2, lParam);
+	return !fc->done; /* we just need the first matching one... */
+    }
+    return 1;
 }
 
 /******************************************************************
  *		CopyFont
  *
- *
+ * get the relevant information from the font described in lf and store them
+ * in config
  */
-void WCUSER_CopyFont(struct config_data* config, const LOGFONT* lf)
+HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONT* lf)
 {
-    config->cell_width  = lf->lfWidth;
-    config->cell_height = lf->lfHeight;
-    config->font_weight  = lf->lfWeight;
-    lstrcpyW(config->face_name, lf->lfFaceName);
+    TEXTMETRIC  tm;
+    HDC         hDC;
+    HFONT       hFont, hOldFont;
+    int         w, i, buf[256];
+
+    if (!(hDC = GetDC(hWnd))) return (HFONT)0;
+    if (!(hFont = CreateFontIndirect(lf))) goto err1;
+
+    hOldFont = SelectObject(hDC, hFont);
+    GetTextMetrics(hDC, &tm);
+
+    /* FIXME:
+     * the current freetype engine (at least 2.0.x with x <= 8) and its implementation
+     * in Wine don't return adequate values for fixed fonts
+     * In Windows, those fonts are expectes to return the same value for
+     *  - the average width
+     *  - the largest width
+     *  - the width of all characters in the font
+     * This isn't true in Wine. As a temporary workaound, we get as the width of the 
+     * cell, the width of the first character in the font, after checking that all
+     * characters in the font have the same width (I hear paranoïa coming)
+     * when this gets fixed, the should be using tm.tmAveCharWidth or tm.tmMaxCharWidth
+     * as the cell width.
+     */
+    GetCharWidth32(hDC, tm.tmFirstChar, tm.tmFirstChar, &w);
+    for (i = tm.tmFirstChar + 1; i <= tm.tmLastChar; i += sizeof(buf) / sizeof(buf[0]))
+    {
+        int j, l;
+            
+        l = min(tm.tmLastChar - i, sizeof(buf) / sizeof(buf[0]) - 1);
+        GetCharWidth32(hDC, i, i + l, buf);
+        for (j = 0; j <= l; j++) 
+        {
+            if (buf[j] != w)
+            {
+                Trace(0, "Non uniform cell width: [%d]=%d [%d]=%d\n", 
+                      i + j, buf[j], tm.tmFirstChar, w);
+                goto err;
+            }
+        }
+    }
+
+    SelectObject(hDC, hOldFont);
+    ReleaseDC(hWnd, hDC);
+
+    config->cell_width  = w;
+    config->cell_height = tm.tmHeight;
+    config->font_weight = tm.tmWeight;
+    lstrcpy(config->face_name, lf->lfFaceName);
+
+    return hFont;
+ err:
+    if (hDC && hOldFont) SelectObject(hDC, hOldFont);
+    if (hFont) DeleteObject(hFont);
+ err1:
+    if (hDC) ReleaseDC(hWnd, hDC);
+
+    return (HFONT)0;
 }
 
 /******************************************************************
- *		WCUSER_InitFont
+ *		WCUSER_FillLogFont
  *
- * create a hFont from the settings saved in registry...
- * (called on init, assuming no font has been created before)
+ *
  */
-BOOL	WCUSER_InitFont(struct inner_data* data)
+void    WCUSER_FillLogFont(LOGFONT* lf, const WCHAR* name, UINT height, UINT weight)
 {
-    LOGFONT lf;
-        
-    lf.lfHeight        = -data->curcfg.cell_height;
-    lf.lfWidth         = data->curcfg.cell_width;
-    lf.lfEscapement    = 0;
-    lf.lfOrientation   = 0;
-    lf.lfWeight        = data->curcfg.font_weight;
-    lf.lfItalic        = FALSE;
-    lf.lfUnderline     = FALSE;
-    lf.lfStrikeOut     = FALSE;
-    lf.lfCharSet       = DEFAULT_CHARSET;
-    lf.lfOutPrecision  = OUT_DEFAULT_PRECIS;
-    lf.lfClipPrecision = CLIP_DEFAULT_PRECIS; 
-    lf.lfQuality       = DEFAULT_QUALITY;
-    lf.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
-    lstrcpy(lf.lfFaceName, data->curcfg.face_name);
-    PRIVATE(data)->hFont = CreateFontIndirect(&lf);
-    if (!PRIVATE(data)->hFont) return FALSE;
-
-    WCUSER_ComputePositions(data);
-    WCUSER_NewBitmap(data, TRUE);
-    InvalidateRect(PRIVATE(data)->hWnd, NULL, FALSE);
-    UpdateWindow(PRIVATE(data)->hWnd);
-    return TRUE;
+    lf->lfHeight        = height;
+    lf->lfWidth         = 0;
+    lf->lfEscapement    = 0;
+    lf->lfOrientation   = 0;
+    lf->lfWeight        = weight;
+    lf->lfItalic        = FALSE;
+    lf->lfUnderline     = FALSE;
+    lf->lfStrikeOut     = FALSE;
+    lf->lfCharSet       = DEFAULT_CHARSET;
+    lf->lfOutPrecision  = OUT_DEFAULT_PRECIS;
+    lf->lfClipPrecision = CLIP_DEFAULT_PRECIS; 
+    lf->lfQuality       = DEFAULT_QUALITY;
+    lf->lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
+    lstrcpy(lf->lfFaceName, name);
 }
 
 /******************************************************************
@@ -320,15 +429,42 @@ BOOL	WCUSER_SetFont(struct inner_data* data, const LOGFONT* logfont)
 {
     if (WCUSER_AreFontsEqual(&data->curcfg, logfont)) return TRUE;
     if (PRIVATE(data)->hFont) DeleteObject(PRIVATE(data)->hFont);
-    PRIVATE(data)->hFont = CreateFontIndirect(logfont);
+
+    PRIVATE(data)->hFont = WCUSER_CopyFont(&data->curcfg, PRIVATE(data)->hWnd, logfont);
     if (!PRIVATE(data)->hFont) {Trace(0, "wrong font\n");return FALSE;}
-    WCUSER_CopyFont(&data->curcfg, logfont);
 
     WCUSER_ComputePositions(data);
     WCUSER_NewBitmap(data, TRUE);
     InvalidateRect(PRIVATE(data)->hWnd, NULL, FALSE);
     UpdateWindow(PRIVATE(data)->hWnd);
+
     return TRUE;
+}
+
+/******************************************************************
+ *		WCUSER_InitFont
+ *
+ * create a hFont from the settings saved in registry...
+ * (called on init, assuming no font has been created before)
+ */
+static BOOL	WCUSER_InitFont(struct inner_data* data)
+{
+    LOGFONT             lf;
+    struct font_chooser fc;
+
+    WCUSER_FillLogFont(&lf, data->curcfg.face_name, 
+                       data->curcfg.cell_height, data->curcfg.font_weight);
+    data->curcfg.face_name[0] = 0;
+    data->curcfg.cell_height = data->curcfg.font_weight = 0;
+
+    if (WCUSER_SetFont(data, &lf)) return TRUE;
+
+    /* try to find an acceptable font */
+    Trace(0, "Couldn't match the font from registry... trying to find one\n");
+    fc.data = data;
+    fc.done = 0;
+    EnumFontFamilies(PRIVATE(data)->hMemDC, NULL, get_first_font_enum, (LPARAM)&fc);
+    return fc.done;
 }
 
 /******************************************************************
@@ -561,68 +697,6 @@ static void WCUSER_Scroll(struct inner_data* data, int pos, BOOL horz)
 	data->curcfg.win_pos.Y = pos;
     }
     InvalidateRect(PRIVATE(data)->hWnd, NULL, FALSE);
-}
-
-struct font_chooser {
-    struct inner_data*	data;
-    int			done;
-};
-
-/******************************************************************
- *		WCUSER_ValidateFontMetric
- *
- * Returns true if the font described in tm is usable as a font for the renderer
- */
-BOOL	WCUSER_ValidateFontMetric(const struct inner_data* data, const TEXTMETRIC* tm)
-{
-    return tm->tmMaxCharWidth * data->curcfg.win_width < GetSystemMetrics(SM_CXSCREEN) &&
-	tm->tmHeight * data->curcfg.win_height < GetSystemMetrics(SM_CYSCREEN) &&
-	!tm->tmItalic && !tm->tmUnderlined && !tm->tmStruckOut;
-}
-
-/******************************************************************
- *		WCUSER_ValidateFont
- *
- * Returns true if the font family described in lf is usable as a font for the renderer
- */
-BOOL	WCUSER_ValidateFont(const struct inner_data* data, const LOGFONT* lf)
-{
-    return (lf->lfPitchAndFamily & 3) == FIXED_PITCH && 
-        (lf->lfPitchAndFamily & 0xF0) == FF_MODERN &&
-        lf->lfCharSet != SYMBOL_CHARSET;
-}
-
-/******************************************************************
- *		get_first_font_enum_2
- *		get_first_font_enum
- *
- * Helper functions to get a decent font for the renderer
- */
-static int CALLBACK get_first_font_enum_2(const LOGFONT* lf, const TEXTMETRIC* tm, 
-					  DWORD FontType, LPARAM lParam)
-{
-    struct font_chooser*	fc = (struct font_chooser*)lParam;
-
-    if (WCUSER_ValidateFontMetric(fc->data, tm))
-    {
-	WCUSER_SetFont(fc->data, lf);
-	fc->done = 1;
-	return 0;
-    }
-    return 1;
-}
-
-static int CALLBACK get_first_font_enum(const LOGFONT* lf, const TEXTMETRIC* tm, 
-					DWORD FontType, LPARAM lParam)
-{
-    struct font_chooser*	fc = (struct font_chooser*)lParam;
-
-    if (WCUSER_ValidateFont(fc->data, lf))
-    {
-	EnumFontFamilies(PRIVATE(fc->data)->hMemDC, lf->lfFaceName, get_first_font_enum_2, lParam);
-	return !fc->done; /* we just need the first matching one... */
-    }
-    return 1;
 }
 
 /******************************************************************
@@ -1257,17 +1331,8 @@ BOOL WCUSER_InitBackend(struct inner_data* data)
     /* force update of current data */
     if (!WINECON_GrabChanges(data)) return FALSE;
 
-    if (!WCUSER_InitFont(data))
-    {
-        struct font_chooser fc;
-        /* try to find an acceptable font */
-        fc.data = data;
-        fc.done = 0;
-        EnumFontFamilies(PRIVATE(data)->hMemDC, NULL, get_first_font_enum, (LPARAM)&fc);
-        return fc.done;
-    }
+    if (!WCUSER_InitFont(data)) return FALSE;
+
     return TRUE;
 }
-
-
 

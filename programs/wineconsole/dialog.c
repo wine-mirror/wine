@@ -42,8 +42,9 @@ struct dialog_info
     int			nFont;		/* number of font size in size LB */
     struct font_info 
     {
-	TEXTMETRIC		tm;
-	LOGFONT			lf;
+        UINT                    height;
+        UINT                    weight;
+        WCHAR                   faceName[LF_FACESIZE];
     } 			*font;		/* array of nFont. index sync'ed with SIZE LB */
     void        (*apply)(struct dialog_info*, HWND, enum WCUSER_ApplyTo, DWORD);
 };
@@ -71,7 +72,15 @@ static void WCUSER_ApplyDefault(struct dialog_info* di, HWND hDlg, enum WCUSER_A
         di->config->quick_edit = val;
         break;
     case WCUSER_ApplyToFont:
-        WCUSER_CopyFont(di->config, &di->font[val].lf);
+        {
+            LOGFONT     lf;
+            HFONT       hFont;
+
+            WCUSER_FillLogFont(&lf, di->font[val].faceName, 
+                               di->font[val].height, di->font[val].weight);
+            hFont = WCUSER_CopyFont(di->config, PRIVATE(di->data)->hWnd, &lf);
+            DeleteObject(hFont);
+        }
         break;
     case WCUSER_ApplyToAttribute:
         di->config->def_attr = val;
@@ -112,7 +121,12 @@ static void WCUSER_ApplyCurrent(struct dialog_info* di, HWND hDlg, enum WCUSER_A
         di->config->quick_edit = val;
         break;
     case WCUSER_ApplyToFont:
-        WCUSER_SetFont(di->data, &di->font[val].lf);
+        {
+            LOGFONT lf;
+            WCUSER_FillLogFont(&lf, di->font[val].faceName, 
+                               di->font[val].height, di->font[val].weight);
+            WCUSER_SetFont(di->data, &lf);
+        }
         break;
     case WCUSER_ApplyToAttribute:
         di->config->def_attr = val;
@@ -228,12 +242,32 @@ static LRESULT WINAPI WCUSER_FontPreviewProc(HWND hWnd, UINT msg, WPARAM wParam,
 {
     switch (msg)
     {
+    case WM_CREATE:
+        SetWindowLong(hWnd, 0, 0);
+        break;
+    case WM_GETFONT:
+        return GetWindowLong(hWnd, 0);
+    case WM_SETFONT:
+        SetWindowLong(hWnd, 0, wParam);
+        if (LOWORD(lParam))
+        {
+            InvalidateRect(hWnd, NULL, TRUE);
+            UpdateWindow(hWnd);
+        }
+        break;
+    case WM_DESTROY:
+        {
+            HFONT hFont = (HFONT)GetWindowLong(hWnd, 0L);
+            if (hFont) DeleteObject(hFont);
+        }
+        break;
     case WM_PAINT:
         {
             PAINTSTRUCT	        ps;
             int		        font_idx;
             int		        size_idx;
             struct dialog_info*	di;
+            HFONT	        hFont, hOldFont;
             
             di = (struct dialog_info*)GetWindowLong(GetParent(hWnd), DWL_USER);
             BeginPaint(hWnd, &ps);
@@ -241,29 +275,27 @@ static LRESULT WINAPI WCUSER_FontPreviewProc(HWND hWnd, UINT msg, WPARAM wParam,
             font_idx = SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_GETCURSEL, 0L, 0L);
             size_idx = SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_SIZE, LB_GETCURSEL, 0L, 0L);
             
-            if (font_idx >= 0 && size_idx >= 0 && size_idx < di->nFont)
+            hFont = (HFONT)GetWindowLong(hWnd, 0L);
+            if (hFont)
             {
-                HFONT	hFont, hOldFont;
                 WCHAR	buf1[256];
                 WCHAR	buf2[256];
                 int	len1, len2;
-                
-                hFont = CreateFontIndirect(&di->font[size_idx].lf);
+
                 len1 = LoadString(GetModuleHandle(NULL), IDS_FNT_PREVIEW_1, 
                                   buf1, sizeof(buf1) / sizeof(WCHAR));
                 len2 = LoadString(GetModuleHandle(NULL), IDS_FNT_PREVIEW_2,
                                   buf2, sizeof(buf2) / sizeof(WCHAR));
                 buf1[len1] = buf2[len2] = 0;
-                if (hFont && len1)
+                if (len1) 
                 {
                     hOldFont = SelectObject(ps.hdc, hFont);
                     SetBkColor(ps.hdc, WCUSER_ColorMap[GetWindowLong(GetDlgItem(di->hDlg, IDC_FNT_COLOR_BK), 0)]);
                     SetTextColor(ps.hdc, WCUSER_ColorMap[GetWindowLong(GetDlgItem(di->hDlg, IDC_FNT_COLOR_FG), 0)]);
                     TextOut(ps.hdc, 0, 0, buf1, len1);
                     if (len2)
-                        TextOut(ps.hdc, 0, di->font[size_idx].tm.tmHeight, buf2, len2);
+                        TextOut(ps.hdc, 0, di->font[size_idx].height, buf2, len2);
                     SelectObject(ps.hdc, hOldFont);
-                    DeleteObject(hFont);
                 }
             }
             EndPaint(hWnd, &ps);
@@ -360,10 +392,11 @@ static int CALLBACK font_enum_size2(const LOGFONT* lf, const TEXTMETRIC* tm,
 {
     struct dialog_info*	di = (struct dialog_info*)lParam;
 
-    if (WCUSER_ValidateFontMetric(di->data, tm))
+    if (WCUSER_ValidateFontMetric(di->data, tm, FontType))
     {
 	di->nFont++;
     }
+
     return 1;
 }
 
@@ -375,16 +408,22 @@ static int CALLBACK font_enum(const LOGFONT* lf, const TEXTMETRIC* tm,
 
     if (WCUSER_ValidateFont(di->data, lf) && (hdc = GetDC(di->hDlg)))
     {
-	di->nFont = 0;
-	EnumFontFamilies(hdc, lf->lfFaceName, font_enum_size2, (LPARAM)di);
-	if (di->nFont)
+        if (FontType & RASTER_FONTTYPE)
+        {
+            di->nFont = 0;
+            EnumFontFamilies(hdc, lf->lfFaceName, font_enum_size2, (LPARAM)di);
+        }
+        else
+            di->nFont = 1;
+        
+        if (di->nFont)
 	{
-	    int idx;
-	    idx = SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_ADDSTRING, 
-				     0, (LPARAM)lf->lfFaceName);
-	}
+	    SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_ADDSTRING, 
+                               0, (LPARAM)lf->lfFaceName);
+        }
 	ReleaseDC(di->hDlg, hdc);
     }
+
     return 1;
 }
 
@@ -397,46 +436,61 @@ static int CALLBACK font_enum_size(const LOGFONT* lf, const TEXTMETRIC* tm,
 				   DWORD FontType, LPARAM lParam)
 {
     struct dialog_info*	di = (struct dialog_info*)lParam;
+    WCHAR	        buf[32];
+    static const WCHAR  fmt[] = {'%','l','d',0};
 
-    if (WCUSER_ValidateFontMetric(di->data, tm))
+    if (di->nFont == 0 && !(FontType & RASTER_FONTTYPE))
     {
-	WCHAR	buf[32];
-        static const WCHAR fmt[] = {'%','l','d',0};
+        static const int sizes[] = {8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72};
+        int i;
+
+        di->nFont = sizeof(sizes) / sizeof(sizes[0]);
+        di->font = HeapAlloc(GetProcessHeap(), 0, di->nFont * sizeof(di->font[0]));
+        for (i = 0; i < di->nFont; i++)
+        {
+            /* drop sizes where window size wouldn't fit on screen */
+            if (sizes[i] * di->data->curcfg.win_height > GetSystemMetrics(SM_CYSCREEN))
+            {
+                di->nFont = i;
+                break;
+            }
+            di->font[i].height = sizes[i];
+            di->font[i].weight = 400;
+            lstrcpy(di->font[i].faceName, lf->lfFaceName);
+            wsprintf(buf, fmt, sizes[i]);
+            SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_SIZE, LB_INSERTSTRING, i, (LPARAM)buf);
+        }
+        /* don't need to enumerate other */
+        return 0;
+    }
+
+    if (WCUSER_ValidateFontMetric(di->data, tm, FontType))
+    {
 	int	idx;
 
 	/* we want the string to be sorted with a numeric order, not a lexicographic...
 	 * do the job by hand... get where to insert the new string
 	 */
-	for (idx = 0; idx < di->nFont && tm->tmHeight > di->font[idx].tm.tmHeight; idx++);
-        if (idx < di->nFont &&
-            tm->tmHeight == di->font[idx].tm.tmHeight && 
-            tm->tmMaxCharWidth == di->font[idx].tm.tmMaxCharWidth)
-        {
-            /* we already have an entry with the same width & height...
-             * try to see which TEXTMETRIC (old or new) we should keep... 
-             */
-            if (di->font[idx].tm.tmWeight != tm->tmWeight)
-            {
-                /* get the weight closer to 400, the default value */
-                if (abs(tm->tmWeight - 400) < abs(di->font[idx].tm.tmWeight - 400))
-                {
-                    di->font[idx].tm = *tm;
-                }
-            }
-            /* else FIXME: skip the new tm for now */
-        }
-        else
+	for (idx = 0; idx < di->nFont && tm->tmHeight > di->font[idx].height; idx++);
+        while (idx < di->nFont && 
+               tm->tmHeight == di->font[idx].height && 
+               tm->tmWeight > di->font[idx].weight)
+            idx++;
+        if (idx == di->nFont || 
+            tm->tmHeight != di->font[idx].height ||
+            tm->tmWeight < di->font[idx].weight)
         {
             /* here we need to add the new entry */
-            wsprintfW(buf, fmt, tm->tmHeight);
+            wsprintf(buf, fmt, tm->tmHeight);
             SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_SIZE, LB_INSERTSTRING, idx, (LPARAM)buf);
 
-            /* now grow our arrays and insert to values at the same index than in the list box */
+            /* now grow our arrays and insert the values at the same index than in the list box */
             di->font = HeapReAlloc(GetProcessHeap(), 0, di->font, sizeof(*di->font) * (di->nFont + 1));
             if (idx != di->nFont)
                 memmove(&di->font[idx + 1], &di->font[idx], (di->nFont - idx) * sizeof(*di->font));
-            di->font[idx].tm = *tm;
-            di->font[idx].lf = *lf;
+            di->font[idx].height = tm->tmHeight;
+            di->font[idx].weight = tm->tmWeight;
+            lstrcpy(di->font[idx].faceName, lf->lfFaceName);
             di->nFont++;
         }
     }
@@ -450,19 +504,37 @@ static int CALLBACK font_enum_size(const LOGFONT* lf, const TEXTMETRIC* tm,
  */
 static BOOL  select_font(struct dialog_info* di)
 {
-    int		idx = SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_SIZE, LB_GETCURSEL, 0L, 0L);
+    int		font_idx, size_idx;
     WCHAR	buf[256];
     WCHAR	fmt[128];
+    LOGFONT     lf;
+    HFONT       hFont, hOldFont;
+    struct config_data config;
 
-    if (idx < 0 || idx >= di->nFont)
+    font_idx = SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_GETCURSEL, 0L, 0L);
+    size_idx = SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_SIZE, LB_GETCURSEL, 0L, 0L);
+
+    if (font_idx < 0 || size_idx < 0 || size_idx >= di->nFont)
 	return FALSE;
+    
+    WCUSER_FillLogFont(&lf, di->font[size_idx].faceName, 
+                       di->font[size_idx].height, di->font[size_idx].weight);
+    hFont = WCUSER_CopyFont(&config, PRIVATE(di->data)->hWnd, &lf);
+    if (!hFont) return FALSE;
+
+    if (config.cell_height != di->font[size_idx].height)
+        Trace(0, "select_font: mismatched heights (%u<>%u)\n",
+              config.cell_height, di->font[size_idx].height);
+    hOldFont = (HFONT)SendDlgItemMessage(di->hDlg, IDC_FNT_PREVIEW, WM_GETFONT, 0L, 0L);
+
+    SendDlgItemMessage(di->hDlg, IDC_FNT_PREVIEW, WM_SETFONT, (DWORD)hFont, TRUE);
+    if (hOldFont) DeleteObject(hOldFont);
 
     LoadString(GetModuleHandle(NULL), IDS_FNT_DISPLAY, fmt, sizeof(fmt) / sizeof(WCHAR));
-    wsprintfW(buf, fmt, di->font[idx].tm.tmMaxCharWidth, di->font[idx].tm.tmHeight);
+    wsprintf(buf, fmt, config.cell_width, config.cell_height);
 
     SendDlgItemMessage(di->hDlg, IDC_FNT_FONT_INFO, WM_SETTEXT, 0, (LPARAM)buf);
-    InvalidateRect(GetDlgItem(di->hDlg, IDC_FNT_PREVIEW), NULL, TRUE);
-    UpdateWindow(GetDlgItem(di->hDlg, IDC_FNT_PREVIEW));
+
     return TRUE;
 }
 
@@ -494,12 +566,19 @@ static BOOL  fill_list_size(struct dialog_info* di, BOOL doInit)
 
     if (doInit)
     {
+        int     ref = -1;
+
 	for (idx = 0; idx < di->nFont; idx++)
 	{
-	    if (WCUSER_AreFontsEqual(di->config, &di->font[idx].lf))
-		break;
+            if (!lstrcmp(di->font[idx].faceName, di->config->face_name) &&
+                di->font[idx].height == di->config->cell_height &&
+                di->font[idx].weight == di->config->font_weight)
+            {
+                if (ref == -1) ref = idx;
+                else Trace(0, "Several matches found: ref=%d idx=%d\n", ref, idx);
+            }
 	}
-	if (idx == di->nFont) idx = 0;
+	idx = (ref == -1) ? 0 : ref;
     }
     else
 	idx = 0;
@@ -545,6 +624,8 @@ static BOOL WINAPI WCUSER_FontDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM
 	di = (struct dialog_info*)((PROPSHEETPAGEA*)lParam)->lParam;
 	di->hDlg = hDlg;
 	SetWindowLong(hDlg, DWL_USER, (DWORD)di);
+        /* remove dialog from this control, font will be reset when listboxes are filled */
+        SendDlgItemMessage(hDlg, IDC_FNT_PREVIEW, WM_SETFONT, 0L, 0L);
 	fill_list_font(di);
         SetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_BK), 0, (di->config->def_attr >> 4) & 0x0F);
         SetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_FG), 0, di->config->def_attr & 0x0F);
@@ -704,7 +785,7 @@ BOOL WCUSER_GetProperties(struct inner_data* data, BOOL current)
     wndclass.style         = 0;
     wndclass.lpfnWndProc   = WCUSER_FontPreviewProc;
     wndclass.cbClsExtra    = 0;
-    wndclass.cbWndExtra    = 0;
+    wndclass.cbWndExtra    = 4; /* for hFont */
     wndclass.hInstance     = GetModuleHandle(NULL);
     wndclass.hIcon         = 0;
     wndclass.hCursor       = LoadCursor(0, IDC_ARROW);
