@@ -345,6 +345,9 @@ HRESULT WINAPI RegisterTypeLib(
     LPSTR guidA;
     CHAR keyName[120];
     HKEY key, subKey;
+    UINT types, tidx;
+    TYPEKIND kind;
+    static const char *PSOA = "{00020424-0000-0000-C000-000000000046}";
 
     if (ptlib == NULL || szFullPath == NULL)
         return E_INVALIDARG;
@@ -403,7 +406,90 @@ HRESULT WINAPI RegisterTypeLib(
     else
         res = E_FAIL;
 
+    /* register OLE Automation-compatible interfaces for this typelib */
+    types = ITypeLib_GetTypeInfoCount(ptlib);
+    for (tidx=0; tidx<types; tidx++) {
+	if (SUCCEEDED(ITypeLib_GetTypeInfoType(ptlib, tidx, &kind))) {
+	    LPOLESTR name = NULL;
+	    ITypeInfo *tinfo = NULL;
+	    BOOL stop = FALSE;
+	    ITypeLib_GetDocumentation(ptlib, tidx, &name, NULL, NULL, NULL);
+	    switch (kind) {
+	    case TKIND_INTERFACE:
+		TRACE_(typelib)("%d: interface %s\n", tidx, debugstr_w(name));
+		ITypeLib_GetTypeInfo(ptlib, tidx, &tinfo);
+		break;
+	    case TKIND_DISPATCH:
+		TRACE_(typelib)("%d: dispinterface %s\n", tidx, debugstr_w(name));
+		/* ITypeLib_GetTypeInfo(ptlib, tidx, &tinfo); */
+		break;
+	    case TKIND_COCLASS:
+		TRACE_(typelib)("%d: coclass %s\n", tidx, debugstr_w(name));
+		/* coclasses should probably not be registered? */
+		break;
+	    default:
+		TRACE_(typelib)("%d: %s\n", tidx, debugstr_w(name));
+		break;
+	    }
+	    if (tinfo) {
+		TYPEATTR *tattr = NULL;
+		ITypeInfo_GetTypeAttr(tinfo, &tattr);
+		if (tattr) {
+		    TRACE_(typelib)("guid=%s, flags=%04x\n",
+				    debugstr_guid(&tattr->guid),
+				    tattr->wTypeFlags);
+		    if (tattr->wTypeFlags & TYPEFLAG_FOLEAUTOMATION) {
+			/* register interface<->typelib coupling */
+			StringFromGUID2(&tattr->guid, guid, 80);
+			guidA = HEAP_strdupWtoA(GetProcessHeap(), 0, guid);
+			snprintf(keyName, sizeof(keyName), "Interface\\%s", guidA);
+			HeapFree(GetProcessHeap(), 0, guidA);
+
+			if (RegCreateKeyExA(HKEY_CLASSES_ROOT, keyName, 0, NULL, 0,
+					    KEY_WRITE, NULL, &key, NULL) == ERROR_SUCCESS) {
+			    if (name)
+				RegSetValueExW(key, NULL, 0, REG_SZ,
+					       (BYTE *)name, lstrlenW(name) * sizeof(OLECHAR));
+
+			    if (RegCreateKeyExA(key, "ProxyStubClsid", 0, NULL, 0,
+				KEY_WRITE, NULL, &subKey, NULL) == ERROR_SUCCESS) {
+				RegSetValueExA(subKey, NULL, 0, REG_SZ,
+					       PSOA, strlen(PSOA));
+				RegCloseKey(subKey);
+			    }
+			    if (RegCreateKeyExA(key, "ProxyStubClsid32", 0, NULL, 0,
+				KEY_WRITE, NULL, &subKey, NULL) == ERROR_SUCCESS) {
+				RegSetValueExA(subKey, NULL, 0, REG_SZ,
+					       PSOA, strlen(PSOA));
+				RegCloseKey(subKey);
+			    }
+
+			    if (RegCreateKeyExA(key, "TypeLib", 0, NULL, 0,
+				KEY_WRITE, NULL, &subKey, NULL) == ERROR_SUCCESS) {
+				CHAR ver[32];
+				StringFromGUID2(&attr->guid, guid, 80);
+				snprintf(ver, sizeof(ver), "%x.%x",
+					 attr->wMajorVerNum, attr->wMinorVerNum);
+				RegSetValueExW(subKey, NULL, 0, REG_SZ,
+					       (BYTE *)guid, lstrlenW(guid) * sizeof(OLECHAR));
+				RegSetValueExA(subKey, "Version", 0, REG_SZ,
+					       ver, lstrlenA(ver));
+				RegCloseKey(subKey);
+			    }
+			    RegCloseKey(key);
+			}
+		    }
+		    ITypeInfo_ReleaseTypeAttr(tinfo, tattr);
+		}
+		ITypeInfo_Release(tinfo);
+	    }
+	    SysFreeString(name);
+	    if (stop) break;
+	}
+    }
+
     ITypeLib_ReleaseTLibAttr(ptlib, attr);
+
     return res;
 }
 

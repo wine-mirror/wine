@@ -144,14 +144,14 @@ debug_channels (ole typelib)
 160 stdcall CreateTypeLib(long wstr ptr) CreateTypeLib
 161 stdcall LoadTypeLib (wstr ptr) LoadTypeLib
 162 stdcall LoadRegTypeLib (ptr long long long ptr) LoadRegTypeLib
-163 stdcall RegisterTypeLib(ptr str str) RegisterTypeLib
+163 stdcall RegisterTypeLib(ptr wstr wstr) RegisterTypeLib
 164 stdcall QueryPathOfRegTypeLib(ptr long long long ptr) QueryPathOfRegTypeLib
 165 stdcall LHashValOfNameSys(long long wstr) LHashValOfNameSys
 166 stdcall LHashValOfNameSysA(long long str) LHashValOfNameSysA
 170 stdcall OaBuildVersion() OaBuildVersion
 171 stub ClearCustData
 180 stub CreateTypeLib2
-183 stdcall LoadTypeLibEx (ptr long ptr) LoadTypeLibEx
+183 stdcall LoadTypeLibEx (wstr long ptr) LoadTypeLibEx
 184 stdcall SystemTimeToVariantTime(ptr ptr) SystemTimeToVariantTime
 185 stdcall VariantTimeToSystemTime(double ptr) VariantTimeToSystemTime
 186 stdcall UnRegisterTypeLib (ptr long long long long) UnRegisterTypeLib
