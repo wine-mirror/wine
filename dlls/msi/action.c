@@ -742,8 +742,8 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
        
         while (*ptr)
         {
-            WCHAR prop[0x100];
-            WCHAR val[0x100];
+            WCHAR *prop = NULL;
+            WCHAR *val = NULL;
 
             TRACE("Looking at %s\n",debugstr_w(ptr));
 
@@ -754,10 +754,13 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
                 DWORD len = 0;
 
                 while (*ptr == ' ') ptr++;
-                strncpyW(prop,ptr,ptr2-ptr);
-                prop[ptr2-ptr]=0;
+                len = ptr2-ptr;
+                prop = HeapAlloc(GetProcessHeap(),0,(len+1)*sizeof(WCHAR));
+                strncpyW(prop,ptr,len);
+                prop[len]=0;
                 ptr2++;
-            
+           
+                len = 0; 
                 ptr = ptr2; 
                 while (*ptr && (quote || (!quote && *ptr!=' ')))
                 {
@@ -772,8 +775,9 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
                     ptr2++;
                     len -= 2;
                 }
+                val = HeapAlloc(GetProcessHeap(),0,(len+1)*sizeof(WCHAR));
                 strncpyW(val,ptr2,len);
-                val[len]=0;
+                val[len] = 0;
 
                 if (strlenW(prop) > 0)
                 {
@@ -781,6 +785,8 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
                                        debugstr_w(prop), debugstr_w(val));
                     MSI_SetPropertyW(package,prop,val);
                 }
+                HeapFree(GetProcessHeap(),0,val);
+                HeapFree(GetProcessHeap(),0,prop);
             }
             ptr++;
         }
@@ -2361,7 +2367,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
             }
             else
             {
-                if (file->Version[0])
+                if (file->Version)
                 {
                     DWORD handle;
                     DWORD versize;
@@ -2872,7 +2878,10 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
                     rc = 0;
                 }
                 else
-                    break;
+                {
+                    ERR("Ignoring Error and continuing...\n");
+                    rc = 0;
+                }
             }
             else
                 file->State = 4;
