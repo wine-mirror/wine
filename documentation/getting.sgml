@@ -21,7 +21,7 @@
         Often a package will only work on the distribution it's
         compiled for.  We'll cover
         <link linkend="getting-dist-debian">Debian</link>, 
-        <link linkend="getting-dist-redhat">Redhat</link>, and 
+        <link linkend="getting-dist-redhat">Red Hat</link>, and 
         <link linkend="getting-dist-other">other</link> distributions.
       </para>
       <para>
@@ -109,10 +109,10 @@ Password:
     </sect1>
 
     <sect1 id="getting-dist-redhat">
-      <title>Getting Wine for a Redhat System</title>
+      <title>Getting Wine for a Red Hat System</title>
 
       <para>
-        Redhat/RPM users can use <ulink url="http://rpmfind.net/linux/RPM/">
+        Red Hat/RPM users can use <ulink url="http://rpmfind.net/linux/RPM/">
           rpmfind.net</ulink> to track down available Wine RPM binaries.
         <ulink url="http://rpmfind.net/linux/RPM/WByName.html"> This
           page</ulink> contains a list of all rpmfind packages that start with
@@ -144,7 +144,7 @@ Password:
 
       <para>
         The first place you should look if your system isn't Debian or
-        Redhat is the <ulink
+        Red Hat is the <ulink
         url="http://www.winehq.com/download/">WineHQ Download
         Page</ulink>.  This page lists many assorted archives of
         binary (precompiled) Wine files.

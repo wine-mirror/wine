@@ -296,6 +296,17 @@ winspool</><entry>wnet</><entry>x11</>
 	place the setting into /etc/profile, or also ~/.bashrc in the case of
 	bash.
       </para>
+      <para>
+        Note however that there is an exception to the rule:
+	If you want to change the PATH environment variable, then of
+	course you can't modify it that way, since this will alter the
+	Unix PATH environment setting. Instead, you should set the
+	WINEPATH environment variable. An alternative way to
+	indicate the content of the DOS PATH environment variable would
+	be to change the "path" setting in the wine config file's <link
+	linkend="config-wine">[wine]</link> section.
+      </para>
+	
     </sect1>
 
   </chapter>

@@ -115,7 +115,7 @@
           <ulink url="http://bugs.winehq.com/">Wine's Bugzilla</ulink> to
           let us know how this document can be improved.  Remember, Open
           Source is "free as in free speech, not as in free beer": it can
-          only work in the case of very active involvement by its users !
+          only work in the case of very active involvement of its users !
         </para>
       </sect2>
     </sect1>
@@ -166,7 +166,7 @@
               <para>
                 <literallayout>A computer ;-)</literallayout>
                 <literallayout>  Wine: only PCs >= i386 are supported at the moment.</literallayout>
-                <literallayout>  Winelib: other platforms may be supported, but can be tricky.</literallayout>
+                <literallayout>  Winelib: selected other platforms are supported, but can be tricky.</literallayout>
               </para>
             </listitem>
             <listitem>
