@@ -40,6 +40,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 #include "cdlg.h"
+#include "colordlg.h"
 
 static INT_PTR CALLBACK ColorDlgProc( HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam );
 
@@ -62,28 +63,6 @@ static const COLORREF predefcolors[6][8]=
  { 0x00000000L, 0x00008080L, 0x00408080L, 0x00808080L,
    0x00808040L, 0x00C0C0C0L, 0x00400040L, 0x00FFFFFFL },
 };
-
-struct CCPRIVATE
-{
- LPCHOOSECOLORW lpcc;  /* points to public known data structure */
- LPCHOOSECOLOR16 lpcc16; /* save the 16 bits pointer */
- int nextuserdef;     /* next free place in user defined color array */
- HDC hdcMem;        /* color graph used for BitBlt() */
- HBITMAP hbmMem;    /* color graph bitmap */
- RECT fullsize;     /* original dialog window size */
- UINT msetrgb;        /* # of SETRGBSTRING message (today not used)  */
- RECT old3angle;    /* last position of l-marker */
- RECT oldcross;     /* last position of color/satuation marker */
- BOOL updating;     /* to prevent recursive WM_COMMAND/EN_UPDATE processing */
- int h;
- int s;
- int l;               /* for temporary storing of hue,sat,lum */
- int capturedGraph; /* control mouse captured */
- RECT focusRect;    /* rectangle last focused item */
- HWND hwndFocus;    /* handle last focused item */
-};
-
-#define LCCPRIV struct CCPRIVATE *
 
 /***********************************************************************
  *                             CC_HSLtoRGB                    [internal]
@@ -355,7 +334,7 @@ static int CC_MouseCheckColorGraph( HWND hDlg, int dlgitem, int *hori, int *vert
  *                  CC_MouseCheckResultWindow                 [internal]
  *                  test if double click one of the result colors
  */
-static int CC_MouseCheckResultWindow( HWND hDlg, LPARAM lParam )
+int CC_MouseCheckResultWindow( HWND hDlg, LPARAM lParam )
 {
  HWND hwnd;
  POINT point;
@@ -808,7 +787,7 @@ static void CC_PaintUserColorArray( HWND hDlg, int rows, int cols, COLORREF* lpc
 /***********************************************************************
  *                             CC_HookCallChk                 [internal]
  */
-static BOOL CC_HookCallChk( LPCHOOSECOLORW lpcc )
+BOOL CC_HookCallChk( LPCHOOSECOLORW lpcc )
 {
  if (lpcc)
   if(lpcc->Flags & CC_ENABLEHOOK)
@@ -817,11 +796,10 @@ static BOOL CC_HookCallChk( LPCHOOSECOLORW lpcc )
  return FALSE;
 }
 
-
 /***********************************************************************
  *                              CC_WMInitDialog                  [internal]
  */
-static LONG CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam, BOOL b16 )
+LONG CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam, BOOL b16 )
 {
    int i, res;
    int r, g, b;
@@ -952,7 +930,7 @@ static LONG CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam, BOOL b16 )
 /***********************************************************************
  *                              CC_WMCommand                  [internal]
  */
-static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notifyCode, HWND hwndCtl )
+LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notifyCode, HWND hwndCtl )
 {
     int  r, g, b, i, xx;
     UINT cokmsg;
@@ -1104,7 +1082,7 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
 /***********************************************************************
  *                              CC_WMPaint                    [internal]
  */
-static LRESULT CC_WMPaint( HWND hDlg, WPARAM wParam, LPARAM lParam )
+LRESULT CC_WMPaint( HWND hDlg, WPARAM wParam, LPARAM lParam )
 {
     HDC hdc;
     PAINTSTRUCT ps;
@@ -1124,11 +1102,10 @@ static LRESULT CC_WMPaint( HWND hDlg, WPARAM wParam, LPARAM lParam )
  return TRUE;
 }
 
-
 /***********************************************************************
  *                              CC_WMLButtonUp              [internal]
  */
-static LRESULT CC_WMLButtonUp( HWND hDlg, WPARAM wParam, LPARAM lParam )
+LRESULT CC_WMLButtonUp( HWND hDlg, WPARAM wParam, LPARAM lParam )
 {
    LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER);
    if (lpp->capturedGraph)
@@ -1141,11 +1118,10 @@ static LRESULT CC_WMLButtonUp( HWND hDlg, WPARAM wParam, LPARAM lParam )
    return 0;
 }
 
-
 /***********************************************************************
  *                              CC_WMMouseMove              [internal]
  */
-static LRESULT CC_WMMouseMove( HWND hDlg, LPARAM lParam )
+LRESULT CC_WMMouseMove( HWND hDlg, LPARAM lParam )
 {
    LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER);
    int r, g, b;
@@ -1179,10 +1155,11 @@ static LRESULT CC_WMMouseMove( HWND hDlg, LPARAM lParam )
    }
    return 0;
 }
+
 /***********************************************************************
  *                              CC_WMLButtonDown              [internal]
  */
-static LRESULT CC_WMLButtonDown( HWND hDlg, WPARAM wParam, LPARAM lParam )
+LRESULT CC_WMLButtonDown( HWND hDlg, WPARAM wParam, LPARAM lParam )
 {
    LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER);
    int r, g, b, i;
@@ -1233,7 +1210,6 @@ static LRESULT CC_WMLButtonDown( HWND hDlg, WPARAM wParam, LPARAM lParam )
    }
    return FALSE;
 }
-
 
 /***********************************************************************
  *           ColorDlgProc32 [internal]
@@ -1297,158 +1273,6 @@ static INT_PTR CALLBACK ColorDlgProc( HWND hDlg, UINT message,
 	                break;
 	}
      return FALSE ;
-}
-
-/***********************************************************************
- *           ColorDlgProc   (COMMDLG.8)
- */
-BOOL16 CALLBACK ColorDlgProc16( HWND16 hDlg16, UINT16 message,
-                            WPARAM16 wParam, LONG lParam )
-{
- BOOL16 res;
- HWND hDlg = HWND_32(hDlg16);
-
- LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER);
- if (message != WM_INITDIALOG)
- {
-  if (!lpp)
-     return FALSE;
-  res=0;
-  if (CC_HookCallChk(lpp->lpcc))
-     res = CallWindowProc16( (WNDPROC16)lpp->lpcc16->lpfnHook, hDlg16, message, wParam, lParam);
-  if (res)
-     return res;
- }
-
- /* FIXME: SetRGB message
- if (message && message == msetrgb)
-    return HandleSetRGB(hDlg, lParam);
- */
-
- switch (message)
-	{
-	  case WM_INITDIALOG:
-	                return CC_WMInitDialog(hDlg, wParam, lParam, TRUE);
-	  case WM_NCDESTROY:
-	                DeleteDC(lpp->hdcMem);
-	                DeleteObject(lpp->hbmMem);
-                        HeapFree(GetProcessHeap(), 0, lpp->lpcc);
-                        HeapFree(GetProcessHeap(), 0, lpp);
-	                SetWindowLongA(hDlg, DWL_USER, 0L); /* we don't need it anymore */
-	                break;
-	  case WM_COMMAND:
-	                if (CC_WMCommand(hDlg, wParam, lParam,
-					 HIWORD(lParam), HWND_32(LOWORD(lParam))))
-	                   return TRUE;
-	                break;
-	  case WM_PAINT:
-	                if (CC_WMPaint(hDlg, wParam, lParam))
-	                   return TRUE;
-	                break;
-	  case WM_LBUTTONDBLCLK:
-	                if (CC_MouseCheckResultWindow(hDlg,lParam))
-			  return TRUE;
-			break;
-	  case WM_MOUSEMOVE:
-	                if (CC_WMMouseMove(hDlg, lParam))
-			  return TRUE;
-			break;
-	  case WM_LBUTTONUP:  /* FIXME: ClipCursor off (if in color graph)*/
-                        if (CC_WMLButtonUp(hDlg, wParam, lParam))
-                           return TRUE;
-			break;
-	  case WM_LBUTTONDOWN:/* FIXME: ClipCursor on  (if in color graph)*/
-	                if (CC_WMLButtonDown(hDlg, wParam, lParam))
-	                   return TRUE;
-	                break;
-	}
-     return FALSE ;
-}
-
-
-
-/***********************************************************************
- *            ChooseColor  (COMMDLG.5)
- */
-BOOL16 WINAPI ChooseColor16( LPCHOOSECOLOR16 lpChCol )
-{
-    HINSTANCE16 hInst;
-    HANDLE16 hDlgTmpl16 = 0, hResource16 = 0;
-    HGLOBAL16 hGlobal16 = 0;
-    BOOL16 bRet = FALSE;
-    LPCVOID template;
-    FARPROC16 ptr;
-
-    TRACE("ChooseColor\n");
-    if (!lpChCol) return FALSE;
-
-    if (lpChCol->Flags & CC_ENABLETEMPLATEHANDLE)
-        hDlgTmpl16 = lpChCol->hInstance;
-    else if (lpChCol->Flags & CC_ENABLETEMPLATE)
-    {
-        HANDLE16 hResInfo;
-        if (!(hResInfo = FindResource16(lpChCol->hInstance,
-                                        MapSL(lpChCol->lpTemplateName),
-                                        RT_DIALOGA)))
-        {
-            COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
-            return FALSE;
-        }
-        if (!(hDlgTmpl16 = LoadResource16(lpChCol->hInstance, hResInfo)))
-        {
-            COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
-            return FALSE;
-        }
-        hResource16 = hDlgTmpl16;
-    }
-    else
-    {
-	HRSRC hResInfo;
-	HGLOBAL hDlgTmpl32;
-        LPCVOID template32;
-        DWORD size;
-	if (!(hResInfo = FindResourceA(COMDLG32_hInstance, "CHOOSE_COLOR", RT_DIALOGA)))
-	{
-	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
-	    return FALSE;
-	}
-	if (!(hDlgTmpl32 = LoadResource(COMDLG32_hInstance, hResInfo)) ||
-	    !(template32 = LockResource(hDlgTmpl32)))
-	{
-	    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
-	    return FALSE;
-	}
-        size = SizeofResource(GetModuleHandleA("COMDLG32"), hResInfo);
-        hGlobal16 = GlobalAlloc16(0, size);
-        if (!hGlobal16)
-        {
-            COMDLG32_SetCommDlgExtendedError(CDERR_MEMALLOCFAILURE);
-            ERR("alloc failure for %ld bytes\n", size);
-            return FALSE;
-        }
-        template = GlobalLock16(hGlobal16);
-        if (!template)
-        {
-            COMDLG32_SetCommDlgExtendedError(CDERR_MEMLOCKFAILURE);
-            ERR("global lock failure for %x handle\n", hDlgTmpl16);
-            GlobalFree16(hGlobal16);
-            return FALSE;
-        }
-        ConvertDialog32To16((LPVOID)template32, size, (LPVOID)template);
-        hDlgTmpl16 = hGlobal16;
-    }
-
-    ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 8);
-    hInst = GetWindowLongA(HWND_32(lpChCol->hwndOwner), GWL_HINSTANCE);
-    bRet = DialogBoxIndirectParam16(hInst, hDlgTmpl16, lpChCol->hwndOwner,
-                     (DLGPROC16) ptr, (DWORD)lpChCol);
-    if (hResource16) FreeResource16(hDlgTmpl16);
-    if (hGlobal16)
-    {
-        GlobalUnlock16(hGlobal16);
-        GlobalFree16(hGlobal16);
-    }
-    return bRet;
 }
 
 /***********************************************************************
