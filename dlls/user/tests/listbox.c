@@ -137,6 +137,26 @@ check (const struct listbox_test test)
   DestroyWindow (hLB);
 }
 
+void check_item_height()
+{
+    HWND hLB;
+    HDC hdc;
+    HFONT font;
+    TEXTMETRICW tm;
+    INT itemHeight;
+
+    hLB = create_listbox (0);
+    ok ((hdc = GetDCEx( hLB, 0, DCX_CACHE )) != 0, "Can't get hdc\n");
+    ok ((font = GetCurrentObject(hdc, OBJ_FONT)) != 0, "Can't get the current font\n");
+    ok (GetTextMetricsW( hdc, &tm ), "Can't read font metrics\n");
+    ReleaseDC( hLB, hdc);
+
+    ok (SendMessageW(hLB, WM_SETFONT, (WPARAM)font, 0) == 0, "Can't set font\n");
+
+    itemHeight = SendMessageW(hLB, LB_GETITEMHEIGHT, 0, 0);
+    ok (itemHeight == tm.tmHeight, "Item height wrong, got %d, expecting %ld\n", itemHeight, tm.tmHeight);
+}
+
 START_TEST(listbox)
 {
   const struct listbox_test SS =
@@ -170,4 +190,6 @@ START_TEST(listbox)
   check (MS);
   trace (" ... with NOSEL\n");
   check (MS_NS);
+
+  check_item_height();
 }
