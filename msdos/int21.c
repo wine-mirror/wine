@@ -2015,6 +2015,19 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 	    *(DWORD*)(dataptr+1) = MAKELONG(DOSMEM_CollateTable & 0xFFFF,DOSMEM_AllocSelector(DOSMEM_CollateTable>>16));
 	    CX_reg(context)         = 258;/*FIXME: size of table?*/
 	    break;
+        case 0x20:
+            TRACE("\tConvert char to uppercase\n");
+            DL_reg(context) = toupper(DL_reg(context));
+            break;
+        case 0x21:
+            TRACE("\tconvert string to uppercase with length\n");
+            CharUpperBuffA( (LPSTR)CTX_SEG_OFF_TO_LIN(context,DS_reg(context),EDX_reg(context)),
+                            CX_reg(context) );
+            break;
+        case 0x22:            
+            TRACE("\tConvert ASCIIZ string to uppercase\n");
+            CharUpperA( (LPSTR)CTX_SEG_OFF_TO_LIN(context,DS_reg(context),EDX_reg(context)) );
+            break;    
 	default:
 	    TRACE("\tunimplemented function %d\n",AL_reg(context));
             INT_BARF( context, 0x21 );
