@@ -12,6 +12,7 @@ typedef void (*ENTRYPOINT32)();
 typedef struct
 {
     const char           *name;         /* DLL name */
+    const char*           filename;     /* DLL file name */
     int                   base;         /* Ordinal base */
     int                   nb_funcs;     /* Number of functions */
     int                   nb_names;     /* Number of function names */

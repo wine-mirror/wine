@@ -1222,6 +1222,7 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
     fprintf( outfile, "const BUILTIN32_DESCRIPTOR %s_Descriptor =\n{\n",
              DLLName );
     fprintf( outfile, "    \"%s\",\n", DLLName );
+    fprintf( outfile, "    \"%s\",\n", DLLFileName );
     fprintf( outfile, "    %d,\n", Base );
     fprintf( outfile, "    %d,\n", Limit - Base + 1 );
     fprintf( outfile, "    %d,\n", nb_names );
