@@ -238,7 +238,7 @@ static LRESULT	EDIT_EM_CharFromPos(EDITSTATE *es, INT x, INT y);
 static BOOL	EDIT_EM_FmtLines(EDITSTATE *es, BOOL add_eol);
 static HLOCAL	EDIT_EM_GetHandle(EDITSTATE *es);
 static HLOCAL16	EDIT_EM_GetHandle16(EDITSTATE *es);
-static INT	EDIT_EM_GetLine(EDITSTATE *es, INT line, LPARAM lParam, BOOL unicode);
+static INT	EDIT_EM_GetLine(EDITSTATE *es, INT line, LPWSTR dst, BOOL unicode);
 static LRESULT	EDIT_EM_GetSel(EDITSTATE *es, PUINT start, PUINT end);
 static LRESULT	EDIT_EM_GetThumb(EDITSTATE *es);
 static INT	EDIT_EM_LineFromChar(EDITSTATE *es, INT index);
@@ -258,7 +258,7 @@ static void	EDIT_EM_SetPasswordChar(EDITSTATE *es, WCHAR c);
 static void	EDIT_EM_SetSel(EDITSTATE *es, UINT start, UINT end, BOOL after_wrap);
 static BOOL	EDIT_EM_SetTabStops(EDITSTATE *es, INT count, LPINT tabs);
 static BOOL	EDIT_EM_SetTabStops16(EDITSTATE *es, INT count, LPINT16 tabs);
-static void	EDIT_EM_SetWordBreakProc(EDITSTATE *es, LPARAM lParam);
+static void	EDIT_EM_SetWordBreakProc(EDITSTATE *es, void *wbp);
 static void	EDIT_EM_SetWordBreakProc16(EDITSTATE *es, EDITWORDBREAKPROC16 wbp);
 static BOOL	EDIT_EM_Undo(EDITSTATE *es);
 /*
@@ -271,7 +271,7 @@ static void	EDIT_WM_Copy(EDITSTATE *es);
 static LRESULT	EDIT_WM_Create(EDITSTATE *es, LPCWSTR name);
 static LRESULT	EDIT_WM_Destroy(EDITSTATE *es);
 static LRESULT	EDIT_WM_EraseBkGnd(EDITSTATE *es, HDC dc);
-static INT	EDIT_WM_GetText(EDITSTATE *es, INT count, LPARAM lParam, BOOL unicode);
+static INT	EDIT_WM_GetText(EDITSTATE *es, INT count, LPWSTR dst, BOOL unicode);
 static LRESULT	EDIT_WM_HScroll(EDITSTATE *es, INT action, INT pos);
 static LRESULT	EDIT_WM_KeyDown(EDITSTATE *es, INT key);
 static LRESULT	EDIT_WM_KillFocus(EDITSTATE *es);
@@ -281,11 +281,11 @@ static LRESULT	EDIT_WM_LButtonUp(EDITSTATE *es);
 static LRESULT	EDIT_WM_MButtonDown(EDITSTATE *es);
 static LRESULT	EDIT_WM_MouseMove(EDITSTATE *es, INT x, INT y);
 static LRESULT	EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs, BOOL unicode);
-static void	EDIT_WM_Paint(EDITSTATE *es, WPARAM wParam);
+static void	EDIT_WM_Paint(EDITSTATE *es, HDC hdc);
 static void	EDIT_WM_Paste(EDITSTATE *es);
 static void	EDIT_WM_SetFocus(EDITSTATE *es);
 static void	EDIT_WM_SetFont(EDITSTATE *es, HFONT font, BOOL redraw);
-static void	EDIT_WM_SetText(EDITSTATE *es, LPARAM lParam, BOOL unicode);
+static void	EDIT_WM_SetText(EDITSTATE *es, LPCWSTR text, BOOL unicode);
 static void	EDIT_WM_Size(EDITSTATE *es, UINT action, INT width, INT height);
 static LRESULT  EDIT_WM_StyleChanged(EDITSTATE *es, WPARAM which, const STYLESTRUCT *style);
 static LRESULT	EDIT_WM_SysKeyDown(EDITSTATE *es, INT key, DWORD key_data);
@@ -639,7 +639,7 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 		unicode = FALSE;  /* 16-bit message is always ascii */
 		/* fall through */
 	case EM_GETLINE:
-		result = (LRESULT)EDIT_EM_GetLine(es, (INT)wParam, lParam, unicode);
+		result = (LRESULT)EDIT_EM_GetLine(es, (INT)wParam, (LPWSTR)lParam, unicode);
 		break;
 
 	case EM_LIMITTEXT16:
@@ -724,7 +724,7 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 		EDIT_EM_SetWordBreakProc16(es, (EDITWORDBREAKPROC16)lParam);
 		break;
 	case EM_SETWORDBREAKPROC:
-		EDIT_EM_SetWordBreakProc(es, lParam);
+		EDIT_EM_SetWordBreakProc(es, (void *)lParam);
 		break;
 
 	case EM_GETWORDBREAKPROC16:
@@ -885,7 +885,7 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 		break;
 
 	case WM_GETTEXT:
-		result = (LRESULT)EDIT_WM_GetText(es, (INT)wParam, lParam, unicode);
+		result = (LRESULT)EDIT_WM_GetText(es, (INT)wParam, (LPWSTR)lParam, unicode);
 		break;
 
 	case WM_GETTEXTLENGTH:
@@ -931,7 +931,7 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 		break;
 
 	case WM_PAINT:
-	        EDIT_WM_Paint(es, wParam);
+	        EDIT_WM_Paint(es, (HDC)wParam);
 		break;
 
 	case WM_PASTE:
@@ -951,7 +951,7 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 		break;
 
 	case WM_SETTEXT:
-		EDIT_WM_SetText(es, lParam, unicode);
+		EDIT_WM_SetText(es, (LPCWSTR)lParam, unicode);
 		result = TRUE;
 		break;
 
@@ -2592,7 +2592,7 @@ static HLOCAL16 EDIT_EM_GetHandle16(EDITSTATE *es)
  *	EM_GETLINE
  *
  */
-static INT EDIT_EM_GetLine(EDITSTATE *es, INT line, LPARAM lParam, BOOL unicode)
+static INT EDIT_EM_GetLine(EDITSTATE *es, INT line, LPWSTR dst, BOOL unicode)
 {
 	LPWSTR src;
 	INT line_len, dst_len;
@@ -2606,10 +2606,9 @@ static INT EDIT_EM_GetLine(EDITSTATE *es, INT line, LPARAM lParam, BOOL unicode)
 	i = EDIT_EM_LineIndex(es, line);
 	src = es->text + i;
 	line_len = EDIT_EM_LineLength(es, i);
-	dst_len = *(WORD *)lParam;
+	dst_len = *(WORD *)dst;
 	if(unicode)
 	{
-	    LPWSTR dst = (LPWSTR)lParam;
 	    if(dst_len <= line_len)
 	    {
 		memcpy(dst, src, dst_len * sizeof(WCHAR));
@@ -2624,13 +2623,11 @@ static INT EDIT_EM_GetLine(EDITSTATE *es, INT line, LPARAM lParam, BOOL unicode)
 	}
 	else
 	{
-	    LPSTR dst = (LPSTR)lParam;
-	    INT ret;
-	    ret = WideCharToMultiByte(CP_ACP, 0, src, line_len, dst, dst_len, NULL, NULL);
+	    INT ret = WideCharToMultiByte(CP_ACP, 0, src, line_len, (LPSTR)dst, dst_len, NULL, NULL);
 	    if(!ret) /* Insufficient buffer size */
 		return dst_len;
 	    if(ret < dst_len) /* Append 0 if enough space */
-		dst[ret] = 0;
+		((LPSTR)dst)[ret] = 0;
 	    return ret;
 	}
 }
@@ -3540,12 +3537,12 @@ static BOOL EDIT_EM_SetTabStops16(EDITSTATE *es, INT count, LPINT16 tabs)
  *	EM_SETWORDBREAKPROC
  *
  */
-static void EDIT_EM_SetWordBreakProc(EDITSTATE *es, LPARAM lParam)
+static void EDIT_EM_SetWordBreakProc(EDITSTATE *es, void *wbp)
 {
-	if (es->word_break_proc == (void *)lParam)
+	if (es->word_break_proc == wbp)
 		return;
 
-	es->word_break_proc = (void *)lParam;
+	es->word_break_proc = wbp;
 	es->word_break_proc16 = NULL;
 
 	if ((es->style & ES_MULTILINE) && !(es->style & ES_AUTOHSCROLL)) {
@@ -3892,19 +3889,18 @@ static LRESULT EDIT_WM_EraseBkGnd(EDITSTATE *es, HDC dc)
  *	WM_GETTEXT
  *
  */
-static INT EDIT_WM_GetText(EDITSTATE *es, INT count, LPARAM lParam, BOOL unicode)
+static INT EDIT_WM_GetText(EDITSTATE *es, INT count, LPWSTR dst, BOOL unicode)
 {
     if(!count) return 0;
 
     if(unicode)
     {
-	LPWSTR textW = (LPWSTR)lParam;
-	lstrcpynW(textW, es->text, count);
-	return strlenW(textW);
+	lstrcpynW(dst, es->text, count);
+	return strlenW(dst);
     }
     else
     {
-	LPSTR textA = (LPSTR)lParam;
+	LPSTR textA = (LPSTR)dst;
 	if (!WideCharToMultiByte(CP_ACP, 0, es->text, -1, textA, count, NULL, NULL))
             textA[count - 1] = 0; /* ensure 0 termination */
 	return strlen(textA);
@@ -4464,7 +4460,7 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs, BOOL unicode)
  *	WM_PAINT
  *
  */
-static void EDIT_WM_Paint(EDITSTATE *es, WPARAM wParam)
+static void EDIT_WM_Paint(EDITSTATE *es, HDC hdc)
 {
 	PAINTSTRUCT ps;
 	INT i;
@@ -4478,10 +4474,7 @@ static void EDIT_WM_Paint(EDITSTATE *es, WPARAM wParam)
 	BOOL rev = es->bEnableState &&
 				((es->flags & EF_FOCUSED) ||
 					(es->style & ES_NOHIDESEL));
-        if (!wParam)
-            dc = BeginPaint(es->hwndSelf, &ps);
-        else
-            dc = (HDC) wParam;
+        dc = hdc ? hdc : BeginPaint(es->hwndSelf, &ps);
 
 	GetClientRect(es->hwndSelf, &rcClient);
 
@@ -4531,7 +4524,7 @@ static void EDIT_WM_Paint(EDITSTATE *es, WPARAM wParam)
 	if (es->font)
 		SelectObject(dc, old_font);
 
-        if (!wParam)
+        if (!hdc)
             EndPaint(es->hwndSelf, &ps);
 }
 
@@ -4640,44 +4633,46 @@ static void EDIT_WM_SetFont(EDITSTATE *es, HFONT font, BOOL redraw)
  *  The modified flag is reset. EN_UPDATE and EN_CHANGE notifications are sent.
  *
  */
-static void EDIT_WM_SetText(EDITSTATE *es, LPARAM lParam, BOOL unicode)
+static void EDIT_WM_SetText(EDITSTATE *es, LPCWSTR text, BOOL unicode)
 {
-    LPWSTR text = NULL;
-
-    if(unicode)
-	text = (LPWSTR)lParam;
-    else if (lParam)
+    if (!unicode && text)
     {
-	LPCSTR textA = (LPCSTR)lParam;
+	LPCSTR textA = (LPCSTR)text;
 	INT countW = MultiByteToWideChar(CP_ACP, 0, textA, -1, NULL, 0);
-	if((text = HeapAlloc(GetProcessHeap(), 0, countW * sizeof(WCHAR))))
-	    MultiByteToWideChar(CP_ACP, 0, textA, -1, text, countW);
+        LPWSTR textW = HeapAlloc(GetProcessHeap(), 0, countW * sizeof(WCHAR));
+	if (textW)
+	    MultiByteToWideChar(CP_ACP, 0, textA, -1, textW, countW);
+	text = textW;
     }
 
-	EDIT_EM_SetSel(es, 0, (UINT)-1, FALSE);
-	if (text) {
-		TRACE("%s\n", debugstr_w(text));
-		EDIT_EM_ReplaceSel(es, FALSE, text, FALSE, FALSE);
-		if(!unicode)
-		    HeapFree(GetProcessHeap(), 0, text);
-	} else {
-		static const WCHAR empty_stringW[] = {0};
-		TRACE("<NULL>\n");
-		EDIT_EM_ReplaceSel(es, FALSE, empty_stringW, FALSE, FALSE);
-	}
-	es->x_offset = 0;
-	es->flags &= ~EF_MODIFIED;
-	EDIT_EM_SetSel(es, 0, 0, FALSE);
-        /* Send the notification after the selection start and end have been set
-         * edit control doesn't send notification on WM_SETTEXT
-         * if it is multiline, or it is part of combobox
-         */
-	if( !((es->style & ES_MULTILINE) || es->hwndListBox))
-       {
-	    EDIT_NOTIFY_PARENT(es, EN_CHANGE, "EN_CHANGE");
-           EDIT_NOTIFY_PARENT(es, EN_UPDATE, "EN_UPDATE");
-       }
-	EDIT_EM_ScrollCaret(es);
+    EDIT_EM_SetSel(es, 0, (UINT)-1, FALSE);
+    if (text) 
+    {
+	TRACE("%s\n", debugstr_w(text));
+	EDIT_EM_ReplaceSel(es, FALSE, text, FALSE, FALSE);
+	if(!unicode)
+	    HeapFree(GetProcessHeap(), 0, (LPWSTR)text);
+    } 
+    else 
+    {
+	static const WCHAR empty_stringW[] = {0};
+	TRACE("<NULL>\n");
+	EDIT_EM_ReplaceSel(es, FALSE, empty_stringW, FALSE, FALSE);
+    }
+    es->x_offset = 0;
+    es->flags &= ~EF_MODIFIED;
+    EDIT_EM_SetSel(es, 0, 0, FALSE);
+
+    /* Send the notification after the selection start and end have been set
+     * edit control doesn't send notification on WM_SETTEXT
+     * if it is multiline, or it is part of combobox
+     */
+    if( !((es->style & ES_MULTILINE) || es->hwndListBox))
+    {
+	EDIT_NOTIFY_PARENT(es, EN_CHANGE, "EN_CHANGE");
+        EDIT_NOTIFY_PARENT(es, EN_UPDATE, "EN_UPDATE");
+    }
+    EDIT_EM_ScrollCaret(es);
 }
 
 
