@@ -2,18 +2,58 @@
  * Month calendar class extra info
  *
  * Copyright 1998 Eric Kohl
+ * Copyright 1999 Alex Priem
  */
 
 #ifndef __WINE_MONTHCAL_H
 #define __WINE_MONTHCAL_H
 
-#include "windef.h"
+#define MC_SEL_LBUTUP		0			/* Left button released */
+#define MC_SEL_LBUTDOWN		1			/* Left button pressed */
 
 typedef struct tagMONTHCAL_INFO
 {
-    DWORD dwDummy;  /* just to keep the compiler happy ;-) */
-
-
+    COLORREF bk;
+    COLORREF txt;
+    COLORREF titlebk;
+    COLORREF titletxt;
+    COLORREF monthbk;
+    COLORREF trailingtxt;
+	HFONT	 hFont;
+	HFONT	 hBoldFont;
+	int		 textHeight;
+	int		 textWidth;
+	int		 firstDayplace;	/* place of the first day of the current month */
+	int		 delta;				/* scroll rate; # of months that the */
+                          /* control moves when user clicks a scroll button */
+	int      visible;		/* # of months visible */
+	int 	 firstDay;		/* Start month calendar with firstDay's day */
+	int		 monthRange;
+	MONTHDAYSTATE *monthdayState;
+	SYSTEMTIME todaysDate;
+	DWORD	 currentMonth;
+	DWORD	 currentYear;
+	int		 selValid;		/* See MC_SEL flags */
+	int		 curSelDay;	    /* current selected day */
+	int		 firstSelDay;	/* first selected day */
+	int		 maxSelCount;
+	SYSTEMTIME minSel;
+	SYSTEMTIME maxSel;
+	DWORD	rangeValid;
+	SYSTEMTIME minDate;
+	SYSTEMTIME maxDate;
+		
+	RECT    rcClient;			/* rect for whole client area */
+	RECT	title;				/* rect for the header above the calendar */
+	RECT	titlebtnnext;		/* the `next month' button in the header */
+	RECT	titlebtnprev;       /* the `prev month' button in the header */	
+	RECT	titlemonth;			/* the `month name' txt in the header */
+	RECT	titleyear;			/* the `year number' txt in the header */
+	RECT	prevmonth;			/* day numbers of the previous month */
+	RECT 	nextmonth;			/* day numbers of the next month */
+	RECT	days;			/* week numbers at left side */
+	RECT	weeknums;			/* week numbers at left side */
+	RECT	today;				/* `today: xx/xx/xx' text rect */
 } MONTHCAL_INFO, *LPMONTHCAL_INFO;
 
 

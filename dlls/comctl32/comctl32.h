@@ -28,3 +28,18 @@ extern HMODULE COMCTL32_hModule;
 #define IDC_MOVEUP_BTN      206
 #define IDC_MOVEDN_BTN      207
 
+/* Month calendar month menu popup */
+#define IDD_MCMONTHMENU     300
+
+#define IDM_JAN				301
+#define IDM_FEB				302
+#define IDM_MAR				303
+#define IDM_APR				304
+#define IDM_MAY				305
+#define IDM_JUN				306
+#define IDM_JUL				307
+#define IDM_AUG				308
+#define IDM_SEP				309
+#define IDM_OCT				310
+#define IDM_NOV				311
+#define IDM_DEC				311

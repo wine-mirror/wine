@@ -6,6 +6,7 @@
 #define __WINE_COMMCTRL_H
 
 #include "windef.h"
+#include "winbase.h"
 #include "winuser.h"
 #include "imagelist.h"
 #include "prsht.h"
@@ -2931,11 +2932,165 @@ typedef struct tagNMIPADDRESS
 
 /**************************************************************************
  * Month calendar control
+ *
  */
 
 #define MONTHCAL_CLASSA	"SysMonthCal32"
 #define MONTHCAL_CLASSW	L"SysMonthCal32"
 #define MONTHCAL_CLASS		WINELIB_NAME_AW(MONTHCAL_CLASS)
+
+#define MCM_FIRST             0x1000
+#define MCN_FIRST             (0U-750U)
+#define MCN_LAST              (0U-759U)
+
+
+#define MCM_GETCURSEL         (MCM_FIRST + 1)
+#define MCM_SETCURSEL         (MCM_FIRST + 2)
+#define MCM_GETMAXSELCOUNT    (MCM_FIRST + 3)
+#define MCM_SETMAXSELCOUNT    (MCM_FIRST + 4)
+#define MCM_GETSELRANGE       (MCM_FIRST + 5)
+#define MCM_SETSELRANGE       (MCM_FIRST + 6)
+#define MCM_GETMONTHRANGE     (MCM_FIRST + 7)
+#define MCM_SETDAYSTATE       (MCM_FIRST + 8)
+#define MCM_GETMINREQRECT     (MCM_FIRST + 9)
+#define MCM_SETCOLOR          (MCM_FIRST + 10)
+#define MCM_GETCOLOR          (MCM_FIRST + 11)
+#define MCM_SETTODAY          (MCM_FIRST + 12)
+#define MCM_GETTODAY          (MCM_FIRST + 13)
+#define MCM_HITTEST           (MCM_FIRST + 14)
+#define MCM_SETFIRSTDAYOFWEEK (MCM_FIRST + 15)
+#define MCM_GETFIRSTDAYOFWEEK (MCM_FIRST + 16)
+#define MCM_GETRANGE          (MCM_FIRST + 17)
+#define MCM_SETRANGE          (MCM_FIRST + 18)
+#define MCM_GETMONTHDELTA     (MCM_FIRST + 19)
+#define MCM_SETMONTHDELTA     (MCM_FIRST + 20)
+#define MCM_GETMAXTODAYWIDTH  (MCM_FIRST + 21)
+#define MCM_GETUNICODEFORMAT   CCM_GETUNICODEFORMAT
+#define MCM_SETUNICODEFORMAT   CCM_SETUNICODEFORMAT
+
+
+/* Notifications */
+
+#define MCN_SELCHANGE         (MCN_FIRST + 1)
+#define MCN_GETDAYSTATE       (MCN_FIRST + 3)
+#define MCN_SELECT            (MCN_FIRST + 4)
+
+#define MCSC_BACKGROUND   0   
+#define MCSC_TEXT         1   
+#define MCSC_TITLEBK      2   
+#define MCSC_TITLETEXT    3
+#define MCSC_MONTHBK      4   
+#define MCSC_TRAILINGTEXT 5   
+
+#define MCS_DAYSTATE           0x0001
+#define MCS_MULTISELECT        0x0002
+#define MCS_WEEKNUMBERS        0x0004
+#define MCS_NOTODAY            0x0010
+#define MCS_NOTODAYCIRCLE      0x0008
+
+#define MCHT_TITLE             0x00010000
+#define MCHT_CALENDAR          0x00020000
+#define MCHT_TODAYLINK         0x00030000
+
+#define MCHT_NEXT              0x01000000   
+#define MCHT_PREV              0x02000000  
+#define MCHT_NOWHERE           0x00000000
+#define MCHT_TITLEBK           (MCHT_TITLE)
+#define MCHT_TITLEMONTH        (MCHT_TITLE | 0x0001)
+#define MCHT_TITLEYEAR         (MCHT_TITLE | 0x0002)
+#define MCHT_TITLEBTNNEXT      (MCHT_TITLE | MCHT_NEXT | 0x0003)
+#define MCHT_TITLEBTNPREV      (MCHT_TITLE | MCHT_PREV | 0x0003)
+
+#define MCHT_CALENDARBK        (MCHT_CALENDAR)
+#define MCHT_CALENDARDATE      (MCHT_CALENDAR | 0x0001)
+#define MCHT_CALENDARDATENEXT  (MCHT_CALENDARDATE | MCHT_NEXT)
+#define MCHT_CALENDARDATEPREV  (MCHT_CALENDARDATE | MCHT_PREV)
+#define MCHT_CALENDARDAY       (MCHT_CALENDAR | 0x0002)
+#define MCHT_CALENDARWEEKNUM   (MCHT_CALENDAR | 0x0003)
+
+
+
+#define GMR_VISIBLE     0      
+#define GMR_DAYSTATE    1     
+
+
+/*  Month calendar's structures */
+
+
+typedef struct {
+        UINT cbSize;
+        POINT pt;
+        UINT uHit;   
+        SYSTEMTIME st;
+} MCHITTESTINFO, *PMCHITTESTINFO;
+
+typedef struct tagNMSELCHANGE
+{
+    NMHDR           nmhdr; 
+    SYSTEMTIME      stSelStart;
+    SYSTEMTIME      stSelEnd;
+} NMSELCHANGE, *LPNMSELCHANGE;
+
+typedef NMSELCHANGE NMSELECT, *LPNMSELECT;
+typedef DWORD MONTHDAYSTATE, *LPMONTHDAYSTATE;
+
+typedef struct tagNMDAYSTATE
+{
+    NMHDR           nmhdr;  
+    SYSTEMTIME      stStart;
+    int             cDayState;
+    LPMONTHDAYSTATE prgDayState;
+} NMDAYSTATE, *LPNMDAYSTATE;
+
+
+/* macros */
+
+#define MonthCal_GetCurSel(hmc, pst) \
+		(BOOL)SNDMSG(hmc, MCM_GETCURSEL, 0, (LPARAM)(pst))
+#define MonthCal_SetCurSel(hmc, pst)  \
+		(BOOL)SNDMSG(hmc, MCM_SETCURSEL, 0, (LPARAM)(pst))
+#define MonthCal_GetMaxSelCount(hmc) \
+		(DWORD)SNDMSG(hmc, MCM_GETMAXSELCOUNT, 0, 0L)
+#define MonthCal_SetMaxSelCount(hmc, n) \
+		(BOOL)SNDMSG(hmc, MCM_SETMAXSELCOUNT, (WPARAM)(n), 0L)
+#define MonthCal_GetSelRange(hmc, rgst) \
+		SNDMSG(hmc, MCM_GETSELRANGE, 0, (LPARAM) (rgst))
+#define MonthCal_SetSelRange(hmc, rgst) \
+		SNDMSG(hmc, MCM_SETSELRANGE, 0, (LPARAM) (rgst))
+#define MonthCal_GetMonthRange(hmc, gmr, rgst) \
+		(DWORD)SNDMSG(hmc, MCM_GETMONTHRANGE, (WPARAM)(gmr), (LPARAM)(rgst))
+#define MonthCal_SetDayState(hmc, cbds, rgds) \
+		SNDMSG(hmc, MCM_SETDAYSTATE, (WPARAM)(cbds), (LPARAM)(rgds))
+#define MonthCal_GetMinReqRect(hmc, prc) \
+		SNDMSG(hmc, MCM_GETMINREQRECT, 0, (LPARAM)(prc))
+#define MonthCal_SetColor(hmc, iColor, clr)\
+		SNDMSG(hmc, MCM_SETCOLOR, iColor, clr
+#define MonthCal_GetColor(hmc, iColor) \
+		SNDMSG(hmc, MCM_SETCOLOR, iColor, 0)
+#define MonthCal_GetToday(hmc, pst)\
+		(BOOL)SNDMSG(hmc, MCM_GETTODAY, 0, (LPARAM)pst)
+#define MonthCal_SetToday(hmc, pst)\
+		SNDMSG(hmc, MCM_SETTODAY, 0, (LPARAM)pst)
+#define MonthCal_HitTest(hmc, pinfo) \
+        SNDMSG(hmc, MCM_HITTEST, 0, (LPARAM)(PMCHITTESTINFO)pinfo)
+#define MonthCal_SetFirstDayOfWeek(hmc, iDay) \
+        SNDMSG(hmc, MCM_SETFIRSTDAYOFWEEK, 0, iDay)
+#define MonthCal_GetFirstDayOfWeek(hmc) \
+        (DWORD)SNDMSG(hmc, MCM_GETFIRSTDAYOFWEEK, 0, 0)
+#define MonthCal_GetRange(hmc, rgst) \
+        (DWORD)SNDMSG(hmc, MCM_GETRANGE, 0, (LPARAM)(rgst))
+#define MonthCal_SetRange(hmc, gd, rgst) \
+        (BOOL)SNDMSG(hmc, MCM_SETRANGE, (WPARAM)(gd), (LPARAM)(rgst))
+#define MonthCal_GetMonthDelta(hmc) \
+        (int)SNDMSG(hmc, MCM_GETMONTHDELTA, 0, 0)
+#define MonthCal_SetMonthDelta(hmc, n) \
+        (int)SNDMSG(hmc, MCM_SETMONTHDELTA, n, 0)
+#define MonthCal_GetMaxTodayWidth(hmc) \
+        (DWORD)SNDMSG(hmc, MCM_GETMAXTODAYWIDTH, 0, 0)
+#define MonthCal_SetUnicodeFormat(hwnd, fUnicode)  \
+        (BOOL)SNDMSG((hwnd), MCM_SETUNICODEFORMAT, (WPARAM)(fUnicode), 0)
+#define MonthCal_GetUnicodeFormat(hwnd)  \
+        (BOOL)SNDMSG((hwnd), MCM_GETUNICODEFORMAT, 0, 0)
 
 
 /**************************************************************************
