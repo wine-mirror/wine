@@ -1,5 +1,3 @@
-name msnet32
-
   1 stub @
   2 stub @
   3 stub @
@@ -96,4 +94,3 @@ name msnet32
  94 stub @
  95 stub @
  96 stub @
-  

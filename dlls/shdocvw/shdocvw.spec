@@ -1,5 +1,3 @@
-name	shdocvw
-
 # ordinal exports
 101 stub @
 102 stub @

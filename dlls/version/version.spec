@@ -1,5 +1,3 @@
-name version
-
 @ stdcall GetFileVersionInfoA(str long long ptr) GetFileVersionInfoA
 @ stdcall GetFileVersionInfoSizeA(str ptr) GetFileVersionInfoSizeA
 @ stdcall GetFileVersionInfoSizeW(wstr ptr) GetFileVersionInfoSizeW

@@ -1,4 +1,3 @@
-name shlwapi
 init SHLWAPI_LibMain
 
 1   stdcall @(str ptr) SHLWAPI_1

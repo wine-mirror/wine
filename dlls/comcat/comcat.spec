@@ -1,4 +1,3 @@
-name comcat
 init COMCAT_DllEntryPoint
 
 @ stdcall DllCanUnloadNow() COMCAT_DllCanUnloadNow

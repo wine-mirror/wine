@@ -1,4 +1,3 @@
-name	comctl32
 init	COMCTL32_LibMain
 
 # Functions exported by the Win95 comctl32.dll

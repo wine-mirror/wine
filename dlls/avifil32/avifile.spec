@@ -1,7 +1,3 @@
-name	avifile
-type	win16
-owner	avifil32
-
 # I'm just using "long" instead of "ptr" for the interface pointers,
 # because they are 32-bit pointers, not converted to 16-bit format,
 # but the app doesn't really need to know, it should never need to

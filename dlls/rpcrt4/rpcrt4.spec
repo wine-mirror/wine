@@ -1,4 +1,3 @@
-name	rpcrt4
 init	RPCRT4_LibMain
 
 @ stub DceErrorInqTextA

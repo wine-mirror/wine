@@ -1,7 +1,3 @@
-name	comm
-type	win16
-owner	kernel32
-
   1 stub INICOM
   2 stub SETCOM
   3 stub SETQUE
@@ -21,4 +17,3 @@ owner	kernel32
  19 stub COMMWRITESTRING
  20 stub READCOMMSTRING
 100 stub ENABLENOTIFICATION
-

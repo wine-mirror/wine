@@ -1,7 +1,3 @@
-name	imm
-type	win16
-owner	imm32
-
 4   stub IMMGETDEFAULTIMEWND
 7   stub IMMGETDESCRIPTIONA
 8   stub IMMGETIMEFILENAMEA

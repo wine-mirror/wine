@@ -1,5 +1,3 @@
-name crypt32
-
 @ stub CertAddCRLContextToStore
 @ stub CertAddCTLContextToStore
 @ stub CertAddCertificateContextToStore

@@ -1,5 +1,3 @@
-name	lz32
-
 @ stdcall CopyLZFile(long long) CopyLZFile
 @ stdcall GetExpandedNameA(str ptr) GetExpandedNameA
 @ stdcall GetExpandedNameW(wstr ptr) GetExpandedNameW

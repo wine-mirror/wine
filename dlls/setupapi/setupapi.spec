@@ -1,5 +1,3 @@
-name setupapi
-
 @ stub AddMiniIconToList
 @ stub AddTagToGroupOrderListEntry
 @ stub AppendStringToMultiSz

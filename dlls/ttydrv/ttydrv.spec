@@ -1,4 +1,3 @@
-name	ttydrv
 init	TTYDRV_Init
 
 # GDI driver

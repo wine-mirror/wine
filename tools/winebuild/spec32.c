@@ -53,12 +53,12 @@ static const char *make_internal_name( const ORDDEF *odp, const char *prefix )
     if (odp->name[0])
     {
         char *p;
-        sprintf( buffer, "__wine_%s_%s_%s", prefix, DLLName, odp->name );
+        sprintf( buffer, "__wine_%s_%s_%s", prefix, DLLFileName, odp->name );
         /* make sure name is a legal C identifier */
         for (p = buffer; *p; p++) if (!isalnum(*p) && *p != '_') break;
         if (!*p) return buffer;
     }
-    sprintf( buffer, "__wine_%s_%s_%d", prefix, make_c_identifier(DLLName), odp->ordinal );
+    sprintf( buffer, "__wine_%s_%s_%d", prefix, make_c_identifier(DLLFileName), odp->ordinal );
     return buffer;
 }
 
@@ -310,9 +310,9 @@ static int output_exports( FILE *outfile, int nr_exports )
             if (!isalnum(*p) && *p != '_' && *p != '.') break;
         if (*p) continue;
         fprintf( outfile, "    \"\\t.globl " PREFIX "__wine_dllexport_%s_%s\\n\"\n",
-                 make_c_identifier(DLLName), Names[i]->name );
+                 make_c_identifier(DLLFileName), Names[i]->name );
         fprintf( outfile, "    \"" PREFIX "__wine_dllexport_%s_%s:\\n\"\n",
-                 make_c_identifier(DLLName), Names[i]->name );
+                 make_c_identifier(DLLFileName), Names[i]->name );
     }
     fprintf( outfile, "    \"\\t.long 0xffffffff\\n\"\n" );
 
@@ -475,7 +475,6 @@ void output_dll_init( FILE *outfile, const char *constructor, const char *destru
     {
         fprintf( outfile, "asm(\"\\t.section\t.fini ,\\\"ax\\\"\\n\"\n" );
         fprintf( outfile, "    \"\\tbl " PREFIX "%s\\n\"\n", destructor );
-                 DLLName );
         fprintf( outfile, "    \"\\t.previous\\n\");\n" );
     }
 #else
@@ -527,7 +526,7 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "    \".align %d\\n\"\n", get_alignment(page_size) );
     fprintf( outfile, "    \"" PREFIX "pe_header:\\t.fill %ld,1,0\\n\\t\");\n", page_size );
 
-    fprintf( outfile, "static const char dllname[] = \"%s\";\n\n", DLLName );
+    fprintf( outfile, "static const char dllname[] = \"%s\";\n\n", DLLFileName );
     fprintf( outfile, "extern int __wine_spec_exports[];\n\n" );
 
 #ifdef __i386__
@@ -775,7 +774,7 @@ void BuildSpec32File( FILE *outfile )
 
     /* Output the DLL constructor */
 
-    sprintf( constructor, "__wine_spec_%s_init", make_c_identifier(DLLName) );
+    sprintf( constructor, "__wine_spec_%s_init", make_c_identifier(DLLFileName) );
     output_dll_init( outfile, constructor, NULL );
 
     fprintf( outfile,

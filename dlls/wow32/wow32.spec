@@ -1,5 +1,3 @@
-name	wow32
-
 # ordinal exports
 1 forward WOWGetDescriptor kernel32.K32WOWGetDescriptor
 

@@ -1,5 +1,4 @@
 # Old C runtime library. All functions provided by msvcrt
-name    crtdll
 init    CRTDLL_Init
 
 @ forward ??2@YAPAXI@Z msvcrt.??2@YAPAXI@Z
@@ -527,4 +526,3 @@ init    CRTDLL_Init
 @ forward wscanf msvcrt.wscanf
 @ forward _itow msvcrt._itow
 @ forward _ltow msvcrt._ltow
-

@@ -1,4 +1,3 @@
-name	imagehlp
 init	IMAGEHLP_LibMain
 
 @ stdcall BindImage(str str str) BindImage

@@ -1,5 +1,3 @@
-name	winspool
-file	winspool.drv
 init	WINSPOOL_EntryPoint
 
 100 stub @

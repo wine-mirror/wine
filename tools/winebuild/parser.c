@@ -495,6 +495,8 @@ SPEC_TYPE ParseTopLevel( FILE *file, int def_only )
 
     input_file = file;
     current_line = 1;
+    if (owner_name[0]) SpecType = SPEC_WIN16;
+
     while ((token = GetToken(1)) != NULL)
     {
 	if (strcmp(token, "name") == 0)
@@ -505,13 +507,6 @@ SPEC_TYPE ParseTopLevel( FILE *file, int def_only )
 	{
 	    strcpy(DLLFileName, GetToken(0));
 	}
-        else if (strcmp(token, "type") == 0)
-        {
-            token = GetToken(0);
-            if (!strcmp(token, "win16" )) SpecType = SPEC_WIN16;
-            else if (!strcmp(token, "win32" )) SpecType = SPEC_WIN32;
-            else fatal_error( "Type must be 'win16' or 'win32'\n" );
-        }
         else if (strcmp(token, "mode") == 0)
         {
             token = GetToken(0);
@@ -528,12 +523,6 @@ SPEC_TYPE ParseTopLevel( FILE *file, int def_only )
             if (!IsNumberString(token)) fatal_error( "Expected number after heap\n" );
             DLLHeapSize = atoi(token);
 	}
-        else if (strcmp(token, "stack") == 0)
-        {
-            token = GetToken(0);
-            if (!IsNumberString(token)) fatal_error( "Expected number after stack\n" );
-            stack_size = atoi(token);
-        }
         else if (strcmp(token, "init") == 0)
         {
             if (SpecType == SPEC_WIN16)
@@ -548,12 +537,6 @@ SPEC_TYPE ParseTopLevel( FILE *file, int def_only )
                 else load_res16_file( GetToken(0) );
             }
             else GetToken(0);  /* skip it */
-        }
-        else if (strcmp(token, "owner") == 0)
-        {
-            if (SpecType != SPEC_WIN16)
-                fatal_error( "Owner only supported for Win16 spec files\n" );
-            strcpy( owner_name, GetToken(0) );
         }
         else if (strcmp(token, "ignore") == 0)
         {
@@ -573,19 +556,6 @@ SPEC_TYPE ParseTopLevel( FILE *file, int def_only )
 	}
 	else
             fatal_error( "Expected name, id, length or ordinal\n" );
-    }
-
-    if (!DLLFileName[0])
-    {
-        if (SpecMode == SPEC_MODE_DLL)
-	{
-	    strcpy( DLLFileName, DLLName );
-	    /* Append .dll to name if no extension present */
-	    if (!strrchr( DLLFileName, '.'))
-		strcat( DLLFileName, ".dll" );
-	}
-        else
-            sprintf( DLLFileName, "%s.exe", DLLName );
     }
 
     if (SpecType == SPEC_WIN16 && !owner_name[0])

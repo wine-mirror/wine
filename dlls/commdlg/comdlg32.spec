@@ -1,4 +1,3 @@
-name	comdlg32
 init	COMDLG32_DllEntryPoint
 
 @ stdcall ChooseColorA(ptr) ChooseColorA

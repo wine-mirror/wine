@@ -1,5 +1,3 @@
-name	quartz
-
 @ stub AMGetErrorTextA
 @ stub AMGetErrorTextW
 @ stub AmpFactorToDB
@@ -8,4 +6,3 @@ name	quartz
 @ stub DllGetClassObject
 @ stub DllRegisterServer
 @ stub DllUnregisterServer
-

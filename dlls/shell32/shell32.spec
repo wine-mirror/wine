@@ -1,4 +1,3 @@
-name	shell32
 init	Shell32LibMain
 
 # Functions exported by the Win95 shell32.dll

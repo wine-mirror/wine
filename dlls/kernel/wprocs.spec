@@ -1,7 +1,3 @@
-name	wprocs
-type	win16
-owner	kernel32
-
 # Interrupt vectors 0-255 are ordinals 100-355
 # The '-interrupt' keyword takes care of the flags pushed on the stack by the interrupt
 117 pascal -interrupt INT_Int11Handler() INT_Int11Handler

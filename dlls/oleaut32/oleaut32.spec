@@ -1,5 +1,3 @@
-name oleaut32
-
 1 stdcall DllGetClassObject(ptr ptr ptr) OLEAUT32_DllGetClassObject
 2 stdcall SysAllocString(wstr) SysAllocString
 3 stdcall SysReAllocString(ptr wstr) SysReAllocString

@@ -1,5 +1,3 @@
-name	msisys
-file	msisys.ocx
 init	MSISYS_DllMain
 
 @ stdcall DllCanUnloadNow() MSISYS_DllCanUnloadNow

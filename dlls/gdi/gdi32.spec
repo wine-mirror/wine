@@ -1,4 +1,3 @@
-name    gdi32
 init    MAIN_GdiInit
 
 # ordinal exports

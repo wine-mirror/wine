@@ -1,5 +1,3 @@
-name    psapi
-
 @ stdcall EmptyWorkingSet(long) EmptyWorkingSet
 @ stdcall EnumDeviceDrivers(ptr long ptr) EnumDeviceDrivers
 @ stdcall EnumProcessModules(long ptr long ptr) EnumProcessModules

@@ -1,5 +1,3 @@
-name	avifil32
-
 @ stub    AVIBuildFilter
 @ stub    AVIBuildFilterA
 @ stub    AVIBuildFilterW

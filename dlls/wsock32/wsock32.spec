@@ -1,5 +1,3 @@
-name	wsock32
-
   1 forward accept ws2_32.accept
   2 forward bind ws2_32.bind
   3 forward closesocket ws2_32.closesocket

@@ -1,5 +1,3 @@
-name	tapi32
-
 @ stdcall lineAccept(long str long) lineAccept
 @ stdcall lineAddProvider(str long ptr) lineAddProvider
 @ stdcall lineAddToConference(long long) lineAddToConference

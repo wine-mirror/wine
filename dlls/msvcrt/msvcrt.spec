@@ -1,5 +1,4 @@
 # msvcrt.dll - MS VC++ Run Time Library
-name    msvcrt
 init    MSVCRT_Init
 
 @ cdecl $I10_OUTPUT() MSVCRT_I10_OUTPUT

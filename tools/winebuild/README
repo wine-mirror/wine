@@ -1,12 +1,10 @@
 			Spec file format
 			----------------
 
-name	NAME
-type    win16|win32
+[name	NAME]
 [file   WINFILENAME]
 [mode	dll|cuiexe|guiexe|cuiexe_unicode|guiexe_unicode]
 [heap   SIZE]
-[stack  SIZE]
 [init	FUNCTION]
 [rsrc	RESFILE]
 [ignore ([SYMBOL [SYMBOL...]])]
@@ -29,22 +27,23 @@ ORDINAL forward [FLAGS] EXPORTNAME SYMBOLNAME
 General:
 ========
 
-    "name" and "type" fields are mandatory.  Specific ordinal
-declarations are optional, but the default handler will print an error
-message.
+All declarations are optional; reasonable defaults will be used for
+anything that isn't specified.
+
+"name" is the internal name of the module. It is only used in Win16
+modules. The default is to use the base name of the spec file (without
+any extension). This is used for KERNEL, since it lives in
+KRNL386.EXE. It shouldn't be needed otherwise.
+
+"file" gives the name of the file containing the dll. If not specified
+it is determined from the name of the source spec file. Normally you
+shouldn't ever need to specify it explicitly.
 
 "mode" specifies whether it is the spec file for a dll or the main exe.
 This is only valid for Win32 spec files.
 
 "heap" is the size of the module local heap (only valid for Win16
 modules); default is no local heap.
-
-"stack" is the stack size for Win32 exe modules, in kilobytes; default
-size is 1024 (1Mb stack).
-
-"file" gives the name of the Windows file that is replaced by the
-builtin. <name>.DLL is assumed if none is given. (This is important
-for kernel, which lives in the Windows file KRNL386.EXE).
 
 "init" specifies a function which will be called when this dll
 is loaded. This is only valid for Win32 modules.
@@ -142,7 +141,7 @@ Equate ordinals:
 ================
 
     This type defines an ordinal as an absolute value.
-"EXPORTNAME" will be the name available for dynamic linking.  
+"EXPORTNAME" will be the name available for dynamic linking.
 "DATA" can be a decimal number or a hex number preceeded by "0x".
 
 Extern ordinals:
@@ -158,6 +157,5 @@ Forwarded ordinals:
 
     This type defines an entry that is forwarded to another entry
 point (kind of a symbolic link). "EXPORTNAME" will forward to the
-entry point "SYMBOLNAME" that must be of the form "DLL.Function". This 
+entry point "SYMBOLNAME" that must be of the form "DLL.Function". This
 type only works with Win32.
-

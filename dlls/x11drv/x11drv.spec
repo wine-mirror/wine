@@ -1,4 +1,3 @@
-name	x11drv
 init	X11DRV_Init
 
 # GDI driver

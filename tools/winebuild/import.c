@@ -116,15 +116,12 @@ static char *open_library( const char *name )
 static void read_exported_symbols( const char *name, struct import *imp )
 {
     FILE *f;
-    char buffer[1024];
+    char buffer[1024], prefix[80];
     char *fullname, *cmdline;
-    const char *ext;
     int size, err;
 
     imp->exports    = NULL;
     imp->nb_exports = size = 0;
-
-    if (!(ext = strrchr( name, '.' ))) ext = name + strlen(name);
 
     if (!(fullname = open_library( name ))) return;
     cmdline = xmalloc( strlen(fullname) + 7 );
@@ -134,15 +131,15 @@ static void read_exported_symbols( const char *name, struct import *imp )
     if (!(f = popen( cmdline, "r" )))
         fatal_error( "Cannot execute '%s'\n", cmdline );
 
+    sprintf( prefix, "__wine_dllexport_%s", make_c_identifier(name) );
+
     while (fgets( buffer, sizeof(buffer), f ))
     {
         char *p = buffer + strlen(buffer) - 1;
         if (p < buffer) continue;
         if (*p == '\n') *p-- = 0;
-        if (!(p = strstr( buffer, "__wine_dllexport_" ))) continue;
-        p += 17;
-        if (strncmp( p, name, ext - name )) continue;
-        p += ext - name;
+        if (!(p = strstr( buffer, prefix ))) continue;
+        p += strlen(prefix);
         if (*p++ != '_') continue;
 
         if (imp->nb_exports == size)

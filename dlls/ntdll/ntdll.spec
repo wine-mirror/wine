@@ -1,5 +1,3 @@
-name	ntdll
-
 #note that the Zw... functions are alternate names for the
 #Nt... functions.  (see www.sysinternals.com for details)
 #if you change a Nt.. function DON'T FORGET to change the

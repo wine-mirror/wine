@@ -1,4 +1,3 @@
-name dinput
 init Init
 
 @ stdcall DirectInputCreateA(long long ptr ptr) DirectInputCreateA

@@ -1,6 +1,3 @@
-name	display
-type	win16
-owner	user32
 rsrc	resources/display.res
 
 1   stub BitBlt
@@ -59,4 +56,3 @@ rsrc	resources/display.res
 502 stub ORDINAL_ONLY2
 600 stub InkReady
 601 stub GetLPDevice
-

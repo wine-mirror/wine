@@ -1,7 +1,3 @@
-name	winnls
-type	win16
-owner	winnls32
-
 1   stub WINNLSINQUIRE
 2   stub HOOKKEYBOARDMESSAGE
 #3   stub ___EXPORTEDSTUB

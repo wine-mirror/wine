@@ -1,9 +1,4 @@
-name	ver
-type	win16
-owner	version
-
 #1 DLLENTRYPOINT
-
 2 pascal GetFileResourceSize(str str str ptr) GetFileResourceSize16
 3 pascal GetFileResource(str str str long long ptr) GetFileResource16
 6 pascal GetFileVersionInfoSize(str ptr) GetFileVersionInfoSize16

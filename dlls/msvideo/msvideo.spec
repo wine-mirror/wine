@@ -1,7 +1,3 @@
-name msvideo
-type win16
-owner msvfw32
-
 2 pascal VideoForWindowsVersion() VideoForWindowsVersion
 20 stub VIDEOGETNUMDEVS
 21 stub VIDEOGETERRORTEXT

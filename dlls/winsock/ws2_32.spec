@@ -2,7 +2,6 @@
 #
 #  Export table information obtained from Windows 2000 ws2_32.dll
 
-name ws2_32
 init WS_LibMain
 
 #  EXPORTS ***********

@@ -1,4 +1,3 @@
-name	wineps
 init	PSDRV_Init
 
 # GDI driver

@@ -1,5 +1,3 @@
-name olecli32
-
    1 stub WEP
    2 stub OleDelete
    3 forward OleSaveToStream ole32.OleSaveToStream

@@ -1,4 +1,3 @@
-name	wnaspi32
 init	WNASPI32_LibMain
 
 # we have several ordinal clashes here, it seems...

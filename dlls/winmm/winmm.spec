@@ -1,4 +1,3 @@
-name winmm
 init WINMM_LibMain
 
 # ordinal exports

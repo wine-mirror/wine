@@ -1,5 +1,3 @@
-name olepro32
-
 248 forward OleIconToCursor OLEAUT32.OleIconToCursor
 249 forward OleCreatePropertyFrameIndirect OLEAUT32.OleCreatePropertyFrameIndirect
 250 forward OleCreatePropertyFrame OLEAUT32.OleCreatePropertyFrame

@@ -1,4 +1,3 @@
-name ddraw
 init DDRAW_DllMain
 
 @ stub DDHAL32_VidMemAlloc

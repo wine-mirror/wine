@@ -1,5 +1,3 @@
-name    urlmon
-
 1 stub CDLGetLongPathNameA
 2 stub CDLGetLongPathNameW
 @ stub AsyncGetClassBits
@@ -76,4 +74,3 @@ name    urlmon
 @ stdcall UrlMkSetSessionOption(long ptr long long) UrlMkSetSessionOption
 @ stub WriteHitLogging
 @ stub ZonesReInit
-

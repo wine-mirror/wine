@@ -1,4 +1,3 @@
-name    snmpapi
 init    SNMPAPI_DllMain
 
 @ stub SnmpSvcAddrIsIpx

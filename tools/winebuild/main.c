@@ -119,6 +119,7 @@ static void do_f_flags( const char *arg );
 static void do_define( const char *arg );
 static void do_include( const char *arg );
 static void do_exe_mode( const char *arg );
+static void do_module( const char *arg );
 static void do_spec( const char *arg );
 static void do_def( const char *arg );
 static void do_exe( const char *arg );
@@ -142,6 +143,7 @@ static const struct option_descr option_table[] =
     { "-D",       1, do_define,  "-D sym           Ignored for C flags compatibility" },
     { "-I",       1, do_include, "-I dir           Ignored for C flags compatibility" },
     { "-m",       1, do_exe_mode,"-m mode          Set the executable mode (cui|gui|cuiw|guiw)" },
+    { "-M",       1, do_module,  "-M module        Set the name of the main (Win32) module for a Win16 dll" },
     { "-L",       1, do_lib,     "-L directory     Look for imports libraries in 'directory'" },
     { "-l",       1, do_import,  "-l lib.dll       Import the specified library" },
     { "-dl",      1, do_dimport, "-dl lib.dll      Delay-import the specified library" },
@@ -207,9 +209,16 @@ static void do_include( const char *arg )
 
 static void do_spec( const char *arg )
 {
+    char *p;
+
     if (exec_mode != MODE_NONE || !arg[0]) do_usage();
     exec_mode = MODE_SPEC;
     open_input( arg );
+
+    if ((p = strrchr( arg, '/' ))) strcpy( DLLFileName, p + 1 );
+    else strcpy( DLLFileName, arg );
+    if ((p = strrchr( DLLFileName, '.' )) && !strcmp( p, ".spec" )) *p = 0;
+    if (!strchr( DLLFileName, '.' )) strcat( DLLFileName, ".dll" );
 }
 
 static void do_def( const char *arg )
@@ -227,7 +236,6 @@ static void do_exe( const char *arg )
     exec_mode = MODE_EXE;
     if ((p = strrchr( arg, '/' ))) p++;
     else p = arg;
-    strcpy( DLLName, p );
     strcpy( DLLFileName, p );
     if (!strchr( DLLFileName, '.' )) strcat( DLLFileName, ".exe" );
     if (SpecMode == SPEC_MODE_DLL) SpecMode = SPEC_MODE_GUIEXE;
@@ -240,6 +248,11 @@ static void do_exe_mode( const char *arg )
     else if (!strcmp( arg, "guiw" )) SpecMode = SPEC_MODE_GUIEXE_UNICODE;
     else if (!strcmp( arg, "cuiw" )) SpecMode = SPEC_MODE_CUIEXE_UNICODE;
     else do_usage();
+}
+
+static void do_module( const char *arg )
+{
+    strcpy( owner_name, arg );
 }
 
 static void do_glue( const char *arg )

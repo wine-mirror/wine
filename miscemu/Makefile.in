@@ -21,6 +21,9 @@ ALL_OBJS = $(SPEC_SRCS:.spec=.spec.o) $(OBJS)
 $(MODULE): $(ALL_OBJS)
 	$(CC) -o $@ $(ALL_OBJS) -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(LIBWINE) $(LIBUNICODE) $(LIBS) $(LDFLAGS)
 
+wine.spec.c: wine.spec
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -spec $(SRCDIR)/wine.spec -L$(DLLDIR) $(IMPORTS:%=-l%)
+
 install:: $(MODULE)
 	$(MKINSTALLDIRS) $(bindir)
 	$(INSTALL_PROGRAM) wine $(bindir)/wine

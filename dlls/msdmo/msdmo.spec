@@ -1,5 +1,3 @@
-name msdmo
-
 @ stub DMOEnum
 @ stub DMOGetName
 @ stub DMOGetTypes
@@ -15,4 +13,3 @@ name msdmo
 @ stub MoDuplicateMediaType
 @ stub MoFreeMediaType
 @ stub MoInitMediaType
-

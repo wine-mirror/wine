@@ -1,5 +1,3 @@
-name	msvfw32
-
 # Yes, ICCompress,ICDecompress,MCIWnd* and ICDraw* are cdecl (VFWAPIV).
 # The rest is stdcall (VFWAPI) however. -Marcus Meissner, 990124
 

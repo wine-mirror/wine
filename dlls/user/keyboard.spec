@@ -1,7 +1,3 @@
-name	keyboard
-type	win16
-owner	user32
-
 1   pascal16 Inquire(ptr) KEYBOARD_Inquire
 2   pascal16 Enable(segptr ptr) KEYBOARD_Enable
 3   pascal16 Disable() KEYBOARD_Disable
@@ -22,4 +18,3 @@ owner	user32
 135 pascal16 OemToAnsiBuff(ptr ptr word) OemToAnsiBuff16
 #136	pascal	EnableKbSysReq
 #137	pascal	GetBiosKeyProc
-

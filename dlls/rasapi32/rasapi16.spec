@@ -1,7 +1,3 @@
-name    rasapi16
-type    win16
-owner	rasapi32
-
 #1 stub	WEP
 #2 stub	DLLENTRYPOINT
 3 stub	RNA1632_THUNKDATA16

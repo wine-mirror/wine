@@ -1,5 +1,3 @@
-name sti
-
 @ stub DllCanUnloadNow
 @ stub DllGetClassObject
 @ stub DllRegisterServer

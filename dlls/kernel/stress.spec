@@ -1,9 +1,5 @@
 # summary: resource modification dll
 #
-name	stress
-type	win16
-owner	kernel32
-
 2   pascal AllocMem(long) AllocMem
 3   pascal FreeAllMem() FreeAllMem
 6   pascal AllocFileHandles(word) AllocFileHandles

@@ -1,4 +1,3 @@
-name	serialui
 init	SERIALUI_LibMain
 
 2 stdcall EnumPropPages(ptr ptr ptr) SERIALUI_EnumPropPages

@@ -1,9 +1,6 @@
 # Compound Storage DLL.
 # (FIXME: some methods are commented out. Commenting them in _WILL_
 #  result in dataloss. Do it at your own risk.)
-name	storage
-type	win16
-owner	ole32
 
 1 pascal StgCreateDocFileA(str long long ptr) StgCreateDocFile16
 2 stub StgCreateDocFileOnILockBytes

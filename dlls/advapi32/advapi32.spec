@@ -1,5 +1,3 @@
-name	advapi32
-
 @ stdcall AbortSystemShutdownA(ptr) AbortSystemShutdownA
 @ stdcall AbortSystemShutdownW(ptr) AbortSystemShutdownW
 @ stdcall AccessCheck(ptr long long ptr ptr ptr ptr ptr) AccessCheck

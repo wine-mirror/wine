@@ -1,5 +1,3 @@
-name	olesvr32
-
  1 stub WEP
  2 stdcall OleRegisterServer(str ptr ptr long long) OleRegisterServer
  3 stub OleRevokeServer

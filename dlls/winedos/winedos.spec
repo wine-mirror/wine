@@ -1,4 +1,3 @@
-name winedos
 init DOSVM_Init
 
 @ stdcall LoadDosExe(str long) MZ_LoadImage

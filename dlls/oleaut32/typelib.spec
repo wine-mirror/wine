@@ -1,7 +1,3 @@
-name typelib
-type win16
-owner oleaut32
-
 2  stub CREATETYPELIB
 3  pascal LoadTypeLib(ptr ptr) LoadTypeLib16
 4  stub LHASHVALOFNAMESYS

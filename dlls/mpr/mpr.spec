@@ -1,5 +1,3 @@
-name mpr
-
 # ordinal exports
  1 stub @
  2 stub @

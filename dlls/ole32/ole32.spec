@@ -1,4 +1,3 @@
-name	ole32
 init	OLE32_DllEntryPoint
 
   1 stub BindMoniker                # stdcall (ptr long ptr ptr) return 0,ERR_NOTIMPLEMENTED

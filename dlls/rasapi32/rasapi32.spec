@@ -1,5 +1,3 @@
-name	rasapi32
-
  1  stub RasAutodialAddressToNetwork
  2  stub RasAutodialEntryToNetwork
  3  stub RasConnectionNotificationA

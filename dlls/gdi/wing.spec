@@ -1,7 +1,3 @@
-name    wing
-type    win16
-owner	gdi32
-
 1001 pascal16 WinGCreateDC() WinGCreateDC16
 1002 pascal16 WinGRecommendDIBFormat(ptr) WinGRecommendDIBFormat16
 1003 pascal16 WinGCreateBitmap(word ptr ptr) WinGCreateBitmap16

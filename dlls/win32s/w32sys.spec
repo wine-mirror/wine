@@ -1,7 +1,3 @@
-name	w32sys
-type	win16
-owner	w32skrnl
-
 #1 WEP
 2 pascal16 IsPeFormat(str word) IsPeFormat16
 3 stub EXECPE

@@ -1,4 +1,3 @@
-name	kernel32
 init	MAIN_KernelInit
 
 # Functions exported by the Win95 kernel32.dll

@@ -1,5 +1,3 @@
-name msimg32
-
 @ stdcall AlphaBlend(long long long long long long long long long long long) AlphaBlend
 @ stub DllInitialize
 @ stdcall GradientFill(long ptr long ptr long long) GradientFill

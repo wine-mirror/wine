@@ -1,4 +1,3 @@
-name	user32
 init	UserClientDllInitialize
 
 @ stdcall ActivateKeyboardLayout(long long) ActivateKeyboardLayout

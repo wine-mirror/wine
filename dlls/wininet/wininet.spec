@@ -1,4 +1,3 @@
-name    wininet
 init    WININET_LibMain
 
 @ stub InternetInitializeAutoProxyDll

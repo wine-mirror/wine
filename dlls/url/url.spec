@@ -1,5 +1,3 @@
-name url
-
 @ stub AddMIMEFileTypesPS
 @ stub AutodialHookCallback
 @ stub DllCanUnloadNow

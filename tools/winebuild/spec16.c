@@ -199,6 +199,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
     /* First entry is module name */
     *pstr = strlen( DLLName );
     strcpy( pstr + 1, DLLName );
+    strupper( pstr + 1 );
     pstr += *pstr + 1;
     *pstr++ = 0;
     *pstr++ = 0;
@@ -588,7 +589,7 @@ static void output_stub_funcs( FILE *outfile )
         fprintf( outfile, "  rec.flags   = %d;\n", EH_NONCONTINUABLE );
         fprintf( outfile, "  rec.rec     = 0;\n" );
         fprintf( outfile, "  rec.params  = 2;\n" );
-        fprintf( outfile, "  rec.info[0] = dllname;\n" );
+        fprintf( outfile, "  rec.info[0] = \"%s\";\n", DLLFileName );
         fprintf( outfile, "  rec.info[1] = func;\n" );
         fprintf( outfile, "#ifdef __GNUC__\n" );
         fprintf( outfile, "  rec.addr = __builtin_return_address(1);\n" );
@@ -639,9 +640,13 @@ void BuildSpec16File( FILE *outfile )
     data = (unsigned char *)xmalloc( 0x10000 );
     memset( data, 0, 16 );
     data_offset = 16;
-    strupper( DLLName );
 
-    fprintf( outfile, "static const char dllname[] = \"%s\";\n\n", DLLName );
+    if (!DLLName[0])  /* set default name from file name */
+    {
+        char *p;
+        strcpy( DLLName, DLLFileName );
+        if ((p = strrchr( DLLName, '.' ))) *p = 0;
+    }
 
     output_stub_funcs( outfile );
 
@@ -683,7 +688,7 @@ void BuildSpec16File( FILE *outfile )
         char profile[101];
 
         strcpy( profile, get_function_name( typelist[i] ));
-        BuildCallFrom16Func( outfile, profile, DLLName );
+        BuildCallFrom16Func( outfile, profile, DLLFileName );
     }
 #endif
 
@@ -780,7 +785,7 @@ void BuildSpec16File( FILE *outfile )
 
 #ifdef __i386__
         fprintf( outfile, "    { 0x68, __wine_%s_CallFrom16_%s, 0x9a, __wine_call_from_16_%s,\n",
-                 make_c_identifier(DLLName), profile,
+                 make_c_identifier(DLLFileName), profile,
                  (typelist[i]->flags & (FLAG_REGISTER|FLAG_INTERRUPT)) ? "regs":
                  typelist[i]->type == TYPE_PASCAL_16? "word" : "long" );
         if (argsize)
@@ -878,8 +883,8 @@ void BuildSpec16File( FILE *outfile )
 
     /* Output the DLL constructor */
 
-    sprintf( constructor, "__wine_spec_%s_init", make_c_identifier(DLLName) );
-    sprintf( destructor, "__wine_spec_%s_fini", make_c_identifier(DLLName) );
+    sprintf( constructor, "__wine_spec_%s_init", make_c_identifier(DLLFileName) );
+    sprintf( destructor, "__wine_spec_%s_fini", make_c_identifier(DLLFileName) );
     output_dll_init( outfile, constructor, destructor );
 
     fprintf( outfile,
@@ -942,4 +947,3 @@ void BuildGlue( FILE *outfile, FILE *infile )
 
     fclose( infile );
 }
-

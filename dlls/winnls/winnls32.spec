@@ -1,5 +1,3 @@
-name	winnls32
-
 1  stub WINNLS32EnableIME
 2  stub WINNLS32GetEnableStatus
 3  stub WINNLS32GetIMEHotKey

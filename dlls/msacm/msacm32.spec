@@ -1,4 +1,3 @@
-name msacm32
 init MSACM32_LibMain
 
 @ stdcall acmDriverAddA(ptr long long long long) acmDriverAddA

@@ -1,5 +1,3 @@
-name icmp
-
 @ stdcall IcmpCloseHandle(ptr) IcmpCloseHandle
 @ stdcall IcmpCreateFile() IcmpCreateFile
 @ stub  IcmpParseReplies
@@ -8,5 +6,3 @@ name icmp
 @ stub  do_echo_rep
 @ stub  do_echo_req
 @ stub  register_icmp
-
-

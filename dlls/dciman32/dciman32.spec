@@ -1,5 +1,3 @@
-name	dciman32
-
 @ stub    DCIBeginAccess
 @ stdcall DCICloseProvider(long) DCICloseProvider
 @ stub    DCICreateOffscreen

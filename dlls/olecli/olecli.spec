@@ -1,7 +1,3 @@
-name	olecli
-type	win16
-owner	olecli32
-
 #1 WEP
 2 stub OLEDELETE
 3 stub OLESAVETOSTREAM

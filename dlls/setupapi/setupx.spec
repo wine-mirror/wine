@@ -1,7 +1,3 @@
-name    setupx
-type    win16
-owner	setupapi
-
 1    stub     WEP
 2    pascal16 IpOpen(str ptr) IpOpen16
 3    stub     IpOpenAppend #(str word)

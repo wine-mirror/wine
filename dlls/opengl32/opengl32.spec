@@ -1,4 +1,3 @@
-name opengl32
 init OpenGL32_Init
 
 @  stdcall wglCreateContext(long) wglCreateContext

@@ -1,7 +1,3 @@
-name	ole2
-type	win16
-owner	ole32
-
 1 pascal OleBuildVersion() OleBuildVersion
 2 pascal OleInitialize(ptr) OleInitialize
 3 pascal OleUninitialize() OleUninitialize

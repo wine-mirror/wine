@@ -1,4 +1,3 @@
-name dplayx
 init DPLAYX_LibMain
 
   1 stdcall DirectPlayCreate(ptr ptr ptr) DirectPlayCreate

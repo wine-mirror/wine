@@ -1,7 +1,3 @@
-name	msacm
-type	win16
-owner	msacm32
-
   1 stub     WEP
   2 stub     DRIVERPROC
   3 stub     ___EXPORTEDSTUB

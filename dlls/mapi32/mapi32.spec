@@ -1,5 +1,3 @@
-name mapi32
-
 @ stub BMAPIAddress
 @ stub BMAPIDetails
 @ stub BMAPIFindNext
