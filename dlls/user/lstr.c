@@ -1,24 +1,322 @@
 /*
- * String functions
+ * USER string functions
  *
  * Copyright 1993 Yngvi Sigurjonsson (yngvi@hafro.is)
+ * Copyright 1996 Alexandre Julliard
  * Copyright 1996 Marcus Meissner
  */
 
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
+#include "wine/unicode.h"
 
 #include "heap.h"
 #include "ldt.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(resource);
+
+/***********************************************************************
+ *           AnsiToOem16   (KEYBOARD.5)
+ */
+INT16 WINAPI AnsiToOem16( LPCSTR s, LPSTR d )
+{
+    CharToOemA( s, d );
+    return -1;
+}
+
+
+/***********************************************************************
+ *           OemToAnsi16   (KEYBOARD.6)
+ */
+INT16 WINAPI OemToAnsi16( LPCSTR s, LPSTR d )
+{
+    OemToCharA( s, d );
+    return -1;
+}
+
+
+/***********************************************************************
+ *           AnsiToOemBuff16   (KEYBOARD.134)
+ */
+void WINAPI AnsiToOemBuff16( LPCSTR s, LPSTR d, UINT16 len )
+{
+    if (len != 0) CharToOemBuffA( s, d, len );
+}
+
+
+/***********************************************************************
+ *           OemToAnsiBuff16   (KEYBOARD.135)
+ */
+void WINAPI OemToAnsiBuff16( LPCSTR s, LPSTR d, UINT16 len )
+{
+    if (len != 0) OemToCharBuffA( s, d, len );
+}
+
+
+/***********************************************************************
+ *           AnsiUpper16   (USER.431)
+ */
+SEGPTR WINAPI AnsiUpper16( SEGPTR strOrChar )
+{
+    /* uppercase only one char if strOrChar < 0x10000 */
+    if (HIWORD(strOrChar))
+    {
+        CharUpperA( PTR_SEG_TO_LIN(strOrChar) );
+        return strOrChar;
+    }
+    else return toupper((char)strOrChar);
+}
+
+
+/***********************************************************************
+ *           AnsiLower16   (USER.432)
+ */
+SEGPTR WINAPI AnsiLower16( SEGPTR strOrChar )
+{
+    /* lowercase only one char if strOrChar < 0x10000 */
+    if (HIWORD(strOrChar))
+    {
+        CharLowerA( PTR_SEG_TO_LIN(strOrChar) );
+        return strOrChar;
+    }
+    else return tolower((char)strOrChar);
+}
+
+
+/***********************************************************************
+ *           AnsiUpperBuff16   (USER.437)
+ */
+UINT16 WINAPI AnsiUpperBuff16( LPSTR str, UINT16 len )
+{
+    CharUpperBuffA( str, len ? len : 65536 );
+    return len;
+}
+
+
+/***********************************************************************
+ *           AnsiLowerBuff16   (USER.438)
+ */
+UINT16 WINAPI AnsiLowerBuff16( LPSTR str, UINT16 len )
+{
+    CharLowerBuffA( str, len ? len : 65536 );
+    return len;
+}
+
+
+/***********************************************************************
+ *           AnsiNext16   (USER.472)
+ */
+SEGPTR WINAPI AnsiNext16(SEGPTR current)
+{
+    char *ptr = (char *)PTR_SEG_TO_LIN(current);
+    return current + (CharNextA(ptr) - ptr);
+}
+
+
+/***********************************************************************
+ *           AnsiPrev16   (USER.473)
+ */
+SEGPTR WINAPI AnsiPrev16( LPCSTR start, SEGPTR current )
+{
+    char *ptr = (char *)PTR_SEG_TO_LIN(current);
+    return current - (ptr - CharPrevA( start, ptr ));
+}
+
+
+/***********************************************************************
+ *           CharNextA   (USER32.@)
+ */
+LPSTR WINAPI CharNextA( LPCSTR ptr )
+{
+    if (!*ptr) return (LPSTR)ptr;
+    if (IsDBCSLeadByte( ptr[0] ) && ptr[1]) return (LPSTR)(ptr + 2);
+    return (LPSTR)(ptr + 1);
+}
+
+
+/***********************************************************************
+ *           CharNextExA   (USER32.@)
+ */
+LPSTR WINAPI CharNextExA( WORD codepage, LPCSTR ptr, DWORD flags )
+{
+    if (!*ptr) return (LPSTR)ptr;
+    if (IsDBCSLeadByteEx( codepage, ptr[0] ) && ptr[1]) return (LPSTR)(ptr + 2);
+    return (LPSTR)(ptr + 1);
+}
+
+
+/***********************************************************************
+ *           CharNextExW   (USER32.@)
+ */
+LPWSTR WINAPI CharNextExW( WORD codepage, LPCWSTR ptr, DWORD flags )
+{
+    /* doesn't make sense, there are no codepages for Unicode */
+    return NULL;
+}
+
+
+/***********************************************************************
+ *           CharNextW   (USER32.@)
+ */
+LPWSTR WINAPI CharNextW(LPCWSTR x)
+{
+    if (*x) x++;
+    else return (LPWSTR)x;
+}
+
+
+/***********************************************************************
+ *           CharPrevA   (USER32.@)
+ */
+LPSTR WINAPI CharPrevA( LPCSTR start, LPCSTR ptr )
+{
+    while (*start && (start < ptr))
+    {
+        LPCSTR next = CharNextA( start );
+        if (next >= ptr) break;
+        start = next;
+    }
+    return (LPSTR)start;
+}
+
+
+/***********************************************************************
+ *           CharPrevExA   (USER32.@)
+ */
+LPSTR WINAPI CharPrevExA( WORD codepage, LPCSTR start, LPCSTR ptr, DWORD flags )
+{
+    while (*start && (start < ptr))
+    {
+        LPCSTR next = CharNextExA( codepage, start, flags );
+        if (next > ptr) break;
+        start = next;
+    }
+    return (LPSTR)start;
+}
+
+
+/***********************************************************************
+ *           CharPrevExW   (USER32.@)
+ */
+LPSTR WINAPI CharPrevExW( WORD codepage, LPCWSTR start, LPCWSTR ptr, DWORD flags )
+{
+    /* doesn't make sense, there are no codepages for Unicode */
+    return NULL;
+}
+
+
+/***********************************************************************
+ *           CharPrevW   (USER32.@)
+ */
+LPWSTR WINAPI CharPrevW(LPCWSTR start,LPCWSTR x)
+{
+    if (x>start) return (LPWSTR)(x-1);
+    else return (LPWSTR)x;
+}
+
+
+/***********************************************************************
+ *           CharToOemA   (USER32.@)
+ */
+BOOL WINAPI CharToOemA( LPCSTR s, LPSTR d )
+{
+    if ( !s || !d ) return TRUE;
+    return CharToOemBuffA( s, d, strlen( s ) + 1 );
+}
+
+
+/***********************************************************************
+ *           CharToOemBuffA   (USER32.@)
+ */
+BOOL WINAPI CharToOemBuffA( LPCSTR s, LPSTR d, DWORD len )
+{
+    WCHAR *bufW;
+
+    bufW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    if( bufW )
+    {
+	MultiByteToWideChar( CP_ACP, 0, s, len, bufW, len );
+	WideCharToMultiByte( CP_OEMCP, 0, bufW, len, d, len, NULL, NULL );
+	HeapFree( GetProcessHeap(), 0, bufW );
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           CharToOemBuffW   (USER32.@)
+ */
+BOOL WINAPI CharToOemBuffW( LPCWSTR s, LPSTR d, DWORD len )
+{
+   if ( !s || !d ) return TRUE;
+    WideCharToMultiByte( CP_OEMCP, 0, s, len, d, len, NULL, NULL );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           CharToOemW   (USER32.@)
+ */
+BOOL WINAPI CharToOemW( LPCWSTR s, LPSTR d )
+{
+    return CharToOemBuffW( s, d, strlenW( s ) + 1 );
+}
+
+
+/***********************************************************************
+ *           OemToCharA   (USER32.@)
+ */
+BOOL WINAPI OemToCharA( LPCSTR s, LPSTR d )
+{
+    return OemToCharBuffA( s, d, strlen( s ) + 1 );
+}
+
+
+/***********************************************************************
+ *           OemToCharBuffA   (USER32.@)
+ */
+BOOL WINAPI OemToCharBuffA( LPCSTR s, LPSTR d, DWORD len )
+{
+    WCHAR *bufW;
+
+    bufW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    if( bufW )
+    {
+	MultiByteToWideChar( CP_OEMCP, 0, s, len, bufW, len );
+	WideCharToMultiByte( CP_ACP, 0, bufW, len, d, len, NULL, NULL );
+	HeapFree( GetProcessHeap(), 0, bufW );
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           OemToCharBuffW   (USER32.@)
+ */
+BOOL WINAPI OemToCharBuffW( LPCSTR s, LPWSTR d, DWORD len )
+{
+    MultiByteToWideChar( CP_OEMCP, 0, s, len, d, len );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           OemToCharW   (USER32.@)
+ */
+BOOL WINAPI OemToCharW( LPCSTR s, LPWSTR d )
+{
+    return OemToCharBuffW( s, d, strlen( s ) + 1 );
+}
+
 
 /***********************************************************************
  *           FormatMessage16   (USER.606)

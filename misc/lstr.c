@@ -38,207 +38,6 @@ DEFAULT_DEBUG_CHANNEL(resource);
 
 extern const WORD OLE2NLS_CT_CType3_LUT[]; /* FIXME: does not belong here */
 
-/* Funny to divide them between user and kernel. */
-
-/***********************************************************************
- *		IsCharAlpha (USER.433)
- */
-BOOL16 WINAPI IsCharAlpha16(CHAR ch)
-{
-  return isalpha(ch);   /* This is probably not right for NLS */
-}
-
-/***********************************************************************
- *		IsCharAlphaNumeric (USER.434)
- */
-BOOL16 WINAPI IsCharAlphaNumeric16(CHAR ch)
-{
-    return isalnum(ch);
-}
-
-/***********************************************************************
- *		IsCharUpper (USER.435)
- */
-BOOL16 WINAPI IsCharUpper16(CHAR ch)
-{
-  return isupper(ch);
-}
-
-/***********************************************************************
- *		IsCharLower (USER.436)
- */
-BOOL16 WINAPI IsCharLower16(CHAR ch)
-{
-  return islower(ch);
-}
-
-/***********************************************************************
- *           AnsiUpper16   (USER.431)
- */
-SEGPTR WINAPI AnsiUpper16( SEGPTR strOrChar )
-{
-  /* I am not sure if the locale stuff works with toupper, but then again 
-     I am not sure if the Linux libc locale stuffs works at all */
-
-    /* uppercase only one char if strOrChar < 0x10000 */
-    if (HIWORD(strOrChar))
-    {
-        char *s;
-        for (s = PTR_SEG_TO_LIN(strOrChar); *s; s++) *s = toupper(*s);
-        return strOrChar;
-    }
-    else return toupper((char)strOrChar);
-}
-
-
-/***********************************************************************
- *           AnsiUpperBuff16   (USER.437)
- */
-UINT16 WINAPI AnsiUpperBuff16( LPSTR str, UINT16 len )
-{
-    UINT count = len ? len : 65536;
-    for (; count; count--, str++) *str = toupper(*str);
-    return len;
-}
-
-/***********************************************************************
- *           AnsiLower16   (USER.432)
- */
-SEGPTR WINAPI AnsiLower16( SEGPTR strOrChar )
-{
-  /* I am not sure if the locale stuff works with toupper, but then again 
-     I am not sure if the Linux libc locale stuffs works at all */
-
-    /* lowercase only one char if strOrChar < 0x10000 */
-    if (HIWORD(strOrChar))
-    {
-        char *s;
-        for (s = PTR_SEG_TO_LIN( strOrChar ); *s; s++) *s = tolower( *s );
-        return strOrChar;
-    }
-    else return tolower((char)strOrChar);
-}
-
-
-/***********************************************************************
- *           AnsiLowerBuff16   (USER.438)
- */
-UINT16 WINAPI AnsiLowerBuff16( LPSTR str, UINT16 len )
-{
-    UINT count = len ? len : 65536;
-    for (; count; count--, str++) *str = tolower(*str);
-    return len;
-}
-
-
-/***********************************************************************
- *           AnsiNext16   (USER.472)
- */
-SEGPTR WINAPI AnsiNext16(SEGPTR current)
-{
-    return (*(char *)PTR_SEG_TO_LIN(current)) ? current + 1 : current;
-}
-
-
-/***********************************************************************
- *           AnsiPrev16   (USER.473)
- */
-SEGPTR WINAPI AnsiPrev16( SEGPTR start, SEGPTR current )
-{
-    return (current == start) ? start : current - 1;
-}
-
-
-/***********************************************************************
- *           CharNextA   (USER32.29)
- */
-LPSTR WINAPI CharNextA( LPCSTR ptr )
-{
-    if (!*ptr) return (LPSTR)ptr;
-    if (IsDBCSLeadByte( *ptr ) && (*(ptr+1) != 0) ) return (LPSTR)(ptr + 2);
-    return (LPSTR)(ptr + 1);
-}
-
-
-/***********************************************************************
- *           CharNextExA   (USER32.30)
- */
-LPSTR WINAPI CharNextExA( WORD codepage, LPCSTR ptr, DWORD flags )
-{
-    if (!*ptr) return (LPSTR)ptr;
-    if (IsDBCSLeadByteEx( codepage, *ptr ) && (*(ptr+1) != 0) ) return (LPSTR)(ptr + 2);
-    return (LPSTR)(ptr + 1);
-}
-
-
-/***********************************************************************
- *           CharNextExW   (USER32.31)
- */
-LPWSTR WINAPI CharNextExW(WORD codepage,LPCWSTR x,DWORD flags)
-{
-    /* FIXME: add DBCS / codepage stuff */
-    if (*x) return (LPWSTR)(x+1);
-    else return (LPWSTR)x;
-}
-
-/***********************************************************************
- *           CharNextW   (USER32.32)
- */
-LPWSTR WINAPI CharNextW(LPCWSTR x)
-{
-    if (*x) return (LPWSTR)(x+1);
-    else return (LPWSTR)x;
-}
-
-/***********************************************************************
- *           CharPrevA   (USER32.33)
- */
-LPSTR WINAPI CharPrevA( LPCSTR start, LPCSTR ptr )
-{
-    while (*start && (start < ptr))
-    {
-        LPCSTR next = CharNextA( start );
-        if (next >= ptr) break;
-        start = next;
-    }
-    return (LPSTR)start;
-}
-
-
-/***********************************************************************
- *           CharPrevExA   (USER32.34)
- */
-LPSTR WINAPI CharPrevExA( WORD codepage, LPCSTR start, LPCSTR ptr, DWORD flags )
-{
-    while (*start && (start < ptr))
-    {
-        LPCSTR next = CharNextExA( codepage, start, flags );
-        if (next > ptr) break;
-        start = next;
-    }
-    return (LPSTR)start;
-}
-
-
-/***********************************************************************
- *           CharPrevExW   (USER32.35)
- */
-LPWSTR WINAPI CharPrevExW(WORD codepage,LPCWSTR start,LPCWSTR x,DWORD flags)
-{
-    /* FIXME: add DBCS / codepage stuff */
-    if (x>start) return (LPWSTR)(x-1);
-    else return (LPWSTR)x;
-}
-
-/***********************************************************************
- *           CharPrevW   (USER32.36)
- */
-LPWSTR WINAPI CharPrevW(LPCWSTR start,LPCWSTR x)
-{
-    if (x>start) return (LPWSTR)(x-1);
-    else return (LPWSTR)x;
-}
-
 /***********************************************************************
  *           CharLowerA   (USER32.25)
  * FIXME: handle current locale
@@ -337,36 +136,24 @@ LPSTR WINAPI CharUpperA(LPSTR x)
  *           CharUpperBuffA   (USER32.42)
  * FIXME: handle current locale
  */
-DWORD WINAPI CharUpperBuffA(LPSTR x,DWORD buflen)
+DWORD WINAPI CharUpperBuffA( LPSTR str, DWORD len )
 {
-    DWORD done=0;
-
-    if (!x) return 0; /* YES */
-    while (*x && (buflen--))
-    {
-        *x=toupper(*x);
-        x++;
-        done++;
-    }
-    return done;
+    DWORD ret = len;
+    if (!str) return 0; /* YES */
+    for (; len; len--, str++) *str = toupper(*str);
+    return ret;
 }
 
 /***********************************************************************
  *           CharUpperBuffW   (USER32.43)
  * FIXME: handle current locale
  */
-DWORD WINAPI CharUpperBuffW(LPWSTR x,DWORD buflen)
+DWORD WINAPI CharUpperBuffW( LPWSTR str, DWORD len )
 {
-    DWORD done=0;
-
-    if (!x) return 0; /* YES */
-    while (*x && (buflen--))
-    {
-        *x=toupperW(*x);
-        x++;
-        done++;
-    }
-    return done;
+    DWORD ret = len;
+    if (!str) return 0; /* YES */
+    for (; len; len--, str++) *str = toupperW(*str);
+    return ret;
 }
 
 /***********************************************************************
@@ -389,7 +176,7 @@ LPWSTR WINAPI CharUpperW(LPWSTR x)
 }
 
 /***********************************************************************
- *           IsCharAlphaA   (USER32.331)
+ *           IsCharAlphaA   (USER.433) (USER32.331)
  * FIXME: handle current locale
  */
 BOOL WINAPI IsCharAlphaA(CHAR x)
@@ -398,7 +185,7 @@ BOOL WINAPI IsCharAlphaA(CHAR x)
 }
 
 /***********************************************************************
- *           IsCharAlphaNumericA   (USER32.332)
+ *           IsCharAlphaNumericA   (USER.434) (USER32.332)
  * FIXME: handle current locale
  */
 BOOL WINAPI IsCharAlphaNumericA(CHAR x)
@@ -425,7 +212,7 @@ BOOL WINAPI IsCharAlphaW(WCHAR x)
 }
 
 /***********************************************************************
- *           IsCharLowerA   (USER32.335)
+ *           IsCharLowerA   (USER.436) (USER32.335)
  * FIXME: handle current locale
  */
 BOOL WINAPI IsCharLowerA(CHAR x)
@@ -443,7 +230,7 @@ BOOL WINAPI IsCharLowerW(WCHAR x)
 }
 
 /***********************************************************************
- *           IsCharUpperA   (USER32.337)
+ *           IsCharUpperA   (USER.435) (USER32.337)
  * FIXME: handle current locale
  */
 BOOL WINAPI IsCharUpperA(CHAR x)

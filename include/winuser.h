@@ -3247,14 +3247,12 @@ LPSTR       WINAPI CharNextA(LPCSTR);
 LPWSTR      WINAPI CharNextW(LPCWSTR);
 #define     CharNext WINELIB_NAME_AW(CharNext)
 LPSTR       WINAPI CharNextExA(WORD,LPCSTR,DWORD);
-LPWSTR      WINAPI CharNextExW(WORD,LPCWSTR,DWORD);
-#define     CharNextEx WINELIB_NAME_AW(CharNextEx)
+/* no CharNextExW (doesn't make sense) */
 LPSTR       WINAPI CharPrevA(LPCSTR,LPCSTR);
 LPWSTR      WINAPI CharPrevW(LPCWSTR,LPCWSTR);
 #define     CharPrev WINELIB_NAME_AW(CharPrev)
 LPSTR       WINAPI CharPrevExA(WORD,LPCSTR,LPCSTR,DWORD);
-LPWSTR      WINAPI CharPrevExW(WORD,LPCWSTR,LPCWSTR,DWORD);
-#define     CharPrevEx WINELIB_NAME_AW(CharPrevEx)
+/* no CharPrevExW (doesn't make sense) */
 LPSTR       WINAPI CharUpperA(LPSTR);
 LPWSTR      WINAPI CharUpperW(LPWSTR);
 #define     CharUpper WINELIB_NAME_AW(CharUpper)

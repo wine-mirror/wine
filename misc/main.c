@@ -544,22 +544,12 @@ end_MAIN_GetLanguageID:
 
 
 /***********************************************************************
- *           called_at_exit
- */
-static void called_at_exit(void)
-{
-    CONSOLE_Close();
-}
-
-/***********************************************************************
  *           MAIN_WineInit
  *
  * Wine initialisation and command-line parsing
  */
 void MAIN_WineInit(void)
 {
-    struct timeval tv;
-
 #ifdef MALLOC_DEBUGGING
     char *trace;
 
@@ -577,10 +567,7 @@ void MAIN_WineInit(void)
 
     setbuf(stdout,NULL);
     setbuf(stderr,NULL);
-
     setlocale(LC_CTYPE,"");
-    gettimeofday( &tv, NULL);
-    atexit(called_at_exit);
 }
 
 /***********************************************************************

@@ -169,7 +169,7 @@ LPSTR WINAPI StrDupA (LPCSTR lpSrc)
  */
 LPWSTR WINAPI StrDupW (LPCWSTR lpSrc)
 {
-	int len = lstrlenW(lpSrc);
+	int len = strlenW(lpSrc);
 	LPWSTR lpDest = (LPWSTR) LocalAlloc(LMEM_FIXED, sizeof(WCHAR) * (len+1));
 	
 	TRACE("%s\n", debugstr_w(lpSrc));
@@ -207,12 +207,12 @@ int WINAPI StrCSpnA (LPCSTR lpStr, LPCSTR lpSet)
  */
 int WINAPI StrCSpnW (LPCWSTR lpStr, LPCWSTR lpSet)
 {
-	int i,j, pos = lstrlenW(lpStr);
+	int i,j, pos = strlenW(lpStr);
 
 	TRACE("(%p %s %p %s)\n",
 	   lpStr, debugstr_w(lpStr), lpSet, debugstr_w(lpSet));
 
-	for (i=0; i < lstrlenW(lpSet) ; i++ )
+	for (i=0; i < strlenW(lpSet) ; i++ )
 	{
 	  for (j = 0; j < pos;j++)
 	  {
@@ -226,6 +226,47 @@ int WINAPI StrCSpnW (LPCWSTR lpStr, LPCWSTR lpSet)
 	return pos;	
 }
 
+/**************************************************************************
+ * StrRChrA [SHLWAPI.@]
+ *
+ */
+LPSTR WINAPI StrRChrA( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch )
+{
+    LPCSTR lpGotIt = NULL;
+    BOOL dbcs = IsDBCSLeadByte( LOBYTE(wMatch) );
+
+    TRACE("(%p, %p, %x)\n", lpStart, lpEnd, wMatch);
+
+    if (!lpEnd) lpEnd = lpStart + strlen(lpStart);
+
+    for(; lpStart < lpEnd; lpStart = CharNextA(lpStart))
+    {
+        if (*lpStart != LOBYTE(wMatch)) continue;
+        if (dbcs && lpStart[1] != HIBYTE(wMatch)) continue;
+        lpGotIt = lpStart;
+    }    
+    return (LPSTR)lpGotIt;
+}
+
+
+/**************************************************************************
+ * StrRChrW [SHLWAPI.@]
+ *
+ */
+LPWSTR WINAPI StrRChrW( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch)
+{
+    LPCWSTR lpGotIt = NULL;
+
+    TRACE("(%p, %p, %x)\n", lpStart, lpEnd, wMatch);
+    if (!lpEnd) lpEnd = lpStart + strlenW(lpStart);
+
+    for(; lpStart < lpEnd; lpStart = CharNextW(lpStart))
+        if (*lpStart == wMatch) lpGotIt = lpStart;
+
+    return (LPWSTR)lpGotIt;
+}
+
+
 /*************************************************************************
  *	StrCatBuffA		[SHLWAPI]
  *
@@ -235,7 +276,7 @@ int WINAPI StrCSpnW (LPCWSTR lpStr, LPCWSTR lpSet)
  */
 LPSTR WINAPI StrCatBuffA(LPSTR front, LPCSTR back, INT size)
 {
-    LPSTR dst = front + lstrlenA(front);
+    LPSTR dst = front + strlen(front);
     LPCSTR src = back, end = front + size - 1;
 
     while(dst < end && *src)
@@ -253,7 +294,7 @@ LPSTR WINAPI StrCatBuffA(LPSTR front, LPCSTR back, INT size)
  */
 LPWSTR WINAPI StrCatBuffW(LPWSTR front, LPCWSTR back, INT size)
 {
-    LPWSTR dst = front + lstrlenW(front);
+    LPWSTR dst = front + strlenW(front);
     LPCWSTR src = back, end = front + size - 1;
 
     while(dst < end && *src)

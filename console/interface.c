@@ -87,6 +87,8 @@ static int CONSOLE_Init(void)
       if the resolution is set on the command-line... */
    CONSOLE_NotifyResizeScreen(driver.x_res, driver.y_res);
 
+   atexit(CONSOLE_Close);
+
    /* For now, always return TRUE */
    return TRUE;
 }
@@ -104,7 +106,7 @@ void CONSOLE_Write(char out, int fg_color, int bg_color, int attribute)
    }
 }
 
-void CONSOLE_Close()
+void CONSOLE_Close(void)
 {
    if (driver.close)
       driver.close();

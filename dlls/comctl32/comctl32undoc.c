@@ -30,13 +30,6 @@ DEFAULT_DEBUG_CHANNEL(commctrl);
 
 extern HANDLE COMCTL32_hHeap; /* handle to the private heap */
 
-/*
- * We put some function prototypes here that don't seem to belong in
- * any header file. When they find their place, we can remove them.
- */
-extern LPSTR WINAPI lstrrchr(LPCSTR, LPCSTR, WORD);
-extern LPWSTR WINAPI lstrrchrw(LPCWSTR, LPCWSTR, WORD);
-
 
 typedef struct _STREAMDATA
 {
@@ -2168,17 +2161,42 @@ INT WINAPI COMCTL32_StrCmpNIW( LPCWSTR lpStr1, LPCWSTR lpStr2, int nChar) {
  * StrRChrA [COMCTL32.351]
  *
  */
-LPSTR WINAPI COMCTL32_StrRChrA( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch) {
-  return lstrrchr(lpStart, lpEnd, wMatch); 
+LPSTR WINAPI COMCTL32_StrRChrA( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch )
+{
+    LPCSTR lpGotIt = NULL;
+    BOOL dbcs = IsDBCSLeadByte( LOBYTE(wMatch) );
+
+    TRACE("(%p, %p, %x)\n", lpStart, lpEnd, wMatch);
+
+    if (!lpEnd) lpEnd = lpStart + strlen(lpStart);
+
+    for(; lpStart < lpEnd; lpStart = CharNextA(lpStart))
+    {
+        if (*lpStart != LOBYTE(wMatch)) continue;
+        if (dbcs && lpStart[1] != HIBYTE(wMatch)) continue;
+        lpGotIt = lpStart;
+    }    
+    return (LPSTR)lpGotIt;
 }
+
 
 /**************************************************************************
  * StrRChrW [COMCTL32.359]
  *
  */
-LPWSTR WINAPI COMCTL32_StrRChrW( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch) {
-  return lstrrchrw(lpStart, lpEnd, wMatch); 
+LPWSTR WINAPI COMCTL32_StrRChrW( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch)
+{
+    LPCWSTR lpGotIt = NULL;
+
+    TRACE("(%p, %p, %x)\n", lpStart, lpEnd, wMatch);
+    if (!lpEnd) lpEnd = lpStart + strlenW(lpStart);
+
+    for(; lpStart < lpEnd; lpStart = CharNextW(lpStart))
+        if (*lpStart == wMatch) lpGotIt = lpStart;
+
+    return (LPWSTR)lpGotIt;
 }
+
 
 /**************************************************************************
  * StrStrA [COMCTL32.354]

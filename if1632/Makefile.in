@@ -7,7 +7,6 @@ MODULE    = if1632
 
 C_SRCS = \
 	builtin.c \
-	dummy.c \
 	relay.c \
 	snoop.c \
 	thunk.c

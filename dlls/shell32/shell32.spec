@@ -265,10 +265,10 @@ import kernel32.dll
  314 stub StrNCmpW
  315 stdcall StrNCpyA (ptr str long) lstrcpynA
  316 stdcall StrNCpyW (ptr wstr long)lstrcpynW
- 317 stdcall StrRChrA (str str long) lstrrchr
+ 317 forward StrRChrA shlwapi.StrRChrA
  318 stub StrRChrIA
  319 stub StrRChrIW
- 320 stdcall StrRChrW (wstr wstr long) lstrrchrw
+ 320 forward StrRChrW shlwapi.StrRChrW
  321 stub StrRStrA
  322 stub StrRStrIA
  323 stub StrRStrIW

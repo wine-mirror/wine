@@ -5,6 +5,7 @@
  * Copyright 1999 Alexandre Julliard
  */
 
+#include <assert.h>
 #include <signal.h>
 #include "winnt.h"
 #include "ntddk.h"
@@ -75,12 +76,12 @@ static DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
 
     newframe.frame.Handler = nested_handler;
     newframe.prevFrame     = frame;
-    EXC_push_frame( &newframe.frame );
+    __wine_push_frame( &newframe.frame );
     TRACE( "calling handler at %p code=%lx flags=%lx\n",
            handler, record->ExceptionCode, record->ExceptionFlags );
     ret = handler( record, frame, context, dispatcher );
     TRACE( "handler returned %lx\n", ret );
-    EXC_pop_frame( &newframe.frame );
+    __wine_pop_frame( &newframe.frame );
     return ret;
 }
 
@@ -259,7 +260,7 @@ void WINAPI EXC_RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
             RtlRaiseException( &newrec );  /* never returns */
             break;
         }
-        frame = EXC_pop_frame( frame );
+        frame = __wine_pop_frame( frame );
     }
 }
 
@@ -291,4 +292,61 @@ void WINAPI RtlRaiseStatus( NTSTATUS status )
     ExceptionRec.ExceptionRecord  = NULL;
     ExceptionRec.NumberParameters = 0;
     RtlRaiseException( &ExceptionRec );
+}
+
+
+/*************************************************************
+ *            __wine_exception_handler
+ *
+ * Exception handler for exception blocks declared in Wine code.
+ */
+DWORD __wine_exception_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
+                                CONTEXT *context, LPVOID pdispatcher )
+{
+    __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
+
+    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND | EH_NESTED_CALL))
+        return ExceptionContinueSearch;
+    if (wine_frame->u.filter)
+    {
+        EXCEPTION_POINTERS ptrs;
+        ptrs.ExceptionRecord = record;
+        ptrs.ContextRecord = context;
+        switch(wine_frame->u.filter( &ptrs ))
+        {
+        case EXCEPTION_CONTINUE_SEARCH:
+            return ExceptionContinueSearch;
+        case EXCEPTION_CONTINUE_EXECUTION:
+            return ExceptionContinueExecution;
+        case EXCEPTION_EXECUTE_HANDLER:
+            break;
+        default:
+            MESSAGE( "Invalid return value from exception filter\n" );
+            assert( FALSE );
+        }
+    }
+    /* hack to make GetExceptionCode() work in handler */
+    wine_frame->ExceptionCode   = record->ExceptionCode;
+    wine_frame->ExceptionRecord = wine_frame;
+
+    RtlUnwind( frame, 0, record, 0 );
+    __wine_pop_frame( frame );
+    longjmp( wine_frame->jmp, 1 );
+}
+
+
+/*************************************************************
+ *            __wine_finally_handler
+ *
+ * Exception handler for try/finally blocks declared in Wine code.
+ */
+DWORD __wine_finally_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
+                              CONTEXT *context, LPVOID pdispatcher )
+{
+    __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
+
+    if (!(record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))
+        return ExceptionContinueSearch;
+    wine_frame->u.finally_func( FALSE );
+    return ExceptionContinueSearch;
 }

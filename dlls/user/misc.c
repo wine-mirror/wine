@@ -207,3 +207,23 @@ DWORD WINAPI RegisterTaskList (DWORD x)
     FIXME("0x%08lx\n",x);
     return TRUE;
 }
+
+/***********************************************************************
+ *		stub_USER_489
+ */
+LONG WINAPI stub_USER_489(void) { FIXME("stub\n"); return 0; }
+
+/***********************************************************************
+ *		stub_USER_490
+ */
+LONG WINAPI stub_USER_490(void) { FIXME("stub\n"); return 0; }
+
+/***********************************************************************
+ *		stub_USER_492
+ */
+LONG WINAPI stub_USER_492(void) { FIXME("stub\n"); return 0; }
+
+/***********************************************************************
+ *		stub_USER_496
+ */
+LONG WINAPI stub_USER_496(void) { FIXME("stub\n"); return 0; }

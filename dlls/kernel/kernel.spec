@@ -83,17 +83,17 @@ owner	kernel32
 75  stub OpenPathName
 76  stub DeletePathName
 # Reserved*: old Win 2.x functions now moved to USER (Win 3.0+)
-77  pascal Reserved1(segptr) AnsiNext16
-78  pascal Reserved2(segptr segptr) AnsiPrev16
-79  pascal Reserved3(segstr) AnsiUpper16
-80  pascal Reserved4(segstr) AnsiLower16
+77  stub Reserved1 #AnsiNext16
+78  stub Reserved2 #AnsiPrev16
+79  stub Reserved3 #AnsiUpper16
+80  stub Reserved4 #AnsiLower16
 81  pascal16 _lclose(word) _lclose16
 82  pascal16 _lread(word segptr word) WIN16_lread
 83  pascal16 _lcreat(str word) _lcreat16
 84  pascal   _llseek(word long word) _llseek16
 85  pascal16 _lopen(str word) _lopen16
 86  pascal16 _lwrite(word ptr word) _lwrite16
-87  pascal16 Reserved5(str str) lstrcmp16
+87  pascal16 Reserved5(str str) strcmp
 88  pascal   lstrcpy(segptr str) lstrcpy16
 89  pascal   lstrcat(segstr str) lstrcat16
 90  pascal16 lstrlen(str) lstrlen16
@@ -291,7 +291,7 @@ owner	kernel32
 345 pascal16 IsSharedSelector(word) IsSharedSelector16
 346 pascal16 IsBadHugeReadPtr(segptr long) IsBadHugeReadPtr16
 347 pascal16 IsBadHugeWritePtr(segptr long) IsBadHugeWritePtr16
-348 pascal16 hmemcpy(ptr ptr long) hmemcpy16
+348 pascal16 hmemcpy(ptr ptr long) memcpy
 349 pascal   _hread(word segptr long) WIN16_hread
 350 pascal   _hwrite(word ptr long) _hwrite16
 351 pascal16 BUNNY_351() KERNEL_nop

@@ -405,13 +405,13 @@ owner	user32
 427 pascal16 FindWindowEx(word word str str) FindWindowEx16
 428 stub TileWindows
 429 stub CascadeWindows
-430 pascal16 lstrcmp(str str) lstrcmp16
+430 pascal16 lstrcmp(str str) strcmp
 431 pascal   AnsiUpper(segstr) AnsiUpper16
 432 pascal   AnsiLower(segstr) AnsiLower16
-433 pascal16 IsCharAlpha(word) IsCharAlpha16
-434 pascal16 IsCharAlphaNumeric(word) IsCharAlphaNumeric16
-435 pascal16 IsCharUpper(word) IsCharUpper16
-436 pascal16 IsCharLower(word) IsCharLower16
+433 pascal16 IsCharAlpha(word) IsCharAlphaA
+434 pascal16 IsCharAlphaNumeric(word) IsCharAlphaNumericA
+435 pascal16 IsCharUpper(word) IsCharUpperA
+436 pascal16 IsCharLower(word) IsCharLowerA
 437 pascal16 AnsiUpperBuff(str word) AnsiUpperBuff16
 438 pascal16 AnsiLowerBuff(str word) AnsiLowerBuff16
 441 pascal16 InsertMenuItem(word word word ptr) InsertMenuItem16
@@ -439,9 +439,9 @@ owner	user32
 465 pascal16 DragDetect(word long) DragDetect16
 466 pascal16 DrawFocusRect(word ptr) DrawFocusRect16
 470 stub StringFunc
-471 pascal16 lstrcmpi(str str) lstrcmpi16
+471 pascal16 lstrcmpi(str str) lstrcmpiA
 472 pascal   AnsiNext(segptr) AnsiNext16
-473 pascal   AnsiPrev(segptr segptr) AnsiPrev16
+473 pascal   AnsiPrev(str segptr) AnsiPrev16
 475 pascal16 SetScrollInfo(word s_word ptr word) SetScrollInfo16
 476 pascal16 GetScrollInfo(word s_word ptr) GetScrollInfo16
 477 pascal16 GetKeyboardLayoutName(ptr) GetKeyboardLayoutName16

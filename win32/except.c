@@ -22,7 +22,6 @@
  *
  */
 
-#include <assert.h>
 #include <stdio.h>
 #include "windef.h"
 #include "winerror.h"
@@ -204,61 +203,4 @@ void WINAPI FatalAppExitW( UINT action, LPCWSTR str )
     WARN("AppExit\n");
     Callout.MessageBoxW( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
     ExitProcess(0);
-}
-
-
-/*************************************************************
- *            WINE_exception_handler
- *
- * Exception handler for exception blocks declared in Wine code.
- */
-DWORD WINE_exception_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
-                              CONTEXT *context, LPVOID pdispatcher )
-{
-    __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
-
-    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND | EH_NESTED_CALL))
-        return ExceptionContinueSearch;
-    if (wine_frame->u.filter)
-    {
-        EXCEPTION_POINTERS ptrs;
-        ptrs.ExceptionRecord = record;
-        ptrs.ContextRecord = context;
-        switch(wine_frame->u.filter( &ptrs ))
-        {
-        case EXCEPTION_CONTINUE_SEARCH:
-            return ExceptionContinueSearch;
-        case EXCEPTION_CONTINUE_EXECUTION:
-            return ExceptionContinueExecution;
-        case EXCEPTION_EXECUTE_HANDLER:
-            break;
-        default:
-            MESSAGE( "Invalid return value from exception filter\n" );
-            assert( FALSE );
-        }
-    }
-    /* hack to make GetExceptionCode() work in handler */
-    wine_frame->ExceptionCode   = record->ExceptionCode;
-    wine_frame->ExceptionRecord = wine_frame;
-
-    RtlUnwind( frame, 0, record, 0 );
-    EXC_pop_frame( frame );
-    longjmp( wine_frame->jmp, 1 );
-}
-
-
-/*************************************************************
- *            WINE_finally_handler
- *
- * Exception handler for try/finally blocks declared in Wine code.
- */
-DWORD WINE_finally_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
-                            CONTEXT *context, LPVOID pdispatcher )
-{
-    __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
-
-    if (!(record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))
-        return ExceptionContinueSearch;
-    wine_frame->u.finally_func( FALSE );
-    return ExceptionContinueSearch;
 }

@@ -991,3 +991,7 @@ type	win32
 @ stub _wtol
 @ stub RtlSetPropertySetClassId
 @ stdcall NtPowerInformation(long long long long long) NtPowerInformation
+
+# Wine extensions
+@ cdecl __wine_exception_handler(ptr ptr ptr ptr) __wine_exception_handler
+@ cdecl __wine_finally_handler(ptr ptr ptr ptr) __wine_finally_handler

@@ -6,637 +6,637 @@ rsrc	user32
 import	gdi32.dll
 import	kernel32.dll
 
-  1 stdcall ActivateKeyboardLayout(long long) ActivateKeyboardLayout
-  2 stdcall AdjustWindowRect(ptr long long) AdjustWindowRect
-  3 stdcall AdjustWindowRectEx(ptr long long long) AdjustWindowRectEx
-  4 stdcall AnyPopup() AnyPopup
-  5 stdcall AppendMenuA(long long long ptr) AppendMenuA
-  6 stdcall AppendMenuW(long long long ptr) AppendMenuW
-  7 stdcall ArrangeIconicWindows(long) ArrangeIconicWindows
-  8 stdcall AttachThreadInput(long long long) AttachThreadInput
-  9 stdcall BeginDeferWindowPos(long) BeginDeferWindowPos
- 10 stdcall BeginPaint(long ptr) BeginPaint
- 11 stdcall BringWindowToTop(long) BringWindowToTop
- 12 stdcall BroadcastSystemMessage(long ptr long long long) BroadcastSystemMessage
- 13 stub CalcChildScroll
- 14 stub CallMsgFilter
- 15 stdcall CallMsgFilterA(ptr long) CallMsgFilterA
- 16 stdcall CallMsgFilterW(ptr long) CallMsgFilterW
- 17 stdcall CallNextHookEx(long long long long) CallNextHookEx
- 18 stdcall CallWindowProcA(ptr long long long long) CallWindowProcA
- 19 stdcall CallWindowProcW(ptr long long long long) CallWindowProcW
- 20 stub CascadeChildWindows
- 21 stdcall CascadeWindows(long long ptr long ptr) CascadeWindows
- 22 stdcall ChangeClipboardChain(long long) ChangeClipboardChain
- 23 stdcall ChangeMenuA(long long ptr long long) ChangeMenuA
- 24 stdcall ChangeMenuW(long long ptr long long) ChangeMenuW
- 25 stdcall CharLowerA(str) CharLowerA
- 26 stdcall CharLowerBuffA(str long) CharLowerBuffA
- 27 stdcall CharLowerBuffW(wstr long) CharLowerBuffW
- 28 stdcall CharLowerW(wstr) CharLowerW
- 29 stdcall CharNextA(str) CharNextA
- 30 stdcall CharNextExA(long str long) CharNextExA
- 31 stdcall CharNextExW(long wstr long) CharNextExW
- 32 stdcall CharNextW(wstr) CharNextW
- 33 stdcall CharPrevA(str str) CharPrevA
- 34 stdcall CharPrevExA(long str str long) CharPrevExA
- 35 stdcall CharPrevExW(long wstr wstr long) CharPrevExW
- 36 stdcall CharPrevW(wstr wstr) CharPrevW
- 37 stdcall CharToOemA(str ptr) CharToOemA
- 38 stdcall CharToOemBuffA(str ptr long) CharToOemBuffA
- 39 stdcall CharToOemBuffW(wstr ptr long) CharToOemBuffW
- 40 stdcall CharToOemW(wstr ptr) CharToOemW
- 41 stdcall CharUpperA(str) CharUpperA
- 42 stdcall CharUpperBuffA(str long) CharUpperBuffA
- 43 stdcall CharUpperBuffW(wstr long) CharUpperBuffW
- 44 stdcall CharUpperW(wstr) CharUpperW
- 45 stdcall CheckDlgButton(long long long) CheckDlgButton
- 46 stdcall CheckMenuItem(long long long) CheckMenuItem
- 47 stdcall CheckMenuRadioItem(long long long long long) CheckMenuRadioItem
- 48 stdcall CheckRadioButton(long long long long) CheckRadioButton
- 49 stdcall ChildWindowFromPoint(long long long) ChildWindowFromPoint
- 50 stdcall ChildWindowFromPointEx(long long long long) ChildWindowFromPointEx
- 51 stub ClientThreadConnect
- 52 stdcall ClientToScreen(long ptr) ClientToScreen
- 53 stdcall ClipCursor(ptr) ClipCursor
- 54 stdcall CloseClipboard() CloseClipboard
- 55 stdcall CloseDesktop(long) CloseDesktop
- 56 stdcall CloseWindow(long) CloseWindow
- 57 stdcall CloseWindowStation(long) CloseWindowStation			
- 58 stdcall CopyAcceleratorTableA(long ptr long) CopyAcceleratorTableA
- 59 stdcall CopyAcceleratorTableW(long ptr long) CopyAcceleratorTableW
- 60 stdcall CopyIcon(long) CopyIcon
- 61 stdcall CopyImage(long long long long long) CopyImage
- 62 stdcall CopyRect(ptr ptr) CopyRect
- 63 stdcall CountClipboardFormats() CountClipboardFormats
- 64 stdcall CreateAcceleratorTableA(ptr long) CreateAcceleratorTableA
- 65 stdcall CreateAcceleratorTableW(ptr long) CreateAcceleratorTableW
- 66 stdcall CreateCaret(long long long long) CreateCaret
- 67 stdcall CreateCursor(long long long long long ptr ptr) CreateCursor
- 68 stdcall CreateDesktopA(str str ptr long long ptr) CreateDesktopA
- 69 stdcall CreateDesktopW(wstr wstr ptr long long ptr) CreateDesktopW
- 70 stdcall CreateDialogIndirectParamA(long ptr long ptr long) CreateDialogIndirectParamA
- 71 stdcall CreateDialogIndirectParamAorW (long ptr long ptr long) CreateDialogIndirectParamAorW
- 72 stdcall CreateDialogIndirectParamW(long ptr long ptr long) CreateDialogIndirectParamW
- 73 stdcall CreateDialogParamA(long ptr long ptr long) CreateDialogParamA
- 74 stdcall CreateDialogParamW(long ptr long ptr long) CreateDialogParamW
- 75 stdcall CreateIcon(long long long long long ptr ptr) CreateIcon
- 76 stdcall CreateIconFromResource (ptr long long long) CreateIconFromResource
- 77 stdcall CreateIconFromResourceEx(ptr long long long long long long) CreateIconFromResourceEx
- 78 stdcall CreateIconIndirect(ptr) CreateIconIndirect
- 79 stdcall CreateMDIWindowA(ptr ptr long long long long long long long long) CreateMDIWindowA
- 80 stdcall CreateMDIWindowW(ptr ptr long long long long long long long long) CreateMDIWindowW
- 81 stdcall CreateMenu() CreateMenu
- 82 stdcall CreatePopupMenu() CreatePopupMenu
- 83 stdcall CreateWindowExA(long str str long long long long long long long long ptr) CreateWindowExA
- 84 stdcall CreateWindowExW(long wstr wstr long long long long long long long long ptr) CreateWindowExW
- 85 stub CreateWindowStationA
- 86 stdcall CreateWindowStationW(wstr long long ptr) CreateWindowStationW
- 87 stdcall DdeAbandonTransaction(long long long)DdeAbandonTransaction
- 88 stdcall DdeAccessData(long ptr) DdeAccessData
- 89 stdcall DdeAddData(long ptr long long) DdeAddData
- 90 stdcall DdeClientTransaction(ptr long long long long long long ptr) DdeClientTransaction
- 91 stdcall DdeCmpStringHandles(long long) DdeCmpStringHandles
- 92 stdcall DdeConnect(long long long ptr) DdeConnect
- 93 stdcall DdeConnectList(long long long long ptr) DdeConnectList
- 94 stdcall DdeCreateDataHandle(long ptr long long long long long) DdeCreateDataHandle
- 95 stdcall DdeCreateStringHandleA(long str long) DdeCreateStringHandleA
- 96 stdcall DdeCreateStringHandleW(long wstr long) DdeCreateStringHandleW
- 97 stdcall DdeDisconnect(long) DdeDisconnect
- 98 stdcall DdeDisconnectList(long) DdeDisconnectList
- 99 stdcall DdeEnableCallback(long long long) DdeEnableCallback
-100 stdcall DdeFreeDataHandle(long) DdeFreeDataHandle
-101 stdcall DdeFreeStringHandle(long long) DdeFreeStringHandle
-102 stdcall DdeGetData(long ptr long long) DdeGetData
-103 stdcall DdeGetLastError(long) DdeGetLastError
-104 stub DdeGetQualityOfService
-105 stdcall DdeImpersonateClient(long) DdeImpersonateClient
-106 stdcall DdeInitializeA(ptr ptr long long) DdeInitializeA
-107 stdcall DdeInitializeW(ptr ptr long long) DdeInitializeW
-108 stdcall DdeKeepStringHandle(long long) DdeKeepStringHandle
-109 stdcall DdeNameService(long long long long) DdeNameService
-110 stdcall DdePostAdvise(long long long) DdePostAdvise
-111 stdcall DdeQueryConvInfo(long long ptr) DdeQueryConvInfo
-112 stdcall DdeQueryNextServer(long long) DdeQueryNextServer
-113 stdcall DdeQueryStringA(long long ptr long long) DdeQueryStringA
-114 stdcall DdeQueryStringW(long long ptr long long) DdeQueryStringW
-115 stdcall DdeReconnect(long) DdeReconnect
-116 stdcall DdeSetQualityOfService(long ptr ptr) DdeSetQualityOfService
-117 stdcall DdeSetUserHandle (long long long) DdeSetUserHandle
-118 stdcall DdeUnaccessData(long) DdeUnaccessData
-119 stdcall DdeUninitialize(long) DdeUninitialize
-120 stdcall DefDlgProcA(long long long long) DefDlgProcA
-121 stdcall DefDlgProcW(long long long long) DefDlgProcW
-122 stdcall DefFrameProcA(long long long long long) DefFrameProcA
-123 stdcall DefFrameProcW(long long long long long) DefFrameProcW
-124 stdcall DefMDIChildProcA(long long long long) DefMDIChildProcA
-125 stdcall DefMDIChildProcW(long long long long) DefMDIChildProcW
-126 stdcall DefWindowProcA(long long long long) DefWindowProcA
-127 stdcall DefWindowProcW(long long long long) DefWindowProcW
-128 stdcall DeferWindowPos(long long long long long long long long) DeferWindowPos
-129 stdcall DeleteMenu(long long long) DeleteMenu
-130 stdcall DestroyAcceleratorTable(long) DestroyAcceleratorTable
-131 stdcall DestroyCaret() DestroyCaret
-132 stdcall DestroyCursor(long) DestroyCursor
-133 stdcall DestroyIcon(long) DestroyIcon
-134 stdcall DestroyMenu(long) DestroyMenu
-135 stdcall DestroyWindow(long) DestroyWindow
-136 stdcall DialogBoxIndirectParamA(long ptr long ptr long) DialogBoxIndirectParamA
-137 stdcall DialogBoxIndirectParamAorW(long ptr long ptr long long) DialogBoxIndirectParamAorW
-138 stdcall DialogBoxIndirectParamW(long ptr long ptr long) DialogBoxIndirectParamW
-139 stdcall DialogBoxParamA(long str long ptr long) DialogBoxParamA
-140 stdcall DialogBoxParamW(long wstr long ptr long) DialogBoxParamW
-141 stdcall DispatchMessageA(ptr) DispatchMessageA
-142 stdcall DispatchMessageW(ptr) DispatchMessageW
-143 stdcall DlgDirListA(long ptr long long long) DlgDirListA
-144 stdcall DlgDirListComboBoxA(long ptr long long long) DlgDirListComboBoxA
-145 stdcall DlgDirListComboBoxW(long ptr long long long) DlgDirListComboBoxW
-146 stdcall DlgDirListW(long ptr long long long) DlgDirListW
-147 stdcall DlgDirSelectComboBoxExA(long ptr long long) DlgDirSelectComboBoxExA
-148 stdcall DlgDirSelectComboBoxExW(long ptr long long) DlgDirSelectComboBoxExW
-149 stdcall DlgDirSelectExA(long ptr long long) DlgDirSelectExA
-150 stdcall DlgDirSelectExW(long ptr long long) DlgDirSelectExW
-151 stdcall DragDetect(long long long) DragDetect
-152 stub DragObject
-153 stdcall DrawAnimatedRects(long long ptr ptr) DrawAnimatedRects
-154 stdcall DrawCaption(long long ptr long) DrawCaption
-155 stdcall DrawEdge(long ptr long long) DrawEdge
-156 stdcall DrawFocusRect(long ptr) DrawFocusRect
-157 stub DrawFrame
-158 stdcall DrawFrameControl(long ptr long long) DrawFrameControl
-159 stdcall DrawIcon(long long long long) DrawIcon
-160 stdcall DrawIconEx(long long long long long long long long long) DrawIconEx
-161 stdcall DrawMenuBar(long) DrawMenuBar
-162 stdcall DrawStateA(long long ptr long long long long long long long) DrawStateA
-163 stdcall DrawStateW(long long ptr long long long long long long long) DrawStateW
-164 stdcall DrawTextA(long str long ptr long) DrawTextA
-165 stdcall DrawTextExA(long str long ptr long ptr) DrawTextExA
-166 stdcall DrawTextExW(long wstr long ptr long ptr) DrawTextExW
-167 stdcall DrawTextW(long wstr long ptr long) DrawTextW
-168 stdcall EditWndProc(long long long long) EditWndProc
-169 stdcall EmptyClipboard() EmptyClipboard
-170 stdcall EnableMenuItem(long long long) EnableMenuItem
-171 stdcall EnableScrollBar(long long long) EnableScrollBar
-172 stdcall EnableWindow(long long) EnableWindow
-173 stdcall EndDeferWindowPos(long) EndDeferWindowPos
-174 stdcall EndDialog(long long) EndDialog
-175 stdcall EndMenu() EndMenu
-176 stdcall EndPaint(long ptr) EndPaint
-177 stub EndTask
-178 stdcall EnumChildWindows(long ptr long) EnumChildWindows
-179 stdcall EnumClipboardFormats(long) EnumClipboardFormats
-180 stub EnumDesktopsA
-181 stub EnumDesktopsW
-182 stub EnumDisplayDeviceModesA
-183 stub EnumDisplayDeviceModesW
-184 stdcall EnumDisplayDevicesA(ptr long ptr long) EnumDisplayDevicesA
-185 stdcall EnumDisplayDevicesW(ptr long ptr long) EnumDisplayDevicesW
-186 stdcall EnumPropsA(long ptr) EnumPropsA
-187 stdcall EnumPropsExA(long ptr long) EnumPropsExA
-188 stdcall EnumPropsExW(long ptr long) EnumPropsExW
-189 stdcall EnumPropsW(long ptr) EnumPropsW
-190 stdcall EnumThreadWindows(long ptr long) EnumThreadWindows
-191 stub EnumWindowStationsA
-192 stub EnumWindowStationsW
-193 stdcall EnumWindows(ptr long) EnumWindows
-194 stdcall EqualRect(ptr ptr) EqualRect
-195 stdcall ExcludeUpdateRgn(long long) ExcludeUpdateRgn
-196 stdcall ExitWindowsEx(long long) ExitWindowsEx
-197 stdcall FillRect(long ptr long) FillRect
-198 stdcall FindWindowA(str str) FindWindowA
-199 stdcall FindWindowExA(long long str str) FindWindowExA
-200 stdcall FindWindowExW(long long wstr wstr) FindWindowExW
-201 stdcall FindWindowW(wstr wstr) FindWindowW
-202 stdcall FlashWindow(long long) FlashWindow
-203 stdcall FrameRect(long ptr long) FrameRect
-204 stdcall FreeDDElParam(long long) FreeDDElParam
-205 stdcall GetActiveWindow() GetActiveWindow
-206 stdcall GetAppCompatFlags(long) GetAppCompatFlags
-207 stdcall GetAsyncKeyState(long) GetAsyncKeyState
-208 stdcall GetCapture() GetCapture
-209 stdcall GetCaretBlinkTime() GetCaretBlinkTime
-210 stdcall GetCaretPos(ptr) GetCaretPos
-211 stdcall GetClassInfoA(long str ptr) GetClassInfoA
-212 stdcall GetClassInfoExA(long str ptr) GetClassInfoExA
-213 stdcall GetClassInfoExW(long wstr ptr) GetClassInfoExW
-214 stdcall GetClassInfoW(long wstr ptr) GetClassInfoW
-215 stdcall GetClassLongA(long long) GetClassLongA
-216 stdcall GetClassLongW(long long) GetClassLongW
-217 stdcall GetClassNameA(long ptr long) GetClassNameA
-218 stdcall GetClassNameW(long ptr long) GetClassNameW
-219 stdcall GetClassWord(long long) GetClassWord
-220 stdcall GetClientRect(long long) GetClientRect
-221 stdcall GetClipCursor(ptr) GetClipCursor
-222 stdcall GetClipboardData(long) GetClipboardData
-223 stdcall GetClipboardFormatNameA(long ptr long) GetClipboardFormatNameA
-224 stdcall GetClipboardFormatNameW(long ptr long) GetClipboardFormatNameW
-225 stdcall GetClipboardOwner() GetClipboardOwner
-226 stdcall GetClipboardViewer() GetClipboardViewer
-227 stdcall GetCursor() GetCursor
-228 stub GetCursorInfo
-229 stdcall GetCursorPos(ptr) GetCursorPos
-230 stdcall GetDC(long) GetDC
-231 stdcall GetDCEx(long long long) GetDCEx
-232 stdcall GetDesktopWindow() GetDesktopWindow
-233 stdcall GetDialogBaseUnits() GetDialogBaseUnits
-234 stdcall GetDlgCtrlID(long) GetDlgCtrlID
-235 stdcall GetDlgItem(long long) GetDlgItem
-236 stdcall GetDlgItemInt(long long ptr long) GetDlgItemInt
-237 stdcall GetDlgItemTextA(long long ptr long) GetDlgItemTextA
-238 stdcall GetDlgItemTextW(long long ptr long) GetDlgItemTextW
-239 stdcall GetDoubleClickTime() GetDoubleClickTime
-240 stdcall GetFocus() GetFocus
-241 stdcall GetForegroundWindow() GetForegroundWindow
-242 stdcall GetIconInfo(long ptr) GetIconInfo
-243 stub GetInputDesktop
-244 stdcall GetInputState() GetInputState
-245 stdcall GetInternalWindowPos(long ptr ptr) GetInternalWindowPos
-246 stdcall GetKBCodePage() GetKBCodePage
-247 stdcall GetKeyNameTextA(long ptr long) GetKeyNameTextA
-248 stdcall GetKeyNameTextW(long ptr long) GetKeyNameTextW
-249 stdcall GetKeyState(long) GetKeyState
-250 stdcall GetKeyboardLayout(long) GetKeyboardLayout
-251 stdcall GetKeyboardLayoutList(long ptr) GetKeyboardLayoutList
-252 stdcall GetKeyboardLayoutNameA(ptr) GetKeyboardLayoutNameA
-253 stdcall GetKeyboardLayoutNameW(ptr) GetKeyboardLayoutNameW
-254 stdcall GetKeyboardState(ptr) GetKeyboardState
-255 stdcall GetKeyboardType(long) GetKeyboardType
-256 stdcall GetLastActivePopup(long) GetLastActivePopup
-257 stdcall GetMenu(long) GetMenu
-258 stdcall GetMenuCheckMarkDimensions() GetMenuCheckMarkDimensions
-259 stdcall GetMenuContextHelpId(long) GetMenuContextHelpId
-260 stdcall GetMenuDefaultItem(long long long) GetMenuDefaultItem
-261 stub GetMenuIndex
-262 stdcall GetMenuItemCount(long) GetMenuItemCount
-263 stdcall GetMenuItemID(long long) GetMenuItemID
-264 stdcall GetMenuItemInfoA(long long long ptr) GetMenuItemInfoA
-265 stdcall GetMenuItemInfoW(long long long ptr) GetMenuItemInfoW
-266 stdcall GetMenuItemRect(long long long ptr) GetMenuItemRect
-267 stdcall GetMenuState(long long long) GetMenuState
-268 stdcall GetMenuStringA(long long ptr long long) GetMenuStringA
-269 stdcall GetMenuStringW(long long ptr long long) GetMenuStringW
-270 stdcall GetMessageA(ptr long long long) GetMessageA
-271 stdcall GetMessageExtraInfo() GetMessageExtraInfo
-272 stdcall GetMessagePos() GetMessagePos
-273 stdcall GetMessageTime() GetMessageTime
-274 stdcall GetMessageW(ptr long long long) GetMessageW
-275 stdcall GetNextDlgGroupItem(long long long) GetNextDlgGroupItem
-276 stdcall GetNextDlgTabItem(long long long) GetNextDlgTabItem
-277 stdcall GetOpenClipboardWindow() GetOpenClipboardWindow
-278 stdcall GetParent(long) GetParent
-279 stdcall GetPriorityClipboardFormat(ptr long) GetPriorityClipboardFormat
-280 stdcall GetProcessWindowStation() GetProcessWindowStation
-281 stdcall GetPropA(long str) GetPropA
-282 stdcall GetPropW(long wstr) GetPropW
-283 stdcall GetQueueStatus(long) GetQueueStatus
-284 stdcall GetScrollInfo(long long ptr) GetScrollInfo
-285 stdcall GetScrollPos(long long) GetScrollPos
-286 stdcall GetScrollRange(long long ptr ptr) GetScrollRange
-287 stdcall GetShellWindow() GetShellWindow
-288 stdcall GetSubMenu(long long) GetSubMenu
-289 stdcall GetSysColor(long) GetSysColor
-290 stdcall GetSysColorBrush(long) GetSysColorBrush
-291 stdcall GetSystemMenu(long long) GetSystemMenu
-292 stdcall GetSystemMetrics(long) GetSystemMetrics
-293 stdcall GetTabbedTextExtentA(long str long long ptr) GetTabbedTextExtentA
-294 stdcall GetTabbedTextExtentW(long wstr long long ptr) GetTabbedTextExtentW
-295 stdcall GetThreadDesktop(long) GetThreadDesktop
-296 stdcall GetTopWindow(long) GetTopWindow
-297 stdcall GetUpdateRect(long ptr long) GetUpdateRect
-298 stdcall GetUpdateRgn(long long long) GetUpdateRgn
-299 stdcall GetUserObjectInformationA (long long ptr long ptr) GetUserObjectInformationA
-300 stdcall GetUserObjectInformationW (long long ptr long ptr) GetUserObjectInformationW
-301 stdcall GetUserObjectSecurity (long ptr ptr long ptr) GetUserObjectSecurity
-302 stdcall GetWindow(long long) GetWindow
-303 stdcall GetWindowContextHelpId(long) GetWindowContextHelpId
-304 stdcall GetWindowDC(long) GetWindowDC
-305 stdcall GetWindowLongA(long long) GetWindowLongA
-306 stdcall GetWindowLongW(long long) GetWindowLongW
-307 stdcall GetWindowPlacement(long ptr) GetWindowPlacement
-308 stdcall GetWindowRect(long ptr) GetWindowRect
-309 stdcall GetWindowTextA(long ptr long) GetWindowTextA
-310 stdcall GetWindowTextLengthA(long) GetWindowTextLengthA
-311 stdcall GetWindowTextLengthW(long) GetWindowTextLengthW
-312 stdcall GetWindowTextW(long ptr long) GetWindowTextW
-313 stdcall GetWindowThreadProcessId(long ptr) GetWindowThreadProcessId
-314 stdcall GetWindowWord(long long) GetWindowWord
-315 stdcall GrayStringA(long long ptr long long long long long long) GrayStringA
-316 stdcall GrayStringW(long long ptr long long long long long long) GrayStringW
-317 stdcall HideCaret(long) HideCaret
-318 stdcall HiliteMenuItem(long long long long) HiliteMenuItem
-319 stub ImpersonateDdeClientWindow
-320 stdcall InSendMessage() InSendMessage
-321 stdcall InflateRect(ptr long long) InflateRect
-322 stdcall InsertMenuA(long long long long ptr) InsertMenuA
-323 stdcall InsertMenuItemA(long long long ptr) InsertMenuItemA
-324 stdcall InsertMenuItemW(long long long ptr) InsertMenuItemW
-325 stdcall InsertMenuW(long long long long ptr) InsertMenuW
-326 stdcall InternalGetWindowText(long long long) InternalGetWindowText
-327 stdcall IntersectRect(ptr ptr ptr) IntersectRect
-328 stdcall InvalidateRect(long ptr long) InvalidateRect
-329 stdcall InvalidateRgn(long long long) InvalidateRgn
-330 stdcall InvertRect(long ptr) InvertRect
-331 stdcall IsCharAlphaA(long) IsCharAlphaA
-332 stdcall IsCharAlphaNumericA(long) IsCharAlphaNumericA
-333 stdcall IsCharAlphaNumericW(long) IsCharAlphaNumericW
-334 stdcall IsCharAlphaW(long) IsCharAlphaW
-335 stdcall IsCharLowerA(long) IsCharLowerA
-336 stdcall IsCharLowerW(long) IsCharLowerW
-337 stdcall IsCharUpperA(long) IsCharUpperA
-338 stdcall IsCharUpperW(long) IsCharUpperW
-339 stdcall IsChild(long long) IsChild
-340 stdcall IsClipboardFormatAvailable(long) IsClipboardFormatAvailable
-341 stub IsDialogMessage
-342 stdcall IsDialogMessageA(long ptr) IsDialogMessageA
-343 stdcall IsDialogMessageW(long ptr) IsDialogMessageW
-344 stdcall IsDlgButtonChecked(long long) IsDlgButtonChecked
-345 stdcall IsIconic(long) IsIconic
-346 stdcall IsMenu(long) IsMenu
-347 stdcall IsRectEmpty(ptr) IsRectEmpty
-348 stdcall IsWindow(long) IsWindow
-349 stdcall IsWindowEnabled(long) IsWindowEnabled
-350 stdcall IsWindowUnicode(long) IsWindowUnicode
-351 stdcall IsWindowVisible(long) IsWindowVisible
-352 stdcall IsZoomed(long) IsZoomed
-353 stdcall KillSystemTimer(long long) KillSystemTimer
-354 stdcall KillTimer(long long) KillTimer
-355 stdcall LoadAcceleratorsA(long str) LoadAcceleratorsA
-356 stdcall LoadAcceleratorsW(long wstr) LoadAcceleratorsW
-357 stdcall LoadBitmapA(long str) LoadBitmapA
-358 stdcall LoadBitmapW(long wstr) LoadBitmapW
-359 stdcall LoadCursorA(long str) LoadCursorA
-360 stdcall LoadCursorFromFileA(str) LoadCursorFromFileA
-361 stdcall LoadCursorFromFileW(wstr) LoadCursorFromFileW
-362 stdcall LoadCursorW(long wstr) LoadCursorW
-363 stdcall LoadIconA(long str) LoadIconA
-364 stdcall LoadIconW(long wstr) LoadIconW
-365 stdcall LoadImageA(long str long long long long) LoadImageA
-366 stdcall LoadImageW(long wstr long long long long) LoadImageW
-367 stdcall LoadKeyboardLayoutA(str long) LoadKeyboardLayoutA
-368 stdcall LoadKeyboardLayoutW(wstr long) LoadKeyboardLayoutW
-369 stdcall LoadLocalFonts() LoadLocalFonts
-370 stdcall LoadMenuA(long str) LoadMenuA
-371 stdcall LoadMenuIndirectA(ptr) LoadMenuIndirectA
-372 stdcall LoadMenuIndirectW(ptr) LoadMenuIndirectW
-373 stdcall LoadMenuW(long wstr) LoadMenuW
-374 stub LoadRemoteFonts
-375 stdcall LoadStringA(long long ptr long) LoadStringA
-376 stdcall LoadStringW(long long ptr long) LoadStringW
-377 stub LockWindowStation
-378 stdcall LockWindowUpdate(long) LockWindowUpdate
-379 stdcall LookupIconIdFromDirectory(ptr long) LookupIconIdFromDirectory
-380 stdcall LookupIconIdFromDirectoryEx(ptr long long long long) LookupIconIdFromDirectoryEx
-381 stub MBToWCSEx
-382 stdcall MapDialogRect(long ptr) MapDialogRect
-383 stdcall MapVirtualKeyA(long long) MapVirtualKeyA
-384 stdcall MapVirtualKeyExA(long long long) MapVirtualKeyExA
-385 stdcall MapVirtualKeyW(long long) MapVirtualKeyA
-386 stdcall MapWindowPoints(long long ptr long) MapWindowPoints
-387 stdcall MenuItemFromPoint(long long long long) MenuItemFromPoint
-388 stub MenuWindowProcA
-389 stub MenuWindowProcW
-390 stdcall MessageBeep(long) MessageBeep
-391 stdcall MessageBoxA(long str str long) MessageBoxA
-392 stdcall MessageBoxExA(long str str long long) MessageBoxExA
-393 stdcall MessageBoxExW(long wstr wstr long long) MessageBoxExW
-394 stdcall MessageBoxIndirectA(ptr) MessageBoxIndirectA
-395 stdcall MessageBoxIndirectW(ptr) MessageBoxIndirectW
-396 stdcall MessageBoxW(long wstr wstr long) MessageBoxW
-397 stdcall ModifyMenuA(long long long long ptr) ModifyMenuA
-398 stdcall ModifyMenuW(long long long long ptr) ModifyMenuW
-399 stdcall MoveWindow(long long long long long long) MoveWindow
-400 stdcall MsgWaitForMultipleObjects(long ptr long long long) MsgWaitForMultipleObjects
-401 stdcall OemKeyScan(long) OemKeyScan
-402 stdcall OemToCharA(ptr ptr) OemToCharA
-403 stdcall OemToCharBuffA(ptr ptr long) OemToCharBuffA
-404 stdcall OemToCharBuffW(ptr ptr long) OemToCharBuffW
-405 stdcall OemToCharW(ptr ptr) OemToCharW
-406 stdcall OffsetRect(ptr long long) OffsetRect
-407 stdcall OpenClipboard(long) OpenClipboard
-408 stdcall OpenDesktopA(str long long long) OpenDesktopA
-409 stub OpenDesktopW
-410 stdcall OpenIcon(long) OpenIcon
-411 stub OpenInputDesktop
-412 stub OpenWindowStationA
-413 stub OpenWindowStationW
-414 stdcall PackDDElParam(long long long) PackDDElParam
-415 stdcall PaintDesktop(long) PaintDesktop
-416 stdcall PeekMessageA(ptr long long long long) PeekMessageA
-417 stdcall PeekMessageW(ptr long long long long) PeekMessageW
-418 stub PlaySoundEvent
-419 stdcall PostMessageA(long long long long) PostMessageA
-420 stdcall PostMessageW(long long long long) PostMessageW
-421 stdcall PostQuitMessage(long) PostQuitMessage
-422 stdcall PostThreadMessageA(long long long long) PostThreadMessageA
-423 stdcall PostThreadMessageW(long long long long) PostThreadMessageW
-424 stdcall PtInRect(ptr long long) PtInRect
-425 stub QuerySendMessage
-426 stdcall RedrawWindow(long ptr long long) RedrawWindow
-427 stdcall RegisterClassA(ptr) RegisterClassA
-428 stdcall RegisterClassExA(ptr) RegisterClassExA
-429 stdcall RegisterClassExW(ptr) RegisterClassExW
-430 stdcall RegisterClassW(ptr) RegisterClassW
-431 stdcall RegisterClipboardFormatA(str) RegisterClipboardFormatA
-432 stdcall RegisterClipboardFormatW(wstr) RegisterClipboardFormatW
-433 stdcall RegisterHotKey(long long long long) RegisterHotKey
-434 stdcall RegisterLogonProcess(long long) RegisterLogonProcess
-435 stdcall RegisterSystemThread(long long) RegisterSystemThread
-436 stdcall RegisterTasklist (long) RegisterTaskList
-437 stdcall RegisterWindowMessageA(str) RegisterWindowMessageA
-438 stdcall RegisterWindowMessageW(wstr) RegisterWindowMessageW
-439 stdcall ReleaseCapture() ReleaseCapture
-440 stdcall ReleaseDC(long long) ReleaseDC
-441 stdcall RemoveMenu(long long long) RemoveMenu
-442 stdcall RemovePropA(long str) RemovePropA
-443 stdcall RemovePropW(long wstr) RemovePropW
-444 stdcall ReplyMessage(long) ReplyMessage
-445 stub ResetDisplay
-446 stdcall ReuseDDElParam(long long long long long) ReuseDDElParam
-447 stdcall ScreenToClient(long ptr) ScreenToClient
-448 stdcall ScrollChildren(long long long long) ScrollChildren
-449 stdcall ScrollDC(long long long ptr ptr long ptr) ScrollDC
-450 stdcall ScrollWindow(long long long ptr ptr) ScrollWindow
-451 stdcall ScrollWindowEx(long long long ptr ptr long ptr long) ScrollWindowEx
-452 stdcall SendDlgItemMessageA(long long long long long) SendDlgItemMessageA
-453 stdcall SendDlgItemMessageW(long long long long long) SendDlgItemMessageW
-454 stdcall SendMessageA(long long long long) SendMessageA
-455 stdcall SendMessageCallbackA(long long long long ptr long) SendMessageCallbackA
-456 stdcall SendMessageCallbackW(long long long long ptr long) SendMessageCallbackW
-457 stdcall SendMessageTimeoutA(long long long long long long ptr) SendMessageTimeoutA
-458 stdcall SendMessageTimeoutW(long long long long long long ptr) SendMessageTimeoutW
-459 stdcall SendMessageW(long long long long) SendMessageW
-460 stdcall SendNotifyMessageA(long long long long) SendNotifyMessageA
-461 stdcall SendNotifyMessageW(long long long long) SendNotifyMessageW
-462 stub ServerSetFunctionPointers
-463 stdcall SetActiveWindow(long) SetActiveWindow
-464 stdcall SetCapture(long) SetCapture
-465 stdcall SetCaretBlinkTime(long) SetCaretBlinkTime
-466 stdcall SetCaretPos(long long) SetCaretPos
-467 stdcall SetClassLongA(long long long) SetClassLongA
-468 stdcall SetClassLongW(long long long) SetClassLongW
-469 stdcall SetClassWord(long long long) SetClassWord
-470 stdcall SetClipboardData(long long) SetClipboardData
-471 stdcall SetClipboardViewer(long) SetClipboardViewer
-472 stdcall SetCursor(long) SetCursor
-473 stub SetCursorContents
-474 stdcall SetCursorPos(long long) SetCursorPos
-475 stdcall SetDebugErrorLevel(long) SetDebugErrorLevel
-476 stdcall SetDeskWallPaper(str) SetDeskWallPaper
-477 stdcall SetDlgItemInt(long long long long) SetDlgItemInt
-478 stdcall SetDlgItemTextA(long long str) SetDlgItemTextA
-479 stdcall SetDlgItemTextW(long long wstr) SetDlgItemTextW
-480 stdcall SetDoubleClickTime(long) SetDoubleClickTime
-481 stdcall SetFocus(long) SetFocus
-482 stdcall SetForegroundWindow(long) SetForegroundWindow
-483 stdcall SetInternalWindowPos(long long ptr ptr) SetInternalWindowPos
-484 stdcall SetKeyboardState(ptr) SetKeyboardState
-485 stdcall SetLastErrorEx(long long) SetLastErrorEx
-486 stdcall SetLogonNotifyWindow(long long) SetLogonNotifyWindow
-487 stdcall SetMenu(long long) SetMenu
-488 stdcall SetMenuContextHelpId(long long) SetMenuContextHelpId
-489 stdcall SetMenuDefaultItem(long long long) SetMenuDefaultItem
-490 stdcall SetMenuItemBitmaps(long long long long long) SetMenuItemBitmaps
-491 stdcall SetMenuItemInfoA(long long long ptr) SetMenuItemInfoA
-492 stdcall SetMenuItemInfoW(long long long ptr) SetMenuItemInfoW
-493 stub SetMessageExtraInfo
-494 stdcall SetMessageQueue(long) SetMessageQueue
-495 stdcall SetParent(long long) SetParent
-496 stdcall SetProcessWindowStation(long) SetProcessWindowStation
-497 stdcall SetPropA(long str long) SetPropA
-498 stdcall SetPropW(long wstr long) SetPropW
-499 stdcall SetRect(ptr long long long long) SetRect
-500 stdcall SetRectEmpty(ptr) SetRectEmpty
-501 stdcall SetScrollInfo(long long ptr long) SetScrollInfo
-502 stdcall SetScrollPos(long long long long) SetScrollPos
-503 stdcall SetScrollRange(long long long long long) SetScrollRange
-504 stdcall SetShellWindow(long) SetShellWindow
-505 stdcall SetSysColors(long ptr ptr) SetSysColors
-506 stub SetSysColorsTemp
-507 stdcall SetSystemCursor(long long) SetSystemCursor
-508 stdcall SetSystemMenu(long long) SetSystemMenu
-509 stdcall SetSystemTimer(long long long ptr) SetSystemTimer
-510 stdcall SetThreadDesktop(long) SetThreadDesktop
-511 stdcall SetTimer(long long long ptr) SetTimer
-512 stdcall SetUserObjectInformationA(long long long long) SetUserObjectInformationA
-513 stub SetUserObjectInformationW
-514 stdcall SetUserObjectSecurity(long ptr ptr) SetUserObjectSecurity
-515 stdcall SetWindowContextHelpId(long long) SetWindowContextHelpId
-516 stub SetWindowFullScreenState
-517 stdcall SetWindowLongA(long long long) SetWindowLongA
-518 stdcall SetWindowLongW(long long long) SetWindowLongW
-519 stdcall SetWindowPlacement(long ptr) SetWindowPlacement
-520 stdcall SetWindowPos(long long long long long long long) SetWindowPos
-521 stdcall SetWindowStationUser(long long) SetWindowStationUser
-522 stdcall SetWindowTextA(long str) SetWindowTextA
-523 stdcall SetWindowTextW(long wstr) SetWindowTextW
-524 stdcall SetWindowWord(long long long) SetWindowWord
-525 stdcall SetWindowsHookA(long ptr) SetWindowsHookA
-526 stdcall SetWindowsHookExA(long long long long) SetWindowsHookExA
-527 stdcall SetWindowsHookExW(long long long long) SetWindowsHookExW
-528 stdcall SetWindowsHookW(long ptr) SetWindowsHookW
-529 stdcall ShowCaret(long) ShowCaret
-530 stdcall ShowCursor(long) ShowCursor
-531 stdcall ShowOwnedPopups(long long) ShowOwnedPopups
-532 stdcall ShowScrollBar(long long long) ShowScrollBar
-533 stub ShowStartGlass
-534 stdcall ShowWindow(long long) ShowWindow
-535 stdcall ShowWindowAsync(long long) ShowWindowAsync
-536 stdcall SubtractRect(ptr ptr ptr) SubtractRect
-537 stdcall SwapMouseButton(long) SwapMouseButton
-538 stub SwitchDesktop
-539 stdcall SwitchToThisWindow(long long) SwitchToThisWindow
-540 stdcall SystemParametersInfoA(long long ptr long) SystemParametersInfoA
-541 stdcall SystemParametersInfoW(long long ptr long) SystemParametersInfoW
-542 stdcall TabbedTextOutA(long long long str long long ptr long) TabbedTextOutA
-543 stdcall TabbedTextOutW(long long long wstr long long ptr long) TabbedTextOutW
-544 stub TileChildWindows
-545 stdcall TileWindows(long long ptr long ptr) TileWindows
-546 stdcall ToAscii(long long ptr ptr long) ToAscii
-547 stdcall ToAsciiEx(long long ptr ptr long long) ToAsciiEx
-548 stdcall ToUnicode(long long ptr wstr long long) ToUnicode
-549 stdcall TrackPopupMenu(long long long long long long ptr) TrackPopupMenu
-550 stdcall TrackPopupMenuEx(long long long long long ptr) TrackPopupMenuEx
-551 stdcall TranslateAccelerator(long long ptr) TranslateAccelerator
-552 stdcall TranslateAcceleratorA(long long ptr) TranslateAccelerator
-553 stdcall TranslateAcceleratorW(long long ptr) TranslateAccelerator
-554 stdcall TranslateCharsetInfo(ptr ptr long) TranslateCharsetInfo
-555 stdcall TranslateMDISysAccel(long ptr) TranslateMDISysAccel
-556 stdcall TranslateMessage(ptr) TranslateMessage
-557 stdcall UnhookWindowsHook(long ptr) UnhookWindowsHook
-558 stdcall UnhookWindowsHookEx(long) UnhookWindowsHookEx
-559 stdcall UnionRect(ptr ptr ptr) UnionRect
-560 stub UnloadKeyboardLayout
-561 stub UnlockWindowStation
-562 stdcall UnpackDDElParam(long long ptr ptr) UnpackDDElParam
-563 stdcall UnregisterClassA(str long) UnregisterClassA
-564 stdcall UnregisterClassW(wstr long) UnregisterClassW
-565 stdcall UnregisterHotKey(long long) UnregisterHotKey
-566 stub UpdatePerUserSystemParameters
-567 stdcall UpdateWindow(long) UpdateWindow
-568 stub UserClientDllInitialize
-569 stub UserRealizePalette
-570 stub UserRegisterWowHandlers
-571 stdcall ValidateRect(long ptr) ValidateRect
-572 stdcall ValidateRgn(long long) ValidateRgn
-573 stdcall VkKeyScanA(long) VkKeyScanA
-574 stdcall VkKeyScanExA(long long) VkKeyScanExA
-575 stdcall VkKeyScanExW(long long) VkKeyScanExW
-576 stdcall VkKeyScanW(long) VkKeyScanW
-577 stdcall WaitForInputIdle(long long) WaitForInputIdle
-578 stdcall WaitMessage() WaitMessage
-579 stdcall WinHelpA(long str long long) WinHelpA
-580 stdcall WinHelpW(long wstr long long) WinHelpW
-581 stdcall WindowFromDC(long) WindowFromDC
-582 stdcall WindowFromPoint(long long) WindowFromPoint
-583 stdcall keybd_event(long long long long) keybd_event
-584 stdcall mouse_event(long long long long long) mouse_event
-585 varargs wsprintfA(str str) wsprintfA
-586 varargs wsprintfW(wstr wstr) wsprintfW
-587 stdcall wvsprintfA(ptr str ptr) wvsprintfA
-588 stdcall wvsprintfW(ptr wstr ptr) wvsprintfW
-#late additions
-589 stdcall ChangeDisplaySettingsA(ptr long) ChangeDisplaySettingsA
-590 stub ChangeDisplaySettingsW
-591 stdcall EnumDesktopWindows(long ptr ptr) EnumDesktopWindows
-592 stdcall EnumDisplaySettingsA(str long ptr) EnumDisplaySettingsA
-593 stdcall EnumDisplaySettingsW(wstr long ptr ) EnumDisplaySettingsW
-594 stdcall GetWindowRgn(long long) GetWindowRgn
-595 stub MapVirtualKeyExW
-596 stub RegisterServicesProcess
-597 stdcall SetWindowRgn(long long long) SetWindowRgn
-598 stub ToUnicodeEx
-599 stdcall DrawCaptionTempA(long long ptr long long str long) DrawCaptionTempA
-600 stub RegisterNetworkCapabilities
-601 stub WNDPROC_CALLBACK
-602 stdcall DrawCaptionTempW(long long ptr long long wstr long) DrawCaptionTempW
-603 stub IsHungAppWindow
-604 stdcall ChangeDisplaySettingsExA(str ptr long long ptr) ChangeDisplaySettingsExA
-605 stub ChangeDisplaySettingsExW
-606 stdcall SetWindowText(long str) SetWindowTextA
-607 stdcall GetMonitorInfoA(long ptr) GetMonitorInfoA
-608 stdcall GetMonitorInfoW(long ptr) GetMonitorInfoW
-609 stdcall MonitorFromWindow(long long) MonitorFromWindow
-610 stdcall MonitorFromRect(ptr long) MonitorFromRect
-611 stdcall MonitorFromPoint(long long long) MonitorFromPoint
-612 stdcall EnumDisplayMonitors(long ptr ptr long) EnumDisplayMonitors
-613 stdcall PrivateExtractIconExA (long long long long long) PrivateExtractIconExA
-614 stdcall PrivateExtractIconExW (long long long long long) PrivateExtractIconExW
-615 stdcall PrivateExtractIconsW (long long long long long long long long) PrivateExtractIconsW
-616 stdcall RegisterShellHookWindow (long) RegisterShellHookWindow
-617 stdcall DeregisterShellHookWindow (long) DeregisterShellHookWindow
-618 stdcall SetShellWindowEx (long long) SetShellWindowEx
-619 stdcall SetProgmanWindow (long) SetProgmanWindow
-620 stdcall GetTaskmanWindow () GetTaskmanWindow
-621 stdcall SetTaskmanWindow (long) SetTaskmanWindow
-622 stdcall GetProgmanWindow () GetProgmanWindow
-623 stdcall UserSignalProc(long long long long) UserSignalProc
+@ stdcall ActivateKeyboardLayout(long long) ActivateKeyboardLayout
+@ stdcall AdjustWindowRect(ptr long long) AdjustWindowRect
+@ stdcall AdjustWindowRectEx(ptr long long long) AdjustWindowRectEx
+@ stdcall AnyPopup() AnyPopup
+@ stdcall AppendMenuA(long long long ptr) AppendMenuA
+@ stdcall AppendMenuW(long long long ptr) AppendMenuW
+@ stdcall ArrangeIconicWindows(long) ArrangeIconicWindows
+@ stdcall AttachThreadInput(long long long) AttachThreadInput
+@ stdcall BeginDeferWindowPos(long) BeginDeferWindowPos
+@ stdcall BeginPaint(long ptr) BeginPaint
+@ stdcall BringWindowToTop(long) BringWindowToTop
+@ stdcall BroadcastSystemMessage(long ptr long long long) BroadcastSystemMessage
+@ stub CalcChildScroll
+@ stub CallMsgFilter
+@ stdcall CallMsgFilterA(ptr long) CallMsgFilterA
+@ stdcall CallMsgFilterW(ptr long) CallMsgFilterW
+@ stdcall CallNextHookEx(long long long long) CallNextHookEx
+@ stdcall CallWindowProcA(ptr long long long long) CallWindowProcA
+@ stdcall CallWindowProcW(ptr long long long long) CallWindowProcW
+@ stub CascadeChildWindows
+@ stdcall CascadeWindows(long long ptr long ptr) CascadeWindows
+@ stdcall ChangeClipboardChain(long long) ChangeClipboardChain
+@ stdcall ChangeMenuA(long long ptr long long) ChangeMenuA
+@ stdcall ChangeMenuW(long long ptr long long) ChangeMenuW
+@ stdcall CharLowerA(str) CharLowerA
+@ stdcall CharLowerBuffA(str long) CharLowerBuffA
+@ stdcall CharLowerBuffW(wstr long) CharLowerBuffW
+@ stdcall CharLowerW(wstr) CharLowerW
+@ stdcall CharNextA(str) CharNextA
+@ stdcall CharNextExA(long str long) CharNextExA
+@ stdcall CharNextExW(long wstr long) CharNextExW
+@ stdcall CharNextW(wstr) CharNextW
+@ stdcall CharPrevA(str str) CharPrevA
+@ stdcall CharPrevExA(long str str long) CharPrevExA
+@ stdcall CharPrevExW(long wstr wstr long) CharPrevExW
+@ stdcall CharPrevW(wstr wstr) CharPrevW
+@ stdcall CharToOemA(str ptr) CharToOemA
+@ stdcall CharToOemBuffA(str ptr long) CharToOemBuffA
+@ stdcall CharToOemBuffW(wstr ptr long) CharToOemBuffW
+@ stdcall CharToOemW(wstr ptr) CharToOemW
+@ stdcall CharUpperA(str) CharUpperA
+@ stdcall CharUpperBuffA(str long) CharUpperBuffA
+@ stdcall CharUpperBuffW(wstr long) CharUpperBuffW
+@ stdcall CharUpperW(wstr) CharUpperW
+@ stdcall CheckDlgButton(long long long) CheckDlgButton
+@ stdcall CheckMenuItem(long long long) CheckMenuItem
+@ stdcall CheckMenuRadioItem(long long long long long) CheckMenuRadioItem
+@ stdcall CheckRadioButton(long long long long) CheckRadioButton
+@ stdcall ChildWindowFromPoint(long long long) ChildWindowFromPoint
+@ stdcall ChildWindowFromPointEx(long long long long) ChildWindowFromPointEx
+@ stub ClientThreadConnect
+@ stdcall ClientToScreen(long ptr) ClientToScreen
+@ stdcall ClipCursor(ptr) ClipCursor
+@ stdcall CloseClipboard() CloseClipboard
+@ stdcall CloseDesktop(long) CloseDesktop
+@ stdcall CloseWindow(long) CloseWindow
+@ stdcall CloseWindowStation(long) CloseWindowStation			
+@ stdcall CopyAcceleratorTableA(long ptr long) CopyAcceleratorTableA
+@ stdcall CopyAcceleratorTableW(long ptr long) CopyAcceleratorTableW
+@ stdcall CopyIcon(long) CopyIcon
+@ stdcall CopyImage(long long long long long) CopyImage
+@ stdcall CopyRect(ptr ptr) CopyRect
+@ stdcall CountClipboardFormats() CountClipboardFormats
+@ stdcall CreateAcceleratorTableA(ptr long) CreateAcceleratorTableA
+@ stdcall CreateAcceleratorTableW(ptr long) CreateAcceleratorTableW
+@ stdcall CreateCaret(long long long long) CreateCaret
+@ stdcall CreateCursor(long long long long long ptr ptr) CreateCursor
+@ stdcall CreateDesktopA(str str ptr long long ptr) CreateDesktopA
+@ stdcall CreateDesktopW(wstr wstr ptr long long ptr) CreateDesktopW
+@ stdcall CreateDialogIndirectParamA(long ptr long ptr long) CreateDialogIndirectParamA
+@ stdcall CreateDialogIndirectParamAorW (long ptr long ptr long) CreateDialogIndirectParamAorW
+@ stdcall CreateDialogIndirectParamW(long ptr long ptr long) CreateDialogIndirectParamW
+@ stdcall CreateDialogParamA(long ptr long ptr long) CreateDialogParamA
+@ stdcall CreateDialogParamW(long ptr long ptr long) CreateDialogParamW
+@ stdcall CreateIcon(long long long long long ptr ptr) CreateIcon
+@ stdcall CreateIconFromResource (ptr long long long) CreateIconFromResource
+@ stdcall CreateIconFromResourceEx(ptr long long long long long long) CreateIconFromResourceEx
+@ stdcall CreateIconIndirect(ptr) CreateIconIndirect
+@ stdcall CreateMDIWindowA(ptr ptr long long long long long long long long) CreateMDIWindowA
+@ stdcall CreateMDIWindowW(ptr ptr long long long long long long long long) CreateMDIWindowW
+@ stdcall CreateMenu() CreateMenu
+@ stdcall CreatePopupMenu() CreatePopupMenu
+@ stdcall CreateWindowExA(long str str long long long long long long long long ptr) CreateWindowExA
+@ stdcall CreateWindowExW(long wstr wstr long long long long long long long long ptr) CreateWindowExW
+@ stub CreateWindowStationA
+@ stdcall CreateWindowStationW(wstr long long ptr) CreateWindowStationW
+@ stdcall DdeAbandonTransaction(long long long)DdeAbandonTransaction
+@ stdcall DdeAccessData(long ptr) DdeAccessData
+@ stdcall DdeAddData(long ptr long long) DdeAddData
+@ stdcall DdeClientTransaction(ptr long long long long long long ptr) DdeClientTransaction
+@ stdcall DdeCmpStringHandles(long long) DdeCmpStringHandles
+@ stdcall DdeConnect(long long long ptr) DdeConnect
+@ stdcall DdeConnectList(long long long long ptr) DdeConnectList
+@ stdcall DdeCreateDataHandle(long ptr long long long long long) DdeCreateDataHandle
+@ stdcall DdeCreateStringHandleA(long str long) DdeCreateStringHandleA
+@ stdcall DdeCreateStringHandleW(long wstr long) DdeCreateStringHandleW
+@ stdcall DdeDisconnect(long) DdeDisconnect
+@ stdcall DdeDisconnectList(long) DdeDisconnectList
+@ stdcall DdeEnableCallback(long long long) DdeEnableCallback
+@ stdcall DdeFreeDataHandle(long) DdeFreeDataHandle
+@ stdcall DdeFreeStringHandle(long long) DdeFreeStringHandle
+@ stdcall DdeGetData(long ptr long long) DdeGetData
+@ stdcall DdeGetLastError(long) DdeGetLastError
+@ stub DdeGetQualityOfService
+@ stdcall DdeImpersonateClient(long) DdeImpersonateClient
+@ stdcall DdeInitializeA(ptr ptr long long) DdeInitializeA
+@ stdcall DdeInitializeW(ptr ptr long long) DdeInitializeW
+@ stdcall DdeKeepStringHandle(long long) DdeKeepStringHandle
+@ stdcall DdeNameService(long long long long) DdeNameService
+@ stdcall DdePostAdvise(long long long) DdePostAdvise
+@ stdcall DdeQueryConvInfo(long long ptr) DdeQueryConvInfo
+@ stdcall DdeQueryNextServer(long long) DdeQueryNextServer
+@ stdcall DdeQueryStringA(long long ptr long long) DdeQueryStringA
+@ stdcall DdeQueryStringW(long long ptr long long) DdeQueryStringW
+@ stdcall DdeReconnect(long) DdeReconnect
+@ stdcall DdeSetQualityOfService(long ptr ptr) DdeSetQualityOfService
+@ stdcall DdeSetUserHandle (long long long) DdeSetUserHandle
+@ stdcall DdeUnaccessData(long) DdeUnaccessData
+@ stdcall DdeUninitialize(long) DdeUninitialize
+@ stdcall DefDlgProcA(long long long long) DefDlgProcA
+@ stdcall DefDlgProcW(long long long long) DefDlgProcW
+@ stdcall DefFrameProcA(long long long long long) DefFrameProcA
+@ stdcall DefFrameProcW(long long long long long) DefFrameProcW
+@ stdcall DefMDIChildProcA(long long long long) DefMDIChildProcA
+@ stdcall DefMDIChildProcW(long long long long) DefMDIChildProcW
+@ stdcall DefWindowProcA(long long long long) DefWindowProcA
+@ stdcall DefWindowProcW(long long long long) DefWindowProcW
+@ stdcall DeferWindowPos(long long long long long long long long) DeferWindowPos
+@ stdcall DeleteMenu(long long long) DeleteMenu
+@ stdcall DestroyAcceleratorTable(long) DestroyAcceleratorTable
+@ stdcall DestroyCaret() DestroyCaret
+@ stdcall DestroyCursor(long) DestroyCursor
+@ stdcall DestroyIcon(long) DestroyIcon
+@ stdcall DestroyMenu(long) DestroyMenu
+@ stdcall DestroyWindow(long) DestroyWindow
+@ stdcall DialogBoxIndirectParamA(long ptr long ptr long) DialogBoxIndirectParamA
+@ stdcall DialogBoxIndirectParamAorW(long ptr long ptr long long) DialogBoxIndirectParamAorW
+@ stdcall DialogBoxIndirectParamW(long ptr long ptr long) DialogBoxIndirectParamW
+@ stdcall DialogBoxParamA(long str long ptr long) DialogBoxParamA
+@ stdcall DialogBoxParamW(long wstr long ptr long) DialogBoxParamW
+@ stdcall DispatchMessageA(ptr) DispatchMessageA
+@ stdcall DispatchMessageW(ptr) DispatchMessageW
+@ stdcall DlgDirListA(long ptr long long long) DlgDirListA
+@ stdcall DlgDirListComboBoxA(long ptr long long long) DlgDirListComboBoxA
+@ stdcall DlgDirListComboBoxW(long ptr long long long) DlgDirListComboBoxW
+@ stdcall DlgDirListW(long ptr long long long) DlgDirListW
+@ stdcall DlgDirSelectComboBoxExA(long ptr long long) DlgDirSelectComboBoxExA
+@ stdcall DlgDirSelectComboBoxExW(long ptr long long) DlgDirSelectComboBoxExW
+@ stdcall DlgDirSelectExA(long ptr long long) DlgDirSelectExA
+@ stdcall DlgDirSelectExW(long ptr long long) DlgDirSelectExW
+@ stdcall DragDetect(long long long) DragDetect
+@ stub DragObject
+@ stdcall DrawAnimatedRects(long long ptr ptr) DrawAnimatedRects
+@ stdcall DrawCaption(long long ptr long) DrawCaption
+@ stdcall DrawEdge(long ptr long long) DrawEdge
+@ stdcall DrawFocusRect(long ptr) DrawFocusRect
+@ stub DrawFrame
+@ stdcall DrawFrameControl(long ptr long long) DrawFrameControl
+@ stdcall DrawIcon(long long long long) DrawIcon
+@ stdcall DrawIconEx(long long long long long long long long long) DrawIconEx
+@ stdcall DrawMenuBar(long) DrawMenuBar
+@ stdcall DrawStateA(long long ptr long long long long long long long) DrawStateA
+@ stdcall DrawStateW(long long ptr long long long long long long long) DrawStateW
+@ stdcall DrawTextA(long str long ptr long) DrawTextA
+@ stdcall DrawTextExA(long str long ptr long ptr) DrawTextExA
+@ stdcall DrawTextExW(long wstr long ptr long ptr) DrawTextExW
+@ stdcall DrawTextW(long wstr long ptr long) DrawTextW
+@ stdcall EditWndProc(long long long long) EditWndProc
+@ stdcall EmptyClipboard() EmptyClipboard
+@ stdcall EnableMenuItem(long long long) EnableMenuItem
+@ stdcall EnableScrollBar(long long long) EnableScrollBar
+@ stdcall EnableWindow(long long) EnableWindow
+@ stdcall EndDeferWindowPos(long) EndDeferWindowPos
+@ stdcall EndDialog(long long) EndDialog
+@ stdcall EndMenu() EndMenu
+@ stdcall EndPaint(long ptr) EndPaint
+@ stub EndTask
+@ stdcall EnumChildWindows(long ptr long) EnumChildWindows
+@ stdcall EnumClipboardFormats(long) EnumClipboardFormats
+@ stub EnumDesktopsA
+@ stub EnumDesktopsW
+@ stub EnumDisplayDeviceModesA
+@ stub EnumDisplayDeviceModesW
+@ stdcall EnumDisplayDevicesA(ptr long ptr long) EnumDisplayDevicesA
+@ stdcall EnumDisplayDevicesW(ptr long ptr long) EnumDisplayDevicesW
+@ stdcall EnumPropsA(long ptr) EnumPropsA
+@ stdcall EnumPropsExA(long ptr long) EnumPropsExA
+@ stdcall EnumPropsExW(long ptr long) EnumPropsExW
+@ stdcall EnumPropsW(long ptr) EnumPropsW
+@ stdcall EnumThreadWindows(long ptr long) EnumThreadWindows
+@ stub EnumWindowStationsA
+@ stub EnumWindowStationsW
+@ stdcall EnumWindows(ptr long) EnumWindows
+@ stdcall EqualRect(ptr ptr) EqualRect
+@ stdcall ExcludeUpdateRgn(long long) ExcludeUpdateRgn
+@ stdcall ExitWindowsEx(long long) ExitWindowsEx
+@ stdcall FillRect(long ptr long) FillRect
+@ stdcall FindWindowA(str str) FindWindowA
+@ stdcall FindWindowExA(long long str str) FindWindowExA
+@ stdcall FindWindowExW(long long wstr wstr) FindWindowExW
+@ stdcall FindWindowW(wstr wstr) FindWindowW
+@ stdcall FlashWindow(long long) FlashWindow
+@ stdcall FrameRect(long ptr long) FrameRect
+@ stdcall FreeDDElParam(long long) FreeDDElParam
+@ stdcall GetActiveWindow() GetActiveWindow
+@ stdcall GetAppCompatFlags(long) GetAppCompatFlags
+@ stdcall GetAsyncKeyState(long) GetAsyncKeyState
+@ stdcall GetCapture() GetCapture
+@ stdcall GetCaretBlinkTime() GetCaretBlinkTime
+@ stdcall GetCaretPos(ptr) GetCaretPos
+@ stdcall GetClassInfoA(long str ptr) GetClassInfoA
+@ stdcall GetClassInfoExA(long str ptr) GetClassInfoExA
+@ stdcall GetClassInfoExW(long wstr ptr) GetClassInfoExW
+@ stdcall GetClassInfoW(long wstr ptr) GetClassInfoW
+@ stdcall GetClassLongA(long long) GetClassLongA
+@ stdcall GetClassLongW(long long) GetClassLongW
+@ stdcall GetClassNameA(long ptr long) GetClassNameA
+@ stdcall GetClassNameW(long ptr long) GetClassNameW
+@ stdcall GetClassWord(long long) GetClassWord
+@ stdcall GetClientRect(long long) GetClientRect
+@ stdcall GetClipCursor(ptr) GetClipCursor
+@ stdcall GetClipboardData(long) GetClipboardData
+@ stdcall GetClipboardFormatNameA(long ptr long) GetClipboardFormatNameA
+@ stdcall GetClipboardFormatNameW(long ptr long) GetClipboardFormatNameW
+@ stdcall GetClipboardOwner() GetClipboardOwner
+@ stdcall GetClipboardViewer() GetClipboardViewer
+@ stdcall GetCursor() GetCursor
+@ stub GetCursorInfo
+@ stdcall GetCursorPos(ptr) GetCursorPos
+@ stdcall GetDC(long) GetDC
+@ stdcall GetDCEx(long long long) GetDCEx
+@ stdcall GetDesktopWindow() GetDesktopWindow
+@ stdcall GetDialogBaseUnits() GetDialogBaseUnits
+@ stdcall GetDlgCtrlID(long) GetDlgCtrlID
+@ stdcall GetDlgItem(long long) GetDlgItem
+@ stdcall GetDlgItemInt(long long ptr long) GetDlgItemInt
+@ stdcall GetDlgItemTextA(long long ptr long) GetDlgItemTextA
+@ stdcall GetDlgItemTextW(long long ptr long) GetDlgItemTextW
+@ stdcall GetDoubleClickTime() GetDoubleClickTime
+@ stdcall GetFocus() GetFocus
+@ stdcall GetForegroundWindow() GetForegroundWindow
+@ stdcall GetIconInfo(long ptr) GetIconInfo
+@ stub GetInputDesktop
+@ stdcall GetInputState() GetInputState
+@ stdcall GetInternalWindowPos(long ptr ptr) GetInternalWindowPos
+@ stdcall GetKBCodePage() GetKBCodePage
+@ stdcall GetKeyNameTextA(long ptr long) GetKeyNameTextA
+@ stdcall GetKeyNameTextW(long ptr long) GetKeyNameTextW
+@ stdcall GetKeyState(long) GetKeyState
+@ stdcall GetKeyboardLayout(long) GetKeyboardLayout
+@ stdcall GetKeyboardLayoutList(long ptr) GetKeyboardLayoutList
+@ stdcall GetKeyboardLayoutNameA(ptr) GetKeyboardLayoutNameA
+@ stdcall GetKeyboardLayoutNameW(ptr) GetKeyboardLayoutNameW
+@ stdcall GetKeyboardState(ptr) GetKeyboardState
+@ stdcall GetKeyboardType(long) GetKeyboardType
+@ stdcall GetLastActivePopup(long) GetLastActivePopup
+@ stdcall GetMenu(long) GetMenu
+@ stdcall GetMenuCheckMarkDimensions() GetMenuCheckMarkDimensions
+@ stdcall GetMenuContextHelpId(long) GetMenuContextHelpId
+@ stdcall GetMenuDefaultItem(long long long) GetMenuDefaultItem
+@ stub GetMenuIndex
+@ stdcall GetMenuItemCount(long) GetMenuItemCount
+@ stdcall GetMenuItemID(long long) GetMenuItemID
+@ stdcall GetMenuItemInfoA(long long long ptr) GetMenuItemInfoA
+@ stdcall GetMenuItemInfoW(long long long ptr) GetMenuItemInfoW
+@ stdcall GetMenuItemRect(long long long ptr) GetMenuItemRect
+@ stdcall GetMenuState(long long long) GetMenuState
+@ stdcall GetMenuStringA(long long ptr long long) GetMenuStringA
+@ stdcall GetMenuStringW(long long ptr long long) GetMenuStringW
+@ stdcall GetMessageA(ptr long long long) GetMessageA
+@ stdcall GetMessageExtraInfo() GetMessageExtraInfo
+@ stdcall GetMessagePos() GetMessagePos
+@ stdcall GetMessageTime() GetMessageTime
+@ stdcall GetMessageW(ptr long long long) GetMessageW
+@ stdcall GetNextDlgGroupItem(long long long) GetNextDlgGroupItem
+@ stdcall GetNextDlgTabItem(long long long) GetNextDlgTabItem
+@ stdcall GetOpenClipboardWindow() GetOpenClipboardWindow
+@ stdcall GetParent(long) GetParent
+@ stdcall GetPriorityClipboardFormat(ptr long) GetPriorityClipboardFormat
+@ stdcall GetProcessWindowStation() GetProcessWindowStation
+@ stdcall GetPropA(long str) GetPropA
+@ stdcall GetPropW(long wstr) GetPropW
+@ stdcall GetQueueStatus(long) GetQueueStatus
+@ stdcall GetScrollInfo(long long ptr) GetScrollInfo
+@ stdcall GetScrollPos(long long) GetScrollPos
+@ stdcall GetScrollRange(long long ptr ptr) GetScrollRange
+@ stdcall GetShellWindow() GetShellWindow
+@ stdcall GetSubMenu(long long) GetSubMenu
+@ stdcall GetSysColor(long) GetSysColor
+@ stdcall GetSysColorBrush(long) GetSysColorBrush
+@ stdcall GetSystemMenu(long long) GetSystemMenu
+@ stdcall GetSystemMetrics(long) GetSystemMetrics
+@ stdcall GetTabbedTextExtentA(long str long long ptr) GetTabbedTextExtentA
+@ stdcall GetTabbedTextExtentW(long wstr long long ptr) GetTabbedTextExtentW
+@ stdcall GetThreadDesktop(long) GetThreadDesktop
+@ stdcall GetTopWindow(long) GetTopWindow
+@ stdcall GetUpdateRect(long ptr long) GetUpdateRect
+@ stdcall GetUpdateRgn(long long long) GetUpdateRgn
+@ stdcall GetUserObjectInformationA (long long ptr long ptr) GetUserObjectInformationA
+@ stdcall GetUserObjectInformationW (long long ptr long ptr) GetUserObjectInformationW
+@ stdcall GetUserObjectSecurity (long ptr ptr long ptr) GetUserObjectSecurity
+@ stdcall GetWindow(long long) GetWindow
+@ stdcall GetWindowContextHelpId(long) GetWindowContextHelpId
+@ stdcall GetWindowDC(long) GetWindowDC
+@ stdcall GetWindowLongA(long long) GetWindowLongA
+@ stdcall GetWindowLongW(long long) GetWindowLongW
+@ stdcall GetWindowPlacement(long ptr) GetWindowPlacement
+@ stdcall GetWindowRect(long ptr) GetWindowRect
+@ stdcall GetWindowTextA(long ptr long) GetWindowTextA
+@ stdcall GetWindowTextLengthA(long) GetWindowTextLengthA
+@ stdcall GetWindowTextLengthW(long) GetWindowTextLengthW
+@ stdcall GetWindowTextW(long ptr long) GetWindowTextW
+@ stdcall GetWindowThreadProcessId(long ptr) GetWindowThreadProcessId
+@ stdcall GetWindowWord(long long) GetWindowWord
+@ stdcall GrayStringA(long long ptr long long long long long long) GrayStringA
+@ stdcall GrayStringW(long long ptr long long long long long long) GrayStringW
+@ stdcall HideCaret(long) HideCaret
+@ stdcall HiliteMenuItem(long long long long) HiliteMenuItem
+@ stub ImpersonateDdeClientWindow
+@ stdcall InSendMessage() InSendMessage
+@ stdcall InflateRect(ptr long long) InflateRect
+@ stdcall InsertMenuA(long long long long ptr) InsertMenuA
+@ stdcall InsertMenuItemA(long long long ptr) InsertMenuItemA
+@ stdcall InsertMenuItemW(long long long ptr) InsertMenuItemW
+@ stdcall InsertMenuW(long long long long ptr) InsertMenuW
+@ stdcall InternalGetWindowText(long long long) InternalGetWindowText
+@ stdcall IntersectRect(ptr ptr ptr) IntersectRect
+@ stdcall InvalidateRect(long ptr long) InvalidateRect
+@ stdcall InvalidateRgn(long long long) InvalidateRgn
+@ stdcall InvertRect(long ptr) InvertRect
+@ stdcall IsCharAlphaA(long) IsCharAlphaA
+@ stdcall IsCharAlphaNumericA(long) IsCharAlphaNumericA
+@ stdcall IsCharAlphaNumericW(long) IsCharAlphaNumericW
+@ stdcall IsCharAlphaW(long) IsCharAlphaW
+@ stdcall IsCharLowerA(long) IsCharLowerA
+@ stdcall IsCharLowerW(long) IsCharLowerW
+@ stdcall IsCharUpperA(long) IsCharUpperA
+@ stdcall IsCharUpperW(long) IsCharUpperW
+@ stdcall IsChild(long long) IsChild
+@ stdcall IsClipboardFormatAvailable(long) IsClipboardFormatAvailable
+@ stub IsDialogMessage
+@ stdcall IsDialogMessageA(long ptr) IsDialogMessageA
+@ stdcall IsDialogMessageW(long ptr) IsDialogMessageW
+@ stdcall IsDlgButtonChecked(long long) IsDlgButtonChecked
+@ stdcall IsIconic(long) IsIconic
+@ stdcall IsMenu(long) IsMenu
+@ stdcall IsRectEmpty(ptr) IsRectEmpty
+@ stdcall IsWindow(long) IsWindow
+@ stdcall IsWindowEnabled(long) IsWindowEnabled
+@ stdcall IsWindowUnicode(long) IsWindowUnicode
+@ stdcall IsWindowVisible(long) IsWindowVisible
+@ stdcall IsZoomed(long) IsZoomed
+@ stdcall KillSystemTimer(long long) KillSystemTimer
+@ stdcall KillTimer(long long) KillTimer
+@ stdcall LoadAcceleratorsA(long str) LoadAcceleratorsA
+@ stdcall LoadAcceleratorsW(long wstr) LoadAcceleratorsW
+@ stdcall LoadBitmapA(long str) LoadBitmapA
+@ stdcall LoadBitmapW(long wstr) LoadBitmapW
+@ stdcall LoadCursorA(long str) LoadCursorA
+@ stdcall LoadCursorFromFileA(str) LoadCursorFromFileA
+@ stdcall LoadCursorFromFileW(wstr) LoadCursorFromFileW
+@ stdcall LoadCursorW(long wstr) LoadCursorW
+@ stdcall LoadIconA(long str) LoadIconA
+@ stdcall LoadIconW(long wstr) LoadIconW
+@ stdcall LoadImageA(long str long long long long) LoadImageA
+@ stdcall LoadImageW(long wstr long long long long) LoadImageW
+@ stdcall LoadKeyboardLayoutA(str long) LoadKeyboardLayoutA
+@ stdcall LoadKeyboardLayoutW(wstr long) LoadKeyboardLayoutW
+@ stdcall LoadLocalFonts() LoadLocalFonts
+@ stdcall LoadMenuA(long str) LoadMenuA
+@ stdcall LoadMenuIndirectA(ptr) LoadMenuIndirectA
+@ stdcall LoadMenuIndirectW(ptr) LoadMenuIndirectW
+@ stdcall LoadMenuW(long wstr) LoadMenuW
+@ stub LoadRemoteFonts
+@ stdcall LoadStringA(long long ptr long) LoadStringA
+@ stdcall LoadStringW(long long ptr long) LoadStringW
+@ stub LockWindowStation
+@ stdcall LockWindowUpdate(long) LockWindowUpdate
+@ stdcall LookupIconIdFromDirectory(ptr long) LookupIconIdFromDirectory
+@ stdcall LookupIconIdFromDirectoryEx(ptr long long long long) LookupIconIdFromDirectoryEx
+@ stub MBToWCSEx
+@ stdcall MapDialogRect(long ptr) MapDialogRect
+@ stdcall MapVirtualKeyA(long long) MapVirtualKeyA
+@ stdcall MapVirtualKeyExA(long long long) MapVirtualKeyExA
+@ stdcall MapVirtualKeyW(long long) MapVirtualKeyA
+@ stdcall MapWindowPoints(long long ptr long) MapWindowPoints
+@ stdcall MenuItemFromPoint(long long long long) MenuItemFromPoint
+@ stub MenuWindowProcA
+@ stub MenuWindowProcW
+@ stdcall MessageBeep(long) MessageBeep
+@ stdcall MessageBoxA(long str str long) MessageBoxA
+@ stdcall MessageBoxExA(long str str long long) MessageBoxExA
+@ stdcall MessageBoxExW(long wstr wstr long long) MessageBoxExW
+@ stdcall MessageBoxIndirectA(ptr) MessageBoxIndirectA
+@ stdcall MessageBoxIndirectW(ptr) MessageBoxIndirectW
+@ stdcall MessageBoxW(long wstr wstr long) MessageBoxW
+@ stdcall ModifyMenuA(long long long long ptr) ModifyMenuA
+@ stdcall ModifyMenuW(long long long long ptr) ModifyMenuW
+@ stdcall MoveWindow(long long long long long long) MoveWindow
+@ stdcall MsgWaitForMultipleObjects(long ptr long long long) MsgWaitForMultipleObjects
+@ stdcall OemKeyScan(long) OemKeyScan
+@ stdcall OemToCharA(ptr ptr) OemToCharA
+@ stdcall OemToCharBuffA(ptr ptr long) OemToCharBuffA
+@ stdcall OemToCharBuffW(ptr ptr long) OemToCharBuffW
+@ stdcall OemToCharW(ptr ptr) OemToCharW
+@ stdcall OffsetRect(ptr long long) OffsetRect
+@ stdcall OpenClipboard(long) OpenClipboard
+@ stdcall OpenDesktopA(str long long long) OpenDesktopA
+@ stub OpenDesktopW
+@ stdcall OpenIcon(long) OpenIcon
+@ stub OpenInputDesktop
+@ stub OpenWindowStationA
+@ stub OpenWindowStationW
+@ stdcall PackDDElParam(long long long) PackDDElParam
+@ stdcall PaintDesktop(long) PaintDesktop
+@ stdcall PeekMessageA(ptr long long long long) PeekMessageA
+@ stdcall PeekMessageW(ptr long long long long) PeekMessageW
+@ stub PlaySoundEvent
+@ stdcall PostMessageA(long long long long) PostMessageA
+@ stdcall PostMessageW(long long long long) PostMessageW
+@ stdcall PostQuitMessage(long) PostQuitMessage
+@ stdcall PostThreadMessageA(long long long long) PostThreadMessageA
+@ stdcall PostThreadMessageW(long long long long) PostThreadMessageW
+@ stdcall PtInRect(ptr long long) PtInRect
+@ stub QuerySendMessage
+@ stdcall RedrawWindow(long ptr long long) RedrawWindow
+@ stdcall RegisterClassA(ptr) RegisterClassA
+@ stdcall RegisterClassExA(ptr) RegisterClassExA
+@ stdcall RegisterClassExW(ptr) RegisterClassExW
+@ stdcall RegisterClassW(ptr) RegisterClassW
+@ stdcall RegisterClipboardFormatA(str) RegisterClipboardFormatA
+@ stdcall RegisterClipboardFormatW(wstr) RegisterClipboardFormatW
+@ stdcall RegisterHotKey(long long long long) RegisterHotKey
+@ stdcall RegisterLogonProcess(long long) RegisterLogonProcess
+@ stdcall RegisterSystemThread(long long) RegisterSystemThread
+@ stdcall RegisterTasklist (long) RegisterTaskList
+@ stdcall RegisterWindowMessageA(str) RegisterWindowMessageA
+@ stdcall RegisterWindowMessageW(wstr) RegisterWindowMessageW
+@ stdcall ReleaseCapture() ReleaseCapture
+@ stdcall ReleaseDC(long long) ReleaseDC
+@ stdcall RemoveMenu(long long long) RemoveMenu
+@ stdcall RemovePropA(long str) RemovePropA
+@ stdcall RemovePropW(long wstr) RemovePropW
+@ stdcall ReplyMessage(long) ReplyMessage
+@ stub ResetDisplay
+@ stdcall ReuseDDElParam(long long long long long) ReuseDDElParam
+@ stdcall ScreenToClient(long ptr) ScreenToClient
+@ stdcall ScrollChildren(long long long long) ScrollChildren
+@ stdcall ScrollDC(long long long ptr ptr long ptr) ScrollDC
+@ stdcall ScrollWindow(long long long ptr ptr) ScrollWindow
+@ stdcall ScrollWindowEx(long long long ptr ptr long ptr long) ScrollWindowEx
+@ stdcall SendDlgItemMessageA(long long long long long) SendDlgItemMessageA
+@ stdcall SendDlgItemMessageW(long long long long long) SendDlgItemMessageW
+@ stdcall SendMessageA(long long long long) SendMessageA
+@ stdcall SendMessageCallbackA(long long long long ptr long) SendMessageCallbackA
+@ stdcall SendMessageCallbackW(long long long long ptr long) SendMessageCallbackW
+@ stdcall SendMessageTimeoutA(long long long long long long ptr) SendMessageTimeoutA
+@ stdcall SendMessageTimeoutW(long long long long long long ptr) SendMessageTimeoutW
+@ stdcall SendMessageW(long long long long) SendMessageW
+@ stdcall SendNotifyMessageA(long long long long) SendNotifyMessageA
+@ stdcall SendNotifyMessageW(long long long long) SendNotifyMessageW
+@ stub ServerSetFunctionPointers
+@ stdcall SetActiveWindow(long) SetActiveWindow
+@ stdcall SetCapture(long) SetCapture
+@ stdcall SetCaretBlinkTime(long) SetCaretBlinkTime
+@ stdcall SetCaretPos(long long) SetCaretPos
+@ stdcall SetClassLongA(long long long) SetClassLongA
+@ stdcall SetClassLongW(long long long) SetClassLongW
+@ stdcall SetClassWord(long long long) SetClassWord
+@ stdcall SetClipboardData(long long) SetClipboardData
+@ stdcall SetClipboardViewer(long) SetClipboardViewer
+@ stdcall SetCursor(long) SetCursor
+@ stub SetCursorContents
+@ stdcall SetCursorPos(long long) SetCursorPos
+@ stdcall SetDebugErrorLevel(long) SetDebugErrorLevel
+@ stdcall SetDeskWallPaper(str) SetDeskWallPaper
+@ stdcall SetDlgItemInt(long long long long) SetDlgItemInt
+@ stdcall SetDlgItemTextA(long long str) SetDlgItemTextA
+@ stdcall SetDlgItemTextW(long long wstr) SetDlgItemTextW
+@ stdcall SetDoubleClickTime(long) SetDoubleClickTime
+@ stdcall SetFocus(long) SetFocus
+@ stdcall SetForegroundWindow(long) SetForegroundWindow
+@ stdcall SetInternalWindowPos(long long ptr ptr) SetInternalWindowPos
+@ stdcall SetKeyboardState(ptr) SetKeyboardState
+@ stdcall SetLastErrorEx(long long) SetLastErrorEx
+@ stdcall SetLogonNotifyWindow(long long) SetLogonNotifyWindow
+@ stdcall SetMenu(long long) SetMenu
+@ stdcall SetMenuContextHelpId(long long) SetMenuContextHelpId
+@ stdcall SetMenuDefaultItem(long long long) SetMenuDefaultItem
+@ stdcall SetMenuItemBitmaps(long long long long long) SetMenuItemBitmaps
+@ stdcall SetMenuItemInfoA(long long long ptr) SetMenuItemInfoA
+@ stdcall SetMenuItemInfoW(long long long ptr) SetMenuItemInfoW
+@ stub SetMessageExtraInfo
+@ stdcall SetMessageQueue(long) SetMessageQueue
+@ stdcall SetParent(long long) SetParent
+@ stdcall SetProcessWindowStation(long) SetProcessWindowStation
+@ stdcall SetPropA(long str long) SetPropA
+@ stdcall SetPropW(long wstr long) SetPropW
+@ stdcall SetRect(ptr long long long long) SetRect
+@ stdcall SetRectEmpty(ptr) SetRectEmpty
+@ stdcall SetScrollInfo(long long ptr long) SetScrollInfo
+@ stdcall SetScrollPos(long long long long) SetScrollPos
+@ stdcall SetScrollRange(long long long long long) SetScrollRange
+@ stdcall SetShellWindow(long) SetShellWindow
+@ stdcall SetSysColors(long ptr ptr) SetSysColors
+@ stub SetSysColorsTemp
+@ stdcall SetSystemCursor(long long) SetSystemCursor
+@ stdcall SetSystemMenu(long long) SetSystemMenu
+@ stdcall SetSystemTimer(long long long ptr) SetSystemTimer
+@ stdcall SetThreadDesktop(long) SetThreadDesktop
+@ stdcall SetTimer(long long long ptr) SetTimer
+@ stdcall SetUserObjectInformationA(long long long long) SetUserObjectInformationA
+@ stub SetUserObjectInformationW
+@ stdcall SetUserObjectSecurity(long ptr ptr) SetUserObjectSecurity
+@ stdcall SetWindowContextHelpId(long long) SetWindowContextHelpId
+@ stub SetWindowFullScreenState
+@ stdcall SetWindowLongA(long long long) SetWindowLongA
+@ stdcall SetWindowLongW(long long long) SetWindowLongW
+@ stdcall SetWindowPlacement(long ptr) SetWindowPlacement
+@ stdcall SetWindowPos(long long long long long long long) SetWindowPos
+@ stdcall SetWindowStationUser(long long) SetWindowStationUser
+@ stdcall SetWindowTextA(long str) SetWindowTextA
+@ stdcall SetWindowTextW(long wstr) SetWindowTextW
+@ stdcall SetWindowWord(long long long) SetWindowWord
+@ stdcall SetWindowsHookA(long ptr) SetWindowsHookA
+@ stdcall SetWindowsHookExA(long long long long) SetWindowsHookExA
+@ stdcall SetWindowsHookExW(long long long long) SetWindowsHookExW
+@ stdcall SetWindowsHookW(long ptr) SetWindowsHookW
+@ stdcall ShowCaret(long) ShowCaret
+@ stdcall ShowCursor(long) ShowCursor
+@ stdcall ShowOwnedPopups(long long) ShowOwnedPopups
+@ stdcall ShowScrollBar(long long long) ShowScrollBar
+@ stub ShowStartGlass
+@ stdcall ShowWindow(long long) ShowWindow
+@ stdcall ShowWindowAsync(long long) ShowWindowAsync
+@ stdcall SubtractRect(ptr ptr ptr) SubtractRect
+@ stdcall SwapMouseButton(long) SwapMouseButton
+@ stub SwitchDesktop
+@ stdcall SwitchToThisWindow(long long) SwitchToThisWindow
+@ stdcall SystemParametersInfoA(long long ptr long) SystemParametersInfoA
+@ stdcall SystemParametersInfoW(long long ptr long) SystemParametersInfoW
+@ stdcall TabbedTextOutA(long long long str long long ptr long) TabbedTextOutA
+@ stdcall TabbedTextOutW(long long long wstr long long ptr long) TabbedTextOutW
+@ stub TileChildWindows
+@ stdcall TileWindows(long long ptr long ptr) TileWindows
+@ stdcall ToAscii(long long ptr ptr long) ToAscii
+@ stdcall ToAsciiEx(long long ptr ptr long long) ToAsciiEx
+@ stdcall ToUnicode(long long ptr wstr long long) ToUnicode
+@ stdcall TrackPopupMenu(long long long long long long ptr) TrackPopupMenu
+@ stdcall TrackPopupMenuEx(long long long long long ptr) TrackPopupMenuEx
+@ stdcall TranslateAccelerator(long long ptr) TranslateAccelerator
+@ stdcall TranslateAcceleratorA(long long ptr) TranslateAccelerator
+@ stdcall TranslateAcceleratorW(long long ptr) TranslateAccelerator
+@ stdcall TranslateCharsetInfo(ptr ptr long) TranslateCharsetInfo
+@ stdcall TranslateMDISysAccel(long ptr) TranslateMDISysAccel
+@ stdcall TranslateMessage(ptr) TranslateMessage
+@ stdcall UnhookWindowsHook(long ptr) UnhookWindowsHook
+@ stdcall UnhookWindowsHookEx(long) UnhookWindowsHookEx
+@ stdcall UnionRect(ptr ptr ptr) UnionRect
+@ stub UnloadKeyboardLayout
+@ stub UnlockWindowStation
+@ stdcall UnpackDDElParam(long long ptr ptr) UnpackDDElParam
+@ stdcall UnregisterClassA(str long) UnregisterClassA
+@ stdcall UnregisterClassW(wstr long) UnregisterClassW
+@ stdcall UnregisterHotKey(long long) UnregisterHotKey
+@ stub UpdatePerUserSystemParameters
+@ stdcall UpdateWindow(long) UpdateWindow
+@ stub UserClientDllInitialize
+@ stub UserRealizePalette
+@ stub UserRegisterWowHandlers
+@ stdcall ValidateRect(long ptr) ValidateRect
+@ stdcall ValidateRgn(long long) ValidateRgn
+@ stdcall VkKeyScanA(long) VkKeyScanA
+@ stdcall VkKeyScanExA(long long) VkKeyScanExA
+@ stdcall VkKeyScanExW(long long) VkKeyScanExW
+@ stdcall VkKeyScanW(long) VkKeyScanW
+@ stdcall WaitForInputIdle(long long) WaitForInputIdle
+@ stdcall WaitMessage() WaitMessage
+@ stdcall WinHelpA(long str long long) WinHelpA
+@ stdcall WinHelpW(long wstr long long) WinHelpW
+@ stdcall WindowFromDC(long) WindowFromDC
+@ stdcall WindowFromPoint(long long) WindowFromPoint
+@ stdcall keybd_event(long long long long) keybd_event
+@ stdcall mouse_event(long long long long long) mouse_event
+@ varargs wsprintfA(str str) wsprintfA
+@ varargs wsprintfW(wstr wstr) wsprintfW
+@ stdcall wvsprintfA(ptr str ptr) wvsprintfA
+@ stdcall wvsprintfW(ptr wstr ptr) wvsprintfW
 
+#late additions
+@ stdcall ChangeDisplaySettingsA(ptr long) ChangeDisplaySettingsA
+@ stub ChangeDisplaySettingsW
+@ stdcall EnumDesktopWindows(long ptr ptr) EnumDesktopWindows
+@ stdcall EnumDisplaySettingsA(str long ptr) EnumDisplaySettingsA
+@ stdcall EnumDisplaySettingsW(wstr long ptr ) EnumDisplaySettingsW
+@ stdcall GetWindowRgn(long long) GetWindowRgn
+@ stub MapVirtualKeyExW
+@ stub RegisterServicesProcess
+@ stdcall SetWindowRgn(long long long) SetWindowRgn
+@ stub ToUnicodeEx
+@ stdcall DrawCaptionTempA(long long ptr long long str long) DrawCaptionTempA
+@ stub RegisterNetworkCapabilities
+@ stub WNDPROC_CALLBACK
+@ stdcall DrawCaptionTempW(long long ptr long long wstr long) DrawCaptionTempW
+@ stub IsHungAppWindow
+@ stdcall ChangeDisplaySettingsExA(str ptr long long ptr) ChangeDisplaySettingsExA
+@ stub ChangeDisplaySettingsExW
+@ stdcall SetWindowText(long str) SetWindowTextA
+@ stdcall GetMonitorInfoA(long ptr) GetMonitorInfoA
+@ stdcall GetMonitorInfoW(long ptr) GetMonitorInfoW
+@ stdcall MonitorFromWindow(long long) MonitorFromWindow
+@ stdcall MonitorFromRect(ptr long) MonitorFromRect
+@ stdcall MonitorFromPoint(long long long) MonitorFromPoint
+@ stdcall EnumDisplayMonitors(long ptr ptr long) EnumDisplayMonitors
+@ stdcall PrivateExtractIconExA (long long long long long) PrivateExtractIconExA
+@ stdcall PrivateExtractIconExW (long long long long long) PrivateExtractIconExW
+@ stdcall PrivateExtractIconsW (long long long long long long long long) PrivateExtractIconsW
+@ stdcall RegisterShellHookWindow (long) RegisterShellHookWindow
+@ stdcall DeregisterShellHookWindow (long) DeregisterShellHookWindow
+@ stdcall SetShellWindowEx (long long) SetShellWindowEx
+@ stdcall SetProgmanWindow (long) SetProgmanWindow
+@ stdcall GetTaskmanWindow () GetTaskmanWindow
+@ stdcall SetTaskmanWindow (long) SetTaskmanWindow
+@ stdcall GetProgmanWindow () GetProgmanWindow
+@ stdcall UserSignalProc(long long long long) UserSignalProc
 
 # win98
-800 stdcall GetMenuInfo(long ptr)GetMenuInfo
-801 stdcall SetMenuInfo(long ptr)SetMenuInfo
-802 stdcall GetProcessDefaultLayout(ptr) GetProcessDefaultLayout
-803 stdcall SetProcessDefaultLayout(long) SetProcessDefaultLayout
-804 stdcall RegisterDeviceNotificationA(long ptr long) RegisterDeviceNotificationA
-805 stub    RegisterDeviceNotificationW
-806 stub    UnregisterDeviceNotification
+@ stdcall GetMenuInfo(long ptr)GetMenuInfo
+@ stdcall SetMenuInfo(long ptr)SetMenuInfo
+@ stdcall GetProcessDefaultLayout(ptr) GetProcessDefaultLayout
+@ stdcall SetProcessDefaultLayout(long) SetProcessDefaultLayout
+@ stdcall RegisterDeviceNotificationA(long ptr long) RegisterDeviceNotificationA
+@ stub    RegisterDeviceNotificationW
+@ stub    UnregisterDeviceNotification

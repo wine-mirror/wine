@@ -639,10 +639,10 @@ import kernel32
 @ stub    StrNCatW
 @ stub    StrPBrkA
 @ stub    StrPBrkW
-@ stdcall StrRChrA (str str long) lstrrchr
+@ stdcall StrRChrA (str str long) StrRChrA
 @ stub    StrRChrIA
 @ stub    StrRChrIW
-@ stdcall StrRChrW (wstr wstr long) lstrrchrw
+@ stdcall StrRChrW (wstr wstr long) StrRChrW
 @ stub    StrRStrIA
 @ stub    StrRStrIW
 @ stub    StrSpnA

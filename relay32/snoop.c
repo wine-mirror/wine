@@ -208,16 +208,7 @@ SNOOP_PrintArg(DWORD x) {
 	static char	buf[200];
 	int		i,nostring;
 	char * volatile ret=0;
-	MEMORY_BASIC_INFORMATION	mbi;
 
-	if (	!HIWORD(x)					||
-		!VirtualQuery((LPVOID)x,&mbi,sizeof(mbi))	||
-		!mbi.Type					||
-		(mbi.Protect == PAGE_NOACCESS)
-	) {
-		sprintf(buf,"%08lx",x);
-		return buf;
-	}
 	__TRY{
 		LPBYTE	s=(LPBYTE)x;
 		i=0;nostring=0;

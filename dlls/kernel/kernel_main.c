@@ -98,3 +98,10 @@ BOOL WINAPI MAIN_KernelInit( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     }
     return TRUE;
 }
+
+/***********************************************************************
+ *		KERNEL_nop
+ *
+ * Entry point for kernel functions that do nothing.
+ */
+LONG WINAPI KERNEL_nop(void) { return 0; }

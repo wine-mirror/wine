@@ -10,23 +10,15 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
 #include "wine/winbase16.h"
-#include "wine/winuser16.h"
-#include "wine/keyboard16.h"
 #include "wine/exception.h"
 #include "wine/unicode.h"
 #include "winerror.h"
+#include "winnls.h"
 #include "ldt.h"
 #include "debugtools.h"
-#include "winnls.h"
 
 DEFAULT_DEBUG_CHANNEL(string);
-
-/* Internaly used by strchr family functions */
-static BOOL ChrCmpA( WORD word1, WORD word2);
-
 
 /* filter for page-fault exceptions */
 static WINE_EXCEPTION_FILTER(page_fault)
@@ -34,15 +26,6 @@ static WINE_EXCEPTION_FILTER(page_fault)
     if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
         return EXCEPTION_EXECUTE_HANDLER;
     return EXCEPTION_CONTINUE_SEARCH;
-}
-
-
-/***********************************************************************
- *           hmemcpy   (KERNEL.348)
- */
-void WINAPI hmemcpy16( LPVOID dst, LPCVOID src, LONG count )
-{
-    memcpy( dst, src, count );
 }
 
 
@@ -110,15 +93,6 @@ SEGPTR WINAPI lstrcatn16( SEGPTR dst, LPCSTR src, INT16 n )
 
 
 /***********************************************************************
- *           lstrcmp16   (USER.430)
- */
-INT16 WINAPI lstrcmp16( LPCSTR str1, LPCSTR str2 )
-{
-    return (INT16)strcmp( str1, str2 );
-}
-
-
-/***********************************************************************
  *           lstrcmpA   (KERNEL.602)
  */
 INT WINAPI lstrcmpA( LPCSTR str1, LPCSTR str2 )
@@ -142,15 +116,6 @@ INT WINAPI lstrcmpW( LPCWSTR str1, LPCWSTR str2 )
     }
     while (*str1 && (*str1 == *str2)) { str1++; str2++; }
     return (INT)(*str1 - *str2);
-}
-
-
-/***********************************************************************
- *           lstrcmpi16   (USER.471)
- */
-INT16 WINAPI lstrcmpi16( LPCSTR str1, LPCSTR str2 )
-{
-    return (INT16)lstrcmpiA( str1, str2 );
 }
 
 
@@ -333,26 +298,6 @@ INT WINAPI lstrlenW( LPCWSTR str )
 
 
 /***********************************************************************
- *           lstrcpyAtoW   (Not a Windows API)
- */
-LPWSTR WINAPI lstrcpyAtoW( LPWSTR dst, LPCSTR src )
-{
-    MultiByteToWideChar( CP_ACP, 0, src, -1, dst, 0x7fffffff );
-    return dst;
-}
-
-
-/***********************************************************************
- *           lstrcpyWtoA   (Not a Windows API)
- */
-LPSTR WINAPI lstrcpyWtoA( LPSTR dst, LPCWSTR src )
-{
-    WideCharToMultiByte( CP_ACP, 0, src, -1, dst, 0x7fffffff, NULL, NULL );
-    return dst;
-}
-
-
-/***********************************************************************
  *           lstrcpynAtoW   (Not a Windows API)
  * Note: this function differs from the UNIX strncpy, it _always_ writes
  * a terminating \0
@@ -388,213 +333,4 @@ INT16 WINAPI UnicodeToAnsi16( LPCWSTR src, LPSTR dst, INT16 codepage )
 	codepage = CP_ACP;
 
     return WideCharToMultiByte( codepage, 0, src, -1, dst, 0x7fffffff, NULL, NULL );
-}
-
-
-/***********************************************************************
- *           Copy   (GDI.250)
- */
-void WINAPI Copy16( LPVOID src, LPVOID dst, WORD size )
-{
-    memcpy( dst, src, size );
-}
-
-/***********************************************************************
- *           AnsiToOem16   (KEYBOARD.5)
- */
-INT16 WINAPI AnsiToOem16( LPCSTR s, LPSTR d )
-{
-    CharToOemA( s, d );
-    return -1;
-}
-
-
-/***********************************************************************
- *           OemToAnsi16   (KEYBOARD.6)
- */
-INT16 WINAPI OemToAnsi16( LPCSTR s, LPSTR d )
-{
-    OemToCharA( s, d );
-    return -1;
-}
-
-
-/***********************************************************************
- *           AnsiToOemBuff16   (KEYBOARD.134)
- */
-void WINAPI AnsiToOemBuff16( LPCSTR s, LPSTR d, UINT16 len )
-{
-    if (len != 0) CharToOemBuffA( s, d, len );
-}
-
-
-/***********************************************************************
- *           OemToAnsiBuff16   (KEYBOARD.135)
- */
-void WINAPI OemToAnsiBuff16( LPCSTR s, LPSTR d, UINT16 len )
-{
-    if (len != 0) OemToCharBuffA( s, d, len );
-}
-
-
-/***********************************************************************
- *           CharToOemA   (USER32.37)
- */
-BOOL WINAPI CharToOemA( LPCSTR s, LPSTR d )
-{
-    if ( !s || !d ) return TRUE;
-    return CharToOemBuffA( s, d, strlen( s ) + 1 );
-}
-
-
-/***********************************************************************
- *           CharToOemBuffA   (USER32.38)
- */
-BOOL WINAPI CharToOemBuffA( LPCSTR s, LPSTR d, DWORD len )
-{
-    WCHAR *bufW;
-
-    bufW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-    if( bufW )
-    {
-	MultiByteToWideChar( CP_ACP, 0, s, len, bufW, len );
-	WideCharToMultiByte( CP_OEMCP, 0, bufW, len, d, len, NULL, NULL );
-	HeapFree( GetProcessHeap(), 0, bufW );
-    }
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           CharToOemBuffW   (USER32.39)
- */
-BOOL WINAPI CharToOemBuffW( LPCWSTR s, LPSTR d, DWORD len )
-{
-   if ( !s || !d ) return TRUE;
-    WideCharToMultiByte( CP_OEMCP, 0, s, len, d, len, NULL, NULL );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           CharToOemW   (USER32.40)
- */
-BOOL WINAPI CharToOemW( LPCWSTR s, LPSTR d )
-{
-    return CharToOemBuffW( s, d, strlenW( s ) + 1 );
-}
-
-
-/***********************************************************************
- *           OemToCharA   (USER32.402)
- */
-BOOL WINAPI OemToCharA( LPCSTR s, LPSTR d )
-{
-    return OemToCharBuffA( s, d, strlen( s ) + 1 );
-}
-
-
-/***********************************************************************
- *           OemToCharBuffA   (USER32.403)
- */
-BOOL WINAPI OemToCharBuffA( LPCSTR s, LPSTR d, DWORD len )
-{
-    WCHAR *bufW;
-
-    bufW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-    if( bufW )
-    {
-	MultiByteToWideChar( CP_OEMCP, 0, s, len, bufW, len );
-	WideCharToMultiByte( CP_ACP, 0, bufW, len, d, len, NULL, NULL );
-	HeapFree( GetProcessHeap(), 0, bufW );
-    }
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           OemToCharBuffW   (USER32.404)
- */
-BOOL WINAPI OemToCharBuffW( LPCSTR s, LPWSTR d, DWORD len )
-{
-    MultiByteToWideChar( CP_OEMCP, 0, s, len, d, len );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           OemToCharW   (USER32.405)
- */
-BOOL WINAPI OemToCharW( LPCSTR s, LPWSTR d )
-{
-    return OemToCharBuffW( s, d, strlen( s ) + 1 );
-}
-
-/***********************************************************************
- *           lstrrchr   (Not a Windows API)
- *
- * This is the implementation meant to be invoked from within
- * COMCTL32_StrRChrA and shell32(TODO)...
- *
- * Return a pointer to the last occurence of wMatch in lpStart
- * not looking further than lpEnd...
- */
-LPSTR WINAPI lstrrchr( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch )
-{
-  LPCSTR lpGotIt = NULL;
-
-  TRACE("(%p, %p, %x)\n", lpStart, lpEnd, wMatch);
-
-  if (!lpEnd) lpEnd = lpStart + strlen(lpStart);
-
-  for(; lpStart < lpEnd; lpStart = CharNextA(lpStart)) 
-    if (!ChrCmpA( GET_WORD(lpStart), wMatch)) 
-      lpGotIt = lpStart;
-    
-  return ((LPSTR)lpGotIt);
-}
-
-/***********************************************************************
- *           ChrCmpW   
- * This fuction returns FALSE if both words match, TRUE otherwise...
- */
-static BOOL ChrCmpW( WORD word1, WORD word2) {
-  return (word1 != word2);
-}
-
-/***********************************************************************
- *           lstrrchrw    (Not a Windows API)
- *
- * This is the implementation meant to be invoked form within
- * COMCTL32_StrRChrW and shell32(TODO)...
- *
- * Return a pointer to the last occurence of wMatch in lpStart
- * not looking further than lpEnd...
- */  
-LPWSTR WINAPI lstrrchrw( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch )
-{
-  LPCWSTR lpGotIt = NULL;
-
-  TRACE("(%p, %p, %x)\n", lpStart, lpEnd, wMatch);
-  if (!lpEnd) lpEnd = lpStart + lstrlenW(lpStart);
-
-  for(; lpStart < lpEnd; lpStart = CharNextW(lpStart)) 
-    if (!ChrCmpW( GET_WORD(lpStart), wMatch)) 
-      lpGotIt = lpStart;
-    
-  return (LPWSTR)lpGotIt;
-}
-
-/***********************************************************************
- *           ChrCmpA   
- * This fuction returns FALSE if both words match, TRUE otherwise...
- */
-static BOOL ChrCmpA( WORD word1, WORD word2) {
-  if (LOBYTE(word1) == LOBYTE(word2)) {
-    if (IsDBCSLeadByte(LOBYTE(word1))) {
-      return (word1 != word2);
-    }
-    return FALSE;
-  }
-  return TRUE;
 }

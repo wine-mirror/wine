@@ -70,12 +70,12 @@
 
 #define __EXCEPT(func) \
              } while(0); \
-             EXC_pop_frame( &__f.frame ); \
+             __wine_pop_frame( &__f.frame ); \
              break; \
          } else { \
-             __f.frame.Handler = (PEXCEPTION_HANDLER)WINE_exception_handler; \
+             __f.frame.Handler = (PEXCEPTION_HANDLER)__wine_exception_handler; \
              __f.u.filter = (func); \
-             EXC_push_frame( &__f.frame ); \
+             __wine_push_frame( &__f.frame ); \
              if (setjmp( __f.jmp)) { \
                  const __WINE_FRAME * const __eptr WINE_UNUSED = &__f; \
                  do {
@@ -90,13 +90,13 @@
 
 #define __FINALLY(func) \
              } while(0); \
-             EXC_pop_frame( &__f.frame ); \
+             __wine_pop_frame( &__f.frame ); \
              (func)(1); \
              break; \
          } else { \
              __f.frame.Handler = (PEXCEPTION_HANDLER)WINE_finally_handler; \
              __f.u.finally_func = (func); \
-             EXC_push_frame( &__f.frame ); \
+             __wine_push_frame( &__f.frame ); \
              __first = 0; \
          } \
     } while (0);
@@ -128,14 +128,14 @@ typedef struct __tagWINE_FRAME
     const struct __tagWINE_FRAME *ExceptionRecord;
 } __WINE_FRAME;
 
-extern DWORD WINE_exception_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame,
+extern DWORD __wine_exception_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame,
+                                       CONTEXT *context, LPVOID pdispatcher );
+extern DWORD __wine_finally_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame,
                                      CONTEXT *context, LPVOID pdispatcher );
-extern DWORD WINE_finally_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame,
-                                   CONTEXT *context, LPVOID pdispatcher );
 
 #endif /* USE_COMPILER_EXCEPTIONS */
 
-static inline EXCEPTION_FRAME * WINE_UNUSED EXC_push_frame( EXCEPTION_FRAME *frame )
+static inline EXCEPTION_FRAME * WINE_UNUSED __wine_push_frame( EXCEPTION_FRAME *frame )
 {
 #if defined(__GNUC__) && defined(__i386__)
     EXCEPTION_FRAME *prev;
@@ -152,7 +152,7 @@ static inline EXCEPTION_FRAME * WINE_UNUSED EXC_push_frame( EXCEPTION_FRAME *fra
 #endif
 }
 
-static inline EXCEPTION_FRAME * WINE_UNUSED EXC_pop_frame( EXCEPTION_FRAME *frame )
+static inline EXCEPTION_FRAME * WINE_UNUSED __wine_pop_frame( EXCEPTION_FRAME *frame )
 {
 #if defined(__GNUC__) && defined(__i386__)
     __asm__ __volatile__(".byte 0x64\n\tmovl %0,(0)"
@@ -166,12 +166,7 @@ static inline EXCEPTION_FRAME * WINE_UNUSED EXC_pop_frame( EXCEPTION_FRAME *fram
 }
 
 #ifdef __WINE__
-extern void WINAPI EXC_NtRaiseException( PEXCEPTION_RECORD, PCONTEXT, BOOL, PCONTEXT );
 extern void WINAPI EXC_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
-extern void WINAPI EXC_RtlUnwind( PEXCEPTION_FRAME, LPVOID,
-                                  PEXCEPTION_RECORD, DWORD, CONTEXT * );
-extern void WINAPI EXC_DebugBreak( CONTEXT *context );
-
 extern BOOL SIGNAL_Init(void);
 #endif
 

@@ -38,3 +38,12 @@ BOOL WINAPI MAIN_GdiInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved
 
     return TRUE;
 }
+
+
+/***********************************************************************
+ *           Copy   (GDI.250)
+ */
+void WINAPI Copy16( LPVOID src, LPVOID dst, WORD size )
+{
+    memcpy( dst, src, size );
+}
