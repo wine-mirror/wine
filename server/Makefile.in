@@ -11,6 +11,7 @@ C_SRCS = \
 	change.c \
 	console.c \
 	context_i386.c \
+	context_powerpc.c \
 	context_sparc.c \
 	debugger.c \
 	device.c \
