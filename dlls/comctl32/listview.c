@@ -5450,12 +5450,13 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
     lvItem.mask = LVIF_STATE | LVIF_TEXT;
     if (uView == LVS_REPORT) lvItem.mask |= LVIF_INDENT;
     lvItem.stateMask = LVIS_STATEIMAGEMASK;
-    if (uView == LVS_ICON && infoPtr->bFocus) lvItem.stateMask |= LVIS_FOCUSED;
+    if (uView == LVS_ICON) lvItem.stateMask |= LVIS_FOCUSED;
     lvItem.iItem = lpht->iItem;
     lvItem.iSubItem = 0;
     lvItem.pszText = szDispText;
     lvItem.cchTextMax = DISP_TEXT_SIZE;
     if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return -1;
+    if (!infoPtr->bFocus) lvItem.state &= ~LVIS_FOCUSED; 
     
     if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, &rcBox, &rcState, &rcIcon, &rcLabel)) return -1;
     if (!LISTVIEW_GetItemOrigin(infoPtr, lpht->iItem, &Position)) return -1;
