@@ -1915,6 +1915,36 @@ BOOL WINAPI LockFile( HFILE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh
     return !CLIENT_WaitReply( NULL, NULL, 0 );
 }
 
+/**************************************************************************
+ * LockFileEx [KERNEL32.512]
+ *
+ * Locks a byte range within an open file for shared or exclusive access.
+ *
+ * RETURNS
+ *   success: TRUE
+ *   failure: FALSE
+ * NOTES
+ *
+ * Per Microsoft docs, the third parameter (reserved) must be set to 0.
+ */
+BOOL WINAPI LockFileEx( HANDLE hFile, DWORD flags, DWORD reserved,
+		      DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh,
+		      LPOVERLAPPED pOverlapped )
+{
+    FIXME(file, "hFile=%d,flags=%ld,reserved=%ld,lowbytes=%ld,highbytes=%ld,overlapped=%p: stub.\n",
+	  hFile, flags, reserved, nNumberOfBytesToLockLow, nNumberOfBytesToLockHigh,
+	  pOverlapped);
+    if (reserved == 0)
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    else
+    {
+	ERR(file, "reserved == %ld: Supposed to be 0??\n", reserved);
+	SetLastError(ERROR_INVALID_PARAMETER);
+    }
+
+    return FALSE;
+}
+
 
 /**************************************************************************
  *           UnlockFile   (KERNEL32.703)

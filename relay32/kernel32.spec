@@ -530,7 +530,7 @@ import  ntdll.dll
 510 stdcall LocalSize(long) LocalSize
 511 stdcall LocalUnlock(long) LocalUnlock
 512 stdcall LockFile(long long long long long) LockFile
-513 stub LockFileEx
+513 stdcall LockFileEx(long long long long long ptr) LockFileEx
 514 stdcall LockResource(long) LockResource
 515 stdcall MakeCriticalSectionGlobal(ptr) MakeCriticalSectionGlobal
 516 register MapHInstLS() MapHInstLS
