@@ -533,7 +533,7 @@ static void split_keypath( LPCWSTR wp, LPWSTR **wpv, int *wpc)
     for (i=1;i<len;i++)
         if (ws[i-1]==0) {
             (*wpv)[j++]=ws+i;
-            /* TRACE(reg, " Subitem %d = %s\n",j-1,debugstr_w((*wpv)[j-1])); */
+            /*TRACE_(reg) (" Subitem %d = %s\n",j-1,debugstr_w((*wpv)[j-1]));*/
         }
 
     (*wpv)[j]=NULL;
@@ -574,7 +574,7 @@ static void REGISTRY_Init(void) {
 	 * 					string	SysContact
 	 * 					string	SysLocation
 	 * 						SysServices
-	 */						
+	 */
 	if (-1!=gethostname(buf,200)) {
 		RegCreateKey16(HKEY_LOCAL_MACHINE,"System\\CurrentControlSet\\Control\\ComputerName\\ComputerName",&hkey);
 		RegSetValueEx16(hkey,"ComputerName",0,REG_SZ,buf,strlen(buf)+1);
@@ -618,19 +618,13 @@ static void REGISTRY_Init(void) {
  */
 static int _save_check_tainted( LPKEYSTRUCT lpkey )
 {
-	int		tainted;
+	int tainted = 0;
 
-	if (!lpkey)
-		return 0;
-	if (lpkey->flags & REG_OPTION_TAINTED)
-		tainted = 1;
-	else
-		tainted = 0;
 	while (lpkey) {
-		if (_save_check_tainted(lpkey->nextsub)) {
+		if (_save_check_tainted(lpkey->nextsub))
 			lpkey->flags |= REG_OPTION_TAINTED;
-			tainted = 1;
-		}
+	  	if (lpkey->flags & REG_OPTION_TAINTED)
+		        tainted = 1;
 		lpkey	= lpkey->next;
 	}
 	return tainted;
