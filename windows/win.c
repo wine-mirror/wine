@@ -983,7 +983,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
                 {
                     retvalue = 0;
                     goto end;
-	    }
+                }
 	    }
 
             if (cs->style & WS_VISIBLE) ShowWindow( hwnd, sw );
@@ -1562,6 +1562,10 @@ static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className,
         }
     }
     retvalue = 0;
+    /* In this case we need to check whether other processes
+       own a window with the given paramters on the Desktop,
+       but we don't, so let's at least warn about it */
+    FIXME("Returning 0 without checking other processes\n");
 end:
     WIN_ReleaseWndPtr(pWnd);
     return retvalue;
