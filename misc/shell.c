@@ -14,10 +14,10 @@
 #include "winerror.h"
 #include "file.h"
 #include "heap.h"
+#include "ldt.h"
 #include "module.h"
 #include "neexe.h"
 #include "dlgs.h"
-#include "win.h"
 #include "cursoricon.h"
 #include "sysmetrics.h"
 #include "shellapi.h"
@@ -67,11 +67,15 @@ static UINT16	uMsgShellActivate = 0;
  */
 void WINAPI DragAcceptFiles(HWND hWnd, BOOL b)
 {
-  WND* wnd = WIN_FindWndPtr(hWnd);
+  LONG exstyle;
   
-  if( wnd )
-    wnd->dwExStyle = b? wnd->dwExStyle | WS_EX_ACCEPTFILES
-                      : wnd->dwExStyle & ~WS_EX_ACCEPTFILES;
+  
+  if( !IsWindow(hWnd) )
+  	return;
+  exstyle = GetWindowLongA(hWnd,GWL_EXSTYLE);
+  if (b)exstyle |= WS_EX_ACCEPTFILES;
+  else	exstyle &= ~WS_EX_ACCEPTFILES;
+  SetWindowLongA(hWnd,GWL_EXSTYLE,exstyle);
 }
 
 /*************************************************************************
