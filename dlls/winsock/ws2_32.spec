@@ -76,7 +76,7 @@
 72  stdcall  WSASend(long ptr long ptr long ptr ptr)
 73  stdcall  WSASendDisconnect(long ptr)
 74  stdcall  WSASendTo(long ptr long ptr long ptr long ptr ptr)
-75  stub     WSASetEvent
+75  stdcall  WSASetEvent(long) kernel32.SetEvent
 76  stub     WSASetServiceA
 77  stub     WSASetServiceW
 78  stdcall  WSASocketA(long long long ptr long long)
