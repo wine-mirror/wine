@@ -32,7 +32,7 @@ DWORD WINAPI tapiGetLocationInfo(LPSTR lpszCountryCode, LPSTR lpszCityCode)
 {
     char temp[30];
 
-    FIXME("(%s, %s): file sections ???\n", lpszCountryCode, lpszCityCode);
+    FIXME("(%p, %p): file sections ???\n", lpszCountryCode, lpszCityCode);
     if (!(GetPrivateProfileStringA("Locations", "CurrentLocation", "", temp, 30, "telephon.ini")))
         return TAPIERR_REQUESTFAILED;
     if (!(GetPrivateProfileStringA("Locations", "FIXME_ENTRY", "", lpszCityCode, 8, "telephon.ini")))
