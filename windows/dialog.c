@@ -1127,18 +1127,6 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
     BOOL RetVal = FALSE;
     INT dlgCode;
 
-    if (vKey == VK_SPACE)
-    {
-        dlgCode = SendMessageA( hwndControl, WM_GETDLGCODE, 0, 0 );
-        if (dlgCode & DLGC_BUTTON)
-        {
-            SendMessageA( hwndControl, WM_LBUTTONDOWN, 0, 0);
-            SendMessageA( hwndControl, WM_LBUTTONUP, 0, 0);
-            RetVal = TRUE;
-        }
-    }
-    else
-    {
         do
         {
             wndPtr = WIN_FindWndPtr( hwndControl );
@@ -1169,21 +1157,7 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
                             /* and bump it on to next */
                             SendMessageA( hwndDlg, WM_NEXTDLGCTL, 0, 0);
                         }
-                        else if (dlgCode & 
-			    (DLGC_DEFPUSHBUTTON | DLGC_UNDEFPUSHBUTTON))
-                        {
-                            /* send command message as from the control */
-                            SendMessageA( hwndDlg, WM_COMMAND, 
-                                MAKEWPARAM( LOWORD(wndPtr->wIDmenu), 
-                                    BN_CLICKED ),
-                                (LPARAM)hwndControl );
-                        }
-                        else
-                        {
-                            /* click the control */
-                            SendMessageA( hwndControl, WM_LBUTTONDOWN, 0, 0);
-                            SendMessageA( hwndControl, WM_LBUTTONUP, 0, 0);
-                        }
+
                         RetVal = TRUE;
 			WIN_ReleaseWndPtr(wndPtr);
                         break;
@@ -1219,7 +1193,7 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
             hwndControl = hwndNext;
         }
         while (hwndControl && (hwndControl != hwnd));
-    }
+
     return RetVal;
 }
  

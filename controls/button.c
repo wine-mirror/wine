@@ -119,7 +119,7 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
             return -1; /* abort */
         infoPtr->state = BUTTON_UNCHECKED;
         infoPtr->hFont = 0;
-        infoPtr->hImage = NULL;
+        infoPtr->hImage = 0;
         return 0;
 
     case WM_ERASEBKGND:
@@ -136,6 +136,14 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
         }
         break;
 
+    case WM_KEYDOWN:
+	if (wParam == VK_SPACE)
+	{
+	    SendMessageA( hWnd, BM_SETSTATE, TRUE, 0 );
+	    infoPtr->state |= BUTTON_BTNPRESSED;
+	}
+	break;
+	
     case WM_LBUTTONDBLCLK:
         if(wndPtr->dwStyle & BS_NOTIFY || 
                 style==BS_RADIOBUTTON ||
@@ -153,6 +161,10 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
         infoPtr->state |= BUTTON_BTNPRESSED;
         break;
 
+    case WM_KEYUP:
+	if (wParam != VK_SPACE)
+	    break;
+	/* fall through */
     case WM_LBUTTONUP:
         if (!(infoPtr->state & BUTTON_BTNPRESSED)) break;
         infoPtr->state &= BUTTON_NSTATES;
@@ -163,7 +175,7 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
         SendMessageA( hWnd, BM_SETSTATE, FALSE, 0 );
         ReleaseCapture();
         GetClientRect( hWnd, &rect );
-        if (PtInRect( &rect, pt ))
+	if (uMsg == WM_KEYUP || PtInRect( &rect, pt ))
         {
             switch(style)
             {
@@ -265,7 +277,7 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
 	else if (wParam == IMAGE_ICON)
 	    return (HICON)infoPtr->hImage;
 	else
-	    return NULL;
+	    return (HICON)0;
 
     case BM_GETCHECK16:
     case BM_GETCHECK:
@@ -483,7 +495,7 @@ static void BUTTON_DrawPushButton(
         }   
     }
     if ( ((wndPtr->dwStyle & BS_ICON) || (wndPtr->dwStyle & BS_BITMAP) ) &&
-	 (infoPtr->hImage != NULL) )
+	 (infoPtr->hImage != 0) )
     {
 	int yOffset, xOffset;
 	int imageWidth, imageHeight;
@@ -523,7 +535,7 @@ static void BUTTON_DrawPushButton(
 	/* If the image is too big for the button then create a region*/
         if(xOffset < 0 || yOffset < 0)
 	{
-            HRGN hBitmapRgn = NULL;
+            HRGN hBitmapRgn = 0;
             hBitmapRgn = CreateRectRgn(
                 rc.left + xBorderOffset, rc.top +yBorderOffset, 
                 rc.right - xBorderOffset, rc.bottom - yBorderOffset);
@@ -560,7 +572,7 @@ static void BUTTON_DrawPushButton(
 
         if(xOffset < 0 || yOffset < 0)
         {
-            SelectClipRgn(hDC, NULL);
+            SelectClipRgn(hDC, 0);
         }
     }
 
@@ -647,7 +659,7 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
      * if the button has a bitmap/icon, draw a normal pushbutton
      * instead of a radion button.
      */
-    if (infoPtr->hImage!=NULL)
+    if (infoPtr->hImage != 0)
     {
         BOOL bHighLighted = ((infoPtr->state & BUTTON_HIGHLIGHTED) ||
 			     (infoPtr->state & BUTTON_CHECKED));
