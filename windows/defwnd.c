@@ -627,7 +627,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             for(len=1; len<64; len++)
                 if((hIcon = LoadIconW(instance, MAKEINTRESOURCEW(len))))
                     return (LRESULT)hIcon;
-            return (LRESULT)LoadIconW(0, IDI_APPLICATIONW);
+            return (LRESULT)LoadIconW(0, (LPWSTR)IDI_APPLICATION);
         }
         break;
 

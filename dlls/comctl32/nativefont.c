@@ -125,7 +125,7 @@ NATIVEFONT_Register (void)
     wndClass.lpfnWndProc   = (WNDPROC)NATIVEFONT_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(NATIVEFONT_INFO *);
-    wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
+    wndClass.hCursor       = LoadCursorA (0, (LPSTR)IDC_ARROW);
     wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wndClass.lpszClassName = WC_NATIVEFONTCTLA;
 

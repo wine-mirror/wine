@@ -51,7 +51,7 @@ const struct builtin_class_descr ICONTITLE_builtin_class =
     NULL,                 /* procA (winproc is Unicode only) */
     IconTitleWndProc,     /* procW */
     0,                    /* extra */
-    IDC_ARROWA,           /* cursor */
+    IDC_ARROW,            /* cursor */
     0                     /* brush */
 };
 

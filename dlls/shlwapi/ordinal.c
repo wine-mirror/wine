@@ -2564,7 +2564,7 @@ HWND WINAPI SHLWAPI_257(LONG wndProc, HWND hWndParent, DWORD dwExStyle,
   wc.cbWndExtra    = 4;
   wc.hInstance     = shlwapi_hInstance;
   wc.hIcon         = (HICON)0;
-  wc.hCursor       = LoadCursorA((HINSTANCE)0, IDC_ARROWA);
+  wc.hCursor       = LoadCursorA((HINSTANCE)0, (LPSTR)IDC_ARROW);
   wc.hbrBackground = (HBRUSH)COLOR_BTNSHADOW;
   wc.lpszMenuName  = NULL;
   wc.lpszClassName = szClass;
@@ -2851,7 +2851,7 @@ HWND WINAPI SHLWAPI_278(LONG wndProc, HWND hWndParent, DWORD dwExStyle,
   wc.cbWndExtra    = 4;
   wc.hInstance     = shlwapi_hInstance;
   wc.hIcon         = (HICON)0;
-  wc.hCursor       = LoadCursorA((HINSTANCE)0, IDC_ARROWA);
+  wc.hCursor       = LoadCursorA((HINSTANCE)0, (LPSTR)IDC_ARROW);
   wc.hbrBackground = (HBRUSH)COLOR_BTNSHADOW;
   wc.lpszMenuName  = NULL;
   wc.lpszClassName = szClass;

@@ -613,7 +613,7 @@ BOOL VCP_UI_GetDialogTemplate(LPCVOID *template32)
     HRSRC hResInfo;
     HGLOBAL hDlgTmpl32;
 
-    if (!(hResInfo = FindResourceA(SETUPAPI_hInstance, MAKEINTRESOURCEA(COPYFILEDLGORD), RT_DIALOGA)))
+    if (!(hResInfo = FindResourceA(SETUPAPI_hInstance, MAKEINTRESOURCEA(COPYFILEDLGORD), (LPSTR)RT_DIALOG)))
 	return FALSE;
     if (!(hDlgTmpl32 = LoadResource(SETUPAPI_hInstance, hResInfo )) ||
         !(*template32 = LockResource( hDlgTmpl32 )))
@@ -652,7 +652,7 @@ void VCP_UI_RegisterProgressClass(void)
     wndClass.lpfnWndProc   = (WNDPROC)VCP_UI_FileCopyWndProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = 0;
-    wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
+    wndClass.hCursor       = LoadCursorA (0, (LPSTR)IDC_ARROW);
     wndClass.hbrBackground = NULL;
     wndClass.lpszClassName = "setupx_progress";
 

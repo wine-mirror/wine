@@ -346,7 +346,7 @@ static LANGID get_language_id(LPCSTR Lang, LPCSTR Country, LPCSTR Charset, LPCST
     if(Country && strlen(Country) > 0)
         strncpy(l_data.country, Country, sizeof(l_data.country));
 
-    EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), RT_STRINGA,
+    EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), (LPSTR)RT_STRING,
                            (LPCSTR)LOCALE_ILANGUAGE, find_language_id_proc, (LPARAM)&l_data);
 
     strcpy(lang_string, l_data.lang);
@@ -362,7 +362,7 @@ static LANGID get_language_id(LPCSTR Lang, LPCSTR Country, LPCSTR Charset, LPCST
         {
             MESSAGE("Warning: Language '%s' was not found, retrying without country name...\n", lang_string);
             l_data.country[0] = 0;
-            EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), RT_STRINGA,
+            EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), (LPSTR)RT_STRING,
                                    (LPCSTR)LOCALE_ILANGUAGE, find_language_id_proc, (LONG)&l_data);
         }
     }
@@ -732,7 +732,7 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
         lang_id = MAKELANGID(PRIMARYLANGID(lang_id), SUBLANG_DEFAULT);
 
     hModule = GetModuleHandleA( "kernel32.dll" );
-    if (!(hrsrc = FindResourceExW( hModule, RT_STRINGW, (LPCWSTR)((lctype >> 4) + 1), lang_id )))
+    if (!(hrsrc = FindResourceExW( hModule, (LPWSTR)RT_STRING, (LPCWSTR)((lctype >> 4) + 1), lang_id )))
     {
         SetLastError( ERROR_INVALID_FLAGS );  /* no such lctype */
         return 0;
@@ -904,7 +904,7 @@ LCID WINAPI ConvertDefaultLocale( LCID lcid )
 BOOL WINAPI IsValidLocale( LCID lcid, DWORD flags )
 {
     /* check if language is registered in the kernel32 resources */
-    return FindResourceExW( GetModuleHandleA("KERNEL32"), RT_STRINGW,
+    return FindResourceExW( GetModuleHandleA("KERNEL32"), (LPWSTR)RT_STRING,
                             (LPCWSTR)LOCALE_ILANGUAGE, LANGIDFROMLCID(lcid)) != 0;
 }
 
@@ -936,7 +936,7 @@ BOOL WINAPI EnumSystemLocalesA(LOCALE_ENUMPROCA lpfnLocaleEnum,
                                    DWORD flags)
 {
     TRACE("(%p,%08lx)\n", lpfnLocaleEnum,flags);
-    EnumResourceLanguagesA( GetModuleHandleA("KERNEL32"), RT_STRINGA,
+    EnumResourceLanguagesA( GetModuleHandleA("KERNEL32"), (LPSTR)RT_STRING,
                             (LPCSTR)LOCALE_ILANGUAGE, enum_lang_proc_a,
                             (LONG)lpfnLocaleEnum);
     return TRUE;
@@ -949,7 +949,7 @@ BOOL WINAPI EnumSystemLocalesA(LOCALE_ENUMPROCA lpfnLocaleEnum,
 BOOL WINAPI EnumSystemLocalesW( LOCALE_ENUMPROCW lpfnLocaleEnum, DWORD flags )
 {
     TRACE("(%p,%08lx)\n", lpfnLocaleEnum,flags);
-    EnumResourceLanguagesW( GetModuleHandleA("KERNEL32"), RT_STRINGW,
+    EnumResourceLanguagesW( GetModuleHandleA("KERNEL32"), (LPWSTR)RT_STRING,
                             (LPCWSTR)LOCALE_ILANGUAGE, enum_lang_proc_w,
                             (LONG)lpfnLocaleEnum);
     return TRUE;

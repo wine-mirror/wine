@@ -202,7 +202,7 @@ extern int atoi(const char *);
 static LCID MSVCRT_locale_to_LCID(locale_search_t* locale)
 {
   LCID lcid;
-  EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), RT_STRINGA,
+  EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), (LPSTR)RT_STRING,
 			 (LPCSTR)LOCALE_ILANGUAGE,find_best_locale_proc,
 			 (LONG)locale);
 

@@ -53,7 +53,7 @@ HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, LPCSTR lpTableName)
 
     TRACE_(accel)("%04x %s\n", instance, debugstr_a(lpTableName) );
 
-    if (!(hRsrc = FindResource16( instance, lpTableName, RT_ACCELERATORA ))) {
+    if (!(hRsrc = FindResource16( instance, lpTableName, (LPSTR)RT_ACCELERATOR ))) {
       WARN_(accel)("couldn't find accelerator table resource\n");
       return 0;
     }
@@ -85,7 +85,7 @@ HACCEL WINAPI LoadAcceleratorsW(HINSTANCE instance,LPCWSTR lpTableName)
         TRACE_(accel)("%p 0x%04x\n",
                        (LPVOID)instance, LOWORD(lpTableName) );
 
-    if (!(hRsrc = FindResourceW( instance, lpTableName, RT_ACCELERATORW )))
+    if (!(hRsrc = FindResourceW( instance, lpTableName, (LPWSTR)RT_ACCELERATOR )))
     {
       WARN_(accel)("couldn't find accelerator table resource\n");
     } else {
@@ -326,7 +326,7 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
     TRACE("inst=%04x id=%04x buff=%08x len=%d\n",
           instance, resource_id, (int) buffer, buflen);
 
-    hrsrc = FindResource16( instance, (LPCSTR)((resource_id>>4)+1), RT_STRINGA );
+    hrsrc = FindResource16( instance, (LPCSTR)((resource_id>>4)+1), (LPSTR)RT_STRING );
     if (!hrsrc) return 0;
     hmem = LoadResource16( instance, hrsrc );
     if (!hmem) return 0;
@@ -376,7 +376,7 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
     /* Use bits 4 - 19 (incremented by 1) as resourceid, mask out
      * 20 - 31. */
     hrsrc = FindResourceW( instance, (LPCWSTR)(((resource_id>>4)&0xffff)+1),
-                             RT_STRINGW );
+                           (LPWSTR)RT_STRING );
     if (!hrsrc) return 0;
     hmem = LoadResource( instance, hrsrc );
     if (!hmem) return 0;

@@ -28,13 +28,6 @@
 #include "winreg.h"
 #include "winuser.h"
 
-#ifndef IDI_APPLICATIONA
-# define IDI_APPLICATIONA IDI_APPLICATION
-#endif
-#ifndef IDC_ARROWA
-# define IDC_ARROWA IDC_ARROW
-#endif
-
 #ifndef SPI_GETDESKWALLPAPER
 # define SPI_GETDESKWALLPAPER 0x0073
 #endif
@@ -1121,8 +1114,8 @@ START_TEST(sysparams)
     wc.lpfnWndProc = SysParamsTestWndProc;
     wc.style = CS_OWNDC | CS_VREDRAW | CS_HREDRAW;
     wc.hInstance = hInstance;
-    wc.hIcon = LoadIconA( 0, IDI_APPLICATIONA );
-    wc.hCursor = LoadCursorA( 0, IDC_ARROWA );
+    wc.hIcon = LoadIconA( 0, (LPSTR)IDI_APPLICATION );
+    wc.hCursor = LoadCursorA( 0, (LPSTR)IDC_ARROW );
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1 );
     wc.lpszMenuName = 0;
     wc.cbClsExtra = 0;

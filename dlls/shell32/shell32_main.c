@@ -868,7 +868,7 @@ BOOL WINAPI ShellAboutA( HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
     LPVOID template;
     TRACE("\n");
 
-    if(!(hRes = FindResourceA(shell32_hInstance, "SHELL_ABOUT_MSGBOX", RT_DIALOGA)))
+    if(!(hRes = FindResourceA(shell32_hInstance, "SHELL_ABOUT_MSGBOX", (LPSTR)RT_DIALOG)))
         return FALSE;
     if(!(template = (LPVOID)LoadResource(shell32_hInstance, hRes)))
         return FALSE;
@@ -876,7 +876,7 @@ BOOL WINAPI ShellAboutA( HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
     info.szApp        = szApp;
     info.szOtherStuff = szOtherStuff;
     info.hIcon        = hIcon;
-    if (!hIcon) info.hIcon = LoadIconA( 0, IDI_WINLOGOA );
+    if (!hIcon) info.hIcon = LoadIconA( 0, (LPSTR)IDI_WINLOGO );
     return DialogBoxIndirectParamA( (HINSTANCE)GetWindowLongA( hWnd, GWL_HINSTANCE ),
                                       template, hWnd, AboutDlgProc, (LPARAM)&info );
 }
@@ -894,7 +894,7 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
 
     TRACE("\n");
 
-    if(!(hRes = FindResourceA(shell32_hInstance, "SHELL_ABOUT_MSGBOX", RT_DIALOGA)))
+    if(!(hRes = FindResourceA(shell32_hInstance, "SHELL_ABOUT_MSGBOX", (LPSTR)RT_DIALOG)))
         return FALSE;
     if(!(template = (LPVOID)LoadResource(shell32_hInstance, hRes)))
         return FALSE;
@@ -902,7 +902,7 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
     info.szApp        = HEAP_strdupWtoA( GetProcessHeap(), 0, szApp );
     info.szOtherStuff = HEAP_strdupWtoA( GetProcessHeap(), 0, szOtherStuff );
     info.hIcon        = hIcon;
-    if (!hIcon) info.hIcon = LoadIconA( 0, IDI_WINLOGOA );
+    if (!hIcon) info.hIcon = LoadIconA( 0, (LPSTR)IDI_WINLOGO );
     ret = DialogBoxIndirectParamA((HINSTANCE)GetWindowLongA( hWnd, GWL_HINSTANCE ),
                                    template, hWnd, AboutDlgProc, (LPARAM)&info );
     HeapFree( GetProcessHeap(), 0, (LPSTR)info.szApp );

@@ -253,7 +253,7 @@ BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos)
 
     /* Create the dialog from a template */
 
-    if(!(hRes = FindResourceA(COMDLG32_hInstance,MAKEINTRESOURCEA(NEWFILEOPENORD),RT_DIALOGA)))
+    if(!(hRes = FindResourceA(COMDLG32_hInstance,MAKEINTRESOURCEA(NEWFILEOPENORD),(LPSTR)RT_DIALOG)))
     {
         COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
         return FALSE;
@@ -732,12 +732,12 @@ HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
         if(fodInfos->unicode)
         {
             LPOPENFILENAMEW ofn = (LPOPENFILENAMEW) fodInfos->ofnInfos;
-            hRes = FindResourceW( hinst, ofn->lpTemplateName, RT_DIALOGW);
+            hRes = FindResourceW( hinst, ofn->lpTemplateName, (LPWSTR)RT_DIALOG);
         }
         else
         {
             LPOPENFILENAMEA ofn = fodInfos->ofnInfos;
-            hRes = FindResourceA( hinst, ofn->lpTemplateName, RT_DIALOGA);
+            hRes = FindResourceA( hinst, ofn->lpTemplateName, (LPSTR)RT_DIALOG);
         }
         if (!hRes)
         {

@@ -475,7 +475,7 @@ ATOM CLASS_RegisterBuiltinClass( const struct builtin_class_descr *descr )
         return 0;
     }
 
-    classPtr->hCursor       = LoadCursorA( 0, descr->cursor );
+    classPtr->hCursor       = LoadCursorA( 0, (LPSTR)descr->cursor );
     classPtr->hbrBackground = descr->brush;
 
     if (descr->procA) WINPROC_SetProc( &classPtr->winprocA, descr->procA,

@@ -219,7 +219,7 @@ static void FillTreeView(IShellFolder * lpsf, LPITEMIDLIST  pidl, HTREEITEM hPar
 
 	TRACE("%p %p %x\n",lpsf, pidl, (INT)hParent);
 	SetCapture(GetParent(hwndTreeView));
-	SetCursor(LoadCursorA(0, IDC_WAITA));
+	SetCursor(LoadCursorA(0, (LPSTR)IDC_WAIT));
 
 	while (NOERROR == IEnumIDList_Next(lpe,1,&pidlTemp,&ulFetched))
 	{
@@ -253,7 +253,7 @@ static void FillTreeView(IShellFolder * lpsf, LPITEMIDLIST  pidl, HTREEITEM hPar
 
 Done:
 	ReleaseCapture();
-	SetCursor(LoadCursorW(0, IDC_ARROWW));
+	SetCursor(LoadCursorW(0, (LPWSTR)IDC_ARROW));
 
 	if (pidlTemp)
 	  SHFree(pidlTemp);

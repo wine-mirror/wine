@@ -947,7 +947,7 @@ void ANIMATE_Register(void)
     wndClass.lpfnWndProc   = (WNDPROC)ANIMATE_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(ANIMATE_INFO *);
-    wndClass.hCursor       = LoadCursorA(0, IDC_ARROWA);
+    wndClass.hCursor       = LoadCursorA(0, (LPSTR)IDC_ARROW);
     wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
     wndClass.lpszClassName = ANIMATE_CLASSA;
 

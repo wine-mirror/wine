@@ -2438,7 +2438,7 @@ TOOLTIPS_Register (void)
     wndClass.lpfnWndProc   = (WNDPROC)TOOLTIPS_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(TOOLTIPS_INFO *);
-    wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
+    wndClass.hCursor       = LoadCursorA (0, (LPSTR)IDC_ARROW);
     wndClass.hbrBackground = 0;
     wndClass.lpszClassName = TOOLTIPS_CLASSA;
 

@@ -170,7 +170,7 @@ BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
     {
       hDlginst=lpChFont->hInstance;
       if( !(hResInfo = FindResourceA(hDlginst, lpChFont->lpTemplateName,
-        RT_DIALOGA)))
+        (LPSTR)RT_DIALOG)))
       {
         COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
         return FALSE;
@@ -178,7 +178,7 @@ BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
     } else
     {
       hDlginst=COMDLG32_hInstance;
-      if (!(hResInfo = FindResourceA(hDlginst, "CHOOSE_FONT", RT_DIALOGA)))
+      if (!(hResInfo = FindResourceA(hDlginst, "CHOOSE_FONT", (LPSTR)RT_DIALOG)))
       {
         COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
         return FALSE;
@@ -326,7 +326,7 @@ BOOL WINAPI ChooseFontW(LPCHOOSEFONTW lpChFont)
   if (TRACE_ON(commdlg))
 	_dump_cf_flags(lpChFont->Flags);
 
-  if (!(hResInfo = FindResourceA(COMDLG32_hInstance, "CHOOSE_FONT", RT_DIALOGA)))
+  if (!(hResInfo = FindResourceA(COMDLG32_hInstance, "CHOOSE_FONT", (LPSTR)RT_DIALOG)))
   {
     COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
     return FALSE;
@@ -568,7 +568,7 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
   int i,j,init=0;
   long l;
   LPLOGFONTA lpxx;
-  HCURSOR hcursor=SetCursor(LoadCursorA(0,IDC_WAITA));
+  HCURSOR hcursor=SetCursor(LoadCursorA(0,(LPSTR)IDC_WAIT));
 
   SetWindowLongA(hDlg, DWL_USER, lParam);
   lpxx=lpcf->lpLogFont;
@@ -840,7 +840,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
 		      i=SendDlgItemMessageA(hDlg, cmb1, CB_GETCURSEL16, 0, 0);
 		      if (i!=CB_ERR)
 		      {
-		        HCURSOR hcursor=SetCursor(LoadCursorA(0,IDC_WAITA));
+		        HCURSOR hcursor=SetCursor(LoadCursorA(0,(LPSTR)IDC_WAIT));
 			CFn_ENUMSTRUCT s;
                         char str[256];
                         SendDlgItemMessageA(hDlg, cmb1, CB_GETLBTEXT, i,

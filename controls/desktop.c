@@ -52,7 +52,7 @@ const struct builtin_class_descr DESKTOP_builtin_class =
     NULL,                 /* procA (winproc is Unicode only) */
     DesktopWndProc,       /* procW */
     0,                    /* extra */
-    IDC_ARROWA,           /* cursor */
+    IDC_ARROW,            /* cursor */
     (HBRUSH)(COLOR_BACKGROUND+1)    /* brush */
 };
 

@@ -385,18 +385,18 @@ static HWND COMDLG32_FR_DoFindReplace(
         		hmod = (HMODULE)pdata->fr.hInstance;
                         if(pdata->fr.Flags & FR_WINE_UNICODE)
                         {
-				htemplate = FindResourceW(hmod, (LPWSTR)pdata->fr.lpTemplateName, (LPWSTR)RT_DIALOGA);
+				htemplate = FindResourceW(hmod, (LPWSTR)pdata->fr.lpTemplateName, (LPWSTR)RT_DIALOG);
                         }
                         else
                         {
-				htemplate = FindResourceA(hmod, pdata->fr.lpTemplateName, (LPCSTR)RT_DIALOGA);
+				htemplate = FindResourceA(hmod, pdata->fr.lpTemplateName, (LPCSTR)RT_DIALOG);
                         }
         	}
 		else
         	{
 			int rcid = pdata->fr.Flags & FR_WINE_REPLACE ? REPLACEDLGORD
 								     : FINDDLGORD;
-			htemplate = FindResourceA(hmod, MAKEINTRESOURCEA(rcid), (LPCSTR)RT_DIALOGA);
+			htemplate = FindResourceA(hmod, MAKEINTRESOURCEA(rcid), (LPCSTR)RT_DIALOG);
 		}
 		if(!htemplate)
        	        {

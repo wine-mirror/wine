@@ -248,7 +248,7 @@ static HICON NC_IconForWindow( HWND hwnd )
      * get the default one.
      */
     if (!hIcon && (GetWindowLongA( hwnd, GWL_STYLE ) & DS_MODALFRAME))
-        hIcon = LoadImageA(0, IDI_WINLOGOA, IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
+        hIcon = LoadImageA(0, (LPSTR)IDI_WINLOGO, IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
     return hIcon;
 }
 
@@ -1739,23 +1739,23 @@ LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 
     case HTLEFT:
     case HTRIGHT:
-	return (LONG)SetCursor( LoadCursorA( 0, IDC_SIZEWEA ) );
+	return (LONG)SetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZEWE ) );
 
     case HTTOP:
     case HTBOTTOM:
-	return (LONG)SetCursor( LoadCursorA( 0, IDC_SIZENSA ) );
+	return (LONG)SetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZENS ) );
 
     case HTTOPLEFT:
     case HTBOTTOMRIGHT:
-	return (LONG)SetCursor( LoadCursorA( 0, IDC_SIZENWSEA ) );
+	return (LONG)SetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZENWSE ) );
 
     case HTTOPRIGHT:
     case HTBOTTOMLEFT:
-	return (LONG)SetCursor( LoadCursorA( 0, IDC_SIZENESWA ) );
+	return (LONG)SetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZENESW ) );
     }
 
     /* Default cursor: arrow */
-    return (LONG)SetCursor( LoadCursorA( 0, IDC_ARROWA ) );
+    return (LONG)SetCursor( LoadCursorA( 0, (LPSTR)IDC_ARROW ) );
 }
 
 /***********************************************************************

@@ -40,7 +40,7 @@ void DirectDrawSurface_RegisterClass(void)
     memset(&wc, 0, sizeof(wc));
     wc.lpfnWndProc = DirectDrawSurface_WndProc;
     wc.cbWndExtra  = sizeof(IDirectDrawSurfaceImpl*);
-    wc.hCursor     = (HCURSOR)IDC_ARROWA;
+    wc.hCursor     = (HCURSOR)IDC_ARROW;
     wc.lpszClassName = "WINE_DDRAW";
     RegisterClassA(&wc);
 }

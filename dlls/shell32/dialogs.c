@@ -97,7 +97,7 @@ void WINAPI RunFileDlg(
     rfdp.lpstrDescription = lpstrDescription;
     rfdp.uFlags           = uFlags;
 
-    if(!(hRes = FindResourceA(shell32_hInstance, "SHELL_RUN_DLG", RT_DIALOGA)))
+    if(!(hRes = FindResourceA(shell32_hInstance, "SHELL_RUN_DLG", (LPSTR)RT_DIALOG)))
         {
         MessageBoxA (hwndOwner, "Couldn't find dialog.", "Nix", MB_OK) ;
         return;
@@ -127,7 +127,8 @@ INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             prfdp = (RUNFILEDLGPARAMS *)lParam ;
             SetWindowTextA (hwnd, prfdp->lpstrTitle) ;
             SetClassLongA (hwnd, GCL_HICON, (LPARAM)prfdp->hIcon) ;
-            SendMessageA (GetDlgItem (hwnd, 12297), STM_SETICON, (WPARAM)LoadIconA (NULL, IDI_WINLOGOA), 0) ;
+            SendMessageA (GetDlgItem (hwnd, 12297), STM_SETICON,
+                          (WPARAM)LoadIconA (NULL, (LPSTR)IDI_WINLOGO), 0);
             FillList (GetDlgItem (hwnd, 12298), NULL) ;
             SetFocus (GetDlgItem (hwnd, 12298)) ;
             return TRUE ;

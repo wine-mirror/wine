@@ -2564,7 +2564,7 @@ UINT16 WINAPI mciLoadCommandResource16(HINSTANCE16 hInst, LPCSTR resname, UINT16
     HGLOBAL16 handle;
     void *ptr;
 
-    if (!(res = FindResource16( hInst, resname, RT_RCDATAA))) return MCI_NO_COMMAND_TABLE;
+    if (!(res = FindResource16( hInst, resname, (LPSTR)RT_RCDATA))) return MCI_NO_COMMAND_TABLE;
     if (!(handle = LoadResource16( hInst, res ))) return MCI_NO_COMMAND_TABLE;
     ptr = LockResource16(handle);
     return MCI_SetCommandTable(ptr, type);

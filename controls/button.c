@@ -108,7 +108,7 @@ const struct builtin_class_descr BUTTON_builtin_class =
     ButtonWndProcA,      /* procA */
     ButtonWndProcW,      /* procW */
     NB_EXTRA_BYTES,      /* extra */
-    IDC_ARROWA,          /* cursor */
+    IDC_ARROW,           /* cursor */
     0                    /* brush */
 };
 

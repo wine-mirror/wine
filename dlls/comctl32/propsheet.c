@@ -423,7 +423,7 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
   {
     HRSRC hResource = FindResourceW(lppsp->hInstance,
                                     lppsp->u.pszTemplate,
-                                    RT_DIALOGW);
+                                    (LPWSTR)RT_DIALOG);
     HGLOBAL hTemplate = LoadResource(lppsp->hInstance,
                                      hResource);
     pTemplate = (LPDLGTEMPLATEW)LockResource(hTemplate);
@@ -432,7 +432,7 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
   {
     HRSRC hResource = FindResourceA(lppsp->hInstance,
                                     (LPSTR)lppsp->u.pszTemplate,
-                                    RT_DIALOGA);
+                                    (LPSTR)RT_DIALOG);
     HGLOBAL hTemplate = LoadResource(lppsp->hInstance,
                                      hResource);
     pTemplate = (LPDLGTEMPLATEA)LockResource(hTemplate);
@@ -585,14 +585,14 @@ int PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
   {
     if(!(hRes = FindResourceW(COMCTL32_hModule,
                             MAKEINTRESOURCEW(resID),
-                            RT_DIALOGW)))
+                            (LPWSTR)RT_DIALOG)))
       return -1;
   }
   else
   {
     if(!(hRes = FindResourceA(COMCTL32_hModule,
                             MAKEINTRESOURCEA(resID),
-                            RT_DIALOGA)))
+                            (LPSTR)RT_DIALOG)))
       return -1;
   }
 
@@ -1396,7 +1396,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
 
     hResource = FindResourceW(ppshpage->hInstance,
                                     ppshpage->u.pszTemplate,
-                                    RT_DIALOGW);
+                                    (LPWSTR)RT_DIALOG);
     if(!hResource)
 	return FALSE;
 
@@ -1418,7 +1418,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
 
     hResource = FindResourceA(ppshpage->hInstance,
                                     (LPSTR)ppshpage->u.pszTemplate,
-                                    RT_DIALOGA);
+                                    (LPSTR)RT_DIALOG);
     if(!hResource)
 	return FALSE;
 

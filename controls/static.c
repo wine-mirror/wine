@@ -84,7 +84,7 @@ const struct builtin_class_descr STATIC_builtin_class =
     StaticWndProcA,      /* procA */
     StaticWndProcW,      /* procW */
     STATIC_EXTRA_BYTES,  /* extra */
-    IDC_ARROWA,          /* cursor */
+    IDC_ARROW,           /* cursor */
     0                    /* brush */
 };
 

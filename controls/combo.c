@@ -85,7 +85,7 @@ const struct builtin_class_descr COMBO_builtin_class =
     ComboWndProcA,        /* procA */
     ComboWndProcW,        /* procW */
     sizeof(HEADCOMBO *),  /* extra */
-    IDC_ARROWA,           /* cursor */
+    IDC_ARROW,            /* cursor */
     0                     /* brush */
 };
 

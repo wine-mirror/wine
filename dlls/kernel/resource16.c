@@ -811,16 +811,16 @@ static HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, 
 
     switch (type)
     {
-    case RT_MENU16:
+    case RT_MENU:
         ConvertMenu32To16( bits, size, GlobalLock16( handle ) );
         break;
-    case RT_DIALOG16:
+    case RT_DIALOG:
         ConvertDialog32To16( bits, size, GlobalLock16( handle ) );
         break;
-    case RT_ACCELERATOR16:
+    case RT_ACCELERATOR:
         ConvertAccelerator32To16( bits, size, GlobalLock16( handle ) );
         break;
-    case RT_STRING16:
+    case RT_STRING:
         FIXME("not yet implemented!\n" );
         /* fall through */
     default:

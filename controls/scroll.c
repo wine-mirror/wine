@@ -136,7 +136,7 @@ const struct builtin_class_descr SCROLL_builtin_class =
     NULL,                   /* procA (winproc is Unicode only) */
     ScrollBarWndProc,       /* procW */
     sizeof(SCROLLBAR_INFO), /* extra */
-    IDC_ARROWA,             /* cursor */
+    IDC_ARROW,              /* cursor */
     0                       /* brush */
 };
     

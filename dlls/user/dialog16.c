@@ -700,7 +700,7 @@ INT16 WINAPI DialogBoxParam16( HINSTANCE16 hInst, LPCSTR template,
     LPCVOID data;
     int ret = -1;
 
-    if (!(hRsrc = FindResource16( hInst, template, RT_DIALOGA ))) return 0;
+    if (!(hRsrc = FindResource16( hInst, template, (LPSTR)RT_DIALOG ))) return 0;
     if (!(hmem = LoadResource16( hInst, hRsrc ))) return 0;
     if ((data = LockResource16( hmem )))
     {
@@ -745,7 +745,7 @@ HWND16 WINAPI CreateDialogParam16( HINSTANCE16 hInst, LPCSTR dlgTemplate,
     TRACE("%04x,%s,%04x,%08lx,%ld\n",
           hInst, debugstr_a(dlgTemplate), owner, (DWORD)dlgProc, param );
 
-    if (!(hRsrc = FindResource16( hInst, dlgTemplate, RT_DIALOGA ))) return 0;
+    if (!(hRsrc = FindResource16( hInst, dlgTemplate, (LPSTR)RT_DIALOG ))) return 0;
     if (!(hmem = LoadResource16( hInst, hRsrc ))) return 0;
     if (!(data = LockResource16( hmem ))) hwnd = 0;
     else hwnd = CreateDialogIndirectParam16( hInst, data, owner, dlgProc, param );

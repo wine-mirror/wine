@@ -222,7 +222,7 @@ static HGLOBAL16 PRINTDLG_Get16TemplateFrom32(char *PrintResourceName)
         LPVOID template;
 
         if (!(hResInfo = FindResourceA(COMDLG32_hInstance,
-               PrintResourceName, RT_DIALOGA)))
+               PrintResourceName, (LPSTR)RT_DIALOG)))
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
             return 0;
@@ -289,7 +289,7 @@ static HGLOBAL16 PRINTDLG_GetDlgTemplate16(PRINTDLG16 *lppd)
 	    hDlgTmpl = lppd->hSetupTemplate;
 	} else if(lppd->Flags & PD_ENABLESETUPTEMPLATE) {
 	    hResInfo = FindResource16(lppd->hInstance,
-				     MapSL(lppd->lpSetupTemplateName), RT_DIALOGA);
+				     MapSL(lppd->lpSetupTemplateName), (LPSTR)RT_DIALOG);
 	    hDlgTmpl = LoadResource16(lppd->hInstance, hResInfo);
 	} else {
 	    hDlgTmpl = PRINTDLG_Get16TemplateFrom32("PRINT32_SETUP");
@@ -300,7 +300,7 @@ static HGLOBAL16 PRINTDLG_GetDlgTemplate16(PRINTDLG16 *lppd)
 	} else if(lppd->Flags & PD_ENABLEPRINTTEMPLATE) {
 	    hResInfo = FindResource16(lppd->hInstance,
 				     MapSL(lppd->lpPrintTemplateName),
-				     RT_DIALOGA);
+				     (LPSTR)RT_DIALOG);
 	    hDlgTmpl = LoadResource16(lppd->hInstance, hResInfo);
 	} else {
 	    hDlgTmpl = PRINTDLG_Get16TemplateFrom32("PRINT32");

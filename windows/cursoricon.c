@@ -772,7 +772,7 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
         /* Get directory resource ID */
 
         if (!(hRsrc = FindResourceW( hInstance, name,
-                          fCursor ? RT_GROUP_CURSORW : RT_GROUP_ICONW )))
+                                     (LPWSTR)(fCursor ? RT_GROUP_CURSOR : RT_GROUP_ICON) )))
             return 0;
 	hGroupRsrc = hRsrc;
 
@@ -794,7 +794,7 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
         /* Load the resource */
 
         if (!(hRsrc = FindResourceW(hInstance,MAKEINTRESOURCEW(wResId),
-                                      fCursor ? RT_CURSORW : RT_ICONW ))) return 0;
+                                    (LPWSTR)(fCursor ? RT_CURSOR : RT_ICON) ))) return 0;
 
         /* If shared icon, check whether it was already loaded */
         if (    (loadflags & LR_SHARED)
@@ -953,7 +953,7 @@ static HICON CURSORICON_ExtCopy(HICON hIcon, UINT nType,
             /* Get the Best Fit
             */
             if (!(hRsrc = FindResourceW(pIconCache->hModule ,
-                MAKEINTRESOURCEW(wResId), bIsIcon ? RT_ICONW : RT_CURSORW)))
+                MAKEINTRESOURCEW(wResId), (LPWSTR)(bIsIcon ? RT_ICON : RT_CURSOR))))
             {
                 return 0;
             }
@@ -1478,10 +1478,10 @@ WORD WINAPI GetIconID16( HGLOBAL16 hResource, DWORD resType )
 
     switch(resType)
     {
-	case RT_CURSOR16:
+	case RT_CURSOR:
 	     return (WORD)LookupIconIdFromDirectoryEx16( lpDir, FALSE,
 			  GetSystemMetrics(SM_CXCURSOR), GetSystemMetrics(SM_CYCURSOR), LR_MONOCHROME );
-	case RT_ICON16:
+	case RT_ICON:
 	     return (WORD)LookupIconIdFromDirectoryEx16( lpDir, TRUE,
 			  GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), 0 );
 	default:
@@ -1943,7 +1943,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
           if (HIWORD(name)) return 0;
           if (!(instance = GetModuleHandleA("user32.dll"))) return 0;
       }
-      if (!(hRsrc = FindResourceW( instance, name, RT_BITMAPW ))) return 0;
+      if (!(hRsrc = FindResourceW( instance, name, (LPWSTR)RT_BITMAP ))) return 0;
       if (!(handle = LoadResource( instance, hRsrc ))) return 0;
 
       if ((info = (BITMAPINFO *)LockResource( handle )) == NULL) return 0;

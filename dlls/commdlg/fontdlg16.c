@@ -162,7 +162,7 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
         HANDLE16 hResInfo;
         if (!(hResInfo = FindResource16( lpChFont->hInstance,
                                          MapSL(lpChFont->lpTemplateName),
-                                         RT_DIALOGA)))
+                                         (LPSTR)RT_DIALOG)))
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
             return FALSE;
@@ -180,7 +180,7 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
 	HGLOBAL hDlgTmpl32;
         LPCVOID template32;
         DWORD size;
-        if (!(hResInfo = FindResourceA(COMDLG32_hInstance, "CHOOSE_FONT", RT_DIALOGA)))
+        if (!(hResInfo = FindResourceA(COMDLG32_hInstance, "CHOOSE_FONT", (LPSTR)RT_DIALOG)))
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
             return FALSE;

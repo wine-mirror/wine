@@ -803,7 +803,7 @@ VOID RICHED32_Register(void)
     wndClass.lpfnWndProc = (WNDPROC)RICHED32_WindowProc;
     wndClass.cbClsExtra = 0;
     wndClass.cbWndExtra = 0; /*(sizeof(RICHED32_INFO *);*/
-    wndClass.hCursor = LoadCursorA(0, IDC_ARROWA);
+    wndClass.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
     wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wndClass.lpszClassName = RICHEDIT_CLASS10A; /* WC_RICHED32A; */
 

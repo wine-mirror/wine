@@ -564,7 +564,7 @@ void IPADDRESS_Register (void)
     wndClass.lpfnWndProc   = (WNDPROC)IPADDRESS_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(IPADDRESS_INFO *);
-    wndClass.hCursor       = LoadCursorW (0, IDC_IBEAMW);
+    wndClass.hCursor       = LoadCursorW (0, (LPWSTR)IDC_IBEAM);
     wndClass.hbrBackground = GetStockObject(WHITE_BRUSH);
     wndClass.lpszClassName = WC_IPADDRESSW;
 

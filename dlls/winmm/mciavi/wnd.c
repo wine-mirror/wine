@@ -96,7 +96,7 @@ BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARM
     wndClass.lpfnWndProc   = (WNDPROC)MCIAVI_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(WINE_MCIAVI*);
-    wndClass.hCursor       = LoadCursorA(0, IDC_ARROWA);
+    wndClass.hCursor       = LoadCursorA(0, (LPSTR)IDC_ARROW);
     wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
     wndClass.lpszClassName = "MCIAVI";
 
@@ -232,4 +232,3 @@ DWORD	MCIAVI_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMSA lpPar
 
     return 0;
 }
-

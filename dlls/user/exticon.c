@@ -442,7 +442,7 @@ static UINT ICO_ExtractIconExW(
 	  }
 
 	  /* search for the group icon directory */
-	  if (!(icongroupresdir = find_entry_by_id(rootresdir, LOWORD(RT_GROUP_ICONW), rootresdir)))
+	  if (!(icongroupresdir = find_entry_by_id(rootresdir, LOWORD(RT_GROUP_ICON), rootresdir)))
 	  {
 	    WARN("No Icongroupresourcedirectory!\n");
 	    goto end;		/* failure */
@@ -533,7 +533,7 @@ static UINT ICO_ExtractIconExW(
 	    pIconId[i] = LookupIconIdFromDirectoryEx(igdata, TRUE, (i & 1) ? cx2 : cx1, (i & 1) ? cy2 : cy1, flags);
 	  }
 
-	  if (!(iconresdir=find_entry_by_id(rootresdir,LOWORD(RT_ICONW),rootresdir)))
+	  if (!(iconresdir=find_entry_by_id(rootresdir,LOWORD(RT_ICON),rootresdir)))
 	  {
 	    WARN("No Iconresourcedirectory!\n");
 	    goto end;		/* failure */

@@ -477,8 +477,8 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
     win->hShadowWnd = 0;
     win->hHistoryWnd = 0;
 
-    win->hArrowCur = LoadCursorA(0, IDC_ARROWA);
-    win->hHandCur = LoadCursorA(0, IDC_HANDA);
+    win->hArrowCur = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    win->hHandCur = LoadCursorA(0, (LPSTR)IDC_HAND);
 
     win->info = wi;
 

@@ -123,11 +123,11 @@ BOOL Get32BitsTemplate(LFSPRIVATE lfs)
         if (lfs->ofnA)
 	    hResInfo = FindResourceA(lfs->ofnA->hInstance,
 				 lfs->ofnA->lpTemplateName,
-                                 RT_DIALOGA);
+                                 (LPSTR)RT_DIALOG);
         else
 	    hResInfo = FindResourceW(ofnW->hInstance,
 				 ofnW->lpTemplateName,
-                                 RT_DIALOGW);
+                                 (LPWSTR)RT_DIALOG);
         if (!hResInfo)
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
@@ -143,7 +143,7 @@ BOOL Get32BitsTemplate(LFSPRIVATE lfs)
     } else { /* get it from internal Wine resource */
 	HRSRC hResInfo;
 	if (!(hResInfo = FindResourceA(COMDLG32_hInstance,
-             lfs->open? "OPEN_FILE":"SAVE_FILE", RT_DIALOGA)))
+             lfs->open? "OPEN_FILE":"SAVE_FILE", (LPSTR)RT_DIALOG)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 	    return FALSE;
@@ -179,7 +179,7 @@ BOOL Get16BitsTemplate(LFSPRIVATE lfs)
 	HANDLE16 hResInfo;
 	if (!(hResInfo = FindResource16(ofn16->hInstance,
 					MapSL(ofn16->lpTemplateName),
-                                        RT_DIALOGA)))
+                                        (LPSTR)RT_DIALOG)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 	    return FALSE;
@@ -199,7 +199,7 @@ BOOL Get16BitsTemplate(LFSPRIVATE lfs)
         DWORD size;
 
 	if (!(hResInfo = FindResourceA(COMDLG32_hInstance,
-               lfs->open ? "OPEN_FILE":"SAVE_FILE", RT_DIALOGA)))
+               lfs->open ? "OPEN_FILE":"SAVE_FILE", (LPSTR)RT_DIALOG)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 	    return FALSE;
@@ -298,7 +298,7 @@ BOOL FILEDLG_ScanDir(HWND hWnd, LPWSTR newPath)
     /* get the list of spec files */
     GetDlgItemTextW(hWnd, edt1, buffer, sizeof(buffer)/sizeof(WCHAR));
 
-    hCursorWait = LoadCursorA(0, IDC_WAITA);
+    hCursorWait = LoadCursorA(0, (LPSTR)IDC_WAIT);
     oldCursor = SetCursor(hCursorWait);
 
     /* list of files */

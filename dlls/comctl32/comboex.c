@@ -2280,7 +2280,7 @@ void COMBOEX_Register (void)
     wndClass.lpfnWndProc   = (WNDPROC)COMBOEX_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(COMBOEX_INFO *);
-    wndClass.hCursor       = LoadCursorW (0, IDC_ARROWW);
+    wndClass.hCursor       = LoadCursorW (0, (LPWSTR)IDC_ARROW);
     wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wndClass.lpszClassName = WC_COMBOBOXEXW;
 

@@ -101,7 +101,7 @@ const struct builtin_class_descr DIALOG_builtin_class =
     DefDlgProcA,        /* procA */
     DefDlgProcW,        /* procW */
     DLGWINDOWEXTRA,     /* extra */
-    IDC_ARROWA,         /* cursor */
+    IDC_ARROW,          /* cursor */
     0                   /* brush */
 };
 
@@ -704,7 +704,7 @@ HWND WINAPI CreateDialogParamA( HINSTANCE hInst, LPCSTR name, HWND owner,
     HRSRC hrsrc;
     LPCDLGTEMPLATEA ptr;
 
-    if (!(hrsrc = FindResourceA( hInst, name, RT_DIALOGA ))) return 0;
+    if (!(hrsrc = FindResourceA( hInst, name, (LPSTR)RT_DIALOG ))) return 0;
     if (!(ptr = (LPCDLGTEMPLATEA)LoadResource(hInst, hrsrc))) return 0;
     return CreateDialogIndirectParamA( hInst, ptr, owner, dlgProc, param );
 }
@@ -719,7 +719,7 @@ HWND WINAPI CreateDialogParamW( HINSTANCE hInst, LPCWSTR name, HWND owner,
     HRSRC hrsrc;
     LPCDLGTEMPLATEA ptr;
 
-    if (!(hrsrc = FindResourceW( hInst, name, RT_DIALOGW ))) return 0;
+    if (!(hrsrc = FindResourceW( hInst, name, (LPWSTR)RT_DIALOG ))) return 0;
     if (!(ptr = (LPCDLGTEMPLATEW)LoadResource(hInst, hrsrc))) return 0;
     return CreateDialogIndirectParamW( hInst, ptr, owner, dlgProc, param );
 }
@@ -808,7 +808,7 @@ INT_PTR WINAPI DialogBoxParamA( HINSTANCE hInst, LPCSTR name,
     HRSRC hrsrc;
     LPCDLGTEMPLATEA ptr;
 
-    if (!(hrsrc = FindResourceA( hInst, name, RT_DIALOGA ))) return 0;
+    if (!(hrsrc = FindResourceA( hInst, name, (LPSTR)RT_DIALOG ))) return 0;
     if (!(ptr = (LPCDLGTEMPLATEA)LoadResource(hInst, hrsrc))) return 0;
     hwnd = DIALOG_CreateIndirect( hInst, ptr, owner, dlgProc, param, FALSE, TRUE );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
@@ -826,7 +826,7 @@ INT_PTR WINAPI DialogBoxParamW( HINSTANCE hInst, LPCWSTR name,
     HRSRC hrsrc;
     LPCDLGTEMPLATEW ptr;
 
-    if (!(hrsrc = FindResourceW( hInst, name, RT_DIALOGW ))) return 0;
+    if (!(hrsrc = FindResourceW( hInst, name, (LPWSTR)RT_DIALOG ))) return 0;
     if (!(ptr = (LPCDLGTEMPLATEW)LoadResource(hInst, hrsrc))) return 0;
     hwnd = DIALOG_CreateIndirect( hInst, ptr, owner, dlgProc, param, TRUE, TRUE );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );

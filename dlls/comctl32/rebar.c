@@ -3871,10 +3871,10 @@ REBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->ihitBand = -1;
     infoPtr->hwndSelf = hwnd;
     infoPtr->DoRedraw = TRUE;
-    infoPtr->hcurArrow = LoadCursorA (0, IDC_ARROWA);
-    infoPtr->hcurHorz  = LoadCursorA (0, IDC_SIZEWEA);
-    infoPtr->hcurVert  = LoadCursorA (0, IDC_SIZENSA);
-    infoPtr->hcurDrag  = LoadCursorA (0, IDC_SIZEA);
+    infoPtr->hcurArrow = LoadCursorA (0, (LPSTR)IDC_ARROW);
+    infoPtr->hcurHorz  = LoadCursorA (0, (LPSTR)IDC_SIZEWE);
+    infoPtr->hcurVert  = LoadCursorA (0, (LPSTR)IDC_SIZENS);
+    infoPtr->hcurDrag  = LoadCursorA (0, (LPSTR)IDC_SIZE);
     infoPtr->bUnicode = IsWindowUnicode (hwnd);
     infoPtr->fStatus = CREATE_RUNNING;
     infoPtr->hFont = GetStockObject (SYSTEM_FONT);

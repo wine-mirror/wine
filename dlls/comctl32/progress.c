@@ -422,7 +422,7 @@ VOID PROGRESS_Register (void)
     wndClass.lpfnWndProc   = (WNDPROC)ProgressWindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof (PROGRESS_INFO *);
-    wndClass.hCursor       = LoadCursorW (0, IDC_ARROWW);
+    wndClass.hCursor       = LoadCursorW (0, (LPWSTR)IDC_ARROW);
     wndClass.lpszClassName = PROGRESS_CLASSW;
 
     RegisterClassW (&wndClass);

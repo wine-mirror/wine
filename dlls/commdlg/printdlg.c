@@ -1879,11 +1879,11 @@ static HGLOBAL PRINTDLG_GetDlgTemplateA(PRINTDLGA *lppd)
 	    hDlgTmpl = lppd->hSetupTemplate;
 	} else if(lppd->Flags & PD_ENABLESETUPTEMPLATE) {
 	    hResInfo = FindResourceA(lppd->hInstance,
-				     lppd->lpSetupTemplateName, RT_DIALOGA);
+				     lppd->lpSetupTemplateName, (LPSTR)RT_DIALOG);
 	    hDlgTmpl = LoadResource(lppd->hInstance, hResInfo);
 	} else {
 	    hResInfo = FindResourceA(COMDLG32_hInstance, "PRINT32_SETUP",
-				     RT_DIALOGA);
+				     (LPSTR)RT_DIALOG);
 	    hDlgTmpl = LoadResource(COMDLG32_hInstance, hResInfo);
 	}
     } else {
@@ -1892,11 +1892,11 @@ static HGLOBAL PRINTDLG_GetDlgTemplateA(PRINTDLGA *lppd)
 	} else if(lppd->Flags & PD_ENABLEPRINTTEMPLATE) {
 	    hResInfo = FindResourceA(lppd->hInstance,
 				     lppd->lpPrintTemplateName,
-				     RT_DIALOGA);
+				     (LPSTR)RT_DIALOG);
 	    hDlgTmpl = LoadResource(lppd->hInstance, hResInfo);
 	} else {
 	    hResInfo = FindResourceA(COMDLG32_hInstance, "PRINT32",
-				     RT_DIALOGA);
+				     (LPSTR)RT_DIALOG);
 	    hDlgTmpl = LoadResource(COMDLG32_hInstance, hResInfo);
 	}
     }
@@ -1915,10 +1915,10 @@ static HGLOBAL PRINTDLG_GetDlgTemplateW(PRINTDLGW *lppd)
 	    hDlgTmpl = lppd->hSetupTemplate;
 	} else if(lppd->Flags & PD_ENABLESETUPTEMPLATE) {
 	    hResInfo = FindResourceW(lppd->hInstance,
-				     lppd->lpSetupTemplateName, RT_DIALOGW);
+				     lppd->lpSetupTemplateName, (LPWSTR)RT_DIALOG);
 	    hDlgTmpl = LoadResource(lppd->hInstance, hResInfo);
 	} else {
-	    hResInfo = FindResourceW(COMDLG32_hInstance, xpsetup, RT_DIALOGW);
+	    hResInfo = FindResourceW(COMDLG32_hInstance, xpsetup, (LPWSTR)RT_DIALOG);
 	    hDlgTmpl = LoadResource(COMDLG32_hInstance, hResInfo);
 	}
     } else {
@@ -1927,10 +1927,10 @@ static HGLOBAL PRINTDLG_GetDlgTemplateW(PRINTDLGW *lppd)
 	} else if(lppd->Flags & PD_ENABLEPRINTTEMPLATE) {
 	    hResInfo = FindResourceW(lppd->hInstance,
 				     lppd->lpPrintTemplateName,
-				     RT_DIALOGW);
+				     (LPWSTR)RT_DIALOG);
 	    hDlgTmpl = LoadResource(lppd->hInstance, hResInfo);
 	} else {
-	    hResInfo = FindResourceW(COMDLG32_hInstance, xprint, RT_DIALOGW);
+	    hResInfo = FindResourceW(COMDLG32_hInstance, xprint, (LPWSTR)RT_DIALOG);
 	    hDlgTmpl = LoadResource(COMDLG32_hInstance, hResInfo);
 	}
     }
@@ -2347,10 +2347,10 @@ static HGLOBAL PRINTDLG_GetPGSTemplateA(PAGESETUPDLGA *lppd)
 	hDlgTmpl = lppd->hPageSetupTemplate;
     } else if(lppd->Flags & PSD_ENABLEPAGESETUPTEMPLATE) {
 	hResInfo = FindResourceA(lppd->hInstance,
-				 lppd->lpPageSetupTemplateName, RT_DIALOGA);
+				 lppd->lpPageSetupTemplateName, (LPSTR)RT_DIALOG);
 	hDlgTmpl = LoadResource(lppd->hInstance, hResInfo);
     } else {
-	hResInfo = FindResourceA(COMDLG32_hInstance,(LPCSTR)PAGESETUPDLGORD,RT_DIALOGA);
+	hResInfo = FindResourceA(COMDLG32_hInstance,(LPCSTR)PAGESETUPDLGORD,(LPSTR)RT_DIALOG);
 	hDlgTmpl = LoadResource(COMDLG32_hInstance,hResInfo);
     }
     return hDlgTmpl;
@@ -2365,10 +2365,10 @@ static HGLOBAL PRINTDLG_GetPGSTemplateW(PAGESETUPDLGW *lppd)
 	hDlgTmpl = lppd->hPageSetupTemplate;
     } else if(lppd->Flags & PSD_ENABLEPAGESETUPTEMPLATE) {
 	hResInfo = FindResourceW(lppd->hInstance,
-				 lppd->lpPageSetupTemplateName, RT_DIALOGW);
+				 lppd->lpPageSetupTemplateName, (LPWSTR)RT_DIALOG);
 	hDlgTmpl = LoadResource(lppd->hInstance, hResInfo);
     } else {
-	hResInfo = FindResourceW(COMDLG32_hInstance,(LPCWSTR)PAGESETUPDLGORD,RT_DIALOGW);
+	hResInfo = FindResourceW(COMDLG32_hInstance,(LPCWSTR)PAGESETUPDLGORD,(LPWSTR)RT_DIALOG);
 	hDlgTmpl = LoadResource(COMDLG32_hInstance,hResInfo);
     }
     return hDlgTmpl;

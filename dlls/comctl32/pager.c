@@ -1594,7 +1594,7 @@ PAGER_Register (void)
     wndClass.lpfnWndProc   = (WNDPROC)PAGER_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(PAGER_INFO *);
-    wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
+    wndClass.hCursor       = LoadCursorA (0, (LPSTR)IDC_ARROW);
     wndClass.hbrBackground = 0;
     wndClass.lpszClassName = WC_PAGESCROLLERA;
 

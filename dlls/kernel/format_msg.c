@@ -73,7 +73,7 @@ static INT load_messageA( HMODULE instance, UINT id, WORD lang,
 
     TRACE("instance = %08lx, id = %08lx, buffer = %p, length = %ld\n", (DWORD)instance, (DWORD)id, buffer, (DWORD)buflen);
 
-    if (RtlFindMessage( instance, (ULONG)RT_MESSAGETABLEW, lang, id, &mre ) != STATUS_SUCCESS) return 0;
+    if (RtlFindMessage( instance, RT_MESSAGETABLE, lang, id, &mre ) != STATUS_SUCCESS) return 0;
 
     slen=mre->Length;
     TRACE("	- strlen=%d\n",slen);

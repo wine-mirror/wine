@@ -952,7 +952,7 @@ void UPDOWN_Register(void)
     wndClass.lpfnWndProc   = (WNDPROC)UpDownWindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(UPDOWN_INFO*);
-    wndClass.hCursor       = LoadCursorW( 0, IDC_ARROWW );
+    wndClass.hCursor       = LoadCursorW( 0, (LPWSTR)IDC_ARROW );
     wndClass.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
     wndClass.lpszClassName = UPDOWN_CLASSW;
 

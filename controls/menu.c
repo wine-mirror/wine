@@ -191,7 +191,7 @@ const struct builtin_class_descr MENU_builtin_class =
     NULL,                          /* procA (winproc is Unicode only) */
     PopupMenuWndProc,              /* procW */
     sizeof(HMENU),                 /* extra */
-    IDC_ARROWA,                    /* cursor */
+    IDC_ARROW,                     /* cursor */
     (HBRUSH)(COLOR_MENU+1)         /* brush */
 };
 
@@ -3937,7 +3937,7 @@ HMENU16 WINAPI LoadMenu16( HINSTANCE16 instance, LPCSTR name )
     if (!name) return 0;
 
     instance = GetExePtr( instance );
-    if (!(hRsrc = FindResource16( instance, name, RT_MENUA ))) return 0;
+    if (!(hRsrc = FindResource16( instance, name, (LPSTR)RT_MENU ))) return 0;
     if (!(handle = LoadResource16( instance, hRsrc ))) return 0;
     hMenu = LoadMenuIndirect16(LockResource16(handle));
     FreeResource16( handle );
@@ -3950,7 +3950,7 @@ HMENU16 WINAPI LoadMenu16( HINSTANCE16 instance, LPCSTR name )
  */
 HMENU WINAPI LoadMenuA( HINSTANCE instance, LPCSTR name )
 {
-    HRSRC hrsrc = FindResourceA( instance, name, RT_MENUA );
+    HRSRC hrsrc = FindResourceA( instance, name, (LPSTR)RT_MENU );
     if (!hrsrc) return 0;
     return LoadMenuIndirectA( (LPCVOID)LoadResource( instance, hrsrc ));
 }
@@ -3961,7 +3961,7 @@ HMENU WINAPI LoadMenuA( HINSTANCE instance, LPCSTR name )
  */
 HMENU WINAPI LoadMenuW( HINSTANCE instance, LPCWSTR name )
 {
-    HRSRC hrsrc = FindResourceW( instance, name, RT_MENUW );
+    HRSRC hrsrc = FindResourceW( instance, name, (LPWSTR)RT_MENU );
     if (!hrsrc) return 0;
     return LoadMenuIndirectW( (LPCVOID)LoadResource( instance, hrsrc ));
 }

@@ -1252,7 +1252,7 @@ HEADER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->hFont = 0;
     infoPtr->items = 0;
     infoPtr->bRectsValid = FALSE;
-    infoPtr->hcurArrow = LoadCursorA (0, IDC_ARROWA);
+    infoPtr->hcurArrow = LoadCursorA (0, (LPSTR)IDC_ARROW);
     infoPtr->hcurDivider = LoadCursorA (COMCTL32_hModule, MAKEINTRESOURCEA(IDC_DIVIDER));
     infoPtr->hcurDivopen = LoadCursorA (COMCTL32_hModule, MAKEINTRESOURCEA(IDC_DIVIDEROPEN));
     infoPtr->bPressed  = FALSE;
@@ -1799,7 +1799,7 @@ HEADER_Register (void)
     wndClass.lpfnWndProc   = (WNDPROC)HEADER_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(HEADER_INFO *);
-    wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
+    wndClass.hCursor       = LoadCursorA (0, (LPSTR)IDC_ARROW);
     wndClass.lpszClassName = WC_HEADERA;
 
     RegisterClassA (&wndClass);

@@ -1784,7 +1784,7 @@ void TRACKBAR_Register (void)
     wndClass.lpfnWndProc   = (WNDPROC)TRACKBAR_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(TRACKBAR_INFO *);
-    wndClass.hCursor       = LoadCursorW (0, IDC_ARROWW);
+    wndClass.hCursor       = LoadCursorW (0, (LPWSTR)IDC_ARROW);
     wndClass.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
     wndClass.lpszClassName = TRACKBAR_CLASSW;
 

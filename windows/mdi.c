@@ -186,7 +186,7 @@ const struct builtin_class_descr MDICLIENT_builtin_class =
     MDIClientWndProcA,      /* procA */
     MDIClientWndProcW,      /* procW */
     sizeof(MDICLIENTINFO),  /* extra */
-    IDC_ARROWA,             /* cursor */
+    IDC_ARROW,              /* cursor */
     (HBRUSH)(COLOR_APPWORKSPACE+1)    /* brush */
 };
 
@@ -2208,7 +2208,7 @@ static HWND MDI_MoreWindowsDialog(HWND hwnd)
     HRSRC hRes;
     HANDLE hDlgTmpl;
 
-    hRes = FindResourceA(GetModuleHandleA("USER32"), "MDI_MOREWINDOWS", RT_DIALOGA);
+    hRes = FindResourceA(GetModuleHandleA("USER32"), "MDI_MOREWINDOWS", (LPSTR)RT_DIALOG);
 
     if (hRes == 0)
         return 0;

@@ -124,19 +124,19 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     switch(lpmb->dwStyle & MB_ICONMASK) {
     case MB_ICONEXCLAMATION:
 	SendDlgItemMessageW(hwnd, stc1, STM_SETICON,
-			    (WPARAM)LoadIconW(0, IDI_EXCLAMATIONW), 0);
+			    (WPARAM)LoadIconW(0, (LPWSTR)IDI_EXCLAMATION), 0);
 	break;
     case MB_ICONQUESTION:
 	SendDlgItemMessageW(hwnd, stc1, STM_SETICON,
-			    (WPARAM)LoadIconW(0, IDI_QUESTIONW), 0);
+			    (WPARAM)LoadIconW(0, (LPWSTR)IDI_QUESTION), 0);
 	break;
     case MB_ICONASTERISK:
 	SendDlgItemMessageW(hwnd, stc1, STM_SETICON,
-			    (WPARAM)LoadIconW(0, IDI_ASTERISKW), 0);
+			    (WPARAM)LoadIconW(0, (LPWSTR)IDI_ASTERISK), 0);
 	break;
     case MB_ICONHAND:
       SendDlgItemMessageW(hwnd, stc1, STM_SETICON,
-			    (WPARAM)LoadIconW(0, IDI_HANDW), 0);
+			    (WPARAM)LoadIconW(0, (LPWSTR)IDI_HAND), 0);
       break;
     case MB_USERICON:
       SendDlgItemMessageW(hwnd, stc1, STM_SETICON,
@@ -448,7 +448,7 @@ INT WINAPI MessageBoxIndirectW( LPMSGBOXPARAMSW msgbox )
     static const WCHAR msg_box_res_nameW[] = { 'M','S','G','B','O','X',0 };
 
     hUser32 = GetModuleHandleW(user32_res_nameW);
-    if (!(hRes = FindResourceExW(hUser32, RT_DIALOGW, msg_box_res_nameW, msgbox->dwLanguageId)))
+    if (!(hRes = FindResourceExW(hUser32, (LPWSTR)RT_DIALOG, msg_box_res_nameW, msgbox->dwLanguageId)))
         return 0;
     if (!(tmplate = (LPVOID)LoadResource(hUser32, hRes)))
         return 0;

@@ -79,7 +79,7 @@ BOOL FINDDLG_Get16BitsTemplate(LFRPRIVATE lfr)
 	HANDLE16 hResInfo;
 	if (!(hResInfo = FindResource16(fr16->hInstance,
 					MapSL(fr16->lpTemplateName),
-                                        RT_DIALOGA)))
+                                        (LPSTR)RT_DIALOG)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 	    return FALSE;
@@ -109,7 +109,7 @@ BOOL FINDDLG_Get16BitsTemplate(LFRPRIVATE lfr)
 	if (!(hResInfo = FindResourceA(COMDLG32_hInstance,
                lfr->find ?
                MAKEINTRESOURCEA(FINDDLGORD):MAKEINTRESOURCEA(REPLACEDLGORD),
-               RT_DIALOGA)))
+               (LPSTR)RT_DIALOG)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 	    return FALSE;

@@ -527,7 +527,7 @@ static void CC_PrepareColorGraph( HWND hDlg )
  HBRUSH hbrush;
  HDC hdc ;
  RECT rect, client;
- HCURSOR hcursor = SetCursor( LoadCursorA(0, IDC_WAITA) );
+ HCURSOR hcursor = SetCursor( LoadCursorA(0, (LPSTR)IDC_WAIT) );
 
  GetClientRect(hwnd, &client);
  hdc = GetDC(hwnd);
@@ -1302,7 +1302,7 @@ BOOL WINAPI ChooseColorW( LPCHOOSECOLORW lpChCol )
 	HRSRC hResInfo;
         if (!(hResInfo = FindResourceW((HINSTANCE)lpChCol->hInstance,
                                         lpChCol->lpTemplateName,
-                                        RT_DIALOGW)))
+                                        (LPWSTR)RT_DIALOG)))
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
             return FALSE;
@@ -1318,7 +1318,7 @@ BOOL WINAPI ChooseColorW( LPCHOOSECOLORW lpChCol )
     {
 	HRSRC hResInfo;
 	HGLOBAL hDlgTmpl;
-	if (!(hResInfo = FindResourceA(COMDLG32_hInstance, "CHOOSE_COLOR", RT_DIALOGA)))
+	if (!(hResInfo = FindResourceA(COMDLG32_hInstance, "CHOOSE_COLOR", (LPSTR)RT_DIALOG)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 	    return FALSE;

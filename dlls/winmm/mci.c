@@ -309,7 +309,7 @@ static	UINT		MCI_GetCommandTable(UINT uDevType)
     }
     uTbl = MCI_NO_COMMAND_TABLE;
     if (str) {
-	HRSRC 	hRsrc = FindResourceA(WINMM_IData->hWinMM32Instance, str, (LPCSTR)RT_RCDATAA);
+	HRSRC 	hRsrc = FindResourceA(WINMM_IData->hWinMM32Instance, str, (LPCSTR)RT_RCDATA);
 	HANDLE	hMem = 0;
 
 	if (hRsrc) hMem = LoadResource(WINMM_IData->hWinMM32Instance, hRsrc);
@@ -1119,7 +1119,7 @@ UINT WINAPI mciLoadCommandResource(HINSTANCE hInst, LPCWSTR resNameW, UINT type)
 	}
 #endif
     }
-    if (!(hRsrc = FindResourceW(hInst, resNameW, RT_RCDATAW))) {
+    if (!(hRsrc = FindResourceW(hInst, resNameW, (LPWSTR)RT_RCDATA))) {
 	WARN("No command table found in resource\n");
     } else if ((hMem = LoadResource(hInst, hRsrc))) {
 	ret = MCI_SetCommandTable(LockResource(hMem), type);

@@ -2957,7 +2957,7 @@ TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
   infoPtr->uVItemPadding   = 3;
   infoPtr->hFont           = 0;
   infoPtr->items           = 0;
-  infoPtr->hcurArrow       = LoadCursorA (0, IDC_ARROWA);
+  infoPtr->hcurArrow       = LoadCursorA (0, (LPSTR)IDC_ARROW);
   infoPtr->iSelected       = -1;
   infoPtr->iHotTracked     = -1;
   infoPtr->uFocus          = -1;
@@ -3256,7 +3256,7 @@ TAB_Register (void)
   wndClass.lpfnWndProc   = (WNDPROC)TAB_WindowProc;
   wndClass.cbClsExtra    = 0;
   wndClass.cbWndExtra    = sizeof(TAB_INFO *);
-  wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
+  wndClass.hCursor       = LoadCursorA (0, (LPSTR)IDC_ARROW);
   wndClass.hbrBackground = NULL;
   wndClass.lpszClassName = WC_TABCONTROLA;
 

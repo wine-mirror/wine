@@ -289,7 +289,7 @@ const struct builtin_class_descr EDIT_builtin_class =
     EditWndProcA,         /* procA */
     EditWndProcW,         /* procW */
     sizeof(EDITSTATE *),  /* extra */
-    IDC_IBEAMA,           /* cursor */
+    IDC_IBEAM,            /* cursor */
     0                     /* brush */
 };
 

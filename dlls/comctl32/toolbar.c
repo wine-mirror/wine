@@ -2867,7 +2867,7 @@ TOOLBAR_Customize (HWND hwnd)
 
     if (!(hRes = FindResourceA (COMCTL32_hModule,
                                 MAKEINTRESOURCEA(IDD_TBCUSTOMIZE),
-                                RT_DIALOGA)))
+                                (LPSTR)RT_DIALOG)))
 	return FALSE;
 
     if(!(template = (LPVOID)LoadResource (COMCTL32_hModule, hRes)))
@@ -6006,7 +6006,7 @@ TOOLBAR_Register (void)
     wndClass.lpfnWndProc   = (WNDPROC)ToolbarWindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(TOOLBAR_INFO *);
-    wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
+    wndClass.hCursor       = LoadCursorA (0, (LPSTR)IDC_ARROW);
     wndClass.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
     wndClass.lpszClassName = TOOLBARCLASSNAMEA;
 

@@ -214,7 +214,7 @@ static BOOL CALLBACK EnumResNameProc(HMODULE hModule, LPCSTR lpszType, LPSTR lps
 
     if (!sEnumRes->nIndex--)
     {
-      *sEnumRes->pResInfo = FindResourceA(hModule, lpszName, RT_GROUP_ICONA);
+      *sEnumRes->pResInfo = FindResourceA(hModule, lpszName, (LPSTR)RT_GROUP_ICON);
       return FALSE;
     }
     else
@@ -242,7 +242,7 @@ static BOOL ExtractFromEXEDLL(const char *szFileName, int nIndex, const char *sz
 
     if (nIndex < 0)
     {
-        hResInfo = FindResourceA(hModule, MAKEINTRESOURCEA(-nIndex), RT_GROUP_ICONA);
+        hResInfo = FindResourceA(hModule, MAKEINTRESOURCEA(-nIndex), (LPSTR)RT_GROUP_ICON);
         WINE_ERR("FindResourceA (%s) called, return %p, error %ld\n", szFileName, hResInfo, GetLastError());
     }
     else
@@ -250,7 +250,7 @@ static BOOL ExtractFromEXEDLL(const char *szFileName, int nIndex, const char *sz
         hResInfo=NULL;
         sEnumRes.pResInfo = &hResInfo;
         sEnumRes.nIndex = nIndex;
-        EnumResourceNamesA(hModule, RT_GROUP_ICONA, &EnumResNameProc, (LONG) &sEnumRes);
+        EnumResourceNamesA(hModule, (LPSTR)RT_GROUP_ICON, &EnumResNameProc, (LONG) &sEnumRes);
     }
 
     if (!hResInfo)
@@ -287,7 +287,7 @@ static BOOL ExtractFromEXEDLL(const char *szFileName, int nIndex, const char *sz
 
     FreeResource(hResData);
 
-    if (!(hResInfo = FindResourceA(hModule, lpName, RT_ICONA)))
+    if (!(hResInfo = FindResourceA(hModule, lpName, (LPSTR)RT_ICON)))
     {
         WINE_ERR("Second FindResourceA failed, error %ld\n", GetLastError());
         goto error2;

@@ -847,7 +847,7 @@ CreateMappedBitmap (HINSTANCE hInstance, INT idBitmap, UINT wFlags,
 	sysColorMap = (LPCOLORMAP)internalColorMap;
     }
 
-    hRsrc = FindResourceA (hInstance, (LPSTR)idBitmap, RT_BITMAPA);
+    hRsrc = FindResourceA (hInstance, (LPSTR)idBitmap, (LPSTR)RT_BITMAP);
     if (hRsrc == 0)
 	return 0;
     hglb = LoadResource (hInstance, hRsrc);

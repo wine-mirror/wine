@@ -143,7 +143,7 @@ const struct builtin_class_descr LISTBOX_builtin_class =
     ListBoxWndProcA,      /* procA */
     ListBoxWndProcW,      /* procW */
     sizeof(LB_DESCR *),   /* extra */
-    IDC_ARROWA,           /* cursor */
+    IDC_ARROW,            /* cursor */
     0                     /* brush */
 };
 
@@ -158,7 +158,7 @@ const struct builtin_class_descr COMBOLBOX_builtin_class =
     ComboLBWndProcA,      /* procA */
     ComboLBWndProcW,      /* procW */
     sizeof(LB_DESCR *),   /* extra */
-    IDC_ARROWA,           /* cursor */
+    IDC_ARROW,            /* cursor */
     0                     /* brush */
 };
 

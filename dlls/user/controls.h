@@ -35,13 +35,13 @@
 /* Built-in class descriptor */
 struct builtin_class_descr
 {
-    LPCSTR  name;    /* class name */
-    UINT    style;   /* class style */
-    WNDPROC procA;   /* ASCII window procedure */
-    WNDPROC procW;   /* Unicode window procedure */
-    INT     extra;   /* window extra bytes */
-    LPCSTR  cursor;  /* cursor name */
-    HBRUSH  brush;   /* brush or system color */
+    LPCSTR    name;    /* class name */
+    UINT      style;   /* class style */
+    WNDPROC   procA;   /* ASCII window procedure */
+    WNDPROC   procW;   /* Unicode window procedure */
+    INT       extra;   /* window extra bytes */
+    ULONG_PTR cursor;  /* cursor id */
+    HBRUSH    brush;   /* brush or system color */
 };
 
 
