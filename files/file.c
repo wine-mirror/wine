@@ -296,7 +296,7 @@ void FILE_SetDosError(void)
         SetLastError( ERROR_BAD_FORMAT );
         break;
     default:
-        WARN( strerror(save_errno) );
+        WARN( "unknown file error: %s", strerror(save_errno) );
         SetLastError( ERROR_GEN_FAILURE );
         break;
     }

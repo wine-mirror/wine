@@ -64,7 +64,7 @@ static inline void release( void *ptr )
 
 /* ---------------------------------------------------------------------- */
 
-const char *debugstr_an( const char *src, int n )
+const char *wine_dbgstr_an( const char *src, int n )
 {
     char *dst, *res;
 
@@ -114,7 +114,7 @@ const char *debugstr_an( const char *src, int n )
 
 /* ---------------------------------------------------------------------- */
 
-const char *debugstr_wn( const WCHAR *src, int n )
+const char *wine_dbgstr_wn( const WCHAR *src, int n )
 {
     char *dst, *res;
 
@@ -164,7 +164,7 @@ const char *debugstr_wn( const WCHAR *src, int n )
 
 /* ---------------------------------------------------------------------- */
 
-const char *debugstr_guid( const GUID *id )
+const char *wine_dbgstr_guid( const GUID *id )
 {
     char *str;
 
@@ -212,27 +212,23 @@ int wine_dbg_printf(const char *format, ...)
     va_list valist;
 
     va_start(valist, format);
-    ret = wine_dbg_vprintf( format, valist);
+    ret = wine_dbg_vprintf( format, valist );
     va_end(valist);
     return ret;
 }
 
-int __wine_dbg_header_err( const char *dbg_channel, const char *func )
+int wine_dbg_log(enum __DEBUG_CLASS cls, const char *channel,
+                 const char *function, const char *format, ... )
 {
-    return wine_dbg_printf( "err:%s:%s ", dbg_channel + 1, func );
-}
+    static const char *classes[__DBCL_COUNT] = { "fixme", "err", "warn", "trace" };
+    va_list valist;
+    int ret = 0;
 
-int __wine_dbg_header_fixme( const char *dbg_channel, const char *func )
-{
-    return wine_dbg_printf( "fixme:%s:%s ", dbg_channel + 1, func );
-}
-
-int __wine_dbg_header_warn( const char *dbg_channel, const char *func )
-{
-    return wine_dbg_printf( "warn:%s:%s ", dbg_channel + 1, func );
-}
-
-int __wine_dbg_header_trace( const char *dbg_channel, const char *func )
-{
-    return wine_dbg_printf( "trace:%s:%s ", dbg_channel + 1, func );
+    va_start(valist, format);
+    if (cls < __DBCL_COUNT)
+        ret = wine_dbg_printf( "%s:%s:%s ", classes[cls], channel + 1, function );
+    if (format)
+        ret += wine_dbg_vprintf( format, valist );
+    va_end(valist);
+    return ret;
 }
