@@ -778,22 +778,16 @@ static void CBPaintText(
       */
      InflateRect( &rectEdit, -1, -1 );
      
-     if ( (lphc->wState & CBF_FOCUSED) && 
-	  !(lphc->wState & CBF_DROPPED) )
-     {
-       /* highlight */
-       
-       FillRect( hdc, &rectEdit, GetSysColorBrush(COLOR_HIGHLIGHT) );
-       SetBkColor( hdc, GetSysColor( COLOR_HIGHLIGHT ) );
-       SetTextColor( hdc, GetSysColor( COLOR_HIGHLIGHTTEXT ) );
-       itemState |= ODS_SELECTED | ODS_FOCUS;
-     } 
-     
      if( CB_OWNERDRAWN(lphc) )
      {
        DRAWITEMSTRUCT dis;
        HRGN           clipRegion;
        
+       /* setup state for DRAWITEM message. Owner will highlight */
+       if ( (lphc->wState & CBF_FOCUSED) && 
+	    !(lphc->wState & CBF_DROPPED) )
+	   itemState |= ODS_SELECTED | ODS_FOCUS;
+
        /*
 	* Save the current clip region.
 	* To retrieve the clip region, we need to create one "dummy"
@@ -838,7 +832,17 @@ static void CBPaintText(
      }
      else
      {
-         static const WCHAR empty_stringW[] = { 0 };
+       static const WCHAR empty_stringW[] = { 0 };
+
+       if ( (lphc->wState & CBF_FOCUSED) && 
+	    !(lphc->wState & CBF_DROPPED) ) {
+
+	   /* highlight */
+	   FillRect( hdc, &rectEdit, GetSysColorBrush(COLOR_HIGHLIGHT) );
+	   SetBkColor( hdc, GetSysColor( COLOR_HIGHLIGHT ) );
+	   SetTextColor( hdc, GetSysColor( COLOR_HIGHLIGHTTEXT ) );
+       } 
+     
        ExtTextOutW( hdc, 
 		    rectEdit.left + 1, 
 		    rectEdit.top + 1,
@@ -1197,12 +1201,13 @@ static void CBRollUp( LPHEADCOMBO lphc, BOOL ok, BOOL bButton )
 {
    HWND	hWnd = lphc->self->hwndSelf;
 
+   TRACE("[%04x]: sel ok? [%i] dropped? [%i]\n", 
+	 CB_HWND(lphc), (INT)ok, (INT)(lphc->wState & CBF_DROPPED));
+
    CB_NOTIFY( lphc, (ok) ? CBN_SELENDOK : CBN_SELENDCANCEL );
 
    if( IsWindow( hWnd ) && CB_GETTYPE(lphc) != CBS_SIMPLE )
    {
-
-       TRACE("[%04x]: roll up [%i]\n", CB_HWND(lphc), (INT)ok );
 
        if( lphc->wState & CBF_DROPPED ) 
        {
@@ -1210,6 +1215,7 @@ static void CBRollUp( LPHEADCOMBO lphc, BOOL ok, BOOL bButton )
 
 	   lphc->wState &= ~CBF_DROPPED;
 	   ShowWindow( lphc->hWndLBox, SW_HIDE );
+
            if(GetCapture() == lphc->hWndLBox)
            {
                ReleaseCapture();
@@ -1277,7 +1283,9 @@ static void COMBO_SetFocus( LPHEADCOMBO lphc )
        if( CB_GETTYPE(lphc) == CBS_DROPDOWNLIST )
            SendMessageW(lphc->hWndLBox, LB_CARETON, 0, 0);
 
-       lphc->wState |= CBF_FOCUSED;
+       /* This is wrong. Message sequences seem to indicate that this
+          is set *after* the notify. */
+       /* lphc->wState |= CBF_FOCUSED;  */
 
        if( !(lphc->wState & CBF_EDIT) )
 	 InvalidateRect(CB_HWND(lphc), &lphc->textRect, TRUE);
