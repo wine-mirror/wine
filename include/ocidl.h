@@ -34,7 +34,10 @@
 #include "oleidl.h"
 #undef __WINE_INCLUDE_OLEIDL
 
-#include "wine/obj_oleaut.h"
+#define __WINE_INCLUDE_OAIDL
+#include "oaidl.h"
+#undef __WINE_INCLUDE_OAIDL
+
 #include "wine/obj_olefont.h"
 #include "wine/obj_picture.h"
 
