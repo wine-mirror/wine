@@ -267,7 +267,7 @@ static void serial_queue_async( struct fd *fd, void *apc, void *user, void *iosb
         return;
     }
 
-    if (!create_async( fd, current, timeout, queue, apc, user, iosb ))
+    if (!create_async( current, &timeout, queue, apc, user, iosb ))
         return;
 
     /* Check if the new pending request can be served immediately */

@@ -79,12 +79,12 @@ struct timeout_user;
 
 typedef void (*timeout_callback)( void *private );
 
-extern struct timeout_user *add_timeout_user( struct timeval *when,
+extern struct timeout_user *add_timeout_user( const struct timeval *when,
                                               timeout_callback func, void *private );
 extern void remove_timeout_user( struct timeout_user *user );
 extern void add_timeout( struct timeval *when, int timeout );
 /* return 1 if t1 is before t2 */
-static inline int time_before( struct timeval *t1, struct timeval *t2 )
+static inline int time_before( const struct timeval *t1, const struct timeval *t2 )
 {
     return ((t1->tv_sec < t2->tv_sec) ||
             ((t1->tv_sec == t2->tv_sec) && (t1->tv_usec < t2->tv_usec)));
@@ -111,7 +111,7 @@ extern int is_serial_fd( struct fd *fd );
 extern struct object *create_serial( struct fd *fd, unsigned int options );
 
 /* async I/O functions */
-extern struct async *create_async( struct fd *fd, struct thread *thread, int timeout,
+extern struct async *create_async( struct thread *thread, int* timeout,
                                    struct list *queue, void *, void *, void *);
 extern void async_terminate_head( struct list *queue, int status );
 

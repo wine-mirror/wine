@@ -528,7 +528,7 @@ static void sock_queue_async( struct fd *fd, void *apc, void *user, void *iosb,
     }
     else
     {
-        if (!create_async( fd, current, 0, queue, apc, user, iosb ))
+        if (!create_async( current, 0, queue, apc, user, iosb ))
             return;
     }
 

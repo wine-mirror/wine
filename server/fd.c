@@ -251,7 +251,8 @@ struct timeout_user
 static struct list timeout_list = LIST_INIT(timeout_list);   /* sorted timeouts list */
 
 /* add a timeout user */
-struct timeout_user *add_timeout_user( struct timeval *when, timeout_callback func, void *private )
+struct timeout_user *add_timeout_user( const struct timeval *when, timeout_callback func,
+                                       void *private )
 {
     struct timeout_user *user;
     struct list *ptr;
@@ -987,12 +988,10 @@ void unlock_fd( struct fd *fd, file_pos_t start, file_pos_t count )
 
 struct async
 {
-    struct fd           *fd;
     struct thread       *thread;
     void                *apc;
     void                *user;
     void                *sb;
-    struct timeval       when;
     struct timeout_user *timeout;
     struct list          entry;
 };
@@ -1022,14 +1021,13 @@ static void async_callback(void *private)
 }
 
 /* create an async on a given queue of a fd */
-struct async *create_async(struct fd *fd, struct thread *thread, int timeout, struct list *queue,
+struct async *create_async(struct thread *thread, int* timeout, struct list *queue,
                            void *io_apc, void *io_user, void* io_sb)
 {
     struct async *async = mem_alloc( sizeof(struct async) );
 
     if (!async) return NULL;
 
-    async->fd = fd;
     async->thread = (struct thread *)grab_object(thread);
     async->apc = io_apc;
     async->user = io_user;
@@ -1039,9 +1037,11 @@ struct async *create_async(struct fd *fd, struct thread *thread, int timeout, st
 
     if (timeout)
     {
-        gettimeofday( &async->when, 0 );
-        add_timeout( &async->when, timeout );
-        async->timeout = add_timeout_user( &async->when, async_callback, async );
+        struct timeval when;
+
+        gettimeofday( &when, 0 );
+        add_timeout( &when, *timeout );
+        async->timeout = add_timeout_user( &when, async_callback, async );
     }
     else async->timeout = NULL;
 
