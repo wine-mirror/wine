@@ -1456,7 +1456,8 @@ struct IDirect3DExecuteBuffer {
   D3DEXECUTEDATA data;
 
   /* This buffer will store the transformed vertices */
-  D3DVERTEX *vertex_data;
+  void *vertex_data;
+  D3DVERTEXTYPE vertex_type;
 
   /* This flags is set to TRUE if we allocated ourselves the
      data buffer */
