@@ -21,7 +21,7 @@
 #include "accel.rc"
 
 /* #include "Da.rc" */
-/* #include "De.rc" */
+#include "De.rc"
 #include "En.rc"
 /* #include "Es.rc" */
 /* #include "Fi.rc" */
