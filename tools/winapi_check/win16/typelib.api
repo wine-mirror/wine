@@ -6,9 +6,9 @@ LCID
 
 %ptr
 
+ITypeLib **
 LPBSTR16
 REFGUID
-void *
 
 %str # --forbidden
 

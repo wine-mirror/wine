@@ -13,8 +13,11 @@ int
 BSTR16 *
 LPBSTR16
 INTERFACEDATA *
+ITypeInfo *
 ITypeInfo **
 IUnknown *
+IUnknown **
+void *
 REFCLSID
 char *
 

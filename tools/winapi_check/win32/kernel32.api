@@ -141,6 +141,7 @@ WIN32_FIND_DATAW *
 WORD *
 struct ThunkDataCommon *
 va_list
+va_list *
 
 %ptr # --forbidden
 

@@ -45,8 +45,13 @@ COLORREF *
 CY *
 DATE *
 FLOAT *
+ICreateTypeLib **
+INTERFACEDATA *
+ITypeInfo *
+ITypeInfo **
 ITypeLib *
 ITypeLib **
+IUnknown *
 IUnknown **
 LONG *
 LPBSTR
@@ -73,7 +78,6 @@ VARIANT *
 VARIANTARG *
 VARIANT_BOOL *
 VARTYPE *
-char *
 double *
 short *
 void *
@@ -83,7 +87,6 @@ void **
 
 LPCOLESTR
 LPCSTR
-LPOLESTR
 
 %void
 
