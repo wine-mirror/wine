@@ -790,6 +790,10 @@ static BOOL PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
         if (!key) return FALSE;
         if (key->value)
         {
+	    /* strip the leading spaces. We can safely strip \n\r and 
+	     * friends too, they should not happen here anyway. */
+	    while (PROFILE_isspace(*value)) value++;
+
             if (!strcmp( key->value, value ))
             {
                 TRACE("  no change needed\n" );
