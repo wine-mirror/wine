@@ -416,16 +416,21 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
 
     if (top != hwnd)
     {
-        escape.org.x = escape.org.y = 0;
+        escape.drawable_org.x = escape.drawable_org.y = 0;
         if (flags & DCX_WINDOW)
         {
             escape.org.x = win->rectWindow.left - win->rectClient.left;
             escape.org.y = win->rectWindow.top - win->rectClient.top;
+            MapWindowPoints( hwnd, top, &escape.org, 1 );
+            MapWindowPoints( top, 0, &escape.drawable_org, 1 );
+            escape.drawable = X11DRV_get_client_window( top );
         }
-        MapWindowPoints( hwnd, top, &escape.org, 1 );
-        escape.drawable_org.x = escape.drawable_org.y = 0;
-        MapWindowPoints( top, 0, &escape.drawable_org, 1 );
-        escape.drawable = X11DRV_get_client_window( top );
+        else
+        {
+            escape.org.x = escape.org.y = 0;
+            MapWindowPoints( hwnd, 0, &escape.drawable_org, 1 );
+            escape.drawable = X11DRV_get_client_window( hwnd );
+        }
     }
     else
     {
