@@ -1,18 +1,19 @@
 /*
  * based on Windows Sockets 1.1 specs
  * (ftp.microsoft.com:/Advsys/winsock/spec11/WINSOCK.TXT)
+ * 
+ * (C) 1993,1994 John Brezak, Erik Bos.
  */
  
-#include <netdb.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#if defined(__FreeBSD__)
 #include <netinet/in.h>
-#endif
 #include <arpa/inet.h>
 #include <errno.h>
 #include <netdb.h>
+#include <unistd.h>
 #include "winsock.h"
 
 #define DEBUG_WINSOCK
@@ -47,12 +48,12 @@ WORD errno_to_wsaerrno(int errno)
                         sys_errlist[errno], errno);
 #else
                 fprintf(stderr, "winsock: errno_to_wsaerrno translation failure.\n\t: %s (%d)\n",
-                        strerror [errno], errno);
+                        strerror[errno], errno);
 #endif
 #else
 		fprintf (stderr, "winsock: errno_to_wsaerrno translation failure.\n");
 #endif
-                break;
+		return WSAENETDOWN;
         }
 }
  

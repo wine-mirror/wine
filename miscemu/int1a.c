@@ -1,5 +1,6 @@
 #include <time.h>
 #include <stdio.h>
+#include "msdos.h"
 #include "wine.h"
 
 #ifdef linux

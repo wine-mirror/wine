@@ -5,6 +5,7 @@
 
 #ifndef _WINARGS
 
+typedef short	INT;
 typedef unsigned short UINT;
 typedef unsigned short WORD;
 typedef unsigned long DWORD;
@@ -217,6 +218,25 @@ typedef struct {
     char *    lpszClass WINE_PACKED;
     DWORD     dwExStyle WINE_PACKED;
 } CREATESTRUCT, *LPCREATESTRUCT;
+
+typedef struct 
+{
+    HMENU     hWindowMenu;
+    WORD      idFirstChild;
+} CLIENTCREATESTRUCT, *LPCLIENTCREATESTRUCT;
+
+typedef struct
+{
+    LPSTR     szClass;
+    LPSTR     szTitle;
+    HANDLE    hOwner;
+    short     x;
+    short     y;
+    short     cx;
+    short     cy;
+    LONG      style WINE_PACKED;
+    LONG      lParam WINE_PACKED;
+} MDICREATESTRUCT, *LPMDICREATESTRUCT;
 
   /* Offsets for GetWindowLong() and GetWindowWord() */
 #define GWL_EXSTYLE         (-20)
@@ -466,7 +486,9 @@ typedef WORD ATOM;
 
 typedef DWORD COLORREF;
 
-#define RGB(r,g,b)  ((COLORREF)((r) | ((g) << 8) | ((b) << 16)))
+#define RGB(r,g,b)          ((COLORREF)((r) | ((g) << 8) | ((b) << 16)))
+#define PALETTERGB(r,g,b)   (0x02000000 | RGB(r,g,b))
+#define PALETTEINDEX(i)     ((COLORREF)(0x01000000 | (WORD)(i)))
 
 #define GetRValue(rgb)	    ((rgb) & 0xff)
 #define GetGValue(rgb)      (((rgb) >> 8) & 0xff)
@@ -987,6 +1009,8 @@ typedef OFSTRUCT *LPOFSTRUCT;
 #define OF_SHARE_EXCLUSIVE 0x0010
 #define OF_VERIFY 0x0400
 
+#define DRIVE_CANNOTDETERMINE	0
+#define DRIVE_DOESNOTEXIST	1
 #define DRIVE_REMOVABLE	2
 #define DRIVE_FIXED	3
 #define DRIVE_REMOTE	4
@@ -1377,6 +1401,18 @@ enum { WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE
 #define WM_MOUSELAST	    WM_MBUTTONDBLCLK
 
 #define WM_PARENTNOTIFY     0x0210
+
+#define WM_MDICREATE	    0x0220
+#define WM_MDIDESTROY	    0x0221
+#define WM_MDIACTIVATE	    0x0222
+#define WM_MDIRESTORE	    0x0223
+#define WM_MDINEXT	    0x0224
+#define WM_MDIMAXIMIZE	    0x0225
+#define WM_MDITILE	    0x0226
+#define WM_MDICASCADE	    0x0227
+#define WM_MDIICONARRANGE   0x0228
+#define WM_MDIGETACTIVE     0x0229
+#define WM_MDISETMENU	    0x0230
 
 #define WM_ENTERSIZEMOVE    0x0231
 #define WM_EXITSIZEMOVE     0x0232
@@ -2117,6 +2153,7 @@ int wsprintf(LPSTR a,LPSTR b,...);
 
 F(HMENU,CreateMenu)
 F(BOOL,GetInputState)
+F(BOOL,SetDeskPattern)
 F(LPSTR,GetDOSEnvironment)
 F(DWORD,GetMessagePos)
 F(LONG,GetMessageTime)
@@ -2199,9 +2236,11 @@ Fa(BOOL,DestroyWindow,HWND,a)
 Fa(BOOL,EnableHardwareInput,BOOL,a)
 Fa(BOOL,FreeModule,HANDLE,a)
 Fa(BOOL,FreeResource,HANDLE,a)
+#ifndef GLOBAL_SOURCE
 Fa(BOOL,GlobalUnWire,HANDLE,a)
 Fa(BOOL,GlobalUnfix,HANDLE,a)
 Fa(BOOL,GlobalUnlock,HANDLE,a)
+#endif
 Fa(BOOL,InitAtomTable,WORD,a)
 Fa(BOOL,IsClipboardFormatAvailable,WORD,a)
 Fa(BOOL,IsIconic,HWND,a)
@@ -2215,6 +2254,7 @@ Fa(BOOL,LocalUnlock,HANDLE,a)
 Fa(BOOL,OpenClipboard,HWND,a)
 Fa(BOOL,OpenIcon,HWND,a)
 Fa(BOOL,RemoveFontResource,LPSTR,a)
+Fa(BOOL,SetDeskWallPaper,LPSTR,a)
 Fa(BOOL,SetErrorMode,WORD,a)
 Fa(BOOL,SwapMouseButton,BOOL,a)
 Fa(BOOL,UnrealizeObject,HBRUSH,a)
@@ -2232,9 +2272,11 @@ Fa(DWORD,GetViewportExt,HDC,a)
 Fa(DWORD,GetViewportOrg,HDC,a)
 Fa(DWORD,GetWindowExt,HDC,a)
 Fa(DWORD,GetWindowOrg,HDC,a)
+#ifndef GLOBAL_SOURCE
 Fa(DWORD,GlobalCompact,DWORD,a)
 Fa(DWORD,GlobalHandle,WORD,a)
 Fa(DWORD,GlobalSize,HANDLE,a)
+#endif
 Fa(DWORD,OemKeyScan,WORD,a)
 Fa(FARPROC,LocalNotify,FARPROC,a)
 Fa(HANDLE,BeginDeferWindowPos,int,nNumWindows)
@@ -2248,9 +2290,11 @@ Fa(HANDLE,GetMetaFileBits,HANDLE,a)
 Fa(HANDLE,GetModuleHandle,LPSTR,a)
 Fa(HANDLE,GetStockObject,int,a)
 Fa(HANDLE,GetWindowTask,HWND,a)
+#ifndef GLOBAL_SOURCE
 Fa(HANDLE,GlobalFree,HANDLE,a)
 Fa(HANDLE,GlobalLRUNewest,HANDLE,a)
 Fa(HANDLE,GlobalLRUOldest,HANDLE,a)
+#endif
 Fa(HANDLE,LoadLibrary,LPSTR,a)
 Fa(HANDLE,LocalFree,HANDLE,a)
 Fa(HANDLE,LocalHandle,WORD,a)
@@ -2289,13 +2333,19 @@ Fa(LONG,SetSwapAreaSize,WORD,a)
 Fa(LPSTR,AnsiLower,LPSTR,a)
 Fa(LPSTR,AnsiNext,LPSTR,a)
 Fa(LPSTR,AnsiUpper,LPSTR,a)
+#ifndef GLOBAL_SOURCE
 Fa(LPSTR,GlobalLock,HANDLE,a)
 Fa(LPSTR,GlobalWire,HANDLE,a)
+#endif
 Fa(LPSTR,LockResource,HANDLE,a)
+#ifndef GLOBAL_SOURCE
 Fa(void,GlobalFix,HANDLE,a)
 Fa(void,GlobalNotify,FARPROC,a)
+#endif
 Fa(void,LimitEmsPages,DWORD,a)
 Fa(void,SetConvertHook,BOOL,a)
+Fa(UINT,GDIRealizePalette,HDC,a)
+Fa(UINT,RealizePalette,HDC,a)
 Fa(WORD,AllocDStoCSAlias,WORD,a)
 Fa(WORD,AllocSelector,WORD,a)
 Fa(WORD,ArrangeIconicWindows,HWND,a)
@@ -2305,13 +2355,15 @@ Fa(WORD,GetDriveType,int,a)
 Fa(WORD,GetMenuItemCount,HMENU,a)
 Fa(WORD,GetTaskQueue,HANDLE,a)
 Fa(WORD,GetTextAlign,HDC,a)
+#ifndef GLOBAL_SOURCE
 Fa(WORD,GlobalFlags,HANDLE,a)
 Fa(WORD,GlobalPageLock,HANDLE,a)
 Fa(WORD,GlobalPageUnlock,HANDLE,a)
+#endif
 Fa(WORD,LocalCompact,WORD,a)
 Fa(WORD,LocalFlags,HANDLE,a)
 Fa(WORD,LocalSize,HANDLE,a)
-Fa(int,RealizePalette,HDC,a)
+Fa(WORD,RealizeDefaultPalette,HDC,a)
 Fa(WORD,RegisterClipboardFormat,LPCSTR,a)
 Fa(WORD,RegisterWindowMessage,LPCSTR,a)
 Fa(WORD,SetHandleCount,WORD,a)
@@ -2412,7 +2464,9 @@ Fb(FARPROC,MakeProcInstance,FARPROC,a,HANDLE,b)
 Fb(FARPROC,SetWindowsHook,int,a,FARPROC,b)
 Fb(HANDLE,CopyMetaFile,HANDLE,a,LPSTR,b)
 Fb(HANDLE,GetProp,HWND,a,LPSTR,b)
+#ifndef GLOBAL_SOURCE
 Fb(HANDLE,GlobalAlloc,WORD,a,DWORD,b)
+#endif
 Fb(HANDLE,LoadAccelerators,HANDLE,a,LPSTR,b)
 Fb(HANDLE,LoadModule,LPSTR,a,LPVOID,b)
 Fb(HANDLE,LoadResource,HANDLE,a,HANDLE,b)
@@ -2425,6 +2479,7 @@ Fb(HBRUSH,CreateDIBPatternBrush,HANDLE,a,WORD,b)
 Fb(HBRUSH,CreateHatchBrush,short,a,COLORREF,b)
 Fb(HCURSOR,LoadCursor,HANDLE,a,LPSTR,b)
 Fb(HICON,LoadIcon,HANDLE,a,LPSTR,b)
+Fb(HPALETTE,GDISelectPalette,HDC,a,HPALETTE,b)
 Fb(HMENU,GetSubMenu,HMENU,a,short,b)
 Fb(HMENU,GetSystemMenu,HWND,a,BOOL,b)
 Fb(HMENU,LoadMenu,HANDLE,a,LPSTR,b)
@@ -2553,7 +2608,9 @@ Fc(DWORD,SetWindowOrg,HDC,a,short,b,short,c)
 Fc(FARPROC,SetResourceHandler,HANDLE,a,LPSTR,b,FARPROC,c)
 Fc(HANDLE,AllocResource,HANDLE,a,HANDLE,b,DWORD,c)
 Fc(HANDLE,FindResource,HANDLE,a,LPSTR,b,LPSTR,c)
+#ifndef GLOBAL_SOURCE
 Fc(HANDLE,GlobalReAlloc,HANDLE,a,DWORD,b,WORD,c)
+#endif
 Fc(HANDLE,LocalReAlloc,HANDLE,a,WORD,b,WORD,c)
 Fc(HBITMAP,CreateCompatibleBitmap,HDC,a,short,b,short,c)
 Fc(HBITMAP,CreateDiscardableBitmap,HDC,a,short,b,short,c)
@@ -2737,7 +2794,7 @@ Fi(BOOL,Pie,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom,int,xStart,int,yStar
 Fk(HWND,CreateWindow,LPSTR,szAppName,LPSTR,Label,DWORD,ol,short,x,short,y,short,w,short,h,HWND,d,HMENU,e,,HANDLE i,LPSTR,g)
 Fk(BOOL,StretchBlt,HDC,a,short,b,short,c,short,d,short,e,HDC,f,short,g,short,h,short,i,short,j,DWORD,k)
 Fl(HWND,CreateWindowEx,DWORD,a,LPSTR,b,LPSTR,c,DWORD,d,short,e,short,f,short,g,short,h,HWND,i,HMENU,j,HANDLE,k,LPSTR,l)
-Fl(int,SetDIBitsToDevice,HDC,a,WORD,b,WORD,c,WORD,d,WORD,e,WORD,f,WORD,g,WORD,h,WORD,i,LPSTR,j,LPBITMAPINFO,k,WORD,l)
+Fl(int,SetDIBitsToDevice,HDC,a,short,b,short,c,WORD,d,WORD,e,WORD,f,WORD,g,WORD,h,WORD,i,LPSTR,j,LPBITMAPINFO,k,WORD,l)
 Fm(int,StretchDIBits,HDC,a,WORD,b,WORD,c,WORD,d,WORD,e,WORD,f,WORD,g,WORD,h,WORD,i,LPSTR,j,LPBITMAPINFO,k,WORD,l,DWORD,m)
 Fn(HFONT,CreateFont,int,a,int,b,int,c,int,d,int,e,BYTE,f,BYTE,g,BYTE,h,BYTE,i,BYTE,j,BYTE,k,BYTE,l,BYTE,m,LPSTR,n)
 

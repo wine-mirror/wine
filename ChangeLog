@@ -1,4 +1,453 @@
 ----------------------------------------------------------------------
+Tue Apr  5 14:36:59 1994  Bob Amstadt  (bob@pooh)
+
+	* [include/mdi.h] [windows/mdi.c]
+	Use WM_PARENTNOTIFY messages to activate children.
+	Generate WM_CHILDACTIVATE messages.
+	Beginnings handler for maxmized child window.
+	Clean up when children are destroyed.
+
+	* [windows/message.c] [windows/nonclient.c] [windows/winpos.c]
+	Removed code add 94/03/26.
+
+Apr 4, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [control/menu.c]
+	Make mouse menu navigation working again. :-))
+	(be carefull, clicking outside menus (ie.: clientrect) 
+	not resolved yet)
+
+	* [windows/nonclient.c]  [controls/scroll.c]
+	Bugs fix in NCTrackScrollBars().
+
+	* [misc/dos_fs.c]
+	Bug fix in 'ToDos()' in conversion for '/',
+		(example: '/window/' was translated to 'WINDOWs').
+
+	* [miscemu/int21.c]
+	Function ChangeDir() extract possible drive before DOS_ChangeDir().
+
+	* [loader/library.c]  [loader/wine.c]
+	Playing around moving function GetProcAddress() and put some code in.
+
+Mon Apr  4 21:39:07 1994  Alexandre Julliard (julliard@lamisun.epfl.ch)
+
+	* [misc/main.c]
+	Better explanation of command-line options.
+
+	* [objects/dib.c]
+	Implemented SetDIBitsToDevice().
+
+	* [windows/dc.c]
+	Bug fix in SetDCState().
+
+	* [windows/event.c]
+	Removed WS_DISABLED handling (now done in message.c).
+
+	* [windows/message.c]
+	Added sending a WM_PARENTNOTIFY message in MSG_TranslateMouseMsg().
+	Use WindowFromPoint() to find the window for mouse events, taking
+	into account disabled windows.
+
+	* [windows/painting.c]
+	Bug fix in BeginPaint() to allow calling it at other times than
+	on WM_PAINT (Solitaire needs it...)
+
+	* [windows/win.c]
+	Implemented FindWindow().
+	Rewritten EnableWindow() to behave more like Windows.
+
+	* [windows/winpos.c]
+	Rewritten WindowFromPoint() to also search child windows.
+
+Mon Apr  4 17:36:32 1994  Erik Bos (erik@trashcan.hacktic.nl)
+
+	* [include/int21.h] -> [msdos.h]
+	renamed.
+
+	* [miscemu/int10.h] [miscemu/int25.h] [miscemu/int26.h] 
+	new, added for int 10, 25 and 26.
+
+	* [miscemu/ioports.c]
+	new, added to allow win apps to use ioports.
+
+	* [loader/signal.c]
+	Added support for in, inb, out, outb instructions.
+
+----------------------------------------------------------------------
+Sun Mar 27 13:40:25 1994  Bob Amstadt  (bob@pooh)
+
+	* controls/menu.c (InsertMenu): Changed to use FindMenuItem().
+
+Sat Mar 26 21:23:55 1994  Bob Amstadt  (bob@pooh)
+
+	* [windows/mdi.c]
+	Window list properly updated.
+
+	* [windows/message.c]
+	Call WINPOS_ChildActivate() when mouse pressed.
+
+	* [windows/nonclient.c]
+	Use WINPOS_IsAnActiveWindow() instead of GetActiveWindow() in
+	NC_HandleNCPaint().
+
+	* [windows/winpos.c]
+	Created functions WINPOS_IsAnActiveWindow() and WINPOS_ActivateChild()
+
+Thu Mar 24 14:49:17 1994  Bob Amstadt  (bob@pooh)
+
+	* controls/menu.c (DeleteMenu): Changed to use FindMenuItem
+	(DeleteMenu): Many bug fixes.
+
+	* [controls/menu.c]
+	Created function FindMenuItem().
+
+Thu Mar 24 14:17:24 1994  Bob Amstadt  (bob@pooh)
+
+	* [windows/win.c]
+	Removed incorrect MDI handling code from CreateWindowEx().
+
+	* [controls/menu.c]
+	MF_STRING items needed to allocate a private copy of string.
+
+	* [controls/menu.c]
+	Fixed buggy calls to GlobalFree().
+
+	* [memory/global.c]
+	Eliminated some redundant code with function call.
+
+Wed Mar 23 1994 Pentti Moilanen (pentti.moilanen@ntc.nokia.com)
+
+	* [windows/timer.c]
+	timer list pointers looped in InsertTimer
+
+Tue Mar 29 13:32:08 MET DST 1994  julliard@di.epfl.ch (Alexandre Julliard)
+
+	* [misc/cursor.c]
+	A few changes for desktop window support.
+
+	* [misc/main.c]
+	Added -depth option.
+
+	* [misc/rect.c]
+	Yet another bug fix in SubtractRect().
+
+	* [objects/bitmap.c]
+	Changes to use only one depth (specified with -depth)
+	for color bitmaps.
+
+	* [objects/brush.c]
+	Added support for dithered solid brushes.
+
+	* [objects/color.c]
+	Use the same 20 system colors as in Windows.
+	System palette initialisation now done in COLOR_InitPalette().
+	Added support for a color mapping table to map logical color
+	indexes to X colormap entries.
+	Implemented GetNearestColor() and RealizeDefaultPalette().
+
+	* [objects/dib.c]
+	Added support for color mapping table.
+
+	* [objects/dither.c]  (New file)
+	Implemented solid color dithering.
+
+	* [objects/palette.c]
+	Implemented GetSystemPaletteEntries() and SelectPalette().
+
+	* [windows/class.c]
+	Make a copy of the menu name in RegisterClass().
+
+	* [windows/dc.c]
+	Fixed device caps when using a desktop window.
+	Added support for the color mapping table in DCs.
+
+	* [windows/event.c]
+	Added ConfigureNotify handler on desktop window.
+
+	* [windows/message.c]
+	Removed call to XTranslateCoordinates() on every mouse motion
+	New function MSG_Synchronize() to synchronize with the X server.
+
+	* [windows/syscolor.c]
+	Rewritten SYSCOLOR_Init() to read the system colors from WIN.INI.
+
+	* [windows/winpos.c]
+	Added synchronization on window mapping. Solves the double redraw
+	problem when starting Solitaire.
+
+Mar 27, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [control/menu.c]	* [windows/defwnd.c]
+	Make keyboard navigation working with menubar,
+	but temporarely inserted a bug in menubar mouse handling ... :-((
+	(it will be fix next week !)
+
+	* [windows/defwnd.c]
+	Connect VK_MENU to menubar navigation.
+
+	* [loader/library.c]
+	GetModuleHandle() return 'fictive 0xF000+ handles' for built-in DLLs.
+
+Sun Mar 20 22:32:13 1994 Erik Bos (erik@trashcan.hacktic.nl)
+
+	* [misc/main.c]
+	Added Copy(). Added a check for `-h' to show usage.
+
+	* [misc/dos_fs.c]
+	Fixed bug in FindFile(), to load directories as dlls.
+
+	* [misc/dos_fs.c]
+	Fixed ToUnix() and ToDos() again, as my previous patch
+	didn't make it.
+
+	* [misc/dos_fs.c] [miscemu/int21.c]
+	Bug fixes, should be able to handle all winfile and progman int21
+	requests now except for a few small things.
+
+Tue Mar 29 06:25:54 1994  crw@harris.mlb.semi.harris.com (Carl Williams)
+
+	* [memory/heap.c]
+	Implemented GetFreeSystemResources().
+
+----------------------------------------------------------------------
+Mon Mar 21 17:32:25 1994  Bob Amstadt  (bob@pooh)
+
+	* controls/menu.c (GetSubMenu): Function did not return correct value
+
+	* [windows/mdi.c]
+	Beginnings of menu handling.
+
+Thu Mar 10 11:32:06 1994  Stefan (SAM) Muenzel  (muenzel@tat.physik.uni-tuebingen.de)
+
+	* [objects/font.c]
+	if font.width equals zero use asterix instead.
+
+Mon Mar 21 17:23:37 MET 1994  julliard@di.epfl.ch (Alexandre Julliard)
+
+	* [objects/bitmap.c]
+	Rewritten bitmap code to use exclusively X pixmaps; *much* faster.
+
+	* [objects/brush.c]
+	Some changes with pattern brushes because of the new bitmap code.
+
+	* [objects/color.c]
+	Added function COLOR_ToPhysical for better color mapping.
+
+	* [objects/dib.c]
+	Heavily optimized SetDIBits().
+
+	* [windows/dc.c]
+	Opimized SetDCState() and DC_SetupGC*() functions.
+	Added stub for CreateIC().
+
+Mar 20, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [misc/message.c]
+	Call SetFocus() after closing box to give back focus to previous owner.
+
+	* [misc/files.c]
+	Small bug fix in GetTempFilename() : replace a '\' to '\\'.
+
+	* [control/scroll.c]
+	Calls to BitBlt() replace by StretchBlt().
+
+	* [control/menu.c]
+	Call SetFocus() to previous owner after closing Popups.	
+	Fill stub DeleteMenu().
+
+	* [control/listbox.c]
+	* [control/combo.c]
+	Use SetFocus() in WM_LBUTTONDOWN.
+	Close ComboBox List upon WM_KILLFOCUS.
+	Early development of WM_MEASUREITEM mecanism.
+
+	* [windows/defwnd.c]
+	Early development of WM_MEASUREITEM mecanism.
+
+Tue Mar 22 10:44:57 1994  Miguel de Icaza  (miguel@xochitl)
+
+	* [misc/atom.c]
+	Fixed sintaxis problem when building the library.
+
+----------------------------------------------------------------------
+Tue Mar 15 13:11:56 1994  Bob Amstadt  (bob@pooh)
+
+	* [include/windows.h]
+	Added message types and structures for MDI
+
+	* [include/mdi.h]
+	Created internal structures for handling MDI
+
+	* [windows/mdi.c]
+	Began creating MDI support
+
+Thu Mar 10 16:51:46 1994  Bob Amstadt  (bob@pooh)
+
+	* [loader/wine.c] [include/wine.h]
+	Added new field to "struct w_files" to hold the "name table"
+	resource for Windows 3.0 programs
+
+	* [loader/resource.c]
+	Added code to handle programs with a "name table" resource.
+	LoadResourceByName() modified to check for the existence of
+	this resource.
+
+Mon Mar 14 22:31:42 MET 1994  julliard@di.epfl.ch (Alexandre Julliard)
+
+	* [objects/color.c]
+	Added installing the private colormap on the desktop window.
+
+	* [windows/event.c]
+	Cleaned up focus event handling (see focus.c).
+	Use GetFocus() to direct key events to the correct window.
+
+	* [windows/focus.c]
+	Rewritten SetFocus() to:
+	- only set X focus on top-level windows
+	- send WM_SETFOCUS and WM_KILLFOCUS messages (was done in event.c)
+	- prevent setting focus to disabled windows
+	- install private colormap so -privatemap option works again
+
+	* [windows/message.c] [windows/timer.c]
+	Changed timer management to no longer use PostMessage(), but
+	to generate timer messages on the fly. Also fixed a related bug
+	in GetMessage() which could cause busy-waiting.
+
+	* [windows/win.c]
+	Only select focus events on top-level windows.
+
+	* [windows/winpos.c]
+	Added some sanity checks for desktop window.
+
+Fri Mar  4 20:42:01 1994  Erik Bos (erik@trashcan.hacktic.nl)
+
+	* [misc/dos_fs.c]
+	bug fixes in ToUnix(), WinIniFileName(), GetUnixFileName(). 
+	Support for tilde symbol added for rootdirectories in [drives]
+	section of wine's configfile.
+
+	* [misc/file.c]
+	hread(), hwrite() added.
+
+	* [misc/main.c]
+	hmemcpy() added.
+
+	* [if1632/stress.spec] [include/stress.h] [misc/stress.c]
+	Added STRESS.DLL, an useless dll used to stress a windows system.
+
+	* [*/*]
+	Added missing #includes, fixed prototypes for prototype checking.
+
+	* [include/prototypes.h]
+
+	Added prototypes for loader/*c, if1632/*c.
+
+----------------------------------------------------------------------
+Tue Mar  8 09:54:34 1994  Bob Amstadt  (bob@pooh)
+
+	* [Configure]
+	Added reminder to set WINEPATH, if it is not set.
+
+	* [Imakefile]
+	Removed #elif's
+
+	* [controls/button.c]
+	Added BN_CLICKED notification for owner-draw buttons.
+
+	* [if1632/kernel.spec] [memory/heap.c]
+	Changed Local* functions to WIN16_Local* to prevent unconcious use
+	of these functions.
+
+	* [if1632/relay.c]
+	Push old Stack16Frame on stack before setting.
+
+	* [include/atom.h] [misc/atom.c] [include/heap.h] [memory/local.c]
+	Added multiple local heap handling in Atom* functions.
+
+	* [include/regfunc.h] [miscemu/int21.c]
+	Rewrote DOS3Call() use context frame that is already on the stack.
+
+	* [misc/profile.c]
+	Fixed to allow leading ";" to mark comments.
+
+	* [misc/spy.c]
+	Fixed bugs and added support for "include" and "exclude" filters.
+
+	* [misc/user.c]
+	Rearranged calls in InitApp().
+
+	* [misc/font.c]
+	Fixed font handling to create system fonts, if they are used.
+
+	* [windows/dc.c]
+	If text drawn on window with no font specified, then default the
+	font to the system font.
+
+Mon Mar  7 20:32:09 MET 1994  julliard@di.epfl.ch (Alexandre Julliard)
+
+	* [controls/desktop.c]
+	Added handling of WM_NCCREATE and WM_ERASEBKGND functions.
+	Implemented SetDeskPattern().
+
+	* [misc/main.c]
+	Added -desktop option to get a large desktop window with
+	everything inside it.
+	Added -name option.
+
+	* [misc/rect.c]
+	Bug fix in SubtractRect().
+
+	* [objects/*.c]
+	Replaced the DefaultRootWindow() macro by the rootWindow variable.
+
+	* [windows/event.c] [windows/message.c]
+	  [windows/nonclient.c] [windows/win.c]
+	A few changes to accomodate the new desktop window.
+
+ Tue Mar  8 11:13:03 1994  Miguel de Icaza  (miguel@xochitl.nuclecu.unam.mx)
+ 
+ 	* [toolkit/arch.c] --New file-- 
+ 	Routines for converting little endian data structures to
+ 	big-endian data structures, currently only BITMAP structures are 
+ 	converted.
+ 
+ 	* [misc/atom.c]
+ 	When used as part of the WineLib, the code is much simpler.
+ 	Doesn't depend on alignement.
+ 
+ 	* [loader/wine.c]
+ 	Ifdefed Emulator dependent code if compiling WineLib.
+ 
+ 	* [loader/resource.c]
+ 	Moved misc/resource.c to loader/resource.c.
+ 
+ 	* [loader/dump.c,ldt.c,ldtlib.c,library,c,selector.c,signal.c]
+ 	Ifdefed whole code if compiling WINELIB.
+ 
+ 	* [include/winsock.h]
+ 	Added compilation define to allow compilation on SunOS.
+ 
+ 	* [include/wine.h]
+ 	Removed load_typeinfo and load_nameinfo prototypes, they belong
+ 	to neexe.h
+ 
+ 	* [include/neexe.h]
+ 	Added load_typeinfo and load_nameinfo prototypes.
+ 
+ 	* [include/arch.h]
+ 	Fixed some bugs in the conversion routines.
+ 	Added macros for Bitmap loading.
+
+Tue Mar  8 12:52:05 1994  crw@maniac.mlb.semi.harris.com (Carl Williams)
+ 	
+	* [if1632/kernel.spec] [memory/global.c]
+	Implemented GetFreeSpace()
+
+	* [if1632/user.spec] [loader/resource.c]
+	Implemented CreateIcon()
+
+----------------------------------------------------------------------
 Tue Mar  1 11:30:21 1994  Bob Amstadt  (bob@pooh)
 
 	* [Configure] [*/Imakefile]

@@ -8,6 +8,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "gdi.h"
 
+extern WORD COLOR_ToPhysical( DC *dc, COLORREF color );
 
 /***********************************************************************
  *           CreatePen    (GDI.61)
@@ -68,21 +69,24 @@ HPEN PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
 	                  / dc->w.WndExtX;
     if (dc->u.x.pen.width < 0) dc->u.x.pen.width = -dc->u.x.pen.width;
     if (dc->u.x.pen.width == 1) dc->u.x.pen.width = 0;  /* Faster */
-    dc->u.x.pen.pixel = GetNearestPaletteIndex( dc->w.hPalette,
-					        pen->logpen.lopnColor );    
+    dc->u.x.pen.pixel = COLOR_ToPhysical( dc, pen->logpen.lopnColor );    
     switch(pen->logpen.lopnStyle)
     {
       case PS_DASH:
-	XSetDashes( XT_display, dc->u.x.gc, 0, dash_dash, 2 );
+	dc->u.x.pen.dashes = dash_dash;
+	dc->u.x.pen.dash_len = 2;
 	break;
       case PS_DOT:
-	XSetDashes( XT_display, dc->u.x.gc, 0, dash_dot, 2 );
+	dc->u.x.pen.dashes = dash_dot;
+	dc->u.x.pen.dash_len = 2;
 	break;
       case PS_DASHDOT:
-	XSetDashes( XT_display, dc->u.x.gc, 0, dash_dashdot, 4 );
+	dc->u.x.pen.dashes = dash_dashdot;
+	dc->u.x.pen.dash_len = 4;
 	break;
       case PS_DASHDOTDOT:
-	XSetDashes( XT_display, dc->u.x.gc, 0, dash_dashdotdot, 6 );
+	dc->u.x.pen.dashes = dash_dashdotdot;
+	dc->u.x.pen.dash_len = 6;
 	break;
     }
     

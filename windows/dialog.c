@@ -6,6 +6,9 @@
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include "windows.h"
 #include "dialog.h"
 #include "win.h"

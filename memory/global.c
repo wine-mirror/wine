@@ -1,8 +1,11 @@
 static char RCSId[] = "$Id: global.c,v 1.2 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
+#define GLOBAL_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "prototypes.h"
 #include "heap.h"
 #include "segmem.h"
@@ -153,7 +156,7 @@ GlobalGetFreeSegments(unsigned int flags, int n_segments)
 /**********************************************************************
  *					GlobalAlloc
  */
-unsigned int
+HANDLE
 GlobalAlloc(unsigned int flags, unsigned long size)
 {
     GDESC *g;
@@ -258,7 +261,7 @@ GlobalAlloc(unsigned int flags, unsigned long size)
  * Windows programs will pass a handle in the "block" parameter, but
  * this function will also accept a 32-bit address.
  */
-unsigned int
+HANDLE
 GlobalFree(unsigned int block)
 {
     GDESC *g;
@@ -269,18 +272,7 @@ GlobalFree(unsigned int block)
     /*
      * Find GDESC for this block.
      */
-    if (block & 0xffff0000)
-    {
-	for (g = GlobalList; g != NULL; g = g->next)
-	    if (g->handle > 0 && (unsigned int) g->addr == block)
-		break;
-    }
-    else
-    {
-	for (g = GlobalList; g != NULL; g = g->next)
-	    if (g->handle == block)
-		break;
-    }
+    g = GlobalGetGDesc(block);
     if (g == NULL)
 	return block;
 
@@ -556,12 +548,7 @@ GlobalReAlloc(unsigned int block, unsigned int new_size, unsigned int flags)
     /*
      * Find GDESC for this block.
      */
-    for (g = GlobalList; g != NULL; g = g->next)
-    {
-	if (g->handle == block)
-	    break;
-    }
-
+    g = GlobalGetGDesc(block);
     if (g == NULL)
 	return 0;
     
@@ -733,6 +720,70 @@ GlobalHandleFromPointer(void *block)
     else
 	return g->handle;
 }
+
+/**********************************************************************
+ *                      GetFreeSpace (kernel.169)
 
+ */
+DWORD GetFreeSpace(UINT wFlags)
+/* windows 3.1 doesn't use the wFlags parameter !! 
+   (so I won't either)                            */
+{
+    GDESC *g;
+    unsigned char free_map[512];
+    unsigned int max_selector_used = 0;
+    unsigned int i;
+    unsigned int selector;
+    int total_free;
 
+    /*
+     * Initialize free list to all items not controlled by GlobalAlloc()
+     */
+    for (i = 0; i < 512; i++)
+	free_map[i] = -1;
 
+    /*
+     * Traverse table looking for used and free selectors.
+     */
+    for (g = GlobalList; g != NULL; g = g->next)
+    {
+	/*
+	 * Check for free segments.
+	 */
+	if (g->sequence == -1)
+	{
+	    free_map[g->handle >> 3] = 1;
+	    if (g->handle > max_selector_used)
+		max_selector_used = g->handle;
+	}
+
+	/*
+	 * Check for heap allocated segments.
+	 */
+	else if (g->handle == 0)
+	{
+	    selector = (unsigned int) g->addr >> 16;
+	    free_map[selector >> 3] = 0;
+	    if (selector > max_selector_used)
+		max_selector_used = selector;
+	}
+    }
+
+    /*
+     * All segments past the biggest selector used are free.
+     */
+    for (i = (max_selector_used >> 3) + 1; i < 512; i++)
+	free_map[i] = 1;
+
+    /*
+     * Add up the total free segments (obviously this amount of memory
+       may not be contiguous, use GlobalCompact to get largest contiguous
+       memory available).
+     */
+    total_free=0;
+    for (i = 0; i < 512; i++)
+	if (free_map[i] == 1)
+	    total_free++;
+    
+    return total_free << 16;
+}

@@ -27,6 +27,7 @@ COMMONSUBDIRS = \
 	controls \
 	etc \
 	include \
+	loader \
 	misc \
 	objects \
 	test \
@@ -36,7 +37,6 @@ EMUSUBDIRS = \
 	tools \
 	debugger \
 	if1632 \
-	loader \
 	memory \
 	miscemu
 
@@ -47,6 +47,7 @@ WINEDIR = $(LIBDIR)/wine
 
 COMMONOBJS = \
 	controls.o \
+	loader.o \
 	misc.o \
 	objects.o \
 	windows.o
@@ -58,7 +59,6 @@ COMMONOBJS = \
 EMUOBJS = \
 	if1632.o \
 	debugger.o \
-	loader.o \
 	memory.o \
 	miscemu.o \
 	readline.o
@@ -74,11 +74,13 @@ SUBDIRS = $(COMMONSUBDIRS) $(LIBSUBDIRS)
 OBJS = $(COMMONOBJS) $(LIBOBJS)
 #endif
 
-#if defined(i386BsdArchitecture)
+#ifdef i386BsdArchitecture
 SYSLIBS = -ll -lm -li386 -lgnumalloc
-#elif defined(i386FreeBsd)
+#endif
+#ifdef i386FreeBsd
 SYSLIBS = -ll -lm -lgnumalloc
-#elif defined(LinuxArchitecture)
+#endif
+#ifdef LinuxArchitecture
 SYSLIBS = -lm -lg
 #endif
 

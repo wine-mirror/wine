@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
+#include <string.h>
 #include "wineopts.h"
 #include "windows.h"
 #include "wine.h"
@@ -14,7 +15,7 @@
 
 #ifndef NOSPY
 
-#define SPY_MAX_MSGNUM		0x0210
+#define SPY_MAX_MSGNUM		0x0232
 
 const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 {
@@ -92,7 +93,9 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_NCCREATE",		/* 0x0081 */
     "WM_NCDESTROY",		/* 0x0082 */
     "WM_NCCALCSIZE",		/* 0x0083 */
-    NULL, NULL, NULL,
+    "WM_NCHITTEST",        	/* 0x0084 */
+    "WM_NCPAINT",          	/* 0x0085 */
+    "WM_NCACTIVATE",       	/* 0x0086 */
     "WM_GETDLGCODE",		/* 0x0087 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
@@ -135,9 +138,9 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_KEYLAST",		/* 0x0108 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
-    "WM_INITDIALOG",		/* 0x0110  */
+    "WM_INITDIALOG",		/* 0x0110 */
     "WM_COMMAND",		/* 0x0111 */
-    NULL,
+    "WM_SYSCOMMAND",       	/* 0x0112 */
     "WM_TIMER",			/* 0x0113 */
     "WM_HSCROLL",		/* 0x0114 */
     "WM_VSCROLL",		/* 0x0115 */
@@ -211,8 +214,25 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_MBUTTONDOWN",		/* 0x0207 */
     "WM_MBUTTONUP",		/* 0x0208 */
     "WM_MBUTTONDBLCLK",		/* 0x0209 */
+    NULL, NULL, NULL, NULL, NULL, NULL,
+
     "WM_PARENTNOTIFY",		/* 0x0210 */
+
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+
+    /* 0x0220 */
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+
+    
+    NULL,			/* 0x0230 */
+    "WM_ENTERSIZEMOVE",		/* 0x0231 */
+    "WM_EXITSIZEMOVE"		/* 0x0232 */
 };
+
+char SpyFilters[256];
+char SpyIncludes[256];
 
 #endif /* NOSPY */
 
@@ -222,18 +242,24 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 void SpyMessage(HWND hwnd, WORD msg, WORD wParam, LONG lParam)
 {
 #ifndef NOSPY
+    char msg_name[80];
+    
     if (SpyFp == NULL)
 	return;
     
     if (msg > SPY_MAX_MSGNUM || MessageTypeNames[msg] == NULL)
-    {
-	fprintf(SpyFp, "%04.4x                  %04.4x  %04.4x  %08.8x\n",
-		hwnd, msg, wParam, lParam);
-    }
+	msg_name[0] = '\0';
     else
+	strcpy(msg_name, MessageTypeNames[msg]);
+    
+    strcat(msg_name, ";");
+    
+    if ((strlen(SpyIncludes) == 0 || strstr(SpyIncludes, msg_name) != NULL) &&
+	strstr(SpyFilters, msg_name) == NULL)
     {
-	fprintf(SpyFp, "%04.4x  %20.20s  %04.4x  %08.8x\n",
-		hwnd, MessageTypeNames[msg], wParam, lParam);
+	msg_name[strlen(msg_name) - 1] = '\0';
+	fprintf(SpyFp, "%04.4x  %20.20s  %04.4x  %04.4x  %08.8x\n",
+		hwnd, msg_name, msg, wParam, lParam);
     }
 #endif
 }
@@ -245,7 +271,7 @@ void SpyInit(void)
 {
     char filename[100];
 
-    if (SpyFp == NULL)
+    if (SpyFp != NULL)
 	return;
 
     if (Options.spyFilename == NULL)
@@ -261,5 +287,13 @@ void SpyInit(void)
     else if (strlen(filename))
 	SpyFp = fopen(filename, "a");
     else
+    {
 	SpyFp = NULL;
+	return;
+    }
+    
+    GetPrivateProfileString("spy", "exclude", "", SpyFilters, 
+			    sizeof(SpyFilters), WINE_INI);
+    GetPrivateProfileString("spy", "include", "", SpyIncludes, 
+			    sizeof(SpyIncludes), WINE_INI);
 }

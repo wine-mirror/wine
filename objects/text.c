@@ -221,7 +221,6 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
 	    	(rect->bottom - rect->top) / 2 - size.cy / 2;
 	    else if (flags & DT_BOTTOM) y = rect->bottom - size.cy;
 	}
-
 	if (!(flags & DT_CALCRECT))
 	    if (!TextOut(hdc, x, y, line, len)) return 0;
 	if (prefix_offset != -1)

@@ -9,8 +9,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "sysmetrics.h"
 #include "user.h"
 #include "win.h"
-
-extern Display * display;
+#include "message.h"
 
 static HWND hwndActive = 0;  /* Currently active window */
 
@@ -68,15 +67,32 @@ void ScreenToClient( HWND hwnd, LPPOINT lppnt )
  */
 HWND WindowFromPoint( POINT pt )
 {
-    RECT rect;
-    HWND hwnd = GetTopWindow( GetDesktopWindow() );
-    while (hwnd)
+    HWND hwndRet = 0;
+    HWND hwnd = GetDesktopWindow();
+
+    while(hwnd)
     {
-	GetWindowRect( hwnd, &rect );
-	if (PtInRect( &rect, pt )) return hwnd;
-	hwnd = GetWindow( hwnd, GW_HWNDNEXT );
+	  /* If point is in window, and window is visible,   */
+	  /* not disabled and not transparent, then explore  */
+	  /* its children. Otherwise, go to the next window. */
+
+	WND *wndPtr = WIN_FindWndPtr( hwnd );
+	if ((pt.x >= wndPtr->rectWindow.left) &&
+	    (pt.x < wndPtr->rectWindow.right) &&
+	    (pt.y >= wndPtr->rectWindow.top) &&
+	    (pt.y < wndPtr->rectWindow.bottom) &&
+	    !(wndPtr->dwStyle & WS_DISABLED) &&
+	    (wndPtr->dwStyle & WS_VISIBLE) &&
+	    !(wndPtr->dwExStyle & WS_EX_TRANSPARENT))
+	{
+	    pt.x -= wndPtr->rectClient.left;
+	    pt.y -= wndPtr->rectClient.top;
+	    hwndRet = hwnd;
+	    hwnd = wndPtr->hwndChild;
+	}
+	else hwnd = wndPtr->hwndNext;
     }
-    return 0;
+    return hwndRet;
 }
 
 
@@ -97,7 +113,7 @@ HWND ChildWindowFromPoint( HWND hwndParent, POINT pt )
 	if (PtInRect( &rect, pt )) return hwnd;
 	hwnd = GetWindow( hwnd, GW_HWNDNEXT );
     }
-    return 0;
+    return hwndParent;
 }
 
 
@@ -167,7 +183,6 @@ HWND GetActiveWindow()
 {
     return hwndActive;
 }
-
 
 /*******************************************************************
  *         SetActiveWindow    (USER.59)
@@ -461,6 +476,20 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, short x, short y,
     winPos->cy = cy;
     winPos->flags = flags;
     SendMessage( hwnd, WM_WINDOWPOSCHANGING, 0, (LONG)winPos );
+    hwndInsertAfter = winPos->hwndInsertAfter;
+
+      /* Some sanity checks */
+
+    if (!IsWindow( hwnd ) || (hwnd == GetDesktopWindow())) goto Abort;
+    if (flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW))
+	flags |= SWP_NOMOVE | SWP_NOSIZE;
+    if (!(flags & (SWP_NOZORDER | SWP_NOACTIVATE)))
+    {
+	if (hwnd != hwndActive) hwndInsertAfter = HWND_TOP;
+	else if ((hwndInsertAfter == HWND_TOPMOST) ||
+		 (hwndInsertAfter == HWND_NOTOPMOST))
+	    hwndInsertAfter = HWND_TOP;	
+    }
 
       /* Calculate new position and size */
 
@@ -485,8 +514,6 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, short x, short y,
 
     if (!(winPos->flags & SWP_NOZORDER))
     {
-	hwndInsertAfter = winPos->hwndInsertAfter;
-
 	  /* TOPMOST not supported yet */
 	if ((hwndInsertAfter == HWND_TOPMOST) ||
 	    (hwndInsertAfter == HWND_NOTOPMOST)) hwndInsertAfter = HWND_TOP;
@@ -571,6 +598,12 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, short x, short y,
     {
 	wndPtr->dwStyle |= WS_VISIBLE;
 	XMapWindow( display, wndPtr->window );
+	MSG_Synchronize();
+	if (!(winPos->flags & SWP_NOREDRAW))
+	    RedrawWindow( hwnd, NULL, 0, RDW_INVALIDATE | RDW_ERASE |
+			  RDW_ERASENOW | RDW_FRAME );
+	else RedrawWindow( hwnd, NULL, 0, RDW_VALIDATE );
+	
     }
     else if (winPos->flags & SWP_HIDEWINDOW)
     {

@@ -1,12 +1,16 @@
+#ifndef WINELIB
 static char RCSId[] = "$Id: selector.c,v 1.3 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
+
 #ifdef __linux__
 #include <linux/unistd.h>
 #include <linux/head.h>
@@ -16,14 +20,16 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #endif
 #if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <sys/mman.h>
+#include <machine/segments.h>
 #endif
-#include <errno.h>
+
 #include "neexe.h"
 #include "segmem.h"
-#include "prototypes.h"
 #include "wine.h"
+#include "windows.h"
+#include "prototypes.h"
 
-/* #define DEBUG_SELECTORS /* */
+/* #define DEBUG_SELECTORS */
 
 #ifdef linux
 #define DEV_ZERO
@@ -31,7 +37,6 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #endif
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)
-#include <machine/segments.h>
 #define PAGE_SIZE getpagesize()
 #define MODIFY_LDT_CONTENTS_DATA	0
 #define MODIFY_LDT_CONTENTS_STACK	1
@@ -214,8 +219,7 @@ IPCCopySelector(int i_old, unsigned long new, int swap_type)
  * This is very bad!!!  This function is implemented for Windows
  * compatibility only.  Do not call this from the emulation library.
  */
-unsigned int
-AllocSelector(unsigned int old_selector)
+WORD AllocSelector(WORD old_selector)
 {
     SEGDESC *s_new, *s_old;
     int i_new, i_old;
@@ -382,7 +386,7 @@ unsigned int PrestoChangoSelector(unsigned src_selector, unsigned dst_selector)
 /**********************************************************************
  *					AllocCStoDSAlias
  */
-AllocDStoCSAlias(unsigned int ds_selector)
+WORD AllocDStoCSAlias(WORD ds_selector)
 {
     unsigned int cs_selector;
     
@@ -396,7 +400,7 @@ AllocDStoCSAlias(unsigned int ds_selector)
 /**********************************************************************
  *					FreeSelector
  */
-unsigned int FreeSelector(unsigned int sel)
+WORD FreeSelector(WORD sel)
 {
     SEGDESC *s;
     int sel_idx;
@@ -694,10 +698,9 @@ GetEntryPointFromOrdinal(struct w_files * wpnt, int ordinal)
 /**********************************************************************
  *					GetDOSEnvironment
  */
-void *
-GetDOSEnvironment()
+LPSTR GetDOSEnvironment(void)
 {
-    return EnvironmentSelector->base_addr;
+    return (LPSTR) EnvironmentSelector->base_addr;
 }
 
 /**********************************************************************
@@ -916,3 +919,4 @@ CreateSelectors(struct  w_files * wpnt)
 
     return selectors;
 }
+#endif /* ifndef WINELIB */

@@ -17,6 +17,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "gdi.h"
 
+extern int COLOR_ToPhysical( DC *dc, COLORREF color );
+
 /***********************************************************************
  *           LineTo    (GDI.19)
  */
@@ -351,7 +353,7 @@ COLORREF SetPixel( HDC hdc, short x, short y, COLORREF color )
 
     x = dc->w.DCOrgX + XLPTODP( dc, x );
     y = dc->w.DCOrgY + YLPTODP( dc, y );
-    pixel = GetNearestPaletteIndex( dc->w.hPalette, color );
+    pixel = COLOR_ToPhysical( dc, color );
     GetPaletteEntries( dc->w.hPalette, pixel, 1, &entry );
     
     XSetForeground( XT_display, dc->u.x.gc, pixel );

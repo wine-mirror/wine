@@ -314,7 +314,7 @@ BOOL StretchBlt( HDC hdcDest, short xDest, short yDest, short widthDest, short h
     sxi = XGetImage(display, dcSrc->u.x.drawable, xs1, ys1, 
 	     widthSrc, heightSrc, AllPlanes, ZPixmap);
     dxi = XCreateImage(display, DefaultVisualOfScreen(screen),
-	  		    DefaultDepthOfScreen(screen), ZPixmap, 
+	  		    screenDepth, ZPixmap,
 			    0, NULL, widthDest, heightDest,
 			    32, 0);
     dxi->data = malloc(dxi->bytes_per_line * heightDest);

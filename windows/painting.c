@@ -25,8 +25,10 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
     if (!wndPtr) return 0;
 
     hrgnUpdate = wndPtr->hrgnUpdate;  /* Save update region */
-
-    if (!(lps->hdc = GetDCEx( hwnd, wndPtr->hrgnUpdate,
+    if (!hrgnUpdate)    /* Create an empty region */
+	if (!(hrgnUpdate = CreateRectRgn( 0, 0, 0, 0 ))) return 0;
+    
+    if (!(lps->hdc = GetDCEx( hwnd, hrgnUpdate,
 			      DCX_INTERSECTRGN | DCX_USESTYLE ))) return 0;
     GetRgnBox( InquireVisRgn(lps->hdc), &lps->rcPaint );
 
@@ -37,7 +39,7 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
     wndPtr->flags &= ~(WIN_NEEDS_BEGINPAINT | WIN_INTERNAL_PAINT);
 
     SendMessage( hwnd, WM_NCPAINT, hrgnUpdate, 0 );
-    if (hrgnUpdate) DeleteObject( hrgnUpdate );
+    DeleteObject( hrgnUpdate );
 
     if (!(wndPtr->flags & WIN_ERASE_UPDATERGN)) lps->fErase = TRUE;
     else lps->fErase = !SendMessage( hwnd, WM_ERASEBKGND, lps->hdc, 0 );

@@ -6,6 +6,8 @@
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
+#include <stdlib.h>
+#include <stdio.h>
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
@@ -21,7 +23,7 @@ typedef char *XPointer;
 
 #define NB_BUTTONS      3     /* Windows can handle 3 buttons */
 
-extern Display * display;
+extern int desktopX, desktopY;   /* misc/main.c */
 
 extern void WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg ); /*winpos.c*/
 
@@ -29,10 +31,10 @@ extern void WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg ); /*winpos.c*/
 static XContext winContext = 0;
 
   /* State variables */
+BOOL MouseButtonsStates[NB_BUTTONS] = { FALSE, FALSE, FALSE };
 static WORD ALTKeyState;
 static HWND captureWnd = 0;
 Window winHasCursor = 0;
-extern HWND hWndFocus;
 
 /* Keyboard translation tables */
 static int special_key[] =
@@ -117,13 +119,13 @@ static char *event_names[] =
 
   /* Event handlers */
 static void EVENT_key( HWND hwnd, XKeyEvent *event );
-static void EVENT_ButtonPress( HWND hwnd, XButtonEvent *event );
-static void EVENT_ButtonRelease( HWND hwnd, XButtonEvent *event );
-static void EVENT_MotionNotify( HWND hwnd, XMotionEvent *event );
-static void EVENT_EnterNotify( HWND hwnd, XCrossingEvent *event );
-static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event );
+static void EVENT_ButtonPress( XButtonEvent *event );
+static void EVENT_ButtonRelease( XButtonEvent *event );
+static void EVENT_MotionNotify( XMotionEvent *event );
+static void EVENT_EnterNotify( XCrossingEvent *event );
 static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event );
 static void EVENT_Expose( HWND hwnd, XExposeEvent *event );
+static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event );
 
 
 /***********************************************************************
@@ -151,23 +153,19 @@ void EVENT_ProcessEvent( XEvent *event )
 	break;
 	
     case ButtonPress:
-	EVENT_ButtonPress( hwnd, (XButtonEvent*)event );
+	EVENT_ButtonPress( (XButtonEvent*)event );
 	break;
 
     case ButtonRelease:
-	EVENT_ButtonRelease( hwnd, (XButtonEvent*)event );
+	EVENT_ButtonRelease( (XButtonEvent*)event );
 	break;
 
     case MotionNotify:
-	EVENT_MotionNotify( hwnd, (XMotionEvent*)event );
+	EVENT_MotionNotify( (XMotionEvent*)event );
 	break;
 
     case EnterNotify:
-	EVENT_EnterNotify( hwnd, (XCrossingEvent*)event );
-	break;
-
-    case FocusIn:
-	EVENT_FocusIn( hwnd, (XFocusChangeEvent*)event );
+	EVENT_EnterNotify( (XCrossingEvent*)event );
 	break;
 
     case FocusOut:
@@ -176,6 +174,10 @@ void EVENT_ProcessEvent( XEvent *event )
 
     case Expose:
 	EVENT_Expose( hwnd, (XExposeEvent*)event );
+	break;
+
+    case ConfigureNotify:
+	EVENT_ConfigureNotify( hwnd, (XConfigureEvent*)event );
 	break;
 
 #ifdef DEBUG_EVENT
@@ -225,8 +227,10 @@ static WORD EVENT_XStateToKeyState( int state )
 static void EVENT_Expose( HWND hwnd, XExposeEvent *event )
 {
     RECT rect;
+    UINT flags;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return;
+
       /* Make position relative to client area instead of window */
     rect.left = event->x - (wndPtr->rectClient.left - wndPtr->rectWindow.left);
     rect.top  = event->y - (wndPtr->rectClient.top - wndPtr->rectWindow.top);
@@ -234,8 +238,10 @@ static void EVENT_Expose( HWND hwnd, XExposeEvent *event )
     rect.bottom = rect.top + event->height;
     winHasCursor = event->window;
 
-    RedrawWindow( hwnd, &rect, 0,
-		  RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_NOCHILDREN );
+    flags = RDW_INVALIDATE | RDW_ERASE | RDW_FRAME;
+      /* Erase desktop background synchronously */
+    if (event->window == rootWindow) flags |= RDW_ERASENOW | RDW_NOCHILDREN;
+    RedrawWindow( hwnd, &rect, 0, flags );
 }
 
 
@@ -252,7 +258,7 @@ static void EVENT_key( HWND hwnd, XKeyEvent *event )
     WORD xkey, vkey, key_type, key;
     KEYLP keylp;
     BOOL extended = FALSE;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
+
     int count = XLookupString(event, Str, 1, &keysym, &cs);
     Str[count] = '\0';
 #ifdef DEBUG_KEY
@@ -260,22 +266,12 @@ static void EVENT_key( HWND hwnd, XKeyEvent *event )
 	   keysym, count, Str[0], Str);
 #endif
 
-    if (wndPtr->dwStyle & WS_DISABLED) {
-	if (event->type == KeyPress) XBell(display, 0);
-	return;
-    }
-
-
     xkey = LOWORD(keysym);
     key_type = HIBYTE(xkey);
     key = LOBYTE(xkey);
 #ifdef DEBUG_KEY
     printf("            key_type=%X, key=%X\n", key_type, key);
 #endif
-
-      /* Position must be relative to client area */
-    event->x -= wndPtr->rectClient.left - wndPtr->rectWindow.left;
-    event->y -= wndPtr->rectClient.top - wndPtr->rectWindow.top;
 
     if (key_type == 0xFF)                          /* non-character key */
     {
@@ -320,9 +316,9 @@ static void EVENT_key( HWND hwnd, XKeyEvent *event )
 #ifdef DEBUG_KEY
 	printf("            wParam=%X, lParam=%lX\n", vkey, keylp.lp2 );
 #endif
-	hardware_event( hwnd, ALTKeyState ? WM_SYSKEYDOWN : WM_KEYDOWN, 
+	hardware_event( ALTKeyState ? WM_SYSKEYDOWN : WM_KEYDOWN, 
 		        vkey, keylp.lp2,
-		        event->x_root & 0xffff, event->y_root & 0xffff,
+		        event->x_root - desktopX, event->y_root - desktopY,
 		        event->time, 0 );
 	KeyDown = TRUE;
 
@@ -351,11 +347,10 @@ static void EVENT_key( HWND hwnd, XKeyEvent *event )
 #ifdef DEBUG_KEY
 	printf("            wParam=%X, lParam=%lX\n", vkey, keylp.lp2 );
 #endif
-	hardware_event( hwnd, 
-		        ((ALTKeyState || vkey == VK_MENU) ? 
+	hardware_event( ((ALTKeyState || vkey == VK_MENU) ? 
 			 WM_SYSKEYUP : WM_KEYUP), 
 		        vkey, keylp.lp2,
-		        event->x_root & 0xffff, event->y_root & 0xffff,
+		        event->x_root - desktopX, event->y_root - desktopY,
 		        event->time, 0 );
 	KeyDown = FALSE;
     }
@@ -365,138 +360,84 @@ static void EVENT_key( HWND hwnd, XKeyEvent *event )
 /***********************************************************************
  *           EVENT_MotionNotify
  */
-static void EVENT_MotionNotify( HWND hwnd, XMotionEvent *event )
+static void EVENT_MotionNotify( XMotionEvent *event )
 {
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-
-    if (!wndPtr) return;
-    if (wndPtr->dwStyle & WS_DISABLED) {
-        return;
-    }
-
-
-    hardware_event( hwnd, WM_MOUSEMOVE,
-		    EVENT_XStateToKeyState( event->state ), 0L,
-		    event->x_root & 0xffff, event->y_root & 0xffff,
-		    event->time, 0 );		    
+    hardware_event( WM_MOUSEMOVE, EVENT_XStateToKeyState( event->state ), 0L,
+		    event->x_root - desktopX, event->y_root - desktopY,
+		    event->time, 0 );
 }
 
 
 /***********************************************************************
  *           EVENT_ButtonPress
  */
-static void EVENT_ButtonPress( HWND hwnd, XButtonEvent *event )
+static void EVENT_ButtonPress( XButtonEvent *event )
 {
     static WORD messages[NB_BUTTONS] = 
         { WM_LBUTTONDOWN, WM_MBUTTONDOWN, WM_RBUTTONDOWN };
     int buttonNum = event->button - 1;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
 
-    if (!wndPtr)  { 
-	printf("couldn't find window\n");
-	return;
-    }
-    if (wndPtr->dwStyle & WS_DISABLED) {
-	XBell(display, 0);
-        return;
-    }
-
-	
-
-    if (buttonNum >= NB_BUTTONS) return;    
+    if (buttonNum >= NB_BUTTONS) return;
+    MouseButtonsStates[buttonNum] = TRUE;
     winHasCursor = event->window;
-    hardware_event( hwnd, messages[buttonNum],
+    hardware_event( messages[buttonNum],
 		    EVENT_XStateToKeyState( event->state ), 0L,
-		    event->x_root & 0xffff, event->y_root & 0xffff,
-		    event->time, 0 );		    
+		    event->x_root - desktopX, event->y_root - desktopY,
+		    event->time, 0 );
 }
 
 
 /***********************************************************************
  *           EVENT_ButtonRelease
  */
-static void EVENT_ButtonRelease( HWND hwnd, XButtonEvent *event )
+static void EVENT_ButtonRelease( XButtonEvent *event )
 {
     static const WORD messages[NB_BUTTONS] = 
         { WM_LBUTTONUP, WM_MBUTTONUP, WM_RBUTTONUP };
     int buttonNum = event->button - 1;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-
-    if (!wndPtr) return;
-    if (wndPtr->dwStyle & WS_DISABLED) {
-        return;
-    } 
-
 
     if (buttonNum >= NB_BUTTONS) return;    
+    MouseButtonsStates[buttonNum] = FALSE;
     winHasCursor = event->window;
-    hardware_event( hwnd, messages[buttonNum],
+    hardware_event( messages[buttonNum],
 		    EVENT_XStateToKeyState( event->state ), 0L,
-		    event->x_root & 0xffff, event->y_root & 0xffff,
-		    event->time, 0 );		    
-}
-
-
-/**********************************************************************
- *              EVENT_FocusIn
- */
-static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event )
-{
-
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-
-    if (!wndPtr) return;
-    if (wndPtr->dwStyle & WS_DISABLED) {
-	return;
-    }
-
-
-    PostMessage( hwnd, WM_SETFOCUS, hwnd, 0 );
-    hWndFocus = hwnd;
+		    event->x_root - desktopX, event->y_root - desktopY,
+		    event->time, 0 );
 }
 
 
 /**********************************************************************
  *              EVENT_FocusOut
+ *
+ * Note: only top-level override-redirect windows get FocusOut events.
  */
 static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
 {
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return;
-
+    if (event->detail == NotifyPointer) return;
     if (hwnd == GetActiveWindow()) WINPOS_ChangeActiveWindow( 0, FALSE );
-
-    if (wndPtr->dwStyle & WS_DISABLED) {
-	return;
-    }
-
-    if (hWndFocus)
-    {
-	PostMessage( hwnd, WM_KILLFOCUS, hwnd, 0 );
-	hWndFocus = 0;
-    }
+    if ((hwnd == GetFocus()) || IsChild( hwnd, GetFocus())) SetFocus( 0 );
 }
 
 
 /**********************************************************************
  *              EVENT_EnterNotify
  */
-static void EVENT_EnterNotify( HWND hwnd, XCrossingEvent *event )
+static void EVENT_EnterNotify( XCrossingEvent *event )
 {
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-
-    if (!wndPtr) return;
-    if (wndPtr->dwStyle & WS_DISABLED) {
-	return;
-    }
-
     if (captureWnd != 0) return;
     winHasCursor = event->window;
-      /* Simulate a mouse motion to set the correct cursor */
-    hardware_event( hwnd, WM_MOUSEMOVE,
-		    EVENT_XStateToKeyState( event->state ), 0L,
-		    event->x_root & 0xffff, event->y_root & 0xffff,
-		    event->time, 0 );		    
+}
+
+
+/**********************************************************************
+ *              EVENT_ConfigureNotify
+ *
+ * The ConfigureNotify event is only selected on the desktop window.
+ */
+static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
+{
+    desktopX = event->x;
+    desktopY = event->y;
 }
 
 
@@ -529,15 +470,7 @@ HWND SetCapture(HWND wnd)
  */
 void ReleaseCapture()
 {
-    WND *wnd_p;
-    
-    if (captureWnd == 0)
-	return;
-    
-    wnd_p = WIN_FindWndPtr(captureWnd);
-    if (wnd_p == NULL)
-	return;
-    
+    if (captureWnd == 0) return;
     XUngrabPointer( display, CurrentTime );
     captureWnd = 0;
 }

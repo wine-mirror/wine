@@ -28,15 +28,17 @@ typedef struct tagMENUITEM
 
 typedef struct tagPOPUPMENU
 {
-    HWND	hWnd;			/* PopupMenu window handle	  */
-    HWND	hWndParent;		/* Parent opupMenu window handle  */
-    HWND	ownerWnd;		/* Owner window			  */
-    WORD	nItems;    		/* Number of items on menu	  */
+    HWND	hWnd;			/* PopupMenu window handle	  		*/
+    HWND	hWndParent;		/* Parent PopupMenu window handle  	*/
+    HWND	ownerWnd;		/* Owner window			  			*/
+    HWND	hWndPrev;		/* Previous Window Focus Owner 		*/
+    WORD	nItems;    		/* Number of items on menu			*/
     MENUITEM   *firstItem;
     WORD	FocusedItem;
     WORD	MouseFlags;
-    WORD	BarFlags;
-    BOOL	SysFlag;
+    BOOL	BarFlag;		/* TRUE if menu is a MENUBAR		*/
+    BOOL	SysFlag; 		/* TRUE if menu is a SYSMENU		*/
+    BOOL	ChildFlag;		/* TRUE if child of other menu		*/
     WORD	Width;
     WORD	Height;
     WORD	CheckWidth;
@@ -64,7 +66,7 @@ typedef struct
 } MENUITEMTEMPLATE;
 
 void StdDrawMenuBar(HDC hDC, LPRECT lprect, LPPOPUPMENU lppop);
-void MenuButtonDown(HWND hWnd, LPPOPUPMENU lppop, int x, int y);
+BOOL MenuButtonDown(HWND hWnd, LPPOPUPMENU lppop, int x, int y);
 void MenuButtonUp(HWND hWnd, LPPOPUPMENU lppop, int x, int y);
 void MenuMouseMove(HWND hWnd, LPPOPUPMENU lppop, WORD wParam, int x, int y);
 extern void NC_TrackSysMenu(HWND hwnd);

@@ -1,6 +1,8 @@
 static char RCSId[] = "$Id: keyboard.c,v 1.2 1993/09/13 18:52:02 scott Exp $";
 static char Copyright[] = "Copyright  Scott A. Laird, 1993";
 
+#include <stdlib.h>
+#include <stdio.h>
 #include "prototypes.h"
 #include "windows.h"
 

@@ -6,10 +6,15 @@
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include "class.h"
 #include "user.h"
 #include "win.h"
 #include "dce.h"
+
+/* #define DEBUG_CLASS /* */
 
 
 static HCLASS firstClass = 0;
@@ -88,8 +93,9 @@ ATOM RegisterClass( LPWNDCLASS class )
     HCLASS handle, prevClass;
     
 #ifdef DEBUG_CLASS
-    printf( "RegisterClass: wndproc=%08x hinst=%d name='%s'\n", 
-	    class->lpfnWndProc, class->hInstance, class->lpszClassName );
+    printf( "RegisterClass: wndproc=%08x hinst=%d name='%s' background %x\n", 
+	    class->lpfnWndProc, class->hInstance, class->lpszClassName,
+	    class->hbrBackground );
 #endif
 
       /* Check if a class with this name already exists */
@@ -117,14 +123,25 @@ ATOM RegisterClass( LPWNDCLASS class )
     if (newClass->wc.style & CS_GLOBALCLASS)
 	newClass->atomName = GlobalAddAtom( class->lpszClassName );
     else newClass->atomName = AddAtom( class->lpszClassName );
+    newClass->wc.lpszClassName = NULL; 
 
     if (newClass->wc.style & CS_CLASSDC)
 	newClass->hdce = DCE_AllocDCE( DCE_CLASS_DC );
     else newClass->hdce = 0;
 
-      /* Menu name should also be set to zero. */
-    newClass->wc.lpszClassName = NULL; 
-    
+      /* Make a copy of the menu name (only if it is a string) */
+
+    if ((int)class->lpszMenuName & 0xffff0000)
+    {
+	HANDLE hname;
+	hname = USER_HEAP_ALLOC( GMEM_MOVEABLE, strlen(class->lpszMenuName)+1);
+	if (hname)
+	{
+	    newClass->wc.lpszMenuName = (char *)USER_HEAP_ADDR( hname );
+	    strcpy( newClass->wc.lpszMenuName, class->lpszMenuName );
+	}
+    }
+
     if (class->cbClsExtra) memset( newClass->wExtra, 0, class->cbClsExtra );
     firstClass = handle;
     return newClass->atomName;
@@ -136,7 +153,7 @@ ATOM RegisterClass( LPWNDCLASS class )
  */
 BOOL UnregisterClass( LPSTR className, HANDLE instance )
 {
-    HANDLE class, next, prevClass;
+    HANDLE class, prevClass;
     CLASS * classPtr, * prevClassPtr;
     
       /* Check if we can remove this class */
@@ -167,6 +184,8 @@ BOOL UnregisterClass( LPSTR className, HANDLE instance )
     if (classPtr->wc.hbrBackground) DeleteObject( classPtr->wc.hbrBackground );
     if (classPtr->wc.style & CS_GLOBALCLASS) GlobalDeleteAtom( classPtr->atomName );
     else DeleteAtom( classPtr->atomName );
+    if ((int)classPtr->wc.lpszMenuName & 0xffff0000)
+	USER_HEAP_FREE( (int)classPtr->wc.lpszMenuName & 0xffff );
     USER_HEAP_FREE( class );
     return TRUE;
 }

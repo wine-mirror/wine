@@ -17,6 +17,7 @@ MDESC *USER_Heap = NULL;
 extern BOOL ATOM_Init();
 extern BOOL GDI_Init();
 extern void SYSMETRICS_Init();
+extern BOOL WIN_CreateDesktopWindow();
 
 #ifndef WINELIB
 /***********************************************************************
@@ -44,6 +45,11 @@ USER_InitApp(int hInstance)
 
     SpyInit();
 
+#ifndef WINELIB    
+      /* Create USER heap */
+    if (!USER_HeapInit()) return 0;
+#endif
+    
       /* Global atom table initialisation */
     if (!ATOM_Init()) return 0;
     
@@ -54,11 +60,6 @@ USER_InitApp(int hInstance)
     SYSMETRICS_Init();
     SYSCOLOR_Init();
 
-#ifndef WINELIB    
-      /* Create USER heap */
-    if (!USER_HeapInit()) return 0;
-#endif
-    
       /* Create the DCEs */
     DCE_Init();
     
@@ -76,9 +77,14 @@ USER_InitApp(int hInstance)
     queueSize = GetProfileInt( "windows", "DefaultQueueSize", 8 );
     if (!SetMessageQueue( queueSize )) return 0;
 
+      /* Create desktop window */
+    if (!WIN_CreateDesktopWindow()) return 0;
+
+#if 1
 #ifndef WINELIB
     /* Initialize DLLs */
     InitializeLoadedDLLs();
+#endif
 #endif
         
     return 1;

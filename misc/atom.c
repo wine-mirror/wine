@@ -7,13 +7,6 @@
 /*
  * Current limitations:
  *
- * - This code should work fine when called from the emulation library,
- * but probably not when called from the Windows program.  The reason
- * is that everything is allocated on the current local heap, instead
- * of taking into account the DS register.  Correcting this will also
- * require some changes in the local heap management to bring it closer
- * to Windows.
- *
  * - The code assumes that LocalAlloc() returns a block aligned on a
  * 4-bytes boundary (because of the shifting done in HANDLETOATOM).
  * If this is not the case, the allocation code will have to be changed.
@@ -30,22 +23,35 @@
  * aligned block. Needed to test the Library.
  */
 
-#include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "user.h"
 #include "atom.h"
-
+#include "prototypes.h"
+#ifndef WINELIB
+#include "heap.h"
+#endif
 
 #define DEFAULT_ATOMTABLE_SIZE    37
 #define MIN_STR_ATOM              0xc000
 
+#ifdef WINELIB
+#define ATOMTOHANDLE
+#define HANDLETOATOM
+#else
 #define ATOMTOHANDLE(atom)        ((HANDLE)(atom) << 2)
 #define HANDLETOATOM(handle)      ((ATOM)(0xc000 | ((handle) >> 2)))
+#endif
 
-
+#ifdef WINELIB
 static ATOMTABLE * localTable = NULL;
+#undef LOCALATOMTABLE
+#define LOCALATOMTABLE() &localTable
+#endif
+
 static ATOMTABLE * globalTable = NULL;
 
 
@@ -56,17 +62,30 @@ static BOOL ATOM_InitTable( ATOMTABLE ** table, WORD entries )
 {
     int i;
     HANDLE handle;
+
+    if (table == &globalTable)
+    {
+	handle = USER_HEAP_ALLOC(LMEM_MOVEABLE, sizeof(ATOMTABLE) +
+				 (entries-1) * sizeof(HANDLE) );
+	if (!handle) 
+	    return FALSE;
+	*table = (ATOMTABLE *) USER_HEAP_ADDR( handle );
+    }
+    else
+    {
+	handle = LocalAlign ( LMEM_MOVEABLE, sizeof(ATOMTABLE) +
+			     (entries-1) * sizeof(HANDLE) );
+	if (!handle) 
+	    return FALSE;
+	*table = (ATOMTABLE *) LocalLock( handle );
+    }
     
-    handle = LocalAlign ( LMEM_MOVEABLE, sizeof(ATOMTABLE) +
-			 (entries-1) * sizeof(HANDLE) );
-    if (!handle) return FALSE;
-    *table = (ATOMTABLE *) LocalLock( handle );
     (*table)->size = entries;
-    for (i = 0; i < entries; i++) (*table)->entries[i] = 0;
+    for (i = 0; i < entries; i++) 
+	(*table)->entries[i] = 0;
     return TRUE;
     
 }
-
 
 /***********************************************************************
  *           ATOM_Init
@@ -87,7 +106,11 @@ BOOL ATOM_Init()
  */
 static ATOMENTRY * ATOM_MakePtr( ATOMTABLE * table, HANDLE handle )
 {
+#ifdef WINELIB
+    return (ATOMENTRY *) LocalLock (handle);
+#else
     return (ATOMENTRY *) (((int)table & 0xffff0000) | (int)handle);
+#endif
 }
 
 
@@ -132,8 +155,18 @@ static ATOM ATOM_AddAtom( ATOMTABLE * table, LPCSTR str )
 	}
 	entry = entryPtr->next;
     }
+
+    if (table == globalTable)
+    {
+	entry = (int) USER_HEAP_ALLOC(LMEM_MOVEABLE, 
+				      sizeof(ATOMENTRY)+len-1 ) & 0xffff;
+    }
+    else
+    {
+	entry = (int) LocalAlign(LMEM_MOVEABLE, 
+				 sizeof(ATOMENTRY)+len-1 ) & 0xffff;
+    }
     
-    entry = (int)LocalAlign( LMEM_MOVEABLE, sizeof(ATOMENTRY)+len-1 ) & 0xffff;
     if (!entry) return 0;
     entryPtr = ATOM_MakePtr( table, entry );
     entryPtr->next = table->entries[hash];
@@ -173,7 +206,10 @@ static ATOM ATOM_DeleteAtom( ATOMTABLE * table, ATOM atom )
     if (--entryPtr->refCount == 0)
     {
 	*prevEntry = entryPtr->next;	
-	USER_HEAP_FREE( entry );
+	if (table == globalTable)
+	    USER_HEAP_FREE(entry);
+	else
+	    LocalFree( entry );
     }    
     return 0;
 }
@@ -246,7 +282,7 @@ static WORD ATOM_GetAtomName( ATOMTABLE * table, ATOM atom,
  */
 BOOL InitAtomTable( WORD entries )
 {
-    return ATOM_InitTable( &localTable, entries );
+    return ATOM_InitTable( LOCALATOMTABLE(), entries );
 }
 
 
@@ -265,8 +301,8 @@ HANDLE GetAtomHandle( ATOM atom )
  */
 ATOM AddAtom( LPCSTR str )
 {
-    if (!localTable) InitAtomTable( DEFAULT_ATOMTABLE_SIZE );
-    return ATOM_AddAtom( localTable, str );
+    if (!*LOCALATOMTABLE()) InitAtomTable( DEFAULT_ATOMTABLE_SIZE );
+    return ATOM_AddAtom( *LOCALATOMTABLE(), str );
 }
 
 
@@ -275,8 +311,8 @@ ATOM AddAtom( LPCSTR str )
  */
 ATOM DeleteAtom( ATOM atom )
 {
-    if (!localTable) InitAtomTable( DEFAULT_ATOMTABLE_SIZE );
-    return ATOM_DeleteAtom( localTable, atom );
+    if (!*LOCALATOMTABLE()) InitAtomTable( DEFAULT_ATOMTABLE_SIZE );
+    return ATOM_DeleteAtom( *LOCALATOMTABLE(), atom );
 }
 
 
@@ -285,8 +321,8 @@ ATOM DeleteAtom( ATOM atom )
  */
 ATOM FindAtom( LPCSTR str )
 {
-    if (!localTable) InitAtomTable( DEFAULT_ATOMTABLE_SIZE );
-    return ATOM_FindAtom( localTable, str );
+    if (!*LOCALATOMTABLE()) InitAtomTable( DEFAULT_ATOMTABLE_SIZE );
+    return ATOM_FindAtom( *LOCALATOMTABLE(), str );
 }
 
 
@@ -295,8 +331,8 @@ ATOM FindAtom( LPCSTR str )
  */
 WORD GetAtomName( ATOM atom, LPSTR buffer, short count )
 {
-    if (!localTable) InitAtomTable( DEFAULT_ATOMTABLE_SIZE );
-    return ATOM_GetAtomName( localTable, atom, buffer, count );
+    if (!*LOCALATOMTABLE()) InitAtomTable( DEFAULT_ATOMTABLE_SIZE );
+    return ATOM_GetAtomName( *LOCALATOMTABLE(), atom, buffer, count );
 }
 
 

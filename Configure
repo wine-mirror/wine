@@ -2,12 +2,13 @@
 
 ALLDEFINES=''
 
+echo
 echo -n 'Build Wine as emulator or library (E/L) [E]? '
 read input
 if [ "$input" = 'l' -o "$input" = 'L' ]
 then
-    WINELIB='#define WineLib -DWINELIB'
-    ALLDEFINES=$ALLDEFINES -DWINELIB
+    WINELIB='#define WINELIB -DWINELIB'
+    ALLDEFINES="$ALLDEFINES -DWINELIB"
 else
     WINELIB=''
 fi
@@ -17,14 +18,40 @@ read input
 if [ "$input" = 'y' -o "$input" = 'Y' ]
 then
     SHORTNAMES='#define ShortNames -DSHORTNAMES'
-    ALLDEFINES=$ALLDEFINES -DSHORTNAMES
+    ALLDEFINES="$ALLDEFINES -DSHORTNAMES"
 else
     SHORTNAMES=''
+fi
+
+echo -n 'Global configfile name [/usr/local/etc/wine.conf]? '
+read input
+if [ "$input" = '' ]
+then
+    WINE_INI_GLOBAL='#define WINE_INI_GLOBAL "/usr/local/etc/wine.conf"'
+else
+    WINE_INI_GLOBAL='#define WINE_INI_GLOBAL "'$input'"'
+fi
+
+if [ "`(domainname)`" = 'amscons.com' ]
+then
+    echo -n 'New build program (Y/N) [N]? '
+    read input
+    if [ "$input" = 'y' -o "$input" = 'Y' ]
+    then
+	NEWBUILD='#define NewBuild -DNEWBUILD'
+	ALLDEFINES="$ALLDEFINES -DNEWBUILD"
+    else
+	NEWBUILD=''
+    fi
+else
+    NEWBUILD=''
 fi
 
 echo '/* autoconf.h generated automatically.  Run Configure. */' > autoconf.h
 echo $WINELIB >> autoconf.h
 echo $SHORTNAMES >> autoconf.h
+echo $NEWBUILD >> autoconf.h
+echo $WINE_INI_GLOBAL >> autoconf.h
 echo "#define AutoDefines  $ALLDEFINES" >> autoconf.h
 
 xmkmf -a

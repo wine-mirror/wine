@@ -963,7 +963,10 @@ static LONG UB_LButtonUp(HWND hWnd, WORD wParam, LONG lParam)
     ReleaseCapture();
     GetClientRect(hWnd, &rc);
     if (PtInRect(&rc, MAKEPOINT(lParam)))
+    {
+	NOTIFY_PARENT(hWnd, BN_CLICKED);
 	NOTIFY_PARENT(hWnd, BN_UNHILITE);
+    }
     InvalidateRect(hWnd, NULL, FALSE);
     UpdateWindow(hWnd);
 }

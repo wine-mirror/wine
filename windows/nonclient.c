@@ -522,7 +522,7 @@ static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
  * Paint the non-client area.
  * 'hrgn' is the update rgn to use (in client coords) or 1 if no update rgn.
  */
-static void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active )
+void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active )
 {
     HDC hdc;
     RECT rect, rect2;
@@ -648,7 +648,7 @@ static void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active )
  */
 LONG NC_HandleNCPaint( HWND hwnd, HRGN hrgn )
 {
-    NC_DoNCPaint( hwnd, hrgn, (hwnd == GetActiveWindow()) );
+    NC_DoNCPaint( hwnd, hrgn, hwnd == GetActiveWindow() );
     return 0;
 }
 
@@ -884,9 +884,9 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
 
     if (wndPtr->dwStyle & WS_CHILD) hdc = GetDC( wndPtr->hwndParent );
     else
-    {  /* Grab the server only when moving top-level windows */
+    {  /* Grab the server only when moving top-level windows without desktop */
 	hdc = GetDC( 0 );
-	XGrabServer( display );
+	if (rootWindow == DefaultRootWindow(display)) XGrabServer( display );
     }
     NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
 
@@ -951,7 +951,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
     else
     {
 	ReleaseDC( 0, hdc );
-	XUngrabServer( display );
+	if (rootWindow == DefaultRootWindow(display)) XUngrabServer( display );
     }
     SendMessage( hwnd, WM_EXITSIZEMOVE, 0, 0 );
 
@@ -1018,9 +1018,8 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
  */
 static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
 {
-    MSG msg;
-    WORD scrollbar;
-
+    MSG 	msg;
+    WORD 	scrollbar;
     if ((wParam & 0xfff0) == SC_HSCROLL)
     {
 	if ((wParam & 0x0f) != HTHSCROLL) return;
@@ -1071,26 +1070,27 @@ static void NC_TrackMouseMenuBar( HWND hwnd, WORD wParam, POINT pt )
 #endif
     ScreenToClient(hwnd, &pt);
     pt.y += lppop->rect.bottom;
-    MenuButtonDown(hwnd, lppop, pt.x, pt.y);
     SetCapture(hwnd);
-    do {
-	if (!GetMessage(&msg, (HWND)NULL, 0, 0)) break;
-	ScreenToClient(hwnd, &msg.pt);
-	msg.pt.y += lppop->rect.bottom;
-	switch(msg.message) {
-	case WM_LBUTTONUP:
-	    MenuButtonUp(hwnd, lppop, msg.pt.x, msg.pt.y);
-	    break;
-	case WM_MOUSEMOVE:
-	    MenuMouseMove(hwnd, lppop, msg.wParam, msg.pt.x, msg.pt.y);
-	    break;
-	default:
-	    TranslateMessage(&msg);
-	    DispatchMessage(&msg);
-	    break;
+    if (!MenuButtonDown(hwnd, lppop, pt.x, pt.y)) {
+	    do {
+		if (!GetMessage(&msg, (HWND)NULL, 0, 0)) break;
+		ScreenToClient(hwnd, &msg.pt);
+		msg.pt.y += lppop->rect.bottom;
+		switch(msg.message) {
+		case WM_LBUTTONUP:
+		    MenuButtonUp(hwnd, lppop, msg.pt.x, msg.pt.y);
+		    break;
+		case WM_MOUSEMOVE:
+		    MenuMouseMove(hwnd, lppop, msg.wParam, msg.pt.x, msg.pt.y);
+		    break;
+		default:
+		    TranslateMessage(&msg);
+		    DispatchMessage(&msg);
+		    break;
+		}
+	    } while (msg.message != WM_LBUTTONUP);
+	    ReleaseCapture();
 	}
-    } while (msg.message != WM_LBUTTONUP);
-    ReleaseCapture();
     GlobalUnlock(wndPtr->wIDmenu);
 }
 
@@ -1216,6 +1216,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt )
 
     case SC_VSCROLL:
     case SC_HSCROLL:
+    if (wndPtr->dwStyle & WS_CHILD) ClientToScreen(wndPtr->hwndParent, &pt);
 	NC_TrackScrollBar( hwnd, wParam, pt );
 	break;
 

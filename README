@@ -2,7 +2,9 @@ Copyright  Robert J. Amstadt, 1993.  All code is provided without
 warranty.  All code is covered by the license contained in the file
 LICENSE unless explicitly stated in the individual source file.
 
-INSTALLATION:
+
+
+1. COMPILATION:
 
 You must have one of:
 
@@ -11,21 +13,103 @@ You must have one of:
 	FreeBSD-current or FreeBSD 1.1
 
 To build Wine, first do a "./Configure" and then a "make".  The
-executable "wine" will be built.  "wine" will load and run Windows'
-executables.  You must have a file "wine.ini" in the current directory,
-your home directory, or in the path specified by the environment 
-variable WINEPATH. Multiple directories in WINEPATH should be seperated
-by semi-colons and NOT by colons!
+executable "wine" will be built.  "wine" will load and run 16-bit
+Windows' executables. 
 
-You must specify the entire path to the executable, or a filename only
-(using the path= statement in wine.ini as the search path)
+
+
+2. SETUP:
+
+Wine requires you to have a file /usr/local/etc/wine.conf (you can
+supply a different name when configuring wine) or a file called .winerc
+in your homedirectory.
+
+The formatstyle of this config file is just like a windows .ini file.
+
+Here's an explanation of each section:
+
+* [drives]
+
+format: <driveletter> = <rootdirectory>
+default: none
+
+This section is used to specify the root directory of each `dos'drive 
+as windows' applications require a dos/mswindows based diskdrive & 
+directory scheme. 
+
+If you mounted you dos-partition as /dos and installed microsoft windows 
+in c:\windows than you should specify c=/dos in the drives section.
+
+* [wine]
+
+format: windows = <directory>
+default: c:\windows
+
+Used to specify an different windows directory.
+
+format: system = <directory>
+default: c:\windows\system
+
+Used to specify an different system directory.
+
+format: temp = <directory>
+default: c:\temp
+
+Used to specify a directory where windows applications can store temporary
+files.
+
+format: path = <directories separated by semi-colons>
+default: c:\windows;c:\windows\system
+
+Used to specify the path which will be used to find executables and DLL's.
+
+format: systemresources = <filename>
+default: c:\temp
+
+Used to specify the name of sysres.dll, a dll which is used by wine itself.
+
+* [serialports]
+
+format: com[12345678] = <devicename>
+default: none
+
+Used to specify the devices which are used as com1 - com8.
+
+* [parallelports]
+
+format: lpt[12345678] = <devicename>
+default: none
+
+Used to specify the devices which are used as lpt1 - lpt8.
+
+* [spy]
+
+format: file = <filename or CON when logging to stdout>
+default: none
+
+used to specify the file which will be used as logfile.
+
+format: exclude = <message names separated by semicolons>
+default: none
+
+Used to specify which messages will be excluded from the logfile.
+
+format: include = <message names separated by semicolons>
+default: none
+
+Used to specify which messages will be included in the logfile.
+
+
+
+3. RUNNING PROGRAMS
+
+When invoking wine, you must specify the entire path to the executable,
+or a filename only.
 
 For example: to run Windows' solitaire:
 
-	export WINEPATH=/etc;/usr/windows
-
-	wine sol		   (using the path= statement in wine.ini
-	wine sol.exe		    as the search path)
+	wine sol		   (using the searchpath to locate the file)
+	wine sol.exe
 
 	wine c:\\windows\\sol.exe  (using a dosfilename)
 
@@ -33,6 +117,93 @@ For example: to run Windows' solitaire:
 
 Have a nice game of solitaire, but be careful.  Emulation isn't perfect.
 So, occassionally it will crash.
+
+
+
+4. EXAMPLE CONFIGFILE
+
+----------------------------------------------------------------------------
+[drives]
+a=/mnt/fd0
+c=/dos
+d=~/Wine
+
+[wine]
+windows=c:\windows
+system=c:\windows\system
+temp=c:\temp
+path=c:\windows;c:\windows\system;c:\winapps\word\;c:\winapps\pctools
+systemresources=./sysres.dll
+
+[serialports]
+com1=/dev/cua1
+com2=/dev/cua1
+
+[parallelports]
+lpt1=/dev/lp0
+
+[spy]
+;File=CON
+;File=spy.log
+Exclude=WM_TIMER;WM_SETCURSOR;WM_MOUSEMOVE;WM_NCHITTEST;WM_NCACTIVATE;WM_GETDLGCODE;
+Include=WM_COMMAND;
+
+----------------------------------------------------------------------------
+
+
+5. BUILD:
+
+    The documentation for the build program is in the file build-spec.txt
+
+
+6. FINALE:
+
+Good luck,
+
+	If you successfully add anything, please send me a copy.
+
+Bob Amstadt
+bob@amscons.com
+
+
+7. WHAT'S NEW
+
+WHAT'S NEW with Wine-940405: (see ChangeLog for details)
+	- Mouse activation of menus working again
+	- GetprocAddress()
+	- SetDIBitsToDevice()
+	- FindWindow()
+	- int 10hm 25h and 26h
+	- in, inb, out, outb emulation
+	- and many many bug fixes!
+
+WHAT'S NEW with Wine-940329: (see ChangeLog for details)
+	- MDI: child windows can be created, activated and cascaded.
+	- -depth option
+	- support for dithered brushes
+	- GetNearestColor(), RealizeDefaultPalette(), 
+	  GetSystemPaletteEntries(), and SelectPalette()
+	- System colors read from WIN.INI
+	- Keyboard menu manipulation (mouse is temporarily broken)
+	- GetFreeSystemResources()
+	- and many many bug fixes!
+
+WHAT'S NEW with Wine-940322: (see ChangeLog for details)
+	- Speed improvements in bitmaps and mouse messages
+	- More MDI support.  More to come next week...
+	- and many many bug fixes!
+
+WHAT'S NEW with Wine-940315: (see ChangeLog for details)
+	- Beginnings of MDI support.  More to come next week...
+	- Stress DLL
+	- and many many bug fixes!
+
+WHAT'S NEW with Wine-940309: (see ChangeLog for details)
+	- New "exclude" and "include" filters for spy feature.  See sample
+	  wine.ini for details.
+	- -desktop and -name options (see ChangeLog)
+	- GetFreeSpace() and CreateIcon()
+	- and many many bug fixes!
 
 WHAT'S NEW with Wine-940301: (see ChangeLog for details)
 	- NEW Configure script to set compile time options!
@@ -299,27 +470,3 @@ WHAT'S NEW with version 0.0.1:
       library routines.  A brief description of how to build these
       specifications is included in the file "build-spec.txt".
     - The code to dispatch builtin DLL calls is complete, but untested.
-
-TODO:
-
-    - Segment fixup code completion.
-    - Trap and handle DOS and DPMI calls.
-    - GlobalAlloc of code segments.
-    - Rewrite global memory support including kernel mods to allow
-      application to mess with page map.
-    - Handle self-loading applications.
-    - Resource loading
-    - Lots and lots of API fiunctions.
-
-BUILD:
-
-    The documentation for the build program is in the file build-spec.txt
-
-FINALE:
-
-Good luck,
-
-	If you successfully add anything, please send me a copy.
-
-Bob Amstadt
-bob@amscons.com

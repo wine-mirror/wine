@@ -1,1 +1,5 @@
 - EBP and ESP are sometimes corrupted while running 16-bit code.
+- Dialog Boxes created by WM_CREATE handler aren't visible
+- RegisterClass() with hbrBackground = COLOR_APPWORKSPACE+1 does not work.
+- MDI client area needs to resize when frame does
+- Need to generate WM_CHILDACTIVATE

@@ -1,6 +1,7 @@
-#ifndef INT21_H
-#define INT21_H
+#ifndef __MSDOS_H
+#define __MSDOS_H
 #include <dirent.h>
+#include <windows.h>
 
 struct dosdirent {
 	int  inuse;
@@ -11,20 +12,9 @@ struct dosdirent {
 	char attribute;
 	long filesize;
 	long filetime;
-	long filedate;
 };
 
-struct diskinfo {
-	unsigned int infolevel;
-	unsigned long serialnumber;
-	char	label[11];
-	char	fstype[8];
-};
-
-#define DosVersion 	  0x0303;
-
-#define SectorSize 	  0x200;
-#define SectorsPerCluster 0x04;
+#define DOSVERSION 0x0330;
 
 #define EAX context->sc_eax
 #define EBX context->sc_ebx
@@ -45,12 +35,38 @@ struct diskinfo {
 
 #define EFL context->sc_efl
 
-#define pointer(a,b) 	(((unsigned int) a << 16) | b)
-#define segment(a) 	(a >> 16)
-#define offset(a)	(a & 0xffff)
-
 #define SetCflag	(EFL |= 0x00000001L)
 #define ResetCflag	(EFL &= 0xfffffffeL)
+
+#define pointer(a,b) 	(BYTE*)(((WORD) a << 16) | b)
+#define segment(a) 	((DWORD)a >> 16)
+#define offset(a)	((DWORD)a & 0xffff)
+
+#define setword(a,b)	*(BYTE*)a	= b & 0xff; \
+			*((BYTE*)a + 1) = (b>>8) & 0xff;
+			
+#define setdword(a,b)	*(BYTE*)a	= b & 0xff; \
+			*((BYTE*)a + 1) = (b>>8) & 0xff; \
+			*((BYTE*)a + 2) = (b>>16) & 0xff; \
+			*((BYTE*)a + 3) = (b>>24) & 0xff;
+
+#define getword(a)	(WORD) *(BYTE*)a + \
+			(*((BYTE*)a + 1) << 8)
+
+#define getdword(a)	(DWORD) (*(BYTE*)a + \
+			(*((BYTE*)a + 1) << 8) + \
+			(*((BYTE*)a + 2) << 16) + \
+			(*((BYTE*)a + 3) << 24))
+
+/* dos file attributes */
+
+#define FA_NORMAL   0x00        /* Normal file, no attributes */
+#define FA_RDONLY   0x01        /* Read only attribute */
+#define FA_HIDDEN   0x02        /* Hidden file */
+#define FA_SYSTEM   0x04        /* System file */
+#define FA_LABEL    0x08        /* Volume label */
+#define FA_DIREC    0x10        /* Directory */
+#define FA_ARCH     0x20        /* Archive */
 
 /* extended error codes */
 
@@ -113,4 +129,4 @@ struct diskinfo {
 #define EL_Network	0x03
 #define EL_Memory	0x05
 
-#endif /* INT21_H */
+#endif /* __MSDOS_H */

@@ -7,16 +7,17 @@
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include <stdlib.h>
-
+#include <string.h>
 #include "gdi.h"
-
-extern HBITMAP BITMAP_hbitmapMemDC;
+#include "bitmap.h"
 
 static DeviceCaps * displayDevCaps = NULL;
 
 extern const WIN_DC_INFO DCVAL_defaultValues;
 
-extern void CLIPPING_SetDeviceClipping( DC * dc );  /* in objects/clipping.c */
+extern void CLIPPING_SetDeviceClipping( DC * dc );     /* objects/clipping.c */
+extern WORD COLOR_ToPhysical( DC *dc, COLORREF color );/* objects/color.c */
+extern void COLOR_SetMapping( DC *dc, HANDLE, WORD );  /* objects/color.c */
 
 
   /* ROP code to GC function conversion */
@@ -50,11 +51,11 @@ void DC_FillDevCaps( DeviceCaps * caps )
 {
     caps->version       = 0x300; 
     caps->technology    = DT_RASDISPLAY;
-    caps->horzSize      = WidthMMOfScreen( XT_screen );
-    caps->vertSize      = HeightMMOfScreen( XT_screen );
-    caps->horzRes       = WidthOfScreen( XT_screen );
-    caps->vertRes       = HeightOfScreen( XT_screen );
-    caps->bitsPixel     = DefaultDepthOfScreen( XT_screen );
+    caps->horzSize      = WidthMMOfScreen(screen) * screenWidth / WidthOfScreen(screen);
+    caps->vertSize      = HeightMMOfScreen(screen) * screenHeight / HeightOfScreen(screen);
+    caps->horzRes       = screenWidth;
+    caps->vertRes       = screenHeight;
+    caps->bitsPixel     = screenDepth;
     caps->planes        = 1;
     caps->numBrushes    = 0;
     caps->numPens       = 0;
@@ -81,26 +82,26 @@ void DC_FillDevCaps( DeviceCaps * caps )
     caps->aspectXY      = 51;
     caps->logPixelsX    = (int)(caps->horzRes * 25.4 / caps->horzSize);
     caps->logPixelsY    = (int)(caps->vertRes * 25.4 / caps->vertSize);
-    caps->sizePalette   = DefaultVisual( XT_display, DefaultScreen(XT_display) )->map_entries;
+    caps->sizePalette   = DefaultVisual(display,DefaultScreen(display))->map_entries;
     caps->numReserved   = 0;
     caps->colorRes      = 0;
 }
 
 
 /***********************************************************************
- *           DC_SetDeviceInfo
+ *           DC_InitDC
  *
- * Set device-specific info from device-independent info.
+ * Setup device-specific DC values for a newly created DC.
  */
-void DC_SetDeviceInfo( HDC hdc, DC * dc )
+static void DC_InitDC( HDC hdc )
 {
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    RealizeDefaultPalette( hdc );
     SetTextColor( hdc, dc->w.textColor );
     SetBkColor( hdc, dc->w.backgroundColor );
-    SetROP2( hdc, dc->w.ROPmode );
     SelectObject( hdc, dc->w.hPen );
     SelectObject( hdc, dc->w.hBrush );
     SelectObject( hdc, dc->w.hFont );
-    
     XSetGraphicsExposures( XT_display, dc->u.x.gc, False );
     CLIPPING_SetDeviceClipping( dc );
 }
@@ -114,6 +115,9 @@ void DC_SetDeviceInfo( HDC hdc, DC * dc )
  */
 int DC_SetupGCForBrush( DC * dc )
 {
+    XGCValues val;
+    unsigned long mask = 0;
+
     if (dc->u.x.brush.style == BS_NULL) return 0;
     if (dc->u.x.brush.pixel == -1)
     {
@@ -121,26 +125,34 @@ int DC_SetupGCForBrush( DC * dc )
 	 * We need to swap foreground and background because
 	 * Windows does it the wrong way...
 	 */
-	XSetForeground( XT_display, dc->u.x.gc, dc->w.backgroundPixel );
-	XSetBackground( XT_display, dc->u.x.gc, dc->w.textPixel );
+	val.foreground = dc->w.backgroundPixel;
+	val.background = dc->w.textPixel;
     }
     else
     {
-	XSetForeground( XT_display, dc->u.x.gc, dc->u.x.brush.pixel );
-	XSetBackground( XT_display, dc->u.x.gc, dc->w.backgroundPixel );
+	val.foreground = dc->u.x.brush.pixel;
+	val.background = dc->w.backgroundPixel;
     }
-
-    if (dc->u.x.brush.fillStyle != FillStippled)
-	XSetFillStyle( XT_display, dc->u.x.gc, dc->u.x.brush.fillStyle );
-    else
-	XSetFillStyle( XT_display, dc->u.x.gc,
-		       (dc->w.backgroundMode == OPAQUE) ? 
-		          FillOpaqueStippled : FillStippled );
-    XSetTSOrigin( XT_display, dc->u.x.gc, dc->w.DCOrgX + dc->w.brushOrgX,
-		  dc->w.DCOrgY + dc->w.brushOrgY );
-    XSetFunction( XT_display, dc->u.x.gc, DC_XROPfunction[dc->w.ROPmode-1] );
-    XSetFillRule( XT_display, dc->u.x.gc, 
-		 (dc->w.polyFillMode == WINDING) ? WindingRule : EvenOddRule );
+    val.function = DC_XROPfunction[dc->w.ROPmode-1];
+    val.fill_style = dc->u.x.brush.fillStyle;
+    if (val.fill_style == FillStippled)
+    {
+	if (dc->w.backgroundMode==OPAQUE) val.fill_style = FillOpaqueStippled;
+	val.stipple = dc->u.x.brush.pixmap;
+	mask = GCStipple;
+    }
+    else if (val.fill_style == FillTiled)
+    {
+	val.tile = dc->u.x.brush.pixmap;
+	mask = GCTile;
+    }
+    val.ts_x_origin = dc->w.DCOrgX + dc->w.brushOrgX;
+    val.ts_y_origin = dc->w.DCOrgY + dc->w.brushOrgY;
+    val.fill_rule = (dc->w.polyFillMode==WINDING) ? WindingRule : EvenOddRule;
+    XChangeGC( display, dc->u.x.gc, 
+	       GCFunction | GCForeground | GCBackground | GCFillStyle |
+	       GCFillRule | GCTileStipXOrigin | GCTileStipYOrigin | mask,
+	       &val );
     return 1;
 }
 
@@ -153,23 +165,27 @@ int DC_SetupGCForBrush( DC * dc )
  */
 int DC_SetupGCForPen( DC * dc )
 {
+    XGCValues val;
+
     if (dc->u.x.pen.style == PS_NULL) return 0;
-    XSetForeground( XT_display, dc->u.x.gc, dc->u.x.pen.pixel );
-    XSetBackground( XT_display, dc->u.x.gc, dc->w.backgroundPixel );
-    XSetFillStyle( XT_display, dc->u.x.gc, FillSolid );
-    if ((dc->u.x.pen.style == PS_SOLID) ||
-	(dc->u.x.pen.style == PS_INSIDEFRAME))
+    val.function   = DC_XROPfunction[dc->w.ROPmode-1];
+    val.foreground = dc->u.x.pen.pixel;
+    val.background = dc->w.backgroundPixel;
+    val.fill_style = FillSolid;
+    if ((dc->u.x.pen.style!=PS_SOLID) && (dc->u.x.pen.style!=PS_INSIDEFRAME))
     {
-	XSetLineAttributes( XT_display, dc->u.x.gc, dc->u.x.pen.width, 
-			    LineSolid, CapRound, JoinBevel );    
+	XSetDashes( display, dc->u.x.gc, 0,
+		    dc->u.x.pen.dashes, dc->u.x.pen.dash_len );
+	val.line_style = (dc->w.backgroundMode == OPAQUE) ?
+	                      LineDoubleDash : LineOnOffDash;
     }
-    else
-    {
-    	XSetLineAttributes( XT_display, dc->u.x.gc, dc->u.x.pen.width, 
-	     (dc->w.backgroundMode == OPAQUE) ? LineDoubleDash : LineOnOffDash,
-	     CapRound, JoinBevel );
-    }
-    XSetFunction( XT_display, dc->u.x.gc, DC_XROPfunction[dc->w.ROPmode-1] );
+    else val.line_style = LineSolid;
+    val.line_width = dc->u.x.pen.width;
+    val.cap_style  = CapRound;
+    val.join_style = JoinBevel;
+    XChangeGC( display, dc->u.x.gc, 
+	       GCFunction | GCForeground | GCBackground | GCLineWidth |
+	       GCLineStyle | GCCapStyle | GCJoinStyle | GCFillStyle, &val );
     return 1;    
 }
 
@@ -182,12 +198,20 @@ int DC_SetupGCForPen( DC * dc )
  */
 int DC_SetupGCForText( DC * dc )
 {
-    XSetForeground( XT_display, dc->u.x.gc, dc->w.textPixel );
-    XSetBackground( XT_display, dc->u.x.gc, dc->w.backgroundPixel );
-    XSetFillStyle( XT_display, dc->u.x.gc, FillSolid );
-    XSetFunction( XT_display, dc->u.x.gc, DC_XROPfunction[dc->w.ROPmode-1] );
-    if (!dc->u.x.font.fstruct) return 0;
-    XSetFont( XT_display, dc->u.x.gc, dc->u.x.font.fstruct->fid );
+    XGCValues val;
+
+    if (!dc->u.x.font.fstruct)
+    {
+	FONT_SelectObject(dc, STOCK_SYSTEM_FIXED_FONT, NULL);
+    }
+    val.function   = DC_XROPfunction[dc->w.ROPmode-1];
+    val.foreground = dc->w.textPixel;
+    val.background = dc->w.backgroundPixel;
+    val.fill_style = FillSolid;
+    val.font       = dc->u.x.font.fstruct->fid;
+    XChangeGC( display, dc->u.x.gc, 
+	       GCFunction | GCForeground | GCBackground | GCFillStyle |
+	       GCFont, &val );
     return 1;
 }
 
@@ -223,6 +247,7 @@ HDC GetDCState( HDC hdc )
 	CombineRgn( newdc->w.hVisRgn, dc->w.hVisRgn, 0, RGN_COPY );	
     }
     newdc->w.hGCClipRgn = 0;
+    COLOR_SetMapping( newdc, dc->u.x.pal.hMapping, dc->u.x.pal.mappingSize );
     return handle;
 }
 
@@ -243,10 +268,16 @@ void SetDCState( HDC hdc, HDC hdcs )
     if (dc->w.hClipRgn)	DeleteObject( dc->w.hClipRgn );
     if (dc->w.hVisRgn) DeleteObject( dc->w.hVisRgn );
     if (dc->w.hGCClipRgn) DeleteObject( dc->w.hGCClipRgn );
+
     memcpy( &dc->w, &dcs->w, sizeof(dc->w) );
+    memcpy( &dc->u.x.pen, &dcs->u.x.pen, sizeof(dc->u.x.pen) );
     dc->w.hClipRgn = dc->w.hVisRgn = dc->w.hGCClipRgn = 0;
     dc->w.flags &= ~DC_SAVED;
-    DC_SetDeviceInfo( hdc, dc );
+
+    SelectObject( hdc, dcs->w.hBrush );
+    SelectObject( hdc, dcs->w.hFont );
+    COLOR_SetMapping( dc, dcs->u.x.pal.hMapping, dcs->u.x.pal.mappingSize );
+
     SelectClipRgn( hdc, dcs->w.hClipRgn );
     SelectVisRgn( hdc, dcs->w.hVisRgn );
 }
@@ -284,14 +315,14 @@ BOOL RestoreDC( HDC hdc, short level )
 #endif    
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return FALSE;
     if (level == -1) level = dc->saveLevel;
-    if ((level < 1) || (level > dc->saveLevel))	return FALSE;
+    if ((level < 1) || (level > (short)dc->saveLevel)) return FALSE;
     
-    while (dc->saveLevel >= level)
+    while ((short)dc->saveLevel >= level)
     {
 	HDC hdcs = dc->header.hNext;
 	if (!(dcs = (DC *) GDI_GetObjPtr( hdcs, DC_MAGIC ))) return FALSE;
 	dc->header.hNext = dcs->header.hNext;
-	if (--dc->saveLevel < level) SetDCState( hdc, hdcs );
+	if ((short)--dc->saveLevel < level) SetDCState( hdc, hdcs );
 	DeleteDC( hdcs );
     }
     return TRUE;
@@ -324,18 +355,27 @@ HDC CreateDC( LPSTR driver, LPSTR device, LPSTR output, LPSTR initData )
     memcpy( &dc->w, &DCVAL_defaultValues, sizeof(DCVAL_defaultValues) );
     memset( &dc->u.x, 0, sizeof(dc->u.x) );
 
-    dc->u.x.drawable   = DefaultRootWindow( XT_display );
-    dc->u.x.gc         = XCreateGC( XT_display, dc->u.x.drawable, 0, NULL );
+    dc->u.x.drawable   = rootWindow;
+    dc->u.x.gc         = XCreateGC( display, dc->u.x.drawable, 0, NULL );
     dc->w.flags        = 0;
     dc->w.devCaps      = displayDevCaps;
-    dc->w.planes       = displayDevCaps->planes;
     dc->w.bitsPerPixel = displayDevCaps->bitsPixel;
     dc->w.DCSizeX      = displayDevCaps->horzRes;
     dc->w.DCSizeY      = displayDevCaps->vertRes;
 
-    DC_SetDeviceInfo( handle, dc );
+    DC_InitDC( handle );
 
     return handle;
+}
+
+
+/***********************************************************************
+ *           CreateIC    (GDI.153)
+ */
+HDC CreateIC( LPSTR driver, LPSTR device, LPSTR output, LPSTR initData )
+{
+      /* Nothing special yet for ICs */
+    return CreateDC( driver, device, output, initData );
 }
 
 
@@ -359,20 +399,17 @@ HDC CreateCompatibleDC( HDC hdc )
     memcpy( &dc->w, &DCVAL_defaultValues, sizeof(DCVAL_defaultValues) );
     memset( &dc->u.x, 0, sizeof(dc->u.x) );
 
-    dc->u.x.drawable   = XCreatePixmap( XT_display,
-				        DefaultRootWindow( XT_display ),
-				        1, 1, 1 );
-    dc->u.x.gc         = XCreateGC( XT_display, dc->u.x.drawable, 0, NULL );
+    dc->u.x.drawable   = XCreatePixmap( display, rootWindow, 1, 1, 1 );
+    dc->u.x.gc         = XCreateGC( display, dc->u.x.drawable, 0, NULL );
     dc->w.flags        = DC_MEMORY;
-    dc->w.planes       = 1;
     dc->w.bitsPerPixel = 1;
     dc->w.devCaps      = displayDevCaps;
     dc->w.DCSizeX      = 1;
     dc->w.DCSizeY      = 1;
 
     SelectObject( handle, BITMAP_hbitmapMemDC );
-    DC_SetDeviceInfo( handle, dc );
-    
+    DC_InitDC( handle );
+
     return handle;
 }
 
@@ -404,9 +441,7 @@ BOOL DeleteDC( HDC hdc )
 	SelectObject( hdc, STOCK_BLACK_PEN );
 	SelectObject( hdc, STOCK_WHITE_BRUSH );
 	SelectObject( hdc, STOCK_SYSTEM_FONT );
-	
-	XFreeGC( XT_display, dc->u.x.gc );
-	if (dc->w.flags & DC_MEMORY) BITMAP_UnselectBitmap( dc );
+	XFreeGC( display, dc->u.x.gc );
     }
     
     if (dc->w.hClipRgn) DeleteObject( dc->w.hClipRgn );
@@ -446,8 +481,7 @@ COLORREF SetBkColor( HDC hdc, COLORREF color )
 
     oldColor = dc->w.backgroundColor;
     dc->w.backgroundColor = color;
-    dc->w.backgroundPixel = GetNearestPaletteIndex( dc->w.hPalette, color );
-    XSetBackground( XT_display, dc->u.x.gc, dc->w.backgroundPixel );
+    dc->w.backgroundPixel = COLOR_ToPhysical( dc, color );
     return oldColor;
 }
 
@@ -463,8 +497,7 @@ COLORREF SetTextColor( HDC hdc, COLORREF color )
 
     oldColor = dc->w.textColor;
     dc->w.textColor = color;
-    dc->w.textPixel = GetNearestPaletteIndex( dc->w.hPalette, color );
-    XSetForeground( XT_display, dc->u.x.gc, dc->w.textPixel );
+    dc->w.textPixel = COLOR_ToPhysical( dc, color );
     return oldColor;
 }
 

@@ -6,6 +6,7 @@
 
 extern unsigned short *Stack16Frame;
 
+#define _CONTEXT &Stack16Frame[12]
 #define _AX	Stack16Frame[34]
 #define _BX	Stack16Frame[28]
 #define _CX	Stack16Frame[32]

@@ -40,7 +40,6 @@ const WIN_DC_INFO DCVAL_defaultValues =
     0,                      /* breakCount */
     0,                      /* breakExtra */
     0,                      /* breakRem */
-    1,                      /* planes */
     1,                      /* bitsPerPixel */
     MM_TEXT,                /* MapMode */
     0,                      /* DCOrgX */

@@ -6,11 +6,14 @@
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
+#include <stdlib.h>
+#include <stdio.h>
 #include "gdi.h"
-
+#include "prototypes.h"
 
 MDESC *GDI_Heap = NULL;
 
+extern HPALETTE COLOR_Init();  /* color.c */
 
 /***********************************************************************
  *          GDI stock objects 
@@ -130,11 +133,9 @@ static GDIOBJHDR * StockObjects[NB_STOCK_OBJECTS] =
     (GDIOBJHDR *) &AnsiVarFont,
     (GDIOBJHDR *) &SystemFont,
     (GDIOBJHDR *) &DeviceDefaultFont,
-    NULL,            /* DEFAULT_PALETTE created by PALETTE_Init */
+    NULL,            /* DEFAULT_PALETTE created by COLOR_Init */
     (GDIOBJHDR *) &SystemFixedFont
 };
-
-extern GDIOBJHDR * PALETTE_systemPalette;
 
 
 /***********************************************************************
@@ -144,6 +145,7 @@ extern GDIOBJHDR * PALETTE_systemPalette;
  */
 BOOL GDI_Init()
 {
+    HPALETTE hpalette;
     struct segment_descriptor_s * s;
 
 #ifndef WINELIB
@@ -156,9 +158,8 @@ BOOL GDI_Init()
     
       /* Create default palette */
 
-    COLOR_Init();
-    PALETTE_Init();
-    StockObjects[DEFAULT_PALETTE] = PALETTE_systemPalette;
+    if (!(hpalette = COLOR_Init())) return FALSE;
+    StockObjects[DEFAULT_PALETTE] = (GDIOBJHDR *) GDI_HEAP_ADDR( hpalette );
 
       /* Create default bitmap */
 
@@ -168,6 +169,10 @@ BOOL GDI_Init()
 
     if (!REGION_Init()) return FALSE;
     
+      /* Initialise dithering */
+
+    if (!DITHER_Init()) return FALSE;
+
     return TRUE;
 }
 
@@ -217,7 +222,6 @@ HANDLE GDI_AllocObject( WORD size, WORD magic )
 BOOL GDI_FreeObject( HANDLE handle )
 {
     GDIOBJHDR * object;
-    HANDLE prev;
 
       /* Can't free stock objects */
     if (handle >= FIRST_STOCK_HANDLE) return FALSE;

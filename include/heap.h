@@ -6,6 +6,10 @@
 #ifndef HEAP_H
 #define HEAP_H
 
+#include "segmem.h"
+#include "regfunc.h"
+#include "atom.h"
+
 /**********************************************************************
  * LOCAL HEAP STRUCTURES AND FUNCTIONS
  */
@@ -17,11 +21,24 @@ typedef struct heap_mem_desc_s
     unsigned char  flags;
 } MDESC;
 
+typedef struct heap_local_heap_s
+{
+    struct heap_local_heap_s *next;
+    MDESC *free_list;
+    ATOMTABLE *local_table;
+    unsigned short selector;
+} LHEAP;
+
 extern void HEAP_Init(MDESC **free_list, void *start, int length);
 extern void *HEAP_Alloc(MDESC **free_list, int flags, int bytes);
 extern int  HEAP_Free(MDESC **free_list, void *block);
 extern void *HEAP_ReAlloc(MDESC **free_list, void *old_block, 
 			  int new_size, unsigned int flags);
+extern LHEAP *HEAP_LocalFindHeap(unsigned short owner);
+
+#define HEAP_OWNER	(Segments[Stack16Frame[11] >> 3].owner)
+#define LOCALHEAP()	(&HEAP_LocalFindHeap(HEAP_OWNER)->free_list)
+#define LOCALATOMTABLE() (&HEAP_LocalFindHeap(HEAP_OWNER)->local_table)
 
 /**********************************************************************
  * GLOBAL HEAP STRUCTURES AND FUNCTIONS:

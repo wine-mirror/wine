@@ -7,6 +7,8 @@
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "gdi.h"
+#include "bitmap.h"
+#include "prototypes.h"
 
 
 #define NB_HATCH_STYLES  6
@@ -21,7 +23,8 @@ static char HatchBrushes[NB_HATCH_STYLES][8] =
     { 0x81, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x81 }  /* HS_DIAGCROSS  */
 };
 
-extern XImage * BITMAP_BmpToImage( BITMAP *, void * );
+extern WORD COLOR_ToPhysical( DC *dc, COLORREF color );
+
 
 /***********************************************************************
  *           CreateBrushIndirect    (GDI.50)
@@ -57,23 +60,21 @@ HBRUSH CreateHatchBrush( short style, COLORREF color )
 HBRUSH CreatePatternBrush( HBITMAP hbitmap )
 {
     LOGBRUSH logbrush = { BS_PATTERN, 0, 0 };
-    BITMAPOBJ * bmpObj;
-    BITMAP * bmp;
-    
+    BITMAPOBJ *bmp, *newbmp;
+
 #ifdef DEBUG_GDI
     printf( "CreatePatternBrush: %d\n", hbitmap );
 #endif
 
       /* Make a copy of the bitmap */
 
-    if (!(bmpObj = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
+    if (!(bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
 	return 0;
-    if (!(bmp = (BITMAP *) GlobalLock( bmpObj->hBitmap ))) return 0;    
-    logbrush.lbHatch = CreateBitmap( bmp->bmWidth, bmp->bmHeight,
-				     bmp->bmPlanes, bmp->bmBitsPixel,
-				     ((char *)bmp) + sizeof(BITMAP) );
-    GlobalUnlock( bmpObj->hBitmap );
-    if (!logbrush.lbHatch) return 0;
+    logbrush.lbHatch = CreateBitmapIndirect( &bmp->bitmap );
+    newbmp = (BITMAPOBJ *) GDI_GetObjPtr( logbrush.lbHatch, BITMAP_MAGIC );
+    if (!newbmp) return 0;
+    XCopyArea( display, bmp->pixmap, newbmp->pixmap, BITMAP_GC(bmp),
+	       0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight, 0, 0 );
     return CreateBrushIndirect( &logbrush );
 }
 
@@ -172,32 +173,46 @@ int BRUSH_GetObject( BRUSHOBJ * brush, int count, LPSTR buffer )
 
 
 /***********************************************************************
+ *           BRUSH_MakeSolidBrush
+ */
+static void BRUSH_SelectSolidBrush( DC *dc, COLORREF color )
+{
+    if ((dc->w.bitsPerPixel > 1) && !COLOR_IsSolid( color ))
+    {
+	  /* Dithered brush */
+	dc->u.x.brush.pixmap = DITHER_DitherColor( dc, color );
+	dc->u.x.brush.fillStyle = FillTiled;
+	dc->u.x.brush.pixel = 0;
+    }
+    else
+    {
+	  /* Solid brush */
+	dc->u.x.brush.pixel = COLOR_ToPhysical( dc, color );
+	dc->u.x.brush.fillStyle = FillSolid;
+    }
+}
+
+
+/***********************************************************************
  *           BRUSH_SelectPatternBrush
  */
-BOOL BRUSH_SelectPatternBrush( DC * dc, HBITMAP hbitmap )
+static BOOL BRUSH_SelectPatternBrush( DC * dc, HBITMAP hbitmap )
 {
-    BITMAPOBJ * bmpObjPtr;
-    BITMAP * bmp;
+    BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
+    if (!bmp) return FALSE;
+    dc->u.x.brush.pixmap = XCreatePixmap( display, rootWindow,
+					  8, 8, bmp->bitmap.bmBitsPixel );
+    XCopyArea( display, bmp->pixmap, dc->u.x.brush.pixmap,
+	       BITMAP_GC(bmp), 0, 0, 8, 8, 0, 0 );
     
-    bmpObjPtr = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
-    if (!bmpObjPtr) return FALSE;
-    if (!(bmp = (BITMAP *) GlobalLock( bmpObjPtr->hBitmap ))) return FALSE;
-
-    dc->u.x.brush.pixmap = XCreatePixmap( XT_display,
-					  DefaultRootWindow(XT_display),
-					  8, 8, bmp->bmBitsPixel );
-    BITMAP_CopyToPixmap( bmp, dc->u.x.brush.pixmap, 0, 0, 8, 8 );
-    
-    if (bmp->bmBitsPixel > 1)
+    if (bmp->bitmap.bmBitsPixel > 1)
     {
 	dc->u.x.brush.fillStyle = FillTiled;
-	XSetTile( XT_display, dc->u.x.gc, dc->u.x.brush.pixmap );
 	dc->u.x.brush.pixel = 0;  /* Ignored */
     }
     else
     {
 	dc->u.x.brush.fillStyle = FillOpaqueStippled;
-	XSetStipple( XT_display, dc->u.x.gc, dc->u.x.brush.pixmap );
 	dc->u.x.brush.pixel = -1;  /* Special case (see DC_SetupGCForBrush) */
     }
     return TRUE;
@@ -218,28 +233,24 @@ HBRUSH BRUSH_SelectObject( HDC hdc, DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 
     if (dc->u.x.brush.pixmap)
     {
-	XFreePixmap( XT_display, dc->u.x.brush.pixmap );
+	XFreePixmap( display, dc->u.x.brush.pixmap );
 	dc->u.x.brush.pixmap = 0;
     }
     dc->u.x.brush.style = brush->logbrush.lbStyle;
     
     switch(brush->logbrush.lbStyle)
     {
-      case BS_SOLID:
       case BS_NULL:
-	dc->u.x.brush.pixel = GetNearestPaletteIndex( dc->w.hPalette, 
-						 brush->logbrush.lbColor );
-	dc->u.x.brush.fillStyle = FillSolid;
+	break;
+
+      case BS_SOLID:
+	BRUSH_SelectSolidBrush( dc, brush->logbrush.lbColor );
 	break;
 	
       case BS_HATCHED:
-	dc->u.x.brush.pixel = GetNearestPaletteIndex( dc->w.hPalette, 
-						 brush->logbrush.lbColor );
-	dc->u.x.brush.pixmap = XCreateBitmapFromData(XT_display, 
-					DefaultRootWindow(XT_display),
-					HatchBrushes[brush->logbrush.lbHatch],
-					8, 8 );
-	XSetStipple( XT_display, dc->u.x.gc, dc->u.x.brush.pixmap );
+	dc->u.x.brush.pixel = COLOR_ToPhysical( dc, brush->logbrush.lbColor );
+	dc->u.x.brush.pixmap = XCreateBitmapFromData( display, rootWindow,
+				 HatchBrushes[brush->logbrush.lbHatch], 8, 8 );
 	dc->u.x.brush.fillStyle = FillStippled;
 	break;
 	
@@ -264,5 +275,3 @@ HBRUSH BRUSH_SelectObject( HDC hdc, DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
     
     return prevHandle;
 }
-
-

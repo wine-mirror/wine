@@ -6,7 +6,8 @@
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
-
+#include <stdlib.h>
+#include <stdio.h>
 #include "windows.h"
 #include "win.h"
 #include "class.h"
@@ -21,6 +22,7 @@ extern LONG NC_HandleNCLButtonDblClk( HWND hwnd, WORD wParam, LONG lParam );
 extern LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt );
 extern LONG NC_HandleSetCursor( HWND hwnd, WORD wParam, LONG lParam );
 extern void NC_TrackSysMenu( HWND hwnd ); /* menu.c */
+extern BOOL ActivateMenuFocus(HWND hWnd); /* menu.c */
 
 
 
@@ -48,10 +50,11 @@ void DEFWND_SetText( HWND hwnd, LPSTR text )
  */
 LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 {
-    CLASS * classPtr;
-    LPSTR textPtr;
-    int len;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
+	MEASUREITEMSTRUCT *measure;
+	CLASS * classPtr;
+	LPSTR textPtr;
+	int len;
+	WND * wndPtr = WIN_FindWndPtr( hwnd );
     
 #ifdef DEBUG_MESSAGE
     printf( "DefWindowProc: %d %d %d %08x\n", hwnd, msg, wParam, lParam );
@@ -208,15 +211,31 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	return NC_HandleSysCommand( hwnd, wParam, MAKEPOINT(lParam) );
 
     case WM_SYSKEYDOWN:
-    	if (wParam == VK_MENU) {
-    	    printf("VK_MENU Pressed // hMenu=%04X !\n", GetMenu(hwnd));
-	    NC_TrackSysMenu(hwnd);
-    	    }
-    	break;    	
+		if (wParam == VK_MENU) ActivateMenuFocus(hwnd);
+		break;    	
     case WM_SYSKEYUP:
-    	if (wParam == VK_MENU) {
-    	    printf("VK_MENU Released // hMenu=%04X !\n", GetMenu(hwnd));
-    	    }
+		break;    	
+    case WM_MENUCHAR:
+		MessageBeep(0);
+		break;    	
+    case WM_MEASUREITEM:
+		measure = (MEASUREITEMSTRUCT *)lParam;
+		switch(measure->CtlType) {
+			case ODT_BUTTON:
+				break;
+			case ODT_COMBOBOX:
+				measure->itemHeight = 10;
+/*				printf("defwndproc WM_MEASUREITEM // ODT_COMBOBOX !\n");*/
+				break;
+			case ODT_LISTBOX:
+				measure->itemHeight = 10;
+/*				printf("defwndproc WM_MEASUREITEM // ODT_LISTBOX !\n");*/
+				break;
+			case ODT_MENU:
+				break;
+			default:
+				break;
+			}
     	break;    	
     }
     return 0;

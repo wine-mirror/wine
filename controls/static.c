@@ -7,6 +7,7 @@
 
 static char Copyright[] = "Copyright  David W. Metcalfe, 1993";
 
+#include <stdio.h>
 #include <windows.h>
 #include "win.h"
 #include "user.h"

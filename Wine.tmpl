@@ -1,26 +1,36 @@
 XCOMM $Id$
 
-INCLUDES = -I$(TOP)/include
+INCLUDES = -I$(TOP)/include -I$(TOP)
 
 XCOMM Imake rules go here
 
 XCOMM First, dll description to files etc
 #ifndef MakeDllFromSpec
+#ifndef NewBuild
 #ifndef ShortNames
 #define MakeDllFromSpec(name,objfile)					@@\
-objfile.o: Concat(dll_,name.o) Concat3(dll_,name,_tab.o)		@@\
-									@@\
 Concat(dll_,name.S) Concat3(dll_,name,_tab.c): name.spec $(TOP)/tools/build  @@\
 	$(TOP)/tools/build name.spec					@@\
 
-#else
+#else /* ShortNames */
 #define MakeDllFromSpec(name,objfile)					@@\
-objfile.o: Concat(dll_,name.o) Concat(dtb_,name.o)		@@\
-									@@\
-Concat(dll_,name.S) Concat(dtb_,name.c): name.spec $(TOP)/tools/build  @@\
+Concat(dll_,name.S) Concat(dtb_,name.c): name.spec $(TOP)/tools/build   @@\
 	$(TOP)/tools/build name.spec					@@\
 
-#endif /* SHORTNAMES */
+#endif /* ShortNames */
+#else /* NewBuild */
+#ifndef ShortNames
+#define MakeDllFromSpec(name,objfile)					@@\
+Concat(dll_,name.S) Concat(rly_,name.S) Concat3(dll_,name,_tab.c): name.spec $(TOP)/tools/newbuild  @@\
+	$(TOP)/tools/newbuild name.spec					@@\
+
+#else /* ShortNames */
+#define MakeDllFromSpec(name,objfile)					@@\
+Concat(dll_,name.S) Concat(rly_,name.S) Concat(dtb_,name.c): name.spec $(TOP)/tools/newbuild   @@\
+	$(TOP)/tools/newbuild name.spec					@@\
+
+#endif /* ShortNames */
+#endif /* NewBuild */
 #endif /* MakeDllFromSpec */
 
 /*

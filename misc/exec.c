@@ -3,6 +3,10 @@
 *
 */
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 #include "windows.h"
 
 #define HELP_CONTEXT      0x0001
@@ -23,79 +27,65 @@
 
 WORD WinExec(LPSTR lpCmdLine, WORD nCmdShow)
 {
-   int X, X2, C;
-   char *ArgV[20];
-   printf("WinExec('%s', %04X)\n", lpCmdLine, nCmdShow);
-   for (X = X2 = C = 0; X < strlen(lpCmdLine) + 1; X++) {
-      if ((lpCmdLine[X] == ' ') || (lpCmdLine[X] == '\0')) {
-          ArgV[C] = (char *)malloc(X - X2 + 1);
-          strncpy(ArgV[C], &lpCmdLine[X2], X - X2);
-          ArgV[C][X - X2] = '\0';
-          C++;   X2 = X + 1;
-      }
-   }  
-   ArgV[C] = NULL;
-   for (C = 0; ; C++) {
-      if (ArgV[C] == NULL)  break;
-      printf("--> '%s' \n", ArgV[C]);
-   }  
-   switch(fork()) {
-      case -1:
-         printf("Can't 'fork' process !\n");
-         break;
-      case 0:
-         printf("New process started !\n");
-         execvp(ArgV[0], ArgV);
-         printf("Child process died !\n");
-         exit(1);
-         break;
-      default:
-         printf("Main process stay alive !\n");
-         break;         
-      }
-   for (C = 0; ; C++) {
-      if (ArgV[C] == NULL)  break;
-      free(ArgV[C]);
-   }  
-   return(TRUE);
+	int X, X2, C;
+	char *ArgV[20];
+	printf("WinExec('%s', %04X)\n", lpCmdLine, nCmdShow);
+	ArgV[0] = "wine";
+	C = 1;
+	for (X = X2 = 0; X < strlen(lpCmdLine) + 1; X++) {
+		if ((lpCmdLine[X] == ' ') || (lpCmdLine[X] == '\0')) {
+			ArgV[C] = (char *)malloc(X - X2 + 1);
+			strncpy(ArgV[C], &lpCmdLine[X2], X - X2);
+			ArgV[C][X - X2] = '\0';
+			C++;   X2 = X + 1;
+		}							  
+	}  
+	ArgV[C] = NULL;
+	for (C = 0; ; C++) {
+		if (ArgV[C] == NULL)  break;
+		printf("--> '%s' \n", ArgV[C]);
+	}  
+	switch(fork()) {
+	case -1:
+		printf("Can't 'fork' process !\n");
+		break;
+	case 0:
+		printf("New process started !\n");
+		execvp(ArgV[0], ArgV);
+		printf("Child process died !\n");
+		exit(1);
+		break;
+	default:
+		printf("Main process stay alive !\n");
+		break;         
+	}
+	for (C = 0; ; C++) {
+		if (ArgV[C] == NULL)  break;
+		free(ArgV[C]);
+	}  
+	return(TRUE);
 }
 
 
 BOOL WinHelp(HWND hWnd, LPSTR lpHelpFile, WORD wCommand, DWORD dwData)
 {
-   char *ArgV[6];
-   char	str[32];
-   printf("WinHelp(%s, %u, %lu)\n", lpHelpFile, wCommand, dwData);
-   switch(fork()) {
-      case -1:
-         printf("Can't 'fork' process !\n");
-         break;
-      case 0:
-         printf("New process started !\n");
-         ArgV[0] = "wine";
-         ArgV[1] = "winhelp.exe";
-         ArgV[2] = lpHelpFile;
-         switch (wCommand) {
-	     case HELP_CONTEXT:
-	     case HELP_KEY:
-	     case HELP_SETINDEX:
-		 sprintf(str, "%lu", dwData);
-		 ArgV[3] = str;
-	     default:
-		 ArgV[3] = NULL;
-	     }
-         ArgV[4] = NULL;
-         if (wCommand == HELP_HELPONHELP)  ArgV[2] = NULL;
-/*
-         _WinMain(ArgV, 2);
-*/
-         execvp(ArgV[0], ArgV);
-         printf("Child process died !\n");
-         exit(1);
-         break;
-      default:
-         printf("Main process stay alive !\n");
-         break;         
-      }
-return(TRUE);
+	char	str[256];
+	printf("WinHelp(%s, %u, %lu)\n", lpHelpFile, wCommand, dwData);
+	switch(wCommand) {
+	case 0:
+	case HELP_HELPONHELP:
+		GetWindowsDirectory(str, sizeof(str));
+		strcat(str, "\\winhelp.exe");
+		printf("'%s'\n", str);
+		break;
+	case HELP_INDEX:
+		GetWindowsDirectory(str, sizeof(str));
+		strcat(str, "\\winhelp.exe");
+		printf("'%s'\n", str);
+		break;
+	default:
+		return FALSE;
+	}
+	WinExec(str, SW_SHOWNORMAL);
+	return(TRUE);
 }

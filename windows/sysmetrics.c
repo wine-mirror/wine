@@ -14,6 +14,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 short sysMetrics[SM_CMETRICS];
 
 extern Display * display;
+extern int screenWidth, screenHeight;
 
 /***********************************************************************
  *           SYSMETRICS_Init
@@ -22,8 +23,8 @@ extern Display * display;
  */
 void SYSMETRICS_Init()
 {
-    sysMetrics[SM_CXSCREEN] = DisplayWidth( display, DefaultScreen(display) );
-    sysMetrics[SM_CYSCREEN] = DisplayHeight( display, DefaultScreen(display) );
+    sysMetrics[SM_CXSCREEN] = screenWidth;
+    sysMetrics[SM_CYSCREEN] = screenHeight;
     sysMetrics[SM_CXVSCROLL] = SYSMETRICS_CXVSCROLL;
     sysMetrics[SM_CYHSCROLL] = SYSMETRICS_CYHSCROLL;
     sysMetrics[SM_CYCAPTION] = SYSMETRICS_CYCAPTION;

@@ -16,9 +16,9 @@ SRCS = \
 	message.c \
 	profile.c \
 	rect.c \
-	resource.c \
 	sound.c \
 	spy.c \
+	stress.c \
 	user.c \
 	winsocket.c
 

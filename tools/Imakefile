@@ -2,4 +2,8 @@
 
 MODULE = tools
 
+#ifndef NewBuild
 SimpleProgramTarget(build)
+#else
+SimpleProgramTarget(newbuild)
+#endif

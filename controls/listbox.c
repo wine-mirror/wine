@@ -12,17 +12,17 @@
 static char Copyright[] = "Copyright Martin Ayotte, 1993";
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <dirent.h>
 #include "windows.h"
 #include "user.h"
 #include "heap.h"
 #include "win.h"
+#include "msdos.h"
 #include "wine.h"
 #include "listbox.h"
 #include "scroll.h"
-#include "int21.h"
 #include "prototypes.h"
 
 #define GMEM_ZEROINIT 0x0040
@@ -34,6 +34,7 @@ void StdDrawListBox(HWND hwnd);
 void OwnerDrawListBox(HWND hwnd);
 int ListBoxFindMouse(HWND hwnd, int X, int Y);
 int CreateListBoxStruct(HWND hwnd);
+void ListBoxAskMeasure(WND *wndPtr, LPHEADLIST lphl, LPLISTSTRUCT lpls);
 int ListBoxAddString(HWND hwnd, LPSTR newstr);
 int ListBoxInsertString(HWND hwnd, UINT uIndex, LPSTR newstr);
 int ListBoxGetText(HWND hwnd, UINT uIndex, LPSTR OutStr);
@@ -56,378 +57,411 @@ int ListBoxFindNextMatch(HWND hwnd, WORD wChar);
  */
 LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 {    
-    WND  *wndPtr;
-    LPHEADLIST  lphl;
-    WORD	wRet;
-    RECT	rect;
-    int		y;
-    CREATESTRUCT *createStruct;
-    static RECT rectsel;
-    switch(message)
-    {
-    case WM_CREATE:
-	CreateListBoxStruct(hwnd);
-	lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
+	WND  *wndPtr;
+	LPHEADLIST  lphl;
+	HWND	hWndCtl;
+	WORD	wRet;
+	RECT	rect;
+	int		y;
+	CREATESTRUCT *createStruct;
+	static RECT rectsel;
+    switch(message) {
+	case WM_CREATE:
+		CreateListBoxStruct(hwnd);
+		lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
 #ifdef DEBUG_LISTBOX
-        printf("ListBox WM_CREATE %lX !\n", lphl);
+		printf("ListBox WM_CREATE %lX !\n", lphl);
 #endif
-	createStruct = (CREATESTRUCT *)lParam;
-     	if (HIWORD(createStruct->lpCreateParams) != 0)
-	    lphl->hWndLogicParent = (HWND)HIWORD(createStruct->lpCreateParams);
-	else
-	    lphl->hWndLogicParent = GetParent(hwnd);
-	lphl->ColumnsWidth = wndPtr->rectClient.right - wndPtr->rectClient.left;
-	if (wndPtr->dwStyle & WS_VSCROLL) {
-	    SetScrollRange(hwnd, SB_VERT, 1, lphl->ItemsCount, TRUE);
-	    ShowScrollBar(hwnd, SB_VERT, FALSE);
-	    }
-	if (wndPtr->dwStyle & WS_HSCROLL) {
-	    SetScrollRange(hwnd, SB_HORZ, 1, 1, TRUE);
-	    ShowScrollBar(hwnd, SB_HORZ, FALSE);
-	    }
-	return 0;
-    case WM_DESTROY:
-	lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
-        if (lphl == 0) return 0;
-	ListBoxResetContent(hwnd);
-	free(lphl);
-	*((LPHEADLIST *)&wndPtr->wExtra[1]) = 0;
+		createStruct = (CREATESTRUCT *)lParam;
+		if (HIWORD(createStruct->lpCreateParams) != 0)
+			lphl->hWndLogicParent = (HWND)HIWORD(createStruct->lpCreateParams);
+		else
+			lphl->hWndLogicParent = GetParent(hwnd);
+		lphl->ColumnsWidth = wndPtr->rectClient.right - wndPtr->rectClient.left;
+		if (wndPtr->dwStyle & WS_VSCROLL) {
+			SetScrollRange(hwnd, SB_VERT, 1, lphl->ItemsCount, TRUE);
+			ShowScrollBar(hwnd, SB_VERT, FALSE);
+			}
+		if (wndPtr->dwStyle & WS_HSCROLL) {
+			SetScrollRange(hwnd, SB_HORZ, 1, 1, TRUE);
+			ShowScrollBar(hwnd, SB_HORZ, FALSE);
+			}
+		if ((wndPtr->dwStyle & LBS_OWNERDRAWFIXED) == LBS_OWNERDRAWFIXED) {
+			}
+		return 0;
+	case WM_DESTROY:
+		lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
+		if (lphl == 0) return 0;
+		ListBoxResetContent(hwnd);
+		free(lphl);
+		*((LPHEADLIST *)&wndPtr->wExtra[1]) = 0;
 #ifdef DEBUG_LISTBOX
-        printf("ListBox WM_DESTROY %lX !\n", lphl);
+		printf("ListBox WM_DESTROY %lX !\n", lphl);
 #endif
-	return 0;
+		return 0;
 
-    case WM_VSCROLL:
-        lphl = ListBoxGetStorageHeader(hwnd);
-        if (lphl == NULL) return 0;
-        y = lphl->FirstVisible;
-        switch(wParam) {
-            case SB_LINEUP:
-		if (lphl->FirstVisible > 1)
-		    lphl->FirstVisible--;
-		break;
-            case SB_LINEDOWN:
-		if (lphl->FirstVisible < lphl->ItemsCount)
-		    lphl->FirstVisible++;
-		break;
-	    case SB_PAGEUP:
-		if (lphl->FirstVisible > 1)  
-		    lphl->FirstVisible -= lphl->ItemsVisible;
-		break;
-	    case SB_PAGEDOWN:
-		if (lphl->FirstVisible < lphl->ItemsCount)  
-		    lphl->FirstVisible += lphl->ItemsVisible;
-		break;
-	    case SB_THUMBTRACK:
-	    	lphl->FirstVisible = LOWORD(lParam);
-		break;
-	    }
-	if (lphl->FirstVisible < 1)    lphl->FirstVisible = 1;
-	if (lphl->FirstVisible > lphl->ItemsCount)
-	    lphl->FirstVisible = lphl->ItemsCount;
-	if (y != lphl->FirstVisible) {
-	    SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
-	    InvalidateRect(hwnd, NULL, TRUE);
-	    UpdateWindow(hwnd);
-            }
-	return 0;
+	case WM_VSCROLL:
+#ifdef DEBUG_LISTBOX
+		printf("ListBox WM_VSCROLL w=%04X l=%08X !\n", wParam, lParam);
+#endif
+		lphl = ListBoxGetStorageHeader(hwnd);
+		if (lphl == NULL) return 0;
+		y = lphl->FirstVisible;
+		switch(wParam) {
+			case SB_LINEUP:
+				if (lphl->FirstVisible > 1)	
+					lphl->FirstVisible--;
+				break;
+			case SB_LINEDOWN:
+				if (lphl->FirstVisible < lphl->ItemsCount)
+					lphl->FirstVisible++;
+				break;
+			case SB_PAGEUP:
+				if (lphl->FirstVisible > 1)  
+					lphl->FirstVisible -= lphl->ItemsVisible;
+				break;
+			case SB_PAGEDOWN:
+				if (lphl->FirstVisible < lphl->ItemsCount)  
+					lphl->FirstVisible += lphl->ItemsVisible;
+				break;
+			case SB_THUMBTRACK:
+				lphl->FirstVisible = LOWORD(lParam);
+				break;
+			}
+		if (lphl->FirstVisible < 1)    lphl->FirstVisible = 1;
+		if (lphl->FirstVisible > lphl->ItemsCount)
+			lphl->FirstVisible = lphl->ItemsCount;
+		if (y != lphl->FirstVisible) {
+			SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+			InvalidateRect(hwnd, NULL, TRUE);
+			UpdateWindow(hwnd);
+			}
+		return 0;
 	
-    case WM_HSCROLL:
-        lphl = ListBoxGetStorageHeader(hwnd);
-        if (lphl == NULL) return 0;
-        y = lphl->FirstVisible;
-        switch(wParam) {
-            case SB_LINEUP:
-		if (lphl->FirstVisible > 1)
-		    lphl->FirstVisible -= lphl->ItemsPerColumn;
-		break;
-            case SB_LINEDOWN:
-		if (lphl->FirstVisible < lphl->ItemsCount)
-		    lphl->FirstVisible += lphl->ItemsPerColumn;
-		break;
-	    case SB_PAGEUP:
-		if (lphl->FirstVisible > 1 && lphl->ItemsPerColumn != 0)  
-		    lphl->FirstVisible -= lphl->ItemsVisible /
-		    	lphl->ItemsPerColumn * lphl->ItemsPerColumn;
-		break;
-	    case SB_PAGEDOWN:
-		if (lphl->FirstVisible < lphl->ItemsCount &&
-			lphl->ItemsPerColumn != 0)  
-		    lphl->FirstVisible += lphl->ItemsVisible /
-		    	lphl->ItemsPerColumn * lphl->ItemsPerColumn;
-		break;
-	    case SB_THUMBTRACK:
-	    	lphl->FirstVisible = lphl->ItemsPerColumn * 
-			(LOWORD(lParam) - 1) + 1;
-		break;
-	    }
-	if (lphl->FirstVisible < 1)    lphl->FirstVisible = 1;
-	if (lphl->FirstVisible > lphl->ItemsCount)
-	    lphl->FirstVisible = lphl->ItemsCount;
-	if (lphl->ItemsPerColumn != 0) {
-	    lphl->FirstVisible = lphl->FirstVisible /
-		lphl->ItemsPerColumn * lphl->ItemsPerColumn + 1;
-	    if (y != lphl->FirstVisible) {
-		SetScrollPos(hwnd, SB_HORZ, lphl->FirstVisible / 
-		    lphl->ItemsPerColumn + 1, TRUE);
+	case WM_HSCROLL:
+#ifdef DEBUG_LISTBOX
+		printf("ListBox WM_HSCROLL w=%04X l=%08X !\n", wParam, lParam);
+#endif
+		lphl = ListBoxGetStorageHeader(hwnd);
+		if (lphl == NULL) return 0;
+		y = lphl->FirstVisible;
+		switch(wParam) {
+			case SB_LINEUP:
+				if (lphl->FirstVisible > 1)
+					lphl->FirstVisible -= lphl->ItemsPerColumn;
+				break;
+			case SB_LINEDOWN:
+				if (lphl->FirstVisible < lphl->ItemsCount)
+					lphl->FirstVisible += lphl->ItemsPerColumn;
+				break;
+			case SB_PAGEUP:
+				if (lphl->FirstVisible > 1 && lphl->ItemsPerColumn != 0)  
+					lphl->FirstVisible -= lphl->ItemsVisible /
+					lphl->ItemsPerColumn * lphl->ItemsPerColumn;
+				break;
+			case SB_PAGEDOWN:
+				if (lphl->FirstVisible < lphl->ItemsCount &&
+							lphl->ItemsPerColumn != 0)  
+					lphl->FirstVisible += lphl->ItemsVisible /
+					lphl->ItemsPerColumn * lphl->ItemsPerColumn;
+				break;
+			case SB_THUMBTRACK:
+				lphl->FirstVisible = lphl->ItemsPerColumn * 
+								(LOWORD(lParam) - 1) + 1;
+				break;
+			}
+		if (lphl->FirstVisible < 1)    lphl->FirstVisible = 1;
+		if (lphl->FirstVisible > lphl->ItemsCount)
+			lphl->FirstVisible = lphl->ItemsCount;
+		if (lphl->ItemsPerColumn != 0) {
+			lphl->FirstVisible = lphl->FirstVisible /
+				lphl->ItemsPerColumn * lphl->ItemsPerColumn + 1;
+			if (y != lphl->FirstVisible) {
+				SetScrollPos(hwnd, SB_HORZ, lphl->FirstVisible / 
+				lphl->ItemsPerColumn + 1, TRUE);
+				InvalidateRect(hwnd, NULL, TRUE);
+				UpdateWindow(hwnd);
+				}
+			}
+		return 0;
+	
+	case WM_LBUTTONDOWN:
+		SetFocus(hwnd);
+		SetCapture(hwnd);
+		lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
+	        if (lphl == NULL) return 0;
+		lphl->PrevFocused = lphl->ItemFocused;
+	        y = ListBoxFindMouse(hwnd, LOWORD(lParam), HIWORD(lParam));
+		if ((wndPtr->dwStyle & LBS_MULTIPLESEL) == LBS_MULTIPLESEL) {
+		    lphl->ItemFocused = y;
+		    wRet = ListBoxGetSel(hwnd, y);
+		    ListBoxSetSel(hwnd, y, !wRet);
+		    }
+		else {
+		    ListBoxSetCurSel(hwnd, y);
+		    }
+		ListBoxGetItemRect(hwnd, y, &rectsel);
 		InvalidateRect(hwnd, NULL, TRUE);
 		UpdateWindow(hwnd);
-		}
-            }
-	return 0;
-	
-    case WM_LBUTTONDOWN:
-/*
-	SetFocus(hwnd);
-*/
-	SetCapture(hwnd);
-	lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
-        if (lphl == NULL) return 0;
-	lphl->PrevFocused = lphl->ItemFocused;
-        y = ListBoxFindMouse(hwnd, LOWORD(lParam), HIWORD(lParam));
-	if ((wndPtr->dwStyle & LBS_MULTIPLESEL) == LBS_MULTIPLESEL) {
-	    lphl->ItemFocused = y;
-	    wRet = ListBoxGetSel(hwnd, y);
-	    ListBoxSetSel(hwnd, y, !wRet);
-	    }
-	else {
-	    ListBoxSetCurSel(hwnd, y);
-	    }
-	ListBoxGetItemRect(hwnd, y, &rectsel);
-        InvalidateRect(hwnd, NULL, TRUE);
-        UpdateWindow(hwnd);
-	return 0;
-    case WM_LBUTTONUP:
-	ReleaseCapture();
-	lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
-        if (lphl == NULL) return 0;
-	if (lphl->PrevFocused != lphl->ItemFocused)
-	    SendMessage(lphl->hWndLogicParent, WM_COMMAND, wndPtr->wIDmenu,
-		        	MAKELONG(hwnd, LBN_SELCHANGE));
-	return 0;
-    case WM_RBUTTONUP:
-    case WM_LBUTTONDBLCLK:
-	lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
-        if (lphl == NULL) return 0;
-        SendMessage(lphl->hWndLogicParent, WM_COMMAND, wndPtr->wIDmenu,
-		        	MAKELONG(hwnd, LBN_DBLCLK));
-        printf("ListBox Send LBN_DBLCLK !\n");
-	return 0;
-    case WM_MOUSEMOVE:
-        if ((wParam & MK_LBUTTON) != 0) {
-            y = HIWORD(lParam);
-	    if (y < 4) {
-	        lphl = ListBoxGetStorageHeader(hwnd);
-		if (lphl->FirstVisible > 1) {
-		    lphl->FirstVisible--;
-		    if (wndPtr->dwStyle & WS_VSCROLL)
-			SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
-		    InvalidateRect(hwnd, NULL, TRUE);
-		    UpdateWindow(hwnd);
-		    break;
-		    }
-		}
-	    GetClientRect(hwnd, &rect);
-	    if (y > (rect.bottom - 4)) {
-	        lphl = ListBoxGetStorageHeader(hwnd);
-		if (lphl->FirstVisible < lphl->ItemsCount) {
-		    lphl->FirstVisible++;
-		    if (wndPtr->dwStyle & WS_VSCROLL)
-			SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
-		    InvalidateRect(hwnd, NULL, TRUE);
-		    UpdateWindow(hwnd);
-		    break;
-		    }
-		}
-	    if ((y > 0) && (y < (rect.bottom - 4))) {
-		if ((y < rectsel.top) || (y > rectsel.bottom)) {
-		    wRet = ListBoxFindMouse(hwnd, LOWORD(lParam), HIWORD(lParam));
-		    if ((wndPtr->dwStyle & LBS_MULTIPLESEL) == LBS_MULTIPLESEL) {
-			lphl->ItemFocused = wRet;
-		        }
-		    else {
-		        ListBoxSetCurSel(hwnd, wRet);
-		        }
-		    ListBoxGetItemRect(hwnd, wRet, &rectsel);
-		    InvalidateRect(hwnd, NULL, TRUE);
-		    UpdateWindow(hwnd);
-		    }
-	        
-		}
-	    }
-	break;
-    case WM_KEYDOWN:
-	lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
-        if (lphl == NULL) return 0;
-        switch(wParam) {
-	    case VK_HOME:
-	    	lphl->ItemFocused = 0;
-		break;
-	    case VK_END:
-	    	lphl->ItemFocused = lphl->ItemsCount - 1;
-		break;
-	    case VK_LEFT:
-	    	if ((wndPtr->dwStyle & LBS_MULTICOLUMN) == LBS_MULTICOLUMN) {
-		    lphl->ItemFocused -= lphl->ItemsPerColumn;
-		    break;
-	    	    }
-	    case VK_UP:
-	    	lphl->ItemFocused--;
-		break;
-	    case VK_RIGHT:
-	    	if ((wndPtr->dwStyle & LBS_MULTICOLUMN) == LBS_MULTICOLUMN) {
-		    lphl->ItemFocused += lphl->ItemsPerColumn;
-		    break;
-	    	    }
-	    case VK_DOWN:
-	    	lphl->ItemFocused++;
-		break;
-	    case VK_PRIOR:
-	    	lphl->ItemFocused -= lphl->ItemsVisible;
-		break;
-	    case VK_NEXT:
-	    	lphl->ItemFocused += lphl->ItemsVisible;
-		break;
-	    case VK_SPACE:
-		wRet = ListBoxGetSel(hwnd, lphl->ItemFocused);
-	    	ListBoxSetSel(hwnd, lphl->ItemFocused, !wRet);
-		break;
-	    default:
-		ListBoxFindNextMatch(hwnd, wParam);
 		return 0;
-	    }
-    	if (lphl->ItemFocused < 0) lphl->ItemFocused = 0;
-    	if (lphl->ItemFocused >= lphl->ItemsCount)
-	    lphl->ItemFocused = lphl->ItemsCount - 1;
-	lphl->FirstVisible = lphl->ItemFocused / lphl->ItemsVisible * 
-						lphl->ItemsVisible + 1;
-	if (lphl->FirstVisible < 1) lphl->FirstVisible = 1;
-	if ((wndPtr->dwStyle & LBS_MULTIPLESEL) != LBS_MULTIPLESEL) {
-	    ListBoxSetCurSel(hwnd, lphl->ItemFocused);
-	    }
-	if (wndPtr->dwStyle & WS_VSCROLL)
-	    SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
-        InvalidateRect(hwnd, NULL, TRUE);
-        UpdateWindow(hwnd);
-	break;
-    case WM_PAINT:
-	wndPtr = WIN_FindWndPtr(hwnd);
-	if ((wndPtr->dwStyle & LBS_OWNERDRAWFIXED) == LBS_OWNERDRAWFIXED) {
-	    OwnerDrawListBox(hwnd);
-	    break;
-	    }
-	if ((wndPtr->dwStyle & LBS_OWNERDRAWVARIABLE) == LBS_OWNERDRAWVARIABLE) {
-	    OwnerDrawListBox(hwnd);
-	    break;
-	    }
-	StdDrawListBox(hwnd);
-	break;
+	case WM_LBUTTONUP:
+		ReleaseCapture();
+		lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
+		if (lphl == NULL) return 0;
+		if (lphl->PrevFocused != lphl->ItemFocused)
+			SendMessage(lphl->hWndLogicParent, WM_COMMAND, wndPtr->wIDmenu,
+											MAKELONG(hwnd, LBN_SELCHANGE));
+		return 0;
+	case WM_RBUTTONUP:
+	case WM_LBUTTONDBLCLK:
+		lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
+		if (lphl == NULL) return 0;
+		SendMessage(lphl->hWndLogicParent, WM_COMMAND, wndPtr->wIDmenu,
+										MAKELONG(hwnd, LBN_DBLCLK));
+		printf("ListBox Send LBN_DBLCLK !\n");
+		return 0;
+	case WM_MOUSEMOVE:
+		if ((wParam & MK_LBUTTON) != 0) {
+			y = HIWORD(lParam);
+			if (y < 4) {
+				lphl = ListBoxGetStorageHeader(hwnd);
+				if (lphl->FirstVisible > 1) {
+					lphl->FirstVisible--;
+					if (wndPtr->dwStyle & WS_VSCROLL)
+					SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+					InvalidateRect(hwnd, NULL, TRUE);
+					UpdateWindow(hwnd);
+					break;
+					}
+				}
+			GetClientRect(hwnd, &rect);
+			if (y > (rect.bottom - 4)) {
+				lphl = ListBoxGetStorageHeader(hwnd);
+				if (lphl->FirstVisible < lphl->ItemsCount) {
+					lphl->FirstVisible++;
+					if (wndPtr->dwStyle & WS_VSCROLL)
+					SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+					InvalidateRect(hwnd, NULL, TRUE);
+					UpdateWindow(hwnd);
+					break;
+					}
+				}
+			if ((y > 0) && (y < (rect.bottom - 4))) {
+				if ((y < rectsel.top) || (y > rectsel.bottom)) {
+					wRet = ListBoxFindMouse(hwnd, LOWORD(lParam), HIWORD(lParam));
+					if ((wndPtr->dwStyle & LBS_MULTIPLESEL) == LBS_MULTIPLESEL) {
+						lphl->ItemFocused = wRet;
+						}
+					else {
+						ListBoxSetCurSel(hwnd, wRet);
+						}
+					ListBoxGetItemRect(hwnd, wRet, &rectsel);
+					InvalidateRect(hwnd, NULL, TRUE);
+					UpdateWindow(hwnd);
+					}
+				}
+			}
+		break;
+	case WM_KEYDOWN:
+		lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
+		if (lphl == NULL) return 0;
+		switch(wParam) {
+			case VK_TAB:
+				hWndCtl = GetNextDlgTabItem(lphl->hWndLogicParent,
+					hwnd, !(GetKeyState(VK_SHIFT) < 0));
+				SetFocus(hWndCtl);
+				if ((GetKeyState(VK_SHIFT) < 0))
+					printf("ListBox PreviousDlgTabItem %04X !\n", hWndCtl);
+				else
+					printf("ListBox NextDlgTabItem %04X !\n", hWndCtl);
+				break;
+			case VK_HOME:
+				lphl->ItemFocused = 0;
+				break;
+			case VK_END:
+				lphl->ItemFocused = lphl->ItemsCount - 1;
+				break;
+			case VK_LEFT:
+				if ((wndPtr->dwStyle & LBS_MULTICOLUMN) == LBS_MULTICOLUMN) {
+					lphl->ItemFocused -= lphl->ItemsPerColumn;
+					}
+				break;
+			case VK_UP:
+				lphl->ItemFocused--;
+				break;
+			case VK_RIGHT:
+				if ((wndPtr->dwStyle & LBS_MULTICOLUMN) == LBS_MULTICOLUMN) {
+					lphl->ItemFocused += lphl->ItemsPerColumn;
+					}
+				break;
+			case VK_DOWN:
+				lphl->ItemFocused++;
+				break;
+			case VK_PRIOR:
+				lphl->ItemFocused -= lphl->ItemsVisible;
+				break;
+			case VK_NEXT:
+				lphl->ItemFocused += lphl->ItemsVisible;
+				break;
+			case VK_SPACE:
+				wRet = ListBoxGetSel(hwnd, lphl->ItemFocused);
+				ListBoxSetSel(hwnd, lphl->ItemFocused, !wRet);
+				break;
+			default:
+				ListBoxFindNextMatch(hwnd, wParam);
+				return 0;
+			}
+		if (lphl->ItemFocused < 0) lphl->ItemFocused = 0;
+		if (lphl->ItemFocused >= lphl->ItemsCount)
+			lphl->ItemFocused = lphl->ItemsCount - 1;
+		lphl->FirstVisible = lphl->ItemFocused / lphl->ItemsVisible * 
+											lphl->ItemsVisible + 1;
+		if (lphl->FirstVisible < 1) lphl->FirstVisible = 1;
+		if ((wndPtr->dwStyle & LBS_MULTIPLESEL) != LBS_MULTIPLESEL) {
+			ListBoxSetCurSel(hwnd, lphl->ItemFocused);
+			}
+		if (wndPtr->dwStyle & WS_VSCROLL)
+			SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+		InvalidateRect(hwnd, NULL, TRUE);
+		UpdateWindow(hwnd);
+		break;
+	case WM_PAINT:
+		wndPtr = WIN_FindWndPtr(hwnd);
+		if ((wndPtr->dwStyle & LBS_OWNERDRAWFIXED) == LBS_OWNERDRAWFIXED) {
+			OwnerDrawListBox(hwnd);
+			break;
+			}
+		if ((wndPtr->dwStyle & LBS_OWNERDRAWVARIABLE) == LBS_OWNERDRAWVARIABLE) {
+			OwnerDrawListBox(hwnd);
+			break;
+			}
+		StdDrawListBox(hwnd);
+		break;
+	case WM_SETFOCUS:
+#ifdef DEBUG_LISTBOX
+		printf("ListBox WM_SETFOCUS !\n");
+#endif
+		lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
+		break;
+	case WM_KILLFOCUS:
+#ifdef DEBUG_LISTBOX
+		printf("ListBox WM_KILLFOCUS !\n");
+#endif
+		InvalidateRect(hwnd, NULL, TRUE);
+		UpdateWindow(hwnd);
+		break;
 
     case LB_RESETCONTENT:
-        printf("ListBox LB_RESETCONTENT !\n");
-	ListBoxResetContent(hwnd);
-	return 0;
+#ifdef DEBUG_LISTBOX
+		printf("ListBox LB_RESETCONTENT !\n");
+#endif
+		ListBoxResetContent(hwnd);
+		return 0;
     case LB_DIR:
-        printf("ListBox LB_DIR !\n");
-	wRet = ListBoxDirectory(hwnd, wParam, (LPSTR)lParam);
-	InvalidateRect(hwnd, NULL, TRUE);
-	UpdateWindow(hwnd);
-	return wRet;
-    case LB_ADDSTRING:
-	wRet = ListBoxAddString(hwnd, (LPSTR)lParam);
-	return wRet;
-    case LB_GETTEXT:
-	wRet = ListBoxGetText(hwnd, wParam, (LPSTR)lParam);
 #ifdef DEBUG_LISTBOX
-        printf("ListBox LB_GETTEXT #%u '%s' !\n", wParam, (LPSTR)lParam);
+		printf("ListBox LB_DIR !\n");
 #endif
-	return wRet;
-    case LB_INSERTSTRING:
-	wRet = ListBoxInsertString(hwnd, wParam, (LPSTR)lParam);
-	return wRet;
-    case LB_DELETESTRING:
-        printf("ListBox LB_DELETESTRING #%u !\n", wParam);
-	wRet = ListBoxDeleteString(hwnd, wParam);
-	return wRet;
-    case LB_FINDSTRING:
-	wRet = ListBoxFindString(hwnd, wParam, (LPSTR)lParam);
-	return wRet;
-    case LB_GETCARETINDEX:
-	return wRet;
-    case LB_GETCOUNT:
-        lphl = ListBoxGetStorageHeader(hwnd);
-	return lphl->ItemsCount;
-    case LB_GETCURSEL:
-	lphl = ListBoxGetStorageHeader(hwnd);
-        printf("ListBox LB_GETCURSEL %u !\n", lphl->ItemFocused);
-	return lphl->ItemFocused;
-    case LB_GETHORIZONTALEXTENT:
-	return wRet;
-    case LB_GETITEMDATA:
-	return wRet;
-    case LB_GETITEMHEIGHT:
-	return wRet;
-    case LB_GETITEMRECT:
-	return wRet;
-    case LB_GETSEL:
-        wRet = ListBoxGetSel(hwnd, wParam);
-	return wRet;
-    case LB_GETSELCOUNT:
-	return wRet;
-    case LB_GETSELITEMS:
-	return wRet;
-    case LB_GETTEXTLEN:
-	return wRet;
-    case LB_GETTOPINDEX:
-	return wRet;
-    case LB_SELECTSTRING:
-	return wRet;
-    case LB_SELITEMRANGE:
-	return wRet;
-    case LB_SETCARETINDEX:
-	return wRet;
-    case LB_SETCOLUMNWIDTH:
-        lphl = ListBoxGetStorageHeader(hwnd);
-        lphl->ColumnsWidth = wParam;
-        break;
-    case LB_SETHORIZONTALEXTENT:
-	return wRet;
-    case LB_SETITEMDATA:
-	return wRet;
-    case LB_SETTABSTOPS:
-	return wRet;
-    case LB_SETCURSEL:
+		wRet = ListBoxDirectory(hwnd, wParam, (LPSTR)lParam);
+		InvalidateRect(hwnd, NULL, TRUE);
+		UpdateWindow(hwnd);
+		return wRet;
+	case LB_ADDSTRING:
+		wRet = ListBoxAddString(hwnd, (LPSTR)lParam);
+		return wRet;
+	case LB_GETTEXT:
+		wRet = ListBoxGetText(hwnd, wParam, (LPSTR)lParam);
 #ifdef DEBUG_LISTBOX
-        printf("ListBox LB_SETCURSEL wParam=%x !\n", wParam);
+		printf("ListBox LB_GETTEXT #%u '%s' !\n", wParam, (LPSTR)lParam);
 #endif
-	wRet = ListBoxSetCurSel(hwnd, wParam);
-	InvalidateRect(hwnd, NULL, TRUE);
-	UpdateWindow(hwnd);
-	return wRet;
-    case LB_SETSEL:
-        printf("ListBox LB_SETSEL wParam=%x lParam=%lX !\n", wParam, lParam);
-	wRet = ListBoxSetSel(hwnd, LOWORD(lParam), wParam);
-	InvalidateRect(hwnd, NULL, TRUE);
-	UpdateWindow(hwnd);
-	return wRet;
-    case LB_SETTOPINDEX:
-        printf("ListBox LB_SETTOPINDEX wParam=%x !\n", wParam);
-        lphl = ListBoxGetStorageHeader(hwnd);
-	lphl->FirstVisible = wParam;
-	if (wndPtr->dwStyle & WS_VSCROLL)
-	    SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
-	InvalidateRect(hwnd, NULL, TRUE);
-	UpdateWindow(hwnd);
-	break;
-    case LB_SETITEMHEIGHT:
+		return wRet;
+	case LB_INSERTSTRING:
+		wRet = ListBoxInsertString(hwnd, wParam, (LPSTR)lParam);
+		return wRet;
+	case LB_DELETESTRING:
+		printf("ListBox LB_DELETESTRING #%u !\n", wParam);
+		wRet = ListBoxDeleteString(hwnd, wParam);
+		return wRet;
+	case LB_FINDSTRING:
+		wRet = ListBoxFindString(hwnd, wParam, (LPSTR)lParam);
+		return wRet;
+	case LB_GETCARETINDEX:
+		return wRet;
+	case LB_GETCOUNT:
+		lphl = ListBoxGetStorageHeader(hwnd);
+		return lphl->ItemsCount;
+	case LB_GETCURSEL:
+		lphl = ListBoxGetStorageHeader(hwnd);
 #ifdef DEBUG_LISTBOX
-        printf("ListBox LB_SETITEMHEIGHT wParam=%x lParam=%lX !\n", wParam, lParam);
+		printf("ListBox LB_GETCURSEL %u !\n", lphl->ItemFocused);
 #endif
-	wRet = ListBoxSetItemHeight(hwnd, wParam, lParam);
-	return wRet;
-	
-    default:
-	return DefWindowProc( hwnd, message, wParam, lParam );
+		return lphl->ItemFocused;
+	case LB_GETHORIZONTALEXTENT:
+		return wRet;
+	case LB_GETITEMDATA:
+		return wRet;
+	case LB_GETITEMHEIGHT:
+		return wRet;
+	case LB_GETITEMRECT:
+		return wRet;
+	case LB_GETSEL:
+		wRet = ListBoxGetSel(hwnd, wParam);
+		return wRet;
+	case LB_GETSELCOUNT:
+		return wRet;
+	case LB_GETSELITEMS:
+		return wRet;
+	case LB_GETTEXTLEN:
+		return wRet;
+	case LB_GETTOPINDEX:
+		return wRet;
+	case LB_SELECTSTRING:
+		return wRet;
+	case LB_SELITEMRANGE:
+		return wRet;
+	case LB_SETCARETINDEX:
+		return wRet;
+	case LB_SETCOLUMNWIDTH:
+		lphl = ListBoxGetStorageHeader(hwnd);
+		lphl->ColumnsWidth = wParam;
+		break;
+	case LB_SETHORIZONTALEXTENT:
+		return wRet;
+	case LB_SETITEMDATA:
+		return wRet;
+	case LB_SETTABSTOPS:
+		return wRet;
+	case LB_SETCURSEL:
+#ifdef DEBUG_LISTBOX
+		printf("ListBox LB_SETCURSEL wParam=%x !\n", wParam);
+#endif
+		wRet = ListBoxSetCurSel(hwnd, wParam);
+		InvalidateRect(hwnd, NULL, TRUE);
+		UpdateWindow(hwnd);
+		return wRet;
+	case LB_SETSEL:
+		printf("ListBox LB_SETSEL wParam=%x lParam=%lX !\n", wParam, lParam);
+		wRet = ListBoxSetSel(hwnd, LOWORD(lParam), wParam);
+		InvalidateRect(hwnd, NULL, TRUE);
+		UpdateWindow(hwnd);
+		return wRet;
+	case LB_SETTOPINDEX:
+		printf("ListBox LB_SETTOPINDEX wParam=%x !\n", wParam);
+		lphl = ListBoxGetStorageHeader(hwnd);
+		lphl->FirstVisible = wParam;
+		if (wndPtr->dwStyle & WS_VSCROLL)
+		SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
+		InvalidateRect(hwnd, NULL, TRUE);
+		UpdateWindow(hwnd);
+		break;
+	case LB_SETITEMHEIGHT:
+#ifdef DEBUG_LISTBOX
+		printf("ListBox LB_SETITEMHEIGHT wParam=%x lParam=%lX !\n", wParam, lParam);
+#endif
+		wRet = ListBoxSetItemHeight(hwnd, wParam, lParam);
+		return wRet;
+
+	default:
+		return DefWindowProc( hwnd, message, wParam, lParam );
     }
 return 0;
 }
@@ -459,11 +493,13 @@ void StdDrawListBox(HWND hwnd)
 	LPHEADLIST  lphl;
 	LPLISTSTRUCT lpls;
 	PAINTSTRUCT ps;
-	HBRUSH hBrush;
+	HBRUSH 	hBrush;
+	int 	OldBkMode;
+	DWORD 	dwOldTextColor;
 	HWND	hWndParent;
-	HDC hdc;
-	RECT rect;
-	UINT  i, h, h2, maxwidth, ipc;
+	HDC 	hdc;
+	RECT 	rect;
+	UINT	i, h, h2, maxwidth, ipc;
 	char	C[128];
 	h = 0;
 	hdc = BeginPaint( hwnd, &ps );
@@ -509,12 +545,18 @@ void StdDrawListBox(HWND hwnd)
 		lpls->dis.rcItem.bottom = h + h2;
 		lpls->dis.rcItem.left = rect.left;
 		lpls->dis.rcItem.right = rect.right;
+		OldBkMode = SetBkMode(hdc, TRANSPARENT);
+		if (lpls->dis.itemState != 0) {
+			dwOldTextColor = SetTextColor(hdc, 0x00FFFFFFL);
+		    FillRect(hdc, &lpls->dis.rcItem, GetStockObject(BLACK_BRUSH));
+		    }
 		TextOut(hdc, rect.left + 5, h + 2, (char *)lpls->dis.itemData, 
 			strlen((char *)lpls->dis.itemData));
 		if (lpls->dis.itemState != 0) {
-		    InvertRect(hdc, &lpls->dis.rcItem);
+			SetTextColor(hdc, dwOldTextColor);
 		    }
-		if (lphl->ItemFocused == i - 1) {
+		SetBkMode(hdc, OldBkMode);
+		if ((lphl->ItemFocused == i - 1) && GetFocus() == hwnd) {
 		    DrawFocusRect(hdc, &lpls->dis.rcItem);
 		    }
 		h += h2;
@@ -675,6 +717,25 @@ int CreateListBoxStruct(HWND hwnd)
 }
 
 
+void ListBoxAskMeasure(WND *wndPtr, LPHEADLIST lphl, LPLISTSTRUCT lpls)  
+{
+	MEASUREITEMSTRUCT *measure;
+	HANDLE hTemp = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(MEASUREITEMSTRUCT));
+	measure = (MEASUREITEMSTRUCT *) USER_HEAP_ADDR(hTemp);
+	if (measure == NULL) return;
+	measure->CtlType = ODT_LISTBOX;
+	measure->CtlID = wndPtr->wIDmenu;
+	measure->itemID = lpls->dis.itemID;
+	measure->itemWidth = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
+	measure->itemHeight = 0;
+	measure->itemData = lpls->dis.itemData;
+	SendMessage(lphl->hWndLogicParent, WM_MEASUREITEM, 0, (DWORD)measure);
+	lpls->dis.rcItem.right = lpls->dis.rcItem.left + measure->itemWidth;
+	lpls->dis.rcItem.bottom = lpls->dis.rcItem.top + measure->itemHeight;
+	USER_HEAP_FREE(hTemp);			
+}
+
+
 int ListBoxAddString(HWND hwnd, LPSTR newstr)
 {
     WND  	*wndPtr;
@@ -708,6 +769,9 @@ int ListBoxAddString(HWND hwnd, LPSTR newstr)
 	    if (str == NULL) return LB_ERRSPACE;
 	    strcpy(str, newstr);
 	    newstr = str;
+#ifdef DEBUG_LISTBOX
+	    printf("ListBoxAddString// after strcpy '%s'\n", str);
+#endif
 	    }
 	}
     ListBoxDefaultItem(hwnd, wndPtr, lphl, lplsnew);
@@ -716,6 +780,8 @@ int ListBoxAddString(HWND hwnd, LPSTR newstr)
     lplsnew->dis.itemID = lphl->ItemsCount;
     lplsnew->dis.itemData = (DWORD)newstr;
     lplsnew->hData = hTemp;
+	if ((wndPtr->dwStyle & LBS_OWNERDRAWVARIABLE) == LBS_OWNERDRAWVARIABLE) 
+		ListBoxAskMeasure(wndPtr, lphl, lplsnew);
     if (wndPtr->dwStyle & WS_VSCROLL)
 	SetScrollRange(hwnd, SB_VERT, 1, lphl->ItemsCount, 
 	    (lphl->FirstVisible != 1));
@@ -738,62 +804,62 @@ int ListBoxAddString(HWND hwnd, LPSTR newstr)
 
 int ListBoxInsertString(HWND hwnd, UINT uIndex, LPSTR newstr)
 {
-    WND  	*wndPtr;
-    LPHEADLIST 	lphl;
-    LPLISTSTRUCT lpls, lplsnew;
-    HANDLE	hTemp;
-    LPSTR	str;
-    UINT	Count;
-    lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
-    if (lphl == NULL) return LB_ERR;
-    if (uIndex >= lphl->ItemsCount) return LB_ERR;
-    lpls = lphl->lpFirst;
-    if (lpls == NULL) return LB_ERR;
-    if (uIndex > lphl->ItemsCount) return LB_ERR;
-    for(Count = 1; Count < uIndex; Count++) {
-	if (lpls->lpNext == NULL) return LB_ERR;
-	lpls = (LPLISTSTRUCT)lpls->lpNext;
-    }
-    hTemp = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(LISTSTRUCT));
-    lplsnew = (LPLISTSTRUCT) USER_HEAP_ADDR(hTemp);
-    ListBoxDefaultItem(hwnd, wndPtr, lphl, lplsnew);
-    lplsnew->hMem = hTemp;
-    lpls->lpNext = lplsnew;
-    lphl->ItemsCount++;
-    hTemp = 0;
-    if ((wndPtr->dwStyle & LBS_HASSTRINGS) != LBS_HASSTRINGS) {
-	if (((wndPtr->dwStyle & LBS_OWNERDRAWFIXED) != LBS_OWNERDRAWFIXED) &&
-	    ((wndPtr->dwStyle & LBS_OWNERDRAWVARIABLE) != LBS_OWNERDRAWVARIABLE)) {
-	    hTemp = USER_HEAP_ALLOC(GMEM_MOVEABLE, strlen(newstr) + 1);
-	    str = (LPSTR)USER_HEAP_ADDR(hTemp);
-	    if (str == NULL) return LB_ERRSPACE;
-	    strcpy(str, newstr);
-	    newstr = str;
-	    }
-	}
-    lplsnew->lpNext = NULL;
-    lplsnew->dis.itemID = lphl->ItemsCount;
-    lplsnew->dis.itemData = (DWORD)newstr;
-    lplsnew->hData = hTemp;
-    if (wndPtr->dwStyle & WS_VSCROLL)
-	SetScrollRange(hwnd, SB_VERT, 1, lphl->ItemsCount, 
-	    (lphl->FirstVisible != 1));
-    if ((wndPtr->dwStyle & WS_HSCROLL) && lphl->ItemsPerColumn != 0)
-	SetScrollRange(hwnd, SB_HORZ, 1, lphl->ItemsVisible / 
-	    lphl->ItemsPerColumn + 1, (lphl->FirstVisible != 1));
-    if (((lphl->ItemsCount - lphl->FirstVisible) == lphl->ItemsVisible) && 
-        (lphl->ItemsVisible != 0)) {
+	WND  	*wndPtr;
+	LPHEADLIST 	lphl;
+	LPLISTSTRUCT lpls, lplsnew;
+	HANDLE	hTemp;
+	LPSTR	str;
+	UINT	Count;
+	lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
+	if (lphl == NULL) return LB_ERR;
+	if (uIndex >= lphl->ItemsCount) return LB_ERR;
+	lpls = lphl->lpFirst;
+	if (lpls == NULL) return LB_ERR;
+	if (uIndex > lphl->ItemsCount) return LB_ERR;
+	for(Count = 1; Count < uIndex; Count++) {
+		if (lpls->lpNext == NULL) return LB_ERR;
+		lpls = (LPLISTSTRUCT)lpls->lpNext;
+		}
+	hTemp = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(LISTSTRUCT));
+	lplsnew = (LPLISTSTRUCT) USER_HEAP_ADDR(hTemp);
+	ListBoxDefaultItem(hwnd, wndPtr, lphl, lplsnew);
+	lplsnew->hMem = hTemp;
+	lpls->lpNext = lplsnew;
+	lphl->ItemsCount++;
+	hTemp = 0;
+	if ((wndPtr->dwStyle & LBS_HASSTRINGS) != LBS_HASSTRINGS) {
+		if (((wndPtr->dwStyle & LBS_OWNERDRAWFIXED) != LBS_OWNERDRAWFIXED) &&
+			((wndPtr->dwStyle & LBS_OWNERDRAWVARIABLE) != LBS_OWNERDRAWVARIABLE)) {
+			hTemp = USER_HEAP_ALLOC(GMEM_MOVEABLE, strlen(newstr) + 1);
+			str = (LPSTR)USER_HEAP_ADDR(hTemp);
+			if (str == NULL) return LB_ERRSPACE;
+			strcpy(str, newstr);
+			newstr = str;
+			}
+		}
+	lplsnew->lpNext = NULL;
+	lplsnew->dis.itemID = lphl->ItemsCount;
+	lplsnew->dis.itemData = (DWORD)newstr;
+	lplsnew->hData = hTemp;
+	if ((wndPtr->dwStyle & LBS_OWNERDRAWVARIABLE) == LBS_OWNERDRAWVARIABLE) 
+		ListBoxAskMeasure(wndPtr, lphl, lplsnew);
 	if (wndPtr->dwStyle & WS_VSCROLL)
-	    ShowScrollBar(hwnd, SB_VERT, TRUE);
-	if (wndPtr->dwStyle & WS_HSCROLL)
-	    ShowScrollBar(hwnd, SB_HORZ, TRUE);
-	}
-    if ((lphl->FirstVisible <= uIndex) &&
-        ((lphl->FirstVisible + lphl->ItemsVisible) >= uIndex)) {
-        InvalidateRect(hwnd, NULL, TRUE);
-        UpdateWindow(hwnd);
-        }
-    return lphl->ItemsCount;
+		SetScrollRange(hwnd, SB_VERT, 1, lphl->ItemsCount, 
+						    (lphl->FirstVisible != 1));
+	if ((wndPtr->dwStyle & WS_HSCROLL) && lphl->ItemsPerColumn != 0)
+		SetScrollRange(hwnd, SB_HORZ, 1, lphl->ItemsVisible / 
+			lphl->ItemsPerColumn + 1, (lphl->FirstVisible != 1));
+	if (((lphl->ItemsCount - lphl->FirstVisible) == lphl->ItemsVisible) && 
+		(lphl->ItemsVisible != 0)) {
+		if (wndPtr->dwStyle & WS_VSCROLL) ShowScrollBar(hwnd, SB_VERT, TRUE);
+		if (wndPtr->dwStyle & WS_HSCROLL) ShowScrollBar(hwnd, SB_HORZ, TRUE);
+		}
+	if ((lphl->FirstVisible <= uIndex) &&
+		((lphl->FirstVisible + lphl->ItemsVisible) >= uIndex)) {
+		InvalidateRect(hwnd, NULL, TRUE);
+		UpdateWindow(hwnd);
+		}
+	return lphl->ItemsCount;
 }
 
 
@@ -1015,25 +1081,20 @@ int ListBoxDirectory(HWND hwnd, UINT attrib, LPSTR filespec)
 	struct stat	st;
 	int	x, wRet;
 	char 	temp[256];
-
+#ifdef DEBUG_LISTBOX
 	fprintf(stderr,"ListBoxDirectory: %s, %4x\n",filespec,attrib);
-
-
-	if ((dp = (struct dosdirent *)DOS_opendir(filespec)) ==NULL)
-		return 0;
-	
-	while (1)
-	{
+#endif
+	if ((dp = (struct dosdirent *)DOS_opendir(filespec)) ==NULL) return 0;
+	while (1) {
 		dp = (struct dosdirent *)DOS_readdir(dp);
-		if (!dp->inuse)
-			break;
-
-		if (dp->attribute & 0x08)
-		{
+		if (!dp->inuse)	break;
+#ifdef DEBUG_LISTBOX
+		printf("ListBoxDirectory %08X '%s' !\n", dp->filename, dp->filename);
+#endif
+		if (dp->attribute & FA_DIREC) {
 			if (attrib & DDL_DIRECTORY) {
 				sprintf(temp, "[%s]", dp->filename);
-				if ( (wRet = ListBoxAddString(hwnd, temp)) == LB_ERR)
-	    				break;
+				if ( (wRet = ListBoxAddString(hwnd, temp)) == LB_ERR) break;
 			}
 		} else 
 		if (attrib & DDL_EXCLUSIVE) {
@@ -1059,7 +1120,9 @@ int ListBoxDirectory(HWND hwnd, UINT attrib, LPSTR filespec)
 			}		
 		}
 	}
-
+#ifdef DEBUG_LISTBOX
+	printf("End of ListBoxDirectory !\n");
+#endif
 	return wRet;
 }
 

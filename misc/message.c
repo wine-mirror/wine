@@ -8,6 +8,9 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 
 #define DEBUG_MSGBOX
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <windows.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -43,53 +46,55 @@ LONG SystemMessageBoxProc(HWND hwnd, WORD message, WORD wParam, LONG lParam);
 
 int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 {
-    HWND    	hDlg;
-    WND	    	*wndPtr;
-    WNDCLASS  	wndClass;
-    MSG	    	msg;
-    MSGBOX	mb;
-    DWORD	dwStyle;
-    HINSTANCE	hInst;
-    wndPtr = WIN_FindWndPtr(hWnd);
+	HWND    	hDlg, hWndOld;
+	WND	    	*wndPtr;
+	WNDCLASS  	wndClass;
+	MSG	    	msg;
+	MSGBOX	mb;
+	DWORD	dwStyle;
+	HINSTANCE	hInst;
+	wndPtr = WIN_FindWndPtr(hWnd);
 #ifdef DEBUG_MSGBOX
-    printf( "MessageBox: '%s'\n", str );
+	printf( "MessageBox: '%s'\n", str );
 #endif
-    if (wndPtr == NULL)
+	if (wndPtr == NULL)
 	hInst = hSysRes;
-    else
+	else
 	hInst = wndPtr->hInstance;
-    wndClass.style           = CS_HREDRAW | CS_VREDRAW ;
-    wndClass.lpfnWndProc     = (WNDPROC)SystemMessageBoxProc;
-    wndClass.cbClsExtra      = 0;
-    wndClass.cbWndExtra      = 0;
-    wndClass.hInstance       = hInst;
-    wndClass.hIcon           = (HICON)NULL;
-    wndClass.hCursor         = LoadCursor((HANDLE)NULL, IDC_ARROW); 
-    wndClass.hbrBackground   = GetStockObject(WHITE_BRUSH);
-    wndClass.lpszMenuName    = NULL;
-    wndClass.lpszClassName   = "MESSAGEBOX";
-    if (!RegisterClass(&wndClass)) return 0;
-    memset(&mb, 0, sizeof(MSGBOX));
-    mb.Title = title;
-    mb.Str = str;
-    mb.wType = type;
-    mb.ActiveFlg = TRUE;
-    dwStyle = WS_POPUP | WS_DLGFRAME | WS_VISIBLE;
-    if ((type & (MB_SYSTEMMODAL | MB_TASKMODAL)) == 0) dwStyle |= WS_CAPTION;
-    hDlg = CreateWindow("MESSAGEBOX", title, dwStyle, 100, 150, 400, 120,
-    	(HWND)NULL, (HMENU)NULL, hInst, (LPSTR)&mb);
-    if (hDlg == 0) return 0;
-    while(TRUE) {
-	if (!mb.ActiveFlg) break;
-	if (!GetMessage(&msg, (HWND)NULL, 0, 0)) break;
-	TranslateMessage(&msg);
-	DispatchMessage(&msg);
-	}
-    if (!UnregisterClass("MESSAGEBOX", hInst)) return 0;
+	wndClass.style           = CS_HREDRAW | CS_VREDRAW ;
+	wndClass.lpfnWndProc     = (WNDPROC)SystemMessageBoxProc;
+	wndClass.cbClsExtra      = 0;
+	wndClass.cbWndExtra      = 0;
+	wndClass.hInstance       = hInst;
+	wndClass.hIcon           = (HICON)NULL;
+	wndClass.hCursor         = LoadCursor((HANDLE)NULL, IDC_ARROW); 
+	wndClass.hbrBackground   = GetStockObject(WHITE_BRUSH);
+	wndClass.lpszMenuName    = NULL;
+	wndClass.lpszClassName   = "MESSAGEBOX";
+	if (!RegisterClass(&wndClass)) return 0;
+	memset(&mb, 0, sizeof(MSGBOX));
+	mb.Title = title;
+	mb.Str = str;
+	mb.wType = type;
+	mb.ActiveFlg = TRUE;
+	dwStyle = WS_POPUP | WS_DLGFRAME | WS_VISIBLE;
+	if ((type & (MB_SYSTEMMODAL | MB_TASKMODAL)) == 0) dwStyle |= WS_CAPTION;
+	hWndOld = GetFocus();
+	hDlg = CreateWindow("MESSAGEBOX", title, dwStyle, 100, 150, 400, 120,
+				(HWND)NULL, (HMENU)NULL, hInst, (LPSTR)&mb);
+	if (hDlg == 0) return 0;
+	while(TRUE) {
+		if (!mb.ActiveFlg) break;
+		if (!GetMessage(&msg, (HWND)NULL, 0, 0)) break;
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+		}
+	SetFocus(hWndOld);
+	if (!UnregisterClass("MESSAGEBOX", hInst)) return 0;
 #ifdef DEBUG_MSGBOX
-    printf( "MessageBox return %04X !\n", mb.wRetVal);
+	printf( "MessageBox return %04X !\n", mb.wRetVal);
 #endif
-    return(mb.wRetVal);
+	return(mb.wRetVal);
 }
 
 LPMSGBOX MsgBoxGetStorageHeader(HWND hwnd)
@@ -110,113 +115,113 @@ LPMSGBOX MsgBoxGetStorageHeader(HWND hwnd)
 
 LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 {
-    WND	    *wndPtr;
-    CREATESTRUCT *createStruct;
-    PAINTSTRUCT	ps;
-    HDC		hDC;
-    RECT	rect;
-    LPMSGBOX	lpmb;
-    LPMSGBOX	lpmbInit;
-    BITMAP	bm;
-    HBITMAP	hBitMap;
-    HDC		hMemDC;
-    HICON	hIcon;
-    HINSTANCE	hInst2;
-    int		x;
-    switch(message) {
+	WND	    	*wndPtr;
+	CREATESTRUCT *createStruct;
+	PAINTSTRUCT	ps;
+	HDC			hDC;
+	RECT		rect;
+	LPMSGBOX	lpmb;
+	LPMSGBOX	lpmbInit;
+	BITMAP		bm;
+	HBITMAP		hBitMap;
+	HDC			hMemDC;
+	HICON		hIcon;
+	HINSTANCE	hInst2;
+	int			x;
+	switch(message) {
 	case WM_CREATE:
 #ifdef DEBUG_MSGBOX
-	    printf("MessageBox WM_CREATE !\n");
+		printf("MessageBox WM_CREATE !\n");
 #endif
-	    wndPtr = WIN_FindWndPtr(hWnd);
-	    createStruct = (CREATESTRUCT *)lParam;
-     	    lpmbInit = (LPMSGBOX)createStruct->lpCreateParams;
-     	    if (lpmbInit == 0) break;
-	    *((LPMSGBOX *)&wndPtr->wExtra[1]) = lpmbInit;
-	    lpmb = MsgBoxGetStorageHeader(hWnd);
-	    GetClientRect(hWnd, &rect);
-	    CopyRect(&lpmb->rectStr, &rect);
-	    lpmb->rectStr.bottom -= 32;
-	    switch(lpmb->wType & MB_TYPEMASK) {
+		wndPtr = WIN_FindWndPtr(hWnd);
+		createStruct = (CREATESTRUCT *)lParam;
+		lpmbInit = (LPMSGBOX)createStruct->lpCreateParams;
+		if (lpmbInit == 0) break;
+		*((LPMSGBOX *)&wndPtr->wExtra[1]) = lpmbInit;
+		lpmb = MsgBoxGetStorageHeader(hWnd);
+		GetClientRect(hWnd, &rect);
+		CopyRect(&lpmb->rectStr, &rect);
+		lpmb->rectStr.bottom -= 32;
+		switch(lpmb->wType & MB_TYPEMASK) {
 		case MB_OK :
-		    lpmb->hWndYes = CreateWindow("BUTTON", "&Ok", 
-			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
-			rect.right / 2 - 30, rect.bottom - 25, 
-			60, 18, hWnd, IDOK, wndPtr->hInstance, 0L);
-		    break;
+			lpmb->hWndYes = CreateWindow("BUTTON", "&Ok", 
+				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
+				rect.right / 2 - 30, rect.bottom - 25, 
+				60, 18, hWnd, IDOK, wndPtr->hInstance, 0L);
+			break;
 		case MB_OKCANCEL :
-		    lpmb->hWndYes = CreateWindow("BUTTON", "&Ok", 
-			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
-			rect.right / 2 - 65, rect.bottom - 25, 
-			60, 18, hWnd, IDOK, wndPtr->hInstance, 0L);
-		    lpmb->hWndCancel = CreateWindow("BUTTON", "&Cancel", 
-			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
-			rect.right / 2 + 5, rect.bottom - 25, 
-			60, 18, hWnd, IDCANCEL, wndPtr->hInstance, 0L);
-		    break;
+			lpmb->hWndYes = CreateWindow("BUTTON", "&Ok", 
+				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
+				rect.right / 2 - 65, rect.bottom - 25, 
+				60, 18, hWnd, IDOK, wndPtr->hInstance, 0L);
+			lpmb->hWndCancel = CreateWindow("BUTTON", "&Cancel", 
+				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
+				rect.right / 2 + 5, rect.bottom - 25, 
+				60, 18, hWnd, IDCANCEL, wndPtr->hInstance, 0L);
+			break;
 		case MB_ABORTRETRYIGNORE :
-		    lpmb->hWndYes = CreateWindow("BUTTON", "&Retry", 
-			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
-			rect.right / 2 - 100, rect.bottom - 25, 
-			60, 18, hWnd, IDRETRY, wndPtr->hInstance, 0L);
-		    lpmb->hWndNo = CreateWindow("BUTTON", "&Ignore", 
-			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
-			rect.right / 2 - 30, rect.bottom - 25, 
-			60, 18, hWnd, IDIGNORE, wndPtr->hInstance, 0L);
-		    lpmb->hWndCancel = CreateWindow("BUTTON", "&Abort", 
-			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
-			rect.right / 2 + 40, rect.bottom - 25, 
-			60, 18, hWnd, IDABORT, wndPtr->hInstance, 0L);
-		    break;
+			lpmb->hWndYes = CreateWindow("BUTTON", "&Retry", 
+				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
+				rect.right / 2 - 100, rect.bottom - 25, 
+				60, 18, hWnd, IDRETRY, wndPtr->hInstance, 0L);
+			lpmb->hWndNo = CreateWindow("BUTTON", "&Ignore", 
+				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
+				rect.right / 2 - 30, rect.bottom - 25, 
+				60, 18, hWnd, IDIGNORE, wndPtr->hInstance, 0L);
+			lpmb->hWndCancel = CreateWindow("BUTTON", "&Abort", 
+				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
+				rect.right / 2 + 40, rect.bottom - 25, 
+				60, 18, hWnd, IDABORT, wndPtr->hInstance, 0L);
+			break;
 		case MB_YESNO :
-		    lpmb->hWndYes = CreateWindow("BUTTON", "&Yes", 
-			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
-			rect.right / 2 - 65, rect.bottom - 25, 
-			60, 18, hWnd, IDYES, wndPtr->hInstance, 0L);
-		    lpmb->hWndNo = CreateWindow("BUTTON", "&No", 
-			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
-			rect.right / 2 + 5, rect.bottom - 25, 
-			60, 18, hWnd, IDNO, wndPtr->hInstance, 0L);
-		    break;
+			lpmb->hWndYes = CreateWindow("BUTTON", "&Yes", 
+				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
+				rect.right / 2 - 65, rect.bottom - 25, 
+				60, 18, hWnd, IDYES, wndPtr->hInstance, 0L);
+			lpmb->hWndNo = CreateWindow("BUTTON", "&No", 
+				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
+				rect.right / 2 + 5, rect.bottom - 25, 
+				60, 18, hWnd, IDNO, wndPtr->hInstance, 0L);
+			break;
 		case MB_YESNOCANCEL :
-		    lpmb->hWndYes = CreateWindow("BUTTON", "&Yes", 
-			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
-			rect.right / 2 - 100, rect.bottom - 25, 
-			60, 18, hWnd, IDYES, wndPtr->hInstance, 0L);
-		    lpmb->hWndNo = CreateWindow("BUTTON", "&No", 
-			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
-			rect.right / 2 - 30, rect.bottom - 25, 
-			60, 18, hWnd, IDNO, wndPtr->hInstance, 0L);
-		    lpmb->hWndCancel = CreateWindow("BUTTON", "&Cancel", 
-			WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
-			rect.right / 2 + 40, rect.bottom - 25, 
-			60, 18, hWnd, IDCANCEL, wndPtr->hInstance, 0L);
-		    break;
+			lpmb->hWndYes = CreateWindow("BUTTON", "&Yes", 
+				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
+				rect.right / 2 - 100, rect.bottom - 25, 
+				60, 18, hWnd, IDYES, wndPtr->hInstance, 0L);
+			lpmb->hWndNo = CreateWindow("BUTTON", "&No", 
+				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
+				rect.right / 2 - 30, rect.bottom - 25, 
+				60, 18, hWnd, IDNO, wndPtr->hInstance, 0L);
+			lpmb->hWndCancel = CreateWindow("BUTTON", "&Cancel", 
+				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
+				rect.right / 2 + 40, rect.bottom - 25, 
+				60, 18, hWnd, IDCANCEL, wndPtr->hInstance, 0L);
+			break;
 		}
 	    switch(lpmb->wType & MB_ICONMASK) {
 		case MB_ICONEXCLAMATION:
-		    printf("MsgBox LoadIcon Exclamation !\n");
-		    lpmb->hIcon = LoadIcon((HINSTANCE)NULL, IDI_EXCLAMATION);
-		    break;
+			printf("MsgBox LoadIcon Exclamation !\n");
+			lpmb->hIcon = LoadIcon((HINSTANCE)NULL, IDI_EXCLAMATION);
+			break;
 		case MB_ICONQUESTION:
-		    printf("MsgBox LoadIcon Question !\n");
-		    lpmb->hIcon = LoadIcon((HINSTANCE)NULL, IDI_QUESTION);
-		    break;
+			printf("MsgBox LoadIcon Question !\n");
+			lpmb->hIcon = LoadIcon((HINSTANCE)NULL, IDI_QUESTION);
+			break;
 		case MB_ICONASTERISK:
-		    printf("MsgBox LoadIcon Asterisk !\n");
-		    lpmb->hIcon = LoadIcon((HINSTANCE)NULL, IDI_ASTERISK);
-		    break;
+			printf("MsgBox LoadIcon Asterisk !\n");
+			lpmb->hIcon = LoadIcon((HINSTANCE)NULL, IDI_ASTERISK);
+			break;
 		case MB_ICONHAND:
-		    printf("MsgBox LoadIcon Hand !\n");
-		    lpmb->hIcon = LoadIcon((HINSTANCE)NULL, IDI_HAND);
-		    break;
-	    	}
+			printf("MsgBox LoadIcon Hand !\n");
+			lpmb->hIcon = LoadIcon((HINSTANCE)NULL, IDI_HAND);
+			break;
+			}
 	    if (lpmb->hIcon != (HICON)NULL) {
-		SetRect(&lpmb->rectIcon, 16,
-		    lpmb->rectStr.bottom / 2 - 16, 48,
-		    lpmb->rectStr.bottom / 2 + 16);
-		lpmb->rectStr.left += 64;
-		}
+			SetRect(&lpmb->rectIcon, 16,
+			lpmb->rectStr.bottom / 2 - 16, 48,
+			lpmb->rectStr.bottom / 2 + 16);
+			lpmb->rectStr.left += 64;
+			}
 	    break;
 	case WM_PAINT:
 #ifdef DEBUG_MSGBOX
@@ -257,6 +262,37 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 #ifdef DEBUG_MSGBOX
 	    printf("MessageBox sending WM_CLOSE !\n");
 #endif
+	    PostMessage(hWnd, WM_CLOSE, 0, 0L);
+	    break;
+	case WM_CHAR:
+	    lpmb = MsgBoxGetStorageHeader(hWnd);
+		if (wParam >= 'a' || wParam <= 'z') wParam -= 'a' - 'A';
+		switch(wParam) {
+			case 'Y':
+			    lpmb->wRetVal = IDYES;
+				break;
+			case 'O':
+			    lpmb->wRetVal = IDOK;
+				break;
+			case 'R':
+			    lpmb->wRetVal = IDRETRY;
+				break;
+			case 'A':
+			    lpmb->wRetVal = IDABORT;
+				break;
+			case 'N':
+			    lpmb->wRetVal = IDNO;
+				break;
+			case 'I':
+			    lpmb->wRetVal = IDIGNORE;
+				break;
+			case 'C':
+			case VK_ESCAPE:
+			    lpmb->wRetVal = IDCANCEL;
+				break;
+			default:
+			    return 0;
+			}
 	    PostMessage(hWnd, WM_CLOSE, 0, 0L);
 	    break;
 	default:

@@ -69,10 +69,9 @@ typedef struct tagFONTOBJ
 typedef struct tagBITMAPOBJ
 {
     GDIOBJHDR   header;
-    HANDLE      hBitmap;
-    BOOL        bSelected;
-    HDC         hdc;
-    SIZE        size;
+    BITMAP      bitmap;
+    Pixmap      pixmap;
+    SIZE        size;   /* For SetBitmapDimension() */
 } BITMAPOBJ;
 
 typedef struct tagRGNOBJ
@@ -152,7 +151,6 @@ typedef struct
     short         breakExtra;        /* breakTotalExtra / breakCount */
     short         breakRem;          /* breakTotalExtra % breakCount */
 
-    BYTE          planes;
     BYTE          bitsPerPixel;
 
     WORD          MapMode;
@@ -179,6 +177,8 @@ typedef struct
     int          style;
     int          pixel;
     int          width;
+    char *       dashes;
+    int          dash_len;
 } X_PHYSPEN;
 
   /* X physical brush */
@@ -197,6 +197,13 @@ typedef struct
     TEXTMETRIC    metrics;
 } X_PHYSFONT;
 
+  /* X physical palette information */
+typedef struct
+{
+    HANDLE    hMapping;
+    WORD      mappingSize;
+} X_PHYSPALETTE;
+
   /* X-specific DC information */
 typedef struct
 {
@@ -205,6 +212,7 @@ typedef struct
     X_PHYSFONT    font;
     X_PHYSPEN     pen;
     X_PHYSBRUSH   brush;
+    X_PHYSPALETTE pal;
 } X_DC_INFO;
 
 
@@ -282,7 +290,7 @@ typedef struct tagDC
 extern MDESC *GDI_Heap;
 
 #define GDI_HEAP_ALLOC(f,size) ((int)HEAP_Alloc(&GDI_Heap,f,size) & 0xffff)
-#define GDI_HEAP_ADDR(handle) ((void *)(handle | ((int)GDI_Heap & 0xffff0000)))
+#define GDI_HEAP_ADDR(handle) ((void *)((handle)|((int)GDI_Heap & 0xffff0000)))
 #define GDI_HEAP_FREE(handle) (HEAP_Free(&GDI_Heap,GDI_HEAP_ADDR(handle)))
 
 #endif
@@ -296,5 +304,7 @@ extern Screen * XT_screen;    /* Will be removed */
 
 extern Display * display;
 extern Screen * screen;
+extern Window rootWindow;
+extern int screenWidth, screenHeight, screenDepth;
 
 #endif  /* GDI_H */

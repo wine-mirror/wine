@@ -12,8 +12,9 @@ SUBMITTING YOUR WORK:
 Submissions of code for inclussion into Wine should be sent to
 bob@amscons.com (Bob Amstadt).  You MUST provide a suitable
 ChangeLog entry for any work that you submit.  I prefer new code
-to be submitted as diffs off of the latest release.  Releases are
-every Tuesday evening (approximately 19:00 PST or Wednesday 03:00 GMT).
+to be submitted as unified diffs (diff -u) off of the latest release.  
+Releases are every Tuesday evening (approximately 17:00 PST or 
+Wednesday 01:00 GMT).
 
 MEMORY AND SEGMENTS:
 
@@ -79,3 +80,10 @@ files contain the entry point code for each API call, and the dll_tab_*.s
 files contain tables used by relay.c to translate arguments and transfer
 control to the proper handler.  The format of the *.spec files is
 documented in the file "tools/build-spec.txt".
+
+REGISTER FUNCTIONS:
+
+Some functions are defined as type "register" in the DLL specification files.
+Inorder to return values in the registers to the WIN16 program, the handler
+function must exit by calling ReturnFromRegisterFunc().  Look at the function
+DOS3Call() for an example of how this works.

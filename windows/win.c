@@ -6,6 +6,8 @@
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
+#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "class.h"
@@ -19,7 +21,11 @@ extern Colormap COLOR_WinColormap;
 
 extern void EVENT_RegisterWindow( Window w, HWND hwnd );  /* event.c */
 extern void CURSOR_SetWinCursor( HWND hwnd, HCURSOR hcursor );  /* cursor.c */
+extern void WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg ); /*winpos.c*/
 extern HMENU CopySysMenu(); /* menu.c */
+extern LONG MDIClientWndProc(HWND hwnd, WORD message, 
+			     WORD wParam, LONG lParam); /* mdi.c */
+
 
 static HWND hwndDesktop = 0;
 
@@ -109,7 +115,8 @@ BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter )
 HWND WIN_FindWinToRepaint( HWND hwnd )
 {
     WND * wndPtr;
-    
+
+      /* Note: the desktop window never gets WM_PAINT messages */
     if (!hwnd) hwnd = GetTopWindow( hwndDesktop );
     for ( ; hwnd != 0; hwnd = wndPtr->hwndNext )
     {
@@ -133,15 +140,15 @@ HWND WIN_FindWinToRepaint( HWND hwnd )
  * Send a WM_PARENTNOTIFY to all ancestors of the given window, unless
  * the window has the WS_EX_NOPARENTNOTIFY style.
  */
-static void WIN_SendParentNotify( HWND hwnd, WND * wndPtr, WORD event )
+void WIN_SendParentNotify( HWND hwnd, WORD event, LONG lParam )
 {
     HWND current = GetParent( hwnd );
-
-    if (wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY) return;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    
+    if (!wndPtr || (wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY)) return;
     while (current)
     {
-	SendMessage( current, WM_PARENTNOTIFY, 
-		     event, MAKELONG( hwnd, wndPtr->wIDmenu ) );
+	SendMessage( current, WM_PARENTNOTIFY, event, lParam );
 	current = GetParent( current );
     }
 }
@@ -152,19 +159,19 @@ static void WIN_SendParentNotify( HWND hwnd, WND * wndPtr, WORD event )
  *
  * Create the desktop window.
  */
-static HWND WIN_CreateDesktopWindow()
+BOOL WIN_CreateDesktopWindow()
 {
-    HWND hwnd;
     WND *wndPtr;
     HCLASS hclass;
     CLASS *classPtr;
 
     if (!(hclass = CLASS_FindClassByName( DESKTOP_CLASS_NAME, &classPtr )))
-	return 0;
+	return FALSE;
 
-    hwnd = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(WND)+classPtr->wc.cbWndExtra);
-    if (!hwnd) return 0;
-    wndPtr = (WND *) USER_HEAP_ADDR( hwnd );
+    hwndDesktop = USER_HEAP_ALLOC( GMEM_MOVEABLE,
+				   sizeof(WND)+classPtr->wc.cbWndExtra );
+    if (!hwndDesktop) return FALSE;
+    wndPtr = (WND *) USER_HEAP_ADDR( hwndDesktop );
 
     wndPtr->hwndNext          = 0;
     wndPtr->hwndChild         = 0;
@@ -187,7 +194,7 @@ static HWND WIN_CreateDesktopWindow()
     wndPtr->hrgnUpdate        = 0;
     wndPtr->hwndLastActive    = 0;
     wndPtr->lpfnWndProc       = classPtr->wc.lpfnWndProc;
-    wndPtr->dwStyle           = WS_VISIBLE | WS_CLIPCHILDREN;
+    wndPtr->dwStyle           = WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
     wndPtr->dwExStyle         = 0;
     wndPtr->hdce              = 0;
     wndPtr->hmenuSystem       = 0;
@@ -196,9 +203,15 @@ static HWND WIN_CreateDesktopWindow()
     wndPtr->wIDmenu           = 0;
     wndPtr->hText             = 0;
     wndPtr->flags             = 0;
-    wndPtr->window            = DefaultRootWindow( display );
+    wndPtr->window            = rootWindow;
     wndPtr->hSysMenu          = 0;
-    return hwnd;
+
+      /* Send dummy WM_NCCREATE message */
+    SendMessage( hwndDesktop, WM_NCCREATE, 0, 0 );
+    EVENT_RegisterWindow( wndPtr->window, hwndDesktop );
+    RedrawWindow( hwndDesktop, NULL, 0,
+		  RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW );
+    return TRUE;
 }
 
 
@@ -228,17 +241,11 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     HANDLE hcreateStruct;
     int wmcreate;
     XSetWindowAttributes win_attr;
-    Window parentWindow;
-    int x_rel, y_rel;
 
 #ifdef DEBUG_WIN
     printf( "CreateWindowEx: %d '%s' '%s' %d,%d %dx%d %08x %x\n",
 	   exStyle, className, windowName, x, y, width, height, style, parent);
 #endif
-
-      /* Before anything, create the desktop window */
-    if (!hwndDesktop)
-	if (!(hwndDesktop = WIN_CreateDesktopWindow())) return 0;
 
     if (x == CW_USEDEFAULT) x = y = 0;
     if (width == CW_USEDEFAULT)
@@ -257,7 +264,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 	if (!(parentPtr = WIN_FindWndPtr( parent ))) return 0;
     }
     else if (style & WS_CHILD) return 0;  /* WS_CHILD needs a parent */
-    
+
     if (!(class = CLASS_FindClassByName( className, &classPtr ))) {
 	printf("CreateWindow BAD CLASSNAME '%s' !\n", className);
 	return 0;
@@ -345,30 +352,25 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 
     win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask |
 	                 PointerMotionMask | ButtonPressMask |
-			 ButtonReleaseMask | FocusChangeMask | EnterWindowMask;
-    win_attr.override_redirect = True;
-    win_attr.colormap = COLOR_WinColormap;
-    if (style & WS_CHILD)
+			 ButtonReleaseMask | EnterWindowMask;
+    win_attr.override_redirect = (rootWindow == DefaultRootWindow(display));
+    win_attr.colormap          = COLOR_WinColormap;
+    if (!(style & WS_CHILD))
     {
-	parentWindow = parentPtr->window;
-	x_rel = x + parentPtr->rectClient.left - parentPtr->rectWindow.left;
-	y_rel = y + parentPtr->rectClient.top - parentPtr->rectWindow.top;
+	parentPtr = WIN_FindWndPtr( hwndDesktop );
+	  /* Only select focus events on top-level override-redirect windows */
+	if (win_attr.override_redirect) win_attr.event_mask |= FocusChangeMask;
     }
-    else
-    {
-	parentWindow = DefaultRootWindow( display );
-	x_rel = x;
-	y_rel = y;
-    }
-    wndPtr->window = XCreateWindow(display, parentWindow,
-				   x_rel, y_rel, width, height, 0,
-				   CopyFromParent, InputOutput, CopyFromParent,
-				   CWEventMask | CWOverrideRedirect |
-				   CWColormap, &win_attr );
+    wndPtr->window = XCreateWindow( display, parentPtr->window,
+		   x + parentPtr->rectClient.left - parentPtr->rectWindow.left,
+		   y + parentPtr->rectClient.top - parentPtr->rectWindow.top,
+		   width, height, 0,
+		   CopyFromParent, InputOutput, CopyFromParent,
+		   CWEventMask | CWOverrideRedirect | CWColormap, &win_attr );
     XStoreName( display, wndPtr->window, windowName );
 
       /* Send the WM_CREATE message */
-	
+
     hcreateStruct = USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(CREATESTRUCT) );
     createStruct = (CREATESTRUCT *) USER_HEAP_ADDR( hcreateStruct );
     createStruct->lpCreateParams = data;
@@ -427,11 +429,12 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 
     EVENT_RegisterWindow( wndPtr->window, hwnd );
 
-    WIN_SendParentNotify( hwnd, wndPtr, WM_CREATE );
+    WIN_SendParentNotify( hwnd, WM_CREATE, MAKELONG( hwnd, wndPtr->wIDmenu ) );
     
     if (style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
     return hwnd;
 }
+
 
 /***********************************************************************
  *           DestroyWindow   (USER.53)
@@ -443,9 +446,12 @@ BOOL DestroyWindow( HWND hwnd )
     
       /* Initialisation */
 
+    if (hwnd == hwndDesktop) return FALSE;  /* Can't destroy desktop */
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
     if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return FALSE;
-    WIN_SendParentNotify( hwnd, wndPtr, WM_DESTROY );
+    if (hwnd == GetActiveWindow()) WINPOS_ChangeActiveWindow( 0, FALSE );
+    if (hwnd == GetFocus()) SetFocus( 0 );
+    WIN_SendParentNotify( hwnd, WM_DESTROY, MAKELONG(hwnd, wndPtr->wIDmenu) );
 
       /* Send destroy messages and destroy children */
 
@@ -501,7 +507,34 @@ BOOL OpenIcon(HWND hWnd)
  */
 HWND FindWindow(LPSTR ClassMatch, LPSTR TitleMatch)
 {
-    return((HWND)NULL);
+    HCLASS hclass;
+    CLASS *classPtr;
+    HWND hwnd;
+
+    if (ClassMatch)
+    {
+	hclass = CLASS_FindClassByName( ClassMatch, &classPtr );
+	if (!hclass) return 0;
+    }
+    else hclass = 0;
+
+    hwnd = GetTopWindow( hwndDesktop );
+    while(hwnd)
+    {
+	WND *wndPtr = WIN_FindWndPtr( hwnd );
+	if (!hclass || (wndPtr->hClass == hclass))
+	{
+	      /* Found matching class */
+	    if (!TitleMatch) return hwnd;
+	    if (wndPtr->hText)
+	    {
+		char *textPtr = (char *) USER_HEAP_ADDR( wndPtr->hText );
+		if (!strcmp( textPtr, TitleMatch )) return hwnd;
+	    }
+	}
+	hwnd = wndPtr->hwndNext;
+    }
+    return 0;
 }
  
  
@@ -513,6 +546,47 @@ HWND GetDesktopWindow()
     return hwndDesktop;
 }
 
+
+/*******************************************************************
+ *           EnableWindow   (USER.34)
+ */
+BOOL EnableWindow( HWND hwnd, BOOL enable )
+{
+    WND *wndPtr;
+
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
+    if (enable && (wndPtr->dwStyle & WS_DISABLED))
+    {
+	  /* Enable window */
+	wndPtr->dwStyle &= ~WS_DISABLED;
+	SendMessage( hwnd, WM_ENABLE, TRUE, 0 );
+	return TRUE;
+    }
+    else if (!enable && !(wndPtr->dwStyle & WS_DISABLED))
+    {
+	  /* Disable window */
+	wndPtr->dwStyle |= WS_DISABLED;
+	if ((hwnd == GetFocus()) || IsChild( hwnd, GetFocus() ))
+	    SetFocus( 0 );  /* A disabled window can't have the focus */
+	if ((hwnd == GetCapture()) || IsChild( hwnd, GetCapture() ))
+	    ReleaseCapture();  /* A disabled window can't capture the mouse */
+	SendMessage( hwnd, WM_ENABLE, FALSE, 0 );
+	return FALSE;
+    }
+    return ((wndPtr->dwStyle & WS_DISABLED) != 0);
+}
+
+
+/***********************************************************************
+ *           IsWindowEnabled   (USER.35)
+ */ 
+BOOL IsWindowEnabled(HWND hWnd)
+{
+    WND * wndPtr; 
+
+    if (!(wndPtr = WIN_FindWndPtr(hWnd))) return FALSE;
+    return !(wndPtr->dwStyle & WS_DISABLED);
+}
 
 
 /**********************************************************************
@@ -552,86 +626,6 @@ WORD SetWindowWord( HWND hwnd, short offset, WORD newval )
     *ptr = newval;
     return retval;
 }
-
-
-
-/*******************************************************************
- *    WIN_SetSensitive
- * 
- *      sets hWnd and all children to the same sensitivity
- * 
- *      sets hWnd sensitive and then calls SetSensitive on hWnd's child
- *      and all of hWnd's child's Next windows 
- */
-static BOOL WIN_SetSensitive(HWND hWnd, BOOL fEnable)
-{
-    WND *wndPtr;
-    HWND hwnd;
-
-    printf("in SetSenitive\n");
-
-    if (!hWnd) return 0;
-    if (!(wndPtr = WIN_FindWndPtr(hWnd))) return 0;
-
-	
-    if (fEnable) {
-        wndPtr->dwStyle &= ~WS_DISABLED;
-     } else {
-        wndPtr->dwStyle |= WS_DISABLED;
-     }
-  
-    hwnd=wndPtr->hwndChild;
-    while (hwnd) {					/* mk next child sens */
-        WIN_SetSensitive(hwnd, fEnable); 
-        if ( !(wndPtr=WIN_FindWndPtr(hwnd)) ) return 0;
-	hwnd=wndPtr->hwndNext;
-    }
-    return 1;
-
-}
-
-/*******************************************************************
- *           EnableWindow   (USER.34)
- * 
- *
- */
-
-BOOL EnableWindow(HWND hWnd, BOOL fEnable)
-{
-    WND *wndPtr;
-    int eprev;
-   
-    if (hWnd == 0) return 0;
-    
-    wndPtr = WIN_FindWndPtr(hWnd);
-    if (wndPtr == 0) return 0;
-
-    eprev = ! (wndPtr->dwStyle & WS_DISABLED);
-
-    if (fEnable != eprev) {                        /* change req */
-        printf("changing window\n");
-        WIN_SetSensitive(hWnd, fEnable); 
-        SendMessage(hWnd, WM_ENABLE, (WORD)fEnable, 0);  
-    }
-    return !eprev;
-}
-
-/***********************************************************************
- *           IsWindowEnabled   (USER.35)
- */
- 
-BOOL IsWindowEnabled(HWND hWnd)
-{
-    WND * wndPtr; 
-
-    if (hWnd == 0) return 0;
-    wndPtr = WIN_FindWndPtr(hWnd);
-    if (wndPtr == 0) return 0;
-
-    return !(wndPtr->dwStyle & WS_DISABLED);
-}
-
-
 
 
 /**********************************************************************

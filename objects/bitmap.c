@@ -6,22 +6,18 @@
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
+#include <stdlib.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include "gdi.h"
+#include "bitmap.h"
 
-/* A GDI bitmap object contains a handle to a packed BITMAP,
- * which is stored on the global heap.
- * A packed BITMAP is a BITMAP structure followed by the bitmap bits.
- */
 
   /* Handle of the bitmap selected by default in a memory DC */
-HBITMAP BITMAP_hbitmapMemDC;
+HBITMAP BITMAP_hbitmapMemDC = 0;
 
-  /* List of supported depths */
-static int depthCount;
-static int * depthList;
-
-  /* List of GC used for bitmap to pixmap operations (one for each depth) */
-static GC * bitmapGC;
+  /* GCs used for B&W and color bitmap operations */
+GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
 
 
 /***********************************************************************
@@ -29,27 +25,25 @@ static GC * bitmapGC;
  */
 BOOL BITMAP_Init()
 {
-    int i;
     Pixmap tmpPixmap;
-    
-    depthList = XListDepths( XT_display, DefaultScreen(XT_display), 
-			     &depthCount );
-    if (!depthList || !depthCount) return FALSE;
-    if (!(bitmapGC = (GC *) malloc( depthCount * sizeof(GC) ))) return FALSE;
     
       /* Create the necessary GCs */
     
-    for (i = 0; i < depthCount; i++)
+    if ((tmpPixmap = XCreatePixmap( display, rootWindow, 1, 1, 1 )))
     {
-	tmpPixmap = XCreatePixmap( XT_display, DefaultRootWindow(XT_display),
-				  1, 1, depthList[i] );
-	if (tmpPixmap)
+	BITMAP_monoGC = XCreateGC( display, tmpPixmap, 0, NULL );
+	XSetGraphicsExposures( display, BITMAP_monoGC, False );
+	XFreePixmap( display, tmpPixmap );
+    }
+
+    if (screenDepth != 1)
+    {
+	if ((tmpPixmap = XCreatePixmap(display, rootWindow, 1,1,screenDepth)))
 	{
-	    bitmapGC[i] = XCreateGC( XT_display, tmpPixmap, 0, NULL );
-	    XSetGraphicsExposures( XT_display, bitmapGC[i], False );
-	    XFreePixmap( XT_display, tmpPixmap );
+	    BITMAP_colorGC = XCreateGC( display, tmpPixmap, 0, NULL );
+	    XSetGraphicsExposures( display, BITMAP_colorGC, False );
+	    XFreePixmap( display, tmpPixmap );
 	}
-	else bitmapGC[i] = 0;
     }
 
     BITMAP_hbitmapMemDC = CreateBitmap( 1, 1, 1, 1, NULL );
@@ -58,26 +52,13 @@ BOOL BITMAP_Init()
 
 
 /***********************************************************************
- *           BITMAP_FindGCForDepth
- *
- * Return a GC appropriate for operations with the given depth.
- */
-GC BITMAP_FindGCForDepth( int depth )
-{
-    int i;
-    for (i = 0; i < depthCount; i++)
-	if (depthList[i] == depth) return bitmapGC[i];
-    return 0;
-}
-
-
-/***********************************************************************
  *           BITMAP_BmpToImage
  *
  * Create an XImage pointing to the bitmap data.
  */
-XImage * BITMAP_BmpToImage( BITMAP * bmp, void * bmpData )
+static XImage *BITMAP_BmpToImage( BITMAP * bmp, void * bmpData )
 {
+    extern void _XInitImageFuncPtrs( XImage* );
     XImage * image;
 
     image = XCreateImage( XT_display, DefaultVisualOfScreen(XT_screen),
@@ -93,57 +74,6 @@ XImage * BITMAP_BmpToImage( BITMAP * bmp, void * bmpData )
 
 
 /***********************************************************************
- *           BITMAP_CopyToPixmap
- *
- * Copy the content of the bitmap to the pixmap. Both must have the same depth.
- */
-BOOL BITMAP_CopyToPixmap( BITMAP * bmp, Pixmap pixmap,
-			  int x, int y, int width, int height )
-{
-    GC gc;
-    XImage * image;
-    
-    gc = BITMAP_FindGCForDepth( bmp->bmBitsPixel );
-    if (!gc) return FALSE;
-    
-    image = BITMAP_BmpToImage( bmp, ((char *)bmp) + sizeof(BITMAP) );
-    if (!image) return FALSE;
-
-#ifdef DEBUG_GDI
-    printf( "BITMAP_CopyToPixmap: %dx%d %d colors -> %d,%d %dx%d\n",
-	    bmp->bmWidth, bmp->bmHeight, 1 << bmp->bmBitsPixel, x, y, width, height );
-#endif
-    XPutImage(XT_display, pixmap, gc, image, 0, 0, x, y, width, height); 
-    image->data = NULL;
-    XDestroyImage( image );
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           BITMAP_CopyFromPixmap
- *
- * Copy the content of the pixmap to the bitmap. Both must have
- * the same dimensions and depth.
- */
-BOOL BITMAP_CopyFromPixmap( BITMAP * bmp, Pixmap pixmap )
-{
-    XImage *image = BITMAP_BmpToImage( bmp, ((char *)bmp) + sizeof(BITMAP) );
-    if (!image) return FALSE;
-
-#ifdef DEBUG_GDI
-    printf( "BITMAP_CopyFromPixmap: %dx%d %d colors\n",
-	    bmp->bmWidth, bmp->bmHeight, 1 << bmp->bmBitsPixel );
-#endif    
-    XGetSubImage( XT_display, pixmap, 0, 0, bmp->bmWidth, bmp->bmHeight,
-		  AllPlanes, ZPixmap, image, 0, 0 );
-    image->data = NULL;
-    XDestroyImage( image );
-    return TRUE;
-}
-
-
-/***********************************************************************
  *           CreateBitmap    (GDI.48)
  */
 HBITMAP CreateBitmap( short width, short height, 
@@ -154,9 +84,6 @@ HBITMAP CreateBitmap( short width, short height,
     printf( "CreateBitmap: %dx%d, %d colors\n", 
 	     width, height, 1 << (planes*bpp) );
 #endif
-    if (!width || !height) return 0;
-    if ((planes != 1) && (bpp != 1)) return 0;
-    bitmap.bmWidthBytes = (width * bpp + 15) / 16 * 2;
     return CreateBitmapIndirect( &bitmap );
 }
 
@@ -166,15 +93,12 @@ HBITMAP CreateBitmap( short width, short height,
  */
 HBITMAP CreateCompatibleBitmap( HDC hdc, short width, short height )
 {
-    HBITMAP hbitmap;
     DC * dc;
 #ifdef DEBUG_GDI
     printf( "CreateCompatibleBitmap: %d %dx%d\n", hdc, width, height );
 #endif
-    dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return 0;
-    hbitmap = CreateBitmap( width, height, dc->w.planes, dc->w.bitsPerPixel, NULL);
-    return hbitmap;
+    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
+    return CreateBitmap( width, height, 1, dc->w.bitsPerPixel, NULL );
 }
 
 
@@ -184,72 +108,34 @@ HBITMAP CreateCompatibleBitmap( HDC hdc, short width, short height )
 HBITMAP CreateBitmapIndirect( BITMAP * bmp )
 {
     BITMAPOBJ * bmpObjPtr;
-    char * bmpPtr;
     HBITMAP hbitmap;
-    int size = bmp->bmPlanes * bmp->bmHeight * bmp->bmWidthBytes;
-    
-      /* Create the BITMAPOBJ */
 
+      /* Check parameters */
+    if (!bmp->bmHeight || !bmp->bmWidth) return 0;
+    if (bmp->bmPlanes != 1) return 0;
+    if ((bmp->bmBitsPixel != 1) && (bmp->bmBitsPixel != screenDepth)) return 0;
+
+      /* Create the BITMAPOBJ */
     hbitmap = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC );
     if (!hbitmap) return 0;
     bmpObjPtr = (BITMAPOBJ *) GDI_HEAP_ADDR( hbitmap );
-    
-      /* Create the bitmap in global heap */
 
-    bmpObjPtr->hBitmap = GlobalAlloc( GMEM_MOVEABLE, sizeof(BITMAP) + size );
-    if (!bmpObjPtr->hBitmap)
+    bmpObjPtr->size.cx = 0;
+    bmpObjPtr->size.cy = 0;
+    bmpObjPtr->bitmap  = *bmp;
+    bmpObjPtr->bitmap.bmBits = NULL;
+    bmpObjPtr->bitmap.bmWidthBytes = (bmp->bmWidth*bmp->bmBitsPixel+15)/16 * 2;
+
+      /* Create the pixmap */
+    bmpObjPtr->pixmap = XCreatePixmap( display, rootWindow, bmp->bmWidth,
+				       bmp->bmHeight, bmp->bmBitsPixel );
+    if (!bmpObjPtr->pixmap)
     {
-	GDI_FreeObject( hbitmap );
-	return 0;
+	GDI_HEAP_FREE( hbitmap );
+	hbitmap = 0;
     }
-    bmpPtr = (char *) GlobalLock( bmpObjPtr->hBitmap );
-    memcpy( bmpPtr, bmp, sizeof(BITMAP) );
-    ((BITMAP *)bmpPtr)->bmBits = NULL;
-    if (bmp->bmBits) memcpy( bmpPtr + sizeof(BITMAP), bmp->bmBits, size );
-    GlobalUnlock( bmpObjPtr->hBitmap );
-
-    bmpObjPtr->bSelected = FALSE;
-    bmpObjPtr->hdc       = 0;
-    bmpObjPtr->size.cx   = 0;
-    bmpObjPtr->size.cy   = 0;
-    return hbitmap;
-}
-
-
-/***********************************************************************
- *           BITMAP_GetSetBitmapBits
- */
-LONG BITMAP_GetSetBitmapBits( HBITMAP hbitmap, LONG count,
-			      LPSTR buffer, int set )
-{
-    BITMAPOBJ * bmpObjPtr;
-    BITMAP * bmp;
-    DC * dc = NULL;
-    int maxSize;
-    
-    if (!count) return 0;
-    bmpObjPtr = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
-    if (!bmpObjPtr) return 0;
-    if (!(bmp = (BITMAP *) GlobalLock( bmpObjPtr->hBitmap ))) return 0;
-    
-    if (bmpObjPtr->bSelected) 
-	dc = (DC *) GDI_GetObjPtr( bmpObjPtr->hdc, DC_MAGIC );
-
-    maxSize = bmp->bmPlanes * bmp->bmHeight * bmp->bmWidthBytes;
-    if (count > maxSize) count = maxSize;
-    	
-    if (set)
-    {
-	memcpy( bmp+1, buffer, count );
-	if (dc) BITMAP_CopyToPixmap( bmp, dc->u.x.drawable,
-				     0, 0, bmp->bmWidth, bmp->bmHeight );
-    }
-    else
-    {
-	if (dc) BITMAP_CopyFromPixmap( bmp, dc->u.x.drawable );
-	memcpy( buffer, bmp+1, count );
-    }
-    GlobalUnlock( bmpObjPtr->hBitmap );
+    else if (bmp->bmBits)  /* Set bitmap bits */
+	SetBitmapBits( hbitmap, bmp->bmHeight*bmp->bmWidthBytes, bmp->bmBits );
     return hbitmap;
 }
 
@@ -259,7 +145,29 @@ LONG BITMAP_GetSetBitmapBits( HBITMAP hbitmap, LONG count,
  */
 LONG GetBitmapBits( HBITMAP hbitmap, LONG count, LPSTR buffer )
 {
-    return BITMAP_GetSetBitmapBits( hbitmap, count, buffer, 0 );
+    BITMAPOBJ * bmp;
+    LONG height;
+    XImage * image;
+    
+    bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
+    if (!bmp) return 0;
+
+#ifdef DEBUG_BITMAP
+    printf( "GetBitmapBits: %dx%d %d colors %p\n",
+	    bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
+	    1 << bmp->bitmap.bmBitsPixel, buffer );
+#endif
+      /* Only get entire lines */
+    height = count / bmp->bitmap.bmWidthBytes;
+    if (height > bmp->bitmap.bmHeight) height = bmp->bitmap.bmHeight;
+    if (!height) return 0;
+    
+    if (!(image = BITMAP_BmpToImage( &bmp->bitmap, buffer ))) return 0;
+    XGetSubImage( display, bmp->pixmap, 0, 0, bmp->bitmap.bmWidth, height,
+		  AllPlanes, ZPixmap, image, 0, 0 );
+    image->data = NULL;
+    XDestroyImage( image );
+    return height * bmp->bitmap.bmWidthBytes;
 }
 
 
@@ -268,7 +176,29 @@ LONG GetBitmapBits( HBITMAP hbitmap, LONG count, LPSTR buffer )
  */
 LONG SetBitmapBits( HBITMAP hbitmap, LONG count, LPSTR buffer )
 {
-    return BITMAP_GetSetBitmapBits( hbitmap, count, buffer, 1 );
+    BITMAPOBJ * bmp;
+    LONG height;
+    XImage * image;
+    
+    bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
+    if (!bmp) return 0;
+
+#ifdef DEBUG_BITMAP
+    printf( "SetBitmapBits: %dx%d %d colors %p\n",
+	    bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
+	    1 << bmp->bitmap.bmBitsPixel, buffer );
+#endif
+      /* Only set entire lines */
+    height = count / bmp->bitmap.bmWidthBytes;
+    if (height > bmp->bitmap.bmHeight) height = bmp->bitmap.bmHeight;
+    if (!height) return 0;
+    	
+    if (!(image = BITMAP_BmpToImage( &bmp->bitmap, buffer ))) return 0;
+    XPutImage( display, bmp->pixmap, BITMAP_GC(bmp), image, 0, 0,
+	       0, 0, bmp->bitmap.bmWidth, height );
+    image->data = NULL;
+    XDestroyImage( image );
+    return height * bmp->bitmap.bmWidthBytes;
 }
 
 
@@ -277,8 +207,7 @@ LONG SetBitmapBits( HBITMAP hbitmap, LONG count, LPSTR buffer )
  */
 BOOL BMP_DeleteObject( HBITMAP hbitmap, BITMAPOBJ * bitmap )
 {
-      /* Free bitmap on global heap */
-    GlobalFree( bitmap->hBitmap );
+    XFreePixmap( display, bitmap->pixmap );
     return GDI_FreeObject( hbitmap );
 }
 
@@ -286,95 +215,39 @@ BOOL BMP_DeleteObject( HBITMAP hbitmap, BITMAPOBJ * bitmap )
 /***********************************************************************
  *           BMP_GetObject
  */
-int BMP_GetObject( BITMAPOBJ * bitmap, int count, LPSTR buffer )
+int BMP_GetObject( BITMAPOBJ * bmp, int count, LPSTR buffer )
 {
-    char * bmpPtr = (char *) GlobalLock( bitmap->hBitmap );    
     if (count > sizeof(BITMAP)) count = sizeof(BITMAP);
-    memcpy( buffer, bmpPtr, count );
-    GlobalUnlock( bitmap->hBitmap );
+    memcpy( buffer, &bmp->bitmap, count );
     return count;
 }
-
     
-/***********************************************************************
- *           BITMAP_UnselectBitmap
- *
- * Unselect the bitmap from the DC. Used by SelectObject and DeleteDC.
- */
-BOOL BITMAP_UnselectBitmap( DC * dc )
-{
-    BITMAPOBJ * bmp;
-    BITMAP * bmpPtr;
-
-    if (!dc->w.hBitmap) return TRUE;
-    bmp = (BITMAPOBJ *) GDI_GetObjPtr( dc->w.hBitmap, BITMAP_MAGIC );
-    if (!bmp) return FALSE;
-    
-    if (!(bmpPtr = (BITMAP *) GlobalLock( bmp->hBitmap ))) return FALSE;
-    
-    BITMAP_CopyFromPixmap( bmpPtr, dc->u.x.drawable );
-    XFreePixmap( XT_display, dc->u.x.drawable );
-    bmp->bSelected = FALSE;
-    bmp->hdc       = 0;
-    GlobalUnlock( bmp->hBitmap );
-    return TRUE;
-}
-
 
 /***********************************************************************
  *           BITMAP_SelectObject
  */
 HBITMAP BITMAP_SelectObject( HDC hdc, DC * dc, HBITMAP hbitmap,
-			     BITMAPOBJ * bitmap )
+			     BITMAPOBJ * bmp )
 {
-    BITMAP * bmp;
     HBITMAP prevHandle = dc->w.hBitmap;
     
     if (!(dc->w.flags & DC_MEMORY)) return 0;
-    if (bitmap->bSelected && hbitmap != BITMAP_hbitmapMemDC) return 0;
-    if (!(bmp = (BITMAP *) GlobalLock( bitmap->hBitmap ))) return 0;
-
-      /* Make sure the bitmap has the right format */
-
-    if ((bmp->bmPlanes != 1) || !BITMAP_FindGCForDepth( bmp->bmBitsPixel ))
-    {
-	GlobalUnlock( bitmap->hBitmap );
-	return 0;
-    }
-    
-      /* Unselect the previous bitmap */
-
-    if (!BITMAP_UnselectBitmap( dc ))
-    {
-	GlobalUnlock( bitmap->hBitmap );
-	return 0;
-    }
-    
-      /* Create the pixmap */
-    
-    dc->u.x.drawable   = XCreatePixmap( XT_display,
-				        DefaultRootWindow( XT_display ), 
-				        bmp->bmWidth, bmp->bmHeight,
-				        bmp->bmBitsPixel );
-    dc->w.DCSizeX      = bmp->bmWidth;
-    dc->w.DCSizeY      = bmp->bmHeight;
-    BITMAP_CopyToPixmap( bmp, dc->u.x.drawable,
-			 0, 0, bmp->bmWidth, bmp->bmHeight );
+    dc->u.x.drawable = bmp->pixmap;
+    dc->w.DCSizeX    = bmp->bitmap.bmWidth;
+    dc->w.DCSizeY    = bmp->bitmap.bmHeight;
+    dc->w.hBitmap    = hbitmap;
 
       /* Change GC depth if needed */
 
-    if (dc->w.bitsPerPixel != bmp->bmBitsPixel)
+    if (dc->w.bitsPerPixel != bmp->bitmap.bmBitsPixel)
     {
-	XFreeGC( XT_display, dc->u.x.gc );
-	dc->u.x.gc = XCreateGC( XT_display, dc->u.x.drawable, 0, NULL );
-	dc->w.bitsPerPixel = bmp->bmBitsPixel;
-	DC_SetDeviceInfo( hdc, dc );
+	XFreeGC( display, dc->u.x.gc );
+	dc->u.x.gc = XCreateGC( display, dc->u.x.drawable, 0, NULL );
+	dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
+	  /* Re-select objects with changed depth */
+	SelectObject( hdc, dc->w.hPen );
+	SelectObject( hdc, dc->w.hBrush );
     }
-    
-    GlobalUnlock( bitmap->hBitmap );
-    dc->w.hBitmap     = hbitmap;
-    bitmap->bSelected = TRUE;
-    bitmap->hdc       = hdc;
     return prevHandle;
 }
 

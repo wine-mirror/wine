@@ -3,27 +3,34 @@
 
 #include "dlls.h"
 
-struct w_files{
-  struct w_files  * next;
-  char * name;   /* Name, as it appears in the windows binaries */
-  char * filename;  /* Actual name of the unix file that satisfies this */
-  int fd;
-  struct mz_header_s *mz_header;
-  struct ne_header_s *ne_header;
-  struct ne_segment_table_entry_s *seg_table;
-  struct segment_descriptor_s *selector_table;
-  char * lookup_table;
-  char * nrname_table;
-  char * rname_table;
-  unsigned short hinstance;
+#define MAX_NAME_LENGTH		64
+
+typedef struct resource_name_table
+{
+    struct resource_name_table *next;
+    unsigned short type_ord;
+    unsigned short id_ord;
+    char id[MAX_NAME_LENGTH];
+} RESNAMTAB;
+
+struct w_files
+{
+    struct w_files  * next;
+    char * name;   /* Name, as it appears in the windows binaries */
+    char * filename;  /* Actual name of the unix file that satisfies this */
+    int fd;
+    struct mz_header_s *mz_header;
+    struct ne_header_s *ne_header;
+    struct ne_segment_table_entry_s *seg_table;
+    struct segment_descriptor_s *selector_table;
+    char * lookup_table;
+    char * nrname_table;
+    char * rname_table;
+    unsigned short hinstance;
+    RESNAMTAB *resnamtab;
 };
 
 extern struct  w_files * wine_files;
-
-extern char *GetFilenameFromInstance(unsigned short instance);
-extern struct w_files *GetFileInfo(unsigned short instance);
-extern char *WineIniFileName(void);
-extern char *WinIniFileName(void);
 
 #define MAX_DOS_DRIVES	26
 
@@ -62,10 +69,5 @@ struct sigcontext_struct {
 #define sigcontext_struct sigcontext
 #define HZ 100
 #endif
-
-void load_mz_header (int, struct mz_header_s *);
-void load_ne_header (int, struct ne_header_s *);
-int  load_typeinfo  (int, struct resource_typeinfo_s *);
-int  load_nameinfo  (int, struct resource_nameinfo_s *);
 
 #endif /* WINE_H */

@@ -8,12 +8,12 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include "gdi.h"
-
 
   /* GC used for region operations */
 static GC regionGC = 0;
-
 
 /***********************************************************************
  *           REGION_Init
@@ -23,8 +23,7 @@ BOOL REGION_Init()
     Pixmap tmpPixmap;
 
       /* CreateGC needs a drawable */
-    tmpPixmap = XCreatePixmap( XT_display, DefaultRootWindow(XT_display),
-			       1, 1, 1 );
+    tmpPixmap = XCreatePixmap( display, rootWindow, 1, 1, 1 );
     if (tmpPixmap)
     {
 	regionGC = XCreateGC( XT_display, tmpPixmap, 0, NULL );
@@ -68,8 +67,7 @@ static BOOL REGION_SetRect( HRGN hrgn, LPRECT rect )
     
       /* Create pixmap */
 
-    region->pixmap = XCreatePixmap( XT_display, DefaultRootWindow(XT_display),
-				    width, height, 1 );
+    region->pixmap = XCreatePixmap( display, rootWindow, width, height, 1 );
     if (!region->pixmap) return FALSE;
 
       /* Fill pixmap */
@@ -576,8 +574,19 @@ int CombineRgn( HRGN hDest, HRGN hSrc1, HRGN hSrc2, short mode )
     
     width  = region->box.right - region->box.left;
     height = region->box.bottom - region->box.top;
-    region->pixmap = XCreatePixmap( XT_display, DefaultRootWindow(XT_display),
-				    width, height, 1 );
+    if (!width || !height)
+    {
+	printf( "CombineRgn: width or height is 0. Please report this.\n" );
+	printf( "src1=%d,%d-%d,%d  src2=%d,%d-%d,%d  dst=%d,%d-%d,%d  op=%d\n",
+	        src1Obj->region.box.left, src1Obj->region.box.top,
+	        src1Obj->region.box.right, src1Obj->region.box.bottom,
+	        src2Obj->region.box.left, src2Obj->region.box.top,
+	        src2Obj->region.box.right, src2Obj->region.box.bottom,
+	        region->box.left, region->box.top,
+	        region->box.right, region->box.bottom, mode );
+	exit(1);
+    }
+    region->pixmap = XCreatePixmap( display, rootWindow, width, height, 1 );
 
     switch(mode)
     {

@@ -3,17 +3,13 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "prototypes.h"
 #include "segmem.h"
 #include "heap.h"
 #include "regfunc.h"
 
-typedef struct heap_local_heap_s
-{
-    struct heap_local_heap_s *next;
-    MDESC *free_list;
-    unsigned short selector;
-} LHEAP;
+/* #define DEBUG_HEAP */
 
 LHEAP *LocalHeaps = NULL;
 
@@ -23,6 +19,9 @@ LHEAP *LocalHeaps = NULL;
 void
 HEAP_Init(MDESC **free_list, void *start, int length)
 {
+    if (length < 2 * sizeof(MDESC))
+	return;
+    
     *free_list = (MDESC *) start;
     (*free_list)->prev = NULL;
     (*free_list)->next = NULL;
@@ -302,8 +301,6 @@ HEAP_LocalFindHeap(unsigned short owner)
     return NULL;
 }
 
-#define LOCALHEAP() (&HEAP_LocalFindHeap(Segments[Stack16Frame[11] >> 3].owner)->free_list)
-
 /**********************************************************************
  *					HEAP_LocalInit
  */
@@ -316,43 +313,47 @@ HEAP_LocalInit(unsigned short owner, void *start, int length)
     printf("HEAP_LocalInit: owner %04x, start %08x, length %04x\n",
 	   owner, start, length);
 #endif
+
+    if (length < 2 * sizeof(MDESC))
+	return;
     
     lh = (LHEAP *) malloc(sizeof(*lh));
     if (lh == NULL)
 	return;
     
-    lh->selector = owner;
-    lh->next = LocalHeaps;
+    lh->next        = LocalHeaps;
+    lh->selector    = owner;
+    lh->local_table = NULL;
     HEAP_Init(&lh->free_list, start, length);
     LocalHeaps = lh;
 }
 
 /**********************************************************************
- *					LocalAlloc
+ *					WIN16_LocalAlloc
  */
 void *
-LocalAlloc(int flags, int bytes)
+WIN16_LocalAlloc(int flags, int bytes)
 {
     void *m;
     
 #ifdef DEBUG_HEAP
-    printf("LocalAlloc: flags %x, bytes %d\n", flags, bytes);
+    printf("WIN16_LocalAlloc: flags %x, bytes %d\n", flags, bytes);
     printf("    called from segment %04x\n", Stack16Frame[11]);
 #endif
 
     m = HEAP_Alloc(LOCALHEAP(), flags, bytes);
 	
 #ifdef DEBUG_HEAP
-	printf("LocalAlloc: returning %x\n", (int) m);
+	printf("WIN16_LocalAlloc: returning %x\n", (int) m);
 #endif
     return m;
 }
 
 /**********************************************************************
- *					LocalCompact
+ *					WIN16_LocalCompact
  */
 int
-LocalCompact(int min_free)
+WIN16_LocalCompact(int min_free)
 {
     MDESC *m;
     int max_block;
@@ -366,10 +367,10 @@ LocalCompact(int min_free)
 }
 
 /**********************************************************************
- *					LocalFlags
+ *					WIN16_LocalFlags
  */
 unsigned int
-LocalFlags(unsigned int handle)
+WIN16_LocalFlags(unsigned int handle)
 {
     MDESC *m;
     
@@ -382,10 +383,10 @@ LocalFlags(unsigned int handle)
 }
 
 /**********************************************************************
- *					LocalFree
+ *					WIN16_LocalFree
  */
 unsigned int 
-LocalFree(unsigned int handle)
+WIN16_LocalFree(unsigned int handle)
 {
     unsigned int addr;
     
@@ -397,12 +398,12 @@ LocalFree(unsigned int handle)
 }
 
 /**********************************************************************
- *					LocalInit
+ *					WIN16_LocalInit
  */
 unsigned int
-LocalInit(unsigned int segment, unsigned int start, unsigned int end)
+WIN16_LocalInit(unsigned int segment, unsigned int start, unsigned int end)
 {
-    unsigned short owner = Segments[Stack16Frame[11] >> 3].owner;
+    unsigned short owner = HEAP_OWNER;
     LHEAP *lh = HEAP_LocalFindHeap(owner);
     
     if (segment == 0)
@@ -426,10 +427,10 @@ LocalInit(unsigned int segment, unsigned int start, unsigned int end)
 }
 
 /**********************************************************************
- *					LocalLock
+ *					WIN16_LocalLock
  */
 void *
-LocalLock(unsigned int handle)
+WIN16_LocalLock(unsigned int handle)
 {
     MDESC *m;
     
@@ -443,10 +444,10 @@ LocalLock(unsigned int handle)
 }
 
 /**********************************************************************
- *					LocalReAlloc
+ *					WIN16_LocalReAlloc
  */
 void *
-LocalReAlloc(unsigned int handle, int flags, int bytes)
+WIN16_LocalReAlloc(unsigned int handle, int flags, int bytes)
 {
     void *m;
     
@@ -458,10 +459,10 @@ LocalReAlloc(unsigned int handle, int flags, int bytes)
 }
 
 /**********************************************************************
- *					LocalSize
+ *					WIN16_LocalSize
  */
 unsigned int
-LocalSize(unsigned int handle)
+WIN16_LocalSize(unsigned int handle)
 {
     MDESC *m;
     
@@ -474,10 +475,10 @@ LocalSize(unsigned int handle)
 }
 
 /**********************************************************************
- *					LocalUnlock
+ *					WIN16_LocalUnlock
  */
 unsigned int
-LocalUnlock(unsigned int handle)
+WIN16_LocalUnlock(unsigned int handle)
 {
     MDESC *m;
     
@@ -490,4 +491,50 @@ LocalUnlock(unsigned int handle)
 	m->lock--;
 
     return 0;
+}
+
+/**********************************************************************
+ *                      GetFreeSystemResources (user.284)
+
+ */
+#define USERRESOURCES 2
+#define GDIRESOURCES 1
+#define SYSTEMRESOURCES 0
+#include <user.h>
+#include <gdi.h>
+
+WORD GetFreeSystemResources(WORD SystemResourceType)
+{
+  unsigned int GdiFree=0,GdiResult=0;
+  unsigned int UserFree=0,UserResult=0;
+  unsigned int result=0;
+  MDESC *m;
+
+  printf("GetFreeSystemResources(%u)\n",SystemResourceType);
+
+  switch(SystemResourceType) {
+    case(USERRESOURCES):
+      for (m = USER_Heap; m != NULL; m = m->next) /* add up free area in heap */
+         UserFree += m->length;
+      result=(UserFree*100)/65516;  /* 65516 == 64K */
+      break;
+    case(GDIRESOURCES):
+      for (m = GDI_Heap; m != NULL; m = m->next)
+         GdiFree += m->length;
+      result=(GdiFree*100)/65516;
+      break;
+    case(SYSTEMRESOURCES):
+      for (m = USER_Heap; m != NULL; m = m->next)
+         UserFree += m->length;
+      UserResult=(UserFree*100)/65516;
+      for (m = GDI_Heap; m != NULL; m = m->next)
+         GdiFree += m->length;
+      GdiResult=(GdiFree*100)/65516;
+      result=(UserResult < GdiResult) ? UserResult:GdiResult; 
+      break;
+    default:
+      result=0;
+      break;
+  }
+  return(result);
 }

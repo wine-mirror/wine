@@ -1,14 +1,14 @@
-#ifndef WINELIB
 static char RCSId[] = "$Id: resource.c,v 1.4 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+
 #include "arch.h"
 #include "prototypes.h"
 #include "windows.h"
@@ -16,6 +16,8 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "wine.h"
 #include "icon.h"
 #include "accel.h"
+
+/* #define DEBUG_RESOURCE  */
 
 #define MIN(a,b)	((a) < (b) ? (a) : (b))
 
@@ -34,18 +36,105 @@ static struct w_files *ResourceFileInfo = NULL;
 static RESOURCE *Top = NULL;
 extern HINSTANCE hSysRes;
 
-HANDLE RSC_LoadResource(int instance, char *rsc_name, int type, int *image_size_ret);
+HANDLE RSC_LoadResource(int instance, char *rsc_name, int type, 
+			int *image_size_ret);
+void RSC_LoadNameTable(void);
 
 extern char *ProgramName;
 
-/*****************************************************************************
-  * Super Patch, I promise to arrange things as soon as I can.
-  *
-******************************************************************************/
-#ifdef WINELIB
-#include "../loader/wine.c"
-#endif
+
+/**********************************************************************
+ *					RSC_LoadNameTable
+ */
+#ifndef WINELIB
+void 
+RSC_LoadNameTable()
+{
+    struct resource_typeinfo_s typeinfo;
+    struct resource_nameinfo_s nameinfo;
+    unsigned short             size_shift;
+    RESNAMTAB                 *top, *new;
+    char                       read_buf[1024];
+    char                      *p;
+    int                        i;
+    unsigned short             len;
+    off_t                      rtoff;
+    off_t		       saved_pos;
+    
+    top = NULL;
 
+    /*
+     * Move to beginning of resource table.
+     */
+    rtoff = (ResourceFileInfo->mz_header->ne_offset +
+	     ResourceFileInfo->ne_header->resource_tab_offset);
+    lseek(ResourceFd, rtoff, SEEK_SET);
+    
+    /*
+     * Read block size.
+     */
+    if (read(ResourceFd, &size_shift, sizeof(size_shift)) != 
+	sizeof(size_shift))
+    {
+	return;
+    }
+    size_shift = CONV_SHORT(size_shift);
+
+    /*
+     * Find resource.
+     */
+    typeinfo.type_id = 0xffff;
+    while (typeinfo.type_id != 0) 
+    {
+	if (!load_typeinfo (ResourceFd, &typeinfo))
+	    break;
+
+	if (typeinfo.type_id == 0) 
+	    break;
+	if (typeinfo.type_id == 0x800f) 
+	{
+	    for (i = 0; i < typeinfo.count; i++) 
+	    {
+		if (read(ResourceFd, &nameinfo, sizeof(nameinfo)) != 
+		    sizeof(nameinfo))
+		{
+		    break;
+		}
+		
+		saved_pos = lseek(ResourceFd, 0, SEEK_CUR);
+		lseek(ResourceFd, (long) nameinfo.offset << size_shift, 
+		      SEEK_SET);
+		read(ResourceFd, &len, sizeof(len));
+		while (len)
+		{
+		    new = (RESNAMTAB *) GlobalQuickAlloc(sizeof(*new));
+		    new->next = top;
+		    top = new;
+
+		    read(ResourceFd, &new->type_ord, 2);
+		    read(ResourceFd, &new->id_ord, 2);
+		    read(ResourceFd, read_buf, len - 6);
+		    
+		    p = read_buf + strlen(read_buf) + 1;
+		    strncpy(new->id, p, MAX_NAME_LENGTH);
+		    new->id[MAX_NAME_LENGTH - 1] = '\0';
+
+		    read(ResourceFd, &len, sizeof(len));
+		}
+
+		lseek(ResourceFd, saved_pos, SEEK_SET);
+	    }
+	    break;
+	}
+	else 
+	{
+	    lseek(ResourceFd, (typeinfo.count * sizeof(nameinfo)), SEEK_CUR);
+	}
+    }
+
+    ResourceFileInfo->resnamtab = top;
+}
+#endif /* WINELIB */
 
 /**********************************************************************
  *					OpenResourceFile
@@ -69,8 +158,15 @@ OpenResourceFile(HANDLE instance)
 	close(ResourceFd);
     
     ResourceInst = instance;
-
-    ResourceFd = open (res_file, O_RDONLY);
+    ResourceFd   = open (res_file, O_RDONLY);
+#if 1
+#ifndef WINELIB
+    if (w->resnamtab == (RESNAMTAB *) -1)
+    {
+	RSC_LoadNameTable();
+    }
+#endif
+#endif
 
 #ifdef DEBUG_RESOURCE
     printf("OpenResourceFile(%04X) // file='%s' hFile=%04X !\n", 
@@ -242,6 +338,25 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
     off_t rtoff;
 
     /*
+     * Check for loaded name table.
+     */
+    if (ResourceFileInfo->resnamtab != NULL)
+    {
+	RESNAMTAB *e;
+
+	for (e = ResourceFileInfo->resnamtab; e != NULL; e = e->next)
+	{
+	    if (e->type_ord == (type_id & 0x000f) &&
+		strcasecmp(e->id, resource_name) == 0)
+	    {
+		return FindResourceByNumber(result_p, type_id, e->id_ord);
+	    }
+	}
+
+	return -1;
+    }
+
+    /*
      * Move to beginning of resource table.
      */
     rtoff = (ResourceFileInfo->mz_header->ne_offset +
@@ -311,9 +426,7 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
 			typeinfo.type_id, i + 1, typeinfo.count, 
 			name, resource_name);
 #endif
-/*		if (strcasecmp(name, resource_name) == 0) */
-		if (strcasecmp(name, resource_name) == 0 ||
-		(nameinfo.id == 0x8001 && type_id == NE_RSCTYPE_MENU))
+		if (strcasecmp(name, resource_name) == 0)
 		{
 		    memcpy(result_p, &nameinfo, sizeof(nameinfo));
 		    return size_shift;
@@ -794,6 +907,10 @@ LoadString(HANDLE instance, WORD resource_id, LPSTR buffer, int buflen)
 HANDLE
 RSC_LoadMenu(HANDLE instance, LPSTR menu_name)
 {
+#ifdef DEBUG_RESOURCE
+    printf("RSC_LoadMenu: instance = %04x, name = '%s'\n",
+	   instance, menu_name);
+#endif
     return RSC_LoadResource(instance, menu_name, NE_RSCTYPE_MENU, NULL);
 }
 
@@ -808,7 +925,8 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
     HDC hdc;
     long *lp;
     int image_size;
-
+    int size;
+    
 #ifdef DEBUG_RESOURCE
     printf("LoadBitmap: instance = %04x, name = %08x\n",
 	   instance, bmp_name);
@@ -828,14 +946,73 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
 	GlobalFree(rsc_mem);
 	return 0;
     }
-    if (*lp == sizeof(BITMAPCOREHEADER))
+    size = CONV_LONG (*lp);
+    if (size == sizeof(BITMAPCOREHEADER)){
+	CONV_BITMAPCOREHEADER (lp);
 	hbitmap = ConvertCoreBitmap( hdc, (BITMAPCOREHEADER *) lp );
-    else if (*lp == sizeof(BITMAPINFOHEADER))
+    } else if (size == sizeof(BITMAPINFOHEADER)){
+	CONV_BITMAPINFO (lp);
 	hbitmap = ConvertInfoBitmap( hdc, (BITMAPINFO *) lp );
-    else hbitmap = 0;
+    } else hbitmap = 0;
     GlobalFree(rsc_mem);
     ReleaseDC( 0, hdc );
     return hbitmap;
 }
+
+/**********************************************************************
+ *			CreateIcon [USER.407]
+ */
+HICON CreateIcon(HANDLE hInstance, int nWidth, int nHeight, 
+                 BYTE nPlanes, BYTE nBitsPixel, LPSTR lpANDbits, 
+                 LPSTR lpXORbits)
+{
+    HICON 	hIcon;
+    ICONALLOC	*lpico;
 
+#ifdef DEBUG_RESOURCE
+    printf("CreateIcon: hInstance = %04x, nWidth = %08x, nHeight = %08x \n",
+	    hInstance, nWidth, nHeight);
+    printf("  nPlanes = %04x, nBitsPixel = %04x,",nPlanes, nBitsPixel);
+    printf(" lpANDbits= %04x, lpXORbits = %04x, \n",lpANDbits, lpXORbits);
+#endif
 
+    if (hInstance == (HANDLE)NULL) { 
+        printf("CreateIcon / hInstance %04x not Found!\n",hInstance);
+        return 0;
+	}
+    hIcon = GlobalAlloc(GMEM_MOVEABLE, sizeof(ICONALLOC) + 1024);
+    if (hIcon == (HICON)NULL) {
+	printf("Can't allocate memory for Icon in CreateIcon\n");
+	return 0;
+	}
+    lpico= (ICONALLOC *)GlobalLock(hIcon);
+
+    lpico->descriptor.Width=nWidth;
+    lpico->descriptor.Height=nHeight;
+    lpico->descriptor.ColorCount=16; /* Dummy Value */ 
+    lpico->descriptor.Reserved1=0;
+    lpico->descriptor.Reserved2=nPlanes;
+    lpico->descriptor.Reserved3=nWidth*nHeight;
+
+    /* either nPlanes and/or nBitCount is set to one */
+    lpico->descriptor.icoDIBSize=nWidth*nHeight*nPlanes*nBitsPixel; 
+    lpico->descriptor.icoDIBOffset=0; 
+
+    if( !(lpico->hBitmap=CreateBitmap(nWidth, nHeight, nPlanes, nBitsPixel, 
+                                 lpXORbits)) ) {
+      printf("CreateIcon: couldn't create the XOR bitmap\n");
+      return(0);
+    }
+    
+    /* the AND BitMask is always monochrome */
+    if( !(lpico->hBitMask=CreateBitmap(nWidth, nHeight, 1, 1, lpANDbits)) ) {
+      printf("CreateIcon: couldn't create the AND bitmap\n");
+      return(0);
+    }
+
+    GlobalUnlock(hIcon);
+#ifdef DEBUG_RESOURCE
+    printf("CreateIcon Alloc hIcon=%X\n", hIcon);
+#endif
+    return hIcon;
+}

@@ -3,6 +3,7 @@
 MODULE = toolkit
 
 SRCS = \
+	arch.c \
 	heap.c \
 	sup.c \
 	winmain.c

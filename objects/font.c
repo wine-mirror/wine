@@ -8,6 +8,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <X11/Xatom.h>
 #include "gdi.h"
 
@@ -17,7 +18,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
  *
  * Find a X font matching the logical font.
  */
-XFontStruct * FONT_MatchFont( DC * dc, LOGFONT * font )
+static XFontStruct * FONT_MatchFont( LOGFONT * font )
 {
     char pattern[100];
     char *family, *weight, *charset;
@@ -44,8 +45,16 @@ XFontStruct * FONT_MatchFont( DC * dc, LOGFONT * font )
       default:            family = "*"; break;
     }
     
-    sprintf( pattern, "-*-%s-%s-%c-normal--*-%d-*-*-%c-%d-%s",
-	    family, weight, slant, height, spacing, width, charset );
+    /* Width==0 seems not to be a valid wildcard on SGI's, using * instead */
+    if ( width == 0 )
+      sprintf( pattern, "-*-%s-%s-%c-normal--*-%d-*-*-%c-*-%s",
+	      family, weight, slant, height, spacing, charset
+	      );
+    else
+      sprintf( pattern, "-*-%s-%s-%c-normal--*-%d-*-*-%c-%d-%s",
+	      family, weight, slant, height, spacing, width, charset
+	      );
+
 #ifdef DEBUG_FONT
     printf( "FONT_MatchFont: '%s'\n", pattern );
 #endif
@@ -166,13 +175,24 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
 
       /* Load font if necessary */
 
+    if (!font)
+    {
+	HFONT hnewfont;
+
+	hnewfont = CreateFont(10, 7, 0, 0, FW_DONTCARE,
+			      FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
+			      DEFAULT_QUALITY, FF_DONTCARE, "*" );
+	font = (FONTOBJ *) GDI_HEAP_ADDR( hnewfont );
+    }
+
     if ((hfont >= FIRST_STOCK_FONT) && (hfont <= LAST_STOCK_FONT))
 	stockPtr = &stockFonts[hfont - FIRST_STOCK_FONT];
-    else stockPtr = NULL;
+    else 
+	stockPtr = NULL;
     
     if (!stockPtr || !stockPtr->fstruct)
     {
-	fontStruct = FONT_MatchFont( dc, &font->logfont );
+	fontStruct = FONT_MatchFont( &font->logfont );
     }
     else
     {

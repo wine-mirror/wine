@@ -14,9 +14,12 @@
 static char Copyright [] = "Copyright (C) 1993 Miguel de Icaza";
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include "windows.h"
+
 #include "wine.h"
+#include "windows.h"
+#include "prototypes.h"
 
 /* #define DEBUG */
 
@@ -121,12 +124,18 @@ static TSecHeader *load (char *file)
 	    }
 	    if (state == FirstBrace) /* On first pass, don't allow dangling keys */
 		break;
-	    
+
 	    if (c == ' ' || c == '\t')
 		break;
 	    
 	    if (c == '\n' || c == ';' || overflow) /* Abort Definition */
 		next = CharBuffer;
+
+	    if (c == ';')
+	    {
+		state = IgnoreToEOL;
+		break;
+	    }
 	    
 	    if (c == '=' || overflow){
 		TKeys *temp;
@@ -165,7 +174,7 @@ static TSecHeader *load (char *file)
     return SecHeader;
 }
 
-static new_key (TSecHeader *section, char *KeyName, char *Value)
+static void new_key (TSecHeader *section, char *KeyName, char *Value)
 {
     TKeys *key;
     

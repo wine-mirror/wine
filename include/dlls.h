@@ -63,5 +63,6 @@ extern struct dll_table_entry_s SHELL_table[];
 extern struct dll_table_entry_s SOUND_table[];
 extern struct dll_table_entry_s KEYBOARD_table[];
 extern struct dll_table_entry_s WINSOCK_table[];
+extern struct dll_table_entry_s STRESS_table[];
 
 #endif /* DLLS_H */

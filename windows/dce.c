@@ -193,7 +193,7 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	IntersectVisRect( hdc, clipRect.left, clipRect.top,
 			  clipRect.right, clipRect.bottom );
     }
-    else dc->u.x.drawable = DefaultRootWindow( display );
+    else dc->u.x.drawable = rootWindow;
 
     if (flags & DCX_CLIPCHILDREN)
 	XSetSubwindowMode( display, dc->u.x.gc, ClipByChildren );

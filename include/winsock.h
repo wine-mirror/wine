@@ -63,6 +63,7 @@ typedef WSADATA FAR *LPWSADATA;
 #endif
 
 #ifndef _SYS_SOCKET_H_
+#ifndef _sys_socket_h
 /*
  * Structure used by kernel to pass protocol
  * information in raw sockets.
@@ -71,6 +72,7 @@ struct sockproto {
         u_short sp_family;              /* address family */
         u_short sp_protocol;            /* protocol */
 };
+#endif
 #endif
 
 /*

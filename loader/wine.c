@@ -49,7 +49,6 @@ HINSTANCE hSysRes;
 
 static char *DLL_Extensions[] = { "dll", "exe", NULL };
 static char *EXE_Extensions[] = { "exe", NULL };
-static char *WinePath = NULL;
 
 FILE *SpyFp = NULL;
 
@@ -137,7 +136,7 @@ HINSTANCE LoadImage(char *modulename, int filetype)
     if (FindFile(buffer, sizeof(buffer), modulename, (filetype == EXE ? 
     	EXE_Extensions : DLL_Extensions), WindowsPath) ==NULL)
     {
-    	fprintf(stderr,"LoadImage: I can't find %s !\n",modulename);
+    	fprintf(stderr, "LoadImage: I can't find %s.dll | %s.exe !\n",modulename, modulename);
 	return (HINSTANCE) NULL;
     }
     fprintf(stderr,"LoadImage: loading %s (%s)\n", modulename, buffer);
@@ -155,6 +154,7 @@ HINSTANCE LoadImage(char *modulename, int filetype)
       wpnt1->next  = wpnt;
     };
     wpnt->next = NULL;
+    wpnt->resnamtab = (RESNAMTAB *) -1;
 
     /*
      * Open file for reading.
@@ -248,8 +248,6 @@ HINSTANCE LoadImage(char *modulename, int filetype)
      */
     for(i=0; i<wpnt->ne_header->n_mod_ref_tab; i++){
       char buff[14];
-      char buff2[256];
-      int  fd, j;
       GetModuleName(wpnt, i + 1, buff);
       
 #ifndef WINELIB
@@ -265,36 +263,25 @@ return(wpnt->hinstance);
 }
 
 
+#ifndef WINELIB
 /**********************************************************************
  *					main
  */
-_WinMain(int argc, char **argv)
+int _WinMain(int argc, char **argv)
 {
 	int segment;
 	char *p;
 	char *sysresname;
 	char filename[100];
-	char syspath[256];
-	char exe_path[256];
 #ifdef WINESTAT
 	char * cp;
 #endif
 	struct w_files * wpnt;
 	int cs_reg, ds_reg, ss_reg, ip_reg, sp_reg;
-	int i;
 	int rv;
 
 	Argc = argc - 1;
 	Argv = argv + 1;
-	
-	WinePath = malloc(1024);
-	
-	getcwd(WinePath, 512);
-	
-	if ((p = getenv("WINEPATH")) != NULL) { 
-		strcat(WinePath, ";");
-		strcat(WinePath, p);
-	}
 	
 	if (LoadImage(Argv[0], EXE) == (HINSTANCE) NULL ) {
 		fprintf(stderr, "wine: can't find %s!.\n", Argv[0]);
@@ -393,6 +380,7 @@ void InitializeLoadedDLLs()
 	}
     }
 }
+#endif
 
 
 /**********************************************************************
@@ -402,10 +390,8 @@ char *
 GetImportedName(int fd, struct mz_header_s *mz_header, 
 		struct ne_header_s *ne_header, int name_offset, char *buffer)
 {
-    char *p;
     int length;
     int status;
-    int i;
     
     status = lseek(fd, mz_header->ne_offset + ne_header->iname_tab_offset +
 		   name_offset, SEEK_SET);
@@ -426,7 +412,6 @@ GetModuleName(struct w_files * wpnt, int index, char *buffer)
     int fd = wpnt->fd;
     struct mz_header_s *mz_header = wpnt->mz_header; 
     struct ne_header_s *ne_header = wpnt->ne_header;
-    char *p;
     int length;
     WORD name_offset, status;
     int i;
@@ -714,16 +699,4 @@ FixupSegment(struct w_files * wpnt, int segment_num)
     return 0;
 }
 
-/**********************************************************************
- *					GetProcAddress
- */
-FARPROC GetProcAddress(HINSTANCE hinstance, char *proc_name)
-{
-    if ((int) proc_name & 0xffff0000)
-	printf("GetProcAddress: %#04x, '%s'\n", hinstance, proc_name);
-    else
-	printf("GetProcAddress: %#04x, %d\n", hinstance, (int) proc_name);
-
-    return NULL;
-}
 #endif

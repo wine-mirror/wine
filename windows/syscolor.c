@@ -2,62 +2,62 @@
  * Support for system colors
  *
  * Copyright  David W. Metcalfe, 1993
+ * Copyright  Alexandre Julliard, 1994
  *
  */
 
 static char Copyright[] = "Copyright  David W. Metcalfe, 1993";
+static char Copyright2[] = "Copyright  Alexandre Julliard, 1994";
 
 #include <stdlib.h>
-#include <X11/Xlib.h>
 
 #include "windows.h"
-#include "gdi.h"
 
-/* Default system colors - loosely based on Windows default color set */
-static const char *DefSysColors[] =
+
+static char * DefSysColors[] =
 {
-    "gray80",              /* COLOR_SCROLLBAR           */
-    "gray60",              /* COLOR_BACKGROUND          */
-    "blue4",               /* COLOR_ACTIVECAPTION       */
-    "white",               /* COLOR_INACTIVECAPTION     */
-    "white",               /* COLOR_MENU                */
-    "white",               /* COLOR_WINDOW              */
-    "black",               /* COLOR_WINDOWFRAME         */
-    "black",               /* COLOR_MENUTEXT            */
-    "black",               /* COLOR_WINDOWTEXT          */
-    "white",               /* COLOR_CAPTIONTEXT         */
-    "gray40",              /* COLOR_ACTIVEBORDER        */
-    "white",               /* COLOR_INACTIVEBORDER      */
-    "gray60",              /* COLOR_APPWORKSPACE        */
-    "black",               /* COLOR_HIGHLIGHT           */
-    "white",               /* COLOR_HIGHLIGHTTEXT       */
-    "gray70",              /* COLOR_BTNFACE             */
-    "gray30",              /* COLOR_BTNSHADOW           */
-    "gray70",              /* COLOR_GRAYTEXT            */
-    "black",               /* COLOR_BTNTEXT             */
-    "black",               /* COLOR_INACTIVECAPTIONTEXT */
-    "white",               /* COLOR_BTNHIGHLIGHT        */
+    "Scrollbar", "224 224 224",      /* COLOR_SCROLLBAR           */
+    "Background", "192 192 192",     /* COLOR_BACKGROUND          */
+    "ActiveTitle", "0 64 128",       /* COLOR_ACTIVECAPTION       */
+    "InactiveTitle", "255 255 255",  /* COLOR_INACTIVECAPTION     */
+    "Menu", "0 255 255",             /* COLOR_MENU                */
+    "Window", "255 255 255",         /* COLOR_WINDOW              */
+    "WindowFrame", "0 0 0",          /* COLOR_WINDOWFRAME         */
+    "MenuText", "0 0 0",             /* COLOR_MENUTEXT            */
+    "WindowText", "0 0 0",           /* COLOR_WINDOWTEXT          */
+    "TitleText", "255 255 255",      /* COLOR_CAPTIONTEXT         */
+    "ActiveBorder", "128 128 128",   /* COLOR_ACTIVEBORDER        */
+    "InactiveBorder", "255 255 255", /* COLOR_INACTIVEBORDER      */
+    "AppWorkspace", "255 255 232",   /* COLOR_APPWORKSPACE        */
+    "Hilight", "166 202 240",        /* COLOR_HIGHLIGHT           */
+    "HilightText", "0 0 0",          /* COLOR_HIGHLIGHTTEXT       */
+    "ButtonFace", "192 192 192",     /* COLOR_BTNFACE             */
+    "ButtonShadow", "128 128 128",   /* COLOR_BTNSHADOW           */
+    "GrayText", "192 192 192",       /* COLOR_GRAYTEXT            */
+    "ButtonText", "0 0 0",           /* COLOR_BTNTEXT             */
+    "InactiveTitleText", "0 0 0",    /* COLOR_INACTIVECAPTIONTEXT */
+    "ButtonHilight", "255 255 255"   /* COLOR_BTNHIGHLIGHT        */
 };
 
-#define NUM_SYS_COLORS     (sizeof(DefSysColors) / sizeof(DefSysColors[0]))
+#define NUM_SYS_COLORS     (COLOR_BTNHIGHLIGHT+1)
 
 static COLORREF SysColors[NUM_SYS_COLORS];
 
-extern Colormap COLOR_WinColormap;
 
-
+/*************************************************************************
+ *             SYSCOLOR_Init
+ */
 void SYSCOLOR_Init()
 {
-    XColor color;
-    int i;
+    int i, r, g, b;
+    char **p;
+    char buffer[100];
 
-    for (i = 0; i < NUM_SYS_COLORS; i++)
+    for (i = 0, p = DefSysColors; i < NUM_SYS_COLORS; i++, p += 2)
     {
-	if (XParseColor(XT_display, COLOR_WinColormap, DefSysColors[i], &color))
-	{
-	    SysColors[i] = RGB(color.red >> 8, color.green >> 8,
-			       color.blue >> 8);
-	}
+	GetProfileString( "colors", p[0], p[1], buffer, 100 );
+	if (!sscanf( buffer, " %d %d %d", &r, &g, &b )) r = g = b = 0;
+	SysColors[i] = RGB( r, g, b );
     }
 }
 

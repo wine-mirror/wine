@@ -7,14 +7,15 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1993";
 #define DEBUG_CURSOR
 */
 
-#include <X11/cursorfont.h>
-#include <X11/Xlib.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <X11/cursorfont.h>
+#include <X11/Xlib.h>
 #include "prototypes.h"
 #include "windows.h"
 #include "win.h"
@@ -28,6 +29,7 @@ static HCURSOR hEmptyCursor = 0;
 RECT	ClipCursorRect;
 extern HINSTANCE hSysRes;
 extern Window winHasCursor;
+extern int desktopX, desktopY;   /* misc/main.c */
 
 static struct { LPSTR name; HCURSOR cursor; } system_cursor[] =
 {
@@ -116,6 +118,11 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
 		lpcur->xcursor = XCreateFontCursor(XT_display, XC_sb_h_double_arrow);
 		GlobalUnlock(hCursor);
 	    	return hCursor;
+            case IDC_SIZENWSE:
+            case IDC_SIZENESW:
+                lpcur->xcursor = XCreateFontCursor(XT_display, XC_fleur);
+                GlobalUnlock(hCursor);
+                return hCursor;
 	    default:
 		break;
 	    }
@@ -358,19 +365,10 @@ HCURSOR SetCursor(HCURSOR hCursor)
  */
 void SetCursorPos(short x, short y)
 {
-    Window 	root, child;
-    int		rootX, rootY;
-    int		childX, childY;
-    unsigned int mousebut;
 #ifdef DEBUG_CURSOR
     printf("SetCursorPos // x=%d y=%d\n", x, y);
 #endif
-    XQueryPointer(XT_display, DefaultRootWindow(XT_display),
-	&root, &child, &rootX, &rootY, &childX, &childY, &mousebut);
-    XWarpPointer(XT_display, child, root, 0, 0, 
-    DisplayWidth(XT_display, DefaultScreen(XT_display)), 
-    DisplayHeight(XT_display, DefaultScreen(XT_display)), 
-    (int)x, (int)y);
+    XWarpPointer( display, None, rootWindow, 0, 0, 0, 0, x, y );
 }
 
 
@@ -383,15 +381,19 @@ void GetCursorPos(LPPOINT lpRetPoint)
     int		rootX, rootY;
     int		childX, childY;
     unsigned int mousebut;
-    if (lpRetPoint != NULL) {
-	XQueryPointer(XT_display, DefaultRootWindow(XT_display),
-	    &root, &child, &rootX, &rootY, &childX, &childY, &mousebut);
+
+    if (!lpRetPoint) return;
+    if (!XQueryPointer( display, rootWindow, &root, &child,
+		        &rootX, &rootY, &childX, &childY, &mousebut ))
+	lpRetPoint->x = lpRetPoint->y = 0;
+    else
+    {
+	lpRetPoint->x = rootX + desktopX;
+	lpRetPoint->y = rootY + desktopY;
+    }
 #ifdef DEBUG_CURSOR
-	printf("GetCursorPos // x=%d y=%d\n", rootX, rootY);
+	printf("GetCursorPos // x=%d y=%d\n", lpRetPoint->x, lpRetPoint->y);
 #endif
-	lpRetPoint->x = rootX;
-	lpRetPoint->y = rootY;
-    	}
 }
 
 

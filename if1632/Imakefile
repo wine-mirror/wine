@@ -8,15 +8,25 @@ SRCS = \
 	callback.c \
 	relay.c
 
-/*
- * Hack alert. There appear to be no object files, 'cause a very
- * nasty rule below links *.o together, which is a generally bad idea,
- * but I can't see how else to do it.
- */
-OBJS = \
-	call.o \
-	callback.o \
-	relay.o
+DLLOBJS = \
+	dll_gdi.o \
+	dll_kernel.o \
+	dll_keyboard.o \
+	dll_shell.o \
+	dll_sound.o \
+	dll_stress.o \
+	dll_unixlib.o \
+	dll_user.o \
+	dll_win87em.o \
+	dll_winsock.o
+
+OBJS1= $(SRCS:.S=.o)
+
+#ifndef NewBuild
+OBJS = $(DLLOBJS) $(OBJS1:.c=.o) $(DLLOBJS:.o=_tab.o)
+#else
+OBJS = $(DLLOBJS) $(OBJS1:.c=.o) $(DLLOBJS:.o=_tab.o) $(DLLOBJS:dll_.rly_)
+#endif
 
 /*
  * If you add a new spec file, copy one of these lines
@@ -26,21 +36,19 @@ MakeDllFromSpec(kernel,$(TOP)/$(MODULE))
 MakeDllFromSpec(keyboard,$(TOP)/$(MODULE))
 MakeDllFromSpec(shell,$(TOP)/$(MODULE))
 MakeDllFromSpec(sound,$(TOP)/$(MODULE))
+MakeDllFromSpec(stress,$(TOP)/$(MODULE))
 MakeDllFromSpec(unixlib,$(TOP)/$(MODULE))
 MakeDllFromSpec(user,$(TOP)/$(MODULE))
 MakeDllFromSpec(win87em,$(TOP)/$(MODULE))
 MakeDllFromSpec(winsock,$(TOP)/$(MODULE))
 
-/*
- * Yes I know *.o is not very clever, but can you do it cleaner ?
- */
-WineRelocatableTarget($(TOP)/$(MODULE),*.o,)
+WineRelocatableTarget($(TOP)/$(MODULE),,$(OBJS))
+DependTarget()
+CleanTarget()
 
-$(TOP)/$(MODULE).o: $(OBJS)
+includes::
+
+install::
 
 clean::
 	$(RM) dll* dtb*
-
-depend::
-
-includes::

@@ -1,61 +1,31 @@
 /*
  * GDI palette objects
  *
- * Copyright 1993 Alexandre Julliard
+ * Copyright 1993,1994 Alexandre Julliard
  */
 
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
+static char Copyright[] = "Copyright  Alexandre Julliard, 1993,1994";
 
 #include <stdlib.h>
+#include <string.h>
+#include <limits.h>
+/*
 #ifdef linux
 #include <values.h>
 #endif
+*/
+
 #if !defined  (MAXINT)
 #include <limits.h>
 #define MAXINT INT_MAX
 #endif
 
 #include <X11/Xlib.h>
-
 #include "gdi.h"
 
+extern void COLOR_SetMapping( DC *dc, HANDLE map, WORD size );  /* color.c */
+
 extern Colormap COLOR_WinColormap;
-
-GDIOBJHDR * PALETTE_systemPalette;
-
-
-/***********************************************************************
- *           PALETTE_Init
- */
-BOOL PALETTE_Init()
-{
-    int i, size;
-    XColor color;
-    HPALETTE hpalette;
-    LOGPALETTE * palPtr;
-
-    size = DefaultVisual( display, DefaultScreen(display) )->map_entries;
-    palPtr = malloc( sizeof(LOGPALETTE) + (size-1)*sizeof(PALETTEENTRY) );
-    if (!palPtr) return FALSE;
-    palPtr->palVersion = 0x300;
-    palPtr->palNumEntries = size;
-    memset( palPtr->palPalEntry, 0xff, size*sizeof(PALETTEENTRY) );
-
-    for (i = 0; i < size; i++)
-    {
-	color.pixel = i;
-	XQueryColor( display, COLOR_WinColormap, &color );
-	palPtr->palPalEntry[i].peRed   = color.red >> 8;
-	palPtr->palPalEntry[i].peGreen = color.green >> 8;
-	palPtr->palPalEntry[i].peBlue  = color.blue >> 8;
-	palPtr->palPalEntry[i].peFlags = 0;	
-    }
-
-    hpalette = CreatePalette( palPtr );
-    PALETTE_systemPalette = (GDIOBJHDR *) GDI_HEAP_ADDR( hpalette );
-    free( palPtr );
-    return TRUE;
-}
 
 
 /***********************************************************************
@@ -117,6 +87,33 @@ WORD SetPaletteEntries( HPALETTE hpalette, WORD start, WORD count,
 
 
 /***********************************************************************
+ *           GetSystemPaletteEntries    (GDI.375)
+ */
+WORD GetSystemPaletteEntries( HDC hdc, WORD start, WORD count,
+			      LPPALETTEENTRY entries )
+{
+    WORD i;
+    DC *dc;
+    XColor color;
+
+    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
+    if (start >= dc->w.devCaps->sizePalette) return 0;
+    if (start+count >= dc->w.devCaps->sizePalette)
+	count = dc->w.devCaps->sizePalette - start;
+    for (i = 0; i < count; i++)
+    {
+	color.pixel = start + i;
+	XQueryColor( display, COLOR_WinColormap, &color );
+	entries[i].peRed   = color.red >> 8;
+	entries[i].peGreen = color.green >> 8;
+	entries[i].peBlue  = color.blue >> 8;
+	entries[i].peFlags = 0;	
+    }
+    return count;
+}
+
+
+/***********************************************************************
  *           GetNearestPaletteIndex    (GDI.370)
  */
 WORD GetNearestPaletteIndex( HPALETTE hpalette, COLORREF color )
@@ -143,7 +140,8 @@ WORD GetNearestPaletteIndex( HPALETTE hpalette, COLORREF color )
     b = GetBValue(color);
 
     entry = palPtr->logpalette.palPalEntry;
-    for (i = 0, minDist = MAXINT; i < palPtr->logpalette.palNumEntries; i++)
+    for (i = 0, minDist = MAXINT; minDist !=0 &&
+         i < palPtr->logpalette.palNumEntries ; i++)
     {
 	if (entry->peFlags != 0xff)
 	{
@@ -178,18 +176,51 @@ int PALETTE_GetObject( PALETTEOBJ * palette, int count, LPSTR buffer )
 
 
 /***********************************************************************
+ *           GDISelectPalette    (GDI.361)
+ */
+HPALETTE GDISelectPalette( HDC hdc, HPALETTE hpal )
+{
+    HPALETTE prev;
+    DC *dc;
+
+#ifdef DEBUG_PALETTE
+    printf( "GDISelectPalette: %d %d\n", hdc, hpal );
+#endif
+    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
+    prev = dc->w.hPalette;
+    dc->w.hPalette = hpal;
+    if (hpal != STOCK_DEFAULT_PALETTE) COLOR_SetMapping( dc, 0, 0 );
+    else RealizeDefaultPalette( hdc );  /* Always realize default palette */
+    return prev;
+}
+
+
+/***********************************************************************
+ *           GDIRealizePalette    (GDI.362)
+ */
+UINT GDIRealizePalette( HDC hdc )
+{
+#ifdef DEBUG_PALETTE
+    printf( "GDIRealizePalette: %d\n", hdc );
+#endif
+    return 0;
+}
+
+
+/***********************************************************************
  *           SelectPalette    (USER.282)
  */
 HPALETTE SelectPalette(HDC hDC, HPALETTE hPal, BOOL bForceBackground)
 {
-    return (HPALETTE)NULL;
+    return GDISelectPalette( hDC, hPal );
 }
+
 
 /***********************************************************************
  *           RealizePalette    (USER.283)
  */
-int RealizePalette(HDC hDC)
+UINT RealizePalette(HDC hDC)
 {
-    return 0;
+    return GDIRealizePalette( hDC );
 }
 

@@ -10,6 +10,8 @@ static char Copyright[] = "Copyright Martin Ayotte, 1994";
 #define DEBUG_CLIPBOARD
 */
 
+#include <stdlib.h>
+#include <stdio.h>
 #include <windows.h>
 #include <sys/types.h>
 #include <sys/stat.h>

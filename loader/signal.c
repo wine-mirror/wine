@@ -1,6 +1,8 @@
-#include <signal.h>
+#ifndef WINELIB
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
+#include <errno.h>
 #include <time.h>
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)
@@ -8,14 +10,14 @@
 #else
 #include <syscall.h>
 #endif
-#include <signal.h>
-#include <errno.h>
 #ifdef linux
 #include <linux/sched.h>
 #include <asm/system.h>
 #endif
+
 #include "wine.h"
 #include "segmem.h"
+#include "prototypes.h"
  
 char * cstack[4096];
 struct sigaction segv_act;
@@ -40,92 +42,145 @@ wine_sigaction(int sig,struct sigaction * new, struct sigaction * old)
 }
 
 #ifdef linux
-static void win_fault(int signal, struct sigcontext_struct context){
-        struct sigcontext_struct *scp = &context;
+static void win_fault(int signal, struct sigcontext_struct context)
+{
+    struct sigcontext_struct *scp = &context;
 #else
-static void win_fault(int signal, int code, struct sigcontext *scp){
+static void win_fault(int signal, int code, struct sigcontext *scp)
+{
 #endif
-	unsigned char * instr;
-	unsigned char intno;
-	unsigned int * dump;
-	int i;
+    unsigned char * instr;
+    unsigned int * dump;
+    int i;
 
 	/* First take care of a few preliminaries */
 #ifdef linux
-	if(signal != SIGSEGV) exit(1);
-	if((scp->sc_cs & 7) != 7){
+    if(signal != SIGSEGV) 
+	exit(1);
+    if((scp->sc_cs & 7) != 7)
+    {
 #endif
 #if defined(__NetBSD__) || defined(__FreeBSD__)
 /*         set_es(0x27); set_ds(0x27); */
-	if(signal != SIGBUS) exit(1);
-	if(scp->sc_cs == 0x1f){
-#endif
-		fprintf(stderr,
-			"Segmentation fault in Wine program (%x:%x)."
-			"  Please debug\n",
-			scp->sc_cs, scp->sc_eip);
-		goto oops;
-	};
-
-	/*  Now take a look at the actual instruction where the program
-	    bombed */
-	instr = (char *) SAFEMAKEPTR(scp->sc_cs, scp->sc_eip);
-
-	if(*instr != 0xcd) {
-		fprintf(stderr,
-			"Unexpected Windows program segfault"
-			" - opcode = %x\n", *instr);
-#if 0
-		return;
-#else
-		goto oops;
-#endif
-	};
-
-	instr++;
-	intno = *instr;
-	switch(intno){
-	case 0x21:
-		if(!do_int21(scp)) goto oops;
-		break;
-        case 0x11:  
-  		scp->sc_eax = (scp->sc_eax & 0xffff0000L) | DOS_GetEquipment();
-		break;
-        case 0x12:               
-          	scp->sc_eax = (scp->sc_eax & 0xffff0000L) | 640L; 
-          	break;				/* get base mem size */                
-	case 0x1A:
-		if(!do_int1A(scp)) goto oops;
-		break;
-	default:
-		fprintf(stderr,"Unexpected Windows interrupt %x\n", intno);
-		goto oops;
-	};
-
-	/* OK, done handling the interrupt */
-
-	scp->sc_eip += 2;  /* Bypass the int instruction */
-	return;
- oops:
-	fprintf(stderr,"In win_fault %x:%x\n", scp->sc_cs, scp->sc_eip);
-#ifdef linux
-	wine_debug(scp);  /* Enter our debugger */
-#else
-	fprintf(stderr,"Stack: %x:%x\n", scp->sc_ss, scp->sc_esp);
-	dump = (int*) scp;
-	for(i=0; i<22; i++) 
-	{
-	    fprintf(stderr," %8.8x", *dump++);
-	    if ((i % 8) == 7)
-		fprintf(stderr,"\n");
-	}
-	fprintf(stderr,"\n");
+    if(signal != SIGBUS) 
 	exit(1);
+    if(scp->sc_cs == 0x1f)
+    {
+#endif
+	fprintf(stderr,
+		"Segmentation fault in Wine program (%x:%x)."
+		"  Please debug\n",
+		scp->sc_cs, scp->sc_eip);
+	goto oops;
+    };
+
+    /*  Now take a look at the actual instruction where the program
+	bombed */
+    instr = (unsigned char *) SAFEMAKEPTR(scp->sc_cs, scp->sc_eip);
+
+    switch(*instr)
+    {
+      case 0xcd: /* int <XX> */
+            instr++;
+	    switch(*instr)
+	    {
+	      case 0x10:
+		if(!do_int10(scp)) 
+		    goto oops;
+		break;
+
+	      case 0x11:  
+		scp->sc_eax = (scp->sc_eax & 0xffff0000L) | DOS_GetEquipment();
+		break;
+
+	      case 0x12:               
+		scp->sc_eax = (scp->sc_eax & 0xffff0000L) | 640L; 
+		break;				/* get base mem size */                
+
+	      case 0x1A:
+		if(!do_int1A(scp)) 
+		    goto oops;
+		break;
+
+	      case 0x21:
+		if (!do_int21(scp)) 
+		    goto oops;
+		break;
+
+	      case 0x22:
+		scp->sc_eax = 0x1234;
+		scp->sc_ebx = 0x5678;
+		scp->sc_ecx = 0x9abc;
+		scp->sc_edx = 0xdef0;
+		break;
+
+	      case 0x25:
+		if (!do_int25(scp)) 
+		    goto oops;
+		break;
+
+	      case 0x26:
+		if (!do_int26(scp)) 
+		    goto oops;
+		break;
+		
+	      default:
+		fprintf(stderr,"Unexpected Windows interrupt %x\n", *instr);
+		goto oops;
+	    }
+	    scp->sc_eip += 2;  /* Bypass the int instruction */
+            break;
+            
+      case 0xec: /* inb al,dx */
+            inportb(scp);
+	    scp->sc_eip++;
+            break;
+
+      case 0xed: /* in ax,dx */
+            inport(scp);
+	    scp->sc_eip++;  
+            break;
+
+      case 0xee: /* outb dx,al */
+            outportb(scp);
+	    scp->sc_eip++;
+            break;
+      
+      case 0xef: /* out dx,ax */
+            outport(scp);
+	    scp->sc_eip++;
+            break;
+
+      default:
+		fprintf(stderr, "Unexpected Windows program segfault"
+			" - opcode = %x\n", *instr);
+		goto oops;
+    }
+    
+    /* OK, done handling the interrupt */
+
+    return;
+
+  oops:
+    fprintf(stderr,"In win_fault %x:%x\n", scp->sc_cs, scp->sc_eip);
+#ifdef linux
+    wine_debug(scp);  /* Enter our debugger */
+#else
+    fprintf(stderr,"Stack: %x:%x\n", scp->sc_ss, scp->sc_esp);
+    dump = (int*) scp;
+    for(i=0; i<22; i++) 
+    {
+	fprintf(stderr," %8.8x", *dump++);
+	if ((i % 8) == 7)
+	    fprintf(stderr,"\n");
+    }
+    fprintf(stderr,"\n");
+    exit(1);
 #endif
 }
 
-int
-init_wine_signals(){
+int init_wine_signals(void)
+{
 #ifdef linux
 	segv_act.sa_handler = (__sighandler_t) win_fault;
 	/* Point to the top of the stack, minus 4 just in case, and make
@@ -155,3 +210,4 @@ init_wine_signals(){
 #endif
 }
 
+#endif /* ifndef WINELIB */

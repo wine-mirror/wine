@@ -28,6 +28,10 @@ static TIMER TimersArray[NB_TIMERS];
 
 static TIMER * pNextTimer = NULL;  /* Next timer to expire */
 
+  /* Duration from 'time' until expiration of the timer */
+#define EXPIRE_TIME(pTimer,time) \
+          (((pTimer)->expires <= (time)) ? 0 : (pTimer)->expires - (time))
+
 
 /***********************************************************************
  *           TIMER_InsertTimer
@@ -46,7 +50,7 @@ static void TIMER_InsertTimer( TIMER * pTimer )
         TIMER * ptr = pNextTimer;	
 	while (ptr->next && (pTimer->expires >= ptr->next->expires))
 	    ptr = ptr->next;
-	pTimer->next = ptr;
+	pTimer->next = ptr->next;
 	ptr->next = pTimer;
     }
 }
@@ -71,42 +75,50 @@ static void TIMER_RemoveTimer( TIMER * pTimer )
 
 
 /***********************************************************************
- *           TIMER_NextExpire
+ *           TIMER_RestartTimers
  *
- * Return time until next timer expiration (-1 if none).
+ * Restart an expired timer.
  */
-static DWORD TIMER_NextExpire( DWORD curTime )
+static void TIMER_RestartTimer( TIMER * pTimer, DWORD curTime )
 {
-    if (!pNextTimer) return -1;
-    if (pNextTimer->expires <= curTime) return 0;
-    return pNextTimer->expires - curTime;
+    TIMER_RemoveTimer( pTimer );
+    pTimer->expires = curTime + pTimer->timeout;
+    TIMER_InsertTimer( pTimer );
 }
 
-
+			       
 /***********************************************************************
  *           TIMER_CheckTimer
  *
- * Check whether a timer has expired, and post a message if necessary.
- * Return TRUE if msg posted, and return time until next expiration in 'next'.
+ * Check whether a timer has expired, and create a message if necessary.
+ * Otherwise, return time until next timer expiration in 'next'.
+ * If 'hwnd' is not NULL, only consider timers for this window.
+ * If 'remove' is TRUE, remove all expired timers up to the returned one.
  */
-BOOL TIMER_CheckTimer( DWORD *next )
+BOOL TIMER_CheckTimer( LONG *next, MSG *msg, HWND hwnd, BOOL remove )
 {
     TIMER * pTimer = pNextTimer;
     DWORD curTime = GetTickCount();
-    
-    if ((*next = TIMER_NextExpire( curTime )) != 0) return FALSE;
 
-    PostMessage( pTimer->hwnd, pTimer->msg, pTimer->id, (LONG)pTimer->proc );
-    TIMER_RemoveTimer( pTimer );
+    if (hwnd)  /* Find first timer for this window */
+	while (pTimer && (pTimer->hwnd != hwnd)) pTimer = pTimer->next;
 
-      /* If timeout == 0, the timer has been removed by KillTimer */
-    if (pTimer->timeout)
+    if (!pTimer) *next = -1;
+    else *next = EXPIRE_TIME( pTimer, curTime );
+    if (*next != 0) return FALSE;  /* No timer expired */
+
+    if (remove)	/* Restart all timers before pTimer, and then pTimer itself */
     {
-	  /* Restart the timer */
-	pTimer->expires = curTime + pTimer->timeout;
-	TIMER_InsertTimer( pTimer );
+	while (pNextTimer != pTimer) TIMER_RestartTimer( pNextTimer, curTime );
+	TIMER_RestartTimer( pTimer, curTime );
     }
-    *next = TIMER_NextExpire( curTime );
+
+      /* Build the message */
+    msg->hwnd    = pTimer->hwnd;
+    msg->message = pTimer->msg;
+    msg->wParam  = pTimer->id;
+    msg->lParam  = (LONG)pTimer->proc;
+    msg->time    = curTime;
     return TRUE;
 }
 

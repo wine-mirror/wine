@@ -19,15 +19,15 @@
 
 #define DEBUG_FILE
 
-#include <windows.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <unistd.h>
+#include <time.h>
+#include <windows.h>
 #include "prototypes.h"
 
 char WindowsDirectory[256], SystemDirectory[256], TempDirectory[256];
-
 
 /***************************************************************************
  _lopen 
@@ -40,12 +40,12 @@ int _lopen (LPSTR lpPathName, int iReadWrite)
   char *UnixFileName;
 
 #ifdef DEBUG_FILE
-  fprintf (stderr, "_lopen: open %s\n", lpPathName);
+  fprintf (stderr, "_lopen: open('%s', %X);\n", lpPathName, iReadWrite);
 #endif
 
   if ((UnixFileName = GetUnixFileName(lpPathName)) == NULL)
   	return HFILE_ERROR;
-
+  iReadWrite &= 0x000F;
   handle =  open (UnixFileName, iReadWrite);
 
 #ifdef DEBUG_FILE
@@ -67,7 +67,7 @@ WORD _lread (int hFile, LPSTR lpBuffer, int wBytes)
 
 #ifdef DEBUG_FILE
   fprintf(stderr, "_lread: handle %d, buffer = %ld, length = %d\n",
-	  		hFile, lpBuffer, wBytes);
+	  		hFile, (int) lpBuffer, wBytes);
 #endif
   
   result = read (hFile, lpBuffer, wBytes);
@@ -87,7 +87,7 @@ WORD _lwrite (int hFile, LPSTR lpBuffer, int wBytes)
 
 #ifdef DEBUG_FILE
   fprintf(stderr, "_lwrite: handle %d, buffer = %ld, length = %d\n",
-	  		hFile, lpBuffer, wBytes);
+	  		hFile, (int) lpBuffer, wBytes);
 #endif
 	result = write (hFile, lpBuffer, wBytes);
 
@@ -103,10 +103,12 @@ WORD _lwrite (int hFile, LPSTR lpBuffer, int wBytes)
 int _lclose (int hFile)
 {
 #ifdef DEBUG_FILE
-  fprintf(stderr, "_lclose: handle %d\n", hFile);
+	fprintf(stderr, "_lclose: handle %d\n", hFile);
 #endif
-  
-  close (hFile);
+	if (close (hFile))
+  		return HFILE_ERROR;
+  	else
+  		return 0;
 }
 
 /**************************************************************************
@@ -221,12 +223,12 @@ UINT GetDriveType(int drive)
 #endif
 
 	if (!DOS_ValidDrive(drive))
-		return 0;
+		return DRIVE_DOESNOTEXIST;
 
 	if (drive == 0 || drive == 1)
 		return DRIVE_REMOVABLE;
 		 
-	return DRIVE_REMOTE;
+	return DRIVE_REMOVABLE;
 }
 
 /***************************************************************************
@@ -254,6 +256,7 @@ UINT GetWindowsDirectory(LPSTR lpszSysPath, UINT cbSysPath)
 	fprintf(stderr,"GetWindowsDirectory (%s)\n",lpszSysPath);
 #endif
 
+	ChopOffSlash(lpszSysPath);
 	return(strlen(lpszSysPath));
 }
 /***************************************************************************
@@ -270,6 +273,7 @@ UINT GetSystemDirectory(LPSTR lpszSysPath, UINT cbSysPath)
 	fprintf(stderr,"GetSystemDirectory (%s)\n",lpszSysPath);
 #endif
 
+	ChopOffSlash(lpszSysPath);
 	return(strlen(lpszSysPath));
 }
 /***************************************************************************
@@ -288,7 +292,7 @@ int GetTempFileName(BYTE bDriveLetter, LPCSTR lpszPrefixString, UINT uUnique, LP
 	strcpy(tempname,lpszPrefixString);
 	tempname[3]='\0';
 
-	sprintf(lpszTempFileName,"%s\%s%d.tmp",WindowsDirectory, tempname, 
+	sprintf(lpszTempFileName,"%s\\%s%d.tmp",WindowsDirectory, tempname, 
 		unique);
 
 	ToDos(lpszTempFileName);
@@ -307,4 +311,53 @@ int GetTempFileName(BYTE bDriveLetter, LPCSTR lpszPrefixString, UINT uUnique, LP
 WORD SetErrorMode(WORD x)
 {
 	fprintf(stderr,"wine: SetErrorMode %4x (ignored)\n",x);
+}
+
+/***************************************************************************
+ _hread
+ ***************************************************************************/
+long _hread(int hf, void FAR *hpvBuffer, long cbBuffer)
+{
+	long dataread = 0;
+	size_t status, size;
+	
+	while (cbBuffer) 
+	{
+		size = cbBuffer < 30000 ? cbBuffer : 30000;
+		
+		status = read(hf, hpvBuffer, size);
+		if (status == -1)
+			return HFILE_ERROR;
+		if (status == 0)
+			return dataread;
+
+		dataread += status;
+		hpvBuffer += status;
+		cbBuffer -= status;
+	}		
+	return dataread;
+}
+/***************************************************************************
+ _hwrite
+ ***************************************************************************/
+long _hwrite(int hf, const void FAR *hpvBuffer, long cbBuffer)
+{
+	long datawritten = 0;
+	size_t status, size;
+	
+	while (cbBuffer) 
+	{
+		size = cbBuffer < 30000 ? cbBuffer : 30000;
+		
+		status = write(hf, hpvBuffer, size);
+		if (status == -1)
+			return HFILE_ERROR;
+		if (status == 0)
+			return datawritten;
+
+		datawritten += status;
+		hpvBuffer += status;
+		cbBuffer -= status;
+	}		
+	return datawritten;
 }

@@ -150,6 +150,12 @@ BOOL EqualRect( LPRECT rect1, LPRECT rect2 )
 BOOL SubtractRect( LPRECT dest, LPRECT src1, LPRECT src2 )
 {
     RECT tmp;
+
+    if (IsRectEmpty( src1 ))
+    {
+	SetRectEmpty( dest );
+	return FALSE;
+    }
     *dest = *src1;
     if (IntersectRect( &tmp, src1, src2 ))
     {
@@ -160,13 +166,13 @@ BOOL SubtractRect( LPRECT dest, LPRECT src1, LPRECT src2 )
 	}
 	if ((tmp.top == dest->top) && (tmp.bottom == dest->bottom))
 	{
-	    if (tmp.left == dest->left) dest->right = tmp.right;
-	    else if (tmp.right == dest->right) dest->left = tmp.left;
+	    if (tmp.left == dest->left) dest->left = tmp.right;
+	    else if (tmp.right == dest->right) dest->right = tmp.left;
 	}
 	else if ((tmp.left == dest->left) && (tmp.right == dest->right))
 	{
-	    if (tmp.top == dest->top) dest->bottom = tmp.bottom;
-	    else if (tmp.bottom == dest->bottom) dest->top = tmp.top;
+	    if (tmp.top == dest->top) dest->top = tmp.bottom;
+	    else if (tmp.bottom == dest->bottom) dest->bottom = tmp.top;
 	}
     }
     return TRUE;

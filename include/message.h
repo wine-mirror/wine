@@ -48,9 +48,10 @@ extern void MSG_IncPaintCount( HANDLE hQueue );
 extern void MSG_DecPaintCount( HANDLE hQueue );
 extern void MSG_IncTimerCount( HANDLE hQueue );
 extern void MSG_DecTimerCount( HANDLE hQueue );
+extern void MSG_Synchronize();
 extern BOOL MSG_CreateSysMsgQueue( int size );
-extern void hardware_event(HWND hwnd, WORD message, WORD wParam, LONG lParam,
-			   WORD xPos, WORD yPos, DWORD time, DWORD extraInfo);
+extern void hardware_event( WORD message, WORD wParam, LONG lParam,
+			    int xPos, int yPos, DWORD time, DWORD extraInfo );
 extern BOOL MSG_GetHardwareMessage( LPMSG msg );
 
 #endif  /* MESSAGE_H */

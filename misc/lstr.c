@@ -6,6 +6,7 @@ static char Copyright[] = "Copyright  Yngvi Sigurjonsson (yngvi@hafro.is), 1993"
 #include <ctype.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "prototypes.h"
 #include "regfunc.h"

@@ -220,4 +220,7 @@ struct resource_typeinfo_s
 #define NE_RSCTYPE_RCDATA		0x800a
 #define NE_RSCTYPE_STRING		0x8006
 
+int  load_typeinfo  (int, struct resource_typeinfo_s *);
+int  load_nameinfo  (int, struct resource_nameinfo_s *);
+
 #endif /* NEEXE_H */
