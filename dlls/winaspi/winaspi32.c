@@ -52,9 +52,10 @@ BOOL WINAPI WNASPI32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoa
 		/* Create instance data */
 		if(!bInitDone)
 		{
+			bInitDone=TRUE;
 			/* Initialize global stuff just once */
 			InitializeCriticalSection(&ASPI_CritSection);
-			bInitDone=TRUE;
+			SCSI_Init();
 		}
 		break;
 	case DLL_PROCESS_DETACH:
@@ -76,8 +77,7 @@ static int
 ASPI_OpenDevice(SRB_ExecSCSICmd *prb)
 {
     int	fd;
-    char	idstr[20];
-    char	device_str[50];
+    DWORD	hc;
     ASPI_DEVICE_INFO *curr;
 
     /* search list of devices to see if we've opened it already.
@@ -96,28 +96,17 @@ ASPI_OpenDevice(SRB_ExecSCSICmd *prb)
     }
     LeaveCriticalSection(&ASPI_CritSection);
 
-    /* device wasn't cached, go ahead and open it */
-    sprintf(idstr, "scsi c%1dt%1dd%1d", prb->SRB_HaId, prb->SRB_Target, prb->SRB_Lun);
+    hc = ASPI_GetHCforController( prb->SRB_HaId );
+    fd = SCSI_OpenDevice( HIWORD(hc), LOWORD(hc), prb->SRB_Target, prb->SRB_Lun);
 
-    if (!PROFILE_GetWineIniString(idstr, "Device", "", device_str, sizeof(device_str))) {
-	TRACE("Trying to open unlisted scsi device %s\n", idstr);
-	return -1;
-    }
-
-    TRACE("Opening device %s=%s\n", idstr, device_str);
-
-    fd = open(device_str, O_RDWR);
     if (fd == -1) {
-	int save_error = errno;
-#ifdef HAVE_STRERROR
-    ERR("Error opening device %s, error '%s'\n", device_str, strerror(save_error));
-#else
-    ERR("Error opening device %s, error %d\n", device_str, save_error);
-#endif
 	return -1;
     }
 
     /* device is now open */
+    /* FIXME: Let users specify SCSI timeout in registry */
+    SCSI_LinuxSetTimeout( fd, SCSI_DEFAULT_TIMEOUT );
+    
     curr = HeapAlloc( GetProcessHeap(), 0, sizeof(ASPI_DEVICE_INFO) );
     curr->fd = fd;
     curr->hostId = prb->SRB_HaId;
@@ -228,14 +217,51 @@ ASPI_DebugPrintResult(SRB_ExecSCSICmd *prb)
   }
 }
 
+/* Posting must be done in such a way that as soon as the SRB_Status is set
+ * we don't touch the SRB anymore because it could possibly be freed
+ * if the app is doing ASPI polling
+ */
+static DWORD
+WNASPI32_DoPosting( SRB_ExecSCSICmd *lpPRB, DWORD status )
+{
+	void (*SRB_PostProc)() = lpPRB->SRB_PostProc;
+	BYTE SRB_Flags = lpPRB->SRB_Flags;
+	if( status == SS_PENDING )
+	{
+		WARN("Tried posting SS_PENDING\n");
+		return SS_PENDING;
+	}
+	lpPRB->SRB_Status = status;
+	/* lpPRB is NOT safe, it could be freed in another thread */
+
+	if (SRB_PostProc)
+	{
+		if (SRB_Flags & 0x1)
+		{
+			TRACE("Post Routine (%lx) called\n", (DWORD) SRB_PostProc);
+			/* Even though lpPRB could have been freed by
+			 * the program.. that's unlikely if it planned
+			 * to use it in the PostProc
+			 */
+			(*SRB_PostProc)(lpPRB);
+		}
+		else if (SRB_Flags & SRB_EVENT_NOTIFY) {
+			TRACE("Setting event %04x\n", (HANDLE)SRB_PostProc);
+			SetEvent((HANDLE)SRB_PostProc);
+		}
+	}
+	return SS_PENDING;
+}
+
 static WORD
 ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
 {
   struct sg_header *sg_hd, *sg_reply_hdr;
-  int	status;
+  DWORD	status;
   int	in_len, out_len;
   int	error_code = 0;
   int	fd;
+  DWORD SRB_Status;
 
   ASPI_DebugPrintCmd(lpPRB);
 
@@ -243,8 +269,7 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
   if (fd == -1) {
       ERR("Failed: could not open device c%01dt%01dd%01d. Device permissions !?\n",
 	  lpPRB->SRB_HaId,lpPRB->SRB_Target,lpPRB->SRB_Lun);
-      lpPRB->SRB_Status = SS_NO_DEVICE;
-      return SS_NO_DEVICE;
+      return WNASPI32_DoPosting( lpPRB, SS_NO_DEVICE );
   }
 
   sg_hd = NULL;
@@ -254,8 +279,7 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
 
   if (!lpPRB->SRB_CDBLen) {
       WARN("Failed: lpPRB->SRB_CDBLen = 0.\n");
-      lpPRB->SRB_Status = SS_ERR;
-      return SS_ERR;
+      return WNASPI32_DoPosting( lpPRB, SS_INVALID_SRB );
   }
 
   /* build up sg_header + scsi cmd */
@@ -290,27 +314,11 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
     sg_hd->reply_len = out_len;
   }
 
-  status = write(fd, sg_hd, in_len);
-  if (status < 0 || status != in_len) {
-      int save_error = errno;
-
-    WARN("Not enough bytes written to scsi device bytes=%d .. %d\n", in_len, status);
-    if (status < 0) {
-		if (save_error == ENOMEM) {
-	    MESSAGE("ASPI: Linux generic scsi driver\n  You probably need to re-compile your kernel with a larger SG_BIG_BUFF value (sg.h)\n  Suggest 130560\n");
-	}
-#ifdef HAVE_STRERROR
-		WARN("error:= '%s'\n", strerror(save_error));
-#else
-		WARN("error:= %d\n", save_error);
-#endif
-    }
-    goto error_exit;
-  }
-
-  status = read(fd, sg_reply_hdr, out_len);
-  if (status < 0 || status != out_len) {
-    WARN("not enough bytes read from scsi device%d\n", status);
+  if(!SCSI_LinuxDeviceIo( fd,
+			  sg_hd, in_len,
+			  sg_reply_hdr, out_len,
+			  &status) )
+  {
     goto error_exit;
   }
 
@@ -337,42 +345,31 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
     ASPI_PrintSenseArea(lpPRB);
   }
 
-  lpPRB->SRB_Status = SS_COMP;
+  SRB_Status = SS_COMP;
   lpPRB->SRB_HaStat = HASTAT_OK;
   lpPRB->SRB_TargStat = sg_reply_hdr->target_status << 1;
 
+  HeapFree(GetProcessHeap(), 0, sg_reply_hdr);
+  HeapFree(GetProcessHeap(), 0, sg_hd);
+
   /* FIXME: Should this be != 0 maybe? */
   if( lpPRB->SRB_TargStat == 2 )
-    lpPRB->SRB_Status = SS_ERR;
+    SRB_Status = SS_ERR;
 
   ASPI_DebugPrintResult(lpPRB);
   /* now do posting */
-
-  if (lpPRB->SRB_PostProc) {
-    if (ASPI_POSTING(lpPRB)) {
-      TRACE("Post Routine (%lx) called\n", (DWORD) lpPRB->SRB_PostProc);
-      (*lpPRB->SRB_PostProc)(lpPRB);
-    }
-    else
-    if (lpPRB->SRB_Flags & SRB_EVENT_NOTIFY) {
-      TRACE("Setting event %04x\n", (HANDLE)lpPRB->SRB_PostProc);
-      SetEvent((HANDLE)lpPRB->SRB_PostProc); /* FIXME: correct ? */
-    }
-  }
-  HeapFree(GetProcessHeap(), 0, sg_reply_hdr);
-  HeapFree(GetProcessHeap(), 0, sg_hd);
-  return SS_PENDING;
+  return WNASPI32_DoPosting( lpPRB, SRB_Status );
   /* In real WNASPI32 stuff really is always pending because ASPI does things
      in the background, but we are not doing that (yet) */
   
 error_exit:
+  SRB_Status = SS_ERR;
   if (error_code == EBUSY) {
-      lpPRB->SRB_Status = SS_ASPI_IS_BUSY;
+      WNASPI32_DoPosting( lpPRB, SS_ASPI_IS_BUSY );
       TRACE("Device busy\n");
   }
   else {
       WARN("Failed\n");
-      lpPRB->SRB_Status = SS_ERR;
   }
 
   /* I'm not sure exactly error codes work here
@@ -381,7 +378,8 @@ error_exit:
   WARN("error_exit\n");
   HeapFree(GetProcessHeap(), 0, sg_reply_hdr);
   HeapFree(GetProcessHeap(), 0, sg_hd);
-  return lpPRB->SRB_Status;
+  WNASPI32_DoPosting( lpPRB, SRB_Status );
+  return SS_PENDING;
 }
 
 #endif /* defined(linux) */
