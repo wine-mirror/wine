@@ -32,9 +32,11 @@
 #ifdef VISIBLE
 #define WAIT Sleep (1000)
 #define REDRAW(hwnd) RedrawWindow (hwnd, NULL, 0, RDW_UPDATENOW)
+#define trace_tab(str) trace(str)
 #else
 #define WAIT
 #define REDRAW(hwnd)
+#define trace_tab(str)
 #endif
 
 HWND
@@ -47,10 +49,12 @@ create_tabcontrol (DWORD style)
 	WC_TABCONTROLA,
 	"TestTab",
 	WS_CLIPSIBLINGS | WS_CLIPCHILDREN | TCS_FOCUSNEVER | style,
-        0, 0, 300, 100,
+        10, 10, 300, 100,
         NULL, NULL, NULL, 0);
 
     assert (handle);
+    
+    SetWindowLong(handle, GWL_STYLE, WS_CLIPSIBLINGS | WS_CLIPCHILDREN | TCS_FOCUSNEVER | style);
 
     tcNewTab.mask = TCIF_TEXT | TCIF_IMAGE;
     tcNewTab.pszText = "Tab 1";
@@ -74,10 +78,13 @@ create_tabcontrol (DWORD style)
 
 void CheckSize(HWND hwnd, INT width, INT height)
 {
-    RECT rTab;
+    RECT rTab, r1;
 
-    SendMessage (hwnd, TCM_GETITEMRECT, 1, (LPARAM) &rTab);
-    /*trace ("Got (%ld,%ld)-(%ld,%ld)\n", rTab.left, rTab.top, rTab.right, rTab.bottom);*/
+    r1.left=r1.top=r1.right=r1.bottom=0;
+    SendMessage (hwnd, TCM_GETITEMRECT, 0, (LPARAM) &rTab);
+    SendMessage (hwnd, TCM_ADJUSTRECT, FALSE, (LPARAM) &r1);
+    /* trace ("Got (%ld,%ld)-(%ld,%ld)", rTab.left, rTab.top, rTab.right, rTab.bottom); */
+    trace (" (%ld,%ld)-(%ld,%ld)\n", r1.left, r1.top, r1.right, r1.bottom);
     if ((width  >= 0) && (height < 0))
 	ok (width  == rTab.right  - rTab.left, "Expected [%d] got [%ld]",  width,  rTab.right  - rTab.left);
     else if ((height >= 0) && (width  < 0))
@@ -107,59 +114,84 @@ START_TEST(tab)
 
     hwTab = create_tabcontrol(TCS_FIXEDWIDTH);
 
-    trace ("Testing TCS_FIXEDWIDTH tabs no icon...\n");
-    trace ("  default width...\n");
+    trace_tab ("Testing TCS_FIXEDWIDTH tabs no icon...\n");
+    trace_tab ("  default width...\n");
     CheckSize(hwTab, TAB_DEFAULT_WIDTH, -1);
-    trace ("  set size...\n");
+    trace_tab ("  set size...\n");
     TabCheckSetSize(hwTab, 50, 20, 50, 20);
     WAIT;
-    trace ("  min size...\n");
+    trace_tab ("  min size...\n");
     TabCheckSetSize(hwTab, 0, 1, 0, 1);
     WAIT;
 
     SendMessage(hwTab, TCM_SETIMAGELIST, 0, (LPARAM)himl);
 
-    trace ("Testing TCS_FIXEDWIDTH tabs with icon...\n");
-    trace ("  set size > icon...\n");
+    trace_tab ("Testing TCS_FIXEDWIDTH tabs with icon...\n");
+    trace_tab ("  set size > icon...\n");
     TabCheckSetSize(hwTab, 50, 30, 50, 30);
-    WAIT;
-    trace ("  set size < icon...\n");
+    trace_tab ("  set size < icon...\n");
     TabCheckSetSize(hwTab, 20, 20, 25, 20);
-    WAIT;
-    trace ("  min size...\n");
+    trace_tab ("  min size...\n");
     TabCheckSetSize(hwTab, 0, 1, 25, 1);
-    WAIT;
 
     DestroyWindow (hwTab);
 
-    trace ("Testing TCS_FIXEDWIDTH buttons no icon...\n");
+    trace_tab ("Testing TCS_FIXEDWIDTH buttons no icon...\n");
     hwTab = create_tabcontrol(TCS_FIXEDWIDTH | TCS_BUTTONS);
 
-    trace ("  default width...\n");
+    trace_tab ("  default width...\n");
     CheckSize(hwTab, TAB_DEFAULT_WIDTH, -1);
-    trace ("  set size 1...\n");
+    trace_tab ("  set size 1...\n");
     TabCheckSetSize(hwTab, 20, 20, 20, 20);
-    trace ("  set size 2...\n");
+    trace_tab ("  set size 2...\n");
     TabCheckSetSize(hwTab, 10, 50, 10, 50);
-    trace ("  min size...\n");
+    trace_tab ("  min size...\n");
     TabCheckSetSize(hwTab, 0, 1, 0, 1);
 
     SendMessage(hwTab, TCM_SETIMAGELIST, 0, (LPARAM)himl);
 
-    trace ("Testing TCS_FIXEDWIDTH buttons with icon...\n");
-    trace ("  set size > icon...\n");
+    trace_tab ("Testing TCS_FIXEDWIDTH buttons with icon...\n");
+    trace_tab ("  set size > icon...\n");
     TabCheckSetSize(hwTab, 50, 30, 50, 30);
-    trace ("  set size < icon...\n");
+    trace_tab ("  set size < icon...\n");
     TabCheckSetSize(hwTab, 20, 20, 25, 20);
-    trace ("  min size...\n");
+    trace_tab ("  min size...\n");
+    TabCheckSetSize(hwTab, 0, 1, 25, 1);
+    trace_tab (" Add padding...\n");
+    SendMessage(hwTab, TCM_SETPADDING, 0, MAKELPARAM(4,4));
+    trace_tab ("  min size...\n");
     TabCheckSetSize(hwTab, 0, 1, 25, 1);
 
-    trace (" Add padding...\n");
-    SendMessage(hwTab, TCM_SETPADDING, 0, MAKELPARAM(4,4));
-    trace ("  min size...\n");
-    TabCheckSetSize(hwTab, 0, 1, 25, 1);
-    WAIT;
-    
     DestroyWindow (hwTab);
+
+    hwTab = create_tabcontrol(TCS_FIXEDWIDTH | TCS_BOTTOM);
+    trace_tab ("Testing TCS_FIXEDWIDTH | TCS_BOTTOM tabs no icon...\n");
+
+    trace_tab ("  default width...\n");
+    CheckSize(hwTab, TAB_DEFAULT_WIDTH, -1);
+    trace_tab ("  set size 1...\n");
+    TabCheckSetSize(hwTab, 20, 20, 20, 20);
+    trace_tab ("  set size 2...\n");
+    TabCheckSetSize(hwTab, 10, 50, 10, 50);
+    trace_tab ("  min size...\n");
+    TabCheckSetSize(hwTab, 0, 1, 0, 1);
+
+    SendMessage(hwTab, TCM_SETIMAGELIST, 0, (LPARAM)himl);
+    
+    trace_tab ("Testing TCS_FIXEDWIDTH | TCS_BOTTOM tabs with icon...\n");
+    trace_tab ("  set size > icon...\n");
+    TabCheckSetSize(hwTab, 50, 30, 50, 30);
+    trace_tab ("  set size < icon...\n");
+    TabCheckSetSize(hwTab, 20, 20, 25, 20);
+    trace_tab ("  min size...\n");
+    TabCheckSetSize(hwTab, 0, 1, 25, 1);
+    trace_tab (" Add padding...\n");
+    SendMessage(hwTab, TCM_SETPADDING, 0, MAKELPARAM(4,4));
+    trace_tab ("  min size...\n");
+    TabCheckSetSize(hwTab, 0, 1, 25, 1);
+
+    DestroyWindow (hwTab);
+
+
     ImageList_Destroy(himl);
 }
