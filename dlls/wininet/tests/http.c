@@ -85,7 +85,7 @@ void winapi_test(int flags)
     DWORD length;
     DWORD out;
     const char *types[2] = { "*", NULL };
-    HINTERNET hi,hic,hor;
+    HINTERNET hi, hic = 0, hor = 0;
 
     trace("Starting with flags 0x%x\n",flags);
 
@@ -190,7 +190,7 @@ abort:
         rc = InternetCloseHandle(hor);
         ok ((rc != 0), "InternetCloseHandle of handle opened by HttpOpenRequestA failed");
     }
-    if (hor != 0x0) {
+    if (hic != 0x0) {
         rc = InternetCloseHandle(hic);
         ok ((rc != 0), "InternetCloseHandle of handle opened by InternetConnectA failed");
     }
