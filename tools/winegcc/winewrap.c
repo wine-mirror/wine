@@ -216,7 +216,7 @@ static const char *wrapper_code =
 ;
 
 static const char *output_name = "a.out";
-static strarray *arh_files, *dll_files, *lib_files, *llib_paths, *lib_paths, *obj_files;
+static strarray *other_lib_files, *arh_files, *dll_files, *llib_paths, *lib_paths, *obj_files;
 static int keep_generated = 0;
 
 static void rm_temp_file(const char *file)
@@ -285,7 +285,7 @@ static char *try_lib_path( const char *path, const char *name )
     return try_path(path, name, "a");
 }
 
-/* open the .def library for a given dll */
+/* find the .def library for a given dll */
 static char *find_dll(const char *name)
 {
     char *fullname;
@@ -295,13 +295,13 @@ static char *find_dll(const char *name)
     {
         if ((fullname = try_dll_path( lib_paths->base[i], name ))) return fullname;
     }
-    return try_dll_path( ".", name );
+    return NULL;
 }
 
 /* find a static library */
 static char *find_lib(const char *name)
 {
-    static const char* std_paths[] = { ".", "/usr/lib", "/usr/local/lib" };
+    static const char* std_paths[] = { "/usr/lib", "/usr/local/lib" };
     char *fullname;
     int i;
     
@@ -324,23 +324,34 @@ static void add_lib_path(const char* path)
     strarray_add(llib_paths, strmake("-L%s", path));
 }
 
-static void add_lib_file(const char* library)
+static void identify_lib_file(const char* library)
 {
     char *lib;
-    
+
     if (find_dll(library))
     {
 	strarray_add(dll_files, strmake("-l%s", library));
     }
     else if ((lib = find_lib(library)))
     {
+	/* winebuild needs the full path for .a files */
         strarray_add(arh_files, lib);
     }
     else
     {
-        strarray_add(lib_files, strmake("-l%s", library));
+        strarray_add(other_lib_files, strmake("-l%s", library));
     }
 }
+ 
+static void identify_lib_files(strarray *lib_files)
+{
+    int i;
+    for (i = 0; i < lib_files->size; i++)
+    {
+        identify_lib_file( lib_files->base[i]);
+    }
+}
+
 
 static void create_the_wrapper(char* base_file, char* base_name, char* app_name, int gui_mode)
 {
@@ -385,7 +396,8 @@ static void create_the_wrapper(char* base_file, char* base_name, char* app_name,
     strarray_add(wspec_args, strmake("%s.exe", base_name));
     strarray_add(wspec_args, gui_mode ? "-mgui" : "-mcui");
     strarray_add(wspec_args, wrap_o_name);
-    strarray_add(wspec_args, "-L" DLLDIR);
+    for (i = 0; i < llib_paths->size; i++)
+	strarray_add(wspec_args, llib_paths->base[i]);
     strarray_add(wspec_args, "-lkernel32");
     strarray_add(wspec_args, NULL);
 
@@ -416,6 +428,8 @@ static void create_the_wrapper(char* base_file, char* base_name, char* app_name,
     strarray_add(wlink_args, strmake("%s.exe.so", base_file));
     strarray_add(wlink_args, wspec_o_name);
     strarray_add(wlink_args, wrap_o_name);
+    for (i = 0; i < llib_paths->size; i++)
+	strarray_add(wlink_args, llib_paths->base[i]);
     strarray_add(wlink_args, NULL);
 
     spawn(wlink_args);
@@ -431,16 +445,15 @@ int main(int argc, char **argv)
     char *base_name, *base_file, *base_path, *app_temp_name, *app_name = 0;
     char *spec_name, *spec_c_name, *spec_o_name;
     strarray *spec_args, *comp_args, *link_args;
+    strarray *lib_files;
 
+    other_lib_files = strarray_alloc();
     arh_files = strarray_alloc();
     dll_files = strarray_alloc();
     lib_files = strarray_alloc();
     lib_paths = strarray_alloc();
     obj_files = strarray_alloc();
     llib_paths = strarray_alloc();
-
-    /* include the standard DLL path first */
-    add_lib_path(DLLDIR);
 
     for (i = 1; i < argc; i++)
     {
@@ -471,7 +484,7 @@ int main(int argc, char **argv)
 		if (argv[i][2]) library = argv[i] + 2;
 		else if (i + 1 < argc) library = argv[++i];
 		else error("The -l switch takes an argument\n.");
-		add_lib_file(library);
+		strarray_add(lib_files, library);
 		break;
 	    case 'm':
 		if (strcmp("-mgui", argv[i]) == 0) gui_mode = 1;
@@ -510,10 +523,19 @@ int main(int argc, char **argv)
     /* create wrapper only in C++ by default */
     if (create_wrapper == -1) create_wrapper = cpp;
     
+    /* include the standard library (for eg libwine.so) and DLL paths last */
+    add_lib_path(DLLDIR);
+    add_lib_path(LIBDIR);
+
     /* link in by default the big three */
-    if (gui_mode) add_lib_file("gdi32");
-    add_lib_file("user32");
-    add_lib_file("kernel32");
+    if (gui_mode)
+	strarray_add(lib_files, "gdi32");
+    strarray_add(lib_files, "user32");
+    strarray_add(lib_files, "kernel32");
+
+    /* Sort out the libraries into .def's and .a's */
+    identify_lib_files(lib_files);
+    strarray_free(lib_files);
 
     app_temp_name = tempnam(0, "wapp");
     /* get base filename by removing the .exe extension, if present */ 
@@ -602,8 +624,8 @@ int main(int argc, char **argv)
 	strarray_add(link_args, llib_paths->base[i]);
     strarray_add(link_args, "-lwine");
     strarray_add(link_args, "-lm");
-    for (i = 0; i < lib_files->size; i++)
-	strarray_add(link_args, lib_files->base[i]);
+    for (i = 0; i < other_lib_files->size; i++)
+	strarray_add(link_args, other_lib_files->base[i]);
 
     strarray_add(link_args, "-o");
     if (create_wrapper)
