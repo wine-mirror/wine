@@ -1538,7 +1538,7 @@ static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className, LPCWSTR tit
     {
         while (list[i])
         {
-            if (GetWindowTextW( list[i], buffer, len ) && !strcmpiW( buffer, title )) break;
+            if (GetWindowTextW( list[i], buffer, len + 1 ) && !strcmpiW( buffer, title )) break;
             i++;
         }
     }
