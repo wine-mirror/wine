@@ -86,9 +86,9 @@ Vorausgesetzte Build-Tools:
 
   Natürlich benötigen Sie auch "make" (höchstwahrscheinlich GNU make).
 
-  Des Weiteren benötigen Sie flex in der Version 2.5 oder höher und yacc.
-  Bison kann als Ersatz für yacc dienen. Wenn Sie RedHat oder Debian 
-  benutzen, installieren Sie bitte die flex- und bison-Pakete.
+  Des Weiteren benötigen Sie flex in der Version 2.5 oder höher und bison.
+  Wenn Sie RedHat oder Debian benutzen, installieren Sie bitte die flex-
+  und bison-Pakete.
 
 Optionale Support-Libraries:
   Wenn Sie CUPS Drucker-Unterstützung haben wollen, installieren Sie bitte

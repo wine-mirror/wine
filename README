@@ -81,8 +81,7 @@ Build tool requirements:
 
   Of course you also need "make" (most likely GNU make).
 
-  You also need flex version 2.5 or later and yacc.
-  Bison will work as a replacement for yacc. If you are
+  You also need flex version 2.5 or later and bison.  If you are
   using RedHat or Debian, install the flex and bison packages.
 
 Optional support libraries:

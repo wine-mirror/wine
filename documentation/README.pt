@@ -94,9 +94,8 @@ desconhecida.
 
 Claro que tambm precisas fazer "make" (geralmente como o GNU make).
 
-Tu também necessitas do flex versao 2.5 ou superior e o yacc.
-Bison irá trabalhar como substituição do yacc. Se estiveres a usar 
-RedHat ou Debian, instala os pacotes do flex e do bison.
+Tu também necessitas do flex versao 2.5 ou superior e o bison.
+Se estiveres a usar RedHat ou Debian, instala os pacotes do flex e do bison.
 
 Para o processamento automático dos scripts de teste, tu também irás 
 precisar do libperl "development header support" (pacote libperl-dev em 

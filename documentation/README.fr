@@ -88,9 +88,8 @@ inconnue.
 
 Évidemment, vous aurez besoin de "make" (très probablement GNU make).
 
-Vous aurez également besoin de flex version 2.5 ou supérieure et yacc.
-Bison fonctionnera en replacement de yacc. Si vous utilisez RedHat ou Debian,
-installez les paquets flex et bison.
+Vous aurez également besoin de flex version 2.5 ou supérieure et bison.
+Si vous utilisez RedHat ou Debian, installez les paquets flex et bison.
 
 Librairies optionnelles :
   Si vous voulez un support d'impression à l'aide de CUPS, SVP installez à la

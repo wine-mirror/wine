@@ -86,9 +86,8 @@ dei file. Pgcc al momento non funziona con Wine. La causa di questo problema
 
 Chiaramente è necessario anche "make" (più precisamente GNU make).
 
-E' necessario anche flex versione 2.5 o successiva e yacc.
-Bison può essere utilizzato al posto di yacc. Se stai usando una RedHat o
-Debian, installa i pacchetti Flex e Bison.
+E' necessario anche flex versione 2.5 o successiva e bison.
+Se stai usando una RedHat o Debian, installa i pacchetti Flex e Bison.
 
 Librerie per supporti opzionali:
 

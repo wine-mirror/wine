@@ -25,7 +25,8 @@ CC        = @CC@
 CFLAGS    = @CFLAGS@
 CPPFLAGS  = @CPPFLAGS@
 LIBS      = @LIBS@
-YACC      = @YACC@
+BISON     = @BISON@
+YACC      = $(BISON) -y
 LEX       = @LEX@
 LEXLIB    = @LEXLIB@
 EXEEXT    = @EXEEXT@
@@ -103,7 +104,7 @@ prog_manext     = 1
 api_manext      = 3w
 conf_manext     = 5
 CLEAN_FILES     = *.o *.a *.so *.ln *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej \
-                  *.flc *.spec.c *.spec.def *.dbg.c y.tab.c y.tab.h @LEX_OUTPUT_ROOT@.c core
+                  *.flc *.spec.c *.spec.def *.dbg.c *.tab.c *.tab.h @LEX_OUTPUT_ROOT@.c core
 
 OBJS = $(C_SRCS:.c=.o) $(EXTRA_OBJS)
 

@@ -63,20 +63,21 @@ AC_CACHE_CHECK([for the directory containing the Wine tools], wine_cv_toolsdir,
 AC_SUBST(TOOLSDIR,$wine_cv_toolsdir)
 
 AC_PATH_XTRA
-AC_PROG_YACC
 AC_PROG_LEX
 
-dnl **** Just additional warning checks, since AC_PROG just sets 'yacc' even
+dnl **** Just additional warning checks, since AC_PROG just sets 'lex' even
 dnl **** without one present.
-AC_CHECK_PROGS(XYACC,$YACC bison yacc,none)
-if test "$XYACC" = "none"
-then
-  AC_MSG_ERROR([no suitable bison/yacc found. Please install the 'bison' package.])
-fi
 AC_CHECK_PROGS(XLEX,$LEX flex lex,none)
 if test "$XLEX" = "none"
 then
   AC_MSG_ERROR([no suitable lex found. Please install the 'flex' package.])
+fi
+
+dnl Check for bison
+AC_CHECK_PROGS(BISON,bison,none)
+if test "$BISON" = "none"
+then
+  AC_MSG_ERROR([no suitable bison found. Please install the 'bison' package.])
 fi
 
 AC_CHECK_TOOLS(AS,[gas as],as)

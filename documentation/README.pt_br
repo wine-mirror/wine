@@ -82,9 +82,8 @@ problema é desconhecida.
 
 Naturalmente que necessita do "make" (comumente o GNU make).
 
-Tamném precisa do flex versão 2.5 ou posterior e do yacc.
-O Bison funciona como um substituto do yacc. Se estiver usando  
-RedHat ou Debian, instale os pacotes do flex e do bison.
+Tamném precisa do flex versão 2.5 ou posterior e do bison.
+Se estiver usando RedHat ou Debian, instale os pacotes do flex e do bison.
 
 Bibliotecas de suporte opcionais:
 Se desejar o suporte de impressão do CUPS, por favor instale os pacotes
