@@ -11,7 +11,8 @@ Wine has already made enough progress that it may be possible to run
 your target applications without Windows installed. If you want to try
 it, follow these steps:
 
-1. Create empty C:\windows and C:\windows\system directories.
+1. Create empty C:\windows, C:\windows\system, C:\windows\Start Menu,
+   and C:\windows\Start Menu\Programs directories.
    Do not point Wine to a Windows directory full of old installations
    and a messy registry. (Wine creates a special registry in your home
    directory, in $HOME/.wine/*.reg. Perhaps you have to remove these
