@@ -1539,18 +1539,6 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
       if (psInfo->ppshheader.dwFlags & (PSH_WIZARD97_NEW | PSH_WIZARD97_OLD) &&
           psInfo->ppshheader.dwFlags & PSH_HEADER)
       {
-	  if ((ppshpage->dwFlags & PSP_USEHEADERTITLE) &&
-	      (HIWORD(ppshpage->pszHeaderTitle) == 0))
-	  {
-	    /* FIXME: load title string into ppshpage->pszHeaderTitle */
-	  }
-
-	  if ((ppshpage->dwFlags & PSP_USEHEADERSUBTITLE) &&
-	      (HIWORD(ppshpage->pszHeaderSubTitle) == 0))
-	  {
-	    /* FIXME: load title string into ppshpage->pszHeaderSubTitle */
-	  }
-
 	  hwndChild = GetDlgItem(hwndParent, IDC_SUNKEN_LINEHEADER);
 
 	  GetClientRect(hwndChild, &r);
@@ -3071,6 +3059,8 @@ static LRESULT PROPSHEET_Paint(HWND hwnd)
     HBRUSH hbr;
     RECT r;
     LPCPROPSHEETPAGEW ppshpage;
+    WCHAR szBuffer[256];
+    int nLength;
 
     hdc = BeginPaint(hwnd, &ps);
     if (!hdc) return 1;
@@ -3133,25 +3123,51 @@ static LRESULT PROPSHEET_Paint(HWND hwnd)
 	clrOld = SetTextColor (hdc, 0x00000000);
 	oldBkMode = SetBkMode (hdc, TRANSPARENT); 
 
-	if (ppshpage->dwFlags & PSP_USEHEADERTITLE) {	    
+	if (ppshpage->dwFlags & PSP_USEHEADERTITLE) {
 	    SetRect(&r, 20, 10, rzone.right - bm.bmWidth, 18);
-	    if (psInfo->unicode)
-		DrawTextW(hdc, (LPWSTR)ppshpage->pszHeaderTitle, 
-			  -1, &r, DT_LEFT | DT_SINGLELINE | DT_NOCLIP);
+	    if (HIWORD(ppshpage->pszHeaderTitle))
+	    {
+		if (psInfo->unicode)
+		    DrawTextW(hdc, (LPWSTR)ppshpage->pszHeaderTitle,
+			      -1, &r, DT_LEFT | DT_SINGLELINE | DT_NOCLIP);
+		else
+		    DrawTextA(hdc, (LPCSTR)ppshpage->pszHeaderTitle,
+			      -1, &r, DT_LEFT | DT_SINGLELINE | DT_NOCLIP);
+	    }
 	    else
-		DrawTextA(hdc, (LPCSTR)ppshpage->pszHeaderTitle, 
-			  -1, &r, DT_LEFT | DT_SINGLELINE | DT_NOCLIP);	
+	    {
+		nLength = LoadStringW(ppshpage->hInstance, (UINT)ppshpage->pszHeaderTitle,
+				      szBuffer, 256);
+		if (nLength != 0)
+		{
+		    DrawTextW(hdc, szBuffer, nLength,
+			      &r, DT_LEFT | DT_SINGLELINE | DT_NOCLIP);
+		}
+	    }
 	}
 
 	if (ppshpage->dwFlags & PSP_USEHEADERSUBTITLE) {
 	    SelectObject(hdc, psInfo->hFont);
 	    SetRect(&r, 40, 25, rzone.right - bm.bmWidth, 43);
-	    if (psInfo->unicode)
-		DrawTextW(hdc, (LPWSTR)ppshpage->pszHeaderSubTitle, 
-		      -1, &r, DT_LEFT | DT_SINGLELINE);
+	    if (HIWORD(ppshpage->pszHeaderTitle))
+	    {
+		if (psInfo->unicode)
+		    DrawTextW(hdc, (LPWSTR)ppshpage->pszHeaderSubTitle,
+			      -1, &r, DT_LEFT | DT_SINGLELINE);
+		else
+		    DrawTextA(hdc, (LPCSTR)ppshpage->pszHeaderSubTitle,
+			      -1, &r, DT_LEFT | DT_SINGLELINE);
+	    }
 	    else
-		DrawTextA(hdc, (LPCSTR)ppshpage->pszHeaderSubTitle, 
-		      -1, &r, DT_LEFT | DT_SINGLELINE);	
+	    {
+		nLength = LoadStringW(ppshpage->hInstance, (UINT)ppshpage->pszHeaderSubTitle,
+				      szBuffer, 256);
+		if (nLength != 0)
+		{
+		    DrawTextW(hdc, szBuffer, nLength,
+			      &r, DT_LEFT | DT_SINGLELINE | DT_NOCLIP);
+		}
+	    }
 	}
 
  	if (psInfo->ppshheader.dwFlags & PSH_WIZARD97_OLD)
