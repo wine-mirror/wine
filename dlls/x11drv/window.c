@@ -191,6 +191,7 @@ static Window create_icon_window( Display *display, WND *win )
                        ButtonPressMask | ButtonReleaseMask);
     attr.bit_gravity = NorthWestGravity;
     attr.backing_store = NotUseful/*WhenMapped*/;
+    attr.colormap      = X11DRV_PALETTE_PaletteXColormap; /* Needed due to our visual */
 
     wine_tsx11_lock();
     data->icon_window = XCreateWindow( display, root_window, 0, 0,
@@ -198,7 +199,7 @@ static Window create_icon_window( Display *display, WND *win )
                                        GetSystemMetrics( SM_CYICON ),
                                        0, screen_depth,
                                        InputOutput, visual,
-                                       CWEventMask | CWBitGravity | CWBackingStore, &attr );
+                                       CWEventMask | CWBitGravity | CWBackingStore | CWColormap, &attr );
     XSaveContext( display, data->icon_window, winContext, (char *)win->hwndSelf );
     wine_tsx11_unlock();
 
