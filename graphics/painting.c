@@ -712,11 +712,15 @@ BOOL16 WINAPI PolyPolygon16( HDC16 hdc, const POINT16* pt, const INT16* counts,
     nrpts=0;
     for (i=polygons;i--;)
     	nrpts+=counts[i];
-    pt32 = (LPPOINT)HEAP_xalloc( GetProcessHeap(), 0, sizeof(POINT)*nrpts);
+    pt32 = (LPPOINT)HeapAlloc( GetProcessHeap(), 0, sizeof(POINT)*nrpts);
+    if(pt32 == NULL) return FALSE;
     for (i=nrpts;i--;)
     	CONV_POINT16TO32(&(pt[i]),&(pt32[i]));
-    counts32 = (LPINT)HEAP_xalloc( GetProcessHeap(), 0,
-                                     polygons*sizeof(INT) );
+    counts32 = (LPINT)HeapAlloc( GetProcessHeap(), 0, polygons*sizeof(INT) );
+    if(counts32 == NULL) {
+	HeapFree( GetProcessHeap(), 0, pt32 );
+	return FALSE;
+    }
     for (i=polygons;i--;) counts32[i]=counts[i];
    
     ret = PolyPolygon(hdc,pt32,counts32,polygons);

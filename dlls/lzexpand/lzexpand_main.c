@@ -178,16 +178,23 @@ HFILE WINAPI LZInit( HFILE hfSrc )
         for (i = 0; i < MAX_LZSTATES; i++) if (!lzstates[i]) break;
         if (i == MAX_LZSTATES) return LZERROR_GLOBALLOC;
 	lzstates[i] = lzs = HeapAlloc( GetProcessHeap(), 0, sizeof(struct lzstate) );
-
+	if(lzs == NULL) return LZERROR_GLOBALLOC;
+	
 	memset(lzs,'\0',sizeof(*lzs));
 	lzs->realfd	= hfSrc;
 	lzs->lastchar	= head.lastchar;
 	lzs->reallength = head.reallength;
 
-	lzs->get	= HEAP_xalloc( GetProcessHeap(), 0, GETLEN );
+	lzs->get	= HeapAlloc( GetProcessHeap(), 0, GETLEN );
 	lzs->getlen	= 0;
 	lzs->getcur	= 0;
 
+	if(lzs->get == NULL) {
+		HeapFree(GetProcessHeap(), 0, lzs);
+		lzstates[i] = NULL;
+		return LZERROR_GLOBALLOC;
+	}
+	
 	/* Yes, preinitialize with spaces */
 	memset(lzs->table,' ',0x1000);
 	/* Yes, start 16 byte from the END of the table */
@@ -534,8 +541,9 @@ LONG WINAPI LZCopy( HFILE src, HFILE dest )
 static LPSTR LZEXPAND_MangleName( LPCSTR fn )
 {
     char *p;
-    char *mfn = (char *)HEAP_xalloc( GetProcessHeap(), 0,
-                                     strlen(fn) + 3 ); /* "._" and \0 */
+    char *mfn = (char *)HeapAlloc( GetProcessHeap(), 0,
+                                   strlen(fn) + 3 ); /* "._" and \0 */
+    if(mfn == NULL) return NULL;
     strcpy( mfn, fn );
     if (!(p = strrchr( mfn, '\\' ))) p = mfn;
     if ((p = strchr( p, '.' )))

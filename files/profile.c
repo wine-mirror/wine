@@ -202,7 +202,8 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
     PROFILESECTION **next_section;
     PROFILEKEY *key, *prev_key, **next_key;
 
-    first_section = HEAP_xalloc( GetProcessHeap(), 0, sizeof(*section) );
+    first_section = HeapAlloc( GetProcessHeap(), 0, sizeof(*section) );
+    if(first_section == NULL) return NULL; 
     first_section->name = NULL;
     first_section->key  = NULL;
     first_section->next = NULL;
@@ -226,7 +227,8 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
             {
                 *p2 = '\0';
                 p++;
-                section = HEAP_xalloc( GetProcessHeap(), 0, sizeof(*section) );
+                section = HeapAlloc( GetProcessHeap(), 0, sizeof(*section) );
+		if(section == NULL) break;
                 section->name = HEAP_strdupA( GetProcessHeap(), 0, p );
                 section->key  = NULL;
                 section->next = NULL;
@@ -253,8 +255,9 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
         }
 
         if(*p || !prev_key || *prev_key->name)
-          {
-           key = HEAP_xalloc( GetProcessHeap(), 0, sizeof(*key) );
+        {
+           key = HeapAlloc( GetProcessHeap(), 0, sizeof(*key) );
+	   if(key == NULL) break;
            key->name  = HEAP_strdupA( GetProcessHeap(), 0, p );
            key->value = p2 ? HEAP_strdupA( GetProcessHeap(), 0, p2 ) : NULL;
            key->next  = NULL;
@@ -263,7 +266,7 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
            prev_key   = key;
 
            TRACE("New key: name='%s', value='%s'\n",key->name,key->value?key->value:"(none)");
-          }
+        }
     }
     return first_section;
 }
@@ -426,7 +429,8 @@ static PROFILEKEY *PROFILE_Find( PROFILESECTION **section,
                 key = &(*key)->next;
             }
             if (!create) return NULL;
-            *key = HEAP_xalloc( GetProcessHeap(), 0, sizeof(PROFILEKEY) );
+            *key = HeapAlloc( GetProcessHeap(), 0, sizeof(PROFILEKEY) );
+	    if(*key == NULL) return NULL;
             (*key)->name  = HEAP_strdupA( GetProcessHeap(), 0, key_name );
             (*key)->value = NULL;
             (*key)->next  = NULL;
@@ -435,10 +439,16 @@ static PROFILEKEY *PROFILE_Find( PROFILESECTION **section,
         section = &(*section)->next;
     }
     if (!create) return NULL;
-    *section = HEAP_xalloc( GetProcessHeap(), 0, sizeof(PROFILESECTION) );
+    *section = HeapAlloc( GetProcessHeap(), 0, sizeof(PROFILESECTION) );
+    if(*section == NULL) return NULL;
     (*section)->name = HEAP_strdupA( GetProcessHeap(), 0, section_name );
     (*section)->next = NULL;
-    (*section)->key  = HEAP_xalloc( GetProcessHeap(), 0, sizeof(PROFILEKEY) );
+    (*section)->key  = HeapAlloc( GetProcessHeap(), 0, sizeof(PROFILEKEY) );
+    if((*section)->key  == NULL)
+    {
+	    HeapFree(GetProcessHeap(), 0, *section);
+	    return NULL;
+    }
     (*section)->key->name  = HEAP_strdupA( GetProcessHeap(), 0, key_name );
     (*section)->key->value = NULL;
     (*section)->key->next  = NULL;
@@ -535,7 +545,8 @@ static BOOL PROFILE_Open( LPCSTR filename )
     if(!CurProfile)
        for(i=0;i<N_CACHED_PROFILES;i++)
          {
-          MRUProfile[i]=HEAP_xalloc( GetProcessHeap(), 0, sizeof(PROFILE) );
+          MRUProfile[i]=HeapAlloc( GetProcessHeap(), 0, sizeof(PROFILE) );
+	  if(MRUProfile[i] == NULL) break;
           MRUProfile[i]->changed=FALSE;
           MRUProfile[i]->section=NULL;
           MRUProfile[i]->dos_name=NULL;

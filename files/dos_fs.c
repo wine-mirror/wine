@@ -992,7 +992,7 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath,
     DWORD ret = 0;
 
     longpathA = HEAP_strdupWtoA( GetProcessHeap(), 0, longpath );
-    shortpathA = HEAP_xalloc ( GetProcessHeap(), 0, shortlen );
+    shortpathA = HeapAlloc ( GetProcessHeap(), 0, shortlen );
 
     ret = GetShortPathNameA ( longpathA, shortpathA, shortlen );
     lstrcpynAtoW ( shortpath, shortpathA, shortlen );
@@ -1953,7 +1953,7 @@ DWORD WINAPI QueryDosDeviceA(LPCSTR devname,LPSTR target,DWORD bufsize)
 DWORD WINAPI QueryDosDeviceW(LPCWSTR devname,LPWSTR target,DWORD bufsize)
 {
     LPSTR devnameA = devname?HEAP_strdupWtoA(GetProcessHeap(),0,devname):NULL;
-    LPSTR targetA = (LPSTR)HEAP_xalloc(GetProcessHeap(),0,bufsize);
+    LPSTR targetA = (LPSTR)HeapAlloc(GetProcessHeap(),0,bufsize);
     DWORD ret = QueryDosDeviceA(devnameA,targetA,bufsize);
 
     lstrcpynAtoW(target,targetA,bufsize);

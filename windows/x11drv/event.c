@@ -984,7 +984,8 @@ static Atom EVENT_SelectionRequest_TARGETS( Window requestor, Atom target, Atom 
        cTargets++;
     
     /* Allocate temp buffer */
-    targets = (Atom*)HEAP_xalloc( GetProcessHeap(), 0, cTargets * sizeof(Atom));
+    targets = (Atom*)HeapAlloc( GetProcessHeap(), 0, cTargets * sizeof(Atom));
+    if(targets == NULL) return None;
 
     /* Create TARGETS property list (First item in list is TARGETS itself) */
 
@@ -1080,7 +1081,8 @@ static Atom EVENT_SelectionRequest_STRING( Window requestor, Atom target, Atom r
     size = GlobalSize16(hText);
     /* remove carriage returns */
     
-    lpstr = (char*)HEAP_xalloc( GetProcessHeap(), 0, size-- );
+    lpstr = (char*)HeapAlloc( GetProcessHeap(), 0, size-- );
+    if(lpstr == NULL) return None;
     for(i=0,j=0; i < size && text[i]; i++ )
     {
         if( text[i] == '\r' && 
