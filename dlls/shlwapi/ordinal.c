@@ -1016,7 +1016,22 @@ DWORD WINAPI SHLWAPI_162(LPSTR lpStr, DWORD size)
 }
 
 /*************************************************************************
- *      @	[SHLWAPI.164]
+ *      _IUnknown_QueryStatus	[SHLWAPI.163]
+ */
+DWORD WINAPI SHLWAPI_163 (
+	LPVOID v,
+	LPVOID w,
+	LPVOID x,
+	LPVOID y,
+	LPVOID z)
+{
+        TRACE("(%p %p %p %p %p) stub\n", v,w,x,y,z);
+	return 0;
+}
+
+
+/*************************************************************************
+ *      _IUnknown_Exec		[SHLWAPI.164]
  */
 DWORD WINAPI SHLWAPI_164 (
 	LPVOID u,
@@ -1046,7 +1061,16 @@ LONG WINAPI SHLWAPI_165(HWND hwnd, INT offset, UINT wFlags, UINT wMask)
 }
 
 /*************************************************************************
- *      @	[SHLWAPI.169]
+ *      _SHSetParentHwnd	[SHLWAPI.167]
+ */
+DWORD WINAPI SHLWAPI_167(HWND hWnd, LPVOID y)
+{
+	FIXME("0x%08x %p\n", hWnd,y);
+	return 0;
+}
+
+/*************************************************************************
+ *	_IUnknown_AtomicRelease	[SHLWAPI.169]
  *
  *  Do IUnknown::Release on passed object.
  */
@@ -1075,26 +1099,36 @@ LPCSTR WINAPI SHLWAPI_170(LPCSTR lpszSrc)
 }
 
 /*************************************************************************
- *      @	[SHLWAPI.172]
+ *      _SHIsSameObject		SHLWAPI.171]
+ */
+BOOL WINAPI SHLWAPI_171(LPVOID x, LPVOID y)
+{
+	FIXME("%p %p\n",x,y);
+	return 0;
+}
+
+/*************************************************************************
+ *      _IUnknown_GetWindow	[SHLWAPI.172]
  * Get window handle of OLE object
  */
 DWORD WINAPI SHLWAPI_172 (
-	IUnknown *y,       /* [in]   OLE object interface */
-	LPHWND z)          /* [out]  location to put window handle */
+	IUnknown *pUnk,       /* [in]   OLE object interface */
+	LPHWND hWnd)          /* [out]  location to put window handle */
 {
-        DWORD ret;
-	IUnknown *pv;
+        DWORD ret = E_FAIL;
+	IOleWindow *pOleWnd;
 
-        TRACE("(%p %p)\n",y,z);
-	if (!y) return E_FAIL;
+        TRACE("(%p %p)\n",pUnk,hWnd);
 
-	if ((ret = IUnknown_QueryInterface(y, &IID_IOleWindow,(LPVOID *)&pv)) < 0) {
-	    /* error */
-	    return ret;
+	if (pUnk) {
+	    ret = IUnknown_QueryInterface(pUnk, &IID_IOleWindow,(LPVOID *)&pOleWnd);
+	    if (SUCCEEDED(ret)) {
+	        ret = IOleWindow_GetWindow(pOleWnd, hWnd);
+	        IOleWindow_Release(pOleWnd);
+	        TRACE("result hwnd=%08x\n", *hWnd);
+	    }
 	}
-	ret = IOleWindow_GetWindow((IOleWindow *)pv, z);
-	IUnknown_Release(pv);
-	TRACE("result hwnd=%08x\n", *z);
+
 	return ret;
 }
 
@@ -1152,7 +1186,7 @@ HRESULT WINAPI SHLWAPI_175 (LPVOID x, LPVOID y)
 	return E_FAIL;
 }
 /*************************************************************************
- *      @	[SHLWAPI.176]
+ *      _IUnknown_QueryService	[SHLWAPI.176]
  *
  * Function appears to be interface to IServiceProvider::QueryService
  *
@@ -1165,19 +1199,23 @@ DWORD WINAPI SHLWAPI_176 (
 	IUnknown* unk,    /* [in]    object to give Service Provider */
 	REFGUID   sid,    /* [in]    Service ID                      */
         REFIID    riid,   /* [in]    Function requested              */
-	LPVOID    *z)     /* [out]   place to save interface pointer */
+	LPVOID    *ppv)   /* [out]   place to save interface pointer */
 {
-    DWORD ret;
-    LPVOID aa;
-    *z = 0;
-    if (!unk) return E_FAIL;
-    ret = IUnknown_QueryInterface(unk, &IID_IServiceProvider, &aa);
-    TRACE("did IU_QI retval=%08lx, aa=%p\n", ret, aa);
-    if (ret) return ret;
-    ret = IServiceProvider_QueryService((IServiceProvider *)aa, sid, riid,
-					(void **)z);
-    TRACE("did ISP_QS retval=%08lx, *z=%p\n", ret, (LPVOID)*z);
-    IUnknown_Release((IUnknown*)aa);
+    HRESULT ret = E_FAIL;
+    IServiceProvider *pSP;
+    *ppv = 0;
+
+    TRACE("%p, %s, %s, %p\n", unk, debugstr_guid(sid), debugstr_guid(riid), ppv);
+
+    if (unk) {
+        ret = IUnknown_QueryInterface(unk, &IID_IServiceProvider,(LPVOID*) &pSP);
+        TRACE("did IU_QI retval=%08lx, aa=%p\n", ret, pSP);
+        if (SUCCEEDED(ret)) {
+            ret = IServiceProvider_QueryService(pSP, sid, riid, (LPVOID*)ppv);
+            TRACE("did ISP_QS retval=%08lx, *z=%p\n", ret, *ppv);
+            IServiceProvider_Release(pSP);
+        }
+    }
     return ret;
 }
 
@@ -1202,6 +1240,15 @@ DWORD WINAPI SHLWAPI_183(WNDCLASSA *wndclass)
   if (GetClassInfoA(wndclass->hInstance, wndclass->lpszClassName, &wca))
     return TRUE;
   return (DWORD)RegisterClassA(wndclass);
+}
+
+/*************************************************************************
+ *      _IUnknown_OnFocusOCS	[SHLWAPI.189]
+ */
+DWORD WINAPI SHLWAPI_189(LPVOID x, LPVOID y)
+{
+	FIXME("%p %p\n", x, y);
+	return 0;
 }
 
 /*************************************************************************
@@ -1721,6 +1768,36 @@ HWND WINAPI SHLWAPI_278 (
 }
 
 /*************************************************************************
+ *      _SHPackDispParamsV	[SHLWAPI.281]
+ */
+HRESULT WINAPI SHLWAPI_281(LPVOID w, LPVOID x, LPVOID y, LPVOID z)
+{
+	FIXME("%p %p %p %p\n",w,x,y,z);
+	return E_FAIL;
+}
+
+/*************************************************************************
+ *      _IConnectionPoint_SimpleInvoke	[SHLWAPI.284]
+ */
+DWORD WINAPI SHLWAPI_284 (
+	LPVOID x,
+	LPVOID y,
+	LPVOID z)
+{
+        TRACE("(%p %p %p) stub\n",x,y,z);
+	return 0;
+}
+
+/*************************************************************************
+ *      _IUnknown_CPContainerOnChanged	[SHLWAPI.287]
+ */
+HRESULT WINAPI SHLWAPI_287(LPVOID x, LPVOID y)
+{
+	FIXME("%p %p\n", x,y);
+	return E_FAIL;
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.289]
  *
  * Late bound call to winmm.PlaySoundW
@@ -2192,6 +2269,42 @@ DWORD WINAPI SHLWAPI_413 (DWORD x)
 	FIXME("(0x%08lx)stub\n", x);
 	return 0;
 }
+
+/*************************************************************************
+ *      SHGlobalCounterCreateNamedA	[SHLWAPI.422]
+ */
+HANDLE WINAPI SHLWAPI_422 (LPCSTR pwName, int nInitialCount)
+{
+	CHAR pwCounterName[MAX_PATH];
+	HANDLE hSem;
+
+	lstrcpyA(pwCounterName,	"shell.");
+	lstrcatA(pwCounterName, pwName);
+	hSem = CreateSemaphoreA(NULL /* FIXME */, nInitialCount, MAXLONG, pwCounterName);
+	if (!hSem) {
+	  OpenSemaphoreA( SYNCHRONIZE | SEMAPHORE_MODIFY_STATE, 0, pwCounterName);
+	}
+	return hSem;
+}
+
+/*************************************************************************
+ *      SHGlobalCounterCreateNamedW	[SHLWAPI.423]
+ */
+HANDLE WINAPI SHLWAPI_423 (LPCWSTR pwName, int nInitialCount)
+{
+	WCHAR pwCounterName[MAX_PATH];
+	WCHAR pwShell[7] = {'s','h','e','l','l','.','\0'};
+	HANDLE hSem;
+
+	lstrcpyW(pwCounterName,	pwShell);
+	lstrcatW(pwCounterName, pwName);
+	hSem = CreateSemaphoreW(NULL /* FIXME */, nInitialCount, MAXLONG, pwCounterName);
+	if (!hSem) {
+	  OpenSemaphoreW( SYNCHRONIZE | SEMAPHORE_MODIFY_STATE, 0, pwCounterName);
+	}
+	return hSem;
+}
+
 
 /*************************************************************************
  *      @	[SHLWAPI.418]

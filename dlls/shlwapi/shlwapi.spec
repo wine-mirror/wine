@@ -162,15 +162,15 @@ init SHLWAPI_LibMain
 160 stub @
 161 stub @
 162 stdcall @(str long) SHLWAPI_162
-163 stub @
+163 stdcall @(ptr ptr ptr ptr ptr) SHLWAPI_163
 164 stdcall @(ptr ptr ptr ptr ptr ptr) SHLWAPI_164
 165 stdcall @(long long long long) SHLWAPI_165
 166 stdcall @(ptr) SHLWAPI_166
-167 stub @
+167 stdcall @(long ptr) SHLWAPI_167
 168 stub @
 169 stdcall @(long) SHLWAPI_169
 170 stdcall @(str) SHLWAPI_170
-171 stub @
+171 stdcall @(ptr ptr) SHLWAPI_171
 172 stdcall @(ptr ptr) SHLWAPI_172
 173 stub @
 174 stdcall @(ptr ptr) SHLWAPI_174
@@ -188,7 +188,7 @@ init SHLWAPI_LibMain
 186 stub @
 187 stub @
 188 stub @
-189 stub @
+189 stdcall @(ptr ptr) SHLWAPI_189
 190 stub @
 191 stub @
 192 stub @
@@ -280,13 +280,13 @@ init SHLWAPI_LibMain
 278 stdcall @(long long long long long long) SHLWAPI_278
 279 stub @
 280 stub @
-281 stub @
+281 stdcall @(ptr ptr ptr ptr) SHLWAPI_281
 282 stub @
 283 stub @
-284 stub @
+284 stdcall @(ptr ptr ptr) SHLWAPI_284
 285 stub @
 286 stub @
-287 stub @
+287 stdcall @(ptr ptr) SHLWAPI_287
 288 stub @
 289 stdcall @(wstr long long) SHLWAPI_289
 290 stub @
@@ -421,8 +421,8 @@ init SHLWAPI_LibMain
 419 stub @
 420 stub @
 421 stub @
-422 stub @
-423 stub @
+422 stdcall @(str long) SHLWAPI_422
+423 stdcall @(wstr long) SHLWAPI_423
 424 stub @
 425 stub @
 426 stub @
@@ -720,8 +720,8 @@ init SHLWAPI_LibMain
 @ stub    SHRegisterValidateTemplate
 @ stdcall SHSetThreadRef (ptr) SHSetThreadRef
 @ stub    SHSkipJunction
-@ stub    SHStrDupA
-@ stub    SHStrDupW
+@ stdcall SHStrDupA (str ptr) SHStrDupA
+@ stdcall SHStrDupW (wstr ptr) SHStrDupW
 @ stub    StrFormatByteSize64A
 @ stub    StrFormatKBSizeA
 @ stub    StrFormatKBSizeW

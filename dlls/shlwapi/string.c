@@ -634,3 +634,59 @@ BOOL WINAPI StrTrimA(LPSTR pszSource, LPCSTR pszTrimChars)
     TRACE("<- '%s'\n", pszSource);
     return trimmed;
 }
+
+/*************************************************************************
+ *      SHStrDupA	[SHLWAPI.@]
+ *
+ * Duplicates a ASCII string to UNICODE. The destination buffer is allocated.
+ */
+HRESULT WINAPI SHStrDupA(LPCSTR src, LPWSTR * dest)
+{
+	HRESULT hr;
+	int len = 0;
+
+	if (src) {
+	    len = (MultiByteToWideChar(0,0,src,-1,0,0) + 1)* sizeof(WCHAR);
+	    *dest = CoTaskMemAlloc(len);
+	} else {
+	    *dest = NULL;
+	}
+
+	if (*dest) {
+	    MultiByteToWideChar(0,0,src,-1,*dest,len);
+	    hr = S_OK;
+	} else {
+	    hr = E_OUTOFMEMORY;
+	}
+
+	TRACE("%s->(%p)\n", debugstr_a(src), *dest);
+	return hr;
+}
+
+/*************************************************************************
+ *      SHStrDupW	[SHLWAPI.@]
+ *
+ * Duplicates a UNICODE string. The destination buffer is allocated.
+ */
+HRESULT WINAPI SHStrDupW(LPCWSTR src, LPWSTR * dest)
+{
+	HRESULT hr;
+	int len = 0;
+
+	if (src) {
+	    len = (lstrlenW(src) + 1) * sizeof(WCHAR);
+	    *dest = CoTaskMemAlloc(len);
+	} else {
+	    *dest = NULL;
+	}
+
+	if (*dest) {
+	    memcpy(*dest, src, len);
+	    hr = S_OK;
+	} else {
+	    hr = E_OUTOFMEMORY;
+	}
+
+	TRACE("%s->(%p)\n", debugstr_w(src), *dest);
+	return hr;
+}

@@ -972,68 +972,6 @@ LONG WINAPI SHQueryInfoKeyW(HKEY hKey, LPDWORD pwSubKeys, LPDWORD pwSubKeyMax,
                           NULL, pwValues, pwValueMax, NULL, NULL, NULL);
 }
 
-/*
-  DWORD dwRet, dwType, dwDataLen;
-
-  FIXME("(hkey=0x%08x,%s,%p,%p,%p,%p=%ld)\n", hKey, debugstr_a(lpszValue),
-        lpReserved, pwType, pvData, pcbData, pcbData ? *pcbData : 0);
-
-  if (pcbData) dwDataLen = *pcbData;
-
-  dwRet = RegQueryValueExA(hKey, lpszValue, lpReserved, &dwType, pvData, &dwDataLen);
-  if (!dwRet)
-  {
-    if (dwType == REG_EXPAND_SZ)
-    {
-      LPSTR szExpand;
-      LPBYTE pData = pvData;
-
-      if (!pData)
-      {
-        if (!pcbData || !(pData = (LPBYTE) LocalAlloc(GMEM_ZEROINIT, *pcbData)))
-          return ERROR_OUTOFMEMORY;
-
-        if ((dwRet = RegQueryValueExA (hKey, lpszValue, lpReserved, &dwType, pData, &dwDataLen)))
-          return dwRet;
-      }
-
-      if (!pcbData && pData != pvData)
-      {
-        WARN("Invalid pcbData would crash under Win32!\n");
-        return ERROR_OUTOFMEMORY;
-      }
-
-      szExpand = (LPBYTE) LocalAlloc(GMEM_ZEROINIT, *pcbData);
-      if (!szExpand)
-      {
-        if ( pData != pvData ) LocalFree((HLOCAL)pData);
-        return ERROR_OUTOFMEMORY;
-      }
-      if ((ExpandEnvironmentStringsA(pvData, szExpand, *pcbData) > 0))
-      {
-        dwDataLen = strlen(szExpand) + 1;
-        strncpy(pvData, szExpand, *pcbData);
-      }
-      else
-      {
-        if ( pData != pvData ) LocalFree((HLOCAL)pData);
-        LocalFree((HLOCAL)szExpand);
-        return GetLastError();
-      }
-      if (pData != pvData) LocalFree((HLOCAL)pData);
-      LocalFree((HLOCAL)szExpand);
-      dwType = REG_SZ;
-    }
-    if (dwType == REG_SZ && pvData && pcbData && dwDataLen >= *pcbData)
-    {
-      ((LPBYTE) pvData)[*pcbData] = '\0';
-    }
-  }
-  if ( pwType ) *pwType = dwType;
-  if ( pcbData ) *pcbData = dwDataLen;
-  return dwRet;
-*/
-
 /*************************************************************************
  * SHQueryValueExA   [SHLWAPI.@]
  *
@@ -1061,6 +999,20 @@ LONG WINAPI SHQueryInfoKeyW(HKEY hKey, LPDWORD pwSubKeys, LPDWORD pwSubKeyMax,
  *   If the type of the data is REG_EXPAND_SZ, it is expanded to REG_SZ. The
  *   value returned will be truncated if it is of type REG_SZ and bigger than
  *   the buffer given to store it.
+ *
+ *   REG_EXPAND_SZ
+ *     case 1: the unexpanded string is smaller than the expanded one
+ *       subcase 1: the buffer is to small to hold the unexpanded string:
+ *          function fails and returns the size of the unexpanded string.
+ *
+ *       subcase 2: buffer is to small to hold the expanded string:
+ *          the function return success (!!) and the result is truncated
+ *	    *** This is clearly a error in the native implemantation. ***
+ *
+ *     case 2: the unexpanded string is bigger than the expanded one
+ *       The buffer must have enough space to hold the unexpanded
+ *       string even if the result is smaller.
+ *
  */
 DWORD WINAPI SHQueryValueExA( HKEY hKey, LPCSTR lpszValue,
                               LPDWORD lpReserved, LPDWORD pwType,
