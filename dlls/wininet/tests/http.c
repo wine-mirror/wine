@@ -275,10 +275,99 @@ void InternetCrackUrl_test(void)
   ok((strcmp(TEST_URL_PATH,path) == 0),"path cracked wrong\n");
 }
 
+void InternetCrackUrlW_test(void)
+{
+    WCHAR url[] = {
+        'h','t','t','p',':','/','/','1','9','2','.','1','6','8','.','0','.','2','2','/',
+        'C','F','I','D','E','/','m','a','i','n','.','c','f','m','?','C','F','S','V','R',
+        '=','I','D','E','&','A','C','T','I','O','N','=','I','D','E','_','D','E','F','A',
+        'U','L','T', 0 };
+    URL_COMPONENTSW comp;
+    WCHAR scheme[20], host[20], user[20], pwd[20], urlpart[50], extra[50];
+    BOOL r;
+
+    urlpart[0]=0;
+    scheme[0]=0;
+    extra[0]=0;
+    host[0]=0;
+    user[0]=0;
+    pwd[0]=0;
+    memset(&comp, 0, sizeof comp);
+    comp.dwStructSize = sizeof comp;
+    comp.lpszScheme = scheme;
+    comp.dwSchemeLength = sizeof scheme;
+    comp.lpszHostName = host;
+    comp.dwHostNameLength = sizeof host;
+    comp.lpszUserName = user;
+    comp.dwUserNameLength = sizeof user;
+    comp.lpszPassword = pwd;
+    comp.dwPasswordLength = sizeof pwd;
+    comp.lpszUrlPath = urlpart;
+    comp.dwUrlPathLength = sizeof urlpart;
+    comp.lpszExtraInfo = extra;
+    comp.dwExtraInfoLength = sizeof extra;
+
+    r = InternetCrackUrlW(url, 0, 0, &comp );
+    ok( r, "failed to crack url\n");
+    ok( comp.dwSchemeLength == 4, "scheme length wrong\n");
+    ok( comp.dwHostNameLength == 12, "host length wrong\n");
+    ok( comp.dwUserNameLength == 0, "user length wrong\n");
+    ok( comp.dwPasswordLength == 0, "password length wrong\n");
+    ok( comp.dwUrlPathLength == 15, "url length wrong\n");
+    ok( comp.dwExtraInfoLength == 29, "extra length wrong\n");
+ 
+    urlpart[0]=0;
+    scheme[0]=0;
+    extra[0]=0;
+    host[0]=0;
+    user[0]=0;
+    pwd[0]=0;
+    memset(&comp, 0, sizeof comp);
+    comp.dwStructSize = sizeof comp;
+    comp.lpszHostName = host;
+    comp.dwHostNameLength = sizeof host;
+    comp.lpszUrlPath = urlpart;
+    comp.dwUrlPathLength = sizeof urlpart;
+
+    r = InternetCrackUrlW(url, 0, 0, &comp );
+    ok( r, "failed to crack url\n");
+    ok( comp.dwSchemeLength == 0, "scheme length wrong\n");
+    ok( comp.dwHostNameLength == 12, "host length wrong\n");
+    ok( comp.dwUserNameLength == 0, "user length wrong\n");
+    ok( comp.dwPasswordLength == 0, "password length wrong\n");
+    ok( comp.dwUrlPathLength == 44, "url length wrong\n");
+    ok( comp.dwExtraInfoLength == 0, "extra length wrong\n");
+
+    urlpart[0]=0;
+    scheme[0]=0;
+    extra[0]=0;
+    host[0]=0;
+    user[0]=0;
+    pwd[0]=0;
+    memset(&comp, 0, sizeof comp);
+    comp.dwStructSize = sizeof comp;
+    comp.lpszHostName = host;
+    comp.dwHostNameLength = sizeof host;
+    comp.lpszUrlPath = urlpart;
+    comp.dwUrlPathLength = sizeof urlpart;
+    comp.lpszExtraInfo = NULL;
+    comp.dwExtraInfoLength = sizeof extra;
+
+    r = InternetCrackUrlW(url, 0, 0, &comp );
+    ok( r, "failed to crack url\n");
+    ok( comp.dwSchemeLength == 0, "scheme length wrong\n");
+    ok( comp.dwHostNameLength == 12, "host length wrong\n");
+    ok( comp.dwUserNameLength == 0, "user length wrong\n");
+    ok( comp.dwPasswordLength == 0, "password length wrong\n");
+    ok( comp.dwUrlPathLength == 15, "url length wrong\n");
+    ok( comp.dwExtraInfoLength == 29, "extra length wrong\n");
+}
+
 START_TEST(http)
 {
     winapi_test(0x10000000);
     winapi_test(0x00000000);
     InternetCrackUrl_test();
     InternetOpenUrlA_test();
+    InternetCrackUrlW_test();
 }
