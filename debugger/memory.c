@@ -74,7 +74,7 @@ BOOL DEBUG_checkmap_bad( const char *addr, size_t size, int rwflag)
 #endif
     if ( end <= addr)
       continue;
-    if (start <= addr && addr+size < end) {
+    if (start <= addr && addr+size <= end) {
       if (rwflag) 
 	ret = (prot[0] != 'r'); /* test for reading */
       else
