@@ -120,7 +120,7 @@ HEADER_SetItemBounds (HWND hwnd)
         phdi->rect.top = rect.top;
         phdi->rect.bottom = rect.bottom;
         phdi->rect.left = x;
-        phdi->rect.right = phdi->rect.left + phdi->cxy;
+        phdi->rect.right = phdi->rect.left + ((phdi->cxy>0)?phdi->cxy:0);
         x = phdi->rect.right;
     }
 }
