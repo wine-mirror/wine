@@ -39,16 +39,22 @@
 @ stdcall LdrFindEntryForAddress(ptr ptr)
 @ stdcall LdrFindResourceDirectory_U(long ptr long ptr)
 @ stdcall LdrFindResource_U(long ptr long ptr)
+@ stub LdrFlushAlternateResourceModules
 @ stdcall LdrGetDllHandle(long long ptr ptr)
 @ stdcall LdrGetProcedureAddress(ptr ptr long ptr)
+@ stub LdrInitShimEngineDynamic
 @ stdcall LdrInitializeThunk(long long long long)
+@ stub LdrLoadAlternateResourceModule
 @ stdcall LdrLoadDll(wstr long ptr ptr)
 @ stdcall LdrLockLoaderLock(long ptr ptr)
 @ stub LdrProcessRelocationBlock
 @ stub LdrQueryImageFileExecutionOptions
 @ stdcall LdrQueryProcessModuleInformation(ptr long ptr)
+@ stub LdrSetAppCompatDllRedirectionCallback
+@ stub LdrSetDllManifestProber
 @ stdcall LdrShutdownProcess()
 @ stdcall LdrShutdownThread()
+@ stub LdrUnloadAlternateResourceModule
 @ stdcall LdrUnloadDll(ptr)
 @ stdcall LdrUnlockLoaderLock(long long)
 @ stub LdrVerifyImageMatchesChecksum
@@ -268,6 +274,9 @@
 @ stdcall RtlAcquirePebLock()
 @ stdcall RtlAcquireResourceExclusive(ptr long)
 @ stdcall RtlAcquireResourceShared(ptr long)
+@ stub RtlActivateActivationContext
+@ stub RtlActivateActivationContextEx
+@ stub RtlActivateActivationContextUnsafeFast
 @ stdcall RtlAddAccessAllowedAce(ptr long long ptr)
 @ stdcall RtlAddAccessAllowedAceEx(ptr long long long ptr)
 @ stdcall RtlAddAccessDeniedAce(ptr long long ptr)
@@ -337,12 +346,21 @@
 @ stub RtlCustomCPToUnicodeN
 @ stub RtlCutoverTimeToSystemTime
 @ stdcall RtlDeNormalizeProcessParams(ptr)
+@ stub RtlDeactivateActivationContext
+@ stub RtlDeactivateActivationContextUnsafeFast
+@ stub RtlDebugPrintTimes
 @ stub RtlDecompressBuffer
 @ stub RtlDecompressFragment
+@ stub RtlDefaultNpAcl
 @ stub RtlDelete
 @ stdcall RtlDeleteAce(ptr long)
+@ stub RtlDeleteAtomFromAtomTable
 @ stdcall RtlDeleteCriticalSection(ptr)
 @ stub RtlDeleteElementGenericTable
+@ stub RtlDeleteElementGenericTableAvl
+@ stub RtlDeleteNoSplay
+@ stub RtlDeleteOwnersRanges
+@ stub RtlDeleteRange
 @ stub RtlDeleteRegistryValue
 @ stdcall RtlDeleteResource(ptr)
 @ stdcall RtlDeleteSecurityObject(long)
@@ -380,6 +398,9 @@
 @ stdcall -ret64 RtlExtendedMagicDivide(long long long long long)
 @ stdcall RtlFillMemory(ptr long long)
 @ stdcall RtlFillMemoryUlong(ptr long long)
+@ stub RtlFinalReleaseOutOfProcessMemoryStream
+@ stub RtlFindActivationContextSectionGuid
+@ stub RtlFindActivationContextSectionString
 @ stdcall RtlFindCharInUnicodeString(long ptr ptr ptr)
 @ stdcall RtlFindClearBits(ptr long long)
 @ stdcall RtlFindClearBitsAndSet(ptr long long)
@@ -393,17 +414,21 @@
 @ stdcall RtlFindMostSignificantBit(long long)
 @ stdcall RtlFindNextForwardRunClear(ptr long ptr)
 @ stdcall RtlFindNextForwardRunSet(ptr long ptr)
+@ stub RtlFindRange
 @ stdcall RtlFindSetBits(ptr long long)
 @ stdcall RtlFindSetBitsAndClear(ptr long long)
 @ stdcall RtlFindSetRuns(ptr ptr long long)
+@ stub RtlFirstEntrySList
 @ stdcall RtlFirstFreeAce(ptr ptr)
 @ stdcall RtlFormatCurrentUserKeyPath(ptr)
 @ stub RtlFormatMessage
 @ stdcall RtlFreeAnsiString(long)
+@ stub RtlFreeHandle
 @ stdcall RtlFreeHeap(long long long)
 @ stdcall RtlFreeOemString(ptr)
 @ stdcall RtlFreeSid (long)
 @ stdcall RtlFreeUnicodeString(ptr)
+@ stub RtlFreeUserThreadStack
 @ stub RtlGenerate8dot3Name
 @ stdcall RtlGetAce(ptr long ptr)
 @ stdcall RtlGetNtVersionNumbers(ptr ptr ptr)
@@ -490,8 +515,14 @@
 @ stdcall RtlPrefixString(ptr ptr long)
 @ stdcall RtlPrefixUnicodeString(ptr ptr long)
 @ stub RtlProtectHeap
+@ stub RtlQueryAtomInAtomTable
+@ stub RtlQueryDepthSList
 @ stdcall RtlQueryEnvironmentVariable_U(ptr ptr ptr)
+@ stub RtlQueryHeapInformation
 @ stdcall RtlQueryInformationAcl(ptr ptr long long)
+@ stub RtlQueryInformationActivationContext
+@ stub RtlQueryInformationActiveActivationContext
+@ stub RtlQueryInterfaceMemoryStream
 @ stub RtlQueryProcessBackTraceInformation
 @ stdcall RtlQueryProcessDebugInformation(long long ptr)
 @ stub RtlQueryProcessHeapInformation
@@ -500,18 +531,28 @@
 @ stub RtlQuerySecurityObject
 @ stub RtlQueryTagHeap
 @ stdcall RtlQueryTimeZoneInformation(ptr)
+@ stub RtlQueueApcWow64Thread
+@ stub RtlQueueWorkItem
 @ stdcall RtlRaiseException(ptr)
 @ stdcall RtlRaiseStatus(long)
 @ stdcall RtlRandom(ptr)
-@ stdcall RtlRestoreLastWin32Error(long) RtlSetLastWin32Error
+@ stub RtlRandomEx
 @ stdcall RtlReAllocateHeap(long long ptr long)
+@ stub RtlReadMemoryStream
+@ stub RtlReadOutOfProcessMemoryStream
 @ stub RtlRealPredecessor
 @ stub RtlRealSuccessor
+@ stub RtlRegisterSecureMemoryCacheCallback
+@ stub RtlRegisterWait
+@ stub RtlReleaseActivationContext
+@ stub RtlReleaseMemoryStream
 @ stdcall RtlReleasePebLock()
 @ stdcall RtlReleaseResource(ptr)
 @ stub RtlRemoteCall
 @ stdcall RtlRemoveVectoredExceptionHandler(ptr)
 @ stub RtlResetRtlTranslations
+@ stdcall RtlRestoreLastWin32Error(long) RtlSetLastWin32Error
+@ stub RtlRevertMemoryStream
 @ stub RtlRunDecodeUnicodeString
 @ stub RtlRunEncodeUnicodeString
 @ stdcall RtlSecondsSince1970ToTime(long ptr)
@@ -579,7 +620,9 @@
 @ stdcall RtlValidateHeap(long long ptr)
 @ stub RtlValidateProcessHeaps
 @ stdcall RtlVerifyVersionInfo(ptr long long long)
+@ stub RtlWalkFrameChain
 @ stdcall RtlWalkHeap(long ptr)
+@ stub RtlWriteMemoryStream
 @ stub RtlWriteRegistryValue
 @ stub RtlZeroHeap
 @ stdcall RtlZeroMemory(ptr long)
@@ -1030,12 +1073,9 @@
 @ stub RtlAddAtomToAtomTable
 @ stub RtlAllocateHandle
 @ stub RtlCreateAtomTable
-@ stub RtlDeleteAtomFromAtomTable
-@ stub RtlFreeHandle
 @ stub RtlInitializeHandleTable
 @ stub RtlIsValidHandle
 @ stub RtlLookupAtomInAtomTable
-@ stub RtlQueryAtomInAtomTable
 @ stdcall RtlTryEnterCriticalSection(ptr)
 @ stub RtlEnumerateProperties
 @ stub RtlSetPropertyClassId

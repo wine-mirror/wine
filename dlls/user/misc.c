@@ -319,3 +319,11 @@ LONG WINAPI stub_USER_492(void) { FIXME("stub\n"); return 0; }
  *		USER_496 (USER.496)
  */
 LONG WINAPI stub_USER_496(void) { FIXME("stub\n"); return 0; }
+
+/***********************************************************************
+ *		User32InitializeImmEntryTable
+ */
+BOOL WINAPI User32InitializeImmEntryTable(LPVOID ptr) { 
+  FIXME("(%p): stub\n", ptr); 
+  return TRUE; 
+}

@@ -137,12 +137,22 @@
 @ stdcall AddAtomW(wstr)
 @ stdcall AddVectoredExceptionHandler(long ptr) ntdll.RtlAddVectoredExceptionHandler
 @ stdcall AllocConsole()
+@ stub AllocateUserPhysicalPages
 @ stub AllocLSCallback
 @ stdcall AllocSLCallback(ptr ptr)
 @ stdcall AreFileApisANSI()
 @ stdcall BackupRead(ptr ptr long ptr long long ptr)
 @ stdcall BackupSeek(ptr long long ptr ptr ptr)
 @ stdcall BackupWrite(ptr ptr long ptr long long ptr)
+@ stub BaseCheckAppcompatCache
+@ stub BaseCleanupAppcompatCache 
+@ stub BaseCleanupAppcompatCacheSupport
+@ stub BaseDumpAppcompatCache
+@ stub BaseFlushAppcompatCache
+@ stub BaseInitAppcompatCache
+@ stub BaseInitAppcompatCacheSupport
+@ stub BaseProcessInitPostImport
+@ stub BaseUpdateAppcompatCache
 @ stdcall Beep(long long)
 @ stdcall BeginUpdateResourceA(str long)
 @ stdcall BeginUpdateResourceW(wstr long)

@@ -52,6 +52,8 @@
 @ stdcall ChildWindowFromPoint(long long long)
 @ stdcall ChildWindowFromPointEx(long long long long)
 @ stub ClientThreadConnect
+@ stub CliImmSetHotKey
+@ stub ClientThreadSetup
 @ stdcall ClientToScreen(long ptr)
 @ stdcall ClipCursor(ptr)
 @ stdcall CloseClipboard()
@@ -599,6 +601,7 @@
 @ stdcall UnregisterHotKey(long long)
 @ stub UpdatePerUserSystemParameters
 @ stdcall UpdateWindow(long)
+@ stdcall User32InitializeImmEntryTable(ptr)
 @ stdcall UserClientDllInitialize(long long ptr) DllMain
 # @ stub UserIsSystemResumeAutomatic
 # @ stub UserSetDeviceHoldState
@@ -616,6 +619,7 @@
 # @ stub WINNLSGetIMEHotkey
 @ stdcall WaitForInputIdle(long long)
 @ stdcall WaitMessage()
+@ stub WCSToMBEx
 @ stdcall WinHelpA(long str long long)
 @ stdcall WinHelpW(long wstr long long)
 # @ stub WinOldAppHackoMatic
