@@ -767,11 +767,11 @@ LDPATH=""
 if test "$LIBEXT" = "so"; then
     DLLFLAGS="-fPIC"
     DLLEXT=".so"
-    LDPATH="LD_LIBRARY_PATH=\"\$(TOPOBJDIR)/unicode:\$\$LD_LIBRARY_PATH\""
+    LDPATH="LD_LIBRARY_PATH=\"\$(TOPOBJDIR)/library:\$(TOPOBJDIR)/unicode:\$\$LD_LIBRARY_PATH\""
 elif test "$LIBEXT" = "dll"; then
     #DLLFLAGS="-fPIC" # -fPIC doesn't work(at least in cygwin-b20) - FIXME
     DLLEXT=""
-    LDPATH="PATH=\"\$(TOPOBJDIR)/unicode:\$\$PATH\""
+    LDPATH="PATH=\"\$(TOPOBJDIR)/library:\$(TOPOBJDIR)/unicode:\$\$PATH\""
 fi
 
 AC_SUBST(DLLFLAGS)
@@ -1227,6 +1227,7 @@ WINE_CONFIG_EXTRA_DIR(dlls/user/dde)
 WINE_CONFIG_EXTRA_DIR(dlls/user/resources)
 WINE_CONFIG_EXTRA_DIR(dlls/user/tests)
 WINE_CONFIG_EXTRA_DIR(dlls/wineps/data)
+WINE_CONFIG_EXTRA_DIR(dlls/winsock/tests)
 WINE_CONFIG_EXTRA_DIR(include/wine)
 WINE_CONFIG_EXTRA_DIR(programs/regapi/tests)
 WINE_CONFIG_EXTRA_DIR(programs/winetest/tests)

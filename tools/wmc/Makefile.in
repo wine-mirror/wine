@@ -24,11 +24,8 @@ mcl.o: y.tab.h
 
 @MAKE_RULES@
 
-wmc: $(OBJS) $(TOPOBJDIR)/unicode/libwine_unicode.$(LIBEXT)
-	$(CC) $(CFLAGS) -o wmc $(OBJS) $(LIBUNICODE) $(LEXLIB) $(LDFLAGS)
-
-$(TOPOBJDIR)/unicode/libwine_unicode.$(LIBEXT):
-	cd `dirname $@` && $(MAKE) `basename $@`
+wmc: $(OBJS)
+	$(CC) $(CFLAGS) -o wmc $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LEXLIB) $(LDFLAGS)
 
 y.tab.c y.tab.h: mcy.y
 	$(YACC) $(YACCOPT) -d -t $(SRCDIR)/mcy.y

@@ -27,11 +27,8 @@ all: $(PROGRAMS)
 
 @MAKE_RULES@
 
-wrc: $(OBJS) $(TOPOBJDIR)/unicode/libwine_unicode.$(LIBEXT)
-	$(CC) $(CFLAGS) -o wrc $(OBJS) $(LIBUNICODE) $(LEXLIB) $(LDFLAGS)
-
-$(TOPOBJDIR)/unicode/libwine_unicode.$(LIBEXT):
-	cd `dirname $@` && $(MAKE) `basename $@`
+wrc: $(OBJS)
+	$(CC) $(CFLAGS) -o wrc $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LEXLIB) $(LDFLAGS)
 
 y.tab.c y.tab.h: parser.y
 	$(YACC) $(YACCOPT) -d -t $(SRCDIR)/parser.y

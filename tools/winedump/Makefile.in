@@ -22,7 +22,7 @@ all: $(PROGRAMS)
 @MAKE_RULES@
 
 winedump: $(OBJS)
-	$(CC) $(CFLAGS) -o winedump $(OBJS) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o winedump $(OBJS) $(LIBWINE) $(LDFLAGS)
 
 install:: $(PROGRAMS)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)

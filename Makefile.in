@@ -142,7 +142,7 @@ $(EMUOBJS): tools dlls
 
 $(LIBPROGRAMS): tools dlls wine
 
-server tools: unicode/libwine_unicode.$(LIBEXT)
+server tools: $(LIBRARIES)
 
 dlls: tools $(LIBRARIES)
 

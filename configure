@@ -9639,11 +9639,11 @@ LDPATH=""
 if test "$LIBEXT" = "so"; then
     DLLFLAGS="-fPIC"
     DLLEXT=".so"
-    LDPATH="LD_LIBRARY_PATH=\"\$(TOPOBJDIR)/unicode:\$\$LD_LIBRARY_PATH\""
+    LDPATH="LD_LIBRARY_PATH=\"\$(TOPOBJDIR)/library:\$(TOPOBJDIR)/unicode:\$\$LD_LIBRARY_PATH\""
 elif test "$LIBEXT" = "dll"; then
     #DLLFLAGS="-fPIC" # -fPIC doesn't work(at least in cygwin-b20) - FIXME
     DLLEXT=""
-    LDPATH="PATH=\"\$(TOPOBJDIR)/unicode:\$\$PATH\""
+    LDPATH="PATH=\"\$(TOPOBJDIR)/library:\$(TOPOBJDIR)/unicode:\$\$PATH\""
 fi
 
 
@@ -12380,6 +12380,8 @@ ac_config_commands="$ac_config_commands dlls/user/tests"
 
 ac_config_commands="$ac_config_commands dlls/wineps/data"
 
+ac_config_commands="$ac_config_commands dlls/winsock/tests"
+
 ac_config_commands="$ac_config_commands include/wine"
 
 ac_config_commands="$ac_config_commands programs/regapi/tests"
@@ -13035,6 +13037,7 @@ do
   "dlls/user/resources" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/resources" ;;
   "dlls/user/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/tests" ;;
   "dlls/wineps/data" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/wineps/data" ;;
+  "dlls/winsock/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/winsock/tests" ;;
   "include/wine" ) CONFIG_COMMANDS="$CONFIG_COMMANDS include/wine" ;;
   "programs/regapi/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/regapi/tests" ;;
   "programs/winetest/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/winetest/tests" ;;
@@ -13706,6 +13709,8 @@ echo "$as_me: creating dlls/user/resources" >&6;} && mkdir "dlls/user/resources"
 echo "$as_me: creating dlls/user/tests" >&6;} && mkdir "dlls/user/tests") ;;
     dlls/wineps/data ) test -d "dlls/wineps/data" || ({ echo "$as_me:$LINENO: creating dlls/wineps/data" >&5
 echo "$as_me: creating dlls/wineps/data" >&6;} && mkdir "dlls/wineps/data") ;;
+    dlls/winsock/tests ) test -d "dlls/winsock/tests" || ({ echo "$as_me:$LINENO: creating dlls/winsock/tests" >&5
+echo "$as_me: creating dlls/winsock/tests" >&6;} && mkdir "dlls/winsock/tests") ;;
     include/wine ) test -d "include/wine" || ({ echo "$as_me:$LINENO: creating include/wine" >&5
 echo "$as_me: creating include/wine" >&6;} && mkdir "include/wine") ;;
     programs/regapi/tests ) test -d "programs/regapi/tests" || ({ echo "$as_me:$LINENO: creating programs/regapi/tests" >&5

@@ -22,11 +22,8 @@ all: $(PROGRAMS)
 
 @MAKE_RULES@
 
-winebuild: $(OBJS) $(TOPOBJDIR)/unicode/libwine_unicode.$(LIBEXT)
-	$(CC) $(CFLAGS) -o winebuild $(OBJS) $(LIBUNICODE) $(LDFLAGS)
-
-$(TOPOBJDIR)/unicode/libwine_unicode.$(LIBEXT):
-	cd `dirname $@` && $(MAKE) `basename $@`
+winebuild: $(OBJS)
+	$(CC) $(CFLAGS) -o winebuild $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LDFLAGS)
 
 install:: $(PROGRAMS)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
