@@ -32,6 +32,11 @@
  * Sorry for the rather chatty explanation - but I think comm.c needs to be
  * redefined with real working buffers make it work; maybe these comments are
  * of help.
+ * Oktober 98, Rein Klazes [RHK]
+ * A program that wants to monitor the modem status line (RLSD/DCD) may
+ * poll the modem status register in the commMask structure. I update the bit
+ * in GetCommError, waiting for an implementation of communication events.
+ * 
  */
 
 #include "config.h"
@@ -67,7 +72,7 @@
 #ifndef TIOCINQ
 #define	TIOCINQ FIONREAD
 #endif
-#define msr  35       /* offset in unknown structure commMask */
+#define COMM_MSR_OFFSET  35       /* see knowledge base Q101417 */
 /*
  * [RER] These are globals are wrong.  They should be in DosDeviceStruct
  * on a per port basis.
@@ -84,7 +89,10 @@ int iGlobalOutQueueFiller;
 
 struct DosDeviceStruct COM[MAX_PORTS];
 struct DosDeviceStruct LPT[MAX_PORTS];
+/* pointers to unknown(==undocumented) comm structure */ 
 LPCVOID *unknown[MAX_PORTS];
+/* save terminal states */
+static struct termios m_stat[MAX_PORTS];
 
 void COMM_Init(void)
 {
@@ -488,6 +496,8 @@ INT16 WINAPI OpenComm(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
                         unknown[port] = SEGPTR_ALLOC(40);
                         bzero(unknown[port],40);
 			COM[port].fd = fd;	
+                        /* save terminal state */
+                        tcgetattr(fd,&m_stat[port]);
 			return fd;
 		}
 	} 
@@ -522,6 +532,7 @@ INT16 WINAPI OpenComm(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 INT16 WINAPI CloseComm(INT16 fd)
 {
         int port;
+        
     	TRACE(comm,"fd %d\n", fd);
        	if ((port = GetCommPort(fd)) !=-1) {  /* [LW]       */
     	        SEGPTR_FREE(unknown[port]); 
@@ -530,6 +541,9 @@ INT16 WINAPI CloseComm(INT16 fd)
 		commerror = IE_BADID;
 		return -1;
 	}
+
+        /* reset modem lines */
+        tcsetattr(fd,TCSANOW,&m_stat[port]);
 
 	if (close(fd) == -1) {
 		commerror = WinError();
@@ -804,6 +818,20 @@ INT16 WINAPI GetCommError(INT16 fd,LPCOMSTAT lpStat)
 	int		temperror;
 	unsigned long	cnt;
 	int		rc;
+        
+        unsigned char *stol;
+        int act;
+        unsigned int mstat;
+        if ((act = GetCommPort(fd)) == -1) {
+            WARN(comm," fd %d not comm port\n",act);
+            return CE_MODE;
+        }
+        stol = (unsigned char *)unknown[act] + COMM_MSR_OFFSET;
+        ioctl(fd,TIOCMGET,&mstat);
+        if( mstat&TIOCM_CAR ) 
+            *stol |= 0x80;
+        else 
+            *stol &=0x7f;
 
 	if (lpStat) {
 		lpStat->status = 0;
@@ -816,13 +844,13 @@ INT16 WINAPI GetCommError(INT16 fd,LPCOMSTAT lpStat)
                 if (rc) WARN(comm, "Error !\n");
 		lpStat->cbInQue = cnt;
 
-    		TRACE(comm, "fd %d, error %d, lpStat %d %d %d\n",
+    		TRACE(comm, "fd %d, error %d, lpStat %d %d %d stol %x\n",
 			     fd, commerror, lpStat->status, lpStat->cbInQue, 
-			     lpStat->cbOutQue);
+			     lpStat->cbOutQue, *stol);
 	}
 	else
-		TRACE(comm, "fd %d, error %d, lpStat NULL\n",
-			     fd, commerror);
+		TRACE(comm, "fd %d, error %d, lpStat NULL stol %x\n",
+			     fd, commerror, *stol);
 
 	/*
 	 * [RER] I have no idea what the following is trying to accomplish.
@@ -860,9 +888,10 @@ SEGPTR WINAPI SetCommEventMask(INT16 fd,UINT16 fuEvtMask)
 	eventmask |= fuEvtMask;
         if ((act = GetCommPort(fd)) == -1) {
             WARN(comm," fd %d not comm port\n",act);
-            return NULL;}
+            return SEGPTR_GET(NULL);
+        }
         stol = (unsigned char *)unknown[act];
-        stol += msr;    
+        stol += COMM_MSR_OFFSET;    
 	repid = ioctl(fd,TIOCMGET,&mstat);
 	TRACE(comm, " ioctl  %d, msr %x at %p %p\n",repid,mstat,stol,unknown[act]);
 	if ((mstat&TIOCM_CAR)) {*stol |= 0x80;}
@@ -1718,7 +1747,7 @@ INT16 WINAPI ReadComm(INT16 fd,LPSTR lpvBuf,INT16 cbRead)
                         return length;
                 }
  	} else {
-	        TRACE(comm,"%*s\n", length+status, lpvBuf);
+	        TRACE(comm,"%.*s\n", length+status, lpvBuf);
 		commerror = 0;
 		return length + status;
 	}
@@ -1744,7 +1773,7 @@ INT16 WINAPI WriteComm(INT16 fd, LPSTR lpvBuf, INT16 cbWrite)
 		return -1;
 	}	
 	
-	TRACE(comm,"%*s\n", cbWrite, lpvBuf );
+	TRACE(comm,"%.*s\n", cbWrite, lpvBuf );
 	length = write(fd, (void *) lpvBuf, cbWrite);
 	
 	if (length == -1) {
