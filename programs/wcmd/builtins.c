@@ -622,11 +622,57 @@ DWORD count;
 }
 
 /****************************************************************************
+ * WCMD_compare
+ */
+int WCMD_compare( const void *a, const void *b )
+{
+    int r;
+    const char * const *str_a = a, * const *str_b = b;
+    r = CompareString( LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
+	  *str_a, -1, *str_b, -1 );
+    if( r == CSTR_LESS_THAN ) return -1;
+    if( r == CSTR_GREATER_THAN ) return 1;
+    return 0;
+}
+
+/****************************************************************************
+ * WCMD_setshow_sortenv
+ *
+ * sort variables into order for display
+ */
+void WCMD_setshow_sortenv(const char *s)
+{
+  UINT count=0, len=0, i;
+  const char **str;
+
+  /* count the number of strings, and the total length */
+  while ( s[len] ) {
+    len += (lstrlen(&s[len]) + 1);
+    count++;
+  }
+
+  /* add the strings to an array */
+  str = LocalAlloc (LMEM_FIXED | LMEM_ZEROINIT, count * sizeof (char*) );
+  if( !str )
+    return;
+  str[0] = s;
+  for( i=1; i<count; i++ )
+    str[i] = str[i-1] + lstrlen(str[i-1]) + 1;
+
+  /* sort the array */
+  qsort( str, count, sizeof (char*), WCMD_compare );
+
+  /* print it */
+  for( i=0; i<count; i++ )
+    WCMD_output("%s\n", str[i] );
+
+  LocalFree( str );
+}
+
+/****************************************************************************
  * WCMD_setshow_env
  *
  * Set/Show the environment variables
- *
- * FIXME: need to sort variables into order for display?
  */
 
 void WCMD_setshow_env (char *s) {
@@ -638,11 +684,7 @@ char buffer[1048];
 
   if (strlen(param1) == 0) {
     env = GetEnvironmentStrings ();
-    p = (char *) env;
-    while (*p) {
-      WCMD_output ("%s\n", p);
-      p += lstrlen(p) + 1;
-    }
+    WCMD_setshow_sortenv( env );
   }
   else {
     p = strchr (s, '=');
