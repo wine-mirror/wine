@@ -1229,8 +1229,8 @@ BOOL WINAPI GetUrlCacheEntryInfoW(LPCWSTR lpszUrl,
     if (!URLCache_FindEntryInHash(pHeader, lpszUrlA, &pEntry))
     {
         URLCacheContainer_UnlockIndex(pContainer, pHeader);
-        HeapFree(GetProcessHeap(), 0, lpszUrlA);
         WARN("entry %s not found!\n", debugstr_a(lpszUrlA));
+        HeapFree(GetProcessHeap(), 0, lpszUrlA);
         SetLastError(ERROR_FILE_NOT_FOUND);
         return FALSE;
     }
