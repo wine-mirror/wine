@@ -36,7 +36,7 @@
 #define YYLEX_PARAM info
 #define YYPARSE_PARAM info
 
-extern int yyerror(char *str);
+extern int yyerror(const char *str);
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
@@ -392,7 +392,7 @@ INT yygetint( yyinput *sql )
     return atoiW( p );
 }
 
-int yyerror(char *str)
+int yyerror(const char *str)
 {
     return 0;
 }

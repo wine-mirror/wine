@@ -204,14 +204,14 @@ char *xstrdup(const char *str)
 /*
  *****************************************************************************
  * Function	: compare_name_id
- * Syntax	: int compare_name_id(name_id_t *n1, name_id_t *n2)
+ * Syntax	: int compare_name_id(const name_id_t *n1, const name_id_t *n2)
  * Input	:
  * Output	:
  * Description	:
  * Remarks	:
  *****************************************************************************
 */
-int compare_name_id(name_id_t *n1, name_id_t *n2)
+int compare_name_id(const name_id_t *n1, const name_id_t *n2)
 {
 	if(n1->type == name_ord && n2->type == name_ord)
 	{

@@ -1620,7 +1620,7 @@ static res_t *versioninfo2res(name_id_t *name, versioninfo_t *ver)
 	assert(ver != NULL);
 
 	vsvi.type = str_char;
-	vsvi.str.cstr = "VS_VERSION_INFO";
+	vsvi.str.cstr = xstrdup("VS_VERSION_INFO");
 	vsvi.size = 15; /* Excl. termination */
 
 	res = new_res();
@@ -1661,6 +1661,7 @@ static res_t *versioninfo2res(name_id_t *name, versioninfo_t *ver)
 	if(win32)
 		put_pad(res);
 
+	free(vsvi.str.cstr);
 	return res;
 }
 
@@ -1762,7 +1763,7 @@ static res_t *dlginit2res(name_id_t *name, dlginit_t *dit)
 /*
  *****************************************************************************
  * Function	: prep_nid_for_label
- * Syntax	: char *prep_nid_for_label(name_id_t *nid)
+ * Syntax	: char *prep_nid_for_label(const name_id_t *nid)
  * Input	:
  * Output	:
  * Description	: Converts a resource name into the first 32 (or less)
@@ -1771,7 +1772,7 @@ static res_t *dlginit2res(name_id_t *name, dlginit_t *dit)
  *****************************************************************************
 */
 #define MAXNAMELEN	32
-char *prep_nid_for_label(name_id_t *nid)
+char *prep_nid_for_label(const name_id_t *nid)
 {
 	static char buf[MAXNAMELEN+1];
 
@@ -1822,7 +1823,7 @@ char *prep_nid_for_label(name_id_t *nid)
 /*
  *****************************************************************************
  * Function	: make_c_name
- * Syntax	: char *make_c_name(char *base, name_id_t *nid, language_t *lan)
+ * Syntax	: char *make_c_name(const char *base, const name_id_t *nid, const language_t *lan)
  * Input	:
  * Output	:
  * Description	: Converts a resource name into a valid c-identifier in the
@@ -1830,7 +1831,7 @@ char *prep_nid_for_label(name_id_t *nid)
  * Remarks	:
  *****************************************************************************
 */
-char *make_c_name(char *base, name_id_t *nid, language_t *lan)
+char *make_c_name(const char *base, const name_id_t *nid, const language_t *lan)
 {
 	int nlen;
 	char *buf;
@@ -1854,7 +1855,7 @@ char *make_c_name(char *base, name_id_t *nid, language_t *lan)
 /*
  *****************************************************************************
  * Function	: get_c_typename
- * Syntax	: char *get_c_typename(enum res_e type)
+ * Syntax	: const char *get_c_typename(enum res_e type)
  * Input	:
  * Output	:
  * Description	: Convert resource enum to char string to be used in c-name
@@ -1862,7 +1863,7 @@ char *make_c_name(char *base, name_id_t *nid, language_t *lan)
  * Remarks	:
  *****************************************************************************
 */
-char *get_c_typename(enum res_e type)
+const char *get_c_typename(enum res_e type)
 {
 	switch(type)
 	{

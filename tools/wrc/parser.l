@@ -157,11 +157,11 @@ static int wanted_id = 0;
 static int save_wanted_id;	/* To save across comment reductions */
 
 struct keyword {
-	char	*keyword;
-	int	token;
-	int	isextension;
-	int	needcase;
-	int	alwayskw;
+	const char	*keyword;
+	int		token;
+	int		isextension;
+	int		needcase;
+	int		alwayskw;
 };
 
 static struct keyword keywords[] = {
@@ -243,7 +243,7 @@ static struct keyword keywords[] = {
 };
 
 #define NKEYWORDS	(sizeof(keywords)/sizeof(keywords[0]))
-#define KWP(p)		((struct keyword *)(p))
+#define KWP(p)		((const struct keyword *)(p))
 static int kw_cmp_func(const void *s1, const void *s2)
 {
 	int ret;

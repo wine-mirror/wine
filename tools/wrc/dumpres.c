@@ -36,7 +36,7 @@
  * Remarks	:
  *****************************************************************************
 */
-char *get_typename(resource_t* r)
+const char *get_typename(const resource_t* r)
 {
 	switch(r->type){
 	case res_acc:	return "ACCELERATOR";
@@ -78,10 +78,10 @@ char *get_typename(resource_t* r)
  * Remarks	: No codepage translation is done.
  *****************************************************************************
 */
-char *strncpyWtoA(char *cs, short *ws, int maxlen)
+char *strncpyWtoA(char *cs, const short *ws, int maxlen)
 {
 	char *cptr = cs;
-	short *wsMax = ws + maxlen - 1;
+	const short *wsMax = ws + maxlen - 1;
 	while(*ws && ws < wsMax)
 	{
 		if(*ws < -128 || *ws > 127)
@@ -102,7 +102,7 @@ char *strncpyWtoA(char *cs, short *ws, int maxlen)
  * Remarks	:
  *****************************************************************************
 */
-void print_string(string_t *str)
+void print_string(const string_t *str)
 {
 	char buffer[512];
 	if(!str)
@@ -119,7 +119,7 @@ void print_string(string_t *str)
 /*
  *****************************************************************************
  * Function	: get_nameid_str
- * Syntax	: char *get_nameid_str(name_id_t *n)
+ * Syntax	: const char *get_nameid_str(const name_id_t *n)
  * Input	:
  *	n	- nameid to convert to text
  * Output	: A pointer to the name.
@@ -127,7 +127,7 @@ void print_string(string_t *str)
  * Remarks	: Not reentrant because of static buffer
  *****************************************************************************
 */
-char *get_nameid_str(name_id_t *n)
+const char *get_nameid_str(const name_id_t *n)
 {
 	static char buffer[256];
 
@@ -187,7 +187,7 @@ static void dump_memopt(DWORD memopt)
 /*
  *****************************************************************************
  * Function	: dump_lvc
- * Syntax	: void dump_lvc(lvc_t *l)
+ * Syntax	: void dump_lvc(const lvc_t *l)
  * Input	:
  *	l	- pointer to lvc structure
  * Output	:
@@ -195,7 +195,7 @@ static void dump_memopt(DWORD memopt)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_lvc(lvc_t *l)
+static void dump_lvc(const lvc_t *l)
 {
 	if(l->language)
 		printf("LANGUAGE %04x, %04x\n", l->language->id, l->language->sub);
@@ -216,7 +216,7 @@ static void dump_lvc(lvc_t *l)
 /*
  *****************************************************************************
  * Function	: dump_raw_data
- * Syntax	: void dump_raw_data(raw_data_t *d)
+ * Syntax	: void dump_raw_data(const raw_data_t *d)
  * Input	:
  *	d	- Raw data descriptor
  * Output	:
@@ -224,7 +224,7 @@ static void dump_lvc(lvc_t *l)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_raw_data(raw_data_t *d)
+static void dump_raw_data(const raw_data_t *d)
 {
 	unsigned int n;
 	int i;
@@ -267,7 +267,7 @@ static void dump_raw_data(raw_data_t *d)
 /*
  *****************************************************************************
  * Function	: dump_accelerator
- * Syntax	: void dump_accelerator(resource_t *acc)
+ * Syntax	: void dump_accelerator(const accelerator_t *acc)
  * Input	:
  *	acc	- Accelerator resource descriptor
  * Output	: nop
@@ -275,7 +275,7 @@ static void dump_raw_data(raw_data_t *d)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_accelerator(accelerator_t *acc)
+static void dump_accelerator(const accelerator_t *acc)
 {
 	event_t *ev = acc->events;
 
@@ -301,7 +301,7 @@ static void dump_accelerator(accelerator_t *acc)
 /*
  *****************************************************************************
  * Function	: dump_cursor
- * Syntax	: void dump_cursor(cursor_t *cur)
+ * Syntax	: void dump_cursor(const cursor_t *cur)
  * Input	:
  *	cur	- Cursor resource descriptor
  * Output	: nop
@@ -309,7 +309,7 @@ static void dump_accelerator(accelerator_t *acc)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_cursor(cursor_t *cur)
+static void dump_cursor(const cursor_t *cur)
 {
 	printf("Id: %d\n", cur->id);
 	printf("Width: %d\n", cur->width);
@@ -322,7 +322,7 @@ static void dump_cursor(cursor_t *cur)
 /*
  *****************************************************************************
  * Function	: dump_cursor_group
- * Syntax	: void dump_cursor_group(cursor_group_t *cur)
+ * Syntax	: void dump_cursor_group(const cursor_group_t *cur)
  * Input	:
  *	cur	- Cursor group resource descriptor
  * Output	: nop
@@ -330,7 +330,7 @@ static void dump_cursor(cursor_t *cur)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_cursor_group(cursor_group_t *curg)
+static void dump_cursor_group(const cursor_group_t *curg)
 {
 	dump_memopt(curg->memopt);
 	printf("There are %d cursors in this group\n", curg->ncursor);
@@ -339,7 +339,7 @@ static void dump_cursor_group(cursor_group_t *curg)
 /*
  *****************************************************************************
  * Function	: dump_icon
- * Syntax	: void dump_icon(icon_t *ico)
+ * Syntax	: void dump_icon(const icon_t *ico)
  * Input	:
  *	ico	- Icon resource descriptor
  * Output	: nop
@@ -347,7 +347,7 @@ static void dump_cursor_group(cursor_group_t *curg)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_icon(icon_t *ico)
+static void dump_icon(const icon_t *ico)
 {
 	printf("Id: %d\n", ico->id);
 	printf("Width: %d\n", ico->width);
@@ -361,7 +361,7 @@ static void dump_icon(icon_t *ico)
 /*
  *****************************************************************************
  * Function	: dump_icon_group
- * Syntax	: void dump_icon_group(icon_group_t *ico)
+ * Syntax	: void dump_icon_group(const icon_group_t *ico)
  * Input	:
  *	ico	- Icon group resource descriptor
  * Output	: nop
@@ -369,7 +369,7 @@ static void dump_icon(icon_t *ico)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_icon_group(icon_group_t *icog)
+static void dump_icon_group(const icon_group_t *icog)
 {
 	dump_memopt(icog->memopt);
 	printf("There are %d icons in this group\n", icog->nicon);
@@ -378,7 +378,7 @@ static void dump_icon_group(icon_group_t *icog)
 /*
  *****************************************************************************
  * Function	: dump_ani_curico
- * Syntax	: void dump_ani_curico(ani_curico_t *ani)
+ * Syntax	: void dump_ani_curico(const ani_curico_t *ani)
  * Input	:
  *	ani	- Animated object resource descriptor
  * Output	: nop
@@ -386,7 +386,7 @@ static void dump_icon_group(icon_group_t *icog)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_ani_curico(ani_curico_t *ani)
+static void dump_ani_curico(const ani_curico_t *ani)
 {
 	dump_memopt(ani->memopt);
 	dump_lvc(&ani->data->lvc);
@@ -396,7 +396,7 @@ static void dump_ani_curico(ani_curico_t *ani)
 /*
  *****************************************************************************
  * Function	: dump_font
- * Syntax	: void dump_font(font_t *fnt)
+ * Syntax	: void dump_font(const font_t *fnt)
  * Input	:
  *	fnt	- Font resource descriptor
  * Output	: nop
@@ -404,7 +404,7 @@ static void dump_ani_curico(ani_curico_t *ani)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_font(font_t *fnt)
+static void dump_font(const font_t *fnt)
 {
 	dump_memopt(fnt->memopt);
 	dump_lvc(&(fnt->data->lvc));
@@ -414,7 +414,7 @@ static void dump_font(font_t *fnt)
 /*
  *****************************************************************************
  * Function	: dump_bitmap
- * Syntax	: void dump_bitmap(bitmap_t *bmp)
+ * Syntax	: void dump_bitmap(const bitmap_t *bmp)
  * Input	:
  *	bmp	- Bitmap resource descriptor
  * Output	: nop
@@ -422,7 +422,7 @@ static void dump_font(font_t *fnt)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_bitmap(bitmap_t *bmp)
+static void dump_bitmap(const bitmap_t *bmp)
 {
 	dump_memopt(bmp->memopt);
 	dump_lvc(&(bmp->data->lvc));
@@ -432,7 +432,7 @@ static void dump_bitmap(bitmap_t *bmp)
 /*
  *****************************************************************************
  * Function	: dump_rcdata
- * Syntax	: void dump_rcdata(rcdata_t *rdt)
+ * Syntax	: void dump_rcdata(const rcdata_t *rdt)
  * Input	:
  *	rdt	- RCData resource descriptor
  * Output	: nop
@@ -440,7 +440,7 @@ static void dump_bitmap(bitmap_t *bmp)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_rcdata(rcdata_t *rdt)
+static void dump_rcdata(const rcdata_t *rdt)
 {
 	dump_memopt(rdt->memopt);
 	dump_lvc(&(rdt->data->lvc));
@@ -450,7 +450,7 @@ static void dump_rcdata(rcdata_t *rdt)
 /*
  *****************************************************************************
  * Function	: dump_user
- * Syntax	: void dump_user(user_t *usr)
+ * Syntax	: void dump_user(const user_t *usr)
  * Input	:
  *	usr	- User resource descriptor
  * Output	: nop
@@ -458,7 +458,7 @@ static void dump_rcdata(rcdata_t *rdt)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_user(user_t *usr)
+static void dump_user(const user_t *usr)
 {
 	dump_memopt(usr->memopt);
 	dump_lvc(&(usr->data->lvc));
@@ -469,7 +469,7 @@ static void dump_user(user_t *usr)
 /*
  *****************************************************************************
  * Function	: dump_messagetable
- * Syntax	: void dump_messagetable(messagetable_t *msg)
+ * Syntax	: void dump_messagetable(const messagetable_t *msg)
  * Input	:
  *	msg	- Messagetable resource descriptor
  * Output	: nop
@@ -477,7 +477,7 @@ static void dump_user(user_t *usr)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_messagetable(messagetable_t *msg)
+static void dump_messagetable(const messagetable_t *msg)
 {
 	dump_memopt(msg->memopt);
 	dump_lvc(&(msg->data->lvc));
@@ -487,7 +487,7 @@ static void dump_messagetable(messagetable_t *msg)
 /*
  *****************************************************************************
  * Function	: dump_stringtable
- * Syntax	: void dump_stringtable(stringtable_t *stt)
+ * Syntax	: void dump_stringtable(const stringtable_t *stt)
  * Input	:
  *	stt	- Stringtable resource descriptor
  * Output	: nop
@@ -495,7 +495,7 @@ static void dump_messagetable(messagetable_t *msg)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_stringtable(stringtable_t *stt)
+static void dump_stringtable(const stringtable_t *stt)
 {
 	int i;
 	for(; stt; stt = stt->next)
@@ -519,7 +519,7 @@ static void dump_stringtable(stringtable_t *stt)
 /*
  *****************************************************************************
  * Function	: dump_control
- * Syntax	: void dump_control(control_t *ctrl)
+ * Syntax	: void dump_control(const control_t *ctrl)
  * Input	:
  *	ctrl	- Control resource descriptor
  * Output	:
@@ -527,7 +527,7 @@ static void dump_stringtable(stringtable_t *stt)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_control(control_t *ctrl)
+static void dump_control(const control_t *ctrl)
 {
 	printf("Control {\n\tClass: %s\n", get_nameid_str(ctrl->ctlclass));
 	printf("\tText: "); get_nameid_str(ctrl->title); printf("\n");
@@ -558,7 +558,7 @@ static void dump_control(control_t *ctrl)
 /*
  *****************************************************************************
  * Function	: dump_dialog
- * Syntax	: void dump_dialog(dialog_t *dlg)
+ * Syntax	: void dump_dialog(const dialog_t *dlg)
  * Input	:
  *	dlg	- Dialog resource descriptor
  * Output	:
@@ -566,7 +566,7 @@ static void dump_control(control_t *ctrl)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_dialog(dialog_t *dlg)
+static void dump_dialog(const dialog_t *dlg)
 {
 	control_t *c = dlg->controls;
 
@@ -608,7 +608,7 @@ static void dump_dialog(dialog_t *dlg)
 /*
  *****************************************************************************
  * Function	: dump_dialogex
- * Syntax	: void dump_dialogex(dialogex_t *dlgex)
+ * Syntax	: void dump_dialogex(const dialogex_t *dlgex)
  * Input	:
  *	dlgex	- DialogEx resource descriptor
  * Output	:
@@ -616,9 +616,9 @@ static void dump_dialog(dialog_t *dlg)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_dialogex(dialogex_t *dlgex)
+static void dump_dialogex(const dialogex_t *dlgex)
 {
-	control_t *c = dlgex->controls;
+	const control_t *c = dlgex->controls;
 
 	dump_memopt(dlgex->memopt);
 	dump_lvc(&(dlgex->lvc));
@@ -659,14 +659,14 @@ static void dump_dialogex(dialogex_t *dlgex)
 /*
  *****************************************************************************
  * Function	: dump_menu_item
- * Syntax	: void dump_menu_item(menu_item_t *item)
+ * Syntax	: void dump_menu_item(const menu_item_t *item)
  * Input	:
  * Output	:
  * Description	:
  * Remarks	:
  *****************************************************************************
 */
-static void dump_menu_item(menu_item_t *item)
+static void dump_menu_item(const menu_item_t *item)
 {
 	while(item)
 	{
@@ -696,7 +696,7 @@ static void dump_menu_item(menu_item_t *item)
 /*
  *****************************************************************************
  * Function	: dump_menu
- * Syntax	: void dump_menu(menu_t *men)
+ * Syntax	: void dump_menu(const menu_t *men)
  * Input	:
  *	men	- Menu resource descriptor
  * Output	:
@@ -704,7 +704,7 @@ static void dump_menu_item(menu_item_t *item)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_menu(menu_t *men)
+static void dump_menu(const menu_t *men)
 {
 	dump_memopt(men->memopt);
 	dump_lvc(&(men->lvc));
@@ -714,14 +714,14 @@ static void dump_menu(menu_t *men)
 /*
  *****************************************************************************
  * Function	: dump_menuex_item
- * Syntax	: void dump_menuex_item(menuex_item_t *item)
+ * Syntax	: void dump_menuex_item(const menuex_item_t *item)
  * Input	:
  * Output	:
  * Description	:
  * Remarks	:
  *****************************************************************************
 */
-static void dump_menuex_item(menuex_item_t *item)
+static void dump_menuex_item(const menuex_item_t *item)
 {
 	while(item)
 	{
@@ -766,7 +766,7 @@ static void dump_menuex_item(menuex_item_t *item)
 /*
  *****************************************************************************
  * Function	: dump_menuex
- * Syntax	: void dump_menuex(dialogex_t *menex)
+ * Syntax	: void dump_menuex(const menuex_t *menex)
  * Input	:
  *	menex	- MenuEx resource descriptor
  * Output	:
@@ -774,7 +774,7 @@ static void dump_menuex_item(menuex_item_t *item)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_menuex(menuex_t *menex)
+static void dump_menuex(const menuex_t *menex)
 {
 	dump_memopt(menex->memopt);
 	dump_lvc(&(menex->lvc));
@@ -784,16 +784,16 @@ static void dump_menuex(menuex_t *menex)
 /*
  *****************************************************************************
  * Function	: dump_ver_value
- * Syntax	: void dump_ver_value(ver_value_t *val)
+ * Syntax	: void dump_ver_value(const ver_value_t *val)
  * Input	:
  * Output	:
  * Description	:
  * Remarks	:
  *****************************************************************************
 */
-static void dump_ver_block(ver_block_t *);	/* Forward ref */
+static void dump_ver_block(const ver_block_t *);	/* Forward ref */
 
-static void dump_ver_value(ver_value_t *val)
+static void dump_ver_value(const ver_value_t *val)
 {
 	if(val->type == val_str)
 	{
@@ -821,16 +821,16 @@ static void dump_ver_value(ver_value_t *val)
 /*
  *****************************************************************************
  * Function	: dump_ver_block
- * Syntax	: void dump_ver_block(ver_block_t *blk)
+ * Syntax	: void dump_ver_block(const ver_block_t *blk)
  * Input	:
  * Output	:
  * Description	:
  * Remarks	:
  *****************************************************************************
 */
-static void dump_ver_block(ver_block_t *blk)
+static void dump_ver_block(const ver_block_t *blk)
 {
-	ver_value_t *val = blk->values;
+	const ver_value_t *val = blk->values;
 	printf("BLOCK ");
 	print_string(blk->name);
 	printf("\n{\n");
@@ -845,7 +845,7 @@ static void dump_ver_block(ver_block_t *blk)
 /*
  *****************************************************************************
  * Function	: dump_versioninfo
- * Syntax	: void dump_versioninfo(versioninfo_t *ver)
+ * Syntax	: void dump_versioninfo(const versioninfo_t *ver)
  * Input	:
  *	ver	- Versioninfo resource descriptor
  * Output	:
@@ -853,9 +853,9 @@ static void dump_ver_block(ver_block_t *blk)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_versioninfo(versioninfo_t *ver)
+static void dump_versioninfo(const versioninfo_t *ver)
 {
-	ver_block_t *blk = ver->blocks;
+	const ver_block_t *blk = ver->blocks;
 
 	dump_lvc(&(ver->lvc));
 
@@ -891,14 +891,14 @@ static void dump_versioninfo(versioninfo_t *ver)
 /*
  *****************************************************************************
  * Function	: dump_toolbar_item
- * Syntax	: void dump_toolbar_item(toolbar_item_t *item)
+ * Syntax	: void dump_toolbar_item(const toolbar_item_t *item)
  * Input	:
  * Output	:
  * Description	:
  * Remarks	:
  *****************************************************************************
 */
-static void dump_toolbar_items(toolbar_item_t *items)
+static void dump_toolbar_items(const toolbar_item_t *items)
 {
 	while(items)
 	{
@@ -916,7 +916,7 @@ static void dump_toolbar_items(toolbar_item_t *items)
 /*
  *****************************************************************************
  * Function	: dump_toolbar
- * Syntax	: void dump_toolbar(toolbar_t *toolbar)
+ * Syntax	: void dump_toolbar(const toolbar_t *toolbar)
  * Input	:
  *	toolbar	- Toolbar resource descriptor
  * Output	:
@@ -924,7 +924,7 @@ static void dump_toolbar_items(toolbar_item_t *items)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_toolbar(toolbar_t *toolbar)
+static void dump_toolbar(const toolbar_t *toolbar)
 {
 	dump_memopt(toolbar->memopt);
 	dump_lvc(&(toolbar->lvc));
@@ -934,7 +934,7 @@ static void dump_toolbar(toolbar_t *toolbar)
 /*
  *****************************************************************************
  * Function	: dump_dlginit
- * Syntax	: void dump_dlginit(dlginit_t *dit)
+ * Syntax	: void dump_dlginit(const dlginit_t *dit)
  * Input	:
  *	dit	- DlgInit resource descriptor
  * Output	:
@@ -942,7 +942,7 @@ static void dump_toolbar(toolbar_t *toolbar)
  * Remarks	:
  *****************************************************************************
 */
-static void dump_dlginit(dlginit_t *dit)
+static void dump_dlginit(const dlginit_t *dit)
 {
 	dump_memopt(dit->memopt);
 	dump_lvc(&(dit->data->lvc));
@@ -952,7 +952,7 @@ static void dump_dlginit(dlginit_t *dit)
 /*
  *****************************************************************************
  * Function	: dump_resources
- * Syntax	: void dump_resources(resource_t *top)
+ * Syntax	: void dump_resources(const resource_t *top)
  * Input	:
  *	top	- Top of the resource tree
  * Output	:
@@ -961,7 +961,7 @@ static void dump_dlginit(dlginit_t *dit)
  * Remarks	:
  *****************************************************************************
 */
-void dump_resources(resource_t *top)
+void dump_resources(const resource_t *top)
 {
 	printf("Internal resource-tree dump:\n");
 	while(top)

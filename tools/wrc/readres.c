@@ -100,7 +100,7 @@ int read_data(FILE *fp, size_t size, void *buf)
  * Remarks	:
  *****************************************************************************
 */
-enum res_e res_type_from_id(name_id_t *nid)
+enum res_e res_type_from_id(const name_id_t *nid)
 {
 	if(nid->type == name_str)
 		return res_usr;

@@ -2763,7 +2763,7 @@ static resource_t *build_fontdirs(resource_t *tail)
 	nid.type = name_str;
 	nid.name.s_name = &str;
 	str.type = str_char;
-	str.str.cstr = "FONTDIR";
+	str.str.cstr = xstrdup("FONTDIR");
 	str.size = 7;
 
 	/* Extract all fonts and fontdirs */
@@ -2888,6 +2888,7 @@ clean:
 		free(fnt);
 	if(fnd)
 		free(fnd);
+	free(str.str.cstr);
 	return lst;
 }
 
@@ -2919,7 +2920,7 @@ clean:
 static int rsrcid_to_token(int lookahead)
 {
 	int token;
-	char *type = "?";
+	const char *type = "?";
 
 	/* Get a token if we don't have one yet */
 	if(lookahead == YYEMPTY)

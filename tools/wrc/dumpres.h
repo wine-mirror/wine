@@ -23,8 +23,8 @@
 
 #include "wrctypes.h"
 
-char *get_typename(resource_t* r);
-void dump_resources(resource_t *top);
-char *get_nameid_str(name_id_t *n);
+const char *get_typename(const resource_t* r);
+void dump_resources(const resource_t *top);
+const char *get_nameid_str(const name_id_t *n);
 
 #endif
