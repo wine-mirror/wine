@@ -362,7 +362,6 @@ int get_handle_fd( struct process *process, int handle, unsigned int access )
 {
     struct handle_entry *entry;
 
-    if (HANDLE_IS_GLOBAL(handle)) return -1;  /* no fd cache for global handles */
     if (!(entry = get_handle( process, handle ))) return -1;
     if ((entry->access & access) != access)
     {

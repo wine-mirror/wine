@@ -109,6 +109,8 @@ static int alloc_client_buffer( struct thread *thread )
     send_client_fd( thread, fd_pipe[0], -1 );
     send_client_fd( thread, fd, -1 );
     send_reply( thread );
+    close( fd_pipe[0] );
+    close( fd );
     return 1;
 
  error:
@@ -691,6 +693,7 @@ DECL_HANDLER(new_thread)
                                              THREAD_ALL_ACCESS, req->inherit )) != -1)
             {
                 send_client_fd( current, sock[1], req->handle );
+                close( sock[1] );
                 /* thread object will be released when the thread gets killed */
                 add_process_thread( current->process, thread );
                 return;

@@ -122,7 +122,7 @@ static int pipe_get_fd( struct object *obj )
         set_error( STATUS_PIPE_BROKEN );
         return -1;
     }
-    return dup( pipe->obj.fd );
+    return pipe->obj.fd;
 }
 
 static int pipe_get_info( struct object *obj, struct get_file_info_request *req )

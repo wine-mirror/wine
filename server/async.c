@@ -117,7 +117,7 @@ static int async_get_fd( struct object *obj )
 {
     struct async *async = (struct async *)obj;
     assert( obj->ops == &async_ops );
-    return dup( async->obj.fd );
+    return async->obj.fd;
 }
 
 static int async_get_info( struct object *obj, struct get_file_info_request *req ) {

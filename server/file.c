@@ -235,7 +235,7 @@ static int file_get_fd( struct object *obj )
 {
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
-    return dup( file->obj.fd );
+    return file->obj.fd;
 }
 
 static int file_flush( struct object *obj )
@@ -474,8 +474,13 @@ DECL_HANDLER(get_handle_fd)
     req->fd = -1;
     if ((obj = get_handle_obj( current->process, req->handle, req->access, NULL )))
     {
-        if ((req->fd = get_handle_fd( current->process, req->handle, req->access )) == -1)
-            send_client_fd( current, obj->ops->get_fd( obj ), req->handle );
+        int fd = get_handle_fd( current->process, req->handle, req->access );
+        if (fd != -1) req->fd = fd;
+        else if (!get_error())
+        {
+            if ((fd = obj->ops->get_fd( obj )) != -1)
+                send_client_fd( current, fd, req->handle );
+        }
         release_object( obj );
     }
 }

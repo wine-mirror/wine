@@ -354,7 +354,7 @@ static int console_input_get_fd( struct object *obj )
 {
     struct console_input *console = (struct console_input *)obj;
     assert( obj->ops == &console_input_ops );
-    return dup( console->obj.fd );
+    return console->obj.fd;
 }
 
 static int console_get_info( struct object *obj, struct get_file_info_request *req )
@@ -395,7 +395,7 @@ static int screen_buffer_get_fd( struct object *obj )
 {
     struct screen_buffer *console = (struct screen_buffer *)obj;
     assert( obj->ops == &screen_buffer_ops );
-    return dup( console->obj.fd );
+    return console->obj.fd;
 }
 
 static void screen_buffer_destroy( struct object *obj )
@@ -481,7 +481,7 @@ DECL_HANDLER(set_console_fd)
 
     if (!(obj = get_handle_obj( current->process, req->file_handle,
                                 GENERIC_READ | GENERIC_WRITE, NULL ))) return;
-    if ((fd_in = obj->ops->get_fd( obj )) == -1)
+    if ((fd_in = dup(obj->ops->get_fd( obj ))) == -1)
     {
         release_object( obj );
         return;

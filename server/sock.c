@@ -255,12 +255,8 @@ static int sock_get_poll_events( struct object *obj )
 static int sock_get_fd( struct object *obj )
 {
     struct sock *sock = (struct sock *)obj;
-    int fd;
     assert( obj->ops == &sock_ops );
-    fd = dup( sock->obj.fd );
-    if (fd==-1)
-    	sock_set_error();
-    return fd;
+    return sock->obj.fd;
 }
 
 static void sock_destroy( struct object *obj )

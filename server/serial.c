@@ -154,7 +154,7 @@ static int serial_get_fd( struct object *obj )
 {
     struct serial *serial = (struct serial *)obj;
     assert( obj->ops == &serial_ops );
-    return dup( serial->obj.fd );
+    return serial->obj.fd;
 }
 
 static int serial_get_info( struct object *obj, struct get_file_info_request *req )

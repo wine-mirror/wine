@@ -259,6 +259,9 @@ int send_client_fd( struct thread *thread, int fd, int handle )
 {
     int ret;
 
+    if (debug_level)
+        fprintf( stderr, "%08x: *fd* %d = %d\n", (unsigned int)thread, handle, fd );
+
 #ifdef HAVE_MSGHDR_ACCRIGHTS
     msghdr.msg_accrightslen = sizeof(fd);
     msghdr.msg_accrights = (void *)&fd;
@@ -272,7 +275,6 @@ int send_client_fd( struct thread *thread, int fd, int handle )
     myiovec.iov_len  = sizeof(handle);
 
     ret = sendmsg( thread->obj.fd, &msghdr, 0 );
-    close( fd );
 
     if (ret > 0) return 0;
     if (errno == EPIPE)
@@ -381,6 +383,7 @@ struct object *create_request_socket( struct thread *thread )
     }
     sock->thread = thread;
     send_client_fd( thread, fd[1], -1 );
+    close( fd[1] );
     set_select_events( &sock->obj, POLLIN );
     return &sock->obj;
 }

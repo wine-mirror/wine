@@ -1340,7 +1340,7 @@ static void load_registry( struct key *key, int handle )
     int fd;
 
     if (!(obj = get_handle_obj( current->process, handle, GENERIC_READ, NULL ))) return;
-    fd = obj->ops->get_fd( obj );
+    fd = dup(obj->ops->get_fd( obj ));
     release_object( obj );
     if (fd != -1)
     {
@@ -1435,7 +1435,7 @@ static void save_registry( struct key *key, int handle )
         return;
     }
     if (!(obj = get_handle_obj( current->process, handle, GENERIC_WRITE, NULL ))) return;
-    fd = obj->ops->get_fd( obj );
+    fd = dup(obj->ops->get_fd( obj ));
     release_object( obj );
     if (fd != -1)
     {

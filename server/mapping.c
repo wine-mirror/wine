@@ -91,7 +91,11 @@ static void init_page_size(void)
 inline static int get_mmap_fd( struct file *file )
 {
     struct object *obj;
-    if (!(obj = (struct object *)file)) return -1;
+    if (!(obj = (struct object *)file))
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        return -1;
+    }
     return obj->ops->get_fd( obj );
 }
 
@@ -100,8 +104,8 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
                                  IMAGE_SECTION_HEADER *sec, int nb_sec )
 {
     int i, max_size, total_size, pos;
-    char *buffer = NULL; 
-    int shared_fd = -1;
+    char *buffer = NULL;
+    int shared_fd;
     long toread;
 
     /* compute the total size of the shared mapping */
@@ -147,12 +151,10 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
         }
         if (write( shared_fd, buffer, sec[i].SizeOfRawData ) != sec[i].SizeOfRawData) goto error;
     }
-    close( shared_fd );
     free( buffer );
     return 1;
 
  error:
-    if (shared_fd != -1) close( shared_fd );
     if (buffer) free( buffer );
     return 0;
 }
@@ -193,13 +195,11 @@ static int get_image_params( struct mapping *mapping )
     if (mapping->header_size > mapping->size_low) goto error;
 
     lseek( fd, filepos, SEEK_SET );
-    close( fd );
     free( sec );
     return 1;
 
  error:
     lseek( fd, filepos, SEEK_SET );
-    close( fd );
     if (sec) free( sec );
     set_error( STATUS_INVALID_FILE_FOR_SECTION );
     return 0;
