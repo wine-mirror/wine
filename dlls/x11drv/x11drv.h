@@ -515,6 +515,7 @@ extern XIC X11DRV_get_ic( HWND hwnd );
 extern XContext winContext;
 
 extern void X11DRV_InitClipboard(void);
+extern void X11DRV_AcquireClipboard(HWND hWndClipWindow);
 extern void X11DRV_SetFocus( HWND hwnd );
 extern Cursor X11DRV_GetCursor( Display *display, struct tagCURSORICONINFO *ptr );
 
