@@ -90,6 +90,7 @@ int DIR_Init(void)
         DRIVE_SetCurrentDrive( drive );
         DRIVE_Chdir( drive, cwd );
     }
+    chdir("/"); /* every other directory operations are done by WINE */ 
 
     if (!(DIR_GetPath( "windows", "c:\\windows", &DIR_Windows )) ||
 	!(DIR_GetPath( "system", "c:\\windows\\system", &DIR_System )) ||
