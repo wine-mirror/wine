@@ -354,6 +354,7 @@ static void update_now( HWND hwnd, UINT rdw_flags )
                 send_erase( child, erase_flags, hrgn, &rect, NULL );
                 DeleteObject( hrgn );
             }
+            prev = 0;
         }
         else
         {
