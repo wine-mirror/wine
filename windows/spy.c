@@ -532,20 +532,20 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 
     NULL,NULL,NULL,NULL,
 
-    /* 0x0380 */
-    "WM_PENWINFIRST", 
-    "WM_RCRESULT", 
-    "WM_HOOKRCRESULT", 
-    "WM_GLOBALRCCHANGE", 
-    "WM_SKB", 
-    "WM_HEDITCTL", 
-					NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_PENWINFIRST",           /* 0x0380 */
+    "WM_RCRESULT",              /* 0x0381 */
+    "WM_HOOKRCRESULT",          /* 0x0382 */
+    "WM_GLOBALRCCHANGE",        /* 0x0383 */
+    "WM_SKB",                   /* 0x0384 */
+    "WM_HEDITCTL",              /* 0x0385 */
+    NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_PENWINLAST",            /* 0x038F */
 
-    "WM_COALESCE_FIRST", 
-          NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-    "WM_COALESCE_LAST", 
+    "WM_COALESCE_FIRST",        /* 0x0390 */
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_COALESCE_LAST",         /* 0x039F */
     
     /* 0x03a0 */
     "MM_JOY1MOVE", 
@@ -601,7 +601,7 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
-    "WM_USER"
+    "WM_USER"                   /* 0x0400 */
 };
 
 
