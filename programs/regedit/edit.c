@@ -76,6 +76,23 @@ void error(HWND hwnd, INT resId, ...)
     va_end(ap);
 }
 
+static void error_code_messagebox(HWND hwnd, DWORD error_code)
+{
+    LPTSTR lpMsgBuf;
+    DWORD status;
+    TCHAR title[256];
+    static const TCHAR fallback[] = TEXT("Error displaying error message.\n");
+    if (!LoadString(hInst, IDS_ERROR, title, COUNT_OF(title)))
+        lstrcpy(title, TEXT("Error"));
+    status = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                           NULL, error_code, 0, (LPTSTR)&lpMsgBuf, 0, NULL);
+    if (!status)
+        lpMsgBuf = (LPTSTR)fallback;
+    MessageBox(hwnd, lpMsgBuf, title, MB_OK | MB_ICONERROR);
+    if (lpMsgBuf != fallback)
+        LocalFree(lpMsgBuf);
+}
+
 BOOL change_dword_base(HWND hwndDlg, BOOL toHex)
 {
     TCHAR buf[128];
@@ -179,7 +196,10 @@ BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPTSTR keyName)
     HKEY hKey;
          
     lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_CREATE_SUB_KEY, &hKey);
-    if (lRet != ERROR_SUCCESS) return FALSE;
+    if (lRet != ERROR_SUCCESS) {
+	error_code_messagebox(hwnd, lRet);
+	goto done;
+    }
 
     if (!LoadString(GetModuleHandle(0), IDS_NEWKEY, newKey, COUNT_OF(newKey))) goto done;
 
@@ -193,7 +213,11 @@ BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPTSTR keyName)
     if (lRet == ERROR_SUCCESS) goto done;
     
     lRet = RegCreateKey(hKey, keyName, &retKey);
-    if (lRet != ERROR_SUCCESS) goto done;
+    if (lRet != ERROR_SUCCESS) {
+	error_code_messagebox(hwnd, lRet);
+	goto done;
+    }
+
     result = TRUE;
 
 done:
@@ -209,7 +233,10 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName)
     HKEY hKey;
 
     lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);
-    if (lRet != ERROR_SUCCESS) return FALSE;
+    if (lRet != ERROR_SUCCESS) {
+	error_code_messagebox(hwnd, lRet);
+	return FALSE;
+    }
 
     editValueName = valueName ? valueName : g_pszDefaultValueName;
     if(!(stringValueData = read_value(hwnd, hKey, valueName, &type, 0))) goto done;
@@ -218,15 +245,17 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName)
         if (DialogBox(0, MAKEINTRESOURCE(IDD_EDIT_STRING), hwnd, modify_dlgproc) == IDOK) {
             lRet = RegSetValueEx(hKey, valueName, 0, type, stringValueData, lstrlen(stringValueData) + 1);
             if (lRet == ERROR_SUCCESS) result = TRUE;
+            else error_code_messagebox(hwnd, lRet);
         }
     } else if ( type == REG_DWORD ) {
 	wsprintf(stringValueData, isDecimal ? "%ld" : "%lx", *((DWORD*)stringValueData));
 	if (DialogBox(0, MAKEINTRESOURCE(IDD_EDIT_DWORD), hwnd, modify_dlgproc) == IDOK) {
-	     DWORD val;
-	     if (_stscanf(stringValueData, isDecimal ? "%ld" : "%lx", &val)) {
+	    DWORD val;
+	    if (_stscanf(stringValueData, isDecimal ? "%ld" : "%lx", &val)) {
 		lRet = RegSetValueEx(hKey, valueName, 0, type, (BYTE*)&val, sizeof(val));
-	        if (lRet == ERROR_SUCCESS) result = TRUE;
-	     }
+		if (lRet == ERROR_SUCCESS) result = TRUE;
+		else error_code_messagebox(hwnd, lRet);
+	    }
 	}
     } else {
         error(hwnd, IDS_UNSUPPORTED_TYPE, type);
@@ -246,7 +275,10 @@ BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath)
     HKEY hKey;
     
     lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_READ|KEY_SET_VALUE, &hKey);
-    if (lRet != ERROR_SUCCESS) return FALSE;
+    if (lRet != ERROR_SUCCESS) {
+	error_code_messagebox(hwnd, lRet);
+	return FALSE;
+    }
     
     if (messagebox(hwnd, MB_YESNO | MB_ICONEXCLAMATION, IDS_DELETE_BOX_TITLE, IDS_DELETE_BOX_TEXT, keyPath) != IDYES)
 	goto done;
@@ -298,7 +330,10 @@ BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, DWORD valueType, LPT
     HKEY hKey;
          
     lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);
-    if (lRet != ERROR_SUCCESS) return FALSE;
+    if (lRet != ERROR_SUCCESS) {
+	error_code_messagebox(hwnd, lRet);
+	return FALSE;
+    }
 
     if (!LoadString(GetModuleHandle(0), IDS_NEWVALUE, newValue, COUNT_OF(newValue))) goto done;
 
@@ -306,12 +341,18 @@ BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, DWORD valueType, LPT
     for (valueNum = 1; valueNum < 100; valueNum++) {
 	wsprintf(valueName, newValue, valueNum);
 	lRet = RegQueryValueEx(hKey, valueName, 0, 0, 0, 0);
-	if (lRet != ERROR_SUCCESS) break;
+	if (lRet == ERROR_FILE_NOT_FOUND) break;
     }
-    if (lRet == ERROR_SUCCESS) goto done;
+    if (lRet != ERROR_FILE_NOT_FOUND) {
+	error_code_messagebox(hwnd, lRet);
+	goto done;
+    }
    
     lRet = RegSetValueEx(hKey, valueName, 0, valueType, (BYTE*)&valueDword, sizeof(DWORD));
-    if (lRet != ERROR_SUCCESS) goto done;
+    if (lRet != ERROR_SUCCESS) {
+	error_code_messagebox(hwnd, lRet);
+	goto done;
+    }
     result = TRUE;
 
 done:
@@ -331,16 +372,23 @@ BOOL RenameValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR oldName, LPC
     if (!newName) return FALSE;
 
     lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);
-    if (lRet != ERROR_SUCCESS) return FALSE;
+    if (lRet != ERROR_SUCCESS) {
+	error_code_messagebox(hwnd, lRet);
+	return FALSE;
+    }
     /* check if value already exists */
     if (check_value(hwnd, hKey, newName)) goto done;
     value = read_value(hwnd, hKey, oldName, &type, &len);
     if(!value) goto done;
     lRet = RegSetValueEx(hKey, newName, 0, type, (BYTE*)value, len);
-    if (lRet != ERROR_SUCCESS) goto done;
+    if (lRet != ERROR_SUCCESS) {
+	error_code_messagebox(hwnd, lRet);
+	goto done;
+    }
     lRet = RegDeleteValue(hKey, oldName);
     if (lRet != ERROR_SUCCESS) {
 	RegDeleteValue(hKey, newName);
+	error_code_messagebox(hwnd, lRet);
 	goto done;
     }
     result = TRUE;
@@ -360,6 +408,7 @@ BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR newName)
     HKEY destKey = 0;
     BOOL result = FALSE;
     LONG lRet;
+    DWORD disposition;
 
     if (!keyPath || !newName) return FALSE;
 
@@ -371,21 +420,38 @@ BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR newName)
 	srcSubKey = strrchr(parentPath, '\\') + 1;
 	*((LPTSTR)srcSubKey - 1) = 0;
 	lRet = RegOpenKeyEx(hRootKey, parentPath, 0, KEY_READ | KEY_CREATE_SUB_KEY, &parentKey);
-	if (lRet != ERROR_SUCCESS) goto done;
+	if (lRet != ERROR_SUCCESS) {
+	    error_code_messagebox(hwnd, lRet);
+	    goto done;
+	}
     }
 
     /* The following fails if the old name is the same as the new name. */
     if (!strcmp(srcSubKey, newName)) goto done;
 
-    lRet = RegCreateKey(parentKey, newName, &destKey);
-    if (lRet != ERROR_SUCCESS) goto done;
+    lRet = RegCreateKeyEx(parentKey, newName, 0, NULL, REG_OPTION_NON_VOLATILE,
+        KEY_WRITE, NULL /* FIXME */, &destKey, &disposition);
+    if (disposition == REG_OPENED_EXISTING_KEY)
+        lRet = ERROR_FILE_EXISTS; /* FIXME: we might want a better error message than this */
+    if (lRet != ERROR_SUCCESS) {
+        error_code_messagebox(hwnd, lRet);
+        goto done;
+    }
 
     /* FIXME: SHCopyKey does not copy the security attributes */
     lRet = SHCopyKey(parentKey, srcSubKey, destKey, 0);
-    if (lRet != ERROR_SUCCESS) goto done;
+    if (lRet != ERROR_SUCCESS) {
+        RegCloseKey(destKey);
+        RegDeleteKey(parentKey, newName);
+        error_code_messagebox(hwnd, lRet);
+        goto done;
+    }
 
     lRet = SHDeleteKey(hRootKey, keyPath);
-    if (lRet != ERROR_SUCCESS) goto done;
+    if (lRet != ERROR_SUCCESS) {
+        error_code_messagebox(hwnd, lRet);
+        goto done;
+    }
 
     result = TRUE;
 
