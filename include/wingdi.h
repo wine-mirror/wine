@@ -852,6 +852,145 @@ typedef struct tagPANOSE
     BYTE bXHeight;
 } PANOSE;
 
+#define PAN_CULTURE_LATIN              0
+
+#define PAN_ANY                        0
+#define PAN_NO_FIT                     1
+
+#define PAN_FAMILY_TEXT_DISPLAY        2
+#define PAN_FAMILY_SCRIPT              3
+#define PAN_FAMILY_DECORATIVE          4
+#define PAN_FAMILY_PICTORIAL           5
+
+#define PAN_SERIF_COVE                 2
+#define PAN_SERIF_OBTUSE_COVE          3
+#define PAN_SERIF_SQUARE_COVE          4
+#define PAN_SERIF_OBTUSE_SQUARE_COVE   5
+#define PAN_SERIF_SQUARE               6
+#define PAN_SERIF_THIN                 7
+#define PAN_SERIF_BONE                 8
+#define PAN_SERIF_EXAGGERATED          9
+#define PAN_SERIF_TRIANGLE             10
+#define PAN_SERIF_NORMAL_SANS          11
+#define PAN_SERIF_OBTUSE_SANS          12
+#define PAN_SERIF_PERP_SANS            13
+#define PAN_SERIF_FLARED               14
+#define PAN_SERIF_ROUNDED              15
+
+#define PAN_WEIGHT_VERY_LIGHT          2
+#define PAN_WEIGHT_LIGHT               3
+#define PAN_WEIGHT_THIN                4
+#define PAN_WEIGHT_BOOK                5
+#define PAN_WEIGHT_MEDIUM              6
+#define PAN_WEIGHT_DEMI                7
+#define PAN_WEIGHT_BOLD                8
+#define PAN_WEIGHT_HEAVY               9
+#define PAN_WEIGHT_BLACK               10
+#define PAN_WEIGHT_NORD                11
+
+#define PAN_PROP_OLD_STYLE             2
+#define PAN_PROP_MODERN                3
+#define PAN_PROP_EVEN_WIDTH            4
+#define PAN_PROP_EXPANDED              5
+#define PAN_PROP_CONDENSED             6
+#define PAN_PROP_VERY_EXPANDED         7
+#define PAN_PROP_VERY_CONDENSED        8
+#define PAN_PROP_MONOSPACED            9
+
+#define PAN_CONTRAST_NONE              2
+#define PAN_CONTRAST_VERY_LOW          3
+#define PAN_CONTRAST_LOW               4
+#define PAN_CONTRAST_MEDIUM_LOW        5
+#define PAN_CONTRAST_MEDIUM            6
+#define PAN_CONTRAST_MEDIUM_HIGH       7
+#define PAN_CONTRAST_HIGH              8
+#define PAN_CONTRAST_VERY_HIGH         9
+
+#define PAN_STROKE_GRADUAL_DIAG        2
+#define PAN_STROKE_GRADUAL_TRAN        3
+#define PAN_STROKE_GRADUAL_VERT        4
+#define PAN_STROKE_GRADUAL_HORZ        5
+#define PAN_STROKE_RAPID_VERT          6
+#define PAN_STROKE_RAPID_HORZ          7
+#define PAN_STROKE_INSTANT_VERT        8
+
+#define PAN_STRAIGHT_ARMS_HORZ         2
+#define PAN_STRAIGHT_ARMS_WEDGE        3
+#define PAN_STRAIGHT_ARMS_VERT         4
+#define PAN_STRAIGHT_ARMS_SINGLE_SERIF 5
+#define PAN_STRAIGHT_ARMS_DOUBLE_SERIF 6
+#define PAN_BENT_ARMS_HORZ             7
+#define PAN_BENT_ARMS_WEDGE            8
+#define PAN_BENT_ARMS_VERT             9
+#define PAN_BENT_ARMS_SINGLE_SERIF     10
+#define PAN_BENT_ARMS_DOUBLE_SERIF     11
+
+#define PAN_LETT_NORMAL_COMPACT        2
+#define PAN_LETT_NORMAL_WEIGHTED       3
+#define PAN_LETT_NORMAL_BOXED          4
+#define PAN_LETT_NORMAL_FLATTENED      5
+#define PAN_LETT_NORMAL_ROUNDED        6
+#define PAN_LETT_NORMAL_OFF_CENTER     7
+#define PAN_LETT_NORMAL_SQUARE         8
+#define PAN_LETT_OBLIQUE_COMPACT       9
+#define PAN_LETT_OBLIQUE_WEIGHTED      10
+#define PAN_LETT_OBLIQUE_BOXED         11
+#define PAN_LETT_OBLIQUE_FLATTENED     12
+#define PAN_LETT_OBLIQUE_ROUNDED       13
+#define PAN_LETT_OBLIQUE_OFF_CENTER    14
+#define PAN_LETT_OBLIQUE_SQUARE        15
+
+#define PAN_MIDLINE_STANDARD_TRIMMED   2
+#define PAN_MIDLINE_STANDARD_POINTED   3
+#define PAN_MIDLINE_STANDARD_SERIFED   4
+#define PAN_MIDLINE_HIGH_TRIMMED       5
+#define PAN_MIDLINE_HIGH_POINTED       6
+#define PAN_MIDLINE_HIGH_SERIFED       7
+#define PAN_MIDLINE_CONSTANT_TRIMMED   8
+#define PAN_MIDLINE_CONSTANT_POINTED   9
+#define PAN_MIDLINE_CONSTANT_SERIFED   10
+#define PAN_MIDLINE_LOW_TRIMMED        11
+#define PAN_MIDLINE_LOW_POINTED        12
+#define PAN_MIDLINE_LOW_SERIFED        13
+
+#define PAN_XHEIGHT_CONSTANT_SMALL     2
+#define PAN_XHEIGHT_CONSTANT_STANDARD  3
+#define PAN_XHEIGHT_CONSTANT_LARGE     4
+#define PAN_XHEIGHT_DUCKING_SMALL      5
+#define PAN_XHEIGHT_DUCKING_STANDARD   6
+#define PAN_XHEIGHT_DUCKING_LARGE      7
+
+#define ELF_VENDOR_SIZE 4
+typedef struct
+{
+  LOGFONTA    elfLogFont;
+  BYTE        elfFullName[LF_FULLFACESIZE];
+  BYTE        elfStyle[LF_FACESIZE];
+  DWORD       elfVersion;
+  DWORD       elfStyleSize;
+  DWORD       elfMatch;
+  DWORD       elfReserved;
+  BYTE        elfVendorId[ELF_VENDOR_SIZE];
+  DWORD       elfCulture;
+  PANOSE      elfPanose;
+} EXTLOGFONTA, *PEXTLOGFONTA;
+
+typedef struct
+{
+  LOGFONTW    elfLogFont;
+  WCHAR       elfFullName[LF_FULLFACESIZE];
+  WCHAR       elfStyle[LF_FACESIZE];
+  DWORD       elfVersion;
+  DWORD       elfStyleSize;
+  DWORD       elfMatch;
+  DWORD       elfReserved;
+  BYTE        elfVendorId[ELF_VENDOR_SIZE];
+  DWORD       elfCulture;
+  PANOSE      elfPanose;
+} EXTLOGFONTW, *PEXTLOGFONTW;
+
+DECL_WINELIB_TYPE_AW(EXTLOGFONT)
+DECL_WINELIB_TYPE_AW(PEXTLOGFONT)
 
 typedef struct _OUTLINETEXTMETRICA
 {
@@ -1814,8 +1953,8 @@ typedef INT (CALLBACK *MFENUMPROC)(HDC,HANDLETABLE*,METARECORD*,
 typedef struct {
     DWORD iType; 
     DWORD nSize; 
-    RECT rclBounds; 
-    RECT rclFrame; 
+    RECTL rclBounds; 
+    RECTL rclFrame; 
     DWORD dSignature; 
     DWORD nVersion; 
     DWORD nBytes; 
@@ -1825,8 +1964,8 @@ typedef struct {
     DWORD nDescription; 
     DWORD offDescription; 
     DWORD nPalEntries; 
-    SIZE szlDevice; 
-    SIZE szlMillimeters;
+    SIZEL szlDevice; 
+    SIZEL szlMillimeters;
     DWORD cbPixelFormat;
     DWORD offPixelFormat;
     DWORD bOpenGL;
@@ -1977,13 +2116,11 @@ typedef struct {
 } EMREXCLUDECLIPRECT,   *PEMREXCLUDECLIPRECT,
   EMRINTERSECTCLIPRECT, *PEMRINTERSECTCLIPRECT;
 
-#if 0
 typedef struct {
     EMR         emr;
     DWORD       ihFont;
     EXTLOGFONTW elfw;
 } EMREXTCREATEFONTINDIRECTW, *PEMREXTCREATEFONTINDIRECTW;
-#endif
 
 typedef struct {
     EMR       emr;
