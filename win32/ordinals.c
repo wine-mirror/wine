@@ -22,13 +22,6 @@ DECLARE_DEBUG_CHANNEL(thread)
 DECLARE_DEBUG_CHANNEL(win)
 DECLARE_DEBUG_CHANNEL(win32)
 
-/**********************************************************************
- *           WOWGetDescriptor        (KERNEL32.88) (WOW32.1)
- */
-BOOL WINAPI WOWGetDescriptor(SEGPTR segptr,LPLDT_ENTRY ldtent)
-{
-    return GetThreadSelectorEntry(GetCurrentThreadId(),segptr>>16,ldtent);
-}
 
 /***********************************************************************
  *		GetWin16DOSEnv			(KERNEL32.34)

@@ -770,44 +770,6 @@ void WINAPI REGS_FUNC(FreeMappedBuffer)( CONTEXT *context )
 #endif
 }
 
-/**********************************************************************
- *           WOWGetVDMPointer	(KERNEL32.55)
- * Get linear from segmented pointer. (MSDN lib)
- */
-LPVOID WINAPI WOWGetVDMPointer(DWORD vp,DWORD nrofbytes,BOOL protected)
-{
-    /* FIXME: add size check too */
-    if (protected)
-	return PTR_SEG_TO_LIN(vp);
-    else
-	return DOSMEM_MapRealToLinear(vp);
-}
-
-/**********************************************************************
- *           GetVDMPointer32W   (KERNEL.516)
- */
-LPVOID WINAPI GetVDMPointer32W(DWORD vp,WORD mode)
-{
-    return WOWGetVDMPointer(vp,0,(DWORD)mode);
-}
-
-/**********************************************************************
- *           WOWGetVDMPointerFix (KERNEL32.55)
- * Dito, but fix heapsegment (MSDN lib)
- */
-LPVOID WINAPI WOWGetVDMPointerFix(DWORD vp,DWORD nrofbytes,BOOL protected)
-{
-    /* FIXME: fix heapsegment */
-    return WOWGetVDMPointer(vp,nrofbytes,protected);
-}
-
-/**********************************************************************
- *           WOWGetVDMPointerUnFix (KERNEL32.56)
- */
-void WINAPI WOWGetVDMPointerUnfix(DWORD vp)
-{
-    /* FIXME: unfix heapsegment */
-}
 
 /***********************************************************************
  *           UTSelectorOffsetToLinear       (WIN32S16.48)

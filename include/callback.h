@@ -35,9 +35,6 @@ typedef struct
     WORD (CALLBACK *CallLoadAppSegProc)( FARPROC16, HANDLE16, HFILE16, WORD );
     WORD (CALLBACK *CallLocalNotifyFunc)( FARPROC16, WORD, HLOCAL16, WORD );
     HGLOBAL16 (CALLBACK *CallResourceHandlerProc)( FARPROC16, HGLOBAL16, HMODULE16, HRSRC16 );
-    DWORD (CALLBACK *CallWOWCallbackProc)( FARPROC16, DWORD );
-    BOOL (CALLBACK *CallWOWCallback16Ex)( FARPROC16, DWORD, DWORD, LPVOID, 
-                                            LPDWORD );
     DWORD (CALLBACK *CallUTProc)( FARPROC16, DWORD, DWORD );
     LRESULT (CALLBACK *CallASPIPostProc)( FARPROC16, SEGPTR );
     /* Following are the graphics driver callbacks */

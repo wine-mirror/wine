@@ -417,12 +417,12 @@ file	krnl386.exe
 509 stub WOWKILLREMOTETASK
 511 stub WOWKILLREMOTETASK
 512 stub WOWQUERYDEBUG
-513 pascal   LoadLibraryEx32W(ptr long long) LoadLibraryEx32W16 # Both NT/95
-514 pascal16 FreeLibrary32W(long) FreeLibrary                 # Both NT/95
-515 pascal   GetProcAddress32W(long str) GetProcAddress       # Both NT/95
-516 pascal   GetVDMPointer32W(segptr word) GetVDMPointer32W     # Both NT/95
-517 pascal   CallProc32W() CallProc32W_16                    # Both NT/95
-518 pascal   CallProcEx32W() CallProcEx32W_16                # Both NT/95
+513 pascal LoadLibraryEx32W(ptr long long) LoadLibraryEx32W16   # Both NT/95
+514 pascal FreeLibrary32W(long) FreeLibrary32W16                # Both NT/95
+515 pascal GetProcAddress32W(long str) GetProcAddress32W16      # Both NT/95
+516 pascal GetVDMPointer32W(segptr word) GetVDMPointer32W16     # Both NT/95
+517 pascal CallProc32W() CallProc32W16                          # Both NT/95
+518 pascal CallProcEx32W() CallProcEx32W16                      # Both NT/95
 519 stub EXITKERNELTHUNK
 # the __MOD_ variables are WORD datareferences, the current values are invented.
 520 equate __MOD_KERNEL 4200

@@ -72,16 +72,16 @@ import  ntdll.dll
  55 stdcall K32WOWCallback16Ex(ptr long long ptr ptr) WOWCallback16Ex
  56 stdcall K32WOWGetVDMPointer(long long long) WOWGetVDMPointer
  57 stdcall K32WOWHandle32(long long) WOWHandle32
- 58 stub K32WOWHandle16
- 59 stdcall K32WOWGlobalAlloc16(long long) GlobalAlloc16
- 60 stdcall K32WOWGlobalLock16(long) WIN16_GlobalLock16
- 61 stdcall K32WOWGlobalUnlock16(long) GlobalUnlock16
- 62 stdcall K32WOWGlobalFree16(long) GlobalFree16
+ 58 stdcall K32WOWHandle16(long long) WOWHandle16
+ 59 stdcall K32WOWGlobalAlloc16(long long) WOWGlobalAlloc16
+ 60 stdcall K32WOWGlobalLock16(long) WOWGlobalLock16
+ 61 stdcall K32WOWGlobalUnlock16(long) WOWGlobalUnlock16
+ 62 stdcall K32WOWGlobalFree16(long) WOWGlobalFree16
  63 stdcall K32WOWGlobalAllocLock16(long long ptr) WOWGlobalAllocLock16
  64 stdcall K32WOWGlobalUnlockFree16(long) WOWGlobalUnlockFree16
- 65 stub K32WOWGlobalLockSize16
- 66 stub K32WOWYield16
- 67 stub K32WOWDirectedYield16
+ 65 stdcall K32WOWGlobalLockSize16(long ptr) WOWGlobalLockSize16
+ 66 stdcall K32WOWYield16() WOWYield16
+ 67 stdcall K32WOWDirectedYield16(long) WOWDirectedYield16
  68 stdcall K32WOWGetVDMPointerFix(long long long) WOWGetVDMPointerFix
  69 stdcall K32WOWGetVDMPointerUnfix(long) WOWGetVDMPointerUnfix
  70 stdcall K32WOWGetDescriptor(long long) WOWGetDescriptor

@@ -1364,29 +1364,6 @@ DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName,
 
 
 /***********************************************************************
- *           LoadLibraryEx32W   (KERNEL.513)
- */
-HMODULE WINAPI LoadLibraryEx32W16( LPCSTR libname, HANDLE16 hf,
-                                   DWORD flags )
-{
-    HMODULE hModule;
-
-    SYSLEVEL_ReleaseWin16Lock();
-    hModule = LoadLibraryExA( libname, hf, flags );
-    SYSLEVEL_RestoreWin16Lock();
-
-    return hModule;
-}
-
-/***********************************************************************
- *           LoadLibrary32_16   (KERNEL.452)
- */
-HMODULE WINAPI LoadLibrary32_16( LPCSTR libname )
-{
-    return LoadLibraryEx32W16( libname, 0, 0 );
-}
-
-/***********************************************************************
  *           LoadLibraryExA   (KERNEL32)
  */
 HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HFILE hfile, DWORD flags)
@@ -1521,6 +1498,20 @@ HMODULE WINAPI LoadLibraryA(LPCSTR libname) {
 HMODULE WINAPI LoadLibraryW(LPCWSTR libnameW)
 {
     return LoadLibraryExW(libnameW,0,0);
+}
+
+/***********************************************************************
+ *           LoadLibrary32_16   (KERNEL.452)
+ */
+HMODULE WINAPI LoadLibrary32_16( LPCSTR libname )
+{
+    HMODULE hModule;
+
+    SYSLEVEL_ReleaseWin16Lock();
+    hModule = LoadLibraryA( libname );
+    SYSLEVEL_RestoreWin16Lock();
+
+    return hModule;
 }
 
 /***********************************************************************

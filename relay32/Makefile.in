@@ -32,7 +32,8 @@ C_SRCS = \
 	builtin32.c \
 	relay386.c \
 	snoop.c \
-	utthunk.c
+	utthunk.c \
+	wowthunk.c
 
 GEN_ASM_SRCS = \
 	call32.s

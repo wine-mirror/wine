@@ -495,39 +495,6 @@ void WINAPI REGS_FUNC(FT_Exit52)(CONTEXT *context) { FT_Exit(context, 52); }
 void WINAPI REGS_FUNC(FT_Exit56)(CONTEXT *context) { FT_Exit(context, 56); }
 
 
-/**********************************************************************
- *           WOWCallback16 (KERNEL32.62)(WOW32.2)
- * Calls a win16 function with a single DWORD argument.
- * RETURNS
- *	the return value
- */
-DWORD WINAPI WOWCallback16(
-	FARPROC16 fproc,	/* [in] win16 function to call */
-	DWORD arg		/* [in] single DWORD argument to function */
-) {
-	DWORD	ret;
-	TRACE_(thunk)("(%p,0x%08lx)...\n",fproc,arg);
-	ret =  Callbacks->CallWOWCallbackProc(fproc,arg);
-	TRACE_(thunk)("... returns %ld\n",ret);
-	return ret;
-}
-
-/**********************************************************************
- *           WOWCallback16Ex (KERNEL32.55)(WOW32.3)
- * Calls a function in 16bit code.
- * RETURNS
- *	TRUE for success
- */
-BOOL WINAPI WOWCallback16Ex(
-	FARPROC16 vpfn16,	/* [in] win16 function to call */
-	DWORD dwFlags,		/* [in] flags */
-	DWORD cbArgs,		/* [in] nr of arguments */
-	LPVOID pArgs,		/* [in] pointer to arguments (LPDWORD) */
-	LPDWORD pdwRetCode	/* [out] return value of win16 function */
-) {
-	return Callbacks->CallWOWCallback16Ex(vpfn16,dwFlags,cbArgs,pArgs,pdwRetCode);
-}
-
 /***********************************************************************
  * 		ThunkInitLS 	(KERNEL32.43)
  * A thunkbuffer link routine 
@@ -1064,21 +1031,6 @@ BOOL16 WINAPI IsPeFormat16(
 	return (xmagic == IMAGE_NT_SIGNATURE);
 }
 
-/***********************************************************************
- *           WOWHandle32			(KERNEL32.57)(WOW32.16)
- * Converts a win16 handle of type into the respective win32 handle.
- * We currently just return this handle, since most handles are the same
- * for win16 and win32.
- * RETURNS
- *	The new handle
- */
-HANDLE WINAPI WOWHandle32(
-	WORD handle,		/* [in] win16 handle */
-	WOW_HANDLE_TYPE type	/* [in] handle type */
-) {
-	TRACE_(win32)("(0x%04x,%d)\n",handle,type);
-	return (HANDLE)handle;
-}
 
 /***********************************************************************
  *           K32Thk1632Prolog			(KERNEL32.492)

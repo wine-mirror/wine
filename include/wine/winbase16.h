@@ -89,7 +89,6 @@ WORD        WINAPI LocalCountFree16(void);
 WORD        WINAPI LocalHandleDelta16(WORD);
 WORD        WINAPI LocalHeapSize16(void);
 BOOL16      WINAPI LocalInit16(HANDLE16,WORD,WORD);
-HMODULE   WINAPI LoadLibraryEx32W16(LPCSTR,HANDLE16,DWORD);
 FARPROC16   WINAPI LocalNotify16(FARPROC16);
 HTASK16     WINAPI LockCurrentTask16(BOOL16);
 VOID        WINAPI OldYield16(void);

@@ -1494,33 +1494,6 @@ VOID WINAPI GlobalMemoryStatus(
     lpmem->dwAvailVirtual  = 32*1024*1024;
 }
 
-
-/**********************************************************************
- *           WOWGlobalAllocLock (KERNEL32.62)
- *
- * Combined GlobalAlloc and GlobalLock.
- */
-SEGPTR WINAPI WOWGlobalAllocLock16(DWORD flags,DWORD cb,HGLOBAL16 *hmem)
-{
-    HGLOBAL16 xhmem;
-    xhmem = GlobalAlloc16(flags,cb);
-    if (hmem) *hmem = xhmem;
-    return WIN16_GlobalLock16(xhmem);
-}
-
-
-/**********************************************************************
- *           WOWGlobalUnlockFree (KERNEL32.64)
- *
- * Combined GlobalUnlock and GlobalFree.
- */
-WORD WINAPI WOWGlobalUnlockFree16(DWORD vpmem) {
-    if (!GlobalUnlock16(HIWORD(vpmem)))
-    	return 0;
-    return GlobalFree16(HIWORD(vpmem));
-}
-
-
 /***********************************************************************
  *           A20Proc16   (KERNEL.165)
  */
