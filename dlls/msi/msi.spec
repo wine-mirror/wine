@@ -2,8 +2,8 @@
 2 stub DllGetClassObject
 3 stub DllRegisterServer
 4 stub DllUnregisterServer
-5 stub MsiAdvertiseProductA
-6 stub MsiAdvertiseProductW
+5 stdcall MsiAdvertiseProductA(str str str long) MsiAdvertiseProductA
+6 stdcall MsiAdvertiseProductW(wstr wstr wstr long) MsiAdvertiseProductW
 7 stdcall MsiCloseAllHandles() MsiCloseAllHandles
 8 stdcall MsiCloseHandle(long) MsiCloseHandle
 9 stub MsiCollectUserInfoA
@@ -35,8 +35,8 @@
 35 stub MsiEnableUIPreview
 36 stdcall MsiEnumClientsA(long ptr) MsiEnumClientsA
 37 stdcall MsiEnumClientsW(long ptr) MsiEnumClientsW
-38 stub MsiEnumComponentQualifiersA
-39 stub MsiEnumComponentQualifiersW
+38 stdcall MsiEnumComponentQualifiersA(str long str ptr str ptr) MsiEnumComponentQualifiersA
+39 stdcall MsiEnumComponentQualifiersW(wstr long wstr ptr wstr ptr) MsiEnumComponentQualifiersW
 40 stdcall MsiEnumComponentsA(long ptr) MsiEnumComponentsA
 41 stdcall MsiEnumComponentsW(long ptr) MsiEnumComponentsW
 42 stdcall MsiEnumFeaturesA(str long ptr ptr) MsiEnumFeaturesA
@@ -220,16 +220,16 @@
 220 stub MsiEnumComponentCostsA
 221 stub MsiEnumComponentCostsW
 222 stub MsiCreateAndVerifyInstallerDirectory
-223 stub MsiGetFileSignatureInformationA
-224 stub MsiGetFileSignatureInformationW
-225 stub MsiProvideAssemblyA
-226 stub MsiProvideAssemblyW
-227 stub MsiAdvertiseProductExA
-228 stub MsiAdvertiseProductExW
+223 stdcall MsiGetFileSignatureInformationA(str long ptr ptr ptr) MsiGetFileSignatureInformationA
+224 stdcall MsiGetFileSignatureInformationW(wstr long ptr ptr ptr) MsiGetFileSignatureInformationW
+225 stdcall MsiProvideAssemblyA(str str long long str ptr) MsiProvideAssemblyA
+226 stdcall MsiProvideAssemblyW(wstr wstr long long wstr ptr) MsiProvideAssemblyW
+227 stdcall MsiAdvertiseProductExA(str str str long long long) MsiAdvertiseProductExA
+228 stdcall MsiAdvertiseProductExW(wstr wstr wstr long long long) MsiAdvertiseProductExW
 229 stub MsiNotifySidChangeA
 230 stub MsiNotifySidChangeW
-231 stub MsiOpenPackageExA
-232 stub MsiOpenPackageExW
+231 stdcall MsiOpenPackageExA(str long ptr) MsiOpenPackageExA
+232 stdcall MsiOpenPackageExW(wstr long ptr) MsiOpenPackageExW
 233 stub MsiDeleteUserDataA
 234 stub MsiDeleteUserDataW
 235 stub Migrate10CachedPackagesA

@@ -29,6 +29,7 @@
 #include "msiquery.h"
 #include "msipriv.h"
 #include "objidl.h"
+#include "wincrypt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
@@ -232,6 +233,46 @@ UINT WINAPI MsiOpenPackageA(LPCSTR szPackage, MSIHANDLE *phPackage)
 UINT WINAPI MsiOpenPackageW(LPCWSTR szPackage, MSIHANDLE *phPackage)
 {
     FIXME("%s %p\n",debugstr_w(szPackage), phPackage);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiOpenPackageExA(LPCSTR szPackage, DWORD dwOptions, MSIHANDLE *phPackage)
+{
+    FIXME("%s 0x%08lx %p\n",debugstr_a(szPackage), dwOptions, phPackage);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiOpenPackageExW(LPCWSTR szPackage, DWORD dwOptions, MSIHANDLE *phPackage)
+{
+    FIXME("%s 0x%08lx %p\n",debugstr_w(szPackage), dwOptions, phPackage);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiAdvertiseProductA(LPCSTR szPackagePath, LPCSTR szScriptfilePath, LPCSTR szTransforms, LANGID lgidLanguage)
+{
+    FIXME("%s %s %s 0x%08x\n",debugstr_a(szPackagePath), debugstr_a(szScriptfilePath), debugstr_a(szTransforms), lgidLanguage);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiAdvertiseProductW(LPCWSTR szPackagePath, LPCWSTR szScriptfilePath, LPCWSTR szTransforms, LANGID lgidLanguage)
+{
+    FIXME("%s %s %s 0x%08x\n",debugstr_w(szPackagePath), debugstr_w(szScriptfilePath), debugstr_w(szTransforms), lgidLanguage);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiAdvertiseProductExA(
+    LPCSTR szPackagePath, LPCSTR szScriptfilePath, LPCSTR szTransforms, LANGID lgidLanguage, DWORD dwPlatform, DWORD dwOptions)
+{
+    FIXME("%s %s %s 0x%08x 0x%08lx 0x%08lx\n",
+	debugstr_a(szPackagePath), debugstr_a(szScriptfilePath), debugstr_a(szTransforms), lgidLanguage, dwPlatform, dwOptions);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiAdvertiseProductExW(
+    LPCWSTR szPackagePath, LPCWSTR szScriptfilePath, LPCWSTR szTransforms, LANGID lgidLanguage, DWORD dwPlatform, DWORD dwOptions)
+{
+    FIXME("%s %s %s 0x%08x 0x%08lx 0x%08lx\n",
+	debugstr_w(szPackagePath), debugstr_w(szScriptfilePath), debugstr_w(szTransforms), lgidLanguage, dwPlatform, dwOptions);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
@@ -607,6 +648,36 @@ end:
     return r;
 }
 
+UINT WINAPI MsiEnumComponentQualifiersA(
+    LPSTR szComponent, DWORD iIndex, LPSTR lpQualifierBuf, DWORD* pcchQualifierBuf, LPSTR lpApplicationDataBuf, DWORD* pcchApplicationDataBuf)
+{
+FIXME("%s 0x%08lx %p %p %p %p\n", debugstr_a(szComponent), iIndex, lpQualifierBuf, pcchQualifierBuf, lpApplicationDataBuf, pcchApplicationDataBuf);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiEnumComponentQualifiersW(
+    LPWSTR szComponent, DWORD iIndex, LPWSTR lpQualifierBuf, DWORD* pcchQualifierBuf, LPWSTR lpApplicationDataBuf, DWORD* pcchApplicationDataBuf)
+{
+FIXME("%s 0x%08lx %p %p %p %p\n", debugstr_w(szComponent), iIndex, lpQualifierBuf, pcchQualifierBuf, lpApplicationDataBuf, pcchApplicationDataBuf);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiProvideAssemblyA(
+    LPCSTR szAssemblyName, LPCSTR szAppContext, DWORD dwInstallMode, DWORD dwAssemblyInfo, LPSTR lpPathBuf, DWORD* pcchPathBuf) 
+{
+    FIXME("%s %s 0x%08lx 0x%08lx %p %p\n", 
+	debugstr_a(szAssemblyName),  debugstr_a(szAppContext), dwInstallMode, dwAssemblyInfo, lpPathBuf, pcchPathBuf);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiProvideAssemblyW(
+    LPCWSTR szAssemblyName, LPCWSTR szAppContext, DWORD dwInstallMode, DWORD dwAssemblyInfo, LPWSTR lpPathBuf, DWORD* pcchPathBuf) 
+{
+    FIXME("%s %s 0x%08lx 0x%08lx %p %p\n", 
+	debugstr_w(szAssemblyName),  debugstr_w(szAppContext), dwInstallMode, dwAssemblyInfo, lpPathBuf, pcchPathBuf);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 UINT WINAPI MsiProvideComponentFromDescriptorA( LPCSTR szDescriptor, LPSTR szPath, DWORD *pcchPath, DWORD *pcchArgs )
 {
     FIXME("%s %p %p %p\n", debugstr_a(szDescriptor), szPath, pcchPath, pcchArgs );
@@ -616,6 +687,20 @@ UINT WINAPI MsiProvideComponentFromDescriptorA( LPCSTR szDescriptor, LPSTR szPat
 UINT WINAPI MsiProvideComponentFromDescriptorW( LPCWSTR szDescriptor, LPWSTR szPath, DWORD *pcchPath, DWORD *pcchArgs )
 {
     FIXME("%s %p %p %p\n", debugstr_w(szDescriptor), szPath, pcchPath, pcchArgs );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+HRESULT WINAPI MsiGetFileSignatureInformationA(
+  LPCSTR szSignedObjectPath, DWORD dwFlags, PCCERT_CONTEXT* ppcCertContext, BYTE* pbHashData, DWORD* pcbHashData)
+{
+    FIXME("%s 0x%08lx %p %p %p\n", debugstr_a(szSignedObjectPath), dwFlags, ppcCertContext, pbHashData, pcbHashData);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+HRESULT WINAPI MsiGetFileSignatureInformationW(
+  LPCWSTR szSignedObjectPath, DWORD dwFlags, PCCERT_CONTEXT* ppcCertContext, BYTE* pbHashData, DWORD* pcbHashData)
+{
+    FIXME("%s 0x%08lx %p %p %p\n", debugstr_w(szSignedObjectPath), dwFlags, ppcCertContext, pbHashData, pcbHashData);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
