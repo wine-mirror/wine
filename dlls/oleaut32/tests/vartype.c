@@ -3269,16 +3269,16 @@ static void test_VarDateFromStr(void)
   /* After 30, two digit dates are expected to be in the 1900's */
   DFS("1 2 30"); EXPECT_DBL(10960.0);
   DFS("1 2 31"); EXPECT_DBL(11325.0);
-  DFS("3 am 1 2"); EXPECT_DBL(37623.125);
-  DFS("1 2 3 am"); EXPECT_DBL(37623.125);
+  /* DFS("3 am 1 2"); EXPECT_DBL(37623.125); FIXME: assumes year is 2003 */
+  /* DFS("1 2 3 am"); EXPECT_DBL(37623.125); FIXME: assumes year is 2003 */
 
   /* 4 elements -interpreted as 2 digit date & time */
   DFS("1.2 3 4");   MKRELDATE(4,3); relative += 0.04305555556; EXPECT_DBL(relative);
   DFS("3 4 1.2");   EXPECT_DBL(relative);
   /* 5 elements - interpreted as 2 & 3 digit date/times */
-  DFS("1.2.3 4 5"); EXPECT_DBL(37716.04309027778);
+  /* DFS("1.2.3 4 5"); EXPECT_DBL(37716.04309027778); FIXME: assumes year is 2003 */
   DFS("1.2 3 4 5"); EXPECT_DBL(38415.04305555556);
-  DFS("1 2 3.4.5"); EXPECT_DBL(37623.12783564815);
+  /* DFS("1 2 3.4.5"); EXPECT_DBL(37623.12783564815); FIXME: assumes year is 2003 */
   DFS("1 2 3 4.5"); EXPECT_DBL(37623.17013888889);
   /* 6 elements - interpreted as 3 digit date/times */
   DFS("1.2.3 4 5 6"); EXPECT_DBL(38812.04309027778);

@@ -2282,6 +2282,7 @@ static void test_variant(void)
 	for (i = 0; i < NB_OLE_STRINGS; i++)
 	{
             *pDouble=42.0;
+            if (i == 34) continue;  /* result for this one depends on the current year */
             rc=VarDateFromStr( pOleChar[i], lcid, LOCALE_NOUSEROVERRIDE, pDouble );
             ok(i == 94 /* FIXME: Bug in native */ || rc == strrets_DATE[i].error,
                "VarDateFromStr([%d]=\"%s\") rc= %lx instead of %lx",
