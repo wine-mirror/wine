@@ -445,16 +445,16 @@ void FindNotifyMonitorCallbacks(DWORD ThisInstance, DWORD DdeEvent )
  *
  */
 
-void DdeReserveAtom( DDE_HANDLE_ENTRY * reference_inst,HSZ hsz)
+static void DdeReserveAtom( DDE_HANDLE_ENTRY * reference_inst,HSZ hsz)
 {
-  CHAR SNameBuffer[MAX_BUFFER_LEN];
-  UINT rcode;
   if ( reference_inst->Unicode)
   {
-        rcode=GlobalGetAtomNameW(hsz,(LPWSTR)&SNameBuffer,MAX_ATOM_LEN);
-        GlobalAddAtomW((LPWSTR)SNameBuffer);
+        WCHAR SNameBuffer[MAX_BUFFER_LEN];
+        GlobalGetAtomNameW(hsz,SNameBuffer,MAX_BUFFER_LEN);
+        GlobalAddAtomW(SNameBuffer);
   } else {
-        rcode=GlobalGetAtomNameA(hsz,SNameBuffer,MAX_ATOM_LEN);
+        CHAR SNameBuffer[MAX_BUFFER_LEN];
+        GlobalGetAtomNameA(hsz,SNameBuffer,MAX_BUFFER_LEN);
         GlobalAddAtomA(SNameBuffer);
   }
 }
@@ -475,18 +475,9 @@ void DdeReserveAtom( DDE_HANDLE_ENTRY * reference_inst,HSZ hsz)
  *
  */
 
-void DdeReleaseAtom( DDE_HANDLE_ENTRY * reference_inst,HSZ hsz)
+static void DdeReleaseAtom( DDE_HANDLE_ENTRY * reference_inst,HSZ hsz)
 {
-  CHAR SNameBuffer[MAX_BUFFER_LEN];
-  UINT rcode;
-  if ( reference_inst->Unicode)
-  {
-        rcode=GlobalGetAtomNameW(hsz,(LPWSTR)&SNameBuffer,MAX_ATOM_LEN);
-        GlobalAddAtomW((LPWSTR)SNameBuffer);
-  } else {
-        rcode=GlobalGetAtomNameA(hsz,SNameBuffer,MAX_ATOM_LEN);
-        GlobalAddAtomA(SNameBuffer);
-  }
+    GlobalDeleteAtom( hsz );
 }
 
 /******************************************************************************
