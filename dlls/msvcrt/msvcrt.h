@@ -543,6 +543,8 @@ struct MSVCRT__stati64 {
 #define MSVCRT__PC_53         0x00010000
 #define MSVCRT__PC_64         0x00000000
 
+#define MSVCRT_CLOCKS_PER_SEC 1000
+
 void           MSVCRT_free(void*);
 void*          MSVCRT_malloc(MSVCRT_size_t);
 void*          MSVCRT_calloc(MSVCRT_size_t,MSVCRT_size_t);

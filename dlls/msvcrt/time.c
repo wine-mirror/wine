@@ -203,7 +203,7 @@ MSVCRT_clock_t MSVCRT_clock(void)
   ktime = ((ULONGLONG)ftk.dwHighDateTime << 32) | ftk.dwLowDateTime;
   utime = ((ULONGLONG)ftu.dwHighDateTime << 32) | ftu.dwLowDateTime;
 
-  clock = ((utime + ktime) / TICKSPERSEC) * CLOCKS_PER_SEC;
+  clock = (utime + ktime) / (TICKSPERSEC / MSVCRT_CLOCKS_PER_SEC);
 
   return clock;
 }
