@@ -432,6 +432,7 @@ static WIN16_SUBSYSTEM_TIB *allocate_win16_tib( TDB *pTask )
 {
     WCHAR path[MAX_PATH];
     WIN16_SUBSYSTEM_TIB *tib;
+    UNICODE_STRING *curdir;
     NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
 
     if (!(tib = HeapAlloc( GetProcessHeap(), 0, sizeof(*tib) ))) return NULL;
@@ -439,6 +440,15 @@ static WIN16_SUBSYSTEM_TIB *allocate_win16_tib( TDB *pTask )
     GetLongPathNameW( path, path, MAX_PATH );
     if (RtlCreateUnicodeString( &tib->exe_str, path )) tib->exe_name = &tib->exe_str;
     else tib->exe_name = NULL;
+
+    RtlAcquirePebLock();
+    curdir = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectoryName;
+    tib->curdir.MaximumLength = sizeof(tib->curdir_buffer);
+    tib->curdir.Length = min( curdir->Length, tib->curdir.MaximumLength-sizeof(WCHAR) );
+    tib->curdir.Buffer = tib->curdir_buffer;
+    memcpy( tib->curdir_buffer, curdir->Buffer, tib->curdir.Length );
+    tib->curdir_buffer[tib->curdir.Length/sizeof(WCHAR)] = 0;
+    RtlReleasePebLock();
     return tib;
 }
 
@@ -518,6 +528,7 @@ static void TASK_CallTaskSignalProc( UINT16 uCode, HANDLE16 hTaskOrModule )
  */
 void TASK_ExitTask(void)
 {
+    WIN16_SUBSYSTEM_TIB *tib;
     TDB *pTask;
     DWORD lockCount;
 
@@ -552,6 +563,13 @@ void TASK_ExitTask(void)
         hLockedTask = 0;
 
     TASK_DeleteTask( pTask->hSelf );
+
+    if ((tib = NtCurrentTeb()->Tib.SubSystemTib))
+    {
+        if (tib->exe_name) RtlFreeUnicodeString( tib->exe_name );
+        HeapFree( GetProcessHeap(), 0, tib );
+        NtCurrentTeb()->Tib.SubSystemTib = NULL;
+    }
 
     /* ... and completely release the Win16Lock, just in case. */
     ReleaseThunkLock( &lockCount );

@@ -133,6 +133,20 @@ typedef struct _TEB
 } TEB;
 #endif /* WINE_TEB_DEFINED */
 
+
+/* The thread information for 16-bit threads */
+/* NtCurrentTeb()->SubSystemTib points to this */
+typedef struct
+{
+    void           *unknown;    /* 00 unknown */
+    UNICODE_STRING *exe_name;   /* 04 exe module name */
+
+    /* the following fields do not exist under Windows */
+    UNICODE_STRING  exe_str;    /* exe name string pointed to by exe_name */
+    UNICODE_STRING  curdir;     /* current directory */
+    WCHAR           curdir_buffer[MAX_PATH];
+} WIN16_SUBSYSTEM_TIB;
+
 /* scheduler/thread.c */
 extern TEB *THREAD_InitStack( TEB *teb, DWORD stack_size );
 

@@ -541,7 +541,10 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
 
     RtlAcquirePebLock();
 
-    cd = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectoryName;
+    if (NtCurrentTeb()->Tib.SubSystemTib)  /* FIXME: hack */
+        cd = &((WIN16_SUBSYSTEM_TIB *)NtCurrentTeb()->Tib.SubSystemTib)->curdir;
+    else
+        cd = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectoryName;
 
     switch (type = RtlDetermineDosPathNameType_U(name))
     {
@@ -851,7 +854,11 @@ NTSTATUS WINAPI RtlGetCurrentDirectory_U(ULONG buflen, LPWSTR buf)
 
     RtlAcquirePebLock();
 
-    us = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectoryName;
+    if (NtCurrentTeb()->Tib.SubSystemTib)  /* FIXME: hack */
+        us = &((WIN16_SUBSYSTEM_TIB *)NtCurrentTeb()->Tib.SubSystemTib)->curdir;
+    else
+        us = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectoryName;
+
     len = us->Length / sizeof(WCHAR);
     if (us->Buffer[len - 1] == '\\' && us->Buffer[len - 2] != ':')
         len--;
@@ -886,7 +893,11 @@ NTSTATUS WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING* dir)
 
     RtlAcquirePebLock();
 
-    curdir = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectoryName;
+    if (NtCurrentTeb()->Tib.SubSystemTib)  /* FIXME: hack */
+        curdir = &((WIN16_SUBSYSTEM_TIB *)NtCurrentTeb()->Tib.SubSystemTib)->curdir;
+    else
+        curdir = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectoryName;
+
     size = curdir->MaximumLength;
 
     buf = RtlAllocateHeap(GetProcessHeap(), 0, size);
@@ -928,24 +939,6 @@ NTSTATUS WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING* dir)
 
     memmove(curdir->Buffer, buf, size + sizeof(WCHAR));
     curdir->Length = size;
-
-#if 0
-    if (curdir->Buffer[1] == ':')
-    {
-        UNICODE_STRING  env;
-        WCHAR           var[4];
-
-        var[0] = '=';
-        var[1] = curdir->Buffer[0];
-        var[2] = ':';
-        var[3] = 0;
-        env.Length = 3 * sizeof(WCHAR);
-        env.MaximumLength = 4 * sizeof(WCHAR);
-        env.Buffer = var;
-
-        RtlSetEnvironmentVariable(NULL, &env, curdir);
-    }
-#endif
 
  out:
     if (buf) RtlFreeHeap(GetProcessHeap(), 0, buf);
