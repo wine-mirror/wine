@@ -478,6 +478,10 @@ static int set_unix_lock( const struct fd *fd, file_pos_t start, file_pos_t end,
 
         switch(errno)
         {
+        case EIO:
+        case ENOLCK:
+            /* no locking on this fs, just ignore it */
+            return 1;
         case EACCES:
         case EAGAIN:
             set_error( STATUS_FILE_LOCK_CONFLICT );
@@ -489,6 +493,7 @@ static int set_unix_lock( const struct fd *fd, file_pos_t start, file_pos_t end,
             set_error( STATUS_ACCESS_DENIED );
             return 0;
         case EOVERFLOW:
+        case EINVAL:
             /* this can happen if off_t is 64-bit but the kernel only supports 32-bit */
             /* in that case we shrink the limit and retry */
             if (max_unix_offset > INT_MAX)
