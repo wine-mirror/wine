@@ -264,6 +264,7 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
 {
     BOOL bIcon;
     HRGN hrgnUpdate;
+    RECT16 clipRect, clientRect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
 
@@ -321,7 +322,15 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
         return 0;
     }
 
-    GetClipBox16( lps->hdc, &lps->rcPaint );
+    /* It is possible that the clip box is bigger than the window itself,
+       if CS_PARENTDC flag is set. Windows never return a paint rect bigger
+       than the window itself, so we need to intersect the cliprect with
+       the window  */
+    
+/*    GetClipBox16( lps->hdc, &lps->rcPaint );*/
+    GetClipBox16( lps->hdc, &clipRect );
+    GetClientRect16( hwnd, &clientRect );
+    IntersectRect16(&lps->rcPaint, &clientRect, &clipRect);
 
     TRACE_(win)("box = (%i,%i - %i,%i)\n", lps->rcPaint.left, lps->rcPaint.top,
 		    lps->rcPaint.right, lps->rcPaint.bottom );
