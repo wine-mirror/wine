@@ -73,7 +73,7 @@ INT WINAPI StartDocA(HDC hdc, const DOCINFOA* doc)
     TRACE("DocName = '%s' Output = '%s' Datatype = '%s'\n",
 	  doc->lpszDocName, doc->lpszOutput, doc->lpszDatatype);
 
-    if(!dc) return 0;
+    if(!dc) return SP_ERROR;
 
     if(dc->funcs->pStartDoc)
         return dc->funcs->pStartDoc( dc, doc );
@@ -128,7 +128,7 @@ INT16 WINAPI EndDoc16(HDC16 hdc)
 INT WINAPI EndDoc(HDC hdc)
 {
     DC *dc = DC_GetDCPtr( hdc );
-    if(!dc) return 0;
+    if(!dc) return SP_ERROR;
 
     if(dc->funcs->pEndDoc)
         return dc->funcs->pEndDoc( dc );
@@ -152,7 +152,7 @@ INT16 WINAPI StartPage16(HDC16 hdc)
 INT WINAPI StartPage(HDC hdc)
 {
     DC *dc = DC_GetDCPtr( hdc );
-    if(!dc) return 0;
+    if(!dc) return SP_ERROR;
 
     if(dc->funcs->pStartPage)
         return dc->funcs->pStartPage( dc );
@@ -177,7 +177,7 @@ INT16 WINAPI EndPage16( HDC16 hdc )
 INT WINAPI EndPage(HDC hdc)
 {
     DC *dc = DC_GetDCPtr( hdc );
-    if(!dc) return 0;
+    if(!dc) return SP_ERROR;
 
     if(dc->funcs->pEndPage)
         return dc->funcs->pEndPage( dc );
@@ -199,7 +199,7 @@ INT16 WINAPI AbortDoc16(HDC16 hdc)
 INT WINAPI AbortDoc(HDC hdc)
 {
     DC *dc = DC_GetDCPtr( hdc );
-    if(!dc) return 0;
+    if(!dc) return SP_ERROR;
 
     if(dc->funcs->pAbortDoc)
         return dc->funcs->pAbortDoc( dc );
