@@ -32,6 +32,7 @@
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
 #endif
+#include <stdio.h>
 
 #include "winbase.h"
 #include "winerror.h"
@@ -1063,4 +1064,40 @@ BOOL WINAPI CallNamedPipeW(
            debugstr_w(lpNamedPipeName), lpInput, lpInputSize,
            lpOutput, lpOutputSize, lpBytesRead, nTimeout);
     return FALSE;
+}
+
+/******************************************************************
+ *		CreatePipe (KERNEL32.@)
+ *
+ */
+BOOL WINAPI CreatePipe( PHANDLE hReadPipe, PHANDLE hWritePipe,
+                        LPSECURITY_ATTRIBUTES sa, DWORD size )
+{
+    static unsigned  index = 0;
+    char        name[64];
+    HANDLE      hr, hw;
+    unsigned    in_index = index;
+
+    *hReadPipe = *hWritePipe = INVALID_HANDLE_VALUE;
+    /* generate a unique pipe name (system wide) */
+    do
+    {
+        sprintf(name, "\\\\.\\pipe\\Win32.Pipes.%08lu.%08u", GetCurrentProcessId(), ++index);
+        hr = CreateNamedPipeA(name, PIPE_ACCESS_INBOUND, 
+                              PIPE_TYPE_BYTE | PIPE_WAIT, 1, size, size, 
+                              NMPWAIT_USE_DEFAULT_WAIT, sa);
+    } while (hr == INVALID_HANDLE_VALUE && index != in_index);
+    /* from completion sakeness, I think system resources might be exhausted before this happens !! */
+    if (hr == INVALID_HANDLE_VALUE) return FALSE;
+
+    hw = CreateFileA(name, GENERIC_WRITE, 0, sa, OPEN_EXISTING, 0, 0);
+    if (hw == INVALID_HANDLE_VALUE) 
+    {
+        CloseHandle(hr);
+        return FALSE;
+    }
+
+    *hReadPipe = hr;
+    *hWritePipe = hw;
+    return TRUE;
 }

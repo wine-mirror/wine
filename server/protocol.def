@@ -712,15 +712,6 @@ enum fd_type
 @END
 
 
-/* Create an anonymous pipe */
-@REQ(create_pipe)
-    int          inherit;       /* inherit flag */
-@REPLY
-    obj_handle_t handle_read;   /* handle to the read-side of the pipe */
-    obj_handle_t handle_write;  /* handle to the write-side of the pipe */
-@END
-
-
 /* Create a socket */
 @REQ(create_socket)
     unsigned int access;        /* wanted access rights */

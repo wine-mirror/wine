@@ -52,7 +52,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/scheduler/critsection.c \
 	$(TOPOBJDIR)/scheduler/fiber.c \
 	$(TOPOBJDIR)/scheduler/handle.c \
-	$(TOPOBJDIR)/scheduler/pipe.c \
 	$(TOPOBJDIR)/scheduler/process.c \
 	$(TOPOBJDIR)/scheduler/pthread.c \
 	$(TOPOBJDIR)/scheduler/synchro.c \

@@ -939,20 +939,6 @@ struct unlock_file_reply
 
 
 
-struct create_pipe_request
-{
-    struct request_header __header;
-    int          inherit;
-};
-struct create_pipe_reply
-{
-    struct reply_header __header;
-    obj_handle_t handle_read;
-    obj_handle_t handle_write;
-};
-
-
-
 struct create_socket_request
 {
     struct request_header __header;
@@ -3092,7 +3078,6 @@ enum request
     REQ_get_file_info,
     REQ_lock_file,
     REQ_unlock_file,
-    REQ_create_pipe,
     REQ_create_socket,
     REQ_accept_socket,
     REQ_set_socket_event,
@@ -3274,7 +3259,6 @@ union generic_request
     struct get_file_info_request get_file_info_request;
     struct lock_file_request lock_file_request;
     struct unlock_file_request unlock_file_request;
-    struct create_pipe_request create_pipe_request;
     struct create_socket_request create_socket_request;
     struct accept_socket_request accept_socket_request;
     struct set_socket_event_request set_socket_event_request;
@@ -3454,7 +3438,6 @@ union generic_reply
     struct get_file_info_reply get_file_info_reply;
     struct lock_file_reply lock_file_reply;
     struct unlock_file_reply unlock_file_reply;
-    struct create_pipe_reply create_pipe_reply;
     struct create_socket_reply create_socket_reply;
     struct accept_socket_reply accept_socket_reply;
     struct set_socket_event_reply set_socket_event_reply;
@@ -3585,6 +3568,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 107
+#define SERVER_PROTOCOL_VERSION 108
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

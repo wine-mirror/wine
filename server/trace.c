@@ -927,17 +927,6 @@ static void dump_unlock_file_request( const struct unlock_file_request *req )
     fprintf( stderr, " count_high=%08x", req->count_high );
 }
 
-static void dump_create_pipe_request( const struct create_pipe_request *req )
-{
-    fprintf( stderr, " inherit=%d", req->inherit );
-}
-
-static void dump_create_pipe_reply( const struct create_pipe_reply *req )
-{
-    fprintf( stderr, " handle_read=%p,", req->handle_read );
-    fprintf( stderr, " handle_write=%p", req->handle_write );
-}
-
 static void dump_create_socket_request( const struct create_socket_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
@@ -2506,7 +2495,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_file_info_request,
     (dump_func)dump_lock_file_request,
     (dump_func)dump_unlock_file_request,
-    (dump_func)dump_create_pipe_request,
     (dump_func)dump_create_socket_request,
     (dump_func)dump_accept_socket_request,
     (dump_func)dump_set_socket_event_request,
@@ -2684,7 +2672,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_file_info_reply,
     (dump_func)dump_lock_file_reply,
     (dump_func)0,
-    (dump_func)dump_create_pipe_reply,
     (dump_func)dump_create_socket_reply,
     (dump_func)dump_accept_socket_reply,
     (dump_func)0,
@@ -2862,7 +2849,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_file_info",
     "lock_file",
     "unlock_file",
-    "create_pipe",
     "create_socket",
     "accept_socket",
     "set_socket_event",

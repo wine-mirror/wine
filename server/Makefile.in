@@ -25,7 +25,6 @@ C_SRCS = \
 	mutex.c \
 	named_pipe.c \
 	object.c \
-	pipe.c \
 	process.c \
 	ptrace.c \
 	queue.c \
