@@ -109,6 +109,45 @@ static char* msvcrt_argvtos(const char* const* arg, char delim)
   return ret;
 }
 
+/* INTERNAL: Convert va_list to a single 'delim'-separated string */
+static char* msvcrt_valisttos(const char* arg0, va_list ap, char delim)
+{
+  va_list search = ap;
+  long size;
+  char *arg;
+  char *ret;
+  int strsize;
+
+  if (!arg0 && !delim)
+    return NULL;
+
+  /* get length */
+  size = strlen(arg0) + 1;
+  while((arg = va_arg(search, char *)) != NULL)
+  {
+    size += strlen(arg) + 1;
+  }
+
+  if (!(ret = (char *)MSVCRT_calloc(size + 1, 1)))
+    return NULL;
+
+  /* fill string */
+  search = ap;
+  size = 0;
+  strsize = strlen(arg0);
+  memcpy(ret+size,arg0,strsize);
+  ret[size+strsize] = delim;
+  size += strsize + 1;
+  while((arg = va_arg(search, char *)) != NULL)
+  {
+    strsize = strlen(search);
+    memcpy(ret+size,search,strsize);
+    ret[size+strsize] = delim;
+    size += strsize + 1;
+  }
+  return ret;
+}
+
 /*********************************************************************
  *		_cwait (MSVCRT.@)
  */
@@ -140,6 +179,47 @@ int _cwait(int *status, int pid, int action)
     MSVCRT__set_errno(doserrno);
 
   return status ? *status = -1 : -1;
+}
+
+/*********************************************************************
+ *		_spawnl (MSVCRT.@)
+ */
+int _spawnl(int flags, const char* name, const char* arg0, ...)
+{
+  va_list ap;
+  char * args;
+  int ret;
+
+  va_start(ap, arg0);
+  args = msvcrt_valisttos(arg0, ap, ' ');
+  va_end(ap);
+
+  ret = msvcrt_spawn(flags, name, args, NULL);
+  MSVCRT_free(args);
+
+  return ret;
+}
+
+/*********************************************************************
+ *		_spawnl (MSVCRT.@)
+ */
+int _spawnlp(int flags, const char* name, const char* arg0, ...)
+{
+  va_list ap;
+  char * args;
+  int ret;
+  char fullname[MAX_PATH];
+
+  _searchenv(name, "PATH", fullname);
+
+  va_start(ap, arg0);
+  args = msvcrt_valisttos(arg0, ap, ' ');
+  va_end(ap);
+
+  ret = msvcrt_spawn(flags, name, args, NULL);
+  MSVCRT_free(args);
+
+  return ret;
 }
 
 /*********************************************************************

@@ -442,9 +442,9 @@ debug_channels (msvcrt)
 @ varargs _snprintf(str long str) snprintf
 @ forward -noimport _snwprintf ntdll._snwprintf
 @ cdecl _sopen(str long long) MSVCRT__sopen
-@ stub _spawnl #(str str) varargs
+@ varargs _spawnl(str str) _spawnl
 @ stub _spawnle #(str str) varargs
-@ stub _spawnlp #(str str) varargs
+@ varargs _spawnlp(str str) _spawnlp
 @ stub _spawnlpe #(str str) varargs
 @ cdecl _spawnv(long str ptr) _spawnv
 @ cdecl _spawnve(long str ptr ptr) _spawnve
