@@ -46,6 +46,15 @@ inline static LONG interlocked_dec( PLONG dest )
     return interlocked_xchg_add( dest, -1 ) - 1;
 }
 
+inline static void small_pause(void)
+{
+#ifdef __i386__
+    __asm__ __volatile__( "rep;nop" : : : "memory" );
+#else
+    __asm__ __volatile__( "" : : : "memory" );
+#endif
+}
+
 /***********************************************************************
  *           get_semaphore
  */
@@ -261,6 +270,22 @@ NTSTATUS WINAPI RtlpUnWaitCriticalSection( RTL_CRITICAL_SECTION *crit )
  */
 NTSTATUS WINAPI RtlEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
+    if (crit->SpinCount)
+    {
+        ULONG count;
+
+        if (RtlTryEnterCriticalSection( crit )) return STATUS_SUCCESS;
+        for (count = crit->SpinCount; count > 0; count--)
+        {
+            if (crit->LockCount > 0) break;  /* more than one waiter, don't bother spinning */
+            if (crit->LockCount == -1)       /* try again */
+            {
+                if (interlocked_cmpxchg( &crit->LockCount, 0, -1 ) == -1) goto done;
+            }
+            small_pause();
+        }
+    }
+
     if (interlocked_inc( &crit->LockCount ))
     {
         if (crit->OwningThread == (HANDLE)GetCurrentThreadId())
@@ -272,6 +297,7 @@ NTSTATUS WINAPI RtlEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
         /* Now wait for it */
         RtlpWaitForCriticalSection( crit );
     }
+done:
     crit->OwningThread   = (HANDLE)GetCurrentThreadId();
     crit->RecursionCount = 1;
     return STATUS_SUCCESS;
