@@ -863,6 +863,7 @@ static INT PROFILE_GetSection( PROFILESECTION *section, LPCWSTR section_name,
                 if (len <= 2) break;
                 if (!*key->name) continue;  /* Skip empty lines */
                 if (IS_ENTRY_COMMENT(key->name)) continue;  /* Skip comments */
+                if (!key->value) continue;  /* Skip lines w.o. '=' */
                 PROFILE_CopyEntry( buffer, key->name, len - 1, 0 );
                 len -= strlenW(buffer) + 1;
                 buffer += strlenW(buffer) + 1;
