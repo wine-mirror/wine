@@ -1108,6 +1108,8 @@ BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
 #ifdef FIONREAD
     int avail=0, fd, ret, flags;
 
+    TRACE("(%p,%p,%lu,%p,%p,%p)\n", hPipe, lpvBuffer, cbBuffer, lpcbRead, lpcbAvail, lpcbMessage);
+
     ret = wine_server_handle_to_fd( hPipe, GENERIC_READ, &fd, &flags );
     if (ret)
     {
@@ -1153,7 +1155,7 @@ BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
 	*lpcbAvail = avail;
     if (lpcbRead)
         *lpcbRead = 0;
-    if (avail && lpvBuffer)
+    if (avail && lpvBuffer && cbBuffer)
     {
         int readbytes = (avail < cbBuffer) ? avail : cbBuffer;
         readbytes = recv(fd, lpvBuffer, readbytes, MSG_PEEK);
