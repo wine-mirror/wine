@@ -105,13 +105,13 @@ extern int num_lock;
             glActiveTextureARB(GL_TEXTURE0_ARB + textureNo);   \
             checkGLcall("glActiveTextureARB");
 #define GLMULTITEXCOORD1F(a,b)                                 \
-            glMultiTexCoord1fARB(GL_TEXTURE0 + a, b);
+            glMultiTexCoord1fARB(GL_TEXTURE0_ARB + a, b);
 #define GLMULTITEXCOORD2F(a,b,c)                               \
-            glMultiTexCoord2fARB(GL_TEXTURE0 + a, b, c);
+            glMultiTexCoord2fARB(GL_TEXTURE0_ARB + a, b, c);
 #define GLMULTITEXCOORD3F(a,b,c,d)                             \
-            glMultiTexCoord3fARB(GL_TEXTURE0 + a, b, c, d);
+            glMultiTexCoord3fARB(GL_TEXTURE0_ARB + a, b, c, d);
 #define GLMULTITEXCOORD4F(a,b,c,d,e)                           \
-            glMultiTexCoord4fARB(GL_TEXTURE0 + a, b, c, d, e);
+            glMultiTexCoord4fARB(GL_TEXTURE0_ARB + a, b, c, d, e);
 #endif
 
 /* DirectX Device Limits */
