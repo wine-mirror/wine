@@ -91,8 +91,6 @@ my @gdi32_dirs = qw(dlls/gdi/enhmfdrv dlls/gdi/mfdrv dlls/gdi/win16drv graphics 
 my @ntdll_dirs = qw(files if1632 loader/ne loader memory misc msdos ole relay32 scheduler win32);
 my @user32_dirs = qw(controls dlls/user/dde windows);
 
-push @makefile_in_files, "library/Makefile.in";
-push @makefile_in_files, "unicode/Makefile.in";
 push @makefile_in_files, "tools/winebuild/Makefile.in";
 
 sub filter_files {
