@@ -72,18 +72,17 @@ static void call_apcs( BOOL alertable )
     for (;;)
     {
         int type = APC_NONE;
-        SERVER_START_REQ
+        SERVER_START_VAR_REQ( get_apc, sizeof(args) )
         {
-            struct get_apc_request *req = server_alloc_req( sizeof(*req), sizeof(args) );
             req->alertable = alertable;
-            if (!server_call( REQ_GET_APC ))
+            if (!SERVER_CALL())
             {
                 type = req->type;
                 proc = req->func;
                 memcpy( args, server_data_ptr(req), server_data_size(req) );
             }
         }
-        SERVER_END_REQ;
+        SERVER_END_VAR_REQ;
 
         switch(type)
         {
@@ -176,9 +175,8 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
 
     for (;;)
     {
-        SERVER_START_REQ
+        SERVER_START_VAR_REQ( select, count * sizeof(int) )
         {
-            struct select_request *req = server_alloc_req( sizeof(*req), count * sizeof(int) );
             int *data = server_data_ptr( req );
 
             req->flags   = SELECT_INTERRUPTIBLE;
@@ -190,9 +188,9 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
             if (alertable) req->flags |= SELECT_ALERTABLE;
             if (timeout != INFINITE) req->flags |= SELECT_TIMEOUT;
 
-            ret = server_call_noerr( REQ_SELECT );
+            ret = SERVER_CALL();
         }
-        SERVER_END_REQ;
+        SERVER_END_VAR_REQ;
         if (ret == STATUS_PENDING) ret = wait_reply();
         if (ret != STATUS_USER_APC) break;
         call_apcs( alertable );

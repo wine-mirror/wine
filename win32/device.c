@@ -337,12 +337,10 @@ HANDLE DEVICE_Open( LPCSTR filename, DWORD access,
 static const struct VxDInfo *DEVICE_GetInfo( HANDLE handle )
 {
     const struct VxDInfo *info = NULL;
-    SERVER_START_REQ
+    SERVER_START_REQ( get_file_info )
     {
-        struct get_file_info_request *req = server_alloc_req( sizeof(*req), 0 );
-
         req->handle = handle;
-        if (!server_call( REQ_GET_FILE_INFO ) &&
+        if (!SERVER_CALL() &&
             (req->type == FILE_TYPE_UNKNOWN) &&
             (req->attr & 0x10000))
         {

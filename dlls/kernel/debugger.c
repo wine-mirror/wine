@@ -36,13 +36,11 @@ BOOL WINAPI WaitForDebugEvent(
     for (;;)
     {
         HANDLE wait = 0;
-        SERVER_START_REQ
+        debug_event_t *data;
+        SERVER_START_VAR_REQ( wait_debug_event, sizeof(*data) )
         {
-            debug_event_t *data;
-            struct wait_debug_event_request *req = server_alloc_req( sizeof(*req), sizeof(*data) );
-
             req->get_handle = (timeout != 0);
-            if (!(ret = !server_call( REQ_WAIT_DEBUG_EVENT ))) goto done;
+            if (!(ret = !SERVER_CALL_ERR())) goto done;
 
             if (!server_data_size(req))  /* timeout */
             {
@@ -108,7 +106,7 @@ BOOL WINAPI WaitForDebugEvent(
             }
         done:
         }
-        SERVER_END_REQ;
+        SERVER_END_VAR_REQ;
         if (ret) return TRUE;
         if (!wait) break;
         res = WaitForSingleObject( wait, timeout );
@@ -137,13 +135,12 @@ BOOL WINAPI ContinueDebugEvent(
     DWORD status) /* [in] The rule to apply to unhandled exeptions. */
 {
     BOOL ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( continue_debug_event )
     {
-        struct continue_debug_event_request *req = server_alloc_req( sizeof(*req), 0 );
         req->pid    = (void *)pid;
         req->tid    = (void *)tid;
         req->status = status;
-        ret = !server_call( REQ_CONTINUE_DEBUG_EVENT );
+        ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
     return ret;
@@ -163,11 +160,10 @@ BOOL WINAPI DebugActiveProcess(
     DWORD pid) /* [in] The process to be debugged. */
 {
     BOOL ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( debug_process )
     {
-        struct debug_process_request *req = server_alloc_req( sizeof(*req), 0 );
         req->pid = (void *)pid;
-        ret = !server_call( REQ_DEBUG_PROCESS );
+        ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
     return ret;
@@ -184,13 +180,12 @@ BOOL WINAPI DebugActiveProcess(
 void WINAPI OutputDebugStringA(
     LPCSTR str) /* [in] The message to be logged and given to the debugger. */
 {
-    SERVER_START_REQ
+    SERVER_START_REQ( output_debug_string )
     {
-        struct output_debug_string_request *req = server_alloc_req( sizeof(*req), 0 );
         req->string  = (void *)str;
         req->unicode = 0;
         req->length  = strlen(str) + 1;
-        server_call_noerr( REQ_OUTPUT_DEBUG_STRING );
+        SERVER_CALL();
     }
     SERVER_END_REQ;
     WARN("%s\n", str);
@@ -206,13 +201,12 @@ void WINAPI OutputDebugStringA(
 void WINAPI OutputDebugStringW(
     LPCWSTR str) /* [in] The message to be logged and given to the debugger. */
 {
-    SERVER_START_REQ
+    SERVER_START_REQ( output_debug_string )
     {
-        struct output_debug_string_request *req = server_alloc_req( sizeof(*req), 0 );
         req->string  = (void *)str;
         req->unicode = 1;
         req->length  = (lstrlenW(str) + 1) * sizeof(WCHAR);
-        server_call_noerr( REQ_OUTPUT_DEBUG_STRING );
+        SERVER_CALL();
     }
     SERVER_END_REQ;
     WARN("%s\n", debugstr_w(str));
@@ -282,11 +276,10 @@ void WINAPI DebugBreak16(
 BOOL WINAPI IsDebuggerPresent(void)
 {
     BOOL ret = FALSE;
-    SERVER_START_REQ
+    SERVER_START_REQ( get_process_info )
     {
-        struct get_process_info_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = GetCurrentProcess();
-        if (!server_call( REQ_GET_PROCESS_INFO )) ret = req->debugged;
+        if (!SERVER_CALL_ERR()) ret = req->debugged;
     }
     SERVER_END_REQ;
     return ret;

@@ -101,7 +101,6 @@ static int alloc_client_buffer( struct thread *thread )
     if (ftruncate( fd, MAX_REQUEST_LENGTH ) == -1) goto error;
     if ((thread->buffer = mmap( 0, MAX_REQUEST_LENGTH, PROT_READ | PROT_WRITE,
                                 MAP_SHARED, fd, 0 )) == (void*)-1) goto error;
-    thread->buffer_info = (struct server_buffer_info *)((char *)thread->buffer + MAX_REQUEST_LENGTH) - 1;
     if (!(thread->request_fd = create_request_socket( thread ))) goto error;
     thread->reply_fd = fd_pipe[1];
     thread->wait_fd  = wait_pipe[1];
@@ -177,7 +176,7 @@ struct thread *create_thread( int fd, struct process *process )
     thread->affinity    = 1;
     thread->suspend     = 0;
     thread->buffer      = (void *)-1;
-    thread->last_req    = REQ_GET_THREAD_BUFFER;
+    thread->last_req    = REQ_get_thread_buffer;
     thread->process     = (struct process *)grab_object( process );
 
     if (!current) current = thread;
@@ -690,7 +689,7 @@ DECL_HANDLER(boot_done)
 {
     debug_level = max( debug_level, req->debug_level );
     /* Make sure last_req is initialized */
-    current->last_req = REQ_BOOT_DONE;
+    current->last_req = REQ_boot_done;
     if (current == booting_thread)
     {
         booting_thread = (struct thread *)~0UL;  /* make sure it doesn't match other threads */

@@ -1597,11 +1597,10 @@ BOOL MODULE_FreeLibrary( WINE_MODREF *wm )
     if ( free_lib_count <= 1 )
     {
         MODULE_DllProcessDetach( FALSE, NULL );
-        SERVER_START_REQ
+        SERVER_START_REQ( unload_dll )
         {
-            struct unload_dll_request *req = server_alloc_req( sizeof(*req), 0 );
             req->base = (void *)wm->module;
-            server_call_noerr( REQ_UNLOAD_DLL );
+            SERVER_CALL();
         }
         SERVER_END_REQ;
         MODULE_FlushModrefs();

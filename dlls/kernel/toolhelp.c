@@ -202,13 +202,12 @@ HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
     }
 
     /* Now do the snapshot */
-    SERVER_START_REQ
+    SERVER_START_REQ( create_snapshot )
     {
-        struct create_snapshot_request *req = server_alloc_req( sizeof(*req), 0 );
         req->flags   = flags & ~TH32CS_INHERIT;
         req->inherit = (flags & TH32CS_INHERIT) != 0;
         req->pid     = (void *)process;
-        server_call( REQ_CREATE_SNAPSHOT );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
     SERVER_END_REQ;
@@ -232,12 +231,11 @@ static BOOL TOOLHELP_Thread32Next( HANDLE handle, LPTHREADENTRY32 lpte, BOOL fir
         ERR("Result buffer too small (req: %d, was: %ld)\n", sizeof(THREADENTRY32), lpte->dwSize);
         return FALSE;
     }
-    SERVER_START_REQ
+    SERVER_START_REQ( next_thread )
     {
-        struct next_thread_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = handle;
         req->reset = first;
-        if ((ret = !server_call( REQ_NEXT_THREAD )))
+        if ((ret = !SERVER_CALL_ERR()))
         {
             lpte->cntUsage           = req->count;
             lpte->th32ThreadID       = (DWORD)req->tid;
@@ -286,12 +284,11 @@ static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY32 lppe, BOOL f
         ERR("Result buffer too small (req: %d, was: %ld)\n", sizeof(PROCESSENTRY32), lppe->dwSize);
         return FALSE;
     }
-    SERVER_START_REQ
+    SERVER_START_REQ( next_process )
     {
-        struct next_process_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = handle;
         req->reset = first;
-        if ((ret = !server_call( REQ_NEXT_PROCESS )))
+        if ((ret = !SERVER_CALL_ERR()))
         {
             lppe->cntUsage            = req->count;
             lppe->th32ProcessID       = (DWORD)req->pid;
@@ -345,12 +342,11 @@ static BOOL TOOLHELP_Module32Next( HANDLE handle, LPMODULEENTRY32 lpme, BOOL fir
         ERR("Result buffer too small (req: %d, was: %ld)\n", sizeof(MODULEENTRY32), lpme->dwSize);
         return FALSE;
     }
-    SERVER_START_REQ
+    SERVER_START_REQ( next_module )
     {
-        struct next_module_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = handle;
         req->reset = first;
-        if ((ret = !server_call( REQ_NEXT_MODULE )))
+        if ((ret = !SERVER_CALL_ERR()))
         {
             lpme->th32ModuleID   = 0;  /* toolhelp internal id, never used */
             lpme->th32ProcessID  = (DWORD)req->pid;

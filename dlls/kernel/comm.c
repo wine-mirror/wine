@@ -2072,11 +2072,10 @@ BOOL WINAPI GetCommMask(
 
     TRACE("handle %d, mask %p\n", handle, evtmask);
 
-    SERVER_START_REQ
+    SERVER_START_REQ( get_serial_info )
     {
-        struct get_serial_info_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = handle;
-        if ((ret = !server_call( REQ_GET_SERIAL_INFO )))
+        if ((ret = !SERVER_CALL_ERR()))
         {
             if (evtmask) *evtmask = req->eventmask;
         }
@@ -2104,13 +2103,12 @@ BOOL WINAPI SetCommMask(
 
     TRACE("handle %d, mask %lx\n", handle, evtmask);
 
-    SERVER_START_REQ
+    SERVER_START_REQ( set_serial_info )
     {
-        struct set_serial_info_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle    = handle;
         req->flags     = SERIALINFO_SET_MASK;
         req->eventmask = evtmask;
-        ret = !server_call( REQ_SET_SERIAL_INFO );
+        ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
     return ret;
@@ -2677,11 +2675,10 @@ BOOL WINAPI GetCommTimeouts(
         return FALSE;
     }
 
-    SERVER_START_REQ
+    SERVER_START_REQ( get_serial_info )
     {
-        struct get_serial_info_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = hComm;
-        if ((ret = !server_call( REQ_GET_SERIAL_INFO )))
+        if ((ret = !SERVER_CALL_ERR()))
         {
             lptimeouts->ReadIntervalTimeout         = req->readinterval;
             lptimeouts->ReadTotalTimeoutMultiplier  = req->readmult;
@@ -2726,9 +2723,8 @@ BOOL WINAPI SetCommTimeouts(
         return FALSE;
     }
 
-    SERVER_START_REQ
+    SERVER_START_REQ( set_serial_info )
     {
-        struct set_serial_info_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle       = hComm;
         req->flags        = SERIALINFO_SET_TIMEOUTS;
         req->readinterval = lptimeouts->ReadIntervalTimeout ;
@@ -2736,7 +2732,7 @@ BOOL WINAPI SetCommTimeouts(
         req->readconst    = lptimeouts->ReadTotalTimeoutConstant ;
         req->writemult    = lptimeouts->WriteTotalTimeoutMultiplier ;
         req->writeconst   = lptimeouts->WriteTotalTimeoutConstant ;
-        ret = !server_call( REQ_SET_SERIAL_INFO );
+        ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
     if (!ret) return FALSE;
@@ -2886,10 +2882,8 @@ BOOL WINAPI WaitCommEvent(
     lpov->OffsetHigh = 0;
 
     /* start an ASYNCHRONOUS WaitCommEvent */
-    SERVER_START_REQ
+    SERVER_START_REQ( create_async )
     {
-        struct create_async_request *req = server_alloc_req( sizeof(*req), 0 );
-
         req->file_handle = hFile;
         req->overlapped  = lpov;
         req->buffer = lpdwEvents;
@@ -2897,7 +2891,7 @@ BOOL WINAPI WaitCommEvent(
         req->func = COMM_WaitCommEventService;
         req->type = ASYNC_TYPE_WAIT;
 
-        ret=server_call( REQ_CREATE_ASYNC );
+        ret=SERVER_CALL_ERR();
 
         lpov->InternalHigh = req->ov_handle;
     }

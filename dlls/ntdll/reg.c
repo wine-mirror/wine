@@ -67,9 +67,8 @@ NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
     }
     if (!retkey) return STATUS_INVALID_PARAMETER;
 
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( create_key, len )
     {
-        struct create_key_request *req = server_alloc_req( sizeof(*req), len );
         WCHAR *data = server_data_ptr(req);
 
         req->parent  = attr->RootDirectory;
@@ -80,13 +79,13 @@ NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
         *data++ = attr->ObjectName->Length;
         memcpy( data, attr->ObjectName->Buffer, attr->ObjectName->Length );
         if (class) memcpy( (char *)data + attr->ObjectName->Length, class->Buffer, class->Length );
-        if (!(ret = server_call_noerr( REQ_CREATE_KEY )))
+        if (!(ret = SERVER_CALL()))
         {
             *retkey = req->hkey;
             if (dispos) *dispos = req->created ? REG_CREATED_NEW_KEY : REG_OPENED_EXISTING_KEY;
         }
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     TRACE("<- 0x%04x\n", *retkey);
     return ret;
 }
@@ -110,16 +109,15 @@ NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTR
     if (len > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
     if (!retkey) return STATUS_INVALID_PARAMETER;
 
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( open_key, len )
     {
-        struct open_key_request *req = server_alloc_req( sizeof(*req), len );
         req->parent = attr->RootDirectory;
         req->access = access;
         memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
-        ret = server_call_noerr( REQ_OPEN_KEY );
+        ret = SERVER_CALL();
         *retkey = req->hkey;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     TRACE("<- 0x%04x\n", *retkey);
     return ret;
 }
@@ -135,11 +133,10 @@ NTSTATUS WINAPI NtDeleteKey( HANDLE hkey )
 
     TRACE( "(%x)\n", hkey );
 
-    SERVER_START_REQ
+    SERVER_START_REQ( delete_key )
     {
-        struct delete_key_request *req = server_alloc_req( sizeof(*req), 0 );
         req->hkey = hkey;
-        ret = server_call_noerr( REQ_DELETE_KEY );
+        ret = SERVER_CALL();
     }
     SERVER_END_REQ;
     return ret;
@@ -157,15 +154,13 @@ NTSTATUS WINAPI NtDeleteValueKey( HANDLE hkey, const UNICODE_STRING *name )
     TRACE( "(0x%x,%s)\n", hkey, debugstr_us(name) );
     if (name->Length > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
 
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( delete_key_value, name->Length )
     {
-        struct delete_key_value_request *req = server_alloc_req( sizeof(*req), name->Length );
-
         req->hkey = hkey;
         memcpy( server_data_ptr(req), name->Buffer, name->Length );
-        ret = server_call_noerr( REQ_DELETE_KEY_VALUE );
+        ret = SERVER_CALL();
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -274,18 +269,17 @@ NTSTATUS WINAPI NtEnumerateKey( HANDLE handle, ULONG index, KEY_INFORMATION_CLAS
     /* -1 means query key, so avoid it here */
     if (index == (ULONG)-1) return STATUS_NO_MORE_ENTRIES;
 
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( enum_key, REQUEST_MAX_VAR_SIZE )
     {
-        struct enum_key_request *req = server_alloc_req( sizeof(*req), REQUEST_MAX_VAR_SIZE );
         req->hkey  = handle;
         req->index = index;
         req->full  = (info_class == KeyFullInformation);
-        if (!(ret = server_call_noerr( REQ_ENUM_KEY )))
+        if (!(ret = SERVER_CALL()))
         {
             ret = fill_key_info( info_class, info, length, result_len, req );
         }
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -299,18 +293,17 @@ NTSTATUS WINAPI NtQueryKey( HANDLE handle, KEY_INFORMATION_CLASS info_class,
 {
     NTSTATUS ret;
 
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( enum_key, REQUEST_MAX_VAR_SIZE )
     {
-        struct enum_key_request *req = server_alloc_req( sizeof(*req), REQUEST_MAX_VAR_SIZE );
         req->hkey  = handle;
         req->index = -1;
         req->full  = (info_class == KeyFullInformation);
-        if (!(ret = server_call_noerr( REQ_ENUM_KEY )))
+        if (!(ret = SERVER_CALL()))
         {
             ret = fill_key_info( info_class, info, length, result_len, req );
         }
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -402,15 +395,13 @@ NTSTATUS WINAPI NtEnumerateValueKey( HANDLE handle, ULONG index,
         if (name_ptr && !offset) reqlen += MAX_PATH*sizeof(WCHAR);
         reqlen = min( reqlen, REQUEST_MAX_VAR_SIZE );
 
-        SERVER_START_REQ
+        SERVER_START_VAR_REQ( enum_key_value, reqlen )
         {
-            struct enum_key_value_request *req = server_alloc_req( sizeof(*req), reqlen );
-
             req->hkey = handle;
             req->index = index;
             req->offset = offset;
 
-            if (!(ret = server_call_noerr( REQ_ENUM_KEY_VALUE )))
+            if (!(ret = SERVER_CALL()))
             {
                 size_t size = server_data_size(req) - sizeof(WCHAR);
                 WCHAR *name = server_data_ptr(req);
@@ -448,7 +439,7 @@ NTSTATUS WINAPI NtEnumerateValueKey( HANDLE handle, ULONG index,
                 total_len = req->len;
             }
         }
-        SERVER_END_REQ;
+        SERVER_END_VAR_REQ;
         if (ret) return ret;
     } while (data_len && data_ptr && offset < total_len);
 
@@ -508,9 +499,8 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
         size_t reqlen = min( data_len, REQUEST_MAX_VAR_SIZE );
         reqlen = max( reqlen, name->Length + sizeof(WCHAR) );
 
-        SERVER_START_REQ
+        SERVER_START_VAR_REQ( get_key_value, reqlen )
         {
-            struct get_key_value_request *req = server_alloc_req( sizeof(*req), reqlen );
             WCHAR *nameptr = server_data_ptr(req);
 
             req->hkey = handle;
@@ -518,7 +508,7 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
             *nameptr++ = name->Length;
             memcpy( nameptr, name->Buffer, name->Length );
 
-            if (!(ret = server_call_noerr( REQ_GET_KEY_VALUE )))
+            if (!(ret = SERVER_CALL()))
             {
                 size_t size = min( server_data_size(req), data_len );
                 type = req->type;
@@ -531,7 +521,7 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
                 }
             }
         }
-        SERVER_END_REQ;
+        SERVER_END_VAR_REQ;
         if (ret) return ret;
     } while (data_len && offset < total_len);
 
@@ -690,9 +680,8 @@ NTSTATUS WINAPI NtSetValueKey( HANDLE hkey, const UNICODE_STRING *name, ULONG Ti
         ULONG len = count - pos;
         if (len > REQUEST_MAX_VAR_SIZE - namelen) len = REQUEST_MAX_VAR_SIZE - namelen;
 
-        SERVER_START_REQ
+        SERVER_START_VAR_REQ( set_key_value, namelen + len )
         {
-            struct set_key_value_request *req = server_alloc_req( sizeof(*req), namelen + len );
             WCHAR *name_ptr = server_data_ptr(req);
 
             req->hkey   = hkey;
@@ -703,9 +692,9 @@ NTSTATUS WINAPI NtSetValueKey( HANDLE hkey, const UNICODE_STRING *name, ULONG Ti
             memcpy( name_ptr, name->Buffer, name->Length );
             memcpy( (char *)name_ptr + name->Length, (char *)data + pos, len );
             pos += len;
-            ret = server_call_noerr( REQ_SET_KEY_VALUE );
+            ret = SERVER_CALL();
         }
-        SERVER_END_REQ;
+        SERVER_END_VAR_REQ;
     } while (!ret && pos < count);
     return ret;
 }

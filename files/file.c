@@ -184,11 +184,10 @@ void FILE_SetDosError(void)
 HANDLE FILE_DupUnixHandle( int fd, DWORD access )
 {
     HANDLE ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( alloc_file_handle )
     {
-        struct alloc_file_handle_request *req = server_alloc_req( sizeof(*req), 0 );
         req->access  = access;
-        server_call_fd( REQ_ALLOC_FILE_HANDLE, fd );
+        SERVER_CALL_FD( fd );
         ret = req->handle;
     }
     SERVER_END_REQ;
@@ -205,12 +204,11 @@ HANDLE FILE_DupUnixHandle( int fd, DWORD access )
 int FILE_GetUnixHandle( HANDLE handle, DWORD access )
 {
     int ret, fd = -1;
-    SERVER_START_REQ
+    SERVER_START_REQ( get_handle_fd )
     {
-        struct get_handle_fd_request *req = wine_server_alloc_req( sizeof(*req), 0 );
         req->handle = handle;
         req->access = access;
-        if (!(ret = server_call( REQ_GET_HANDLE_FD ))) fd = req->fd;
+        if (!(ret = SERVER_CALL_ERR())) fd = req->fd;
     }
     SERVER_END_REQ;
     if (!ret)
@@ -232,15 +230,13 @@ static HANDLE FILE_OpenConsole( BOOL output, DWORD access, LPSECURITY_ATTRIBUTES
 {
     HANDLE ret;
 
-    SERVER_START_REQ
+    SERVER_START_REQ( open_console )
     {
-        struct open_console_request *req = server_alloc_req( sizeof(*req), 0 );
-
         req->output  = output;
         req->access  = access;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         SetLastError(0);
-        server_call( REQ_OPEN_CONSOLE );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
     SERVER_END_REQ;
@@ -270,9 +266,8 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
     }
 
  restart:
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( create_file, len )
     {
-        struct create_file_request *req = server_alloc_req( sizeof(*req), len );
         req->access  = access;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         req->sharing = sharing;
@@ -280,10 +275,10 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
         req->attrs   = attributes;
         memcpy( server_data_ptr(req), filename, len );
         SetLastError(0);
-        err = server_call( REQ_CREATE_FILE );
+        err = SERVER_CALL();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
 
     /* If write access failed, retry without GENERIC_WRITE */
 
@@ -298,9 +293,10 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
         }
     }
 
+    if (err) SetLastError( RtlNtStatusToDosError(err) );
+
     if (!ret)
-	WARN("Unable to create file '%s' (GLE %ld)\n", filename,
-	     GetLastError());
+        WARN("Unable to create file '%s' (GLE %ld)\n", filename, GetLastError());
 
     return ret;
 }
@@ -315,15 +311,13 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
 HANDLE FILE_CreateDevice( int client_id, DWORD access, LPSECURITY_ATTRIBUTES sa )
 {
     HANDLE ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( create_device )
     {
-        struct create_device_request *req = server_alloc_req( sizeof(*req), 0 );
-
         req->access  = access;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         req->id      = client_id;
         SetLastError(0);
-        server_call( REQ_CREATE_DEVICE );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
     SERVER_END_REQ;
@@ -544,11 +538,10 @@ DWORD WINAPI GetFileInformationByHandle( HANDLE hFile,
     DWORD ret;
     if (!info) return 0;
 
-    SERVER_START_REQ
+    SERVER_START_REQ( get_file_info )
     {
-        struct get_file_info_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = hFile;
-        if ((ret = !server_call( REQ_GET_FILE_INFO )))
+        if ((ret = !SERVER_CALL_ERR()))
         {
             RtlSecondsSince1970ToTime( req->write_time, &info->ftCreationTime );
             RtlSecondsSince1970ToTime( req->write_time, &info->ftLastWriteTime );
@@ -1186,17 +1179,13 @@ static int FILE_AsyncResult(HANDLE hAsync, int result)
 {
     int r;
 
-    SERVER_START_REQ
+    SERVER_START_REQ( async_result )
     {
-        struct async_result_request *req = server_alloc_req(sizeof *req,0);
-
         req->ov_handle = hAsync;
         req->result    = result;
-
-        r = server_call( REQ_ASYNC_RESULT);
+        r = SERVER_CALL_ERR();
     }
-    SERVER_END_REQ
-
+    SERVER_END_REQ;
     return !r;
 }
 
@@ -1279,10 +1268,8 @@ static BOOL FILE_StartAsyncRead( HANDLE hFile, LPOVERLAPPED overlapped, LPVOID b
 {
     int r;
 
-    SERVER_START_REQ
+    SERVER_START_REQ( create_async )
     {
-        struct create_async_request *req = server_alloc_req(sizeof *req,0);
-
         req->file_handle = hFile;
         req->overlapped = overlapped;
         req->buffer = buffer;
@@ -1290,11 +1277,11 @@ static BOOL FILE_StartAsyncRead( HANDLE hFile, LPOVERLAPPED overlapped, LPVOID b
         req->func = FILE_AsyncReadService;
         req->type = ASYNC_TYPE_READ;
 
-        r=server_call( REQ_CREATE_ASYNC );
+        r=SERVER_CALL_ERR();
 
         overlapped->Offset = req->ov_handle;
     }
-    SERVER_END_REQ
+    SERVER_END_REQ;
 
     if(!r)
     {
@@ -1435,10 +1422,8 @@ static BOOL FILE_StartAsyncWrite(HANDLE hFile, LPOVERLAPPED overlapped, LPCVOID 
 {
     int r;
 
-    SERVER_START_REQ
+    SERVER_START_REQ( create_async )
     {
-        struct create_async_request *req = server_alloc_req( sizeof(*req), 0 );
-
         req->file_handle = hFile;
         req->buffer = (LPVOID)buffer;
         req->overlapped = overlapped;
@@ -1446,11 +1431,11 @@ static BOOL FILE_StartAsyncWrite(HANDLE hFile, LPOVERLAPPED overlapped, LPCVOID 
         req->func = FILE_AsyncWriteService;
         req->type = ASYNC_TYPE_WRITE;
 
-        r = server_call( REQ_CREATE_ASYNC );
+        r = SERVER_CALL_ERR();
 
         overlapped->Offset = req->ov_handle;
     }
-    SERVER_END_REQ
+    SERVER_END_REQ;
 
     if(!r)
     {
@@ -1607,16 +1592,15 @@ DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword,
     TRACE("handle %d offset %ld origin %ld\n",
           hFile, distance, method );
 
-    SERVER_START_REQ
+    SERVER_START_REQ( set_file_pointer )
     {
-        struct set_file_pointer_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = hFile;
         req->low = distance;
         req->high = highword ? *highword : (distance >= 0) ? 0 : -1;
         /* FIXME: assumes 1:1 mapping between Windows and Unix seek constants */
         req->whence = method;
         SetLastError( 0 );
-        if (!server_call( REQ_SET_FILE_POINTER ))
+        if (!SERVER_CALL_ERR())
         {
             ret = req->new_low;
             if (highword) *highword = req->new_high;
@@ -1768,11 +1752,10 @@ UINT WINAPI SetHandleCount( UINT count )
 BOOL WINAPI FlushFileBuffers( HANDLE hFile )
 {
     BOOL ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( flush_file )
     {
-        struct flush_file_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = hFile;
-        ret = !server_call( REQ_FLUSH_FILE );
+        ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
     return ret;
@@ -1785,11 +1768,10 @@ BOOL WINAPI FlushFileBuffers( HANDLE hFile )
 BOOL WINAPI SetEndOfFile( HANDLE hFile )
 {
     BOOL ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( truncate_file )
     {
-        struct truncate_file_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = hFile;
-        ret = !server_call( REQ_TRUNCATE_FILE );
+        ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
     return ret;
@@ -1854,11 +1836,10 @@ BOOL WINAPI DeleteFileW( LPCWSTR path )
 DWORD WINAPI GetFileType( HANDLE hFile )
 {
     DWORD ret = FILE_TYPE_UNKNOWN;
-    SERVER_START_REQ
+    SERVER_START_REQ( get_file_info )
     {
-        struct get_file_info_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = hFile;
-        if (!server_call( REQ_GET_FILE_INFO )) ret = req->type;
+        if (!SERVER_CALL_ERR()) ret = req->type;
     }
     SERVER_END_REQ;
     return ret;
@@ -2145,9 +2126,8 @@ BOOL WINAPI SetFileTime( HANDLE hFile,
                            const FILETIME *lpLastWriteTime )
 {
     BOOL ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( set_file_time )
     {
-        struct set_file_time_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = hFile;
         if (lpLastAccessTime)
             RtlTimeToSecondsSince1970( lpLastAccessTime, (DWORD *)&req->access_time );
@@ -2157,7 +2137,7 @@ BOOL WINAPI SetFileTime( HANDLE hFile,
             RtlTimeToSecondsSince1970( lpLastWriteTime, (DWORD *)&req->write_time );
         else
             req->write_time = 0; /* FIXME */
-        ret = !server_call( REQ_SET_FILE_TIME );
+        ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
     return ret;
@@ -2171,16 +2151,14 @@ BOOL WINAPI LockFile( HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHig
                         DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh )
 {
     BOOL ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( lock_file )
     {
-        struct lock_file_request *req = server_alloc_req( sizeof(*req), 0 );
-
         req->handle      = hFile;
         req->offset_low  = dwFileOffsetLow;
         req->offset_high = dwFileOffsetHigh;
         req->count_low   = nNumberOfBytesToLockLow;
         req->count_high  = nNumberOfBytesToLockHigh;
-        ret = !server_call( REQ_LOCK_FILE );
+        ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
     return ret;
@@ -2224,16 +2202,14 @@ BOOL WINAPI UnlockFile( HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetH
                           DWORD nNumberOfBytesToUnlockLow, DWORD nNumberOfBytesToUnlockHigh )
 {
     BOOL ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( unlock_file )
     {
-        struct unlock_file_request *req = server_alloc_req( sizeof(*req), 0 );
-
         req->handle      = hFile;
         req->offset_low  = dwFileOffsetLow;
         req->offset_high = dwFileOffsetHigh;
         req->count_low   = nNumberOfBytesToUnlockLow;
         req->count_high  = nNumberOfBytesToUnlockHigh;
-        ret = !server_call( REQ_UNLOCK_FILE );
+        ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
     return ret;

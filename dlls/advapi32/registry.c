@@ -33,13 +33,6 @@ static inline int is_string( DWORD type )
     return (type == REG_SZ) || (type == REG_EXPAND_SZ) || (type == REG_MULTI_SZ);
 }
 
-/* do a server call without setting the last error code */
-static inline int reg_server_call( enum request req )
-{
-    unsigned int res = server_call_noerr( req );
-    if (res) res = RtlNtStatusToDosError(res);
-    return res;
-}
 
 /******************************************************************************
  *           RegCreateKeyExW   [ADVAPI32.@]
@@ -1228,15 +1221,14 @@ LONG WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
         goto done;
     }
 
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( load_registry, len )
     {
-        struct load_registry_request *req = server_alloc_req( sizeof(*req), len );
         req->hkey  = hkey;
         req->file  = file;
         memcpy( server_data_ptr(req), subkey, len );
-        ret = reg_server_call( REQ_LOAD_REGISTRY );
+        ret = RtlNtStatusToDosError( SERVER_CALL() );
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     CloseHandle( file );
 
  done:
@@ -1268,16 +1260,15 @@ LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
         goto done;
     }
 
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( load_registry, len )
     {
-        struct load_registry_request *req = server_alloc_req( sizeof(*req), len );
         req->hkey  = hkey;
         req->file  = file;
         MultiByteToWideChar( CP_ACP, 0, subkey, strlen(subkey),
                              server_data_ptr(req), len/sizeof(WCHAR) );
-        ret = reg_server_call( REQ_LOAD_REGISTRY );
+        ret = RtlNtStatusToDosError( SERVER_CALL() );
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     CloseHandle( file );
 
  done:
@@ -1321,12 +1312,11 @@ LONG WINAPI RegSaveKeyA( HKEY hkey, LPCSTR file, LPSECURITY_ATTRIBUTES sa )
             MESSAGE("Wow, we are already fiddling with a temp file %s with an ordinal as high as %d !\nYou might want to delete all corresponding temp files in that directory.\n", buffer, count);
     }
 
-    SERVER_START_REQ
+    SERVER_START_REQ( save_registry )
     {
-        struct save_registry_request *req = server_alloc_req( sizeof(*req), 0 );
         req->hkey = hkey;
         req->file = handle;
-        ret = reg_server_call( REQ_SAVE_REGISTRY );
+        ret = RtlNtStatusToDosError( SERVER_CALL() );
     }
     SERVER_END_REQ;
 

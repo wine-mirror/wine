@@ -451,10 +451,9 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
     if ( !msgQueue )
         return 0;
 
-    SERVER_START_REQ
+    SERVER_START_REQ( get_msg_queue )
     {
-        struct get_msg_queue_request *req = server_alloc_req( sizeof(*req), 0 );
-        server_call( REQ_GET_MSG_QUEUE );
+        SERVER_CALL_ERR();
         handle = req->handle;
     }
     SERVER_END_REQ;
@@ -654,12 +653,11 @@ static BOOL QUEUE_TrySetWakeBit( MESSAGEQUEUE *queue, WORD bit, BOOL always )
         }
         else
         {
-            SERVER_START_REQ
+            SERVER_START_REQ( wake_queue )
             {
-                struct wake_queue_request *req = server_alloc_req( sizeof(*req), 0 );
                 req->handle = queue->server_queue;
                 req->bits   = bit;
-                server_call( REQ_WAKE_QUEUE );
+                SERVER_CALL();
             }
             SERVER_END_REQ;
         }
@@ -1560,12 +1558,11 @@ DWORD WINAPI WaitForInputIdle (HANDLE hProcess, DWORD dwTimeOut)
     DWORD cur_time, ret;
     HANDLE idle_event = -1;
 
-    SERVER_START_REQ
+    SERVER_START_REQ( wait_input_idle )
     {
-        struct wait_input_idle_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = hProcess;
         req->timeout = dwTimeOut;
-        if (!(ret = server_call( REQ_WAIT_INPUT_IDLE ))) idle_event = req->event;
+        if (!(ret = SERVER_CALL_ERR())) idle_event = req->event;
     }
     SERVER_END_REQ;
     if (ret) return 0xffffffff;  /* error */

@@ -1314,10 +1314,8 @@ HANDLE WINAPI CreateFileMappingA(
     /* Create the server object */
 
     if (hFile == INVALID_HANDLE_VALUE) hFile = 0;
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( create_mapping, len * sizeof(WCHAR) )
     {
-        struct create_mapping_request *req = server_alloc_req( sizeof(*req),
-                                                               len * sizeof(WCHAR) );
         req->file_handle = hFile;
         req->size_high   = size_high;
         req->size_low    = size_low;
@@ -1325,10 +1323,10 @@ HANDLE WINAPI CreateFileMappingA(
         req->inherit     = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
         SetLastError(0);
-        server_call( REQ_CREATE_MAPPING );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -1372,10 +1370,8 @@ HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
     /* Create the server object */
 
     if (hFile == INVALID_HANDLE_VALUE) hFile = 0;
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( create_mapping, len * sizeof(WCHAR) )
     {
-        struct create_mapping_request *req = server_alloc_req( sizeof(*req),
-                                                               len * sizeof(WCHAR) );
         req->file_handle = hFile;
         req->size_high   = size_high;
         req->size_low    = size_low;
@@ -1383,10 +1379,10 @@ HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
         req->inherit     = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
         SetLastError(0);
-        server_call( REQ_CREATE_MAPPING );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -1411,17 +1407,15 @@ HANDLE WINAPI OpenFileMappingA(
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( open_mapping, len * sizeof(WCHAR) )
     {
-        struct open_mapping_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
-
         req->access  = access;
         req->inherit = inherit;
         if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
-        server_call( REQ_OPEN_MAPPING );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -1439,17 +1433,15 @@ HANDLE WINAPI OpenFileMappingW( DWORD access, BOOL inherit, LPCWSTR name)
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( open_mapping, len * sizeof(WCHAR) )
     {
-        struct open_mapping_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
-
         req->access  = access;
         req->inherit = inherit;
         memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
-        server_call( REQ_OPEN_MAPPING );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -1508,11 +1500,10 @@ LPVOID WINAPI MapViewOfFileEx(
         return NULL;
     }
 
-    SERVER_START_REQ
+    SERVER_START_REQ( get_mapping_info )
     {
-        struct get_mapping_info_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = handle;
-        res = server_call( REQ_GET_MAPPING_INFO );
+        res = SERVER_CALL_ERR();
         prot        = req->protect;
         base        = req->base;
         size_low    = req->size_low;

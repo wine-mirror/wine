@@ -1365,115 +1365,115 @@ struct async_result_request
 
 enum request
 {
-    REQ_NEW_PROCESS,
-    REQ_GET_NEW_PROCESS_INFO,
-    REQ_NEW_THREAD,
-    REQ_BOOT_DONE,
-    REQ_INIT_PROCESS,
-    REQ_INIT_PROCESS_DONE,
-    REQ_INIT_THREAD,
-    REQ_GET_THREAD_BUFFER,
-    REQ_TERMINATE_PROCESS,
-    REQ_TERMINATE_THREAD,
-    REQ_GET_PROCESS_INFO,
-    REQ_SET_PROCESS_INFO,
-    REQ_GET_THREAD_INFO,
-    REQ_SET_THREAD_INFO,
-    REQ_SUSPEND_THREAD,
-    REQ_RESUME_THREAD,
-    REQ_LOAD_DLL,
-    REQ_UNLOAD_DLL,
-    REQ_QUEUE_APC,
-    REQ_GET_APC,
-    REQ_CLOSE_HANDLE,
-    REQ_SET_HANDLE_INFO,
-    REQ_DUP_HANDLE,
-    REQ_OPEN_PROCESS,
-    REQ_SELECT,
-    REQ_CREATE_EVENT,
-    REQ_EVENT_OP,
-    REQ_OPEN_EVENT,
-    REQ_CREATE_MUTEX,
-    REQ_RELEASE_MUTEX,
-    REQ_OPEN_MUTEX,
-    REQ_CREATE_SEMAPHORE,
-    REQ_RELEASE_SEMAPHORE,
-    REQ_OPEN_SEMAPHORE,
-    REQ_CREATE_FILE,
-    REQ_ALLOC_FILE_HANDLE,
-    REQ_GET_HANDLE_FD,
-    REQ_SET_FILE_POINTER,
-    REQ_TRUNCATE_FILE,
-    REQ_SET_FILE_TIME,
-    REQ_FLUSH_FILE,
-    REQ_GET_FILE_INFO,
-    REQ_LOCK_FILE,
-    REQ_UNLOCK_FILE,
-    REQ_CREATE_PIPE,
-    REQ_CREATE_SOCKET,
-    REQ_ACCEPT_SOCKET,
-    REQ_SET_SOCKET_EVENT,
-    REQ_GET_SOCKET_EVENT,
-    REQ_ENABLE_SOCKET_EVENT,
-    REQ_ALLOC_CONSOLE,
-    REQ_FREE_CONSOLE,
-    REQ_OPEN_CONSOLE,
-    REQ_SET_CONSOLE_FD,
-    REQ_GET_CONSOLE_MODE,
-    REQ_SET_CONSOLE_MODE,
-    REQ_SET_CONSOLE_INFO,
-    REQ_GET_CONSOLE_INFO,
-    REQ_WRITE_CONSOLE_INPUT,
-    REQ_READ_CONSOLE_INPUT,
-    REQ_CREATE_CHANGE_NOTIFICATION,
-    REQ_CREATE_MAPPING,
-    REQ_OPEN_MAPPING,
-    REQ_GET_MAPPING_INFO,
-    REQ_CREATE_DEVICE,
-    REQ_CREATE_SNAPSHOT,
-    REQ_NEXT_PROCESS,
-    REQ_NEXT_THREAD,
-    REQ_NEXT_MODULE,
-    REQ_WAIT_DEBUG_EVENT,
-    REQ_QUEUE_EXCEPTION_EVENT,
-    REQ_GET_EXCEPTION_STATUS,
-    REQ_OUTPUT_DEBUG_STRING,
-    REQ_CONTINUE_DEBUG_EVENT,
-    REQ_DEBUG_PROCESS,
-    REQ_READ_PROCESS_MEMORY,
-    REQ_WRITE_PROCESS_MEMORY,
-    REQ_CREATE_KEY,
-    REQ_OPEN_KEY,
-    REQ_DELETE_KEY,
-    REQ_ENUM_KEY,
-    REQ_SET_KEY_VALUE,
-    REQ_GET_KEY_VALUE,
-    REQ_ENUM_KEY_VALUE,
-    REQ_DELETE_KEY_VALUE,
-    REQ_LOAD_REGISTRY,
-    REQ_SAVE_REGISTRY,
-    REQ_SAVE_REGISTRY_ATEXIT,
-    REQ_SET_REGISTRY_LEVELS,
-    REQ_CREATE_TIMER,
-    REQ_OPEN_TIMER,
-    REQ_SET_TIMER,
-    REQ_CANCEL_TIMER,
-    REQ_GET_THREAD_CONTEXT,
-    REQ_SET_THREAD_CONTEXT,
-    REQ_GET_SELECTOR_ENTRY,
-    REQ_ADD_ATOM,
-    REQ_DELETE_ATOM,
-    REQ_FIND_ATOM,
-    REQ_GET_ATOM_NAME,
-    REQ_INIT_ATOM_TABLE,
-    REQ_GET_MSG_QUEUE,
-    REQ_WAKE_QUEUE,
-    REQ_WAIT_INPUT_IDLE,
-    REQ_CREATE_SERIAL,
-    REQ_GET_SERIAL_INFO,
-    REQ_SET_SERIAL_INFO,
-    REQ_CREATE_ASYNC,
-    REQ_ASYNC_RESULT,
+    REQ_new_process,
+    REQ_get_new_process_info,
+    REQ_new_thread,
+    REQ_boot_done,
+    REQ_init_process,
+    REQ_init_process_done,
+    REQ_init_thread,
+    REQ_get_thread_buffer,
+    REQ_terminate_process,
+    REQ_terminate_thread,
+    REQ_get_process_info,
+    REQ_set_process_info,
+    REQ_get_thread_info,
+    REQ_set_thread_info,
+    REQ_suspend_thread,
+    REQ_resume_thread,
+    REQ_load_dll,
+    REQ_unload_dll,
+    REQ_queue_apc,
+    REQ_get_apc,
+    REQ_close_handle,
+    REQ_set_handle_info,
+    REQ_dup_handle,
+    REQ_open_process,
+    REQ_select,
+    REQ_create_event,
+    REQ_event_op,
+    REQ_open_event,
+    REQ_create_mutex,
+    REQ_release_mutex,
+    REQ_open_mutex,
+    REQ_create_semaphore,
+    REQ_release_semaphore,
+    REQ_open_semaphore,
+    REQ_create_file,
+    REQ_alloc_file_handle,
+    REQ_get_handle_fd,
+    REQ_set_file_pointer,
+    REQ_truncate_file,
+    REQ_set_file_time,
+    REQ_flush_file,
+    REQ_get_file_info,
+    REQ_lock_file,
+    REQ_unlock_file,
+    REQ_create_pipe,
+    REQ_create_socket,
+    REQ_accept_socket,
+    REQ_set_socket_event,
+    REQ_get_socket_event,
+    REQ_enable_socket_event,
+    REQ_alloc_console,
+    REQ_free_console,
+    REQ_open_console,
+    REQ_set_console_fd,
+    REQ_get_console_mode,
+    REQ_set_console_mode,
+    REQ_set_console_info,
+    REQ_get_console_info,
+    REQ_write_console_input,
+    REQ_read_console_input,
+    REQ_create_change_notification,
+    REQ_create_mapping,
+    REQ_open_mapping,
+    REQ_get_mapping_info,
+    REQ_create_device,
+    REQ_create_snapshot,
+    REQ_next_process,
+    REQ_next_thread,
+    REQ_next_module,
+    REQ_wait_debug_event,
+    REQ_queue_exception_event,
+    REQ_get_exception_status,
+    REQ_output_debug_string,
+    REQ_continue_debug_event,
+    REQ_debug_process,
+    REQ_read_process_memory,
+    REQ_write_process_memory,
+    REQ_create_key,
+    REQ_open_key,
+    REQ_delete_key,
+    REQ_enum_key,
+    REQ_set_key_value,
+    REQ_get_key_value,
+    REQ_enum_key_value,
+    REQ_delete_key_value,
+    REQ_load_registry,
+    REQ_save_registry,
+    REQ_save_registry_atexit,
+    REQ_set_registry_levels,
+    REQ_create_timer,
+    REQ_open_timer,
+    REQ_set_timer,
+    REQ_cancel_timer,
+    REQ_get_thread_context,
+    REQ_set_thread_context,
+    REQ_get_selector_entry,
+    REQ_add_atom,
+    REQ_delete_atom,
+    REQ_find_atom,
+    REQ_get_atom_name,
+    REQ_init_atom_table,
+    REQ_get_msg_queue,
+    REQ_wake_queue,
+    REQ_wait_input_idle,
+    REQ_create_serial,
+    REQ_get_serial_info,
+    REQ_set_serial_info,
+    REQ_create_async,
+    REQ_async_result,
     REQ_NB_REQUESTS
 };
 
@@ -1600,13 +1600,6 @@ union generic_request
 #undef REQUEST_HEADER
 #undef VARARG
 
-/* format of the server buffer */
-struct server_buffer_info
-{
-    volatile unsigned int cur_req;    /* offset of the current request */
-    volatile unsigned int cur_pos;    /* first available position in buffer */
-};
-
 /* client-side functions */
 
 #ifndef __WINE_SERVER__
@@ -1617,22 +1610,18 @@ struct server_buffer_info
 
 /* client communication functions */
 
-extern unsigned int wine_server_call( enum request req );
-extern unsigned int server_call_fd( enum request req, int fd_out );
+extern unsigned int wine_server_call( union generic_request *req, size_t size );
+extern unsigned int wine_server_call_fd( union generic_request *req, size_t size, int fd );
 extern void server_protocol_error( const char *err, ... ) WINE_NORETURN;
 extern void server_protocol_perror( const char *err ) WINE_NORETURN;
-extern void *wine_server_alloc_req( size_t fixed_size, size_t var_size );
+extern void wine_server_alloc_req( union generic_request *req, size_t size );
 extern int wine_server_recv_fd( int handle, int cache );
 extern const char *get_config_dir(void);
 
-/* compatibility macros */
-#define server_alloc_req(f,v) wine_server_alloc_req(f,v)
-#define server_call_noerr(req) wine_server_call(req)
-
 /* do a server call and set the last error code */
-inline static unsigned int server_call( enum request req )
+inline static unsigned int __server_call_err( union generic_request *req, size_t size )
 {
-    unsigned int res = wine_server_call( req );
+    unsigned int res = wine_server_call( req, size );
     if (res) SetLastError( RtlNtStatusToDosError(res) );
     return res;
 }
@@ -1640,7 +1629,7 @@ inline static unsigned int server_call( enum request req )
 /* get a pointer to the variable part of the request */
 inline static void *server_data_ptr( const void *req )
 {
-    return (union generic_request *)req + 1;
+    return (char *)NtCurrentTeb()->buffer + ((struct request_header *)req)->var_offset;
 }
 
 /* get the size of the variable part of the request */
@@ -1657,23 +1646,47 @@ extern DWORD __wine_server_exception_handler( PEXCEPTION_RECORD record, EXCEPTIO
 
 struct __server_exception_frame
 {
-    EXCEPTION_FRAME           frame;
-    struct server_buffer_info info;  /* saved buffer information */
+    EXCEPTION_FRAME  frame;
+    unsigned int     buffer_pos;  /* saved buffer position */
 };
 
-#define SERVER_START_REQ \
+
+/* macros for server requests */
+
+#define SERVER_START_REQ(type) \
     do { \
-        struct __server_exception_frame __f; \
-        __f.frame.Handler = __wine_server_exception_handler; \
-        __f.info = *NtCurrentTeb()->buffer_info; \
-        __wine_push_frame( &__f.frame ); \
-        do {
+        union generic_request __req; \
+        struct type##_request * const req = &__req.type; \
+        __req.header.req = REQ_##type; \
+        __req.header.var_size = 0; \
+        do
 
 #define SERVER_END_REQ \
-        } while(0); \
-        *NtCurrentTeb()->buffer_info = __f.info; \
+        while(0); \
+    } while(0)
+
+#define SERVER_START_VAR_REQ(type,size) \
+    do { \
+        struct __server_exception_frame __f; \
+        union generic_request __req; \
+        struct type##_request * const req = &__req.type; \
+        __f.frame.Handler = __wine_server_exception_handler; \
+        __f.buffer_pos = NtCurrentTeb()->buffer_pos; \
+        __wine_push_frame( &__f.frame ); \
+        __req.header.req = REQ_##type; \
+        wine_server_alloc_req( &__req, (size) ); \
+        do
+
+#define SERVER_END_VAR_REQ \
+        while(0); \
+        NtCurrentTeb()->buffer_pos = __f.buffer_pos; \
         __wine_pop_frame( &__f.frame ); \
-    } while(0);
+    } while(0)
+
+#define SERVER_CALL()      (wine_server_call( &__req, sizeof(*req) ))
+#define SERVER_CALL_ERR()  (__server_call_err( &__req, sizeof(*req) ))
+#define SERVER_CALL_FD(fd) (wine_server_call_fd( &__req, sizeof(*req), (fd) ))
+
 
 extern int CLIENT_InitServer(void);
 extern int CLIENT_BootDone( int debug_level );

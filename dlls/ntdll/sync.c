@@ -36,17 +36,16 @@ NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
     if ((MaximumCount <= 0) || (InitialCount < 0) || (InitialCount > MaximumCount))
         return STATUS_INVALID_PARAMETER;
 
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( create_semaphore, len )
     {
-        struct create_semaphore_request *req = server_alloc_req( sizeof(*req), len );
         req->initial = InitialCount;
         req->max     = MaximumCount;
         req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
         if (len) memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
-        ret = server_call_noerr( REQ_CREATE_SEMAPHORE );
+        ret = SERVER_CALL();
         *SemaphoreHandle = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -60,16 +59,15 @@ NTSTATUS WINAPI NtOpenSemaphore( OUT PHANDLE SemaphoreHandle,
     DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
 
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( open_semaphore, len )
     {
-        struct open_semaphore_request *req = server_alloc_req( sizeof(*req), len );
         req->access  = access;
         req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
         if (len) memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
-        ret = server_call_noerr( REQ_OPEN_SEMAPHORE );
+        ret = SERVER_CALL();
         *SemaphoreHandle = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -94,12 +92,11 @@ NTSTATUS WINAPI NtQuerySemaphore(
 NTSTATUS WINAPI NtReleaseSemaphore( HANDLE handle, ULONG count, PULONG previous )
 {
     NTSTATUS ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( release_semaphore )
     {
-        struct release_semaphore_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = handle;
         req->count  = count;
-        if (!(ret = server_call_noerr( REQ_RELEASE_SEMAPHORE )))
+        if (!(ret = SERVER_CALL()))
         {
             if (previous) *previous = req->prev_count;
         }
@@ -125,17 +122,16 @@ NTSTATUS WINAPI NtCreateEvent(
     DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
 
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( create_event, len )
     {
-        struct create_event_request *req = server_alloc_req( sizeof(*req), len );
         req->manual_reset = ManualReset;
         req->initial_state = InitialState;
         req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
         if (len) memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
-        ret = server_call_noerr( REQ_CREATE_EVENT );
+        ret = SERVER_CALL();
         *EventHandle = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -150,17 +146,15 @@ NTSTATUS WINAPI NtOpenEvent(
     DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
 
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( open_event, len )
     {
-        struct open_event_request *req = server_alloc_req( sizeof(*req), len );
-
         req->access  = DesiredAccess;
         req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
         if (len) memcpy( server_data_ptr(req), attr->ObjectName->Buffer, len );
-        ret = server_call_noerr( REQ_OPEN_EVENT );
+        ret = SERVER_CALL();
         *EventHandle = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -174,12 +168,11 @@ NTSTATUS WINAPI NtSetEvent( HANDLE handle, PULONG NumberOfThreadsReleased )
 
     /* FIXME: set NumberOfThreadsReleased */
 
-    SERVER_START_REQ
+    SERVER_START_REQ( event_op )
     {
-        struct event_op_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = handle;
         req->op     = SET_EVENT;
-        ret = server_call_noerr( REQ_EVENT_OP );
+        ret = SERVER_CALL();
     }
     SERVER_END_REQ;
     return ret;
@@ -195,12 +188,11 @@ NTSTATUS WINAPI NtResetEvent( HANDLE handle, PULONG NumberOfThreadsReleased )
     /* resetting an event can't release any thread... */
     if (NumberOfThreadsReleased) *NumberOfThreadsReleased = 0;
 
-    SERVER_START_REQ
+    SERVER_START_REQ( event_op )
     {
-        struct event_op_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = handle;
         req->op     = RESET_EVENT;
-        ret = server_call_noerr( REQ_EVENT_OP );
+        ret = SERVER_CALL();
     }
     SERVER_END_REQ;
     return ret;
@@ -227,12 +219,11 @@ NTSTATUS WINAPI NtPulseEvent( HANDLE handle, PULONG PulseCount )
 {
     NTSTATUS ret;
     FIXME("(0x%08x,%p)\n", handle, PulseCount);
-    SERVER_START_REQ
+    SERVER_START_REQ( event_op )
     {
-        struct event_op_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = handle;
         req->op     = PULSE_EVENT;
-        ret = server_call_noerr( REQ_EVENT_OP );
+        ret = SERVER_CALL();
     }
     SERVER_END_REQ;
     return ret;

@@ -996,14 +996,12 @@ static int _nt_dump_nk(LPSTR key_name,char *base,nt_nk *nk,FILE *f,int level)
  */
 static void _set_registry_levels(int level,int saving,int period)
 {
-    SERVER_START_REQ
+    SERVER_START_REQ( set_registry_levels )
     {
-        struct set_registry_levels_request *req = server_alloc_req( sizeof(*req), 0 );
-
 	req->current = level;
 	req->saving  = saving;
         req->period  = period;
-	server_call( REQ_SET_REGISTRY_LEVELS );
+        SERVER_CALL();
     }
     SERVER_END_REQ;
 }
@@ -1018,14 +1016,13 @@ static void _save_at_exit(HKEY hkey,LPCSTR path)
         ERR( "config dir '%s' too long\n", confdir );
         return;
     }
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( save_registry_atexit, len )
     {
-        struct save_registry_atexit_request *req = server_alloc_req( sizeof(*req), len );
         sprintf( server_data_ptr(req), "%s/%s", confdir, path );
         req->hkey = hkey;
-        server_call( REQ_SAVE_REGISTRY_ATEXIT );
+        SERVER_CALL();
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
 }
 
 /* configure save files and start the periodic saving timer [Internal] */
@@ -1186,12 +1183,11 @@ static void load_wine_registry(HKEY hkey,LPCSTR fn)
             if ((file = FILE_CreateFile( fn, GENERIC_READ, 0, NULL, OPEN_EXISTING,
                                               FILE_ATTRIBUTE_NORMAL, 0, TRUE )))
             {
-                SERVER_START_REQ
+                SERVER_START_REQ( load_registry )
                 {
-                    struct load_registry_request *req = server_alloc_req( sizeof(*req), 0 );
                     req->hkey    = hkey;
                     req->file    = file;
-                    server_call( REQ_LOAD_REGISTRY );
+                    SERVER_CALL();
                 }
                 SERVER_END_REQ;
                 CloseHandle( file );

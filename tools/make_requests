@@ -63,7 +63,7 @@ REPLACE_IN_FILE( "server/trace.c", @trace_lines );
 my @server_lines = ();
 
 push @server_lines, "enum request\n{\n";
-foreach $req (@requests) { push @server_lines, "    REQ_\U$req,\n"; }
+foreach $req (@requests) { push @server_lines, "    REQ_$req,\n"; }
 push @server_lines, "    REQ_NB_REQUESTS\n};\n\n";
 push @server_lines, "union generic_request\n{\n";
 push @server_lines, "    struct request_max_size max_size;\n";

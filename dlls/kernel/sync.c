@@ -31,19 +31,17 @@ HANDLE WINAPI CreateEventA( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( create_event, len * sizeof(WCHAR) )
     {
-        struct create_event_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
-
         req->manual_reset = manual_reset;
         req->initial_state = initial_state;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
         SetLastError(0);
-        server_call( REQ_CREATE_EVENT );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -70,19 +68,17 @@ HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
         SetLastError( ERROR_INVALID_PARAMETER);
         return 0;
     }
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( create_event, len * sizeof(WCHAR) )
     {
-        struct create_event_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
-
         req->manual_reset = manual_reset;
         req->initial_state = initial_state;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
         SetLastError(0);
-        server_call( REQ_CREATE_EVENT );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -108,17 +104,15 @@ HANDLE WINAPI OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( open_event, len * sizeof(WCHAR) )
     {
-        struct open_event_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
-
         req->access  = access;
         req->inherit = inherit;
         if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
-        server_call( REQ_OPEN_EVENT );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -135,17 +129,15 @@ HANDLE WINAPI OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( open_event, len * sizeof(WCHAR) )
     {
-        struct open_event_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
-
         req->access  = access;
         req->inherit = inherit;
         memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
-        server_call( REQ_OPEN_EVENT );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -158,12 +150,11 @@ HANDLE WINAPI OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
 static BOOL EVENT_Operation( HANDLE handle, enum event_op op )
 {
     BOOL ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( event_op )
     {
-        struct event_op_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = handle;
         req->op     = op;
-        ret = !server_call( REQ_EVENT_OP );
+        ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
     return ret;
@@ -257,18 +248,16 @@ HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCSTR name )
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( create_mutex, len * sizeof(WCHAR) )
     {
-        struct create_mutex_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
-
         req->owned   = owner;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
         SetLastError(0);
-        server_call( REQ_CREATE_MUTEX );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -285,18 +274,16 @@ HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( create_mutex, len * sizeof(WCHAR) )
     {
-        struct create_mutex_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
-
         req->owned   = owner;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
         SetLastError(0);
-        server_call( REQ_CREATE_MUTEX );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -318,17 +305,15 @@ HANDLE WINAPI OpenMutexA( DWORD access, BOOL inherit, LPCSTR name )
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( open_mutex, len * sizeof(WCHAR) )
     {
-        struct open_mutex_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
-
         req->access  = access;
         req->inherit = inherit;
         if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
-        server_call( REQ_OPEN_MUTEX );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -345,17 +330,15 @@ HANDLE WINAPI OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( open_mutex, len * sizeof(WCHAR) )
     {
-        struct open_mutex_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
-
         req->access  = access;
         req->inherit = inherit;
         memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
-        server_call( REQ_OPEN_MUTEX );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -366,11 +349,10 @@ HANDLE WINAPI OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
 BOOL WINAPI ReleaseMutex( HANDLE handle )
 {
     BOOL ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( release_mutex )
     {
-        struct release_mutex_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = handle;
-        ret = !server_call( REQ_RELEASE_MUTEX );
+        ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
     return ret;
@@ -403,20 +385,17 @@ HANDLE WINAPI CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max,
         return 0;
     }
 
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( create_semaphore, len * sizeof(WCHAR) )
     {
-        struct create_semaphore_request *req = server_alloc_req( sizeof(*req),
-                                                                 len * sizeof(WCHAR) );
-
         req->initial = (unsigned int)initial;
         req->max     = (unsigned int)max;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
         SetLastError(0);
-        server_call( REQ_CREATE_SEMAPHORE );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -443,20 +422,17 @@ HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
         return 0;
     }
 
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( create_semaphore, len * sizeof(WCHAR) )
     {
-        struct create_semaphore_request *req = server_alloc_req( sizeof(*req),
-                                                                 len * sizeof(WCHAR) );
-
         req->initial = (unsigned int)initial;
         req->max     = (unsigned int)max;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
         SetLastError(0);
-        server_call( REQ_CREATE_SEMAPHORE );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -473,17 +449,15 @@ HANDLE WINAPI OpenSemaphoreA( DWORD access, BOOL inherit, LPCSTR name )
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( open_semaphore, len * sizeof(WCHAR) )
     {
-        struct open_semaphore_request *req = server_alloc_req( sizeof(*req),
-                                                               len * sizeof(WCHAR) );
         req->access  = access;
         req->inherit = inherit;
         if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
-        server_call( REQ_OPEN_SEMAPHORE );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -500,16 +474,15 @@ HANDLE WINAPI OpenSemaphoreW( DWORD access, BOOL inherit, LPCWSTR name )
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( open_semaphore, len * sizeof(WCHAR) )
     {
-        struct open_semaphore_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
         req->access  = access;
         req->inherit = inherit;
         memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
-        server_call( REQ_OPEN_SEMAPHORE );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 

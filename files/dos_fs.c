@@ -675,12 +675,10 @@ const DOS_DEVICE *DOSFS_GetDevice( const char *name )
 const DOS_DEVICE *DOSFS_GetDeviceByHandle( HFILE hFile )
 {
     const DOS_DEVICE *ret = NULL;
-    SERVER_START_REQ
+    SERVER_START_REQ( get_file_info )
     {
-        struct get_file_info_request *req = server_alloc_req( sizeof(*req), 0 );
-
         req->handle = hFile;
-        if (!server_call( REQ_GET_FILE_INFO ) && (req->type == FILE_TYPE_UNKNOWN))
+        if (!SERVER_CALL() && (req->type == FILE_TYPE_UNKNOWN))
         {
             if ((req->attr >= 0) &&
                 (req->attr < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0])))
@@ -699,6 +697,7 @@ static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access)
 {
     HANDLE ret;
     char devname[40];
+    size_t len;
 
     TRACE("%s %lx\n", name, access);
 
@@ -708,20 +707,18 @@ static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access)
 
     TRACE("opening %s as %s\n", devname, name);
 
-    SERVER_START_REQ
+    len = strlen(devname);
+    SERVER_START_VAR_REQ( create_serial, len )
     {
-        size_t len = strlen(devname);
-        struct create_serial_request *req = server_alloc_req( sizeof(*req), len );
-
         req->access  = access;
         req->inherit = 0;  /*FIXME*/
         req->sharing = FILE_SHARE_READ|FILE_SHARE_WRITE;
         memcpy( server_data_ptr(req), devname, len );
         SetLastError(0);
-        server_call( REQ_CREATE_SERIAL );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
 
     if(!ret)
         ERR("Couldn't open %s ! (check permissions)\n",devname);

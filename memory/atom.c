@@ -402,11 +402,10 @@ UINT16 WINAPI GetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
 BOOL WINAPI InitAtomTable( DWORD entries )
 {
     BOOL ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( init_atom_table )
     {
-        struct init_atom_table_request *req = server_alloc_req( sizeof(*req), 0 );
         req->entries = entries;
-        ret = !server_call( REQ_INIT_ATOM_TABLE );
+        ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
     return ret;
@@ -424,14 +423,13 @@ static ATOM ATOM_AddAtomA( LPCSTR str, BOOL local )
             SetLastError( ERROR_INVALID_PARAMETER );
             return 0;
         }
-        SERVER_START_REQ
+        SERVER_START_VAR_REQ( add_atom, len * sizeof(WCHAR) )
         {
-            struct add_atom_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
             MultiByteToWideChar( CP_ACP, 0, str, strlen(str), server_data_ptr(req), len );
             req->local = local;
-            if (!server_call( REQ_ADD_ATOM )) atom = req->atom + MIN_STR_ATOM;
+            if (!SERVER_CALL_ERR()) atom = req->atom + MIN_STR_ATOM;
         }
-        SERVER_END_REQ;
+        SERVER_END_VAR_REQ;
     }
     TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_a(str), atom );
     return atom;
@@ -480,14 +478,13 @@ static ATOM ATOM_AddAtomW( LPCWSTR str, BOOL local )
             SetLastError( ERROR_INVALID_PARAMETER );
             return 0;
         }
-        SERVER_START_REQ
+        SERVER_START_VAR_REQ( add_atom, len * sizeof(WCHAR) )
         {
-            struct add_atom_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
             memcpy( server_data_ptr(req), str, len * sizeof(WCHAR) );
             req->local = local;
-            if (!server_call( REQ_ADD_ATOM )) atom = req->atom + MIN_STR_ATOM;
+            if (!SERVER_CALL_ERR()) atom = req->atom + MIN_STR_ATOM;
         }
-        SERVER_END_REQ;
+        SERVER_END_VAR_REQ;
     }
     TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_w(str), atom );
     return atom;
@@ -518,12 +515,11 @@ static ATOM ATOM_DeleteAtom( ATOM atom,  BOOL local)
     if (atom < MIN_STR_ATOM) atom = 0;
     else
     {
-        SERVER_START_REQ
+        SERVER_START_REQ( delete_atom )
         {
-            struct delete_atom_request *req = server_alloc_req( sizeof(*req), 0 );
             req->atom = atom - MIN_STR_ATOM;
             req->local = local;
-            if (!server_call( REQ_DELETE_ATOM )) atom = 0;
+            if (!SERVER_CALL_ERR()) atom = 0;
         }
         SERVER_END_REQ;
     }
@@ -572,14 +568,13 @@ static ATOM ATOM_FindAtomA( LPCSTR str, BOOL local )
             SetLastError( ERROR_INVALID_PARAMETER );
             return 0;
         }
-        SERVER_START_REQ
+        SERVER_START_VAR_REQ( find_atom, len * sizeof(WCHAR) )
         {
-            struct find_atom_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
             MultiByteToWideChar( CP_ACP, 0, str, strlen(str), server_data_ptr(req), len );
             req->local = local;
-            if (!server_call( REQ_FIND_ATOM )) atom = req->atom + MIN_STR_ATOM;
+            if (!SERVER_CALL_ERR()) atom = req->atom + MIN_STR_ATOM;
         }
-        SERVER_END_REQ;
+        SERVER_END_VAR_REQ;
     }
     TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_a(str), atom );
     return atom;
@@ -627,14 +622,13 @@ static ATOM ATOM_FindAtomW( LPCWSTR str, BOOL local )
             SetLastError( ERROR_INVALID_PARAMETER );
             return 0;
         }
-        SERVER_START_REQ
+        SERVER_START_VAR_REQ( find_atom, len * sizeof(WCHAR) )
         {
-            struct find_atom_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
             memcpy( server_data_ptr(req), str, len * sizeof(WCHAR) );
             req->local = local;
-            if (!server_call( REQ_FIND_ATOM )) atom = req->atom + MIN_STR_ATOM;
+            if (!SERVER_CALL_ERR()) atom = req->atom + MIN_STR_ATOM;
         }
-        SERVER_END_REQ;
+        SERVER_END_VAR_REQ;
     }
     TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugres_w(str), atom );
     return atom;
@@ -682,13 +676,11 @@ static UINT ATOM_GetAtomNameA( ATOM atom, LPSTR buffer, INT count, BOOL local )
     else
     {
         len = 0;
-        SERVER_START_REQ
+        SERVER_START_VAR_REQ( get_atom_name, MAX_ATOM_LEN * sizeof(WCHAR) )
         {
-            struct get_atom_name_request *req = server_alloc_req( sizeof(*req),
-                                                                  MAX_ATOM_LEN * sizeof(WCHAR) );
             req->atom = atom - MIN_STR_ATOM;
             req->local = local;
-            if (!server_call( REQ_GET_ATOM_NAME ))
+            if (!SERVER_CALL_ERR())
             {
                 len = WideCharToMultiByte( CP_ACP, 0, server_data_ptr(req),
                                            server_data_size(req) / sizeof(WCHAR),
@@ -697,7 +689,7 @@ static UINT ATOM_GetAtomNameA( ATOM atom, LPSTR buffer, INT count, BOOL local )
                 else buffer[len] = 0;
             }
         }
-        SERVER_END_REQ;
+        SERVER_END_VAR_REQ;
     }
 
     if (len && count <= len)
@@ -770,13 +762,11 @@ static UINT ATOM_GetAtomNameW( ATOM atom, LPWSTR buffer, INT count, BOOL local )
     else
     {
         len = 0;
-        SERVER_START_REQ
+        SERVER_START_VAR_REQ( get_atom_name, MAX_ATOM_LEN * sizeof(WCHAR) )
         {
-            struct get_atom_name_request *req = server_alloc_req( sizeof(*req),
-                                                                  MAX_ATOM_LEN * sizeof(WCHAR) );
             req->atom = atom - MIN_STR_ATOM;
             req->local = local;
-            if (!server_call( REQ_GET_ATOM_NAME ))
+            if (!SERVER_CALL_ERR())
             {
                 len = server_data_size(req) / sizeof(WCHAR);
                 if (count > len) count = len + 1;
@@ -784,7 +774,7 @@ static UINT ATOM_GetAtomNameW( ATOM atom, LPWSTR buffer, INT count, BOOL local )
                 buffer[count-1] = 0;
             }
         }
-        SERVER_END_REQ;
+        SERVER_END_VAR_REQ;
         if (!len) return 0;
     }
     if (count <= len)

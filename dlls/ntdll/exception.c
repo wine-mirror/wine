@@ -112,33 +112,29 @@ static int send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *c
     int ret;
     HANDLE handle = 0;
 
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( queue_exception_event, sizeof(*rec)+sizeof(*context) )
     {
-        struct queue_exception_event_request *req = server_alloc_req( sizeof(*req),
-                                                                      sizeof(*rec)+sizeof(*context) );
         CONTEXT *context_ptr = server_data_ptr(req);
         EXCEPTION_RECORD *rec_ptr = (EXCEPTION_RECORD *)(context_ptr + 1);
         req->first   = first_chance;
         *rec_ptr     = *rec;
         *context_ptr = *context;
-        if (!server_call_noerr( REQ_QUEUE_EXCEPTION_EVENT )) handle = req->handle;
+        if (!SERVER_CALL()) handle = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     if (!handle) return 0;  /* no debugger present or other error */
 
     /* No need to wait on the handle since the process gets suspended
      * once the event is passed to the debugger, so when we get back
      * here the event has been continued already.
      */
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( get_exception_status, sizeof(*context) )
     {
-        struct get_exception_status_request *req = server_alloc_req( sizeof(*req), sizeof(*context) );
         req->handle = handle;
-        if (!server_call_noerr( REQ_GET_EXCEPTION_STATUS ))
-            *context = *(CONTEXT *)server_data_ptr(req);
+        if (!SERVER_CALL()) *context = *(CONTEXT *)server_data_ptr(req);
         ret = req->status;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     NtClose( handle );
     return ret;
 }

@@ -587,13 +587,11 @@ BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldten
         return FALSE;
     }
 
-    SERVER_START_REQ
+    SERVER_START_REQ( get_selector_entry )
     {
-        struct get_selector_entry_request *req = server_alloc_req( sizeof(*req), 0 );
-
         req->handle = hthread;
         req->entry = sel >> __AHSHIFT;
-        if ((ret = !server_call( REQ_GET_SELECTOR_ENTRY )))
+        if ((ret = !SERVER_CALL_ERR()))
         {
             if (!(req->flags & WINE_LDT_FLAGS_ALLOCATED))
             {

@@ -101,11 +101,10 @@ extern int wine_openpty(int *master, int *slave, char *name,
 static int CONSOLE_GetPid( HANDLE handle )
 {
     int ret = 0;
-    SERVER_START_REQ
+    SERVER_START_REQ( get_console_info )
     {
-        struct get_console_info_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = handle;
-        if (!server_call( REQ_GET_CONSOLE_INFO )) ret = req->pid;
+        if (!SERVER_CALL_ERR()) ret = req->pid;
     }
     SERVER_END_REQ;
     return ret;
@@ -333,19 +332,17 @@ static BOOL read_console_input( HANDLE handle, LPINPUT_RECORD buffer, DWORD coun
 
     count = min( count, REQUEST_MAX_VAR_SIZE/sizeof(INPUT_RECORD) );
 
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( read_console_input, count*sizeof(INPUT_RECORD) )
     {
-        struct read_console_input_request *req = server_alloc_req( sizeof(*req),
-                                                                   count*sizeof(INPUT_RECORD) );
         req->handle = handle;
         req->flush = flush;
-        if ((ret = !server_call( REQ_READ_CONSOLE_INPUT )))
+        if ((ret = !SERVER_CALL_ERR()))
         {
             if (count) memcpy( buffer, server_data_ptr(req), server_data_size(req) );
             if (read) *read = req->read;
         }
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -554,10 +551,9 @@ COORD WINAPI GetLargestConsoleWindowSize( HANDLE hConsoleOutput )
 BOOL WINAPI FreeConsole(VOID)
 {
     BOOL ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( free_console )
     {
-        struct free_console_request *req = server_alloc_req( sizeof(*req), 0 );
-        ret = !server_call( REQ_FREE_CONSOLE );
+        ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
     return ret;
@@ -629,14 +625,13 @@ static BOOL CONSOLE_make_complex(HANDLE handle)
             CloseHandle( pty_handle );
             return FALSE;
 	}
-        SERVER_START_REQ
+        SERVER_START_REQ( set_console_fd )
         {
-            struct set_console_fd_request *req = server_alloc_req( sizeof(*req), 0 );
             req->handle     = handle;
             req->handle_in  = pty_handle;
             req->handle_out = pty_handle;
             req->pid = xpid;
-            server_call( REQ_SET_CONSOLE_FD );
+            SERVER_CALL();
         }
         SERVER_END_REQ;
         CloseHandle( pty_handle );
@@ -669,13 +664,11 @@ BOOL WINAPI AllocConsole(VOID)
 
     TRACE("()\n");
 
-    SERVER_START_REQ
+    SERVER_START_REQ( alloc_console )
     {
-        struct alloc_console_request *req = server_alloc_req( sizeof(*req), 0 );
-
         req->access  = GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE;
         req->inherit = FALSE;
-        ret = !server_call( REQ_ALLOC_CONSOLE );
+        ret = !SERVER_CALL_ERR();
         handle_in = req->handle_in;
         handle_out = req->handle_out;
     }
@@ -728,11 +721,10 @@ UINT WINAPI GetConsoleOutputCP(VOID)
 BOOL WINAPI GetConsoleMode(HANDLE hcon,LPDWORD mode)
 {
     BOOL ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( get_console_mode )
     {
-        struct get_console_mode_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = hcon;
-        ret = !server_call( REQ_GET_CONSOLE_MODE );
+        ret = !SERVER_CALL_ERR();
         if (ret && mode) *mode = req->mode;
     }
     SERVER_END_REQ;
@@ -754,12 +746,11 @@ BOOL WINAPI GetConsoleMode(HANDLE hcon,LPDWORD mode)
 BOOL WINAPI SetConsoleMode( HANDLE hcon, DWORD mode )
 {
     BOOL ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( set_console_mode )
     {
-        struct set_console_mode_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = hcon;
         req->mode = mode;
-        ret = !server_call( REQ_SET_CONSOLE_MODE );
+        ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
     return ret;
@@ -794,12 +785,10 @@ DWORD WINAPI GetConsoleTitleA(LPSTR title,DWORD size)
     if ((hcon = CreateFileA( "CONOUT$", GENERIC_READ, 0, NULL,
                                OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE)
         return 0;
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( get_console_info, REQUEST_MAX_VAR_SIZE )
     {
-        struct get_console_info_request *req = server_alloc_req( sizeof(*req),
-                                                                 REQUEST_MAX_VAR_SIZE );
         req->handle = hcon;
-        if (!server_call( REQ_GET_CONSOLE_INFO ))
+        if (!SERVER_CALL_ERR())
         {
             ret = server_data_size(req);
             size = min( size-1, ret );
@@ -807,7 +796,7 @@ DWORD WINAPI GetConsoleTitleA(LPSTR title,DWORD size)
             title[size] = 0;
         }
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     CloseHandle( hcon );
     return ret;
 }
@@ -1184,20 +1173,18 @@ BOOL WINAPI WriteConsoleInputA( HANDLE handle, INPUT_RECORD *buffer,
     while (count && ret)
     {
         DWORD len = min( count, REQUEST_MAX_VAR_SIZE/sizeof(INPUT_RECORD) );
-        SERVER_START_REQ
+        SERVER_START_VAR_REQ( write_console_input, len * sizeof(INPUT_RECORD) )
         {
-            struct write_console_input_request *req = server_alloc_req( sizeof(*req),
-                                                                        len*sizeof(INPUT_RECORD) );
             req->handle = handle;
             memcpy( server_data_ptr(req), buffer, len * sizeof(INPUT_RECORD) );
-            if ((ret = !server_call( REQ_WRITE_CONSOLE_INPUT )))
+            if ((ret = !SERVER_CALL_ERR()))
             {
                 if (written) *written += req->written;
                 count -= len;
                 buffer += len;
             }
         }
-        SERVER_END_REQ;
+        SERVER_END_VAR_REQ;
     }
     return ret;
 }
@@ -1237,15 +1224,14 @@ BOOL WINAPI SetConsoleTitleA(LPCSTR title)
         return FALSE;
 
     len = min( len, REQUEST_MAX_VAR_SIZE );
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( set_console_info, len )
     {
-        struct set_console_info_request *req = server_alloc_req( sizeof(*req), len );
         req->handle = hcon;
         req->mask = SET_CONSOLE_INFO_TITLE;
         memcpy( server_data_ptr(req), title, len );
-        ret = !server_call( REQ_SET_CONSOLE_INFO );
+        ret = !SERVER_CALL_ERR();
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
 
     if (ret && CONSOLE_GetPid( hcon ))
     {
@@ -1349,11 +1335,10 @@ BOOL WINAPI GetConsoleCursorInfo( HANDLE hcon, LPCONSOLE_CURSOR_INFO cinfo )
 {
     BOOL ret;
 
-    SERVER_START_REQ
+    SERVER_START_REQ( get_console_info )
     {
-        struct get_console_info_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = hcon;
-        ret = !server_call( REQ_GET_CONSOLE_INFO );
+        ret = !SERVER_CALL_ERR();
         if (ret && cinfo)
         {
             cinfo->dwSize = req->cursor_size;
@@ -1384,14 +1369,13 @@ BOOL WINAPI SetConsoleCursorInfo(
     sprintf(buf,"\033[?25%c",cinfo->bVisible?'h':'l');
     WriteFile(hcon,buf,strlen(buf),&xlen,NULL);
 
-    SERVER_START_REQ
+    SERVER_START_REQ( set_console_info )
     {
-        struct set_console_info_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle         = hcon;
         req->cursor_size    = cinfo->dwSize;
         req->cursor_visible = cinfo->bVisible;
         req->mask           = SET_CONSOLE_INFO_CURSOR;
-        ret = !server_call( REQ_SET_CONSOLE_INFO );
+        ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
     return ret;

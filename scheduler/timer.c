@@ -25,18 +25,16 @@ HANDLE WINAPI CreateWaitableTimerA( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCSTR
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( create_timer, len * sizeof(WCHAR) )
     {
-        struct create_timer_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
-
         req->manual  = manual;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
         SetLastError(0);
-        server_call( REQ_CREATE_TIMER );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -53,18 +51,16 @@ HANDLE WINAPI CreateWaitableTimerW( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCWST
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( create_timer, len * sizeof(WCHAR) )
     {
-        struct create_timer_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
-
         req->manual  = manual;
         req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
         memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
         SetLastError(0);
-        server_call( REQ_CREATE_TIMER );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -81,17 +77,15 @@ HANDLE WINAPI OpenWaitableTimerA( DWORD access, BOOL inherit, LPCSTR name )
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( open_timer, len * sizeof(WCHAR) )
     {
-        struct open_timer_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
-
         req->access  = access;
         req->inherit = inherit;
         if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
-        server_call( REQ_OPEN_TIMER );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -108,17 +102,15 @@ HANDLE WINAPI OpenWaitableTimerW( DWORD access, BOOL inherit, LPCWSTR name )
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
-    SERVER_START_REQ
+    SERVER_START_VAR_REQ( open_timer, len * sizeof(WCHAR) )
     {
-        struct open_timer_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
-
         req->access  = access;
         req->inherit = inherit;
         memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
-        server_call( REQ_OPEN_TIMER );
+        SERVER_CALL_ERR();
         ret = req->handle;
     }
-    SERVER_END_REQ;
+    SERVER_END_VAR_REQ;
     return ret;
 }
 
@@ -139,10 +131,8 @@ BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG per
         exp.QuadPart = RtlLargeIntegerSubtract( now.QuadPart, exp.QuadPart );
     }
 
-    SERVER_START_REQ
+    SERVER_START_REQ( set_timer )
     {
-        struct set_timer_request *req = server_alloc_req( sizeof(*req), 0 );
-
         if (!exp.s.LowPart && !exp.s.HighPart)
         {
             /* special case to start timeout on now+period without too many calculations */
@@ -160,7 +150,7 @@ BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG per
         req->callback = callback;
         req->arg      = arg;
         if (resume) SetLastError( ERROR_NOT_SUPPORTED ); /* set error but can still succeed */
-        ret = !server_call( REQ_SET_TIMER );
+        ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
     return ret;
@@ -173,11 +163,10 @@ BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG per
 BOOL WINAPI CancelWaitableTimer( HANDLE handle )
 {
     BOOL ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( cancel_timer )
     {
-        struct cancel_timer_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = handle;
-        ret = !server_call( REQ_CANCEL_TIMER );
+        ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
     return ret;

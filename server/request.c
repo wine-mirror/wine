@@ -178,12 +178,18 @@ static inline void call_req_handler( struct thread *thread, union generic_reques
 
     if (debug_level) trace_request( thread, request );
 
-    if ((unsigned int)request->header.var_offset + request->header.var_size > MAX_REQUEST_LENGTH)
+    if (request->header.var_size)
     {
-        fatal_protocol_error( current, "bad request offset/size %d/%d\n",
-                              request->header.var_offset, request->header.var_size );
+        if ((unsigned int)request->header.var_offset +
+                          request->header.var_size > MAX_REQUEST_LENGTH)
+        {
+            fatal_protocol_error( current, "bad request offset/size %d/%d\n",
+                                  request->header.var_offset, request->header.var_size );
+            return;
+        }
     }
-    else if (req < REQ_NB_REQUESTS)
+
+    if (req < REQ_NB_REQUESTS)
     {
         req_handlers[req]( request );
         if (current) send_reply( current, request );

@@ -41,14 +41,13 @@ BOOL WINAPI CloseHandle( HANDLE handle )
 BOOL WINAPI GetHandleInformation( HANDLE handle, LPDWORD flags )
 {
     BOOL ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( set_handle_info )
     {
-        struct set_handle_info_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = handle;
         req->flags  = 0;
         req->mask   = 0;
         req->fd     = -1;
-        ret = !server_call( REQ_SET_HANDLE_INFO );
+        ret = !SERVER_CALL_ERR();
         if (ret && flags) *flags = req->old_flags;
     }
     SERVER_END_REQ;
@@ -62,14 +61,13 @@ BOOL WINAPI GetHandleInformation( HANDLE handle, LPDWORD flags )
 BOOL WINAPI SetHandleInformation( HANDLE handle, DWORD mask, DWORD flags )
 {
     BOOL ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( set_handle_info )
     {
-        struct set_handle_info_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = handle;
         req->flags  = flags;
         req->mask   = mask;
         req->fd     = -1;
-        ret = !server_call( REQ_SET_HANDLE_INFO );
+        ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
     return ret;
@@ -84,10 +82,8 @@ BOOL WINAPI DuplicateHandle( HANDLE source_process, HANDLE source,
                                DWORD access, BOOL inherit, DWORD options )
 {
     BOOL ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( dup_handle )
     {
-        struct dup_handle_request *req = server_alloc_req( sizeof(*req), 0 );
-
         req->src_process = source_process;
         req->src_handle  = source;
         req->dst_process = dest_process;
@@ -95,7 +91,7 @@ BOOL WINAPI DuplicateHandle( HANDLE source_process, HANDLE source,
         req->inherit     = inherit;
         req->options     = options;
 
-        ret = !server_call( REQ_DUP_HANDLE );
+        ret = !SERVER_CALL_ERR();
         if (ret)
         {
             if (dest) *dest = req->handle;

@@ -45,8 +45,6 @@
 #define SERVERDIR  "/wineserver-"  /* server socket directory (hostname appended) */
 #define SOCKETNAME "socket"        /* name of the socket file */
 
-#undef server_alloc_req
-
 /* data structure used to pass an fd with sendmsg/recvmsg */
 struct cmsg_fd
 {
@@ -120,7 +118,7 @@ DWORD __wine_server_exception_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME
 {
     struct __server_exception_frame *server_frame = (struct __server_exception_frame *)frame;
     if ((record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))
-        *NtCurrentTeb()->buffer_info = server_frame->info;
+        NtCurrentTeb()->buffer_pos = server_frame->buffer_pos;
     return ExceptionContinueSearch;
 }
 
@@ -128,22 +126,19 @@ DWORD __wine_server_exception_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME
 /***********************************************************************
  *           wine_server_alloc_req (NTDLL.@)
  */
-void *wine_server_alloc_req( size_t fixed_size, size_t var_size )
+void wine_server_alloc_req( union generic_request *req, size_t size )
 {
-    unsigned int pos = NtCurrentTeb()->buffer_info->cur_pos;
-    union generic_request *req = (union generic_request *)((char *)NtCurrentTeb()->buffer + pos);
-    size_t size = sizeof(*req) + var_size;
+    unsigned int pos = NtCurrentTeb()->buffer_pos;
 
-    assert( fixed_size <= sizeof(*req) );
-    assert( var_size <= REQUEST_MAX_VAR_SIZE );
+    assert( size <= REQUEST_MAX_VAR_SIZE );
 
-    if ((char *)req + size > (char *)NtCurrentTeb()->buffer_info)
+    if (pos + size > NtCurrentTeb()->buffer_size)
         server_protocol_error( "buffer overflow %d bytes\n",
-                               (char *)req + size - (char *)NtCurrentTeb()->buffer_info );
-    NtCurrentTeb()->buffer_info->cur_pos = pos + size;
-    req->header.var_offset = pos + sizeof(*req);
-    req->header.var_size = var_size;
-    return req;
+                               pos + size - NtCurrentTeb()->buffer_pos );
+
+    NtCurrentTeb()->buffer_pos = pos + size;
+    req->header.var_offset = pos;
+    req->header.var_size = size;
 }
 
 
@@ -152,12 +147,10 @@ void *wine_server_alloc_req( size_t fixed_size, size_t var_size )
  *
  * Send a request to the server.
  */
-static void send_request( enum request req, union generic_request *request )
+static void send_request( union generic_request *request )
 {
     int ret;
 
-    request->header.req = req;
-    NtCurrentTeb()->buffer_info->cur_req = (char *)request - (char *)NtCurrentTeb()->buffer;
     if ((ret = write( NtCurrentTeb()->request_fd, request, sizeof(*request) )) == sizeof(*request))
         return;
     if (ret >= 0) server_protocol_error( "partial write %d\n", ret );
@@ -170,7 +163,7 @@ static void send_request( enum request req, union generic_request *request )
  *
  * Send a request to the server, passing a file descriptor.
  */
-static void send_request_fd( enum request req, union generic_request *request, int fd )
+static void send_request_fd( union generic_request *request, int fd )
 {
 #ifndef HAVE_MSGHDR_ACCRIGHTS
     struct cmsg_fd cmsg;
@@ -199,8 +192,6 @@ static void send_request_fd( enum request req, union generic_request *request, i
     msghdr.msg_controllen = sizeof(cmsg);
     msghdr.msg_flags      = 0;
 #endif  /* HAVE_MSGHDR_ACCRIGHTS */
-
-    request->header.req = req;
 
     if ((ret = sendmsg( NtCurrentTeb()->socket, &msghdr, 0 )) == sizeof(*request)) return;
     if (ret >= 0) server_protocol_error( "partial write %d\n", ret );
@@ -237,30 +228,26 @@ static void wait_reply( union generic_request *req )
  *
  * Perform a server call.
  */
-unsigned int wine_server_call( enum request req )
+unsigned int wine_server_call( union generic_request *req, size_t size )
 {
-    union generic_request *req_ptr = NtCurrentTeb()->buffer;
-    send_request( req, req_ptr );
-    wait_reply( req_ptr );
-    return req_ptr->header.error;
+    memset( (char *)req + size, 0, sizeof(*req) - size );
+    send_request( req );
+    wait_reply( req );
+    return req->header.error;
 }
 
 
 /***********************************************************************
- *           server_call_fd
+ *           wine_server_call_fd
  *
  * Perform a server call, passing a file descriptor.
  */
-unsigned int server_call_fd( enum request req, int fd_out )
+unsigned int wine_server_call_fd( union generic_request *req, size_t size, int fd )
 {
-    unsigned int res;
-    union generic_request *req_ptr = NtCurrentTeb()->buffer;
-
-    send_request_fd( req, req_ptr, fd_out );
-    wait_reply( req_ptr );
-
-    if ((res = req_ptr->header.error)) SetLastError( RtlNtStatusToDosError(res) );
-    return res;  /* error code */
+    memset( (char *)req + size, 0, sizeof(*req) - size );
+    send_request_fd( req, fd );
+    wait_reply( req );
+    return req->header.error;
 }
 
 
@@ -271,14 +258,13 @@ unsigned int server_call_fd( enum request req, int fd_out )
  */
 static int set_handle_fd( int handle, int fd )
 {
-    SERVER_START_REQ
+    SERVER_START_REQ( set_handle_info )
     {
-        struct set_handle_info_request *req = wine_server_alloc_req( sizeof(*req), 0 );
         req->handle = handle;
         req->flags  = 0;
         req->mask   = 0;
         req->fd     = fd;
-        if (!server_call( REQ_SET_HANDLE_INFO ))
+        if (!SERVER_CALL())
         {
             if (req->cur_fd != fd)
             {
@@ -597,7 +583,7 @@ int CLIENT_InitThread(void)
 {
     struct get_thread_buffer_request *req;
     TEB *teb = NtCurrentTeb();
-    int fd, ret, size;
+    int fd, ret;
 
     /* ignore SIGPIPE so that we get a EPIPE error instead  */
     signal( SIGPIPE, SIG_IGN );
@@ -617,11 +603,11 @@ int CLIENT_InitThread(void)
     fd = wine_server_recv_fd( 0, 0 );
     if (fd == -1) server_protocol_error( "no fd received for thread buffer\n" );
 
-    if ((size = lseek( fd, 0, SEEK_END )) == -1) server_protocol_perror( "lseek" );
-    teb->buffer = mmap( 0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 );
+    if ((teb->buffer_size = lseek( fd, 0, SEEK_END )) == -1) server_protocol_perror( "lseek" );
+    teb->buffer = mmap( 0, teb->buffer_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 );
+    teb->buffer_pos = 0;
     close( fd );
     if (teb->buffer == (void*)-1) server_protocol_perror( "mmap" );
-    teb->buffer_info = (struct server_buffer_info *)((char *)teb->buffer + size) - 1;
 
     req = (struct get_thread_buffer_request *)teb->buffer;
     wait_reply( (union generic_request *)req );
@@ -638,13 +624,12 @@ int CLIENT_InitThread(void)
     if (req->boot) boot_thread_id = teb->tid;
     else if (boot_thread_id == teb->tid) boot_thread_id = 0;
 
-    SERVER_START_REQ
+    SERVER_START_REQ( init_thread )
     {
-        struct init_thread_request *req = wine_server_alloc_req( sizeof(*req), 0 );
         req->unix_pid = getpid();
         req->teb      = teb;
         req->entry    = teb->entry_point;
-        ret = wine_server_call( REQ_INIT_THREAD );
+        ret = SERVER_CALL();
     }
     SERVER_END_REQ;
     return ret;
@@ -659,11 +644,10 @@ int CLIENT_InitThread(void)
 int CLIENT_BootDone( int debug_level )
 {
     int ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( boot_done )
     {
-        struct boot_done_request *req = wine_server_alloc_req( sizeof(*req), 0 );
         req->debug_level = debug_level;
-        ret = server_call( REQ_BOOT_DONE );
+        ret = SERVER_CALL();
     }
     SERVER_END_REQ;
     return ret;

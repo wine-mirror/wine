@@ -32,12 +32,11 @@ HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName, BOOL bWatchSubtre
 
     FIXME("this is not supported yet (non-trivial).\n");
 
-    SERVER_START_REQ
+    SERVER_START_REQ( create_change_notification )
     {
-        struct create_change_notification_request *req = server_alloc_req( sizeof(*req), 0 );
         req->subtree = bWatchSubtree;
         req->filter  = dwNotifyFilter;
-        if (!server_call( REQ_CREATE_CHANGE_NOTIFICATION )) ret = req->handle;
+        if (!SERVER_CALL_ERR()) ret = req->handle;
     }
     SERVER_END_REQ;
     return ret;

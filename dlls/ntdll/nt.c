@@ -76,12 +76,11 @@ NTSTATUS WINAPI NtTerminateProcess( HANDLE handle, LONG exit_code )
 {
     NTSTATUS ret;
     BOOL self;
-    SERVER_START_REQ
+    SERVER_START_REQ( terminate_process )
     {
-        struct terminate_process_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle    = handle;
         req->exit_code = exit_code;
-        ret = server_call_noerr( REQ_TERMINATE_PROCESS );
+        ret = SERVER_CALL();
         self = !ret && req->self;
     }
     SERVER_END_REQ;
@@ -150,12 +149,11 @@ NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code )
     NTSTATUS ret;
     BOOL self, last;
 
-    SERVER_START_REQ
+    SERVER_START_REQ( terminate_thread )
     {
-        struct terminate_thread_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle    = handle;
         req->exit_code = exit_code;
-        ret = server_call_noerr( REQ_TERMINATE_THREAD );
+        ret = SERVER_CALL();
         self = !ret && req->self;
         last = req->last;
     }

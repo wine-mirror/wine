@@ -217,11 +217,10 @@ NTSTATUS WINAPI NtDuplicateObject(
 NTSTATUS WINAPI NtClose( HANDLE Handle )
 {
     NTSTATUS ret;
-    SERVER_START_REQ
+    SERVER_START_REQ( close_handle )
     {
-        struct close_handle_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = Handle;
-        ret = server_call_noerr( REQ_CLOSE_HANDLE );
+        ret = SERVER_CALL();
         if (!ret && req->fd != -1) close( req->fd );
     }
     SERVER_END_REQ;

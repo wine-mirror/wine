@@ -990,12 +990,11 @@ static HINSTANCE16 NE_CreateThread( NE_MODULE *pModule, WORD cmdShow, LPCSTR cmd
     TDB *pTask;
     HINSTANCE16 instance = 0;
 
-    SERVER_START_REQ
+    SERVER_START_REQ( new_thread )
     {
-        struct new_thread_request *req = server_alloc_req( sizeof(*req), 0 );
         req->suspend = 0;
         req->inherit = 0;
-        if (!server_call( REQ_NEW_THREAD ))
+        if (!SERVER_CALL_ERR())
         {
             hThread = req->handle;
             socket = wine_server_recv_fd( hThread, 0 );

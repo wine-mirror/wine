@@ -664,15 +664,14 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
 
     if (nt->FileHeader.Characteristics & IMAGE_FILE_DLL)
     {
-        SERVER_START_REQ
+        SERVER_START_REQ( load_dll )
         {
-            struct load_dll_request *req = server_alloc_req( sizeof(*req), 0 );
             req->handle     = hFile;
             req->base       = (void *)hModule;
             req->dbg_offset = nt->FileHeader.PointerToSymbolTable;
             req->dbg_size   = nt->FileHeader.NumberOfSymbols;
             req->name       = &wm->filename;
-            server_call_noerr( REQ_LOAD_DLL );
+            SERVER_CALL();
         }
         SERVER_END_REQ;
     }
