@@ -149,7 +149,7 @@ int cp_mbstowcs( const union cptable *table, int flags,
     {
         if (flags & MB_ERR_INVALID_CHARS)
         {
-            if (!check_invalid_chars_sbcs( &table->sbcs, src, srclen )) return -2;
+            if (check_invalid_chars_sbcs( &table->sbcs, src, srclen )) return -2;
         }
         if (!dstlen) return srclen;
         return mbstowcs_sbcs( &table->sbcs, src, srclen, dst, dstlen );
@@ -158,7 +158,7 @@ int cp_mbstowcs( const union cptable *table, int flags,
     {
         if (flags & MB_ERR_INVALID_CHARS)
         {
-            if (!check_invalid_chars_dbcs( &table->dbcs, src, srclen )) return -2;
+            if (check_invalid_chars_dbcs( &table->dbcs, src, srclen )) return -2;
         }
         if (!dstlen) return get_length_dbcs( &table->dbcs, src, srclen );
         return mbstowcs_dbcs( &table->dbcs, src, srclen, dst, dstlen );
