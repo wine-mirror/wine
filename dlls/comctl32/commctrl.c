@@ -115,7 +115,6 @@ extern void UPDOWN_Register(void);
 extern void UPDOWN_Unregister(void);
 
 
-HANDLE COMCTL32_hHeap = NULL;
 LPSTR    COMCTL32_aSubclass = NULL;
 HMODULE COMCTL32_hModule = 0;
 LANGID  COMCTL32_uiLang = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
@@ -153,10 +152,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             DisableThreadLibraryCalls(hinstDLL);
 
             COMCTL32_hModule = (HMODULE)hinstDLL;
-
-            /* create private heap */
-            COMCTL32_hHeap = HeapCreate (0, 0x10000, 0);
-            TRACE("Heap created: %p\n", COMCTL32_hHeap);
 
             /* add global subclassing atom (used by 'tooltip' and 'updown') */
             COMCTL32_aSubclass = (LPSTR)(DWORD)GlobalAddAtomA ("CC32SubclassInfo");
@@ -218,11 +213,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             GlobalDeleteAtom (LOWORD(COMCTL32_aSubclass));
             TRACE("Subclassing atom deleted: %p\n", COMCTL32_aSubclass);
             COMCTL32_aSubclass = NULL;
-
-            /* destroy private heap */
-            HeapDestroy (COMCTL32_hHeap);
-            TRACE("Heap destroyed: %p\n", COMCTL32_hHeap);
-            COMCTL32_hHeap = NULL;
             break;
     }
 
