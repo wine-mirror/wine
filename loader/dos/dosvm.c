@@ -22,9 +22,11 @@
 #include "wine/winbase16.h"
 #include "wine/exception.h"
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnt.h"
+#include "wincon.h"
 
 #include "callback.h"
 #include "msdos.h"
@@ -196,7 +198,7 @@ void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,CONTEXT86*
   LPDOSTASK lpDosTask = MZ_Current();
   LPDOSEVENT event, cur, prev;
 
-  if (lpDosTask) {
+  if (lpDosTask && lpDosTask->entered) {
     event = malloc(sizeof(DOSEVENT));
     if (!event) {
       ERR_(int)("out of memory allocating event entry\n");
@@ -216,13 +218,25 @@ void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,CONTEXT86*
     if (prev) prev->next = event;
     else lpDosTask->pending = event;
     
-    /* get dosmod's attention to the new event, except for irq==0 where we already have it */
-    if (irq && !lpDosTask->sig_sent) {
+    /* get dosmod's attention to the new event, if necessary */
+    if (!lpDosTask->sig_sent) {
       TRACE_(int)("new event queued, signalling dosmod\n");
       kill(lpDosTask->task,SIGUSR2);
       lpDosTask->sig_sent++;
     } else {
       TRACE_(int)("new event queued\n");
+    }
+  } else {
+    /* DOS subsystem not running */
+    /* (this probably means that we're running a win16 app
+     *  which uses DPMI to thunk down to DOS services) */
+    if (irq<0) {
+      /* callback event, perform it with dummy context */
+      CONTEXT86 context;
+      memset(&context,0,sizeof(context));
+      (*relay)(lpDosTask,&context,data);
+    } else {
+      ERR_(int)("IRQ without DOS task: should not happen");
     }
   }
 }
@@ -266,6 +280,7 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn, int sig,
    TRACE_(int)("DOS module caught signal %d\n",sig);
    if ((sig==SIGALRM) || (sig==SIGUSR2)) {
      if (sig==SIGALRM) {
+       lpDosTask->sig_sent++;
        DOSVM_QueueEvent(0,DOS_PRIORITY_REALTIME,NULL,NULL);
      }
      if (lpDosTask->pending) {
@@ -277,7 +292,7 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn, int sig,
        TRACE_(int)("no events are pending, clearing Pending flag\n");
        CLR_PEND(&context);
      }
-     if (sig==SIGUSR2) lpDosTask->sig_sent--;
+     lpDosTask->sig_sent--;
    }
    else if ((sig==SIGHUP) || (sig==SIGILL) || (sig==SIGSEGV)) {
        do_exception( sig, &context );
@@ -320,11 +335,36 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn, int sig,
  return ret;
 }
 
-void DOSVM_ProcessMessage(LPDOSTASK lpDosTask,MSG *msg)
+static void DOSVM_ProcessConsole(LPDOSTASK lpDosTask)
+{
+  INPUT_RECORD msg;
+  DWORD res;
+  BYTE scan;
+
+  if (ReadConsoleInputA(GetStdHandle(STD_INPUT_HANDLE),&msg,1,&res)) {
+    switch (msg.EventType) {
+    case KEY_EVENT:
+      scan = msg.Event.KeyEvent.wVirtualScanCode;
+      if (!msg.Event.KeyEvent.bKeyDown) scan |= 0x80;
+
+      /* check whether extended bit is set,
+       * and if so, queue the extension prefix */
+      if (msg.Event.KeyEvent.dwControlKeyState & ENHANCED_KEY) {
+        INT_Int09SendScan(0xE0,0);
+      }
+      INT_Int09SendScan(scan,msg.Event.KeyEvent.uChar.AsciiChar);
+      break;
+    default:
+      FIXME_(int)("unhandled console event: %d\n", msg.EventType);
+    }
+  }
+}
+
+static void DOSVM_ProcessMessage(LPDOSTASK lpDosTask,MSG *msg)
 {
   BYTE scan = 0;
 
-  fprintf(stderr,"got message %04x, wparam=%08x, lparam=%08lx\n",msg->message,msg->wParam,msg->lParam);
+  TRACE_(int)("got message %04x, wparam=%08x, lparam=%08lx\n",msg->message,msg->wParam,msg->lParam);
   if ((msg->message>=WM_MOUSEFIRST)&&
       (msg->message<=WM_MOUSELAST)) {
     INT_Int33Message(msg->message,msg->wParam,msg->lParam);
@@ -354,8 +394,13 @@ void DOSVM_Wait( int read_pipe, HANDLE hObject )
   LPDOSTASK lpDosTask = MZ_Current();
   MSG msg;
   DWORD waitret;
+  HANDLE objs[2];
+  int objc;
   BOOL got_msg = FALSE;
 
+  objs[0]=GetStdHandle(STD_INPUT_HANDLE);
+  objs[1]=hObject;
+  objc=hObject?2:1;
   do {
     /* check for messages (waste time before the response check below) */
     while (Callout.PeekMessageA(&msg,0,0,0,PM_REMOVE|PM_NOYIELD)) {
@@ -364,6 +409,15 @@ void DOSVM_Wait( int read_pipe, HANDLE hObject )
       /* we don't need a TranslateMessage here */
       Callout.DispatchMessageA(&msg);
       got_msg = TRUE;
+    }
+    if (!got_msg) {
+      /* check for console input */
+      INPUT_RECORD msg;
+      DWORD num;
+      if (PeekConsoleInputA(objs[0],&msg,1,&num) && num) {
+        DOSVM_ProcessConsole(lpDosTask);
+        got_msg = TRUE;
+      }
     }
     if (read_pipe == -1) {
       if (got_msg) break;
@@ -376,15 +430,16 @@ void DOSVM_Wait( int read_pipe, HANDLE hObject )
       if (select(read_pipe+1,&readfds,NULL,NULL,&timeout)>0)
 	break;
     }
-    /* check for data from win32 console device */
-
     /* nothing yet, block while waiting for something to do */
-    waitret=MsgWaitForMultipleObjects(1,&hObject,FALSE,INFINITE,QS_ALLINPUT);
+    waitret=MsgWaitForMultipleObjects(objc,objs,FALSE,INFINITE,QS_ALLINPUT);
     if (waitret==(DWORD)-1) {
       ERR_(module)("dosvm wait error=%ld\n",GetLastError());
     }
-    if (read_pipe != -1) {
-      if (waitret==WAIT_OBJECT_0) break;
+    if ((read_pipe != -1) && hObject) {
+      if (waitret==(WAIT_OBJECT_0+1)) break;
+    }
+    if (waitret==WAIT_OBJECT_0) {
+      DOSVM_ProcessConsole(lpDosTask);
     }
   } while (TRUE);
 }
@@ -424,7 +479,9 @@ int DOSVM_Enter( CONTEXT86 *context )
  }
 
  /* main exchange loop */
+ lpDosTask->entered++;
  do {
+  TRACE_(module)("thread is: %lx\n",GetCurrentThreadId());
   stat = VM86_ENTER;
   errno = 0;
   /* transmit VM86 structure to dosmod task */
@@ -449,6 +506,10 @@ int DOSVM_Enter( CONTEXT86 *context )
     return -1;
   }
   TRACE_(module)("dosmod return code=%d\n",stat);
+  if (stat==DOSMOD_LEFTIDLE) {
+    lpDosTask->idling--;
+    continue;
+  }
   while (1) {
     if ((len=read(lpDosTask->read_pipe,&VM86,sizeof(VM86)))==sizeof(VM86)) break;
     if (((errno==EINTR)||(errno==EAGAIN))&&(len<=0)) {
@@ -471,6 +532,7 @@ int DOSVM_Enter( CONTEXT86 *context )
   } else sig=0;
   /* got response */
  } while (DOSVM_Process(lpDosTask,stat,sig,&VM86)>=0);
+ lpDosTask->entered--;
 
  if (context) {
 #define CP(x,y) y##_reg(context) = VM86.regs.x
@@ -616,6 +678,16 @@ void DOSVM_SetTimer( unsigned ticks ) {}
 unsigned DOSVM_GetTimer( void ) { return 0; }
 void DOSVM_SetSystemData( int id, void *data ) { free(data); }
 void* DOSVM_GetSystemData( int id ) { return NULL; }
-void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,CONTEXT86*,void*), void *data) {}
+void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,CONTEXT86*,void*), void *data)
+{
+  if (irq<0) {
+    /* callback event, perform it with dummy context */
+    CONTEXT86 context;
+    memset(&context,0,sizeof(context));
+    (*relay)(lpDosTask,&context,data);
+  } else {
+    ERR_(int)("IRQ without DOS task: should not happen");
+  }
+}
 
 #endif

@@ -32,7 +32,7 @@ typedef struct _DOSTASK {
  HANDLE hReadPipe,hXPipe,hConInput,hConOutput;
  int read_pipe,write_pipe;
  pid_t task;
- int sig_sent;
+ int sig_sent,entered,idling;
  struct _DOSEVENT *pending,*current;
  DOSSYSTEM *sys;
 } DOSTASK, *LPDOSTASK;
