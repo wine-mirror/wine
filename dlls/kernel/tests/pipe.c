@@ -50,6 +50,10 @@
 
 #define PIPENAME "\\\\.\\PiPe\\tests_" __FILE__
 
+#define NB_SERVER_LOOPS 8
+
+static HANDLE alarm_event;
+
 void test_CreateNamedPipe(pipemode)
 {
     HANDLE hnp;
@@ -384,9 +388,11 @@ static DWORD CALLBACK alarmThreadMain(LPVOID arg)
 {
     DWORD timeout = (DWORD) arg;
     trace("alarmThreadMain\n");
-    Sleep(timeout);
-    ok(FALSE, "alarm\n");
-    ExitProcess(1);
+    if (WaitForSingleObject( alarm_event, timeout ) == WAIT_TIMEOUT)
+    {
+        ok(FALSE, "alarm\n");
+        ExitProcess(1);
+    }
     return 1;
 }
 
@@ -408,7 +414,7 @@ static DWORD CALLBACK serverThreadMain1(LPVOID arg)
         /* lpSecurityAttrib */ NULL);
 
     ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
-    for (i = 0; ; i++) {
+    for (i = 0; i < NB_SERVER_LOOPS; i++) {
         char buf[512];
         DWORD written;
         DWORD readden;
@@ -440,6 +446,7 @@ static DWORD CALLBACK serverThreadMain1(LPVOID arg)
         ok(DisconnectNamedPipe(hnp), "DisconnectNamedPipe\n");
         trace("Server done disconnecting.\n");
     }
+    return 0;
 }
 
 /** Trivial byte echo server - closes after each connection */
@@ -459,7 +466,7 @@ static DWORD CALLBACK serverThreadMain2(LPVOID arg)
         /* lpSecurityAttrib */ NULL);
     ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
-    for (i = 0; ; i++) {
+    for (i = 0; i < NB_SERVER_LOOPS; i++) {
         char buf[512];
         DWORD written;
         DWORD readden;
@@ -503,6 +510,7 @@ static DWORD CALLBACK serverThreadMain2(LPVOID arg)
         ok(CloseHandle(hnp), "CloseHandle\n");
         hnp = hnpNext;
     }
+    return 0;
 }
 
 /** Trivial byte echo server - uses overlapped named pipe calls */
@@ -528,7 +536,7 @@ static DWORD CALLBACK serverThreadMain3(LPVOID arg)
         NULL);                  /* name */
     ok(hEvent != NULL, "CreateEvent\n");
 
-    for (i = 0; ; i++) {
+    for (i = 0; i < NB_SERVER_LOOPS; i++) {
         char buf[512];
         DWORD written;
         DWORD readden;
@@ -599,6 +607,7 @@ static DWORD CALLBACK serverThreadMain3(LPVOID arg)
         ok(FlushFileBuffers(hnp), "FlushFileBuffers\n");
         ok(DisconnectNamedPipe(hnp), "DisconnectNamedPipe\n");
     }
+    return 0;
 }
 
 static void exercizeServer(const char *pipename, HANDLE serverThread)
@@ -606,7 +615,7 @@ static void exercizeServer(const char *pipename, HANDLE serverThread)
     int i;
 
     trace("exercizeServer starting\n");
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < NB_SERVER_LOOPS; i++) {
         HANDLE hFile=INVALID_HANDLE_VALUE;
         const char obuf[] = "Bit Bucket";
         char ibuf[32];
@@ -646,7 +655,7 @@ static void exercizeServer(const char *pipename, HANDLE serverThread)
         ok(CloseHandle(hFile), "CloseHandle\n");
     }
 
-    ok(TerminateThread(serverThread, 0), "TerminateThread\n");
+    ok(WaitForSingleObject(serverThread,INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject\n");
     CloseHandle(hnp);
     trace("exercizeServer returning\n");
 }
@@ -660,6 +669,7 @@ void test_NamedPipe_2(void)
 
     trace("test_NamedPipe_2 starting\n");
     /* Set up a ten second timeout */
+    alarm_event = CreateEvent( NULL, TRUE, FALSE, NULL );
     alarmThread = CreateThread(NULL, 0, alarmThreadMain, (void *) 10000, 0, &alarmThreadId);
 
     /* The servers we're about to exercize do try to clean up carefully,
@@ -668,7 +678,7 @@ void test_NamedPipe_2(void)
      */
 
     /* Try server #1 */
-    serverThread = CreateThread(NULL, 0, serverThreadMain1, 0, 0, &serverThreadId);
+    serverThread = CreateThread(NULL, 0, serverThreadMain1, (void *)8, 0, &serverThreadId);
     ok(serverThread != INVALID_HANDLE_VALUE, "CreateThread\n");
     exercizeServer(PIPENAME "serverThreadMain1", serverThread);
 
@@ -685,7 +695,8 @@ void test_NamedPipe_2(void)
     exercizeServer(PIPENAME "serverThreadMain3", serverThread);
     }
 
-    ok(TerminateThread(alarmThread, 0), "TerminateThread\n");
+    ok(SetEvent( alarm_event ), "SetEvent\n");
+    CloseHandle( alarm_event );
     trace("test_NamedPipe_2 returning\n");
 }
 
