@@ -58,29 +58,6 @@ void MSI_FreePackage( MSIOBJECTHDR *arg)
     msiobj_release( &package->db->hdr );
 }
 
-UINT WINAPI MsiOpenPackageA(LPCSTR szPackage, MSIHANDLE *phPackage)
-{
-    LPWSTR szwPack = NULL;
-    UINT len, ret;
-
-    TRACE("%s %p\n",debugstr_a(szPackage), phPackage);
-
-    if( szPackage )
-    {
-        len = MultiByteToWideChar( CP_ACP, 0, szPackage, -1, NULL, 0 );
-        szwPack = HeapAlloc( GetProcessHeap(), 0, len * sizeof (WCHAR) );
-        if( szwPack )
-            MultiByteToWideChar( CP_ACP, 0, szPackage, -1, szwPack, len );
-    }
-
-    ret = MsiOpenPackageW( szwPack, phPackage );
-
-    HeapFree( GetProcessHeap(), 0, szwPack );
-
-    return ret;
-}
-
-
 static const UINT clone_properties(MSIDATABASE *db)
 {
     MSIQUERY * view = NULL;
@@ -375,39 +352,19 @@ Privileged
     ReleaseDC(0, dc);
 }
 
-UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
+UINT MSI_CreatePackage(MSIDATABASE *db, MSIPACKAGE **pPackage)
 {
-    UINT rc;
-    MSIDATABASE *db = NULL;
+    static const WCHAR szLevel[] = { 'U','I','L','e','v','e','l',0 };
+    static const WCHAR szpi[] = {'%','i',0};
     MSIPACKAGE *package = NULL;
     WCHAR uilevel[10];
     UINT ret = ERROR_FUNCTION_FAILED;
 
-    static const WCHAR OriginalDatabase[] =
-{'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
-    static const WCHAR Database[] =
-{'D','A','T','A','B','A','S','E',0};
-    static const WCHAR szpi[] = {'%','i',0};
-    static const WCHAR szLevel[] = { 'U','I','L','e','v','e','l',0 };
-
-    TRACE("%s %p\n",debugstr_w(szPackage), pPackage);
-
-    if (szPackage[0] == '#')
-    {
-        INT handle = atoiW(&szPackage[1]);
-        db = msihandle2msiinfo( handle , MSIHANDLETYPE_DATABASE);
-    }
-    else
-    {
-        rc = MSI_OpenDatabaseW(szPackage, MSIDBOPEN_READONLY, &db);
-        if (rc != ERROR_SUCCESS)
-            return ERROR_FUNCTION_FAILED;
-    }
+    TRACE("%p %p\n", db, pPackage);
 
     package = alloc_msiobject( MSIHANDLETYPE_PACKAGE, sizeof (MSIPACKAGE),
                                MSI_FreePackage );
-
-    if (package)
+    if( package )
     {
         msiobj_addref( &db->hdr );
 
@@ -428,8 +385,6 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 
         clone_properties(db);
         set_installer_properties(package);
-        MSI_SetPropertyW(package, OriginalDatabase, szPackage);
-        MSI_SetPropertyW(package, Database, szPackage);
         sprintfW(uilevel,szpi,gUILevel);
         MSI_SetPropertyW(package, szLevel, uilevel);
 
@@ -440,16 +395,64 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 
     if( package )
         msiobj_release( &package->hdr );
+
+    return ret;
+}
+
+UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
+{
+    MSIDATABASE *db = NULL;
+    UINT ret = ERROR_FUNCTION_FAILED;
+    MSIHANDLE handle;
+
+    TRACE("%s %p\n", debugstr_w(szPackage), pPackage);
+
+    if( szPackage[0] == '#' )
+    {
+        handle = atoiW(&szPackage[1]);
+        db = msihandle2msiinfo( handle, MSIHANDLETYPE_DATABASE );
+        if( !db )
+            return ERROR_INVALID_HANDLE;
+    }
+    else
+    {
+        ret = MSI_OpenDatabaseW(szPackage, MSIDBOPEN_READONLY, &db);
+        if( ret != ERROR_SUCCESS )
+            return ret;
+    }
+
+    ret = MSI_CreatePackage( db, pPackage );
+
+    /* 
+     * FIXME:  I don't think this is right.  Maybe we should be storing the
+     * name of the database in the MSIDATABASE structure and fetching this
+     * info from there, or maybe this is only relevant to cached databases.
+     */
+    if( ret == ERROR_SUCCESS && szPackage[0] != '#' )
+    {
+        static const WCHAR OriginalDatabase[] =
+          {'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
+        static const WCHAR Database[] = {'D','A','T','A','B','A','S','E',0};
+
+        MSI_SetPropertyW(*pPackage, OriginalDatabase, szPackage);
+        MSI_SetPropertyW(*pPackage, Database, szPackage);
+    }
+
     if( db )
         msiobj_release( &db->hdr );
 
     return ret;
 }
 
-UINT WINAPI MsiOpenPackageW(LPCWSTR szPackage, MSIHANDLE *phPackage)
+UINT WINAPI MsiOpenPackageExW(LPCWSTR szPackage, DWORD dwOptions, MSIHANDLE *phPackage)
 {
     MSIPACKAGE *package = NULL;
     UINT ret;
+
+    TRACE("%s %08lx %p\n",debugstr_w(szPackage), dwOptions, phPackage);
+
+    if( dwOptions )
+        FIXME("dwOptions %08lx not supported\n", dwOptions);
 
     ret = MSI_OpenPackageW( szPackage, &package);
     if( ret == ERROR_SUCCESS )
@@ -460,16 +463,34 @@ UINT WINAPI MsiOpenPackageW(LPCWSTR szPackage, MSIHANDLE *phPackage)
     return ret;
 }
 
-UINT WINAPI MsiOpenPackageExA(LPCSTR szPackage, DWORD dwOptions, MSIHANDLE *phPackage)
+UINT WINAPI MsiOpenPackageW(LPCWSTR szPackage, MSIHANDLE *phPackage)
 {
-    FIXME("%s 0x%08lx %p\n",debugstr_a(szPackage), dwOptions, phPackage);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    return MsiOpenPackageExW( szPackage, 0, phPackage );
 }
 
-UINT WINAPI MsiOpenPackageExW(LPCWSTR szPackage, DWORD dwOptions, MSIHANDLE *phPackage)
+UINT WINAPI MsiOpenPackageExA(LPCSTR szPackage, DWORD dwOptions, MSIHANDLE *phPackage)
 {
-    FIXME("%s 0x%08lx %p\n",debugstr_w(szPackage), dwOptions, phPackage);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    LPWSTR szwPack = NULL;
+    UINT len, ret;
+
+    if( szPackage )
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, szPackage, -1, NULL, 0 );
+        szwPack = HeapAlloc( GetProcessHeap(), 0, len * sizeof (WCHAR) );
+        if( szwPack )
+            MultiByteToWideChar( CP_ACP, 0, szPackage, -1, szwPack, len );
+    }
+
+    ret = MsiOpenPackageExW( szwPack, dwOptions, phPackage );
+
+    HeapFree( GetProcessHeap(), 0, szwPack );
+
+    return ret;
+}
+
+UINT WINAPI MsiOpenPackageA(LPCSTR szPackage, MSIHANDLE *phPackage)
+{
+    return MsiOpenPackageExA( szPackage, 0, phPackage );
 }
 
 MSIHANDLE WINAPI MsiGetActiveDatabase(MSIHANDLE hInstall)
