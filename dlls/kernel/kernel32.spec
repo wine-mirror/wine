@@ -904,8 +904,8 @@ import  ntdll.dll
 885 stub ReadDirectoryChangesW
 886 stub ReadFileScatter
 887 stub SetConsoleIcon
-888 stub SetConsoleInputExeNameA
-889 stub SetConsoleInputExeNameW
+888 stdcall SetConsoleInputExeNameA(ptr) SetConsoleInputExeNameA
+889 stdcall SetConsoleInputExeNameW(ptr) SetConsoleInputExeNameW
 890 stdcall SetProcessAffinityMask(long long) SetProcessAffinityMask
 891 stdcall SetProcessPriorityBoost(long long) SetProcessPriorityBoost
 892 stub SetThreadIdealProcessor

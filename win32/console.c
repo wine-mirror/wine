@@ -1590,3 +1590,31 @@ BOOL WINAPI SetConsoleCP( UINT cp )
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+/******************************************************************************
+ *  SetConsoleInputExeNameW	 [KERNEL32.889]
+ * 
+ * BUGS
+ *   Unimplemented
+ */
+BOOL WINAPI SetConsoleInputExeNameW( LPCWSTR name )
+{
+    FIXME("(%s): stub!\n", debugstr_w(name));
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return TRUE;
+}
+
+/******************************************************************************
+ *  SetConsoleInputExeNameA	 [KERNEL32.888]
+ * 
+ * BUGS
+ *   Unimplemented
+ */
+BOOL WINAPI SetConsoleInputExeNameA( LPCSTR name )
+{
+    FIXME("(%s): stub!\n", name);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return TRUE;
+}
