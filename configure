@@ -3150,7 +3150,7 @@ if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
   cat >> confdefs.h <<\EOF
 #define HAVE_LIBMESAGL 1
 EOF
- X_PRE_LIBS="$X_PRE_LIBS -lGL"
+ X_PRE_LIBS="$X_PRE_LIBS -lMesaGL"
 else
   echo "$ac_t""no" 1>&6
 fi

@@ -154,7 +154,7 @@ then
             AC_CHECK_LIB(GL,glXCreateContext,AC_DEFINE(HAVE_LIBMESAGL) X_PRE_LIBS="$X_PRE_LIBS -lGL",,$X_LIBS -lXext -lX11 -lm)
 	    if test "$ac_cv_lib_GL_glXCreateContext" = "no"
 	    then
-		AC_CHECK_LIB(MesaGL,glXCreateContext,AC_DEFINE(HAVE_LIBMESAGL) X_PRE_LIBS="$X_PRE_LIBS -lGL",,$X_LIBS -lXext -lX11 -lm)
+		AC_CHECK_LIB(MesaGL,glXCreateContext,AC_DEFINE(HAVE_LIBMESAGL) X_PRE_LIBS="$X_PRE_LIBS -lMesaGL",,$X_LIBS -lXext -lX11 -lm)
 	    fi
         fi
     fi
