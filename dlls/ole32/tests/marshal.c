@@ -588,7 +588,7 @@ static void test_no_couninitialize()
     SetEvent(ncu_params.unmarshal_event);
     WaitForSingleObject(thread, INFINITE);
 
-    todo_wine { ok_no_locks(); }
+    ok_no_locks();
 
     CloseHandle(thread);
     CloseHandle(ncu_params.marshal_event);

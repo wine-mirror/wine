@@ -790,7 +790,7 @@ static DWORD WINAPI client_dispatch_thread(LPVOID param)
     
     /* join marshalling apartment. fixme: this stuff is all very wrong, threading needs to work like native */
     COM_CurrentInfo()->apt = apt;
-    
+
     while (TRUE)
     {
         int i;
@@ -825,6 +825,10 @@ static DWORD WINAPI client_dispatch_thread(LPVOID param)
     }
 
     TRACE("exiting with hres %lx\n",hres);
+
+    /* leave marshalling apartment. fixme: this stuff is all very wrong, threading needs to work like native */
+    COM_CurrentInfo()->apt = NULL;
+
     DisconnectNamedPipe(pipe);
     CloseHandle(pipe);
     return 0;
@@ -933,6 +937,9 @@ static DWORD WINAPI apartment_listener_thread(LPVOID p)
     }
 
     TRACE("shutting down: %s\n", wine_dbgstr_longlong(this_oxid));
+
+    /* we must leave the marshalling threads apartment. we don't have a ref here */
+    COM_CurrentInfo()->apt = NULL;
 
     DisconnectNamedPipe(listenPipe);
     CloseHandle(listenPipe);

@@ -209,7 +209,6 @@ HRESULT WINAPI RunningObjectTableImpl_UnInitialize(void);
 int WINAPI FileMonikerImpl_DecomposePath(LPCOLESTR str, LPOLESTR** stringTable);
 
 /* compobj.c */
-APARTMENT *COM_CreateApartment(DWORD model);
 APARTMENT *COM_ApartmentFromOXID(OXID oxid, BOOL ref);
 APARTMENT *COM_ApartmentFromTID(DWORD tid);
 DWORD COM_ApartmentAddRef(struct apartment *apt);
