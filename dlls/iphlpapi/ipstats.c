@@ -23,15 +23,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
 #if HAVE_NET_IF_H
 #include <net/if.h>
 #endif
-
 #if HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
 #endif
-
 #if HAVE_NETINET_TCP_FSM_H
 #include <netinet/tcp_fsm.h>
 #endif
