@@ -68,11 +68,23 @@ void __wine_init_codepages( const union cptable *ansi, const union cptable *oem 
 
 
 /**************************************************************************
- *	RtlInitAnsiString   (NTDLL.@)
+ *      RtlInitAnsiString   (NTDLL.@)
+ *
+ * Initializes a buffered ansi string.
+ *
+ * RETURNS
+ *  Nothing.
+ *
+ * NOTES
+ *  Assigns source to target->Buffer. The length of source is assigned to
+ *  target->Length and target->MaximumLength. If source is NULL the length
+ *  of source is assumed to be 0.
  */
-void WINAPI RtlInitAnsiString( PSTRING target, LPCSTR source)
+void WINAPI RtlInitAnsiString(
+    PANSI_STRING target, /* [I/O] Buffered ansi string to be initialized */
+    PCSZ source)         /* [I]   '\0' terminated string used to initialize target */
 {
-    if ((target->Buffer = (LPSTR)source))
+    if ((target->Buffer = (PCHAR) source))
     {
         target->Length = strlen(source);
         target->MaximumLength = target->Length + 1;
@@ -82,9 +94,21 @@ void WINAPI RtlInitAnsiString( PSTRING target, LPCSTR source)
 
 
 /**************************************************************************
- *	RtlInitString   (NTDLL.@)
+ *      RtlInitString   (NTDLL.@)
+ *
+ * Initializes a buffered string.
+ *
+ * RETURNS
+ *  Nothing.
+ *
+ * NOTES
+ *  Assigns source to target->Buffer. The length of source is assigned to
+ *  target->Length and target->MaximumLength. If source is NULL the length
+ *  of source is assumed to be 0.
  */
-void WINAPI RtlInitString( PSTRING target, LPCSTR source )
+void WINAPI RtlInitString(
+    PSTRING target, /* [I/O] Buffered string to be initialized */
+    PCSZ source)    /* [I]   '\0' terminated string used to initialize target */
 {
     RtlInitAnsiString( target, source );
 }
@@ -124,16 +148,65 @@ void WINAPI RtlCopyString( STRING *dst, const STRING *src )
 
 
 /**************************************************************************
- *	RtlInitUnicodeString   (NTDLL.@)
+ *      RtlInitUnicodeString   (NTDLL.@)
+ *
+ * Initializes a buffered unicode string.
+ *
+ * RETURNS
+ *  Nothing.
+ *
+ * NOTES
+ *  Assigns source to target->Buffer. The length of source is assigned to
+ *  target->Length and target->MaximumLength. If source is NULL the length
+ *  of source is assumed to be 0.
  */
-void WINAPI RtlInitUnicodeString( PUNICODE_STRING target, LPCWSTR source )
+void WINAPI RtlInitUnicodeString(
+    PUNICODE_STRING target, /* [I/O] Buffered unicode string to be initialized */
+    PCWSTR source)          /* [I]   '\0' terminated unicode string used to initialize target */
 {
-    if ((target->Buffer = (LPWSTR)source))
+    if ((target->Buffer = (PWSTR) source))
     {
         target->Length = strlenW(source) * sizeof(WCHAR);
         target->MaximumLength = target->Length + sizeof(WCHAR);
     }
     else target->Length = target->MaximumLength = 0;
+}
+
+
+/**************************************************************************
+ *      RtlInitUnicodeStringEx   (NTDLL.@)
+ *
+ * Initializes a buffered unicode string.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS. target is initialized.
+ *  Failure: STATUS_NAME_TOO_LONG, if the source string is larger than 65532 bytes.
+ *
+ * NOTES
+ *  Assigns source to target->Buffer. The length of source is assigned to
+ *  target->Length and target->MaximumLength. If source is NULL the length
+ *  of source is assumed to be 0.
+ */
+NTSTATUS WINAPI RtlInitUnicodeStringEx(
+    PUNICODE_STRING target, /* [I/O] Buffered unicode string to be initialized */
+    PCWSTR source)          /* [I]   '\0' terminated unicode string used to initialize target */
+{
+    if (source != NULL) {
+        unsigned int len = strlenW(source) * sizeof(WCHAR);
+
+        if (len > 0xFFFC) {
+            return STATUS_NAME_TOO_LONG;
+        } else {
+            target->Length = len;
+            target->MaximumLength = len + sizeof(WCHAR);
+            target->Buffer = (PWSTR) source;
+        } /* if */
+    } else {
+        target->Length = 0;
+        target->MaximumLength = 0;
+        target->Buffer = NULL;
+    } /* if */
+    return STATUS_SUCCESS;
 }
 
 
@@ -181,10 +254,68 @@ void WINAPI RtlCopyUnicodeString( UNICODE_STRING *dst, const UNICODE_STRING *src
         unsigned int len = min( src->Length, dst->MaximumLength );
         memcpy( dst->Buffer, src->Buffer, len );
         dst->Length = len;
-        /* append terminating NULL if enough space */
+        /* append terminating '\0' if enough space */
         if (len < dst->MaximumLength) dst->Buffer[len / sizeof(WCHAR)] = 0;
     }
     else dst->Length = 0;
+}
+
+
+/**************************************************************************
+ *      RtlDuplicateUnicodeString   (NTDLL.@)
+ *
+ * Duplicates an unicode string.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS. destination contains the duplicated unicode string.
+ *  Failure: STATUS_INVALID_PARAMETER, if one of the parameters is illegal.
+ *           STATUS_NO_MEMORY, if the allocation fails.
+ *
+ * NOTES
+ *  For add_nul there are several possible values:
+ *  0 = destination will not be '\0' terminated,
+ *  1 = destination will be '\0' terminated,
+ *  3 = like 1 but for an empty source string produce '\0' terminated empty
+ *     Buffer instead of assigning NULL to the Buffer.
+ *  Other add_nul values are invalid.
+ */
+NTSTATUS WINAPI RtlDuplicateUnicodeString(
+    int add_nul,                  /* [I] flag */
+    const UNICODE_STRING *source, /* [I] Unicode string to be duplicated */
+    UNICODE_STRING *destination)  /* [O] destination for the duplicated unicode string */
+{
+    if (source == NULL || destination == NULL ||
+        source->Length > source->MaximumLength ||
+        (source->Length == 0 && source->MaximumLength > 0 && source->Buffer == NULL) ||
+        add_nul == 2 || add_nul >= 4 || add_nul < 0) {
+        return STATUS_INVALID_PARAMETER;
+    } else {
+        if (source->Length == 0 && add_nul != 3) {
+            destination->Length = 0;
+            destination->MaximumLength = 0;
+            destination->Buffer = NULL;
+        } else {
+            unsigned int destination_max_len = source->Length;
+
+            if (add_nul) {
+                destination_max_len += sizeof(WCHAR);
+            } /* if */
+            destination->Buffer = RtlAllocateHeap(ntdll_get_process_heap(), 0, destination_max_len);
+            if (destination->Buffer == NULL) {
+                return STATUS_NO_MEMORY;
+            } else {
+                memcpy(destination->Buffer, source->Buffer, source->Length);
+                destination->Length = source->Length;
+                destination->MaximumLength = source->Length;
+                /* append terminating '\0' if enough space */
+                if (add_nul) {
+                    destination->MaximumLength = destination_max_len;
+                    destination->Buffer[destination->Length / sizeof(WCHAR)] = 0;
+                } /* if */
+            } /* if */
+        } /* if */
+    } /* if */
+    return STATUS_SUCCESS;
 }
 
 
@@ -407,20 +538,29 @@ NTSTATUS WINAPI RtlEqualDomainName(const UNICODE_STRING *left,
 
 
 /*
-	COPY BETWEEN ANSI_STRING or UNICODE_STRING
-	there is no parameter checking, it just crashes
+        COPY BETWEEN ANSI_STRING or UNICODE_STRING
+        there is no parameter checking, it just crashes
 */
 
 
 /**************************************************************************
- *	RtlAnsiStringToUnicodeString   (NTDLL.@)
+ *      RtlAnsiStringToUnicodeString   (NTDLL.@)
+ *
+ * Converts an ansi string to an unicode string.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS. uni contains the converted string
+ *  Failure: STATUS_BUFFER_OVERFLOW, if doalloc is FALSE and ansi is too small.
+ *           STATUS_NO_MEMORY, if doalloc is TRUE and the allocation fails.
+ *           STATUS_INVALID_PARAMETER_2, if the unicode string would be larger than 65535.
  *
  * NOTES
- *  This function always writes a terminating NUL.
+ *  This function always writes a terminating '\0'.
  */
-NTSTATUS WINAPI RtlAnsiStringToUnicodeString( PUNICODE_STRING uni,
-                                              PCANSI_STRING ansi,
-                                              BOOLEAN doalloc )
+NTSTATUS WINAPI RtlAnsiStringToUnicodeString(
+    PUNICODE_STRING uni, /* [I/O] Destination for the unicode string */
+    PCANSI_STRING ansi,  /* [I]   Ansi string to be converted */
+    BOOLEAN doalloc)     /* [I]   TRUE=Allocate new buffer for uni, FALSE=Use existing buffer */
 {
     DWORD total = RtlAnsiStringToUnicodeSize( ansi );
 
@@ -443,13 +583,21 @@ NTSTATUS WINAPI RtlAnsiStringToUnicodeString( PUNICODE_STRING uni,
 /**************************************************************************
  *	RtlOemStringToUnicodeString   (NTDLL.@)
  *
+ * Converts an oem string to an unicode string.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS. uni contains the converted string
+ *  Failure: STATUS_BUFFER_OVERFLOW, if doalloc is FALSE and oem is too small.
+ *           STATUS_NO_MEMORY, if doalloc is TRUE and the allocation fails.
+ *           STATUS_INVALID_PARAMETER_2, if the unicode string would be larger than 65535.
+ *
  * NOTES
- *  This function always writes a terminating NUL.
- *  If the resulting length > 0xffff it returns STATUS_INVALID_PARAMETER_2
+ *  This function always writes a terminating '\0'.
  */
-NTSTATUS WINAPI RtlOemStringToUnicodeString( UNICODE_STRING *uni,
-                                             const STRING *oem,
-                                             BOOLEAN doalloc )
+NTSTATUS WINAPI RtlOemStringToUnicodeString(
+    UNICODE_STRING *uni, /* [I/O] Destination for the unicode string */
+    const STRING *oem,   /* [I]   Oem string to be converted */
+    BOOLEAN doalloc)     /* [I]   TRUE=Allocate new buffer for uni, FALSE=Use existing buffer */
 {
     DWORD total = RtlOemStringToUnicodeSize( oem );
 
@@ -472,19 +620,19 @@ NTSTATUS WINAPI RtlOemStringToUnicodeString( UNICODE_STRING *uni,
 /**************************************************************************
  *	RtlUnicodeStringToAnsiString   (NTDLL.@)
  *
- * Converts an Unicode string to an Ansi string.
+ * Converts an unicode string to an ansi string.
  *
  * RETURNS
  *  Success: STATUS_SUCCESS. ansi contains the converted string
- *  Failure: STATUS_BUFFER_OVERFLOW if doalloc is FALSE and ansi is too small.
- *           STATUS_NO_MEMORY if doalloc is TRUE and the allocation fails.
+ *  Failure: STATUS_BUFFER_OVERFLOW, if doalloc is FALSE and ansi is too small.
+ *           STATUS_NO_MEMORY, if doalloc is TRUE and the allocation fails.
  *
  * NOTES
  *  This function always writes a terminating '\0'.
  *  It performs a partial copy if ansi is too small.
  */
 NTSTATUS WINAPI RtlUnicodeStringToAnsiString(
-    STRING *ansi,              /* [I/O] Destination for the Ansi string */
+    STRING *ansi,              /* [I/O] Destination for the ansi string */
     const UNICODE_STRING *uni, /* [I]   Unicode string to be converted */
     BOOLEAN doalloc)           /* [I]   TRUE=Allocate new buffer for ansi, FALSE=Use existing buffer */
 {
@@ -528,7 +676,7 @@ NTSTATUS WINAPI RtlUnicodeStringToAnsiString(
  *
  * NOTES
  *   If doalloc is TRUE, the length allocated is uni->Length + 1.
- *   This function always NUL terminates the string returned.
+ *   This function always '\0' terminates the string returned.
  */
 NTSTATUS WINAPI RtlUnicodeStringToOemString( STRING *oem,
                                              const UNICODE_STRING *uni,
@@ -724,12 +872,12 @@ WCHAR WINAPI RtlDowncaseUnicodeChar(WCHAR wch)
  *           STATUS_BUFFER_OVERFLOW, if doalloc is FALSE and dest is too small.
  *
  * NOTES
- *  dest is never NUL terminated because it may be equal to src, and src
- *  might not be NUL terminated. dest->Length is only set upon success.
+ *  dest is never '\0' terminated because it may be equal to src, and src
+ *  might not be '\0' terminated. dest->Length is only set upon success.
  */
 NTSTATUS WINAPI RtlUpcaseUnicodeString( UNICODE_STRING *dest,
                                         const UNICODE_STRING *src,
-                                        BOOLEAN doalloc )
+                                        BOOLEAN doalloc)
 {
     DWORD i, len = src->Length;
 
@@ -763,13 +911,13 @@ NTSTATUS WINAPI RtlUpcaseUnicodeString( UNICODE_STRING *dest,
  *           STATUS_BUFFER_OVERFLOW, if doalloc is FALSE and dest is too small.
  *
  * NOTES
- *  dest is never NUL terminated because it may be equal to src, and src
- *  might not be NUL terminated. dest->Length is only set upon success.
+ *  dest is never '\0' terminated because it may be equal to src, and src
+ *  might not be '\0' terminated. dest->Length is only set upon success.
  */
 NTSTATUS WINAPI RtlDowncaseUnicodeString(
-	UNICODE_STRING *dest,
-	const UNICODE_STRING *src,
-	BOOLEAN doalloc)
+    UNICODE_STRING *dest,
+    const UNICODE_STRING *src,
+    BOOLEAN doalloc)
 {
     DWORD i;
     DWORD len = src->Length;
@@ -777,14 +925,14 @@ NTSTATUS WINAPI RtlDowncaseUnicodeString(
     if (doalloc) {
         dest->MaximumLength = len;
         if (!(dest->Buffer = RtlAllocateHeap( ntdll_get_process_heap(), 0, len ))) {
-	    return STATUS_NO_MEMORY;
-	} /* if */
+            return STATUS_NO_MEMORY;
+        } /* if */
     } else if (len > dest->MaximumLength) {
-	return STATUS_BUFFER_OVERFLOW;
+        return STATUS_BUFFER_OVERFLOW;
     } /* if */
 
     for (i = 0; i < len/sizeof(WCHAR); i++) {
-	dest->Buffer[i] = tolowerW(src->Buffer[i]);
+        dest->Buffer[i] = tolowerW(src->Buffer[i]);
     } /* for */
     dest->Length = len;
     return STATUS_SUCCESS;
@@ -912,7 +1060,7 @@ NTSTATUS WINAPI RtlUpcaseUnicodeToOemN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
 
 
 /*
-	STRING SIZE
+        STRING SIZE
 */
 
 
@@ -921,7 +1069,7 @@ NTSTATUS WINAPI RtlUpcaseUnicodeToOemN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
  *      RtlxOemStringToUnicodeSize  (NTDLL.@)
  *
  * Calculate the size in bytes necessary for the Unicode conversion of str,
- * including the terminating NUL.
+ * including the terminating '\0'.
  *
  * PARAMS
  *  str [I] String to calculate the size of
@@ -941,7 +1089,7 @@ UINT WINAPI RtlOemStringToUnicodeSize( const STRING *str )
  *      RtlxAnsiStringToUnicodeSize  (NTDLL.@)
  *
  * Calculate the size in bytes necessary for the Unicode conversion of str,
- * including the terminating NUL.
+ * including the terminating '\0'.
  *
  * PARAMS
  *  str [I] String to calculate the size of
@@ -961,7 +1109,7 @@ DWORD WINAPI RtlAnsiStringToUnicodeSize( const STRING *str )
  *      RtlMultiByteToUnicodeSize   (NTDLL.@)
  *
  * Compute the size in bytes necessary for the Unicode conversion of str,
- * without the terminating NUL.
+ * without the terminating '\0'.
  *
  * PARAMS
  *  size [O] Destination for size
@@ -982,7 +1130,7 @@ NTSTATUS WINAPI RtlMultiByteToUnicodeSize( DWORD *size, LPCSTR str, UINT len )
  *      RtlUnicodeToMultiByteSize   (NTDLL.@)
  *
  * Calculate the size in bytes necessary for the multibyte conversion of str,
- * without the terminating NULL.
+ * without the terminating '\0'.
  *
  * PARAMS
  *  size [O] Destination for size
@@ -1004,7 +1152,7 @@ NTSTATUS WINAPI RtlUnicodeToMultiByteSize( PULONG size, LPCWSTR str, ULONG len )
  *      RtlxUnicodeStringToAnsiSize  (NTDLL.@)
  *
  * Calculate the size in bytes necessary for the Ansi conversion of str,
- * including the terminating NUL.
+ * including the terminating '\0'.
  *
  * PARAMS
  *  str [I] String to calculate the size of
@@ -1025,7 +1173,7 @@ DWORD WINAPI RtlUnicodeStringToAnsiSize( const UNICODE_STRING *str )
  *      RtlxUnicodeStringToOemSize  (NTDLL.@)
  *
  * Calculate the size in bytes necessary for the OEM conversion of str,
- * including the terminating NUL.
+ * including the terminating '\0'.
  *
  * PARAMS
  *  str [I] String to calculate the size of
@@ -1090,11 +1238,11 @@ NTSTATUS WINAPI RtlAppendStringToString(
     const STRING *src)  /* [I]   Buffered character string to be concatenated */
 {
     if (src->Length != 0) {
-	unsigned int dest_len = src->Length + dest->Length;
+        unsigned int dest_len = src->Length + dest->Length;
 
-	if (dest_len > dest->MaximumLength) return STATUS_BUFFER_TOO_SMALL;
-	memcpy(dest->Buffer + dest->Length, src->Buffer, src->Length);
-	dest->Length = dest_len;
+        if (dest_len > dest->MaximumLength) return STATUS_BUFFER_TOO_SMALL;
+        memcpy(dest->Buffer + dest->Length, src->Buffer, src->Length);
+        dest->Length = dest_len;
     } /* if */
     return STATUS_SUCCESS;
 }
@@ -1131,10 +1279,10 @@ NTSTATUS WINAPI RtlAppendUnicodeToString(
         if (dest_len > dest->MaximumLength) return STATUS_BUFFER_TOO_SMALL;
         memcpy(dest->Buffer + dest->Length/sizeof(WCHAR), src, src_len);
         dest->Length = dest_len;
-        /* append terminating NULL if enough space */
+        /* append terminating '\0' if enough space */
         if (dest_len + sizeof(WCHAR) <= dest->MaximumLength) {
-	    dest->Buffer[dest_len / sizeof(WCHAR)] = 0;
-	} /* if */
+            dest->Buffer[dest_len / sizeof(WCHAR)] = 0;
+        } /* if */
     } /* if */
     return STATUS_SUCCESS;
 }
@@ -1164,22 +1312,96 @@ NTSTATUS WINAPI RtlAppendUnicodeStringToString(
     const UNICODE_STRING *src) /* [I]   Buffered unicode string to be concatenated */
 {
     if (src->Length != 0) {
-	unsigned int dest_len = src->Length + dest->Length;
+        unsigned int dest_len = src->Length + dest->Length;
 
-	if (dest_len > dest->MaximumLength) return STATUS_BUFFER_TOO_SMALL;
-	memcpy(dest->Buffer + dest->Length/sizeof(WCHAR), src->Buffer, src->Length);
-	dest->Length = dest_len;
-	/* append terminating NULL if enough space */
-	if (dest_len + sizeof(WCHAR) <= dest->MaximumLength) {
-	    dest->Buffer[dest_len / sizeof(WCHAR)] = 0;
-	} /* if */
+        if (dest_len > dest->MaximumLength) return STATUS_BUFFER_TOO_SMALL;
+        memcpy(dest->Buffer + dest->Length/sizeof(WCHAR), src->Buffer, src->Length);
+        dest->Length = dest_len;
+        /* append terminating '\0' if enough space */
+        if (dest_len + sizeof(WCHAR) <= dest->MaximumLength) {
+            dest->Buffer[dest_len / sizeof(WCHAR)] = 0;
+        } /* if */
     } /* if */
     return STATUS_SUCCESS;
 }
 
 
+/**************************************************************************
+ *      RtlFindCharInUnicodeString   (NTDLL.@)
+ *
+ * Searches for one of several unicode characters in an unicode string.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS. pos contains the position after the character found.
+ *  Failure: STATUS_NOT_FOUND, if none of the search_chars are in main_str.
+ */
+NTSTATUS WINAPI RtlFindCharInUnicodeString(
+    int flags,                          /* [I] Flags */
+    const UNICODE_STRING *main_str,     /* [I] Unicode string in which one or more characters are searched */
+    const UNICODE_STRING *search_chars, /* [I] Unicode string which contains the characters to search for */
+    USHORT *pos)                        /* [O] Position of the first character found + 2 */
+{
+    int main_idx;
+    unsigned int search_idx;
+
+    switch (flags) {
+        case 0:
+            for (main_idx = 0; main_idx < main_str->Length / sizeof(WCHAR); main_idx++) {
+                for (search_idx = 0; search_idx < search_chars->Length / sizeof(WCHAR); search_idx++) {
+                    if (main_str->Buffer[main_idx] == search_chars->Buffer[search_idx]) {
+                        *pos = (main_idx + 1) * sizeof(WCHAR);
+                        return STATUS_SUCCESS;
+                    }
+                }
+            }
+            *pos = 0;
+            return STATUS_NOT_FOUND;
+        case 1:
+            for (main_idx = main_str->Length / sizeof(WCHAR) - 1; main_idx >= 0; main_idx--) {
+                for (search_idx = 0; search_idx < search_chars->Length / sizeof(WCHAR); search_idx++) {
+                    if (main_str->Buffer[main_idx] == search_chars->Buffer[search_idx]) {
+                        *pos = main_idx * sizeof(WCHAR);
+                        return STATUS_SUCCESS;
+                    }
+                }
+            }
+            *pos = 0;
+            return STATUS_NOT_FOUND;
+        case 2:
+            for (main_idx = 0; main_idx < main_str->Length / sizeof(WCHAR); main_idx++) {
+                search_idx = 0;
+                while (search_idx < search_chars->Length / sizeof(WCHAR) &&
+                         main_str->Buffer[main_idx] != search_chars->Buffer[search_idx]) {
+                    search_idx++;
+                }
+                if (search_idx >= search_chars->Length / sizeof(WCHAR)) {
+                    *pos = (main_idx + 1) * sizeof(WCHAR);
+                    return STATUS_SUCCESS;
+                }
+            }
+            *pos = 0;
+            return STATUS_NOT_FOUND;
+        case 3:
+            for (main_idx = main_str->Length / sizeof(WCHAR) - 1; main_idx >= 0; main_idx--) {
+                search_idx = 0;
+                while (search_idx < search_chars->Length / sizeof(WCHAR) &&
+                         main_str->Buffer[main_idx] != search_chars->Buffer[search_idx]) {
+                    search_idx++;
+                }
+                if (search_idx >= search_chars->Length / sizeof(WCHAR)) {
+                    *pos = main_idx * sizeof(WCHAR);
+                    return STATUS_SUCCESS;
+                }
+            }
+            *pos = 0;
+            return STATUS_NOT_FOUND;
+    } /* switch */
+    return STATUS_NOT_FOUND;
+}
+
+
 /*
-	MISC
+        MISC
 */
 
 

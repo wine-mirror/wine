@@ -354,6 +354,7 @@
 @ stdcall RtlDowncaseUnicodeChar(long)
 @ stdcall RtlDowncaseUnicodeString(ptr ptr long)
 @ stdcall RtlDumpResource(ptr)
+@ stdcall RtlDuplicateUnicodeString(long ptr ptr)
 @ stdcall -ret64 RtlEnlargedIntegerMultiply(long long)
 @ stdcall RtlEnlargedUnsignedDivide(long long long ptr)
 @ stdcall -ret64 RtlEnlargedUnsignedMultiply(long long)
@@ -376,6 +377,7 @@
 @ stdcall -ret64 RtlExtendedMagicDivide(long long long long long)
 @ stdcall RtlFillMemory(ptr long long)
 @ stdcall RtlFillMemoryUlong(ptr long long)
+@ stdcall RtlFindCharInUnicodeString(long ptr ptr ptr)
 @ stdcall RtlFindClearBits(ptr long long)
 @ stdcall RtlFindClearBitsAndSet(ptr long long)
 @ stdcall RtlFindClearRuns(ptr ptr long long)
@@ -429,6 +431,7 @@
 @ stub RtlInitNlsTables
 @ stdcall RtlInitString(ptr str)
 @ stdcall RtlInitUnicodeString(ptr wstr)
+@ stdcall RtlInitUnicodeStringEx(ptr wstr)
 @ stdcall RtlInitializeBitMap(ptr long long)
 @ stub RtlInitializeContext
 @ stdcall RtlInitializeCriticalSection(ptr)
