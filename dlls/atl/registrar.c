@@ -422,7 +422,7 @@ static HRESULT string_register(Registrar *This, LPCOLESTR data, BOOL do_register
 }
 
 static HRESULT resource_register(Registrar *This, LPCOLESTR resFileName,
-                        UINT nID, LPCOLESTR szType, BOOL do_register)
+                        LPCOLESTR szID, LPCOLESTR szType, BOOL do_register)
 {
     HINSTANCE hins;
     HRSRC src;
@@ -433,7 +433,7 @@ static HRESULT resource_register(Registrar *This, LPCOLESTR resFileName,
 
     hins = LoadLibraryExW(resFileName, NULL, LOAD_LIBRARY_AS_DATAFILE);
     if(hins) {
-        src = FindResourceW(hins, (LPWSTR)nID, szType);
+        src = FindResourceW(hins, szID, szType);
         if(src) {
             regstra = (LPSTR)LoadResource(hins, src);
             reslen = SizeofResource(hins, src);
@@ -446,11 +446,11 @@ static HRESULT resource_register(Registrar *This, LPCOLESTR resFileName,
                 hres = string_register(This, regstrw, do_register);
 
                 HeapFree(GetProcessHeap(), 0, regstrw);
-                HeapFree(GetProcessHeap(), 0, regstra);
             }else {
                 WARN("could not load resource\n");
                 hres = HRESULT_FROM_WIN32(GetLastError());
             }
+            HeapFree(GetProcessHeap(), 0, regstra);
         }else {
             WARN("Could not find source\n");
             hres = HRESULT_FROM_WIN32(GetLastError());
@@ -458,6 +458,43 @@ static HRESULT resource_register(Registrar *This, LPCOLESTR resFileName,
         FreeLibrary(hins);
     }else {
         WARN("Could not load resource file\n");
+        hres = HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    return hres;
+}
+
+static HRESULT file_register(Registrar *This, LPCOLESTR fileName, BOOL do_register)
+{
+    HANDLE file;
+    DWORD filelen, len;
+    LPWSTR regstrw;
+    LPSTR regstra;
+    LRESULT lres;
+    HRESULT hres;
+
+    file = CreateFileW(fileName, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
+    if(file) {
+        filelen = GetFileSize(file, NULL);
+        regstra = HeapAlloc(GetProcessHeap(), 0, filelen);
+        lres = ReadFile(file, regstra, filelen, NULL, NULL);
+        if(lres == ERROR_SUCCESS) {
+            len = MultiByteToWideChar(CP_ACP, 0, regstra, filelen, NULL, 0)+1;
+            regstrw = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len*sizeof(WCHAR));
+            MultiByteToWideChar(CP_ACP, 0, regstra, filelen, regstrw, -1);
+            regstrw[len-1] = '\0';
+            
+            hres = string_register(This, regstrw, do_register);
+
+            HeapFree(GetProcessHeap(), 0, regstrw);
+        }else {
+            WARN("Failed to read faile\n");
+            hres = HRESULT_FROM_WIN32(lres);
+        }
+        HeapFree(GetProcessHeap(), 0, regstra);
+        CloseHandle(file);
+    }else {
+        WARN("Could not open file\n");
         hres = HRESULT_FROM_WIN32(GetLastError());
     }
 
@@ -549,30 +586,30 @@ static HRESULT WINAPI Registrar_ResourceRegisterSz(IRegistrar* iface, LPCOLESTR 
                 LPCOLESTR szID, LPCOLESTR szType)
 {
     Registrar *This = (Registrar*)iface;
-    FIXME("(%p)->(%s %s %s)\n", This, debugstr_w(resFileName), debugstr_w(szID), debugstr_w(szType));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s %s %s)\n", This, debugstr_w(resFileName), debugstr_w(szID), debugstr_w(szType));
+    return resource_register(This, resFileName, szID, szType, TRUE);
 }
 
 static HRESULT WINAPI Registrar_ResourceUnregisterSz(IRegistrar* iface, LPCOLESTR resFileName,
                 LPCOLESTR szID, LPCOLESTR szType)
 {
     Registrar *This = (Registrar*)iface;
-    FIXME("(%p)->(%s %s %s)\n", This, debugstr_w(resFileName), debugstr_w(szID), debugstr_w(szType));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s %s %s)\n", This, debugstr_w(resFileName), debugstr_w(szID), debugstr_w(szType));
+    return resource_register(This, resFileName, szID, szType, FALSE);
 }
 
 static HRESULT WINAPI Registrar_FileRegister(IRegistrar* iface, LPCOLESTR fileName)
 {
     Registrar *This = (Registrar*)iface;
-    FIXME("(%p)->(%s)\n", This, debugstr_w(fileName));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(fileName));
+    return file_register(This, fileName, TRUE);
 }
 
 static HRESULT WINAPI Registrar_FileUnregister(IRegistrar* iface, LPCOLESTR fileName)
 {
     Registrar *This = (Registrar*)iface;
     FIXME("(%p)->(%s)\n", This, debugstr_w(fileName));
-    return E_NOTIMPL;
+    return file_register(This, fileName, FALSE);
 }
 
 static HRESULT WINAPI Registrar_StringRegister(IRegistrar* iface, LPCOLESTR data)
@@ -594,7 +631,7 @@ static HRESULT WINAPI Registrar_ResourceRegister(IRegistrar* iface, LPCOLESTR re
 {
     Registrar *This = (Registrar*)iface;
     TRACE("(%p)->(%s %d %s)\n", iface, debugstr_w(resFileName), nID, debugstr_w(szType));
-    return resource_register(This, resFileName, nID, szType, TRUE);
+    return resource_register(This, resFileName, (LPOLESTR)nID, szType, TRUE);
 }
 
 static HRESULT WINAPI Registrar_ResourceUnregister(IRegistrar* iface, LPCOLESTR resFileName,
@@ -602,7 +639,7 @@ static HRESULT WINAPI Registrar_ResourceUnregister(IRegistrar* iface, LPCOLESTR 
 {
     Registrar *This = (Registrar*)iface;
     TRACE("(%p)->(%s %d %s)\n", This, debugstr_w(resFileName), nID, debugstr_w(szType));
-    return resource_register(This, resFileName, nID, szType, FALSE);
+    return resource_register(This, resFileName, (LPOLESTR)nID, szType, FALSE);
 }
 
 static IRegistrarVtbl RegistrarVtbl = {
