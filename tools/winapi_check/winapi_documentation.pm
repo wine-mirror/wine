@@ -129,7 +129,8 @@ sub check_documentation {
     }
 
     if($options->documentation_pedantic) {
-	if($documentation !~ /^ \*\s+(?:\@|\w+)(?:\s+\(\w+\.(?:\@|\d+)\))+/m) {
+	my $ordinal = $win16api->function_ordinal($internal_name);
+	if(defined($ordinal) && $documentation !~ /^ \*\s+(?:\@|\w+)(?:\s+[\(\[]\w+\.(?:\@|\d+)[\)\]])+/m) {
 	    $output->write("documentation: pedantic check failed \\\n$documentation\n");
 	}
     }

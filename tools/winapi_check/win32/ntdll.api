@@ -114,7 +114,7 @@ WCHAR ***
 char *
 char ***
 enum __DEBUG_CLASS
-enum request
+union generic_request *
 va_list
 
 %str

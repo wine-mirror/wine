@@ -26,6 +26,8 @@ dlls/commdlg
 
 % dlls/crtdll/crtdll.spec
 
+dlls/crtdll
+
 % dlls/dciman32/dciman32.spec
 
 dlls/dciman32
@@ -463,6 +465,10 @@ dlls/wsock32
 % dlls/winspool/winspool.drv.spec
 
 dlls/winspool
+
+% dlls/wintrust/wintrust.spec
+
+dlls/wintrust
 
 % dlls/wow32/wow32.spec
 

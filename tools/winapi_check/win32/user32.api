@@ -143,6 +143,10 @@ DLGPROC16
 HOOKPROC16
 WNDPROC16
 
+%ptr # --forbidden
+
+int *
+
 %str
 
 LPSTR

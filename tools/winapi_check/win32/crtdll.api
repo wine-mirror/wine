@@ -1,0 +1,13 @@
+%long
+
+int
+size_t
+
+%ptr
+
+char ***
+int *
+
+%void
+
+void

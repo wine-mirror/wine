@@ -100,6 +100,16 @@ sub file_type {
     }
 }
 
+sub file_skip {
+    local $_ = shift;
+    
+    if(/agl.c$/) {
+	return 1;
+    }
+
+    return 0;
+}
+
 my $modules = 'modules'->new($options, $output, $wine_dir, $current_dir, \&file_type, "$winapi_check_dir/modules.dat");
 
 my $win16api = 'winapi'->new($options, $output, "win16", "$winapi_check_dir/win16");
@@ -267,7 +277,11 @@ foreach my $file ($options->c_files) {
     }
    
     my $file_type = file_type($file);
-    
+
+    if(file_skip($file)) {
+	next;
+    }
+
     my $found_function = sub {
 	my $documentation = shift;
 	my $linkage = shift;
@@ -306,6 +320,11 @@ foreach my $file ($options->c_files) {
 	    }
 	    if(defined($module32)) {
 		$modules->found_module_in_dir($module32, $file_dir);
+	    }
+
+	    my $previous_function;	    
+	    if(defined($functions{$internal_name})) {
+		$previous_function = $functions{$internal_name};
 	    }
 
 	    my $function = 'winapi_function'->new;
@@ -440,6 +459,7 @@ foreach my $file ($options->c_files) {
 	    }
 	    
 	    if($options->local && $options->documentation &&
+	       !defined($previous_function) &&
 	       (defined($module16) || defined($module32)) &&
 	       $linkage ne "extern" && $statements)
 	    {
