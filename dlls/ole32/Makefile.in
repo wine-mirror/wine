@@ -69,3 +69,6 @@ SUBDIRS = tests
 @MAKE_DLL_RULES@
 
 ### Dependencies:
+
+# note: this will get overwritten by make depend
+$(ALL_OBJS): $(IDL_SRCS:.idl=.h)

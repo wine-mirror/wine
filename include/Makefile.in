@@ -32,12 +32,14 @@ IDL_SRCS = \
 	wtypes.idl
 
 IDL_INCLUDES = \
+	$(IDL_SRCS) \
 	axcore.idl \
 	axextend.idl \
 	devenum.idl \
 	dyngraph.idl
 
 WINDOWS_INCLUDES = \
+	$(IDL_INCLUDES) \
 	accctrl.h \
 	aclapi.h \
 	audevcod.h \
@@ -243,10 +245,7 @@ WINDOWS_INCLUDES = \
 	wsipx.h \
 	wsnwlink.h \
 	xcmc.h \
-	zmouse.h \
-	$(IDL_INCLUDES) \
-	$(IDL_SRCS) \
-	$(IDL_SRCS:.idl=.h)
+	zmouse.h
 
 MSVCRT_INCLUDES = \
 	msvcrt/conio.h \
@@ -295,18 +294,21 @@ EXTRASUBDIRS = msvcrt msvcrt/sys wine
 
 @MAKE_RULES@
 
-all: $(IDL_SRCS:.idl=.h)
+IDL_HEADERS = $(IDL_SRCS:.idl=.h)
 
-install:: $(IDL_SRCS:.idl=.h)
+all: $(IDL_HEADERS)
+
+install:: $(IDL_HEADERS)
 	$(MKINSTALLDIRS) $(includedir) $(includedir)/windows $(includedir)/msvcrt $(includedir)/msvcrt/sys
 	for f in $(WINDOWS_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(includedir)/windows/$$f; done
+	for f in $(IDL_HEADERS); do $(INSTALL_DATA) $$f $(includedir)/windows/$$f; done
 	for f in $(MSVCRT_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(includedir)/$$f; done
 	for f in $(WINE_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/wine/$$f $(includedir)/$$f; done
 
 # Don't just do a rm -rf on $(includedir) -- don't want to wipe out
 # anything extra the user may have put there.
 uninstall::
-	[ -d $(includedir)/windows ] && cd $(includedir)/windows && $(RM) $(WINDOWS_INCLUDES) || true
+	[ -d $(includedir)/windows ] && cd $(includedir)/windows && $(RM) $(WINDOWS_INCLUDES) $(IDL_HEADERS) || true
 	[ -d $(includedir) ] && cd $(includedir) && $(RM) $(MSVCRT_INCLUDES) $(WINE_INCLUDES) || true
 	-rmdir $(includedir)/msvcrt/sys $(includedir)/msvcrt $(includedir)/windows $(includedir)
 
