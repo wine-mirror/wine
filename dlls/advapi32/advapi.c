@@ -24,15 +24,13 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef HAVE_PWD_H
-# include <pwd.h>
-#endif
 
 #include "winbase.h"
 #include "windef.h"
 #include "winnls.h"
 #include "winerror.h"
 
+#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(advapi);
@@ -47,18 +45,7 @@ BOOL WINAPI
 GetUserNameA( LPSTR lpszName, LPDWORD lpSize )
 {
   size_t len;
-  char *name;
-
-#ifdef HAVE_GETPWUID
-  struct passwd *pwd = getpwuid( getuid() );
-  name = pwd ? pwd->pw_name : NULL;
-#else
-  name = getenv("USER");
-#endif
-  if (!name) {
-    ERR("Username lookup failed: %s\n", strerror(errno));
-    return 0;
-  }
+  const char *name = wine_get_user_name();
 
   /* We need to include the null character when determining the size of the buffer. */
   len = strlen(name) + 1;
@@ -84,15 +71,19 @@ GetUserNameA( LPSTR lpszName, LPDWORD lpSize )
 BOOL WINAPI
 GetUserNameW( LPWSTR lpszName, LPDWORD lpSize )
 {
-	LPSTR name = (LPSTR)HeapAlloc( GetProcessHeap(), 0, *lpSize );
-	DWORD	size = *lpSize;
-	BOOL res = GetUserNameA(name,lpSize);
+    const char *name = wine_get_user_name();
+    DWORD len = MultiByteToWideChar( CP_ACP, 0, name, -1, NULL, 0 );
 
-        /* FIXME: should set lpSize in WCHARs */
-        if (size && !MultiByteToWideChar( CP_ACP, 0, name, -1, lpszName, size ))
-            lpszName[size-1] = 0;
-        HeapFree( GetProcessHeap(), 0, name );
-	return res;
+    if (len > *lpSize)
+    {
+        SetLastError(ERROR_MORE_DATA);
+        *lpSize = len;
+        return FALSE;
+    }
+
+    *lpSize = len;
+    MultiByteToWideChar( CP_ACP, 0, name, -1, lpszName, len );
+    return TRUE;
 }
 
 /******************************************************************************

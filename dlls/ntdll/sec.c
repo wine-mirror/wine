@@ -25,9 +25,6 @@
 #include <time.h>
 #include <ctype.h>
 #include <math.h>
-#ifdef HAVE_PWD_H
-# include <pwd.h>
-#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -741,17 +738,9 @@ NTSTATUS WINAPI RtlConvertSidToUnicodeString(
        PSID Sid,
        BOOLEAN AllocateString)
 {
-        const char *p;
+        const char *p = wine_get_user_name();
         NTSTATUS status;
         ANSI_STRING AnsiStr;
-
-#ifdef HAVE_GETPWUID
-	struct passwd *pwd = getpwuid( getuid() );
-	p = pwd ? pwd->pw_name : NULL;
-#else
-	p = getenv("USER");
-#endif
-	p = p ? p : ".Default";
 
 	FIXME("(%p %p %u)\n", String, Sid, AllocateString);
 

@@ -37,7 +37,6 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <pwd.h>
 #include "object.h"
 #include "handle.h"
 #include "request.h"
@@ -942,15 +941,7 @@ static struct key *create_root_key( obj_handle_t hkey )
     if (hkey == (obj_handle_t)HKEY_CURRENT_USER)  /* this one is special */
     {
         /* get the current user name */
-        char buffer[10];
-        struct passwd *pwd = getpwuid( getuid() );
-
-        if (pwd) p = pwd->pw_name;
-        else
-        {
-            sprintf( buffer, "%ld", (long) getuid() );
-            p = buffer;
-        }
+        p = wine_get_user_name();
         while (*p && i < sizeof(keyname)/sizeof(WCHAR)-1) keyname[i++] = *p++;
     }
     keyname[i++] = 0;

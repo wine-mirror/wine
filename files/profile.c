@@ -29,9 +29,6 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#ifdef HAVE_PWD_H
-# include <pwd.h>
-#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif

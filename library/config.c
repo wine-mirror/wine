@@ -39,6 +39,7 @@ static const char * const server_dir_prefix = "/server-";      /* prefix for ser
 
 static char *config_dir;
 static char *server_dir;
+static char *user_name;
 
 #ifdef __GNUC__
 static void fatal_error( const char *err, ... )  __attribute__((noreturn,format(printf,1,2)));
@@ -80,6 +81,15 @@ static void *xmalloc( size_t size )
     return res;
 }
 
+/* strdup wrapper */
+static char *xstrdup( const char *str )
+{
+    size_t len = strlen(str) + 1;
+    char *res = xmalloc( len );
+    memcpy( res, str, len );
+    return res;
+}
+
 /* remove all trailing slashes from a path name */
 inline static void remove_trailing_slashes( char *path )
 {
@@ -115,6 +125,7 @@ static void init_paths(void)
     if (!(user = getenv( "USER" )))
         fatal_error( "cannot determine your user name, set the USER environment variable\n" );
 #endif  /* HAVE_GETPWUID */
+    user_name = xstrdup( user );
 
     /* build config_dir */
 
@@ -154,13 +165,15 @@ static void init_paths(void)
     }
     strcpy( p, server_dir_prefix );
 
-    if (sizeof(st.st_dev) > sizeof(unsigned long))
-        sprintf( server_dir + strlen(server_dir), "%llx-", (unsigned long long)st.st_dev );
+    if (sizeof(st.st_dev) > sizeof(unsigned long) && st.st_dev > ~0UL)
+        sprintf( server_dir + strlen(server_dir), "%lx%08lx-",
+                 (unsigned long)(st.st_dev >> 32), (unsigned long)st.st_dev );
     else
         sprintf( server_dir + strlen(server_dir), "%lx-", (unsigned long)st.st_dev );
 
-    if (sizeof(st.st_ino) > sizeof(unsigned long))
-        sprintf( server_dir + strlen(server_dir), "%llx", (unsigned long long)st.st_ino );
+    if (sizeof(st.st_ino) > sizeof(unsigned long) && st.st_ino > ~0UL)
+        sprintf( server_dir + strlen(server_dir), "%lx%08lx",
+                 (unsigned long)(st.st_ino >> 32), (unsigned long)st.st_ino );
     else
         sprintf( server_dir + strlen(server_dir), "%lx", (unsigned long)st.st_ino );
 }
@@ -177,4 +190,11 @@ const char *wine_get_server_dir(void)
 {
     if (!server_dir) init_paths();
     return server_dir;
+}
+
+/* return the current user name */
+const char *wine_get_user_name(void)
+{
+    if (!user_name) init_paths();
+    return user_name;
 }

@@ -25,9 +25,6 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
-#ifdef HAVE_PWD_H
-# include <pwd.h>
-#endif
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
