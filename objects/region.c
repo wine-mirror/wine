@@ -2588,19 +2588,21 @@ HRGN WINAPI GetRandomRgn(DWORD dwArg1, DWORD dwArg2, DWORD dwArg3)
  */
 static BOOL REGION_CropAndOffsetRegion(const POINT* off, const RECT *rect, WINEREGION *rgnSrc, WINEREGION* rgnDst)
 {
+
     if( !rect )	/* just copy and offset */
     {
+        RECT *xrect;
 	if( rgnDst == rgnSrc )
 	{
 	    if( off->x || off->y )
-		rect = rgnDst->rects;
+		xrect = rgnDst->rects;
 	    else 
 		return TRUE;
 	}
 	else
-	    rect = HeapReAlloc( SystemHeap, 0, rgnDst->rects,
+	    xrect = HeapReAlloc( SystemHeap, 0, rgnDst->rects,
 				rgnSrc->size * sizeof( RECT ));
-	if( rect )
+	if( xrect )
 	{
 	    INT i;
 
@@ -2611,18 +2613,17 @@ static BOOL REGION_CropAndOffsetRegion(const POINT* off, const RECT *rect, WINER
 	    {
 		for( i = 0; i < rgnDst->numRects; i++ )
 		{
-		    rect[i].left = rgnSrc->rects[i].left + off->x;
-		    rect[i].right = rgnSrc->rects[i].right + off->x;
-		    rect[i].top = rgnSrc->rects[i].top + off->y;
-		    rect[i].bottom = rgnSrc->rects[i].bottom + off->y;
+		    xrect[i].left = rgnSrc->rects[i].left + off->x;
+		    xrect[i].right = rgnSrc->rects[i].right + off->x;
+		    xrect[i].top = rgnSrc->rects[i].top + off->y;
+		    xrect[i].bottom = rgnSrc->rects[i].bottom + off->y;
 		}
 		OffsetRect( &rgnDst->extents, off->x, off->y );
 	    }
 	    else
-		memcpy( rect, rgnSrc->rects, rgnDst->numRects * sizeof( RECT ));
-	    rgnDst->rects = rect;
-	}
-	else
+		memcpy( xrect, rgnSrc->rects, rgnDst->numRects * sizeof(RECT));
+	    rgnDst->rects = xrect;
+	} else
 	    return FALSE;
     }
     else if( IsRectEmpty(rect) || !EXTENTCHECK(rect, &rgnSrc->extents) )
