@@ -2,6 +2,7 @@ name	wsock32
 type	win32
 
 import	ws2_32.dll
+import	kernel32.dll
 import	ntdll.dll
 
 debug_channels (winsock)
@@ -70,8 +71,8 @@ debug_channels (winsock)
 1108 stdcall s_perror(str) WS_s_perror
 1109 stub GetAddressByNameA
 1110 stub GetAddressByNameW
-#1111 stub EnumProtocolsA
-#1112 stub EnumProtocolsW
+1111 stdcall EnumProtocolsA(ptr ptr ptr) EnumProtocolsA
+1112 stdcall EnumProtocolsW(ptr ptr ptr) EnumProtocolsW
 #1113 stub GetTypeByNameA
 #1114 stub GetTypeByNameW
 #1115 stub GetNameByTypeA

@@ -472,7 +472,7 @@ winnls/libwinnls32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winsock/libws2_32.@LIBEXT@: libuser32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 winspool/libwinspool.drv.@LIBEXT@: libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 wow32/libwow32.@LIBEXT@: libkernel32.@LIBEXT@
-wsock32/libwsock32.@LIBEXT@: libws2_32.@LIBEXT@ libntdll.@LIBEXT@
+wsock32/libwsock32.@LIBEXT@: libws2_32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 x11drv/libx11drv.@LIBEXT@: libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@
 
 $(DLLFILES): dummy

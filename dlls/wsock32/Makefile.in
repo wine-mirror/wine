@@ -7,7 +7,9 @@ MODULE    = wsock32
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
-C_SRCS = socket.c
+C_SRCS = \
+	protocol.c \
+	socket.c
 
 @MAKE_DLL_RULES@
 

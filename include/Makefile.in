@@ -41,6 +41,7 @@ INSTALLED_INCLUDES = \
 	mmsystem.h \
 	msacm.h \
 	msacmdlg.h \
+	nspapi.h \
 	ntsecapi.h \
 	oaidl.h \
 	objbase.h \
@@ -144,6 +145,8 @@ INSTALLED_INCLUDES = \
 	winver.h \
 	wnaspi32.h \
 	wownt32.h \
+	wshisotp.h \
+	wsipx.h \
 	wtypes.h \
 	zmouse.h
 
