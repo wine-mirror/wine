@@ -757,7 +757,50 @@ static int output_delayed_imports( FILE *outfile )
     fprintf( outfile, "    \"\\tmov %%g1, %%o0\\n\"\n" );
     fprintf( outfile, "    \"\\tjmp %%o0\\n\\trestore\\n\"\n" );
 #elif defined(__PPC__)
-    fprintf(outfile, "#error: DELAYED IMPORTS NOT SUPPORTED ON PPC!!!\n");
+    /* Save all callee saved registers into a stackframe. */
+    fprintf( outfile, "    \"\\tstwu %%r1, -48(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tstw  %%r3, 4(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tstw  %%r4, 8(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tstw  %%r5, 12(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tstw  %%r6, 16(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tstw  %%r7, 20(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tstw  %%r8, 24(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tstw  %%r9, 28(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tstw  %%r10, 32(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tstw  %%r11, 36(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tstw  %%r12, 40(%%r1)\\n\"\n" );
+
+    /* r0 -> r3 (arg1) */
+    fprintf( outfile, "    \"\\tmr  %%r3, %%r0\\n\"\n" );
+
+    /* save return address */
+    fprintf( outfile, "    \"\\tmflr  %%r0\\n\"\n" );
+    fprintf( outfile, "    \"\\tstw  %%r0, 44(%%r1)\\n\"\n" );
+
+    /* Call the __wine_delay_load function, arg1 is arg1. */
+    fprintf( outfile, "    \"\\tbl __wine_delay_load\\n\"\n" );
+
+    /* Load return value from call into ctr register */
+    fprintf( outfile, "    \"\\tmtctr %%r3\\n\"\n" );
+
+    /* restore all saved registers and drop stackframe. */
+    fprintf( outfile, "    \"\\tlwz  %%r3, 4(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tlwz  %%r4, 8(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tlwz  %%r5, 12(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tlwz  %%r6, 16(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tlwz  %%r7, 20(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tlwz  %%r8, 24(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tlwz  %%r9, 28(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tlwz  %%r10, 32(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tlwz  %%r11, 36(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tlwz  %%r12, 40(%%r1)\\n\"\n" );
+    /* Load return value from call into return register */
+    fprintf( outfile, "    \"\\tlwz  %%r0, 44(%%r1)\\n\"\n" );
+    fprintf( outfile, "    \"\\tmtlr %%r0\\n\"\n" );
+    fprintf( outfile, "    \"\\taddi %%r1, %%r1, 48\\n\"\n" );
+    /* branch to ctr register. */
+    fprintf( outfile, "    \"\\tbctr\\n\"\n" );
+
 #else
 #error You need to defined delayed import thunks for your architecture!
 #endif
@@ -778,7 +821,9 @@ static int output_delayed_imports( FILE *outfile )
             fprintf( outfile, "    \"\\tset %d, %%g1\\n\"\n", (idx << 16) | j );
             fprintf( outfile, "    \"\\tb,a __wine_delay_load_asm\\n\"\n" );
 #elif defined(__PPC__)
-            fprintf(outfile, "#error: DELAYED IMPORTS NOT SUPPORTED ON PPC!!!\n");
+	    /* g0 is a function scratch register or so I understand. */
+	    fprintf( outfile, "    \"\\tli  %%r0, %d\\n\"\n", (idx << 16) | j  );
+	    fprintf( outfile, "    \"\\tb  __wine_delay_load_asm\\n\"\n" );
 #else
 #error You need to defined delayed import thunks for your architecture!
 #endif
@@ -796,18 +841,18 @@ static int output_delayed_imports( FILE *outfile )
             struct func *import = &dll_imports[i]->imports[j];
             fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", import->name );
             fprintf( outfile, "    \"\\t.globl " __ASM_NAME("%s") "\\n\"\n", import->name );
-            fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\\t", import->name);
+            fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\\t\"", import->name);
 #if defined(__i386__)
             if (strstr( import->name, "__wine_call_from_16" ))
-                fprintf( outfile, ".byte 0x2e\\n\\tjmp *(delay_imports+%d)\\n\\tnop\\n", pos );
+                fprintf( outfile, "\".byte 0x2e\\n\\tjmp *(delay_imports+%d)\\n\\tnop\\n\"", pos );
             else
-                fprintf( outfile, "jmp *(delay_imports+%d)\\n\\tmovl %%esi,%%esi\\n", pos );
+                fprintf( outfile, "\"jmp *(delay_imports+%d)\\n\\tmovl %%esi,%%esi\\n\"", pos );
 #elif defined(__sparc__)
             if ( !UsePIC )
             {
-                fprintf( outfile, "sethi %%hi(delay_imports+%d), %%g1\\n\\t", pos );
-                fprintf( outfile, "ld [%%g1+%%lo(delay_imports+%d)], %%g1\\n\\t", pos );
-                fprintf( outfile, "jmp %%g1\\n\\tnop\\n" );
+                fprintf( outfile, "\"sethi %%hi(delay_imports+%d), %%g1\\n\\t\"", pos );
+                fprintf( outfile, "\"ld [%%g1+%%lo(delay_imports+%d)], %%g1\\n\\t\"", pos );
+                fprintf( outfile, "\"jmp %%g1\\n\\tnop\\n\"" );
             }
             else
             {
@@ -822,11 +867,34 @@ static int output_delayed_imports( FILE *outfile )
             }
 
 #elif defined(__PPC__)
-            fprintf(outfile, "#error: DELAYED IMPORTS NOT SUPPORTED ON PPC!!!\n");
+            fprintf(outfile, "\t\"addi 1, 1, -0x4\\n\"\n");
+            fprintf(outfile, "\t\"\\tstw 9, 0(1)\\n\"\n");
+            fprintf(outfile, "\t\"\\taddi 1, 1, -0x4\\n\"\n");
+            fprintf(outfile, "\t\"\\tstw 8, 0(1)\\n\"\n");
+            fprintf(outfile, "\t\"\\taddi 1, 1, -0x4\\n\"\n");
+            fprintf(outfile, "\t\"\\tstw 7, 0(1)\\n\"\n");
+
+            fprintf(outfile, "\t\"\\tlis 9,delay_imports+%d@ha\\n\"\n", pos);
+            fprintf(outfile, "\t\"\\tla 8,delay_imports+%d@l(9)\\n\"\n", pos);
+            fprintf(outfile, "\t\"\\tlwz 7, 0(8)\\n\"\n");
+            fprintf(outfile, "\t\"\\tmtctr 7\\n\"\n");
+
+            fprintf(outfile, "\t\"\\tlwz 7, 0(1)\\n\"\n");
+            fprintf(outfile, "\t\"\\taddi 1, 1, 0x4\\n\"\n");
+            fprintf(outfile, "\t\"\\tlwz 8, 0(1)\\n\"\n");
+            fprintf(outfile, "\t\"\\taddi 1, 1, 0x4\\n\"\n");
+            fprintf(outfile, "\t\"\\tlwz 9, 0(1)\\n\"\n");
+            fprintf(outfile, "\t\"\\taddi 1, 1, 0x4\\n\"\n");
+            fprintf(outfile, "\t\"\\tbctr\\n\"");
+
+            /*fprintf(outfile, "\t\"li r0,delay_imports\\n\\t\"\n" );
+            fprintf(outfile, "\t\"lwz r0, %d(r0)\\n\\t\"\n", pos);
+            fprintf(outfile, "\t\"mtctr r0\\n\\t\"\n");
+            fprintf(outfile, "\t\"bctr\\n\"");*/
 #else
 #error You need to define delayed import thunks for your architecture!
 #endif
-            fprintf( outfile, "\"\n" );
+            fprintf( outfile, "\n" );
         }
     }
     fprintf( outfile, "\".section \\\".text\\\"\");\n" );
