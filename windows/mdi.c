@@ -1469,7 +1469,8 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
         return 0;
 
     case WM_SETFOCUS:
-        if (ci->hwndActiveChild != hwnd) MDI_ChildActivate( client, hwnd );
+        if (ci->hwndActiveChild != hwnd && IsWindowVisible(hwnd))
+            MDI_ChildActivate( client, hwnd );
         break;
 
     case WM_CHILDACTIVATE:
