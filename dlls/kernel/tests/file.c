@@ -918,6 +918,23 @@ void test_FindFirstFileA()
     ok ( FindClose(handle) == TRUE, "Failed to close handle");
 }
 
+void test_FindNextFileA()
+{
+    HANDLE handle;
+    WIN32_FIND_DATAA search_results;
+    int err;
+
+    handle = FindFirstFileA("C:\\*",&search_results);
+    ok ( handle != INVALID_HANDLE_VALUE, "FindFirstFile on C:\\* should succeed" );
+    while (FindNextFile(handle, &search_results))
+    {
+        /* get to the end of the files */
+    }
+    ok ( FindClose(handle) == TRUE, "Failed to close handle");
+    err = GetLastError();
+    ok ( err == ERROR_NO_MORE_FILES, "GetLastError should return ERROR_NO_MORE_FILES");
+}
+
 START_TEST(file)
 {
     test__hread(  );
@@ -935,6 +952,7 @@ START_TEST(file)
     test_DeleteFileA();
     test_DeleteFileW();
     test_FindFirstFileA();
+    test_FindNextFileA();
     test_LockFile();
     test_offset_in_overlapped_structure();
 }

@@ -147,6 +147,7 @@ typedef struct
     BYTE  attr;
     int   drive;
     int   cur_pos;
+    CRITICAL_SECTION cs;
     union
     {
         DOS_DIR *dos_dir;
@@ -1995,7 +1996,6 @@ HANDLE WINAPI FindFirstFileExW(
 	LPVOID lpSearchFilter,
 	DWORD dwAdditionalFlags)
 {
-    HGLOBAL handle;
     FIND_FIRST_INFO *info;
 
     if (!lpFileName)
@@ -2023,20 +2023,15 @@ HANDLE WINAPI FindFirstFileExW(
           if (lpFileName[0] == '\\' && lpFileName[1] == '\\')
           {
               ERR("UNC path name\n");
-              if (!(handle = GlobalAlloc(GMEM_MOVEABLE, sizeof(FIND_FIRST_INFO)))) break;
-
-              info = (FIND_FIRST_INFO *)GlobalLock( handle );
+              if (!(info = HeapAlloc( GetProcessHeap(), 0, sizeof(FIND_FIRST_INFO)))) break;
               info->u.smb_dir = SMB_FindFirst(lpFileName);
               if(!info->u.smb_dir)
               {
-                 GlobalUnlock( handle );
-                 GlobalFree(handle);
+                 HeapFree(GetProcessHeap(), 0, info);
                  break;
               }
-
               info->drive = -1;
-
-              GlobalUnlock( handle );
+              RtlInitializeCriticalSection( &info->cs );
           }
           else
           {
@@ -2053,8 +2048,8 @@ HANDLE WINAPI FindFirstFileExW(
                 }
             }
             if (!DOSFS_GetFullName( lpFileName, FALSE, &full_name )) break;
-            if (!(handle = GlobalAlloc(GMEM_MOVEABLE, sizeof(FIND_FIRST_INFO)))) break;
-            info = (FIND_FIRST_INFO *)GlobalLock( handle );
+            if (!(info = HeapAlloc( GetProcessHeap(), 0, sizeof(FIND_FIRST_INFO)))) break;
+            RtlInitializeCriticalSection( &info->cs );
             info->path = HeapAlloc( GetProcessHeap(), 0, strlen(full_name.long_name)+1 );
             strcpy( info->path, full_name.long_name );
 
@@ -2071,15 +2066,14 @@ HANDLE WINAPI FindFirstFileExW(
             info->cur_pos = 0;
 
             info->u.dos_dir = DOSFS_OpenDir( codepage, info->path );
-            GlobalUnlock( handle );
           }
-          if (!FindNextFileW( handle, data ))
+          if (!FindNextFileW( (HANDLE) info, data ))
           {
-              FindClose( handle );
+              FindClose( (HANDLE) info );
               SetLastError( ERROR_FILE_NOT_FOUND );
               break;
           }
-          return handle;
+          return (HANDLE) info;
         }
         break;
       default:
@@ -2163,12 +2157,13 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
     BOOL ret = FALSE;
     DWORD gle = ERROR_NO_MORE_FILES;
 
-    if ((handle == INVALID_HANDLE_VALUE) ||
-       !(info = (FIND_FIRST_INFO *)GlobalLock( handle )))
+    if (handle == INVALID_HANDLE_VALUE)
     {
         SetLastError( ERROR_INVALID_HANDLE );
         return ret;
     }
+    info = (FIND_FIRST_INFO*) handle;
+    RtlEnterCriticalSection( &info->cs );
     if (info->drive == -1)
     {
         ret = SMB_FindNext( info->u.smb_dir, data );
@@ -2194,7 +2189,7 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
     }
     ret = TRUE;
 done:
-    GlobalUnlock( handle );
+    RtlLeaveCriticalSection( &info->cs );
     if( !ret ) SetLastError( gle );
     return ret;
 }
@@ -2226,13 +2221,14 @@ BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
  */
 BOOL WINAPI FindClose( HANDLE handle )
 {
-    FIND_FIRST_INFO *info;
+    FIND_FIRST_INFO *info = (FIND_FIRST_INFO*) handle;
 
     if (handle == INVALID_HANDLE_VALUE) goto error;
 
     __TRY
     {
-        if ((info = (FIND_FIRST_INFO *)GlobalLock( handle )))
+        RtlEnterCriticalSection( &info->cs );
+        if (info)
         {
             if (info->u.dos_dir) DOSFS_CloseDir( info->u.dos_dir );
             if (info->path) HeapFree( GetProcessHeap(), 0, info->path );
@@ -2247,8 +2243,9 @@ BOOL WINAPI FindClose( HANDLE handle )
     }
     __ENDTRY
     if (!info) goto error;
-    GlobalUnlock( handle );
-    GlobalFree( handle );
+    RtlLeaveCriticalSection( &info->cs );
+    RtlDeleteCriticalSection( &info->cs );
+    HeapFree(GetProcessHeap(), 0, info);
     return TRUE;
 
  error:
