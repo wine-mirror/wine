@@ -255,11 +255,11 @@ BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 			*ptr = toupper(*ptr);
 
         	TRACE(comm,"parity (%c)\n", *ptr);
-		lpdcb->fParity = 1;
+		lpdcb->fParity = TRUE;
 		switch (*ptr) {
 			case 'N':
 				lpdcb->Parity = NOPARITY;
-				lpdcb->fParity = 0;
+				lpdcb->fParity = FALSE;
 				break;			
 			case 'E':
 				lpdcb->Parity = EVENPARITY;
@@ -1459,15 +1459,18 @@ INT16 WINAPI GetCommState16(INT16 fd, LPDCB16 lpdcb)
 			break;
 	}	
 	
-	switch (port.c_cflag & ~(PARENB | PARODD)) {
+	switch (port.c_cflag & (PARENB | PARODD)) {
 		case 0:
-			lpdcb->fParity = NOPARITY;
+			lpdcb->fParity = FALSE;
+			lpdcb->Parity = NOPARITY;
 			break;
 		case PARENB:
-			lpdcb->fParity = EVENPARITY;
+			lpdcb->fParity = TRUE;
+			lpdcb->Parity = EVENPARITY;
 			break;
 		case (PARENB | PARODD):
-			lpdcb->fParity = ODDPARITY;		
+			lpdcb->fParity = TRUE;		
+			lpdcb->Parity = ODDPARITY;		
 			break;
 	}
 
@@ -1578,15 +1581,18 @@ BOOL32 WINAPI GetCommState32(INT32 fd, LPDCB32 lpdcb)
 			break;
 	}	
 	
-	switch (port.c_cflag & ~(PARENB | PARODD)) {
+	switch (port.c_cflag & (PARENB | PARODD)) {
 		case 0:
-			lpdcb->fParity = NOPARITY;
+			lpdcb->fParity = FALSE;
+			lpdcb->Parity = NOPARITY;
 			break;
 		case PARENB:
-			lpdcb->fParity = EVENPARITY;
+			lpdcb->fParity = TRUE;
+			lpdcb->Parity = EVENPARITY;
 			break;
 		case (PARENB | PARODD):
-			lpdcb->fParity = ODDPARITY;		
+			lpdcb->fParity = TRUE;		
+			lpdcb->Parity = ODDPARITY;		
 			break;
 	}
 
