@@ -319,8 +319,16 @@ INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT count,
 INT WINAPI DrawTextW( HDC hdc, LPCWSTR str, INT count,
                           LPRECT rect, UINT flags )
 {
-    LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
-    INT ret = DrawTextA( hdc, p, count, rect, flags );
+    LPSTR p;
+    INT acount;
+    INT ret;
+    UINT codepage = CP_ACP; /* FIXME: get codepage of font charset */
+        
+    acount = WideCharToMultiByte(codepage,0,str,count,NULL,0,NULL,NULL);
+    p = HeapAlloc( GetProcessHeap(), 0, acount );
+    acount = WideCharToMultiByte(codepage,0,str,count,p,acount,NULL,NULL);
+    ret = DrawTextA( hdc, p, acount, rect, flags );
+
     HeapFree( GetProcessHeap(), 0, p );
     return ret;
 }
@@ -386,12 +394,30 @@ BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
     INT ret;
     UINT codepage = CP_ACP; /* FIXME: get codepage of font charset */
     UINT wlen;
+    LPINT lpDxW = NULL;
 
     wlen = MultiByteToWideChar(codepage,0,str,count,NULL,0);
+    if(lpDx){
+	int i, j;
+	i = 0; j = 0;
+
+	lpDxW = (LPINT)HeapAlloc( GetProcessHeap(), 0, wlen*sizeof(INT));
+	while(i < count){
+	    if(IsDBCSLeadByteEx(codepage, str[i])){
+		lpDxW[j++] = lpDx[i] + lpDx[i+1];
+		i = i + 2;
+	    }
+	    else{
+		lpDxW[j++] = lpDx[i];
+		i = i + 1;
+	    }
+	}
+	lpDx = lpDxW;
+    }
     p = HeapAlloc( GetProcessHeap(), 0, wlen * sizeof(WCHAR) );
     wlen = MultiByteToWideChar(codepage,0,str,count,p,wlen);
-
-    ret = ExtTextOutW( hdc, x, y, flags, lprect, p, wlen, lpDx );
+    ret = ExtTextOutW( hdc, x, y, flags, lprect, p, wlen, lpDxW );
+    if (lpDxW) HeapFree( GetProcessHeap(), 0, lpDxW );
     HeapFree( GetProcessHeap(), 0, p );
     return ret;
 }
