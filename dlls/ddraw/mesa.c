@@ -37,7 +37,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 {
 
   if (TRACE_ON(ddraw))
-    _dump_renderstate(dwRenderStateType, dwRenderState);
+    TRACE("%s = %08lx\n", _get_renderstate(dwRenderStateType), dwRenderState);
 
   /* First, all the stipple patterns */
   if ((dwRenderStateType >= D3DRENDERSTATE_STIPPLEPATTERN00) &&
@@ -269,7 +269,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
       break;
 
     default:
-      ERR("Unhandled dwRenderStateType %d!\n",dwRenderStateType);
+      ERR("Unhandled dwRenderStateType %s !\n", _get_renderstate(dwRenderStateType));
       break;
     }
 

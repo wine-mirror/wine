@@ -924,9 +924,9 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
     /* First, copy the Surface description */
     DD_STRUCT_COPY_BYSIZE(pDDSD,&(This->surface_desc));
 
-    TRACE("locked surface: height=%ld, width=%ld, pitch=%ld\n",
-	  pDDSD->dwHeight,pDDSD->dwWidth,pDDSD->u1.lPitch);
-
+    TRACE("locked surface returning description : \n");
+    if (TRACE_ON(ddraw)) DDRAW_dump_surface_desc(pDDSD);
+    
     /* If asked only for a part, change the surface pointer.
      * (Not documented.) */
     if (prect != NULL) {

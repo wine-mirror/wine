@@ -570,7 +570,7 @@ extern int d3d_OpenGL(LPD3DENUMDEVICESCALLBACK cb, LPVOID context) ;
 extern int is_OpenGL(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevice2Impl** device, IDirect3D2Impl* d3d);
 
 
-extern void _dump_renderstate(D3DRENDERSTATETYPE type, DWORD value);
+extern const char *_get_renderstate(D3DRENDERSTATETYPE type);
 
 #define dump_mat(mat) \
     TRACE("%f %f %f %f\n", (mat)->_11, (mat)->_12, (mat)->_13, (mat)->_14); \

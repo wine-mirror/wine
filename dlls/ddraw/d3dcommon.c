@@ -29,9 +29,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-void _dump_renderstate(D3DRENDERSTATETYPE type, DWORD value) {
-  char *states[] = {
-    NULL,
+const char *_get_renderstate(D3DRENDERSTATETYPE type) {
+  static const char * const states[] = {
+    "ERR",
     "D3DRENDERSTATE_TEXTUREHANDLE",
     "D3DRENDERSTATE_ANTIALIAS",
     "D3DRENDERSTATE_TEXTUREADDRESS",
@@ -117,5 +117,6 @@ void _dump_renderstate(D3DRENDERSTATETYPE type, DWORD value) {
     "D3DRENDERSTATE_STIPPLEPATTERN30",
     "D3DRENDERSTATE_STIPPLEPATTERN31"
   };
-  DPRINTF(" %s = 0x%08lx\n", states[type], value);
+  if (type >= (sizeof(states) / sizeof(states[0]))) return "ERR";
+  return states[type];
 }
