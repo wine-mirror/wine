@@ -12,15 +12,17 @@
  *   classes are getting registered with wrong hInstance.
  */
 
+#include "wine/port.h"
+
 #include <stdlib.h>
 #include <string.h>
+
 #include "wine/winbase16.h"
 #include "winerror.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
-#include "wine/port.h"
 #include "heap.h"
 #include "win.h"
 #include "user.h"

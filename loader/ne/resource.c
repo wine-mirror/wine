@@ -6,14 +6,16 @@
  * Copyright 1997 Alex Korobka
  */
 
+#include "wine/port.h" 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
+
 #include "windef.h"
-#include "wine/port.h"
 #include "wine/winbase16.h"
 #include "wine/library.h"
 #include "module.h"

@@ -7,7 +7,7 @@
  *
  */
 
-#include "config.h"
+#include "wine/port.h"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -15,7 +15,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <time.h>
-#include "wine/port.h"
+
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"

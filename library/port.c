@@ -4,7 +4,6 @@
  * Copyright 1996 Alexandre Julliard
  */
 
-#include "config.h"
 #include "wine/port.h"
 
 #ifdef __BEOS__

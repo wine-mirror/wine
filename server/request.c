@@ -4,7 +4,7 @@
  * Copyright (C) 1998 Alexandre Julliard
  */
 
-#include "config.h"
+#include "wine/port.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -32,7 +32,6 @@
 #include "process.h"
 #define WANT_REQUEST_HANDLERS
 #include "request.h"
-#include "wine/port.h"
 
 /* Some versions of glibc don't define this */
 #ifndef SCM_RIGHTS

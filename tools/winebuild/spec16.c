@@ -8,11 +8,11 @@
  * Copyright 1999 Ulrich Weigand
  */
 
+#include "wine/port.h"
+
 #include <assert.h>
 #include <ctype.h>
 
-#include "config.h"
-#include "wine/port.h"
 #include "wine/exception.h"
 #include "builtin16.h"
 #include "module.h"

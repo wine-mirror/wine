@@ -9,7 +9,7 @@
  * IDEA(s):	could be used to split up shell32,comctl32... 
  */
 
-#include "config.h"
+#include "wine/port.h" 
 
 #include <assert.h>
 #include <stdio.h>
@@ -21,7 +21,6 @@
 #include "module.h"
 #include "debugtools.h"
 #include "winerror.h"
-#include "wine/port.h"
 
 DEFAULT_DEBUG_CHANNEL(win32);
 

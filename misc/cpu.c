@@ -5,11 +5,12 @@
  * Copyright 1997-1998 Marcus Meissner
  */
 
+#include "wine/port.h"
+
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
-#include "config.h"
-#include "wine/port.h"
+
 #include "winbase.h"
 #include "winreg.h"
 #include "winnt.h"

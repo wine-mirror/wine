@@ -4,13 +4,15 @@
  * Copyright 1995 Alexandre Julliard
  */
 
+#include "wine/port.h" 
+
 #include <assert.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
-#include "wine/port.h"
+
 #include "wine/winbase16.h"
 #include "wine/library.h"
 #include "winerror.h"

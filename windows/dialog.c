@@ -4,6 +4,8 @@
  * Copyright 1993, 1994, 1996 Alexandre Julliard
  */
 
+#include "wine/port.h" 
+
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -20,7 +22,6 @@
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
 #include "wine/unicode.h"
-#include "wine/port.h"
 #include "controls.h"
 #include "heap.h"
 #include "win.h"

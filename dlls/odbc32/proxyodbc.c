@@ -9,6 +9,8 @@
  *
  */
 
+#include "wine/port.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,7 +18,6 @@
 
 #include "winbase.h"
 #include "debugtools.h"
-#include "wine/port.h"
 
 #include "sql.h"
 #include "sqltypes.h"

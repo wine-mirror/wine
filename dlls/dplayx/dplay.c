@@ -6,8 +6,10 @@
  *
  */
 
-#include <string.h>
 #include "wine/port.h"
+
+#include <string.h>
+
 #include "windef.h"
 #include "winerror.h"
 #include "winbase.h"

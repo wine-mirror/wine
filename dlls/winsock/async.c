@@ -19,7 +19,7 @@
  *	  whole stuff did not work anyway to other changes).
  */
  
-#include "config.h"
+#include "wine/port.h"
 
 #include <string.h>
 #include <sys/types.h>
@@ -85,7 +85,6 @@
 #include "ws2spi.h"
 #include "wine/winsock16.h"
 #include "winnt.h"
-#include "wine/port.h"
 
 #include "debugtools.h"
 

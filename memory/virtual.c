@@ -4,7 +4,7 @@
  * Copyright 1997 Alexandre Julliard
  */
 
-#include "config.h"
+#include "wine/port.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -25,7 +25,6 @@
 #include "wine/exception.h"
 #include "wine/unicode.h"
 #include "wine/library.h"
-#include "wine/port.h"
 #include "winerror.h"
 #include "file.h"
 #include "global.h"

@@ -4,7 +4,7 @@
  * Copyright (C) 1998 Alexandre Julliard
  */
 
-#include "config.h"
+#include "wine/port.h"
 
 #include <assert.h>
 #include <ctype.h>
@@ -30,7 +30,6 @@
 #include <unistd.h>
 #include <stdarg.h>
 
-#include "wine/port.h"
 #include "thread.h"
 #include "wine/server.h"
 #include "winerror.h"

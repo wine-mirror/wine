@@ -10,7 +10,7 @@
  *
  */
 
-#include "config.h"
+#include "wine/port.h"
 
 #include <assert.h>
 #include <ctype.h>
@@ -48,7 +48,6 @@
 #include "heap.h"
 #include "msdos.h"
 #include "options.h"
-#include "wine/port.h"
 #include "task.h"
 #include "debugtools.h"
 #include "wine/server.h"

@@ -5,6 +5,8 @@
  */
 /* 0xffff sometimes seems to mean: CURRENT_DS */
 
+#include "wine/port.h"
+
 #include <sys/types.h>
 #include <stdlib.h>
 #include <time.h>
@@ -14,7 +16,6 @@
 
 #include "wine/winbase16.h"
 #include "wine/exception.h"
-#include "wine/port.h"
 #include "global.h"
 #include "toolhelp.h"
 #include "selectors.h"

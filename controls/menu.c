@@ -12,6 +12,8 @@
  * This is probably not the meaning this style has in MS-Windows.
  */
 
+#include "wine/port.h"
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -23,7 +25,6 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
-#include "wine/port.h"
 #include "win.h"
 #include "controls.h"
 #include "nonclient.h"

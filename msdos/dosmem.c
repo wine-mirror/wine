@@ -5,7 +5,7 @@
  * Copyright 1996 Marcus Meissner
  */
 
-#include "config.h"
+#include "wine/port.h"
 
 #include <signal.h>
 #include <stdlib.h>
@@ -17,7 +17,6 @@
 
 #include "winbase.h"
 #include "wine/winbase16.h"
-#include "wine/port.h"
 
 #include "global.h"
 #include "selectors.h"

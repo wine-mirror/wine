@@ -4,13 +4,13 @@
  * Copyright 1995 Alexandre Julliard
  */
 
+#include "wine/port.h"
+
 #include <unistd.h>
 #include <string.h>
 
-#include "config.h"
 #include "windef.h"
 #include "wine/winbase16.h"
-#include "wine/port.h"
 #include "builtin16.h"
 #include "miscemu.h"
 #include "msdos.h"
