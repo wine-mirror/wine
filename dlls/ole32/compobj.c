@@ -226,6 +226,7 @@ APARTMENT* COM_CreateApartment(DWORD model)
     else
         apt = NtCurrentTeb()->ReservedForOle;
 
+    list_init(&apt->proxies);
     list_init(&apt->stubmgrs);
     apt->oidc = 1;
     
@@ -263,6 +264,14 @@ static void COM_DestroyApartment(APARTMENT *apt)
     apt->prev = NULL; apt->next = NULL;
     LeaveCriticalSection(&csApartment);
     if (apt->model & COINIT_APARTMENTTHREADED) {
+      /* disconnect proxies to release the corresponding stubs.
+       * It is confirmed in "Essential COM" in the sub-chapter on
+       * "Lifecycle Management and Marshalling" that the native version also
+       * disconnects proxies in this function. */
+      /* FIXME: this should also be called for MTA destruction, but that
+       * requires restructuring how apartments work slightly. */
+      MARSHAL_Disconnect_Proxies(apt);
+
       if (apt->win) DestroyWindow(apt->win);
       DeleteCriticalSection(&apt->cs);
     }
@@ -544,14 +553,6 @@ void WINAPI CoUninitialize(void)
     TRACE("() - Releasing the COM libraries\n");
 
     RunningObjectTableImpl_UnInitialize();
-
-    /* disconnect proxies to release the corresponding stubs.
-     * It is confirmed in "Essential COM" in the sub-chapter on
-     * "Lifecycle Management and Marshalling" that the native version also
-     * does some kind of proxy cleanup in this function.
-     * FIXME: does it just disconnect or completely destroy the proxies?
-     * FIXME: should this be in the apartment destructor? */
-    MARSHAL_Disconnect_Proxies();
 
     /* Release the references to the registered class objects */
     COM_RevokeAllClasses();

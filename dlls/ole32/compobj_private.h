@@ -68,29 +68,30 @@ typedef struct tagXOBJECT {
   DWORD refs;              /* external reference count */
 } XOBJECT;
 
-/* imported interface */
-typedef struct tagIIF {
-  struct tagIIF *next;
+/* imported interface proxy */
+struct ifproxy
+{
+  struct list entry;
   LPVOID iface;            /* interface pointer */
   IID iid;                 /* interface ID */
   IPID ipid;               /* imported interface ID */
   LPRPCPROXYBUFFER proxy;  /* interface proxy */
   DWORD refs;              /* imported (public) references */
-  HRESULT hres;            /* result of proxy creation attempt */
-} IIF;
+};
 
-/* imported object */
-typedef struct tagIOBJECT {
-  IRemUnknownVtbl *lpVtbl;
+/* imported object / proxy manager */
+struct proxy_manager
+{
+  const IInternalUnknownVtbl *lpVtbl;
   struct tagAPARTMENT *parent;
-  struct tagIOBJECT *next;
+  struct list entry;
   LPRPCCHANNELBUFFER chan; /* channel to object */
   OXID oxid;               /* object exported ID */
   OID oid;                 /* object ID */
-  IPID ipid;               /* first imported interface ID */
-  IIF *ifaces;             /* imported interfaces */
+  struct list interfaces;  /* imported interfaces */
   DWORD refs;              /* proxy reference count */
-} IOBJECT;
+  CRITICAL_SECTION cs;     /* thread safety for this object and children */
+};
 
 /* apartment */
 typedef struct tagAPARTMENT {
@@ -105,7 +106,7 @@ typedef struct tagAPARTMENT {
   CRITICAL_SECTION cs;     /* thread safety */
   LPMESSAGEFILTER filter;  /* message filter */
   XOBJECT *objs;           /* exported objects */
-  IOBJECT *proxies;        /* imported objects */  
+  struct list proxies;     /* imported objects */
   LPUNKNOWN state;         /* state object (see Co[Get,Set]State) */
   LPVOID ErrorInfo;        /* thread error info */
   DWORD listenertid;       /* id of apartment_listener_thread */
@@ -139,7 +140,7 @@ MARSHAL_Compare_Mids(wine_marshal_id *mid1,wine_marshal_id *mid2) {
     ;
 }
 
-HRESULT MARSHAL_Disconnect_Proxies(void);
+HRESULT MARSHAL_Disconnect_Proxies(APARTMENT *apt);
 HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv);
 
 /* an interface stub */
