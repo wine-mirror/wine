@@ -76,6 +76,9 @@ static const WCHAR ClassesRootW[] = {'M','a','c','h','i','n','e','\\',
                                      'S','o','f','t','w','a','r','e','\\',
                                      'C','l','a','s','s','e','s',0};
 
+#define IS_OPTION_FALSE(ch) \
+    ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
+
 /* _xmalloc [Internal] */
 static void *_xmalloc( size_t size )
 {
@@ -1084,35 +1087,6 @@ static void _save_at_exit(HKEY hkey,LPCSTR path)
     SERVER_END_REQ;
 }
 
-/* configure save files and start the periodic saving timer [Internal] */
-static void _init_registry_saving( HKEY hkey_local_machine, HKEY hkey_current_user,
-                                   HKEY hkey_users_default )
-{
-    int all;
-    int period = 0;
-    WCHAR buffer[20];
-    static const WCHAR registryW[] = {'r','e','g','i','s','t','r','y',0};
-    static const WCHAR SaveOnlyUpdatedKeysW[] = {'S','a','v','e','O','n','l','y','U','p','d','a','t','e','d','K','e','y','s',0};
-    static const WCHAR PeriodicSaveW[] = {'P','e','r','i','o','d','i','c','S','a','v','e',0};
-    static const WCHAR WritetoHomeRegistryFilesW[] = {'W','r','i','t','e','t','o','H','o','m','e','R','e','g','i','s','t','r','y','F','i','l','e','s',0};
-    static const WCHAR empty_strW[] = { 0 };
-
-    all  = !PROFILE_GetWineIniBool(registryW, SaveOnlyUpdatedKeysW, 1);
-    PROFILE_GetWineIniString( registryW, PeriodicSaveW, empty_strW, buffer, 20 );
-    if (buffer[0]) period = (int)strtolW(buffer, NULL, 10);
-
-    /* set saving level (0 for saving everything, 1 for saving only modified keys) */
-    _set_registry_levels(1,!all,period*1000);
-
-    if (PROFILE_GetWineIniBool(registryW, WritetoHomeRegistryFilesW, 1))
-    {
-        _save_at_exit(hkey_current_user,"/" SAVE_LOCAL_REGBRANCH_CURRENT_USER );
-        _save_at_exit(hkey_local_machine,"/" SAVE_LOCAL_REGBRANCH_LOCAL_MACHINE);
-        _save_at_exit(hkey_users_default,"/" SAVE_LOCAL_REGBRANCH_USER_DEFAULT);
-    }
-
-}
-
 /******************************************************************************
  * _allocate_default_keys [Internal]
  * Registry initialisation, allocates some default keys.
@@ -1170,14 +1144,6 @@ static int _get_reg_type(void)
       strcatW(tmp, win9x_reg_pathW);
       if(GetFileAttributesW(tmp) != (DWORD)-1)
         ret = REG_WIN95;
-    }
-
-    if ((ret == REG_WINNT) && (!PROFILE_GetWineIniString( WineW, ProfileW, empty_strW, tmp, MAX_PATHNAME_LEN )))
-    {
-       MESSAGE("When you are running with a native NT directory specify\n");
-       MESSAGE("'Profile=<profiledirectory>' or disable loading of Windows\n");
-       MESSAGE("registry (LoadWindowsRegistryFiles=N)\n");
-       ret = REG_DONTLOAD;
     }
 
     return ret;
@@ -1512,6 +1478,13 @@ static void _load_windows_registry( HKEY hkey_local_machine, HKEY hkey_current_u
                 strcatW(path, ntuser_datW);
                 _convert_and_load_native_registry(path,hkey_current_user,REG_WINNT,1);
             }
+            else
+            {
+                MESSAGE("When you are running with a native NT directory specify\n");
+                MESSAGE("'Profile=<profiledirectory>' or disable loading of Windows\n");
+                MESSAGE("registry (LoadWindowsRegistryFiles=N)\n");
+                break;
+            }
 
             /* default user.dat */
             if (hkey_users_default) {
@@ -1612,37 +1585,6 @@ static void _load_windows_registry( HKEY hkey_local_machine, HKEY hkey_current_u
     }
 }
 
-/* load global registry files (stored in /etc/wine) [Internal] */
-static void _load_global_registry( HKEY hkey_local_machine, HKEY hkey_users )
-{
-    WCHAR Wglobalregistrydir[MAX_PATHNAME_LEN];
-    char globalregistrydir[MAX_PATHNAME_LEN];
-    char configfile[MAX_PATHNAME_LEN];
-    static const WCHAR registryW[] = {'r','e','g','i','s','t','r','y',0};
-    static const WCHAR GlobalRegistryDirW[] = {'G','l','o','b','a','l','R','e','g','i','s','t','r','y','D','i','r',0};
-    static const WCHAR empty_strW[] = { 0 };
-
-    TRACE("(void)\n");
-
-    /* Override ETCDIR? */
-    PROFILE_GetWineIniString( registryW, GlobalRegistryDirW, empty_strW , Wglobalregistrydir, MAX_PATHNAME_LEN);
-    WideCharToMultiByte(CP_ACP, 0, Wglobalregistrydir, -1, globalregistrydir, MAX_PATHNAME_LEN, NULL, NULL);
-
-    if (globalregistrydir[0] != '/') strcpy(globalregistrydir, ETCDIR);
-
-    TRACE("GlobalRegistryDir is '%s'.\n", globalregistrydir);
-
-    /* Load the global HKU hive directly from sysconfdir */
-    strcpy(configfile, globalregistrydir);
-    strcat(configfile, SAVE_GLOBAL_REGBRANCH_USER_DEFAULT);
-    load_wine_registry( hkey_users, configfile );
-
-    /* Load the global machine defaults directly from sysconfdir */
-    strcpy(configfile, globalregistrydir);
-    strcat(configfile, SAVE_GLOBAL_REGBRANCH_LOCAL_MACHINE);
-    load_wine_registry( hkey_local_machine, configfile );
-}
-
 /* load home registry files (stored in ~/.wine) [Internal] */
 static void _load_home_registry( HKEY hkey_local_machine, HKEY hkey_current_user,
                                  HKEY hkey_users_default )
@@ -1665,20 +1607,34 @@ static void _load_home_registry( HKEY hkey_local_machine, HKEY hkey_current_user
     free(tmp);
 }
 
+
 /* load all registry (native and global and home) */
 void SHELL_LoadRegistry( void )
 {
-    HKEY hkey_local_machine, hkey_users, hkey_users_default, hkey_current_user;
+    HKEY hkey_local_machine, hkey_users, hkey_users_default, hkey_current_user, hkey_config;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
+    DWORD count;
+    BOOL res;
+    int all, period;
+    char tmp[1024];
 
     static const WCHAR MachineW[] = {'M','a','c','h','i','n','e',0};
     static const WCHAR UserW[] = {'U','s','e','r',0};
     static const WCHAR DefaultW[] = {'.','D','e','f','a','u','l','t',0};
-    static const WCHAR RegistryW[] = {'R','e','g','i','s','t','r','y',0};
+    static const WCHAR RegistryW[] = {'M','a','c','h','i','n','e','\\',
+                                      'S','o','f','t','w','a','r','e','\\',
+                                      'W','i','n','e','\\',
+                                      'W','i','n','e','\\',
+                                      'C','o','n','f','i','g','\\',
+                                      'R','e','g','i','s','t','r','y',0};
     static const WCHAR load_win_reg_filesW[] = {'L','o','a','d','W','i','n','d','o','w','s','R','e','g','i','s','t','r','y','F','i','l','e','s',0};
     static const WCHAR load_global_reg_filesW[] = {'L','o','a','d','G','l','o','b','a','l','R','e','g','i','s','t','r','y','F','i','l','e','s',0};
     static const WCHAR load_home_reg_filesW[] = {'L','o','a','d','H','o','m','e','R','e','g','i','s','t','r','y','F','i','l','e','s',0};
+    static const WCHAR SaveOnlyUpdatedKeysW[] = {'S','a','v','e','O','n','l','y','U','p','d','a','t','e','d','K','e','y','s',0};
+    static const WCHAR PeriodicSaveW[] = {'P','e','r','i','o','d','i','c','S','a','v','e',0};
+    static const WCHAR WritetoHomeRegistryFilesW[] = {'W','r','i','t','e','t','o','H','o','m','e','R','e','g','i','s','t','r','y','F','i','l','e','s',0};
+    static const WCHAR GlobalRegistryDirW[] = {'G','l','o','b','a','l','R','e','g','i','s','t','r','y','D','i','r',0};
 
     TRACE("(void)\n");
 
@@ -1707,16 +1663,112 @@ void SHELL_LoadRegistry( void )
 
     _set_registry_levels(0,0,0);
     _allocate_default_keys();
-    if (PROFILE_GetWineIniBool(RegistryW, load_win_reg_filesW, 1))
-        _load_windows_registry( hkey_local_machine, hkey_current_user, hkey_users_default );
-    if (PROFILE_GetWineIniBool(RegistryW, load_global_reg_filesW, 1))
-        _load_global_registry( hkey_local_machine, hkey_users );
+
+    attr.RootDirectory = 0;
+    RtlInitUnicodeString( &nameW, RegistryW );
+    if (NtOpenKey( &hkey_config, KEY_ALL_ACCESS, &attr )) hkey_config = 0;
+
+    /* load windows registry if required */
+
+    res = TRUE;
+    attr.RootDirectory = hkey_config;
+    RtlInitUnicodeString( &nameW, load_win_reg_filesW );
+    if (!NtQueryValueKey( hkey_config, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
+    {
+        WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+        res = !IS_OPTION_FALSE(str[0]);
+    }
+    if (res) _load_windows_registry( hkey_local_machine, hkey_current_user, hkey_users_default );
+
+    /* load global registry if required */
+
+    res = TRUE;
+    RtlInitUnicodeString( &nameW, load_global_reg_filesW );
+    if (!NtQueryValueKey( hkey_config, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
+    {
+        WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+        res = !IS_OPTION_FALSE(str[0]);
+    }
+    if (res)
+    {
+        /* load global registry files (stored in /etc/wine) */
+        char *p, configfile[MAX_PATHNAME_LEN];
+
+        /* Override ETCDIR? */
+        configfile[0] = 0;
+        RtlInitUnicodeString( &nameW, GlobalRegistryDirW );
+        if (!NtQueryValueKey( hkey_config, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
+        {
+            WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+            WideCharToMultiByte(CP_ACP, 0, str, -1, configfile, sizeof(configfile), NULL, NULL);
+        }
+        if (configfile[0] != '/') strcpy(configfile, ETCDIR);
+
+        TRACE("GlobalRegistryDir is '%s'.\n", configfile);
+
+        /* Load the global HKU hive directly from sysconfdir */
+        p = configfile + strlen(configfile);
+        strcpy(p, SAVE_GLOBAL_REGBRANCH_USER_DEFAULT);
+        load_wine_registry( hkey_users, configfile );
+
+        /* Load the global machine defaults directly from sysconfdir */
+        strcpy(p, SAVE_GLOBAL_REGBRANCH_LOCAL_MACHINE);
+        load_wine_registry( hkey_local_machine, configfile );
+    }
+
     _set_registry_levels(1,0,0);
-    if (PROFILE_GetWineIniBool(RegistryW, load_home_reg_filesW, 1))
-        _load_home_registry( hkey_local_machine, hkey_current_user, hkey_users_default );
-    _init_registry_saving( hkey_local_machine, hkey_current_user, hkey_users_default );
+
+    /* load home registry if required */
+
+    res = TRUE;
+    RtlInitUnicodeString( &nameW, load_home_reg_filesW );
+    if (!NtQueryValueKey( hkey_config, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
+    {
+        WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+        res = !IS_OPTION_FALSE(str[0]);
+    }
+    if (res) _load_home_registry( hkey_local_machine, hkey_current_user, hkey_users_default );
+
+    /* setup registry saving */
+
+    all = FALSE;
+    RtlInitUnicodeString( &nameW, SaveOnlyUpdatedKeysW );
+    if (!NtQueryValueKey( hkey_config, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
+    {
+        WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+        all = IS_OPTION_FALSE(str[0]);
+    }
+
+    period = 0;
+    RtlInitUnicodeString( &nameW, PeriodicSaveW );
+    if (!NtQueryValueKey( hkey_config, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
+    {
+        WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+        period = (int)strtolW(str, NULL, 10);
+    }
+
+    /* set saving level (0 for saving everything, 1 for saving only modified keys) */
+    _set_registry_levels(1,!all,period*1000);
+
+    /* setup keys to save */
+
+    res = TRUE;
+    RtlInitUnicodeString( &nameW, WritetoHomeRegistryFilesW );
+    if (!NtQueryValueKey( hkey_config, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
+    {
+        WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+        res = !IS_OPTION_FALSE(str[0]);
+    }
+    if (res)
+    {
+        _save_at_exit(hkey_current_user,"/" SAVE_LOCAL_REGBRANCH_CURRENT_USER );
+        _save_at_exit(hkey_local_machine,"/" SAVE_LOCAL_REGBRANCH_LOCAL_MACHINE);
+        _save_at_exit(hkey_users_default,"/" SAVE_LOCAL_REGBRANCH_USER_DEFAULT);
+    }
+
     NtClose(hkey_users_default);
     NtClose(hkey_current_user);
     NtClose(hkey_users);
     NtClose(hkey_local_machine);
+    NtClose(hkey_config);
 }
