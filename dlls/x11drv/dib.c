@@ -72,6 +72,7 @@ typedef struct
     DWORD           bMask;
     BOOL            useShm;
     int             dibpitch;
+    DWORD           sizeImage;  
 } X11DRV_DIB_IMAGEBITS_DESCR;
 
 
@@ -3516,24 +3517,27 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
        break;
 
     case 4:
-       if (descr->compression)
+        if (descr->compression) {
 	   FIXME("Compression not yet supported!\n");
-       else
-	   X11DRV_DIB_GetImageBits_4( descr->lines,(LPVOID)descr->bits,
-				      descr->infoWidth, descr->width,
-				      descr->colorMap, descr->palentry,
-				      bmpImage, descr->dibpitch );
-       break;
-
+           if(descr->sizeImage < X11DRV_DIB_GetDIBWidthBytes( descr->infoWidth, 4 ) * abs(descr->lines))
+               break;
+        }
+        X11DRV_DIB_GetImageBits_4( descr->lines,(LPVOID)descr->bits,
+                                   descr->infoWidth, descr->width,
+                                   descr->colorMap, descr->palentry,
+                                   bmpImage, descr->dibpitch );
+        break;
     case 8:
-       if (descr->compression)
+        if (descr->compression) {
 	   FIXME("Compression not yet supported!\n");
-       else
-	   X11DRV_DIB_GetImageBits_8( descr->lines, (LPVOID)descr->bits,
-				      descr->infoWidth, descr->width,
-				      descr->colorMap, descr->palentry,
-				      bmpImage, descr->dibpitch );
-       break;
+           if(descr->sizeImage < X11DRV_DIB_GetDIBWidthBytes( descr->infoWidth, 8 ) * abs(descr->lines))
+               break;
+        }
+        X11DRV_DIB_GetImageBits_8( descr->lines, (LPVOID)descr->bits,
+                                   descr->infoWidth, descr->width,
+                                   descr->colorMap, descr->palentry,
+                                   bmpImage, descr->dibpitch );
+        break;
     case 15:
     case 16:
        X11DRV_DIB_GetImageBits_16( descr->lines, (LPVOID)descr->bits,
@@ -3875,6 +3879,7 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   descr.xDest     = 0;
   descr.yDest     = 0;
   descr.xSrc      = 0;
+  descr.sizeImage = info->bmiHeader.biSizeImage;
 
   if (descr.lines > 0)
   {
@@ -4001,6 +4006,8 @@ static void X11DRV_DIB_DoCopyDIBSection(BITMAPOBJ *bmp, BOOL toDIB,
   descr.yDest     = yDest;
   descr.width     = width;
   descr.height    = height;
+  descr.sizeImage = 0;
+
 #ifdef HAVE_LIBXXSHM
   descr.useShm = (dib->shminfo.shmid != -1);
 #else
