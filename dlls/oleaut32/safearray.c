@@ -1457,7 +1457,7 @@ HRESULT WINAPI SafeArrayRedim(SAFEARRAY *psa, SAFEARRAYBOUND *psabound)
       ULONG ulOldSize, ulNewSize;
       PVOID pvNewData;
 
-      ulOldSize = SAFEARRAY_GetCellCount(psa);
+      ulOldSize = SAFEARRAY_GetCellCount(psa) * psa->cbElements;
       if (ulOldSize)
         ulNewSize = (ulOldSize / oldBounds->cElements) * psabound->cElements;
       else {
