@@ -748,8 +748,8 @@ SOCKET WINAPI WSOCK32_accept(SOCKET s, struct sockaddr *addr,
 	sock_server_call( REQ_ACCEPT_SOCKET );
 	if( req->handle >= 0 )
 	{
-	    unsigned omask = _get_sock_mask( s );
 	    SOCKET as = req->handle;
+	    unsigned omask = _get_sock_mask( s );
 	    int fd = _get_sock_fd( as );
 	    if( getpeername(fd, addr, addrlen32) != -1 )
 	    {
