@@ -551,8 +551,9 @@ HWND FindWindow(LPSTR ClassMatch, LPSTR TitleMatch)
  
 /**********************************************************************
  *           GetDesktopWindow        (USER.286)
+ *	     GetDeskTopHwnd          (USER.278)
  */
-HWND GetDesktopWindow()
+HWND GetDesktopWindow(void)
 {
     return hwndDesktop;
 }
@@ -960,10 +961,16 @@ BOOL EnumChildWindows(HWND hwnd, FARPROC wndenumprc, LPARAM lParam)
  */
 HWND SetSysModalWindow(HWND hWnd)
 {
-	HWND 	hWndOldModal = hWndSysModal;
+	HWND hWndOldModal = hWndSysModal;
 	hWndSysModal = hWnd;
 	printf("EMPTY STUB !! SetSysModalWindow(%04X) !\n", hWnd);
 	return hWndOldModal;
 }
 
-
+/*******************************************************************
+ *			GetSysModalWindow		[USER.189]
+ */
+HWND GetSysModalWindow(void)
+{
+	return hWndSysModal;
+}

@@ -226,6 +226,29 @@ static void wonb_stretch(XImage *sxi, XImage *dxi,
     } /* for all x in dest */
 }
 
+/* We use the 32-bit to 64-bit multiply and 64-bit to 32-bit divide of the */
+/* 386 (which gcc doesn't know well enough) to efficiently perform integer */
+/* scaling without having to worry about overflows. */
+
+/* ##### muldiv64() borrowed from svgalib 1.03 ##### */
+static inline int muldiv64( int m1, int m2, int d ) 
+{
+	/* int32 * int32 -> int64 / int32 -> int32 */
+#ifdef i386	
+	int result;
+	__asm__(
+		"imull %%edx\n\t"
+		"idivl %3\n\t"
+		: "=a" (result)			/* out */
+		: "a" (m1), "d" (m2), "g" (d)	/* in */
+		: "ax", "dx"			/* mod */
+	);
+	return result;
+#else
+	return m1 * m2 / d;
+#endif
+}
+
 /***********************************************************************
  *          color stretch -- deletes unused pixels
  * 
@@ -233,16 +256,40 @@ static void wonb_stretch(XImage *sxi, XImage *dxi,
 static void color_stretch(XImage *sxi, XImage *dxi, 
 	short widthSrc, short heightSrc, short widthDest, short heightDest)
 {
-    float deltax, deltay, sourcex, sourcey;
-    register int x, y;
+	register int x, y, sx, sy, xfactor, yfactor;
 
-    deltax = (float)widthSrc/widthDest;
-    deltay = (float)heightSrc/heightDest;
+	xfactor = muldiv64(widthSrc, 65536, widthDest);
+	yfactor = muldiv64(heightSrc, 65536, heightDest);
 
-    for (x=0, sourcex=0.0; x<widthDest; x++, sourcex+=deltax)
-        for (y=0, sourcey=0.0; y<heightDest; y++, sourcey+=deltay)
-            XPutPixel(dxi, x, y, XGetPixel(sxi, (int)sourcex, (int)sourcey));
+	sy = 0;
 
+	for (y = 0; y < heightDest;) 
+	{
+		int sourcey = sy >> 16;
+		sx = 0;
+		for (x = 0; x < widthDest; x++) {
+            		XPutPixel(dxi, x, y, XGetPixel(sxi, sx >> 16, sourcey));
+			sx += xfactor;
+		}
+		y++;
+		while (y < heightDest) {
+			int py;
+
+			sourcey = sy >> 16;
+			sy += yfactor;
+
+			if ((sy >> 16) != sourcey)
+				break;
+
+			/* vertical stretch => copy previous line */
+			
+			py = y - 1;
+
+			for (x = 0; x < widthDest; x++)
+	            		XPutPixel(dxi, x, y, XGetPixel(dxi, x, py));
+        	    	y++;
+		}
+	}
 }
 
 /***********************************************************************
@@ -266,7 +313,7 @@ BOOL StretchBlt( HDC hdcDest, short xDest, short yDest, short widthDest, short h
     WORD stretchmode;
 
 #ifdef DEBUG_GDI     
-    printf( "StretchBlt: %d %d,%d %dx%d %d %d,%d %dx%d %08x\n",
+    fprintf(stderr, "StretchBlt: %d %d,%d %dx%d %d %d,%d %dx%d %08x\n",
            hdcDest, xDest, yDest, widthDest, heightDest, hdcSrc, xSrc, 
            ySrc, widthSrc, heightSrc, rop );
     printf("StretchMode is %x\n", 
@@ -328,13 +375,17 @@ BOOL StretchBlt( HDC hdcDest, short xDest, short yDest, short widthDest, short h
 
     switch (stretchmode) {
 	case BLACKONWHITE:
-		bonw_stretch(sxi, dxi, widthSrc, heightSrc,
+		color_stretch(sxi, dxi, widthSrc, heightSrc, 
 				widthDest, heightDest);
-		break;
+/*		bonw_stretch(sxi, dxi, widthSrc, heightSrc,
+				widthDest, heightDest);
+*/		break;
 	case WHITEONBLACK:
-		wonb_stretch(sxi, dxi, widthSrc, heightSrc, 
+		color_stretch(sxi, dxi, widthSrc, heightSrc, 
 				widthDest, heightDest);
-		break;
+/*		wonb_stretch(sxi, dxi, widthSrc, heightSrc, 
+				widthDest, heightDest);
+*/		break;
 	case COLORONCOLOR:
 		color_stretch(sxi, dxi, widthSrc, heightSrc, 
 				widthDest, heightDest);

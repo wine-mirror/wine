@@ -317,7 +317,7 @@ int main( int argc, char *argv[] )
     DOS_InitFS();
     Comm_Init();
     
-#ifndef sun
+#ifndef sunos
     atexit(called_at_exit);
 #endif
 
@@ -504,3 +504,20 @@ void Copy(LPVOID lpSource, LPVOID lpDest, WORD nBytes)
 {
 	memcpy(lpDest, lpSource, nBytes);
 }
+
+/***********************************************************************
+*	YIELD (KERNEL.29)
+*/
+void Yield(void)
+{
+	;
+}
+
+/***********************************************************************
+*	SWAPMOUSEBUTTON (USER.186)
+*/
+BOOL SwapMouseButton(BOOL fSwap)
+{
+	return 0;	/* don't swap */
+}
+

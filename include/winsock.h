@@ -80,8 +80,9 @@ struct sockproto {
  */
 #define SOMAXCONN       5
 
+#ifndef MSG_DONTROUTE
 #define MSG_DONTROUTE   0x4             /* send without using routing tables */
-
+#endif
 #define MSG_MAXIOVLEN   16
 
 /*

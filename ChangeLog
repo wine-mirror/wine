@@ -1,3 +1,45 @@
+----------------------------------------------------------------------
+May 1, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [loader/signal.c]
+	Add XUngrabPointer() & XUngrabServer() in wine_fault().
+
+Fri Apr 22 19:30:08 1994  Erik Bos (erik@trashcan.hacktic.nl)
+
+	* [objects/bitblt.c]
+	color_stretch() rewritten to use ints only. *fast!*
+	BLACKONWHITE & WHITEONBLACK stretchmodes redirected to
+	use color_stretch().
+
+Mon May  2 21:39:43 1994  Erik Bos (erik@trashcan.hacktic.nl)
+
+	* [controls/menu.c]
+	SetSysMenu() added.
+
+	* [misc/cursor.c]
+	GetCursor() added.
+
+	* [misc/main.c]
+	SwapMouseButton() added, (NOP).
+
+	* [windows/win.c]
+	GetDesktopHwnd() added.
+
+	* [if1632/*spec]
+	Added not implemented functions defs as comment.
+
+	* [misc/winsocket.c]
+	Change WSAGetXbyY() functions to non-blocking ones,
+	Added WSAAsyncSelect(). 
+	(WSA functions can't be canceled yet).
+
+Wed Apr 20 23:58:58 1994  Scott A. Laird  (scott@curly)
+
+	* misc/profile.c: Fixed bug with GetIniFileName returning wrong
+	path when given a simple file name.  Fixed GetSetProfile to allow
+	enumerating all key names when KeyName is null.
+
+----------------------------------------------------------------------
 Wed Apr 20 14:53:35 1994  Bob Amstadt  (bob@pooh)
 
 	* [tools/build.c] [if1632/call.S] [if1632/Imakefile]

@@ -2,7 +2,7 @@
 #
 name	shell
 id	6
-length	256
+length	103
 
 #
 # WARNING ! These functions are not documented, so I didn't look for

@@ -359,6 +359,13 @@ HCURSOR SetCursor(HCURSOR hCursor)
     return hOldCursor;
 }
 
+/**********************************************************************
+ *			GetCursor [USER.247]
+ */
+HCURSOR GetCursor(void)
+{
+	return hActiveCursor;
+}
 
 /**********************************************************************
  *                        SetCursorPos [USER.70]

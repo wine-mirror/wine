@@ -171,6 +171,12 @@ bob@amscons.com
 
 7. WHAT'S NEW
 
+WHAT'S NEW with Wine-940505: (see ChangeLog for details)
+	- faster color_stretch()
+	- SetSysMenu(), GetCursor(), GetDesktopWindow()
+	- WSAGetXbyY() now non-blocking	
+	- and many many bug fixes!
+
 WHAT'S NEW with Wine-940420: (see ChangeLog for details)
 	- new property functions
 	- new listbox and combo box functions

@@ -18,6 +18,7 @@
 #include "wine.h"
 #include "segmem.h"
 #include "prototypes.h"
+#include "win.h"
  
 char * cstack[4096];
 struct sigaction segv_act;
@@ -162,6 +163,9 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
     return;
 
   oops:
+    XUngrabPointer(display, CurrentTime);
+	XUngrabServer(display);
+	XFlush(display);
     fprintf(stderr,"In win_fault %x:%x\n", scp->sc_cs, scp->sc_eip);
 #ifdef linux
     wine_debug(scp);  /* Enter our debugger */

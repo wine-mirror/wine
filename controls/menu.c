@@ -1924,6 +1924,17 @@ HMENU GetSystemMenu(HWND hWnd, BOOL bRevert)
 	return wndPtr->hSysMenu;
 }
 
+/**********************************************************************
+ *			SetSystemMenu		[USER.280]
+ */
+BOOL SetSystemMenu(HWND hWnd, HMENU newHmenu)
+{
+	WND	*wndPtr;
+
+	if ((wndPtr = WIN_FindWndPtr(hWnd)) != NULL)
+		wndPtr->hSysMenu = newHmenu;
+}
+
 
 /**********************************************************************
  *			GetMenu		[USER.157]

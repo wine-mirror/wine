@@ -9,6 +9,11 @@
  *            of the KeyNames (as documented in the MS-SDK).
  *
  *       o if KeyValue == NULL now clears the value in Get*ProfileString
+ *
+ * 20/Apr  SL - I'm not sure where these definitions came from, but my SDK
+ *         has a NULL KeyValue returning a list of KeyNames, and a NULL
+ *         AppName undefined.  I changed GetSetProfile to match.  This makes
+ *         PROGMAN.EXE do the right thing.
  */
 
 static char Copyright [] = "Copyright (C) 1993 Miguel de Icaza";
@@ -78,7 +83,7 @@ static char *GetIniFileName(char *name)
 	strcat(temp, "\\");
 	strcat(temp, name);
 	
-	return GetUnixFileName(name);
+	return GetUnixFileName(temp);
 }
 
 static TSecHeader *load (char *filename)
@@ -230,7 +235,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 	    continue;
 
 	/* If no key value given, then list all the keys */
-	if ((!AppName) && (!set)){
+	if ((!KeyName) && (!set)){
 	    char *p = ReturnedString;
 	    int left = Size - 1;
 	    int slen;

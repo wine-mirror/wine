@@ -306,7 +306,7 @@ _WinMain(int argc, char **argv)
 
 	hSysRes = LoadImage(filename, DLL);
 	if (hSysRes == (HINSTANCE)NULL)
-		fprintf(stderr, "wine: can't find %s!.\n", filename);
+		fprintf(stderr, "wine: can't find %s!\n", filename);
  	else
  	    printf("System Resources Loaded // hSysRes='%04X'\n", hSysRes);
 	

@@ -7,7 +7,9 @@
  
 #include <stdio.h>
 #include <string.h>
+#include <signal.h>
 #include <sys/types.h>
+#include <sys/ipc.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -22,12 +24,20 @@
 
 static WORD wsa_errno;
 static int wsa_initted;
+static key_t wine_key = 0;
+static FARPROC BlockFunction;
+static fd_set fd_in_use;
 
-#define dump_sockaddr(a) \
-	fprintf(stderr, "sockaddr_in: family %d, address %s, port %d\n", \
-			((struct sockaddr_in *)a)->sin_family, \
-			inet_ntoa(((struct sockaddr_in *)a)->sin_addr), \
-			ntohs(((struct sockaddr_in *)a)->sin_port))
+struct ipc_packet {
+	long	mtype;
+	HANDLE	handle;
+	HWND	hWnd;
+	WORD	wMsg;
+	LONG	lParam;
+};
+#define IPC_PACKET_SIZE (sizeof(struct ipc_packet) - sizeof(long))
+
+#define MTYPE 0xb0b0eb05
 
 struct WinSockHeap {
 	char	ntoa_buffer[32];
@@ -46,8 +56,13 @@ struct WinSockHeap {
 	struct	servent WSAservent_name;
 	struct	servent WSAservent_port;
 };
-
 static struct WinSockHeap *heap;
+
+#define dump_sockaddr(a) \
+	fprintf(stderr, "sockaddr_in: family %d, address %s, port %d\n", \
+			((struct sockaddr_in *)a)->sin_family, \
+			inet_ntoa(((struct sockaddr_in *)a)->sin_addr), \
+			ntohs(((struct sockaddr_in *)a)->sin_port))
 
 static WORD wsaerrno(void)
 {
@@ -112,7 +127,7 @@ static WORD wsaerrno(void)
 	case EREMOTE:		return WSAEREMOTE;
 
         default:
-		fprintf(stderr, "winsock: unknown error!\n");
+		fprintf(stderr, "winsock: unknown errorno %d!\n", errno);
 		return WSAEOPNOTSUPP;
 	}
 }
@@ -156,6 +171,8 @@ INT Winsock_closesocket(SOCKET s)
 #ifdef DEBUG_WINSOCK
 	fprintf(stderr, "WSA_closesocket: socket %d\n", s);
 #endif
+
+	FD_CLR(s, &fd_in_use);
 
 	if (close(s) < 0) {
         	errno_to_wsaerrno();
@@ -399,10 +416,13 @@ SOCKET Winsock_socket(INT af, INT type, INT protocol)
 #endif
             return INVALID_SOCKET;
     }
+    
     if (sock > 0xffff) {
 	wsa_errno = WSAEMFILE;
 	return INVALID_SOCKET;
     }
+
+    FD_SET(sock, &fd_in_use);
 
 #ifdef DEBUG_WINSOCK
     fprintf(stderr, "WSA_socket: fd %d\n", sock);
@@ -526,114 +546,224 @@ struct servent *Winsock_getservbyport(INT port, const char FAR *proto)
 	return (struct servent *) &heap->servent_port;
 }
 
-/******************** winsock specific functions ************************/
+/******************** winsock specific functions ************************
+ *
+ */
+
+#define AllocWSAHandle() getpid()
+
+static void recv_message(int sig)
+{
+	struct ipc_packet message;
+
+	if (msgrcv(wine_key, &message, IPC_PACKET_SIZE, MTYPE, IPC_NOWAIT) == -1)
+		perror("wine: msgrcv");
+
+	fprintf(stderr, 
+		"WSA: PostMessage (hwnd %d, wMsg %d, wParam %d, lParam %d)\n",
+		message.hWnd,
+		message.wMsg,
+		message.handle,
+		message.lParam);
+
+	PostMessage(message.hWnd, message.wMsg, message.handle, message.lParam);
+		
+	signal(SIGUSR1, recv_message);
+}
+
+
+static void send_message(HANDLE handle, HWND hWnd, u_int wMsg, long lParam)
+{
+	struct ipc_packet message;
+	
+	message.mtype = MTYPE;
+	message.handle = handle;
+	message.hWnd = hWnd;
+	message.wMsg = wMsg;
+	message.lParam = lParam;
+
+	fprintf(stderr, 
+		"WSA: send (hwnd %d, wMsg %d, handle %d, lParam %d)\n",
+		hWnd, wMsg, handle, lParam);
+	
+	if (msgsnd(wine_key, &message,  IPC_PACKET_SIZE, IPC_NOWAIT) == -1)
+		perror("wine: msgsnd");
+		
+	kill(getppid(), SIGUSR1);
+}
+
 
 HANDLE WSAAsyncGetHostByAddr(HWND hWnd, u_int wMsg, const char FAR *addr,
 		 INT len, INT type, char FAR *buf, INT buflen)
 {
+	HANDLE handle;
 	struct hostent *host;
 
-	if ((host = gethostbyaddr(addr, len, type)) == NULL) {
-		PostMessage(hWnd, wMsg, 1, wsaerrno() << 8);
+	handle = AllocWSAHandle();
 
-		return 1;
+	if (fork()) {
+		return handle;
+	} else {
+		if ((host = gethostbyaddr(addr, len, type)) == NULL) {
+			send_message(hWnd, wMsg, handle, wsaerrno() << 16);
+			exit(0);
+		}
+		memcpy(buf, host, buflen);
+		send_message(hWnd, wMsg, handle, 0);
+		exit(0);
 	}
+}
 
-	memcpy(buf, host, buflen);
-	PostMessage(hWnd, wMsg, 1, 0);
-
-	return 1;
-}                    
 
 HANDLE WSAAsyncGetHostByName(HWND hWnd, u_int wMsg, const char FAR *name, 
 			char FAR *buf, INT buflen)
 {
+	HANDLE handle;
 	struct hostent *host;
 
-	if ((host = gethostbyname(name)) == NULL) {
-		PostMessage(hWnd, wMsg, 2, wsaerrno() << 8);
-		return 2;
+	handle = AllocWSAHandle();
+
+	if (fork()) {
+		return handle;
+	} else {
+		if ((host = gethostbyname(name)) == NULL) {
+			send_message(hWnd, wMsg, handle, wsaerrno() << 16);
+			exit(0);
+		}
+		memcpy(buf, host, buflen);
+		send_message(hWnd, wMsg, handle, 0);
+		exit(0);
 	}
-
-	memcpy(buf, host, buflen);
-	PostMessage(hWnd, wMsg, 2, 0);
-
-	return 2;
 }                     
+
 
 HANDLE WSAAsyncGetProtoByName(HWND hWnd, u_int wMsg, const char FAR *name, 
 			char FAR *buf, INT buflen)
 {
+	HANDLE handle;
 	struct protoent *proto;
 
-	if ((proto = getprotobyname(name)) == NULL) {
-		PostMessage(hWnd, wMsg, 3, wsaerrno() << 8);
-		return 3;
+	handle = AllocWSAHandle();
+
+	if (fork()) {
+		return handle;
+	} else {
+		if ((proto = getprotobyname(name)) == NULL) {
+			send_message(hWnd, wMsg, handle, wsaerrno() << 16);
+			exit(0);
+		}
+		memcpy(buf, proto, buflen);
+		send_message(hWnd, wMsg, handle, 0);
+		exit(0);
 	}
-
-	memcpy(buf, proto, buflen);
-	PostMessage(hWnd, wMsg, 3, 0);
-
-	return 3;
 }
+
 
 HANDLE WSAAsyncGetProtoByNumber(HWND hWnd, u_int wMsg, INT number, 
 			char FAR *buf, INT buflen)
 {
+	HANDLE handle;
 	struct protoent *proto;
 
-	if ((proto = getprotobynumber(number)) == NULL) {
-		PostMessage(hWnd, wMsg, 4, wsaerrno() << 8);
-		return 4;
+	handle = AllocWSAHandle();
+
+	if (fork()) {
+		return handle;
+	} else {
+		if ((proto = getprotobynumber(number)) == NULL) {
+			send_message(hWnd, wMsg, handle, wsaerrno() << 16);
+			exit(0);
+		}
+		memcpy(buf, proto, buflen);
+		send_message(hWnd, wMsg, handle, 0);
+		exit(0);
 	}
-
-	memcpy(buf, proto, buflen);
-	PostMessage(hWnd, wMsg, 4, 0);
-
-	return 4;
 }
+
 
 HANDLE WSAAsyncGetServByName(HWND hWnd, u_int wMsg, const char FAR *name, 
 			const char FAR *proto, char FAR *buf, INT buflen)
 {
+	HANDLE handle;
 	struct servent *service;
 
-	if ((service = getservbyname(name, proto)) == NULL) {
-		PostMessage(hWnd, wMsg, 5, wsaerrno() << 8);
-        
-        	return 5;
+	handle = AllocWSAHandle();
+
+	if (fork()) {
+		return handle;
+	} else {
+		if ((service = getservbyname(name, proto)) == NULL) {
+			send_message(hWnd, wMsg, handle, wsaerrno() << 16);
+			exit(0);
+		}
+		memcpy(buf, service, buflen);
+		send_message(hWnd, wMsg, handle, 0);
+		exit(0);
 	}
-	memcpy(buf, service, buflen);
-	PostMessage(hWnd, wMsg, 5, 0);
-	
-	return 5;
 }
+
 
 HANDLE WSAAsyncGetServByPort(HWND hWnd, u_int wMsg, INT port, const char FAR 
 			*proto, char FAR *buf, INT buflen)
 {
+	HANDLE handle;
 	struct servent *service;
 
-	if ((service = getservbyport(port, proto)) == NULL) {
-		PostMessage(hWnd, wMsg, 6, wsaerrno() << 8);
-        
-        	return 6;
+	handle = AllocWSAHandle();
+
+	if (fork()) {
+		return handle;
+	} else {
+		if ((service = getservbyport(port, proto)) == NULL) {
+			send_message(hWnd, wMsg, handle, wsaerrno() << 16);
+			exit(0);
+		}
+		memcpy(buf, service, buflen);
+		send_message(hWnd, wMsg, handle, 0);
+		exit(0);
 	}
-	memcpy(buf, service, buflen);
-	PostMessage(hWnd, wMsg, 6, 0);
-	
-	return 6;
 }
 
 INT WSAAsyncSelect(SOCKET s, HWND hWnd, u_int wMsg, long lEvent)
 {
+	long event;
+	fd_set read_fds, write_fds, except_fds;
+
 #ifdef DEBUG_WINSOCK
 	fprintf(stderr, "WSA_AsyncSelect: socket %d, HWND %d, wMsg %d, event %d\n", s, hWnd, wMsg, lEvent);
 #endif
-	fcntl(s, F_SETFL, O_NONBLOCK);
 
+	/* remove outstanding asyncselect() processes */
+	/* kill */
 
-	return 0;
+	if (wMsg == 0 && lEvent == 0) 
+		return 0;
+
+	if (fork()) {
+		return 0;
+	} else {
+		while (1) {
+			FD_ZERO(&read_fds);
+			FD_ZERO(&write_fds);
+			FD_ZERO(&except_fds);
+
+			if (lEvent & FD_READ)
+				FD_SET(s, &read_fds);
+			if (lEvent & FD_WRITE)
+				FD_SET(s, &write_fds);
+
+			fcntl(s, F_SETFL, O_NONBLOCK);
+			select(s + 1, &read_fds, &write_fds, &except_fds, NULL);
+
+			event = 0;
+			if (FD_ISSET(s, &read_fds))
+				event |= FD_READ;
+			if (FD_ISSET(s, &write_fds))
+				event |= FD_WRITE;
+
+			send_message(hWnd, wMsg, s, (wsaerrno() << 16) | event);
+		}
+	}
 }
 
 INT WSAFDIsSet(INT fd, fd_set *set)
@@ -646,6 +776,7 @@ INT WSACancelAsyncRequest(HANDLE hAsyncTaskHandle)
 #ifdef DEBUG_WINSOCK
 	fprintf(stderr, "WSA_AsyncRequest: handle %d\n", hAsyncTaskHandle);
 #endif
+
 	return 0;
 }
 
@@ -685,8 +816,11 @@ BOOL WSAIsBlocking(void)
 FARPROC WSASetBlockingHook(FARPROC lpBlockFunc)
 {
 #ifdef DEBUG_WINSOCK
-	fprintf(stderr, "WSA_SetBlockHook\n %8x", lpBlockFunc);
+	fprintf(stderr, "WSA_SetBlockHook %8x, STUB!\n", lpBlockFunc);
 #endif
+	BlockFunction = lpBlockFunc;
+
+	return lpBlockFunc;
 }
 
 INT WSAUnhookBlockingHook(void)
@@ -694,6 +828,9 @@ INT WSAUnhookBlockingHook(void)
 #ifdef DEBUG_WINSOCK
 	fprintf(stderr, "WSA_UnhookBlockingHook\n");
 #endif
+	BlockFunction = NULL;
+
+	return 0;
 }
 
 WSADATA Winsock_data = {
@@ -716,8 +853,8 @@ WSADATA Winsock_data = {
 
 INT WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
 {
-	int HeapHandle;
-	MDESC *MyHeap;
+    int HeapHandle;
+    MDESC *MyHeap;
 
 #ifdef DEBUG_WINSOCK
     fprintf(stderr, "WSAStartup: verReq=%x\n", wVersionRequested);
@@ -731,21 +868,42 @@ INT WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
     if (!lpWSAData)
         return WSAEINVAL;
 
+	/* alloc winsock heap */
+
     if ((HeapHandle = GlobalAlloc(GMEM_FIXED,sizeof(struct WinSockHeap))) == 0)
 	return WSASYSNOTREADY;
 
     heap = (struct WinSockHeap *) GlobalLock(HeapHandle);
     HEAP_Init(&MyHeap, heap, sizeof(struct WinSockHeap));
-    
     bcopy(&Winsock_data, lpWSAData, sizeof(Winsock_data));
 
-    wsa_initted = 1;
+    /* ipc stuff */
+
+    if ((wine_key = msgget(IPC_PRIVATE, 0600)) == -1)
+	perror("wine: msgget");
+
+    signal(SIGUSR1, recv_message);
+
+    /* clear */
     
+    FD_ZERO(&fd_in_use);
+
+    wsa_initted = 1;
     return(0);
 }
 
 INT WSACleanup(void)
 {
-    wsa_initted = 0;
-    return 0;
+	int fd;
+
+	if (wine_key)
+		if (msgctl(wine_key, IPC_RMID, NULL) == -1)
+			perror("wine: shmctl");
+
+	for (fd = 0; fd != FD_SETSIZE; fd++)
+		if (FD_ISSET(fd, &fd_in_use))
+			close(fd);
+
+	wsa_initted = 0;
+	return 0;
 }
