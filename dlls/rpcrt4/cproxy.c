@@ -61,15 +61,19 @@ static ICOM_VTABLE(IRpcProxyBuffer) StdProxy_Vtbl;
 
 #if defined(__i386__)
 
+#include "pshpack1.h"
+
 struct StublessThunk {
-  BYTE push WINE_PACKED;
-  DWORD index WINE_PACKED;
-  BYTE call WINE_PACKED;
-  LONG handler WINE_PACKED;
-  BYTE ret WINE_PACKED;
-  WORD bytes WINE_PACKED;
+  BYTE push;
+  DWORD index;
+  BYTE call;
+  LONG handler;
+  BYTE ret;
+  WORD bytes;
   BYTE pad[3];
 };
+
+#include "poppack.h"
 
 /* adjust the stack size since we don't use Windows's method */
 #define STACK_ADJUST sizeof(DWORD)
@@ -318,4 +322,3 @@ ULONG WINAPI IUnknown_Release_Proxy(LPUNKNOWN iface)
   return IUnknown_Release(This->pUnkOuter);
 #endif
 }
-

@@ -274,6 +274,8 @@ static int _nroffuncs(ITypeInfo *tinfo) {
     /*NOTREACHED*/
 }
 
+#include "pshpack1.h"
+
 typedef struct _TMAsmProxy {
     BYTE	popleax;
     BYTE	pushlval;
@@ -283,7 +285,9 @@ typedef struct _TMAsmProxy {
     DWORD	xcall;
     BYTE	lret;
     WORD	bytestopop;
-} WINE_PACKED TMAsmProxy;
+} TMAsmProxy;
+
+#include "poppack.h"
 
 typedef struct _TMProxyImpl {
     DWORD				*lpvtbl;

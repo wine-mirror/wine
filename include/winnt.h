@@ -34,10 +34,8 @@
 /* Macro for structure packing and more. */
 
 #ifdef __GNUC__
-#define WINE_PACKED   __attribute__((packed))
 #define WINE_UNUSED   __attribute__((unused))
 #else
-#define WINE_PACKED    /* nothing */
 #define WINE_UNUSED    /* nothing */
 #endif
 

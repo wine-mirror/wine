@@ -29,6 +29,8 @@
 #include <wine/winbase16.h>
 #include <winternl.h>
 
+#include <pshpack1.h>
+
   /* In-memory module structure. See 'Windows Internals' p. 219 */
 typedef struct _NE_MODULE
 {
@@ -77,7 +79,7 @@ typedef struct {
     BYTE type;
     BYTE flags;
     BYTE segnum;
-    WORD offs WINE_PACKED;
+    WORD offs;
 } ET_ENTRY;
 
 typedef struct {
@@ -116,6 +118,8 @@ typedef struct _THHOOK
 } THHOOK;
 
 extern THHOOK *pThhook;
+
+#include <poppack.h>
 
 /* Resource types */
 

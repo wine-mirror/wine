@@ -27,14 +27,14 @@
 typedef struct tagCOMSTAT16
 {
     BYTE   status;
-    UINT16 cbInQue WINE_PACKED;
-    UINT16 cbOutQue WINE_PACKED;
+    UINT16 cbInQue;
+    UINT16 cbOutQue;
 } COMSTAT16,*LPCOMSTAT16;
 
 typedef struct tagDCB16
 {
     BYTE   Id;
-    UINT16 BaudRate WINE_PACKED;
+    UINT16 BaudRate;
     BYTE   ByteSize;
     BYTE   Parity;
     BYTE   StopBits;
@@ -66,7 +66,7 @@ typedef struct tagDCB16
     CHAR   PeChar;
     CHAR   EofChar;
     CHAR   EvtChar;
-    UINT16 TxDelay WINE_PACKED;
+    UINT16 TxDelay;
 } DCB16, *LPDCB16;
 
 
@@ -93,9 +93,9 @@ typedef struct
     UINT16   length;
     UINT16   flags;
     UINT16   showCmd;
-    POINT16  ptMinPosition WINE_PACKED;
-    POINT16  ptMaxPosition WINE_PACKED;
-    RECT16   rcNormalPosition WINE_PACKED;
+    POINT16  ptMinPosition;
+    POINT16  ptMaxPosition;
+    RECT16   rcNormalPosition;
 } WINDOWPLACEMENT16, *LPWINDOWPLACEMENT16;
 
 /****** Window classes ******/
@@ -103,15 +103,15 @@ typedef struct
 typedef struct
 {
     UINT16      style;
-    WNDPROC16   lpfnWndProc WINE_PACKED;
+    WNDPROC16   lpfnWndProc;
     INT16       cbClsExtra;
     INT16       cbWndExtra;
     HANDLE16    hInstance;
     HICON16     hIcon;
     HCURSOR16   hCursor;
     HBRUSH16    hbrBackground;
-    SEGPTR      lpszMenuName WINE_PACKED;
-    SEGPTR      lpszClassName WINE_PACKED;
+    SEGPTR      lpszMenuName;
+    SEGPTR      lpszClassName;
 } WNDCLASS16, *LPWNDCLASS16;
 
 typedef struct
@@ -135,9 +135,9 @@ typedef struct
     HWND16    hwnd;
     UINT16    message;
     WPARAM16  wParam;
-    LPARAM    lParam WINE_PACKED;
-    DWORD     time WINE_PACKED;
-    POINT16   pt WINE_PACKED;
+    LPARAM    lParam;
+    DWORD     time;
+    POINT16   pt;
 } MSG16, *LPMSG16;
 
 typedef struct
@@ -283,10 +283,10 @@ typedef struct
     INT16       cx;
     INT16       y;
     INT16       x;
-    LONG        style WINE_PACKED;
-    SEGPTR      lpszName WINE_PACKED;
-    SEGPTR      lpszClass WINE_PACKED;
-    DWORD       dwExStyle WINE_PACKED;
+    LONG        style;
+    SEGPTR      lpszName;
+    SEGPTR      lpszClass;
+    DWORD       dwExStyle;
 } CREATESTRUCT16, *LPCREATESTRUCT16;
 
 typedef struct
@@ -314,8 +314,8 @@ typedef struct
     INT16        y;
     INT16        cx;
     INT16        cy;
-    DWORD        style WINE_PACKED;
-    LPARAM       lParam WINE_PACKED;
+    DWORD        style;
+    LPARAM       lParam;
 } MDICREATESTRUCT16, *LPMDICREATESTRUCT16;
 
   /* WM_GETMINMAXINFO struct */
@@ -372,7 +372,7 @@ typedef struct
     UINT16  message;
     UINT16  paramL;
     UINT16  paramH;
-    DWORD   time WINE_PACKED;
+    DWORD   time;
 } EVENTMSG16, *LPEVENTMSG16;
 
   /* Mouse hook structure */
@@ -392,7 +392,7 @@ typedef struct
     HWND16    hWnd;
     UINT16    wMessage;
     WPARAM16  wParam;
-    LPARAM    lParam WINE_PACKED;
+    LPARAM    lParam;
 } HARDWAREHOOKSTRUCT16, *LPHARDWAREHOOKSTRUCT16;
 
 /* Scrollbar messages */
@@ -424,8 +424,8 @@ typedef struct
 typedef struct
 {
     HMODULE16   hModuleHook;
-    LPARAM	reserved WINE_PACKED;
-    LPARAM	lParam WINE_PACKED;
+    LPARAM      reserved;
+    LPARAM      lParam;
     WPARAM16    wParam;
     INT16       code;
 } DEBUGHOOKINFO16, *LPDEBUGHOOKINFO16;
@@ -508,8 +508,8 @@ typedef struct
     UINT16      itemState;
     HWND16      hwndItem;
     HDC16       hDC;
-    RECT16      rcItem WINE_PACKED;
-    DWORD       itemData WINE_PACKED;
+    RECT16      rcItem;
+    DWORD       itemData;
 } DRAWITEMSTRUCT16, *PDRAWITEMSTRUCT16, *LPDRAWITEMSTRUCT16;
 
 typedef struct
@@ -519,7 +519,7 @@ typedef struct
     UINT16      itemID;
     UINT16      itemWidth;
     UINT16      itemHeight;
-    DWORD       itemData WINE_PACKED;
+    DWORD       itemData;
 } MEASUREITEMSTRUCT16, *PMEASUREITEMSTRUCT16, *LPMEASUREITEMSTRUCT16;
 
 typedef struct
@@ -539,8 +539,30 @@ typedef struct
     UINT16      itemID1;
     DWORD       itemData1;
     UINT16      itemID2;
-    DWORD       itemData2 WINE_PACKED;
+    DWORD       itemData2;
 } COMPAREITEMSTRUCT16, *LPCOMPAREITEMSTRUCT16;
+
+/* DragObject stuff */
+
+typedef struct
+{
+    HWND16     hWnd;
+    HANDLE16   hScope;
+    WORD       wFlags;
+    HANDLE16   hList;
+    HANDLE16   hOfStruct;
+    POINT16    pt;
+    LONG       l;
+} DRAGINFO16, *LPDRAGINFO16;
+
+#define DRAGOBJ_PROGRAM    0x0001
+#define DRAGOBJ_DATA       0x0002
+#define DRAGOBJ_DIRECTORY  0x0004
+#define DRAGOBJ_MULTIPLE   0x0008
+#define DRAGOBJ_EXTERNAL   0x8000
+
+#define DRAG_PRINT 0x544E5250
+#define DRAG_FILE  0x454C4946
 
 #include <poppack.h>
 
@@ -944,28 +966,5 @@ BOOL16      WINAPI GrayString16(HDC16,HBRUSH16,GRAYSTRINGPROC16,LPARAM,
 DWORD       WINAPI GetFileResourceSize16(LPCSTR,LPCSTR,LPCSTR,LPDWORD);
 DWORD       WINAPI GetFileResource16(LPCSTR,LPCSTR,LPCSTR,DWORD,DWORD,LPVOID);
 FARPROC16   WINAPI SetTaskSignalProc(HTASK16,FARPROC16);
-
-
-/* DragObject stuff */
-
-typedef struct
-{
-    HWND16     hWnd;
-    HANDLE16   hScope;
-    WORD       wFlags;
-    HANDLE16   hList;
-    HANDLE16   hOfStruct;
-    POINT16 pt WINE_PACKED;
-    LONG       l WINE_PACKED;
-} DRAGINFO16, *LPDRAGINFO16;
-
-#define DRAGOBJ_PROGRAM		0x0001
-#define DRAGOBJ_DATA		0x0002
-#define DRAGOBJ_DIRECTORY	0x0004
-#define DRAGOBJ_MULTIPLE	0x0008
-#define DRAGOBJ_EXTERNAL	0x8000
-
-#define DRAG_PRINT		0x544E5250
-#define DRAG_FILE		0x454C4946
 
 #endif /* __WINE_WINE_WINUSER16_H */

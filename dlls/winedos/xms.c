@@ -35,16 +35,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(int31);
 
+#include "pshpack1.h"
+
 typedef struct {
  WORD Handle;
  DWORD Offset;
-} WINE_PACKED MOVEOFS;
+} MOVEOFS;
 
 typedef struct {
  DWORD Length;
  MOVEOFS Source;
  MOVEOFS Dest;
-} WINE_PACKED MOVESTRUCT;
+} MOVESTRUCT;
+
+#include "poppack.h"
 
 static BYTE * XMS_Offset( MOVEOFS *ofs )
 {

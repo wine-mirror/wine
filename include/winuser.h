@@ -483,9 +483,9 @@ typedef struct
     UINT   length;
     UINT   flags;
     UINT   showCmd;
-    POINT  ptMinPosition WINE_PACKED;
-    POINT  ptMaxPosition WINE_PACKED;
-    RECT   rcNormalPosition WINE_PACKED;
+    POINT  ptMinPosition;
+    POINT  ptMaxPosition;
+    RECT   rcNormalPosition;
 } WINDOWPLACEMENT, *PWINDOWPLACEMENT, *LPWINDOWPLACEMENT;
 
 
@@ -3164,8 +3164,8 @@ typedef struct
     UINT      itemState;
     HWND      hwndItem;
     HDC       hDC;
-    RECT      rcItem WINE_PACKED;
-    ULONG_PTR itemData WINE_PACKED;
+    RECT      rcItem;
+    ULONG_PTR itemData;
 } DRAWITEMSTRUCT, *PDRAWITEMSTRUCT, *LPDRAWITEMSTRUCT;
 
 

@@ -40,8 +40,8 @@ typedef struct
     WORD  Lpt4Addr;                  /* 0e: LPT4 I/O address */
     WORD  InstalledHardware;         /* 10: Installed hardware flags */
     BYTE  POSTstatus;                /* 12: Power-On Self Test status */
-    WORD  MemSize WINE_PACKED;       /* 13: Base memory size in Kb */
-    WORD  unused1 WINE_PACKED;       /* 15: Manufacturing test scratch pad */
+    WORD  MemSize;                   /* 13: Base memory size in Kb */
+    WORD  unused1;                   /* 15: Manufacturing test scratch pad */
     BYTE  KbdFlags1;                 /* 17: Keyboard flags 1 */
     BYTE  KbdFlags2;                 /* 18: Keyboard flags 2 */
     BYTE  unused2;                   /* 19: Keyboard driver workspace */
@@ -60,10 +60,10 @@ typedef struct
     BYTE  VideoCursorPos[16];        /* 50: Cursor position for 8 pages, column/row order */
     WORD  VideoCursorType;           /* 60: Video cursor type */
     BYTE  VideoCurPage;              /* 62: Video current page */
-    WORD  VideoCtrlAddr WINE_PACKED; /* 63: Video controller address */
+    WORD  VideoCtrlAddr;             /* 63: Video controller address */
     BYTE  VideoReg1;                 /* 65: Video mode select register */
     BYTE  VideoReg2;                 /* 66: Video CGA palette register */
-    DWORD ResetEntry WINE_PACKED;    /* 67: Warm reset entry point */
+    DWORD ResetEntry;                /* 67: Warm reset entry point */
     BYTE  LastIRQ;                   /* 6b: Last unexpected interrupt */
     DWORD Ticks;                     /* 6c: Ticks since midnight */
     BYTE  TicksOverflow;             /* 70: Timer overflow if past midnight */
@@ -78,7 +78,7 @@ typedef struct
     WORD  KbdBufferStart;            /* 80: Keyboard buffer start */
     WORD  KbdBufferEnd;              /* 82: Keyboard buffer end */
     BYTE  RowsOnScreenMinus1;        /* 84: EGA only */
-    WORD  BytesPerChar WINE_PACKED;  /* 85: EGA only */
+    WORD  BytesPerChar;              /* 85: EGA only */
     BYTE  ModeOptions;               /* 87: EGA only */
     BYTE  FeatureBitsSwitches;       /* 88: EGA only */
     BYTE  VGASettings;               /* 89: VGA misc settings */

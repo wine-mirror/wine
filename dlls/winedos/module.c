@@ -80,11 +80,13 @@ BOOL DOSVM_IsWin16(void)
 
 /* structures for EXEC */
 
+#include "pshpack1.h"
+
 typedef struct {
   WORD env_seg;
-  DWORD cmdline WINE_PACKED;
-  DWORD fcb1 WINE_PACKED;
-  DWORD fcb2 WINE_PACKED;
+  DWORD cmdline;
+  DWORD fcb1;
+  DWORD fcb2;
   WORD init_sp;
   WORD init_ss;
   WORD init_ip;
@@ -95,6 +97,8 @@ typedef struct {
   WORD load_seg;
   WORD rel_seg;
 } OverlayBlock;
+
+#include "poppack.h"
 
 /* global variables */
 

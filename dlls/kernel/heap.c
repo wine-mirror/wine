@@ -320,14 +320,17 @@ SIZE_T WINAPI HeapSize( HANDLE heap, DWORD flags, LPVOID ptr )
  * the output jpeg's > 1 MB if not */
 #define HGLOBAL_STORAGE      8  /* sizeof(HGLOBAL)*2 */
 
+#include "pshpack1.h"
+
 typedef struct __GLOBAL32_INTERN
 {
    WORD         Magic;
-   LPVOID       Pointer WINE_PACKED;
+   LPVOID       Pointer;
    BYTE         Flags;
    BYTE         LockCount;
 } GLOBAL32_INTERN, *PGLOBAL32_INTERN;
 
+#include "poppack.h"
 
 /***********************************************************************
  *           GlobalAlloc   (KERNEL32.@)

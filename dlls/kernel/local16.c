@@ -120,7 +120,7 @@ typedef struct
     WORD hdelta;                /* 18 Delta to expand the handle table */
     WORD expand;                /* 1a Pointer to expand function (unused) */
     WORD pstat;                 /* 1c Pointer to status structure (unused) */
-    FARPROC16 notify WINE_PACKED; /* 1e Pointer to LocalNotify() function */
+    FARPROC16 notify;           /* 1e Pointer to LocalNotify() function */
     WORD lock;                  /* 22 Lock count for the heap */
     WORD extra;                 /* 24 Extra bytes to allocate when expanding */
     WORD minsize;               /* 26 Minimum size of the heap */

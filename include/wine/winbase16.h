@@ -148,21 +148,21 @@ typedef struct _SEGINFO {
 /* Parameters for LoadModule() */
 typedef struct
 {
-    HGLOBAL16 hEnvironment;         /* Environment segment */
-    SEGPTR    cmdLine WINE_PACKED;  /* Command-line */
-    SEGPTR    showCmd WINE_PACKED;  /* Code for ShowWindow() */
-    SEGPTR    reserved WINE_PACKED;
+    HGLOBAL16 hEnvironment; /* Environment segment */
+    SEGPTR    cmdLine;      /* Command-line */
+    SEGPTR    showCmd;      /* Code for ShowWindow() */
+    SEGPTR    reserved;
 } LOADPARAMS16;
 
 /* Debugging support (DEBUG SYSTEM ONLY) */
 typedef struct
 {
     WORD    flags;
-    DWORD   dwOptions WINE_PACKED;
-    DWORD   dwFilter WINE_PACKED;
-    CHAR    achAllocModule[8] WINE_PACKED;
-    DWORD   dwAllocBreak WINE_PACKED;
-    DWORD   dwAllocCount WINE_PACKED;
+    DWORD   dwOptions;
+    DWORD   dwFilter;
+    CHAR    achAllocModule[8];
+    DWORD   dwAllocBreak;
+    DWORD   dwAllocCount;
 } WINDEBUGINFO16, *LPWINDEBUGINFO16;
 
 #include <poppack.h>

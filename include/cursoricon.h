@@ -55,7 +55,7 @@ typedef struct
     WORD                idReserved;
     WORD                idType;
     WORD                idCount;
-    CURSORICONDIRENTRY  idEntries[1] WINE_PACKED;
+    CURSORICONDIRENTRY  idEntries[1];
 } CURSORICONDIR;
 
 typedef struct {
