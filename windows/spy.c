@@ -1826,9 +1826,6 @@ typedef struct
     WCHAR      wnd_name[16];     /* window name for message            */
 } SPY_INSTANCE;
 
-/* This is defined so that the external entry point can return the addr */
-static SPY_INSTANCE ext_sp_e;
-
 static int indent_tls_index;
 
 /***********************************************************************
@@ -1884,7 +1881,7 @@ static const char *SPY_GetMsgInternal( UINT msg )
 /***********************************************************************
  *           SPY_Bsearch_Msg
  */
-const USER_MSG *SPY_Bsearch_Msg( const USER_MSG *first, const USER_MSG *last, UINT code)
+static const USER_MSG *SPY_Bsearch_Msg( const USER_MSG *first, const USER_MSG *last, UINT code)
 {
     INT count;
     const USER_MSG *test;
@@ -1944,7 +1941,7 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
 #endif
 
 	while (cc_array[i].classname &&
-	       strcmpW(cc_array[i].classname, sp_e->wnd_class) !=0) i++;
+	       strcmpiW(cc_array[i].classname, sp_e->wnd_class) != 0) i++;
 
 	if (cc_array[i].classname)
         {
@@ -1977,7 +1974,7 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
  *  instance structure.
  *
  */
-void SPY_GetWndName( SPY_INSTANCE *sp_e )
+static void SPY_GetWndName( SPY_INSTANCE *sp_e )
 {
     DWORD save_error;
     INT len;
@@ -2016,13 +2013,15 @@ void SPY_GetWndName( SPY_INSTANCE *sp_e )
  */
 const char *SPY_GetMsgName( UINT msg, HWND hWnd )
 {
+    SPY_INSTANCE ext_sp_e;
+
     ext_sp_e.msgnum = msg;
     ext_sp_e.msg_hwnd   = hWnd;
     ext_sp_e.lParam = 0;
     ext_sp_e.wParam = 0;
     SPY_GetWndName(&ext_sp_e);
     SPY_GetMsgStuff(&ext_sp_e);
-    return ext_sp_e.msg_name;
+    return wine_dbg_sprintf("%s", ext_sp_e.msg_name);
 }
 
 /***********************************************************************
@@ -2043,7 +2042,7 @@ const char *SPY_GetVKeyName(WPARAM wParam)
 /***********************************************************************
  *           SPY_Bsearch_Notify
  */
-const SPY_NOTIFY *SPY_Bsearch_Notify( const SPY_NOTIFY *first, const SPY_NOTIFY *last, UINT code)
+static const SPY_NOTIFY *SPY_Bsearch_Notify( const SPY_NOTIFY *first, const SPY_NOTIFY *last, UINT code)
 {
     INT count;
     const SPY_NOTIFY *test;
@@ -2077,7 +2076,7 @@ const SPY_NOTIFY *SPY_Bsearch_Notify( const SPY_NOTIFY *first, const SPY_NOTIFY 
 /***********************************************************************
  *           SPY_DumpMem
  */
-void SPY_DumpMem (LPCSTR header, UINT *q, INT len)
+static void SPY_DumpMem (LPCSTR header, const UINT *q, INT len)
 {
     int i;
 
@@ -2111,7 +2110,7 @@ void SPY_DumpMem (LPCSTR header, UINT *q, INT len)
 /***********************************************************************
  *           SPY_DumpStructure
  */
-void SPY_DumpStructure (SPY_INSTANCE *sp_e, BOOL enter)
+static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
 {
     switch (sp_e->msgnum)
 	{
@@ -2294,7 +2293,7 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
     if (!TRACE_ON(message) || SPY_EXCLUDE(msg)) return;
 
     sp_e.msgnum = msg;
-    sp_e.msg_hwnd   = hWnd;
+    sp_e.msg_hwnd = hWnd;
     sp_e.lParam = lParam;
     sp_e.wParam = wParam;
     SPY_GetWndName(&sp_e);
