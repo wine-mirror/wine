@@ -153,8 +153,6 @@ static BOOL in_transition = FALSE; /* This is not used as for today */
  */
 void X11DRV_EVENT_Init(void)
 {
-    HANDLE service;
-
 #ifdef HAVE_LIBXXSHM
     ShmAvailable = XShmQueryExtension( display );
     if (ShmAvailable) {
