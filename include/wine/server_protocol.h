@@ -1918,6 +1918,18 @@ struct load_registry_reply
 
 
 
+struct unload_registry_request
+{
+    struct request_header __header;
+    obj_handle_t hkey;
+};
+struct unload_registry_reply
+{
+    struct reply_header __header;
+};
+
+
+
 struct save_registry_request
 {
     struct request_header __header;
@@ -3204,6 +3216,7 @@ enum request
     REQ_enum_key_value,
     REQ_delete_key_value,
     REQ_load_registry,
+    REQ_unload_registry,
     REQ_save_registry,
     REQ_save_registry_atexit,
     REQ_set_registry_levels,
@@ -3388,6 +3401,7 @@ union generic_request
     struct enum_key_value_request enum_key_value_request;
     struct delete_key_value_request delete_key_value_request;
     struct load_registry_request load_registry_request;
+    struct unload_registry_request unload_registry_request;
     struct save_registry_request save_registry_request;
     struct save_registry_atexit_request save_registry_atexit_request;
     struct set_registry_levels_request set_registry_levels_request;
@@ -3570,6 +3584,7 @@ union generic_reply
     struct enum_key_value_reply enum_key_value_reply;
     struct delete_key_value_reply delete_key_value_reply;
     struct load_registry_reply load_registry_reply;
+    struct unload_registry_reply unload_registry_reply;
     struct save_registry_reply save_registry_reply;
     struct save_registry_atexit_reply save_registry_atexit_reply;
     struct set_registry_levels_reply set_registry_levels_reply;
@@ -3646,6 +3661,6 @@ union generic_reply
     struct open_token_reply open_token_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 119
+#define SERVER_PROTOCOL_VERSION 120
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

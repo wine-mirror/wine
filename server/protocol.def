@@ -1386,6 +1386,12 @@ enum char_info_mode
 @END
 
 
+/* UnLoad a registry branch from a file */
+@REQ(unload_registry)
+    obj_handle_t hkey;         /* root key to unload to */
+@END
+
+
 /* Save a registry branch to a file */
 @REQ(save_registry)
     obj_handle_t hkey;         /* key to save */

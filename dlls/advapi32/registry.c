@@ -1669,8 +1669,24 @@ LONG WINAPI RegRestoreKeyA( HKEY hkey, LPCSTR lpFile, DWORD dwFlags )
  */
 LONG WINAPI RegUnLoadKeyW( HKEY hkey, LPCWSTR lpSubKey )
 {
-    FIXME("(%p,%s): stub\n",hkey, debugstr_w(lpSubKey));
-    return ERROR_SUCCESS;
+    DWORD ret;
+    HKEY shkey;
+
+    TRACE("(%p,%s)\n",hkey, debugstr_w(lpSubKey));
+
+    ret = RegOpenKeyW(hkey,lpSubKey,&shkey);
+    if( ret )
+        return ERROR_INVALID_PARAMETER;
+
+    SERVER_START_REQ( unload_registry )
+    {
+        req->hkey  = shkey;
+        ret = RtlNtStatusToDosError( wine_server_call(req) );
+    }
+    SERVER_END_REQ;
+    RegCloseKey(shkey);
+
+    return ret;
 }
 
 

@@ -206,6 +206,7 @@ DECL_HANDLER(get_key_value);
 DECL_HANDLER(enum_key_value);
 DECL_HANDLER(delete_key_value);
 DECL_HANDLER(load_registry);
+DECL_HANDLER(unload_registry);
 DECL_HANDLER(save_registry);
 DECL_HANDLER(save_registry_atexit);
 DECL_HANDLER(set_registry_levels);
@@ -389,6 +390,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_enum_key_value,
     (req_handler)req_delete_key_value,
     (req_handler)req_load_registry,
+    (req_handler)req_unload_registry,
     (req_handler)req_save_registry,
     (req_handler)req_save_registry_atexit,
     (req_handler)req_set_registry_levels,

@@ -1624,6 +1624,11 @@ static void dump_load_registry_request( const struct load_registry_request *req 
     dump_varargs_unicode_str( cur_size );
 }
 
+static void dump_unload_registry_request( const struct unload_registry_request *req )
+{
+    fprintf( stderr, " hkey=%p", req->hkey );
+}
+
 static void dump_save_registry_request( const struct save_registry_request *req )
 {
     fprintf( stderr, " hkey=%p,", req->hkey );
@@ -2601,6 +2606,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_enum_key_value_request,
     (dump_func)dump_delete_key_value_request,
     (dump_func)dump_load_registry_request,
+    (dump_func)dump_unload_registry_request,
     (dump_func)dump_save_registry_request,
     (dump_func)dump_save_registry_atexit_request,
     (dump_func)dump_set_registry_levels_request,
@@ -2785,6 +2791,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)0,
     (dump_func)0,
+    (dump_func)0,
     (dump_func)dump_create_timer_reply,
     (dump_func)dump_open_timer_reply,
     (dump_func)dump_set_timer_reply,
@@ -2961,6 +2968,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "enum_key_value",
     "delete_key_value",
     "load_registry",
+    "unload_registry",
     "save_registry",
     "save_registry_atexit",
     "set_registry_levels",

@@ -770,7 +770,7 @@ static void enum_key( const struct key *key, int index, int info_class,
 }
 
 /* delete a key and its values */
-static void delete_key( struct key *key )
+static int delete_key( struct key *key, int recurse )
 {
     int index;
     struct key *parent;
@@ -779,13 +779,18 @@ static void delete_key( struct key *key )
     if (key->flags & KEY_ROOT)
     {
         set_error( STATUS_ACCESS_DENIED );
-        return;
+        return -1;
     }
     if (!(parent = key->parent) || (key->flags & KEY_DELETED))
     {
         set_error( STATUS_KEY_DELETED );
-        return;
+        return -1;
     }
+
+    while (recurse && (key->last_subkey>=0))
+        if(0>delete_key(key->subkeys[key->last_subkey], 1))
+            return -1;
+
     for (index = 0; index <= parent->last_subkey; index++)
         if (parent->subkeys[index] == key) break;
     assert( index <= parent->last_subkey );
@@ -794,11 +799,13 @@ static void delete_key( struct key *key )
     if ((key->flags & KEY_ROOT) || (key->last_subkey >= 0))
     {
         set_error( STATUS_ACCESS_DENIED );
-        return;
+        return -1;
     }
+
     if (debug_level > 1) dump_operation( key, NULL, "Delete" );
     free_subkey( parent, index );
     touch_key( parent, REG_NOTIFY_CHANGE_NAME );
+    return 0;
 }
 
 /* try to grow the array of values; return 1 if OK, 0 on error */
@@ -1764,7 +1771,7 @@ DECL_HANDLER(delete_key)
 
     if ((key = get_hkey_obj( req->hkey, 0 /*FIXME*/ )))
     {
-        delete_key( key );
+        delete_key( key, 0);
         release_object( key );
     }
 }
@@ -1852,6 +1859,17 @@ DECL_HANDLER(load_registry)
     {
         /* FIXME: use subkey name */
         load_registry( key, req->file );
+        release_object( key );
+    }
+}
+
+DECL_HANDLER(unload_registry)
+{
+    struct key *key;
+
+    if ((key = get_hkey_obj( req->hkey, 0 )))
+    {
+        delete_key( key, 1 );     /* FIXME */
         release_object( key );
     }
 }
