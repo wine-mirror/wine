@@ -10,7 +10,6 @@ WHAT'S INCLUDED
 - A Makefile for Borland C++ (needs editing for directories).
 
 WHAT'S MISSING
-- Pipes
 - Command-line qualifiers for most builtin commands
 - Wildcards and relative paths in COPY, MOVE and RENAME
 - Set functionality in DATE, TIME, ATTRIB, LABEL
@@ -27,8 +26,6 @@ US date-time format is used. Set eg "LANG=en_GB" for DD/MM/YY dates and 24-hour
 times.
 - Line editing and command recall doesn't work due to missing functionality in
 Wine.
-- File sizes in the DIR function are all given in 32 bits, though totals and
-free space are computed to 64 bits.
 - DIR/S only works if no file specification is given, ie "DIR C:\TEMP /S" works
 but "DIR C:\TEMP\*.C" doesn't work if a matching file exists in a lower
 directory.

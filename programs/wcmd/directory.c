@@ -10,7 +10,6 @@
 
 /*
  * FIXME:
- * - 32-bit limit on individual file sizes (directories and free space are 64-bit)
  * - DIR /S fails if the starting directory is not the current default.
  */
 
@@ -18,8 +17,7 @@
 
 int WCMD_dir_sort (const void *a, const void *b);
 void WCMD_list_directory (char *path, int level);
-char * WCMD_filesize64 (__int64 n);
-char * WCMD_filesize32 (int n);
+char * WCMD_filesize64 (__int64 free);
 char * WCMD_strrev (char *buff);
 
 
@@ -46,8 +44,7 @@ void WCMD_directory () {
 
 char path[MAX_PATH], drive[8];
 int status;
-__int64 free_space;
-DWORD spc, bps, fc, capacity;
+ULARGE_INTEGER avail, total, free;
 
   line_count = 5;
   page_mode = (strstr(quals, "/P") != NULL);
@@ -65,9 +62,8 @@ DWORD spc, bps, fc, capacity;
   }
   WCMD_list_directory (path, 0);
   lstrcpyn (drive, path, 4);
-  GetDiskFreeSpace (drive, &spc, &bps, &fc, &capacity);
-  free_space = bps * spc * fc;
-  WCMD_output (" %18s bytes free\n\n", WCMD_filesize64 (free_space));
+  GetDiskFreeSpaceEx (drive, &avail, &total, &free);
+  WCMD_output (" %18s bytes free\n\n", WCMD_filesize64 (free.QuadPart));
   if (recurse) {
     WCMD_output ("Total files listed:\n%8d files%25s bytes\n%8d directories\n\n",
     	 file_total, WCMD_filesize64 (byte_total), dir_total);
@@ -80,7 +76,6 @@ DWORD spc, bps, fc, capacity;
  * List a single file directory. This function (and those below it) can be called
  * recursively when the /S switch is used.
  *
- * FIXME: Assumes individual files are less than 2**32 bytes.
  * FIXME: Entries sorted by name only. Should we support DIRCMD??
  * FIXME: Assumes 24-line display for the /P qualifier.
  * FIXME: Other command qualifiers not supported.
@@ -98,12 +93,12 @@ FILETIME ft;
 SYSTEMTIME st;
 HANDLE hff;
 int status, dir_count, file_count, entry_count, i;
-__int64 byte_count;
+ULARGE_INTEGER byte_count, file_size;
 
   dir_count = 0;
   file_count = 0;
   entry_count = 0;
-  byte_count = 0;
+  byte_count.QuadPart = 0;
 
 /*
  *  If the path supplied does not include a wildcard, and the endpoint of the
@@ -166,10 +161,12 @@ __int64 byte_count;
     }
     else {
       file_count++;
-      byte_count += (fd+i)->nFileSizeLow;
+      file_size.LowPart = (fd+i)->nFileSizeLow;
+      file_size.HighPart = (fd+i)->nFileSizeHigh;
+      byte_count.QuadPart += file_size.QuadPart;
       WCMD_output ("%8s  %8s    %10s  %s\n",
      	  datestring, timestring,
-	  WCMD_filesize32((fd+i)->nFileSizeLow), (fd+i)->cFileName);
+	  WCMD_filesize64(file_size.QuadPart), (fd+i)->cFileName);
     }
     if (page_mode) {
       if (++line_count > 23) {
@@ -180,10 +177,10 @@ __int64 byte_count;
     }
   }
   if (file_count == 1) {
-    WCMD_output ("       1 file %25s bytes\n", WCMD_filesize64 (byte_count));
+    WCMD_output ("       1 file %25s bytes\n", WCMD_filesize64 (byte_count.QuadPart));
   }
   else {
-    WCMD_output ("%8d files %24s bytes\n", file_count, WCMD_filesize64 (byte_count));
+    WCMD_output ("%8d files %24s bytes\n", file_count, WCMD_filesize64 (byte_count.QuadPart));
   }
   if (page_mode) {
     if (++line_count > 23) {
@@ -192,7 +189,7 @@ __int64 byte_count;
       ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
     }
   }
-  byte_total = byte_total + byte_count;
+  byte_total = byte_total + byte_count.QuadPart;
   file_total = file_total + file_count;
   dir_total = dir_total + dir_count;
   if (dir_count == 1) WCMD_output ("1 directory         ");
@@ -249,34 +246,6 @@ static char buff[32];
   } while (n != 0);
   WCMD_strrev (buff);
   return buff;
-}
-
-/*****************************************************************************
- * WCMD_filesize32
- *
- * Convert a 32-bit number into a character string, with commas every three digits.
- * Result is returned in a static string overwritten with each call.
- * FIXME: There must be a better algorithm!
- */
-
-char * WCMD_filesize32 (int n) {
-
-int r, i;
-char *p, *q;
-static char buff1[16], buff2[16];
-
-  wsprintf (buff1, "%i", n);
-  r = lstrlen (buff1);
-  WCMD_strrev (buff1);
-  p = buff1;
-  q = buff2;
-  for (i=0; i<r; i++) {
-  if ((i-2)%3 == 1) *q++ = ',';
-  *q++ = *p++;
-  }
-  *q = '\0';
-  WCMD_strrev (buff2);
-  return buff2;
 }
 
 /*****************************************************************************

@@ -1,13 +1,11 @@
 /*
  * WCMD - Wine-compatible command line interface. 
  *
- * (C) 1999 D A Pickles
+ * (C) 1999 - 2001 D A Pickles
  */
 
 /*
  * FIXME:
- * - No support for pipes
- * - 32-bit limit on file sizes in DIR command
  * - Cannot handle parameters in quotes
  * - Lots of functionality missing from builtins
  */
@@ -25,7 +23,7 @@ DWORD errorlevel;
 int echo_mode = 1, verify_mode = 0;
 char nyi[] = "Not Yet Implemented\n\n";
 char newline[] = "\n";
-char version_string[] = "WCMD Version 0.15\n\n";
+char version_string[] = "WCMD Version 0.17\n\n";
 char anykey[] = "Press any key to continue: ";
 char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 BATCH_CONTEXT *context = NULL;
@@ -109,7 +107,12 @@ HANDLE h;
       string[count-1] = '\0';		/* ReadFile output is not null-terminated! */
       if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */
       if (lstrlen (string) != 0) {
-        WCMD_process_command (string);
+        if (strchr(string,'|') != NULL) {
+          WCMD_pipe (string);
+        }
+	else {
+          WCMD_process_command (string);
+	}
       }
     }
   }
@@ -131,14 +134,6 @@ DWORD count;
 HANDLE old_stdin = 0, old_stdout = 0, h;
 char *whichcmd;
 
-/*
- *	Throw away constructs we don't support yet
- */
-
-    if (strchr(command,'|') != NULL) {
-      WCMD_output ("Pipes not yet implemented\n");
-      return;
-    }
 
 /*
  *	Expand up environment variables.
@@ -614,3 +609,36 @@ char *ptr;
     ptr--;
   }
 }
+
+/*************************************************************************
+ * WCMD_pipe
+ *
+ *	Handle pipes within a command - the DOS way using temporary files.
+ */
+
+void WCMD_pipe (char *command) {
+
+char *p;
+char temp_path[MAX_PATH], temp_file[MAX_PATH], temp_file2[MAX_PATH], temp_cmd[1024];
+
+  GetTempPath (sizeof(temp_path), temp_path);
+  GetTempFileName (temp_path, "WCMD", 0, temp_file);
+  p = strchr(command, '|');
+  *p++ = '\0';
+  wsprintf (temp_cmd, "%s > %s", command, temp_file);
+  WCMD_process_command (temp_cmd);
+  command = p;
+  while ((p = strchr(command, '|'))) {
+    *p++ = '\0';
+    GetTempFileName (temp_path, "WCMD", 0, temp_file2);
+    wsprintf (temp_cmd, "%s < %s > %s", command, temp_file, temp_file2);
+    WCMD_process_command (temp_cmd);
+    DeleteFile (temp_file);
+    lstrcpy (temp_file, temp_file2);
+    command = p;
+  }
+  wsprintf (temp_cmd, "%s < %s", command, temp_file);
+  WCMD_process_command (temp_cmd);
+  DeleteFile (temp_file);
+}
+

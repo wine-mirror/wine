@@ -1,3 +1,9 @@
+v0.17 - 4 June 2001
+- Simple pipes now work, using temporary files (the DOS way).
+
+v0.16 - 1 April 2001
+-File, directory and free space sizes are all now computed in 64 bits.
+
 v0.15 - 31 October 2000
 -Running console mode programs the interpreter now waits for the
 program to exit before issuing the next prompt.

@@ -11,7 +11,6 @@
 /*
  * FIXME:
  * - No support for pipes, shell parameters
- * - 32-bit limit on file sizes in DIR command
  * - Lots of functionality missing from builtins
  * - Messages etc need international support
  */
