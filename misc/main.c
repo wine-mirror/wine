@@ -114,9 +114,6 @@ struct options Options =
 const char *argv0;
 
 static const char szUsage[] =
-  "%s\n"
-  "Usage:  %s [options] \"program_name [arguments]\"\n"
-  "\n"
   "Options:\n"
   "    -config name    Specify config file to use\n"
   "    -debug          Enter debugger before starting application\n"
@@ -147,7 +144,8 @@ static const char szUsage[] =
  */
 void MAIN_Usage( char *name )
 {
-    MESSAGE( szUsage, WINE_RELEASE_INFO, name );
+    MESSAGE( WINE_RELEASE_INFO "\nUsage:  %s [options] \"program_name [arguments]\"\n\n", name );
+    write( 2, szUsage, sizeof(szUsage)-1 );  /* too large for MESSAGE() */
     ExitProcess(1);
 }
 
