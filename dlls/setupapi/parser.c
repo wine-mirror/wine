@@ -537,6 +537,21 @@ static struct field *add_field_from_token( struct parser *parser, int is_key )
 }
 
 
+/* close the current line and prepare for parsing a new one */
+static void close_current_line( struct parser *parser )
+{
+    struct line *cur_line = parser->line;
+
+    if (cur_line)
+    {
+        /* if line has a single field and no key, the field is the key too */
+        if (cur_line->nb_fields == 1 && cur_line->key_field == -1)
+            cur_line->key_field = cur_line->first_field;
+    }
+    parser->line = NULL;
+}
+
+
 /* handler for parser LINE_START state */
 static const WCHAR *line_start_state( struct parser *parser, const WCHAR *pos )
 {
@@ -548,7 +563,7 @@ static const WCHAR *line_start_state( struct parser *parser, const WCHAR *pos )
         {
         case '\n':
             parser->line_pos++;
-            parser->line = NULL;  /* start a new line */
+            close_current_line( parser );
             break;
         case ';':
             push_state( parser, LINE_START );
@@ -568,6 +583,7 @@ static const WCHAR *line_start_state( struct parser *parser, const WCHAR *pos )
             break;
         }
     }
+    close_current_line( parser );
     return NULL;
 }
 
