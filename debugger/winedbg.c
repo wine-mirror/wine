@@ -67,26 +67,32 @@ static	BOOL DEBUG_IntVarsRW(int read)
 #undef   INTERNAL_VAR
     }
 
-    if (!RegOpenKey(HKEY_CURRENT_USER, "Software\\Wine\\WineDbg", &hkey)) {
-	for (i = 0; i < DBG_IV_LAST; i++) {
-	    if (read) {
-		if (!DEBUG_IntVars[i].pval) {
-		    if (!RegQueryValueEx(hkey, DEBUG_IntVars[i].name, 0, 
-					 &type, (LPSTR)&val, &count))
-			DEBUG_IntVars[i].val = val;
-		    DEBUG_IntVars[i].pval = &DEBUG_IntVars[i].val;
-		} else {
-		    *DEBUG_IntVars[i].pval = 0;
-		}
-	    } else {
-		/* FIXME: type should be infered from basic type -if any- of intvar */
-		if (DEBUG_IntVars[i].pval == &DEBUG_IntVars[i].val)
-		    RegSetValueEx(hkey, DEBUG_IntVars[i].name, 0, 
-				  type, (LPCVOID)DEBUG_IntVars[i].pval, count);
-	    }
-	}
-	RegCloseKey(hkey);
+    if (RegOpenKey(HKEY_CURRENT_USER, "Software\\Wine\\WineDbg", &hkey) &&
+	RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Wine\\WineDbg", &hkey)) {
+	/* since the IVars are not yet setup, DEBUG_Printf doesn't work,
+	 * so don't use it */
+	fprintf(stderr, "Cannot create WineDbg key in registry\n");
+	return FALSE;
     }
+
+    for (i = 0; i < DBG_IV_LAST; i++) {
+	if (read) {
+	    if (!DEBUG_IntVars[i].pval) {
+		if (!RegQueryValueEx(hkey, DEBUG_IntVars[i].name, 0, 
+				     &type, (LPSTR)&val, &count))
+		    DEBUG_IntVars[i].val = val;
+		DEBUG_IntVars[i].pval = &DEBUG_IntVars[i].val;
+	    } else {
+		*DEBUG_IntVars[i].pval = 0;
+	    }
+	} else {
+	    /* FIXME: type should be infered from basic type -if any- of intvar */
+	    if (DEBUG_IntVars[i].pval == &DEBUG_IntVars[i].val)
+		RegSetValueEx(hkey, DEBUG_IntVars[i].name, 0, 
+			      type, (LPCVOID)DEBUG_IntVars[i].pval, count);
+	}
+    }
+    RegCloseKey(hkey);
     return TRUE;
 }
 
@@ -549,9 +555,7 @@ static	DWORD	DEBUG_MainLoop(DWORD pid)
 int DEBUG_main(int argc, char** argv)
 {
     DWORD	pid = 0, retv = 0;
-    int		i;
 
-    for  (i = 0; i < argc; i++) fprintf(stderr, "argv[%d]=%s\n", i, argv[i]);
 #ifdef DBG_need_heap
     /* Initialize the debugger heap. */
     dbg_heap = HeapCreate(HEAP_NO_SERIALIZE, 0x1000, 0x8000000); /* 128MB */
@@ -562,7 +566,7 @@ int DEBUG_main(int argc, char** argv)
     DEBUG_InitCVDataTypes();    
 
     /* Initialize internal vars */
-    DEBUG_IntVarsRW(TRUE);
+    if (!DEBUG_IntVarsRW(TRUE)) return -1;
 
     /* keep it as a guiexe for now, so that Wine won't touch the Unix stdin, 
      * stdout and stderr streams
