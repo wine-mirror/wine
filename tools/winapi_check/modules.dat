@@ -322,7 +322,7 @@ dlls/urlmon
 
 % dlls/user/ddeml.spec
 
-dlls/user
+dlls/user/dde
 
 % dlls/user/display.spec
 
@@ -350,6 +350,7 @@ windows
 
 controls
 dlls/user
+dlls/user/dde
 loader
 windows
 

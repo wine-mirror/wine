@@ -257,16 +257,20 @@ sub check_statements {
 			    $format =~ s/^\'(.*?)\'$/$1/;
 			    $format =~ s/^\\\"(.*?)\\\"$/$1/;
 
-			    if($argument !~ /$name/) {
-				$output->write("$called_name: argument $n is wrong ($name != '$argument')\n");
-			    } elsif(!$winapi->is_allowed_type_format($module, $type, $format)) {
-				$output->write("$called_name: argument $n ($type $name) has illegal format ($format)\n");
+			    if($options->debug_messages) {
+				if($argument !~ /$name/) {
+				    $output->write("$called_name: argument $n is wrong ($name != '$argument')\n");
+				} elsif(!$winapi->is_allowed_type_format($module, $type, $format)) {
+				    $output->write("$called_name: argument $n ($type $name) has illegal format ($format)\n");
+				}
 			    }
 			}
 
-			my $count = $#{$function->argument_types} + 1; 
-			if($n != $count) {
-			    $output->write("$called_name: argument count mismatch ($n != $count)\n");
+			if($options->debug_messages) {
+			    my $count = $#{$function->argument_types} + 1; 
+			    if($n != $count) {
+				$output->write("$called_name: argument count mismatch ($n != $count)\n");
+			    }
 			}
 		    }
 		}

@@ -38,9 +38,9 @@ my %options_long = (
 
     "local" =>  { default => 1, description => "local fixup" },
     "documentation" => { default => 1, parent => "local", description => "documentation fixup" },
-    "documentation-ordinal" => { default => 1, parent => "documentation", description => "documentation ordinal fixup" },
+    "documentation-ordinal" => { default => 0, parent => "documentation", description => "documentation ordinal fixup" },
     "documentation-missing" => { default => 0, parent => "documentation", description => "documentation missing fixup" },
-    "documentation-name" => { default => 0, parent => "documentation", description => "documentation name fixup" },
+    "documentation-name" => { default => 1, parent => "documentation", description => "documentation name fixup" },
     "stub" => { default => 0, parent => "local", description => "stub fixup" },
 
     "global" => { default => 1, description => "global fixup" },
@@ -104,6 +104,12 @@ sub get_all_module_external_ordinal {
 
     my @entries = ();
     foreach my $winapi (@winapis) {
+	my @name = (); {
+	    my $name = $winapi->function_external_name($external_name);
+	    if(defined($name)) {
+		@name = split(/ & /, $name);
+	    }
+	}
 	my @module = (); {
 	    my $module = $winapi->function_external_module($external_name);
 	    if(defined($module)) {
@@ -117,14 +123,33 @@ sub get_all_module_external_ordinal {
 	    }
 	}
 
+	my $name;
 	my $module;
 	my $ordinal;
-	while(defined($module = shift @module) && defined($ordinal = shift @ordinal)) {
-	    push @entries, [$module, $ordinal];
+	while(# defined($name = shift @name) &&
+	      defined($module = shift @module) &&
+	      defined($ordinal = shift @ordinal)) 
+	{
+	    push @entries, [$name, $module, $ordinal];
 	}
     }
 
     return @entries;
+}
+
+sub normalize_set {
+    local $_ = shift;
+
+    if(!defined($_)) {
+	return undef;
+    }
+    
+    my %hash = ();
+    foreach my $key (split(/\s*&\s*/)) {
+	$hash{$key}++;
+    }
+
+    return join(" & ", sort(keys(%hash)));
 }
 
 my @c_files = options->c_files;
@@ -173,11 +198,11 @@ foreach my $file (@c_files) {
 	my $prefix = "";
 	$prefix .= "$file: ";
 	if(defined($module16) && !defined($module32)) {
-	    $prefix .= "$module16: ";
+	    $prefix .= normalize_set($module16) . ": ";
 	} elsif(!defined($module16) && defined($module32)) {
-	    $prefix .= "$module32: ";
+	    $prefix .= normalize_set($module32) . ": ";
 	} elsif(defined($module16) && defined($module32)) {
-	    $prefix .= "$module16 & $module32: ";
+	    $prefix .= normalize_set($module16) . " & " . normalize_set($module32) . ": ";
 	} else {
 	    $prefix .= "<>: ";
 	}
@@ -189,10 +214,18 @@ foreach my $file (@c_files) {
 	my $calling_convention16 = translate_calling_convention16($calling_convention);
 	my $calling_convention32 = translate_calling_convention32($calling_convention);
 
+	my @external_names = ();
+	foreach my $winapi (@winapis) {
+	    my $external_names = $winapi->function_external_name($internal_name);
+	    if(defined($external_names)) { 
+		push @external_names, split(/\s*&\s*/, $external_names);
+	    }
+	}
+
 	if(options->documentation_ordinal && $documentation) {
 	    local $_;
 	    foreach (split(/\n/, $documentation)) {
-		if(/^(\s*\*\s*(\w+)\s*)(\s*(?:[\(\[]\s*\w+(?:\s*\.\s*\S+\s*)?[\)\]])+)(.*?)$/m) {
+		if(/^(\s*\*\s*(\w+)\s*)(\s*(?:[\(\[]\s*\w+(?:\s*\.\s*\S*\s*)?[\)\]])+)(.*?)$/m) {
 		    my $part1 = $1;
 		    my $external_name = $2;
 		    my $part3 = $3;
@@ -201,7 +234,7 @@ foreach my $file (@c_files) {
 		    $part4 =~ s/\s*$//;
 
 		    my @entries = ();
-		    while($part3 =~ s/^\s*([\(\[]\s*(\w+)(?:\s*\.\s*(\S+)\s*)?[\)\]])//) {
+		    while($part3 =~ s/^\s*([\(\[]\s*(\w+)(?:\s*\.\s*(\S*)\s*)?[\)\]])//) {
 			push @entries, [$1, lc($2), $3];
 		    }
 
@@ -210,7 +243,7 @@ foreach my $file (@c_files) {
 		    foreach my $entry (@entries) {
 			(my $part, my $module, my $ordinal) = @$entry;
 			foreach my $entry2 (get_all_module_external_ordinal($external_name)) {
-			    (my $module2, my $ordinal2) = @$entry2;
+			    (my $external_name2, my $module2, my $ordinal2) = @$entry2;
 			    
 			    if(defined($module2) && $module eq $module2 && 
 			       (!defined($ordinal) || (defined($ordinal2) && $ordinal ne $ordinal2)))
@@ -239,8 +272,9 @@ foreach my $file (@c_files) {
 		    my $external_name = $2;
 		    if($internal_name eq $external_name) {
 			foreach my $entry (get_all_module_external_ordinal($external_name)) {
-			    (my $module, my $ordinal) = @$entry;
+			    (my $external_name2, my $module, my $ordinal) = @$entry;
 
+			    # FIXME: Not correct
 			    $substitute_line{$_}{search} = "^\Q$_\E\$";
 			    $substitute_line{$_}{replace} = "$part1$external_name (\U$module\E.$ordinal)";
 			}
@@ -251,25 +285,107 @@ foreach my $file (@c_files) {
 
 	if(options->documentation_name && $documentation) {
 	    local $_;
+
+	    my @entries = ();
 	    foreach (split(/\n/, $documentation)) {
 		if(/^(\s*\*\s*(\w+)\s*)(\s*(?:[\(\[]\s*\w+(?:\s*\.\s*\S+\s*)?[\)\]])+)(.*?)$/m) {
 		    my $part1 = $1;
-		    my $external_name = $2;
+		    my $external_name2 = $2;
 		    my $part3 = $3;
 		    my $part4 = $4;
 
 		    $part4 =~ s/\s*$//;
 
-		    my $external_name2;
-		    foreach my $winapi (@winapis) {
-			$external_name2 = ($winapi->function_external_name($internal_name) || $external_name2);
-		    }
+		    push @entries, [$part1, $external_name2, $part3, $part4];
+		}
+	    }
+	    
+	    my @missing_external_names = ();
+	    foreach my $external_name (@external_names) {
+		my $found = 0;
+		foreach my $entry (@entries) {
+		    my $part1 = $entry->[0];
+		    my $external_name2 = $entry->[1];
+		    my $part3 = $entry->[2];
+		    my $part4 = $entry->[3];
 
-		    if(defined($external_name2) && $external_name ne $external_name2) {
-			output->write("$external_name != $external_name2\n");
+		    if($external_name eq $external_name2) {
+			$found = 1;
 		    }
 		}
-	    }	    
+		if(!$found) {
+		    push @missing_external_names, $external_name;
+		}
+	    }
+
+	    foreach my $external_name (@missing_external_names) {
+		my $internal_name2 = $internal_name;
+		my $external_name2 = $external_name;
+
+		if($internal_name =~ /^(.*?)$external_name(.*?)$/) {
+		    my $prefix = $1;
+		    my $suffix = $2;
+
+		    my $part1;
+		    my $part3;
+		    my $external_name2;
+		    my $part4;
+
+		    foreach my $entry (@entries) {
+			$part1 = $entry->[0];
+			$external_name2 = $entry->[1];
+			$part3 = $entry->[2];
+			$part4 = $entry->[3];
+
+			if($internal_name =~ /^(.*?)$external_name(.*?)$/) {
+			    last;
+			}
+		    }
+
+		    foreach (split(/\n/, $documentation)) {
+			if(/\Q$external_name\E/) {
+			    if($suffix =~ /^16$/) {
+				$substitute_line{$_}{search} = "\Q$internal_name\E";
+				$substitute_line{$_}{replace} = "$external_name";
+				last;
+			    } elsif($suffix =~ /^[AW]$/) {
+				$substitute_line{$_}{search} = "^\Q$_\E\$";
+
+				# FIXME: Not correct
+				my $replace  = "";
+				
+				$part3 =~ /^\s*[\(\[]\s*(\w+)(?:\s*\.\s*(\S*)\s*)?[\)\]]/;
+				my $module = lc($1);
+				my $ordinal = $2;
+
+				foreach my $entry2 (get_all_module_external_ordinal($external_name)) {
+				    (my $external_name2, my $module2, my $ordinal2) = @$entry2;
+
+				    my $part12 = $part1;
+				    $part12 =~ s/[AW](\s*)$/ $1/;
+
+				    my $part32 = $part3;
+
+				    if($module ne $module2 || $ordinal ne $ordinal2) {
+					$part32 =~ s/\U$module\E\s*.\s*\Q$ordinal\E/\U$module2\E.$ordinal2/;
+					$replace = "$part12$part32$part4";
+				    }
+				}
+
+				if($replace) {
+				    $replace .= "\n$part1$part3$part4";
+				    $substitute_line{$_}{replace} = $replace;
+				    last;
+				}
+			    }
+
+			}
+
+		    }
+		} else {
+		    output->write("$external_name missing\n");
+		}
+	    }
 	}
 
 	if(options->documentation_missing && !$documentation) {

@@ -286,8 +286,16 @@ sub parse_spec_file {
 	    $ordinal = $1;
 
 	    # FIXME: Internal name existing more than once not handled properly
-	    $$function_internal_name{$external_name} = $internal_name;
-	    $$function_external_name{$internal_name} = $external_name;
+	    if(!$$function_internal_name{$external_name}) {
+		$$function_internal_name{$external_name} = $internal_name;
+	    } else {
+		$$function_internal_name{$external_name} .= " & $internal_name";
+	    }
+	    if(!$$function_external_name{$internal_name}) {
+		$$function_external_name{$internal_name} = $external_name;
+	    } else {
+		$$function_external_name{$internal_name} .= " & $external_name";
+	    }
 	    $$function_internal_arguments{$internal_name} = $arguments;
 	    $$function_external_arguments{$external_name} = $arguments;
 	    if(!$$function_internal_ordinal{$internal_name}) {
@@ -304,12 +312,12 @@ sub parse_spec_file {
 	    $$function_external_calling_convention{$external_name} = $calling_convention;
 	    if(!$$function_internal_module{$internal_name}) {
 		$$function_internal_module{$internal_name} = "$module";
-	    } else { # if($$function_internal_module{$internal_name} !~ /$module/) {
+	    } else {
 		$$function_internal_module{$internal_name} .= " & $module";
 	    }
 	    if(!$$function_external_module{$external_name}) {
 		$$function_external_module{$external_name} = "$module";
-	    } else { # if($$function_external_module{$external_name} !~ /$module/) {
+	    } else {
 		$$function_external_module{$external_name} .= " & $module";
 	    }
 

@@ -265,7 +265,13 @@ if($options->headers) {
 		my $module = $winapi->function_internal_module($internal_name);
 		if(!defined($module)) { next }
 
+		# FIXME: Not correct
 		my $external_name = $winapi->function_external_name($internal_name);
+
+		if(defined($external_name)) {
+		    $external_name = (split(/\s*&\s*/, $external_name))[0];
+		}
+
 		# FIXME: Kludge because of the THUNK variants
 		if(!defined($external_name)) {
 		    next;
@@ -410,6 +416,16 @@ foreach my $file (@c_files) {
 	    $prefix .= "$calling_convention " if $calling_convention;
 	    $prefix .= "$internal_name(" . join(",", @argument_types) . "): ";
 	    $output->prefix($prefix);
+
+	    # FIXME: Not correct
+	    if(defined($external_name16)) {
+		$external_name16 = (split(/\s*&\s*/, $external_name16))[0];
+	    }
+	    
+	    # FIXME: Not correct
+	    if(defined($external_name32)) {
+		$external_name32 = (split(/\s*&\s*/, $external_name32))[0];
+	    }
 
 	    if($options->local && $options->misplaced &&
 	       $linkage ne "extern" && $statements) 

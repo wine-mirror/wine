@@ -21,6 +21,16 @@ sub check_documentation {
     my $documentation = $function->documentation;
     my @argument_documentations = @{$function->argument_documentations};
 
+    # FIXME: Not correct
+    if(defined($external_name16)) {
+	$external_name16 = (split(/\s*&\s*/, $external_name16))[0];
+    }
+    
+    # FIXME: Not correct
+    if(defined($external_name32)) {
+	$external_name32 = (split(/\s*&\s*/, $external_name32))[0];
+    }
+
     my $external_name;
     my $name1;
     my $name2;
