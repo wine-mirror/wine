@@ -168,6 +168,7 @@ WINE REGISTRY Version 2
 "Lpt1" = "/dev/lp0"
 
 [spooler]
+"FILE:" = "tmp.ps"
 "LPT1:" = "|lpr"
 "LPT2:" = "|gs -sDEVICE=bj200 -sOutputFile=/tmp/fred -q -"
 "LPT3:" = "/dev/lp3"
