@@ -141,6 +141,8 @@ extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType );  /* windows/defwnd.c
 
 extern BOOL FOCUS_MouseActivate( HWND hwnd );
 
+extern BOOL MENU_SetMenu(HWND, HMENU);
+
 /* check if hwnd is a broadcast magic handle */
 inline static BOOL is_broadcast( HWND hwnd )
 {

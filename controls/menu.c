@@ -3758,9 +3758,12 @@ HMENU WINAPI GetMenu( HWND hWnd )
 
 
 /**********************************************************************
- *         SetMenu    (USER32.@)
+ *         MENU_SetMenu
+ *
+ * Helper for SetMenu. Also called by WIN_CreateWindowEx to avoid the
+ * SetWindowPos call that would result if SetMenu were called directly.
  */
-BOOL WINAPI SetMenu( HWND hWnd, HMENU hMenu )
+BOOL MENU_SetMenu( HWND hWnd, HMENU hMenu )
 {
     TRACE("(%p, %p);\n", hWnd, hMenu);
 
@@ -3784,13 +3787,22 @@ BOOL WINAPI SetMenu( HWND hWnd, HMENU hMenu )
         lpmenu->Height = 0;  /* Make sure we recalculate the size */
     }
     SetWindowLongW( hWnd, GWL_ID, (LONG_PTR)hMenu );
-
-    if (IsWindowVisible(hWnd))
-        SetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
-                      SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
     return TRUE;
 }
 
+
+/**********************************************************************
+ *         SetMenu    (USER32.@)
+ */
+BOOL WINAPI SetMenu( HWND hWnd, HMENU hMenu )
+{   
+    if(!MENU_SetMenu(hWnd, hMenu))
+        return FALSE;
+ 
+    SetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
+                  SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
+    return TRUE;
+}
 
 
 /**********************************************************************

@@ -1185,7 +1185,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     if (((wndPtr->dwStyle & (WS_CAPTION|WS_CHILD)) == WS_CAPTION) ||
         (wndPtr->dwExStyle & WS_EX_APPWINDOW))
     {
-        if (cs->hMenu) SetMenu(hwnd, cs->hMenu);
+        if (cs->hMenu) MENU_SetMenu(hwnd, cs->hMenu);
         else
         {
             LPCSTR menuName = (LPCSTR)GetClassLongA( hwnd, GCL_MENUNAME );
@@ -1196,7 +1196,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
                 else
                     cs->hMenu = HMENU_32(LoadMenu16(HINSTANCE_16(cs->hInstance),menuName));
 
-                if (cs->hMenu) SetMenu( hwnd, cs->hMenu );
+                if (cs->hMenu) MENU_SetMenu( hwnd, cs->hMenu );
             }
         }
     }

@@ -296,6 +296,44 @@ static struct message WmCreateModalDialogResizeSeq[] = { /* FIXME: add */
     { WM_SETCURSOR, sent|parent },
     { 0 }
 };
+/* SetMenu for NonVisible windows with size change*/
+static struct message WmSetMenuNonVisibleSizeChangeSeq[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { WM_MOVE, sent },
+    { WM_SIZE, sent },
+    { 0 }
+};
+/* SetMenu for NonVisible windows with no size change */
+static struct message WmSetMenuNonVisibleNoSizeChangeSeq[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { 0 }
+};
+/* SetMenu for Visible windows with size change */
+static struct message WmSetMenuVisibleSizeChangeSeq[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_NCPAINT, sent|wparam, 1 },
+    { WM_GETTEXT, sent },
+    { WM_ACTIVATE, sent },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { WM_MOVE, sent },
+    { WM_SIZE, sent },
+    { 0 }
+};
+/* SetMenu for Visible windows with no size change */
+static struct message WmSetMenuVisibleNoSizeChangeSeq[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_NCPAINT, sent|wparam, 1 },
+    { WM_GETTEXT, sent },
+    { WM_ACTIVATE, sent },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { 0 }
+};
 
 static int sequence_cnt, sequence_size;
 static struct message* sequence;
@@ -380,6 +418,7 @@ static void test_messages(void)
 {
     HWND hwnd, hparent, hchild;
     HWND hchild2, hbutton;
+    HMENU hmenu;
 
     hwnd = CreateWindowExA(0, "TestWindowClass", "Test overlapped", WS_OVERLAPPEDWINDOW,
                            100, 100, 200, 200, 0, 0, 0, NULL);
@@ -420,6 +459,30 @@ static void test_messages(void)
 
     DestroyWindow(hchild);
     ok_sequence(WmDestroyChildSeq, "DestroyWindow:child");
+    DestroyWindow(hchild2);
+    DestroyWindow(hbutton);
+    DestroyWindow(hparent);
+    flush_sequence();
+
+    /* Message sequence for SetMenu */
+    hmenu = CreateMenu();
+    ok (hmenu != 0, "Failed to create menu\n");
+    ok (InsertMenuA(hmenu, -1, MF_BYPOSITION, 0x1000, "foo"), "InsertMenu failed\n");
+    hwnd = CreateWindowExA(0, "TestWindowClass", "Test overlapped", WS_OVERLAPPEDWINDOW,
+                           100, 100, 200, 200, 0, hmenu, 0, NULL);
+    ok_sequence(WmCreateOverlappedSeq, "CreateWindow:overlapped");
+    ok (SetMenu(hwnd, 0), "SetMenu");
+    ok_sequence(WmSetMenuNonVisibleSizeChangeSeq, "SetMenu:NonVisibleSizeChange");    
+    ok (SetMenu(hwnd, 0), "SetMenu");
+    ok_sequence(WmSetMenuNonVisibleNoSizeChangeSeq, "SetMenu:NonVisibleNoSizeChange");    
+    ShowWindow(hwnd, TRUE);
+    flush_sequence();
+    ok (SetMenu(hwnd, 0), "SetMenu");
+    ok_sequence(WmSetMenuVisibleNoSizeChangeSeq, "SetMenu:VisibleNoSizeChange");    
+    ok (SetMenu(hwnd, hmenu), "SetMenu");
+    ok_sequence(WmSetMenuVisibleSizeChangeSeq, "SetMenu:VisibleSizeChange");    
+    DestroyWindow(hwnd);
+
 }
 
 static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
