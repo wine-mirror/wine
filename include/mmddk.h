@@ -213,12 +213,6 @@ typedef struct {
 	DWORD   		dwFlags;
 } PORTALLOC, *LPPORTALLOC;
 
-#if 0
-/* FIXME: the ???OPENDESC structs will be fixed when low
- * level driver loading is available
- * for now comment them out, and use non corrrect ones in winemm.h
- * to be uncommented ASAP
- */
 typedef struct {
 	HWAVE16			hWave;
 	LPWAVEFORMATEX		lpFormat;
@@ -286,45 +280,6 @@ typedef struct tMIXEROPENDESC
 	DWORD			dwCallback;
 	DWORD			dwInstance;
 } MIXEROPENDESC, *LPMIXEROPENDESC;
-#else
-/* those definitions are still wine tainted
- * keep them in a temporary phase
- */
-typedef struct {
-	HWAVE16			hWave;
-	LPWAVEFORMAT		lpFormat;
-	DWORD			dwCallBack;
-	DWORD			dwInstance;
-	UINT16			uDeviceID;
-} WAVEOPENDESC, *LPWAVEOPENDESC;
-
-typedef struct {
-        DWORD  			dwStreamID;
-        WORD   			wDeviceID;
-} MIDIOPENSTRMID;
-
-/* FIXME: this structure has a different mapping in 16 & 32 bit mode
- * Since, I don't plan to add support for native 16 bit low level
- * multimedia drivers, it'll do.
- */
-typedef struct {
-	HMIDI16			hMidi;
-	DWORD			dwCallback;
-	DWORD			dwInstance;
-	UINT16			wDevID;
-        DWORD          		dnDevNode;
-        DWORD          		cIds;
-        MIDIOPENSTRMID 		rgIds;
-} MIDIOPENDESC, *LPMIDIOPENDESC;
-
-typedef struct tMIXEROPENDESC
-{
-	HMIXEROBJ16		hmx;
-	DWORD			dwCallback;
-	DWORD			dwInstance;
-	UINT16			uDeviceID;
-} MIXEROPENDESC,*LPMIXEROPENDESC;
-#endif
 
 typedef struct {
 	UINT16			wDeviceID;		/* device ID */
