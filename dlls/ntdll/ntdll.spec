@@ -394,6 +394,7 @@ debug_channels (atom cdrom console debug delayhlp dll dosfs dosmem file fixup
 @ stdcall RtlFreeUnicodeString(ptr) RtlFreeUnicodeString
 @ stub RtlGenerate8dot3Name
 @ stdcall RtlGetAce(ptr long ptr) RtlGetAce
+@ stub RtlGetNtVersionNumbers
 @ stub RtlGetVersion
 @ stub RtlGetCallersAddress
 @ stub RtlGetCompressionWorkSpaceSize
