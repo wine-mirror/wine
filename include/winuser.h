@@ -1048,6 +1048,11 @@ typedef struct
 #define SC_SCREENSAVE   0xf140
 #define SC_HOTKEY       0xf150
 
+/* obsolete names(SC_ICON and SC_ZOOM) */
+#define SC_ICON   SC_MINIMIZE
+#define SC_ZOOM   SC_MAXIMIZE
+
+
 #define CS_VREDRAW          0x0001
 #define CS_HREDRAW          0x0002
 #define CS_KEYCVTWINDOW     0x0004
