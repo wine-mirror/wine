@@ -17,6 +17,7 @@
 #include "wingdi.h"
 #include "winreg.h"
 #include "winuser.h"
+#include "wine/unicode.h"
 
 #include "debugtools.h"
 #include "x11drv.h"
@@ -714,6 +715,7 @@ BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
     Display *display = thread_display();
     UINT count;
     char *buffer;
+    char *utf8_buffer;
     static UINT text_cp = (UINT)-1;
     Window win;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -747,11 +749,31 @@ BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
         }
         WideCharToMultiByte(text_cp, 0, text, -1, buffer, count, NULL, NULL);
 
+        count = WideCharToMultiByte(CP_UTF8, 0, text, strlenW(text), NULL, 0, NULL, NULL);
+        if (!(utf8_buffer = HeapAlloc( GetProcessHeap(), 0, count )))
+        {
+            ERR("Not enough memory for window text in UTF-8\n");
+            WIN_ReleaseWndPtr( wndPtr );
+            return FALSE;
+        }
+        WideCharToMultiByte(CP_UTF8, 0, text, strlenW(text), utf8_buffer, count, NULL, NULL);
+
         wine_tsx11_lock();
         XStoreName( display, win, buffer );
         XSetIconName( display, win, buffer );
+        /*
+        Implements a NET_WM UTF-8 title. It should be without a trailing \0,
+        according to the standard
+        ( http://www.pps.jussieu.fr/~jch/software/UTF8_STRING/UTF8_STRING.text ).
+        */
+        XChangeProperty( display, win,
+            XInternAtom(display, "_NET_WM_NAME", False),
+            XInternAtom(display, "UTF8_STRING", False),
+            8, PropModeReplace, (unsigned char *) utf8_buffer,
+            count);
         wine_tsx11_unlock();
 
+        HeapFree( GetProcessHeap(), 0, utf8_buffer );
         HeapFree( GetProcessHeap(), 0, buffer );
     }
     WIN_ReleaseWndPtr( wndPtr );
