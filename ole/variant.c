@@ -4237,3 +4237,28 @@ HRESULT WINAPI VarCyFromUI4(ULONG ulIn, CY* pcyOut) {
       
    return S_OK;
 }
+
+
+/**********************************************************************
+ *              DosDateTimeToVariantTime [OLEAUT32.14]
+ * Convert dos representation of time to the date and time representation
+ * stored in a variant.
+ */
+INT WINAPI DosDateTimeToVariantTime(USHORT wDosDate, USHORT wDosTime,
+                                    DATE *pvtime)
+{
+    struct tm t;
+
+    TRACE( ole, "( 0x%x, 0x%x, 0x%p ), stub\n", wDosDate, wDosTime, pvtime );
+    
+    t.tm_sec = (wDosTime & 0x001f) * 2;
+    t.tm_min = (wDosTime & 0x07e0) >> 5;
+    t.tm_hour = (wDosTime & 0xf800) >> 11;
+    
+    t.tm_mday = (wDosDate & 0x001f);
+    t.tm_mon = (wDosDate & 0x01e0) >> 5;
+    t.tm_year = ((wDosDate & 0xfe00) >> 9) + 1980;
+
+    return TmToDATE( &t, pvtime );
+}
+

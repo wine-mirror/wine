@@ -14,7 +14,7 @@ type win32
 11 stdcall VariantCopyInd(ptr ptr) VariantCopyInd
 12 stdcall VariantChangeType(ptr ptr) VariantChangeType
 13 stub VariantTimeToDosDateTime
-14 stub DosDateTimeToVariantTime
+14 stdcall DosDateTimeToVariantTime(long ptr) DosDateTimeToVariantTime
 15 stdcall SafeArrayCreate(long long ptr) SafeArrayCreate
 16 stdcall SafeArrayDestroy(ptr) SafeArrayDestroy
 17 stdcall SafeArrayGetDim(ptr) SafeArrayGetDim
@@ -129,7 +129,7 @@ type win32
 147 stdcall VariantChangeTypeEx(ptr ptr) VariantChangeTypeEx
 148 stub SafeArrayPtrOfIndex
 149 stdcall SysStringByteLen(ptr) SysStringByteLen
-150 stub SysAllocStringByteLen
+150 stdcall SysAllocStringByteLen(ptr long) SysAllocStringByteLen
 160 stub CreateTypeLib
 161 stdcall LoadTypeLib (ptr ptr) LoadTypeLib
 162 stdcall LoadRegTypeLib (ptr long long long ptr) LoadRegTypeLib

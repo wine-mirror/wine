@@ -326,6 +326,58 @@ INT WINAPI OleTranslateColor(
   return S_OK;
 }
 
+/******************************************************************************
+ *             SysAllocStringByteLen     [OLEAUT32.150]
+ *
+ */
+BSTR WINAPI SysAllocStringByteLen(char *in, int len)
+{
+    DWORD* newBuffer;
+    char* stringBuffer;
 
+    /*
+     * Allocate a new buffer to hold the string.
+     * dont't forget to keep an empty spot at the begining of the
+     * buffer for the character count and an extra character at the
+     * end for the NULL.
+     */
+    newBuffer = (DWORD*)HeapAlloc(GetProcessHeap(),
+                                 0,
+                                 len + sizeof(WCHAR) + sizeof(DWORD));
+
+    /*
+     * If the memory allocation failed, return a null pointer.
+     */
+    if (newBuffer==0)
+      return 0;
+
+    /*
+     * Copy the length of the string in the placeholder.
+     */
+    *newBuffer = len;
+
+    /*
+     * Skip the byte count.
+     */
+    newBuffer++;
+
+    /*
+     * Copy the information in the buffer.
+     * Since it is valid to pass a NULL pointer here, we'll initialize the
+     * buffer to nul if it is the case.
+     */
+    if (in != 0)
+      memcpy(newBuffer, in, len);
+
+    /*
+     * Make sure that there is a nul character at the end of the
+     * string.
+     */
+    stringBuffer = (char *)newBuffer;
+    stringBuffer[len] = 0;
+    stringBuffer[len+1] = 0;
+
+    return (LPWSTR)stringBuffer;
+}
 
 
