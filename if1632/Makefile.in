@@ -9,9 +9,6 @@ SPEC_SRCS = \
 	comm.spec \
 	dispdib.spec \
 	kernel.spec \
-	ole2conv.spec \
-	ole2prox.spec \
-	ole2thk.spec \
 	system.spec \
 	toolhelp.spec \
 	wineps.spec \

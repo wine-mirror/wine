@@ -3,9 +3,6 @@ call16.s
 comm.spec.c
 dispdib.spec.c
 kernel.spec.c
-ole2conv.spec.c
-ole2prox.spec.c
-ole2thk.spec.c
 system.spec.c
 thunk.glue.c
 toolhelp.spec.c
