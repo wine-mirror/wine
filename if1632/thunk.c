@@ -1172,7 +1172,7 @@ FARPROC32 THUNK_AllocLSThunklet( SEGPTR target, DWORD relay,
 
         thunk->target  = (DWORD)target;
         thunk->relay   = (DWORD)relay;
-        thunk->glue    = (DWORD)glue - (DWORD)&thunk->owner;
+        thunk->glue    = (DWORD)glue - (DWORD)&thunk->type;
 
         thunk->type    = THUNKLET_TYPE_LS;
         thunk->owner   = pTask? pTask->hInstance : 0;
@@ -1266,7 +1266,7 @@ SEGPTR WINAPI AllocSLThunkletSysthunk( FARPROC32 target,
 FARPROC32 WINAPI AllocLSThunkletCallbackEx( SEGPTR target, 
                                             DWORD relay, HTASK16 task )
 {
-    THUNKLET *thunk = (THUNKLET *)target;
+    THUNKLET *thunk = (THUNKLET *)PTR_SEG_TO_LIN( target );
     if (   IsSLThunklet( thunk ) && thunk->relay == relay 
         && thunk->glue == (DWORD)ThunkletCallbackGlueSL )
         return (FARPROC32)thunk->target;
