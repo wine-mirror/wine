@@ -2344,7 +2344,10 @@ static void set_curdir(ChildWnd* child, Entry* entry)
 
 	get_path(entry, path);
 	lstrcpy(child->path, path);
-	SetWindowText(child->hwnd, path);
+
+	if (child->hwnd)	/* only change window title, if the window already exists */
+		SetWindowText(child->hwnd, path);
+
 	SetCurrentDirectory(path);
 }
 
