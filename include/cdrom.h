@@ -56,14 +56,15 @@ int	CDAUDIO_Reset(WINE_CDAUDIO* wcda);
 int	CDAUDIO_Play(WINE_CDAUDIO* wcda, DWORD start, DWORD stop);
 int	CDAUDIO_Stop(WINE_CDAUDIO* wcda);
 int	CDAUDIO_Pause(WINE_CDAUDIO* wcda, int pauseOn);
+int	CDAUDIO_Seek(WINE_CDAUDIO* wcda, DWORD at);
 int	CDAUDIO_SetDoor(WINE_CDAUDIO* wcda, int open);
 UINT16 	CDAUDIO_GetNumberOfTracks(WINE_CDAUDIO* wcda);
 BOOL 	CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda);
 BOOL	CDAUDIO_GetCDStatus(WINE_CDAUDIO* wcda);
 
 #define CDFRAMES_PERSEC 		75
-#define CDFRAMES_PERMIN 		4500
 #define SECONDS_PERMIN	 		60
+#define CDFRAMES_PERMIN 		((CDFRAMES_PERSEC) * (SECONDS_PERMIN))
 
 #ifndef CDROM_DATA_TRACK
 #define CDROM_DATA_TRACK 0x04

@@ -29,7 +29,7 @@
 int	CDAUDIO_Open(WINE_CDAUDIO* wcda)
 {
 #if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
-    wcda->unixdev = open(CDAUDIO_DEV, O_RDONLY, 0);
+    wcda->unixdev = open(CDAUDIO_DEV, O_RDONLY | O_NONBLOCK, 0);
     if (wcda->unixdev == -1) {
 	WARN(cdaudio,"can't open '%s'!.  errno=%d\n", CDAUDIO_DEV, errno);
 	return -1;
@@ -416,6 +416,31 @@ int	CDAUDIO_Pause(WINE_CDAUDIO* wcda, int pauseOn)
     ret = ioctl(wcda->unixdev, pauseOn ? CDROMPAUSE : CDROMRESUME);
 #else
     ret = ioctl(wcda->unixdev, pauseOn ? CDIOCPAUSE : CDIOCRESUME, NULL);
+#endif
+    return ret;
+#else
+    return -1;
+#endif
+}
+
+int	CDAUDIO_Seek(WINE_CDAUDIO* wcda, DWORD at)
+{
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
+    int				ret = 0;    
+    struct cdrom_msf0		msf;
+#ifdef linux
+    msf.minute = at / CDFRAMES_PERMIN;
+    msf.second = (at % CDFRAMES_PERMIN) / CDFRAMES_PERSEC;
+    msf.frame  = at % CDFRAMES_PERSEC;
+
+   ret = ioctl(wcda->unixdev, CDROMSEEK, &msf);
+#else
+   /* FIXME: the current end for play is lost 
+    * use end of CD ROM instead
+    */
+   FIXME(cdaudio, "Could a BSD expert implement the seek function ?\n");
+   CDAUDIO_Play(wcda, at, wcda->lpdwTrackPos[wcda->nTracks] + wcda->lpdwTrackLen[wcda->nTracks]);
+   
 #endif
     return ret;
 #else
