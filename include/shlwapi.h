@@ -130,6 +130,19 @@ DWORD WINAPI SHDeleteEmptyKeyA(HKEY hKey, LPCSTR lpszSubKey);
 DWORD WINAPI SHDeleteEmptyKeyW(HKEY hKey, LPCWSTR lpszSubKey);
 #define  SHDeleteEmptyKey WINELIB_NAME_AW(SHDeleteEmptyKey)
 
+typedef struct _DllVersionInfo {
+    DWORD cbSize;
+    DWORD dwMajorVersion;
+    DWORD dwMinorVersion;
+    DWORD dwBuildNumber;
+    DWORD dwPlatformID;
+} DLLVERSIONINFO;
+
+#define DLLVER_PLATFORM_WINDOWS         0x00000001      // Windows 9x
+#define DLLVER_PLATFORM_NT              0x00000002      // Windows NT
+
+typedef HRESULT (CALLBACK* DLLGETVERSIONPROC)(DLLVERSIONINFO *);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */

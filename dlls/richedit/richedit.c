@@ -17,6 +17,7 @@
 #include "riched32.h"
 #include "richedit.h"
 #include "charlist.h"
+#include "shlwapi.h"
 
 #include "rtf.h"
 #include "rtf2text.h"

@@ -13,6 +13,7 @@
 #include "commctrl.h"
 #include "debugtools.h"
 #include "winerror.h"
+#include "shlwapi.h"
 
 DEFAULT_DEBUG_CHANNEL(commctrl);
 
