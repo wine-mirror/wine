@@ -3,6 +3,8 @@
  * joystick functions
  *
  * Copyright 1997 Andreas Mohr
+ * Copyright 2000 Wolfgang Schwotzer
+ * Copyright 2002 David Hagood
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,13 +30,6 @@
  * but will be dropped in the future."
  * Thus we should implement the new interface and at most keep the old
  * routines for backward compatibility.
- */
-
-/*
- * Wolfgang Schwotzer
- *
- *    01/2000    added support for new joystick driver
- *
  */
 
 #include "config.h"
@@ -73,6 +68,24 @@ WINE_DEFAULT_DEBUG_CHANNEL(joystick);
 typedef struct tagWINE_JSTCK {
     int		joyIntf;
     int		in_use;
+    /* Some extra info we need to make this acutaly work under the
+       Linux 2.2 event api.
+       First of all, we cannot keep closing and reopening the device file -
+       that blows away the state of the stick device, and we lose events. So, we
+       need to open the low-level device once, and close it when we are done.
+
+       Secondly, the event API only gives us what's changed. However, Windows apps
+       want the whole state every time, so we have to cache the data.
+    */
+
+    int         dev; /* Linux level device file descriptor */
+    int         x;
+    int         y;
+    int         z;
+    int         r;
+    int         u;
+    int         v;
+    int         buttons;
 } WINE_JSTCK;
 
 static	WINE_JSTCK	JSTCK_Data[MAXJOYSTICK];
@@ -116,6 +129,11 @@ static	DWORD	JSTCK_drvClose(DWORD dwDevID)
     if (jstck == NULL)
 	return 0;
     jstck->in_use = 0;
+    if (jstck->dev > 0)
+    {
+       close(jstck->dev);
+       jstck->dev = 0;
+    }
     return 1;
 }
 
@@ -134,13 +152,16 @@ static	int	JSTCK_OpenDevice(WINE_JSTCK* jstick)
     char	buf[20];
     int		flags;
 
+    if (jstick->dev > 0)
+      return jstick->dev;
+
     sprintf(buf, JOYDEV, jstick->joyIntf);
 #ifdef HAVE_LINUX_22_JOYSTICK_API
     flags = O_RDONLY | O_NONBLOCK;
 #else
     flags = O_RDONLY;
 #endif
-    return open(buf, flags);
+    return (jstick->dev = open(buf, flags));
 }
 
 /**************************************************************************
@@ -161,7 +182,6 @@ static	LONG	JSTCK_GetDevCaps(DWORD dwDevID, LPJOYCAPSA lpCaps, DWORD dwSize)
 	return MMSYSERR_NODRIVER;
 
 #ifdef HAVE_LINUX_22_JOYSTICK_API
-
     if ((dev = JSTCK_OpenDevice(jstck)) < 0) return JOYERR_PARMS;
     ioctl(dev, JSIOCGAXES, &nrOfAxes);
     ioctl(dev, JSIOCGBUTTONS, &nrOfButtons);
@@ -179,7 +199,19 @@ static	LONG	JSTCK_GetDevCaps(DWORD dwDevID, LPJOYCAPSA lpCaps, DWORD dwSize)
     lpCaps->wYmax = 0xFFFF;
     lpCaps->wZmin = 0;
     lpCaps->wZmax = (nrOfAxes >= 3) ? 0xFFFF : 0;
+#ifdef BODGE_THE_HAT
+    /* HalfLife won't allow you to map an axis event to things like
+       "next weapon" and "use". Linux reports the hat on my stick as
+       axis U and V. So, IFF BODGE_THE_HAT is defined, lie through our
+       teeth and say we have 32 buttons, and we will map the axises to
+       the high buttons. Really, perhaps this should be a registry entry,
+       or even a parameter to the Linux joystick driver (which would completely
+       remove the need for this.)
+    */
+    lpCaps->wNumButtons = 32;
+#else
     lpCaps->wNumButtons = nrOfButtons;
+#endif
     if (dwSize == sizeof(JOYCAPSA)) {
 	/* since we suppose ntOfAxes <= 6 in the following code, do it explicitly */
 	if (nrOfAxes > 6) nrOfAxes = 6;
@@ -205,8 +237,6 @@ static	LONG	JSTCK_GetDevCaps(DWORD dwDevID, LPJOYCAPSA lpCaps, DWORD dwSize)
 	       JOYCAPS_HASPOV, JOYCAPS_POV4DIR, JOYCAPS_POVCTS */
 	}
     }
-    close(dev);
-
 #else
     lpCaps->wMid = MM_MICROSOFT;
     lpCaps->wPid = MM_PC_JOYSTICK;
@@ -258,46 +288,41 @@ static LONG	JSTCK_GetPosEx(DWORD dwDevID, LPJOYINFOEX lpInfo)
     if ((dev = JSTCK_OpenDevice(jstck)) < 0) return JOYERR_PARMS;
 
 #ifdef HAVE_LINUX_22_JOYSTICK_API
-    /* After opening the device, its state can be
-       read with JS_EVENT_INIT flag */
     while ((read(dev, &ev, sizeof(struct js_event))) > 0) {
-	if (ev.type == (JS_EVENT_AXIS | JS_EVENT_INIT)) {
+	if (ev.type == (JS_EVENT_AXIS)) {
 	    switch (ev.number) {
 	    case 0:
-		if (lpInfo->dwFlags & JOY_RETURNX)
-		    lpInfo->dwXpos   = ev.value + 32767;
+		jstck->x = ev.value;
 		break;
 	    case 1:
-		if (lpInfo->dwFlags & JOY_RETURNY)
-		    lpInfo->dwYpos   = ev.value + 32767;
+		jstck->y = ev.value;
 		break;
 	    case 2:
-		if (lpInfo->dwFlags & JOY_RETURNZ)
-		    lpInfo->dwZpos   = ev.value + 32767;
+		jstck->z = ev.value;
 		break;
 	    case 3:
-		if (lpInfo->dwFlags & JOY_RETURNR)
-		    lpInfo->dwRpos   = ev.value + 32767;
+		jstck->r = ev.value;
+		break;
 	    case 4:
-		if (lpInfo->dwFlags & JOY_RETURNU)
-		    lpInfo->dwUpos   = ev.value + 32767;
+		jstck->u = ev.value;
+		break;
 	    case 5:
-		if (lpInfo->dwFlags & JOY_RETURNV)
-		    lpInfo->dwVpos   = ev.value + 32767;
+		jstck->v = ev.value;
 		break;
 	    default:
 		FIXME("Unknown joystick event '%d'\n", ev.number);
 	    }
-	} else if (ev.type == (JS_EVENT_BUTTON | JS_EVENT_INIT)) {
-	    if (lpInfo->dwFlags & JOY_RETURNBUTTONS) {
-		if (ev.value) {
-		    lpInfo->dwButtons |= (1 << ev.number);
+	} else if (ev.type == (JS_EVENT_BUTTON)) {
+	    if (ev.value) {
+		    jstck->buttons |= (1 << ev.number);
 		    /* FIXME: what to do for this field when
 		     * multiple buttons are depressed ?
 		     */
-		    lpInfo->dwButtonNumber = ev.number + 1;
+		    if (lpInfo->dwFlags & JOY_RETURNBUTTONS)
+                       lpInfo->dwButtonNumber = ev.number + 1;
 		}
-	    }
+             else
+               jstck->buttons  &= ~(1 << ev.number);
 	}
     }
     /* EAGAIN is returned when the queue is empty */
@@ -305,10 +330,43 @@ static LONG	JSTCK_GetPosEx(DWORD dwDevID, LPJOYINFOEX lpInfo)
 	/* FIXME: error should not be ignored */
 	ERR("Error while reading joystick state (%s)\n", strerror(errno));
     }
+    /* Now, copy the cached values into Window's structure... */
+    if (lpInfo->dwFlags & JOY_RETURNBUTTONS)
+       lpInfo->dwButtons = jstck->buttons;
+    if (lpInfo->dwFlags & JOY_RETURNX)
+       lpInfo->dwXpos   = jstck->x + 32767;
+    if (lpInfo->dwFlags & JOY_RETURNY)
+       lpInfo->dwYpos   = jstck->y + 32767;
+    if (lpInfo->dwFlags & JOY_RETURNZ)
+       lpInfo->dwZpos   = jstck->z + 32767;
+    if (lpInfo->dwFlags & JOY_RETURNR)
+       lpInfo->dwRpos   = jstck->r + 32767;
+    #ifdef BODGE_THE_HAT
+    else if (lpInfo->dwFlags & JOY_RETURNBUTTONS)
+    {
+         if (jstck->r > 0)
+            lpInfo->dwButtons |= 1<<7;
+         else if (jstck->r < 0)
+            lpInfo->dwButtons |= 1<<8;
+    }
+    #endif
+    if (lpInfo->dwFlags & JOY_RETURNU)
+	lpInfo->dwUpos   = jstck->u + 32767;
+    #ifdef BODGE_THE_HAT
+    else if (lpInfo->dwFlags & JOY_RETURNBUTTONS)
+    {
+       if (jstck->u > 0)
+          lpInfo->dwButtons |= 1<<9;
+        else if (jstck->u < 0)
+          lpInfo->dwButtons |= 1<<10;
+    }
+    #endif
+    if (lpInfo->dwFlags & JOY_RETURNV)
+       lpInfo->dwVpos   = jstck->v + 32767;
+
 #else
     dev_stat = read(dev, &js, sizeof(js));
     if (dev_stat != sizeof(js)) {
-	close(dev);
 	return JOYERR_UNPLUGGED; /* FIXME: perhaps wrong, but what should I return else ? */
     }
     js.x = js.x<<8;
@@ -321,13 +379,13 @@ static LONG	JSTCK_GetPosEx(DWORD dwDevID, LPJOYINFOEX lpInfo)
 	lpInfo->dwButtons = js.buttons;
 #endif
 
-    close(dev);
-
-    TRACE("x: %ld, y: %ld, z: %ld, r: %ld, u: %ld, v: %ld, buttons: 0x%04x, flags: 0x%04x\n",
+    TRACE("x: %ld, y: %ld, z: %ld, r: %ld, u: %ld, v: %ld, buttons: 0x%04x, flags: 0x%04x (fd %d)\n",
 	  lpInfo->dwXpos, lpInfo->dwYpos, lpInfo->dwZpos,
 	  lpInfo->dwRpos, lpInfo->dwUpos, lpInfo->dwVpos,
 	  (unsigned int)lpInfo->dwButtons,
-	  (unsigned int)lpInfo->dwFlags);
+	  (unsigned int)lpInfo->dwFlags,
+          dev
+         );
 
     return JOYERR_NOERROR;
 }
