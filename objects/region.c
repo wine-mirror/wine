@@ -254,10 +254,18 @@ INT32 WINAPI GetRgnBox32( HRGN32 hrgn, LPRECT32 rect )
 
 /***********************************************************************
  *           CreateRectRgn16    (GDI.64)
+ *
+ * NOTE: Doesn't call CreateRectRgn32 because of differences in SetRectRgn16/32
  */
 HRGN16 WINAPI CreateRectRgn16(INT16 left, INT16 top, INT16 right, INT16 bottom)
 {
-    return (HRGN16)CreateRectRgn32( left, top, right, bottom );
+    HRGN16 hrgn;
+
+    if (!(hrgn = (HRGN16)REGION_CreateRegion()))
+	return 0;
+    TRACE(region, "\n");
+    SetRectRgn16(hrgn, left, top, right, bottom);
+    return hrgn;
 }
 
 
@@ -270,7 +278,7 @@ HRGN32 WINAPI CreateRectRgn32(INT32 left, INT32 top, INT32 right, INT32 bottom)
 
     if (!(hrgn = REGION_CreateRegion()))
 	return 0;
-    TRACE(region, " \n");
+    TRACE(region, "\n");
     SetRectRgn32(hrgn, left, top, right, bottom);
     return hrgn;
 }
@@ -280,7 +288,7 @@ HRGN32 WINAPI CreateRectRgn32(INT32 left, INT32 top, INT32 right, INT32 bottom)
  */
 HRGN16 WINAPI CreateRectRgnIndirect16( const RECT16* rect )
 {
-    return CreateRectRgn32( rect->left, rect->top, rect->right, rect->bottom );
+    return CreateRectRgn16( rect->left, rect->top, rect->right, rect->bottom );
 }
 
 
@@ -295,16 +303,23 @@ HRGN32 WINAPI CreateRectRgnIndirect32( const RECT32* rect )
 
 /***********************************************************************
  *           SetRectRgn16    (GDI.172)
+ *
+ * NOTE: Win 3.1 sets region to empty if left > right
  */
 VOID WINAPI SetRectRgn16( HRGN16 hrgn, INT16 left, INT16 top,
 			  INT16 right, INT16 bottom )
 {
-    SetRectRgn32( hrgn, left, top, right, bottom );
+    if(left < right)
+        SetRectRgn32( hrgn, left, top, right, bottom );
+    else
+        SetRectRgn32( hrgn, 0, 0, 0, 0 );
 }
 
 
 /***********************************************************************
  *           SetRectRgn32    (GDI32.332)
+ *
+ * Allows either or both left and top to be greater than right or bottom.
  */
 VOID WINAPI SetRectRgn32( HRGN32 hrgn, INT32 left, INT32 top,
 			  INT32 right, INT32 bottom )
@@ -315,7 +330,11 @@ VOID WINAPI SetRectRgn32( HRGN32 hrgn, INT32 left, INT32 top,
 		   hrgn, left, top, right, bottom );
     
     if (!(obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return;
-    if ((right > left) && (bottom > top))
+
+    if (left > right) { INT32 tmp = left; left = right; right = tmp; }
+    if (top > bottom) { INT32 tmp = top; top = bottom; bottom = tmp; }
+
+    if((left != right) && (top != bottom))
     {
         obj->rgn->rects->left = obj->rgn->extents.left = left;
         obj->rgn->rects->top = obj->rgn->extents.top = top;
@@ -333,12 +352,20 @@ VOID WINAPI SetRectRgn32( HRGN32 hrgn, INT32 left, INT32 top,
 
 /***********************************************************************
  *           CreateRoundRectRgn16    (GDI.444)
+ *
+ * If either ellipse dimension is zero we call CreateRectRgn16 for its
+ * `special' behaviour. -ve ellipse dimensions can result in GPFs under win3.1
+ * we just let CreateRoundRectRgn32 convert them to +ve values. 
  */
+
 HRGN16 WINAPI CreateRoundRectRgn16( INT16 left, INT16 top,
 				    INT16 right, INT16 bottom,
 				    INT16 ellipse_width, INT16 ellipse_height )
 {
-    return (HRGN16)CreateRoundRectRgn32( left, top, right, bottom,
+    if( ellipse_width == 0 || ellipse_height == 0 )
+        return CreateRectRgn16( left, top, right, bottom );
+    else
+        return (HRGN16)CreateRoundRectRgn32( left, top, right, bottom,
 					 ellipse_width, ellipse_height );
 }
 
@@ -356,9 +383,16 @@ HRGN32 WINAPI CreateRoundRectRgn32( INT32 left, INT32 top,
     
       /* Check if we can do a normal rectangle instead */
 
-    if ((right <= left) || (bottom <= top) ||
-                   (ellipse_width <= 0) || (ellipse_height <= 0))
+    if ((ellipse_width == 0) || (ellipse_height == 0))
 	return CreateRectRgn32( left, top, right, bottom );
+
+      /* Make the dimensions sensible */
+
+    if (left > right) { INT32 tmp = left; left = right; right = tmp; }
+    if (top > bottom) { INT32 tmp = top; top = bottom; bottom = tmp; }
+
+    ellipse_width = abs(ellipse_width);
+    ellipse_height = abs(ellipse_height);
 
       /* Create region */
 
@@ -382,7 +416,7 @@ HRGN32 WINAPI CreateRoundRectRgn32( INT32 left, INT32 top,
     yd = asq * ellipse_height;                      /* 2a^2b */
 
     rect.left   = left + ellipse_width / 2;
-    rect.right  = right - ellipse_width;
+    rect.right  = right - ellipse_width / 2;
 
       /* Loop to draw first half of quadrant */
 
