@@ -845,14 +845,35 @@ BOOL32 DOSFS_GetFullName( LPCSTR name, BOOL32 check_last, DOS_FULL_NAME *full )
 
 /***********************************************************************
  *           GetShortPathName32A   (KERNEL32.271)
+ *
+ * NOTES
+ *  observed:
+ *  longpath=NULL: LastError=ERROR_INVALID_PARAMETER, ret=0
+ *  *longpath="" or invalid: LastError=ERROR_BAD_PATHNAME, ret=0
  */
 DWORD WINAPI GetShortPathName32A( LPCSTR longpath, LPSTR shortpath,
                                   DWORD shortlen )
 {
     DOS_FULL_NAME full_name;
+    
+    if (!longpath)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    if (!longpath[0])
+    {
+        SetLastError(ERROR_BAD_PATHNAME);
+        return 0;
+    }
 
     /* FIXME: is it correct to always return a fully qualified short path? */
-    if (!DOSFS_GetFullName( longpath, TRUE, &full_name )) return 0;
+    if (!DOSFS_GetFullName( longpath, TRUE, &full_name )) 
+    {
+        SetLastError(ERROR_BAD_PATHNAME);
+        return 0;
+    }
     lstrcpyn32A( shortpath, full_name.short_name, shortlen );
     return strlen( full_name.short_name );
 }
@@ -865,8 +886,21 @@ DWORD WINAPI GetShortPathName32W( LPCWSTR longpath, LPWSTR shortpath,
                                   DWORD shortlen )
 {
     DOS_FULL_NAME full_name;
+    LPSTR longpathA ;
     DWORD ret = 0;
-    LPSTR longpathA = HEAP_strdupWtoA( GetProcessHeap(), 0, longpath );
+
+    if (!longpath)
+    { SetLastError(ERROR_INVALID_PARAMETER);
+      return 0;
+    }
+
+    if (!longpath[0])
+    { SetLastError(ERROR_BAD_PATHNAME);
+      return 0;
+    }
+
+
+    longpathA = HEAP_strdupWtoA( GetProcessHeap(), 0, longpath );
 
     /* FIXME: is it correct to always return a fully qualified short path? */
     if (DOSFS_GetFullName( longpathA, TRUE, &full_name ))
@@ -874,8 +908,10 @@ DWORD WINAPI GetShortPathName32W( LPCWSTR longpath, LPWSTR shortpath,
         ret = strlen( full_name.short_name );
         lstrcpynAtoW( shortpath, full_name.short_name, shortlen );
     }
+
+    SetLastError(ERROR_BAD_PATHNAME);
     HeapFree( GetProcessHeap(), 0, longpathA );
-    return ret;
+    return 0;
 }
 
 
