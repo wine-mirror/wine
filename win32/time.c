@@ -166,8 +166,12 @@ BOOL WINAPI SetTimeZoneInformation(const LPTIME_ZONE_INFORMATION tzinfo)
 /***********************************************************************
  *              GetSystemTimeAsFileTime  (KERNEL32)
  */
-VOID WINAPI GetSystemTimeAsFileTime(LPFILETIME systemtimeAsfiletime) {
-	DOSFS_UnixTimeToFileTime(time(NULL),systemtimeAsfiletime,0);
+VOID WINAPI GetSystemTimeAsFileTime(LPFILETIME systemtimeAsfiletime)
+{
+    struct timeval now;
+    gettimeofday( &now, 0 );
+    /* FIXME: convert to UTC */
+    DOSFS_UnixTimeToFileTime( now.tv_sec, systemtimeAsfiletime, now.tv_usec * 10 );
 }
 
 /***********************************************************************
