@@ -148,18 +148,19 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
 
     pLockedRect->Pitch = This->bytesPerPixel * This->myDesc.Width;  /* Bytes / row */    
     
-    if (!pRect) {
+    if (NULL == pRect) {
       pLockedRect->pBits = This->allocatedMemory;
-      This->lockedRect.left = 0;
-      This->lockedRect.top = 0;
-      This->lockedRect.right = This->myDesc.Width;
+      This->lockedRect.left   = 0;
+      This->lockedRect.top    = 0;
+      This->lockedRect.right  = This->myDesc.Width;
       This->lockedRect.bottom = This->myDesc.Height;
+      TRACE("Locked Rect (%p) = l %ld, t %ld, r %ld, b %ld\n", &This->lockedRect, This->lockedRect.left, This->lockedRect.top, This->lockedRect.right, This->lockedRect.bottom);
     } else {
       TRACE("Lock Rect (%p) = l %ld, t %ld, r %ld, b %ld\n", pRect, pRect->left, pRect->top, pRect->right, pRect->bottom);
       pLockedRect->pBits = This->allocatedMemory + (pLockedRect->Pitch * pRect->top) + (pRect->left * This->bytesPerPixel);
-      This->lockedRect.left = pRect->left;
-      This->lockedRect.top = pRect->top;
-      This->lockedRect.right = pRect->right;
+      This->lockedRect.left   = pRect->left;
+      This->lockedRect.top    = pRect->top;
+      This->lockedRect.right  = pRect->right;
       This->lockedRect.bottom = pRect->bottom;
     }
 
@@ -207,7 +208,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
 			 1,
 			 D3DFmt2GLFmt(This->Device, This->myDesc.Format), 
                          D3DFmt2GLType(This->Device, This->myDesc.Format), 
-                         pLockedRect->pBits);
+                         pLockedRect->pBits + j * pLockedRect->Pitch);
 	    vcheckGLcall("glReadPixels");
 	  }
 	}
@@ -502,11 +503,11 @@ HRESULT WINAPI IDirect3DSurface8Impl_LoadTexture(LPDIRECT3DSURFACE8 iface, GLenu
 
 #if 0
     {
-      static int gen = 0;
+      static unsigned int gen = 0;
       char buffer[4096];
       ++gen;
       if ((gen % 10) == 0) {
-	snprintf(buffer, sizeof(buffer), "/tmp/surface%d_level%d_%d.png", gl_target, gl_level, gen);
+	snprintf(buffer, sizeof(buffer), "/tmp/surface%u_level%u_%u.png", gl_target, gl_level, gen);
 	IDirect3DSurface8Impl_SaveSnapshot((LPDIRECT3DSURFACE8) This, buffer);
       }
     }
@@ -528,7 +529,7 @@ HRESULT WINAPI IDirect3DSurface8Impl_SaveSnapshot(LPDIRECT3DSURFACE8 iface, cons
     return D3DERR_INVALIDCALL;
   }
 
-  TRACE("opened %s\n", filename);
+  TRACE("opened %s with format %s\n", filename, debug_d3dformat(This->myDesc.Format));
 
   fprintf(f, "P6\n%u %u\n255\n", This->myDesc.Width, This->myDesc.Height);
   switch (This->myDesc.Format) {
@@ -560,20 +561,32 @@ HRESULT WINAPI IDirect3DSurface8Impl_SaveSnapshot(LPDIRECT3DSURFACE8 iface, cons
       WORD color;
       for (i = 0; i < This->myDesc.Width * This->myDesc.Height; i++) {
 	color = ((WORD*) This->allocatedMemory)[i];
-	fputc((color >> 10) & 0xFF, f);
-	fputc((color >>  5) & 0xFF, f);
-	fputc((color >>  0) & 0xFF, f);
+	fputc(((color >> 10) & 0x1F) * 255 / 31, f);
+	fputc(((color >>  5) & 0x1F) * 255 / 31, f);
+	fputc(((color >>  0) & 0x1F) * 255 / 31, f);
       }
     }
     break;
+  case D3DFMT_A4R4G4B4:
+    {
+      WORD color;
+      for (i = 0; i < This->myDesc.Width * This->myDesc.Height; i++) {
+	color = ((WORD*) This->allocatedMemory)[i];
+	fputc(((color >>  8) & 0x0F) * 255 / 15, f);
+	fputc(((color >>  4) & 0x0F) * 255 / 15, f);
+	fputc(((color >>  0) & 0x0F) * 255 / 15, f);
+      }
+    }
+    break;
+
   case D3DFMT_R5G6B5: 
     {
       WORD color;
       for (i = 0; i < This->myDesc.Width * This->myDesc.Height; i++) {
 	color = ((WORD*) This->allocatedMemory)[i];
-	fputc((color >> 11) & 0xFF, f);
-	fputc((color >>  5) & 0xFF, f);
-	fputc((color >>  0) & 0xFF, f);
+	fputc(((color >> 11) & 0x1F) * 255 / 31, f);
+	fputc(((color >>  5) & 0x3F) * 255 / 63, f);
+	fputc(((color >>  0) & 0x1F) * 255 / 31, f);
       }
     }
     break;
