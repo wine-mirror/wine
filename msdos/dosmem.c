@@ -28,8 +28,9 @@
 DEFAULT_DEBUG_CHANNEL(dosmem);
 DECLARE_DEBUG_CHANNEL(selector);
 
-HANDLE16 DOSMEM_BiosDataSeg;  /* BIOS data segment at 0x40:0 */
-HANDLE16 DOSMEM_BiosSysSeg;   /* BIOS ROM segment at 0xf000:0 */
+WORD DOSMEM_0000H;        /* segment at 0:0 */
+WORD DOSMEM_BiosDataSeg;  /* BIOS data segment at 0x40:0 */
+WORD DOSMEM_BiosSysSeg;   /* BIOS ROM segment at 0xf000:0 */
 
 DWORD DOSMEM_CollateTable;
 
@@ -484,6 +485,8 @@ BOOL DOSMEM_Init(BOOL dos_init)
     {
         setup_dos_mem( dos_init );
 
+        DOSMEM_0000H = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_biosdata - 0x400,
+                                           0x10000, 0, FALSE, FALSE, FALSE );
         DOSMEM_BiosDataSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_biosdata,
                                                 0x100, 0, FALSE, FALSE, FALSE );
         DOSMEM_BiosSysSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0xf0000,
@@ -509,6 +512,7 @@ BOOL DOSMEM_Init(BOOL dos_init)
         /* copy the BIOS area down to 0x400 */
         memcpy( DOSMEM_dosmem + 0x400, DOSMEM_biosdata, 0x100 );
         DOSMEM_biosdata = DOSMEM_dosmem + 0x400;
+        SetSelectorBase( DOSMEM_0000H, 0 );
         SetSelectorBase( DOSMEM_BiosDataSeg, 0x400 );
     }
     /* interrupt table is at addr 0, so only do this when setting up DOS mode */

@@ -122,6 +122,7 @@ typedef struct
 
 #include "poppack.h"
 
+extern WORD DOSMEM_0000H;
 extern WORD DOSMEM_BiosDataSeg;
 extern WORD DOSMEM_BiosSysSeg;
 extern BIOSDATA * DOSMEM_BiosData();
