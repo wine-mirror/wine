@@ -446,7 +446,41 @@ BOOL WINAPI AnimatePalette(
 
     if( hPal != GetStockObject(DEFAULT_PALETTE) )
     {
-        if (!SetPaletteEntries( hPal, StartIndex, NumEntries, PaletteColors )) return FALSE;
+        PALETTEOBJ * palPtr;
+        UINT pal_entries;
+        const PALETTEENTRY *pptr = PaletteColors;
+
+        palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
+        if (!palPtr) return 0;
+
+        pal_entries = palPtr->logpalette.palNumEntries;
+        if (StartIndex >= pal_entries)
+        {
+          GDI_ReleaseObj( hPal );
+          return 0;
+        }
+        if (StartIndex+NumEntries > pal_entries) NumEntries = pal_entries - StartIndex;
+        
+        for (NumEntries += StartIndex; StartIndex < NumEntries; StartIndex++, pptr++) {
+          /* According to MSDN, only animate PC_RESERVED colours */
+          if (palPtr->logpalette.palPalEntry[StartIndex].peFlags & PC_RESERVED) {
+            TRACE("Animating colour (%d,%d,%d) to (%d,%d,%d)\n",
+              palPtr->logpalette.palPalEntry[StartIndex].peRed,
+              palPtr->logpalette.palPalEntry[StartIndex].peGreen,
+              palPtr->logpalette.palPalEntry[StartIndex].peBlue,
+              pptr->peRed, pptr->peGreen, pptr->peBlue);
+            memcpy( &palPtr->logpalette.palPalEntry[StartIndex], pptr,
+                    sizeof(PALETTEENTRY) );
+            PALETTE_ValidateFlags(&palPtr->logpalette.palPalEntry[StartIndex], 1);
+          } else {
+            TRACE("Not animating entry %d -- not PC_RESERVED\n", StartIndex);
+          }
+        }
+        
+        GDI_ReleaseObj( hPal );
+        
+        TRACE("pLastRealizedDC %p -- pLastRealizedDC->pRealizePalette %p\n",
+          pLastRealizedDC, pLastRealizedDC ? pLastRealizedDC->pRealizePalette : 0);
 
         if (pLastRealizedDC && pLastRealizedDC->pRealizePalette)
             pLastRealizedDC->pRealizePalette( NULL, hPal, hPal == hPrimaryPalette );
@@ -669,6 +703,7 @@ static BOOL PALETTE_UnrealizeObject( HGDIOBJ handle, void *obj )
     }
     if (hLastRealizedPalette == handle)
     {
+        TRACE("unrealizing palette %p\n", handle);
         hLastRealizedPalette = 0;
         pLastRealizedDC = NULL;
     }
@@ -686,6 +721,7 @@ static BOOL PALETTE_DeleteObject( HGDIOBJ handle, void *obj )
     HeapFree( GetProcessHeap(), 0, palette->mapping );
     if (hLastRealizedPalette == handle)
     {
+        TRACE("unrealizing palette %p\n", handle);
         hLastRealizedPalette = 0;
         pLastRealizedDC = NULL;
     }
