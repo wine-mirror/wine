@@ -246,6 +246,12 @@ INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
     const union cptable *table;
     int ret;
 
+    if (!src || (!dst && dstlen))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
     if (srclen == -1) srclen = strlen(src) + 1;
 
     if (page >= CP_UTF7)
@@ -311,6 +317,12 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
 {
     const union cptable *table;
     int ret, used_tmp;
+
+    if (!src || (!dst && dstlen))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
 
     if (srclen == -1) srclen = strlenW(src) + 1;
 
