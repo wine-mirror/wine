@@ -393,7 +393,7 @@ HEADER_InternalHitTest (HWND hwnd, LPPOINT lpPt, UINT *pFlags, INT *pItem)
 	   *pFlags |= HHT_TOLEFT;
 	}
 	else if (lpPt->x > rect.right) {
-	    TRACE("TO LEFT\n");
+	    TRACE("TO RIGHT\n");
 	    *pFlags |= HHT_TORIGHT;
 	}
 
@@ -1234,8 +1234,8 @@ HEADER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
     INT   nItem, nWidth;
     HDC   hdc;
 
-    pt.x = (INT)LOWORD(lParam);
-    pt.y = (INT)HIWORD(lParam);
+    pt.x = (INT)SLOWORD(lParam);
+    pt.y = (INT)SHIWORD(lParam);
     HEADER_InternalHitTest (hwnd, &pt, &flags, &nItem);
 
     if (infoPtr->bPressed) {
@@ -1297,8 +1297,8 @@ HEADER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
     INT   nItem, nWidth;
     HDC   hdc;
 
-    pt.x = (INT)LOWORD(lParam);
-    pt.y = (INT)HIWORD(lParam);
+    pt.x = (INT)SLOWORD(lParam);
+    pt.y = (INT)SHIWORD(lParam);
     HEADER_InternalHitTest (hwnd, &pt, &flags, &nItem);
 
     if ((dwStyle & HDS_BUTTONS) && (dwStyle & HDS_HOTTRACK)) {
