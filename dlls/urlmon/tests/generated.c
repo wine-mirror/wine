@@ -163,6 +163,16 @@ static void test_pack_IInternetProtocolInfoVtbl(void)
     /* IInternetProtocolInfoVtbl */
 }
 
+static void test_pack_IInternetSession(void)
+{
+    /* IInternetSession */
+}
+
+static void test_pack_IInternetSessionVtbl(void)
+{
+    /* IInternetSessionVtbl */
+}
+
 static void test_pack_IPersistMoniker(void)
 {
     /* IPersistMoniker */
@@ -215,6 +225,12 @@ static void test_pack_LPIINTERNETPROTOCOLINFO(void)
 {
     /* LPIINTERNETPROTOCOLINFO */
     TEST_TYPE(LPIINTERNETPROTOCOLINFO, 4, 4);
+}
+
+static void test_pack_LPIINTERNETSESSION(void)
+{
+    /* LPIINTERNETSESSION */
+    TEST_TYPE(LPIINTERNETSESSION, 4, 4);
 }
 
 static void test_pack_LPPERSISTMONIKER(void)
@@ -306,6 +322,8 @@ static void test_pack(void)
     test_pack_IBindingVtbl();
     test_pack_IInternetProtocolInfo();
     test_pack_IInternetProtocolInfoVtbl();
+    test_pack_IInternetSession();
+    test_pack_IInternetSessionVtbl();
     test_pack_IPersistMoniker();
     test_pack_IPersistMonikerVtbl();
     test_pack_IWinInetHttpInfo();
@@ -316,6 +334,7 @@ static void test_pack(void)
     test_pack_LPBINDING();
     test_pack_LPBINDSTATUSCALLBACK();
     test_pack_LPIINTERNETPROTOCOLINFO();
+    test_pack_LPIINTERNETSESSION();
     test_pack_LPPERSISTMONIKER();
     test_pack_LPREMFORMATETC();
     test_pack_LPREMSECURITY_ATTRIBUTES();
