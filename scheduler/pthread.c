@@ -18,6 +18,7 @@
 
 #include "winbase.h"
 #include "thread.h"
+#include "ntddk.h"
 
 static int init_done;
 
@@ -72,16 +73,26 @@ void PTHREAD_init_done(void)
 extern pid_t LIBC_FORK(void);
 
 #define LIBC_SIGACTION __sigaction
+extern int LIBC_SIGACTION(int signum, 
+                         const struct sigaction *act, 
+                         struct sigaction *oldact);
 
 /* NOTE: This is a truly extremely incredibly ugly hack!
  * But it does seem to work... */
 
 /* assume that pthread_mutex_t has room for at least one pointer,
  * and hope that the users of pthread_mutex_t considers it opaque
- * (never checks what's in it) */
+ * (never checks what's in it) 
+ * also: assume that static initializer sets pointer to NULL
+ */
 typedef struct {
   CRITICAL_SECTION *critsect;
 } *wine_mutex;
+
+/* see wine_mutex above for comments */
+typedef struct {
+  RTL_RWLOCK *lock;
+} *wine_rwlock;
 
 typedef struct _wine_cleanup {
   void (*routine)(void *);
@@ -403,53 +414,91 @@ int pthread_condattr_destroy(pthread_condattr_t *attr)
 
 #if (__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 2)
 /***** READ-WRITE LOCKS *****/
-/* not implemented right now */
+
+static void rwlock_real_init(pthread_rwlock_t *rwlock)
+{
+  RTL_RWLOCK *lock = HeapAlloc(GetProcessHeap(), 0, sizeof(RTL_RWLOCK));
+  RtlInitializeResource(lock);
+
+  if (InterlockedCompareExchangePointer((void**)&(((wine_rwlock)rwlock)->lock),lock,NULL) != NULL) {
+    /* too late, some other thread already did it */
+    RtlDeleteResource(lock);
+    HeapFree(GetProcessHeap(), 0, lock);
+  }
+}
 
 int __pthread_rwlock_init(pthread_rwlock_t *rwlock, const pthread_rwlockattr_t *rwlock_attr)
 {
-  P_OUTPUT("FIXME:pthread_rwlock_init\n");
+  ((wine_rwlock)rwlock)->lock = NULL;
   return 0;
 }
 strong_alias(__pthread_rwlock_init, pthread_rwlock_init);
 
 int __pthread_rwlock_destroy(pthread_rwlock_t *rwlock)
 {
-  P_OUTPUT("FIXME:pthread_rwlock_destroy\n");
+  if (!((wine_rwlock)rwlock)->lock) return 0;
+  RtlDeleteResource(((wine_rwlock)rwlock)->lock);
+  HeapFree(GetProcessHeap(), 0, ((wine_rwlock)rwlock)->lock);
   return 0;
 }
 strong_alias(__pthread_rwlock_destroy, pthread_rwlock_destroy);
 
 int __pthread_rwlock_rdlock(pthread_rwlock_t *rwlock)
 {
-  P_OUTPUT("FIXME:pthread_rwlock_rdlock\n");
-  return 0;
+  if (!init_done) return 0;
+  if (!((wine_rwlock)rwlock)->lock)
+    rwlock_real_init( rwlock );
+
+  while(TRUE)
+    if (RtlAcquireResourceShared(((wine_rwlock)rwlock)->lock, TRUE))
+      return 0;
 }
 strong_alias(__pthread_rwlock_rdlock, pthread_rwlock_rdlock);
 
 int __pthread_rwlock_tryrdlock(pthread_rwlock_t *rwlock)
 {
-  P_OUTPUT("FIXME:pthread_rwlock_tryrdlock\n");
+  if (!init_done) return 0;
+  if (!((wine_rwlock)rwlock)->lock)
+    rwlock_real_init( rwlock );
+
+  if (!RtlAcquireResourceShared(((wine_rwlock)rwlock)->lock, FALSE)) {
+    errno = EBUSY;
+    return -1;
+  }
   return 0;
 }
 strong_alias(__pthread_rwlock_tryrdlock, pthread_rwlock_tryrdlock);
 
 int __pthread_rwlock_wrlock(pthread_rwlock_t *rwlock)
 {
-  P_OUTPUT("FIXME:pthread_wrlock_rdlock\n");
-  return 0;
+  if (!init_done) return 0;
+  if (!((wine_rwlock)rwlock)->lock)
+    rwlock_real_init( rwlock );
+
+  while(TRUE)
+    if (RtlAcquireResourceExclusive(((wine_rwlock)rwlock)->lock, TRUE))
+      return 0;
 }
 strong_alias(__pthread_rwlock_wrlock, pthread_rwlock_wrlock);
 
 int __pthread_rwlock_trywrlock(pthread_rwlock_t *rwlock)
 {
-  P_OUTPUT("FIXME:pthread_rwlock_trywrlock\n");
+  if (!init_done) return 0;
+  if (!((wine_rwlock)rwlock)->lock)
+    rwlock_real_init( rwlock );
+
+  if (!RtlAcquireResourceExclusive(((wine_rwlock)rwlock)->lock, FALSE)) {
+    errno = EBUSY;
+    return -1;
+  }
   return 0;
 }
 strong_alias(__pthread_rwlock_trywrlock, pthread_rwlock_trywrlock);
 
 int __pthread_rwlock_unlock(pthread_rwlock_t *rwlock)
 {
-  P_OUTPUT("FIXME:pthread_rwlock_unlock\n");
+  if (!((wine_rwlock)rwlock)->lock) return 0;
+  RtlReleaseResource( ((wine_rwlock)rwlock)->lock );
   return 0;
 }
 strong_alias(__pthread_rwlock_unlock, pthread_rwlock_unlock);
