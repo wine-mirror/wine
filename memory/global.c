@@ -1370,6 +1370,8 @@ DWORD WINAPI GlobalSize32(
       
       if(pintern->Magic==MAGIC_GLOBAL_USED)
       {
+        if (!pintern->Pointer) /* handle case of GlobalAlloc( ??,0) */
+            return 0;
 	 retval=HeapSize(GetProcessHeap(), 0, 
 	                 (char *)(pintern->Pointer)-sizeof(HGLOBAL32))-4;
       }
@@ -1380,6 +1382,8 @@ DWORD WINAPI GlobalSize32(
       }
       /* HeapUnlock(GetProcessHeap()); */
    }
+   /* HeapSize returns 0xffffffff on failure */
+   if (retval == 0xffffffff) retval = 0;
    return retval;
 }
 

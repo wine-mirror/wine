@@ -1204,7 +1204,7 @@ BOOL32 WINAPI HeapUnlock(
  *           HeapSize   (KERNEL32.341)
  * RETURNS
  *	Size in bytes of allocated memory
- *	0: Failure
+ *	0xffffffff: Failure
  */
 DWORD WINAPI HeapSize(
              HANDLE32 heap, /* [in] Handle of heap */
