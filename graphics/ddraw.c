@@ -795,28 +795,65 @@ static HRESULT WINAPI DGA_IDirectDrawSurface4Impl_SetPalette(
 
 }
 
+static HRESULT _Blt_ColorFill(LPBYTE buf, int width, int height, int bpp, LONG lPitch, DWORD color)
+{
+	int x, y;
+	LPBYTE first;
+
+	/* Do first row */
+
+#define COLORFILL_ROW(type) { \
+	type *d = (type *) buf; \
+	for (x = 0; x < width; x++) \
+		d[x] = (type) color; \
+	break; \
+}
+
+	switch(bpp) {
+	case 1: COLORFILL_ROW(BYTE)
+	case 2: COLORFILL_ROW(WORD)
+	case 4: COLORFILL_ROW(DWORD)
+	default:
+	FIXME(ddraw, "Stretched blit not implemented for bpp %d!\n", bpp*8);
+	return DDERR_UNSUPPORTED;
+	}
+
+#undef COLORFILL_ROW
+
+	/* Now copy first row */
+	first = buf;
+	for (y = 1; y < height; y++) {
+		buf += lPitch;
+		memcpy(buf, first, width * bpp);
+	}
+
+	return DD_OK;
+}
+
 static HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
 	LPDIRECTDRAWSURFACE4 iface,LPRECT rdst,LPDIRECTDRAWSURFACE4 src,LPRECT rsrc,DWORD dwFlags,LPDDBLTFX lpbltfx
 ) {
         ICOM_THIS(IDirectDrawSurface4Impl,iface);
-        IDirectDrawSurface4Impl* isrc=(IDirectDrawSurface4Impl*)src;
 	RECT	xdst,xsrc;
 	DDSURFACEDESC	ddesc,sdesc;
-	int	i,j;
+	HRESULT			ret = DD_OK;
+	int bpp, srcheight, srcwidth, dstheight, dstwidth, width;
+	int x, y;
+	LPBYTE dbuf, sbuf;
 
-	  TRACE(ddraw,"(%p)->(%p,%p,%p,%08lx,%p)\n",
-		This,rdst,isrc,rsrc,dwFlags,lpbltfx);
+	TRACE(ddraw,"(%p)->(%p,%p,%p,%08lx,%p)\n", This,rdst,src,rsrc,dwFlags,lpbltfx);
 
-	if (isrc != NULL)
-	  IDirectDrawSurface4_Lock(src, NULL,&sdesc,0,0);
+	if (src) IDirectDrawSurface4_Lock(src, NULL, &sdesc, 0, 0);
 	IDirectDrawSurface4_Lock(iface,NULL,&ddesc,0,0);
 	
 	if (TRACE_ON(ddraw)) {
 	  if (rdst) TRACE(ddraw,"	destrect :%dx%d-%dx%d\n",rdst->left,rdst->top,rdst->right,rdst->bottom);
 	  if (rsrc) TRACE(ddraw,"	srcrect  :%dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
-	  TRACE(ddraw,"\tflags: "); _dump_DDBLT(dwFlags);
+	  TRACE(ddraw,"\tflags: ");
+	  _dump_DDBLT(dwFlags);
 	  if (dwFlags & DDBLT_DDFX) {
-	    TRACE(ddraw,"	blitfx: \n");_dump_DDBLTFX(lpbltfx->dwDDFX);
+	    TRACE(ddraw,"	blitfx: \n");
+		_dump_DDBLTFX(lpbltfx->dwDDFX);
 	  }
 	}
 		
@@ -832,7 +869,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
 	if (rsrc) {
 		memcpy(&xsrc,rsrc,sizeof(xsrc));
 	} else {
-		if (isrc) {
+		if (src) {
 		xsrc.top	= 0;
 		xsrc.bottom	= sdesc.dwHeight;
 		xsrc.left	= 0;
@@ -842,29 +879,22 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
 		}
 	}
 
+	bpp = ddesc.ddpfPixelFormat.x.dwRGBBitCount / 8;
+	srcheight = xsrc.bottom - xsrc.top;
+	srcwidth = xsrc.right - xsrc.left;
+	dstheight = xdst.bottom - xdst.top;
+	dstwidth = xdst.right - xdst.left;
+	width = (xdst.right - xdst.left) * bpp;
+	dbuf = ddesc.y.lpSurface + (xdst.top * ddesc.lPitch) + (xdst.left * bpp);
+
 	dwFlags &= ~(DDBLT_WAIT|DDBLT_ASYNC);/* FIXME: can't handle right now */
 	
 	/* First, all the 'source-less' blits */
 	if (dwFlags & DDBLT_COLORFILL) {
-		int	bpp = ddesc.ddpfPixelFormat.x.dwRGBBitCount / 8;
-		LPBYTE	xline,xpixel;
-
-		xline = (LPBYTE) ddesc.y.lpSurface + xdst.top * ddesc.lPitch;
-		for (i=xdst.top;i<xdst.bottom;i++) {
-			xpixel = xline+bpp*xdst.left;
-
-			for (j=xdst.left;j<xdst.right;j++) {
-				/* FIXME: this only works on little endian
-				 * architectures, where DWORD starts with low
-				 * byte first!
-				 */
-				memcpy(xpixel,&(lpbltfx->b.dwFillColor),bpp);
-				xpixel += bpp;
-			}
-			xline += ddesc.lPitch;
+		ret = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp,
+		                     ddesc.lPitch, lpbltfx->b.dwFillColor);
+		dwFlags &= ~DDBLT_COLORFILL;
 		}
-		dwFlags &= ~(DDBLT_COLORFILL);
-	}
 
 	if (dwFlags & DDBLT_DEPTHFILL) {
 #ifdef HAVE_MESAGL
@@ -882,144 +912,146 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
 #endif HAVE_MESAGL
 	}
 	
-	if (!isrc) {
-	    if (dwFlags) {
-	      TRACE(ddraw,"\t(src=NULL):Unsupported flags: "); _dump_DDBLT(dwFlags);
+	if (dwFlags & DDBLT_ROP) {
+		/* Catch some degenerate cases here */
+		switch(lpbltfx->dwROP) {
+			case BLACKNESS:
+				ret = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp, ddesc.lPitch, 0);
+				break;
+			case 0xAA0029: /* No-op */
+				break;
+			case WHITENESS:
+				ret = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp, ddesc.lPitch, ~0);
+				break;
+			default: 
+				FIXME(ddraw, "Unsupported raster op: %08lx  Pattern: %p\n", lpbltfx->dwROP, lpbltfx->b.lpDDSPattern);
+				goto error;
 	    }
-	    IDirectDrawSurface4_Unlock(iface,ddesc.y.lpSurface);
-	    return DD_OK;
+		dwFlags &= ~DDBLT_ROP;
+	}
+
+    if (dwFlags & DDBLT_DDROPS) {
+		FIXME(ddraw, "\tDdraw Raster Ops: %08lx  Pattern: %p\n", lpbltfx->dwDDROP, lpbltfx->b.lpDDSPattern);
 	}
 
 	/* Now the 'with source' blits */
+	if (src) {
+		LPBYTE sbase;
+		int sx, xinc, sy, yinc;
 
-	/* Standard 'full-surface' blit without special effects */
-	if (	(xsrc.top ==0) && (xsrc.bottom ==ddesc.dwHeight) &&
-		(xsrc.left==0) && (xsrc.right  ==ddesc.dwWidth) &&
-		(xdst.top ==0) && (xdst.bottom ==ddesc.dwHeight) &&
-		(xdst.left==0) && (xdst.right  ==ddesc.dwWidth)  &&
-		!dwFlags
-	) {
-		memcpy(ddesc.y.lpSurface,
-		       sdesc.y.lpSurface,
-		       ddesc.dwHeight * ddesc.lPitch);
+		sbase = sdesc.y.lpSurface + (xsrc.top * sdesc.lPitch) + xsrc.left * bpp;
+		xinc = (srcwidth << 16) / dstwidth;
+		yinc = (srcheight << 16) / dstheight;
+
+		if (!dwFlags) {
+
+			/* No effects, we can cheat here */
+			if (dstwidth == srcwidth) {
+				if (dstheight == srcheight) {
+					/* No stretching in either direction.  This needs to be as fast as possible */
+					sbuf = sbase;
+					for (y = 0; y < dstheight; y++) {
+						memcpy(dbuf, sbuf, width);
+						sbuf += sdesc.lPitch;
+						dbuf += ddesc.lPitch;
+					}
 	} else {
-	  int bpp = ddesc.ddpfPixelFormat.x.dwRGBBitCount / 8;
-	  int srcheight = xsrc.bottom - xsrc.top;
-	  int srcwidth = xsrc.right - xsrc.left;
-	  int dstheight = xdst.bottom - xdst.top;
-	  int dstwidth = xdst.right - xdst.left;
-	  int width = (xsrc.right - xsrc.left) * bpp;
-	  int h;
-
-	  /* Sanity check for rectangle sizes */
-	  if ((srcheight != dstheight) || (srcwidth  != dstwidth)) {
-	    int x, y;
-	    
-	    /* I think we should do a Blit with 'stretching' here....
-	       Tomb Raider II uses this to display the background during the menu selection
-	       when the screen resolution is != than 640x480 */
-	    TRACE(ddraw, "Blt with stretching\n");
-
-	    /* This is a basic stretch implementation. It is painfully slow and quite ugly. */
-	    if (bpp == 1) {
-	      /* In this case, we cannot do any anti-aliasing */
-	      if(dwFlags & DDBLT_KEYSRC) {
-		for (y = xdst.top; y < xdst.bottom; y++) {
-		  for (x = xdst.left; x < xdst.right; x++) {
-		    double sx, sy;
-		    unsigned char tmp;
-		    unsigned char *dbuf = (unsigned char *) ddesc.y.lpSurface;
-		    unsigned char *sbuf = (unsigned char *) sdesc.y.lpSurface;
-		    
-		    sx = (((double) (x - xdst.left) / dstwidth) * srcwidth) + xsrc.left;
-		    sy = (((double) (y - xdst.top) / dstheight) * srcheight) + xsrc.top;
-
-		    tmp = sbuf[(((int) sy) * sdesc.lPitch) + ((int) sx)];
-		    
-		    if ((tmp < isrc->s.surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue) ||
-			(tmp > isrc->s.surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue))
-		      dbuf[(y * ddesc.lPitch) + x] = tmp;
+					/* Stretching in Y direction only */
+					for (y = sy = 0; y < dstheight; y++, sy += yinc) {
+						sbuf = sbase + (sy >> 16) * sdesc.lPitch;
+						memcpy(dbuf, sbuf, width);
+						dbuf += ddesc.lPitch;
 		  }
 		}
+			} else {
+				/* Stretching in X direction */
+				int last_sy = -1;
+				for (y = sy = 0; y < dstheight; y++, sy += yinc) {
+					sbuf = sbase + (sy >> 16) * sdesc.lPitch;
+
+					if ((sy >> 16) == (last_sy >> 16)) {
+						/* Same as last row - copy already stretched row */
+						memcpy(dbuf, dbuf - ddesc.lPitch, width);
 	      } else {
-	      for (y = xdst.top; y < xdst.bottom; y++) {
-		for (x = xdst.left; x < xdst.right; x++) {
-		  double sx, sy;
-		  unsigned char *dbuf = (unsigned char *) ddesc.y.lpSurface;
-		  unsigned char *sbuf = (unsigned char *) sdesc.y.lpSurface;
 
-		  sx = (((double) (x - xdst.left) / dstwidth) * srcwidth) + xsrc.left;
-		  sy = (((double) (y - xdst.top) / dstheight) * srcheight) + xsrc.top;
+#define STRETCH_ROW(type) { \
+	type *s = (type *) sbuf, *d = (type *) dbuf; \
+	for (x = sx = 0; x < dstwidth; x++, sx += xinc) \
+		d[x] = s[sx >> 16]; \
+	break; \
+}
 		  
-		  dbuf[(y * ddesc.lPitch) + x] = sbuf[(((int) sy) * sdesc.lPitch) + ((int) sx)];
+						switch(bpp) {
+							case 1: STRETCH_ROW(BYTE)
+							case 2: STRETCH_ROW(WORD)
+							case 4: STRETCH_ROW(DWORD)
+							default:
+								FIXME(ddraw, "Stretched blit not implemented for bpp %d!\n", bpp*8);
+								ret = DDERR_UNSUPPORTED;
+								goto error;
 		}
+
+#undef STRETCH_ROW
+
 	      }
+					last_sy = sy;
+					dbuf += ddesc.lPitch;
 	      }
-	    } else {
-	      FIXME(ddraw, "Not done yet for depth != 8\n");
 	    }
-	  } else {
-	    /* Same size => fast blit */
+		} else if (dwFlags & (DDBLT_KEYSRC | DDBLT_KEYDEST)) {
+			DWORD keylow, keyhigh;
+
 	    if (dwFlags & DDBLT_KEYSRC) {
-	      switch (bpp) {
-	      case 1: {
-		unsigned char tmp,*psrc,*pdst;
-		int h,i;
-		
-	    for (h = 0; h < srcheight; h++) {
-		  psrc=sdesc.y.lpSurface +
-		    ((h + xsrc.top) * sdesc.lPitch) + xsrc.left;
-		  pdst=ddesc.y.lpSurface +
-		    ((h + xdst.top) * ddesc.lPitch) + xdst.left;
-		  for(i=0;i<srcwidth;i++) {
-		    tmp=*(psrc + i);
-		    if ((tmp < isrc->s.surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue) ||
-			(tmp > isrc->s.surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue))
-		      *(pdst + i)=tmp;
-		  }
+				keylow  = sdesc.ddckCKSrcBlt.dwColorSpaceLowValue;
+				keyhigh = sdesc.ddckCKSrcBlt.dwColorSpaceHighValue;
+			} else {
+				/* I'm not sure if this is correct */
+				FIXME(ddraw, "DDBLT_KEYDEST not fully supported yet.\n");
+				keylow  = ddesc.ddckCKDestBlt.dwColorSpaceLowValue;
+				keyhigh = ddesc.ddckCKDestBlt.dwColorSpaceHighValue;
+			}
+
+#define COPYROW_COLORKEY(type) { \
+	type *s = (type *) sbuf, *d = (type *) dbuf, tmp; \
+	for (x = sx = 0; x < dstwidth; x++, sx += xinc) { \
+		tmp = s[sx >> 16]; \
+		if (tmp < keylow || tmp > keyhigh) d[x] = tmp; \
+	} \
+	break; \
 		}
-		dwFlags&=~(DDBLT_KEYSRC);
-	      } break;
 		
-	      case 2: {
-		unsigned short tmp,*psrc,*pdst;
-		int h,i;
-		
-		for (h = 0; h < srcheight; h++) {
-		  psrc=sdesc.y.lpSurface +
-		    ((h + xsrc.top) * sdesc.lPitch) + xsrc.left;
-		  pdst=ddesc.y.lpSurface +
-		    ((h + xdst.top) * ddesc.lPitch) + xdst.left;
-		  for(i=0;i<srcwidth;i++) {
-		    tmp=*(psrc + i);
-		    if ((tmp < isrc->s.surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue) ||
-			(tmp > isrc->s.surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue))
-		      *(pdst + i)=tmp;
-		  }
-		}
-		dwFlags&=~(DDBLT_KEYSRC);
-	      } break;
-		
+			for (y = sy = 0; y < dstheight; y++, sy += yinc) {
+				sbuf = sbase + (sy >> 16) * sdesc.lPitch;
+
+				switch (bpp) {
+					case 1: COPYROW_COLORKEY(BYTE)
+					case 2: COPYROW_COLORKEY(WORD)
+					case 4: COPYROW_COLORKEY(DWORD)
 	      default:
-		FIXME(ddraw, "Bitblt, KEYSRC: Not done yet for depth > 16\n");
+						FIXME(ddraw, "%s color-keyed blit not implemented for bpp %d!\n",
+							(dwFlags & DDBLT_KEYSRC) ? "Source" : "Destination", bpp*8);
+						ret = DDERR_UNSUPPORTED;
+						goto error;
 	      }
-	    } else {
-	      /* Non-stretching Blt without color keying */
-	      for (h = 0; h < srcheight; h++) {
-	    memcpy(ddesc.y.lpSurface + ((h + xdst.top) * ddesc.lPitch) + xdst.left * bpp,
-		   sdesc.y.lpSurface + ((h + xsrc.top) * sdesc.lPitch) + xsrc.left * bpp,
-		   width);
+				dbuf += ddesc.lPitch;
 	  }
-	}
+
+#undef COPYROW_COLORKEY
+			
+			dwFlags &= ~(DDBLT_KEYSRC | DDBLT_KEYDEST);
+
 	}
 	}
 	
+error:
+	
 	if (dwFlags && FIXME_ON(ddraw)) {
-	  FIXME(ddraw,"\tUnsupported flags: ");_dump_DDBLT(dwFlags);
+	  FIXME(ddraw,"\tUnsupported flags: ");
+	  _dump_DDBLT(dwFlags);
 	}
 
 	IDirectDrawSurface4_Unlock(iface,ddesc.y.lpSurface);
-	IDirectDrawSurface4_Unlock(src,sdesc.y.lpSurface);
+	if (src) IDirectDrawSurface4_Unlock(src,sdesc.y.lpSurface);
 
 	return DD_OK;
 }
@@ -1028,10 +1060,13 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_BltFast(
 	LPDIRECTDRAWSURFACE4 iface,DWORD dstx,DWORD dsty,LPDIRECTDRAWSURFACE4 src,LPRECT rsrc,DWORD trans
 ) {
         ICOM_THIS(IDirectDrawSurface4Impl,iface);
-	int		i,bpp,w,h;
+	int				bpp, w, h, x, y;
 	DDSURFACEDESC	ddesc,sdesc;
+	HRESULT			ret = DD_OK;
+	LPBYTE			sbuf, dbuf;
 
-	if (1  || TRACE_ON(ddraw)) {
+
+	if (TRACE_ON(ddraw)) {
 	    FIXME(ddraw,"(%p)->(%ld,%ld,%p,%p,%08lx)\n",
 		    This,dstx,dsty,src,rsrc,trans
 	    );
@@ -1043,25 +1078,76 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_BltFast(
 	/* We need to lock the surfaces, or we won't get refreshes when done. */
 	IDirectDrawSurface4_Lock(src, NULL,&sdesc,DDLOCK_READONLY, 0);
 	IDirectDrawSurface4_Lock(iface,NULL,&ddesc,DDLOCK_WRITEONLY,0);
+
 	bpp = This->s.surface_desc.ddpfPixelFormat.x.dwRGBBitCount / 8;
+	sbuf = sdesc.y.lpSurface + (rsrc->top * sdesc.lPitch) + rsrc->left * bpp;
+	dbuf = ddesc.y.lpSurface + (dsty      * ddesc.lPitch) + dstx       * bpp;
+
+
 	h=rsrc->bottom-rsrc->top;
 	if (h>ddesc.dwHeight-dsty) h=ddesc.dwHeight-dsty;
 	if (h>sdesc.dwHeight-rsrc->top) h=sdesc.dwHeight-rsrc->top;
 	if (h<0) h=0;
+
 	w=rsrc->right-rsrc->left;
 	if (w>ddesc.dwWidth-dstx) w=ddesc.dwWidth-dstx;
 	if (w>sdesc.dwWidth-rsrc->left) w=sdesc.dwWidth-rsrc->left;
 	if (w<0) w=0;
 
-	for (i=0;i<h;i++) {
-		memcpy(	ddesc.y.lpSurface+(dsty     +i)*ddesc.lPitch+dstx*bpp,
-			sdesc.y.lpSurface+(rsrc->top+i)*sdesc.lPitch+rsrc->left*bpp,
-			w*bpp
-		);
+	if (trans & (DDBLTFAST_SRCCOLORKEY | DDBLTFAST_DESTCOLORKEY)) {
+		DWORD keylow, keyhigh;
+		if (trans & DDBLTFAST_SRCCOLORKEY) {
+			keylow  = sdesc.ddckCKSrcBlt.dwColorSpaceLowValue;
+			keyhigh = sdesc.ddckCKSrcBlt.dwColorSpaceHighValue;
+		} else {
+			/* I'm not sure if this is correct */
+			FIXME(ddraw, "DDBLTFAST_DESTCOLORKEY not fully supported yet.\n");
+			keylow  = ddesc.ddckCKDestBlt.dwColorSpaceLowValue;
+			keyhigh = ddesc.ddckCKDestBlt.dwColorSpaceHighValue;
+		}
+
+#define COPYBOX_COLORKEY(type) { \
+	type *d = (type *)dbuf, *s = (type *)sbuf, tmp; \
+	s = sdesc.y.lpSurface + (rsrc->top * sdesc.lPitch) + rsrc->left * bpp; \
+	d = ddesc.y.lpSurface + (dsty * ddesc.lPitch) + dstx * bpp; \
+	for (y = 0; y < h; y++) { \
+		for (x = 0; x < w; x++) { \
+			tmp = s[x]; \
+			if (tmp < keylow || tmp > keyhigh) d[x] = tmp; \
+		} \
+		(LPBYTE)s += sdesc.lPitch; \
+		(LPBYTE)d += ddesc.lPitch; \
+	} \
+	break; \
+}
+
+		switch (bpp) {
+			case 1: COPYBOX_COLORKEY(BYTE)
+			case 2: COPYBOX_COLORKEY(WORD)
+			case 4: COPYBOX_COLORKEY(DWORD)
+			default:
+				FIXME(ddraw, "Source color key blitting not supported for bpp %d\n", bpp*8);
+				ret = DDERR_UNSUPPORTED;
+				goto error;
 	}
+
+#undef COPYBOX_COLORKEY
+
+	} else {
+		int width = w * bpp;
+
+		for (y = 0; y < h; y++) {
+			memcpy(dbuf, sbuf, width);
+			sbuf += sdesc.lPitch;
+			dbuf += ddesc.lPitch;
+		}
+	}
+
+error:
+
 	IDirectDrawSurface4_Unlock(iface,ddesc.y.lpSurface);
 	IDirectDrawSurface4_Unlock(src,sdesc.y.lpSurface);
-	return DD_OK;
+	return ret;
 }
 
 static HRESULT WINAPI IDirectDrawSurface4Impl_BltBatch(
