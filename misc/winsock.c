@@ -1037,7 +1037,7 @@ INT WINAPI WINSOCK_getpeername(SOCKET s, struct sockaddr *name,
 #endif
 	    return 0; 
 	}
-	SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno());
+	SetLastError(wsaErrno());
     }
 #ifdef HAVE_IPX
     if (name && ((struct ws_sockaddr_ipx *)name)->sipx_family == AF_IPX) {
@@ -1103,7 +1103,7 @@ INT WINAPI WINSOCK_getsockname(SOCKET s, struct sockaddr *name,
 #endif
 	    return 0; 
 	}
-	SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno());
+	SetLastError(wsaErrno());
     }
 #ifdef HAVE_IPX
     if (name && ((struct ws_sockaddr_ipx *)name)->sipx_family == AF_IPX) {
