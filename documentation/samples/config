@@ -70,7 +70,7 @@ WINE REGISTRY Version 2
 # <wineconf>
 
 [Version]
-; Windows version to imitate (win95,win98,winme,nt351,nt40,win2k,winxp,win20,win30,win31)" },
+; Windows version to imitate (win95,win98,winme,nt351,nt40,win2k,winxp,win20,win30,win31)
 ;"Windows" = "win98"
 ; DOS version to imitate
 ;"DOS" = "6.22"
@@ -93,7 +93,10 @@ WINE REGISTRY Version 2
 "mciavi.drv"   = "native, builtin"
 "mcianim.drv"  = "native, builtin"
 ; you can specify applications too
-"notepad.exe"  = "native, builtin"
+; this one will apply for all notepad.exe
+;"*notepad.exe" = "native, builtin"
+; this one will apply only for a particular file
+;"C:\\windows\\regedit.exe" = "native, builtin"
 ; default for all other dlls
 "*" = "builtin, native"
 
