@@ -185,12 +185,16 @@ BOOL EMFDRV_WriteRecord( PHYSDEV dev, EMR *emr )
 	if (!WriteFile(physDev->hFile, (char *)emr, emr->nSize, NULL, NULL))
 	    return FALSE;
     } else {
-	len = physDev->emh->nBytes;
-	emh = HeapReAlloc( GetProcessHeap(), 0, physDev->emh, len );
-        if (!emh) return FALSE;
-        physDev->emh = emh;
-	memcpy((CHAR *)physDev->emh + physDev->emh->nBytes - emr->nSize, emr,
-	       emr->nSize);
+        DWORD nEmfSize = HeapSize(GetProcessHeap(), 0, physDev->emh);
+        len = physDev->emh->nBytes;
+        if (len > nEmfSize) {
+            nEmfSize += (nEmfSize / 2) + emr->nSize;
+            emh = HeapReAlloc(GetProcessHeap(), 0, physDev->emh, nEmfSize);
+            if (!emh) return FALSE;
+            physDev->emh = emh;
+        }
+        memcpy((CHAR *)physDev->emh + physDev->emh->nBytes - emr->nSize, emr,
+               emr->nSize);
     }
     return TRUE;
 }
