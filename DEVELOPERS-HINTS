@@ -232,7 +232,6 @@ Miscellaneous:
 Note: these directories will ultimately get moved into their
 respective dlls.
 
-	files/			- KERNEL file I/O
 	misc/			- KERNEL registry 
 
 	objects/		- GDI logical objects

@@ -606,8 +606,7 @@ enum fd_type
 {
     FD_TYPE_INVALID,
     FD_TYPE_DEFAULT,
-    FD_TYPE_SOCKET,
-    FD_TYPE_SMB
+    FD_TYPE_SOCKET
 };
 #define FD_FLAG_OVERLAPPED         0x01
 #define FD_FLAG_TIMEOUT            0x02
@@ -1673,31 +1672,6 @@ enum message_type
     unsigned int   outsize;
     unsigned int   insize;
 @END
-
-
-@REQ(create_smb)
-    int            fd;
-    unsigned int   tree_id;
-    unsigned int   user_id;
-    unsigned int   file_id;
-    unsigned int   dialect;
-@REPLY
-    obj_handle_t   handle;
-@END
-
-
-@REQ(get_smb_info)
-    obj_handle_t   handle;
-    unsigned int   flags;
-    unsigned int   offset;
-@REPLY
-    unsigned int   tree_id;
-    unsigned int   user_id;
-    unsigned int   dialect;
-    unsigned int   file_id;
-    unsigned int   offset;
-@END
-#define SMBINFO_SET_OFFSET    0x01
 
 
 /* Create a window */

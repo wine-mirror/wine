@@ -20005,8 +20005,6 @@ esac
 
           ac_config_commands="$ac_config_commands dlls/wineps/data"
 
-          ac_config_commands="$ac_config_commands files"
-
           ac_config_commands="$ac_config_commands include/wine"
 
           ac_config_commands="$ac_config_commands misc"
@@ -20806,7 +20804,6 @@ do
   "dlls/user/dde" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/dde" ;;
   "dlls/user/resources" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/resources" ;;
   "dlls/wineps/data" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/wineps/data" ;;
-  "files" ) CONFIG_COMMANDS="$CONFIG_COMMANDS files" ;;
   "include/wine" ) CONFIG_COMMANDS="$CONFIG_COMMANDS include/wine" ;;
   "misc" ) CONFIG_COMMANDS="$CONFIG_COMMANDS misc" ;;
   "objects" ) CONFIG_COMMANDS="$CONFIG_COMMANDS objects" ;;
@@ -21618,8 +21615,6 @@ echo "$as_me: creating dlls/user/dde" >&6;} && mkdir "dlls/user/dde") ;;
 echo "$as_me: creating dlls/user/resources" >&6;} && mkdir "dlls/user/resources") ;;
     dlls/wineps/data ) test -d "dlls/wineps/data" || ({ echo "$as_me:$LINENO: creating dlls/wineps/data" >&5
 echo "$as_me: creating dlls/wineps/data" >&6;} && mkdir "dlls/wineps/data") ;;
-    files ) test -d "files" || ({ echo "$as_me:$LINENO: creating files" >&5
-echo "$as_me: creating files" >&6;} && mkdir "files") ;;
     include/wine ) test -d "include/wine" || ({ echo "$as_me:$LINENO: creating include/wine" >&5
 echo "$as_me: creating include/wine" >&6;} && mkdir "include/wine") ;;
     misc ) test -d "misc" || ({ echo "$as_me:$LINENO: creating misc" >&5

@@ -18,7 +18,6 @@ SPEC_SRCS16 = \
 	windebug.spec
 
 C_SRCS = \
-	$(TOPOBJDIR)/files/smb.c \
 	$(TOPOBJDIR)/misc/registry.c \
 	actctx.c \
 	atom.c \
@@ -93,7 +92,6 @@ MC_SRCS = \
 EXTRA_OBJS   = $(ASM_SRCS:.s=.o)
 SUBDIRS      = tests
 EXTRASUBDIRS = \
-	$(TOPOBJDIR)/files \
 	$(TOPOBJDIR)/misc \
 	messages \
 	nls

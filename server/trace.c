@@ -1974,36 +1974,6 @@ static void dump_get_named_pipe_info_reply( const struct get_named_pipe_info_rep
     fprintf( stderr, " insize=%08x", req->insize );
 }
 
-static void dump_create_smb_request( const struct create_smb_request *req )
-{
-    fprintf( stderr, " fd=%d,", req->fd );
-    fprintf( stderr, " tree_id=%08x,", req->tree_id );
-    fprintf( stderr, " user_id=%08x,", req->user_id );
-    fprintf( stderr, " file_id=%08x,", req->file_id );
-    fprintf( stderr, " dialect=%08x", req->dialect );
-}
-
-static void dump_create_smb_reply( const struct create_smb_reply *req )
-{
-    fprintf( stderr, " handle=%p", req->handle );
-}
-
-static void dump_get_smb_info_request( const struct get_smb_info_request *req )
-{
-    fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " flags=%08x,", req->flags );
-    fprintf( stderr, " offset=%08x", req->offset );
-}
-
-static void dump_get_smb_info_reply( const struct get_smb_info_reply *req )
-{
-    fprintf( stderr, " tree_id=%08x,", req->tree_id );
-    fprintf( stderr, " user_id=%08x,", req->user_id );
-    fprintf( stderr, " dialect=%08x,", req->dialect );
-    fprintf( stderr, " file_id=%08x,", req->file_id );
-    fprintf( stderr, " offset=%08x", req->offset );
-}
-
 static void dump_create_window_request( const struct create_window_request *req )
 {
     fprintf( stderr, " parent=%p,", req->parent );
@@ -2643,8 +2613,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_wait_named_pipe_request,
     (dump_func)dump_disconnect_named_pipe_request,
     (dump_func)dump_get_named_pipe_info_request,
-    (dump_func)dump_create_smb_request,
-    (dump_func)dump_get_smb_info_request,
     (dump_func)dump_create_window_request,
     (dump_func)dump_link_window_request,
     (dump_func)dump_destroy_window_request,
@@ -2821,8 +2789,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_disconnect_named_pipe_reply,
     (dump_func)dump_get_named_pipe_info_reply,
-    (dump_func)dump_create_smb_reply,
-    (dump_func)dump_get_smb_info_reply,
     (dump_func)dump_create_window_reply,
     (dump_func)dump_link_window_reply,
     (dump_func)0,
@@ -2999,8 +2965,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "wait_named_pipe",
     "disconnect_named_pipe",
     "get_named_pipe_info",
-    "create_smb",
-    "get_smb_info",
     "create_window",
     "link_window",
     "destroy_window",

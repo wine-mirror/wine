@@ -483,24 +483,6 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         }
         return io_status->u.Status;
     }
-    switch (type)
-    {
-    case FD_TYPE_SMB:
-        FIXME("NIY-SMB\n");
-        /* FIXME */
-        /* return SMB_ReadFile(hFile, unix_handle, buffer, length, io_status); */
-        wine_server_release_fd( hFile, unix_handle );
-        return STATUS_INVALID_HANDLE;
-
-    case FD_TYPE_DEFAULT:
-        /* normal unix file */
-        break;
-
-    default:
-        FIXME("Unsupported type of fd %d\n", type);
-        wine_server_release_fd( hFile, unix_handle );
-        return STATUS_INVALID_HANDLE;
-    }
 
     if (offset)
     {
@@ -666,23 +648,6 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
             NtDelayExecution( TRUE, &timeout );
         }
         return io_status->u.Status;
-    }
-    switch (type)
-    {
-    case FD_TYPE_SMB:
-        FIXME("NIY-SMB\n");
-        wine_server_release_fd( hFile, unix_handle );
-        return STATUS_NOT_IMPLEMENTED;
-
-    case FD_TYPE_DEFAULT:
-        /* normal unix files */
-        if (unix_handle == -1) return STATUS_INVALID_HANDLE;
-        break;
-
-    default:
-        FIXME("Unsupported type of fd %d\n", type);
-        wine_server_release_fd( hFile, unix_handle );
-        return STATUS_INVALID_HANDLE;
     }
 
     if (offset)

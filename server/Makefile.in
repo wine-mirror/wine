@@ -34,7 +34,6 @@ C_SRCS = \
 	semaphore.c \
 	serial.c \
 	signal.c \
-	smb.c \
 	snapshot.c \
 	sock.c \
 	thread.c \
