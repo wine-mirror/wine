@@ -296,7 +296,11 @@ WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
                     cs.hMenu = 0; /* not used in following call */
                     cs.hwndParent = pWndParent->hwndSelf;
                     cs.cy = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
+                    if (!cs.cy)
+                      cs.cy = 1;
                     cs.cx = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
+                    if (!cs.cx)
+                      cs.cx = 1;
                     cs.y = wndPtr->rectWindow.top;
                     cs.x = wndPtr->rectWindow.left;
                     cs.style = wndPtr->dwStyle;
