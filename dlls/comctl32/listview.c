@@ -5925,18 +5925,6 @@ static void column_fill_hditem(LISTVIEW_INFO *infoPtr, HDITEMW *lphdi, INT nColu
     }
 }
 
-/*** Helper for {Insert,Set}ColumnT *only* */
-static BOOL column_fill_info(LISTVIEW_INFO *infoPtr, COLUMN_INFO *lpColumnInfo, INT nColumn, LPLVCOLUMNW lpColumn)
-{
-    RECT rcCol;
-
-    if (!Header_GetItemRect(infoPtr->hwndHeader, nColumn, &rcCol)) return FALSE;
-    lpColumnInfo->rcHeader = rcCol;
-    if (lpColumn->mask & LVCF_FMT)
-	lpColumnInfo->fmt = lpColumn->fmt;
-
-    return TRUE;
-}
 
 /***
  * DESCRIPTION:
@@ -5976,7 +5964,8 @@ static LRESULT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
     if (!(lpColumnInfo = COMCTL32_Alloc(sizeof(COLUMN_INFO)))) goto fail;
     if (DPA_InsertPtr(infoPtr->hdpaColumns, nNewColumn, lpColumnInfo) == -1) goto fail;
 
-    if (!column_fill_info(infoPtr, lpColumnInfo, nNewColumn, lpColumn)) goto fail;
+    if (lpColumn->mask & LVCF_FMT) lpColumnInfo->fmt = lpColumn->fmt;
+    if (!Header_GetItemRect(infoPtr->hwndHeader, nNewColumn, &lpColumnInfo->rcHeader)) goto fail;
 
     /* now we have to actually adjust the data */
     if (!(infoPtr->dwStyle & LVS_OWNERDATA) && infoPtr->nItemCount > 0)
@@ -6060,34 +6049,29 @@ fail:
 static LRESULT LISTVIEW_SetColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
                                    LPLVCOLUMNW lpColumn, BOOL isW)
 {
-    COLUMN_INFO *lpColumnInfo;
     HDITEMW hdi, hdiget;
     BOOL bResult;
 
-    if (!lpColumn || nColumn < 0 || nColumn < infoPtr->hdpaColumns->nItemCount) return FALSE;
+    TRACE("(nColumn=%d, lpColumn=%s, isW=%d)\n", nColumn, debuglvcolumn_t(lpColumn, isW), isW);
+    
+    if (!lpColumn || nColumn < 0 || nColumn >= infoPtr->hdpaColumns->nItemCount) return FALSE;
 
     ZeroMemory(&hdi, sizeof(HDITEMW));
     if (lpColumn->mask & LVCF_FMT)
     {
-        /* format member is valid */
         hdi.mask |= HDI_FORMAT;
-
-        /* get current format first */
         hdiget.mask = HDI_FORMAT;
         if (Header_GetItemW(infoPtr->hwndHeader, nColumn, &hdiget))
-	      /* preserve HDF_STRING if present */
-	      hdi.fmt = hdiget.fmt & HDF_STRING;
+	    hdi.fmt = hdiget.fmt & HDF_STRING;
     }
-
-    lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, nColumn);
-
     column_fill_hditem(infoPtr, &hdi, nColumn, lpColumn, isW);
 
     /* set header item attributes */
     bResult = SendMessageW(infoPtr->hwndHeader, isW ? HDM_SETITEMW : HDM_SETITEMA, (WPARAM)nColumn, (LPARAM)&hdi);
     if (!bResult) return FALSE;
 
-    if (!column_fill_info(infoPtr, lpColumnInfo, nColumn, lpColumn)) return FALSE;
+    if (lpColumn->mask & LVCF_FMT) 
+	LISTVIEW_GetColumnInfo(infoPtr, nColumn)->fmt = lpColumn->fmt;
 
     return TRUE;
 }
@@ -6129,7 +6113,7 @@ static LRESULT LISTVIEW_SetColumnOrderArray(LISTVIEW_INFO *infoPtr, INT iCount, 
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT iCol, INT cx)
+static BOOL LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT iCol, INT cx)
 {
     HDITEMW hdi;
     LRESULT lret;
@@ -7655,14 +7639,15 @@ static LRESULT LISTVIEW_Notify(LISTVIEW_INFO *infoPtr, INT nCtrlId, LPNMHDR lpnm
     {
 	LPNMHEADERW lphnm = (LPNMHEADERW)lpnmh;
 	
-	if (lpnmh->code == HDN_TRACKW || lpnmh->code == HDN_TRACKA)
+	if (lpnmh->code == HDN_TRACKW       || lpnmh->code == HDN_TRACKA ||
+	    lpnmh->code == HDN_ITEMCHANGEDW || lpnmh->code == HDN_ITEMCHANGEDA)
 	{
 	    COLUMN_INFO *lpColumnInfo;
 	    RECT rcCol;
 	    INT dx;
 
 	    if (lphnm->iItem < 0 || lphnm->iItem >= infoPtr->hdpaColumns->nItemCount) return 0;
-	    if (!(lphnm->pitem->mask & HDI_WIDTH)) return 0;
+	    if (!lphnm->pitem || !(lphnm->pitem->mask & HDI_WIDTH)) return 0;
 
 	    lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, lphnm->iItem);
 	    
