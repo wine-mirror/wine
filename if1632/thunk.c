@@ -1557,10 +1557,10 @@ void WINAPI CBClientGlueSL( CONTEXT86 *context )
 /***********************************************************************
  *     CBClientThunkSL                      (KERNEL.620)
  */
+extern DWORD WINAPI CALL32_CBClient( FARPROC proc, LPWORD args, DWORD *esi );
 void WINAPI CBClientThunkSL( CONTEXT86 *context )
 {
     /* Call 32-bit relay code */
-    extern DWORD WINAPI CALL32_CBClient( FARPROC proc, LPWORD args, DWORD *esi );
 
     LPWORD args = PTR_SEG_OFF_TO_LIN( SS_reg( context ), BP_reg( context ) );
     FARPROC proc = CBClientRelay32[ args[2] ][ args[1] ];
@@ -1571,11 +1571,11 @@ void WINAPI CBClientThunkSL( CONTEXT86 *context )
 /***********************************************************************
  *     CBClientThunkSLEx                    (KERNEL.621)
  */
+extern DWORD WINAPI CALL32_CBClientEx( FARPROC proc, LPWORD args, 
+                                       DWORD *esi, INT *nArgs );
 void WINAPI CBClientThunkSLEx( CONTEXT86 *context )
 {
     /* Call 32-bit relay code */
-    extern DWORD WINAPI CALL32_CBClientEx( FARPROC proc, LPWORD args, 
-                                           DWORD *esi, INT *nArgs );
 
     LPWORD args = PTR_SEG_OFF_TO_LIN( SS_reg( context ), BP_reg( context ) );
     FARPROC proc = CBClientRelay32[ args[2] ][ args[1] ];
