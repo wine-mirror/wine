@@ -181,6 +181,8 @@ static AFM *PSDRV_AFMParse(char const *file)
 	        afm->Weight = FW_BOLD;
 	    else if(!strncmp("Light", value, 5))
 	        afm->Weight = FW_LIGHT;
+	    else if(!strncmp("Black", value, 5))
+	        afm->Weight = FW_BLACK;
 	    else {
   	        FIXME("Unkown AFM Weight '%s'\n", value);
 	        afm->Weight = FW_NORMAL;
@@ -252,12 +254,20 @@ static AFM *PSDRV_AFMParse(char const *file)
     }
     fclose(fp);
 
+    if(afm->FontName == NULL)
+        WARN("%s contains no FontName.\n", file);
+    if(afm->FullName == NULL)
+        afm->FullName = HEAP_strdupA(PSDRV_Heap, 0, afm->FontName);
+    if(afm->FamilyName == NULL)
+        afm->FamilyName = HEAP_strdupA(PSDRV_Heap, 0, afm->FontName);      
     if(afm->Ascender == 0.0)
         afm->Ascender = afm->FontBBox.ury;
     if(afm->Descender == 0.0)
         afm->Descender = afm->FontBBox.lly;
     if(afm->FullAscender == 0.0)
         afm->FullAscender = afm->Ascender;
+    if(afm->Weight == 0)
+        afm->Weight = FW_NORMAL;
 
     return afm;
 }
