@@ -533,12 +533,17 @@ static const WCHAR *skip_unc_prefix( const WCHAR *ptr )
  */
 static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
 {
-    ULONG                       reqsize = 0, mark = 0, dep = 0, deplen;
+    ULONG                       reqsize = 0, mark = 0, dep = 0, deplen, name_len;
     DOS_PATHNAME_TYPE           type;
     LPWSTR                      ins_str = NULL;
     LPCWSTR                     ptr;
     const UNICODE_STRING*       cd;
     WCHAR                       tmp[4];
+
+    /* remove trailing spaces (yes, Windows really does that, don't ask) */
+    name_len = strlenW( name );
+    while (name_len && name[name_len-1] == ' ') name_len--;
+    if (!name_len) return 0;
 
     RtlAcquirePebLock();
 
@@ -674,7 +679,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
     }
 
     /* enough space ? */
-    deplen = strlenW(name + dep) * sizeof(WCHAR);
+    deplen = (name_len - dep) * sizeof(WCHAR);
     if (reqsize + deplen + sizeof(WCHAR) > size)
     {
         /* not enough space, return need size (including terminating '\0') */
@@ -682,7 +687,8 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
         goto done;
     }
 
-    memmove(buffer + reqsize / sizeof(WCHAR), name + dep, deplen + sizeof(WCHAR));
+    memmove(buffer + reqsize / sizeof(WCHAR), name + dep, deplen);
+    buffer[(reqsize + deplen) / sizeof(WCHAR)] = 0;
     if (reqsize) memcpy(buffer, ins_str, reqsize);
     reqsize += deplen;
 
@@ -737,6 +743,7 @@ DWORD WINAPI RtlGetFullPathName_U(const WCHAR* name, ULONG size, WCHAR* buffer,
     }
 
     reqsize = get_full_path_helper(name, buffer, size);
+    if (!reqsize) return 0;
     if (reqsize > size)
     {
         LPWSTR tmp = RtlAllocateHeap(GetProcessHeap(), 0, reqsize);

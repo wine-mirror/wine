@@ -239,6 +239,7 @@ static void test_RtlGetFullPathName_U()
     static const struct test tests[] =
         {
             { "c:/test",                     "c:\\test",         "test"},
+            { "c:/test     ",                "c:\\test",         "test"},
             { "c:/TEST",                     "c:\\test",         "test"},
             { "c:/test/file",                "c:\\test\\file",   "file"},
             { "c:/test/././file",            "c:\\test\\file",   "file"},
