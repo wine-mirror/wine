@@ -6,6 +6,7 @@ MODULE    = dbghelp.dll
 IMPORTS   = psapi kernel32 ntdll
 
 C_SRCS = \
+	coff.c \
 	dbghelp.c \
 	elf_module.c \
 	image.c \
