@@ -574,7 +574,7 @@ INT16 WINAPI OemToAnsi16( LPCSTR s, LPSTR d )
  */
 void WINAPI AnsiToOemBuff16( LPCSTR s, LPSTR d, UINT16 len )
 {
-    CharToOemBuffA( s, d, len ? len : 65536 );
+    if (len != 0) CharToOemBuffA( s, d, len );
 }
 
 
@@ -583,7 +583,7 @@ void WINAPI AnsiToOemBuff16( LPCSTR s, LPSTR d, UINT16 len )
  */
 void WINAPI OemToAnsiBuff16( LPCSTR s, LPSTR d, UINT16 len )
 {
-    OemToCharBuffA( s, d, len ? len : 65536 );
+    if (len != 0) OemToCharBuffA( s, d, len );
 }
 
 
