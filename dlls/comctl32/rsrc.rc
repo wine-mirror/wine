@@ -7,6 +7,7 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "comctl32.h"
+#include "wine/wine_common_ver.rc"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 

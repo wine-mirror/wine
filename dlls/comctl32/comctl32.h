@@ -86,5 +86,8 @@ HWND COMCTL32_CreateToolTip (HWND);
 INT  Str_GetPtrWtoA (LPCWSTR lpSrc, LPSTR lpDest, INT nMaxLen);
 BOOL Str_SetPtrAtoW (LPWSTR *lppDest, LPCSTR lpSrc);
 
+#define COMCTL32_VERSION_MINOR 0 
+#define WINE_FILEVERSION 5, COMCTL32_VERSION_MINOR, 0, 0
+#define WINE_FILEVERSIONSTR "5.00"
 
 #endif  /* __WINE_COMCTL32_H */

@@ -14,6 +14,7 @@
 #include "debugtools.h"
 #include "winerror.h"
 #include "shlwapi.h"
+#include "comctl32.h"
 
 DEFAULT_DEBUG_CHANNEL(commctrl);
 
@@ -882,8 +883,8 @@ COMCTL32_DllGetVersion (DLLVERSIONINFO *pdvi)
 	return E_INVALIDARG;
     }
 
-    pdvi->dwMajorVersion = 5;
-    pdvi->dwMinorVersion = 0;
+    pdvi->dwMajorVersion = COMCTL32_VERSION;
+    pdvi->dwMinorVersion = COMCTL32_VERSION_MINOR;
     pdvi->dwBuildNumber = 2919;
     pdvi->dwPlatformID = 6304;
 
