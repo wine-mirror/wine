@@ -1,3 +1,4 @@
 Makefile
 msrle32.dll.dbg.c
 msrle32.spec.c
+rsrc.res

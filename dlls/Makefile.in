@@ -47,10 +47,10 @@ BASEDIRS = \
 	msimg32 \
 	msisys \
 	msnet32 \
-	msrle32 \
 	msvcrt \
 	msvcrt20 \
 	msvideo \
+	msvideo/msrle32 \
 	netapi32 \
 	ntdll \
 	odbc32 \
@@ -396,8 +396,8 @@ msisys.ocx$(DLLEXT): msisys/msisys.ocx$(DLLEXT)
 msnet32.dll$(DLLEXT): msnet32/msnet32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msnet32/msnet32.dll$(DLLEXT) $@
 
-msrle32.dll$(DLLEXT): msrle32/msrle32.dll$(DLLEXT)
-	$(RM) $@ && $(LN_S) msrle32/msrle32.dll$(DLLEXT) $@
+msrle32.dll$(DLLEXT): msvideo/msrle32/msrle32.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) msvideo/msrle32/msrle32.dll$(DLLEXT) $@
 
 msvcrt.dll$(DLLEXT): msvcrt/msvcrt.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msvcrt/msvcrt.dll$(DLLEXT) $@
@@ -605,7 +605,7 @@ msacm/msg711/msg711.acm$(DLLEXT): msacm/msg711
 msimg32/msimg32.dll$(DLLEXT): msimg32
 msisys/msisys.ocx$(DLLEXT): msisys
 msnet32/msnet32.dll$(DLLEXT): msnet32
-msrle32/msrle32.dll$(DLLEXT): msrle32
+msvideo/msrle32/msrle32.dll$(DLLEXT): msvideo/msrle32
 msvcrt/msvcrt.dll$(DLLEXT): msvcrt
 msvcrt20/msvcrt20.dll$(DLLEXT): msvcrt20
 msvideo/msvfw32.dll$(DLLEXT): msvideo
@@ -704,7 +704,7 @@ msacm/msg711/__install__: msg711.acm$(DLLEXT)
 msimg32/__install__: msimg32.dll$(DLLEXT)
 msisys/__install__: msisys.ocx$(DLLEXT)
 msnet32/__install__: msnet32.dll$(DLLEXT)
-msrle32/__install__: msrle32.dll$(DLLEXT)
+msvideo/msrle32/__install__: msrle32.dll$(DLLEXT)
 msvcrt/__install__: msvcrt.dll$(DLLEXT)
 msvcrt20/__install__: msvcrt20.dll$(DLLEXT)
 msvideo/__install__: msvfw32.dll$(DLLEXT)
@@ -762,7 +762,7 @@ x11drv/__install__: x11drv.dll$(DLLEXT)
 # Inter-dll dependencies
 
 advapi32: kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
-avicap32: kernel32.dll$(DLLEXT)
+avicap32: ntdll.dll$(DLLEXT)
 avifil32: msvfw32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 comcat:   ole32.dll$(DLLEXT) user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 comctl32: user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
@@ -799,9 +799,9 @@ msdmo:    kernel32.dll$(DLLEXT)
 msimg32:  kernel32.dll$(DLLEXT)
 msisys:   kernel32.dll$(DLLEXT)
 msnet32:  kernel32.dll$(DLLEXT)
-msrle32:  kernel32.dll$(DLLEXT)
 msvcrt20: msvcrt.dll$(DLLEXT)
 msvcrt:   kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+msvideo/msrle32: winmm.dll$(DLLEXT) user32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 msvideo:  winmm.dll$(DLLEXT) comctl32.dll$(DLLEXT) version.dll$(DLLEXT) user32.dll$(DLLEXT) \
           gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 netapi32: advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)

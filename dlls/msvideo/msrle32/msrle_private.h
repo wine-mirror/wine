@@ -1,0 +1,56 @@
+/*
+ * Copyright 2002 Michael Günnewig
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#ifndef __MSRLE32_PRIVATE_H
+#define __MSRLE32_PRIVATE_H
+
+#include "winbase.h"
+#include "mmsystem.h"
+#include "vfw.h"
+
+#define IDS_NAME        100
+#define IDS_DESCRIPTION 101
+#define IDS_ABOUT       102
+
+#define MSRLE32_VERSION  0x00010000 /* Version 1.0 build 0 */
+#define MSRLE32_DEFAULTQUALITY (75 * ICQUALITY_HIGH) / 100
+
+#define FOURCC_RLE   mmioFOURCC('R','L','E',' ')
+#define FOURCC_RLE4  mmioFOURCC('R','L','E','4')
+#define FOURCC_RLE8  mmioFOURCC('R','L','E','8')
+#define FOURCC_MRLE  mmioFOURCC('M','R','L','E')
+
+#define WIDTHBYTES(i)     ((WORD)((i+31)&(~31))/8) /* ULONG aligned ! */
+#define DIBWIDTHBYTES(bi) WIDTHBYTES((WORD)(bi).biWidth * (WORD)(bi).biBitCount)
+
+typedef struct _CodecInfo {
+  FOURCC  fccHandler;
+  DWORD   dwQuality;
+
+  BOOL    bCompress;
+  LONG    nPrevFrame;
+  LPWORD  pPrevFrame;
+  LPWORD  pCurFrame;
+
+  BOOL    bDecompress;
+  LPBYTE  palette_map;
+} CodecInfo;
+
+typedef const BITMAPINFOHEADER * LPCBITMAPINFOHEADER;
+
+#endif

@@ -1412,10 +1412,10 @@ dlls/msdmo/Makefile
 dlls/msimg32/Makefile
 dlls/msisys/Makefile
 dlls/msnet32/Makefile
-dlls/msrle32/Makefile
 dlls/msvcrt/Makefile
 dlls/msvcrt20/Makefile
 dlls/msvideo/Makefile
+dlls/msvideo/msrle32/Makefile
 dlls/netapi32/Makefile
 dlls/netapi32/tests/Makefile
 dlls/ntdll/Makefile

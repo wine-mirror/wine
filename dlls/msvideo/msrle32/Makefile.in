@@ -1,13 +1,16 @@
 TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../..
+TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msrle32.dll
+IMPORTS   = winmm user32 kernel32
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = msrle32.c
+
+RC_SRCS = rsrc.rc
 
 @MAKE_DLL_RULES@
 
