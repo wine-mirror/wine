@@ -32,32 +32,11 @@
 #include "wine/unicode.h"
 #include "windef.h"
 #include "winnls.h"
+#include "ntddk.h"
 #include "winerror.h"
-#include "module.h"
-#include "stackframe.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(resource);
-
-
-/**********************************************************************
- *  get_module_base
- *
- * Get the base address of a module
- */
-static const void *get_module_base( HMODULE hmod )
-{
-    if (!hmod) hmod = GetModuleHandleA( NULL );
-    else if (!HIWORD(hmod))
-    {
-        FIXME("Enumeration of 16-bit resources is not supported\n");
-        SetLastError(ERROR_INVALID_HANDLE);
-        return NULL;
-    }
-
-    /* clear low order bit in case of LOAD_LIBRARY_AS_DATAFILE module */
-    return (void *)((ULONG_PTR)hmod & ~1);
-}
 
 
 /**********************************************************************
@@ -72,48 +51,22 @@ inline static int is_data_file_module( HMODULE hmod )
 
 
 /**********************************************************************
- *  get_data_file_ptr
- *
- * Get a pointer to a given offset in a file mapped as data file.
- */
-static const void *get_data_file_ptr( const void *base, DWORD offset )
-{
-    const IMAGE_NT_HEADERS *nt = PE_HEADER(base);
-    const IMAGE_SECTION_HEADER *sec = (IMAGE_SECTION_HEADER *)((char *)&nt->OptionalHeader +
-                                                               nt->FileHeader.SizeOfOptionalHeader);
-    int i;
-
-    /* find the section containing the virtual address */
-    for (i = 0; i < nt->FileHeader.NumberOfSections; i++, sec++)
-    {
-        if ((sec->VirtualAddress <= offset) && (sec->VirtualAddress + sec->SizeOfRawData > offset))
-            return (char *)base + sec->PointerToRawData + (offset - sec->VirtualAddress);
-    }
-    return NULL;
-}
-
-
-/**********************************************************************
  *  get_resdir
  *
  * Get the resource directory of a PE module
  */
 static const IMAGE_RESOURCE_DIRECTORY* get_resdir( HMODULE hmod )
 {
-    const IMAGE_DATA_DIRECTORY *dir;
-    const IMAGE_RESOURCE_DIRECTORY *ret = NULL;
-    const void *base = get_module_base( hmod );
+    DWORD size;
 
-    if (base)
+    if (!hmod) hmod = GetModuleHandleA( NULL );
+    else if (!HIWORD(hmod))
     {
-        dir = &PE_HEADER(base)->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE];
-        if (dir->Size && dir->VirtualAddress)
-        {
-            if (is_data_file_module(hmod)) ret = get_data_file_ptr( base, dir->VirtualAddress );
-            else ret = (IMAGE_RESOURCE_DIRECTORY *)((char *)base + dir->VirtualAddress);
-        }
+        FIXME("Enumeration of 16-bit resources is not supported\n");
+        SetLastError(ERROR_INVALID_HANDLE);
+        return NULL;
     }
-    return ret;
+    return RtlImageDirectoryEntryToData( hmod, TRUE, IMAGE_DIRECTORY_ENTRY_RESOURCE, &size );
 }
 
 
@@ -325,16 +278,19 @@ HRSRC PE_FindResourceW( HMODULE hmod, LPCWSTR name, LPCWSTR type )
 HGLOBAL PE_LoadResource( HMODULE hmod, HRSRC hRsrc )
 {
     DWORD offset;
-    const void *base = get_module_base( hmod );
 
-    if (!hRsrc || !base) return 0;
+    if (!hRsrc) return 0;
+    if (!hmod) hmod = GetModuleHandleA( NULL );
 
     offset = ((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData;
 
     if (is_data_file_module(hmod))
-        return (HANDLE)get_data_file_ptr( base, offset );
+    {
+        hmod = (HMODULE)((ULONG_PTR)hmod & ~1);
+        return (HGLOBAL)RtlImageRvaToVa( RtlImageNtHeader(hmod), hmod, offset, NULL );
+    }
     else
-        return (HANDLE)((char *)base + offset);
+        return (HGLOBAL)((char *)hmod + offset);
 }
 
 

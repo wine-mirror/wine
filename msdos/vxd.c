@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include "winbase.h"
 #include "windef.h"
+#include "ntddk.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/winbase16.h"
@@ -758,8 +759,10 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
                             (struct Win32sModule *)W32S_APP2WINE(context->Edx);
         struct Win32sModule *module = moduleTable + context->Ecx;
 
-        IMAGE_NT_HEADERS *nt_header = PE_HEADER(module->baseAddr);
-        IMAGE_SECTION_HEADER *pe_seg = PE_SECTIONS(module->baseAddr);
+        IMAGE_NT_HEADERS *nt_header = RtlImageNtHeader( (HMODULE)module->baseAddr );
+        IMAGE_SECTION_HEADER *pe_seg = (IMAGE_SECTION_HEADER*)((char *)&nt_header->OptionalHeader +
+                                                         nt_header->FileHeader.SizeOfOptionalHeader);
+
 
         HFILE image = _lopen(module->pathName, OF_READ);
         BOOL error = (image == HFILE_ERROR);

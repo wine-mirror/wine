@@ -86,6 +86,7 @@ int BUILTIN32_dlclose( void *handle )
 static void load_library( void *base, const char *filename )
 {
     HMODULE module = (HMODULE)base;
+    IMAGE_NT_HEADERS *nt;
     WINE_MODREF *wm;
     char *fullname;
     DWORD len;
@@ -95,8 +96,13 @@ static void load_library( void *base, const char *filename )
         ERR("could not map image for %s\n", filename ? filename : "main exe" );
         return;
     }
+    if (!(nt = RtlImageNtHeader( module )))
+    {
+        ERR( "bad module for %s\n", filename ? filename : "main exe" );
+        return;
+    }
 
-    if (!(PE_HEADER(module)->FileHeader.Characteristics & IMAGE_FILE_DLL))
+    if (!(nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
     {
         /* if we already have an executable, ignore this one */
         if (!main_module) main_module = module;

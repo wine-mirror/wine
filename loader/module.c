@@ -121,7 +121,7 @@ WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename )
         if (wm->next) wm->next->prev = wm;
         MODULE_modref_list = wm;
 
-        if (!(PE_HEADER(hModule)->FileHeader.Characteristics & IMAGE_FILE_DLL))
+        if (!(RtlImageNtHeader(hModule)->FileHeader.Characteristics & IMAGE_FILE_DLL))
         {
             if (!exe_modref) exe_modref = wm;
             else FIXME( "Trying to load second .EXE file: %s\n", filename );
@@ -434,11 +434,11 @@ HMODULE16 MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 )
     /* Set version and flags */
     if (module32)
     {
-        pModule->expected_version =
-            ((PE_HEADER(module32)->OptionalHeader.MajorSubsystemVersion & 0xff) << 8 ) |
-             (PE_HEADER(module32)->OptionalHeader.MinorSubsystemVersion & 0xff);
+        IMAGE_NT_HEADERS *nt = RtlImageNtHeader( module32 );
+        pModule->expected_version = ((nt->OptionalHeader.MajorSubsystemVersion & 0xff) << 8 ) |
+                                     (nt->OptionalHeader.MinorSubsystemVersion & 0xff);
         pModule->flags |= NE_FFLAGS_WIN32;
-        if (PE_HEADER(module32)->FileHeader.Characteristics & IMAGE_FILE_DLL)
+        if (nt->FileHeader.Characteristics & IMAGE_FILE_DLL)
             pModule->flags |= NE_FFLAGS_LIBMODULE | NE_FFLAGS_SINGLEDATA;
     }
 

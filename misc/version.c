@@ -29,6 +29,7 @@
 #include "winreg.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "ntddk.h"
 #include "wine/winbase16.h"
 #include "module.h"
 #include "wine/debug.h"
@@ -352,11 +353,11 @@ static void VERSION_Init(void)
  */
 static DWORD VERSION_GetSystemDLLVersion( HMODULE hmod )
 {
-    IMAGE_DATA_DIRECTORY *dir = PE_HEADER(hmod)->OptionalHeader.DataDirectory
-                                + IMAGE_DIRECTORY_ENTRY_IMPORT;
-    if (dir->Size && dir->VirtualAddress)
+    DWORD size;
+    IMAGE_IMPORT_DESCRIPTOR *pe_imp;
+
+    if ((pe_imp = RtlImageDirectoryEntryToData( hmod, TRUE, IMAGE_DIRECTORY_ENTRY_IMPORT, &size )))
     {
-        IMAGE_IMPORT_DESCRIPTOR *pe_imp = (IMAGE_IMPORT_DESCRIPTOR *)((char *)hmod + dir->VirtualAddress);
         for ( ; pe_imp->Name; pe_imp++)
         {
 	    char * name = (char *)hmod + (unsigned int)pe_imp->Name;
@@ -364,7 +365,7 @@ static DWORD VERSION_GetSystemDLLVersion( HMODULE hmod )
 
 	    if (!strncasecmp(name, "ntdll", 5))
 	    {
-	      switch(PE_HEADER(hmod)->OptionalHeader.MajorOperatingSystemVersion) {
+	      switch(RtlImageNtHeader(hmod)->OptionalHeader.MajorOperatingSystemVersion) {
 		  case 3:
 			  MESSAGE("WARNING: very old native DLL (NT 3.x) used, might cause instability.\n");
 			  return NT351;
@@ -405,12 +406,14 @@ DWORD VERSION_GetLinkedDllVersion(void)
 	WINE_MODREF *wm;
 	DWORD WinVersion = NB_WINDOWS_VERSIONS;
 	PIMAGE_OPTIONAL_HEADER ophd;
+        IMAGE_NT_HEADERS *nt;
 
 	/* First check the native dlls provided. These have to be
 	from one windows version */
 	for ( wm = MODULE_modref_list; wm; wm=wm->next )
 	{
-	  ophd = &(PE_HEADER(wm->module)->OptionalHeader);
+          nt = RtlImageNtHeader(wm->module);
+          ophd = &nt->OptionalHeader;
 
 	  TRACE("%s: %02x.%02x/%02x.%02x/%02x.%02x/%02x.%02x\n",
 	    wm->modname,
@@ -449,7 +452,8 @@ DWORD VERSION_GetLinkedDllVersion(void)
 	if(WinVersion != NB_WINDOWS_VERSIONS) return WinVersion;
 
 	/* we are using no external system dlls, look at the exe */
-	ophd = &(PE_HEADER(GetModuleHandleA(NULL))->OptionalHeader);
+        nt = RtlImageNtHeader(GetModuleHandleA(NULL));
+        ophd = &nt->OptionalHeader;
 
 	TRACE("%02x.%02x/%02x.%02x/%02x.%02x/%02x.%02x\n",
 	    ophd->MajorLinkerVersion, ophd->MinorLinkerVersion,

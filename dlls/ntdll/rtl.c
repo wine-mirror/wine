@@ -346,23 +346,6 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(
 }
 
 
-/***********************************************************************
- *           RtlImageNtHeader   (NTDLL.@)
- */
-PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
-{
-    IMAGE_NT_HEADERS *ret = NULL;
-    IMAGE_DOS_HEADER *dos = (IMAGE_DOS_HEADER *)hModule;
-
-    if (dos->e_magic == IMAGE_DOS_SIGNATURE)
-    {
-        ret = (IMAGE_NT_HEADERS *)((char *)dos + dos->e_lfanew);
-        if (ret->Signature != IMAGE_NT_SIGNATURE) ret = NULL;
-    }
-    return ret;
-}
-
-
 /******************************************************************************
  *  RtlCreateEnvironment		[NTDLL.@]
  */

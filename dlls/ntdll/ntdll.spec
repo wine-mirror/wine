@@ -403,8 +403,10 @@
 @ stdcall RtlGetSaclSecurityDescriptor(ptr ptr ptr ptr)RtlGetSaclSecurityDescriptor
 @ stub RtlGetUserInfoHeap
 @ stdcall RtlIdentifierAuthoritySid(ptr) RtlIdentifierAuthoritySid
-@ stub RtlImageDirectoryEntryToData
+@ stdcall RtlImageDirectoryEntryToData(long long long ptr) RtlImageDirectoryEntryToData
 @ stdcall RtlImageNtHeader(long) RtlImageNtHeader
+@ stdcall RtlImageRvaToSection(ptr long long) RtlImageRvaToSection
+@ stdcall RtlImageRvaToVa(ptr long long ptr) RtlImageRvaToVa
 @ stdcall RtlImpersonateSelf(long) RtlImpersonateSelf
 @ stdcall RtlInitAnsiString(ptr str) RtlInitAnsiString
 @ stub RtlInitCodePageTable

@@ -170,13 +170,6 @@ extern WINE_MODREF *MODULE_modref_list;
 #define NE_MODULE_NAME(pModule) \
     (((OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo))->szPathName)
 
-#define PE_HEADER(module) \
-    ((IMAGE_NT_HEADERS*)((LPBYTE)(module) + \
-                         (((IMAGE_DOS_HEADER*)(module))->e_lfanew)))
-
-#define PE_SECTIONS(module) \
-    ((IMAGE_SECTION_HEADER*)((LPBYTE)&PE_HEADER(module)->OptionalHeader + \
-                           PE_HEADER(module)->FileHeader.SizeOfOptionalHeader))
 
 enum loadorder_type
 {

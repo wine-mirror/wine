@@ -68,3 +68,83 @@ NTSTATUS WINAPI LdrGetProcedureAddress(PVOID base, PANSI_STRING name, ULONG ord,
 
     return (*address) ? STATUS_SUCCESS : STATUS_DLL_NOT_FOUND;
 }
+
+
+/***********************************************************************
+ *           RtlImageNtHeader   (NTDLL.@)
+ */
+PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
+{
+    IMAGE_NT_HEADERS *ret = NULL;
+    IMAGE_DOS_HEADER *dos = (IMAGE_DOS_HEADER *)hModule;
+
+    if (dos->e_magic == IMAGE_DOS_SIGNATURE)
+    {
+        ret = (IMAGE_NT_HEADERS *)((char *)dos + dos->e_lfanew);
+        if (ret->Signature != IMAGE_NT_SIGNATURE) ret = NULL;
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           RtlImageDirectoryEntryToData   (NTDLL.@)
+ */
+PVOID WINAPI RtlImageDirectoryEntryToData( HMODULE module, BOOL image, WORD dir, ULONG *size )
+{
+    const IMAGE_NT_HEADERS *nt;
+    DWORD addr;
+
+    if ((ULONG_PTR)module & 1)  /* mapped as data file */
+    {
+        module = (HMODULE)((ULONG_PTR)module & ~1);
+        image = FALSE;
+    }
+    if (!(nt = RtlImageNtHeader( module ))) return NULL;
+    if (dir >= nt->OptionalHeader.NumberOfRvaAndSizes) return NULL;
+    if (!(addr = nt->OptionalHeader.DataDirectory[dir].VirtualAddress)) return NULL;
+    *size = nt->OptionalHeader.DataDirectory[dir].Size;
+    if (image || addr < nt->OptionalHeader.SizeOfHeaders) return (char *)module + addr;
+
+    /* not mapped as image, need to find the section containing the virtual address */
+    return RtlImageRvaToVa( nt, module, addr, NULL );
+}
+
+
+/***********************************************************************
+ *           RtlImageRvaToSection   (NTDLL.@)
+ */
+PIMAGE_SECTION_HEADER WINAPI RtlImageRvaToSection( const IMAGE_NT_HEADERS *nt,
+                                                   HMODULE module, DWORD rva )
+{
+    int i;
+    IMAGE_SECTION_HEADER *sec = (IMAGE_SECTION_HEADER*)((char*)&nt->OptionalHeader +
+                                                        nt->FileHeader.SizeOfOptionalHeader);
+    for (i = 0; i < nt->FileHeader.NumberOfSections; i++, sec++)
+    {
+        if ((sec->VirtualAddress <= rva) && (sec->VirtualAddress + sec->SizeOfRawData > rva))
+            return sec;
+    }
+    return NULL;
+}
+
+
+/***********************************************************************
+ *           RtlImageRvaToVa   (NTDLL.@)
+ */
+PVOID WINAPI RtlImageRvaToVa( const IMAGE_NT_HEADERS *nt, HMODULE module,
+                              DWORD rva, IMAGE_SECTION_HEADER **section )
+{
+    IMAGE_SECTION_HEADER *sec;
+
+    if (section && *section)  /* try this section first */
+    {
+        sec = *section;
+        if ((sec->VirtualAddress <= rva) && (sec->VirtualAddress + sec->SizeOfRawData > rva))
+            goto found;
+    }
+    if (!(sec = RtlImageRvaToSection( nt, module, rva ))) return NULL;
+ found:
+    if (section) *section = sec;
+    return (char *)module + sec->PointerToRawData + (rva - sec->VirtualAddress);
+}

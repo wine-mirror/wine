@@ -55,27 +55,6 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 WINE_DECLARE_DEBUG_CHANNEL(segment);
 
 
-static IMAGE_EXPORT_DIRECTORY *get_exports( HMODULE hmod )
-{
-    IMAGE_EXPORT_DIRECTORY *ret = NULL;
-    IMAGE_DATA_DIRECTORY *dir = PE_HEADER(hmod)->OptionalHeader.DataDirectory
-                                + IMAGE_DIRECTORY_ENTRY_EXPORT;
-    if (dir->Size && dir->VirtualAddress)
-        ret = (IMAGE_EXPORT_DIRECTORY *)((char *)hmod + dir->VirtualAddress);
-    return ret;
-}
-
-static IMAGE_IMPORT_DESCRIPTOR *get_imports( HMODULE hmod )
-{
-    IMAGE_IMPORT_DESCRIPTOR *ret = NULL;
-    IMAGE_DATA_DIRECTORY *dir = PE_HEADER(hmod)->OptionalHeader.DataDirectory
-                                + IMAGE_DIRECTORY_ENTRY_IMPORT;
-    if (dir->Size && dir->VirtualAddress)
-        ret = (IMAGE_IMPORT_DESCRIPTOR *)((char *)hmod + dir->VirtualAddress);
-    return ret;
-}
-
-
 /* convert PE image VirtualAddress to Real Address */
 #define RVA(x) ((void *)((char *)load_addr+(unsigned int)(x)))
 
@@ -89,12 +68,11 @@ void dump_exports( HMODULE hModule )
   DWORD		*function,*functions;
   BYTE		**name;
   unsigned int load_addr = hModule;
+  IMAGE_EXPORT_DIRECTORY *pe_exports;
+  DWORD rva_start, size;
 
-  DWORD rva_start = PE_HEADER(hModule)->OptionalHeader
-                   .DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
-  DWORD rva_end = rva_start + PE_HEADER(hModule)->OptionalHeader
-                   .DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
-  IMAGE_EXPORT_DIRECTORY *pe_exports = (IMAGE_EXPORT_DIRECTORY*)RVA(rva_start);
+  pe_exports = RtlImageDirectoryEntryToData( hModule, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size );
+  rva_start = (char *)pe_exports - (char *)hModule;
 
   Module = (char*)RVA(pe_exports->Name);
   DPRINTF("*******EXPORT DATA*******\n");
@@ -117,7 +95,7 @@ void dump_exports( HMODULE hModule )
               DPRINTF( "  %s", (char*)RVA(name[j]) );
               break;
           }
-      if ((*function >= rva_start) && (*function <= rva_end))
+      if ((*function >= rva_start) && (*function <= rva_start + size))
 	  DPRINTF(" (forwarded -> %s)", (char *)RVA(*function));
       DPRINTF("\n");
   }
@@ -142,30 +120,24 @@ static FARPROC PE_FindExportedFunction(
 	BYTE				** name, *ename = NULL;
 	int				i, ordinal;
 	unsigned int			load_addr = wm->module;
-	DWORD				rva_start, rva_end, addr;
+	DWORD				rva_start, addr;
 	char				* forward;
-	IMAGE_EXPORT_DIRECTORY *exports = get_exports(wm->module);
+        FARPROC proc;
+        IMAGE_EXPORT_DIRECTORY *exports;
+        DWORD exp_size;
 
-	if (HIWORD(funcName))
-		TRACE("(%s)\n",funcName);
-	else
-		TRACE("(%d)\n",(int)funcName);
-	if (!exports) {
-		/* Not a fatal problem, some apps do
-		 * GetProcAddress(0,"RegisterPenApp") which triggers this
-		 * case.
-		 */
-		WARN("Module %08x(%s)/MODREF %p doesn't have a exports table.\n",wm->module,wm->modname,wm);
-		return NULL;
-	}
+        if (!(exports = RtlImageDirectoryEntryToData( wm->module, TRUE,
+                                                      IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
+            return NULL;
+
+        if (HIWORD(funcName)) TRACE("(%s)\n",funcName);
+        else TRACE("(%d)\n",LOWORD(funcName));
+
 	ordinals= RVA(exports->AddressOfNameOrdinals);
 	function= RVA(exports->AddressOfFunctions);
 	name	= RVA(exports->AddressOfNames);
 	forward = NULL;
-	rva_start = PE_HEADER(wm->module)->OptionalHeader
-		.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
-	rva_end = rva_start + PE_HEADER(wm->module)->OptionalHeader
-		.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
+        rva_start = (char *)exports - (char *)wm->module;
 
 	if (HIWORD(funcName))
         {
@@ -219,9 +191,10 @@ static FARPROC PE_FindExportedFunction(
         }
         addr = function[ordinal];
         if (!addr) return NULL;
-        if ((addr < rva_start) || (addr >= rva_end))
+
+        proc = RVA(addr);
+        if (((char *)proc < (char *)exports) || ((char *)proc >= (char *)exports + exp_size))
         {
-            FARPROC proc = RVA(addr);
             if (snoop)
             {
                 if (!ename) ename = "@";
@@ -232,8 +205,7 @@ static FARPROC PE_FindExportedFunction(
         else  /* forward entry point */
         {
                 WINE_MODREF *wm_fw;
-                FARPROC proc;
-                char *forward = RVA(addr);
+                char *forward = (char *)proc;
 		char module[256];
 		char *end = strchr(forward, '.');
 
@@ -257,10 +229,12 @@ static FARPROC PE_FindExportedFunction(
  */
 DWORD PE_fixup_imports( WINE_MODREF *wm )
 {
-    IMAGE_IMPORT_DESCRIPTOR	*pe_imp;
     unsigned int load_addr	= wm->module;
     int				i,characteristics_detection=1;
-    IMAGE_IMPORT_DESCRIPTOR *imports = get_imports(wm->module);
+    IMAGE_IMPORT_DESCRIPTOR *imports, *pe_imp;
+    DWORD size;
+
+    imports = RtlImageDirectoryEntryToData( wm->module, TRUE, IMAGE_DIRECTORY_ENTRY_IMPORT, &size );
 
     /* first, count the number of imported non-internal modules */
     pe_imp = imports;
@@ -406,21 +380,11 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, DWORD flags )
     /* virus check */
 
     hModule = (HMODULE)base;
-    nt = PE_HEADER( hModule );
+    nt = RtlImageNtHeader( hModule );
 
     if (nt->OptionalHeader.AddressOfEntryPoint)
     {
-        int i;
-        IMAGE_SECTION_HEADER *sec = (IMAGE_SECTION_HEADER*)((char*)&nt->OptionalHeader +
-                                                            nt->FileHeader.SizeOfOptionalHeader);
-        for (i = 0; i < nt->FileHeader.NumberOfSections; i++, sec++)
-        {
-            if (nt->OptionalHeader.AddressOfEntryPoint < sec->VirtualAddress)
-                continue;
-            if (nt->OptionalHeader.AddressOfEntryPoint < sec->VirtualAddress+sec->SizeOfRawData)
-                break;
-        }
-        if (i == nt->FileHeader.NumberOfSections)
+        if (!RtlImageRvaToSection( nt, hModule, nt->OptionalHeader.AddressOfEntryPoint ))
             MESSAGE("VIRUS WARNING: PE module has an invalid entrypoint (0x%08lx) "
                     "outside all sections (possibly infected by Tchernobyl/SpaceFiller virus)!\n",
                     nt->OptionalHeader.AddressOfEntryPoint );
@@ -448,7 +412,7 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
                               HANDLE hFile, BOOL builtin )
 {
     DWORD load_addr = (DWORD)hModule;  /* for RVA */
-    IMAGE_NT_HEADERS *nt = PE_HEADER(hModule);
+    IMAGE_NT_HEADERS *nt;
     IMAGE_DATA_DIRECTORY *dir;
     IMAGE_EXPORT_DIRECTORY *pe_export = NULL;
     WINE_MODREF *wm;
@@ -456,6 +420,7 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
 
     /* Retrieve DataDirectory entries */
 
+    nt = RtlImageNtHeader(hModule);
     dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_EXPORT;
     if (dir->Size)
         pe_export = (PIMAGE_EXPORT_DIRECTORY)RVA(dir->VirtualAddress);
@@ -651,10 +616,10 @@ typedef DWORD (CALLBACK *DLLENTRYPROC)(HMODULE,DWORD,LPVOID);
 BOOL PE_InitDLL( HMODULE module, DWORD type, LPVOID lpReserved )
 {
     BOOL retv = TRUE;
-    IMAGE_NT_HEADERS *nt = PE_HEADER(module);
+    IMAGE_NT_HEADERS *nt = RtlImageNtHeader(module);
 
     /* Is this a library? And has it got an entrypoint? */
-    if ((nt->FileHeader.Characteristics & IMAGE_FILE_DLL) &&
+    if (nt && (nt->FileHeader.Characteristics & IMAGE_FILE_DLL) &&
         (nt->OptionalHeader.AddressOfEntryPoint))
     {
         DLLENTRYPROC entry = (void*)((char*)module + nt->OptionalHeader.AddressOfEntryPoint);
@@ -692,19 +657,17 @@ void PE_InitTls( void )
 {
 	WINE_MODREF		*wm;
 	IMAGE_NT_HEADERS	*peh;
-	DWORD			size,datasize;
+	DWORD			size,datasize,dirsize;
 	LPVOID			mem;
 	PIMAGE_TLS_DIRECTORY	pdir;
         int delta;
 
 	for (wm = MODULE_modref_list;wm;wm=wm->next) {
-		peh = PE_HEADER(wm->module);
-		delta = wm->module - peh->OptionalHeader.ImageBase;
-		if (!peh->OptionalHeader.DataDirectory[IMAGE_FILE_THREAD_LOCAL_STORAGE].VirtualAddress)
-			continue;
-		pdir = (LPVOID)(wm->module + peh->OptionalHeader.
-			DataDirectory[IMAGE_FILE_THREAD_LOCAL_STORAGE].VirtualAddress);
-
+                peh = RtlImageNtHeader(wm->module);
+                pdir = RtlImageDirectoryEntryToData( wm->module, TRUE,
+                                                     IMAGE_DIRECTORY_ENTRY_TLS, &dirsize );
+                if (!pdir) continue;
+                delta = (char *)wm->module - (char *)peh->OptionalHeader.ImageBase;
 
 		if ( wm->tlsindex == -1 ) {
 			LPDWORD xaddr;

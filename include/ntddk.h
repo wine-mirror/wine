@@ -1073,6 +1073,9 @@ LPVOID WINAPI RtlNormalizeProcessParams(LPVOID x);
 DWORD WINAPI RtlNtStatusToDosError(DWORD error);
 BOOLEAN WINAPI RtlGetNtProductType(LPDWORD type);
 PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule);
+PIMAGE_SECTION_HEADER WINAPI RtlImageRvaToSection( const IMAGE_NT_HEADERS *, HMODULE, DWORD );
+PVOID WINAPI RtlImageDirectoryEntryToData( HMODULE module, BOOL image, WORD dir, ULONG *size );
+PVOID WINAPI RtlImageRvaToVa( const IMAGE_NT_HEADERS *, HMODULE, DWORD, IMAGE_SECTION_HEADER **);
 
 DWORD WINAPI RtlOpenCurrentUser(
 	IN ACCESS_MASK DesiredAccess,

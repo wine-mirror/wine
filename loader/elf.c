@@ -33,7 +33,6 @@
 
 #include "snoop.h"
 #include "file.h"
-#include "module.h"
 #include "wine/debug.h"
 #include "winerror.h"
 
@@ -77,7 +76,7 @@ static HMODULE ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname )
 	dh = (PIMAGE_DOS_HEADER)hmod;
 	dh->e_magic = IMAGE_DOS_SIGNATURE;
 	dh->e_lfanew = sizeof(IMAGE_DOS_HEADER);
-	nth = PE_HEADER(hmod);
+	nth = (IMAGE_NT_HEADERS *)(dh + 1);
 	nth->Signature = IMAGE_NT_SIGNATURE;
 	nth->FileHeader.Machine = IMAGE_FILE_MACHINE_I386;
 	nth->FileHeader.NumberOfSections = 1;

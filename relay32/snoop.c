@@ -26,6 +26,7 @@
 #include <string.h>
 #include "winbase.h"
 #include "winnt.h"
+#include "ntddk.h"
 #include "snoop.h"
 #include "stackframe.h"
 #include "wine/debug.h"
@@ -175,30 +176,16 @@ FARPROC
 SNOOP_GetProcAddress(HMODULE hmod,LPCSTR name,DWORD ordinal,FARPROC origfun) {
 	SNOOP_DLL			*dll = firstdll;
 	SNOOP_FUN			*fun;
-	int				j;
-	IMAGE_SECTION_HEADER		*pe_seg = PE_SECTIONS(hmod);
+        IMAGE_SECTION_HEADER *sec;
 
 	if (!TRACE_ON(snoop)) return origfun;
 	if (!*(LPBYTE)origfun) /* 0x00 is an imposs. opcode, poss. dataref. */
 		return origfun;
-	for (j=0;j<PE_HEADER(hmod)->FileHeader.NumberOfSections;j++)
-		/* 0x42 is special ELF loader tag */
-		if ((pe_seg[j].VirtualAddress==0x42) ||
-		    (((char *)origfun - (char *)hmod>=pe_seg[j].VirtualAddress)&&
-		     ((char *)origfun - (char *)hmod <pe_seg[j].VirtualAddress+
-		    		   pe_seg[j].SizeOfRawData
-		   ))
-		)
-			break;
-	/* If we looked through all sections (and didn't find one)
-	 * or if the sectionname contains "data", we return the
-	 * original function since it is most likely a datareference.
-	 */
-	if (	(j==PE_HEADER(hmod)->FileHeader.NumberOfSections)	||
-		(strstr(pe_seg[j].Name,"data"))				||
-		!(pe_seg[j].Characteristics & IMAGE_SCN_CNT_CODE)
-	)
-		return origfun;
+
+        sec = RtlImageRvaToSection( RtlImageNtHeader(hmod), hmod, (char *)origfun - (char *)hmod );
+
+        if (!sec || !(sec->Characteristics & IMAGE_SCN_CNT_CODE))
+            return origfun;  /* most likely a data reference */
 
 	while (dll) {
 		if (hmod == dll->hmod)

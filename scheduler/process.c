@@ -450,6 +450,7 @@ static void start_process(void)
     LPTHREAD_START_ROUTINE entry;
     WINE_MODREF *wm;
     HANDLE main_file = main_exe_file;
+    IMAGE_NT_HEADERS *nt;
 
     /* use original argv[0] as name for the main module */
     if (!main_exe_name[0])
@@ -466,16 +467,17 @@ static void start_process(void)
     }
 
     /* Retrieve entry point address */
+    nt = RtlImageNtHeader( current_process.module );
     entry = (LPTHREAD_START_ROUTINE)((char*)current_process.module +
-                         PE_HEADER(current_process.module)->OptionalHeader.AddressOfEntryPoint);
-    console_app = (PE_HEADER(current_process.module)->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
+                                     nt->OptionalHeader.AddressOfEntryPoint);
+    console_app = (nt->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
     if (console_app) current_process.flags |= PDB32_CONSOLE_PROC;
 
     /* Signal the parent process to continue */
     SERVER_START_REQ( init_process_done )
     {
         req->module      = (void *)current_process.module;
-        req->module_size = PE_HEADER(current_process.module)->OptionalHeader.SizeOfImage;
+        req->module_size = nt->OptionalHeader.SizeOfImage;
         req->entry    = entry;
         /* API requires a double indirection */
         req->name     = &main_exe_name_ptr;
@@ -633,7 +635,7 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
 
     /* create 32-bit module for main exe */
     if (!(current_process.module = BUILTIN32_LoadExeModule( current_process.module ))) goto error;
-    stack_size = PE_HEADER(current_process.module)->OptionalHeader.SizeOfStackReserve;
+    stack_size = RtlImageNtHeader(current_process.module)->OptionalHeader.SizeOfStackReserve;
 
     /* allocate main thread stack */
     if (!THREAD_InitStack( NtCurrentTeb(), stack_size )) goto error;

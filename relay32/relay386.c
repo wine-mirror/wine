@@ -26,6 +26,7 @@
 #include <stdio.h>
 
 #include "winnt.h"
+#include "ntddk.h"
 #include "winreg.h"
 #include "stackframe.h"
 #include "module.h"
@@ -199,24 +200,22 @@ static const char *find_exported_name( const char *module,
  */
 static void get_entry_point( char *buffer, DEBUG_ENTRY_POINT *relay )
 {
-    IMAGE_DATA_DIRECTORY *dir;
     IMAGE_EXPORT_DIRECTORY *exp = NULL;
     DEBUG_ENTRY_POINT *debug;
     char *p, *base = NULL;
     const char *name;
     int ordinal = 0;
     WINE_MODREF *wm;
+    DWORD size;
 
     /* First find the module */
 
     for (wm = MODULE_modref_list; wm; wm = wm->next)
     {
         if (!(wm->flags & WINE_MODREF_INTERNAL)) continue;
-        base = (char *)wm->module;
-        dir = &PE_HEADER(base)->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
-        if (!dir->Size) continue;
-        exp = (IMAGE_EXPORT_DIRECTORY *)(base + dir->VirtualAddress);
-        debug = (DEBUG_ENTRY_POINT *)((char *)exp + dir->Size);
+        exp = RtlImageDirectoryEntryToData( wm->module, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size );
+        if (!exp) continue;
+        debug = (DEBUG_ENTRY_POINT *)((char *)exp + size);
         if (debug <= relay && relay < debug + exp->NumberOfFunctions)
         {
             ordinal = relay - debug;
@@ -226,6 +225,7 @@ static void get_entry_point( char *buffer, DEBUG_ENTRY_POINT *relay )
 
     /* Now find the function */
 
+    base = (char *)wm->module;
     strcpy( buffer, base + exp->Name );
     p = buffer + strlen(buffer);
     if (p > buffer + 4 && !strcasecmp( p - 4, ".dll" )) p -= 4;
@@ -504,18 +504,18 @@ __ASM_GLOBAL_FUNC( RELAY_CallFrom32Regs,
  */
 void RELAY_SetupDLL( const char *module )
 {
-    IMAGE_DATA_DIRECTORY *dir;
     IMAGE_EXPORT_DIRECTORY *exports;
     DEBUG_ENTRY_POINT *debug;
     DWORD *funcs;
     int i;
     const char *name;
     char *p, dllname[80];
+    DWORD size;
 
-    dir = &PE_HEADER(module)->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
-    if (!dir->Size) return;
-    exports = (IMAGE_EXPORT_DIRECTORY *)(module + dir->VirtualAddress);
-    debug = (DEBUG_ENTRY_POINT *)((char *)exports + dir->Size);
+    exports = RtlImageDirectoryEntryToData( (HMODULE)module, TRUE,
+                                            IMAGE_DIRECTORY_ENTRY_EXPORT, &size );
+    if (!exports) return;
+    debug = (DEBUG_ENTRY_POINT *)((char *)exports + size);
     funcs = (DWORD *)(module + exports->AddressOfFunctions);
     strcpy( dllname, module + exports->Name );
     p = dllname + strlen(dllname) - 4;
