@@ -14,6 +14,7 @@
 
 #include "shlobj.h"
 #include "shell32_main.h"
+#include "windef.h"
 
 DEFAULT_DEBUG_CHANNEL(shell)
 
@@ -1000,3 +1001,112 @@ BOOL WINAPI SHGetSpecialFolderPathAW (
 	  return SHGetSpecialFolderPathW (hwndOwner, szPath, csidl, bCreate);
 	return SHGetSpecialFolderPathA (hwndOwner, szPath, csidl, bCreate);
 }
+
+/* PathRemoveBackslash
+ *
+ * If the path ends in a backslash it is replaced by a NULL
+ * and the address of the NULL is returned
+ * Otherwise 
+ * the address of the last character is returned.
+ *
+ */
+
+LPSTR WINAPI PathRemoveBackslashA(
+    LPSTR lpPath
+    )
+{
+	LPSTR temp = lpPath;
+	LPSTR prev = lpPath;
+	
+	while (*temp)
+	{
+		prev = temp++;
+	}
+	if ( *prev == (CHAR)'\\')
+	{
+		*prev = (CHAR)'\0';
+	}
+
+	return prev;
+}
+
+LPWSTR WINAPI PathRemoveBackslashW(
+    LPWSTR lpPath
+    )
+{
+    FIXME("(%p),stub!\n", lpPath);
+	return lpPath;
+}
+
+/*
+   shlwapi functions that have found their way in because most of
+   shlwapi is unimplemented and doesn't have a home.  
+
+   FIXME: move to a more appropriate file( when one exists )
+*/
+   
+ /* SHGetValue: Gets a value from the registry */
+
+DWORD WINAPI SHGetValueA(
+    HKEY     hkey,
+    LPCSTR   pSubKey,
+    LPCSTR   pValue,
+    LPDWORD  pwType,
+    LPVOID   pvData,
+    LPDWORD  pbData
+    )
+{
+    FIXME("(%p),stub!\n", pSubKey);
+
+	return ERROR_SUCCESS;  /* return success */
+}
+
+DWORD WINAPI SHGetValueW(
+    HKEY     hkey,
+    LPCWSTR  pSubKey,
+    LPCWSTR  pValue,
+    LPDWORD  pwType,
+    LPVOID   pvData,
+    LPDWORD  pbData
+    )
+{
+    FIXME("(%p),stub!\n", pSubKey);
+
+	return ERROR_SUCCESS;  /* return success */
+}
+
+/* gets a user-specific registry value. */
+
+LONG WINAPI SHRegGetUSValueA(
+    LPCSTR   pSubKey,
+    LPCSTR   pValue,
+    LPDWORD  pwType,
+    LPVOID   pvData,
+    LPDWORD  pbData,
+    BOOL     fIgnoreHKCU,
+    LPVOID   pDefaultData,
+    DWORD    wDefaultDataSize
+    )
+{
+    FIXME("(%p),stub!\n", pSubKey);
+
+	return ERROR_SUCCESS;  /* return success */
+}
+
+LONG WINAPI SHRegGetUSValueW(
+    LPCWSTR  pSubKey,
+    LPCWSTR  pValue,
+    LPDWORD  pwType,
+    LPVOID   pvData,
+    LPDWORD  pbData,
+    BOOL     flagIgnoreHKCU,
+    LPVOID   pDefaultData,
+    DWORD    wDefaultDataSize
+    )
+{
+    FIXME("(%p),stub!\n", pSubKey);
+
+	return ERROR_SUCCESS;  /* return success */
+}
+  
+  

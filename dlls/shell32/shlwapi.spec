@@ -243,8 +243,8 @@ type win32
 240	stub	PathRelativePathToW
 241	stub	PathRemoveArgsA
 242	stub	PathRemoveArgsW
-243	stub	PathRemoveBackslashA
-244	stub	PathRemoveBackslashW
+243	stdcall	PathRemoveBackslashA (ptr) PathRemoveBackslashA
+244	stdcall	PathRemoveBackslashW (ptr) PathRemoveBackslashW
 245	stub	PathRemoveBlanksA
 246	stub	PathRemoveBlanksW
 247	stub	PathRemoveExtensionA
@@ -281,8 +281,8 @@ type win32
 278	stub	SHEnumValueA
 279	stub	SHEnumValueW
 280	stub	SHGetInverseCMAP
-281	stub	SHGetValueA
-282	stub	SHGetValueW
+281	stdcall	SHGetValueA ( long ptr ptr ptr ptr ptr ) SHGetValueA
+282	stdcall	SHGetValueW ( long ptr ptr ptr ptr ptr ) SHGetValueW
 283	stub	SHIsLowMemoryMachine
 284	stub	SHOpenRegStreamA
 285	stub	SHOpenRegStreamW
@@ -303,8 +303,8 @@ type win32
 300	stub	SHRegEnumUSValueW
 301	stub	SHRegGetBoolUSValueA
 302	stub	SHRegGetBoolUSValueW
-303	stub	SHRegGetUSValueA
-304	stub	SHRegGetUSValueW
+303	stdcall SHRegGetUSValueA ( ptr ptr ptr ptr ptr long ptr long ) SHRegGetUSValueA
+304	stdcall	SHRegGetUSValueW ( ptr ptr ptr ptr ptr long ptr long ) SHRegGetUSValueW
 305	stub	SHRegOpenUSKeyA
 306	stub	SHRegOpenUSKeyW
 307	stub	SHRegQueryInfoUSKeyA
