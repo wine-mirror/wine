@@ -389,25 +389,28 @@ char condition[MAX_PATH], *command, *s;
   if (!lstrcmpi (condition, "errorlevel")) {
     if (errorlevel >= atoi(WCMD_parameter (p, 1+negate, NULL))) test = 1;
     return;
+    WCMD_parameter (p, 2+negate, &command);
   }
   else if (!lstrcmpi (condition, "exist")) {
-    if ((h = CreateFile (WCMD_parameter (p, 1+negate, NULL), GENERIC_READ, 0, NULL,
+    if ((h = CreateFile (WCMD_parameter (p, 1+negate, NULL), GENERIC_READ,
+                         FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
 	OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) != INVALID_HANDLE_VALUE) {
       CloseHandle (h);
       test = 1;
     }
+    WCMD_parameter (p, 2+negate, &command);
   }
   else if ((s = strstr (p, "=="))) {
     s += 2;
     if (!lstrcmpi (condition, WCMD_parameter (s, 0, NULL))) test = 1;
+    WCMD_parameter (s, 1, &command);
   }
   else {
     WCMD_output ("Syntax error\n");
     return;
   }
   if (test != negate) {
-    WCMD_parameter (p, 2+negate, &s);
-    command = strdup (s);
+    command = strdup (command);
     WCMD_process_command (command);
     free (command);
   }

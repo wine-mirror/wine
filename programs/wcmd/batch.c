@@ -54,7 +54,8 @@ BATCH_CONTEXT *prev_context;
   strcpy (string, file);
   CharLower (string);
   if (strstr (string, ".bat") == NULL) strcat (string, ".bat");
-  h = CreateFile (string, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  h = CreateFile (string, GENERIC_READ, FILE_SHARE_READ,
+                  NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
   if (h == INVALID_HANDLE_VALUE) {
     SetLastError (ERROR_FILE_NOT_FOUND);
     WCMD_print_error ();
