@@ -25,8 +25,6 @@
 #include <float.h>
 #include <time.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "winsock.h"
@@ -41,6 +39,21 @@
 #include "oleauto.h"
 
 static HMODULE hOleaut32;
+
+#ifdef NONAMELESSUNION
+# define U(x)  (x).u
+# define U1(x) (x).u1
+#else
+# define U(x)  (x)
+# define U1(x) (x)
+#endif
+#ifdef NONAMELESSSTRUCT
+# define S(x)  (x).s
+# define S1(x) (x).s1
+#else
+# define S(x)  (x)
+# define S1(x) (x)
+#endif
 
 static HRESULT (WINAPI *pVarUdateFromDate)(DATE,ULONG,UDATE*);
 static HRESULT (WINAPI *pVarDateFromUdate)(UDATE*,ULONG,DATE*);
@@ -1815,11 +1828,11 @@ static void test_VarNot(void)
     ok(V_VT(&v) == VT_BSTR && V_BSTR(&v) == szNum1, "VarNot(1): changed input\n");
 
     V_VT(&v) = VT_DECIMAL;
-    pdec->u.s.sign = DECIMAL_NEG;
-    pdec->u.s.scale = 0;
+    S(U(*pdec)).sign = DECIMAL_NEG;
+    S(U(*pdec)).scale = 0;
     pdec->Hi32 = 0;
-    pdec->u1.s1.Mid32 = 0;
-    pdec->u1.s1.Lo32 = 1;
+    S1(U1(*pdec)).Mid32 = 0;
+    S1(U1(*pdec)).Lo32 = 1;
     VARNOT(DECIMAL,*pdec,I4,0);
 
     pcy->int64 = 10000;
@@ -2403,11 +2416,11 @@ static void test_VarFix(void)
        "VarFix: expected 0x0,%d got 0x%lX,%d\n", VT_NULL, hres, V_VT(&vDst));
 
     V_VT(&v) = VT_DECIMAL;
-    pdec->u.s.sign = DECIMAL_NEG;
-    pdec->u.s.scale = 0;
+    S(U(*pdec)).sign = DECIMAL_NEG;
+    S(U(*pdec)).scale = 0;
     pdec->Hi32 = 0;
-    pdec->u1.s1.Mid32 = 0;
-    pdec->u1.s1.Lo32 = 1;
+    S1(U1(*pdec)).Mid32 = 0;
+    S1(U1(*pdec)).Lo32 = 1;
     hres = pVarFix(&v,&vDst);
     ok(hres == S_OK && V_VT(&vDst) == VT_DECIMAL && !memcmp(&v, &vDst, sizeof(v)),
        "VarFix: expected 0x0,%d,identical, got 0x%lX,%d\n", VT_DECIMAL,
@@ -2520,11 +2533,11 @@ static void test_VarInt(void)
        "VarInt: expected 0x0,%d got 0x%lX,%d\n", VT_NULL, hres, V_VT(&vDst));
 
     V_VT(&v) = VT_DECIMAL;
-    pdec->u.s.sign = DECIMAL_NEG;
-    pdec->u.s.scale = 0;
+    S(U(*pdec)).sign = DECIMAL_NEG;
+    S(U(*pdec)).scale = 0;
     pdec->Hi32 = 0;
-    pdec->u1.s1.Mid32 = 0;
-    pdec->u1.s1.Lo32 = 1;
+    S1(U1(*pdec)).Mid32 = 0;
+    S1(U1(*pdec)).Lo32 = 1;
     hres = pVarInt(&v,&vDst);
     ok(hres == S_OK && V_VT(&vDst) == VT_DECIMAL && !memcmp(&v, &vDst, sizeof(v)),
        "VarInt: expected 0x0,%d,identical, got 0x%lX,%d\n", VT_DECIMAL,
@@ -2646,23 +2659,23 @@ static void test_VarNeg(void)
        "VarNeg: expected 0x0,%d got 0x%lX,%d\n", VT_NULL, hres, V_VT(&vDst));
 
     V_VT(&v) = VT_DECIMAL;
-    pdec->u.s.sign = DECIMAL_NEG;
-    pdec->u.s.scale = 0;
+    S(U(*pdec)).sign = DECIMAL_NEG;
+    S(U(*pdec)).scale = 0;
     pdec->Hi32 = 0;
-    pdec->u1.s1.Mid32 = 0;
-    pdec->u1.s1.Lo32 = 1;
+    S1(U1(*pdec)).Mid32 = 0;
+    S1(U1(*pdec)).Lo32 = 1;
     hres = pVarNeg(&v,&vDst);
     ok(hres == S_OK && V_VT(&vDst) == VT_DECIMAL &&
-       V_DECIMAL(&vDst).u.s.sign == 0,
+       S(U(V_DECIMAL(&vDst))).sign == 0,
        "VarNeg: expected 0x0,%d,0x00, got 0x%lX,%d,%02x\n", VT_DECIMAL,
-       hres, V_VT(&vDst), V_DECIMAL(&vDst).u.s.sign);
+       hres, V_VT(&vDst), S(U(V_DECIMAL(&vDst))).sign);
 
-    pdec->u.s.sign = 0;
+    S(U(*pdec)).sign = 0;
     hres = pVarNeg(&v,&vDst);
     ok(hres == S_OK && V_VT(&vDst) == VT_DECIMAL &&
-       V_DECIMAL(&vDst).u.s.sign == DECIMAL_NEG,
+       S(U(V_DECIMAL(&vDst))).sign == DECIMAL_NEG,
        "VarNeg: expected 0x0,%d,0x7f, got 0x%lX,%d,%02x\n", VT_DECIMAL,
-       hres, V_VT(&vDst), V_DECIMAL(&vDst).u.s.sign);
+       hres, V_VT(&vDst), S(U(V_DECIMAL(&vDst))).sign);
 
     V_VT(&v) = VT_CY;
     pcy->int64 = -10000;
@@ -2766,23 +2779,23 @@ static void test_VarRound(void)
     todo_wine {
         DECIMAL *pdec = &V_DECIMAL(&v);
         V_VT(&v) = VT_DECIMAL;
-        pdec->u.s.sign = DECIMAL_NEG;
-        pdec->u.s.scale = 0;
+        S(U(*pdec)).sign = DECIMAL_NEG;
+        S(U(*pdec)).scale = 0;
         pdec->Hi32 = 0;
-        pdec->u1.s1.Mid32 = 0;
-        pdec->u1.s1.Lo32 = 1;
+        S1(U1(*pdec)).Mid32 = 0;
+        S1(U1(*pdec)).Lo32 = 1;
         hres = pVarRound(&v,0,&vDst);
         ok(hres == S_OK && V_VT(&vDst) == VT_DECIMAL &&
-            V_DECIMAL(&vDst).u.s.sign == 0,
+            S(U(V_DECIMAL(&vDst))).sign == 0,
             "VarRound: expected 0x0,%d,0x00, got 0x%lX,%d,%02x\n", VT_DECIMAL,
-            hres, V_VT(&vDst), V_DECIMAL(&vDst).u.s.sign);
+            hres, V_VT(&vDst), S(U(V_DECIMAL(&vDst))).sign);
 
-        pdec->u.s.sign = 0;
+        S(U(*pdec)).sign = 0;
         hres = pVarRound(&v,0,&vDst);
         ok(hres == S_OK && V_VT(&vDst) == VT_DECIMAL &&
-            V_DECIMAL(&vDst).u.s.sign == DECIMAL_NEG,
+            S(U(V_DECIMAL(&vDst))).sign == DECIMAL_NEG,
             "VarRound: expected 0x0,%d,0x7f, got 0x%lX,%d,%02x\n", VT_DECIMAL,
-            hres, V_VT(&vDst), V_DECIMAL(&vDst).u.s.sign);
+            hres, V_VT(&vDst), S(U(V_DECIMAL(&vDst))).sign);
     }
     */
 

@@ -17,14 +17,28 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
+
 #include "wine/test.h"
 #include "wine/unicode.h"
 #include "oleauto.h"
 #include <math.h>
 
 static HMODULE hOleaut32;
+
+#ifdef NONAMELESSUNION
+# define U(x)  (x).u
+# define U1(x) (x).u1
+#else
+# define U(x)  (x)
+# define U1(x) (x)
+#endif
+#ifdef NONAMELESSSTRUCT
+# define S(x)  (x).s
+# define S1(x) (x).s1
+#else
+# define S(x)  (x)
+# define S1(x) (x)
+#endif
 
 /* Get a conversion function ptr, return if function not available */
 #define CHECKPTR(func) p##func = (void*)GetProcAddress(hOleaut32, #func); \
@@ -80,13 +94,13 @@ static HMODULE hOleaut32;
 
 #define CONVERT_CY(func,val) in.int64 = (LONGLONG)(val * CY_MULTIPLIER); hres = p##func(in, &out)
 
-#define CONVERT_CY64(func,hi,lo) in.s.Hi = hi; in.s.Lo = lo; in.int64 *= CY_MULTIPLIER; hres = p##func(in, &out)
+#define CONVERT_CY64(func,hi,lo) S(in).Hi = hi; S(in).Lo = lo; in.int64 *= CY_MULTIPLIER; hres = p##func(in, &out)
 
-#define SETDEC(dec, scl, sgn, hi, lo) dec.u.s.scale = (BYTE)scl; dec.u.s.sign = (BYTE)sgn; \
-  dec.Hi32 = (ULONG)hi; dec.u1.Lo64 = (ULONG64)lo
+#define SETDEC(dec, scl, sgn, hi, lo) S(U(dec)).scale = (BYTE)scl; S(U(dec)).sign = (BYTE)sgn; \
+  dec.Hi32 = (ULONG)hi; U1(dec).Lo64 = (ULONG64)lo
 
-#define SETDEC64(dec, scl, sgn, hi, mid, lo) dec.u.s.scale = (BYTE)scl; dec.u.s.sign = (BYTE)sgn; \
-  dec.Hi32 = (ULONG)hi; dec.u1.s1.Mid32 = mid; dec.u1.s1.Lo32 = lo;
+#define SETDEC64(dec, scl, sgn, hi, mid, lo) S(U(dec)).scale = (BYTE)scl; S(U(dec)).sign = (BYTE)sgn; \
+  dec.Hi32 = (ULONG)hi; S1(U1(dec)).Mid32 = mid; S1(U1(dec)).Lo32 = lo;
 
 #define CONVERT_DEC(func,scl,sgn,hi,lo) SETDEC(in,scl,sgn,hi,lo); hres = p##func(&in, &out)
 
@@ -192,7 +206,7 @@ static HMODULE hOleaut32;
     hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_CY); \
     ok(hres == S_OK && V_VT(&vDst) == VT_CY && V_CY(&vDst).int64 == CY_MULTIPLIER, \
        "->VT_CY hres=0x%lX, type=%d (should be VT_CY), value (%08lx,%08lx) (should be CY_MULTIPLIER)\n", \
-       hres, V_VT(&vDst), V_CY(&vDst).s.Hi, V_CY(&vDst).s.Lo); \
+       hres, V_VT(&vDst), S(V_CY(&vDst)).Hi, S(V_CY(&vDst)).Lo); \
   } \
   if (V_VT(&vSrc) != VT_DATE) \
   { \
@@ -206,11 +220,11 @@ static HMODULE hOleaut32;
   { \
     hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_DECIMAL); \
     ok(hres == S_OK && V_VT(&vDst) == VT_DECIMAL && \
-       V_DECIMAL(&vDst).u.s.sign == 0 && V_DECIMAL(&vDst).u.s.scale == 0 && \
-       V_DECIMAL(&vDst).Hi32 == 0 && V_DECIMAL(&vDst).u1.Lo64 == (ULONGLONG)in, \
+       S(U(V_DECIMAL(&vDst))).sign == 0 && S(U(V_DECIMAL(&vDst))).scale == 0 && \
+       V_DECIMAL(&vDst).Hi32 == 0 && U1(V_DECIMAL(&vDst)).Lo64 == (ULONGLONG)in, \
        "->VT_DECIMAL hres=0x%lX, type=%d (should be VT_DECIMAL), sign=%d, scale=%d, hi=%lu, lo=(%8lx %8lx),\n", \
-       hres, V_VT(&vDst), V_DECIMAL(&vDst).u.s.sign, V_DECIMAL(&vDst).u.s.scale, \
-       V_DECIMAL(&vDst).Hi32, V_DECIMAL(&vDst).u1.s1.Mid32, V_DECIMAL(&vDst).u1.s1.Lo32); \
+       hres, V_VT(&vDst), S(U(V_DECIMAL(&vDst))).sign, S(U(V_DECIMAL(&vDst))).scale, \
+       V_DECIMAL(&vDst).Hi32, S1(U1(V_DECIMAL(&vDst))).Mid32, S1(U1(V_DECIMAL(&vDst))).Lo32); \
   } \
   hres = VariantChangeTypeEx(&vDst, &vSrc, 0, 0, VT_EMPTY); \
   ok(hres == S_OK && V_VT(&vDst) == VT_EMPTY, "->VT_EMPTY hres=0x%lX, type=%d (should be VT_EMPTY)\n", hres, V_VT(&vDst)); \
@@ -3390,12 +3404,12 @@ static void test_VarDateChangeTypeEx(void)
 
 #define EXPECTCY(x) \
   ok((hres == S_OK && out.int64 == (LONGLONG)(x*CY_MULTIPLIER)), \
-     "expected " #x "*CY_MULTIPLIER, got (%8lx %8lx); hres=0x%08lx\n", out.s.Hi, out.s.Lo, hres)
+     "expected " #x "*CY_MULTIPLIER, got (%8lx %8lx); hres=0x%08lx\n", S(out).Hi, S(out).Lo, hres)
 
 #define EXPECTCY64(x,y) \
-  ok(hres == S_OK && out.s.Hi == (long)x && out.s.Lo == y, \
+  ok(hres == S_OK && S(out).Hi == (long)x && S(out).Lo == y, \
      "expected " #x #y "(%lu,%lu), got (%lu,%lu); hres=0x%08lx\n", \
-      (ULONG)(x), (ULONG)(y), out.s.Hi, out.s.Lo, hres)
+      (ULONG)(x), (ULONG)(y), S(out).Hi, S(out).Lo, hres)
 
 static void test_VarCyFromI1(void)
 {
@@ -3888,19 +3902,19 @@ static void test_VarCyInt(void)
      "expected hres " #x ", got hres=0x%08lx\n", hres)
 
 #define EXPECTDEC(scl, sgn, hi, lo) ok(hres == S_OK && \
-  out.u.s.scale == (BYTE)(scl) && out.u.s.sign == (BYTE)(sgn) && \
-  out.Hi32 == (ULONG)(hi) && out.u1.Lo64 == (ULONG64)(lo), \
+  S(U(out)).scale == (BYTE)(scl) && S(U(out)).sign == (BYTE)(sgn) && \
+  out.Hi32 == (ULONG)(hi) && U1(out).Lo64 == (ULONG64)(lo), \
   "expected (%d,%d,%d,(%lx %lx)), got (%d,%d,%ld,(%lx %lx)) hres 0x%08lx\n", \
-  scl, sgn, hi, (LONG)((LONG64)(lo) >> 32), (LONG)((lo) & 0xffffffff), out.u.s.scale, \
-  out.u.s.sign, out.Hi32, out.u1.s1.Mid32, out.u1.s1.Lo32, hres)
+  scl, sgn, hi, (LONG)((LONG64)(lo) >> 32), (LONG)((lo) & 0xffffffff), S(U(out)).scale, \
+  S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres)
 
 #define EXPECTDEC64(scl, sgn, hi, mid, lo) ok(hres == S_OK && \
-  out.u.s.scale == (BYTE)(scl) && out.u.s.sign == (BYTE)(sgn) && \
-  out.Hi32 == (ULONG)(hi) && out.u1.s1.Mid32 == (ULONG)(mid) && \
-  out.u1.s1.Lo32 == (ULONG)(lo), \
+  S(U(out)).scale == (BYTE)(scl) && S(U(out)).sign == (BYTE)(sgn) && \
+  out.Hi32 == (ULONG)(hi) && S1(U1(out)).Mid32 == (ULONG)(mid) && \
+  S1(U1(out)).Lo32 == (ULONG)(lo), \
   "expected (%d,%d,%d,(%lx %lx)), got (%d,%d,%ld,(%lx %lx)) hres 0x%08lx\n", \
-  scl, sgn, hi, (LONG)(mid), (LONG)(lo), out.u.s.scale, \
-  out.u.s.sign, out.Hi32, out.u1.s1.Mid32, out.u1.s1.Lo32, hres)
+  scl, sgn, hi, (LONG)(mid), (LONG)(lo), S(U(out)).scale, \
+  S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres)
 
 #define EXPECTDECI if (i < 0) EXPECTDEC(0, 0x80, 0, -i); else EXPECTDEC(0, 0, 0, i)
 
@@ -4170,7 +4184,7 @@ static void test_VarDecAdd(void)
   EXPECTDEC64(0,0,0xffffffff,0xffffffff,0xfffffffe);
   SETDEC64(l,0,0,0xffffffff,0xffffffff,0xffffffff);SETDEC(r,0,0,0,1); MATH2(VarDecAdd);
   ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%ld,(%8lx,%8lx)x) hres 0x%08lx\n",
-     out.u.s.scale, out.u.s.sign, out.Hi32, out.u1.s1.Mid32, out.u1.s1.Lo32, hres);
+     S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
 
   /* Promotes to the highest scale, so here the results are in the scale of 2 */
   SETDEC(l,2,0,0,0);   SETDEC(r,0,0,0,0); MATH2(VarDecAdd); EXPECTDEC(2,0,0,0);

@@ -29,8 +29,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
@@ -39,6 +37,12 @@
 #include "mmddk.h"
 
 #include "winmm_test.h"
+
+#ifdef NONAMELESSSTRUCT
+# define S1(x) (x).s1
+#else
+# define S1(x) (x)
+#endif
 
 static const char * line_flags(DWORD fdwLine)
 {
@@ -355,8 +359,8 @@ void mixer_test_deviceA(int device)
                                               control_flags(array[nc].fdwControl));
                                         trace("            Items=%ld Min=%ld Max=%ld Step=%ld\n",
                                               array[nc].cMultipleItems,
-                                              array[nc].Bounds.s1.dwMinimum,
-                                              array[nc].Bounds.s1.dwMaximum,
+                                              S1(array[nc].Bounds).dwMinimum,
+                                              S1(array[nc].Bounds).dwMaximum,
                                               array[nc].Metrics.cSteps);
                                     }
                                 }
@@ -578,8 +582,8 @@ void mixer_test_deviceW(int device)
                                               control_flags(array[nc].fdwControl));
                                         trace("            Items=%ld Min=%ld Max=%ld Step=%ld\n",
                                               array[nc].cMultipleItems,
-                                              array[nc].Bounds.s1.dwMinimum,
-                                              array[nc].Bounds.s1.dwMaximum,
+                                              S1(array[nc].Bounds).dwMinimum,
+                                              S1(array[nc].Bounds).dwMaximum,
                                               array[nc].Metrics.cSteps);
                                     }
                                 }
