@@ -45,7 +45,7 @@ typedef struct IOleCacheControl IOleCacheControl, *LPOLECACHECONTROL;
 ICOM_DEFINE(IOleCache,IUnknown)
 #undef ICOM_INTERFACE
 
-/*** IUnknwon methods ***/
+/*** IUnknown methods ***/
 #define IOleCache_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleCache_AddRef(p)                  ICOM_CALL (AddRef,p)
 #define IOleCache_Release(p)                 ICOM_CALL (Release,p)
@@ -70,7 +70,7 @@ ICOM_DEFINE(IOleCache,IUnknown)
 ICOM_DEFINE(IOleCache2,IOleCache)
 #undef ICOM_INTERFACE
 
-/*** IUnknwon methods ***/
+/*** IUnknown methods ***/
 #define IOleCache2_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleCache2_AddRef(p)                  ICOM_CALL (AddRef,p)
 #define IOleCache2_Release(p)                 ICOM_CALL (Release,p)
@@ -98,7 +98,7 @@ ICOM_DEFINE(IOleCache2,IOleCache)
 ICOM_DEFINE(IOleCacheControl,IUnknown)
 #undef ICOM_INTERFACE
 
-/*** IUnknwon methods ***/
+/*** IUnknown methods ***/
 #define IOleCacheControl_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleCacheControl_AddRef(p)                  ICOM_CALL (AddRef,p)
 #define IOleCacheControl_Release(p)                 ICOM_CALL (Release,p)

@@ -46,7 +46,7 @@ typedef BOOL    CALLBACK (*IVO_ContCallback)(DWORD);
 ICOM_DEFINE(IViewObject,IUnknown)
 #undef ICOM_INTERFACE
 
-/*** IUnknwon methods ***/
+/*** IUnknown methods ***/
 #define IViewObject_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
 #define IViewObject_AddRef(p)                    ICOM_CALL (AddRef,p)
 #define IViewObject_Release(p)                   ICOM_CALL (Release,p)
@@ -72,7 +72,7 @@ ICOM_DEFINE(IViewObject,IUnknown)
 ICOM_DEFINE(IViewObject2,IViewObject)
 #undef ICOM_INTERFACE
 
-/*** IUnknwon methods ***/
+/*** IUnknown methods ***/
 #define IViewObject2_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
 #define IViewObject2_AddRef(p)                    ICOM_CALL (AddRef,p)
 #define IViewObject2_Release(p)                   ICOM_CALL (Release,p)

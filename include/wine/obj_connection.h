@@ -52,7 +52,7 @@ typedef struct IEnumConnectionPoints IEnumConnectionPoints, *LPENUMCONNECTIONPOI
 ICOM_DEFINE(IConnectionPoint,IUnknown)
 #undef ICOM_INTERFACE
 
-/*** IUnknwon methods ***/
+/*** IUnknown methods ***/
 #define IConnectionPoint_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IConnectionPoint_AddRef(p)                  ICOM_CALL (AddRef,p)
 #define IConnectionPoint_Release(p)                 ICOM_CALL (Release,p)
@@ -77,7 +77,7 @@ ICOM_DEFINE(IConnectionPoint,IUnknown)
 ICOM_DEFINE(IConnectionPointContainer,IUnknown)
 #undef ICOM_INTERFACE
 
-/*** IUnknwon methods ***/
+/*** IUnknown methods ***/
 #define IConnectionPointContainer_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IConnectionPointContainer_AddRef(p)                  ICOM_CALL (AddRef,p)
 #define IConnectionPointContainer_Release(p)                 ICOM_CALL (Release,p)
@@ -101,7 +101,7 @@ ICOM_DEFINE(IConnectionPointContainer,IUnknown)
 ICOM_DEFINE(IEnumConnections,IUnknown)
 #undef ICOM_INTERFACE
 
-/*** IUnknwon methods ***/
+/*** IUnknown methods ***/
 #define IEnumConnections_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IEnumConnections_AddRef(p)                  ICOM_CALL (AddRef,p)
 #define IEnumConnections_Release(p)                 ICOM_CALL (Release,p)
@@ -126,7 +126,7 @@ ICOM_DEFINE(IEnumConnections,IUnknown)
 ICOM_DEFINE(IEnumConnectionPoints,IUnknown)
 #undef ICOM_INTERFACE
 
-/*** IUnknwon methods ***/
+/*** IUnknown methods ***/
 #define IEnumConnectionPoints_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IEnumConnectionPoints_AddRef(p)                  ICOM_CALL (AddRef,p)
 #define IEnumConnectionPoints_Release(p)                 ICOM_CALL (Release,p)

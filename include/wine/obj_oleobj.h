@@ -105,7 +105,7 @@ typedef struct IEnumOLEVERB IEnumOLEVERB, *LPENUMOLEVERB;
 ICOM_DEFINE(IOleObject,IUnknown)
 #undef ICOM_INTERFACE
 				 
-/*** IUnknwon methods ***/
+/*** IUnknown methods ***/
 #define IOleObject_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleObject_AddRef(p)                  ICOM_CALL (AddRef,p)
 #define IOleObject_Release(p)                 ICOM_CALL (Release,p)
@@ -150,7 +150,7 @@ ICOM_DEFINE(IOleObject,IUnknown)
 ICOM_DEFINE(IOleAdviseHolder,IUnknown)
 #undef ICOM_INTERFACE
 
-/*** IUnknwon methods ***/
+/*** IUnknown methods ***/
 #define IOleAdviseHolder_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleAdviseHolder_AddRef(p)                  ICOM_CALL (AddRef,p)
 #define IOleAdviseHolder_Release(p)                 ICOM_CALL (Release,p)
