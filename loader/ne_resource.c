@@ -248,7 +248,7 @@ int NE_AccessResource( HMODULE hModule, HRSRC hRsrc )
     pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
 
     name = ((LOADEDFILEINFO*)((char*)pModule + pModule->fileinfo))->filename;
-    fd = open( name, O_RDONLY );
+    fd = open( DOS_GetUnixFileName(name), O_RDONLY );
     sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
     lseek( fd, (int)pNameInfo->offset << sizeShift, SEEK_SET );
     return fd;

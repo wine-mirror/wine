@@ -7,6 +7,16 @@
 #ifndef __WINE_CURSOR_H
 #define __WINE_CURSOR_H
 
+
+typedef struct {
+        POINT           pntHotSpot;     /* cursor hot spot */
+        WORD            nWidth;         /* width of bitmap in pixels */
+        WORD            nHeight;
+        WORD            nWidthBytes;
+        BYTE            byPlanes;       /* number of bit planes */
+        BYTE            byBitsPix;      /* bits per pixel */
+        } CURSORICONINFO, FAR *LPCURSORICONINFO;
+
 typedef struct {
 	BYTE	Width;
 	BYTE	Reserved1;

@@ -2,9 +2,8 @@
  * Sample AUXILARY Wine Driver for Linux
  *
  * Copyright 1994 Martin Ayotte
- *
-static char Copyright[] = "Copyright  Martin Ayotte, 1994";
-*/
+ */
+
 #ifndef WINELIB
 #define BUILTIN_MMSYSTEM
 #endif 
@@ -45,7 +44,7 @@ static int	NumDev = 6;
 /**************************************************************************
 * 				AUX_GetDevCaps			[internal]
 */
-DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPS lpCaps, DWORD dwSize)
+static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPS lpCaps, DWORD dwSize)
 {
 #ifdef linux
 	int 	mixer;
@@ -116,7 +115,7 @@ DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPS lpCaps, DWORD dwSize)
 /**************************************************************************
 * 				AUX_GetVolume			[internal]
 */
-DWORD AUX_GetVolume(WORD wDevID, LPDWORD lpdwVol)
+static DWORD AUX_GetVolume(WORD wDevID, LPDWORD lpdwVol)
 {
 #ifdef linux
 	int 	mixer;
@@ -175,7 +174,7 @@ DWORD AUX_GetVolume(WORD wDevID, LPDWORD lpdwVol)
 /**************************************************************************
 * 				AUX_SetVolume			[internal]
 */
-DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
+static DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
 {
 #ifdef linux
 	int 	mixer;

@@ -301,7 +301,7 @@ int DOS_ValidDrive(int drive)
 
         dprintf_dosfs(stddeb,"ValidDrive %c (%d) -- ",'A'+drive,drive);
 
-	if (drive >= MAX_DOS_DRIVES)
+	if (drive < 0 || drive >= MAX_DOS_DRIVES)
 		valid = 0;
 	if (DosDrives[drive].rootdir == NULL)
 		valid = 0;
@@ -446,12 +446,14 @@ static void GetUnixDirName(char *rootdir, char *name)
 char *DOS_GetUnixFileName(char *dosfilename)
 { 
 	/*   a:\windows\system.ini  =>  /dos/windows/system.ini */
-	
+
+        /* FIXME: should handle devices here (like LPT: or NUL:) */
+
 	static char temp[256];
 	static char dostemp[256];
 	int drive;
 
-	if (dosfilename[1] == ':') 
+	if (dosfilename[0] && (dosfilename[1] == ':'))
 	{
 		drive = (islower(*dosfilename) ? toupper(*dosfilename) : *dosfilename) - 'A';
 		
@@ -463,7 +465,8 @@ char *DOS_GetUnixFileName(char *dosfilename)
 		drive = CurrentDrive;
 
 	/* Consider dosfilename const */
-	strcpy(dostemp,dosfilename);
+	strncpy( dostemp, dosfilename, 255 );
+        dostemp[255] = '\0';
 
         /* Expand the filename to it's full path if it doesn't
          * start from the root.
@@ -675,7 +678,7 @@ char *DOS_FindFile(char *buffer, int buflen, char *filename, char **extensions,
     char *workingpath, *dirname, *rootname, **e;
     DIR *d;
     struct dirent *f;
-    int rootnamelen, found = 0;
+    int rootnamelen;
     struct stat filestat;
 
     if (strchr(filename, '\\') != NULL)
@@ -713,41 +716,35 @@ char *DOS_FindFile(char *buffer, int buflen, char *filename, char **extensions,
 	if (d != NULL)
 	{
 	    while ((f = readdir(d)) != NULL)
-	    {
-		if (strncasecmp(rootname, f->d_name, rootnamelen) == 0)
-		{
-		    if (extensions == NULL || 
-			strcasecmp(rootname, f->d_name) == 0)
-				found = 1;
-		    else 
-		    if (f->d_name[rootnamelen] == '.')
-			for (e = extensions; *e != NULL; e++)
-			    if (strcasecmp(*e, f->d_name + rootnamelen + 1) 
-				== 0)
-			    {
-				found = 1;
-				break;
-			    }
+	    {		
+		if (strcasecmp(rootname, f->d_name) != 0) {
+		    if (strncasecmp(rootname, f->d_name, rootnamelen) != 0
+		      || extensions == NULL 
+		      || f->d_name[rootnamelen] != '.')
+		        continue;
 
-		    if (found)
-		    {
-			if (strchr(dirname, '\\') != NULL)
-				strncpy(buffer, DOS_GetUnixFileName(dirname), buflen);
-			else
-				strncpy(buffer, dirname, buflen);
-
-			strncat(buffer, "/", buflen - strlen(buffer));
-			strncat(buffer, f->d_name, buflen - strlen(buffer));
-
-			stat(buffer, &filestat);
-			if (S_ISREG(filestat.st_mode)) {
-				closedir(d);
-				free(rootname);
-				return buffer;
-		    	} else 
-		    		found = 0; 
+		    for (e = extensions; *e != NULL; e++) {
+			if (strcasecmp(*e, f->d_name + rootnamelen + 1) == 0)
+			    break;
 		    }
+		    if (*e == NULL) continue;
 		}
+
+		if (strchr(dirname, '\\') != NULL) {
+		    strncpy(buffer, DOS_GetUnixFileName(dirname), buflen);
+		} else {
+		    strncpy(buffer, dirname, buflen);
+		}
+
+		strncat(buffer, "/", buflen - strlen(buffer));
+		strncat(buffer, f->d_name, buflen - strlen(buffer));
+		
+		stat(buffer, &filestat);
+		if (S_ISREG(filestat.st_mode)) {
+		    closedir(d);
+		    free(rootname);
+		    return buffer;
+		} 
 	    }
 	    closedir(d);
 	}
@@ -897,7 +894,8 @@ struct dosdirent *DOS_opendir(char *dosdirname)
 	  if (strcmp(DosDirs[x].unixpath,temp) == 0) break;
 	}
         
-        strcpy(DosDirs[x].filemask, unixdirname);
+        strncpy(DosDirs[x].filemask, unixdirname, 12);
+        DosDirs[x].filemask[12] = 0;
         ToDos(DosDirs[x].filemask);
     	dprintf_dosfs(stddeb,"DOS_opendir: %s / %s\n", unixdirname, temp);
 

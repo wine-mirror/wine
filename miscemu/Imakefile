@@ -3,7 +3,9 @@
 MODULE = miscemu
 
 SRCS = \
+	dpmi.c \
 	emulate.c \
+	instr.c \
 	int10.c \
 	int13.c \
 	int15.c \
@@ -14,7 +16,6 @@ SRCS = \
 	int26.c \
 	int2a.c \
 	int2f.c \
-	int31.c \
 	int5c.c \
 	interrupts.c \
 	ioports.c

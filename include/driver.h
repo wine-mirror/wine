@@ -46,7 +46,7 @@ typedef struct {
 	} DRIVERINFOSTRUCT;
 typedef DRIVERINFOSTRUCT FAR* LPDRIVERINFOSTRUCT;
 
-typedef LRESULT (CALLBACK* DRIVERPROC)(DWORD, HDRVR, UINT, LPARAM, LPARAM);
+typedef LONG (CALLBACK* DRIVERPROC)(DWORD, HDRVR, UINT, LPARAM, LPARAM);
 
 typedef struct {
 	DRIVERINFOSTRUCT dis;
@@ -59,12 +59,12 @@ typedef DRIVERITEM FAR* LPDRIVERITEM;
 
 LRESULT DefDriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
 						DWORD dwParam1, DWORD dwParam2);
-HDRVR   WINAPI OpenDriver(LPSTR szDriverName, LPSTR szSectionName, LPARAM lParam2);
-LRESULT WINAPI CloseDriver(HDRVR hDriver, LPARAM lParam1, LPARAM lParam2);
-LRESULT WINAPI SendDriverMessage(HDRVR hDriver, WORD message, LPARAM lParam1, LPARAM lParam2);
-HINSTANCE WINAPI GetDriverModuleHandle(HDRVR hDriver);
-HDRVR   WINAPI GetNextDriver(HDRVR, DWORD);
-BOOL    WINAPI GetDriverInfo(HDRVR, DRIVERINFOSTRUCT FAR*);
+HDRVR   OpenDriver(LPSTR szDriverName, LPSTR szSectionName, LPARAM lParam2);
+LRESULT CloseDriver(HDRVR hDriver, LPARAM lParam1, LPARAM lParam2);
+LRESULT SendDriverMessage(HDRVR hDriver, WORD message, LPARAM lParam1, LPARAM lParam2);
+HINSTANCE GetDriverModuleHandle(HDRVR hDriver);
+HDRVR   GetNextDriver(HDRVR, DWORD);
+BOOL    GetDriverInfo(HDRVR, DRIVERINFOSTRUCT FAR*);
 
 
 

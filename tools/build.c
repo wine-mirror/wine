@@ -974,27 +974,32 @@ static void BuildCall32LargeStack(void)
     printf( "\tpushl %%ebp\n" );
     printf( "\tmovl %%esp,%%ebp\n" );
 
+    /* Retrieve the original 32-bit stack pointer */
+
+    printf( "\tmovl " PREFIX "IF1632_Original32_esp, %%eax\n" );
+    printf( "\torl %%eax,%%eax\n" );
+    printf( "\tje 0f\n" );
+
     /* Save registers */
 
     printf( "\tpushl %%ecx\n" );
     printf( "\tpushl %%esi\n" );
     printf( "\tpushl %%edi\n" );
 
-    /* Switch to the new stack (if any) */
+    /* Switch to the new stack */
 
-    printf( "\tleal 16(%%ebp),%%esi\n" );
-    printf( "\tmovl " PREFIX "IF1632_Original32_esp, %%ecx\n" );
-    printf( "\tjcxz 0f\n" );
-    printf( "\tmovl %%ecx,%%esp\n" );
+    printf( "\tmovl %%eax,%%esp\n" );
 
     /* Transfer the arguments */
 
+    printf( "\tleal 16(%%ebp),%%esi\n" );
     printf( "\tmovl 12(%%ebp),%%ecx\n" );
-    printf( "\tjcxz 1f\n" );
-    printf( "\tshl $2,%%ecx\n" );
+    printf( "\torl %%ecx,%%ecx\n" );
+    printf( "\tje 1f\n" );
+    printf( "\tshll $2,%%ecx\n" );
     printf( "\tsubl %%ecx,%%esp\n" );
     printf( "\tmovl %%esp,%%edi\n" );
-    printf( "\tshr $2,%%ecx\n" );
+    printf( "\tshrl $2,%%ecx\n" );
     printf( "\trep; movsl\n" );
     printf( "1:\n" );
 
@@ -1019,12 +1024,6 @@ static void BuildCall32LargeStack(void)
     /* switched to another 32-bit stack yet. */
 
     printf( "0:\n" );
-
-    /* Restore the registers */
-
-    printf( "\tpopl %%edi\n" );
-    printf( "\tpopl %%esi\n" );
-    printf( "\tpopl %%ecx\n" );
 
     /* Move the return address up the stack */
 
@@ -1267,6 +1266,11 @@ static void BuildCall32Func( char *profile )
 
     printf( "\tmovl -8(%%ebp),%%eax\n" );
 
+    /* If necessary, save %edx over the API function address */
+
+    if (!reg_func && short_ret)
+        printf( "\tmovl %%edx,-8(%%ebp)\n" );
+
     /* Setup es */
 
     printf( "\tpushw %%ds\n" );
@@ -1284,7 +1288,7 @@ static void BuildCall32Func( char *profile )
 
     printf( "\taddl $24,%%ebp\n" );
 
-    /* Call the entry point */
+    /* Print the debug information before the call */
 
     if (debugging)
     {
@@ -1295,21 +1299,20 @@ static void BuildCall32Func( char *profile )
         printf( "\tpopl %%eax\n" );
     }
 
+    /* Call the entry point */
+
     printf( "\tcall %%eax\n" );
+
+    /* Print the debug information after the call */
 
     if (debugging)
     {
         printf( "\tpushl %%eax\n" );
-        printf( "\tpushl $%d\n", short_ret );
+        printf( "\tpushl $%d\n", reg_func ? 2 : (short_ret ? 1 : 0) );
         printf( "\tcall " PREFIX "RELAY_DebugReturn\n" );
         printf( "\tpopl %%eax\n" );
         printf( "\tpopl %%eax\n" );
     }
-
-    if (reg_func)
-        printf( "\taddl $%d,%%esp\n", sizeof(struct sigcontext_struct) );
-    else if (*args)
-        printf( "\taddl $%d,%%esp\n", 4 * strlen(args) );
 
     /* Restore the 16-bit stack */
 
@@ -1342,21 +1345,40 @@ static void BuildCall32Func( char *profile )
             args++;
         }
     }
-    else  /* Store the return value in dx:ax if needed */
-    {
-        if (!short_ret)
-        {
-            printf( "\tpushl %%eax\n" );
-            printf( "\tpopw %%dx\n" );
-            printf( "\tpopw %%dx\n" );
-        }
-    }
 
-    /* Restore ds and bp */
+    /* Restore ds */
 
     printf( "\tpopw %%ds\n" );
-    printf( "\tpopl %%ebp\n" );  /* Remove entry point address */
-    printf( "\tpopl %%ebp\n" );  /* Remove DLL id and ordinal */
+
+    /* Get the return value into dx:ax and clean up the stack */
+
+    if (!reg_func)
+    {
+        if (short_ret)
+        {
+            printf( "\tpopl %%edx\n" );     /* Restore %edx */
+            printf( "\taddl $4,%%esp\n" );  /* Remove DLL id and ordinal */
+        }
+        else
+        {
+            printf( "\tpushl %%eax\n" );
+            printf( "\tpopw %%ax\n" );
+            printf( "\tpopw %%dx\n" );
+            /* Remove API entry point, DLL id and ordinal from the stack */
+            printf( "\taddl $8,%%esp\n" );
+        }
+    }
+    else
+    {
+        /* Remove API entry point, DLL id and ordinal from the stack, */
+        /* but take care not to change the value of the carry flag.   */
+
+        printf( "\tpopl %%ebp\n" );
+        printf( "\tpopl %%ebp\n" );
+    }
+
+    /* Restore bp */
+
     printf( "\tpopw %%bp\n" );
 
     /* Remove the arguments and return */
@@ -1451,7 +1473,7 @@ static void BuildCall16Func( char *profile )
         /* Push the address of the first argument */
         printf( "\tmovl %%ebx,%%eax\n" );
         printf( "\taddl $12,%%eax\n" );
-        printf( "\tpushl $%d\n", reg_func ? 7 : strlen(args) );
+        printf( "\tpushl $%d\n", reg_func ? 8 : strlen(args) );
         printf( "\tpushl %%eax\n" );
         printf( "\tcall " PREFIX "RELAY_DebugCall16\n" );
         printf( "\tpopl %%eax\n" );
@@ -1512,18 +1534,17 @@ static void BuildCall16Func( char *profile )
     /* Get the 16-bit ds */
     /* FIXME: this shouldn't be necessary if function prologs fixup worked. */
 
-    printf( "\tpushw 16(%%ebx)\n" );
-    printf( "\tpopw %%ds\n" );
-
     if (reg_func)
     {
-        /* Retrieve ebx from the 32-bit stack */
-        printf( "\tmovl %%fs:28(%%ebx),%%ebx\n" );
+        printf( "\tpushw 16(%%ebx)\n" );
+        printf( "\tmovl 32(%%ebx),%%ebx\n" ); /*Get ebx from the 32-bit stack*/
+        printf( "\tpopw %%ds\n" );
     }
     else
     {
         /* Set ax equal to ds for window procedures */
-        printf( "\tmovw %%ds,%%ax\n" );
+        printf( "\tmovw 16(%%ebx),%%ax\n" );
+/*        printf( "\tmovw %%ax,%%ds\n" ); */
     }
 
     /* Jump to the called routine */

@@ -17,7 +17,6 @@
 #include "user.h"
 #include "win.h"
 #include "stddebug.h"
-/* #define DEBUG_COMBO */
 #include "debug.h"
 #include "graphics.h"
 #include "listbox.h"
@@ -791,6 +790,7 @@ static LONG CBLPaint( HWND hwnd, WORD message, WORD wParam, LONG lParam )
   PAINTSTRUCT  ps;
   HBRUSH       hBrush;
   HFONT        hOldFont;
+  HWND  combohwnd = CLBoxGetCombo(hwnd);
   HDC 	hdc;
   RECT 	rect;
   int   i, top, height;
@@ -829,15 +829,15 @@ static LONG CBLPaint( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 
       dprintf_listbox(stddeb,"drawing item: %d %d %d %d %d\n",rect.left,top,rect.right,top+height,lpls->itemState);
       if (OWNER_DRAWN(lphl)) {
-	ListBoxDrawItem (hwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_DRAWENTIRE, 0);
+	ListBoxDrawItem (combohwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_DRAWENTIRE, 0);
 	if (lpls->itemState)
-	  ListBoxDrawItem (hwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_SELECT, ODS_SELECTED);
+	  ListBoxDrawItem (combohwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_SELECT, ODS_SELECTED);
       } else {
-	ListBoxDrawItem (hwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_DRAWENTIRE, 
+	ListBoxDrawItem (combohwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_DRAWENTIRE, 
 			 lpls->itemState);
       }
       if ((lphl->ItemFocused == i) && GetFocus() == hwnd)
-	ListBoxDrawItem (hwnd,lphl, hdc, lpls, &lpls->itemRect, ODA_FOCUS, ODS_FOCUS);
+	ListBoxDrawItem (combohwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_FOCUS, ODS_FOCUS);
 
       top += height;
       lphl->ItemsVisible++;
@@ -876,7 +876,6 @@ static LONG CBLActivate( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 static LONG CBLLButtonDown( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 {
   LPHEADLIST lphl = CLBoxGetListHeader(hwnd);
-  WORD       wRet;
   int        y;
   RECT       rectsel;
 

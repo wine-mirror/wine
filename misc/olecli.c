@@ -9,6 +9,7 @@
 
 #include "windows.h"
 #include "ole.h"
+#include "gdi.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -44,4 +45,13 @@ OLESTATUS WINAPI OleRevokeClientDoc(LHCLIENTDOC hServerDoc)
 {
     dprintf_ole(stdnimp,"OleRevokeClientDoc:%ld\n",hServerDoc);
     return OLE_OK;
+}
+
+/***********************************************************************
+ *           OleIsDcMeta
+ */
+BOOL WINAPI OleIsDcMeta(HDC hdc)
+{
+	dprintf_ole(stddeb,"OleIsDCMeta(%04X)\n",hdc);
+	return GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC ) != 0;
 }

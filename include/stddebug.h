@@ -79,7 +79,6 @@
 #undef DEBUG_ACCEL
 #undef DEBUG_BITBLT
 #undef DEBUG_BITMAP
-#undef DEBUG_CALLBACK
 #undef DEBUG_CARET
 #undef DEBUG_CATCH
 #undef DEBUG_CDAUDIO
@@ -104,7 +103,6 @@
 #undef DEBUG_GDI
 #undef DEBUG_GLOBAL
 #undef DEBUG_GRAPHICS
-#undef DEBUG_HEAP
 #undef DEBUG_ICON
 #undef DEBUG_INT
 #undef DEBUG_KEY
@@ -123,10 +121,10 @@
 #undef DEBUG_METAFILE
 #undef DEBUG_MIDI
 #undef DEBUG_MMIO
+#undef DEBUG_MMSYS
 #undef DEBUG_MMTIME
 #undef DEBUG_MODULE
 #undef DEBUG_MSG
-#undef DEBUG_MSGBOX
 #undef DEBUG_NONCLIENT
 #undef DEBUG_OLE
 #undef DEBUG_PALETTE
@@ -154,7 +152,6 @@
 #define DEBUG_ACCEL
 #define DEBUG_BITBLT
 #define DEBUG_BITMAP
-#define DEBUG_CALLBACK
 #define DEBUG_CARET
 #define DEBUG_CATCH
 #define DEBUG_CDAUDIO
@@ -179,7 +176,6 @@
 #define DEBUG_GDI
 #define DEBUG_GLOBAL
 #define DEBUG_GRAPHICS
-#define DEBUG_HEAP
 #define DEBUG_ICON
 #define DEBUG_INT
 #define DEBUG_KEY
@@ -198,10 +194,10 @@
 #define DEBUG_METAFILE
 #define DEBUG_MIDI
 #define DEBUG_MMIO
+#define DEBUG_MMSYS
 #define DEBUG_MMTIME
 #define DEBUG_MODULE
 #define DEBUG_MSG
-#define DEBUG_MSGBOX
 #define DEBUG_NONCLIENT
 #define DEBUG_OLE
 #define DEBUG_PALETTE

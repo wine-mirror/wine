@@ -1003,7 +1003,7 @@ LONG DispatchMessage( LPMSG msg )
     if ((msg->message == WM_TIMER) || (msg->message == WM_SYSTIMER))
     {
 	if (msg->lParam)
-	    return CallWindowProc( (WNDPROC)msg->lParam, msg->hwnd,
+	    return CallWndProc( (WNDPROC)msg->lParam, CURRENT_DS, msg->hwnd,
 				   msg->message, msg->wParam, GetTickCount() );
     }
 

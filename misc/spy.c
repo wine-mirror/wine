@@ -288,6 +288,7 @@ void SpyMessage(HWND hwnd, WORD msg, WORD wParam, LONG lParam)
  */
 void SpyInit(void)
 {
+#ifndef NOSPY
     char filename[100];
 
     if (SpyFp != NULL)
@@ -322,4 +323,5 @@ void SpyInit(void)
     if (*SpyFilters != 0) {
       strcat(SpyFilters, ";");
     }
+#endif
 }

@@ -29,7 +29,6 @@ DIGIT	[0-9]
 HEXDIGIT [0-9a-fA-F]
 
 IDENTIFIER [_a-zA-Z\.~][_a-zA-Z0-9\.~]*
-FILE_IDENTIFIER [_a-zA-Z\.~/][_a-zA-Z\.~/]*
 
 %%
 
@@ -118,10 +117,6 @@ q		{ return 'q'; }
 
 {IDENTIFIER}	{yylval = (int) make_symbol(yytext); 
 	          return IDENTIFIER;
-	         }
-
-{FILE_IDENTIFIER} {yylval = (int) make_symbol(yytext); 
-	          return FILE_IDENTIFIER;
 	         }
 
 [ \t]+        /* Eat up whitespace */

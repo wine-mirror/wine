@@ -75,6 +75,7 @@ LONG SystemMessageBoxProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
       SendDlgItemMessage(hwnd, stc1, STM_SETICON, LoadIcon(0, IDI_ASTERISK), 0);
       break;
      case MB_ICONHAND:
+     default:
       SendDlgItemMessage(hwnd, stc1, STM_SETICON, LoadIcon(0, IDI_HAND), 0);
       break;
     }

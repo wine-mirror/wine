@@ -11,7 +11,6 @@
 #include "stddebug.h"
 #include "debug.h"
 
-ldt_copy_entry ldt_copy[LDT_SIZE] = { {0,0}, };
 
 #define FIRST_LDT_ENTRY_TO_ALLOC  6
 
@@ -323,12 +322,12 @@ BOOL IsBadCodePtr( SEGPTR lpfn )
     ldt_entry entry;
 
     sel = SELECTOROF(lpfn);
-    if (!sel) return FALSE;
-    if (IS_SELECTOR_FREE(sel)) return FALSE;
+    if (!sel) return TRUE;
+    if (IS_SELECTOR_FREE(sel)) return TRUE;
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );
-    if (entry.type != SEGMENT_CODE) return FALSE;
-    if (OFFSETOF(lpfn) > entry.limit) return FALSE;
-    return TRUE;
+    if (entry.type != SEGMENT_CODE) return TRUE;
+    if (OFFSETOF(lpfn) > entry.limit) return TRUE;
+    return FALSE;
 }
 
 
@@ -341,13 +340,13 @@ BOOL IsBadStringPtr( SEGPTR ptr, WORD size )
     ldt_entry entry;
 
     sel = SELECTOROF(ptr);
-    if (!sel) return FALSE;
-    if (IS_SELECTOR_FREE(sel)) return FALSE;
+    if (!sel) return TRUE;
+    if (IS_SELECTOR_FREE(sel)) return TRUE;
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );
-    if ((entry.type == SEGMENT_CODE) && entry.read_only) return FALSE;
+    if ((entry.type == SEGMENT_CODE) && entry.read_only) return TRUE;
     if (strlen(PTR_SEG_TO_LIN(ptr)) < size) size = strlen(PTR_SEG_TO_LIN(ptr));
-    if (OFFSETOF(ptr) + size > entry.limit) return FALSE;
-    return TRUE;
+    if (OFFSETOF(ptr) + size > entry.limit) return TRUE;
+    return FALSE;
 }
 
 
@@ -360,12 +359,12 @@ BOOL IsBadHugeReadPtr( SEGPTR ptr, DWORD size )
     ldt_entry entry;
 
     sel = SELECTOROF(ptr);
-    if (!sel) return FALSE;
-    if (IS_SELECTOR_FREE(sel)) return FALSE;
+    if (!sel) return TRUE;
+    if (IS_SELECTOR_FREE(sel)) return TRUE;
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );
-    if ((entry.type == SEGMENT_CODE) && entry.read_only) return FALSE;
-    if (OFFSETOF(ptr) + size > entry.limit) return FALSE;
-    return TRUE;
+    if ((entry.type == SEGMENT_CODE) && entry.read_only) return TRUE;
+    if (OFFSETOF(ptr) + size > entry.limit) return TRUE;
+    return FALSE;
 }
 
 
@@ -378,12 +377,12 @@ BOOL IsBadHugeWritePtr( SEGPTR ptr, DWORD size )
     ldt_entry entry;
 
     sel = SELECTOROF(ptr);
-    if (!sel) return FALSE;
-    if (IS_SELECTOR_FREE(sel)) return FALSE;
+    if (!sel) return TRUE;
+    if (IS_SELECTOR_FREE(sel)) return TRUE;
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );
-    if ((entry.type == SEGMENT_CODE) || entry.read_only) return FALSE;
-    if (OFFSETOF(ptr) + size > entry.limit) return FALSE;
-    return TRUE;
+    if ((entry.type == SEGMENT_CODE) || entry.read_only) return TRUE;
+    if (OFFSETOF(ptr) + size > entry.limit) return TRUE;
+    return FALSE;
 }
 
 /***********************************************************************

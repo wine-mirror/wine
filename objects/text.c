@@ -262,7 +262,7 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
 	y += lh;
 	if (strPtr)
 	{
-	    if (!(flags & DT_NOCLIP))
+	    if (!(flags & DT_NOCLIP) && !(flags & DT_CALCRECT))
 	    {
 		if (y > rect->bottom - lh)
 		    break;

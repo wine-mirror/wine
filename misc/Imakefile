@@ -17,6 +17,7 @@ SRCS = \
 	kernel32.c \
 	lstr.c \
 	main.c \
+	ole2.c \
 	ole2nls.c \
 	olecli.c \
 	olesvr.c \

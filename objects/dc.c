@@ -334,6 +334,7 @@ HDC GetDCState( HDC hdc )
 
     dprintf_dc(stddeb, "GetDCState(%d): returning %d\n", hdc, handle );
 
+    memset( &newdc->u.x, 0, sizeof(newdc->u.x) );
     memcpy( &newdc->w, &dc->w, sizeof(dc->w) );
     memcpy( &newdc->u.x.pen, &dc->u.x.pen, sizeof(dc->u.x.pen) );
     newdc->saveLevel = 0;

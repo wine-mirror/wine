@@ -351,15 +351,32 @@ BOOL DragQueryPoint(HDROP h, POINT FAR *p)
  */
 HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpParameters, LPCSTR lpDirectory, int iShowCmd)
 {
-        fprintf(stdnimp, "ShellExecute: empty stub\n");
+    char cmd[400];
+    dprintf_exec(stddeb, "ShellExecute(%4X,'%s','%s','%s','%s',%x)\n",
+		hWnd, lpOperation ? lpOperation:"<null>", lpFile ? lpFile:"<null>",
+		lpParameters ? lpParameters : "<null>", 
+		lpDirectory ? lpDirectory : "<null>", iShowCmd);
+    if(lpOperation && !strcasecmp(lpOperation,"print"))
+    {
+        fprintf(stderr, "Shell print %s: not supported\n", lpFile);
+    	return 2; /* file not found */
+    }
+    if(lpOperation && !strcasecmp(lpOperation,"open"))
+    {
+        fprintf(stderr, "ShellExecute: Unknown operation %s\n",lpOperation);
         return 2;
-	fprintf(stdnimp, "ShellExecute // hWnd=%04X\n", hWnd);  
-	fprintf(stdnimp, "ShellExecute // lpOperation='%s'\n", lpOperation);
-	fprintf(stdnimp, "ShellExecute // lpFile='%s'\n", lpFile);
-	fprintf(stdnimp, "ShellExecute // lpParameters='%s'\n", lpParameters);
-	fprintf(stdnimp, "ShellExecute // lpDirectory='%s'\n", lpDirectory);
-	fprintf(stdnimp, "ShellExecute // iShowCmd=%04X\n", iShowCmd);
-	return 2; /* file not found */
+    }
+    /* OK. We are supposed to lookup the program associated with lpFile,
+       then to execute it using that program. If lpFile is a program,
+       we have to pass the parameters. If an instance is already running,
+       we might have to send DDE commands.
+       This implementation does none of that. It assumes lpFile is a program.
+       Plain WinExec will do what we need */
+    if(lpParameters)
+        sprintf(cmd,"%s %s",lpFile,lpParameters);
+    else
+        strcpy(cmd,lpFile);
+    return WinExec(cmd,iShowCmd);
 }
 
 
@@ -430,8 +447,9 @@ HICON ExtractIcon(HINSTANCE hInst, LPCSTR lpszExeFileName, UINT nIconIndex)
 	HINSTANCE hInst2 = hInst;
 	dprintf_reg(stddeb, "ExtractIcon(%04X, '%s', %d\n", 
 			hInst, lpszExeFileName, nIconIndex);
+        return 0;
 	if (lpszExeFileName != NULL) {
-		hInst2 = LoadLibrary(lpszExeFileName);
+		hInst2 = LoadModule(lpszExeFileName,(LPVOID)-1);
 	}
 	if (hInst2 != 0 && nIconIndex == (UINT)-1) {
 #if 0

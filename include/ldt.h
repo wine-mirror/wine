@@ -26,8 +26,10 @@ typedef struct
     enum seg_type type;            /* segment type */
 } ldt_entry;
 
+extern void LDT_BytesToEntry( const unsigned long *buffer, ldt_entry *content);
+extern void LDT_EntryToBytes( unsigned long *buffer, const ldt_entry *content);
 extern int LDT_GetEntry( int entry, ldt_entry *content );
-extern int LDT_SetEntry( int entry, ldt_entry *content );
+extern int LDT_SetEntry( int entry, const ldt_entry *content );
 extern void LDT_Print();
 
 
@@ -57,6 +59,17 @@ extern ldt_copy_entry ldt_copy[LDT_SIZE];
            ((void*)(GET_SEL_BASE((int)(ptr) >> 16) + ((int)(ptr) & 0xffff)))
 
 #define PTR_SEG_OFF_TO_LIN(seg,off) \
-           ((void*)(GET_SEL_BASE(seg) + ((int)(off) & 0xffff)))
+           ((void*)(GET_SEL_BASE(seg) + (unsigned int)(off)))
+
+
+extern unsigned char ldt_flags_copy[LDT_SIZE];
+
+#define LDT_FLAGS_TYPE      0x03  /* Mask for segment type */
+#define LDT_FLAGS_READONLY  0x04  /* Segment is read-only (data) */
+#define LDT_FLAGS_EXECONLY  0x04  /* Segment is execute-only (code) */
+#define LDT_FLAGS_32BIT     0x08  /* Segment is 32-bit (code or stack) */
+#define LDT_FLAGS_BIG       0x10  /* Segment is big (limit is in pages) */
+
+#define GET_SEL_FLAGS(sel)   (ldt_flags_copy[SELECTOR_TO_ENTRY(sel)])
 
 #endif  /* _WINE_LDT_H */

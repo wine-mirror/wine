@@ -34,11 +34,11 @@ void inportb(struct sigcontext_struct *context)
 	}
 }
 
-void inport(struct sigcontext_struct *context)
+void inport( struct sigcontext_struct *context, int long_op )
 {
-	dprintf_int(stdnimp, "IO: in (%x)\n", DX);
-
-	AX = 0xffff;
+    dprintf_int(stdnimp, "IO: in (%x)\n", DX);
+    if (long_op) EAX = 0xffffffff;
+    else AX = 0xffff;
 }
 
 void inportb_abs(struct sigcontext_struct *context)
@@ -47,10 +47,11 @@ void inportb_abs(struct sigcontext_struct *context)
 	AL = 0xff;
 }
 
-void inport_abs(struct sigcontext_struct *context)
+void inport_abs( struct sigcontext_struct *context, int long_op )
 {
-	dprintf_int(stdnimp, "IO: in (%x)\n", *(BYTE *)(EIP+1));
-	AX = 0xffff;
+    dprintf_int(stdnimp, "IO: in (%x)\n", *(BYTE *)(EIP+1));
+    if (long_op) EAX = 0xffffffff;
+    else AX = 0xffff;
 }
 
 void outportb(struct sigcontext_struct *context)
@@ -69,9 +70,9 @@ void outportb(struct sigcontext_struct *context)
 	}
 }
 
-void outport(struct sigcontext_struct *context)
+void outport( struct sigcontext_struct *context, int long_op )
 {
-	dprintf_int(stdnimp, "IO: out (%x), %x\n", DX, AX);
+    dprintf_int(stdnimp, "IO: out (%x), %lx\n", DX, long_op ? EAX : AX);
 }
 
 void outportb_abs(struct sigcontext_struct *context)
@@ -79,7 +80,8 @@ void outportb_abs(struct sigcontext_struct *context)
     dprintf_int(stdnimp, "IO: out (%x), %x\n", *(BYTE *)(EIP+1), AL);
 }
 
-void outport_abs(struct sigcontext_struct *context)
+void outport_abs( struct sigcontext_struct *context, int long_op )
 {
-    dprintf_int(stdnimp, "IO: out (%x), %x\n", *(BYTE *)(EIP+1), AX);
+    dprintf_int(stdnimp, "IO: out (%x), %lx\n", *(BYTE *)(EIP+1),
+                long_op ? EAX : AX);
 }

@@ -16,7 +16,6 @@
 #include "ldt.h"
 #include "stackframe.h"
 #include "stddebug.h"
-/* #define DEBUG_UTILITY */
 #include "debug.h"
 
 
@@ -33,7 +32,11 @@
 
 int MulDiv(int foo, int bar, int baz)
 {
-	return (long)(((int)foo*bar)/baz);
+    int ret;
+    if (!baz) return -32768;
+    ret = (foo * bar) / baz;
+    if ((ret > 32767) || (ret < -32767)) return -32768;
+    return ret;
 };
 
 /*	UTILITY_strip015() removes \015 (^M, CR) from a string;
@@ -210,62 +213,84 @@ size_t UTILITY_argsize(const char *format, BOOL windows)
 
 char *UTILITY_convertArgs(char *format, char *winarg)
 {
-	char *result = (char *)malloc(UTILITY_argsize(format, 0));
-	char *rptr = result;
-
-	while(*format) {
-		while((*format) && (*format != '%')) format++;	/* skip ahead */
-		if(*format) {
-			char modifier = ' ';
-			dprintf_utility(stddeb, "found:\t\"%%");
-			format++;		/* skip past '%' */
-			/* First skip the flags, field width, etc. */
-			/* First the flags */
-			if ((*format == '#') || (*format == '-') || (*format == '+')
-				|| (*format == ' ')) format++;
-			/* Now the field width, etc. */
-			while(isdigit(*format)) format++;
-			if(*format == '.') format++;
-			while(isdigit(*format)) format++;
-			/* Now we handle the rest */
-			if((*format == 'h') || (*format == 'l') || (*format == 'L'))
-				modifier = *(format++);
-			/* Handle the actual type. */
-			dprintf_utility(stddeb, "%c\"\n", *format);
-			switch(*format) {
-				case 'd':
-				case 'i':
-					*(((int *)rptr)++) = (modifier=='l') ? *(((int *)winarg)++) : *(((short *)winarg)++);
-					break;
-				case 'o':
-				case 'x':
-				case 'X':
-				case 'u':
-				case 'c':
-					*(((unsigned int *)rptr)++) = (modifier=='l') ? *(((unsigned int *)winarg)++) 
-						: *(((unsigned short *)winarg)++);
-					break;
-				case 's':
-				case 'p':
-				case 'n':	/* A pointer, is a pointer, is a pointer... */
-					*(((char **)rptr)++) = (char *)PTR_SEG_TO_LIN(*(((char **)winarg)++));
-					break;
-				case 'e':
-				case 'E':
-				case 'f':
-				case 'g':
-				case 'G':
-					/* It doesn't look as if Windows' wvsprintf()
-					   supports floating-point arguments. However,
-					   I'll leave this code here just in case. */
-					if(modifier=='L')
-						*(((long double *)rptr)++) = *(((long double *)winarg)++);
-					else *(((double *)rptr)++) = *(((double *)winarg)++);
-					break;
-			}
+    char *result = (char *)malloc(UTILITY_argsize(format, 0));
+    char *rptr = result;
+    short *wptr = (short *)winarg;
+    long *dptr = (long *)result;
+    
+    while(*format) {
+	while((*format) && (*format != '%')) format++;	/* skip ahead */
+	if(*format) {
+	    char modifier = ' ';
+	    dprintf_utility(stddeb, "found:\t\"%%");
+	    format++;		/* skip past '%' */
+	    
+	    /* First skip the flags, field width, etc. */
+	    /* First the flags */
+	    if (*format == '#' || *format == '-' || *format == '+'
+		|| *format == ' ') format++;
+	    
+	    /* Now the field width, etc. */
+	    while (isdigit(*format)) format++;
+	    if (*format == '.') format++;
+	    while (isdigit(*format)) format++;
+	    
+	    /* Now we handle the rest */
+	    if(*format == 'h' || *format == 'l' || *format == 'L')
+	        modifier = *format++;
+	    
+	    /* Handle the actual type. */
+	    dprintf_utility(stddeb, "%c\"\n", *format);
+	    
+	    switch(*format) {
+	     case 'd':
+	     case 'i':
+		if (modifier == 'l') {
+		    *((int *)rptr)++ = *((int *)winarg)++;
+		} else {
+		    *((int *)rptr)++ = *((short *)winarg)++;
 		}
+		break;
+	     case 'o':
+	     case 'x':
+	     case 'X':
+	     case 'u':
+	     case 'c':
+		if (modifier == 'l')  {
+		    *((unsigned int *)rptr)++ =  *((unsigned int *)winarg)++;
+		} else {
+		    *((unsigned int *)rptr)++ = *((unsigned short *)winarg)++;
+		}
+		break;
+	     case 's':
+	     case 'p':
+	     case 'n':	/* A pointer, is a pointer, is a pointer... */
+		*((char **)rptr)++ = (char *)PTR_SEG_TO_LIN(*(SEGPTR *)winarg);
+		((SEGPTR *)winarg)++;
+		break;
+	     case 'e':
+	     case 'E':
+	     case 'f':
+	     case 'g':
+	     case 'G':
+		/* It doesn't look as if Windows' wvsprintf()
+		 supports floating-point arguments. However,
+		 I'll leave this code here just in case. */
+		if(modifier=='L')
+		    *((long double *)rptr)++ = *((long double *)winarg)++;
+		else
+		    *((double *)rptr)++ = *((double *)winarg)++;
+		break;
+	    }
 	}
-	return result;
+    }
+    for(; (char *)dptr < rptr; dptr ++)
+        dprintf_utility( stddeb, "%08lx ", *dptr );
+    dprintf_utility( stddeb, "\n" );
+    for(; (char *)wptr < winarg; wptr ++)
+        dprintf_utility( stddeb, "%04x ", *wptr );
+    dprintf_utility( stddeb, "\n" );
+    return result;
 };
 
 #ifndef WINELIB

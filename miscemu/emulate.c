@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "wine.h"
+#include "registers.h"
 #include "stddebug.h"
 /* #define DEBUG_INT */
 #include "debug.h"
@@ -15,18 +16,20 @@ struct Win87EmInfoStruct {
 };
 
 void
-WIN87_fpmath( struct sigcontext_struct context )
+WIN87_fpmath( struct sigcontext_struct sigcontext )
 {
-  dprintf_int(stddeb, "_fpmath: (%x:%lx %x %x)\n",context.sc_cs, 
-              context.sc_eip, context.sc_es, (int)context.sc_ebx & 0xffff );
+    /* Declare a context pointer so that registers macros work */
+    struct sigcontext_struct *context = &sigcontext;
 
-  switch(context.sc_ebx & 0xffff)
+    dprintf_int(stddeb, "_fpmath: (%x:%lx %x %x)\n", CS, EIP, ES, BX );
+
+    switch(BX)
     {
     case 11:
-        context.sc_eax = 1;
+        AX = 1;
         break;
     default:
-        context.sc_eax = 0;
+        AX = 0;
         break;
     }
 }

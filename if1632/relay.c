@@ -21,6 +21,9 @@ dprintf_relay
 #define DLL_ENTRY(name) \
   { #name, name##_Code_Start, name##_Data_Start, \
     name##_Module_Start, name##_Module_End, TRUE, 0 }
+#define DLL_ENTRY_NOTUSED(name) \
+  { #name, name##_Code_Start, name##_Data_Start, \
+    name##_Module_Start, name##_Module_End, FALSE, 0 }
 
 struct dll_table_s dll_builtin_table[N_BUILTINS] =
 {
@@ -38,17 +41,17 @@ struct dll_table_s dll_builtin_table[N_BUILTINS] =
     DLL_ENTRY(TOOLHELP),
     DLL_ENTRY(MOUSE),
     DLL_ENTRY(COMMDLG),
-    DLL_ENTRY(OLE2),
-    DLL_ENTRY(OLE2CONV),
-    DLL_ENTRY(OLE2DISP),
-    DLL_ENTRY(OLE2NLS),
-    DLL_ENTRY(OLE2PROX),
-    DLL_ENTRY(OLECLI),
-    DLL_ENTRY(OLESVR),
-    DLL_ENTRY(COMPOBJ),
-    DLL_ENTRY(STORAGE),
+    DLL_ENTRY_NOTUSED(OLE2),
+    DLL_ENTRY_NOTUSED(OLE2CONV),
+    DLL_ENTRY_NOTUSED(OLE2DISP),
+    DLL_ENTRY_NOTUSED(OLE2NLS),
+    DLL_ENTRY_NOTUSED(OLE2PROX),
+    DLL_ENTRY_NOTUSED(OLECLI),
+    DLL_ENTRY_NOTUSED(OLESVR),
+    DLL_ENTRY_NOTUSED(COMPOBJ),
+    DLL_ENTRY_NOTUSED(STORAGE),
     DLL_ENTRY(WINPROCS),
-    DLL_ENTRY(DDEML)
+    DLL_ENTRY_NOTUSED(DDEML)
 };
 
 /* don't forget to increase N_BUILTINS in dlls.h if you add a dll */
@@ -153,7 +156,7 @@ void RELAY_DebugCall32( char *args )
 /***********************************************************************
  *           RELAY_DebugReturn
  */
-void RELAY_DebugReturn( int short_ret, int ret_val )
+void RELAY_DebugReturn( int func_type, int ret_val )
 {
     STACK16FRAME *frame;
     struct dll_table_s *table;
@@ -166,8 +169,18 @@ void RELAY_DebugReturn( int short_ret, int ret_val )
     name  = MODULE_GetEntryPointName( table->hModule, frame->ordinal_number );
     printf( "Ret  %s.%d: %*.*s() ",
             table->name, frame->ordinal_number, *name, *name, name + 1 );
-    if (short_ret) printf( "retval=0x%04x\n", ret_val & 0xffff );
-    else printf( "retval=0x%08x\n", ret_val );
+    switch(func_type)
+    {
+    case 0: /* long */
+        printf( "retval=0x%08x ds=%04x\n", ret_val, frame->ds );
+        break;
+    case 1: /* word */
+        printf( "retval=0x%04x ds=%04x\n", ret_val & 0xffff, frame->ds );
+        break;
+    case 2: /* regs */
+        printf( "retval=none ds=%04x\n", frame->ds );
+        break;
+    }
 }
 
 

@@ -2,9 +2,8 @@
  * Sample MCI ANIMATION Wine Driver for Linux
  *
  * Copyright 1994 Martin Ayotte
- *
-static char Copyright[] = "Copyright  Martin Ayotte, 1994";
-*/
+ */
+
 #ifndef WINELIB
 #define BUILTIN_MMSYSTEM
 #endif 
@@ -22,8 +21,6 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #include "driver.h"
 #include "mmsystem.h"
 #include "stddebug.h"
-/* #define DEBUG_MCIANIM */
-#define DEBUG_MCIANIM
 #include "debug.h"
 
 #define MAX_ANIMDRV 		2
@@ -53,16 +50,12 @@ static LINUX_ANIM	AnimDev[MAX_ANIMDRV];
 #endif
 
 
-DWORD ANIM_CalcTime(UINT wDevID, DWORD dwFormatType, DWORD dwFrame);
-DWORD ANIM_CalcFrame(UINT wDevID, DWORD dwFormatType, DWORD dwTime);
-
-
 /*-----------------------------------------------------------------------*/
 
 /**************************************************************************
 * 				ANIM_mciOpen			[internal]
 */
-DWORD ANIM_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
+static DWORD ANIM_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 {
 #ifdef linux
 	LPSTR		lpstrElementName;
@@ -120,7 +113,7 @@ DWORD ANIM_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 /**************************************************************************
 * 				ANIM_mciClose		[internal]
 */
-DWORD ANIM_mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
+static DWORD ANIM_mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 {
 #ifdef linux
 	dprintf_mcianim(stddeb,"ANIM_mciClose(%u, %08lX, %p);\n", 
@@ -134,7 +127,7 @@ DWORD ANIM_mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 /**************************************************************************
 * 				ANIM_mciGetDevCaps	[internal]
 */
-DWORD ANIM_mciGetDevCaps(UINT wDevID, DWORD dwFlags, 
+static DWORD ANIM_mciGetDevCaps(UINT wDevID, DWORD dwFlags, 
 						LPMCI_GETDEVCAPS_PARMS lpParms)
 {
 #ifdef linux
@@ -186,10 +179,114 @@ DWORD ANIM_mciGetDevCaps(UINT wDevID, DWORD dwFlags,
 #endif
 }
 
+
+/**************************************************************************
+* 				ANIM_CalcTime			[internal]
+*/
+static DWORD ANIM_CalcTime(UINT wDevID, DWORD dwFormatType, DWORD dwFrame)
+{
+	DWORD	dwTime = 0;
+#ifdef linux
+	UINT	wTrack;
+	UINT	wMinutes;
+	UINT	wSeconds;
+	UINT	wFrames;
+	dprintf_mcianim(stddeb,"ANIM_CalcTime(%u, %08lX, %lu);\n", 
+			wDevID, dwFormatType, dwFrame);
+    
+	switch (dwFormatType) {
+		case MCI_FORMAT_MILLISECONDS:
+			dwTime = dwFrame / ANIMFRAMES_PERSEC * 1000;
+			dprintf_mcianim(stddeb,
+				"ANIM_CalcTime // MILLISECONDS %lu\n", dwTime);
+			break;
+		case MCI_FORMAT_MSF:
+			wMinutes = dwFrame / ANIMFRAMES_PERMIN;
+			wSeconds = (dwFrame - ANIMFRAMES_PERMIN * wMinutes) / ANIMFRAMES_PERSEC;
+			wFrames = dwFrame - ANIMFRAMES_PERMIN * wMinutes - 
+								ANIMFRAMES_PERSEC * wSeconds;
+			dwTime = MCI_MAKE_MSF(wMinutes, wSeconds, wFrames);
+			dprintf_mcianim(stddeb,"ANIM_CalcTime // MSF %02u:%02u:%02u -> dwTime=%lu\n",
+								wMinutes, wSeconds, wFrames, dwTime);
+			break;
+		default:
+			/* unknown format ! force TMSF ! ... */
+			dwFormatType = MCI_FORMAT_TMSF;
+		case MCI_FORMAT_TMSF:
+			for (wTrack = 0; wTrack < AnimDev[wDevID].nTracks; wTrack++) {
+/*				dwTime += AnimDev[wDevID].lpdwTrackLen[wTrack - 1];
+				printf("Adding trk#%u curpos=%u \n", dwTime);
+				if (dwTime >= dwFrame) break; */
+				if (AnimDev[wDevID].lpdwTrackPos[wTrack - 1] >= dwFrame) break;
+				}
+			wMinutes = dwFrame / ANIMFRAMES_PERMIN;
+			wSeconds = (dwFrame - ANIMFRAMES_PERMIN * wMinutes) / ANIMFRAMES_PERSEC;
+			wFrames = dwFrame - ANIMFRAMES_PERMIN * wMinutes - 
+								ANIMFRAMES_PERSEC * wSeconds;
+			dwTime = MCI_MAKE_TMSF(wTrack, wMinutes, wSeconds, wFrames);
+			dprintf_mcianim(stddeb,
+				"ANIM_CalcTime // %02u-%02u:%02u:%02u\n",
+				wTrack, wMinutes, wSeconds, wFrames);
+			break;
+		}
+#endif
+	return dwTime;
+}
+
+
+/**************************************************************************
+* 				ANIM_CalcFrame			[internal]
+*/
+static DWORD ANIM_CalcFrame(UINT wDevID, DWORD dwFormatType, DWORD dwTime)
+{
+	DWORD	dwFrame = 0;
+#ifdef linux
+	UINT	wTrack;
+	dprintf_mcianim(stddeb,"ANIM_CalcFrame(%u, %08lX, %lu);\n", 
+			wDevID, dwFormatType, dwTime);
+
+        switch (dwFormatType) {
+		case MCI_FORMAT_MILLISECONDS:
+			dwFrame = dwTime * ANIMFRAMES_PERSEC / 1000;
+			dprintf_mcianim(stddeb,
+				"ANIM_CalcFrame // MILLISECONDS %lu\n", dwFrame);
+			break;
+		case MCI_FORMAT_MSF:
+			dprintf_mcianim(stddeb,
+				"ANIM_CalcFrame // MSF %02u:%02u:%02u\n",
+				MCI_MSF_MINUTE(dwTime), MCI_MSF_SECOND(dwTime), 
+				MCI_MSF_FRAME(dwTime));
+			dwFrame += ANIMFRAMES_PERMIN * MCI_MSF_MINUTE(dwTime);
+			dwFrame += ANIMFRAMES_PERSEC * MCI_MSF_SECOND(dwTime);
+			dwFrame += MCI_MSF_FRAME(dwTime);
+			break;
+		default:
+			/* unknown format ! force TMSF ! ... */
+			dwFormatType = MCI_FORMAT_TMSF;
+		case MCI_FORMAT_TMSF:
+			wTrack = MCI_TMSF_TRACK(dwTime);
+			dprintf_mcianim(stddeb,
+				"ANIM_CalcFrame // TMSF %02u-%02u:%02u:%02u\n",
+				MCI_TMSF_TRACK(dwTime), MCI_TMSF_MINUTE(dwTime), 
+				MCI_TMSF_SECOND(dwTime), MCI_TMSF_FRAME(dwTime));
+			dprintf_mcianim(stddeb,
+				"ANIM_CalcFrame // TMSF trackpos[%u]=%lu\n",
+				wTrack, AnimDev[wDevID].lpdwTrackPos[wTrack - 1]);
+			dwFrame = AnimDev[wDevID].lpdwTrackPos[wTrack - 1];
+			dwFrame += ANIMFRAMES_PERMIN * MCI_TMSF_MINUTE(dwTime);
+			dwFrame += ANIMFRAMES_PERSEC * MCI_TMSF_SECOND(dwTime);
+			dwFrame += MCI_TMSF_FRAME(dwTime);
+			break;
+		}
+#endif
+	return dwFrame;
+}
+
+
 /**************************************************************************
 * 				ANIM_mciInfo			[internal]
 */
-DWORD ANIM_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms)
+static DWORD ANIM_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms)
 {
 #ifdef linux
 	dprintf_mcianim(stddeb,"ANIM_mciInfo(%u, %08lX, %p);\n", 
@@ -223,7 +320,7 @@ DWORD ANIM_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms)
 /**************************************************************************
 * 				ANIM_mciStatus		[internal]
 */
-DWORD ANIM_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
+static DWORD ANIM_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 {
 #ifdef linux
 	dprintf_mcianim(stddeb,"ANIM_mciStatus(%u, %08lX, %p);\n", 
@@ -310,115 +407,9 @@ DWORD ANIM_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 
 
 /**************************************************************************
-* 				ANIM_CalcTime			[internal]
-*/
-DWORD ANIM_CalcTime(UINT wDevID, DWORD dwFormatType, DWORD dwFrame)
-{
-	DWORD	dwTime = 0;
-#ifdef linux
-	UINT	wTrack;
-	UINT	wMinutes;
-	UINT	wSeconds;
-	UINT	wFrames;
-	dprintf_mcianim(stddeb,"ANIM_CalcTime(%u, %08lX, %lu);\n", 
-			wDevID, dwFormatType, dwFrame);
-TryAGAIN:
-	switch (dwFormatType) {
-		case MCI_FORMAT_MILLISECONDS:
-			dwTime = dwFrame / ANIMFRAMES_PERSEC * 1000;
-			dprintf_mcianim(stddeb,
-				"ANIM_CalcTime // MILLISECONDS %lu\n", dwTime);
-			break;
-		case MCI_FORMAT_MSF:
-			wMinutes = dwFrame / ANIMFRAMES_PERMIN;
-			wSeconds = (dwFrame - ANIMFRAMES_PERMIN * wMinutes) / ANIMFRAMES_PERSEC;
-			wFrames = dwFrame - ANIMFRAMES_PERMIN * wMinutes - 
-								ANIMFRAMES_PERSEC * wSeconds;
-			dwTime = MCI_MAKE_MSF(wMinutes, wSeconds, wFrames);
-			dprintf_mcianim(stddeb,"ANIM_CalcTime // MSF %02u:%02u:%02u -> dwTime=%lu\n",
-								wMinutes, wSeconds, wFrames, dwTime);
-			break;
-		case MCI_FORMAT_TMSF:
-			for (wTrack = 0; wTrack < AnimDev[wDevID].nTracks; wTrack++) {
-/*				dwTime += AnimDev[wDevID].lpdwTrackLen[wTrack - 1];
-				printf("Adding trk#%u curpos=%u \n", dwTime);
-				if (dwTime >= dwFrame) break; */
-				if (AnimDev[wDevID].lpdwTrackPos[wTrack - 1] >= dwFrame) break;
-				}
-			wMinutes = dwFrame / ANIMFRAMES_PERMIN;
-			wSeconds = (dwFrame - ANIMFRAMES_PERMIN * wMinutes) / ANIMFRAMES_PERSEC;
-			wFrames = dwFrame - ANIMFRAMES_PERMIN * wMinutes - 
-								ANIMFRAMES_PERSEC * wSeconds;
-			dwTime = MCI_MAKE_TMSF(wTrack, wMinutes, wSeconds, wFrames);
-			dprintf_mcianim(stddeb,
-				"ANIM_CalcTime // %02u-%02u:%02u:%02u\n",
-				wTrack, wMinutes, wSeconds, wFrames);
-			break;
-		default:
-			/* unknown format ! force TMSF ! ... */
-			dwFormatType = MCI_FORMAT_TMSF;
-			goto TryAGAIN;
-		}
-#endif
-	return dwTime;
-}
-
-
-/**************************************************************************
-* 				ANIM_CalcFrame			[internal]
-*/
-DWORD ANIM_CalcFrame(UINT wDevID, DWORD dwFormatType, DWORD dwTime)
-{
-	DWORD	dwFrame = 0;
-#ifdef linux
-	UINT	wTrack;
-	dprintf_mcianim(stddeb,"ANIM_CalcFrame(%u, %08lX, %lu);\n", 
-			wDevID, dwFormatType, dwTime);
-TryAGAIN:
-	switch (dwFormatType) {
-		case MCI_FORMAT_MILLISECONDS:
-			dwFrame = dwTime * ANIMFRAMES_PERSEC / 1000;
-			dprintf_mcianim(stddeb,
-				"ANIM_CalcFrame // MILLISECONDS %lu\n", dwFrame);
-			break;
-		case MCI_FORMAT_MSF:
-			dprintf_mcianim(stddeb,
-				"ANIM_CalcFrame // MSF %02u:%02u:%02u\n",
-				MCI_MSF_MINUTE(dwTime), MCI_MSF_SECOND(dwTime), 
-				MCI_MSF_FRAME(dwTime));
-			dwFrame += ANIMFRAMES_PERMIN * MCI_MSF_MINUTE(dwTime);
-			dwFrame += ANIMFRAMES_PERSEC * MCI_MSF_SECOND(dwTime);
-			dwFrame += MCI_MSF_FRAME(dwTime);
-			break;
-		case MCI_FORMAT_TMSF:
-			wTrack = MCI_TMSF_TRACK(dwTime);
-			dprintf_mcianim(stddeb,
-				"ANIM_CalcFrame // TMSF %02u-%02u:%02u:%02u\n",
-				MCI_TMSF_TRACK(dwTime), MCI_TMSF_MINUTE(dwTime), 
-				MCI_TMSF_SECOND(dwTime), MCI_TMSF_FRAME(dwTime));
-			dprintf_mcianim(stddeb,
-				"ANIM_CalcFrame // TMSF trackpos[%u]=%lu\n",
-				wTrack, AnimDev[wDevID].lpdwTrackPos[wTrack - 1]);
-			dwFrame = AnimDev[wDevID].lpdwTrackPos[wTrack - 1];
-			dwFrame += ANIMFRAMES_PERMIN * MCI_TMSF_MINUTE(dwTime);
-			dwFrame += ANIMFRAMES_PERSEC * MCI_TMSF_SECOND(dwTime);
-			dwFrame += MCI_TMSF_FRAME(dwTime);
-			break;
-		default:
-			/* unknown format ! force TMSF ! ... */
-			dwFormatType = MCI_FORMAT_TMSF;
-			goto TryAGAIN;
-		}
-#endif
-	return dwFrame;
-}
-
-
-
-/**************************************************************************
 * 				ANIM_mciPlay			[internal]
 */
-DWORD ANIM_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
+static DWORD ANIM_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 {
 #ifdef linux
 	int 	start, end;
@@ -457,7 +448,7 @@ DWORD ANIM_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 /**************************************************************************
 * 				ANIM_mciStop			[internal]
 */
-DWORD ANIM_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
+static DWORD ANIM_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
 #ifdef linux
 	dprintf_mcianim(stddeb,"ANIM_mciStop(%u, %08lX, %p);\n", 
@@ -480,7 +471,7 @@ DWORD ANIM_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 /**************************************************************************
 * 				ANIM_mciPause		[internal]
 */
-DWORD ANIM_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
+static DWORD ANIM_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
 #ifdef linux
 	dprintf_mcianim(stddeb,"ANIM_mciPause(%u, %08lX, %p);\n", 
@@ -503,7 +494,7 @@ DWORD ANIM_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 /**************************************************************************
 * 				ANIM_mciResume		[internal]
 */
-DWORD ANIM_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
+static DWORD ANIM_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
 #ifdef linux
 	dprintf_mcianim(stddeb,"ANIM_mciResume(%u, %08lX, %p);\n", 
@@ -526,7 +517,7 @@ DWORD ANIM_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 /**************************************************************************
 * 				ANIM_mciSeek			[internal]
 */
-DWORD ANIM_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
+static DWORD ANIM_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 {
 #ifdef linux
 	DWORD	dwRet;
@@ -566,7 +557,7 @@ DWORD ANIM_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 /**************************************************************************
 * 				ANIM_mciSet			[internal]
 */
-DWORD ANIM_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
+static DWORD ANIM_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 {
 #ifdef linux
 	dprintf_mcianim(stddeb,"ANIM_mciSet(%u, %08lX, %p);\n", 
@@ -614,15 +605,15 @@ DWORD ANIM_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 /**************************************************************************
 * 				ANIM_DriverProc		[sample driver]
 */
-LRESULT ANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
+LONG ANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg, 
 							DWORD dwParam1, DWORD dwParam2)
 {
 #ifdef linux
 	switch(wMsg) {
 		case DRV_LOAD:
-			return (LRESULT)1L;
+			return 1;
 		case DRV_FREE:
-			return (LRESULT)1L;
+			return 1;
 		case DRV_OPEN:
 		case MCI_OPEN_DRIVER:
 		case MCI_OPEN:
@@ -634,19 +625,19 @@ LRESULT ANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 			return ANIM_mciClose(dwDevID, dwParam1, 
 					(LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case DRV_ENABLE:
-			return (LRESULT)1L;
+			return 1;
 		case DRV_DISABLE:
-			return (LRESULT)1L;
+			return 1;
 		case DRV_QUERYCONFIGURE:
-			return (LRESULT)1L;
+			return 1;
 		case DRV_CONFIGURE:
 			MessageBox((HWND)NULL, "Sample MultiMedia Linux Driver !", 
 								"MMLinux Driver", MB_OK);
-			return (LRESULT)1L;
+			return 1;
 		case DRV_INSTALL:
-			return (LRESULT)DRVCNF_RESTART;
+			return DRVCNF_RESTART;
 		case DRV_REMOVE:
-			return (LRESULT)DRVCNF_RESTART;
+			return DRVCNF_RESTART;
 		case MCI_GETDEVCAPS:
 			return ANIM_mciGetDevCaps(dwDevID, dwParam1, 
 					(LPMCI_GETDEVCAPS_PARMS)PTR_SEG_TO_LIN(dwParam2));

@@ -386,8 +386,7 @@ void ListBoxAskMeasure(LPHEADLIST lphl, LPLISTSTRUCT lpls)
  
   *lpmeasure = lpls->mis;
   lpmeasure->itemHeight = lphl->StdItemHeight;
-  SendMessage(lphl->hParent, WM_MEASUREITEM,
-	      0, USER_HEAP_SEG_ADDR(hTemp));
+  SendMessage(lphl->hParent, WM_MEASUREITEM, 0, USER_HEAP_SEG_ADDR(hTemp));
 
   if (lphl->dwStyle & LBS_OWNERDRAWFIXED) {
     lphl->StdItemHeight = lpmeasure->itemHeight;
@@ -419,7 +418,7 @@ LPLISTSTRUCT ListBoxCreateItem(LPHEADLIST lphl, int id)
 
 int ListBoxInsertString(LPHEADLIST lphl, UINT uIndex, LPSTR newstr)
 {
-  LPLISTSTRUCT *lppls, lplsnew;
+  LPLISTSTRUCT *lppls, lplsnew, lpls;
   HANDLE       hStr;
   LPSTR	str;
   UINT	Count;
@@ -448,20 +447,25 @@ int ListBoxInsertString(LPHEADLIST lphl, UINT uIndex, LPSTR newstr)
   
   hStr = 0;
   if (HasStrings(lphl)) {
-    hStr = LIST_HEAP_ALLOC(lphl, GMEM_MOVEABLE, strlen(newstr) + 1);
+    hStr = LIST_HEAP_ALLOC(lphl, LMEM_MOVEABLE, strlen(newstr) + 1);
     str = (LPSTR)LIST_HEAP_ADDR(lphl, hStr);
     if (str == NULL) return LB_ERRSPACE;
     strcpy(str, newstr);
     lplsnew->itemText = str;
     /* I'm not so sure about the next one */
-    lplsnew->mis.itemData = LIST_HEAP_SEG_ADDR(lphl,hStr); 
+    lplsnew->mis.itemData = 0;
   } else {
     lplsnew->itemText = NULL;
     lplsnew->mis.itemData = (DWORD)newstr;
   }
 
-  lplsnew->mis.itemID = lphl->ItemsCount;
+  lplsnew->mis.itemID = uIndex;
   lplsnew->hData = hStr;
+  
+  /* adjust the itemID field of the following entries */
+  for(lpls = lplsnew->lpNext; lpls != NULL; lpls = lpls->lpNext) {
+      lpls->mis.itemID++;
+  }
  
   if (lphl->needMeasure) {
     ListBoxAskMeasure(lphl, lplsnew);
@@ -530,7 +534,7 @@ int ListBoxSetItemData(LPHEADLIST lphl, UINT uIndex, DWORD ItemData)
 
 int ListBoxDeleteString(LPHEADLIST lphl, UINT uIndex)
 {
-  LPLISTSTRUCT lpls;
+  LPLISTSTRUCT lpls, lpls2;
   UINT	Count;
 
   if (uIndex >= lphl->ItemsCount) return LB_ERR;
@@ -548,9 +552,14 @@ int ListBoxDeleteString(LPHEADLIST lphl, UINT uIndex)
       lpls2 = lpls;
       lpls = (LPLISTSTRUCT)lpls->lpNext;
     }
-    lpls2->lpNext = (LPLISTSTRUCT)lpls->lpNext;
+    lpls2->lpNext = lpls->lpNext;
   }
 
+  /* adjust the itemID field of the following entries */
+  for(lpls2 = lpls->lpNext; lpls2 != NULL; lpls2 = lpls2->lpNext) {
+      lpls2->mis.itemID--;
+  }
+ 
   lphl->ItemsCount--;
 
   if (lpls->hData != 0) LIST_HEAP_FREE(lphl, lpls->hData);

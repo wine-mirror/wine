@@ -29,8 +29,8 @@ id	12
 75 stub INTERRUPTREGISTER
 76 stub INTERRUPTUNREGISTER
 77 stub TERMINATEAPP
-78 pascal MemoryRead(word long ptr long) MemoryRead
-79 pascal MemoryWrite(word long ptr long) MemoryWrite
+78 pascal   MemoryRead(word long ptr long) MemoryRead
+79 pascal   MemoryWrite(word long ptr long) MemoryWrite
 80 stub TIMERCOUNT
 81 stub TASKSETCSIP
 82 stub TASKGETCSIP

@@ -10,6 +10,8 @@
 #include "db_disasm.h"
 #include "regpos.h"
 
+extern char * find_nearest_symbol( unsigned int seg, unsigned int addr );
+
 extern int * regval;
 extern unsigned int dbg_mask;
 extern unsigned int dbg_mode;
@@ -19,29 +21,14 @@ void application_not_running()
   fprintf(stderr,"Application not running\n");
 }
 
-void print_address(unsigned int addr, FILE * outfile, int addrlen)
+void print_address( unsigned int segment, unsigned int addr, int addrlen )
 {
-    extern char * find_nearest_symbol(unsigned short, unsigned int *);
-    char *name;
+    char *name = find_nearest_symbol( segment, addr );
 
-    if (addrlen == 16)
-    {
-        name = find_nearest_symbol( addr >> 16,
-                                    (unsigned int *)(addr & 0xffff) );
-        if (name)
-            fprintf( outfile, "0x%4.4x:0x%4.4x (%s)",
-                     addr >> 16, addr & 0xffff, name );
-        else
-            fprintf( outfile, "0x%4.4x:0x%4.4x", addr >> 16, addr & 0xffff );
-    }
-    else
-    {
-        name = find_nearest_symbol(0, (unsigned int *) addr);
-	if(name)
-		fprintf(outfile,"0x%8.8x(%s)", addr, name);
-	else
-		fprintf(outfile,"0x%8.8x", addr);
-    }
+    if (segment) fprintf( stderr, "0x%04x:", segment );
+    if (addrlen == 16) fprintf( stderr, "0x%04x", addr );
+    else fprintf( stderr, "0x%08x", addr );
+    if (name) fprintf( stderr, " (%s)", name );
 }
 
 
@@ -82,7 +69,7 @@ void info_stack(){
 	}
 
 	fprintf(stderr,"Stack dump:\n");
-	dump = (int*) SC_EIP(dbg_mask);
+	dump = (int*) SC_ESP(dbg_mask);
 	for(i=0; i<22; i++) 
 	{
 	    fprintf(stderr," %8.8x", *dump++);
@@ -93,24 +80,28 @@ void info_stack(){
 }
 
 
-void examine_memory(int addr, int count, char format){
-	char * pnt;
-	unsigned int * dump;
-	unsigned short int * wdump;
-	int i;
+void examine_memory( unsigned int segment, unsigned int addr,
+                     int count, char format )
+{
+    char * pnt;
+    unsigned int * dump;
+    unsigned short int * wdump;
+    int i;
 
-	if((addr & 0xffff0000) == 0 && dbg_mode == 16)
-            addr |= (format == 'i' ? SC_CS : SC_DS) << 16;
+    if (segment == 0xffffffff)
+        segment = (dbg_mode == 32) ? 0 : (format == 'i' ? SC_CS : SC_DS);
+    
+    if (format != 'i' && count > 1)
+    {
+        print_address( segment, addr, dbg_mode );
+        fprintf(stderr,":  ");
+    }
 
-	if(format != 'i' && count > 1) {
-		print_address(addr, stderr, dbg_mode);
-		fprintf(stderr,":  ");
-	};
+    pnt = segment ? (char *)PTR_SEG_OFF_TO_LIN(segment,addr) : (char *)addr;
 
-	switch(format){
+    switch(format)
+    {
 	case 's':
-		pnt = dbg_mode == 16 ? (char *)PTR_SEG_TO_LIN(addr)
-                                     : (char *)addr;
 		if (count == 1) count = 256;
 	        while(*pnt && count) {
 			fputc( *pnt++, stderr);
@@ -121,22 +112,21 @@ void examine_memory(int addr, int count, char format){
 
 	case 'i':
 		for(i=0; i<count; i++) {
-			print_address(addr, stderr, dbg_mode);
+			print_address( segment, addr, dbg_mode );
 			fprintf(stderr,":  ");
-			addr = db_disasm( addr, 0, (dbg_mode == 16) );
+			addr = db_disasm( segment, addr, (dbg_mode == 16) );
 			fprintf(stderr,"\n");
 		};
 		return;
 	case 'x':
-		dump = dbg_mode == 16 ? (unsigned int *)PTR_SEG_TO_LIN(addr)
-                                      : (unsigned int *)addr;
+		dump = (unsigned int *)pnt;
 		for(i=0; i<count; i++) 
 		{
 			fprintf(stderr," %8.8x", *dump++);
                         addr += 4;
 			if ((i % 8) == 7) {
 				fprintf(stderr,"\n");
-				print_address(addr, stderr, dbg_mode);
+				print_address( segment, addr, dbg_mode );
 				fprintf(stderr,":  ");
 			};
 		}
@@ -144,15 +134,14 @@ void examine_memory(int addr, int count, char format){
 		return;
 	
 	case 'd':
-		dump = dbg_mode == 16 ? (unsigned int *)PTR_SEG_TO_LIN(addr)
-                                      : (unsigned int *)addr;
+		dump = (unsigned int *)pnt;
 		for(i=0; i<count; i++) 
 		{
 			fprintf(stderr," %d", *dump++);
                         addr += 4;
 			if ((i % 8) == 7) {
 				fprintf(stderr,"\n");
-				print_address(addr, stderr, dbg_mode);
+				print_address( segment, addr, dbg_mode );
 				fprintf(stderr,":  ");
 			};
 		}
@@ -160,15 +149,14 @@ void examine_memory(int addr, int count, char format){
 		return;
 	
 	case 'w':
-		wdump = dbg_mode == 16 ? (unsigned short *)PTR_SEG_TO_LIN(addr)
-                                       : (unsigned short *)addr;
+		wdump = (unsigned short *)pnt;
 		for(i=0; i<count; i++) 
 		{
 			fprintf(stderr," %x", *wdump++);
                         addr += 2;
 			if ((i % 10) == 7) {
 				fprintf(stderr,"\n");
-				print_address(addr, stderr, dbg_mode);
+				print_address( segment, addr, dbg_mode );
 				fprintf(stderr,":  ");
 			};
 		}
@@ -176,8 +164,6 @@ void examine_memory(int addr, int count, char format){
 		return;
 	
 	case 'c':
-		pnt = dbg_mode == 16 ? (char *)PTR_SEG_TO_LIN(addr)
-                                     : (char *)addr;
 		for(i=0; i<count; i++) 
 		{
 			if(*pnt < 0x20) {
@@ -188,7 +174,7 @@ void examine_memory(int addr, int count, char format){
                         addr++;
 			if ((i % 32) == 7) {
 				fprintf(stderr,"\n");
-				print_address(addr, stderr, dbg_mode);
+				print_address( segment, addr, dbg_mode );
 				fprintf(stderr,":  ");
 			};
 		}
@@ -196,15 +182,13 @@ void examine_memory(int addr, int count, char format){
 		return;
 	
 	case 'b':
-		pnt = dbg_mode == 16 ? (char *)PTR_SEG_TO_LIN(addr)
-                                     : (char *)addr;
 		for(i=0; i<count; i++) 
 		{
 			fprintf(stderr," %02x", (*pnt++) & 0xff);
                         addr++;
 			if ((i % 32) == 7) {
 				fprintf(stderr,"\n");
-				print_address(addr, stderr, dbg_mode);
+				print_address( segment, addr, dbg_mode );
 				fprintf(stderr,":  ");
 			};
 		}
@@ -285,7 +269,7 @@ void dbg_bt(){
     /* See if in 32 bit mode or not.  Assume GDT means 32 bit. */
     if ((cs & 7) != 7) {
       fprintf(stderr,"%d ",frameno++);
-      print_address(frame->u.win32.saved_ip,stderr,32);
+      print_address( 0, frame->u.win32.saved_ip, 32 );
       fprintf( stderr, "\n" );
       if (!frame->u.win32.saved_ip) break;
       frame = (struct frame *) frame->u.win32.saved_bp;

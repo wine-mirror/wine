@@ -230,6 +230,23 @@ HCURSOR LoadCursor(HANDLE instance, SEGPTR cursor_name)
 
 
 
+/***********************************************************************
+ *           CreateCursorIconIndirect           (USER.408)
+ *
+ * Returns handle to either an icon or a cursor. Used by CreateCursor
+ * and CreateIcon in  Windoze, but will use same in this version.
+ */
+HANDLE CreateCursorIconIndirect(HANDLE hInstance, LPCURSORICONINFO lpInfo,
+                                LPSTR lpANDBits, /* bitmap data */
+                                LPSTR lpXORBits /* masking data */)
+{
+        return CreateIcon(hInstance,
+                lpInfo->nWidth, lpInfo->nHeight,
+                lpInfo->byPlanes, lpInfo->byBitsPix,
+                lpANDBits, lpXORBits);
+}
+
+
 /**********************************************************************
  *			CreateCursor [USER.406]
  */

@@ -20,7 +20,7 @@ id	3
 17  pascal OffsetViewportOrg(word s_word s_word) OffsetViewportOrg
 18  pascal ScaleViewportExt(word s_word s_word s_word s_word) ScaleViewportExt
 19  pascal16 LineTo(word s_word s_word) LineTo
-20  pascal MoveTo(word s_word s_word) MoveTo
+20  pascal   MoveTo(word s_word s_word) MoveTo
 21  pascal16 ExcludeClipRect(word s_word s_word s_word s_word) ExcludeClipRect
 22  pascal16 IntersectClipRect(word s_word s_word s_word s_word)
              IntersectClipRect
@@ -35,7 +35,7 @@ id	3
              RoundRect
 29  pascal16 PatBlt(word s_word s_word s_word s_word long) PatBlt
 30  pascal16 SaveDC(word) SaveDC
-31  pascal SetPixel(word s_word s_word long) SetPixel
+31  pascal   SetPixel(word s_word s_word long) SetPixel
 32  pascal16 OffsetClipRgn(word s_word s_word) OffsetClipRgn
 33  pascal16 TextOut(word s_word s_word ptr word) TextOut
 34  pascal16 BitBlt( word s_word s_word s_word s_word word s_word s_word long)
@@ -123,7 +123,7 @@ id	3
 125 pascal16 CreateMetaFile(ptr) CreateMetaFile
 126 pascal16 CloseMetaFile(word) CloseMetaFile
 127 pascal16 DeleteMetaFile(word) DeleteMetaFile
-128 pascal MulDiv(s_word s_word s_word) MulDiv
+128 pascal16 MulDiv(s_word s_word s_word) MulDiv
 129 pascal16 SaveVisRgn(word) SaveVisRgn
 130 pascal16 RestoreVisRgn(word) RestoreVisRgn
 131 pascal16 InquireVisRgn(word) InquireVisRgn
@@ -212,7 +212,7 @@ id	3
 313 pascal16 GetRasterizerCaps(ptr word) GetRasterizerCaps
 314 stub EngineExtTextOut
 330 pascal16 EnumFontFamilies(word ptr segptr long) EnumFontFamilies
-332 stub GetKerningPairs
+332 pascal16 GetKerningPairs(word word ptr) GetKerningPairs
 345 pascal16 GetTextAlign(word) GetTextAlign
 346 pascal16 SetTextAlign(word word) SetTextAlign
 348 pascal16 Chord(word s_word s_word s_word s_word s_word s_word

@@ -1,9 +1,9 @@
 name	OLE2
 id	15
 
-1 stub OLEBUILDVERSION
-2 stub OLEINITIALIZE
-3 stub OLEUNINITIALIZE
+1 stub OleBuildVersion
+2 pascal OleInitialize(ptr) OleInitialize
+3 pascal OleUninitialize() OleUninitialize
 4 stub DLLGETCLASSOBJECT
 #5 WEP
 6 stub OLEQUERYLINKFROMDATA

@@ -1,9 +1,9 @@
 name	compobj
 id	22
 
-1 stub COBUILDVERSION
-2 stub COINITIALIZE
-3 stub COUNINITIALIZE
+1 pascal CoBuildVersion() CoBuildVersion
+2 pascal CoInitialize(ptr) CoInitialize
+3 pascal CoUninitialize() CoUnitialize
 4 stub COGETMALLOC
 5 stub COREGISTERCLASSOBJECT
 6 stub COREVOKECLASSOBJECT

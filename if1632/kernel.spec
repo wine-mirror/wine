@@ -211,7 +211,7 @@ id	1
 #327 K327
 328 stub _DebugOutput
 #329 K329
-332 stub THHOOK
+#332 stub THHOOK
 334 pascal16 IsBadReadPtr(segptr word) IsBadReadPtr
 335 pascal16 IsBadWritePtr(segptr word) IsBadWritePtr
 336 pascal16 IsBadCodePtr(segptr) IsBadCodePtr

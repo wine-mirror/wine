@@ -37,7 +37,7 @@ int do_int26(struct sigcontext_struct *context)
 	}
 		
 	dprintf_int(stdnimp,"int26: abs diskwrite, drive %d, sector %ld, "
-	"count %ld, buffer %d\n", (int)EAX & 0xff, begin, length, (int) dataptr);
+	"count %ld, buffer %d\n", AL, begin, length, (int) dataptr);
 
 	ResetCflag;
 

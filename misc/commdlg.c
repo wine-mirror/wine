@@ -210,23 +210,23 @@ static LPSTR FILEDLG_GetFileType(LPSTR ptr, WORD index)
 static LONG FILEDLG_WMDrawItem(HWND hWnd, WORD wParam, LONG lParam)
 {
     LPDRAWITEMSTRUCT lpdis = (LPDRAWITEMSTRUCT)PTR_SEG_TO_LIN(lParam);
-    LPSTR str;
+    char str[512];
     HBRUSH hBrush;
     HBITMAP hBitmap, hPrevBitmap;
     BITMAP bm;
     HDC hMemDC;
-    
+
+    strcpy(str, "");
     if (lpdis->CtlType == ODT_LISTBOX && lpdis->CtlID == lst1) {
 	hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
 	SelectObject(lpdis->hDC, hBrush);
 	FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
-	str = (LPSTR) PTR_SEG_TO_LIN(lpdis->itemData);
-	if (str != NULL)  {
-	    TextOut(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
-		    str, strlen(str));
-	    if (lpdis->itemState != 0) {
-		InvertRect(lpdis->hDC, &lpdis->rcItem);
-	    }
+	SendMessage(lpdis->hwndItem, LB_GETTEXT, lpdis->itemID, 
+		    MAKE_SEGPTR(str));
+	TextOut(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
+		str, strlen(str));
+	if (lpdis->itemState != 0) {
+	    InvertRect(lpdis->hDC, &lpdis->rcItem);
 	}
 	return TRUE;
     }
@@ -235,21 +235,21 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WORD wParam, LONG lParam)
 	hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
 	SelectObject(lpdis->hDC, hBrush);
 	FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
-	str = (LPSTR) PTR_SEG_TO_LIN(lpdis->itemData);
-	if (str != NULL)  {
-	    hBitmap = hFolder;
-	    GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm);
-	    TextOut(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
-		    lpdis->rcItem.top, str, strlen(str));
-	    hMemDC = CreateCompatibleDC(lpdis->hDC);
-	    hPrevBitmap = SelectObject(hMemDC, hBitmap);
-	    BitBlt(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
-		   bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-	    SelectObject(hMemDC, hPrevBitmap);
-	    DeleteDC(hMemDC);
-	    if (lpdis->itemState != 0) {
-		InvertRect(lpdis->hDC, &lpdis->rcItem);
-	    }
+	SendMessage(lpdis->hwndItem, LB_GETTEXT, lpdis->itemID, 
+		    MAKE_SEGPTR(str));
+
+	hBitmap = hFolder;
+	GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm);
+	TextOut(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
+		lpdis->rcItem.top, str, strlen(str));
+	hMemDC = CreateCompatibleDC(lpdis->hDC);
+	hPrevBitmap = SelectObject(hMemDC, hBitmap);
+	BitBlt(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
+	       bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+	SelectObject(hMemDC, hPrevBitmap);
+	DeleteDC(hMemDC);
+	if (lpdis->itemState != 0) {
+	    InvertRect(lpdis->hDC, &lpdis->rcItem);
 	}
 	return TRUE;
     }
@@ -257,28 +257,27 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WORD wParam, LONG lParam)
 	hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
 	SelectObject(lpdis->hDC, hBrush);
 	FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
-	str = (LPSTR) PTR_SEG_TO_LIN(lpdis->itemData);
-	if (str != NULL) {
-	    switch(str[2]) {
-	     case 'a': case 'b':
-		hBitmap = hFloppy;
-		break;
-	     default:
-		hBitmap = hHDisk;
-		break;
-	    }
-	    GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm);
-	    TextOut(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
-		    lpdis->rcItem.top, str, strlen(str));
-	    hMemDC = CreateCompatibleDC(lpdis->hDC);
-	    hPrevBitmap = SelectObject(hMemDC, hBitmap);
-	    BitBlt(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
-		   bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-	    SelectObject(hMemDC, hPrevBitmap);
-	    DeleteDC(hMemDC);
-	    if (lpdis->itemState != 0) {
-		InvertRect(lpdis->hDC, &lpdis->rcItem);
-	    }
+	SendMessage(lpdis->hwndItem, CB_GETLBTEXT, lpdis->itemID, 
+		    MAKE_SEGPTR(str));
+	switch(str[2]) {
+	 case 'a': case 'b':
+	    hBitmap = hFloppy;
+	    break;
+	 default:
+	    hBitmap = hHDisk;
+	    break;
+	}
+	GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm);
+	TextOut(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
+		lpdis->rcItem.top, str, strlen(str));
+	hMemDC = CreateCompatibleDC(lpdis->hDC);
+	hPrevBitmap = SelectObject(hMemDC, hBitmap);
+	BitBlt(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
+	       bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+	SelectObject(hMemDC, hPrevBitmap);
+	DeleteDC(hMemDC);
+	if (lpdis->itemState != 0) {
+	    InvertRect(lpdis->hDC, &lpdis->rcItem);
 	}
 	return TRUE;
     }

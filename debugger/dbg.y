@@ -43,7 +43,6 @@ void mode_command(int);
 %token SET
 %token MODE
 %token PRINT
-%token FILE_IDENTIFIER
 %token IDENTIFIER
 %token NO_SYMBOL
 %token SYMBOLFILE
@@ -64,7 +63,7 @@ void mode_command(int);
 	| CONT '\n'        { return 0; }
 	| 'c' '\n'         { return 0; }
 	| ABORT '\n'       { kill(getpid(), SIGABRT); }
- 	| SYMBOLFILE FILE_IDENTIFIER '\n' { read_symboltable($2); }
+ 	| SYMBOLFILE IDENTIFIER '\n' { read_symboltable($2); }
 	| DEFINE IDENTIFIER expr '\n'  { add_hash($2, 0, $3); }
 	| MODE NUM	   { mode_command($2); }
 	| ENABLE NUM	   { enable_break($2); }
@@ -82,18 +81,17 @@ deposit_command:
 
 
 x_command:
-	  'x' expr  '\n' { examine_memory($2, 1, 'x'); }
-	| 'x' '/' fmt expr  '\n' { examine_memory($4, 1, $3); }
-	| 'x' '/' NUM fmt expr  '\n' { examine_memory($5, $3, $4); }
+	  'x' expr  '\n' { examine_memory( 0xffffffff, $2, 1, 'x'); }
+	| 'x' '/' fmt expr  '\n' { examine_memory( 0xffffffff, $4, 1, $3); }
+	| 'x' '/' NUM fmt expr  '\n' { examine_memory( 0xffffffff, $5, $3, $4); }
 
 print:
 	  'p'
 	| PRINT
 	
  print_command:
-	  print expr '\n' { examine_memory(((unsigned int) &$2 ), 1, 'x'); }
-	| print '/' fmt expr '\n' { examine_memory((unsigned int) &$4, 1, $3); }
-	| print '/' NUM fmt expr '\n' { examine_memory((unsigned int) &$5, $3, $4); }
+	  print expr '\n' { examine_memory( 0, ((unsigned int) &$2 ), 1, 'x'); }
+	| print '/' fmt expr '\n' { examine_memory( 0, (unsigned int) &$4, 1, $3); }
 
  fmt:  'x'     { $$ = 'x'; }
 	| 'd'  { $$ = 'd'; }
@@ -162,15 +160,10 @@ wine_debug(int signal, int * regs)
 	yyin = stdin;
 	regval = regs ? regs : dummy_regs;
 
-	if (SC_CS == WINE_CODE_SELECTOR)
-        {
-		dbg_mask = 0xffffffff;
-		dbg_mode = 32;
-	} else
-        {
-		dbg_mask = 0xffff;
-		dbg_mode = 16;
-	}
+	if (SC_CS == WINE_CODE_SELECTOR) dbg_mode = 32;
+        else dbg_mode = (GET_SEL_FLAGS(SC_CS) & LDT_FLAGS_32BIT) ? 32 : 16;
+        dbg_mask = (dbg_mode == 32) ? 0xffffffff : 0xffff;
+
 	fprintf(stderr,"In %d bit mode.\n", dbg_mode);
 
 	if(dbg_mode == 32 && !loaded_symbols)
@@ -190,8 +183,7 @@ wine_debug(int signal, int * regs)
 	    unsigned int addr;
 	    int bpnum;
 	    addr = SC_EIP(dbg_mask);
-	    if((addr & 0xffff0000) == 0 && dbg_mode == 16)
-	      addr = PTR_SEG_OFF_TO_LIN( SC_CS, addr );
+	    if (dbg_mode == 16) addr = PTR_SEG_OFF_TO_LIN( SC_CS, addr );
 	    if(should_continue(bpnum=get_bpnum(addr))){
 		insert_break(1);
 		return;
@@ -201,7 +193,7 @@ wine_debug(int signal, int * regs)
 
 	/* Show where we crashed */
 	if(regs)
-	  examine_memory(SC_EIP(dbg_mask), 1, 'i');
+	  examine_memory(0xffffffff, SC_EIP(dbg_mask), 1, 'i');
 
 	issue_prompt();
 

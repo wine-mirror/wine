@@ -24,6 +24,8 @@ static char Copyright [] = "Copyright (C) 1993 Miguel de Icaza";
 #include "wine.h"
 #include "windows.h"
 #include "dos_fs.h"
+#include "module.h"
+#include "toolhelp.h"
 #include "stddebug.h"
 /* #define DEBUG_PROFILE */
 #include "debug.h"
@@ -48,6 +50,7 @@ typedef struct TSecHeader {
     
 typedef struct TProfile {
     char *FileName;
+    char *FullName;
     TSecHeader *Section;
     struct TProfile *link;
     int changed;
@@ -70,7 +73,7 @@ static TSecHeader *is_loaded (char *FileName)
     return 0;
 }
 
-static char *GetIniFileName(char *name)
+static char *GetIniFileName(char *name, char *dir)
 {
 	char temp[256];
 
@@ -79,15 +82,15 @@ static char *GetIniFileName(char *name)
 
 	if (strchr(name, '\\'))
 		return DOS_GetUnixFileName(name);
-		
-	GetWindowsDirectory(temp, sizeof(temp) );
-	strcat(temp, "\\");
+
+        strcpy(temp, dir);
+        strcat(temp, "\\");
 	strcat(temp, name);
 	
 	return DOS_GetUnixFileName(temp);
 }
 
-static TSecHeader *load (char *filename)
+static TSecHeader *load (char *filename, char **pfullname)
 {
     FILE *f;
     int state;
@@ -95,13 +98,37 @@ static TSecHeader *load (char *filename)
     char CharBuffer [STRSIZE];
     char *next, *file;
     char c;
+    char path[MAX_PATH+1];
 
-    file = GetIniFileName(filename);
+    /* Try the Windows directory */
+
+    GetWindowsDirectory(path, sizeof(path));
+    file = GetIniFileName(filename, path);
 
     dprintf_profile(stddeb,"Load %s\n", file);
-    if ((f = fopen (file, "r"))==NULL)
+    f = fopen(file, "r");
+    
+    if (f == NULL) {
+	/* Try the path of the current executable */
+    
+	if (GetCurrentTask())
+	{
+	    char *p;
+	    GetModuleFileName( GetCurrentTask(), path, MAX_PATH );
+	    if ((p = strrchr( path, '\\' )))
+	    {
+		p[1] = '\0';
+		file = GetIniFileName(filename, path);
+		f = fopen(file, "r");
+	    }
+	}
+    }
+    if (f == NULL) {
+	fprintf(stderr, "profile.c: load() can't find file %s\n", filename);
 	return NULL;
-
+    }
+    
+    *pfullname = strdup(file);
     dprintf_profile(stddeb,"Loading %s\n", file);
 
 
@@ -220,7 +247,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 	New = (TProfile *) xmalloc (sizeof (TProfile));
 	New->link = Base;
 	New->FileName = strdup (FileName);
-	New->Section = load (FileName);
+	New->Section = load (FileName, &New->FullName);
 	New->changed = FALSE;
 	Base = New;
 	section = New->Section;
@@ -242,7 +269,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 		if (left < 1) {
 			dprintf_profile(stddeb,"GetSetProfile // No more storage for enum !\n");
 			return (Size - 2);
-			}
+		}
 		slen = min(strlen(key->KeyName) + 1, left);
 		dprintf_profile(stddeb,"GetSetProfile // strncpy(%p, %p, %d);\n", 
 				ReturnedString, key->Value, slen);
@@ -376,7 +403,7 @@ static void dump_profile (TProfile *p)
     dump_profile (p->link);
     if(!p->changed)
 	return;
-    if ((profile = fopen (GetIniFileName(p->FileName), "w")) != NULL){
+    if ((profile = fopen (p->FullName, "w")) != NULL){
 	dump_sections (profile, p->Section);
 	fclose (profile);
     }

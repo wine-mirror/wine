@@ -10,7 +10,7 @@ struct dosdirent {
 	DIR *ds;
 	char unixpath[256];
 	char filename[256];
-	char filemask[12];
+	char filemask[13];
 	char attribute;
 	char search_attribute;
 	long filesize;
@@ -30,7 +30,9 @@ struct fcb {
 	BYTE dummy2[9];
 };
 
-#define DOSVERSION 0x0005;      /* Major version in low byte: DOS 5.00 */
+#define DOSVERSION 0x0005      /* Major version in low byte: DOS 5.00 */
+#define WINVERSION 0x0a03      /* Windows version 3.10 */
+
 #define MAX_DOS_DRIVES	26
 
 extern WORD ExtendedError;

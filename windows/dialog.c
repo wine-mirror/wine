@@ -398,7 +398,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 	SendMessage( hwnd, WM_SETFONT, dlgInfo->hUserFont, 0 );
     if (SendMessage( hwnd, WM_INITDIALOG, dlgInfo->hwndFocus, param ))
 	SetFocus( dlgInfo->hwndFocus );
-    ShowWindow(hwnd, SW_SHOW);
+    if (template.header->style & WS_VISIBLE) ShowWindow(hwnd, SW_SHOW);
     return hwnd;
 }
 

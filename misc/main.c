@@ -550,7 +550,7 @@ void MessageBeep(WORD i)
  */
 LONG GetVersion(void)
 {
-	return( 0x03300a03 ); /*  dos 3.30 & win 3.10 */
+    return MAKELONG( WINVERSION, DOSVERSION );
 }
 
 /***********************************************************************

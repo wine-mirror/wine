@@ -372,6 +372,7 @@ HICON LoadIcon( HANDLE instance, SEGPTR icon_name )
     if (bih->biSize != sizeof(BITMAPINFOHEADER)) return 0;
     lpico->hBitmap = CreateDIBitmap( hdc, &pInfo->bmiHeader, CBM_INIT,
                                     (char*)bmi + size, pInfo, DIB_RGB_COLORS );
+
     if (bih->biSizeImage == 0)
     {
 	if (bih->biCompression != BI_RGB)
@@ -381,20 +382,18 @@ HICON LoadIcon( HANDLE instance, SEGPTR icon_name )
 	    ReleaseDC( 0, hdc); 
 	    return 0;
         }
-	bih->biSizeImage = DIB_GetImageWidthBytes(bih->biWidth,bih->biBitCount)
-                             * bih->biHeight;
+	bih->biSizeImage = (DIB_GetImageWidthBytes(bih->biWidth,bih->biBitCount) +
+                     DIB_GetImageWidthBytes(bih->biWidth,1)) * bih->biHeight/2;
     }
     bits = (char *)bmi + size +
              bih->biSizeImage * bih->biBitCount / (bih->biBitCount+1);
     bih->biBitCount = 1;
     bih->biClrUsed = bih->biClrImportant = 2;
-    rgbq = &bmi->bmiColors[0];
+    rgbq = &pInfo->bmiColors[0];
     rgbq[0].rgbBlue = rgbq[0].rgbGreen = rgbq[0].rgbRed = 0x00;
     rgbq[1].rgbBlue = rgbq[1].rgbGreen = rgbq[1].rgbRed = 0xff;
     rgbq[0].rgbReserved = rgbq[1].rgbReserved = 0;
     lpico->hBitMask = CreateDIBitmap(hdc, &pInfo->bmiHeader, CBM_INIT,
-/*  	(LPSTR)bmi + bih->biSizeImage - sizeof(BITMAPINFOHEADER) / 2 - 4,
-   (LPSTR)lp + bih->biSizeImage + bih->biSize + 4*lpicodesc->ColorCount, */
                                      bits, pInfo, DIB_RGB_COLORS );
     FreeResource( rsc_mem );
     ReleaseDC( 0, hdc);
@@ -612,19 +611,20 @@ LoadString(HANDLE instance, WORD resource_id, LPSTR buffer, int buflen)
     for (i = 0; i < string_num; i++)
 	p += *p + 1;
     
+    dprintf_resource( stddeb, "strlen = %d\n", (int)*p );
+    
     i = min(buflen - 1, *p);
-	if (i > 0) {
-		memcpy(buffer, p + 1, i);
-		buffer[i] = '\0';
-		}
-	else {
-		if (buflen > 1) {
-			buffer[0] = '\0';
-			return 0;
-			}
-		fprintf(stderr,"LoadString // I dont know why , but caller give buflen=%d *p=%d !\n", buflen, *p);
-		fprintf(stderr,"LoadString // and try to obtain string '%s'\n", p + 1);
-		}
+    if (i > 0) {
+	memcpy(buffer, p + 1, i);
+	buffer[i] = '\0';
+    } else {
+	if (buflen > 1) {
+	    buffer[0] = '\0';
+	    return 0;
+	}
+	fprintf(stderr,"LoadString // I dont know why , but caller give buflen=%d *p=%d !\n", buflen, *p);
+	fprintf(stderr,"LoadString // and try to obtain string '%s'\n", p + 1);
+    }
     FreeResource( hmem );
 
     dprintf_resource(stddeb,"LoadString // '%s' copied !\n", buffer);

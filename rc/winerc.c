@@ -3,7 +3,6 @@
  * Copyright  Martin von Loewis, 1994
  *
  */
-static char Copyright[] = "Copyright Martin von Loewis, 1994";
 
 #include <stdio.h>
 #include <stdlib.h>

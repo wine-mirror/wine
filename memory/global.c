@@ -307,7 +307,6 @@ SEGPTR WIN16_GlobalLock( HGLOBAL handle )
  */
 LPSTR GlobalLock( HGLOBAL handle )
 {
-    dprintf_global( stddeb, "GlobalLock: %04x\n", handle );
     if (!handle) return 0;
     return (LPSTR)GET_ARENA_PTR(handle)->base;
 }
@@ -452,7 +451,7 @@ WORD GlobalDOSFree( WORD sel )
  */
 LONG SetSwapAreaSize( WORD size )
 {
-    dprintf_heap(stdnimp, "STUB: SetSwapAreaSize(%d)\n", size );
+    dprintf_global(stdnimp, "STUB: SetSwapAreaSize(%d)\n", size );
     return MAKELONG( size, 0xffff );
 }
 

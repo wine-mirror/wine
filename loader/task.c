@@ -529,6 +529,9 @@ void InitTask( struct sigcontext_struct context )
     static int firstTask = 1;
     TDB *pTask;
     NE_MODULE *pModule;
+    SEGTABLEENTRY *pSegTable;
+    INSTANCEDATA *pinstance;
+    LONG stacklow, stackhi;
 
     context.sc_eax = 0;
     if (!(pTask = (TDB *)GlobalLock( hCurrentTask ))) return;
@@ -567,6 +570,23 @@ void InitTask( struct sigcontext_struct context )
     context.sc_esi = pTask->hPrevInstance;
     context.sc_edi = pTask->hInstance;
     context.sc_es  = pTask->hPDB;
+
+    /* Initialize the local heap */
+    if ( pModule->heap_size )
+    {
+        LocalInit( pTask->hInstance, 0, pModule->heap_size );
+    }    
+
+
+    /* Initialize the INSTANCEDATA structure */
+    pSegTable = NE_SEG_TABLE( pModule );
+    stacklow = pSegTable[pModule->ss - 1].minsize;
+    stackhi  = stacklow + pModule->stack_size;
+    if (stackhi > 0xffff) stackhi = 0xffff;
+    pinstance = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN(CURRENT_DS, 0);
+    pinstance->stackbottom = stackhi; /* yup, that's right. Confused me too. */
+    pinstance->stacktop    = stacklow; 
+    pinstance->stackmin    = IF1632_Saved16_sp;
 }
 
 
@@ -585,8 +605,8 @@ BOOL WaitEvent( HTASK hTask )
         return FALSE;
     }
     TASK_SCHEDULE();
-    /* When we get back here, we have an event */
-    pTask->nEvents--;
+    /* When we get back here, we have an event (or the task is the only one) */
+    if (pTask->nEvents > 0) pTask->nEvents--;
     return TRUE;
 }
 

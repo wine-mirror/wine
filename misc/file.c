@@ -86,19 +86,19 @@ INT _lread (INT hFile, LPSTR lpBuffer, WORD wBytes)
 /****************************************************************************
  _lwrite
 ****************************************************************************/
-INT _lwrite (INT hFile, LPSTR lpBuffer, WORD wBytes)
+INT _lwrite (INT hFile, LPCSTR lpBuffer, WORD wBytes)
 {
-	int result;
+    int result;
 
-  dprintf_file(stddeb, "_lwrite: handle %d, buffer = %ld, length = %d\n",
-	  		hFile, (long) lpBuffer, wBytes);
+    dprintf_file(stddeb, "_lwrite: handle %d, buffer = %ld, length = %d\n",
+		 hFile, (long) lpBuffer, wBytes);
 
     result = write (hFile, lpBuffer, wBytes);
 
-	if (result == -1)
-  		return HFILE_ERROR;
-  	else
-  		return result;
+    if (result == -1)
+        return HFILE_ERROR;
+    else
+        return result;
 }
 
 /***************************************************************************
@@ -106,11 +106,16 @@ INT _lwrite (INT hFile, LPSTR lpBuffer, WORD wBytes)
  ***************************************************************************/
 INT _lclose (INT hFile)
 {
-    	dprintf_file(stddeb, "_lclose: handle %d\n", hFile);
-	if (close (hFile))
-  		return HFILE_ERROR;
-  	else
-  		return 0;
+    dprintf_file(stddeb, "_lclose: handle %d\n", hFile);
+    
+    if (hFile == 1 || hFile == 2) {
+	fprintf( stderr, "Program attempted to close stdout or stderr!\n" );
+	return 0;
+    }
+    if (close (hFile))
+        return HFILE_ERROR;
+    else
+        return 0;
 }
 
 /**************************************************************************
@@ -123,7 +128,7 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
     struct stat  s;
     struct tm   *now;
     int          res, handle;
-    int          verify_time;
+    int          verify_time = 0;
   
     dprintf_file(stddeb,"Openfile(%s,<struct>,%d)\n",lpFileName,wStyle);
   
@@ -162,64 +167,62 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
     /* If path isn't given, try to find the file. */
 
     if (!(action & OF_REOPEN))
-      {
-	if( !( index(lpFileName,'\\') || index(lpFileName,'/') || 
-	      index(lpFileName,':')))
-	while(1)
+    {
+	char temp[MAX_PATH + 1];
+	
+	if(index(lpFileName,'\\') || index(lpFileName,'/') || 
+	   index(lpFileName,':')) 
 	{
-          char temp[MAX_PATH+1];
-          /* Try current directory */
-	  strcpy (filename, lpFileName);
-	  if ( (!stat(DOS_GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
-	    break;
-
-          /* Try Windows directory */
-
-	  GetWindowsDirectory (filename,MAX_PATH);
-	  if ((!filename[0])||(filename[strlen(filename)-1]!='\\'))
-            strcat(filename, "\\");
-	  strcat (filename, lpFileName);
-	  if ( (!stat(DOS_GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
-	    break;
-
-          /* Try Windows system directory */
-
-	  GetSystemDirectory (filename,MAX_PATH);
-	  if ((!filename[0])||(filename[strlen(filename)-1]!='\\'))
- 	    strcat(filename, "\\");
-	  strcat (filename, lpFileName);
-	  if ( (!stat(DOS_GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
-	    break;
-
-          /* Try the path of the current executable */
-
-          if (GetCurrentTask())
-          {
-              char *p;
-              GetModuleFileName( GetCurrentTask(), filename, MAX_PATH );
-              if ((p = strrchr( filename, '\\' )))
-              {
-                  p[1] = '\0';
-                  strcat( filename, lpFileName );
-                  if ((!stat(DOS_GetUnixFileName(filename), &s)) &&
-                      (S_ISREG(s.st_mode)) )
-                      break;
-              }
-          }
-
-          /* Try all directories in path */
-
-	  if (DOS_FindFile(temp,MAX_PATH,lpFileName,NULL,WindowsPath))
-          {
-	      strcpy(filename, DOS_GetDosFileName(temp));
-	      break;
-          }
-	  strcpy (filename, lpFileName);
-	  break;
+	    strcpy (filename,lpFileName);
+	    goto found;
 	}
-	else
-	  strcpy (filename,lpFileName);
+	/* Try current directory */
+	if (DOS_FindFile(temp, MAX_PATH, lpFileName, NULL, ".")) {
+	    strcpy(filename, DOS_GetDosFileName(temp));
+	    goto found;
+	}
 
+	/* Try Windows directory */
+	GetWindowsDirectory(filename, MAX_PATH);
+	if (DOS_FindFile(temp, MAX_PATH, lpFileName, NULL, filename)) {
+	    strcpy(filename, DOS_GetDosFileName(temp));
+	    goto found;
+	}
+	
+	/* Try Windows system directory */
+	GetSystemDirectory(filename, MAX_PATH);
+	if (DOS_FindFile(temp, MAX_PATH, lpFileName, NULL, filename)) {
+	    strcpy(filename, DOS_GetDosFileName(temp));
+	    goto found;
+	}
+
+	/* Try the path of the current executable */
+	if (GetCurrentTask())
+	{
+	    char *p;
+	    GetModuleFileName( GetCurrentTask(), filename, MAX_PATH );
+	    if ((p = strrchr( filename, '\\' )))
+	    {
+		p[1] = '\0';
+		if (DOS_FindFile(temp, MAX_PATH, lpFileName, NULL, filename)) {
+		    strcpy(filename, DOS_GetDosFileName(temp));
+		    goto found;
+		}
+	    }
+	}
+
+	/* Try all directories in path */
+
+	if (DOS_FindFile(temp,MAX_PATH,lpFileName,NULL,WindowsPath))
+	{
+	    strcpy(filename, DOS_GetDosFileName(temp));
+	    goto found;
+	}
+	/* ??? shouldn't we give an error here? */
+	strcpy (filename, lpFileName);
+	
+	found:
+	
 	ofs->cBytes = sizeof(OFSTRUCT);
 	ofs->fFixedDisk = FALSE;
 	strcpy(ofs->szPathName, filename);
@@ -305,9 +308,9 @@ LONG _llseek (INT hFile, LONG lOffset, INT nOrigin)
 			break;
 		default: origin = SEEK_SET;
 			break;
-		}
+	}
 
-	return ( lseek(hFile, lOffset, origin) );
+	return lseek(hFile, lOffset, origin);
 }
 
 /***************************************************************************
@@ -413,7 +416,7 @@ INT GetTempFileName(BYTE bDriveLetter, LPCSTR lpszPrefixString, UINT uUnique, LP
 		lpszPrefixString,uUnique,lpszTempFileName);
 	if ((handle = _lcreat (lpszTempFileName, 0x0000)) == -1) {
 		fprintf(stderr,"GetTempFilename: can't create temp file '%s' !\n", lpszTempFileName);
-		}
+	}
 	else
 		close(handle);
 
@@ -440,7 +443,7 @@ LONG _hread(INT hf, LPSTR hpvBuffer, LONG cbBuffer)
 /***************************************************************************
  _hwrite
  ***************************************************************************/
-LONG _hwrite(INT hf, const LPSTR hpvBuffer, LONG cbBuffer)
+LONG _hwrite(INT hf, LPCSTR hpvBuffer, LONG cbBuffer)
 {
 	return write(hf, hpvBuffer, cbBuffer);
 }

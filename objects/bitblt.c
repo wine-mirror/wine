@@ -1240,8 +1240,12 @@ BOOL BitBlt( HDC hdcDst, short xDst, short yDst, short width, short height,
                 "BitBlt: %04x %d,%d %d bpp -> %04x %d,%d %dx%dx%d rop=%06lx\n",
                 hdcSrc, xSrc, ySrc, dcSrc ? dcSrc->w.bitsPerPixel : 0,
                 hdcDst, xDst, yDst, width, height, dcDst->w.bitsPerPixel, rop);
-    dprintf_bitblt(stddeb,"        src org=%d,%d  dst org=%d,%d\n",
-                dcSrc->w.DCOrgX, dcSrc->w.DCOrgY, dcDst->w.DCOrgX, dcDst->w.DCOrgY );
+    if (dcSrc != NULL) {
+	dprintf_bitblt(stddeb,"        src org=%d,%d",
+		       dcSrc->w.DCOrgX, dcSrc->w.DCOrgY);
+    }
+    dprintf_bitblt(stddeb,"  dst org=%d,%d\n", dcDst->w.DCOrgX, 
+		   dcDst->w.DCOrgY);
     return CallTo32_LargeStack( (int(*)())BITBLT_InternalStretchBlt, 11,
                                 dcDst, xDst, yDst, width, height,
                                 dcSrc, xSrc, ySrc, width, height, rop );

@@ -21,10 +21,10 @@
 /**********************************************************************
  *					MDIRecreateMenuList
  */
-void
-MDIRecreateMenuList(MDICLIENTINFO *ci)
+void MDIRecreateMenuList(MDICLIENTINFO *ci)
 {
-    MDICHILDINFO *chi;
+    HLOCAL hinfo;
+    
     char buffer[128];
     int id, n, index;
 
@@ -46,15 +46,18 @@ MDIRecreateMenuList(MDICLIENTINFO *ci)
     
     id = ci->idFirstChild;
     index = 1;
-    for (chi = ci->infoActiveChildren; chi != NULL; chi = chi->next)
+    for (hinfo = ci->infoActiveChildren; hinfo != 0;)
     {
+	MDICHILDINFO *chi = USER_HEAP_LIN_ADDR(hinfo);
+	
 	n = sprintf(buffer, "%d ", index++);
 	GetWindowText(chi->hwnd, buffer + n, sizeof(buffer) - n - 1);
 
-	dprintf_mdi(stddeb, "MDIRecreateMenuList: id %04x, '%s'\n", 
+	dprintf_mdi(stddeb, "MDIRecreateMenuList: id %04x, '%s'\n",
 		id, buffer);
 
 	AppendMenu(ci->hWindowMenu, MF_STRING, id++, buffer);
+	hinfo = chi->next;
     }
 }
 
@@ -62,8 +65,7 @@ MDIRecreateMenuList(MDICLIENTINFO *ci)
 /**********************************************************************
  *					MDIIconArrange
  */
-WORD
-MDIIconArrange(HWND parent)
+WORD MDIIconArrange(HWND parent)
 {
   return ArrangeIconicWindows(parent);		/* Any reason why the    */
 						/* existing icon arrange */
@@ -74,8 +76,7 @@ MDIIconArrange(HWND parent)
 /**********************************************************************
  *					MDICreateChild
  */
-HWND 
-MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPARAM lParam )
+HWND MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPARAM lParam )
 {
     MDICREATESTRUCT *cs = (MDICREATESTRUCT *)PTR_SEG_TO_LIN(lParam);
     HWND hwnd;
@@ -104,6 +105,7 @@ MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPARAM lParam )
     {
 	HANDLE h = USER_HEAP_ALLOC( sizeof(MDICHILDINFO) );
 	MDICHILDINFO *child_info = USER_HEAP_LIN_ADDR(h);
+	
 	if (!h)
 	{
 	    DestroyWindow(hwnd);
@@ -111,15 +113,17 @@ MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPARAM lParam )
 	}
 
 	ci->nActiveChildren++;
-	
+
 	child_info->next = ci->infoActiveChildren;
-	child_info->prev = NULL;
+	child_info->prev = 0;
 	child_info->hwnd = hwnd;
 
-	if (ci->infoActiveChildren)
-	    ci->infoActiveChildren->prev = child_info;
+	if (ci->infoActiveChildren) {
+	    MDICHILDINFO *nextinfo = USER_HEAP_LIN_ADDR(ci->infoActiveChildren);
+	    nextinfo->prev = h;
+	}
 
-	ci->infoActiveChildren = child_info;
+	ci->infoActiveChildren = h;
 
 	SendMessage(parent, WM_CHILDACTIVATE, 0, 0);
     }
@@ -130,23 +134,26 @@ MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPARAM lParam )
 /**********************************************************************
  *					MDIDestroyChild
  */
-HWND 
-MDIDestroyChild(WND *w_parent, MDICLIENTINFO *ci, HWND parent, HWND child,
-		 BOOL flagDestroy)
+HWND MDIDestroyChild(WND *w_parent, MDICLIENTINFO *ci, HWND parent,
+		     HWND child, BOOL flagDestroy)
 {
     MDICHILDINFO  *chi;
+    HLOCAL hinfo;
     
-    chi = ci->infoActiveChildren;
-    while (chi && chi->hwnd != child)
-	chi = chi->next;
-
-    if (chi)
+    hinfo = ci->infoActiveChildren;
+    while (hinfo != 0) {
+	chi = (MDICHILDINFO *)USER_HEAP_LIN_ADDR(hinfo);
+	if (chi->hwnd == child) break;
+	hinfo = chi->next;
+    }
+    
+    if (hinfo != 0)
     {
 	if (chi->prev)
-	    chi->prev->next = chi->next;
+	    ((MDICHILDINFO *)USER_HEAP_LIN_ADDR(chi->prev))->next = chi->next;
 	if (chi->next)
-	    chi->next->prev = chi->prev;
-	if (ci->infoActiveChildren == chi)
+	    ((MDICHILDINFO *)USER_HEAP_LIN_ADDR(chi->next))->prev = chi->prev;
+	if (ci->infoActiveChildren == hinfo)
 	    ci->infoActiveChildren = chi->next;
 
 	ci->nActiveChildren--;
@@ -154,7 +161,7 @@ MDIDestroyChild(WND *w_parent, MDICLIENTINFO *ci, HWND parent, HWND child,
 	if (chi->hwnd == ci->hwndActiveChild)
 	    SendMessage(parent, WM_CHILDACTIVATE, 0, 0);
 
-	USER_HEAP_FREE((HANDLE) (LONG) chi);
+	USER_HEAP_FREE(hinfo);
 	
 	if (flagDestroy)
 	    DestroyWindow(child);
@@ -168,6 +175,7 @@ MDIDestroyChild(WND *w_parent, MDICLIENTINFO *ci, HWND parent, HWND child,
  */
 void MDIBringChildToTop(HWND parent, WORD id, WORD by_id, BOOL send_to_bottom)
 {
+    HLOCAL hinfo;
     MDICHILDINFO  *chi;
     MDICLIENTINFO *ci;
     WND           *w;
@@ -182,24 +190,28 @@ void MDIBringChildToTop(HWND parent, WORD id, WORD by_id, BOOL send_to_bottom)
 	id -= ci->idFirstChild;
     if (!by_id || id < ci->nActiveChildren)
     {
-	chi = ci->infoActiveChildren;
+	hinfo = ci->infoActiveChildren;
 
 	if (by_id)
 	{
 	    for (i = 0; i < id; i++)
-		chi = chi->next;
+		hinfo = ((MDICHILDINFO *)USER_HEAP_LIN_ADDR(hinfo))->next;
+	    chi = USER_HEAP_LIN_ADDR(hinfo);
 	}
 	else
 	{
-	    while (chi && chi->hwnd != id)
-		chi = chi->next;
+	    while (hinfo != 0) {
+		chi = (MDICHILDINFO *)USER_HEAP_LIN_ADDR(hinfo);
+		if (chi->hwnd == id) break;
+	        hinfo = chi->next;
+	    }
 	}
 
-	if (!chi)
+	if (hinfo == 0)
 	    return;
 
 	dprintf_mdi(stddeb, "MDIBringToTop: child %04x\n", chi->hwnd);
-	if (chi != ci->infoActiveChildren)
+	if (hinfo != ci->infoActiveChildren)
 	{
 	    if (ci->flagChildMaximized)
 	    {
@@ -220,7 +232,7 @@ void MDIBringChildToTop(HWND parent, WORD id, WORD by_id, BOOL send_to_bottom)
 			       (w->rectWindow.right - w->rectClient.right));
 		w->dwStyle |= WS_MAXIMIZE;
 		SetWindowPos(chi->hwnd, HWND_TOP, rect.left, rect.top, 
-			     rect.right - rect.left + 1, 
+			     rect.right - rect.left + 1,
 			     rect.bottom - rect.top + 1, 0);
 		SendMessage(chi->hwnd, WM_SIZE, SIZE_MAXIMIZED,
 			    MAKELONG(w->rectClient.right-w->rectClient.left,
@@ -247,15 +259,15 @@ void MDIBringChildToTop(HWND parent, WORD id, WORD by_id, BOOL send_to_bottom)
 	    }
 		
 	    if (chi->next)
-		chi->next->prev    = chi->prev;
+		((MDICHILDINFO *)USER_HEAP_LIN_ADDR(chi->next))->prev = chi->prev;
 
 	    if (chi->prev)
-		chi->prev->next    = chi->next;
+		((MDICHILDINFO *)USER_HEAP_LIN_ADDR(chi->prev))->next = chi->next;
 	    
-	    chi->prev              = NULL;
+	    chi->prev              = 0;
 	    chi->next              = ci->infoActiveChildren;
-	    chi->next->prev        = chi;
-	    ci->infoActiveChildren = chi;
+	    ((MDICHILDINFO *)USER_HEAP_LIN_ADDR(chi->next))->prev = hinfo;
+	    ci->infoActiveChildren = hinfo;
 
 	    SendMessage(parent, WM_CHILDACTIVATE, 0, 0);
 	}
@@ -323,6 +335,7 @@ LONG MDIRestoreChild(HWND parent, MDICLIENTINFO *ci)
  */
 LONG MDIChildActivated(WND *w, MDICLIENTINFO *ci, HWND parent)
 {
+    HLOCAL hinfo;
     MDICHILDINFO *chi;
     HWND          deact_hwnd;
     HWND          act_hwnd;
@@ -330,9 +343,10 @@ LONG MDIChildActivated(WND *w, MDICLIENTINFO *ci, HWND parent)
 
     dprintf_mdi(stddeb, "MDIChildActivate: top %04x\n", w->hwndChild);
 
-    chi = ci->infoActiveChildren;
-    if (chi)
+    hinfo = ci->infoActiveChildren;
+    if (hinfo)
     {
+	chi = (MDICHILDINFO *)USER_HEAP_LIN_ADDR(hinfo);
 	deact_hwnd = ci->hwndActiveChild;
 	act_hwnd   = chi->hwnd;
 	lParam     = ((LONG) deact_hwnd << 16) | act_hwnd;
@@ -353,7 +367,7 @@ LONG MDIChildActivated(WND *w, MDICLIENTINFO *ci, HWND parent)
 	SendMessage(act_hwnd, WM_MDIACTIVATE, TRUE, lParam);
     }
 
-    if (chi || ci->nActiveChildren == 0)
+    if (hinfo || ci->nActiveChildren == 0)
     {
 	MDIRecreateMenuList(ci);
 	SendMessage(GetParent(parent), WM_NCPAINT, 0, 0);
@@ -367,6 +381,7 @@ LONG MDIChildActivated(WND *w, MDICLIENTINFO *ci, HWND parent)
  */
 LONG MDICascade(HWND parent, MDICLIENTINFO *ci)
 {
+    HLOCAL hinfo;
     MDICHILDINFO *chi;
     RECT          rect;
     int           spacing, xsize, ysize;
@@ -389,21 +404,29 @@ LONG MDICascade(HWND parent, MDICLIENTINFO *ci)
 	    "MDICascade: Client wnd at (%d,%d) - (%d,%d), spacing %d\n", 
 	    rect.left, rect.top, rect.right, rect.bottom, spacing);
     dprintf_mdi(stddeb, "MDICascade: searching for last child\n");
-    for (chi = ci->infoActiveChildren; chi->next != NULL; chi = chi->next)
-	;
+    hinfo = ci->infoActiveChildren;
+    while(1) {
+	chi = USER_HEAP_LIN_ADDR(hinfo);
+	if (chi->next == 0) break;
+	hinfo = chi->next;
+    }
     
     dprintf_mdi(stddeb, "MDICascade: last child is %04x\n", chi->hwnd);
     x = 0;
     y = 0;
-    for ( ; chi != NULL; chi = chi->prev)
+    while (hinfo != 0)
     {
+	chi = USER_HEAP_LIN_ADDR(hinfo);
 	dprintf_mdi(stddeb, "MDICascade: move %04x to (%d,%d) size [%d,%d]\n", 
 		chi->hwnd, x, y, xsize, ysize);
+        if (IsIconic(chi->hwnd)) continue;
 	SetWindowPos(chi->hwnd, 0, x, y, xsize, ysize, 
 		     SWP_DRAWFRAME | SWP_NOACTIVATE | SWP_NOZORDER);
 
 	x += spacing;
 	y += spacing;
+	
+	hinfo = chi->prev;
     }
 
     return 0;
@@ -414,6 +437,7 @@ LONG MDICascade(HWND parent, MDICLIENTINFO *ci)
  */
 LONG MDITile(HWND parent, MDICLIENTINFO *ci)
 {
+    HLOCAL hinfo;
     MDICHILDINFO *chi;
     RECT          rect;
     int           xsize, ysize;
@@ -436,7 +460,7 @@ LONG MDITile(HWND parent, MDICLIENTINFO *ci)
     ysize   = rect.bottom / rows;
     xsize   = rect.right  / columns;
     
-    chi     = ci->infoActiveChildren;
+    hinfo   = ci->infoActiveChildren;
     x       = 0;
     i       = 0;
     for (c = 1; c <= columns; c++)
@@ -448,12 +472,14 @@ LONG MDITile(HWND parent, MDICLIENTINFO *ci)
 	}
 
 	y = 0;
-	for (r = 1; r <= rows; r++, i++, chi = chi->next)
+	for (r = 1; r <= rows; r++, i++)
 	{
+	    chi = (MDICHILDINFO *)USER_HEAP_LIN_ADDR(hinfo);
 	    SetWindowPos(chi->hwnd, 0, x, y, xsize, ysize, 
 			 SWP_DRAWFRAME | SWP_NOACTIVATE | SWP_NOZORDER);
 
 	    y += ysize;
+	    hinfo = chi->next;
 	}
 
 	x += xsize;
@@ -510,22 +536,20 @@ LONG MDIPaintMaximized(HWND hwndFrame, HWND hwndClient, WORD message,
     
     MDICLIENTINFO *ci;
     WND           *w;
-    HDC            hdc, hdcMem;
-    RECT           rect;
+    HDC           hdc, hdcMem;
+    RECT          rect;
     WND           *wndPtr = WIN_FindWndPtr(hwndFrame);
 
     w  = WIN_FindWndPtr(hwndClient);
     ci = (MDICLIENTINFO *) w->wExtra;
 
-    dprintf_mdi(stddeb, 
-		"MDIPaintMaximized: frame %04x,  client %04x"
-		",  max flag %d,  menu %04x\n", 
-		hwndFrame, hwndClient, 
+    dprintf_mdi(stddeb, "MDIPaintMaximized: frame %04x,  client %04x"
+		",  max flag %d,  menu %04x\n", hwndFrame, hwndClient, 
 		ci->flagChildMaximized, wndPtr ? wndPtr->wIDmenu : 0);
 
     if (ci->flagChildMaximized && wndPtr && wndPtr->wIDmenu != 0)
     {
-	NC_DoNCPaint( hwndFrame, wParam, TRUE);
+	NC_DoNCPaint(hwndFrame, wParam, TRUE);
 
 	hdc = GetDCEx(hwndFrame, 0, DCX_CACHE | DCX_WINDOW);
 	if (!hdc) return 0;
@@ -539,21 +563,19 @@ LONG MDIPaintMaximized(HWND hwndFrame, HWND hwndClient, WORD message,
 	}
 
 	dprintf_mdi(stddeb, 
-		"MDIPaintMaximized: hdcMem %04x, close bitmap %04x, "
-		"maximized bitmap %04x\n",
-		hdcMem, hbitmapClose, hbitmapMaximized);
+		    "MDIPaintMaximized: hdcMem %04x, close bitmap %04x, "
+		    "maximized bitmap %04x\n",
+		    hdcMem, hbitmapClose, hbitmapMaximized);
 
 	NC_GetInsideRect(hwndFrame, &rect);
-	rect.top   += ((wndPtr->dwStyle & WS_CAPTION) ? 
-		       SYSMETRICS_CYSIZE + 1 :  0);
+	rect.top += (wndPtr->dwStyle & WS_CAPTION) ? SYSMETRICS_CYSIZE + 1 : 0;
 	SelectObject(hdcMem, hbitmapClose);
 	BitBlt(hdc, rect.left, rect.top + 1, 
 	       SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
 	       hdcMem, 1, 1, SRCCOPY);
 	
 	NC_GetInsideRect(hwndFrame, &rect);
-	rect.top   += ((wndPtr->dwStyle & WS_CAPTION) ? 
-		       SYSMETRICS_CYSIZE + 1 :  0);
+	rect.top += (wndPtr->dwStyle & WS_CAPTION) ? SYSMETRICS_CYSIZE + 1 : 0;
 	rect.left   = rect.right - SYSMETRICS_CXSIZE;
 	SelectObject(hdcMem, hbitmapMaximized);
 	BitBlt(hdc, rect.left, rect.top + 1, 
@@ -561,9 +583,8 @@ LONG MDIPaintMaximized(HWND hwndFrame, HWND hwndClient, WORD message,
 	       hdcMem, 1, 1, SRCCOPY);
 	
 	NC_GetInsideRect(hwndFrame, &rect);
-	rect.top   += ((wndPtr->dwStyle & WS_CAPTION) ? 
-		       SYSMETRICS_CYSIZE + 1 :  0);
-	rect.left  += SYSMETRICS_CXSIZE;
+	rect.top += (wndPtr->dwStyle & WS_CAPTION) ? SYSMETRICS_CYSIZE + 1 : 0;
+	rect.left += SYSMETRICS_CXSIZE;
 	rect.right -= SYSMETRICS_CXSIZE;
 	rect.bottom = rect.top + SYSMETRICS_CYMENU;
 
@@ -573,7 +594,7 @@ LONG MDIPaintMaximized(HWND hwndFrame, HWND hwndClient, WORD message,
 	ReleaseDC(hwndFrame, hdc);
     }
     else
-	DefWindowProc(hwndFrame, message, wParam, lParam);
+	return DefWindowProc(hwndFrame, message, wParam, lParam);
 
     return 0;
 }
@@ -583,8 +604,7 @@ LONG MDIPaintMaximized(HWND hwndFrame, HWND hwndClient, WORD message,
  *
  * This function is the handler for all MDI requests.
  */
-LONG 
-MDIClientWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+LONG MDIClientWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 {
     LPCREATESTRUCT       cs;
     LPCLIENTCREATESTRUCT ccs;
@@ -604,7 +624,7 @@ MDIClientWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 	ccs                     = (LPCLIENTCREATESTRUCT) PTR_SEG_TO_LIN(cs->lpCreateParams);
 	ci->hWindowMenu         = ccs->hWindowMenu;
 	ci->idFirstChild        = ccs->idFirstChild;
-	ci->infoActiveChildren  = NULL;
+	ci->infoActiveChildren  = 0;
 	ci->flagMenuAltered     = FALSE;
 	ci->flagChildMaximized  = FALSE;
 	w->dwStyle             |= WS_CLIPCHILDREN;
@@ -676,9 +696,8 @@ MDIClientWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
  *					DefFrameProc (USER.445)
  *
  */
-LONG 
-DefFrameProc(HWND hwnd, HWND hwndMDIClient, WORD message, 
-	     WORD wParam, LONG lParam)
+LONG DefFrameProc(HWND hwnd, HWND hwndMDIClient, WORD message, 
+		  WORD wParam, LONG lParam)
 {
     if (hwndMDIClient)
     {
@@ -720,8 +739,7 @@ DefFrameProc(HWND hwnd, HWND hwndMDIClient, WORD message,
  *					DefMDIChildProc (USER.447)
  *
  */
-LONG 
-DefMDIChildProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+LONG DefMDIChildProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 {
     MDICLIENTINFO       *ci;
     WND                 *w;
@@ -762,4 +780,38 @@ DefMDIChildProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 BOOL TranslateMDISysAccel(HWND hwndClient, LPMSG msg)
 {
     return 0;
+}
+
+
+/***********************************************************************
+ *           CalcChildScroll   (USER.462)
+ */
+void CalcChildScroll( HWND hwnd, WORD scroll )
+{
+    RECT childRect, clientRect;
+    HWND hwndChild;
+
+    GetClientRect( hwnd, &clientRect );
+    SetRectEmpty( &childRect );
+    hwndChild = GetWindow( hwnd, GW_CHILD );
+    while (hwndChild)
+    {
+        WND *wndPtr = WIN_FindWndPtr( hwndChild );
+        UnionRect( &childRect, &wndPtr->rectWindow, &childRect );
+        hwndChild = wndPtr->hwndNext;
+    }
+    UnionRect( &childRect, &clientRect, &childRect );
+
+    if ((scroll == SB_HORZ) || (scroll == SB_BOTH))
+    {
+        SetScrollRange( hwnd, SB_HORZ, childRect.left,
+                        childRect.right - clientRect.right, FALSE );
+        SetScrollPos( hwnd, SB_HORZ, clientRect.left - childRect.left, TRUE );
+    }
+    if ((scroll == SB_VERT) || (scroll == SB_BOTH))
+    {
+        SetScrollRange( hwnd, SB_VERT, childRect.top,
+                        childRect.bottom - clientRect.bottom, FALSE );
+        SetScrollPos( hwnd, SB_HORZ, clientRect.top - childRect.top, TRUE );
+    }
 }

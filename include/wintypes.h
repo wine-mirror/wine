@@ -31,8 +31,8 @@ typedef SEGPTR FARPROC;
 typedef SEGPTR WNDPROC;
 #endif
 typedef FARPROC DLGPROC;
-typedef int CATCHBUF[9];
-typedef int *LPCATCHBUF;
+typedef WORD CATCHBUF[9];
+typedef WORD *LPCATCHBUF;
 typedef FARPROC HOOKPROC;
 
 #define DECLARE_HANDLE(a) typedef HANDLE a;

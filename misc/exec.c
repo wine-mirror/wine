@@ -34,12 +34,15 @@
 /**********************************************************************
  *				ExitWindows		[USER.7]
  */
-BOOL ExitWindows(DWORD dwReserved, WORD wRetCode)
+BOOL ExitWindows(DWORD dwReturnCode, WORD wReserved)
 {
-    dprintf_exec(stdnimp,"EMPTY STUB !!! ExitWindows(%08lX, %04X) !\n", 
-		dwReserved, wRetCode);
+    api_assert("ExitWindows", wReserved == 0);
+    api_assert("ExitWindows", HIWORD(dwReturnCode) == 0);
 
-   exit(wRetCode);
+    dprintf_exec( stdnimp,"PARTIAL STUB ExitWindows(%08lX, %04X)\n", 
+                  dwReturnCode, wReserved);
+
+    exit( LOWORD(dwReturnCode) );
 }
 
 

@@ -11,6 +11,8 @@
 
 #include "hook.h"
 #include "user.h"
+#include "stddebug.h"
+#include "debug.h"
 
 HHOOK systemHooks[LAST_HOOK-FIRST_HOOK+1] = { 0, };
 
@@ -97,6 +99,9 @@ HHOOK SetWindowsHookEx( short id, HOOKPROC proc, HINSTANCE hinst, HTASK htask )
     HHOOK *prevHook;
 
     if ((id < FIRST_HOOK) || (id > LAST_HOOK)) return 0;
+    if (id != WH_GETMESSAGE && id != WH_CALLWNDPROC) {
+	fprintf( stdnimp, "Unimplemented hook set: %d!\n", id );
+    }
     if (htask)  /* Task-specific hook */
     {
 	if ((id == WH_JOURNALRECORD) || (id == WH_JOURNALPLAYBACK) ||

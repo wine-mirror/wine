@@ -15,7 +15,6 @@
 #endif
 
 #include "wine.h"
-#include "dos_fs.h"
 #include "prototypes.h"
 #include "miscemu.h"
 #include "registers.h"
@@ -45,46 +44,6 @@ wine_sigaction(int sig,struct sigaction * new, struct sigaction * old)
 }
 #endif
 
-int do_int(int intnum, struct sigcontext_struct *context)
-{
-	switch(intnum)
-	{
-	      case 0x10: return do_int10(context);
-
-	      case 0x11:  
-		AX = DOS_GetEquipment();
-		return 1;
-
-	      case 0x12:               
-		AX = 640;
-		return 1;	/* get base mem size */                
-
-              case 0x13: return do_int13(context);
-	      case 0x15: return do_int15(context);
-	      case 0x16: return do_int16(context);
-	      case 0x1a: return do_int1a(context);
-	      case 0x21: return do_int21(context);
-
-	      case 0x22:
-		AX = 0x1234;
-		BX = 0x5678;
-		CX = 0x9abc;
-		DX = 0xdef0;
-		return 1;
-
-              case 0x25: return do_int25(context);
-              case 0x26: return do_int26(context);
-              case 0x2a: return do_int2a(context);
-	      case 0x2f: return do_int2f(context);
-	      case 0x31: return do_int31(context);
-	      case 0x5c: return do_int5c(context);
-
-              default:
-                fprintf(stderr,"int%02x: Unimplemented!\n", intnum);
-                break;
-	}
-	return 0;
-}
 
 #ifdef linux
 static void win_fault(int signal, struct sigcontext_struct context_struct)
@@ -94,131 +53,19 @@ static void win_fault(int signal, struct sigcontext_struct context_struct)
 static void win_fault(int signal, int code, struct sigcontext *context)
 {
 #endif
-    unsigned char * instr;
-    WORD *stack;
+
 #if !(defined (linux) || defined (__NetBSD__))
     int i, *dump;
 #endif
 
-	/* First take care of a few preliminaries */
-#ifdef linux
-    if(signal != SIGSEGV 
-       && signal != SIGILL 
-       && signal != SIGFPE 
-#ifdef SIGBUS
-       && signal != SIGBUS 
-#endif
-       && signal != SIGTRAP) 
+    if(signal == SIGTRAP) EIP--;   /* Back up over the int3 instruction. */
+    else if (CS == WINE_CODE_SELECTOR)
     {
-	exit(1);
+	fprintf(stderr, "Segmentation fault in Wine program (%x:%lx)."
+		        "  Please debug\n", CS, EIP );
     }
+    else if (INSTR_EmulateInstruction( context )) return;
 
-    /* And back up over the int3 instruction. */
-    if(signal == SIGTRAP) {
-      EIP--;
-      goto oops;
-    }
-#endif
-#ifdef __NetBSD__
-/*         set_es(0x1f); set_ds(0x1f); */
-    if(signal != SIGBUS && signal != SIGSEGV && signal != SIGTRAP) 
-	exit(1);
-#endif
-#ifdef __FreeBSD__
-/*         set_es(0x27); set_ds(0x27); */
-    if(signal != SIGBUS && signal != SIGSEGV && signal != SIGTRAP) 
-	exit(1);
-#endif
-    if (CS == WINE_CODE_SELECTOR)
-    {
-	fprintf(stderr,
-		"Segmentation fault in Wine program (%x:%lx)."
-		"  Please debug\n", CS, EIP );
-	goto oops;
-    }
-
-    /*  Now take a look at the actual instruction where the program
-	bombed */
-    instr = (unsigned char *) PTR_SEG_OFF_TO_LIN( CS, EIP );
-
-    switch(*instr)
-    {
-      case 0xcd: /* int <XX> */
-            instr++;
-	    if (!do_int(*instr, context)) {
-		fprintf(stderr,"Unexpected Windows interrupt %x\n", *instr);
-		goto oops;
-	    }
-	    EIP += 2;  /* Bypass the int instruction */
-            break;
-
-      case 0xcf: /* iret */
-            stack = (WORD *)PTR_SEG_OFF_TO_LIN( SS, SP );
-            EIP = *stack++;
-            CS  = *stack++;
-            EFL = *stack;
-            SP += 6;  /* Pop the return address and flags */
-            break;
-
-      case 0xe4: /* inb al,XX */
-            inportb_abs(context);
-	    EIP += 2;
-            break;
-
-      case 0xe5: /* in ax,XX */
-            inport_abs(context);
-	    EIP += 2;
-            break;
-
-      case 0xe6: /* outb XX,al */
-            outportb_abs(context);
-	    EIP += 2;
-            break;
-
-      case 0xe7: /* out XX,ax */
-            outport_abs(context);
-	    EIP += 2;
-            break;
-
-      case 0xec: /* inb al,dx */
-            inportb(context);
-	    EIP++;
-            break;
-
-      case 0xed: /* in ax,dx */
-            inport(context);
-	    EIP++;  
-            break;
-
-      case 0xee: /* outb dx,al */
-            outportb(context);
-	    EIP++;
-            break;
-      
-      case 0xef: /* out dx,ax */
-            outport(context);
-	    EIP++;
-            break;
-
-      case 0xfa: /* cli, ignored */
-	    EIP++;
-            break;
-
-      case 0xfb: /* sti, ignored */
-	    EIP++;
-            break;
-
-      default:
-		fprintf(stderr, "Unexpected Windows program segfault"
-			" - opcode = %x\n", *instr);
-		goto oops;
-    }
-    
-    /* OK, done handling the interrupt */
-
-    return;
-
-  oops:
     XUngrabPointer(display, CurrentTime);
     XUngrabServer(display);
     XFlush(display);

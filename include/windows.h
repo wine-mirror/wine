@@ -2125,6 +2125,8 @@ typedef COMPAREITEMSTRUCT FAR* LPCOMPAREITEMSTRUCT;
   
 #define LMEM_FIXED          0   
 #define LMEM_MOVEABLE       0x0002
+#define LMEM_NOCOMPACT      0x0010
+#define LMEM_NODISCARD      0x0020
 #define LMEM_ZEROINIT       0x0040
 #define LMEM_MODIFY         0x0080
 #define LMEM_DISCARDABLE    0x0F00
@@ -2815,9 +2817,9 @@ Fc(HWND,GetNextDlgTabItem,HWND,a,HWND,b,BOOL,c)
 Fc(INT,GetTextFace,HDC,a,INT,b,LPSTR,c)
 Fc(INT,OpenFile,LPSTR,a,LPOFSTRUCT,b,WORD,c)
 Fc(INT,_lread,INT,a,LPSTR,b,WORD,c)
-Fc(INT,_lwrite,INT,a,LPSTR,b,WORD,c)
+Fc(INT,_lwrite,INT,a,LPCSTR,b,WORD,c)
 Fc(LONG,_hread,INT,a,LPSTR,b,LONG,c)
-Fc(LONG,_hwrite,INT,a,LPSTR,b,LONG,c)
+Fc(LONG,_hwrite,INT,a,LPCSTR,b,LONG,c)
 Fc(LONG,GetBitmapBits,HBITMAP,a,LONG,b,LPSTR,c)
 Fc(LONG,SetBitmapBits,HBITMAP,a,LONG,b,LPSTR,c)
 Fc(LONG,SetClassLong,HWND,a,short,b,LONG,c)

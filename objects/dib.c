@@ -473,8 +473,8 @@ static int DIB_SetImageBits( DC *dc, WORD lines, WORD depth, LPSTR bits,
 	if (coloruse == DIB_RGB_COLORS)
 	{
 	    RGBQUAD * rgbPtr = info->bmiColors;
-	    for (i = 0; i < colors; i++, rgbPtr++)
-		colorMapping[i] = COLOR_ToPhysical( dc, RGB(rgbPtr->rgbRed,
+            for (i = 0; i < colors; i++, rgbPtr++)
+                colorMapping[i] = COLOR_ToPhysical( dc, RGB(rgbPtr->rgbRed,
 							    rgbPtr->rgbGreen,
 							    rgbPtr->rgbBlue) );
 	}
@@ -677,6 +677,9 @@ HBITMAP CreateDIBitmap( HDC hdc, BITMAPINFOHEADER * header, DWORD init,
     HBITMAP handle;
     
     handle = CreateCompatibleBitmap( hdc, header->biWidth, header->biHeight );
+/*    handle = CreateBitmap( header->biWidth, header->biHeight,
+                           1, header->biBitCount, NULL );
+*/
     if (!handle) return 0;
     if (init == CBM_INIT) SetDIBits( hdc, handle, 0, header->biHeight,
 				    bits, data, coloruse );

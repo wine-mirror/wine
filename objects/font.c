@@ -15,7 +15,6 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "wine.h"
 #include "callback.h"
 #include "stddebug.h"
-/* #define DEBUG_FONT */
 #include "debug.h"
 
 #define MAX_FONTS	256
@@ -122,7 +121,7 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
     const char *family, *weight, *charset;
     char **names;
     char slant, spacing;
-    int width, height, count;
+    int width, height, oldheight, count;
     XFontStruct * fontStruct;
     
     weight = (font->lfWeight > 550) ? "bold" : "medium";
@@ -138,6 +137,11 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
     }
     else height *= 10;
     width  = 10 * (font->lfWidth * dc->w.VportExtY / dc->w.WndExtY);
+    if (width < 0) {
+	dprintf_font( stddeb, "FONT_MatchFont: negative width %d(%d)\n",
+		      width, font->lfWidth );
+	width = -width;
+    }
     spacing = (font->lfPitchAndFamily & FIXED_PITCH) ? 'm' :
 	      (font->lfPitchAndFamily & VARIABLE_PITCH) ? 'p' : '*';
     charset = (font->lfCharSet == ANSI_CHARSET) ? "iso8859-1" : "*-*";
@@ -164,6 +168,7 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
       break;
     }
     
+    oldheight = height;
     while (TRUE) {
 	    /* Width==0 seems not to be a valid wildcard on SGI's, using * instead */
 	    if ( width == 0 )
@@ -178,11 +183,20 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
             height -= 10;		
             if (height < 10) {
                 dprintf_font(stddeb,"*** No match for %s\n", pattern );
-				if(slant == 'i')
-					/* try oblique if no italic font */
-					slant = 'o';
-				else
-                	return NULL;
+		if(slant == 'i') {
+		    /* try oblique if no italic font */
+		    slant = 'o';
+		    height = oldheight;
+		    continue;
+		}
+		if (spacing == 'm') {
+		    /* If a fixed spacing font could not be found, ignore
+		     * the family */
+		    family = "*-*";
+		    height = oldheight;
+		    continue;
+		}
+		return NULL;
             }
     }
     dprintf_font(stddeb,"        Found '%s'\n", *names );
@@ -630,7 +644,7 @@ void InitFontsList(void)
   names = XListFonts( display, pattern, MAX_FONTS, &count );
   dprintf_font(stddeb,"InitFontsList // count=%d \n", count);
   for (i = 0; i < count; i++) {
-    lpNewFont = malloc(sizeof(LOGFONT));
+    lpNewFont = malloc(sizeof(LOGFONT) + LF_FACESIZE);
     if (lpNewFont == NULL) {
       dprintf_font(stddeb, "InitFontsList // Error alloc new font structure !\n");
       break;
@@ -731,6 +745,7 @@ int EnumFonts(HDC hDC, LPSTR lpFaceName, FARPROC lpEnumFunc, LPSTR lpData)
       if (strcmp(FaceName, lpLogFontList[i]->lfFaceName) != 0) continue;
     }
     dprintf_font(stddeb,"EnumFonts // enum '%s' !\n", lpLogFontList[i]->lfFaceName);
+    dprintf_font(stddeb,"EnumFonts // %p !\n", lpLogFontList[i]);
     memcpy(lpLogFont, lpLogFontList[i], sizeof(LOGFONT) + LF_FACESIZE);
     hFont = CreateFontIndirect(lpLogFont);
     hOldFont = SelectObject(hDC, hFont);
@@ -835,4 +850,14 @@ BOOL GetRasterizerCaps(LPRASTERIZER_STATUS lprs, WORD cbNumBytes)
   rs.wFlags = 0;
   rs.nLanguageID = 0;
   return True;
+}
+
+/*************************************************************************
+ *             GetKerningPairs      [GDI.332]
+ *  FIXME: The last parameter is actually LPKERNINGPAIR
+ */
+int GetKerningPairs(WORD hDC,int cBufLen,LPVOID lpKerningPairs)
+{
+	/* Wine fonts are ugly and don't support kerning :) */
+	return 0;
 }

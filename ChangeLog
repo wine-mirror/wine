@@ -1,4 +1,263 @@
 ----------------------------------------------------------------------
+Mon Jun 19 20:29:50 1995  Alexandre Julliard  (julliard@sunsite.unc.edu)
+
+	* [debugger/*.c]
+	Modified debugger to use segmented pointers everywhere.
+
+	* [if1632/shell.spec] [if1632/sound.spec] [if1632/user.spec]
+	Declared all functions that return only 16-bit as 'pascal16'.
+
+	* [include/ldt.h] [memory/ldt.c]
+	Export LDT_EntryToBytes (new) and LDT_BytesToEntry for DPMI.
+	Maintain a copy of the selector flags, removing the need to make a
+	system call to retrieve an LDT entry.
+
+	* [loader/module.c]
+	Fixed bug with module file handle cache.
+
+	* [loader/ne_resource.c]
+	Fixed file name bug in NE_AccessResource().
+
+	* [loader/resource.c]
+	Fixed bug in LoadIcon() that caused wrong colors to be used for
+	the icon mask.
+
+	* [loader/signal.c]
+	Moved instruction emulation to miscemu/instr.c.
+
+	* [misc/dos_fs.c] [miscemu/int21.c]
+	Lots of small fixes, thanks to Morten Welinder.
+
+	* [miscemu/dpmi.c]
+	More complete DPMI emulation.
+
+	* [miscemu/instr.c]
+	Added support for prefixes in instructions to emulate.
+
+	* [miscemu/int2f.c]
+	Use register macros instead of destroying the high part of 32-bit
+	registers.
+
+	* [objects/dc.c]
+	Fixed bug in GetDCState() that failed to clear the new DC.
+
+	* [rc/sysres.rc]
+	Removed dialogs 11 and 12 that were never used.
+
+	* [tools/build.c]
+	'pascal16' generated functions did not save %dx.
+	Removed use of %fs to access the stack.
+	%ds is no longer initialized before calling a 16-bit routine.
+
+	* [windows/defwnd.c]
+	Accept a NULL pointer as window title.
+
+	* [windows/mdi.c]
+	MDICascade: skip iconic windows.
+	Implemented CalcChildScroll().
+	
+	* [windows/utility.c]
+	Fixed MulDiv() for illegal values.
+
+	* [windows/win.c]
+	Fixed X error in CreateWindowEx() when WM_NCCALCSIZE returned
+	a zero width or height.
+
+Sun Jun 18 22:22:30 MET DST 1995  Fons Botman  (botman@inter.nl.net)
+
+	* [controls/edit.c]
+	Fixed "uninitalized" message which -Wall couldnt see to be ok
+	in EDIT_WriteText.
+
+	* [include/debug.h]
+	Added define for extra checks in API definitions during debugging.
+
+	* [loader/ne_image.c]
+	Added newline in NE_FixupPrologs to avoid long lines.
+
+	* [misc/dos_fs.c]
+	Added extra safety check in DOS_ValidDrive.
+
+	* [misc/exec.c]
+	Fixed definition of ExitWindows.
+	
+Sun Jun 18 21:16:08 1995   Bernd Schmidt <crux@pool.informatik.rwth-aachen.de>
+
+	* [controls/edit.c]
+	Some fixes, mostly for memory management, but also for text selection
+	and tab postitions. General cleanup. Notepad.exe now works.
+
+	* [controls/combo.c]
+	Fix: the hwnd field of the DRAWITEMSTRUCT should always be that of
+	the combo box, not the ComboLBox that belongs to it.
+
+	* [controls/listbox.c]
+	Handle itemID field correctly throughout.
+
+	* [memory/local.c]
+	Implemented flag LMEM_ZEROINIT.
+	LocalReAlloc() could trash the heap. Fixed.
+
+	* [objects/font.c]
+	FONT_MatchFont(): don't get confused by negative widths.
+	Fixed a segfault in EnumFonts().
+
+	* [objects/text.c]
+	DrawText(): DT_CALCRECT implies DT_NOCLIP.
+
+	* [objects/dcvalues.c]
+	MAKELONG was used with bad parameters in DC_GET_X_Y.
+
+	* [windows/dialog.c]
+	Don't show the dialog if WS_VISIBLE isn't set in the template.
+
+	* [windows/utility.c]
+	UTILITY_convertArgs(): Never pass an expression containing ++ into a
+	macro...
+
+	* [windows/win.c]
+	SetParent() should unlink the window before changing the parent.
+
+	* [windows/message.c]
+	Don't call timer functions via CallWindowProc(), since it checks
+	whether hwnd==0 and does not call the function in that case.
+
+	* [miscemu/instr.c]
+	Ignore interrupt 0x3D, for VBRUN300.DLL.
+
+	* [misc/commdlg.c]
+	Don't rely on the itemData field of the DRAWITEMSTRUCT to contain a
+	pointer to the item text.
+
+	* [if1632/relay.c]
+	Disable OLE and DDEML DLLs by default, since they contain nothing but
+	stubs anyway. SHELL, COMMDLG and WIN87EM are left enabled, although
+	some programs may work better without them.
+	
+	* [multimedia/*.c] [include/multimedia.h] [include/driver.h]
+	Begun cleaning things up a little. Replaced printfs with dprintf_
+	macros, made functions static where possible, and some other minor
+	changes.
+
+Sun Jun 11 23:19:10 1995  Martin von Loewis  <martin@informatik.hu-berlin.de>
+
+	* [debugger/dbg.y][debugger/dbg.l]
+	Removed special handling for FILE_IDENTIFER, because it caused
+	problems with x/<format> statements.
+
+	* [debugger/info.c]
+	Use SC_ESP instead of SC_EIP for stack dump.
+
+	* [misc/compobj.c][if1632/compobj.spec]
+	CoBuildVersion, CoInitialize, CoUninitialize: new functions
+
+	* [misc/ole2.c][if1632/ole2.spec][misc/Imakefile][include/ole2.h]
+	New files ole2.c, ole2.h
+	OleBuildVersion, OleInitialize, OleUninitialize: new functions
+
+	* [if1632/ole2disp.spec]
+	Added missing ordinals above 109
+
+	* [misc/ole2nls.c][if1632/ole2nls.spec][include/winnls.h]
+	New file winnls.h
+	GetLocaleInfoA: new function
+
+	* [if1632/shell.spec]
+	Added FindEnvironmentString as stub
+
+	* [misc/olecli.c][if1632/olecli.spec]
+	OleIsDcMeta: New function
+
+	* [objects/font][misc/gdi.spec]
+	GetKerningPairs: new function
+
+	* [misc/shell.c]
+	ShellExecute: Implemented support for starting programs
+
+	* [if1632/user.spec]
+	Inserted missing relay to GetClipCursor
+
+Sun Jun 11 20:34:47 1995   Bernd Schmidt <crux@pool.informatik.rwth-aachen.de>
+        
+	* [controls/edit.c]
+	Fix a problem with the local heap.
+
+	* [include/wintypes.h]
+	Fixed wrong declarations of CATCHBUF and LPCATCHBUF.
+	
+	* [include/mdi.h] [windows/mdi.c]
+	This code still assumed segmented address==linear address. Fixed.
+
+	* [include/msdos.h] [misc/dos_fs.c]
+	The filemask field of the dosdirent structure could be overrun. Fixed.
+	If you had a file called foobar and a file called foo, trying to 
+	FindFile(foo) could accidentally find file foobar instead. Fixed.
+	
+	* [misc/file.c]
+	OpenFile(): Always return the full pathname in ofs->szPathName. This 
+	also fixes GetModuleFilename().
+	Prevent _lclose() from closing stderr or stdout.
+
+	* [misc/profile.c]
+	Search for .ini files in the path of the current module as well.
+	(Needed by Lotus Organizer.)
+
+	* [loader/task.c] [loader/ne_image.c] [loader/module.c]
+	[memory/local.c]
+	Local heaps are now initialized by InitTask() for executables. DLLs
+	have to call LocalInit() themselves, LocalInit() has to put the
+	heap at the end of the segment when called with start==0. We no longer
+	allocate the DGROUP with 64k on startup, but grow the local heap
+	in LOCAL_GetBlock() when necessary.
+
+        * [loader/module.c]
+	LoadLibrary() should call LoadModule() in all cases, even if the
+	DLL is already loaded, to ensure that the reference count is correct.
+
+	* [loader/ne_image.c]
+	Some changes to function prolog fixup. Does anyone know exactly how
+	this is supposed to work? I am only guessing here.
+	In NE_InitializeDLLs(), initialize the DLLs a module refers to before
+	the module itself.
+	
+        * [loader/task.c]
+	Initialize instance data at the beginning of the DGROUP in InitTask().
+
+	* [memory/local.c]
+	Some fixes for moveable blocks.
+
+	* [memory/selector.c]
+	All the IsBad*Pointer() functions returned exactly the wrong boolean
+	value in all cases!
+	
+	* [objects/bitblt.c]
+	Fixed another null pointer dereference in debugging output.
+	
+	* [objects/font.c]
+	Some more recovery possibilities for FONT_MatchFont() if a specified
+	font does not exist.
+	
+	* [windows/win.c]
+	The dialog code may call CreateWindowEx with an integer in windowName.
+	This happens for static icon controls that expect a resource ID as
+	the window name. CreateWindowEx() used to crash. Fixed.
+	
+	* [windows/class.c] [windows/win.c]
+	Window classes are owned by modules, not instances. Changed
+	RegisterClass(), UnregisterClass(), GetClassInfo() and CreateWindowEx()
+	accordingly.
+
+Sat Jun 10 16:10:53 1995  Olaf Flebbe <o.flebbe@science-computing.uni-tuebingen.de>
+
+	* [miscemu/int21.c]
+	  clock.exe was displaying incorrect year.
+
+Fri Jun 9 20:36:56 1995  Victor Schneider <tailor@crl.com>
+
+	* [include/cursor.h] [windows/cursor.c]
+	Implemented CreateCursorIconIndirect().
+
+----------------------------------------------------------------------
 Tue Jun  6 12:11:41 1995  Alexandre Julliard  (julliard@sunsite.unc.edu)
 
 	* [controls/menu.c]

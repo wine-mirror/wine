@@ -31,6 +31,7 @@ void DEFWND_SetText( HWND hwnd, LPSTR text )
     LPSTR textPtr;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
+    if (!text) text = "";
     if (wndPtr->hText) USER_HEAP_FREE( wndPtr->hText );
     wndPtr->hText = USER_HEAP_ALLOC( strlen(text) + 1 );
     textPtr = (LPSTR) USER_HEAP_LIN_ADDR( wndPtr->hText );

@@ -138,6 +138,8 @@ HWND WIN_FindWinToRepaint( HWND hwnd )
     for ( ; hwnd != 0; hwnd = wndPtr->hwndNext )
     {
 	if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
+	dprintf_win( stddeb, "WIN_FindWinToRepaint: %04x, style %08lx\n",
+		     hwnd, wndPtr->dwStyle );
         if (!(wndPtr->dwStyle & WS_VISIBLE) || (wndPtr->flags & WIN_NO_REDRAW))
             continue;
         if ((wndPtr->dwStyle & WS_MINIMIZE) && (WIN_CLASS_INFO(wndPtr).hIcon))
@@ -295,44 +297,50 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     int wmcreate;
     XSetWindowAttributes win_attr;
 
-    dprintf_win(stddeb, "CreateWindowEx: %08lX '%s' '%s' %08lX %d,%d %dx%d %04X %04X %04X %08lx\n",
-				exStyle, className, windowName, style, x, y, width, height, 
-				parent, menu, instance, data);
-	/* 'soundrec.exe' has negative position ! 
-	Why ? For now, here a patch : */
-        if (!strcmp(className, "SoundRec"))
-	{
-	    if (x < 0) x = 0;
-	    if (y < 0) y = 0;
-	}
+    if (windowName != NULL && HIWORD(windowName) == 0) {
+	dprintf_win(stddeb,"CreateWindowEx: %04x ", LOWORD(windowName));
+    } else {
+	dprintf_win(stddeb,"CreateWindowEx: '%s' ", windowName);
+    }
+    dprintf_win(stddeb, "%08lX '%s' %08lX %d,%d %dx%d %04X %04X %04X %08lx\n",
+		exStyle, className, style, x, y, width, height,
+		parent, menu, instance, data);
+    /* 'soundrec.exe' has negative position ! 
+       Why ? For now, here a patch : */
+    if (!strcmp(className, "SoundRec"))
+    {
+	if (x < 0) x = 0;
+	if (y < 0) y = 0;
+    }
     if (x == CW_USEDEFAULT) x = y = 0;
     if (width == CW_USEDEFAULT)
     {
 	width = 600;
 	height = 400;
     }
-    if (width == 0) width = 1;
-    if (height == 0) height = 1;
 
       /* Find the parent and class */
 
     if (parent)
     {
-	  /* Make sure parent is valid */
+	/* Make sure parent is valid */
         if (!IsWindow( parent )) {
-			dprintf_win(stddeb,"CreateWindowEx: Parent %x is not a windows\n", parent);
-			return 0;
-		}
-    }
-    else if (style & WS_CHILD) {
-		dprintf_win(stddeb,"CreateWindowEx: no parent\n");
-		return 0;  /* WS_CHILD needs a parent */
+	    dprintf_win(stddeb,"CreateWindowEx: Parent %x is not a windows\n", parent);
+	    return 0;
 	}
+    }
+    else 
+    {
+	if (style & WS_CHILD) {
+	    dprintf_win(stddeb,"CreateWindowEx: no parent\n");
+	    return 0;  /* WS_CHILD needs a parent */
+	}
+    }
 
-    if (!(class = CLASS_FindClassByName( className, instance, &classPtr ))) {
+    if (!(class = CLASS_FindClassByName( className, GetExePtr( instance ), &classPtr ))) {
 	fprintf(stderr,"CreateWindow BAD CLASSNAME '%s' !\n", className);
 	return 0;
-	}    
+    }
 
       /* Correct the window style */
 
@@ -344,45 +352,39 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 
     hwnd = USER_HEAP_ALLOC( sizeof(WND)+classPtr->wc.cbWndExtra );
     if (!hwnd) {
-		dprintf_win(stddeb,"CreateWindowEx: Out of memory\n");
-		return 0;
-	}
+	dprintf_win(stddeb,"CreateWindowEx: Out of memory\n");
+	return 0;
+    }
 
       /* Fill the structure */
 
     wndPtr = (WND *) USER_HEAP_LIN_ADDR( hwnd );
-    wndPtr->hwndNext   = 0;
-    wndPtr->hwndChild  = 0;
-    wndPtr->window     = 0;
-    wndPtr->dwMagic    = WND_MAGIC;
-    wndPtr->hwndParent = (style & WS_CHILD) ? parent : hwndDesktop;
-    wndPtr->hwndOwner  = (style & WS_CHILD) ? 0 : parent;
-    wndPtr->hClass     = class;
-    wndPtr->hInstance  = instance;
-    wndPtr->rectWindow.left   = x;
-    wndPtr->rectWindow.top    = y;
-    wndPtr->rectWindow.right  = x + width;
-    wndPtr->rectWindow.bottom = y + height;
-    wndPtr->rectClient        = wndPtr->rectWindow;
-    wndPtr->rectNormal        = wndPtr->rectWindow;
-    wndPtr->ptIconPos.x       = -1;
-    wndPtr->ptIconPos.y       = -1;
-    wndPtr->ptMaxPos.x        = -1;
-    wndPtr->ptMaxPos.y        = -1;
-    wndPtr->hmemTaskQ         = GetTaskQueue(0);
-    wndPtr->hrgnUpdate        = 0;
-    wndPtr->hwndPrevActive    = 0;
-    wndPtr->hwndLastActive    = hwnd;
-    wndPtr->lpfnWndProc       = classPtr->wc.lpfnWndProc;
-    wndPtr->dwStyle           = style;
-    wndPtr->dwExStyle         = exStyle;
-    wndPtr->wIDmenu           = 0;
-    wndPtr->hText             = 0;
-    wndPtr->flags             = 0;
-    wndPtr->hVScroll          = 0;
-    wndPtr->hHScroll          = 0;
-    wndPtr->hSysMenu          = 0;
-    wndPtr->hProp             = 0;
+    wndPtr->hwndNext       = 0;
+    wndPtr->hwndChild      = 0;
+    wndPtr->window         = 0;
+    wndPtr->dwMagic        = WND_MAGIC;
+    wndPtr->hwndParent     = (style & WS_CHILD) ? parent : hwndDesktop;
+    wndPtr->hwndOwner      = (style & WS_CHILD) ? 0 : parent;
+    wndPtr->hClass         = class;
+    wndPtr->hInstance      = instance;
+    wndPtr->ptIconPos.x    = -1;
+    wndPtr->ptIconPos.y    = -1;
+    wndPtr->ptMaxPos.x     = -1;
+    wndPtr->ptMaxPos.y     = -1;
+    wndPtr->hmemTaskQ      = GetTaskQueue(0);
+    wndPtr->hrgnUpdate     = 0;
+    wndPtr->hwndPrevActive = 0;
+    wndPtr->hwndLastActive = hwnd;
+    wndPtr->lpfnWndProc    = classPtr->wc.lpfnWndProc;
+    wndPtr->dwStyle        = style;
+    wndPtr->dwExStyle      = exStyle;
+    wndPtr->wIDmenu        = 0;
+    wndPtr->hText          = 0;
+    wndPtr->flags          = 0;
+    wndPtr->hVScroll       = 0;
+    wndPtr->hHScroll       = 0;
+    wndPtr->hSysMenu       = 0;
+    wndPtr->hProp          = 0;
 
     if (classPtr->wc.cbWndExtra)
 	memset( wndPtr->wExtra, 0, classPtr->wc.cbWndExtra );
@@ -410,16 +412,17 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 
     NC_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack );
 
-    if ( maxSize.x < width)
-      {
-	width = maxSize.x;
-	wndPtr->rectWindow.right = x + width;
-      }
-    if ( maxSize.y < height)
-      {
-	height = maxSize.y;
-	wndPtr->rectWindow.bottom = y + height;
-      }
+    if (maxSize.x < width) width = maxSize.x;
+    if (maxSize.y < height) height = maxSize.y;
+    if (width <= 0) width = 1;
+    if (height <= 0) height = 1;
+
+    wndPtr->rectWindow.left   = x;
+    wndPtr->rectWindow.top    = y;
+    wndPtr->rectWindow.right  = x + width;
+    wndPtr->rectWindow.bottom = y + height;
+    wndPtr->rectClient        = wndPtr->rectWindow;
+    wndPtr->rectNormal        = wndPtr->rectWindow;
 
       /* Create the X window (only for top-level windows, and then only */
       /* when there's no desktop window) */
@@ -475,9 +478,15 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     createStruct.dwExStyle      = 0;
     if (windowName)
     {
-        hwinName = USER_HEAP_ALLOC( strlen(windowName)+1 );
-        strcpy( USER_HEAP_LIN_ADDR(hwinName), windowName );
-        createStruct.lpszName = (LPSTR)USER_HEAP_SEG_ADDR(hwinName);
+	if (HIWORD(windowName) == 0) {
+	    /* Hack for SS_ICON controls */
+	    createStruct.lpszName = windowName;
+	    hwinName = 0;
+	} else  {
+	    hwinName = USER_HEAP_ALLOC( strlen(windowName)+1 );
+	    strcpy( USER_HEAP_LIN_ADDR(hwinName), windowName );
+	    createStruct.lpszName = (LPSTR)USER_HEAP_SEG_ADDR(hwinName);
+	}
     }
     else
     {
@@ -487,9 +496,9 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 
     wmcreate = SendMessage( hwnd, WM_NCCREATE, 0, MAKE_SEGPTR(&createStruct) );
     if (!wmcreate) {
-		dprintf_win(stddeb,"CreateWindowEx: WM_NCCREATE return 0\n");
-		wmcreate = -1;
-	}
+	dprintf_win(stddeb,"CreateWindowEx: WM_NCCREATE return 0\n");
+	wmcreate = -1;
+    }
     else
     {
 	WINPOS_SendNCCalcSize( hwnd, FALSE, &wndPtr->rectWindow,
@@ -503,7 +512,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     if (wmcreate == -1)
     {
 	  /* Abort window creation */
-	  dprintf_win(stddeb,"CreateWindowEx: wmcreate==-1, aborting\n");
+	dprintf_win(stddeb,"CreateWindowEx: wmcreate==-1, aborting\n");
         WIN_DestroyWindow( hwnd );
 	return 0;
     }
@@ -851,11 +860,15 @@ HWND SetParent(HWND hwndChild, HWND hwndNewParent)
 
     temp = wndPtr->hwndParent;
 
+    WIN_UnlinkWindow(hwndChild);
     if (hwndNewParent)
       wndPtr->hwndParent = hwndNewParent;
     else
       wndPtr->hwndParent = GetDesktopWindow();
-
+    WIN_LinkWindow(hwndChild, HWND_BOTTOM);
+    
+    if (IsWindowVisible(hwndChild)) UpdateWindow(hwndChild);
+    
     return temp;
 }
 

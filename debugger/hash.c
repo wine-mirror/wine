@@ -16,8 +16,8 @@
 
 struct  name_hash{
 	struct name_hash * next;
-        unsigned short segment;
-	unsigned int * address;
+        unsigned int segment;
+	unsigned int address;
 	char * name;
 };
 
@@ -37,7 +37,7 @@ static  unsigned int name_hash(const char * name){
 }
 
 
-void add_hash(char * name, unsigned short segment, unsigned int * address)
+void add_hash(char * name, unsigned int segment, unsigned int address)
 {
 	struct name_hash  * new;
 	int hash;
@@ -54,7 +54,7 @@ void add_hash(char * name, unsigned short segment, unsigned int * address)
 	name_hash_table[hash] = new;
 }
 
-unsigned int * find_hash(char * name)
+unsigned int find_hash(char * name)
 {
 	char buffer[256];
 	struct name_hash  * nh;
@@ -70,32 +70,39 @@ unsigned int * find_hash(char * name)
 	};
 
 
-	return (unsigned int *) 0xffffffff;
+	return 0xffffffff;
 }
 
 
 static char name_buffer[256];
 
-char * find_nearest_symbol(unsigned int segment, unsigned int * address)
+char * find_nearest_symbol(unsigned int segment, unsigned int address)
 {
 	struct name_hash * nearest;
-	struct name_hash start;
 	struct name_hash  * nh;
+        unsigned int nearest_address;
 	int i;
 	
-	nearest = &start;
-	start.address = (unsigned int *) 0;
+	nearest = NULL;
+        nearest_address = 0;
 	
 	for(i=0; i<NR_NAME_HASH; i++) {
 		for(nh = name_hash_table[i]; nh; nh = nh->next)
 			if (nh->segment == segment &&
                             nh->address <= address &&
-                            nh->address > nearest->address) nearest = nh;
-	};
-	if((unsigned int) nearest->address == 0) return NULL;
+                            nh->address >= nearest_address)
+                        {
+                            nearest_address = nh->address;
+                            nearest = nh;
+                        }
+	}
+        if (!nearest) return NULL;
 
-	sprintf(name_buffer, "%s+0x%x", nearest->name, ((unsigned int) address) - 
-		((unsigned int) nearest->address));
+        if (address == nearest->address)
+            sprintf( name_buffer, "%s", nearest->name );
+	else
+            sprintf( name_buffer, "%s+0x%x", nearest->name,
+                     address - nearest->address );
 	return name_buffer;
 }
 
@@ -142,7 +149,7 @@ read_symboltable(char * filename){
 		};
 		
 		nargs = sscanf(buffer, "%x %c %s", &addr, &type, name);
-		add_hash(name, 0, (unsigned int *) addr);
+		add_hash(name, 0, addr);
       };
       fclose(symbolfile);
 }
@@ -172,8 +179,7 @@ void load_entrypoints( HMODULE hModule )
         sprintf( buffer, "%*.*s.%*.*s", *name, *name, name + 1,
                  *cpnt, *cpnt, cpnt + 1 );
         address = MODULE_GetEntryPoint( hModule, *(WORD *)(cpnt + *cpnt + 1) );
-        if (address)
-            add_hash(buffer, address >> 16, (unsigned int*)(address & 0xffff));
+        if (address) add_hash( buffer, HIWORD(address), LOWORD(address) );
     }
 
       /* Now search the non-resident names table */
@@ -186,7 +192,6 @@ void load_entrypoints( HMODULE hModule )
         sprintf( buffer, "%*.*s.%*.*s", *name, *name, name + 1,
                  *cpnt, *cpnt, cpnt + 1 );
         address = MODULE_GetEntryPoint( hModule, *(WORD *)(cpnt + *cpnt + 1) );
-        if (address)
-            add_hash(buffer, address >> 16, (unsigned int*)(address & 0xffff));
+        if (address) add_hash( buffer, HIWORD(address), LOWORD(address) );
     }
 }

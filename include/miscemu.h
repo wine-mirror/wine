@@ -4,6 +4,8 @@
 #include "wintypes.h"
 #include "wine.h"
 
+extern BOOL INSTR_HandleInstruction( struct sigcontext_struct *context );
+
 extern int do_int10(struct sigcontext_struct *);
 extern int do_int13(struct sigcontext_struct *);
 extern int do_int15(struct sigcontext_struct *);
@@ -17,14 +19,14 @@ extern int do_int2f(struct sigcontext_struct *);
 extern int do_int31(struct sigcontext_struct *);
 extern int do_int5c(struct sigcontext_struct *);
 
-extern void inportb(struct sigcontext_struct *context);
-extern void inport(struct sigcontext_struct *context);
-extern void outportb(struct sigcontext_struct *context);
-extern void outport(struct sigcontext_struct *context);
-extern void inportb_abs(struct sigcontext_struct *context);
-extern void inport_abs(struct sigcontext_struct *context);
-extern void outportb_abs(struct sigcontext_struct *context);
-extern void outport_abs(struct sigcontext_struct *context);
+extern void inportb( struct sigcontext_struct *context );
+extern void inport( struct sigcontext_struct *context, int long_op );
+extern void outportb( struct sigcontext_struct *context );
+extern void outport( struct sigcontext_struct *context, int long_op );
+extern void inportb_abs( struct sigcontext_struct *context);
+extern void inport_abs( struct sigcontext_struct *context, int long_op );
+extern void outportb_abs( struct sigcontext_struct *context );
+extern void outport_abs( struct sigcontext_struct *context, int long_op );
 
 extern void IntBarf(int i, struct sigcontext_struct *context);
 

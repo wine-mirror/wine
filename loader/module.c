@@ -26,6 +26,7 @@
 
 
 static HMODULE hFirstModule = 0;
+static HMODULE hCachedModule = 0;  /* Module cached by MODULE_OpenFile */
 
 
 /***********************************************************************
@@ -271,7 +272,6 @@ int MODULE_OpenFile( HMODULE hModule )
     NE_MODULE *pModule;
     char *name;
 
-    static HMODULE hCachedModule = 0;
     static int cachedfd = -1;
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
@@ -306,8 +306,10 @@ static BOOL MODULE_CreateSegments( HMODULE hModule )
         if (i == pModule->ss) minsize += pModule->stack_size;
         if (i == pModule->dgroup)
         {
+#if 0
             /* FIXME: this is needed because heap growing is not implemented */
             pModule->heap_size = 0x10000 - minsize;
+#endif
             /* The DGROUP is allocated by MODULE_CreateInstance */
             continue;
         }
@@ -865,6 +867,10 @@ static void MODULE_FreeModule( HMODULE hModule )
     if (pModule->nrname_handle) GlobalFree( pModule->nrname_handle );
     if (pModule->dlls_to_init) GlobalFree( pModule->dlls_to_init );
     GlobalFree( hModule );
+
+      /* Remove module from cache */
+
+    if (hCachedModule == hModule) hCachedModule = 0;
 }
 
 
@@ -997,6 +1003,8 @@ BOOL FreeModule( HANDLE hModule )
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return FALSE;
 
+    dprintf_module( stddeb, "FreeModule: %s count %d\n", 
+		    MODULE_GetModuleName(hModule), pModule->count );
     if (--pModule->count == 0) MODULE_FreeModule( hModule );
     return TRUE;
 }
@@ -1052,8 +1060,10 @@ HANDLE LoadLibrary( LPCSTR libname )
     HANDLE handle;
 
     dprintf_module( stddeb, "LoadLibrary: (%08x) %s\n", (int)libname, libname);
+    /* This does not increment the module reference count, and will
+     * therefore cause crashes on FreeLibrary calls.
     if ((handle = MODULE_FindModule( libname )) != 0) return handle;
-
+     */
     handle = LoadModule( libname, (LPVOID)-1 );
     if (handle == 2)  /* file not found */
     {

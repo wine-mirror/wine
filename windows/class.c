@@ -2,9 +2,7 @@
  * Window classes functions
  *
  * Copyright 1993 Alexandre Julliard
- *
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
-*/
+ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -55,12 +53,7 @@ HCLASS CLASS_FindClassByName( char * name, WORD hinstance, CLASS **ptr )
     for (class = firstClass; (class); class = classPtr->hNext)
     {
         classPtr = (CLASS *) USER_HEAP_LIN_ADDR(class);
-#if 0
-      /* This breaks Borland's Resource Workshop: A DLL creates a class,
-       * and the main program tries to use it, but passes a different
-       * hInstance */
-      if (!(classPtr->wc.style & CS_GLOBALCLASS)) continue;
-#endif
+        if (!(classPtr->wc.style & CS_GLOBALCLASS)) continue;
         if (classPtr->atomName == atom)
         {
             if (ptr) *ptr = classPtr;
@@ -98,11 +91,14 @@ ATOM RegisterClass( LPWNDCLASS class )
     int classExtra;
     char *name = PTR_SEG_TO_LIN( class->lpszClassName );
 
-    dprintf_class(stddeb, "RegisterClass: wndproc=%08lx hinst=%d name='%s' background %04x\n",
+    dprintf_class(stddeb, "RegisterClass: wndproc=%08lx hinst=%04x name='%s' background %04x\n",
 	    (DWORD)class->lpfnWndProc, class->hInstance, name, class->hbrBackground );
     dprintf_class(stddeb, "               style %04x\n",class->style);
+    
+      /* Window classes are owned by modules, not instances */
+    class->hInstance = GetExePtr( class->hInstance );
+    
       /* Check if a class with this name already exists */
-
     prevClass = CLASS_FindClassByName( name, class->hInstance, &prevClassPtr );
     if (prevClass)
     {
@@ -155,15 +151,16 @@ ATOM RegisterClass( LPWNDCLASS class )
 /***********************************************************************
  *           UnregisterClass    (USER.403)
  */
-BOOL UnregisterClass( LPSTR className, HANDLE instance )
+BOOL UnregisterClass( LPSTR className, HANDLE hinstance )
 {
     HANDLE class, prevClass;
     CLASS * classPtr, * prevClassPtr;
     
+    hinstance = GetExePtr( hinstance );
       /* Check if we can remove this class */
-    class = CLASS_FindClassByName( className, instance, &classPtr );
+    class = CLASS_FindClassByName( className, hinstance, &classPtr );
     if (!class) return FALSE;
-    if ((classPtr->wc.hInstance != instance) || (classPtr->cWindows > 0))
+    if ((classPtr->wc.hInstance != hinstance) || (classPtr->cWindows > 0))
 	return FALSE;
     
       /* Remove the class from the linked list */
@@ -289,7 +286,8 @@ BOOL GetClassInfo(HANDLE hInstance, SEGPTR ClassName,
     dprintf_class(stddeb, "GetClassInfo   hInstance=%04x  lpClassName=%s\n",
 		  hInstance, lpClassName);
 
-
+    hInstance = GetExePtr(hInstance);
+    
     /* if (!(CLASS_FindClassByName(lpClassName, &classPtr))) return FALSE; */
     if (!(CLASS_FindClassByName(lpClassName, hInstance, &classPtr)))
     {

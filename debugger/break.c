@@ -141,7 +141,7 @@ void toggle_next(int num)
    unsigned int addr;
    addr=wbp[num].addr;
    if(wbp[num].next_addr == 0)
-	wbp[num].next_addr = db_disasm( addr, 0, (dbg_mode == 16) );
+	wbp[num].next_addr = db_disasm( 0, addr, (dbg_mode == 16) );
    wbp[num].addr=wbp[num].next_addr;
    wbp[num].next_addr=addr;
 }
