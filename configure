@@ -6116,6 +6116,8 @@ fi
 
 
 
+
+
 MAKE_RULES=Make.rules
 
 
@@ -6329,7 +6331,6 @@ programs/wcmd/Makefile
 programs/winemine/Makefile
 programs/winhelp/Makefile
 programs/winver/Makefile
-rc/Makefile
 relay32/Makefile
 resources/Makefile
 scheduler/Makefile
@@ -6556,7 +6557,6 @@ programs/wcmd/Makefile
 programs/winemine/Makefile
 programs/winhelp/Makefile
 programs/winver/Makefile
-rc/Makefile
 relay32/Makefile
 resources/Makefile
 scheduler/Makefile
@@ -6737,8 +6737,19 @@ fi; done
 EOF
 cat >> $CONFIG_STATUS <<EOF
 
+
 EOF
 cat >> $CONFIG_STATUS <<\EOF
+
+extra_subdirs="\
+dlls/ddraw/d3ddevice \
+dlls/ddraw/dclipper \
+dlls/ddraw/ddraw \
+dlls/ddraw/direct3d \
+dlls/ddraw/dpalette \
+dlls/ddraw/dsurface \
+"
+for i in $extra_subdirs; do [ -d $i ] || (echo "creating $i" && mkdir $i); done 
 
 exit 0
 EOF
