@@ -104,7 +104,7 @@
 104 stdcall VarCyFromStr(ptr long long ptr)
 105 stub VarCyFromDisp
 106 stdcall VarCyFromBool(long ptr)
-107 stub VarFormatNumber # stdcall (ptr long long long long long ptr)
+107 stdcall VarFormatNumber(ptr long long long long long ptr)
 108 stdcall VarBstrFromUI1(long long long ptr)
 109 stdcall VarBstrFromI2(long long long ptr)
 110 stdcall VarBstrFromI4(long long long ptr)
@@ -114,7 +114,7 @@
 114 stdcall VarBstrFromDate(double long long ptr)
 115 stub VarBstrFromDisp
 116 stdcall VarBstrFromBool(long long long ptr)
-117 stub VarFormatPercent # stdcall (ptr long long long long long ptr)
+117 stdcall VarFormatPercent(ptr long long long long long ptr)
 118 stdcall VarBoolFromUI1(long ptr)
 119 stdcall VarBoolFromI2(long ptr)
 120 stdcall VarBoolFromI4(long ptr)

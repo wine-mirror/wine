@@ -26,6 +26,7 @@ C_SRCS = \
 	tmarshal.c \
 	typelib.c \
 	usrmarshal.c \
+	varformat.c \
 	variant.c
 
 C_SRCS16 = \

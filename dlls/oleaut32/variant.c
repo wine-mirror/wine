@@ -66,13 +66,40 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+const char* wine_vtypes[VT_CLSID] =
+{
+  "VT_EMPTY","VT_NULL","VT_I2","VT_I4","VT_R4","VT_R8","VT_CY","VT_DATE",
+  "VT_BSTR","VT_DISPATCH","VT_ERROR","VT_BOOL","VT_VARIANT","VT_UNKNOWN",
+  "VT_DECIMAL","15","VT_I1","VT_UI1","VT_UI2","VT_UI4","VT_I8","VT_UI8",
+  "VT_INT","VT_UINT","VT_VOID","VT_HRESULT","VT_PTR","VT_SAFEARRAY",
+  "VT_CARRAY","VT_USERDEFINED","VT_LPSTR","VT_LPWSTR""32","33","34","35",
+  "VT_RECORD","VT_INT_PTR","VT_UINT_PTR","39","40","41","42","43","44","45",
+  "46","47","48","49","50","51","52","53","54","55","56","57","58","59","60",
+  "61","62","63","VT_FILETIME","VT_BLOB","VT_STREAM","VT_STORAGE",
+  "VT_STREAMED_OBJECT","VT_STORED_OBJECT","VT_BLOB_OBJECT","VT_CF","VT_CLSID"
+};
+
+const char* wine_vflags[16] =
+{
+ "",
+ "|VT_VECTOR",
+ "|VT_ARRAY",
+ "|VT_VECTOR|VT_ARRAY",
+ "|VT_BYREF",
+ "|VT_VECTOR|VT_ARRAY",
+ "|VT_ARRAY|VT_BYREF",
+ "|VT_VECTOR|VT_ARRAY|VT_BYREF",
+ "|VT_HARDTYPE",
+ "|VT_VECTOR|VT_HARDTYPE",
+ "|VT_ARRAY|VT_HARDTYPE",
+ "|VT_VECTOR|VT_ARRAY|VT_HARDTYPE",
+ "|VT_BYREF|VT_HARDTYPE",
+ "|VT_VECTOR|VT_ARRAY|VT_HARDTYPE",
+ "|VT_ARRAY|VT_BYREF|VT_HARDTYPE",
+ "|VT_VECTOR|VT_ARRAY|VT_BYREF|VT_HARDTYPE",
+};
+
 #define SYSDUPSTRING(str) SysAllocStringByteLen((LPCSTR)(str), SysStringByteLen(str))
-
-/* Flags set in V_VT, other than the actual type value */
-#define VT_EXTRA_TYPE (VT_VECTOR|VT_ARRAY|VT_BYREF|VT_RESERVED)
-
-/* Get the extra flags from a variant pointer */
-#define V_EXTRA_TYPE(v) (V_VT(v) & VT_EXTRA_TYPE)
 
 /* the largest valid type
  */
@@ -100,100 +127,6 @@ static char pBuffer[BUFFER_MAX];
  * to keep arithmetic simple
  */
 static const double DAYS_IN_ONE_YEAR = 365.0;
-
-/*
- * Token definitions for Varient Formatting
- * Worked out by experimentation on a w2k machine. Doesnt appear to be
- *   documented anywhere obviously so keeping definitions internally
- *
- */
-/* Pre defined tokens */
-#define TOK_COPY 0x00
-#define TOK_END  0x02
-#define LARGEST_TOKENID 6
-
-/* Mapping of token name to id put into the tokenized form
-   Note testing on W2K shows aaaa and oooo are not parsed??!! */
-#define TOK_COLON  0x03
-#define TOK_SLASH  0x04
-#define TOK_c      0x05
-#define TOK_d      0x08
-#define TOK_dd     0x09
-#define TOK_ddd    0x0a
-#define TOK_dddd   0x0b
-#define TOK_ddddd  0x0c
-#define TOK_dddddd 0x0d
-#define TOK_w      0x0f
-#define TOK_ww     0x10
-#define TOK_m      0x11
-#define TOK_mm     0x12
-#define TOK_mmm    0x13
-#define TOK_mmmm   0x14
-#define TOK_q      0x06
-#define TOK_y      0x15
-#define TOK_yy     0x16
-#define TOK_yyyy   0x18
-#define TOK_h      0x1e
-#define TOK_Hh     0x1f
-#define TOK_N      0x1a
-#define TOK_Nn     0x1b
-#define TOK_S      0x1c
-#define TOK_Ss     0x1d
-#define TOK_ttttt  0x07
-#define TOK_AMsPM  0x2f
-#define TOK_amspm  0x32
-#define TOK_AsP    0x30
-#define TOK_asp    0x33
-#define TOK_AMPM   0x2e
-
-typedef struct tagFORMATTOKEN {
-    const char  *str;
-    BYTE        tokenSize;
-    BYTE        tokenId;
-    int         varTypeRequired;
-} FORMATTOKEN;
-
-typedef struct tagFORMATHDR {
-    BYTE   len;
-    BYTE   hex3;
-    BYTE   hex6;
-    BYTE   reserved[8];
-} FORMATHDR;
-
-FORMATTOKEN formatTokens[] = {           /* FIXME: Only date formats so far */
-    {":"     ,   1,  TOK_COLON  , 0},
-    {"/"     ,   1,  TOK_SLASH  , 0},
-    {"c"     ,   1,  TOK_c      , VT_DATE},
-    {"dddddd",   6,  TOK_dddddd , VT_DATE},
-    {"ddddd" ,   5,  TOK_ddddd  , VT_DATE},
-    {"dddd"  ,   4,  TOK_dddd   , VT_DATE},
-    {"ddd"   ,   3,  TOK_ddd    , VT_DATE},
-    {"dd"    ,   2,  TOK_dd     , VT_DATE},
-    {"d"     ,   1,  TOK_d      , VT_DATE},
-    {"ww"    ,   2,  TOK_ww     , VT_DATE},
-    {"w"     ,   1,  TOK_w      , VT_DATE},
-    {"mmmm"  ,   4,  TOK_mmmm   , VT_DATE},
-    {"mmm"   ,   3,  TOK_mmm    , VT_DATE},
-    {"mm"    ,   2,  TOK_mm     , VT_DATE},
-    {"m"     ,   1,  TOK_m      , VT_DATE},
-    {"q"     ,   1,  TOK_q      , VT_DATE},
-    {"yyyy"  ,   4,  TOK_yyyy   , VT_DATE},
-    {"yy"    ,   2,  TOK_yy     , VT_DATE},
-    {"y"     ,   1,  TOK_y      , VT_DATE},
-    {"h"     ,   1,  TOK_h      , VT_DATE},
-    {"Hh"    ,   2,  TOK_Hh     , VT_DATE},
-    {"Nn"    ,   2,  TOK_Nn     , VT_DATE},
-    {"N"     ,   1,  TOK_N      , VT_DATE},
-    {"S"     ,   1,  TOK_S      , VT_DATE},
-    {"Ss"    ,   2,  TOK_Ss     , VT_DATE},
-    {"ttttt" ,   5,  TOK_ttttt  , VT_DATE},
-    {"AM/PM" ,   5,  TOK_AMsPM  , VT_DATE},
-    {"am/pm" ,   5,  TOK_amspm  , VT_DATE},
-    {"A/P"   ,   3,  TOK_AsP    , VT_DATE},
-    {"a/p"   ,   3,  TOK_asp    , VT_DATE},
-    {"AMPM"  ,   4,  TOK_AMPM   , VT_DATE},
-    {0x00    ,   0,  0          , VT_NULL}
-};
 
 /******************************************************************************
  *	   DateTimeStringToTm	[INTERNAL]
@@ -1360,7 +1293,12 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			res = VarBstrFromDate( V_UNION(ps,date), lcid, 0, &V_UNION(pd,bstrVal) );
 			break;
 		case( VT_BOOL ):
-			res = VarBstrFromBool( V_UNION(ps,boolVal), lcid, 0, &V_UNION(pd,bstrVal) );
+			if (dwFlags & VARIANT_ALPHABOOL)
+			  res = VarBstrFromBool(V_BOOL(ps), lcid, 0, &V_BSTR(pd));
+			else if (dwFlags & VARIANT_LOCALBOOL)
+			  res = VarBstrFromBool(V_BOOL(ps), lcid, VAR_LOCALBOOL, &V_BSTR(pd));
+			else
+			  res = VarBstrFromI2(V_BOOL(ps), lcid, dwFlags, &V_BSTR(pd));
 			break;
 		case( VT_BSTR ):
 			res = VariantCopy( pd, ps );
@@ -4545,7 +4483,7 @@ HRESULT WINAPI VarDateFromUdate(UDATE *pUdateIn, ULONG dwFlags, DATE *pDateOut)
  * PARAMS
  *  datein    [I] Variant VT_DATE format date
  *  dwFlags   [I] Flags controlling the conversion (VAR_ flags from "oleauto.h")
- *  lpUdate [O] Destination for unpacked format date and time
+ *  lpUdate   [O] Destination for unpacked format date and time
  *
  * RETURNS
  *  Success: S_OK. *lpUdate contains the converted value.
@@ -5390,24 +5328,6 @@ HRESULT WINAPI VarNumFromParseNum(NUMPARSE *pNumprs, BYTE *rgbDig,
 }
 
 /**********************************************************************
- *              VarFormatDateTime [OLEAUT32.97]
- */
-HRESULT WINAPI VarFormatDateTime(LPVARIANT var, INT format, ULONG dwFlags, BSTR *out)
-{
-    FIXME("%p %d %lx %p\n", var, format, dwFlags, out);
-    return E_NOTIMPL;
-}
-
-/**********************************************************************
- *              VarFormatCurrency [OLEAUT32.127]
- */
-HRESULT WINAPI VarFormatCurrency(LPVARIANT var, INT digits, INT lead, INT paren, INT group, ULONG dwFlags, BSTR *out)
-{
-    FIXME("%p %d %d %d %d %lx %p\n", var, digits, lead, paren, group, dwFlags, out);
-    return E_NOTIMPL;
-}
-
-/**********************************************************************
  *              VarBstrCmp [OLEAUT32.314]
  *
  * flags can be:
@@ -5562,7 +5482,7 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
 	if (FAILED(rc)) return rc;
 	rc = VariantChangeType(&rv,right,0,VT_R8);
 	if (FAILED(rc)) return rc;
-	
+
 	if (V_R8(&lv) == V_R8(&rv)) return VARCMP_EQ;
 	if (V_R8(&lv) < V_R8(&rv)) return VARCMP_LT;
 	if (V_R8(&lv) > V_R8(&rv)) return VARCMP_GT;
@@ -5573,7 +5493,7 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
 	if (FAILED(rc)) return rc;
 	rc = VariantChangeType(&rv,right,0,VT_R4);
 	if (FAILED(rc)) return rc;
-	
+
 	if (V_R4(&lv) == V_R4(&rv)) return VARCMP_EQ;
 	if (V_R4(&lv) < V_R4(&rv)) return VARCMP_LT;
 	if (V_R4(&lv) > V_R4(&rv)) return VARCMP_GT;
@@ -6164,437 +6084,6 @@ HRESULT WINAPI VarNot(LPVARIANT in, LPVARIANT result)
 
     TRACE("rc=%d, Result:\n", (int) rc);
     dump_Variant(result);
-    return rc;
-}
-
-/**********************************************************************
- *              VarTokenizeFormatString [OLEAUT32.140]
- *
- * From investigation on W2K, a list is built up which is:
- *
- * <0x00> AA BB - Copy from AA for BB chars (Note 1 byte with wrap!)
- * <token> - Insert appropriate token
- *
- */
-HRESULT WINAPI VarTokenizeFormatString(LPOLESTR  format, LPBYTE rgbTok,
-                     int   cbTok, int iFirstDay, int iFirstWeek,
-                     LCID  lcid, int *pcbActual) {
-
-    FORMATHDR *hdr;
-    int        realLen, formatLeft;
-    BYTE      *pData;
-    LPSTR      pFormatA, pStart;
-    int        checkStr;
-    BOOL       insertCopy = FALSE;
-    LPSTR      copyFrom = NULL;
-
-    TRACE("'%s', %p %d %d %d only date support\n", debugstr_w(format), rgbTok, cbTok,
-                   iFirstDay, iFirstWeek);
-
-    /* Big enough for header? */
-    if (cbTok < sizeof(FORMATHDR)) {
-        return TYPE_E_BUFFERTOOSMALL;
-    }
-
-    /* Insert header */
-    hdr = (FORMATHDR *) rgbTok;
-    memset(hdr, 0x00, sizeof(FORMATHDR));
-    hdr->hex3 = 0x03; /* No idea what these are */
-    hdr->hex6 = 0x06;
-
-    /* Start parsing string */
-    realLen    = sizeof(FORMATHDR);
-    pData      = rgbTok + realLen;
-    pFormatA   = HEAP_strdupWtoA( GetProcessHeap(), 0, format );
-    pStart     = pFormatA;
-    formatLeft = strlen(pFormatA);
-
-    /* Work through the format */
-    while (*pFormatA != 0x00) {
-
-        checkStr = 0;
-        while (checkStr>=0 && (formatTokens[checkStr].tokenSize != 0x00)) {
-            if (formatLeft >= formatTokens[checkStr].tokenSize &&
-                strncmp(formatTokens[checkStr].str, pFormatA,
-                        formatTokens[checkStr].tokenSize) == 0) {
-                TRACE("match on '%s'\n", formatTokens[checkStr].str);
-
-                /* Found Match! */
-
-                /* If we have skipped chars, insert the copy */
-                if (insertCopy == TRUE) {
-
-                    if ((realLen + 3) > cbTok) {
-                        HeapFree( GetProcessHeap(), 0, pFormatA );
-                        return TYPE_E_BUFFERTOOSMALL;
-                    }
-                    insertCopy = FALSE;
-                    *pData = TOK_COPY;
-                    pData++;
-                    *pData = (BYTE)(copyFrom - pStart);
-                    pData++;
-                    *pData = (BYTE)(pFormatA - copyFrom);
-                    pData++;
-                    realLen = realLen + 3;
-                }
-
-
-                /* Now insert the token itself */
-                if ((realLen + 1) > cbTok) {
-                    HeapFree( GetProcessHeap(), 0, pFormatA );
-                    return TYPE_E_BUFFERTOOSMALL;
-                }
-                *pData = formatTokens[checkStr].tokenId;
-                pData = pData + 1;
-                realLen = realLen + 1;
-
-                pFormatA = pFormatA + formatTokens[checkStr].tokenSize;
-                formatLeft = formatLeft - formatTokens[checkStr].tokenSize;
-                checkStr = -1; /* Flag as found and break out of while loop */
-            } else {
-                checkStr++;
-            }
-        }
-
-        /* Did we ever match a token? */
-        if (checkStr != -1 && insertCopy == FALSE) {
-            TRACE("No match - need to insert copy from %p [%p]\n", pFormatA, pStart);
-            insertCopy = TRUE;
-            copyFrom   = pFormatA;
-        } else if (checkStr != -1) {
-            pFormatA = pFormatA + 1;
-        }
-
-    }
-
-    /* Finally, if we have skipped chars, insert the copy */
-    if (insertCopy == TRUE) {
-
-        TRACE("Chars left over, so still copy %p,%p,%p\n", copyFrom, pStart, pFormatA);
-        if ((realLen + 3) > cbTok) {
-            HeapFree( GetProcessHeap(), 0, pFormatA );
-            return TYPE_E_BUFFERTOOSMALL;
-        }
-        insertCopy = FALSE;
-        *pData = TOK_COPY;
-        pData++;
-        *pData = (BYTE)(copyFrom - pStart);
-        pData++;
-        *pData = (BYTE)(pFormatA - copyFrom);
-        pData++;
-        realLen = realLen + 3;
-    }
-
-    /* Finally insert the terminator */
-    if ((realLen + 1) > cbTok) {
-        HeapFree( GetProcessHeap(), 0, pFormatA );
-        return TYPE_E_BUFFERTOOSMALL;
-    }
-    *pData++ = TOK_END;
-    realLen = realLen + 1;
-
-    /* Finally fill in the length */
-    hdr->len = realLen;
-    *pcbActual = realLen;
-
-#if 0
-    { int i,j;
-      for (i=0; i<realLen; i=i+0x10) {
-          printf(" %4.4x : ", i);
-          for (j=0; j<0x10 && (i+j < realLen); j++) {
-              printf("%2.2x ", rgbTok[i+j]);
-          }
-          printf("\n");
-      }
-    }
-#endif
-    HeapFree( GetProcessHeap(), 0, pFormatA );
-
-    return S_OK;
-}
-
-/**********************************************************************
- *              VarFormatFromTokens [OLEAUT32.139]
- * FIXME: No account of flags or iFirstDay etc
- */
-HRESULT WINAPI VarFormatFromTokens(LPVARIANT varIn, LPOLESTR format,
-                            LPBYTE pbTokCur, ULONG dwFlags, BSTR *pbstrOut,
-                            LCID  lcid) {
-
-    FORMATHDR   *hdr = (FORMATHDR *)pbTokCur;
-    BYTE        *pData    = pbTokCur + sizeof (FORMATHDR);
-    LPSTR        pFormatA = HEAP_strdupWtoA( GetProcessHeap(), 0, format );
-    char         output[BUFFER_MAX];
-    char        *pNextPos;
-    int          size, whichToken;
-    VARIANTARG   Variant;
-    struct tm    TM;
-
-
-
-    TRACE("'%s', %p %lx %p only date support\n", pFormatA, pbTokCur, dwFlags, pbstrOut);
-    TRACE("varIn:\n");
-    dump_Variant(varIn);
-
-    memset(output, 0x00, BUFFER_MAX);
-    pNextPos = output;
-
-    while (*pData != TOK_END && ((pData - pbTokCur) <= (hdr->len))) {
-
-        TRACE("Output looks like : '%s'\n", output);
-
-        /* Convert varient to appropriate data type */
-        whichToken = 0;
-        while ((formatTokens[whichToken].tokenSize != 0x00) &&
-               (formatTokens[whichToken].tokenId   != *pData)) {
-            whichToken++;
-        }
-
-        /* Use Variant local from here downwards as always correct type */
-        if (formatTokens[whichToken].tokenSize > 0 &&
-            formatTokens[whichToken].varTypeRequired != 0) {
-			VariantInit( &Variant );
-            if (Coerce( &Variant, lcid, dwFlags, varIn,
-                        formatTokens[whichToken].varTypeRequired ) != S_OK) {
-                HeapFree( GetProcessHeap(), 0, pFormatA );
-                return DISP_E_TYPEMISMATCH;
-            } else if (formatTokens[whichToken].varTypeRequired == VT_DATE) {
-                if( DateToTm( V_UNION(&Variant,date), dwFlags, &TM ) == FALSE ) {
-                    HeapFree( GetProcessHeap(), 0, pFormatA );
-                    return E_INVALIDARG;
-                }
-            }
-        }
-
-        TRACE("Looking for match on token '%x'\n", *pData);
-        switch (*pData) {
-        case TOK_COPY:
-            TRACE("Copy from %d for %d bytes\n", *(pData+1), *(pData+2));
-            memcpy(pNextPos, &pFormatA[*(pData+1)], *(pData+2));
-            pNextPos = pNextPos + *(pData+2);
-            pData = pData + 3;
-            break;
-
-        case TOK_COLON   :
-            /* Get locale information - Time Separator */
-            size = GetLocaleInfoA(lcid, LOCALE_STIME, NULL, 0);
-            GetLocaleInfoA(lcid, LOCALE_STIME, pNextPos, size);
-            TRACE("TOK_COLON Time separator is '%s'\n", pNextPos);
-            pNextPos = pNextPos + size;
-            pData = pData + 1;
-            break;
-
-        case TOK_SLASH   :
-            /* Get locale information - Date Separator */
-            size = GetLocaleInfoA(lcid, LOCALE_SDATE, NULL, 0);
-            GetLocaleInfoA(lcid, LOCALE_SDATE, pNextPos, size);
-            TRACE("TOK_COLON Time separator is '%s'\n", pNextPos);
-            pNextPos = pNextPos + size;
-            pData = pData + 1;
-            break;
-
-        case TOK_d       :
-            sprintf(pNextPos, "%d", TM.tm_mday);
-            pNextPos = pNextPos + strlen(pNextPos);
-            pData = pData + 1;
-            break;
-
-        case TOK_dd      :
-            sprintf(pNextPos, "%2.2d", TM.tm_mday);
-            pNextPos = pNextPos + strlen(pNextPos);
-            pData = pData + 1;
-            break;
-
-        case TOK_w       :
-            sprintf(pNextPos, "%d", TM.tm_wday+1);
-            pNextPos = pNextPos + strlen(pNextPos);
-            pData = pData + 1;
-            break;
-
-        case TOK_m       :
-            sprintf(pNextPos, "%d", TM.tm_mon+1);
-            pNextPos = pNextPos + strlen(pNextPos);
-            pData = pData + 1;
-            break;
-
-        case TOK_mm      :
-            sprintf(pNextPos, "%2.2d", TM.tm_mon+1);
-            pNextPos = pNextPos + strlen(pNextPos);
-            pData = pData + 1;
-            break;
-
-        case TOK_q       :
-            sprintf(pNextPos, "%d", ((TM.tm_mon+1)/4)+1);
-            pNextPos = pNextPos + strlen(pNextPos);
-            pData = pData + 1;
-            break;
-
-        case TOK_y       :
-            sprintf(pNextPos, "%2.2d", TM.tm_yday+1);
-            pNextPos = pNextPos + strlen(pNextPos);
-            pData = pData + 1;
-            break;
-
-        case TOK_yy      :
-            sprintf(pNextPos, "%2.2d", TM.tm_year);
-            pNextPos = pNextPos + strlen(pNextPos);
-            pData = pData + 1;
-            break;
-
-        case TOK_yyyy    :
-            sprintf(pNextPos, "%4.4d", TM.tm_year);
-            pNextPos = pNextPos + strlen(pNextPos);
-            pData = pData + 1;
-            break;
-
-        case TOK_h       :
-            sprintf(pNextPos, "%d", TM.tm_hour);
-            pNextPos = pNextPos + strlen(pNextPos);
-            pData = pData + 1;
-            break;
-
-        case TOK_Hh      :
-            sprintf(pNextPos, "%2.2d", TM.tm_hour);
-            pNextPos = pNextPos + strlen(pNextPos);
-            pData = pData + 1;
-            break;
-
-        case TOK_N       :
-            sprintf(pNextPos, "%d", TM.tm_min);
-            pNextPos = pNextPos + strlen(pNextPos);
-            pData = pData + 1;
-            break;
-
-        case TOK_Nn      :
-            sprintf(pNextPos, "%2.2d", TM.tm_min);
-            pNextPos = pNextPos + strlen(pNextPos);
-            pData = pData + 1;
-            break;
-
-        case TOK_S       :
-            sprintf(pNextPos, "%d", TM.tm_sec);
-            pNextPos = pNextPos + strlen(pNextPos);
-            pData = pData + 1;
-            break;
-
-        case TOK_Ss      :
-            sprintf(pNextPos, "%2.2d", TM.tm_sec);
-            pNextPos = pNextPos + strlen(pNextPos);
-            pData = pData + 1;
-            break;
-
-        /* FIXME: To Do! */
-        case TOK_ttttt   :
-        case TOK_AMsPM   :
-        case TOK_amspm   :
-        case TOK_AsP     :
-        case TOK_asp     :
-        case TOK_AMPM    :
-        case TOK_c       :
-        case TOK_ddd     :
-        case TOK_dddd    :
-        case TOK_ddddd   :
-        case TOK_dddddd  :
-        case TOK_ww      :
-        case TOK_mmm     :
-        case TOK_mmmm    :
-        default:
-            FIXME("Unhandled token for VarFormat %d\n", *pData);
-            HeapFree( GetProcessHeap(), 0, pFormatA );
-            return E_INVALIDARG;
-        }
-
-    }
-
-    *pbstrOut = StringDupAtoBstr( output );
-    HeapFree( GetProcessHeap(), 0, pFormatA );
-    return S_OK;
-}
-
-/**********************************************************************
- *              VarFormat [OLEAUT32.87]
- *
- */
-HRESULT WINAPI VarFormat(LPVARIANT varIn, LPOLESTR format,
-                         int firstDay, int firstWeek, ULONG dwFlags,
-                         BSTR *pbstrOut) {
-
-    LPSTR   pNewString = NULL;
-    HRESULT rc = S_OK;
-
-    TRACE("mostly stub! format='%s' day=%d, wk=%d, flags=%ld\n",
-          debugstr_w(format), firstDay, firstWeek, dwFlags);
-    TRACE("varIn:\n");
-    dump_Variant(varIn);
-
-    /* Note: Must Handle references type Variants (contain ptrs
-          to values rather than values */
-
-    /* Get format string */
-    pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, format );
-
-    /* FIXME: Handle some simple pre-definted format strings : */
-    if (((V_VT(varIn)&VT_TYPEMASK) == VT_CY) && (lstrcmpiA(pNewString, "Currency") == 0)) {
-
-        /* Can't use VarBstrFromCy as it does not put currency sign on nor decimal places */
-        double curVal;
-
-
-        /* Handle references type Variants (contain ptrs to values rather than values */
-        if (V_VT(varIn)&VT_BYREF) {
-            rc = VarR8FromCy(*(CY *)V_UNION(varIn,byref), &curVal);
-        } else {
-            rc = VarR8FromCy(V_UNION(varIn,cyVal), &curVal);
-        }
-
-        if (rc == S_OK) {
-            char tmpStr[BUFFER_MAX];
-            sprintf(tmpStr, "%f", curVal);
-            if (GetCurrencyFormatA(GetUserDefaultLCID(), dwFlags, tmpStr, NULL, pBuffer, BUFFER_MAX) == 0) {
-                return E_FAIL;
-            } else {
-                *pbstrOut = StringDupAtoBstr( pBuffer );
-            }
-        }
-
-    } else if ((V_VT(varIn)&VT_TYPEMASK) == VT_DATE) {
-
-        /* Attempt to do proper formatting! */
-        int firstToken = -1;
-
-        rc = VarTokenizeFormatString(format, pBuffer, sizeof(pBuffer), firstDay,
-                                  firstWeek, GetUserDefaultLCID(), &firstToken);
-        if (rc==S_OK) {
-            rc = VarFormatFromTokens(varIn, format, pBuffer, dwFlags, pbstrOut, GetUserDefaultLCID());
-        }
-
-    } else if ((V_VT(varIn)&VT_TYPEMASK) == VT_R8) {
-        if (V_VT(varIn)&VT_BYREF) {
-            sprintf(pBuffer, "%f", *V_UNION(varIn,pdblVal));
-        } else {
-            sprintf(pBuffer, "%f", V_UNION(varIn,dblVal));
-        }
-        *pbstrOut = StringDupAtoBstr( pBuffer );
-    } else if ((V_VT(varIn)&VT_TYPEMASK) == VT_I2) {
-        if (V_VT(varIn)&VT_BYREF) {
-            sprintf(pBuffer, "%d", *V_UNION(varIn,piVal));
-        } else {
-            sprintf(pBuffer, "%d", V_UNION(varIn,iVal));
-        }
-        *pbstrOut = StringDupAtoBstr( pBuffer );
-    } else if ((V_VT(varIn)&VT_TYPEMASK) == VT_BSTR) {
-        if (V_VT(varIn)&VT_BYREF)
-            *pbstrOut = SysAllocString( *V_UNION(varIn,pbstrVal) );
-        else
-            *pbstrOut = SysAllocString( V_UNION(varIn,bstrVal) );
-    } else {
-        FIXME("VarFormat: Unsupported format %d!\n", V_VT(varIn)&VT_TYPEMASK);
-        *pbstrOut = StringDupAtoBstr( "??" );
-    }
-
-    /* Free allocated storage */
-    HeapFree( GetProcessHeap(), 0, pNewString );
-    TRACE("result: '%s'\n", debugstr_w(*pbstrOut));
     return rc;
 }
 
