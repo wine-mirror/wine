@@ -2539,7 +2539,18 @@ static void PROPSHEET_SetHeaderSubTitleA(HWND hwndDlg, int iPageIndex, LPCSTR ps
  */
 static LRESULT PROPSHEET_HwndToIndex(HWND hwndDlg, HWND hPageDlg)
 {
-    FIXME("(%p, %p): stub\n", hwndDlg, hPageDlg);
+    int index;
+    PropSheetInfo * psInfo = (PropSheetInfo*) GetPropW(hwndDlg,
+                                                       PropSheetInfoStr);
+
+    TRACE("(%p, %p)\n", hwndDlg, hPageDlg);
+
+    for (index = 0; index < psInfo->nPages; index++)
+        if (psInfo->proppage[index].hwndPage == hPageDlg)
+            return index;
+
+    WARN("%p not found\n", hPageDlg);
+
     return -1;
 }
 
