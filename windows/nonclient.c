@@ -478,7 +478,8 @@ END:
 
 static LONG NC_DoNCHitTest (WND *wndPtr, POINT pt )
 {
-    RECT rect;
+    RECT rect, rcClient;
+    POINT ptClient;
 
     TRACE("hwnd=%p pt=%ld,%ld\n", wndPtr->hwndSelf, pt.x, pt.y );
 
@@ -486,6 +487,12 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT pt )
     if (!PtInRect( &rect, pt )) return HTNOWHERE;
 
     if (wndPtr->dwStyle & WS_MINIMIZE) return HTCAPTION;
+
+    /* Check client area */
+    ptClient = pt;
+    ScreenToClient( wndPtr->hwndSelf, &ptClient );
+    GetClientRect( wndPtr->hwndSelf, &rcClient );
+    if (PtInRect( &rcClient, ptClient )) return HTCLIENT;
 
     /* Check borders */
     if (HAS_THICKFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
@@ -571,45 +578,39 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT pt )
         }
     }
 
-      /* Check client area */
-
-    ScreenToClient( wndPtr->hwndSelf, &pt );
-    GetClientRect( wndPtr->hwndSelf, &rect );
-    if (PtInRect( &rect, pt )) return HTCLIENT;
-
       /* Check vertical scroll bar */
 
     if (wndPtr->dwStyle & WS_VSCROLL)
     {
         if((wndPtr->dwExStyle & WS_EX_LEFTSCROLLBAR) != 0)
-            rect.left -= GetSystemMetrics(SM_CXVSCROLL);
+            rcClient.left -= GetSystemMetrics(SM_CXVSCROLL);
         else
-            rect.right += GetSystemMetrics(SM_CXVSCROLL);
-        if (PtInRect( &rect, pt )) return HTVSCROLL;
+            rcClient.right += GetSystemMetrics(SM_CXVSCROLL);
+        if (PtInRect( &rcClient, ptClient )) return HTVSCROLL;
     }
 
       /* Check horizontal scroll bar */
 
     if (wndPtr->dwStyle & WS_HSCROLL)
     {
-	rect.bottom += GetSystemMetrics(SM_CYHSCROLL);
-	if (PtInRect( &rect, pt ))
-	{
-	      /* Check size box */
-	    if ((wndPtr->dwStyle & WS_VSCROLL) &&
-		((((wndPtr->dwExStyle & WS_EX_LEFTSCROLLBAR) != 0) && (pt.x <= rect.left + GetSystemMetrics(SM_CXVSCROLL))) ||
-		(((wndPtr->dwExStyle & WS_EX_LEFTSCROLLBAR) == 0) && (pt.x >= rect.right - GetSystemMetrics(SM_CXVSCROLL)))))
-		return HTSIZE;
-	    return HTHSCROLL;
-	}
+        rcClient.bottom += GetSystemMetrics(SM_CYHSCROLL);
+        if (PtInRect( &rcClient, ptClient ))
+        {
+            /* Check size box */
+            if ((wndPtr->dwStyle & WS_VSCROLL) &&
+                ((((wndPtr->dwExStyle & WS_EX_LEFTSCROLLBAR) != 0) && (ptClient.x <= rcClient.left + GetSystemMetrics(SM_CXVSCROLL))) ||
+                (((wndPtr->dwExStyle & WS_EX_LEFTSCROLLBAR) == 0) && (ptClient.x >= rcClient.right - GetSystemMetrics(SM_CXVSCROLL)))))
+                return HTSIZE;
+            return HTHSCROLL;
+        }
     }
 
       /* Check menu bar */
 
     if (HAS_MENU(wndPtr))
     {
-	if ((pt.y < 0) && (pt.x >= 0) && (pt.x < rect.right))
-	    return HTMENU;
+        if ((ptClient.y < 0) && (ptClient.x >= 0) && (ptClient.x < rcClient.right))
+            return HTMENU;
     }
 
     /* Has to return HTNOWHERE if nothing was found
