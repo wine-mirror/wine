@@ -170,7 +170,8 @@ LPWSTR WINAPI CharNextExW( WORD codepage, LPCWSTR ptr, DWORD flags )
 LPWSTR WINAPI CharNextW(LPCWSTR x)
 {
     if (*x) x++;
-    else return (LPWSTR)x;
+
+    return (LPWSTR)x;
 }
 
 
