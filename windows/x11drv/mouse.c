@@ -178,9 +178,11 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
  */
 void X11DRV_MOUSE_SetCursor( CURSORICONINFO *lpCursor )
 {
+    WIN_LockWnds();
     EnterCriticalSection( &X11DRV_CritSection );
     CALL_LARGE_STACK( X11DRV_MOUSE_DoSetCursor, lpCursor );
     LeaveCriticalSection( &X11DRV_CritSection );
+    WIN_UnlockWnds();
 }
 
 /***********************************************************************
