@@ -4433,7 +4433,7 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
     if (lpmii->fMask & MIIM_SUBMENU) {
 	menu->hSubMenu = lpmii->hSubMenu;
 	if (menu->hSubMenu) {
-	    POPUPMENU *subMenu = MENU_GetMenu((UINT16)menu->hSubMenu);
+	    POPUPMENU *subMenu = MENU_GetMenu(menu->hSubMenu);
 	    if (subMenu) {
 		subMenu->wFlags |= MF_POPUP;
 		menu->fType |= MF_POPUP;

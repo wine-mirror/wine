@@ -37,6 +37,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
+#include "wownt32.h"
 #include "user.h"
 #include "wine/debug.h"
 
@@ -1176,7 +1177,7 @@ static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb, GRAYSTRINGPROC fn, LPARAM lp, IN
         if(_32bit)
             retval = fn(memdc, lp, slen);
         else
-            retval = (BOOL)((BOOL16)((GRAYSTRINGPROC16)fn)((HDC16)memdc, lp, (INT16)slen));
+            retval = (BOOL)((BOOL16)((GRAYSTRINGPROC16)fn)(HDC_16(memdc), lp, (INT16)slen));
     }
     else
     {

@@ -1124,7 +1124,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
     case WM_CTLCOLOR:
     	if ( HIWORD(*plparam) > CTLCOLOR_STATIC ) return -1;
         *pmsg32    = WM_CTLCOLORMSGBOX + HIWORD(*plparam);
-        *pwparam32 = (WPARAM)(HDC)wParam16;
+        *pwparam32 = (WPARAM)HDC_32(wParam16);
         *plparam   = (LPARAM)WIN_Handle32( LOWORD(*plparam) );
         return 0;
     case WM_COMPAREITEM:
@@ -1185,7 +1185,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
             dis->itemID     = dis16->itemID;
             dis->itemAction = dis16->itemAction;
             dis->itemState  = dis16->itemState;
-            dis->hwndItem   = (dis->CtlType == ODT_MENU) ? (HWND)(HMENU)dis16->hwndItem
+            dis->hwndItem   = (dis->CtlType == ODT_MENU) ? (HWND)HMENU_32(dis16->hwndItem)
                                                          : WIN_Handle32( dis16->hwndItem );
             dis->hDC        = dis16->hDC;
             dis->itemData   = dis16->itemData;
@@ -1229,23 +1229,23 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
     case WM_MDISETMENU:
         if(wParam16==TRUE)
            *pmsg32=WM_MDIREFRESHMENU;
-        *pwparam32 = (WPARAM)(HMENU)LOWORD(*plparam);
-        *plparam   = (LPARAM)(HMENU)HIWORD(*plparam);
+        *pwparam32 = (WPARAM)HMENU_32(LOWORD(*plparam));
+        *plparam   = (LPARAM)HMENU_32(HIWORD(*plparam));
         return 0;
     case WM_MENUCHAR:
         *pwparam32 = MAKEWPARAM( wParam16, LOWORD(*plparam) );
-        *plparam   = (LPARAM)(HMENU)HIWORD(*plparam);
+        *plparam   = (LPARAM)HMENU_32(HIWORD(*plparam));
         return 0;
     case WM_MENUSELECT:
         if((LOWORD(*plparam) & MF_POPUP) && (LOWORD(*plparam) != 0xFFFF))
         {
-            HMENU hmenu=(HMENU)HIWORD(*plparam);
+            HMENU hmenu=HMENU_32(HIWORD(*plparam));
             UINT Pos=MENU_FindSubMenu( &hmenu, wParam16);
             if(Pos==0xFFFF) Pos=0; /* NO_SELECTED_ITEM */
             *pwparam32 = MAKEWPARAM( Pos, LOWORD(*plparam) );
         }
         else *pwparam32 = MAKEWPARAM( wParam16, LOWORD(*plparam) );
-        *plparam   = (LPARAM)(HMENU)HIWORD(*plparam);
+        *plparam   = (LPARAM)HMENU_32(HIWORD(*plparam));
         return 0;
     case WM_MDIACTIVATE:
 	if( *plparam )
@@ -1517,7 +1517,7 @@ LRESULT WINPROC_UnmapMsg16To32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
     case WM_NEXTMENU:
         {
             MDINEXTMENU *next = (MDINEXTMENU *)lParam;
-            result = MAKELONG( next->hmenuNext, HWND_16(next->hwndNext) );
+            result = MAKELONG( HMENU_16(next->hmenuNext), HWND_16(next->hwndNext) );
             HeapFree( GetProcessHeap(), 0, next );
         }
         break;
@@ -1614,7 +1614,7 @@ INT WINPROC_MapMsg16To32W( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
         ch = wParam16;
         MultiByteToWideChar( CP_ACP, 0, &ch, 1, &wch, 1);
         *pwparam32 = MAKEWPARAM( wch, LOWORD(*plparam) );
-        *plparam   = (LPARAM)(HMENU)HIWORD(*plparam);
+        *plparam   = (LPARAM)HMENU_32(HIWORD(*plparam));
         return 0;
     case WM_CHAR:
     case WM_DEADCHAR:
@@ -1951,7 +1951,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             dis->itemAction = (UINT16)dis32->itemAction;
             dis->itemState  = (UINT16)dis32->itemState;
             dis->hwndItem   = HWND_16( dis32->hwndItem );
-            dis->hDC        = (HDC16)dis32->hDC;
+            dis->hDC        = HDC_16(dis32->hDC);
             dis->itemData   = dis32->itemData;
             CONV_RECT32TO16( &dis32->rcItem, &dis->rcItem );
             *plparam = MapLS( dis );

@@ -688,7 +688,7 @@ static WDML_QUEUE_STATE WDML_HandleExecuteReply(WDML_CONV* pConv, MSG* msg, WDML
     }
 
     WDML_ExtractAck(uiLo, &ddeAck);
-    pXAct->hDdeData = (HDDEDATA)ddeAck.fAck;
+    pXAct->hDdeData = (HDDEDATA)(UINT_PTR)ddeAck.fAck;
 
     return WDML_QS_HANDLED;
 }

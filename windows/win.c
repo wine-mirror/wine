@@ -3084,7 +3084,7 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
         {
             HDC hDC = GetDC(hWnd);
 
-            if (!SendMessageW( hWnd, WM_ERASEBKGND, (WPARAM16)hDC, 0 ))
+            if (!SendMessageW( hWnd, WM_ERASEBKGND, (WPARAM)hDC, 0 ))
                 wndPtr->flags |= WIN_NEEDS_ERASEBKGND;
 
             ReleaseDC( hWnd, hDC );
