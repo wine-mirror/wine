@@ -606,6 +606,7 @@ INT WINAPI WSACleanup(void)
 	WINSOCK_DeleteIData();
 	return 0;
     }
+    SetLastError(WSANOTINITIALISED);
     return SOCKET_ERROR;
 }
 
