@@ -215,9 +215,11 @@ static void check_position(int device, HWAVEOUT wout, DWORD bytes, LPWAVEFORMATE
 {
     MMTIME mmtime;
     DWORD samples;
+    double duration;
     MMRESULT rc;
 
-    samples=bytes*8/pwfx->wBitsPerSample/pwfx->nChannels;
+    samples=bytes/(pwfx->wBitsPerSample/8*pwfx->nChannels);
+    duration=((double)samples)/pwfx->nSamplesPerSec;
 
     mmtime.wType = TIME_BYTES;
     rc=waveOutGetPosition(wout, &mmtime, sizeof(mmtime));
@@ -246,9 +248,9 @@ static void check_position(int device, HWAVEOUT wout, DWORD bytes, LPWAVEFORMATE
     ok(rc==MMSYSERR_NOERROR,
        "waveOutGetPosition: device=%s rc=%s\n",dev_name(device),wave_out_error(rc));
     if (mmtime.wType == TIME_MS)
-        ok(mmtime.u.ms==samples*1000/pwfx->nSamplesPerSec,
+        ok(mmtime.u.ms==floor(duration*1000.0),
            "waveOutGetPosition returned %ld ms, should be %ld\n",
-           mmtime.u.ms, samples*1000/pwfx->nSamplesPerSec);
+           mmtime.u.ms, (long)floor(duration*1000.0));
     else
         trace("TIME_MS not supported, returned %s\n",wave_time_format(mmtime.wType));
 
@@ -258,7 +260,6 @@ static void check_position(int device, HWAVEOUT wout, DWORD bytes, LPWAVEFORMATE
        "waveOutGetPosition: device=%s rc=%s\n",dev_name(device),wave_out_error(rc));
     if (mmtime.wType == TIME_SMPTE)
     {
-        double duration=((double)samples)/pwfx->nSamplesPerSec;
         BYTE frames=ceil(fmod(duration*mmtime.u.smpte.fps, mmtime.u.smpte.fps));
         ok(mmtime.u.smpte.hour==(BYTE)(floor(duration/(60*60))) &&
            mmtime.u.smpte.min==(BYTE)(fmod(floor(duration/60), 60)) &&
