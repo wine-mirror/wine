@@ -19,16 +19,16 @@ struct dll
 
 static struct dll *first_dll;
 
-struct option
+struct debug_option
 {
-    struct option *next;       /* next option in list */
-    unsigned char  set;        /* bits to set */
-    unsigned char  clear;      /* bits to clear */
-    char           name[14];   /* channel name, or empty for "all" */
+    struct debug_option *next;       /* next option in list */
+    unsigned char        set;        /* bits to set */
+    unsigned char        clear;      /* bits to clear */
+    char                 name[14];   /* channel name, or empty for "all" */
 };
 
-static struct option *first_option;
-static struct option *last_option;
+static struct debug_option *first_option;
+static struct debug_option *last_option;
 
 
 static int cmp_name( const void *p1, const void *p2 )
@@ -39,7 +39,7 @@ static int cmp_name( const void *p1, const void *p2 )
 }
 
 /* apply a debug option to the channels of a given dll */
-static void apply_option( struct dll *dll, const struct option *opt )
+static void apply_option( struct dll *dll, const struct debug_option *opt )
 {
     if (opt->name[0])
     {
@@ -58,7 +58,7 @@ static void apply_option( struct dll *dll, const struct option *opt )
 /* register a new set of channels for a dll */
 void *__wine_dbg_register( char * const *channels, int nb )
 {
-    struct option *opt = first_option;
+    struct debug_option *opt = first_option;
     struct dll *dll = malloc( sizeof(*dll) );
     if (dll)
     {
@@ -97,7 +97,7 @@ void __wine_dbg_unregister( void *channel )
 void wine_dbg_add_option( const char *name, unsigned char set, unsigned char clear )
 {
     struct dll *dll = first_dll;
-    struct option *opt;
+    struct debug_option *opt;
 
     if (!(opt = malloc( sizeof(*opt) ))) return;
     opt->next  = NULL;
