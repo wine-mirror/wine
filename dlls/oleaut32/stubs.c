@@ -35,8 +35,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
  */
 HCURSOR WINAPI OleIconToCursor( HINSTANCE hinstExe, HICON hicon)
 {
-	FIXME("(%x,%x), not implemented (olepro32.dll)\n",hinstExe,hicon);
-	return S_OK;
+	ICONINFO	ii;
+
+	TRACE("(%x,%x)\n",hinstExe,hicon);
+
+	ZeroMemory( &ii, sizeof(ii) );
+
+	if ( !GetIconInfo( hicon, &ii ) )
+		return (HCURSOR)NULL;
+
+	ii.fIcon = FALSE;
+	return CreateIconIndirect( &ii );
 }
 
  
