@@ -62,6 +62,7 @@ static const char * const FlagNames[] =
     "i386",        /* FLAG_I386 */
     "register",    /* FLAG_REGISTER */
     "interrupt",   /* FLAG_INTERRUPT */
+    "private",     /* FLAG_PRIVATE */
     NULL
 };
 

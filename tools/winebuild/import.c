@@ -341,6 +341,11 @@ static int read_import_lib( const char *name, struct import *imp )
                 /* we don't support importing non-function entry points */
                 goto next;
             }
+            else if (!strcmp( flags, "PRIVATE" ))
+            {
+                /* function must not be imported */
+                goto next;
+            }
             else
             {
                 error( "Garbage after ordinal declaration\n" );

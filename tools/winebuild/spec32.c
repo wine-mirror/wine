@@ -853,8 +853,11 @@ void BuildDef32File(FILE *outfile)
         default:
             assert(0);
         }
-        fprintf(outfile, " @%d%s%s\n", odp->ordinal,
-                odp->name ? "" : " NONAME", is_data ? " DATA" : "" );
+        fprintf( outfile, " @%d", odp->ordinal );
+        if (!odp->name) fprintf( outfile, " NONAME" );
+        if (is_data) fprintf( outfile, " DATA" );
+        if (odp->flags & FLAG_PRIVATE) fprintf( outfile, " PRIVATE" );
+        fprintf( outfile, "\n" );
     }
 }
 
