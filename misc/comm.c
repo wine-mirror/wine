@@ -78,7 +78,15 @@ DEFAULT_DEBUG_CHANNEL(comm);
 #ifndef TIOCINQ
 #define	TIOCINQ FIONREAD
 #endif
-#define COMM_MSR_OFFSET  35       /* see knowledge base Q101417 */
+
+/* window's semi documented modem status register */
+#define COMM_MSR_OFFSET  35
+#define MSR_CTS  0x10
+#define MSR_DSR  0x20
+#define MSR_RI   0x40
+#define MSR_RLSD 0x80
+#define MSR_MASK (MSR_CTS|MSR_DSR|MSR_RI|MSR_RLSD)
+
 #define FLAG_LPT 0x80
 
 struct DosDeviceStruct COM[MAX_PORTS];
@@ -87,6 +95,18 @@ struct DosDeviceStruct LPT[MAX_PORTS];
 LPCVOID *unknown[MAX_PORTS];
 /* save terminal states */
 static struct termios m_stat[MAX_PORTS];
+
+/* update window's semi documented modem status register */
+/* see knowledge base Q101417 */
+static void COMM_MSRUpdate( UCHAR * pMsr, unsigned int mstat)
+{
+    UCHAR tmpmsr=0;
+    if(mstat & TIOCM_CTS) tmpmsr |= MSR_CTS;
+    if(mstat & TIOCM_DSR) tmpmsr |= MSR_DSR;
+    if(mstat & TIOCM_RI)  tmpmsr |= MSR_RI;
+    if(mstat & TIOCM_CAR) tmpmsr |= MSR_RLSD;
+    *pMsr = (*pMsr & ~MSR_MASK) | tmpmsr;
+}
 
 void COMM_Init(void)
 {
@@ -745,10 +765,7 @@ INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
         }
         stol = (unsigned char *)unknown[cid] + COMM_MSR_OFFSET;
         ioctl(ptr->fd,TIOCMGET,&mstat);
-        if( mstat&TIOCM_CAR ) 
-            *stol |= 0x80;
-        else 
-            *stol &=0x7f;
+        COMM_MSRUpdate( stol, mstat);
 
 	if (lpStat) {
 		lpStat->status = 0;
@@ -796,10 +813,7 @@ SEGPTR WINAPI SetCommEventMask16(INT16 cid,UINT16 fuEvtMask)
         stol = (unsigned char *)unknown[cid] + COMM_MSR_OFFSET;
 	repid = ioctl(ptr->fd,TIOCMGET,&mstat);
 	TRACE(" ioctl  %d, msr %x at %p %p\n",repid,mstat,stol,unknown[cid]);
-	if ((mstat&TIOCM_CAR))
-	    *stol |= 0x80;
-	else
-	    *stol &=0x7f;
+        COMM_MSRUpdate( stol, mstat);
 
 	TRACE(" modem dcd construct %x\n",*stol);
 	return SEGPTR_GET(unknown[cid]);
