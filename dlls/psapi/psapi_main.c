@@ -21,12 +21,33 @@
 #include "winbase.h"
 #include "windef.h"
 #include "winerror.h"
+#include "wine/server.h"
 #include "wine/debug.h"
+#include "tlhelp32.h"
 #include "psapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psapi);
 
 #include <string.h>
+
+
+/***********************************************************************
+ *	get pid from hProcess (internal)
+ */
+static DWORD get_pid_from_process_handle(HANDLE hProcess)
+{
+	DWORD ret = 0;
+
+	SERVER_START_REQ( get_process_info )
+	{
+		req->handle = hProcess;
+		if ( !wine_server_call_err( req ) )
+			ret = (DWORD)reply->pid;
+	}
+	SERVER_END_REQ;
+
+	return ret;
+}
 
 /***********************************************************************
  *           EmptyWorkingSet (PSAPI.@)
@@ -56,12 +77,47 @@ BOOL WINAPI EnumDeviceDrivers(
  */
 BOOL WINAPI EnumProcesses(DWORD *lpidProcess, DWORD cb, DWORD *lpcbNeeded)
 {
-  FIXME("(%p, %ld, %p): stub\n", lpidProcess,cb, lpcbNeeded);
+	PROCESSENTRY32	pe;
+	HANDLE	hSnapshot;
+	BOOL	res;
+	DWORD	count;
+	DWORD	countMax;
 
-  if(lpcbNeeded)
-    *lpcbNeeded = 0;
+	FIXME("(%p, %ld, %p)\n", lpidProcess,cb, lpcbNeeded);
 
-  return TRUE;
+	if ( lpidProcess == NULL )
+		cb = 0;
+	if ( lpcbNeeded != NULL )
+		*lpcbNeeded = 0;
+
+	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+	if ( hSnapshot == INVALID_HANDLE_VALUE )
+	{
+		FIXME("cannot create snapshot\n");
+		return FALSE;
+	}
+	count = 0;
+	countMax = cb / sizeof(DWORD);
+	while (1)
+	{
+		ZeroMemory( &pe, sizeof(PROCESSENTRY32) );
+		pe.dwSize = sizeof(PROCESSENTRY32);
+		res = (count == 0) ? Process32First( hSnapshot, &pe ) : Process32Next( hSnapshot, &pe );
+		if ( !res )
+			break;
+		TRACE("process 0x%08lx\n",(long)pe.th32ProcessID);
+		if ( count < countMax )
+			lpidProcess[count] = pe.th32ProcessID;
+		count ++;
+	}
+	CloseHandle( hSnapshot );
+
+	if ( lpcbNeeded != NULL )
+		*lpcbNeeded = sizeof(DWORD) * count;
+
+	TRACE("return %lu processes\n",count);
+
+	return TRUE;
 }
 
 /***********************************************************************
@@ -70,14 +126,56 @@ BOOL WINAPI EnumProcesses(DWORD *lpidProcess, DWORD cb, DWORD *lpcbNeeded)
 BOOL WINAPI EnumProcessModules(
   HANDLE hProcess, HMODULE *lphModule, DWORD cb, LPDWORD lpcbNeeded)
 {
-  FIXME("(hProcess=0x%08x, %p, %ld, %p): stub\n",
-    hProcess, lphModule, cb, lpcbNeeded
-  );
+	MODULEENTRY32	me;
+	HANDLE	hSnapshot;
+	BOOL	res;
+	DWORD	pid;
+	DWORD	count;
+	DWORD	countMax;
 
-  if(lpcbNeeded)
-    *lpcbNeeded = 0;
+	FIXME("(hProcess=0x%08x, %p, %ld, %p)\n",
+		hProcess, lphModule, cb, lpcbNeeded );
 
-  return TRUE;
+	if ( lphModule == NULL )
+		cb = 0;
+	if ( lpcbNeeded != NULL )
+		*lpcbNeeded = 0;
+
+	pid = get_pid_from_process_handle(hProcess);
+	if ( pid == 0 )
+	{
+		FIXME("no pid for hProcess 0x%08x\n",hProcess);
+		return FALSE;
+	}
+
+	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE,pid);
+	if ( hSnapshot == INVALID_HANDLE_VALUE )
+	{
+		FIXME("cannot create snapshot\n");
+		return FALSE;
+	}
+	count = 0;
+	countMax = cb / sizeof(HMODULE);
+	while (1)
+	{
+		ZeroMemory( &me, sizeof(MODULEENTRY32) );
+		me.dwSize = sizeof(MODULEENTRY32);
+		res = (count == 0) ? Module32First( hSnapshot, &me ) : Module32Next( hSnapshot, &me );
+		if ( !res )
+			break;
+		TRACE("module 0x%08lx\n",(long)me.hModule);
+		if ( count < countMax )
+			lphModule[count] = me.hModule;
+		count ++;
+	}
+	CloseHandle( hSnapshot );
+
+	if ( lpcbNeeded != NULL )
+		*lpcbNeeded = sizeof(HMODULE) * count;
+
+	TRACE("return %lu modules\n",count);
+
+	return TRUE;
 }
 
 /***********************************************************************
@@ -217,6 +315,9 @@ DWORD WINAPI GetModuleFileNameExA(
     hProcess, hModule, debugstr_a(lpFilename), nSize
   );
 
+	if ( get_pid_from_process_handle(hProcess) == GetCurrentProcessId() )
+		return GetModuleFileNameA( hModule, lpFilename, nSize );
+
   if(lpFilename&&nSize)
     lpFilename[0]='\0';
 
@@ -232,6 +333,9 @@ DWORD WINAPI GetModuleFileNameExW(
   FIXME("(hProcess=0x%08x,hModule=0x%08x, %s, %ld): stub\n",
     hProcess, hModule, debugstr_w(lpFilename), nSize
   );
+
+	if ( get_pid_from_process_handle(hProcess) == GetCurrentProcessId() )
+		return GetModuleFileNameW( hModule, lpFilename, nSize );
 
   if(lpFilename && nSize)
     lpFilename[0] = '\0';
