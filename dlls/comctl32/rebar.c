@@ -1,5 +1,5 @@
 /*
- * Rebar control    rev 6c
+ * Rebar control    rev 6d
  *
  * Copyright 1998, 1999 Eric Kohl
  *
@@ -45,6 +45,12 @@
  *      separate rows till "y" adjustment rect equalled or exceeded. (6c)
  * 10. Implement vertical drag. (6c)
  * 11. Use DeferWindowPos to set child window position. (6c)
+ * 12. Fixup RBN_CHILDSIZE notify. The rcBand rectangle should start
+ *     after the header. (6d)
+ * 13. Flags for DeferWindowPos seem to always be SWP_NOZORDER in the 
+ *     traces. (6d)
+ * 14. Make handling of ComboBox and ComboBoxEx the same in 
+ *     _MoveChildWindow. (6d)
  *
  *
  *
@@ -57,6 +63,8 @@
  *     supported by the following functions:
  *      _Layout (phase 2), _InternalEraseBkgnd, _InternalHitTest,
  *      _HandleLRDrag
+ *  5. _HandleLRDrag does not properly position ComboBox or ComboBoxEx 
+ *     children. (See code in _MoveChildWindow.)
 
  */
 
@@ -1201,6 +1209,7 @@ REBAR_MoveChildWindows (HWND hwnd)
 		rbcz.wID = lpBand->wID;
 		rbcz.rcChild = lpBand->rcChild;
 		rbcz.rcBand = lpBand->rcBand;
+		rbcz.rcBand.left += lpBand->cxHeader;
 		REBAR_Notify (hwnd, (NMHDR *)&rbcz, infoPtr, RBN_CHILDSIZE);
 		if (!EqualRect (&lpBand->rcChild, &rbcz.rcChild)) {
 		    TRACE("Child rect changed by NOTIFY for band %u\n", i);
@@ -1213,11 +1222,12 @@ REBAR_MoveChildWindows (HWND hwnd)
 	    }
 
 	    GetClassNameA (lpBand->hwndChild, szClassName, 40);
-	    if (!lstrcmpA (szClassName, "ComboBox")) {
+	    if (!lstrcmpA (szClassName, "ComboBox") ||
+		!lstrcmpA (szClassName, WC_COMBOBOXEXA)) {
 		INT nEditHeight, yPos;
 		RECT rc;
 
-		/* special placement code for combo box */
+		/* special placement code for combo or comboex box */
 
 
 		/* get size of edit line */
@@ -1226,7 +1236,7 @@ REBAR_MoveChildWindows (HWND hwnd)
 		yPos = (lpBand->rcChild.bottom + lpBand->rcChild.top - nEditHeight)/2;
 
 		/* center combo box inside child area */
-		TRACE("moving child %04x to (%d,%d)-(%d,%d)\n",
+		TRACE("moving child (Combo(Ex)) %04x to (%d,%d)-(%d,%d)\n",
 		      lpBand->hwndChild,
 		      lpBand->rcChild.left, yPos,
 		      lpBand->rcChild.right - lpBand->rcChild.left,
@@ -1236,42 +1246,12 @@ REBAR_MoveChildWindows (HWND hwnd)
 					   /*lpBand->rcChild.top*/ yPos,
 					   lpBand->rcChild.right - lpBand->rcChild.left,
 					   nEditHeight,
-					   SWP_SHOWWINDOW);
+					   SWP_NOZORDER);
 		if (!deferpos)
 		    ERR("DeferWindowPos returned NULL\n");
 	    }
-#if 0
-	    else if (!lstrcmpA (szClassName, WC_COMBOBOXEXA)) {
-		INT nEditHeight, yPos;
-		RECT rc;
-		HWND hwndEdit;
-
-		/* special placement code for extended combo box */
-
-		/* get size of edit line */
-		hwndEdit = SendMessageA (lpBand->hwndChild, CBEM_GETEDITCONTROL, 0, 0);
-		GetWindowRect (hwndEdit, &rc);
-		nEditHeight = rc.bottom - rc.top;
-		yPos = (lpBand->rcChild.bottom + lpBand->rcChild.top - nEditHeight)/2;
-
-		/* center combo box inside child area */
-		TRACE("moving child %04x to (%d,%d)-(%d,%d)\n",
-		      lpBand->hwndChild,
-		      lpBand->rcChild.left, yPos,
-		      lpBand->rcChild.right - lpBand->rcChild.left,
-		      nEditHeight);
-		deferpos = DeferWindowPos (deferpos, lpBand->hwndChild, HWND_TOP,
-					   lpBand->rcChild.left,
-					   /*lpBand->rcChild.top*/ yPos,
-					   lpBand->rcChild.right - lpBand->rcChild.left,
-					   nEditHeight,
-					   SWP_SHOWWINDOW);
-		if (!deferpos)
-		    ERR("DeferWindowPos returned NULL\n");
-	    }
-#endif
 	    else {
-		TRACE("moving child %04x to (%d,%d)-(%d,%d)\n",
+		TRACE("moving child (Other) %04x to (%d,%d)-(%d,%d)\n",
 		      lpBand->hwndChild,
 		      lpBand->rcChild.left, lpBand->rcChild.top,
 		      lpBand->rcChild.right - lpBand->rcChild.left,
@@ -1281,7 +1261,7 @@ REBAR_MoveChildWindows (HWND hwnd)
 					   lpBand->rcChild.top,
 					   lpBand->rcChild.right - lpBand->rcChild.left,
 					   lpBand->rcChild.bottom - lpBand->rcChild.top,
-					   SWP_SHOWWINDOW);
+					   SWP_NOZORDER);
 		if (!deferpos)
 		    ERR("DeferWindowPos returned NULL\n");
 	    }
@@ -1836,6 +1816,7 @@ REBAR_HandleLRDrag (HWND hwnd, REBAR_INFO *infoPtr, POINTS *ptsmove, DWORD dwSty
 	    cs.wID = band->wID;
 	    cs.rcChild = band->rcChild;
 	    cs.rcBand = band->rcBand;
+	    cs.rcBand.left += band->cxHeader;
 	    REBAR_Notify (hwnd, (NMHDR *) &cs, infoPtr, RBN_CHILDSIZE);
 	    deferpos = DeferWindowPos (deferpos, band->hwndChild, HWND_TOP,
 				       cs.rcChild.left, cs.rcChild.top,
@@ -3143,6 +3124,7 @@ REBAR_SetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     return 0;
 }
+
 
 static LRESULT
 REBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
