@@ -53,31 +53,34 @@
 #include "dlgs.h"
 #include "lzexpand.h"
 #include "mmsystem.h"
-/* #include "nb30.h" */
+#include "nb30.h"
 #include "rpc.h"
 #include "shellapi.h"
 /* #include "winperf.h" */
 
 #ifndef WINE_NOWINSOCK
 #include "winsock2.h"
-/* #include "mswsock.h" */
 #endif /* WINE_NOWINSOCK */
 
 #ifndef NOCRYPT
 #include "wincrypt.h"
+/* #include "winefs.h" */
+/* #include "winscard.h" */
 #endif /* !NOCRYPT */
 
 #ifndef NOGDI
-#include "commdlg.h"
 #include "winspool.h"
 #ifdef INC_OLE1
 #include "ole.h"
 #else
 #include "ole2.h"
 #endif
+#include "commdlg.h"
 #endif /* !NOGDI */
 
 #endif /* !WIN32_LEAN_AND_MEAN */
+
+/* #include "stralign.h" */
 
 #ifdef INC_OLE2
 #include "ole2.h"

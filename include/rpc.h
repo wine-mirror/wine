@@ -64,7 +64,7 @@ RPC_STATUS RPC_ENTRY UuidCreate(UUID *Uuid);
 #include "rpcdce.h"
 /* #include "rpcnsi.h" */
 #include "rpcnterr.h"
-/* #include "excpt.h" */
+#include "excpt.h"
 #include "winerror.h"
 
 #endif /*__WINE_RPC_H */
