@@ -2584,6 +2584,7 @@ UINT WINAPI waveInPrepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
 				UINT uSize)
 {
     LPWINE_MLD		wmld;
+    UINT                result;
 
     TRACE("(%p, %p, %u);\n", hWaveIn, lpWaveInHdr, uSize);
 
@@ -2593,9 +2594,18 @@ UINT WINAPI waveInPrepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
     if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
+    if ((result = MMDRV_Message(wmld, WIDM_PREPARE, (DWORD_PTR)lpWaveInHdr,
+                                uSize, TRUE)) != MMSYSERR_NOTSUPPORTED)
+        return result;
+
+    if (lpWaveInHdr->dwFlags & WHDR_INQUEUE)
+        return WAVERR_STILLPLAYING;
+
+    lpWaveInHdr->dwFlags |= WHDR_PREPARED;
+    lpWaveInHdr->dwFlags &= ~WHDR_DONE;
     lpWaveInHdr->dwBytesRecorded = 0;
 
-    return MMDRV_Message(wmld, WIDM_PREPARE, (DWORD_PTR)lpWaveInHdr, uSize, TRUE);
+    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
@@ -2605,20 +2615,30 @@ UINT WINAPI waveInUnprepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
 				  UINT uSize)
 {
     LPWINE_MLD		wmld;
+    UINT                result;
 
     TRACE("(%p, %p, %u);\n", hWaveIn, lpWaveInHdr, uSize);
 
     if (lpWaveInHdr == NULL || uSize < sizeof (WAVEHDR))
 	return MMSYSERR_INVALPARAM;
 
-    if (!(lpWaveInHdr->dwFlags & WHDR_PREPARED)) {
+    if (!(lpWaveInHdr->dwFlags & WHDR_PREPARED))
 	return MMSYSERR_NOERROR;
-    }
 
     if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, WIDM_UNPREPARE, (DWORD_PTR)lpWaveInHdr, uSize, TRUE);
+    if ((result = MMDRV_Message(wmld, WIDM_UNPREPARE, (DWORD_PTR)lpWaveInHdr,
+                                uSize, TRUE)) != MMSYSERR_NOTSUPPORTED)
+        return result;
+
+    if (lpWaveInHdr->dwFlags & WHDR_INQUEUE)
+        return WAVERR_STILLPLAYING;
+
+    lpWaveInHdr->dwFlags &= ~WHDR_PREPARED;
+    lpWaveInHdr->dwFlags |= WHDR_DONE;
+
+    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
