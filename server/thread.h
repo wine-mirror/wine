@@ -43,10 +43,10 @@ struct thread
     struct debug_ctx   *debug_ctx;   /* debugger context if this thread is a debugger */
     struct debug_event *debug_event; /* debug event being sent to debugger */
     struct msg_queue   *queue;       /* message queue */
-    struct startup_info*info;      /* startup info for child process */
-    struct thread_wait *wait;      /* current wait condition if sleeping */
-    struct thread_apc  *apc;       /* list of async procedure calls */
-    int                 apc_count; /* number of outstanding APCs */
+    struct startup_info*info;        /* startup info for child process */
+    struct thread_wait *wait;        /* current wait condition if sleeping */
+    struct thread_apc  *apc_head;    /* queue of async procedure calls */
+    struct thread_apc  *apc_tail;    /* queue of async procedure calls */
     int                 error;     /* current error code */
     int                 pass_fd;   /* fd to pass to the client */
     enum run_state      state;     /* running state */
@@ -90,6 +90,9 @@ extern void kill_thread( struct thread *thread, int violent_death );
 extern void wake_up( struct object *obj, int max );
 extern int sleep_on( int count, struct object *objects[], int flags,
                      int timeout, sleep_reply func );
+extern int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
+                             enum apc_type type, int nb_args, ... );
+extern void thread_cancel_apc( struct thread *thread, struct object *owner );
 extern struct thread_snapshot *thread_snap( int *count );
 
 /* ptrace functions */

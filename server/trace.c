@@ -165,11 +165,11 @@ static void dump_varargs_select_request( const struct select_request *req )
     dump_ints( req->handles, count );
 }
 
-static void dump_varargs_get_apcs_reply( const struct get_apcs_request *req )
+static void dump_varargs_get_apc_reply( const struct get_apc_request *req )
 {
     int i;
-    for (i = 0; i < 2 * req->count; i++)
-        fprintf( stderr, "%c%p", i ? ',' : '{', req->apcs[i] );
+    for (i = 0; i < req->nb_args; i++)
+        fprintf( stderr, "%c%p", i ? ',' : '{', req->args[i] );
     fprintf( stderr, "}" );
 }
 
@@ -422,15 +422,17 @@ static void dump_queue_apc_request( const struct queue_apc_request *req )
     fprintf( stderr, " param=%p", req->param );
 }
 
-static void dump_get_apcs_request( const struct get_apcs_request *req )
+static void dump_get_apc_request( const struct get_apc_request *req )
 {
 }
 
-static void dump_get_apcs_reply( const struct get_apcs_request *req )
+static void dump_get_apc_reply( const struct get_apc_request *req )
 {
-    fprintf( stderr, " count=%d,", req->count );
-    fprintf( stderr, " apcs=" );
-    dump_varargs_get_apcs_reply( req );
+    fprintf( stderr, " func=%p,", req->func );
+    fprintf( stderr, " type=%d,", req->type );
+    fprintf( stderr, " nb_args=%d,", req->nb_args );
+    fprintf( stderr, " args=" );
+    dump_varargs_get_apc_reply( req );
 }
 
 static void dump_close_handle_request( const struct close_handle_request *req )
@@ -1394,7 +1396,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_load_dll_request,
     (dump_func)dump_unload_dll_request,
     (dump_func)dump_queue_apc_request,
-    (dump_func)dump_get_apcs_request,
+    (dump_func)dump_get_apc_request,
     (dump_func)dump_close_handle_request,
     (dump_func)dump_get_handle_info_request,
     (dump_func)dump_set_handle_info_request,
@@ -1504,7 +1506,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)0,
     (dump_func)0,
-    (dump_func)dump_get_apcs_reply,
+    (dump_func)dump_get_apc_reply,
     (dump_func)0,
     (dump_func)dump_get_handle_info_reply,
     (dump_func)0,
@@ -1614,7 +1616,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "load_dll",
     "unload_dll",
     "queue_apc",
-    "get_apcs",
+    "get_apc",
     "close_handle",
     "get_handle_info",
     "set_handle_info",

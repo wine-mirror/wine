@@ -9,10 +9,12 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include "heap.h"
+#include "file.h"  /* for DOSFS_UnixTimeToFileTime */
 #include "thread.h"
 #include "winerror.h"
 #include "syslevel.h"
 #include "server.h"
+
 
 /***********************************************************************
  *              call_apcs
@@ -21,24 +23,35 @@
  */
 static void call_apcs(void)
 {
-#define MAX_APCS 16
-    int i;
-    void *buffer[MAX_APCS * 2];
-    int count;
-    struct get_apcs_request *req = get_req_buffer();
+    FARPROC proc;
+    struct get_apc_request *req = get_req_buffer();
 
-    if (server_call( REQ_GET_APCS ) || !req->count) return;
-    assert( req->count <= MAX_APCS );
-
-    /* make a copy of the request buffer... it may get trashed *
-     * when the apcs are called                                */
-    memcpy( buffer, req->apcs, req->count * 2 * sizeof(req->apcs[0]) );
-    count = req->count;
-
-    for (i = 0; i < count * 2; i += 2)
+    for (;;)
     {
-        PAPCFUNC func = (PAPCFUNC)buffer[i];
-        if (func) func( (ULONG_PTR)buffer[i+1] );
+        if (server_call( REQ_GET_APC )) return;
+        switch(req->type)
+        {
+        case APC_NONE:
+            return;  /* no more APCs */
+        case APC_USER:
+            if ((proc = req->func))
+            {
+                proc( req->args[0] );
+            }
+            break;
+        case APC_TIMER:
+            if ((proc = req->func))
+            {
+                FILETIME ft;
+                /* convert sec/usec to NT time */
+                DOSFS_UnixTimeToFileTime( (time_t)req->args[0], &ft, (DWORD)req->args[1] * 10 );
+                proc( req->args[2], ft.dwLowDateTime, ft.dwHighDateTime );
+            }
+            break;
+        default:
+            server_protocol_error( "get_apc_request: bad type %d\n", req->type );
+            break;
+        }
     }
 }
 

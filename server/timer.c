@@ -10,13 +10,9 @@
 #include <sys/time.h>
 #include <sys/types.h>
 
+#include "winnt.h"
 #include "handle.h"
 #include "request.h"
-
-/* FIXME: check values and move to standard header */
-#define TIMER_MODIFY_STATE  0x0001
-#define TIMER_QUERY_STATE   0x0002
-#define TIMER_ALL_ACCESS    (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x3)
 
 struct timer
 {
@@ -26,6 +22,7 @@ struct timer
     int                  period;    /* timer period in ms */
     struct timeval       when;      /* next expiration */
     struct timeout_user *timeout;   /* timeout user */
+    struct thread       *thread;    /* thread that set the APC function */
     void                *callback;  /* callback APC function */
     void                *arg;       /* callback argument */
 };
@@ -69,6 +66,7 @@ static struct timer *create_timer( const WCHAR *name, size_t len, int manual )
             timer->when.tv_usec = 0;
             timer->period       = 0;
             timer->timeout      = NULL;
+            timer->thread       = NULL;
         }
     }
     return timer;
@@ -78,6 +76,11 @@ static struct timer *create_timer( const WCHAR *name, size_t len, int manual )
 static void timer_callback( void *private )
 {
     struct timer *timer = (struct timer *)private;
+
+    /* queue an APC */
+    if (timer->thread)
+        thread_queue_apc( timer->thread, &timer->obj, timer->callback, APC_TIMER, 3,
+                          (void *)timer->when.tv_sec, (void *)timer->when.tv_usec, timer->arg );
 
     if (timer->period)  /* schedule the next expiration */
     {
@@ -91,16 +94,31 @@ static void timer_callback( void *private )
     wake_up( &timer->obj, 0 );
 }
 
+/* cancel a running timer */
+static void cancel_timer( struct timer *timer )
+{
+    if (timer->timeout)
+    {
+        remove_timeout_user( timer->timeout );
+        timer->timeout = NULL;
+    }
+    if (timer->thread)
+    {
+        thread_cancel_apc( timer->thread, &timer->obj );
+        timer->thread = NULL;
+    }
+}
+
 /* set the timer expiration and period */
 static void set_timer( struct timer *timer, int sec, int usec, int period,
                        void *callback, void *arg )
 {
+    cancel_timer( timer );
     if (timer->manual)
     {
         period = 0;  /* period doesn't make any sense for a manual timer */
         timer->signaled = 0;
     }
-    if (timer->timeout) remove_timeout_user( timer->timeout );
     if (!sec && !usec)
     {
         /* special case: use now + period as first expiration */
@@ -115,17 +133,8 @@ static void set_timer( struct timer *timer, int sec, int usec, int period,
     timer->period       = period;
     timer->callback     = callback;
     timer->arg          = arg;
+    if (callback) timer->thread = current;
     timer->timeout = add_timeout_user( &timer->when, timer_callback, timer );
-}
-
-/* cancel a running timer */
-static void cancel_timer( struct timer *timer )
-{
-    if (timer->timeout)
-    {
-        remove_timeout_user( timer->timeout );
-        timer->timeout = NULL;
-    }
 }
 
 static void timer_dump( struct object *obj, int verbose )

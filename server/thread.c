@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,7 +23,6 @@
 #include <sys/uio.h>
 #include <unistd.h>
 #include <stdarg.h>
-
 
 #include "winbase.h"
 
@@ -48,10 +48,14 @@ struct thread_wait
 
 struct thread_apc
 {
-    void                   *func;    /* function to call in client */
-    void                   *param;   /* function param */
+    struct thread_apc  *next;     /* queue linked list */
+    struct thread_apc  *prev;
+    struct object      *owner;    /* object that queued this apc */
+    void               *func;     /* function to call in client */
+    enum apc_type       type;     /* type of apc function */
+    int                 nb_args;  /* number of arguments */
+    void               *args[1];  /* function arguments */
 };
-#define MAX_THREAD_APC  16  /* Max outstanding APCs for a thread */
 
 
 /* thread operations */
@@ -60,6 +64,7 @@ static void dump_thread( struct object *obj, int verbose );
 static int thread_signaled( struct object *obj, struct thread *thread );
 extern void thread_poll_event( struct object *obj, int event );
 static void destroy_thread( struct object *obj );
+static struct thread_apc *thread_dequeue_apc( struct thread *thread );
 
 static const struct object_ops thread_ops =
 {
@@ -126,8 +131,8 @@ struct thread *create_thread( int fd, struct process *process )
     thread->queue       = NULL;
     thread->info        = NULL;
     thread->wait        = NULL;
-    thread->apc         = NULL;
-    thread->apc_count   = 0;
+    thread->apc_head    = NULL;
+    thread->apc_tail    = NULL;
     thread->error       = 0;
     thread->pass_fd     = -1;
     thread->state       = RUNNING;
@@ -179,6 +184,7 @@ void thread_poll_event( struct object *obj, int event )
 /* destroy a thread when its refcount is 0 */
 static void destroy_thread( struct object *obj )
 {
+    struct thread_apc *apc;
     struct thread *thread = (struct thread *)obj;
     assert( obj->ops == &thread_ops );
 
@@ -187,7 +193,7 @@ static void destroy_thread( struct object *obj )
     if (thread->next) thread->next->prev = thread->prev;
     if (thread->prev) thread->prev->next = thread->next;
     else first_thread = thread->next;
-    if (thread->apc) free( thread->apc );
+    while ((apc = thread_dequeue_apc( thread ))) free( apc );
     if (thread->info) release_object( thread->info );
     if (thread->queue) release_object( thread->queue );
     if (thread->buffer != (void *)-1) munmap( thread->buffer, MAX_REQUEST_LENGTH );
@@ -399,7 +405,7 @@ static int check_wait( struct thread *thread, struct object **object )
     }
 
  other_checks:
-    if ((wait->flags & SELECT_ALERTABLE) && thread->apc) return STATUS_USER_APC;
+    if ((wait->flags & SELECT_ALERTABLE) && thread->apc_head) return STATUS_USER_APC;
     if (wait->flags & SELECT_TIMEOUT)
     {
         struct timeval now;
@@ -501,24 +507,65 @@ void wake_up( struct object *obj, int max )
 }
 
 /* queue an async procedure call */
-static int thread_queue_apc( struct thread *thread, void *func, void *param )
+int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
+                      enum apc_type type, int nb_args, ... )
 {
     struct thread_apc *apc;
-    if (!thread->apc)
+
+    /* cancel a possible previous APC with the same owner */
+    if (owner) thread_cancel_apc( thread, owner );
+
+    if (!(apc = mem_alloc( sizeof(*apc) + (nb_args-1)*sizeof(apc->args[0]) ))) return 0;
+    apc->prev    = thread->apc_tail;
+    apc->next    = NULL;
+    apc->owner   = owner;
+    apc->func    = func;
+    apc->type    = type;
+    apc->nb_args = nb_args;
+    if (nb_args)
     {
-        if (!(thread->apc = mem_alloc( MAX_THREAD_APC * sizeof(*apc) )))
-            return 0;
-        thread->apc_count = 0;
+        int i;
+        va_list args;
+        va_start( args, nb_args );
+        for (i = 0; i < nb_args; i++) apc->args[i] = va_arg( args, void * );
+        va_end( args );
     }
-    else if (thread->apc_count >= MAX_THREAD_APC) return 0;
-    thread->apc[thread->apc_count].func  = func;
-    thread->apc[thread->apc_count].param = param;
-    thread->apc_count++;
-    if (thread->wait)
+    thread->apc_tail = apc;
+    if (!apc->prev)  /* first one */
     {
-        if (wake_thread( thread )) send_reply( thread );
+        thread->apc_head = apc;
+        if (thread->wait && wake_thread( thread )) send_reply( thread );
     }
     return 1;
+}
+
+/* cancel the async procedure call owned by a specific object */
+void thread_cancel_apc( struct thread *thread, struct object *owner )
+{
+    struct thread_apc *apc;
+    for (apc = thread->apc_head; apc; apc = apc->next)
+    {
+        if (apc->owner != owner) continue;
+        if (apc->next) apc->next->prev = apc->prev;
+        else thread->apc_tail = apc->prev;
+        if (apc->prev) apc->prev->next = apc->next;
+        else thread->apc_head = apc->next;
+        free( apc );
+        return;
+    }
+}
+
+/* remove the head apc from the queue; the returned pointer must be freed by the caller */
+static struct thread_apc *thread_dequeue_apc( struct thread *thread )
+{
+    struct thread_apc *apc = thread->apc_head;
+    if (apc)
+    {
+        if (apc->next) apc->next->prev = NULL;
+        else thread->apc_tail = NULL;
+        thread->apc_head = apc->next;
+    }
+    return apc;
 }
 
 /* retrieve an LDT selector entry */
@@ -749,20 +796,29 @@ DECL_HANDLER(queue_apc)
     struct thread *thread;
     if ((thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT )))
     {
-        thread_queue_apc( thread, req->func, req->param );
+        thread_queue_apc( thread, NULL, req->func, APC_USER, 1, req->param );
         release_object( thread );
     }
 }
 
-/* get list of APC to call */
-DECL_HANDLER(get_apcs)
+/* get next APC to call */
+DECL_HANDLER(get_apc)
 {
-    if ((req->count = current->apc_count))
+    struct thread_apc *apc;
+
+    if ((apc = thread_dequeue_apc( current )))
     {
-        memcpy( req->apcs, current->apc, current->apc_count * sizeof(*current->apc) );
-        free( current->apc );
-        current->apc = NULL;
-        current->apc_count = 0;
+        req->func    = apc->func;
+        req->type    = apc->type;
+        req->nb_args = apc->nb_args;
+        memcpy( req->args, apc->args, apc->nb_args * sizeof(req->args[0]) );
+        free( apc );
+    }
+    else
+    {
+        req->func    = NULL;
+        req->type    = APC_NONE;
+        req->nb_args = 0;
     }
 }
 

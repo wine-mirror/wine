@@ -308,12 +308,15 @@ struct queue_apc_request
 };
 
 
-/* Get list of APC to call */
-struct get_apcs_request
+/* Get next APC to call */
+struct get_apc_request
 {
-    OUT int          count;        /* number of apcs */
-    OUT void*        apcs[1];      /* async procedures to call */
+    OUT void*        func;         /* function to call */
+    OUT int          type;         /* function type */
+    OUT int          nb_args;      /* number of arguments */
+    OUT void*        args[1];      /* function arguments */
 };
+enum apc_type { APC_NONE, APC_USER, APC_TIMER };
 
 
 /* Close a handle for the current process */
@@ -1212,7 +1215,7 @@ enum request
     REQ_LOAD_DLL,
     REQ_UNLOAD_DLL,
     REQ_QUEUE_APC,
-    REQ_GET_APCS,
+    REQ_GET_APC,
     REQ_CLOSE_HANDLE,
     REQ_GET_HANDLE_INFO,
     REQ_SET_HANDLE_INFO,
@@ -1303,7 +1306,7 @@ enum request
     REQ_NB_REQUESTS
 };
 
-#define SERVER_PROTOCOL_VERSION 16
+#define SERVER_PROTOCOL_VERSION 17
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */
