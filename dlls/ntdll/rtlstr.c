@@ -144,7 +144,7 @@ BOOLEAN WINAPI RtlCreateUnicodeString( PUNICODE_STRING target, LPCWSTR src )
     if (!(target->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len ))) return FALSE;
     memcpy( target->Buffer, src, len );
     target->MaximumLength = len;
-    target->Length = len - 2;
+    target->Length = len - sizeof(WCHAR);
     return TRUE;
 }
 
