@@ -153,6 +153,7 @@ create_device_helper(IDirectDrawImpl *This,
 	(IsEqualGUID(&IID_D3DDEVICE_OpenGL, iid)) ||
 	(IsEqualGUID(&IID_IDirect3DHALDevice, iid)) ||
 	(IsEqualGUID(&IID_IDirect3DTnLHalDevice, iid)) ||
+	(IsEqualGUID(&IID_IDirect3DRGBDevice, iid)) ||
 	(IsEqualGUID(&IID_IDirect3DRefDevice, iid))) {
         switch (version) {
 	    case 1:
