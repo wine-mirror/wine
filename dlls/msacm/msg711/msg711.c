@@ -928,7 +928,7 @@ static	LRESULT	G711_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
 	    aad->convert = cvtXXulaw16K;
     }
     else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
-             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_ALAW)
+             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_MULAW)
     {
 	if (adsi->pwfxSrc->nSamplesPerSec != adsi->pwfxDst->nSamplesPerSec ||
 	    adsi->pwfxSrc->nChannels != adsi->pwfxDst->nChannels ||
