@@ -491,6 +491,7 @@ AC_HEADER_STAT()
 dnl **** Check for types ****
 
 AC_C_CONST()
+AC_C_INLINE()
 AC_TYPE_SIZE_T()
 AC_CHECK_SIZEOF(long long,0)
 
