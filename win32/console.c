@@ -1379,9 +1379,9 @@ int CONSOLE_GetHistory(int idx, WCHAR* buf, int buf_len)
     {
         req->handle = 0;
         req->index = idx;
-        if (buf && buf_len > sizeof(WCHAR))
+        if (buf && buf_len > 1)
         {
-            wine_server_set_reply( req, buf, buf_len - sizeof(WCHAR) );
+            wine_server_set_reply( req, buf, (buf_len - 1) * sizeof(WCHAR) );
         }
         if (!wine_server_call_err( req ))
         {

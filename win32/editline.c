@@ -175,8 +175,8 @@ static void WCEL_InsertString(WCEL_Context* ctx, const WCHAR* str)
     memcpy(&ctx->line[ctx->ofs], str, len * sizeof(WCHAR));
     ctx->len += len;
     ctx->line[ctx->len] = 0;
-    WriteConsoleOutputCharacterW(ctx->hConOut, &ctx->line[ctx->ofs], ctx->len - ctx->ofs, 
-				 WCEL_GetCoord(ctx, ctx->ofs), NULL);
+    SetConsoleCursorPosition(ctx->hConOut, WCEL_GetCoord(ctx, ctx->ofs));
+    WriteConsoleW(ctx->hConOut, &ctx->line[ctx->ofs], ctx->len - ctx->ofs, NULL, NULL);
     ctx->ofs += len;
 }
 
