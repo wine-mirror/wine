@@ -1,3 +1,4 @@
 Makefile
 wintrust.dll.dbg.c
 wintrust.spec.c
+wintrust.spec.def

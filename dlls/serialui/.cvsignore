@@ -1,4 +1,5 @@
 Makefile
 serialui.dll.dbg.c
 serialui.spec.c
+serialui.spec.def
 serialui_rc.res

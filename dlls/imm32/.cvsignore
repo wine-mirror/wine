@@ -2,3 +2,4 @@ Makefile
 imm.spec.c
 imm32.dll.dbg.c
 imm32.spec.c
+imm32.spec.def

@@ -1,3 +1,4 @@
 Makefile
 snmpapi.dll.dbg.c
 snmpapi.spec.c
+snmpapi.spec.def

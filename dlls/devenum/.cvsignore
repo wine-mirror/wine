@@ -1,3 +1,4 @@
 Makefile
 devenum.dll.dbg.c
 devenum.spec.c
+devenum.spec.def

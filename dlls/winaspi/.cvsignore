@@ -3,3 +3,4 @@ winaspi.spec.c
 wnaspi32.dll.dbg.c
 wnaspi32.dll.glue.c
 wnaspi32.spec.c
+wnaspi32.spec.def

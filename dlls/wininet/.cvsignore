@@ -2,3 +2,4 @@ Makefile
 version.res
 wininet.dll.dbg.c
 wininet.spec.c
+wininet.spec.def

@@ -1,3 +1,4 @@
 Makefile
 dciman32.dll.dbg.c
 dciman32.spec.c
+dciman32.spec.def

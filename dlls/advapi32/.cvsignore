@@ -1,3 +1,4 @@
 Makefile
 advapi32.dll.dbg.c
 advapi32.spec.c
+advapi32.spec.def

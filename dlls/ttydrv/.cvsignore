@@ -1,3 +1,4 @@
 Makefile
 ttydrv.dll.dbg.c
 ttydrv.spec.c
+ttydrv.spec.def

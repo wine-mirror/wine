@@ -2,3 +2,4 @@ Makefile
 winnls.spec.c
 winnls32.dll.dbg.c
 winnls32.spec.c
+winnls32.spec.def

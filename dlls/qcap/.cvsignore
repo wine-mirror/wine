@@ -1,3 +1,4 @@
 Makefile
 qcap.dll.dbg.c
 qcap.spec.c
+qcap.spec.def

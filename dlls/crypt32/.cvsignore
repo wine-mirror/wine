@@ -1,3 +1,4 @@
 Makefile
 crypt32.dll.dbg.c
 crypt32.spec.c
+crypt32.spec.def

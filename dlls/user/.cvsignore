@@ -7,3 +7,4 @@ user.exe.spec.c
 user32.dll.dbg.c
 user32.dll.glue.c
 user32.spec.c
+user32.spec.def

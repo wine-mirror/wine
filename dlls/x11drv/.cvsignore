@@ -2,3 +2,4 @@ Makefile
 wineclipsrv
 x11drv.dll.dbg.c
 x11drv.spec.c
+x11drv.spec.def

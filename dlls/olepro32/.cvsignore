@@ -1,3 +1,4 @@
 Makefile
 olepro32.dll.dbg.c
 olepro32.spec.c
+olepro32.spec.def

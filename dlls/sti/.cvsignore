@@ -1,3 +1,4 @@
 Makefile
 sti.dll.dbg.c
 sti.spec.c
+sti.spec.def
