@@ -141,7 +141,11 @@ static WORD X11DRV_enum_subfont_charset_cp949( UINT index )
 
 static WORD X11DRV_enum_subfont_charset_cp950( UINT index )
 {
-    FIXME( "please implement X11DRV_enum_subfont_charset_cp950!\n" );
+    switch ( index )
+    {
+    case 0: return ANSI_CHARSET;
+    }
+
     return DEFAULT_CHARSET;
 }
 
@@ -262,16 +266,8 @@ static XChar2b* X11DRV_unicode_to_char2b_cp936( fontObject* pfo,
     {
 	if ( IsLegalDBCSChar_cp936( *str_src, *(str_src+1) ) )
 	{
-	    if ( IsLegalDBCSChar_euc( *str_src, *(str_src+1) ) )
-	    {
-		DBCSCharToXChar2b_euc( str2b_dst, *str_src, *(str_src+1) );
-	    }
-	    else
-	    {
-		/* FIXME */
-		str2b_dst->byte1 = 0;
-		str2b_dst->byte2 = 0;
-	    }
+	    str2b_dst->byte1 = *str_src;
+	    str2b_dst->byte2 = *(str_src+1);
 	    str_src++;
 	}
 	else
@@ -311,16 +307,8 @@ static XChar2b* X11DRV_unicode_to_char2b_cp949( fontObject* pfo,
     {
 	if ( IsLegalDBCSChar_cp949( *str_src, *(str_src+1) ) )
 	{
-	    if ( IsLegalDBCSChar_euc( *str_src, *(str_src+1) ) )
-	    {
-		DBCSCharToXChar2b_euc( str2b_dst, *str_src, *(str_src+1) );
-	    }
-	    else
-	    {
-		/* FIXME */
-		str2b_dst->byte1 = 0;
-		str2b_dst->byte2 = 0;
-	    }
+            str2b_dst->byte1 = *str_src;
+	    str2b_dst->byte2 = *(str_src+1);
 	    str_src++;
 	}
 	else
@@ -339,8 +327,42 @@ static XChar2b* X11DRV_unicode_to_char2b_cp949( fontObject* pfo,
 static XChar2b* X11DRV_unicode_to_char2b_cp950( fontObject* pfo,
                                                 LPCWSTR lpwstr, UINT count )
 {
-    FIXME( "please implement X11DRV_unicode_to_char2b_cp950!\n" );
-    return NULL;
+    XChar2b *str2b;
+    XChar2b *str2b_dst;
+    BYTE *str;
+    BYTE *str_src;
+    UINT i;
+    char ch = pfo->fs->default_char;
+
+    if (!(str2b = HeapAlloc( GetProcessHeap(), 0, count * sizeof(XChar2b) )))
+	return NULL;
+    if (!(str = HeapAlloc( GetProcessHeap(), 0, count*2 )))
+    {
+	HeapFree( GetProcessHeap(), 0, str2b );
+	return NULL;
+    }
+    WideCharToMultiByte( 950, 0, lpwstr, count, str, count*2, &ch, NULL );
+
+    str_src = str;
+    str2b_dst = str2b;
+    for (i = 0; i < count; i++, str_src++, str2b_dst++)
+    {
+	if ( IsLegalDBCSChar_cp950( *str_src, *(str_src+1) ) )
+	{
+            str2b_dst->byte1 = *str_src;
+	    str2b_dst->byte2 = *(str_src+1);
+	    str_src++;
+	}
+	else
+	{
+	    str2b_dst->byte1 = 0;
+	    str2b_dst->byte2 = *str_src;
+	}
+    }
+
+    HeapFree( GetProcessHeap(), 0, str );
+
+    return str2b;
 }
 
 
@@ -673,10 +695,10 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
     { /* CP950 */
 	X11DRV_enum_subfont_charset_cp950,
 	X11DRV_unicode_to_char2b_cp950,
-	X11DRV_DrawString_normal, /* FIXME */
-	X11DRV_TextWidth_normal, /* FIXME */
-	X11DRV_DrawText_normal, /* FIXME */
-	X11DRV_TextExtents_normal, /* FIXME */
-        X11DRV_GetTextMetricsA_normal, /* FIXME */
+	X11DRV_DrawString_dbcs,
+	X11DRV_TextWidth_dbcs_2fonts,
+	X11DRV_DrawText_dbcs_2fonts,
+	X11DRV_TextExtents_dbcs_2fonts,
+        X11DRV_GetTextMetricsA_cp932,
     },
 };

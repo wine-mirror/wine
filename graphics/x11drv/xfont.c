@@ -242,7 +242,7 @@ static fontEncodingTemplate __fETTable[] = {
 			{ "jisx0212.1990",sufch_jisx0212,     &__fETTable[15]},
 			{ "ksc5601.1987", sufch_ksc5601,      &__fETTable[16]},
 			{ "gb2312.1980",  sufch_gb2312,       &__fETTable[17]},
-			{ "big5.et",      sufch_big5,         &__fETTable[18]},
+			{ "big5",	  sufch_big5,         &__fETTable[18]},
 			{ "unicode",      sufch_unicode,      &__fETTable[19]},
 			{ "iso10646",     sufch_iso10646,     &__fETTable[20]},
 			{ "cp",           sufch_windows,      &__fETTable[21]},
@@ -299,6 +299,8 @@ static const struct CharsetBindingInfo charsetbindings[] =
 	{ "GulimChe", HANGEUL_CHARSET },
 	{ "MS Song", GB2312_CHARSET },
 	{ "MS Hei", GB2312_CHARSET },
+	{ "\xb7\x73\xb2\xd3\xa9\xfa\xc5\xe9", CHINESEBIG5_CHARSET },/*MS Mingliu*/
+	{ "\xb2\xd3\xa9\xfa\xc5\xe9", CHINESEBIG5_CHARSET },
 
 	{ NULL, 0 }
 };
@@ -3037,9 +3039,7 @@ static X_PHYSFONT XFONT_RealizeFont( const LPLOGFONT16 plf,
 
 		    lfSub = *plf;
 		    lfSub.lfWidth = 0;
-		    lfSub.lfHeight = pfo->fi->df.dfPixHeight;
-		    if ( plf->lfHeight < 0 )
-			lfSub.lfHeight = - lfSub.lfHeight;
+                   lfSub.lfHeight=plf->lfHeight;
 		    lfSub.lfCharSet = (BYTE)(charset_sub & 0xff);
 		    lfSub.lfFaceName[0] = '\0'; /* FIXME? */
 		    /* this font has sub font */
