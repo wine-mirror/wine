@@ -43,34 +43,40 @@ DEFINE_SHLGUID(CGID_ShellServiceObject, 0x000214D2L, 0, 0);
 DEFINE_SHLGUID(CGID_ExplorerBarDoc,     0x000214D3L, 0, 0);
 
 DEFINE_SHLGUID(IID_INewShortcutHookA,   0x000214E1L, 0, 0);
-DEFINE_SHLGUID(IID_IShellBrowser,       0x000214E2L, 0, 0);
-DEFINE_SHLGUID(IID_IShellView,          0x000214E3L, 0, 0);
 DEFINE_SHLGUID(IID_IContextMenu,        0x000214E4L, 0, 0);
 DEFINE_SHLGUID(IID_IShellIcon,          0x000214E5L, 0, 0);
-DEFINE_SHLGUID(IID_IShellFolder,        0x000214E6L, 0, 0);
-DEFINE_SHLGUID(IID_IShellExtInit,       0x000214E8L, 0, 0);
 DEFINE_SHLGUID(IID_IShellPropSheetExt,  0x000214E9L, 0, 0);
-DEFINE_SHLGUID(IID_IPersistFolder,      0x000214EAL, 0, 0);
 DEFINE_SHLGUID(IID_IExtractIconA,       0x000214EBL, 0, 0);
 DEFINE_SHLGUID(IID_IShellDetails,       0x000214ECL, 0, 0);
 DEFINE_SHLGUID(IID_IDelayedRelease,     0x000214EDL, 0, 0);
-DEFINE_SHLGUID(IID_IShellLinkA,         0x000214EEL, 0, 0);
 DEFINE_SHLGUID(IID_IShellCopyHookA,     0x000214EFL, 0, 0);
 DEFINE_SHLGUID(IID_IFileViewerA,        0x000214F0L, 0, 0);
 DEFINE_SHLGUID(IID_ICommDlgBrowser,     0x000214F1L, 0, 0);
-DEFINE_SHLGUID(IID_IEnumIDList,         0x000214F2L, 0, 0);
 DEFINE_SHLGUID(IID_IFileViewerSite,     0x000214F3L, 0, 0);
 DEFINE_SHLGUID(IID_IContextMenu2,       0x000214F4L, 0, 0);
 DEFINE_SHLGUID(IID_IShellExecuteHookA,  0x000214F5L, 0, 0);
 DEFINE_SHLGUID(IID_IPropSheetPage,      0x000214F6L, 0, 0);
 DEFINE_SHLGUID(IID_INewShortcutHookW,   0x000214F7L, 0, 0);
 DEFINE_SHLGUID(IID_IFileViewerW,        0x000214F8L, 0, 0);
-DEFINE_SHLGUID(IID_IShellLinkW,         0x000214F9L, 0, 0);
 DEFINE_SHLGUID(IID_IExtractIconW,       0x000214FAL, 0, 0);
 DEFINE_SHLGUID(IID_IShellExecuteHookW,  0x000214FBL, 0, 0);
 DEFINE_SHLGUID(IID_IShellCopyHookW,     0x000214FCL, 0, 0);
 DEFINE_SHLGUID(IID_IRemoteComputer,     0x000214FEL, 0, 0);
 DEFINE_SHLGUID(IID_IQueryInfo,          0x00021500L, 0, 0);
+
+/* avoid duplicate definitions with shobjidl.h (FIXME) */
+/* DEFINE_SHLGUID(IID_IShellBrowser,       0x000214E2L, 0, 0); */
+/* DEFINE_SHLGUID(IID_IShellView,          0x000214E3L, 0, 0); */
+/* DEFINE_SHLGUID(IID_IShellFolder,        0x000214E6L, 0, 0); */
+/* DEFINE_SHLGUID(IID_IShellExtInit,       0x000214E8L, 0, 0); */
+/* DEFINE_SHLGUID(IID_IPersistFolder,      0x000214EAL, 0, 0); */
+/* DEFINE_SHLGUID(IID_IShellLinkA,         0x000214EEL, 0, 0); */
+/* DEFINE_SHLGUID(IID_IEnumIDList,         0x000214F2L, 0, 0); */
+/* DEFINE_SHLGUID(IID_IShellLinkW,         0x000214F9L, 0, 0); */
+
+DEFINE_GUID(SID_STopLevelBrowser, 0x4C96BE40L, 0x915C, 0x11CF, 0x99, 0xD3, 0x00, 0xAA, 0x00, 0x4A, 0xE8, 0x37);
+
+#define SID_SShellBrowser     IID_IShellBrowser
 
 #define IID_IFileViewer       WINELIB_NAME_AW(IID_IFileViewer)
 #define IID_IShellLink        WINELIB_NAME_AW(IID_IShellLink)

@@ -33,36 +33,17 @@ extern "C" {
 
 #include <pshpack1.h>
 
-/****************************************************************************
-* SHITEMID, ITEMIDLIST, PIDL API
-*/
-#include <pshpack1.h>
-typedef struct
-{
-    WORD cb;      /* nr of bytes in this item */
-    BYTE abID[1]; /* first byte in this item */
-} SHITEMID, *LPSHITEMID;
-typedef const SHITEMID *LPCSHITEMID;
+#include <shtypes.h>
+#include <shobjidl.h>
 
-typedef struct _ITEMIDLIST
-{
-    SHITEMID mkid; /* first itemid in list */
-} ITEMIDLIST,*LPITEMIDLIST;
-typedef const ITEMIDLIST *LPCITEMIDLIST;
-#include <poppack.h>
 
 BOOL WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath);
 BOOL WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath);
 #define     SHGetPathFromIDList WINELIB_NAME_AW(SHGetPathFromIDList)
 
 
-#include <wine/obj_enumidlist.h>
 #include <wine/obj_shellfolder.h>
-#include <wine/obj_shellview.h>
-#include <wine/obj_shelllink.h>
-#include <wine/obj_shellbrowser.h>
 #include <wine/obj_contextmenu.h>
-#include <wine/obj_shellextinit.h>
 #include <wine/obj_extracticon.h>
 #include <wine/obj_commdlgbrowser.h>
 #include <wine/obj_dockingwindowframe.h>
@@ -122,6 +103,69 @@ extern UINT cfFileContents;
 
 typedef GUID SHELLVIEWID;
 #define SV_CLASS_NAME   ("SHELLDLL_DefView")
+
+#define FCIDM_SHVIEWFIRST       0x0000
+/* undocumented */
+#define FCIDM_SHVIEW_ARRANGE    0x7001
+#define FCIDM_SHVIEW_DELETE     0x7011
+#define FCIDM_SHVIEW_PROPERTIES 0x7013
+#define FCIDM_SHVIEW_CUT        0x7018
+#define FCIDM_SHVIEW_COPY       0x7019
+#define FCIDM_SHVIEW_INSERT     0x701A
+#define FCIDM_SHVIEW_UNDO       0x701B
+#define FCIDM_SHVIEW_INSERTLINK 0x701C
+#define FCIDM_SHVIEW_SELECTALL  0x7021
+#define FCIDM_SHVIEW_INVERTSELECTION 0x7022
+
+#define FCIDM_SHVIEW_BIGICON    0x7029
+#define FCIDM_SHVIEW_SMALLICON  0x702A
+#define FCIDM_SHVIEW_LISTVIEW   0x702B
+#define FCIDM_SHVIEW_REPORTVIEW 0x702C
+/* 0x7030-0x703f are used by the shellbrowser */
+#define FCIDM_SHVIEW_AUTOARRANGE 0x7031
+#define FCIDM_SHVIEW_SNAPTOGRID 0x7032
+
+#define FCIDM_SHVIEW_HELP       0x7041
+#define FCIDM_SHVIEW_RENAME     0x7050
+#define FCIDM_SHVIEW_CREATELINK 0x7051
+#define FCIDM_SHVIEW_NEWLINK    0x7052
+#define FCIDM_SHVIEW_NEWFOLDER  0x7053
+
+#define FCIDM_SHVIEW_REFRESH    0x7100 /* FIXME */
+#define FCIDM_SHVIEW_EXPLORE    0x7101 /* FIXME */
+#define FCIDM_SHVIEW_OPEN       0x7102 /* FIXME */
+
+#define FCIDM_SHVIEWLAST        0x7fff
+#define FCIDM_BROWSERFIRST      0xA000
+/* undocumented toolbar items from stddlg's*/
+#define FCIDM_TB_UPFOLDER       0xA001
+#define FCIDM_TB_NEWFOLDER      0xA002
+#define FCIDM_TB_SMALLICON      0xA003
+#define FCIDM_TB_REPORTVIEW     0xA004
+#define FCIDM_TB_DESKTOP        0xA005  /* FIXME */
+
+#define FCIDM_BROWSERLAST       0xbf00
+#define FCIDM_GLOBALFIRST       0x8000
+#define FCIDM_GLOBALLAST        0x9fff
+
+/*
+* Global submenu IDs and separator IDs
+*/
+#define FCIDM_MENU_FILE             (FCIDM_GLOBALFIRST+0x0000)
+#define FCIDM_MENU_EDIT             (FCIDM_GLOBALFIRST+0x0040)
+#define FCIDM_MENU_VIEW             (FCIDM_GLOBALFIRST+0x0080)
+#define FCIDM_MENU_VIEW_SEP_OPTIONS (FCIDM_GLOBALFIRST+0x0081)
+#define FCIDM_MENU_TOOLS            (FCIDM_GLOBALFIRST+0x00c0)
+#define FCIDM_MENU_TOOLS_SEP_GOTO   (FCIDM_GLOBALFIRST+0x00c1)
+#define FCIDM_MENU_HELP             (FCIDM_GLOBALFIRST+0x0100)
+#define FCIDM_MENU_FIND             (FCIDM_GLOBALFIRST+0x0140)
+#define FCIDM_MENU_EXPLORE          (FCIDM_GLOBALFIRST+0x0150)
+#define FCIDM_MENU_FAVORITES        (FCIDM_GLOBALFIRST+0x0170)
+
+/* control IDs known to the view */
+#define FCIDM_TOOLBAR      (FCIDM_BROWSERFIRST + 0)
+#define FCIDM_STATUS       (FCIDM_BROWSERFIRST + 1)
+
 
 /****************************************************************************
  * IShellIcon interface

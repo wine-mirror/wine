@@ -591,7 +591,7 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDetailsOf (IShellFolder2 * iface, LPCI
 
     return hr;
 }
-static HRESULT WINAPI ISF_MyComputer_fnMapNameToSCID (IShellFolder2 * iface, LPCWSTR pwszName, SHCOLUMNID * pscid)
+static HRESULT WINAPI ISF_MyComputer_fnMapColumnToSCID (IShellFolder2 * iface, UINT column, SHCOLUMNID * pscid)
 {
     ICOM_THIS (IGenericSFImpl, iface);
     FIXME ("(%p)\n", This);
@@ -621,7 +621,7 @@ static ICOM_VTABLE (IShellFolder2) vt_ShellFolder2 =
 	ISF_MyComputer_fnGetDefaultColumnState,
 	ISF_MyComputer_fnGetDetailsEx,
 	ISF_MyComputer_fnGetDetailsOf,
-	ISF_MyComputer_fnMapNameToSCID
+	ISF_MyComputer_fnMapColumnToSCID
 };
 
 /************************************************************************

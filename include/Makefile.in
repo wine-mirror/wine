@@ -13,6 +13,8 @@ IDL_SRCS = \
 	ocidl.idl \
 	oleidl.idl \
 	servprov.idl \
+	shobjidl.idl \
+	shtypes.idl \
 	strmif.idl \
 	unknwn.idl \
 	urlmon.idl \
@@ -246,13 +248,8 @@ WINE_INCLUDES = \
 	obj_contextmenu.h \
 	obj_dockingwindowframe.h \
 	obj_dragdrophelper.h \
-	obj_enumidlist.h \
 	obj_extracticon.h \
-	obj_shellbrowser.h \
-	obj_shellextinit.h \
 	obj_shellfolder.h \
-	obj_shelllink.h \
-	obj_shellview.h \
 	unicode.h
 
 EXTRASUBDIRS = bitmaps msvcrt msvcrt/sys wine

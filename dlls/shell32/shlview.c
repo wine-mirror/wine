@@ -1851,24 +1851,6 @@ static HRESULT WINAPI IShellView_fnGetItemObject(IShellView * iface, UINT uItem,
 	return S_OK;
 }
 
-static HRESULT WINAPI IShellView_fnEditItem(
-	IShellView * iface,
-	LPCITEMIDLIST pidl)
-{
-	ICOM_THIS(IShellViewImpl, iface);
-	int i;
-
-	TRACE("(%p)->(pidl=%p)\n",This, pidl);
-
-	i = LV_FindItemByPidl(This, pidl);
-	if (i != -1)
-	{
-	  SetFocus(This->hWndList);
-	  ListView_EditLabelA(This->hWndList, i);
-	}
-	return S_OK;
-}
-
 static struct ICOM_VTABLE(IShellView) svvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
@@ -1887,8 +1869,7 @@ static struct ICOM_VTABLE(IShellView) svvt =
 	IShellView_fnAddPropertySheetPages,
 	IShellView_fnSaveViewState,
 	IShellView_fnSelectItem,
-	IShellView_fnGetItemObject,
-	IShellView_fnEditItem
+	IShellView_fnGetItemObject
 };
 
 

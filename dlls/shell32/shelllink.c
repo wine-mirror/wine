@@ -1186,7 +1186,7 @@ static ULONG WINAPI IShellLinkW_fnRelease(IShellLinkW * iface)
 	return IShellLinkA_Release((IShellLinkA*)This);
 }
 
-static HRESULT WINAPI IShellLinkW_fnGetPath(IShellLinkW * iface, LPWSTR pszFile,INT cchMaxPath, WIN32_FIND_DATAA *pfd, DWORD fFlags)
+static HRESULT WINAPI IShellLinkW_fnGetPath(IShellLinkW * iface, LPWSTR pszFile,INT cchMaxPath, WIN32_FIND_DATAW *pfd, DWORD fFlags)
 {
     _ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 
