@@ -85,8 +85,8 @@ debug_channels (msvcrt)
 @ stub ??1streambuf@@UAE@XZ #
 @ stub ??1strstream@@UAE@XZ #
 @ stub ??1strstreambuf@@UAE@XZ #
-@ stub ??2@YAPAXI@Z #
-@ stub ??3@YAXPAX@Z #
+@ forward -noimport ??2@YAPAXI@Z msvcrt.??2@YAPAXI@Z
+@ forward -noimport ??3@YAXPAX@Z msvcrt.??3@YAXPAX@Z
 @ stub ??4Iostream_init@@QAEAAV0@ABV0@@Z #
 @ stub ??4filebuf@@QAEAAV0@ABV0@@Z #
 @ stub ??4fstream@@QAEAAV0@AAV0@@Z #
@@ -232,11 +232,11 @@ debug_channels (msvcrt)
 @ stub ??_Gstreambuf@@UAEPAXI@Z #
 @ stub ??_Gstrstream@@UAEPAXI@Z #
 @ stub ??_Gstrstreambuf@@UAEPAXI@Z #
-@ stub ?_query_new_handler@@YAP6AHI@ZXZ #
-@ stub ?_query_new_mode@@YAHXZ #
-@ stub ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z #
-@ stub ?_set_new_mode@@YAHH@Z #
-@ stub ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z #
+@ forward -noimport ?_query_new_handler@@YAP6AHI@ZXZ msvcrt.?_query_new_handler@@YAP6AHI@ZXZ
+@ forward -noimport ?_query_new_mode@@YAHXZ  msvcrt.?_query_new_mode@@YAHXZ
+@ forward -noimport ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z msvcrt.?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z
+@ forward -noimport ?_set_new_mode@@YAHH@Z msvcrt.?_set_new_mode@@YAHH@Z
+@ forward -noimport ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z msvcrt.?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z
 @ stub ?adjustfield@ios@@2JB #
 @ stub ?allocate@streambuf@@IAEHXZ #
 @ stub ?attach@filebuf@@QAEPAV1@H@Z #
@@ -371,8 +371,8 @@ debug_channels (msvcrt)
 @ stub ?seekp@ostream@@QAEAAV1@J@Z #
 @ stub ?seekp@ostream@@QAEAAV1@JW4seek_dir@ios@@@Z #
 @ stub ?seekpos@streambuf@@UAEJJH@Z #
-@ stub ?set_terminate@@YAP6AXXZP6AXXZ@Z #
-@ stub ?set_unexpected@@YAP6AXXZP6AXXZ@Z #
+@ forward -noimport ?set_terminate@@YAP6AXXZP6AXXZ@Z msvcrt.?set_terminate@@YAP6AXXZP6AXXZ@Z
+@ forward -noimport ?set_unexpected@@YAP6AXXZP6AXXZ@Z msvcrt.?set_unexpected@@YAP6AXXZP6AXXZ@Z
 @ stub ?setb@streambuf@@IAEXPAD0H@Z #
 @ stub ?setbuf@filebuf@@UAEPAVstreambuf@@PADH@Z #
 @ stub ?setbuf@fstream@@QAEPAVstreambuf@@PADH@Z #
@@ -415,7 +415,7 @@ debug_channels (msvcrt)
 @ stub ?sync_with_stdio@ios@@SAXXZ #
 @ stub ?tellg@istream@@QAEJXZ #
 @ stub ?tellp@ostream@@QAEJXZ #
-@ stub ?terminate@@YAXXZ #
+@ forward -noimport ?terminate@@YAXXZ msvcrt.?terminate@@YAXXZ
 @ stub ?text@filebuf@@2HB #
 @ stub ?tie@ios@@QAEPAVostream@@PAV2@@Z #
 @ stub ?tie@ios@@QBEPAVostream@@XZ #
@@ -424,7 +424,7 @@ debug_channels (msvcrt)
 @ stub ?underflow@filebuf@@UAEHXZ #
 @ stub ?underflow@stdiobuf@@UAEHXZ #
 @ stub ?underflow@strstreambuf@@UAEHXZ #
-@ stub ?unexpected@@YAXXZ #
+@ forward -noimport ?unexpected@@YAXXZ msvcrt.?unexpected@@YAXXZ
 @ stub ?unlock@ios@@QAAXXZ #
 @ stub ?unlock@streambuf@@QAEXXZ #
 @ stub ?unlockbuf@ios@@QAAXXZ #
