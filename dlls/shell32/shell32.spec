@@ -312,9 +312,9 @@
 @ stdcall Control_FillCache_RunDLL(long long long long)Control_FillCache_RunDLL
 @ stub Control_FillCache_RunDLLA
 @ stub Control_FillCache_RunDLLW
-@ stdcall Control_RunDLL(long long long long)Control_RunDLL
-@ stub Control_RunDLLA
-@ stub Control_RunDLLW
+@ stdcall Control_RunDLL(ptr ptr str long) Control_RunDLLA
+@ stdcall Control_RunDLLA(ptr ptr str long) Control_RunDLLA
+@ stdcall Control_RunDLLW(ptr ptr wstr long) Control_RunDLLW
 @ stdcall DllInstall(long wstr)SHELL32_DllInstall
 @ stdcall DoEnvironmentSubstA(str str)DoEnvironmentSubstA
 @ stdcall DoEnvironmentSubstW(wstr wstr)DoEnvironmentSubstW
