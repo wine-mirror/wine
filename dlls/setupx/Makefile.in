@@ -5,8 +5,6 @@ VPATH     = @srcdir@
 MODULE    = setupx
 SOVERSION = 1.0
 
-SPEC_SRCS = setupx.spec
-
 C_SRCS = \
 	setupx_main.c
 

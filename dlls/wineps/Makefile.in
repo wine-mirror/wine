@@ -6,8 +6,6 @@ MODULE    = wineps
 SOVERSION = 1.0
 ALTNAMES  = wineps16
 
-SPEC_SRCS = wineps.spec wineps16.spec
-
 C_SRCS = \
 	afm.c \
 	bitblt.c \

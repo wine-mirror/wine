@@ -5,8 +5,6 @@ VPATH     = @srcdir@
 MODULE    = winspool.drv
 SOVERSION = 1.0
 
-SPEC_SRCS = winspool.spec
-
 C_SRCS = \
 	info.c \
 	wspool.c

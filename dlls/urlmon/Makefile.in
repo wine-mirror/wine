@@ -6,8 +6,6 @@ MODULE    = urlmon
 SOVERSION = 1.0
 IMPORTS   = ole32
 
-SPEC_SRCS = urlmon.spec
-
 C_SRCS = \
 	umon.c \
 	urlmon_main.c

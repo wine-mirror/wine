@@ -7,8 +7,6 @@ SOVERSION = 1.0
 ALTNAMES  = avifile
 IMPORTS   = msvfw32 winmm
 
-SPEC_SRCS = avifil32.spec avifile.spec
-
 C_SRCS = \
 	avifile.c
 

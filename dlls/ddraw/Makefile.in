@@ -6,9 +6,6 @@ MODULE    = ddraw
 SOVERSION = 1.0
 IMPORTS   = x11drv
 
-SPEC_SRCS = ddraw.spec
-
-
 MESA_SRCS = \
 	d3dcommon.c \
 	d3ddevice/mesa.c \

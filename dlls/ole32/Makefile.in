@@ -6,9 +6,6 @@ MODULE    = ole32
 SOVERSION = 1.0
 ALTNAMES  = ole2 ole2nls ole2conv ole2prox ole2thk storage compobj
 
-SPEC_SRCS = ole32.spec ole2.spec ole2conv.spec ole2nls.spec \
-	    ole2prox.spec ole2thk.spec storage.spec compobj.spec
-
 C_SRCS = \
 	antimoniker.c \
 	bindctx.c \

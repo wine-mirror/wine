@@ -6,9 +6,6 @@ MODULE    = mciwave.drv
 SOVERSION = 1.0
 IMPORTS   = winmm
 
-SPEC_SRCS = \
-	mciwave.spec
-
 C_SRCS = \
 	mciwave.c
 

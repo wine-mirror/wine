@@ -7,8 +7,6 @@ SOVERSION = 1.0
 ALTNAMES  = olecli
 IMPORTS   = olesvr32 ole32
 
-SPEC_SRCS = olecli32.spec olecli.spec
-
 C_SRCS = \
 	olecli_main.c
 

@@ -6,9 +6,6 @@ MODULE    = midimap.drv
 SOVERSION = 1.0
 IMPORTS   = winmm
 
-SPEC_SRCS = \
-	midimap.spec
-
 C_SRCS = \
 	midimap.c
 

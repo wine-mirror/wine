@@ -6,8 +6,6 @@ MODULE    = olepro32
 SOVERSION = 1.0
 IMPORTS	  = oleaut32 ole32
 
-SPEC_SRCS = olepro32.spec
-
 C_SRCS = olepro32stubs.c
 
 @MAKE_DLL_RULES@

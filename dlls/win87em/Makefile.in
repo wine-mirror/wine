@@ -5,8 +5,6 @@ VPATH     = @srcdir@
 MODULE    = win87em
 SOVERSION = 1.0
 
-SPEC_SRCS = win87em.spec
-
 C_SRCS = \
 	emulate.c
 

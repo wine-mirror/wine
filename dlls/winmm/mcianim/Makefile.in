@@ -6,9 +6,6 @@ MODULE    = mcianim.drv
 SOVERSION = 1.0
 IMPORTS   = winmm
 
-SPEC_SRCS = \
-	mcianim.spec
-
 C_SRCS = \
 	mcianim.c
 

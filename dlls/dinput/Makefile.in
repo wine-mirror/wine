@@ -6,8 +6,6 @@ MODULE    = dinput
 SOVERSION = 1.0
 IMPORTS   = user32
 
-SPEC_SRCS = dinput.spec
-
 C_SRCS = \
 	dinput_main.c
 

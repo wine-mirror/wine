@@ -6,8 +6,6 @@ MODULE    = olesvr32
 SOVERSION = 1.0
 ALTNAMES  = olesvr
 
-SPEC_SRCS = olesvr32.spec olesvr.spec
-
 C_SRCS = \
 	olesvr_main.c
 

@@ -7,8 +7,6 @@ SOVERSION = 1.0
 ALTNAMES  = ver
 IMPORTS   = lz32
 
-SPEC_SRCS = ver.spec version.spec
-
 C_SRCS = \
 	info.c \
 	install.c \

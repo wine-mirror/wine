@@ -6,9 +6,6 @@ MODULE    = msacm.drv
 SOVERSION = 1.0
 IMPORTS   = winmm
 
-SPEC_SRCS = \
-	msacm.spec
-
 C_SRCS = \
 	wavemap.c
 

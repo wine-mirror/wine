@@ -7,14 +7,6 @@ SOVERSION = 1.0
 WRCEXTRA  = -w16 -m
 ALTNAMES  = user keyboard ddeml display mouse
 
-SPEC_SRCS = \
-	user32.spec \
-	user.spec \
-	keyboard.spec \
-	ddeml.spec \
-	display.spec \
-	mouse.spec
-
 C_SRCS = \
 	ddeml.c \
 	display.c \

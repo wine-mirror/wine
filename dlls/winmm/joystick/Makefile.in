@@ -6,9 +6,6 @@ MODULE    = joystick.drv
 SOVERSION = 1.0
 IMPORTS   = winmm
 
-SPEC_SRCS = \
-	joystick.spec
-
 C_SRCS = \
 	joystick.c
 

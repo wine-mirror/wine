@@ -8,8 +8,6 @@ IMPORTS   = \
 	x11drv \
 	gdi32
 
-SPEC_SRCS = opengl32.spec
-
 C_SRCS = \
 	wgl.c \
 	opengl_norm.c \

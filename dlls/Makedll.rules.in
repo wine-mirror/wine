@@ -16,6 +16,7 @@ LDSHARED   = @LDSHARED@
 SONAME     = lib$(MODULE).so
 IMPORTLIBS = $(IMPORTS:%=$(DLLDIR)/lib%.$(LIBEXT))
 ALLNAMES   = lib$(MODULE).so $(ALTNAMES:%=lib%.so)
+SPEC_SRCS  = $(MODULE).spec $(ALTNAMES:%=%.spec)
 
 all: lib$(MODULE).$(LIBEXT) $(ALTNAMES:%=lib%.$(LIBEXT))
 

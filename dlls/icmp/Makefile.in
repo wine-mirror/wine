@@ -5,8 +5,6 @@ VPATH     = @srcdir@
 MODULE    = icmp
 SOVERSION = 1.0
 
-SPEC_SRCS = icmp.spec
-
 C_SRCS = icmp_main.c 
 
 @MAKE_DLL_RULES@

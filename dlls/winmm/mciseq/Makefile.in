@@ -6,9 +6,6 @@ MODULE    = mciseq.drv
 SOVERSION = 1.0
 IMPORTS   = winmm
 
-SPEC_SRCS = \
-	mciseq.spec
-
 C_SRCS = \
 	mcimidi.c
 

@@ -6,9 +6,6 @@ MODULE    = mciavi.drv
 SOVERSION = 1.0
 IMPORTS   = winmm
 
-SPEC_SRCS = \
-	mciavi.spec
-
 C_SRCS = \
 	mciavi.c
 

@@ -7,8 +7,6 @@ SOVERSION = 1.0
 ALTNAMES  = msvideo
 IMPORTS   = winmm
 
-SPEC_SRCS = msvfw32.spec msvideo.spec
-
 C_SRCS = \
 	msvideo_main.c
 

@@ -6,9 +6,6 @@ MODULE    = mcicda.drv
 SOVERSION = 1.0
 IMPORTS   = winmm
 
-SPEC_SRCS = \
-	mcicda.spec
-
 C_SRCS = \
 	mcicda.c
 

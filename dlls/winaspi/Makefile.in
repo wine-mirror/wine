@@ -6,8 +6,6 @@ MODULE    = wnaspi32
 SOVERSION = 1.0
 ALTNAMES  = winaspi
 
-SPEC_SRCS = wnaspi32.spec winaspi.spec
-
 C_SRCS = \
 	aspi.c \
 	winaspi16.c \

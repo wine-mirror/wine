@@ -6,8 +6,6 @@ MODULE    = ttydrv
 SOVERSION = 1.0
 EXTRALIBS = $(LIBS)
 
-SPEC_SRCS = ttydrv.spec
-
 C_SRCS = \
 	ttydrv_main.c
 

@@ -5,8 +5,6 @@ VPATH     = @srcdir@
 MODULE    = sound
 SOVERSION = 1.0
 
-SPEC_SRCS = sound.spec
-
 C_SRCS = \
 	sound_main.c
 

@@ -7,8 +7,6 @@ SOVERSION = 1.0
 ALTNAMES  = ole2disp typelib
 IMPORTS   = ole32 comctl32
 
-SPEC_SRCS = oleaut32.spec ole2disp.spec typelib.spec
-
 C_SRCS = \
 	ole2disp.c \
 	oleaut.c \

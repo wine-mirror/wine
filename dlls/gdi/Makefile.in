@@ -6,8 +6,6 @@ MODULE    = gdi32
 SOVERSION = 1.0
 ALTNAMES  = gdi dispdib
 
-SPEC_SRCS = gdi32.spec gdi.spec dispdib.spec
-
 C_SRCS = \
 	gdi_main.c \
 	thunk.c
