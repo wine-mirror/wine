@@ -72,6 +72,10 @@ int main(int argc, char **argv)
                 case 'v':        /* verbose */
                     if (argv[i][2] == 0) verbose = 1;
                     break;
+		case 'V':
+		    printf("winegcc v0.3\n");
+		    exit(0);
+		    break;
 		case 'm':
 		    if (strcmp("-mno-cygwin", argv[i]) == 0)
 			use_msvcrt = 1;
@@ -125,6 +129,7 @@ int main(int argc, char **argv)
 	    if (use_msvcrt) gcc_argv[i++] = "-I" INCLUDEDIR "/msvcrt";
 	    gcc_argv[i++] = "-I" INCLUDEDIR "/windows";
 	}
+	gcc_argv[i++] = "-DWINE_UNICODE_NATIVE";
 	gcc_argv[i++] = "-D__int8=char";
 	gcc_argv[i++] = "-D__int16=short";
 	gcc_argv[i++] = "-D__int32=int";
@@ -145,7 +150,7 @@ int main(int argc, char **argv)
 
     if (linking)
     {
-	if (use_stdlib) gcc_argv[i++] = use_msvcrt ? "-lmsvcrt" : "-lc";
+	if (use_stdlib && use_msvcrt) gcc_argv[i++] = "-lmsvcrt";
     }
     gcc_argv[i] = NULL;
 
