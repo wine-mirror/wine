@@ -810,8 +810,8 @@ INT WINAPIV wnsprintfW(LPWSTR,INT,LPCWSTR, ...);
 
 HRESULT WINAPI SHLoadIndirectString(LPCWSTR,LPWSTR,UINT,PVOID*);
 
-BOOL IntlStrEqWorkerA(BOOL,LPCSTR,LPCSTR,int);
-BOOL IntlStrEqWorkerW(BOOL,LPCWSTR,LPCWSTR,int);
+BOOL WINAPI IntlStrEqWorkerA(BOOL,LPCSTR,LPCSTR,int);
+BOOL WINAPI IntlStrEqWorkerW(BOOL,LPCWSTR,LPCWSTR,int);
 #define IntlStrEqWorker WINELIB_NAME_AW(IntlStrEqWorker)
 
 #define IntlStrEqNA(s1,s2,n) IntlStrEqWorkerA(TRUE,s1,s2,n)
