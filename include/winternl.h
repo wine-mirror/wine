@@ -133,6 +133,16 @@ typedef struct _RTL_USER_PROCESS_PARAMETERS
 } RTL_USER_PROCESS_PARAMETERS, *PRTL_USER_PROCESS_PARAMETERS;
 
 
+typedef struct _PEB_LDR_DATA
+{
+    ULONG               Length;
+    BOOLEAN             Initialized;
+    PVOID               SsHandle;
+    LIST_ENTRY          InLoadOrderModuleList;
+    LIST_ENTRY          InMemoryOrderModuleList;
+    LIST_ENTRY          InInitializationOrderModuleList;
+} PEB_LDR_DATA, *PPEB_LDR_DATA;
+
 /***********************************************************************
  * PEB data structure
  */
@@ -142,7 +152,7 @@ typedef struct _PEB
     BYTE                         BeingDebugged;      /*  02 */
     BYTE                         Reserved2[5];       /*  03 */
     HMODULE                      ImageBaseAddress;   /*  08 */
-    PVOID                        __pad_0c;           /*  0c */
+    PPEB_LDR_DATA                LdrData;            /*  0c */
     RTL_USER_PROCESS_PARAMETERS *ProcessParameters;  /*  10 */
     PVOID                        __pad_14;           /*  14 */
     HANDLE                       ProcessHeap;        /*  18 */
@@ -1366,6 +1376,39 @@ NTSTATUS WINAPI LdrLockLoaderLock(ULONG,ULONG*,ULONG*);
 NTSTATUS WINAPI LdrQueryProcessModuleInformation(SYSTEM_MODULE_INFORMATION*, ULONG, ULONG*);
 NTSTATUS WINAPI LdrUnloadDll(HMODULE);
 NTSTATUS WINAPI LdrUnlockLoaderLock(ULONG,ULONG);
+
+/* list manipulation macros */
+#define InitializeListHead(le)  (void)((le)->Flink = (le)->Blink = (le))
+#define InsertHeadList(le,e)    do { PLIST_ENTRY f = (le)->Flink; (e)->Flink = f; (e)->Blink = (le); f->Blink = (e); (le)->Flink = (e); } while (0)
+#define InsertTailList(le,e)    do { PLIST_ENTRY b = (le)->Blink; (e)->Flink = (le); (e)->Blink = b; b->Flink = (e); (le)->Blink = (e); } while (0)
+#define IsListEmpty(le)         ((le)->Flink == (le))
+#define RemoveEntryList(e)      do { PLIST_ENTRY f = (e)->Flink, b = (e)->Blink; f->Blink = b; b->Flink = f; (e)->Flink = (e)->Blink = NULL; } while (0)
+static inline PLIST_ENTRY RemoveHeadList(PLIST_ENTRY le)
+{
+    PLIST_ENTRY f, b, e;
+
+    e = le->Flink;
+    f = le->Flink->Flink;
+    b = le->Flink->Blink;
+    f->Blink = b;
+    b->Flink = f;
+
+    if (e != le) e->Flink = e->Blink = NULL;
+    return e;
+}
+static inline PLIST_ENTRY RemoveTailList(PLIST_ENTRY le)
+{
+    PLIST_ENTRY f, b, e;
+
+    e = le->Blink;
+    f = le->Blink->Flink;
+    b = le->Blink->Blink;
+    f->Blink = b;
+    b->Flink = f;
+
+    if (e != le) e->Flink = e->Blink = NULL;
+    return e;
+}
 
 #ifdef __cplusplus
 } /* extern "C" */

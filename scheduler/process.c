@@ -60,8 +60,8 @@ typedef struct _PDB
 {
     LONG             header[2];        /* 00 Kernel object header */
     HMODULE          module;           /* 08 Main exe module (NT) */
-    void            *event;            /* 0c Pointer to an event object (unused) */
-    RTL_USER_PROCESS_PARAMETERS *ProcessParameters;  /*  10 Process parameters*/
+    PPEB_LDR_DATA    LdrData;          /* 0c Pointer to loader information */
+    RTL_USER_PROCESS_PARAMETERS *ProcessParameters;  /*  10 Process parameters */
     DWORD            unknown2;         /* 14 Unknown */
     HANDLE           heap;             /* 18 Default process heap */
     HANDLE           mem_context;      /* 1c Process memory context */
@@ -107,7 +107,8 @@ typedef struct _PDB
 
 PDB current_process;
 
-static RTL_USER_PROCESS_PARAMETERS     process_pmts;
+static RTL_USER_PROCESS_PARAMETERS      process_pmts;
+static PEB_LDR_DATA                     process_ldr;
 
 static char main_exe_name[MAX_PATH];
 static char *main_exe_name_ptr = main_exe_name;
@@ -290,12 +291,16 @@ static BOOL process_init( char *argv[] )
     argv0 = argv[0];
 
     /* Fill the initial process structure */
-    current_process.threads         = 1;
-    current_process.running_threads = 1;
-    current_process.ring0_threads   = 1;
-    current_process.group           = &current_process;
-    current_process.priority        = 8;  /* Normal */
+    current_process.threads           = 1;
+    current_process.running_threads   = 1;
+    current_process.ring0_threads     = 1;
+    current_process.group             = &current_process;
+    current_process.priority          = 8;  /* Normal */
     current_process.ProcessParameters = &process_pmts;
+    current_process.LdrData           = &process_ldr;
+    InitializeListHead(&process_ldr.InLoadOrderModuleList);
+    InitializeListHead(&process_ldr.InMemoryOrderModuleList);
+    InitializeListHead(&process_ldr.InInitializationOrderModuleList);
 
     /* Setup the server connection */
     CLIENT_InitServer();

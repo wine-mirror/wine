@@ -128,8 +128,6 @@ typedef struct
 /* internal representation of 32bit modules. per process. */
 typedef struct _wine_modref
 {
-	struct _wine_modref *next;
-	struct _wine_modref *prev;
 	void                *dlhandle;  /* handle returned by dlopen() */
         LDR_MODULE           ldr;
 
@@ -143,8 +141,6 @@ typedef struct _wine_modref
 
     char data[1];  /* space for storing filename and short_filename */
 } WINE_MODREF;
-
-extern WINE_MODREF *MODULE_modref_list;
 
 /* Resource types */
 

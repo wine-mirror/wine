@@ -265,15 +265,9 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
     if (!(wm->ldr.Flags & LDR_DONT_RESOLVE_REFS) &&
         PE_fixup_imports( wm ))
     {
-        /* remove entry from modref chain */
-
-        if ( !wm->prev )
-            MODULE_modref_list = wm->next;
-        else
-            wm->prev->next = wm->next;
-
-        if ( wm->next ) wm->next->prev = wm->prev;
-        wm->next = wm->prev = NULL;
+        /* the module has only be inserted in the load & memory order lists */
+        RemoveEntryList(&wm->ldr.InLoadOrderModuleList);
+        RemoveEntryList(&wm->ldr.InMemoryOrderModuleList);
 
         /* FIXME: there are several more dangling references
          * left. Including dlls loaded by this dll before the

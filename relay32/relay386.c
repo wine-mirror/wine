@@ -27,7 +27,6 @@
 
 #include "winternl.h"
 #include "stackframe.h"
-#include "module.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
@@ -284,15 +283,18 @@ static void get_entry_point( char *buffer, DEBUG_ENTRY_POINT *relay )
     char *p, *base = NULL;
     const char *name;
     int ordinal = 0;
-    WINE_MODREF *wm;
+    PLIST_ENTRY mark, entry;
+    PLDR_MODULE mod = NULL;
     DWORD size;
 
     /* First find the module */
 
-    for (wm = MODULE_modref_list; wm; wm = wm->next)
+    mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
+    for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
-        if (!(wm->ldr.Flags & LDR_WINE_INTERNAL)) continue;
-        exp = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size );
+        mod = CONTAINING_RECORD(entry, LDR_MODULE, InLoadOrderModuleList);
+        if (!(mod->Flags & LDR_WINE_INTERNAL)) continue;
+        exp = RtlImageDirectoryEntryToData( mod->BaseAddress, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size );
         if (!exp) continue;
         debug = (DEBUG_ENTRY_POINT *)((char *)exp + size);
         if (debug <= relay && relay < debug + exp->NumberOfFunctions)
@@ -304,7 +306,7 @@ static void get_entry_point( char *buffer, DEBUG_ENTRY_POINT *relay )
 
     /* Now find the function */
 
-    base = (char *)wm->ldr.BaseAddress;
+    base = (char *)mod->BaseAddress;
     strcpy( buffer, base + exp->Name );
     p = buffer + strlen(buffer);
     if (p > buffer + 4 && !strcasecmp( p - 4, ".dll" )) p -= 4;
