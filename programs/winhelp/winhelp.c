@@ -91,9 +91,10 @@ HLPFILE_WINDOWINFO*     WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name)
     if (!name || !name[0])
         name = Globals.active_win->lpszName;
 
-    for (i = 0; i < hlpfile->numWindows; i++)
-        if (!strcmp(hlpfile->windows[i].name, name))
-            return &hlpfile->windows[i];
+    if (hlpfile)
+        for (i = 0; i < hlpfile->numWindows; i++)
+            if (!strcmp(hlpfile->windows[i].name, name))
+                return &hlpfile->windows[i];
 
     if (strcmp(name, "main") != 0)
     {
@@ -196,9 +197,12 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 
     /* Create primary window */
     WINHELP_RegisterWinClasses();
-    hlpfile = WINHELP_LookupHelpFile(cmdline);
-    if (!hlpfile)
-        return 0;
+    if (*cmdline)
+    {
+        hlpfile = WINHELP_LookupHelpFile(cmdline);
+        if (!hlpfile) return 0;
+    }
+    else hlpfile = NULL;
     WINHELP_CreateHelpWindowByHash(hlpfile, lHash, 
                                    WINHELP_GetWindowInfo(hlpfile, "main"), show);
 
@@ -285,33 +289,60 @@ static LRESULT  WINHELP_HandleCommand(HWND hSrcWnd, LPARAM lParam)
 
     if (wh)
     {
+        char*   ptr = (wh->ofsFilename) ? (LPSTR)wh + wh->ofsFilename : NULL;
+
         WINE_TRACE("Got[%u]: cmd=%u data=%08lx fn=%s\n", 
-                   wh->size, wh->command, wh->data,
-                   wh->ofsFilename ? (LPSTR)wh + wh->ofsFilename : "");
+                   wh->size, wh->command, wh->data, ptr);
         switch (wh->command)
         {
+        case HELP_CONTEXT:
+            if (ptr)
+            {
+                MACRO_JumpContext(ptr, "main", wh->data);
+            }
+            break;
         case HELP_QUIT:
             MACRO_Exit();
             break;
-        case HELP_FINDER:
-            /* in fact, should be the topic dialog box */
-            if (wh->ofsFilename)
+        case HELP_CONTENTS:
+            if (ptr)
             {
-                MACRO_JumpHash((LPSTR)wh + wh->ofsFilename, "main", 0);
+                MACRO_JumpContents(ptr, "main");
             }
             break;
-        case HELP_CONTEXT:
-        case HELP_SETCONTENTS:
-        case HELP_CONTENTS:
-        case HELP_CONTEXTPOPUP:
-        case HELP_FORCEFILE:
         case HELP_HELPONHELP:
-        case HELP_KEY:
-        case HELP_PARTIALKEY:
-        case HELP_COMMAND:
-        case HELP_MULTIKEY:
-        case HELP_SETWINPOS:
-            WINE_FIXME("NIY\n");
+            MACRO_HelpOn();
+            break;
+        /* case HELP_SETINDEX: */
+        case HELP_SETCONTENTS:
+            if (ptr)
+            {
+                MACRO_SetContents(ptr, wh->data);
+            }
+            break;
+        case HELP_CONTEXTPOPUP:
+            if (ptr)
+            {
+                MACRO_PopupContext(ptr, wh->data);
+            }
+            break;
+        /* case HELP_FORCEFILE:*/
+        /* case HELP_CONTEXTMENU: */
+        case HELP_FINDER:
+            /* in fact, should be the topic dialog box */
+            if (ptr)
+            {
+                MACRO_JumpHash(ptr, "main", 0);
+            }
+            break;
+        /* case HELP_WM_HELP: */
+        /* case HELP_SETPOPUP_POS: */
+        /* case HELP_KEY: */
+        /* case HELP_COMMAND: */
+        /* case HELP_PARTIALKEY: */
+        /* case HELP_MULTIKEY: */
+        /* case HELP_SETWINPOS: */
+            WINE_FIXME("Unknown command (%x) for remote winhelp control\n", wh->command);
             break;
         }
     }
@@ -478,6 +509,7 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
             MACRO_ExecuteMacro(macro->lpszMacro);
     }
 
+    win->histIndex = win->backIndex = 0;
     /* Reuse existing window */
     if (!bPopup)
     {
@@ -488,13 +520,13 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
                 return WINHELP_ReuseWindow(win, oldwin, page, nCmdShow);
             }
         }
-
-        win->histIndex = win->backIndex = 1;
-        win->history[0] = win->back[0] = page;
-        page->file->wRefCount += 2;
+        if (page)
+        {
+            win->histIndex = win->backIndex = 1;
+            win->history[0] = win->back[0] = page;
+            page->file->wRefCount += 2;
+        }
     }
-    else
-        win->histIndex = win->backIndex = 0;
 
     hWnd = CreateWindow(bPopup ? TEXT_WIN_CLASS_NAME : MAIN_WIN_CLASS_NAME,
                         wi->caption, wi->win_style,

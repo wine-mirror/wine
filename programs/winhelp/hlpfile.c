@@ -85,7 +85,7 @@ static BOOL  HLPFILE_AddPage(HLPFILE*, BYTE*, BYTE*, unsigned);
 static BOOL  HLPFILE_AddParagraph(HLPFILE*, BYTE *, BYTE*, unsigned*);
 static void  HLPFILE_Uncompress2(const BYTE*, const BYTE*, BYTE*, const BYTE*);
 static BOOL  HLPFILE_Uncompress3(char*, const char*, const BYTE*, const BYTE*);
-static void  HLPFILE_UncompressRLE(const BYTE* src, unsigned sz, BYTE** dst);
+static void  HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE** dst, unsigned dstsz);
 static BOOL  HLPFILE_ReadFont(HLPFILE* hlpfile);
 
 /***********************************************************************
@@ -523,15 +523,15 @@ static BYTE*    HLPFILE_DecompressGfx(BYTE* src, unsigned csz, unsigned sz, BYTE
     {
     case 0: /* uncompressed */
         if (sz != csz)
-            WINE_WARN("Bogus gfx sizes: %u / %u\n", sz, csz);
+            WINE_WARN("Bogus gfx sizes (uncompressed): %u / %u\n", sz, csz);
         dst = src;
         break;
     case 1: /* RunLen */
         tmp = dst = HeapAlloc(GetProcessHeap(), 0, sz);
         if (!dst) return NULL;
-        HLPFILE_UncompressRLE(src, csz, &tmp);
+        HLPFILE_UncompressRLE(src, src + csz, &tmp, sz);
         if (tmp - dst != sz)
-            WINE_FIXME("Bogus gfx sizes: %u/%u\n", tmp - dst, sz);
+            WINE_FIXME("Bogus gfx sizes (RunLen): %u/%u\n", tmp - dst, sz);
         break;
     case 2: /* LZ77 */
         sz77 = HLPFILE_UncompressedLZ77_Size(src, src + csz);
@@ -539,18 +539,18 @@ static BYTE*    HLPFILE_DecompressGfx(BYTE* src, unsigned csz, unsigned sz, BYTE
         if (!dst) return NULL;
         HLPFILE_UncompressLZ77(src, src + csz, dst);
         if (sz77 != sz)
-            WINE_WARN("Bogus gfx sizes: %u / %u\n", sz77, sz);
+            WINE_WARN("Bogus gfx sizes (LZ77): %u / %u\n", sz77, sz);
         break;
     case 3: /* LZ77 then RLE */
         sz77 = HLPFILE_UncompressedLZ77_Size(src, src + csz);
-        tmp = HeapAlloc(GetProcessHeap(), 0, sz/*sz77*/);
+        tmp = HeapAlloc(GetProcessHeap(), 0, sz77);
         if (!tmp) return FALSE;
         HLPFILE_UncompressLZ77(src, src + csz, tmp);
         dst = tmp2 = HeapAlloc(GetProcessHeap(), 0, sz);
         if (!dst) return FALSE;
-        HLPFILE_UncompressRLE(tmp, sz77, &tmp2);
+        HLPFILE_UncompressRLE(tmp, tmp + sz77, &tmp2, sz);
         if (tmp2 - dst != sz)
-            WINE_WARN("Bogus gfx: %u / %u\n", tmp2 - dst, sz);
+            WINE_WARN("Bogus gfx sizes (LZ77+RunLen): %u / %u\n", tmp2 - dst, sz);
         HeapFree(GetProcessHeap(), 0, tmp);
         break;
     default:
@@ -592,6 +592,9 @@ static BOOL HLPFILE_LoadBitmap(BYTE* beg, BYTE type, BYTE pack,
     if (bi->bmiHeader.biBitCount > 32) WINE_FIXME("Unknown bit count %u\n", bi->bmiHeader.biBitCount);
     if (bi->bmiHeader.biPlanes != 1) WINE_FIXME("Unsupported planes %u\n", bi->bmiHeader.biPlanes);
     bi->bmiHeader.biSizeImage = (((bi->bmiHeader.biWidth * bi->bmiHeader.biBitCount + 31) & ~31) / 8) * bi->bmiHeader.biHeight;
+    WINE_TRACE("planes=%d bc=%d size=(%ld,%ld)\n",
+               bi->bmiHeader.biPlanes, bi->bmiHeader.biBitCount, 
+               bi->bmiHeader.biWidth, bi->bmiHeader.biHeight);
 
     csz = fetch_ulong(&ptr);
     fetch_ulong(&ptr); /* hotspot size */
@@ -1406,7 +1409,7 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
                 wi->style = (flags & 0x0080) ? GET_USHORT(ptr, 84) : SW_SHOW;
                 wi->sr_color = (flags & 0x0100) ? GET_UINT(ptr, 86) : 0xFFFFFF;
                 wi->nsr_color = (flags & 0x0200) ? GET_UINT(ptr, 90) : 0xFFFFFF;
-                WINE_FIXME("System-Window: flags=%c%c%c%c%c%c%c%c type=%s name=%s caption=%s (%ld,%ld)x(%ld,%ld)\n",
+                WINE_TRACE("System-Window: flags=%c%c%c%c%c%c%c%c type=%s name=%s caption=%s (%ld,%ld)x(%ld,%ld)\n",
                            flags & 0x0001 ? 'T' : 't',
                            flags & 0x0002 ? 'N' : 'n',
                            flags & 0x0004 ? 'C' : 'c',
@@ -1715,7 +1718,8 @@ static BOOL HLPFILE_Uncompress3(char* dst, const char* dst_end,
             else 
             {
                 len = phrases.offsets[idx + 1] - phrases.offsets[idx];
-                memcpy(dst, &phrases.buffer[phrases.offsets[idx]], len);
+                if (dst + len <= dst_end)
+                    memcpy(dst, &phrases.buffer[phrases.offsets[idx]], len);
             }
         }
         else if ((*src & 0x03) == 0x01)
@@ -1730,19 +1734,22 @@ static BOOL HLPFILE_Uncompress3(char* dst, const char* dst_end,
             else
             {
                 len = phrases.offsets[idx + 1] - phrases.offsets[idx];
-                memcpy(dst, &phrases.buffer[phrases.offsets[idx]], len);
+                if (dst + len <= dst_end)
+                    memcpy(dst, &phrases.buffer[phrases.offsets[idx]], len);
             }
         }
         else if ((*src & 0x07) == 0x03)
         {
             len = (*src / 8) + 1;
-            memcpy(dst, src + 1, len);
+            if (dst + len <= dst_end)
+                memcpy(dst, src + 1, len);
             src += len;
         }
         else
         {
             len = (*src / 16) + 1;
-            memset(dst, ((*src & 0x0F) == 0x07) ? ' ' : 0, len);
+            if (dst + len <= dst_end)
+                memset(dst, ((*src & 0x0F) == 0x07) ? ' ' : 0, len);
         }
         dst += len;
     }
@@ -1756,27 +1763,37 @@ static BOOL HLPFILE_Uncompress3(char* dst, const char* dst_end,
  *
  *
  */
-static void HLPFILE_UncompressRLE(const BYTE* src, unsigned sz, BYTE** dst)
+static void HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE** dst, unsigned dstsz)
 {
-    unsigned    i;
     BYTE        ch;
+    BYTE*       sdst = *dst + dstsz;
 
-    for (i = 0; i < sz; i++)
+    while (src < end)
     {
-        ch = src[i];
+        ch = *src++;
         if (ch & 0x80)
         {
             ch &= 0x7F;
-            memcpy(*dst, src + i + 1, ch);
-            i += ch;
+            if (ch == 0) WINE_FIXME("Null length 1, next is %u\n", *src);
+            if ((*dst) + ch < sdst)
+                memcpy(*dst, src, ch);
+            src += ch;
         }
         else
         {
-            memset(*dst, (char)src[i + 1], ch);
-            i++;
+            if ((*dst) + ch < sdst)
+                memset(*dst, (char)*src, ch);
+            src++;
+            if (ch == 0)
+            {
+                WINE_FIXME("Null length 2, next is %u\n", *src);
+            }
         }
         *dst += ch;
     }
+    if (*dst != sdst)
+        WINE_FIXME("Buffer X-flow: d(%u) instead of d(%u)\n",
+                   *dst - (sdst - dstsz), dstsz);
 }
 
 /******************************************************************

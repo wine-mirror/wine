@@ -62,6 +62,7 @@ STID_CONTENTS, 		"&Teme pomoèi"
 STID_SEARCH, 		"&Iskanje"
 STID_BACK, 			"&Nazaj"
 STID_HISTORY, 		"&Zgodovina"
+STID_TOPICS,		"&Topics"
 STID_ALL_FILES, 		"Vse datiteke (*.*)"
 STID_HELP_FILES_HLP, 	"Datoteke s pomoèjo (*.hlp)"
 }
