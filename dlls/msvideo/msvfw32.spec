@@ -18,10 +18,10 @@
 @ stdcall DrawDibStop(long)
 @ stub    DrawDibTime
 @ stub    GetOpenFileNamePreview
-@ stub    GetOpenFileNamePreviewA
-@ stub    GetOpenFileNamePreviewW
-@ stub    GetSaveFileNamePreviewA
-@ stub    GetSaveFileNamePreviewW
+@ stdcall GetOpenFileNamePreviewA(ptr)
+@ stdcall GetOpenFileNamePreviewW(ptr)
+@ stdcall GetSaveFileNamePreviewA(ptr)
+@ stdcall GetSaveFileNamePreviewW(ptr)
 @ stdcall ICClose(long)
 @ cdecl   ICCompress(long long ptr ptr ptr ptr ptr ptr long long long ptr ptr)
 @ stdcall ICCompressorChoose(long long ptr ptr ptr ptr)

@@ -22,6 +22,7 @@
 #define COM_NO_WINDOWS_H
 #include "winbase.h"
 #include "windef.h"
+#include "commdlg.h"
 #include "vfw.h"
 
 /* HIC struct (same layout as Win95 one) */

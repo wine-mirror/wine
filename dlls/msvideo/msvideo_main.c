@@ -890,3 +890,43 @@ err:
 
 	return (HANDLE)hMem;
 }
+
+/***********************************************************************
+ *		GetOpenFileNamePreviewA	[MSVFW32.@]
+ */
+BOOL WINAPI GetOpenFileNamePreviewA(LPOPENFILENAMEA lpofn)
+{
+  FIXME("(%p), stub!\n", lpofn);
+
+  return FALSE;
+}
+
+/***********************************************************************
+ *		GetOpenFileNamePreviewW	[MSVFW32.@]
+ */
+BOOL WINAPI GetOpenFileNamePreviewW(LPOPENFILENAMEW lpofn)
+{
+  FIXME("(%p), stub!\n", lpofn);
+
+  return FALSE;
+}
+
+/***********************************************************************
+ *		GetSaveFileNamePreviewA	[MSVFW32.@]
+ */
+BOOL WINAPI GetSaveFileNamePreviewA(LPOPENFILENAMEA lpofn)
+{
+  FIXME("(%p), stub!\n", lpofn);
+
+  return FALSE;
+}
+
+/***********************************************************************
+ *		GetSaveFileNamePreviewW	[MSVFW32.@]
+ */
+BOOL WINAPI GetSaveFileNamePreviewW(LPOPENFILENAMEW lpofn)
+{
+  FIXME("(%p), stub!\n", lpofn);
+
+  return FALSE;
+}
