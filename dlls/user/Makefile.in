@@ -6,7 +6,7 @@ MODULE    = user32
 SOVERSION = 1.0
 ALTNAMES  = user
 
-SPEC_SRCS = user32.spec user.spec
+SPEC_SRCS = user32.spec user.spec keyboard.spec
 
 C_SRCS = \
 	user_main.c \
