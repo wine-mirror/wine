@@ -1,3 +1,3 @@
 Makefile
-msg711.drv.dbg.c
-msg711.drv.spec.c
+msg711.acm.dbg.c
+msg711.acm.spec.c

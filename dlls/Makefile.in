@@ -156,7 +156,7 @@ all: \
 	msacm.drv$(DLLEXT) \
 	msacm32.dll$(DLLEXT) \
 	msdmo.dll$(DLLEXT) \
-	msg711.drv$(DLLEXT) \
+	msg711.acm$(DLLEXT) \
 	msimg32.dll$(DLLEXT) \
 	msisys.ocx$(DLLEXT) \
 	msnet32.dll$(DLLEXT) \
@@ -349,8 +349,8 @@ msacm32.dll$(DLLEXT) msacm.dll$(DLLEXT): msacm/msacm32.dll$(DLLEXT)
 msdmo.dll$(DLLEXT): msdmo/msdmo.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msdmo/msdmo.dll$(DLLEXT) $@
 
-msg711.drv$(DLLEXT): msacm/msg711/msg711.drv$(DLLEXT)
-	$(RM) $@ && $(LN_S) msacm/msg711/msg711.drv$(DLLEXT) $@
+msg711.acm$(DLLEXT): msacm/msg711/msg711.acm$(DLLEXT)
+	$(RM) $@ && $(LN_S) msacm/msg711/msg711.acm$(DLLEXT) $@
 
 msimg32.dll$(DLLEXT): msimg32/msimg32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msimg32/msimg32.dll$(DLLEXT) $@
@@ -605,8 +605,9 @@ msacm/msacm32.dll$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
   advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 	@cd msacm && $(MAKE) msacm32.dll$(DLLEXT)
 
-msacm/msg711/msg711.drv$(DLLEXT): dummy kernel32.dll$(DLLEXT)
-	@cd msacm/msg711 && $(MAKE) msg711.drv$(DLLEXT)
+msacm/msg711/msg711.acm$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
+  kernel32.dll$(DLLEXT)
+	@cd msacm/msg711 && $(MAKE) msg711.acm$(DLLEXT)
 
 msdmo/msdmo.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT)
 	@cd msdmo && $(MAKE) msdmo.dll$(DLLEXT)
