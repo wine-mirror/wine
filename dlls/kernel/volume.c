@@ -763,11 +763,7 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
         if (serial) *serial = VOLUME_GetSuperblockSerial( type, superblock );
         goto fill_fs_info;
     }
-    else
-    {
-        TRACE( "cannot open device %s: err %ld\n", debugstr_w(device), GetLastError() );
-        if (GetLastError() != ERROR_FILE_NOT_FOUND) return FALSE;
-    }
+    else TRACE( "cannot open device %s: err %ld\n", debugstr_w(device), GetLastError() );
 
     /* we couldn't open the device, fallback to default strategy */
 
