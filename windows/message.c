@@ -1201,10 +1201,20 @@ WORD WINAPI RegisterWindowMessageW( LPCWSTR str )
  */
 LONG WINAPI BroadcastSystemMessage(
 	DWORD dwFlags,LPDWORD recipients,UINT uMessage,WPARAM wParam,
-	LPARAM lParam
-) {
-	FIXME("(%08lx,%08lx,%08x,%08x,%08lx): stub!\n",
-	      dwFlags,*recipients,uMessage,wParam,lParam
-	);
-	return 0;
+	LPARAM lParam )
+{
+    if ((*recipients & BSM_APPLICATIONS)||
+        (*recipients == BSM_ALLCOMPONENTS))
+    {
+        FIXME("(%08lx,%08lx,%08x,%08x,%08lx): semi-stub!\n",
+              dwFlags,*recipients,uMessage,wParam,lParam);
+        PostMessageA(HWND_BROADCAST,uMessage,wParam,lParam);
+        return 1;
+    }
+    else
+    {
+        FIXME("(%08lx,%08lx,%08x,%08x,%08lx): stub!\n",
+              dwFlags,*recipients,uMessage,wParam,lParam);
+        return -1;
+    }
 }

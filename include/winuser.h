@@ -1539,6 +1539,25 @@ typedef struct
 #define GCW_ATOM            (-32)
 #define GCL_HICONSM         (-34)
 
+/* BroadcastSystemMessage flags */
+#define BSM_ALLCOMPONENTS        0x00000000
+#define BSM_VXDS                 0x00000001
+#define BSM_NETDRIVER            0x00000002
+#define BSM_INSTALLABLEDRIVERS   0x00000004
+#define BSM_APPLICATIONS         0x00000008
+
+#define BSF_QUERY                0x00000001
+#define BSF_IGNORECURRENTTASK    0x00000002
+#define BSF_FLUSHDISK            0x00000004
+#define BSF_NOHANG               0x00000008
+#define BSF_POSTMESSAGE          0x00000010
+#define BSF_FORCEIFHUNG          0x00000020
+#define BSF_NOTIMEOUTIFNOTHUNG   0x00000040
+#define BSF_ALLOWSFW             0x00000080
+#define BSF_SENDNOTIFYMESSAGE    0x00000100
+#define BSF_RETURNHDESK          0x00000200
+#define BSF_LUID                 0x00000400
+
 
 /***** Window hooks *****/
 
