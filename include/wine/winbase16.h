@@ -5,6 +5,7 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "wine/windef16.h"
+#include "wine/library.h"
 
 #include "pshpack1.h"
 typedef struct _SEGINFO {
@@ -354,5 +355,11 @@ WORD        WINAPI wine_call_to_16_word( FARPROC16 target, INT nArgs );
 LONG        WINAPI wine_call_to_16_long( FARPROC16 target, INT nArgs );
 void        WINAPI wine_call_to_16_regs_short( CONTEXT86 *context, INT nArgs );
 void        WINAPI wine_call_to_16_regs_long ( CONTEXT86 *context, INT nArgs );
+
+/* Some optimizations */
+extern inline LPVOID WINAPI MapSL( SEGPTR segptr )
+{
+    return (char *)wine_ldt_copy.base[SELECTOROF(segptr) >> __AHSHIFT] + OFFSETOF(segptr);
+}
 
 #endif /* __WINE_WINE_WINBASE16_H */
