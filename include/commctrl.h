@@ -487,6 +487,11 @@ typedef struct _IMAGELIST *HIMAGELIST;
 #define ILCF_MOVE        (0x00000000)
 #define ILCF_SWAP        (0x00000001)
 
+#define ILS_NORMAL	0x0000
+#define ILS_GLOW	0x0001
+#define ILS_SHADOW	0x0002
+#define ILS_SATURATE	0x0004
+#define ILS_ALPHA	0x0008
 
 typedef struct _IMAGEINFO
 {
