@@ -456,6 +456,27 @@ static DWORD VERSION_GetLinkedDllVersion(void)
             return WIN98;
     }
 
+    switch (ophd->MajorOperatingSystemVersion)
+    {
+    case 5:
+        switch (ophd->MinorOperatingSystemVersion)
+        {
+        case 0 : return NT2K;
+        case 1 : return WINXP;
+        case 2 : return WIN2K3;
+        }
+        break;
+    case 4:
+        switch(ophd->MinorOperatingSystemVersion)
+        {
+        case 90 : return WINME;
+        case 10 : return WIN98;
+        case 0  : return WIN95; /* FIXME: We should check for NT40 here */
+        }
+        break;
+    }
+    FIXME("Unknown EXE OS version %d.%d, please report !!\n",
+          ophd->MajorOperatingSystemVersion, ophd->MinorOperatingSystemVersion );
     return WIN98;
 }
 
