@@ -820,8 +820,8 @@ static const struct {
  {0x0424, "Slovenian keyboard layout", &main_key_SI, &main_key_scan_qwerty, &main_key_vkey_qwertz},
  {0x041a, "Croatian keyboard layout", &main_key_HR, &main_key_scan_qwerty, &main_key_vkey_qwertz},
  {0x041a, "Croatian keyboard layout (specific)", &main_key_HR_jelly, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {0xe0010411, "Japanese 106 keyboard layout", &main_key_JA_jp106, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {0xe0010411, "Japanese pc98x1 keyboard layout", &main_key_JA_pc98x1, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0411, "Japanese 106 keyboard layout", &main_key_JA_jp106, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0411, "Japanese pc98x1 keyboard layout", &main_key_JA_pc98x1, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x041b, "Slovak keyboard layout", &main_key_SK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x041b, "Slovak and Czech keyboard layout without dead keys", &main_key_SK_prog, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x0405, "Czech keyboard layout", &main_key_CS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
@@ -1557,7 +1557,19 @@ UINT X11DRV_GetKeyboardLayoutList(INT size, HKL *hkl)
     for (i = 0; main_key_tab[i].comment && (i < size); i++)
     {
         if (hkl)
-            hkl[i] = (HKL)main_key_tab[i].lcid;
+        {
+            DWORD layout = main_key_tab[i].lcid;
+            LANGID langid;
+
+            /* see comment for GetKeyboardLayout */
+            langid = PRIMARYLANGID(LANGIDFROMLCID(layout));
+            if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
+                layout |= 0xe001 << 16; /* FIXME */
+            else
+                layout |= layout << 16;
+
+            hkl[i] = (HKL)layout;
+        }
     }
     return i;
 }
@@ -1571,7 +1583,7 @@ HKL X11DRV_GetKeyboardLayout(DWORD dwThreadid)
     DWORD layout;
     LANGID langid;
 
-    if (dwThreadid)
+    if (dwThreadid && dwThreadid != GetCurrentThreadId())
         FIXME("couldn't return keyboard layout for thread %04lx\n", dwThreadid);
 
 #if 0
@@ -1595,6 +1607,8 @@ HKL X11DRV_GetKeyboardLayout(DWORD dwThreadid)
     langid = PRIMARYLANGID(LANGIDFROMLCID(layout));
     if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
         layout |= 0xe001 << 16; /* FIXME */
+    else
+        layout |= layout << 16;
 
     return (HKL)layout;
 }
@@ -1610,10 +1624,12 @@ BOOL X11DRV_GetKeyboardLayoutName(LPWSTR name)
     LANGID langid;
 
     layout = main_key_tab[kbd_layout].lcid;
-    /* see comment above */
+    /* see comment for GetKeyboardLayout */
     langid = PRIMARYLANGID(LANGIDFROMLCID(layout));
     if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
         layout |= 0xe001 << 16; /* FIXME */
+    else
+        layout |= layout << 16;
 
     sprintfW(name, formatW, layout);
     TRACE("returning %s\n", debugstr_w(name));
