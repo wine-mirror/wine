@@ -1,0 +1,8 @@
+#! /usr/bin/perl -w
+
+use strict;
+
+$0 =~ m%^(.*?/?tools)/winapi/winapi_check$%;
+exec "$1/winapi_check/winapi_check @ARGV";
+
+

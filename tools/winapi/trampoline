@@ -1,0 +1,18 @@
+#! /usr/bin/perl -w
+
+use strict;
+
+require Cwd;
+
+my $tool = $0; 
+$tool =~ s%^(?:.*?/)?([^/]+)$%$1%;
+
+$_ = Cwd::cwd();
+while($_) {
+    my $file = "$_/tools/winapi/$tool";
+    if(-e $file) {
+	exec("$file @ARGV");
+    }
+    s%/[^/]*$%%;
+}
+print STDERR "$0: $tool: can't link to command\n";
