@@ -170,7 +170,7 @@ static const struct DefaultFontInfo default_fonts[] =
         { /* DefaultGuiFont */
          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, EASTEUROPE_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}       /* FIXME - what is the native font??? */
+           {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'}
         },
     },
     {   RUSSIAN_CHARSET,
@@ -192,7 +192,7 @@ static const struct DefaultFontInfo default_fonts[] =
         { /* DefaultGuiFont */
          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, RUSSIAN_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}       /* FIXME - what is the native font??? */
+           {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'}
         },
     },
     {   GREEK_CHARSET,
@@ -214,7 +214,7 @@ static const struct DefaultFontInfo default_fonts[] =
         { /* DefaultGuiFont */
          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GREEK_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}       /* FIXME - what is the native font??? */
+           {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'}
         },
     },
     {   TURKISH_CHARSET,
@@ -236,7 +236,7 @@ static const struct DefaultFontInfo default_fonts[] =
         { /* DefaultGuiFont */
          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, TURKISH_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}       /* FIXME - what is the native font??? */
+           {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'}
         },
     },
     {   HEBREW_CHARSET,
@@ -258,7 +258,7 @@ static const struct DefaultFontInfo default_fonts[] =
         { /* DefaultGuiFont */
          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HEBREW_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}       /* FIXME - what is the native font??? */
+           {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'}
         },
     },
     {   ARABIC_CHARSET,
@@ -280,7 +280,7 @@ static const struct DefaultFontInfo default_fonts[] =
         { /* DefaultGuiFont */
          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ARABIC_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}       /* FIXME - what is the native font??? */
+           {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'}
         },
     },
     {   BALTIC_CHARSET,
@@ -302,10 +302,9 @@ static const struct DefaultFontInfo default_fonts[] =
         { /* DefaultGuiFont */
          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, BALTIC_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}       /* FIXME - what is the native font??? */
+           {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'}
         },
     },
-
     {   THAI_CHARSET,
         { /* System */
           16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, THAI_CHARSET,
@@ -325,7 +324,7 @@ static const struct DefaultFontInfo default_fonts[] =
         { /* DefaultGuiFont */
          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, THAI_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}       /* FIXME - what is the native font??? */
+           {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'}
         },
     },
     {   SHIFTJIS_CHARSET,
@@ -347,7 +346,7 @@ static const struct DefaultFontInfo default_fonts[] =
         { /* DefaultGuiFont */
          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}       /* FIXME - mbtowc of native ("MS P gothic") */
+           {'M','S',' ','P',' ','g','o','t','h','i','c','\0'} /* FIXME: Is this correct? */
         },
     },
     {   GB2312_CHARSET,
@@ -435,7 +434,7 @@ static const struct DefaultFontInfo default_fonts[] =
         { /* DefaultGuiFont */
          -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, JOHAB_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
-           {'\0'}       /* FIXME - what is the native font??? mbtowc of native ("MS Mingliu")??? */
+           {'M','S',' ','M','i','n','g','l','i','u','\0'} /* FIXME: Is this correct? */
         },
     },
 };
@@ -1495,4 +1494,3 @@ BOOL WINAPI SetColorAdjustment(HDC hdc, const COLORADJUSTMENT* lpca)
         FIXME("SetColorAdjustment, stub\n");
         return 0;
 }
-
