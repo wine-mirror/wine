@@ -2114,9 +2114,9 @@ HBITMAP16 X11DRV_DIB_CreateDIBSection16(
 		SELECTOR_AllocBlock( dib->dsBm.bmBits, size, 
 				     SEGMENT_DATA, FALSE, FALSE );
 	    }
-	  printf("ptr = %p, size =%d, selector = %04x, segptr = %ld\n",
-		 dib->dsBm.bmBits, size, ((X11DRV_DIBSECTION *) bmp->dib)->selector,
-		 PTR_SEG_OFF_TO_SEGPTR(((X11DRV_DIBSECTION *) bmp->dib)->selector, 0));
+	  TRACE_(bitmap)("ptr = %p, size =%d, selector = %04x, segptr = %ld\n",
+			 dib->dsBm.bmBits, size, ((X11DRV_DIBSECTION *) bmp->dib)->selector,
+			 PTR_SEG_OFF_TO_SEGPTR(((X11DRV_DIBSECTION *) bmp->dib)->selector, 0));
 	}
       GDI_HEAP_UNLOCK( res );
       
