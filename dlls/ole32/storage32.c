@@ -44,8 +44,11 @@ typedef struct
     DWORD dwTypeID;
     DWORD dwOleTypeNameLength;
     CHAR  strOleTypeName[OLESTREAM_MAX_STR_LEN];
+    CHAR  *pstrOleObjFileName;
+    DWORD dwOleObjFileNameLength;
     DWORD dwMetaFileWidth;
     DWORD dwMetaFileHeight;
+    CHAR  strUnknown[8]; //don't know what is this 8 byts information in OLE stream.
     DWORD dwDataLength;
     BYTE *pData;
 }OLECONVERT_OLESTREAM_DATA;
@@ -5929,12 +5932,18 @@ static DWORD GetCreationModeFromSTGM(DWORD stgm)
  *     
  *     Memory allocated for pData must be freed by the caller
  */
-HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM_DATA *pData)
+HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM_DATA *pData, BOOL bStrem1)
 {
 	DWORD dwSize;
 	HRESULT hRes = S_OK;
-	pData->pData = NULL;
+	int nTryCnt=0;
+	int max_try = 6;
 
+	pData->pData = NULL;
+	pData->pstrOleObjFileName = (CHAR *) NULL;
+
+	for( nTryCnt=0;nTryCnt < max_try; nTryCnt++)
+	{
 	/* Get the OleID */
 	dwSize = pOleStream->lpstbl->Get(pOleStream, (void *)&(pData->dwOleID), sizeof(pData->dwOleID));
 	if(dwSize != sizeof(pData->dwOleID))
@@ -5944,6 +5953,12 @@ HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM_DATA *
 	else if(pData->dwOleID != OLESTREAM_ID)
 	{
 		hRes = CONVERT10_E_OLESTREAM_FMT;
+	}
+		else
+		{
+			hRes = S_OK;
+			break;
+		}
 	}
 
 	if(hRes == S_OK)
@@ -5955,7 +5970,6 @@ HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM_DATA *
 			hRes = CONVERT10_E_OLESTREAM_GET;
 		}
 	}
-
 	if(hRes == S_OK)
 	{
 		if(pData->dwTypeID != 0)
@@ -5979,8 +5993,31 @@ HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM_DATA *
 					}
 				}
 			}
-
+			if(bStrem1)
+			{
+				dwSize = pOleStream->lpstbl->Get(pOleStream, (void *)&(pData->dwOleObjFileNameLength), sizeof(pData->dwOleObjFileNameLength));
+				if(dwSize != sizeof(pData->dwOleObjFileNameLength))
+				{
+					hRes = CONVERT10_E_OLESTREAM_GET;
+				}
 			if(hRes == S_OK)
+			{
+					if(pData->dwOleObjFileNameLength < 1) //there is no file name exist
+						pData->dwOleObjFileNameLength = sizeof(pData->dwOleObjFileNameLength);
+					pData->pstrOleObjFileName = (CHAR *)malloc(pData->dwOleObjFileNameLength);
+					if(pData->pstrOleObjFileName)
+					{
+						dwSize = pOleStream->lpstbl->Get(pOleStream, (void *)(pData->pstrOleObjFileName),pData->dwOleObjFileNameLength);
+						if(dwSize != pData->dwOleObjFileNameLength)
+						{
+							hRes = CONVERT10_E_OLESTREAM_GET;
+						}
+					}
+					else
+						hRes = CONVERT10_E_OLESTREAM_GET;
+				}
+			}
+			else
 			{
 				/* Get the Width of the Metafile */
 				dwSize = pOleStream->lpstbl->Get(pOleStream, (void *)&(pData->dwMetaFileWidth), sizeof(pData->dwMetaFileWidth));
@@ -5988,8 +6025,6 @@ HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM_DATA *
 				{
 					hRes = CONVERT10_E_OLESTREAM_GET;
 				}
-			}
-
 			if(hRes == S_OK)
 			{
 				/* Get the Height of the Metafile */
@@ -5999,7 +6034,7 @@ HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM_DATA *
 					hRes = CONVERT10_E_OLESTREAM_GET;
 				}
 			}
-
+			}
 			if(hRes == S_OK)
 			{
 				/* Get the Lenght of the Data */
@@ -6010,6 +6045,18 @@ HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM_DATA *
 				}
 			}
 
+			if(hRes == S_OK) // I don't know what is this 8 byts information is we have to figure out
+			{
+				if(!bStrem1) //if it is a second OLE stream data
+				{
+					pData->dwDataLength -= 8;
+					dwSize = pOleStream->lpstbl->Get(pOleStream, (void *)(pData->strUnknown), sizeof(pData->strUnknown));
+					if(dwSize != sizeof(pData->strUnknown))
+					{
+						hRes = CONVERT10_E_OLESTREAM_GET;
+					}
+				}
+			}
 			if(hRes == S_OK)
 			{
 				if(pData->dwDataLength > 0)
@@ -6779,13 +6826,13 @@ HRESULT WINAPI OleConvertOLESTREAMToIStorage (
     if(hRes == S_OK)
     {
         /* Load the OLESTREAM to Memory */
-        hRes = OLECONVERT_LoadOLE10(pOleStream, &pOleStreamData[0]);
+        hRes = OLECONVERT_LoadOLE10(pOleStream, &pOleStreamData[0], TRUE);
     }
 
     if(hRes == S_OK)
     {
         /* Load the OLESTREAM to Memory (part 2)*/
-        hRes = OLECONVERT_LoadOLE10(pOleStream, &pOleStreamData[1]);
+        hRes = OLECONVERT_LoadOLE10(pOleStream, &pOleStreamData[1], FALSE);
     }
 
     if(hRes == S_OK)
@@ -6828,6 +6875,11 @@ HRESULT WINAPI OleConvertOLESTREAMToIStorage (
         {
             HeapFree(GetProcessHeap(),0,pOleStreamData[i].pData);
         }
+        if(pOleStreamData[i].pstrOleObjFileName != NULL)
+	{
+        	HeapFree(GetProcessHeap(),0,pOleStreamData[i].pstrOleObjFileName);
+        	pOleStreamData[i].pstrOleObjFileName = NULL;
+	}
     }
     return hRes;
 }
