@@ -740,31 +740,59 @@ ORDINAL FUNCTYPE EXPORTNAME([ARGTYPE [ARGTYPE [...]]]) HANDLERNAME
         <variablelist>
           <varlistentry>
             <term>pascal16</term>
-            <listitem><para>for a Win16 function returning a 16-bit value</para></listitem>
+            <listitem>
+              <para>
+                for a Win16 function returning a 16-bit value
+              </para>
+            </listitem>
           </varlistentry>
           <varlistentry>
             <term>pascal</term>
-            <listitem><para>for a Win16 function returning a 32-bit value</para></listitem>
+            <listitem>
+              <para>
+                for a Win16 function returning a 32-bit value
+              </para>
+            </listitem>
           </varlistentry>
           <varlistentry>
             <term>register</term>
-            <listitem><para>for a function using CPU register to pass arguments</para></listitem>
+            <listitem>
+              <para>
+                for a function using CPU register to pass arguments
+              </para>
+            </listitem>
           </varlistentry>
           <varlistentry>
             <term>interrupt</term>
-            <listitem><para>for a Win16 interrupt handler routine</para></listitem>
+            <listitem>
+              <para>
+                for a Win16 interrupt handler routine
+              </para>
+            </listitem>
           </varlistentry>
           <varlistentry>
             <term>stdcall</term>
-            <listitem><para>for a normal Win32 function</para></listitem>
+            <listitem>
+              <para>
+                for a normal Win32 function
+              </para>
+            </listitem>
           </varlistentry>
           <varlistentry>
             <term>cdecl</term>
-            <listitem><para>for a Win32 function using the C calling convention</para></listitem>
+            <listitem>
+              <para>
+                for a Win32 function using the C calling convention
+              </para>
+            </listitem>
           </varlistentry>
           <varlistentry>
             <term>varargs</term>
-            <listitem><para>for a Win32 function taking a variable number of arguments</para></listitem>
+            <listitem>
+              <para>
+                for a Win32 function taking a variable number of arguments
+              </para>
+            </listitem>
           </varlistentry>
         </variablelist>
 
@@ -774,36 +802,68 @@ ORDINAL FUNCTYPE EXPORTNAME([ARGTYPE [ARGTYPE [...]]]) HANDLERNAME
         <variablelist>
           <varlistentry>
             <term>word</term>
-            <listitem><para>for a 16 bit word</para></listitem>
+            <listitem>
+              <para>
+                for a 16 bit word
+              </para>
+            </listitem>
           </varlistentry>
           <varlistentry>
             <term>long</term>
-            <listitem><para>a 32 bit value</para></listitem>
+            <listitem>
+              <para>
+                a 32 bit value
+              </para>
+            </listitem>
           </varlistentry>
           <varlistentry>
             <term>ptr</term>
-            <listitem><para>for a linear pointer</para></listitem>
+            <listitem>
+              <para>
+                for a linear pointer
+              </para>
+            </listitem>
           </varlistentry>
           <varlistentry>
             <term>str</term>
-            <listitem><para>for a linear pointer to a null-terminated string</para></listitem>
+            <listitem>
+              <para>
+                for a linear pointer to a null-terminated string
+              </para>
+            </listitem>
           </varlistentry>
           <varlistentry>
             <term>s_word</term>
-            <listitem><para>for a 16 bit signed word</para></listitem>
+            <listitem>
+              <para>
+                for a 16 bit signed word
+              </para>
+            </listitem>
           </varlistentry>
           <varlistentry>
             <term>segptr</term>
-            <listitem><para>for a segmented pointer</para></listitem>
+            <listitem>
+              <para>
+                for a segmented pointer
+              </para>
+            </listitem>
           </varlistentry>
           <varlistentry>
             <term>segstr</term>
-            <listitem><para>for a segmented pointer to a null-terminated string</para></listitem>
+            <listitem>
+              <para>
+                for a segmented pointer to a null-terminated string
+              </para>
+            </listitem>
           </varlistentry>
           <varlistentry>
             <term>wstr</term>
-            <listitem><para>for a linear pointer to a null-terminated wide
-              (16-bit Unicode) string</para></listitem>
+            <listitem>
+              <para>
+                for a linear pointer to a null-terminated wide
+                (16-bit Unicode) string
+              </para>
+            </listitem>
           </varlistentry>
         </variablelist>
 

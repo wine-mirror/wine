@@ -479,13 +479,19 @@ winspool</><entry>wnet</><entry>x11</>
 	running a console program (aka a CUI executable):
 	<itemizedlist>
 	  <listitem>
-	    <para>bare streams</para>
+	    <para>
+	      bare streams
+	    </para>
 	  </listitem>
 	  <listitem>
-	    <para>wineconsole with user backend</para>
+	    <para>
+	      wineconsole with user backend
+	    </para>
 	  </listitem>
 	  <listitem>
-	    <para>wineconsole with curses backend</para>
+	    <para>
+	      wineconsole with curses backend
+	    </para>
 	  </listitem>
 	</itemizedlist>
       </para>

@@ -38,7 +38,9 @@
 		features, known bugs, etc. They serve as a constant and
 		active reminder of what needs to be done.
               </para>
-              <para>Examples: stubs, semi-implemented features, etc.</para>
+              <para>
+                Examples: stubs, semi-implemented features, etc.
+              </para>
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -319,13 +321,16 @@ LPSTR debugres(const void *id);
         </para>
         <itemizedlist>
           <listitem>
-            <para>the <literal>FIXME</literal> and <literal>ERR</literal>
-              classes are enabled by default</para>
+            <para>
+              the <literal>FIXME</literal> and <literal>ERR</literal>
+              classes are enabled by default
+            </para>
           </listitem>
           <listitem>
-            <para>the <literal>TRACE</literal> and
-              <literal>WARN</literal> classes are disabled by
-              default</para>
+            <para>
+              the <literal>TRACE</literal> and <literal>WARN</literal>
+              classes are disabled by default
+            </para>
           </listitem>
         </itemizedlist>
       </sect1>
@@ -379,7 +384,9 @@ where:
 
         <itemizedlist>
           <listitem>
-            <para>do NOT include the name of the function: it is included automatically</para>
+            <para>
+              do NOT include the name of the function: it is included automatically
+            </para>
           </listitem>
           <listitem>
             <para>

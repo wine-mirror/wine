@@ -296,7 +296,7 @@
 
       <para>
         Wine can be pretty intimidating at first.  The Wine
-        distribution consists of over two thousand files and half a
+        distribution consists of over four thousand files and almost a
         million lines of source code
         <footnote>
           <para>Crudely calculated from running <command>find . | wc

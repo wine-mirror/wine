@@ -18,19 +18,25 @@
 	belonging to Wine may be brought (downloaded) to your system:
         <itemizedlist>
           <listitem>
-	  <para>Getting a single Wine <glossterm>package</glossterm> file
-	  (specifically adapted to your particular system), which
-	  contains various <glossterm>binary</glossterm> files of Wine</para>
+	  <para>
+	    Getting a single Wine <glossterm>package</glossterm> file
+	    (specifically adapted to your particular system), which
+	    contains various <glossterm>binary</glossterm> files of Wine
+	  </para>
 	  </listitem>
 	  <listitem>
-	  <para>Getting a single compressed archive file (usually .tar.gz), which contains
-	  all <glossterm>source code</glossterm> files of a standard Wine
-	  release version</para>
+	  <para>
+	    Getting a single compressed archive file (usually .tar.gz), which contains
+	    all <glossterm>source code</glossterm> files of a standard Wine
+	    release version
+	  </para>
 	  </listitem>
 	  <listitem>
-	  <para>Downloading from a <glossterm>CVS</glossterm> server,
-	  which contains the very latest development source code files
-	  of Wine</para>
+	  <para>
+	    Downloading from a <glossterm>CVS</glossterm> server,
+	    which contains the very latest development source code files
+	    of Wine
+	  </para>
 	  </listitem>
 	</itemizedlist>
       </para>

@@ -934,7 +934,9 @@
         </para>
         <itemizedlist>
           <listitem>
-            <para><filename>README</filename></para>
+            <para>
+              <filename>README</filename>
+            </para>
           </listitem>
           <listitem>
             <para>

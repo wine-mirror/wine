@@ -21,13 +21,19 @@
 
         <itemizedlist>
           <listitem>
-            <para>How to port Wine to your favorite operating system</para>
+            <para>
+              How to port Wine to your favorite operating system
+            </para>
           </listitem>
           <listitem>
-            <para>Why you probably shouldn't use <symbol>#ifdef MyOS</symbol></para>
+            <para>
+              Why you probably shouldn't use <symbol>#ifdef MyOS</symbol>
+            </para>
           </listitem>
           <listitem>
-            <para>What to do instead.</para>
+            <para>
+              What to do instead.
+            </para>
           </listitem>
         </itemizedlist>
 
@@ -65,19 +71,29 @@
 
         <itemizedlist>
           <listitem>
-            <para>existence of a header file</para>
+            <para>
+              existence of a header file
+            </para>
           </listitem>
           <listitem>
-            <para>existence of a library function</para>
+            <para>
+              existence of a library function
+            </para>
           </listitem>
           <listitem>
-            <para>existence of libraries</para>
+            <para>
+              existence of libraries
+            </para>
           </listitem>
           <listitem>
-            <para>bugs in header files, library functions, the compiler, ...</para>
+            <para>
+              bugs in header files, library functions, the compiler, ...
+            </para>
           </listitem>
           <listitem>
-            <para>(you name it)</para>
+            <para>
+              (you name it)
+            </para>
           </listitem>
         </itemizedlist>
         <para>
@@ -254,10 +270,14 @@ AC_CHECK_HEADER(foo.h, AC_DEFINE(HAVE_FOO_H))
 
       <itemizedlist>
         <listitem>
-          <para>EMX 0.9c (fix 2)</para>
+          <para>
+            EMX 0.9c (fix 2)
+          </para>
         </listitem>
         <listitem>
-          <para>XFree86 3.2 OS/2 (with development libraries)</para>
+          <para>
+            XFree86 3.2 OS/2 (with development libraries)
+          </para>
         </listitem>
         <listitem>
           <para>
@@ -267,14 +287,20 @@ AC_CHECK_HEADER(foo.h, AC_DEFINE(HAVE_FOO_H))
           </para>
         </listitem>
         <listitem>
-          <para><command>sed</command> (a working copy of)</para>
+          <para>
+            <command>sed</command> (a working copy of)
+          </para>
         </listitem>
         <listitem>
-          <para><command>diff</command> and <command>patch</command>
-            are recommended</para>
+          <para>
+            <command>diff</command> and <command>patch</command>
+            are recommended
+          </para>
         </listitem>
         <listitem>
-          <para>Lots of disk space (about 40-50 megs after EMX and XFree installed)</para>
+          <para>
+            Lots of disk space (about 40-50 megs after EMX and XFree installed)
+          </para>
         </listitem>
       </itemizedlist>
 
@@ -296,19 +322,27 @@ AC_CHECK_HEADER(foo.h, AC_DEFINE(HAVE_FOO_H))
 
       <itemizedlist>
         <listitem>
-          <para><command>configure</command> and <command>make depend</command> work...</para>
+          <para>
+            <command>configure</command> and <command>make depend</command> work...
+          </para>
         </listitem>
         <listitem>
-          <para><command>make</command> compiles (with a modified
+          <para>
+            <command>make</command> compiles (with a modified
             Linux <filename>mman.h</filename>), but doesn't
-            link.</para>
+            link.
+          </para>
         </listitem>
         <listitem>
-          <para>signal handling is horrible... (if any)</para>
+          <para>
+            signal handling is horrible... (if any)
+          </para>
         </listitem>
         <listitem>
-          <para>EMX doesn't support <function>mmap</function> (and
-            related), SysV IPC and <function>stafs()</function></para>
+          <para>
+            EMX doesn't support <function>mmap</function> (and
+            related), SysV IPC and <function>stafs()</function>
+          </para>
         </listitem>
         <listitem>
           <para>
@@ -326,23 +360,35 @@ AC_CHECK_HEADER(foo.h, AC_DEFINE(HAVE_FOO_H))
 
       <itemizedlist>
         <listitem>
-          <para>LDT (using <function>DosAllocSeg</function> in
-            <filename>memory/ldt.c</filename>) *</para>
+          <para>
+            LDT (using <function>DosAllocSeg</function> in
+            <filename>memory/ldt.c</filename>) *
+          </para>
         </listitem>
         <listitem>
-          <para>Implement <function>mmap()</function> and SysV IPC in EMX *</para>
+          <para>
+            Implement <function>mmap()</function> and SysV IPC in EMX *
+          </para>
         </listitem>
         <listitem>
-          <para>File functions, </para>
+          <para>
+            File functions,
+          </para>
         </listitem>
         <listitem>
-          <para>I/O access (do it!),</para>
+          <para>
+            I/O access (do it!),
+          </para>
         </listitem>
         <listitem>
-          <para>Communication (modem),</para>
+          <para>
+            Communication (modem),
+          </para>
         </listitem>
         <listitem>
-          <para>Interrupt (if int unknown, call current RealMode one...), </para>
+          <para>
+            Interrupt (if int unknown, call current RealMode one...),
+          </para>
         </listitem>
         <listitem>
           <para>
@@ -355,10 +401,14 @@ AC_CHECK_HEADER(foo.h, AC_DEFINE(HAVE_FOO_H))
           </para>
         </listitem>
         <listitem>
-          <para>Return right CPU type, </para>
+          <para>
+            Return right CPU type,
+          </para>
         </listitem>
         <listitem>
-          <para>Make winsock work</para>
+          <para>
+            Make winsock work
+          </para>
         </listitem>
       </itemizedlist>
 
@@ -368,16 +418,24 @@ AC_CHECK_HEADER(foo.h, AC_DEFINE(HAVE_FOO_H))
 
       <itemizedlist>
         <listitem>
-          <para>OS/2 have DOS interrupts</para>
+          <para>
+            OS/2 have DOS interrupts
+          </para>
         </listitem>
         <listitem>
-          <para>OS/2 have I/O port access</para>
+          <para>
+            OS/2 have I/O port access
+          </para>
         </listitem>
         <listitem>
-          <para>OS/2 have multi-thread</para>
+          <para>
+            OS/2 have multi-thread
+          </para>
         </listitem>
         <listitem>
-          <para>Merlin have Open32 (to be used later...)</para>
+          <para>
+            Merlin have Open32 (to be used later...)
+          </para>
         </listitem>
       </itemizedlist>
     </sect1>

@@ -712,14 +712,46 @@ BOOL WINAPI PathRelativePathToA(
             will want to be careful about the order in which you install the
             RPMs.
             <itemizedlist>
-              <listitem><para>sgml-common-*.rpm</para></listitem>
-              <listitem><para>openjade-*.rpm</para></listitem>
-              <listitem><para>perl-SGMLSpm-*.rpm</para></listitem>
-              <listitem><para>docbook-dtd*.rpm</para></listitem>
-              <listitem><para>docbook-style-dsssl-*.rpm</para></listitem>
-              <listitem><para>tetex-*.rpm</para></listitem>
-              <listitem><para>jadetex-*.rpm</para></listitem>
-              <listitem><para>docbook-utils-*.rpm</para></listitem>
+              <listitem>
+                <para>
+                  sgml-common-*.rpm
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  openjade-*.rpm
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  perl-SGMLSpm-*.rpm
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  docbook-dtd*.rpm
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  docbook-style-dsssl-*.rpm
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  tetex-*.rpm
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  jadetex-*.rpm
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  docbook-utils-*.rpm
+                </para>
+              </listitem>
             </itemizedlist>
             You can also use ghostscript to view the ps format output and
             Adobe Acrobat 4 to view the pdf file.
@@ -732,17 +764,61 @@ BOOL WINAPI PathRelativePathToA(
            This is not a definitive listing yet, but it seems
 	   you might need the following packages:
             <itemizedlist>
-              <listitem><para>docbook</para></listitem>
-              <listitem><para>docbook-dsssl</para></listitem>
-              <listitem><para>docbook-utils</para></listitem>
-              <listitem><para>docbook-xml</para></listitem>
-              <listitem><para>docbook-xsl</para></listitem>
-              <listitem><para>sgml-base</para></listitem>
-              <listitem><para>sgml-data</para></listitem>
-              <listitem><para>tetex-base</para></listitem>
-              <listitem><para>tetex-bin</para></listitem>
-              <listitem><para>jade</para></listitem>
-              <listitem><para>jadetex</para></listitem>
+              <listitem>
+                <para>
+                  docbook
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  docbook-dsssl
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  docbook-utils
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  docbook-xml
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  docbook-xsl
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  sgml-base
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  sgml-data
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  tetex-base
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  tetex-bin
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  jade
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  jadetex
+                </para>
+              </listitem>
             </itemizedlist>
           </para>
         </sect4>

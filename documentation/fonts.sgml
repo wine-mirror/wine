@@ -37,7 +37,9 @@
 
         <orderedlist>
           <listitem>
-            <para>Extract bitmap fonts with <command>fnt2bdf</command>.</para>
+            <para>
+              Extract bitmap fonts with <command>fnt2bdf</command>.
+            </para>
           </listitem>
           <listitem>
             <para>
@@ -398,16 +400,24 @@ Resolution = &lt;integer value&gt;
 
       <orderedlist>
         <listitem>
-          <para>Get a freetype source archive (<filename>freetype-X.Y.tar.gz</filename> ?).</para>
+          <para>
+            Get a freetype source archive (<filename>freetype-X.Y.tar.gz</filename> ?).
+          </para>
         </listitem>
         <listitem>
-          <para>Read docs, unpack, configure and install</para>
+          <para>
+            Read docs, unpack, configure and install
+          </para>
         </listitem>
         <listitem>
-          <para>Test the library, e.g. <command>ftview 20 /dosc/win95/fonts/times</command></para>
+          <para>
+            Test the library, e.g. <command>ftview 20 /dosc/win95/fonts/times</command>
+          </para>
         </listitem>
         <listitem>
-          <para>Get <filename>xfsft-beta1e.linux-i586</filename></para>
+          <para>
+            Get <filename>xfsft-beta1e.linux-i586</filename>
+          </para>
         </listitem>
         <listitem>
           <para>
@@ -417,7 +427,9 @@ Resolution = &lt;integer value&gt;
           </para>
         </listitem>
         <listitem>
-          <para>Follow the hints given by <email>williamc@dai.ed.ac.uk</email></para>
+          <para>
+            Follow the hints given by <email>williamc@dai.ed.ac.uk</email>
+          </para>
         </listitem>
         <listitem>
           <para>
@@ -485,7 +497,9 @@ FontPath "tcp/localhost:7100"
           </para>
         </listitem>
         <listitem>
-          <para>Test with e.g. <command>xlsfont | grep arial</command></para>
+          <para>
+            Test with e.g. <command>xlsfont | grep arial</command>
+          </para>
         </listitem>
       </orderedlist>
 

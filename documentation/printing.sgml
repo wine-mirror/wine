@@ -23,7 +23,9 @@
           </para>
         </listitem>
         <listitem>
-          <para>Use an external windows 3.1 printer driver (outdated, probably won't get supported any more).</para>
+          <para>
+            Use an external windows 3.1 printer driver (outdated, probably won't get supported any more).
+          </para>
         </listitem>
       </orderedlist>
 
@@ -197,7 +199,9 @@ printer=on
 		</para>
 	      </listitem>
 	      <listitem>
-		<para><userinput>vi ~/winedefault.reg</userinput></para>
+		<para>
+		  <userinput>vi ~/winedefault.reg</userinput>
+		</para>
 	      </listitem>
 	      <listitem>
 		<para>
@@ -271,19 +275,29 @@ printer=on
             </para>
           </listitem>
           <listitem>
-            <para>No TrueType download.</para>
+            <para>
+              No TrueType download.
+            </para>
           </listitem>
           <listitem>
-            <para>StretchDIBits uses level 2 PostScript.</para>
+            <para>
+              StretchDIBits uses level 2 PostScript.
+            </para>
           </listitem>
           <listitem>
-            <para>AdvancedSetup dialog box.</para>
+            <para>
+              AdvancedSetup dialog box.
+            </para>
           </listitem>
           <listitem>
-            <para>Many partially implemented functions.</para>
+            <para>
+              Many partially implemented functions.
+            </para>
           </listitem>
           <listitem>
-            <para>ps.c is becoming messy.</para>
+            <para>
+              ps.c is becoming messy.
+            </para>
           </listitem>
           <listitem>
             <para>
@@ -294,7 +308,9 @@ printer=on
             </para>
           </listitem>
           <listitem>
-            <para>Probably many more...</para>
+            <para>
+              Probably many more...
+            </para>
           </listitem>
         </itemizedlist>
 

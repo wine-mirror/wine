@@ -204,13 +204,17 @@
         <varlistentry>
           <term><filename>wine.systemreg</filename></term>
           <listitem>
-            <para>Contains HKEY_LOCAL_MACHINE.</para>
+            <para>
+              Contains HKEY_LOCAL_MACHINE.
+            </para>
           </listitem>
         </varlistentry>
         <varlistentry>
           <term><filename>wine.userreg</filename></term>
           <listitem>
-            <para>Contains HKEY_USERS.</para>
+            <para>
+              Contains HKEY_USERS.
+            </para>
           </listitem>
         </varlistentry>
       </variablelist>

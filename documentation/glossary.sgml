@@ -22,7 +22,7 @@ EXAMPLE:
   <glossterm>Binary</glossterm>
   <glossdef>
   <para>
-  A file which is in machine executable, compiled form: hex data (as opposed to a source code file).
+    A file which is in machine executable, compiled form: hex data (as opposed to a source code file).
   </para>
   </glossdef>
 </glossentry>
@@ -48,9 +48,9 @@ EXAMPLE:
   <glossterm>DLL</glossterm>
   <glossdef>
   <para>
-  A DLL (Dynamic Link Library) is a file that can be loaded and executed by programs dynamically. Basically it's an external code repository for programs.
-  Since usually several different programs reuse the same DLL instead of having that code in their own file, this dramatically reduces required storage space.
-  A synonym for a DLL would be library.
+    A DLL (Dynamic Link Library) is a file that can be loaded and executed by programs dynamically. Basically it's an external code repository for programs.
+    Since usually several different programs reuse the same DLL instead of having that code in their own file, this dramatically reduces required storage space.
+    A synonym for a DLL would be library.
   </para>
   </glossdef>
 </glossentry>
@@ -71,8 +71,8 @@ EXAMPLE:
     In a <glossterm>terminal</glossterm>, simply run them via:
   </para>
   <screen>
-  <prompt>$ </><userinput><replaceable>editorname</replaceable>
-  <replaceable>filename</replaceable></>
+    <prompt>$ </><userinput><replaceable>editorname</replaceable>
+    <replaceable>filename</replaceable></>
   </screen>
   </glossdef>
 </glossentry>
@@ -85,19 +85,19 @@ EXAMPLE:
     you can view all environment variables by executing:
   </para>
   <screen>
-  <userinput>set</userinput>
+    <userinput>set</userinput>
   </screen>
   <para>
     If you want to change an environment variable, you could run:
   </para>
   <screen>
-  <userinput>export <replaceable>MYVARIABLE</>=<replaceable>mycontent</></userinput>
+    <userinput>export <replaceable>MYVARIABLE</>=<replaceable>mycontent</></userinput>
   </screen>
   <para>
     For deleting an environment variable, use:
   </para>
   <screen>
-  <userinput>unset <replaceable>MYVARIABLE</></userinput>
+    <userinput>unset <replaceable>MYVARIABLE</></userinput>
   </screen>
   </glossdef>
 </glossentry>
@@ -105,11 +105,11 @@ EXAMPLE:
   <glossterm>Package</glossterm>
   <glossdef>
   <para>
-  A package is a compressed file in a
-  <glossterm>distribution</glossterm> specific format. It contains the
-  files for a particular program you want to install. Packages are
-  usually installed via the <command>dpkg</command> or
-  <command>rpm</command> package managers.
+    A package is a compressed file in a
+    <glossterm>distribution</glossterm> specific format. It contains the
+    files for a particular program you want to install. Packages are
+    usually installed via the <command>dpkg</command> or
+    <command>rpm</command> package managers.
   </para>
   </glossdef>
 </glossentry>
@@ -117,23 +117,23 @@ EXAMPLE:
   <glossterm>root</glossterm>
   <glossdef>
   <para>
-  root is the account name of the system administrator.
-  In order to run programs as root, simply open a
-  <glossterm>Terminal</glossterm> window, then run:
+    root is the account name of the system administrator.
+    In order to run programs as root, simply open a
+    <glossterm>Terminal</glossterm> window, then run:
   </para>
   <screen>
-  <prompt>$ </><userinput>su -</>
+    <prompt>$ </><userinput>su -</>
   </screen>
   <para>
-  This will prompt you for the password of the root user of your system,
-  and after that you will be able to system administration tasks
-  that require special root privileges. The root account is indicated by the
+    This will prompt you for the password of the root user of your system,
+    and after that you will be able to system administration tasks
+    that require special root privileges. The root account is indicated by the
   </para>
   <screen>
-  <prompt># </>
+    <prompt># </>
   </screen>
   <para>
-  prompt, whereas '$' indicates a normal user account.
+    prompt, whereas '$' indicates a normal user account.
   </para>
   </glossdef>
 </glossentry>
@@ -156,10 +156,10 @@ EXAMPLE:
   <glossterm>Source code</glossterm>
   <glossdef>
   <para>
-  Source code is the code that a program consists of before the program
-  is being compiled, i.e. it's the original building instructions of a
-  program that tell a compiler what the program should look like once
-  it's been compiled to a <glossterm>Binary</glossterm>.
+    Source code is the code that a program consists of before the program
+    is being compiled, i.e. it's the original building instructions of a
+    program that tell a compiler what the program should look like once
+    it's been compiled to a <glossterm>Binary</glossterm>.
   </para>
   </glossdef>
 </glossentry>
@@ -167,20 +167,20 @@ EXAMPLE:
   <glossterm>Terminal</glossterm>
   <glossdef>
   <para>
-  A terminal window is usually a graphical window that one uses to
-  execute a <command>Shell</command>. If Wine asks you to open a
-  terminal, then you usually need to click on an icon on your desktop
-  that shows a big black window (or, in other cases, an icon displaying a
-  maritime shell).
-  Wine assumes you're using the <command>bash</command> shell in a
-  terminal window, so if your terminal happens to use a different
-  shell program, simply type:
+    A terminal window is usually a graphical window that one uses to
+    execute a <command>Shell</command>. If Wine asks you to open a
+    terminal, then you usually need to click on an icon on your desktop
+    that shows a big black window (or, in other cases, an icon displaying a
+    maritime shell).
+    Wine assumes you're using the <command>bash</command> shell in a
+    terminal window, so if your terminal happens to use a different
+    shell program, simply type:
   </para>
   <screen>
-  <userinput>bash</>
+    <userinput>bash</>
   </screen>
   <para>
-  in the terminal window.
+    in the terminal window.
   </para>
   </glossdef>
 </glossentry>

@@ -881,10 +881,14 @@ child1-&gt;popup-&gt;child2-&gt;child3-&gt;wnd1-&gt;child4-&gt;wnd2-&gt;desktop.
 
         <itemizedlist>
           <listitem>
-            <para>what specific DLLs do</para>
+            <para>
+              what specific DLLs do
+            </para>
           </listitem>
           <listitem>
-            <para>which other DLLs or features a given library interacts with</para>
+            <para>
+              which other DLLs or features a given library interacts with
+            </para>
           </listitem>
         </itemizedlist>
         <para>

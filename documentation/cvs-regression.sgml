@@ -128,7 +128,7 @@ make depend && make
           time, so you have to make everything if you don't backup the older
           version)
         </para>
-        <para>  
+        <para>
           When you have found the day where the problem happened, continue
           the search using the wine-cvs archive (sorted by date) and a
           more precise cvs update including hour, minute, second :

@@ -11,13 +11,19 @@
 
       <itemizedlist>
         <listitem>
-          <para>Thereafter revised February 1999 by Klaas van Gend</para>
+          <para>
+            Thereafter revised February 1999 by Klaas van Gend
+          </para>
         </listitem>
         <listitem>
-          <para>Revised again May 23, 1999, Klaas van Gend</para>
+          <para>
+            Revised again May 23, 1999, Klaas van Gend
+          </para>
         </listitem>
         <listitem>
-          <para>Updated May 26, 2000, Zoran Dzelajlija</para>
+          <para>
+            Updated May 26, 2000, Zoran Dzelajlija
+          </para>
         </listitem>
       </itemizedlist>
 
@@ -69,8 +75,10 @@
 
       <orderedlist>
         <listitem>
-          <para>Find the language ID in
-            <filename>include/winnls.h</filename>.</para>
+          <para>
+            Find the language ID in
+            <filename>include/winnls.h</filename>.
+          </para>
         </listitem>
         <listitem>
           <para>
@@ -180,9 +188,10 @@
           </para>
         </listitem>
         <listitem>
-          <para>Edit
-            <filename>documentation/internationalization</filename> to
-            show the new status.</para>
+          <para>
+            Edit <filename>documentation/internationalization</filename>
+            to show the new status.
+          </para>
         </listitem>
         <listitem>
           <para>

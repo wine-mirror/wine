@@ -40,19 +40,25 @@
           <varlistentry>
             <term><filename>gl.h:</filename></term>
             <listitem>
-              <para>the definition of all OpenGL core functions, types and enumerants</para>
+              <para>
+                the definition of all OpenGL core functions, types and enumerants
+              </para>
             </listitem>
           </varlistentry>
           <varlistentry>
             <term><filename>glx.h:</filename></term>
             <listitem>
-              <para>how OpenGL integrates in the X Window environment</para>
+              <para>
+                how OpenGL integrates in the X Window environment
+              </para>
             </listitem>
           </varlistentry>
           <varlistentry>
             <term><filename>glext.h:</filename></term>
             <listitem>
-              <para>the list of all registered OpenGL extensions</para>
+              <para>
+                the list of all registered OpenGL extensions
+              </para>
             </listitem>
           </varlistentry>
         </variablelist>

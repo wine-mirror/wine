@@ -71,95 +71,119 @@
             <varlistentry>
               <term><varname>HDITEM_V1_SIZE</varname>:</term>
               <listitem>
-                <para>The size of the <structname>HDITEM</structname>
-                  structure in version 4.00.</para>
+                <para>
+                  The size of the <structname>HDITEM</structname>
+                  structure in version 4.00.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term><varname>LVCOLUMN_V1_SIZE</varname>:</term>
               <listitem>
-                <para>The size of the
+                <para>
+                  The size of the
                   <structname>LVCOLUMN</structname> structure in
-                  version 4.00.</para>
+                  version 4.00.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term><varname>LVHITTESTINFO_V1_SIZE</varname>:</term>
               <listitem>
-                <para>The size of the
+                <para>
+                  The size of the
                   <structname>LVHITTESTINFO</structname> structure in
-                  version 4.00.</para>
+                  version 4.00.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term><varname>LVITEM_V1_SIZE</varname>:</term>
               <listitem>
-                <para>The size of the <structname>LVITEM</structname>
-                  structure in version 4.00.</para>
+                <para>
+                  The size of the <structname>LVITEM</structname>
+                  structure in version 4.00.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term><varname>NMLVCUSTOMDRAW_V3_SIZE</varname>:</term>
               <listitem>
-                <para>The size of the
+                <para>
+                  The size of the
                   <structname>NMLVCUSTOMDRAW</structname> structure in
-                  version 4.70.</para>
+                  version 4.70.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term><varname>NMTTDISPINFO_V1_SIZE</varname>:</term>
               <listitem>
-                <para>The size of the
+                <para>
+                  The size of the
                   <structname>NMTTDISPINFO</structname> structure in
-                  version 4.00.</para>
+                  version 4.00.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term><varname>NMTVCUSTOMDRAW_V3_SIZE</varname>:</term>
               <listitem>
-                <para>The size of the
+                <para>
+                  The size of the
                   <structname>NMTVCUSTOMDRAW</structname> structure in
-                  version 4.70.</para>
+                  version 4.70.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term><varname>PROPSHEETHEADER_V1_SIZE</varname>:</term>
               <listitem>
-                <para>The size of the
+                <para>
+                  The size of the
                   <structname>PROPSHEETHEADER</structname> structure
-                  in version 4.00.</para>
+                  in version 4.00.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term><varname>PROPSHEETPAGE_V1_SIZE</varname>:</term>
               <listitem>
-                <para>The size of the
+                <para>
+                  The size of the
                   <structname>PROPSHEETPAGE</structname> structure in
-                  version 4.00.</para>
+                  version 4.00.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term><varname>REBARBANDINFO_V3_SIZE</varname>:</term>
               <listitem>
-                <para>The size of the
+                <para>
+                  The size of the
                   <structname>REBARBANDINFO</structname> structure in
-                  version 4.70.</para>
+                  version 4.70.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term><varname>TTTOOLINFO_V1_SIZE</varname>:</term>
               <listitem>
-                <para>The size of the
+                <para>
+                  The size of the
                   <structname>TOOLINFO</structname> structure in
-                  version 4.00.</para>
+                  version 4.00.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term><varname>TVINSERTSTRUCT_V1_SIZE</varname>:</term>
               <listitem>
-                <para>The size of the
+                <para>
+                  The size of the
                   <structname>TVINSERTSTRUCT</structname> structure in
-                  version 4.00.</para>
+                  version 4.00.
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -188,13 +212,17 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Dummy control. No functionality.</para>
+                <para>
+                  Dummy control. No functionality.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term>  Notes:</term>
               <listitem>
-                <para>Author needed!! Any volunteers??</para>
+                <para>
+                  Author needed!! Any volunteers??
+                </para>
               </listitem>
             </varlistentry>  
           </variablelist>
@@ -215,13 +243,17 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Dummy control. No functionality.</para>
+                <para>
+                  Dummy control. No functionality.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term>Notes:</term>
               <listitem>
-                <para>Author needed!! Any volunteers??</para>
+                <para>
+                  Author needed!! Any volunteers??
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -242,13 +274,17 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Dummy control. No functionality.</para>
+                <para>
+                  Dummy control. No functionality.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term>Notes:</term>
               <listitem>
-                <para>Author needed!! Any volunteers??</para>
+                <para>
+                  Author needed!! Any volunteers??
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -269,13 +305,17 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Dummy control. No functionality.</para>
+                <para>
+                  Dummy control. No functionality.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term>Notes:</term>
               <listitem>
-                <para>Author needed!! Any volunteers??</para>
+                <para>
+                  Author needed!! Any volunteers??
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -296,13 +336,17 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Dummy control. No functionality.</para>
+                <para>
+                  Dummy control. No functionality.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term>Notes:</term>
               <listitem>
-                <para>Author needed!! Any volunteers??</para>
+                <para>
+                  Author needed!! Any volunteers??
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -325,13 +369,19 @@
               <listitem>
                 <itemizedlist>
                   <listitem>
-                    <para>Almost finished.</para>
+                    <para>
+                      Almost finished.
+                    </para>
                   </listitem>
                   <listitem>
-                    <para>Unicode notifications are not supported (WM_NOTIFYFORMAT).</para>
+                    <para>
+                      Unicode notifications are not supported (WM_NOTIFYFORMAT).
+                    </para>
                   </listitem>
                   <listitem>
-                    <para>Order array not supported.</para>
+                    <para>
+                      Order array not supported.
+                    </para>
                   </listitem>
                 </itemizedlist>
               </listitem>
@@ -354,13 +404,17 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Dummy control. No functionality.</para>
+                <para>
+                  Dummy control. No functionality.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term>Notes:</term>
               <listitem>
-                <para>Author needed!! Any volunteers??</para>
+                <para>
+                  Author needed!! Any volunteers??
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -381,7 +435,9 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Almost finished.</para>
+                <para>
+                  Almost finished.
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -403,7 +459,9 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Under construction.</para>
+                <para>
+                  Under construction.
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -416,7 +474,9 @@
             <varlistentry>
             <term>Author:</term>
               <listitem>
-                <para>Dummy written by: </para>
+                <para>
+                  Dummy written by:
+                </para>
                 <itemizedlist>
                   <listitem>
                     <para>
@@ -424,14 +484,20 @@
                     </para>
                   </listitem>
                   <listitem>
-                    <para>&name-luc-tourangeau; <email>&email-luc-tourangeau;</email></para>
+                    <para>
+                      &name-luc-tourangeau; <email>&email-luc-tourangeau;</email>
+                    </para>
                   </listitem>
                   <listitem>
-                    <para>&name-koen-deforche; <email>&email-koen-deforche;</email></para>
+                    <para>
+                      &name-koen-deforche; <email>&email-koen-deforche;</email>
+                    </para>
                   </listitem>
                   <listitem>
-                    <para>&name-francis-beaudet; <email>&email-francis-beaudet;</email>
-                      and the "Corel Team"</para>
+                    <para>
+                      &name-francis-beaudet; <email>&email-francis-beaudet;</email>
+                      and the "Corel Team"
+                    </para>
                   </listitem>
                 </itemizedlist>
               </listitem>
@@ -440,7 +506,9 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Under construction.</para>
+                <para>
+                  Under construction.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
@@ -470,13 +538,17 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Dummy control. No functionality.</para>
+                <para>
+                  Dummy control. No functionality.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term>Notes:</term>
               <listitem>
-                <para>Author needed!! Any volunteers??</para>
+                <para>
+                  Author needed!! Any volunteers??
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -497,13 +569,17 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Dummy control. No functionality.</para>
+                <para>
+                  Dummy control. No functionality.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term>Notes:</term>
               <listitem>
-                <para>Author needed!! Any volunteers??</para>
+                <para>
+                  Author needed!! Any volunteers??
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -532,7 +608,9 @@
             <varlistentry>
               <term>Notes:</term>
               <listitem>
-                <para>Author needed!! Any volunteers??</para>
+                <para>
+                  Author needed!! Any volunteers??
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -554,7 +632,9 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Finished!</para>
+                <para>
+                  Finished!
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -576,13 +656,17 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Development in progress.</para>
+                <para>
+                  Development in progress.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term>Notes:</term>
               <listitem>
-                <para>Tab control must be implemented first.</para>
+                <para>
+                  Tab control must be implemented first.
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -603,13 +687,17 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Development in progress. Many bugs and missing features.</para>
+                <para>
+                  Development in progress. Many bugs and missing features.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term>Notes:</term>
               <listitem>
-                <para>Author needed!! Any volunteers??</para>
+                <para>
+                  Author needed!! Any volunteers??
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -631,13 +719,17 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Almost finished.</para>
+                <para>
+                  Almost finished.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term>Notes:</term>
               <listitem>
-                <para>Tooltip integration is almost complete.</para>
+                <para>
+                  Tooltip integration is almost complete.
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -658,7 +750,9 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Development in progress.</para>
+                <para>
+                  Development in progress.
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -703,14 +797,18 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Almost finished.</para>
+                <para>
+                  Almost finished.
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term>Notes:</term>
               <listitem>
-                <para>Unicode support is incomplete
-                  (<constant>WM_NOTIFYFORMAT</constant>).</para>
+                <para>
+                  Unicode support is incomplete
+                  (<constant>WM_NOTIFYFORMAT</constant>).
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -732,7 +830,9 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Under construction.</para>
+                <para>
+                  Under construction.
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -755,7 +855,9 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Quite usable already.</para>
+                <para>
+                  Quite usable already.
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -777,7 +879,9 @@
             <varlistentry>
               <term>Status:</term>
               <listitem>
-                <para>Unknown.</para>
+                <para>
+                  Unknown.
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -817,16 +921,24 @@
         </para>
         <itemizedlist>
           <listitem>
-            <para>DSA (Dynamic Storage Array) functions.</para>
+            <para>
+              DSA (Dynamic Storage Array) functions.
+            </para>
           </listitem>
           <listitem>
-            <para>DPA (Dynamic Pointer Array) functions.</para>
+            <para>
+              DPA (Dynamic Pointer Array) functions.
+            </para>
           </listitem>
           <listitem>
-            <para>MRU ("Most Recently Used" List) functions.</para>
+            <para>
+              MRU ("Most Recently Used" List) functions.
+            </para>
           </listitem>
           <listitem>
-            <para>other unknown functions.</para>
+            <para>
+              other unknown functions.
+            </para>
           </listitem>
         </itemizedlist>
 

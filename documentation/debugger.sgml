@@ -33,13 +33,19 @@
         </para>
         <itemizedlist>
           <listitem>
-            <para><varname>W-process</varname> means a process in Windows' terminology</para>
+            <para>
+              <varname>W-process</varname> means a process in Windows' terminology
+            </para>
           </listitem>
           <listitem>
-            <para><varname>U-process</varname> means a process in Unix' terminology</para>
+            <para>
+              <varname>U-process</varname> means a process in Unix' terminology
+            </para>
           </listitem>
           <listitem>
-            <para><varname>W-thread</varname> means a thread in Windows' terminology</para>
+            <para>
+              <varname>W-thread</varname> means a thread in Windows' terminology
+            </para>
           </listitem>
         </itemizedlist>
         <para>
@@ -55,10 +61,14 @@
         </para>
         <itemizedlist>
           <listitem>
-            <para>the Unix process id (<varname>upid</varname> in the following)</para>
+            <para>
+              the Unix process id (<varname>upid</varname> in the following)
+            </para>
           </listitem>
           <listitem>
-            <para>the Windows's thread id (<varname>tid</varname>)</para>
+            <para>
+              the Windows's thread id (<varname>tid</varname>)
+            </para>
           </listitem>
         </itemizedlist>
         <para>
@@ -89,11 +99,14 @@
         </para>
         <itemizedlist>
           <listitem>
-            <para>the Windows' debugging API.</para>
+            <para>
+              the Windows' debugging API.
+            </para>
           </listitem>
           <listitem>
-            <para>the Wine integrated debugger, dubbed
-              <command>WineDbg</command>.</para>
+            <para>
+              the Wine integrated debugger, dubbed <command>WineDbg</command>.
+            </para>
           </listitem>
         </itemizedlist>
         <para>
@@ -147,7 +160,9 @@ winedbg "hl.exe -windowed"
         </para>
         <itemizedlist>
           <listitem>
-            <para>you can debug an already started application</para>
+            <para>
+              you can debug an already started application
+            </para>
           </listitem>
         </itemizedlist>
       </sect2>
@@ -1185,7 +1200,9 @@ set $BreakAllThreadsStartup = 1
 
           <orderedlist>
             <listitem>
-              <para>default</para>
+              <para>
+                default
+              </para>
               <programlisting>
 ConChannelMask = DBG_CHN_MESG (1)
 StdChannelMask = 0
@@ -1222,21 +1239,27 @@ StdChannelMask = DBG_CHN_MESG (1)
             <varlistentry>
               <term><varname>ThreadId</varname></term>
               <listitem>
-                <para>ID of the <varname>W-thread</varname> currently
-                  examined by the debugger</para>
+                <para>
+                  ID of the <varname>W-thread</varname> currently
+                  examined by the debugger
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term><varname>ProcessId</varname></term>
               <listitem>
-                <para>ID of the <varname>W-thread</varname> currently
-                  examined by the debugger</para>
+                <para>
+                  ID of the <varname>W-thread</varname> currently
+                  examined by the debugger
+                </para>
               </listitem>
             </varlistentry>
             <varlistentry>
               <term>&lt;registers></term>
               <listitem>
-                <para>All CPU registers are also available</para>
+                <para>
+                  All CPU registers are also available
+                </para>
               </listitem>
             </varlistentry>
           </variablelist>
@@ -1589,14 +1612,19 @@ like:
 </para>
 	      </listitem>
 	      <listitem>
-		<para>Start ddd</para>
+		<para>
+                  Start ddd
+                </para>
 	      </listitem>
 	      <listitem>
-		<para>In ddd, use the 'Open File' or 'Open Program' to
-                  point to the wine executable</para>
+		<para>
+		  In ddd, use the 'Open File' or 'Open Program' to
+                  point to the wine executable
+		</para>
 	      </listitem>
 	      <listitem>
-		<para>In the output of 1/, there's a line like 
+		<para>
+In the output of 1/, there's a line like 
 <screen>
 	target remote localhost:32878
 </screen>
@@ -1625,7 +1653,8 @@ parameters
 </para>
 	      </listitem>
 	      <listitem>
-		<para>In the output of 1/, there's a line like 
+		<para>
+		  In the output of 1/, there's a line like 
 <screen>
 	target remote localhost:32878
 </screen>

@@ -39,7 +39,9 @@
         another one for MIDI output only), whose role is:
 	<itemizedlist>
 	  <listitem>
-	    <para>help choosing one low level driver between many</para>
+	    <para>
+	      help choosing one low level driver between many
+	    </para>
 	  </listitem>
 	  <listitem>
 	    <para>
@@ -647,7 +649,8 @@
 	  <para>
 	    Native MCIMIDI has been working but is currently blocked by scheduling
 	    issues (mmTaskXXX no longer work).
-	  </para><para>FIXME:
+	  </para>
+	  <para>FIXME:
 	    <itemizedlist>
 	      <listitem>
 		<para>
