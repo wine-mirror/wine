@@ -576,8 +576,8 @@ long long WINAPI _alldiv(LARGE_INTEGER a,  LARGE_INTEGER b)
 #if SIZEOF_LONG_LONG==8
 	return (*(long long*)&a / *(long long*)&b);
 #else
-	FIXME(ntdll,"stub\n");
-	retrun 0;
+	FIXME("stub\n");
+	return 0;
 #endif
 }
 /******************************************************************************
@@ -590,8 +590,8 @@ long long WINAPI _allmul(LARGE_INTEGER a,  LARGE_INTEGER b)
 #if SIZEOF_LONG_LONG==8
 	return (*(long long*)&a * *(long long*)&b);
 #else
-	FIXME(ntdll,"stub\n");
-	retrun 0;
+	FIXME("stub\n");
+	return 0;
 #endif
 }
 
