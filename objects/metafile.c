@@ -370,7 +370,7 @@ static METAHEADER *MF_LoadDiskBasedMetaFile(METAHEADER *mh)
  * Take a memory based METAHEADER and change it to a disk based METAHEADER
  * assosiated with filename.  Note: Trashes contents of old one.
  */
-METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mh, LPCSTR filename)
+METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mh, LPCVOID filename, BOOL uni )
 {
     METAHEADERDISK *mhd;
     DWORD size;
@@ -380,7 +380,12 @@ METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mh, LPCSTR filename)
     mh->mtType = METAFILE_DISK;
     size = HeapSize( GetProcessHeap(), 0, mh );
     mhd = (METAHEADERDISK *)((char *)mh + sizeof(METAHEADER));
-    strcpy(mhd->filename, filename);
+
+    if( uni )
+        WideCharToMultiByte(CP_ACP, 0, filename, -1, 
+                   mhd->filename, sizeof mhd->filename, NULL, NULL);
+    else
+        lstrcpynA( mhd->filename, filename, sizeof mhd->filename );
     return mh;
 }
 
@@ -413,7 +418,7 @@ HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
 	}
 	WriteFile(hFile, mh2, mh2->mtSize * 2, NULL, NULL);
 	CloseHandle(hFile);
-	mh2 = MF_CreateMetaHeaderDisk(mh2, lpFilename);
+	mh2 = MF_CreateMetaHeaderDisk(mh2, lpFilename, FALSE);
     }
 
     return MF_Create_HMETAFILE16( mh2 );
@@ -455,8 +460,6 @@ HMETAFILE WINAPI CopyMetaFileW(
     }
 
     if(lpFilename) {         /* disk based metafile */
-        DWORD len;
-        LPSTR lpFilenameA;
         if((hFile = CreateFileW(lpFilename, GENERIC_WRITE, 0, NULL,
 				CREATE_ALWAYS, 0, 0)) == INVALID_HANDLE_VALUE) {
 	    HeapFree( GetProcessHeap(), 0, mh2 );
@@ -464,11 +467,7 @@ HMETAFILE WINAPI CopyMetaFileW(
 	}
 	WriteFile(hFile, mh2, mh2->mtSize * 2, NULL, NULL);
 	CloseHandle(hFile);
-        len = WideCharToMultiByte(CP_ACP, 0, lpFilename, -1, NULL, 0, NULL, NULL);
-        lpFilenameA = HeapAlloc(GetProcessHeap(), 0, len);
-        WideCharToMultiByte(CP_ACP, 0, lpFilename, -1, lpFilenameA, len, NULL, NULL);
-        mh2 = MF_CreateMetaHeaderDisk(mh2, lpFilenameA);
-        HeapFree(GetProcessHeap(), 0, lpFilenameA);
+        mh2 = MF_CreateMetaHeaderDisk(mh2, lpFilename, TRUE);
     }
 
     return MF_Create_HMETAFILE( mh2 );

@@ -222,7 +222,7 @@ static BOOL MFDRV_DeleteDC( PHYSDEV dev )
 
 
 /**********************************************************************
- *	     CreateMetaFileA   (GDI32.@)
+ *	     CreateMetaFileW   (GDI32.@)
  *
  *  Create a new DC and associate it with a metafile. Pass a filename
  *  to create a disk-based metafile, NULL to create a memory metafile.
@@ -230,14 +230,14 @@ static BOOL MFDRV_DeleteDC( PHYSDEV dev )
  * RETURNS
  *  A handle to the metafile DC if successful, NULL on failure.
  */
-HDC WINAPI CreateMetaFileA( LPCSTR filename ) /* [in] Filename of disk metafile */
+HDC WINAPI CreateMetaFileW( LPCWSTR filename ) /* [in] Filename of disk metafile */
 {
     HDC ret;
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
     HANDLE hFile;
 
-    TRACE("'%s'\n", filename );
+    TRACE("'%s'\n", debugstr_w(filename) );
 
     if (!(dc = MFDRV_AllocMetaFile())) return 0;
     physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
@@ -245,12 +245,12 @@ HDC WINAPI CreateMetaFileA( LPCSTR filename ) /* [in] Filename of disk metafile 
     if (filename)  /* disk based metafile */
     {
         physDev->mh->mtType = METAFILE_DISK;
-        if ((hFile = CreateFileA(filename, GENERIC_WRITE, 0, NULL,
+        if ((hFile = CreateFileW(filename, GENERIC_WRITE, 0, NULL,
 				CREATE_ALWAYS, 0, 0)) == INVALID_HANDLE_VALUE) {
             MFDRV_DeleteDC( dc->physDev );
             return 0;
         }
-        if (!WriteFile( hFile, (LPSTR)physDev->mh, sizeof(*physDev->mh), NULL,
+        if (!WriteFile( hFile, physDev->mh, sizeof(*physDev->mh), NULL,
 			NULL )) {
             MFDRV_DeleteDC( dc->physDev );
             return 0;
@@ -258,7 +258,7 @@ HDC WINAPI CreateMetaFileA( LPCSTR filename ) /* [in] Filename of disk metafile 
 	physDev->hFile = hFile;
 
 	/* Grow METAHEADER to include filename */
-	physDev->mh = MF_CreateMetaHeaderDisk(physDev->mh, filename);
+	physDev->mh = MF_CreateMetaHeaderDisk(physDev->mh, filename, TRUE);
     }
     else  /* memory based metafile */
 	physDev->mh->mtType = METAFILE_MEMORY;
@@ -270,23 +270,23 @@ HDC WINAPI CreateMetaFileA( LPCSTR filename ) /* [in] Filename of disk metafile 
 }
 
 /**********************************************************************
- *          CreateMetaFileW   (GDI32.@)
+ *          CreateMetaFileA   (GDI32.@)
  */
-HDC WINAPI CreateMetaFileW(LPCWSTR filename)
+HDC WINAPI CreateMetaFileA(LPCSTR filename)
 {
-    LPSTR filenameA;
+    LPWSTR filenameW;
     DWORD len;
     HDC hReturnDC;
 
-    if (!filename) return CreateMetaFileA(NULL);
+    if (!filename) return CreateMetaFileW(NULL);
 
-    len = WideCharToMultiByte( CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL );
-    filenameA = HeapAlloc( GetProcessHeap(), 0, len );
-    WideCharToMultiByte( CP_ACP, 0, filename, -1, filenameA, len, NULL, NULL );
+    len = MultiByteToWideChar( CP_ACP, 0, filename, -1, NULL, 0 );
+    filenameW = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+    MultiByteToWideChar( CP_ACP, 0, filename, -1, filenameW, len );
 
-    hReturnDC = CreateMetaFileA(filenameA);
+    hReturnDC = CreateMetaFileW(filenameW);
 
-    HeapFree( GetProcessHeap(), 0, filenameA );
+    HeapFree( GetProcessHeap(), 0, filenameW );
 
     return hReturnDC;
 }

@@ -356,7 +356,7 @@ extern BOOL GDI_hdc_not_using_object(HGDIOBJ obj, HDC hdc);
 /* metafile.c */
 extern HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh);
 extern HMETAFILE16 MF_Create_HMETAFILE16(METAHEADER *mh);
-extern METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mr, LPCSTR filename);
+extern METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mr, LPCVOID filename, BOOL unicode );
 
 /* path.c */
 
