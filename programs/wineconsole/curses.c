@@ -54,7 +54,7 @@
 #include "wine/server.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(wineconsole);
+WINE_DEFAULT_DEBUG_CHANNEL(curses);
 
 #define PRIVATE(data)   ((struct inner_data_curse*)((data)->private))
 
@@ -821,7 +821,7 @@ static void WCCURSES_GetEvents(struct inner_data* data)
     
     if ((inchar = wgetch(stdscr)) == ERR) {WINE_FIXME("Ooch. somebody beat us\n");return;}
     
-    WINE_TRACE("Got %d\n", inchar);
+    WINE_TRACE("Got o%o (0x%x)\n", inchar,inchar);
     
     if (inchar & KEY_CODE_YES)
     {
