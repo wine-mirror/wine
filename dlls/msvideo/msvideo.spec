@@ -5,7 +5,7 @@ owner msvfw32
 2 pascal VideoForWindowsVersion() VideoForWindowsVersion
 20 stub VIDEOGETNUMDEVS
 21 stub VIDEOGETERRORTEXT
-22 pascal VIDEOCAPDRIVERDESCANDVER(word ptr word ptr word) VideoCapDriverDescAndVer
+22 pascal VideoCapDriverDescAndVer(word ptr word ptr word) VideoCapDriverDescAndVer
 28 stub VIDEOOPEN
 29 stub VIDEOCLOSE
 30 stub VIDEODIALOG

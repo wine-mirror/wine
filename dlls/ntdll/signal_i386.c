@@ -134,7 +134,7 @@ __ASM_GLOBAL_FUNC(vm86_enter,
                   "popl %ebp\n\t"
                   "ret" );
 
-#define HAVE_VM86
+#define __HAVE_VM86
 
 #endif  /* linux */
 
@@ -394,7 +394,7 @@ static inline void *get_cr2_value( const SIGCONTEXT *sigcontext )
 }
 
 
-#ifdef HAVE_VM86
+#ifdef __HAVE_VM86
 /***********************************************************************
  *           save_vm86_context
  *
@@ -445,7 +445,7 @@ static void restore_vm86_context( const CONTEXT *context, struct vm86plus_struct
     vm86->regs.ss     = context->SegSs;
     vm86->regs.eflags = context->EFlags;
 }
-#endif /* HAVE_VM86 */
+#endif /* __HAVE_VM86 */
 
 
 /***********************************************************************
@@ -469,7 +469,7 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
     {
         fs = SYSLEVEL_Win16CurrentTeb;
     }
-#ifdef HAVE_VM86
+#ifdef __HAVE_VM86
     else if ((void *)EIP_sig(sigcontext) == vm86_return)  /* vm86 mode */
     {
         /* retrieve pointer to vm86plus struct that was stored in vm86_enter */
@@ -481,7 +481,7 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
         save_vm86_context( context, vm86 );
         return;
     }
-#endif  /* HAVE_VM86 */
+#endif  /* __HAVE_VM86 */
 
     __set_fs(fs);
 
@@ -514,7 +514,7 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
  */
 static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
 {
-#ifdef HAVE_VM86
+#ifdef __HAVE_VM86
     /* check if exception occurred in vm86 mode */
     if ((void *)EIP_sig(sigcontext) == vm86_return &&
         IS_SELECTOR_SYSTEM(CS_sig(sigcontext)))
@@ -524,7 +524,7 @@ static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
         restore_vm86_context( context, vm86 );
         return;
     }
-#endif /* HAVE_VM86 */
+#endif /* __HAVE_VM86 */
 
     EAX_sig(sigcontext) = context->Eax;
     EBX_sig(sigcontext) = context->Ebx;
@@ -775,7 +775,7 @@ static void do_fpe( CONTEXT *context, int trap_code )
 }
 
 
-#ifdef HAVE_VM86
+#ifdef __HAVE_VM86
 /**********************************************************************
  *		set_vm86_pend
  *
@@ -863,7 +863,7 @@ static HANDLER_DEF(alrm_handler)
     set_vm86_pend( &context );
     restore_context( &context, HANDLER_CONTEXT );
 }
-#endif /* HAVE_VM86 */
+#endif /* __HAVE_VM86 */
 
 
 /**********************************************************************
@@ -1013,7 +1013,7 @@ BOOL SIGNAL_Init(void)
     if (set_handler( SIGTRAP, have_sigaltstack, (void (*)())trap_handler ) == -1) goto error;
 #endif
 
-#ifdef HAVE_VM86
+#ifdef __HAVE_VM86
     if (set_handler( SIGALRM, have_sigaltstack, (void (*)())alrm_handler ) == -1) goto error;
     if (set_handler( SIGUSR2, have_sigaltstack, (void (*)())usr2_handler ) == -1) goto error;
 #endif
@@ -1026,7 +1026,7 @@ BOOL SIGNAL_Init(void)
 }
 
 
-#ifdef HAVE_VM86
+#ifdef __HAVE_VM86
 /**********************************************************************
  *		__wine_enter_vm86
  *
@@ -1108,12 +1108,12 @@ cancel_vm86:
     }
 }
 
-#else /* HAVE_VM86 */
+#else /* __HAVE_VM86 */
 void __wine_enter_vm86( CONTEXT *context )
 {
     MESSAGE("vm86 mode not supported on this platform\n");
 }
-#endif /* HAVE_VM86 */
+#endif /* __HAVE_VM86 */
 
 /**********************************************************************
  *		DbgBreakPoint   (NTDLL.@)

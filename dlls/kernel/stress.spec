@@ -4,17 +4,17 @@ name	stress
 type	win16
 owner	kernel32
 
-2   pascal allocmem(long)		AllocMem
-3   pascal freeallmem()			FreeAllMem
-6   pascal allocfilehandles(word)	AllocFileHandles
-7   pascal unallocfilehandles()		UnAllocFileHandles
-8   pascal getfreefilehandles()		GetFreeFileHandles
-10  pascal allocdiskspace(long word)	AllocDiskSpace
-11  pascal unallocdiskspace(word)	UnAllocDiskSpace
-12  pascal allocusermem(word)		AllocUserMem
-13  pascal freeallusermem()		FreeAllUserMem
-14  pascal allocgdimem(word)		AllocGDIMem
-15  pascal freeallgdimem()		FreeAllGDIMem
+2   pascal AllocMem(long) AllocMem
+3   pascal FreeAllMem() FreeAllMem
+6   pascal AllocFileHandles(word) AllocFileHandles
+7   pascal UnAllocFileHandles() UnAllocFileHandles
+8   pascal GetFreeFileHandles() GetFreeFileHandles
+10  pascal AllocDiskSpace(long word) AllocDiskSpace
+11  pascal UnAllocDiskSpace(word) UnAllocDiskSpace
+12  pascal AllocUserMem(word) AllocUserMem
+13  pascal FreeAllUserMem() FreeAllUserMem
+14  pascal AllocGDIMem(word) AllocGDIMem
+15  pascal FreeAllGDIMem() FreeAllGDIMem
 16  stub   GETFREEHEAP32SPACE
 17  stub   ALLOCHEAP32MEM
 18  stub   FREEALLHEAP32MEM
