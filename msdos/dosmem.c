@@ -156,6 +156,12 @@ BYTE * DOSMEM_BiosSys()
     return DOSMEM_MemoryBase(0)+0xf0000;
 }
 
+struct _DOS_LISTOFLISTS * DOSMEM_LOL()
+{
+    return (struct _DOS_LISTOFLISTS *)DOSMEM_MapRealToLinear
+      (PTR_SEG_OFF_TO_SEGPTR(HIWORD(DOS_LOLSeg),0));
+}
+
 /***********************************************************************
  *           DOSMEM_FillBiosSegments
  *
@@ -377,6 +383,28 @@ static void DOSMEM_InitMemory(HMODULE16 hModule)
 }
 
 /***********************************************************************
+ *           DOSMEM_MovePointers
+ *
+ * Relocates any pointers into DOS memory to a new address space.
+ */
+static void DOSMEM_MovePointers(LPVOID dest, LPVOID src, DWORD size)
+{
+  unsigned long delta = dest-src;
+  unsigned cnt;
+  ldt_entry ent;
+
+  /* relocate base addresses of any selectors pointing into memory */
+  for (cnt=FIRST_LDT_ENTRY_TO_ALLOC; cnt<LDT_SIZE; cnt++) {
+    LDT_GetEntry(cnt, &ent);
+    if ((ent.base >= (unsigned long)src) && \
+	(ent.base < ((unsigned long)src + size))) {
+      ent.base += delta;
+      LDT_SetEntry(cnt, &ent);
+    }
+  }
+}
+
+/***********************************************************************
  *           DOSMEM_Init
  *
  * Create the dos memory segments, and store them into the KERNEL
@@ -415,8 +443,12 @@ BOOL DOSMEM_Init(HMODULE16 hModule)
         DOSMEM_FillIsrTable(hModule);
         DOSMEM_InitMemory(hModule);
 #else
+	LPVOID base = DOSMEM_MemoryBase(hModule);
+
         /* bootstrap the new V86 task with a copy of the "system" memory */
-        memcpy(DOSMEM_MemoryBase(hModule), DOSMEM_dosmem, 0x100000);
+        memcpy(base, DOSMEM_dosmem, 0x100000);
+	/* then move existing selectors to it */
+	DOSMEM_MovePointers(base, DOSMEM_dosmem, 0x100000);
 #endif
     }
     return TRUE;

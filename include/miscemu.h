@@ -86,8 +86,8 @@ extern DWORD DOSMEM_CollateTable;
 extern DWORD DOSMEM_ErrorCall;
 extern DWORD DOSMEM_ErrorBuffer;
 
-extern struct _DOS_LISTOFLISTS * DOS_LOL;
 extern DWORD DOS_LOLSeg;
+extern struct _DOS_LISTOFLISTS * DOSMEM_LOL();
 
 extern BOOL DOSMEM_Init(HMODULE16 hModule);
 extern void   DOSMEM_Tick(WORD timer);

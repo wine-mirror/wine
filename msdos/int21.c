@@ -1662,9 +1662,9 @@ void WINAPI DOS3Call( CONTEXT *context )
                 SET_CFLAG(context);
                 break;
             }
-            DOS_LOL->sharing_retry_delay = CX_reg(context);
+            DOSMEM_LOL()->sharing_retry_delay = CX_reg(context);
             if (!DX_reg(context))
-                DOS_LOL->sharing_retry_count = DX_reg(context);
+                DOSMEM_LOL()->sharing_retry_count = DX_reg(context);
             RESET_CFLAG(context);
             break;
 
