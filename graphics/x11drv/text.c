@@ -14,6 +14,7 @@
 #include <math.h>
 
 #include "windef.h"
+#include "winnls.h"
 #include "dc.h"
 #include "gdi.h"
 #include "heap.h"
@@ -34,24 +35,55 @@ DEFAULT_DEBUG_CHANNEL(text);
 static XChar2b *unicode_to_char2b( LPCWSTR wstr, UINT count, UINT codepage, UINT def_char )
 {
     XChar2b *str2b;
-    UINT i, total_size = count * (sizeof(XChar2b) + (codepage ? sizeof(WCHAR) : 0));
-    
-    if (!(str2b = HeapAlloc( GetProcessHeap(), 0, total_size ))) return NULL;
+    UINT i;
 
-    if (codepage != 0)  /* a one byte font */
+    if (!(str2b = HeapAlloc( GetProcessHeap(), 0, count * sizeof(XChar2b) )))
+	return NULL;
+
+    if (codepage != 0)  /* multibyte font */
     {
-	BYTE *str = (BYTE *)(str2b + count);
+	BYTE *str;
         char ch = def_char;
+	CPINFO cpinfo;
+	
+	/* allocate the worst case count * 2 bytes */
+	if (!(str = HeapAlloc( GetProcessHeap(), 0, count * 2 )))
+	{
+	    HeapFree( GetProcessHeap(), 0, str2b );
+	    return NULL;
+	}
 
 	/* we have to convert from unicode to codepage first */
         WideCharToMultiByte( codepage, 0, wstr, count, str, count, &ch, NULL );
-        for (i = 0; i < count; i++)
-        {
-            str2b[i].byte1 = 0;
-            str2b[i].byte2 = str[i];
-        }
+
+	GetCPInfo( codepage, &cpinfo );
+
+	if (cpinfo.MaxCharSize == 1)
+	{
+    	    for (i = 0; i < count; i++)
+    	    {
+        	str2b[i].byte1 = 0;
+        	str2b[i].byte2 = str[i];
+    	    }
+	}
+	else
+	{
+	    XChar2b *str2b_dst = str2b;
+    	    for (i = 0; i < count; i++, str2b_dst++)
+    	    {
+        	str2b_dst->byte2 = str[i];
+		if (IsDBCSLeadByteEx( codepage, str[i] ))
+		{
+        	    str2b_dst->byte1 = str[i + 1];
+		    i++;
+		}
+		else
+		    str2b_dst->byte1 = 0;
+    	    }
+	}
+	HeapFree( GetProcessHeap(), 0, str );
     }
-    else  /* codepage 0 -> two byte font */
+    else  /* codepage 0 -> unicode font */
     {
 	for (i = 0; i < count; i++)
         {
