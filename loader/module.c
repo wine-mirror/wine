@@ -256,7 +256,7 @@ HMODULE32 MODULE_FindModule32(
     	LPSTR	xlname,xdotptr;
 
 	assert (wm->longname);
-	xlname = strrchr(wm->longname,'/');
+	xlname = strrchr(wm->longname,'\\');
 	if (!xlname) 
 	    xlname = wm->longname;
 	else
@@ -636,21 +636,14 @@ DWORD WINAPI GetModuleFileName32A(
         DWORD size		/* [in] size of filenamebuffer */
 ) {                   
     WINE_MODREF *wm = MODULE32_LookupHMODULE(PROCESS_Current(),hModule);
-    char *p;
 
     if (!wm) /* can happen on start up or the like */
     	return 0;
 
-    /* FIXME: we should probably get a real long name, but wm->longname
-     * is currently a UNIX filename!
-     * Use the module name to at least get the long version of the filename.
-     */
-    lstrcpyn32A( lpFileName, wm->shortname, size );
-    if ( (p = strrchr( lpFileName, '\\' )) ) {
-      p++;
-      size -= (p-lpFileName);
-      lstrcpyn32A( p, wm->modname, size);
-    }
+    if (PE_HEADER(wm->module)->OptionalHeader.MajorOperatingSystemVersion >= 4.0)
+      lstrcpyn32A( lpFileName, wm->longname, size );
+    else
+      lstrcpyn32A( lpFileName, wm->shortname, size );
        
     TRACE(module, "%s\n", lpFileName );
     return strlen(lpFileName);
