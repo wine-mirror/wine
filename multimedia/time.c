@@ -124,7 +124,7 @@ static	LPWINE_MM_IDATA	MULTIMEDIA_MMTimeStart(void)
 {
     LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIData();
 
-    if (!iData || IsBadWritePtr(iData, sizeof(WINE_MM_IDATA))) {
+    if (IsBadWritePtr(iData, sizeof(WINE_MM_IDATA))) {
 	ERR("iData is not correctly set, please report. Expect failure.\n");
 	return 0;
     }
@@ -149,18 +149,13 @@ static	LPWINE_MM_IDATA	MULTIMEDIA_MMTimeStart(void)
  */
 MMRESULT WINAPI timeGetSystemTime(LPMMTIME lpTime, UINT wSize)
 {
-    LPWINE_MM_IDATA	iData;
-
     TRACE("(%p, %u);\n", lpTime, wSize);
 
     if (wSize >= sizeof(*lpTime)) {
-	iData = MULTIMEDIA_MMTimeStart();
-	if (!iData)
-	    return MMSYSERR_NOMEM;
 	lpTime->wType = TIME_MS;
-	lpTime->u.ms = iData->mmSysTimeMS;
+	lpTime->u.ms = MULTIMEDIA_MMTimeStart()->mmSysTimeMS;
 
-	TRACE("=> %lu\n", iData->mmSysTimeMS);
+	TRACE("=> %lu\n", lpTime->u.ms);
     }
 
     return 0;
@@ -171,18 +166,13 @@ MMRESULT WINAPI timeGetSystemTime(LPMMTIME lpTime, UINT wSize)
  */
 MMRESULT16 WINAPI timeGetSystemTime16(LPMMTIME16 lpTime, UINT16 wSize)
 {
-    LPWINE_MM_IDATA	iData;
-
     TRACE("(%p, %u);\n", lpTime, wSize);
 
     if (wSize >= sizeof(*lpTime)) {
-	iData = MULTIMEDIA_MMTimeStart();
-	if (!iData)
-	    return MMSYSERR_NOMEM;
 	lpTime->wType = TIME_MS;
-	lpTime->u.ms = iData->mmSysTimeMS;
+	lpTime->u.ms = MULTIMEDIA_MMTimeStart()->mmSysTimeMS;
 
-	TRACE("=> %lu\n", iData->mmSysTimeMS);
+	TRACE("=> %lu\n", lpTime->u.ms);
     }
 
     return 0;
@@ -209,9 +199,6 @@ static	WORD	timeSetEventInternal(UINT wDelay, UINT wResol,
 	return 0;
 
     iData = MULTIMEDIA_MMTimeStart();
-
-    if (!iData)
-	return 0;
 
     lpNewTimer->uCurTime = wDelay;
     lpNewTimer->wDelay = wDelay;
@@ -381,5 +368,13 @@ MMRESULT16 WINAPI timeEndPeriod16(UINT16 wPeriod)
  */
 DWORD WINAPI timeGetTime(void)
 {
+    /* FIXME: releasing the win16 lock here is a temporary hack (I hope)
+     * that lets mciavi.drv run correctly
+     */
+    if ( _ConfirmWin16Lock() ) {
+	SYSLEVEL_ReleaseWin16Lock();
+	SYSLEVEL_RestoreWin16Lock();
+    }
+
     return MULTIMEDIA_MMTimeStart()->mmSysTimeMS;
 }
