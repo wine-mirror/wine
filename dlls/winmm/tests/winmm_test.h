@@ -27,6 +27,13 @@
 #define WAVE_FORMAT_96S16      0x00080000    /* 96     kHz, Stereo, 16-bit */
 #endif
 
+#ifndef DRV_QUERYDEVICEINTERFACE
+#define DRV_QUERYDEVICEINTERFACE     (DRV_RESERVED + 12)
+#endif
+#ifndef DRV_QUERYDEVICEINTERFACESIZE
+#define DRV_QUERYDEVICEINTERFACESIZE (DRV_RESERVED + 13)
+#endif
+
 static const unsigned int win_formats[][4] = {
     {0,                  8000,  8, 1},
     {0,                  8000,  8, 2},
