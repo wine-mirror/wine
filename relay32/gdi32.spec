@@ -304,8 +304,8 @@ init    MAIN_GdiInit
 399 stdcall PolyDraw(long ptr ptr long) PolyDraw
 400 stdcall PolyPolygon(long ptr ptr long) PolyPolygon
 401 stdcall PolyPolyline(long ptr ptr long) PolyPolyline
-402 stub PolyTextOutA
-403 stub PolyTextOutW
+402 stdcall PolyTextOutA(long ptr long) PolyTextOutA
+403 stdcall PolyTextOutW(long ptr long) PolyTextOutW
 404 stdcall Polygon(long ptr long) Polygon
 405 stdcall Polyline(long ptr long) Polyline
 406 stdcall PolylineTo(long ptr long) PolylineTo

@@ -10,6 +10,7 @@
 #include "wine/winuser16.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winerror.h"
 #include "dc.h"
 #include "gdi.h"
 #include "heap.h"
@@ -781,4 +782,34 @@ UINT WINAPI GetTextCharsetInfo(
       memcpy(fs, &csinfo.fs, sizeof(FONTSIGNATURE));
     }
     return charSet;
+}
+
+/***********************************************************************
+ * PolyTextOutA [GDI.402]  Draw several Strings
+ */
+BOOL WINAPI PolyTextOutA (
+			  HDC hdc,               /* Handle to device context */			  
+			  PPOLYTEXTA pptxt,      /* array of strings */
+			  INT cStrings           /* Number of strings in array */
+			  )
+{
+  FIXME("stub!\n");
+  SetLastError ( ERROR_CALL_NOT_IMPLEMENTED );
+  return 0;
+}
+
+
+
+/***********************************************************************
+ * PolyTextOutW [GDI.403] Draw several Strings
+ */
+BOOL WINAPI PolyTextOutW ( 
+			  HDC hdc,               /* Handle to device context */			  
+			  PPOLYTEXTW pptxt,      /* array of strings */
+			  INT cStrings           /* Number of strings in array */
+			  )
+{
+  FIXME("stub!\n");
+  SetLastError ( ERROR_CALL_NOT_IMPLEMENTED );
+  return 0;
 }

@@ -3355,6 +3355,9 @@ BOOL      WINAPI TranslateCharsetInfo(LPDWORD,LPCHARSETINFO,DWORD);
 BOOL      WINAPI UnrealizeObject(HGDIOBJ);
 BOOL      WINAPI UpdateColors(HDC);
 BOOL      WINAPI WidenPath(HDC);
+BOOL      WINAPI PolyTextOutA(HDC,PPOLYTEXTA,INT);
+BOOL      WINAPI PolyTextOutW(HDC,PPOLYTEXTW,INT);
+#define   PolyTextOut WINELIB_NAME_AW(PolyTextOut)
 
 #ifdef __cplusplus
 }
