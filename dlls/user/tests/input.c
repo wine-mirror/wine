@@ -44,11 +44,8 @@
  *
  */
 
-/* for definitions of INPUT */
 #define _WIN32_WINNT 0x401
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "wine/test.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -79,13 +76,25 @@ int GETUPDOWN[]={0, 0, KEYEVENTF_KEYUP, 0, KEYEVENTF_KEYUP, 0, KEYEVENTF_KEYUP, 
 /* matching descripts */
 char *getdesc[]={"", "+alt","-alt","+X","-X","+shift","-shift","+ctrl","-ctrl"};
 
+/* The MSVC headers ignore our NONAMELESSUNION requests so we have to define our own type */
+typedef struct
+{
+    DWORD type;
+    union
+    {
+        MOUSEINPUT      mi;
+        KEYBDINPUT      ki;
+        HARDWAREINPUT   hi;
+    } u;
+} TEST_INPUT;
+
 #define ADDTOINPUTS(kev) \
 inputs[evtctr].type = INPUT_KEYBOARD; \
-    inputs[evtctr].u.ki.wVk = GETVKEY[ kev]; \
-    inputs[evtctr].u.ki.wScan = GETSCAN[ kev]; \
-    inputs[evtctr].u.ki.dwFlags = GETUPDOWN[ kev]; \
-    inputs[evtctr].u.ki.dwExtraInfo = 0; \
-    inputs[evtctr].u.ki.time = ++timetag; \
+    ((TEST_INPUT*)inputs)[evtctr].u.ki.wVk = GETVKEY[ kev]; \
+    ((TEST_INPUT*)inputs)[evtctr].u.ki.wScan = GETSCAN[ kev]; \
+    ((TEST_INPUT*)inputs)[evtctr].u.ki.dwFlags = GETUPDOWN[ kev]; \
+    ((TEST_INPUT*)inputs)[evtctr].u.ki.dwExtraInfo = 0; \
+    ((TEST_INPUT*)inputs)[evtctr].u.ki.time = ++timetag; \
     if( kev) evtctr++;
 
 typedef struct {
@@ -198,7 +207,8 @@ void do_test( HWND hwnd, int seqnr, KEV td[] )
     KMSG expmsg[MAXKEYEVENTS];
     MSG msg;
     char buf[100];
-    int evtctr=0, kmctr, i;
+    UINT evtctr=0;
+    int kmctr, i;
     buf[0]='\0';
     TrackSysKey=0; /* see input.c */
     for( i = 0; i < MAXKEYEVENTS; i++) {
