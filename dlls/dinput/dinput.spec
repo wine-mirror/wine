@@ -1,5 +1,3 @@
-init Init
-
 @ stdcall DirectInputCreateA(long long ptr ptr) DirectInputCreateA
 @ stub DirectInputCreateW
 @ stdcall DirectInputCreateEx(long long ptr ptr ptr) DirectInputCreateEx

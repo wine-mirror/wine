@@ -1,5 +1,4 @@
 # msvcrt.dll - MS VC++ Run Time Library
-init    MSVCRT_Init
 
 @ cdecl $I10_OUTPUT() MSVCRT_I10_OUTPUT
 @ cdecl ??0__non_rtti_object@@QAE@ABV0@@Z(ptr ptr) MSVCRT___non_rtti_object_copy_ctor

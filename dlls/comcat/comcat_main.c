@@ -62,9 +62,9 @@ static struct regsvr_entry regsvr_entries[6] = {
 };
 
 /***********************************************************************
- *		DllEntryPoint
+ *		DllMain
  */
-BOOL WINAPI COMCAT_DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
     TRACE("%p 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
 

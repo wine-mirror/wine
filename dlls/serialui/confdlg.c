@@ -47,7 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(comm);
 HMODULE SERIALUI_hModule = 0;
 
 /***********************************************************************
- * SERIALUI_LibMain [Internal] Initializes the internal 'SERIALUI.DLL'.
+ * DllMain [Internal] Initializes the internal 'SERIALUI.DLL'.
  *
  * PARAMS
  *     hinstDLL    [I] handle to the DLL's instance
@@ -59,8 +59,7 @@ HMODULE SERIALUI_hModule = 0;
  *     Failure: FALSE
  */
 
-BOOL WINAPI
-SERIALUI_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("%p,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
 

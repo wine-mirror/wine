@@ -1,5 +1,3 @@
-init	X11DRV_Init
-
 # GDI driver
 
 @ cdecl Arc(ptr long long long long long long long long) X11DRV_Arc

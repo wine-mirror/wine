@@ -1,5 +1,3 @@
-init URLMON_DllEntryPoint
-
 1 stub CDLGetLongPathNameA
 2 stub CDLGetLongPathNameW
 @ stub AsyncGetClassBits

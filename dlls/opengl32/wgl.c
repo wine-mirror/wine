@@ -647,7 +647,7 @@ static void process_detach(void)
 /***********************************************************************
  *           OpenGL initialisation routine
  */
-BOOL WINAPI OpenGL32_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
     switch(reason)
     {

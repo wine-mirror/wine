@@ -118,7 +118,7 @@ static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1,
 
 HINSTANCE MCIAVI_hInstance = 0;
 
-BOOL WINAPI MCIAVI_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
+BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:

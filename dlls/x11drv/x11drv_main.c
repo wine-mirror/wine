@@ -432,7 +432,7 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
 /***********************************************************************
  *           X11DRV initialisation routine
  */
-BOOL WINAPI X11DRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
     switch(reason)
     {

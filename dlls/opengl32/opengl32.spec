@@ -1,5 +1,3 @@
-init OpenGL32_Init
-
 @  stdcall wglCreateContext(long) wglCreateContext
 @  stdcall wglCreateLayerContext(long long) wglCreateLayerContext
 @  stdcall wglCopyContext(long long long) wglCopyContext

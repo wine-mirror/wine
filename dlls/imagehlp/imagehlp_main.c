@@ -33,10 +33,9 @@ HANDLE IMAGEHLP_hHeap = (HANDLE) NULL;
 static API_VERSION IMAGEHLP_ApiVersion = { 4, 0, 0, 5 };
 
 /***********************************************************************
- *           IMAGEHLP_LibMain (IMAGEHLP.init)
+ *           DllMain (IMAGEHLP.init)
  */
-BOOL WINAPI IMAGEHLP_LibMain(
-  HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
   switch(fdwReason)
     {

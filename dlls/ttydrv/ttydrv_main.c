@@ -74,7 +74,7 @@ static void process_detach(void)
 /***********************************************************************
  *           TTYDRV initialisation routine
  */
-BOOL WINAPI TTYDRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
     switch(reason)
     {

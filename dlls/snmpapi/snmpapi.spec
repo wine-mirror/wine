@@ -1,5 +1,3 @@
-init    SNMPAPI_DllMain
-
 @ stub SnmpSvcAddrIsIpx
 @ stub SnmpSvcAddrToSocket
 @ stub SnmpSvcBufRevAndCpy

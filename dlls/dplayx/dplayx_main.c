@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 DWORD gdwDPlaySPRefCount = 0; /* FIXME: Should it be initialized here? */
 
 
-BOOL WINAPI DPLAYX_LibMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
+BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 {
 
   TRACE( "(%p,0x%08lx,%p)\n", hinstDLL, fdwReason, lpvReserved );

@@ -1855,7 +1855,7 @@ LRESULT CALLBACK MSRLE32_DriverProc(DWORD dwDrvID, HDRVR hDrv, UINT uMsg,
 }
 
 /* DllMain - library initialization code */
-BOOL WINAPI MSRLE32_DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved)
+BOOL WINAPI DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved)
 {
   TRACE("(%p,%ld,%p)\n",(LPVOID)hModule,dwReason,lpReserved);
 

@@ -1,5 +1,3 @@
-init WINMM_LibMain
-
 # ordinal exports
 1 stdcall @(ptr long long) PlaySoundA
 3 stub @

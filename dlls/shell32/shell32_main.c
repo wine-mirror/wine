@@ -944,13 +944,13 @@ HIMAGELIST	ShellBigIconList = 0;
 
 
 /*************************************************************************
- * SHELL32 LibMain
+ * SHELL32 DllMain
  *
  * NOTES
  *  calling oleinitialize here breaks sone apps.
  */
 
-BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
 	TRACE("0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
 

@@ -31,10 +31,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 HINSTANCE URLMON_hInstance = 0;
 
 /***********************************************************************
- *		DllEntryPoint (OLE32.@)
+ *		DllMain (URLMON.init)
  */
-
-BOOL WINAPI URLMON_DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
     TRACE("%p 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
 

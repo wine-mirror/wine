@@ -53,7 +53,7 @@ HANDLE RICHED32_hHeap = (HANDLE)NULL;
 
 
 /***********************************************************************
- * RICHED32_LibMain [Internal] Initializes the internal 'RICHED32.DLL'.
+ * DllMain [Internal] Initializes the internal 'RICHED32.DLL'.
  *
  * PARAMS
  *     hinstDLL    [I] handle to the DLL's instance
@@ -65,8 +65,7 @@ HANDLE RICHED32_hHeap = (HANDLE)NULL;
  *     Failure: FALSE
  */
 
-BOOL WINAPI
-RICHED32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("\n");
     switch (fdwReason)

@@ -428,9 +428,9 @@ static void WINSOCK_DeleteIData(void)
 }
 
 /***********************************************************************
- *		WS_LibMain (WS2_32.init)
+ *		DllMain (WS2_32.init)
  */
-BOOL WINAPI WS_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
+BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
     TRACE("%p 0x%lx %p\n", hInstDLL, fdwReason, fImpLoad);
     switch (fdwReason) {

@@ -1,5 +1,3 @@
-init	TTYDRV_Init
-
 # GDI driver
 
 @ cdecl Arc(ptr long long long long long long long long) TTYDRV_DC_Arc

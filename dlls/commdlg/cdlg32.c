@@ -52,7 +52,7 @@ BOOL (WINAPI *COMDLG32_SHGetFolderPathA)(HWND,int,HANDLE,DWORD,LPSTR);
 BOOL (WINAPI *COMDLG32_SHGetFolderPathW)(HWND,int,HANDLE,DWORD,LPWSTR);
 
 /***********************************************************************
- *	COMDLG32_DllEntryPoint			(COMDLG32.init)
+ *	DllMain  (COMDLG32.init)
  *
  *    Initialization code for the COMDLG32 DLL
  *
@@ -68,7 +68,7 @@ static char * GPA_string = "Failed to get entry point %s for hinst = 0x%08x\n";
 	  return FALSE; \
 	}
 
-BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Reserved)
+BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD Reason, LPVOID Reserved)
 {
 	TRACE("(%08x, %08lx, %p)\n", hInstance, Reason, Reserved);
 

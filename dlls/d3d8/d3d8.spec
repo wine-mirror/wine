@@ -1,5 +1,3 @@
-init D3D8_DllMain
-
 @ stdcall D3D8GetSWInfo() D3D8GetSWInfo
 @ stdcall DebugSetMute() DebugSetMute
 @ stdcall Direct3DCreate8(long) Direct3DCreate8

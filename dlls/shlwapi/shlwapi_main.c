@@ -40,12 +40,12 @@ HMODULE SHLWAPI_hversion = 0;
 DWORD SHLWAPI_ThreadRef_index = -1;
 
 /*************************************************************************
- * SHLWAPI LibMain
+ * SHLWAPI DllMain
  *
  * NOTES
  *  calling oleinitialize here breaks sone apps.
  */
-BOOL WINAPI SHLWAPI_LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
 	TRACE("%p 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
 	switch (fdwReason)

@@ -56,7 +56,7 @@ static CRITICAL_SECTION ASPI_CritSection = CRITICAL_SECTION_INIT("ASPI_CritSecti
 #endif /* defined(linux) */
 
 
-BOOL WINAPI WNASPI32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
+BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
 #ifdef linux
 	switch( fdwReason )

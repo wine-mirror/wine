@@ -97,7 +97,7 @@ LPWORKREQUEST lpHeadWorkQueue;
 LPWORKREQUEST lpWorkQueueTail;
 
 /***********************************************************************
- * WININET_LibMain [Internal] Initializes the internal 'WININET.DLL'.
+ * DllMain [Internal] Initializes the internal 'WININET.DLL'.
  *
  * PARAMS
  *     hinstDLL    [I] handle to the DLL's instance
@@ -109,8 +109,7 @@ LPWORKREQUEST lpWorkQueueTail;
  *     Failure: FALSE
  */
 
-BOOL WINAPI
-WININET_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("%p,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
 

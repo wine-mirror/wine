@@ -1,5 +1,3 @@
-init	COMDLG32_DllEntryPoint
-
 @ stdcall ChooseColorA(ptr) ChooseColorA
 @ stdcall ChooseColorW(ptr) ChooseColorW
 @ stdcall ChooseFontA(ptr) ChooseFontA

@@ -1,5 +1,3 @@
-init	IMAGEHLP_LibMain
-
 @ stdcall BindImage(str str str) BindImage
 @ stdcall BindImageEx(long str str str ptr) BindImageEx
 @ stdcall CheckSumMappedFile(ptr long ptr ptr) CheckSumMappedFile

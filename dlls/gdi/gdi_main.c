@@ -29,7 +29,7 @@
 /***********************************************************************
  *           GDI initialisation routine
  */
-BOOL WINAPI MAIN_GdiInit(HINSTANCE hinstDLL, DWORD reason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID lpvReserved)
 {
     if (reason != DLL_PROCESS_ATTACH) return TRUE;
     return GDI_Init();

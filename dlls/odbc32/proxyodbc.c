@@ -156,7 +156,7 @@ SQLRETURN SQLDummyFunc()
 }
 
 /***********************************************************************
- * MAIN_OdbcInit [Internal] Initializes the internal 'ODBC32.DLL'.
+ * DllMain [Internal] Initializes the internal 'ODBC32.DLL'.
  *
  * PARAMS
  *     hinstDLL    [I] handle to the DLL's instance
@@ -168,8 +168,7 @@ SQLRETURN SQLDummyFunc()
  *     Failure: FALSE
  */
 
-BOOL WINAPI
-MAIN_OdbcInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     int i;
     TRACE("Initializing or Finalizing proxy ODBC: %p,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);

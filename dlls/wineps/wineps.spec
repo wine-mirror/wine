@@ -1,5 +1,3 @@
-init	PSDRV_Init
-
 # GDI driver
 
 @ cdecl Arc(ptr long long long long long long long long) PSDRV_Arc

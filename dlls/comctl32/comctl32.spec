@@ -1,5 +1,3 @@
-init	COMCTL32_LibMain
-
 # Functions exported by the Win95 comctl32.dll
 # (these need to have these exact ordinals, because some win95 dlls
 #  import comctl32.dll by ordinal)

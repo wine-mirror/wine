@@ -668,9 +668,9 @@ void DOSVM_RealModeInterrupt( BYTE intnum, CONTEXT86 *context )
 
 
 /**********************************************************************
- *	    DOSVM_Init
+ *	    DllMain  (DOSVM.Init)
  */
-BOOL WINAPI DOSVM_Init( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
+BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 {
     TRACE_(module)("(%p,%ld,%p)\n", hinstDLL, fdwReason, lpvReserved);
 

@@ -1,5 +1,3 @@
-init    MAIN_OdbcInit
-
   1 stdcall SQLAllocConnect(long ptr) SQLAllocConnect
   2 stdcall SQLAllocEnv(ptr)  SQLAllocEnv
   3 stdcall SQLAllocStmt(long ptr) SQLAllocStmt

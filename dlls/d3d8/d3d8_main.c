@@ -70,7 +70,7 @@ IDirect3D8* WINAPI Direct3DCreate8(UINT SDKVersion)
 }
 
 /* At process attach */
-BOOL WINAPI D3D8_DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
+BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
     TRACE("fdwReason=%ld\n", fdwReason);
        if (fdwReason == DLL_PROCESS_ATTACH)

@@ -1,5 +1,3 @@
-init	WINSPOOL_EntryPoint
-
 100 stub @
 @ stub ADVANCEDSETUPDIALOG
 @ stub AbortPrinter

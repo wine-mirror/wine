@@ -183,8 +183,7 @@ static UCHAR NETBIOS_Astat(PNCB ncb)
     return NRC_GOODRET;
 }
 
-BOOL WINAPI
-NETAPI32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("%p,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
 

@@ -50,9 +50,9 @@ static void MSISYS_UninitProcess( void )
 }
 
 /***********************************************************************
- *		MSISYS_DllMain
+ *		DllMain for MSISYS
  */
-BOOL WINAPI MSISYS_DllMain(
+BOOL WINAPI DllMain(
 	HINSTANCE hInstDLL,
 	DWORD fdwReason,
 	LPVOID lpvReserved )

@@ -1,5 +1,3 @@
-init	WNASPI32_LibMain
-
 # we have several ordinal clashes here, it seems...
 
 1 cdecl GetASPI32SupportInfo() GetASPI32SupportInfo

@@ -1,5 +1,3 @@
-init	NETAPI32_LibMain
-
 @ stub I_BrowserDebugCall
 @ stub I_BrowserDebugTrace
 @ stdcall I_BrowserQueryEmulatedDomains(wstr ptr ptr) I_BrowserQueryEmulatedDomains

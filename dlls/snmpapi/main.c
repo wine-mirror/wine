@@ -27,9 +27,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(snmpapi);
 
 /***********************************************************************
- *		SNMPAPI_DllMain
+ *		DllMain for SNMPAPI
  */
-BOOL WINAPI SNMPAPI_DllMain(
+BOOL WINAPI DllMain(
 	HINSTANCE hInstDLL,
 	DWORD fdwReason,
 	LPVOID lpvReserved)

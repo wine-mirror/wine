@@ -108,12 +108,12 @@ BOOL WINMM_CheckForMMSystem(void)
 }
 
 /**************************************************************************
- *		DllEntryPoint (WINMM.init)
+ *		DllMain (WINMM.init)
  *
  * WINMM DLL entry point
  *
  */
-BOOL WINAPI WINMM_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
+BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
     TRACE("%p 0x%lx %p\n", hInstDLL, fdwReason, fImpLoad);
 

@@ -1,5 +1,3 @@
-init    WININET_LibMain
-
 @ stdcall InternetInitializeAutoProxyDll(long) InternetInitializeAutoProxyDll
 @ stub ShowCertificate
 @ stdcall CommitUrlCacheEntryA(str str long long long str long str str) CommitUrlCacheEntryA

@@ -127,7 +127,7 @@ static const WORD wPattern55AA[] =
 
 
 /***********************************************************************
- * COMCTL32_LibMain [Internal] Initializes the internal 'COMCTL32.DLL'.
+ * DllMain [Internal] Initializes the internal 'COMCTL32.DLL'.
  *
  * PARAMS
  *     hinstDLL    [I] handle to the 'dlls' instance
@@ -139,8 +139,7 @@ static const WORD wPattern55AA[] =
  *     Failure: FALSE
  */
 
-BOOL WINAPI
-COMCTL32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("%p,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
 

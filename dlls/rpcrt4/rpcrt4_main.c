@@ -144,7 +144,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 static UUID uuid_nil;
 
 /***********************************************************************
- * RPCRT4_LibMain
+ * DllMain
  *
  * PARAMS
  *     hinstDLL    [I] handle to the DLL's instance
@@ -156,8 +156,7 @@ static UUID uuid_nil;
  *     Failure: FALSE
  */
 
-BOOL WINAPI
-RPCRT4_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:

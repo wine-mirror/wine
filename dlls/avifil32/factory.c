@@ -195,10 +195,9 @@ DWORD WINAPI AVIFILE_DllCanUnloadNow(void)
 }
 
 /*****************************************************************************
- *		AVIFILE_DllMain		[internal]
+ *		DllMain		[AVIFIL32.init]
  */
-BOOL WINAPI AVIFILE_DllMain(HINSTANCE hInstDll, DWORD fdwReason,
-			    LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD fdwReason, LPVOID lpvReserved)
 {
   TRACE("(%p,%lu,%p)\n", hInstDll, fdwReason, lpvReserved);
 

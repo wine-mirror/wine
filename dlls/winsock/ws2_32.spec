@@ -2,9 +2,6 @@
 #
 #  Export table information obtained from Windows 2000 ws2_32.dll
 
-init WS_LibMain
-
-#  EXPORTS ***********
 1   stdcall  accept(long ptr ptr) WS_accept
 2   stdcall  bind(long ptr long) WS_bind
 3   stdcall  closesocket(long) WS_closesocket

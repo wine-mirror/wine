@@ -29,10 +29,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 HINSTANCE OLE32_hInstance = 0;
 
 /***********************************************************************
- *		DllEntryPoint (OLE32.@)
+ *		DllMain (OLE32.@)
  */
 
-BOOL WINAPI OLE32_DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
     TRACE("0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
 

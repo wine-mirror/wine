@@ -100,12 +100,12 @@ static LOGFONTA DefaultLogFont = {
 };
 
 /*********************************************************************
- *	     PSDRV_Init
+ *	     DllMain
  *
- * Initializes font metrics and registers driver. Called from GDI_Init()
+ * Initializes font metrics and registers driver. wineps dll entry point.
  *
  */
-BOOL WINAPI PSDRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
     TRACE("(%p, 0x%08lx, %p)\n", hinst, reason, reserved);
 

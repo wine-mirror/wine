@@ -1,5 +1,3 @@
-init	Shell32LibMain
-
 # Functions exported by the Win95 shell32.dll
 # (these need to have these exact ordinals, for some
 #  win95 and winNT dlls import shell32.dll by ordinal)

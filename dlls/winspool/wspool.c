@@ -28,14 +28,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(winspool);
 
 
 /******************************************************************************
- *  WINSPOOL_EntryPoint
+ *  DllMain
  *
  * Winspool entry point.
  *
  */
-BOOL WINAPI WINSPOOL_EntryPoint(HINSTANCE hInstance,
-                                DWORD reason,
-                                LPVOID lpReserved)
+BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD reason, LPVOID lpReserved)
 {
   switch (reason)
   {

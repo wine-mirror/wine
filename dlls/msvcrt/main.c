@@ -39,7 +39,7 @@ typedef void (*MSVCRT_free_func)(void*);
 /*********************************************************************
  *                  Init
  */
-BOOL WINAPI MSVCRT_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
   MSVCRT_thread_data *tls;
 

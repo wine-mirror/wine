@@ -50,7 +50,7 @@ static ICOM_VTABLE(IDirectInput8A) ddi8avt;
 static dinput_device * dinput_devices[MAX_WINE_DINPUT_DEVICES];
 static int nrof_dinput_devices = 0;
 
-BOOL WINAPI Init( HINSTANCE inst, DWORD reason, LPVOID reserv)
+BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserv)
 {
     switch(reason)
     {

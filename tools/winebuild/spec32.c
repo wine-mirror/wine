@@ -598,6 +598,16 @@ void BuildSpec32File( FILE *outfile )
     {
     case SPEC_MODE_DLL:
         if (init_func) fprintf( outfile, "extern void %s();\n", init_func );
+        else
+        {
+            fprintf( outfile, "#ifdef __GNUC__\n" );
+            fprintf( outfile, "extern void DllMain() __attribute__((weak));\n" );
+            fprintf( outfile, "#else\n" );
+            fprintf( outfile, "extern void DllMain();\n" );
+            fprintf( outfile, "static void __asm__dummy_dllmain(void)" );
+            fprintf( outfile, " { asm(\".weak " __ASM_NAME("DllMain") "\"); }\n" );
+            fprintf( outfile, "#endif\n" );
+        }
         characteristics = IMAGE_FILE_DLL;
         break;
     case SPEC_MODE_GUIEXE:
@@ -790,7 +800,7 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "  { 0x%04x,\n", IMAGE_NT_OPTIONAL_HDR_MAGIC );  /* Magic */
     fprintf( outfile, "    0, 0,\n" );                   /* Major/MinorLinkerVersion */
     fprintf( outfile, "    0, 0, 0,\n" );                /* SizeOfCode/Data */
-    fprintf( outfile, "    %s,\n", init_func ? init_func : "0" );  /* AddressOfEntryPoint */
+    fprintf( outfile, "    %s,\n", init_func ? init_func : "DllMain" );  /* AddressOfEntryPoint */
     fprintf( outfile, "    0, 0,\n" );                   /* BaseOfCode/Data */
     fprintf( outfile, "    pe_header,\n" );              /* ImageBase */
     fprintf( outfile, "    %ld,\n", page_size );         /* SectionAlignment */

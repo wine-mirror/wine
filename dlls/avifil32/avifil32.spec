@@ -1,5 +1,3 @@
-init AVIFILE_DllMain
-
 @ stub    AVIBuildFilter
 @ stdcall AVIBuildFilterA(str long long) AVIBuildFilterA
 @ stdcall AVIBuildFilterW(wstr long long) AVIBuildFilterW

@@ -1,5 +1,3 @@
-init SHLWAPI_LibMain
-
 1   stdcall @(str ptr) SHLWAPI_1
 2   stdcall @(wstr ptr) SHLWAPI_2
 3   stdcall @(str long) SHLWAPI_3

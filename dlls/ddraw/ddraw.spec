@@ -1,5 +1,3 @@
-init DDRAW_DllMain
-
 @ stub DDHAL32_VidMemAlloc
 @ stub DDHAL32_VidMemFree
 @ stub DDInternalLock

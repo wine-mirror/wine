@@ -36,9 +36,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(msacm);
 HINSTANCE	MSACM_hInstance32 = 0;
 
 /***********************************************************************
- *           MSACM_LibMain (MSACM32.init)
+ *           DllMain (MSACM32.init)
  */
-BOOL WINAPI MSACM32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("%p 0x%lx %p\n", hInstDLL, fdwReason, lpvReserved);
 
