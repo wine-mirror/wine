@@ -1,6 +1,10 @@
 #ifndef __WINE_TCHAR_H
 #define __WINE_TCHAR_H
 
+#ifdef __WINE__
+#error Wine should not include tchar.h internally
+#endif
+
 #include "windef.h"
 
 #ifdef __cplusplus
@@ -10,10 +14,12 @@ extern "C" {
 /*****************************************************************************
  * tchar routines
  */
-#define _strdec(start,current)  (start<current?((char*)current)-1:NULL)
-#define _strinc(current) (((char*)current)+1)
-/* FIXME: _strncnt and strncnt are missing */
-/* FIXME: _strspnp is not implemented */
+#define _strdec(start,current)  ((start)<(current) ? ((char*)(current))-1 : NULL)
+#define _strinc(current)        (((char*)(current))+1)
+#define _strncnt(str,max)       (strlen(str)>(max) ? (max) : strlen(str))
+#define _strnextc(str)          ((unsigned int)*(str))
+#define _strninc(str,n)         (((char*)(str))+(n))
+#define _strspnp(s1,s2)         (*((s1)+=strspn((s1),(s2))) ? (s1) : NULL)
 
 
 /*****************************************************************************
