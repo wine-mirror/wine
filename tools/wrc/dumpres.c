@@ -81,13 +81,12 @@ char *get_typename(resource_t* r)
 char *strncpyWtoA(char *cs, short *ws, int maxlen)
 {
 	char *cptr = cs;
-	short *wsMax = ws + maxlen;
-	while(ws < wsMax)
+	short *wsMax = ws + maxlen - 1;
+	while(*ws && ws < wsMax)
 	{
 		if(*ws < -128 || *ws > 127)
-			printf("***Warning: Unicode string contains non-printable chars***");
+			fprintf(stderr, "***Warning: Unicode string contains non-printable chars***\n");
 		*cptr++ = (char)*ws++;
-		maxlen--;
 	}
 	*cptr = '\0';
 	return cs;
@@ -1047,4 +1046,3 @@ void dump_resources(resource_t *top)
 		top = top->next;
 	}
 }
-
