@@ -43,6 +43,10 @@ typedef struct _TEST_URL_CANONICALIZE {
 
 const TEST_URL_CANONICALIZE TEST_CANONICALIZE[] = {
     {"http://www.winehq.org/tests/../tests", 0, S_OK, "http://www.winehq.org/tests"},
+    {"http://www.winehq.org/tests\n", URL_WININET_COMPATIBILITY|URL_ESCAPE_SPACES_ONLY|URL_ESCAPE_UNSAFE, S_OK, "http://www.winehq.org/tests"},
+    {"http://www.winehq.org/tests\r", URL_WININET_COMPATIBILITY|URL_ESCAPE_SPACES_ONLY|URL_ESCAPE_UNSAFE, S_OK, "http://www.winehq.org/tests"},
+    {"http://www.winehq.org/tests\r", 0, S_OK, "http://www.winehq.org/tests"},
+    {"http://www.winehq.org/tests\r", URL_DONT_SIMPLIFY, S_OK, "http://www.winehq.org/tests"},
     {"http://www.winehq.org/tests/../tests/", 0, S_OK, "http://www.winehq.org/tests/"},
     {"http://www.winehq.org/tests/../tests/..", 0, S_OK, "http://www.winehq.org/"},
     {"http://www.winehq.org/tests/../tests/../", 0, S_OK, "http://www.winehq.org/"},
@@ -53,6 +57,24 @@ const TEST_URL_CANONICALIZE TEST_CANONICALIZE[] = {
     {"http://www.winehq.org/tests/..#example", 0, S_OK, "http://www.winehq.org/#example"},
     {"http://www.winehq.org/tests/../#example", 0, S_OK, "http://www.winehq.org/#example"},
     {"http://www.winehq.org/tests/../#example", URL_DONT_SIMPLIFY, S_OK, "http://www.winehq.org/tests/../#example"},
+};
+
+typedef struct _TEST_URL_ESCAPE {
+    char *url;
+    DWORD flags;
+    DWORD expectescaped;
+    HRESULT expectret;
+    char *expecturl;
+} TEST_URL_ESCAPE;
+
+const TEST_URL_ESCAPE TEST_ESCAPE[] = {
+    {"http://www.winehq.org/tests0", 0, 0, S_OK, "http://www.winehq.org/tests0"},
+    {"http://www.winehq.org/tests1\n", 0, 0, S_OK, "http://www.winehq.org/tests1%0A"},
+    {"http://www.winehq.org/tests2\r", 0, 0, S_OK, "http://www.winehq.org/tests2%0D"},
+    {"http://www.winehq.org/tests3\r", URL_ESCAPE_SPACES_ONLY|URL_ESCAPE_UNSAFE, 0, S_OK, "http://www.winehq.org/tests3\r"},
+    {"http://www.winehq.org/tests4\r", URL_ESCAPE_SPACES_ONLY, 0, S_OK, "http://www.winehq.org/tests4\r"},
+    {"http://www.winehq.org/tests5\r", URL_WININET_COMPATIBILITY|URL_ESCAPE_SPACES_ONLY, 0, S_OK, "http://www.winehq.org/tests5\r"},
+    {"/direct/swhelp/series6/6.2i_latestservicepack.dat\r", URL_ESCAPE_SPACES_ONLY, 0, S_OK, "/direct/swhelp/series6/6.2i_latestservicepack.dat\r"},
 };
 
 static LPWSTR GetWideString(const char* szString)
@@ -102,7 +124,7 @@ static void test_url_part(const char* szUrl, DWORD dwPart, DWORD dwFlags, const 
   DWORD dwSize;
 
   dwSize = INTERNET_MAX_URL_LENGTH;
-  ok( UrlGetPartA(szUrl, szPart, &dwSize, dwPart, dwFlags) == S_OK, "UrlGetPartA didn't return S_OK\n" );
+  ok( UrlGetPartA(szUrl, szPart, &dwSize, dwPart, dwFlags) == S_OK, "UrlGetPartA for \"%s\" part 0x%08lx didn't return S_OK but \"%s\"\n", szUrl, dwPart, szPart);
   dwSize = INTERNET_MAX_URL_LENGTH;
   ok( UrlGetPartW(wszUrl, wszPart, &dwSize, dwPart, dwFlags) == S_OK, "UrlGetPartW didn't return S_OK\n" );
 
@@ -129,6 +151,15 @@ static void test_UrlGetPart(void)
   test_url_part(TEST_URL_3, URL_PART_QUERY, 0, "?query=x&return=y");
 }
 
+static void test_url_escape(const char *szUrl, DWORD dwFlags, HRESULT dwExpectReturn, const char *szExpectUrl)
+{
+    CHAR szReturnUrl[INTERNET_MAX_URL_LENGTH];
+    DWORD dwEscaped;
+
+    dwEscaped=INTERNET_MAX_URL_LENGTH;
+    ok(UrlEscapeA(szUrl, szReturnUrl, &dwEscaped, dwFlags) == dwExpectReturn, "UrlEscapeA didn't return 0x%08lx\n", dwExpectReturn);
+    ok(strcmp(szReturnUrl,szExpectUrl)==0, "Expected \"%s\", but got \"%s\"\n", szExpectUrl, szReturnUrl);
+}
 static void test_url_canonicalize(const char *szUrl, DWORD dwFlags, HRESULT dwExpectReturn, const char *szExpectUrl)
 {
     CHAR szReturnUrl[INTERNET_MAX_URL_LENGTH];
@@ -141,19 +172,28 @@ static void test_url_canonicalize(const char *szUrl, DWORD dwFlags, HRESULT dwEx
     
     dwSize = INTERNET_MAX_URL_LENGTH;
     ok(UrlCanonicalizeA(szUrl, szReturnUrl, &dwSize, dwFlags) == dwExpectReturn, "UrlCanonicalizeA didn't return 0x%08lx\n", dwExpectReturn);
+    ok(strcmp(szReturnUrl,szExpectUrl)==0, "Expected %s, but got %s\n", szExpectUrl, szReturnUrl);
+
     dwSize = INTERNET_MAX_URL_LENGTH;
     ok(UrlCanonicalizeW(wszUrl, wszReturnUrl, &dwSize, dwFlags) == dwExpectReturn, "UrlCanonicalizeW didn't return 0x%08lx\n", dwExpectReturn);
-
     wszConvertedUrl = GetWideString(szReturnUrl);
     ok(strcmpW(wszReturnUrl, wszConvertedUrl)==0, "Strings didn't match between ascii and unicode UrlCanonicalize!\n");
     FreeWideString(wszConvertedUrl);
     
-    ok(strcmp(szReturnUrl,szExpectUrl)==0, "Expected %s, but got %s\n", szExpectUrl, szReturnUrl);
             
     FreeWideString(wszUrl);
     FreeWideString(wszExpectUrl);
 }
 
+
+static void test_UrlEscape(void)
+{
+    int i;
+    for(i=0; i<sizeof(TEST_ESCAPE)/sizeof(TEST_ESCAPE[0]); i++) {
+        test_url_escape(TEST_ESCAPE[i].url, TEST_ESCAPE[i].flags,
+                              TEST_ESCAPE[i].expectret, TEST_ESCAPE[i].expecturl);
+    }
+}
 
 static void test_UrlCanonicalize(void)
 {
@@ -169,4 +209,5 @@ START_TEST(path)
   test_UrlHash();
   test_UrlGetPart();
   test_UrlCanonicalize();
+  test_UrlEscape();
 }
