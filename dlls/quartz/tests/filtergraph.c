@@ -72,6 +72,7 @@ static void releasefiltergraph()
 
 START_TEST(filtergraph)
 {
+    CoInitialize(NULL);
     createfiltergraph();
 #if 0
     renderfile();
