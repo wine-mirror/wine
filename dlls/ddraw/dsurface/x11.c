@@ -312,8 +312,9 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_SetPalette(
 	if( This->s.palette != NULL )
 	    IDirectDrawPalette_Release( (IDirectDrawPalette*)This->s.palette );
 	This->s.palette = ipal; 
-	/* Perform the refresh */
-	TSXSetWindowColormap(display,ddpriv->drawable,dppriv->cm);
+	/* Perform the refresh, only if a palette was created */
+	if (dppriv->cm)
+	  TSXSetWindowColormap(display,ddpriv->drawable,dppriv->cm);
 
 	if (This->s.hdc != 0) {
 	    /* hack: set the DIBsection color map */
