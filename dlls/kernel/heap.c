@@ -1179,7 +1179,7 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
 VOID WINAPI GlobalMemoryStatus( LPMEMORYSTATUS lpBuffer )
 {
     MEMORYSTATUSEX memstatus;
-    OSVERSIONINFOA osver;
+    OSVERSIONINFOW osver;
 
     /* Because GlobalMemoryStatus is identical to GlobalMemoryStatusEX save
        for one extra field in the struct, and the lack of a bug, we simply
@@ -1193,7 +1193,9 @@ VOID WINAPI GlobalMemoryStatus( LPMEMORYSTATUS lpBuffer )
      * NT reports values modulo 4 Gb.
      * Values between 2 Gb and 4 Gb are rounded down to 2 Gb.
      */
-    GetVersionExA(&osver);
+
+    osver.dwOSVersionInfoSize = sizeof(osver);
+    GetVersionExW(&osver);
 
     if ( osver.dwMajorVersion >= 5 )
     {
