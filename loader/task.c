@@ -10,7 +10,6 @@
 #include <unistd.h>
 
 #include "wine/winbase16.h"
-#include "user.h"
 #include "callback.h"
 #include "drive.h"
 #include "file.h"

@@ -19,7 +19,6 @@
 #include "task.h"
 #include "module.h"
 #include "global.h"
-#include "user.h"
 #include "winerror.h"
 #include "heap.h"
 #include "selectors.h"

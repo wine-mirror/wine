@@ -18,7 +18,6 @@
 #include "module.h"
 #include "miscemu.h"
 #include "stackframe.h"
-#include "user.h"
 #include "process.h"
 #include "task.h"
 #include "debugtools.h"

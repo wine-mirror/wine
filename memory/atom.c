@@ -25,7 +25,6 @@
 #include "instance.h"
 #include "ldt.h"
 #include "stackframe.h"
-#include "user.h"
 #include "debugtools.h"
 #include "server.h"
 
