@@ -1434,94 +1434,154 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
     return count;
 }
 
-
-
 /*************************************************************************
- *           FindFirstFile16   (KERNEL.413)
+ *           FindFirstFileExA  (KERNEL32)
  */
-HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATAA *data )
+HANDLE WINAPI FindFirstFileExA(
+	LPCSTR lpFileName,
+	FINDEX_INFO_LEVELS fInfoLevelId,
+	LPVOID lpFindFileData,
+	FINDEX_SEARCH_OPS fSearchOp,
+	LPVOID lpSearchFilter,
+	DWORD dwAdditionalFlags)
 {
     DOS_FULL_NAME full_name;
-    HGLOBAL16 handle;
+    HGLOBAL handle;
     FIND_FIRST_INFO *info;
-
-    data->dwReserved0 = data->dwReserved1 = 0x0;
-    if (!path) return 0;
-    if (!DOSFS_GetFullName( path, FALSE, &full_name ))
-        return INVALID_HANDLE_VALUE16;
-    if (!(handle = GlobalAlloc16( GMEM_MOVEABLE, sizeof(FIND_FIRST_INFO) )))
-        return INVALID_HANDLE_VALUE16;
-    info = (FIND_FIRST_INFO *)GlobalLock16( handle );
-    info->path = HEAP_strdupA( GetProcessHeap(), 0, full_name.long_name );
-    info->long_mask = strrchr( info->path, '/' );
-    *(info->long_mask++) = '\0';
-    info->short_mask = NULL;
-    info->attr = 0xff;
-    if (path[0] && (path[1] == ':')) info->drive = toupper(*path) - 'A';
-    else info->drive = DRIVE_GetCurrentDrive();
-    info->cur_pos = 0;
-
-    info->dir = DOSFS_OpenDir( info->path );
-
-    GlobalUnlock16( handle );
-    if (!FindNextFile16( handle, data ))
+    
+    if ((fSearchOp != FindExSearchNameMatch) || (dwAdditionalFlags != 0))
     {
-        FindClose16( handle );
-        SetLastError( ERROR_NO_MORE_FILES );
-        return INVALID_HANDLE_VALUE16;
+        FIXME("options not implemented 0x%08x 0x%08lx\n", fSearchOp, dwAdditionalFlags );
+        return INVALID_HANDLE_VALUE;
     }
-    return handle;
-}
 
+    switch(fInfoLevelId)
+    {
+      case FindExInfoStandard:
+        {
+          WIN32_FIND_DATAA * data = (WIN32_FIND_DATAA *) lpFindFileData;
+          data->dwReserved0 = data->dwReserved1 = 0x0;
+          if (!lpFileName) return 0;
+          if (!DOSFS_GetFullName( lpFileName, FALSE, &full_name )) break;
+          if (!(handle = GlobalAlloc(GMEM_MOVEABLE, sizeof(FIND_FIRST_INFO)))) break;
+          info = (FIND_FIRST_INFO *)GlobalLock( handle );
+          info->path = HEAP_strdupA( GetProcessHeap(), 0, full_name.long_name );
+          info->long_mask = strrchr( info->path, '/' );
+          *(info->long_mask++) = '\0';
+          info->short_mask = NULL;
+          info->attr = 0xff;
+          if (lpFileName[0] && (lpFileName[1] == ':'))
+              info->drive = toupper(*lpFileName) - 'A';
+          else info->drive = DRIVE_GetCurrentDrive();
+          info->cur_pos = 0;
+
+          info->dir = DOSFS_OpenDir( info->path );
+
+          GlobalUnlock( handle );
+          if (!FindNextFileA( handle, data ))
+          {
+              FindClose( handle );
+              SetLastError( ERROR_NO_MORE_FILES );
+              break;
+          }
+          return handle;
+        }
+        break;
+      default:
+        FIXME("fInfoLevelId 0x%08x not implemented\n", fInfoLevelId );
+    }
+    return INVALID_HANDLE_VALUE;
+}
 
 /*************************************************************************
  *           FindFirstFileA   (KERNEL32.123)
  */
-HANDLE WINAPI FindFirstFileA( LPCSTR path, WIN32_FIND_DATAA *data )
+HANDLE WINAPI FindFirstFileA(
+	LPCSTR lpFileName,
+	WIN32_FIND_DATAA *lpFindData )
 {
-    HANDLE handle = FindFirstFile16( path, data );
-    if (handle == INVALID_HANDLE_VALUE16) return INVALID_HANDLE_VALUE;
-    return handle;
+    return FindFirstFileExA(lpFileName, FindExInfoStandard, lpFindData,
+                            FindExSearchNameMatch, NULL, 0);
 }
 
+/*************************************************************************
+ *           FindFirstFileExW   (KERNEL32)
+ */
+HANDLE WINAPI FindFirstFileExW(
+	LPCWSTR lpFileName,
+	FINDEX_INFO_LEVELS fInfoLevelId,
+	LPVOID lpFindFileData,
+	FINDEX_SEARCH_OPS fSearchOp,
+	LPVOID lpSearchFilter,
+	DWORD dwAdditionalFlags)
+{
+    HANDLE handle;
+    WIN32_FIND_DATAA dataA;
+    LPVOID _lpFindFileData;
+    LPSTR pathA;
+
+    switch(fInfoLevelId)
+    {
+      case FindExInfoStandard:
+        {
+          _lpFindFileData = &dataA;
+        }
+        break;
+      default:
+        FIXME("fInfoLevelId 0x%08x not implemented\n", fInfoLevelId );
+	return INVALID_HANDLE_VALUE;
+    }
+
+    pathA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFileName );
+    handle = FindFirstFileExA(pathA, fInfoLevelId, _lpFindFileData, fSearchOp, lpSearchFilter, dwAdditionalFlags);
+    HeapFree( GetProcessHeap(), 0, pathA );
+    if (handle == INVALID_HANDLE_VALUE) return handle;
+    
+    switch(fInfoLevelId)
+    {
+      case FindExInfoStandard:
+        {
+          WIN32_FIND_DATAW *dataW = (WIN32_FIND_DATAW*) lpFindFileData;
+          dataW->dwFileAttributes = dataA.dwFileAttributes;
+          dataW->ftCreationTime   = dataA.ftCreationTime;
+          dataW->ftLastAccessTime = dataA.ftLastAccessTime;
+          dataW->ftLastWriteTime  = dataA.ftLastWriteTime;
+          dataW->nFileSizeHigh    = dataA.nFileSizeHigh;
+          dataW->nFileSizeLow     = dataA.nFileSizeLow;
+          lstrcpyAtoW( dataW->cFileName, dataA.cFileName );
+          lstrcpyAtoW( dataW->cAlternateFileName, dataA.cAlternateFileName );
+        }
+        break;
+      default:
+        FIXME("fInfoLevelId 0x%08x not implemented\n", fInfoLevelId );
+        return INVALID_HANDLE_VALUE;
+    }
+    return handle;
+}
 
 /*************************************************************************
  *           FindFirstFileW   (KERNEL32.124)
  */
-HANDLE WINAPI FindFirstFileW( LPCWSTR path, WIN32_FIND_DATAW *data )
+HANDLE WINAPI FindFirstFileW( LPCWSTR lpFileName, WIN32_FIND_DATAW *lpFindData )
 {
-    WIN32_FIND_DATAA dataA;
-    LPSTR pathA = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
-    HANDLE handle = FindFirstFileA( pathA, &dataA );
-    HeapFree( GetProcessHeap(), 0, pathA );
-    if (handle != INVALID_HANDLE_VALUE)
-    {
-        data->dwFileAttributes = dataA.dwFileAttributes;
-        data->ftCreationTime   = dataA.ftCreationTime;
-        data->ftLastAccessTime = dataA.ftLastAccessTime;
-        data->ftLastWriteTime  = dataA.ftLastWriteTime;
-        data->nFileSizeHigh    = dataA.nFileSizeHigh;
-        data->nFileSizeLow     = dataA.nFileSizeLow;
-        lstrcpyAtoW( data->cFileName, dataA.cFileName );
-        lstrcpyAtoW( data->cAlternateFileName, dataA.cAlternateFileName );
-    }
-    return handle;
+    return FindFirstFileExW(lpFileName, FindExInfoStandard, lpFindData,
+                            FindExSearchNameMatch, NULL, 0);
 }
 
-
 /*************************************************************************
- *           FindNextFile16   (KERNEL.414)
+ *           FindNextFileA   (KERNEL32.126)
  */
-BOOL16 WINAPI FindNextFile16( HANDLE16 handle, WIN32_FIND_DATAA *data )
+BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
 {
     FIND_FIRST_INFO *info;
 
-    if (!(info = (FIND_FIRST_INFO *)GlobalLock16( handle )))
+    if ((handle == INVALID_HANDLE_VALUE) || 
+       !(info = (FIND_FIRST_INFO *)GlobalLock( handle )))
     {
         SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
     }
-    GlobalUnlock16( handle );
+    GlobalUnlock( handle );
     if (!info->path || !info->dir)
     {
         SetLastError( ERROR_NO_MORE_FILES );
@@ -1536,15 +1596,6 @@ BOOL16 WINAPI FindNextFile16( HANDLE16 handle, WIN32_FIND_DATAA *data )
         return FALSE;
     }
     return TRUE;
-}
-
-
-/*************************************************************************
- *           FindNextFileA   (KERNEL32.126)
- */
-BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
-{
-    return FindNextFile16( handle, data );
 }
 
 
@@ -1566,36 +1617,25 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
     return TRUE;
 }
 
-
 /*************************************************************************
- *           FindClose16   (KERNEL.415)
+ *           FindClose   (KERNEL32.119)
  */
-BOOL16 WINAPI FindClose16( HANDLE16 handle )
+BOOL WINAPI FindClose( HANDLE handle )
 {
     FIND_FIRST_INFO *info;
 
-    if ((handle == INVALID_HANDLE_VALUE16) ||
-        !(info = (FIND_FIRST_INFO *)GlobalLock16( handle )))
+    if ((handle == INVALID_HANDLE_VALUE) ||
+        !(info = (FIND_FIRST_INFO *)GlobalLock( handle )))
     {
         SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
     }
     if (info->dir) DOSFS_CloseDir( info->dir );
     if (info->path) HeapFree( GetProcessHeap(), 0, info->path );
-    GlobalUnlock16( handle );
-    GlobalFree16( handle );
+    GlobalUnlock( handle );
+    GlobalFree( handle );
     return TRUE;
 }
-
-
-/*************************************************************************
- *           FindClose   (KERNEL32.119)
- */
-BOOL WINAPI FindClose( HANDLE handle )
-{
-    return FindClose16( (HANDLE16)handle );
-}
-
 
 /***********************************************************************
  *           DOSFS_UnixTimeToFileTime
@@ -2008,3 +2048,96 @@ BOOL WINAPI DefineDosDeviceA(DWORD flags,LPCSTR devname,LPCSTR targetpath) {
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
 }
+
+/*
+   --- 16 bit functions ---
+*/
+
+/*************************************************************************
+ *           FindFirstFile16   (KERNEL.413)
+ */
+HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATAA *data )
+{
+    DOS_FULL_NAME full_name;
+    HGLOBAL16 handle;
+    FIND_FIRST_INFO *info;
+
+    data->dwReserved0 = data->dwReserved1 = 0x0;
+    if (!path) return 0;
+    if (!DOSFS_GetFullName( path, FALSE, &full_name ))
+        return INVALID_HANDLE_VALUE16;
+    if (!(handle = GlobalAlloc16( GMEM_MOVEABLE, sizeof(FIND_FIRST_INFO) )))
+        return INVALID_HANDLE_VALUE16;
+    info = (FIND_FIRST_INFO *)GlobalLock16( handle );
+    info->path = HEAP_strdupA( SystemHeap, 0, full_name.long_name );
+    info->long_mask = strrchr( info->path, '/' );
+    if (info->long_mask )
+        *(info->long_mask++) = '\0';
+    info->short_mask = NULL;
+    info->attr = 0xff;
+    if (path[0] && (path[1] == ':')) info->drive = toupper(*path) - 'A';
+    else info->drive = DRIVE_GetCurrentDrive();
+    info->cur_pos = 0;
+
+    info->dir = DOSFS_OpenDir( info->path );
+
+    GlobalUnlock16( handle );
+    if (!FindNextFile16( handle, data ))
+    {
+        FindClose16( handle );
+        SetLastError( ERROR_NO_MORE_FILES );
+        return INVALID_HANDLE_VALUE16;
+    }
+    return handle;
+}
+
+/*************************************************************************
+ *           FindNextFile16   (KERNEL.414)
+ */
+BOOL16 WINAPI FindNextFile16( HANDLE16 handle, WIN32_FIND_DATAA *data )
+{
+    FIND_FIRST_INFO *info;
+
+    if ((handle == INVALID_HANDLE_VALUE16) ||
+       !(info = (FIND_FIRST_INFO *)GlobalLock16( handle )))
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    GlobalUnlock16( handle );
+    if (!info->path || !info->dir)
+    {
+        SetLastError( ERROR_NO_MORE_FILES );
+        return FALSE;
+    }
+    if (!DOSFS_FindNextEx( info, data ))
+    {
+        DOSFS_CloseDir( info->dir ); info->dir = NULL;
+        HeapFree( SystemHeap, 0, info->path );
+        info->path = info->long_mask = NULL;
+        SetLastError( ERROR_NO_MORE_FILES );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/*************************************************************************
+ *           FindClose16   (KERNEL.415)
+ */
+BOOL16 WINAPI FindClose16( HANDLE16 handle )
+{
+    FIND_FIRST_INFO *info;
+
+    if ((handle == INVALID_HANDLE_VALUE16) ||
+        !(info = (FIND_FIRST_INFO *)GlobalLock16( handle )))
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    if (info->dir) DOSFS_CloseDir( info->dir );
+    if (info->path) HeapFree( SystemHeap, 0, info->path );
+    GlobalUnlock16( handle );
+    GlobalFree16( handle );
+    return TRUE;
+}
+

@@ -881,8 +881,8 @@ import  ntdll.dll
 862 stdcall CreateWaitableTimerW(ptr long wstr) CreateWaitableTimerW
 863 stub DeleteFiber
 864 stub DuplicateConsoleHandle
-865 stub FindFirstFileExA
-866 stub FindFirstFileExW
+865 stdcall FindFirstFileExA(str long ptr long ptr long)FindFirstFileExA
+866 stdcall FindFirstFileExW(wstr long ptr long ptr long)FindFirstFileExW
 867 stub GetConsoleInputExeNameA
 868 stub GetConsoleInputExeNameW
 869 stub GetConsoleKeyboardLayoutNameA
@@ -927,4 +927,3 @@ import  ntdll.dll
 
 #1599 wrong ordinal (249 in Win32s's W32SCOMB.DLL) !
 1599 stdcall Get16DLLAddress(long str) Get16DLLAddress
-
