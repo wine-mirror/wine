@@ -398,6 +398,13 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     object->ref = 1;
     object->direct3d8 = This;
     object->UpdateStateBlock = &object->StateBlock;
+
+    /* Save the creation parameters */
+    object->CreateParms.AdapterOrdinal = Adapter;
+    object->CreateParms.DeviceType = DeviceType;
+    object->CreateParms.hFocusWindow = hFocusWindow;
+    object->CreateParms.BehaviorFlags = BehaviourFlags;
+
     CreateStateBlock((LPDIRECT3DDEVICE8) object);
 
     *ppReturnedDeviceInterface = (LPDIRECT3DDEVICE8)object;

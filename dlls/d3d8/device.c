@@ -567,7 +567,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetDisplayMode(LPDIRECT3DDEVICE8 iface, D3
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetCreationParameters(LPDIRECT3DDEVICE8 iface, D3DDEVICE_CREATION_PARAMETERS *pParameters) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    TRACE("(%p) copying to %p\n", This, pParameters);    
+    memcpy(pParameters, &This->CreateParms, sizeof(D3DDEVICE_CREATION_PARAMETERS));
+    return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetCursorProperties(LPDIRECT3DDEVICE8 iface, UINT XHotSpot, UINT YHotSpot, IDirect3DSurface8* pCursorBitmap) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
@@ -801,11 +803,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateIndexBuffer(LPDIRECT3DDEVICE8 iface,
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateRenderTarget(LPDIRECT3DDEVICE8 iface, UINT Width,UINT Height,D3DFORMAT Format,D3DMULTISAMPLE_TYPE MultiSample,BOOL Lockable,IDirect3DSurface8** ppSurface) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    /* up ref count on surface */
+    /* up ref count on surface, surface->container = This */
     FIXME("(%p) : stub\n", This);    return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateDepthStencilSurface(LPDIRECT3DDEVICE8 iface, UINT Width,UINT Height,D3DFORMAT Format,D3DMULTISAMPLE_TYPE MultiSample,IDirect3DSurface8** ppSurface) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
+    /* surface->container = This */
     FIXME("(%p) : stub\n", This);    return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateImageSurface(LPDIRECT3DDEVICE8 iface, UINT Width,UINT Height,D3DFORMAT Format,IDirect3DSurface8** ppSurface) {
@@ -818,7 +821,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateImageSurface(LPDIRECT3DDEVICE8 iface
     object->lpVtbl = &Direct3DSurface8_Vtbl;
     object->Device = This;
     object->ResourceType = D3DRTYPE_SURFACE;
-    object->Container = object;
+    object->Container = This;
 
     object->ref = 1;
     object->myDesc.Width = Width;
@@ -1401,13 +1404,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
             glEnable(GL_CULL_FACE);
             checkGLcall("glEnable GL_CULL_FACE");
             glFrontFace(GL_CW);
-            checkGLcall("glFrontFace");
+            checkGLcall("glFrontFace GL_CW");
             break;
         case D3DCULL_CCW:
             glEnable(GL_CULL_FACE);
             checkGLcall("glEnable GL_CULL_FACE");
-            glFrontFace(GL_CW);
-            checkGLcall("glFrontFace GL_CULL_FACE");
+            glFrontFace(GL_CW); /* FIXME: Samples show this is required, but why not CCW? */
+            checkGLcall("glFrontFace GL_CCW");
             break;
         default:
             FIXME("Unrecognized/Unhandled D3DCULL value %ld\n", Value);
@@ -1547,7 +1550,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         }
         break;
 
-    case D3DRS_ALPHAREF                  :
+    case D3DRS_ALPHAFUNC                 :
         {
             int glParm = GL_LESS;
             float ref = 1.0;
@@ -1573,7 +1576,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         }
         break;
 
-    case D3DRS_ALPHAFUNC                 :
+    case D3DRS_ALPHAREF                  :
         {
             int glParm = GL_LESS;
             float ref = 1.0;
@@ -1753,7 +1756,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, D
     int i,j;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    TRACE("(%p) : Applying state block %lx\n", This, Token);
+    TRACE("(%p) : Applying state block %lx ------------------v\n", This, Token);
 
     /* FIXME: Only apply applicable states not all states */
 
@@ -1817,7 +1820,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, D
         /* Render */
         for (i=0; i<HIGHEST_RENDER_STATE; i++) {
 
-            if (This->StateBlock.Set.renderstate[i] && pSB->Changed.renderstate[i])
+            if (pSB->Set.renderstate[i] && pSB->Changed.renderstate[i])
                 IDirect3DDevice8Impl_SetRenderState(iface, i, pSB->renderstate[i]);
 
         }
@@ -1826,7 +1829,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, D
         for (j=0; j<8; j++) {
             for (i=0; i<HIGHEST_TEXTURE_STATE; i++) {
 
-                if (This->StateBlock.Set.texture_state[j][i] && pSB->Changed.texture_state[j][i])
+                if (pSB->Set.texture_state[j][i] && pSB->Changed.texture_state[j][i])
                     IDirect3DDevice8Impl_SetTextureStageState(iface, j, i, pSB->texture_state[j][i]);
             }
 
@@ -1835,7 +1838,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, D
     } else if (pSB->blockType == D3DSBT_PIXELSTATE) {
 
         for (i=0; i<NUM_SAVEDPIXELSTATES_R; i++) {
-            if (This->StateBlock.Set.renderstate[SavedPixelStates_R[i]] && pSB->Changed.renderstate[SavedPixelStates_R[i]])
+            if (pSB->Set.renderstate[SavedPixelStates_R[i]] && pSB->Changed.renderstate[SavedPixelStates_R[i]])
                 IDirect3DDevice8Impl_SetRenderState(iface, SavedPixelStates_R[i], pSB->renderstate[SavedPixelStates_R[i]]);
 
         }
@@ -1843,7 +1846,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, D
         for (j=0; j<8; i++) {
             for (i=0; i<NUM_SAVEDPIXELSTATES_T; i++) {
 
-                if (This->StateBlock.Set.texture_state[j][SavedPixelStates_T[i]] &&
+                if (pSB->Set.texture_state[j][SavedPixelStates_T[i]] &&
                     pSB->Changed.texture_state[j][SavedPixelStates_T[i]])
                     IDirect3DDevice8Impl_SetTextureStageState(iface, j, SavedPixelStates_T[i], pSB->texture_state[j][SavedPixelStates_T[i]]);
             }
@@ -1852,7 +1855,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, D
     } else if (pSB->blockType == D3DSBT_VERTEXSTATE) {
 
         for (i=0; i<NUM_SAVEDVERTEXSTATES_R; i++) {
-            if (This->StateBlock.Set.renderstate[SavedVertexStates_R[i]] && pSB->Changed.renderstate[SavedVertexStates_R[i]])
+            if (pSB->Set.renderstate[SavedVertexStates_R[i]] && pSB->Changed.renderstate[SavedVertexStates_R[i]])
                 IDirect3DDevice8Impl_SetRenderState(iface, SavedVertexStates_R[i], pSB->renderstate[SavedVertexStates_R[i]]);
 
         }
@@ -1860,7 +1863,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, D
         for (j=0; j<8; i++) {
             for (i=0; i<NUM_SAVEDVERTEXSTATES_T; i++) {
 
-                if (This->StateBlock.Set.texture_state[j][SavedVertexStates_T[i]] &&
+                if (pSB->Set.texture_state[j][SavedVertexStates_T[i]] &&
                     pSB->Changed.texture_state[j][SavedVertexStates_T[i]])
                     IDirect3DDevice8Impl_SetTextureStageState(iface, j, SavedVertexStates_T[i], pSB->texture_state[j][SavedVertexStates_T[i]]);
             }
@@ -1871,6 +1874,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, D
         FIXME("Unrecognized state block type %d\n", pSB->blockType);
     }
     memcpy(&This->StateBlock.Changed, &pSB->Changed, sizeof(This->StateBlock.Changed));
+    TRACE("(%p) : Applied state block %lx ------------------^\n", This, Token);
 
     return D3D_OK;
 }
@@ -1880,7 +1884,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CaptureStateBlock(LPDIRECT3DDEVICE8 iface,
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
-    TRACE("(%p) : Updating state block %lx\n", This, Token);
+    TRACE("(%p) : Updating state block %lx ------------------v \n", This, Token);
 
     /* If not recorded, then update can just recapture */
     if (updateBlock->blockType != D3DSBT_RECORDED) {
@@ -1895,14 +1899,117 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CaptureStateBlock(LPDIRECT3DDEVICE8 iface,
            across this action */
 
     } else {
+        int i,j;
 
-        /* Recorded => Only update 'changed' values
-          FIXME: Currently implementation just copies the whole state block, because
-          then 'changed' flags were copied in when the block was applied, so the new state
-          block will just have more changed flags set! This will break if
-          state A is applied, then state B is applied, then state A is captured. */
-        memcpy(updateBlock, &This->StateBlock, sizeof(STATEBLOCK));
+        /* Recorded => Only update 'changed' values */
+        if (updateBlock->Set.vertexShader && updateBlock->VertexShader != This->StateBlock.VertexShader) {
+            updateBlock->VertexShader = This->StateBlock.VertexShader;
+            TRACE("Updating vertex shader to %ld\n", This->StateBlock.VertexShader);
+        }
+
+        /* TODO: Vertex Shader Constants */
+
+        for (i=0; i<MAX_ACTIVE_LIGHTS; i++) {
+          if (updateBlock->Set.lightEnable[i] && This->StateBlock.lightEnable[i] != updateBlock->lightEnable[i]) {
+              TRACE("Updating light enable for light %d to %d\n", i, This->StateBlock.lightEnable[i]);
+              updateBlock->lightEnable[i] = This->StateBlock.lightEnable[i];
+          }
+
+          if (updateBlock->Set.lights[i] && memcmp(&This->StateBlock.lights[i], 
+                                                   &updateBlock->lights[i], 
+                                                   sizeof(D3DLIGHT8)) != 0) {
+              TRACE("Updating lights for light %d\n", i);
+              memcpy(&updateBlock->lights[i], &This->StateBlock.lights[i], sizeof(D3DLIGHT8));
+          }
+        }
+
+        if (updateBlock->Set.pixelShader && updateBlock->PixelShader != This->StateBlock.PixelShader) {
+            TRACE("Updating pixel shader to %ld\n", This->StateBlock.PixelShader);
+            updateBlock->lights[i] = This->StateBlock.lights[i];
+                IDirect3DDevice8Impl_SetVertexShader(iface, updateBlock->PixelShader);
+        }
+
+        /* TODO: Pixel Shader Constants */
+
+        /* Others + Render & Texture */
+       for (i=0; i<HIGHEST_TRANSFORMSTATE; i++) {
+            if (updateBlock->Set.transform[i] && memcmp(&This->StateBlock.transforms[i], 
+                                                   &updateBlock->transforms[i], 
+                                                   sizeof(D3DMATRIX)) != 0) {
+                TRACE("Updating transform %d\n", i);
+                memcpy(&updateBlock->transforms[i], &This->StateBlock.transforms[i], sizeof(D3DMATRIX));
+            }
+       }
+
+       if (updateBlock->Set.Indices && ((updateBlock->pIndexData != This->StateBlock.pIndexData)
+                                    || (updateBlock->baseVertexIndex != This->StateBlock.baseVertexIndex))) {
+           TRACE("Updating pindexData to %p, baseVertexIndex to %d\n", 
+                       This->StateBlock.pIndexData, This->StateBlock.baseVertexIndex);
+           updateBlock->pIndexData = This->StateBlock.pIndexData;
+           updateBlock->baseVertexIndex = This->StateBlock.baseVertexIndex;
+       }
+
+       if (updateBlock->Set.material && memcmp(&This->StateBlock.material, 
+                                                   &updateBlock->material, 
+                                                   sizeof(D3DMATERIAL8)) != 0) {
+                TRACE("Updating material\n");
+                memcpy(&updateBlock->material, &This->StateBlock.material, sizeof(D3DMATERIAL8));
+       }
+           
+       if (updateBlock->Set.viewport && memcmp(&This->StateBlock.viewport, 
+                                                   &updateBlock->viewport, 
+                                                   sizeof(D3DVIEWPORT8)) != 0) {
+                TRACE("Updating viewport\n");
+                memcpy(&updateBlock->viewport, &This->StateBlock.viewport, sizeof(D3DVIEWPORT8));
+       }
+
+       for (i=0; i<MAX_STREAMS; i++) {
+           if (updateBlock->Set.stream_source[i] && 
+                           ((updateBlock->stream_stride[i] != This->StateBlock.stream_stride[i]) ||
+                           (updateBlock->stream_source[i] != This->StateBlock.stream_source[i]))) {
+               TRACE("Updating stream source %d to %p, stride to %d\n", i, This->StateBlock.stream_source[i], 
+                                                                        This->StateBlock.stream_stride[i]);
+               updateBlock->stream_stride[i] = This->StateBlock.stream_stride[i];
+               updateBlock->stream_source[i] = This->StateBlock.stream_source[i];
+           }
+       }
+
+       for (i=0; i<MAX_CLIPPLANES; i++) {
+           if (updateBlock->Set.clipplane[i] && memcmp(&This->StateBlock.clipplane[i], 
+                                                       &updateBlock->clipplane[i], 
+                                                       sizeof(updateBlock->clipplane)) != 0) {
+
+               TRACE("Updating clipplane %d\n", i);
+               memcpy(&updateBlock->clipplane[i], &This->StateBlock.clipplane[i], 
+                                       sizeof(updateBlock->clipplane));
+           }
+       }
+
+       /* Render */
+       for (i=0; i<HIGHEST_RENDER_STATE; i++) {
+
+           if (updateBlock->Set.renderstate[i] && (updateBlock->renderstate[i] != 
+                                                       This->StateBlock.renderstate[i])) {
+               TRACE("Updating renderstate %d to %ld\n", i, This->StateBlock.renderstate[i]);
+               updateBlock->renderstate[i] = This->StateBlock.renderstate[i];
+           }
+       }
+
+       /* Texture */
+       for (j=0; j<8; j++) {
+           for (i=0; i<HIGHEST_TEXTURE_STATE; i++) {
+
+               if (updateBlock->Set.texture_state[j][i] && (updateBlock->texture_state[j][i] != 
+                                                                This->StateBlock.texture_state[j][i])) {
+                   TRACE("Updating texturestagestate %d,%d to %ld\n", j,i, This->StateBlock.texture_state[j][i]);
+                   updateBlock->texture_state[j][i] =  This->StateBlock.texture_state[j][i];
+               }
+           }
+
+       }
     }
+
+    TRACE("(%p) : Updated state block %lx ------------------^\n", This, Token);
 
     return D3D_OK;
 }
