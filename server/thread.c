@@ -256,7 +256,8 @@ void wait4_thread( struct thread *thread, int signal )
         switch(sig)
         {
         case SIGSTOP:  /* continue at once if not suspended */
-            if (!thread) thread = get_thread_from_pid( pid );
+            if (!thread)
+                if (!(thread = get_thread_from_pid( pid ))) break;
             if (!(thread->process->suspend + thread->suspend))
                 ptrace( PTRACE_CONT, pid, 0, sig );
             break;
@@ -271,7 +272,8 @@ void wait4_thread( struct thread *thread, int signal )
         int exit_code = WTERMSIG(status);
         if (debug_level)
             fprintf( stderr, "ptrace: pid %d killed by sig %d\n", pid, exit_code );
-        if (!thread) thread = get_thread_from_pid( pid );
+        if (!thread)
+            if (!(thread = get_thread_from_pid( pid ))) return;
         if (thread->client) remove_client( thread->client, exit_code );
     }
     else if (WIFEXITED(status))
@@ -279,7 +281,8 @@ void wait4_thread( struct thread *thread, int signal )
         int exit_code = WEXITSTATUS(status);
         if (debug_level)
             fprintf( stderr, "ptrace: pid %d exited with status %d\n", pid, exit_code );
-        if (!thread) thread = get_thread_from_pid( pid );
+        if (!thread)
+            if (!(thread = get_thread_from_pid( pid ))) return;
         if (thread->client) remove_client( thread->client, exit_code );
     }
     else fprintf( stderr, "wait4: pid %d unknown status %x\n", pid, status );
