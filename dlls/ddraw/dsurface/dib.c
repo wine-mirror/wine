@@ -542,19 +542,24 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 		    last_sy = sy;
 		}
 	    }
-	} else if (dwFlags & (DDBLT_KEYSRC | DDBLT_KEYDEST)) {
+	} else if (dwFlags & (DDBLT_KEYSRC | DDBLT_KEYDEST | DDBLT_KEYSRCOVERRIDE | DDBLT_KEYDESTOVERRIDE)) {
 	    DWORD keylow, keyhigh;
 
 	    if (dwFlags & DDBLT_KEYSRC) {
 		keylow  = sdesc.ddckCKSrcBlt.dwColorSpaceLowValue;
 		keyhigh = sdesc.ddckCKSrcBlt.dwColorSpaceHighValue;
-	    } else {
+	    } else if (dwFlags & DDBLT_KEYDEST){
 		/* I'm not sure if this is correct */
 		FIXME("DDBLT_KEYDEST not fully supported yet.\n");
 		keylow  = ddesc.ddckCKDestBlt.dwColorSpaceLowValue;
 		keyhigh = ddesc.ddckCKDestBlt.dwColorSpaceHighValue;
-	    }
-
+	    } else if (dwFlags & DDBLT_KEYSRCOVERRIDE) {
+		keylow  = lpbltfx->ddckSrcColorkey.dwColorSpaceLowValue;
+		keyhigh = lpbltfx->ddckSrcColorkey.dwColorSpaceHighValue;
+	    } else {
+		keylow  = lpbltfx->ddckDestColorkey.dwColorSpaceLowValue;
+		keyhigh = lpbltfx->ddckDestColorkey.dwColorSpaceHighValue;
+	    } 
 
 	    for (y = sy = 0; y < dstheight; y++, sy += yinc) {
 		sbuf = sbase + (sy >> 16) * sdesc.u1.lPitch;
@@ -580,7 +585,7 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 		dbuf += ddesc.u1.lPitch;
 	    }
 #undef COPYROW_COLORKEY
-	    dwFlags &= ~(DDBLT_KEYSRC | DDBLT_KEYDEST);
+	    dwFlags &= ~(DDBLT_KEYSRC | DDBLT_KEYDEST | DDBLT_KEYSRCOVERRIDE | DDBLT_KEYDESTOVERRIDE);
 	}
     }
 
