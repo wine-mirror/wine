@@ -466,6 +466,7 @@ static const char * _CDS_flags(DWORD fields)
     _X_FIELD(CDS,UPDATEREGISTRY);_X_FIELD(CDS,TEST);_X_FIELD(CDS,FULLSCREEN);
     _X_FIELD(CDS,GLOBAL);_X_FIELD(CDS,SET_PRIMARY);_X_FIELD(CDS,RESET);
     _X_FIELD(CDS,SETRECT);_X_FIELD(CDS,NORESET);
+    *p = 0;
     return wine_dbg_sprintf("%s", buf);
 }
 static const char * _DM_fields(DWORD fields)
@@ -475,6 +476,7 @@ static const char * _DM_fields(DWORD fields)
     char *p = buf;
     _X_FIELD(DM,BITSPERPEL);_X_FIELD(DM,PELSWIDTH);_X_FIELD(DM,PELSHEIGHT);
     _X_FIELD(DM,DISPLAYFLAGS);_X_FIELD(DM,DISPLAYFREQUENCY);_X_FIELD(DM,POSITION);
+    *p = 0;
     return wine_dbg_sprintf("%s", buf);
 }
 #undef _X_FIELD
