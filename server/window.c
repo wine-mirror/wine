@@ -77,6 +77,8 @@ struct window
     int              prop_inuse;      /* number of in-use window properties */
     int              prop_alloc;      /* number of allocated window properties */
     struct property *properties;      /* window properties array */
+    int              nb_extra_bytes;  /* number of extra bytes */
+    char             extra_bytes[1];  /* extra bytes storage */
 };
 
 static struct window *top_window;  /* top-level (desktop) window */
@@ -264,9 +266,10 @@ static void destroy_window( struct window *win )
 }
 
 /* create a new window structure (note: the window is not linked in the window tree) */
-static struct window *create_window( struct window *parent, struct window *owner, atom_t atom )
+static struct window *create_window( struct window *parent, struct window *owner, atom_t atom,
+                                     int extra_bytes )
 {
-    struct window *win = mem_alloc( sizeof(*win) );
+    struct window *win = mem_alloc( sizeof(*win) + extra_bytes - 1 );
     if (!win) return NULL;
 
     if (!(win->handle = alloc_user_handle( win, USER_WINDOW )))
@@ -292,6 +295,8 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->prop_inuse     = 0;
     win->prop_alloc     = 0;
     win->properties     = NULL;
+    win->nb_extra_bytes = extra_bytes;
+    memset( win->extra_bytes, 0, extra_bytes );
 
     if (parent)  /* put it on parent unlinked list */
     {
@@ -448,11 +453,16 @@ user_handle_t find_window_to_repaint( user_handle_t parent, struct thread *threa
 DECL_HANDLER(create_window)
 {
     reply->handle = 0;
+    if (req->extra < 0 || req->extra > 4096)  /* don't allow stupid values here */
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
     if (!req->parent)  /* return desktop window */
     {
         if (!top_window)
         {
-            if (!(top_window = create_window( NULL, NULL, req->atom ))) return;
+            if (!(top_window = create_window( NULL, NULL, req->atom, req->extra ))) return;
             top_window->thread = NULL;  /* no thread owns the desktop */
             top_window->style  = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
         }
@@ -471,7 +481,7 @@ DECL_HANDLER(create_window)
             set_error( STATUS_ACCESS_DENIED );
             return;
         }
-        if (!(win = create_window( parent, owner, req->atom ))) return;
+        if (!(win = create_window( parent, owner, req->atom, req->extra ))) return;
         reply->handle = win->handle;
     }
 }
@@ -576,6 +586,22 @@ DECL_HANDLER(set_window_info)
         set_error( STATUS_ACCESS_DENIED );
         return;
     }
+    if (req->extra_offset < -1 || req->extra_offset >= win->nb_extra_bytes)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+    if (req->extra_offset != -1)
+    {
+        memcpy( &reply->old_extra_value, win->extra_bytes + req->extra_offset,
+                min( sizeof(reply->old_extra_value),
+                     (size_t)(win->nb_extra_bytes - req->extra_offset) ));
+    }
+    else if (req->flags & (SET_WIN_EXTRAWORD|SET_WIN_EXTRALONG))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
     reply->old_style     = win->style;
     reply->old_ex_style  = win->ex_style;
     reply->old_id        = win->id;
@@ -586,6 +612,12 @@ DECL_HANDLER(set_window_info)
     if (req->flags & SET_WIN_ID) win->id = req->id;
     if (req->flags & SET_WIN_INSTANCE) win->instance = req->instance;
     if (req->flags & SET_WIN_USERDATA) win->user_data = req->user_data;
+    if (req->flags & (SET_WIN_EXTRAWORD|SET_WIN_EXTRALONG))
+    {
+        const int len = (req->flags & SET_WIN_EXTRALONG) ? sizeof(int) : sizeof(short);
+        memcpy( win->extra_bytes + req->extra_offset, &req->extra_value,
+                min( len, win->nb_extra_bytes - req->extra_offset ));
+    }
 }
 
 

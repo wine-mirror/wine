@@ -1780,6 +1780,7 @@ enum message_type
     user_handle_t  parent;      /* parent window */
     user_handle_t  owner;       /* owner window */
     atom_t         atom;        /* class atom */
+    int            extra;       /* number of extra bytes */
 @REPLY
     user_handle_t  handle;      /* created window */
 @END
@@ -1832,18 +1833,23 @@ enum message_type
     unsigned int   id;            /* window id */
     void*          instance;      /* creator instance */
     void*          user_data;     /* user-specific data */
+    int            extra_offset;  /* offset to set in extra bytes */
+    unsigned int   extra_value;   /* value to set in extra bytes */
 @REPLY
     unsigned int   old_style;     /* old window style */
     unsigned int   old_ex_style;  /* old window extended style */
     unsigned int   old_id;        /* old window id */
     void*          old_instance;  /* old creator instance */
     void*          old_user_data; /* old user-specific data */
+    unsigned int   old_extra_value; /* old value in extra bytes */
 @END
 #define SET_WIN_STYLE     0x01
 #define SET_WIN_EXSTYLE   0x02
 #define SET_WIN_ID        0x04
 #define SET_WIN_INSTANCE  0x08
 #define SET_WIN_USERDATA  0x10
+#define SET_WIN_EXTRAWORD 0x20
+#define SET_WIN_EXTRALONG 0x40
 
 
 /* Get a list of the window parents, up to the root of the tree */

@@ -2525,6 +2525,7 @@ struct create_window_request
     user_handle_t  parent;
     user_handle_t  owner;
     atom_t         atom;
+    int            extra;
 };
 struct create_window_reply
 {
@@ -2603,6 +2604,8 @@ struct set_window_info_request
     unsigned int   id;
     void*          instance;
     void*          user_data;
+    int            extra_offset;
+    unsigned int   extra_value;
 };
 struct set_window_info_reply
 {
@@ -2612,12 +2615,15 @@ struct set_window_info_reply
     unsigned int   old_id;
     void*          old_instance;
     void*          old_user_data;
+    unsigned int   old_extra_value;
 };
 #define SET_WIN_STYLE     0x01
 #define SET_WIN_EXSTYLE   0x02
 #define SET_WIN_ID        0x04
 #define SET_WIN_INSTANCE  0x08
 #define SET_WIN_USERDATA  0x10
+#define SET_WIN_EXTRAWORD 0x20
+#define SET_WIN_EXTRALONG 0x40
 
 
 
@@ -3667,6 +3673,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 126
+#define SERVER_PROTOCOL_VERSION 127
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

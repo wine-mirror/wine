@@ -2095,7 +2095,8 @@ static void dump_create_window_request( const struct create_window_request *req 
 {
     fprintf( stderr, " parent=%p,", req->parent );
     fprintf( stderr, " owner=%p,", req->owner );
-    fprintf( stderr, " atom=%04x", req->atom );
+    fprintf( stderr, " atom=%04x,", req->atom );
+    fprintf( stderr, " extra=%d", req->extra );
 }
 
 static void dump_create_window_reply( const struct create_window_reply *req )
@@ -2154,7 +2155,9 @@ static void dump_set_window_info_request( const struct set_window_info_request *
     fprintf( stderr, " ex_style=%08x,", req->ex_style );
     fprintf( stderr, " id=%08x,", req->id );
     fprintf( stderr, " instance=%p,", req->instance );
-    fprintf( stderr, " user_data=%p", req->user_data );
+    fprintf( stderr, " user_data=%p,", req->user_data );
+    fprintf( stderr, " extra_offset=%d,", req->extra_offset );
+    fprintf( stderr, " extra_value=%08x", req->extra_value );
 }
 
 static void dump_set_window_info_reply( const struct set_window_info_reply *req )
@@ -2163,7 +2166,8 @@ static void dump_set_window_info_reply( const struct set_window_info_reply *req 
     fprintf( stderr, " old_ex_style=%08x,", req->old_ex_style );
     fprintf( stderr, " old_id=%08x,", req->old_id );
     fprintf( stderr, " old_instance=%p,", req->old_instance );
-    fprintf( stderr, " old_user_data=%p", req->old_user_data );
+    fprintf( stderr, " old_user_data=%p,", req->old_user_data );
+    fprintf( stderr, " old_extra_value=%08x", req->old_extra_value );
 }
 
 static void dump_get_window_parents_request( const struct get_window_parents_request *req )
