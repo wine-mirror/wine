@@ -394,24 +394,24 @@ BOOL X11DRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
 
     TRACE("%s %d\n", debugstr_wn(str,count), count);
     if( pfo ) {
+	XChar2b *p = X11DRV_cptable[pfo->fi->cptable].punicode_to_char2b( pfo, str, count );
+	if (!p) return FALSE;
         if( !pfo->lpX11Trans ) {
 	    int dir, ascent, descent;
 	    int info_width;
-	    XChar2b *p = X11DRV_cptable[pfo->fi->cptable].punicode_to_char2b( pfo, str, count );
-            if (!p) return FALSE;
 	    X11DRV_cptable[pfo->fi->cptable].pTextExtents( pfo, p,
 				count, &dir, &ascent, &descent, &info_width );
 	    size->cx = abs((info_width + dc->w.breakRem + count * 
 			    dc->w.charExtra) * dc->wndExtX / dc->vportExtX);
 	    size->cy = abs((pfo->fs->ascent + pfo->fs->descent) * 
 			   dc->wndExtY / dc->vportExtY);
-	    HeapFree( GetProcessHeap(), 0, p );
 	} else {
 	    INT i;
 	    float x = 0.0, y = 0.0;
+	    /* FIXME: Deal with *_char_or_byte2 != 0 situations */
 	    for(i = 0; i < count; i++) {
 	        x += pfo->fs->per_char ? 
-	   pfo->fs->per_char[str[i] - pfo->fs->min_char_or_byte2].attributes : 
+	   pfo->fs->per_char[p[i].byte2 - pfo->fs->min_char_or_byte2].attributes : 
 	   pfo->fs->min_bounds.attributes;
 	    }
 	    y = pfo->lpX11Trans->RAW_ASCENT + pfo->lpX11Trans->RAW_DESCENT;
@@ -421,6 +421,7 @@ BOOL X11DRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
 	    size->cx = fabs((x + dc->w.breakRem + count * dc->w.charExtra) *
 			     dc->wndExtX / dc->vportExtX);
 	    size->cy = fabs(y * dc->wndExtY / dc->vportExtY);
+	    HeapFree( GetProcessHeap(), 0, p );
 	}
 	size->cx *= pfo->rescale;
 	size->cy *= pfo->rescale;
