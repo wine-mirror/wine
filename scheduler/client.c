@@ -45,6 +45,7 @@
 #define SERVERDIR  "/wineserver-"  /* server socket directory (hostname appended) */
 #define SOCKETNAME "socket"        /* name of the socket file */
 
+#ifndef HAVE_MSGHDR_ACCRIGHTS
 /* data structure used to pass an fd with sendmsg/recvmsg */
 struct cmsg_fd
 {
@@ -53,6 +54,7 @@ struct cmsg_fd
     int type;  /* SCM_RIGHTS */
     int fd;    /* fd to pass */
 };
+#endif  /* HAVE_MSGHDR_ACCRIGHTS */
 
 static void *boot_thread_id;
 static sigset_t block_set;  /* signals to block during server calls */
