@@ -3637,6 +3637,9 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
     if (xSrc + cx >= width) cx = width - xSrc;
     if (!cx || !cy) return lines;
 
+    /* Update the pixmap from the DIB section */
+    X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
+
     X11DRV_SetupGCForText( physDev );  /* To have the correct colors */
     wine_tsx11_lock();
     XSetFunction(gdi_display, physDev->gc, X11DRV_XROPfunction[GetROP2(physDev->hdc) - 1]);
@@ -3692,6 +3695,10 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
 
     if (descr.infoBpp <= 8)
        HeapFree(GetProcessHeap(), 0, descr.colorMap);
+
+    /* Update the DIBSection of the pixmap */
+    X11DRV_UnlockDIBSection(physDev, TRUE);
+
     return result;
 }
 
