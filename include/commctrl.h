@@ -3545,6 +3545,9 @@ typedef struct NMLVSCROLL
 #define ListView_SetSelectionMark(hwndLV, iItem) \
     (int)SNDMSG((hwndLV), LVM_SETSELECTIONMARK, 0, (LPARAM)(iItem))
 
+#define ListView_GetViewRect(hwndLV, prc) \
+    (BOOL)SNDMSG((hwndLV),LVM_GETVIEWRECT,0,(LPARAM)(LPRECT)(prc))
+
 /* Tab Control */
 
 #define WC_TABCONTROL16	"SysTabControl"
