@@ -669,8 +669,8 @@ void FILEDLG_UpdateResult(LFSPRIVATE lfs, WCHAR *tmpstr)
 	LPOPENFILENAME16 ofn16 = lfs->ofn16;
         char *dest = MapSL(ofn16->lpstrFile);
         if (!WideCharToMultiByte( CP_ACP, 0, ofnW->lpstrFile, -1,
-                                  tmp, ofnW->nMaxFile, NULL, NULL ))
-            tmp[ofnW->nMaxFile-1] = 0;
+                                  tmp, sizeof(tmp), NULL, NULL ))
+            tmp[sizeof(tmp)-1] = 0;
 	GetShortPathNameA(tmp, dest, ofn16->nMaxFile);
 
 	/* the same procedure as every year... */
@@ -685,7 +685,8 @@ void FILEDLG_UpdateResult(LFSPRIVATE lfs, WCHAR *tmpstr)
     }
     if (lfs->ofnA)
     {
-        if (!WideCharToMultiByte( CP_ACP, 0, ofnW->lpstrFile, -1,
+        if (ofnW->nMaxFile &&
+            !WideCharToMultiByte( CP_ACP, 0, ofnW->lpstrFile, -1,
                                   lfs->ofnA->lpstrFile, ofnW->nMaxFile, NULL, NULL ))
             lfs->ofnA->lpstrFile[ofnW->nMaxFile-1] = 0;
         lfs->ofnA->nFileOffset = ofnW->nFileOffset;
