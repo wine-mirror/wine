@@ -623,10 +623,10 @@ init SHLWAPI_LibMain
 @ stdcall StrCpyW (ptr wstr) StrCpyW
 @ stdcall StrDupA (str) StrDupA
 @ stdcall StrDupW (wstr) StrDupW
-@ stdcall StrFormatByteSizeA(long str long) StrFormatByteSizeA
-@ stdcall StrFormatByteSizeW(long wstr long) StrFormatByteSizeW
-@ stdcall StrFromTimeIntervalA(str long long long) StrFromTimeIntervalA
-@ stdcall StrFromTimeIntervalW(wstr long long long) StrFromTimeIntervalW
+@ stdcall StrFormatByteSizeA(long ptr long) StrFormatByteSizeA
+@ stdcall StrFormatByteSizeW(long long ptr long) StrFormatByteSizeW
+@ stdcall StrFromTimeIntervalA(ptr long long long) StrFromTimeIntervalA
+@ stdcall StrFromTimeIntervalW(ptr long long long) StrFromTimeIntervalW
 @ stdcall StrIsIntlEqualA(long str str long) StrIsIntlEqualA
 @ stdcall StrIsIntlEqualW(long wstr wstr long) StrIsIntlEqualW
 @ stdcall StrNCatA(str str long) StrNCatA
@@ -711,7 +711,7 @@ init SHLWAPI_LibMain
 @ stdcall SHCreateStreamOnFileA(str long ptr) SHCreateStreamOnFileA
 @ stdcall SHCreateStreamOnFileW(wstr long ptr) SHCreateStreamOnFileW
 @ stdcall SHCreateStreamOnFileEx(wstr long long long ptr ptr) SHCreateStreamOnFileEx
-@ stub    SHCreateStreamWrapper
+@ stdcall SHCreateStreamWrapper(ptr ptr long ptr) SHCreateStreamWrapper
 @ stdcall SHGetThreadRef (ptr) SHGetThreadRef
 @ stdcall SHRegDuplicateHKey (long) SHRegDuplicateHKey
 @ stdcall SHRegSetPathA(long str str str long) SHRegSetPathA
@@ -722,6 +722,7 @@ init SHLWAPI_LibMain
 @ stdcall SHSkipJunction(ptr ptr) SHSkipJunction
 @ stdcall SHStrDupA (str ptr) SHStrDupA
 @ stdcall SHStrDupW (wstr ptr) SHStrDupW
-@ stub    StrFormatByteSize64A
+@ stdcall StrFormatByteSize64A(long long ptr long) StrFormatByteSize64A
 @ stdcall StrFormatKBSizeA(long long str long) StrFormatKBSizeA
 @ stdcall StrFormatKBSizeW(long long wstr long) StrFormatKBSizeW
+@ stdcall StrCmpLogicalW(wstr wstr) StrCmpLogicalW

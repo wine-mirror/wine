@@ -35,11 +35,22 @@
 #define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
 #include "wine/debug.h"
-#include "ordinal.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
-/* function pointers for GET_FUNC macro; these need to be global because of gcc bug */
+/* Get a function pointer from a DLL handle */
+#define GET_FUNC(func, module, name, fail) \
+  do { \
+    if (!func) { \
+      if (!SHLWAPI_h##module && !(SHLWAPI_h##module = LoadLibraryA(#module ".dll"))) return fail; \
+      if (!(func = (void*)GetProcAddress(SHLWAPI_h##module, name))) return fail; \
+    } \
+  } while (0)
+
+/* DLL handles for late bound calls */
+extern HMODULE SHLWAPI_hshell32;
+
+/* Function pointers for GET_FUNC macro; these need to be global because of gcc bug */
 static BOOL (WINAPI *pIsNetDrive)(DWORD);
 
 /*************************************************************************
@@ -1035,33 +1046,11 @@ int WINAPI PathParseIconLocationW(LPWSTR lpszPath)
 }
 
 /*************************************************************************
- * SHLWAPI_PathFindLocalExeA
+ * @	[SHLWAPI.4]
  *
- * Internal implementation of SHLWAPI_3.
+ * Unicode version of SHLWAPI_3.
  */
-BOOL WINAPI SHLWAPI_PathFindLocalExeA (LPSTR lpszPath, DWORD dwWhich)
-{
-  BOOL bRet = FALSE;
-
-  TRACE("(%s,%ld)\n", debugstr_a(lpszPath), dwWhich);
-
-  if (lpszPath)
-  {
-    WCHAR szPath[MAX_PATH];
-    MultiByteToWideChar(0,0,lpszPath,-1,szPath,MAX_PATH);
-    bRet = SHLWAPI_PathFindLocalExeW(szPath, dwWhich);
-    if (bRet)
-      WideCharToMultiByte(0,0,szPath,-1,lpszPath,MAX_PATH,0,0);
-  }
-  return bRet;
-}
-
-/*************************************************************************
- * SHLWAPI_PathFindLocalExeW
- *
- * Internal implementation of SHLWAPI_4.
- */
-BOOL WINAPI SHLWAPI_PathFindLocalExeW (LPWSTR lpszPath, DWORD dwWhich)
+BOOL WINAPI SHLWAPI_4(LPWSTR lpszPath,DWORD dwWhich)
 {
   static const WCHAR pszExts[7][5] = { { '.', 'p', 'i', 'f', '0'},
                                        { '.', 'c', 'o', 'm', '0'},
@@ -1101,6 +1090,46 @@ BOOL WINAPI SHLWAPI_PathFindLocalExeW (LPWSTR lpszPath, DWORD dwWhich)
 }
 
 /*************************************************************************
+ * @	[SHLWAPI.3]
+ *
+ * Determine if a file exists locally and is of an executable type.
+ *
+ * PARAMS
+ *  lpszPath       [O] File to search for
+ *  dwWhich        [I] Type of executable to search for
+ *
+ * RETURNS
+ *  TRUE  If the file was found. lpszFile contains the file name.
+ *  FALSE Otherwise.
+ *
+ * NOTES
+ *  lpszPath is modified in place and must be at least MAX_PATH in length.
+ *  If the function returns FALSE, the path is modified to its orginal state.
+ *  If the given path contains an extension or dwWhich is 0, executable
+ *  extensions are not checked.
+ *
+ *  Ordinals 3-6 are a classic case of MS exposing limited functionality to
+ *  users (here through PathFindOnPath) and keeping advanced functionality for
+ *  their own developers exclusive use. Monopoly, anyone?
+ */
+BOOL WINAPI SHLWAPI_3(LPSTR lpszPath,DWORD dwWhich)
+{
+  BOOL bRet = FALSE;
+
+  TRACE("(%s,%ld)\n", debugstr_a(lpszPath), dwWhich);
+
+  if (lpszPath)
+  {
+    WCHAR szPath[MAX_PATH];
+    MultiByteToWideChar(0,0,lpszPath,-1,szPath,MAX_PATH);
+    bRet = SHLWAPI_4(szPath, dwWhich);
+    if (bRet)
+      WideCharToMultiByte(0,0,szPath,-1,lpszPath,MAX_PATH,0,0);
+  }
+  return bRet;
+}
+
+/*************************************************************************
  * SHLWAPI_PathFindInOtherDirs
  *
  * Internal helper for SHLWAPI_PathFindOnPathExA/W.
@@ -1120,7 +1149,7 @@ static BOOL WINAPI SHLWAPI_PathFindInOtherDirs(LPWSTR lpszFile, DWORD dwWhich)
   GetSystemDirectoryW(buff, MAX_PATH);
   if (!PathAppendW(buff, lpszFile))
      return FALSE;
-  if (SHLWAPI_PathFindLocalExeW(buff, dwWhich))
+  if (SHLWAPI_4(buff, dwWhich))
   {
     strcpyW(lpszFile, buff);
     return TRUE;
@@ -1128,7 +1157,7 @@ static BOOL WINAPI SHLWAPI_PathFindInOtherDirs(LPWSTR lpszFile, DWORD dwWhich)
   GetWindowsDirectoryW(buff, MAX_PATH);
   if (!PathAppendW(buff, szSystem ) || !PathAppendW(buff, lpszFile))
     return FALSE;
-  if (SHLWAPI_PathFindLocalExeW(buff, dwWhich))
+  if (SHLWAPI_4(buff, dwWhich))
   {
     strcpyW(lpszFile, buff);
     return TRUE;
@@ -1136,7 +1165,7 @@ static BOOL WINAPI SHLWAPI_PathFindInOtherDirs(LPWSTR lpszFile, DWORD dwWhich)
   GetWindowsDirectoryW(buff, MAX_PATH);
   if (!PathAppendW(buff, lpszFile))
     return FALSE;
-  if (SHLWAPI_PathFindLocalExeW(buff, dwWhich))
+  if (SHLWAPI_4(buff, dwWhich))
   {
     strcpyW(lpszFile, buff);
     return TRUE;
@@ -1167,7 +1196,7 @@ static BOOL WINAPI SHLWAPI_PathFindInOtherDirs(LPWSTR lpszFile, DWORD dwWhich)
 
     if (!PathAppendW(buff, lpszFile))
       return FALSE;
-    if (SHLWAPI_PathFindLocalExeW(buff, dwWhich))
+    if (SHLWAPI_4(buff, dwWhich))
     {
       strcpyW(lpszFile, buff);
       free(lpszPATH);
@@ -1178,13 +1207,21 @@ static BOOL WINAPI SHLWAPI_PathFindInOtherDirs(LPWSTR lpszFile, DWORD dwWhich)
   return FALSE;
 }
 
-
 /*************************************************************************
- * SHLWAPI_PathFindOnPathExA
+ * @	[SHLWAPI.5]
  *
- * Internal implementation of SHLWAPI_5
+ * Search a range of paths for a specific type of executable.
+ *
+ * PARAMS
+ *  lpszFile       [O] File to search for
+ *  lppszOtherDirs [I] Other directories to look in
+ *  dwWhich        [I] Type of executable to search for
+ *
+ * RETURNS
+ *  Success: TRUE. The path to the executable is stored in sFile.
+ *  Failure: FALSE. The path to the executable is unchanged.
  */
-BOOL WINAPI SHLWAPI_PathFindOnPathExA(LPSTR lpszFile, LPCSTR *lppszOtherDirs, DWORD dwWhich)
+BOOL WINAPI SHLWAPI_5(LPSTR lpszFile,LPCSTR *lppszOtherDirs,DWORD dwWhich)
 {
   WCHAR szFile[MAX_PATH];
   WCHAR buff[MAX_PATH];
@@ -1206,7 +1243,7 @@ BOOL WINAPI SHLWAPI_PathFindOnPathExA(LPSTR lpszFile, LPCSTR *lppszOtherDirs, DW
     {
       MultiByteToWideChar(0,0,*lpszOtherPath,-1,szOther,MAX_PATH);
       PathCombineW(buff, szOther, szFile);
-      if (SHLWAPI_PathFindLocalExeW(buff, dwWhich))
+      if (SHLWAPI_4(buff, dwWhich))
       {
         WideCharToMultiByte(0,0,buff,-1,lpszFile,MAX_PATH,0,0);
         return TRUE;
@@ -1224,11 +1261,11 @@ BOOL WINAPI SHLWAPI_PathFindOnPathExA(LPSTR lpszFile, LPCSTR *lppszOtherDirs, DW
 }
 
 /*************************************************************************
- * SHLWAPI_PathFindOnPathExW
+ * @	[SHLWAPI.6]
  *
- * Internal implementation of SHLWAPI_6.
+ * Unicode version of SHLWAPI_5.
  */
-BOOL WINAPI SHLWAPI_PathFindOnPathExW(LPWSTR lpszFile, LPCWSTR *lppszOtherDirs, DWORD dwWhich)
+BOOL WINAPI SHLWAPI_6(LPWSTR lpszFile,LPCWSTR *lppszOtherDirs,DWORD dwWhich)
 {
   WCHAR buff[MAX_PATH];
 
@@ -1244,7 +1281,7 @@ BOOL WINAPI SHLWAPI_PathFindOnPathExW(LPWSTR lpszFile, LPCWSTR *lppszOtherDirs, 
     while (lpszOtherPath && *lpszOtherPath && (*lpszOtherPath)[0])
     {
       PathCombineW(buff, *lpszOtherPath, lpszFile);
-      if (SHLWAPI_PathFindLocalExeW(buff, dwWhich))
+      if (SHLWAPI_4(buff, dwWhich))
       {
         strcpyW(lpszFile, buff);
         return TRUE;
@@ -1272,7 +1309,7 @@ BOOL WINAPI SHLWAPI_PathFindOnPathExW(LPWSTR lpszFile, LPCWSTR *lppszOtherDirs, 
 BOOL WINAPI PathFindOnPathA(LPSTR lpszFile, LPCSTR *lppszOtherDirs)
 {
   TRACE("(%s,%p)\n", debugstr_a(lpszFile), lppszOtherDirs);
-  return SHLWAPI_PathFindOnPathExA(lpszFile, lppszOtherDirs, 0);
+  return SHLWAPI_5(lpszFile, lppszOtherDirs, 0);
  }
 
 /*************************************************************************
@@ -1280,10 +1317,10 @@ BOOL WINAPI PathFindOnPathA(LPSTR lpszFile, LPCSTR *lppszOtherDirs)
  *
  * See PathFindOnPathA.
  */
-BOOL WINAPI PathFindOnPathW (LPWSTR lpszFile, LPCWSTR *lppszOtherDirs)
+BOOL WINAPI PathFindOnPathW(LPWSTR lpszFile, LPCWSTR *lppszOtherDirs)
 {
   TRACE("(%s,%p)\n", debugstr_w(lpszFile), lppszOtherDirs);
-  return SHLWAPI_PathFindOnPathExW(lpszFile,lppszOtherDirs, 0);
+  return SHLWAPI_6(lpszFile,lppszOtherDirs, 0);
 }
 
 /*************************************************************************
@@ -1834,47 +1871,6 @@ BOOL WINAPI PathIsSameRootW(LPCWSTR lpszPath1, LPCWSTR lpszPath2)
   if (lpszStart - lpszPath1 > dwLen)
     return FALSE; /* Paths not common up to length of the root */
   return TRUE;
-}
-
-/*************************************************************************
- * PathIsURLA	[SHLWAPI.@]
- *
- * Check if the given path is a URL.
- *
- * PARAMS
- *  lpszPath [I] Path to check.
- *
- * RETURNS
- *  TRUE  if lpszPath is a URL.
- *  FALSE if lpszPath is NULL or not a URL.
- */
-BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
-{
-    UNKNOWN_SHLWAPI_1 base;
-    DWORD res1;
-
-    if (!lpstrPath || !*lpstrPath) return FALSE;
-
-    /* get protocol        */
-    base.size = sizeof(base);
-    res1 = SHLWAPI_1(lpstrPath, &base);
-    return (base.fcncde > 0);
-}
-
-/*************************************************************************
- * PathIsURLW	[SHLWAPI.@]
- */
-BOOL WINAPI PathIsURLW(LPCWSTR lpstrPath)
-{
-    UNKNOWN_SHLWAPI_2 base;
-    DWORD res1;
-
-    if (!lpstrPath || !*lpstrPath) return FALSE;
-
-    /* get protocol        */
-    base.size = sizeof(base);
-    res1 = SHLWAPI_2(lpstrPath, &base);
-    return (base.fcncde > 0);
 }
 
 /*************************************************************************

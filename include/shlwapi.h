@@ -709,8 +709,17 @@ HRESULT WINAPI SHStrDupW(LPCWSTR,WCHAR**);
 #define SHStrDup WINELIB_NAME_AW(SHStrDup)
 
 LPSTR WINAPI StrFormatByteSizeA (DWORD,LPSTR,UINT);
-LPWSTR WINAPI StrFormatByteSizeW (DWORD,LPWSTR,UINT);
-#define StrFormatByteSize WINELIB_NAME_AW(StrFormatByteSize)
+
+/* A/W Pairing is broken for this function */
+LPSTR WINAPI StrFormatByteSize64A (LONGLONG,LPSTR,UINT);
+LPWSTR WINAPI StrFormatByteSizeW (LONGLONG,LPWSTR,UINT);
+#ifndef __WINE__
+#ifdef UNICODE
+#define StrFormatByteSize StrFormatByteSizeW
+#else
+#define StrFormatByteSize StrFormatByteSize64A
+#endif
+#endif
 
 int WINAPI StrFromTimeIntervalA(LPSTR,UINT,DWORD,int);
 int WINAPI StrFromTimeIntervalW(LPWSTR,UINT,DWORD,int);

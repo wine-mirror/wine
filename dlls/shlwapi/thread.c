@@ -30,13 +30,25 @@
 #define NO_SHLWAPI_STREAM
 #define NO_SHLWAPI_USER
 #include "shlwapi.h"
-#include "ordinal.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
-extern DWORD SHLWAPI_ThreadRef_index;  /* Initialised in shlwapi_main.c */
+/* Get a function pointer from a DLL handle */
+#define GET_FUNC(func, module, name, fail) \
+  do { \
+    if (!func) { \
+      if (!SHLWAPI_h##module && !(SHLWAPI_h##module = LoadLibraryA(#module ".dll"))) return fail; \
+      if (!(func = (void*)GetProcAddress(SHLWAPI_h##module, name))) return fail; \
+    } \
+  } while (0)
 
+/* DLL handles for late bound calls */
+extern HMODULE SHLWAPI_hshell32;
+
+/* Function pointers for GET_FUNC macro; these need to be global because of gcc bug */
 static HRESULT (WINAPI *pSHGetInstanceExplorer)(IUnknown**);
+
+extern DWORD SHLWAPI_ThreadRef_index;  /* Initialised in shlwapi_main.c */
 
 DWORD WINAPI SHLWAPI_23(REFGUID,LPSTR,INT);
 

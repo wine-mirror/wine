@@ -46,12 +46,21 @@
 #include "winreg.h"
 #include "winuser.h"
 #include "wine/debug.h"
-#include "ordinal.h"
 #include "shlwapi.h"
 
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
+/* Get a function pointer from a DLL handle */
+#define GET_FUNC(func, module, name, fail) \
+  do { \
+    if (!func) { \
+      if (!SHLWAPI_h##module && !(SHLWAPI_h##module = LoadLibraryA(#module ".dll"))) return fail; \
+      if (!(func = (void*)GetProcAddress(SHLWAPI_h##module, name))) return fail; \
+    } \
+  } while (0)
+
+/* DLL handles for late bound calls */
 extern HINSTANCE shlwapi_hInstance;
 extern HMODULE SHLWAPI_hshell32;
 extern HMODULE SHLWAPI_hwinmm;
@@ -70,61 +79,7 @@ static DWORD id1[4] = {0xfc4801a3, 0x11cf2ba9, 0xaa0029a2, 0x52733d00};
 /* following is GUID for IPersistMoniker::GetClassID  -- see _174        */
 static DWORD id2[4] = {0x79eac9ee, 0x11cebaf9, 0xaa00828c, 0x0ba94b00};
 
-/* The following schemes were identified in the native version of
- * SHLWAPI.DLL version 5.50
- */
-typedef enum {
-    URL_SCHEME_INVALID     = -1,
-    URL_SCHEME_UNKNOWN     =  0,
-    URL_SCHEME_FTP,
-    URL_SCHEME_HTTP,
-    URL_SCHEME_GOPHER,
-    URL_SCHEME_MAILTO,
-    URL_SCHEME_NEWS,
-    URL_SCHEME_NNTP,
-    URL_SCHEME_TELNET,
-    URL_SCHEME_WAIS,
-    URL_SCHEME_FILE,
-    URL_SCHEME_MK,
-    URL_SCHEME_HTTPS,
-    URL_SCHEME_SHELL,
-    URL_SCHEME_SNEWS,
-    URL_SCHEME_LOCAL,
-    URL_SCHEME_JAVASCRIPT,
-    URL_SCHEME_VBSCRIPT,
-    URL_SCHEME_ABOUT,
-    URL_SCHEME_RES,
-    URL_SCHEME_MAXVALUE
-} URL_SCHEME;
-
-typedef struct {
-    URL_SCHEME  scheme_number;
-    LPCSTR scheme_name;
-} SHL_2_inet_scheme;
-
-static const SHL_2_inet_scheme shlwapi_schemes[] = {
-  {URL_SCHEME_FTP,        "ftp"},
-  {URL_SCHEME_HTTP,       "http"},
-  {URL_SCHEME_GOPHER,     "gopher"},
-  {URL_SCHEME_MAILTO,     "mailto"},
-  {URL_SCHEME_NEWS,       "news"},
-  {URL_SCHEME_NNTP,       "nntp"},
-  {URL_SCHEME_TELNET,     "telnet"},
-  {URL_SCHEME_WAIS,       "wais"},
-  {URL_SCHEME_FILE,       "file"},
-  {URL_SCHEME_MK,         "mk"},
-  {URL_SCHEME_HTTPS,      "https"},
-  {URL_SCHEME_SHELL,      "shell"},
-  {URL_SCHEME_SNEWS,      "snews"},
-  {URL_SCHEME_LOCAL,      "local"},
-  {URL_SCHEME_JAVASCRIPT, "javascript"},
-  {URL_SCHEME_VBSCRIPT,   "vbscript"},
-  {URL_SCHEME_ABOUT,      "about"},
-  {URL_SCHEME_RES,        "res"},
-  {0, 0}
-};
-
-/* function pointers for GET_FUNC macro; these need to be global because of gcc bug */
+/* Function pointers for GET_FUNC macro; these need to be global because of gcc bug */
 static LPITEMIDLIST (WINAPI *pSHBrowseForFolderW)(LPBROWSEINFOW);
 static HRESULT (WINAPI *pConvertINetUnicodeToMultiByte)(LPDWORD,DWORD,LPCWSTR,LPINT,LPSTR,LPINT);
 static BOOL    (WINAPI *pPlaySoundW)(LPCWSTR, HMODULE, DWORD);
@@ -158,189 +113,6 @@ static HRESULT (WINAPI *pDllGetVersion)(DLLVERSIONINFO*);
  fail. However, its better to implement the functions in the forward DLL
  and recommend the builtin rather than reimplementing the calls here!
 */
-
-/*************************************************************************
- *      @	[SHLWAPI.1]
- *
- * Identifies the Internet "scheme" in the passed string. ASCII based.
- * Also determines start and length of item after the ':'
- */
-DWORD WINAPI SHLWAPI_1 (LPCSTR x, UNKNOWN_SHLWAPI_1 *y)
-{
-    DWORD cnt;
-    const SHL_2_inet_scheme *inet_pro;
-
-    y->fcncde = URL_SCHEME_INVALID;
-    if (y->size != 0x18) return E_INVALIDARG;
-    /* FIXME: leading white space generates error of 0x80041001 which
-     *        is undefined
-     */
-    if (*x <= ' ') return 0x80041001;
-    cnt = 0;
-    y->sizep1 = 0;
-    y->ap1 = x;
-    while (*x) {
-	if (*x == ':') {
-	    y->sizep1 = cnt;
-	    cnt = -1;
-	    y->ap2 = x+1;
-	    break;
-	}
-	x++;
-	cnt++;
-    }
-
-    /* check for no scheme in string start */
-    /* (apparently schemes *must* be larger than a single character)  */
-    if ((*x == '\0') || (y->sizep1 <= 1)) {
-	y->ap1 = 0;
-	return 0x80041001;
-    }
-
-    /* found scheme, set length of remainder */
-    y->sizep2 = lstrlenA(y->ap2);
-
-    /* see if known scheme and return indicator number */
-    y->fcncde = URL_SCHEME_UNKNOWN;
-    inet_pro = shlwapi_schemes;
-    while (inet_pro->scheme_name) {
-	if (!strncasecmp(inet_pro->scheme_name, y->ap1,
-		    min(y->sizep1, lstrlenA(inet_pro->scheme_name)))) {
-	    y->fcncde = inet_pro->scheme_number;
-	    break;
-	}
-	inet_pro++;
-    }
-    return S_OK;
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.2]
- *
- * Identifies the Internet "scheme" in the passed string. UNICODE based.
- * Also determines start and length of item after the ':'
- */
-DWORD WINAPI SHLWAPI_2 (LPCWSTR x, UNKNOWN_SHLWAPI_2 *y)
-{
-    DWORD cnt;
-    const SHL_2_inet_scheme *inet_pro;
-    LPSTR cmpstr;
-    INT len;
-
-    y->fcncde = URL_SCHEME_INVALID;
-    if (y->size != 0x18) return E_INVALIDARG;
-    /* FIXME: leading white space generates error of 0x80041001 which
-     *        is undefined
-     */
-    if (*x <= L' ') return 0x80041001;
-    cnt = 0;
-    y->sizep1 = 0;
-    y->ap1 = x;
-    while (*x) {
-	if (*x == L':') {
-	    y->sizep1 = cnt;
-	    cnt = -1;
-	    y->ap2 = x+1;
-	    break;
-	}
-	x++;
-	cnt++;
-    }
-
-    /* check for no scheme in string start */
-    /* (apparently schemes *must* be larger than a single character)  */
-    if ((*x == L'\0') || (y->sizep1 <= 1)) {
-	y->ap1 = 0;
-	return 0x80041001;
-    }
-
-    /* found scheme, set length of remainder */
-    y->sizep2 = lstrlenW(y->ap2);
-
-    /* see if known scheme and return indicator number */
-    len = WideCharToMultiByte(0, 0, y->ap1, y->sizep1, 0, 0, 0, 0);
-    cmpstr = (LPSTR)HeapAlloc(GetProcessHeap(), 0, len+1);
-    WideCharToMultiByte(0, 0, y->ap1, y->sizep1, cmpstr, len+1, 0, 0);
-    y->fcncde = URL_SCHEME_UNKNOWN;
-    inet_pro = shlwapi_schemes;
-    while (inet_pro->scheme_name) {
-	if (!strncasecmp(inet_pro->scheme_name, cmpstr,
-		    min(len, lstrlenA(inet_pro->scheme_name)))) {
-	    y->fcncde = inet_pro->scheme_number;
-	    break;
-	}
-	inet_pro++;
-    }
-    HeapFree(GetProcessHeap(), 0, cmpstr);
-    return S_OK;
-}
-
-/*************************************************************************
- * @	[SHLWAPI.3]
- *
- * Determine if a file exists locally and is of an executable type.
- *
- * PARAMS
- *  lpszFile       [O] File to search for
- *  dwWhich        [I] Type of executable to search for
- *
- * RETURNS
- *  TRUE  If the file was found. lpszFile contains the file name.
- *  FALSE Otherwise.
- *
- * NOTES
- *  lpszPath is modified in place and must be at least MAX_PATH in length.
- *  If the function returns FALSE, the path is modified to its orginal state.
- *  If the given path contains an extension or dwWhich is 0, executable
- *  extensions are not checked.
- *
- *  Ordinals 3-6 are a classic case of MS exposing limited functionality to
- *  users (here through PathFindOnPath) and keeping advanced functionality for
- *  their own developers exclusive use. Monopoly, anyone?
- */
-BOOL WINAPI SHLWAPI_3(LPSTR lpszFile,DWORD dwWhich)
-{
-  return SHLWAPI_PathFindLocalExeA(lpszFile,dwWhich);
-}
-
-/*************************************************************************
- * @	[SHLWAPI.4]
- *
- * Unicode version of SHLWAPI_3.
- */
-BOOL WINAPI SHLWAPI_4(LPWSTR lpszFile,DWORD dwWhich)
-{
-  return SHLWAPI_PathFindLocalExeW(lpszFile,dwWhich);
-}
-
-/*************************************************************************
- * @	[SHLWAPI.5]
- *
- * Search a range of paths for a specific type of executable.
- *
- * PARAMS
- *  lpszFile       [O] File to search for
- *  lppszOtherDirs [I] Other directories to look in
- *  dwWhich        [I] Type of executable to search for
- *
- * RETURNS
- *  Success: TRUE. The path to the executable is stored in sFile.
- *  Failure: FALSE. The path to the executable is unchanged.
- */
-BOOL WINAPI SHLWAPI_5(LPSTR lpszFile,LPCSTR *lppszOtherDirs,DWORD dwWhich)
-{
-  return SHLWAPI_PathFindOnPathExA(lpszFile,lppszOtherDirs,dwWhich);
-}
-
-/*************************************************************************
- * @	[SHLWAPI.6]
- *
- * Unicode version of SHLWAPI_5.
- */
-BOOL WINAPI SHLWAPI_6(LPWSTR lpszFile,LPCWSTR *lppszOtherDirs,DWORD dwWhich)
-{
-  return SHLWAPI_PathFindOnPathExW(lpszFile,lppszOtherDirs,dwWhich);
-}
 
 /*************************************************************************
  * SHLWAPI_DupSharedHandle

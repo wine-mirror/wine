@@ -505,3 +505,43 @@ IStream * WINAPI SHLWAPI_12(LPBYTE lpbData, DWORD dwDataLen)
   }
   return iStrmRet;
 }
+
+/*************************************************************************
+ * SHCreateStreamWrapper   [SHLWAPI.@]
+ *
+ * Create a stream on a block of memory.
+ *
+ * PARAMS
+ * lpbData    [I] Memory block to create the stream on
+ * dwDataLen  [I] Length of data block
+ * dwReserved [I] Reserved, Must be 0.
+ * lppStream  [O] Destination for stream object
+ *
+ * RETURNS
+ * Success: S_OK. lppStream contains the new stream object.
+ * Failure: E_INVALIDARG, if any parameters are invalid,
+ *          E_OUTOFMEMORY if memory allocation fails.
+ *
+ * NOTES
+ *  The stream assumes ownership of the memory passed to it.
+ */
+HRESULT WINAPI SHCreateStreamWrapper(LPBYTE lpbData, DWORD dwDataLen,
+                                     DWORD dwReserved, IStream **lppStream)
+{
+  IStream* lpStream;
+
+  if (lppStream)
+    *lppStream = NULL;
+
+  if(dwReserved || !lppStream)
+    return E_INVALIDARG;
+
+  lpStream = IStream_Create((HKEY)0, lpbData, dwDataLen);
+
+  if(!lpStream)
+    return E_OUTOFMEMORY;
+
+  IStream_QueryInterface(lpStream, &IID_IStream, (void**)lppStream);
+  IStream_Release(lpStream);
+  return S_OK;
+}

@@ -23,6 +23,7 @@
 #include "wine/port.h"
 
 #include <ctype.h>
+#include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -1494,40 +1495,6 @@ HRESULT WINAPI StrRetToStrW(LPSTRRET pstr, const ITEMIDLIST * pidl, LPWSTR* ppsz
 }
 
 /*************************************************************************
- * StrFormatByteSizeA				[SHLWAPI.@]
- */
-LPSTR WINAPI StrFormatByteSizeA ( DWORD dw, LPSTR pszBuf, UINT cchBuf )
-{	char buf[64];
-	TRACE("%lx %p %i\n", dw, pszBuf, cchBuf);
-	if ( dw<1024L )
-	{ sprintf (buf,"%ld bytes", dw);
-	}
-	else if ( dw<1048576L)
-	{ sprintf (buf,"%3.1f KB", (FLOAT)dw/1024);
-	}
-	else if ( dw < 1073741824L)
-	{ sprintf (buf,"%3.1f MB", (FLOAT)dw/1048576L);
-	}
-	else
-	{ sprintf (buf,"%3.1f GB", (FLOAT)dw/1073741824L);
-	}
-	lstrcpynA (pszBuf, buf, cchBuf);
-	return pszBuf;
-}
-
-/*************************************************************************
- * StrFormatByteSizeW				[SHLWAPI.@]
- */
-LPWSTR WINAPI StrFormatByteSizeW ( DWORD dw, LPWSTR pszBuf, UINT cchBuf )
-{
-        char buf[64];
-        StrFormatByteSizeA( dw, buf, sizeof(buf) );
-        if (!MultiByteToWideChar( CP_ACP, 0, buf, -1, pszBuf, cchBuf ) && cchBuf)
-            pszBuf[cchBuf-1] = 0;
-        return pszBuf;
-}
-
-/*************************************************************************
  * StrFormatKBSizeA	[SHLWAPI.@]
  *
  * Create a formatted string containing a byte count in Kilobytes.
@@ -2122,4 +2089,213 @@ LPWSTR WINAPI SHLWAPI_400(LPWSTR lpszDest, LPCWSTR lpszSrc, int iLen)
      *lpszDest = '\0';
   }
   return lpszDest;
+}
+
+/*************************************************************************
+ * StrCmpLogicalW	[SHLWAPI.@]
+ *
+ * Compare two strings, ignoring case and comparing digits as numbers.
+ *
+ * PARAMS
+ *  lpszStr  [I] First string to compare
+ *  lpszComp [I] Second string to compare
+ *  iLen     [I] Length to compare
+ *
+ * RETURNS
+ *  TRUE  If the strings are equal.
+ *  FALSE Otherwise.
+ */
+INT WINAPI StrCmpLogicalW(LPCWSTR lpszStr, LPCWSTR lpszComp)
+{
+  INT iDiff;
+
+  TRACE("(%s,%s)\n", debugstr_w(lpszStr), debugstr_w(lpszComp));
+
+  if (lpszStr && lpszComp)
+  {
+    while (*lpszStr)
+    {
+      if (!*lpszComp)
+        return 1;
+      else if (isdigitW(*lpszStr))
+      {
+        int iStr, iComp;
+
+        if (!isdigitW(*lpszComp))
+          return -1;
+
+        /* Compare the numbers */
+        StrToIntExW(lpszStr, 0, &iStr);
+        StrToIntExW(lpszComp, 0, &iComp);
+
+        if (iStr < iComp)
+          return -1;
+        else if (iStr > iComp)
+          return 1;
+
+        /* Skip */
+        while (isdigitW(*lpszStr))
+          lpszStr++;
+        while (isdigitW(*lpszComp))
+          lpszComp++;
+      }
+      else if (isdigitW(*lpszComp))
+        return 1;
+      else
+      {
+        iDiff = SHLWAPI_ChrCmpHelperA(*lpszStr,*lpszComp,NORM_IGNORECASE);
+        if (iDiff > 0)
+          return 1;
+        else if (iDiff < 0)
+          return -1;
+
+        lpszStr++;
+        lpszComp++;
+      }
+    }
+    if (*lpszComp)
+      return -1;
+  }
+  return 0;
+}
+
+/* Structure for formatting byte strings */
+typedef struct tagSHLWAPI_BYTEFORMATS
+{
+  LONGLONG dLimit;
+  double   dDivisor;
+  double   dNormaliser;
+  LPCSTR   lpszFormat;
+  CHAR     wPrefix;
+} SHLWAPI_BYTEFORMATS;
+
+/*************************************************************************
+ * StrFormatByteSize64A	[SHLWAPI.@]
+ *
+ * Create a string containing an abbreviated byte count of up to 2^63-1.
+ *
+ * PARAMS
+ *  llBytes  [I] Byte size to format
+ *  lpszDest [I] Destination for formatted string
+ *  cchMax   [I] Size of lpszDest
+ *
+ * RETURNS
+ *  lpszDest.
+ *
+ * NOTES
+ *  There is no StrFormatByteSize64W function, it is called StrFormatByteSizeW.
+ */
+LPSTR WINAPI StrFormatByteSize64A(LONGLONG llBytes, LPSTR lpszDest, UINT cchMax)
+{
+  static const char szBytes[] = "%ld bytes";
+  static const char sz3_0[] = "%3.0f";
+  static const char sz3_1[] = "%3.1f";
+  static const char sz3_2[] = "%3.2f";
+
+  static const SHLWAPI_BYTEFORMATS bfFormats[] =
+  {
+    { 10240, 10.24, 100.0, sz3_2, 'K' }, /* 10 KB */
+    { 102400, 102.4, 10.0, sz3_1, 'K' }, /* 100 KB */
+    { 1024000, 1024.0, 1.0, sz3_0, 'K' }, /* 1000 KB */
+    { 10485760, 10485.76, 100.0, sz3_2, 'M' }, /* 10 MB */
+    { 104857600, 104857.6, 10.0, sz3_1, 'M' }, /* 100 MB */
+    { 1048576000, 1048576.0, 1.0, sz3_0, 'M' }, /* 1000 MB */
+    { 10737418240, 10737418.24, 100.0, sz3_2, 'G' }, /* 10 GB */
+    { 107374182400, 107374182.4, 10.0, sz3_1, 'G' }, /* 100 GB */
+    { 1073741824000, 1073741824.0, 1.0, sz3_0, 'G' }, /* 1000 GB */
+    { 10995116277760, 10485.76, 100.0, sz3_2, 'T' }, /* 10 TB */
+    { 109951162777600, 104857.6, 10.0, sz3_1, 'T' }, /* 100 TB */
+    { 1099511627776000, 1048576.0, 1.0, sz3_0, 'T' }, /* 1000 TB */
+    { 11258999068426240, 10737418.24, 100.00, sz3_2, 'P' }, /* 10 PB */
+    { 112589990684262400, 107374182.4, 10.00, sz3_1, 'P' }, /* 100 PB */
+    { 1125899906842624000, 1073741824.0, 1.00, sz3_0, 'P' }, /* 1000 PB */
+    { 0, 10995116277.76, 100.00, sz3_2, 'E' } /* EB's, catch all */
+  };
+  char szBuff[32];
+  char szAdd[4];
+  double dBytes;
+  UINT i = 0;
+
+  TRACE("(%lld,%p,%d)\n", llBytes, lpszDest, cchMax);
+
+  if (!lpszDest || !cchMax)
+    return lpszDest;
+
+  if (llBytes < 1024)  /* 1K */
+  {
+    snprintf (lpszDest, cchMax, szBytes, (long)llBytes);
+    return lpszDest;
+  }
+
+  /* Note that if this loop completes without finding a match, i will be
+   * pointing at the last entry, which is a catch all for > 1000 PB
+   */
+  while (i < sizeof(bfFormats) / sizeof(SHLWAPI_BYTEFORMATS) - 1)
+  {
+    if (llBytes < bfFormats[i].dLimit)
+      break;
+    i++;
+  }
+  /* Above 1 TB we encounter problems with FP accuracy. So for amounts above
+   * this number we integer shift down by 1 MB first. The table above has
+   * the divisors scaled down from the '< 10 TB' entry onwards, to account
+   * for this. We also add a small fudge factor to get the correct result for
+   * counts that lie exactly on a 1024 byte boundary.
+   */
+  if (i > 8)
+    dBytes = (double)(llBytes >> 20) + 0.001; /* Scale down by I MB */
+  else
+    dBytes = (double)llBytes + 0.00001;
+
+  dBytes = floor(dBytes / bfFormats[i].dDivisor) / bfFormats[i].dNormaliser;
+
+  sprintf(szBuff, bfFormats[i].lpszFormat, dBytes);
+  szAdd[0] = ' ';
+  szAdd[1] = bfFormats[i].wPrefix;
+  szAdd[2] = 'B';
+  szAdd[3] = '\0';
+  strcat(szBuff, szAdd);
+  strncpy(lpszDest, szBuff, cchMax);
+  return lpszDest;
+}
+
+/*************************************************************************
+ * StrFormatByteSizeW	[SHLWAPI.@]
+ *
+ * See StrFormatByteSize64A.
+ */
+LPWSTR WINAPI StrFormatByteSizeW(LONGLONG llBytes, LPWSTR lpszDest,
+                                 UINT cchMax)
+{
+  char szBuff[32];
+
+  StrFormatByteSize64A(llBytes, szBuff, sizeof(szBuff));
+
+  if (lpszDest)
+    MultiByteToWideChar(CP_ACP, 0, szBuff, -1, lpszDest, cchMax);
+  return lpszDest;
+}
+
+/*************************************************************************
+ * StrFormatByteSizeA	[SHLWAPI.@]
+ *
+ * Create a string containing an abbreviated byte count of up to 2^31-1.
+ *
+ * PARAMS
+ *  dwBytes  [I] Byte size to format
+ *  lpszDest [I] Destination for formatted string
+ *  cchMax   [I] Size of lpszDest
+ *
+ * RETURNS
+ *  lpszDest.
+ *
+ * NOTES
+ *  The ASCII and Unicode versions of this function accept a different
+ *  integer size for dwBytes. See StrFormatByteSize64A.
+ */
+LPSTR WINAPI StrFormatByteSizeA(DWORD dwBytes, LPSTR lpszDest, UINT cchMax)
+{
+  TRACE("(%ld,%p,%d)\n", dwBytes, lpszDest, cchMax);
+
+  return StrFormatByteSize64A(dwBytes, lpszDest, cchMax);
 }

@@ -30,9 +30,62 @@
 #define NO_SHLWAPI_STREAM
 #include "shlwapi.h"
 #include "wine/debug.h"
-#include "ordinal.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
+
+/* The following schemes were identified in the native version of
+ * SHLWAPI.DLL version 5.50
+ */
+typedef enum {
+    URL_SCHEME_INVALID     = -1,
+    URL_SCHEME_UNKNOWN     =  0,
+    URL_SCHEME_FTP,
+    URL_SCHEME_HTTP,
+    URL_SCHEME_GOPHER,
+    URL_SCHEME_MAILTO,
+    URL_SCHEME_NEWS,
+    URL_SCHEME_NNTP,
+    URL_SCHEME_TELNET,
+    URL_SCHEME_WAIS,
+    URL_SCHEME_FILE,
+    URL_SCHEME_MK,
+    URL_SCHEME_HTTPS,
+    URL_SCHEME_SHELL,
+    URL_SCHEME_SNEWS,
+    URL_SCHEME_LOCAL,
+    URL_SCHEME_JAVASCRIPT,
+    URL_SCHEME_VBSCRIPT,
+    URL_SCHEME_ABOUT,
+    URL_SCHEME_RES,
+    URL_SCHEME_MAXVALUE
+} URL_SCHEME;
+
+typedef struct {
+    URL_SCHEME  scheme_number;
+    LPCSTR scheme_name;
+} SHL_2_inet_scheme;
+
+static const SHL_2_inet_scheme shlwapi_schemes[] = {
+  {URL_SCHEME_FTP,        "ftp"},
+  {URL_SCHEME_HTTP,       "http"},
+  {URL_SCHEME_GOPHER,     "gopher"},
+  {URL_SCHEME_MAILTO,     "mailto"},
+  {URL_SCHEME_NEWS,       "news"},
+  {URL_SCHEME_NNTP,       "nntp"},
+  {URL_SCHEME_TELNET,     "telnet"},
+  {URL_SCHEME_WAIS,       "wais"},
+  {URL_SCHEME_FILE,       "file"},
+  {URL_SCHEME_MK,         "mk"},
+  {URL_SCHEME_HTTPS,      "https"},
+  {URL_SCHEME_SHELL,      "shell"},
+  {URL_SCHEME_SNEWS,      "snews"},
+  {URL_SCHEME_LOCAL,      "local"},
+  {URL_SCHEME_JAVASCRIPT, "javascript"},
+  {URL_SCHEME_VBSCRIPT,   "vbscript"},
+  {URL_SCHEME_ABOUT,      "about"},
+  {URL_SCHEME_RES,        "res"},
+  {0, 0}
+};
 
 typedef struct {
     LPCWSTR pScheme;      /* [out] start of scheme                     */
@@ -55,6 +108,24 @@ typedef enum {
     PORT,
     USERPASS,
 } WINE_URL_SCAN_TYPE;
+
+typedef struct {
+    INT     size;      /* [in]  (always 0x18)                       */
+    LPCSTR  ap1;       /* [out] start of scheme                     */
+    INT     sizep1;    /* [out] size of scheme (until colon)        */
+    LPCSTR  ap2;       /* [out] pointer following first colon       */
+    INT     sizep2;    /* [out] size of remainder                   */
+    INT     fcncde;    /* [out] function match of p1 (0 if unknown) */
+} UNKNOWN_SHLWAPI_1;
+
+typedef struct {
+    INT     size;      /* [in]  (always 0x18)                       */
+    LPCWSTR ap1;       /* [out] start of scheme                     */
+    INT     sizep1;    /* [out] size of scheme (until colon)        */
+    LPCWSTR ap2;       /* [out] pointer following first colon       */
+    INT     sizep2;    /* [out] size of remainder                   */
+    INT     fcncde;    /* [out] function match of p1 (0 if unknown) */
+} UNKNOWN_SHLWAPI_2;
 
 static const CHAR hexDigits[] = "0123456789ABCDEF";
 
@@ -184,6 +255,122 @@ static BOOL URL_JustLocation(LPCWSTR str)
     return TRUE;
 }
 
+
+/*************************************************************************
+ *      @	[SHLWAPI.1]
+ *
+ * Identifies the Internet "scheme" in the passed string. ASCII based.
+ * Also determines start and length of item after the ':'
+ */
+DWORD WINAPI SHLWAPI_1 (LPCSTR x, UNKNOWN_SHLWAPI_1 *y)
+{
+    DWORD cnt;
+    const SHL_2_inet_scheme *inet_pro;
+
+    y->fcncde = URL_SCHEME_INVALID;
+    if (y->size != 0x18) return E_INVALIDARG;
+    /* FIXME: leading white space generates error of 0x80041001 which
+     *        is undefined
+     */
+    if (*x <= ' ') return 0x80041001;
+    cnt = 0;
+    y->sizep1 = 0;
+    y->ap1 = x;
+    while (*x) {
+	if (*x == ':') {
+	    y->sizep1 = cnt;
+	    cnt = -1;
+	    y->ap2 = x+1;
+	    break;
+	}
+	x++;
+	cnt++;
+    }
+
+    /* check for no scheme in string start */
+    /* (apparently schemes *must* be larger than a single character)  */
+    if ((*x == '\0') || (y->sizep1 <= 1)) {
+	y->ap1 = 0;
+	return 0x80041001;
+    }
+
+    /* found scheme, set length of remainder */
+    y->sizep2 = lstrlenA(y->ap2);
+
+    /* see if known scheme and return indicator number */
+    y->fcncde = URL_SCHEME_UNKNOWN;
+    inet_pro = shlwapi_schemes;
+    while (inet_pro->scheme_name) {
+	if (!strncasecmp(inet_pro->scheme_name, y->ap1,
+		    min(y->sizep1, lstrlenA(inet_pro->scheme_name)))) {
+	    y->fcncde = inet_pro->scheme_number;
+	    break;
+	}
+	inet_pro++;
+    }
+    return S_OK;
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.2]
+ *
+ * Identifies the Internet "scheme" in the passed string. UNICODE based.
+ * Also determines start and length of item after the ':'
+ */
+DWORD WINAPI SHLWAPI_2 (LPCWSTR x, UNKNOWN_SHLWAPI_2 *y)
+{
+    DWORD cnt;
+    const SHL_2_inet_scheme *inet_pro;
+    LPSTR cmpstr;
+    INT len;
+
+    y->fcncde = URL_SCHEME_INVALID;
+    if (y->size != 0x18) return E_INVALIDARG;
+    /* FIXME: leading white space generates error of 0x80041001 which
+     *        is undefined
+     */
+    if (*x <= L' ') return 0x80041001;
+    cnt = 0;
+    y->sizep1 = 0;
+    y->ap1 = x;
+    while (*x) {
+	if (*x == L':') {
+	    y->sizep1 = cnt;
+	    cnt = -1;
+	    y->ap2 = x+1;
+	    break;
+	}
+	x++;
+	cnt++;
+    }
+
+    /* check for no scheme in string start */
+    /* (apparently schemes *must* be larger than a single character)  */
+    if ((*x == L'\0') || (y->sizep1 <= 1)) {
+	y->ap1 = 0;
+	return 0x80041001;
+    }
+
+    /* found scheme, set length of remainder */
+    y->sizep2 = lstrlenW(y->ap2);
+
+    /* see if known scheme and return indicator number */
+    len = WideCharToMultiByte(0, 0, y->ap1, y->sizep1, 0, 0, 0, 0);
+    cmpstr = (LPSTR)HeapAlloc(GetProcessHeap(), 0, len+1);
+    WideCharToMultiByte(0, 0, y->ap1, y->sizep1, cmpstr, len+1, 0, 0);
+    y->fcncde = URL_SCHEME_UNKNOWN;
+    inet_pro = shlwapi_schemes;
+    while (inet_pro->scheme_name) {
+	if (!strncasecmp(inet_pro->scheme_name, cmpstr,
+		    min(len, lstrlenA(inet_pro->scheme_name)))) {
+	    y->fcncde = inet_pro->scheme_number;
+	    break;
+	}
+	inet_pro++;
+    }
+    HeapFree(GetProcessHeap(), 0, cmpstr);
+    return S_OK;
+}
 
 /*************************************************************************
  *        UrlCanonicalizeA     [SHLWAPI.@]
@@ -1752,4 +1939,45 @@ HRESULT WINAPI UrlGetPartW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut,
 	TRACE("len=%ld %s\n", *pcchOut, debugstr_w(pszOut));
     }
     return ret;
+}
+
+/*************************************************************************
+ * PathIsURLA	[SHLWAPI.@]
+ *
+ * Check if the given path is a URL.
+ *
+ * PARAMS
+ *  lpszPath [I] Path to check.
+ *
+ * RETURNS
+ *  TRUE  if lpszPath is a URL.
+ *  FALSE if lpszPath is NULL or not a URL.
+ */
+BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
+{
+    UNKNOWN_SHLWAPI_1 base;
+    DWORD res1;
+
+    if (!lpstrPath || !*lpstrPath) return FALSE;
+
+    /* get protocol        */
+    base.size = sizeof(base);
+    res1 = SHLWAPI_1(lpstrPath, &base);
+    return (base.fcncde > 0);
+}
+
+/*************************************************************************
+ * PathIsURLW	[SHLWAPI.@]
+ */
+BOOL WINAPI PathIsURLW(LPCWSTR lpstrPath)
+{
+    UNKNOWN_SHLWAPI_2 base;
+    DWORD res1;
+
+    if (!lpstrPath || !*lpstrPath) return FALSE;
+
+    /* get protocol        */
+    base.size = sizeof(base);
+    res1 = SHLWAPI_2(lpstrPath, &base);
+    return (base.fcncde > 0);
 }
