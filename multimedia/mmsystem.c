@@ -199,17 +199,17 @@ static int		PlaySound_Loop = FALSE;
 static int		PlaySound_SearchMode = 0; /* 1 - sndPlaySound search order
 						     2 - PlaySound order */
 
-static HMMIO16	get_mmioFromFile(LPCSTR lpszName)
+static HMMIO	get_mmioFromFile(LPCSTR lpszName)
 {
-    return mmioOpen16((LPSTR)lpszName, NULL,
-		      MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
+    return mmioOpenA((LPSTR)lpszName, NULL,
+		     MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
 }
 
-static HMMIO16 get_mmioFromProfile(UINT uFlags, LPCSTR lpszName) 
+static HMMIO	get_mmioFromProfile(UINT uFlags, LPCSTR lpszName) 
 {
     char	str[128];
     LPSTR	ptr;
-    HMMIO16  	hmmio;
+    HMMIO  	hmmio;
     
     TRACE("searching in SystemSound List !\n");
     GetProfileStringA("Sounds", (LPSTR)lpszName, "", str, sizeof(str));
@@ -227,10 +227,10 @@ static HMMIO16 get_mmioFromProfile(UINT uFlags, LPCSTR lpszName)
     return hmmio;
 }
 
-static BOOL16 WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
+static BOOL WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
 {
-    BOOL16		bRet = FALSE;
-    HMMIO16		hmmio;
+    BOOL		bRet = FALSE;
+    HMMIO		hmmio;
     MMCKINFO		ckMainRIFF;
     
     TRACE("SoundName='%s' uFlags=%04X !\n", lpszSoundName, uFlags);
@@ -239,13 +239,13 @@ static BOOL16 WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
 	return FALSE;
     }
     if (uFlags & SND_MEMORY) {
-	MMIOINFO16 mminfo;
+	MMIOINFO	mminfo;
 	memset(&mminfo, 0, sizeof(mminfo));
 	mminfo.fccIOProc = FOURCC_MEM;
 	mminfo.pchBuffer = (LPSTR)lpszSoundName;
 	mminfo.cchBuffer = -1;
 	TRACE("Memory sound %p\n", lpszSoundName);
-	hmmio = mmioOpen16(NULL, &mminfo, MMIO_READ);
+	hmmio = mmioOpenA(NULL, &mminfo, MMIO_READ);
     } else {
 	hmmio = 0;
 	if (uFlags & SND_ALIAS)
