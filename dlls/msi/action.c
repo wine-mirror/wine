@@ -5055,6 +5055,7 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
 {
     DWORD i;
     LPWSTR path = NULL;
+    INT len;
     MSIFOLDER *folder;
 
     TRACE("(%p %s %s)\n",package, debugstr_w(szFolder),debugstr_w(szFolderPath));
@@ -5073,7 +5074,17 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
         return ERROR_INVALID_PARAMETER;
     HeapFree(GetProcessHeap(),0,path);
 
-    strcpyW(folder->Property,szFolderPath);
+    len = strlenW(szFolderPath);
+
+    if (szFolderPath[len-1]!='\\')
+    {
+        len +=2;
+        folder->Property = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+        strcpyW(folder->Property,szFolderPath);
+        strcatW(folder->Property,cszbs);
+    }
+    else
+        folder->Property = dupstrW(szFolderPath);
 
     for (i = 0; i < package->loaded_folders; i++)
         package->folders[i].ResolvedTarget=NULL;
