@@ -40,4 +40,5 @@
  * get localized bitmaps for example.
  */
 #include "wininet_En.rc"
+#include "wininet_Es.rc"
 #include "wininet_Pt.rc"

@@ -1,5 +1,6 @@
 /*
  * Copyright 1998 Juergen Schmied
+ * Copyright 2003 José Manuel Ferrer Ortiz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,7 +28,7 @@ FONT 10, "Helv"
  LISTBOX 99, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
  ICON "", 1088, 189, 10, 14, 16
  LTEXT "", 100, 8, 10, 137, 33
- LTEXT "Wine es disponible gracias a:", 98, 8, 55, 137, 10
+ LTEXT "Wine está disponible gracias a:", 98, 8, 55, 137, 10
 }
 
 SHELL_RUN_DLG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 227, 95
@@ -36,10 +37,22 @@ CAPTION ""
 FONT 8, "Helv"
 {
  ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "Type the name of a program, folder, document, or Internet resource, and Wine will open it for you.", 12289, 36, 11, 182, 18
- LTEXT "&Open:", 12305, 7, 39, 24, 10
+ LTEXT "Introduzca el nombre de un programa, carpeta, documento o recurso de Internet, y Wine lo abrirá para usted.", 12289, 36, 11, 182, 18
+ LTEXT "&Abrir:", 12305, 7, 39, 24, 10
  CONTROL "", 12298, "COMBOBOX", WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
- DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "Cancel", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "&Browse...", 12288, 170, 63, 50, 14, WS_TABSTOP
+ DEFPUSHBUTTON "Aceptar", IDOK, 62, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "Cancelar", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "&Examinar...", 12288, 170, 63, 50, 14, WS_TABSTOP
 }
+
+/*      columns in the shellview        */
+STRINGTABLE LANGUAGE LANG_SPANISH, SUBLANG_DEFAULT
+BEGIN
+	IDS_SHV_COLUMN1         "Archivo"
+	IDS_SHV_COLUMN2         "Tamaño"
+	IDS_SHV_COLUMN3         "Tipo"
+	IDS_SHV_COLUMN4         "Modificado"
+	IDS_SHV_COLUMN5         "Atributos"
+	IDS_SHV_COLUMN6         "Tamaño"
+	IDS_SHV_COLUMN7         "Tamaño disponible"
+END

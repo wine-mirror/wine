@@ -4,6 +4,7 @@
  * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
  * Spanish translation by Pablo Saratxaga <srtxg@chanae.alphanet.ch>
  * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
+ * Copyright 2003 José Manuel Ferrer Ortiz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,7 +23,7 @@
 
 MAIN_MENU MENU LANGUAGE LANG_SPANISH, SUBLANG_DEFAULT
 {
- POPUP "&Propepiedades" {
+ POPUP "&Propiedades" {
   MENUITEM "Ana&lógico", 0x100
   MENUITEM "Digi&tal", 0x101
   MENUITEM SEPARATOR
