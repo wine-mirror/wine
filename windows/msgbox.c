@@ -70,7 +70,7 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
        }
        else
        {
-           if (LoadStringW(0, IDS_ERROR, buf, 256))
+           if (LoadStringW(GetModuleHandleA("user32.dll"), IDS_ERROR, buf, 256))
                SetWindowTextW(hwnd, buf);
        }
     }
@@ -158,6 +158,11 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     /* Get the icon height */
     GetWindowRect(GetDlgItem(hwnd, MSGBOX_IDICON), &rect);
     MapWindowPoints(0, hwnd, (LPPOINT)&rect, 2);
+    if (!(lpmb->dwStyle & MB_ICONMASK))
+    {
+        rect.bottom = rect.top;
+        rect.right = rect.left;
+    }
     iheight = rect.bottom - rect.top;
     ileft = rect.left;
     iwidth = rect.right - ileft;
@@ -198,7 +203,8 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     DrawTextW( hdc, lpszText, -1, &rect,
 	       DT_LEFT | DT_EXPANDTABS | DT_WORDBREAK | DT_CALCRECT);
     /* Min text width corresponds to space for the buttons */
-    tleft = 2 * ileft + iwidth;
+    tleft = ileft;
+    if (iwidth) tleft += ileft + iwidth;
     twidth = max((bw + bspace) * buttons + bspace - tleft, rect.right);
     theight = rect.bottom;
 
@@ -407,7 +413,7 @@ INT WINAPI MessageBoxIndirectA( LPMSGBOXPARAMSA msgbox )
     if (HIWORD(msgbox->lpszIcon))
         RtlCreateUnicodeStringFromAsciiz(&iconW, msgbox->lpszIcon);
     else
-        captionW.Buffer = (LPWSTR)msgbox->lpszIcon;
+        iconW.Buffer = (LPWSTR)msgbox->lpszIcon;
 
     msgboxW.cbSize = sizeof(msgboxW);
     msgboxW.hwndOwner = msgbox->hwndOwner;
