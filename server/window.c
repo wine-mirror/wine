@@ -287,6 +287,9 @@ static struct window *create_window( struct window *parent, struct window *owner
     }
     else win->next = win->prev = NULL;
 
+    /* if parent belongs to a different thread, attach the two threads */
+    if (parent && parent->thread && parent->thread != current)
+        attach_thread_input( current, parent->thread );
     return win;
 }
 

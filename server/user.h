@@ -46,6 +46,7 @@ extern void *next_user_handle( user_handle_t *handle, enum user_object type );
 extern void free_msg_queue( struct thread *thread );
 extern void inc_queue_paint_count( struct thread *thread, int incr );
 extern void queue_cleanup_window( struct thread *thread, user_handle_t win );
+extern int attach_thread_input( struct thread *thread_from, struct thread *thread_to );
 extern void post_message( user_handle_t win, unsigned int message,
                           unsigned int wparam, unsigned int lparam );
 

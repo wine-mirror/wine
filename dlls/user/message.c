@@ -2231,3 +2231,58 @@ BOOL WINAPI SetMessageQueue( INT size )
     /* now obsolete the message queue will be expanded dynamically as necessary */
     return TRUE;
 }
+
+
+/**********************************************************************
+ *		AttachThreadInput (USER32.@)
+ *
+ * Attaches the input processing mechanism of one thread to that of
+ * another thread.
+ */
+BOOL WINAPI AttachThreadInput( DWORD from, DWORD to, BOOL attach )
+{
+    BOOL ret;
+
+    SERVER_START_REQ( attach_thread_input )
+    {
+        req->tid_from = from;
+        req->tid_to   = to;
+        req->attach   = attach;
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/**********************************************************************
+ *		GetGUIThreadInfo  (USER32.@)
+ */
+BOOL WINAPI GetGUIThreadInfo( DWORD id, GUITHREADINFO *info )
+{
+    BOOL ret;
+
+    SERVER_START_REQ( get_thread_input )
+    {
+        req->tid = id;
+        if ((ret = !wine_server_call_err( req )))
+        {
+            info->flags          = 0;
+            info->hwndActive     = reply->active;
+            info->hwndFocus      = reply->focus;
+            info->hwndCapture    = reply->capture;
+            info->hwndMenuOwner  = reply->menu_owner;
+            info->hwndMoveSize   = reply->move_size;
+            info->hwndCaret      = reply->caret;
+            info->rcCaret.left   = reply->rect.left;
+            info->rcCaret.top    = reply->rect.top;
+            info->rcCaret.right  = reply->rect.right;
+            info->rcCaret.bottom = reply->rect.bottom;
+            if (reply->menu_owner) info->flags |= GUI_INMENUMODE;
+            if (reply->move_size) info->flags |= GUI_INMOVESIZE;
+            if (reply->caret) info->flags |= GUI_CARETBLINKING;
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
+}

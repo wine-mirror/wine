@@ -2175,6 +2175,31 @@ static void dump_get_window_properties_reply( const struct get_window_properties
     dump_varargs_properties( cur_size );
 }
 
+static void dump_attach_thread_input_request( const struct attach_thread_input_request *req )
+{
+    fprintf( stderr, " tid_from=%08x,", req->tid_from );
+    fprintf( stderr, " tid_to=%08x,", req->tid_to );
+    fprintf( stderr, " attach=%d", req->attach );
+}
+
+static void dump_get_thread_input_request( const struct get_thread_input_request *req )
+{
+    fprintf( stderr, " tid=%08x", req->tid );
+}
+
+static void dump_get_thread_input_reply( const struct get_thread_input_reply *req )
+{
+    fprintf( stderr, " focus=%08x,", req->focus );
+    fprintf( stderr, " capture=%08x,", req->capture );
+    fprintf( stderr, " active=%08x,", req->active );
+    fprintf( stderr, " foreground=%08x,", req->foreground );
+    fprintf( stderr, " menu_owner=%08x,", req->menu_owner );
+    fprintf( stderr, " move_size=%08x,", req->move_size );
+    fprintf( stderr, " caret=%08x,", req->caret );
+    fprintf( stderr, " rect=" );
+    dump_rectangle( &req->rect );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -2332,6 +2357,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_remove_window_property_request,
     (dump_func)dump_get_window_property_request,
     (dump_func)dump_get_window_properties_request,
+    (dump_func)dump_attach_thread_input_request,
+    (dump_func)dump_get_thread_input_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -2491,6 +2518,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_remove_window_property_reply,
     (dump_func)dump_get_window_property_reply,
     (dump_func)dump_get_window_properties_reply,
+    (dump_func)0,
+    (dump_func)dump_get_thread_input_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -2650,6 +2679,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "remove_window_property",
     "get_window_property",
     "get_window_properties",
+    "attach_thread_input",
+    "get_thread_input",
 };
 
 /* ### make_requests end ### */

@@ -2729,6 +2729,40 @@ struct get_window_properties_reply
 };
 
 
+
+struct attach_thread_input_request
+{
+    struct request_header __header;
+    thread_id_t    tid_from;
+    thread_id_t    tid_to;
+    int            attach;
+};
+struct attach_thread_input_reply
+{
+    struct reply_header __header;
+};
+
+
+
+struct get_thread_input_request
+{
+    struct request_header __header;
+    thread_id_t    tid;
+};
+struct get_thread_input_reply
+{
+    struct reply_header __header;
+    user_handle_t  focus;
+    user_handle_t  capture;
+    user_handle_t  active;
+    user_handle_t  foreground;
+    user_handle_t  menu_owner;
+    user_handle_t  move_size;
+    user_handle_t  caret;
+    rectangle_t    rect;
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -2887,6 +2921,8 @@ enum request
     REQ_remove_window_property,
     REQ_get_window_property,
     REQ_get_window_properties,
+    REQ_attach_thread_input,
+    REQ_get_thread_input,
     REQ_NB_REQUESTS
 };
 
@@ -3050,6 +3086,8 @@ union generic_request
     struct remove_window_property_request remove_window_property_request;
     struct get_window_property_request get_window_property_request;
     struct get_window_properties_request get_window_properties_request;
+    struct attach_thread_input_request attach_thread_input_request;
+    struct get_thread_input_request get_thread_input_request;
 };
 union generic_reply
 {
@@ -3211,8 +3249,10 @@ union generic_reply
     struct remove_window_property_reply remove_window_property_reply;
     struct get_window_property_reply get_window_property_reply;
     struct get_window_properties_reply get_window_properties_reply;
+    struct attach_thread_input_reply attach_thread_input_reply;
+    struct get_thread_input_reply get_thread_input_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 84
+#define SERVER_PROTOCOL_VERSION 85
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -244,6 +244,7 @@ init	UserClientDllInitialize
 @ stdcall GetDoubleClickTime() GetDoubleClickTime
 @ stdcall GetFocus() GetFocus
 @ stdcall GetForegroundWindow() GetForegroundWindow
+@ stdcall GetGUIThreadInfo(long ptr) GetGUIThreadInfo
 @ stdcall GetIconInfo(long ptr) GetIconInfo
 @ stub GetInputDesktop
 @ stdcall GetInputState() GetInputState

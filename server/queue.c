@@ -89,6 +89,19 @@ struct timer
     unsigned int    lparam;    /* lparam for message */
 };
 
+struct thread_input
+{
+    struct object          obj;           /* object header */
+    user_handle_t          focus;         /* focus window */
+    user_handle_t          capture;       /* capture window */
+    user_handle_t          active;        /* active window */
+    user_handle_t          menu_owner;    /* current menu owner window */
+    user_handle_t          move_size;     /* current moving/resizing window */
+    user_handle_t          caret;         /* caret window */
+    rectangle_t            rect;          /* caret rectangle */
+    unsigned char          keystate[256]; /* state of each key */
+};
+
 struct msg_queue
 {
     struct object          obj;           /* object header */
@@ -106,6 +119,7 @@ struct msg_queue
     struct timer          *last_timer;    /* tail of timer list */
     struct timer          *next_timer;    /* next timer to expire */
     struct timeout_user   *timeout;       /* timeout for next timer to expire */
+    struct thread_input   *input;         /* thread input descriptor */
 };
 
 static void msg_queue_dump( struct object *obj, int verbose );
@@ -114,6 +128,8 @@ static void msg_queue_remove_queue( struct object *obj, struct wait_queue_entry 
 static int msg_queue_signaled( struct object *obj, struct thread *thread );
 static int msg_queue_satisfied( struct object *obj, struct thread *thread );
 static void msg_queue_destroy( struct object *obj );
+static void thread_input_dump( struct object *obj, int verbose );
+static void thread_input_destroy( struct object *obj );
 static void timer_callback( void *private );
 
 static const struct object_ops msg_queue_ops =
@@ -134,11 +150,55 @@ static const struct object_ops msg_queue_ops =
 };
 
 
-static struct msg_queue *create_msg_queue( struct thread *thread )
+static const struct object_ops thread_input_ops =
+{
+    sizeof(struct thread_input),  /* size */
+    thread_input_dump,            /* dump */
+    no_add_queue,                 /* add_queue */
+    NULL,                         /* remove_queue */
+    NULL,                         /* signaled */
+    NULL,                         /* satisfied */
+    NULL,                         /* get_poll_events */
+    NULL,                         /* poll_event */
+    no_get_fd,                    /* get_fd */
+    no_flush,                     /* flush */
+    no_get_file_info,             /* get_file_info */
+    NULL,                         /* queue_async */
+    thread_input_destroy          /* destroy */
+};
+
+/* create a thread input object */
+static struct thread_input *create_thread_input(void)
+{
+    struct thread_input *input;
+
+    if ((input = alloc_object( &thread_input_ops, -1 )))
+    {
+        input->focus       = 0;
+        input->capture     = 0;
+        input->active      = 0;
+        input->menu_owner  = 0;
+        input->move_size   = 0;
+        input->caret       = 0;
+        input->rect.left   = 0;
+        input->rect.top    = 0;
+        input->rect.right  = 0;
+        input->rect.bottom = 0;
+        memset( input->keystate, 0, sizeof(input->keystate) );
+    }
+    return input;
+}
+
+/* pointer to input structure of foreground thread */
+static struct thread_input *foreground_input;
+
+/* create a message queue object */
+static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_input *input )
 {
     struct msg_queue *queue;
     int i;
 
+    if (!input && !(input = create_thread_input())) return NULL;
     if ((queue = alloc_object( &msg_queue_ops, -1 )))
     {
         queue->wake_bits       = 0;
@@ -153,6 +213,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread )
         queue->last_timer      = NULL;
         queue->next_timer      = NULL;
         queue->timeout         = NULL;
+        queue->input           = (struct thread_input *)grab_object( input );
         for (i = 0; i < NB_MSG_KINDS; i++)
             queue->msg_list[i].first = queue->msg_list[i].last = NULL;
 
@@ -160,6 +221,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread )
         if (!thread->process->queue)
             thread->process->queue = (struct msg_queue *)grab_object( queue );
     }
+    release_object( input );
     return queue;
 }
 
@@ -217,7 +279,7 @@ inline static int get_hardware_msg_bit( struct message *msg )
 inline static struct msg_queue *get_current_queue(void)
 {
     struct msg_queue *queue = current->queue;
-    if (!queue) queue = create_msg_queue( current );
+    if (!queue) queue = create_msg_queue( current, NULL );
     return queue;
 }
 
@@ -529,7 +591,75 @@ static void msg_queue_destroy( struct object *obj )
         timer = next;
     }
     if (queue->timeout) remove_timeout_user( queue->timeout );
+    if (queue->input) release_object( queue->input );
 }
+
+static void thread_input_dump( struct object *obj, int verbose )
+{
+    struct thread_input *input = (struct thread_input *)obj;
+    fprintf( stderr, "Thread input focus=%x capture=%x active=%x\n",
+             input->focus, input->capture, input->active );
+}
+
+static void thread_input_destroy( struct object *obj )
+{
+    struct thread_input *input = (struct thread_input *)obj;
+
+    if (foreground_input == input) foreground_input = NULL;
+}
+
+/* fix the thread input data when a window is destroyed */
+inline static void thread_input_cleanup_window( struct msg_queue *queue, user_handle_t window )
+{
+    struct thread_input *input = queue->input;
+
+    if (window == input->focus) input->focus = 0;
+    if (window == input->capture) input->capture = 0;
+    if (window == input->active) input->active = 0;
+    if (window == input->menu_owner) input->menu_owner = 0;
+    if (window == input->move_size) input->move_size = 0;
+    if (window == input->caret) input->caret = 0;
+}
+
+/* attach two thread input data structures */
+int attach_thread_input( struct thread *thread_from, struct thread *thread_to )
+{
+    struct thread_input *input;
+
+    if (!thread_to->queue && !(thread_to->queue = create_msg_queue( thread_to, NULL ))) return 0;
+    input = (struct thread_input *)grab_object( thread_to->queue->input );
+
+    if (thread_from->queue)
+    {
+        release_object( thread_from->queue->input );
+        thread_from->queue->input = input;
+    }
+    else
+    {
+        if (!(thread_from->queue = create_msg_queue( thread_from, input ))) return 0;
+    }
+    memset( input->keystate, 0, sizeof(input->keystate) );
+    return 1;
+}
+
+/* detach two thread input data structures */
+static void detach_thread_input( struct thread *thread_from, struct thread *thread_to )
+{
+    struct thread_input *input;
+
+    if (!thread_from->queue || !thread_to->queue ||
+        thread_from->queue->input != thread_to->queue->input)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return;
+    }
+    if ((input = create_thread_input()))
+    {
+        release_object( thread_from->queue->input );
+        thread_from->queue->input = input;
+    }
+}
+
 
 /* set the next timer to expire */
 static void set_next_timer( struct msg_queue *queue, struct timer *timer )
@@ -706,6 +836,8 @@ void queue_cleanup_window( struct thread *thread, user_handle_t win )
             msg = next;
         }
     }
+
+    thread_input_cleanup_window( queue, win );
 }
 
 /* post a message to a window; used by socket handling */
@@ -1097,4 +1229,66 @@ DECL_HANDLER(kill_win_timer)
 
     if (!queue || !kill_timer( queue, get_user_full_handle(req->win), req->msg, req->id ))
         set_error( STATUS_INVALID_PARAMETER );
+}
+
+
+/* attach (or detach) thread inputs */
+DECL_HANDLER(attach_thread_input)
+{
+    struct thread *thread_from = get_thread_from_id( req->tid_from );
+    struct thread *thread_to = get_thread_from_id( req->tid_to );
+
+    if (!thread_from || !thread_to)
+    {
+        if (thread_from) release_object( thread_from );
+        if (thread_to) release_object( thread_to );
+        return;
+    }
+    if (thread_from != thread_to)
+    {
+        if (req->attach) attach_thread_input( thread_from, thread_to );
+        else detach_thread_input( thread_from, thread_to );
+    }
+    else set_error( STATUS_ACCESS_DENIED );
+    release_object( thread_from );
+    release_object( thread_to );
+}
+
+
+/* get thread input data */
+DECL_HANDLER(get_thread_input)
+{
+    struct thread *thread = NULL;
+    struct thread_input *input;
+
+    if (req->tid)
+    {
+        if (!(thread = get_thread_from_id( req->tid ))) return;
+        input = thread->queue ? thread->queue->input : NULL;
+    }
+    else input = foreground_input;  /* get the foreground thread info */
+
+    if (input)
+    {
+        reply->focus      = input->focus;
+        reply->capture    = input->capture;
+        reply->active     = input->active;
+        reply->menu_owner = input->menu_owner;
+        reply->move_size  = input->move_size;
+        reply->caret      = input->caret;
+        reply->rect       = input->rect;
+    }
+    else
+    {
+        reply->focus      = 0;
+        reply->capture    = 0;
+        reply->active     = 0;
+        reply->menu_owner = 0;
+        reply->move_size  = 0;
+        reply->caret      = 0;
+        reply->rect.left = reply->rect.top = reply->rect.right = reply->rect.bottom = 0;
+    }
+    /* foreground window is active window of foreground thread */
+    reply->foreground = foreground_input ? foreground_input->active : 0;
+    if (thread) release_object( thread );
 }

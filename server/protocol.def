@@ -1908,3 +1908,26 @@ enum message_type
     int            total;         /* total number of properties */
     VARARG(props,properties);     /* list of properties */
 @END
+
+
+/* Attach (or detach) thread inputs */
+@REQ(attach_thread_input)
+    thread_id_t    tid_from;       /* thread to be attached */
+    thread_id_t    tid_to;         /* thread to which tid_from should be attached */
+    int            attach;         /* is it an attach? */
+@END
+
+
+/* Get input data for a given thread */
+@REQ(get_thread_input)
+    thread_id_t    tid;           /* id of thread */
+@REPLY
+    user_handle_t  focus;         /* handle to the focus window */
+    user_handle_t  capture;       /* handle to the capture window */
+    user_handle_t  active;        /* handle to the active window */
+    user_handle_t  foreground;    /* handle to the global foreground window */
+    user_handle_t  menu_owner;    /* handle to the menu owner */
+    user_handle_t  move_size;     /* handle to the moving/resizing window */
+    user_handle_t  caret;         /* handle to the caret window */
+    rectangle_t    rect;          /* caret rectangle */
+@END

@@ -397,6 +397,27 @@ typedef struct tagINPUT
 } INPUT, *PINPUT, *LPINPUT;
 
 
+typedef struct tagGUITHREADINFO
+{
+    DWORD   cbSize;
+    DWORD   flags;
+    HWND    hwndActive;
+    HWND    hwndFocus;
+    HWND    hwndCapture;
+    HWND    hwndMenuOwner;
+    HWND    hwndMoveSize;
+    HWND    hwndCaret;
+    RECT    rcCaret;
+} GUITHREADINFO, *PGUITHREADINFO, *LPGUITHREADINFO;
+
+#define GUI_CARETBLINKING   0x00000001
+#define GUI_INMOVESIZE      0x00000002
+#define GUI_INMENUMODE      0x00000004
+#define GUI_SYSTEMMENUMODE  0x00000008
+#define GUI_POPUPMENUMODE   0x00000010
+#define GUI_16BITTASK       0x00000020
+
+
 /***** Dialogs *****/
 
 /* Gcc on Solaris has a version of this that we don't care about */
@@ -4079,15 +4100,16 @@ UINT        WINAPI GetDlgItemInt(HWND,INT,BOOL*,BOOL);
 INT         WINAPI GetDlgItemTextA(HWND,INT,LPSTR,UINT);
 INT         WINAPI GetDlgItemTextW(HWND,INT,LPWSTR,UINT);
 #define     GetDlgItemText WINELIB_NAME_AW(GetDlgItemText)
-UINT      WINAPI GetDoubleClickTime(void);
-HWND      WINAPI GetFocus(void);
-HWND      WINAPI GetForegroundWindow(void);
-BOOL      WINAPI GetInputState(void);
-UINT      WINAPI GetInternalWindowPos(HWND,LPRECT,LPPOINT);
-UINT      WINAPI GetKBCodePage(void);
-INT       WINAPI GetKeyboardType(INT);
-INT       WINAPI GetKeyNameTextA(LONG,LPSTR,INT);
-INT       WINAPI GetKeyNameTextW(LONG,LPWSTR,INT);
+UINT        WINAPI GetDoubleClickTime(void);
+HWND        WINAPI GetFocus(void);
+HWND        WINAPI GetForegroundWindow(void);
+BOOL        WINAPI GetGUIThreadInfo(DWORD,GUITHREADINFO*);
+BOOL        WINAPI GetInputState(void);
+UINT        WINAPI GetInternalWindowPos(HWND,LPRECT,LPPOINT);
+UINT        WINAPI GetKBCodePage(void);
+INT         WINAPI GetKeyboardType(INT);
+INT         WINAPI GetKeyNameTextA(LONG,LPSTR,INT);
+INT         WINAPI GetKeyNameTextW(LONG,LPWSTR,INT);
 #define     GetKeyNameText WINELIB_NAME_AW(GetKeyNameText)
 INT       WINAPI GetKeyboardLayoutNameA(LPSTR);
 INT       WINAPI GetKeyboardLayoutNameW(LPWSTR);

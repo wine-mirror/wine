@@ -259,6 +259,8 @@ DECL_HANDLER(set_window_property);
 DECL_HANDLER(remove_window_property);
 DECL_HANDLER(get_window_property);
 DECL_HANDLER(get_window_properties);
+DECL_HANDLER(attach_thread_input);
+DECL_HANDLER(get_thread_input);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -421,6 +423,8 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_remove_window_property,
     (req_handler)req_get_window_property,
     (req_handler)req_get_window_properties,
+    (req_handler)req_attach_thread_input,
+    (req_handler)req_get_thread_input,
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 
