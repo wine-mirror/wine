@@ -828,7 +828,7 @@ typedef DWORD (CALLBACK *LPPROGRESS_ROUTINE)(LARGE_INTEGER, LARGE_INTEGER, LARGE
 #define	FORMAT_MESSAGE_ARGUMENT_ARRAY	0x00002000
 #define	FORMAT_MESSAGE_MAX_WIDTH_MASK	0x000000FF
 
-#ifdef __WINE__
+#ifdef __WINESRC__
 #define CRITICAL_SECTION_INIT(name) { (void *)(__FILE__ ": " name), -1, 0, 0, 0, 0 }
 #endif
 
@@ -1944,7 +1944,7 @@ static inline PVOID WINAPI InterlockedExchangePointer( PVOID *dest, PVOID val )
     return (PVOID)InterlockedExchange( (PLONG)dest, (LONG)val );
 }
 
-#ifdef __WINE__
+#ifdef __WINESRC__
 #define GetCurrentProcess() ((HANDLE)0xffffffff)
 #define GetCurrentThread()  ((HANDLE)0xfffffffe)
 #endif

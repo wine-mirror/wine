@@ -1,4 +1,4 @@
-DEFS      = -D__WINE__ -DINCLUDEDIR="\"$(includedir)\""
+DEFS      = -D__WINESRC__ -DINCLUDEDIR="\"$(includedir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

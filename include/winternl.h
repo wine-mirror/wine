@@ -475,7 +475,7 @@ typedef struct _OBJECT_ATTRIBUTES {
 } OBJECT_ATTRIBUTES, *POBJECT_ATTRIBUTES;
 
 typedef struct _PROCESS_BASIC_INFORMATION {
-#ifdef __WINE__
+#ifdef __WINESRC__
     DWORD ExitStatus;
     DWORD PebBaseAddress;
     DWORD AffinityMask;
@@ -556,7 +556,7 @@ typedef struct _RTL_RWLOCK {
 
 /* System Information Class 0x00 */
 typedef struct _SYSTEM_BASIC_INFORMATION {
-#ifdef __WINE__
+#ifdef __WINESRC__
     DWORD dwUnknown1;
     ULONG uKeMaximumIncrement;
     ULONG uPageSize;
@@ -645,7 +645,7 @@ typedef struct _SYSTEM_PERFORMANCE_INFORMATION {
 
 /* System Information Class 0x02 */
 typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
-#ifdef __WINE__
+#ifdef __WINESRC__
     LARGE_INTEGER liIdleTime;
     DWORD dwSpare[76];
 #else
@@ -659,7 +659,7 @@ typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
 
 /* System Information Class 0x05 */
 typedef struct _SYSTEM_PROCESS_INFORMATION {
-#ifdef __WINE__
+#ifdef __WINESRC__
     DWORD dwOffset;
     DWORD dwThreadCount;
     DWORD dwUnknown1[6];
@@ -714,7 +714,7 @@ typedef struct _SYSTEM_TIME_ADJUSTMENT {
 
 /* System Information Class 0x03 */
 typedef struct _SYSTEM_TIMEOFDAY_INFORMATION {
-#ifdef __WINE__
+#ifdef __WINESRC__
     LARGE_INTEGER liKeBootTime;
     LARGE_INTEGER liKeSystemTime;
     LARGE_INTEGER liExpTimeZoneBias;

@@ -715,7 +715,7 @@ LPSTR WINAPI StrFormatByteSizeA (DWORD,LPSTR,UINT);
 /* A/W Pairing is broken for this function */
 LPSTR WINAPI StrFormatByteSize64A (LONGLONG,LPSTR,UINT);
 LPWSTR WINAPI StrFormatByteSizeW (LONGLONG,LPWSTR,UINT);
-#ifndef __WINE__
+#ifndef __WINESRC__
 #ifdef UNICODE
 #define StrFormatByteSize StrFormatByteSizeW
 #else

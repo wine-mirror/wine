@@ -1,4 +1,4 @@
-DEFS      = -D__WINE__
+DEFS      = -D__WINESRC__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

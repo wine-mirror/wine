@@ -136,7 +136,7 @@
 
 /* Anonymous union/struct handling */
 
-#ifdef __WINE__
+#ifdef __WINESRC__
 # define NONAMELESSSTRUCT
 # define NONAMELESSUNION
 #else
@@ -266,7 +266,7 @@
 # define EXTERN_C    extern
 #endif
 
-#ifndef __WINE__
+#ifndef __WINESRC__
 #define STDMETHODCALLTYPE       __stdcall
 #define STDMETHODVCALLTYPE      __cdecl
 #define STDAPICALLTYPE          __stdcall
@@ -328,7 +328,7 @@ typedef const WCHAR    *PCWSTR,     *LPCWSTR;
  * the emulator. The reason is they depend on the UNICODE
  * macro which only exists in the user's code.
  */
-#ifndef __WINE__
+#ifndef __WINESRC__
 # ifdef WINE_UNICODE_REWRITE
 
 /* Use this if your compiler does not provide a 16bit wchar_t type.
@@ -379,7 +379,7 @@ typedef LPCSTR          PCTSTR,      LPCTSTR;
 #  define __TEXT(string) string
 # endif /* UNICODE */
 # define TEXT(quote) __TEXT(quote)
-#endif   /* __WINE__ */
+#endif   /* __WINESRC__ */
 
 /* Misc common WIN32 types */
 typedef char            CCHAR;
@@ -474,7 +474,7 @@ typedef struct _MEMORY_BASIC_INFORMATION
 #define MEM_MAPPED              0x00040000
 #define MEM_RESET               0x00080000
 #define MEM_TOP_DOWN            0x00100000
-#ifdef __WINE__
+#ifdef __WINESRC__
 #define MEM_SYSTEM              0x80000000
 #endif
 
@@ -1132,7 +1132,7 @@ typedef struct _CONTEXT
 
 typedef CONTEXT *PCONTEXT;
 
-#ifdef __WINE__
+#ifdef __WINESRC__
 
 /* Macros to retrieve the current context */
 
@@ -1269,7 +1269,7 @@ static DWORD __builtin_return_address(int p_iDepth)
 #error You need to define DEFINE_REGS_ENTRYPOINT macros for your CPU
 #endif
 
-#endif  /* __WINE__ */
+#endif  /* __WINESRC__ */
 
 /*
  * Language IDs

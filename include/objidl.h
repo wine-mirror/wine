@@ -1711,7 +1711,7 @@ void __RPC_STUB IRunnableObject_SetContainedObject_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
-#ifdef __WINE__
+#ifdef __WINESRC__
 #undef GetObject
 #endif
 typedef IRunningObjectTable *LPRUNNINGOBJECTTABLE;

@@ -19,7 +19,7 @@
 #ifndef __WINE_WINDOWS_H
 #define __WINE_WINDOWS_H
 
-#ifdef __WINE__
+#ifdef __WINESRC__
 #error Wine should not include windows.h internally
 #endif
 

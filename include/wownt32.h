@@ -59,7 +59,7 @@ typedef enum
 HANDLE WINAPI WOWHandle32(WORD,WOW_HANDLE_TYPE);
 WORD   WINAPI WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
 
-#ifdef __WINE__
+#ifdef __WINESRC__
 /* under Wine use the kernel functions directly so we don't have to import wow32 */
 HANDLE WINAPI K32WOWHandle32(WORD,WOW_HANDLE_TYPE);
 WORD   WINAPI K32WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
@@ -67,7 +67,7 @@ WORD   WINAPI K32WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
 #define WOWHandle16 K32WOWHandle16
 #endif
 
-#ifdef __WINE__
+#ifdef __WINESRC__
 /* under Wine we use optimized versions where we can */
 #define HWND_32(h16)      ((HWND)      (ULONG_PTR)(h16))
 #define HMENU_32(h16)     ((HMENU)     (ULONG_PTR)(h16))
@@ -95,7 +95,7 @@ WORD   WINAPI K32WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
 #define HPEN_16(h32)      (LOWORD(h32))
 #define HACCEL_16(h32)    (LOWORD(h32))
 
-#else  /* __WINE__ */
+#else  /* __WINESRC__ */
 
 #define HWND_32(h16)      ((HWND)      (WOWHandle32(h16, WOW_TYPE_HWND)))
 #define HMENU_32(h16)     ((HMENU)     (WOWHandle32(h16, WOW_TYPE_HMENU)))
@@ -123,7 +123,7 @@ WORD   WINAPI K32WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
 #define HPEN_16(h32)      (WOWHandle16(h32, WOW_TYPE_HPEN))
 #define HACCEL_16(h32)    (WOWHandle16(h32, WOW_TYPE_HACCEL))
 
-#endif  /* __WINE__ */
+#endif  /* __WINESRC__ */
 
 #define HMETAFILE_32(h16) ((HMETAFILE)(WOWHandle32(h16, WOW_TYPE_HMETAFILE)))
 #define HTASK_32(h16)     ((DWORD)(WOWHandle32(h16, WOW_TYPE_HTASK)))

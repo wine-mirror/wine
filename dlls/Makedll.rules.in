@@ -8,7 +8,7 @@
 # plus all variables required by the global Make.rules.in
 #
 
-DEFS        = @DLLFLAGS@ -D__WINE__ $(EXTRADEFS)
+DEFS        = @DLLFLAGS@ -D__WINESRC__ $(EXTRADEFS)
 DLLEXT      = @DLLEXT@
 ALTSPECS    = $(ALTNAMES:%.dll=%)
 SPEC_SRCS   = $(ALTSPECS:%=%.spec)

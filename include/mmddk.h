@@ -79,7 +79,7 @@ typedef struct {
 #define DRV_QUERYNAME		(DRV_RESERVED + 3)
 #define DRV_QUERYDRIVERIDS	(DRV_RESERVED + 4)
 #define DRV_QUERYMAPPABLE	(DRV_RESERVED + 5)
-#ifdef __WINE__
+#ifdef __WINESRC__
 #define DRV_QUERYDSOUNDIFACE	(DRV_RESERVED + 10)
 #endif
 

@@ -228,7 +228,7 @@ LRESULT WINAPI SendDriverMessage(HDRVR hDriver, UINT message,
 HMODULE WINAPI GetDriverModuleHandle(HDRVR hDriver);
 
 DWORD	WINAPI GetDriverFlags(HDRVR hDriver);
-#ifdef __WINE__
+#ifdef __WINESRC__
 /* this call (GetDriverFlags) is not documented, nor the flags returned.
  * here are Wine only definitions
  */
@@ -303,7 +303,7 @@ typedef LPDRVCALLBACK LPWAVECALLBACK;
 #define  WAVE_MAPPED               	0x0004
 #define  WAVE_FORMAT_DIRECT        	0x0008
 #define  WAVE_FORMAT_DIRECT_QUERY  	(WAVE_FORMAT_QUERY | WAVE_FORMAT_DIRECT)
-#ifdef __WINE__
+#ifdef __WINESRC__
 #define  WAVE_DIRECTSOUND               0x0080
 #endif
 

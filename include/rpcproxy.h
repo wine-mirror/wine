@@ -195,7 +195,7 @@ ULONG WINAPI CStdStubBuffer_Release(IRpcStubBuffer *This) \
 
 #define IID_GENERIC_CHECK_IID(name,pIID,index) memcmp(pIID, name##_ProxyVtblList[index]->header.piid, sizeof(IID))
 
-#if defined(__WINE__) && defined(__WINE_WINE_OBJ_OLEAUT_H)
+#if defined(__WINESRC__) && defined(__WINE_WINE_OBJ_OLEAUT_H)
 /* see http://msdn.microsoft.com/library/en-us/dnmsj99/html/com0199.asp?frame=true */
 
 RPCRTAPI HRESULT RPC_ENTRY

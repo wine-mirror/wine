@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#if !defined(RPC_NO_WINDOWS_H) && !defined(__WINE__)
+#if !defined(RPC_NO_WINDOWS_H) && !defined(__WINESRC__)
 #include "windows.h"
 #endif
 

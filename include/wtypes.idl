@@ -153,7 +153,7 @@ cpp_quote("#endif")
 typedef WCHAR OLECHAR;
 typedef [string] OLECHAR *LPOLESTR;
 typedef [string] const OLECHAR *LPCOLESTR;
-cpp_quote("#ifndef __WINE__")
+cpp_quote("#ifndef __WINESRC__")
 cpp_quote("#define OLESTR(str) WINE_UNICODE_TEXT(str)")
 cpp_quote("#endif")
 

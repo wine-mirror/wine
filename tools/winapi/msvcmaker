@@ -673,7 +673,7 @@ sub _generate_dsp {
 	my @includes = ();
 	if($wine) {
 	    push @defines2, "_\U${project}\E_";
-	    push @defines2, qw(__WINE__) if $project !~ /^(?:wine(?:build|test)|.*?_test)$/;
+	    push @defines2, qw(__WINESRC__) if $project !~ /^(?:wine(?:build|test)|.*?_test)$/;
 	    push @defines2, qw(__WINE_USE_MSVCRT);
 	    my $output_dir2 = $output_dir;
 	    $output_dir =~ s/\\/\\\\/g;

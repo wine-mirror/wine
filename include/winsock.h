@@ -20,13 +20,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef __WINE__
+#ifdef __WINESRC__
 # ifndef __WINE_WINSOCK2__
 #  error Please use Winsock2 in Wine
 # endif
 #endif
 
-#ifndef __WINE__
+#ifndef __WINESRC__
 # include "windows.h"
 #else
 # include "windef.h"
@@ -720,7 +720,7 @@ typedef struct WS(WSAData)
 #define FD_CLOSE                   0x00000020
 
 /* internal per-socket flags */
-#ifdef __WINE__
+#ifdef __WINESRC__
 #define FD_WINE_LISTENING          0x10000000
 #define FD_WINE_NONBLOCKING        0x20000000
 #define FD_WINE_CONNECTED          0x40000000
@@ -936,7 +936,7 @@ u_long WINAPI WS(ntohl)(u_long);
 u_short WINAPI WS(ntohs)(u_short);
 #endif
 
-#if defined(__WINE__) || !defined(__WINE_WINSOCK2__)
+#if defined(__WINESRC__) || !defined(__WINE_WINSOCK2__)
 /* Stuff specific to winsock.h */
 
 #include "mswsock.h"

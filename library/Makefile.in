@@ -1,4 +1,4 @@
-DEFS      = @DLLFLAGS@ -D__WINE__ -DDLLDIR="\"$(dlldir)\""
+DEFS      = @DLLFLAGS@ -D__WINESRC__ -DDLLDIR="\"$(dlldir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@

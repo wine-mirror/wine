@@ -424,7 +424,7 @@ ICOM_DEFINE(IViewObjectEx,IViewObject2)
 /*****************************************************************************
  * IProvideClassInfo interface
  */
-#ifdef __WINE__
+#ifdef __WINESRC__
 #undef GetClassInfo
 #endif
 

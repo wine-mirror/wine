@@ -264,7 +264,7 @@ DECL_WINELIB_TYPE_AW(LPFNPSPCALLBACK)
 #define PSH_WIZARD_LITE         0x00400000
 #define PSH_WIZARD97_NEW        0x01000000 /* for IE >= 5 */
 #define PSH_NOCONTEXTHELP       0x02000000
-#ifndef __WINE__
+#ifndef __WINESRC__
 # if _WIN32_IE < 0x0500
 #  define PSH_WIZARD97          PSH_WIZARD97_OLD
 # else

@@ -425,7 +425,7 @@ ICOM_DEFINE(IOleContainer,IParseDisplayName)
 /*****************************************************************************
  * IOleItemContainer interface
  */
-#ifdef __WINE__
+#ifdef __WINESRC__
 #undef GetObject
 #endif
 

@@ -174,7 +174,7 @@ static inline const char *wine_dbgstr_rect( const RECT *rect )
 #define WINE_DPRINTF               wine_dbg_printf
 #define WINE_MESSAGE               wine_dbg_printf
 
-#ifdef __WINE__
+#ifdef __WINESRC__
 /* Wine uses shorter names that are very likely to conflict with other software */
 
 inline static const char *debugstr_an( const char * s, int n ) { return wine_dbgstr_an( s, n ); }
@@ -203,7 +203,7 @@ inline static const char *debugstr_w( const WCHAR *s ) { return wine_dbgstr_wn( 
 #define DPRINTF                    WINE_DPRINTF
 #define MESSAGE                    WINE_MESSAGE
 
-#endif /* __WINE__ */
+#endif /* __WINESRC__ */
 
 #ifdef __cplusplus
 }

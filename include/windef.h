@@ -21,9 +21,9 @@
 #ifndef __WINE_WINDEF_H
 #define __WINE_WINDEF_H
 
-#ifdef __WINE__
+#ifdef __WINESRC__
 # undef UNICODE
-#endif  /* __WINE__ */
+#endif  /* __WINESRC__ */
 
 #ifndef WINVER
 #define WINVER 0x0500
@@ -58,7 +58,7 @@ extern "C" {
 # define __cdecl
 #endif  /* __i386__ */
 
-#ifndef __WINE__
+#ifndef __WINESRC__
 
 #ifndef pascal
 #define pascal      __stdcall
@@ -111,7 +111,7 @@ extern "C" {
 #define __declspec(x)
 #endif
 
-#endif /* __WINE__ */
+#endif /* __WINESRC__ */
 
 #define CALLBACK    __stdcall
 #define WINAPI      __stdcall
@@ -175,26 +175,26 @@ typedef double          DATE;
 #include "winnt.h"
 
 /* Macros to map Winelib names to the correct implementation name */
-/* depending on __WINE__ and UNICODE macros.                      */
+/* depending on __WINESRC__ and UNICODE macros.                   */
 /* Note that Winelib is purely Win32.                             */
 
-#ifdef __WINE__
+#ifdef __WINESRC__
 # define WINELIB_NAME_AW(func) \
     func##_must_be_suffixed_with_W_or_A_in_this_context \
     func##_must_be_suffixed_with_W_or_A_in_this_context
-#else  /* __WINE__ */
+#else  /* __WINESRC__ */
 # ifdef UNICODE
 #  define WINELIB_NAME_AW(func) func##W
 # else
 #  define WINELIB_NAME_AW(func) func##A
 # endif  /* UNICODE */
-#endif  /* __WINE__ */
+#endif  /* __WINESRC__ */
 
-#ifdef __WINE__
+#ifdef __WINESRC__
 # define DECL_WINELIB_TYPE_AW(type)  /* nothing */
-#else   /* __WINE__ */
+#else   /* __WINESRC__ */
 # define DECL_WINELIB_TYPE_AW(type)  typedef WINELIB_NAME_AW(type) type;
-#endif  /* __WINE__ */
+#endif  /* __WINESRC__ */
 
 
 /* Integer types */

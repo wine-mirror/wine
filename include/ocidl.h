@@ -26,7 +26,7 @@
 #ifndef __WINE_OCIDL_H
 #define __WINE_OCIDL_H
 
-#if defined(__WINE__) && !defined(INITGUID) && !defined(__WINE_INCLUDE_OCIDL)
+#if defined(__WINESRC__) && !defined(INITGUID) && !defined(__WINE_INCLUDE_OCIDL)
 #error DO NOT INCLUDE DIRECTLY
 #endif
 

@@ -805,7 +805,7 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(ILockBytes *plkbyt, IStorage *pstgPrio
 #define ICOM_CALL26(xfn, ptr,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) ICOM_VTBL(ptr)->xfn(ptr,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
 
 
-#ifndef __WINE__
+#ifndef __WINESRC__
 /* These macros are msdev's way of defining COM objects.
  * They are provided here for use by Winelib developpers.
  */
@@ -859,6 +859,6 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(ILockBytes *plkbyt, IStorage *pstgPrio
 
 #endif /* __cplusplus && !CINTERFACE */
 
-#endif /* __WINE__ */
+#endif /* __WINESRC__ */
 
 #endif /* _OBJBASE_H_ */
