@@ -1817,7 +1817,7 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
 	        style.styleOld = wndPtr->dwExStyle;
 		style.styleNew = newval;
                 SendMessageA(hwnd,WM_STYLECHANGING,GWL_EXSTYLE,(LPARAM)&style);
-		wndPtr->dwExStyle = newval;
+		wndPtr->dwExStyle = style.styleNew;
                 SendMessageA(hwnd,WM_STYLECHANGED,GWL_EXSTYLE,(LPARAM)&style);
                 retval = style.styleOld;
                 goto end;
