@@ -3187,22 +3187,17 @@ static VOID LISTVIEW_DrawLargeItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem,
   rcWidth = max(0, rcItem.right - rcItem.left);
   if (nLabelWidth > rcWidth)
   {
-      INT i, len, eos, nCharsFit;
       /* give or take a couple, how many average sized chars would fit? */
-      nCharsFit = tm.tmAveCharWidth > 0 ? (rcWidth/tm.tmAveCharWidth)+2 : 0; 
-      /* place the ellipse accordingly, without overrunning the buffer */
-      len = strlenW(szDispText);
-      eos = min((nCharsFit > 1 && nCharsFit < len) ? nCharsFit+3 : len+2,
-                sizeof(szDispText)/sizeof(WCHAR)-1);
-      
-      nLabelWidth = ListView_GetStringWidthW(hwnd, szDispText);
-      while ((nLabelWidth > rcWidth) && (eos > 3))
+      INT nCharsFit = tm.tmAveCharWidth > 0 ? rcWidth/tm.tmAveCharWidth+2 : 0;
+      INT eos = min(strlenW(lvItem.pszText), nCharsFit);
+      if (eos > 0) lvItem.pszText[eos-1] = '.';
+      if (eos > 1) lvItem.pszText[eos-2] = '.';
+      if (eos < 3) lvItem.pszText[eos] = '\0'; 
+      for ( ; eos > 2; eos--) 
       {
-	 for (i = 1; i < 4; i++)
-	    szDispText[eos-i] = '.'; 
-         /* shift the ellipse one char to the left for each iteration */
-         szDispText[eos--] = '\0'; 
-         nLabelWidth = ListView_GetStringWidthW(hwnd, szDispText);
+ 	 lvItem.pszText[eos - 3] = '.';
+ 	 lvItem.pszText[eos] = '\0';
+ 	 if (ListView_GetStringWidthW(hwnd, lvItem.pszText) <= rcWidth) break;
       }
   }
 
