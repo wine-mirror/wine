@@ -1416,6 +1416,19 @@ ImageList_LoadImageA (HINSTANCE hi, LPCSTR lpbmp, INT cx,	INT cGrow,
     if (uType == IMAGE_BITMAP) {
         BITMAP bmp;
         GetObjectA (handle, sizeof(BITMAP), &bmp);
+
+        /* To match windows behavior, if cx is set to zero and
+         the flag DI_DEFAULTSIZE is specified, cx becomes the
+         system metric value for icons. If the flag is not specified
+         the function sets the size to the height of the bitmap */
+        if (cx == 0)
+        {
+            if (uFlags & DI_DEFAULTSIZE)
+                cx = GetSystemMetrics (SM_CXICON);
+            else
+                cx = bmp.bmHeight;
+        }
+
         nImageCount = bmp.bmWidth / cx;
 
         himl = ImageList_Create (cx, bmp.bmHeight, ILC_MASK | ILC_COLOR,
