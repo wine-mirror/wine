@@ -1568,7 +1568,7 @@ BOOL WINAPI GetOverlappedResult(
            it may be a non-manual reset event. */
         do {
             TRACE("waiting on %p\n",lpOverlapped);
-            r = WaitForSingleObjectEx(lpOverlapped->hEvent, INFINITE, TRUE);
+            r = WaitForSingleObjectEx(lpOverlapped->hEvent, 0, TRUE);
             TRACE("wait on %p returned %ld\n",lpOverlapped,r);
         } while (r==STATUS_USER_APC);
         if ( r == WAIT_OBJECT_0 )
