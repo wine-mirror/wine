@@ -27,6 +27,7 @@
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winreg.h"
 #include "winuser.h"
 
@@ -997,6 +998,76 @@ static void test_SPI_SETMINIMIZEDMETRICS( void )               /*     44 */
     eq( lpMm_new.iArrange, lpMm_orig.iArrange, "iArrange", "%d" );
 }
 
+static void test_SPI_SETICONMETRICS( void )               /*     46 */
+{
+    BOOL rc;
+    ICONMETRICSA im_orig;
+    ICONMETRICSA im_new;
+    ICONMETRICSA im_cur;
+        
+    im_orig.cbSize = sizeof(ICONMETRICSA);
+    im_new.cbSize = sizeof(ICONMETRICSA);
+    im_cur.cbSize = sizeof(ICONMETRICSA);
+
+    trace("testing SPI_{GET,SET}ICONMETRICS\n");
+    rc=SystemParametersInfoA( SPI_GETICONMETRICS, sizeof(ICONMETRICSA), &im_orig, FALSE );
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+
+    im_cur.iHorzSpacing = 65;
+    im_cur.iVertSpacing = 65;
+    im_cur.iTitleWrap = 0;
+    im_cur.lfFont.lfHeight = 1;
+    im_cur.lfFont.lfWidth = 1;
+    im_cur.lfFont.lfEscapement = 1;
+    im_cur.lfFont.lfWeight = 1;
+    im_cur.lfFont.lfItalic = 1;
+    im_cur.lfFont.lfStrikeOut = 1;
+    im_cur.lfFont.lfUnderline = 1;
+    im_cur.lfFont.lfCharSet = 1;
+    im_cur.lfFont.lfOutPrecision = 1;
+    im_cur.lfFont.lfClipPrecision = 1;
+    im_cur.lfFont.lfPitchAndFamily = 1;
+    im_cur.lfFont.lfQuality = 1;
+
+    rc=SystemParametersInfoA( SPI_SETICONMETRICS, sizeof(ICONMETRICSA), &im_cur, FALSE );
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+
+    rc=SystemParametersInfoA( SPI_GETICONMETRICS, sizeof(ICONMETRICSA), &im_new, FALSE );
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+
+    eq( im_new.iHorzSpacing, im_cur.iHorzSpacing, "iHorzSpacing", "%d" );
+    eq( im_new.iVertSpacing, im_cur.iVertSpacing, "iVertSpacing", "%d" );
+    eq( im_new.iTitleWrap,   im_cur.iTitleWrap,   "iTitleWrap",   "%d" );
+
+    eq( im_new.lfFont.lfHeight,         im_cur.lfFont.lfHeight,         "lfHeight",         "%ld" );
+    eq( im_new.lfFont.lfWidth,          im_cur.lfFont.lfWidth,          "lfWidth",          "%ld" );
+    eq( im_new.lfFont.lfEscapement,     im_cur.lfFont.lfEscapement,     "lfEscapement",     "%ld" );
+    eq( im_new.lfFont.lfWeight,         im_cur.lfFont.lfWeight,         "lfWeight",         "%ld" );
+    eq( im_new.lfFont.lfItalic,         im_cur.lfFont.lfItalic,         "lfItalic",         "%d" );
+    eq( im_new.lfFont.lfStrikeOut,      im_cur.lfFont.lfStrikeOut,      "lfStrikeOut",      "%d" );
+    eq( im_new.lfFont.lfUnderline,      im_cur.lfFont.lfUnderline,      "lfUnderline",      "%d" );
+    eq( im_new.lfFont.lfCharSet,        im_cur.lfFont.lfCharSet,        "lfCharSet",        "%d" );
+    eq( im_new.lfFont.lfOutPrecision,   im_cur.lfFont.lfOutPrecision,   "lfOutPrecision",   "%d" );
+    eq( im_new.lfFont.lfClipPrecision,  im_cur.lfFont.lfClipPrecision,  "lfClipPrecision",  "%d" );
+    eq( im_new.lfFont.lfPitchAndFamily, im_cur.lfFont.lfPitchAndFamily, "lfPitchAndFamily", "%d" );
+    eq( im_new.lfFont.lfQuality,        im_cur.lfFont.lfQuality,        "lfQuality",        "%d" );
+
+    eq( GetSystemMetrics( SM_CXICONSPACING ),
+        im_new.iHorzSpacing, "iHorzSpacing", "%d" );
+    eq( GetSystemMetrics( SM_CYICONSPACING ),
+        im_new.iVertSpacing, "iVertSpacing", "%d" );
+
+    rc=SystemParametersInfoA( SPI_SETICONMETRICS, sizeof(ICONMETRICSA), &im_orig, FALSE );
+    ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
+    
+    rc=SystemParametersInfoA( SPI_GETICONMETRICS, sizeof(ICONMETRICSA), &im_new, FALSE );
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    
+    eq( im_new.iHorzSpacing, im_orig.iHorzSpacing, "iHorzSpacing", "%d" );
+    eq( im_new.iVertSpacing, im_orig.iVertSpacing, "iVertSpacing", "%d" );
+    eq( im_new.iTitleWrap,   im_orig.iTitleWrap,   "iTitleWrap",   "%d" );
+}
+
 static void test_SPI_SETWORKAREA( void )               /*     47 */
 {
     BOOL rc;
@@ -1343,6 +1414,7 @@ static DWORD WINAPI SysParamsThreadFunc( LPVOID lpParam )
     test_SPI_SETFASTTASKSWITCH();               /*     36 */
     test_SPI_SETDRAGFULLWINDOWS();              /*     37 */
     test_SPI_SETMINIMIZEDMETRICS();             /*     44 */
+    test_SPI_SETICONMETRICS();                  /*     46 */
     test_SPI_SETWORKAREA();                     /*     47 */
     test_SPI_SETSHOWSOUNDS();                   /*     57 */
     test_SPI_SETKEYBOARDPREF();                 /*     69 */

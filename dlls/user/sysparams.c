@@ -72,8 +72,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(system);
 #define SPI_SETMOUSEHOVERTIME_IDX               28
 #define SPI_SETMOUSESCROLLLINES_IDX             29
 #define SPI_SETMENUSHOWDELAY_IDX                30
+#define SPI_SETICONTITLELOGFONT_IDX             31
 
-#define SPI_WINE_IDX                            SPI_SETMENUSHOWDELAY_IDX
+#define SPI_WINE_IDX                            SPI_SETICONTITLELOGFONT_IDX
 
 /**
  * Names of the registry subkeys of HKEY_CURRENT_USER key and value names
@@ -236,6 +237,7 @@ static BOOL keyboard_cues = FALSE;
 static BOOL gradient_captions = FALSE;
 static BOOL listbox_smoothscrolling = FALSE;
 static BOOL hot_tracking = FALSE;
+static LOGFONTW log_font = { -11,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,ANSI_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,DEFAULT_PITCH };
 
 /***********************************************************************
  *		GetTimerResolution (USER.14)
@@ -1295,33 +1297,39 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     case SPI_GETICONTITLELOGFONT:		/*     31 */
     {
-	LPLOGFONTW lpLogFont = (LPLOGFONTW)pvParam;
 	LOGFONTW	lfDefault;
 
         if (!pvParam) return FALSE;
 
-	/*
-	 * The 'default GDI fonts' seems to be returned.
-	 * If a returned font is not a correct font in your environment,
-	 * please try to fix objects/gdiobj.c at first.
-	 */
-	GetObjectW( GetStockObject( DEFAULT_GUI_FONT ), sizeof(LOGFONTW), &lfDefault );
+        spi_idx = SPI_SETICONTITLELOGFONT_IDX;
+        if (!spi_loaded[spi_idx])
+        {       
+            /*
+             * The 'default GDI fonts' seems to be returned.
+             * If a returned font is not a correct font in your environment,
+             * please try to fix objects/gdiobj.c at first.
+             */
+            GetObjectW( GetStockObject( DEFAULT_GUI_FONT ), sizeof(LOGFONTW), &lfDefault );
 
-	GetProfileStringW( Desktop, IconTitleFaceName,
-			   lfDefault.lfFaceName,
-			   lpLogFont->lfFaceName, LF_FACESIZE );
-	lpLogFont->lfHeight = -GetProfileIntW( Desktop, IconTitleSize, 11 );
-	lpLogFont->lfWidth = 0;
-	lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
-	lpLogFont->lfWeight = FW_NORMAL;
-	lpLogFont->lfItalic = FALSE;
-	lpLogFont->lfStrikeOut = FALSE;
-	lpLogFont->lfUnderline = FALSE;
-	lpLogFont->lfCharSet = lfDefault.lfCharSet; /* at least 'charset' should not be hard-coded */
-	lpLogFont->lfOutPrecision = OUT_DEFAULT_PRECIS;
-	lpLogFont->lfClipPrecision = CLIP_DEFAULT_PRECIS;
-	lpLogFont->lfPitchAndFamily = DEFAULT_PITCH;
-	lpLogFont->lfQuality = DEFAULT_QUALITY;
+            GetProfileStringW( Desktop, IconTitleFaceName,
+                               lfDefault.lfFaceName,
+                               log_font.lfFaceName,
+                               LF_FACESIZE );
+            log_font.lfHeight = -GetProfileIntW( Desktop, IconTitleSize, 11 );
+            log_font.lfWidth = 0;
+            log_font.lfEscapement = log_font.lfOrientation = 0;
+            log_font.lfWeight = FW_NORMAL;
+            log_font.lfItalic = FALSE;
+            log_font.lfStrikeOut = FALSE;
+            log_font.lfUnderline = FALSE;
+            log_font.lfCharSet = lfDefault.lfCharSet; /* at least 'charset' should not be hard-coded */
+            log_font.lfOutPrecision = OUT_DEFAULT_PRECIS;
+            log_font.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+            log_font.lfQuality = DEFAULT_QUALITY;
+            log_font.lfPitchAndFamily = DEFAULT_PITCH;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        *(LOGFONTW *)pvParam = log_font;
 	break;
     }
 
@@ -1535,7 +1543,23 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 	}
 	break;
     }
-    WINE_SPI_FIXME(SPI_SETICONMETRICS);		/*     46  WINVER >= 0x400 */
+
+    case SPI_SETICONMETRICS:			/*     46  WINVER >= 0x400 */
+    {
+	LPICONMETRICSW lpIcon = pvParam;
+	if(lpIcon && lpIcon->cbSize == sizeof(*lpIcon))
+	{
+            sysMetrics[SM_CXICONSPACING] = lpIcon->iHorzSpacing;
+            sysMetrics[SM_CYICONSPACING] = lpIcon->iVertSpacing;
+            icon_title_wrap = lpIcon->iTitleWrap;
+            log_font = lpIcon->lfFont;
+	}
+	else
+	{
+	    ret = FALSE;
+	}
+	break;
+    }
 
     case SPI_SETWORKAREA:                       /*     47  WINVER >= 0x400 */
     {
@@ -2499,6 +2523,27 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     }
 
     case SPI_GETICONMETRICS:			/*     45  WINVER >= 0x400 */
+    {
+	ICONMETRICSW tmp;
+	LPICONMETRICSA lpimA = (LPICONMETRICSA)pvParam;
+	if (lpimA && lpimA->cbSize == sizeof(ICONMETRICSA))
+	{
+	    tmp.cbSize = sizeof(ICONMETRICSW);
+	    ret = SystemParametersInfoW( uiAction, uiParam, &tmp, fuWinIni );
+	    if (ret)
+	    {
+		lpimA->iHorzSpacing = tmp.iHorzSpacing;
+		lpimA->iVertSpacing = tmp.iVertSpacing;
+		lpimA->iTitleWrap   = tmp.iTitleWrap;
+		SYSPARAMS_LogFont32WTo32A( &tmp.lfFont, &lpimA->lfFont );
+	    }
+	}
+	else
+	    ret = FALSE;
+	break;
+    }
+
+    case SPI_SETICONMETRICS:			/*     46  WINVER >= 0x400 */
     {
 	ICONMETRICSW tmp;
 	LPICONMETRICSA lpimA = (LPICONMETRICSA)pvParam;
