@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <shellapi.h>
+#include <shlwapi.h>
 
 #include "main.h"
 #include "regproc.h"
@@ -224,6 +225,30 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName)
 done:
     HeapFree(GetProcessHeap(), 0, stringValueData);
     stringValueData = NULL;
+    RegCloseKey(hKey);
+    return result;
+}
+
+BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath)
+{
+    BOOL result = FALSE;
+    LONG lRet;
+    HKEY hKey;
+    
+    lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_SET_VALUE, &hKey);
+    if (lRet != ERROR_SUCCESS) return FALSE;
+    
+    if (messagebox(hwnd, MB_YESNO | MB_ICONEXCLAMATION, IDS_DELETE_BOX_TITLE, IDS_DELETE_BOX_TEXT, keyPath) != IDYES)
+	goto done;
+	
+    lRet = SHDeleteKey(hKeyRoot, keyPath);
+    if (lRet != ERROR_SUCCESS) {
+	error(hwnd, IDS_BAD_KEY, keyPath);
+	goto done;
+    }
+    result = TRUE;
+    
+done:
     RegCloseKey(hKey);
     return result;
 }

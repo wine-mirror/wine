@@ -458,8 +458,13 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         PrintRegistryHive(hWnd, _T(""));
         break;
     case ID_EDIT_DELETE:
-	if (DeleteValue(hWnd, hKeyRoot, keyPath, valueName))
-	    RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath);
+	if (GetFocus() == g_pChildWnd->hTreeWnd) {
+	    if (DeleteKey(hWnd, hKeyRoot, keyPath))
+		;/* FIXME: TreeView should be refreshed */
+	} else if (GetFocus() == g_pChildWnd->hListWnd) {
+	    if (DeleteValue(hWnd, hKeyRoot, keyPath, valueName))
+		RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath);
+	}
         break;
     case ID_EDIT_MODIFY:
         if (ModifyValue(hWnd, hKeyRoot, keyPath, valueName))
@@ -470,6 +475,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case ID_EDIT_NEW_KEY:
 	CreateKey(hWnd, hKeyRoot, keyPath);
+	/* FIXME: TreeView should be refreshed */
 	break;
     case ID_EDIT_NEW_STRINGVALUE:
 	valueType = REG_SZ;

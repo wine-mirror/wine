@@ -91,6 +91,8 @@ extern HWND CreateListView(HWND hwndParent, int id);
 extern BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath);
 extern BOOL StartValueRename(HWND hwndLV);
 extern LPCTSTR GetValueName(HWND hwndLV);
+extern BOOL ListWndNotifyProc(HWND hWnd, WPARAM wParam, LPARAM lParam, BOOL *Result);
+extern BOOL IsDefaultValue(HWND hwndLV, int i);
 
 /* treeview.c */
 extern HWND CreateTreeView(HWND hwndParent, LPTSTR pHostName, int id);
@@ -101,6 +103,7 @@ extern LPCTSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey);
 extern BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath);
 extern BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, DWORD valueType);
 extern BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName);
+extern BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath);
 extern BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName);
 extern BOOL RenameValue(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR oldName, LPCTSTR newName);
 
