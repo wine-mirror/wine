@@ -46,8 +46,8 @@ typedef struct tagTOOLBAR_INFO
     INT      nOldHit;
     INT      nHotItem;        /* index of the "hot" item */
     HFONT    hFont;           /* text font */
-    HIMAGELIST himlStd;         /* standard image list for TB_ADDBITMAP command*/
-    HIMAGELIST himlDef;         /* default image list for TB_SETIMAGELIST*/
+    HIMAGELIST himlInt;         /* image list created internally */
+    HIMAGELIST himlDef;         /* default image list */
     HIMAGELIST himlHot;         /* hot image list */
     HIMAGELIST himlDis;         /* disabled image list */
     HWND     hwndToolTip;     /* handle to tool tip control */

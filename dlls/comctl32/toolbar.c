@@ -129,7 +129,7 @@ TOOLBAR_DrawMasked (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 
     HDC hdcImageList = CreateCompatibleDC (0);
     HDC hdcMask = CreateCompatibleDC (0);
-    HIMAGELIST himl = infoPtr->himlStd;
+    HIMAGELIST himl = infoPtr->himlDef;
     HBITMAP hbmMask;
 
     /* create new bitmap */
@@ -177,24 +177,23 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	return;
 
     rc = btnPtr->rect;
+
+    /* separator */
     if (btnPtr->fsStyle & TBSTYLE_SEP) {
 	if ((dwStyle & TBSTYLE_FLAT) && (btnPtr->idCommand == 0))
-	    TOOLBAR_DrawFlatSeparator (&btnPtr->rect, hdc);
+	    TOOLBAR_DrawFlatSeparator (&rc, hdc);
 	return;
     }
 
     /* disabled */
     if (!(btnPtr->fsState & TBSTATE_ENABLED)) {
-	DrawEdge (hdc, &rc, EDGE_RAISED,
-		    BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
-
-	if (dwStyle & TBSTYLE_FLAT) {
-/*	    if (infoPtr->himlDis) */
-		ImageList_Draw (infoPtr->himlDis, btnPtr->iBitmap, hdc,
+	if (!(dwStyle & TBSTYLE_FLAT))
+	    DrawEdge (hdc, &rc, EDGE_RAISED,
+		      BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
+	
+	if (infoPtr->himlDis)
+	    ImageList_Draw (infoPtr->himlDis, btnPtr->iBitmap, hdc,
 				rc.left+1, rc.top+1, ILD_NORMAL);
-/*	    else */
-/*		TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rc.left+1, rc.top+1); */
-	}
 	else
 	    TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rc.left+1, rc.top+1);
 
@@ -205,13 +204,13 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     /* pressed TBSTYLE_BUTTON */
     if (btnPtr->fsState & TBSTATE_PRESSED) {
 	DrawEdge (hdc, &rc, EDGE_SUNKEN, BF_RECT | BF_MIDDLE | BF_ADJUST);
-	ImageList_Draw (infoPtr->himlStd, btnPtr->iBitmap, hdc,
+	ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
 			rc.left+2, rc.top+2, ILD_NORMAL);
 	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState);
 	return;
     }
 
-    /* checked TBSTYLE_CHECK*/
+    /* checked TBSTYLE_CHECK */
     if ((btnPtr->fsStyle & TBSTYLE_CHECK) &&
 	(btnPtr->fsState & TBSTATE_CHECKED)) {
 	if (dwStyle & TBSTYLE_FLAT)
@@ -222,18 +221,10 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 			BF_RECT | BF_MIDDLE | BF_ADJUST);
 
 	TOOLBAR_DrawPattern (hdc, &rc);
-	if (dwStyle & TBSTYLE_FLAT)
-	{
-	    if (infoPtr->himlDef != NULL)
-	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
-			    rc.left+2, rc.top+2, ILD_NORMAL);
-	else
-	    ImageList_Draw (infoPtr->himlStd, btnPtr->iBitmap, hdc,
-			    rc.left+2, rc.top+2, ILD_NORMAL);
-	}
-	else
-	    ImageList_Draw (infoPtr->himlStd, btnPtr->iBitmap, hdc,
-			    rc.left+2, rc.top+2, ILD_NORMAL);
+
+	ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
+			rc.left+2, rc.top+2, ILD_NORMAL);
+
 	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState);
 	return;
     }
@@ -249,25 +240,25 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	return;
     }
 
+    /* normal state */
     if (dwStyle & TBSTYLE_FLAT)
     {
-	if(btnPtr->bHot)
+	if (btnPtr->bHot)
 	    DrawEdge (hdc, &rc, BDR_RAISEDINNER,
 		       BF_RECT | BF_MIDDLE | BF_SOFT);
-
-	if(infoPtr->himlDef != NULL)
-	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
+	if (btnPtr->bHot && infoPtr->himlHot)
+	    ImageList_Draw (infoPtr->himlHot, btnPtr->iBitmap, hdc,
 			    rc.left +2, rc.top +2, ILD_NORMAL);
 	else
-	    ImageList_Draw (infoPtr->himlStd, btnPtr->iBitmap, hdc,
+	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
 			    rc.left +2, rc.top +2, ILD_NORMAL);
     }
-    else{
-    /* normal state */
-    DrawEdge (hdc, &rc, EDGE_RAISED,
+    else
+    {
+	DrawEdge (hdc, &rc, EDGE_RAISED,
 		BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
 
-	ImageList_Draw (infoPtr->himlStd, btnPtr->iBitmap, hdc,
+	ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
 			rc.left+1, rc.top+1, ILD_NORMAL);
     }
 
@@ -871,75 +862,90 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     LPTBADDBITMAP lpAddBmp = (LPTBADDBITMAP)lParam;
-    INT nIndex = 0;
+    INT nIndex = 0, nButtons;
 
-    if ((!lpAddBmp) || ((INT)wParam <= 0))
+    if (!lpAddBmp)
 	return -1;
 
-    TRACE("adding %d bitmaps!\n", wParam);
+    if (lpAddBmp->hInst == HINST_COMMCTRL)
+    {
+	if ((lpAddBmp->nID & ~1) == IDB_STD_SMALL_COLOR)
+	    nButtons = 15;
+	else if ((lpAddBmp->nID & ~1) == IDB_VIEW_SMALL_COLOR)
+	    nButtons = 13;
+	else if ((lpAddBmp->nID & ~1) == IDB_HIST_SMALL_COLOR)
+	    nButtons = 5;
+	else
+	    return -1;
 
-    if (!(infoPtr->himlStd)) {
-	/* create new standard image list */
-
-	TRACE("creating standard image list!\n");
-
+	TRACE ("adding %d internal bitmaps!\n", nButtons);
 
 	/* Windows resize all the buttons to the size of a newly added STandard Image*/
-	/* TODO: The resizing  should be done each time a standard image is added*/
-	if (lpAddBmp->hInst == HINST_COMMCTRL)
+	if (lpAddBmp->nID & 1) 
 	{
-
-	    if (lpAddBmp->nID & 1) 
-	    {
-		SendMessageA (hwnd, TB_SETBITMAPSIZE, 0,
-			      MAKELPARAM((WORD)26, (WORD)26));
-		SendMessageA (hwnd, TB_SETBUTTONSIZE, 0,
-			      MAKELPARAM((WORD)33, (WORD)33));
-	    }
-	    else 
-	    {
-		SendMessageA (hwnd, TB_SETBITMAPSIZE, 0,
-			      MAKELPARAM((WORD)16, (WORD)16));
-
-		SendMessageA (hwnd, TB_SETBUTTONSIZE, 0,
-			      MAKELPARAM((WORD)22, (WORD)22));
-	    }
-
-	    TOOLBAR_CalcToolbar (hwnd);
+	    /* large icons */
+	    SendMessageA (hwnd, TB_SETBITMAPSIZE, 0,
+			  MAKELPARAM((WORD)26, (WORD)26));
+	    SendMessageA (hwnd, TB_SETBUTTONSIZE, 0,
+			  MAKELPARAM((WORD)33, (WORD)33));
+	}	
+	else 
+	{
+	    /* small icons */
+	    SendMessageA (hwnd, TB_SETBITMAPSIZE, 0,
+			  MAKELPARAM((WORD)16, (WORD)16));
+	    SendMessageA (hwnd, TB_SETBUTTONSIZE, 0,
+			  MAKELPARAM((WORD)22, (WORD)22));
 	}
+	
+	TOOLBAR_CalcToolbar (hwnd);
+    }
+    else
+    {
+	nButtons = (INT)wParam;
+	if (nButtons <= 0)
+	    return -1;
+	
+	TRACE ("adding %d bitmaps!\n", nButtons);
+    }
+    
+    if (!(infoPtr->himlDef)) {
+	/* create new default image list */
+	TRACE ("creating default image list!\n");
 
-	infoPtr->himlStd =
+	infoPtr->himlDef =
 	    ImageList_Create (infoPtr->nBitmapWidth, infoPtr->nBitmapHeight,
-			      ILC_COLOR | ILC_MASK, (INT)wParam, 2);
+			      ILC_COLOR | ILC_MASK, nButtons, 2);
+	infoPtr->himlInt = infoPtr->himlDef;
     }
 
-    /* Add bitmaps to the standard image list */
-    if (lpAddBmp->hInst == (HINSTANCE)0) {
+    /* Add bitmaps to the default image list */
+    if (lpAddBmp->hInst == (HINSTANCE)0)
+    {
 	nIndex = 
-	    ImageList_AddMasked (infoPtr->himlStd, (HBITMAP)lpAddBmp->nID,
+	    ImageList_AddMasked (infoPtr->himlDef, (HBITMAP)lpAddBmp->nID,
 				 CLR_DEFAULT);
     }
-    else if (lpAddBmp->hInst == HINST_COMMCTRL) {
+    else if (lpAddBmp->hInst == HINST_COMMCTRL)
+    {
 	/* add internal bitmaps */
-	
-	FIXME("internal bitmaps not supported!\n");
-	/* TODO: Resize all the buttons when a new standard image is added */
+	FIXME ("internal bitmaps not supported!\n");
 
 	/* Hack to "add" some reserved images within the image list 
 	   to get the right image indices */
-	nIndex = ImageList_GetImageCount (infoPtr->himlStd);
-	ImageList_SetImageCount (infoPtr->himlStd, nIndex + (INT)wParam);
-	
+	nIndex = ImageList_GetImageCount (infoPtr->himlDef);
+	ImageList_SetImageCount (infoPtr->himlDef, nIndex + nButtons);
     }
-    else {
+    else
+    {
 	HBITMAP hBmp =
 	    LoadBitmapA (lpAddBmp->hInst, (LPSTR)lpAddBmp->nID);
-	nIndex = ImageList_AddMasked (infoPtr->himlStd, hBmp, CLR_DEFAULT);
+	nIndex = ImageList_AddMasked (infoPtr->himlDef, hBmp, CLR_DEFAULT);
 
 	DeleteObject (hBmp); 
     }
 
-    infoPtr->nNumBitmaps += (INT)wParam;
+    infoPtr->nNumBitmaps += nButtons;
 
     return nIndex;
 }
@@ -1564,10 +1570,7 @@ TOOLBAR_GetDisabledImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
-    if (GetWindowLongA (hwnd, GWL_STYLE) & TBSTYLE_FLAT)
-	return (LRESULT)infoPtr->himlDis;
-    else
-	return 0;
+    return (LRESULT)infoPtr->himlDis;
 }
 
 
@@ -1585,10 +1588,7 @@ TOOLBAR_GetHotImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
-    if (GetWindowLongA (hwnd, GWL_STYLE) & TBSTYLE_FLAT)
-	return (LRESULT)infoPtr->himlHot;
-    else
-	return 0;
+    return (LRESULT)infoPtr->himlHot;
 }
 
 
@@ -1600,10 +1600,7 @@ TOOLBAR_GetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
-    if (GetWindowLongA (hwnd, GWL_STYLE) & TBSTYLE_FLAT)
-	return (LRESULT)infoPtr->himlDef;
-    else
-	return 0;
+    return (LRESULT)infoPtr->himlDef;
 }
 
 
@@ -2176,9 +2173,6 @@ TOOLBAR_SetDisabledImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     HIMAGELIST himlTemp;
 
-    if (!(GetWindowLongA (hwnd, GWL_STYLE) & TBSTYLE_FLAT))
-	return 0;
-
     himlTemp = infoPtr->himlDis;
     infoPtr->himlDis = (HIMAGELIST)lParam;
 
@@ -2221,9 +2215,6 @@ TOOLBAR_SetHotImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
     HIMAGELIST himlTemp;
 
-    if (!(GetWindowLongA (hwnd, GWL_STYLE) & TBSTYLE_FLAT))
-	return 0;
-
     himlTemp = infoPtr->himlHot;
     infoPtr->himlHot = (HIMAGELIST)lParam;
 
@@ -2241,9 +2232,6 @@ TOOLBAR_SetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     HIMAGELIST himlTemp;
-
-    if (!(GetWindowLongA (hwnd, GWL_STYLE) & TBSTYLE_FLAT))
-	return 0;
 
     himlTemp = infoPtr->himlDef;
     infoPtr->himlDef = (HIMAGELIST)lParam;
@@ -2507,17 +2495,9 @@ TOOLBAR_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	COMCTL32_Free (infoPtr->strings);
     }
 
-    /* destroy default image list */
-    if (infoPtr->himlDef)
-	ImageList_Destroy (infoPtr->himlDef);
-
-    /* destroy disabled image list */
-    if (infoPtr->himlDis)
-	ImageList_Destroy (infoPtr->himlDis);
-
-    /* destroy hot image list */
-    if (infoPtr->himlHot)
-	ImageList_Destroy (infoPtr->himlHot);
+    /* destroy internal image list */
+    if (infoPtr->himlInt)
+	ImageList_Destroy (infoPtr->himlInt);
 
     /* delete default font */
     if (infoPtr->hFont)
