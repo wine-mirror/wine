@@ -20,6 +20,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef __WINE_PRIVATE_MCIAVI_H
+#define __WINE_PRIVATE_MCIAVI_H
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -27,6 +30,7 @@
 #include "mmddk.h"
 #include "digitalv.h"
 #include "vfw.h"
+#include "wownt32.h"
 #include "mciavi.h"
 
 struct MMIOPos {
@@ -101,5 +105,4 @@ DWORD	MCIAVI_mciPut(UINT wDevID, DWORD dwFlags, LPMCI_DGV_PUT_PARMS lpParms);
 DWORD	MCIAVI_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lpParms);
 DWORD	MCIAVI_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMSA lpParms);
 
-/* handle conversions */
-#define HWND_32(h16)		((HWND)(ULONG_PTR)(h16))
+#endif  /* __WINE_PRIVATE_MCIAVI_H */

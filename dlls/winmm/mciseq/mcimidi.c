@@ -37,12 +37,11 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "wownt32.h"
 #include "mmddk.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mcimidi);
-
-#define HWND_32(h16)		((HWND)(ULONG_PTR)(h16))
 
 #define MIDI_NOTEOFF             0x80
 #define MIDI_NOTEON              0x90

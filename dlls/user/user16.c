@@ -20,19 +20,14 @@
 
 #include "wine/winuser16.h"
 #include "winbase.h"
+#include "wownt32.h"
+#include "user.h"
 
 /* handle to handle 16 conversions */
 #define HANDLE_16(h32)		(LOWORD(h32))
-#define HBITMAP_16(h32)		(LOWORD(h32))
-#define HCURSOR_16(h32)		(LOWORD(h32))
-#define HICON_16(h32)		(LOWORD(h32))
 
 /* handle16 to handle conversions */
 #define HANDLE_32(h16)		((HANDLE)(ULONG_PTR)(h16))
-#define HBRUSH_32(h16)		((HBRUSH)(ULONG_PTR)(h16))
-#define HCURSOR_32(h16)		((HCURSOR)(ULONG_PTR)(h16))
-#define HDC_32(h16)		((HDC)(ULONG_PTR)(h16))
-#define HICON_32(h16)		((HICON)(ULONG_PTR)(h16))
 #define HINSTANCE_32(h16)	((HINSTANCE)(ULONG_PTR)(h16))
 
 WORD WINAPI DestroyIcon32(HGLOBAL16, UINT16);

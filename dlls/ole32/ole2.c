@@ -36,6 +36,7 @@
 #include "winerror.h"
 #include "winuser.h"
 #include "winreg.h"
+#include "wownt32.h"
 
 #include "wine/obj_clientserver.h"
 #include "wine/winbase16.h"
@@ -48,10 +49,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 WINE_DECLARE_DEBUG_CHANNEL(accel);
 
-#define HACCEL_16(h32)		(LOWORD(h32))
 #define HICON_16(h32)		(LOWORD(h32))
-
-#define HDC_32(h16)		((HDC)(ULONG_PTR)(h16))
 #define HICON_32(h16)		((HICON)(ULONG_PTR)(h16))
 
 /******************************************************************************

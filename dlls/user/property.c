@@ -22,6 +22,7 @@
 
 #include "windef.h"
 #include "wingdi.h"
+#include "wownt32.h"
 #include "wine/winuser16.h"
 #include "wine/server.h"
 #include "win.h"

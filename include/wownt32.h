@@ -59,6 +59,46 @@ typedef enum
 HANDLE WINAPI WOWHandle32(WORD,WOW_HANDLE_TYPE);
 WORD   WINAPI WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
 
+#ifdef __WINE__
+/* under Wine use the kernel functions directly so we don't have to import wow32 */
+HANDLE WINAPI K32WOWHandle32(WORD,WOW_HANDLE_TYPE);
+WORD   WINAPI K32WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
+#define WOWHandle32 K32WOWHandle32
+#define WOWHandle16 K32WOWHandle16
+#endif
+
+#ifdef __WINE__
+/* under Wine we use optimized versions where we can */
+#define HWND_32(h16)      ((HWND)      (ULONG_PTR)(h16))
+#define HMENU_32(h16)     ((HMENU)     (ULONG_PTR)(h16))
+#define HDWP_32(h16)      ((HDWP)      (ULONG_PTR)(h16))
+#define HDROP_32(h16)     ((HDROP)     (ULONG_PTR)(h16))
+#define HDC_32(h16)       ((HDC)       (ULONG_PTR)(h16))
+#define HFONT_32(h16)     ((HFONT)     (ULONG_PTR)(h16))
+#define HMETAFILE_32(h16) ((HMETAFILE) (ULONG_PTR)(h16))
+#define HRGN_32(h16)      ((HRGN)      (ULONG_PTR)(h16))
+#define HBITMAP_32(h16)   ((HBITMAP)   (ULONG_PTR)(h16))
+#define HBRUSH_32(h16)    ((HBRUSH)    (ULONG_PTR)(h16))
+#define HPALETTE_32(h16)  ((HPALETTE)  (ULONG_PTR)(h16))
+#define HPEN_32(h16)      ((HPEN)      (ULONG_PTR)(h16))
+#define HACCEL_32(h16)    ((HACCEL)    (ULONG_PTR)(h16))
+
+#define HWND_16(h32)      (LOWORD(h32))
+#define HMENU_16(h32)     (LOWORD(h32))
+#define HDWP_16(h32)      (LOWORD(h32))
+#define HDROP_16(h32)     (LOWORD(h32))
+#define HDC_16(h32)       (LOWORD(h32))
+#define HFONT_16(h32)     (LOWORD(h32))
+#define HMETAFILE_16(h32) (LOWORD(h32))
+#define HRGN_16(h32)      (LOWORD(h32))
+#define HBITMAP_16(h32)   (LOWORD(h32))
+#define HBRUSH_16(h32)    (LOWORD(h32))
+#define HPALETTE_16(h32)  (LOWORD(h32))
+#define HPEN_16(h32)      (LOWORD(h32))
+#define HACCEL_16(h32)    (LOWORD(h32))
+
+#else  /* __WINE__ */
+
 #define HWND_32(h16)      ((HWND)      (WOWHandle32(h16, WOW_TYPE_HWND)))
 #define HMENU_32(h16)     ((HMENU)     (WOWHandle32(h16, WOW_TYPE_HMENU)))
 #define HDWP_32(h16)      ((HDWP)      (WOWHandle32(h16, WOW_TYPE_HDWP)))
@@ -72,8 +112,6 @@ WORD   WINAPI WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
 #define HPALETTE_32(h16)  ((HPALETTE)  (WOWHandle32(h16, WOW_TYPE_HPALETTE)))
 #define HPEN_32(h16)      ((HPEN)      (WOWHandle32(h16, WOW_TYPE_HPEN)))
 #define HACCEL_32(h16)    ((HACCEL)    (WOWHandle32(h16, WOW_TYPE_HACCEL)))
-#define HTASK_32(h16)     ((DWORD)     (WOWHandle32(h16, WOW_TYPE_HTASK)))
-#define FULLHWND_32(h16)  ((HWND)      (WOWHandle32(h16, WOW_TYPE_FULLHWND)))
 
 #define HWND_16(h32)      (WOWHandle16(h32, WOW_TYPE_HWND))
 #define HMENU_16(h32)     (WOWHandle16(h32, WOW_TYPE_HMENU))
@@ -88,8 +126,13 @@ WORD   WINAPI WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
 #define HPALETTE_16(h32)  (WOWHandle16(h32, WOW_TYPE_HPALETTE))
 #define HPEN_16(h32)      (WOWHandle16(h32, WOW_TYPE_HPEN))
 #define HACCEL_16(h32)    (WOWHandle16(h32, WOW_TYPE_HACCEL))
-#define HTASK_16(h32)     (WOWHandle16(h32, WOW_TYPE_HTASK))
 
+#endif  /* __WINE__ */
+
+#define FULLHWND_32(h16)  ((HWND) (WOWHandle32(h16, WOW_TYPE_FULLHWND)))
+#define HTASK_32(h16)     ((DWORD)(WOWHandle32(h16, WOW_TYPE_HTASK)))
+
+#define HTASK_16(h32)     (WOWHandle16((HANDLE)(h32), WOW_TYPE_HTASK))
 
 #define WCB16_PASCAL     0
 #define WCB16_CDECL      1
@@ -99,5 +142,3 @@ DWORD WINAPI WOWCallback16(DWORD,DWORD);
 BOOL  WINAPI WOWCallback16Ex(DWORD,DWORD,DWORD,LPVOID,LPDWORD);
 
 #endif /* _WOWNT32_H_ */
-
-

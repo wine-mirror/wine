@@ -30,6 +30,7 @@
 #include <errno.h>
 #include "wine/winbase16.h"
 #include "winuser.h"
+#include "wownt32.h"
 #include "win16drv/win16drv.h"
 #include "wine/debug.h"
 #include "bitmap.h"
@@ -62,8 +63,6 @@ extern LONG CALLBACK PRTDRV_CallTo16_long_llwll (FARPROC16,LONG,LONG,WORD,LONG,
 
 /* ### stop build ### */
 
-
-#define HWND_16(h32)		(LOWORD(h32))
 
 #define MAX_PRINTER_DRIVERS 	16
 static LOADED_PRINTER_DRIVER *gapLoadedPrinterDrivers[MAX_PRINTER_DRIVERS];

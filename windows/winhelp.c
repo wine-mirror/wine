@@ -29,6 +29,7 @@
 #include "wine/debug.h"
 #include "windef.h"
 #include "wingdi.h"
+#include "wownt32.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
 #include "win.h"

@@ -32,6 +32,7 @@
 #include "windef.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "wownt32.h"
 #include "dlgs.h"
 #include "shellapi.h"
 #include "shlobj.h"

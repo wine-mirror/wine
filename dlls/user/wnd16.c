@@ -19,6 +19,7 @@
  */
 
 #include "wine/winuser16.h"
+#include "wownt32.h"
 #include "user.h"
 #include "win.h"
 #include "task.h"
@@ -26,19 +27,6 @@
 
 /* handle --> handle16 conversions */
 #define HANDLE_16(h32)		(LOWORD(h32))
-#define HDC_16(h32)		(LOWORD(h32))
-#define HDWP_16(h32)		(LOWORD(h32))
-#define HMENU_16(h32)		(LOWORD(h32))
-
-/* handle16 --> handle conversions */
-#define HBITMAP_32(h16)		((HBITMAP)(ULONG_PTR)(h16))
-#define HDC_32(h16)		((HDC)(ULONG_PTR)(h16))
-#define HDWP_32(h16)		((HDWP)(ULONG_PTR)(h16))
-#define HFONT_32(h16)		((HFONT)(ULONG_PTR)(h16))
-#define HICON_32(h16)		((HICON)(ULONG_PTR)(h16))
-#define HINSTANCE_32(h16)	((HINSTANCE)(ULONG_PTR)(h16))
-#define HMENU_32(h16)		((HMENU)(ULONG_PTR)(h16))
-#define HRGN_32(h16)		((HRGN)(ULONG_PTR)(h16))
 
 static HWND16 hwndSysModal;
 
@@ -1667,7 +1655,7 @@ INT16 WINAPI MessageBoxIndirect16( LPMSGBOXPARAMS16 msgbox )
 
     msgbox32.cbSize             = msgbox->cbSize;
     msgbox32.hwndOwner          = WIN_Handle32( msgbox->hwndOwner );
-    msgbox32.hInstance          = HINSTANCE_32(msgbox->hInstance);
+    msgbox32.hInstance          = MapHModuleSL(msgbox->hInstance);
     msgbox32.lpszText           = MapSL(msgbox->lpszText);
     msgbox32.lpszCaption        = MapSL(msgbox->lpszCaption);
     msgbox32.dwStyle            = msgbox->dwStyle;

@@ -105,7 +105,4 @@ INT16     WINAPI WSACancelAsyncRequest16(HANDLE16 hAsyncTaskHandle);
 INT16     WINAPI WSAAsyncSelect16(SOCKET16 s, HWND16 hWnd, UINT16 wMsg, LONG lEvent);
 INT16     WINAPI WSARecvEx16(SOCKET16 s, char *buf, INT16 len, INT16 *flags);
 
-#define HWND_16(h32)		(LOWORD(h32))
-#define HWND_32(h16)		((HWND)(ULONG_PTR)(h16))
-
 #endif /* __WINE_WINE_WINSOCK16_H */

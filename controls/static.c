@@ -21,6 +21,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
+#include "wownt32.h"
 #include "cursoricon.h"
 #include "controls.h"
 #include "user.h"

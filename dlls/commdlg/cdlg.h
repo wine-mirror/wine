@@ -23,10 +23,7 @@
 
 #include "dlgs.h"
 #include "wine/windef16.h"
-
-/* handle conversions */
-#define HWND_16(h32)		(LOWORD(h32))
-#define HWND_32(h16)		((HWND)(ULONG_PTR)(h16))
+#include "wownt32.h"
 
 /*---------------- 16-bit ----------------*/
 extern HINSTANCE16	COMMDLG_hInstance;

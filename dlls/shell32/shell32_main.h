@@ -200,6 +200,5 @@ inline static void __SHCloneStrWtoA(char ** target, const WCHAR * source)
 #define HICON_16(h32)		(LOWORD(h32))
 #define HICON_32(h16)		((HICON)(ULONG_PTR)(h16))
 #define HINSTANCE_32(h16)	((HINSTANCE)(ULONG_PTR)(h16))
-#define HWND_32(h16)		((HWND)(ULONG_PTR)(h16))
 
 #endif

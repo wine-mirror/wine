@@ -89,6 +89,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "wownt32.h"
 #include "wine/unicode.h"
 #include "win.h"
 #include "nonclient.h"

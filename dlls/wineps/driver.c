@@ -26,14 +26,13 @@
 #include "psdrv.h"
 #include "wine/debug.h"
 #include "winuser.h"
+#include "wownt32.h"
 #include "winspool.h"
 #include "prsht.h"
 #include "psdlg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
-#define HWND_16(h32)		(LOWORD(h32))
-#define HWND_32(h16)		((HWND)(ULONG_PTR)(h16))
 
 /************************************************************************
  *

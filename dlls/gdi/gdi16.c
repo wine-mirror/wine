@@ -20,6 +20,7 @@
 
 #include "winbase.h"
 #include "wingdi.h"
+#include "wownt32.h"
 #include "wine/wingdi16.h"
 #include "gdi.h"
 #include "wine/debug.h"
@@ -28,20 +29,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
 #define HGDIOBJ_32(handle16)    ((HGDIOBJ)(ULONG_PTR)(handle16))
 #define HGDIOBJ_16(handle32)    ((HGDIOBJ16)(ULONG_PTR)(handle32))
-
-#define HDC_32(hdc16)           ((HDC)HGDIOBJ_32(hdc16))
-#define HRGN_32(hrgn16)         ((HRGN)HGDIOBJ_32(hrgn16))
-#define HBRUSH_32(hbrush16)     ((HBRUSH)HGDIOBJ_32(hbrush16))
-#define HBITMAP_32(hbitmap16)   ((HBITMAP)HGDIOBJ_32(hbitmap16))
-#define HPALETTE_32(hpalette16) ((HPALETTE)HGDIOBJ_32(hpalette16))
-
-#define HDC_16(hdc)             ((HDC16)HGDIOBJ_16(hdc))
-#define HPEN_16(hpen)           ((HPEN16)HGDIOBJ_16(hpen))
-#define HRGN_16(hrgn)           ((HRGN16)HGDIOBJ_16(hrgn))
-#define HFONT_16(hfont)         ((HFONT16)HGDIOBJ_16(hfont))
-#define HBRUSH_16(hbrush)       ((HBRUSH16)HGDIOBJ_16(hbrush))
-#define HBITMAP_16(hbitmap)     ((HBITMAP16)HGDIOBJ_16(hbitmap))
-#define HPALETTE_16(hpalette)   ((HPALETTE16)HGDIOBJ_16(hpalette))
 
 
 /* convert a LOGFONT16 to a LOGFONTW */

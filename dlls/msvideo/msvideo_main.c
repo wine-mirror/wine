@@ -47,7 +47,6 @@ void MSVIDEO_UnmapMsg16To32(UINT msg, LPVOID lpv, LPDWORD lParam1, LPDWORD lPara
 LRESULT MSVIDEO_SendMessage(HIC hic, UINT msg, DWORD lParam1, DWORD lParam2, BOOL bFrom32);
 
 #define HDRVR_16(h32)		(LOWORD(h32))
-#define HWND_32(h16)		((HWND)(ULONG_PTR)(h16))
 
 
 /***********************************************************************

@@ -29,6 +29,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "wownt32.h"
 #include "mmddk.h"
 #include "winioctl.h"
 #include "ntddstor.h"
@@ -41,8 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mcicda);
 #define CDFRAMES_PERMIN                 (CDFRAMES_PERSEC * 60)
 #define FRAME_OF_ADDR(a) ((a)[1] * CDFRAMES_PERMIN + (a)[2] * CDFRAMES_PERSEC + (a)[3])
 #define FRAME_OF_TOC(toc, idx)  FRAME_OF_ADDR((toc).TrackData[idx - (toc).FirstTrack].Address)
-
-#define HWND_32(h16)		((HWND)(ULONG_PTR)(h16))
 
 typedef struct {
     UINT		wDevID;

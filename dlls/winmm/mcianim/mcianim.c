@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "wownt32.h"
 #include "mmddk.h"
 #include "wine/debug.h"
 
@@ -32,8 +33,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mcianim);
 #define ANIMFRAMES_PERSEC 	30
 #define ANIMFRAMES_PERMIN 	1800
 #define SECONDS_PERMIN	 	60
-
-#define HWND_32(h16)		((HWND)(ULONG_PTR)(h16))
 
 typedef struct {
         UINT16		wDevID;

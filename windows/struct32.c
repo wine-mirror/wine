@@ -19,6 +19,7 @@
  */
 
 #include "struct32.h"
+#include "wownt32.h"
 #include "win.h"
 #include "winerror.h"
 

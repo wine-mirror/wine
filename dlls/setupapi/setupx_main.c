@@ -61,6 +61,7 @@
 #include "winreg.h"
 #include "winerror.h"
 #include "wine/winuser16.h"
+#include "wownt32.h"
 #include "setupapi.h"
 #include "setupx16.h"
 #include "setupapi_private.h"
@@ -69,7 +70,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
-#define HWND_32(h16)		((HWND)(ULONG_PTR)(h16))
 
 /***********************************************************************
  *		SURegOpenKey (SETUPX.47)

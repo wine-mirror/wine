@@ -25,6 +25,7 @@
 #include "winnls.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
+#include "wownt32.h"
 #include "user.h"
 #include "wine/debug.h"
 

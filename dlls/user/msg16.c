@@ -19,6 +19,7 @@
  */
 
 #include "wine/winuser16.h"
+#include "wownt32.h"
 #include "winerror.h"
 #include "hook.h"
 #include "message.h"

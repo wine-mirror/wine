@@ -25,6 +25,7 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
+#include "wownt32.h"
 #include "wine/unicode.h"
 #include "winuser.h"
 #include "winerror.h"

@@ -27,12 +27,11 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "mmddk.h"
+#include "wownt32.h"
 #include "digitalv.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mciwave);
-
-#define HWND_32(h16)		((HWND)(ULONG_PTR)(h16))
 
 typedef struct {
     UINT			wDevID;

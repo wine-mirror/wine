@@ -114,6 +114,7 @@
 #include "wsipx.h"
 #include "wine/winsock16.h"
 #include "winnt.h"
+#include "wownt32.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 

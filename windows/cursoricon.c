@@ -48,6 +48,7 @@
 
 #include "windef.h"
 #include "wingdi.h"
+#include "wownt32.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/exception.h"
@@ -66,16 +67,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(cursor);
 WINE_DECLARE_DEBUG_CHANNEL(icon);
 WINE_DECLARE_DEBUG_CHANNEL(resource);
 
-/* handle conversions */
-#define HCURSOR_16(h32)		(LOWORD(h32))
-#define HGLOBAL_16(h32)		(LOWORD(h32))
-#define HICON_16(h32)		(LOWORD(h32))
-#define HINSTANCE_16(h32)	(LOWORD(h32))
-
-#define HCURSOR_32(h16)		((HCURSOR)(ULONG_PTR)(h16))
-#define HICON_32(h16)		((HICON)(ULONG_PTR)(h16))
-#define HINSTANCE_32(h16)	((HINSTANCE)(ULONG_PTR)(h16))
-#define HMODULE_32(h16)		((HMODULE)(ULONG_PTR)(h16))
 
 static RECT CURSOR_ClipRect;       /* Cursor clipping rect */
 
@@ -504,14 +495,13 @@ fail:
  * FIXME: Convert to mono when cFlag is LR_MONOCHROME. Do something
  *        with cbSize parameter as well.
  */
-static HICON CURSORICON_CreateFromResource( HINSTANCE hInstance, HICON hObject, LPBYTE bits,
+static HICON CURSORICON_CreateFromResource( HMODULE16 hModule, HGLOBAL16 hObj, LPBYTE bits,
 	 					UINT cbSize, BOOL bIcon, DWORD dwVersion,
 						INT width, INT height, UINT loadflags )
 {
     static HDC hdcMem;
     int sizeAnd, sizeXor;
     HBITMAP hAndBits = 0, hXorBits = 0; /* error condition for later */
-    HGLOBAL16 hObj = HGLOBAL_16(hObject);
     BITMAP bmpXor, bmpAnd;
     POINT16 hotspot;
     BITMAPINFO *bmi;
@@ -677,8 +667,8 @@ static HICON CURSORICON_CreateFromResource( HINSTANCE hInstance, HICON hObject, 
 	CURSORICONINFO *info;
 
 	/* Make it owned by the module */
-        if (hInstance) hInstance = GetExePtr(hInstance);
-        FarSetOwner16( hObj, hInstance );
+        if (hModule) hModule = GetExePtr(hModule);
+        FarSetOwner16( hObj, hModule );
 
 	info = (CURSORICONINFO *)GlobalLock16( hObj );
 	info->ptHotSpot.x   = hotspot.x;
@@ -825,11 +815,10 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
  *
  * Make a copy of a cursor or icon.
  */
-static HICON CURSORICON_Copy( HINSTANCE hInst, HICON hIcon )
+static HICON CURSORICON_Copy( HINSTANCE16 hInst16, HICON hIcon )
 {
     char *ptrOld, *ptrNew;
     int size;
-    HINSTANCE16 hInst16 = HINSTANCE_16(hInst);
     HICON16 hOld = HICON_16(hIcon);
     HICON16 hNew;
 
@@ -1008,7 +997,7 @@ HCURSOR WINAPI CreateCursor( HINSTANCE hInstance,
     info.bPlanes = 1;
     info.bBitsPerPixel = 1;
 
-    return HICON_32(CreateCursorIconIndirect16(HINSTANCE_16(hInstance), &info,
+    return HICON_32(CreateCursorIconIndirect16(MapHModuleLS(hInstance), &info,
 		    lpANDbits, lpXORbits));
 }
 
@@ -1099,7 +1088,7 @@ HICON WINAPI CreateIcon(
         info.bPlanes = bPlanes;
         info.bBitsPerPixel = bBitsPixel;
 
-        hIcon=HICON_32(CreateCursorIconIndirect16(HINSTANCE_16(hInstance), &info,
+        hIcon=HICON_32(CreateCursorIconIndirect16(MapHModuleLS(hInstance), &info,
 						  lpANDbits, lpXORbits));
     } else {
         ICONINFO iinfo;
@@ -1171,7 +1160,7 @@ HGLOBAL16 WINAPI CreateCursorIconIndirect16( HINSTANCE16 hInstance,
 HICON16 WINAPI CopyIcon16( HINSTANCE16 hInstance, HICON16 hIcon )
 {
     TRACE_(icon)("%04x %04x\n", hInstance, hIcon );
-    return HICON_16(CURSORICON_Copy(HINSTANCE_32(hInstance), HICON_32(hIcon)));
+    return HICON_16(CURSORICON_Copy(hInstance, HICON_32(hIcon)));
 }
 
 
@@ -1191,7 +1180,7 @@ HICON WINAPI CopyIcon( HICON hIcon )
 HCURSOR16 WINAPI CopyCursor16( HINSTANCE16 hInstance, HCURSOR16 hCursor )
 {
     TRACE_(cursor)("%04x %04x\n", hInstance, hCursor );
-    return HICON_16(CURSORICON_Copy(HINSTANCE_32(hInstance), HCURSOR_32(hCursor)));
+    return HICON_16(CURSORICON_Copy(hInstance, HCURSOR_32(hCursor)));
 }
 
 /**********************************************************************
@@ -1528,7 +1517,7 @@ HGLOBAL16 WINAPI LoadDIBIconHandler16( HGLOBAL16 hMemObj, HMODULE16 hModule, HRS
      {
 	 LPBYTE bits = (LPBYTE)GlobalLock16( hMemObj );
 	 hMemObj = HICON_16(CURSORICON_CreateFromResource(
-				HMODULE_32(hModule), HICON_32(hMemObj), bits,
+				hModule, hMemObj, bits,
 				SizeofResource16(hModule, hRsrc), TRUE, 0x00030000,
 				GetSystemMetrics(SM_CXICON),
 				GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR));
@@ -1548,7 +1537,7 @@ HGLOBAL16 WINAPI LoadDIBCursorHandler16( HGLOBAL16 hMemObj, HMODULE16 hModule, H
     {
 	LPBYTE bits = (LPBYTE)GlobalLock16( hMemObj );
 	hMemObj = HICON_16(CURSORICON_CreateFromResource(
-				HMODULE_32(hModule), HICON_32(hMemObj), bits,
+				hModule, hMemObj, bits,
 				SizeofResource16(hModule, hRsrc), FALSE, 0x00030000,
 				GetSystemMetrics(SM_CXCURSOR),
 				GetSystemMetrics(SM_CYCURSOR), LR_MONOCHROME));
