@@ -649,6 +649,8 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
     int nameLen;
     ULONG ulEaten;
     LPWSTR szClsidTemp = NULL;
+    REGFILTER2 regfilter2;
+    REGFILTERPINS2* pregfp2 = NULL;
 
     TRACE("(%s, %s, %p, %s, %s, %p)\n",
         debugstr_guid(clsidFilter),
@@ -658,9 +660,43 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
         debugstr_w(szInstance),
         prf2);
 
-    if (prf2->dwVersion != 2)
+    if (prf2->dwVersion == 2)
     {
-        FIXME("dwVersion != 2 not supported at the moment\n");
+        regfilter2 = *prf2;
+    }
+    else if (prf2->dwVersion == 1)
+    {
+        ULONG i;
+        DWORD flags;
+        /* REGFILTER2 structure is converted from version 1 to 2. Tested on Win2k. */
+        regfilter2.dwVersion = 2;
+        regfilter2.dwMerit = prf2->dwMerit;
+        regfilter2.u.s1.cPins2 = prf2->u.s.cPins;
+        pregfp2 = (REGFILTERPINS2*) CoTaskMemAlloc(prf2->u.s.cPins * sizeof(REGFILTERPINS2));
+        regfilter2.u.s1.rgPins2 = pregfp2;
+        for (i = 0; i < prf2->u.s.cPins; i++)
+        {
+            flags = 0;
+            if (prf2->u.s.rgPins[i].bRendered)
+                flags |= REG_PINFLAG_B_RENDERER;
+            if (prf2->u.s.rgPins[i].bOutput)
+                flags |= REG_PINFLAG_B_OUTPUT;
+            if (prf2->u.s.rgPins[i].bZero)
+                flags |= REG_PINFLAG_B_ZERO;
+            if (prf2->u.s.rgPins[i].bMany)
+                flags |= REG_PINFLAG_B_MANY;
+            pregfp2[i].dwFlags = flags;
+            pregfp2[i].cInstances = 1;
+            pregfp2[i].nMediaTypes = prf2->u.s.rgPins[i].nMediaTypes;
+            pregfp2[i].lpMediaType = prf2->u.s.rgPins[i].lpMediaType;
+            pregfp2[i].nMediums = 0;
+            pregfp2[i].lpMedium = NULL;
+            pregfp2[i].clsPinCategory = NULL;
+        }
+    }
+    else
+    {
+        FIXME("dwVersion other that 1 or 2 not supported at the moment\n");
         return E_NOTIMPL;
     }
 
@@ -668,7 +704,9 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
         *ppMoniker = NULL;
 
     if (!pclsidCategory)
-        pclsidCategory = &CLSID_ActiveMovieCategories;
+        /* MSDN mentions the non existing CLSID_ActiveMovieFilters GUID.
+         * In fact this is the CLSID_LegacyAmFilterCategory one */
+        pclsidCategory = &CLSID_LegacyAmFilterCategory;
 
     /* sizeof... will include null terminator and
      * the + 1 is for the separator ('\\'). The -1 is
@@ -721,9 +759,9 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
         hr = IParseDisplayName_ParseDisplayName(pParser, pBindCtx, pwszParseName, &ulEaten, &pMoniker);
 
     if (pBindCtx)
-        IBindCtx_Release(pBindCtx); pBindCtx = NULL;
+        IBindCtx_Release(pBindCtx);
     if (pParser)
-        IParseDisplayName_Release(pParser); pParser = NULL;
+        IParseDisplayName_Release(pParser);
 
     if (SUCCEEDED(hr))
         hr = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (LPVOID)&pPropBag);
@@ -735,17 +773,20 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
         hr = FM2_WriteClsid(pPropBag, clsidFilter);
 
     if (SUCCEEDED(hr))
-        hr = FM2_WriteFilterData(pPropBag, prf2);
+        hr = FM2_WriteFilterData(pPropBag, &regfilter2);
 
     if (pPropBag)
-        IPropertyBag_Release(pPropBag); pPropBag = NULL;
+        IPropertyBag_Release(pPropBag);
     if (szClsidTemp)
         CoTaskMemFree(szClsidTemp);
 
     if (SUCCEEDED(hr) && ppMoniker)
         *ppMoniker = pMoniker;
     else if (pMoniker)
-        IMoniker_Release(pMoniker); pMoniker = NULL;
+        IMoniker_Release(pMoniker);
+
+    if (pregfp2)
+        CoTaskMemFree(pregfp2);
 
     TRACE("-- returning %lx\n", hr);
 
