@@ -414,7 +414,7 @@ static	DWORD	MIDI_ConvertPulseToMS(WINE_MCIMIDI* wmm, DWORD pulse)
      */
     if (wmm->nDivision == 0) {
 	FIXME(mcimidi, "Shouldn't happen. wmm->nDivision = 0\n");
-    } else if (wmm->nDivision > 0x8000) { /* SMPTE, unchecked */
+    } else if (wmm->nDivision > 0x8000) { /* SMPTE, unchecked FIXME? */
 	int	nf = -(char)HIBYTE(wmm->nDivision);	/* number of frames     */
 	int	nsf = LOBYTE(wmm->nDivision);		/* number of sub-frames */
 	ret = (pulse * 1000) / (nf * nsf);
@@ -533,6 +533,7 @@ static	DWORD	MIDI_GetMThdLengthMS(WINE_MCIMIDI* wmm)
 	    ret = wmm->tracks[nt].dwLength;
 	}
     }
+    /* FIXME: this is wrong if there is a tempo change inside the file */
     return MIDI_ConvertPulseToMS(wmm, ret);
 }
 
@@ -542,11 +543,11 @@ static	DWORD	MIDI_GetMThdLengthMS(WINE_MCIMIDI* wmm)
 static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS32A lpParms)
 {
     MIDIOPENDESC 	midiOpenDesc;
-    DWORD		dwRet;
+    DWORD		dwRet = 0;
     DWORD		dwDeviceID;
     WINE_MCIMIDI*	wmm;
 
-    TRACE(mcimidi, "(%08lX, %p)\n", dwFlags, lpParms);
+    TRACE(mcimidi, "(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
      
     if (lpParms == NULL) 	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wDevID >= MAX_MCIMIDIDRV) {
@@ -563,7 +564,7 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS32A lpPa
     }
     wmm->nUseCount++;
     
-    wmm->hMidiHdr = USER_HEAP_ALLOC(sizeof(MIDIHDR));
+    wmm->hFile = 0;
     dwDeviceID = lpParms->wDeviceID;
     
     TRACE(mcimidi, "wDevID=%04X (lpParams->wDeviceID=%08lX)\n", wDevID, dwDeviceID);
@@ -580,6 +581,7 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS32A lpPa
 				     MMIO_ALLOCBUF | MMIO_READWRITE | MMIO_EXCLUSIVE);
 	    if (wmm->hFile == 0) {
 		WARN(mcimidi, "Can't find file='%s' !\n", lpstrElementName);
+		wmm->nUseCount--;
 		return MCIERR_FILE_NOT_FOUND;
 	    }
 	} else {
@@ -592,52 +594,60 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS32A lpPa
 
     wmm->wNotifyDeviceID = dwDeviceID;
     wmm->dwStatus = MCI_MODE_NOT_READY;	/* while loading file contents */
+    /* spec says it should be the default format from the MIDI file... */
     wmm->dwMciTimeFormat = MCI_FORMAT_MILLISECONDS;
 
     midiOpenDesc.hMidi = 0;
 
     if (wmm->hFile != 0) {
 	MMCKINFO	ckMainRIFF;
+	MMCKINFO	mmckInfo;
 	DWORD		dwOffset = 0;
 
 	if (mmioDescend(wmm->hFile, &ckMainRIFF, NULL, 0) != 0) {
-	    return MCIERR_INTERNAL;
-	}
+	    dwRet = MCIERR_INVALID_FILE;
+	} else {
 	TRACE(mcimidi,"ParentChunk ckid=%.4s fccType=%.4s cksize=%08lX \n",
 	      (LPSTR)&ckMainRIFF.ckid, (LPSTR)&ckMainRIFF.fccType, ckMainRIFF.cksize);
 
-	if (ckMainRIFF.ckid == mmioFOURCC('R', 'M', 'I', 'D')) {
+	    if (ckMainRIFF.ckid == FOURCC_RIFF && ckMainRIFF.fccType == mmioFOURCC('R', 'M', 'I', 'D')) {
+		mmckInfo.ckid = mmioFOURCC('d', 'a', 't', 'a');
+		if (mmioDescend(wmm->hFile, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK) == 0) {
 	    TRACE(mcimidi, "... is a 'RMID' file \n");
-	    dwOffset = ckMainRIFF.dwDataOffset;
-	    FIXME(mcimidi, "Setting #tracks for RMID to 1: is this correct ?\n");
-	    wmm->nTracks = 1;
+		    dwOffset = mmckInfo.dwDataOffset;
+		} else {
+		    dwRet = MCIERR_INVALID_FILE;
 	}
-	if (MIDI_mciReadMThd(wmm, dwOffset) != 0) {
+	    }
+	    if (dwRet == 0 && MIDI_mciReadMThd(wmm, dwOffset) != 0) {
 	    WARN(mcimidi, "Can't read 'MThd' header \n");
-	    return MCIERR_INTERNAL;
+		dwRet = MCIERR_INVALID_FILE;
 	}
-
-	TRACE(mcimidi, "Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
-	      (LPSTR)&ckMainRIFF.ckid, (LPSTR)&ckMainRIFF.fccType,
-	      ckMainRIFF.cksize);
+	}
     } else {
 	TRACE(mcimidi, "hFile==0, setting #tracks to 0; is this correct ?\n");
 	wmm->nTracks = 0;
 	wmm->wFormat = 0;
 	wmm->nDivision = 1;
     }
-
+    if (dwRet != 0) {
+	wmm->nUseCount--;
+	if (wmm->hFile != 0)
+	    mmioClose32(wmm->hFile, 0);
+	wmm->hFile = 0;
+    } else {
     wmm->dwPositionMS = 0;
     wmm->dwStatus = MCI_MODE_STOP;
+	wmm->hMidiHdr = USER_HEAP_ALLOC(sizeof(MIDIHDR));
 
     dwRet = modMessage(wDevID, MODM_OPEN, 0, (DWORD)&midiOpenDesc, CALLBACK_NULL);
     /*	dwRet = midMessage(wDevID, MIDM_OPEN, 0, (DWORD)&midiOpenDesc, CALLBACK_NULL);*/
-    
-    return 0;
+    }
+    return dwRet;
 }
 
 /**************************************************************************
- * 				MIDI_mciSop			[internal]
+ * 				MIDI_mciStop			[internal]
  */
 static DWORD MIDI_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {    
@@ -703,6 +713,9 @@ static DWORD MIDI_mciClose(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
     return 0;
 }
 
+/**************************************************************************
+ * 				MIDI_mciFindNextEvent		[internal]
+ */
 static MCI_MIDITRACK*	MIDI_mciFindNextEvent(WINE_MCIMIDI* wmm, LPDWORD hiPulse) 
 {
     WORD		cnt, nt;
@@ -795,22 +808,24 @@ static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 	while (((volatile WINE_MCIMIDI*)wmm)->dwStatus == MCI_MODE_PAUSE);
 
 	doPlay = (wmm->dwPositionMS >= dwStartMS && wmm->dwPositionMS <= dwEndMS);
-	/* if starting playing, then set StartTicks to the value it would have had
-	   if play had started at position 0
-	*/
+
 	TRACE(mcimidi, "wmm->dwStatus=%d, doPlay=%s\n", wmm->dwStatus, doPlay ? "T" : "F");
 
 	if ((mmt = MIDI_mciFindNextEvent(wmm, &hiPulse)) == NULL)
 	    break;  /* no more event on tracks */
 
+	/* if starting playing, then set StartTicks to the value it would have had
+	 * if play had started at position 0
+	 */
 	if (doPlay && !wmm->wStartedPlaying) {
 	    wmm->dwStartTicks = GetTickCount() - MIDI_ConvertPulseToMS(wmm, wmm->dwPulse);
 	    wmm->wStartedPlaying = TRUE;
+	    TRACE(mcimidi, "Setting dwStartTicks to %lu\n", wmm->dwStartTicks);
 	}
 	
 	if (hiPulse > wmm->dwPulse) {
 	    if (doPlay) {
-		DWORD	togo = wmm->dwStartTicks + MIDI_ConvertPulseToMS(wmm, hiPulse);
+		DWORD	togo = wmm->dwStartTicks + wmm->dwPositionMS + MIDI_ConvertPulseToMS(wmm, hiPulse - wmm->dwPulse);
 		DWORD	tc = GetTickCount();
 
 		TRACE(mcimidi, "Pulses hi=0x%08lx <> cur=0x%08lx\n", hiPulse, wmm->dwPulse);
@@ -897,13 +912,14 @@ static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 		    WARN(mcimidi, "For format #1 MIDI files, tempo can only be changed on track #0 (%u)\n", mmt->wTrackNr);
 		} else { 
 		    BYTE	tbt;
+		    DWORD	value = 0;
 		    
-		    MIDI_mciReadByte(wmm, &tbt);	wmm->dwTempo  = ((DWORD)tbt) << 16;
-		    MIDI_mciReadByte(wmm, &tbt);	wmm->dwTempo |= ((DWORD)tbt) << 8;
-		    MIDI_mciReadByte(wmm, &tbt);	wmm->dwTempo |= ((DWORD)tbt) << 0;
-		    TRACE(mcimidi, "Setting tempo to %ld (BPM=%ld)\n", wmm->dwTempo, 60000000l / wmm->dwTempo);
+		    MIDI_mciReadByte(wmm, &tbt);	value  = ((DWORD)tbt) << 16;
+		    MIDI_mciReadByte(wmm, &tbt);	value |= ((DWORD)tbt) << 8;
+		    MIDI_mciReadByte(wmm, &tbt);	value |= ((DWORD)tbt) << 0;
+		    TRACE(mcimidi, "Setting tempo to %ld (BPM=%ld)\n", wmm->dwTempo, (value) ? (60000000l / value) : 0);
+		    wmm->dwTempo = value;
 		}
-		
 		break;
 	    case 0x54: /* (hour) (min) (second) (frame) (fractional-frame) - SMPTE track start */
 		if (mmt->wTrackNr != 0 && wmm->wFormat == 1) {
@@ -1214,6 +1230,7 @@ static DWORD MIDI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 	    if ((dwFlags & MCI_TRACK) && wmm->wFormat == 2) {
 		if (lpParms->dwTrack >= wmm->nTracks)
 		    return MCIERR_BAD_INTEGER;
+		/* FIXME: this is wrong if there is a tempo change inside the file */
 		lpParms->dwReturn = MIDI_ConvertPulseToMS(wmm, wmm->tracks[lpParms->dwTrack].dwLength);
 	    } else {
 		lpParms->dwReturn = MIDI_GetMThdLengthMS(wmm);
@@ -1256,8 +1273,7 @@ static DWORD MIDI_mciStatus(UINT16 wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpP
 		case 0xE7:	lpParms->dwReturn = MCI_SEQ_DIV_SMPTE_25;	break;	/* -25 */
 		case 0xE3:	lpParms->dwReturn = MCI_SEQ_DIV_SMPTE_30DROP;	break;	/* -29 */ /* is the MCI constant correct ? */
 		case 0xE2:	lpParms->dwReturn = MCI_SEQ_DIV_SMPTE_30;	break;	/* -30 */
-		default:	
-		    FIXME(mcimidi, "There is a bad bad programmer\n");
+		default:	FIXME(mcimidi, "There is a bad bad programmer\n");
 		}
 	    } else {
 		lpParms->dwReturn = MCI_SEQ_DIV_PPQN;
