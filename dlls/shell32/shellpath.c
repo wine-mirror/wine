@@ -766,7 +766,7 @@ static const CSIDL_DATA CSIDL_Data[] =
 	"SendTo",
 	"SendTo"
     },
-    { /* CSIDL_BITBUCKET (is this c:\recycled ?) */
+    { /* CSIDL_BITBUCKET - Recycle Bin */
 	0, (HKEY)1, /* FIXME */
 	NULL,
 	"recycled"
@@ -779,17 +779,17 @@ static const CSIDL_DATA CSIDL_Data[] =
     { /* CSIDL_MYDOCUMENTS */
 	0, (HKEY)1, /* FIXME */
 	NULL,
-	NULL,
+	NULL
     },
     { /* CSIDL_MYMUSIC */
-	0, (HKEY)1, /* FIXME */
-	NULL,
-	NULL,
+	1, HKCU,
+	"My Music",
+	"My Documents\\My Music"
     },
-    { /* CSIDL_MYVIDEO */
-	0, (HKEY)1, /* FIXME */
-	NULL,
-	NULL,
+    { /* CSIDL_MYMUSIC */
+	1, HKCU,
+	"My Video",
+	"My Documents\\My Video"
     },
     { /* unassigned */
 	0, 0,
@@ -876,17 +876,17 @@ static const CSIDL_DATA CSIDL_Data[] =
 	"Favorites",
 	"Favorites"
     },
-    { /* CSIDL_INTERNET_CACHE */
+    { /* CSIDL_INTERNET_CACHE (32) */
 	9, HKCU,
 	"Cache",
 	"Temporary Internet Files"
     },
-    { /* CSIDL_COOKIES */
+    { /* CSIDL_COOKIES (33) */
 	9, HKCU,
 	"Cookies",
 	"Cookies"
     },
-    { /* CSIDL_HISTORY */
+    { /* CSIDL_HISTORY (34) */
 	9, HKCU,
 	"History",
 	"History"
@@ -942,19 +942,19 @@ static const CSIDL_DATA CSIDL_Data[] =
 	"Program Files\\Common Files" /* ? */
     },
     { /* CSIDL_COMMON_TEMPLATES */
-	0, (HKEY)1, /* FIXME */
-	NULL,
-	NULL
+	9, HKLM,
+	"Common Templates",
+	/*"Documents and Settings\\"*/"All Users\\Templates"
     },
     { /* CSIDL_COMMON_DOCUMENTS */
-	0, (HKEY)1, /* FIXME */
-	NULL,
-	NULL
+	9, HKLM,
+	"Common Documents",
+	/*"Documents and Settings\\"*/"All Users\\Documents"
     },
     { /* CSIDL_COMMON_ADMINTOOLS */
-	0, (HKEY)1, /* FIXME */
-	NULL,
-	NULL
+	9, HKLM,
+	"Common Administrative Tools",
+	/*"Documents and Settings\\"*/"All Users\\Start Menu\\Programs\\Administrative Tools"
     },
     { /* CSIDL_ADMINTOOLS */
 	9, HKCU,
@@ -962,74 +962,59 @@ static const CSIDL_DATA CSIDL_Data[] =
 	"Start Menu\\Programs\\Administrative Tools"
     },
     { /* CSIDL_CONNECTIONS */
-	0, (HKEY)1, /* FIXME */
+	0, 0, /* FIXME */
 	NULL,
 	NULL
     },
-    { /* unassigned 32*/
-	0, 0,
-	NULL,
-	NULL,
-    },
-    { /* unassigned 33*/
-	0, 0,
-	NULL,
-	NULL,
-    },
-    { /* unassigned 34*/
-	0, 0,
-	NULL,
-	NULL,
-    },
     { /* CSIDL_COMMON_MUSIC */
-	0, 0, /* FIXME */
-	NULL,
-	NULL,
+	9, HKLM,
+	"CommonMusic",
+	/*"Documents and Settings\\"*/"All Users\\Documents\\My Music"
     },
     { /* CSIDL_COMMON_PICTURES */
-	0, 0, /* FIXME */
-	NULL,
-	NULL,
+	9, HKLM,
+	"CommonPictures",
+	/*"Documents and Settings\\"*/"All Users\\Documents\\My Pictures"
     },
     { /* CSIDL_COMMON_VIDEO */
-	0, 0, /* FIXME */
-	NULL,
-	NULL,
+	9, HKLM,
+	"CommonVideo",
+	/*"Documents and Settings\\"*/"All Users\\Documents\\My Video"
     },
     { /* CSIDL_RESOURCES */
 	0, 0, /* FIXME */
 	NULL,
-	NULL,
+	NULL
     },
     { /* CSIDL_RESOURCES_LOCALIZED */
 	0, 0, /* FIXME */
 	NULL,
-	NULL,
+	NULL
     },
     { /* CSIDL_COMMON_OEM_LINKS */
 	0, 0, /* FIXME */
 	NULL,
-	NULL,
+	NULL
     },
     { /* CSIDL_CDBURN_AREA */
-	0, 0, /* FIXME */
-	NULL,
-	NULL,
+	1, HKCU,
+	"CD Burning",
+	"Local Settings\\Application Data\\Microsoft\\CD Burning"
     },
     { /* unassigned 3C */
 	0, 0,
 	NULL,
-	NULL,
+	NULL
     },
     { /* CSIDL_COMPUTERSNEARME */
 	0, 0, /* FIXME */
 	NULL,
-	NULL,
+	NULL
     },
     { /* CSIDL_PROFILES */
 	0, 0, /* FIXME */
 	NULL,
-	NULL,
+	NULL
     }
 };
 #undef HKCU
