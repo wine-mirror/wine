@@ -2995,6 +2995,10 @@ HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont, FONTOBJ* font )
 
     hPrevFont = dc->w.hFont;
     dc->w.hFont = hfont;
+    dc->w.codepage = CP_ACP;
+    /* NOTE: the codepage of UNICODE is treated as CP_ACP(=0) */
+    if ( CHECK_PFONT(physDev->font) )
+	dc->w.codepage = __PFONT(physDev->font)->fi->codepage;
 
     LeaveCriticalSection( &crtsc_fonts_X11 );
 

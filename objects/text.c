@@ -52,35 +52,44 @@ BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
                              const RECT *lprect, LPCSTR str, UINT count,
                              const INT *lpDx )
 {
+    DC * dc = DC_GetDCUpdate( hdc );
     LPWSTR p;
-    INT ret;
-    UINT codepage = CP_ACP; /* FIXME: get codepage of font charset */
-    UINT wlen;
+    BOOL ret = FALSE;
     LPINT lpDxW = NULL;
 
-    wlen = MultiByteToWideChar(codepage,0,str,count,NULL,0);
-    if(lpDx){
-	int i, j;
-	i = 0; j = 0;
+    if (!dc) return FALSE;
 
-	lpDxW = (LPINT)HeapAlloc( GetProcessHeap(), 0, wlen*sizeof(INT));
-	while(i < count){
-	    if(IsDBCSLeadByteEx(codepage, str[i])){
-		lpDxW[j++] = lpDx[i] + lpDx[i+1];
-		i = i + 2;
-	    }
-	    else{
-		lpDxW[j++] = lpDx[i];
-		i = i + 1;
-	    }
-	}
-	lpDx = lpDxW;
+    if (dc->funcs->pExtTextOut)
+    {
+        UINT wlen = MultiByteToWideChar(dc->w.codepage,0,str,count,NULL,0);
+        if (lpDx)
+        {
+            int i = 0, j = 0;
+
+            lpDxW = (LPINT)HeapAlloc( GetProcessHeap(), 0, wlen*sizeof(INT));
+            while(i < count)
+            {
+                if(IsDBCSLeadByteEx(dc->w.codepage, str[i]))
+                {
+                    lpDxW[j++] = lpDx[i] + lpDx[i+1];
+                    i = i + 2;
+                }
+                else
+                {
+                    lpDxW[j++] = lpDx[i];
+                    i = i + 1;
+                }
+            }
+        }
+        if ((p = HeapAlloc( GetProcessHeap(), 0, wlen * sizeof(WCHAR) )))
+        {
+            wlen = MultiByteToWideChar(dc->w.codepage,0,str,count,p,wlen);
+            ret = dc->funcs->pExtTextOut( dc, x, y, flags, lprect, p, wlen, lpDxW );
+            HeapFree( GetProcessHeap(), 0, p );
+        }
+        if (lpDxW) HeapFree( GetProcessHeap(), 0, lpDxW );
     }
-    p = HeapAlloc( GetProcessHeap(), 0, wlen * sizeof(WCHAR) );
-    wlen = MultiByteToWideChar(codepage,0,str,count,p,wlen);
-    ret = ExtTextOutW( hdc, x, y, flags, lprect, p, wlen, lpDxW );
-    if (lpDxW) HeapFree( GetProcessHeap(), 0, lpDxW );
-    HeapFree( GetProcessHeap(), 0, p );
+    GDI_ReleaseObj( hdc );
     return ret;
 }
 

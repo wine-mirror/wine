@@ -73,6 +73,7 @@ static void DC_Init_DC_INFO( WIN_DC_INFO *win_dc_info )
     win_dc_info->xformWorld2Vport    = win_dc_info->xformWorld2Wnd;
     win_dc_info->xformVport2World    = win_dc_info->xformWorld2Wnd;
     win_dc_info->vport2WorldValid    = TRUE;
+    win_dc_info->codepage            = CP_ACP;
 
     PATH_InitGdiPath(&win_dc_info->path);
 }

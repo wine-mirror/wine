@@ -889,22 +889,28 @@ BOOL16 WINAPI GetTextExtentPoint16( HDC16 hdc, LPCSTR str, INT16 count,
 BOOL WINAPI GetTextExtentPoint32A( HDC hdc, LPCSTR str, INT count,
                                      LPSIZE size )
 {
-    LPWSTR p;
-    BOOL ret;
-    UINT codepage = CP_ACP; /* FIXME: get codepage of font charset */
-    UINT wlen;
+    BOOL ret = FALSE;
+    DC * dc = DC_GetDCPtr( hdc );
 
-  /* str may not be 0 terminated so we can't use HEAP_strdupWtoA.
-   * We allocate one more than we need so that lstrcpynWtoA can write a
-   * trailing 0 if it wants.
-   */
+    if (!dc) return FALSE;
 
-    wlen = MultiByteToWideChar(codepage,0,str,count,NULL,0);
-    p = HeapAlloc( GetProcessHeap(), 0, wlen * sizeof(WCHAR) );
-    wlen = MultiByteToWideChar(codepage,0,str,count,p,wlen);
-
-    ret = GetTextExtentPoint32W( hdc, p, wlen, size );
-    HeapFree( GetProcessHeap(), 0, p );
+    if (dc->funcs->pGetTextExtentPoint)
+    {
+        /* str may not be 0 terminated so we can't use HEAP_strdupWtoA.
+         * So we use MultiByteToWideChar.
+         */
+        UINT wlen = MultiByteToWideChar(dc->w.codepage,0,str,count,NULL,0);
+        LPWSTR p = HeapAlloc( GetProcessHeap(), 0, wlen * sizeof(WCHAR) );
+        if (p)
+        {
+            wlen = MultiByteToWideChar(dc->w.codepage,0,str,count,p,wlen);
+            ret = dc->funcs->pGetTextExtentPoint( dc, p, wlen, size );
+            HeapFree( GetProcessHeap(), 0, p );
+        }
+    }
+    GDI_ReleaseObj( hdc );
+    TRACE("(%08x %s %d %p): returning %d,%d\n",
+          hdc, debugstr_an (str, count), count, size, size->cx, size->cy );
     return ret;
 }
 
