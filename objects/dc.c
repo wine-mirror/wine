@@ -820,6 +820,19 @@ INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
     case SCALINGFACTORY:
         if(Escape(hdc, GETSCALINGFACTOR, 0, NULL, (LPVOID)&pt) > 0) ret = pt.y;
         break;
+    case CAPS1:
+        FIXME("(%04x,%d): DeviceCaps param CAPS1 is UNIMPLEMENTED, will yield 0!\n",
+                  hdc,cap );
+
+        /* please see wingdi.h for the possible bit-flag values that need
+           to be returned.
+
+           also, see 
+           http://msdn.microsoft.com/library/ddkdoc/win95ddk/graphcnt_1m0p.htm
+
+           the fall-through to 'default' is on purpose */
+
+
     default:
         if ((cap < 0) || (cap > sizeof(DeviceCaps)-sizeof(WORD))) break;
 

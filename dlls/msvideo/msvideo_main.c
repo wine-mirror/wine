@@ -348,7 +348,7 @@ HIC VFWAPI ICGetDisplayFormat(
 		HDC	hdc;
 
 		hdc = GetDC(0);
-		depth = GetDeviceCaps(hdc,12)*GetDeviceCaps(hdc,14);
+		depth = GetDeviceCaps(hdc,BITSPIXEL)*GetDeviceCaps(hdc,PLANES);
 		ReleaseDC(0,hdc);
 		if (depth==15)	depth = 16;
 		if (depth<8)	depth =  8;

@@ -1952,7 +1952,7 @@ static int may_use_dibsection(HDC hdc) {
 	return TRUE;
     if (bitspixel<=4)
 	return FALSE;
-    return GetDeviceCaps(hdc,94) & 0x10;
+    return GetDeviceCaps(hdc,CAPS1) & C1_DIBENGINE;
 }
 #endif
 
