@@ -184,7 +184,7 @@ TOOLTIPS_GetTipText (HWND hwnd, TOOLTIPS_INFO *infoPtr, INT nTool)
 {
     TTTOOL_INFO *toolPtr = &infoPtr->tools[nTool];
 
-    if ((toolPtr->hinst) && (HIWORD((UINT)toolPtr->lpszText) == 0)) {
+    if (HIWORD((UINT)toolPtr->lpszText) == 0) {
 	/* load a resource */
 	TRACE("load res string %x %x\n",
 	       toolPtr->hinst, (int)toolPtr->lpszText);
@@ -208,7 +208,7 @@ TOOLTIPS_GetTipText (HWND hwnd, TOOLTIPS_INFO *infoPtr, INT nTool)
 	    SendMessageA (toolPtr->hwnd, WM_NOTIFY,
 			    (WPARAM)toolPtr->uId, (LPARAM)&ttnmdi);
 
-	    if ((ttnmdi.hinst) && (HIWORD((UINT)ttnmdi.lpszText) == 0)) {
+	    if (HIWORD((UINT)ttnmdi.lpszText) == 0) {
 		LoadStringW (ttnmdi.hinst, (UINT)ttnmdi.lpszText,
 			       infoPtr->szTipText, INFOTIPSIZE);
 		if (ttnmdi.uFlags & TTF_DI_SETITEM) {
