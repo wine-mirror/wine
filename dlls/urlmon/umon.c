@@ -643,9 +643,34 @@ static HRESULT WINAPI URLMonikerImpl_Enum(IMoniker* iface,BOOL fForward, IEnumMo
 static HRESULT WINAPI URLMonikerImpl_IsEqual(IMoniker* iface,IMoniker* pmkOtherMoniker)
 {
     ICOM_THIS(URLMonikerImpl,iface);
-    FIXME("(%p)->(%p): stub\n",This,pmkOtherMoniker);
+    CLSID clsid;
+    LPOLESTR urlPath;
+    IBindCtx* bind;
+    HRESULT res;
 
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n",This,pmkOtherMoniker);
+
+    if(pmkOtherMoniker==NULL)
+        return E_INVALIDARG;
+
+    IMoniker_GetClassID(pmkOtherMoniker,&clsid);
+
+    if(!IsEqualCLSID(&clsid,&CLSID_StdURLMoniker))
+        return S_FALSE;
+
+    res = CreateBindCtx(0,&bind);
+    if(FAILED(res))
+        return res;
+
+    res = S_FALSE;
+    if(SUCCEEDED(IMoniker_GetDisplayName(pmkOtherMoniker,bind,NULL,&urlPath))) {
+        int result = lstrcmpiW(urlPath, This->URLName);
+        CoTaskMemFree(urlPath);
+        if(result == 0)
+            res = S_OK;
+    }
+    IUnknown_Release(bind);
+    return res;
 }
 
 
