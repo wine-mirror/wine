@@ -56,7 +56,7 @@ static RTL_BITMAP bm;
 static void InitFunctionPtrs()
 {
   hntdll = LoadLibraryA("ntdll.dll");
-  ok(hntdll != 0, "LoadLibrary failed");
+  ok(hntdll != 0, "LoadLibrary failed\n");
   if (hntdll)
   {
     pRtlInitializeBitMap = (void *)GetProcAddress(hntdll, "RtlInitializeBitMap");
@@ -89,15 +89,15 @@ static void test_RtlInitializeBitMap(void)
   buff[79] = 77;
 
   pRtlInitializeBitMap(&bm, buff, 800);
-  ok(bm.SizeOfBitMap == 800, "size uninitialised");
-  ok(bm.BitMapBuffer == buff,"buffer uninitialised");
-  ok(buff[0] == 77 && buff[79] == 77, "wrote to buffer");
+  ok(bm.SizeOfBitMap == 800, "size uninitialised\n");
+  ok(bm.BitMapBuffer == buff,"buffer uninitialised\n");
+  ok(buff[0] == 77 && buff[79] == 77, "wrote to buffer\n");
 
   /* Test inlined version */
   RtlInitializeBitMap(&bm, buff, 800);
-  ok(bm.SizeOfBitMap == 800, "size uninitialised");
-  ok(bm.BitMapBuffer == buff,"buffer uninitialised");
-  ok(buff[0] == 77 && buff[79] == 77, "wrote to buffer");
+  ok(bm.SizeOfBitMap == 800, "size uninitialised\n");
+  ok(bm.BitMapBuffer == buff,"buffer uninitialised\n");
+  ok(buff[0] == 77 && buff[79] == 77, "wrote to buffer\n");
 }
 
 static void test_RtlSetAllBits(void)
@@ -110,15 +110,15 @@ static void test_RtlSetAllBits(void)
 
   pRtlSetAllBits(&bm);
   ok(buff[0] == 0xff && buff[1] == 0xff && buff[2] == 0xff &&
-     buff[3] == 0xff, "didnt round up size");
-  ok(buff[4] == 0, "set more than rounded size");
+     buff[3] == 0xff, "didn't round up size\n");
+  ok(buff[4] == 0, "set more than rounded size\n");
 
   /* Test inlined version */
   memset(buff, 0 , sizeof(buff));
   RtlSetAllBits(&bm);
   ok(buff[0] == 0xff && buff[1] == 0xff && buff[2] == 0xff &&
-     buff[3] == 0xff, "didnt round up size");
-  ok(buff[4] == 0, "set more than rounded size");
+     buff[3] == 0xff, "didn't round up size\n");
+  ok(buff[4] == 0, "set more than rounded size\n");
 }
 
 static void test_RtlClearAllBits()
@@ -130,14 +130,14 @@ static void test_RtlClearAllBits()
   pRtlInitializeBitMap(&bm, buff, 1);
 
   pRtlClearAllBits(&bm);
-  ok(!buff[0] && !buff[1] && !buff[2] && !buff[3], "didnt round up size");
-  ok(buff[4] == 0xff, "cleared more than rounded size");
+  ok(!buff[0] && !buff[1] && !buff[2] && !buff[3], "didn't round up size\n");
+  ok(buff[4] == 0xff, "cleared more than rounded size\n");
 
   /* Test inlined version */
   memset(buff, 0xff , sizeof(buff));
   RtlClearAllBits(&bm);
-  ok(!buff[0] && !buff[1] && !buff[2] && !buff[3] , "didnt round up size");
-  ok(buff[4] == 0xff, "cleared more than rounded size");
+  ok(!buff[0] && !buff[1] && !buff[2] && !buff[3] , "didn't round up size\n");
+  ok(buff[4] == 0xff, "cleared more than rounded size\n");
 }
 
 static void test_RtlSetBits()
@@ -149,23 +149,23 @@ static void test_RtlSetBits()
   pRtlInitializeBitMap(&bm, buff, sizeof(buff)*8);
 
   pRtlSetBits(&bm, 0, 1);
-  ok(buff[0] == 1, "didnt set 1st bit");
+  ok(buff[0] == 1, "didn't set 1st bit\n");
 
   buff[0] = 0;
   pRtlSetBits(&bm, 7, 2);
-  ok(buff[0] == 0x80 && buff[1] == 1, "didnt span w/len < 8");
+  ok(buff[0] == 0x80 && buff[1] == 1, "didn't span w/len < 8\n");
 
   buff[0] = buff[1] = 0;
   pRtlSetBits(&bm, 7, 10);
-  ok(buff[0] == 0x80 && buff[1] == 0xff && buff[2] == 1, "didnt span w/len > 8");
+  ok(buff[0] == 0x80 && buff[1] == 0xff && buff[2] == 1, "didn't span w/len > 8\n");
 
   buff[0] = buff[1] = buff[2] = 0;
   pRtlSetBits(&bm, 0, 8); /* 1st byte */
-  ok(buff[0] == 0xff, "didnt set all bits");
-  ok(!buff[1], "set too many bits");
+  ok(buff[0] == 0xff, "didn't set all bits\n");
+  ok(!buff[1], "set too many bits\n");
 
   pRtlSetBits(&bm, sizeof(buff)*8-1, 1); /* last bit */
-  ok(buff[sizeof(buff)-1] == 0x80, "didnt set last bit");
+  ok(buff[sizeof(buff)-1] == 0x80, "didn't set last bit\n");
 }
 
 static void test_RtlClearBits()
@@ -177,23 +177,23 @@ static void test_RtlClearBits()
   pRtlInitializeBitMap(&bm, buff, sizeof(buff)*8);
 
   pRtlClearBits(&bm, 0, 1);
-  ok(buff[0] == 0xfe, "didnt clear 1st bit");
+  ok(buff[0] == 0xfe, "didn't clear 1st bit\n");
 
   buff[0] = 0xff;
   pRtlClearBits(&bm, 7, 2);
-  ok(buff[0] == 0x7f && buff[1] == 0xfe, "didnt span w/len < 8");
+  ok(buff[0] == 0x7f && buff[1] == 0xfe, "didn't span w/len < 8\n");
 
   buff[0] = buff[1] = 0xff;
   pRtlClearBits(&bm, 7, 10);
-  ok(buff[0] == 0x7f && buff[1] == 0 && buff[2] == 0xfe, "didnt span w/len > 8");
+  ok(buff[0] == 0x7f && buff[1] == 0 && buff[2] == 0xfe, "didn't span w/len > 8\n");
 
   buff[0] = buff[1] = buff[2] = 0xff;
   pRtlClearBits(&bm, 0, 8);  /* 1st byte */
-  ok(!buff[0], "didnt clear all bits");
-  ok(buff[1] == 0xff, "cleared too many bits");
+  ok(!buff[0], "didn't clear all bits\n");
+  ok(buff[1] == 0xff, "cleared too many bits\n");
 
   pRtlClearBits(&bm, sizeof(buff)*8-1, 1);
-  ok(buff[sizeof(buff)-1] == 0x7f, "didnt set last bit");
+  ok(buff[sizeof(buff)-1] == 0x7f, "didn't set last bit\n");
 }
 
 static void test_RtlCheckBit()
@@ -207,17 +207,17 @@ static void test_RtlCheckBit()
   pRtlSetBits(&bm, sizeof(buff)*8-1, 1);
 
   bRet = RtlCheckBit(&bm, 0);
-  ok (bRet, "didnt find set bit");
+  ok (bRet, "didn't find set bit\n");
   bRet = RtlCheckBit(&bm, 7);
-  ok (bRet, "didnt find set bit");
+  ok (bRet, "didn't find set bit\n");
   bRet = RtlCheckBit(&bm, 8);
-  ok (bRet, "didnt find set bit");
+  ok (bRet, "didn't find set bit\n");
   bRet = RtlCheckBit(&bm, sizeof(buff)*8-1);
-  ok (bRet, "didnt find set bit");
+  ok (bRet, "didn't find set bit\n");
   bRet = RtlCheckBit(&bm, 1);
-  ok (!bRet, "found non set bit");
+  ok (!bRet, "found non set bit\n");
   bRet = RtlCheckBit(&bm, sizeof(buff)*8-2);
-  ok (!bRet, "found non set bit");
+  ok (!bRet, "found non set bit\n");
 }
 
 static void test_RtlAreBitsSet()
@@ -231,38 +231,38 @@ static void test_RtlAreBitsSet()
   pRtlInitializeBitMap(&bm, buff, sizeof(buff)*8);
 
   bRet = pRtlAreBitsSet(&bm, 0, 1);
-  ok (!bRet, "found set bits after init");
+  ok (!bRet, "found set bits after init\n");
 
   pRtlSetBits(&bm, 0, 1);
   bRet = pRtlAreBitsSet(&bm, 0, 1);
-  ok (bRet, "didnt find set bits");
+  ok (bRet, "didn't find set bits\n");
 
   buff[0] = 0;
   pRtlSetBits(&bm, 7, 2);
   bRet = pRtlAreBitsSet(&bm, 7, 2);
-  ok(bRet, "didnt find w/len < 8");
+  ok(bRet, "didn't find w/len < 8\n");
   bRet = pRtlAreBitsSet(&bm, 6, 3);
-  ok(!bRet, "found non set bit");
+  ok(!bRet, "found non set bit\n");
   bRet = pRtlAreBitsSet(&bm, 7, 3);
-  ok(!bRet, "found non set bit");
+  ok(!bRet, "found non set bit\n");
 
   buff[0] = buff[1] = 0;
   pRtlSetBits(&bm, 7, 10);
   bRet = pRtlAreBitsSet(&bm, 7, 10);
-  ok(bRet, "didnt find w/len < 8");
+  ok(bRet, "didn't find w/len < 8\n");
   bRet = pRtlAreBitsSet(&bm, 6, 11);
-  ok(!bRet, "found non set bit");
+  ok(!bRet, "found non set bit\n");
   bRet = pRtlAreBitsSet(&bm, 7, 11);
-  ok(!bRet, "found non set bit");
+  ok(!bRet, "found non set bit\n");
 
   buff[0] = buff[1] = buff[2] = 0;
   pRtlSetBits(&bm, 0, 8); /* 1st byte */
   bRet = pRtlAreBitsSet(&bm, 0, 8);
-  ok(bRet, "didn't find whole byte");
+  ok(bRet, "didn't find whole byte\n");
 
   pRtlSetBits(&bm, sizeof(buff)*8-1, 1);
   bRet = pRtlAreBitsSet(&bm, sizeof(buff)*8-1, 1);
-  ok(bRet, "didn't find last bit");
+  ok(bRet, "didn't find last bit\n");
 }
 
 static void test_RtlAreBitsClear()
@@ -276,38 +276,38 @@ static void test_RtlAreBitsClear()
   pRtlInitializeBitMap(&bm, buff, sizeof(buff)*8);
 
   bRet = pRtlAreBitsClear(&bm, 0, 1);
-  ok (!bRet, "found clear bits after init");
+  ok (!bRet, "found clear bits after init\n");
 
   pRtlClearBits(&bm, 0, 1);
   bRet = pRtlAreBitsClear(&bm, 0, 1);
-  ok (bRet, "didnt find set bits");
+  ok (bRet, "didn't find set bits\n");
 
   buff[0] = 0xff;
   pRtlClearBits(&bm, 7, 2);
   bRet = pRtlAreBitsClear(&bm, 7, 2);
-  ok(bRet, "didnt find w/len < 8");
+  ok(bRet, "didn't find w/len < 8\n");
   bRet = pRtlAreBitsClear(&bm, 6, 3);
-  ok(!bRet, "found non clear bit");
+  ok(!bRet, "found non clear bit\n");
   bRet = pRtlAreBitsClear(&bm, 7, 3);
-  ok(!bRet, "found non clear bit");
+  ok(!bRet, "found non clear bit\n");
 
   buff[0] = buff[1] = 0xff;
   pRtlClearBits(&bm, 7, 10);
   bRet = pRtlAreBitsClear(&bm, 7, 10);
-  ok(bRet, "didnt find w/len < 8");
+  ok(bRet, "didn't find w/len < 8\n");
   bRet = pRtlAreBitsClear(&bm, 6, 11);
-  ok(!bRet, "found non clear bit");
+  ok(!bRet, "found non clear bit\n");
   bRet = pRtlAreBitsClear(&bm, 7, 11);
-  ok(!bRet, "found non clear bit");
+  ok(!bRet, "found non clear bit\n");
 
   buff[0] = buff[1] = buff[2] = 0xff;
   pRtlClearBits(&bm, 0, 8); /* 1st byte */
   bRet = pRtlAreBitsClear(&bm, 0, 8);
-  ok(bRet, "didn't find whole byte");
+  ok(bRet, "didn't find whole byte\n");
 
   pRtlClearBits(&bm, sizeof(buff)*8-1, 1);
   bRet = pRtlAreBitsClear(&bm, sizeof(buff)*8-1, 1);
-  ok(bRet, "didn't find last bit");
+  ok(bRet, "didn't find last bit\n");
 }
 
 static void test_RtlNumberOfSetBits()
@@ -321,23 +321,23 @@ static void test_RtlNumberOfSetBits()
   pRtlInitializeBitMap(&bm, buff, sizeof(buff)*8);
 
   ulCount = pRtlNumberOfSetBits(&bm);
-  ok(ulCount == 0, "set bits after init");
+  ok(ulCount == 0, "set bits after init\n");
 
   pRtlSetBits(&bm, 0, 1); /* Set 1st bit */
   ulCount = pRtlNumberOfSetBits(&bm);
-  ok(ulCount == 1, "count wrong");
+  ok(ulCount == 1, "count wrong\n");
 
   pRtlSetBits(&bm, 7, 8); /* 8 more, spanning bytes 1-2 */
   ulCount = pRtlNumberOfSetBits(&bm);
-  ok(ulCount == 8+1, "count wrong");
+  ok(ulCount == 8+1, "count wrong\n");
 
   pRtlSetBits(&bm, 17, 33); /* 33 more crossing ULONG boundary */
   ulCount = pRtlNumberOfSetBits(&bm);
-  ok(ulCount == 8+1+33, "count wrong");
+  ok(ulCount == 8+1+33, "count wrong\n");
 
   pRtlSetBits(&bm, sizeof(buff)*8-1, 1); /* Set last bit */
   ulCount = pRtlNumberOfSetBits(&bm);
-  ok(ulCount == 8+1+33+1, "count wrong");
+  ok(ulCount == 8+1+33+1, "count wrong\n");
 }
 
 static void test_RtlNumberOfClearBits()
@@ -351,23 +351,23 @@ static void test_RtlNumberOfClearBits()
   pRtlInitializeBitMap(&bm, buff, sizeof(buff)*8);
 
   ulCount = pRtlNumberOfClearBits(&bm);
-  ok(ulCount == 0, "cleared bits after init");
+  ok(ulCount == 0, "cleared bits after init\n");
 
   pRtlClearBits(&bm, 0, 1); /* Set 1st bit */
   ulCount = pRtlNumberOfClearBits(&bm);
-  ok(ulCount == 1, "count wrong");
+  ok(ulCount == 1, "count wrong\n");
 
   pRtlClearBits(&bm, 7, 8); /* 8 more, spanning bytes 1-2 */
   ulCount = pRtlNumberOfClearBits(&bm);
-  ok(ulCount == 8+1, "count wrong");
+  ok(ulCount == 8+1, "count wrong\n");
 
   pRtlClearBits(&bm, 17, 33); /* 33 more crossing ULONG boundary */
   ulCount = pRtlNumberOfClearBits(&bm);
-  ok(ulCount == 8+1+33, "count wrong");
+  ok(ulCount == 8+1+33, "count wrong\n");
 
   pRtlClearBits(&bm, sizeof(buff)*8-1, 1); /* Set last bit */
   ulCount = pRtlNumberOfClearBits(&bm);
-  ok(ulCount == 8+1+33+1, "count wrong");
+  ok(ulCount == 8+1+33+1, "count wrong\n");
 }
 
 /* Note: this tests RtlFindSetBits also */
@@ -384,21 +384,21 @@ static void test_RtlFindSetBitsAndClear()
 
   pRtlSetBits(&bm, 0, 32);
   ulPos = pRtlFindSetBitsAndClear(&bm, 32, 0);
-  ok (ulPos == 0, "didnt find bits");
+  ok (ulPos == 0, "didn't find bits\n");
   if(ulPos == 0)
   {
     bRet = pRtlAreBitsClear(&bm, 0, 32);
-    ok (bRet, "found but didnt clear");
+    ok (bRet, "found but didn't clear\n");
   }
 
   memset(buff, 0 , sizeof(buff));
   pRtlSetBits(&bm, 40, 77);
   ulPos = pRtlFindSetBitsAndClear(&bm, 77, 0);
-  ok (ulPos == 40, "didnt find bits");
+  ok (ulPos == 40, "didn't find bits\n");
   if(ulPos == 40)
   {
     bRet = pRtlAreBitsClear(&bm, 40, 77);
-    ok (bRet, "found but didnt clear");
+    ok (bRet, "found but didn't clear\n");
   }
 }
 
@@ -416,21 +416,21 @@ static void test_RtlFindClearBitsAndSet()
   memset(buff, 0xff, sizeof(buff));
   pRtlSetBits(&bm, 0, 32);
   ulPos = pRtlFindSetBitsAndClear(&bm, 32, 0);
-  ok (ulPos == 0, "didnt find bits");
+  ok (ulPos == 0, "didn't find bits\n");
   if(ulPos == 0)
   {
       bRet = pRtlAreBitsClear(&bm, 0, 32);
-      ok (bRet, "found but didnt clear");
+      ok (bRet, "found but didn't clear\n");
   }
 
   memset(buff, 0xff , sizeof(buff));
   pRtlClearBits(&bm, 40, 77);
   ulPos = pRtlFindClearBitsAndSet(&bm, 77, 50);
-  ok (ulPos == 40, "didnt find bits");
+  ok (ulPos == 40, "didn't find bits\n");
   if(ulPos == 40)
   {
     bRet = pRtlAreBitsSet(&bm, 40, 77);
-    ok (bRet, "found but didnt set");
+    ok (bRet, "found but didn't set\n");
   }
 }
 
@@ -449,16 +449,16 @@ static void test_RtlFindMostSignificantBit()
     ulLong <<= i;
 
     cPos = pRtlFindMostSignificantBit(ulLong);
-    ok (cPos == i, "didnt find MSB %llx %d %d", ulLong, i, cPos);
+    ok (cPos == i, "didn't find MSB %llx %d %d\n", ulLong, i, cPos);
 
     /* Set all bits lower than bit i */
     ulLong = ((ulLong - 1) << 1) | 1;
 
     cPos = pRtlFindMostSignificantBit(ulLong);
-    ok (cPos == i, "didnt find MSB %llx %d %d", ulLong, i, cPos);
+    ok (cPos == i, "didn't find MSB %llx %d %d\n", ulLong, i, cPos);
   }
   cPos = pRtlFindMostSignificantBit(0);
-  ok (cPos == -1, "found bit when not set");
+  ok (cPos == -1, "found bit when not set\n");
 }
 
 static void test_RtlFindLeastSignificantBit()
@@ -475,15 +475,15 @@ static void test_RtlFindLeastSignificantBit()
     ulLong = (ULONGLONG)1 << i;
 
     cPos = pRtlFindLeastSignificantBit(ulLong);
-    ok (cPos == i, "didnt find LSB %llx %d %d", ulLong, i, cPos);
+    ok (cPos == i, "didn't find LSB %llx %d %d\n", ulLong, i, cPos);
 
     ulLong = ~((ULONGLONG)0) << i;
 
     cPos = pRtlFindLeastSignificantBit(ulLong);
-    ok (cPos == i, "didnt find LSB %llx %d %d", ulLong, i, cPos);
+    ok (cPos == i, "didn't find LSB %llx %d %d\n", ulLong, i, cPos);
   }
   cPos = pRtlFindLeastSignificantBit(0);
-  ok (cPos == -1, "found bit when not set");
+  ok (cPos == -1, "found bit when not set\n");
 }
 
 /* Note: Also tests RtlFindLongestRunSet() */
@@ -499,14 +499,14 @@ static void test_RtlFindSetRuns()
 
   memset(buff, 0, sizeof(buff));
   ulCount = pRtlFindSetRuns(&bm, runs, 16, TRUE);
-  ok (ulCount == 0, "found set bits in empty bitmap");
+  ok (ulCount == 0, "found set bits in empty bitmap\n");
 
   memset(runs, 0, sizeof(runs));
   memset(buff, 0xff, sizeof(buff));
   ulCount = pRtlFindSetRuns(&bm, runs, 16, TRUE);
-  ok (ulCount == 1, "didnt find set bits");
-  ok (runs[0].StartOfRun == 0,"bad start");
-  ok (runs[0].SizeOfRun == sizeof(buff)*8,"bad size");
+  ok (ulCount == 1, "didn't find set bits\n");
+  ok (runs[0].StartOfRun == 0,"bad start\n");
+  ok (runs[0].SizeOfRun == sizeof(buff)*8,"bad size\n");
 
   /* Set up 3 runs */
   memset(runs, 0, sizeof(runs));
@@ -517,46 +517,46 @@ static void test_RtlFindSetRuns()
 
   /* Get first 2 */
   ulCount = pRtlFindSetRuns(&bm, runs, 2, FALSE);
-  ok (runs[0].StartOfRun == 7 || runs[0].StartOfRun == 101,"bad find");
-  ok (runs[1].StartOfRun == 7 || runs[1].StartOfRun == 101,"bad find");
-  ok (runs[0].SizeOfRun + runs[1].SizeOfRun == 19 + 3,"bad size");
-  ok (runs[0].StartOfRun != runs[1].StartOfRun,"found run twice");
-  ok (runs[2].StartOfRun == 0,"found extra run");
+  ok (runs[0].StartOfRun == 7 || runs[0].StartOfRun == 101,"bad find\n");
+  ok (runs[1].StartOfRun == 7 || runs[1].StartOfRun == 101,"bad find\n");
+  ok (runs[0].SizeOfRun + runs[1].SizeOfRun == 19 + 3,"bad size\n");
+  ok (runs[0].StartOfRun != runs[1].StartOfRun,"found run twice\n");
+  ok (runs[2].StartOfRun == 0,"found extra run\n");
 
   /* Get longest 3 */
   memset(runs, 0, sizeof(runs));
   ulCount = pRtlFindSetRuns(&bm, runs, 2, TRUE);
-  ok (runs[0].StartOfRun == 7 || runs[0].StartOfRun == 1877,"bad find");
-  ok (runs[1].StartOfRun == 7 || runs[1].StartOfRun == 1877,"bad find");
-  ok (runs[0].SizeOfRun + runs[1].SizeOfRun == 33 + 19,"bad size");
-  ok (runs[0].StartOfRun != runs[1].StartOfRun,"found run twice");
-  ok (runs[2].StartOfRun == 0,"found extra run");
+  ok (runs[0].StartOfRun == 7 || runs[0].StartOfRun == 1877,"bad find\n");
+  ok (runs[1].StartOfRun == 7 || runs[1].StartOfRun == 1877,"bad find\n");
+  ok (runs[0].SizeOfRun + runs[1].SizeOfRun == 33 + 19,"bad size\n");
+  ok (runs[0].StartOfRun != runs[1].StartOfRun,"found run twice\n");
+  ok (runs[2].StartOfRun == 0,"found extra run\n");
 
   /* Get all 3 */
   memset(runs, 0, sizeof(runs));
   ulCount = pRtlFindSetRuns(&bm, runs, 3, TRUE);
   ok (runs[0].StartOfRun == 7 || runs[0].StartOfRun == 101 ||
-      runs[0].StartOfRun == 1877,"bad find");
+      runs[0].StartOfRun == 1877,"bad find\n");
   ok (runs[1].StartOfRun == 7 || runs[1].StartOfRun == 101 ||
-      runs[1].StartOfRun == 1877,"bad find");
+      runs[1].StartOfRun == 1877,"bad find\n");
   ok (runs[2].StartOfRun == 7 || runs[2].StartOfRun == 101 ||
-      runs[2].StartOfRun == 1877,"bad find");
+      runs[2].StartOfRun == 1877,"bad find\n");
   ok (runs[0].SizeOfRun + runs[1].SizeOfRun
-      + runs[2].SizeOfRun == 19 + 3 + 33,"bad size");
-  ok (runs[0].StartOfRun != runs[1].StartOfRun,"found run twice");
-  ok (runs[1].StartOfRun != runs[2].StartOfRun,"found run twice");
-  ok (runs[3].StartOfRun == 0,"found extra run");
+      + runs[2].SizeOfRun == 19 + 3 + 33,"bad size\n");
+  ok (runs[0].StartOfRun != runs[1].StartOfRun,"found run twice\n");
+  ok (runs[1].StartOfRun != runs[2].StartOfRun,"found run twice\n");
+  ok (runs[3].StartOfRun == 0,"found extra run\n");
 
   if (pRtlFindLongestRunSet)
   {
     ULONG ulStart = 0;
 
     ulCount = pRtlFindLongestRunSet(&bm, &ulStart);
-    ok(ulCount == 33 && ulStart == 1877,"didn't find longest %ld %ld",ulCount,ulStart);
+    ok(ulCount == 33 && ulStart == 1877,"didn't find longest %ld %ld\n",ulCount,ulStart);
 
     memset(buff, 0, sizeof(buff));
     ulCount = pRtlFindLongestRunSet(&bm, &ulStart);
-    ok(ulCount == 0,"found longest when none set");
+    ok(ulCount == 0,"found longest when none set\n");
   }
 }
 
@@ -573,14 +573,14 @@ static void test_RtlFindClearRuns()
 
   memset(buff, 0xff, sizeof(buff));
   ulCount = pRtlFindClearRuns(&bm, runs, 16, TRUE);
-  ok (ulCount == 0, "found clear bits in full bitmap");
+  ok (ulCount == 0, "found clear bits in full bitmap\n");
 
   memset(runs, 0, sizeof(runs));
   memset(buff, 0, sizeof(buff));
   ulCount = pRtlFindClearRuns(&bm, runs, 16, TRUE);
-  ok (ulCount == 1, "didnt find clear bits");
-  ok (runs[0].StartOfRun == 0,"bad start");
-  ok (runs[0].SizeOfRun == sizeof(buff)*8,"bad size");
+  ok (ulCount == 1, "didn't find clear bits\n");
+  ok (runs[0].StartOfRun == 0,"bad start\n");
+  ok (runs[0].SizeOfRun == sizeof(buff)*8,"bad size\n");
 
   /* Set up 3 runs */
   memset(runs, 0, sizeof(runs));
@@ -591,46 +591,46 @@ static void test_RtlFindClearRuns()
 
   /* Get first 2 */
   ulCount = pRtlFindClearRuns(&bm, runs, 2, FALSE);
-  ok (runs[0].StartOfRun == 7 || runs[0].StartOfRun == 101,"bad find");
-  ok (runs[1].StartOfRun == 7 || runs[1].StartOfRun == 101,"bad find");
-  ok (runs[0].SizeOfRun + runs[1].SizeOfRun == 19 + 3,"bad size");
-  ok (runs[0].StartOfRun != runs[1].StartOfRun,"found run twice");
-  ok (runs[2].StartOfRun == 0,"found extra run");
+  ok (runs[0].StartOfRun == 7 || runs[0].StartOfRun == 101,"bad find\n");
+  ok (runs[1].StartOfRun == 7 || runs[1].StartOfRun == 101,"bad find\n");
+  ok (runs[0].SizeOfRun + runs[1].SizeOfRun == 19 + 3,"bad size\n");
+  ok (runs[0].StartOfRun != runs[1].StartOfRun,"found run twice\n");
+  ok (runs[2].StartOfRun == 0,"found extra run\n");
 
   /* Get longest 3 */
   memset(runs, 0, sizeof(runs));
   ulCount = pRtlFindClearRuns(&bm, runs, 2, TRUE);
-  ok (runs[0].StartOfRun == 7 || runs[0].StartOfRun == 1877,"bad find");
-  ok (runs[1].StartOfRun == 7 || runs[1].StartOfRun == 1877,"bad find");
-  ok (runs[0].SizeOfRun + runs[1].SizeOfRun == 33 + 19,"bad size");
-  ok (runs[0].StartOfRun != runs[1].StartOfRun,"found run twice");
-  ok (runs[2].StartOfRun == 0,"found extra run");
+  ok (runs[0].StartOfRun == 7 || runs[0].StartOfRun == 1877,"bad find\n");
+  ok (runs[1].StartOfRun == 7 || runs[1].StartOfRun == 1877,"bad find\n");
+  ok (runs[0].SizeOfRun + runs[1].SizeOfRun == 33 + 19,"bad size\n");
+  ok (runs[0].StartOfRun != runs[1].StartOfRun,"found run twice\n");
+  ok (runs[2].StartOfRun == 0,"found extra run\n");
 
   /* Get all 3 */
   memset(runs, 0, sizeof(runs));
   ulCount = pRtlFindClearRuns(&bm, runs, 3, TRUE);
   ok (runs[0].StartOfRun == 7 || runs[0].StartOfRun == 101 ||
-      runs[0].StartOfRun == 1877,"bad find");
+      runs[0].StartOfRun == 1877,"bad find\n");
   ok (runs[1].StartOfRun == 7 || runs[1].StartOfRun == 101 ||
-      runs[1].StartOfRun == 1877,"bad find");
+      runs[1].StartOfRun == 1877,"bad find\n");
   ok (runs[2].StartOfRun == 7 || runs[2].StartOfRun == 101 ||
-      runs[2].StartOfRun == 1877,"bad find");
+      runs[2].StartOfRun == 1877,"bad find\n");
   ok (runs[0].SizeOfRun + runs[1].SizeOfRun
-      + runs[2].SizeOfRun == 19 + 3 + 33,"bad size");
-  ok (runs[0].StartOfRun != runs[1].StartOfRun,"found run twice");
-  ok (runs[1].StartOfRun != runs[2].StartOfRun,"found run twice");
-  ok (runs[3].StartOfRun == 0,"found extra run");
+      + runs[2].SizeOfRun == 19 + 3 + 33,"bad size\n");
+  ok (runs[0].StartOfRun != runs[1].StartOfRun,"found run twice\n");
+  ok (runs[1].StartOfRun != runs[2].StartOfRun,"found run twice\n");
+  ok (runs[3].StartOfRun == 0,"found extra run\n");
 
   if (pRtlFindLongestRunClear)
   {
     ULONG ulStart = 0;
 
     ulCount = pRtlFindLongestRunClear(&bm, &ulStart);
-    ok(ulCount == 33 && ulStart == 1877,"didn't find longest");
+    ok(ulCount == 33 && ulStart == 1877,"didn't find longest\n");
 
     memset(buff, 0xff, sizeof(buff));
     ulCount = pRtlFindLongestRunClear(&bm, &ulStart);
-    ok(ulCount == 0,"found longest when none clear");
+    ok(ulCount == 0,"found longest when none clear\n");
   }
 
 }
