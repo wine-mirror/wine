@@ -34,7 +34,7 @@ $RCS_ID = '$Id$ ';
 # and serial device configuration is hardcoded and not configured for
 # the machine it runs on.  Similarly, spy parameters are hard coded.
 
-# It would make sense to incorporate much of the hueristic code in
+# It would make sense to incorporate much of the heuristic code in
 # this program into a library to be shared with a dosemu configuration
 # program, because it seems that at least some of the same stuff will
 # be wanted.  The program needs to be cleaned up still.  A better tmp
@@ -49,6 +49,8 @@ use Carp;
 
 GetOptions('windir=s', 'sysdir=s', 'thorough', 'debug:s', 'inifile=s') || &Usage;
 
+print "WINE REGISTRY Version 2\n";
+print ";; All keys relative to \\\\Machine\\\\Software\\\\Wine\\\\Wine\\\\Config\n\n";
 &ReadFSTAB();
 &FindWindowsDir();
 &ReadAutoexecBat();
@@ -103,9 +105,9 @@ sub ReadFSTAB {
 	print "[Drive $MagicDrive]\n";
 	my $MntPoint = $FatDrive->[1];
 	my $FileSys = $FatDrive->[2];
-	print "Path=$MntPoint\n";
-	print "Type=hd\n";
-	print "Filesystem=$FileSys\n";
+	print "\"Path\" = \"$MntPoint\"\n";
+	print "\"Type\" = \"hd\"\n";
+	print "\"Filesystem\" = \"$FileSys\"\n";
 	print "\n";
 	&RegisterDrive($MagicDrive, $FatDrive);
 	if(!&IsMounted($FatDrive->[0])) {
@@ -119,10 +121,10 @@ sub ReadFSTAB {
 	my $Device = $CdromDrive->[0];
 	my $MntPoint = $CdromDrive->[1];
 	my $FileSys = $CdromDrive->[2];
-	print "Path=$MntPoint\n";
-	print "Type=cdrom\n";
-	print "Device=$Device\n";
-	print "Filesystem=$FileSys\n";
+	print "\"Path\" = \"$MntPoint\"\n";
+	print "\"Type\" = \"cdrom\"\n";
+	print "\"Device\" = \"$Device\"\n";
+	print "\"Filesystem\" = \"$FileSys\"\n";
 	print "\n";
 	&RegisterDrive($MagicDrive, $CdromDrive);
 	$MagicDrive++;
@@ -131,9 +133,9 @@ sub ReadFSTAB {
 	print "[Drive $MagicDrive]\n";
 	my $MntPoint = $UnixDrive->[1];
 	my $Type = $UnixDrive->[2];
-	print "Path=$MntPoint\n";
-	print "Type=$Type\n";
-	print "Filesystem=win95\n";
+	print "\"Path\" = \"$MntPoint\"\n";
+	print "\"Type\" = \"$Type\"\n";
+	print "\"Filesystem\" = \"win95\"\n";
 	print "\n";
 	$MagicDrive++;
     }
@@ -189,12 +191,12 @@ sub FindWindowsDir {
     }
     $::windir = &ToDos(dirname($winini));
     print "[wine]\n";
-    print "windows=$::windir\n";
+    print "\"windows\" = \"$::windir\"\n";
     if ($::opt_sysdir) {
-	print "system=$::opt_sysdir\n";
+	print "\"system\" = \"$::opt_sysdir\"\n";
     }
     else {
-	print "system=$::windir\\SYSTEM\n";
+	print "\"system\" = \"$::windir\\SYSTEM\"\n";
     }
 }
 
@@ -250,7 +252,7 @@ sub ReadAutoexecBat {
 		    my $matchname = $1;
 		    my $subname = $1;
 		    $subname =~ tr/A-Z/a-z/;
-		    if ($::opt_debug =~ /path/i) {
+		    if (($::opt_debug) && ($::opt_debug =~ /path/i)) {
 			print STDERR "DEBUG: Found $matchname as $subname\n";
 			print STDERR "DEBUG: Old varvalue:\n$varvalue\n";
 			print STDERR "DEBUG: Old subname value:\n" .
@@ -265,7 +267,7 @@ sub ReadAutoexecBat {
 			warn "is not implemented.)  Using null value\n";
 			$varvalue =~ s/%$matchname%//;
 		    }
-		    if ($::opt_debug =~ /path/i) {
+		    if (($::opt_debug) && ($::opt_debug =~ /path/i)) {
 			print STDERR "DEBUG: New varvalue:\n$varvalue\n";
 		    }
 		}
@@ -284,7 +286,7 @@ sub ReadAutoexecBat {
 
     if ($::DOSenv{"path"}) {
 	my @pathdirs = split(/\s*;\s*/, $::DOSenv{"path"});
-	if ($::opt_debug =~ /path/i) {
+	if (($::opt_debug) && ($::opt_debug =~ /path/i)) {
 	    print STDERR "DEBUG (path): @pathdirs\n";
 	}
 	foreach my $pathdir (@pathdirs) {
@@ -293,7 +295,7 @@ sub ReadAutoexecBat {
 		    warn "Ignoring duplicate DOS path entry $pathdir\n";
 		}
 		else {
-		    if ($::opt_debug =~ /path/i) {
+		    if (($::opt_debug) && ($::opt_debug =~ /path/i)) {
 			print STDERR "DEBUG (path): Found $pathdir\n";
 		    }
 		    push(@::DOSpathlist, $pathdir);
@@ -304,7 +306,7 @@ sub ReadAutoexecBat {
 		warn "exist\n";
 	    }
 	}
-	print "path=" . join(";", @::DOSpathlist) . "\n";
+	print "\"path\" = \"" . join(";", @::DOSpathlist) . "\"\n";
     }
     else {
 	# Code status: tested 1.4
@@ -324,15 +326,15 @@ sub ReadAutoexecBat {
 	    $command =~ s%[^/]+$%%;
 	    $::DOSexecdir{&ToDos($command)}++;
 	}
-	print "path=" . 
+	print "\"path\" = \"" . 
 	    join(";", 
 		 grep(s%\\$%%, 
 		      sort {$::DOSexecdir{$b} <=> $::DOSexecdir{$a}}
-		      (keys %::DOSexecdir))) . "\n";
+		      (keys %::DOSexecdir))) . "\"\n";
     }
 
     if ($::DOSenv{"temp"} && -d &ToUnix($::DOSenv{"temp"})) {
-	print "temp=" . $::DOSenv{"temp"} . "\n";
+	print "\"temp\" = \"" . $::DOSenv{"temp"} . "\"\n";
     }
     else {
         my $TheTemp;
@@ -349,11 +351,11 @@ sub ReadAutoexecBat {
 	$TheTemp = '/tmp' if (!$TheTemp && -d '/tmp');
 	if ($TheTemp) {
 	    warn "Using $TheTemp\n";
-	    print "temp=$TheTemp\n";
+	    print "\"temp\" = \"$TheTemp\"\n";
 	}
 	else {
 	    warn "Using C:\\\n";
-	    print "temp=C:\\\n";
+	    print "\"temp\" = \"C:\\\"\n";
 	}
     }
     print "\n";
