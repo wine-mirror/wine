@@ -1627,7 +1627,8 @@ DECL_HANDLER(get_update_region)
     {
         /* if window doesn't need any repaint, check the children */
         if (!(flags & UPDATE_NOCHILDREN) &&
-            ((flags & UPDATE_ALLCHILDREN) || (win->style & WS_CLIPCHILDREN)))
+            ((flags & UPDATE_ALLCHILDREN) || (win->style & WS_CLIPCHILDREN)) &&
+            !(win->style & WS_MINIMIZE))
         {
             reply->flags = get_child_update_flags( win, flags, &win );
         }
