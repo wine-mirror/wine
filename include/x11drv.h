@@ -337,6 +337,7 @@ struct x11drv_thread_data
     Cursor   cursor;               /* current cursor */
     Window   cursor_window;        /* current window that contains the cursor */
     HWND     last_focus;           /* last window that had focus */
+    XIM      xim;                  /* input method */
 };
 
 extern struct x11drv_thread_data *x11drv_init_thread_data(void);
@@ -400,6 +401,7 @@ struct x11drv_win_data
     Window  icon_window;    /* X window for the icon */
     RECT    whole_rect;     /* X window rectangle for the whole window relative to parent */
     RECT    client_rect;    /* client area relative to whole window */
+    XIC     xic;            /* X input context */
     HBITMAP hWMIconBitmap;
     HBITMAP hWMIconMask;
 };
@@ -408,6 +410,7 @@ typedef struct x11drv_win_data X11DRV_WND_DATA;
 
 extern Window X11DRV_get_client_window( HWND hwnd );
 extern Window X11DRV_get_whole_window( HWND hwnd );
+extern XIC X11DRV_get_ic( HWND hwnd );
 
 inline static Window get_client_window( WND *wnd )
 {

@@ -328,14 +328,6 @@ static void process_attach(void)
         screen_depth = desktop_vi->depth;
     }
 
-    /* tell the libX11 that we will do input method handling ourselves
-     * that keep libX11 from doing anything whith dead keys, allowing Wine
-     * to have total control over dead keys, that is this line allows
-     * them to work in Wine, even whith a libX11 including the dead key
-     * patches from Th.Quinot (http://Web.FdN.FR/~tquinot/dead-keys.en.html)
-     */
-    TSXOpenIM( display, NULL, NULL, NULL);
-
     if (synchronous) XSynchronize( display, True );
 
     screen_width  = WidthOfScreen( screen );
@@ -377,6 +369,7 @@ static void thread_detach(void)
         CloseHandle( data->display_fd );
         wine_tsx11_lock();
         XCloseDisplay( data->display );
+        if (data->xim) XCloseIM( data->xim );
         wine_tsx11_unlock();
         HeapFree( GetProcessHeap(), 0, data );
     }
@@ -429,6 +422,10 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
         ExitProcess(1);
     }
     fcntl( ConnectionNumber(data->display), F_SETFD, 1 ); /* set close on exec flag */
+
+    if (!(data->xim = XOpenIM( data->display, NULL, NULL, NULL )))
+        WARN("Can't open input method\n");
+
     if (synchronous) XSynchronize( data->display, True );
     wine_tsx11_unlock();
     if (wine_server_fd_to_handle( ConnectionNumber(data->display), GENERIC_READ | SYNCHRONIZE,

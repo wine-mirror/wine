@@ -688,6 +688,15 @@ static Window create_whole_window( Display *display, WND *win )
         return 0;
     }
 
+    if (is_top_level)
+    {
+        XIM xim = x11drv_thread_data()->xim;
+        if (xim) data->xic = XCreateIC( xim,
+                                        XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+                                        XNClientWindow, data->whole_window,
+                                        0 );
+    }
+
     /* non-maximized child must be at bottom of Z order */
     if ((win->dwStyle & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD)
     {
@@ -829,6 +838,11 @@ BOOL X11DRV_DestroyWindow( HWND hwnd )
         XDeleteContext( display, data->whole_window, winContext );
         XDeleteContext( display, data->client_window, winContext );
         XDestroyWindow( display, data->whole_window );  /* this destroys client too */
+        if (data->xic)
+        {
+            XUnsetICFocus( data->xic );
+            XDestroyIC( data->xic );
+        }
         destroy_icon_window( display, wndPtr );
         wine_tsx11_unlock();
     }
@@ -871,6 +885,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     data->whole_window  = 0;
     data->client_window = 0;
     data->icon_window   = 0;
+    data->xic           = 0;
     data->hWMIconBitmap = 0;
     data->hWMIconMask   = 0;
 
@@ -1074,6 +1089,26 @@ Window X11DRV_get_whole_window( HWND hwnd )
     {
         struct x11drv_win_data *data = win->pDriverData;
         ret = data->whole_window;
+        WIN_ReleasePtr( win );
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *		X11DRV_get_ic
+ *
+ * Return the X input context associated with a window
+ */
+XIC X11DRV_get_ic( HWND hwnd )
+{
+    XIC ret = 0;
+    WND *win = WIN_GetPtr( hwnd );
+
+    if (win && win != WND_OTHER_PROCESS)
+    {
+        struct x11drv_win_data *data = win->pDriverData;
+        ret = data->xic;
         WIN_ReleasePtr( win );
     }
     return ret;
