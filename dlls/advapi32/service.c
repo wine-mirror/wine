@@ -10,6 +10,11 @@
 #include "heap.h"
 #include <time.h>
 
+/* FIXME: Where do these belong? */
+typedef DWORD	SERVICE_STATUS_HANDLE;
+typedef VOID (WINAPI *LPHANDLER_FUNCTION)( DWORD dwControl);
+
+
 /******************************************************************************
  * EnumServicesStatus32A [ADVAPI32.38]
  */
@@ -59,11 +64,7 @@ StartServiceCtrlDispatcher32W( LPSERVICE_TABLE_ENTRY32W servent )
 	return TRUE;
 }
 
-/* FIXME: Where do these belong? */
-typedef DWORD       SERVICE_STATUS_HANDLE; 
-typedef VOID (WINAPI *LPHANDLER_FUNCTION)( DWORD    dwControl);
-
-/*****************************************************************************
+/******************************************************************************
  * RegisterServiceCtrlHandlerA [ADVAPI32.176]
  */
 SERVICE_STATUS_HANDLE WINAPI

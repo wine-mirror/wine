@@ -323,27 +323,36 @@ AllocateAndInitializeSid( LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
     return TRUE;
 }
 
-/***********************************************************************
- *           FreeSid  (ADVAPI.42)
+/******************************************************************************
+ * FreeSid [ADVAPI32.42]
+ *
+ * PARAMS
+ *   pSid []
  */
-VOID* WINAPI FreeSid(LPSID pSid)
+VOID* WINAPI
+FreeSid( LPSID pSid )
 {
     HeapFree( GetProcessHeap(), 0, pSid );
     return NULL;
 }
 
-/***********************************************************************
- *           InitializeSecurityDescriptor  (ADVAPI.73)
+/******************************************************************************
+ * InitializeSecurityDescriptor [ADVAPI32.73]
+ *
+ * PARAMS
+ *   pDescr   []
+ *   revision []
  */
-BOOL32 WINAPI InitializeSecurityDescriptor( SECURITY_DESCRIPTOR *pDescr,
-                                            DWORD revision )
+BOOL32 WINAPI
+InitializeSecurityDescriptor( SECURITY_DESCRIPTOR *pDescr,
+                              DWORD revision )
 {
     FIXME(security, "(%p,%#lx): stub\n", pDescr, revision);
     return TRUE;
 }
 
-/***********************************************************************
- *           GetSecurityDescriptorLength  (ADVAPI.55)
+/******************************************************************************
+ * GetSecurityDescriptorLength [ADVAPI32.55]
  */
 DWORD WINAPI GetSecurityDescriptorLength( SECURITY_DESCRIPTOR *pDescr)
 {
@@ -351,30 +360,46 @@ DWORD WINAPI GetSecurityDescriptorLength( SECURITY_DESCRIPTOR *pDescr)
     return 0;
 }
 
-/***********************************************************************
- *           GetSecurityDescriptorOwner  (ADVAPI.56)
+/******************************************************************************
+ * GetSecurityDescriptorOwner [ADVAPI32.56]
+ *
+ * PARAMS
+ *   pOwner            []
+ *   lpbOwnerDefaulted []
  */
-BOOL32 WINAPI GetSecurityDescriptorOwner (SECURITY_DESCRIPTOR *pDescr,LPSID *pOwner,LPBOOL32 lpbOwnerDefaulted)
+BOOL32 WINAPI
+GetSecurityDescriptorOwner( SECURITY_DESCRIPTOR *pDescr, LPSID *pOwner,
+                            LPBOOL32 lpbOwnerDefaulted )
 {
     FIXME(security, "(%p,%p,%p), stub\n", pDescr,pOwner,lpbOwnerDefaulted);
     *lpbOwnerDefaulted = TRUE;
     return 0;
 }
 
-/***********************************************************************
- *           GetSecurityDescriptorGroup  (ADVAPI.54)
+/******************************************************************************
+ * GetSecurityDescriptorGroup [ADVAPI32.54]
+ *
+ * PARAMS
+ *   pGroup            []
+ *   lpbOwnerDefaulted []
  */
-BOOL32 WINAPI GetSecurityDescriptorGroup(SECURITY_DESCRIPTOR *pDescr,LPSID *pGroup,LPBOOL32 lpbOwnerDefaulted)
+BOOL32 WINAPI
+GetSecurityDescriptorGroup( SECURITY_DESCRIPTOR *pDescr, LPSID *pGroup,
+                            LPBOOL32 lpbOwnerDefaulted )
 {
     FIXME(security, "(%p,%p,%p), stub\n", pDescr,pGroup,lpbOwnerDefaulted);
     *lpbOwnerDefaulted = TRUE;
     return 0;
 }
 
-/***********************************************************************
- *           InitializeSid  (ADVAPI.74)
+/******************************************************************************
+ * InitializeSid [ADVAPI32.74]
+ *
+ * PARAMS
+ *   pIdentifierAuthority []
  */
-BOOL32 WINAPI InitializeSid (LPSID pSid, LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
+BOOL32 WINAPI
+InitializeSid (LPSID pSid, LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
                     BYTE nSubAuthorityCount)
 {
     int i;
@@ -596,9 +621,14 @@ NotifyBootConfigStatus( DWORD x1 )
 }
 
 /******************************************************************************
- * RevertToSelf			[ADVAPI32]
+ * RevertToSelf [ADVAPI32.180]
+ *
+ * PARAMS
+ *   void []
  */
-BOOL32 WINAPI RevertToSelf(void) {
+BOOL32 WINAPI
+RevertToSelf( void )
+{
 	FIXME(advapi,"(), stub\n");
 	return TRUE;
 }
