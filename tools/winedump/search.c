@@ -281,7 +281,8 @@ static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
     {
       iter = proto;
       base_type = catch_unsigned;
-    }
+    } else
+      catch_unsigned = NULL;
   }
   else
     catch_unsigned = NULL;
