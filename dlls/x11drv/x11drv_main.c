@@ -55,7 +55,7 @@ unsigned int screen_width;
 unsigned int screen_height;
 unsigned int screen_depth;
 Window root_window;
-int dxgrab, usedga;
+int dxgrab, usedga, usexvidmode;
 
 unsigned int X11DRV_server_startticks;
 
@@ -218,6 +218,9 @@ static void setup_options(void)
 
     if (!get_config_key( hkey, appkey, "UseDGA", buffer, sizeof(buffer) ))
         usedga = IS_OPTION_TRUE( buffer[0] );
+
+    if (!get_config_key( hkey, appkey, "UseXVidMode", buffer, sizeof(buffer) ))
+        usexvidmode = IS_OPTION_TRUE( buffer[0] );
 
     screen_depth = 0;
     if (!get_config_key( hkey, appkey, "ScreenDepth", buffer, sizeof(buffer) ))

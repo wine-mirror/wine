@@ -24,6 +24,8 @@ DEFAULT_DEBUG_CHANNEL(x11drv);
 
 #ifdef HAVE_LIBXXF86VM
 
+extern int usexvidmode;
+
 static int xf86vm_event, xf86vm_error, xf86vm_major, xf86vm_minor;
 
 LPDDHALMODEINFO xf86vm_modes;
@@ -62,12 +64,14 @@ void X11DRV_XF86VM_Init(void)
 
   if (xf86vm_major) return; /* already initialized? */
 
+  /* if in desktop mode, don't use XVidMode */
+  if (root_window != DefaultRootWindow(gdi_display)) return;
+
+  if (!usexvidmode) return;
+
   /* see if XVidMode is available */
   if (!TSXF86VidModeQueryExtension(gdi_display, &xf86vm_event, &xf86vm_error)) return;
   if (!TSXF86VidModeQueryVersion(gdi_display, &xf86vm_major, &xf86vm_minor)) return;
-
-  /* if in desktop mode, don't use XVidMode */
-  if (root_window != DefaultRootWindow(gdi_display)) return;
 
   /* retrieve modes */
   if (!TSXF86VidModeGetAllModeLines(gdi_display, DefaultScreen(gdi_display), &nmodes,

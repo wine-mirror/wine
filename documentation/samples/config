@@ -124,6 +124,8 @@ WINE REGISTRY Version 2
 "UseDGA" = "Y"
 ; Use XShm extension if present
 "UseXShm" = "Y"
+; Use XVidMode extension if present
+"UseXVidMode" = "Y"
 ; Enable DirectX mouse grab
 "DXGrab" = "N"
 ; Create the desktop window with a double-buffered visual
