@@ -99,10 +99,10 @@ input: line
     | input line
     ;
 
-line: command
+line: command                   { DEBUG_FreeExprMem(); }
     | tEOL
     | tEOF                      { return 1; }
-    | error tEOL               	{ yyerrok; }
+    | error tEOL               	{ yyerrok; DEBUG_FreeExprMem(); }
     ;
 
 command:
@@ -148,8 +148,8 @@ command:
     | tCOND tNUM expr tEOL	{ DEBUG_AddBPCondition($2, $3); }
     | tSOURCE pathname tEOL     { DEBUG_Parser($2); }
     | tSYMBOLFILE pathname tEOL	{ DEBUG_ReadSymbolTable($2, 0); }
-    | tSYMBOLFILE pathname tNUM tEOL	{ DEBUG_ReadSymbolTable($2, $3); }
-    | tWHATIS expr_addr tEOL	{ DEBUG_PrintType(&$2); DEBUG_FreeExprMem(); }
+    | tSYMBOLFILE pathname expr_value tEOL	{ DEBUG_ReadSymbolTable($2, $3); }
+    | tWHATIS expr_addr tEOL    { DEBUG_PrintType(&$2); }
     | tATTACH tNUM tEOL		{ DEBUG_Attach($2, FALSE, TRUE); }
     | tDETACH tEOL              { return DEBUG_Detach(); /* FIXME: we shouldn't return, but since we cannot simply clean the symbol table, exit debugger for now */ }
     | list_command
@@ -166,7 +166,7 @@ command:
     ;
 
 set_command:
-      tSET lval_addr '=' expr_value tEOL { DEBUG_WriteMemory(&$2, $4); DEBUG_FreeExprMem(); }
+      tSET lval_addr '=' expr_value tEOL { DEBUG_WriteMemory(&$2, $4); }
     | tSET '+' tIDENTIFIER tEOL { DEBUG_DbgChannel(TRUE, NULL, $3); }
     | tSET '-' tIDENTIFIER tEOL { DEBUG_DbgChannel(FALSE, NULL, $3); }
     | tSET tIDENTIFIER '+' tIDENTIFIER tEOL { DEBUG_DbgChannel(TRUE, $2, $4); }
@@ -197,24 +197,21 @@ list_arg:
     | pathname ':' tNUM	       { $$.sourcefile = $1; $$.line = $3; }
     | tIDENTIFIER	       { DEBUG_GetFuncInfo( & $$, NULL, $1); }
     | pathname ':' tIDENTIFIER { DEBUG_GetFuncInfo( & $$, $1, $3); }
-    | '*' expr_addr	       { DEBUG_FindNearestSymbol( & $2.addr, FALSE, NULL, 0, & $$ );
-                                 DEBUG_FreeExprMem(); }
+    | '*' expr_addr	       { DEBUG_FindNearestSymbol( & $2.addr, FALSE, NULL, 0, & $$ ); }
     ;
 
 x_command:
-      tEXAM expr_addr tEOL     { DEBUG_ExamineMemory( &$2, 1, 'x'); DEBUG_FreeExprMem(); }
-    | tEXAM tFORMAT expr_addr tEOL  { DEBUG_ExamineMemory( &$3, $2>>8, $2&0xff );
- 				      DEBUG_FreeExprMem(); }
+      tEXAM expr_addr tEOL     { DEBUG_ExamineMemory( &$2, 1, 'x'); }
+    | tEXAM tFORMAT expr_addr tEOL  { DEBUG_ExamineMemory( &$3, $2>>8, $2&0xff ); }
     ;
 
 print_command:
-      tPRINT expr_addr tEOL    { DEBUG_Print( &$2, 1, 0, 0 ); DEBUG_FreeExprMem(); }
-    | tPRINT tFORMAT expr_addr tEOL { DEBUG_Print( &$3, $2 >> 8, $2 & 0xff, 0 );
- 				      DEBUG_FreeExprMem(); }
+      tPRINT expr_addr tEOL    { DEBUG_Print( &$2, 1, 0, 0 ); }
+    | tPRINT tFORMAT expr_addr tEOL { DEBUG_Print( &$3, $2 >> 8, $2 & 0xff, 0 ); }
     ;
 
 break_command:
-      tBREAK '*' expr_addr tEOL{ DEBUG_AddBreakpointFromValue( &$3 ); DEBUG_FreeExprMem(); }
+      tBREAK '*' expr_addr tEOL{ DEBUG_AddBreakpointFromValue( &$3 ); }
     | tBREAK identifier tEOL   { DEBUG_AddBreakpointFromId($2, -1); }
     | tBREAK identifier ':' tNUM tEOL  { DEBUG_AddBreakpointFromId($2, $4); }
     | tBREAK tNUM tEOL	       { DEBUG_AddBreakpointFromLineno($2); }
@@ -222,7 +219,7 @@ break_command:
     ;
 
 watch_command:
-      tWATCH '*' expr_addr tEOL { DEBUG_AddWatchpoint( &$3, 1 ); DEBUG_FreeExprMem(); }
+      tWATCH '*' expr_addr tEOL { DEBUG_AddWatchpoint( &$3, 1 ); }
     | tWATCH identifier tEOL    { DEBUG_AddWatchpointFromId($2); }
     ;
 
@@ -230,13 +227,13 @@ info_command:
       tINFO tBREAK tEOL         { DEBUG_InfoBreakpoints(); }
     | tINFO tCLASS tSTRING tEOL	{ DEBUG_InfoClass( $3 ); }
     | tINFO tSHARE tEOL		{ DEBUG_InfoShare(); }
-    | tINFO tMODULE expr_value tEOL   { DEBUG_DumpModule( $3 ); DEBUG_FreeExprMem(); }
+    | tINFO tMODULE expr_value tEOL   { DEBUG_DumpModule( $3 ); }
     | tINFO tREGS tEOL          { DEBUG_InfoRegisters(&DEBUG_context); }
-    | tINFO tSEGMENTS expr_value tEOL { DEBUG_InfoSegments( $3, 1 ); DEBUG_FreeExprMem(); }
+    | tINFO tSEGMENTS expr_value tEOL { DEBUG_InfoSegments( $3, 1 ); }
     | tINFO tSEGMENTS tEOL      { DEBUG_InfoSegments( 0, -1 ); }
     | tINFO tSTACK tEOL         { DEBUG_InfoStack(); }
     | tINFO tSYMBOL tSTRING tEOL{ DEBUG_InfoSymbols($3); }
-    | tINFO tWND expr_value tEOL{ DEBUG_InfoWindow( (HWND)$3 ); DEBUG_FreeExprMem(); }
+    | tINFO tWND expr_value tEOL{ DEBUG_InfoWindow( (HWND)$3 ); }
     | tINFO tLOCAL tEOL         { DEBUG_InfoLocals(); }
     | tINFO tDISPLAY tEOL       { DEBUG_InfoDisplay(); }
     ;
@@ -245,13 +242,13 @@ walk_command:
       tWALK tCLASS tEOL         { DEBUG_WalkClasses(); }
     | tWALK tMODULE tEOL        { DEBUG_WalkModules(); }
     | tWALK tWND tEOL           { DEBUG_WalkWindows( 0, 0 ); }
-    | tWALK tWND expr_value tEOL{ DEBUG_WalkWindows( (HWND)$3, 0 ); DEBUG_FreeExprMem(); }
+    | tWALK tWND expr_value tEOL{ DEBUG_WalkWindows( (HWND)$3, 0 ); }
     | tWALK tMAPS tEOL          { DEBUG_InfoVirtual(0); }
-    | tWALK tMAPS expr_value tEOL { DEBUG_InfoVirtual($3); DEBUG_FreeExprMem(); }
+    | tWALK tMAPS expr_value tEOL { DEBUG_InfoVirtual($3); }
     | tWALK tPROCESS tEOL       { DEBUG_WalkProcess(); }
     | tWALK tTHREAD tEOL        { DEBUG_WalkThreads(); }
     | tWALK tEXCEPTION tEOL     { DEBUG_WalkExceptions(DEBUG_CurrTid); }
-    | tWALK tEXCEPTION expr_value tEOL{ DEBUG_WalkExceptions($3); DEBUG_FreeExprMem(); }
+    | tWALK tEXCEPTION expr_value tEOL{ DEBUG_WalkExceptions($3); }
     ;
 
 run_command:
