@@ -3884,23 +3884,32 @@ static UINT register_progid(MSIPACKAGE *package, MSIRECORD * row, LPWSTR clsid)
     else
     {
         WCHAR buffer[0x1000];
-        DWORD sz;
+        DWORD sz, disp;
         HKEY hkey,hkey2;
         static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
 
-        sz = 0x100;
-        MSI_RecordGetStringW(row,2,buffer,&sz);
-        rc = register_parent_progid(package,buffer,clsid);
-
+        /* check if already registered */
         sz = 0x100;
         MSI_RecordGetStringW(row,1,buffer,&sz);
-        RegCreateKeyW(HKEY_CLASSES_ROOT,buffer,&hkey);
-        /* clasid is same as parent */
+        RegCreateKeyExW(HKEY_CLASSES_ROOT, buffer, 0, NULL, 0,
+                        KEY_ALL_ACCESS, NULL, &hkey, &disp );
+        if (disp == REG_OPENED_EXISTING_KEY)
+        {
+            TRACE("Key already registered\n");
+            RegCloseKey(hkey);
+            return rc;
+        }
+        /* clsid is same as parent */
         RegCreateKeyW(hkey,szCLSID,&hkey2);
         RegSetValueExW(hkey2,NULL,0,REG_SZ,(LPVOID)clsid, (strlenW(clsid)+1) *
                        sizeof(WCHAR));
 
         RegCloseKey(hkey2);
+
+        sz = 0x100;
+        MSI_RecordGetStringW(row,2,buffer,&sz);
+        rc = register_parent_progid(package,buffer,clsid);
+
         if (!MSI_RecordIsNull(row,4))
         {
             sz = 0x100;
@@ -4528,8 +4537,8 @@ BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, DWORD iRunMode)
 }
 
 /*
- * according to the docs when this is called it immediently recalculates all the
- * components states as well
+ * According to the docs, when this is called it immediately recalculates
+ * all the component states as well
  */
 UINT WINAPI MsiSetFeatureStateA(MSIHANDLE hInstall, LPCSTR szFeature,
                                 INSTALLSTATE iState)
