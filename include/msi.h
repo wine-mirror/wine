@@ -19,7 +19,12 @@
 #ifndef __WINE_MSI_H
 #define __WINE_MSI_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef unsigned long MSIHANDLE;
+
 typedef enum tagINSTALLSTATE
 {
     INSTALLSTATE_BADCONFIG = -6,
@@ -45,6 +50,14 @@ typedef enum tagINSTALLUILEVEL
     INSTALLUILEVEL_REDUCED = 4,
     INSTALLUILEVEL_FULL = 5
 } INSTALLUILEVEL;
+
+typedef enum tagINSTALLLEVEL
+{
+    INSTALLLEVEL_DEFAULT = 0,
+    INSTALLLEVEL_MINIMUM = 1,
+    INSTALLLEVEL_MAXIMUM = 0xFFFF
+} INSTALLLEVEL;
+
 
 #define MAX_FEATURE_CHARS 38
 
@@ -77,6 +90,10 @@ UINT WINAPI MsiOpenPackageA(LPCSTR, MSIHANDLE*);
 UINT WINAPI MsiOpenPackageW(LPCWSTR, MSIHANDLE*);
 #define     MsiOpenPackage WINELIB_NAME_AW(MsiOpenPackage)
 
+UINT WINAPI MsiOpenPackageExA(LPCSTR, DWORD, MSIHANDLE*);
+UINT WINAPI MsiOpenPackageExW(LPCWSTR, DWORD, MSIHANDLE*);
+#define     MsiOpenPackageEx WINELIB_NAME_AW(MsiOpenPackageEx)
+
 UINT WINAPI MsiOpenProductA(LPCSTR, MSIHANDLE*);
 UINT WINAPI MsiOpenProductW(LPCWSTR, MSIHANDLE*);
 #define     MsiOpenProduct WINELIB_NAME_AW(MsiOpenProduct)
@@ -89,9 +106,6 @@ UINT WINAPI MsiSummaryInfoGetPropertyA(MSIHANDLE,UINT,UINT*,INT*,FILETIME*,LPSTR
 UINT WINAPI MsiSummaryInfoGetPropertyW(MSIHANDLE,UINT,UINT*,INT*,FILETIME*,LPWSTR,DWORD*);
 #define     MsiSummaryInfoGetProperty WINELIB_NAME_AW(MsiSummaryInfoGetProperty)
 
-UINT WINAPI MsiCloseHandle(MSIHANDLE);
-UINT WINAPI MsiCloseAllHandles();
-
 UINT WINAPI MsiProvideComponentFromDescriptorA(LPCSTR,LPSTR,DWORD*,DWORD*);
 UINT WINAPI MsiProvideComponentFromDescriptorW(LPCWSTR,LPWSTR,DWORD*,DWORD*);
 #define     MsiProvideComponentFromDescriptor WINELIB_NAME_AW(MsiProvideComponentFromDescriptor)
@@ -100,12 +114,42 @@ UINT WINAPI MsiGetProductPropertyA(MSIHANDLE,LPCSTR,LPSTR,DWORD*);
 UINT WINAPI MsiGetProductPropertyW(MSIHANDLE,LPCWSTR,LPWSTR,DWORD*);
 #define     MsiGetProductProperty WINELIB_NAME_AW(MsiGetProductProperty)
 
+UINT WINAPI MsiGetPropertyA(MSIHANDLE, LPCSTR, LPSTR, DWORD*);
+UINT WINAPI MsiGetPropertyW(MSIHANDLE, LPCWSTR, LPWSTR, DWORD*);
+#define     MsiGetProperty WINELIB_NAME_AW(MsiGetProperty)
+
 UINT WINAPI MsiVerifyPackageA(LPCSTR);
 UINT WINAPI MsiVerifyPackageW(LPCWSTR);
 #define     MsiVerifyPackage WINELIB_NAME_AW(MsiVerifyPackage)
 
 INSTALLSTATE WINAPI MsiQueryProductStateA(LPCSTR);
 INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR);
-#define     MsiQueryProductState WINELIB_NAME_AW(MsiQueryProductState)
+#define      MsiQueryProductState WINELIB_NAME_AW(MsiQueryProductState)
+
+UINT WINAPI MsiConfigureProductA(LPCSTR szProduct, int iInstallLevel, INSTALLSTATE eInstallState);
+UINT WINAPI MsiConfigureProductW(LPCWSTR szProduct, int iInstallLevel, INSTALLSTATE eInstallState);
+#define     MsiConfigureProduct WINELIB_NAME_AW(MsiConfigureProduct);
+
+UINT WINAPI MsiGetProductCodeA(LPCSTR szComponent, LPSTR szBuffer);
+UINT WINAPI MsiGetProductCodeW(LPCWSTR szComponent, LPWSTR szBuffer);
+#define     MsiGetProductCode WINELIB_NAME_AW(MsiGetProductCode)
+
+UINT WINAPI MsiGetProductInfoA(LPCSTR szProduct, LPCSTR szAttribute, LPSTR szBuffer, DWORD *pcchValueBuf);
+UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute, LPWSTR szBuffer, DWORD *pcchValueBuf);
+#define     MsiGetProductInfo WINELIB_NAME_AW(MsiGetProductInfo)
+
+UINT WINAPI MsiEnableLogA(DWORD dwLogMode, LPCSTR szLogFile, BOOL fAppend);
+UINT WINAPI MsiEnableLogW(DWORD dwLogMode, LPCWSTR szLogFile, BOOL fAppend);
+#define     MsiEnableLog WINELIB_NAME_AW(MsiEnableLog)
+
+/**
+ * Non Unicode
+ */
+UINT WINAPI MsiCloseHandle(MSIHANDLE);
+UINT WINAPI MsiCloseAllHandles();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WINE_MSI_H */

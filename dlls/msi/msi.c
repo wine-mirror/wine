@@ -140,8 +140,7 @@ VOID MSI_CloseDatabase( VOID *arg )
     IStorage_Release( db->storage );
 }
 
-UINT WINAPI MsiOpenDatabaseA(
-               LPCSTR szDBPath, LPCSTR szPersist, MSIHANDLE *phDB)
+UINT WINAPI MsiOpenDatabaseA(LPCSTR szDBPath, LPCSTR szPersist, MSIHANDLE *phDB)
 {
     HRESULT r = ERROR_FUNCTION_FAILED;
     LPWSTR szwDBPath = NULL, szwPersist = NULL;
@@ -180,8 +179,7 @@ end:
     return r;
 }
 
-UINT WINAPI MsiOpenDatabaseW(
-              LPCWSTR szDBPath, LPCWSTR szPersist, MSIHANDLE *phDB)
+UINT WINAPI MsiOpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIHANDLE *phDB)
 {
     IStorage *stg = NULL;
     HRESULT r;
@@ -375,16 +373,14 @@ UINT WINAPI MsiAdvertiseProductW(LPCWSTR szPackagePath, LPCWSTR szScriptfilePath
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-UINT WINAPI MsiAdvertiseProductExA(
-    LPCSTR szPackagePath, LPCSTR szScriptfilePath, LPCSTR szTransforms, LANGID lgidLanguage, DWORD dwPlatform, DWORD dwOptions)
+UINT WINAPI MsiAdvertiseProductExA(LPCSTR szPackagePath, LPCSTR szScriptfilePath, LPCSTR szTransforms, LANGID lgidLanguage, DWORD dwPlatform, DWORD dwOptions)
 {
     FIXME("%s %s %s 0x%08x 0x%08lx 0x%08lx\n",
 	debugstr_a(szPackagePath), debugstr_a(szScriptfilePath), debugstr_a(szTransforms), lgidLanguage, dwPlatform, dwOptions);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-UINT WINAPI MsiAdvertiseProductExW(
-    LPCWSTR szPackagePath, LPCWSTR szScriptfilePath, LPCWSTR szTransforms, LANGID lgidLanguage, DWORD dwPlatform, DWORD dwOptions)
+UINT WINAPI MsiAdvertiseProductExW( LPCWSTR szPackagePath, LPCWSTR szScriptfilePath, LPCWSTR szTransforms, LANGID lgidLanguage, DWORD dwPlatform, DWORD dwOptions)
 {
     FIXME("%s %s %s 0x%08x 0x%08lx 0x%08lx\n",
 	debugstr_w(szPackagePath), debugstr_w(szScriptfilePath), debugstr_w(szTransforms), lgidLanguage, dwPlatform, dwOptions);
@@ -435,15 +431,32 @@ UINT WINAPI MsiInstallProductW(LPCWSTR szPackagePath, LPCWSTR szCommandLine)
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-UINT WINAPI MsiConfigureProductA(
-              LPCSTR szProduct, int iInstallLevel, INSTALLSTATE eInstallState)
+UINT WINAPI MsiConfigureProductA(LPCSTR szProduct, int iInstallLevel, INSTALLSTATE eInstallState)
 {
+    LPWSTR szwProduct = NULL;
+    UINT hr = ERROR_SUCCESS;
+
     FIXME("%s %d %d\n",debugstr_a(szProduct), iInstallLevel, eInstallState);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if( szProduct )
+    {
+        UINT len = MultiByteToWideChar( CP_ACP, 0, szProduct, -1, NULL, 0 );
+        szwProduct = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        if( !szwProduct )
+            goto end;
+        MultiByteToWideChar( CP_ACP, 0, szProduct, -1, szwProduct, len );
+    }
+
+    hr = MsiConfigureProductW( szwProduct, iInstallLevel, eInstallState );
+
+end:
+    if( szwProduct )
+        HeapFree( GetProcessHeap(), 0, szwProduct );
+
+    return hr;
 }
 
-UINT WINAPI MsiConfigureProductW(
-              LPCWSTR szProduct, int iInstallLevel, INSTALLSTATE eInstallState)
+UINT WINAPI MsiConfigureProductW(LPCWSTR szProduct, int iInstallLevel, INSTALLSTATE eInstallState)
 {
     FIXME("%s %d %d\n",debugstr_w(szProduct), iInstallLevel, eInstallState);
     return ERROR_CALL_NOT_IMPLEMENTED;
@@ -451,26 +464,191 @@ UINT WINAPI MsiConfigureProductW(
 
 UINT WINAPI MsiGetProductCodeA(LPCSTR szComponent, LPSTR szBuffer)
 {
+    LPWSTR szwComponent = NULL, szwBuffer = NULL;
+    UINT hr = ERROR_INSTALL_FAILURE;
+
     FIXME("%s %s\n",debugstr_a(szComponent), debugstr_a(szBuffer));
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if( szComponent )
+    {
+        UINT len = MultiByteToWideChar( CP_ACP, 0, szComponent, -1, NULL, 0 );
+        szwComponent = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        if( !szwComponent )
+            goto end;
+        MultiByteToWideChar( CP_ACP, 0, szComponent, -1, szwComponent, len );
+    } else {
+      return ERROR_INVALID_PARAMETER;
+    }
+
+    {
+        szwBuffer = HeapAlloc( GetProcessHeap(), 0, GUID_SIZE * sizeof(WCHAR) );
+        if( !szwBuffer )	 
+            goto end;
+    }
+
+    hr = MsiGetProductCodeW( szwComponent, szwBuffer );
+
+    if( ERROR_SUCCESS == hr )
+    {
+        WideCharToMultiByte(CP_ACP, 0, szwBuffer, -1, szBuffer, GUID_SIZE, NULL, NULL);
+    }
+
+end:
+    if( szwComponent )
+        HeapFree( GetProcessHeap(), 0, szwComponent );
+    if( szwBuffer )
+        HeapFree( GetProcessHeap(), 0, szwBuffer );
+
+    return hr;
 }
 
 UINT WINAPI MsiGetProductCodeW(LPCWSTR szComponent, LPWSTR szBuffer)
 {
     FIXME("%s %s\n",debugstr_w(szComponent), debugstr_w(szBuffer));
+    if (NULL == szComponent) {
+      return ERROR_INVALID_PARAMETER;
+    }
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiGetPropertyA(MSIHANDLE hInstall, LPCSTR szName, LPSTR szValueBuf, DWORD* pchValueBuf) 
+{
+    LPWSTR szwName = NULL, szwValueBuf = NULL;
+    UINT hr = ERROR_INSTALL_FAILURE;
+
+    if (0 == hInstall) {
+      return ERROR_INVALID_HANDLE;
+    }
+    if (NULL == szName) {
+      return ERROR_INVALID_PARAMETER;
+    }
+
+    FIXME("%lu %s %lu\n", hInstall, debugstr_a(szName), *pchValueBuf);
+
+    if (NULL != szValueBuf && NULL == pchValueBuf) {
+      return ERROR_INVALID_PARAMETER;
+    }
+    if( szName )
+    {
+        UINT len = MultiByteToWideChar( CP_ACP, 0, szName, -1, NULL, 0 );
+        szwName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        if( !szwName )
+            goto end;
+        MultiByteToWideChar( CP_ACP, 0, szName, -1, szwName, len );
+    } else {
+      return ERROR_INVALID_PARAMETER;
+    }
+    if( szValueBuf )
+    {
+        szwValueBuf = HeapAlloc( GetProcessHeap(), 0, (*pchValueBuf) * sizeof(WCHAR) );
+        if( !szwValueBuf )	 
+            goto end;
+    }
+
+    hr = MsiGetPropertyW( hInstall, szwName, szwValueBuf, pchValueBuf );
+
+    if( ERROR_SUCCESS == hr )
+    {
+        WideCharToMultiByte(CP_ACP, 0, szwValueBuf, -1, szValueBuf, *pchValueBuf, NULL, NULL);
+    }
+
+end:
+    if( szwName )
+        HeapFree( GetProcessHeap(), 0, szwName );
+    if( szwValueBuf )
+        HeapFree( GetProcessHeap(), 0, szwValueBuf );
+
+    return hr;
+}
+UINT WINAPI MsiGetPropertyW(MSIHANDLE hInstall, LPCWSTR szName, LPWSTR szValueBuf, DWORD* pchValueBuf) 
+{
+    FIXME("%lu %s %lu\n", hInstall, debugstr_w(szName), *pchValueBuf);
+    if (0 == hInstall) {
+      return ERROR_INVALID_HANDLE;
+    }
+    if (NULL == szName) {
+      return ERROR_INVALID_PARAMETER;
+    }
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
 UINT WINAPI MsiGetProductInfoA(LPCSTR szProduct, LPCSTR szAttribute, LPSTR szBuffer, DWORD *pcchValueBuf)
 {
+    LPWSTR szwProduct = NULL, szwAttribute = NULL, szwBuffer = NULL;
+    UINT hr = ERROR_INSTALL_FAILURE;
+
     FIXME("%s %s %p %p\n",debugstr_a(szProduct), debugstr_a(szAttribute), szBuffer, pcchValueBuf);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if (NULL != szBuffer && NULL == pcchValueBuf) {
+      return ERROR_INVALID_PARAMETER;
+    }
+    if( szProduct )
+    {
+        UINT len = MultiByteToWideChar( CP_ACP, 0, szProduct, -1, NULL, 0 );
+        szwProduct = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        if( !szwProduct )
+            goto end;
+        MultiByteToWideChar( CP_ACP, 0, szProduct, -1, szwProduct, len );
+    } else {
+      return ERROR_INVALID_PARAMETER;
+    }
+    
+    if( szAttribute )
+    {
+        UINT len = MultiByteToWideChar( CP_ACP, 0, szAttribute, -1, NULL, 0 );
+        szwAttribute = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        if( !szwAttribute )
+            goto end;
+        MultiByteToWideChar( CP_ACP, 0, szAttribute, -1, szwAttribute, len );
+    } else {
+      return ERROR_INVALID_PARAMETER;
+    }
+
+    if( szBuffer )
+    {
+        szwBuffer = HeapAlloc( GetProcessHeap(), 0, (*pcchValueBuf) * sizeof(WCHAR) );
+        if( !szwBuffer )	 
+            goto end;
+    }
+
+    hr = MsiGetProductInfoW( szwProduct, szwAttribute, szwBuffer, pcchValueBuf );
+
+    if( ERROR_SUCCESS == hr )
+    {
+        WideCharToMultiByte(CP_ACP, 0, szwBuffer, -1, szBuffer, *pcchValueBuf, NULL, NULL);
+    }
+
+end:
+    if( szwProduct )
+        HeapFree( GetProcessHeap(), 0, szwProduct );
+    if( szwAttribute )
+        HeapFree( GetProcessHeap(), 0, szwAttribute );
+    if( szwBuffer )
+        HeapFree( GetProcessHeap(), 0, szwBuffer );
+
+    return hr;    
 }
 
 UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute, LPWSTR szBuffer, DWORD *pcchValueBuf)
 {
+    MSIHANDLE hProduct;
+    UINT hr;
+    
     FIXME("%s %s %p %p\n",debugstr_w(szProduct), debugstr_w(szAttribute), szBuffer, pcchValueBuf);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if (NULL != szBuffer && NULL == pcchValueBuf) {
+      return ERROR_INVALID_PARAMETER;
+    }
+    if (NULL == szProduct || NULL == szAttribute) {
+      return ERROR_INVALID_PARAMETER;
+    }
+
+    hr = MsiOpenProductW(szProduct, &hProduct);
+    if (ERROR_SUCCESS != hr) return hr;
+
+    hr = MsiGetPropertyW(hProduct, szAttribute, szBuffer, pcchValueBuf);
+    MsiCloseHandle(hProduct);
+    return hr;
 }
 
 UINT WINAPI MsiDatabaseImportA(LPCSTR szFolderPath, LPCSTR szFilename)
@@ -487,15 +665,36 @@ UINT WINAPI MsiDatabaseImportW(LPCWSTR szFolderPath, LPCWSTR szFilename)
 
 UINT WINAPI MsiEnableLogA(DWORD dwLogMode, LPCSTR szLogFile, BOOL fAppend)
 {
+    LPWSTR szwLogFile = NULL;
+    UINT hr = ERROR_INSTALL_FAILURE;
+
     FIXME("%08lx %s %d\n", dwLogMode, debugstr_a(szLogFile), fAppend);
-    return ERROR_SUCCESS;
-    /* return ERROR_CALL_NOT_IMPLEMENTED; */
+
+    if( szLogFile )
+    {
+        UINT len = MultiByteToWideChar( CP_ACP, 0, szLogFile, -1, NULL, 0 );
+        szwLogFile = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        if( !szwLogFile )
+            goto end;
+        MultiByteToWideChar( CP_ACP, 0, szLogFile, -1, szwLogFile, len );
+    } else {
+      return ERROR_INVALID_PARAMETER;
+    }
+
+    hr = MsiEnableLogW( dwLogMode, szwLogFile, fAppend );
+
+end:
+    if( szwLogFile )
+        HeapFree( GetProcessHeap(), 0, szwLogFile );
+
+    return hr;
 }
 
 UINT WINAPI MsiEnableLogW(DWORD dwLogMode, LPCWSTR szLogFile, BOOL fAppend)
 {
     FIXME("%08lx %s %d\n", dwLogMode, debugstr_w(szLogFile), fAppend);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    return ERROR_SUCCESS;
+    /* return ERROR_CALL_NOT_IMPLEMENTED; */
 }
 
 INSTALLSTATE WINAPI MsiQueryProductStateA(LPCSTR szProduct)
@@ -516,15 +715,21 @@ INSTALLUILEVEL WINAPI MsiSetInternalUI(INSTALLUILEVEL dwUILevel, HWND *phWnd)
     return dwUILevel;
 }
 
-UINT WINAPI MsiLoadStringA(DWORD a, DWORD b, DWORD c, DWORD d, DWORD e)
+UINT WINAPI MsiLoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int nBufferMax, DWORD e)
 {
-    FIXME("%08lx %08lx %08lx %08lx %08lx\n",a,b,c,d,e);
+    /*FIXME("%08lx %08lx %08lx %08lx %08lx\n",a,b,c,d,e);*/
+    FIXME("%p %u %p %d %08lx\n",hInstance,uID,lpBuffer,nBufferMax,e);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-UINT WINAPI MsiLoadStringW(DWORD a, DWORD b, DWORD c, DWORD d, DWORD e)
+UINT WINAPI MsiLoadStringW(HINSTANCE hInstance, UINT uID, LPWSTR lpBuffer, int nBufferMax, DWORD e)
 {
-    FIXME("%08lx %08lx %08lx %08lx %08lx\n",a,b,c,d,e);
+    FIXME("%p %u %p %d %08lx\n",hInstance,uID,lpBuffer,nBufferMax,e);
+    /*
+    int ret =  LoadStringW(hInstance,uID,lpBuffer,nBufferMax);
+    FIXME("%s\n",debugstr_w(lpBuffer));
+    return ret;
+    */
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
@@ -540,15 +745,24 @@ INSTALLSTATE WINAPI MsiLocateComponentW(LPCWSTR szComponent, LPSTR lpPathBuf, DW
     return INSTALLSTATE_UNKNOWN;
 }
 
-UINT WINAPI MsiMessageBoxA(DWORD a, DWORD b, DWORD c, DWORD d, DWORD e, DWORD f)
+#include "winuser.h"
+
+UINT WINAPI MsiMessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType, WORD wLanguageId, DWORD f)
 {
-    FIXME("%08lx %08lx %08lx %08lx %08lx %08lx\n",a,b,c,d,e,f);
+    FIXME("%p %s %s %u %08x %08lx\n",hWnd,debugstr_a(lpText),debugstr_a(lpCaption),uType,wLanguageId,f);
+    /*
+    MessageBoxExA(hWnd,lpText,lpCaption,uType|MB_OK,wLanguageId);
+    */
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-UINT WINAPI MsiMessageBoxW(DWORD a, DWORD b, DWORD c, DWORD d, DWORD e, DWORD f)
+UINT WINAPI MsiMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType, WORD wLanguageId, DWORD f)
 {
-    FIXME("%08lx %08lx %08lx %08lx %08lx %08lx\n",a,b,c,d,e,f);
+    /*FIXME("%08lx %08lx %08lx %08lx %08lx %08lx\n",a,b,c,d,e,f);*/
+    FIXME("%p %s %s %u %08x %08lx\n",hWnd,debugstr_w(lpText),debugstr_w(lpCaption),uType,wLanguageId,f);
+    /*
+    MessageBoxExW(hWnd,lpText,lpCaption,uType|MB_OK,wLanguageId);
+    */
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
@@ -558,7 +772,10 @@ UINT WINAPI MsiEnumProductsA(DWORD index, LPSTR lpguid)
     WCHAR szwGuid[GUID_SIZE];
 
     TRACE("%ld %p\n",index,lpguid);
-
+    
+    if (NULL == lpguid) {
+      return ERROR_INVALID_PARAMETER;
+    }
     r = MsiEnumProductsW(index, szwGuid);
     if( r == ERROR_SUCCESS )
         WideCharToMultiByte(CP_ACP, 0, szwGuid, -1, lpguid, GUID_SIZE, NULL, NULL);
@@ -574,6 +791,9 @@ UINT WINAPI MsiEnumProductsW(DWORD index, LPWSTR lpguid)
 
     TRACE("%ld %p\n",index,lpguid);
 
+    if (NULL == lpguid) {
+      return ERROR_INVALID_PARAMETER;
+    }
     r = RegOpenKeyW(HKEY_LOCAL_MACHINE, szInstaller, &hkey);
     if( r != ERROR_SUCCESS )
         goto end;

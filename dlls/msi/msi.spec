@@ -70,8 +70,8 @@
 70 stdcall MsiGetProductInfoW(wstr wstr wstr long)
 71 stdcall MsiGetProductPropertyA(long str ptr ptr)
 72 stdcall MsiGetProductPropertyW(long wstr ptr ptr)
-73 stub MsiGetPropertyA
-74 stub MsiGetPropertyW
+73 stdcall MsiGetPropertyA(ptr str str ptr)
+74 stdcall MsiGetPropertyW(ptr wstr wstr ptr)
 75 stub MsiGetSourcePathA
 76 stub MsiGetSourcePathW
 77 stdcall MsiGetSummaryInformationA(long str long ptr)
