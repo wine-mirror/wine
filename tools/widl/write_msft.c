@@ -745,6 +745,13 @@ static int encode_type(
 	*alignment = 1;
 	break;
 
+    case VT_UNKNOWN:
+    case VT_DISPATCH:
+        *encoded_type = default_type;
+        *width = 4;
+        *alignment = 4;
+        break;
+
     case VT_PTR:
       {
         int next_vt;
@@ -754,6 +761,14 @@ static int encode_type(
         }
 
 	encode_type(typelib, next_vt, type->ref, &target_type, NULL, NULL, &child_size);
+        if(type->ref->type == RPC_FC_IP) {
+            chat("encode_type: skipping ptr\n");
+            *encoded_type = target_type;
+            *width = 4;
+            *alignment = 4;
+            *decoded_size = child_size;
+            break;
+        }
 
 	for (typeoffset = 0; typeoffset < typelib->typelib_segdir[MSFT_SEG_TYPEDESC].length; typeoffset += 8) {
 	    typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
@@ -828,11 +843,10 @@ static int encode_type(
     case VT_USERDEFINED:
       {
         int typeinfo_offset;
-	chat("USERDEFINED.\n");
-        chat("type %p name = %s idx %d\n", type, type->name, type->typelib_idx);
+        chat("encode_type: VT_USERDEFINED - type %p name = %s idx %d\n", type, type->name, type->typelib_idx);
 
         if(type->typelib_idx == -1)
-            error("trying to ref not added type\n");
+            error("encode_type: trying to ref not added type\n");
 
         typeinfo_offset = typelib->typelib_typeinfo_offsets[type->typelib_idx];
 	for (typeoffset = 0; typeoffset < typelib->typelib_segdir[MSFT_SEG_TYPEDESC].length; typeoffset += 8) {
@@ -851,11 +865,23 @@ static int encode_type(
 	*encoded_type = typeoffset;
 	*width = 0;
 	*alignment = 1;
+
+        if(type->type == RPC_FC_IP) {
+            typeoffset = ctl2_alloc_segment(typelib, MSFT_SEG_TYPEDESC, 8, 0);
+	    typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
+
+	    typedata[0] = (0x7fff << 16) | VT_PTR;
+	    typedata[1] = *encoded_type;
+            *encoded_type = typeoffset;
+            *width = 4;
+            *alignment = 4;
+            *decoded_size += 8;
+        }            
 	break;
       }
 
     default:
-	error("Unrecognized type %d.\n", vt);
+	error("encode_type: unrecognized type %d.\n", vt);
 	*encoded_type = default_type;
 	*width = 0;
 	*alignment = 1;
@@ -894,8 +920,18 @@ static int encode_var(
 
     chat("encode_var: var %p var->tname %s var->type %p var->ptr_level %d var->type->ref %p\n", var, var->tname, var->type, var->ptr_level, var->type->ref);
     if(var->ptr_level--) {
-	encode_var(typelib, var, &target_type, NULL, NULL, &child_size);
+        int skip_ptr;
+	skip_ptr = encode_var(typelib, var, &target_type, NULL, NULL, &child_size);
         var->ptr_level++;
+
+        if(skip_ptr == 2) {
+            chat("encode_var: skipping ptr\n");
+            *encoded_type = target_type;
+            *decoded_size = child_size;
+            *width = 4;
+            *alignment = 4;
+            return 0;
+        }
 
 	for (typeoffset = 0; typeoffset < typelib->typelib_segdir[MSFT_SEG_TYPEDESC].length; typeoffset += 8) {
 	    typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][typeoffset];
@@ -978,7 +1014,9 @@ static int encode_var(
         if(!type) error("encode_var: type->ref is null\n");
         vt = get_type_vt(type);
     }
-    return encode_type(typelib, vt, type, encoded_type, width, alignment, decoded_size);
+    encode_type(typelib, vt, type, encoded_type, width, alignment, decoded_size);
+    if(type->type == RPC_FC_IP) return 2;
+    return 0;
 }
 
     

@@ -132,19 +132,18 @@ unsigned short get_type_vt(type_t *t)
   case RPC_FC_UP:
   case RPC_FC_OP:
   case RPC_FC_FP:
-    /* it's a pointer... */
-    if (t->ref && t->ref->type == RPC_FC_IP) {
-      /* it's to an interface, which one? */
-      if (match(t->ref->name, "IDispatch"))
-        return VT_DISPATCH;
-      if (match(t->ref->name, "IUnknown"))
-        return VT_UNKNOWN;
-    }
     if(t->ref)
       return VT_PTR;
 
     error("get_type_vt: unknown-deref-type: %d\n", t->ref->type);
     break;
+  case RPC_FC_IP:
+    if(match(t->name, "IUnknown"))
+      return VT_UNKNOWN;
+    if(match(t->name, "IDispatch"))
+      return VT_DISPATCH;
+    return VT_USERDEFINED;
+        
   case RPC_FC_STRUCT:
     return VT_USERDEFINED;
   case 0:
