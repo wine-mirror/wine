@@ -719,6 +719,8 @@ static HDDEDATA CALLBACK dde_cb(UINT uType, UINT uFmt, HCONV hConv,
                                 HSZ hsz1, HSZ hsz2, HDDEDATA hData,
                                 ULONG_PTR dwData1, ULONG_PTR dwData2)
 {
+    TRACE("dde_cb: %04x, %04x, %p, %p, %p, %p, %p, %p\n",
+           uType, uFmt, hConv, hsz1, hsz2, hData, dwData1, dwData2);
     return NULL;
 }
 
@@ -1108,7 +1110,6 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
 	}
     }
 
-
     /* expand environment strings */
     if (ExpandEnvironmentStringsW(sei_tmp.lpFile, buffer, MAX_PATH))
 	lstrcpyW(wszApplicationName, buffer);
@@ -1122,7 +1123,7 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
 	    lstrcpyW(wszDir, buffer);
 
     /* Else, try to execute the filename */
-    TRACE("execute:'%s','%s','%s'\n", debugstr_w(wszApplicationName), debugstr_w(wszParameters), debugstr_w(wszDir));
+    TRACE("execute:%s,%s,%s\n", debugstr_w(wszApplicationName), debugstr_w(wszParameters), debugstr_w(wszDir));
 
     /* separate out command line arguments from executable file name */
     if (!*sei_tmp.lpParameters) {
@@ -1192,6 +1193,11 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
         strcatW(wszApplicationName, wSpace);
         strcatW(wszApplicationName, wszParameters);
     }
+
+    /* We set the default to open, and that should generally work.
+       But that is not really the way the MS docs say to do it. */
+    if (!sei_tmp.lpVerb)
+        sei_tmp.lpVerb = wszOpen;
 
     retval = execfunc(wszApplicationName, NULL, FALSE, &sei_tmp, sei);
     if (retval > 32)
@@ -1281,7 +1287,9 @@ HINSTANCE WINAPI ShellExecuteA(HWND hWnd, LPCSTR lpOperation,LPCSTR lpFile,
     SHELLEXECUTEINFOA sei;
     HANDLE hProcess = 0;
 
-    TRACE("\n");
+    TRACE("%p,%s,%s,%s,%s,%d\n",
+           hWnd, lpOperation, lpFile, lpParameters, lpDirectory, iShowCmd);
+
     sei.cbSize = sizeof(sei);
     sei.fMask = 0;
     sei.hwnd = hWnd;
