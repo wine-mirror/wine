@@ -3,11 +3,35 @@
 # Perl definitions for header file windef.h
 #
 
-$HFILE_ERROR = -1;
-$MAX_PATH = 260;
-$WINVER = 1280;
-$_MAX_DIR = 256;
-$_MAX_DRIVE = 3;
-$_MAX_EXT = 256;
-$_MAX_FNAME = 256;
-$_MAX_PATH = 260;
+
+package windef;
+
+use strict;
+
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
+
+require Exporter;
+
+@ISA = qw(Exporter);
+@EXPORT = qw(
+    HFILE_ERROR
+    MAX_PATH
+    WINVER
+    _MAX_DIR
+    _MAX_DRIVE
+    _MAX_EXT
+    _MAX_FNAME
+    _MAX_PATH
+);
+@EXPORT_OK = qw();
+
+use constant HFILE_ERROR => -1;
+use constant MAX_PATH => 260;
+use constant WINVER => 1280;
+use constant _MAX_DIR => 256;
+use constant _MAX_DRIVE => 3;
+use constant _MAX_EXT => 256;
+use constant _MAX_FNAME => 256;
+use constant _MAX_PATH => 260;
+
+1;

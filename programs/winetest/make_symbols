@@ -46,6 +46,9 @@ foreach $basename (@list)
     my $result = "include/" . $basename;
     $result =~ s!\.h$!.pm!;
 
+    my $package = $basename;
+    $package =~ s/\.h$//;
+
     open INPUT, "$include_dir/$basename" or die "Cannot open $include_dir/$basename";
     open OUTPUT, ">sym.c" or die "Cannot create sym.c";
     print "Building $result\n";
@@ -64,6 +67,17 @@ int main()
     printf( "#\\n" );
     printf( "# Perl definitions for header file $basename\\n" );
     printf( "#\\n\\n" );
+    printf( "\\n" );
+    printf( "package $package;\\n" );
+    printf( "\\n" );
+    printf( "use strict;\\n" );
+    printf( "\\n" );
+    printf( "use vars qw(\$VERSION \@ISA \@EXPORT \@EXPORT_OK);\\n" );
+    printf( "\\n" );
+    printf( "require Exporter;\\n" );
+    printf( "\\n" );
+    printf( "\@ISA = qw(Exporter);\\n" );
+    printf( "\@EXPORT = qw(\\n" );
 EOF
 
     my %symbols = ();
@@ -84,8 +98,18 @@ EOF
     }
     foreach $sym (sort keys %symbols)
     {
-        printf OUTPUT "    printf(\"\$$sym = %%d;\\n\", (int)($sym));\n";
+        printf OUTPUT "    printf(\"    $sym\\n\");\n";
     }
+    printf OUTPUT "    printf(\");\\n\");\n";
+    printf OUTPUT "    printf(\"\@EXPORT_OK = qw();\\n\");\n";
+    printf OUTPUT "    printf(\"\\n\");\n";
+
+    foreach $sym (sort keys %symbols)
+    {
+        printf OUTPUT "    printf(\"use constant $sym => %%d;\\n\", (int)($sym));\n";
+    }
+    printf OUTPUT "    printf(\"\\n\");\n";
+    printf OUTPUT "    printf(\"1;\\n\");\n";
     print OUTPUT "    exit(0);\n}\n";
     close OUTPUT;
     #print "cc -I../../include -o sym sym.c\n";
