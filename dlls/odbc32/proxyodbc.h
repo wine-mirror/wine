@@ -31,9 +31,6 @@ typedef struct proxyhandle
 	char UserName[50];          /* keep username */	
 } PROXYHANDLE;
 
-BOOL ODBC_LoadDriverManager();
-BOOL ODBC_LoadDMFunctions();
-
 #define    /* 00 */ SQLAPI_INDEX_SQLALLOCCONNECT       0
 #define    /* 01 */ SQLAPI_INDEX_SQLALLOCENV           1
 #define    /* 02 */ SQLAPI_INDEX_SQLALLOCHANDLE        2
