@@ -1,7 +1,7 @@
 /*
  *	OLE2NLS library
  *      Slovenia
- *	(Slovenian strings in iso-8859-2)
+ *	(Slovenian strings in cp1250)
  */
 
 LOCVAL(LOCALE_ILANGUAGE,"0424")

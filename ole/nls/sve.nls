@@ -2,7 +2,7 @@
  *	OLE2NLS library
  *      Sweden
  *
- *	(swedish strings in iso-8859-1)
+ *	(swedish strings in cp1252)
  */
 
 LOCVAL(LOCALE_ILANGUAGE,"041d")

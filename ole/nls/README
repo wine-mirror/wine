@@ -8,9 +8,8 @@ and LOCALE_IDEFAULTANSICODEPAGE use decimal.
 I'll appreciate info on the others numeric fields; and a confirmation
 about the numeric fields I told above.
 
-I have also doubts for the alphanumeric fields; what character encoding
-should be used for non ascii strings ? DOS code page ? Windows code page ?
-Unix standard encoding (what I did until now) ? Unicode ?
+For the alphanumeric fields the encoding used is the one used by MS-Windows
+for that language (the one in LOCALE_IDEFAULTANSICODEPAGE).
 
 --
 

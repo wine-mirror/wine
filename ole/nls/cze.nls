@@ -1,7 +1,7 @@
 /*
  *	OLE2NLS library
  *      Czech Republic
- *	(Czech strings in iso-8859-2)
+ *	(Czech strings in cp1250)
  */
 
 LOCVAL(LOCALE_ILANGUAGE,"0405")

@@ -1,7 +1,7 @@
 /*
  *	OLE2NLS library
  *      Iceland
- *	(Icelandic strings in iso-8859-1)
+ *	(Icelandic strings in cp1252)
  */
 
 LOCVAL(LOCALE_ILANGUAGE,"040f")

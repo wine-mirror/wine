@@ -1,7 +1,7 @@
 /*
  *	OLE2NLS library
  *      Norway (Bokmaal)
- *	(Norwegian strings in iso-8859-1)
+ *	(Norwegian strings in cp1252)
  */
 
 LOCVAL(LOCALE_ILANGUAGE,"0414")

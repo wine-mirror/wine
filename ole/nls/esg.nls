@@ -1,7 +1,7 @@
 /*
  *	OLE2NLS library
  *      Spanish (Guatemala)
- *	(spanish strings in iso-8859-1)
+ *	(spanish strings in cp1252)
  */
 
 LOCVAL(LOCALE_ILANGUAGE,"100a")

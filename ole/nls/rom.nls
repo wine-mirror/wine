@@ -1,7 +1,7 @@
 /*
  *	OLE2NLS library
  *      Romania
- *	(Romanian strings in iso-8859-2)
+ *	(Romanian strings in cp1250)
  */
 
 LOCVAL(LOCALE_ILANGUAGE,"0418")

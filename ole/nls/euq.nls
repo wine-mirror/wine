@@ -1,6 +1,8 @@
 /*
  *	OLE2NLS library
  *      Basque
+ *
+ *	email: srtxg@chanae.alphanet.ch
  */
 
 LOCVAL(LOCALE_ILANGUAGE,"042d")

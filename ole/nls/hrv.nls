@@ -1,7 +1,7 @@
 /*
  *	OLE2NLS library
  *      Croatia
- *	(Croatian strings in iso-8859-2)
+ *	(Croatian strings in cp1250)
  */
 
 LOCVAL(LOCALE_ILANGUAGE,"041a")
