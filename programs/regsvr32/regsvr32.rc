@@ -15,39 +15,15 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * FIXME: not sure about values of FILEFLAGSMASK, FILEOS, Translation
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "winver.h"
+#define WINE_FILEDESCRIPTION_STR "Wine Register Server"
+#define WINE_FILENAME_STR "REGSVR32"
+#define WINE_FILETYPE VFT_APP
+#define WINE_FILEVERSION 5,0,1586,1
+#define WINE_FILEVERSION_STR "5.0.1586.1"
 
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+#define WINE_PRODUCTVERSION 5,0,1586,1
+#define WINE_PRODUCTVERSION_STR "5.0"
 
-1 VERSIONINFO
-FILEVERSION	5, 0, 1586, 1
-PRODUCTVERSION	5, 0, 1586, 1
-FILEFLAGSMASK	VS_FFI_FILEFLAGSMASK
-FILEOS		VOS_DOS_WINDOWS32
-FILETYPE	VFT_APP
-{
-	BLOCK "StringFileInfo"
-	{
-		BLOCK "040904B0"
-		{
-			VALUE "CompanyName", "Wine Developer Team"
-			VALUE "FileDescription", "Wine Register Server"
-			VALUE "FileVersion", "0.01"
-			VALUE "InternalName", "REGSVR32"
-			VALUE "LegalCopyright", "Copyright (c) 2003 the Wine project authors"
-			VALUE "OriginalFilename", "REGSVR32.EXE"
-			VALUE "ProductName", "Wine"
-			VALUE "ProductVersion", "1.00"
-		}
-	}
-	BLOCK "VarFileInfo"
-	{
-		VALUE "Translation", 1030, 1200
-	}
-}
+#include "wine/wine_common_ver.rc"
