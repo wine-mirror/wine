@@ -1502,6 +1502,7 @@ DWORD WINAPI TlsAlloc( void )
     for (i = 0, mask = 1; i < 32; i++, mask <<= 1) if (!(*bits & mask)) break;
     *bits |= mask;
     RtlReleasePebLock();
+    NtCurrentTeb()->tls_array[ret+i] = 0; /* clear the value */
     return ret + i;
 }
 
