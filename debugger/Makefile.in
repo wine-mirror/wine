@@ -1,11 +1,8 @@
-DEFS      = -DWINELIB
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = none
-PROGRAMS  = winedbg
-IMPORTS   = user32 gdi32 kernel32 ntdll
+MODULE    = winedbg
 
 C_SRCS = \
 	break.c \
@@ -13,6 +10,7 @@ C_SRCS = \
 	display.c \
 	editline.c \
 	expr.c \
+	ext_debugger.c \
 	hash.c \
 	info.c \
 	memory.c \
@@ -25,29 +23,15 @@ C_SRCS = \
 	types.c \
 	winedbg.c
 
-SPEC_SRCS = winedbg.spec
-
 EXTRA_SRCS = dbg.y debug.l
 EXTRA_OBJS = y.tab.o lex.yy.o
 
-all: $(PROGRAMS)
-
-@MAKE_RULES@
+@MAKE_PROG_RULES@
 
 y.tab.c y.tab.h: dbg.y
 	$(YACC) -d -t $(SRCDIR)/dbg.y
 
 lex.yy.c: debug.l
 	$(LEX) -8 -I $(SRCDIR)/debug.l
-
-winedbg: $(OBJS)
-	$(CC) -o $@ $(OBJS) $(DLL_LINK) $(LIBS) $(LDFLAGS)
-
-install:: $(PROGRAMS)
-	[ -d $(bindir) ] || $(MKDIR) $(bindir)
-	$(INSTALL_PROGRAM) winedbg $(bindir)/winedbg
-
-uninstall::
-	$(RM) $(bindir)/winedbg
 
 ### Dependencies:

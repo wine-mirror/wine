@@ -14,8 +14,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "options.h"
-
 #define DBG_BUFF_SIZE  12
 
 #define DBG_EXTERNAL_DEFAULT   "gdb"
@@ -107,7 +105,7 @@ void DEBUG_ExternalDebugger(void)
 
     /* if not set in environment, use default */
     if (!dbg_wine_location)
-      dbg_wine_location = argv0;
+      dbg_wine_location = "wine";
 
     /* check for empty string in WINE_DBG_NO_XTERM */
     if (dbg_no_xterm && (strlen(dbg_no_xterm) < 1))

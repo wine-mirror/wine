@@ -10,7 +10,6 @@ C_SRCS = \
 	cdrom.c \
 	cpu.c \
 	error.c \
-	ext_debugger.c \
 	lstr.c \
 	main.c \
 	options.c \

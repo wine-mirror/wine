@@ -649,11 +649,11 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
                 if (!GetBinaryTypeA( buffer, &type ))
                 {
                     /* not a Windows binary, assume it's a Unix executable then */
-                    DOS_FULL_NAME fullname;
+                    char unixname[MAX_PATH];
                     /* HACK!! should fix DEBUG_ReadExecutableDbgInfo to accept DOS filenames */
-                    if (DOSFS_GetFullName( buffer, TRUE, &fullname ))
+                    if (wine_get_unix_file_name( buffer, unixname, sizeof(unixname) ))
                     {
-                        DEBUG_ReadExecutableDbgInfo( fullname.long_name );
+                        DEBUG_ReadExecutableDbgInfo( unixname );
                         break;
                     }
                 }

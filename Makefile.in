@@ -116,7 +116,7 @@ server tools: unicode/libwine_unicode.$(LIBEXT)
 dlls: tools $(LIBRARIES)
 
 checklink::
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c $(LIBWINE) $(LIBUNICODE) $(LIBS) && $(RM) checklink
+	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c $(LIBWINE) $(LIBS) && $(RM) checklink
 
 install_programs: dummy
 	@cd programs && $(MAKE) install
@@ -126,6 +126,7 @@ uninstall_programs: dummy
 
 checklink::
 	@cd dlls && $(MAKE) checklink
+	@cd debugger && $(MAKE) checklink
 
 TAGS etags:
 	etags `find $(TOPSRCDIR) -name '*.[chS]' -print | grep -v dbgmain`
