@@ -49,7 +49,7 @@ static DWORD PosX, PosY;
 
 #define GET_KEYSTATE() \
      ((InputKeyStateTable[SwappedButtons ? VK_RBUTTON : VK_LBUTTON] & 0x80 ? MK_LBUTTON : 0) | \
-      (InputKeyStateTable[SwappedButtons ? VK_LBUTTON : VK_LBUTTON] & 0x80 ? MK_RBUTTON : 0) | \
+      (InputKeyStateTable[SwappedButtons ? VK_LBUTTON : VK_RBUTTON] & 0x80 ? MK_RBUTTON : 0) | \
       (InputKeyStateTable[VK_MBUTTON] & 0x80 ? MK_MBUTTON : 0) | \
       (InputKeyStateTable[VK_SHIFT]   & 0x80 ? MK_SHIFT   : 0) | \
       (InputKeyStateTable[VK_CONTROL] & 0x80 ? MK_CONTROL : 0))
