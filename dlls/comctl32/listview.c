@@ -31,7 +31,6 @@
  *   LISTVIEW_GetHoverTime : not implemented
  *   LISTVIEW_GetISearchString : not implemented 
  *   LISTVIEW_GetBkImage : not implemented
- *   LISTVIEW_EditLabel : REPORT (need to implement a timer)
  *   LISTVIEW_GetColumnOrderArray : not implemented
  *   LISTVIEW_SetColumnOrderArray : not implemented
  *   LISTVIEW_Arrange : empty stub
@@ -90,6 +89,20 @@ DEFAULT_DEBUG_CHANNEL(listview)
 /* retrieve the number of items in the listview */
 #define GETITEMCOUNT(infoPtr) ((infoPtr)->hdpaItems->nItemCount)
 
+/* Some definitions for inline edit control */    
+typedef BOOL (*EditlblCallback)(HWND, LPSTR, DWORD);
+
+HWND CreateEditLabel(LPCSTR text, DWORD style, INT x, INT y, 
+	INT width, INT height, HWND parent, HINSTANCE hinst, 
+	EditlblCallback EditLblCb, DWORD param);
+ 
+typedef struct tagEDITLABEL_ITEM
+{
+    WNDPROC EditWndProc;
+    DWORD param;
+    EditlblCallback EditLblCb;
+} EDITLABEL_ITEM;
+
 /* 
  * forward declarations 
  */
@@ -127,6 +140,9 @@ static BOOL LISTVIEW_SetSubItem(HWND, LPLVITEMA);
 static LRESULT LISTVIEW_SetViewRect(HWND, LPRECT);
 static BOOL LISTVIEW_ToggleSelection(HWND, INT);
 static VOID LISTVIEW_UnsupportedStyles(LONG lStyle);
+static HWND LISTVIEW_EditLabelA(HWND hwnd, INT nItem);
+static BOOL LISTVIEW_EndEditLabel(HWND hwnd, LPSTR pszText, DWORD nItem);
+static LRESULT LISTVIEW_Command(HWND hwnd, WPARAM wParam, LPARAM lParam);
 
 /***
  * DESCRIPTION:
@@ -1773,6 +1789,10 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem)
     rcItem.left += infoPtr->iconSize.cx; 
   }
 
+  /* Don't bother painting item being edited */
+  if (infoPtr->lpeditItem && lvItem.state & LVIS_FOCUSED)
+      return;
+
   if ((lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus != FALSE))
   {
     /* set item colors */ 
@@ -2592,7 +2612,141 @@ static LRESULT LISTVIEW_DeleteItem(HWND hwnd, INT nItem)
   return bResult;
 }
 
-/* LISTVIEW_EditLabel */
+
+/***
+ * DESCRIPTION:
+ * Return edit control handle of current edit label
+ *
+ * PARAMETER(S):
+ * [I] HWND : window handle
+ *
+ * RETURN:
+ *   SUCCESS : HWND
+ *   FAILURE : 0
+ */
+static LRESULT LISTVIEW_GetEditControl(hwnd)
+{
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  return infoPtr->hwndEdit;
+}
+
+
+/***
+ * DESCRIPTION:
+ * Callback implementation for editlabel control
+ *
+ * PARAMETER(S):
+ * [I] HWND : window handle
+ * [I] LPSTR : modified text
+ * [I] DWORD : item index
+ *
+ * RETURN:
+ *   SUCCESS : TRUE
+ *   FAILURE : FALSE
+ */
+
+static BOOL LISTVIEW_EndEditLabel(HWND hwnd, LPSTR pszText, DWORD nItem)
+{
+  NMLVDISPINFOA dispInfo;
+  LISTVIEW_ITEM *lpItem;
+  INT nCtrlId = GetWindowLongA(hwnd, GWL_ID);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  HDPA hdpaSubItems;
+  
+  ZeroMemory(&dispInfo, sizeof(NMLVDISPINFOA));
+
+  if (NULL == (hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)))
+	  return FALSE;
+
+  if (NULL == (lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)))
+  	  return FALSE;
+
+  dispInfo.hdr.hwndFrom = hwnd;
+  dispInfo.hdr.idFrom = nCtrlId;
+  dispInfo.hdr.code = LVN_ENDLABELEDITA;
+  dispInfo.item.mask = 0;
+  dispInfo.item.iItem = nItem;
+  dispInfo.item.state = lpItem->state;
+  dispInfo.item.stateMask = 0;
+  dispInfo.item.pszText = pszText;
+  dispInfo.item.cchTextMax = pszText ? strlen(pszText) : 0;
+  dispInfo.item.iImage = lpItem->iImage;
+  dispInfo.item.lParam = lpItem->lParam;
+
+  ListView_Notify(GetParent(hwnd), nCtrlId, &dispInfo);
+  infoPtr->hwndEdit = 0;
+  infoPtr->lpeditItem = NULL;
+
+  return TRUE;
+}
+
+/***
+ * DESCRIPTION:
+ * Begin in place editing of specified list view item
+ *
+ * PARAMETER(S):
+ * [I] HWND : window handle
+ * [I] INT : item index
+ *
+ * RETURN:
+ *   SUCCESS : TRUE
+ *   FAILURE : FALSE
+ */
+
+static HWND LISTVIEW_EditLabelA(HWND hwnd, INT nItem)
+{
+  NMLVDISPINFOA dispInfo;
+  RECT rect;
+  LISTVIEW_ITEM *lpItem;
+  HWND hedit; 
+  HINSTANCE hinst = GetWindowLongA(hwnd, GWL_HINSTANCE);
+  INT nCtrlId = GetWindowLongA(hwnd, GWL_ID);
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  HDPA hdpaSubItems;
+ 
+  if (~GetWindowLongA(hwnd, GWL_STYLE) & LVS_EDITLABELS)
+      return FALSE;
+
+  ZeroMemory(&dispInfo, sizeof(NMLVDISPINFOA));
+  if (NULL == (hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)))
+	  return 0;
+
+  if (NULL == (lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)))
+  	  return 0;
+
+  dispInfo.hdr.hwndFrom = hwnd;
+  dispInfo.hdr.idFrom = nCtrlId;
+  dispInfo.hdr.code = LVN_BEGINLABELEDITA;
+  dispInfo.item.mask = 0;
+  dispInfo.item.iItem = nItem;
+  dispInfo.item.state = lpItem->state;
+  dispInfo.item.stateMask = 0;
+  dispInfo.item.pszText = lpItem->pszText;
+  dispInfo.item.cchTextMax = strlen(lpItem->pszText);
+  dispInfo.item.iImage = lpItem->iImage;
+  dispInfo.item.lParam = lpItem->lParam;
+
+  if (ListView_LVNotify(GetParent(hwnd), nCtrlId, &dispInfo))
+	  return 0;
+
+  rect.left = LVIR_LABEL;
+  if (!LISTVIEW_GetItemRect(hwnd, nItem, &rect))
+	  return 0;
+  
+ if (!(hedit = CreateEditLabel(dispInfo.item.pszText , WS_VISIBLE, 
+		 rect.left, rect.top, rect.right - rect.left + 15, 
+		 rect.bottom - rect.top, 
+		 hwnd, hinst, LISTVIEW_EndEditLabel, nItem)))
+	 return 0;
+
+  infoPtr->hwndEdit = hedit;
+  infoPtr->lpeditItem = lpItem;
+  SetFocus(hedit); 
+  SendMessageA(hedit, EM_SETSEL, 0, -1);
+
+  return hedit;
+}
+
 
 /***
  * DESCRIPTION:
@@ -5494,6 +5648,8 @@ static LRESULT LISTVIEW_Create(HWND hwnd, WPARAM wParam, LPARAM lParam)
   infoPtr->iconSpacing.cx = GetSystemMetrics(SM_CXICONSPACING);
   infoPtr->iconSpacing.cy = GetSystemMetrics(SM_CYICONSPACING);
   ZeroMemory(&infoPtr->rcList, sizeof(RECT));
+  infoPtr->hwndEdit = 0;
+  infoPtr->lpeditItem = NULL;
 
   /* get default font (icon title) */
   SystemParametersInfoA(SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
@@ -6731,7 +6887,9 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
   case LVM_DELETEITEM:
     return LISTVIEW_DeleteItem(hwnd, (INT)wParam);
 
-/*	case LVM_EDITLABEL: */
+  case LVM_EDITLABELW:
+  case LVM_EDITLABELA:
+    return LISTVIEW_EditLabelA(hwnd, (INT)wParam);
 
   case LVM_ENSUREVISIBLE:
     return LISTVIEW_EnsureVisible(hwnd, (INT)wParam, (BOOL)lParam);
@@ -6762,7 +6920,8 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
   case LVM_GETCOUNTPERPAGE:
     return LISTVIEW_GetCountPerPage(hwnd);
 
-/*	case LVM_GETEDITCONTROL: */
+  case LVM_GETEDITCONTROL:
+    return LISTVIEW_GetEditControl(hwnd);
 
   case LVM_GETEXTENDEDLISTVIEWSTYLE:
     return LISTVIEW_GetExtendedListViewStyle(hwnd);
@@ -6947,7 +7106,8 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     return LISTVIEW_Update(hwnd, (INT)wParam);
 
 /*	case WM_CHAR: */
-/*	case WM_COMMAND: */
+  case WM_COMMAND:
+    return LISTVIEW_Command(hwnd, wParam, lParam);
 
   case WM_CREATE:
     return LISTVIEW_Create(hwnd, wParam, lParam);
@@ -7095,3 +7255,151 @@ VOID LISTVIEW_Unregister(void)
   }
 }
 
+/***
+ * DESCRIPTION:
+ * Handle any WM_COMMAND messages
+ * 
+ * PARAMETER(S):
+ *
+ * RETURN:
+ */
+static LRESULT LISTVIEW_Command(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    switch (HIWORD(wParam))
+    {
+	case EN_UPDATE:
+	{
+	    /* 
+	     * Adjust the edit window size 
+	     */
+	    char buffer[1024];
+	    LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+	    HDC           hdc      = GetDC(infoPtr->hwndEdit);
+	    RECT	  rect;
+	    SIZE	  sz;
+
+	    GetWindowTextA(infoPtr->hwndEdit, buffer, 1024);
+	    GetWindowRect(infoPtr->hwndEdit, &rect);
+	    if (GetTextExtentPoint32A(hdc, buffer, strlen(buffer), &sz))
+	    {
+		    SetWindowPos ( 
+		infoPtr->hwndEdit,
+		HWND_TOP, 
+		0, 
+		0,
+		sz.cx + 15,
+		rect.bottom - rect.top,
+		SWP_DRAWFRAME|SWP_NOMOVE);
+	    }
+	    ReleaseDC(hwnd, hdc);
+
+	    break;
+	}
+
+	default:
+	  return SendMessageA (GetParent (hwnd), WM_COMMAND, wParam, lParam);
+    }
+
+    return 0;
+}
+
+
+/***
+ * DESCRIPTION:
+ * Subclassed edit control windproc function
+ *
+ * PARAMETER(S):
+ *
+ * RETURN:
+ */
+LRESULT CALLBACK EditLblWndProc(HWND hwnd, UINT uMsg, 
+	WPARAM wParam, LPARAM lParam)
+{
+    BOOL cancel = TRUE;
+    EDITLABEL_ITEM *einfo = 
+    (EDITLABEL_ITEM *) GetWindowLongA(hwnd, GWL_USERDATA);
+
+    switch (uMsg)
+    {
+	case WM_KILLFOCUS:
+	    break;
+
+	case WM_CHAR:
+	    if (VK_RETURN == (INT)wParam)
+	    {
+		cancel = FALSE;
+		break;
+	    }
+	    else if (VK_ESCAPE == (INT)wParam)
+		break;
+
+	default:
+	    return CallWindowProcA(einfo->EditWndProc, hwnd, 
+			uMsg, wParam, lParam);
+    }
+
+    SetWindowLongA(hwnd, GWL_WNDPROC, (LONG)einfo->EditWndProc);
+    if (einfo->EditLblCb)
+    {
+	char *buffer  = NULL;
+
+	if (!cancel)
+	{
+	    int len = 1 + GetWindowTextLengthA(hwnd);
+
+	    if (len > 1)
+	    {
+		if (NULL != (buffer = (char *)COMCTL32_Alloc(len*sizeof(char))))
+		{
+		    GetWindowTextA(hwnd, buffer, len);
+		}
+	    }
+	}
+	    
+	einfo->EditLblCb(GetParent(hwnd), buffer, einfo->param);
+
+	if (buffer)
+	    COMCTL32_Free(buffer);
+    }
+
+    COMCTL32_Free(einfo);
+    PostMessageA(hwnd, WM_CLOSE, 0, 0);
+    return TRUE;
+}
+
+
+/***
+ * DESCRIPTION:
+ * Creates a subclassed edit cotrol
+ *
+ * PARAMETER(S):
+ *
+ * RETURN:
+ */
+HWND CreateEditLabel(LPCSTR text, DWORD style, INT x, INT y, 
+	INT width, INT height, HWND parent, HINSTANCE hinst, 
+	EditlblCallback EditLblCb, DWORD param)
+{
+    HWND hedit;
+    EDITLABEL_ITEM *einfo;
+ 
+    if (NULL == (einfo = COMCTL32_Alloc(sizeof(EDITLABEL_ITEM))))
+	return 0;
+
+    style |= WS_CHILDWINDOW|WS_CLIPSIBLINGS|ES_LEFT|WS_BORDER;
+    if (!(hedit = CreateWindowA("Edit", text, style, x, y, width, height, 
+		    parent, 0, hinst, 0)))
+    {
+	COMCTL32_Free(einfo);
+	return 0;
+    }
+
+    einfo->param = param;
+    einfo->EditLblCb = EditLblCb;
+    einfo->EditWndProc = (WNDPROC)SetWindowLongA(hedit, 
+	  GWL_WNDPROC, (LONG) EditLblWndProc);
+
+    SetWindowLongA(hedit, GWL_USERDATA, (LONG)einfo);
+
+    return hedit;
+}

@@ -60,6 +60,8 @@ typedef struct tagLISTVIEW_INFO
     HDPA hdpaItems;
     PFNLVCOMPARE pfnCompare;
     LPARAM lParamSort;
+    HWND hwndEdit;
+    LISTVIEW_ITEM *lpeditItem;
     
 } LISTVIEW_INFO;
 
