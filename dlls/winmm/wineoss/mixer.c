@@ -45,9 +45,11 @@
 #include "oss.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(mmaux);
+WINE_DEFAULT_DEBUG_CHANNEL(mixer);
 
 #ifdef HAVE_OSS
+
+#define MAX_MIXERDRV     (6)
 
 #define	WINE_MIXER_MANUF_ID		0xAA
 #define	WINE_MIXER_PRODUCT_ID		0x55
@@ -96,7 +98,7 @@ struct mixer
 #define LINEID_RECORD	0x0001
 
 static int		MIX_NumMixers;
-static struct mixer	MIX_Mixers[1];
+static struct mixer	MIX_Mixers[MAX_MIXERDRV];
 
 /**************************************************************************
  * 				MIX_FillLineControls		[internal]
@@ -105,6 +107,8 @@ static void MIX_FillLineControls(struct mixer* mix, int c, DWORD lineID, DWORD d
 {
     struct mixerCtrl* 	mc = &mix->ctrl[c];
     int			j;
+
+    TRACE("(%p, %d, %ld, %08lx)\n", mix, c, lineID, dwType);
 
     mc->dwLineID = lineID;
     mc->ctrl.cbStruct = sizeof(MIXERCONTROLA);
@@ -127,6 +131,7 @@ static void MIX_FillLineControls(struct mixer* mix, int c, DWORD lineID, DWORD d
 	mc->ctrl.Bounds.s1.dwMinimum = 0;
 	mc->ctrl.Bounds.s1.dwMaximum = 65535;
 	memset(&mc->ctrl.Metrics, 0, sizeof(mc->ctrl.Metrics));
+        mc->ctrl.Metrics.cSteps = 1;
 	break;
     case MIXERCONTROL_CONTROLTYPE_MUTE:
     case MIXERCONTROL_CONTROLTYPE_ONOFF:
@@ -165,7 +170,11 @@ static void MIX_FillLineControls(struct mixer* mix, int c, DWORD lineID, DWORD d
  */
 static struct mixer*	MIX_Get(WORD wDevID)
 {
-    if (wDevID >= MIX_NumMixers || MIX_Mixers[wDevID].name == NULL) return NULL;
+    TRACE("(%04x)\n", wDevID);
+
+    if (wDevID >= MIX_NumMixers || MIX_Mixers[wDevID].name == NULL)
+        return NULL;
+
     return &MIX_Mixers[wDevID];
 }
 
@@ -187,13 +196,17 @@ static DWORD MIX_Open(WORD wDevID, LPMIXEROPENDESC lpMod, DWORD flags)
      * messages to it... it seems to be linked to all the equivalent of mixer identification
      * (with a reference to a wave, midi.. handle
      */
-    if (!(mix = MIX_Get(wDevID))) return MMSYSERR_BADDEVICEID;
+    if (!(mix = MIX_Get(wDevID))) {
+        WARN("bad device ID\n");
+        return MMSYSERR_BADDEVICEID;
+    }
 
     if ((mixer = open(mix->name, O_RDWR)) < 0)
     {
 	if (errno == ENODEV || errno == ENXIO)
 	{
 	    /* no driver present */
+            WARN("no driver\n");
 	    return MMSYSERR_NODRIVER;
 	}
 	return MMSYSERR_ERROR;
@@ -201,20 +214,24 @@ static DWORD MIX_Open(WORD wDevID, LPMIXEROPENDESC lpMod, DWORD flags)
 
     if (ioctl(mixer, SOUND_MIXER_READ_DEVMASK, &mix->devMask) == -1)
     {
-	perror("ioctl mixer SOUND_MIXER_DEVMASK");
+	ERR("ioctl(%s, SOUND_MIXER_DEVMASK) failed (%s)\n",
+            mix->name, strerror(errno));
 	ret = MMSYSERR_ERROR;
 	goto error;
     }
+
     mix->devMask &= WINE_MIXER_MASK_SPEAKER;
     if (mix->devMask == 0)
     {
+        WARN("no driver\n");
 	ret = MMSYSERR_NODRIVER;
 	goto error;
     }
 
     if (ioctl(mixer, SOUND_MIXER_READ_STEREODEVS, &mix->stereoMask) == -1)
     {
-	perror("ioctl mixer SOUND_MIXER_STEREODEVS");
+	ERR("ioctl(%s, SOUND_MIXER_STEREODEVS) failed (%s)\n",
+            mix->name, strerror(errno));
 	ret = MMSYSERR_ERROR;
 	goto error;
     }
@@ -222,7 +239,8 @@ static DWORD MIX_Open(WORD wDevID, LPMIXEROPENDESC lpMod, DWORD flags)
 
     if (ioctl(mixer, SOUND_MIXER_READ_RECMASK, &mix->recMask) == -1)
     {
-	perror("ioctl mixer SOUND_MIXER_RECMASK");
+	ERR("ioctl(%s, SOUND_MIXER_RECMASK) failed (%s)\n",
+            mix->name, strerror(errno));
 	ret = MMSYSERR_ERROR;
 	goto error;
     }
@@ -236,7 +254,8 @@ static DWORD MIX_Open(WORD wDevID, LPMIXEROPENDESC lpMod, DWORD flags)
     }
     if (ioctl(mixer, SOUND_MIXER_READ_CAPS, &caps) == -1)
     {
-	perror("ioctl mixer SOUND_MIXER_READ_CAPS");
+	ERR("ioctl(%s, SOUND_MIXER_READ_CAPS) failed (%s)\n",
+            mix->name, strerror(errno));
 	ret = MMSYSERR_ERROR;
 	goto error;
     }
@@ -258,7 +277,7 @@ static DWORD MIX_Open(WORD wDevID, LPMIXEROPENDESC lpMod, DWORD flags)
 	    mix->numCtrl += 2; /* volume & onoff */
 
     }
-    if (!(mix->ctrl = HeapAlloc(GetProcessHeap(), 0, sizeof(mix->ctrl[0]) * mix->numCtrl)))
+    if (!(mix->ctrl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(mix->ctrl[0]) * mix->numCtrl)))
     {
 	ret = MMSYSERR_NOMEM;
 	goto error;
@@ -305,6 +324,8 @@ static	BOOL	MIX_GetVal(struct mixer* mix, int chn, int* val)
     int		mixer;
     BOOL	ret = FALSE;
 
+    TRACE("(%p, %d, %p\n", mix, chn, val);
+
     if ((mixer = open(mix->name, O_RDWR)) < 0)
     {
 	/* FIXME: ENXIO => no mixer installed */
@@ -330,7 +351,7 @@ static	BOOL	MIX_SetVal(struct mixer* mix, int chn, int val)
     int		mixer;
     BOOL	ret = FALSE;
 
-    TRACE("Writing volume %x on %d\n", val, chn);
+    TRACE("(%p, %d, %x\n", mix, chn, val);
 
     if ((mixer = open(mix->name, O_RDWR)) < 0)
     {
@@ -358,6 +379,8 @@ static BOOL	MIX_GetRecSrc(struct mixer* mix, unsigned* mask)
     int		mixer;
     BOOL	ret = FALSE;
 
+    TRACE("(%p, %p)\n", mix, mask);
+
     if ((mixer = open(mix->name, O_RDWR)) >= 0)
     {
 	if (ioctl(mixer, SOUND_MIXER_READ_RECSRC, &mask) >= 0) ret = TRUE;
@@ -375,6 +398,8 @@ static BOOL	MIX_SetRecSrc(struct mixer* mix, unsigned mask)
 {
     int		mixer;
     BOOL	ret = FALSE;
+
+    TRACE("(%p, %08x)\n", mix, mask);
 
     if ((mixer = open(mix->name, O_RDWR)) >= 0)
     {
@@ -399,8 +424,15 @@ static DWORD MIX_GetDevCaps(WORD wDevID, LPMIXERCAPSA lpCaps, DWORD dwSize)
 
     TRACE("(%04X, %p, %lu);\n", wDevID, lpCaps, dwSize);
 
-    if (lpCaps == NULL) return MMSYSERR_INVALPARAM;
-    if (!(mix = MIX_Get(wDevID))) return MMSYSERR_BADDEVICEID;
+    if (lpCaps == NULL) {
+        WARN("invalid parameter: lpCaps == NULL\n");
+        return MMSYSERR_INVALPARAM;
+    }
+
+    if (!(mix = MIX_Get(wDevID))) {
+        WARN("bad device ID\n");
+        return MMSYSERR_BADDEVICEID;
+    }
 
     capsA.wMid = WINE_MIXER_MANUF_ID;
     capsA.wPid = WINE_MIXER_PRODUCT_ID;
@@ -422,6 +454,8 @@ static	DWORD	MIX_GetLineInfoDst(struct mixer* mix, LPMIXERLINEA lpMl, DWORD dst)
 {
     unsigned mask;
     int	j;
+
+    TRACE("(%p, %p, %08lx)\n", mix, lpMl, dst);
 
     lpMl->dwDestination = dst;
     switch (dst)
@@ -468,6 +502,8 @@ static	DWORD	MIX_GetLineInfoSrc(struct mixer* mix, LPMIXERLINEA lpMl, DWORD idx,
 {
     int		i, j;
     unsigned	mask = (dst) ? mix->recMask : mix->devMask;
+
+    TRACE("(%p, %p, %ld, %08lx)\n", mix, lpMl, idx, dst);
 
     strcpy(lpMl->szShortName, MIX_Labels[idx]);
     strcpy(lpMl->szName, MIX_Names[idx]);
@@ -529,6 +565,8 @@ static	DWORD	MIX_GetLineInfoSrc(struct mixer* mix, LPMIXERLINEA lpMl, DWORD idx,
  */
 static BOOL MIX_CheckLine(DWORD lineID)
 {
+    TRACE("(%08lx)\n",lineID);
+
     return ((HIWORD(lineID) < SOUND_MIXER_NRDEVICES && LOWORD(lineID) < 2) ||
 	    (HIWORD(lineID) == LINEID_DST && LOWORD(lineID) < SOUND_MIXER_NRDEVICES));
 }
@@ -545,9 +583,15 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEA lpMl, DWORD fdwInfo)
 
     TRACE("(%04X, %p, %lu);\n", wDevID, lpMl, fdwInfo);
 
-    if (lpMl == NULL || lpMl->cbStruct != sizeof(*lpMl))
+    if (lpMl == NULL || lpMl->cbStruct != sizeof(*lpMl)) {
+        WARN("invalid parameter\n");
 	return MMSYSERR_INVALPARAM;
-    if ((mix = MIX_Get(wDevID)) == NULL) return MMSYSERR_BADDEVICEID;
+    }
+
+    if ((mix = MIX_Get(wDevID)) == NULL) {
+        WARN("bad device ID\n");
+        return MMSYSERR_BADDEVICEID;
+    }
 
     /* FIXME: set all the variables correctly... the lines below
      * are very wrong...
@@ -559,8 +603,10 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEA lpMl, DWORD fdwInfo)
     {
     case MIXER_GETLINEINFOF_DESTINATION:
 	TRACE("DESTINATION (%08lx)\n", lpMl->dwDestination);
-	if (lpMl->dwDestination >= 2)
+	if (lpMl->dwDestination >= 2) {
+            WARN("invalid parameter\n");
 	    return MMSYSERR_INVALPARAM;
+        }
 	if ((ret = MIX_GetLineInfoDst(mix, lpMl, lpMl->dwDestination)) != MMSYSERR_NOERROR)
 	    return ret;
 	break;
@@ -570,7 +616,9 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEA lpMl, DWORD fdwInfo)
 	{
 	case 0: mask = mix->devMask; break;
 	case 1: mask = mix->recMask; break;
-	default: return MMSYSERR_INVALPARAM;
+	default: 
+            WARN("invalid parameter\n");
+            return MMSYSERR_INVALPARAM;
 	}
 	i = lpMl->dwSource;
 	for (j = 0; j < SOUND_MIXER_NRDEVICES; j++)
@@ -578,16 +626,20 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEA lpMl, DWORD fdwInfo)
 	    if (WINE_CHN_SUPPORTS(mask, j) && (i-- == 0))
 		break;
 	}
-	if (j >= SOUND_MIXER_NRDEVICES)
+	if (j >= SOUND_MIXER_NRDEVICES) {
+            WARN("invalid line\n");
 	    return MIXERR_INVALLINE;
+        }
 	if ((ret = MIX_GetLineInfoSrc(mix, lpMl, j, lpMl->dwDestination)) != MMSYSERR_NOERROR)
 	    return ret;
 	break;
     case MIXER_GETLINEINFOF_LINEID:
 	TRACE("LINEID (%08lx)\n", lpMl->dwLineID);
 
-	if (!MIX_CheckLine(lpMl->dwLineID))
+	if (!MIX_CheckLine(lpMl->dwLineID)) {
+            WARN("invalid line\n");
 	    return MIXERR_INVALLINE;
+        }
 	if (HIWORD(lpMl->dwLineID) == LINEID_DST)
 	    ret = MIX_GetLineInfoDst(mix, lpMl, LOWORD(lpMl->dwLineID));
 	else
@@ -658,18 +710,29 @@ static BOOL	MIX_CheckControl(struct mixer* mix, DWORD ctrlID)
 /**************************************************************************
  * 				MIX_GetLineControls		[internal]
  */
-static	DWORD	MIX_GetLineControls(WORD wDevID, LPMIXERLINECONTROLSA lpMlc, DWORD flags)
+static	DWORD	MIX_GetLineControls(WORD wDevID, LPMIXERLINECONTROLSA lpMlc,
+                                    DWORD flags)
 {
     DWORD		dwRet = MMSYSERR_NOERROR;
     struct mixer*	mix;
 
     TRACE("(%04X, %p, %lu);\n", wDevID, lpMlc, flags);
 
-    if (lpMlc == NULL) return MMSYSERR_INVALPARAM;
+    if (lpMlc == NULL) {
+        WARN("invalid parameter: lpMlc == NULL\n");
+        return MMSYSERR_INVALPARAM;
+    }
+
     if (lpMlc->cbStruct < sizeof(*lpMlc) ||
-	lpMlc->cbmxctrl < sizeof(MIXERCONTROLA))
+	lpMlc->cbmxctrl < sizeof(MIXERCONTROLA)) {
+        WARN("invalid parameter: lpMlc\n");
 	return MMSYSERR_INVALPARAM;
-    if ((mix = MIX_Get(wDevID)) == NULL) return MMSYSERR_BADDEVICEID;
+    }
+
+    if ((mix = MIX_Get(wDevID)) == NULL) {
+        WARN("bad device id\n");
+        return MMSYSERR_BADDEVICEID;
+    }
 
     switch (flags & MIXER_GETLINECONTROLSF_QUERYMASK)
     {
@@ -677,22 +740,28 @@ static	DWORD	MIX_GetLineControls(WORD wDevID, LPMIXERLINECONTROLSA lpMlc, DWORD 
         {
 	    int		i, j;
 
-	    TRACE("line=%08lx GLCF_ALL (%ld)\n", lpMlc->dwLineID, lpMlc->cControls);
+	    TRACE("line=%08lx GLCF_ALL (%ld)\n", lpMlc->dwLineID,
+                  lpMlc->cControls);
 
 	    for (i = j = 0; i < mix->numCtrl; i++)
 	    {
 		if (mix->ctrl[i].dwLineID == lpMlc->dwLineID)
 		    j++;
 	    }
-	    if (!j || lpMlc->cControls != j)		dwRet = MMSYSERR_INVALPARAM;
-	    else if (!MIX_CheckLine(lpMlc->dwLineID))	dwRet = MIXERR_INVALLINE;
-	    else
-	    {
+
+	    if (!j || lpMlc->cControls != j) {
+                WARN("invalid parameter\n");
+                dwRet = MMSYSERR_INVALPARAM;
+	    } else if (!MIX_CheckLine(lpMlc->dwLineID)) {
+                WARN("invalid line\n");
+                dwRet = MIXERR_INVALLINE;
+	    } else {
 		for (i = j = 0; i < mix->numCtrl; i++)
 		{
 		    if (mix->ctrl[i].dwLineID == lpMlc->dwLineID)
 		    {
-			TRACE("[%d] => [%2d]: typ=%08lx\n", j, i + 1, mix->ctrl[i].ctrl.dwControlType);
+			TRACE("[%d] => [%2d]: typ=%08lx\n", j, i + 1,
+                              mix->ctrl[i].ctrl.dwControlType);
 			lpMlc->pamxctrl[j++] = mix->ctrl[i].ctrl;
 		    }
 		}
@@ -700,32 +769,38 @@ static	DWORD	MIX_GetLineControls(WORD wDevID, LPMIXERLINECONTROLSA lpMlc, DWORD 
 	}
 	break;
     case MIXER_GETLINECONTROLSF_ONEBYID:
-	TRACE("line=%08lx GLCF_ONEBYID (%lx)\n", lpMlc->dwLineID, lpMlc->u.dwControlID);
+	TRACE("line=%08lx GLCF_ONEBYID (%lx)\n", lpMlc->dwLineID,
+              lpMlc->u.dwControlID);
 
 	if (!MIX_CheckControl(mix, lpMlc->u.dwControlID) ||
-	    mix->ctrl[lpMlc->u.dwControlID - 1].dwLineID != lpMlc->dwLineID)
+	    mix->ctrl[lpMlc->u.dwControlID - 1].dwLineID != lpMlc->dwLineID) {
+            WARN("invalid parameter\n");
 	    dwRet = MMSYSERR_INVALPARAM;
-	else
+	} else
 	    lpMlc->pamxctrl[0] = mix->ctrl[lpMlc->u.dwControlID - 1].ctrl;
 	break;
     case MIXER_GETLINECONTROLSF_ONEBYTYPE:
-	TRACE("line=%08lx GLCF_ONEBYTYPE (%lx)\n", lpMlc->dwLineID, lpMlc->u.dwControlType);
-	if (!MIX_CheckLine(lpMlc->dwLineID))	dwRet = MIXERR_INVALLINE;
-	else
-	{
-	    int		i;
-	    DWORD	ct = lpMlc->u.dwControlType & MIXERCONTROL_CT_CLASS_MASK;
-
-	    for (i = 0; i < mix->numCtrl; i++)
-	    {
+	TRACE("line=%08lx GLCF_ONEBYTYPE (%lx)\n", lpMlc->dwLineID,
+              lpMlc->u.dwControlType);
+	if (!MIX_CheckLine(lpMlc->dwLineID)) {
+            WARN("invalid line\n");
+            dwRet = MIXERR_INVALLINE;
+	} else {
+	    int	  i;
+	    DWORD ct = lpMlc->u.dwControlType & MIXERCONTROL_CT_CLASS_MASK;
+	    for (i = 0; i < mix->numCtrl; i++) {
 		if (mix->ctrl[i].dwLineID == lpMlc->dwLineID &&
-		    ct == (mix->ctrl[i].ctrl.dwControlType & MIXERCONTROL_CT_CLASS_MASK))
-		{
+		    ct == (mix->ctrl[i].ctrl.dwControlType &
+                    MIXERCONTROL_CT_CLASS_MASK)) {
 		    lpMlc->pamxctrl[0] = mix->ctrl[i].ctrl;
 		    break;
 		}
 	    }
-	    if (i == mix->numCtrl) dwRet = MMSYSERR_INVALPARAM;
+
+	    if (i == mix->numCtrl) {
+                WARN("invalid parameter\n");
+                dwRet = MMSYSERR_INVALPARAM;
+            }
 	}
 	break;
     default:
@@ -747,8 +822,15 @@ static	DWORD	MIX_GetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd, DWO
 
     TRACE("(%04X, %p, %lu);\n", wDevID, lpmcd, fdwDetails);
 
-    if (lpmcd == NULL) return MMSYSERR_INVALPARAM;
-    if ((mix = MIX_Get(wDevID)) == NULL) return MMSYSERR_BADDEVICEID;
+    if (lpmcd == NULL) {
+        WARN("invalid parameter: lpmcd == NULL\n");
+        return MMSYSERR_INVALPARAM;
+    }
+
+    if ((mix = MIX_Get(wDevID)) == NULL) {
+        WARN("bad device ID\n");
+        return MMSYSERR_BADDEVICEID;
+    }
 
     switch (fdwDetails & MIXER_GETCONTROLDETAILSF_QUERYMASK)
     {
@@ -895,8 +977,15 @@ static	DWORD	MIX_SetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd, DWO
 
     TRACE("(%04X, %p, %lu);\n", wDevID, lpmcd, fdwDetails);
 
-    if (lpmcd == NULL) return MMSYSERR_INVALPARAM;
-    if ((mix = MIX_Get(wDevID)) == NULL) return MMSYSERR_BADDEVICEID;
+    if (lpmcd == NULL) {
+        TRACE("invalid parameter: lpmcd == NULL\n");
+        return MMSYSERR_INVALPARAM;
+    }
+
+    if ((mix = MIX_Get(wDevID)) == NULL) {
+        WARN("bad device ID\n");
+        return MMSYSERR_BADDEVICEID;
+    }
 
     switch (fdwDetails & MIXER_GETCONTROLDETAILSF_QUERYMASK)
     {
@@ -1025,12 +1114,15 @@ static	DWORD	MIX_Init(void)
 {
     int	mixer;
 
+    TRACE("()\n");
+
 #define MIXER_DEV "/dev/mixer"
     if ((mixer = open(MIXER_DEV, O_RDWR)) < 0)
     {
 	if (errno == ENODEV || errno == ENXIO)
 	{
 	    /* no driver present */
+            WARN("no driver\n");
 	    return MMSYSERR_NODRIVER;
 	}
 	MIX_NumMixers = 0;
@@ -1049,6 +1141,8 @@ static	DWORD	MIX_Init(void)
  */
 static	DWORD	MIX_GetNumDevs(void)
 {
+    TRACE("()\n");
+
     return MIX_NumMixers;
 }
 
@@ -1060,7 +1154,7 @@ static	DWORD	MIX_GetNumDevs(void)
 DWORD WINAPI OSS_mxdMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-/* TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n", wDevID, wMsg, dwUser, dwParam1, dwParam2); */
+    TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
 #ifdef HAVE_OSS
     switch (wMsg)
