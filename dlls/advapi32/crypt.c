@@ -98,9 +98,10 @@ static inline BOOL CRYPT_UnicodeToANSI(LPCWSTR wstr, LPSTR* str, int strsize)
 		return TRUE;
 	}
 	count = WideCharToMultiByte(CP_ACP, 0, wstr, -1, NULL, 0, NULL, NULL);
-	count = count < strsize ? count : strsize;
 	if (strsize == -1)
 		*str = CRYPT_Alloc(count * sizeof(CHAR));
+	else
+		count = min( count, strsize );
 	if (*str)
 	{
 		WideCharToMultiByte(CP_ACP, 0, wstr, -1, *str, count, NULL, NULL);
@@ -125,9 +126,10 @@ static inline BOOL CRYPT_ANSIToUnicode(LPCSTR str, LPWSTR* wstr, int wstrsize)
 		return TRUE;
 	}
 	wcount = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-	wcount = wcount < wstrsize/sizeof(WCHAR) ? wcount : wstrsize/sizeof(WCHAR);
 	if (wstrsize == -1)
 		*wstr = CRYPT_Alloc(wcount * sizeof(WCHAR));
+	else
+		wcount = min( wcount, wstrsize/sizeof(WCHAR) );
 	if (*wstr)
 	{
 		MultiByteToWideChar(CP_ACP, 0, str, -1, *wstr, wcount);
