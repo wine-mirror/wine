@@ -934,6 +934,7 @@ HRESULT WINAPI IDirectSoundImpl_Create(
     }
 
     InitializeCriticalSection(&(pDS->mixlock));
+    pDS->mixlock.DebugInfo->Spare[1] = (DWORD)"DSOUND_mixlock";
     RtlInitializeResource(&(pDS->lock));
 
     *ppDS = (LPDIRECTSOUND8)pDS;
