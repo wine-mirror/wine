@@ -237,7 +237,7 @@ file	krnl386.exe
 228 pascal16 K228(word) GetExePtr
 229 pascal16 K229(long) Local32GetSegment16
 230 pascal GlobalSmartPageLock(word) GlobalPageLock16 #?
-231 stub GlobalSmartPageUnlock
+231 pascal GlobalSmartPageUnlock(word) GlobalPageUnlock16 #?
 232 stub RegLoadKey
 233 stub RegUnloadKey
 234 stub RegSaveKey
