@@ -98,6 +98,7 @@ BASEDIRS = \
 	tapi32 \
 	ttydrv \
 	twain \
+	unicows \
 	url \
 	urlmon \
 	user \
@@ -293,6 +294,7 @@ SYMLINKS = \
 	tapi32.dll$(DLLEXT) \
 	ttydrv.dll$(DLLEXT) \
 	twain_32.dll$(DLLEXT) \
+	unicows.dll$(DLLEXT) \
 	url.dll$(DLLEXT) \
 	urlmon.dll$(DLLEXT) \
 	user32.dll$(DLLEXT) \
@@ -618,6 +620,9 @@ ttydrv.dll$(DLLEXT): ttydrv/ttydrv.dll$(DLLEXT)
 twain_32.dll$(DLLEXT): twain/twain_32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) twain/twain_32.dll$(DLLEXT) $@
 
+unicows.dll$(DLLEXT): unicows/unicows.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) unicows/unicows.dll$(DLLEXT) $@
+
 url.dll$(DLLEXT): url/url.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) url/url.dll$(DLLEXT) $@
 
@@ -788,6 +793,7 @@ IMPORT_LIBS = \
 	libtapi32 \
 	libttydrv \
 	libtwain_32 \
+	libunicows \
 	liburl \
 	liburlmon \
 	libuser32 \
@@ -1229,6 +1235,11 @@ libtwain_32.def: twain/twain_32.spec.def
 libtwain_32.a: twain/twain_32.spec.def
 	$(DLLTOOL) -k -l $@ -d twain/twain_32.spec.def
 
+libunicows.def: unicows/unicows.spec.def
+	$(RM) $@ && $(LN_S) unicows/unicows.spec.def $@
+libunicows.a: unicows/unicows.spec.def
+	$(DLLTOOL) -k -l $@ -d unicows/unicows.spec.def
+
 liburl.def: url/url.spec.def
 	$(RM) $@ && $(LN_S) url/url.spec.def $@
 liburl.a: url/url.spec.def
@@ -1413,6 +1424,7 @@ sti/sti.spec.def: $(WINEBUILD)
 tapi32/tapi32.spec.def: $(WINEBUILD)
 ttydrv/ttydrv.spec.def: $(WINEBUILD)
 twain/twain_32.spec.def: $(WINEBUILD)
+unicows/unicows.spec.def: $(WINEBUILD)
 url/url.spec.def: $(WINEBUILD)
 urlmon/urlmon.spec.def: $(WINEBUILD)
 user/user32.spec.def: $(WINEBUILD)
@@ -1536,6 +1548,7 @@ sti/sti.dll$(DLLEXT): sti
 tapi32/tapi32.dll$(DLLEXT): tapi32
 ttydrv/ttydrv.dll$(DLLEXT): ttydrv
 twain/twain_32.dll$(DLLEXT): twain
+unicows/unicows.dll$(DLLEXT): unicows
 url/url.dll$(DLLEXT): url
 urlmon/urlmon.dll$(DLLEXT): urlmon
 user/user32.dll$(DLLEXT): user

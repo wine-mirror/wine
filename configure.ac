@@ -1578,6 +1578,7 @@ dlls/sti/Makefile
 dlls/tapi32/Makefile
 dlls/ttydrv/Makefile
 dlls/twain/Makefile
+dlls/unicows/Makefile
 dlls/url/Makefile
 dlls/urlmon/Makefile
 dlls/urlmon/tests/Makefile
