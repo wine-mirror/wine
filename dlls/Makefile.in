@@ -47,6 +47,7 @@ BASEDIRS = \
 	dpnhpast \
 	dsound \
 	gdi \
+	iccvid \
 	icmp \
 	imagehlp \
 	imm32 \
@@ -239,6 +240,7 @@ SYMLINKS = \
 	dpnhpast.dll$(DLLEXT) \
 	dsound.dll$(DLLEXT) \
 	gdi32.dll$(DLLEXT) \
+	iccvid.dll$(DLLEXT) \
 	icmp.dll$(DLLEXT) \
 	imaadp32.acm$(DLLEXT) \
 	imagehlp.dll$(DLLEXT) \
@@ -455,6 +457,9 @@ glu32.dll$(DLLEXT): glu32/glu32.dll$(DLLEXT)
 
 glut32.dll$(DLLEXT): glut32/glut32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) glut32/glut32.dll$(DLLEXT) $@
+
+iccvid.dll$(DLLEXT): iccvid/iccvid.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) iccvid/iccvid.dll$(DLLEXT) $@
 
 icmp.dll$(DLLEXT): icmp/icmp.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) icmp/icmp.dll$(DLLEXT) $@
@@ -838,6 +843,7 @@ IMPORT_LIBS = \
 	libgdi32 \
 	libglu32 \
 	libglut32 \
+	libiccvid \
 	libicmp \
 	libimagehlp \
 	libimm32 \
@@ -1094,6 +1100,11 @@ libglut32.def: glut32/glut32.spec.def
 	$(RM) $@ && $(LN_S) glut32/glut32.spec.def $@
 libglut32.a: glut32/glut32.spec.def
 	$(DLLTOOL) -k -l $@ -d glut32/glut32.spec.def
+
+libiccvid.def: iccvid/iccvid.spec.def
+	$(RM) $@ && $(LN_S) iccvid/iccvid.spec.def $@
+libiccvid.a: iccvid/iccvid.spec.def
+	$(DLLTOOL) -k -l $@ -d iccvid/iccvid.spec.def
 
 libicmp.def: icmp/icmp.spec.def
 	$(RM) $@ && $(LN_S) icmp/icmp.spec.def $@
@@ -1487,6 +1498,7 @@ dsound/dsound.spec.def: $(WINEBUILD)
 gdi/gdi32.spec.def: $(WINEBUILD)
 glu32/glu32.spec.def: $(WINEBUILD)
 glut32/glut32.spec.def: $(WINEBUILD)
+iccvid/iccvid.spec.def: $(WINEBUILD)
 icmp/icmp.spec.def: $(WINEBUILD)
 imagehlp/imagehlp.spec.def: $(WINEBUILD)
 imm32/imm32.spec.def: $(WINEBUILD)
@@ -1602,6 +1614,7 @@ dsound/dsound.dll$(DLLEXT): dsound
 gdi/gdi32.dll$(DLLEXT): gdi
 glu32/glu32.dll$(DLLEXT): glu32
 glut32/glut32.dll$(DLLEXT): glut32
+iccvid/iccvid.dll$(DLLEXT): iccvid
 icmp/icmp.dll$(DLLEXT): icmp
 msacm/imaadp32/imaadp32.acm$(DLLEXT): msacm/imaadp32
 imagehlp/imagehlp.dll$(DLLEXT): imagehlp

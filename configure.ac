@@ -1523,6 +1523,7 @@ dlls/gdi/Makefile
 dlls/gdi/tests/Makefile
 dlls/glu32/Makefile
 dlls/glut32/Makefile
+dlls/iccvid/Makefile
 dlls/icmp/Makefile
 dlls/imagehlp/Makefile
 dlls/imm32/Makefile
