@@ -154,6 +154,8 @@ int sqliteKeywordCode(const WCHAR *z, int n){
   char buffer[0x10];
 
   len = WideCharToMultiByte( CP_ACP, 0, z, n, buffer, sizeof buffer, NULL, NULL );
+  for(i=0; i<len; i++)
+      buffer[i] = toupper(buffer[i]);
   for(i=0; i<KEYWORD_COUNT; i++)
   {
       if(memcmp(buffer, aKeywordTable[i].zName, len))
