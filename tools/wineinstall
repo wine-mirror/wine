@@ -122,7 +122,7 @@ then {
 if ! [ -f configure ]
 then {
   echo "You're running this from the wrong directory."
-  echo "Change to the Wine directory and try again."
+  echo "Change to the Wine source's main directory and try again."
   exit 1
 }
 fi
@@ -141,6 +141,7 @@ if [ $RET -eq 0 ]; then
         echo Done.
       else
         echo "FAILED. Probably you aren't installing as root."
+	echo "Expect problems (library conflicts with existing install etc.)."
       fi
     else
       echo "Sorry, I won't install Wine when an rpm version is still installed."
