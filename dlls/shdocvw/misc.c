@@ -95,3 +95,11 @@ static IQuickActivateVtbl WBQA_Vtbl =
 };
 
 IQuickActivateImpl SHDOCVW_QuickActivate = { &WBQA_Vtbl, 1 };
+
+/**********************************************************************
+ * OpenURL  (SHDOCVW.@)
+ */
+void WINAPI OpenURL(HWND hWnd, HINSTANCE hInst, LPCSTR lpcstrUrl, int nShowCmd)
+{
+    FIXME("%p %p %s %d\n", hWnd, hInst, debugstr_a(lpcstrUrl), nShowCmd);
+}
