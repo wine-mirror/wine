@@ -22,6 +22,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define GLPRIVATE_NO_REDEFINE
+
 #include "config.h"
 
 #include <assert.h>
@@ -37,6 +39,12 @@
 /* This for all the enumeration and creation of D3D-related objects */
 #include "ddraw_private.h"
 #include "wine/debug.h"
+#include "wine/library.h"
+#include "wine/port.h"
+
+#include "gl_private.h"
+
+#undef GLPRIVATE_NO_REDEFINE
 
 #define MAX_DDRAW_DRIVERS 3
 static const ddraw_driver* DDRAW_drivers[MAX_DDRAW_DRIVERS];
@@ -54,6 +62,52 @@ typedef struct {
     LPVOID lpCallback;
     LPVOID lpContext;
 } DirectDrawEnumerateProcData;
+
+BOOL opengl_initialized = 0;
+
+#ifdef HAVE_OPENGL
+
+static void *gl_handle = NULL;
+
+#define GL_API_FUNCTION(f) typeof(f) * p##f;
+#include "gl_api.h"
+#undef GL_API_FUNCTION
+
+#ifndef SONAME_LIBGL
+#define SONAME_LIBGL "libGL.so"
+#endif
+
+static BOOL DDRAW_bind_to_opengl( void )
+{
+    char *glname = SONAME_LIBGL;
+
+    gl_handle = wine_dlopen(glname, RTLD_NOW, NULL, 0);
+    if (!gl_handle) {
+        WARN("Wine cannot find the OpenGL graphics library (%s).\n",glname);
+	return FALSE;
+    }
+
+#define GL_API_FUNCTION(f)  \
+    if((p##f = wine_dlsym(gl_handle, #f, NULL, 0)) == NULL) \
+    { \
+        WARN("Can't find symbol %s\n", #f); \
+        goto sym_not_found; \
+    }
+#include "gl_api.h"
+#undef GL_API_FUNCTION
+
+    return TRUE;
+
+sym_not_found:
+    WARN("Wine cannot find certain functions that it needs inside the OpenGL\n"
+	 "graphics library.  To enable Wine to use OpenGL please upgrade\n"
+	 "your OpenGL libraries\n");
+    wine_dlclose(gl_handle, NULL, 0);
+    gl_handle = NULL;
+    return FALSE;
+}
+
+#endif /* HAVE_OPENGL */
 
 /***********************************************************************
  *		DirectDrawEnumerateExA (DDRAW.@)
@@ -531,6 +585,9 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
             wine_tsx11_lock_ptr   = (void *)GetProcAddress( mod, "wine_tsx11_lock" );
             wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod, "wine_tsx11_unlock" );
         }
+#ifdef HAVE_OPENGL
+        opengl_initialized = DDRAW_bind_to_opengl();
+#endif /* HAVE_OPENGL */
     }
 
     if (DDRAW_num_drivers > 0)

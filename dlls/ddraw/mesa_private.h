@@ -26,26 +26,7 @@
 
 #ifdef HAVE_OPENGL
 
-#undef APIENTRY
-#undef CALLBACK
-#undef WINAPI
-
-#define XMD_H /* This is to prevent the Xmd.h inclusion bug :-/ */
-#include <GL/gl.h>
-#include <GL/glx.h>
-#ifdef HAVE_GL_GLEXT_H
-# include <GL/glext.h>
-#endif
-#undef  XMD_H
-
-#undef APIENTRY
-#undef CALLBACK
-#undef WINAPI
-
-/* Redefines the constants */
-#define CALLBACK    __stdcall
-#define WINAPI      __stdcall
-#define APIENTRY    WINAPI
+#include "gl_private.h"
 
 /* X11 locking */
 

@@ -138,11 +138,10 @@ static BOOL WINAPI set_hal_info(LPDDHALINFO lpDDHalInfo, BOOL reset)
 	dd_gbl.lpD3DHALCallbacks2 = (ULONG_PTR)&d3d_hal_cbs2;
     }
 
-#ifdef HAVE_OPENGL
-    if (d3d_hal_data.hwCaps.dwFlags & D3DDD_WINE_OPENGL_DEVICE) {
+    if( opengl_initialized && 
+           (d3d_hal_data.hwCaps.dwFlags & D3DDD_WINE_OPENGL_DEVICE) ) {
         /*GL_DirectDraw_Init(&dd_gbl);*/
     }
-#endif
 
     return FALSE;
 }

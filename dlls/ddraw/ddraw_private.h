@@ -355,6 +355,7 @@ typedef struct {
 
 extern Convert ModeEmulations[8];
 extern int _common_depth_to_pixelformat(DWORD depth,LPDIRECTDRAW ddraw);
+extern BOOL opengl_initialized;
 
 /******************************************************************************
  * Structure conversion (for thunks)

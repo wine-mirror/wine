@@ -179,8 +179,12 @@ Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
 	return S_OK;
     }
 #ifdef HAVE_OPENGL
-    else if ( IsEqualGUID( &IID_D3DDEVICE_OpenGL, riid ) ||
-	      IsEqualGUID( &IID_IDirect3DHALDevice, riid) )
+    /* interfaces following here require OpenGL */
+    if( !opengl_initialized )
+        return E_NOINTERFACE;
+
+    if ( IsEqualGUID( &IID_D3DDEVICE_OpenGL, riid ) ||
+	  IsEqualGUID( &IID_IDirect3DHALDevice, riid) )
     {
         IDirect3DDeviceImpl *d3ddevimpl;
 	HRESULT ret_value;
@@ -220,7 +224,7 @@ Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
 	}
 	This->ref++;
 	return ret_value;
-    }    
+    }
 #endif
 
     return E_NOINTERFACE;

@@ -173,10 +173,11 @@ HRESULT User_DirectDraw_Construct(IDirectDrawImpl *This, BOOL ex)
 		| DDFXCAPS_BLTSTRETCHX | DDFXCAPS_BLTSTRETCHXN		\
 		| DDFXCAPS_BLTSTRETCHY | DDFXCAPS_BLTSTRETCHYN)
     This->caps.dwCaps |= DDCAPS_GDI | DDCAPS_PALETTE | BLIT_CAPS;
-#ifdef HAVE_OPENGL
-    /* Hack for D3D code */
-    This->caps.dwCaps |= DDCAPS_3D;
-#endif /* HAVE_OPENGL */
+    if( opengl_initialized )
+    {
+        /* Hack for D3D code */
+        This->caps.dwCaps |= DDCAPS_3D;
+    }
     This->caps.dwCaps2 |= DDCAPS2_CERTIFIED | DDCAPS2_NOPAGELOCKREQUIRED |
 			  DDCAPS2_PRIMARYGAMMA | DDCAPS2_WIDESURFACES;
     This->caps.dwCKeyCaps |= CKEY_CAPS;
@@ -198,10 +199,11 @@ HRESULT User_DirectDraw_Construct(IDirectDrawImpl *This, BOOL ex)
 				 DDSCAPS_OFFSCREENPLAIN | DDSCAPS_PALETTE |
 				 DDSCAPS_PRIMARYSURFACE | DDSCAPS_SYSTEMMEMORY |
 				 DDSCAPS_VIDEOMEMORY | DDSCAPS_VISIBLE;
-#ifdef HAVE_OPENGL
-    /* Hacks for D3D code */
-    This->caps.ddsCaps.dwCaps |= DDSCAPS_3DDEVICE | DDSCAPS_MIPMAP | DDSCAPS_TEXTURE | DDSCAPS_ZBUFFER;
-#endif /* HAVE_OPENGL */
+    if( opengl_initialized )
+    {
+        /* Hacks for D3D code */
+        This->caps.ddsCaps.dwCaps |= DDSCAPS_3DDEVICE | DDSCAPS_MIPMAP | DDSCAPS_TEXTURE | DDSCAPS_ZBUFFER;
+    }
     
     This->caps.ddsOldCaps.dwCaps = This->caps.ddsCaps.dwCaps;
 #undef BLIT_CAPS

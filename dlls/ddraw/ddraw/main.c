@@ -184,28 +184,44 @@ HRESULT WINAPI Main_DirectDraw_QueryInterface(
 	      IsEqualGUID( &IID_IDirect3D3 , refiid ) ||
 	      IsEqualGUID( &IID_IDirect3D7 , refiid ) )
     {
-        IDirect3DImpl *d3d_impl;
-	HRESULT ret_value;
+        if (opengl_initialized) {
+	    IDirect3DImpl *d3d_impl;
+	    HRESULT ret_value;
 
-	ret_value = direct3d_create(&d3d_impl, This);
-	if (FAILED(ret_value)) return ret_value;
+	    ret_value = direct3d_create(&d3d_impl, This);
+	    if (FAILED(ret_value)) return ret_value;
+	    
+	    if ( IsEqualGUID( &IID_IDirect3D  , refiid ) ) {
+	        *obj = ICOM_INTERFACE(d3d_impl, IDirect3D);
+		TRACE(" returning Direct3D interface at %p.\n", *obj);	    
+	    } else if ( IsEqualGUID( &IID_IDirect3D2  , refiid ) ) {
+	        *obj = ICOM_INTERFACE(d3d_impl, IDirect3D2);
+		TRACE(" returning Direct3D2 interface at %p.\n", *obj);	    
+	    } else if ( IsEqualGUID( &IID_IDirect3D3  , refiid ) ) {
+	        *obj = ICOM_INTERFACE(d3d_impl, IDirect3D3);
+		TRACE(" returning Direct3D3 interface at %p.\n", *obj);	    
+	    } else {
+	        *obj = ICOM_INTERFACE(d3d_impl, IDirect3D7);
+		TRACE(" returning Direct3D7 interface at %p.\n", *obj);	    
+	    }
 
-	if ( IsEqualGUID( &IID_IDirect3D  , refiid ) ) {
-  	    *obj = ICOM_INTERFACE(d3d_impl, IDirect3D);
-	    TRACE(" returning Direct3D interface at %p.\n", *obj);	    
-	} else 	if ( IsEqualGUID( &IID_IDirect3D2  , refiid ) ) {
-  	    *obj = ICOM_INTERFACE(d3d_impl, IDirect3D2);
-	    TRACE(" returning Direct3D2 interface at %p.\n", *obj);	    
-	} else 	if ( IsEqualGUID( &IID_IDirect3D3  , refiid ) ) {
-  	    *obj = ICOM_INTERFACE(d3d_impl, IDirect3D3);
-	    TRACE(" returning Direct3D3 interface at %p.\n", *obj);	    
+	    /* And store the D3D object */
+	    This->d3d = d3d_impl;
 	} else {
-  	    *obj = ICOM_INTERFACE(d3d_impl, IDirect3D7);
-	    TRACE(" returning Direct3D7 interface at %p.\n", *obj);	    
+	    ERR("Application requests a Direct3D interface but dynamic OpenGL support loading failed !\n");
+	    ERR("(%p)->(%s,%p): no interface\n",This,debugstr_guid(refiid),obj);
+	    return E_NOINTERFACE;
 	}
-
-	/* And store the D3D object */
-	This->d3d = d3d_impl;
+    }
+#else
+    else if ( IsEqualGUID( &IID_IDirect3D  , refiid ) ||
+	      IsEqualGUID( &IID_IDirect3D2 , refiid ) ||
+	      IsEqualGUID( &IID_IDirect3D3 , refiid ) ||
+	      IsEqualGUID( &IID_IDirect3D7 , refiid ) )
+    {
+        ERR("Application requests a Direct3D interface but OpenGL support not built-in !\n");
+	ERR("(%p)->(%s,%p): no interface\n",This,debugstr_guid(refiid),obj);
+	return E_NOINTERFACE;
     }
 #endif
     else
