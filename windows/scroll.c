@@ -73,25 +73,6 @@ BOOL WINAPI ScrollWindow( HWND hwnd, INT dx, INT dy,
 }
 
 /*************************************************************************
- *		ScrollDC (USER.221)
- */
-BOOL16 WINAPI ScrollDC16( HDC16 hdc, INT16 dx, INT16 dy, const RECT16 *rect,
-                          const RECT16 *cliprc, HRGN16 hrgnUpdate,
-                          LPRECT16 rcUpdate )
-{
-    RECT rect32, clipRect32, rcUpdate32;
-    BOOL16 ret;
-
-    if (rect) CONV_RECT16TO32( rect, &rect32 );
-    if (cliprc) CONV_RECT16TO32( cliprc, &clipRect32 );
-    ret = ScrollDC( hdc, dx, dy, rect ? &rect32 : NULL,
-                      cliprc ? &clipRect32 : NULL, hrgnUpdate, &rcUpdate32 );
-    if (rcUpdate) CONV_RECT32TO16( &rcUpdate32, rcUpdate );
-    return ret;
-}
-
-
-/*************************************************************************
  *		ScrollDC (USER32.@)
  *
  *   Only the hrgnUpdate is return in device coordinate.

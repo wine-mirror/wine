@@ -582,7 +582,7 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
                                            lphc->droppedRect.right - lphc->droppedRect.left,
                                            lphc->droppedRect.bottom - lphc->droppedRect.top,
                                            hwnd, (HMENU)ID_CB_LISTBOX,
-                                           GetWindowLongA( hwnd, GWL_HINSTANCE ), lphc );
+                                           (HINSTANCE)GetWindowLongA( hwnd, GWL_HINSTANCE ), lphc );
       else
           lphc->hWndLBox = CreateWindowExA(lbeExStyle, "ComboLBox", NULL, lbeStyle,
                                            lphc->droppedRect.left,
@@ -590,7 +590,7 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
                                            lphc->droppedRect.right - lphc->droppedRect.left,
                                            lphc->droppedRect.bottom - lphc->droppedRect.top,
                                            hwnd, (HMENU)ID_CB_LISTBOX,
-                                           GetWindowLongA( hwnd, GWL_HINSTANCE ), lphc );
+                                           (HINSTANCE)GetWindowLongA( hwnd, GWL_HINSTANCE ), lphc );
 
       if( lphc->hWndLBox )
       {
@@ -623,14 +623,14 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
                                                    lphc->textRect.right - lphc->textRect.left,
                                                    lphc->textRect.bottom - lphc->textRect.top,
                                                    hwnd, (HMENU)ID_CB_EDIT,
-                                                   GetWindowLongA( hwnd, GWL_HINSTANCE ), NULL );
+                                                   (HINSTANCE)GetWindowLongA( hwnd, GWL_HINSTANCE ), NULL );
               else
                   lphc->hWndEdit = CreateWindowExA(0, "Edit", NULL, lbeStyle,
                                                    lphc->textRect.left, lphc->textRect.top,
                                                    lphc->textRect.right - lphc->textRect.left,
                                                    lphc->textRect.bottom - lphc->textRect.top,
                                                    hwnd, (HMENU)ID_CB_EDIT,
-                                                   GetWindowLongA( hwnd, GWL_HINSTANCE ), NULL );
+                                                   (HINSTANCE)GetWindowLongA( hwnd, GWL_HINSTANCE ), NULL );
 
 	      if( !lphc->hWndEdit )
 		bEdit = FALSE;
@@ -927,7 +927,8 @@ static HBRUSH COMBO_PrepareColors(
    */
   if (CB_DISABLED(lphc))
   {
-    hBkgBrush = SendMessageW(lphc->owner, WM_CTLCOLORSTATIC, hDC, (LPARAM)lphc->self );
+    hBkgBrush = (HBRUSH)SendMessageW(lphc->owner, WM_CTLCOLORSTATIC,
+				     (WPARAM)hDC, (LPARAM)lphc->self );
 
     /*
      * We have to change the text color since WM_CTLCOLORSTATIC will
@@ -940,11 +941,13 @@ static HBRUSH COMBO_PrepareColors(
   {
     if (lphc->wState & CBF_EDIT)
     {
-      hBkgBrush = SendMessageW(lphc->owner, WM_CTLCOLOREDIT, hDC, (LPARAM)lphc->self );
+      hBkgBrush = (HBRUSH)SendMessageW(lphc->owner, WM_CTLCOLOREDIT,
+				       (WPARAM)hDC, (LPARAM)lphc->self );
     }
     else
     {
-      hBkgBrush = SendMessageW(lphc->owner, WM_CTLCOLORLISTBOX, hDC, (LPARAM)lphc->self );
+      hBkgBrush = (HBRUSH)SendMessageW(lphc->owner, WM_CTLCOLORLISTBOX,
+				       (WPARAM)hDC, (LPARAM)lphc->self );
     }
   }
 
@@ -1946,14 +1949,14 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
 
         case WM_PRINTCLIENT:
 	        if (lParam & PRF_ERASEBKGND)
-		  COMBO_EraseBackground(hwnd, lphc, wParam);
+		  COMBO_EraseBackground(hwnd, lphc, (HDC)wParam);
 
 		/* Fallthrough */
      	case WM_PAINT:
 		/* wParam may contain a valid HDC! */
-		return  COMBO_Paint(lphc, wParam);
+		return  COMBO_Paint(lphc, (HDC)wParam);
 	case WM_ERASEBKGND:
-		return  COMBO_EraseBackground(hwnd, lphc, wParam);
+		return  COMBO_EraseBackground(hwnd, lphc, (HDC)wParam);
 	case WM_GETDLGCODE:
 	{
 		LRESULT result = DLGC_WANTARROWS | DLGC_WANTCHARS;
@@ -1980,7 +1983,7 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
 		  !(lphc->wState & CBF_NORESIZE) ) COMBO_Size( lphc );
 		return  TRUE;
 	case WM_SETFONT:
-		COMBO_Font( lphc, (HFONT16)wParam, (BOOL)lParam );
+		COMBO_Font( lphc, (HFONT)wParam, (BOOL)lParam );
 		return  TRUE;
 	case WM_GETFONT:
 		return  (LRESULT)lphc->hFont;

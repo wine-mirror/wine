@@ -488,7 +488,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 	{
 	    RECT rect;
             HDC hdc = (HDC)wParam;
-            HBRUSH hbr = GetClassLongW( hwnd, GCL_HBRBACKGROUND );
+            HBRUSH hbr = (HBRUSH)GetClassLongW( hwnd, GCL_HBRBACKGROUND );
             if (!hbr) return 0;
 
             if (GetClassLongW( hwnd, GCL_STYLE ) & CS_PARENTDC)
@@ -622,7 +622,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             UINT len;
 
             HICON hIcon = (HICON)GetClassLongW( hwnd, GCL_HICON );
-            HINSTANCE instance = GetWindowLongW( hwnd, GWL_HINSTANCE );
+            HINSTANCE instance = (HINSTANCE)GetWindowLongW( hwnd, GWL_HINSTANCE );
             if (hIcon) return (LRESULT)hIcon;
             for(len=1; len<64; len++)
                 if((hIcon = LoadIconW(instance, MAKEINTRESOURCEW(len))))

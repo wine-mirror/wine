@@ -92,6 +92,25 @@ HBITMAP16 WINAPI LoadBitmap16(HINSTANCE16 hInstance, LPCSTR name)
   return HBITMAP_16(LoadBitmapA(HINSTANCE_32(hInstance), name));
 }
 
+/*************************************************************************
+ *		ScrollDC (USER.221)
+ */
+BOOL16 WINAPI ScrollDC16( HDC16 hdc, INT16 dx, INT16 dy, const RECT16 *rect,
+                          const RECT16 *cliprc, HRGN16 hrgnUpdate,
+                          LPRECT16 rcUpdate )
+{
+    RECT rect32, clipRect32, rcUpdate32;
+    BOOL16 ret;
+
+    if (rect) CONV_RECT16TO32( rect, &rect32 );
+    if (cliprc) CONV_RECT16TO32( cliprc, &clipRect32 );
+    ret = ScrollDC( HDC_32(hdc), dx, dy, rect ? &rect32 : NULL,
+                    cliprc ? &clipRect32 : NULL, HRGN_32(hrgnUpdate),
+                    &rcUpdate32 );
+    if (rcUpdate) CONV_RECT32TO16( &rcUpdate32, rcUpdate );
+    return ret;
+}
+
 /***********************************************************************
  *		GetCursor (USER.247)
  */
@@ -246,4 +265,32 @@ BOOL16 WINAPI DestroyIcon16(HICON16 hIcon)
 BOOL16 WINAPI DestroyCursor16(HCURSOR16 hCursor)
 {
   return DestroyIcon32(hCursor, 0);
+}
+
+/**********************************************************************
+ *          DrawFrameControl  (USER.656)
+ */
+BOOL16 WINAPI DrawFrameControl16( HDC16 hdc, LPRECT16 rc, UINT16 uType, UINT16 uState )
+{
+    RECT rect32;
+    BOOL ret;
+
+    CONV_RECT16TO32( rc, &rect32 );
+    ret = DrawFrameControl( HDC_32(hdc), &rect32, uType, uState );
+    CONV_RECT32TO16( &rect32, rc );
+    return ret;
+}
+
+/**********************************************************************
+ *          DrawEdge   (USER.659)
+ */
+BOOL16 WINAPI DrawEdge16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
+{
+    RECT rect32;
+    BOOL ret;
+
+    CONV_RECT16TO32( rc, &rect32 );
+    ret = DrawEdge( HDC_32(hdc), &rect32, edge, flags );
+    CONV_RECT32TO16( &rect32, rc );
+    return ret;
 }

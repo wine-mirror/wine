@@ -51,7 +51,7 @@ const struct builtin_class_descr DESKTOP_builtin_class =
     DesktopWndProc,       /* procW */
     0,                    /* extra */
     IDC_ARROWA,           /* cursor */
-    COLOR_BACKGROUND+1    /* brush */
+    (HBRUSH)(COLOR_BACKGROUND+1)    /* brush */
 };
 
 
@@ -151,7 +151,7 @@ BOOL WINAPI PaintDesktop(HDC hdc)
             (!fTileWallPaper && ((bitmapSize.cx < rect.right) || (bitmapSize.cy < rect.bottom))))
         {
             HBRUSH brush = hbrushPattern;
-            if (!brush) brush = GetClassLongA( hwnd, GCL_HBRBACKGROUND );
+            if (!brush) brush = (HBRUSH)GetClassLongA( hwnd, GCL_HBRBACKGROUND );
             /* Set colors in case pattern is a monochrome bitmap */
             SetBkColor( hdc, RGB(0,0,0) );
             SetTextColor( hdc, GetSysColor(COLOR_BACKGROUND) );
@@ -267,4 +267,3 @@ BOOL DESKTOP_SetPattern( LPCSTR pattern )
     else hbrushPattern = 0;
     return TRUE;
 }
-

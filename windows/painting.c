@@ -74,7 +74,7 @@ struct draw_state_info
 static BOOL CALLBACK draw_state_callback( HDC hdc, LPARAM lparam, WPARAM wparam, int cx, int cy )
 {
     const struct draw_state_info *info = (struct draw_state_info *)lparam;
-    return PAINTING_CallTo16_word_wlwww( info->proc, hdc, info->param, wparam, cx, cy );
+    return PAINTING_CallTo16_word_wlwww( info->proc, HDC_16(hdc), info->param, wparam, cx, cy );
 }
 
 
@@ -212,7 +212,7 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
     if(wnd->hwndSelf == GetDesktopWindow())
     {
         wnd->flags &= ~WIN_NEEDS_NCPAINT;
-	if( wnd->hrgnUpdate > 1 )
+	if( wnd->hrgnUpdate > (HRGN)1 )
         {
             if (!hRgn) hRgn = CreateRectRgn( 0, 0, 0, 0 );
             CombineRgn( hRgn, wnd->hrgnUpdate, 0, RGN_COPY );
@@ -245,7 +245,7 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
 
 	    TRACE_(nonclient)( "\tclient box (%i,%i-%i,%i), hrgnUpdate %04x\n",
 				r.left, r.top, r.right, r.bottom, wnd->hrgnUpdate );
-	    if( wnd->hrgnUpdate > 1 )
+	    if( wnd->hrgnUpdate > (HRGN)1 )
 	    {
 		/* Check if update rgn overlaps with nonclient area */
 
@@ -282,16 +282,16 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
 		if(!hClip && wnd->hrgnUpdate ) goto copyrgn;
 	    }
 	    else
-	    if( wnd->hrgnUpdate == 1 )/* entire window */
+	    if( wnd->hrgnUpdate == (HRGN)1 )/* entire window */
 	    {
 		if( uncFlags & UNC_UPDATE ) wnd->hrgnUpdate = CreateRectRgnIndirect( &r );
-		if( uncFlags & UNC_REGION ) hrgnRet = 1;
+		if( uncFlags & UNC_REGION ) hrgnRet = (HRGN)1;
 		uncFlags |= UNC_ENTIRE;
 	    }
     }
     else /* no WM_NCPAINT unless forced */
     {
-	if( wnd->hrgnUpdate >  1 )
+	if( wnd->hrgnUpdate >  (HRGN)1 )
 	{
 copyrgn:
 	    if( uncFlags & UNC_REGION )
@@ -302,29 +302,29 @@ copyrgn:
             }
 	}
 	else
-	if( wnd->hrgnUpdate == 1 && (uncFlags & UNC_UPDATE) )
+	if( wnd->hrgnUpdate == (HRGN)1 && (uncFlags & UNC_UPDATE) )
 	{
 	    GETCLIENTRECTW( wnd, r );
 	    wnd->hrgnUpdate = CreateRectRgnIndirect( &r );
-	    if( uncFlags & UNC_REGION ) hrgnRet = 1;
+	    if( uncFlags & UNC_REGION ) hrgnRet = (HRGN)1;
 	}
     }
 
     if(!hClip && (uncFlags & UNC_ENTIRE) )
     {
 	/* still don't do anything if there is no nonclient area */
-	hClip = (memcmp( &wnd->rectWindow, &wnd->rectClient, sizeof(RECT) ) != 0);
+	hClip = (HRGN)(memcmp( &wnd->rectWindow, &wnd->rectClient, sizeof(RECT) ) != 0);
     }
 
     if( hClip ) /* NOTE: WM_NCPAINT allows wParam to be 1 */
     {
-        if ( hClip == hrgnRet && hrgnRet > 1 ) {
+        if ( hClip == hrgnRet && hrgnRet > (HRGN)1 ) {
 	    hClip = CreateRectRgn( 0, 0, 0, 0 );
 	    CombineRgn( hClip, hrgnRet, 0, RGN_COPY );
 	}
 
-	SendMessageA( wnd->hwndSelf, WM_NCPAINT, hClip, 0L );
-	if( (hClip > 1) && (hClip != hRgn) && (hClip != hrgnRet) )
+	SendMessageA( wnd->hwndSelf, WM_NCPAINT, (WPARAM)hClip, 0L );
+	if( (hClip > (HRGN)1) && (hClip != hRgn) && (hClip != hrgnRet) )
 	    DeleteObject( hClip );
 	/*
          * Since all Window locks are suspended while processing the WM_NCPAINT
@@ -354,7 +354,7 @@ static void RDW_ValidateParent(WND *wndChild)
     HWND parent;
     HRGN hrg;
 
-    if (wndChild->hrgnUpdate == 1 ) {
+    if (wndChild->hrgnUpdate == (HRGN)1 ) {
         RECT r;
         r.left = 0;
         r.top = 0;
@@ -374,7 +374,7 @@ static void RDW_ValidateParent(WND *wndChild)
             {
                 POINT ptOffset;
                 RECT rect, rectParent;
-                if( wndParent->hrgnUpdate == 1 )
+                if( wndParent->hrgnUpdate == (HRGN)1 )
                 {
                    RECT r;
 
@@ -431,7 +431,7 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
 
     if( flags & RDW_INVALIDATE )
     {
-	if( hRgn > 1 )
+	if( hRgn > (HRGN)1 )
 	{
 	    switch ((UINT)wndPtr->hrgnUpdate)
 	    {
@@ -457,11 +457,11 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
 		        break;
 	    }
 	}
-	else if( hRgn == 1 )
+	else if( hRgn == (HRGN)1 )
 	{
-	    if( wndPtr->hrgnUpdate > 1 )
+	    if( wndPtr->hrgnUpdate > (HRGN)1 )
 		DeleteObject( wndPtr->hrgnUpdate );
-	    wndPtr->hrgnUpdate = 1;
+	    wndPtr->hrgnUpdate = (HRGN)1;
 	}
 	else
 	    hRgn = wndPtr->hrgnUpdate;	/* this is a trick that depends on code in PAINT_RedrawWindow() */
@@ -477,9 +477,9 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
     {
 	if( wndPtr->hrgnUpdate )
 	{
-	    if( hRgn > 1 )
+	    if( hRgn > (HRGN)1 )
 	    {
-		if( wndPtr->hrgnUpdate == 1 )
+		if( wndPtr->hrgnUpdate == (HRGN)1 )
 		    wndPtr->hrgnUpdate = CreateRectRgnIndirect( &r );
 
 		if( CombineRgn( wndPtr->hrgnUpdate, wndPtr->hrgnUpdate, hRgn, RGN_DIFF )
@@ -491,7 +491,7 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
 	    }
 	    else /* validate everything */
 	    {
-		if( wndPtr->hrgnUpdate > 1 ) DeleteObject( wndPtr->hrgnUpdate );
+		if( wndPtr->hrgnUpdate > (HRGN)1 ) DeleteObject( wndPtr->hrgnUpdate );
 		wndPtr->hrgnUpdate = 0;
 	    }
 
@@ -517,7 +517,7 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
     if( flags & (RDW_INVALIDATE | RDW_VALIDATE) )
     {
         HWND *list;
-	if( hRgn > 1 && bChildren && (list = WIN_ListChildren( wndPtr->hwndSelf )))
+	if( hRgn > (HRGN)1 && bChildren && (list = WIN_ListChildren( wndPtr->hwndSelf )))
 	{
 	    POINT ptTotal, prevOrigin = {0,0};
             POINT ptClient;
@@ -656,7 +656,7 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
 
         if( hrgnRet )
 	{
-	    if( hrgnRet > 1 ) hrgn = hrgnRet; else hrgnRet = 0; /* entire client */
+	    if( hrgnRet > (HRGN)1 ) hrgn = hrgnRet; else hrgnRet = 0; /* entire client */
 	    if( wndPtr->flags & WIN_NEEDS_ERASEBKGND )
 	    {
 		if( bIcon ) dcx |= DCX_WINDOW;
@@ -792,8 +792,8 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 	{
 	    if( flags & RDW_FRAME )
 	    {
-                if (wndPtr->hrgnUpdate) hRgn = 1;
-                else wndPtr->hrgnUpdate = 1;
+                if (wndPtr->hrgnUpdate) hRgn = (HRGN)1;
+                else wndPtr->hrgnUpdate = (HRGN)1;
 	    }
 	    else
 	    {
@@ -824,7 +824,7 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 	else /* entire window or client depending on RDW_NOFRAME */
         {
 	    if( flags & RDW_NOFRAME )
-		hRgn = 1;
+		hRgn = (HRGN)1;
 	    else
 	    {
 		GETCLIENTRECTW( wndPtr, r2 );
@@ -839,10 +839,10 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 
     /* Erase/update windows, from now on hRgn is a scratch region */
 
-    hRgn = RDW_Paint( wndPtr, (hRgn == 1) ? 0 : hRgn, flags, 0 );
+    hRgn = RDW_Paint( wndPtr, (hRgn == (HRGN)1) ? 0 : hRgn, flags, 0 );
 
 END:
-    if( hRgn > 1 && (hRgn != hrgnUpdate) )
+    if( hRgn > (HRGN)1 && (hRgn != hrgnUpdate) )
 	DeleteObject(hRgn );
     WIN_ReleaseWndPtr(wndPtr);
     return TRUE;
@@ -905,7 +905,7 @@ BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 
     if (rect)
     {
-	if (wndPtr->hrgnUpdate > 1)
+	if (wndPtr->hrgnUpdate > (HRGN)1)
 	{
 	    HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
             if (GetUpdateRgn( hwnd, hrgn, erase ) == ERROR)
@@ -924,7 +924,7 @@ BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 	    }
 	}
 	else
-	if( wndPtr->hrgnUpdate == 1 )
+	if( wndPtr->hrgnUpdate == (HRGN)1 )
 	{
 	    GetClientRect( hwnd, rect );
 	    if (erase) RedrawWindow( hwnd, NULL, 0, RDW_FRAME | RDW_ERASENOW | RDW_NOCHILDREN );
@@ -932,7 +932,7 @@ BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 	else
 	    SetRectEmpty( rect );
     }
-    retvalue = (wndPtr->hrgnUpdate >= 1);
+    retvalue = (wndPtr->hrgnUpdate >= (HRGN)1);
 END:
     WIN_ReleaseWndPtr(wndPtr);
     return retvalue;
@@ -955,7 +955,7 @@ INT WINAPI GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
         goto END;
     }
     else
-    if (wndPtr->hrgnUpdate == 1)
+    if (wndPtr->hrgnUpdate == (HRGN)1)
     {
 	SetRectRgn( hrgn, 0, 0, wndPtr->rectClient.right - wndPtr->rectClient.left,
 				wndPtr->rectClient.bottom - wndPtr->rectClient.top );
@@ -991,7 +991,7 @@ INT WINAPI ExcludeUpdateRgn( HDC hdc, HWND hwnd )
 				      wndPtr->rectWindow.top - wndPtr->rectClient.top,
 				      wndPtr->rectWindow.right - wndPtr->rectClient.left,
 				      wndPtr->rectWindow.bottom - wndPtr->rectClient.top);
-	if( wndPtr->hrgnUpdate > 1 )
+	if( wndPtr->hrgnUpdate > (HRGN)1 )
 	{
 	    CombineRgn(hrgn, wndPtr->hrgnUpdate, 0, RGN_COPY);
 	    OffsetRgn(hrgn, wndPtr->rectWindow.left - wndPtr->rectClient.left,
@@ -1026,10 +1026,10 @@ INT16 WINAPI FillRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
      * it will be done later in the PatBlt().
      */
 
-    if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
-    PatBlt( hdc, rect->left, rect->top,
+    if (!(prevBrush = SelectObject( HDC_32(hdc), HBRUSH_32(hbrush) ))) return 0;
+    PatBlt( HDC_32(hdc), rect->left, rect->top,
               rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
-    SelectObject( hdc, prevBrush );
+    SelectObject( HDC_32(hdc), prevBrush );
     return 1;
 }
 
@@ -1058,7 +1058,7 @@ INT WINAPI FillRect( HDC hdc, const RECT *rect, HBRUSH hbrush )
  */
 void WINAPI InvertRect16( HDC16 hdc, const RECT16 *rect )
 {
-    PatBlt( hdc, rect->left, rect->top,
+    PatBlt( HDC_32(hdc), rect->left, rect->top,
               rect->right - rect->left, rect->bottom - rect->top, DSTINVERT );
 }
 
@@ -1106,7 +1106,7 @@ INT16 WINAPI FrameRect16( HDC16 hdc, const RECT16 *rect16, HBRUSH16 hbrush )
 {
     RECT rect;
     CONV_RECT16TO32( rect16, &rect );
-    return FrameRect( hdc, &rect, hbrush );
+    return FrameRect( HDC_32(hdc), &rect, HBRUSH_32(hbrush) );
 }
 
 
@@ -1117,7 +1117,7 @@ void WINAPI DrawFocusRect16( HDC16 hdc, const RECT16* rc )
 {
     RECT rect32;
     CONV_RECT16TO32( rc, &rect32 );
-    DrawFocusRect( hdc, &rect32 );
+    DrawFocusRect( HDC_32(hdc), &rect32 );
 }
 
 
@@ -1425,14 +1425,15 @@ BOOL16 WINAPI DrawState16( HDC16 hdc, HBRUSH16 hbr, DRAWSTATEPROC16 func, LPARAM
         if (!cx || !cy)
         {
             SIZE s;
-            if (!GetTextExtentPoint32A( hdc, MapSL(ldata), wdata, &s )) return FALSE;
+            if (!GetTextExtentPoint32A( HDC_32(hdc), MapSL(ldata), wdata, &s )) return FALSE;
             if (!cx) cx = s.cx;
             if (!cy) cy = s.cy;
         }
     }
     info.proc  = func;
     info.param = ldata;
-    return DrawStateA( hdc, hbr, draw_state_callback, (LPARAM)&info, wdata, x, y, cx, cy, flags );
+    return DrawStateA( HDC_32(hdc), HBRUSH_32(hbr), draw_state_callback,
+		       (LPARAM)&info, wdata, x, y, cx, cy, flags );
 }
 
 

@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"
+#include "wownt32.h"
 #include "win.h"
 #include "user.h"
 #include "dce.h"
@@ -30,9 +31,9 @@
 #include "cursoricon.h"
 #include "winpos.h"
 #include "nonclient.h"
-#include "wine/debug.h"
 #include "shellapi.h"
 #include "bitmap.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(nonclient);
 WINE_DECLARE_DEBUG_CHANNEL(shell);
@@ -873,7 +874,7 @@ void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
 /***********************************************************************
  *           NC_DrawMaxButton
  */
-static void NC_DrawMaxButton( HWND hwnd, HDC16 hdc, BOOL down )
+static void NC_DrawMaxButton( HWND hwnd, HDC hdc, BOOL down )
 {
     RECT rect;
     UINT flags = IsZoomed(hwnd) ? DFCS_CAPTIONRESTORE : DFCS_CAPTIONMAX;
@@ -891,7 +892,7 @@ static void NC_DrawMaxButton( HWND hwnd, HDC16 hdc, BOOL down )
 /***********************************************************************
  *           NC_DrawMinButton
  */
-static void NC_DrawMinButton( HWND hwnd, HDC16 hdc, BOOL down )
+static void NC_DrawMinButton( HWND hwnd, HDC hdc, BOOL down )
 {
     RECT rect;
     UINT flags = DFCS_CAPTIONMIN;
@@ -998,7 +999,7 @@ static void NC_DrawCloseButton95 (HWND hwnd, HDC hdc, BOOL down, BOOL bGrayed)
  *   Draws the maximize button for Win95 style windows.
  *   If bGrayed is true, then draw a disabled Maximize button
  */
-static void NC_DrawMaxButton95(HWND hwnd,HDC16 hdc,BOOL down, BOOL bGrayed)
+static void NC_DrawMaxButton95(HWND hwnd,HDC hdc,BOOL down, BOOL bGrayed)
 {
     RECT rect;
     UINT flags = IsZoomed(hwnd) ? DFCS_CAPTIONRESTORE : DFCS_CAPTIONMAX;
@@ -1021,7 +1022,7 @@ static void NC_DrawMaxButton95(HWND hwnd,HDC16 hdc,BOOL down, BOOL bGrayed)
  *   Draws the minimize button for Win95 style windows.
  *   If bGrayed is true, then draw a disabled Minimize button
  */
-static void  NC_DrawMinButton95(HWND hwnd,HDC16 hdc,BOOL down, BOOL bGrayed)
+static void  NC_DrawMinButton95(HWND hwnd,HDC hdc,BOOL down, BOOL bGrayed)
 {
     RECT rect;
     UINT flags = DFCS_CAPTIONMIN;
@@ -1409,10 +1410,10 @@ static void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 
     TRACE("%04x %d\n", hwnd, active );
 
-    if (!(hdc = GetDCEx( hwnd, (clip > 1) ? clip : 0, DCX_USESTYLE | DCX_WINDOW |
-			      ((clip > 1) ? (DCX_INTERSECTRGN | DCX_KEEPCLIPRGN): 0) ))) return;
+    if (!(hdc = GetDCEx( hwnd, (clip > (HRGN)1) ? clip : 0, DCX_USESTYLE | DCX_WINDOW |
+			      ((clip > (HRGN)1) ? (DCX_INTERSECTRGN | DCX_KEEPCLIPRGN): 0) ))) return;
 
-    if (ExcludeVisRect16( hdc, rectClient.left-rectWindow.left,
+    if (ExcludeVisRect16( HDC_16(hdc), rectClient.left-rectWindow.left,
 		        rectClient.top-rectWindow.top,
 		        rectClient.right-rectWindow.left,
 		        rectClient.bottom-rectWindow.top )
@@ -1541,11 +1542,11 @@ static void  NC_DoNCPaint95(
        Now, how is the "system" supposed to tell what happened?
      */
 
-    if (!(hdc = GetDCEx( hwnd, (clip > 1) ? clip : 0, DCX_USESTYLE | DCX_WINDOW |
-			      ((clip > 1) ?(DCX_INTERSECTRGN | DCX_KEEPCLIPRGN) : 0) ))) return;
+    if (!(hdc = GetDCEx( hwnd, (clip > (HRGN)1) ? clip : 0, DCX_USESTYLE | DCX_WINDOW |
+			      ((clip > (HRGN)1) ?(DCX_INTERSECTRGN | DCX_KEEPCLIPRGN) : 0) ))) return;
 
 
-    if (ExcludeVisRect16( hdc, rectClient.left-rectWindow.left,
+    if (ExcludeVisRect16( HDC_16(hdc), rectClient.left-rectWindow.left,
 		        rectClient.top-rectWindow.top,
 		        rectClient.right-rectWindow.left,
 		        rectClient.bottom-rectWindow.top )
@@ -1559,7 +1560,7 @@ static void  NC_DoNCPaint95(
     rect.right  = rectWindow.right - rectWindow.left;
     rect.bottom = rectWindow.bottom - rectWindow.top;
 
-    if( clip > 1 )
+    if( clip > (HRGN)1 )
 	GetRgnBox( clip, &rectClip );
     else
     {
@@ -1782,7 +1783,7 @@ static void NC_TrackMinMaxBox95( HWND hwnd, WORD wParam )
     DWORD wndStyle = GetWindowLongA( hwnd, GWL_STYLE);
     HMENU hSysMenu = GetSystemMenu(hwnd, FALSE);
 
-    void  (*paintButton)(HWND, HDC16, BOOL, BOOL);
+    void  (*paintButton)(HWND, HDC, BOOL, BOOL);
 
     if (wParam == HTMINBUTTON)
     {
@@ -1857,7 +1858,7 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
     MSG msg;
     HDC hdc = GetWindowDC( hwnd );
     BOOL pressed = TRUE;
-    void  (*paintButton)(HWND, HDC16, BOOL);
+    void  (*paintButton)(HWND, HDC, BOOL);
 
     SetCapture( hwnd );
 
@@ -2218,7 +2219,7 @@ BOOL NC_DrawGrayButton(HDC hdc, int x, int y)
     SelectObject (hdcMask, hMaskBmp);
 
     /* Draw the grayed bitmap using the mask */
-    hOldBrush = SelectObject (hdc, RGB(128, 128, 128));
+    hOldBrush = SelectObject (hdc, (HGDIOBJ)RGB(128, 128, 128));
     BitBlt (hdc, x, y, 12, 10,
 	    hdcMask, 0, 0, 0xB8074A);
 

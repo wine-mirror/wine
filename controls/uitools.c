@@ -576,20 +576,6 @@ static BOOL UITOOLS95_DrawRectEdge(HDC hdc, LPRECT rc,
 
 
 /**********************************************************************
- *          DrawEdge   (USER.659)
- */
-BOOL16 WINAPI DrawEdge16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
-{
-    RECT rect32;
-    BOOL ret;
-
-    CONV_RECT16TO32( rc, &rect32 );
-    ret = DrawEdge( hdc, &rect32, edge, flags );
-    CONV_RECT32TO16( &rect32, rc );
-    return ret;
-}
-
-/**********************************************************************
  *          DrawEdge   (USER32.@)
  */
 BOOL WINAPI DrawEdge( HDC hdc, LPRECT rc, UINT edge, UINT flags )
@@ -1379,22 +1365,6 @@ static BOOL UITOOLS95_DrawFrameMenu(HDC dc, LPRECT r, UINT uFlags)
     SelectObject(dc, hpsave);
     SelectObject(dc, hbsave);
     return retval;
-}
-
-
-/**********************************************************************
- *          DrawFrameControl  (USER.656)
- */
-BOOL16 WINAPI DrawFrameControl16( HDC16 hdc, LPRECT16 rc, UINT16 uType,
-                                  UINT16 uState )
-{
-    RECT rect32;
-    BOOL ret;
-
-    CONV_RECT16TO32( rc, &rect32 );
-    ret = DrawFrameControl( hdc, &rect32, uType, uState );
-    CONV_RECT32TO16( &rect32, rc );
-    return ret;
 }
 
 

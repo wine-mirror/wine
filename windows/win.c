@@ -1108,8 +1108,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->pVScroll       = NULL;
     wndPtr->pHScroll       = NULL;
     wndPtr->userdata       = 0;
-    wndPtr->hSysMenu       = (wndPtr->dwStyle & WS_SYSMENU)
-			     ? MENU_GetSysMenu( hwnd, 0 ) : 0;
+    wndPtr->hSysMenu       = (wndPtr->dwStyle & WS_SYSMENU) ? MENU_GetSysMenu( hwnd, 0 ) : 0;
     wndPtr->cbWndExtra     = wndExtra;
 
     if (wndExtra) memset( wndPtr->wExtra, 0, wndExtra);
@@ -1252,7 +1251,7 @@ HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
 
     cs.lpCreateParams = data;
     cs.hInstance      = (HINSTANCE)instance;
-    cs.hMenu          = (HMENU)menu;
+    cs.hMenu          = HMENU_32(menu);
     cs.hwndParent     = WIN_Handle32( parent );
     cs.style          = style;
     cs.lpszName       = windowName;

@@ -778,7 +778,7 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD count, CONST HANDLE *handles,
 DWORD WINAPI WaitForInputIdle( HANDLE hProcess, DWORD dwTimeOut )
 {
     DWORD start_time, elapsed, ret;
-    HANDLE idle_event = -1;
+    HANDLE idle_event = (HANDLE)-1;
 
     SERVER_START_REQ( wait_input_idle )
     {
