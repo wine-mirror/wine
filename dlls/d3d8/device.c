@@ -3424,9 +3424,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
                 operand = GL_ONE_MINUS_SRC_ALPHA;
             } else if (isComplement) {
                 if (isAlphaArg) {
-                    operand = GL_ONE_MINUS_SRC_COLOR;
-                } else {
                     operand = GL_ONE_MINUS_SRC_ALPHA;
+                } else {
+                    operand = GL_ONE_MINUS_SRC_COLOR;
                 }
             } else {
                 if (isAlphaArg) {
