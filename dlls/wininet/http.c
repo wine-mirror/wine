@@ -998,6 +998,8 @@ INT HTTP_GetStdHeaderIndex(LPCSTR lpszField)
         index = HTTP_QUERY_ACCEPT_RANGES;
     else if (!_stricmp(lpszField,"Expires"))
         index = HTTP_QUERY_EXPIRES;
+    else if (!_stricmp(lpszField,"Mime-Version"))
+        index = HTTP_QUERY_MIME_VERSION;
     else
     {
        FIXME("Couldn't find %s in standard header table\n", lpszField);
