@@ -951,16 +951,6 @@ static void dump_dlginit(dlginit_t *dit)
 
 /*
  *****************************************************************************
- * Function	:
- * Syntax	:
- * Input	:
- * Output	:
- * Description	:
- * Remarks	:
- *****************************************************************************
-*/
-/*
- *****************************************************************************
  * Function	: dump_resources
  * Syntax	: void dump_resources(resource_t *top)
  * Input	:
