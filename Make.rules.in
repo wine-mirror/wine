@@ -136,12 +136,16 @@ $(BUILD) checkbuild:
 
 # Rule for main module
 
-$(MODULE).o: Makefile $(OBJS)
+$(MODULE).o: $(OBJS)
 	$(LDCOMBINE) $(OBJS) -o $(MODULE).o
+
+# Rules for makefile
 
 Makefile: Makefile.in $(TOPSRCDIR)/configure
 	@echo Makefile is older than $?, please rerun $(TOPSRCDIR)/configure
 	@exit 1
+
+all: Makefile
 
 # Rules for auto documentation
 
@@ -150,8 +154,6 @@ man: $(C_SRCS)
 
 html: $(C_SRCS)
 	for i in $(C_SRCS); do $(C2MAN) -L -o $(TOPOBJDIR)/documentation/html -Th -iwindows.h  $(DIVINCL) -D__WINE__ $(MANSPECS) $$i; done
-
-
 
 # Rule for linting
 
