@@ -540,7 +540,7 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
     static const WCHAR szNul[] = { 0 };
     URL_COMPONENTSW UrlComponents;
     static const WCHAR szHttp[] = { 'h','t','t','p',':','/','/',0 }, szSlash[] = { '/',0 } ;
-    static const WCHAR szFormat1[] = { 'h','t','t','p',':','/','/','%','s',':','%','d',0 };
+    static const WCHAR szFormat1[] = { 'h','t','t','p',':','/','/','%','s',0 };
     static const WCHAR szFormat2[] = { 'h','t','t','p',':','/','/','%','s',':','%','d',0 };
     int len;
 

@@ -1172,10 +1172,10 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
    * <protocol>:[//<net_loc>][/path][;<params>][?<query>][#<fragment>]
    *
    */
-    LPWSTR lpszParam    = NULL;
+    LPCWSTR lpszParam    = NULL;
     BOOL  bIsAbsolute = FALSE;
-    LPWSTR lpszap = (WCHAR*)lpszUrl;
-    LPWSTR lpszcp = NULL;
+    LPCWSTR lpszap = lpszUrl;
+    LPCWSTR lpszcp = NULL;
     const WCHAR lpszSeparators[3]={';','?',0};
     const WCHAR lpszSlash[2]={'/',0};
     if(dwUrlLength==0)
@@ -1198,7 +1198,7 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
         }
         else
         {
-            lpszcp = (LPWSTR)lpszUrl; /* Relative url */
+            lpszcp = lpszUrl; /* Relative url */
         }
 
         break;
@@ -1217,7 +1217,7 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
 
     if (bIsAbsolute) /* Parse <protocol>:[//<net_loc>] */
     {
-        LPWSTR lpszNetLoc;
+        LPCWSTR lpszNetLoc;
         static const WCHAR wszAbout[]={'a','b','o','u','t',':',0};
 
         /* Get scheme first. */
@@ -1265,8 +1265,8 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
             /* Parse net-loc */
             if (lpszNetLoc)
             {
-                LPWSTR lpszHost;
-                LPWSTR lpszPort;
+                LPCWSTR lpszHost;
+                LPCWSTR lpszPort;
 
                 /* [<user>[<:password>]@]<host>[:<port>] */
                 /* First find the user and password if they exist */
@@ -1280,8 +1280,8 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
                 }
                 else /* Parse out username and password */
                 {
-                    LPWSTR lpszUser = lpszcp;
-                    LPWSTR lpszPasswd = lpszHost;
+                    LPCWSTR lpszUser = lpszcp;
+                    LPCWSTR lpszPasswd = lpszHost;
 
                     while (lpszcp < lpszHost)
                     {
