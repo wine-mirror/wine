@@ -165,7 +165,7 @@ type	win32
 162 stub WriteStringStream
 163 stdcall CoInitializeEx(ptr long) CoInitializeEx
 164 stub CoInitializeSecurity       # stdcall (ptr long ptr ptr long long ptr long ptr) return 0,ERR_NOTIMPLEMENTED
-165 stub CoCreateInstanceEx         # stdcall (ptr ptr long ptr long ptr) return 0,ERR_NOTIMPLEMENTED
+165 stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr) CoCreateInstanceEx
 166 stub PropVariantClear
 167 stub CoCopyProxy                # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
 168 stub CoGetCallContext           # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED

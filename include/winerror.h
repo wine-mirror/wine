@@ -315,6 +315,7 @@ extern int WIN32_LastError;
 #define CO_E_INIT_SCM_EXEC_FAILURE	0x80004011
 #define CO_E_INIT_ONLY_SINGLE_THREADED	0x80004012 */
 
+#define CO_S_NOTALLINTERFACES           0x00080012
 #define CO_E_NOTINITIALIZED             0x800401F0
 #define CO_E_ERRORINDLL                 0x800401F9
 #define CO_E_OBJISREG                   0x800401FB

@@ -178,5 +178,11 @@ HRESULT WINAPI CoGetTreatAsClass(REFCLSID clsidOld, LPCLSID pClsidNew);
 /* FIXME: unimplemented */
 HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew);
 
+HRESULT WINAPI CoCreateInstanceEx(REFCLSID      rclsid, 
+				  LPUNKNOWN     pUnkOuter,
+				  DWORD         dwClsContext, 
+				  COSERVERINFO* pServerInfo,
+				  ULONG         cmq,
+				  MULTI_QI*     pResults);
 
 #endif /* __WINE_WINE_OBJ_MISC_H */

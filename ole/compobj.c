@@ -1439,7 +1439,78 @@ HRESULT WINAPI CoCreateInstance(
 	return hres;
 }
 
+/***********************************************************************
+ *           CoCreateInstanceEx [OLE32.165]
+ */
+HRESULT WINAPI CoCreateInstanceEx(
+  REFCLSID      rclsid, 
+  LPUNKNOWN     pUnkOuter,
+  DWORD         dwClsContext, 
+  COSERVERINFO* pServerInfo,
+  ULONG         cmq,
+  MULTI_QI*     pResults)
+{
+  IUnknown* pUnk = NULL;
+  HRESULT   hr;
+  ULONG     index;
+  int       successCount = 0;
 
+  /*
+   * Sanity check
+   */
+  if ( (cmq==0) || (pResults==NULL))
+    return E_INVALIDARG;
+
+  if (pServerInfo!=NULL)
+    FIXME(ole, "() non-NULL pServerInfo not supported!\n");
+
+  /*
+   * Initialize all the "out" parameters.
+   */
+  for (index = 0; index < cmq; index++)
+  {
+    pResults[index].pItf = NULL;
+    pResults[index].hr   = E_NOINTERFACE;
+  }
+
+  /*
+   * Get the object and get it's IUnknown pointer.
+   */
+  hr = CoCreateInstance(rclsid, 
+			pUnkOuter,
+			dwClsContext,
+			&IID_IUnknown,
+			(VOID**)&pUnk);
+
+  if (hr)
+    return hr;
+
+  /*
+   * Then, query for all the interfaces requested.
+   */
+  for (index = 0; index < cmq; index++)
+  {
+    pResults[index].hr = IUnknown_QueryInterface(pUnk,
+						 pResults[index].pIID,
+						 (VOID**)&(pResults[index].pItf));
+
+    if (pResults[index].hr == S_OK)
+      successCount++;
+  }
+
+  /*
+   * Release our temporary unknown pointer.
+   */
+  IUnknown_Release(pUnk);
+
+  if (successCount == 0)
+    return E_NOINTERFACE;
+
+  if (successCount!=cmq)
+    return CO_S_NOTALLINTERFACES;
+
+  return S_OK;
+}
 
 /***********************************************************************
  *           CoFreeLibrary [COMPOBJ.13]
