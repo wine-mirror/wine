@@ -9,7 +9,7 @@ ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
 RCFLAGS   = -w32 -h
 WRCEXTRA  = -t -A -p $*
 
-LANGUAGES   = En Da De Fr Sw Es Fi Wa
+LANGUAGES   = En Da De Fr Sw Es Fi Wa Pt
 LICENSELANG = En
 
 MOSTSRCS = \

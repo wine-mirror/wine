@@ -1,0 +1,40 @@
+/*
+ * Clock (English resources)
+ *
+ * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
+ * FIXME: Weak translation !
+ */
+
+#define LANGUAGE_ID                  Pt_br
+#define LANGUAGE_NUMBER              0
+
+
+/* System Menu */
+
+#define MENU_ON_TOP                  "&Sempre visível"
+
+/* Window Menu */
+
+#define MENU_PROPERTIES              "&Propriedades"
+#define MENU_ANALOG                  "&Analógico"
+#define MENU_DIGITAL                 "&Digital"
+#define MENU_FONT                    "&Fonte..."
+#define MENU_WITHOUT_TITLE           "&Sem barra de título"
+
+#define MENU_SECONDS                 "&Segundos"
+#define MENU_DATE                    "&Data"
+
+#define MENU_LANGUAGE                "&Linguagem"
+#define LANGUAGE_MENU_ITEM           "&Português"
+
+#define MENU_INFO                    "Inf&ormações..."
+#define MENU_INFO_LICENSE            "&Licença"
+#define MENU_INFO_NO_WARRANTY        "&SEM GARANTIA"
+#define MENU_INFO_ABOUT_WINE         "&Sobre Clock..."
+
+/* Window Caption */
+#define STRING_CLOCK                 "Clock"
+
+
+#include "clock.rc"
+

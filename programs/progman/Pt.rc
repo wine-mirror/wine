@@ -1,0 +1,120 @@
+/*
+ * Program Manager
+ *
+ * Copyright 1996 Ulrich Schmid
+ */
+
+#define LANGUAGE_ID                  Pt_br
+#define LANGUAGE_NUMBER              0
+#define LANGUAGE_MENU_ITEM           "&Português"
+
+/* Menu */
+
+#define MENU_FILE                    "&Arquivo"
+#define MENU_FILE_NEW                "&Novo..."
+#define MENU_FILE_OPEN               "A&brir\tEnter"
+#define MENU_FILE_MOVE               "&Mover...\tF7"
+#define MENU_FILE_COPY               "&Copiar...\tF8"
+#define MENU_FILE_DELETE             "&Deletar\tEntf"
+#define MENU_FILE_ATTRIBUTES         "A&tributos...\tAlt+Enter"
+#define MENU_FILE_EXECUTE            "&Executar..."
+#define MENU_FILE_EXIT               "&Sair do Windows..."
+
+#define MENU_OPTIONS                 "&Opções"
+#define MENU_OPTIONS_AUTO_ARRANGE    "&Organizar Automaticamente"
+#define MENU_OPTIONS_MIN_ON_RUN      "&Minimizar na Execução"
+#define MENU_OPTIONS_SAVE_SETTINGS   "&Salvar alterações ao sair"
+
+#define MENU_WINDOWS                 "&Janelas"
+#define MENU_WINDOWS_OVERLAP         "&Cascata\tShift+F5"
+#define MENU_WINDOWS_SIDE_BY_SIDE    "&Lado a lado\tShift+F4"
+#define MENU_WINDOWS_ARRANGE         "&Organizar simbolos"
+
+#define MENU_LANGUAGE                "&Linguagem"
+
+#define MENU_HELP                    "&Ajuda"
+#define MENU_HELP_CONTENTS           "&Conteudo"
+#define MENU_HELP_SEARCH             "&Procuras..."
+#define MENU_HELP_HELP_ON_HELP       "&Ajuda na ajuda"
+#define MENU_HELP_TUTORIAL           "&Tutorial"
+
+#define MENU_INFO                    "&Informações..."
+#define MENU_INFO_LICENSE            "&Licença"
+#define MENU_INFO_NO_WARRANTY        "&SEM GARANTIA"
+#define MENU_INFO_ABOUT_WINE         "&Sobre WINE"
+
+/* Dialogs */
+
+#define DIALOG_OK                    "OK"
+#define DIALOG_CANCEL                "Cancelar"
+#define DIALOG_BROWSE                "&Procurar"
+#define DIALOG_HELP                  "&Ajuda"
+
+#define DIALOG_NEW_CAPTION           "Novo objeto de programa"
+#define DIALOG_NEW_NEW               "Novo"
+#define DIALOG_NEW_GROUP             "&Grupo de programa"
+#define DIALOG_NEW_PROGRAM           "&Programa"
+
+#define DIALOG_MOVE_CAPTION          "Mover Programa"
+#define DIALOG_MOVE_PROGRAM          "Mover programa:"
+#define DIALOG_MOVE_FROM_GROUP       "Do grupo:"
+#define DIALOG_MOVE_TO_GROUP         "&Para grupo:"
+
+#define DIALOG_COPY_CAPTION          "Copiar Programa"
+#define DIALOG_COPY_PROGRAM          "Copiar programa:"
+#define DIALOG_COPY_FROM_GROUP       DIALOG_MOVE_FROM_GROUP
+#define DIALOG_COPY_TO_GROUP         DIALOG_MOVE_TO_GROUP
+
+#define DIALOG_GROUP_CAPTION         "Atributos do grupo de programa"
+#define DIALOG_GROUP_DESCRIPTION     "&Descrição:"
+#define DIALOG_GROUP_FILE            "&Arquivo de grupo:"
+
+#define DIALOG_PROGRAM_CAPTION       "Atributos de programa"
+#define DIALOG_PROGRAM_DESCRIPTION   DIALOG_GROUP_DESCRIPTION
+#define DIALOG_PROGRAM_COMMAND_LINE  "&Linha de comando:"
+#define DIALOG_PROGRAM_DIRECTORY     "&Diretório de trabalho:"
+#define DIALOG_PROGRAM_HOT_KEY       "&Combinação de chaves:"
+#define DIALOG_PROGRAM_SYMBOL        "Como &Simbolo"
+#define DIALOG_PROGRAM_OTHER_SYMBOL  "&Outros simbolos..."
+
+#define DIALOG_SYMBOL_CAPTION        "Selecionar simbolo"
+#define DIALOG_SYMBOL_FILE           "&Nome do arquivo:"
+#define DIALOG_SYMBOL_CURRENT        "&Simbolo corrente:"
+
+#define DIALOG_EXECUTE_CAPTION       "Executar programa"
+#define DIALOG_EXECUTE_COMMAND_LINE  DIALOG_PROGRAM_COMMAND_LINE
+#define DIALOG_EXECUTE_SYMBOL        DIALOG_PROGRAM_SYMBOL
+
+/* Strings */
+
+#define STRING_PROGRAM_MANAGER            "Gerenciador de programas"
+#define STRING_ERROR                      "ERRO"
+#define STRING_WARNING                    "AVISO"
+#define STRING_INFO                       "Informação"
+#define STRING_DELETE                     "Excluir"
+#define STRING_DELETE_GROUP_s             "Excluir grupo `%s' ?"
+#define STRING_DELETE_PROGRAM_s           "Excluir programa `%s' ?"
+#define STRING_NOT_IMPLEMENTED            "Não implementado"
+#define STRING_FILE_READ_ERROR_s          "Erro lendo `%s'"
+#define STRING_FILE_WRITE_ERROR_s         "Erro escrevendo `%s'"
+
+#define STRING_GRPFILE_READ_ERROR_s       "\
+O arquivo de grupo `%s' não pode ser aberto.\n\
+Deverá ser tentado outras vezes?"
+
+#define STRING_OUT_OF_MEMORY              "Sem memória"
+#define STRING_WINHELP_ERROR              "Ajuda não disponível"
+#define STRING_UNKNOWN_FEATURE_s          "Recurso desconhecido em %s"
+#define STRING_FILE_NOT_OVERWRITTEN_s     "Arquivo `%s' existe. Não sobreescrevendo."
+#define STRING_SAVE_GROUP_AS_s            "Salvar grupo como `%s' para previnir a sobreescrita dos arquivos originais"
+
+#define STRING_NO_HOT_KEY                 "Nenhuma"
+
+#define STRING_ALL_FILES                  "Todos os arquivos (*.*)"
+#define STRING_PROGRAMS                   "Programas"
+#define STRING_LIBRARIES_DLL              "Bibliotecas (*.dll)"
+#define STRING_SYMBOL_FILES               "Arquivo de simbolos"
+#define STRING_SYMBOLS_ICO                "Simbolos (*.ico)"
+
+#include "Xx.rc"
+
