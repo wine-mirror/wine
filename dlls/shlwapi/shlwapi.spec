@@ -426,7 +426,7 @@
 426 stub -noname DestroyMenuWrap
 427 stub -noname TrackPopupMenuWrap
 428 stdcall @(long long long long long ptr) user32.TrackPopupMenuEx
-429 stub -noname MLIsMLHInstance
+429 stdcall -noname MLIsMLHInstance(long)
 430 stdcall -noname MLSetMLHInstance(long long)
 431 stdcall -noname MLClearMLHInstance(long)
 432 stub -noname SHSendMessageBroadcastA
