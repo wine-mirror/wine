@@ -197,8 +197,10 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
     DWORD		bAuto = FALSE;
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup;
-    char		buffer[256];
-    char 		format[256];
+    char*		cmdline = NULL;
+    char*		format = NULL;
+    DWORD		format_size;
+    BOOL		ret = FALSE;
 
     MESSAGE("wine: Unhandled exception, starting debugger...\n");
 
@@ -207,9 +209,21 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
        DWORD 	type;
        DWORD 	count;
 
-       count = sizeof(format);
-       if (RegQueryValueExA(hDbgConf, "Debugger", 0, &type, format, &count))
-	  format[0] = 0;
+       format_size = 0;
+       if (!RegQueryValueExA(hDbgConf, "Debugger", 0, &type, NULL, &format_size)) {
+           format = HeapAlloc(GetProcessHeap(), 0, format_size);
+           RegQueryValueExA(hDbgConf, "Debugger", 0, &type, format, &format_size);
+           if (type==REG_EXPAND_SZ) {
+               char* tmp;
+
+               /* Expand environment variable references */
+               format_size=ExpandEnvironmentStringsA(format,NULL,0);
+               tmp=HeapAlloc(GetProcessHeap(), 0, format_size);
+               ExpandEnvironmentStringsA(format,tmp,format_size);
+               HeapFree(GetProcessHeap(), 0, format);
+               format=tmp;
+           }
+       }
 
        count = sizeof(bAuto);
        if (RegQueryValueExA(hDbgConf, "Auto", 0, &type, (char*)&bAuto, &count))
@@ -224,7 +238,7 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
        RegCloseKey(hDbgConf);
     } else {
 	/* try a default setup... */
-	strcpy( format, "debugger/winedbg %ld %ld" );
+	strcpy( format, "winedbg --debugmsg -all -- --auto %ld %ld" );
     }
 
     if (!bAuto)
@@ -235,30 +249,43 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
 	if (mod) pMessageBoxA = (MessageBoxA_funcptr)GetProcAddress( mod, "MessageBoxA" );
 	if (pMessageBoxA)
 	{
+	    char buffer[256];
 	    format_exception_msg( epointers, buffer, sizeof(buffer) );
 	    if (pMessageBoxA( 0, buffer, "Exception raised", MB_YESNO | MB_ICONHAND ) == IDNO)
 	    {
 		TRACE("Killing process\n");
-		return FALSE;
+		goto EXIT;
 	    }
 	}
     }
 
-    TRACE("Starting debugger (fmt=%s)\n", format);
-    sprintf(buffer, format, GetCurrentProcessId(), hEvent);
-    memset(&startup, 0, sizeof(startup));
-    startup.cb = sizeof(startup);
-    startup.dwFlags = STARTF_USESHOWWINDOW;
-    startup.wShowWindow = SW_SHOWNORMAL;
-    if (CreateProcessA(NULL, buffer, NULL, NULL, TRUE, 0, NULL, NULL, &startup, &info)) {
-	/* wait for debugger to come up... */
-	WaitForSingleObject(hEvent, INFINITE);
-	return TRUE;
+    if (format) {
+        TRACE("Starting debugger (fmt=%s)\n", format);
+        cmdline=HeapAlloc(GetProcessHeap(), 0, format_size+2*20);
+        sprintf(cmdline, format, GetCurrentProcessId(), hEvent);
+        memset(&startup, 0, sizeof(startup));
+        startup.cb = sizeof(startup);
+        startup.dwFlags = STARTF_USESHOWWINDOW;
+        startup.wShowWindow = SW_SHOWNORMAL;
+        if (CreateProcessA(NULL, cmdline, NULL, NULL, TRUE, 0, NULL, NULL, &startup, &info)) {
+            /* wait for debugger to come up... */
+            WaitForSingleObject(hEvent, INFINITE);
+            ret = TRUE;
+            goto EXIT;
+        }
+    } else {
+        cmdline = NULL;
     }
     ERR("Couldn't start debugger (%s) (%ld)\n"
 	"Read the Wine Developers Guide on how to set up winedbg or another debugger\n",
-	buffer, GetLastError());
-    return FALSE;
+	debugstr_a(cmdline), GetLastError());
+
+EXIT:
+    if (cmdline)
+        HeapFree(GetProcessHeap(), 0, cmdline);
+    if (format)
+        HeapFree(GetProcessHeap(), 0, format);
+    return ret;
 }
 
 /******************************************************************
