@@ -272,16 +272,18 @@ void WINAPI DOSVM_Wait( CONTEXT86 *waitctx )
     {
         /*
          * FIXME: This does not work in protected mode DOS programs.
-         * FIXME: If we have pending IRQ which has 16-bit handler,
-         *        DOSVM_SendQueuedEvents may stuck in which case application
-         *        deadlocks. This is why keyboard events must have top 
-         *        priority (default timer IRQ handler is 16-bit code).
          * FIXME: Critical section locking is broken.
          */
         CONTEXT86 context = *waitctx;
         IF_SET(&context);
         SET_PEND(&context);
+        context.SegCs = 0;
+        context.Eip = 0;
+
         DOSVM_SendQueuedEvents(&context);
+
+        if(context.SegCs || context.Eip)
+            DPMI_CallRMProc( &context, NULL, 0, TRUE );
     }
     else
     {

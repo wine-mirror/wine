@@ -75,8 +75,8 @@ typedef void (*DOSRELAY)(CONTEXT86*,void*);
 typedef void (WINAPI *RMCBPROC)(CONTEXT86*);
 typedef void (WINAPI *INTPROC)(CONTEXT86*);
 
-#define DOS_PRIORITY_REALTIME 1  /* IRQ0 - FIXME: should be 0 */
-#define DOS_PRIORITY_KEYBOARD 0  /* IRQ1 - FIXME: should be 1 */
+#define DOS_PRIORITY_REALTIME 0  /* IRQ0 */
+#define DOS_PRIORITY_KEYBOARD 1  /* IRQ1 */
 #define DOS_PRIORITY_VGA      2  /* IRQ9 */
 #define DOS_PRIORITY_MOUSE    5  /* IRQ12 */
 #define DOS_PRIORITY_SERIAL   10 /* IRQ4 */
