@@ -609,7 +609,7 @@ NTSTATUS WINAPI RtlLocalTimeToSystemTime( const LARGE_INTEGER *LocalTime,
     gmt = time(NULL);
     bias = TIME_GetBias(gmt, &daylight);
 
-    SystemTime->QuadPart = LocalTime->QuadPart - bias * (LONGLONG)10000000;
+    SystemTime->QuadPart = LocalTime->QuadPart - bias * (LONGLONG)TICKSPERSEC;
     return STATUS_SUCCESS;
 }
 
@@ -637,7 +637,7 @@ NTSTATUS WINAPI RtlSystemTimeToLocalTime( const LARGE_INTEGER *SystemTime,
     gmt = time(NULL);
     bias = TIME_GetBias(gmt, &daylight);
 
-    LocalTime->QuadPart = SystemTime->QuadPart + bias * (LONGLONG)10000000;
+    LocalTime->QuadPart = SystemTime->QuadPart + bias * (LONGLONG)TICKSPERSEC;
     return STATUS_SUCCESS;
 }
 
@@ -657,7 +657,7 @@ NTSTATUS WINAPI RtlSystemTimeToLocalTime( const LARGE_INTEGER *SystemTime,
 BOOLEAN WINAPI RtlTimeToSecondsSince1970( const LARGE_INTEGER *Time, LPDWORD Seconds )
 {
     ULONGLONG tmp = ((ULONGLONG)Time->u.HighPart << 32) | Time->u.LowPart;
-    tmp = RtlLargeIntegerDivide( tmp, 10000000, NULL );
+    tmp = RtlLargeIntegerDivide( tmp, TICKSPERSEC, NULL );
     tmp -= SECS_1601_TO_1970;
     if (tmp > 0xffffffff) return FALSE;
     *Seconds = (DWORD)tmp;
@@ -680,7 +680,7 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1970( const LARGE_INTEGER *Time, LPDWORD Sec
 BOOLEAN WINAPI RtlTimeToSecondsSince1980( const LARGE_INTEGER *Time, LPDWORD Seconds )
 {
     ULONGLONG tmp = ((ULONGLONG)Time->u.HighPart << 32) | Time->u.LowPart;
-    tmp = RtlLargeIntegerDivide( tmp, 10000000, NULL );
+    tmp = RtlLargeIntegerDivide( tmp, TICKSPERSEC, NULL );
     tmp -= SECS_1601_TO_1980;
     if (tmp > 0xffffffff) return FALSE;
     *Seconds = (DWORD)tmp;
