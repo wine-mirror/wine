@@ -882,8 +882,8 @@ static inline BOOL iterator_empty(ITERATOR* i)
 static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT* lprc)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-    INT lower, upper;
-    RECT frame = *lprc;
+    RECT frame = *lprc, rcItem, rcTemp;
+    INT lower, upper, nItem;
     POINT Origin;
     
     /* in case we fail, we want to return an empty iterator */
@@ -895,9 +895,25 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
 
     if (uView == LVS_ICON || uView == LVS_SMALLICON)
     {
-	/* FIXME: we got to do better then this */
-	i->range.lower = 0;
-	i->range.upper = infoPtr->nItemCount - 1;
+	if (uView == LVS_ICON)
+	{
+	    if (LISTVIEW_GetItemBox(infoPtr, infoPtr->nFocusedItem, &rcItem) && IntersectRect(&rcTemp, &rcItem, lprc))
+		i->nSpecial = infoPtr->nFocusedItem;
+	}
+	if (!(i->ranges = DPA_Create(50))) return FALSE;
+	/* to do better here, we need to have PosX, and PosY sorted */
+	for (nItem = 0; nItem < infoPtr->nItemCount; nItem++)
+	{
+            rcItem.left = (LONG)DPA_GetPtr(infoPtr->hdpaPosX, nItem);
+	    rcItem.top = (LONG)DPA_GetPtr(infoPtr->hdpaPosY, nItem);
+	    rcItem.right = rcItem.left + infoPtr->nItemWidth;
+	    rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
+	    if (IntersectRect(&rcTemp, &rcItem, &frame))
+	    {
+		RANGE item_range = { nItem, nItem };
+		ranges_add(i->ranges, item_range);
+	    }				    
+	}
 	return TRUE;
     }
     else if (uView == LVS_REPORT)
@@ -933,37 +949,45 @@ static BOOL iterator_visibleitems(ITERATOR* i, LISTVIEW_INFO *infoPtr, HDC  hdc)
 {
     POINT Origin, Position;
     RECT rcItem, rcClip;
-    INT nItem, rgntype;
+    INT rgntype;
     
     rgntype = GetClipBox(hdc, &rcClip);
     if (rgntype == NULLREGION) return iterator_empty(i);
     if (!iterator_frameditems(i, infoPtr, &rcClip)) return FALSE;
     if (rgntype == SIMPLEREGION) return TRUE;
  
+    /* first deal with the special item */
+    if (LISTVIEW_GetItemBox(infoPtr, i->nSpecial, &rcItem) && !RectVisible(hdc, &rcItem))
+	i->nSpecial = -1;
+    
     /* if we can't deal with the region, we'll just go with the simple range */
     if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return TRUE;
-    if (!(i->ranges = DPA_Create(10))) return TRUE;
-    if (!ranges_add(i->ranges, i->range))
+    if (!i->ranges)
     {
-	DPA_Destroy(i->ranges);
-	i->ranges = 0;
-	return TRUE;
+	if (!(i->ranges = DPA_Create(50))) return TRUE;
+	if (!ranges_add(i->ranges, i->range))
+        {
+	    DPA_Destroy(i->ranges);
+	    i->ranges = 0;
+	    return TRUE;
+        }
     }
 
     /* now delete the invisible items from the list */
-    for (nItem = i->range.lower; nItem <= i->range.upper; nItem++)
+    while(iterator_next(i))
     {
-	if (!LISTVIEW_GetItemListOrigin(infoPtr, nItem, &Position)) continue;
+	if (!LISTVIEW_GetItemListOrigin(infoPtr, i->nItem, &Position)) continue;
 	rcItem.left = Position.x + Origin.x;
 	rcItem.top = Position.y + Origin.y;
 	rcItem.right = rcItem.left + infoPtr->nItemWidth;
 	rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
 	if (!RectVisible(hdc, &rcItem))
 	{
-	    RANGE item_range = { nItem, nItem };
+	    RANGE item_range = { i->nItem, i->nItem };
 	    ranges_del(i->ranges, item_range);
 	}
     }
+    /* the iterator should restart on the next iterator_next */
     
     return TRUE;
 }
@@ -1460,6 +1484,8 @@ static void LISTVIEW_UnsupportedStyles(LONG lStyle)
 static BOOL LISTVIEW_GetItemListOrigin(LISTVIEW_INFO *infoPtr, INT nItem, LPPOINT lpptPosition)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
+
+    if (nItem < 0 || nItem >= infoPtr->nItemCount) return FALSE;
 
     if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
     {
@@ -3538,54 +3564,6 @@ static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
     iterator_destroy(&i);
 }
 
-/***
- * DESCRIPTION:
- * Draws listview items when in icon or small icon display mode.
- *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- * [I] hdc : device context handle
- * [I] cdmode : custom draw mode
- *
- * RETURN:
- * None
- */
-static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
-{
-    POINT Origin, Position;
-    RECT rcBox;
-    ITERATOR i;
-
-    /* Get scroll info once before loop */
-    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return;
-    
-    /* figure out what we need to draw */
-    iterator_visibleitems(&i, infoPtr, hdc);
-    
-    while(iterator_prev(&i))
-    {
-	if (LISTVIEW_GetItemState(infoPtr, i.nItem, LVIS_FOCUSED))
-	    continue;
-
-	if (!LISTVIEW_GetItemListOrigin(infoPtr, i.nItem, &Position)) continue;
-	Position.x += Origin.x;
-	Position.y += Origin.y;
-        LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, Position, cdmode);
-    }
-    iterator_destroy(&i);
-
-    /* draw the focused item last, in case it's oversized */
-    if (LISTVIEW_GetItemBox(infoPtr, infoPtr->nFocusedItem, &rcBox) &&
-        RectVisible(hdc, &rcBox))
-    {
-	if (LISTVIEW_GetItemListOrigin(infoPtr, infoPtr->nFocusedItem, &Position))
-	{
-	    Position.x += Origin.x;
-	    Position.y += Origin.y;
-	    LISTVIEW_DrawItem(infoPtr, hdc, infoPtr->nFocusedItem, Position, cdmode);
-	}
-    }
-}
 
 /***
  * DESCRIPTION:
@@ -3630,11 +3608,9 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
 	LISTVIEW_RefreshOwnerDraw(infoPtr, hdc);
     else
     {
-	if (uView == LVS_ICON)
-	    LISTVIEW_RefreshIcon(infoPtr, hdc, cdmode);
-    	else if (uView == LVS_REPORT)
+    	if (uView == LVS_REPORT)
             LISTVIEW_RefreshReport(infoPtr, hdc, cdmode);
-	else /* LVS_LIST or LVS_SMALLICON */
+	else /* LVS_LIST, LVS_ICON or LVS_SMALLICON */
 	    LISTVIEW_RefreshList(infoPtr, hdc, cdmode);
 
 	/* if we have a focus rect, draw it */
@@ -4576,6 +4552,7 @@ static LRESULT LISTVIEW_GetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn)
 
     TRACE("nColumn=%d\n", nColumn);
 
+    /* we have a 'column' in LIST and REPORT mode only */
     switch(infoPtr->dwStyle & LVS_TYPEMASK)
     {
     case LVS_LIST:
@@ -4586,8 +4563,6 @@ static LRESULT LISTVIEW_GetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn)
 	if (Header_GetItemW(infoPtr->hwndHeader, nColumn, &hdi))
 	    nColumnWidth = hdi.cxy;
 	break;
-    default:
-	/* we don't have a 'column' in [SMALL]ICON mode */
     }
 
     TRACE("nColumnWidth=%d\n", nColumnWidth);
@@ -5524,9 +5499,10 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
 {
     WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-    RECT rcBounds, rcState, rcIcon, rcLabel;
+    RECT rcBounds, rcState, rcIcon, rcLabel, rcSearch;
     POINT Origin, Position, opt;
     LVITEMW lvItem;
+    ITERATOR i;
     
     TRACE("(pt=%s, subitem=%d, select=%d)\n", debugpoint(&lpht->pt), subitem, select);
     
@@ -5551,49 +5527,16 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
     if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return -1;
    
     /* first deal with the large items */
-    if (uView == LVS_ICON && PtInRect (&infoPtr->rcFocus, lpht->pt))
-    {
-	lpht->iItem = infoPtr->nFocusedItem;
-    }
-    else
-    {
-	if (uView == LVS_ICON || uView == LVS_SMALLICON)
-	{
-	    RECT rcSearch;
-	    ITERATOR i;
-
-	    rcSearch.left = lpht->pt.x - infoPtr->nItemWidth;
-	    rcSearch.top = lpht->pt.y - infoPtr->nItemHeight;
-	    rcSearch.right = lpht->pt.x + 1;
-	    rcSearch.bottom = lpht->pt.y + 1;
-
-	    iterator_frameditems(&i, infoPtr, &rcSearch);
-	    while(iterator_next(&i))
-	    {
-		if (!LISTVIEW_GetItemBox(infoPtr, i.nItem, &rcBounds)) continue;
-		if (PtInRect(&rcBounds, lpht->pt)) break;
-	    }
-	    lpht->iItem = i.nItem;
-	    iterator_destroy(&i);
-	}
-	else
-	{
-	    INT nPerCol = (uView == LVS_REPORT) ? infoPtr->nItemCount : LISTVIEW_GetCountPerColumn(infoPtr);
-
-	    Position.x = lpht->pt.x - Origin.x;
-	    Position.y = lpht->pt.y - Origin.y;
-	    TRACE("Position=%s, nPerCol=%d, nItemHeight=%d, nColHeight=%d\n", 
-		  debugpoint(&Position), nPerCol, infoPtr->nItemHeight, nPerCol * infoPtr->nItemHeight);
-
-	    if (Position.y < nPerCol * infoPtr->nItemHeight)
-	    {
-		lpht->iItem = (Position.x / infoPtr->nItemWidth) * nPerCol + (Position.y / infoPtr->nItemHeight);
-		TRACE("iItem=%d\n", lpht->iItem);
-		if (lpht->iItem < 0 || lpht->iItem >= infoPtr->nItemCount) lpht->iItem = -1;
-	    }
-	}
-    }
-   
+    rcSearch.left = lpht->pt.x;
+    rcSearch.top = lpht->pt.y;
+    rcSearch.right = rcSearch.left + 1;
+    rcSearch.bottom = rcSearch.top + 1;
+    
+    iterator_frameditems(&i, infoPtr, &rcSearch);
+    iterator_next(&i); /* go to first item in the sequence */
+    lpht->iItem = i.nItem;
+    iterator_destroy(&i);
+    
     if (lpht->iItem == -1) return -1;
 
     lvItem.mask = LVIF_STATE | LVIF_TEXT;
@@ -5641,8 +5584,9 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
     if (!select || lpht->iItem == -1) return lpht->iItem;
 
     if (uView == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)) return lpht->iItem;
-
-    return lpht->flags & (LVHT_ONITEMICON | LVHT_ONITEMLABEL) ? lpht->iItem : -1;
+    
+    if (uView == LVS_REPORT) UnionRect(&rcBounds, &rcIcon, &rcLabel);
+    return PtInRect(&rcBounds, opt) ? lpht->iItem : -1;
 }
 
 
