@@ -57,12 +57,11 @@ símbolo @ precedendo o mesmo.\n"
   WCMD_ERASE,  "Ajuda do comando ERASE\n"
 
   WCMD_FOR,
-"O comando FOR é usado para executar um comando a cada vez em\n\
-um conjunto de arquivos.\n\
+"O comando FOR é usado para executar um comando a cada vez em\n\um conjunto de arquivos.\n\
 \n\
 Sintaxe: FOR %variável IN (conjunto) DO comando\n\
 \n\
-No wcmd, não existe a necessidade de usar dois sinais % no \n\
+No wcmd, não existe a necessidade de usar dois sinais \% no \n\
 comando FOR nos arquivos de lote.\n"
 
   WCMD_GOTO,
@@ -132,12 +131,12 @@ Os seguintes caracteres tem um significado especial, conforme mostrado:\n\
 \n\
 $$    Cifrão ($)          $_    Avanço de linha     $b    Símbolo pipe (|)\n\
 $d    Data atual          $e    Código de escape    $g    Sinal de maior (>)\n\
-$l    Sinal de menor (>)  $n    Unidade atual       $p    Caminho atual\n\
+$l    Sinal de menor (<)  $n    Unidade atual       $p    Caminho atual\n\
 $q    Sinal de igual (=)  $t    Hora atual          $v    Versão do wcmd\n\
 \n\
 Note que digitando o comando PROMPT sem parâmetros reconfigura o padrão,\n\
-que é a unidade atual seguida de um sinal de maior (equivalente a um\n\
-comando PROMPT $p$g).\n\
+que é a letra da unidade atual seguida pelo diretório e um sinal de maior\n\
+(equivalente a um comando PROMPT $p$g).\n\
 \n\
 O 'prompt' também pode ser mudado alterando a variável PROMPT, assim,\n\
 o comando 'SET PROMPT=texto' tem o mesmo efeito que 'PROMPT texto'\n"
@@ -162,8 +161,7 @@ Para criar ou modificar variável de ambiente, a sintaxe é:\n\
       SET <variável>=<valor>\n\
 \n\
 sendo que <variável> e <valor> são textos. Não devem existir espaços\n\
-em ambos os lados do sinal de igualdade, nem na varável nem no valor\n\
-podem haver espaços.\n\
+antes do sinal de igualdade, nem a varável pode conter espaços.\n\
 \n\
 No Wine, o ambiente do sistema operacional é incluido no ambiente Win32,\n\
 onde sempre haverá mais valores que em um sistema Win32 nativo. Note que\n\
@@ -176,7 +174,7 @@ Isto não tem efeito se chamado a partir da linha de comando.\n"
 
   WCMD_TIME,   "Ajuda do comando TIME\n"
 
-  WCMD_TITLE,  "Configura o título da janela do wcmd, e a sintaxe é TITLE [texto]"
+  WCMD_TITLE,  "Configura o título da janela do wcmd, e a sintaxe é TITLE [texto]\n"
 
   WCMD_TYPE,
 "TYPE <arquivo> copia <arquvo> para o dispositivo console (ou outro, se\n\

@@ -36,8 +36,7 @@ called procedure are inherited by the caller.\n"
   WCMD_CD,     "Help about CD\n"
   WCMD_CHDIR,  "Help about CHDIR\n"
 
-  WCMD_CLS,
-"CLS clears the console screen\n"
+  WCMD_CLS,    "CLS clears the console screen\n"
 
   WCMD_COPY,   "Help about COPY\n"
   WCMD_CTTY,   "Help about CTTY\n"
@@ -138,6 +137,7 @@ $q    Equal sign          $t    Current time        $v    wcmd version\n\
 Note that entering the PROMPT command without a prompt-string resets the\n\
 prompt to the default, which is the current drive letter followed by its\n\
 current directory and a greater-than (>) sign.\n\
+(like a command PROMPT $p$g).\n\
 \n\
 The prompt can also be changed by altering the PROMPT environment variable,\n\
 so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
