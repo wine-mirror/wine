@@ -567,7 +567,7 @@ static HWND MDICreateChild( HWND parent, MDICLIENTINFO *ci,
         seg_cs16 = MapLS( &cs16 );
         hwnd = WIN_Handle32( CreateWindow16( cs->szClass, cs->szTitle, style,
                                              cs16.x, cs16.y, cs16.cx, cs16.cy,
-                                             HWND_16(parent), (HMENU)wIDmenu,
+                                             HWND_16(parent), (HMENU16)wIDmenu,
                                              cs16.hOwner, (LPVOID)seg_cs16 ));
         UnMapLS( seg_cs16 );
         UnMapLS( title );
@@ -1063,7 +1063,7 @@ static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
     hSysMenuBitmap = hBmpClose;
 
     if( !InsertMenuA(menu,0,MF_BYPOSITION | MF_BITMAP | MF_POPUP,
-                    hSysPopup, (LPSTR)(DWORD)hSysMenuBitmap))
+                     (UINT_PTR)hSysPopup, (LPSTR)hSysMenuBitmap))
     {
         TRACE("not inserted\n");
 	DestroyMenu(hSysPopup);
@@ -1448,7 +1448,7 @@ LRESULT WINAPI DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient,
             MDINEXTMENU next_menu;
             DefFrameProcW( WIN_Handle32(hwnd), WIN_Handle32(hwndMDIClient),
                            message, wParam, (LPARAM)&next_menu );
-            return MAKELONG( next_menu.hmenuNext, HWND_16(next_menu.hwndNext) );
+            return MAKELONG( HMENU_16(next_menu.hmenuNext), HWND_16(next_menu.hwndNext) );
         }
     default:
         return DefWindowProc16(hwnd, message, wParam, lParam);
@@ -1615,7 +1615,7 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
         {
             MDINEXTMENU next_menu;
             DefMDIChildProcW( WIN_Handle32(hwnd), message, wParam, (LPARAM)&next_menu );
-            return MAKELONG( next_menu.hmenuNext, HWND_16(next_menu.hwndNext) );
+            return MAKELONG( HMENU_16(next_menu.hmenuNext), HWND_16(next_menu.hwndNext) );
         }
     default:
         return DefWindowProc16(hwnd, message, wParam, lParam);

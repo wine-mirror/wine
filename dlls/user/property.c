@@ -311,10 +311,10 @@ INT16 WINAPI EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
             if (list[i].string)  /* it was a string originally */
             {
                 if (!GlobalGetAtomNameA( list[i].atom, string, ATOM_BUFFER_SIZE )) continue;
-                ret = PROP_CallTo16_word_wlw( func, hwnd, segptr, list[i].handle );
+                ret = PROP_CallTo16_word_wlw( func, hwnd, segptr, LOWORD(list[i].handle) );
             }
             else
-                ret = PROP_CallTo16_word_wlw( func, hwnd, list[i].atom, list[i].handle );
+                ret = PROP_CallTo16_word_wlw( func, hwnd, list[i].atom, LOWORD(list[i].handle) );
             if (!ret) break;
         }
         UnMapLS( segptr );

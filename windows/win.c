@@ -1956,7 +1956,7 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
     case GWL_EXSTYLE:    retvalue = wndPtr->dwExStyle; break;
     case GWL_ID:         retvalue = (LONG)wndPtr->wIDmenu; break;
     case GWL_WNDPROC:    retvalue = (LONG)WINPROC_GetProc( wndPtr->winproc, type ); break;
-    case GWL_HINSTANCE:  retvalue = wndPtr->hInstance; break;
+    case GWL_HINSTANCE:  retvalue = (LONG)wndPtr->hInstance; break;
     default:
         WARN("Unknown offset %d\n", offset );
         SetLastError( ERROR_INVALID_INDEX );
@@ -2113,8 +2113,8 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
                     retval = reply->old_id;
                     break;
                 case GWL_HINSTANCE:
-                    wndPtr->hInstance = newval;
-                    retval = (HINSTANCE)reply->old_instance;
+                    wndPtr->hInstance = (HINSTANCE)newval;
+                    retval = (ULONG_PTR)reply->old_instance;
                     break;
                 case GWL_USERDATA:
                     wndPtr->userdata = newval;

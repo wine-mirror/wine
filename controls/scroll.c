@@ -1290,12 +1290,12 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
                                                 &arrowSize, &thumbSize, &thumbPos );
             if (!vertical)
             {
-                CreateCaret(hwnd,1, thumbSize-2, rect.bottom-rect.top-2);
+                CreateCaret(hwnd, (HBITMAP)1, thumbSize-2, rect.bottom-rect.top-2);
                 SetCaretPos(thumbPos+1, rect.top+1);
             }
             else
             {
-                CreateCaret(hwnd,1, rect.right-rect.left-2,thumbSize-2);
+                CreateCaret(hwnd, (HBITMAP)1, rect.right-rect.left-2,thumbSize-2);
                 SetCaretPos(rect.top+1, thumbPos+1);
             }
             ShowCaret(hwnd);

@@ -216,7 +216,7 @@ static void DCE_DeleteClipRgn( DCE* dce )
     if( dce->DCXflags & DCX_KEEPCLIPRGN )
 	dce->DCXflags &= ~DCX_KEEPCLIPRGN;
     else
-	if( dce->hClipRgn > 1 )
+	if( dce->hClipRgn > (HRGN)1 )
 	    DeleteObject( dce->hClipRgn );
 
     dce->hClipRgn = 0;

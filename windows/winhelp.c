@@ -154,7 +154,7 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand, ULONG_PTR dwD
                lpwh->size, lpwh->command, lpwh->data,
                lpwh->ofsFilename ? (LPSTR)lpwh + lpwh->ofsFilename : "");
 
-    return SendMessageA(hDest, WM_COPYDATA, hWnd, (LPARAM)&cds);
+    return SendMessageA(hDest, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
 }
 
 

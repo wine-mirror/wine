@@ -1011,7 +1011,7 @@ LONG WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
         break;
     case GCL_HBRBACKGROUND:
         retval = (LONG)class->hbrBackground;
-        class->hbrBackground = newval;
+        class->hbrBackground = (HBRUSH)newval;
         break;
     case GCL_HCURSOR:
         retval = (LONG)class->hCursor;
@@ -1035,7 +1035,7 @@ LONG WINAPI SetClassLongW( HWND hwnd, INT offset, LONG newval )
         break;
     case GCL_HMODULE:
         retval = (LONG)class->hInstance;
-        class->hInstance = newval;
+        class->hInstance = (HINSTANCE)newval;
         break;
     case GCW_ATOM:
         retval = (DWORD)class->atomName;

@@ -61,12 +61,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
  *	  Clipboard context global variables
  */
 
-static HANDLE hClipLock   = 0;
+static DWORD ClipLock = 0;
 static BOOL bCBHasChanged  = FALSE;
 
 static HWND hWndClipWindow;        /* window that last opened clipboard */
 static HWND hWndClipOwner;         /* current clipboard owner */
-static HANDLE16 hTaskClipOwner;    /* clipboard owner's task  */
+static DWORD ClipOwner;            /* clipboard owner's thread id  */
 static HWND hWndViewer;            /* start of viewers chain */
 
 /* Clipboard cache initial data.
@@ -127,7 +127,6 @@ LPWINE_CLIPFORMAT CLIPBOARD_LookupFormat( WORD wID )
 BOOL CLIPBOARD_IsLocked()
 {
   BOOL bIsLocked = TRUE;
-  HANDLE16 hTaskCur = GetCurrentTask();
 
   /*
    * The clipboard is available:
@@ -136,10 +135,10 @@ BOOL CLIPBOARD_IsLocked()
    * 2. if the caller is the clipboard owners task, AND is responding to a
    *    WM_RENDERFORMAT message.
    */
-  if ( hClipLock == hTaskCur )
+  if ( ClipLock == GetCurrentThreadId() )
       bIsLocked = FALSE;
 
-  else if ( hTaskCur == hTaskClipOwner )
+  else if ( ClipOwner == GetCurrentThreadId() )
   {
       /* Check if we're currently executing inside a window procedure
        * called in response to a WM_RENDERFORMAT message. A WM_RENDERFORMAT
@@ -172,7 +171,7 @@ BOOL CLIPBOARD_IsLocked()
 void CLIPBOARD_ReleaseOwner()
 {
    hWndClipOwner = 0;
-   hTaskClipOwner = 0;
+   ClipOwner = 0;
 }
 
 /**************************************************************************
@@ -753,9 +752,9 @@ BOOL WINAPI OpenClipboard( HWND hWnd )
 
     TRACE("(%04x)...\n", hWnd);
 
-    if (!hClipLock)
+    if (!ClipLock)
     {
-        hClipLock = GetCurrentTask();
+        ClipLock = GetCurrentThreadId();
 
         /* Save current user of the clipboard */
         hWndClipWindow = WIN_GetFullHandle( hWnd );
@@ -785,12 +784,12 @@ BOOL WINAPI CloseClipboard(void)
 {
     TRACE("()\n");
 
-    if (hClipLock == GetCurrentTask())
+    if (ClipLock == GetCurrentThreadId())
     {
 	hWndClipWindow = 0;
 
         if (bCBHasChanged && hWndViewer) SendMessageW( hWndViewer, WM_DRAWCLIPBOARD, 0, 0 );
-	hClipLock = 0;
+	ClipLock = 0;
     }
     return TRUE;
 }
@@ -813,7 +812,7 @@ BOOL WINAPI EmptyClipboard(void)
 {
     TRACE("()\n");
 
-    if (hClipLock != GetCurrentTask())
+    if (ClipLock != GetCurrentThreadId())
     {
         WARN("Clipboard not opened by calling task!\n");
         return FALSE;
@@ -830,7 +829,7 @@ BOOL WINAPI EmptyClipboard(void)
     hWndClipOwner = hWndClipWindow;
 
     /* Save the current task */
-    hTaskClipOwner = GetCurrentTask();
+    ClipOwner = GetCurrentThreadId();
 
     /* Tell the driver to acquire the selection */
     USER_Driver.pAcquireClipboard();

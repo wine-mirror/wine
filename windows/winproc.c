@@ -1345,7 +1345,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
         {
             MDINEXTMENU *next = HeapAlloc( GetProcessHeap(), 0, sizeof(*next) );
             if (!next) return -1;
-            next->hmenuIn = *plparam;
+            next->hmenuIn = (HMENU)*plparam;
             next->hmenuNext = 0;
             next->hwndNext = 0;
             *plparam = (LPARAM)next;
@@ -2013,11 +2013,11 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case WM_MENUSELECT:
         if(HIWORD(wParam32) & MF_POPUP)
         {
-            UINT16 hmenu;
+            HMENU hmenu;
             if (((UINT)HIWORD(wParam32) != 0xFFFF) || (*plparam))
             {
-                if((hmenu = GetSubMenu((HMENU16)*plparam, *pwparam16)))
-                    *pwparam16=hmenu;
+                if((hmenu = GetSubMenu((HMENU)*plparam, *pwparam16)))
+                    *pwparam16=HMENU_16(hmenu);
             }
         }
         /* fall through */
@@ -2125,7 +2125,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case WM_NEXTMENU:
         {
             MDINEXTMENU *next = (MDINEXTMENU *)*plparam;
-            *plparam = next->hmenuIn;
+            *plparam = (LPARAM)next->hmenuIn;
             return 1;
         }
     case WM_PAINTCLIPBOARD:
@@ -2371,7 +2371,7 @@ void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     case WM_NEXTMENU:
         {
             MDINEXTMENU *next = (MDINEXTMENU *)lParam;
-            next->hmenuNext = LOWORD(p16->lResult);
+            next->hmenuNext = HMENU_32( LOWORD(p16->lResult) );
             next->hwndNext = WIN_Handle32( HIWORD(p16->lResult) );
             p16->lResult = 0;
         }

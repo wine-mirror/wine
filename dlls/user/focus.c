@@ -192,7 +192,7 @@ static BOOL set_foreground_window( HWND hwnd, BOOL mouse )
             ret = set_active_window( 0, NULL, mouse, TRUE );
 
         if (send_msg_new)  /* new window belongs to other thread */
-            SendNotifyMessageW( hwnd, WM_WINE_SETACTIVEWINDOW, hwnd, 0 );
+            SendNotifyMessageW( hwnd, WM_WINE_SETACTIVEWINDOW, (WPARAM)hwnd, 0 );
         else  /* new window belongs to us */
             ret = set_active_window( hwnd, NULL, mouse, TRUE );
     }

@@ -54,7 +54,7 @@ static void add_paint_count( HWND hwnd, int incr )
  */
 static HRGN copy_rgn( HRGN hSrc )
 {
-    if (hSrc > 1)
+    if (hSrc > (HRGN)1)
     {
         HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
         CombineRgn( hrgn, hSrc, 0, RGN_COPY );
@@ -71,7 +71,7 @@ static HRGN copy_rgn( HRGN hSrc )
  */
 static void get_update_regions( WND *win, HRGN *whole_rgn, HRGN *client_rgn )
 {
-    if (win->hrgnUpdate > 1)
+    if (win->hrgnUpdate > (HRGN)1)
     {
         RECT client, update;
 
@@ -126,22 +126,22 @@ static HRGN begin_ncpaint( HWND hwnd )
     if (whole_rgn) /* NOTE: WM_NCPAINT allows wParam to be 1 */
     {
         WIN_ReleasePtr( wnd );
-        SendMessageA( hwnd, WM_NCPAINT, whole_rgn, 0 );
-        if (whole_rgn > 1) DeleteObject( whole_rgn );
+        SendMessageA( hwnd, WM_NCPAINT, (WPARAM)whole_rgn, 0 );
+        if (whole_rgn > (HRGN)1) DeleteObject( whole_rgn );
         /* make sure the window still exists before continuing */
         if (!(wnd = WIN_GetPtr( hwnd )) || wnd == WND_OTHER_PROCESS)
         {
-            if (client_rgn > 1) DeleteObject( client_rgn );
+            if (client_rgn > (HRGN)1) DeleteObject( client_rgn );
             return 0;
         }
     }
 
     if (wnd->hrgnUpdate || (wnd->flags & WIN_INTERNAL_PAINT)) add_paint_count( hwnd, -1 );
-    if (wnd->hrgnUpdate > 1) DeleteObject( wnd->hrgnUpdate );
+    if (wnd->hrgnUpdate > (HRGN)1) DeleteObject( wnd->hrgnUpdate );
     wnd->hrgnUpdate = 0;
     wnd->flags &= ~(WIN_INTERNAL_PAINT | WIN_NEEDS_NCPAINT | WIN_NEEDS_BEGINPAINT);
-    if (client_rgn > 1) OffsetRgn( client_rgn, wnd->rectWindow.left - wnd->rectClient.left,
-                                   wnd->rectWindow.top - wnd->rectClient.top );
+    if (client_rgn > (HRGN)1) OffsetRgn( client_rgn, wnd->rectWindow.left - wnd->rectClient.left,
+                                         wnd->rectWindow.top - wnd->rectClient.top );
     WIN_ReleasePtr( wnd );
     return client_rgn;
 }
@@ -181,7 +181,7 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
     if (GetClassLongA( hwnd, GCL_STYLE ) & CS_PARENTDC)
     {
         /* Don't clip the output to the update region for CS_PARENTDC window */
-        if (hrgnUpdate > 1) DeleteObject( hrgnUpdate );
+        if (hrgnUpdate > (HRGN)1) DeleteObject( hrgnUpdate );
         hrgnUpdate = 0;
         dcx_flags &= ~DCX_INTERSECTRGN;
     }
@@ -191,7 +191,7 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
         {
             hrgnUpdate = CreateRectRgn( 0, 0, 0, 0 );
         }
-        else if (hrgnUpdate == 1)  /* whole client area, don't clip */
+        else if (hrgnUpdate == (HRGN)1)  /* whole client area, don't clip */
         {
             hrgnUpdate = 0;
             dcx_flags &= ~DCX_INTERSECTRGN;

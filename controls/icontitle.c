@@ -62,7 +62,7 @@ const struct builtin_class_descr ICONTITLE_builtin_class =
 HWND ICONTITLE_Create( HWND owner )
 {
     HWND hWnd;
-    HINSTANCE instance = GetWindowLongA( owner, GWL_HINSTANCE );
+    HINSTANCE instance = (HINSTANCE)GetWindowLongA( owner, GWL_HINSTANCE );
     LONG style = WS_CLIPSIBLINGS;
 
     if (!IsWindowEnabled(owner)) style |= WS_DISABLED;
@@ -238,5 +238,3 @@ LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg,
     }
     return DefWindowProcW( hWnd, msg, wParam, lParam );
 }
-
-

@@ -363,15 +363,6 @@ DWORD WINAPI SetSysColorsTemp( const COLORREF *pPens, const HBRUSH *pBrushes, DW
 }
 
 /***********************************************************************
- *		GetSysColorBrush (USER.281)
- */
-HBRUSH16 WINAPI GetSysColorBrush16( INT16 index )
-{
-    return (HBRUSH16)GetSysColorBrush(index);
-}
-
-
-/***********************************************************************
  *		GetSysColorBrush (USER32.@)
  */
 HBRUSH WINAPI GetSysColorBrush( INT index )

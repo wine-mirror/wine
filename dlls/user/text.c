@@ -1076,25 +1076,6 @@ INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT count, LPRECT rect, UINT flags )
 }
 
 /***********************************************************************
- *           DrawText    (USER.85)
- */
-INT16 WINAPI DrawText16( HDC16 hdc, LPCSTR str, INT16 count, LPRECT16 rect, UINT16 flags )
-{
-    INT16 ret;
-
-    if (rect)
-    {
-        RECT rect32;
-        CONV_RECT16TO32( rect, &rect32 );
-        ret = DrawTextA( hdc, str, count, &rect32, flags );
-        CONV_RECT32TO16( &rect32, rect );
-    }
-    else ret = DrawTextA( hdc, str, count, NULL, flags);
-    return ret;
-}
-
-
-/***********************************************************************
  *
  *           GrayString functions
  */
@@ -1113,7 +1094,7 @@ struct gray_string_info
 static BOOL CALLBACK gray_string_callback( HDC hdc, LPARAM param, INT len )
 {
     const struct gray_string_info *info = (struct gray_string_info *)param;
-    return TEXT_CallTo16_word_wlw( info->proc, hdc, info->param, len );
+    return TEXT_CallTo16_word_wlw( info->proc, HDC_16(hdc), info->param, len );
 }
 
 /***********************************************************************
