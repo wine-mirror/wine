@@ -329,26 +329,41 @@ int is_resource(const char* file)
     return !memcmp(buf, res_sig, sizeof(buf));
 }
 
-/* open the .def library for a given dll in a specified path */
-static char *try_dll_path( const char *path, const char *name )
+/* open the file for a given name, in a specified path, with the given extension */
+static char *try_path( const char *path, const char *name, const char *ext )
 {
     char *fullname;
     int fd;
 
-    fullname = strmake("%s/lib%s.def", path, name );
+    fullname = strmake("%s/lib%s.%s", path, name, ext);
+    if (verbose > 1) fprintf(stderr, "Try %s...", fullname);
 
     /* check if the file exists */
     if ((fd = open( fullname, O_RDONLY )) != -1)
     {
         close( fd );
+	if (verbose > 1) fprintf(stderr, "FOUND!\n");
         return fullname;
     }
     free( fullname );
+    if (verbose > 1) fprintf(stderr, "\n");
     return NULL;
 }
 
+/* open the .def library for a given dll in a specified path */
+static char *try_dll_path( const char *path, const char *name )
+{
+    return try_path(path, name, "def");
+}
+
+/* open the .a library for a given lib in a specified path */
+static char *try_lib_path( const char *path, const char *name )
+{
+    return try_path(path, name, "a");
+}
+
 /* open the .def library for a given dll */
-static char *open_dll( const char *name )
+static char *open_dll(const char *name)
 {
     char *fullname;
     int i;
@@ -360,34 +375,55 @@ static char *open_dll( const char *name )
     return try_dll_path( ".", name );
 }
 
+/* find a static library */
+static char *find_lib(const char *name)
+{
+    static const char* std_paths[] = { ".", "/usr/lib", "/usr/local/lib" };
+    char *fullname;
+    int i;
+    
+    for (i = 0; i < nb_lib_paths; i++)
+    {
+        if ((fullname = try_lib_path( lib_paths[i], name ))) return fullname;
+    }
+
+    for (i = 0; i < sizeof(std_paths)/sizeof(std_paths[0]); i++)
+    {
+        if ((fullname = try_lib_path( std_paths[i], name ))) return fullname;
+    }
+
+    return 0;
+}
+
 void add_lib_path(const char* path)
 {
     lib_paths = realloc( lib_paths, (nb_lib_paths+1) * sizeof(*lib_paths) );
     lib_paths[nb_lib_paths++] = strdup(path);
     dll_files = realloc( dll_files, (nb_dll_files+1) * sizeof(*dll_files) );
     dll_files[nb_dll_files++] = strmake("-L%s", path);
-    lib_files = realloc( lib_files, (nb_lib_files+1) * sizeof(*lib_files) );
-    lib_files[nb_lib_files++] = strmake("-L%s", path);
 }
 
 void add_lib_file(const char* library)
 {
+    char *lib;
+    
     if (open_dll(library))
     {
         dll_files = realloc( dll_files, (nb_dll_files+1) * sizeof(*dll_files) );
         dll_files[nb_dll_files++] = strmake("-l%s", library);
     }
-    else
+    else if ((lib = find_lib(library)))
     {
         lib_files = realloc( lib_files, (nb_lib_files+1) * sizeof(*lib_files) );
-        lib_files[nb_lib_files++] = strmake("-l%s", library);
+        lib_files[nb_lib_files++] = lib;
     }
+    else error("Can not find library %s", library);
 }
 
 int main(int argc, char **argv)
 {
     char *library = 0, *path = 0;
-    int i, j, len, cpp = 0, no_opt = 0, gui_mode = 0, create_wrapper = 1;
+    int i, j, len, cpp = 0, no_opt = 0, gui_mode = 0, create_wrapper = -1;
     char *base_name, *base_file, *app_temp_name, *wrp_temp_name;
     char *spec_name, *spec_c_name, *spec_o_name;
     char *wspec_name, *wspec_c_name, *wspec_o_name;
@@ -430,7 +466,7 @@ int main(int argc, char **argv)
 		else error("Unknown option %s\n", argv[i]);
 		break;
             case 'v':        /* verbose */
-                if (argv[i][2] == 0) verbose = 1;
+                if (argv[i][2] == 0) verbose++;
                 break;
 	    case 'V':
 		printf("winewrap v0.40\n");
@@ -438,6 +474,12 @@ int main(int argc, char **argv)
 		break;
 	    case 'C':
 		cpp = 1;
+		break;
+	    case 'w':
+		create_wrapper = 1;
+		break;
+	    case 'W':
+		create_wrapper = 0;
 		break;
 	    case '-':
 		if (argv[i][2]) error("No long option supported.");
@@ -454,6 +496,9 @@ int main(int argc, char **argv)
 	obj_files[nb_obj_files++] = strdup(argv[i]);
     }
 
+    /* create wrapper only in C++ by default */
+    if (create_wrapper == -1) create_wrapper = cpp;
+    
     /* link in by default the big three */
     add_lib_file("user32");
     add_lib_file("gdi32");
@@ -502,10 +547,12 @@ int main(int argc, char **argv)
 	spec_args[j++] = strmake("%s.exe", base_name);
         spec_args[j++] = gui_mode ? "-mgui" : "-mcui";
     }
-    for (i = 0; i < nb_obj_files; i++)
-	spec_args[j++] = obj_files[i];
     for (i = 0; i < nb_dll_files; i++)
 	spec_args[j++] = dll_files[i];
+    for (i = 0; i < nb_obj_files; i++)
+	spec_args[j++] = obj_files[i];
+    for (i = 0; i < nb_lib_files; i++)
+	spec_args[j++] = lib_files[i];
     spec_args[j] = 0;
 
     /* build gcc's argument list */
@@ -520,13 +567,11 @@ int main(int argc, char **argv)
     comp_args[j] = 0;
     
     /* build ld's argument list */
-    link_args = malloc( (nb_obj_files + 20) * sizeof (char *) );
+    link_args = malloc( (nb_lib_files + nb_obj_files + 20) * sizeof (char *) );
     j = 0;
     link_args[j++] = cpp ? "g++" : "gcc";
     link_args[j++] = "-shared";
     link_args[j++] = "-Wl,-Bsymbolic,-z,defs";
-    for (i = 0; i < nb_lib_files; i++)
-	link_args[j++] = lib_files[i];
     link_args[j++] = "-lwine";
     link_args[j++] = "-lm";
     link_args[j++] = "-o";
@@ -534,6 +579,8 @@ int main(int argc, char **argv)
     link_args[j++] = spec_o_name;
     for (i = 0; i < nb_obj_files; i++)
 	if (!is_resource(obj_files[i])) link_args[j++] = obj_files[i];
+    for (i = 0; i < nb_lib_files; i++)
+	link_args[j++] = lib_files[i];
     link_args[j] = 0;
   
     /* build wrapper compile argument list */
@@ -549,7 +596,7 @@ int main(int argc, char **argv)
     wwrap_args[j] = 0;
      
     /* build wrapper winebuild's argument list */
-    wspec_args = malloc( (nb_lib_files + nb_dll_files + 20) * sizeof (char *) );
+    wspec_args = malloc( (nb_dll_files + 20) * sizeof (char *) );
     j = 0;
     wspec_args[j++] = BINDIR "/winebuild";
     wspec_args[j++] = "-o";
