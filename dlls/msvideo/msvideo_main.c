@@ -383,6 +383,12 @@ DrawDibOpen( void ) {
 	return 0xdead;
 }
 
+BOOL WINAPI
+DrawDibClose( HANDLE /*HDRAWDIB*/ hDib ) {
+       FIXME("stub!\n");
+       return TRUE;
+}
+
 BOOL VFWAPI DrawDibBegin(HANDLE /*HDRAWDIB*/ hdd,
                                     HDC      hdc,
                                     INT      dxDst,

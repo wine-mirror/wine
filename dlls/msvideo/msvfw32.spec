@@ -7,7 +7,7 @@ type	win32
   2 stdcall VideoForWindowsVersion() VideoForWindowsVersion
   3 stdcall DrawDibBegin(long long long long ptr long long long) DrawDibBegin
   4 stub    DrawDibChangePalette
-  5 stub    DrawDibClose
+  5 stdcall DrawDibClose(long) DrawDibClose
   6 stub    DrawDibDraw
   7 stub    DrawDibEnd
   8 stub    DrawDibGetBuffer
