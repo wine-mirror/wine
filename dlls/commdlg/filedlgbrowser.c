@@ -93,9 +93,10 @@ extern HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
 static void COMDLG32_UpdateCurrentDir(FileOpenDlgInfos *fodInfos)
 {
     char lpstrPath[MAX_PATH];
-    SHGetPathFromIDListA(fodInfos->ShellInfos.pidlAbsCurrent,lpstrPath);
-    SetCurrentDirectoryA(lpstrPath);
-    TRACE("new current folder %s\n", lpstrPath);
+    if(SHGetPathFromIDListA(fodInfos->ShellInfos.pidlAbsCurrent,lpstrPath)) {
+        SetCurrentDirectoryA(lpstrPath);
+        TRACE("new current folder %s\n", lpstrPath);
+    }
 }
 
 /* copied from shell32 to avoid linking to it */
