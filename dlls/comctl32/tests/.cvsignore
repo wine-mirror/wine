@@ -1,4 +1,5 @@
 Makefile
 comctl32_test.exe.spec.c
 dpa.ok
+tab.ok
 testlist.c

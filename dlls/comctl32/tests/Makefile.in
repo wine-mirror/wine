@@ -3,10 +3,11 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = comctl32.dll
-IMPORTS   = comctl32
+IMPORTS   = comctl32 user32
 
 CTESTS = \
-	dpa.c
+	dpa.c \
+	tab.c
 
 @MAKE_TEST_RULES@
 
