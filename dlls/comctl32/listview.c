@@ -54,6 +54,7 @@
  *
  * Speedups
  *   -- LISTVIEW_SetItemCount is too invalidation happy
+ *   -- LISTVIEW_Size invalidates too much
  *   -- in sorted mode, LISTVIEW_InsertItemT sorts the array,
  *      instead of inserting in the right spot
  *   -- we should keep an ordered array of coordinates in iconic mode
@@ -252,6 +253,7 @@ typedef struct tagLISTVIEW_INFO
   BOOL bFocus;
   INT nFocusedItem;
   RECT rcFocus;
+  BOOL bFirstPaint;		/* Flags if the control has never painted before */
   DWORD dwStyle;		/* the cached window GWL_STYLE */
   DWORD dwLvExStyle;		/* extended listview style */
   INT nItemCount;		/* the number of items in the list */
@@ -6898,6 +6900,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->iconSpacing.cx = GetSystemMetrics(SM_CXICONSPACING);
   infoPtr->iconSpacing.cy = GetSystemMetrics(SM_CYICONSPACING);
   infoPtr->nEditLabelItem = -1;
+  infoPtr->bFirstPaint = TRUE;
 
   /* get default font (icon title) */
   SystemParametersInfoW(SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
@@ -6957,9 +6960,6 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->hdpaItems = DPA_Create(10);
   infoPtr->hdpaPosX  = DPA_Create(10);
   infoPtr->hdpaPosY  = DPA_Create(10);
-
-  /* initialize size of items */
-  LISTVIEW_UpdateItemSize(infoPtr);
 
   /* initialize the hover time to -1(indicating the default system hover time) */
   infoPtr->dwHoverTime = -1;
@@ -7707,6 +7707,16 @@ static LRESULT LISTVIEW_Paint(LISTVIEW_INFO *infoPtr, HDC hdc)
 {
     TRACE("(hdc=%p)\n", hdc);
 
+    if (infoPtr->bFirstPaint)
+    {
+	UINT uView =  infoPtr->dwStyle & LVS_TYPEMASK;
+	
+	LISTVIEW_UpdateItemSize(infoPtr);
+	if (uView == LVS_ICON || uView == LVS_SMALLICON)
+	    LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
+	LISTVIEW_UpdateScroll(infoPtr);
+	infoPtr->bFirstPaint = FALSE;
+    }
     if (hdc) 
 	LISTVIEW_Refresh(infoPtr, hdc);
     else
@@ -7984,7 +7994,7 @@ static LRESULT LISTVIEW_Size(LISTVIEW_INFO *infoPtr, int Width, int Height)
 
     LISTVIEW_UpdateScroll(infoPtr);
 
-    LISTVIEW_InvalidateList(infoPtr);
+    LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
 
   return 0;
 }
