@@ -656,13 +656,21 @@ NTSTATUS WINAPI NtRestoreKey(
  * NtSaveKey [NTDLL.@]
  * ZwSaveKey [NTDLL.@]
  */
-NTSTATUS WINAPI NtSaveKey(
-	IN HKEY KeyHandle,
-	IN HANDLE FileHandle)
+NTSTATUS WINAPI NtSaveKey(IN HKEY KeyHandle, IN HANDLE FileHandle)
 {
-	FIXME("(%p,%p) stub\n",
-	KeyHandle, FileHandle);
-	return STATUS_SUCCESS;
+    NTSTATUS ret;
+
+    TRACE("(%p,%p)\n", KeyHandle, FileHandle);
+
+    SERVER_START_REQ( save_registry )
+    {
+        req->hkey = KeyHandle;
+        req->file = FileHandle;
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 /******************************************************************************
  * NtSetInformationKey [NTDLL.@]
@@ -727,12 +735,20 @@ NTSTATUS WINAPI RtlpNtSetValueKey( HKEY hkey, ULONG type, const void *data,
  * NtUnloadKey [NTDLL.@]
  * ZwUnloadKey [NTDLL.@]
  */
-NTSTATUS WINAPI NtUnloadKey(
-	IN HKEY KeyHandle)
+NTSTATUS WINAPI NtUnloadKey(IN HKEY KeyHandle)
 {
-	FIXME("(%p) stub\n",
-	KeyHandle);
-	return STATUS_SUCCESS;
+    NTSTATUS ret;
+
+    TRACE("(%p)\n", KeyHandle);
+
+    SERVER_START_REQ( unload_registry )
+    {
+        req->hkey  = KeyHandle;
+        ret = wine_server_call(req);
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 /******************************************************************************

@@ -1680,13 +1680,7 @@ LONG WINAPI RegSaveKeyW( HKEY hkey, LPCWSTR file, LPSECURITY_ATTRIBUTES sa )
             MESSAGE("Wow, we are already fiddling with a temp file %s with an ordinal as high as %d !\nYou might want to delete all corresponding temp files in that directory.\n", debugstr_w(buffer), count);
     }
 
-    SERVER_START_REQ( save_registry )
-    {
-        req->hkey = hkey;
-        req->file = handle;
-        ret = RtlNtStatusToDosError( wine_server_call( req ) );
-    }
-    SERVER_END_REQ;
+    ret = RtlNtStatusToDosError(NtSaveKey(hkey, handle));
 
     CloseHandle( handle );
     if (!ret)
@@ -1791,12 +1785,8 @@ LONG WINAPI RegUnLoadKeyW( HKEY hkey, LPCWSTR lpSubKey )
     if( ret )
         return ERROR_INVALID_PARAMETER;
 
-    SERVER_START_REQ( unload_registry )
-    {
-        req->hkey  = shkey;
-        ret = RtlNtStatusToDosError( wine_server_call(req) );
-    }
-    SERVER_END_REQ;
+    ret = RtlNtStatusToDosError(NtUnloadKey(shkey));
+
     RegCloseKey(shkey);
 
     return ret;
