@@ -78,7 +78,6 @@
  *
  * Extended Styles
  *   -- LVS_EX_BORDERSELECT
- *   -- LVS_EX_CHECKBOXES
  *   -- LVS_EX_FLATSB
  *   -- LVS_EX_GRIDLINES
  *   -- LVS_EX_HEADERDRAGDROP
@@ -397,6 +396,7 @@ static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *, INT, INT, HWND);
 static INT LISTVIEW_GetTopIndex(LISTVIEW_INFO *);
 static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *, INT, BOOL);
 static HWND CreateEditLabelT(LISTVIEW_INFO *, LPCWSTR, DWORD, INT, INT, INT, INT, BOOL);
+static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *, INT, HIMAGELIST);
 
 /******** Text handling functions *************************************/
 
@@ -5971,7 +5971,11 @@ static INT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BOOL s
 
     if (select && !(uView == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)))
     {
-        if (uView == LVS_REPORT) UnionRect(&rcBounds, &rcIcon, &rcLabel);
+        if (uView == LVS_REPORT)
+        {
+            UnionRect(&rcBounds, &rcIcon, &rcLabel);
+            UnionRect(&rcBounds, &rcBounds, &rcState);
+        }
         if (!PtInRect(&rcBounds, opt)) iItem = -1;
     }
     return lpht->iItem = iItem;
@@ -6584,6 +6588,53 @@ static BOOL LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn, INT cx)
 }
 
 /***
+ * Creates the checkbox imagelist.  Helper for LISTVIEW_SetExtendedListViewStyle
+ *
+ */
+static HIMAGELIST LISTVIEW_CreateCheckBoxIL(LISTVIEW_INFO *infoPtr)
+{
+    HDC hdc_wnd, hdc;
+    HBITMAP hbm_im, hbm_mask, hbm_orig;
+    RECT rc;
+    HBRUSH hbr_white = GetStockObject(WHITE_BRUSH);
+    HBRUSH hbr_black = GetStockObject(BLACK_BRUSH);
+    HIMAGELIST himl;
+
+    himl = ImageList_Create(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
+                            ILC_COLOR | ILC_MASK, 2, 2);
+    hdc_wnd = GetDC(infoPtr->hwndSelf);
+    hdc = CreateCompatibleDC(hdc_wnd);
+    hbm_im = CreateCompatibleBitmap(hdc_wnd, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON));
+    hbm_mask = CreateBitmap(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), 1, 1, NULL);
+    ReleaseDC(infoPtr->hwndSelf, hdc_wnd);
+
+    rc.left = rc.top = 0;
+    rc.right = GetSystemMetrics(SM_CXSMICON);
+    rc.bottom = GetSystemMetrics(SM_CYSMICON);
+
+    hbm_orig = SelectObject(hdc, hbm_mask);
+    FillRect(hdc, &rc, hbr_white);
+    InflateRect(&rc, -3, -3);
+    FillRect(hdc, &rc, hbr_black);
+
+    SelectObject(hdc, hbm_im);
+    DrawFrameControl(hdc, &rc, DFC_BUTTON, DFCS_BUTTONCHECK | DFCS_MONO);
+    SelectObject(hdc, hbm_orig);
+    ImageList_Add(himl, hbm_im, hbm_mask); 
+
+    SelectObject(hdc, hbm_im);
+    DrawFrameControl(hdc, &rc, DFC_BUTTON, DFCS_BUTTONCHECK | DFCS_MONO | DFCS_CHECKED);
+    SelectObject(hdc, hbm_orig);
+    ImageList_Add(himl, hbm_im, hbm_mask);
+
+    DeleteObject(hbm_mask);
+    DeleteObject(hbm_im);
+    DeleteDC(hdc);
+
+    return himl;
+}
+
+/***
  * DESCRIPTION:
  * Sets the extended listview style.
  *
@@ -6605,6 +6656,14 @@ static DWORD LISTVIEW_SetExtendedListViewStyle(LISTVIEW_INFO *infoPtr, DWORD dwM
 	infoPtr->dwLvExStyle = (dwOldStyle & ~dwMask) | (dwStyle & dwMask);
     else
 	infoPtr->dwLvExStyle = dwStyle;
+
+    if((infoPtr->dwLvExStyle ^ dwOldStyle) & LVS_EX_CHECKBOXES)
+    {
+        HIMAGELIST himl = 0;
+        if(infoPtr->dwLvExStyle & LVS_EX_CHECKBOXES)
+            himl = LISTVIEW_CreateCheckBoxIL(infoPtr);
+        LISTVIEW_SetImageList(infoPtr, LVSIL_STATE, himl);
+    }
 
     return dwOldStyle;
 }
@@ -7890,6 +7949,19 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
   infoPtr->nEditLabelItem = -1;
   if ((nItem >= 0) && (nItem < infoPtr->nItemCount))
   {
+    if ((infoPtr->dwLvExStyle & LVS_EX_CHECKBOXES) && (lvHitTestInfo.flags & LVHT_ONITEMSTATEICON))
+    {
+        DWORD state = LISTVIEW_GetItemState(infoPtr, nItem, LVIS_STATEIMAGEMASK) >> 12;
+        if(state == 1 || state == 2)
+        {
+            LVITEMW lvitem;
+            state ^= 3;
+            lvitem.state = state << 12;
+            lvitem.stateMask = LVIS_STATEIMAGEMASK;
+            LISTVIEW_SetItemState(infoPtr, nItem, &lvitem);
+        }
+        return 0;
+    }
     if (LISTVIEW_TrackMouse(infoPtr, lvHitTestInfo.pt))
     {
         NMLISTVIEW nmlv;
