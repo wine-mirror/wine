@@ -122,6 +122,18 @@ static int _px_tcp_ops[] = {
 static int   _check_ws(LPWSINFO pwsi, ws_socket* pws);
 static char* _check_buffer(LPWSINFO pwsi, int size);
 
+/* ----------------------------------- non-blocking I/O */
+
+static int WINSOCK_unblock_io(int fd, int noblock)
+{
+    int fd_flags;
+
+    fd_flags = fcntl(fd, F_GETFL, 0);
+    if (fcntl(fd, F_SETFL, (noblock)? fd_flags |  O_NONBLOCK
+                                    : fd_flags & ~O_NONBLOCK ) != -1) return 0;
+    return -1;
+}
+
 /***********************************************************************
  *          convert_sockopt()
  *
@@ -413,8 +425,6 @@ INT WINAPI WSAStartup(UINT wVersionRequested, LPWSADATA lpWSAData)
 void WINSOCK_Shutdown()
 {
     /* Called on exit(), has to remove all outstanding async DNS processes.  */
-
-    WINSOCK_cancel_task_aops( 0, __ws_memfree );
 }
 
 INT WINSOCK_DeleteTaskWSI( TDB* pTask, LPWSINFO pwsi )
@@ -428,10 +438,6 @@ INT WINSOCK_DeleteTaskWSI( TDB* pTask, LPWSINFO pwsi )
     int	i, j, n;
 
     if( --pwsi->num_startup > 0 ) return 0;
-
-    SIGNAL_MaskAsyncEvents( TRUE );
-    WINSOCK_cancel_task_aops( pTask->hSelf, __ws_memfree );
-    SIGNAL_MaskAsyncEvents( FALSE );
 
     /* unlink socket control struct */
 
@@ -1947,269 +1953,6 @@ INT16 WINAPI WINSOCK_gethostname16(char *name, INT16 namelen)
 /* ------------------------------------- Windows sockets extensions -- *
  *								       *
  * ------------------------------------------------------------------- */
-
-
-/***********************************************************************
- *       WSAAsyncGetHostByAddr()	(WINSOCK.102)
- */
-HANDLE16 WINAPI WSAAsyncGetHostByAddr16(HWND16 hWnd, UINT16 uMsg, LPCSTR addr,
-                               INT16 len, INT16 type, SEGPTR sbuf, INT16 buflen)
-{
-  LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-
-  TRACE(winsock, "(%08x): hwnd %04x, msg %04x, addr %08x[%i]\n",
-	       (unsigned)pwsi, hWnd, uMsg, (unsigned)addr , len );
-
-  if( pwsi ) 
-    return __WSAsyncDBQuery(pwsi, hWnd, uMsg, type, addr, len,
-			    NULL, (void*)sbuf, buflen, WSMSG_ASYNC_HOSTBYADDR );
-  return 0;
-}
-
-/***********************************************************************
- *       WSAAsyncGetHostByAddr()        (WSOCK32.102)
- */
-HANDLE WINAPI WSAAsyncGetHostByAddr(HWND hWnd, UINT uMsg, LPCSTR addr,
-                               INT len, INT type, LPSTR sbuf, INT buflen)
-{
-  LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-
-  TRACE(winsock, "(%08x): hwnd %04x, msg %08x, addr %08x[%i]\n",
-	       (unsigned)pwsi, (HWND16)hWnd, uMsg, (unsigned)addr , len );
-
-  if( pwsi )
-    return __WSAsyncDBQuery(pwsi, hWnd, uMsg, type, addr, len,
-                            NULL, (void*)sbuf, buflen, WSMSG_ASYNC_HOSTBYADDR | WSMSG_WIN32_AOP);
-  return 0;
-}
-
-
-/***********************************************************************
- *       WSAAsyncGetHostByName()	(WINSOCK.103)
- */
-HANDLE16 WINAPI WSAAsyncGetHostByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name, 
-                                      SEGPTR sbuf, INT16 buflen)
-{
-  LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-
-  TRACE(winsock, "(%08x): hwnd %04x, msg %04x, host %s, 
-buffer %i\n", (unsigned)pwsi, hWnd, uMsg, (name)?name:NULL_STRING, (int)buflen );
-
-  if( pwsi )
-    return __WSAsyncDBQuery(pwsi, hWnd, uMsg, 0, name, 0,
-                            NULL, (void*)sbuf, buflen, WSMSG_ASYNC_HOSTBYNAME );
-  return 0;
-}                     
-
-/***********************************************************************
- *       WSAAsyncGetHostByName32()	(WSOCK32.103)
- */
-HANDLE WINAPI WSAAsyncGetHostByName(HWND hWnd, UINT uMsg, LPCSTR name, 
-					LPSTR sbuf, INT buflen)
-{
-  LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-  TRACE(winsock, "(%08x): hwnd %04x, msg %08x, host %s, buffer %i\n", 
-	       (unsigned)pwsi, (HWND16)hWnd, uMsg, 
-	       (name)?name:NULL_STRING, (int)buflen );
-  if( pwsi )
-    return __WSAsyncDBQuery(pwsi, hWnd, uMsg, 0, name, 0,
- 			    NULL, (void*)sbuf, buflen, WSMSG_ASYNC_HOSTBYNAME | WSMSG_WIN32_AOP);
-  return 0;
-}                     
-
-
-/***********************************************************************
- *       WSAAsyncGetProtoByName()	(WINSOCK.105)
- */
-HANDLE16 WINAPI WSAAsyncGetProtoByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name, 
-                                         SEGPTR sbuf, INT16 buflen)
-{
-  LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-
-  TRACE(winsock, "(%08x): hwnd %04x, msg %08x, protocol %s\n",
-	       (unsigned)pwsi, (HWND16)hWnd, uMsg, (name)?name:NULL_STRING );
-
-  if( pwsi )
-    return __WSAsyncDBQuery(pwsi, hWnd, uMsg, 0, name, 0,
-                            NULL, (void*)sbuf, buflen, WSMSG_ASYNC_PROTOBYNAME );
-  return 0;
-}
-
-/***********************************************************************
- *       WSAAsyncGetProtoByName()       (WSOCK32.105)
- */
-HANDLE WINAPI WSAAsyncGetProtoByName(HWND hWnd, UINT uMsg, LPCSTR name,
-                                         LPSTR sbuf, INT buflen)
-{
-  LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-
-  TRACE(winsock, "(%08x): hwnd %04x, msg %08x, protocol %s\n",
-	       (unsigned)pwsi, (HWND16)hWnd, uMsg, (name)?name:NULL_STRING );
-
-  if( pwsi )
-    return __WSAsyncDBQuery(pwsi, hWnd, uMsg, 0, name, 0,
-                            NULL, (void*)sbuf, buflen, WSMSG_ASYNC_PROTOBYNAME | WSMSG_WIN32_AOP);
-  return 0;
-}
-
-
-/***********************************************************************
- *       WSAAsyncGetProtoByNumber()	(WINSOCK.104)
- */
-HANDLE16 WINAPI WSAAsyncGetProtoByNumber16(HWND16 hWnd, UINT16 uMsg, INT16 number, 
-                                           SEGPTR sbuf, INT16 buflen)
-{
-  LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-
-  TRACE(winsock, "(%08x): hwnd %04x, msg %04x, num %i\n",
-	       (unsigned)pwsi, hWnd, uMsg, number );
-
-  if( pwsi )
-    return __WSAsyncDBQuery(pwsi, hWnd, uMsg, number, NULL, 0,
-                            NULL, (void*)sbuf, buflen, WSMSG_ASYNC_PROTOBYNUM );
-  return 0;
-}
-
-/***********************************************************************
- *       WSAAsyncGetProtoByNumber()     (WSOCK32.104)
- */
-HANDLE WINAPI WSAAsyncGetProtoByNumber(HWND hWnd, UINT uMsg, INT number,
-                                           LPSTR sbuf, INT buflen)
-{
-  LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-
-  TRACE(winsock, "(%08x): hwnd %04x, msg %08x, num %i\n",
-	       (unsigned)pwsi, (HWND16)hWnd, uMsg, number );
-
-  if( pwsi )
-    return __WSAsyncDBQuery(pwsi, hWnd, uMsg, number, NULL, 0,
-                            NULL, (void*)sbuf, buflen, WSMSG_ASYNC_PROTOBYNUM | WSMSG_WIN32_AOP);
-  return 0;
-}
-
-
-/***********************************************************************
- *       WSAAsyncGetServByName()	(WINSOCK.107)
- */
-HANDLE16 WINAPI WSAAsyncGetServByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name, 
-                                        LPCSTR proto, SEGPTR sbuf, INT16 buflen)
-{
-  LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-
-  TRACE(winsock, "(%08x): hwnd %04x, msg %04x, name %s, proto %s\n",
-	       (unsigned)pwsi, hWnd, uMsg, 
-	       (name)?name:NULL_STRING, (proto)?proto:NULL_STRING );
-
-  if( pwsi )
-  {
-      int i = wsi_strtolo( pwsi, name, proto );
-
-      if( i )
-          return __WSAsyncDBQuery(pwsi, hWnd, uMsg, 0, pwsi->buffer, 0,
-                    pwsi->buffer + i, (void*)sbuf, buflen, WSMSG_ASYNC_SERVBYNAME );
-  }
-  return 0;
-}
-
-/***********************************************************************
- *       WSAAsyncGetServByName()        (WSOCK32.107)
- */
-HANDLE WINAPI WSAAsyncGetServByName(HWND hWnd, UINT uMsg, LPCSTR name,
-                                        LPCSTR proto, LPSTR sbuf, INT buflen)
-{
-  LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-
-  TRACE(winsock, "(%08x): hwnd %04x, msg %08x, name %s, proto %s\n",
-	       (unsigned)pwsi, (HWND16)hWnd, uMsg, 
-	       (name)?name:NULL_STRING, (proto)?proto:NULL_STRING );
-  if( pwsi )
-  {
-      int i = wsi_strtolo( pwsi, name, proto );
-
-      if( i )
-          return __WSAsyncDBQuery(pwsi, hWnd, uMsg, 0, pwsi->buffer, 0,
-                 pwsi->buffer + i, (void*)sbuf, buflen, WSMSG_ASYNC_SERVBYNAME | WSMSG_WIN32_AOP);
-  }
-  return 0;
-}
-
-
-/***********************************************************************
- *       WSAAsyncGetServByPort()	(WINSOCK.106)
- */
-HANDLE16 WINAPI WSAAsyncGetServByPort16(HWND16 hWnd, UINT16 uMsg, INT16 port, 
-                                        LPCSTR proto, SEGPTR sbuf, INT16 buflen)
-{
-  LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-
-  TRACE(winsock, "(%08x): hwnd %04x, msg %04x, port %i, proto %s\n",
-	       (unsigned)pwsi, hWnd, uMsg, port, (proto)?proto:NULL_STRING );
-
-  if( pwsi )
-  {
-      int i = wsi_strtolo( pwsi, proto, NULL );
-
-      if( i )
-	  return __WSAsyncDBQuery(pwsi, hWnd, uMsg, port, pwsi->buffer, 0,
-		NULL, (void*)sbuf, buflen, WSMSG_ASYNC_SERVBYPORT );
-  }
-  return 0;
-}
-
-/***********************************************************************
- *       WSAAsyncGetServByPort()        (WSOCK32.106)
- */
-HANDLE WINAPI WSAAsyncGetServByPort(HWND hWnd, UINT uMsg, INT port,
-                                        LPCSTR proto, LPSTR sbuf, INT buflen)
-{
-  LPWSINFO              pwsi = wsi_find(GetCurrentTask());
-
-  TRACE(winsock, "(%08x): hwnd %04x, msg %08x, port %i, proto %s\n",
-	       (unsigned)pwsi, (HWND16)hWnd, uMsg, port, (proto)?proto:NULL_STRING );
-
-  if( pwsi )
-  {
-      int i = wsi_strtolo( pwsi, proto, NULL );
-
-      if( i )
-	  return __WSAsyncDBQuery(pwsi, hWnd, uMsg, port, pwsi->buffer, 0,
-		 NULL, (void*)sbuf, buflen, WSMSG_ASYNC_SERVBYPORT | WSMSG_WIN32_AOP);
-  }
-  return 0;
-}
-
-
-/***********************************************************************
- *       WSACancelAsyncRequest()	(WINSOCK.108)(WSOCK32.109)
- */
-INT WINAPI WSACancelAsyncRequest(HANDLE hAsyncTaskHandle)
-{
-    INT		retVal = SOCKET_ERROR;
-    LPWSINFO		pwsi = wsi_find(GetCurrentTask());
-    ws_async_op*	p_aop = (ws_async_op*)WS_HANDLE2PTR(hAsyncTaskHandle);
-
-    TRACE(winsock, "(%08x): handle %08x\n", 
-			   (unsigned)pwsi, hAsyncTaskHandle);
-    if( pwsi )
-    {
-	SIGNAL_MaskAsyncEvents( TRUE );	/* block SIGIO */
-	if( WINSOCK_cancel_async_op(p_aop) )
-	{
-	    WS_FREE(p_aop);
-	    pwsi->num_async_rq--;
-	    retVal = 0;
-	}
-	else pwsi->err = WSAEINVAL;
-	SIGNAL_MaskAsyncEvents( FALSE );
-    }
-    return retVal;
-}
-
-INT16 WINAPI WSACancelAsyncRequest16(HANDLE16 hAsyncTaskHandle)
-{
-    return (HANDLE16)WSACancelAsyncRequest((HANDLE)hAsyncTaskHandle);
-}
-
 /***********************************************************************
  *      WSAAsyncSelect()		(WINSOCK.101)(WSOCK32.101)
  */

@@ -526,48 +526,6 @@ typedef struct timeval TIMEVAL, *PTIMEVAL, *LPTIMEVAL;
 #define WS_DUP_OFFSET           0x0002		/* internal pointers are offsets */
 #define WS_DUP_SEGPTR           0x0004		/* internal pointers are SEGPTRs */
 						/* by default, internal pointers are linear */
-/* async DNS op flags */
-
-#define AOP_IO                  0x0000001	/* aop_control paramaters */
-
-#define AOP_CONTROL_REMOVE      0x0000000	/* aop_control return values */
-#define AOP_CONTROL_KEEP        0x0000001
-
-typedef struct  __aop
-{
-  /* AOp header */
-
-  struct __aop *next, *prev;
-  int           fd[2];				/* pipe */
-  int   (*aop_control)(struct __aop*, int);	/* SIGIO handler */
-  pid_t         pid;				/* child process pid */
-
-  /* custom data */
-
-  HWND        hWnd;				/* hWnd to post */ 
-  UINT        uMsg;				/* uMsg message to. */
-
-  union 
-  {
-    SEGPTR seg_base;
-    LPSTR  lin_base;
-    void*  ptr_base;
-  } 		b;				/* buffer to copy result to */
-
-  UINT        buflen;
-  UINT	flags;				/* WSMSG_ASYNC_... */
-} ws_async_op;
-
-#define WSMSG_ASYNC_HOSTBYNAME  0x0001
-#define WSMSG_ASYNC_HOSTBYADDR  0x0002
-#define WSMSG_ASYNC_PROTOBYNAME 0x0010
-#define WSMSG_ASYNC_PROTOBYNUM  0x0020
-#define WSMSG_ASYNC_SERVBYNAME  0x0100
-#define WSMSG_ASYNC_SERVBYPORT  0x0200
-#define WSMSG_ASYNC_RQMASK	0x0fff
-
-#define WSMSG_WIN32_AOP		0x1000
-#define WSMSG_DEAD_AOP		0x8000
 
 typedef struct __sop	/* WSAAsyncSelect() control struct */
 {
@@ -619,25 +577,6 @@ typedef struct _WSINFO
 int WS_dup_he(LPWSINFO pwsi, struct hostent* p_he, int flag);
 int WS_dup_pe(LPWSINFO pwsi, struct protoent* p_pe, int flag);
 int WS_dup_se(LPWSINFO pwsi, struct servent* p_se, int flag);
-
-void WS_do_async_gethost(LPWSINFO, unsigned);
-void WS_do_async_getproto(LPWSINFO, unsigned);
-void WS_do_async_getserv(LPWSINFO, unsigned);
-
-/* winsock_dns.c */
-extern HANDLE16 __WSAsyncDBQuery(LPWSINFO pwsi, HWND hWnd, UINT uMsg, 
-    INT type, LPCSTR init, INT len, LPCSTR proto, void* sbuf, 
-    INT buflen, UINT flag);
-
-int WINSOCK_async_io(int fd, int async);
-int WINSOCK_unblock_io(int fd, int noblock);
-
-int  WINSOCK_check_async_op(ws_async_op* p_aop);
-void WINSOCK_link_async_op(ws_async_op* p_aop);
-void WINSOCK_unlink_async_op(ws_async_op* p_aop);
-int  WINSOCK_cancel_async_op(ws_async_op* p_aop);
-
-void WINSOCK_cancel_task_aops(HTASK16, void (*__memfree)(void*) );
 
 BOOL WINSOCK_HandleIO(int* fd_max, int num_pending, fd_set pending_set[3], fd_set master_set[3] );
 void   WINSOCK_Shutdown(void);
