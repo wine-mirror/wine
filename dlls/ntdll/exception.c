@@ -327,7 +327,7 @@ void WINAPI REGS_FUNC(DebugBreak)( CONTEXT *context )
     EXCEPTION_RECORD rec;
 
     rec.ExceptionCode    = EXCEPTION_BREAKPOINT;
-    rec.ExceptionFlags   = EH_NONCONTINUABLE;
+    rec.ExceptionFlags   = 0;
     rec.ExceptionRecord  = NULL;
     rec.NumberParameters = 0;
     REGS_FUNC(RtlRaiseException)( &rec, context );
@@ -440,7 +440,7 @@ static HANDLER_DEF(EXC_segv)
 
     EXC_SaveContext( &context, HANDLER_CONTEXT );
     rec.ExceptionRecord  = NULL;
-    rec.ExceptionFlags   = EH_NONCONTINUABLE;
+    rec.ExceptionFlags   = 0;
     rec.ExceptionAddress = GET_IP(&context);
     rec.NumberParameters = 0;
 
@@ -650,7 +650,7 @@ static HANDLER_DEF(EXC_fpe)
 #endif  /* TRAP_sig */
 
     EXC_SaveContext( &context, HANDLER_CONTEXT );
-    rec.ExceptionFlags   = EH_NONCONTINUABLE;
+    rec.ExceptionFlags   = 0;
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = GET_IP(&context);
     rec.NumberParameters = 0;
@@ -674,7 +674,7 @@ static HANDLER_DEF(EXC_int)
 
     EXC_SaveContext( &context, HANDLER_CONTEXT );
     rec.ExceptionCode    = CONTROL_C_EXIT;
-    rec.ExceptionFlags   = EH_NONCONTINUABLE;
+    rec.ExceptionFlags   = 0;
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = GET_IP(&context);
     rec.NumberParameters = 0;
