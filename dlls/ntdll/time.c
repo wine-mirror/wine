@@ -831,8 +831,9 @@ NTSTATUS WINAPI NtSetSystemTime(const LARGE_INTEGER *NewTime, LARGE_INTEGER *Old
 
     ERR("Cannot set time to %d/%d/%d %d:%d:%d Time adjustment %ld %s\n",
             tf.Year, tf.Month, tf.Day, tf.Hour, tf.Minute, tf.Second,
-            sec-oldsec, err == -1 ? "No Permission" :
-                sec == (time_t)-1 ? "" : "is too large." );
+            (long)(sec-oldsec),
+            err == -1 ? "No Permission"
+                      : sec == (time_t)-1 ? "" : "is too large." );
 
     if(err == 2)
         return STATUS_INVALID_PARAMETER;
