@@ -38,6 +38,7 @@ SUBDIRS = \
 	mapi32 \
 	mpr \
 	msacm \
+	msacm/imaadp32 \
 	msacm/msg711 \
 	msdmo \
 	msimg32 \
@@ -127,6 +128,7 @@ all: \
 	gdi.dll$(DLLEXT) \
 	gdi32.dll$(DLLEXT) \
 	icmp.dll$(DLLEXT) \
+	imaadp32.acm$(DLLEXT) \
 	imagehlp.dll$(DLLEXT) \
 	imm.dll$(DLLEXT) \
 	imm32.dll$(DLLEXT) \
@@ -284,6 +286,9 @@ glu32.dll$(DLLEXT): glu32/glu32.dll$(DLLEXT)
 
 icmp.dll$(DLLEXT): icmp/icmp.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) icmp/icmp.dll$(DLLEXT) $@
+
+imaadp32.acm$(DLLEXT): msacm/imaadp32/imaadp32.acm$(DLLEXT)
+	$(RM) $@ && $(LN_S) msacm/imaadp32/imaadp32.acm$(DLLEXT) $@
 
 imagehlp.dll$(DLLEXT): imagehlp/imagehlp.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) imagehlp/imagehlp.dll$(DLLEXT) $@
@@ -578,6 +583,10 @@ mapi32/mapi32.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
 mpr/mpr.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd mpr && $(MAKE) mpr.dll$(DLLEXT)
 
+msacm/imaadp32/imaadp32.acm$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
+  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+	@cd msacm/imaadp32 && $(MAKE) imaadp32.acm$(DLLEXT)
+
 msacm/msacm32.dll$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
   advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd msacm && $(MAKE) msacm32.dll$(DLLEXT)
@@ -791,7 +800,7 @@ winnls/winnls32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd winnls && $(MAKE) winnls32.dll$(DLLEXT)
 
 winsock/ws2_32.dll$(DLLEXT): dummy user32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT) libuser32.dll.$(LIBEXT) libkernel32.dll.$(LIBEXT) libntdll.dll.$(LIBEXT)
+  ntdll.dll$(DLLEXT)
 	@cd winsock && $(MAKE) ws2_32.dll$(DLLEXT)
 
 winspool/winspool.drv$(DLLEXT): dummy advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \

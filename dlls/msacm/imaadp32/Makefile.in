@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = imaadp32.acm
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
+
+C_SRCS = imaadp32.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:
