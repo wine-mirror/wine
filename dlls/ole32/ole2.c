@@ -1462,7 +1462,9 @@ void WINAPI ReleaseStgMedium(
       if ( (pmedium->pUnkForRelease==0) && 
 	   (pmedium->u.hMetaFilePict!=0) )
       {
-	DeleteMetaFile(pmedium->u.hMetaFilePict);
+	LPMETAFILEPICT pMP = GlobalLock(pmedium->u.hMetaFilePict);
+	DeleteMetaFile(pMP->hMF);
+	GlobalUnlock(pmedium->u.hMetaFilePict);
 	GlobalFree(pmedium->u.hMetaFilePict);
       }
 
