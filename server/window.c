@@ -633,6 +633,21 @@ static struct region *intersect_window_region( struct region *region, struct win
 }
 
 
+/* map the region from window to screen coordinates */
+static inline void map_win_region_to_screen( struct window *win, struct region *region )
+{
+    int x = win->window_rect.left;
+    int y = win->window_rect.top;
+
+    for (win = win->parent; win; win = win->parent)
+    {
+        x += win->client_rect.left;
+        y += win->client_rect.top;
+    }
+    offset_region( region, x, y );
+}
+
+
 /* clip all children of a given window out of the visible region */
 static struct region *clip_children( struct window *parent, struct window *last,
                                      struct region *region, int offset_x, int offset_y )
@@ -690,7 +705,7 @@ static inline struct window *get_top_clipping_window( struct window *win )
 }
 
 
-/* compute the visible region of a window */
+/* compute the visible region of a window, in window coordinates */
 static struct region *get_visible_region( struct window *win, unsigned int flags )
 {
     struct region *tmp, *region;
@@ -709,39 +724,32 @@ static struct region *get_visible_region( struct window *win, unsigned int flags
     {
         set_region_client_rect( region, win->parent );
         offset_region( region, -win->parent->client_rect.left, -win->parent->client_rect.top );
-        offset_x = win->client_rect.left;
-        offset_y = win->client_rect.top;
     }
     else if (flags & DCX_WINDOW)
     {
         set_region_rect( region, &win->visible_rect );
         if (win->win_region && !intersect_window_region( region, win )) goto error;
-        offset_x = win->window_rect.left;
-        offset_y = win->window_rect.top;
     }
     else
     {
         set_region_client_rect( region, win );
         if (win->win_region && !intersect_window_region( region, win )) goto error;
-        offset_x = win->client_rect.left;
-        offset_y = win->client_rect.top;
     }
-    offset_region( region, -offset_x, -offset_y );
+    offset_x = win->window_rect.left;
+    offset_y = win->window_rect.top;
 
     /* clip children */
 
     if (flags & DCX_CLIPCHILDREN)
     {
-        if (!clip_children( win, NULL, region,
-                            offset_x - win->client_rect.left,
-                            offset_y - win->client_rect.top )) goto error;
+        if (!clip_children( win, NULL, region, win->client_rect.left, win->client_rect.top ))
+            goto error;
     }
 
     /* clip siblings of ancestors */
 
     if (top && top != win && (tmp = create_empty_region()) != NULL)
     {
-        offset_region( region, offset_x, offset_y );  /* make it relative to parent */
         while (win != top && win->parent)
         {
             if (win->style & WS_CLIPSIBLINGS)
@@ -767,9 +775,9 @@ static struct region *get_visible_region( struct window *win, unsigned int flags
             }
             if (is_region_empty( region )) break;
         }
-        offset_region( region, -offset_x, -offset_y );  /* make it relative to target window again */
         free_region( tmp );
     }
+    offset_region( region, -offset_x, -offset_y );  /* make it relative to target window */
     return region;
 
 error:
@@ -1578,7 +1586,9 @@ DECL_HANDLER(get_visible_region)
 
     if ((region = get_visible_region( win, req->flags )))
     {
-        rectangle_t *data = get_region_data_and_free( region, get_reply_max_size(), &reply->total_size );
+        rectangle_t *data;
+        map_win_region_to_screen( win, region );
+        data = get_region_data_and_free( region, get_reply_max_size(), &reply->total_size );
         if (data) set_reply_data_ptr( data, reply->total_size );
     }
 }
@@ -1657,8 +1667,18 @@ DECL_HANDLER(get_update_region)
 
     if (win->update_region)
     {
-        if (!(data = get_region_data( win->update_region, get_reply_max_size(),
-                                      &reply->total_size ))) return;
+        /* convert update region to screen coordinates */
+        struct region *region = create_empty_region();
+
+        if (!region) return;
+        if (!copy_region( region, win->update_region ))
+        {
+            free_region( region );
+            return;
+        }
+        map_win_region_to_screen( win, region );
+        if (!(data = get_region_data_and_free( region, get_reply_max_size(),
+                                               &reply->total_size ))) return;
         set_reply_data_ptr( data, reply->total_size );
     }
 

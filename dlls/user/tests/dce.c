@@ -167,7 +167,7 @@ static void test_dc_visrgn(void)
     hdc = GetDCEx( hwnd_cache, hrgn, DCX_INTERSECTRGN | DCX_USESTYLE );
     SetRectEmpty( &rect );
     GetClipBox( hdc, &rect );
-    todo_wine ok( rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20,
+    ok( rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20,
         "invalid clip box %ld,%ld-%ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom );
     ok( GetRgnBox( hrgn, &rect ) != ERROR, "region must still be valid\n" );
     ReleaseDC( hwnd_cache, hdc );
@@ -181,7 +181,7 @@ static void test_dc_visrgn(void)
     hdc = GetDCEx( hwnd_cache, hrgn, DCX_INTERSECTRGN | DCX_USESTYLE | DCX_NORESETATTRS );
     SetRectEmpty( &rect );
     GetClipBox( hdc, &rect );
-    todo_wine ok( rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20,
+    ok( rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20,
         "invalid clip box %ld,%ld-%ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom );
     ok( GetRgnBox( hrgn, &rect ) != ERROR, "region must still be valid\n" );
     ReleaseDC( hwnd_cache, hdc );
@@ -201,19 +201,19 @@ static void test_dc_visrgn(void)
     hdc = GetDCEx( hwnd_owndc, hrgn, DCX_INTERSECTRGN | DCX_USESTYLE );
     SetRectEmpty( &rect );
     GetClipBox( hdc, &rect );
-    todo_wine ok( rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20,
+    ok( rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20,
         "invalid clip box %ld,%ld-%ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom );
     ok( GetRgnBox( hrgn, &rect ) != ERROR, "region must still be valid\n" );
     ReleaseDC( hwnd_owndc, hdc );
     ok( GetRgnBox( hrgn, &rect ) != ERROR, "region must still be valid\n" );
     SetRectEmpty( &rect );
     GetClipBox( hdc, &rect );
-    todo_wine ok( rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20,
+    ok( rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20,
         "invalid clip box %ld,%ld-%ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom );
     hdc = GetDCEx( hwnd_owndc, 0, DCX_USESTYLE );
     SetRectEmpty( &rect );
     GetClipBox( hdc, &rect );
-    todo_wine ok( rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20,
+    ok( rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20,
         "invalid clip box %ld,%ld-%ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom );
     ok( GetRgnBox( hrgn, &rect ) != ERROR, "region must still be valid\n" );
     ReleaseDC( hwnd_owndc, hdc );
@@ -226,7 +226,7 @@ static void test_dc_visrgn(void)
     ok( GetRgnBox( hrgn, &rect ) == ERROR, "region must no longer be valid\n" );
     SetRectEmpty( &rect );
     GetClipBox( hdc, &rect );
-    todo_wine ok( rect.left >= 20 && rect.top >= 20 && rect.right <= 30 && rect.bottom <= 30,
+    ok( rect.left >= 20 && rect.top >= 20 && rect.right <= 30 && rect.bottom <= 30,
         "invalid clip box %ld,%ld-%ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom );
     ok( GetRgnBox( hrgn2, &rect ) != ERROR, "region2 must still be valid\n" );
     ReleaseDC( hwnd_owndc, hdc );
@@ -247,20 +247,20 @@ static void test_dc_visrgn(void)
     hdc = GetDCEx( hwnd_classdc, hrgn, DCX_INTERSECTRGN | DCX_USESTYLE );
     SetRectEmpty( &rect );
     GetClipBox( hdc, &rect );
-    todo_wine ok( rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20,
+    ok( rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20,
         "invalid clip box %ld,%ld-%ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom );
     ok( GetRgnBox( hrgn, &rect ) != ERROR, "region must still be valid\n" );
     ReleaseDC( hwnd_classdc, hdc );
     ok( GetRgnBox( hrgn, &rect ) != ERROR, "region must still be valid\n" );
     SetRectEmpty( &rect );
     GetClipBox( hdc, &rect );
-    todo_wine ok( rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20,
+    ok( rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20,
         "invalid clip box %ld,%ld-%ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom );
 
     hdc = GetDCEx( hwnd_classdc, 0, DCX_USESTYLE );
     SetRectEmpty( &rect );
     GetClipBox( hdc, &rect );
-    todo_wine ok( rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20,
+    ok( rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20,
         "invalid clip box %ld,%ld-%ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom );
     ok( GetRgnBox( hrgn, &rect ) != ERROR, "region must still be valid\n" );
     ReleaseDC( hwnd_classdc, hdc );
@@ -273,7 +273,7 @@ static void test_dc_visrgn(void)
     ok( GetRgnBox( hrgn, &rect ) == ERROR, "region must no longer be valid\n" );
     SetRectEmpty( &rect );
     GetClipBox( hdc, &rect );
-    todo_wine ok( rect.left >= 20 && rect.top >= 20 && rect.right <= 30 && rect.bottom <= 30,
+    ok( rect.left >= 20 && rect.top >= 20 && rect.right <= 30 && rect.bottom <= 30,
         "invalid clip box %ld,%ld-%ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom );
     ok( GetRgnBox( hrgn2, &rect ) != ERROR, "region2 must still be valid\n" );
 

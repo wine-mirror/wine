@@ -224,6 +224,10 @@ static void set_drawable( struct dce *dce, BOOL update_visrgn )
             CombineRgn( visRgn, visRgn, dce->clip_rgn,
                         (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
 
+        /* map region to DC coordinates */
+        OffsetRgn( visRgn, -(escape.org.x + escape.drawable_org.x),
+                   -(escape.org.y + escape.drawable_org.y) );
+
         SelectVisRgn16( HDC_16(dce->hdc), HRGN_16(visRgn) );
         DeleteObject( visRgn );
     }

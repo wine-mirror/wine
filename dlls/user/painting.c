@@ -80,7 +80,7 @@ static void dump_rdw_flags(UINT flags)
 /***********************************************************************
  *           get_update_region
  *
- * Return update region for a window.
+ * Return update region (in screen coordinates) for a window.
  */
 static HRGN get_update_region( HWND hwnd, UINT *flags, HWND *child )
 {
@@ -172,7 +172,7 @@ static BOOL redraw_window_rects( HWND hwnd, UINT flags, const RECT *rects, UINT 
 /***********************************************************************
  *           send_ncpaint
  *
- * Send a WM_NCPAINT message if needed, and return the resulting update region.
+ * Send a WM_NCPAINT message if needed, and return the resulting update region (in screen coords).
  * Helper for erase_now and BeginPaint.
  */
 static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
@@ -186,18 +186,11 @@ static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
     {
         RECT client, update;
         INT type;
-        WND *win = WIN_GetPtr( hwnd );
-
-        if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP)
-        {
-            DeleteObject( whole_rgn );
-            return 0;
-        }
 
         /* check if update rgn overlaps with nonclient area */
         type = GetRgnBox( whole_rgn, &update );
-        client = win->rectClient;
-        OffsetRect( &client, -win->rectWindow.left, -win->rectWindow.top );
+        GetClientRect( hwnd, &client );
+        MapWindowPoints( hwnd, 0, (POINT *)&client, 2 );
 
         if ((*flags & UPDATE_NONCLIENT) ||
             update.left < client.left || update.top < client.top ||
@@ -207,12 +200,15 @@ static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
             CombineRgn( client_rgn, client_rgn, whole_rgn, RGN_AND );
 
             /* check if update rgn contains complete nonclient area */
-            if (type == SIMPLEREGION && update.left == 0 && update.top == 0 &&
-                update.right == win->rectWindow.right - win->rectWindow.left &&
-                update.bottom == win->rectWindow.bottom - win->rectWindow.top)
+            if (type == SIMPLEREGION)
             {
-                DeleteObject( whole_rgn );
-                whole_rgn = (HRGN)1;
+                RECT window;
+                GetWindowRect( hwnd, &window );
+                if (EqualRect( &window, &update ))
+                {
+                    DeleteObject( whole_rgn );
+                    whole_rgn = (HRGN)1;
+                }
             }
         }
         else
@@ -220,10 +216,6 @@ static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
             client_rgn = whole_rgn;
             whole_rgn = 0;
         }
-        /* map client region to client coordinates */
-        OffsetRgn( client_rgn, win->rectWindow.left - win->rectClient.left,
-                   win->rectWindow.top - win->rectClient.top );
-        WIN_ReleasePtr( win );
 
         if (whole_rgn) /* NOTE: WM_NCPAINT allows wParam to be 1 */
         {
@@ -247,7 +239,9 @@ static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
 {
     BOOL need_erase = FALSE;
     HDC hdc;
+    RECT dummy;
 
+    if (!clip_rect) clip_rect = &dummy;
     if (hdc_ret || (flags & UPDATE_ERASE))
     {
         UINT dcx_flags = DCX_INTERSECTRGN | DCX_USESTYLE;
@@ -266,7 +260,7 @@ static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
             if (!hdc_ret)
             {
                 if (need_erase && hwnd != GetDesktopWindow())  /* FIXME: mark it as needing erase again */
-                    RedrawWindow( hwnd, NULL, client_rgn, RDW_INVALIDATE | RDW_ERASE | RDW_NOCHILDREN );
+                    RedrawWindow( hwnd, clip_rect, 0, RDW_INVALIDATE | RDW_ERASE | RDW_NOCHILDREN );
                 ReleaseDC( hwnd, hdc );
             }
         }
@@ -290,14 +284,13 @@ static void erase_now( HWND hwnd, UINT rdw_flags )
     /* loop while we find a child to repaint */
     for (;;)
     {
-        RECT rect;
         UINT flags = UPDATE_NONCLIENT | UPDATE_ERASE;
 
         if (rdw_flags & RDW_NOCHILDREN) flags |= UPDATE_NOCHILDREN;
         else if (rdw_flags & RDW_ALLCHILDREN) flags |= UPDATE_ALLCHILDREN;
 
         if (!(hrgn = send_ncpaint( hwnd, &child, &flags ))) break;
-        send_erase( child, flags, hrgn, &rect, NULL );
+        send_erase( child, flags, hrgn, NULL, NULL );
         DeleteObject( hrgn );
 
         if (!flags) break;  /* nothing more to do */
@@ -349,12 +342,11 @@ static void update_now( HWND hwnd, UINT rdw_flags )
         {
             UINT erase_flags = UPDATE_NONCLIENT | UPDATE_ERASE | UPDATE_NOCHILDREN;
             HRGN hrgn;
-            RECT rect;
 
             TRACE( "%p not repainted properly, erasing\n", child );
             if ((hrgn = send_ncpaint( child, NULL, &erase_flags )))
             {
-                send_erase( child, erase_flags, hrgn, &rect, NULL );
+                send_erase( child, erase_flags, hrgn, NULL, NULL );
                 DeleteObject( hrgn );
             }
             prev = 0;
@@ -529,10 +521,6 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags )
 
     if (!hwnd) hwnd = GetDesktopWindow();
 
-    /* check if the window or its parents are visible/not minimized */
-
-    if (!WIN_IsWindowDrawable( hwnd, !(flags & RDW_FRAME) )) return TRUE;
-
     if (TRACE_ON(win))
     {
         if (hrgn)
@@ -638,8 +626,12 @@ INT WINAPI GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 
     if ((update_rgn = send_ncpaint( hwnd, NULL, &flags )))
     {
-        RECT rect;
-        send_erase( hwnd, flags, update_rgn, &rect, NULL );
+        POINT offset;
+        send_erase( hwnd, flags, update_rgn, NULL, NULL );
+        /* map region to client coordinates */
+        offset.x = offset.y = 0;
+        ScreenToClient( hwnd, &offset );
+        OffsetRgn( update_rgn, offset.x, offset.y );
         retval = CombineRgn( hrgn, update_rgn, 0, RGN_COPY );
         DeleteObject( update_rgn );
     }
@@ -653,7 +645,6 @@ INT WINAPI GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 {
     HDC hdc;
-    RECT dummy;
     UINT flags = UPDATE_NOCHILDREN;
     HRGN update_rgn;
 
@@ -661,9 +652,13 @@ BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 
     if (!(update_rgn = send_ncpaint( hwnd, NULL, &flags ))) return FALSE;
 
-    if (rect) GetRgnBox( update_rgn, rect );
+    if (rect)
+    {
+        if (GetRgnBox( update_rgn, rect ) != NULLREGION)
+            MapWindowPoints( 0, hwnd, (LPPOINT)rect, 2 );
+    }
 
-    send_erase( hwnd, flags, update_rgn, &dummy, &hdc );
+    send_erase( hwnd, flags, update_rgn, NULL, &hdc );
     if (hdc)
     {
         if (rect) DPtoLP( hdc, (LPPOINT)rect, 2 );

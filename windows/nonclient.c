@@ -953,7 +953,6 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip, BOOL  suppress_menupaint )
     dwStyle = wndPtr->dwStyle;
     dwExStyle = wndPtr->dwExStyle;
     flags = wndPtr->flags;
-    rectClient = wndPtr->rectClient;
     rectWindow = wndPtr->rectWindow;
     WIN_ReleasePtr( wndPtr );
 
@@ -971,10 +970,10 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip, BOOL  suppress_menupaint )
        Now, how is the "system" supposed to tell what happened?
      */
 
-    hrgn = CreateRectRgn( rectClient.left - rectWindow.left,
-                          rectClient.top - rectWindow.top,
-                          rectClient.right - rectWindow.left,
-                          rectClient.bottom - rectWindow.top );
+    GetClientRect( hwnd, &rectClient );
+    MapWindowPoints( hwnd, 0, (POINT *)&rectClient, 2 );
+    hrgn = CreateRectRgnIndirect( &rectClient );
+
     if (clip > (HRGN)1)
     {
         CombineRgn( hrgn, clip, hrgn, RGN_DIFF );
@@ -990,14 +989,7 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip, BOOL  suppress_menupaint )
     rect.top = rect.left = 0;
     rect.right  = rectWindow.right - rectWindow.left;
     rect.bottom = rectWindow.bottom - rectWindow.top;
-
-    if( clip > (HRGN)1 )
-	GetRgnBox( clip, &rectClip );
-    else
-    {
-	clip = 0;
-	rectClip = rect;
-    }
+    GetClipBox( hdc, &rectClip );
 
     SelectObject( hdc, SYSCOLOR_GetPen(COLOR_WINDOWFRAME) );
 
@@ -1021,7 +1013,7 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip, BOOL  suppress_menupaint )
             r.bottom = rect.top + GetSystemMetrics(SM_CYCAPTION);
             rect.top += GetSystemMetrics(SM_CYCAPTION);
         }
-        if( !clip || IntersectRect( &rfuzz, &r, &rectClip ) )
+        if( IntersectRect( &rfuzz, &r, &rectClip ) )
             NC_DrawCaption(hdc, &r, hwnd, dwStyle, dwExStyle, active);
     }
 
