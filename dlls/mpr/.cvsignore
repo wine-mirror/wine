@@ -1,3 +1,5 @@
 Makefile
 mpr.dll.dbg.c
+mpr.res
 mpr.spec.def
+version.res
