@@ -497,19 +497,20 @@ static void build(struct options* opts)
     for ( j = 0; j < lib_paths->size; j++ )
 	strarray_add(link_args, lib_paths->base[j]);
 
-    strarray_add(link_args, "-lwine");
-    strarray_add(link_args, "-lm");
-
-    for ( j = 0; j < so_libs->size; j++ )
-	strarray_add(link_args, so_libs->base[j]);
+    strarray_add(link_args, spec_o_name);
 
     for ( j = 0; j < obj_files->size; j++ )
 	strarray_add(link_args, obj_files->base[j]);
 
-    strarray_add(link_args, spec_o_name);
-
     for ( j = 0; j < arh_libs->size; j++ )
 	strarray_add(link_args, arh_libs->base[j]);
+
+    for ( j = 0; j < so_libs->size; j++ )
+	strarray_add(link_args, so_libs->base[j]);
+
+    strarray_add(link_args, "-lwine");
+    strarray_add(link_args, "-lm");
+    strarray_add(link_args, "-lc");
 
     spawn(link_args);
 
