@@ -58,7 +58,7 @@ unsigned char *WINAPI NdrConformantStringMarshall(MIDL_STUB_MESSAGE *pStubMsg, u
     assert( (pStubMsg->BufferLength > (len + 13)) && (pStubMsg->Buffer != NULL) );
     /* in DCE terminology this is a Conformant Varying String */
     c = pStubMsg->Buffer;
-    ZeroMemory(c, 12);
+    memset(c, 0, 12);
     *((UINT32 *)c) = len + 1;   /* max length: strlen + 1 (for '\0') */
     c += 8;                     /* offset: 0 */
     *((UINT32 *)c) = len + 1;   /* actual length: (same) */

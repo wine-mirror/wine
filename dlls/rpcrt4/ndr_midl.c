@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -198,7 +199,10 @@ unsigned char *WINAPI NdrGetBuffer(MIDL_STUB_MESSAGE *stubmsg, unsigned long buf
 {
   TRACE("(stubmsg == ^%p, buflen == %lu, handle == %p): wild guess.\n", stubmsg, buflen, handle);
   
-  /* FIXME: What are we supposed to do with the handle? */
+  assert( stubmsg && stubmsg->RpcMsg );
+
+  /* I guess this is our chance to put the binding handle into the RPC_MESSAGE */
+  stubmsg->RpcMsg->Handle = handle;
   
   stubmsg->RpcMsg->BufferLength = buflen;
   if (I_RpcGetBuffer(stubmsg->RpcMsg) != S_OK)
@@ -224,6 +228,26 @@ void WINAPI NdrFreeBuffer(MIDL_STUB_MESSAGE *pStubMsg)
  */
 unsigned char *WINAPI NdrSendReceive( MIDL_STUB_MESSAGE *stubmsg, unsigned char *buffer  )
 {
-  FIXME("stub\n");
+  TRACE("(stubmsg == ^%p, buffer == ^%p)\n", stubmsg, buffer);
+
+  /* FIXME: how to handle errors? (raise exception?) */
+  if (!stubmsg) {
+    ERR("NULL stub message.  No action taken.\n");
+    return NULL;
+  }
+  if (!stubmsg->RpcMsg) {
+    ERR("RPC Message not present in stub message.  No action taken.\n");
+    return NULL;
+  }
+  if (stubmsg->RpcMsg->Buffer != buffer) {
+    ERR("Ambiguous buffer doesn't match rpc message buffer.  No action taken.\n");
+    return NULL;
+  }
+
+  if (I_RpcSendReceive(stubmsg->RpcMsg) != RPC_S_OK) {
+    WARN("I_RpcSendReceive did not return success.\n");
+  }
+
+  /* FIXME: is this the right return value? */
   return NULL;
 }

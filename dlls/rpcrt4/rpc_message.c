@@ -72,18 +72,21 @@ RPC_STATUS WINAPI I_RpcFreeBuffer(PRPC_MESSAGE pMsg)
 RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
 {
   RpcBinding* bind = (RpcBinding*)pMsg->Handle;
-  RPC_CLIENT_INTERFACE* cif;
+  RPC_CLIENT_INTERFACE* cif = NULL;
+  RPC_SERVER_INTERFACE* sif = NULL;
   RPC_STATUS status;
   RpcPktHdr hdr;
 
   TRACE("(%p)\n", pMsg);
   if (!bind) return RPC_S_INVALID_BINDING;
 
-  /* I'll only implement this for client handles for now */
-  if (bind->server) return RPC_S_WRONG_KIND_OF_BINDING;
-
-  cif = pMsg->RpcInterfaceInformation;
-  if (!cif) return RPC_S_INTERFACE_NOT_FOUND; /* ? */
+  if (bind->server) {
+    sif = pMsg->RpcInterfaceInformation;
+    if (!sif) return RPC_S_INTERFACE_NOT_FOUND; /* ? */
+  } else {
+    cif = pMsg->RpcInterfaceInformation;
+    if (!cif) return RPC_S_INTERFACE_NOT_FOUND; /* ? */
+  }
 
   status = RPCRT4_OpenBinding(bind);
   if (status != RPC_S_OK) return status;
@@ -92,10 +95,12 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
   memset(&hdr, 0, sizeof(hdr));
   hdr.rpc_ver = 4;
   hdr.ptype = PKT_REQUEST;
-  hdr.object = bind->ObjectUuid;
-  hdr.if_id = cif->InterfaceId.SyntaxGUID;
-  hdr.if_vers = MAKELONG(cif->InterfaceId.SyntaxVersion.MinorVersion,
-                        cif->InterfaceId.SyntaxVersion.MajorVersion);
+  hdr.object = bind->ObjectUuid; /* FIXME: IIRC iff no object, the header structure excludes this elt */
+  hdr.if_id = (bind->server) ? sif->InterfaceId.SyntaxGUID : cif->InterfaceId.SyntaxGUID;
+  hdr.if_vers = 
+    (bind->server) ?
+    MAKELONG(sif->InterfaceId.SyntaxVersion.MinorVersion, sif->InterfaceId.SyntaxVersion.MajorVersion) :
+    MAKELONG(cif->InterfaceId.SyntaxVersion.MinorVersion, cif->InterfaceId.SyntaxVersion.MajorVersion);
   hdr.opnum = pMsg->ProcNum;
   hdr.len = pMsg->BufferLength;
 
@@ -121,9 +126,6 @@ RPC_STATUS WINAPI I_RpcReceive(PRPC_MESSAGE pMsg)
 
   TRACE("(%p)\n", pMsg);
   if (!bind) return RPC_S_INVALID_BINDING;
-
-  /* I'll only implement this for client handles for now */
-  if (bind->server) return RPC_S_WRONG_KIND_OF_BINDING;
 
   status = RPCRT4_OpenBinding(bind);
   if (status != RPC_S_OK) return status;
