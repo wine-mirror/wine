@@ -1126,9 +1126,6 @@ static int _get_reg_type(void)
     int ret = REG_WIN31;
     static const WCHAR nt_reg_pathW[] = {'\\','s','y','s','t','e','m','3','2','\\','c','o','n','f','i','g','\\','s','y','s','t','e','m',0};
     static const WCHAR win9x_reg_pathW[] = {'\\','s','y','s','t','e','m','.','d','a','t',0};
-    static const WCHAR WineW[] = {'W','i','n','e',0};
-    static const WCHAR ProfileW[] = {'P','r','o','f','i','l','e',0};
-    static const WCHAR empty_strW[] = { 0 };
 
     GetWindowsDirectoryW(windir, MAX_PATHNAME_LEN);
 
