@@ -712,7 +712,7 @@ NTSTATUS WINAPI RtlFormatCurrentUserKeyPath(
 /******************************************************************************
  *  RtlOpenCurrentUser		[NTDLL.@]
  *
- * if we return just HKEY_CURRENT_USER the advapi try's to find a remote
+ * if we return just HKEY_CURRENT_USER the advapi tries to find a remote
  * registry (odd handle) and fails
  *
  */

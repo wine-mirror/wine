@@ -337,7 +337,7 @@ static void DoDelete(IContextMenu *iface)
 /**************************************************************************
  * DoCopyOrCut
  *
- * copys the currently selected items into the clipboard
+ * copies the currently selected items into the clipboard
  */
 static BOOL DoCopyOrCut(
 	IContextMenu *iface,

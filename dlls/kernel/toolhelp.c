@@ -21,7 +21,7 @@
 DEFAULT_DEBUG_CHANNEL(toolhelp);
 
 
-/* FIXME: to make this working, we have to callback all these registered 
+/* FIXME: to make this work, we have to call back all these registered 
  * functions from all over the WINE code. Someone with more knowledge than
  * me please do that. -Marcus
  */

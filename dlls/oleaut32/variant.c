@@ -4264,7 +4264,7 @@ INT WINAPI DosDateTimeToVariantTime(USHORT wDosDate, USHORT wDosTime,
 {
     struct tm t;
 
-    TRACE("( 0x%x, 0x%x, 0x%p ), stub\n", wDosDate, wDosTime, pvtime );
+    TRACE("( 0x%x, 0x%x, %p ), stub\n", wDosDate, wDosTime, pvtime );
     
     t.tm_sec = (wDosTime & 0x001f) * 2;
     t.tm_min = (wDosTime & 0x07e0) >> 5;
@@ -4356,7 +4356,7 @@ INT WINAPI VariantTimeToDosDateTime(DATE pvtime, USHORT *wDosDate, USHORT *wDosT
     wDosTime = 0;
     wDosDate = 0;
 
-    TRACE("( 0x%x, 0x%x, 0x%p ), stub\n", *wDosDate, *wDosTime, &pvtime );
+    TRACE("( 0x%x, 0x%x, %p ), stub\n", *wDosDate, *wDosTime, &pvtime );
 
     if (DateToTm(pvtime, 0, &t) < 0) return 0;
 

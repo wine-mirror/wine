@@ -1456,7 +1456,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
                     pwm->flags &= ~WINE_MODREF_DONT_RESOLVE_REFS;
                     PE_fixup_imports( pwm );
 		}
-		TRACE("Already loaded module '%s' at 0x%08x, count=%d, \n", filename, pwm->module, pwm->refCount);
+		TRACE("Already loaded module '%s' at 0x%08x, count=%d\n", filename, pwm->module, pwm->refCount);
                 if (allocated_libdir)
                 {
                     HeapFree ( GetProcessHeap(), 0, (LPSTR)libdir );
@@ -1502,7 +1502,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 		if(pwm)
 		{
 			/* Initialize DLL just loaded */
-			TRACE("Loaded module '%s' at 0x%08x, \n", filename, pwm->module);
+			TRACE("Loaded module '%s' at 0x%08x\n", filename, pwm->module);
                         if (!TRACE_ON(module))
                             TRACE_(loaddll)("Loaded module '%s' : %s\n", filename, filetype);
 			/* Set the refCount here so that an attach failure will */
@@ -1531,7 +1531,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
             libdir = NULL;
         }
         RtlReleasePebLock();
-	WARN("Failed to load module '%s'; error=0x%08lx, \n", filename, GetLastError());
+	WARN("Failed to load module '%s'; error=0x%08lx\n", filename, GetLastError());
 	HeapFree ( GetProcessHeap(), 0, filename );
 	return NULL;
 }

@@ -479,7 +479,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
 		foundRoutes = WSCNTL_GetRouteTable(numRoutes, routeTable);
 		if (foundRoutes < 0)
 		{
-		    ERR ("Unable to open /proc filesystem to parse the route entrys!\n");
+		    ERR ("Unable to open /proc filesystem to parse the route entries!\n");
 		    free(routeTable);
 		    return -1;
 		}
@@ -888,7 +888,7 @@ int WSCNTL_GetRouteTable(int numRoutes, wscntl_routeentry *routeTable)
     /* skip the header line */
     fgets(buf, sizeof(buf), file);
 
-    /* parse the rest of the file and put the matching entrys into routeTable.
+    /* parse the rest of the file and put the matching entries into routeTable.
        Format of procfs route entry:
        Iface Destination Gateway Flags RefCnt Use Metric Mask  MTU Window IRTT
        lo 0000007F 00000000 0001 0 0 0 000000FF 0 0 0

@@ -320,7 +320,7 @@ LONG WINAPI SHRegGetUSValueA(
 	if (!pvData || !pcbData) return ERROR_INVALID_FUNCTION; /* FIXME:wrong*/
 	TRACE("key '%s', value '%s', datalen %ld,  %s\n",
 	      debugstr_a(pSubKey), debugstr_a(pValue), *pcbData,
-	      (flagIgnoreHKCU) ? "Ignoring HKCU" : "Trys HKCU then HKLM");
+	      (flagIgnoreHKCU) ? "Ignoring HKCU" : "Tries HKCU then HKLM");
 
 	ret = SHRegOpenUSKeyA(pSubKey, 0x1, 0, &myhuskey, flagIgnoreHKCU);
 	if (ret == ERROR_SUCCESS) {
@@ -354,7 +354,7 @@ LONG WINAPI SHRegGetUSValueW(
 	if (!pvData || !pcbData) return ERROR_INVALID_FUNCTION; /* FIXME:wrong*/
 	TRACE("key '%s', value '%s', datalen %ld,  %s\n",
 	      debugstr_w(pSubKey), debugstr_w(pValue), *pcbData,
-	      (flagIgnoreHKCU) ? "Ignoring HKCU" : "Trys HKCU then HKLM");
+	      (flagIgnoreHKCU) ? "Ignoring HKCU" : "Tries HKCU then HKLM");
 
 	ret = SHRegOpenUSKeyW(pSubKey, 0x1, 0, &myhuskey, flagIgnoreHKCU);
 	if (ret == ERROR_SUCCESS) {
@@ -382,7 +382,7 @@ BOOL WINAPI SHRegGetBoolUSValueA(
 
 	TRACE("key '%s', value '%s', %s\n",
 	      debugstr_a(pszSubKey), debugstr_a(pszValue),
-	      (fIgnoreHKCU) ? "Ignoring HKCU" : "Trys HKCU then HKLM");
+	      (fIgnoreHKCU) ? "Ignoring HKCU" : "Tries HKCU then HKLM");
 
 	datalen = sizeof(data)-1;
 	if (!(retvalue = SHRegGetUSValueA( pszSubKey, pszValue, &type, 
@@ -441,7 +441,7 @@ BOOL WINAPI SHRegGetBoolUSValueW(
 
 	TRACE("key '%s', value '%s', %s\n",
 	      debugstr_w(pszSubKey), debugstr_w(pszValue),
-	      (fIgnoreHKCU) ? "Ignoring HKCU" : "Trys HKCU then HKLM");
+	      (fIgnoreHKCU) ? "Ignoring HKCU" : "Tries HKCU then HKLM");
 
 	datalen = (sizeof(data)-1) * sizeof(WCHAR);
 	if (!(retvalue = SHRegGetUSValueW( pszSubKey, pszValue, &type, 

@@ -435,7 +435,7 @@ LPWSTR WINAPI StrCatBuffW(LPWSTR front, LPCWSTR back, INT size)
  */
 HRESULT WINAPI StrRetToBufA (LPSTRRET src, const ITEMIDLIST *pidl, LPSTR dest, DWORD len)
 {
-	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
+	TRACE("dest=%p len=0x%lx strret=%p pidl=%p stub\n",dest,len,src,pidl);
 
 	switch (src->uType)
 	{
@@ -480,7 +480,7 @@ HRESULT WINAPI StrRetToBufA (LPSTRRET src, const ITEMIDLIST *pidl, LPSTR dest, D
  */
 HRESULT WINAPI StrRetToBufW (LPSTRRET src, const ITEMIDLIST *pidl, LPWSTR dest, DWORD len)
 {
-	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
+	TRACE("dest=%p len=0x%lx strret=%p pidl=%p stub\n",dest,len,src,pidl);
 
 	switch (src->uType)
 	{

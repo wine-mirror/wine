@@ -757,7 +757,7 @@ BOOL WINAPI FileMenu_EnableItemByCmd(
  * FileMenu_GetItemExtent			[SHELL32.144]
  * 
  * NOTES
- *  if the menu is to big, entrys are getting cut away!!
+ *  if the menu is too big, entries are getting cut away!!
  */
 DWORD WINAPI FileMenu_GetItemExtent (HMENU hMenu, UINT uPos)
 {	RECT rect;

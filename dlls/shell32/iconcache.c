@@ -164,7 +164,7 @@ INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex )
  * SIC_GetIcon				[internal]
  *
  * NOTES
- *  retrives the specified icon from the iconcache. if not found try's to load the icon
+ *  retrieves the specified icon from the iconcache. if not found tries to load the icon
  */
 static HICON WINE_UNUSED SIC_GetIcon (LPCSTR sSourceFile, INT dwSourceIndex, BOOL bSmallIcon )
 {	INT index;

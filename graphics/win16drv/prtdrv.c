@@ -82,14 +82,12 @@ static void GetPrinterDriverFunctions(HINSTANCE16 hInst, LOADED_PRINTER_DRIVER *
       LoadPrinterDrvFunc(ADVANCEDSETUPDIALOG);
       LoadPrinterDrvFunc(DIALOGFN);
       LoadPrinterDrvFunc(PSEUDOEDIT);
-      TRACE("got func CONTROL 0x%p enable 0x%p enumDfonts 0x%p realizeobject 0x%p extextout 0x%p\n",
+      TRACE("got func CONTROL %p enable %p enumDfonts %p realizeobject %p extextout %p\n",
               pLPD->fn[FUNC_CONTROL],
               pLPD->fn[FUNC_ENABLE],
               pLPD->fn[FUNC_ENUMDFONTS],
               pLPD->fn[FUNC_REALIZEOBJECT],
               pLPD->fn[FUNC_EXTTEXTOUT]);
-      
-
 }
 
 

@@ -821,7 +821,7 @@ LPITEMIDLIST WINAPI SHSimpleIDListFromPathAW (LPCVOID lpszPath)
  * SHGetSpecialFolderLocation		[SHELL32.@]
  *
  * gets the folder locations from the registry and creates a pidl
- * creates missing reg keys and directorys
+ * creates missing reg keys and directories
  * 
  * PARAMS
  *   hwndOwner [I]
@@ -1839,7 +1839,7 @@ void _ILFreeaPidl(LPITEMIDLIST * apidl, UINT cidl)
 /*************************************************************************
 * ILCopyaPidl
 *
-* copys a aPidl struct
+* copies an aPidl struct
 */
 LPITEMIDLIST *  _ILCopyaPidl(LPITEMIDLIST * apidlsrc, UINT cidl)
 {

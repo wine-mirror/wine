@@ -51,7 +51,7 @@
  *
  *  mod 4
  *   1. Implemented CBN_SELCHANGE, CBN_KILLFOCUS, and CBN_SELENDOK.
- *   2. Fix putting text in CBEN_ENDEDIT notifys for CBN_DROPDOWN case.
+ *   2. Fix putting text in CBEN_ENDEDIT notifies for CBN_DROPDOWN case.
  *   3. Lock image selected status to focus state of edit control if
  *      edit control exists. Mimics native actions.
  *   4. Implemented WM_SETFOCUS in EditWndProc to track status of 
@@ -531,7 +531,7 @@ COMBOEX_GetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     COMBOEX_INFO *infoPtr = COMBOEX_GetInfoPtr (hwnd);
 
-    TRACE("-- 0x%p\n", infoPtr->himl);
+    TRACE("-- %p\n", infoPtr->himl);
 
     return (LRESULT)infoPtr->himl;
 }

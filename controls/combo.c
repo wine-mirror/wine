@@ -141,7 +141,7 @@ static LRESULT COMBO_NCCreate(HWND hwnd, LONG style)
 	if( !(GetWindowLongA( hwnd, GWL_EXSTYLE ) & WS_EX_NOPARENTNOTIFY) )
 	      lphc->wState |= CBF_NOTIFY;
 
-        TRACE("[0x%p], style = %08x\n", lphc, lphc->dwStyle );
+        TRACE("[%p], style = %08x\n", lphc, lphc->dwStyle );
         return TRUE;
     }
     return FALSE;

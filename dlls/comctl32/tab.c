@@ -1160,9 +1160,8 @@ static void TAB_SetItemBounds (HWND hwnd)
       INT iIndexStart=0,iIndexEnd=0, iCount=0;
 
       /*
-       * Ok Microsoft trys to even out the rows. place the same
+       * Ok windows tries to even out the rows. place the same
        * number of tabs in each row. So lets give that a shot
-       *
        */
 
       tabPerRow = infoPtr->uNumItem / (infoPtr->uNumRows);
@@ -1218,7 +1217,7 @@ static void TAB_SetItemBounds (HWND hwnd)
  	       (infoPtr->items[iIndexEnd].rect.top ==
                 infoPtr->items[iIndexStart].rect.top) ;
             iIndexEnd++)
-        /* intentionaly blank */;
+        /* intentionally blank */;
 
         /* 
          * we need to justify these tabs so they fill the whole given

@@ -20,10 +20,10 @@ static CRITICAL_SECTION SHELL32_ChangenotifyCS = CRITICAL_SECTION_INIT("SHELL32_
 typedef struct _NOTIFICATIONLIST
 {
 	struct _NOTIFICATIONLIST *next;
-	struct _NOTIFICATIONLIST *prev; 
+	struct _NOTIFICATIONLIST *prev;
 	HWND hwnd;		/* window to notify */
 	DWORD uMsg;		/* message to send */
-	LPNOTIFYREGISTER apidl; /* array of entrys to watch*/
+	LPNOTIFYREGISTER apidl; /* array of entries to watch*/
 	UINT cidl;		/* number of pidls in array */
 	LONG wEventMask;	/* subscribed events */
 	DWORD dwFlags;		/* client flags */

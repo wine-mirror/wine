@@ -224,7 +224,7 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     PDEVICE_HEADER *pPDH;
     WIN16DRV_PDEVICE *physDev;
 
-    TRACE("In creatdc for (%s,%s,%s) initData 0x%p\n",
+    TRACE("In creatdc for (%s,%s,%s) initData %p\n",
 	  driver, device, output, initData);
 
     physDev = (WIN16DRV_PDEVICE *)HeapAlloc( GetProcessHeap(), 0, sizeof(*physDev) );
@@ -238,7 +238,7 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
         HeapFree( GetProcessHeap(), 0, physDev );
         return FALSE;
     }
-    TRACE("windevCreateDC pLPD 0x%p\n", pLPD);
+    TRACE("windevCreateDC pLPD %p\n", pLPD);
 
     /* Now Get the device capabilities from the printer driver */
     memset( &physDev->DevCaps, 0, sizeof(physDev->DevCaps) );

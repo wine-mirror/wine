@@ -203,7 +203,7 @@ static BYTE * ICO_GetIconDirectory( LPBYTE peimage, LPicoICONDIR* lplpiID, ULONG
 	  lpID->idType = lpcid->idType;
 	  lpID->idCount = lpcid->idCount;
 
-	  /* copy the entrys */
+	  /* copy the entries */
 	  for( i=0; i < lpcid->idCount; i++ )
 	  {
 	    memcpy((void*)&(lpID->idEntries[i]),(void*)&(lpcid->idEntries[i]), sizeof(CURSORICONDIRENTRY) - 2);

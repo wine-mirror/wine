@@ -27,7 +27,7 @@ DECLARE_DEBUG_CHANNEL(pidl);
 /*************************************************************************
  * ParseFieldA					[internal]
  *
- * copys a field from a ',' delimited string
+ * copies a field from a ',' delimited string
  * 
  * first field is nField = 1
  */
@@ -61,7 +61,7 @@ DWORD WINAPI ParseFieldA(
 /*************************************************************************
  * ParseFieldW			[internal]
  *
- * copys a field from a ',' delimited string
+ * copies a field from a ',' delimited string
  * 
  * first field is nField = 1
  */
@@ -1233,8 +1233,8 @@ HGLOBAL WINAPI SHAllocShared(LPVOID psrc, DWORD size, DWORD procID)
  * NOTES
  *  parameter1 is return value from SHAllocShared
  *  parameter2 is return value from GetCurrentProcessId
- *  the receiver of (WM_USER+2) trys to lock the HANDLE (?) 
- *  the returnvalue seems to be a memoryadress
+ *  the receiver of (WM_USER+2) tries to lock the HANDLE (?) 
+ *  the return value seems to be a memory address
  */
 LPVOID WINAPI SHLockShared(HANDLE hmem, DWORD procID)
 {	TRACE("handle=0x%04x procID=0x%04lx\n",hmem,procID);

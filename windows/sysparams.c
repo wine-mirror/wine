@@ -326,7 +326,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	    lpnm->iSmCaptionHeight = lpnm->iSmCaptionWidth;
 	    SystemParametersInfoA( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfSmCaptionFont), 0 );
 
-	    /* menus, FIXME: names of wine.conf entrys are bogus */
+	    /* menus, FIXME: names of wine.conf entries are bogus */
 
 	    lpnm->iMenuWidth = GetProfileIntA( "Desktop", "MenuWidth", 13 );	/* size of the menu buttons*/
 	    lpnm->iMenuHeight = GetProfileIntA( "Desktop", "MenuHeight", 

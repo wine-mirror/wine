@@ -778,7 +778,7 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_IncludeObject(ICommDlgBrowser *
       | !(ulAttr & (SFGAO_FILESYSTEM | SFGAO_FILESYSANCESTOR))) /* special folder */
         return S_FALSE;
 
-    /* always include directorys and links */
+    /* always include directories and links */
     if(ulAttr & (SFGAO_FOLDER | SFGAO_LINK)) 
         return S_OK;
 

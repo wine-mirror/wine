@@ -1551,7 +1551,7 @@ static HRESULT WINAPI ISFHelper_fnDeleteItems(
 /****************************************************************************
  * ISFHelper_fnCopyItems
  *
- * copys items to this folder
+ * copies items to this folder
  */
 static HRESULT WINAPI ISFHelper_fnCopyItems(
 	ISFHelper *iface,
