@@ -1346,8 +1346,7 @@ static void set_alignment(
     if (!cbAlignment) return;
     if (cbAlignment > 16) return;
 
-    typeinfo->typeinfo->typekind &= ~0xffc0;
-    typeinfo->typeinfo->typekind |= cbAlignment << 6;
+    typeinfo->typeinfo->typekind &= ~0xf800;
 
     /* FIXME: There's probably some way to simplify this. */
     switch (typeinfo->typeinfo->typekind & 15) {
@@ -1529,7 +1528,7 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, typelib_en
 
     msft_typeinfo->typeinfo = typeinfo;
 
-    typeinfo->typekind |= entry->kind | 0x20;
+    typeinfo->typekind |= entry->kind | 0x220;
     set_alignment(msft_typeinfo, 4);
 
     switch (entry->kind) {
