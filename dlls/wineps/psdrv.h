@@ -231,6 +231,7 @@ typedef struct {
     JOB			job;
     PSDRV_DEVMODEA	*Devmode;
     PRINTERINFO		*pi;
+    RECT                PageSize;      /* Imageable area in device co-ords */
 } PSDRV_PDEVICE;
 
 typedef struct {

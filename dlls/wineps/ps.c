@@ -273,8 +273,8 @@ INT PSDRV_WriteFeature(HANDLE16 hJob, char *feature, char *value,
 			 char *invocation)
 {
 
-    char *buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psheader) +
-			     strlen(feature) + strlen(value));
+    char *buf = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psbeginfeature) +
+				   strlen(feature) + strlen(value));
 
 
     sprintf(buf, psbeginfeature, feature, value);
@@ -296,7 +296,7 @@ INT PSDRV_WriteHeader( DC *dc, LPCSTR title )
     char *buf, *orient, vectbuf[256];
     INPUTSLOT *slot;
     PAGESIZE *page;
-    int urx, ury, i, j;
+    int llx, lly, urx, ury, i, j;
 
     TRACE("'%s'\n", title);
 
@@ -306,22 +306,23 @@ INT PSDRV_WriteHeader( DC *dc, LPCSTR title )
         WARN("HeapAlloc failed\n");
         return 0;
     }
+    
+    /* BBox co-ords are in default user co-ord system so urx < ury even in
+       landscape mode */
+    llx = physDev->PageSize.left * 72.0 / dc->devCaps->logPixelsX;
+    lly = physDev->PageSize.bottom * 72.0 / dc->devCaps->logPixelsY;
+    urx = physDev->PageSize.right * 72.0 / dc->devCaps->logPixelsX;
+    ury = physDev->PageSize.top * 72.0 / dc->devCaps->logPixelsY;
 
     if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE) {
-      /* BBox co-ords are in default user co-ord system so urx < ury even in
-	 landscape mode */
-	urx = (int) (dc->devCaps->vertSize * 72.0 / 25.4);
-        ury = (int) (dc->devCaps->horzSize * 72.0 / 25.4);
 	orient = "Landscape";
     } else {
-        urx = (int) (dc->devCaps->horzSize * 72.0 / 25.4);
-	ury = (int) (dc->devCaps->vertSize * 72.0 / 25.4);
 	orient = "Portrait";
     }
 
     /* FIXME should do something better with BBox */
 
-    sprintf(buf, psheader, title, 0, 0, urx, ury, orient);		
+    sprintf(buf, psheader, title, llx, lly, urx, ury, orient);		
 
     if( WriteSpool16( physDev->job.hJob, buf, strlen(buf) ) != 
 	                                             strlen(buf) ) {
@@ -440,16 +441,17 @@ INT PSDRV_WriteNewPage( DC *dc )
 
     if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE) {
         if(physDev->pi->ppd->LandscapeOrientation == -90) {
-	    xtrans = dc->devCaps->vertRes;
-	    ytrans = dc->devCaps->horzRes;
+	    xtrans = physDev->PageSize.right;
+	    ytrans = physDev->PageSize.top;
 	    rotation = 90;
 	} else {
-	    xtrans = ytrans = 0;
+	    xtrans = physDev->PageSize.left;
+	    ytrans = physDev->PageSize.bottom;
 	    rotation = -90;
 	}
     } else {
-        xtrans = 0;
-	ytrans = dc->devCaps->vertRes;
+        xtrans = physDev->PageSize.left;
+	ytrans = physDev->PageSize.top;
 	rotation = 0;
     }
 

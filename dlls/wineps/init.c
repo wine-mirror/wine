@@ -267,6 +267,8 @@ static BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     PSDRV_PDEVICE *physDev;
     PRINTERINFO *pi;
     DeviceCaps *devCaps;
+    PAGESIZE *page;
+    INT width = 0, height = 0;
 
     /* If no device name was specified, retrieve the device name
      * from the DEVMODE structure from the DC's physDev.
@@ -311,19 +313,6 @@ static BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     devCaps = HeapAlloc( PSDRV_Heap, 0, sizeof(PSDRV_DevCaps) );
     memcpy(devCaps, &PSDRV_DevCaps, sizeof(PSDRV_DevCaps));
 
-    if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_PORTRAIT) {
-        devCaps->horzSize = physDev->Devmode->dmPublic.u1.s1.dmPaperWidth / 10;
-	devCaps->vertSize = physDev->Devmode->dmPublic.u1.s1.dmPaperLength / 10;
-    } else {
-        devCaps->horzSize = physDev->Devmode->dmPublic.u1.s1.dmPaperLength / 10;
-	devCaps->vertSize = physDev->Devmode->dmPublic.u1.s1.dmPaperWidth / 10;
-    }
-
-    devCaps->horzRes = physDev->pi->ppd->DefaultResolution * 
-      devCaps->horzSize / 25.4;
-    devCaps->vertRes = physDev->pi->ppd->DefaultResolution * 
-      devCaps->vertSize / 25.4;
-
     /* Are aspect[XY] and logPixels[XY] correct? */
     /* Need to handle different res in x and y => fix ppd */
     devCaps->aspectX = devCaps->logPixelsX = 
@@ -332,6 +321,57 @@ static BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 				physDev->pi->ppd->DefaultResolution;
     devCaps->aspectXY = (int)hypot( (double)devCaps->aspectX, 
 				    (double)devCaps->aspectY );
+
+
+    for(page = pi->ppd->PageSizes; page; page = page->next) {
+        if(page->WinPage == physDev->Devmode->dmPublic.u1.s1.dmPaperSize)
+	    break;
+    }
+    if(!page) {
+        FIXME("Can't find page\n");
+	physDev->PageSize.left = 0;
+	physDev->PageSize.right = 0;
+	physDev->PageSize.bottom = 0;
+        physDev->PageSize.top = 0;
+    } else if(page->ImageableArea) { /* PageSize is in device units */
+        physDev->PageSize.left = page->ImageableArea->llx *
+	  devCaps->logPixelsX / 72;
+       physDev->PageSize.right = page->ImageableArea->urx *
+	  devCaps->logPixelsX / 72;
+       physDev->PageSize.bottom = page->ImageableArea->lly *
+	  devCaps->logPixelsY / 72;
+       physDev->PageSize.top = page->ImageableArea->ury *
+	  devCaps->logPixelsY / 72;
+    } else {
+        physDev->PageSize.left = physDev->PageSize.bottom = 0;
+	physDev->PageSize.right = page->PaperDimension->x *
+	  devCaps->logPixelsX / 72;
+	physDev->PageSize.top = page->PaperDimension->y *
+	  devCaps->logPixelsY / 72;
+    }
+    TRACE("PageSize = (%d,%d - %d,%d)\n", physDev->PageSize.left, physDev->PageSize.bottom, physDev->PageSize.right, physDev->PageSize.top);
+
+    /* these are in mm */
+    width = (physDev->PageSize.right - physDev->PageSize.left) * 25.4 /
+      devCaps->logPixelsX;
+    height = (physDev->PageSize.top - physDev->PageSize.bottom) * 25.4 /
+      devCaps->logPixelsY;
+
+    if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_PORTRAIT) {
+        devCaps->horzSize = width;
+	devCaps->vertSize = height;
+    } else {
+        devCaps->horzSize = height;
+	devCaps->vertSize = width;
+    }
+
+    devCaps->horzRes = devCaps->logPixelsX * devCaps->horzSize / 25.4;
+    devCaps->vertRes = devCaps->logPixelsY * devCaps->vertSize / 25.4;
+
+    TRACE("devcaps: horzSize = %dmm, vertSize = %dmm, "
+	  "horzRes = %d, vertRes = %d\n",
+	  devCaps->horzSize, devCaps->vertSize,
+	  devCaps->horzRes, devCaps->vertRes);
 
     if(physDev->pi->ppd->ColorDevice) {
         devCaps->bitsPixel = 8;
