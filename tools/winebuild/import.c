@@ -569,6 +569,7 @@ static void add_extra_undef_symbols( const DLLSPEC *spec )
     switch (spec->mode)
     {
     case SPEC_MODE_DLL:
+    case SPEC_MODE_NATIVE:
         break;
     case SPEC_MODE_GUIEXE:
         kernel_imports += add_extra_symbol( extras, &count, "GetCommandLineA", spec );

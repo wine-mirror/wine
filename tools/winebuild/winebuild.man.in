@@ -145,7 +145,10 @@ for a graphical ASCII executable,
 for a command line Unicode executable,
 .br
 .B guiw
-for a graphical Unicode executable.
+for a graphical Unicode executable,
+.br
+.B native
+for a native-mode dll.
 .br
 A command line executable entry point is a normal C \fBmain\fR
 function. A graphical executable has a \fBWinMain\fR entry point

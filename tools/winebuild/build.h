@@ -53,6 +53,7 @@ typedef enum
 typedef enum
 {
     SPEC_MODE_DLL,
+    SPEC_MODE_NATIVE,
     SPEC_MODE_GUIEXE,
     SPEC_MODE_CUIEXE,
     SPEC_MODE_GUIEXE_UNICODE,

@@ -72,6 +72,27 @@ static const char *make_internal_name( const ORDDEF *odp, DLLSPEC *spec, const c
 }
 
 /*******************************************************************
+ *         declare_weak_function
+ *
+ * Output a prototype for a weak function.
+ */
+static void declare_weak_function( FILE *outfile, const char *name, const char *prototype )
+{
+    fprintf( outfile, "#ifdef __GNUC__\n" );
+    fprintf( outfile, "# ifdef __APPLE__\n" );
+    fprintf( outfile, "extern %s __attribute__((weak_import));\n", prototype );
+    fprintf( outfile, "# else\n" );
+    fprintf( outfile, "extern %s __attribute__((weak));\n", prototype );
+    fprintf( outfile, "# endif\n" );
+    fprintf( outfile, "#else\n" );
+    fprintf( outfile, "extern %s;\n", prototype );
+    fprintf( outfile, "static void __asm__dummy_%s(void)", name );
+    fprintf( outfile, " { asm(\".weak " __ASM_NAME("%s") "\"); }\n", name );
+    fprintf( outfile, "#endif\n\n" );
+}
+
+
+/*******************************************************************
  *         output_debug
  *
  * Output the debug channels.
@@ -559,17 +580,8 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
             fprintf( outfile, "extern int __stdcall %s( void*, unsigned int, void* );\n\n", init_func );
         else
         {
-            fprintf( outfile, "#ifdef __GNUC__\n" );
-            fprintf( outfile, "# ifdef __APPLE__\n" );
-            fprintf( outfile, "extern int __stdcall DllMain( void*, unsigned int, void* ) __attribute__((weak_import));\n" );
-            fprintf( outfile, "# else\n" );
-            fprintf( outfile, "extern int __stdcall DllMain( void*, unsigned int, void* ) __attribute__((weak));\n" );
-            fprintf( outfile, "# endif\n" );
-            fprintf( outfile, "#else\n" );
-            fprintf( outfile, "extern int __stdcall DllMain( void*, unsigned int, void* );\n" );
-            fprintf( outfile, "static void __asm__dummy_dllmain(void)" );
-            fprintf( outfile, " { asm(\".weak " __ASM_NAME("DllMain") "\"); }\n" );
-            fprintf( outfile, "#endif\n\n" );
+            declare_weak_function( outfile, "DllMain",
+                                   "int __stdcall DllMain( void*, unsigned int, void* )" );
             init_func = "DllMain";
         }
         fprintf( outfile,
@@ -585,6 +597,29 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
                  DLL_PROCESS_ATTACH, init_func, init_func, DLL_PROCESS_DETACH );
         init_func = "__wine_dll_main";
         characteristics = IMAGE_FILE_DLL;
+        break;
+    case SPEC_MODE_NATIVE:
+        if (init_func)
+            fprintf( outfile, "extern int __stdcall %s( void*, void* );\n\n", init_func );
+        else
+        {
+            declare_weak_function( outfile, "DriverEntry",
+                                   "int __stdcall DriverEntry( void*, void* )" );
+            init_func = "DriverEntry";
+        }
+        fprintf( outfile,
+                 "static int __stdcall __wine_driver_entry( void *obj, void *path )\n"
+                 "{\n"
+                 "    int ret;\n"
+                 "    if (reason == %d && __wine_spec_init_state == 1)\n"
+                 "        _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );\n"
+                 "    ret = %s ? %s( obj, path ) : 0;\n"
+                 "    if (reason == %d && __wine_spec_init_state == 1) _fini();\n"
+                 "    return ret;\n"
+                 "}\n",
+                 DLL_PROCESS_ATTACH, init_func, init_func, DLL_PROCESS_DETACH );
+        init_func = "__wine_driver_entry";
+        subsystem = IMAGE_SUBSYSTEM_NATIVE;
         break;
     case SPEC_MODE_GUIEXE:
     case SPEC_MODE_GUIEXE_UNICODE:
