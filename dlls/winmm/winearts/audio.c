@@ -1110,7 +1110,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     /* only PCM format is supported so far... */
     if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
 	lpDesc->lpFormat->nChannels == 0 ||
-	lpDesc->lpFormat->nSamplesPerSec == 0 ||
+        lpDesc->lpFormat->nSamplesPerSec < DSBFREQUENCY_MIN ||
+        lpDesc->lpFormat->nSamplesPerSec > DSBFREQUENCY_MAX ||
         (lpDesc->lpFormat->wBitsPerSample!=8 && lpDesc->lpFormat->wBitsPerSample!=16)) {
 	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
@@ -1419,13 +1420,13 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 	break;
     case TIME_SMPTE:
 	time = val / (wwo->format.wf.nAvgBytesPerSec / 1000);
-	lpTime->u.smpte.hour = time / 108000;
-	time -= lpTime->u.smpte.hour * 108000;
-	lpTime->u.smpte.min = time / 1800;
-	time -= lpTime->u.smpte.min * 1800;
-	lpTime->u.smpte.sec = time / 30;
-	time -= lpTime->u.smpte.sec * 30;
-	lpTime->u.smpte.frame = time;
+	lpTime->u.smpte.hour = time / (60 * 60 * 1000);
+	time -= lpTime->u.smpte.hour * (60 * 60 * 1000);
+	lpTime->u.smpte.min = time / (60 * 1000);
+	time -= lpTime->u.smpte.min * (60 * 1000);
+	lpTime->u.smpte.sec = time / 1000;
+	time -= lpTime->u.smpte.sec * 1000;
+	lpTime->u.smpte.frame = time * 30 / 1000;
 	lpTime->u.smpte.fps = 30;
 	TRACE("TIME_SMPTE=%02u:%02u:%02u:%02u\n",
 	      lpTime->u.smpte.hour, lpTime->u.smpte.min,
@@ -1849,7 +1850,8 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     /* only PCM format is support so far... */
     if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
 	lpDesc->lpFormat->nChannels == 0 ||
-	lpDesc->lpFormat->nSamplesPerSec == 0 ||
+        lpDesc->lpFormat->nSamplesPerSec < DSBFREQUENCY_MIN ||
+        lpDesc->lpFormat->nSamplesPerSec > DSBFREQUENCY_MAX ||
         (lpDesc->lpFormat->wBitsPerSample!=8 && lpDesc->lpFormat->wBitsPerSample!=16)) {
 	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
