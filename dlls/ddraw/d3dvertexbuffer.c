@@ -78,6 +78,7 @@ Main_IDirect3DVertexBufferImpl_7_1T_Release(LPDIRECT3DVERTEXBUFFER7 iface)
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
     TRACE("(%p/%p)->() decrementing from %lu.\n", This, iface, This->ref);
     if (--(This->ref) == 0) {
+        HeapFree(GetProcessHeap(), 0, This->vertices);
 	HeapFree(GetProcessHeap(), 0, This);
 	return 0;
     }
@@ -313,9 +314,9 @@ HRESULT d3dvertexbuffer_create(IDirect3DVertexBufferImpl **obj, IDirect3DImpl *d
 
     if (TRACE_ON(ddraw)) {
         TRACE(" creating implementation at %p with description : \n", *obj);
-	TRACE("  flags        : - "); DDRAW_dump_flags_(lpD3DVertBufDesc->dwCaps, flags, sizeof(flags)/sizeof(flags[0]), TRUE);
-	TRACE("  vertex type  : - "); dump_flexible_vertex(lpD3DVertBufDesc->dwFVF);
-	TRACE("  num vertices : - %ld\n", lpD3DVertBufDesc->dwNumVertices);
+	TRACE("  flags        : "); DDRAW_dump_flags_(lpD3DVertBufDesc->dwCaps, flags, sizeof(flags)/sizeof(flags[0]), TRUE);
+	TRACE("  vertex type  : "); dump_flexible_vertex(lpD3DVertBufDesc->dwFVF);
+	TRACE("  num vertices : %ld\n", lpD3DVertBufDesc->dwNumVertices);
     }
     
     
