@@ -21,6 +21,9 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <locale.h>
+#include <stdio.h>
+
 #include "winbase.h"
 #include "winuser.h"
 
@@ -29,8 +32,6 @@
 #include "mtdll.h"
 
 #include "wine/debug.h"
-
-#include <locale.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
@@ -257,8 +258,6 @@ static LCID MSVCRT_locale_to_LCID(locale_search_t* locale)
                  locale->found_country, MAX_ELEM_LEN);
   return lcid;
 }
-
-extern int snprintf(char *, int, const char *, ...);
 
 /* INTERNAL: Set ctype behaviour for a codepage */
 static void msvcrt_set_ctype(unsigned int codepage, LCID lcid)

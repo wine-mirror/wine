@@ -139,14 +139,13 @@ UINT16 WINAPI DragQueryFile16(
 	if(!lpDropFileStruct) goto end;
 
 	lpDrop = (LPSTR) lpDropFileStruct + lpDropFileStruct->wSize;
-	wFile = (wFile==0xffff) ? 0xffffffff : wFile;
 
 	while (i++ < wFile)
 	{
 	  while (*lpDrop++); /* skip filename */
 	  if (!*lpDrop)
 	  {
-	    i = (wFile == 0xFFFFFFFF) ? i : 0;
+	    i = (wFile == 0xFFFF) ? i : 0;
 	    goto end;
 	  }
 	}

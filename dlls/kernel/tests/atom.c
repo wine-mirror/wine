@@ -37,7 +37,7 @@ static void test_add_atom(void)
 
     SetLastError( 0xdeadbeef );
     atom = GlobalAddAtomA( "foobar" );
-    ok( (atom >= 0xc000) && (atom <= 0xffff), "bad atom id %x", atom );
+    ok( atom >= 0xc000, "bad atom id %x", atom );
     ok( GetLastError() == 0xdeadbeef, "GlobalAddAtomA set last error" );
 
     /* Verify that it can be found (or not) appropriately */

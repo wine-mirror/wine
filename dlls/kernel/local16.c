@@ -1448,7 +1448,7 @@ static HLOCAL16 LOCAL_InternalLock( LPSTR heap, HLOCAL16 handle )
     if (HANDLE_MOVEABLE(handle))
     {
         LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY *)(heap + handle);
-	if (pEntry->flags == LMEM_DISCARDED) return 0;
+        if (pEntry->flags == (LMEM_DISCARDED >> 8)) return 0;
         if (pEntry->lock < 0xfe) pEntry->lock++;
         handle = pEntry->addr;
     }
