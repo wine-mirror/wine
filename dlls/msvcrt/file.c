@@ -957,9 +957,13 @@ int _stat(const char* path, struct _stat * buf)
 
   memset(buf,0,sizeof(struct _stat));
 
-  /* FIXME: rdev isnt drive num,despite what the docs say-what is it? */
-  if (isalpha(*path))
-    buf->st_dev = buf->st_rdev = toupper(*path - 'A'); /* drive num */
+  /* FIXME: rdev isnt drive num,despite what the docs say-what is it? 
+     Bon 011120: This fixme seems incorrect 
+                 Also a letter as first char isn't enough to be classify 
+		 as drive letter
+  */
+  if (isalpha(*path)&& (*(path+1)==':'))
+    buf->st_dev = buf->st_rdev = toupper(*path) - 'A'; /* drive num */
   else
     buf->st_dev = buf->st_rdev = _getdrive() - 1;
 
