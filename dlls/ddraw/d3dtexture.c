@@ -652,8 +652,7 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
     if (glThis->loaded == FALSE) {
         /* Only check memory for not already loaded texture... */
         mem_used = This->surface_desc.dwHeight *
-	           This->surface_desc.dwHeight *
-	           This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount;
+	           This->surface_desc.u1.lPitch;
 	if (This->ddraw_owner->allocate_memory(This->ddraw_owner, mem_used) < 0) {
 	    TRACE(" out of virtual memory... Warning application.\n");
 	    return D3DERR_TEXTURE_LOAD_FAILED;

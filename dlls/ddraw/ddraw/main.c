@@ -1115,7 +1115,7 @@ Main_DirectDraw_GetAvailableVidMem(LPDIRECTDRAW7 iface, LPDDSCAPS2 ddscaps,
 
     if (TRACE_ON(ddraw)) {
         TRACE(" Asking for memory of type : \n");
-        DDRAW_dump_DDSCAPS2(ddscaps);
+        DDRAW_dump_DDSCAPS2(ddscaps); DPRINTF("\n");
     }
 
     /* We have 16 MB videomemory */
