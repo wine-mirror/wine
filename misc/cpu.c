@@ -35,6 +35,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -46,6 +47,48 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
+
+#define AUTH	0x68747541	/* "Auth" */
+#define ENTI	0x69746e65	/* "enti" */
+#define CAMD	0x444d4163	/* "cAMD" */
+
+/* Calls cpuid with an eax of 'ax' and returns the 16 bytes in *p
+ * We are compiled with -fPIC, so we can't clobber ebx.
+ */
+static inline void do_cpuid(int ax, int *p)
+{
+#ifdef __i386__
+	__asm__("pushl %%ebx\n\t"
+                "cpuid\n\t"
+                "movl %%ebx, %%esi\n\t"
+                "popl %%ebx"
+                : "=a" (p[0]), "=S" (p[1]), "=c" (p[2]), "=d" (p[3])
+                :  "0" (ax));
+#endif
+}
+
+/* From xf86info havecpuid.c 1.11 */
+static inline int have_cpuid(void)
+{
+#ifdef __i386__
+	unsigned int f1, f2;
+	__asm__("pushfl\n\t"
+                "pushfl\n\t"
+                "popl %0\n\t"
+                "movl %0,%1\n\t"
+                "xorl %2,%0\n\t"
+                "pushl %0\n\t"
+                "popfl\n\t"
+                "pushfl\n\t"
+                "popl %0\n\t"
+                "popfl"
+                : "=&r" (f1), "=&r" (f2)
+                : "ir" (0x00200000));
+	return ((f1^f2) & 0x00200000) != 0;
+#else
+        return 0;
+#endif
+}
 
 static BYTE PF[64] = {0,};
 
@@ -368,9 +411,63 @@ VOID WINAPI GetSystemInfo(
 
         }
         memcpy(si,&cachedsi,sizeof(*si));
-#else /* !linux && !__NetBSD__ */
+#elif defined(__FreeBSD__)
+	{
+	unsigned int regs[4], regs2[4];
+	int ret, len, num;
+	if (!have_cpuid())
+		regs[0] = 0;			/* No cpuid support -- skip the rest */
+	else
+		do_cpuid(0x00000000, regs);	/* get standard cpuid level and vendor name */
+	if (regs[0]>=0x00000001) {		/* Check for supported cpuid version */
+		do_cpuid(0x00000001, regs2);	/* get cpu features */
+		switch ((regs2[0] >> 8)&0xf) {	/* cpu family */
+		case 3: cachedsi.dwProcessorType = PROCESSOR_INTEL_386;
+			cachedsi.wProcessorLevel = 3;
+			break;
+		case 4: cachedsi.dwProcessorType = PROCESSOR_INTEL_486;
+			cachedsi.wProcessorLevel = 4;
+			break;
+		case 5:
+		case 6: /* PPro/2/3 has same info as P1 */
+			cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+			cachedsi.wProcessorLevel = 5;
+			break;
+		default:
+			FIXME("unknown cpu family %d, please report! (-> setting to 386)\n", \
+				(regs2[0] >> 8)&0xf);
+			break;
+		}
+		PF[PF_FLOATING_POINT_EMULATED]     = !(regs2[3] & 1);
+		PF[PF_RDTSC_INSTRUCTION_AVAILABLE] = (regs2[3] & (1 << 4 )) >> 4;
+		PF[PF_COMPARE_EXCHANGE_DOUBLE]     = (regs2[3] & (1 << 8 )) >> 8;
+		PF[PF_MMX_INSTRUCTIONS_AVAILABLE]  = (regs2[3] & (1 << 23)) >> 23;
+		/* Check for OS support of SSE -- Is this used, and should it be sse1 or sse2? */
+		/*len = sizeof(num);
+		ret = sysctlbyname("hw.instruction_sse", &num, &len, NULL, 0);
+		if (!ret)
+			PF[PF_XMMI_INSTRUCTIONS_AVAILABLE] = num;*/
+		
+		if (regs[1] == AUTH &&
+		    regs[3] == ENTI &&
+		    regs[2] == CAMD) {
+			do_cpuid(0x80000000, regs);		/* get vendor cpuid level */
+			if (regs[0]>=0x80000001) {
+				do_cpuid(0x80000001, regs2);	/* get vendor features */
+				PF[PF_AMD3D_INSTRUCTIONS_AVAILABLE] = 
+				    (regs2[3] & (1 << 31 )) >> 31;
+			}
+		}
+	}
+	len = sizeof(num);
+	ret = sysctlbyname("hw.ncpu", &num, &len, NULL, 0);
+	if (!ret)
+		cachedsi.dwNumberOfProcessors = num;
+	}
+	memcpy(si,&cachedsi,sizeof(*si));
+#else
 	FIXME("not yet supported on this system\n");
-#endif  /* !linux  && !__NetBSD__ */
+#endif
         TRACE("<- CPU arch %d, res'd %d, pagesize %ld, minappaddr %p, maxappaddr %p,"
               " act.cpumask %08lx, numcpus %ld, CPU type %ld, allocgran. %ld, CPU level %d, CPU rev %d\n",
               si->u.s.wProcessorArchitecture, si->u.s.wReserved, si->dwPageSize,
