@@ -50,12 +50,12 @@ LOCAL_LIBRARIES = -ll
 LOCAL_LIBRARIES = -lfl
 #endif
 
-depend:: y.tab.c y.tab.h lex.yy.c
+NormalProgramTarget(winerc,$(OBJS),$(DEPLIBS),$(LOCAL_LIBRARIES),)
+
+DependTarget()
 
 clean::
 	$(RM) lex.yy.c y.tab.*
-
-ComplexProgramTarget(winerc)
 
 y.tab.c y.tab.h: parser.y
 	$(YACC) -d -t parser.y

@@ -525,7 +525,7 @@ COLORREF GetPixel( HDC hdc, short x, short y )
     XDestroyImage( image );
     
     if (screenDepth > 8) return pixel;
-    mapping = (WORD *) GDI_HEAP_ADDR( dc->u.x.pal.hRevMapping );
+    mapping = (WORD *) GDI_HEAP_LIN_ADDR( dc->u.x.pal.hRevMapping );
     if (mapping) pixel = mapping[pixel];
     GetPaletteEntries( dc->w.hPalette, pixel, 1, &entry );
     return RGB( entry.peRed, entry.peGreen, entry.peBlue );

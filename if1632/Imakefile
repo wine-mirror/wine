@@ -14,6 +14,7 @@ DLLOBJS =
 CALLOBJS = call.o
 DLLOBJS = \
 	dll_commdlg.o \
+	dll_compobj.o \
 	dll_gdi.o \
 	dll_kernel.o \
 	dll_keyboard.o \
@@ -28,10 +29,10 @@ DLLOBJS = \
 	dll_olesvr.o \
 	dll_shell.o \
 	dll_sound.o \
+	dll_storage.o \
 	dll_stress.o \
 	dll_system.o \
 	dll_toolhelp.o \
-	dll_unixlib.o \
 	dll_user.o \
 	dll_win87em.o \
 	dll_winsock.o
@@ -47,6 +48,7 @@ OBJS = $(CALLOBJS) $(DLLOBJS) $(SRCS:.c=.o) $(DLLOBJS:.o=_tab.o) $(DLLOBJS:dll_.
  * If you add a new spec file, copy one of these lines
  */
 MakeDllFromSpec(commdlg)
+MakeDllFromSpec(compobj)
 MakeDllFromSpec(gdi)
 MakeDllFromSpec(kernel)
 MakeDllFromSpec(keyboard)
@@ -61,10 +63,10 @@ MakeDllFromSpec(ole2prox)
 MakeDllFromSpec(olecli)
 MakeDllFromSpec(olesvr)
 MakeDllFromSpec(sound)
+MakeDllFromSpec(storage)
 MakeDllFromSpec(stress)
 MakeDllFromSpec(system)
 MakeDllFromSpec(toolhelp)
-MakeDllFromSpec(unixlib)
 MakeDllFromSpec(user)
 MakeDllFromSpec(win87em)
 MakeDllFromSpec(winsock)

@@ -122,7 +122,7 @@ HBITMAP CreateBitmapIndirect( BITMAP * bmp )
       /* Create the BITMAPOBJ */
     hbitmap = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC );
     if (!hbitmap) return 0;
-    bmpObjPtr = (BITMAPOBJ *) GDI_HEAP_ADDR( hbitmap );
+    bmpObjPtr = (BITMAPOBJ *) GDI_HEAP_LIN_ADDR( hbitmap );
 
     bmpObjPtr->size.cx = 0;
     bmpObjPtr->size.cy = 0;

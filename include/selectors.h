@@ -1,25 +1,28 @@
+/*
+ * Selector definitions
+ *
+ * Copyright 1995 Alexandre Julliard
+ */
+
 #ifndef __WINE_SELECTORS_H
 #define __WINE_SELECTORS_H
 
-#include "dlls.h"
-#include "segmem.h"
 #include "windows.h"
+#include "ldt.h"
 
-extern int FindUnusedSelectors(int n_selectors);
-extern int IPCCopySelector(int i_old, unsigned long new, int swap_type);
-extern WORD AllocSelector(WORD old_selector);
-extern unsigned int PrestoChangoSelector(unsigned src_selector, unsigned dst_selector);
-extern WORD AllocDStoCSAlias(WORD ds_selector);
-extern SEGDESC *CreateSelectors(struct  w_files * wpnt);
-extern WORD FreeSelector(WORD sel);
+extern WORD SELECTOR_AllocBlock( void *base, DWORD size, enum seg_type type,
+                                 BOOL is32bit, BOOL readonly );
+extern WORD SELECTOR_ReallocBlock( WORD sel, void *base, DWORD size,
+                                   enum seg_type type, BOOL is32bit,
+                                   BOOL readonly );
 
-extern SEGDESC *CreateNewSegments(int code_flag, int read_only, int length, 
-					int n_segments);
-extern SEGDESC *GetNextSegment(unsigned int flags, unsigned int limit);
+#include "dlls.h"
 
-extern unsigned int GetEntryDLLName(char *dll_name, char *function, int *sel,
+extern WORD *CreateSelectors( struct w_files * wpnt );
+
+extern unsigned int GetEntryDLLName(char *dll_name, char *function, WORD *sel,
 					int *addr);
-extern unsigned int GetEntryDLLOrdinal(char *dll_name, int ordinal, int *sel,
+extern unsigned int GetEntryDLLOrdinal(char *dll_name, int ordinal, WORD *sel,
 					int *addr);
 extern unsigned int GetEntryPointFromOrdinal(struct w_files * wpnt, 
 					int ordinal);

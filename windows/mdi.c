@@ -62,8 +62,9 @@ MDIRecreateMenuList(MDICLIENTINFO *ci)
  *					MDICreateChild
  */
 HWND 
-MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPMDICREATESTRUCT cs)
+MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPARAM lParam )
 {
+    MDICREATESTRUCT *cs = (MDICREATESTRUCT *)PTR_SEG_TO_LIN(lParam);
     HWND hwnd;
 
     /*
@@ -71,17 +72,18 @@ MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPMDICREATESTRUCT cs)
      */
     cs->style &= (WS_MINIMIZE | WS_MAXIMIZE | WS_HSCROLL | WS_VSCROLL);
     
-    hwnd = CreateWindowEx(0, cs->szClass, cs->szTitle, 
+    hwnd = CreateWindowEx(0, PTR_SEG_TO_LIN(cs->szClass),
+                          PTR_SEG_TO_LIN(cs->szTitle), 
 			  WS_CHILD | WS_BORDER | WS_CAPTION | WS_CLIPSIBLINGS |
 			  WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SYSMENU |
 			  WS_THICKFRAME | WS_VISIBLE | cs->style,
 			  cs->x, cs->y, cs->cx, cs->cy, parent, (HMENU) 0,
-			  w->hInstance, (LPSTR) cs);
+			  w->hInstance, lParam);
 
     if (hwnd)
     {
-	HANDLE h = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(MDICHILDINFO));
-	MDICHILDINFO *child_info = USER_HEAP_ADDR(h);
+	HANDLE h = USER_HEAP_ALLOC( sizeof(MDICHILDINFO) );
+	MDICHILDINFO *child_info = USER_HEAP_LIN_ADDR(h);
 	if (!h)
 	{
 	    DestroyWindow(hwnd);
@@ -577,8 +579,8 @@ MDIClientWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 	return MDIChildActivated(w, ci, hwnd);
 
       case WM_CREATE:
-	cs                      = (LPCREATESTRUCT) lParam;
-	ccs                     = (LPCLIENTCREATESTRUCT) cs->lpCreateParams;
+	cs                      = (LPCREATESTRUCT) PTR_SEG_TO_LIN(lParam);
+	ccs                     = (LPCLIENTCREATESTRUCT) PTR_SEG_TO_LIN(cs->lpCreateParams);
 	ci->hWindowMenu         = ccs->hWindowMenu;
 	ci->idFirstChild        = ccs->idFirstChild;
 	ci->infoActiveChildren  = NULL;
@@ -600,7 +602,7 @@ MDIClientWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 	return MDICascade(hwnd, ci);
 
       case WM_MDICREATE:
-	return MDICreateChild(w, ci, hwnd, (LPMDICREATESTRUCT) lParam);
+	return MDICreateChild(w, ci, hwnd, lParam );
 
       case WM_MDIDESTROY:
 	return MDIDestroyChild(w, ci, hwnd, wParam, TRUE);

@@ -22,6 +22,7 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #include "user.h"
 #include "driver.h"
 #include "mmsystem.h"
+#include "ldt.h"
 
 #ifdef linux
 #include <linux/soundcard.h>
@@ -154,28 +155,28 @@ LRESULT WAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 			return (LRESULT)DRVCNF_RESTART;
 		case MCI_OPEN_DRIVER:
 		case MCI_OPEN:
-			return WAVE_mciOpen(dwParam1, (LPMCI_WAVE_OPEN_PARMS)dwParam2);
+			return WAVE_mciOpen(dwParam1, (LPMCI_WAVE_OPEN_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_CLOSE_DRIVER:
 		case MCI_CLOSE:
-			return WAVE_mciClose(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
+			return WAVE_mciClose(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_PLAY:
-			return WAVE_mciPlay(dwDevID, dwParam1, (LPMCI_PLAY_PARMS)dwParam2);
+			return WAVE_mciPlay(dwDevID, dwParam1, (LPMCI_PLAY_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_RECORD:
-			return WAVE_mciRecord(dwDevID, dwParam1, (LPMCI_RECORD_PARMS)dwParam2);
+			return WAVE_mciRecord(dwDevID, dwParam1, (LPMCI_RECORD_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_STOP:
-			return WAVE_mciStop(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
+			return WAVE_mciStop(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_SET:
-			return WAVE_mciSet(dwDevID, dwParam1, (LPMCI_SET_PARMS)dwParam2);
+			return WAVE_mciSet(dwDevID, dwParam1, (LPMCI_SET_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_PAUSE:
-			return WAVE_mciPause(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
+			return WAVE_mciPause(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_RESUME:
-			return WAVE_mciResume(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
+			return WAVE_mciResume(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_STATUS:
-			return WAVE_mciStatus(dwDevID, dwParam1, (LPMCI_STATUS_PARMS)dwParam2);
+			return WAVE_mciStatus(dwDevID, dwParam1, (LPMCI_STATUS_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_GETDEVCAPS:
-			return WAVE_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
+			return WAVE_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_INFO:
-			return WAVE_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMS)dwParam2);
+			return WAVE_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		default:
 			return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 		}
@@ -856,6 +857,8 @@ DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	int			smplrate;
 	int			samplesize;
 	int			dsp_stereo;
+        LPWAVEFORMAT lpFormat;
+
 	dprintf_mciwave(stddeb,
 		     "wodOpen(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
 	if (lpDesc == NULL) {
@@ -903,12 +906,13 @@ DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	WOutDev[wDevID].dwTotalPlayed = 0;
 	WOutDev[wDevID].bufsize = abuf_size;
 	memcpy(&WOutDev[wDevID].waveDesc, lpDesc, sizeof(WAVEOPENDESC));
-	if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM) {
+        lpFormat = (LPWAVEFORMAT)PTR_SEG_TO_LIN(lpDesc->lpFormat);
+	if (lpFormat->wFormatTag != WAVE_FORMAT_PCM) {
 	        fprintf(stderr,"Linux 'wodOpen' // Bad format %04X !\n",
-						lpDesc->lpFormat->wFormatTag);
+						lpFormat->wFormatTag);
 		return WAVERR_BADFORMAT;
 		}
-	memcpy(&WOutDev[wDevID].Format, lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
+	memcpy(&WOutDev[wDevID].Format, lpFormat, sizeof(PCMWAVEFORMAT));
 	if (WOutDev[wDevID].Format.wf.nChannels == 0) return WAVERR_BADFORMAT;
 	if (WOutDev[wDevID].Format.wf.nSamplesPerSec == 0) return WAVERR_BADFORMAT;
 	if (WOutDev[wDevID].Format.wBitsPerSample == 0) {
@@ -1204,23 +1208,23 @@ DWORD wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 			wDevID, wMsg, dwUser, dwParam1, dwParam2);
 	switch(wMsg) {
 		case WODM_OPEN:
-			return wodOpen(wDevID, (LPWAVEOPENDESC)dwParam1, dwParam2);
+			return wodOpen(wDevID, (LPWAVEOPENDESC)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case WODM_CLOSE:
 			return wodClose(wDevID);
 		case WODM_WRITE:
-			return wodWrite(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
+			return wodWrite(wDevID, (LPWAVEHDR)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case WODM_PAUSE:
 			return 0L;
 		case WODM_GETPOS:
-			return wodGetPosition(wDevID, (LPMMTIME)dwParam1, dwParam2);
+			return wodGetPosition(wDevID, (LPMMTIME)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case WODM_BREAKLOOP:
 			return 0L;
 		case WODM_PREPARE:
-			return wodPrepare(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
+			return wodPrepare(wDevID, (LPWAVEHDR)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case WODM_UNPREPARE:
-			return wodUnprepare(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
+			return wodUnprepare(wDevID, (LPWAVEHDR)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case WODM_GETDEVCAPS:
-			return wodGetDevCaps(wDevID, (LPWAVEOUTCAPS)dwParam1, dwParam2);
+			return wodGetDevCaps(wDevID, (LPWAVEOUTCAPS)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case WODM_GETNUMDEVS:
 			return 1L;
 		case WODM_GETPITCH:
@@ -1232,7 +1236,7 @@ DWORD wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 		case WODM_SETPLAYBACKRATE:
 			return 0L;
 		case WODM_GETVOLUME:
-			return wodGetVolume(wDevID, (LPDWORD)dwParam1);
+			return wodGetVolume(wDevID, (LPDWORD)PTR_SEG_TO_LIN(dwParam1));
 		case WODM_SETVOLUME:
 			return wodSetVolume(wDevID, dwParam1);
 		case WODM_RESTART:
@@ -1322,6 +1326,7 @@ DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	int			smplrate;
 	int			samplesize;
 	int			dsp_stereo;
+        LPWAVEFORMAT  lpFormat;
 	dprintf_mciwave(stddeb,
 		 "widOpen(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
 	if (lpDesc == NULL) {
@@ -1370,12 +1375,13 @@ DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	WInDev[wDevID].bufsize = abuf_size;
 	WInDev[wDevID].dwTotalRecorded = 0;
 	memcpy(&WInDev[wDevID].waveDesc, lpDesc, sizeof(WAVEOPENDESC));
-	if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM) {
+        lpFormat = (LPWAVEFORMAT)PTR_SEG_TO_LIN(lpDesc->lpFormat);
+	if (lpFormat->wFormatTag != WAVE_FORMAT_PCM) {
 	        fprintf(stderr,"Linux 'widOpen' // Bad format %04X !\n",
-						lpDesc->lpFormat->wFormatTag);
+						lpFormat->wFormatTag);
 		return WAVERR_BADFORMAT;
 		}
-	memcpy(&WInDev[wDevID].Format, lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
+	memcpy(&WInDev[wDevID].Format, lpFormat, sizeof(PCMWAVEFORMAT));
 	WInDev[wDevID].Format.wBitsPerSample = 8; /* <-------------- */
 	if (WInDev[wDevID].Format.wf.nChannels == 0) return WAVERR_BADFORMAT;
 	if (WInDev[wDevID].Format.wf.nSamplesPerSec == 0) return WAVERR_BADFORMAT;
@@ -1700,21 +1706,21 @@ DWORD widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 			wDevID, wMsg, dwUser, dwParam1, dwParam2);
 	switch(wMsg) {
 		case WIDM_OPEN:
-			return widOpen(wDevID, (LPWAVEOPENDESC)dwParam1, dwParam2);
+			return widOpen(wDevID, (LPWAVEOPENDESC)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case WIDM_CLOSE:
 			return widClose(wDevID);
 		case WIDM_ADDBUFFER:
-			return widAddBuffer(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
+			return widAddBuffer(wDevID, (LPWAVEHDR)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case WIDM_PREPARE:
-			return widPrepare(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
+			return widPrepare(wDevID, (LPWAVEHDR)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case WIDM_UNPREPARE:
-			return widUnprepare(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
+			return widUnprepare(wDevID, (LPWAVEHDR)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case WIDM_GETDEVCAPS:
-			return widGetDevCaps(wDevID, (LPWAVEINCAPS)dwParam1, dwParam2);
+			return widGetDevCaps(wDevID, (LPWAVEINCAPS)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case WIDM_GETNUMDEVS:
 			return 1L;
 		case WIDM_GETPOS:
-			return widGetPosition(wDevID, (LPMMTIME)dwParam1, dwParam2);
+			return widGetPosition(wDevID, (LPMMTIME)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case WIDM_RESET:
 			return widReset(wDevID);
 		case WIDM_START:

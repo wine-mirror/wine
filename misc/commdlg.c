@@ -2,8 +2,7 @@
  * COMMDLG functions
  *
  * Copyright 1994 Martin Ayotte
-static char Copyright[] = "Copyright  Martin Ayotte, 1994";
-*/
+ */
 
 /*
 #define DEBUG_OPENDLG
@@ -18,7 +17,6 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #include "user.h"
 #include "message.h"
 #include "library.h"
-#include "heap.h"
 #include "commdlg.h"
 #include "dlgs.h"
 
@@ -65,8 +63,8 @@ BOOL GetOpenFileName(LPOPENFILENAME lpofn)
 	if (lpofn == NULL) return FALSE;
 	printf("GetOpenFileName // Flags=%08lX !\n", lpofn->Flags);
 	printf("GetOpenFileName // nMaxFile=%ld lpstrFile='%s' !\n", 
-						lpofn->nMaxFile, lpofn->lpstrFile);
-	printf("GetOpenFileName // lpstrInitialDir='%s' !\n", lpofn->lpstrInitialDir);
+						lpofn->nMaxFile, PTR_SEG_TO_LIN(lpofn->lpstrFile));
+	printf("GetOpenFileName // lpstrInitialDir='%s' !\n", PTR_SEG_TO_LIN(lpofn->lpstrInitialDir));
 	printf("GetOpenFileName // lpstrFilter=%p !\n", lpofn->lpstrFilter);
 	printf("GetOpenFileName // nFilterIndex=%ld !\n", lpofn->nFilterIndex);
 	if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE) {
@@ -75,7 +73,7 @@ BOOL GetOpenFileName(LPOPENFILENAME lpofn)
 	else {
 		if (lpofn->Flags & OFN_ENABLETEMPLATE) {
 			printf("GetOpenFileName // avant FindResource hInstance=%04X lpTemplateName='%s' !\n", 
-								lpofn->hInstance, lpofn->lpTemplateName);
+								lpofn->hInstance, PTR_SEG_TO_LIN(lpofn->lpTemplateName));
 			hInst = lpofn->hInstance;
 			hResInfo = FindResource(hInst, 
 				(LPSTR)lpofn->lpTemplateName, RT_DIALOG);
@@ -108,7 +106,7 @@ BOOL GetOpenFileName(LPOPENFILENAME lpofn)
 	lpofn->nFileExtension = strlen(lpofn->lpstrFile) - 3;
 	bRet = TRUE;
 */
-	printf("GetOpenFileName // return lpstrFile='%s' !\n", lpofn->lpstrFile);
+	printf("GetOpenFileName // return lpstrFile='%s' !\n", PTR_SEG_TO_LIN(lpofn->lpstrFile));
 	return bRet;
 }
 
@@ -127,8 +125,8 @@ BOOL GetSaveFileName(LPOPENFILENAME lpofn)
 	if (lpofn == NULL) return FALSE;
 	printf("GetSaveFileName // Flags=%08lX !\n", lpofn->Flags);
 	printf("GetSaveFileName // nMaxFile=%ld lpstrFile='%s' !\n", 
-						lpofn->nMaxFile, lpofn->lpstrFile);
-	printf("GetSaveFileName // lpstrInitialDir='%s' !\n", lpofn->lpstrInitialDir);
+						lpofn->nMaxFile, PTR_SEG_TO_LIN(lpofn->lpstrFile));
+	printf("GetSaveFileName // lpstrInitialDir='%s' !\n", PTR_SEG_TO_LIN(lpofn->lpstrInitialDir));
 	printf("GetSaveFileName // lpstrFilter=%p !\n", lpofn->lpstrFilter);
 	if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE) {
 		hDlgTmpl = lpofn->hInstance;
@@ -136,7 +134,7 @@ BOOL GetSaveFileName(LPOPENFILENAME lpofn)
 	else {
 		if (lpofn->Flags & OFN_ENABLETEMPLATE) {
 			printf("GetSaveFileName // avant FindResource lpTemplateName='%s' !\n", 
-												lpofn->lpTemplateName);
+                               PTR_SEG_TO_LIN(lpofn->lpTemplateName));
 			hInst = lpofn->hInstance;
 			hResInfo = FindResource(hInst, 
 				(LPSTR)lpofn->lpTemplateName, RT_DIALOG);
@@ -159,7 +157,7 @@ BOOL GetSaveFileName(LPOPENFILENAME lpofn)
     wndPtr = WIN_FindWndPtr(lpofn->hwndOwner);
 	bRet = DialogBoxIndirectParam(wndPtr->hInstance, hDlgTmpl, 
 		lpofn->hwndOwner, (WNDPROC)FileSaveDlgProc, (DWORD)lpofn);
-	printf("GetSaveFileName // return lpstrFile='%s' !\n", lpofn->lpstrFile);
+	printf("GetSaveFileName // return lpstrFile='%s' !\n", PTR_SEG_TO_LIN(lpofn->lpstrFile));
 	return bRet;
 }
 
@@ -212,8 +210,8 @@ BOOL FileOpenDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 			if (!FileDlg_Init(hWnd, lParam)) return TRUE;
 			SendDlgItemMessage(hWnd, cmb1, CB_RESETCONTENT, 0, 0L);
 			lpofn = (LPOPENFILENAME)lParam;
-			ptr = (LPSTR)lpofn->lpstrFilter;
-			strcpy(CurPath, lpofn->lpstrInitialDir);
+			ptr = (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFilter);
+			strcpy(CurPath, PTR_SEG_TO_LIN(lpofn->lpstrInitialDir));
 #ifdef DEBUG_OPENDLG
 			printf("FileOpenDlgProc // lpstrInitialDir='%s' !\n", CurPath);
 #endif
@@ -236,7 +234,7 @@ BOOL FileOpenDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 			nDrive = 2; 		/* Drive 'C:' */
 			SendDlgItemMessage(hWnd, cmb2, CB_SETCURSEL, nDrive, 0L);
 			sprintf(str, "%c:\\%s", nDrive + 'A', DOS_GetCurrentDir(nDrive));
-			fspec = OpenDlg_GetFileType(lpofn->lpstrFilter, 
+			fspec = OpenDlg_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrFilter), 
 									lpofn->nFilterIndex);
 #ifdef DEBUG_OPENDLG
 			printf("FileOpenDlgProc // WM_INITDIALOG fspec #%d = '%s' !\n", 
@@ -263,7 +261,7 @@ BOOL FileOpenDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 
     case WM_MEASUREITEM:
 		GetObject(hFolder2, sizeof(BITMAP), (LPSTR)&bm);
-		lpmeasure = (LPMEASUREITEMSTRUCT)lParam;
+		lpmeasure = (LPMEASUREITEMSTRUCT)PTR_SEG_TO_LIN(lParam);
 		lpmeasure->itemHeight = bm.bmHeight;
 #ifdef DEBUG_OPENDLG_DRAW
 		printf("FileOpenDlgProc WM_MEASUREITEM Height=%d !\n", bm.bmHeight);
@@ -275,7 +273,7 @@ BOOL FileOpenDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 		printf("FileOpenDlgProc // WM_DRAWITEM w=%04X l=%08X\n", wParam, lParam);
 #endif
 		if (lParam == 0L) break;
-		lpdis = (LPDRAWITEMSTRUCT)lParam;
+		lpdis = (LPDRAWITEMSTRUCT)PTR_SEG_TO_LIN(lParam);
 #ifdef DEBUG_OPENDLG_DRAW
 		printf("FileOpenDlgProc // WM_DRAWITEM CtlType=%04X CtlID=%04X \n", 
 									lpdis->CtlType, lpdis->CtlID);
@@ -284,7 +282,7 @@ BOOL FileOpenDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 			hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
 			SelectObject(lpdis->hDC, hBrush);
 			FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
-			ptr = (LPSTR) lpdis->itemData;
+			ptr = (LPSTR) PTR_SEG_TO_LIN(lpdis->itemData);
 			if (ptr == NULL) break;
 			TextOut(lpdis->hDC, lpdis->rcItem.left,	lpdis->rcItem.top, 
 											ptr, strlen(ptr));
@@ -293,7 +291,7 @@ BOOL FileOpenDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 			hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
 			SelectObject(lpdis->hDC, hBrush);
 			FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
-			ptr = (LPSTR) lpdis->itemData;
+			ptr = (LPSTR) PTR_SEG_TO_LIN(lpdis->itemData);
 			if (ptr == NULL) break;
 			if (strcmp(ptr, "[.]") == 0) {
 				hBitmap = hFolder2;
@@ -315,7 +313,7 @@ BOOL FileOpenDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 			hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
 			SelectObject(lpdis->hDC, hBrush);
 			FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
-			ptr = (LPSTR) lpdis->itemData;
+			ptr = (LPSTR) PTR_SEG_TO_LIN(lpdis->itemData);
 			if (ptr == NULL) break;
 			switch(ptr[2]) {
 				case 'a':
@@ -434,13 +432,13 @@ BOOL FileOpenDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 				wRet = SendDlgItemMessage(hWnd, lst1, LB_GETCURSEL, 0, 0L);
 				SendDlgItemMessage(hWnd, lst1, LB_GETTEXT, wRet, (DWORD)str);
 				printf("FileOpenDlgProc // IDOK str='%s'\n", str);
-				strcpy(lpofn->lpstrFile, str);
+				strcpy(PTR_SEG_TO_LIN(lpofn->lpstrFile), str);
 				lpofn->nFileOffset = 0;
-				lpofn->nFileExtension = strlen(lpofn->lpstrFile) - 3;
+				lpofn->nFileExtension = strlen(PTR_SEG_TO_LIN(lpofn->lpstrFile)) - 3;
 				if (lpofn->lpstrFileTitle != NULL) {
 					wRet = SendDlgItemMessage(hWnd, lst1, LB_GETCURSEL, 0, 0L);
 					SendDlgItemMessage(hWnd, lst1, LB_GETTEXT, wRet, (DWORD)str);
-					strcpy(lpofn->lpstrFileTitle, str);
+					strcpy(PTR_SEG_TO_LIN(lpofn->lpstrFileTitle), str);
 					}
 				EndDialog(hWnd, TRUE);
 				return(TRUE);

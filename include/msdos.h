@@ -15,6 +15,7 @@ struct dosdirent {
 	char search_attribute;
 	long filesize;
 	long filetime;
+        short entnum;           /* Directory entry number */
 };
 
 struct fcb {
@@ -29,15 +30,12 @@ struct fcb {
 	BYTE dummy2[9];
 };
 
-#define DOSVERSION 0x0330;
+#define DOSVERSION 0x0500;      /* Might as well pretend we're DOS 5.0 */
 #define MAX_DOS_DRIVES	26
 
 extern WORD ExtendedError;
 extern struct DosDeviceStruct COM[MAX_PORTS];
 extern struct DosDeviceStruct LPT[MAX_PORTS];
-
-#define segment(a) 	((DWORD)(a) >> 16)
-#define offset(a)	((DWORD)(a) & 0xffff)
 
 #define setword(a,b)	*(BYTE*)(a)	  = (b) & 0xff; \
 			*((BYTE*)((a)+1)) = ((b)>>8) & 0xff;

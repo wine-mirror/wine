@@ -12,7 +12,6 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <string.h>
 #include <errno.h>
 #include "neexe.h"
-#include "segmem.h"
 #include "dlls.h"
 #include "windows.h"
 #include "arch.h"
@@ -82,20 +81,20 @@ static char *NE_GetModuleName(struct w_files *wpnt, int index, char *buffer)
  */
 int NE_FixupSegment(struct w_files *wpnt, int segment_num)
 {
-    struct segment_descriptor_s *selector_table = wpnt->ne->selector_table;
+    WORD *selector_table = wpnt->ne->selector_table;
+    WORD selector, sel, offset;
     struct relocation_entry_s *rep, *rep1;
     struct ne_segment_table_entry_s *seg;
-    struct segment_descriptor_s *sel;
     int status, ordinal, i, n_entries, additive;
     unsigned short *sp;
-    unsigned int selector, address, next_addr;
+    unsigned int address;
     unsigned char dll_name[257], func_name[257];
 
     seg = &wpnt->ne->seg_table[segment_num];
-    sel = &selector_table[segment_num];
+    sel = selector_table[segment_num];
 
-    dprintf_fixup(stddeb, "Segment fixups for %s, segment %d, selector %x\n", 
-                  wpnt->name, segment_num, (int) sel->base_addr >> 16);
+    dprintf_fixup(stddeb, "Segment fixups for %s, segment %d, selector %04x\n", 
+                  wpnt->name, segment_num, sel );
 
     if ((seg->seg_data_offset == 0) ||
 	!(seg->seg_flags & NE_SEGFLAGS_RELOC_DATA))
@@ -128,13 +127,14 @@ int NE_FixupSegment(struct w_files *wpnt, int segment_num)
 	/*
 	 * Get the target address corresponding to this entry.
 	 */
-	additive = 0;
+
+	/* If additive, there is no target chain list. Instead, add source
+	   and target */
+	additive = rep->relocation_type & NE_RELFLAG_ADDITIVE;
+	rep->relocation_type &= 0x3;
 	
 	switch (rep->relocation_type)
 	{
-	  case NE_RELTYPE_ORDINALADD:
-	    additive = 1;
-	    
 	  case NE_RELTYPE_ORDINAL:
 	    if (NE_GetModuleName(wpnt, rep->target1,
 			      dll_name) == NULL)
@@ -159,9 +159,6 @@ int NE_FixupSegment(struct w_files *wpnt, int segment_num)
 	    dprintf_fixup(stddeb,"%d: %s.%d: %04x:%04x\n", i + 1, 
 		   dll_name, ordinal, selector, address);
 	    break;
-	    
-	  case NE_RELTYPE_NAMEADD:
-	    additive = 1;
 	    
 	  case NE_RELTYPE_NAME:
 	    if (NE_GetModuleName(wpnt, rep->target1, dll_name) == NULL) {
@@ -189,7 +186,6 @@ int NE_FixupSegment(struct w_files *wpnt, int segment_num)
 	    break;
 	    
 	  case NE_RELTYPE_INTERNAL:
-    	  case NE_RELTYPE_INT1:
 	    if (rep->target1 == 0x00ff)
 	    {
 		address  = GetEntryPointFromOrdinal(wpnt, rep->target2);
@@ -198,7 +194,7 @@ int NE_FixupSegment(struct w_files *wpnt, int segment_num)
 	    }
 	    else
 	    {
-		selector = selector_table[rep->target1-1].selector;
+		selector = selector_table[rep->target1-1];
 		address  = rep->target2;
 	    }
 	    
@@ -206,7 +202,7 @@ int NE_FixupSegment(struct w_files *wpnt, int segment_num)
 			  i + 1, selector, address);
 	    break;
 
-	  case 7:
+	  case NE_RELTYPE_OSFIXUP:
 	    /* Relocation type 7:
 	     *
 	     *    These appear to be used as fixups for the Windows
@@ -234,69 +230,70 @@ int NE_FixupSegment(struct w_files *wpnt, int segment_num)
 	    return -1;
 	}
 
-	/*
-	 * Stuff the right size result in.
-	 */
-	sp = (unsigned short *) ((char *) sel->base_addr + rep->offset);
-	if (additive)
-	{
-	    if (FindDLLTable(dll_name) == NULL)
-		additive = 2;
-	    dprintf_fixup(stddeb,
-		   "%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04x,  ",
-		   i + 1, rep->address_type, rep->relocation_type, 
-		   rep->offset);
-	    dprintf_fixup(stddeb,"TARGET %04x %04x\n", 
-		    rep->target1, rep->target2);
-	    dprintf_fixup(stddeb, "    Additive = %d\n", additive);
-	}
-	
+        /* I'm not sure why a DLL entry point fixup could be additive.
+           Old code used to ignore additive if the target is a built-in
+           DLL. This doesn't seem to work for __AHSHIFT */
+        if (additive && FindDLLTable(dll_name) != NULL)
+            dprintf_fixup(stddeb,"Additive for builtin???\n"
+                          "%d: ADDR TYPE %d, TYPE %d, OFFSET %04x, "
+                          "TARGET %04x %04x\n",
+                          i+1, rep->address_type, rep->relocation_type,
+                          rep->offset, rep->target1, rep->target2);
+
+	offset = rep->offset;
+
 	switch (rep->address_type)
 	{
 	  case NE_RADDR_LOWBYTE:
-	    dprintf_fixup(stddeb,"Unhandled address type NE_RADDR_LOWBYTE\n");
-	    return -1;
+            do {
+                sp = PTR_SEG_OFF_TO_LIN( sel, offset );
+                dprintf_fixup(stddeb,"    %04x:%04x:%04x BYTE%s\n",
+                              sel, offset, *sp, additive ? " additive":"");
+                offset = *sp;
+		if(additive)
+                    *(unsigned char*)sp = (unsigned char)(address & 0xFF);
+		else
+                    *(unsigned char*)sp = (unsigned char)((address+offset) & 0xFF);
+            }
+            while (offset != 0xffff && !additive);
+            break;
+
 	  case NE_RADDR_OFFSET16:
 	    do {
-		dprintf_fixup(stddeb,"    %04x:%04x:%04x OFFSET16\n",
-		       (unsigned int) sp >> 16, (int) sp & 0xFFFF, *sp);
-		next_addr = *sp;
+                sp = PTR_SEG_OFF_TO_LIN( sel, offset );
+		dprintf_fixup(stddeb,"    %04x:%04x:%04x OFFSET16%s\n",
+                              sel, offset, *sp, additive ? " additive" : "" );
+		offset = *sp;
 		*sp = (unsigned short) address;
-		if (additive == 2)
-		    *sp += next_addr;
-		sp = (unsigned short *) ((char *) sel->base_addr + next_addr);
+		if (additive) *sp += offset;
 	    } 
-	    while (next_addr != 0xffff && !additive);
-
+	    while (offset != 0xffff && !additive);
 	    break;
 	    
 	  case NE_RADDR_POINTER32:
 	    do {
-		dprintf_fixup(stddeb,"    %04x:%04x:%04x POINTER32\n",
-		       (unsigned int) sp >> 16, (int) sp & 0xFFFF, *sp);
-		next_addr = *sp;
-		*sp     = (unsigned short) address;
-		if (additive == 2)
-		    *sp += next_addr;
-		*(sp+1) = (unsigned short) selector;
-		sp = (unsigned short *) ((char *) sel->base_addr + next_addr);
+                sp = PTR_SEG_OFF_TO_LIN( sel, offset );
+		dprintf_fixup(stddeb,"    %04x:%04x:%04x POINTER32%s\n",
+                              sel, offset, *sp, additive ? " additive" : "" );
+		offset = *sp;
+		*sp    = (unsigned short) address;
+		if (additive) *sp += offset;
+		*(sp+1) = selector;
 	    } 
-	    while (next_addr != 0xffff && !additive);
-
+	    while (offset != 0xffff && !additive);
 	    break;
 	    
 	  case NE_RADDR_SELECTOR:
 	    do {
-		dprintf_fixup(stddeb,"    %04x:%04x:%04x SELECTOR\n",
-		       (unsigned int) sp >> 16, (int) sp & 0xFFFF, *sp);
-		next_addr = *sp;
-		*sp     = (unsigned short) selector;
-		sp = (unsigned short *) ((char *) sel->base_addr + next_addr);
-		if (rep->relocation_type == NE_RELTYPE_INT1) 
-		    break;
+                sp = PTR_SEG_OFF_TO_LIN( sel, offset );
+		dprintf_fixup(stddeb,"    %04x:%04x:%04x SELECTOR%s\n",
+                              sel, offset, *sp, additive ? " additive" : "" );
+		offset = *sp;
+		*sp    = (unsigned short) selector;
+		if(additive)
+                    fprintf(stderr,"Additive selector, please report\n");
 	    } 
-	    while (next_addr != 0xffff && !additive);
-
+	    while (offset != 0xffff && !additive);
 	    break;
 	    
 	  default:
@@ -331,10 +328,10 @@ int NE_StartProgram(struct w_files *wpnt)
     WIN_StackSize = wpnt->ne->ne_header->stack_length;
     WIN_HeapSize = wpnt->ne->ne_header->local_heap_length;
 
-    ds_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->auto_data_seg-1].selector;
-    cs_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->cs-1].selector;
+    ds_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->auto_data_seg-1];
+    cs_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->cs-1];
     ip_reg = wpnt->ne->ne_header->ip;
-    ss_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->ss-1].selector;
+    ss_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->ss-1];
     sp_reg = wpnt->ne->ne_header->sp;
 
     return CallToInit16(cs_reg << 16 | ip_reg, ss_reg << 16 | sp_reg, ds_reg);
@@ -358,15 +355,15 @@ void NE_InitDLL(struct w_files *wpnt)
   		exit(1);
 	    } else { /* DATA NONE DLL */
 		ds_reg = current_exe->ne->selector_table[
-		        current_exe->ne->ne_header->auto_data_seg-1].selector;
+		        current_exe->ne->ne_header->auto_data_seg-1];
 		cx_reg = 0;
 	    } else { /* DATA SINGLE DLL */
 		    ds_reg = wpnt->ne->selector_table[wpnt->ne->
-					  ne_header->auto_data_seg-1].selector;
+					  ne_header->auto_data_seg-1];
 		    cx_reg = wpnt->ne->ne_header->local_heap_length;
   	    }
   
-  	    cs_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->cs-1].selector;
+  	    cs_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->cs-1];
   	    ip_reg = wpnt->ne->ne_header->ip;
   
             di_reg = wpnt->hinstance;
@@ -423,8 +420,7 @@ HINSTANCE NE_LoadImage(struct w_files *wpnt)
         wpnt->hinstance=current_nodata++;
     } else
     wpnt->hinstance = (wpnt->ne->
-		       selector_table[wpnt->ne->ne_header->auto_data_seg-1].
-		       selector);
+		       selector_table[wpnt->ne->ne_header->auto_data_seg-1]);
     if (wpnt->hinstance == 0)
     	wpnt->hinstance = 0xf000;
 #endif

@@ -180,7 +180,7 @@ LONG ButtonWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
                 break;
 
         case WM_SETTEXT:
-		DEFWND_SetText( hWnd, (LPSTR)lParam );
+		DEFWND_SetText( hWnd, (LPSTR)PTR_SEG_TO_LIN(lParam) );
                 PAINT_BUTTON( hWnd, style, ODA_DRAWENTIRE );
 		return 0;
 
@@ -306,7 +306,7 @@ static void PB_Paint( HWND hButton, HDC hDC, WORD action )
     else GRAPH_DrawReliefRect( hDC, &rc, 2, 2, FALSE );
     
     /* draw button label, if any: */
-    text = USER_HEAP_ADDR( wndPtr->hText );
+    text = USER_HEAP_LIN_ADDR( wndPtr->hText );
     if (text[0])
     {
         SetTextColor( hDC, (wndPtr->dwStyle & WS_DISABLED) ?
@@ -356,7 +356,7 @@ static void CB_Paint( HWND hWnd, HDC hDC, WORD action )
 
     GetTextMetrics(hDC, &tm);
     delta = (rc.bottom - rc.top - tm.tmHeight) >> 1;
-    text = USER_HEAP_ADDR( wndPtr->hText );
+    text = USER_HEAP_LIN_ADDR( wndPtr->hText );
     textlen = strlen( text );
 
       /* Draw the check-box bitmap */
@@ -433,7 +433,7 @@ static void GB_Paint( HWND hWnd, HDC hDC, WORD action )
     LineTo( hDC, rc.left, rc.bottom-1 );
     LineTo( hDC, rc.left, rc.top+2 );
 
-    text = USER_HEAP_ADDR( wndPtr->hText );
+    text = USER_HEAP_LIN_ADDR( wndPtr->hText );
     GetTextExtentPoint(hDC, text, strlen(text), &size);
     rc.left  += 10;
     rc.right  = rc.left + size.cx + 1;
@@ -481,9 +481,8 @@ static void OB_Paint( HWND hWnd, HDC hDC, WORD action )
     WND *wndPtr = WIN_FindWndPtr( hWnd );
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
 
-    if (!(hDis = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(DRAWITEMSTRUCT))))
-        return;
-    lpdis = (LPDRAWITEMSTRUCT)USER_HEAP_ADDR(hDis);
+    if (!(hDis = USER_HEAP_ALLOC( sizeof(DRAWITEMSTRUCT) ))) return;
+    lpdis = (LPDRAWITEMSTRUCT)USER_HEAP_LIN_ADDR(hDis);
     lpdis->CtlType    = ODT_BUTTON;
     lpdis->CtlID      = wndPtr->wIDmenu;
     lpdis->itemID     = 0;
@@ -495,7 +494,7 @@ static void OB_Paint( HWND hWnd, HDC hDC, WORD action )
     lpdis->hDC        = hDC;
     GetClientRect( hWnd, &lpdis->rcItem );
     lpdis->itemData   = 0;
-    SendMessage(GetParent(hWnd), WM_DRAWITEM, 1, (LPARAM)lpdis); 
+    SendMessage(GetParent(hWnd), WM_DRAWITEM, 1, USER_HEAP_SEG_ADDR(hDis) );
     USER_HEAP_FREE(hDis);
 }
 

@@ -189,6 +189,11 @@ void DOS_InitFS(void)
          * /windows/word)  Also set the default drive to whatever drive
          * corresponds to the directory we started in.
          */
+
+        for (x=0; x!=MAX_DOS_DRIVES; x++) 
+	  if (DosDrives[x].rootdir != NULL) 
+	    strcpy( DosDrives[x].cwd, "\\" );
+
         getcwd(temp, 254);
         strcat(temp, "/");      /* For DOS_GetDosFileName */
         strcpy(temp, DOS_GetDosFileName(temp));
@@ -292,15 +297,19 @@ WORD DOS_GetEquipment(void)
 
 int DOS_ValidDrive(int drive)
 {
-    dprintf_dosfs(stddeb,"ValidDrive %c (%d)\n",'A'+drive,drive);
-	if (drive >= MAX_DOS_DRIVES)
-		return 0;
-	if (DosDrives[drive].rootdir == NULL)
-		return 0;
-	if (DosDrives[drive].disabled)
-		return 0;
+        int valid = 1;
 
-	return 1;
+        dprintf_dosfs(stddeb,"ValidDrive %c (%d) -- ",'A'+drive,drive);
+
+	if (drive >= MAX_DOS_DRIVES)
+		valid = 0;
+	if (DosDrives[drive].rootdir == NULL)
+		valid = 0;
+	if (DosDrives[drive].disabled)
+		valid = 0;
+
+        dprintf_dosfs(stddeb, "%s\n", valid ? "Valid" : "Invalid");
+	return valid;
 }
 
 
@@ -319,6 +328,45 @@ int DOS_ValidDirectory(char *name)
 	return 1;
 }
 
+
+
+/* Simplify the path in "name" by removing  "//"'s and
+   ".."'s in names like "/usr/bin/../lib/test" */
+void DOS_SimplifyPath(char *name)
+{
+  char *p = name, *q = name, *l = NULL;
+  BOOL changed;
+
+ start:
+  p = name;
+  q = name;
+  while( *p ) {
+    *q++ = *p++;
+    if( ( *p == '/' ) && ( *(p-1) == '/' ) )
+      p++;
+  }
+  *q = 0;
+
+  p = name;
+  q = name;
+  changed = FALSE;
+  while( *p ) {
+    if( (!changed) &&( *p == '/' ) && ( *(p+1) == '.' ) && ( *(p+2) == '.' ) ) {
+      if( l ) {
+	q = l;
+	p += 3;
+        changed = TRUE;
+	continue;
+      }
+    }
+    else if( *p == '/' )
+      l = q;
+    *q++ = *p++;
+  }
+  *q = 0;
+  if( changed)
+    goto start;
+}
 
 
 int DOS_GetDefaultDrive(void)
@@ -475,18 +523,17 @@ char *DOS_GetDosFileName(char *unixfilename)
 
 char *DOS_GetCurrentDir(int drive)
 { 
-	/* should return 'WINDOWS\SYSTEM' */
-
 	static char temp[256];
 
 	if (!DOS_ValidDrive(drive)) 
 		return 0;
 	
 	strcpy(temp, DosDrives[drive].cwd);
+	DOS_SimplifyPath( temp );
 	ToDos(temp);
 	ChopOffSlash(temp);
 
-    	dprintf_dosfs(stddeb,"DOS_GetCWD: %c: %s\n",'A'+drive, temp + 1);
+    	dprintf_dosfs(stddeb,"DOS_GetCWD: %c:%s\n", 'A'+drive, temp);
 	return (temp + 1);
 }
 
@@ -512,6 +559,7 @@ int DOS_ChangeDir(int drive, char *dirname)
 		strcpy(DosDrives[drive].cwd, old);
 		return 0;
 	}
+        DOS_SimplifyPath(DosDrives[drive].cwd);
 	return 1;
 }
 
@@ -570,7 +618,7 @@ void DOS_ExpandToFullUnixPath(char *filename)
             return;
 
         getcwd(temp, 255);
-        if(strncmp(filename, "./", 2))
+        if(!strncmp(filename, "./", 2))
                 strcat(temp, filename + 1);
         else
         {
@@ -770,33 +818,66 @@ char *WinIniFileName(void)
 
 static int match(char *filename, char *filemask)
 {
-	int x, masklength = strlen(filemask);
+        char name[12], mask[12];
+        int i;
 
-    	dprintf_dosfs(stddeb, "match: %s, %s\n", filename, filemask);
-	for (x = 0; x != masklength ; x++) {
-/*		printf("(%c%c) ", *filename, filemask[x]); 
-*/
-		if (!*filename)
-			/* stop if EOFname */
-			return 1;
-
-		if (filemask[x] == '?') {
-			/* skip the next char */
-			filename++;
-			continue;
-		}
-
-		if (filemask[x] == '*') {
-			/* skip each char until '.' or EOFname */
-			while (*filename && *filename !='.')
-				filename++;
-			continue;
-		}
-		if (filemask[x] != *filename)
-			return 0;
-
-		filename++;
+        dprintf_dosfs(stddeb, "match: %s, %s\n", filename, filemask);
+ 
+	for( i=0; i<11; i++ ) {
+	  name[i] = ' ';
+	  mask[i] = ' ';
 	}
+	name[11] = 0;
+	mask[11] = 0; 
+ 
+	for( i=0; i<8; i++ )
+	  if( !(*filename) || *filename == '.' )
+  	    break;
+	  else
+            name[i] = toupper( *filename++ );
+        while( *filename && *filename != '.' )
+	  filename++;
+        if( *filename )
+	  filename++;
+        for( i=8; i<11; i++ )
+	  if( !(*filename) )
+	    break;
+	  else
+	    name[i] = toupper( *filename++ );
+
+	for( i=0; i<8; i++ )
+	  if( !(*filemask) || *filemask == '.' )
+	    break;
+	  else if( *filemask == '*' ) {
+	    int j;
+	    for( j=i; j<8; j++ )
+	      mask[j] = '?';
+	    break;
+          }
+	  else
+	    mask[i] = toupper( *filemask++ );
+	while( *filemask && *filemask != '.' )
+	  filemask++;	   
+	if( *filemask )
+	  filemask++;
+	for( i=8; i<11; i++ )
+	  if( !(*filemask) )
+	    break;
+	  else if (*filemask == '*' ) {
+	    int j;
+	    for( j=i; j<11; j++ )
+	      mask[j] = '?';
+	    break;
+	  }
+	  else
+	    mask[i] = toupper( *filemask++ );
+	
+    	dprintf_dosfs(stddeb, "changed to: %s, %s\n", name, mask);
+
+	for( i=0; i<11; i++ )
+	  if( ( name[i] != mask[i] ) && ( mask[i] != '?' ) )
+	    return 0;
+
 	return 1;
 }
 
@@ -809,8 +890,10 @@ struct dosdirent *DOS_opendir(char *dosdirname)
 	for (x=0; x != MAX_OPEN_DIRS && DosDirs[x].inuse; x++)
 		;
 
-	if (x == MAX_OPEN_DIRS)
+	if (x == MAX_OPEN_DIRS) {
+		fprintf( stderr, "DOS_opendir(): Too many open directories\n");
 		return NULL;
+	}
 
 	if ((unixdirname = DOS_GetUnixFileName(dosdirname)) == NULL)
 		return NULL;
@@ -832,6 +915,7 @@ struct dosdirent *DOS_opendir(char *dosdirname)
 
 	DosDirs[x].inuse = 1;
 	strcpy(DosDirs[x].unixpath, temp);
+        DosDirs[x].entnum = 0;
 
 	if ((DosDirs[x].ds = opendir(temp)) == NULL)
 		return NULL;
@@ -853,6 +937,7 @@ struct dosdirent *DOS_readdir(struct dosdirent *de)
 		if ((d = readdir(de->ds)) == NULL) 
 			return NULL;
 
+                de->entnum++;   /* Increment the directory entry number */
 		strcpy(de->filename, d->d_name);
 		if (d->d_reclen > 12)
 			de->filename[12] = '\0';

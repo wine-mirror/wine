@@ -8,7 +8,6 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "windows.h"
 #include "win.h"
 #include "class.h"
 #include "user.h"
@@ -33,8 +32,8 @@ void DEFWND_SetText( HWND hwnd, LPSTR text )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if (wndPtr->hText) USER_HEAP_FREE( wndPtr->hText );
-    wndPtr->hText = USER_HEAP_ALLOC( LMEM_MOVEABLE, strlen(text) + 1 );
-    textPtr = (LPSTR) USER_HEAP_ADDR( wndPtr->hText );
+    wndPtr->hText = USER_HEAP_ALLOC( strlen(text) + 1 );
+    textPtr = (LPSTR) USER_HEAP_LIN_ADDR( wndPtr->hText );
     strcpy( textPtr, text );
 }
 
@@ -45,11 +44,11 @@ void DEFWND_SetText( HWND hwnd, LPSTR text )
  */
 LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 {
-	MEASUREITEMSTRUCT *measure;
-	CLASS * classPtr;
-	LPSTR textPtr;
-	int len;
-	WND * wndPtr = WIN_FindWndPtr( hwnd );
+    MEASUREITEMSTRUCT *measure;
+    CLASS * classPtr;
+    LPSTR textPtr;
+    int len;
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
     
     dprintf_message(stddeb, "DefWindowProc: %d %d %d %08lx\n", 
 		    hwnd, msg, wParam, lParam );
@@ -58,14 +57,16 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
     {
     case WM_NCCREATE:
 	{
-	    CREATESTRUCT * createStruct = (CREATESTRUCT *)lParam;
+	    CREATESTRUCT *createStruct = (CREATESTRUCT*)PTR_SEG_TO_LIN(lParam);
 	    if (createStruct->lpszName)
-		DEFWND_SetText( hwnd, createStruct->lpszName );
+		DEFWND_SetText( hwnd,
+                               (LPSTR)PTR_SEG_TO_LIN(createStruct->lpszName) );
 	    return 1;
 	}
 
     case WM_NCCALCSIZE:
-	return NC_HandleNCCalcSize( hwnd, (NCCALCSIZE_PARAMS *)lParam );
+	return NC_HandleNCCalcSize( hwnd,
+                                 (NCCALCSIZE_PARAMS *)PTR_SEG_TO_LIN(lParam) );
 
     case WM_PAINTICON: 
     case WM_NCPAINT:
@@ -126,11 +127,11 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	break;
 
     case WM_WINDOWPOSCHANGING:
-	return WINPOS_HandleWindowPosChanging( (WINDOWPOS *)lParam );
+	return WINPOS_HandleWindowPosChanging( (WINDOWPOS *)PTR_SEG_TO_LIN(lParam) );
 
     case WM_WINDOWPOSCHANGED:
 	{
-	    WINDOWPOS * winPos = (WINDOWPOS *)lParam;
+	    WINDOWPOS * winPos = (WINDOWPOS *)PTR_SEG_TO_LIN(lParam);
 	    if (!(winPos->flags & SWP_NOMOVE))
 		SendMessage( hwnd, WM_MOVE, 0,
 		             MAKELONG( wndPtr->rectClient.left,
@@ -187,30 +188,29 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	    {
 		if (wndPtr->hText)
 		{
-		    textPtr = (LPSTR)USER_HEAP_ADDR(wndPtr->hText);
+		    textPtr = (LPSTR)USER_HEAP_LIN_ADDR(wndPtr->hText);
 		    if ((int)wParam > (len = strlen(textPtr)))
 		    {
-			strcpy((char *)lParam, textPtr);
+			strcpy((char *)PTR_SEG_TO_LIN(lParam), textPtr);
 			return (DWORD)len;
 		    }
 		}
-	        lParam = (DWORD)NULL;
 	    }
-	    return (0L);
+	    return 0;
 	}
 
     case WM_GETTEXTLENGTH:
 	{
 	    if (wndPtr->hText)
 	    {
-		textPtr = (LPSTR)USER_HEAP_ADDR(wndPtr->hText);
+		textPtr = (LPSTR)USER_HEAP_LIN_ADDR(wndPtr->hText);
 		return (DWORD)strlen(textPtr);
 	    }
 	    return (0L);
 	}
 
     case WM_SETTEXT:
-	DEFWND_SetText( hwnd, (LPSTR)lParam );
+	DEFWND_SetText( hwnd, (LPSTR)PTR_SEG_TO_LIN(lParam) );
 	NC_HandleNCPaint( hwnd );  /* Repaint caption */
 	return 0;
 
@@ -235,7 +235,7 @@ LONG DefWindowProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
     case WM_SYSKEYUP:
 		break;    	
     case WM_MEASUREITEM:
-		measure = (MEASUREITEMSTRUCT *)lParam;
+		measure = (MEASUREITEMSTRUCT *)PTR_SEG_TO_LIN(lParam);
 		switch(measure->CtlType) {
 			case ODT_BUTTON:
 				break;

@@ -72,7 +72,7 @@ HRGN CreateRectRgn( short left, short top, short right, short bottom )
     RGNOBJ *obj;
 
     if (!(hrgn = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC ))) return 0;
-    obj = (RGNOBJ *) GDI_HEAP_ADDR( hrgn );
+    obj = (RGNOBJ *) GDI_HEAP_LIN_ADDR( hrgn );
     if ((right > left) && (bottom > top))
     {
 	XRectangle rect = { left, top, right - left, bottom - top };
@@ -141,7 +141,7 @@ HRGN CreateRoundRectRgn( short left, short top, short right, short bottom,
       /* Create region */
 
     if (!(hrgn = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC ))) return 0;
-    obj = (RGNOBJ *) GDI_HEAP_ADDR( hrgn );
+    obj = (RGNOBJ *) GDI_HEAP_LIN_ADDR( hrgn );
     obj->xrgn = XCreateRegion();
     dprintf_region(stddeb,"CreateRoundRectRgn(%d,%d-%d,%d %dx%d): return=%x\n",
                left, top, right, bottom, ellipse_width, ellipse_height, hrgn );
@@ -274,7 +274,7 @@ HRGN CreatePolyPolygonRgn( POINT * points, short * count,
 	free( xpoints );
 	return 0;
     }
-    obj = (RGNOBJ *) GDI_HEAP_ADDR( hrgn );
+    obj = (RGNOBJ *) GDI_HEAP_LIN_ADDR( hrgn );
     obj->xrgn = 0;
     dprintf_region(stddeb, "CreatePolyPolygonRgn: %d polygons, returning %x\n",
                    nbpolygons, hrgn );

@@ -16,7 +16,6 @@
 
 #include "wine.h"
 #include "dos_fs.h"
-#include "segmem.h"
 #include "prototypes.h"
 #include "miscemu.h"
 #include "win.h"
@@ -72,11 +71,15 @@ int do_int(int intnum, struct sigcontext_struct *scp)
 		scp->sc_edx = 0xdef0;
 		return 1;
 
-	      case 0x25: return do_int25(scp);
-	      case 0x26: return do_int26(scp);
+              case 0x25: return do_int25(scp);
+              case 0x26: return do_int26(scp);
               case 0x2a: return do_int2a(scp);
 	      case 0x2f: return do_int2f(scp);
 	      case 0x31: return do_int31(scp);
+
+              default:
+                printf("int%02x: Unimplemented!\n", intnum);
+                break;
 	}
 	return 0;
 }
@@ -98,6 +101,7 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
 #ifdef linux
     if(signal != SIGSEGV 
        && signal != SIGILL 
+       && signal != SIGFPE 
 #ifdef SIGBUS
        && signal != SIGBUS 
 #endif
@@ -131,7 +135,7 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
 
     /*  Now take a look at the actual instruction where the program
 	bombed */
-    instr = (unsigned char *) SAFEMAKEPTR(scp->sc_cs, scp->sc_eip);
+    instr = (unsigned char *) PTR_SEG_OFF_TO_LIN(scp->sc_cs, scp->sc_eip);
 
     switch(*instr)
     {
@@ -233,6 +237,7 @@ void init_wine_signals(void)
 		(void (*)()) (((unsigned int)(cstack) + sizeof(cstack) - 4) & ~3);
 	wine_sigaction(SIGSEGV, &segv_act, NULL);
 	wine_sigaction(SIGILL, &segv_act, NULL);
+	wine_sigaction(SIGFPE, &segv_act, NULL);
 #ifdef SIGBUS
 	wine_sigaction(SIGBUS, &segv_act, NULL);
 #endif

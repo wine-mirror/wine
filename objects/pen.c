@@ -32,7 +32,7 @@ HPEN CreatePenIndirect( LOGPEN * pen )
     if (pen->lopnStyle > PS_INSIDEFRAME) return 0;
     hpen = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC );
     if (!hpen) return 0;
-    penPtr = (PENOBJ *) GDI_HEAP_ADDR( hpen );    
+    penPtr = (PENOBJ *) GDI_HEAP_LIN_ADDR( hpen );    
     memcpy( &penPtr->logpen, pen, sizeof(LOGPEN) );
     return hpen;
 }

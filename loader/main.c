@@ -11,12 +11,12 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <string.h>
 #include <errno.h>
 #include "neexe.h"
-#include "segmem.h"
 #include "dos_fs.h"
 #include "dlls.h"
 #include "library.h"
 #include "windows.h"
 #include "wineopts.h"
+#include "wine.h"
 #include "task.h"
 #include "prototypes.h"
 #include "options.h"

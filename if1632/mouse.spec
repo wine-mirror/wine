@@ -1,5 +1,5 @@
 name	mouse
-id	14
+id	13
 length	8
 
 #1 pascal INQUIRE

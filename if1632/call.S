@@ -321,7 +321,6 @@ A(CallTo32:)
  	 * Save registers.  286 mode does not have fs or gs.
 	 */
 	pushw	%ds
-	pushw	%es
 
 	/*
 	 * Restore segment registers.
@@ -372,7 +371,6 @@ A(CallTo32:)
 	popw	A(IF1632_Saved16_bp)
 	popw	A(IF1632_Saved16_sp)
 
-	popw	%es
 	popw	%ds
 	popw	%bp
 
@@ -423,7 +421,6 @@ A(CallTo32_16:)
  	 * Save registers.  286 mode does not have fs or gs.
 	 */
 	pushw	%ds
-	pushw	%es
 
 	/*
 	 * Restore segment registers.
@@ -474,7 +471,6 @@ A(CallTo32_16:)
 	popw	A(IF1632_Saved16_bp)
 	popw	A(IF1632_Saved16_sp)
 
-	popw	%es
 	popw	%ds
 	popw	%bp
 
@@ -515,7 +511,6 @@ A(ReturnFromRegisterFunc:)
 	popw	A(IF1632_Saved16_bp)
 	popw	A(IF1632_Saved16_sp)
 
-	popw	%es
 	popw	%ds
 	popw	%bp
 

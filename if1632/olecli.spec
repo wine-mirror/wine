@@ -1,6 +1,9 @@
 name	olecli
-id	21
-length	954
+id	20
+length	43
+## 954 is too large for now
+##length	954
+
 #1 WEP
 #2 OLEDELETE
 #3 OLESAVETOSTREAM
@@ -40,9 +43,9 @@ length	954
 #38 OLECREATEFROMFILE
 #39 OLECREATELINKFROMFILE
 #40 OLERELEASE
-41  pascal OleRegisterClientDoc(ptr ptr long ptr) OleRegisterClientDoc(1 2 3 4)
-42  pascal OleRevokeClientDoc(long) OleRevokeClientDoc(1)
-43  pascal OleRenameClientDoc(long ptr) OleRenameClientDoc(1 2)
+41  pascal OleRegisterClientDoc(ptr ptr long ptr) OleRegisterClientDoc
+42  pascal OleRevokeClientDoc(long) OleRevokeClientDoc
+43  pascal OleRenameClientDoc(long ptr) OleRenameClientDoc
 #44 OLEREVERTCLIENTDOC
 #45 OLESAVEDCLIENTDOC
 #46 OLERENAME

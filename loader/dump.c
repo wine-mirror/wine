@@ -16,7 +16,6 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #endif
 #include <errno.h>
 #include "neexe.h"
-#include "segmem.h"
 #include "prototypes.h"
 
 /**********************************************************************

@@ -12,7 +12,7 @@ static char Copyright[] = "Copyright  David W. Metcalfe, 1994";
 #include <stdlib.h>
 #include <string.h>
 #include <windows.h>
-#include <heap.h>
+#include "local.h"
 #include "win.h"
 #include "class.h"
 #include "user.h"
@@ -231,7 +231,7 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	break;
 
     case EM_GETRECT:
-	GetWindowRect(hwnd, (LPRECT)lParam);
+	GetWindowRect(hwnd, (LPRECT)PTR_SEG_TO_LIN(lParam));
 	break;
 
     case EM_GETSEL:
@@ -359,7 +359,7 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	textPtr = EDIT_HeapAddr(hwnd, es->hText);
 	if ((int)wParam > (len = strlen(textPtr)))
 	{
-	    strcpy((char *)lParam, textPtr);
+	    strcpy((char *)PTR_SEG_TO_LIN(lParam), textPtr);
 	    lResult = (DWORD)len ;
 	}
 	else
@@ -469,7 +469,7 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 
 long EDIT_NCCreateMsg(HWND hwnd, LONG lParam)
 {
-    CREATESTRUCT *createStruct = (CREATESTRUCT *)lParam;
+    CREATESTRUCT *createStruct = (CREATESTRUCT *)PTR_SEG_TO_LIN(lParam);
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     EDITSTATE *es;
     unsigned int *textPtrs;
@@ -477,6 +477,7 @@ long EDIT_NCCreateMsg(HWND hwnd, LONG lParam)
 
     /* store pointer to local or global heap in window structure so that */
     /* EDITSTATE structure itself can be stored on local heap  */
+#if 0
     if (HEAP_LocalFindHeap(createStruct->hInstance)!=NULL)
       (MDESC **)*(LONG *)(wndPtr->wExtra + 2) = 
 	&HEAP_LocalFindHeap(createStruct->hInstance)->free_list;
@@ -486,6 +487,7 @@ long EDIT_NCCreateMsg(HWND hwnd, LONG lParam)
 	  GlobalLock(createStruct->hInstance);
 	/* GlobalUnlock(createStruct->hInstance); */
       }
+#endif
     /* allocate space for state variable structure */
     (HANDLE)(*(wndPtr->wExtra)) = EDIT_HeapAlloc(hwnd, sizeof(EDITSTATE));
     es = (EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
@@ -507,21 +509,21 @@ long EDIT_NCCreateMsg(HWND hwnd, LONG lParam)
     }
     else
     {
-	if (strlen(createStruct->lpszName) < EditBufLen(wndPtr))
+        char *windowName = (char *)PTR_SEG_TO_LIN( createStruct->lpszName );
+	if (strlen(windowName) < EditBufLen(wndPtr))
 	{
 	    es->textlen = EditBufLen(wndPtr) + 1;
 	    es->hText = EDIT_HeapAlloc(hwnd, EditBufLen(wndPtr) + 2);
 	    text = EDIT_HeapAddr(hwnd, es->hText);
-	    strcpy(text, createStruct->lpszName);
+	    strcpy(text, windowName);
 	    *(text + es->textlen) = '\0';
 	}
 	else
 	{
-	    es->hText = EDIT_HeapAlloc(hwnd, 
-				       strlen(createStruct->lpszName) + 2);
+	    es->hText = EDIT_HeapAlloc(hwnd, strlen(windowName) + 2);
 	    text = EDIT_HeapAddr(hwnd, es->hText);
-	    strcpy(text, createStruct->lpszName);
-	    es->textlen = strlen(createStruct->lpszName) + 1;
+	    strcpy(text, windowName);
+	    es->textlen = strlen(windowName) + 1;
 	}
 	*(text + es->textlen + 1) = '\0';
 	EDIT_BuildTextPointers(hwnd);
@@ -970,10 +972,10 @@ void EDIT_WriteTextLine(HWND hwnd, RECT *rect, int y)
 	    }
 	}
     }
-    else
+    else 
 	EDIT_WriteText(hwnd, lp, off, len, y - es->wtop, rc.left, &rc,
 		       TRUE, FALSE);
-	      
+
     EDIT_HeapFree(hwnd, hLine);
 }
 
@@ -998,7 +1000,7 @@ void EDIT_WriteText(HWND hwnd, char *lp, int off, int len, int row,
     HDC hdc;
     HANDLE hStr;
     char *str, *cp, *cp1;
-    int diff, num_spaces, tabwidth, scol;
+    int diff=0, num_spaces, tabwidth, scol;
     HRGN hrgnClip;
     COLORREF oldTextColor, oldBkgdColor;
     HFONT oldfont;
@@ -1010,6 +1012,12 @@ void EDIT_WriteText(HWND hwnd, char *lp, int off, int len, int row,
 
     dprintf_edit(stddeb,"EDIT_WriteText lp=%s, off=%d, len=%d, row=%d, col=%d, reverse=%d\n", lp, off, len, row, col, reverse);
 
+    if( off < 0 ) {
+      len += off;
+      col -= off;
+      off = 0;
+    }
+	
     hdc = GetDC(hwnd);
     hStr = EDIT_GetStr(hwnd, lp, off, len, &diff);
     str = (char *)EDIT_HeapAddr(hwnd, hStr);
@@ -1166,7 +1174,7 @@ void EDIT_CharMsg(HWND hwnd, WORD wParam)
 	break;
 
     default:
-	if (wParam >= 20 && wParam <= 126)
+	if (wParam >= 20 && wParam <= 254 && wParam != 127 )
 	    EDIT_KeyTyped(hwnd, wParam);
 	break;
     }
@@ -2232,15 +2240,15 @@ LONG EDIT_SetTextMsg(HWND hwnd, LONG lParam)
     EDITSTATE *es = 
 	(EDITSTATE *)EDIT_HeapAddr(hwnd, (HANDLE)(*(wndPtr->wExtra)));
 
-    if (strlen((char *)lParam) <= es->MaxTextLen)
+    if (strlen((char *)PTR_SEG_TO_LIN(lParam)) <= es->MaxTextLen)
     {
-	len = ( lParam? strlen((char *)lParam) : 0 );
+	len = ( lParam? strlen((char *)PTR_SEG_TO_LIN(lParam)) : 0 );
 	EDIT_ClearText(hwnd);
 	es->textlen = len;
 	es->hText = EDIT_HeapReAlloc(hwnd, es->hText, len + 3);
 	text = EDIT_HeapAddr(hwnd, es->hText);
 	if (lParam)
-	    strcpy(text, (char *)lParam);
+	    strcpy(text, (char *)PTR_SEG_TO_LIN(lParam));
 	text[len]     = '\0';
 	text[len + 1] = '\0';
 	text[len + 2] = '\0';
@@ -2392,7 +2400,7 @@ void EDIT_GetLineCol(HWND hwnd, int off, int *line, int *col)
 	(unsigned int *)EDIT_HeapAddr(hwnd, es->hTextPtrs);
 
     /* check for (0,0) */
-    if (!off)
+    if (!off || !es->wlines)
     {
 	*line = 0;
 	*col = 0;
@@ -2739,7 +2747,8 @@ LONG EDIT_GetSelMsg(HWND hwnd)
 void EDIT_ReplaceSel(HWND hwnd, LONG lParam)
 {
     EDIT_DeleteSel(hwnd);
-    EDIT_InsertText(hwnd, (char *)lParam, strlen((char *)lParam));
+    EDIT_InsertText(hwnd, (char *)PTR_SEG_TO_LIN(lParam),
+                    strlen((char *)PTR_SEG_TO_LIN(lParam)));
     InvalidateRect(hwnd, NULL, TRUE);
     UpdateWindow(hwnd);
 }
@@ -3000,9 +3009,8 @@ unsigned int EDIT_HeapAlloc(HWND hwnd, int bytes)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     unsigned int ret;
-    ret = ((unsigned int)HEAP_Alloc((MDESC **)
-				     *(LONG *)(wndPtr->wExtra + 2), 
-				     GMEM_MOVEABLE, bytes) & 0xffff);
+
+    ret = LOCAL_Alloc( wndPtr->hInstance, LMEM_FIXED, bytes );
     if (ret == 0)
       printf("EDIT_HeapAlloc: Out of heap-memory\n");
     return ret;
@@ -3018,10 +3026,7 @@ unsigned int EDIT_HeapAlloc(HWND hwnd, int bytes)
 void *EDIT_HeapAddr(HWND hwnd, unsigned int handle)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
-
-    return ((void *)((handle) ? ((handle) | ((unsigned int)
-		    (*(MDESC **)*(LONG *)(wndPtr->wExtra + 2))   
-		     & 0xffff0000)) : 0));
+    return handle ? PTR_SEG_OFF_TO_LIN( wndPtr->hInstance, handle ) : 0;
 }
 
 
@@ -3035,10 +3040,7 @@ unsigned int EDIT_HeapReAlloc(HWND hwnd, unsigned int handle, int bytes)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
 
-    return ((unsigned int)HEAP_ReAlloc((MDESC **)
-				       *(LONG *)(wndPtr->wExtra + 2), 
-				       EDIT_HeapAddr(hwnd, handle),
-				       bytes, GMEM_MOVEABLE) & 0xffff);
+    return LOCAL_ReAlloc( wndPtr->hInstance, handle, bytes, LMEM_FIXED );
 }
 
 
@@ -3052,8 +3054,7 @@ void EDIT_HeapFree(HWND hwnd, unsigned int handle)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
 
-    HEAP_Free((MDESC **)*(LONG *)(wndPtr->wExtra + 2), 
-	      EDIT_HeapAddr(hwnd, handle));
+    LOCAL_Free( wndPtr->hInstance, handle );
 }
 
 
@@ -3067,7 +3068,10 @@ unsigned int EDIT_HeapSize(HWND hwnd, unsigned int handle)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
 
+#if 0
     return HEAP_LocalSize((MDESC **)*(LONG *)(wndPtr->wExtra + 2), handle);
+#endif
+    return LOCAL_Size( wndPtr->hInstance, handle );
 }
 
 

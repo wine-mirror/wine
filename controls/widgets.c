@@ -13,6 +13,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "desktop.h"
 #include "mdi.h"
 #include "gdi.h"
+#include "user.h"
 
 LONG ListBoxWndProc  ( HWND hwnd, WORD message, WORD wParam, LONG lParam );
 LONG ComboBoxWndProc ( HWND hwnd, WORD message, WORD wParam, LONG lParam );
@@ -34,7 +35,7 @@ static WNDCLASS WIDGETS_BuiltinClasses[] =
       0, 0, 0, 0, NULL, "LISTBOX" },
     { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS, ComboBoxWndProc, 0, 8,
       0, 0, 0, 0, NULL, "COMBOBOX" },
-    { CS_GLOBALCLASS | CS_PARENTDC, EditWndProc, 0, 4, 
+    { CS_GLOBALCLASS | CS_PARENTDC, EditWndProc, 0, sizeof(WORD), 
       0, 0, 0, 0, NULL, "EDIT" },
     { CS_GLOBALCLASS | CS_SAVEBITS, PopupMenuWndProc, 0, 8,
       0, 0, 0, 0, NULL, POPUPMENU_CLASS_NAME },
@@ -58,12 +59,19 @@ static WNDCLASS WIDGETS_BuiltinClasses[] =
 BOOL WIDGETS_Init(void)
 {
     int i;
+    HANDLE hName;
+    char *name;
     WNDCLASS *class = WIDGETS_BuiltinClasses;
 
+    if (!(hName = USER_HEAP_ALLOC( 20 ))) return FALSE;
+    name = USER_HEAP_LIN_ADDR( hName );
     for (i = 0; i < NB_BUILTIN_CLASSES; i++, class++)
     {
+        strcpy( name, class->lpszClassName );
+        class->lpszClassName = (LPSTR)USER_HEAP_SEG_ADDR( hName );
 	class->hCursor = LoadCursor( 0, IDC_ARROW );
 	if (!RegisterClass( class )) return FALSE;
     }
+    USER_HEAP_FREE( hName );
     return TRUE;
 }

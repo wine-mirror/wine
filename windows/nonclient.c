@@ -161,12 +161,13 @@ void NC_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
         MinMax.ptMaxPosition.y = -yinc;
     }
 
-    minmaxHandle = USER_HEAP_ALLOC( LMEM_MOVEABLE, sizeof(MINMAXINFO) );
+    minmaxHandle = USER_HEAP_ALLOC( sizeof(MINMAXINFO) );
     if (minmaxHandle)
     {
-	pMinMax = (MINMAXINFO *) USER_HEAP_ADDR( minmaxHandle );
+	pMinMax = (MINMAXINFO *) USER_HEAP_LIN_ADDR( minmaxHandle );
 	memcpy( pMinMax, &MinMax, sizeof(MinMax) );	
-	SendMessage( hwnd, WM_GETMINMAXINFO, 0, (LONG)pMinMax );
+	SendMessage( hwnd, WM_GETMINMAXINFO, 0,
+                     USER_HEAP_SEG_ADDR(minmaxHandle) );
     }
     else pMinMax = &MinMax;
 
@@ -1085,7 +1086,8 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
  */
 static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
 {
-    MSG msg;
+    MSG *msg;
+    HLOCAL hMsg;
     WORD scrollbar;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -1100,6 +1102,8 @@ static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
 	scrollbar = SB_VERT;
     }
 
+    hMsg = USER_HEAP_ALLOC( sizeof(MSG) );
+    msg  = (MSG *) USER_HEAP_LIN_ADDR( hMsg );
     pt.x -= wndPtr->rectWindow.left;
     pt.y -= wndPtr->rectWindow.top;
     SetCapture( hwnd );
@@ -1107,20 +1111,20 @@ static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
 
     do
     {
-        GetMessage( &msg, 0, 0, 0 );
-	switch(msg.message)
+        GetMessage( USER_HEAP_SEG_ADDR(hMsg), 0, 0, 0 );
+	switch(msg->message)
 	{
 	case WM_LBUTTONUP:
 	case WM_MOUSEMOVE:
         case WM_SYSTIMER:
-            pt = MAKEPOINT(msg.lParam);
+            pt = MAKEPOINT(msg->lParam);
             pt.x += wndPtr->rectClient.left - wndPtr->rectWindow.left;
             pt.y += wndPtr->rectClient.top - wndPtr->rectWindow.top;
-            SCROLL_HandleScrollEvent( hwnd, scrollbar, msg.message, pt );
+            SCROLL_HandleScrollEvent( hwnd, scrollbar, msg->message, pt );
 	    break;
         default:
-            TranslateMessage( &msg );
-            DispatchMessage( &msg );
+            TranslateMessage( msg );
+            DispatchMessage( msg );
             break;
 	}
         if (!IsWindow( hwnd ))
@@ -1128,7 +1132,8 @@ static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
             ReleaseCapture();
             break;
         }
-    } while (msg.message != WM_LBUTTONUP);
+    } while (msg->message != WM_LBUTTONUP);
+    USER_HEAP_FREE( hMsg );
 }
 
 /***********************************************************************

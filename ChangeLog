@@ -1,4 +1,103 @@
 ----------------------------------------------------------------------
+Sun Mar 19 16:30:20 1995  Alexandre Julliard  (julliard@sunsite.unc.edu)
+
+	* [*/*]
+	Implemented a new memory mapping scheme. There's no longer a
+	one-to-one mapping between 16-bit and 32-bit pointers. Please see
+	file DEVELOPERS-HINTS for technical details.
+
+	* [controls/scroll.c]
+	Fixed bug when dragging mouse in horizontal scrollbars.
+
+	* [tools/build.c] [if1632/*.spec]
+	Removed support for C callback functions and for re-ordering
+	of the 32-bit arguments, as these were never used. This should
+	allow a more efficient callback scheme to be implemented.
+
+	* [if1632/olecli.spec]
+	Reduced the number of entries to make the 16-bit code fit in 64k.
+	This limitation will soon be removed.
+
+	* [loader/ldt.c]
+	Rewrote LDT manipulation functions and implemented LDT_GetEntry().
+
+	* [memory/global.c]
+	Rewrote Global*() routines to use the new selector allocation
+	mechanism.
+
+	* [memory/local.c]
+	Rewrote local heap handling to use a Windows-compatible layout
+	(not really finished yet).
+	Implemented TOOLHELP heap-walking routines.
+
+	* [memory/selector.c]
+	Implemented LDT manipulation API functions.
+
+Tue Mar 14 19:50:28 EST 1995 William Magro (wmagro@tc.cornell.edu)
+
+	* [windows/defdlg.c]
+	Fixed problem where dialogs closed using the System menu 
+        ('Close' item or double click on close box) would
+	hang Wine.
+
+Sun Mar 12 14:28:13 1995  Michael Patra <micky@marie.physik.TU-Berlin.DE>
+
+	* [controls/listbox.c]
+	Removed most of the statements for sending a notification message
+	ListBoxDirectory(), DlgDirSelect(), DlgDirList(): Improved the
+	code; Borland's standard file open dialog will work now.
+	
+	* [misc/main.c], [misc/file.c], [miscemu/int21.c]
+	Added support for new command line option "-allowreadonly". If set
+	an attempt to open a read only file in write mode will be converted 
+	to opening it read only (many programs try to open all files in 
+	read/write mode even if they only intend to read it - this might 
+	cause a few under problems under an unix-like environment where most 
+	files are read only for a "normal" user)
+
+	* [loader/selector.c]
+	GetMemoryReference(): Added support for __AHIncr and __AHShift
+
+	* [misc/dos_fs.c]
+	DOS_SimplifyPath(): This routine simplifies path names ( e.g., it
+	will change "/usr///local/bin/../lib//a" to "/usr/local/lib/a" )
+	match(): rewritten
+	
+	* [objects/text.c]
+	TEXT_NextLine(): Removed a bug in the handling of LF's
+
+	* [miscemu/int21.c]
+	GetFileDateTime(): Fixed. SetFileDateTime() is still broken.
+
+Sat Mar 11 19:46:19 1995  Martin von Loewis  <loewis@informatik.hu-berlin.de>
+
+	* [controls/menu.c]
+	ChangeMenu: defaults to MF_INSERT
+	InsertMenu: allow insertion even if position is one after last item
+
+	* [if1632/Imakefile] [if1632/compobj.spec] [if1632/relay.c]
+	  [if1632/storage.spec] [include/dlls.h]
+	Added stubs for STORAGE.DLL and COMPOBJ.DLL
+
+	* [if1632/user.spec] [windows/message.c]
+	InSendMessage: new function
+
+	* [include/neexe.h][include/ne_image.c]
+	NE_FixupSegment: fixed handling of additive records
+
+	* [loader/selector.c]
+	GetEntryDLLName: return NULL instead of pointer to DLL.0 if not found
+
+	* [loader/signal.c]
+	win_fault: Enter debugger on SIGFPE, too
+
+Wed Mar  1 21:47:42 1995  Cameron Heide  (heide@ee.ualberta.ca)
+
+        * [miscemu/int*.c]
+        Various minor modifications to the clock tick counter,
+        FindFirst/FindNext funcs, and DPB handling.
+
+----------------------------------------------------------------------
 Thu Mar  2 17:44:32 1995  Alexandre Julliard  (julliard@sunsite.unc.edu)
 
 	* [loader/resource.c] [objects/oembitmap.c]

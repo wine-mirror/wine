@@ -1,5 +1,5 @@
 name	system
-id	12
+id	11
 length	20
 
-6 pascal GetSystemmsecCount() GetTickCount()
+6 pascal GetSystemmsecCount() GetTickCount

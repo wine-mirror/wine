@@ -9,6 +9,7 @@
 
 #include <X11/Xlib.h>
 
+#include "ldt.h"
 #include "class.h"
 
 #define WND_MAGIC     0x444e4957  /* 'WIND' */

@@ -1,5 +1,5 @@
 name	ole2disp
-id	18
+id	17
 length	110
 #1 DLLGETCLASSOBJECT
 #2 SYSALLOCSTRING

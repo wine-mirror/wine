@@ -1,91 +1,221 @@
-#ifndef WINELIB
 /*
-static char RCSId[] = "$Id: ldt.c,v 1.2 1993/07/04 04:04:21 root Exp root $";
-static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
-*/
+ * LDT manipulation functions
+ *
+ * Copyright 1993 Robert J. Amstadt
+ * Copyright 1995 Alexandre Julliard
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <strings.h>
 #include <errno.h>
-#include "prototypes.h"
+#include "ldt.h"
+#include "stddebug.h"
+#include "debug.h"
+
+#ifndef WINELIB
+
+#ifdef linux
+#include <linux/unistd.h>
+#include <linux/head.h>
+#include <linux/ldt.h>
+
+_syscall3(int, modify_ldt, int, func, void *, ptr, unsigned long, bytecount)
+#endif  /* linux */
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <machine/segments.h>
-#endif
 
-/**********************************************************************
- *					print_ldt
+extern int i386_get_ldt(int, union descriptor *, int);
+extern int i386_set_ldt(int, union descriptor *, int);
+#endif  /* __NetBSD__ || __FreeBSD__ */
+
+#endif  /* ifndef WINELIB */
+
+        
+/***********************************************************************
+ *           LDT_BytesToEntry
+ *
+ * Convert the raw bytes of the descriptor to an ldt_entry structure.
  */
-/* XXX These are *real* 386 descriptors !! */
-void
-print_ldt()
+static void LDT_BytesToEntry( unsigned long *buffer, ldt_entry *content )
 {
-    char buffer[0x10000];
-    unsigned long *lp;
-    unsigned long base_addr, limit;
-    int type, dpl, i;
-#if defined(__NetBSD__) || defined(__FreeBSD__)
-    struct segment_descriptor *sd;
-#endif
-    
-    if (get_ldt(buffer) < 0)
-	exit(1);
-    
-    lp = (unsigned long *) buffer;
-#if defined(__NetBSD__) || defined(__FreeBSD__)
-    sd = (struct segment_descriptor *) buffer;
-#endif
-    
-    for (i = 0; i < 32; i++, lp++)
-    {
-	/* First 32 bits of descriptor */
-	base_addr = (*lp >> 16) & 0x0000FFFF;
-	limit = *lp & 0x0000FFFF;
-	lp++;
-	
-	/* First 32 bits of descriptor */
-	base_addr |= (*lp & 0xFF000000) | ((*lp << 16) & 0x00FF0000);
-	limit |= (*lp & 0x000F0000);
-#ifdef linux
-	type = (*lp >> 10) & 5;
-	dpl = (*lp >> 13) & 3;
-#endif
-#if defined(__NetBSD__) || defined(__FreeBSD__)
-        type = sd->sd_type;
-        dpl = sd->sd_dpl;
-	sd++;
-#endif
-	if (*lp & 1000)
-	{
-	    printf("Entry %2d: Base %08lx, Limit %05lx, DPL %d, Type %d\n",
-		   i, base_addr, limit, dpl, type);
-	    printf("          ");
-	    if (*lp & 0x100)
-		printf("Accessed, ");
-	    if (*lp & 8000)
-		printf("Present, ");
-	    if (*lp & 0x100000)
-		printf("User, ");
-	    if (*lp & 0x200000)
-		printf("X, ");
-	    if (*lp & 0x400000)
-		printf("32, ");
-	    else
-		printf("16, ");
-	    if (*lp & 0x800000)
-		printf("page limit, ");
-	    else
-		printf("byte limit, ");
-	    printf("\n");
-	    printf("          %08lx %08lx\n", *(lp), *(lp-1));
-	}
-	else
-	{
-	    printf("Entry %2d: Base %08lx, Limit %05lx, DPL %d, Type %d\n",
-		   i, base_addr, limit, dpl, type);
-	    printf("          SYSTEM: %08lx %08lx\n", *lp, *(lp-1));
-	}
-    }
+    content->base  = (*buffer >> 16) & 0x0000ffff;
+    content->limit = *buffer & 0x0000ffff;
+    buffer++;
+    content->base  |= (*buffer & 0xff000000) | ((*buffer << 16) & 0x00ff0000);
+    content->limit |= (*buffer & 0x000f0000);
+    content->type           = (*buffer >> 10) & 3;
+    content->seg_32bit      = (*buffer & 0x00400000) != 0;
+    content->read_only      = (*buffer & 0x00000200) == 0;
+    content->limit_in_pages = (*buffer & 0x00800000) != 0;
 }
 
-#endif /* ifndef WINELIB */
+
+/***********************************************************************
+ *           LDT_GetEntry
+ *
+ * Retrieve an LDT entry.
+ */
+int LDT_GetEntry( int entry, ldt_entry *content )
+{
+    int ret = 0;
+
+#ifdef WINELIB
+    content->base           = ldt_copy[entry].base;
+    content->limit          = ldt_copy[entry].limit;
+    content->type           = SEGMENT_DATA;
+    content->seg_32bit      = 0;
+    content->read_only      = 0;
+    content->limit_in_pages = 0;
+#else  /* WINELIB */
+
+#ifdef linux
+    int size = (entry + 1) * 2 * sizeof(long);
+    long *buffer = (long *) malloc( size );
+    ret = modify_ldt( 0, buffer, size );
+    LDT_BytesToEntry( &buffer[entry*2], content );
+    free( buffer );
+#endif  /* linux */
+
+#if defined(__NetBSD__) || defined(__FreeBSD__)
+    long buffer[2];
+    ret = i386_get_ldt( entry, (union descriptor *)buffer, 1 );
+    LDT_BytesToEntry( buffer, content );
+#endif  /* __NetBSD__ || __FreeBSD__ */
+
+#endif  /* WINELIB */
+
+    return ret;
+}
+
+
+/***********************************************************************
+ *           LDT_SetEntry
+ *
+ * Set an LDT entry.
+ */
+int LDT_SetEntry( int entry, ldt_entry *content )
+{
+    int ret = 0;
+
+    dprintf_ldt(stddeb,
+	  "LDT_SetEntry: entry=%04x base=%08lx limit=%05lx %s %d-bit flags=%c%c%c\n",
+          entry, content->base, content->limit,
+          content->limit_in_pages ? "pages" : "bytes",
+          content->seg_32bit ? 32 : 16,
+          content->read_only && (content->type & SEGMENT_CODE) ? '-' : 'r',
+          content->read_only || (content->type & SEGMENT_CODE) ? '-' : 'w',
+          (content->type & SEGMENT_CODE) ? 'x' : '-' );
+
+#ifndef WINELIB
+#ifdef linux
+    {
+        struct modify_ldt_ldt_s ldt_info;
+
+        memset( &ldt_info, 0, sizeof(ldt_info) );
+        ldt_info.entry_number   = entry;
+        ldt_info.base_addr      = content->base;
+        ldt_info.limit          = content->limit;
+        ldt_info.seg_32bit      = content->seg_32bit != 0;
+        ldt_info.contents       = content->type;
+        ldt_info.read_exec_only = content->read_only != 0;
+        ldt_info.limit_in_pages = content->limit_in_pages != 0;
+        ret = modify_ldt(1, &ldt_info, sizeof(ldt_info));
+    }
+#endif  /* linux */
+
+#if defined(__NetBSD__) || defined(__FreeBSD__)
+    {
+        long d[2];
+
+        d[0] = ((content->base & 0x0000ffff) << 16) |
+                (content->limit & 0x0ffff);
+        d[1] = (content->base & 0xff000000) |
+               ((content->base & 0x00ff0000)>>16) |
+               (content->limit & 0xf0000) |
+               (content->type << 10) |
+               ((content->read_only == 0) << 9) |
+               ((content->seg_32bit != 0) << 22) |
+               ((content->limit_in_pages != 0) << 23) |
+               0xf000;
+        ret = i386_set_ldt(entry, (union descriptor *)d, 1);
+        if (ret < 0)
+        {
+            perror("i386_set_ldt");
+            fprintf(stderr,
+		"Did you reconfigure the kernel with \"options USER_LDT\"?\n");
+    	    exit(1);
+        }
+    }
+#endif  /* __NetBSD__ || __FreeBSD__ */
+#endif  /* ifndef WINELIB */
+
+    if (ret < 0) return ret;
+    ldt_copy[entry].base = content->base;
+    if (!content->limit_in_pages) ldt_copy[entry].limit = content->limit;
+    else ldt_copy[entry].limit = (content->limit << 12) | 0x0fff;
+    return ret;
+}
+
+
+/***********************************************************************
+ *           LDT_Print
+ *
+ * Print the content of the LDT on stdout.
+ */
+void LDT_Print()
+{
+    int i;
+
+#ifdef WINELIB
+    for (i = 0; i < LDT_SIZE; i++)
+    {
+        if (ldt_copy[i].base || ldt_copy[i].limit)
+        {
+            fprintf( stderr, "%04x: sel=%04x base=%08x limit=%05x\n",
+                     i, ENTRY_TO_SELECTOR(i),
+                     ldt_copy[i].base, ldt_copy[i].limit );
+        }
+    }
+#else  /* WINELIB */
+
+#ifdef linux
+    long buffer[2*LDT_SIZE];
+    ldt_entry content;
+
+    modify_ldt( 0, buffer, sizeof(buffer) );
+    for (i = 0; i < LDT_SIZE; i++)
+    {
+        LDT_BytesToEntry( &buffer[2*i], &content );
+        if (content.base || content.limit)
+        {
+            fprintf( stderr, "%04x: sel=%04x base=%08lx limit=%05lx %s type=%d\n",
+                    i, ENTRY_TO_SELECTOR(i),
+                    content.base, content.limit,
+                    content.limit_in_pages ? "(pages)" : "(bytes)",
+                    content.type );
+        }
+    }
+#endif  /* linux */
+
+#if defined(__NetBSD__) || defined(__FreeBSD__)
+    long buffer[2*LDT_SIZE];
+    ldt_entry content;
+
+    i386_get_ldt( 0, (union descriptor *)buffer, LDT_SIZE );
+    for (i = 0; i < LDT_SIZE; i++)
+    {
+        LDT_BytesToEntry( buffer[2*i], &content );
+        if (content.base || content.limit)
+        {
+            fprintf( stderr, "%04x: sel=%04x base=%08lx limit=%05lx %s type=%d\n",
+                    i, ENTRY_TO_SELECTOR(i),
+                    content.base, content.limit,
+                    content.limit_in_pages ? "(pages)" : "(bytes)",
+                    content.type );
+        }
+    }
+#endif  /* __NetBSD__ || __FreeBSD__ */
+#endif  /* WINELIB */
+}

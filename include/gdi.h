@@ -11,8 +11,8 @@
 #include <X11/Xutil.h>
 
 #include "windows.h"
-#include "segmem.h"
-#include "heap.h"
+#include "ldt.h"
+#include "local.h"
 
   /* GDI objects magic numbers */
 #define PEN_MAGIC             0x4f47
@@ -245,18 +245,26 @@ typedef struct tagDC
 
 #ifdef WINELIB
 
-#define GDI_HEAP_ALLOC(f,size) LocalAlloc (f,size)
-#define GDI_HEAP_ADDR(handle)  LocalLock (handle)
-#define GDI_HEAP_FREE(handle)  LocalFree (handle)
+#define GDI_HEAP_ALLOC(f,size)     LocalAlloc (f,size)
+#define GDI_HEAP_LIN_ADDR(handle)  LocalLock (handle)
+#define GDI_HEAP_SEG_ADDR(handle)  LocalLock (handle)
+#define GDI_HEAP_FREE(handle)      LocalFree (handle)
 
 #else
 
-extern MDESC *GDI_Heap;
+extern LPSTR GDI_Heap;
+extern WORD GDI_HeapSel;
 
-#define GDI_HEAP_ALLOC(f,size) ((int)HEAP_Alloc(&GDI_Heap,f,size) & 0xffff)
-#define GDI_HEAP_FREE(handle) (HEAP_Free(&GDI_Heap,GDI_HEAP_ADDR(handle)))
-#define GDI_HEAP_ADDR(handle) \
-    ((void *)((handle) ? ((handle) | ((int)GDI_Heap & 0xffff0000)) : 0))
+#define GDI_HEAP_ALLOC(size) \
+            LOCAL_Alloc( GDI_HeapSel, LMEM_FIXED, (size) )
+#define GDI_HEAP_REALLOC(handle,size) \
+            LOCAL_ReAlloc( GDI_HeapSel, (handle), (size), LMEM_FIXED )
+#define GDI_HEAP_FREE(handle) \
+            LOCAL_Free( GDI_HeapSel, (handle) )
+#define GDI_HEAP_LIN_ADDR(handle)  \
+            ((handle) ? PTR_SEG_OFF_TO_LIN(GDI_HeapSel, (handle)) : NULL)
+#define GDI_HEAP_SEG_ADDR(handle)  \
+            ((handle) ? MAKELONG((handle), GDI_HeapSel) : 0)
 
 #endif
 

@@ -10,6 +10,7 @@
  */
 
 #include "hook.h"
+#include "user.h"
 
 
 HHOOK systemHooks[LAST_HOOK-FIRST_HOOK+1] = { 0, };
@@ -49,7 +50,7 @@ DWORD DefHookProc( short code, WORD wParam, DWORD lParam, HHOOK *hhook )
 /***********************************************************************
  *           CallMsgFilter   (USER.123)
  */
-BOOL CallMsgFilter( LPMSG msg, short code )
+BOOL CallMsgFilter( SEGPTR msg, short code )
 {
     if (CALL_SYSTEM_HOOK( WH_SYSMSGFILTER, code, 0, (LPARAM)msg )) return TRUE;
     else return CALL_TASK_HOOK( WH_MSGFILTER, code, 0, (LPARAM)msg );
@@ -77,16 +78,16 @@ HHOOK SetWindowsHookEx( short id, HOOKPROC proc, HINSTANCE hinst, HTASK htask )
 	prevHook = &SYSTEM_HOOK( id );
     }
     
-    handle = (HANDLE) USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(*data) );
+    handle = (HANDLE) USER_HEAP_ALLOC( sizeof(*data) );
     if (!handle) return 0;
-    data   = (HOOKDATA *) USER_HEAP_ADDR( handle );
+    data   = (HOOKDATA *) USER_HEAP_LIN_ADDR( handle );
 
     data->next  = *prevHook;
     data->proc  = proc;
     data->id    = id;
     data->htask = htask;
-    *prevHook   = (HHOOK)data;
-    return (HHOOK)data;
+    *prevHook   = USER_HEAP_SEG_ADDR(handle);
+    return *prevHook;
 }
 
 
@@ -95,7 +96,7 @@ HHOOK SetWindowsHookEx( short id, HOOKPROC proc, HINSTANCE hinst, HTASK htask )
  */
 BOOL UnhookWindowsHookEx( HHOOK hhook )
 {
-    HOOKDATA *data = (HOOKDATA *)hhook;
+    HOOKDATA *data = (HOOKDATA *)PTR_SEG_TO_LIN(hhook);
     HHOOK *prevHook;
 
     if (!data) return FALSE;
@@ -114,7 +115,7 @@ BOOL UnhookWindowsHookEx( HHOOK hhook )
  */
 DWORD CallNextHookEx( HHOOK hhook, short code, WPARAM wParam, LPARAM lParam )
 {
-    HOOKDATA *data = (HOOKDATA *)hhook;
+    HOOKDATA *data = (HOOKDATA *)PTR_SEG_TO_LIN(hhook);
     if (!data->next) return 0;
     else return INTERNAL_CALL_HOOK( data->next, code, wParam, lParam );
 }

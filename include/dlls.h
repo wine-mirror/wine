@@ -20,7 +20,7 @@ typedef struct resource_name_table
 struct ne_data {
     struct ne_header_s *ne_header;
     struct ne_segment_table_entry_s *seg_table;
-    struct segment_descriptor_s *selector_table;
+    unsigned short *selector_table;
     char *lookup_table;
     char *nrname_table;
     char *rname_table;
@@ -61,7 +61,6 @@ extern struct  w_files *wine_files;
 #define DLL_MAX_ARGS		16
 
 #define DLL_HANDLERTYPE_PASCAL	16
-#define DLL_HANDLERTYPE_C	17
 
 struct dll_table_entry_s
 {
@@ -76,7 +75,6 @@ struct dll_table_entry_s
      */
     char *export_name;
     void *handler;		/* Address of function to process request */
-    char handler_type;		/* C or PASCAL calling convention	  */
     char n_args;			/* Number of arguments passed to function */
     short conv_reference ; /* reference to Argument conversion data  */
 #ifdef WINESTAT
@@ -97,7 +95,6 @@ struct dll_name_table_entry_s
 extern struct dll_table_entry_s KERNEL_table[];
 extern struct dll_table_entry_s USER_table[];
 extern struct dll_table_entry_s GDI_table[];
-extern struct dll_table_entry_s UNIXLIB_table[];
 extern struct dll_table_entry_s WIN87EM_table[];
 extern struct dll_table_entry_s MMSYSTEM_table[];
 extern struct dll_table_entry_s SHELL_table[];
@@ -116,12 +113,13 @@ extern struct dll_table_entry_s OLE2NLS_table[];
 extern struct dll_table_entry_s OLE2PROX_table[];
 extern struct dll_table_entry_s OLECLI_table[];
 extern struct dll_table_entry_s OLESVR_table[];
+extern struct dll_table_entry_s COMPOBJ_table[];
+extern struct dll_table_entry_s STORAGE_table[];
 
 
 extern unsigned short KERNEL_offsets[];
 extern unsigned short USER_offsets[];
 extern unsigned short GDI_offsets[];
-extern unsigned short UNIXLIB_offsets[];
 extern unsigned short WIN87EM_offsets[];
 extern unsigned short MMSYSTEM_offsets[];
 extern unsigned short SHELL_offsets[];
@@ -140,12 +138,13 @@ extern unsigned short OLE2NLS_offsets[];
 extern unsigned short OLE2PROX_offsets[];
 extern unsigned short OLECLI_offsets[];
 extern unsigned short OLESVR_offsets[];
+extern unsigned short COMPOBJ_offsets[];
+extern unsigned short STORAGE_offsets[];
 
 
 extern unsigned char KERNEL_types[];
 extern unsigned char USER_types[];
 extern unsigned char GDI_types[];
-extern unsigned char UNIXLIB_types[];
 extern unsigned char WIN87EM_types[];
 extern unsigned char MMSYSTEM_types[];
 extern unsigned char SHELL_types[];
@@ -164,8 +163,10 @@ extern unsigned char OLE2NLS_types[];
 extern unsigned char OLE2PROX_types[];
 extern unsigned char OLECLI_types[];
 extern unsigned char OLESVR_types[];
+extern unsigned char COMPOBJ_types[];
+extern unsigned char STORAGE_types[];
 
-#define N_BUILTINS	22
+#define N_BUILTINS	23
 
 #endif /* DLLS_H */
 

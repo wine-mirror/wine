@@ -1,4 +1,5 @@
 #include <time.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "registers.h"
@@ -16,21 +17,27 @@ int do_int1a(struct sigcontext_struct * context){
 	time_t ltime;
         DWORD ticks;
 	struct tm *bdtime;
+        struct timeval tvs;
 
-    if (debugging_relay) {
-	fprintf(stddeb,"int1A: AX %04x, BX %04x, CX %04x, DX %04x, "
+	dprintf_int(stddeb,"int1A: AX %04x, BX %04x, CX %04x, DX %04x, "
 	       "SI %04x, DI %04x, DS %04x, ES %04x\n",
 	       AX, BX, CX, DX, SI, DI, DS, ES);
-    }
 
 	switch(AH) {
 	case 0:
-                ticks = GetTickCount();
+                /* This should give us the (approximately) correct
+                 * 18.206 clock ticks per second since midnight
+                 * expected from this interrupt
+                 */
+                gettimeofday(&tvs, NULL);
+                bdtime = localtime(&tvs.tv_sec);
+                ticks = (((bdtime->tm_hour * 3600 + bdtime->tm_min * 60 +
+                        bdtime->tm_sec) * 18206) / 1000) +
+                        (tvs.tv_usec / 54927);
 		CX = ticks >> 16;
 		DX = ticks & 0x0000FFFF;
 		AX = 0;  /* No midnight rollover */
-		dprintf_int(stddeb,"int1a_00 // ltime=%ld ticks=%ld\n",
-			ltime, ticks);
+		dprintf_int(stddeb,"int1a_00 // ticks=%ld\n", ticks);
 		break;
 		
 	case 2: 

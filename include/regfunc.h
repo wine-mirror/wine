@@ -7,13 +7,11 @@
 #include "wine.h"
 #include "stackframe.h"
 
-#define _CONTEXT ((struct sigcontext_struct *) pStack16Frame->args)
+#define _CONTEXT ((struct sigcontext_struct *) CURRENT_STACK16->args)
 #define _AX	(_CONTEXT->sc_eax)
 #define _BX	(_CONTEXT->sc_ebx)
 #define _CX	(_CONTEXT->sc_ecx)
 #define _DX	(_CONTEXT->sc_edx)
-#define _SP	(_CONTEXT->sc_esp)
-#define _BP	(_CONTEXT->sc_ebp)
 #define _SI	(_CONTEXT->sc_esi)
 #define _DI	(_CONTEXT->sc_edi)
 #define _DS	(_CONTEXT->sc_ds)

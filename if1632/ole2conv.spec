@@ -1,5 +1,5 @@
 name	ole2conv
-id	17
+id	16
 length	10
 #1 GETFILTERINFO
 #2 IMPORTGR

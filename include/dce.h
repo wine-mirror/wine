@@ -29,6 +29,7 @@ typedef struct tagDCE
 } DCE;
 
 
+extern void DCE_Init(void);
 extern HANDLE DCE_AllocDCE( DCE_TYPE type );
 extern void DCE_FreeDCE( HANDLE hdce );
 

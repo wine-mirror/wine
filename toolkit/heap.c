@@ -186,16 +186,6 @@ HANDLE GlobalReAlloc(HANDLE hMem, DWORD new_size, WORD flags)
 	return LocalReAlloc (hMem, new_size, flags);
 }
 
-char *GlobalLinearLock (HANDLE hMem)
-{
-    return GlobalLock (hMem);
-}
-
-HANDLE GlobalLinearUnlock (HANDLE hMem)
-{
-    return GlobalUnlock (hMem);
-}
-
 int HEAP_LocalSize ()
 {
     return 0;
@@ -207,15 +197,8 @@ int HEAP_LocalFindHeap ()
 }
 
 #ifdef UNIMPLEMENTED
-void *GlobalQuickAlloc(int size)
-{
-}
 
 DWORD int GlobalHandle(WORD selector)
-{
-}
-
-unsigned int GlobalHandleFromPointer(void *block)
 {
 }
 

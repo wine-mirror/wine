@@ -10,7 +10,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <neexe.h>
-#include <segmem.h>
 #include "selectors.h"
 #include <wine.h>
 #include <dlls.h>
@@ -168,7 +167,7 @@ load_entrypoints(){
 			j = GetEntryPointFromOrdinal(wpnt, ordinal);		
 			address  = j & 0xffff;
 			j = j >> 16;
-			address |= (wpnt->ne->selector_table[j].selector) << 16;
+			address |= wpnt->ne->selector_table[j] << 16;
 			fprintf(stderr,"%s -> %x\n", buffer, address);
 			add_hash(buffer, (unsigned int *) address);
 			cpnt += len + 2;

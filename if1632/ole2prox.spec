@@ -1,5 +1,5 @@
 name	ole2prox
-id	20
+id	19
 length	3
 #1 DLLGETCLASSOBJECT
 #2 WEP

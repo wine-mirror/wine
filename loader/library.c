@@ -11,7 +11,6 @@ static char Copyright[] = "Copyright 1993, 1994 Martin Ayotte, Robert J. Amstadt
 #include <fcntl.h>
 #include <unistd.h>
 #include "neexe.h"
-#include "segmem.h"
 #include "dlls.h"
 #include "if1632.h"
 #include "wineopts.h"
@@ -436,7 +435,8 @@ FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
 #ifdef WINELIB
     WINELIB_UNIMP ("GetProcAddress");
 #else
-    int		sel, addr, ret;
+    int		addr, ret;
+    WORD        sel;
     register struct w_files *w = wine_files;
     int 	ordinal, len;
     char 	* cpnt;

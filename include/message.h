@@ -54,7 +54,7 @@ extern BOOL MSG_CreateSysMsgQueue( int size );
 extern void hardware_event( WORD message, WORD wParam, LONG lParam,
 			    int xPos, int yPos, DWORD time, DWORD extraInfo );
 extern BOOL MSG_GetHardwareMessage( LPMSG msg );
-extern BOOL MSG_InternalGetMessage( LPMSG msg, HWND hwnd, HWND hwndOwner,
+extern BOOL MSG_InternalGetMessage( SEGPTR msg, HWND hwnd, HWND hwndOwner,
 				    short code, WORD flags, BOOL sendIdle );
 
 #endif  /* MESSAGE_H */

@@ -9,7 +9,7 @@ static char Copyright[] = "Copyright  Yngvi Sigurjonsson (yngvi@hafro.is), 1993"
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "regfunc.h"
+#include "ldt.h"
 #include "windows.h"
 
 #define ToUpper(c)	toupper(c)
@@ -18,12 +18,10 @@ static char Copyright[] = "Copyright  Yngvi Sigurjonsson (yngvi@hafro.is), 1993"
 /* Funny to divide them between user and kernel. */
 
 /* KERNEL.89 */
-LPSTR lstrcat(LPSTR target,LPCSTR source)
+SEGPTR lstrcat( SEGPTR target, SEGPTR source )
 {
-#ifdef DEBUG_STRING
-  fprintf(stderr,"lstrcat(%s,%s)\n",target,source);
-#endif
-  return strcat(target,source);
+    strcat( (char *)PTR_SEG_TO_LIN(target), (char *)PTR_SEG_TO_LIN(source) );
+    return target;
 }
 
 /* USER.430 */
@@ -43,15 +41,17 @@ INT lstrcmpi(LPCSTR str1,LPCSTR str2)
 }
 
 /* KERNEL.88 */
-LPSTR lstrcpy(LPSTR target,LPCSTR source)
+SEGPTR lstrcpy( SEGPTR target, SEGPTR source )
 {
-  return strcpy(target,source);
+    strcpy( (char *)PTR_SEG_TO_LIN(target), (char *)PTR_SEG_TO_LIN(source) );
+    return target;
 }
 
 /* KERNEL.353 */
-LPSTR lstrcpyn(LPSTR target,LPCSTR source,int n)
+SEGPTR lstrcpyn( SEGPTR target, SEGPTR source, WORD n )
 {
-  return strncpy(target,source,n);
+    strncpy((char *)PTR_SEG_TO_LIN(target), (char *)PTR_SEG_TO_LIN(source), n);
+    return target;
 }
 
 /* KERNEL.90 */
@@ -84,29 +84,41 @@ BOOL IsCharLower(char ch)
   return islower(ch);
 }
 
-/* AnsiUpper USER.431 */
-LPSTR AnsiUpper(LPSTR strOrChar)
+/***********************************************************************
+ *           AnsiUpper   (USER.431)
+ */
+
+/* 16-bit version */
+SEGPTR WIN16_AnsiUpper( SEGPTR strOrChar )
 {
-	char *s = strOrChar;
   /* I am not sure if the locale stuff works with toupper, but then again 
      I am not sure if the Linux libc locale stuffs works at all */
 
-	/* uppercase only one char if strOrChar < 0x10000 */
-	if(HIWORD((DWORD)strOrChar)) {
-		while (*s) {
-			if (IsCharLower(*s))
-				*s = ToUpper(*s);
-			s++;
-		}
-		return strOrChar;
-	} else
-		if (IsCharLower((int)strOrChar))
-			return (LPSTR) ToUpper((int)strOrChar);
-		else 
-			return (LPSTR) strOrChar;
+    /* uppercase only one char if strOrChar < 0x10000 */
+    if (HIWORD(strOrChar))
+    {
+        char *s = PTR_SEG_TO_LIN(strOrChar);
+        while (*s) *s++ = ToUpper( *s );
+        return strOrChar;
+    }
+    else return (SEGPTR)ToUpper( (int)strOrChar );
 }
 
-/* AnsiUpperBuff USER.437 */
+/* 32-bit version */
+LPSTR AnsiUpper(LPSTR strOrChar)
+{
+    char *s = strOrChar;
+  /* I am not sure if the locale stuff works with toupper, but then again 
+     I am not sure if the Linux libc locale stuffs works at all */
+
+    while (*s) *s++ = ToUpper( *s );
+    return strOrChar;
+}
+
+
+/***********************************************************************
+ *           AnsiUpperBuff   (USER.437)
+ */
 UINT AnsiUpperBuff(LPSTR str,UINT len)
 {
   int i;
@@ -117,29 +129,41 @@ UINT AnsiUpperBuff(LPSTR str,UINT len)
   return i;	
 }
 
-/* AnsiLower USER.432 */
-LPSTR AnsiLower(LPSTR strOrChar)
+/***********************************************************************
+ *           AnsiLower   (USER.432)
+ */
+
+/* 16-bit version */
+SEGPTR WIN16_AnsiLower(SEGPTR strOrChar)
 {
-	char *s = strOrChar;
   /* I am not sure if the locale stuff works with toupper, but then again 
      I am not sure if the Linux libc locale stuffs works at all */
 
-	/* lowercase only one char if strOrChar < 0x10000 */
-	if(HIWORD((DWORD)strOrChar)) {
-		while (*s) {
-			if (IsCharUpper(*s))
-				*s = ToLower(*s);
-			s++;
-		}
-		return strOrChar;
-	} else
-		if (IsCharUpper((int)strOrChar))
-			return (LPSTR) ToLower((int)strOrChar);
-		else 
-			return (LPSTR) strOrChar;
+    /* lowercase only one char if strOrChar < 0x10000 */
+    if (HIWORD(strOrChar))
+    {
+        char *s = PTR_SEG_TO_LIN( strOrChar );
+        while (*s) *s++ = ToLower( *s );
+        return strOrChar;
+    }
+    else return (SEGPTR)ToLower( (int)strOrChar );
 }
 
-/* AnsiLowerBuff USER.438 */
+/* 32-bit version */
+LPSTR AnsiLower(LPSTR strOrChar)
+{
+    char *s = strOrChar;
+  /* I am not sure if the locale stuff works with toupper, but then again 
+     I am not sure if the Linux libc locale stuffs works at all */
+
+    while (*s) *s++ = ToLower( *s );
+    return strOrChar;
+}
+
+
+/***********************************************************************
+ *           AnsiLowerBuff   (USER.438)
+ */
 UINT AnsiLowerBuff(LPSTR str,UINT len)
 {
   int i;
@@ -152,16 +176,17 @@ UINT AnsiLowerBuff(LPSTR str,UINT len)
   return i;	
 }
 
+
 /* AnsiNext USER.472 */
-LPSTR AnsiNext(LPSTR current)
+SEGPTR AnsiNext(SEGPTR current)
 {
-  return (*current)?current+1:current;
+    return (*(char *)PTR_SEG_TO_LIN(current)) ? current + 1 : current;
 }
 
 /* AnsiPrev USER.473 */
-char FAR*  AnsiPrev(/*const*/ char FAR* start,char FAR* current)
+SEGPTR AnsiPrev( SEGPTR start, SEGPTR current)
 {
-  return (current==start)?start:current-1;
+    return (current==start)?start:current-1;
 }
 
 BYTE Oem2Ansi[256], Ansi2Oem[256];

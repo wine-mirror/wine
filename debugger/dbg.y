@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <signal.h>
+#include "ldt.h"
 
 #define YYSTYPE int
 
@@ -116,8 +117,8 @@ print:
 	
  infocmd: INFO REGS     { info_reg(); }
 	| INFO STACK    { info_stack(); }
+	| INFO SEGMENTS { LDT_Print(); }
 	| INFO BREAK    { info_break(); }
-	| INFO SEGMENTS { print_ldt(); }
 
 
 %%
@@ -197,7 +198,7 @@ wine_debug(int signal, int * regs)
 	    int bpnum;
 	    addr = SC_EIP(dbg_mask);
 	    if((addr & 0xffff0000) == 0 && dbg_mode == 16)
-	      addr |= SC_CS << 16;
+	      addr = PTR_SEG_OFF_TO_LIN( SC_CS, addr );
 	    if(should_continue(bpnum=get_bpnum(addr))){
 		insert_break(1);
 		return;

@@ -1,54 +1,45 @@
-This is intend to be a document to help new developers get started.
+This is intended to be a document to help new developers get started.
 Existing developers should feel free to add their comments.
 
 MEMORY AND SEGMENTS:
 
 NE (Win16) executables consist of multiple segments.  The Wine loader
-loads each segment into a unique location the Wine processes memory
-and assigns a selector to that segment.  To make address conversion
-simpler, Wine loads the segments in such a way that the segmented
-address (16:16) is stored in memory the same way as the 32-bit linear
-address.  For example, the segmented address 1237:89AB can be at the
-address 0x123789AB in the Wine process space.
+loads each segment into a unique location in the Wine processes memory
+and assigns a selector to that segment.  Because of this, it's not
+possible to exchange addresses freely between 16-bit and 32-bit code.
+Addresses used by 16-bit code are segmented addresses (16:16), formed
+by a 16-bit selector and a 16-bit offset.  Those used by the Wine code
+are regular 32-bit linear addresses.
 
-This also implies that a Win16 program cannot access any arbitrary
-memory location.  If a pointer needs to be returned to a Win16 program,
-then the memory block must be allocated using either GlobalAlloc()
-or HEAP_Alloc().  The HEAP_* functions are faster than the Global*
-functions but are only capable of managing a 64k memory block.  The
-HEAP_* functions are used to implement local heaps.  Wine should
-never call Local* functions.  These functions are reserved for use
-by Win16 programs only!
+There's three ways to obtain a segmented pointer:
+  - Allocate a block of memory from the global heap and use
+    WIN16_GlobalLock to get its segmented address.
+  - Allocate a block of memory from a local heap, and build the
+    segmented address from the local heap selector (see the
+    USER_HEAP_* macros for an example of this).
+  - Declare the argument as 'segptr' instead of 'ptr' in the spec file
+    for a given API function.
 
-The following code fragment should be used to establish a new Wine
-local heap:
+Once you have a segmented pointer, it must be converted to a linear
+pointer before you can use it from 32-bit code.  This can be done with
+the PTR_SEG_TO_LIN() and PTR_SEG_OFF_TO_LIN() macros.  The linear
+pointer can then be used freely with standard Unix functions like
+memcpy() etc. without worrying about 64k boundaries.  Note: there's no
+easy way to convert back from a linear to a segmented address.
 
-	#include "heap.h"
+In most cases, you don't need to worry about segmented address, as the
+conversion is made automatically by the callback code and the API
+functions only see linear addresses. However, in some cases it is
+necessary to manipulate segmented addresses; the most frequent cases
+are:
+  - API functions that return a pointer
+  - lParam of Windows messages that point to a structure
+  - Pointers contained inside structures accessed by 16-bit code.
 
-	#define MY_HEAP_SIZE	0x10000		/* Must be <= 64k */
-
-	int MyHeapHandle;
-	void *MyHeapBase;
-	MDESC *MyHeap;
-
-		...
-
-	int InitMyHeap()
-	{
-	    MyHeapHandle = GlobalAlloc(GMEM_FIXED, MY_HEAP_SIZE);
-	    if (MyHeapHandle == 0)
-		return -1;
-	    MyHeapBase = GlobalLock(MyHeapHandle);
-	    HEAP_Init(&MyHeap, MyHeapBase, MY_HEAP_SIZE);
-	    return 0;
-	}
-
-Memory blocks greater than 64 kilobytes in length must be allocated
-using GlobalAlloc().  Because of our special memory mapping, GlobalLock()
-cannot be used to obtain the address of a linearly accessible memory
-block that is greater than 64kB in length.  Instead GlobalLinearLock()
-should be used.  The inverse function GlobalLinearUnlock() must be 
-called before the block can be freed with GlobalFree().
+It is usually a good practice to used the type 'SEGPTR' for segmented
+pointers, instead of something like 'LPSTR' or 'char *'.  As SEGPTR is
+defined as a DWORD, you'll get a compilation warning if you mistakenly
+use it as a regular 32-bit pointer.
 
 API ENTRY POINTS:
 
@@ -69,7 +60,7 @@ documented in the file "tools/build-spec.txt".
 REGISTER FUNCTIONS:
 
 Some functions are defined as type "register" in the DLL specification files.
-Inorder to return values in the registers to the WIN16 program, the handler
+In order to return values in the registers to the WIN16 program, the handler
 function must exit by calling ReturnFromRegisterFunc().  Look at the function
 DOS3Call() for an example of how this works.
 

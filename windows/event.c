@@ -357,7 +357,8 @@ static void EVENT_key( XKeyEvent *event )
 	if (count == 1)                /* key has an ASCII representation */
 	{
 	    dprintf_key(stddeb,"WM_CHAR :   wParam=%X\n", (WORD)Str[0] );
-	    PostMessage( GetFocus(), WM_CHAR, (WORD)Str[0], keylp.lp2 );
+	    PostMessage( GetFocus(), WM_CHAR, (WORD)(unsigned char)(Str[0]), 
+			keylp.lp2 );
 	}
     }
     else

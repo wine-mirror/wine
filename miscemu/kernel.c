@@ -14,36 +14,6 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 extern unsigned short WIN_StackSize;
 
 /**********************************************************************
- *					KERNEL_LockSegment
- */
-int
-KERNEL_LockSegment(int segment)
-{
-    if (segment == -1)
-	segment = pStack16Frame->ds;
-
-    if (debugging_relay)
-	fprintf(stddeb,"LockSegment: segment %x\n", segment);
-
-    return segment;
-}
-
-/**********************************************************************
- *					KERNEL_UnlockSegment
- */
-int
-KERNEL_UnlockSegment(int segment)
-{
-    if (segment == -1)
-	segment = pStack16Frame->ds;
-
-    if (debugging_relay)
-    	fprintf(stddeb,"UnlockSegment: segment %x\n", segment);
-
-    return segment;
-}
-
-/**********************************************************************
  *					KERNEL_InitTask
  */
 void KERNEL_InitTask(void)

@@ -84,7 +84,7 @@ HANDLE CreateMetaFile(LPSTR lpFilename)
 
     handle = GDI_AllocObject(sizeof(DC), METAFILE_DC_MAGIC);
     if (!handle) return 0;
-    dc = (DC *)GDI_HEAP_ADDR(handle);
+    dc = (DC *)GDI_HEAP_LIN_ADDR(handle);
 
     if (!(dc->w.hMetaFile = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAFILE))))
 	return 0;

@@ -28,7 +28,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include "desktop.h"
 #include "prototypes.h"
 #include "texts.h"
-#include "selectors.h" /* for InitSelectors prototype */
+#include "dlls.h"
 #include "library.h"
 #define DEBUG_DEFINE_VARIABLES
 #include "stddebug.h"
@@ -74,7 +74,8 @@ struct options Options =
     FALSE,          /* synchronous */
     FALSE,          /* backing store */
     SW_SHOWNORMAL,  /* cmdShow */
-    FALSE
+    FALSE,
+    FALSE           /* AllowReadOnly */
 };
 
 
@@ -91,7 +92,8 @@ static XrmOptionDescRec optionsTable[] =
     { "-spy",           ".spy",             XrmoptionSepArg, (caddr_t)NULL },
     { "-debug",         ".debug",           XrmoptionNoArg,  (caddr_t)"on" },
     { "-debugmsg",      ".debugmsg",        XrmoptionSepArg, (caddr_t)NULL },
-    { "-dll",           ".dll",             XrmoptionSepArg, (caddr_t)NULL }
+    { "-dll",           ".dll",             XrmoptionSepArg, (caddr_t)NULL },
+    { "-allowreadonly", ".allowreadonly",   XrmoptionNoArg,  (caddr_t)"on" }
 };
 
 #define NB_OPTIONS  (sizeof(optionsTable) / sizeof(optionsTable[0]))
@@ -112,7 +114,8 @@ static XrmOptionDescRec optionsTable[] =
   "    -spy file       Turn on message spying to the specified file\n" \
   "    -relaydbg       Obsolete. Use -debugmsg +relay instead\n" \
   "    -debugmsg name  Turn debugging-messages on or off\n" \
-  "    -dll name       Enable or disable built-in DLLs\n"
+  "    -dll name       Enable or disable built-in DLLs\n" \
+  "    -allowreadonly  Read only files may be opened in write mode\n"
 
 
 
@@ -353,6 +356,8 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	Options.backingstore = TRUE;	
     if (MAIN_GetResource( db, ".debug", &value ))
 	Options.debug = TRUE;
+    if (MAIN_GetResource( db, ".allowreadonly", &value ))
+        Options.allowReadOnly = TRUE;
     if (MAIN_GetResource( db, ".spy", &value))
 	Options.spyFilename = value.addr;
     if (MAIN_GetResource( db, ".depth", &value))
@@ -514,7 +519,6 @@ static void called_at_exit(void)
     sync_profiles();
     MAIN_RestoreSetup();
     WSACleanup();
-    CleanupSelectors();
 }
 
 /***********************************************************************
@@ -569,7 +573,6 @@ int main( int argc, char *argv[] )
     if (Options.desktopGeometry) MAIN_CreateDesktop( argc, argv );
     else rootWindow = DefaultRootWindow( display );
 
-    InitSelectors();
     MAIN_SaveSetup();
     DOS_InitFS();
     Comm_Init();

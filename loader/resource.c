@@ -27,19 +27,19 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 RESOURCE *Top = NULL;
 
-extern int NE_FindResource(HANDLE, LPSTR, LPSTR, RESOURCE *);
-extern int PE_FindResource(HANDLE, LPSTR, LPSTR, RESOURCE *);
+extern int NE_FindResource(HANDLE, SEGPTR, SEGPTR, RESOURCE *);
+extern int PE_FindResource(HANDLE, SEGPTR, SEGPTR, RESOURCE *);
 
 #define PrintId(name) \
 	if (HIWORD((DWORD)name)) \
-		printf(", %s", name); \
-	else \
-		printf(", #%d", (int) name); 
+		printf(", '%s'", (char *)PTR_SEG_TO_LIN(name)); \
+  	else \
+		printf(", #%d", LOWORD(name)); 
 
 /**********************************************************************
  *			FindResource	[KERNEL.60]
  */
-HANDLE FindResource(HANDLE instance, LPSTR name, LPSTR type)
+HANDLE FindResource(HANDLE instance, SEGPTR name, SEGPTR type)
 {
 	int status;
 	RESOURCE *r;
@@ -64,14 +64,14 @@ HANDLE FindResource(HANDLE instance, LPSTR name, LPSTR type)
 	r->rsc_mem = 0;
 	r->count = 0;
 	if (HIWORD((DWORD)name))
-		r->name = strdup(name);
+		r->name = strdup(PTR_SEG_TO_LIN(name));
 	else
-		r->name = name;
+		r->name = (LPSTR)name;
 
 	if (HIWORD((DWORD)type))
-		r->type = strdup(type);
+		r->type = strdup(PTR_SEG_TO_LIN(type));
 	else
-		r->type = type;
+		r->type = (LPSTR)type;
 
 	r->wpnt = GetFileInfo(instance);
 	r->fd = dup(r->wpnt->fd);
@@ -178,7 +178,7 @@ HANDLE LoadResource(HANDLE instance, HANDLE hResInfo)
 	return 0;
     
     h = r->rsc_mem = AllocResource(instance, hResInfo, 0);
-    image = GlobalLinearLock(h);
+    image = GlobalLock(h);
     image_size = r->size;
     fd = AccessResource(instance, hResInfo);
 
@@ -189,7 +189,7 @@ HANDLE LoadResource(HANDLE instance, HANDLE hResInfo)
     }
     r->count++;
     close(fd);
-    GlobalLinearUnlock(h);
+    GlobalUnlock(h);
     GlobalUnlock(hResInfo);
     return h;
 }
@@ -197,6 +197,14 @@ HANDLE LoadResource(HANDLE instance, HANDLE hResInfo)
 /**********************************************************************
  *				LockResource	[KERNEL.62]
  */
+
+/* 16-bit version */
+SEGPTR WIN16_LockResource(HANDLE hResData)
+{
+    return WIN16_GlobalLock(hResData);
+}
+
+/* 32-bit version */
 LPSTR LockResource(HANDLE hResData)
 {
     return GlobalLock(hResData);
@@ -302,15 +310,15 @@ HBITMAP	ConvertInfoBitmap( HDC hdc, BITMAPINFO * image )
  *			RSC_LoadResource
  */
 HANDLE
-RSC_LoadResource(int instance, LPSTR rsc_name, LPSTR type, int *image_size_ret)
+RSC_LoadResource(int instance, SEGPTR rsc_name, SEGPTR type, int *image_size_ret)
 {
 	HANDLE hResInfo;
 	RESOURCE *r;
 
-	dprintf_resource(stddeb, "RSC_LoadResource: instance = %04x, name = %08x, type = %08x\n",
-	   instance, (int) rsc_name, (int) type);
+	dprintf_resource(stddeb, "RSC_LoadResource: instance = %04x, name = %08lx, type = %08lx\n",
+	   instance, rsc_name, type);
 
-	if ((hResInfo = FindResource(instance, rsc_name, (LPSTR) type)) == (HANDLE) NULL) {
+	if ((hResInfo = FindResource(instance, rsc_name, type)) == (HANDLE) NULL) {
 		return (HANDLE)NULL;
 	}
 	r = (RESOURCE *)GlobalLock(hResInfo);
@@ -324,7 +332,7 @@ RSC_LoadResource(int instance, LPSTR rsc_name, LPSTR type, int *image_size_ret)
 /**********************************************************************
  *			LoadIcon [USER.174]
  */
-HICON LoadIcon(HANDLE instance, LPSTR icon_name)
+HICON LoadIcon( HANDLE instance, SEGPTR icon_name )
 {
     HICON 	hIcon;
     HANDLE 	rsc_mem;
@@ -338,11 +346,12 @@ HICON LoadIcon(HANDLE instance, LPSTR icon_name)
     HDC 	hdc;
     int 	image_size;
 
-    if(debugging_resource){
-	printf("LoadIcon(%04X", instance);
-	PrintId(icon_name);
-	printf(")\n");
-    }
+    if (HIWORD(icon_name))
+        dprintf_resource( stddeb, "LoadIcon: %04x '%s'\n",
+                          instance, (char *)PTR_SEG_TO_LIN( icon_name ) );
+    else
+        dprintf_resource( stddeb, "LoadIcon: %04x %04x\n",
+                          instance, LOWORD(icon_name) );
     
     if (!instance)
     {
@@ -351,10 +360,10 @@ HICON LoadIcon(HANDLE instance, LPSTR icon_name)
     }
 
     if (!(hdc = GetDC(GetDesktopWindow()))) return 0;
-    rsc_mem = RSC_LoadResource(instance, icon_name, (LPSTR) NE_RSCTYPE_GROUP_ICON, 
-			       &image_size);
+    rsc_mem = RSC_LoadResource(instance, icon_name,
+                               (SEGPTR) NE_RSCTYPE_GROUP_ICON, &image_size);
     if (rsc_mem == (HANDLE)NULL) {
-	printf("LoadIcon / Icon %04X not Found !\n", (int) icon_name);
+	printf("LoadIcon / Icon %08x not Found !\n", (int) icon_name);
 	ReleaseDC(GetDesktopWindow(), hdc); 
 	return 0;
 	}
@@ -377,11 +386,11 @@ HICON LoadIcon(HANDLE instance, LPSTR icon_name)
     height = lpicodesc->Height;
     GlobalUnlock(rsc_mem);
     GlobalFree(rsc_mem);
-    rsc_mem = RSC_LoadResource(instance, 
-    	MAKEINTRESOURCE(lpicodesc->icoDIBOffset), 
-    	(LPSTR) NE_RSCTYPE_ICON, &image_size);
+    rsc_mem = RSC_LoadResource( instance, 
+                                MAKEINTRESOURCE(lpicodesc->icoDIBOffset), 
+                                (SEGPTR) NE_RSCTYPE_ICON, &image_size );
     if (rsc_mem == (HANDLE)NULL) {
-	printf("LoadIcon / Icon %04X Bitmaps not Found !\n", (int) icon_name);
+	printf("LoadIcon / Icon %08lx Bitmaps not Found !\n", icon_name );
 	ReleaseDC(GetDesktopWindow(), hdc); 
 	return 0;
 	}
@@ -503,7 +512,7 @@ BOOL DestroyIcon(HICON hIcon)
 /**********************************************************************
  *			LoadAccelerators	[USER.177]
  */
-HANDLE LoadAccelerators(HANDLE instance, LPSTR lpTableName)
+HANDLE LoadAccelerators(HANDLE instance, SEGPTR lpTableName)
 {
     HANDLE 	hAccel;
     HANDLE 	rsc_mem;
@@ -511,18 +520,17 @@ HANDLE LoadAccelerators(HANDLE instance, LPSTR lpTableName)
     ACCELHEADER	*lpAccelTbl;
     int 	i, image_size, n;
 
-    if(debugging_accel){
-	printf("LoadAccelerators(%04X", instance);
-	PrintId(lpTableName);
-	printf(")\n");
-    }
+    if (HIWORD(lpTableName))
+        dprintf_accel( stddeb, "LoadAccelerators: %04x '%s'\n",
+                      instance, (char *)PTR_SEG_TO_LIN( lpTableName ) );
+    else
+        dprintf_accel( stddeb, "LoadAccelerators: %04x %04x\n",
+                       instance, LOWORD(lpTableName) );
 
-    rsc_mem = RSC_LoadResource(instance, lpTableName, (LPSTR) NE_RSCTYPE_ACCELERATOR, 
-			       &image_size);
+    rsc_mem = RSC_LoadResource( instance, lpTableName,
+                                (SEGPTR) NE_RSCTYPE_ACCELERATOR, &image_size );
     if (rsc_mem == (HANDLE)NULL) {
-	printf("LoadAccelerators(%04X", instance);
-	PrintId(lpTableName);
-	printf(") not found !\n");
+	printf("LoadAccelerators(%08lx) not found!\n", lpTableName );
 	return 0;
 	}
     lp = (BYTE *)GlobalLock(rsc_mem);
@@ -624,8 +632,8 @@ LoadString(HANDLE instance, WORD resource_id, LPSTR buffer, int buflen)
     dprintf_resource(stddeb, "LoadString: instance = %04x, id = %d, buffer = %08x, "
 	   "length = %d\n", instance, resource_id, (int) buffer, buflen);
 
-    hmem = RSC_LoadResource(instance, (char *) ((resource_id >> 4) + 1),
-			    (LPSTR) NE_RSCTYPE_STRING, &rsc_size);
+    hmem = RSC_LoadResource(instance, (SEGPTR)((resource_id >> 4) + 1),
+			    (SEGPTR) NE_RSCTYPE_STRING, &rsc_size );
     if (hmem == 0)
 	return 0;
     
@@ -656,33 +664,34 @@ LoadString(HANDLE instance, WORD resource_id, LPSTR buffer, int buflen)
 /**********************************************************************
  *			LoadMenu		[USER.150]
  */
-HMENU LoadMenu(HINSTANCE instance, char *menu_name)
+HMENU LoadMenu( HINSTANCE instance, SEGPTR menu_name )
 {
-	HMENU     		hMenu;
-	HANDLE		hMenu_desc;
-	MENU_HEADER 	*menu_desc;
+    HMENU     		hMenu;
+    HANDLE		hMenu_desc;
+    MENU_HEADER 	*menu_desc;
 
-	if(debugging_menu){
-	printf("LoadMenu(%04X", instance);
-	PrintId(menu_name);
-	printf(")\n");
-	}
-	if (menu_name == NULL)
-		return 0;
+    if (HIWORD(menu_name))
+        dprintf_resource( stddeb, "LoadMenu(%04x,'%s')\n",
+                          instance, (char *)PTR_SEG_TO_LIN( menu_name ) );
+    else
+        dprintf_resource( stddeb, "LoadMenu(%04x,%04x)\n",
+                          instance, LOWORD(menu_name) );
 
-	if ((hMenu_desc = RSC_LoadResource(instance, menu_name, (LPSTR) NE_RSCTYPE_MENU, NULL)) == (HANDLE) NULL)
-		return 0;
+    if (!menu_name) return 0;
+
+    if (!(hMenu_desc = RSC_LoadResource( instance, menu_name,
+                                         (SEGPTR) NE_RSCTYPE_MENU, NULL )))
+        return 0;
 	
-	menu_desc = (MENU_HEADER *) GlobalLock(hMenu_desc);
-	hMenu = LoadMenuIndirect((LPSTR)menu_desc);
-	return hMenu;
+    menu_desc = (MENU_HEADER *) GlobalLock(hMenu_desc);
+    hMenu = LoadMenuIndirect((LPSTR)menu_desc);
+    return hMenu;
 }
 
 /**********************************************************************
  *					LoadBitmap
  */
-HBITMAP 
-LoadBitmap(HANDLE instance, LPSTR bmp_name)
+HBITMAP LoadBitmap( HANDLE instance, SEGPTR bmp_name )
 {
     HBITMAP hbitmap;
     HANDLE rsc_mem;
@@ -691,11 +700,12 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
     int image_size;
     int size;
     
-    if(debugging_resource){
-	printf("LoadBitmap(%04X", instance);
-	PrintId(bmp_name);
-	printf(")\n");
-    }
+    if (HIWORD(bmp_name))
+        dprintf_resource( stddeb, "LoadBitmap(%04x,'%s')\n",
+                          instance, (char *)PTR_SEG_TO_LIN( bmp_name ) );
+    else
+        dprintf_resource( stddeb, "LoadBitmap(%04x,%04x)\n",
+                          instance, LOWORD( bmp_name ) );
 
     if (!instance)
     {
@@ -703,20 +713,19 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
         return OBM_LoadBitmap( LOWORD((int)bmp_name) );
     }
 
-    rsc_mem = RSC_LoadResource(instance, bmp_name, (LPSTR) NE_RSCTYPE_BITMAP, 
+    rsc_mem = RSC_LoadResource(instance, bmp_name, (SEGPTR) NE_RSCTYPE_BITMAP, 
 			       &image_size);
     if (rsc_mem == (HANDLE)NULL) {
-	printf("LoadBitmap(%04X", instance);
-	PrintId(bmp_name);
-	printf(") NOT found!\n");
+	printf("LoadBitmap(%04x,%08lx)\n", instance, bmp_name);
 	return 0;
 	}
-    lp = (long *) GlobalLinearLock(rsc_mem);
+    lp = (long *) GlobalLock(rsc_mem);
     if (lp == NULL)
     {
 	GlobalFree(rsc_mem);
 	return 0;
     }
+
     if (!(hdc = GetDC(0))) lp = NULL;
     size = CONV_LONG (*lp);
     if (size == sizeof(BITMAPCOREHEADER)){

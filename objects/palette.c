@@ -33,7 +33,7 @@ HPALETTE CreatePalette( LOGPALETTE * palette )
     size = sizeof(LOGPALETTE) + (palette->palNumEntries - 1) * sizeof(PALETTEENTRY);
     hpalette = GDI_AllocObject( sizeof(GDIOBJHDR) + size, PALETTE_MAGIC );
     if (!hpalette) return 0;
-    palettePtr = (PALETTEOBJ *) GDI_HEAP_ADDR( hpalette );
+    palettePtr = (PALETTEOBJ *) GDI_HEAP_LIN_ADDR( hpalette );
     memcpy( &palettePtr->logpalette, palette, size );
     return hpalette;
 }

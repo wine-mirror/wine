@@ -778,29 +778,34 @@ static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
  * 'hwnd' must be the handle of the dialog or menu window.
  * 'code' is the message filter value (MSGF_??? codes).
  */
-BOOL MSG_InternalGetMessage( LPMSG msg, HWND hwnd, HWND hwndOwner, short code,
+BOOL MSG_InternalGetMessage( SEGPTR msg, HWND hwnd, HWND hwndOwner, short code,
 			     WORD flags, BOOL sendIdle ) 
 {
     for (;;)
     {
 	if (sendIdle)
 	{
-	    if (!MSG_PeekMessage( appMsgQueue, msg, 0, 0, 0, flags, TRUE ))
+	    if (!MSG_PeekMessage( appMsgQueue, (MSG *)PTR_SEG_TO_LIN(msg),
+                                  0, 0, 0, flags, TRUE ))
 	    {
 		  /* No message present -> send ENTERIDLE and wait */
 		SendMessage( hwndOwner, WM_ENTERIDLE, code, (LPARAM)hwnd );
-		MSG_PeekMessage( appMsgQueue, msg, 0, 0, 0, flags, FALSE );
+		MSG_PeekMessage( appMsgQueue, (MSG *)PTR_SEG_TO_LIN(msg),
+                                 0, 0, 0, flags, FALSE );
 	    }
 	}
 	else  /* Always wait for a message */
-	    MSG_PeekMessage( appMsgQueue, msg, 0, 0, 0, flags, FALSE );
+	    MSG_PeekMessage( appMsgQueue, (MSG *)PTR_SEG_TO_LIN(msg),
+                             0, 0, 0, flags, FALSE );
 
-	if (!CallMsgFilter( msg, code )) return (msg->message != WM_QUIT);
+	if (!CallMsgFilter( msg, code ))
+            return (((MSG *)PTR_SEG_TO_LIN(msg))->message != WM_QUIT);
 
 	  /* Message filtered -> remove it from the queue */
 	  /* if it's still there. */
 	if (!(flags & PM_REMOVE))
-	    MSG_PeekMessage( appMsgQueue, msg, 0, 0, 0, PM_REMOVE, TRUE );
+	    MSG_PeekMessage( appMsgQueue, (MSG *)PTR_SEG_TO_LIN(msg),
+                             0, 0, 0, PM_REMOVE, TRUE );
     }
 }
 
@@ -817,12 +822,13 @@ BOOL PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last, WORD flags )
 /***********************************************************************
  *           GetMessage   (USER.108)
  */
-BOOL GetMessage( LPMSG msg, HWND hwnd, WORD first, WORD last ) 
+BOOL GetMessage( SEGPTR msg, HWND hwnd, WORD first, WORD last ) 
 {
-    MSG_PeekMessage( appMsgQueue, msg, hwnd, first, last, PM_REMOVE, FALSE );
+    MSG_PeekMessage( appMsgQueue, (MSG *)PTR_SEG_TO_LIN(msg),
+                     hwnd, first, last, PM_REMOVE, FALSE );
     CALL_SYSTEM_HOOK( WH_GETMESSAGE, 0, 0, (LPARAM)msg );
     CALL_TASK_HOOK( WH_GETMESSAGE, 0, 0, (LPARAM)msg );
-    return (msg->message != WM_QUIT);
+    return (((MSG *)PTR_SEG_TO_LIN(msg))->message != WM_QUIT);
 }
 
 
@@ -1000,9 +1006,22 @@ WORD RegisterWindowMessage( LPCSTR str )
 /***********************************************************************
  *           GetTickCount    (USER.13)
  */
-DWORD GetTickCount()
+DWORD GetTickCount(void)
 {
     struct timeval t;
     gettimeofday( &t, NULL );
     return (t.tv_sec * 1000) + (t.tv_usec / 1000);
+}
+
+/***********************************************************************
+ *			InSendMessage	(USER.192
+ *
+ * According to the book, this should return true iff the current message
+ * was send from another application. In that case, the application should
+ * invoke ReplyMessage before calling message relevant API.
+ * Currently, Wine will always return FALSE, as there is no other app.
+ */
+BOOL InSendMessage()
+{
+	return FALSE;
 }

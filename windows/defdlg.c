@@ -211,6 +211,11 @@ LONG DefDlgProc( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
             }
             break;
 
+        case WM_CLOSE:
+            EndDialog( hwnd, TRUE );
+            DestroyWindow( hwnd );
+            return 0;
+
 	default:
 	    return DefWindowProc( hwnd, msg, wParam, lParam );
     }

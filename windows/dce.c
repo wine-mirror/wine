@@ -30,9 +30,9 @@ static HDC defaultDCstate = 0;
 HANDLE DCE_AllocDCE( DCE_TYPE type )
 {
     DCE * dce;
-    HANDLE handle = USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(DCE) );
+    HANDLE handle = USER_HEAP_ALLOC( sizeof(DCE) );
     if (!handle) return 0;
-    dce = (DCE *) USER_HEAP_ADDR( handle );
+    dce = (DCE *) USER_HEAP_LIN_ADDR( handle );
     if (!(dce->hdc = CreateDC( "DISPLAY", NULL, NULL, NULL )))
     {
 	USER_HEAP_FREE( handle );
@@ -57,10 +57,10 @@ void DCE_FreeDCE( HANDLE hdce )
     DCE * dce;
     HANDLE *handle = &firstDCE;
 
-    if (!(dce = (DCE *) USER_HEAP_ADDR( hdce ))) return;
+    if (!(dce = (DCE *) USER_HEAP_LIN_ADDR( hdce ))) return;
     while (*handle && (*handle != hdce))
     {
-	DCE * prev = (DCE *) USER_HEAP_ADDR( *handle );	
+	DCE * prev = (DCE *) USER_HEAP_LIN_ADDR( *handle );	
 	handle = &prev->hNext;
     }
     if (*handle == hdce) *handle = dce->hNext;
@@ -81,7 +81,7 @@ void DCE_Init()
     for (i = 0; i < NB_DCE; i++)
     {
 	if (!(handle = DCE_AllocDCE( DCE_CACHE_DC ))) return;
-	dce = (DCE *) USER_HEAP_ADDR( handle );	
+	dce = (DCE *) USER_HEAP_LIN_ADDR( handle );	
 	if (!defaultDCstate) defaultDCstate = GetDCState( dce->hdc );
     }
 }
@@ -335,14 +335,14 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     {
 	for (hdce = firstDCE; (hdce); hdce = dce->hNext)
 	{
-	    if (!(dce = (DCE *) USER_HEAP_ADDR( hdce ))) return 0;
+	    if (!(dce = (DCE *) USER_HEAP_LIN_ADDR( hdce ))) return 0;
 	    if ((dce->type == DCE_CACHE_DC) && (!dce->inUse)) break;
 	}
     }
     else hdce = wndPtr->hdce;
 
     if (!hdce) return 0;
-    dce = (DCE *) USER_HEAP_ADDR( hdce );
+    dce = (DCE *) USER_HEAP_LIN_ADDR( hdce );
     dce->hwndCurrent = hwnd;
     dce->inUse       = TRUE;
     hdc = dce->hdc;
@@ -436,7 +436,7 @@ int ReleaseDC( HWND hwnd, HDC hdc )
         
     for (hdce = firstDCE; (hdce); hdce = dce->hNext)
     {
-	if (!(dce = (DCE *) USER_HEAP_ADDR( hdce ))) return 0;
+	if (!(dce = (DCE *) USER_HEAP_LIN_ADDR( hdce ))) return 0;
 	if (dce->inUse && (dce->hdc == hdc)) break;
     }
     if (!hdce) return 0;

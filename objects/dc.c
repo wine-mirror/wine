@@ -319,7 +319,7 @@ HDC GetDCState( HDC hdc )
     
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     if (!(handle = GDI_AllocObject( sizeof(DC), DC_MAGIC ))) return 0;
-    newdc = (DC *) GDI_HEAP_ADDR( handle );
+    newdc = (DC *) GDI_HEAP_LIN_ADDR( handle );
 
     dprintf_dc(stddeb, "GetDCState(%d): returning %d\n", hdc, handle );
 
@@ -394,7 +394,7 @@ int SaveDC( HDC hdc )
 	return 1;  /* ?? */
     }
     if (!(hdcs = GetDCState( hdc ))) return 0;
-    dcs = (DC *) GDI_HEAP_ADDR( hdcs );
+    dcs = (DC *) GDI_HEAP_LIN_ADDR( hdcs );
     dcs->header.hNext = dc->header.hNext;
     dc->header.hNext = hdcs;
     dprintf_dc(stddeb, "SaveDC(%d): returning %d\n", hdc, dc->saveLevel+1 );
@@ -444,7 +444,7 @@ HDC CreateDC( LPSTR driver, LPSTR device, LPSTR output, LPSTR initData )
     
     handle = GDI_AllocObject( sizeof(DC), DC_MAGIC );
     if (!handle) return 0;
-    dc = (DC *) GDI_HEAP_ADDR( handle );
+    dc = (DC *) GDI_HEAP_LIN_ADDR( handle );
 
     dprintf_dc(stddeb, "CreateDC(%s %s %s): returning %d\n", 
 	    driver, device, output, handle );
@@ -500,7 +500,7 @@ HDC CreateCompatibleDC( HDC hdc )
 
     handle = GDI_AllocObject( sizeof(DC), DC_MAGIC );
     if (!handle) return 0;
-    dc = (DC *) GDI_HEAP_ADDR( handle );
+    dc = (DC *) GDI_HEAP_LIN_ADDR( handle );
 
     dprintf_dc(stddeb, "CreateCompatibleDC(%d): returning %d\n", hdc, handle );
 

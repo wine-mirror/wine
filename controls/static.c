@@ -88,10 +88,10 @@ LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
         case WM_NCCREATE:
 	    if (style == SS_ICON)
             {
-		CREATESTRUCT * createStruct = (CREATESTRUCT *)lParam;
+		CREATESTRUCT * createStruct = (CREATESTRUCT *)PTR_SEG_TO_LIN(lParam);
 		if (createStruct->lpszName)
                     STATIC_SetIcon( hWnd, LoadIcon( createStruct->hInstance,
-                                                    createStruct->lpszName ));
+                                             (SEGPTR)createStruct->lpszName ));
                 return 1;
             }
             return DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -136,9 +136,9 @@ LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 	case WM_SETTEXT:
 	    if (style == SS_ICON)
                 STATIC_SetIcon( hWnd, LoadIcon( wndPtr->hInstance,
-                                                (LPSTR)lParam ) );
+                                                (SEGPTR)lParam ));
             else
-                DEFWND_SetText( hWnd, (LPSTR)lParam );
+                DEFWND_SetText( hWnd, (LPSTR)PTR_SEG_TO_LIN(lParam) );
 	    InvalidateRect( hWnd, NULL, FALSE );
 	    UpdateWindow( hWnd );
 	    break;
@@ -192,7 +192,7 @@ static void PaintTextfn( HWND hwnd, HDC hdc )
     STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
     GetClientRect(hwnd, &rc);
-    text = USER_HEAP_ADDR( wndPtr->hText );
+    text = USER_HEAP_LIN_ADDR( wndPtr->hText );
 
     switch (style & 0x0000000F)
     {

@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "windows.h"
+#include "ldt.h"
 #include "neexe.h"
 #include "peexe.h"
 #include "dlls.h"
@@ -124,18 +125,26 @@ find_type(struct PE_Resource_Directory *resource, LPSTR resource_name,
  *			PE_FindResource	[KERNEL.60]
  */
 int
-PE_FindResource(HANDLE instance, LPSTR resource_name, LPSTR type_name,
+PE_FindResource(HANDLE instance, SEGPTR resource_name, SEGPTR type_name,
 		RESOURCE *r)
 {
 	dprintf_resource(stddeb, "PE_FindResource hInst=%04X typename=%08X resname=%08X\n", 
 		instance, (int) type_name, (int) resource_name);
-	if (HIWORD((DWORD)resource_name)) 
-		if (resource_name[0] == '#')
-			resource_name = (LPSTR) atoi(resource_name + 1);
-
-	if (HIWORD((DWORD)type_name)) 
-		if (type_name[0] == '#')
-			type_name = (LPSTR) atoi(type_name + 1);
-
+	if (HIWORD(resource_name))
+        {
+                char *resource_name_ptr = PTR_SEG_TO_LIN( resource_name );
+		if (resource_name_ptr[0] == '#')
+			resource_name = (SEGPTR) atoi(resource_name_ptr + 1);
+                else
+                    resource_name = (SEGPTR)resource_name_ptr;
+        }
+	if (HIWORD(type_name)) 
+        {
+                char *type_name_ptr = PTR_SEG_TO_LIN( type_name );
+		if (type_name_ptr[0] == '#')
+			type_name = (SEGPTR) atoi(type_name_ptr + 1);
+                else
+                        type_name = (SEGPTR) type_name_ptr;
+        }
 	return find_type(r->wpnt->pe->pe_resource, resource_name, type_name,r);
 }

@@ -8,7 +8,6 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "selectors.h"
 #include "gdi.h"
 #include "color.h"
 #include "bitmap.h"
@@ -21,7 +20,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 /* #define DEBUG_GDI */
 #include "debug.h"
 
-MDESC *GDI_Heap = NULL;
+LPSTR GDI_Heap = NULL;
+WORD GDI_HeapSel = 0;
 
 /* Object types for EnumObjects() */
 #define OBJ_PEN             1
@@ -162,20 +162,19 @@ static GDIOBJHDR * StockObjects[NB_STOCK_OBJECTS] =
 BOOL GDI_Init(void)
 {
     HPALETTE hpalette;
-    struct segment_descriptor_s * s;
 
 #ifndef WINELIB
-    /* Create GDI heap */
+      /* Create GDI heap */
 
-    s = (struct segment_descriptor_s *)GetNextSegment( 0, 0x10000 );
-    if (s == NULL) return FALSE;
-    HEAP_Init( &GDI_Heap, s->base_addr, GDI_HEAP_SIZE );
+    if (!(GDI_HeapSel = GlobalAlloc(GMEM_FIXED, GDI_HEAP_SIZE))) return FALSE;
+    GDI_Heap = GlobalLock( GDI_HeapSel );
+    LocalInit( GDI_HeapSel, 0, GDI_HEAP_SIZE-1 );
 #endif
     
       /* Create default palette */
 
     if (!(hpalette = COLOR_Init())) return FALSE;
-    StockObjects[DEFAULT_PALETTE] = (GDIOBJHDR *) GDI_HEAP_ADDR( hpalette );
+    StockObjects[DEFAULT_PALETTE] = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( hpalette );
 
       /* Create default bitmap */
 
@@ -230,7 +229,7 @@ HANDLE GDI_FindPrevObject( HANDLE first, HANDLE obj )
         
     for (handle = first; handle && (handle != obj); )
     {
-	GDIOBJHDR * header = (GDIOBJHDR *) GDI_HEAP_ADDR( handle );
+	GDIOBJHDR * header = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
 	handle = header->hNext;
     }
     return handle;
@@ -244,9 +243,9 @@ HANDLE GDI_AllocObject( WORD size, WORD magic )
 {
     static DWORD count = 0;
     GDIOBJHDR * obj;
-    HANDLE handle = GDI_HEAP_ALLOC( GMEM_MOVEABLE, size );
+    HANDLE handle = GDI_HEAP_ALLOC( size );
     if (!handle) return 0;
-    obj = (GDIOBJHDR *) GDI_HEAP_ADDR( handle );
+    obj = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
     obj->hNext   = 0;
     obj->wMagic  = magic;
     obj->dwCount = ++count;
@@ -267,7 +266,7 @@ BOOL GDI_FreeObject( HANDLE handle )
       /* Can't free stock objects */
     if (handle >= FIRST_STOCK_HANDLE) return TRUE;
     
-    object = (GDIOBJHDR *) GDI_HEAP_ADDR( handle );
+    object = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
     if (!object) return FALSE;
     object->wMagic = 0;  /* Mark it as invalid */
 
@@ -292,7 +291,7 @@ GDIOBJHDR * GDI_GetObjPtr( HANDLE handle, WORD magic )
 	if (handle < FIRST_STOCK_HANDLE + NB_STOCK_OBJECTS)
 	    ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
     }
-    else ptr = (GDIOBJHDR *) GDI_HEAP_ADDR( handle );
+    else ptr = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
     if (!ptr) return NULL;
     if (ptr->wMagic != magic) return NULL;
     return ptr;
@@ -306,7 +305,7 @@ BOOL DeleteObject( HANDLE obj )
 {
       /* Check if object is valid */
 
-    GDIOBJHDR * header = (GDIOBJHDR *) GDI_HEAP_ADDR( obj );
+    GDIOBJHDR * header = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( obj );
     if (!header) return FALSE;
 
     dprintf_gdi(stddeb, "DeleteObject: %d\n", obj );
@@ -353,7 +352,7 @@ int GetObject( HANDLE handle, int count, LPSTR buffer )
 	if (handle < FIRST_STOCK_HANDLE + NB_STOCK_OBJECTS)
 	    ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
     }
-    else ptr = (GDIOBJHDR *) GDI_HEAP_ADDR( handle );
+    else ptr = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
     if (!ptr) return 0;
     
     switch(ptr->wMagic)
@@ -387,7 +386,7 @@ HANDLE SelectObject( HDC hdc, HANDLE handle )
 	if (handle < FIRST_STOCK_HANDLE + NB_STOCK_OBJECTS)
 	    ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
     }
-    else ptr = (GDIOBJHDR *) GDI_HEAP_ADDR( handle );
+    else ptr = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
     if (!ptr) return 0;
     
     dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -446,8 +445,8 @@ int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
 			wMagic = PEN_MAGIC;
 			dprintf_gdi(stddeb,"EnumObjects(%04X, OBJ_PEN, %p, %p);\n", 
 									hDC, lpEnumFunc, lpData);
-			hLog = GDI_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(LOGPEN));
-			lpLog = (LPSTR) GDI_HEAP_ADDR(hLog);
+			hLog = GDI_HEAP_ALLOC( sizeof(LOGPEN) );
+			lpLog = (LPSTR) GDI_HEAP_LIN_ADDR(hLog);
 			if (lpLog == NULL) {
 				fprintf(stderr,"EnumObjects // Unable to alloc LOGPEN struct !\n");
 				return 0;
@@ -457,8 +456,8 @@ int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
 			wMagic = BRUSH_MAGIC;
 			dprintf_gdi(stddeb,"EnumObjects(%04X, OBJ_BRUSH, %p, %p);\n", 
 									hDC, lpEnumFunc, lpData);
-			hLog = GDI_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(LOGBRUSH));
-			lpLog = (LPSTR) GDI_HEAP_ADDR(hLog);
+			hLog = GDI_HEAP_ALLOC( sizeof(LOGBRUSH) );
+			lpLog = (LPSTR) GDI_HEAP_LIN_ADDR(hLog);
 			if (lpLog == NULL) {
 				fprintf(stderr,"EnumObjects // Unable to alloc LOGBRUSH struct !\n");
 				return 0;
@@ -469,6 +468,7 @@ int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
 						hDC, nObjType, lpEnumFunc, lpData);
 			return 0;
 		}
+#ifdef notdef  /* FIXME: stock object ptr won't work in callback */
 	dprintf_gdi(stddeb,"EnumObjects // Stock Objects first !\n");
 	for (i = 0; i < NB_STOCK_OBJECTS; i++) {
 		header = StockObjects[i];
@@ -491,7 +491,8 @@ int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
 #ifdef WINELIB
 			nRet = (*lpEnumFunc)(lpLog, lpData);
 #else
-			nRet = CallBack16(lpEnumFunc, 4, 2, (int)lpLog,	2, (int)lpData);
+			nRet = CallBack16(lpEnumFunc, 4, 2,
+                                      GDI_HEAP_SEG_ADDR(hLog), 2, (int)lpData);
 #endif
 */
 			dprintf_gdi(stddeb,"EnumObjects // after CallBack16 !\n");
@@ -502,11 +503,13 @@ int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
 				}
 			}
 		}
+#endif  /* notdef */
+
 	if (lpPenBrushList == NULL) return 0;
 	dprintf_gdi(stddeb,"EnumObjects // Now DC owned objects %p !\n", header);
 	for (lphObj = lpPenBrushList; *lphObj != 0; ) {
 		dprintf_gdi(stddeb,"EnumObjects // *lphObj=%04X\n", *lphObj);
-		header = (GDIOBJHDR *) GDI_HEAP_ADDR(*lphObj++);
+		header = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR(*lphObj++);
 		if (header->wMagic == wMagic) {
 			dprintf_gdi(stddeb,"EnumObjects // DC_Obj lpLog=%p lpData=%p\n", lpLog, lpData);
 			if (header->wMagic == BRUSH_MAGIC) {
@@ -525,7 +528,8 @@ int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
 #ifdef WINELIB
 			nRet = (*lpEnumFunc)(lpLog, lpData);
 #else
-			nRet = CallBack16(lpEnumFunc, 4, 2, (int)lpLog,	2, (int)lpData);
+			nRet = CallBack16(lpEnumFunc, 4, 2,
+                                      GDI_HEAP_SEG_ADDR(hLog), 2, (int)lpData);
 #endif
 */
 			nRet = 1;
@@ -549,7 +553,7 @@ BOOL IsGDIObject(HANDLE handle)
 {
 	GDIOBJHDR *object;
 
-	object = (GDIOBJHDR *) GDI_HEAP_ADDR( handle );
+	object = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
 	if (object)
 		return TRUE;
 	else

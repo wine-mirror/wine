@@ -12,6 +12,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include <X11/Xatom.h>
 #include "font.h"
 #include "metafile.h"
+#include "wine.h"
 #include "callback.h"
 #include "stddebug.h"
 /* #define DEBUG_FONT */
@@ -249,7 +250,7 @@ HFONT CreateFontIndirect( LOGFONT * font )
     FONTOBJ * fontPtr;
     HFONT hfont = GDI_AllocObject( sizeof(FONTOBJ), FONT_MAGIC );
     if (!hfont) return 0;
-    fontPtr = (FONTOBJ *) GDI_HEAP_ADDR( hfont );
+    fontPtr = (FONTOBJ *) GDI_HEAP_LIN_ADDR( hfont );
     memcpy( &fontPtr->logfont, font, sizeof(LOGFONT) );
     AnsiLower( fontPtr->logfont.lfFaceName );
     dprintf_font(stddeb,"CreateFontIndirect(%p); return %04x\n",font,hfont);
@@ -303,7 +304,7 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
 	hnewfont = CreateFont(10, 7, 0, 0, FW_DONTCARE,
 			      FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
 			      DEFAULT_QUALITY, FF_DONTCARE, "*" );
-	font = (FONTOBJ *) GDI_HEAP_ADDR( hnewfont );
+	font = (FONTOBJ *) GDI_HEAP_LIN_ADDR( hnewfont );
     }
 
     if (dc->header.wMagic == METAFILE_DC_MAGIC)
@@ -688,14 +689,14 @@ int EnumFonts(HDC hDC, LPSTR lpFaceName, FARPROC lpEnumFunc, LPSTR lpData)
 	dprintf_font(stddeb,"EnumFonts(%04X, %p='%s', %p, %p)\n", 
 		hDC, lpFaceName, lpFaceName, lpEnumFunc, lpData);
 	if (lpEnumFunc == NULL) return 0;
-	hLog = GDI_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(LOGFONT) + LF_FACESIZE);
-	lpLogFont = (LPLOGFONT) GDI_HEAP_ADDR(hLog);
+	hLog = GDI_HEAP_ALLOC( sizeof(LOGFONT) + LF_FACESIZE );
+	lpLogFont = (LPLOGFONT) GDI_HEAP_LIN_ADDR(hLog);
 	if (lpLogFont == NULL) {
 		dprintf_font(stddeb,"EnumFonts // can't alloc LOGFONT struct !\n");
 		return 0;
 		}
-	hMet = GDI_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(TEXTMETRIC));
-	lptm = (LPTEXTMETRIC) GDI_HEAP_ADDR(hMet);
+	hMet = GDI_HEAP_ALLOC( sizeof(TEXTMETRIC) );
+	lptm = (LPTEXTMETRIC) GDI_HEAP_LIN_ADDR(hMet);
 	if (lptm == NULL) {
 		GDI_HEAP_FREE(hLog);
 		dprintf_font(stddeb, "EnumFonts // can't alloc TEXTMETRIC struct !\n");
@@ -739,8 +740,9 @@ int EnumFonts(HDC hDC, LPSTR lpFaceName, FARPROC lpEnumFunc, LPSTR lpData)
 #ifdef WINELIB
 		nRet = (*lpEnumFunc)(lpLogFont, lptm, 0, lpData);
 #else
-		nRet = CallBack16(lpEnumFunc, 4, 2, (int)lpLogFont,
-					2, (int)lptm, 0, (int)0, 2, (int)lpData);
+		nRet = CallBack16(lpEnumFunc, 4, 2, GDI_HEAP_SEG_ADDR(hLog),
+					2, GDI_HEAP_SEG_ADDR(hMet),
+                                        0, (int)0, 2, (int)lpData);
 #endif
 		if (nRet == 0) {
 			dprintf_font(stddeb,"EnumFonts // EnumEnd requested by application !\n");
@@ -772,14 +774,14 @@ int EnumFontFamilies(HDC hDC, LPSTR lpszFamily, FARPROC lpEnumFunc, LPSTR lpData
 	dprintf_font(stddeb,"EnumFontFamilies(%04X, %p, %p, %p)\n", 
 					hDC, lpszFamily, lpEnumFunc, lpData);
 	if (lpEnumFunc == NULL) return 0;
-	hLog = GDI_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(LOGFONT) + LF_FACESIZE);
-	lpLogFont = (LPLOGFONT) GDI_HEAP_ADDR(hLog);
+	hLog = GDI_HEAP_ALLOC( sizeof(LOGFONT) + LF_FACESIZE );
+	lpLogFont = (LPLOGFONT) GDI_HEAP_LIN_ADDR(hLog);
 	if (lpLogFont == NULL) {
 		dprintf_font(stddeb,"EnumFontFamilies // can't alloc LOGFONT struct !\n");
 		return 0;
 		}
-	hMet = GDI_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(TEXTMETRIC));
-	lptm = (LPTEXTMETRIC) GDI_HEAP_ADDR(hMet);
+	hMet = GDI_HEAP_ALLOC( sizeof(TEXTMETRIC) );
+	lptm = (LPTEXTMETRIC) GDI_HEAP_LIN_ADDR(hMet);
 	if (lptm == NULL) {
 		GDI_HEAP_FREE(hLog);
 		dprintf_font(stddeb,"EnumFontFamilies // can't alloc TEXTMETRIC struct !\n");
@@ -824,8 +826,9 @@ int EnumFontFamilies(HDC hDC, LPSTR lpszFamily, FARPROC lpEnumFunc, LPSTR lpData
 #ifdef WINELIB
 		nRet = (*lpEnumFunc)(lpLogFont, lptm, 0, lpData);
 #else
-		nRet = CallBack16(lpEnumFunc, 4, 2, (int)lpLogFont,
-					2, (int)lptm, 0, (int)0, 2, (int)lpData);
+		nRet = CallBack16(lpEnumFunc, 4, 2, GDI_HEAP_SEG_ADDR(hLog),
+					2, GDI_HEAP_SEG_ADDR(hMet),
+                                        0, (int)0, 2, (int)lpData);
 #endif
 		if (nRet == 0) {
 			dprintf_font(stddeb,"EnumFontFamilies // EnumEnd requested by application !\n");

@@ -7,8 +7,8 @@
 #ifndef USER_H
 #define USER_H
 
-#include "segmem.h"
-#include "heap.h"
+#include "ldt.h"
+#include "local.h"
 
 /* USER local heap */
 
@@ -16,18 +16,24 @@
 
 #define USER_HEAP_ALLOC(f,size) LocalAlloc (f, size)
 #define USER_HEAP_REALLOC(handle,size,f) LocalReAlloc (handle,size,f)
-#define USER_HEAP_ADDR(handle) LocalLock (handle)
+#define USER_HEAP_LIN_ADDR(handle) LocalLock (handle)
+#define USER_HEAP_SEG_ADDR(handle) LocalLock (handle)
 #define USER_HEAP_FREE(handle) LocalFree (handle)
 #else
 
-extern MDESC *USER_Heap;
+extern LPSTR USER_Heap;
+extern WORD USER_HeapSel;
 
-#define USER_HEAP_ALLOC(f,size) ((int)HEAP_Alloc(&USER_Heap,f,size) & 0xffff)
-#define USER_HEAP_REALLOC(handle,size,f) ((int)HEAP_ReAlloc(&USER_Heap, \
-				       USER_HEAP_ADDR(handle),size,f) & 0xffff)
-#define USER_HEAP_FREE(handle) (HEAP_Free(&USER_Heap,USER_HEAP_ADDR(handle)))
-#define USER_HEAP_ADDR(handle) \
-    ((void *)((handle) ? ((handle) | ((int)USER_Heap & 0xffff0000)) : 0))
+#define USER_HEAP_ALLOC(size) \
+            LOCAL_Alloc( USER_HeapSel, LMEM_FIXED, (size) )
+#define USER_HEAP_REALLOC(handle,size) \
+            LOCAL_ReAlloc( USER_HeapSel, (handle), (size), LMEM_FIXED )
+#define USER_HEAP_FREE(handle) \
+            LOCAL_Free( USER_HeapSel, (handle) )
+#define USER_HEAP_LIN_ADDR(handle)  \
+            ((handle) ? PTR_SEG_OFF_TO_LIN(USER_HeapSel, (handle)) : NULL)
+#define USER_HEAP_SEG_ADDR(handle)  \
+            ((handle) ? MAKELONG((handle), USER_HeapSel) : 0)
 
 #endif  /* WINELIB */
 

@@ -12,9 +12,9 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 #include "windows.h"
 #include "dialog.h"
 #include "win.h"
+#include "ldt.h"
 #include "user.h"
 #include "message.h"
-#include "heap.h"
 #include "stddebug.h"
 /* #define DEBUG_DIALOG */
 #include "debug.h"
@@ -173,7 +173,7 @@ static void DIALOG_DisplayTemplate( DLGTEMPLATE * result )
 /***********************************************************************
  *           CreateDialog   (USER.89)
  */
-HWND CreateDialog( HINSTANCE hInst, LPCSTR dlgTemplate,
+HWND CreateDialog( HINSTANCE hInst, SEGPTR dlgTemplate,
 		   HWND owner, WNDPROC dlgProc )
 {
     return CreateDialogParam( hInst, dlgTemplate, owner, dlgProc, 0 );
@@ -183,14 +183,14 @@ HWND CreateDialog( HINSTANCE hInst, LPCSTR dlgTemplate,
 /***********************************************************************
  *           CreateDialogParam   (USER.241)
  */
-HWND CreateDialogParam( HINSTANCE hInst, LPCSTR dlgTemplate,
+HWND CreateDialogParam( HINSTANCE hInst, SEGPTR dlgTemplate,
 		        HWND owner, WNDPROC dlgProc, LPARAM param )
 {
     HWND hwnd = 0;
     HANDLE hres, hmem;
     LPCSTR data;
 
-    dprintf_dialog(stddeb, "CreateDialogParam: %d,'%p',%d,%p,%ld\n",
+    dprintf_dialog(stddeb, "CreateDialogParam: %d,%08lx,%d,%p,%ld\n",
 	    hInst, dlgTemplate, owner, dlgProc, param );
      
       /* FIXME: MAKEINTRESOURCE should be replaced by RT_DIALOG */
@@ -251,7 +251,13 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 						   256*template.menuName[2] ));
 	  break;
       default:
-	  hMenu = LoadMenu( hInst, template.menuName );
+          {
+                /* Need to copy the menu name to a 16-bit area */
+              HANDLE handle = USER_HEAP_ALLOC( strlen(template.menuName)+1 );
+              strcpy( USER_HEAP_LIN_ADDR( handle ), template.menuName );
+              hMenu = LoadMenu( hInst, USER_HEAP_SEG_ADDR( handle ) );
+              USER_HEAP_FREE( handle );
+          }
 	  break;
     }
 
@@ -297,8 +303,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 			   rect.left + template.header->x * xUnit / 4,
 			   rect.top + template.header->y * yUnit / 8,
 			   rect.right - rect.left, rect.bottom - rect.top,
-			   owner, hMenu, hInst,
-			   NULL );
+			   owner, hMenu, hInst, (SEGPTR)0 );
     if (!hwnd)
     {
 	if (hFont) DeleteObject( hFont );
@@ -339,14 +344,14 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 		    fprintf(stderr,"CreateDialogIndirectParam: Insufficient memory to create heap for edit control\n");
 		    continue;
 		}
-		HEAP_LocalInit(dlgInfo->hDialogHeap, GlobalLock(dlgInfo->hDialogHeap), 0x10000);
+		LocalInit(dlgInfo->hDialogHeap, 0, 0xffff);
 	    }
 	    header->style |= WS_CHILD;
 	    hwndCtrl = CreateWindowEx( WS_EX_NOPARENTNOTIFY, 
                            class, text, header->style,
                            header->x * xUnit / 4, header->y * yUnit / 8,
                            header->cx * xUnit / 4, header->cy * yUnit / 8,
-                           hwnd, header->id, dlgInfo->hDialogHeap, NULL );
+                           hwnd, header->id, dlgInfo->hDialogHeap, (SEGPTR)0 );
 	}
 	else
         {
@@ -355,7 +360,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
                                 class, text, header->style,
                                 header->x * xUnit / 4, header->y * yUnit / 8,
                                 header->cx * xUnit / 4, header->cy * yUnit / 8,
-                                hwnd, header->id, hInst, NULL );
+                                hwnd, header->id, hInst, (SEGPTR)0 );
 	}
         /* Make the control last one in Z-order, so that controls remain
            in the order in which they were created */
@@ -412,13 +417,13 @@ static int DIALOG_DoDialogBox( HWND hwnd, HWND owner )
       /* Owner must be a top-level window */
     while (owner && GetParent(owner)) owner = GetParent(owner);
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return -1;
-    if (!(msgHandle = USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(MSG)))) return -1;
-    lpmsg = (MSG *) USER_HEAP_ADDR( msgHandle );
+    if (!(msgHandle = USER_HEAP_ALLOC( sizeof(MSG) ))) return -1;
+    lpmsg = (MSG *) USER_HEAP_LIN_ADDR( msgHandle );
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
     EnableWindow( owner, FALSE );
     ShowWindow( hwnd, SW_SHOW );
 
-    while (MSG_InternalGetMessage( lpmsg, hwnd, owner,
+    while (MSG_InternalGetMessage( USER_HEAP_SEG_ADDR(msgHandle), hwnd, owner,
                                    MSGF_DIALOGBOX, PM_REMOVE,
                                    !(wndPtr->dwStyle & DS_NOIDLEMSG) ))
     {
@@ -440,7 +445,7 @@ static int DIALOG_DoDialogBox( HWND hwnd, HWND owner )
 /***********************************************************************
  *           DialogBox   (USER.87)
  */
-int DialogBox( HINSTANCE hInst, LPCSTR dlgTemplate,
+int DialogBox( HINSTANCE hInst, SEGPTR dlgTemplate,
 	       HWND owner, WNDPROC dlgProc )
 {
     return DialogBoxParam( hInst, dlgTemplate, owner, dlgProc, 0 );
@@ -450,12 +455,12 @@ int DialogBox( HINSTANCE hInst, LPCSTR dlgTemplate,
 /***********************************************************************
  *           DialogBoxParam   (USER.239)
  */
-int DialogBoxParam( HINSTANCE hInst, LPCSTR dlgTemplate,
+int DialogBoxParam( HINSTANCE hInst, SEGPTR dlgTemplate,
 		    HWND owner, WNDPROC dlgProc, LPARAM param )
 {
     HWND hwnd;
     
-    dprintf_dialog(stddeb, "DialogBoxParam: %d,'%p',%d,%p,%ld\n",
+    dprintf_dialog(stddeb, "DialogBoxParam: %d,%08lx,%d,%p,%ld\n",
 	    hInst, dlgTemplate, owner, dlgProc, param );
     hwnd = CreateDialogParam( hInst, dlgTemplate, owner, dlgProc, param );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
@@ -666,7 +671,7 @@ LONG SendDlgItemMessage(HWND hwnd, WORD id, UINT msg, WORD wParam, LONG lParam)
 /*******************************************************************
  *           SetDlgItemText   (USER.92)
  */
-void SetDlgItemText( HWND hwnd, WORD id, LPSTR lpString )
+void SetDlgItemText( HWND hwnd, WORD id, SEGPTR lpString )
 {
     SendDlgItemMessage( hwnd, id, WM_SETTEXT, 0, (DWORD)lpString );
 }
@@ -675,7 +680,7 @@ void SetDlgItemText( HWND hwnd, WORD id, LPSTR lpString )
 /***********************************************************************
  *           GetDlgItemText   (USER.93)
  */
-int GetDlgItemText( HWND hwnd, WORD id, LPSTR str, WORD max )
+int GetDlgItemText( HWND hwnd, WORD id, SEGPTR str, WORD max )
 {
     return (int)SendDlgItemMessage( hwnd, id, WM_GETTEXT, max, (DWORD)str );
 }
@@ -686,12 +691,13 @@ int GetDlgItemText( HWND hwnd, WORD id, LPSTR str, WORD max )
  */
 void SetDlgItemInt( HWND hwnd, WORD id, WORD value, BOOL fSigned )
 {
-    HANDLE hText = USER_HEAP_ALLOC(0, 10 );
-    char * str = (char *) USER_HEAP_ADDR( hText );
+    HANDLE hText = USER_HEAP_ALLOC( 10 );
+    char * str = (char *) USER_HEAP_LIN_ADDR( hText );
 
     if (fSigned) sprintf( str, "%d", value );
     else sprintf( str, "%u", value );
-    SendDlgItemMessage( hwnd, id, WM_SETTEXT, 0, (DWORD)str );
+    SendDlgItemMessage( hwnd, id, WM_SETTEXT, 0,
+                        USER_HEAP_SEG_ADDR(hText) );
     USER_HEAP_FREE( hText );
 }
 
@@ -709,10 +715,10 @@ WORD GetDlgItemInt( HWND hwnd, WORD id, BOOL * translated, BOOL fSigned )
     if (translated) *translated = FALSE;
     if (!(len = SendDlgItemMessage( hwnd, id, WM_GETTEXTLENGTH, 0, 0 )))
 	return 0;
-    if (!(hText = USER_HEAP_ALLOC(0, len+1 )))
-	return 0;
-    str = (char *) USER_HEAP_ADDR( hText );
-    if (SendDlgItemMessage( hwnd, id, WM_GETTEXT, len+1, (DWORD)str ))
+    if (!(hText = USER_HEAP_ALLOC( len+1 ))) return 0;
+    str = (char *) USER_HEAP_LIN_ADDR( hText );
+    if (SendDlgItemMessage( hwnd, id, WM_GETTEXT, len+1,
+                            USER_HEAP_SEG_ADDR(hText) ))
     {
 	char * endptr;
 	result = strtol( str, &endptr, 10 );

@@ -9,6 +9,10 @@
 
 int do_int13(struct sigcontext_struct *context)
 {
+        dprintf_int(stddeb,"int13: AX %04x, BX %04x, CX %04x, DX %04x, "
+               "SI %04x, DI %04x, DS %04x, ES %04x\n",
+               AX, BX, CX, DX, SI, DI, DS, ES);
+
 	switch(AH) {
 	case 0x00:                            /* RESET DISK SYSTEM     */
 	case 0x04:                            /* VERIFY DISK SECTOR(S) */

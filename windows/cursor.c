@@ -29,7 +29,7 @@ static HCURSOR hActiveCursor;
 static HCURSOR hEmptyCursor = 0;
 RECT	ClipCursorRect;
 
-static struct { LPSTR name; HCURSOR cursor; } system_cursor[] =
+static struct { SEGPTR name; HCURSOR cursor; } system_cursor[] =
 {
     { IDC_ARROW, 0 },
     { IDC_IBEAM, 0 },
@@ -50,7 +50,7 @@ static struct { LPSTR name; HCURSOR cursor; } system_cursor[] =
 /**********************************************************************
  *			LoadCursor [USER.173]
  */
-HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
+HCURSOR LoadCursor(HANDLE instance, SEGPTR cursor_name)
 {
     XColor	bkcolor;
     XColor	fgcolor;
@@ -62,7 +62,7 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
     HDC 	hdc;
     int i, j, image_size;
 
-    dprintf_resource(stddeb,"LoadCursor: instance = %04x, name = %p\n",
+    dprintf_resource(stddeb,"LoadCursor: instance = %04x, name = %08lx\n",
 	   instance, cursor_name);
     if (!instance)
     {
@@ -127,7 +127,7 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
     rsc_mem = RSC_LoadResource(instance, cursor_name, NE_RSCTYPE_GROUP_CURSOR, 
 			       &image_size);
     if (rsc_mem == (HANDLE)NULL) {
-    fprintf(stderr,"LoadCursor / Cursor %p not Found !\n", cursor_name);
+    fprintf(stderr,"LoadCursor / Cursor %08lx not Found !\n", cursor_name);
 	ReleaseDC(GetDesktopWindow(), hdc); 
 	return 0;
 	}
@@ -162,7 +162,7 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
     	NE_RSCTYPE_CURSOR, &image_size);
     if (rsc_mem == (HANDLE)NULL) {
     	fprintf(stderr,
-		"LoadCursor / Cursor %p Bitmap not Found !\n", cursor_name);
+		"LoadCursor / Cursor %08lx Bitmap not Found !\n", cursor_name);
 	ReleaseDC(GetDesktopWindow(), hdc); 
 	return 0;
 	}

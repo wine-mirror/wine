@@ -1,9 +1,19 @@
 #include "../Wine.tmpl"
 
-MODULE = tools
+SRCS = build.c
+
+OBJS = $(SRCS:.c=.o)
+
+AllTarget(build)
 
 #ifndef NewBuild
-SimpleProgramTarget(build)
+NormalProgramTarget(build,build.o,$(DEPLIBS),,)
 #else
-SimpleProgramTarget(newbuild)
+NormalProgramTarget(newbuild,$(OBJS),$(DEPLIBS),,)
 #endif
+
+DependTarget()
+
+includes::
+
+install::

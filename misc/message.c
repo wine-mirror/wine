@@ -15,10 +15,10 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 #include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "heap.h"
 #include "library.h"
 #include "win.h"
 #include "texts.h"
+#include "user.h"
 #include "stddebug.h"
 /* #define DEBUG_MSGBOX */
 #include "debug.h"
@@ -30,21 +30,21 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 
 ButtonTexts ButtonText = {    /* FIXME: Norwegian Translation missing */
 #if #LANG(De)
-  "&Ja",     'J',
-  "&Nein",   'N',
-  "&Ok",     'O',
-  "&Abbruch",'A',
-  "&Abbruch",'A',
-  "&Wiederholen", 'W',
-  "&Ignorieren", 'I'
+  { "&Ja",     'J' },
+  { "&Nein",   'N' },
+  { "&Ok",     'O' },
+  { "&Abbruch",'A' },
+  { "&Abbruch",'A' },
+  { "&Wiederholen", 'W' },
+  { "&Ignorieren", 'I' }
 #else
-  "&Yes",    'Y',
-  "&No",     'N',
-  "&Ok",     'O',
-  "&Cancel", 'C',
-  "&Abort",  'A',
-  "&Retry",  'R',
-  "&Ignore", 'I'
+  { "&Yes",    'Y' },
+  { "&No",     'N' },
+  { "&Ok",     'O' },
+  { "&Cancel", 'C' },
+  { "&Abort",  'A' },
+  { "&Retry",  'R' },
+  { "&Ignore", 'I' }
 #endif
 };
 
@@ -76,8 +76,9 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 	HWND    	hDlg, hWndOld;
 	WND	    	*wndPtr;
 	WNDCLASS  	wndClass;
-	MSG	    	msg;
-    LPMSGBOX 	lpmb;
+	MSG*	    	msg;
+        LPMSGBOX 	lpmb;
+        HANDLE          hClassName, hMsg;
 	DWORD		dwStyle;
 	HINSTANCE	hInst;
 	int			nRet;
@@ -116,24 +117,29 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 	wndClass.style           = CS_HREDRAW | CS_VREDRAW ;
 	wndClass.lpfnWndProc     = (WNDPROC)SystemMessageBoxProc;
 	wndClass.cbClsExtra      = 0;
-	wndClass.cbWndExtra      = 0;
+	wndClass.cbWndExtra      = 4;
 	wndClass.hInstance       = hInst;
 	wndClass.hIcon           = (HICON)NULL;
 	wndClass.hCursor         = LoadCursor((HANDLE)NULL, IDC_ARROW); 
 	wndClass.hbrBackground   = GetStockObject(WHITE_BRUSH);
 	wndClass.lpszMenuName    = NULL;
-	wndClass.lpszClassName   = "MESSAGEBOX";
+        hClassName = USER_HEAP_ALLOC( 20 );
+        strcpy( USER_HEAP_LIN_ADDR( hClassName ), "MESSAGEBOX" );
+        hMsg = USER_HEAP_ALLOC( sizeof(MSG) );
+        msg = (MSG *) USER_HEAP_LIN_ADDR( hMsg );
+	wndClass.lpszClassName = (LPSTR)USER_HEAP_SEG_ADDR( hClassName );
 	dprintf_msgbox(stddeb, "MessageBox // before RegisterClass, '%s' '%s' !\n", str, title);
 	if (!RegisterClass(&wndClass)) {
 		printf("Unable to Register class 'MESSAGEBOX' !\n");
 		if (lpmb != NULL) free(lpmb);
 		return 0;
 		}
+        USER_HEAP_FREE( hClassName );
 	dwStyle = WS_POPUP | WS_DLGFRAME | WS_VISIBLE;
 	if ((type & (MB_SYSTEMMODAL | MB_TASKMODAL)) == 0) dwStyle |= WS_CAPTION;
 	hWndOld = GetFocus();
 	hDlg = CreateWindow("MESSAGEBOX", lpmb->Title, dwStyle, 100, 150, 400, 160,
-				(HWND)NULL, (HMENU)NULL, hInst, (LPSTR)lpmb);
+				(HWND)NULL, (HMENU)NULL, hInst, (SEGPTR)lpmb);
 	if (hDlg == 0) {
 		printf("Unable to create 'MESSAGEBOX' window !\n");
 		if (lpmb != NULL) free(lpmb);
@@ -142,11 +148,12 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 	dprintf_msgbox(stddeb, "MessageBox // before Msg Loop !\n");
 	while(TRUE) {
 		if (!lpmb->ActiveFlg) break;
-		if (!GetMessage(&msg, (HWND)NULL, 0, 0)) break;
-		TranslateMessage(&msg);
+		if (!GetMessage( USER_HEAP_SEG_ADDR(hMsg),
+                                 (HWND)NULL, 0, 0)) break;
+		TranslateMessage(msg);
 		if ((type & (MB_SYSTEMMODAL | MB_TASKMODAL)) != 0 &&
-			msg.hwnd != hDlg) {
-			switch(msg.message) {
+			msg->hwnd != hDlg) {
+			switch(msg->message) {
 				case WM_KEYDOWN:
 				case WM_LBUTTONDOWN:
 				case WM_MBUTTONDOWN:
@@ -155,8 +162,9 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 					break;
 				}
 			}
-		DispatchMessage(&msg);
+		DispatchMessage(msg);
 		}
+        USER_HEAP_FREE(hMsg);
 	SetFocus(hWndOld);
 	nRet = lpmb->wRetVal;
 	if (lpmb != NULL) free(lpmb);
@@ -175,7 +183,7 @@ LPMSGBOX MsgBoxGetStorageHeader(HWND hwnd)
     	printf("Bad Window handle on MessageBox !\n");
     	return 0;
     	}
-    lpmb = *((LPMSGBOX *)&wndPtr->wExtra[1]);
+    lpmb = *((LPMSGBOX *)wndPtr->wExtra);
     return lpmb;
 }
 
@@ -196,10 +204,10 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 	case WM_CREATE:
 		dprintf_msgbox(stddeb, "MessageBox WM_CREATE hWnd=%04X !\n", hWnd);
 		wndPtr = WIN_FindWndPtr(hWnd);
-		createStruct = (CREATESTRUCT *)lParam;
+		createStruct = (CREATESTRUCT *)PTR_SEG_TO_LIN(lParam);
 		lpmb = (LPMSGBOX)createStruct->lpCreateParams;
 		if (lpmb == NULL) break;
-		*((LPMSGBOX *)&wndPtr->wExtra[1]) = lpmb;
+		*((LPMSGBOX *)wndPtr->wExtra) = lpmb;
 		dprintf_msgbox(stddeb, "MessageBox WM_CREATE title='%s' str='%s' !\n", 
 									lpmb->Title, lpmb->Str);
 		GetClientRect(hWnd, &rect);

@@ -107,14 +107,12 @@ static HPALETTE COLOR_InitPalette(void)
     COLOR_ColormapSize = size;
     if (screenDepth <= 8)
     {
-        if (!(hSysColorTranslation = GDI_HEAP_ALLOC( GMEM_MOVEABLE,
-                                            sizeof(WORD)*NB_RESERVED_COLORS )))
+        if (!(hSysColorTranslation = GDI_HEAP_ALLOC(sizeof(WORD)*NB_RESERVED_COLORS )))
             return FALSE;
-        if (!(hRevSysColorTranslation = GDI_HEAP_ALLOC( GMEM_MOVEABLE,
-                                                        sizeof(WORD)*size )))
+        if (!(hRevSysColorTranslation = GDI_HEAP_ALLOC( sizeof(WORD)*size )))
             return FALSE;
-        colorTranslation = (WORD *) GDI_HEAP_ADDR( hSysColorTranslation );
-        revTranslation   = (WORD *) GDI_HEAP_ADDR( hRevSysColorTranslation );
+        colorTranslation = (WORD *) GDI_HEAP_LIN_ADDR( hSysColorTranslation );
+        revTranslation   = (WORD *) GDI_HEAP_LIN_ADDR( hRevSysColorTranslation );
     }
     else colorTranslation = revTranslation = NULL;
 
@@ -284,12 +282,12 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
     if (dc)
     {
         if (index >= dc->u.x.pal.mappingSize) return 0;
-        mapping = (WORD *) GDI_HEAP_ADDR( dc->u.x.pal.hMapping );
+        mapping = (WORD *) GDI_HEAP_LIN_ADDR( dc->u.x.pal.hMapping );
     }
     else
     {
         if (index >= NB_RESERVED_COLORS) return 0;
-        mapping = (WORD *) GDI_HEAP_ADDR( hSysColorTranslation );
+        mapping = (WORD *) GDI_HEAP_LIN_ADDR( hSysColorTranslation );
     }
     if (mapping) return mapping[index];
     else return index;  /* Identity mapping */
@@ -314,14 +312,13 @@ void COLOR_SetMapping( DC *dc, HANDLE map, HANDLE revMap, WORD size )
     if (map && (map != hSysColorTranslation))
     {
 	  /* Copy mapping table */
-	dc->u.x.pal.hMapping = GDI_HEAP_ALLOC(GMEM_MOVEABLE,sizeof(WORD)*size);
-	pmap = (WORD *) GDI_HEAP_ADDR( map );
-	pnewmap = (WORD *) GDI_HEAP_ADDR( dc->u.x.pal.hMapping );
+	dc->u.x.pal.hMapping = GDI_HEAP_ALLOC( sizeof(WORD) * size );
+	pmap = (WORD *) GDI_HEAP_LIN_ADDR( map );
+	pnewmap = (WORD *) GDI_HEAP_LIN_ADDR( dc->u.x.pal.hMapping );
 	memcpy( pnewmap, pmap, sizeof(WORD)*size );
           /* Build reverse table */
-        dc->u.x.pal.hRevMapping = GDI_HEAP_ALLOC( GMEM_MOVEABLE,
-                                             sizeof(WORD)*COLOR_ColormapSize );
-        pmap = (WORD *) GDI_HEAP_ADDR( dc->u.x.pal.hRevMapping );
+        dc->u.x.pal.hRevMapping = GDI_HEAP_ALLOC(sizeof(WORD)*COLOR_ColormapSize);
+        pmap = (WORD *) GDI_HEAP_LIN_ADDR( dc->u.x.pal.hRevMapping );
         for (i = 0; i < size; i++) pmap[pnewmap[i]] = i;
     }
     else

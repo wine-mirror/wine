@@ -8,7 +8,6 @@
 #include <string.h>
 #include <unistd.h>
 #include "neexe.h"
-#include "segmem.h"
 #include "prototypes.h"
 #include "dlls.h"
 #include "windows.h"
@@ -79,8 +78,8 @@ void InitializeLoadedNewDLLs(HINSTANCE hInst)
 	    }
 
 	    ds_reg = wpnt->ne->selector_table[wpnt->ne->
-					  ne_header->auto_data_seg-1].selector;
-	    cs_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->cs-1].selector;
+					  ne_header->auto_data_seg-1];
+	    cs_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->cs-1];
 	    ip_reg = wpnt->ne->ne_header->ip;
 
         dprintf_exec(stddeb, "Initializing %s, cs:ip %04x:%04x, ds %04x\n",
@@ -117,10 +116,10 @@ void StartNewTask(HINSTANCE hInst)
 	dprintf_exec(stddeb,"StartNewTask() before InitializeLoadedNewDLLs !\n");
 	InitializeLoadedNewDLLs(hInst);
 	dprintf_exec(stddeb,"StartNewTask() before setup register !\n");
-    ds_reg = (wpnt->ne->selector_table[wpnt->ne->ne_header->auto_data_seg-1].selector);
-    cs_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->cs-1].selector;
+    ds_reg = (wpnt->ne->selector_table[wpnt->ne->ne_header->auto_data_seg-1]);
+    cs_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->cs-1];
     ip_reg = wpnt->ne->ne_header->ip;
-    ss_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->ss-1].selector;
+    ss_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->ss-1];
     sp_reg = wpnt->ne->ne_header->sp;
 
 	dprintf_exec(stddeb,"StartNewTask() before CallToInit16() !\n");

@@ -13,6 +13,7 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1993";
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include "windows.h"
+#include "ldt.h"
 #include "callback.h"
 #include "user.h"
 #include "driver.h"
@@ -640,8 +641,9 @@ DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS lpParms)
 			dwDevTyp = (DWORD)lpParms->lpstrDeviceType;
 			}
 		else {
-			printf("MCI_OPEN // Dev='%s' !\n", lpParms->lpstrDeviceType);
-			strcpy(str, lpParms->lpstrDeviceType);
+			printf("MCI_OPEN // Dev='%s' !\n",
+                              (char*)PTR_SEG_TO_LIN(lpParms->lpstrDeviceType));
+			strcpy(str, PTR_SEG_TO_LIN(lpParms->lpstrDeviceType));
 			AnsiUpper(str);
 			if (strcmp(str, "CDAUDIO") == 0) {
 				dwDevTyp = MCI_DEVTYPE_CD_AUDIO;
@@ -750,9 +752,9 @@ DWORD mciSendCommand(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2)
 					wDevID, wMsg, dwParam1, dwParam2);
 	switch(wMsg) {
 		case MCI_OPEN:
-			return mciOpen(dwParam1, (LPMCI_OPEN_PARMS)dwParam2);
+			return mciOpen(dwParam1, (LPMCI_OPEN_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_CLOSE:
-			return mciClose(wDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
+			return mciClose(wDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		default:
 			switch(mciDrv[wDevID].wType) {
 				case MCI_DEVTYPE_CD_AUDIO:

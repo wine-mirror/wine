@@ -17,7 +17,7 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include "windows.h"
-#include "user.h"
+#include "ldt.h"
 #include "driver.h"
 #include "mmsystem.h"
 
@@ -160,28 +160,28 @@ LRESULT MIDI_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 			return (LRESULT)DRVCNF_RESTART;
 		case MCI_OPEN_DRIVER:
 		case MCI_OPEN:
-			return MIDI_mciOpen(dwParam1, (LPMCI_OPEN_PARMS)dwParam2);
+			return MIDI_mciOpen(dwParam1, (LPMCI_OPEN_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_CLOSE_DRIVER:
 		case MCI_CLOSE:
-			return MIDI_mciClose(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
+			return MIDI_mciClose(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_PLAY:
-			return MIDI_mciPlay(dwDevID, dwParam1, (LPMCI_PLAY_PARMS)dwParam2);
+			return MIDI_mciPlay(dwDevID, dwParam1, (LPMCI_PLAY_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_RECORD:
-			return MIDI_mciRecord(dwDevID, dwParam1, (LPMCI_RECORD_PARMS)dwParam2);
+			return MIDI_mciRecord(dwDevID, dwParam1, (LPMCI_RECORD_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_STOP:
-			return MIDI_mciStop(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
+			return MIDI_mciStop(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_SET:
-			return MIDI_mciSet(dwDevID, dwParam1, (LPMCI_SET_PARMS)dwParam2);
+			return MIDI_mciSet(dwDevID, dwParam1, (LPMCI_SET_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_PAUSE:
-			return MIDI_mciPause(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
+			return MIDI_mciPause(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_RESUME:
-			return MIDI_mciResume(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
+			return MIDI_mciResume(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_STATUS:
-			return MIDI_mciStatus(dwDevID, dwParam1, (LPMCI_STATUS_PARMS)dwParam2);
+			return MIDI_mciStatus(dwDevID, dwParam1, (LPMCI_STATUS_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_GETDEVCAPS:
-			return MIDI_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
+			return MIDI_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_INFO:
-			return MIDI_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMS)dwParam2);
+			return MIDI_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		default:
 			return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 		}
@@ -1083,17 +1083,17 @@ DWORD midMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 			wDevID, wMsg, dwUser, dwParam1, dwParam2);
 	switch(wMsg) {
 		case MIDM_OPEN:
-			return midOpen(wDevID, (LPMIDIOPENDESC)dwParam1, dwParam2);
+			return midOpen(wDevID, (LPMIDIOPENDESC)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case MIDM_CLOSE:
 			return midClose(wDevID);
 		case MIDM_ADDBUFFER:
-			return midAddBuffer(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
+			return midAddBuffer(wDevID, (LPMIDIHDR)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case MIDM_PREPARE:
-			return midPrepare(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
+			return midPrepare(wDevID, (LPMIDIHDR)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case MIDM_UNPREPARE:
-			return midUnprepare(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
+			return midUnprepare(wDevID, (LPMIDIHDR)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case MIDM_GETDEVCAPS:
-			return midGetDevCaps(wDevID, (LPMIDIINCAPS)dwParam1, dwParam2);
+			return midGetDevCaps(wDevID, (LPMIDIINCAPS)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case MIDM_GETNUMDEVS:
 			return 1L;
 		case MIDM_RESET:
@@ -1353,19 +1353,19 @@ DWORD modMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 			wDevID, wMsg, dwUser, dwParam1, dwParam2);
 	switch(wMsg) {
 		case MODM_OPEN:
-			return modOpen(wDevID, (LPMIDIOPENDESC)dwParam1, dwParam2);
+			return modOpen(wDevID, (LPMIDIOPENDESC)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case MODM_CLOSE:
 			return modClose(wDevID);
 		case MODM_DATA:
 			return modData(wDevID, dwParam1);
 		case MODM_LONGDATA:
-			return modLongData(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
+			return modLongData(wDevID, (LPMIDIHDR)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case MODM_PREPARE:
-			return modPrepare(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
+			return modPrepare(wDevID, (LPMIDIHDR)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case MODM_UNPREPARE:
-			return modUnprepare(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
+			return modUnprepare(wDevID, (LPMIDIHDR)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case MODM_GETDEVCAPS:
-			return modGetDevCaps(wDevID, (LPMIDIOUTCAPS)dwParam1, dwParam2);
+			return modGetDevCaps(wDevID, (LPMIDIOUTCAPS)PTR_SEG_TO_LIN(dwParam1), dwParam2);
 		case MODM_GETNUMDEVS:
 			return 1L;
 		case MODM_GETVOLUME:

@@ -603,9 +603,8 @@ LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect, RECT *newWindowRect,
     HANDLE hparams;
     LONG result;
 
-    if (!(hparams = USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(*params) )))
-	return 0;
-    params = (NCCALCSIZE_PARAMS *) USER_HEAP_ADDR( hparams );
+    if (!(hparams = USER_HEAP_ALLOC( sizeof(*params) ))) return 0;
+    params = (NCCALCSIZE_PARAMS *) USER_HEAP_LIN_ADDR( hparams );
     params->rgrc[0] = *newWindowRect;
     if (calcValidRect)
     {
@@ -613,7 +612,8 @@ LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect, RECT *newWindowRect,
 	params->rgrc[2] = *oldClientRect;
 	params->lppos = winpos;
     }
-    result = SendMessage( hwnd, WM_NCCALCSIZE, calcValidRect, (LONG)params);
+    result = SendMessage( hwnd, WM_NCCALCSIZE, calcValidRect,
+                          USER_HEAP_SEG_ADDR(hparams) );
     *newClientRect = params->rgrc[0];
     USER_HEAP_FREE( hparams );
     return result;
@@ -758,61 +758,71 @@ static void WINPOS_SetXWindowPos( WINDOWPOS *winpos )
 
 
 /***********************************************************************
- *           WINPOS_InternalSetWindowPos
- *
- * Helper function for SetWindowPos.
+ *           SetWindowPos   (USER.232)
  */
-static BOOL WINPOS_InternalSetWindowPos( WINDOWPOS *winpos )
+BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
+		   INT cx, INT cy, WORD flags )
 {
-    HWND hwndAfter;
+    HLOCAL hWinPos;
+    WINDOWPOS *winpos;
     WND *wndPtr;
     RECT newWindowRect, newClientRect;
-    int flags, result;
-
-      /* Send WM_WINDOWPOSCHANGING message */
-
-    if (!(winpos->flags & SWP_NOSENDCHANGING))
-	SendMessage( winpos->hwnd, WM_WINDOWPOSCHANGING, 0, (LONG)winpos );
+    int result;
 
       /* Check window handle */
 
-    if (winpos->hwnd == GetDesktopWindow()) return FALSE;
-    if (!(wndPtr = WIN_FindWndPtr( winpos->hwnd ))) return FALSE;
+    if (hwnd == GetDesktopWindow()) return FALSE;
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
 
       /* Check dimensions */
 
-    if (winpos->cx <= 0) winpos->cx = 1;
-    if (winpos->cy <= 0) winpos->cy = 1;
+    if (cx <= 0) cx = 1;
+    if (cy <= 0) cy = 1;
 
       /* Check flags */
 
-    if (winpos->hwnd == hwndActive)
-        winpos->flags |= SWP_NOACTIVATE;   /* Already active */
-    if ((wndPtr->rectWindow.right-wndPtr->rectWindow.left == winpos->cx) &&
-        (wndPtr->rectWindow.bottom-wndPtr->rectWindow.top == winpos->cy))
-        winpos->flags |= SWP_NOSIZE;    /* Already the right size */
-    if ((wndPtr->rectWindow.left == winpos->x) &&
-        (wndPtr->rectWindow.top == winpos->y))
-        winpos->flags |= SWP_NOMOVE;    /* Already the right position */
-    flags = winpos->flags;
+    if (hwnd == hwndActive) flags |= SWP_NOACTIVATE;   /* Already active */
+    if ((wndPtr->rectWindow.right - wndPtr->rectWindow.left == cx) &&
+        (wndPtr->rectWindow.bottom - wndPtr->rectWindow.top == cy))
+        flags |= SWP_NOSIZE;    /* Already the right size */
+    if ((wndPtr->rectWindow.left == x) && (wndPtr->rectWindow.top == y))
+        flags |= SWP_NOMOVE;    /* Already the right position */
 
-      /* Check hwndAfter */
+      /* Check hwndInsertAfter */
 
-    hwndAfter = winpos->hwndInsertAfter;
-    if (!(winpos->flags & (SWP_NOZORDER | SWP_NOACTIVATE)))
+    if (!(flags & (SWP_NOZORDER | SWP_NOACTIVATE)))
     {
 	  /* Ignore TOPMOST flags when activating a window */
           /* _and_ moving it in Z order. */
-	if ((hwndAfter == HWND_TOPMOST) || (hwndAfter == HWND_NOTOPMOST))
-	    hwndAfter = HWND_TOP;	
+	if ((hwndInsertAfter == HWND_TOPMOST) ||
+            (hwndInsertAfter == HWND_NOTOPMOST))
+	    hwndInsertAfter = HWND_TOP;	
     }
       /* TOPMOST not supported yet */
-    if ((hwndAfter == HWND_TOPMOST) || (hwndAfter == HWND_NOTOPMOST))
-	hwndAfter = HWND_TOP;
-      /* hwndAfter must be a sibling of the window */
-    if ((hwndAfter != HWND_TOP) && (hwndAfter != HWND_BOTTOM) &&
-	(GetParent(winpos->hwnd) != GetParent(hwndAfter))) return FALSE;
-    winpos->hwndInsertAfter = hwndAfter;
+    if ((hwndInsertAfter == HWND_TOPMOST) ||
+        (hwndInsertAfter == HWND_NOTOPMOST)) hwndInsertAfter = HWND_TOP;
+      /* hwndInsertAfter must be a sibling of the window */
+    if ((hwndInsertAfter != HWND_TOP) && (hwndInsertAfter != HWND_BOTTOM) &&
+	(GetParent(hwnd) != GetParent(hwndInsertAfter))) return FALSE;
+
+      /* Allocate the WINDOWPOS structure */
+
+    hWinPos = USER_HEAP_ALLOC( sizeof(WINDOWPOS) );
+    if (!hWinPos) return FALSE;
+    winpos = USER_HEAP_LIN_ADDR( hWinPos );
+    winpos->hwnd = hwnd;
+    winpos->hwndInsertAfter = hwndInsertAfter;
+    winpos->x = x;
+    winpos->y = y;
+    winpos->cx = cx;
+    winpos->cy = cy;
+    winpos->flags = flags;
+    
+      /* Send WM_WINDOWPOSCHANGING message */
+
+    if (!(flags & SWP_NOSENDCHANGING))
+	SendMessage( hwnd, WM_WINDOWPOSCHANGING, 0,
+                     USER_HEAP_SEG_ADDR(hWinPos) );
 
       /* Calculate new position and size */
 
@@ -839,9 +849,9 @@ static BOOL WINPOS_InternalSetWindowPos( WINDOWPOS *winpos )
         if (wndPtr->window)
         {
             WIN_UnlinkWindow( winpos->hwnd );
-            WIN_LinkWindow( winpos->hwnd, hwndAfter );
+            WIN_LinkWindow( winpos->hwnd, hwndInsertAfter );
         }
-        else WINPOS_MoveWindowZOrder( winpos->hwnd, hwndAfter );
+        else WINPOS_MoveWindowZOrder( winpos->hwnd, hwndInsertAfter );
     }
 
       /* Send WM_NCCALCSIZE message to get new client area */
@@ -952,7 +962,10 @@ static BOOL WINPOS_InternalSetWindowPos( WINDOWPOS *winpos )
       /* And last, send the WM_WINDOWPOSCHANGED message */
 
     if (!(winpos->flags & SWP_NOSENDCHANGING))
-        SendMessage( winpos->hwnd, WM_WINDOWPOSCHANGED, 0, (LONG)winpos );
+        SendMessage( winpos->hwnd, WM_WINDOWPOSCHANGED, 0,
+                     USER_HEAP_SEG_ADDR(hWinPos) );
+
+    USER_HEAP_FREE( hWinPos );
     return TRUE;
 }
 
@@ -966,10 +979,9 @@ HDWP BeginDeferWindowPos( INT count )
     DWP *pDWP;
 
     if (count <= 0) return 0;
-    handle = USER_HEAP_ALLOC( GMEM_MOVEABLE,
-                              sizeof(DWP) + (count-1)*sizeof(WINDOWPOS) );
+    handle = USER_HEAP_ALLOC( sizeof(DWP) + (count-1)*sizeof(WINDOWPOS) );
     if (!handle) return 0;
-    pDWP = (DWP *) USER_HEAP_ADDR( handle );
+    pDWP = (DWP *) USER_HEAP_LIN_ADDR( handle );
     pDWP->actualCount    = 0;
     pDWP->suggestedCount = count;
     pDWP->valid          = TRUE;
@@ -989,7 +1001,7 @@ HDWP DeferWindowPos( HDWP hdwp, HWND hwnd, HWND hwndAfter, INT x, INT y,
     int i;
     HDWP newhdwp = hdwp;
 
-    pDWP = (DWP *) USER_HEAP_ADDR( hdwp );
+    pDWP = (DWP *) USER_HEAP_LIN_ADDR( hdwp );
     if (!pDWP) return 0;
 
       /* All the windows of a DeferWindowPos() must have the same parent */
@@ -1032,9 +1044,9 @@ HDWP DeferWindowPos( HDWP hdwp, HWND hwnd, HWND hwndAfter, INT x, INT y,
     if (pDWP->actualCount >= pDWP->suggestedCount)
     {
         newhdwp = USER_HEAP_REALLOC( hdwp,
-                      sizeof(DWP) + pDWP->suggestedCount*sizeof(WINDOWPOS), 0);
+                      sizeof(DWP) + pDWP->suggestedCount*sizeof(WINDOWPOS) );
         if (!newhdwp) return 0;
-        pDWP = (DWP *) USER_HEAP_ADDR( newhdwp );
+        pDWP = (DWP *) USER_HEAP_LIN_ADDR( newhdwp );
         pDWP->suggestedCount++;
     }
     pDWP->winPos[pDWP->actualCount].hwnd = hwnd;
@@ -1055,35 +1067,22 @@ HDWP DeferWindowPos( HDWP hdwp, HWND hwnd, HWND hwndAfter, INT x, INT y,
 BOOL EndDeferWindowPos( HDWP hdwp )
 {
     DWP *pDWP;
+    WINDOWPOS *winpos;
     BOOL res = TRUE;
     int i;
 
-    pDWP = (DWP *) USER_HEAP_ADDR( hdwp );
+    pDWP = (DWP *) USER_HEAP_LIN_ADDR( hdwp );
     if (!pDWP) return FALSE;
-    for (i = 0; i < pDWP->actualCount; i++)
+    for (i = 0, winpos = pDWP->winPos; i < pDWP->actualCount; i++, winpos++)
     {
-        if (!(res = WINPOS_InternalSetWindowPos( &pDWP->winPos[i] ))) break;
+        if (!(res = SetWindowPos( winpos->hwnd, winpos->hwndInsertAfter,
+                                  winpos->x, winpos->y, winpos->cx, winpos->cy,
+                                  winpos->flags ))) break;
     }
     USER_HEAP_FREE( hdwp );
     return res;
 }
 
-
-/***********************************************************************
- *           SetWindowPos   (USER.232)
- */
-BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
-		   INT cx, INT cy, WORD flags )
-{
-    HDWP hdwp;
-
-    dprintf_win(stddeb, "SetWindowPos: %04X %d %d,%d %dx%d 0x%x\n",
-            hwnd, hwndInsertAfter, x, y, cx, cy, flags );
-    if (!(hdwp = BeginDeferWindowPos( 1 ))) return FALSE;
-    if (!(hdwp = DeferWindowPos( hdwp, hwnd, hwndInsertAfter,
-                                 x, y, cx, cy, flags ))) return FALSE;
-    return EndDeferWindowPos( hdwp );
-}
 
 /***********************************************************************
  *           TileChildWindows   (USER.199)

@@ -102,6 +102,7 @@
 #undef DEBUG_FIXUP
 #undef DEBUG_FONT
 #undef DEBUG_GDI
+#undef DEBUG_GLOBAL
 #undef DEBUG_GRAPHICS
 #undef DEBUG_HEAP
 #undef DEBUG_ICON
@@ -110,6 +111,7 @@
 #undef DEBUG_KEYBOARD
 #undef DEBUG_LDT
 #undef DEBUG_LISTBOX
+#undef DEBUG_LOCAL
 #undef DEBUG_MALLOC
 #undef DEBUG_MCI
 #undef DEBUG_MCIANIM
@@ -135,6 +137,7 @@
 #undef DEBUG_RELAY
 #undef DEBUG_RESOURCE
 #undef DEBUG_SCROLL
+#undef DEBUG_SELECTOR
 #undef DEBUG_SELECTORS
 #undef DEBUG_STACK
 #undef DEBUG_STRESS
@@ -142,6 +145,7 @@
 #undef DEBUG_TASK
 #undef DEBUG_TEXT
 #undef DEBUG_TIMER
+#undef DEBUG_TOOLHELP
 #undef DEBUG_UTILITY
 #undef DEBUG_WIN
 #undef DEBUG_WINSOCK
@@ -174,6 +178,7 @@
 #define DEBUG_FIXUP
 #define DEBUG_FONT
 #define DEBUG_GDI
+#define DEBUG_GLOBAL
 #define DEBUG_GRAPHICS
 #define DEBUG_HEAP
 #define DEBUG_ICON
@@ -182,6 +187,7 @@
 #define DEBUG_KEYBOARD
 #define DEBUG_LDT
 #define DEBUG_LISTBOX
+#define DEBUG_LOCAL
 #define DEBUG_MALLOC
 #define DEBUG_MCI
 #define DEBUG_MCIANIM
@@ -207,6 +213,7 @@
 #define DEBUG_RELAY
 #define DEBUG_RESOURCE
 #define DEBUG_SCROLL
+#define DEBUG_SELECTOR
 #define DEBUG_SELECTORS
 #define DEBUG_STACK
 #define DEBUG_STRESS
@@ -214,6 +221,7 @@
 #define DEBUG_TASK
 #define DEBUG_TEXT
 #define DEBUG_TIMER
+#define DEBUG_TOOLHELP
 #define DEBUG_UTILITY
 #define DEBUG_WIN
 #define DEBUG_WINSOCK

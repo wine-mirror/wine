@@ -66,6 +66,7 @@ static char *TEXT_NextLine(HDC hdc, char *str, int *count, char *dest,
 		    i++;
 		i++;
 		*len = j;
+		(*count)--;
 		return (&str[i]);
 	    }
 	    dest[j++] = str[i++];
@@ -195,7 +196,7 @@ int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
 
     dprintf_text(stddeb,"DrawText: '%s', %d , [(%d,%d),(%d,%d)]\n", str, count,
 	   rect->left, rect->top, rect->right, rect->bottom);
-
+    
     if (count == -1) count = strlen(str);
     strPtr = str;
 

@@ -64,6 +64,14 @@
 #define  SC_EDX(dbg_mask)	(regval[RN_EDX] & dbg_mask)
 #define  SC_ECX(dbg_mask)	(regval[RN_ECX] & dbg_mask)
 #define  SC_EAX(dbg_mask)	(regval[RN_EAX] & dbg_mask)
+#define  SC_DI                  (regval[RN_EDI] & 0xffff)
+#define  SC_SI                  (regval[RN_ESI] & 0xffff)
+#define  SC_BP                  (regval[RN_EBP] & 0xffff)
+#define  SC_SP                  (regval[RN_ESP] & 0xffff)
+#define  SC_BX                  (regval[RN_EBX] & 0xffff)
+#define  SC_DX                  (regval[RN_EDX] & 0xffff)
+#define  SC_CX                  (regval[RN_ECX] & 0xffff)
+#define  SC_AX                  (regval[RN_EAX] & 0xffff)
 #define  SC_TRAPNO		regval[RN_TRAPNO]
 #define  SC_ERR			regval[RN_ERR]
 #define  SC_EIP(dbg_mask)	(regval[RN_EIP] & dbg_mask)

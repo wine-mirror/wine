@@ -1,13 +1,13 @@
 name	olesvr
-id	22
+id	21
 length	31
 #1 WEP
-2  pascal OleRegisterServer(ptr ptr ptr word word) OleRegisterServer(1 2 3 4 5)
-3  pascal OleRevokeServer(long) OleRevokeServer(1)
-4  pascal OleBlockServer(long) OleBlockServer(1)
-5  pascal OleUnblockServer(long ptr) OleUnblockServer(1 2)
-6  pascal OleRegisterServerDoc(long ptr ptr ptr) OleRegisterServerDoc(1 2 3 4)
-7  pascal OleRevokeServerDoc(long) OleRevokeServerDoc(1)
+2  pascal OleRegisterServer(ptr ptr ptr word word) OleRegisterServer
+3  pascal OleRevokeServer(long) OleRevokeServer
+4  pascal OleBlockServer(long) OleBlockServer
+5  pascal OleUnblockServer(long ptr) OleUnblockServer
+6  pascal OleRegisterServerDoc(long ptr ptr ptr) OleRegisterServerDoc
+7  pascal OleRevokeServerDoc(long) OleRevokeServerDoc
 #8 OLERENAMESERVERDOC
 #9 OLEREVERTSERVERDOC
 #10 OLESAVEDSERVERDOC

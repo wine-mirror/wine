@@ -18,6 +18,7 @@
 #include "cursor.h"
 #include "event.h"
 #include "message.h"
+#include "nonclient.h"
 #include "winpos.h"
 #include "color.h"
 #include "stddebug.h"
@@ -39,8 +40,7 @@ WND * WIN_FindWndPtr( HWND hwnd )
     WND * ptr;
     
     if (!hwnd) return NULL;
-    ptr = (WND *) USER_HEAP_ADDR( hwnd );
-    if (IsBadReadPtr(ptr, sizeof *ptr)) return NULL;
+    ptr = (WND *) USER_HEAP_LIN_ADDR( hwnd );
     if (ptr->dwMagic != WND_MAGIC) return NULL;
     return ptr;
 }
@@ -219,10 +219,9 @@ BOOL WIN_CreateDesktopWindow()
     if (!(hclass = CLASS_FindClassByName( DESKTOP_CLASS_NAME, 0, &classPtr )))
 	return FALSE;
 
-    hwndDesktop = USER_HEAP_ALLOC( GMEM_MOVEABLE,
-				   sizeof(WND)+classPtr->wc.cbWndExtra );
+    hwndDesktop = USER_HEAP_ALLOC( sizeof(WND)+classPtr->wc.cbWndExtra );
     if (!hwndDesktop) return FALSE;
-    wndPtr = (WND *) USER_HEAP_ADDR( hwndDesktop );
+    wndPtr = (WND *) USER_HEAP_LIN_ADDR( hwndDesktop );
 
     wndPtr->hwndNext          = 0;
     wndPtr->hwndChild         = 0;
@@ -272,7 +271,7 @@ BOOL WIN_CreateDesktopWindow()
  */
 HWND CreateWindow( LPSTR className, LPSTR windowName,
 		   DWORD style, short x, short y, short width, short height,
-		   HWND parent, HMENU menu, HANDLE instance, LPSTR data ) 
+		   HWND parent, HMENU menu, HANDLE instance, SEGPTR data ) 
 {
     return CreateWindowEx( 0, className, windowName, style,
 			   x, y, width, height, parent, menu, instance, data );
@@ -284,18 +283,18 @@ HWND CreateWindow( LPSTR className, LPSTR windowName,
  */
 HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 		     DWORD style, short x, short y, short width, short height,
-		     HWND parent, HMENU menu, HANDLE instance, LPSTR data ) 
+		     HWND parent, HMENU menu, HANDLE instance, SEGPTR data ) 
 {
     HANDLE class, hwnd;
     CLASS *classPtr;
     WND *wndPtr;
     POINT maxSize, maxPos, minTrack, maxTrack;
     CREATESTRUCT *createStruct;
-    HANDLE hcreateStruct;
+    HANDLE hcreateStruct, hwinName, hclassName;
     int wmcreate;
     XSetWindowAttributes win_attr;
 
-    dprintf_win(stddeb, "CreateWindowEx: %08lX '%s' '%s' %08lX %d,%d %dx%d %04X %04X %04X %p\n",
+    dprintf_win(stddeb, "CreateWindowEx: %08lX '%s' '%s' %08lX %d,%d %dx%d %04X %04X %04X %08lx\n",
 				exStyle, className, windowName, style, x, y, width, height, 
 				parent, menu, instance, data);
 	/* 'soundrec.exe' has negative position ! 
@@ -336,12 +335,12 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
 
       /* Create the window structure */
 
-    hwnd = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(WND)+classPtr->wc.cbWndExtra);
+    hwnd = USER_HEAP_ALLOC( sizeof(WND)+classPtr->wc.cbWndExtra );
     if (!hwnd) return 0;
 
       /* Fill the structure */
 
-    wndPtr = (WND *) USER_HEAP_ADDR( hwnd );
+    wndPtr = (WND *) USER_HEAP_LIN_ADDR( hwnd );
     wndPtr->hwndNext   = 0;
     wndPtr->hwndChild  = 0;
     wndPtr->window     = 0;
@@ -442,25 +441,21 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
         GlobalUnlock( hCursor );
     }
     
-    dprintf_menu(stddeb,"CreateWindowEx // menu=%04X instance=%04X classmenu=%p !\n", 
-    	menu, instance, classPtr->wc.lpszMenuName);
-
-	if ((style & WS_CAPTION) && (style & WS_CHILD) == 0) {
-		if (menu != 0)
-			SetMenu(hwnd, menu);
-		else {
-			if (classPtr->wc.lpszMenuName != NULL)
-				SetMenu(hwnd, LoadMenu(instance, classPtr->wc.lpszMenuName));
-			}
-		}
-	else
-		wndPtr->wIDmenu   = menu;
+    if ((style & WS_CAPTION) && !(style & WS_CHILD))
+    {
+        if (menu) SetMenu(hwnd, menu);
+        else if (classPtr->wc.lpszMenuName)
+            SetMenu(hwnd,LoadMenu(instance,(SEGPTR)classPtr->wc.lpszMenuName));
+    }
+    else wndPtr->wIDmenu = menu;
 
       /* Send the WM_CREATE message */
 
-    hcreateStruct = USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(CREATESTRUCT) );
-    createStruct = (CREATESTRUCT *) USER_HEAP_ADDR( hcreateStruct );
-    createStruct->lpCreateParams = data;
+    hcreateStruct = USER_HEAP_ALLOC( sizeof(CREATESTRUCT) );
+    hclassName = USER_HEAP_ALLOC( strlen(className)+1 );
+    strcpy( USER_HEAP_LIN_ADDR(hclassName), className );
+    createStruct = (CREATESTRUCT *) USER_HEAP_LIN_ADDR( hcreateStruct );
+    createStruct->lpCreateParams = (LPSTR)data;
     createStruct->hInstance      = instance;
     createStruct->hMenu          = menu;
     createStruct->hwndParent     = parent;
@@ -469,20 +464,34 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     createStruct->x              = x;
     createStruct->y              = y;
     createStruct->style          = style;
-    createStruct->lpszName       = windowName;
-    createStruct->lpszClass      = className;
+    createStruct->lpszClass      = (LPSTR)USER_HEAP_SEG_ADDR(hclassName);
     createStruct->dwExStyle      = 0;
+    if (windowName)
+    {
+        hwinName = USER_HEAP_ALLOC( strlen(windowName)+1 );
+        strcpy( USER_HEAP_LIN_ADDR(hwinName), windowName );
+        createStruct->lpszName = (LPSTR)USER_HEAP_SEG_ADDR(hwinName);
+    }
+    else
+    {
+        hwinName = 0;
+        createStruct->lpszName = NULL;
+    }
 
-    wmcreate = SendMessage( hwnd, WM_NCCREATE, 0, (LONG)createStruct );
+    wmcreate = SendMessage( hwnd, WM_NCCREATE, 0,
+                            USER_HEAP_SEG_ADDR(hcreateStruct) );
     if (!wmcreate) wmcreate = -1;
     else
     {
 	WINPOS_SendNCCalcSize( hwnd, FALSE, &wndPtr->rectWindow,
 			       NULL, NULL, NULL, &wndPtr->rectClient );
-	wmcreate = SendMessage( hwnd, WM_CREATE, 0, (LONG)createStruct );
+	wmcreate = SendMessage( hwnd, WM_CREATE, 0,
+                                USER_HEAP_SEG_ADDR(hcreateStruct) );
     }
 
     USER_HEAP_FREE( hcreateStruct );
+    USER_HEAP_FREE( hclassName );
+    if (hwinName) USER_HEAP_FREE( hwinName );
 
     if (wmcreate == -1)
     {
@@ -612,7 +621,7 @@ HWND FindWindow(LPSTR ClassMatch, LPSTR TitleMatch)
 	    if (!TitleMatch) return hwnd;
 	    if (wndPtr->hText)
 	    {
-		char *textPtr = (char *) USER_HEAP_ADDR( wndPtr->hText );
+		char *textPtr = (char *) USER_HEAP_LIN_ADDR( wndPtr->hText );
 		if (!strcmp( textPtr, TitleMatch )) return hwnd;
 	    }
 	}
@@ -725,19 +734,7 @@ LONG GetWindowLong( HWND hwnd, short offset )
     {
 	case GWL_STYLE:   return wndPtr->dwStyle;
         case GWL_EXSTYLE: return wndPtr->dwExStyle;
-	case GWL_WNDPROC: 
-		if (!IS_16_BIT_ADDRESS(wndPtr->lpfnWndProc))
-		{
-		   /* The window procedure is part of Wine.
-		      Unfortunately, MS-Windows programs can't access these
-		      adresses.
-                      FIXME: There should be a jump table somewhere in if1632
-		   */
-		   long x=pStack16Frame->cs<<16 | 0x0010;
-		   /* Just to make Borland's OWL happy */
-		   return x;
-		}
-	        else return (LONG)wndPtr->lpfnWndProc;
+	case GWL_WNDPROC: return (LONG)wndPtr->lpfnWndProc;
     }
     return 0;
 }
@@ -771,27 +768,55 @@ LONG SetWindowLong( HWND hwnd, short offset, LONG newval )
 /*******************************************************************
  *         GetWindowText          (USER.36)
  */
-int GetWindowText(HWND hwnd, LPSTR lpString, int nMaxCount)
+int WIN16_GetWindowText( HWND hwnd, SEGPTR lpString, int nMaxCount )
 {
     return (int)SendMessage(hwnd, WM_GETTEXT, (WORD)nMaxCount, 
 			                      (DWORD)lpString);
 }
 
+int GetWindowText( HWND hwnd, LPSTR lpString, int nMaxCount )
+{
+    int len;
+    HANDLE handle;
+
+      /* We have to allocate a buffer on the USER heap */
+      /* to be able to pass its address to 16-bit code */
+    if (!(handle = USER_HEAP_ALLOC( nMaxCount ))) return 0;
+    len = (int)SendMessage( hwnd, WM_GETTEXT, (WORD)nMaxCount, 
+                            USER_HEAP_SEG_ADDR(handle) );
+    strncpy( lpString, USER_HEAP_LIN_ADDR(handle), nMaxCount );
+    USER_HEAP_FREE( handle );
+    return len;
+}
+
+
 /*******************************************************************
  *         SetWindowText          (USER.37)
  */
-void SetWindowText(HWND hwnd, LPSTR lpString)
+void WIN16_SetWindowText( HWND hwnd, SEGPTR lpString )
 {
-    SendMessage(hwnd, WM_SETTEXT, (WORD)NULL, (DWORD)lpString);
+    SendMessage( hwnd, WM_SETTEXT, 0, (DWORD)lpString );
 }
+
+void SetWindowText( HWND hwnd, LPSTR lpString )
+{
+    HANDLE handle;
+
+      /* We have to allocate a buffer on the USER heap */
+      /* to be able to pass its address to 16-bit code */
+    if (!(handle = USER_HEAP_ALLOC( strlen(lpString)+1 ))) return;
+    strcpy( USER_HEAP_LIN_ADDR(handle), lpString );
+    SendMessage( hwnd, WM_SETTEXT, 0, USER_HEAP_SEG_ADDR(handle) );
+    USER_HEAP_FREE( handle );
+}
+
 
 /*******************************************************************
  *         GetWindowTextLength    (USER.38)
  */
 int GetWindowTextLength(HWND hwnd)
 {
-    return (int)SendMessage(hwnd, WM_GETTEXTLENGTH, (WORD)NULL, 
-			                            (DWORD)NULL);
+    return (int)SendMessage(hwnd, WM_GETTEXTLENGTH, 0, 0 );
 }
 
 

@@ -28,10 +28,7 @@ typedef struct
 #ifdef WINELIB
 #define LocalAlign(flags,bytes) LocalAlloc (flags|LMEM_WINE_ALIGN,bytes)
 #else
-#define LocalAlign(flags,bytes) WIN16_LocalAlloc((flags),(bytes))
-#define LocalAlloc		WIN16_LocalAlloc
-#define LocalLock		WIN16_LocalLock
-#define LocalFree		WIN16_LocalFree
+#define LocalAlign(flags,bytes) LocalAlloc((flags),(bytes))
 #endif
 
 #endif  /* ATOM_H */

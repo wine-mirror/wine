@@ -11,6 +11,10 @@ int do_int2f_16(struct sigcontext_struct *context);
 
 int do_int2f(struct sigcontext_struct *context)
 {
+        dprintf_int(stddeb,"int2f: AX %04x, BX %04x, CX %04x, DX %04x, "
+               "SI %04x, DI %04x, DS %04x, ES %04x\n",
+               AX, BX, CX, DX, SI, DI, DS, ES);
+
 	switch((context->sc_eax >> 8) & 0xff)
 	{
 	case 0x10: /* share is installed */

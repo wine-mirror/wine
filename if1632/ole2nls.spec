@@ -1,5 +1,5 @@
 name	ole2nls
-id	19
+id	18
 length	11
 #1 GETUSERDEFAULTLCID
 #2 GETSYSTEMDEFAULTLCID

@@ -8,7 +8,6 @@ extern int CallToInit16(unsigned long csip, unsigned long sssp,
 extern int CallTo16cx(unsigned long csip, unsigned long dscx);
 extern int CallToDllEntry(unsigned long csip, unsigned long dscx, unsigned short di);
 extern int CallBack16(void *func, int n_args, ...);
-extern void *CALLBACK_MakeProcInstance(void *func, int instance);
 extern void CallLineDDAProc(FARPROC func, short xPos, short yPos, long lParam);
 extern void winestat(void);
 extern int DLLRelay(unsigned int func_num, unsigned int seg_off);

@@ -145,7 +145,7 @@ HBRUSH CreateBrushIndirect( LOGBRUSH * brush )
     BRUSHOBJ * brushPtr;
     HBRUSH hbrush = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC );
     if (!hbrush) return 0;
-    brushPtr = (BRUSHOBJ *) GDI_HEAP_ADDR( hbrush );
+    brushPtr = (BRUSHOBJ *) GDI_HEAP_LIN_ADDR( hbrush );
     memcpy( &brushPtr->logbrush, brush, sizeof(LOGBRUSH) );
     return hbrush;
 }

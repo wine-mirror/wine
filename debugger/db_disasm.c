@@ -72,6 +72,7 @@
 #endif
 #include <stdio.h>
 #include "db_disasm.h"
+#include "ldt.h"
 
 /*
  * Switch to disassemble 16-bit code.
@@ -888,9 +889,10 @@ static int db_lengths[] = {
 	10,	/* EXTR */
 };
 
-unsigned int db_get_task_value(unsigned int loc, int size, int is_signed)
+static unsigned int db_get_task_value(unsigned int loc, int size, int is_signed)
 {
   unsigned int result;
+  if (db_disasm_16) loc = (unsigned int)PTR_SEG_TO_LIN(loc);
   switch(size)
     {
     case 4:
@@ -921,7 +923,8 @@ unsigned int db_get_task_value(unsigned int loc, int size, int is_signed)
 
 #define	get_value_inc(result, loc, size, is_signed) \
 	result = db_get_task_value((loc), (size), (is_signed)); \
-	(loc) += (size);
+        if (!db_disasm_16) (loc) += (size); \
+        else (loc) = ((loc) & 0xffff0000) | (((loc) + (size)) & 0xffff);
 
 /*
  * Read address at location and return updated location.
@@ -1011,6 +1014,23 @@ db_read_address(loc, short_addr, regmodrm, addrp)
 	return (loc);
 }
 
+static void db_task_printsym(unsigned int addr, int size)
+{
+    extern void print_address(unsigned int addr, FILE * outfile, int addrlen);
+    switch(size)
+    {
+    case BYTE:
+        fprintf(stderr, "0x%2.2x", addr & 0xff );
+        break;
+    case WORD:
+        fprintf(stderr, "0x%4.4x", addr & 0xffff );
+        break;
+    case LONG:
+        print_address(addr, stderr, db_disasm_16 ? 16 : 32);
+        break;
+    }
+}
+
 void
 db_print_address(seg, size, addrp)
 	char *		seg;
@@ -1035,7 +1055,7 @@ db_print_address(seg, size, addrp)
 		fprintf(stderr,",%s,%d", addrp->index, 1<<addrp->ss);
 	    fprintf(stderr,")");
 	} else
-	    db_task_printsym((db_addr_t)addrp->disp);
+	    db_task_printsym((db_addr_t)addrp->disp, size);
 }
 
 /*
@@ -1418,7 +1438,8 @@ db_disasm(loc, altfmt, flag16)
 		    if (seg)
 			fprintf(stderr,"%s:%d",seg, displ);
 		    else
-			db_task_printsym((db_addr_t)displ);
+			db_task_printsym((db_addr_t)displ,
+                                         short_addr ? WORD : LONG);
 		    break;
 
 		case Db:
@@ -1430,7 +1451,8 @@ db_disasm(loc, altfmt, flag16)
 		    }
 		    else
 			displ = displ + loc;
-		    db_task_printsym((db_addr_t)displ);
+		    db_task_printsym((db_addr_t)displ,
+                                     short_addr ? WORD : LONG);
 		    break;
 
 		case Dl:
@@ -1444,7 +1466,8 @@ db_disasm(loc, altfmt, flag16)
 			get_value_inc(displ, loc, 4, TRUE);
 			displ = displ + loc;
 		    }
-		    db_task_printsym((db_addr_t)displ);
+		    db_task_printsym((db_addr_t)displ,
+                                     short_addr ? WORD : LONG);
 		    break;
 
 		case o1:

@@ -19,7 +19,6 @@
 #include <errno.h>
 #include <netdb.h>
 #include <unistd.h>
-#include "heap.h"
 #include "winsock.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -883,7 +882,6 @@ WSADATA WINSOCK_data = {
 INT WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
 {
     int HeapHandle;
-    MDESC *MyHeap;
 
     dprintf_winsock(stddeb, "WSAStartup: verReq=%x\n", wVersionRequested);
 
@@ -901,9 +899,6 @@ INT WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
 	return WSASYSNOTREADY;
 
     heap = (struct WinSockHeap *) GlobalLock(HeapHandle);
-#ifndef WINELIB
-    HEAP_Init(&MyHeap, heap, sizeof(struct WinSockHeap));
-#endif
     bcopy(&WINSOCK_data, lpWSAData, sizeof(WINSOCK_data));
 
     /* ipc stuff */

@@ -109,9 +109,9 @@ static SCROLLINFO *SCROLL_GetScrollInfo( HWND hwnd, int nBar )
 
     if (!handle)  /* Create the info structure if needed */
     {
-        if ((handle = USER_HEAP_ALLOC( GMEM_MOVEABLE, sizeof(SCROLLINFO) )))
+        if ((handle = USER_HEAP_ALLOC( sizeof(SCROLLINFO) )))
         {
-            SCROLLINFO *infoPtr = (SCROLLINFO *) USER_HEAP_ADDR( handle );
+            SCROLLINFO *infoPtr = (SCROLLINFO *) USER_HEAP_LIN_ADDR( handle );
             infoPtr->MinVal = infoPtr->CurVal = 0;
             infoPtr->MaxVal = 100;
             infoPtr->flags  = ESB_ENABLE_BOTH;
@@ -120,7 +120,7 @@ static SCROLLINFO *SCROLL_GetScrollInfo( HWND hwnd, int nBar )
         }
         if (!hUpArrow) SCROLL_LoadBitmaps();
     }
-    return (SCROLLINFO *) USER_HEAP_ADDR( handle );
+    return (SCROLLINFO *) USER_HEAP_LIN_ADDR( handle );
 }
 
 
@@ -204,7 +204,7 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, int nBar, RECT *lprect,
  * from the top of the scroll-bar.
  */
 static UINT SCROLL_GetThumbVal( SCROLLINFO *infoPtr, RECT *rect,
-                                WORD arrowSize, BOOL vertical, WORD pos )
+                                BOOL vertical, WORD pos )
 {
     int pixels = vertical ? rect->bottom-rect->top : rect->right-rect->left;
     if ((pixels -= 3*SYSMETRICS_CXVSCROLL+1) <= 0) return infoPtr->MinVal;
@@ -631,7 +631,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
                 SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize,
                                        trackThumbPos + pos - lastClickPos );
                 lastMousePos = pos;
-                val = SCROLL_GetThumbVal( infoPtr, &rect, vertical, arrowSize,
+                val = SCROLL_GetThumbVal( infoPtr, &rect, vertical,
                                  trackThumbPos + lastMousePos - lastClickPos );
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              SB_THUMBTRACK, MAKELONG( val, hwndCtl ));
@@ -673,7 +673,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
     {
         if (trackHitTest == SCROLL_THUMB)
         {
-            UINT val = SCROLL_GetThumbVal( infoPtr, &rect, vertical, arrowSize,
+            UINT val = SCROLL_GetThumbVal( infoPtr, &rect, vertical,
                                  trackThumbPos + lastMousePos - lastClickPos );
             SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                          SB_THUMBPOSITION, MAKELONG( val, hwndCtl ) );
@@ -697,7 +697,7 @@ LONG ScrollBarWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
     {
     case WM_CREATE:
         {
-	    CREATESTRUCT *lpCreat = (CREATESTRUCT *)lParam;
+	    CREATESTRUCT *lpCreat = (CREATESTRUCT *)PTR_SEG_TO_LIN(lParam);
             if (lpCreat->style & SBS_SIZEBOX)
             {
                 fprintf( stdnimp, "Unimplemented style SBS_SIZEBOX.\n" );

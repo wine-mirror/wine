@@ -3,7 +3,7 @@
 #include <string.h>
 #include "registers.h"
 #include "msdos.h"
-#include "segmem.h"
+#include "ldt.h"
 #include "wine.h"
 #include "miscemu.h"
 #include "stddebug.h"
@@ -12,13 +12,13 @@
 
 int do_int25(struct sigcontext_struct *context)
 {
-	BYTE *dataptr = SAFEMAKEPTR(DS, BX);
+	BYTE *dataptr = PTR_SEG_OFF_TO_LIN(DS, BX);
 	DWORD begin, length;
 
 	if (CX == 0xffff) {
 		begin = getdword(dataptr);
 		length = getword(&dataptr[4]);
-		dataptr = (BYTE *) getdword(&dataptr[6]);
+		dataptr = (BYTE *) PTR_SEG_TO_LIN(getdword(&dataptr[6]));
 			
 	} else {
 		begin = DX;
@@ -39,7 +39,7 @@ int do_int25(struct sigcontext_struct *context)
 
 	/* push flags on stack */
 	SP -= sizeof(WORD);
-	setword(SAFEMAKEPTR(SS,SP), (WORD) EFL);
+	setword(PTR_SEG_OFF_TO_LIN(SS,SP), (WORD) EFL);
 
 	return 1;
 }

@@ -133,11 +133,7 @@ struct relocation_entry_s
 #define NE_RELTYPE_ORDINAL	1
 #define NE_RELTYPE_NAME		2
 #define NE_RELTYPE_OSFIXUP	3
-/* Used by Windows 3.0 programs, like when getting selector to be
-   given to makeprocinst */
-#define NE_RELTYPE_INT1		4
-#define NE_RELTYPE_ORDINALADD	5
-#define NE_RELTYPE_NAMEADD	6
+#define NE_RELFLAG_ADDITIVE	4
 
 /*
  * DOS PSP

@@ -6,6 +6,7 @@
 #include <sys/utsname.h>
 #endif
 #include <windows.h>
+#include "db_disasm.h"
 
 #define N_BP 25
 
@@ -140,7 +141,7 @@ void toggle_next(int num)
    unsigned int addr;
    addr=wbp[num].addr;
    if(wbp[num].next_addr == 0)
-	wbp[num].next_addr=addr+print_insn(addr,addr,stderr,dbg_mode);
+	wbp[num].next_addr = db_disasm( addr, 0, (dbg_mode == 16) );
    wbp[num].addr=wbp[num].next_addr;
    wbp[num].next_addr=addr;
 }

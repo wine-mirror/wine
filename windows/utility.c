@@ -13,6 +13,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include "windows.h"
+#include "ldt.h"
 #include "stddebug.h"
 /* #define DEBUG_UTILITY */
 #include "debug.h"
@@ -246,7 +247,7 @@ char *UTILITY_convertArgs(char *format, char *winarg)
 				case 's':
 				case 'p':
 				case 'n':	/* A pointer, is a pointer, is a pointer... */
-					*(((char **)rptr)++) = *(((char **)winarg)++);
+					*(((char **)rptr)++) = (char *)PTR_SEG_TO_LIN(*(((char **)winarg)++));
 					break;
 				case 'e':
 				case 'E':
@@ -269,72 +270,88 @@ char *UTILITY_convertArgs(char *format, char *winarg)
 #ifndef WINELIB
 INT windows_wsprintf(BYTE *win_stack)
 {
-	LPSTR lpOutput, lpFormat, ptr;
-	BYTE new_stack[1024], *stack_ptr;
+    LPSTR lpOutput, lpFormat, ptr;
+    BYTE new_stack[1024], *stack_ptr;
+    BOOL fLarge;
 
-	lpOutput = (LPSTR) *(DWORD*)win_stack;
-	win_stack += 4;
-	lpFormat = (LPSTR) *(DWORD*)win_stack;
-	win_stack += 4;
+    lpOutput = (LPSTR) PTR_SEG_TO_LIN(*(DWORD*)win_stack);
+    win_stack += sizeof(DWORD);
+    lpFormat = (LPSTR) PTR_SEG_TO_LIN(*(DWORD*)win_stack);
+    win_stack += sizeof(DWORD);
 
-	/* create 32-bit stack for libc's vsprintf() */
+      /* create 32-bit stack for libc's vsprintf() */
 
-	for (ptr = lpFormat, stack_ptr = new_stack; *ptr; ptr++) {
-		if (*ptr != '%' || *++ptr == '%')
-			continue;
+    for (ptr = lpFormat, stack_ptr = new_stack; *ptr; ptr++)
+    {
+        if (*ptr != '%' || *++ptr == '%')
+            continue;
 
-		/* skip width/precision */
-		while (*ptr == '-' || *ptr == '+' || *ptr == '.' ||
-		       *ptr == ' ' || isdigit(*ptr) || *ptr == '#')
-			ptr++;
-			
-		switch (*ptr) {
-			case 's':
-				*(DWORD*)stack_ptr = *(DWORD*)win_stack;
-				stack_ptr += 4;
- 				win_stack += 4;
-				break;
-			case 'l':
-				*(DWORD*)stack_ptr = *(DWORD*)win_stack;
-				stack_ptr += 4;
-				win_stack += 4;
-				ptr++; /* skip next type character */
-				break;
-			case 'c':
+        /* skip width/precision */
+        while (*ptr == '-' || *ptr == '+' || *ptr == '.' ||
+               *ptr == ' ' || isdigit(*ptr) || *ptr == '#')
+            ptr++;
+
+        /* handle modifier */
+        fLarge = ((*ptr == 'l') || (*ptr == 'L'));
+        if (fLarge) ptr++;
+
+        switch (*ptr)
+        {
+        case 's':
+            *(char**)stack_ptr = (char *)PTR_SEG_TO_LIN(*(DWORD*)win_stack);
+            stack_ptr += sizeof(char *);
+            win_stack += sizeof(DWORD);
+            break;
+
+        case 'c':
 	
 /* windows' wsprintf() %c ignores 0's, we replace 0 with SPACE to make sure
    that the remaining part of the string isn't ignored by the winapp */
 				
-				if (*(WORD*)win_stack)
-					*(DWORD*)stack_ptr = *(WORD*)win_stack;
-				else
-					*(DWORD*)stack_ptr = ' ';
-				stack_ptr += 4;
-				win_stack += 2;
-				break;
-			case 'd':
-			case 'i':
-				*(int*)stack_ptr = *(INT*)win_stack;
-				stack_ptr += 4;
-				win_stack += 2;
-				break;
-			case 'u':
-			case 'x':
-			case 'X':
-				*(DWORD*)stack_ptr = *(WORD*)win_stack;
-				stack_ptr += 4;
-				win_stack += 2;
-				break;
-			default:
-				*(DWORD*)stack_ptr = 0;
-				stack_ptr += 4;
-				win_stack += 4;
-				fprintf(stderr, "wsprintf: oops, unknown formattype %c used!\n", *ptr);
-				break;
-		}
-	}
+            if (*(WORD*)win_stack)
+                *(DWORD*)stack_ptr = *(WORD*)win_stack;
+            else
+                *(DWORD*)stack_ptr = ' ';
+            stack_ptr += sizeof(DWORD);
+            win_stack += sizeof(WORD);
+            break;
 
-	return vsprintf(lpOutput, lpFormat, new_stack);
+        case 'd':
+        case 'i':
+            if (!fLarge)
+            {
+                *(int*)stack_ptr = *(INT*)win_stack;
+                stack_ptr += sizeof(int);
+                win_stack += sizeof(INT);
+                break;
+            }
+            /* else fall through */
+        case 'u':
+        case 'x':
+        case 'X':
+            if (fLarge)
+            {
+                *(DWORD*)stack_ptr = *(DWORD*)win_stack;
+                win_stack += sizeof(DWORD);
+            }
+            else
+            {
+                *(DWORD*)stack_ptr = *(WORD*)win_stack;
+                win_stack += sizeof(WORD);
+            }
+            stack_ptr += sizeof(DWORD);
+            break;
+
+        default:
+            *(DWORD*)stack_ptr = 0;
+            stack_ptr += sizeof(DWORD);
+            win_stack += sizeof(WORD);
+            fprintf(stderr, "wsprintf: oops, unknown formattype %c used!\n", *ptr);
+            break;
+        }
+    }
+
+    return vsprintf(lpOutput, lpFormat, new_stack);
 }
 #endif
 

@@ -33,7 +33,7 @@ OLESTATUS WINAPI OleRegisterClientDoc(
  */
 OLESTATUS WINAPI OleRenameClientDoc(LHCLIENTDOC hDoc, LPCSTR newName)
 {
-    dprintf_ole(stdnimp,"OleRenameClientDoc: %d %s\n",hDoc, newName);
+    dprintf_ole(stdnimp,"OleRenameClientDoc: %ld %s\n",hDoc, newName);
     return OLE_OK;
 }
 
@@ -42,6 +42,6 @@ OLESTATUS WINAPI OleRenameClientDoc(LHCLIENTDOC hDoc, LPCSTR newName)
  */
 OLESTATUS WINAPI OleRevokeClientDoc(LHCLIENTDOC hServerDoc)
 {
-    dprintf_ole(stdnimp,"OleRevokeClientDoc:%d\n",hServerDoc);
+    dprintf_ole(stdnimp,"OleRevokeClientDoc:%ld\n",hServerDoc);
     return OLE_OK;
 }

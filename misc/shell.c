@@ -48,7 +48,8 @@ static LONG SHELL_RegCheckForRoot()
       lphTopKey->lpSubKey = TopKeyName;
       lphTopKey->dwType = 0;
       lphTopKey->lpValue = NULL;
-      lphTopKey->lpSubLvl = lphRootKey; lphTopKey->lpNextKey = lphTopKey->lpPrevKey = NULL;
+      lphTopKey->lpSubLvl = lphRootKey;
+      lphTopKey->lpNextKey = lphTopKey->lpPrevKey = NULL;
 
       dprintf_reg(stddeb,"SHELL_RegCheckForRoot: Root/Top created\n");
     }
@@ -403,7 +404,7 @@ INT AboutDlgProc(HWND hWnd, WORD msg, WORD wParam, LONG lParam)
         case WM_INITDIALOG:
 		sprintf(temp, "About %s", AppName);
 		SetWindowText(hWnd, temp);
-		SetDlgItemText(hWnd, 100, AppMisc);
+                SetWindowText(GetDlgItem(hWnd,100), AppMisc );
 		break;
 
         case WM_COMMAND:

@@ -51,6 +51,8 @@ INT _lopen (LPSTR lpPathName, INT iReadWrite)
   	return HFILE_ERROR;
   iReadWrite &= 0x000F;
   handle =  open (UnixFileName, iReadWrite);
+  if( ( handle == -1 ) && Options.allowReadOnly )
+    handle = open( UnixFileName, O_RDONLY );
 
   dprintf_file(stddeb, "_lopen: open: %s (handle %d)\n", UnixFileName, handle);
 
@@ -244,11 +246,12 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
    /* Now we are actually going to open the file. According to Microsoft's
        Knowledge Basis, this is done by calling int 21h, ax=3dh. */    
 
+#if 0
     AX = 0x3d00;
     AL = (AL & 0x0f) | (wStyle & 0x70); /* Handle OF_SHARE_xxx etc. */
     AL = (AL & 0xf0) | (wStyle & 0x03); /* Handle OF_READ etc. */
-    DS = segment (ofs->szPathName);
-    DX = offset (ofs->szPathName);
+    DS = SELECTOROF(ofs->szPathName);
+    DX = OFFSETOF(ofs->szPathName);
   
     OpenExistingFile (context);
 
@@ -259,6 +262,25 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
       }
 
     return AX;
+#endif
+      /* FIXME: Quick hack to get it to work without calling DOS  --AJ */
+    {
+        int mode, handle;
+        switch(wStyle & 3)
+        {
+            case 0: mode = O_RDONLY; break;
+            case 1: mode = O_WRONLY; break;
+            default: mode = O_RDWR; break;
+        }
+        if ((handle = open(DOS_GetUnixFileName(ofs->szPathName), mode)) == -1)
+        {
+            ofs->nErrCode = 2;  /* not found */
+            return -1;
+        }
+          /* don't bother with locking for now */
+
+        return handle;
+    }
 #endif /*WINELIB*/
 }
 

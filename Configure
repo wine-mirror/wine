@@ -194,11 +194,6 @@ else
 	fi
 fi
 
-if grep -s seg_not_present /usr/include/linux/ldt.h 2> /dev/null
-then
-	ALLDEFINES="$ALLDEFINES -DNEW_LDT_STRUCT"
-fi
-
 cat > autoconf.h << EOF
 /* autoconf.h generated automatically.  Run Configure. */
 $WINELIB

@@ -8,7 +8,7 @@
 #define HOOK_H
 
 #include "windows.h"
-#include "user.h"
+#include "ldt.h"
 
   /* Hook data (pointed to by a HHOOK) */
 typedef struct
@@ -26,7 +26,8 @@ typedef struct
 #define SYSTEM_HOOK(id)  (systemHooks[(id)-FIRST_HOOK])
 #define TASK_HOOK(id)    (taskHooks[(id)-FIRST_HOOK])
 #define INTERNAL_CALL_HOOK(hhook,code,wparam,lparam) \
-    ((hhook) ? CallHookProc(((HOOKDATA*)(hhook))->proc,code,wparam,lparam) : 0)
+    ((hhook) ? CallHookProc(((HOOKDATA*)PTR_SEG_TO_LIN(hhook))->proc,\
+                            code, wparam, lparam) : 0)
 
 #define CALL_SYSTEM_HOOK(id,code,wparam,lparam) \
     INTERNAL_CALL_HOOK(SYSTEM_HOOK(id),code,wparam,lparam)

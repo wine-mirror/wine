@@ -10,12 +10,12 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <fcntl.h>
 #include <unistd.h>
 #include "windows.h"
+#include "ldt.h"
 #include "neexe.h"
 #include "peexe.h"
 #include "arch.h"
 #include "dlls.h"
 #include "library.h"
-#include "heap.h"
 #include "resource.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -75,7 +75,7 @@ static void NE_LoadNameTable(struct w_files *wpnt)
 		read(wpnt->fd, &len, sizeof(len));
 		while (len)
 		{
-		    new = (RESNAMTAB *) GlobalQuickAlloc(sizeof(*new));
+		    new = (RESNAMTAB *) GlobalLock(GlobalAlloc(GMEM_MOVEABLE,sizeof(*new)));
 		    new->next = top;
 		    top = new;
 
@@ -337,12 +337,13 @@ int GetRsrcCount(HINSTANCE hInst, int type_id)
 /**********************************************************************
  *			NE_FindResource	[KERNEL.60]
  */
-int NE_FindResource(HANDLE instance, LPSTR resource_name, LPSTR type_name,
-		RESOURCE *r)
+int NE_FindResource(HANDLE instance, SEGPTR resource_name, SEGPTR type_name,
+                    RESOURCE *r)
 {
     int type, x;
+    char *type_name_ptr, *resource_name_ptr;
 
-    dprintf_resource(stddeb, "NE_FindResource hInst=%04X typename=%p resname=%p\n", 
+    dprintf_resource(stddeb, "NE_FindResource hInst=%04X typename=%08lx resname=%08lx\n", 
 			instance, type_name, resource_name);
 
     r->size = r->offset = 0;
@@ -351,30 +352,32 @@ int NE_FindResource(HANDLE instance, LPSTR resource_name, LPSTR type_name,
     if (r->wpnt->ne->resnamtab == NULL)
 	NE_LoadNameTable(r->wpnt);
 
-    if (((int) type_name & 0xffff0000) == 0)
+    if (HIWORD(type_name) == 0)
 	type = (int) type_name;
     else {
-    	if (type_name[0] == '\0')
+        type_name_ptr = PTR_SEG_TO_LIN( type_name );
+    	if (type_name_ptr[0] == '\0')
 		type = -1;
-    	if (type_name[0] == '#')
-		type = atoi(type_name + 1);
+    	if (type_name_ptr[0] == '#')
+		type = atoi(type_name_ptr + 1);
 	    else
-    		type = (int) type_name;
+    		type = (int) type_name_ptr;
     }
 
-    if (((int) resource_name & 0xffff0000) == 0)
-	x = FindResourceByNumber(r, type, (int) resource_name | 0x8000);
+    if (HIWORD(resource_name) == 0)
+	x = FindResourceByNumber(r, type, LOWORD(resource_name) | 0x8000);
     else {
-	if (resource_name[0] == '\0')
+        resource_name_ptr = PTR_SEG_TO_LIN( resource_name );
+	if (resource_name_ptr[0] == '\0')
 		x = FindResourceByNumber(r, type, -1);
-	if (resource_name[0] == '#')
-		x = FindResourceByNumber(r, type, atoi(resource_name + 1));
+	if (resource_name_ptr[0] == '#')
+		x = FindResourceByNumber(r, type, atoi(resource_name_ptr + 1));
 	else
-		x = FindResourceByName(r, type, resource_name);
+		x = FindResourceByName(r, type, resource_name_ptr);
     }
     if (x == -1) {
-        printf("NE_FindResource hInst=%04X typename=%08X resname=%08X not found!\n", 
-		instance, (int) type_name, (int) resource_name);
+        printf("NE_FindResource hInst=%04x typename=%p resname=%p not found!\n", 
+		instance, type_name_ptr, resource_name_ptr);
 	return 0;
     }
     return 1;

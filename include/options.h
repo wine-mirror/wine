@@ -17,6 +17,8 @@ struct options
     int    backingstore;    /* Use backing store */
     short  cmdShow;
     int    debug;
+    int    allowReadOnly;   /* Opening a read only file will succeed even
+			       if write access is requested */
 };
 
 extern struct options Options;

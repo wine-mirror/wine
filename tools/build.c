@@ -30,12 +30,11 @@
 #define VARTYPE_LONG	2
 #define VARTYPE_FARPTR	3
 
-#define FUNCTYPE_PASCAL_16	15
-#define FUNCTYPE_PASCAL		16
-#define FUNCTYPE_C		17
-#define FUNCTYPE_REG		19
+#define FUNCTYPE_PASCAL_16	16
+#define FUNCTYPE_PASCAL		17
+#define FUNCTYPE_REG		18
 
-#define EQUATETYPE_ABS	18
+#define EQUATETYPE_ABS	19
 #define TYPE_RETURN	20
 
 /*#define MAX_ORDINALS	1024*/
@@ -102,8 +101,6 @@ typedef struct ordinal_function_definition_s
     int arg_16_offsets[16];
     int arg_16_size;
     char internal_name[80];
-    int n_args_32;
-    int arg_indices_32[16];
 } ORDFUNCDEF;
 
 typedef struct ordinal_return_definition_s
@@ -361,7 +358,7 @@ ParseExportFunction(int ordinal, int type)
 	    fdp->arg_16_size += 2;
 	    fdp->arg_16_offsets[i] = 2;
 	}
-	else if (stricmp(token, "long") == 0 || stricmp(token, "s_long") == 0)
+	else if (stricmp(token, "long") == 0 || stricmp(token, "segptr") == 0)
 	{
 	    fdp->arg_types_16[i] = VARTYPE_LONG;
 	    fdp->arg_16_size += 4;
@@ -381,52 +378,15 @@ ParseExportFunction(int ordinal, int type)
     }
     fdp->n_args_16 = i;
 
-    if (type == FUNCTYPE_PASCAL_16 || type == FUNCTYPE_PASCAL ||
-	type == FUNCTYPE_REG )
+    current_offset = 0;
+    for (i--; i >= 0; i--)
     {
-	current_offset = 0;
-	for (i--; i >= 0; i--)
-	{
-	    arg_size = fdp->arg_16_offsets[i];
-	    fdp->arg_16_offsets[i] = current_offset;
-	    current_offset += arg_size;
-	}
-    }
-    else
-    {
-	current_offset = 0;
-	for (i = 0; i < fdp->n_args_16; i++)
-	{
-	    arg_size = fdp->arg_16_offsets[i];
-	    fdp->arg_16_offsets[i] = current_offset;
-	    current_offset += arg_size;
-	}
+        arg_size = fdp->arg_16_offsets[i];
+        fdp->arg_16_offsets[i] = current_offset;
+        current_offset += arg_size;
     }
 
     strcpy(fdp->internal_name, GetToken());
-    token = GetToken();
-    if (*token != '(')
-    {
-	fprintf(stderr, "%d: Expected '(' got '%s'\n", Line, token);
-	exit(1);
-    }
-    for (i = 0; i < 16; i++)
-    {
-	token = GetToken();
-	if (*token == ')')
-	    break;
-
-	fdp->arg_indices_32[i] = atoi(token);
-	if (fdp->arg_indices_32[i] < 1 || 
-	    fdp->arg_indices_32[i] > fdp->n_args_16)
-	{
-	    fprintf(stderr, "%d: Bad argument index %d\n", Line,
-		    fdp->arg_indices_32[i]);
-	    exit(1);
-	}
-    }
-    fdp->n_args_32 = i;
-
     return 0;
 }
 
@@ -524,8 +484,6 @@ ParseOrdinal(int ordinal)
 	return ParseVariable(ordinal, VARTYPE_WORD);
     else if (stricmp(token, "long") == 0)
 	return ParseVariable(ordinal, VARTYPE_LONG);
-    else if (stricmp(token, "c") == 0)
-	return ParseExportFunction(ordinal, FUNCTYPE_C);
     else if (stricmp(token, "p") == 0)
 	return ParseExportFunction(ordinal, FUNCTYPE_PASCAL);
     else if (stricmp(token, "pascal") == 0)
@@ -705,7 +663,7 @@ int main(int argc, char **argv)
     ORDRETDEF *rdp;
     FILE *fp;
     char filename[80];
-    int i, ci, add_count;
+    int i, ci, add_count, argnum;
     int prev_index;      /* Index to previous #define (-1 if none) */
 
     /* the difference between last #define and the current */
@@ -764,27 +722,6 @@ int main(int argc, char **argv)
 #ifdef __ELF__
     fprintf (fp, "#define __ASSEMBLY__\n");
     fprintf (fp, "#include <asm/segment.h>\n");
-#endif
-#if 0
-    fprintf(fp, "\t.globl " PREFIX "%s_Dispatch\n", UpperDLLName);
-    fprintf(fp, PREFIX "%s_Dispatch:\n", UpperDLLName);
-    fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");
-    fprintf(fp, "\tandl\t$0x0000ffff,%%ebp\n");
-#ifdef __ELF__
-    fprintf(fp, "\tljmp\t$USER_CS, $" PREFIX "CallTo32\n\n");
-#else
-    fprintf(fp, "\tjmp\t_CallTo32\n\n");
-#endif
-
-    fprintf(fp, "\t.globl " PREFIX "%s_Dispatch_16\n", UpperDLLName);
-    fprintf(fp, PREFIX "%s_Dispatch_16:\n", UpperDLLName);
-    fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");
-    fprintf(fp, "\tandl\t$0x0000ffff,%%ebp\n");
-#ifdef __ELF__
-    fprintf(fp, "\tljmp\t$USER_CS, $" PREFIX "CallTo32_16\n\n");
-#else
-    fprintf(fp, "\tjmp\t_CallTo32_16\n\n");
-#endif
 #endif
 
     odp = OrdinalDefinitions;
@@ -887,7 +824,6 @@ int main(int argc, char **argv)
 #endif
 		break;
 		
-	      case FUNCTYPE_C:
 	      default:
 		fprintf(fp, PREFIX "%s_Ordinal_%d:\n", UpperDLLName, i);
                 fprintf(fp, "\tmovl\t$0x%08x,%%eax\n", (DLLId << 16) | i);
@@ -925,7 +861,7 @@ int main(int argc, char **argv)
     {
 	if (odp->valid && 
 	    (odp->type == FUNCTYPE_PASCAL || odp->type == FUNCTYPE_PASCAL_16 ||
-	     odp->type == FUNCTYPE_REG || odp->type == FUNCTYPE_C ))
+	     odp->type == FUNCTYPE_REG))
 	{
 	    fdp = odp->additional_data;
 	    fprintf(fp, "extern int %s();\n", fdp->internal_name);
@@ -941,7 +877,6 @@ int main(int argc, char **argv)
     odp = OrdinalDefinitions;
     for (i = 0; i <= Limit; i++, odp++)
     {
-	int argnum;
 	fdp = odp->additional_data;
 
 	switch (odp->type)
@@ -949,21 +884,19 @@ int main(int argc, char **argv)
 	  case FUNCTYPE_PASCAL:
 	  case FUNCTYPE_PASCAL_16:
 	  case FUNCTYPE_REG:
-	    if (!odp->valid || fdp->n_args_32 <=0 )
-	       continue;
-	    if (prev_index<0) 
-		fprintf(fp,"#\tdefine %s_ref_%d   0\n\t", UpperDLLName, i);
-	    else
-		fprintf(fp,"#\tdefine %s_ref_%d   %s_ref_%d+%d\n\t",
-			UpperDLLName,i, UpperDLLName,prev_index ,prev_n_args);
-	    for (argnum = 0; argnum < fdp->n_args_32; argnum++)
-		 fprintf(fp, "%d, ",
-		         fdp->arg_16_offsets[fdp->arg_indices_32[argnum]-1]);
-	    fprintf(fp,"\n");
+            if (!odp->valid || fdp->n_args_16 <= 0) continue;
+            if (prev_index<0) 
+                fprintf(fp,"#\tdefine %s_ref_%d   0\n\t", UpperDLLName, i);
+            else
+                fprintf(fp,"#\tdefine %s_ref_%d   %s_ref_%d+%d\n\t",
+                        UpperDLLName,i, UpperDLLName,prev_index ,prev_n_args);
+            for (argnum = 0; argnum < fdp->n_args_16; argnum++)
+                fprintf(fp, "%d, ", fdp->arg_16_offsets[argnum]);
+            fprintf(fp,"\n");
 	    
-	    prev_n_args=fdp->n_args_32;
-	    prev_index=i;
-	}
+            prev_n_args=fdp->n_args_16;
+            prev_index=i;
+        }
     }    
     fprintf(fp,"};\n");
 
@@ -982,15 +915,14 @@ int main(int argc, char **argv)
 	  case FUNCTYPE_PASCAL:
 	  case FUNCTYPE_PASCAL_16:
 	  case FUNCTYPE_REG:
-	    if (!odp->valid || fdp->n_args_32 <=0 )
-	       continue;
+            if (!odp->valid || fdp->n_args_16 <= 0) continue;
 	    
-	    fprintf(fp,"/* %s_%d */\n\t", UpperDLLName, i);
+            fprintf(fp,"/* %s_%d */\n\t", UpperDLLName, i);
 	    
-	    for (argnum = 0; argnum < fdp->n_args_32; argnum++)
-		fprintf(fp, "%d, ", fdp->arg_types_16[argnum]);
-	    fprintf(fp,"\n");
-	}
+            for (argnum = 0; argnum < fdp->n_args_16; argnum++)
+                fprintf(fp, "%d, ", fdp->arg_types_16[argnum]);
+            fprintf(fp,"\n");
+        }
     }    
     fprintf(fp,"};\n");
 
@@ -1014,9 +946,9 @@ int main(int argc, char **argv)
 	  case FUNCTYPE_REG:
 	    fprintf(fp, "    { 0x%x, %s_Ordinal_%d, ", UTEXTSEL, UpperDLLName, i);
 	    fprintf(fp, "\042%s\042, ", odp->export_name);
-	    fprintf(fp, "%s, DLL_HANDLERTYPE_PASCAL, ", fdp->internal_name);
-	    fprintf(fp, "%d, ", fdp->n_args_32);
-	    if (fdp->n_args_32 > 0)
+	    fprintf(fp, "%s, ", fdp->internal_name);
+	    fprintf(fp, "%d, ", fdp->n_args_16);
+	    if (fdp->n_args_16 > 0)
 	       fprintf(fp,"%s_ref_%d", UpperDLLName, i);
 	    else
 	       fprintf(fp,"      0    ");
@@ -1027,30 +959,6 @@ int main(int argc, char **argv)
 	    fprintf(fp, "}, \n");
 	    break;
 		
-	  case FUNCTYPE_C:
-	    fprintf(fp, "    { 0x%x, %s_Ordinal_%d, ", UTEXTSEL, UpperDLLName, i);
-	    fprintf(fp, "\042%s\042, ", odp->export_name);
-	    fprintf(fp, "%s, DLL_HANDLERTYPE_C, ", fdp->internal_name);
-#ifdef WINESTAT
-	    fprintf(fp, "0, ");
-#endif	    
-	    fprintf(fp, "%d, ", fdp->n_args_32);
-	    if (fdp->n_args_32 > 0)
-	    {
-		int argnum;
-		
-		fprintf(fp, "\n      {\n");
-		for (argnum = 0; argnum < fdp->n_args_32; argnum++)
-		{
-		    fprintf(fp, "        { %d, %d },\n",
-			    fdp->arg_16_offsets[fdp->arg_indices_32[argnum]-1],
-			    fdp->arg_types_16[argnum]);
-		}
-		fprintf(fp, "      }\n    ");
-	    }
-	    fprintf(fp, "}, \n");
-	    break;
-	    
 	  default:
 	    fprintf(fp, "    { 0x%x, %s_Ordinal_%d, \042\042, NULL },\n", 
 		    UTEXTSEL, UpperDLLName, i);

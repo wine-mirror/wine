@@ -3,9 +3,9 @@
 MODULE = memory
 
 SRCS = \
+	selector.c \
 	global.c \
-	heap.c \
-	linear.c
+	local.c
 
 OBJS = $(SRCS:.c=.o)
 

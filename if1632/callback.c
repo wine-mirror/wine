@@ -6,32 +6,39 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <strings.h>
 #include "windows.h"
 #include "callback.h"
 #include "wine.h"
-#include "segmem.h"
 #include <setjmp.h>
+#include "ldt.h"
 #include "stackframe.h"
 #include "dlls.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "if1632.h"
 
-extern unsigned short IF1632_Saved16_ss;
-extern unsigned short IF1632_Saved16_bp;
-extern unsigned short IF1632_Saved16_sp;
 extern unsigned short IF1632_Saved32_ss;
 extern unsigned long  IF1632_Saved32_ebp;
 extern unsigned long  IF1632_Saved32_esp;
 
-extern struct segment_descriptor_s *MakeProcThunks;
+static WORD ThunkSelector = 0;
 
 struct thunk_s
 {
     int used;
-    unsigned char thunk[10];
+    unsigned char thunk[8];
 };
 
+#ifdef __ELF__
+#define FIRST_SELECTOR 2
+#define IS_16_BIT_ADDRESS(addr)  \
+    (((unsigned int)(addr) < 0x8000000) || ((unsigned int)(addr) >= 0x8400000))
+#else
+#define FIRST_SELECTOR	8
+#define IS_16_BIT_ADDRESS(addr)  \
+     ((unsigned int)(addr) >= (((FIRST_SELECTOR << __AHSHIFT) | 7) << 16))
+#endif
 
 /**********************************************************************
  *					PushOn16
@@ -39,8 +46,7 @@ struct thunk_s
 static void
 PushOn16(int size, unsigned int value)
 {
-    char *p = (char *) (((unsigned int)IF1632_Saved16_ss << 16) +
-			IF1632_Saved16_sp);
+    char *p = PTR_SEG_OFF_TO_LIN( IF1632_Saved16_ss, IF1632_Saved16_sp );
     if (size)
     {
 	unsigned long *lp = (unsigned long *) p - 1;
@@ -67,7 +73,8 @@ CallBack16(void *func, int n_args, ...)
     va_list ap;
     int i;
     int arg_type, arg_value;
-    
+    WORD ds = CURRENT_DS;
+
     va_start(ap, n_args);
 
     for (i = 0; i < n_args; i++)
@@ -79,36 +86,50 @@ CallBack16(void *func, int n_args, ...)
 
     va_end(ap);
 
-    return CallTo16((unsigned int) func, pStack16Frame->ds );
+    return CallTo16((unsigned int) func, ds );
 }
 
 /**********************************************************************
- *					CALLBACK_MakeProcInstance
+ *					MakeProcInstance
  */
-void *
-CALLBACK_MakeProcInstance(void *func, int instance)
+FARPROC MakeProcInstance( FARPROC func, WORD instance )
 {
+    char *thunks;
     struct thunk_s *tp;
     int i;
-    
-    tp = (struct thunk_s *) MakeProcThunks->base_addr;
+
+    if (!ThunkSelector)
+    {
+        ldt_entry entry;
+
+          /* Allocate a segment for thunks */
+        ThunkSelector = AllocSelector( 0 );
+        entry.base           = (unsigned long) malloc( 0x10000 );
+        entry.limit          = 0xffff;
+        entry.seg_32bit      = 0;
+        entry.limit_in_pages = 0;
+        entry.type           = SEGMENT_CODE;
+        entry.read_only      = 0;
+        memset( (char *)entry.base, 0, 0x10000 );
+        LDT_SetEntry( SELECTOR_TO_ENTRY(ThunkSelector), &entry );
+    }
+
+    thunks = (char *)PTR_SEG_OFF_TO_LIN( ThunkSelector, 0 );
+    tp = (struct thunk_s *) thunks;
     for (i = 0; i < 0x10000 / sizeof(*tp); i++, tp++)
 	if (!tp->used)
 	    break;
     
-    if (tp->used)
-	return (void *) 0;
+    if (tp->used) return (FARPROC)0;
     
-    tp->thunk[0] = 0xb8;
+    tp->thunk[0] = 0xb8;    /* movw instance, %ax */
     tp->thunk[1] = (unsigned char) instance;
     tp->thunk[2] = (unsigned char) (instance >> 8);
-    tp->thunk[3] = 0x8e;
-    tp->thunk[4] = 0xd8;
-    tp->thunk[5] = 0xea;
-    memcpy(&tp->thunk[6], &func, 4);
+    tp->thunk[3] = 0xea;    /* ljmp func */
+    *(LONG *)&tp->thunk[4] = (LONG)func;
     tp->used = 1;
 
-    return tp->thunk;
+    return (FARPROC)MAKELONG( (char *)tp->thunk - thunks, ThunkSelector );
 }
 
 /**********************************************************************
@@ -119,7 +140,7 @@ void FreeProcInstance(FARPROC func)
     struct thunk_s *tp;
     int i;
     
-    tp = (struct thunk_s *) MakeProcThunks->base_addr;
+    tp = (struct thunk_s *) PTR_SEG_OFF_TO_LIN( ThunkSelector, 0 );
     for (i = 0; i < 0x10000 / sizeof(*tp); i++, tp++)
     {
 	if ((void *) tp->thunk == (void *) func)
@@ -183,13 +204,14 @@ LONG CallWindowProc( WNDPROC func, HWND hwnd, WORD message,
     }
     else if (IS_16_BIT_ADDRESS(func))
     {	
+        WORD ds = CURRENT_DS;
 	dprintf_callback(stddeb, "CallWindowProc // 16bit func=%08x ds=%04x!\n", 
-		(unsigned int) func, pStack16Frame->ds );
+		(unsigned int) func, ds );
 	PushOn16( CALLBACK_SIZE_WORD, hwnd );
 	PushOn16( CALLBACK_SIZE_WORD, message );
 	PushOn16( CALLBACK_SIZE_WORD, wParam );
 	PushOn16( CALLBACK_SIZE_LONG, lParam );
-	return CallTo16((unsigned int) func, pStack16Frame->ds );
+	return CallTo16((unsigned int) func, ds );
     }
     else
     {
@@ -204,12 +226,13 @@ LONG CallWindowProc( WNDPROC func, HWND hwnd, WORD message,
  */
 void CallLineDDAProc(FARPROC func, short xPos, short yPos, long lParam)
 {
+    WORD ds = CURRENT_DS;
     if (IS_16_BIT_ADDRESS(func))
     {
 	PushOn16( CALLBACK_SIZE_WORD, xPos );
 	PushOn16( CALLBACK_SIZE_WORD, yPos );
 	PushOn16( CALLBACK_SIZE_LONG, lParam );
-	CallTo16((unsigned int) func, pStack16Frame->ds );
+	CallTo16((unsigned int) func, ds );
     }
     else
     {
@@ -222,12 +245,13 @@ void CallLineDDAProc(FARPROC func, short xPos, short yPos, long lParam)
  */
 DWORD CallHookProc( HOOKPROC func, short code, WPARAM wParam, LPARAM lParam )
 {
+    WORD ds = CURRENT_DS;
     if (IS_16_BIT_ADDRESS(func))
     {
 	PushOn16( CALLBACK_SIZE_WORD, code );
 	PushOn16( CALLBACK_SIZE_WORD, wParam );
 	PushOn16( CALLBACK_SIZE_LONG, lParam );
-	return CallTo16((unsigned int) func, pStack16Frame->ds );
+	return CallTo16((unsigned int) func, ds );
     }
     else
     {
@@ -240,12 +264,13 @@ DWORD CallHookProc( HOOKPROC func, short code, WPARAM wParam, LPARAM lParam )
  */
 BOOL CallGrayStringProc(FARPROC func, HDC hdc, LPARAM lParam, INT cch )
 {
+    WORD ds = CURRENT_DS;
     if (IS_16_BIT_ADDRESS(func))
     {
 	PushOn16( CALLBACK_SIZE_WORD, hdc );
 	PushOn16( CALLBACK_SIZE_LONG, lParam );
 	PushOn16( CALLBACK_SIZE_WORD, cch );
-	return CallTo16((unsigned int) func, pStack16Frame->ds );
+	return CallTo16((unsigned int) func, ds );
     }
     else
     {
