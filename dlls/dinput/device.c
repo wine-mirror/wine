@@ -102,8 +102,8 @@ void _dump_DIPROPHEADER(DIPROPHEADER *diph) {
 
 void _dump_OBJECTINSTANCEA(DIDEVICEOBJECTINSTANCEA *ddoi) {
   if (TRACE_ON(dinput)) {
-    DPRINTF("    - enumerating : 0x%08lx - %2ld - 0x%08lx - %s\n",
-	    ddoi->guidType.Data1, ddoi->dwOfs, ddoi->dwType, ddoi->tszName);
+    DPRINTF("    - enumerating : %s - %2ld - 0x%08lx - %s\n",
+	    debugstr_guid(&ddoi->guidType), ddoi->dwOfs, ddoi->dwType, ddoi->tszName);
   }
 }
 

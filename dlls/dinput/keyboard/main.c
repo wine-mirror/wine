@@ -166,7 +166,7 @@ static SysKeyboardAImpl *alloc_device(REFGUID rguid, LPVOID kvt, IDirectInputAIm
 
     EnterCriticalSection(&keyboard_crit);
     if (!keyboard_users++)
-	keyboard_hook = SetWindowsHookExW( WH_KEYBOARD_LL, KeyboardCallback, DINPUT_instance, 0 );
+        keyboard_hook = SetWindowsHookExW( WH_KEYBOARD_LL, KeyboardCallback, DINPUT_instance, 0 );
     LeaveCriticalSection(&keyboard_crit);
 
     return newDevice;
@@ -326,6 +326,40 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
         return ret;
 }
 
+static HRESULT WINAPI SysKeyboardAImpl_EnumObjects(
+	LPDIRECTINPUTDEVICE8A iface,
+	LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback,
+	LPVOID lpvRef,
+	DWORD dwFlags)
+{
+    ICOM_THIS(SysKeyboardAImpl,iface);
+    DIDEVICEOBJECTINSTANCEA ddoi;
+    int i;
+    
+    TRACE("(this=%p,%p,%p,%08lx)\n", This, lpCallback, lpvRef, dwFlags);
+    if (TRACE_ON(dinput)) {
+        DPRINTF("  - flags = ");
+	_dump_EnumObjects_flags(dwFlags);
+	DPRINTF("\n");
+    }
+
+    /* Only the fields till dwFFMaxForce are relevant */
+    memset(&ddoi, 0, sizeof(ddoi));
+    ddoi.dwSize = FIELD_OFFSET(DIDEVICEOBJECTINSTANCEA, dwFFMaxForce);
+
+    for (i = 0; i < 256; i++) {
+        /* Report 255 keys :-) */
+        ddoi.guidType = GUID_Key;
+	ddoi.dwOfs = i;
+	ddoi.dwType = DIDFT_MAKEINSTANCE(i) | DIDFT_BUTTON;
+	strcpy(ddoi.tszName, "a"); /* This should be better handled :-/ */
+	_dump_OBJECTINSTANCEA(&ddoi);
+	if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) return DI_OK;
+    }
+    
+    return DI_OK;
+}
+
 static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface);
 
 static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
@@ -412,7 +446,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(
     lpDIDevCaps->dwFlags = DIDC_ATTACHED;
     lpDIDevCaps->dwDevType = DIDEVTYPE_KEYBOARD;
     lpDIDevCaps->dwAxes = 0;
-    lpDIDevCaps->dwButtons = 0;
+    lpDIDevCaps->dwButtons = 256;
     lpDIDevCaps->dwPOVs = 0;
     lpDIDevCaps->dwFFSamplePeriod = 0;
     lpDIDevCaps->dwFFMinTimeResolution = 0;
@@ -434,7 +468,7 @@ static ICOM_VTABLE(IDirectInputDevice8A) SysKeyboardAvt =
 	IDirectInputDevice2AImpl_AddRef,
 	SysKeyboardAImpl_Release,
 	SysKeyboardAImpl_GetCapabilities,
-	IDirectInputDevice2AImpl_EnumObjects,
+	SysKeyboardAImpl_EnumObjects,
 	IDirectInputDevice2AImpl_GetProperty,
 	SysKeyboardAImpl_SetProperty,
 	SysKeyboardAImpl_Acquire,

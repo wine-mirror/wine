@@ -874,6 +874,7 @@ static HRESULT WINAPI SysMouseAImpl_EnumObjects(
   }
 
   /* Only the fields till dwFFMaxForce are relevant */
+  memset(&ddoi, 0, sizeof(ddoi));
   ddoi.dwSize = FIELD_OFFSET(DIDEVICEOBJECTINSTANCEA, dwFFMaxForce);
 
   /* In a mouse, we have : two relative axis and three buttons */
