@@ -75,9 +75,9 @@ void dump_exports( HMODULE hModule )
 { 
   char		*Module;
   int		i, j;
-  u_short	*ordinal;
-  u_long	*function,*functions;
-  u_char	**name;
+  WORD		*ordinal;
+  DWORD		*function,*functions;
+  BYTE		**name;
   unsigned int load_addr = hModule;
 
   DWORD rva_start = PE_HEADER(hModule)->OptionalHeader
@@ -91,9 +91,9 @@ void dump_exports( HMODULE hModule )
   TRACE("Module name is %s, %ld functions, %ld names\n", 
         Module, pe_exports->NumberOfFunctions, pe_exports->NumberOfNames);
 
-  ordinal=(u_short*) RVA(pe_exports->AddressOfNameOrdinals);
-  functions=function=(u_long*) RVA(pe_exports->AddressOfFunctions);
-  name=(u_char**) RVA(pe_exports->AddressOfNames);
+  ordinal = RVA(pe_exports->AddressOfNameOrdinals);
+  functions = function = RVA(pe_exports->AddressOfFunctions);
+  name = RVA(pe_exports->AddressOfNames);
 
   TRACE(" Ord    RVA     Addr   Name\n" );
   for (i=0;i<pe_exports->NumberOfFunctions;i++, function++)
@@ -129,12 +129,12 @@ static FARPROC PE_FindExportedFunction(
 	LPCSTR funcName,	/* [in] function name */
         BOOL snoop )
 {
-	u_short				* ordinals;
-	u_long				* function;
-	u_char				** name, *ename = NULL;
+	WORD				* ordinals;
+	DWORD				* function;
+	BYTE				** name, *ename = NULL;
 	int				i, ordinal;
 	unsigned int			load_addr = wm->module;
-	u_long				rva_start, rva_end, addr;
+	DWORD				rva_start, rva_end, addr;
 	char				* forward;
 	IMAGE_EXPORT_DIRECTORY *exports = get_exports(wm->module);
 
@@ -150,9 +150,9 @@ static FARPROC PE_FindExportedFunction(
 		WARN("Module %08x(%s)/MODREF %p doesn't have a exports table.\n",wm->module,wm->modname,wm);
 		return NULL;
 	}
-	ordinals= (u_short*)  RVA(exports->AddressOfNameOrdinals);
-	function= (u_long*)   RVA(exports->AddressOfFunctions);
-	name	= (u_char **) RVA(exports->AddressOfNames);
+	ordinals= RVA(exports->AddressOfNameOrdinals);
+	function= RVA(exports->AddressOfFunctions);
+	name	= RVA(exports->AddressOfNames);
 	forward = NULL;
 	rva_start = PE_HEADER(wm->module)->OptionalHeader
 		.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
