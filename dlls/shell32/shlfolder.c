@@ -225,7 +225,7 @@ static HRESULT WINAPI IShellFolder_ParseDisplayName(
 	LPITEMIDLIST   pidlFull=NULL, pidlTemp = NULL, pidlOld = NULL;
 	LPSTR          pszTemp, pszNext=NULL;
 	CHAR           szElement[MAX_PATH];
-	BOOL32         bType;
+	BOOL32         bIsFile;
 	DWORD          dwChars;
        
 	TRACE(shell,"(%p)->(HWND=0x%08x,%p,%p=%s,%p,pidl=%p,%p)\n",
@@ -250,9 +250,9 @@ static HRESULT WINAPI IShellFolder_ParseDisplayName(
 	    { pidlFull = _ILCreateMyComputer();
 
 	      /* check if the lpszDisplayName is Folder or File*/
-	      bType = ! (GetFileAttributes32A(pszNext) & FILE_ATTRIBUTE_DIRECTORY);
+	      bIsFile = ! (GetFileAttributes32A(pszTemp) & FILE_ATTRIBUTE_DIRECTORY);
 	      pszNext = GetNextElement(pszTemp, szElement, MAX_PATH);
-  
+
 	      pidlTemp = _ILCreateDrive(szElement);			
 	      pidlOld = pidlFull;
 	      pidlFull = ILCombine(pidlFull,pidlTemp);
@@ -260,7 +260,7 @@ static HRESULT WINAPI IShellFolder_ParseDisplayName(
   
 	      if(pidlFull)
 	      { while((pszNext=GetNextElement(pszNext, szElement, MAX_PATH)))
-	        { if(!*pszNext && bType)
+	        { if(!*pszNext && bIsFile)
 	          { pidlTemp = _ILCreateValue(szElement);
 	          }
 	          else				

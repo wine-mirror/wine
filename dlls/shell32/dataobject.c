@@ -6,6 +6,7 @@
  *	Copyright 1998	<juergen.schmied@metronet.de>
  */
 #include "debug.h"
+#include "wintypes.h"
 #include "shlobj.h"
 #include "pidl.h"
 #include "winerror.h"

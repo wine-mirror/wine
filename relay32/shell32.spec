@@ -13,7 +13,7 @@ init	Shell32LibMain
    5 stub SHChangeNotifyUpdateEntryList@16
    6 stub CheckEscapesW@8
    7 stdcall CommandLineToArgvW(wstr ptr) CommandLineToArgvW
-   8 stub Control_FillCache_RunDLL@16
+   8 stdcall Control_FillCache_RunDLL (long long long long) Control_FillCache_RunDLL
    9 stub PifMgr_OpenProperties@16
   10 stub PifMgr_GetProperties@20
   11 stub PifMgr_SetProperties@20
@@ -63,7 +63,7 @@ init	Shell32LibMain
   55 stdcall PathQuoteSpaces (ptr) PathQuoteSpaces32AW
   56 stdcall PathUnquoteSpaces(str) PathUnquoteSpaces
   57 stdcall PathGetDriveNumber (str) PathGetDriveNumber32
-  58 stdcall ParseField(str long str long) ParseField32A
+  58 stdcall ParseField(str long ptr long) ParseField32A
   59 stub RestartDialog@12
   60 stdcall ExitWindowsDialog(long) ExitWindowsDialog
   61 stdcall RunFileDlg(long long long str str long) RunFileDlg

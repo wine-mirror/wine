@@ -14,7 +14,7 @@
 
 #include "shell32_main.h"
 
-BOOL32 HCR_MapTypeToValue ( LPSTR szExtension, LPSTR szFileType, DWORD len)
+BOOL32 HCR_MapTypeToValue ( LPCSTR szExtension, LPSTR szFileType, DWORD len)
 {	HKEY	hkey;
 
 	TRACE(shell, "%s %p\n",szExtension, szFileType );

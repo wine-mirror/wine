@@ -512,7 +512,7 @@ static INT32 SIC_LoadIcon (LPCSTR sSourceFile, INT32 dwSourceIndex)
 *  look in the cache for a proper icon. if not available the icon is taken
 *  from the file and cached
 */
-static INT32 SIC_GetIconIndex (LPCSTR sSourceFile, INT32 dwSourceIndex )
+INT32 SIC_GetIconIndex (LPCSTR sSourceFile, INT32 dwSourceIndex )
 {	SIC_ENTRY sice;
 	INT32 index;
 		
@@ -643,7 +643,7 @@ DWORD WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh,LPITEMIDLIST pidl,
 	DWORD	dwNr, ret = INVALID_INDEX;
 	LPITEMIDLIST pidltemp = ILFindLastID(pidl);
 
- 	WARN(shell,"(SF=%p,pidl=%p,%08lx)\n",sh,pidl,z);
+ 	WARN(shell,"(SF=%p,pidl=%p,0x%08x)\n",sh,pidl,z);
 	pdump(pidl);
 
 	if (_ILIsDesktop(pidltemp))
@@ -652,7 +652,7 @@ DWORD WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh,LPITEMIDLIST pidl,
 	else if (_ILIsMyComputer(pidltemp))
 	{ if (HCR_GetDefaultIcon("CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}", sTemp, 64, &dwNr))
 	  { ret = SIC_GetIconIndex(sTemp, dwNr);
-	    return (( INVALID_INDEX == ret) ? 20 : ret);
+	    return (( INVALID_INDEX == ret) ? 15 : ret);
 	  }
 	}
 	else if (_ILIsDrive (pidltemp))
