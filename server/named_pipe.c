@@ -169,8 +169,8 @@ static void pipe_user_destroy( struct object *obj)
 
     if(user->other)
     {
-        close(user->other->obj.fd);
-        user->other->obj.fd = -1;
+        close_fd( user->other->obj.fd_obj );
+        user->other->obj.fd_obj = NULL;
         switch(user->other->state)
         {
         case ps_connected_server:
@@ -330,7 +330,7 @@ DECL_HANDLER(open_named_pipe)
 
                 if( (user = create_pipe_user (pipe, fds[1])) )
                 {
-                    partner->obj.fd = fds[0];
+                    set_unix_fd( &partner->obj, fds[0] );
                     notify_waiter(partner,STATUS_SUCCESS);
                     partner->state = ps_connected_server;
                     partner->other = user;
@@ -443,13 +443,13 @@ DECL_HANDLER(disconnect_named_pipe)
     if( (user->state == ps_connected_server) &&
         (user->other->state == ps_connected_client) )
     {
-        close(user->other->obj.fd);
-        user->other->obj.fd = -1;
+        close_fd( user->other->obj.fd_obj );
+        user->other->obj.fd_obj = NULL;
         user->other->state = ps_disconnected;
         user->other->other = NULL;
 
-        close(user->obj.fd);
-        user->obj.fd = -1;
+        close_fd( user->obj.fd_obj );
+        user->obj.fd_obj = NULL;
         user->state = ps_idle_server;
         user->other = NULL;
     }
