@@ -57,11 +57,11 @@ static int msvcrt_spawn(int flags, const char* exe, char* cmdline, char* env)
                      env, NULL, &si, &pi))
   {
     msvcrt_set_errno(GetLastError());
-    MSVCRT_free(&si.lpReserved2);
+    MSVCRT_free(si.lpReserved2);
     return -1;
   }
 
-  MSVCRT_free(&si.lpReserved2);
+  MSVCRT_free(si.lpReserved2);
   switch(flags)
   {
   case MSVCRT__P_WAIT:
