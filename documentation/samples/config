@@ -217,4 +217,10 @@ WINE REGISTRY Version 2
 "2" = "/usr/share/a2ps/afm"
 "3" = "/usr/share/enscript"
 "4" = "/usr/X11R6/lib/X11/fonts/Type1"
+
+[WinMM]
+"Drivers" = "wineoss.drv"
+"WaveMapper" = "msacm.drv"
+"MidiMapper" = "midimap.drv"                                                                                                                                                      
+
 # </wineconf>
