@@ -165,7 +165,12 @@ static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
 	/* stuff for distance related stuff calc. */
 	D3DVECTOR vDistance;
 	D3DVALUE fDistance;
-		
+	
+	/* stuff for cone angle calc. */
+	DWORD dwAlpha, dwTheta, dwInsideConeAngle, dwOutsideConeAngle;
+	D3DVECTOR vConeOrientation;
+	DWORD dwConstVolAng; /* Volume/Angle constant */
+	
 	if (ds3db->dsb->dsound->listener == NULL)
 		return;
 	
@@ -203,12 +208,43 @@ static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
 			   ...hope it works */
 			iPower = fDistance/ds3db->ds3db.flMinDistance - 1; /* this sucks, but for unknown reason damn thing works only if you reduce it for 1 */
 			lAttuneation = (((pow(2, iPower) - 1)*DSBVOLUME_MIN) + lVolume)/pow(2, iPower);
+			lAttuneation *= dsl->ds3dl.flRolloffFactor; /* attuneation according to rolloff factor */
 			lAttuneation /= 5; /* i've figured this value wih trying (without it, sound is too quiet */
 			TRACE ("distance att.: distance = %f, min distance = %f => adjusting volume %ld for attuneation %ld\n", fDistance, ds3db->ds3db.flMinDistance, lVolume, lAttuneation);
-			lVolume = lVolume + lAttuneation;
-			/* conning */
+			lVolume += lAttuneation;
 			
-			/* at least, we got the desired volume */
+			/* conning */
+			/* correct me if I'm wrong, but i believe 'D3DVECTORS' used below are only points
+			   between which vectors are yet to be calculated */
+			vConeOrientation = VectorBetweenTwoPoints(&ds3db->ds3db.vPosition, &ds3db->ds3db.vConeOrientation);
+			/* I/O ConeAngles are defined in both directions; for comparing, we need only half of their values */
+			dwOutsideConeAngle = ds3db->ds3db.dwOutsideConeAngle / 2;
+			dwInsideConeAngle = ds3db->ds3db.dwInsideConeAngle / 2;
+			dwTheta = AngleBetweenVectorsDeg (&vDistance, &vConeOrientation);
+			/* actual conning */
+			if (dwTheta <= dwInsideConeAngle)
+			{
+				lAttuneation = 0;
+				TRACE("conning: angle (%ld) < InsideConeAngle (%ld), leaving volume at %ld\n", dwTheta, dwInsideConeAngle, lVolume);
+			}
+			if (dwTheta > dwOutsideConeAngle)
+			{
+				/* attuneation is equal to lConeOutsideVolume */
+				lAttuneation = ds3db->ds3db.lConeOutsideVolume;
+				TRACE("conning: angle (%ld) > OutsideConeAngle (%ld), attuneation = %ld, final volume = %ld\n", dwTheta, dwOutsideConeAngle, \
+				      ds3db->ds3db.lConeOutsideVolume, lVolume);
+			}
+			if (dwTheta > dwInsideConeAngle && dwTheta <= dwOutsideConeAngle)
+			{
+				dwAlpha = dwTheta - dwInsideConeAngle;
+				dwConstVolAng = ((lVolume + ds3db->ds3db.lConeOutsideVolume) - lVolume) / (dwOutsideConeAngle - dwInsideConeAngle);
+				lAttuneation = dwAlpha*dwConstVolAng;
+				TRACE("conning: angle = %ld, attuneation = %ld, final Volume = %ld\n", dwTheta, dwAlpha*dwConstVolAng, lVolume);
+			}
+			lVolume += lAttuneation;
+			TRACE("final volume = %ld\n", lVolume);		
+			
+			/* at last, we got the desired volume */
 			ds3db->dsb->volpan.lVolume = lVolume;
 			DSOUND_RecalcVolPan (&ds3db->dsb->volpan);
 			DSOUND_ForceRemix (ds3db->dsb);			
