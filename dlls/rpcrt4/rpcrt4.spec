@@ -179,6 +179,7 @@ debug_channels (ole)
 
 @ stub UuidCompare
 @ stdcall UuidCreate(ptr) UuidCreate
+@ stdcall UuidCreateSequential(ptr) UuidCreateSequential # win 2000
 @ stub UuidCreateNil
 @ stub UuidEqual
 @ stub UuidFromStringA

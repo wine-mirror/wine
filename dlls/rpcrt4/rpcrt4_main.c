@@ -81,7 +81,7 @@ RPCRT4_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 RPC_STATUS WINAPI UuidCreate(UUID *Uuid)
 {
    static char has_init = 0;
-   unsigned char a[6];
+   static unsigned char a[6];
    static int                      adjustment = 0;
    static struct timeval           last = {0, 0};
    static UINT16                   clock_seq;
@@ -96,7 +96,7 @@ RPC_STATUS WINAPI UuidCreate(UUID *Uuid)
    char buf[1024];
    int             n, i;
 #endif
-   
+
    /* Have we already tried to get the MAC address? */
    if (!has_init) {
 #ifdef HAVE_NET_IF_H
@@ -264,6 +264,20 @@ sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
    return RPC_S_OK;
 }
 
+
+/*************************************************************************
+ *           UuidCreateSequential   [RPCRT4.@]
+ *
+ * Creates a 128bit UUID by calling UuidCreate.
+ * New API in Win 2000
+ */
+
+RPC_STATUS WINAPI UuidCreateSequential(UUID *Uuid)
+{
+   return UuidCreate (Uuid);
+}
+
+
 /*************************************************************************
  *           RpcStringFreeA   [RPCRT4.@]
  *
@@ -314,7 +328,7 @@ RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, unsigned char** StringUuid)
   if(!(*StringUuid))
     return RPC_S_OUT_OF_MEMORY;
 
-  sprintf(*StringUuid, "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+  sprintf(*StringUuid, "%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
                  Uuid->Data1, Uuid->Data2, Uuid->Data3,
                  Uuid->Data4[0], Uuid->Data4[1], Uuid->Data4[2],
                  Uuid->Data4[3], Uuid->Data4[4], Uuid->Data4[5],
