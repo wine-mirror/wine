@@ -58,6 +58,13 @@ extern DWORD SavedPixelStates_T[NUM_SAVEDPIXELSTATES_T];
 extern DWORD SavedVertexStates_R[NUM_SAVEDVERTEXSTATES_R];
 extern DWORD SavedVertexStates_T[NUM_SAVEDVERTEXSTATES_T];
 
+static const float idmatrix[16] = {
+    1.0, 0.0, 0.0, 0.0,
+    0.0, 1.0, 0.0, 0.0,
+    0.0, 0.0, 1.0, 0.0,
+    0.0, 0.0, 0.0, 1.0
+};
+
 /* Routine common to the draw primitive and draw indexed primitive routines
    Doesnt use gl pointer arrays as I dont believe we can support the blending
    coordinates that way.                                                      */
@@ -103,6 +110,7 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
         const short                *pIdxBufS = NULL;
         const long                 *pIdxBufL = NULL;
         const void                 *curPos;
+        BOOL                        isLightingOn = FALSE;
 
         float x=0.0, y=0.0, z=0.0;             /* x,y,z coordinates          */
         float nx=0.0, ny=0.0, nz=0.0;          /* normal x,y,z coordinates   */
@@ -130,7 +138,14 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
         TRACE("Drawing with FVF = %x, (n?%d, rhw?%d, ptSize(%d), diffuse?%d, specular?%d, numTextures=%d)\n",
               fvf, normal, isRHW, isPtSize, isDiffuse, isSpecular, numTextures);
 
-        /* Note: Dont touch lighing anymore - it is set by the appropriate render state */
+        /* If no normals, DISABLE lighting otherwise, dont touch lighing as it is 
+           set by the appropriate render state                                    */
+        if (!normal) {
+            isLightingOn = glIsEnabled(GL_LIGHTING);
+            glDisable(GL_LIGHTING);
+            TRACE("Enabled lighting as no normals supplied, old state = %d\n", isLightingOn);
+        }
+
 
         if (isRHW) {
 
@@ -341,9 +356,18 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                 curVtx = curVtx + skip;
             }
         }
+
+        glEnd();
+        checkGLcall("glEnd and previous calls");
+
+        /* If no normals, restore previous lighting state */
+        if (!normal) {
+            if (isLightingOn) glEnable(GL_LIGHTING);
+            else glDisable(GL_LIGHTING);
+            TRACE("Restored lighting to original state\n");
+        }
+
     }
-    glEnd();
-    checkGLcall("glEnd and previous calls");
     LEAVE_GL();
 
     TRACE("glEnd\n");
@@ -488,6 +512,33 @@ GLenum StencilOp(DWORD op) {
         FIXME("Invalid stencil op %ld\n", op);
         return GL_ALWAYS;
     }
+}
+
+/* Apply the current values to the specified texture stage */
+void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage) {
+    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    int i=0;
+    float col[4];
+
+    /* Make appropriate texture active */
+    glActiveTextureARB(GL_TEXTURE0_ARB + i);
+    checkGLcall("glActiveTextureARB");
+
+    TRACE("-----------------------> Updating the texture at stage %ld to have new texture state information\n", Stage);
+    for (i=1; i<29; i++) {
+        IDirect3DDevice8Impl_SetTextureStageState(iface, Stage, i, This->StateBlock.texture_state[Stage][i]);
+    }
+
+    /* Note the D3DRS value applies to all textures, but GL has one
+       per texture, so apply it now ready to be used!               */
+    col[0] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR]>> 16) & 0xFF) / 255.0;
+    col[1] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR] >> 8 ) & 0xFF) / 255.0;
+    col[2] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR] >> 0 ) & 0xFF) / 255.0;
+    col[3] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR] >> 24 ) & 0xFF) / 255.0;
+    glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
+    checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
+
+    TRACE("-----------------------> Updated the texture at stage %ld to have new texture state information\n", Stage);
 }
 
 /* IDirect3D IUnknown parts follow: */
@@ -1810,15 +1861,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
             /* And now the default texture color as well */
             for (i=0; i<8; i++) {
 
-                if (This->StateBlock.textures[i]) {
-                   glActiveTextureARB(GL_TEXTURE0_ARB + i);
-                   checkGLcall("Activate texture.. to update const color");
+                /* Note the D3DRS value applies to all textures, but GL has one
+                   per texture, so apply it now ready to be used!               */
+                checkGLcall("Activate texture.. to update const color");
+                glActiveTextureARB(GL_TEXTURE0_ARB + i);
 
-                   /* Note the D3DRS value applies to all textures, but GL has one
-                      per texture, so apply it now ready to be used!               */
-                   glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
-                   checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
-                }
+                glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
+                checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
             }
         }
         break;
@@ -2015,7 +2064,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_INDEXEDVERTEXBLENDENABLE  :
     case D3DRS_COLORWRITEENABLE          :
     case D3DRS_TWEENFACTOR               :
-        FIXME("(%p)->(%d,%ld) not handled yet\n", This, State, Value);
+        /*Put back later: FIXME("(%p)->(%d,%ld) not handled yet\n", This, State, Value); */
+        TRACE("(%p)->(%d,%ld) not handled yet\n", This, State, Value);
         break;
     default:
         FIXME("(%p)->(%d,%ld) unrecognized\n", This, State, Value);
@@ -2317,7 +2367,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CaptureStateBlock(LPDIRECT3DDEVICE8 iface,
 
                if (updateBlock->Set.texture_state[j][i] && (updateBlock->texture_state[j][i] != 
                                                                 This->StateBlock.texture_state[j][i])) {
-                   TRACE("Updating texturestagestate %d,%d to %ld\n", j,i, This->StateBlock.texture_state[j][i]);
+                   TRACE("Updating texturestagestate %d,%d to %ld (was %ld)\n", j,i, This->StateBlock.texture_state[j][i], 
+                               updateBlock->texture_state[j][i]);
                    updateBlock->texture_state[j][i] =  This->StateBlock.texture_state[j][i];
                }
            }
@@ -2453,10 +2504,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
         if (textureType == D3DRTYPE_TEXTURE) {
             IDirect3DTexture8Impl *pTexture2 = (IDirect3DTexture8Impl *) pTexture;
             int i;
-            float col[4];
 
             /* Standard 2D texture */
             TRACE("Standard 2d texture\n");
+            This->StateBlock.textureDimensions[Stage] = GL_TEXTURE_2D;
+
 /*            for (i=0; i<pTexture2->levels; i++) { */
             i=0;
             {
@@ -2500,31 +2552,19 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
                     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
                     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
-
-                    glEnable(GL_TEXTURE_2D);
-                    checkGLcall("glEnable");
-
                     pTexture2->Dirty = FALSE;
                 }
-
-                /* Note the D3DRS value applies to all textures, but GL has one
-                   per texture, so apply it now ready to be used!               */
-                col[0] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR]>> 16) & 0xFF) / 255.0;
-                col[1] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR] >> 8 ) & 0xFF) / 255.0;
-                col[2] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR] >> 0 ) & 0xFF) / 255.0;
-                col[3] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR] >> 24 ) & 0xFF) / 255.0;
-                glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
-                checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
 
             }
 
         } else if (textureType == D3DRTYPE_VOLUMETEXTURE) {
             IDirect3DVolumeTexture8Impl *pTexture2 = (IDirect3DVolumeTexture8Impl *) pTexture;
             int i;
-            float col[4];
 
             /* Standard 3D (volume) texture */
             TRACE("Standard 3d texture\n");
+            This->StateBlock.textureDimensions[Stage] = GL_TEXTURE_3D;
+
 /*            for (i=0; i<pTexture2->levels; i++) { */
             i=0;
             {
@@ -2571,28 +2611,25 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
                     glTexParameterf( GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
                     glTexParameterf( GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
-
-                    glEnable(GL_TEXTURE_3D);
-                    checkGLcall("glEnable");
-
                     pTexture2->Dirty = FALSE;
                 }
-
-                /* Note the D3DRS value applies to all textures, but GL has one
-                   per texture, so apply it now ready to be used!               */
-                col[0] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR]>> 16) & 0xFF) / 255.0;
-                col[1] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR] >> 8 ) & 0xFF) / 255.0;
-                col[2] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR] >> 0 ) & 0xFF) / 255.0;
-                col[3] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR] >> 24 ) & 0xFF) / 255.0;
-                glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
-                checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
-
             }
 
         } else {
             FIXME("(%p) : Incorrect type for a texture : %d\n", This, textureType);
         }
+    } else {
+        TRACE("Setting to no texture (ie default texture)\n");
+        This->StateBlock.textureDimensions[Stage] = GL_TEXTURE_1D;
+        glBindTexture(GL_TEXTURE_1D, This->dummyTextureName[Stage]);
+        checkGLcall("glBindTexture");
+        TRACE("Bound dummy Texture to stage %ld (gl name %d)\n", Stage, This->dummyTextureName[Stage]);
     }
+
+    /* Even if the texture has been set to null, reapply the stages as a null texture to directx requires
+       a dummy texture in opengl, and we always need to ensure the current view of the TextureStates apply */
+    setupTextureStates (iface, Stage);
+       
     return D3D_OK;
 }
 
@@ -2621,7 +2658,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
     }
 
     /* Make appropriate texture active */
-    TRACE("Activating appropriate texture state\n");
+    TRACE("Activating appropriate texture state %ld\n", Stage);
     glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
     checkGLcall("glActiveTextureARB");
 
@@ -2629,10 +2666,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 
     case D3DTSS_MINFILTER             :
         if (Value == D3DTEXF_POINT) {  
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(This->StateBlock.textureDimensions[Stage], GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             checkGLcall("glTexParameter GL_TEXTURE_MINFILTER, GL_NEAREST");
         } else if (Value == D3DTEXF_LINEAR) {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(This->StateBlock.textureDimensions[Stage], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             checkGLcall("glTexParameter GL_TEXTURE_MINFILTER, GL_LINEAR");
         } else {
             FIXME("Unhandled D3DTSS_MINFILTER value of %ld\n", Value);
@@ -2642,22 +2679,25 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 
     case D3DTSS_MAGFILTER             :
         if (Value == D3DTEXF_POINT) {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(This->StateBlock.textureDimensions[Stage], GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             checkGLcall("glTexParameter GL_TEXTURE_MAGFILTER, GL_NEAREST");
         } else if (Value == D3DTEXF_LINEAR) {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(This->StateBlock.textureDimensions[Stage], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             checkGLcall("glTexParameter GL_TEXTURE_MAGFILTER, GL_LINEAR");
         } else {
             FIXME("Unhandled D3DTSS_MAGFILTER value of %ld\n", Value);
         }
         break;
 
+    case D3DTSS_COLORARG0             :
+    case D3DTSS_ALPHAARG0             :
+        /* FIXME: Mesa seems to struggle setting these at the moment */
+        break;
+
     case D3DTSS_COLORARG1             :
     case D3DTSS_COLORARG2             :
-    case D3DTSS_COLORARG0             :
     case D3DTSS_ALPHAARG1             :
     case D3DTSS_ALPHAARG2             :
-    case D3DTSS_ALPHAARG0             :
         {
             BOOL isAlphaReplicate = FALSE;
             BOOL isComplement     = FALSE;
@@ -2738,61 +2778,96 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
             int Scale = 1;
             int Parm = (Type == D3DTSS_ALPHAOP)? GL_COMBINE_ALPHA_EXT : GL_COMBINE_RGB_EXT;
 
-            switch (Value) {
-            case D3DTOP_DISABLE                   :
+            if (Type==D3DTSS_COLOROP && Value == D3DTOP_DISABLE) {
                 /* TODO: Disable by making this and all later levels disabled */
+                glDisable(GL_TEXTURE_1D);
+                checkGLcall("Disable GL_TEXTURE_1D");
                 glDisable(GL_TEXTURE_2D);
                 checkGLcall("Disable GL_TEXTURE_2D");
-                break;
+                glDisable(GL_TEXTURE_3D);
+                checkGLcall("Disable GL_TEXTURE_3D");
+            } else {
 
-            case D3DTOP_SELECTARG1                :
-                glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE);
-                break;
+                /* Enable only the appropriate texture dimension */
+                if (This->StateBlock.textureDimensions[Stage] == GL_TEXTURE_1D) {
+                    glEnable(GL_TEXTURE_1D);
+                    checkGLcall("Enable GL_TEXTURE_1D");
+                } else {
+                    glDisable(GL_TEXTURE_1D);
+                    checkGLcall("Disable GL_TEXTURE_1D");
+                }
+                if (This->StateBlock.textureDimensions[Stage] == GL_TEXTURE_2D) {
+                    glEnable(GL_TEXTURE_2D);
+                    checkGLcall("Enable GL_TEXTURE_2D");
+                } else {
+                    glDisable(GL_TEXTURE_2D);
+                    checkGLcall("Disable GL_TEXTURE_2D");
+                }
+                if (This->StateBlock.textureDimensions[Stage] == GL_TEXTURE_3D) {
+                    glEnable(GL_TEXTURE_3D);
+                    checkGLcall("Enable GL_TEXTURE_3D");
+                } else {
+                    glDisable(GL_TEXTURE_3D);
+                    checkGLcall("Disable GL_TEXTURE_3D");
+                }
 
-            case D3DTOP_MODULATE4X                : Scale = Scale * 2;  /* Drop through */
-            case D3DTOP_MODULATE2X                : Scale = Scale * 2;  /* Drop through */
-            case D3DTOP_MODULATE                  :
+                /* Now set up the operand correctly */
+                switch (Value) {
+                case D3DTOP_DISABLE                   :
+                    /* Contrary to the docs, alpha can be disabled when colorop is enabled
+                       and it works, so ignore this op */
+                    TRACE("Disable ALPHAOP but COLOROP enabled!\n");
+                    break;
 
-                /* Correct scale */
-                if (Type == D3DTSS_ALPHAOP) glTexEnvi(GL_TEXTURE_ENV, GL_ALPHA_SCALE, Scale);
-                else glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, Scale);
+                case D3DTOP_SELECTARG1                :
+                    glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE);
+                    break;
 
-                glTexEnvi(GL_TEXTURE_ENV, Parm, GL_MODULATE);
-                break;
+                case D3DTOP_MODULATE4X                : Scale = Scale * 2;  /* Drop through */
+                case D3DTOP_MODULATE2X                : Scale = Scale * 2;  /* Drop through */
+                case D3DTOP_MODULATE                  :
 
-            case D3DTOP_ADD                       :
-                glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD);
-                break;
+                    /* Correct scale */
+                    if (Type == D3DTSS_ALPHAOP) glTexEnvi(GL_TEXTURE_ENV, GL_ALPHA_SCALE, Scale);
+                    else glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, Scale);
+
+                    glTexEnvi(GL_TEXTURE_ENV, Parm, GL_MODULATE);
+                    break;
+
+                case D3DTOP_ADD                       :
+                    glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD);
+                    break;
 
 
-            case D3DTOP_ADDSIGNED2X               : Scale = Scale * 2;  /* Drop through */
-            case D3DTOP_ADDSIGNED                 :
-                glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD_SIGNED_EXT);
-                break;
+                case D3DTOP_ADDSIGNED2X               : Scale = Scale * 2;  /* Drop through */
+                case D3DTOP_ADDSIGNED                 :
+                    glTexEnvi(GL_TEXTURE_ENV, Parm, GL_ADD_SIGNED_EXT);
+                    break;
 
 
-            case D3DTOP_SUBTRACT                  :
-                /* glTexEnvi(GL_TEXTURE_ENV, Parm, GL_SUBTRACT); Missing? */
-            case D3DTOP_SELECTARG2                :
-                /* GL_REPLACE, swap args 0 and 1? */
-            case D3DTOP_ADDSMOOTH                 :
-            case D3DTOP_BLENDDIFFUSEALPHA         :
-            case D3DTOP_BLENDTEXTUREALPHA         :
-            case D3DTOP_BLENDFACTORALPHA          :
-            case D3DTOP_BLENDTEXTUREALPHAPM       :
-            case D3DTOP_BLENDCURRENTALPHA         :
-            case D3DTOP_PREMODULATE               :
-            case D3DTOP_MODULATEALPHA_ADDCOLOR    :
-            case D3DTOP_MODULATECOLOR_ADDALPHA    :
-            case D3DTOP_MODULATEINVALPHA_ADDCOLOR :
-            case D3DTOP_MODULATEINVCOLOR_ADDALPHA :
-            case D3DTOP_BUMPENVMAP                :
-            case D3DTOP_BUMPENVMAPLUMINANCE       :
-            case D3DTOP_DOTPRODUCT3               :
-            case D3DTOP_MULTIPLYADD               :
-            case D3DTOP_LERP                      :
-            default:
-                FIXME("Unhandled texture operation %ld\n", Value);
+                case D3DTOP_SUBTRACT                  :
+                    /* glTexEnvi(GL_TEXTURE_ENV, Parm, GL_SUBTRACT); Missing? */
+                case D3DTOP_SELECTARG2                :
+                    /* GL_REPLACE, swap args 0 and 1? */
+                case D3DTOP_ADDSMOOTH                 :
+                case D3DTOP_BLENDDIFFUSEALPHA         :
+                case D3DTOP_BLENDTEXTUREALPHA         :
+                case D3DTOP_BLENDFACTORALPHA          :
+                case D3DTOP_BLENDTEXTUREALPHAPM       :
+                case D3DTOP_BLENDCURRENTALPHA         :
+                case D3DTOP_PREMODULATE               :
+                case D3DTOP_MODULATEALPHA_ADDCOLOR    :
+                case D3DTOP_MODULATECOLOR_ADDALPHA    :
+                case D3DTOP_MODULATEINVALPHA_ADDCOLOR :
+                case D3DTOP_MODULATEINVCOLOR_ADDALPHA :
+                case D3DTOP_BUMPENVMAP                :
+                case D3DTOP_BUMPENVMAPLUMINANCE       :
+                case D3DTOP_DOTPRODUCT3               :
+                case D3DTOP_MULTIPLYADD               :
+                case D3DTOP_LERP                      :
+                default:
+                    FIXME("Unhandled texture operation %ld\n", Value);
+                }
             }
             break;
         }
@@ -2816,7 +2891,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
     case D3DTSS_ADDRESSW              :
     case D3DTSS_RESULTARG             :
     default:
-        FIXME("(%p) : stub, Stage=%ld, Type=%d, Value =%ld\n", This, Stage, Type, Value);
+        /* Put back later: FIXME("(%p) : stub, Stage=%ld, Type=%d, Value =%ld\n", This, Stage, Type, Value); */
+        TRACE("Still a stub, Stage=%ld, Type=%d, Value =%ld\n", Stage, Type, Value);
     }
     return D3D_OK;
 }
@@ -3039,7 +3115,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetPixelShader(LPDIRECT3DDEVICE8 iface, DW
         return D3D_OK;
     }
 
-    FIXME("(%p) : stub\n", This);
+    /* FIXME: Quieten when not being used */
+    if (Handle != 0) {
+       FIXME("(%p) : stub %ld\n", This, Handle);
+    } else {
+       TRACE("(%p) : stub %ld\n", This, Handle);
+    }
 
     return D3D_OK;
 }
@@ -3215,16 +3296,20 @@ ICOM_VTABLE(IDirect3DDevice8) Direct3DDevice8_Vtbl =
 
 void CreateStateBlock(LPDIRECT3DDEVICE8 iface) {
     D3DLINEPATTERN lp;
+    int i;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
-    FIXME("Need to sort out defaults for the state information! \n");
-
+    /* Note this may have a large overhead but it should only be executed
+       once, in order to initialize the complete state of the device and 
+       all opengl equivalents                                            */
     TRACE("-----------------------> Setting up device defaults...\n");
     This->StateBlock.blockType = D3DSBT_ALL;
 
-    /* Set some of the defaults */
-
+    /* FIXME: Set some of the defaults for lights, transforms etc */
+    memcpy(&This->StateBlock.transforms[D3DTS_WORLDMATRIX(0)], &idmatrix, sizeof(idmatrix));
+    memcpy(&This->StateBlock.transforms[D3DTS_PROJECTION], &idmatrix, sizeof(idmatrix));
+    memcpy(&This->StateBlock.transforms[D3DTS_VIEW], &idmatrix, sizeof(idmatrix));
 
     /* Render states: */
     if (This->PresentParms.EnableAutoDepthStencil) {
@@ -3308,13 +3393,72 @@ void CreateStateBlock(LPDIRECT3DDEVICE8 iface) {
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_POSITIONORDER, D3DORDER_CUBIC);
     IDirect3DDevice8Impl_SetRenderState(iface, D3DRS_NORMALORDER, D3DORDER_LINEAR);
 
+    /* Texture Stage States - Put directly into state block, we will call function below */
+    for (i=0; i<8;i++) {
+        This->StateBlock.texture_state[i][D3DTSS_COLOROP               ] = (i==0)? D3DTOP_MODULATE :  D3DTOP_DISABLE;
+        This->StateBlock.texture_state[i][D3DTSS_COLORARG1             ] = D3DTA_TEXTURE;
+        This->StateBlock.texture_state[i][D3DTSS_COLORARG2             ] = D3DTA_CURRENT;
+        This->StateBlock.texture_state[i][D3DTSS_ALPHAOP               ] = (i==0)? D3DTOP_SELECTARG1 :  D3DTOP_DISABLE;
+        This->StateBlock.texture_state[i][D3DTSS_ALPHAARG1             ] = D3DTA_TEXTURE;
+        This->StateBlock.texture_state[i][D3DTSS_ALPHAARG2             ] = D3DTA_CURRENT;
+        This->StateBlock.texture_state[i][D3DTSS_BUMPENVMAT00          ] = (DWORD) 0.0;
+        This->StateBlock.texture_state[i][D3DTSS_BUMPENVMAT01          ] = (DWORD) 0.0;
+        This->StateBlock.texture_state[i][D3DTSS_BUMPENVMAT10          ] = (DWORD) 0.0;
+        This->StateBlock.texture_state[i][D3DTSS_BUMPENVMAT11          ] = (DWORD) 0.0;
+        /* FIXME: This->StateBlock.texture_state[i][D3DTSS_TEXCOORDINDEX         ] = ?; */
+        This->StateBlock.texture_state[i][D3DTSS_ADDRESSU              ] = D3DTADDRESS_WRAP;
+        This->StateBlock.texture_state[i][D3DTSS_ADDRESSV              ] = D3DTADDRESS_WRAP;
+        This->StateBlock.texture_state[i][D3DTSS_BORDERCOLOR           ] = 0x00;
+        This->StateBlock.texture_state[i][D3DTSS_MAGFILTER             ] = D3DTEXF_POINT;
+        This->StateBlock.texture_state[i][D3DTSS_MINFILTER             ] = D3DTEXF_POINT;
+        This->StateBlock.texture_state[i][D3DTSS_MIPFILTER             ] = D3DTEXF_NONE;
+        This->StateBlock.texture_state[i][D3DTSS_MIPMAPLODBIAS         ] = 0;
+        This->StateBlock.texture_state[i][D3DTSS_MAXMIPLEVEL           ] = 0;
+        This->StateBlock.texture_state[i][D3DTSS_MAXANISOTROPY         ] = 1;
+        This->StateBlock.texture_state[i][D3DTSS_BUMPENVLSCALE         ] = (DWORD) 0.0;
+        This->StateBlock.texture_state[i][D3DTSS_BUMPENVLOFFSET        ] = (DWORD) 0.0;
+        This->StateBlock.texture_state[i][D3DTSS_TEXTURETRANSFORMFLAGS ] = D3DTTFF_DISABLE;
+        This->StateBlock.texture_state[i][D3DTSS_ADDRESSW              ] = D3DTADDRESS_WRAP;
+        This->StateBlock.texture_state[i][D3DTSS_COLORARG0             ] = D3DTA_CURRENT;
+        This->StateBlock.texture_state[i][D3DTSS_ALPHAARG0             ] = D3DTA_CURRENT;
+        This->StateBlock.texture_state[i][D3DTSS_RESULTARG             ] = D3DTA_CURRENT;
+    }
 
+    /* Under DirectX you can have texture stage operations even if no texture is
+       bound, whereas opengl will only do texture operations when a valid texture is
+       bound. We emulate this by creating 8 dummy textures and binding them to each
+       texture stage, but disable all stages by default. Hence if a stage is enabled
+       then the default texture will kick in until replaced by a SetTexture call     */
+    for (i=0; i<8; i++) {
 
+        /* Make appropriate texture active */
+        glActiveTextureARB(GL_TEXTURE0_ARB + i);
+        checkGLcall("glActiveTextureARB");
 
+        /* Define 64 dummy bytes for the texture */
+        This->dummyTexture[i] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 64);
+
+        /* Generate an opengl texture name */
+        glGenTextures(1, &This->dummyTextureName[i]);
+        checkGLcall("glGenTextures");
+        TRACE("Dummy Texture %d given name %d\n", i, This->dummyTextureName[i]);
+
+        /* Generate a dummy 1d texture */
+        This->StateBlock.textureDimensions[i] = GL_TEXTURE_1D;
+        glBindTexture(GL_TEXTURE_1D, This->dummyTextureName[i]);
+        checkGLcall("glBindTexture");
+
+        glTexImage1D(GL_TEXTURE_1D, 1, GL_ALPHA8, 1, 0, GL_ALPHA, GL_BYTE, &This->dummyTexture[i]); 
+        checkGLcall("glTexImage1D");
+
+        /* Reapply all the texture state information to this texture */
+        setupTextureStates(iface, i);
+    }
 
     TRACE("-----------------------> Device defaults now set up...\n");
 
 }
+
 
 DWORD SavedPixelStates_R[NUM_SAVEDPIXELSTATES_R] = {
     D3DRS_ALPHABLENDENABLE   ,

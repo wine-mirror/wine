@@ -133,6 +133,7 @@ typedef struct STATEBLOCK {
 
     /* Texture */
     IDirect3DBaseTexture8    *textures[8];
+    int                       textureDimensions[8];
 
     /* Texture State Stage */
     DWORD                     texture_state[8][HIGHEST_TEXTURE_STATE];
@@ -309,6 +310,9 @@ struct IDirect3DDevice8Impl
     XVisualInfo *visInfo;
     Display     *display;
     Window       win;
+
+    void        *dummyTexture[8];
+    UINT         dummyTextureName[8];
 
 };
 

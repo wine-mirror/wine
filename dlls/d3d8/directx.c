@@ -31,13 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
-static const float idmatrix[16] = {
-    1.0, 0.0, 0.0, 0.0,
-    0.0, 1.0, 0.0, 0.0,
-    0.0, 0.0, 1.0, 0.0,
-    0.0, 0.0, 0.0, 1.0
-};
-
 #define NUM_MODES 10
 static const int modes[NUM_MODES][3] = {
     {640, 480, 85},
@@ -405,15 +398,10 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     object->CreateParms.hFocusWindow = hFocusWindow;
     object->CreateParms.BehaviorFlags = BehaviourFlags;
 
-    CreateStateBlock((LPDIRECT3DDEVICE8) object);
-
     *ppReturnedDeviceInterface = (LPDIRECT3DDEVICE8)object;
 
     /* Initialize settings */
     memcpy(&object->PresentParms, pPresentationParameters, sizeof(D3DPRESENT_PARAMETERS));
-    memcpy(&object->StateBlock.transforms[D3DTS_WORLDMATRIX(0)], &idmatrix, sizeof(idmatrix));
-    memcpy(&object->StateBlock.transforms[D3DTS_PROJECTION], &idmatrix, sizeof(idmatrix));
-    memcpy(&object->StateBlock.transforms[D3DTS_VIEW], &idmatrix, sizeof(idmatrix));
 
     object->PresentParms.BackBufferCount = 1; /* Opengl only supports one? */
     pPresentationParameters->BackBufferCount = 1;
@@ -517,6 +505,9 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
     checkGLcall("glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);");
 
+    /* Setup all the devices defaults */
+    CreateStateBlock((LPDIRECT3DDEVICE8) object);
+
     LEAVE_GL();
 
     { /* Set a default viewport */
@@ -530,7 +521,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
        IDirect3DDevice8Impl_SetViewport((LPDIRECT3DDEVICE8) object, &vp);
     }
 
-    TRACE("(%p,%d) incomplete\n", This, Adapter);
+    TRACE("(%p,%d)\n", This, Adapter);
     return D3D_OK;
 }
 
