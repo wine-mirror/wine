@@ -58,8 +58,9 @@ void *mem_alloc( size_t size )
 /* duplicate a block of memory */
 void *memdup( const void *data, size_t len )
 {
-    void *ptr = mem_alloc( len );
+    void *ptr = malloc( len );
     if (ptr) memcpy( ptr, data, len );
+    else if (current) set_error( STATUS_NO_MEMORY );
     return ptr;
 }
 
