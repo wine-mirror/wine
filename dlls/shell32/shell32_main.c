@@ -298,6 +298,29 @@ DWORD WINAPI SHGetFileInfoAW(
 }
 
 /*************************************************************************
+ * DuplicateIcon			[SHELL32.188]
+ */
+HICON WINAPI DuplicateIcon( HINSTANCE hInstance, HICON hIcon)
+{
+    ICONINFO IconInfo;
+    HICON hDupIcon = NULL;
+
+    TRACE("(%04x, %04x)\n", hInstance, hIcon);
+
+    if(GetIconInfo(hIcon, &IconInfo))
+    {
+        hDupIcon = CreateIconIndirect(&IconInfo);
+
+        /* clean up hbmMask and hbmColor */
+        DeleteObject(IconInfo.hbmMask);        
+        DeleteObject(IconInfo.hbmColor);        
+    }
+ 
+    return hDupIcon;
+}
+    
+
+/*************************************************************************
  * ExtractIconA				[SHELL32.133]
  *
  * fixme

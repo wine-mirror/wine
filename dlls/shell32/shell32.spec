@@ -335,7 +335,7 @@ import kernel32.dll
 @ stdcall DoEnvironmentSubstA(str str)DoEnvironmentSubstA
 @ stdcall DoEnvironmentSubstW(wstr wstr)DoEnvironmentSubstW
 @ stub DragQueryFileAorW
-@ stub DuplicateIcon
+@ stdcall DuplicateIcon(long long) DuplicateIcon
 @ stdcall ExtractAssociatedIconA(long ptr long)ExtractAssociatedIconA 
 @ stub ExtractAssociatedIconExA 
 @ stub ExtractAssociatedIconExW 
