@@ -958,6 +958,11 @@ LPVOID	WINAPI (*pDPA_GetPtr) (const HDPA, INT);
 BOOL	WINAPI (*pDPA_Destroy) (const HDPA); 
 INT	WINAPI (*pDPA_Search) (const HDPA, LPVOID, INT, PFNDPACOMPARE, LPARAM, UINT);
 LPVOID	WINAPI (*pDPA_DeletePtr) (const HDPA hdpa, INT i);
+HANDLE  WINAPI (*pCreateMRUListA) (LPVOID lpcml);
+DWORD   WINAPI (*pFreeMRUListA) (HANDLE hMRUList);
+INT     WINAPI (*pAddMRUData) (HANDLE hList, LPCVOID lpData, DWORD cbData);
+INT     WINAPI (*pFindMRUData) (HANDLE hList, LPCVOID lpData, DWORD cbData, LPINT lpRegNum);
+INT     WINAPI (*pEnumMRUListA) (HANDLE hList, INT nItemPos, LPVOID lpBuffer, DWORD nBufferSize);
 
 static HINSTANCE	hComctl32;
 
@@ -1002,6 +1007,11 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	    pDPA_DeletePtr=(void*)GetProcAddress(hComctl32, (LPCSTR)336L);
 	    pDPA_Sort=(void*)GetProcAddress(hComctl32, (LPCSTR)338L);
 	    pDPA_Search=(void*)GetProcAddress(hComctl32, (LPCSTR)339L);
+	    pCreateMRUListA=(void*)GetProcAddress(hComctl32, "CreateMRUListA");
+	    pFreeMRUListA=(void*)GetProcAddress(hComctl32, "FreeMRUList");
+	    pAddMRUData=(void*)GetProcAddress(hComctl32, "AddMRUData");
+	    pFindMRUData=(void*)GetProcAddress(hComctl32, "FindMRUData");
+	    pEnumMRUListA=(void*)GetProcAddress(hComctl32, "EnumMRUListA");
 
 	    /* initialize the common controls */
 	    if (pDLLInitComctl)
