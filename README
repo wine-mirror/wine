@@ -69,16 +69,12 @@ To build Wine, run the following commands:
 make depend
 make
 
-This will build the library "libwine.a" and the program "wine".  
+This will build the program "wine" and numerous support libraries/binaries.  
 The program "wine" will load and run Windows executables.
-The library "libwine.a" can be used to compile and link Windows source
-code under Unix.
+The library "libwine" ("Winelib") can be used to compile and link
+Windows source code under Unix.
 
-If you do not intend to compile Windows source code, use
-"./configure --disable-lib" to skip building the library and reduce disk
-space requirements. If you have an ELF compiler (which you probably do),
-you can use "./configure --enable-dll" to build a shared library instead.
-To see other configuration options, do ./configure --help.
+To see compile configuration options, do ./configure --help.
 
 To upgrade to a new release by using a patch file, first cd to the
 top-level directory of the release (the one containing this README
@@ -145,7 +141,7 @@ FAQ:	The Wine FAQ is located at http://www.winehq.com/faq.html.
 WWW:	A great deal of information about Wine is available from WineHQ at
 	http://www.winehq.com/. Untested patches against the current release
 	are available on the wine-patches mailing list; see 
-	http://www.winehq.com/dev.html#ml for more information.
+	http://www.winehq.com/dev.shtml#ml for more information.
 
 HOWTO:	The Wine HOWTO is available at
 	http://www.westfalen.de/witch/wine-HOWTO.txt .
@@ -162,7 +158,7 @@ Usenet:	Please browse old messages on http://www.dejanews.com/ to check whether
 IRC:	Online help is available at channel #WineHQ on IRCnet.
 
 CVS:	The current Wine development tree is available through CVS.
-	Go to http://www.winehq.com/dev.html for more information.
+	Go to http://www.winehq.com/dev.shtml for more information.
 
 If you add something, or fix a bug, please send a patch ('diff -u'
 format preferred) to julliard@winehq.com for inclusion in the next

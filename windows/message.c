@@ -361,7 +361,7 @@ END:
 /***********************************************************************
  *           MSG_TranslateKbdMsg
  *
- * Translate an keyboard hardware event into a real message.
+ * Translate a keyboard hardware event into a real message.
  */
 static DWORD MSG_TranslateKbdMsg( HWND hTopWnd, DWORD first, DWORD last,
 				  MSG *msg, BOOL remove )
@@ -508,7 +508,7 @@ static int MSG_JournalPlayBackMsg(void)
   if (wtime<=0)
   {
    wtime=0;
-   if ((tmpMsg->message>= WM_KEYFIRST) && (tmpMsg->message <= WM_KEYLAST))
+   if ((tmpMsg->message >= WM_KEYFIRST) && (tmpMsg->message <= WM_KEYLAST))
    {
      wParam=tmpMsg->paramL & 0xFF;
      lParam=MAKELONG(tmpMsg->paramH&0x7ffff,tmpMsg->paramL>>8);
@@ -590,8 +590,6 @@ static int MSG_JournalPlayBackMsg(void)
 static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, DWORD first, DWORD last,
                                    BOOL remove )
 {
-    /* FIXME: should deal with MSG32 instead of MSG16 */
-    
     DWORD status = SYSQ_MSG_ACCEPT;
     MESSAGEQUEUE *sysMsgQueue = QUEUE_GetSysQueue();
     enum { MOUSE_MSG = 0, KEYBOARD_MSG, HARDWARE_MSG } msgType;
@@ -789,7 +787,7 @@ UINT WINAPI GetDoubleClickTime(void)
  * Implementation of an inter-task SendMessage.
  * Return values:
  *    0 if error or timeout
- *    1 if successflul
+ *    1 if successful
  */
 static LRESULT MSG_SendMessageInterThread( HQUEUE16 hDestQueue,
                                            HWND hwnd, UINT msg,
@@ -2204,7 +2202,7 @@ static BOOL MSG_DoTranslateMessage( UINT message, HWND hwnd,
     /* FIXME : should handle ToUnicode yielding 2 */
     switch (ToUnicode(wParam, HIWORD(lParam), QueueKeyStateTable, wp, 2, 0)) 
     {
-    case 1 :
+    case 1:
         message = (message == WM_KEYDOWN) ? WM_CHAR : WM_SYSCHAR;
         /* Should dead chars handling go in ToAscii ? */
         if (dead_char)
@@ -2232,7 +2230,7 @@ static BOOL MSG_DoTranslateMessage( UINT message, HWND hwnd,
         PostMessageW( hwnd, message, wp[0], lParam );
         return TRUE;
 
-    case -1 :
+    case -1:
         message = (message == WM_KEYDOWN) ? WM_DEADCHAR : WM_SYSDEADCHAR;
         dead_char = wp[0];
         TRACE_(key)("-1 -> PostMessage(%s)\n", SPY_GetMsgName(message));
@@ -2293,9 +2291,9 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
     {
 	if (msg->lParam)
         {
-            /* before calling window proc, verify it the timer is still valid,
-               there's a slim chance the application kill the timer between
-               getMessage and DisaptachMessage API calls */
+            /* before calling window proc, verify whether timer is still valid;
+               there's a slim chance that the application kills the timer
+	       between GetMessage and DispatchMessage API calls */
             if (!TIMER_IsTimerValid(msg->hwnd, (UINT) msg->wParam, (HWINDOWPROC) msg->lParam))
                 return 0; /* invalid winproc */
 
@@ -2377,9 +2375,9 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
         {
 /*            HOOK_CallHooks32A( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
 
-            /* before calling window proc, verify it the timer is still valid,
-               there's a slim chance the application kill the timer between
-               getMessage and DisaptachMessage API calls */
+            /* before calling window proc, verify whether timer is still valid;
+               there's a slim chance that the application kills the timer
+	       between GetMessage and DispatchMessage API calls */
             if (!TIMER_IsTimerValid(msg->hwnd, (UINT) msg->wParam, (HWINDOWPROC) msg->lParam))
                 return 0; /* invalid winproc */
 
@@ -2460,9 +2458,9 @@ LONG WINAPI DispatchMessageW( const MSG* msg )
         {
 /*            HOOK_CallHooks32W( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
 
-            /* before calling window proc, verify it the timer is still valid,
-               there's a slim chance the application kill the timer between
-               getMessage and DisaptachMessage API calls */
+            /* before calling window proc, verify whether timer is still valid;
+               there's a slim chance that the application kills the timer
+	       between GetMessage and DispatchMessage API calls */
             if (!TIMER_IsTimerValid(msg->hwnd, (UINT) msg->wParam, (HWINDOWPROC) msg->lParam))
                 return 0; /* invalid winproc */
 
@@ -2598,8 +2596,10 @@ BOOL WINAPI SendNotifyMessageW(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 /***********************************************************************
  *           SendMessageCallbackA
  * FIXME: It's like PostMessage. The callback gets called when the message
- * is processed. We have to modify the message processing for a exact
+ * is processed. We have to modify the message processing for an exact
  * implementation...
+ * The callback is only called when the thread that called us calls one of
+ * Get/Peek/WaitMessage.
  */
 BOOL WINAPI SendMessageCallbackA(
 	HWND hWnd,UINT Msg,WPARAM wParam,LPARAM lParam,
@@ -2617,9 +2617,7 @@ BOOL WINAPI SendMessageCallbackA(
 }
 /***********************************************************************
  *           SendMessageCallbackW
- * FIXME: It's like PostMessage. The callback gets called when the message
- * is processed. We have to modify the message processing for a exact
- * implementation...
+ * FIXME: see SendMessageCallbackA.
  */
 BOOL WINAPI SendMessageCallbackW(
 	HWND hWnd,UINT Msg,WPARAM wParam,LPARAM lParam,

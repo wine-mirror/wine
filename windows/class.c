@@ -9,7 +9,7 @@
  *	  win31->NT migration book)
  *
  * FIXME: There seems to be a general problem with hInstance in WINE
- *   classes are getting registred with wrong hInstance.
+ *   classes are getting registered with wrong hInstance.
  */
 
 #include <stdlib.h>

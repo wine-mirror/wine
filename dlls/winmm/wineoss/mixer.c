@@ -63,7 +63,7 @@ static	BOOL	MIX_GetVal(int chn, int* val)
 	WARN("mixer device not available !\n");
     } else {
 	if (ioctl(mixer, MIXER_READ(chn), val) >= 0) {
-	    TRACE("Reading %x on %d\n", *val, chn);
+	    TRACE("Reading volume %x on %d\n", *val, chn);
 	    ret = TRUE;
 	}
 	close(mixer);
@@ -79,7 +79,7 @@ static	BOOL	MIX_SetVal(int chn, int val)
     int		mixer;
     BOOL	ret = FALSE;
 
-    TRACE("Writing %x on %d\n", val, chn);
+    TRACE("Writing volume %x on %d\n", val, chn);
 
     if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
 	/* FIXME: ENXIO => no mixer installed */
@@ -199,7 +199,7 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEA lpMl, DWORD fdwInfo)
 	TRACE("SOURCE (%08lx)\n", lpMl->dwSource);
 	i = lpMl->dwSource;
 	for (j = 1; j < SOUND_MIXER_NRDEVICES; j++) {
-	    if (WINE_CHN_SUPPORTS(MIX_DevMask, j) && (i-- == 0)) 
+	    if (WINE_CHN_SUPPORTS(MIX_DevMask, j) && (i-- == 0))
 		break;
 	}
 	if (j >= SOUND_MIXER_NRDEVICES)

@@ -40,7 +40,7 @@ typedef struct tagSMSG
     HQUEUE16       hSrcQueue;       /* sending Queue, (NULL if it didn't wait) */
     HQUEUE16       hDstQueue;       /* destination Queue */
 
-    HWND         hWnd;            /* destinantion window */
+    HWND         hWnd;            /* destination window */
     UINT         msg;             /* message sent */
     WPARAM       wParam;          /* wParam of the sent message */
     LPARAM         lParam;          /* lParam of the sent message */
@@ -65,7 +65,7 @@ typedef struct tagSMSG
 #define SMSG_EARLY_REPLY            0x0080
 /* set when sender is Win32 thread */
 #define SMSG_WIN32                  0x1000
-/* set when sender is a unnicode thread */
+/* set when sender is a unicode thread */
 #define SMSG_UNICODE                0x2000
 
 /* Per-queue data for the message queue

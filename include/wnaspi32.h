@@ -90,105 +90,105 @@ extern "C" {
 
 /* SRB - HOST ADAPTER INQUIRY - SC_HA_INQUIRY */
 typedef struct tagSRB32_HaInquiry {
- BYTE  SRB_Cmd;                 /* ASPI command code = SC_HA_INQUIRY */
- BYTE  SRB_Status;              /* ASPI command status byte */
- BYTE  SRB_HaId;                /* ASPI host adapter number */
- BYTE  SRB_Flags;               /* ASPI request flags */
- DWORD  SRB_Hdr_Rsvd;           /* Reserved, MUST = 0 */
- BYTE  HA_Count;                /* Number of host adapters present */
- BYTE  HA_SCSI_ID;              /* SCSI ID of host adapter */
- BYTE  HA_ManagerId[16];        /* String describing the manager */
- BYTE  HA_Identifier[16];       /* String describing the host adapter */
- BYTE  HA_Unique[16];           /* Host Adapter Unique parameters */
+ BYTE  SRB_Cmd;                 /* 00 ASPI command code = SC_HA_INQUIRY */
+ BYTE  SRB_Status;              /* 01 ASPI command status byte */
+ BYTE  SRB_HaId;                /* 02 ASPI host adapter number */
+ BYTE  SRB_Flags;               /* 03 ASPI request flags */
+ DWORD  SRB_Hdr_Rsvd;           /* 04 Reserved, MUST = 0 */
+ BYTE  HA_Count;                /* 08 Number of host adapters present */
+ BYTE  HA_SCSI_ID;              /* 09 SCSI ID of host adapter */
+ BYTE  HA_ManagerId[16];        /* 0A String describing the manager */
+ BYTE  HA_Identifier[16];       /* 1A String describing the host adapter */
+ BYTE  HA_Unique[16];           /* 2A Host Adapter Unique parameters */
  WORD  HA_Rsvd1;
 } SRB_HaInquiry, *PSRB_HaInquiry;
 
 /* SRB - GET DEVICE TYPE - SC_GET_DEV_TYPE */
 typedef struct tagSRB32_GDEVBlock {
- BYTE  SRB_Cmd;                 /* ASPI command code = SC_GET_DEV_TYPE */
- BYTE  SRB_Status;              /* ASPI command status byte */
- BYTE  SRB_HaId;                /* ASPI host adapter number */
- BYTE  SRB_Flags;               /* Reserved */
- DWORD  SRB_Hdr_Rsvd;           /* Reserved */
- BYTE  SRB_Target;              /* Target's SCSI ID */
- BYTE  SRB_Lun;                 /* Target's LUN number */
- BYTE  SRB_DeviceType;          /* Target's peripheral device type */
+ BYTE  SRB_Cmd;                 /* 00 ASPI command code = SC_GET_DEV_TYPE */
+ BYTE  SRB_Status;              /* 01 ASPI command status byte */
+ BYTE  SRB_HaId;                /* 02 ASPI host adapter number */
+ BYTE  SRB_Flags;               /* 03 Reserved */
+ DWORD  SRB_Hdr_Rsvd;           /* 04 Reserved */
+ BYTE  SRB_Target;              /* 08 Target's SCSI ID */
+ BYTE  SRB_Lun;                 /* 09 Target's LUN number */
+ BYTE  SRB_DeviceType;          /* 0A Target's peripheral device type */
  BYTE  SRB_Rsvd1;
 } SRB_GDEVBlock, *PSRB_GDEVBlock;
 
 /* SRB - EXECUTE SCSI COMMAND - SC_EXEC_SCSI_CMD */
 typedef struct tagSRB32_ExecSCSICmd {
-  BYTE        SRB_Cmd;            /* ASPI command code = SC_EXEC_SCSI_CMD */
-  BYTE        SRB_Status;         /* ASPI command status byte */
-  BYTE        SRB_HaId;           /* ASPI host adapter number */
-  BYTE        SRB_Flags;          /* ASPI request flags */
-  DWORD       SRB_Hdr_Rsvd;       /* Reserved */
-  BYTE        SRB_Target;         /* Target's SCSI ID */
-  BYTE        SRB_Lun;            /* Target's LUN number */
-  WORD        SRB_Rsvd1;          /* Reserved for Alignment */
-  DWORD       SRB_BufLen;         /* Data Allocation Length */
-  BYTE        *SRB_BufPointer;    /* Data Buffer Point */
-  BYTE        SRB_SenseLen;       /* Sense Allocation Length */
-  BYTE        SRB_CDBLen;         /* CDB Length */
-  BYTE        SRB_HaStat;         /* Host Adapter Status */
-  BYTE        SRB_TargStat;       /* Target Status */
-  void        (*SRB_PostProc)();  /* Post routine */
-  void        *SRB_Rsvd2;         /* Reserved */
-  BYTE        SRB_Rsvd3[16];      /* Reserved for expansion */
-  BYTE        CDBByte[16];        /* SCSI CDB */
-  BYTE        SenseArea[SENSE_LEN+2];  /* Request sense buffer - var length */
+  BYTE        SRB_Cmd;            /* 00 ASPI command code = SC_EXEC_SCSI_CMD */
+  BYTE        SRB_Status;         /* 01 ASPI command status byte */
+  BYTE        SRB_HaId;           /* 02 ASPI host adapter number */
+  BYTE        SRB_Flags;          /* 03 ASPI request flags */
+  DWORD       SRB_Hdr_Rsvd;       /* 04 Reserved */
+  BYTE        SRB_Target;         /* 08 Target's SCSI ID */
+  BYTE        SRB_Lun;            /* 09 Target's LUN number */
+  WORD        SRB_Rsvd1;          /* 0A Reserved for Alignment */
+  DWORD       SRB_BufLen;         /* 0C Data Allocation Length */
+  BYTE        *SRB_BufPointer;    /* 10 Data Buffer Point */
+  BYTE        SRB_SenseLen;       /* 14 Sense Allocation Length */
+  BYTE        SRB_CDBLen;         /* 15 CDB Length */
+  BYTE        SRB_HaStat;         /* 16 Host Adapter Status */
+  BYTE        SRB_TargStat;       /* 17 Target Status */
+  void        (*SRB_PostProc)();  /* 18 Post routine */
+  void        *SRB_Rsvd2;         /* 1C Reserved */
+  BYTE        SRB_Rsvd3[16];      /* 20 Reserved for expansion */
+  BYTE        CDBByte[16];        /* 30 SCSI CDB */
+  BYTE        SenseArea[SENSE_LEN+2];  /* 40 Request sense buffer - var length */
 } SRB_ExecSCSICmd, *PSRB_ExecSCSICmd;
 
 /* SRB - ABORT AN ARB - SC_ABORT_SRB */
 typedef struct tagSRB32_Abort {
-  BYTE        SRB_Cmd;            /* ASPI command code = SC_ABORT_SRB */
-  BYTE        SRB_Status;         /* ASPI command status byte */
-  BYTE        SRB_HaId;           /* ASPI host adapter number */
-  BYTE        SRB_Flags;          /* Reserved */
-  DWORD       SRB_Hdr_Rsvd;       /* Reserved, MUST = 0 */
-  VOID       *SRB_ToAbort;        /* Pointer to SRB to abort */
+  BYTE        SRB_Cmd;            /* 00 ASPI command code = SC_ABORT_SRB */
+  BYTE        SRB_Status;         /* 01 ASPI command status byte */
+  BYTE        SRB_HaId;           /* 02 ASPI host adapter number */
+  BYTE        SRB_Flags;          /* 03 Reserved */
+  DWORD       SRB_Hdr_Rsvd;       /* 04 Reserved, MUST = 0 */
+  VOID       *SRB_ToAbort;        /* 08 Pointer to SRB to abort */
 } SRB_Abort, *PSRB_Abort;
 
 /* SRB - BUS DEVICE RESET - SC_RESET_DEV */
 typedef struct tagSRB32_BusDeviceReset {
- BYTE         SRB_Cmd;                  /* ASPI command code = SC_RESET_DEV */
- BYTE         SRB_Status;               /* ASPI command status byte */
- BYTE         SRB_HaId;                 /* ASPI host adapter number */
- BYTE         SRB_Flags;                /* Reserved */
- DWORD        SRB_Hdr_Rsvd;             /* Reserved */
- BYTE         SRB_Target;               /* Target's SCSI ID */
- BYTE         SRB_Lun;                  /* Target's LUN number */
- BYTE         SRB_Rsvd1[12];            /* Reserved for Alignment */
- BYTE         SRB_HaStat;               /* Host Adapter Status */
- BYTE         SRB_TargStat;             /* Target Status */
- void         (*SRB_PostProc)();        /* Post routine */
- void         *SRB_Rsvd2;               /* Reserved */
- BYTE         SRB_Rsvd3[32];            /* Reserved */
+ BYTE         SRB_Cmd;                  /* 00 ASPI cmd code = SC_RESET_DEV */
+ BYTE         SRB_Status;               /* 01 ASPI command status byte */
+ BYTE         SRB_HaId;                 /* 02 ASPI host adapter number */
+ BYTE         SRB_Flags;                /* 03 Reserved */
+ DWORD        SRB_Hdr_Rsvd;             /* 04 Reserved */
+ BYTE         SRB_Target;               /* 08 Target's SCSI ID */
+ BYTE         SRB_Lun;                  /* 09 Target's LUN number */
+ BYTE         SRB_Rsvd1[12];            /* 0A Reserved for Alignment */
+ BYTE         SRB_HaStat;               /* 16 Host Adapter Status */
+ BYTE         SRB_TargStat;             /* 17 Target Status */
+ void         (*SRB_PostProc)();        /* 18 Post routine */
+ void         *SRB_Rsvd2;               /* 1c Reserved */
+ BYTE         SRB_Rsvd3[32];            /* 20 Reserved */
 } SRB_BusDeviceReset, *PSRB_BusDeviceReset;
 
 /* SRB - GET DISK INFORMATION - SC_GET_DISK_INFO */
 typedef struct tagSRB32_GetDiskInfo {
- BYTE         SRB_Cmd;                  /* ASPI command code = SC_RESET_DEV */
- BYTE         SRB_Status;               /* ASPI command status byte */
- BYTE         SRB_HaId;                 /* ASPI host adapter number */
- BYTE         SRB_Flags;                /* Reserved */
- DWORD        SRB_Hdr_Rsvd;             /* Reserved */
- BYTE         SRB_Target;               /* Target's SCSI ID */
- BYTE         SRB_Lun;                  /* Target's LUN number */
- BYTE         SRB_DriveFlags;           /* Driver flags */
- BYTE         SRB_Int13HDriveInfo;      /* Host Adapter Status */
- BYTE         SRB_Heads;                /* Preferred number of heads trans */
- BYTE         SRB_Sectors;              /* Preferred number of sectors trans */
- BYTE         SRB_Rsvd1[10];            /* Reserved */
+ BYTE         SRB_Cmd;                  /* 00 ASPI cmd code = SC_RESET_DEV */
+ BYTE         SRB_Status;               /* 01 ASPI command status byte */
+ BYTE         SRB_HaId;                 /* 02 ASPI host adapter number */
+ BYTE         SRB_Flags;                /* 03 Reserved */
+ DWORD        SRB_Hdr_Rsvd;             /* 04 Reserved */
+ BYTE         SRB_Target;               /* 08 Target's SCSI ID */
+ BYTE         SRB_Lun;                  /* 09 Target's LUN number */
+ BYTE         SRB_DriveFlags;           /* 0A Driver flags */
+ BYTE         SRB_Int13HDriveInfo;      /* 0B Host Adapter Status */
+ BYTE         SRB_Heads;                /* 0C Preferred number of heads trans */
+ BYTE         SRB_Sectors;              /* 0D Preferred number of sectors trans */
+ BYTE         SRB_Rsvd1[10];            /* 0E Reserved */
 } SRB_GetDiskInfo, *PSRB_GetDiskInfo;
 
 /* SRB header */
 typedef struct tagSRB32_Header {
- BYTE         SRB_Cmd;                  /* ASPI command code = SC_RESET_DEV */
- BYTE         SRB_Status;               /* ASPI command status byte */
- BYTE         SRB_HaId;                 /* ASPI host adapter number */
- BYTE         SRB_Flags;                /* Reserved */
- DWORD        SRB_Hdr_Rsvd;             /* Reserved */
+ BYTE         SRB_Cmd;                  /* 00 ASPI cmd code = SC_RESET_DEV */
+ BYTE         SRB_Status;               /* 01 ASPI command status byte */
+ BYTE         SRB_HaId;                 /* 02 ASPI host adapter number */
+ BYTE         SRB_Flags;                /* 03 Reserved */
+ DWORD        SRB_Hdr_Rsvd;             /* 04 Reserved */
 } SRB_Header, *PSRB_Header;
 
 typedef union tagSRB32 {

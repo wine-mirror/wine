@@ -136,7 +136,7 @@ BSTR16 WINAPI SysAllocStringLen16(const char *in, int len)
  *             SysAllocStringLen     [OLEAUT32.4]
  *
  * In "Inside OLE, second edition" by Kraig Brockshmidt. In the Automation
- * section, he describes the DWORD value placed before the BSTR data type.
+ * section, he describes the DWORD value placed *before* the BSTR data type.
  * he describes it as a "DWORD count of characters". By experimenting with
  * a windows application, this count seems to be a DWORD count of bytes in
  * the string. Meaning that the count is double the number of wide 
@@ -149,13 +149,13 @@ BSTR WINAPI SysAllocStringLen(const OLECHAR *in, unsigned int len)
     WCHAR* stringBuffer;
 
     /*
-     * Find the lenth of the buffer passed-in in bytes.
+     * Find the length of the buffer passed-in in bytes.
      */
     bufferSize = len * sizeof (WCHAR);
 
     /*
      * Allocate a new buffer to hold the string.
-     * dont't forget to keep an empty spot at the begining of the
+     * dont't forget to keep an empty spot at the beginning of the
      * buffer for the character count and an extra character at the
      * end for the NULL.
      */

@@ -156,11 +156,11 @@ void MAIN_ParseDebugOptions( const char *arg )
 
  error:  
   MESSAGE("%s: Syntax: --debugmsg [class]+xxx,...  or "
-      "-debugmsg [class]-xxx,...\n",argv0);
+      "--debugmsg [class]-xxx,...\n",argv0);
   MESSAGE("Example: --debugmsg +all,warn-heap\n"
       "  turn on all messages except warning heap messages\n");
   MESSAGE("Special case: --debugmsg +relay=DLL:DLL.###:FuncName\n"
-      "  turn on -debugmsg +relay only as specified\n"
+      "  turn on --debugmsg +relay only as specified\n"
       "Special case: --debugmsg -relay=DLL:DLL.###:FuncName\n"
       "  turn on --debugmsg +relay except as specified\n"
       "Also permitted, +snoop=..., -snoop=... as with relay.\n\n");
