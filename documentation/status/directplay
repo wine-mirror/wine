@@ -6,7 +6,7 @@ Most methods and APIs are but stubs at this point. Examine the code
 to see what has been implemented. Use -debugmsg +dplay to get a 
 reasonably thourough description of what's going on.
 
-Associated header files are include/dplay.h, include/dplobby.h.
+Associated DirectX user header files are include/dplay.h, include/dplobby.h.
 
 Implementation of the DPLAY and DPLAYX dlls are both in the dlls/dplayx
 directory.
@@ -26,10 +26,6 @@ dplayx_main.c: LibMain executed for loading and unloading the dll. This will mak
 
 Presently the architectural relationship between this files is a little shakey, but
 isn't so sufficiently bad that it needs fixing yet.
-
-Everything right now will run in the context of the calling thread, but at some
-point in the future the code will actually be far enough along to create a thread
-for session management.
 
 I think I can safely say that any application which requires direct play
 or direct play lobby will not work at this point. Priority will be to get
@@ -70,7 +66,8 @@ TODO:
   - bug fixes ;)
   - Implement some WineLib test programs using sdk programs as a skeleton
   - (done) Change all RegEnumKey calls to RegEnumKeyEx.
-  - Change RegEnumKeyEx enumeration pattern to allow error handling.
+  - Change RegEnumKeyEx enumeration pattern to allow error handling and to
+    share registry implementation (or at least simplify).
   - Add in appropriate RegCloseKey calls for all the opening we're doing...
   - Fix all the buffer sizes for registry calls. They're off by one - but in a safe direction.
   - Find out how to call the service provider dlls - they don't have a published interface!
@@ -83,7 +80,7 @@ Programs to make work:
   - duel.exe (from sdk)
   - dplaunch.exe (from sdk)
 
-Next API to implement on a per program basis:
+Next API to implement on a per SDK program basis:
   override.exe
   - fixme:dplay:DirectPlayCreate Modem binding not supported yet
   - DirectPlay3AImpl_InitializeConnection
@@ -91,9 +88,8 @@ Next API to implement on a per program basis:
   - ?
 
   dplaunch.exe
-  - IDirectPlayLobby2AImpl_CreateCompoundAddress
   - IDirectPlayLobbyAImpl_RunApplication
-  - ?
+    (need address space separation or else rebuild all sdk examples)
 
   lserver.exe
   - IDirectPlayLobby2WImpl_Connect 
@@ -105,11 +101,15 @@ Next API to implement on a per program basis:
   - ?
  
   bellhop.exe
-  - DirectPlay3AImpl_EnumConnections (lobby applications)
+  - DP_SendSessionRequestBroadcast (implement the name server stuff)
   - ?
 
   dpslots.exe
   - IDirectPlayLobby3AImpl_ConnectEx
+  - ?
+
+  override.exe
+  - DirectPlayCreate Service provider binding not supported yet
   - ?
 
 Other TODO:

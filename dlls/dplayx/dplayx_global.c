@@ -219,6 +219,8 @@ HRESULT DPLAYX_GetConnectionSettingsA
   if ( ! DPLAYX_IsAppIdLobbied( dwAppID, &lpDplData ) )
   {
     DPLAYX_ReleaseSemaphore();
+
+    TRACE( "Application 0x%08lx is not lobbied\n", dwAppID );
     return DPERR_NOTLOBBIED;
   }
 

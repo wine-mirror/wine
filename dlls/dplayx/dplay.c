@@ -746,16 +746,23 @@ static HRESULT WINAPI DirectPlay2WImpl_EnumPlayers
           ( LPDIRECTPLAY2 iface, LPGUID lpguidInstance, LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2, LPVOID lpContext, DWORD dwFlags )
 {
   ICOM_THIS(IDirectPlay2Impl,iface);
-  FIXME("(%p)->(%p,%p,%p,0x%08lx): stub\n", This, lpguidInstance, lpEnumPlayersCallback2, lpContext, dwFlags );
+  FIXME("(%p)->(%p,%p,%p,0x%08lx): stub\n", 
+        This, lpguidInstance, lpEnumPlayersCallback2, lpContext, dwFlags );
   return DP_OK;
 }
 
+/* This function is responsible for sending a request for all other known
+   nameservers to send us what sessions they have registered locally
+ */
 void DP_SendSessionRequestBroadcast()
 {
   FIXME( ": stub\n" );
 } 
 
-void DP_InvokeEnumSessionCallbacksA( LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
+/* This function should call the registered callback function that the user
+   passed into EnumSessions 
+ */
+static void DP_InvokeEnumSessionCallbacksA( LPDPENUMSESSIONSCALLBACK2 lpEnumSessionsCallback2,
                                      LPVOID lpContext )
 {
   FIXME( ": stub\n" );
@@ -802,7 +809,7 @@ static HRESULT WINAPI DirectPlay2AImpl_EnumSessions
     /* Does a thread exist? If so we were doing an async enum session */
     if( This->dp2->hEnumSessionThread != INVALID_HANDLE_VALUE )
     {
-      /* FIXME: This needs to be send an event to the thread to clean itself up */
+      /* FIXME: This needs to be send an event to the thread to clean itself up nicely */
       TerminateThread( This->dp2->hEnumSessionThread, 0 );
       CloseHandle( This->dp2->hEnumSessionThread );
 
@@ -1368,7 +1375,108 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
   /* Enumerate DirectPlayLobby service providers */
   if( dwFlags & DPCONNECTION_DIRECTPLAYLOBBY )
   {
-    FIXME( "DPCONNECTION_DIRECTPLAYLOBBY flag not handled\n" );
+    HKEY hkResult;
+    LPCSTR searchSubKey    = "SOFTWARE\\Microsoft\\DirectPlay\\Lobby Providers";
+    LPSTR guidDataSubKey   = "Guid";
+    char subKeyName[51]; 
+    DWORD dwIndex, sizeOfSubKeyName=50;
+    FILETIME filetime;
+
+    /* Need to loop over the service providers in the registry */
+    if( RegOpenKeyExA( HKEY_LOCAL_MACHINE, searchSubKey,
+                         0, KEY_READ, &hkResult ) != ERROR_SUCCESS )
+    {
+      /* Hmmm. Does this mean that there are no service providers? */
+      ERR(": no service providers?\n");
+      return DP_OK;
+    }
+
+
+    /* Traverse all the service providers we have available */
+    for( dwIndex=0;
+         RegEnumKeyExA( hkResult, dwIndex, subKeyName, &sizeOfSubKeyName, 
+                        NULL, NULL, NULL, &filetime ) != ERROR_NO_MORE_ITEMS;
+         ++dwIndex, sizeOfSubKeyName=51 )
+    {
+
+      HKEY     hkServiceProvider;
+      GUID     serviceProviderGUID;
+      DWORD    returnTypeGUID, sizeOfReturnBuffer = 50;
+      char     returnBuffer[51];
+      LPWSTR   lpWGUIDString;
+      DPNAME   dpName;
+      HRESULT  hr;
+
+      DPCOMPOUNDADDRESSELEMENT dpCompoundAddress;
+      LPVOID                   lpAddressBuffer = NULL;
+      DWORD                    dwAddressBufferSize = 0;
+
+      TRACE(" this time through: %s\n", subKeyName );
+
+      /* Get a handle for this particular service provider */
+      if( RegOpenKeyExA( hkResult, subKeyName, 0, KEY_READ,
+                         &hkServiceProvider ) != ERROR_SUCCESS )
+      {
+         ERR(": what the heck is going on?\n" );
+         continue;
+      }
+
+      if( RegQueryValueExA( hkServiceProvider, guidDataSubKey,
+                            NULL, &returnTypeGUID, returnBuffer,
+                            &sizeOfReturnBuffer ) != ERROR_SUCCESS )
+      {
+        ERR(": missing GUID registry data members\n" );
+        continue;
+      }
+
+      /* FIXME: Check return types to ensure we're interpreting data right */
+      lpWGUIDString = HEAP_strdupAtoW( GetProcessHeap(), 0, returnBuffer );
+      CLSIDFromString( (LPCOLESTR)lpWGUIDString, &serviceProviderGUID );
+      HeapFree( GetProcessHeap(), 0, lpWGUIDString );
+      /* FIXME: Have I got a memory leak on the serviceProviderGUID? */
+
+      /* Fill in the DPNAME struct for the service provider */
+      dpName.dwSize             = sizeof( dpName );
+      dpName.dwFlags            = 0;
+      dpName.psn.lpszShortNameA = subKeyName;
+      dpName.pln.lpszLongNameA  = NULL;
+
+      /* Create the compound address for the service provider. 
+         NOTE: This is a gruesome architectural scar right now. DP uses DPL and DPL uses DP
+               nast stuff. This may be why the native dll just gets around this little bit by
+               allocating an 80 byte buffer which isn't even a filled with a valid compound 
+               address. Oh well. Creating a proper compound address is the way to go anyways 
+               despite this method taking slightly more heap space and realtime :) */
+      dpCompoundAddress.guidDataType = DPAID_ServiceProvider;
+      dpCompoundAddress.dwDataSize   = sizeof( GUID );
+      dpCompoundAddress.lpData       = &serviceProviderGUID; 
+
+      if( ( hr = DPL_CreateCompoundAddress( &dpCompoundAddress, 1, lpAddressBuffer, 
+                                     &dwAddressBufferSize, TRUE ) ) != DPERR_BUFFERTOOSMALL )
+      {
+        ERR( "can't get buffer size: %s\n", DPLAYX_HresultToString( hr ) );
+        return hr;
+      }
+
+      /* Now allocate the buffer */
+      lpAddressBuffer = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwAddressBufferSize );
+
+      if( ( hr = DPL_CreateCompoundAddress( &dpCompoundAddress, 1, lpAddressBuffer,
+                                     &dwAddressBufferSize, TRUE ) ) != DP_OK )
+      {
+        ERR( "can't create address: %s\n", DPLAYX_HresultToString( hr ) );
+        return hr;
+      }
+
+      /* The enumeration will return FALSE if we are not to continue */
+      if( !lpEnumCallback( &serviceProviderGUID, lpAddressBuffer, dwAddressBufferSize,
+                           &dpName, DPCONNECTION_DIRECTPLAY, lpContext ) )
+      {
+         WARN("lpEnumCallback returning FALSE\n" );
+
+         return DP_OK;
+      }
+    }
   }
 
   return DP_OK;
@@ -1418,7 +1526,8 @@ static HRESULT WINAPI DirectPlay3AImpl_InitializeConnection
           ( LPDIRECTPLAY3A iface, LPVOID lpConnection, DWORD dwFlags )
 {
   HMODULE hServiceProvider;
-  typedef DWORD (WINAPI *SP_SPInit)(LPVOID lpCompoundAddress, ...); /* FIXME: How many arguments? */
+  /*DWORD   dwReturnValue; */
+  typedef DWORD (WINAPI *SP_SPInit)(LPVOID, LPVOID, LPVOID ); /* FIXME: How many arguments? */
   SP_SPInit SPInit;
 
   ICOM_THIS(IDirectPlay3Impl,iface);
@@ -1460,7 +1569,7 @@ static HRESULT WINAPI DirectPlay3AImpl_InitializeConnection
   /* FIXME: Take a guess that we just pass the compound address to the SP */
   /* Hmmm...how to say which parameters need to be gotten from the SP. They must
      come from the compound address, but how do we communicate what's required? */
-  dwReturnValue = (*SPInit)( lpConnection );
+  dwReturnValue = (*SPInit)( lpConnection, NULL, NULL );
 #endif
 
   /* This interface is now initialized */
