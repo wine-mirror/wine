@@ -56,9 +56,9 @@ time_t ConvertTimeString(LPCWSTR asctime)
     strncpyW(tmpChar, asctime, TIME_STRING_LEN);
 
     /* Assert that the string is the expected length */
-    if (tmpChar[TIME_STRING_LEN] != '\0')
+    if (tmpChar[TIME_STRING_LEN - 1] != '\0')
     {
-        tmpChar[TIME_STRING_LEN] = '\0';
+        tmpChar[TIME_STRING_LEN - 1] = '\0';
         FIXME("\n");
     }
 
