@@ -9,6 +9,7 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -103,26 +104,51 @@ void __pthread_kill_other_threads_np(void)
 }
 strong_alias(__pthread_kill_other_threads_np, pthread_kill_other_threads_np);
 
+/***** atfork *****/
+
+#define MAX_ATFORK 8  /* libc doesn't need that many anyway */
+
+static CRITICAL_SECTION atfork_section = CRITICAL_SECTION_INIT;
+typedef void (*atfork_handler)();
+static atfork_handler atfork_prepare[MAX_ATFORK];
+static atfork_handler atfork_parent[MAX_ATFORK];
+static atfork_handler atfork_child[MAX_ATFORK];
+static int atfork_count;
+
 int __pthread_atfork(void (*prepare)(void),
 		     void (*parent)(void),
 		     void (*child)(void))
 {
-  P_OUTPUT("fixme:pthread_atfork\n");
-  return 0;
+    EnterCriticalSection( &atfork_section );
+    assert( atfork_count < MAX_ATFORK );
+    atfork_prepare[atfork_count] = prepare;
+    atfork_parent[atfork_count] = parent;
+    atfork_child[atfork_count] = child;
+    atfork_count++;
+    LeaveCriticalSection( &atfork_section );
+    return 0;
 }
 strong_alias(__pthread_atfork, pthread_atfork);
 
 pid_t PTHREAD_FORK(void)
 {
-  pid_t pid;
-  /* call prepare handlers */
-  pid = LIBC_FORK();
-  if (pid == 0) {
-    /* call child handlers */
-  } else {
-    /* call parent handlers */
-  }
-  return pid;
+    pid_t pid;
+    int i;
+
+    EnterCriticalSection( &atfork_section );
+    /* prepare handlers are called in reverse insertion order */
+    for (i = atfork_count - 1; i >= 0; i--) atfork_prepare[i]();
+    if (!(pid = LIBC_FORK()))
+    {
+        InitializeCriticalSection( &atfork_section );
+        for (i = 0; i < atfork_count; i++) atfork_child[i]();
+    }
+    else
+    {
+        for (i = 0; i < atfork_count; i++) atfork_parent[i]();
+        LeaveCriticalSection( &atfork_section );
+    }
+    return pid;
 }
 #ifdef ALIAS_FORK
 strong_alias(PTHREAD_FORK, fork);
