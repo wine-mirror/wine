@@ -1963,6 +1963,17 @@ static BOOL PROPSHEET_AddPage(HWND hwndDlg,
   item.pszText = (LPWSTR) psInfo->proppage[psInfo->nPages].pszText;
   item.cchTextMax = MAX_TABTEXT_LENGTH;
 
+  if (psInfo->hImageList)
+  {
+    SendMessageW(hwndTabControl, TCM_SETIMAGELIST, 0, (LPARAM)psInfo->hImageList);
+  }
+
+  if ( psInfo->proppage[psInfo->nPages].hasIcon )
+  {
+    item.mask |= TCIF_IMAGE;
+    item.iImage = psInfo->nPages;
+  }
+
   SendMessageW(hwndTabControl, TCM_INSERTITEMW, psInfo->nPages + 1,
                (LPARAM)&item);
 
