@@ -136,6 +136,42 @@ LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl)
   	return newpidl;
 }
 /*************************************************************************
+ * ILLoadFromStream
+ *
+ * NOTES
+ *   the first two bytes are the len, the pidl is following then
+ */
+HRESULT WINAPI ILLoadFromStream (IStream * pStream, LPITEMIDLIST * ppPidl)
+{	WORD		wLen = 0;
+	DWORD		dwBytesRead;
+	HRESULT		ret = E_FAIL;
+	
+
+	TRACE(shell,"%p %p\n", pStream ,  ppPidl);
+
+	if (*ppPidl)
+	{ SHFree(*ppPidl);
+	  *ppPidl = NULL;
+	}
+	
+	IStream_AddRef (pStream);
+
+	if (SUCCEEDED(IStream_Read(pStream, (LPVOID)&wLen, 2, &dwBytesRead)))
+	{ *ppPidl = SHAlloc (wLen);
+	  if (SUCCEEDED(IStream_Read(pStream, *ppPidl , wLen, &dwBytesRead)))
+	  { ret = S_OK;
+	  }
+	  else
+	  { SHFree(*ppPidl);
+	    *ppPidl = NULL;
+	  }
+	}
+
+	IStream_Release (pStream);
+
+	return ret;
+}
+/*************************************************************************
  * SHILCreateFromPath	[SHELL32.28]
  *
  * NOTES
