@@ -220,11 +220,13 @@ static void on_selection_change(HWND dialog, HWND listview)
 {
   LVITEM item;
   char *oldapp = current_app;
-    
+
   WINE_TRACE("()\n");
-  
+
   item.iItem = get_listview_selection(listview);
   item.mask = LVIF_PARAM;
+
+  WINE_TRACE("item.iItem=%d\n", item.iItem);
   
   if (item.iItem == -1) return;
   
@@ -303,8 +305,11 @@ static void on_remove_app_click(HWND dialog)
     section[strlen(section)] = '\0'; /* remove last backslash  */
     set(section, NULL, NULL); /* delete the section  */
     ListView_DeleteItem(listview, selection);
+    ListView_SetItemState(listview, selection - 1, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 
     SetFocus(listview);
+    
+    SendMessage(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);        
 }
 
 static void on_winver_change(HWND dialog)

@@ -206,8 +206,8 @@ struct setting
 {
     struct list entry;
     char *path;   /* path in the registry rooted at the config key  */
-    char *name;   /* name of the registry value  */
-    char *value;  /* contents of the registry value. if null, this means a deletion  */
+    char *name;   /* name of the registry value. if null, this means delete the key  */
+    char *value;  /* contents of the registry value. if null, this means delete the value  */
 };
 
 struct list *settings;
@@ -215,11 +215,10 @@ struct list *settings;
 static void free_setting(struct setting *setting)
 {
     assert( setting != NULL );
+    assert( setting->path );
 
-    WINE_TRACE("destroying %p\n", setting);
-
-    assert( setting->path && setting->name );
-
+    WINE_TRACE("destroying %p: %s\n", setting, setting->path);
+    
     HeapFree(GetProcessHeap(), 0, setting->path);
     HeapFree(GetProcessHeap(), 0, setting->name);
     HeapFree(GetProcessHeap(), 0, setting->value);
@@ -272,8 +271,7 @@ char *get(char *path, char *name, char *def)
  * "AppDefaults\\fooapp.exe\\Version". You can use keypath()
  * to get such a string.
  *
- * name is the value name, it must not be null (you cannot create
- * empty groups, sorry ...)
+ * name is the value name, or NULL to delete the path.
  *
  * value is what to set the value to, or NULL to delete it.
  *
@@ -285,7 +283,6 @@ void set(char *path, char *name, char *value)
     struct setting *s;
 
     assert( path != NULL );
-    assert( name != NULL );
 
     WINE_TRACE("path=%s, name=%s, value=%s\n", path, name, value);
 
@@ -295,19 +292,35 @@ void set(char *path, char *name, char *value)
         struct setting *s = LIST_ENTRY(cursor, struct setting, entry);
 
         if (strcasecmp(s->path, path) != 0) continue;
-        if (strcasecmp(s->name, name) != 0) continue;
+        if ((s->name && name) && strcasecmp(s->name, name) != 0) continue;
+
+        /* are we attempting a double delete? */
+        if (!s->name && !name) return;
+
+        /* do we want to undelete this key? */
+        if (!s->name && name) s->name = strdupA(name);
 
         /* yes, we have already set it, so just replace the content and return  */
         HeapFree(GetProcessHeap(), 0, s->value);
         s->value = value ? strdupA(value) : NULL;
+
+        /* are we deleting this key? this won't remove any of the
+         * children from the overlay so if the user adds it again in
+         * that session it will appear to undelete the settings, but
+         * in reality only the settings actually modified by the user
+         * in that session will be restored. we might want to fix this
+         * corner case in future by actually deleting all the children
+         * here so that once it's gone, it's gone.
+         */
+        if (!name) s->name = NULL;
 
         return;
     }
 
     /* otherwise add a new setting for it  */
     s = HeapAlloc(GetProcessHeap(), 0, sizeof(struct setting));
-    s->path = strdupA(path);
-    s->name = strdupA(name);
+    s->path  = strdupA(path);
+    s->name  = name  ? strdupA(name)  : NULL;
     s->value = value ? strdupA(value) : NULL;
 
     list_add_tail(settings, &s->entry);
