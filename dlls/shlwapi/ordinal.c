@@ -2182,17 +2182,6 @@ COLORREF WINAPI ColorHLSToRGB(WORD wHue, WORD wLuminosity, WORD wSaturation)
 }
 
 /*************************************************************************
- *      @	[SHLWAPI.394]
- *
- * Called by ICQ2000b install via SHDOCVW
- */
-LPVOID WINAPI SHLWAPI_394 (DWORD x, DWORD y, LPWSTR someURL, DWORD z)
-{
-	FIXME("(0x%08lx, 0x%08lx, '%s', 0x%08lx), stub.\n", x, y, debugstr_w(someURL), z);
-	return (LPVOID)0xdeadbee1;
-}
-
-/*************************************************************************
  *      @	[SHLWAPI.413]
  *
  * Function unknown seems to always to return 0
@@ -2222,6 +2211,15 @@ BOOL  WINAPI SHLWAPI_418 (HMODULE x)
 {
 	FIXME("(0x%08lx) partial stub\n", (LONG)x);
 	return FreeLibrary(x);
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.430]
+ */
+DWORD WINAPI SHLWAPI_430 (HINSTANCE hModule, HANDLE heap)
+{
+	FIXME("(0x%08lx 0x%08lx) stub\n", (DWORD)hModule, (DWORD)heap);
+	return E_FAIL;   /* This is what is used if shlwapi not loaded */
 }
 
 /*************************************************************************

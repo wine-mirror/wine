@@ -393,7 +393,7 @@ init SHLWAPI_LibMain
 391 stdcall @(ptr ptr ptr ptr ptr ) SHLWAPI_391
 392 stub @
 393 stub @
-394 stdcall @(long long wstr long) SHLWAPI_394
+394 forward @ user32.CreateDialogIndirectParamA
 395 stub @
 396 stub @
 397 stub @
@@ -429,7 +429,7 @@ init SHLWAPI_LibMain
 427 stub @
 428 forward @ user32.TrackPopupMenuEx
 429 stub @
-430 stub @
+430 stdcall @(long long) SHLWAPI_430
 431 stdcall @(long) SHLWAPI_431
 432 stub @
 433 stub @
