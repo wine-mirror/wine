@@ -243,11 +243,11 @@ static const struct inst db_inst_0f2x[] = {
 /*22*/	{ "mov",   TRUE,  LONG,  op2(E,CR),   0 },
 /*23*/	{ "mov",   TRUE,  LONG,  op2(E,DR),   0 },
 /*24*/	{ "mov",   TRUE,  LONG,  op2(TR,E),   0 },
-/*25*/	{ "",      FALSE, NONE,  0,	      0 },
+/*25*/	{ "(bad)", FALSE, NONE,  0,	      0 },
 /*26*/	{ "mov",   TRUE,  LONG,  op2(E,TR),   0 },
-/*27*/	{ "",      FALSE, NONE,  0,	      0 },
+/*27*/	{ "(bad)", FALSE, NONE,  0,	      0 },
 
-/*28*/	{ "",      FALSE, NONE,  0,	      0 },
+/*28*/	{ "",	   FALSE, NONE,  0,	      0 },
 /*29*/	{ "",      FALSE, NONE,  0,	      0 },
 /*2a*/	{ "",      FALSE, NONE,  0,	      0 },
 /*2b*/	{ "",      FALSE, NONE,  0,	      0 },
@@ -255,6 +255,26 @@ static const struct inst db_inst_0f2x[] = {
 /*2d*/	{ "",      FALSE, NONE,  0,	      0 },
 /*2e*/	{ "",      FALSE, NONE,  0,	      0 },
 /*2f*/	{ "",      FALSE, NONE,  0,	      0 },
+};
+
+static const struct inst db_inst_0f3x[] = {
+/*20*/	{ "wrmsr", FALSE, NONE,  0,   0 },
+/*21*/	{ "rdtsc", FALSE, NONE,  0,   0 },
+/*22*/	{ "rdmsr", FALSE, NONE,  0,   0 },
+/*23*/	{ "rdpmc", FALSE, NONE,  0,   0 },
+/*24*/	{ "sysenter",FALSE,NONE, 0,   0 },
+/*25*/	{ "sysexit",FALSE,NONE,  0,   0 },
+/*26*/	{ "(bad)", FALSE, NONE,  0,   0 },
+/*27*/	{ "(bad)", FALSE, NONE,  0,   0 },
+
+/*28*/	{ "(bad)",FALSE, NONE,  0,	      0 },
+/*29*/	{ "(bad)",FALSE, NONE,  0,	      0 },
+/*2a*/	{ "(bad)",FALSE, NONE,  0,	      0 },
+/*2b*/	{ "(bad)",FALSE, NONE,  0,	      0 },
+/*2c*/	{ "(bad)",FALSE, NONE,  0,	      0 },
+/*2d*/	{ "(bad)",FALSE, NONE,  0,	      0 },
+/*2e*/	{ "(bad)",FALSE, NONE,  0,	      0 },
+/*2f*/	{ "(bad)",FALSE, NONE,  0,	      0 },
 };
 
 static const struct inst db_inst_0f4x[] = {
@@ -454,11 +474,30 @@ static const struct inst db_inst_0fex[] = {
 /*ef*/	{ "pxor",   TRUE, NONE,	 op2(MX, EMX),   0 },
 };
 
+static const struct inst db_inst_0ffx[] = {
+/*f0*/	{ "(bad)",  FALSE,NONE,  0,   0 },
+/*f1*/	{ "psllw",  TRUE, NONE,	 op2(MX, EMX),   0 },
+/*f2*/	{ "pslld",  TRUE, NONE,	 op2(MX, EMX),   0 },
+/*f3*/	{ "psllq",  TRUE, NONE,	 op2(MX, EMX),   0 },
+/*f4*/	{ "(bad)",  FALSE,NONE,	 0,   0 },
+/*f5*/	{ "pmaddwd",TRUE, NONE,	 op2(MX, EMX),   0 },
+/*f6*/	{ "psadbw", TRUE, NONE,	 op2(MX, EMX),   0 },
+/*f7*/	{ "maskmovq",TRUE,NONE,	 op2(MX, EMX),   0 },
+/*f8*/	{ "psubb",  TRUE, NONE,	 op2(MX, EMX),   0 },
+/*f9*/	{ "psubw",  TRUE, NONE,	 op2(MX, EMX),   0 },
+/*fa*/	{ "psubd",  TRUE, NONE,	 op2(MX, EMX),   0 },
+/*fb*/	{ "(bad)",  FALSE,NONE,	 0,   0 },
+/*fc*/	{ "paddb",  TRUE, NONE,	 op2(MX, EMX),   0 },
+/*fd*/	{ "paddw",  TRUE, NONE,	 op2(MX, EMX),   0 },
+/*fe*/	{ "paddd",  TRUE, NONE,	 op2(MX, EMX),   0 },
+/*ff*/	{ "(bad)",  FALSE, NONE, 0,   0 },
+};
+
 static const struct inst * const db_inst_0f[] = {
 	db_inst_0f0x,
 	0,
 	db_inst_0f2x,
-	0,
+	db_inst_0f3x,
 	db_inst_0f4x,
 	0,
 	db_inst_0f6x,
@@ -470,7 +509,7 @@ static const struct inst * const db_inst_0f[] = {
 	db_inst_0fcx,
 	db_inst_0fdx,
 	db_inst_0fex,
-	0
+	db_inst_0ffx
 };
 
 static const char * const db_Esc92[] = {
