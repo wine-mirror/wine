@@ -702,6 +702,7 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
 {
     static const WCHAR audiocdW[] = {'A','u','d','i','o',' ','C','D',0};
     static const WCHAR fatW[] = {'F','A','T',0};
+    static const WCHAR ntfsW[] = {'N','T','F','S',0};
     static const WCHAR cdfsW[] = {'C','D','F','S',0};
 
     WCHAR device[] = {'\\','\\','.','\\','A',':',0};
@@ -840,10 +841,14 @@ fill_fs_info:  /* now fill in the information that depends on the file system ty
         break;
     case FS_FAT1216:
     case FS_FAT32:
-    default:  /* default to FAT file system (FIXME) */
         if (fsname) lstrcpynW( fsname, fatW, fsname_len );
         if (filename_len) *filename_len = 255;
         if (flags) *flags = FILE_CASE_PRESERVED_NAMES;  /* FIXME */
+        break;
+    default:
+        if (fsname) lstrcpynW( fsname, ntfsW, fsname_len );
+        if (filename_len) *filename_len = 255;
+        if (flags) *flags = FILE_CASE_PRESERVED_NAMES;
         break;
     }
     return TRUE;
