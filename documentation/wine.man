@@ -37,9 +37,9 @@ libc6 (aka glibc2).
 .PP
 .B X
 must be installed.  To use Wine's support for multithreaded applications,
-your X libraries must be reetrant.  If you have libc6 (glibc2), or you 
+your X libraries must be reentrant.  If you have libc6 (glibc2), or you 
 compiled the X libraries yourself, they were probably compiled with the 
-reetrant option enabled.  
+reentrant option enabled.  
 .PP
 .B libXpm
 must be installed.  If you're using Red Hat, make sure the following

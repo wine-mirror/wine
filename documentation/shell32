@@ -12,7 +12,7 @@ base functionality is roughly in place. The missing parts are the icon
 the file copy status window.
 
 The basis comes from Marcus Meissner and I <juergen.schmied@metronet.de>
-implemented the classes and filled function stubs.
+implemented the classes and filled in function stubs.
             
 2. General Information
 ----------------------
@@ -71,7 +71,7 @@ implemented the classes and filled function stubs.
 
   Undocumented:
   MS says: the abID of SHITEMID should be treated as binary data and not
-  be interpreted by applications. Applys to everyone but MS itself.
+  be interpreted by applications. Applies to everyone but MS itself.
   Word95 interprets the contents of abID (Filesize/Date) so we have to go
   for binary compatibility here.
   I expect the file open/close dialog in comctl32 does so also.

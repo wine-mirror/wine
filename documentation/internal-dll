@@ -1,15 +1,15 @@
-This document describes some points you should know when you are going to
-implement the internal counterparts to external DLL's. Only 32  bit DLL's
+This document describes some points you should know before implementing 
+the internal counterparts to external DLL's. Only 32  bit DLL's
 are considered.
 
 1. The LibMain function
 -----------------------
-These are the way to do some initialising when a process or thread is attached
+This is the way to do some initializing when a process or thread is attached
 to the dll. The function name is taken from a *.spec file line:
 
 init    YourFunctionName
 
-the you have to implement the function:
+then, you have to implement the function:
 
 
 BOOL32 WINAPI YourLibMain(HINSTANCE32 hinstDLL,
@@ -26,11 +26,11 @@ BOOL32 WINAPI YourLibMain(HINSTANCE32 hinstDLL,
 The problem here is, that you can't know if you have to call the function from
 the internal or the external DLL. If you just call the function you will get
 the internal implementation. If the external DLL is loaded the executed program
-will use the external and you the internal DLL. 
-When you -as example- fill a iconlist placed in the internal DLL the
-application wont get the icons from the external DLL.
+will use the external DLL and you the internal one. 
+When you -as an example- fill an iconlist placed in the internal DLL the
+application won't get the icons from the external DLL.
 
-To go around this you have to call the functions over pointer.
+To work around this, you should always use a pointer to call such functions:
 
 /* definition of the pointer type*/
 void (CALLBACK* pDLLInitComctl)();
