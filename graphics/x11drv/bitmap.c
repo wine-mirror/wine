@@ -73,7 +73,7 @@ HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap )
     if (hbitmap == dc->hBitmap) return hbitmap;  /* nothing to do */
     if (!(bmp = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC ))) return 0;
 
-    if (bmp->header.dwCount)
+    if (bmp->header.dwCount && (hbitmap != GetStockObject(DEFAULT_BITMAP)))
     {
         WARN( "Bitmap already selected in another DC\n" );
         GDI_ReleaseObj( hbitmap );
