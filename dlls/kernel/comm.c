@@ -379,7 +379,7 @@ static void comm_waitwrite(struct DosDeviceStruct *ptr)
  * IF THIS IS NOT CORRECT THE RETURNVALUE CHECK IN BuildCommDCBAndTimeoutsA
  * NEEDS TO BE FIXED
  */
-BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
+INT16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 {
 	/* "COM1:96,n,8,1"	*/
 	/*  012345		*/
@@ -600,7 +600,7 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			return port|FLAG_LPT;
 		}
 	}
-	return 0;
+	return IE_BADID;
 }
 
 /*****************************************************************************
