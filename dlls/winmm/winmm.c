@@ -901,8 +901,29 @@ static int MCI_MapMsgWtoA(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
         }
         return 0;
 
-    case MCI_INFO:
     case MCI_SYSINFO:
+        {
+            MCI_SYSINFO_PARMSW *mci_sysinfoW = (MCI_SYSINFO_PARMSW *)*dwParam2;
+            MCI_SYSINFO_PARMSA *mci_sysinfoA;
+            DWORD_PTR *ptr;
+
+            ptr = HeapAlloc(GetProcessHeap(), 0, sizeof(*mci_sysinfoA) + sizeof(DWORD_PTR));
+            if (!ptr) return -1;
+
+            *ptr++ = *dwParam2; /* save the previous pointer */
+            *dwParam2 = (DWORD_PTR)ptr;
+            mci_sysinfoA = (MCI_SYSINFO_PARMSA *)ptr;
+
+            if (dwParam1 & MCI_NOTIFY)
+                mci_sysinfoA->dwCallback = mci_sysinfoW->dwCallback;
+
+            mci_sysinfoA->dwRetSize = mci_sysinfoW->dwRetSize; /* FIXME */
+            mci_sysinfoA->lpstrReturn = HeapAlloc(GetProcessHeap(), 0, mci_sysinfoA->dwRetSize);
+
+            return 1;
+        }
+
+    case MCI_INFO:
     case MCI_SAVE:
     case MCI_LOAD:
     case MCI_ESCAPE:
@@ -913,7 +934,8 @@ static int MCI_MapMsgWtoA(UINT msg, DWORD_PTR dwParam1, DWORD_PTR *dwParam2)
     return 0;
 }
 
-static void MCI_UnmapMsgWtoA(UINT msg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+static DWORD MCI_UnmapMsgWtoA(UINT msg, DWORD_PTR dwParam1, DWORD_PTR dwParam2,
+                              DWORD result)
 {
     switch(msg)
     {
@@ -951,10 +973,32 @@ static void MCI_UnmapMsgWtoA(UINT msg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
         }
         break;
 
+    case MCI_SYSINFO:
+        {
+            DWORD_PTR *ptr = (DWORD_PTR *)dwParam2 - 1;
+            MCI_SYSINFO_PARMSW *mci_sysinfoW = (MCI_SYSINFO_PARMSW *)*ptr;
+            MCI_SYSINFO_PARMSA *mci_sysinfoA = (MCI_SYSINFO_PARMSA *)(ptr + 1);
+
+            if (!result)
+            {
+                mci_sysinfoW->dwNumber = mci_sysinfoA->dwNumber;
+                mci_sysinfoW->wDeviceType = mci_sysinfoA->wDeviceType;
+                MultiByteToWideChar(CP_ACP, 0,
+                                    mci_sysinfoA->lpstrReturn, mci_sysinfoA->dwRetSize,
+                                    mci_sysinfoW->lpstrReturn, mci_sysinfoW->dwRetSize);
+            }
+
+            HeapFree(GetProcessHeap(), 0, mci_sysinfoA->lpstrReturn);
+            HeapFree(GetProcessHeap(), 0, ptr);
+        }
+        break;
+
     default:
         FIXME("Message 0x%04x needs unmapping\n", msg);
         break;
     }
+
+    return result;
 }
 
 
@@ -980,7 +1024,7 @@ DWORD WINAPI mciSendCommandW(MCIDEVICEID wDevID, UINT wMsg, DWORD_PTR dwParam1, 
     }
     ret = mciSendCommandA(wDevID, wMsg, dwParam1, dwParam2);
     if (mapped)
-        MCI_UnmapMsgWtoA(wMsg, dwParam1, dwParam2);
+        MCI_UnmapMsgWtoA(wMsg, dwParam1, dwParam2, ret);
     return ret;
 }
 
