@@ -3404,15 +3404,39 @@ static HRESULT WINAPI DGA_IDirectDrawImpl_SetDisplayMode(
 static void pixel_convert_16_to_8(void *src, void *dst, DWORD width, DWORD height, LONG pitch, IDirectDrawPaletteImpl* palette) {
   unsigned char  *c_src = (unsigned char  *) src;
   unsigned short *c_dst = (unsigned short *) dst;
-  int x, y;
+  int y;
 
   if (palette != NULL) {
-    unsigned short *pal = (unsigned short *) palette->screen_palents;
+    const unsigned short * pal = (unsigned short *) palette->screen_palents;
 
-    for (y = 0; y < height; y++) {
-      for (x = 0; x < width; x++) {
-	c_dst[x + y * width] = pal[c_src[x + y * pitch]];
-      }
+    for (y = height; y--; ) {
+#ifdef __i386__
+      /* gcc generates slightly inefficient code for the the copy / lookup,
+       * it generates one excess memory access (to pal) per pixel. Since
+       * we know that pal is not modified by the memory write we can
+       * put it into a register and reduce the number of memory accesses 
+       * from 4 to 3 pp. There are two xor eax,eax to avoid pipeline stalls.
+       * (This is not guaranteed to be the fastest method.)
+       */
+      __asm__ __volatile__(
+      "xor %%eax,%%eax\n"
+      "1:\n"
+      "    lodsb\n"
+      "    movw (%%edx,%%eax,2),%%ax\n"
+      "    stosw\n"
+      "	   xor %%eax,%%eax\n"
+      "    loop 1b\n"
+      : "=S" (c_src), "=D" (c_dst)
+      : "S" (c_src), "D" (c_dst) , "c" (width), "d" (pal)
+      : "eax", "cc", "memory"
+      );
+      c_src+=(pitch-width);
+#else
+      unsigned char * srclineend = c_src+width;
+      while (c_src < srclineend)
+        *c_dst++ = pal[*c_src++];
+      c_src+=(pitch-width);
+#endif
     }
   } else {
     WARN(ddraw, "No palette set...\n");
@@ -3444,15 +3468,33 @@ static void palette_convert_15_to_8(LPPALETTEENTRY palent, void *screen_palette,
 static void pixel_convert_32_to_8(void *src, void *dst, DWORD width, DWORD height, LONG pitch, IDirectDrawPaletteImpl* palette) {
   unsigned char  *c_src = (unsigned char  *) src;
   unsigned int *c_dst = (unsigned int *) dst;
-  int x, y;
+  int y;
 
   if (palette != NULL) {
-    unsigned int *pal = (unsigned int *) palette->screen_palents;
+    const unsigned int *pal = (unsigned int *) palette->screen_palents;
     
-    for (y = 0; y < height; y++) {
-      for (x = 0; x < width; x++) {
-	c_dst[x + y * width] = pal[c_src[x + y * pitch]];
-      }
+    for (y = height; y--; ) {
+#ifdef __i386__
+      /* See comment in pixel_convert_16_to_8 */
+      __asm__ __volatile__(
+      "xor %%eax,%%eax\n"
+      "1:\n"
+      "    lodsb\n"
+      "    movl (%%edx,%%eax,4),%%eax\n"
+      "    stosl\n"
+      "	   xor %%eax,%%eax\n"
+      "    loop 1b\n"
+      : "=S" (c_src), "=D" (c_dst)
+      : "S" (c_src), "D" (c_dst) , "c" (width), "d" (pal)
+      : "eax", "cc", "memory"
+      );
+      c_src+=(pitch-width);
+#else
+      unsigned char * srclineend = c_src+width;
+      while (c_src < srclineend )
+	*c_dst++ = pal[*c_src++];
+      c_src+=(pitch-width);
+#endif
     }
   } else {
     WARN(ddraw, "No palette set...\n");
