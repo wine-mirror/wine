@@ -1,6 +1,6 @@
 /*
  * Copyright 1999 Marcus Meissner
- * Copyright 2002 Michael Günnewig
+ * Copyright 2002-2003 Michael Günnewig
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1388,7 +1388,7 @@ INT_PTR CALLBACK AVISaveOptionsDlgProc(HWND hWnd, UINT uMsg,
       }
       /* fall through */
     case IDCANCEL:
-      EndDialog(hWnd, GET_WM_COMMAND_CMD(wParam, lParam) == IDOK);
+      EndDialog(hWnd, GET_WM_COMMAND_ID(wParam, lParam) == IDOK);
       break;
     case IDC_INTERLEAVE:
       EnableWindow(GetDlgItem(hWnd, IDC_INTERLEAVEEVERY),
@@ -1450,10 +1450,12 @@ BOOL WINAPI AVISaveOptions(HWND hWnd, UINT uFlags, INT nStreams,
     ret = FALSE;
 
   /* restore options when user pressed cancel */
-  if (pSavedOptions != NULL && ret == FALSE) {
-    for (n = 0; n < nStreams; n++) {
-      if (ppOptions[n] != NULL)
-	memcpy(ppOptions[n], pSavedOptions + n, sizeof(AVICOMPRESSOPTIONS));
+  if (pSavedOptions != NULL) {
+    if (ret == FALSE) {
+      for (n = 0; n < nStreams; n++) {
+	if (ppOptions[n] != NULL)
+	  memcpy(ppOptions[n], pSavedOptions + n, sizeof(AVICOMPRESSOPTIONS));
+      }
     }
     GlobalFreePtr(pSavedOptions);
   }
@@ -1530,19 +1532,442 @@ HRESULT WINAPI AVISaveVA(LPCSTR szFile, CLSID *pclsidHandler,
 }
 
 /***********************************************************************
+ *		AVIFILE_AVISaveDefaultCallback	(internal)
+ */
+static BOOL WINAPI AVIFILE_AVISaveDefaultCallback(INT progress)
+{
+  TRACE("(%d)\n", progress);
+
+  return FALSE;
+}
+
+/***********************************************************************
  *		AVISaveVW		(AVIFIL32.@)
  */
 HRESULT WINAPI AVISaveVW(LPCWSTR szFile, CLSID *pclsidHandler,
-			 AVISAVECALLBACK lpfnCallback, int nStream,
+			 AVISAVECALLBACK lpfnCallback, int nStreams,
 			 PAVISTREAM *ppavi, LPAVICOMPRESSOPTIONS *plpOptions)
 {
-  FIXME("(%s,%p,%p,%d,%p,%p), stub!\n", debugstr_w(szFile), pclsidHandler,
-	lpfnCallback, nStream, ppavi, plpOptions);
+  LONG           lStart[MAX_AVISTREAMS];
+  PAVISTREAM     pOutStreams[MAX_AVISTREAMS];
+  PAVISTREAM     pInStreams[MAX_AVISTREAMS];
+  AVIFILEINFOW   fInfo;
+  AVISTREAMINFOW sInfo;
+
+  PAVIFILE       pfile = NULL; /* the output AVI file */
+  LONG           lFirstVideo = -1;
+  int            curStream;
+
+  /* for interleaving ... */
+  DWORD          dwInterleave = 0; /* interleave rate */
+  DWORD          dwFileInitialFrames;
+  LONG           lFileLength;
+  LONG           lSampleInc;
+
+  /* for reading/writing the data ... */
+  LPVOID         lpBuffer = NULL;
+  LONG           cbBuffer;        /* real size of lpBuffer */
+  LONG           lBufferSize;     /* needed bytes for format(s), etc. */
+  LONG           lReadBytes;
+  LONG           lReadSamples;
+  HRESULT        hres;
+
+  TRACE("(%s,%p,%p,%d,%p,%p)\n", debugstr_w(szFile), pclsidHandler,
+	lpfnCallback, nStreams, ppavi, plpOptions);
 
   if (szFile == NULL || ppavi == NULL || plpOptions == NULL)
     return AVIERR_BADPARAM;
+  if (nStreams >= MAX_AVISTREAMS) {
+    WARN("Can't write AVI with %d streams only supports %d -- change MAX_AVISTREAMS!\n", nStreams, MAX_AVISTREAMS);
+    return AVIERR_INTERNAL;
+  }
 
-  return AVIERR_UNSUPPORTED;
+  if (lpfnCallback == NULL)
+    lpfnCallback = AVIFILE_AVISaveDefaultCallback;
+
+  /* clear local variable(s) */
+  for (curStream = 0; curStream < nStreams; curStream++) {
+    pInStreams[curStream]  = NULL;
+    pOutStreams[curStream] = NULL;
+  }
+
+  /* open output AVI file (create it if it doesn't exist) */
+  hres = AVIFileOpenW(&pfile, szFile, OF_CREATE|OF_SHARE_EXCLUSIVE|OF_WRITE,
+		      pclsidHandler);
+  if (FAILED(hres))
+    return hres;
+  AVIFileInfoW(pfile, &fInfo, sizeof(fInfo)); /* for dwCaps */
+
+  /* initialize our data structures part 1 */
+  for (curStream = 0; curStream < nStreams; curStream++) {
+    PAVISTREAM pCurStream = ppavi[curStream];
+
+    hres = AVIStreamInfoW(pCurStream, &sInfo, sizeof(sInfo));
+    if (FAILED(hres))
+      goto error;
+
+    /* search first video stream and check for interleaving */
+    if (sInfo.fccType == streamtypeVIDEO) {
+      /* remember first video stream -- needed for interleaving */
+      if (lFirstVideo < 0)
+	lFirstVideo = curStream;
+    } else if (!dwInterleave && plpOptions != NULL) {
+      /* check if any non-video stream wants to be interleaved */
+      WARN("options.flags=0x%lX options.dwInterleave=%lu\n",plpOptions[curStream]->dwFlags,plpOptions[curStream]->dwInterleaveEvery);
+      if (plpOptions[curStream] != NULL &&
+	  plpOptions[curStream]->dwFlags & AVICOMPRESSF_INTERLEAVE)
+	dwInterleave = plpOptions[curStream]->dwInterleaveEvery;
+    }
+
+    /* create de-/compressed stream interface if needed */
+    pInStreams[curStream] = NULL;
+    if (plpOptions != NULL && plpOptions[curStream] != NULL) {
+      if (plpOptions[curStream]->fccHandler ||
+	  plpOptions[curStream]->lpFormat != NULL) {
+	DWORD dwKeySave = plpOptions[curStream]->dwKeyFrameEvery;
+
+	if (fInfo.dwCaps & AVIFILECAPS_ALLKEYFRAMES)
+	  plpOptions[curStream]->dwKeyFrameEvery = 1;
+
+	hres = AVIMakeCompressedStream(&pInStreams[curStream], pCurStream,
+				       plpOptions[curStream], NULL);
+	plpOptions[curStream]->dwKeyFrameEvery = dwKeySave;
+	if (FAILED(hres) || pInStreams[curStream] == NULL) {
+	  pInStreams[curStream] = NULL;
+	  goto error;
+	}
+
+	/* test stream interface and update stream-info */
+	hres = AVIStreamInfoW(pInStreams[curStream], &sInfo, sizeof(sInfo));
+	if (FAILED(hres))
+	  goto error;
+      }
+    }
+
+    /* now handle streams which will only be copied */
+    if (pInStreams[curStream] == NULL) {
+      pCurStream = pInStreams[curStream] = ppavi[curStream];
+      AVIStreamAddRef(pCurStream);
+    } else
+      pCurStream = pInStreams[curStream];
+
+    lStart[curStream] = sInfo.dwStart;
+  } /* for all streams */
+
+  /* check that first video stream is the first stream */
+  if (lFirstVideo > 0) {
+    PAVISTREAM pTmp = pInStreams[lFirstVideo];
+    LONG lTmp = lStart[lFirstVideo];
+
+    pInStreams[lFirstVideo] = pInStreams[0];
+    pInStreams[0] = pTmp;
+    lStart[lFirstVideo] = lStart[0];
+    lStart[0] = lTmp;
+    lFirstVideo = 0;
+  }
+
+  /* allocate buffer for formats, data, etc. of an initiale size of 64 kByte */
+  lpBuffer = GlobalAllocPtr(GPTR, cbBuffer = 0x00010000);
+  if (lpBuffer == NULL) {
+    hres = AVIERR_MEMORY;
+    goto error;
+  }
+
+  AVIStreamInfoW(pInStreams[0], &sInfo, sizeof(sInfo));
+  lFileLength = sInfo.dwLength;
+  dwFileInitialFrames = 0;
+  if (lFirstVideo >= 0) {
+    /* check for correct version of the format
+     *  -- need atleast BITMAPINFOHEADER or newer
+     */
+    lSampleInc = 1;
+    lBufferSize = cbBuffer;
+    hres = AVIStreamReadFormat(pInStreams[lFirstVideo], AVIStreamStart(pInStreams[lFirstVideo]), lpBuffer, &lBufferSize);
+    if (lBufferSize < (LONG)sizeof(BITMAPINFOHEADER))
+      hres = AVIERR_INTERNAL;
+    if (FAILED(hres))
+      goto error;
+  } else /* use one second blocks for interleaving if no video present */
+    lSampleInc = AVIStreamTimeToSample(pInStreams[0], 1000000);
+
+  /* create output streams */
+  for (curStream = 0; curStream < nStreams; curStream++) {
+    AVIStreamInfoW(pInStreams[curStream], &sInfo, sizeof(sInfo));
+
+    sInfo.dwInitialFrames = 0;
+    if (dwInterleave != 0 && curStream > 0 && sInfo.fccType != streamtypeVIDEO) {
+      /* 750 ms initial frames for non-video streams */
+      sInfo.dwInitialFrames = AVIStreamTimeToSample(pInStreams[0], 750);
+    }
+
+    hres = AVIFileCreateStreamW(pfile, &pOutStreams[curStream], &sInfo);
+    if (pOutStreams[curStream] != NULL && SUCCEEDED(hres)) {
+      /* copy initial format for this stream */
+      lBufferSize = cbBuffer;
+      hres = AVIStreamReadFormat(pInStreams[curStream], sInfo.dwStart,
+				 lpBuffer, &lBufferSize);
+      if (FAILED(hres))
+	goto error;
+      hres = AVIStreamSetFormat(pOutStreams[curStream], 0, lpBuffer, lBufferSize);
+      if (FAILED(hres))
+	goto error;
+
+      /* try to copy stream handler data */
+      lBufferSize = cbBuffer;
+      hres = AVIStreamReadData(pInStreams[curStream], ckidSTREAMHANDLERDATA,
+			       lpBuffer, &lBufferSize);
+      if (SUCCEEDED(hres) && lBufferSize > 0) {
+	hres = AVIStreamWriteData(pOutStreams[curStream],ckidSTREAMHANDLERDATA,
+				  lpBuffer, lBufferSize);
+	if (FAILED(hres))
+	  goto error;
+      }
+
+      if (dwFileInitialFrames < sInfo.dwInitialFrames)
+	dwFileInitialFrames = sInfo.dwInitialFrames;
+      lReadBytes =
+	AVIStreamSampleToSample(pOutStreams[0], pInStreams[curStream],
+				sInfo.dwLength);
+      if (lFileLength < lReadBytes)
+	lFileLength = lReadBytes;
+    } else {
+      /* creation of de-/compression stream interface failed */
+      WARN("creation of (de-)compression stream failed for stream %d\n",curStream);
+      AVIStreamRelease(pInStreams[curStream]);
+      if (curStream + 1 >= nStreams) {
+	/* move the others one up */
+	PAVISTREAM *ppas = &pInStreams[curStream];
+	int            n = nStreams - (curStream + 1);
+
+	do {
+	  *ppas = pInStreams[curStream + 1];
+	} while (--n);
+      }
+      nStreams--;
+      curStream--;
+    }
+  } /* create output streams for all input streams */
+
+  /* have we still something to write, or lost everything? */
+  if (nStreams <= 0)
+    goto error;
+
+  if (dwInterleave) {
+    LONG lCurFrame = -dwFileInitialFrames;
+
+    /* interleaved file */
+    if (dwInterleave == 1)
+      AVIFileEndRecord(pfile);
+
+    for (; lCurFrame < lFileLength; lCurFrame += lSampleInc) {
+      for (curStream = 0; curStream < nStreams; curStream++) {
+	LONG lLastSample;
+
+	hres = AVIStreamInfoW(pOutStreams[curStream], &sInfo, sizeof(sInfo));
+	if (FAILED(hres))
+	  goto error;
+
+	/* initial frames phase at the end for this stream? */
+	if (-(LONG)sInfo.dwInitialFrames > lCurFrame)
+	  continue;
+
+	if ((lFileLength - lSampleInc) <= lCurFrame) {
+	  lLastSample = AVIStreamLength(pInStreams[curStream]);
+	  lFirstVideo = lLastSample + AVIStreamStart(pInStreams[curStream]);
+	} else {
+	  if (curStream != 0) {
+	    lFirstVideo =
+	      AVIStreamSampleToSample(pInStreams[curStream], pInStreams[0],
+				      (sInfo.fccType == streamtypeVIDEO ? 
+				       (LONG)dwInterleave : lSampleInc) +
+				      sInfo.dwInitialFrames + lCurFrame);
+	  } else
+	    lFirstVideo = lSampleInc + (sInfo.dwInitialFrames + lCurFrame);
+
+	  lLastSample = AVIStreamEnd(pInStreams[curStream]);
+	  if (lLastSample <= lFirstVideo)
+	    lFirstVideo = lLastSample;
+	}
+
+	/* copy needed samples now */
+	WARN("copy from stream %d samples %ld to %ld...\n",curStream,
+	      lStart[curStream],lFirstVideo);
+	while (lFirstVideo > lStart[curStream]) {
+	  DWORD flags = 0;
+
+	  /* copy format for case it can change */
+	  lBufferSize = cbBuffer;
+	  hres = AVIStreamReadFormat(pInStreams[curStream], lStart[curStream],
+				     lpBuffer, &lBufferSize);
+	  if (FAILED(hres))
+	    goto error;
+	  AVIStreamSetFormat(pOutStreams[curStream], lStart[curStream],
+			     lpBuffer, lBufferSize);
+
+	  /* try to read data until we got it, or error */
+	  do {
+	    hres = AVIStreamRead(pInStreams[curStream], lStart[curStream],
+				 lFirstVideo - lStart[curStream], lpBuffer,
+				 cbBuffer, &lReadBytes, &lReadSamples);
+	  } while ((hres == AVIERR_BUFFERTOOSMALL) &&
+		   (lpBuffer = GlobalReAllocPtr(lpBuffer, cbBuffer *= 2, GPTR)) != NULL);
+	  if (lpBuffer == NULL)
+	    hres = AVIERR_MEMORY;
+	  if (FAILED(hres))
+	    goto error;
+
+	  if (AVIStreamIsKeyFrame(pInStreams[curStream], (LONG)sInfo.dwStart))
+	    flags = AVIIF_KEYFRAME;
+	  hres = AVIStreamWrite(pOutStreams[curStream], -1, lReadSamples,
+				lpBuffer, lReadBytes, flags, NULL, NULL);
+	  if (FAILED(hres))
+	    goto error;
+
+	  lStart[curStream] += lReadSamples;
+	}
+	lStart[curStream] = lFirstVideo;
+      } /* stream by stream */
+
+      /* need to close this block? */
+      if (dwInterleave == 1) {
+	hres = AVIFileEndRecord(pfile);
+	if (FAILED(hres))
+	  break;
+      }
+
+      /* show progress */
+      if (lpfnCallback(MulDiv(dwFileInitialFrames + lCurFrame, 100,
+			      dwFileInitialFrames + lFileLength))) {
+	hres = AVIERR_USERABORT;
+	break;
+      }
+    } /* copy frame by frame */
+  } else {
+    /* non-interleaved file */
+
+    for (curStream = 0; curStream < nStreams; curStream++) {
+      /* show progress */
+      if (lpfnCallback(MulDiv(curStream, 100, nStreams))) {
+	hres = AVIERR_USERABORT;
+	goto error;
+      }
+
+      AVIStreamInfoW(pInStreams[curStream], &sInfo, sizeof(sInfo));
+
+      if (sInfo.dwSampleSize != 0) {
+	/* sample-based data like audio */
+	while (sInfo.dwStart < sInfo.dwLength) {
+	  LONG lSamples = cbBuffer / sInfo.dwSampleSize;
+
+	  /* copy format for case it can change */
+	  lBufferSize = cbBuffer;
+	  hres = AVIStreamReadFormat(pInStreams[curStream], sInfo.dwStart,
+				     lpBuffer, &lBufferSize);
+	  if (FAILED(hres))
+	    return hres;
+	  AVIStreamSetFormat(pOutStreams[curStream], sInfo.dwStart,
+			     lpBuffer, lBufferSize);
+
+	  /* limit to stream boundaries */
+	  if (lSamples != (LONG)(sInfo.dwLength - sInfo.dwStart))
+	    lSamples = sInfo.dwLength - sInfo.dwStart;
+
+	  /* now try to read until we got it, or error occures */
+	  do {
+	    lReadBytes   = cbBuffer;
+	    lReadSamples = 0;
+	    hres = AVIStreamRead(pInStreams[curStream],sInfo.dwStart,lSamples,
+				 lpBuffer,cbBuffer,&lReadBytes,&lReadSamples);
+	  } while ((hres == AVIERR_BUFFERTOOSMALL) &&
+		   (lpBuffer = GlobalReAllocPtr(lpBuffer, cbBuffer *= 2, GPTR)) != NULL);
+	  if (lpBuffer == NULL)
+	    hres = AVIERR_MEMORY;
+	  if (FAILED(hres))
+	    goto error;
+	  if (lReadSamples != 0) {
+	    sInfo.dwStart += lReadSamples;
+	    hres = AVIStreamWrite(pOutStreams[curStream], -1, lReadSamples,
+				  lpBuffer, lReadBytes, 0, NULL , NULL);
+	    if (FAILED(hres))
+	      goto error;
+
+	    /* show progress */
+	    if (lpfnCallback(MulDiv(sInfo.dwStart,100,nStreams*sInfo.dwLength)+
+			     MulDiv(curStream, 100, nStreams))) {
+	      hres = AVIERR_USERABORT;
+	      goto error;
+	    }
+	  } else {
+	    if ((sInfo.dwLength - sInfo.dwStart) != 1) {
+	      hres = AVIERR_FILEREAD;
+	      goto error;
+	    }
+	  }
+	}
+      } else {
+	/* block-based data like video */
+	for (; sInfo.dwStart < sInfo.dwLength; sInfo.dwStart++) {
+	  DWORD flags = 0;
+
+	  /* copy format for case it can change */
+	  lBufferSize = cbBuffer;
+	  hres = AVIStreamReadFormat(pInStreams[curStream], sInfo.dwStart,
+				     lpBuffer, &lBufferSize);
+	  if (FAILED(hres))
+	    goto error;
+	  AVIStreamSetFormat(pOutStreams[curStream], sInfo.dwStart,
+			     lpBuffer, lBufferSize);
+
+	  /* try to read block and resize buffer if neccessary */
+	  do {
+	    lReadSamples = 0;
+	    lReadBytes   = cbBuffer;
+	    hres = AVIStreamRead(pInStreams[curStream], sInfo.dwStart, 1,
+				 lpBuffer, cbBuffer,&lReadBytes,&lReadSamples);
+	  } while ((hres == AVIERR_BUFFERTOOSMALL) &&
+		   (lpBuffer = GlobalReAllocPtr(lpBuffer, cbBuffer *= 2, GPTR)) != NULL);
+	  if (lpBuffer == NULL)
+	    hres = AVIERR_MEMORY;
+	  if (FAILED(hres))
+	    goto error;
+	  if (lReadSamples != 1) {
+	    hres = AVIERR_FILEREAD;
+	    goto error;
+	  }
+
+	  if (AVIStreamIsKeyFrame(pInStreams[curStream], (LONG)sInfo.dwStart))
+	    flags = AVIIF_KEYFRAME;
+	  hres = AVIStreamWrite(pOutStreams[curStream], -1, lReadSamples,
+				lpBuffer, lReadBytes, flags, NULL, NULL);
+	  if (FAILED(hres))
+	    goto error;
+
+	  /* show progress */
+	  if (lpfnCallback(MulDiv(sInfo.dwStart,100,nStreams*sInfo.dwLength)+
+			   MulDiv(curStream, 100, nStreams))) {
+	    hres = AVIERR_USERABORT;
+	    goto error;
+	  }
+	} /* copy all blocks */
+      }
+    } /* copy data stream by stream */
+  }
+
+ error:
+  if (lpBuffer != NULL)
+    GlobalFreePtr(lpBuffer);
+  if (pfile != NULL) {
+    for (curStream = 0; curStream < nStreams; curStream++) {
+      if (pOutStreams[curStream] != NULL)
+	AVIStreamRelease(pOutStreams[curStream]);
+      if (pInStreams[curStream] != NULL)
+	AVIStreamRelease(pInStreams[curStream]);
+    }
+
+    AVIFileRelease(pfile);
+  }
+
+  return hres;
 }
 
 /***********************************************************************
@@ -1550,16 +1975,30 @@ HRESULT WINAPI AVISaveVW(LPCWSTR szFile, CLSID *pclsidHandler,
  */
 HRESULT WINAPI CreateEditableStream(PAVISTREAM *ppEditable, PAVISTREAM pSource)
 {
-  FIXME("(%p,%p), stub!\n", ppEditable, pSource);
+  IAVIEditStream *pEdit = NULL;
+  HRESULT	  hr;
 
-  if (pSource == NULL)
-    return AVIERR_BADHANDLE;
+  FIXME("(%p,%p), semi stub!\n", ppEditable, pSource);
+
   if (ppEditable == NULL)
     return AVIERR_BADPARAM;
 
   *ppEditable = NULL;
 
-  return AVIERR_UNSUPPORTED;
+  if (pSource != NULL) {
+    hr = IAVIStream_QueryInterface(pSource, &IID_IAVIEditStream,
+				   (LPVOID*)&pEdit);
+    if (FAILED(hr) || pEdit == NULL) {
+      /* need own implementation of IAVIEditStream */
+
+      return AVIERR_UNSUPPORTED;
+    }
+  }
+
+  hr = IAVIEditStream_Clone(pEdit, ppEditable);
+  IAVIEditStream_Release(pEdit);
+
+  return hr;
 }
 
 /***********************************************************************

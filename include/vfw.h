@@ -43,6 +43,7 @@ typedef struct IAVIStream IAVIStream,*PAVISTREAM;
 typedef struct IAVIFile IAVIFile,*PAVIFILE;
 typedef struct IGetFrame IGetFrame,*PGETFRAME;
 typedef struct IAVIEditStream IAVIEditStream, *PAVIEDITSTREAM;
+typedef struct IAVIStreaming  IAVIStreaming;
 
 /* Installable Compressor Manager */
 
@@ -1093,6 +1094,41 @@ LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime);
     AVIStreamTimeToSample(pavi1, AVIStreamSampleToTime(pavi2, samp2))
 #define AVIStreamStartTime(pavi) \
     AVIStreamSampleToTime(pavi, AVIStreamStart(pavi))
+
+#define AVIStreamNextSample(pavi, pos) \
+    AVIStreamFindSample(pavi, pos + 1, FIND_NEXT | FIND_ANY)
+#define AVIStreamPrevSample(pavi, pos) \
+    AVIStreamFindSample(pavi, pos - 1, FIND_PREV | FIND_ANY)
+#define AVIStreamNearestSample(pavi, pos) \
+    AVIStreamFindSample(pavi, pos, FIND_PREV | FIND_ANY)
+#define AVStreamNextKeyFrame(pavi,pos) \
+    AVIStreamFindSample(pavi, pos + 1, FIND_NEXT | FIND_KEY)
+#define AVStreamPrevKeyFrame(pavi,pos) \
+    AVIStreamFindSample(pavi, pos - 1, FIND_NEXT | FIND_KEY)
+#define AVIStreamNearestKeyFrame(pavi,pos) \
+    AVIStreamFindSample(pavi, pos, FIND_PREV | FIND_KEY)
+#define AVIStreamIsKeyFrame(pavi, pos) \
+    (AVIStreamNearestKeyFrame(pavi, pos) == pos)
+
+/*****************************************************************************
+ * IAVIStreaming interface
+ */
+#define INTERFACE IAVIStreaming
+#define IAVIStreaming_METHODS \
+    IUnknown_METHODS \
+    STDMETHOD(Begin)(IAVIStreaming*iface,LONG lStart,LONG lEnd,LONG lRate) PURE; \
+    STDMETHOD(End)(IAVIStreaming*iface) PURE;
+#undef INTERFACE
+
+#ifdef COBJMACROS
+/*** IUnknown methods ***/
+#define IAVIStreaming_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IAVIStreaming_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IAVIStreaming_Release(p)            (p)->lpVtbl->Release(p)
+/*** IAVIStreaming methods ***/
+#define IAVIStreaming_Begin(p,a,b,c)        (p)->lpVtbl->Begin(p,a,b,c)
+#define IAVIStreaming_End(p)                (p)->lpVtbl->End(p)
+#endif
 
 /*****************************************************************************
  * IAVIEditStream interface
