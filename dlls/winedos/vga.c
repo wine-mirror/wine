@@ -38,7 +38,9 @@ static IDirectDraw *lpddraw = NULL;
 static IDirectDrawSurface *lpddsurf;
 static IDirectDrawPalette *lpddpal;
 static DDSURFACEDESC sdesc;
-static LONG vga_refresh;
+
+static BOOL vga_retrace_vertical;
+static BOOL vga_retrace_horizontal;
 
 /*
  * VGA controller memory is emulated using linear framebuffer.
@@ -391,7 +393,7 @@ static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
             return;
         }
         IDirectDrawSurface_SetPalette(lpddsurf,lpddpal);
-        vga_refresh=0;
+        vga_retrace_vertical = vga_retrace_horizontal = FALSE;
         /* poll every 20ms (50fps should provide adequate responsiveness) */
         VGA_InstallTimer(20);
     }
@@ -953,7 +955,10 @@ static void CALLBACK VGA_Poll( LPVOID arg, DWORD low, DWORD high )
         VGA_Poll_Text();
     }
 
-    vga_refresh=1;
+    /*
+     * Fake start of retrace.
+     */
+    vga_retrace_vertical = TRUE;
     LeaveCriticalSection(&vga_lock);
 }
 
@@ -1045,21 +1050,48 @@ BYTE VGA_ioport_in( WORD port )
            FIXME("Unsupported index, register 0x3d4: 0x%02x\n",
                  vga_index_3d4);
            return 0xff;
+
         case 0x3da:
-           /*
-            * Read from this register resets register 0x3c0 address flip-flop.
-            */
-           vga_address_3c0 = TRUE;
-            /* since we don't (yet?) serve DOS VM requests while VGA_Poll is running,
-               we need to fake the occurrence of the vertical refresh */
-            ret=vga_refresh?0x00:0x0b; /* toggle video RAM and lightpen and VGA refresh bits ! */
+            /*
+             * Read from this register resets register 0x3c0 address flip-flop.
+             */
+            vga_address_3c0 = TRUE;
+
+            /*
+             * Read from this register returns following bits:
+             *   xxxx1xxx = Vertical retrace in progress if set.
+             *   xxxxx1xx = Light pen switched on.
+             *   xxxxxx1x = Light pen trigger set.
+             *   xxxxxxx1 = Either vertical or horizontal retrace 
+             *              in progress if set.
+             */
+            ret = 0;
+            if (vga_retrace_vertical)
+                ret |= 9;
+            if (vga_retrace_horizontal)
+                ret |= 3;
+            
+            /*
+             * If VGA mode has been set, vertical retrace is
+             * turned on once a frame and cleared after each read.
+             * This might cause applications that synchronize with
+             * vertical retrace to actually skip one frame but that
+             * is probably not a problem.
+             * 
+             * If no VGA mode has been set, vertical retrace is faked
+             * by toggling the value after every read.
+             */
             if (VGA_IsTimerRunning())
-                vga_refresh=0;
+                vga_retrace_vertical = FALSE;
             else
-                /* Also fake the occurence of the vertical refresh when no graphic
-                   mode has been set */
-                vga_refresh=!vga_refresh;
+                vga_retrace_vertical = !vga_retrace_vertical;
+
+            /*
+             * Toggle horizontal retrace.
+             */
+            vga_retrace_horizontal = !vga_retrace_horizontal;
             break;
+
         default:
             ret=0xff;
             FIXME("Unsupported VGA register: 0x%04x\n", port);
