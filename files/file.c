@@ -438,8 +438,12 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
 	}
     }
 
-    if (!strncmp(filename, "\\\\.\\", 4))
-        return DEVICE_Open( filename+4, access, sa );
+    if (!strncmp(filename, "\\\\.\\", 4)) {
+        if (!DOSFS_GetDevice( filename ))
+        	return DEVICE_Open( filename+4, access, sa );
+	else
+        	filename+=4; /* fall into DOSFS_Device case below */
+    }
 
     /* If the name still starts with '\\', it's a UNC name. */
     if (!strncmp(filename, "\\\\", 2))
