@@ -816,6 +816,18 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
         (SCROLL_TrackingBar == nBar))
         SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize, thumbSize );
 
+    if(hwnd==GetFocus())  /* if scroll bar has focus, reposition the caret*/
+    {
+        if (!vertical)
+        {
+            SetCaretPos(thumbPos+1, rect.top+1);
+        }
+        else
+        {
+            SetCaretPos(rect.top+1, thumbPos+1);
+        }
+    }
+
 END:
     WIN_ReleaseWndPtr(wndPtr);
 }
@@ -907,14 +919,15 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
     switch(msg)
     {
       case WM_LBUTTONDOWN:  /* Initialise mouse tracking */
-	  SCROLL_trackVertical = vertical;
+          HideCaret(hwnd);  /* hide caret while holding down LBUTTON*/
+          SCROLL_trackVertical = vertical;
           SCROLL_trackHitTest  = hittest = SCROLL_HitTest( hwnd, nBar, pt, FALSE );
           lastClickPos  = vertical ? (pt.y - rect.top) : (pt.x - rect.left);
           lastMousePos  = lastClickPos;
           trackThumbPos = thumbPos;
           prevPt = pt;
           SetCapture( hwnd );
-          if (nBar == SB_CTL) SetFocus( hwnd );
+          if (nBar == SB_CTL && (GetWindowLongA(hwnd, GWL_STYLE) & WS_TABSTOP)) SetFocus( hwnd );
           break;
 
       case WM_MOUSEMOVE:
@@ -925,6 +938,8 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
       case WM_LBUTTONUP:
           hittest = SCROLL_NOWHERE;
           ReleaseCapture();
+          /* if scrollbar has focus, show back caret */
+          if (hwnd==GetFocus()) ShowCaret(hwnd);
           break;
 
       case WM_SYSTIMER:
@@ -1142,8 +1157,58 @@ LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam,
         }
         break;
 
+    /* if key event is received, the scrollbar has the focus*/
     case WM_KEYDOWN:
+        HideCaret(hwnd);  /*hide caret to prevent flicker*/
         SCROLL_HandleKbdEvent( hwnd, wParam );
+        break;
+
+    case WM_KEYUP:
+        ShowCaret(hwnd);
+        break;
+
+    case WM_SETFOCUS:
+        {
+            /* Create a caret when a ScrollBar get focus*/
+            RECT rect;
+            int arrowSize, thumbSize, thumbPos, vertical;
+            if(hwnd==GetFocus())
+            {
+                vertical = SCROLL_GetScrollBarRect( hwnd, SB_CTL, &rect,
+                                                    &arrowSize, &thumbSize, &thumbPos );
+                if (!vertical)
+                {
+                    CreateCaret(hwnd,1, thumbSize-2, rect.bottom-rect.top-2);
+                    SetCaretPos(thumbPos+1, rect.top+1);
+                }
+                else
+                {
+                    CreateCaret(hwnd,1, rect.right-rect.left-2,thumbSize-2);
+                    SetCaretPos(rect.top+1, thumbPos+1);
+                }
+                ShowCaret(hwnd);
+            }
+        }
+        break;
+
+    case WM_KILLFOCUS:
+        {
+            RECT rect;
+            int arrowSize, thumbSize, thumbPos, vertical;
+            vertical = SCROLL_GetScrollBarRect( hwnd, SB_CTL, &rect,&arrowSize, &thumbSize, &thumbPos );
+            if (!vertical){
+                rect.left=thumbPos+1;
+                rect.right=rect.left+thumbSize;
+            }
+            else
+            {
+                rect.top=thumbPos+1;
+                rect.bottom=rect.top+thumbSize;
+            }
+            HideCaret(hwnd);
+            InvalidateRect(hwnd,&rect,0);
+            DestroyCaret();
+        }
         break;
 
     case WM_ERASEBKGND:
