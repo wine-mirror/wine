@@ -62,7 +62,7 @@ IDM_WINEFILE MENU FIXED IMPURE
 		MENUITEM SEPARATOR
 		MENUITEM "&Format Disk..." ,			203
 #ifdef _WIN95
-		MENUITEM "&Make System Disk...", -1	//@@
+		MENUITEM "&Make System Disk...", -1	/*@@ */
 #endif
 		MENUITEM SEPARATOR
 		MENUITEM "Connect &Network Drive" ,			252
@@ -114,8 +114,8 @@ IDM_WINEFILE MENU FIXED IMPURE
 		MENUITEM "F&ull Screen\tCtrl+Shift+S" , 	ID_VIEW_FULLSCREEN
 #endif
 		MENUITEM SEPARATOR
-		MENUITEM "&Symbol nach Programmstart" ,		-1
-		MENUITEM "&Einstellungen beim Beenden speichern" ,			511
+		MENUITEM "&Minize on run" ,		-1
+		MENUITEM "&Save settings on exit" ,			511
 	}
 
 
@@ -144,8 +144,10 @@ IDM_WINEFILE MENU FIXED IMPURE
 		MENUITEM SEPARATOR
 		POPUP "Info..."  {
 		  MENUITEM "Info about &Wine..." ,			ID_ABOUT_WINE
-//		  MENUITEM "&License..."		ID_LICENSE
-//		  MENUITEM "&NO WARRANTY"		ID_NO_WARRANTY
+/*
+ *		  MENUITEM "&License..."		ID_LICENSE
+ *		  MENUITEM "&NO WARRANTY"		ID_NO_WARRANTY
+ */
 		}
 	}
 }
