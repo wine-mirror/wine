@@ -12,6 +12,7 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	clist.c \
 	ordinal.c \
 	path.c \
 	reg.c \
@@ -24,6 +25,7 @@ C_SRCS = \
 EXTRASUBDIRS = tests
 
 CTESTS = \
+	tests/clist.c \
 	tests/shreg.c
 
 @MAKE_DLL_RULES@

@@ -1,0 +1,454 @@
+/* Unit test suite for SHLWAPI Compact List functions
+ *
+ * Copyright 2002 Jon Griffiths
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#include "wine/test.h"
+#include "winbase.h"
+#include "objbase.h"
+
+typedef struct tagSHLWAPI_CLIST
+{
+  ULONG ulSize;
+  ULONG ulId;
+} SHLWAPI_CLIST, *LPSHLWAPI_CLIST;
+
+typedef const SHLWAPI_CLIST* LPCSHLWAPI_CLIST;
+
+/* Items to add */
+static const SHLWAPI_CLIST SHLWAPI_CLIST_items[] =
+{
+  {4, 1},
+  {8, 3},
+  {12, 2},
+  {16, 8},
+  {20, 9},
+  {3, 11},
+  {9, 82},
+  {33, 16},
+  {32, 55},
+  {24, 100},
+  {39, 116},
+  { 0, 0}
+};
+
+/* Dummy IStream object for testing calls */
+typedef struct
+{
+  void* lpVtbl;
+  ULONG ref;
+  int   readcalls;
+  BOOL  failreadcall;
+  BOOL  failreadsize;
+  BOOL  readbeyondend;
+  BOOL  readreturnlarge;
+  int   writecalls;
+  BOOL  failwritecall;
+  BOOL  failwritesize;
+  int   seekcalls;
+  int   statcalls;
+  LPCSHLWAPI_CLIST item;
+} _IDummyStream;
+
+static
+HRESULT WINAPI QueryInterface(_IDummyStream *This,REFIID riid, LPVOID *ppvObj)
+{
+  return S_OK;
+}
+
+static ULONG WINAPI AddRef(_IDummyStream *This)
+{
+  return ++This->ref;
+}
+
+static ULONG WINAPI Release(_IDummyStream *This)
+{
+  return --This->ref;
+}
+
+static HRESULT WINAPI Read(_IDummyStream* This, LPVOID lpMem, ULONG ulSize,
+                           LPULONG lpRead)
+{
+  HRESULT hRet = S_OK;
+  ++This->readcalls;
+
+  if (This->failreadcall)
+  {
+    return STG_E_ACCESSDENIED;
+  }
+  else if (This->failreadsize)
+  {
+    *lpRead = ulSize + 8;
+    return S_OK;
+  }
+  else if (This->readreturnlarge)
+  {
+    *((ULONG*)lpMem) = 0xffff01;
+    *lpRead = ulSize;
+    This->readreturnlarge = FALSE;
+    return S_OK;
+  }
+  if (ulSize == sizeof(ULONG))
+  {
+    /* Read size of item */
+    *((ULONG*)lpMem) = This->item->ulSize ? This->item->ulSize + sizeof(SHLWAPI_CLIST) : 0;
+    *lpRead = ulSize;
+  }
+  else
+  {
+    unsigned int i;
+    char* buff = (char*)lpMem;
+
+    /* Read item data */
+    if (!This->item->ulSize)
+    {
+      This->readbeyondend = TRUE;
+      *lpRead = 0;
+      return E_FAIL; /* Should never happen */
+    }
+    *((ULONG*)lpMem) = This->item->ulId;
+    *lpRead = ulSize;
+
+    for (i = 0; i < This->item->ulSize; i++)
+      buff[4+i] = i*2;
+
+    This->item++;
+  }
+  return hRet;
+}
+
+static HRESULT WINAPI Write(_IDummyStream* This, LPVOID lpMem, ULONG ulSize,
+                            LPULONG lpWritten)
+{
+  HRESULT hRet = S_OK;
+
+  ++This->writecalls;
+  if (This->failwritecall)
+  {
+    return STG_E_ACCESSDENIED;
+  }
+  else if (This->failwritesize)
+  {
+    *lpWritten = 0;
+  }
+  else
+    *lpWritten = ulSize;
+  return hRet;
+}
+
+static HRESULT WINAPI Seek(_IDummyStream* This, LARGE_INTEGER dlibMove,
+                           DWORD dwOrigin, ULARGE_INTEGER* plibNewPosition)
+{
+  ++This->seekcalls;
+  if (plibNewPosition)
+    plibNewPosition->QuadPart = sizeof(ULONG);
+  return S_OK;
+}
+
+static HRESULT WINAPI Stat(_IDummyStream* This, STATSTG* pstatstg,
+                           DWORD grfStatFlag)
+{
+  ++This->statcalls;
+  if (pstatstg)
+    pstatstg->cbSize.QuadPart = 5000l;
+  return S_OK;
+}
+
+/* VTable */
+static void* iclvt[] =
+{
+  QueryInterface,
+  AddRef,
+  Release,
+  Read,
+  Write,
+  Seek,
+  NULL, /* SetSize */
+  NULL, /* CopyTo */
+  NULL, /* Commit */
+  NULL, /* Revert */
+  NULL, /* LockRegion */
+  NULL, /* UnlockRegion */
+  Stat,
+  NULL  /* Clone */
+};
+
+/* Function ptrs for ordinal calls */
+static HMODULE SHLWAPI_hshlwapi = 0;
+
+static VOID    (WINAPI *pSHLWAPI_19)(LPSHLWAPI_CLIST);
+static HRESULT (WINAPI *pSHLWAPI_20)(LPSHLWAPI_CLIST*,LPCSHLWAPI_CLIST);
+static BOOL    (WINAPI *pSHLWAPI_21)(LPSHLWAPI_CLIST*,ULONG);
+static LPSHLWAPI_CLIST (WINAPI *pSHLWAPI_22)(LPSHLWAPI_CLIST,ULONG);
+static HRESULT (WINAPI *pSHLWAPI_17)(_IDummyStream*,LPSHLWAPI_CLIST);
+static HRESULT (WINAPI *pSHLWAPI_18)(_IDummyStream*,LPSHLWAPI_CLIST*);
+
+static void InitFunctionPtrs()
+{
+  SHLWAPI_hshlwapi = LoadLibraryA("shlwapi.dll");
+  ok(SHLWAPI_hshlwapi != 0, "LoadLibrary failed");
+  if (SHLWAPI_hshlwapi)
+  {
+    pSHLWAPI_17 = (void *)GetProcAddress( SHLWAPI_hshlwapi, (LPSTR)17);
+    ok(pSHLWAPI_17 != 0, "No Ordinal 17");
+    pSHLWAPI_18 = (void *)GetProcAddress( SHLWAPI_hshlwapi, (LPSTR)18);
+    ok(pSHLWAPI_18 != 0, "No Ordinal 18");
+    pSHLWAPI_19 = (void *)GetProcAddress( SHLWAPI_hshlwapi, (LPSTR)19);
+    ok(pSHLWAPI_19 != 0, "No Ordinal 19");
+    pSHLWAPI_20 = (void *)GetProcAddress( SHLWAPI_hshlwapi, (LPSTR)20);
+    ok(pSHLWAPI_20 != 0, "No Ordinal 20");
+    pSHLWAPI_21 = (void *)GetProcAddress( SHLWAPI_hshlwapi, (LPSTR)21);
+    ok(pSHLWAPI_21 != 0, "No Ordinal 21");
+    pSHLWAPI_22 = (void *)GetProcAddress( SHLWAPI_hshlwapi, (LPSTR)22);
+    ok(pSHLWAPI_22 != 0, "No Ordinal 22");
+  }
+}
+
+static void InitDummyStream(_IDummyStream* iface)
+{
+  iface->lpVtbl = (void*)iclvt;
+  iface->ref = 1;
+  iface->readcalls = 0;
+  iface->failreadcall = FALSE;
+  iface->failreadsize = FALSE;
+  iface->readbeyondend = FALSE;
+  iface->readreturnlarge = FALSE;
+  iface->writecalls = 0;
+  iface->failwritecall = FALSE;
+  iface->failwritesize = FALSE;
+  iface->seekcalls = 0;
+  iface->statcalls = 0;
+  iface->item = SHLWAPI_CLIST_items;
+}
+
+
+static void test_CList(void)
+{
+  _IDummyStream streamobj;
+  LPSHLWAPI_CLIST list = NULL;
+  LPCSHLWAPI_CLIST item = SHLWAPI_CLIST_items;
+  HRESULT hRet;
+  LPSHLWAPI_CLIST inserted;
+  char buff[64];
+  unsigned int i;
+
+  if (!pSHLWAPI_17 || !pSHLWAPI_18 || !pSHLWAPI_19 || !pSHLWAPI_20 ||
+      !pSHLWAPI_21 || !pSHLWAPI_22)
+    return;
+
+  /* Populate a list and test the items are added correctly */
+  while (item->ulSize)
+  {
+    /* Create item and fill with data */
+    inserted = (LPSHLWAPI_CLIST)buff;
+    inserted->ulSize = item->ulSize + sizeof(SHLWAPI_CLIST);
+    inserted->ulId = item->ulId;
+    for (i = 0; i < item->ulSize; i++)
+      buff[sizeof(SHLWAPI_CLIST)+i] = i*2;
+
+    /* Add it */
+    hRet = pSHLWAPI_20(&list, inserted);
+    ok(hRet > S_OK, "failed list add");
+
+    if (hRet > S_OK)
+    {
+      ok(list && list->ulSize, "item not added");
+
+      /* Find it */
+      inserted = pSHLWAPI_22(list, item->ulId);
+      ok(inserted != NULL, "lost after adding");
+
+      ok(!inserted || inserted->ulId != -1u, "find returned a container");
+
+      /* Check size */
+      if (inserted && inserted->ulSize & 0x3)
+      {
+        /* Contained */
+        ok(inserted[-1].ulId == -1u, "invalid size is not countained");
+        ok(inserted[-1].ulSize > inserted->ulSize+sizeof(SHLWAPI_CLIST),
+           "container too small");
+      }
+      else if (inserted)
+      {
+        ok(inserted->ulSize==item->ulSize+sizeof(SHLWAPI_CLIST),
+           "id %ld size wrong (%ld!=%ld)", inserted->ulId, inserted->ulSize,
+           item->ulSize+sizeof(SHLWAPI_CLIST));
+      }
+      if (inserted)
+      {
+        BOOL bDataOK = TRUE;
+        LPBYTE bufftest = (LPBYTE)inserted;
+
+        for (i = 0; i < inserted->ulSize - sizeof(SHLWAPI_CLIST); i++)
+          if (bufftest[sizeof(SHLWAPI_CLIST)+i] != i*2)
+            bDataOK = FALSE;
+
+        ok(bDataOK == TRUE, "data corrupted on insert");
+      }
+      ok(!inserted || inserted->ulId==item->ulId, "find got wrong item");
+    }
+    item++;
+  }
+
+  /* Write the list */
+  InitDummyStream(&streamobj);
+
+  hRet = pSHLWAPI_17(&streamobj, list);
+  ok(hRet == S_OK, "write failed");
+  if (hRet == S_OK)
+  {
+    /* 1 call for each element, + 1 for OK (use our null element for this) */
+    ok(streamobj.writecalls == sizeof(SHLWAPI_CLIST_items)/sizeof(SHLWAPI_CLIST),
+       "wrong call count");
+    ok(streamobj.readcalls == 0,"called Read() in write");
+    ok(streamobj.seekcalls == 0,"called Seek() in write");
+  }
+
+  /* Failure cases for writing */
+  InitDummyStream(&streamobj);
+  streamobj.failwritecall = TRUE;
+  hRet = pSHLWAPI_17(&streamobj, list);
+  ok(hRet == STG_E_ACCESSDENIED, "changed object failure return");
+  ok(streamobj.writecalls == 1, "called object after failure");
+  ok(streamobj.readcalls == 0,"called Read() after failure");
+  ok(streamobj.seekcalls == 0,"called Seek() after failure");
+
+  InitDummyStream(&streamobj);
+  streamobj.failwritesize = TRUE;
+  hRet = pSHLWAPI_17(&streamobj, list);
+  ok(hRet == STG_E_MEDIUMFULL, "changed size failure return");
+  ok(streamobj.writecalls == 1, "called object after size failure");
+  ok(streamobj.readcalls == 0,"called Read() after failure");
+  ok(streamobj.seekcalls == 0,"called Seek() after failure");
+
+  /* Invalid inputs for adding */
+  inserted = (LPSHLWAPI_CLIST)buff;
+  inserted->ulSize = sizeof(SHLWAPI_CLIST) -1;
+  inserted->ulId = 33;
+  hRet = pSHLWAPI_20(&list, inserted);
+  ok(hRet == E_INVALIDARG, "allowed bad element size");
+
+  inserted->ulSize = 44;
+  inserted->ulId = -1;
+  hRet = pSHLWAPI_20(&list, inserted);
+  ok(hRet == E_INVALIDARG, "allowed adding a container");
+
+  item = SHLWAPI_CLIST_items;
+
+  /* Look for non-existing item in populated list */
+  inserted = pSHLWAPI_22(list, 99999999);
+  ok(inserted == NULL, "found a non-existing item");
+
+  while (item->ulSize)
+  {
+    /* Delete items */
+    BOOL bRet = pSHLWAPI_21(&list, item->ulId);
+    ok(bRet == TRUE, "couldn't find item to delete");
+    item++;
+  }
+
+  /* Look for non-existing item in empty list */
+  inserted = pSHLWAPI_22(list, 99999999);
+  ok(inserted == NULL, "found an item in empty list");
+
+  /* Create a list by reading in data */
+  InitDummyStream(&streamobj);
+
+  hRet = pSHLWAPI_18(&streamobj, &list);
+  ok(hRet == S_OK, "failed create from Read()");
+  if (hRet == S_OK)
+  {
+    ok(streamobj.readbeyondend == FALSE, "read beyond end");
+    /* 2 calls per item, but only 1 for the terminator */
+    ok(streamobj.readcalls == sizeof(SHLWAPI_CLIST_items)/sizeof(SHLWAPI_CLIST)*2-1,
+       "wrong call count");
+    ok(streamobj.writecalls == 0, "called Write() from create");
+    ok(streamobj.seekcalls == 0,"called Seek() from create");
+
+    item = SHLWAPI_CLIST_items;
+
+    /* Check the items were added correctly */
+    while (item->ulSize)
+    {
+      inserted = pSHLWAPI_22(list, item->ulId);
+      ok(inserted != NULL, "lost after adding");
+
+      ok(!inserted || inserted->ulId != -1, "find returned a container");
+
+      /* Check size */
+      if (inserted && inserted->ulSize & 0x3)
+      {
+        /* Contained */
+        ok(inserted[-1].ulId == -1, "invalid size is not countained");
+        ok(inserted[-1].ulSize > inserted->ulSize+sizeof(SHLWAPI_CLIST),
+           "container too small");
+      }
+      else if (inserted)
+      {
+        ok(inserted->ulSize==item->ulSize+sizeof(SHLWAPI_CLIST),
+           "id %ld size wrong (%ld!=%ld)", inserted->ulId, inserted->ulSize,
+           item->ulSize+sizeof(SHLWAPI_CLIST));
+      }
+      ok(!inserted || inserted->ulId==item->ulId, "find got wrong item");
+      if (inserted)
+      {
+        BOOL bDataOK = TRUE;
+        char *bufftest = (char*)inserted;
+
+        for (i = 0; i < inserted->ulSize - sizeof(SHLWAPI_CLIST); i++)
+          if (bufftest[sizeof(SHLWAPI_CLIST)+i] != i*2)
+            bDataOK = FALSE;
+
+        ok(bDataOK == TRUE, "data corrupted on insert");
+      }
+      item++;
+    }
+  }
+
+  /* Failure cases for reading */
+  InitDummyStream(&streamobj);
+  streamobj.failreadcall = TRUE;
+  hRet = pSHLWAPI_18(&streamobj, &list);
+  ok(hRet == STG_E_ACCESSDENIED, "changed object failure return");
+  ok(streamobj.readbeyondend == FALSE, "read beyond end");
+  ok(streamobj.readcalls == 1, "called object after read failure");
+  ok(streamobj.writecalls == 0,"called Write() after read failure");
+  ok(streamobj.seekcalls == 0,"called Seek() after read failure");
+
+  /* Read returns large object */
+  InitDummyStream(&streamobj);
+  streamobj.readreturnlarge = TRUE;
+  hRet = pSHLWAPI_18(&streamobj, &list);
+  ok(hRet == S_OK, "failed create from Read() with large item");
+  ok(streamobj.readbeyondend == FALSE, "read beyond end");
+  ok(streamobj.readcalls == 1,"wrong call count");
+  ok(streamobj.writecalls == 0,"called Write() after read failure");
+  ok(streamobj.seekcalls == 2,"wrong Seek() call count (%d)", streamobj.seekcalls);
+
+  pSHLWAPI_19(list);
+}
+
+
+START_TEST(clist)
+{
+  InitFunctionPtrs();
+
+  test_CList();
+
+  if (SHLWAPI_hshlwapi)
+    FreeLibrary(SHLWAPI_hshlwapi);
+}

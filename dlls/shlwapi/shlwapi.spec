@@ -16,12 +16,12 @@ init SHLWAPI_LibMain
 14  stdcall @(ptr ptr) SHLWAPI_14
 15  stdcall @(ptr ptr) SHLWAPI_15
 16  stdcall @(long long long long) SHLWAPI_16
-17  stub @
-18  stdcall @(ptr ptr) SHLWAPI_18
-19  stdcall @(ptr) SHLWAPI_19
-20  stub @
-21  stdcall @(ptr long) SHLWAPI_21
-22  stdcall @(ptr long) SHLWAPI_22
+17  stdcall @ (ptr ptr) SHLWAPI_17
+18  stdcall @ (ptr ptr) SHLWAPI_18
+19  stdcall @ (ptr) SHLWAPI_19
+20  stdcall @ (ptr ptr) SHLWAPI_20
+21  stdcall @ (ptr long) SHLWAPI_21
+22  stdcall @ (ptr long) SHLWAPI_22
 23  stdcall @(ptr ptr long) SHLWAPI_23
 24  stdcall @(ptr ptr long) SHLWAPI_24
 25  stdcall @(long) SHLWAPI_25
