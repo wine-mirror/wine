@@ -58,6 +58,8 @@ sub check_function {
     if($winapi->name eq "win16") {
 	if($calling_convention =~ /^__cdecl$/) {
 	    $implemented_calling_convention = "cdecl";
+	} elsif($calling_convention =~ /^VFWAPIV|WINAPIV$/) {
+	    $implemented_calling_convention = "varargs";
 	} elsif($calling_convention = ~ /^__stdcall|VFWAPI|WINAPI$/) {
 	    if($implemented_return_kind =~ /^s_word|word|void$/) {
 		$implemented_calling_convention = "pascal16";
@@ -90,7 +92,8 @@ sub check_function {
     {
 	# correct
     } elsif($implemented_calling_convention ne $declared_calling_convention && 
-       !($declared_calling_convention =~ /^pascal/ && $forbidden_return_type)) 
+       !($declared_calling_convention =~ /^pascal/ && $forbidden_return_type) &&
+       !($implemented_calling_convention =~ /^cdecl|varargs$/ && $declared_calling_convention =~ /^cdecl|varargs$/))
     {
 	if($options->calling_convention) {
 	    &$output("calling convention mismatch: $implemented_calling_convention != $declared_calling_convention");

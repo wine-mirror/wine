@@ -125,12 +125,13 @@ foreach my $file ($options->files) {
     }
 
     my $file_type;
-    if($file_dir =~ /^(libtest|program|rc)/) {
+    if($file_dir =~ /^(libtest|program|rc|tools)/ || 
+       $file =~ /dbgmain\.c$/ ||
+       $file =~ /wineclipsrv\.c$/) # FIXME: Kludge
+    {
 	$file_type = "application";
     } elsif($file_dir =~ /^(debug|miscemu)/) {
 	$file_type = "emulator";
-    } elsif($file_dir =~ /^(tools)/) {
-	$file_type = "tool";
     } else {
 	$file_type = "library";
     }
@@ -156,7 +157,7 @@ foreach my $file ($options->files) {
 	    $win32api->found_function($name) if $options->win32;
 	}
 	
-	if($options->local) {
+	if($options->local && $file_type ne "application") {
 	    my $module16 = $win16api->function_module($name);
 	    my $module32 = $win32api->function_module($name);
 
@@ -269,18 +270,20 @@ foreach my $file ($options->files) {
 	}
     };
     my $found_conditional = sub {
-	local $_ = shift;
-	if(!$nativeapi->is_conditional($_)) {
-	    if(/^HAVE_/ && !/^HAVE_(IPX|MESAGL|BUGGY_MESAGL|WINE_CONSTRUCTOR)$/)
-	    {
-		$output->write("$file: $_ is not a declared as a conditional\n");
-	    }
-	} else {
-	    $conditional++;
-	    if(!$config) {
-		$output->write("$file: conditional $_ used but config.h is not included\n");
-	    }
-	}
+	if($file_type ne "application") {
+	   local $_ = shift;
+	   if(!$nativeapi->is_conditional($_)) {
+	       if(/^HAVE_/ && !/^HAVE_(IPX|MESAGL|BUGGY_MESAGL|WINE_CONSTRUCTOR)$/)
+	       {
+		   $output->write("$file: $_ is not a declared as a conditional\n");
+	       }
+	   } else {
+	       $conditional++;
+	       if(!$config) {
+		   $output->write("$file: conditional $_ used but config.h is not included\n");
+	       }
+	   }
+       }
     };
     my $preprocessor = 'preprocessor'->new($found_include, $found_conditional);
     my $found_preprocessor = sub {
@@ -291,10 +294,25 @@ foreach my $file ($options->files) {
 
 	if($options->config) {
 	    if($directive eq "include") {
+		my $header;
+		my $check_protection;
+		my $check_local;
 		if($argument =~ /^<(.*?)>$/) {
-		    my $header = $1;
+		   $header = $1;
+		   if($file_type ne "application") {
+		       $check_protection = 1;
+		   } else {
+		       $check_protection = 0;
+		   }
+		   $check_local = 0;
+		} elsif($argument =~ /^"(.*?)"$/) {
+		   $header = $1;
+		   $check_protection = 0;
+		   $check_local = 1;
+		}
 
-		    if((-e "$wine_dir/include/$header" || -e "$file_dir/$header") && $file_type ne "application") {
+		if($check_protection) {
+		    if((-e "$wine_dir/include/$header" || -e "$file_dir/$header")) {
 			$output->write("$file: #include \<$header\> is a local include\n");
 		    }
 
@@ -306,20 +324,23 @@ foreach my $file ($options->files) {
 			if(!$preprocessor->is_def($macro)) {
 			    if($macro =~ /^HAVE_X11/) {
 				if(!$preprocessor->is_undef("X_DISPLAY_MISSING")) {
-				    $output->write("$file: #$directive $argument: is a conditional include, but is not protected\n");
+				    $output->write("$file: #$directive $argument: is a conditional include, " .
+						   "but is not protected\n");
 				}
 			    } elsif($macro =~ /^HAVE_(.*?)_H$/) {
 				if($header ne "alloca.h" && !$preprocessor->is_def("STATFS_DEFINED_BY_$1")) {
-				    $output->write("$file: #$directive $argument: is a conditional include, but is not protected\n");
+				    $output->write("$file: #$directive $argument: is a conditional include, " . 
+						   "but is not protected\n");
 				}
 			    }
 			}
 		    } elsif($preprocessor->is_def($macro)) {
-			$output->write("$file: #$directive $argument: is protected, but is not a conditional include\n");
+			$output->write("$file: #$directive $argument: is protected, " .
+				       "but is not a conditional include\n");
 		    }
-		} elsif($argument =~ /^"(.*?)"$/) {
-		    my $header = $1;
+		}
 
+		if($check_local) {
 		    if(-e "$file_dir/$header") {
 			$includes{"$file_dir/$header"}{used}++;
 			foreach my $name (keys(%{$includes{"$file_dir/$header"}{includes}})) {

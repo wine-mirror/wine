@@ -175,12 +175,12 @@ sub parse_spec_file {
 	if($header)  {
 	    if(/^name\s*(\S*)/) { $module = $1; }
 	    if(/^type\s*(\w+)/) { $type = $1; }
-	    if(/^\d+/) { $header = 0 };
+	    if(/^\d+|@/) { $header = 0 };
 	    next;
 	} 
 
 	my $ordinal;
-	if(/^(\d+)\s+(pascal|pascal16|stdcall|cdecl|register|interrupt|varargs)\s+(\S+)\s*\(\s*(.*?)\s*\)\s*(\S+)$/) {
+	if(/^(\d+|@)\s+(pascal|pascal16|stdcall|cdecl|register|interrupt|varargs)\s+(\S+)\s*\(\s*(.*?)\s*\)\s*(\S+)$/) {
 	    my $calling_convention = $2;
 	    my $external_name = $3;
 	    my $arguments = $4;
@@ -196,7 +196,7 @@ sub parse_spec_file {
 	    } elsif($$function_module{$internal_name} !~ /$module/) {
 		$$function_module{$internal_name} .= " & $module";
 	    }
-	} elsif(/^(\d+)\s+stub\s+(\S+)$/) {
+	} elsif(/^(\d+|@)\s+stub\s+(\S+)$/) {
 	    my $external_name = $2;
 
 	    $ordinal = $1;
@@ -215,11 +215,11 @@ sub parse_spec_file {
 	    } elsif($$function_module{$internal_name} !~ /$module/) {
 		$$function_module{$internal_name} .= " & $module";
 	    }
-	} elsif(/^\d+\s+(equate|long|word|extern|forward)/) {
+	} elsif(/^(\d+|@)\s+(equate|long|word|extern|forward)/) {
 	    # ignore
 	} else {
 	    my $next_line = <IN>;
-	    if($next_line =~ /^\d/) {
+	    if($next_line =~ /^\d|@/) {
 		die "$file: $.: syntax error: '$_'\n";
 	    } else {
 		$_ .= $next_line;
@@ -228,7 +228,7 @@ sub parse_spec_file {
 	}
 	
 	if(defined($ordinal)) {
-	    if($ordinals{$ordinal}) {
+	    if($ordinal ne "@" && $ordinals{$ordinal}) {
 		$$output->write("$file: ordinal redefined: $_\n");
 	    }
 	    $ordinals{$ordinal}++;
