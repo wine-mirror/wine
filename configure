@@ -2143,7 +2143,7 @@ else
     fi
   done
   IFS="$ac_save_ifs"
-  test -z "$ac_cv_prog_C2MAN" && ac_cv_prog_C2MAN="true"
+  test -z "$ac_cv_prog_C2MAN" && ac_cv_prog_C2MAN="\$(TOPSRCDIR)/tools/c2man.pl"
 fi
 fi
 C2MAN="$ac_cv_prog_C2MAN"
