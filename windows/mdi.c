@@ -1021,16 +1021,23 @@ static void MDI_UpdateFrameText( WND *frameWnd, HWND hClient,
 LRESULT WINAPI MDIClientWndProc( HWND hwnd, UINT message, WPARAM wParam,
                                  LPARAM lParam )
 {
-    LPCREATESTRUCTA    cs;
+    LPCREATESTRUCTA	 cs;
     MDICLIENTINFO       *ci;
     RECT		 rect;
-    WND                 *w 	  = WIN_FindWndPtr(hwnd);
-    WND			*frameWnd = WIN_LockWndPtr(w->parent);
-    INT nItems;
-    LRESULT            retvalue;
+    WND                 *w, *frameWnd;
+    INT 		 nItems;
+    LRESULT              retvalue;
     
-    ci = (MDICLIENTINFO *) w->wExtra;
-    
+    if ( ( w = WIN_FindWndPtr(hwnd) ) == NULL )
+       return 0;
+
+    if ( ( frameWnd = WIN_LockWndPtr(w->parent) ) == NULL ) {
+       WIN_ReleaseWndPtr(w);
+       return 0;
+    }
+
+    ci = (MDICLIENTINFO *) w->wExtra;    
+
     switch (message)
     {
       case WM_CREATE:
