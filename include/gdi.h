@@ -284,7 +284,7 @@ typedef struct tagFLOAT_POINT
  * transformation process is done in floating point internally. This function
  * is then used to round these coordinates to integer values.
  */
-static __inline__ INT32 GDI_ROUND(FLOAT val)
+static __inline__ INT32 WINE_UNUSED GDI_ROUND(FLOAT val)
 {
    return (int)floor(val + 0.5);
 }
@@ -292,7 +292,7 @@ static __inline__ INT32 GDI_ROUND(FLOAT val)
 /* Performs a viewport-to-world transformation on the specified point (which
  * is in floating point format). Returns TRUE if successful, else FALSE.
  */
-static __inline__ BOOL32 INTERNAL_DPTOLP_FLOAT(DC *dc, FLOAT_POINT *point)
+static __inline__ BOOL32 WINE_UNUSED INTERNAL_DPTOLP_FLOAT(DC *dc, FLOAT_POINT *point)
 {
     FLOAT x, y;
     
@@ -316,7 +316,7 @@ static __inline__ BOOL32 INTERNAL_DPTOLP_FLOAT(DC *dc, FLOAT_POINT *point)
 /* Performs a viewport-to-world transformation on the specified point (which
  * is in integer format). Returns TRUE if successful, else FALSE.
  */
-static __inline__ BOOL32 INTERNAL_DPTOLP(DC *dc, LPPOINT32 point)
+static __inline__ BOOL32 WINE_UNUSED INTERNAL_DPTOLP(DC *dc, LPPOINT32 point)
 {
     FLOAT_POINT floatPoint;
     
@@ -336,7 +336,7 @@ static __inline__ BOOL32 INTERNAL_DPTOLP(DC *dc, LPPOINT32 point)
 /* Performs a world-to-viewport transformation on the specified point (which
  * is in floating point format).
  */
-static __inline__ void INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *point)
+static __inline__ void WINE_UNUSED INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *point)
 {
     FLOAT x, y;
     
@@ -354,7 +354,7 @@ static __inline__ void INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *point)
 /* Performs a world-to-viewport transformation on the specified point (which
  * is in integer format).
  */
-static __inline__ void INTERNAL_LPTODP(DC *dc, LPPOINT32 point)
+static __inline__ void WINE_UNUSED INTERNAL_LPTODP(DC *dc, LPPOINT32 point)
 {
     FLOAT_POINT floatPoint;
     
