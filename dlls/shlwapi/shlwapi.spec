@@ -437,8 +437,8 @@
 437 stdcall @(long) SHLWAPI_437
 438 stub @
 439 stub @
-440 stub @
-441 stub @
+440 stdcall -noname SHLWAPI_440(str ptr long)
+441 stdcall -noname SHLWAPI_441(wstr ptr long)
 442 stdcall @(wstr ptr long) kernel32.GetEnvironmentVariableW
 443 stdcall @(ptr long) kernel32.GetSystemWindowsDirectoryA
 444 stdcall @(ptr long) kernel32.GetSystemWindowsDirectoryW
