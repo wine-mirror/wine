@@ -39,15 +39,6 @@
  *   - EN_ALIGN_LTR_EC
  *   - EN_ALIGN_RTL_EC
  *   - ES_OEMCONVERT
- *   -!ES_AUTOVSCROLL (every multi line control *is* auto vscroll)
- *   -!ES_AUTOHSCROLL (every single line control *is* auto hscroll)
- *   
- * When there is no autoscrolling, the control should first check whether
- * the new text would fit.  If not, an EN_MAXTEXT should be sent.
- * However, currently this would require the actual change to be made,
- * then call EDIT_BuildLineDefs() and then find out that the new text doesn't
- * fit.  After all this, things should be put back in the state before the
- * changes. Note that for multi line controls !ES_AUTOHSCROLL works : wordwrap.
  *
  */
 
@@ -3027,6 +3018,8 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 	UINT size;
 	LPWSTR p;
 	HRGN hrgn = 0;
+	LPWSTR buf = NULL;
+	UINT bufl = 0;
 
 	TRACE("%s, can_undo %d, send_update %d\n",
 	    debugstr_w(lpsz_replace), can_undo, send_update);
@@ -3056,12 +3049,71 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 	if (e != s) {
 		/* there is something to be deleted */
 		TRACE("deleting stuff.\n");
+		bufl = e - s;
+		buf = HeapAlloc(GetProcessHeap(), 0, (bufl + 1) * sizeof(WCHAR));
+		if (!buf) return;
+		strncpyW(buf, es->text + s, bufl);
+		buf[bufl] = 0; /* ensure 0 termination */
+		/* now delete */
+		strcpyW(es->text + s, es->text + e);
+	}
+	if (strl) {
+		/* there is an insertion */
+		tl = strlenW(es->text);
+		TRACE("inserting stuff (tl %d, strl %d, selstart %d ('%s'), text '%s')\n", tl, strl, s, debugstr_w(es->text + s), debugstr_w(es->text));
+		for (p = es->text + tl ; p >= es->text + s ; p--)
+			p[strl] = p[0];
+		for (i = 0 , p = es->text + s ; i < strl ; i++)
+			p[i] = lpsz_replace[i];
+		if(es->style & ES_UPPERCASE)
+			CharUpperBuffW(p, strl);
+		else if(es->style & ES_LOWERCASE)
+			CharLowerBuffW(p, strl);
+	}
+	if (es->style & ES_MULTILINE)
+	{
+		INT st = min(es->selection_start, es->selection_end);
+		INT vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
+
+		hrgn = CreateRectRgn(0, 0, 0, 0);
+		EDIT_BuildLineDefs_ML(es, st, st + strl,
+				strl - abs(es->selection_end - es->selection_start), hrgn);
+		/* if text is too long undo all changes */
+		if (!(es->style & ES_AUTOVSCROLL) && (es->line_count > vlc)) {
+			if (strl)
+				strcpyW(es->text + e, es->text + e + strl);
+			if (e != s)
+				for (i = 0 , p = es->text ; i < e - s ; i++)
+					p[i + s] = buf[i];
+			EDIT_BuildLineDefs_ML(es, s, e, 
+				abs(es->selection_end - es->selection_start) - strl, hrgn);
+			strl = 0;
+			e = s;
+			hrgn = CreateRectRgn(0, 0, 0, 0);
+			EDIT_NOTIFY_PARENT(es, EN_MAXTEXT, "EN_MAXTEXT");
+		}
+	}
+	else {
+		INT fw = es->format_rect.right - es->format_rect.left;
+		EDIT_CalcLineWidth_SL(es);
+		/* remove chars that don't fit */
+		if (!(es->style & ES_AUTOHSCROLL) && (es->text_width > fw)) {
+			while ((es->text_width > fw) && s + strl >= s) {
+				strcpyW(es->text + s + strl - 1, es->text + s + strl);
+				strl--;
+				EDIT_CalcLineWidth_SL(es);
+			}
+			EDIT_NOTIFY_PARENT(es, EN_MAXTEXT, "EN_MAXTEXT");
+		}
+	}
+	
+	if (e != s) {
 		if (can_undo) {
 			utl = strlenW(es->undo_text);
 			if (!es->undo_insert_count && (*es->undo_text && (s == es->undo_position))) {
 				/* undo-buffer is extended to the right */
 				EDIT_MakeUndoFit(es, utl + e - s);
-				strncpyW(es->undo_text + utl, es->text + s, e - s + 1);
+				strncpyW(es->undo_text + utl, buf, e - s + 1);
 				(es->undo_text + utl)[e - s] = 0; /* ensure 0 termination */
 			} else if (!es->undo_insert_count && (*es->undo_text && (e == es->undo_position))) {
 				/* undo-buffer is extended to the left */
@@ -3069,12 +3121,12 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 				for (p = es->undo_text + utl ; p >= es->undo_text ; p--)
 					p[e - s] = p[0];
 				for (i = 0 , p = es->undo_text ; i < e - s ; i++)
-					p[i] = (es->text + s)[i];
+					p[i] = buf[i];
 				es->undo_position = s;
 			} else {
 				/* new undo-buffer */
 				EDIT_MakeUndoFit(es, e - s);
-				strncpyW(es->undo_text, es->text + s, e - s + 1);
+				strncpyW(es->undo_text, buf, e - s + 1);
 				es->undo_text[e - s] = 0; /* ensure 0 termination */
 				es->undo_position = s;
 			}
@@ -3082,16 +3134,12 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 			es->undo_insert_count = 0;
 		} else
 			EDIT_EM_EmptyUndoBuffer(es);
-
-		/* now delete */
-		strcpyW(es->text + s, es->text + e);
 	}
 	if (strl) {
-		/* there is an insertion */
 		if (can_undo) {
 			if ((s == es->undo_position) ||
-					((es->undo_insert_count) &&
-					(s == es->undo_position + es->undo_insert_count)))
+				((es->undo_insert_count) &&
+				(s == es->undo_position + es->undo_insert_count)))
 				/*
 				 * insertion is new and at delete position or
 				 * an extension to either left or right
@@ -3106,30 +3154,12 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 			}
 		} else
 			EDIT_EM_EmptyUndoBuffer(es);
-
-		/* now insert */
-		tl = strlenW(es->text);
-		TRACE("inserting stuff (tl %d, strl %d, selstart %d ('%s'), text '%s')\n", tl, strl, s, debugstr_w(es->text + s), debugstr_w(es->text));
-		for (p = es->text + tl ; p >= es->text + s ; p--)
-			p[strl] = p[0];
-		for (i = 0 , p = es->text + s ; i < strl ; i++)
-			p[i] = lpsz_replace[i];
-		if(es->style & ES_UPPERCASE)
-			CharUpperBuffW(p, strl);
-		else if(es->style & ES_LOWERCASE)
-			CharLowerBuffW(p, strl);
-		s += strl;
 	}
-	if (es->style & ES_MULTILINE)
-	{
-		INT s = min(es->selection_start, es->selection_end);
 
-		hrgn = CreateRectRgn(0, 0, 0, 0);
-		EDIT_BuildLineDefs_ML(es, s, s + strl,
-				strl - abs(es->selection_end - es->selection_start), hrgn);
-	}
-	else
-	    EDIT_CalcLineWidth_SL(es);
+	if (bufl)
+		HeapFree(GetProcessHeap(), 0, buf);
+ 
+	s += strl;
 
 	/* If text has been deleted and we're right or center aligned then scroll rightward */
 	if (es->style & (ES_RIGHT | ES_CENTER))
@@ -3260,9 +3290,6 @@ static void EDIT_EM_ScrollCaret(EDITSTATE *es)
 		INT x;
 		INT goal;
 		INT format_width;
-
-		if (!(es->style & ES_AUTOHSCROLL))
-			return;
 
 		x = (short)LOWORD(EDIT_EM_PosFromChar(es, es->selection_end, FALSE));
 		format_width = es->format_rect.right - es->format_rect.left;
@@ -4521,9 +4548,6 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs, BOOL unicode)
 			es->style &= ~WS_HSCROLL;
 			es->style &= ~ES_AUTOHSCROLL;
 		}
-
-		/* FIXME: for now, all multi line controls are AUTOVSCROLL */
-		es->style |= ES_AUTOVSCROLL;
 	} else {
 		es->buffer_limit = BUFLIMIT_SINGLE;
 		if ((es->style & ES_RIGHT) && (es->style & ES_CENTER))
@@ -4532,9 +4556,6 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs, BOOL unicode)
 		es->style &= ~WS_VSCROLL;
 		if (es->style & ES_PASSWORD)
 			es->password_char = '*';
-
-		/* FIXME: for now, all single line controls are AUTOHSCROLL */
-		es->style |= ES_AUTOHSCROLL;
 	}
 
 	alloc_size = ROUND_TO_GROW((es->buffer_size + 1) * sizeof(WCHAR));
