@@ -307,7 +307,7 @@ static void test__lcreat( void )
 }
 
 
-void test__llseek( void )
+static void test__llseek( void )
 {
     INT i;
     HFILE filehandle;
@@ -506,7 +506,7 @@ static void test__lwrite( void )
     ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)", GetLastError(  ) );
 }
 
-void test_CopyFileA(void)
+static void test_CopyFileA(void)
 {
     char temp_path[MAX_PATH];
     char source[MAX_PATH], dest[MAX_PATH];
@@ -536,7 +536,7 @@ void test_CopyFileA(void)
     ok(ret, "DeleteFileA: error %ld\n", GetLastError());
 }
 
-void test_CopyFileW(void)
+static void test_CopyFileW(void)
 {
     WCHAR temp_path[MAX_PATH];
     WCHAR source[MAX_PATH], dest[MAX_PATH];
@@ -568,7 +568,7 @@ void test_CopyFileW(void)
     ok(ret, "DeleteFileW: error %ld\n", GetLastError());
 }
 
-void test_CreateFileA(void)
+static void test_CreateFileA(void)
 {
     HANDLE hFile;
     char temp_path[MAX_PATH];
@@ -592,7 +592,7 @@ void test_CreateFileA(void)
     ok(ret, "DeleteFileA: error %ld\n", GetLastError());
 }
 
-void test_CreateFileW(void)
+static void test_CreateFileW(void)
 {
     HANDLE hFile;
     WCHAR temp_path[MAX_PATH];
@@ -651,7 +651,7 @@ static void test_DeleteFileW( void )
 
 #define IsDotDir(x)     ((x[0] == '.') && ((x[1] == 0) || ((x[1] == '.') && (x[2] == 0))))
 
-void test_MoveFileA(void)
+static void test_MoveFileA(void)
 {
     char tempdir[MAX_PATH];
     char source[MAX_PATH], dest[MAX_PATH];
@@ -687,11 +687,12 @@ void test_MoveFileA(void)
     lstrcatA(dest, "\\wild?.*");
     ret = MoveFileA(source, dest);
     todo_wine {
-	  ok(!ret, "MoveFileA: shouldn't move to wildcard file");
+      ok(!ret, "MoveFileA: shouldn't move to wildcard file");
       ok(GetLastError() == ERROR_INVALID_NAME,
               "MoveFileA: with wildcards, unexpected error %ld\n", GetLastError());
+#if 0
       if (ret || (GetLastError() != ERROR_INVALID_NAME))
-	  {
+      {
         WIN32_FIND_DATAA fd;
         char temppath[MAX_PATH];
         HANDLE hFind;
@@ -700,30 +701,31 @@ void test_MoveFileA(void)
         lstrcatA(temppath, "\\*.*");
         hFind = FindFirstFileA(temppath, &fd);
         if (INVALID_HANDLE_VALUE != hFind)
-		{
+        {
           LPSTR lpName;
           do
-		  {
+          {
             lpName = fd.cAlternateFileName;
             if (!lpName[0])
               lpName = fd.cFileName;
-            ok(!IsDotDir(lpName), "MoveFileA: wildcards file created!");
-		  }
+            ok(IsDotDir(lpName), "MoveFileA: wildcards file created!");
+          }
           while (FindNextFileA(hFind, &fd));
           FindClose(hFind);
-		}
-	  }
+        }
+      }
+#endif
+      ret = DeleteFileA(source);
+      ok(ret, "DeleteFileA: error %ld\n", GetLastError());
+      ret = DeleteFileA(dest);
+      ok(!ret, "DeleteFileA: error %ld\n", GetLastError());
     }
 
-    ret = DeleteFileA(source);
-    ok(ret, "DeleteFileA: error %ld\n", GetLastError());
-    ret = DeleteFileA(dest);
-    ok(!ret, "DeleteFileA: error %ld\n", GetLastError());
     ret = RemoveDirectoryA(tempdir);
     ok(ret, "DeleteDirectoryA: error %ld\n", GetLastError());
 }
 
-void test_MoveFileW(void)
+static void test_MoveFileW(void)
 {
     WCHAR temp_path[MAX_PATH];
     WCHAR source[MAX_PATH], dest[MAX_PATH];
@@ -754,7 +756,7 @@ void test_MoveFileW(void)
 
 #define PATTERN_OFFSET 0x10
 
-void test_offset_in_overlapped_structure(void)
+static void test_offset_in_overlapped_structure(void)
 {
     HANDLE hFile;
     OVERLAPPED ov;
@@ -896,7 +898,7 @@ static void test_LockFile(void)
     DeleteFileA( filename );
 }
 
-void test_FindFirstFileA()
+static void test_FindFirstFileA()
 {
     HANDLE handle;
     WIN32_FIND_DATAA search_results;
@@ -912,7 +914,7 @@ void test_FindFirstFileA()
     ok ( FindClose(handle) == TRUE, "Failed to close handle");
 }
 
-void test_FindNextFileA()
+static void test_FindNextFileA()
 {
     HANDLE handle;
     WIN32_FIND_DATAA search_results;
@@ -945,6 +947,8 @@ START_TEST(file)
     test_CreateFileW();
     test_DeleteFileA();
     test_DeleteFileW();
+    test_MoveFileA();
+    test_MoveFileW();
     test_FindFirstFileA();
     test_FindNextFileA();
     test_LockFile();
