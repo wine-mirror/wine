@@ -44,7 +44,7 @@ y.tab.c y.tab.h: dbg.y
 lex.yy.c: debug.l
 	$(LEX) -8 -I $(SRCDIR)/debug.l
 
-winedbg: $(OBJS)
+winedbg: $(OBJS) $(WINESTUB)
 	$(CC) -o $@ $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
 
 ### Dependencies:
