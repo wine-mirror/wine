@@ -1240,7 +1240,7 @@ HGLOBAL32 WINAPI GlobalReAlloc32(
          if (hmem == 0)
          {
 	     ERR(global, "GlobalReAlloc32 with null handle!\n");
-             SetLastError( ERROR_INVALID_ACCESS_TO_MEM );
+             SetLastError( ERROR_NOACCESS );
     	     return 0;
          }
 	 size=HeapSize(GetProcessHeap(), 0, (LPVOID) hmem);
