@@ -29,7 +29,7 @@ typedef struct {
     HMMIO			hFile;		/* mmio file handle open as Element */
     MCI_WAVE_OPEN_PARMSA 	openParms;
     WAVEOPENDESC 		waveDesc;
-    PCMWAVEFORMAT		WaveFormat;
+    WAVEFORMATEX		WaveFormat;
     WAVEHDR			WaveHdr;
     BOOL			fInput;		/* FALSE = Output, TRUE = Input */
     WORD			dwStatus;	/* one from MCI_MODE_xxxx */
@@ -100,7 +100,7 @@ static	DWORD 	WAVE_ConvertByteToTimeFormat(WINE_MCIWAVE* wmw, DWORD val, LPDWORD
     
     switch (wmw->dwMciTimeFormat) {
     case MCI_FORMAT_MILLISECONDS:
-	ret = (val * 1000) / wmw->WaveFormat.wf.nAvgBytesPerSec;
+	ret = (val * 1000) / wmw->WaveFormat.nAvgBytesPerSec;
 	break;
     case MCI_FORMAT_BYTES:
 	ret = val;
@@ -125,7 +125,7 @@ static	DWORD 	WAVE_ConvertTimeFormatToByte(WINE_MCIWAVE* wmw, DWORD val)
     
     switch (wmw->dwMciTimeFormat) {
     case MCI_FORMAT_MILLISECONDS:
-	ret = (val * wmw->WaveFormat.wf.nAvgBytesPerSec) / 1000;
+	ret = (val * wmw->WaveFormat.nAvgBytesPerSec) / 1000;
 	break;
     case MCI_FORMAT_BYTES:
 	ret = val;
@@ -156,11 +156,11 @@ static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, MMCKINFO* pckMainRIFF)
 		 (long)sizeof(PCMWAVEFORMAT)) != (long)sizeof(PCMWAVEFORMAT))
 	return MCIERR_INVALID_FILE;
     
-    TRACE("wFormatTag=%04X !\n",   wmw->WaveFormat.wf.wFormatTag);
-    TRACE("nChannels=%d \n",       wmw->WaveFormat.wf.nChannels);
-    TRACE("nSamplesPerSec=%ld\n",  wmw->WaveFormat.wf.nSamplesPerSec);
-    TRACE("nAvgBytesPerSec=%ld\n", wmw->WaveFormat.wf.nAvgBytesPerSec);
-    TRACE("nBlockAlign=%d \n",     wmw->WaveFormat.wf.nBlockAlign);
+    TRACE("wFormatTag=%04X !\n",   wmw->WaveFormat.wFormatTag);
+    TRACE("nChannels=%d \n",       wmw->WaveFormat.nChannels);
+    TRACE("nSamplesPerSec=%ld\n",  wmw->WaveFormat.nSamplesPerSec);
+    TRACE("nAvgBytesPerSec=%ld\n", wmw->WaveFormat.nAvgBytesPerSec);
+    TRACE("nBlockAlign=%d \n",     wmw->WaveFormat.nBlockAlign);
     TRACE("wBitsPerSample=%u !\n", wmw->WaveFormat.wBitsPerSample);
 
     mmckInfo.ckid = mmioFOURCC('d', 'a', 't', 'a');
@@ -172,7 +172,7 @@ static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, MMCKINFO* pckMainRIFF)
     TRACE("Chunk Found ckid=%.4s fccType=%.4s cksize=%08lX \n",
 	  (LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType, mmckInfo.cksize);
     TRACE("nChannels=%d nSamplesPerSec=%ld\n",
-	  wmw->WaveFormat.wf.nChannels, wmw->WaveFormat.wf.nSamplesPerSec);
+	  wmw->WaveFormat.nChannels, wmw->WaveFormat.nSamplesPerSec);
     wmw->dwLength = mmckInfo.cksize;
     wmw->dwFileOffset = mmioSeek(wmw->hFile, 0, SEEK_CUR); /* >= 0 */
     return 0;
@@ -259,9 +259,9 @@ static DWORD WAVE_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMSA lpO
 	wmw->dwLength = 0;
     }
     if (dwRet == 0) {
-	wmw->WaveFormat.wf.nAvgBytesPerSec = 
-	    wmw->WaveFormat.wf.nSamplesPerSec * wmw->WaveFormat.wf.nBlockAlign;
-	wmw->waveDesc.lpFormat = (LPWAVEFORMAT)&wmw->WaveFormat;
+	wmw->WaveFormat.nAvgBytesPerSec = 
+	    wmw->WaveFormat.nSamplesPerSec * wmw->WaveFormat.nBlockAlign;
+	wmw->waveDesc.lpFormat = &wmw->WaveFormat;
 	wmw->dwPosition = 0;
 	
 	wmw->dwStatus = MCI_MODE_STOP;
@@ -443,8 +443,7 @@ static DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
      * change from output to input and back
      */
     /* FIXME: how to choose between several output channels ? here 0 is forced */
-    /* I shall rather use WAVE_MAPPER */
-    dwRet = waveOutOpen(&wmw->hWave, 0, (LPWAVEFORMATEX)&wmw->WaveFormat, 0L, 0L, CALLBACK_NULL);
+    dwRet = waveOutOpen(&wmw->hWave, WAVE_MAPPER, (LPWAVEFORMATEX)&wmw->WaveFormat, 0L, 0L, CALLBACK_NULL);
     if (dwRet != 0) {
 	TRACE("Can't open low level audio device %ld\n", dwRet);
 	return MCIERR_DEVICE_OPEN;
@@ -468,8 +467,8 @@ static DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 	TRACE("mmioRead bufsize=%ld count=%ld\n", bufsize, count);
 	if (count < 1) 
 	    break;
-	dwRet = waveOutPrepareHeader(wmw->hWave, &wmw->WaveHdr, sizeof(WAVEHDR));
 	wmw->WaveHdr.dwBufferLength = count;
+	dwRet = waveOutPrepareHeader(wmw->hWave, &wmw->WaveHdr, sizeof(WAVEHDR));
 	wmw->WaveHdr.dwBytesRecorded = 0;
 	TRACE("before WODM_WRITE lpWaveHdr=%p dwBufferLength=%lu dwBytesRecorded=%lu\n",
 	      &wmw->WaveHdr, wmw->WaveHdr.dwBufferLength, wmw->WaveHdr.dwBytesRecorded);
@@ -547,10 +546,11 @@ static DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
     lpWaveHdr->dwFlags = 0L;
     lpWaveHdr->dwLoops = 0L;
     dwRet = waveInPrepareHeader(wmw->hWave, lpWaveHdr, sizeof(WAVEHDR));
-    while (TRUE) { /* FIXME: I don't see any waveInAddBuffer ? */
+
+    for (;;) { /* FIXME: I don't see any waveInAddBuffer ? */
 	lpWaveHdr->dwBytesRecorded = 0;
 	dwRet = waveInStart(wmw->hWave);
-	TRACE("after WIDM_START lpWaveHdr=%p dwBytesRecorded=%lu\n",
+	TRACE("waveInStart => lpWaveHdr=%p dwBytesRecorded=%lu\n",
 	      lpWaveHdr, lpWaveHdr->dwBytesRecorded);
 	if (lpWaveHdr->dwBytesRecorded == 0) break;
     }
@@ -802,7 +802,7 @@ static DWORD WAVE_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
 	    lpParms->dwReturn = 0;
 	    break;
 	case MCI_WAVE_STATUS_AVGBYTESPERSEC:
-	    lpParms->dwReturn = wmw->WaveFormat.wf.nAvgBytesPerSec;
+	    lpParms->dwReturn = wmw->WaveFormat.nAvgBytesPerSec;
 	    TRACE("MCI_WAVE_STATUS_AVGBYTESPERSEC => %lu!\n", lpParms->dwReturn);
 	    break;
 	case MCI_WAVE_STATUS_BITSPERSAMPLE:
@@ -810,15 +810,15 @@ static DWORD WAVE_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
 	    TRACE("MCI_WAVE_STATUS_BITSPERSAMPLE => %lu!\n", lpParms->dwReturn);
 	    break;
 	case MCI_WAVE_STATUS_BLOCKALIGN:
-	    lpParms->dwReturn = wmw->WaveFormat.wf.nBlockAlign;
+	    lpParms->dwReturn = wmw->WaveFormat.nBlockAlign;
 	    TRACE("MCI_WAVE_STATUS_BLOCKALIGN => %lu!\n", lpParms->dwReturn);
 	    break;
 	case MCI_WAVE_STATUS_CHANNELS:
-	    lpParms->dwReturn = wmw->WaveFormat.wf.nChannels;
+	    lpParms->dwReturn = wmw->WaveFormat.nChannels;
 	    TRACE("MCI_WAVE_STATUS_CHANNELS => %lu!\n", lpParms->dwReturn);
 	    break;
 	case MCI_WAVE_STATUS_FORMATTAG:
-	    lpParms->dwReturn = wmw->WaveFormat.wf.wFormatTag;
+	    lpParms->dwReturn = wmw->WaveFormat.wFormatTag;
 	    TRACE("MCI_WAVE_FORMATTAG => %lu!\n", lpParms->dwReturn);
 	    break;
 	case MCI_WAVE_STATUS_LEVEL:
@@ -826,7 +826,7 @@ static DWORD WAVE_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
 	    lpParms->dwReturn = 0xAAAA5555;
 	    break;
 	case MCI_WAVE_STATUS_SAMPLESPERSEC:
-	    lpParms->dwReturn = wmw->WaveFormat.wf.nSamplesPerSec;
+	    lpParms->dwReturn = wmw->WaveFormat.nSamplesPerSec;
 	    TRACE("MCI_WAVE_STATUS_SAMPLESPERSEC => %lu!\n", lpParms->dwReturn);
 	    break;
 	default:
