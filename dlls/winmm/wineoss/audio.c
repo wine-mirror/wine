@@ -37,6 +37,7 @@
 /* #define EXACT_WODPOSITION */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -524,7 +525,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
                 return FALSE;
             }
         } else {
-            ERR("%s: not found!\n", ossdev->mixer_name);
+            ERR("%s: %s\n", ossdev->mixer_name , strerror( errno ));
             OSS_CloseDevice(ossdev);
             return FALSE;
         }
@@ -660,7 +661,7 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
                 return FALSE;
             }
         } else {
-            ERR("%s: not found!\n", ossdev->mixer_name);
+            ERR("%s: %s\n", ossdev->mixer_name, strerror(errno));
             OSS_CloseDevice(ossdev);
             return FALSE;
         }
