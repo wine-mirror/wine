@@ -7564,7 +7564,17 @@ static LRESULT LISTVIEW_VScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
     {
       scrollInfo.fMask = SIF_POS;
       SetScrollInfo(hwnd, SB_VERT, &scrollInfo, TRUE);
-      InvalidateRect(hwnd, NULL, TRUE);
+      if (IsWindowVisible(infoPtr->hwndHeader))
+      {
+        RECT rListview, rcHeader, rDest;
+        GetClientRect(hwnd, &rListview);
+        GetWindowRect(infoPtr->hwndHeader, &rcHeader);
+        MapWindowPoints((HWND) NULL, hwnd, (LPPOINT) &rcHeader, 2);
+        SubtractRect(&rDest, &rListview, &rcHeader);
+        InvalidateRect(hwnd, &rDest, TRUE);
+      }
+      else
+        InvalidateRect(hwnd, NULL, TRUE);
     }
   }
     
