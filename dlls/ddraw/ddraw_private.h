@@ -133,7 +133,6 @@ struct IDirectDrawImpl
     int           pixmap_depth;
     pixel_convert_func pixel_convert;
     palette_convert_func palette_convert;
-    const struct tagDC_FUNCS *funcs, *old_funcs; /* DISPLAY.DRV overrides */
 
     /* This is for the fake mainWindow */
     ATOM	winclass;
