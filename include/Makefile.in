@@ -9,6 +9,7 @@ IDL_SRCS = \
 	oaidl.idl \
 	objidl.idl \
 	oleidl.idl \
+	servprov.idl \
 	strmif.idl \
 	unknwn.idl \
 	wtypes.idl
@@ -145,7 +146,6 @@ WINDOWS_INCLUDES = \
 	rpcndr.h \
 	rpcnterr.h \
 	rpcproxy.h \
-	servprov.h \
 	setupapi.h \
 	shellapi.h \
 	shlguid.h \
