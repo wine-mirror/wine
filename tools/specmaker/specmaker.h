@@ -50,17 +50,25 @@
 #define CT_BY_REFERENCE     0x1
 #define CT_VOLATILE         0x2
 #define CT_CONST            0x4
+#define CT_EXTENDED         0x8
+
+/* symbol flags */
+#define SYM_CDECL           0x1
+#define SYM_STDCALL         0x2
+#define SYM_THISCALL        0x4
+#define SYM_DATA            0x8 /* Data, not a function */
 
 /* Structure holding a parsed symbol */
 typedef struct __parsed_symbol
 {
   char *symbol;
+  int   ordinal;
   char *return_text;
   char  return_type;
-  char *calling_convention;
   char *function_name;
   unsigned int varargs;
   unsigned int argc;
+  unsigned int flags;
   char  arg_type [MAX_FUNCTION_ARGS];
   char  arg_flag [MAX_FUNCTION_ARGS];
   char *arg_text [MAX_FUNCTION_ARGS];
@@ -87,6 +95,7 @@ typedef struct __globals
   const char *forward_dll; /* -f */
   const char *dll_name;    /* -o */
   char *uc_dll_name;       /* -o */
+  int   do_ordinals;
 } _globals;
 
 extern _globals globals;
@@ -102,13 +111,13 @@ extern _globals globals;
 #define VERBOSE (globals.do_verbose)
 
 /* Default calling convention */
-#define CALLING_CONVENTION (globals.do_cdecl ? "__cdecl" : "__stdcall")
+#define CALLING_CONVENTION (globals.do_cdecl ? SYM_CDECL : SYM_STDCALL)
 
 
 /* DLL functions */
 void  dll_open (const char *dll_name);
 
-char *dll_next_symbol (void);
+int dll_next_symbol (parsed_symbol * sym);
 
 /* Symbol functions */
 int   symbol_demangle (parsed_symbol *symbol);
@@ -119,7 +128,7 @@ void  symbol_clear(parsed_symbol *sym);
 
 int   symbol_is_valid_c(const parsed_symbol *sym);
 
-int   symbol_is_cdecl(const parsed_symbol *sym);
+const char *symbol_get_call_convention(const parsed_symbol *sym);
 
 const char *symbol_get_spec_type (const parsed_symbol *sym, size_t arg);
 

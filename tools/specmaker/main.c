@@ -220,9 +220,13 @@ int   main (int argc, char *argv[])
   {
     int result;
     globals.uc_dll_name = "";
+    VERBOSE = 1;
     symbol.symbol = strdup(globals.input_name);
     result = symbol_demangle (&symbol);
-    output_prototype (stdout, &symbol);
+    if (symbol.flags & SYM_DATA)
+      printf (symbol.arg_text[0]);
+    else
+      output_prototype (stdout, &symbol);
     fputc ('\n', stdout);
     return result ? 1 : 0;
   }
@@ -233,7 +237,7 @@ int   main (int argc, char *argv[])
   output_header_preamble ();
   output_c_preamble ();
 
-  while ((symbol.symbol = dll_next_symbol ()))
+  while (!dll_next_symbol (&symbol))
   {
     count++;
 
@@ -250,7 +254,7 @@ int   main (int argc, char *argv[])
       if (result)
         result = symbol_search (&symbol);
 
-      if (!result)
+      if (!result && symbol.function_name)
       /* Clean up the prototype */
         symbol_clean_string (symbol.function_name);
 

@@ -52,34 +52,58 @@ void  output_spec_preamble (void)
  */
 void  output_spec_symbol (const parsed_symbol *sym)
 {
+  char ord_spec[16];
+
   assert (specfile);
   assert (sym && sym->symbol);
 
+  if (globals.do_ordinals)
+    snprintf(ord_spec, 8, "%d", sym->ordinal);
+  else
+  {
+    ord_spec[0] = '@';
+    ord_spec[1] = '\0';
+  }
+  if (sym->flags & SYM_THISCALL)
+    strcat (ord_spec, " -i386"); /* For binary compatability only */
+
   if (!globals.do_code || !sym->function_name)
   {
+    if (sym->flags & SYM_DATA)
+    {
+      if (globals.forward_dll)
+        fprintf (specfile, "%s forward %s %s.%s #", ord_spec, sym->symbol,
+                 globals.forward_dll, sym->symbol);
+
+      fprintf (specfile, "%s extern %s %s\n", ord_spec, sym->symbol,
+               sym->arg_name[0]);
+      return;
+    }
+
     if (globals.forward_dll)
-      fprintf (specfile, "@ forward %s %s.%s\n", sym->symbol,
+      fprintf (specfile, "%s forward %s %s.%s\n", ord_spec, sym->symbol,
                globals.forward_dll, sym->symbol);
     else
-    {
-      if (!symbol_is_valid_c (sym))
-        fputc ('#', specfile);
-      fprintf (specfile, "@ stub %s\n", sym->symbol);
-    }
+      fprintf (specfile, "%s stub %s\n", ord_spec, sym->symbol);
   }
   else
   {
-    unsigned int i;
+    unsigned int i = sym->flags & SYM_THISCALL ? 1 : 0;
 
-    fprintf (specfile, "@ %s %s(", sym->varargs ? "varargs" :
-             symbol_is_cdecl (sym) ? "cdecl" : "stdcall", sym->symbol);
+    fprintf (specfile, "%s %s %s(", ord_spec, sym->varargs ? "varargs" :
+             symbol_get_call_convention(sym), sym->symbol);
 
-    for (i = 0; i < sym->argc; i++)
+    for (; i < sym->argc; i++)
       fprintf (specfile, " %s", symbol_get_spec_type(sym, i));
 
     if (sym->argc)
       fputc (' ', specfile);
-    fprintf (specfile, ") %s_%s\n", OUTPUT_UC_DLL_NAME, sym->function_name);
+    fprintf (specfile, ") %s_%s", OUTPUT_UC_DLL_NAME, sym->function_name);
+
+    if (sym->flags & SYM_THISCALL)
+      fputs (" # __thiscall", specfile);
+
+    fputc ('\n',specfile);
   }
 }
 
@@ -132,8 +156,11 @@ void  output_header_symbol (const parsed_symbol *sym)
   if (!globals.do_code)
     return;
 
+  if (sym->flags & SYM_DATA)
+    return;
+
   if (!sym->function_name)
-    fprintf (hfile, "/* %s %s_%s(); */\n", CALLING_CONVENTION,
+    fprintf (hfile, "/* __%s %s_%s(); */\n", symbol_get_call_convention(sym),
              OUTPUT_UC_DLL_NAME, sym->symbol);
   else
   {
@@ -183,8 +210,11 @@ void  output_c_preamble (void)
     if (VERBOSE)
       puts ("Creating a forwarding DLL");
 
-    fputs ("\nHMODULE hDLL=0;\t/* DLL to call */\n\n\n", cfile);
+    fputs ("\nHMODULE hDLL=0;\t/* DLL to call */\n\n", cfile);
   }
+
+  fputs ("#ifdef __i386__\n#define GET_THIS(t,p) t p;\\\n__asm__ __volatile__"
+         " (\"movl %%ecx, %0\" : \"=m\" (p))\n#endif\n\n\n", cfile);
 
   fprintf (cfile,
            "BOOL WINAPI %s_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID "
@@ -219,6 +249,11 @@ void  output_c_preamble (void)
 }
 
 
+#define CPP_END  if (sym->flags & SYM_THISCALL) \
+  fputs ("#endif\n", cfile); fputs ("\n\n", cfile)
+#define GET_THIS if (sym->flags & SYM_THISCALL) \
+  fprintf (cfile, "\tGET_THIS(%s,%s);\n", sym->arg_text[0],sym->arg_name[0])
+
 /*******************************************************************
  *         output_c_symbol
  *
@@ -226,7 +261,7 @@ void  output_c_preamble (void)
  */
 void  output_c_symbol (const parsed_symbol *sym)
 {
-  unsigned int i;
+  unsigned int i, start = sym->flags & SYM_THISCALL ? 1 : 0;
   int is_void;
 
   assert (cfile);
@@ -235,14 +270,25 @@ void  output_c_symbol (const parsed_symbol *sym)
   if (!globals.do_code)
     return;
 
+  if (sym->flags & SYM_DATA)
+  {
+    fprintf (cfile, "/* FIXME: Move to top of file */\n%s;\n\n",
+             sym->arg_text[0]);
+    return;
+  }
+
+  if (sym->flags & SYM_THISCALL)
+    fputs ("#ifdef __i386__\n", cfile);
+
   output_c_banner(sym);
 
   if (!sym->function_name)
   {
     /* #ifdef'd dummy */
-    fprintf (cfile, "#if 0\n%s %s_%s()\n{\n\t/* %s in .spec */\n}\n#endif\n\n\n",
-             CALLING_CONVENTION, OUTPUT_UC_DLL_NAME, sym->symbol,
+    fprintf (cfile, "#if 0\n__%s %s_%s()\n{\n\t/* %s in .spec */\n}\n#endif\n",
+             symbol_get_call_convention(sym), OUTPUT_UC_DLL_NAME, sym->symbol,
              globals.forward_dll ? "@forward" : "@stub");
+    CPP_END;
     return;
   }
 
@@ -253,10 +299,12 @@ void  output_c_symbol (const parsed_symbol *sym)
 
   if (!globals.do_trace)
   {
+    GET_THIS;
     fputs ("\tFIXME(\":stub\\n\");\n", cfile);
     if (!is_void)
         fprintf (cfile, "\treturn (%s) 0;\n", sym->return_text);
-    fputs ("}\n\n\n", cfile);
+    fputs ("}\n", cfile);
+    CPP_END;
     return;
   }
 
@@ -264,18 +312,25 @@ void  output_c_symbol (const parsed_symbol *sym)
   if (globals.forward_dll)
   {
     /* Write variables for calling */
-    fprintf (cfile, "\t%s (%s *pFunc)(", sym->return_text,
-             sym->calling_convention);
+    if (sym->varargs)
+      fputs("\tva_list valist;\n", cfile);
 
-    for (i = 0; i < sym->argc; i++)
-      fprintf (cfile, "%s%s", i ? ", " : "", sym->arg_text [i]);
+    fprintf (cfile, "\t%s (__%s *pFunc)(", sym->return_text,
+             symbol_get_call_convention(sym));
 
-    fprintf (cfile, "%s)=(void*)GetProcAddress(hDLL,\"%s\");\n%s",
-             sym->varargs ? ",..." : sym->argc ? "" : "void", sym->symbol,
-             sym->varargs ? "\tva_list valist;\n" : "");
+    for (i = start; i < sym->argc; i++)
+      fprintf (cfile, "%s%s", i > start ? ", " : "", sym->arg_text [i]);
+
+    fprintf (cfile, "%s);\n", sym->varargs ? ",..." : sym->argc == 1 &&
+             sym->flags & SYM_THISCALL ? "" : sym->argc ? "" : "void");
 
     if (!is_void)
       fprintf (cfile, "\t%s retVal;\n", sym->return_text);
+
+    GET_THIS;
+
+    fprintf (cfile, "\tpFunc=(void*)GetProcAddress(hDLL,\"%s\");\n",
+             sym->symbol);
   }
 
   /* TRACE input arguments */
@@ -301,7 +356,8 @@ void  output_c_symbol (const parsed_symbol *sym)
   {
     if (!is_void)
       fprintf (cfile, "\treturn (%s) 0;\n", sym->return_text);
-    fputs ("}\n\n\n", cfile);
+    fputs ("}\n", cfile);
+    CPP_END;
     return;
   }
 
@@ -332,7 +388,8 @@ void  output_c_symbol (const parsed_symbol *sym)
   else
     fputs (");\n", cfile);
 
-  fputs ("}\n\n\n", cfile);
+  fputs ("}\n", cfile);
+  CPP_END;
 }
 
 
@@ -436,16 +493,16 @@ void  output_install_script (void)
  */
 void  output_prototype (FILE *file, const parsed_symbol *sym)
 {
-  unsigned int i;
+  unsigned int i, start = sym->flags & SYM_THISCALL ? 1 : 0;
 
-  fprintf (file, "%s %s %s_%s(", sym->return_text, sym->calling_convention,
+  fprintf (file, "%s __%s %s_%s(", sym->return_text, symbol_get_call_convention(sym),
            OUTPUT_UC_DLL_NAME, sym->function_name);
 
-  if (!sym->argc)
+  if (!sym->argc || (sym->argc == 1 && sym->flags & SYM_THISCALL))
     fputs ("void", file);
   else
-    for (i = 0; i < sym->argc; i++)
-      fprintf (file, "%s%s %s", i ? ", " : "", sym->arg_text [i],
+    for (i = start; i < sym->argc; i++)
+      fprintf (file, "%s%s %s", i > start ? ", " : "", sym->arg_text [i],
                sym->arg_name [i]);
   if (sym->varargs)
     fputs (", ...", file);
@@ -460,11 +517,20 @@ void  output_prototype (FILE *file, const parsed_symbol *sym)
  */
 void  output_c_banner (const parsed_symbol *sym)
 {
+  char ord_spec[16];
   size_t i;
 
+  if (globals.do_ordinals)
+    snprintf(ord_spec, sizeof (ord_spec), "%d", sym->ordinal);
+  else
+  {
+    ord_spec[0] = '@';
+    ord_spec[1] = '\0';
+  }
+
   fprintf (cfile, "/*********************************************************"
-           "*********\n *\t\t%s (%s.@)\n *\n", sym->symbol,
-           OUTPUT_UC_DLL_NAME);
+           "*********\n *\t\t%s (%s.%s)\n *\n", sym->symbol,
+           OUTPUT_UC_DLL_NAME, ord_spec);
 
   if (globals.do_documentation && sym->function_name)
   {
@@ -478,7 +544,7 @@ void  output_c_banner (const parsed_symbol *sym)
         fprintf (cfile, " *  %s [%s]%s\n", sym->arg_name [i],
                  get_in_or_out(sym, i),
                  strcmp (sym->arg_name [i], "_this") ? "" :
-                 "     Pointer to the class object");
+                 "     Pointer to the class object (in ECX)");
 
       if (sym->varargs)
         fputs (" *  ...[I]\n", cfile);
@@ -522,7 +588,7 @@ static const char *get_format_str (int type)
 /*******************************************************************
  *         get_in_or_out
  *
- * Determin if a parameter is In or In/Out
+ * Determine if a parameter is In or In/Out
  */
 static const char *get_in_or_out (const parsed_symbol *sym, size_t arg)
 {

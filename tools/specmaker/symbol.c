@@ -69,7 +69,7 @@ static const char *ascii_chars[] =
 static const char *known_longs[] =
 {
   "char", "CHAR", "float", "int", "INT", "short", "SHORT", "long", "LONG",
-  "WCHAR", "BOOL", "bool", "INT16", NULL
+  "WCHAR", "BOOL", "bool", "INT16", "WORD", "DWORD", NULL
 };
 
 
@@ -89,9 +89,6 @@ void symbol_clear(parsed_symbol *sym)
 
  if (sym->return_text)
    free (sym->return_text);
-
- if (sym->calling_convention)
-   free (sym->calling_convention);
 
  if (sym->function_name)
    free (sym->function_name);
@@ -132,21 +129,20 @@ int symbol_is_valid_c(const parsed_symbol *sym)
 
 
 /*******************************************************************
- *         symbol_is_cdecl
+ *         symbol_get_call_convention
  *
- * Check if a symbol is cdecl
+ * Return the calling convention of a symbol
  */
-int symbol_is_cdecl(const parsed_symbol *sym)
+const char *symbol_get_call_convention(const parsed_symbol *sym)
 {
+  int call = sym->flags ? sym->flags : CALLING_CONVENTION;
+
   assert (sym);
   assert (sym->symbol);
 
-  if (sym->calling_convention && (strstr (sym->calling_convention, "cdecl")
-      || strstr (sym->calling_convention, "CDECL")))
-    return 1;
-  else if (!sym->calling_convention)
-    return globals.do_cdecl;
-  return 0;
+  if (call & SYM_CDECL)
+    return "cdecl";
+  return "stdcall";
 }
 
 
@@ -184,6 +180,12 @@ int   symbol_get_type (const char *string)
   const char **tab;
   int ptrs = 0;
 
+  while (*iter && isspace(*iter))
+    iter++;
+  if (*iter == 'P' || *iter == 'H')
+    ptrs++; /* Win32 type pointer */
+
+  iter = string;
   while (*iter)
   {
     if (*iter == '*' || (*iter == 'L' && iter[1] == 'P')
@@ -199,8 +201,8 @@ int   symbol_get_type (const char *string)
   while (*tab++)
     if (strstr (string, tab[-1]))
     {
-      if (!ptrs) return ARG_WIDE_STRING;
-      else       return ARG_POINTER;
+      if (ptrs < 2) return ARG_WIDE_STRING;
+      else          return ARG_POINTER;
     }
   tab = wide_chars;
   while (*tab++)
@@ -213,8 +215,8 @@ int   symbol_get_type (const char *string)
   while (*tab++)
     if (strstr (string, tab[-1]))
     {
-      if (!ptrs) return ARG_STRING;
-      else       return ARG_POINTER;
+      if (ptrs < 2) return ARG_STRING;
+      else          return ARG_POINTER;
     }
   tab = ascii_chars;
   while (*tab++)
@@ -234,7 +236,7 @@ int   symbol_get_type (const char *string)
   if (strstr (string, "double"))
     return ARG_DOUBLE;
 
-  if (strstr (string, "void"))
+  if (strstr (string, "void") || strstr (string, "VOID"))
     return ARG_VOID;
 
   if (strstr (string, "struct") || strstr (string, "union"))

@@ -21,6 +21,8 @@ typedef struct _compound_type
 /* free the memory used by a compound structure */
 #define FREE_CT(ct) do { if (ct.expression) free (ct.expression); } while (0)
 
+/* Flags for data types */
+#define DATA_VTABLE   0x1
 
 /* Internal functions */
 static char *demangle_datatype (char **str, compound_type *ct,
@@ -49,8 +51,9 @@ int symbol_demangle (parsed_symbol *sym)
   int is_static = 0, is_const = 0;
   char *function_name = NULL;
   char *class_name = NULL;
-  char *name;
+  char *name, *const_status;
   static unsigned int hash = 0; /* In case of overloaded functions */
+  unsigned int data_flags = 0;
 
   assert (globals.do_code);
   assert (sym && sym->symbol);
@@ -96,6 +99,7 @@ int symbol_demangle (parsed_symbol *sym)
     case 'N': function_name = strdup ("operator_lessthanequal"); break;
     case 'O': function_name = strdup ("operator_greaterthan"); break;
     case 'P': function_name = strdup ("operator_greaterthanequal"); break;
+    case 'Q': function_name = strdup ("operator_comma"); break;
     case 'R': function_name = strdup ("operator_functioncall"); break;
     case 'S': function_name = strdup ("operator_compliment"); break;
     case 'T': function_name = strdup ("operator_xor"); break;
@@ -115,9 +119,28 @@ int symbol_demangle (parsed_symbol *sym)
       case '4': function_name = strdup ("operator_andequals"); break;
       case '5': function_name = strdup ("operator_orequals"); break;
       case '6': function_name = strdup ("operator_xorequals"); break;
-      /* FIXME: These look like static vtable/rtti information ? */
-      case 'E': function_name = strdup ("_unknown_E"); break;
-      case 'G': function_name = strdup ("_unknown_G"); break;
+      case '7': function_name = strdup ("vftable"); data_flags = DATA_VTABLE; break;
+      case '8': function_name = strdup ("vbtable"); data_flags = DATA_VTABLE; break;
+      case '9': function_name = strdup ("vcall"); data_flags = DATA_VTABLE; break;
+      case 'A': function_name = strdup ("typeof"); data_flags = DATA_VTABLE; break;
+      case 'B': function_name = strdup ("local_static_guard"); data_flags = DATA_VTABLE; break;
+      case 'C': function_name = strdup ("string"); data_flags = DATA_VTABLE; break;
+      case 'D': function_name = strdup ("vbase_dtor"); data_flags = DATA_VTABLE; break;
+      case 'E': function_name = strdup ("vector_dtor"); break;
+      case 'G': function_name = strdup ("scalar_dtor"); break;
+      case 'H': function_name = strdup ("vector_ctor_iter"); break;
+      case 'I': function_name = strdup ("vector_dtor_iter"); break;
+      case 'J': function_name = strdup ("vector_vbase_ctor_iter"); break;
+      case 'L': function_name = strdup ("eh_vector_ctor_iter"); break;
+      case 'M': function_name = strdup ("eh_vector_dtor_iter"); break;
+      case 'N': function_name = strdup ("eh_vector_vbase_ctor_iter"); break;
+      case 'O': function_name = strdup ("copy_ctor_closure"); break;
+      case 'S': function_name = strdup ("local_vftable"); data_flags = DATA_VTABLE; break;
+      case 'T': function_name = strdup ("local_vftable_ctor_closure"); break;
+      case 'U': function_name = strdup ("operator_new_vector"); break;
+      case 'V': function_name = strdup ("operator_delete_vector"); break;
+      case 'X': function_name = strdup ("placement_new_closure"); break;
+      case 'Y': function_name = strdup ("placement_delete_closure"); break;
       default:
         return -1;
       }
@@ -154,22 +177,72 @@ int symbol_demangle (parsed_symbol *sym)
     class_name = str_substring (class_name, name - 2);
   }
 
-  /* Note: This is guesswork on my part, but it seems to work:
-   * 'Q' Means the function is passed an implicit 'this' pointer.
-   * 'S' Means static member function, i.e. no implicit 'this' pointer.
-   * 'Y' Is used for datatypes and functions, so there is no 'this' pointer.
-   * This character also implies some other things:
-   * 'Y','S' = The character after the calling convention is always the
-   *     start of the return type code.
-   * 'Q' Character after the calling convention is 'const'ness code
-   *     (only non static member functions can be const).
-   * 'U' also occurs, it seems to behave like Q, but probably implies
-   *     something else.
-   */
+  /* Function/Data type and access level */
+  /* FIXME: why 2 possible letters for each option? */
   switch(*name++)
   {
-  case 'U' :
-  case 'Q' :
+  /* Data */
+
+  case '0' : /* private static */
+  case '1' : /* protected static */
+  case '2' : /* public static */
+    is_static = 1;
+    /* Fall through */
+  case '3' : /* non static */
+  case '4' : /* non static */
+    /* Data members need to be implemented: report */
+    INIT_CT (ct);
+    if (!demangle_datatype (&name, &ct, sym))
+    {
+      if (VERBOSE)
+        printf ("/*FIXME: %s: unknown data*/\n", sym->symbol);
+      return -1;
+    }
+    sym->flags |= SYM_DATA;
+    sym->argc = 1;
+    sym->arg_name[0] = str_create (5, OUTPUT_UC_DLL_NAME, "_", class_name,
+                                  is_static ? "static_" : "_", function_name);
+    sym->arg_text[0] = str_create (3, ct.expression, " ", sym->arg_name[0]);
+    FREE_CT (ct);
+    return 0;
+    break;
+
+  case '6' : /* compiler generated static */
+  case '7' : /* compiler generated static */
+    if (data_flags & DATA_VTABLE)
+    {
+      sym->flags |= SYM_DATA;
+      sym->argc = 1;
+      sym->arg_name[0] = str_create (5, OUTPUT_UC_DLL_NAME, "_", class_name,
+                                     "_", function_name);
+      sym->arg_text[0] = str_create (2, "void *", sym->arg_name[0]);
+
+      if (VERBOSE)
+        puts ("Demangled symbol OK [vtable]");
+      return 0;
+    }
+    return -1;
+    break;
+
+  /* Functions */
+
+  case 'E' : /* private virtual */
+  case 'F' : /* private virtual */
+  case 'M' : /* protected virtual */
+  case 'N' : /* protected virtual */
+  case 'U' : /* public virtual */
+  case 'V' : /* public virtual */
+    /* Virtual functions need to be added to the exported vtable: report */
+    if (VERBOSE)
+      printf ("/*FIXME %s: %s::%s is virtual-add to vftable*/\n", sym->symbol,
+              class_name, function_name);
+    /* Fall through */
+  case 'A' : /* private */
+  case 'B' : /* private */
+  case 'I' : /* protected */
+  case 'J' : /* protected */
+  case 'Q' : /* public */
+  case 'R' : /* public */
     /* Implicit 'this' pointer */
     sym->arg_text [sym->argc] = str_create (3, "struct ", class_name, " *");
     sym->arg_type [sym->argc] = ARG_POINTER;
@@ -177,40 +250,65 @@ int symbol_demangle (parsed_symbol *sym)
     sym->arg_name [sym->argc++] = strdup ("_this");
     /* New struct definitions can be 'grep'ed out for making a fixup header */
     if (VERBOSE)
-      printf ("struct %s { int _FIXME; };\n", class_name);
+      printf ("struct %s { void **vtable; /*FIXME: class definition */ };\n", class_name);
     break;
-  case 'S' :
-    is_static = 1;
+  case 'C' : /* private: static */
+  case 'D' : /* private: static */
+  case 'K' : /* protected: static */
+  case 'L' : /* protected: static */
+  case 'S' : /* public: static */
+  case 'T' : /* public: static */
+    is_static = 1; /* No implicit this pointer */
     break;
   case 'Y' :
+  case 'Z' :
     break;
+  /* FIXME: G,H / O,P / W,X are private / protected / public thunks */
   default:
     return -1;
+  }
+
+  /* If there is an implicit this pointer, const status follows */
+  if (sym->argc)
+  {
+   switch (*name++)
+   {
+   case 'A': break; /* non-const */
+   case 'B': is_const = CT_CONST; break;
+   case 'C': is_const = CT_VOLATILE; break;
+   case 'D': is_const = (CT_CONST | CT_VOLATILE); break;
+   default:
+     return -1;
+   }
   }
 
   /* Next is the calling convention */
   switch (*name++)
   {
-  case 'A':
-    sym->calling_convention = strdup ("__cdecl");
-    break;
-  case 'B': /* FIXME: Something to do with __declspec(dllexport)? */
+  case 'A': /* __cdecl */
+  case 'B': /* __cdecl __declspec(dllexport) */
+    if (!sym->argc)
+    {
+      sym->flags |= SYM_CDECL;
+      break;
+    }
+    /* Else fall through */
+  case 'C': /* __pascal */
+  case 'D': /* __pascal __declspec(dllexport) */
+  case 'E': /* __thiscall */
+  case 'F': /* __thiscall __declspec(dllexport) */
+  case 'G': /* __stdcall */
+  case 'H': /* __stdcall __declspec(dllexport) */
   case 'I': /* __fastcall */
-  case 'G':
-    sym->calling_convention = strdup ("__stdcall");
+  case 'J': /* __fastcall __declspec(dllexport)*/
+  case 'K': /* default (none given) */
+    if (sym->argc)
+      sym->flags |= SYM_THISCALL;
+    else
+      sym->flags |= SYM_STDCALL;
     break;
   default:
     return -1;
-  }
-
-  /* If the symbol is associated with a class, its 'const' status follows */
-  if (sym->argc)
-  {
-    if (*name == 'B')
-      is_const = 1;
-    else if (*name != 'E')
-      return -1;
-    name++;
   }
 
   /* Return type, or @ if 'void' */
@@ -272,11 +370,18 @@ int symbol_demangle (parsed_symbol *sym)
   /* Create the function name. Include a unique number because otherwise
    * overloaded functions could have the same c signature.
    */
+  switch (is_const)
+  {
+  case (CT_CONST | CT_VOLATILE): const_status = "_const_volatile"; break;
+  case CT_CONST: const_status = "_const"; break;
+  case CT_VOLATILE: const_status = "_volatile"; break;
+  default: const_status = "_"; break;
+  }
   sym->function_name = str_create_num (4, hash, class_name, "_",
-       function_name, is_static ? "_static" : is_const ? "_const" : "_");
+       function_name, is_static ? "_static" : const_status);
 
   assert (sym->return_text);
-  assert (sym->calling_convention);
+  assert (sym->flags);
   assert (sym->function_name);
 
   free (class_name);
@@ -312,17 +417,15 @@ static char *demangle_datatype (char **str, compound_type *ct,
   if (!get_constraints_convention_1 (&iter, ct))
     return NULL;
 
+  if (*iter == '_')
+  {
+    /* MS type: __int8,__int16 etc */
+    ct->flags |= CT_EXTENDED;
+    iter++;
+  }
+
   switch (*iter)
   {
-    case '_':
-      if (*++iter != 'N') /* _N = bool */
-        return NULL;
-      iter++;
-      ct->dest_type = 'I'; /* treat as int */
-      if (!get_constraints_convention_2 (&iter, ct))
-        return NULL;
-      ct->expression = get_type_string (ct->dest_type, ct->flags);
-      break;
     case 'C': case 'D': case 'E': case 'F': case 'G':
     case 'H': case 'I': case 'J': case 'K': case 'M':
     case 'N': case 'O': case 'X': case 'Z':
@@ -357,10 +460,10 @@ static char *demangle_datatype (char **str, compound_type *ct,
                          ct->flags & CT_VOLATILE ? "volatile " : "", stripped);
         free (stripped);
       }
-      else if (*iter == '_')
+      else if (*iter != '@')
       {
         /* The name of the class/struct, followed by '@@' */
-        char *struct_name = ++iter;
+        char *struct_name = iter;
         while (*iter && *iter++ != '@') ;
         if (*iter++ != '@')
           return NULL;
@@ -519,26 +622,50 @@ static char *get_type_string (const char c, const int constraints)
 {
   char *type_string;
 
-  switch (c)
+  if (constraints & CT_EXTENDED)
   {
-  case 'C': /* Signed char, fall through */
-  case 'D': type_string = "char"; break;
-  case 'E': type_string = "unsigned char"; break;
-  case 'F': type_string = "short int"; break;
-  case 'G': type_string = "unsigned short int"; break;
-  case 'H': type_string = "int"; break;
-  case 'I': type_string = "unsigned int"; break;
-  case 'J': type_string = "long"; break;
-  case 'K': type_string = "unsigned long"; break;
-  case 'M': type_string = "float"; break;
-  case 'N': type_string = "double"; break;
-  case 'O': type_string = "long double"; break;
-  case 'U':
-  case 'V': type_string = "struct"; break;
-  case 'X': return strdup ("void");
-  case 'Z': return strdup ("...");
-  default:
-    return NULL;
+    switch (c)
+    {
+    case 'D': type_string = "__int8"; break;
+    case 'E': type_string = "__uint8"; break;
+    case 'F': type_string = "__int16"; break;
+    case 'G': type_string = "__uint16"; break;
+    case 'H': type_string = "__int32"; break;
+    case 'I': type_string = "__uint32"; break;
+    case 'J': type_string = "__int64"; break;
+    case 'K': type_string = "__uint64"; break;
+    case 'L': type_string = "__int128"; break;
+    case 'M': type_string = "__uint128"; break;
+    case 'N': type_string = "int"; break; /* bool */
+    case 'W': type_string = "WCHAR"; break; /* wchar_t */
+    default:
+      return NULL;
+   }
+  }
+  else
+  {
+    switch (c)
+    {
+    case 'C': /* Signed char, fall through */
+    case 'D': type_string = "char"; break;
+    case 'E': type_string = "unsigned char"; break;
+    case 'F': type_string = "short int"; break;
+    case 'G': type_string = "unsigned short int"; break;
+    case 'H': type_string = "int"; break;
+    case 'I': type_string = "unsigned int"; break;
+    case 'J': type_string = "long"; break;
+    case 'K': type_string = "unsigned long"; break;
+    case 'M': type_string = "float"; break;
+    case 'N': type_string = "double"; break;
+    case 'O': type_string = "long double"; break;
+    /* FIXME: T = union */
+    case 'U':
+    case 'V': type_string = "struct"; break;
+    case 'X': return strdup ("void");
+    case 'Z': return strdup ("...");
+    default:
+      return NULL;
+   }
   }
 
   return str_create (3, constraints & CT_CONST ? "const " :

@@ -103,7 +103,7 @@ int symbol_search (parsed_symbol *sym)
              iter[strlen (sym->symbol)] == '('))
           {
             if (VERBOSE)
-              puts ("Prototype looks OK, processing");
+              printf ("Prototype '%s' looks OK, processing\n", grep_buff);
 
             if (!symbol_from_prototype (sym, grep_buff))
             {
@@ -146,20 +146,30 @@ static int symbol_from_prototype (parsed_symbol *sym, const char *proto)
 
   if (!found)
   {
+    char *call;
     /* Calling Convention */
     iter = strchr (iter, ' ');
     if (!iter)
       return -1;
 
-    sym->calling_convention = str_substring (proto, iter);
+    call = str_substring (proto, iter);
 
+    if (!strcasecmp (call, "cdecl") || !strcasecmp (call, "__cdecl"))
+      sym->flags |= SYM_CDECL;
+    else
+      sym->flags |= SYM_STDCALL;
+    free (call);
     iter = (char *)str_match (iter, sym->symbol, &found);
 
     if (!found)
       return -1;
+
+    if (VERBOSE)
+      printf ("Using %s calling convention\n",
+              sym->flags & SYM_CDECL ? "cdecl" : "stdcall");
   }
   else
-    sym->calling_convention = strdup (CALLING_CONVENTION);
+    sym->flags = CALLING_CONVENTION;
 
   sym->function_name = strdup (sym->symbol);
   proto = iter;
