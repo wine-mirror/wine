@@ -18,6 +18,7 @@ SUBDIRS = \
 	view \
 	wcmd \
 	winemine \
+	winetest \
 	winhelp \
 	winver
 

@@ -1,0 +1,4 @@
+Makefile
+Makefile.perl
+wine.c
+winetest.spec.c
