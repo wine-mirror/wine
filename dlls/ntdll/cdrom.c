@@ -325,10 +325,10 @@ static int CDROM_SyncCache(int dev)
     cdrom_cache[dev].toc_good = 1;
     io = 0;
 #else
-    io = STATUS_NOT_SUPPORTED;
+    return STATUS_NOT_SUPPORTED;
 #endif
 end:
-   return CDROM_GetStatusCode(io);
+    return CDROM_GetStatusCode(io);
 }
 
 static void CDROM_ClearCacheEntry(int dev)
@@ -581,7 +581,7 @@ static void CDROM_Close(DWORD clientID)
  */
 static DWORD CDROM_GetStatusCode(int io)
 {
-    if (io == 0) return 0;
+    if (io == 0) return STATUS_SUCCESS;
     switch (errno)
     {
     case EIO:
@@ -696,7 +696,7 @@ static DWORD CDROM_ReadTOC(int dev, CDROM_TOC* toc)
 	  return ret;
     }
     *toc = cdrom_cache[dev].toc;
-    return 0;
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************
@@ -718,7 +718,7 @@ static DWORD CDROM_GetDiskData(int dev, CDROM_DISK_DATA* data)
         else
             data->DiskData |= CDROM_DISK_AUDIO_TRACK;
     }
-    return 0;
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************
@@ -1076,7 +1076,7 @@ static DWORD CDROM_SeekAudioMSF(int dev, const CDROM_SEEK_AUDIO_MSF* audio_msf)
       msf.frame  = audio_msf->F;
       return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDROMSEEK, &msf));
     }
-    return 0;
+    return STATUS_SUCCESS;
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
     read_sc.address_format = CD_MSF_FORMAT;
     read_sc.track          = 0;
@@ -1102,7 +1102,7 @@ static DWORD CDROM_SeekAudioMSF(int dev, const CDROM_SEEK_AUDIO_MSF* audio_msf)
 
       return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, CDIOCPLAYMSF, &msf));
     }
-    return 0;
+    return STATUS_SUCCESS;
 #else
     return STATUS_NOT_SUPPORTED;
 #endif
@@ -1281,6 +1281,9 @@ static DWORD CDROM_RawRead(int dev, const RAW_READ_INFO* raw, void* buffer, DWOR
             cdra.buf = buffer;
             io = ioctl(cdrom_cache[dev].fd, CDROMREADAUDIO, &cdra);
             break;
+        default:
+            FIXME("NIY: %d\n", raw->TrackMode);
+            return ret;
         }
     }
 #elif defined(__FreeBSD__)
@@ -1478,7 +1481,7 @@ static DWORD CDROM_GetAddress(int dev, SCSI_ADDRESS* address)
 
     address->PortNumber = portnum;
     address->TargetId = targetid;
-    return 0;
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************
@@ -1508,12 +1511,7 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
     }
 
     SetLastError(0);
-    dev = CDROM_Open(hDevice, clientID);
-    if (dev == -1)
-    {
-        CDROM_GetStatusCode(-1);
-        return FALSE;
-    }
+    if ((dev = CDROM_Open(hDevice, clientID)) == -1) return FALSE;
 
     switch (dwIoControlCode)
     {
