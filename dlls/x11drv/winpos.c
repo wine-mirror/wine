@@ -1284,22 +1284,20 @@ static HWND query_zorder( Display *display, HWND hWndCheck)
 {
     HWND      hwndInsertAfter = HWND_TOP;
     WND      *pWndCheck = WIN_FindWndPtr(hWndCheck);
-    WND      *pDesktop = WIN_GetDesktop();
-    WND      *pWnd, *pWndZ = WIN_LockWndPtr(pDesktop->child);
+    WND *top = WIN_FindWndPtr( GetTopWindow(0) );
+    WND *pWnd, *pWndZ = top;
     Window      w, parent, *children = NULL;
     unsigned    total, check, pos, best;
 
     if( !__check_query_condition(&pWndZ, &pWnd) )
     {
         WIN_ReleaseWndPtr(pWndCheck);
-        WIN_ReleaseWndPtr(pDesktop->child);
-        WIN_ReleaseDesktop();
+        WIN_ReleaseWndPtr(top);
         return hwndInsertAfter;
     }
     WIN_LockWndPtr(pWndZ);
     WIN_LockWndPtr(pWnd);
-    WIN_ReleaseWndPtr(pDesktop->child);
-    WIN_ReleaseDesktop();
+    WIN_ReleaseWndPtr(top);
 
     parent = __get_common_ancestor( display, get_whole_window(pWndZ),
                                     get_whole_window(pWnd), &children, &total );

@@ -1550,14 +1550,11 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
     if (wndPtr && !(wndPtr->dwStyle & WS_CHILD) && !(wndPtr->dwExStyle & WS_EX_MANAGED))
     {
 	/* check Z-order and bring hWnd to the top */
-	for (wndTemp = WIN_LockWndPtr(WIN_GetDesktop()->child); wndTemp; WIN_UpdateWndPtr(&wndTemp,wndTemp->next))
-        {
-	    if (wndTemp->dwStyle & WS_VISIBLE) break;
-        }
-        WIN_ReleaseDesktop();
-        WIN_ReleaseWndPtr(wndTemp);
+        HWND tmp = GetTopWindow(0);
+        while (tmp && !(GetWindowLongA( tmp, GWL_STYLE ) & WS_VISIBLE))
+            tmp = GetWindow( tmp, GW_HWNDNEXT );
 
-	if( wndTemp != wndPtr )
+        if( tmp != hWnd )
 	    SetWindowPos(hWnd, HWND_TOP, 0,0,0,0, 
 			   SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
         if (!IsWindow(hWnd))  

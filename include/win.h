@@ -84,8 +84,6 @@ extern WND*   WIN_FindWndPtr( HWND hwnd );
 extern WND*   WIN_LockWndPtr(WND *wndPtr);
 extern void   WIN_ReleaseWndPtr(WND *wndPtr);
 extern void   WIN_UpdateWndPtr(WND **oldPtr,WND *newPtr);
-extern WND*   WIN_GetDesktop(void);
-extern void   WIN_ReleaseDesktop(void);
 extern void   WIN_DumpWindow( HWND hwnd );
 extern void   WIN_WalkWindows( HWND hwnd, int indent );
 extern BOOL WIN_UnlinkWindow( HWND hwnd );

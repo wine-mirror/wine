@@ -216,44 +216,6 @@ void WIN_DumpWindow( HWND hwnd )
 
 
 /***********************************************************************
- *           WIN_WalkWindows
- *
- * Walk the windows tree and print each window on stderr.
- */
-void WIN_WalkWindows( HWND hwnd, int indent )
-{
-    WND *ptr;
-    char className[80];
-
-    ptr = hwnd ? WIN_FindWndPtr( hwnd ) : WIN_GetDesktop();
-
-    if (!ptr)
-    {
-        WARN("Invalid window handle %04x\n", hwnd );
-        return;
-    }
-
-    if (!indent)  /* first time around */
-       DPRINTF( "%-16.16s %-8.8s %-6.6s %-17.17s %-8.8s %s\n",
-                 "hwnd", " wndPtr", "queue", "Class Name", " Style", " WndProc"
-                 " Text");
-
-    while (ptr)
-    {
-        DPRINTF( "%*s%04x%*s", indent, "", ptr->hwndSelf, 13-indent,"");
-
-        GetClassNameA( ptr->hwndSelf, className, sizeof(className) );
-        DPRINTF( "%08lx %-6.4x %-17.17s %08x %08x %.14s\n",
-                 (DWORD)ptr, ptr->hmemTaskQ, className,
-                 (UINT)ptr->dwStyle, (UINT)ptr->winproc,
-                 ptr->text ? debugstr_w(ptr->text) : "<null>");
-        
-        if (ptr->child) WIN_WalkWindows( ptr->child->hwndSelf, indent+1 );
-        WIN_UpdateWndPtr(&ptr,ptr->next);
-    }
-}
-
-/***********************************************************************
  *           WIN_UnlinkWindow
  *
  * Remove a window from the siblings linked list.
@@ -1206,12 +1168,8 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
     /* Initialization */
 
+    if (hwnd == GetDesktopWindow()) return FALSE;   /* Can't destroy desktop */
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
-    if (wndPtr == pWndDesktop)
-    {
-        retvalue = FALSE; /* Can't destroy desktop */
-	goto end;
-    }
 
     /* Look whether the focus is within the tree of windows we will
      * be destroying.
@@ -1544,24 +1502,6 @@ HWND WINAPI FindWindowExW( HWND parent, HWND child,
 HWND WINAPI FindWindowW( LPCWSTR className, LPCWSTR title )
 {
     return FindWindowExW( 0, 0, className, title );
-}
-
-
-/**********************************************************************
- *           WIN_GetDesktop
- * returns a locked pointer
- */
-WND *WIN_GetDesktop(void)
-{
-    return WIN_LockWndPtr(pWndDesktop);
-}
-/**********************************************************************
- *           WIN_ReleaseDesktop
- * unlock the desktop pointer
- */
-void WIN_ReleaseDesktop(void)
-{
-    WIN_ReleaseWndPtr(pWndDesktop);
 }
 
 
@@ -2433,15 +2373,8 @@ HWND16 WINAPI GetTopWindow16( HWND16 hwnd )
  */
 HWND WINAPI GetTopWindow( HWND hwnd )
 {
-    HWND retval = 0;
-    WND * wndPtr = (hwnd) ?
-	           WIN_FindWndPtr( hwnd ) : WIN_GetDesktop();
-
-    if (wndPtr && wndPtr->child)
-        retval = wndPtr->child->hwndSelf;
-
-    WIN_ReleaseWndPtr(wndPtr);
-    return retval;
+    if (!hwnd) hwnd = GetDesktopWindow();
+    return GetWindow( hwnd, GW_CHILD );
 }
 
 

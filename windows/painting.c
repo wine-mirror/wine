@@ -165,7 +165,7 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
                       wnd->hwndSelf, wnd->hrgnUpdate, hRgn, uncFlags, wnd->flags & WIN_NEEDS_NCPAINT);
 
     /* desktop window doesn't have a nonclient area */
-    if(wnd == WIN_GetDesktop()) 
+    if(wnd->hwndSelf == GetDesktopWindow())
     {
         wnd->flags &= ~WIN_NEEDS_NCPAINT;
 	if( wnd->hrgnUpdate > 1 )
@@ -174,10 +174,8 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
 	{
 	    hrgnRet = wnd->hrgnUpdate;
 	}
-        WIN_ReleaseDesktop();
         return hrgnRet;
     }
-    WIN_ReleaseDesktop();
 
     if ((wnd->hwndSelf == GetForegroundWindow()) &&
         !(wnd->flags & WIN_NCACTIVATED) )
@@ -498,7 +496,6 @@ HBRUSH16 WINAPI GetControlBrush16( HWND16 hwnd, HDC16 hdc, UINT16 ctlType )
 static void RDW_ValidateParent(WND *wndChild)
 {
     WND *wndParent = WIN_LockWndPtr(wndChild->parent);
-    WND *wndDesktop = WIN_GetDesktop();
     HRGN hrg;
 
     if (wndChild->hrgnUpdate == 1 ) {
@@ -511,7 +508,7 @@ static void RDW_ValidateParent(WND *wndChild)
     } else
         hrg = wndChild->hrgnUpdate;
 
-    while ((wndParent) && (wndParent != wndDesktop) ) {
+    while ((wndParent) && (wndParent->hwndSelf != GetDesktopWindow()) ) {
         if (!(wndParent->dwStyle & WS_CLIPCHILDREN))
         {
             if (wndParent->hrgnUpdate != 0)
@@ -543,7 +540,6 @@ static void RDW_ValidateParent(WND *wndChild)
     }
     if (hrg != wndChild->hrgnUpdate) DeleteObject( hrg );
     WIN_ReleaseWndPtr(wndParent);
-    WIN_ReleaseDesktop();
 }
 
 /***********************************************************************
