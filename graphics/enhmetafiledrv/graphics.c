@@ -310,7 +310,7 @@ EMFDRV_Polylinegon( DC *dc, const POINT* pt, INT count, DWORD iType )
 
     size = sizeof(EMRPOLYLINE) + sizeof(POINTL) * (count - 1);
 
-    emr = HeapAlloc( SystemHeap, 0, size );
+    emr = HeapAlloc( GetProcessHeap(), 0, size );
     emr->emr.iType = iType;
     emr->emr.nSize = size;
     
@@ -334,7 +334,7 @@ EMFDRV_Polylinegon( DC *dc, const POINT* pt, INT count, DWORD iType )
     ret = EMFDRV_WriteRecord( dc, &emr->emr );
     if(ret)
         EMFDRV_UpdateBBox( dc, &emr->rclBounds );
-    HeapFree( SystemHeap, 0, emr );
+    HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
 
@@ -392,7 +392,7 @@ EMFDRV_PolyPolylinegon( DC *dc, const POINT* pt, const INT* counts, UINT polys,
     size = sizeof(EMRPOLYPOLYLINE) + (polys - 1) * sizeof(DWORD) + 
       (cptl - 1) * sizeof(POINTL);
 
-    emr = HeapAlloc( SystemHeap, 0, size );
+    emr = HeapAlloc( GetProcessHeap(), 0, size );
 
     emr->emr.iType = iType;
     emr->emr.nSize = size;
@@ -404,7 +404,7 @@ EMFDRV_PolyPolylinegon( DC *dc, const POINT* pt, const INT* counts, UINT polys,
     ret = EMFDRV_WriteRecord( dc, &emr->emr );
     if(ret)
         EMFDRV_UpdateBBox( dc, &emr->rclBounds );
-    HeapFree( SystemHeap, 0, emr );
+    HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
 
@@ -461,7 +461,7 @@ BOOL EMFDRV_FillRgn( DC *dc, HRGN hrgn, HBRUSH hbrush )
 
     rgnsize = GetRegionData( hrgn, 0, NULL );
     size = rgnsize + sizeof(EMRFILLRGN) - 1;
-    emr = HeapAlloc( SystemHeap, 0, size );
+    emr = HeapAlloc( GetProcessHeap(), 0, size );
 
     GetRegionData( hrgn, rgnsize, (RGNDATA *)&emr->RgnData );
 
@@ -477,7 +477,7 @@ BOOL EMFDRV_FillRgn( DC *dc, HRGN hrgn, HBRUSH hbrush )
     ret = EMFDRV_WriteRecord( dc, &emr->emr );
     if(ret)
         EMFDRV_UpdateBBox( dc, &emr->rclBounds );
-    HeapFree( SystemHeap, 0, emr );
+    HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
 /*********************************************************************
@@ -494,7 +494,7 @@ BOOL EMFDRV_FrameRgn( DC *dc, HRGN hrgn, HBRUSH hbrush, INT width, INT height )
 
     rgnsize = GetRegionData( hrgn, 0, NULL );
     size = rgnsize + sizeof(EMRFRAMERGN) - 1;
-    emr = HeapAlloc( SystemHeap, 0, size );
+    emr = HeapAlloc( GetProcessHeap(), 0, size );
 
     GetRegionData( hrgn, rgnsize, (RGNDATA *)&emr->RgnData );
 
@@ -512,7 +512,7 @@ BOOL EMFDRV_FrameRgn( DC *dc, HRGN hrgn, HBRUSH hbrush, INT width, INT height )
     ret = EMFDRV_WriteRecord( dc, &emr->emr );
     if(ret)
         EMFDRV_UpdateBBox( dc, &emr->rclBounds );
-    HeapFree( SystemHeap, 0, emr );
+    HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
 
@@ -530,7 +530,7 @@ static BOOL EMFDRV_PaintInvertRgn( DC *dc, HRGN hrgn, DWORD iType )
 
     rgnsize = GetRegionData( hrgn, 0, NULL );
     size = rgnsize + sizeof(EMRINVERTRGN) - 1;
-    emr = HeapAlloc( SystemHeap, 0, size );
+    emr = HeapAlloc( GetProcessHeap(), 0, size );
 
     GetRegionData( hrgn, rgnsize, (RGNDATA *)&emr->RgnData );
 
@@ -545,7 +545,7 @@ static BOOL EMFDRV_PaintInvertRgn( DC *dc, HRGN hrgn, DWORD iType )
     ret = EMFDRV_WriteRecord( dc, &emr->emr );
     if(ret)
         EMFDRV_UpdateBBox( dc, &emr->rclBounds );
-    HeapFree( SystemHeap, 0, emr );
+    HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
 

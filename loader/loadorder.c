@@ -90,13 +90,13 @@ static char *get_tok(const char *str, const char *delim)
 
 	if(str && buf)
 	{
-		HeapFree(SystemHeap, 0, buf);
+		HeapFree(GetProcessHeap(), 0, buf);
 		buf = NULL;
 	}
 
 	if(str && !buf)
 	{
-		buf = HEAP_strdupA(SystemHeap, 0, str);
+		buf = HEAP_strdupA(GetProcessHeap(), 0, str);
 		cptr = strtok(buf, delim);
 	}
 	else
@@ -106,7 +106,7 @@ static char *get_tok(const char *str, const char *delim)
 
 	if(!cptr)
 	{
-		HeapFree(SystemHeap, 0, buf);
+		HeapFree(GetProcessHeap(), 0, buf);
 		buf = NULL;
 	}
 	return cptr;
@@ -193,7 +193,7 @@ static BOOL AddLoadOrder(module_loadorder_t *plo, BOOL override)
 	{
 		/* No space in current array, make it larger */
 		nmodule_loadorder_alloc += LOADORDER_ALLOC_CLUSTER;
-		module_loadorder = (module_loadorder_t *)HeapReAlloc(SystemHeap,
+		module_loadorder = (module_loadorder_t *)HeapReAlloc(GetProcessHeap(),
 								     0,
 								     module_loadorder,
 								     nmodule_loadorder_alloc * sizeof(module_loadorder_t));
@@ -204,7 +204,7 @@ static BOOL AddLoadOrder(module_loadorder_t *plo, BOOL override)
 		}
 	}
 	memcpy(module_loadorder[nmodule_loadorder].loadorder, plo->loadorder, sizeof(plo->loadorder));
-	module_loadorder[nmodule_loadorder].modulename = HEAP_strdupA(SystemHeap, 0, plo->modulename);
+	module_loadorder[nmodule_loadorder].modulename = HEAP_strdupA(GetProcessHeap(), 0, plo->modulename);
 	nmodule_loadorder++;
 	return TRUE;
 }
@@ -262,7 +262,7 @@ static BOOL ParseCommandlineOverrides(void)
 	if(!Options.dllFlags)
 		return TRUE;
 
-	cpy = HEAP_strdupA(SystemHeap, 0, Options.dllFlags);
+	cpy = HEAP_strdupA(GetProcessHeap(), 0, Options.dllFlags);
 	key = cpy;
 	next = key;
 	for(; next; key = next)
@@ -291,7 +291,7 @@ static BOOL ParseCommandlineOverrides(void)
 		}
 	}
 endit:
-	HeapFree(SystemHeap, 0, cpy);
+	HeapFree(GetProcessHeap(), 0, cpy);
 	return retval;;
 }
 
@@ -375,7 +375,7 @@ BOOL MODULE_InitLoadOrder(void)
 
 	if(nbuffer)
 	{
-		extra_ld_library_path = HEAP_strdupA(SystemHeap, 0, buffer);
+		extra_ld_library_path = HEAP_strdupA(GetProcessHeap(), 0, buffer);
 		TRACE("Setting extra LD_LIBRARY_PATH=%s\n", buffer);
 	}
 #endif

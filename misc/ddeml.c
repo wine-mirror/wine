@@ -305,7 +305,7 @@ static DWORD Release_reserved_mutex (HANDLE mutex, LPSTR mutex_name, BOOL releas
 	if (!ReleaseMutex(mutex))
         {
 		ERR("ReleaseMutex failed - %s mutex %li\n",mutex_name,GetLastError());
-		HeapFree(SystemHeap, 0, this_instance);
+		HeapFree(GetProcessHeap(), 0, this_instance);
 		if ( release_handle_m )
 		{
 			ReleaseMutex(handle_mutex);
@@ -314,7 +314,7 @@ static DWORD Release_reserved_mutex (HANDLE mutex, LPSTR mutex_name, BOOL releas
          }
 	if ( release_this_i )
 	{
-                HeapFree(SystemHeap, 0, this_instance);
+                HeapFree(GetProcessHeap(), 0, this_instance);
 	}
 	return DMLERR_NO_ERROR;
 }
@@ -565,7 +565,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 
      /* grab enough heap for one control struct - not really necessary for re-initialise
       *	but allows us to use same validation routines */
-     this_instance= (DDE_HANDLE_ENTRY*)HeapAlloc( SystemHeap, 0, sizeof(DDE_HANDLE_ENTRY) );
+     this_instance= (DDE_HANDLE_ENTRY*)HeapAlloc( GetProcessHeap(), 0, sizeof(DDE_HANDLE_ENTRY) );
      if ( this_instance == NULL )
      {
 	/* catastrophe !! warn user & abort */
@@ -616,7 +616,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 	handle_mutex = ConvertToGlobalHandle(handle_mutex); /* fixme when having seperate adresspaces*/
 	if ( !handle_mutex ) {
 		ERR("CreateMutex failed - handle list  %li\n",GetLastError());
-		HeapFree(SystemHeap, 0, this_instance);
+		HeapFree(GetProcessHeap(), 0, this_instance);
 		return DMLERR_SYS_ERROR;
 	}
     } else {
@@ -706,7 +706,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 
 	if ( !WaitForMutex(handle_mutex)  )
 	{
-		HeapFree(SystemHeap, 0, this_instance);
+		HeapFree(GetProcessHeap(), 0, this_instance);
 		return DMLERR_SYS_ERROR;
         }
 
@@ -715,7 +715,7 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
 		if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1,this_instance)) return DMLERR_SYS_ERROR;
         	return DMLERR_DLL_USAGE;
  	}
-        HeapFree(SystemHeap, 0, this_instance); /* finished - release heap space used as work store */
+        HeapFree(GetProcessHeap(), 0, this_instance); /* finished - release heap space used as work store */
         /* can't reinitialise if we have initialised nothing !! */
         reference_inst =  DDE_Handle_Table_Base;
         /* must first check if we have been given a valid instance to re-initialise !!  how do we do that ? */
@@ -1888,10 +1888,10 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
 			reference_service = this_service;
 			this_service = this_service->next;
 			DdeReleaseAtom(reference_inst,reference_service->hsz);
-        		HeapFree(SystemHeap, 0, reference_service); /* finished - release heap space used as work store */
+        		HeapFree(GetProcessHeap(), 0, reference_service); /* finished - release heap space used as work store */
 		}
 		DdeReleaseAtom(reference_inst,this_service->hsz);
-        	HeapFree(SystemHeap, 0, this_service); /* finished - release heap space used as work store */
+        	HeapFree(GetProcessHeap(), 0, this_service); /* finished - release heap space used as work store */
 		reference_inst->ServiceNames = NULL;
 		TRACE("General de-register - finished\n");
 	}
@@ -1913,7 +1913,7 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
 
 		DdeReserveAtom(reference_inst, hsz1);
 
-		this_service = (ServiceNode*)HeapAlloc( SystemHeap, 0, sizeof(ServiceNode) );
+		this_service = (ServiceNode*)HeapAlloc( GetProcessHeap(), 0, sizeof(ServiceNode) );
 		this_service->hsz = hsz1;
 		this_service->FilterOn = TRUE;
 
@@ -1937,7 +1937,7 @@ HDDEDATA WINAPI DdeNameService( DWORD idInst, HSZ hsz1, HSZ hsz2,
 	{
 		*pServiceNode = this_service->next;
 		DdeReleaseAtom(reference_inst,this_service->hsz);
-        	HeapFree(SystemHeap, 0, this_service);
+        	HeapFree(GetProcessHeap(), 0, this_service);
  	}
   }
   if ( afCmd & DNS_FILTERON )

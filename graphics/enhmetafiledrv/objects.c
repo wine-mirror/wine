@@ -64,8 +64,8 @@ DWORD EMFDRV_CreateBrushIndirect( DC *dc, HBRUSH hBrush )
 					  info->bmiHeader.biBitCount);
 	biSize = DIB_BitmapInfoSize(info, LOWORD(brushObj->logbrush.lbColor)); 
 	size = sizeof(EMRCREATEDIBPATTERNBRUSHPT) + biSize + bmSize;
-	emr = HeapAlloc( SystemHeap, 0, size );
-	if(!emr) break;;
+	emr = HeapAlloc( GetProcessHeap(), 0, size );
+	if(!emr) break;
 	emr->emr.iType = EMR_CREATEDIBPATTERNBRUSHPT;
 	emr->emr.nSize = size;
 	emr->ihBrush = index = EMFDRV_AddHandleDC( dc );
@@ -78,7 +78,7 @@ DWORD EMFDRV_CreateBrushIndirect( DC *dc, HBRUSH hBrush )
 
 	if(!EMFDRV_WriteRecord( dc, &emr->emr ))
 	    index = 0;
-	HeapFree( SystemHeap, 0, emr );
+	HeapFree( GetProcessHeap(), 0, emr );
 	GlobalUnlock16(brushObj->logbrush.lbHatch);
       }
       break;

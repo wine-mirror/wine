@@ -52,7 +52,7 @@ INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
 	    lb16.lbColor = brushObj->logbrush.lbColor;
 	    lb16.lbHatch = brushObj->logbrush.lbHatch;
 	    size = sizeof(METARECORD) + sizeof(LOGBRUSH16) - 2;
-	    mr = HeapAlloc( SystemHeap, 0, size );
+	    mr = HeapAlloc( GetProcessHeap(), 0, size );
 	    mr->rdSize = size / 2;
 	    mr->rdFunction = META_CREATEBRUSHINDIRECT;
 	    memcpy( mr->rdParm, &lb16, sizeof(LOGBRUSH));
@@ -76,7 +76,7 @@ INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
 	    size = sizeof(METARECORD) + sizeof(WORD) + sizeof(BITMAPINFO) + 
 	      sizeof(RGBQUAD) + bmSize;
 
-	    mr = HeapAlloc(SystemHeap, HEAP_ZERO_MEMORY, size);
+	    mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 	    if(!mr) return FALSE;
 	    mr->rdFunction = META_DIBCREATEPATTERNBRUSH;
 	    mr->rdSize = size / 2;
@@ -113,7 +113,7 @@ INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
 	      biSize = DIB_BitmapInfoSize(info,
 					  LOWORD(brushObj->logbrush.lbColor)); 
 	      size = sizeof(METARECORD) + biSize + bmSize + 2;
-	      mr = HeapAlloc(SystemHeap, HEAP_ZERO_MEMORY, size);
+	      mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 	      if(!mr) return FALSE;
 	      mr->rdFunction = META_DIBCREATEPATTERNBRUSH;
 	      mr->rdSize = size / 2;
@@ -129,7 +129,7 @@ INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
     index = MFDRV_AddHandleDC( dc );
     if(!MFDRV_WriteRecord( dc, mr, mr->rdSize * 2))
         index = -1;
-    HeapFree(SystemHeap, 0, mr);
+    HeapFree(GetProcessHeap(), 0, mr);
     GDI_HEAP_UNLOCK( hBrush );
     return index;
 }

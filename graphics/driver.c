@@ -26,12 +26,12 @@ static GRAPHICS_DRIVER *genericDriver = NULL;
  */
 BOOL DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs )
 {
-    GRAPHICS_DRIVER *driver = HeapAlloc( SystemHeap, 0, sizeof(*driver) );
+    GRAPHICS_DRIVER *driver = HeapAlloc( GetProcessHeap(), 0, sizeof(*driver) );
     if (!driver) return FALSE;
     driver->funcs = funcs;
     if (name)
     {
-        driver->name  = HEAP_strdupA( SystemHeap, 0, name );
+        driver->name  = HEAP_strdupA( GetProcessHeap(), 0, name );
         driver->next  = firstDriver;
         firstDriver = driver;
         return TRUE;
@@ -40,7 +40,7 @@ BOOL DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs )
     if (genericDriver)
     {
         WARN(" already a generic driver\n" );
-        HeapFree( SystemHeap, 0, driver );
+        HeapFree( GetProcessHeap(), 0, driver );
         return FALSE;
     }
     driver->name = NULL;
@@ -80,8 +80,8 @@ BOOL DRIVER_UnregisterDriver( LPCSTR name )
             {
                 GRAPHICS_DRIVER *driver = *ppDriver;
                 (*ppDriver) = driver->next;
-                HeapFree( SystemHeap, 0, driver->name );
-                HeapFree( SystemHeap, 0, driver );
+                HeapFree( GetProcessHeap(), 0, driver->name );
+                HeapFree( GetProcessHeap(), 0, driver );
                 return TRUE;
             }
             ppDriver = &(*ppDriver)->next;
@@ -91,7 +91,7 @@ BOOL DRIVER_UnregisterDriver( LPCSTR name )
     else
     {
         if (!genericDriver) return FALSE;
-        HeapFree( SystemHeap, 0, genericDriver );
+        HeapFree( GetProcessHeap(), 0, genericDriver );
         genericDriver = NULL;
         return TRUE;
     }

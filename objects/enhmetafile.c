@@ -63,7 +63,7 @@ static BOOL EMF_Delete_HENHMETAFILE( HENHMETAFILE hmf )
 	CloseHandle( metaObj->hMapping );
 	CloseHandle( metaObj->hFile );
     } else
-        HeapFree( SystemHeap, 0, metaObj->emh );
+        HeapFree( GetProcessHeap(), 0, metaObj->emh );
     return GDI_FreeObject( hmf );
 }
 
@@ -256,7 +256,7 @@ UINT WINAPI GetEnhMetaFileDescriptionW(
  */
 HENHMETAFILE WINAPI SetEnhMetaFileBits(UINT bufsize, const BYTE *buf)
 {
-    ENHMETAHEADER *emh = HeapAlloc( SystemHeap, 0, bufsize );
+    ENHMETAHEADER *emh = HeapAlloc( GetProcessHeap(), 0, bufsize );
     memmove(emh, buf, bufsize);
     return EMF_Create_HENHMETAFILE( emh, 0, 0 );
 }
@@ -1333,7 +1333,7 @@ HENHMETAFILE WINAPI CopyEnhMetaFileA(
 
     if(!emrSrc) return FALSE;
     if (!file) {
-        emrDst = HeapAlloc( SystemHeap, 0, emrSrc->nBytes );
+        emrDst = HeapAlloc( GetProcessHeap(), 0, emrSrc->nBytes );
 	memcpy( emrDst, emrSrc, emrSrc->nBytes );
 	hmfDst = EMF_Create_HENHMETAFILE( emrDst, 0, 0 );
     } else {
@@ -1478,7 +1478,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
      /* 1. Get the header - skip over this and get straight to the records  */
 
      uNewEnhMetaFileBufferSize = sizeof( ENHMETAHEADER );
-     lpNewEnhMetaFileBuffer = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, 
+     lpNewEnhMetaFileBuffer = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
                                          uNewEnhMetaFileBufferSize );
 
      if( lpNewEnhMetaFileBuffer == NULL )
@@ -1533,7 +1533,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
 #define EMF_ReAllocAndAdjustPointers( a , b ) \
                                         { \
                                           LPVOID lpTmp; \
-                                          lpTmp = HeapReAlloc( SystemHeap, 0, \
+                                          lpTmp = HeapReAlloc( GetProcessHeap(), 0, \
                                                                lpNewEnhMetaFileBuffer, \
                                                                uNewEnhMetaFileBufferSize + (b) ); \
                                           if( lpTmp == NULL ) { ERR( "No memory!\n" ); goto error; } \
@@ -1802,7 +1802,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
 
 error:
      /* Free the data associated with our copy since it's been copied */
-     HeapFree( SystemHeap, 0, lpNewEnhMetaFileBuffer ); 
+     HeapFree( GetProcessHeap(), 0, lpNewEnhMetaFileBuffer ); 
 
      return 0;  
 }

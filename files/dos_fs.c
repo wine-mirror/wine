@@ -321,7 +321,7 @@ static int DOSFS_MatchLong( const char *mask, const char *name,
  */
 static DOS_DIR *DOSFS_OpenDir( LPCSTR path )
 {
-    DOS_DIR *dir = HeapAlloc( SystemHeap, 0, sizeof(*dir) );
+    DOS_DIR *dir = HeapAlloc( GetProcessHeap(), 0, sizeof(*dir) );
     if (!dir)
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
@@ -357,7 +357,7 @@ static DOS_DIR *DOSFS_OpenDir( LPCSTR path )
 
     if (!(dir->dir = opendir( path )))
     {
-        HeapFree( SystemHeap, 0, dir );
+        HeapFree( GetProcessHeap(), 0, dir );
         return NULL;
     }
     return dir;
@@ -373,7 +373,7 @@ static void DOSFS_CloseDir( DOS_DIR *dir )
     if (dir->fd != -1) close( dir->fd );
 #endif  /* VFAT_IOCTL_READDIR_BOTH */
     if (dir->dir) closedir( dir->dir );
-    HeapFree( SystemHeap, 0, dir );
+    HeapFree( GetProcessHeap(), 0, dir );
 }
 
 
@@ -1384,7 +1384,7 @@ HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATAA *data )
     if (!(handle = GlobalAlloc16( GMEM_MOVEABLE, sizeof(FIND_FIRST_INFO) )))
         return INVALID_HANDLE_VALUE16;
     info = (FIND_FIRST_INFO *)GlobalLock16( handle );
-    info->path = HEAP_strdupA( SystemHeap, 0, full_name.long_name );
+    info->path = HEAP_strdupA( GetProcessHeap(), 0, full_name.long_name );
     info->long_mask = strrchr( info->path, '/' );
     *(info->long_mask++) = '\0';
     info->short_mask = NULL;
@@ -1462,7 +1462,7 @@ BOOL16 WINAPI FindNextFile16( HANDLE16 handle, WIN32_FIND_DATAA *data )
     if (!DOSFS_FindNextEx( info, data ))
     {
         DOSFS_CloseDir( info->dir ); info->dir = NULL;
-        HeapFree( SystemHeap, 0, info->path );
+        HeapFree( GetProcessHeap(), 0, info->path );
         info->path = info->long_mask = NULL;
         SetLastError( ERROR_NO_MORE_FILES );
         return FALSE;
@@ -1513,7 +1513,7 @@ BOOL16 WINAPI FindClose16( HANDLE16 handle )
         return FALSE;
     }
     if (info->dir) DOSFS_CloseDir( info->dir );
-    if (info->path) HeapFree( SystemHeap, 0, info->path );
+    if (info->path) HeapFree( GetProcessHeap(), 0, info->path );
     GlobalUnlock16( handle );
     GlobalFree16( handle );
     return TRUE;

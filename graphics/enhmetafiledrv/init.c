@@ -122,8 +122,8 @@ static BOOL EMFDRV_DeleteDC( DC *dc )
 {
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dc->physDev;
     
-    if (physDev->emh) HeapFree( SystemHeap, 0, physDev->emh );
-    HeapFree( SystemHeap, 0, physDev );
+    if (physDev->emh) HeapFree( GetProcessHeap(), 0, physDev->emh );
+    HeapFree( GetProcessHeap(), 0, physDev );
     dc->physDev = NULL;
     GDI_FreeObject(dc->hSelf);
     return TRUE;
@@ -150,7 +150,7 @@ BOOL EMFDRV_WriteRecord( DC *dc, EMR *emr )
 	    return FALSE;
     } else {
 	len = physDev->emh->nBytes;
-	emh = HeapReAlloc( SystemHeap, 0, physDev->emh, len );
+	emh = HeapReAlloc( GetProcessHeap(), 0, physDev->emh, len );
         if (!emh) return FALSE;
         physDev->emh = emh;
 	memcpy((CHAR *)physDev->emh + physDev->emh->nBytes - emr->nSize, emr,
@@ -252,7 +252,7 @@ HDC WINAPI CreateEnhMetaFileW(
     if (!(dc = DC_AllocDC( &EMFDRV_Funcs ))) return 0;
     dc->header.wMagic = ENHMETAFILE_DC_MAGIC;
 
-    physDev = (EMFDRV_PDEVICE *)HeapAlloc(SystemHeap,0,sizeof(*physDev));
+    physDev = (EMFDRV_PDEVICE *)HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
     if (!physDev) {
         GDI_HEAP_FREE( dc->hSelf );
         return 0;
@@ -267,8 +267,8 @@ HDC WINAPI CreateEnhMetaFileW(
     }
     size = sizeof(ENHMETAHEADER) + (length + 3) / 4 * 4;
 
-    if (!(physDev->emh = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, size))) {
-        HeapFree( SystemHeap, 0, physDev );
+    if (!(physDev->emh = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size))) {
+        HeapFree( GetProcessHeap(), 0, physDev );
         GDI_HEAP_FREE( dc->hSelf );
         return 0;
     }
@@ -362,7 +362,7 @@ HENHMETAFILE WINAPI CloseEnhMetaFile( HDC hdc /* metafile DC */ )
             EMFDRV_DeleteDC( dc );
             return 0;
         }
-	HeapFree( SystemHeap, 0, physDev->emh );
+	HeapFree( GetProcessHeap(), 0, physDev->emh );
         hMapping = CreateFileMappingA(physDev->hFile, NULL, PAGE_READONLY, 0,
 				      0, NULL);
 	TRACE("hMapping = %08x\n", hMapping );

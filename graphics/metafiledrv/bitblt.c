@@ -39,7 +39,7 @@ BOOL MFDRV_BitBlt( DC *dcDst, INT xDst, INT yDst, INT width, INT height,
 
     GetObject16(dcSrc->w.hBitmap, sizeof(BITMAP16), &BM);
     len = sizeof(METARECORD) + 12 * sizeof(INT16) + BM.bmWidthBytes * BM.bmHeight;
-    if (!(mr = HeapAlloc(SystemHeap, 0, len)))
+    if (!(mr = HeapAlloc(GetProcessHeap(), 0, len)))
 	return FALSE;
     mr->rdFunction = META_BITBLT;
     *(mr->rdParm + 7) = BM.bmWidth;
@@ -63,7 +63,7 @@ BOOL MFDRV_BitBlt( DC *dcDst, INT xDst, INT yDst, INT width, INT height,
     } 
     else
         ret = FALSE;
-    HeapFree( SystemHeap, 0, mr);
+    HeapFree( GetProcessHeap(), 0, mr);
     return ret;
 }
 
@@ -96,7 +96,7 @@ BOOL MFDRV_StretchBlt( DC *dcDst, INT xDst, INT yDst, INT widthDst,
     len = sizeof(METARECORD) + 10 * sizeof(INT16) 
             + sizeof(BITMAPINFOHEADER) + (nBPP != 24 ? 1 << nBPP: 0) * sizeof(RGBQUAD) 
               + ((BM.bmWidth * nBPP + 31) / 32) * 4 * BM.bmHeight;
-    if (!(mr = HeapAlloc( SystemHeap, 0, len)))
+    if (!(mr = HeapAlloc( GetProcessHeap(), 0, len)))
 	return FALSE;
     mr->rdFunction = META_DIBSTRETCHBLT;
     lpBMI=(LPBITMAPINFOHEADER)(mr->rdParm+10);
@@ -120,7 +120,7 @@ BOOL MFDRV_StretchBlt( DC *dcDst, INT xDst, INT yDst, INT widthDst,
                   (LPBITMAPINFO)lpBMI, DIB_RGB_COLORS))
 #else
     len = sizeof(METARECORD) + 15 * sizeof(INT16) + BM.bmWidthBytes * BM.bmHeight;
-    if (!(mr = HeapAlloc( SystemHeap, 0, len )))
+    if (!(mr = HeapAlloc( GetProcessHeap(), 0, len )))
 	return FALSE;
     mr->rdFunction = META_STRETCHBLT;
     *(mr->rdParm +10) = BM.bmWidth;
@@ -148,7 +148,7 @@ BOOL MFDRV_StretchBlt( DC *dcDst, INT xDst, INT yDst, INT widthDst,
     }  
     else
         ret = FALSE;
-    HeapFree( SystemHeap, 0, mr);
+    HeapFree( GetProcessHeap(), 0, mr);
     return ret;
 }
 
@@ -170,7 +170,7 @@ INT MFDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
 				      info->bmiHeader.biBitCount );
 
     len = sizeof(METARECORD) + 10 * sizeof(WORD) + infosize + imagesize;
-    mr = (METARECORD *)HeapAlloc( SystemHeap, 0, len );
+    mr = (METARECORD *)HeapAlloc( GetProcessHeap(), 0, len );
     if(!mr) return 0;
 
     mr->rdSize = len / 2;
@@ -189,7 +189,7 @@ INT MFDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
     memcpy(mr->rdParm + 11, info, infosize);
     memcpy(mr->rdParm + 11 + infosize / 2, bits, imagesize);
     MFDRV_WriteRecord( dc, mr, mr->rdSize * 2 );
-    HeapFree( SystemHeap, 0, mr );
+    HeapFree( GetProcessHeap(), 0, mr );
     return heightSrc;
 }
 
@@ -212,7 +212,7 @@ INT MFDRV_SetDIBitsToDevice( DC *dc, INT xDst, INT yDst, DWORD cx,
 				      info->bmiHeader.biBitCount );
 
     len = sizeof(METARECORD) + 8 * sizeof(WORD) + infosize + imagesize;
-    mr = (METARECORD *)HeapAlloc( SystemHeap, 0, len );
+    mr = (METARECORD *)HeapAlloc( GetProcessHeap(), 0, len );
     if(!mr) return 0;
 
     mr->rdSize = len / 2;
@@ -229,7 +229,7 @@ INT MFDRV_SetDIBitsToDevice( DC *dc, INT xDst, INT yDst, DWORD cx,
     memcpy(mr->rdParm + 9, info, infosize);
     memcpy(mr->rdParm + 9 + infosize / 2, bits, imagesize);
     MFDRV_WriteRecord( dc, mr, mr->rdSize * 2 );
-    HeapFree( SystemHeap, 0, mr );
+    HeapFree( GetProcessHeap(), 0, mr );
     return lines;
 }
 

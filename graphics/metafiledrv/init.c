@@ -125,7 +125,7 @@ static DC *MFDRV_AllocMetaFile(void)
     if (!(dc = DC_AllocDC( &MFDRV_Funcs ))) return NULL;
     dc->header.wMagic = METAFILE_DC_MAGIC;
 
-    physDev = (METAFILEDRV_PDEVICE *)HeapAlloc(SystemHeap,0,sizeof(*physDev));
+    physDev = (METAFILEDRV_PDEVICE *)HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
     if (!physDev)
     {
         GDI_HEAP_FREE( dc->hSelf );
@@ -133,9 +133,9 @@ static DC *MFDRV_AllocMetaFile(void)
     }
     dc->physDev = physDev;
 
-    if (!(physDev->mh = HeapAlloc( SystemHeap, 0, sizeof(*physDev->mh) )))
+    if (!(physDev->mh = HeapAlloc( GetProcessHeap(), 0, sizeof(*physDev->mh) )))
     {
-        HeapFree( SystemHeap, 0, physDev );
+        HeapFree( GetProcessHeap(), 0, physDev );
         GDI_HEAP_FREE( dc->hSelf );
         return NULL;
     }
@@ -161,8 +161,8 @@ static BOOL MFDRV_DeleteDC( DC *dc )
 {
     METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
     
-    if (physDev->mh) HeapFree( SystemHeap, 0, physDev->mh );
-    HeapFree( SystemHeap, 0, physDev );
+    if (physDev->mh) HeapFree( GetProcessHeap(), 0, physDev->mh );
+    HeapFree( GetProcessHeap(), 0, physDev );
     dc->physDev = NULL;
     GDI_FreeObject(dc->hSelf);
     return TRUE;
@@ -352,7 +352,7 @@ BOOL MFDRV_WriteRecord( DC *dc, METARECORD *mr, DWORD rlen)
     {
     case METAFILE_MEMORY:
 	len = physDev->mh->mtSize * 2 + rlen;
-	mh = HeapReAlloc( SystemHeap, 0, physDev->mh, len );
+	mh = HeapReAlloc( GetProcessHeap(), 0, physDev->mh, len );
         if (!mh) return FALSE;
         physDev->mh = mh;
 	memcpy((WORD *)physDev->mh + physDev->mh->mtSize, mr, rlen);

@@ -983,7 +983,7 @@ HFILE WINAPI OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
 BOOL FILE_InitProcessDosHandles( void ) {
 	HANDLE *ptr;
 
-        if (!(ptr = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY,
+        if (!(ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                                sizeof(*ptr) * DOS_TABLE_SIZE )))
             return FALSE;
         PROCESS_Current()->dos_handles = ptr;
@@ -2082,11 +2082,11 @@ static BOOL DOS_AddLock(FILE_OBJECT *file, struct flock *f)
   }
 #endif
 
-  curr = HeapAlloc( SystemHeap, 0, sizeof(DOS_FILE_LOCK) );
+  curr = HeapAlloc( GetProcessHeap(), 0, sizeof(DOS_FILE_LOCK) );
   curr->processId = GetCurrentProcessId();
   curr->base = f->l_start;
   curr->len = f->l_len;
-/*  curr->unix_name = HEAP_strdupA( SystemHeap, 0, file->unix_name);*/
+/*  curr->unix_name = HEAP_strdupA( GetProcessHeap(), 0, file->unix_name);*/
   curr->next = locks;
   curr->dos_file = file;
   locks = curr;
@@ -2105,8 +2105,8 @@ static void DOS_RemoveFileLocks(FILE_OBJECT *file)
     if ((*curr)->dos_file == file) {
       rem = *curr;
       *curr = (*curr)->next;
-/*      HeapFree( SystemHeap, 0, rem->unix_name );*/
-      HeapFree( SystemHeap, 0, rem );
+/*      HeapFree( GetProcessHeap(), 0, rem->unix_name );*/
+      HeapFree( GetProcessHeap(), 0, rem );
     }
     else
       curr = &(*curr)->next;
@@ -2128,8 +2128,8 @@ static BOOL DOS_RemoveLock(FILE_OBJECT *file, struct flock *f)
       /* this is the same lock */
       rem = *curr;
       *curr = (*curr)->next;
-/*      HeapFree( SystemHeap, 0, rem->unix_name );*/
-      HeapFree( SystemHeap, 0, rem );
+/*      HeapFree( GetProcessHeap(), 0, rem->unix_name );*/
+      HeapFree( GetProcessHeap(), 0, rem );
       return TRUE;
     }
   }

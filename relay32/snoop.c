@@ -131,17 +131,17 @@ SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD nrofordinals) {
 			return; /* already registered */
 		dll = &((*dll)->next);
 	}
-	*dll = (SNOOP_DLL*)HeapAlloc(SystemHeap,HEAP_ZERO_MEMORY,sizeof(SNOOP_DLL));
+	*dll = (SNOOP_DLL*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SNOOP_DLL));
 	(*dll)->next	= NULL;
 	(*dll)->hmod	= hmod;
 	(*dll)->nrofordinals = nrofordinals;
-	(*dll)->name	= HEAP_strdupA(SystemHeap,0,name);
+	(*dll)->name	= HEAP_strdupA(GetProcessHeap(),0,name);
 	if ((s=strrchr((*dll)->name,'.')))
 		*s='\0';
 	(*dll)->funs = VirtualAlloc(NULL,nrofordinals*sizeof(SNOOP_FUN),MEM_COMMIT|MEM_RESERVE,PAGE_EXECUTE_READWRITE);
 	memset((*dll)->funs,0,nrofordinals*sizeof(SNOOP_FUN));
 	if (!(*dll)->funs) {
-		HeapFree(SystemHeap,0,*dll);
+		HeapFree(GetProcessHeap(),0,*dll);
 		FIXME("out of memory\n");
 		return;
 	}
@@ -187,7 +187,7 @@ SNOOP_GetProcAddress(HMODULE hmod,LPCSTR name,DWORD ordinal,FARPROC origfun) {
 		return origfun;
 	assert(ordinal<dll->nrofordinals);
 	fun = dll->funs+ordinal;
-	if (!fun->name) fun->name = HEAP_strdupA(SystemHeap,0,name);
+	if (!fun->name) fun->name = HEAP_strdupA(GetProcessHeap(),0,name);
 	fun->lcall	= 0xe8;
 	/* NOTE: origreturn struct member MUST come directly after snoopentry */
 	fun->snoopentry	= (char*)SNOOP_Entry-((char*)(&fun->nrofargs));
@@ -323,7 +323,7 @@ void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
 			DPRINTF(" ...");
 	} else if (fun->nrofargs<0) {
 		DPRINTF("<unknown, check return>");
-		ret->args = HeapAlloc(SystemHeap,0,16*sizeof(DWORD));
+		ret->args = HeapAlloc(GetProcessHeap(),0,16*sizeof(DWORD));
 		memcpy(ret->args,(LPBYTE)(ESP_reg(context)+4),sizeof(DWORD)*16);
 	}
 	DPRINTF(") ret=%08lx fs=%04lx\n",(DWORD)ret->origreturn,FS_reg(context));
@@ -355,7 +355,7 @@ void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
 		DPRINTF(") retval = %08lx ret=%08lx fs=%04lx\n",
 			EAX_reg(context),(DWORD)ret->origreturn,FS_reg(context)
 		);
-		HeapFree(SystemHeap,0,ret->args);
+		HeapFree(GetProcessHeap(),0,ret->args);
 		ret->args = NULL;
 	} else
 		DPRINTF("Ret  %s.%ld: %s() retval = %08lx ret=%08lx fs=%04lx\n",

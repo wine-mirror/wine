@@ -341,7 +341,7 @@ static	UINT		MCI_SetCommandTable(LPWINE_MM_IDATA iData, HANDLE hMem,
 		    count++;
 	    } while (eid != MCI_END_COMMAND_LIST);
 
-	    S_MciCmdTable[uTbl].aVerbs = HeapAlloc(SystemHeap, 0, count * sizeof(LPCSTR));
+	    S_MciCmdTable[uTbl].aVerbs = HeapAlloc(GetProcessHeap(), 0, count * sizeof(LPCSTR));
 	    S_MciCmdTable[uTbl].nVerbs = count;
 
 	    lmem = S_MciCmdTable[uTbl].lpTable;
@@ -373,7 +373,7 @@ static	BOOL	MCI_DeleteCommandTable(UINT uTbl)
     FreeResource16(S_MciCmdTable[uTbl].hMem);
     S_MciCmdTable[uTbl].hMem = 0;
     if (S_MciCmdTable[uTbl].aVerbs) {
-	HeapFree(SystemHeap, 0, S_MciCmdTable[uTbl].aVerbs);
+	HeapFree(GetProcessHeap(), 0, S_MciCmdTable[uTbl].aVerbs);
 	S_MciCmdTable[uTbl].aVerbs = 0;
     }
     return TRUE;
@@ -1121,7 +1121,7 @@ static	MCI_MapType	MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam)
 	break;
     case MCI_BREAK:
 	{
-            LPMCI_BREAK_PARMS		mbp32 = HeapAlloc(SystemHeap, 0, sizeof(MCI_BREAK_PARMS));
+            LPMCI_BREAK_PARMS		mbp32 = HeapAlloc(GetProcessHeap(), 0, sizeof(MCI_BREAK_PARMS));
 	    LPMCI_BREAK_PARMS16		mbp16 = PTR_SEG_TO_LIN(*lParam);
 
 	    if (mbp32) {
@@ -1136,7 +1136,7 @@ static	MCI_MapType	MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam)
 	return MCI_MAP_OKMEM;
     case MCI_ESCAPE:
 	{
-            LPMCI_VD_ESCAPE_PARMSA	mvep32a = HeapAlloc(SystemHeap, 0, sizeof(MCI_VD_ESCAPE_PARMSA));
+            LPMCI_VD_ESCAPE_PARMSA	mvep32a = HeapAlloc(GetProcessHeap(), 0, sizeof(MCI_VD_ESCAPE_PARMSA));
 	    LPMCI_VD_ESCAPE_PARMS16	mvep16  = PTR_SEG_TO_LIN(*lParam);
 
 	    if (mvep32a) {
@@ -1150,7 +1150,7 @@ static	MCI_MapType	MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam)
 	return MCI_MAP_OKMEM;
     case MCI_INFO:
 	{
-            LPMCI_INFO_PARMSA	mip32a = HeapAlloc(SystemHeap, 0, sizeof(MCI_INFO_PARMSA));
+            LPMCI_INFO_PARMSA	mip32a = HeapAlloc(GetProcessHeap(), 0, sizeof(MCI_INFO_PARMSA));
 	    LPMCI_INFO_PARMS16	mip16  = PTR_SEG_TO_LIN(*lParam);
 
 	    /* FIXME this is wrong if device is of type 
@@ -1169,7 +1169,7 @@ static	MCI_MapType	MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam)
     case MCI_OPEN:
     case MCI_OPEN_DRIVER:	
 	{
-            LPMCI_OPEN_PARMSA	mop32a = HeapAlloc(SystemHeap, 0, sizeof(LPMCI_OPEN_PARMS16) + sizeof(MCI_OPEN_PARMSA) + 2 * sizeof(DWORD));
+            LPMCI_OPEN_PARMSA	mop32a = HeapAlloc(GetProcessHeap(), 0, sizeof(LPMCI_OPEN_PARMS16) + sizeof(MCI_OPEN_PARMSA) + 2 * sizeof(DWORD));
 	    LPMCI_OPEN_PARMS16	mop16  = PTR_SEG_TO_LIN(*lParam);
 
 	    if (mop32a) {
@@ -1197,7 +1197,7 @@ static	MCI_MapType	MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam)
 	return MCI_MAP_OKMEM;
     case MCI_SYSINFO:
 	{
-            LPMCI_SYSINFO_PARMSA	msip32a = HeapAlloc(SystemHeap, 0, sizeof(MCI_SYSINFO_PARMSA));
+            LPMCI_SYSINFO_PARMSA	msip32a = HeapAlloc(GetProcessHeap(), 0, sizeof(MCI_SYSINFO_PARMSA));
 	    LPMCI_SYSINFO_PARMS16	msip16  = PTR_SEG_TO_LIN(*lParam);
 
 	    if (msip32a) {
@@ -1282,7 +1282,7 @@ static	MCI_MapType	MCI_UnMapMsg16To32A(WORD uDevType, WORD wMsg, DWORD lParam)
     case MCI_ESCAPE:
     case MCI_INFO:
     case MCI_SYSINFO:
-	HeapFree(SystemHeap, 0, (LPVOID)lParam);
+	HeapFree(GetProcessHeap(), 0, (LPVOID)lParam);
 	return MCI_MAP_OK;
     case MCI_OPEN:
     case MCI_OPEN_DRIVER:	
@@ -1291,7 +1291,7 @@ static	MCI_MapType	MCI_UnMapMsg16To32A(WORD uDevType, WORD wMsg, DWORD lParam)
 	    LPMCI_OPEN_PARMS16	mop16  = *(LPMCI_OPEN_PARMS16*)((char*)mop32a - sizeof(LPMCI_OPEN_PARMS16));
 	    
 	    mop16->wDeviceID = mop32a->wDeviceID;
-	    if (!HeapFree(SystemHeap, 0, (LPVOID)(lParam - sizeof(LPMCI_OPEN_PARMS16))))
+	    if (!HeapFree(GetProcessHeap(), 0, (LPVOID)(lParam - sizeof(LPMCI_OPEN_PARMS16))))
 		FIXME("bad free line=%d\n", __LINE__);
 	}
 	return MCI_MAP_OK;
@@ -2476,7 +2476,7 @@ BOOL MULTIMEDIA_MciInit(void)
     LPSTR	ptr1, ptr2;
 
     MCI_InstalledCount = 0;
-    ptr1 = MCI_lpInstallNames = HeapAlloc(SystemHeap, 0, 2048);
+    ptr1 = MCI_lpInstallNames = HeapAlloc(GetProcessHeap(), 0, 2048);
 
     if (!MCI_lpInstallNames)
 	return FALSE;

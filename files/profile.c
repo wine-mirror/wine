@@ -196,16 +196,16 @@ static void PROFILE_Free( PROFILESECTION *section )
 
     for ( ; section; section = next_section)
     {
-        if (section->name) HeapFree( SystemHeap, 0, section->name );
+        if (section->name) HeapFree( GetProcessHeap(), 0, section->name );
         for (key = section->key; key; key = next_key)
         {
             next_key = key->next;
-            if (key->name) HeapFree( SystemHeap, 0, key->name );
-            if (key->value) HeapFree( SystemHeap, 0, key->value );
-            HeapFree( SystemHeap, 0, key );
+            if (key->name) HeapFree( GetProcessHeap(), 0, key->name );
+            if (key->value) HeapFree( GetProcessHeap(), 0, key->value );
+            HeapFree( GetProcessHeap(), 0, key );
         }
         next_section = section->next;
-        HeapFree( SystemHeap, 0, section );
+        HeapFree( GetProcessHeap(), 0, section );
     }
 }
 
@@ -232,7 +232,7 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
     PROFILESECTION **next_section;
     PROFILEKEY *key, *prev_key, **next_key;
 
-    first_section = HEAP_xalloc( SystemHeap, 0, sizeof(*section) );
+    first_section = HEAP_xalloc( GetProcessHeap(), 0, sizeof(*section) );
     first_section->name = NULL;
     first_section->key  = NULL;
     first_section->next = NULL;
@@ -256,8 +256,8 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
             {
                 *p2 = '\0';
                 p++;
-                section = HEAP_xalloc( SystemHeap, 0, sizeof(*section) );
-                section->name = HEAP_strdupA( SystemHeap, 0, p );
+                section = HEAP_xalloc( GetProcessHeap(), 0, sizeof(*section) );
+                section->name = HEAP_strdupA( GetProcessHeap(), 0, p );
                 section->key  = NULL;
                 section->next = NULL;
                 *next_section = section;
@@ -284,9 +284,9 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
 
         if(*p || !prev_key || *prev_key->name)
           {
-           key = HEAP_xalloc( SystemHeap, 0, sizeof(*key) );
-           key->name  = HEAP_strdupA( SystemHeap, 0, p );
-           key->value = p2 ? HEAP_strdupA( SystemHeap, 0, p2 ) : NULL;
+           key = HEAP_xalloc( GetProcessHeap(), 0, sizeof(*key) );
+           key->name  = HEAP_strdupA( GetProcessHeap(), 0, p );
+           key->value = p2 ? HEAP_strdupA( GetProcessHeap(), 0, p2 ) : NULL;
            key->next  = NULL;
            *next_key  = key;
            next_key   = &key->next;
@@ -341,9 +341,9 @@ static BOOL PROFILE_DeleteKey( PROFILESECTION **section,
                 {
                     PROFILEKEY *to_del = *key;
                     *key = to_del->next;
-                    if (to_del->name) HeapFree( SystemHeap, 0, to_del->name );
-                    if (to_del->value) HeapFree( SystemHeap, 0, to_del->value);
-                    HeapFree( SystemHeap, 0, to_del );
+                    if (to_del->name) HeapFree( GetProcessHeap(), 0, to_del->name );
+                    if (to_del->value) HeapFree( GetProcessHeap(), 0, to_del->value);
+                    HeapFree( GetProcessHeap(), 0, to_del );
                     return TRUE;
                 }
                 key = &(*key)->next;
@@ -392,8 +392,8 @@ static PROFILEKEY *PROFILE_Find( PROFILESECTION **section,
                 key = &(*key)->next;
             }
             if (!create) return NULL;
-            *key = HEAP_xalloc( SystemHeap, 0, sizeof(PROFILEKEY) );
-            (*key)->name  = HEAP_strdupA( SystemHeap, 0, key_name );
+            *key = HEAP_xalloc( GetProcessHeap(), 0, sizeof(PROFILEKEY) );
+            (*key)->name  = HEAP_strdupA( GetProcessHeap(), 0, key_name );
             (*key)->value = NULL;
             (*key)->next  = NULL;
             return *key;
@@ -401,11 +401,11 @@ static PROFILEKEY *PROFILE_Find( PROFILESECTION **section,
         section = &(*section)->next;
     }
     if (!create) return NULL;
-    *section = HEAP_xalloc( SystemHeap, 0, sizeof(PROFILESECTION) );
-    (*section)->name = HEAP_strdupA( SystemHeap, 0, section_name );
+    *section = HEAP_xalloc( GetProcessHeap(), 0, sizeof(PROFILESECTION) );
+    (*section)->name = HEAP_strdupA( GetProcessHeap(), 0, section_name );
     (*section)->next = NULL;
-    (*section)->key  = HEAP_xalloc( SystemHeap, 0, sizeof(PROFILEKEY) );
-    (*section)->key->name  = HEAP_strdupA( SystemHeap, 0, key_name );
+    (*section)->key  = HEAP_xalloc( GetProcessHeap(), 0, sizeof(PROFILEKEY) );
+    (*section)->key->name  = HEAP_strdupA( GetProcessHeap(), 0, key_name );
     (*section)->key->value = NULL;
     (*section)->key->next  = NULL;
     return (*section)->key;
@@ -469,9 +469,9 @@ static void PROFILE_ReleaseFile(void)
 {
     PROFILE_FlushFile();
     PROFILE_Free( CurProfile->section );
-    if (CurProfile->dos_name) HeapFree( SystemHeap, 0, CurProfile->dos_name );
-    if (CurProfile->unix_name) HeapFree( SystemHeap, 0, CurProfile->unix_name );
-    if (CurProfile->filename) HeapFree( SystemHeap, 0, CurProfile->filename );
+    if (CurProfile->dos_name) HeapFree( GetProcessHeap(), 0, CurProfile->dos_name );
+    if (CurProfile->unix_name) HeapFree( GetProcessHeap(), 0, CurProfile->unix_name );
+    if (CurProfile->filename) HeapFree( GetProcessHeap(), 0, CurProfile->filename );
     CurProfile->changed   = FALSE;
     CurProfile->section   = NULL;
     CurProfile->dos_name  = NULL;
@@ -501,7 +501,7 @@ static BOOL PROFILE_Open( LPCSTR filename )
     if(!CurProfile)
        for(i=0;i<N_CACHED_PROFILES;i++)
          {
-          MRUProfile[i]=HEAP_xalloc( SystemHeap, 0, sizeof(PROFILE) );
+          MRUProfile[i]=HEAP_xalloc( GetProcessHeap(), 0, sizeof(PROFILE) );
           MRUProfile[i]->changed=FALSE;
           MRUProfile[i]->section=NULL;
           MRUProfile[i]->dos_name=NULL;
@@ -562,9 +562,9 @@ static BOOL PROFILE_Open( LPCSTR filename )
     if(CurProfile->filename) PROFILE_ReleaseFile();
 
     /* OK, now that CurProfile is definitely free we assign it our new file */
-    newdos_name = HEAP_strdupA( SystemHeap, 0, full_name.short_name );
+    newdos_name = HEAP_strdupA( GetProcessHeap(), 0, full_name.short_name );
     CurProfile->dos_name  = newdos_name;
-    CurProfile->filename  = HEAP_strdupA( SystemHeap, 0, filename );
+    CurProfile->filename  = HEAP_strdupA( GetProcessHeap(), 0, filename );
 
     /* Try to open the profile file, first in $HOME/.wine */
 
@@ -578,12 +578,12 @@ static BOOL PROFILE_Open( LPCSTR filename )
     {
         TRACE("(%s): found it in %s\n",
               filename, buffer );
-        CurProfile->unix_name = HEAP_strdupA( SystemHeap, 0, buffer );
+        CurProfile->unix_name = HEAP_strdupA( GetProcessHeap(), 0, buffer );
     }
 
     if (!file)
     {
-        CurProfile->unix_name = HEAP_strdupA( SystemHeap, 0,
+        CurProfile->unix_name = HEAP_strdupA( GetProcessHeap(), 0,
                                              full_name.long_name );
         if ((file = fopen( full_name.long_name, "r" )))
             TRACE("(%s): found it in %s\n",
@@ -748,10 +748,10 @@ static BOOL PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
                 return TRUE;  /* No change needed */
             }
             TRACE("  replacing '%s'\n", key->value );
-            HeapFree( SystemHeap, 0, key->value );
+            HeapFree( GetProcessHeap(), 0, key->value );
         }
         else TRACE("  creating key\n" );
-        key->value = HEAP_strdupA( SystemHeap, 0, value );
+        key->value = HEAP_strdupA( GetProcessHeap(), 0, value );
         CurProfile->changed = TRUE;
     }
     return TRUE;
@@ -1066,7 +1066,7 @@ UINT WINAPI GetProfileIntA( LPCSTR section, LPCSTR entry, INT def_val )
  */
 UINT WINAPI GetProfileIntW( LPCWSTR section, LPCWSTR entry, INT def_val )
 {
-    if (!wininiW) wininiW = HEAP_strdupAtoW( SystemHeap, 0, "win.ini" );
+    if (!wininiW) wininiW = HEAP_strdupAtoW( GetProcessHeap(), 0, "win.ini" );
     return GetPrivateProfileIntW( section, entry, def_val, wininiW );
 }
 
@@ -1096,7 +1096,7 @@ INT WINAPI GetProfileStringA( LPCSTR section, LPCSTR entry, LPCSTR def_val,
 INT WINAPI GetProfileStringW( LPCWSTR section, LPCWSTR entry,
 			      LPCWSTR def_val, LPWSTR buffer, UINT len )
 {
-    if (!wininiW) wininiW = HEAP_strdupAtoW( SystemHeap, 0, "win.ini" );
+    if (!wininiW) wininiW = HEAP_strdupAtoW( GetProcessHeap(), 0, "win.ini" );
     return GetPrivateProfileStringW( section, entry, def_val,
 				     buffer, len, wininiW );
 }
@@ -1125,7 +1125,7 @@ BOOL WINAPI WriteProfileStringA( LPCSTR section, LPCSTR entry,
 BOOL WINAPI WriteProfileStringW( LPCWSTR section, LPCWSTR entry,
                                      LPCWSTR string )
 {
-    if (!wininiW) wininiW = HEAP_strdupAtoW( SystemHeap, 0, "win.ini" );
+    if (!wininiW) wininiW = HEAP_strdupAtoW( GetProcessHeap(), 0, "win.ini" );
     return WritePrivateProfileStringW( section, entry, string, wininiW );
 }
 
@@ -1306,7 +1306,7 @@ INT WINAPI GetProfileSectionA( LPCSTR section, LPSTR buffer, DWORD len )
  */
 INT WINAPI GetProfileSectionW( LPCWSTR section, LPWSTR buffer, DWORD len )
 {
-    if (!wininiW) wininiW = HEAP_strdupAtoW( SystemHeap, 0, "win.ini" );
+    if (!wininiW) wininiW = HEAP_strdupAtoW( GetProcessHeap(), 0, "win.ini" );
     return GetPrivateProfileSectionW( section, buffer, len, wininiW );
 }
 
@@ -1442,7 +1442,7 @@ BOOL WINAPI WriteProfileSectionA( LPCSTR section, LPCSTR keys_n_values)
  */
 BOOL WINAPI WriteProfileSectionW( LPCWSTR section, LPCWSTR keys_n_values)
 {
-   if (!wininiW) wininiW = HEAP_strdupAtoW( SystemHeap, 0, "win.ini");
+   if (!wininiW) wininiW = HEAP_strdupAtoW( GetProcessHeap(), 0, "win.ini");
    
    return (WritePrivateProfileSectionW (section,keys_n_values, wininiW));
 }
@@ -1637,7 +1637,7 @@ BOOL WINAPI WritePrivateProfileStructA (LPCSTR section, LPCSTR key,
         return WritePrivateProfileStringA( NULL, NULL, NULL, filename );
 
     /* allocate string buffer for hex chars + checksum hex char + '\0' */
-    outstring = HeapAlloc( SystemHeap, 0, bufsize*2 + 2 + 1);
+    outstring = HeapAlloc( GetProcessHeap(), 0, bufsize*2 + 2 + 1);
     p = outstring;
     for (binbuf = (LPBYTE)buf; binbuf < (LPBYTE)buf+bufsize; binbuf++) {
       *p++ = hex[*binbuf >> 4];
@@ -1656,7 +1656,7 @@ BOOL WINAPI WritePrivateProfileStructA (LPCSTR section, LPCSTR key,
 
     LeaveCriticalSection( &PROFILE_CritSect );
 
-    HeapFree( SystemHeap, 0, outstring );
+    HeapFree( GetProcessHeap(), 0, outstring );
 
     return ret;
 }

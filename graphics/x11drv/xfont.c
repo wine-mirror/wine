@@ -328,7 +328,7 @@ static LFD* LFD_Parse(LPSTR lpFont)
     if (*lpch)
 	WARN("Extra ignored in font '%s'\n", lpFont);
     
-    lfd = HeapAlloc( SystemHeap, 0, sizeof(LFD) );
+    lfd = HeapAlloc( GetProcessHeap(), 0, sizeof(LFD) );
     if (lfd)
     {
 	lfd->foundry = lfd_fld[0];
@@ -1341,7 +1341,7 @@ static void XFONT_LoadDefault(LPCSTR ini, LPCSTR fonttype)
 		XFONT_LoadDefaultLFD(lfd, fonttype);
 	    else
 		WARN("Ini section [%s]%s is malformed\n", INIFontSection, ini);
-	    HeapFree(SystemHeap, 0, lfd);
+	    HeapFree(GetProcessHeap(), 0, lfd);
 	}
     }   
 }
@@ -1376,7 +1376,7 @@ static fontAlias* XFONT_CreateAlias( LPCSTR lpTypeFace, LPCSTR lpAlias )
     }
 
     j = lstrlenA(lpTypeFace) + 1;
-    pfa = HeapAlloc( SystemHeap, 0, sizeof(fontAlias) +
+    pfa = HeapAlloc( GetProcessHeap(), 0, sizeof(fontAlias) +
 			       j + lstrlenA(lpAlias) + 1 );
     if (pfa)
     {
@@ -1444,7 +1444,7 @@ static void XFONT_LoadAlias(const LFD* lfd, LPCSTR lpAlias, BOOL bSubst)
 
 		/* Update any references to the substituted font in aliasTable */
 		if(!strcmp(frMatch->lfFaceName, pfa->faTypeFace))
-		    pfa->faTypeFace = HEAP_strdupA( SystemHeap, 0, lpAlias );
+		    pfa->faTypeFace = HEAP_strdupA( GetProcessHeap(), 0, lpAlias );
 		prev = pfa;
 	    }
 						
@@ -1511,7 +1511,7 @@ static void XFONT_LoadAliases(void)
 	XFONT_LoadAlias( lfd, "Times New Roman", FALSE);
 
 	XFONT_LoadDefaultLFD( lfd, "serif ");
-	HeapFree(SystemHeap, 0, lfd);
+	HeapFree(GetProcessHeap(), 0, lfd);
     }
 	
     PROFILE_GetWineIniString( INIFontSection, INIDefaultSansSerif,
@@ -1525,7 +1525,7 @@ static void XFONT_LoadAliases(void)
 	XFONT_LoadAlias( lfd, "Arial", FALSE);
 
 	XFONT_LoadDefaultLFD( lfd, "sans serif ");
-	HeapFree(SystemHeap, 0, lfd);
+	HeapFree(GetProcessHeap(), 0, lfd);
     }
 
     /* then user specified aliases */
@@ -1549,7 +1549,7 @@ static void XFONT_LoadAliases(void)
 	    if (lfd)
 	    {
 		XFONT_LoadAlias(lfd, buffer, bSubst);
-		HeapFree(SystemHeap, 0, lfd);
+		HeapFree(GetProcessHeap(), 0, lfd);
 	    }
 	}
 	else
@@ -1601,10 +1601,10 @@ void XFONT_RemoveFontResource( fontResource** ppfr )
     while( pfr->fi )
     {
 	pfi = pfr->fi->next;
-	HeapFree( SystemHeap, 0, pfr->fi );
+	HeapFree( GetProcessHeap(), 0, pfr->fi );
 	pfr->fi = pfi;
     }
-    HeapFree( SystemHeap, 0, pfr );
+    HeapFree( GetProcessHeap(), 0, pfr );
 #endif
     *ppfr = pfr->next;
 }
@@ -1647,7 +1647,7 @@ static void XFONT_LoadIgnore(char* lfdname)
     else
 	WARN("Malformed font resource\n");
     
-    HeapFree(SystemHeap, 0, lfd);
+    HeapFree(GetProcessHeap(), 0, lfd);
 }
 
 static void XFONT_LoadIgnores(void)
@@ -1696,7 +1696,7 @@ static char* XFONT_UserMetricsCache( char* buffer, int* buf_size )
 	int i = strlen( home ) + strlen( INIWinePrefix ) + 
 		strlen( INIFontMetrics ) + strlen( pchDisplay ) + 2;
 	if( i > *buf_size ) 
-	    buffer = (char*) HeapReAlloc( SystemHeap, 0, buffer, *buf_size = i );
+	    buffer = (char*) HeapReAlloc( GetProcessHeap(), 0, buffer, *buf_size = i );
 	strcpy( buffer, home );
 	strcat( buffer, INIWinePrefix );
 	strcat( buffer, INIFontMetrics );
@@ -1759,7 +1759,7 @@ static void XFONT_CheckFIList( fontResource* fr, fontInfo* fi, int action)
 	    fr->fi_count--;
             if( prev ) prev->next = pfi = pfi->next;
             else fr->fi = pfi = pfi->next;
-	    HeapFree( SystemHeap, 0, subset );
+	    HeapFree( GetProcessHeap(), 0, subset );
 	    continue;
         }
     }
@@ -1834,14 +1834,14 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 	XFontStruct*  x_fs;
 	fontInfo*    pfi;
 
-	typeface = HEAP_strdupA(SystemHeap, 0, x_pattern[i]);
+	typeface = HEAP_strdupA(GetProcessHeap(), 0, x_pattern[i]);
 	if (!typeface)
 	    break;
 
 	lfd = LFD_Parse(typeface);
 	if (!lfd)
 	{
-	    HeapFree(SystemHeap, 0, typeface);
+	    HeapFree(GetProcessHeap(), 0, typeface);
 	    continue;
 	}
 
@@ -1854,7 +1854,7 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 	    pfr = fr;
 	}  
 	
-	if( !fi ) fi = (fontInfo*) HeapAlloc(SystemHeap, 0, sizeof(fontInfo));
+	if( !fi ) fi = (fontInfo*) HeapAlloc(GetProcessHeap(), 0, sizeof(fontInfo));
 	
 	if( !LFD_InitFontInfo( fi, lfd, x_pattern[i]) )
 	    goto nextfont;
@@ -1862,17 +1862,17 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 	if( !fr ) /* add new family */
 	{
 	    n_ff++;
-	    fr = (fontResource*) HeapAlloc(SystemHeap, 0, sizeof(fontResource)); 
+	    fr = (fontResource*) HeapAlloc(GetProcessHeap(), 0, sizeof(fontResource)); 
 	    if (fr)
 	    {
 		memset(fr, 0, sizeof(fontResource));
 	      
-		fr->resource = (LFD*) HeapAlloc(SystemHeap, 0, sizeof(LFD)); 
+		fr->resource = (LFD*) HeapAlloc(GetProcessHeap(), 0, sizeof(LFD)); 
 		memset(fr->resource, 0, sizeof(LFD));
 	      
 		TRACE("family: -%s-%s-\n", lfd->foundry, lfd->family );
-		fr->resource->foundry = HEAP_strdupA(SystemHeap, 0, lfd->foundry);
-		fr->resource->family = HEAP_strdupA(SystemHeap, 0, lfd->family);
+		fr->resource->foundry = HEAP_strdupA(GetProcessHeap(), 0, lfd->foundry);
+		fr->resource->family = HEAP_strdupA(GetProcessHeap(), 0, lfd->family);
 		fr->resource->weight = "";
 
 		if( pfr ) pfr->next = fr;
@@ -1934,10 +1934,10 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 	    XFONT_CheckFIList( fr, fi, UNMARK_SUBSETS );
 	}
     nextfont:
-	HeapFree(SystemHeap, 0, lfd);
-	HeapFree(SystemHeap, 0, typeface);
+	HeapFree(GetProcessHeap(), 0, lfd);
+	HeapFree(GetProcessHeap(), 0, typeface);
     }
-    if( fi ) HeapFree(SystemHeap, 0, fi);
+    if( fi ) HeapFree(GetProcessHeap(), 0, fi);
 
     return n_ff;
 }
@@ -1969,7 +1969,7 @@ static BOOL XFONT_ReadCachedMetrics( int fd, int res, unsigned x_checksum, int x
 	    if( length == (i + offset) )
 	    {
 		lseek( fd, offset, SEEK_SET );
-		fontList = (fontResource*)HeapAlloc( SystemHeap, 0, i);
+		fontList = (fontResource*)HeapAlloc( GetProcessHeap(), 0, i);
 		if( fontList )
 		{
 		    fontResource* 	pfr = fontList;
@@ -2033,7 +2033,7 @@ static BOOL XFONT_ReadCachedMetrics( int fd, int res, unsigned x_checksum, int x
 	    }
 	}
 fail:
-	if( fontList ) HeapFree( SystemHeap, 0, fontList );
+	if( fontList ) HeapFree( GetProcessHeap(), 0, fontList );
 	fontList = NULL;
 	close( fd );
     }
@@ -2576,7 +2576,7 @@ static fontObject* XFONT_GetCacheEntry(void)
 
 	    /* FIXME: lpXForm, lpPixmap */
 	    if(fontCache[j].lpX11Trans)
-	        HeapFree( SystemHeap, 0, fontCache[j].lpX11Trans );
+	        HeapFree( GetProcessHeap(), 0, fontCache[j].lpX11Trans );
 
 	    TSXFreeFont( display, fontCache[j].fs );
 
@@ -2591,7 +2591,7 @@ static fontObject* XFONT_GetCacheEntry(void)
 
 	    TRACE("\tgrowing font cache from %i to %i\n", fontCacheSize, prev_i );
 
-	    if( (newCache = (fontObject*)HeapReAlloc(SystemHeap, 0,  
+	    if( (newCache = (fontObject*)HeapReAlloc(GetProcessHeap(), 0,  
 						     fontCache, prev_i)) )
 	    {
 		i = fontCacheSize;
@@ -2654,7 +2654,7 @@ BOOL X11DRV_FONT_Init( DeviceCaps* pDevCaps )
   }
   x_checksum |= X_PFONT_MAGIC;
   buf_size = 128;
-  buffer = HeapAlloc( SystemHeap, 0, buf_size );
+  buffer = HeapAlloc( GetProcessHeap(), 0, buf_size );
 
   /* deal with systemwide font metrics cache */
 
@@ -2700,7 +2700,7 @@ BOOL X11DRV_FONT_Init( DeviceCaps* pDevCaps )
 	  TSXFreeFont(display, x_fs);
       }
   }
-  HeapFree(SystemHeap, 0, buffer);
+  HeapFree(GetProcessHeap(), 0, buffer);
 
   XFONT_WindowsNames();
   XFONT_LoadAliases();
@@ -2712,7 +2712,7 @@ BOOL X11DRV_FONT_Init( DeviceCaps* pDevCaps )
 
   /* fontList initialization is over, allocate X font cache */
 
-  fontCache = (fontObject*) HeapAlloc(SystemHeap, 0, fontCacheSize * sizeof(fontObject));
+  fontCache = (fontObject*) HeapAlloc(GetProcessHeap(), 0, fontCacheSize * sizeof(fontObject));
   XFONT_GrowFreeList(0, fontCacheSize - 1);
 
   TRACE("done!\n");
@@ -2746,7 +2746,7 @@ static BOOL XFONT_SetX11Trans( fontObject *pfo )
   }
 
   if (lfd->pixel_size[0] != '[') {
-      HeapFree(SystemHeap, 0, lfd);
+      HeapFree(GetProcessHeap(), 0, lfd);
       TSXFree(fontName);
       return FALSE;
   }
@@ -2755,7 +2755,7 @@ static BOOL XFONT_SetX11Trans( fontObject *pfo )
 
   sscanf(lfd->pixel_size, "[%f%f%f%f]", &PX->a, &PX->b, &PX->c, &PX->d);
   TSXFree(fontName);
-  HeapFree(SystemHeap, 0, lfd);
+  HeapFree(GetProcessHeap(), 0, lfd);
 
   TSXGetFontProperty( pfo->fs, RAW_ASCENT, &PX->RAW_ASCENT );
   TSXGetFontProperty( pfo->fs, RAW_DESCENT, &PX->RAW_DESCENT );
@@ -2830,9 +2830,9 @@ static X_PHYSFONT XFONT_RealizeFont( const LPLOGFONT16 plf, LPCSTR* faceMatched)
 
 		
 	    if(pfo->lf.lfEscapement != 0) {
-		pfo->lpX11Trans = HeapAlloc(SystemHeap, 0, sizeof(XFONTTRANS));
+		pfo->lpX11Trans = HeapAlloc(GetProcessHeap(), 0, sizeof(XFONTTRANS));
 		if(!XFONT_SetX11Trans( pfo )) {
-		    HeapFree(SystemHeap, 0, pfo->lpX11Trans);
+		    HeapFree(GetProcessHeap(), 0, pfo->lpX11Trans);
 		    pfo->lpX11Trans = NULL;
 		}
 	    }

@@ -18,7 +18,7 @@ DEFAULT_DEBUG_CHANNEL(mpr)
  */
 LPVOID WINAPI MPR_Alloc( DWORD dwSize )
 {
-    return HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, dwSize );
+    return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwSize );
 }
 
 /*****************************************************************
@@ -27,9 +27,9 @@ LPVOID WINAPI MPR_Alloc( DWORD dwSize )
 LPVOID WINAPI MPR_ReAlloc( LPVOID lpSrc, DWORD dwSize )
 {
     if ( lpSrc )
-        return HeapReAlloc( SystemHeap, HEAP_ZERO_MEMORY, lpSrc, dwSize );
+        return HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, lpSrc, dwSize );
     else
-        return HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, dwSize );
+        return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwSize );
 }
 
 /*****************************************************************
@@ -38,7 +38,7 @@ LPVOID WINAPI MPR_ReAlloc( LPVOID lpSrc, DWORD dwSize )
 BOOL WINAPI MPR_Free( LPVOID lpMem )
 {
     if ( lpMem )
-        return HeapFree( SystemHeap, 0, lpMem );
+        return HeapFree( GetProcessHeap(), 0, lpMem );
     else
         return FALSE;
 }

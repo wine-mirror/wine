@@ -733,7 +733,7 @@ LsaQueryInformationPolicy(
 	{
 	  case PolicyAuditEventsInformation: /* 2 */
 	    {
-	      PPOLICY_AUDIT_EVENTS_INFO p = HeapAlloc(SystemHeap, HEAP_ZERO_MEMORY, sizeof(POLICY_AUDIT_EVENTS_INFO));
+	      PPOLICY_AUDIT_EVENTS_INFO p = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(POLICY_AUDIT_EVENTS_INFO));
 	      p->AuditingMode = FALSE; /* no auditing */
 	      *Buffer = p;
 	    }
@@ -747,7 +747,7 @@ LsaQueryInformationPolicy(
 	      };
 	      SID_IDENTIFIER_AUTHORITY localSidAuthority = {SECURITY_NT_AUTHORITY};
 		
-	      struct di * xdi = HeapAlloc(SystemHeap, HEAP_ZERO_MEMORY, sizeof(xdi));
+	      struct di * xdi = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(xdi));
 	      RtlInitUnicodeString(&(xdi->ppdi.Name), HEAP_strdupAtoW(GetProcessHeap(),0,"DOMAIN"));
 	      xdi->ppdi.Sid = &(xdi->sid);
 	      xdi->sid.Revision = SID_REVISION;
@@ -816,7 +816,7 @@ NTSTATUS WINAPI
 LsaFreeMemory(IN PVOID Buffer)
 {
 	TRACE("(%p)\n",Buffer);
-	return HeapFree(SystemHeap, 0, Buffer);
+	return HeapFree(GetProcessHeap(), 0, Buffer);
 }
 /******************************************************************************
  * LsaClose [ADVAPI32.243]

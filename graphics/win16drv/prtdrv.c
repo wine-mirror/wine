@@ -185,7 +185,7 @@ LOADED_PRINTER_DRIVER *LoadPrinterDriver(const char *pszDriver)
 	memset(pLPD, 0 , sizeof(LOADED_PRINTER_DRIVER));
 	
 	pLPD->hInst	= hInst;
-	pLPD->szDriver	= HEAP_strdupA(SystemHeap,0,pszDriver);
+	pLPD->szDriver	= HEAP_strdupA(GetProcessHeap(),0,pszDriver);
 
 	/* Get DS for the printer module */
 	pLPD->ds_reg	= hInst;
@@ -421,7 +421,7 @@ WORD PRTDRV_Output(LPPDEVICE 	 lpDestDev,
 	    RGNDATA *clip;
 
 	    size = GetRegionData( hClipRgn, 0, NULL );
-	    clip = HeapAlloc( SystemHeap, 0, size );
+	    clip = HeapAlloc( GetProcessHeap(), 0, size );
 	    if(!clip) 
 	    {
 	        WARN("Can't alloc clip array in PRTDRV_Output\n");
@@ -456,7 +456,7 @@ WORD PRTDRV_Output(LPPDEVICE 	 lpDestDev,
 		}
 		SEGPTR_FREE(lP8);
 	    }
-	    HeapFree( SystemHeap, 0, clip );
+	    HeapFree( GetProcessHeap(), 0, clip );
 	}
 	else
 	{

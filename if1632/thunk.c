@@ -150,7 +150,7 @@ FARPROC THUNK_Alloc( FARPROC16 func, RELAY relay )
     }
 
     /* Otherwise, we need to alloc a thunk */
-    thunk = HeapAlloc( SystemHeap, 0, sizeof(*thunk) );
+    thunk = HeapAlloc( GetProcessHeap(), 0, sizeof(*thunk) );
     if (thunk)
     {
         thunk->popl_eax   = 0x58;
@@ -179,14 +179,14 @@ void THUNK_Free( FARPROC thunk )
             || t->magic != CALLTO16_THUNK_MAGIC )
          return;
 
-    if (HEAP_IsInsideHeap( SystemHeap, 0, t ))
+    if (HEAP_IsInsideHeap( GetProcessHeap(), 0, t ))
     {
         THUNK **prev = &firstThunk;
         while (*prev && (*prev != t)) prev = &(*prev)->next;
         if (*prev)
         {
             *prev = t->next;
-            HeapFree( SystemHeap, 0, t );
+            HeapFree( GetProcessHeap(), 0, t );
             return;
         }
     }

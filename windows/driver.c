@@ -180,7 +180,7 @@ static int DRIVER_MapMsg16To32(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
 	    *lParam1 = (DWORD)PTR_SEG_TO_LIN(*lParam1);
 	if (*lParam2 && wMsg == DRV_OPEN) {
             LPMCI_OPEN_DRIVER_PARMS16	modp16 = PTR_SEG_TO_LIN(*lParam2);
-            char*			ptr = HeapAlloc(SystemHeap, 0, sizeof(LPMCI_OPEN_DRIVER_PARMS16) + sizeof(MCI_OPEN_DRIVER_PARMSA));
+            char*			ptr = HeapAlloc(GetProcessHeap(), 0, sizeof(LPMCI_OPEN_DRIVER_PARMS16) + sizeof(MCI_OPEN_DRIVER_PARMSA));
             LPMCI_OPEN_DRIVER_PARMSA	modp32;
 	    
 	    if (ptr) {
@@ -200,13 +200,13 @@ static int DRIVER_MapMsg16To32(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
     case DRV_INSTALL:
 	/* lParam1 is a handle to a window (or not used), lParam2 is a pointer to DRVCONFIGINFO */
 	if (*lParam2) {
-            LPDRVCONFIGINFO	dci32 = HeapAlloc(SystemHeap, 0, sizeof(DRVCONFIGINFO));
+            LPDRVCONFIGINFO	dci32 = HeapAlloc(GetProcessHeap(), 0, sizeof(DRVCONFIGINFO));
             LPDRVCONFIGINFO16	dci16 = PTR_SEG_TO_LIN(*lParam2);
 	    
 	    if (dci32) {
 		dci32->dwDCISize = sizeof(DRVCONFIGINFO);
-		dci32->lpszDCISectionName = HEAP_strdupAtoW(SystemHeap, 0, PTR_SEG_TO_LIN(dci16->lpszDCISectionName));
-		dci32->lpszDCIAliasName   = HEAP_strdupAtoW(SystemHeap, 0, PTR_SEG_TO_LIN(dci16->lpszDCIAliasName));
+		dci32->lpszDCISectionName = HEAP_strdupAtoW(GetProcessHeap(), 0, PTR_SEG_TO_LIN(dci16->lpszDCISectionName));
+		dci32->lpszDCIAliasName   = HEAP_strdupAtoW(GetProcessHeap(), 0, PTR_SEG_TO_LIN(dci16->lpszDCIAliasName));
 		if (dci32->lpszDCISectionName == NULL || dci32->lpszDCIAliasName == NULL)
 		    return -2;
 	    } else {
@@ -265,7 +265,7 @@ static int DRIVER_UnMapMsg16To32(WORD wMsg, DWORD lParam1, DWORD lParam2)
 
 	    modp16->wCustomCommandTable = modp32->wCustomCommandTable;
 	    modp16->wType = modp32->wType;
-	    if (!HeapFree(SystemHeap, 0, modp32))
+	    if (!HeapFree(GetProcessHeap(), 0, modp32))
 		FIXME("bad free line=%d\n", __LINE__);
 	}
 	ret = 0;
@@ -275,11 +275,11 @@ static int DRIVER_UnMapMsg16To32(WORD wMsg, DWORD lParam1, DWORD lParam2)
 	/* lParam1 is a handle to a window (or not used), lParam2 is a pointer to DRVCONFIGINFO, lParam2 */
 	if (lParam2) {
 	    LPDRVCONFIGINFO	dci32 = (LPDRVCONFIGINFO)lParam2;
-	    if (!HeapFree(SystemHeap, 0, (LPVOID)dci32->lpszDCISectionName))
+	    if (!HeapFree(GetProcessHeap(), 0, (LPVOID)dci32->lpszDCISectionName))
 		FIXME("bad free line=%d\n", __LINE__);
-	    if (!HeapFree(SystemHeap, 0, (LPVOID)dci32->lpszDCIAliasName))
+	    if (!HeapFree(GetProcessHeap(), 0, (LPVOID)dci32->lpszDCIAliasName))
 		FIXME("bad free line=%d\n", __LINE__);
-	    if (!HeapFree(SystemHeap, 0, dci32))
+	    if (!HeapFree(GetProcessHeap(), 0, dci32))
 		FIXME("bad free line=%d\n", __LINE__);
 	}
 	ret = 0;
@@ -369,18 +369,18 @@ static int DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
 		
 		dci16->dwDCISize = sizeof(DRVCONFIGINFO16);
 		
-		if ((str1 = HEAP_strdupWtoA(SystemHeap, 0, dci32->lpszDCISectionName)) != NULL &&
+		if ((str1 = HEAP_strdupWtoA(GetProcessHeap(), 0, dci32->lpszDCISectionName)) != NULL &&
 		    (str2 = SEGPTR_STRDUP(str1)) != NULL) {
 		    dci16->lpszDCISectionName = (LPSTR)SEGPTR_GET(str2);
-		    if (!HeapFree(SystemHeap, 0, str1))
+		    if (!HeapFree(GetProcessHeap(), 0, str1))
 			FIXME("bad free line=%d\n", __LINE__);
 		} else {
 		    return -2;
 		}
-		if ((str1 = HEAP_strdupWtoA(SystemHeap, 0, dci32->lpszDCIAliasName)) != NULL &&
+		if ((str1 = HEAP_strdupWtoA(GetProcessHeap(), 0, dci32->lpszDCIAliasName)) != NULL &&
 		    (str2 = SEGPTR_STRDUP(str1)) != NULL) {
 		    dci16->lpszDCIAliasName = (LPSTR)SEGPTR_GET(str2);
-		    if (!HeapFree(SystemHeap, 0, str1))
+		    if (!HeapFree(GetProcessHeap(), 0, str1))
 			FIXME("bad free line=%d\n", __LINE__);
 		} else {
 		    return -2;
@@ -655,7 +655,7 @@ BOOL DRIVER_CloseDriver(LPWINE_DRIVER lpDrv, DWORD lParam1, DWORD lParam2)
 	SendDriverMessage((HDRVR)lpDrv, DRV_CLOSE, lParam1, lParam2);
     
 	if (DRIVER_RemoveFromList(lpDrv)) {
-	    HeapFree(SystemHeap, 0, lpDrv);
+	    HeapFree(GetProcessHeap(), 0, lpDrv);
 	    return TRUE;
 	}
     }
@@ -674,7 +674,7 @@ LPWINE_DRIVER DRIVER_RegisterDriver16(LPCSTR lpName, HMODULE16 hModule, DRIVERPR
 {
     LPWINE_DRIVER	lpDrv;
     
-    lpDrv = HeapAlloc(SystemHeap, 0, sizeof(WINE_DRIVER));
+    lpDrv = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_DRIVER));
     if (lpDrv != NULL) {
 	lpDrv->dwFlags         = WINE_GDF_EXIST|WINE_GDF_16BIT;
 	lpDrv->dwDriverID      = 0;
@@ -684,7 +684,7 @@ LPWINE_DRIVER DRIVER_RegisterDriver16(LPCSTR lpName, HMODULE16 hModule, DRIVERPR
 	lpDrv->d.d16.lpDrvProc = lpProc;
 	
 	if (!DRIVER_AddToList(lpDrv, lParam, bCallFrom32)) {
-	    HeapFree(SystemHeap, 0, lpDrv);
+	    HeapFree(GetProcessHeap(), 0, lpDrv);
 	    lpDrv = NULL;
 	}
     }
@@ -702,7 +702,7 @@ LPWINE_DRIVER DRIVER_RegisterDriver32(LPCSTR lpName, HMODULE hModule, DRIVERPROC
 {
     LPWINE_DRIVER	lpDrv;
     
-    lpDrv = HeapAlloc(SystemHeap, 0, sizeof(WINE_DRIVER));
+    lpDrv = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_DRIVER));
     if (lpDrv != NULL) {
 	lpDrv->dwFlags          = WINE_GDF_EXIST;
 	lpDrv->dwDriverID       = 0;
@@ -712,7 +712,7 @@ LPWINE_DRIVER DRIVER_RegisterDriver32(LPCSTR lpName, HMODULE hModule, DRIVERPROC
 	lpDrv->d.d32.lpDrvProc  = lpProc;
 	
 	if (!DRIVER_AddToList(lpDrv, lParam, bCallFrom32)) {
-	    HeapFree(SystemHeap, 0, lpDrv);
+	    HeapFree(GetProcessHeap(), 0, lpDrv);
 	    lpDrv = NULL;
 	}
     }

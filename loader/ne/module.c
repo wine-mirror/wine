@@ -499,12 +499,12 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
         fastload_length=ne_header.fastload_length<<ne_header.align_shift_count;
         TRACE("Using fast-load area offset=%x len=%d\n",
                         fastload_offset, fastload_length );
-        if ((fastload = HeapAlloc( SystemHeap, 0, fastload_length )) != NULL)
+        if ((fastload = HeapAlloc( GetProcessHeap(), 0, fastload_length )) != NULL)
         {
             _llseek16( hFile, fastload_offset, SEEK_SET);
             if (_hread16(hFile, fastload, fastload_length) != fastload_length)
             {
-                HeapFree( SystemHeap, 0, fastload );
+                HeapFree( GetProcessHeap(), 0, fastload );
                 WARN("Error reading fast-load area!\n");
                 fastload = NULL;
             }
@@ -514,7 +514,7 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
     /* Get the segment table */
 
     pModule->seg_table = (int)pData - (int)pModule;
-    buffer = HeapAlloc( SystemHeap, 0, ne_header.n_segment_tab *
+    buffer = HeapAlloc( GetProcessHeap(), 0, ne_header.n_segment_tab *
                                       sizeof(struct ne_segment_table_entry_s));
     if (buffer)
     {
@@ -525,9 +525,9 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
              ne_header.n_segment_tab * sizeof(struct ne_segment_table_entry_s),
              buffer ))
         {
-            HeapFree( SystemHeap, 0, buffer );
+            HeapFree( GetProcessHeap(), 0, buffer );
             if (fastload)
-		HeapFree( SystemHeap, 0, fastload );
+		HeapFree( GetProcessHeap(), 0, fastload );
             GlobalFree16( hModule );
             _lclose16( hFile );
             return (HMODULE16)11;  /* invalid exe */
@@ -538,12 +538,12 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
             memcpy( pData, pSeg, sizeof(*pSeg) );
             pData += sizeof(SEGTABLEENTRY);
         }
-        HeapFree( SystemHeap, 0, buffer );
+        HeapFree( GetProcessHeap(), 0, buffer );
     }
     else
     {
         if (fastload)
-	    HeapFree( SystemHeap, 0, fastload );
+	    HeapFree( GetProcessHeap(), 0, fastload );
         GlobalFree16( hModule );
         _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
@@ -574,7 +574,7 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
                pData ))
     {
         if (fastload)
-	    HeapFree( SystemHeap, 0, fastload );
+	    HeapFree( GetProcessHeap(), 0, fastload );
         GlobalFree16( hModule );
         _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
@@ -591,7 +591,7 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
                   pData ))
         {
             if (fastload)
-		HeapFree( SystemHeap, 0, fastload );
+		HeapFree( GetProcessHeap(), 0, fastload );
             GlobalFree16( hModule );
             _lclose16( hFile );
             return (HMODULE16)11;  /* invalid exe */
@@ -608,7 +608,7 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
                pData ))
     {
         if (fastload)
-	    HeapFree( SystemHeap, 0, fastload );
+	    HeapFree( GetProcessHeap(), 0, fastload );
         GlobalFree16( hModule );
         _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
@@ -617,7 +617,7 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
 
     /* Load entry table, convert it to the optimized version used by Windows */
 
-    if ((pTempEntryTable = HeapAlloc( SystemHeap, 0, ne_header.entry_tab_length)) != NULL)
+    if ((pTempEntryTable = HeapAlloc( GetProcessHeap(), 0, ne_header.entry_tab_length)) != NULL)
     {
         BYTE nr_entries, type, *s;
 
@@ -626,9 +626,9 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
     if (!READ( mz_header.e_lfanew + ne_header.entry_tab_offset,
                 ne_header.entry_tab_length, pTempEntryTable ))
     {
-            HeapFree( SystemHeap, 0, pTempEntryTable );
+            HeapFree( GetProcessHeap(), 0, pTempEntryTable );
             if (fastload)
-		HeapFree( SystemHeap, 0, fastload );
+		HeapFree( GetProcessHeap(), 0, fastload );
         GlobalFree16( hModule );
         _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
@@ -689,12 +689,12 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
                 }
             }
         }
-	HeapFree( SystemHeap, 0, pTempEntryTable );
+	HeapFree( GetProcessHeap(), 0, pTempEntryTable );
     }
     else
     {
         if (fastload)
-	    HeapFree( SystemHeap, 0, fastload );
+	    HeapFree( GetProcessHeap(), 0, fastload );
         GlobalFree16( hModule );
         _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
@@ -718,7 +718,7 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
 
 #undef READ
     if (fastload)
-	HeapFree( SystemHeap, 0, fastload );
+	HeapFree( GetProcessHeap(), 0, fastload );
 
     /* Get the non-resident names table */
 

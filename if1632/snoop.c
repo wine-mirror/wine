@@ -118,18 +118,18 @@ SNOOP16_RegisterDLL(NE_MODULE *pModule,LPCSTR name) {
 			return; /* already registered */
 		dll = &((*dll)->next);
 	}
-	*dll = (SNOOP16_DLL*)HeapAlloc(SystemHeap,HEAP_ZERO_MEMORY,sizeof(SNOOP16_DLL));
+	*dll = (SNOOP16_DLL*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SNOOP16_DLL));
 	(*dll)->next	= NULL;
 	(*dll)->hmod	= pModule->self;
 	if ((s=strrchr(name,'\\')))
 		name = s+1;
-	(*dll)->name	= HEAP_strdupA(SystemHeap,0,name);
+	(*dll)->name	= HEAP_strdupA(GetProcessHeap(),0,name);
 	if ((s=strrchr((*dll)->name,'.')))
 		*s='\0';
 	(*dll)->funhandle = GlobalHandleToSel16(GLOBAL_Alloc(GMEM_ZEROINIT,65535,0,TRUE,FALSE,FALSE));
 	(*dll)->funs = GlobalLock16((*dll)->funhandle);
 	if (!(*dll)->funs) {
-		HeapFree(SystemHeap,0,*dll);
+		HeapFree(GetProcessHeap(),0,*dll);
 		FIXME("out of memory\n");
 		return;
 	}
@@ -185,9 +185,9 @@ SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfun) {
 		}
 	}
 	if (*cpnt)
-		fun->name = HEAP_strdupA(SystemHeap,0,name);
+		fun->name = HEAP_strdupA(GetProcessHeap(),0,name);
 	else
-		fun->name = HEAP_strdupA(SystemHeap,0,"");
+		fun->name = HEAP_strdupA(GetProcessHeap(),0,"");
 	if (!SNOOP_ShowDebugmsgSnoop(dll->name, ordinal, fun->name))
 		return origfun;
 
@@ -196,7 +196,7 @@ SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfun) {
 		char *s=strchr(fun->name,'_');
 
 		if (!strncasecmp(s,"_thunkdata",10)) {
-			HeapFree(SystemHeap,0,fun->name);
+			HeapFree(GetProcessHeap(),0,fun->name);
 			fun->name = NULL;
 			return origfun;
 		}
@@ -270,7 +270,7 @@ void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 			DPRINTF(" ...");
 	} else if (fun->nrofargs<0) {
 		DPRINTF("<unknown, check return>");
-		ret->args = HeapAlloc(SystemHeap,0,16*sizeof(WORD));
+		ret->args = HeapAlloc(GetProcessHeap(),0,16*sizeof(WORD));
 		memcpy(ret->args,(LPBYTE)((char *) PTR_SEG_OFF_TO_LIN(SS_reg(context),LOWORD(ESP_reg(context)))+8),sizeof(WORD)*16);
 	}
 	DPRINTF(") ret=%04x:%04x\n",HIWORD(ret->origreturn),LOWORD(ret->origreturn));
@@ -306,7 +306,7 @@ void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 		DPRINTF(") retval = %04x:%04x ret=%04x:%04x\n",
 			DX_reg(context),AX_reg(context),HIWORD(ret->origreturn),LOWORD(ret->origreturn)
 		);
-		HeapFree(SystemHeap,0,ret->args);
+		HeapFree(GetProcessHeap(),0,ret->args);
 		ret->args = NULL;
 	} else
 		DPRINTF("Ret  %s.%ld: %s() retval = %04x:%04x ret=%04x:%04x\n",

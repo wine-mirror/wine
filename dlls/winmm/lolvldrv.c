@@ -2211,7 +2211,7 @@ static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT num,
 	  lpDrv->name, llTypes[type].name);
     /* realloc translation table */
     llTypes[type].lpMlds = (LPWINE_MLD)
-	HeapReAlloc(SystemHeap, 0, (llTypes[type].lpMlds) ? llTypes[type].lpMlds - 1 : NULL,
+	HeapReAlloc(GetProcessHeap(), 0, (llTypes[type].lpMlds) ? llTypes[type].lpMlds - 1 : NULL,
 		    sizeof(WINE_MLD) * (llTypes[type].wMaxId + 1)) + 1;
     /* re-build the translation table */
     if (llTypes[type].nMapper != -1) {

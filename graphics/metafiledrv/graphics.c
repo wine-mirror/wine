@@ -120,7 +120,7 @@ static BOOL MFDRV_MetaPoly(DC *dc, short func, LPPOINT16 pt, short count)
     METARECORD *mr;
 
     len = sizeof(METARECORD) + (count * 4); 
-    if (!(mr = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, len )))
+    if (!(mr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len )))
 	return FALSE;
 
     mr->rdSize = len / 2;
@@ -128,7 +128,7 @@ static BOOL MFDRV_MetaPoly(DC *dc, short func, LPPOINT16 pt, short count)
     *(mr->rdParm) = count;
     memcpy(mr->rdParm + 1, pt, count * 4);
     ret = MFDRV_WriteRecord( dc, mr, mr->rdSize * 2);
-    HeapFree( SystemHeap, 0, mr);
+    HeapFree( GetProcessHeap(), 0, mr);
     return ret;
 }
 
@@ -227,7 +227,7 @@ static INT16 MFDRV_CreateRegion(DC *dc, HRGN hrgn)
     BOOL ret;
 
     len = GetRegionData( hrgn, 0, NULL );
-    if( !(rgndata = HeapAlloc( SystemHeap, 0, len )) ) {
+    if( !(rgndata = HeapAlloc( GetProcessHeap(), 0, len )) ) {
         WARN("Can't alloc rgndata buffer\n");
 	return -1;
     }
@@ -237,9 +237,9 @@ static INT16 MFDRV_CreateRegion(DC *dc, HRGN hrgn)
      * Assume every rect is a separate band -> 6 WORDs per rect
      */
     len = sizeof(METARECORD) + 20 + (rgndata->rdh.nCount * 12);
-    if( !(mr = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, len )) ) {
+    if( !(mr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len )) ) {
         WARN("Can't alloc METARECORD buffer\n");
-	HeapFree( SystemHeap, 0, rgndata );
+	HeapFree( GetProcessHeap(), 0, rgndata );
 	return -1;
     }
 
@@ -287,8 +287,8 @@ static INT16 MFDRV_CreateRegion(DC *dc, HRGN hrgn)
     mr->rdFunction = META_CREATEREGION;
     mr->rdSize = len / 2;
     ret = MFDRV_WriteRecord( dc, mr, mr->rdSize * 2 );	
-    HeapFree( SystemHeap, 0, mr );
-    HeapFree( SystemHeap, 0, rgndata );
+    HeapFree( GetProcessHeap(), 0, mr );
+    HeapFree( GetProcessHeap(), 0, rgndata );
     if(!ret) 
     {
         WARN("MFDRV_WriteRecord failed\n");

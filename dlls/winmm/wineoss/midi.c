@@ -179,7 +179,7 @@ static	BOOL OSS_MidiInit(void)
 	    return TRUE;
 	}
 	
-	tmplpCaps = HeapAlloc(SystemHeap, 0, sizeof(MIDIOUTCAPSA));
+	tmplpCaps = HeapAlloc(GetProcessHeap(), 0, sizeof(MIDIOUTCAPSA));
 	if (!tmplpCaps)
 	    break;
 	/* We also have the information sinfo.synth_subtype, not used here
@@ -258,7 +258,7 @@ static	BOOL OSS_MidiInit(void)
 	    return TRUE;
 	}
 	
-	tmplpOutCaps = HeapAlloc(SystemHeap, 0, sizeof(MIDIOUTCAPSA));
+	tmplpOutCaps = HeapAlloc(GetProcessHeap(), 0, sizeof(MIDIOUTCAPSA));
 	if (!tmplpOutCaps)
 	    break;
 	/* This whole part is somewhat obscure to me. I'll keep trying to dig
@@ -284,7 +284,7 @@ static	BOOL OSS_MidiInit(void)
 	
 	midiOutDevices[numsynthdevs + i] = tmplpOutCaps;
 	
-	tmplpInCaps = HeapAlloc(SystemHeap, 0, sizeof(MIDIOUTCAPSA));
+	tmplpInCaps = HeapAlloc(GetProcessHeap(), 0, sizeof(MIDIOUTCAPSA));
 	if (!tmplpInCaps)
 	    break;
 	/* This whole part is somewhat obscure to me. I'll keep trying to dig

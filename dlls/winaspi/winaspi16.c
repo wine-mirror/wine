@@ -80,7 +80,7 @@ ASPI_OpenDevice16(SRB_ExecSCSICmd16 *prb)
     }
 
     /* device is now open */
-    curr = HeapAlloc( SystemHeap, 0, sizeof(ASPI_DEVICE_INFO) );
+    curr = HeapAlloc( GetProcessHeap(), 0, sizeof(ASPI_DEVICE_INFO) );
     curr->fd = fd;
     curr->hostId = prb->SRB_HaId;
     curr->target = prb->SRB_Target;

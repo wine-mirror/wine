@@ -210,7 +210,7 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     TRACE("In creatdc for (%s,%s,%s) initData 0x%p\n",
 	  driver, device, output, initData);
 
-    physDev = (WIN16DRV_PDEVICE *)HeapAlloc( SystemHeap, 0, sizeof(*physDev) );
+    physDev = (WIN16DRV_PDEVICE *)HeapAlloc( GetProcessHeap(), 0, sizeof(*physDev) );
     if (!physDev) return FALSE;
     dc->physDev = physDev;
 
@@ -218,7 +218,7 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     if (pLPD == NULL)
     {
 	WARN("Failed to find printer driver\n");
-        HeapFree( SystemHeap, 0, physDev );
+        HeapFree( GetProcessHeap(), 0, physDev );
         return FALSE;
     }
     TRACE("windevCreateDC pLPD 0x%p\n", pLPD);

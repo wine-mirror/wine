@@ -2704,7 +2704,7 @@ HWND WINAPI GetLastActivePopup( HWND hwnd )
  *           WIN_BuildWinArray
  *
  * Build an array of pointers to the children of a given window.
- * The array must be freed with HeapFree(SystemHeap). Return NULL
+ * The array must be freed with WIN_ReleaseWinArray. Return NULL
  * when no windows are found.
  */
 WND **WIN_BuildWinArray( WND *wndPtr, UINT bwaFlags, UINT* pTotal )
@@ -2739,7 +2739,7 @@ WND **WIN_BuildWinArray( WND *wndPtr, UINT bwaFlags, UINT* pTotal )
     {
 	/* Now build the list of all windows */
 
-	if ((list = (WND **)HeapAlloc( SystemHeap, 0, sizeof(WND *) * (count + 1))))
+	if ((list = (WND **)HeapAlloc( GetProcessHeap(), 0, sizeof(WND *) * (count + 1))))
 	{
 	    for (pWnd = WIN_LockWndPtr(wndPtr->child), ppWnd = list, count = 0; pWnd; WIN_UpdateWndPtr(&pWnd,pWnd->next))
 	    {
@@ -2765,7 +2765,7 @@ WND **WIN_BuildWinArray( WND *wndPtr, UINT bwaFlags, UINT* pTotal )
 void WIN_ReleaseWinArray(WND **wndArray)
 {
     /* Future : this function will also unlock all windows associated with wndArray */
-     HeapFree( SystemHeap, 0, wndArray );
+     HeapFree( GetProcessHeap(), 0, wndArray );
 
 }
 
