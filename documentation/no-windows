@@ -1,34 +1,63 @@
-Running Wine without Windows
-============================
+			Wine without Windows
+			====================
 
-Sometimes you can bring applications to run by using some of the
-native Windows DLL's, together with Wine. Here are some tips by
-Juergen Schmied on how to proceed. This assumes that your C:\windows
+A major goal of Wine is to allow users to run Windows programs without
+having to install Windows on their machine. Wine implements the
+functionality of the main DLL's usually provided with Windows.
+Therefore, once Wine is finished, you will not need to have windows
+installed to use Wine.
+
+Wine has already made enough progress that it may be possible to run
+your target applications without Windows installed. If you want to try
+it, follow these steps:
+
+1. Create empty C:\windows and C:\windows\system directories.
+   Do not point Wine to a Windows directory full of old installations
+   and a messy registry. (Wine creates a special registry in your home
+   directory, in $HOME/.wine/*.reg. Perhaps you have to remove these
+   files).
+
+2. Point [Drive C] in wine.conf or .winerc to where you want C: to be.
+   Refer to the Wine man page for more information. Remember to use
+   filesystem=win95 !
+
+3. Use tools/wineinstall to compile Wine and install the default
+   registry. Or if you prefer to do it yourself, compile programs/regapi,
+   and run:   programs/regapi/regapi setValue < winedefault.reg
+
+4. Run and/or install your applications.
+
+
+Because Wine is not yet complete, some programs will work better
+with native Windows DLL's than with Wine's replacements. Wine has been
+designed to make this possible. Here are some tips by Juergen Schmied
+(and others) on how to proceed. This assumes that your C:\windows
 directory in the configuration file does not point to a native Windows
 installation but is in a separate Unix file system. (For instance,
 C:\windows is really /home/ego/wine/drives/c).
 
-- Create empty C:\windows and C:\windows\system directories.
-  Do not point Wine to a Windows directory full of old installations
-  and a messy registry. (Wine creates a special registry in your home
-  directory, in $HOME/.wine/*.reg. Perhaps you have to remove these
-  files).
-- Point [Drive C] in wine.conf or .winerc to where you want C: to be.
-  Refer to the README file or man page. Remember to use filesystem=win95 !
-- Use tools/wineinstall to compile Wine and install the default
-  registry. Or if you prefer to do it yourself, compile programs/regapi,
-  and run:   programs/regapi/regapi setValue < winedefault.reg
 - Run the application with   -debugmsg +module,+file   to find out
   which files are needed. Copy the required DLL's one by one to the
-  C:\windows\system directory.
+  C:\windows\system directory. Do not copy KERNEL/KERNEL32, GDI/GDI32,
+  or USER/USER32. These implement the core functionality of the
+  Windows API, and the Wine internal versions must be used.
+
+- Edit the [DllOverrides] section of wine.conf or .winerc to specify
+  'native' before 'builtin' for the Windows DLL's you want to use.
+  For more information about this, see the Wine manpage.
+
 - Note that some network DLL's are not needed even though Wine is
-  looking for them. Do not copy the MPR.DLL into the directory,
-  use the internal implementation.
+  looking for them. The Windows MPR.DLL currently does not work; you
+  must use the internal implementation.
+
 - Copy SHELL/SHELL32 and COMDLG/COMDLG32 COMMCTRL/COMCTL32
   only as pairs to your Wine directory (these DLL's are
-  "clean" to use)
-- Be consistent: Use only DLLS from the same Windows version
+  "clean" to use).  Make sure you have these specified in the
+  [DllPairs] section of wine.conf or .winerc.
+
+- Be consistent: Use only DLL's from the same Windows version
   together.
+
 - Put regedit.exe in the C:\windows directory (office95 imports
   a *.reg file when it runs with a empty registry, don't know
   about office97).
