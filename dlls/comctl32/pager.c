@@ -598,6 +598,18 @@ PAGER_SetFixedHeight(HWND hwnd, PAGER_INFO* infoPtr)
     return w;
 }
 
+/******************************************************************
+ * For the PGM_RECALCSIZE message (but not the other uses in      *
+ * this module), the native control does only the following:      *
+ *                                                                *
+ *    if (some condition)                                         *
+ *          PostMessageA(hwnd, EM_FMTLINES, 0, 0);                *
+ *    return DefWindowProcA(hwnd, PGM_RECALCSIZE, 0, 0);          *
+ *                                                                *
+ * When we figure out what the "some condition" is we will        *
+ * implement that for the message processing.                     *
+ ******************************************************************/
+
 static LRESULT
 PAGER_RecalcSize(HWND hwnd)
 {
@@ -634,8 +646,12 @@ PAGER_SetBkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->clrBk = (COLORREF)lParam;
     TRACE("[%04x] %06lx\n", hwnd, infoPtr->clrBk);
 
-    PAGER_RecalcSize(hwnd);
-    SendMessageA(hwnd, WM_NCPAINT, (WPARAM)0, (LPARAM)0);
+    /* the native control seems to do things this way */
+    SetWindowPos(hwnd, 0,0,0,0,0, 
+		 SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE |
+		 SWP_NOZORDER | SWP_NOACTIVATE);
+
+    RedrawWindow(hwnd, 0, 0, RDW_ERASE | RDW_INVALIDATE);
 
     return (LRESULT)clrTemp;
 }
@@ -850,6 +866,9 @@ PAGER_NCCalcSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
 	
     DefWindowProcA (hwnd, WM_NCCALCSIZE, wParam, lParam);
 
+    TRACE("orig rect=(%d,%d)-(%d,%d)\n",
+	  lpRect->left, lpRect->top, lpRect->right, lpRect->bottom);
+
     if (PAGER_IsHorizontal(hwnd))
     {
 	infoPtr->nWidth = lpRect->right - lpRect->left;
@@ -860,7 +879,7 @@ PAGER_NCCalcSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
 	GetWindowRect (hwnd, &rcmyw);
 
 	/* Reset buttons and hide any grey ones */
-	scrollRange = infoPtr->nWidth - (rcmyw.right - rcmyw.bottom);
+	scrollRange = infoPtr->nWidth - (rcmyw.right - rcmyw.left);
 
 	TRACE("nPos=%d, scrollrange=%d, nWidth=%d, myw=(%d,%d)-(%d,%d)\n",
 	      infoPtr->nPos, scrollRange, infoPtr->nWidth,
@@ -882,9 +901,9 @@ PAGER_NCCalcSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    if (PtInRect (&rbrc, cursor) && infoPtr->BRbtnState)
 		RedrawWindow (hwnd, 0, 0, RDW_INVALIDATE | RDW_ERASE);
 	}
-	if (infoPtr->TLbtnState) /* != PGF_INVISIBLE */
+	if (infoPtr->TLbtnState && (lpRect->left + infoPtr->nButtonSize < lpRect->right))
 	    lpRect->left += infoPtr->nButtonSize;
-	if (infoPtr->BRbtnState) 
+	if (infoPtr->BRbtnState && (lpRect->right - infoPtr->nButtonSize > lpRect->left))
 	    lpRect->right -= infoPtr->nButtonSize;
     }
     else
@@ -941,9 +960,9 @@ PAGER_NCCalcSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    if (PtInRect (&rbrc, cursor) && infoPtr->BRbtnState)
 		RedrawWindow (hwnd, 0, 0, RDW_INVALIDATE | RDW_ERASE);
 	}
-	if (infoPtr->TLbtnState)
+	if (infoPtr->TLbtnState && (lpRect->top + infoPtr->nButtonSize < lpRect->bottom))
 	    lpRect->top += infoPtr->nButtonSize;
-	if (infoPtr->BRbtnState)
+	if (infoPtr->BRbtnState && (lpRect->bottom - infoPtr->nButtonSize > lpRect->top))
 	    lpRect->bottom -= infoPtr->nButtonSize;
 	/* ???? */
 	if ((lpRect->bottom < 0) || (lpRect->bottom > infoPtr->nHeight))
