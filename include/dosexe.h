@@ -8,7 +8,7 @@
 #define __WINE_DOSEXE_H
 
 #include <sys/types.h> /* pid_t */
-#include "wintypes.h"
+#include "winbase.h"
 #include "sig_context.h"
 
 typedef struct _DOSTASK {
