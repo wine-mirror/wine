@@ -1347,8 +1347,8 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
     SERVER_START_REQ( create_mapping )
     {
         req->file_handle = file;
-        req->size_high   = size ? size->s.HighPart : 0;
-        req->size_low    = size ? size->s.LowPart : 0;
+        req->size_high   = size ? size->u.HighPart : 0;
+        req->size_low    = size ? size->u.LowPart : 0;
         req->protect     = vprot;
         req->access      = access;
         req->inherit     = (attr->Attributes & OBJ_INHERIT) != 0;
@@ -1410,11 +1410,11 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     }
 
     TRACE("handle=%p addr=%p off=%lx%08lx size=%x access=%lx\n",
-          handle, *addr_ptr, offset->s.HighPart, offset->s.LowPart, size, protect );
+          handle, *addr_ptr, offset->u.HighPart, offset->u.LowPart, size, protect );
 
     /* Check parameters */
 
-    if ((offset->s.LowPart & granularity_mask) ||
+    if ((offset->u.LowPart & granularity_mask) ||
         (*addr_ptr && ((UINT_PTR)*addr_ptr & granularity_mask)))
         return STATUS_INVALID_PARAMETER;
 
@@ -1462,14 +1462,14 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     if (size_high)
         ERR("Sizes larger than 4Gb not supported\n");
 
-    if ((offset->s.LowPart >= size_low) ||
-        (*size_ptr > size_low - offset->s.LowPart))
+    if ((offset->u.LowPart >= size_low) ||
+        (*size_ptr > size_low - offset->u.LowPart))
     {
         res = STATUS_INVALID_PARAMETER;
         goto error;
     }
-    if (*size_ptr) size = ROUND_SIZE( offset->s.LowPart, *size_ptr );
-    else size = size_low - offset->s.LowPart;
+    if (*size_ptr) size = ROUND_SIZE( offset->u.LowPart, *size_ptr );
+    else size = size_low - offset->u.LowPart;
 
     switch(protect)
     {
@@ -1511,14 +1511,14 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     /* Map the file */
 
-    TRACE("handle=%p size=%x offset=%lx\n", handle, size, offset->s.LowPart );
+    TRACE("handle=%p size=%x offset=%lx\n", handle, size, offset->u.LowPart );
 
-    ret = VIRTUAL_mmap( unix_handle, ptr, size, offset->s.LowPart, offset->s.HighPart,
+    ret = VIRTUAL_mmap( unix_handle, ptr, size, offset->u.LowPart, offset->u.HighPart,
                         VIRTUAL_GetUnixProt( prot ), flags | MAP_FIXED, &removable );
     if (ret != ptr)
     {
         ERR( "VIRTUAL_mmap %p %x %lx%08lx failed\n",
-             ptr, size, offset->s.HighPart, offset->s.LowPart );
+             ptr, size, offset->u.HighPart, offset->u.LowPart );
         res = STATUS_NO_MEMORY;  /* FIXME */
         goto error;
     }

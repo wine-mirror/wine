@@ -435,8 +435,8 @@ static void _w31_loadreg(void)
 
     /* read text */
     txt = _xmalloc(head.textsize);
-    fpi.CurrentByteOffset.s.LowPart = head.textoff;
-    fpi.CurrentByteOffset.s.HighPart = 0;
+    fpi.CurrentByteOffset.u.LowPart = head.textoff;
+    fpi.CurrentByteOffset.u.HighPart = 0;
     if (NtSetInformationFile(hf, &iosb, &fpi, sizeof(fpi), 
                              FilePositionInformation) != STATUS_SUCCESS)
     {

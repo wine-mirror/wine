@@ -200,19 +200,19 @@ HRESULT WINAPI GetHGlobalFromILockBytes(ILockBytes* plkbyt, HGLOBAL* phglobal)
      ERR("Cannot ILockBytes_Stat, %lx\n",hres);
      return hres;
   }
-  FIXME("cbSize is %ld\n",stbuf.cbSize.s.LowPart);
-  *phglobal = GlobalAlloc( GMEM_MOVEABLE|GMEM_SHARE, stbuf.cbSize.s.LowPart);
+  FIXME("cbSize is %ld\n",stbuf.cbSize.u.LowPart);
+  *phglobal = GlobalAlloc( GMEM_MOVEABLE|GMEM_SHARE, stbuf.cbSize.u.LowPart);
   if (!*phglobal)
     return E_INVALIDARG;
   memset(&start,0,sizeof(start));
-  hres = ILockBytes_ReadAt(plkbyt, start, GlobalLock(*phglobal), stbuf.cbSize.s.LowPart, &xread);
+  hres = ILockBytes_ReadAt(plkbyt, start, GlobalLock(*phglobal), stbuf.cbSize.u.LowPart, &xread);
   GlobalUnlock(*phglobal);
   if (hres != S_OK) {
     FIXME("%p->ReadAt failed with %lx\n",plkbyt,hres);
     return hres;
   }
-  if (stbuf.cbSize.s.LowPart != xread) {
-    FIXME("Read size is not requested size %ld vs %ld?\n",stbuf.cbSize.s.LowPart, xread);
+  if (stbuf.cbSize.u.LowPart != xread) {
+    FIXME("Read size is not requested size %ld vs %ld?\n",stbuf.cbSize.u.LowPart, xread);
   }
   return S_OK;
 }
@@ -264,8 +264,8 @@ HGLOBALLockBytesImpl* HGLOBALLockBytesImpl_Construct(HGLOBAL hGlobal,
     /*
      * Initialize the size of the array to the size of the handle.
      */
-    newLockBytes->byteArraySize.s.HighPart = 0;
-    newLockBytes->byteArraySize.s.LowPart  = GlobalSize(
+    newLockBytes->byteArraySize.u.HighPart = 0;
+    newLockBytes->byteArraySize.u.LowPart  = GlobalSize(
                                               newLockBytes->supportHandle);
   }
 
@@ -414,15 +414,15 @@ HRESULT WINAPI HGLOBALLockBytesImpl_ReadAt(
   /*
    * Make sure the offset is valid.
    */
-  if (ulOffset.s.LowPart > This->byteArraySize.s.LowPart)
+  if (ulOffset.u.LowPart > This->byteArraySize.u.LowPart)
     return E_FAIL;
 
   /*
    * Using the known size of the array, calculate the number of bytes
    * to read.
    */
-  bytesToReadFromBuffer = min(This->byteArraySize.s.LowPart -
-                              ulOffset.s.LowPart, cb);
+  bytesToReadFromBuffer = min(This->byteArraySize.u.LowPart -
+                              ulOffset.u.LowPart, cb);
 
   /*
    * Lock the buffer in position and copy the data.
@@ -430,7 +430,7 @@ HRESULT WINAPI HGLOBALLockBytesImpl_ReadAt(
   supportBuffer = GlobalLock(This->supportHandle);
 
   memcpy(pv,
-         (char *) supportBuffer + ulOffset.s.LowPart,
+         (char *) supportBuffer + ulOffset.u.LowPart,
          bytesToReadFromBuffer);
 
   /*
@@ -489,14 +489,14 @@ HRESULT WINAPI HGLOBALLockBytesImpl_WriteAt(
   }
   else
   {
-    newSize.s.HighPart = 0;
-    newSize.s.LowPart = ulOffset.s.LowPart + cb;
+    newSize.u.HighPart = 0;
+    newSize.u.LowPart = ulOffset.u.LowPart + cb;
   }
 
   /*
    * Verify if we need to grow the stream
    */
-  if (newSize.s.LowPart > This->byteArraySize.s.LowPart)
+  if (newSize.u.LowPart > This->byteArraySize.u.LowPart)
   {
     /* grow stream */
     if (HGLOBALLockBytesImpl_SetSize(iface, newSize) == STG_E_MEDIUMFULL)
@@ -508,7 +508,7 @@ HRESULT WINAPI HGLOBALLockBytesImpl_WriteAt(
    */
   supportBuffer = GlobalLock(This->supportHandle);
 
-  memcpy((char *) supportBuffer + ulOffset.s.LowPart, pv, cb);
+  memcpy((char *) supportBuffer + ulOffset.u.LowPart, pv, cb);
 
   /*
    * Return the number of bytes written.
@@ -550,22 +550,22 @@ HRESULT WINAPI HGLOBALLockBytesImpl_SetSize(
   /*
    * As documented.
    */
-  if (libNewSize.s.HighPart != 0)
+  if (libNewSize.u.HighPart != 0)
     return STG_E_INVALIDFUNCTION;
 
-  if (This->byteArraySize.s.LowPart == libNewSize.s.LowPart)
+  if (This->byteArraySize.u.LowPart == libNewSize.u.LowPart)
     return S_OK;
 
   /*
    * Re allocate the HGlobal to fit the new size of the stream.
    */
-  supportHandle = GlobalReAlloc(This->supportHandle, libNewSize.s.LowPart, 0);
+  supportHandle = GlobalReAlloc(This->supportHandle, libNewSize.u.LowPart, 0);
 
   if (supportHandle == 0)
     return STG_E_MEDIUMFULL;
 
   This->supportHandle = supportHandle;
-  This->byteArraySize.s.LowPart = libNewSize.s.LowPart;
+  This->byteArraySize.u.LowPart = libNewSize.u.LowPart;
 
   return S_OK;
 }

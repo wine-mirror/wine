@@ -309,8 +309,8 @@ HRESULT WINAPI StdGlobalInterfaceTable_GetInterfaceFromGlobal(IGlobalInterfaceTa
   }
   
   /* rewind stream, in case it's used again */
-  move.s.LowPart = 0;
-  move.s.HighPart = 0;
+  move.u.LowPart = 0;
+  move.u.HighPart = 0;
   IStream_Seek(entry->stream, move, STREAM_SEEK_SET, NULL);
 
   /* addref it */

@@ -163,16 +163,16 @@ _marshal_interface(marshal_state *buf, REFIID riid, LPUNKNOWN pUnk) {
 	goto fail;
     }
     hres = IStream_Stat(pStm,&ststg,0);
-    tempbuf = HeapAlloc(GetProcessHeap(), 0, ststg.cbSize.s.LowPart);
+    tempbuf = HeapAlloc(GetProcessHeap(), 0, ststg.cbSize.u.LowPart);
     memset(&seekto,0,sizeof(seekto));
     hres = IStream_Seek(pStm,seekto,SEEK_SET,&newpos);
     if (hres) { FIXME("Failed Seek %lx\n",hres); goto fail;}
-    hres = IStream_Read(pStm,tempbuf,ststg.cbSize.s.LowPart,&res);
+    hres = IStream_Read(pStm,tempbuf,ststg.cbSize.u.LowPart,&res);
     if (hres) { FIXME("Failed Read %lx\n",hres); goto fail;}
     IStream_Release(pStm);
-    xsize = ststg.cbSize.s.LowPart;
+    xsize = ststg.cbSize.u.LowPart;
     xbuf_add(buf,(LPBYTE)&xsize,sizeof(xsize));
-    hres = xbuf_add(buf,tempbuf,ststg.cbSize.s.LowPart);
+    hres = xbuf_add(buf,tempbuf,ststg.cbSize.u.LowPart);
     HeapFree(GetProcessHeap(),0,tempbuf);
     return hres;
 fail:

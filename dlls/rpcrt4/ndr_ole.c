@@ -154,20 +154,20 @@ static HRESULT WINAPI RpcStream_Seek(LPSTREAM iface,
   ICOM_THIS(RpcStreamImpl, iface);
   switch (origin) {
   case STREAM_SEEK_SET:
-    This->pos = move.s.LowPart;
+    This->pos = move.u.LowPart;
     break;
   case STREAM_SEEK_CUR:
-    This->pos = This->pos + move.s.LowPart;
+    This->pos = This->pos + move.u.LowPart;
     break;
   case STREAM_SEEK_END:
-    This->pos = *This->size + move.s.LowPart;
+    This->pos = *This->size + move.u.LowPart;
     break;
   default:
     return STG_E_INVALIDFUNCTION;
   }
   if (newPos) {
-    newPos->s.LowPart = This->pos;
-    newPos->s.HighPart = 0;
+    newPos->u.LowPart = This->pos;
+    newPos->u.HighPart = 0;
   }
   return S_OK;
 }
@@ -176,7 +176,7 @@ static HRESULT WINAPI RpcStream_SetSize(LPSTREAM iface,
                                        ULARGE_INTEGER newSize)
 {
   ICOM_THIS(RpcStreamImpl, iface);
-  *This->size = newSize.s.LowPart;
+  *This->size = newSize.u.LowPart;
   return S_OK;
 }
 

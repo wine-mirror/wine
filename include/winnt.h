@@ -2918,7 +2918,18 @@ typedef union _LARGE_INTEGER {
         DWORD    LowPart;
         LONG     HighPart;
 #endif
-    } DUMMYSTRUCTNAME;
+    } u;
+#ifndef NONAMELESSSTRUCT
+    struct {
+#ifdef WORDS_BIGENDIAN
+        LONG     HighPart;
+        DWORD    LowPart;
+#else
+        DWORD    LowPart;
+        LONG     HighPart;
+#endif
+    };
+#endif
     LONGLONG QuadPart;
 } LARGE_INTEGER, *PLARGE_INTEGER;
 
@@ -2931,7 +2942,18 @@ typedef union _ULARGE_INTEGER {
         DWORD    LowPart;
         DWORD    HighPart;
 #endif
-    } DUMMYSTRUCTNAME;
+    } u;
+#ifndef NONAMELESSSTRUCT
+    struct {
+#ifdef WORDS_BIGENDIAN
+        DWORD    HighPart;
+        DWORD    LowPart;
+#else
+        DWORD    LowPart;
+        DWORD    HighPart;
+#endif
+    };
+#endif
     ULONGLONG QuadPart;
 } ULARGE_INTEGER, *PULARGE_INTEGER;
 

@@ -806,8 +806,8 @@ static void MSCDEX_Handler(CONTEXT86* context)
                             break;
                         case 1:
                             /* FIXME: computation is wrong */
-                            rri.DiskOffset.s.HighPart = 0;
-                            rri.DiskOffset.s.LowPart = at << 11;
+                            rri.DiskOffset.u.HighPart = 0;
+                            rri.DiskOffset.u.LowPart = at << 11;
                             rri.TrackMode = YellowMode2;
                             rri.SectorCount = num;
                             DeviceIoControl(h, IOCTL_CDROM_RAW_READ, &rri, sizeof(rri),

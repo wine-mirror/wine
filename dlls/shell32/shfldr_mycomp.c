@@ -596,14 +596,14 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDetailsOf (IShellFolder2 * iface, LPCI
 	    if (_ILIsDrive (pidl)) {
 		_ILSimpleGetText (pidl, szPath, MAX_PATH);
 		GetDiskFreeSpaceExA (szPath, NULL, &ulBytes, NULL);
-		StrFormatByteSizeA (ulBytes.s.LowPart, psd->str.u.cStr, MAX_PATH);
+		StrFormatByteSizeA (ulBytes.u.LowPart, psd->str.u.cStr, MAX_PATH);
 	    }
 	    break;
 	case 3:		/* free size */
 	    if (_ILIsDrive (pidl)) {
 		_ILSimpleGetText (pidl, szPath, MAX_PATH);
 		GetDiskFreeSpaceExA (szPath, &ulBytes, NULL, NULL);
-		StrFormatByteSizeA (ulBytes.s.LowPart, psd->str.u.cStr, MAX_PATH);
+		StrFormatByteSizeA (ulBytes.u.LowPart, psd->str.u.cStr, MAX_PATH);
 	    }
 	    break;
 	}

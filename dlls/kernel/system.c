@@ -79,7 +79,7 @@ static DWORD CALLBACK SYSTEM_TimerThread( void *dummy )
 
     if (!(SYS_timer = CreateWaitableTimerA( NULL, FALSE, NULL ))) return 0;
 
-    when.s.LowPart = when.s.HighPart = 0;
+    when.u.LowPart = when.u.HighPart = 0;
     SetWaitableTimer( SYS_timer, &when, (SYS_TIMER_RATE+500)/1000, SYSTEM_TimerTick, 0, FALSE );
     for (;;) SleepEx( INFINITE, TRUE );
 }

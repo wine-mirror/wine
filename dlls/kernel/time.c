@@ -69,8 +69,8 @@ BOOL WINAPI SetLocalTime(
     NTSTATUS status;
 
     SystemTimeToFileTime( systime, &ft );
-    st.s.LowPart = ft.dwLowDateTime;
-    st.s.HighPart = ft.dwHighDateTime;
+    st.u.LowPart = ft.dwLowDateTime;
+    st.u.HighPart = ft.dwHighDateTime;
     RtlLocalTimeToSystemTime( &st, &st2 );
 
     if ((status = NtSetSystemTime(&st2, NULL)))
@@ -121,8 +121,8 @@ BOOL WINAPI SetSystemTime(
     NTSTATUS status;
 
     SystemTimeToFileTime( systime, &ft );
-    t.s.LowPart = ft.dwLowDateTime;
-    t.s.HighPart = ft.dwHighDateTime;
+    t.u.LowPart = ft.dwLowDateTime;
+    t.u.HighPart = ft.dwHighDateTime;
     if ((status = NtSetSystemTime(&t, NULL)))
         SetLastError( RtlNtStatusToDosError(status) );
     return !status;
@@ -472,8 +472,8 @@ VOID WINAPI GetSystemTimeAsFileTime(
 {
     LARGE_INTEGER t;
     NtQuerySystemTime( &t );
-    time->dwLowDateTime = t.s.LowPart;
-    time->dwHighDateTime = t.s.HighPart;
+    time->dwLowDateTime = t.u.LowPart;
+    time->dwHighDateTime = t.u.HighPart;
 }
 
 
@@ -728,12 +728,12 @@ BOOL WINAPI LocalFileTimeToFileTime( const FILETIME *localft, LPFILETIME utcft )
     NTSTATUS status;
     LARGE_INTEGER local, utc;
 
-    local.s.LowPart = localft->dwLowDateTime;
-    local.s.HighPart = localft->dwHighDateTime;
+    local.u.LowPart = localft->dwLowDateTime;
+    local.u.HighPart = localft->dwHighDateTime;
     if (!(status = RtlLocalTimeToSystemTime( &local, &utc )))
     {
-        utcft->dwLowDateTime = utc.s.LowPart;
-        utcft->dwHighDateTime = utc.s.HighPart;
+        utcft->dwLowDateTime = utc.u.LowPart;
+        utcft->dwHighDateTime = utc.u.HighPart;
     }
     else SetLastError( RtlNtStatusToDosError(status) );
 
@@ -748,12 +748,12 @@ BOOL WINAPI FileTimeToLocalFileTime( const FILETIME *utcft, LPFILETIME localft )
     NTSTATUS status;
     LARGE_INTEGER local, utc;
 
-    utc.s.LowPart = utcft->dwLowDateTime;
-    utc.s.HighPart = utcft->dwHighDateTime;
+    utc.u.LowPart = utcft->dwLowDateTime;
+    utc.u.HighPart = utcft->dwHighDateTime;
     if (!(status = RtlSystemTimeToLocalTime( &utc, &local )))
     {
-        localft->dwLowDateTime = local.s.LowPart;
-        localft->dwHighDateTime = local.s.HighPart;
+        localft->dwLowDateTime = local.u.LowPart;
+        localft->dwHighDateTime = local.u.HighPart;
     }
     else SetLastError( RtlNtStatusToDosError(status) );
 
@@ -768,8 +768,8 @@ BOOL WINAPI FileTimeToSystemTime( const FILETIME *ft, LPSYSTEMTIME syst )
     TIME_FIELDS tf;
     LARGE_INTEGER t;
 
-    t.s.LowPart = ft->dwLowDateTime;
-    t.s.HighPart = ft->dwHighDateTime;
+    t.u.LowPart = ft->dwLowDateTime;
+    t.u.HighPart = ft->dwHighDateTime;
     RtlTimeToTimeFields(&t, &tf);
 
     syst->wYear = tf.Year;
@@ -800,8 +800,8 @@ BOOL WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
     tf.Milliseconds = syst->wMilliseconds;
 
     RtlTimeFieldsToTime(&tf, &t);
-    ft->dwLowDateTime = t.s.LowPart;
-    ft->dwHighDateTime = t.s.HighPart;
+    ft->dwLowDateTime = t.u.LowPart;
+    ft->dwHighDateTime = t.u.HighPart;
     return TRUE;
 }
 
@@ -848,8 +848,8 @@ VOID WINAPI GetLocalTime(LPSYSTEMTIME systime) /* [O] Destination for current ti
 
     NtQuerySystemTime(&ft);
     RtlSystemTimeToLocalTime(&ft, &ft2);
-    lft.dwLowDateTime = ft2.s.LowPart;
-    lft.dwHighDateTime = ft2.s.HighPart;
+    lft.dwLowDateTime = ft2.u.LowPart;
+    lft.dwHighDateTime = ft2.u.HighPart;
     FileTimeToSystemTime(&lft, systime);
 }
 
@@ -867,7 +867,7 @@ VOID WINAPI GetSystemTime(LPSYSTEMTIME systime) /* [O] Destination for current t
     LARGE_INTEGER t;
 
     NtQuerySystemTime(&t);
-    ft.dwLowDateTime = t.s.LowPart;
-    ft.dwHighDateTime = t.s.HighPart;
+    ft.dwLowDateTime = t.u.LowPart;
+    ft.dwHighDateTime = t.u.HighPart;
     FileTimeToSystemTime(&ft, systime);
 }

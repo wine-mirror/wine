@@ -686,8 +686,8 @@ static NTSTATUS CDROM_GetDriveGeometry(int dev, DISK_GEOMETRY* dg)
   fsize = FRAME_OF_TOC(toc, toc.LastTrack+1)
         - FRAME_OF_TOC(toc, 1); /* Total size in frames */
   
-  dg->Cylinders.s.LowPart = fsize / (64 * 32); 
-  dg->Cylinders.s.HighPart = 0; 
+  dg->Cylinders.u.LowPart = fsize / (64 * 32); 
+  dg->Cylinders.u.HighPart = 0; 
   dg->MediaType = RemovableMedia;  
   dg->TracksPerCylinder = 64; 
   dg->SectorsPerTrack = 32;  
@@ -1318,8 +1318,8 @@ static NTSTATUS CDROM_RawRead(int dev, const RAW_READ_INFO* raw, void* buffer, D
         switch (raw->TrackMode)
         {
         case YellowMode2:
-            if (raw->DiskOffset.s.HighPart) FIXME("Unsupported value\n");
-            cdr.cdread_lba = raw->DiskOffset.s.LowPart; /* FIXME ? */
+            if (raw->DiskOffset.u.HighPart) FIXME("Unsupported value\n");
+            cdr.cdread_lba = raw->DiskOffset.u.LowPart; /* FIXME ? */
             cdr.cdread_bufaddr = buffer;
             cdr.cdread_buflen = raw->SectorCount * sectSize;
             io = ioctl(cdrom_cache[dev].fd, CDROMREADMODE2, &cdr);
@@ -1336,9 +1336,9 @@ static NTSTATUS CDROM_RawRead(int dev, const RAW_READ_INFO* raw, void* buffer, D
              * talking of 0.2 ms of sound
              */
             /* 2048 = 2 ** 11 */
-            if (raw->DiskOffset.s.HighPart & ~2047) FIXME("Unsupported value\n");
-            cdra.addr.lba = ((raw->DiskOffset.s.LowPart >> 11) |
-                (raw->DiskOffset.s.HighPart << (32 - 11))) - 1;
+            if (raw->DiskOffset.u.HighPart & ~2047) FIXME("Unsupported value\n");
+            cdra.addr.lba = ((raw->DiskOffset.u.LowPart >> 11) |
+                (raw->DiskOffset.u.HighPart << (32 - 11))) - 1;
             FIXME("reading at %u\n", cdra.addr.lba);
             cdra.addr_format = CDROM_LBA;
             cdra.nframes = raw->SectorCount;

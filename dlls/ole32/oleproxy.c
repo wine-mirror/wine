@@ -184,14 +184,14 @@ CFStub_Invoke(
 	    return hres;
 	}
 
-	msg->cbBuffer = ststg.cbSize.s.LowPart;
+	msg->cbBuffer = ststg.cbSize.u.LowPart;
 
 	if (msg->Buffer)
-	    msg->Buffer = HeapReAlloc(GetProcessHeap(),0,msg->Buffer,ststg.cbSize.s.LowPart);
+	    msg->Buffer = HeapReAlloc(GetProcessHeap(),0,msg->Buffer,ststg.cbSize.u.LowPart);
 	else
-	    msg->Buffer = HeapAlloc(GetProcessHeap(),0,ststg.cbSize.s.LowPart);
+	    msg->Buffer = HeapAlloc(GetProcessHeap(),0,ststg.cbSize.u.LowPart);
 
-	seekto.s.LowPart = 0;seekto.s.HighPart = 0;
+	seekto.u.LowPart = 0;seekto.u.HighPart = 0;
 	hres = IStream_Seek(pStm,seekto,SEEK_SET,&newpos);
 	if (hres) {
 	    FIXME("IStream_Seek failed, %lx\n",hres);

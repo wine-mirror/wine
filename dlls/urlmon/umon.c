@@ -498,7 +498,7 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
 
 		    TRACE("res = %ld gle = %08lx url len = %ld\n", hres, GetLastError(), len);
 
-		    last_read_pos.s.LowPart = last_read_pos.s.HighPart = 0;
+		    last_read_pos.u.LowPart = last_read_pos.u.HighPart = 0;
 		    fmt.cfFormat = 0;
 		    fmt.ptd = NULL;
 		    fmt.dwAspect = 0;
@@ -525,7 +525,7 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
 								       (total_read == bufread) ? BSCF_FIRSTDATANOTIFICATION :
 								       BSCF_INTERMEDIATEDATANOTIFICATION,
 								       total_read, &fmt, &stg);
-			    last_read_pos.s.LowPart += bufread; /* FIXME */
+			    last_read_pos.u.LowPart += bufread; /* FIXME */
 			} else
 			    break;
 		    }

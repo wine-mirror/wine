@@ -4220,7 +4220,7 @@ HRESULT WINAPI VarDecFromI8(LONG64 llIn, DECIMAL* pDecOut)
   DEC_HI32(pDecOut) = 0;
 
   /* Note: This assumes 2s complement integer representation */
-  if (pLi->s.HighPart & 0x80000000)
+  if (pLi->u.HighPart & 0x80000000)
   {
     DEC_SIGNSCALE(pDecOut) = SIGNSCALE(DECIMAL_NEG,0);
     DEC_LO64(pDecOut) = -pLi->QuadPart;
@@ -4228,8 +4228,8 @@ HRESULT WINAPI VarDecFromI8(LONG64 llIn, DECIMAL* pDecOut)
   else
   {
     DEC_SIGNSCALE(pDecOut) = SIGNSCALE(DECIMAL_POS,0);
-    DEC_MID32(pDecOut) = pLi->s.HighPart;
-    DEC_LO32(pDecOut) = pLi->s.LowPart;
+    DEC_MID32(pDecOut) = pLi->u.HighPart;
+    DEC_LO32(pDecOut) = pLi->u.LowPart;
   }
   return S_OK;
 }
@@ -4306,8 +4306,8 @@ static ULONG VARIANT_Add(ULONG ulLeft, ULONG ulRight, ULONG* pulHigh)
   ULARGE_INTEGER ul64;
 
   ul64.QuadPart = (ULONG64)ulLeft + (ULONG64)ulRight + (ULONG64)*pulHigh;
-  *pulHigh = ul64.s.HighPart;
-  return ul64.s.LowPart;
+  *pulHigh = ul64.u.HighPart;
+  return ul64.u.LowPart;
 }
 
 /* Subtract two unsigned 32 bit values with underflow */
@@ -4328,10 +4328,10 @@ static ULONG VARIANT_Sub(ULONG ulLeft, ULONG ulRight, ULONG* pulHigh)
     invert = 1;
   }
   if (invert)
-    ul64.s.HighPart = -ul64.s.HighPart ;
+    ul64.u.HighPart = -ul64.u.HighPart ;
 
-  *pulHigh = ul64.s.HighPart;
-  return ul64.s.LowPart;
+  *pulHigh = ul64.u.HighPart;
+  return ul64.u.LowPart;
 }
 
 /* Multiply two unsigned 32 bit values with overflow */
@@ -4340,8 +4340,8 @@ static ULONG VARIANT_Mul(ULONG ulLeft, ULONG ulRight, ULONG* pulHigh)
   ULARGE_INTEGER ul64;
 
   ul64.QuadPart = (ULONG64)ulLeft * (ULONG64)ulRight + (ULONG64)*pulHigh;
-  *pulHigh = ul64.s.HighPart;
-  return ul64.s.LowPart;
+  *pulHigh = ul64.u.HighPart;
+  return ul64.u.LowPart;
 }
 
 /* Compare two decimals that have the same scale */

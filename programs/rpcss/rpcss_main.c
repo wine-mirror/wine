@@ -93,11 +93,11 @@ static SYSTEMTIME lazy_timeout_time;
 
 #if defined(NONAMELESSSTRUCT)
   #define FILETIME_TO_ULARGEINT(filetime, ularge) \
-    ( ularge.s.LowPart = filetime.dwLowDateTime, \
-      ularge.s.HighPart = filetime.dwHighDateTime )
+    ( ularge.u.LowPart = filetime.dwLowDateTime, \
+      ularge.u.HighPart = filetime.dwHighDateTime )
   #define ULARGEINT_TO_FILETIME(ularge, filetime) \
-    ( filetime.dwLowDateTime = ularge.s.LowPart, \
-      filetime.dwHighDateTime = ularge.s.HighPart )
+    ( filetime.dwLowDateTime = ularge.u.LowPart, \
+      filetime.dwHighDateTime = ularge.u.HighPart )
 #else
   #define FILETIME_TO_ULARGEINT(filetime, ularge) \
     ( ularge.LowPart = filetime.dwLowDateTime, \

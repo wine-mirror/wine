@@ -547,7 +547,7 @@ HRESULT create_marshalled_proxy(REFCLSID rclsid, REFIID iid, LPVOID *ppv) {
   if (hres) return hres;
   hres = IStream_Write(pStm,marshalbuffer,bufferlen,&res);
   if (hres) goto out;
-  seekto.s.LowPart = 0;seekto.s.HighPart = 0;
+  seekto.u.LowPart = 0;seekto.u.HighPart = 0;
   hres = IStream_Seek(pStm,seekto,SEEK_SET,&newpos);
   hres = CoUnmarshalInterface(pStm,&IID_IClassFactory,ppv);
 out:

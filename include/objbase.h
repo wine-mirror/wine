@@ -322,8 +322,8 @@ extern "C" {
 #define LISet32(li, v)   ((li).HighPart = (v) < 0 ? -1 : 0, (li).LowPart = (v))
 #define ULISet32(li, v)  ((li).HighPart = 0, (li).LowPart = (v))
 #else
-#define LISet32(li, v)   ((li).s.HighPart = (v) < 0 ? -1 : 0, (li).s.LowPart = (v))
-#define ULISet32(li, v)  ((li).s.HighPart = 0, (li).s.LowPart = (v))
+#define LISet32(li, v)   ((li).u.HighPart = (v) < 0 ? -1 : 0, (li).u.LowPart = (v))
+#define ULISet32(li, v)  ((li).u.HighPart = 0, (li).u.LowPart = (v))
 #endif
 
 /*****************************************************************************

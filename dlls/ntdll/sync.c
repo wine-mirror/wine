@@ -365,7 +365,7 @@ NTSTATUS WINAPI NtSetTimer(IN HANDLE handle,
 
     SERVER_START_REQ( set_timer )
     {
-        if (!when->s.LowPart && !when->s.HighPart)
+        if (!when->u.LowPart && !when->u.HighPart)
         {
             /* special case to start timeout on now+period without too many calculations */
             req->expire.sec  = 0;
@@ -539,7 +539,7 @@ static void call_apcs( BOOL alertable )
             /* convert sec/usec to NT time */
             RtlSecondsSince1970ToTime( (time_t)arg1, &time );
             time.QuadPart += (DWORD)arg2 * 10;
-            proc( arg3, time.s.LowPart, time.s.HighPart );
+            proc( arg3, time.u.LowPart, time.u.HighPart );
             break;
         case APC_ASYNC_IO:
             check_async_list( arg1, (DWORD) arg2 );

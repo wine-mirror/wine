@@ -289,7 +289,7 @@ static void CALLBACK set_timer_rate( ULONG_PTR arg )
 {
     LARGE_INTEGER when;
 
-    when.s.LowPart = when.s.HighPart = 0;
+    when.u.LowPart = when.u.HighPart = 0;
     SetWaitableTimer( VGA_timer, &when, arg, VGA_Poll, 0, FALSE );
 }
 

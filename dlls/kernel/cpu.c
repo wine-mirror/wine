@@ -187,7 +187,7 @@ BOOL WINAPI QueryPerformanceCounter(PLARGE_INTEGER counter)
     if (IsProcessorFeaturePresent( PF_RDTSC_INSTRUCTION_AVAILABLE )) {
 	/* i586 optimized version */
 	__asm__ __volatile__ ( "rdtsc"
-			       : "=a" (counter->s.LowPart), "=d" (counter->s.HighPart) );
+			       : "=a" (counter->u.LowPart), "=d" (counter->u.HighPart) );
 	counter->QuadPart = counter->QuadPart / 1000; /* see below */
 	return TRUE;
     }
@@ -226,8 +226,8 @@ BOOL WINAPI QueryPerformanceFrequency(PLARGE_INTEGER frequency)
         return TRUE;
     }
 #endif
-    frequency->s.LowPart  = 1000000;
-    frequency->s.HighPart = 0;
+    frequency->u.LowPart  = 1000000;
+    frequency->u.HighPart = 0;
     return TRUE;
 }
 

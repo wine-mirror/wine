@@ -343,8 +343,8 @@ HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
         }
     }
 
-    size.s.LowPart  = size_low;
-    size.s.HighPart = size_high;
+    size.u.LowPart  = size_low;
+    size.u.HighPart = size_high;
 
     status = NtCreateSection( &ret, access, &attr, &size, protect, sec_type, hFile );
     SetLastError( RtlNtStatusToDosError(status) );
@@ -453,8 +453,8 @@ LPVOID WINAPI MapViewOfFileEx(
     LARGE_INTEGER offset;
     ULONG protect;
 
-    offset.s.LowPart  = offset_low;
-    offset.s.HighPart = offset_high;
+    offset.u.LowPart  = offset_low;
+    offset.u.HighPart = offset_high;
 
     if (access & FILE_MAP_WRITE) protect = PAGE_READWRITE;
     else if (access & FILE_MAP_READ) protect = PAGE_READONLY;

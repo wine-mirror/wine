@@ -231,8 +231,8 @@ ULARGE_INTEGER byte_count, file_size;
           file_size.LowPart = (fd+i)->nFileSizeLow;
           file_size.HighPart = (fd+i)->nFileSizeHigh;
 #else
-          file_size.s.LowPart = (fd+i)->nFileSizeLow;
-          file_size.s.HighPart = (fd+i)->nFileSizeHigh;
+          file_size.u.LowPart = (fd+i)->nFileSizeLow;
+          file_size.u.HighPart = (fd+i)->nFileSizeHigh;
 #endif
       byte_count.QuadPart += file_size.QuadPart;
       }
@@ -264,8 +264,8 @@ ULARGE_INTEGER byte_count, file_size;
       file_size.LowPart = (fd+i)->nFileSizeLow;
       file_size.HighPart = (fd+i)->nFileSizeHigh;
 #else
-      file_size.s.LowPart = (fd+i)->nFileSizeLow;
-      file_size.s.HighPart = (fd+i)->nFileSizeHigh;
+      file_size.u.LowPart = (fd+i)->nFileSizeLow;
+      file_size.u.HighPart = (fd+i)->nFileSizeHigh;
 #endif
       byte_count.QuadPart += file_size.QuadPart;
 	  if (!bare) {

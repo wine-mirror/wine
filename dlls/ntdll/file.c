@@ -377,8 +377,8 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
             ovp->offset = 0;
         else
         {
-            ovp->offset = offset->s.LowPart;
-            if (offset->s.HighPart) FIXME("NIY-high part\n");
+            ovp->offset = offset->u.LowPart;
+            if (offset->u.HighPart) FIXME("NIY-high part\n");
         } 
         ovp->apc = apc;
         ovp->apc_user = apc_user;
@@ -399,7 +399,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
             LARGE_INTEGER   timeout;
 
             /* let some APC be run, this will read some already pending data */
-            timeout.s.LowPart = timeout.s.HighPart = 0;
+            timeout.u.LowPart = timeout.u.HighPart = 0;
             NtDelayExecution( TRUE, &timeout );
         }
         return io_status->u.Status;
@@ -559,8 +559,8 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
         ovp->async.iosb = io_status;
         ovp->count = length;
         if (offset) {
-            ovp->offset = offset->s.LowPart;
-            if (offset->s.HighPart) FIXME("NIY-high part\n");
+            ovp->offset = offset->u.LowPart;
+            if (offset->u.HighPart) FIXME("NIY-high part\n");
         } else {
             ovp->offset = 0;
         }
@@ -583,7 +583,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
             LARGE_INTEGER   timeout;
 
             /* let some APC be run, this will write as much data as possible */
-            timeout.s.LowPart = timeout.s.HighPart = 0;
+            timeout.u.LowPart = timeout.u.HighPart = 0;
             NtDelayExecution( TRUE, &timeout );
         }
         return io_status->u.Status;
@@ -833,10 +833,10 @@ NTSTATUS WINAPI NtQueryInformationFile(HANDLE hFile, PIO_STATUS_BLOCK io_status,
                     if ((reply->type == FILE_TYPE_DISK) ||
                         (reply->type == FILE_TYPE_REMOTE))
                     {
-                        fsi->AllocationSize.s.HighPart = reply->alloc_high;
-                        fsi->AllocationSize.s.LowPart  = reply->alloc_low;
-                        fsi->EndOfFile.s.HighPart      = reply->size_high;
-                        fsi->EndOfFile.s.LowPart       = reply->size_low;
+                        fsi->AllocationSize.u.HighPart = reply->alloc_high;
+                        fsi->AllocationSize.u.LowPart  = reply->alloc_low;
+                        fsi->EndOfFile.u.HighPart      = reply->size_high;
+                        fsi->EndOfFile.u.LowPart       = reply->size_low;
                         fsi->NumberOfLinks             = reply->links;
                         fsi->DeletePending             = FALSE; /* FIXME */
                         fsi->Directory                 = (reply->attr & FILE_ATTRIBUTE_DIRECTORY);
@@ -861,8 +861,8 @@ NTSTATUS WINAPI NtQueryInformationFile(HANDLE hFile, PIO_STATUS_BLOCK io_status,
                 req->whence = SEEK_CUR;
                 if (!(status = wine_server_call( req )))
                 {
-                    fpi->CurrentByteOffset.s.HighPart = reply->new_high;
-                    fpi->CurrentByteOffset.s.LowPart  = reply->new_low;
+                    fpi->CurrentByteOffset.u.HighPart = reply->new_high;
+                    fpi->CurrentByteOffset.u.LowPart  = reply->new_low;
                     used = sizeof(*fpi);
                 }
             }
@@ -917,8 +917,8 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE hFile, PIO_STATUS_BLOCK io_status,
             SERVER_START_REQ( set_file_pointer )
             {
                 req->handle = hFile;
-                req->low = fpi->CurrentByteOffset.s.LowPart;
-                req->high = fpi->CurrentByteOffset.s.HighPart;
+                req->low = fpi->CurrentByteOffset.u.LowPart;
+                req->high = fpi->CurrentByteOffset.u.HighPart;
                 req->whence = SEEK_SET;
                 status = wine_server_call( req );
             }
@@ -1125,10 +1125,10 @@ NTSTATUS WINAPI NtLockFile( HANDLE hFile, HANDLE lock_granted_event,
         SERVER_START_REQ( lock_file )
         {
             req->handle      = hFile;
-            req->offset_low  = offset->s.LowPart;
-            req->offset_high = offset->s.HighPart;
-            req->count_low   = count->s.LowPart;
-            req->count_high  = count->s.HighPart;
+            req->offset_low  = offset->u.LowPart;
+            req->offset_high = offset->u.HighPart;
+            req->count_low   = count->u.LowPart;
+            req->count_high  = count->u.HighPart;
             req->shared      = !exclusive;
             req->wait        = !dont_wait;
             ret = wine_server_call( req );
@@ -1178,7 +1178,7 @@ NTSTATUS WINAPI NtUnlockFile( HANDLE hFile, PIO_STATUS_BLOCK io_status,
     NTSTATUS status;
 
     TRACE( "%p %lx%08lx %lx%08lx\n",
-           hFile, offset->s.HighPart, offset->s.LowPart, count->s.HighPart, count->s.LowPart );
+           hFile, offset->u.HighPart, offset->u.LowPart, count->u.HighPart, count->u.LowPart );
 
     if (io_status || key)
     {
@@ -1189,10 +1189,10 @@ NTSTATUS WINAPI NtUnlockFile( HANDLE hFile, PIO_STATUS_BLOCK io_status,
     SERVER_START_REQ( unlock_file )
     {
         req->handle      = hFile;
-        req->offset_low  = offset->s.LowPart;
-        req->offset_high = offset->s.HighPart;
-        req->count_low   = count->s.LowPart;
-        req->count_high  = count->s.HighPart;
+        req->offset_low  = offset->u.LowPart;
+        req->offset_high = offset->u.HighPart;
+        req->count_low   = count->u.LowPart;
+        req->count_high  = count->u.HighPart;
         status = wine_server_call( req );
     }
     SERVER_END_REQ;

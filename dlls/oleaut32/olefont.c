@@ -1704,18 +1704,18 @@ static HRESULT WINAPI OLEFontImpl_GetSizeMax(
   if (pcbSize==NULL)
     return E_POINTER;
 
-  pcbSize->s.HighPart = 0;
-  pcbSize->s.LowPart = 0;
+  pcbSize->u.HighPart = 0;
+  pcbSize->u.LowPart = 0;
 
-  pcbSize->s.LowPart += sizeof(BYTE);  /* Version */
-  pcbSize->s.LowPart += sizeof(WORD);  /* Lang code */
-  pcbSize->s.LowPart += sizeof(BYTE);  /* Flags */
-  pcbSize->s.LowPart += sizeof(WORD);  /* Weight */
-  pcbSize->s.LowPart += sizeof(DWORD); /* Size */
-  pcbSize->s.LowPart += sizeof(BYTE);  /* StrLength */
+  pcbSize->u.LowPart += sizeof(BYTE);  /* Version */
+  pcbSize->u.LowPart += sizeof(WORD);  /* Lang code */
+  pcbSize->u.LowPart += sizeof(BYTE);  /* Flags */
+  pcbSize->u.LowPart += sizeof(WORD);  /* Weight */
+  pcbSize->u.LowPart += sizeof(DWORD); /* Size */
+  pcbSize->u.LowPart += sizeof(BYTE);  /* StrLength */
 
   if (this->description.lpstrName!=0)
-    pcbSize->s.LowPart += lstrlenW(this->description.lpstrName);
+    pcbSize->u.LowPart += lstrlenW(this->description.lpstrName);
 
   return S_OK;
 }

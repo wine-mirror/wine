@@ -127,8 +127,8 @@ HRESULT  WINAPI  IDirect3D8Impl_GetAdapterIdentifier       (LPDIRECT3D8 iface,
     if (Adapter == 0) { /* Display */
         strcpy(pIdentifier->Driver, "Display");
         strcpy(pIdentifier->Description, "Direct3D Display");
-        pIdentifier->DriverVersion.s.HighPart = 1;
-        pIdentifier->DriverVersion.s.LowPart = 0;
+        pIdentifier->DriverVersion.u.HighPart = 1;
+        pIdentifier->DriverVersion.u.LowPart = 0;
         pIdentifier->VendorId = 0;
         pIdentifier->DeviceId = 0;
         pIdentifier->SubSysId = 0;

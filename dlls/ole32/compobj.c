@@ -1006,10 +1006,10 @@ _LocalServerThread(LPVOID param) {
     hres = IStream_Stat(pStm,&ststg,0);
     if (hres) return hres;
 
-    buflen = ststg.cbSize.s.LowPart;
+    buflen = ststg.cbSize.u.LowPart;
     buffer = HeapAlloc(GetProcessHeap(),0,buflen);
-    seekto.s.LowPart = 0;
-    seekto.s.HighPart = 0;
+    seekto.u.LowPart = 0;
+    seekto.u.HighPart = 0;
     hres = IStream_Seek(pStm,seekto,SEEK_SET,&newpos);
     if (hres) {
 	FIXME("IStream_Seek failed, %lx\n",hres);

@@ -1189,8 +1189,8 @@ BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         return FALSE;
     }
 
-    offset.s.LowPart = overlapped->Offset;
-    offset.s.HighPart = overlapped->OffsetHigh;
+    offset.u.LowPart = overlapped->Offset;
+    offset.u.HighPart = overlapped->OffsetHigh;
     io_status = (PIO_STATUS_BLOCK)overlapped;
     io_status->u.Status = STATUS_PENDING;
 
@@ -1234,8 +1234,8 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
 
     if (overlapped != NULL)
     {
-        offset.s.LowPart = overlapped->Offset;
-        offset.s.HighPart = overlapped->OffsetHigh;
+        offset.u.LowPart = overlapped->Offset;
+        offset.u.HighPart = overlapped->OffsetHigh;
         poffset = &offset;
         hEvent = overlapped->hEvent;
         io_status = (PIO_STATUS_BLOCK)overlapped;
@@ -1276,8 +1276,8 @@ BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    offset.s.LowPart = overlapped->Offset;
-    offset.s.HighPart = overlapped->OffsetHigh;
+    offset.u.LowPart = overlapped->Offset;
+    offset.u.HighPart = overlapped->OffsetHigh;
 
     io_status = (PIO_STATUS_BLOCK)overlapped;
     io_status->u.Status = STATUS_PENDING;
@@ -1316,8 +1316,8 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
 
     if (overlapped)
     {
-        offset.s.LowPart = overlapped->Offset;
-        offset.s.HighPart = overlapped->OffsetHigh;
+        offset.u.LowPart = overlapped->Offset;
+        offset.u.HighPart = overlapped->OffsetHigh;
         poffset = &offset;
         hEvent = overlapped->hEvent;
         piosb = (PIO_STATUS_BLOCK)overlapped;

@@ -519,7 +519,7 @@ NTSTATUS WINAPI RtlSystemTimeToLocalTime( const LARGE_INTEGER *SystemTime,
  */
 BOOLEAN WINAPI RtlTimeToSecondsSince1970( const LARGE_INTEGER *Time, LPDWORD Seconds )
 {
-    ULONGLONG tmp = ((ULONGLONG)Time->s.HighPart << 32) | Time->s.LowPart;
+    ULONGLONG tmp = ((ULONGLONG)Time->u.HighPart << 32) | Time->u.LowPart;
     tmp = RtlLargeIntegerDivide( tmp, 10000000, NULL );
     tmp -= SECS_1601_TO_1970;
     if (tmp > 0xffffffff) return FALSE;
@@ -542,7 +542,7 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1970( const LARGE_INTEGER *Time, LPDWORD Sec
  */
 BOOLEAN WINAPI RtlTimeToSecondsSince1980( const LARGE_INTEGER *Time, LPDWORD Seconds )
 {
-    ULONGLONG tmp = ((ULONGLONG)Time->s.HighPart << 32) | Time->s.LowPart;
+    ULONGLONG tmp = ((ULONGLONG)Time->u.HighPart << 32) | Time->u.LowPart;
     tmp = RtlLargeIntegerDivide( tmp, 10000000, NULL );
     tmp -= SECS_1601_TO_1980;
     if (tmp > 0xffffffff) return FALSE;
@@ -565,8 +565,8 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1980( const LARGE_INTEGER *Time, LPDWORD Sec
 void WINAPI RtlSecondsSince1970ToTime( DWORD Seconds, LARGE_INTEGER *Time )
 {
     ULONGLONG secs = Seconds * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
-    Time->s.LowPart  = (DWORD)secs;
-    Time->s.HighPart = (DWORD)(secs >> 32);
+    Time->u.LowPart  = (DWORD)secs;
+    Time->u.HighPart = (DWORD)(secs >> 32);
 }
 
 /******************************************************************************
@@ -584,8 +584,8 @@ void WINAPI RtlSecondsSince1970ToTime( DWORD Seconds, LARGE_INTEGER *Time )
 void WINAPI RtlSecondsSince1980ToTime( DWORD Seconds, LARGE_INTEGER *Time )
 {
     ULONGLONG secs = Seconds * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1980;
-    Time->s.LowPart  = (DWORD)secs;
-    Time->s.HighPart = (DWORD)(secs >> 32);
+    Time->u.LowPart  = (DWORD)secs;
+    Time->u.HighPart = (DWORD)(secs >> 32);
 }
 
 /******************************************************************************

@@ -696,7 +696,7 @@ static BOOL DataCache_IsPresentationStream(const STATSTG *elem)
     LPCWSTR name = elem->pwcsName;
 
     return (elem->type == STGTY_STREAM)
-	&& (elem->cbSize.s.LowPart >= sizeof(PresentationDataHeader))
+	&& (elem->cbSize.u.LowPart >= sizeof(PresentationDataHeader))
 	&& (strlenW(name) == 11)
 	&& (strncmpW(name, OlePres, 8) == 0)
 	&& (name[8] >= '0') && (name[8] <= '9')
@@ -765,8 +765,8 @@ static HRESULT DataCache_OpenPresStream(
 		{
 		    /* Rewind the stream before returning it. */
 		    LARGE_INTEGER offset;
-		    offset.s.LowPart = 0;
-		    offset.s.HighPart = 0;
+		    offset.u.LowPart = 0;
+		    offset.u.HighPart = 0;
 		    IStream_Seek(pStm, offset, STREAM_SEEK_SET, NULL);
 
 		    *ppStm = pStm;
@@ -835,8 +835,8 @@ static HMETAFILE DataCache_ReadPresMetafile(
   /*
    * Skip the header
    */
-  offset.s.HighPart = 0;
-  offset.s.LowPart  = sizeof(PresentationDataHeader);
+  offset.u.HighPart = 0;
+  offset.u.LowPart  = sizeof(PresentationDataHeader);
 
   hres = IStream_Seek(
            presStream,
@@ -844,14 +844,14 @@ static HMETAFILE DataCache_ReadPresMetafile(
 	   STREAM_SEEK_SET,
 	   NULL);
 
-  streamInfo.cbSize.s.LowPart -= offset.s.LowPart;
+  streamInfo.cbSize.u.LowPart -= offset.u.LowPart;
 
   /*
    * Allocate a buffer for the metafile bits.
    */
   metafileBits = HeapAlloc(GetProcessHeap(),
 			   0,
-			   streamInfo.cbSize.s.LowPart);
+			   streamInfo.cbSize.u.LowPart);
 
   /*
    * Read the metafile bits.
@@ -859,7 +859,7 @@ static HMETAFILE DataCache_ReadPresMetafile(
   hres = IStream_Read(
 	   presStream,
 	   metafileBits,
-	   streamInfo.cbSize.s.LowPart,
+	   streamInfo.cbSize.u.LowPart,
 	   NULL);
 
   /*
@@ -867,7 +867,7 @@ static HMETAFILE DataCache_ReadPresMetafile(
    */
   if (SUCCEEDED(hres))
   {
-    newMetafile = SetMetaFileBitsEx(streamInfo.cbSize.s.LowPart, metafileBits);
+    newMetafile = SetMetaFileBitsEx(streamInfo.cbSize.u.LowPart, metafileBits);
   }
 
   /*

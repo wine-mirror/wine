@@ -338,8 +338,8 @@ BOOL WINAPI GetFileSizeEx( HANDLE hFile, PLARGE_INTEGER lpFileSize )
         return FALSE;
     }
 
-    lpFileSize->s.LowPart = info.nFileSizeLow;
-    lpFileSize->s.HighPart = info.nFileSizeHigh;
+    lpFileSize->u.LowPart = info.nFileSizeLow;
+    lpFileSize->u.HighPart = info.nFileSizeHigh;
 
     return TRUE;
 }
@@ -357,10 +357,10 @@ BOOL WINAPI LockFile( HANDLE hFile, DWORD offset_low, DWORD offset_high,
     TRACE( "%p %lx%08lx %lx%08lx\n", 
            hFile, offset_high, offset_low, count_high, count_low );
 
-    count.s.LowPart = count_low;
-    count.s.HighPart = count_high;
-    offset.s.LowPart = offset_low;
-    offset.s.HighPart = offset_high;
+    count.u.LowPart = count_low;
+    count.u.HighPart = count_high;
+    offset.u.LowPart = offset_low;
+    offset.u.HighPart = offset_high;
 
     status = NtLockFile( hFile, 0, NULL, NULL, 
                          NULL, &offset, &count, NULL, TRUE, TRUE );
@@ -398,10 +398,10 @@ BOOL WINAPI LockFileEx( HANDLE hFile, DWORD flags, DWORD reserved,
            hFile, overlapped->OffsetHigh, overlapped->Offset, 
            count_high, count_low, flags );
 
-    count.s.LowPart = count_low;
-    count.s.HighPart = count_high;
-    offset.s.LowPart = overlapped->Offset;
-    offset.s.HighPart = overlapped->OffsetHigh;
+    count.u.LowPart = count_low;
+    count.u.HighPart = count_high;
+    offset.u.LowPart = overlapped->Offset;
+    offset.u.HighPart = overlapped->OffsetHigh;
 
     status = NtLockFile( hFile, overlapped->hEvent, NULL, NULL, 
                          NULL, &offset, &count, NULL, 
@@ -422,10 +422,10 @@ BOOL WINAPI UnlockFile( HANDLE hFile, DWORD offset_low, DWORD offset_high,
     NTSTATUS    status;
     LARGE_INTEGER count, offset;
 
-    count.s.LowPart = count_low;
-    count.s.HighPart = count_high;
-    offset.s.LowPart = offset_low;
-    offset.s.HighPart = offset_high;
+    count.u.LowPart = count_low;
+    count.u.HighPart = count_high;
+    offset.u.LowPart = offset_low;
+    offset.u.HighPart = offset_high;
 
     status = NtUnlockFile( hFile, NULL, &offset, &count, NULL);
     if (status) SetLastError( RtlNtStatusToDosError(status) );

@@ -1668,8 +1668,8 @@ BOOL WINAPI FileTimeToDosDateTime( const FILETIME *ft, LPWORD fatdate,
     time_t              unixtime;
     struct tm*          tm;
 
-    li.s.LowPart = ft->dwLowDateTime;
-    li.s.HighPart = ft->dwHighDateTime;
+    li.u.LowPart = ft->dwLowDateTime;
+    li.u.HighPart = ft->dwHighDateTime;
     RtlTimeToSecondsSince1970( &li, &t );
     unixtime = t;
     tm = gmtime( &unixtime );
