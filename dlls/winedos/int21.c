@@ -38,6 +38,7 @@
 #include "winuser.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "wine/exception.h"
 
 /*
  * FIXME: Delete this reference when all int21 code has been moved to winedos.
@@ -2623,8 +2624,10 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         TRACE("TERMINATE PROGRAM\n");
         if (DOSVM_IsWin16())
             ExitThread( 0 );
-        else
+        else if(ISV86(context))
             MZ_Exit( context, FALSE, 0 );
+        else
+            ERR( "Called from DOS protected mode\n" );
         break;
 
     case 0x01: /* READ CHARACTER FROM STANDARD INPUT, WITH ECHO */
@@ -3398,8 +3401,16 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         TRACE( "EXIT with return code %d\n", AL_reg(context) );
         if (DOSVM_IsWin16())
             ExitThread( AL_reg(context) );
-        else
+        else if(ISV86(context))
             MZ_Exit( context, FALSE, AL_reg(context) );
+        else
+        {
+            /*
+             * Exit from DPMI.
+             */            
+            DWORD rv = AL_reg(context);
+            RaiseException( EXCEPTION_VM86_INTx, 0, 1, &rv );
+        }
         break;
 
     case 0x4d: /* GET RETURN CODE */

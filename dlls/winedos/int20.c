@@ -18,10 +18,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <stdlib.h>
-#include "winbase.h"
 #include "dosexe.h"
-#include "miscemu.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 /**********************************************************************
  *	    DOSVM_Int20Handler (WINEDOS16.132)
@@ -30,9 +30,10 @@
  */
 void WINAPI DOSVM_Int20Handler( CONTEXT86 *context )
 {
-    /* FIXME: Is this correct in DOS DPMI? */
-    if (ISV86(context))
+    if (DOSVM_IsWin16())
+        ExitThread( 0 );
+    else if(ISV86(context))
         MZ_Exit( context, TRUE, 0 );
     else
-        ExitThread(0);
+        ERR( "Called from DOS protected mode\n" );
 }

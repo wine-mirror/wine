@@ -623,7 +623,7 @@ static void MZ_Launch( LPCSTR cmdtail, int length )
   loop_thread = 0; loop_tid = 0;
 
   VGA_Clean();
-  ExitThread(rv);
+  ExitProcess(rv);
 }
 
 /***********************************************************************

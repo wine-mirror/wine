@@ -69,6 +69,7 @@ typedef struct tagRMCB {
 static RMCB *FirstRMCB = NULL;
 static WORD dpmi_flag;
 static void* lastvalloced = NULL;
+static BYTE DPMI_retval;
 
 /**********************************************************************
  *          DOSVM_IsDos32
@@ -100,6 +101,14 @@ static WINE_EXCEPTION_FILTER(dpmi_exception_handler)
         DOSVM_SendQueuedEvents(context);
         return EXCEPTION_CONTINUE_EXECUTION;
     }
+    else if (rec->ExceptionCode == EXCEPTION_VM86_INTx)
+    {
+        if (ISV86(context))
+            ERR( "Real mode INTx caught by protected mode handler!\n" );
+        DPMI_retval = (BYTE)rec->ExceptionInformation[0];
+        return EXCEPTION_EXECUTE_HANDLER;
+    }
+
 #endif
     return EXCEPTION_CONTINUE_SEARCH;
 }
@@ -593,8 +602,14 @@ static void StartPM( CONTEXT86 *context )
     } 
     __ENDTRY
 
-    /* in the current state of affairs, we won't ever actually return here... */
-    /* we should have int21/ah=4c do it someday, though... */
+    TRACE( "Protected mode DOS program is terminating\n" );
+
+    /*
+     * FIXME: Instead of calling ExitThread, we should release all
+     *        allocated protected mode resources and call MZ_Exit
+     *        using real mode context. See DPMI specification.
+     */
+    ExitThread( DPMI_retval );
 
 #if 0
     FreeSelector16(psp->environment);
