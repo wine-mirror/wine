@@ -60,7 +60,6 @@ static void sigterm_handler()
 /* initialize signal handling */
 static void signal_init(void)
 {
-#if 0
     if (!debug_level)
     {
         switch(fork())
@@ -74,7 +73,6 @@ static void signal_init(void)
             exit(0);
         }
     }
-#endif
     signal( SIGPIPE, SIG_IGN );
     signal( SIGHUP, sigterm_handler );
     signal( SIGINT, sigterm_handler );

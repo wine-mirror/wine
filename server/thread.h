@@ -47,6 +47,7 @@ struct thread
     int                 attached;  /* is thread attached with ptrace? */
     int                 exit_code; /* thread exit code */
     int                 unix_pid;  /* Unix pid of client */
+    CONTEXT            *context;   /* current context if in an exception handler */
     void               *teb;       /* TEB address (in client address space) */
     void               *entry;     /* thread entry point (in client address space) */
     int                 priority;  /* priority level */

@@ -13,9 +13,10 @@
 #include "wine/exception.h"
 #include "stackframe.h"
 #include "miscemu.h"
+#include "server.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(seh)
+DEFAULT_DEBUG_CHANNEL(seh);
 
 /* Exception record for handling exceptions happening inside exception handlers */
 typedef struct
@@ -84,6 +85,22 @@ static DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
 }
 
 
+/**********************************************************************
+ *           EXC_SendEvent
+ *
+ * Send an EXCEPTION_DEBUG_EVENT event to the debugger.
+ */
+static inline int send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *context )
+{
+    struct exception_event_request *req = get_req_buffer();
+    req->record  = *rec;
+    req->first   = first_chance;
+    req->context = *context;
+    if (!server_call_noerr( REQ_EXCEPTION_EVENT )) *context = req->context;
+    return req->status;
+}
+
+
 /*******************************************************************
  *         EXC_DefaultHandling
  *
@@ -91,8 +108,7 @@ static DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
  */
 static void EXC_DefaultHandling( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    if (DEBUG_SendExceptionEvent( rec, FALSE, context ) == DBG_CONTINUE)
-        return;  /* continue execution */
+    if (send_debug_event( rec, FALSE, context ) == DBG_CONTINUE) return;  /* continue execution */
 
     if (rec->ExceptionFlags & EH_STACK_INVALID)
         ERR("Exception frame is not in stack limits => unable to dispatch exception.\n");
@@ -117,8 +133,7 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 
     TRACE( "code=%lx flags=%lx\n", rec->ExceptionCode, rec->ExceptionFlags );
 
-    if (DEBUG_SendExceptionEvent( rec, TRUE, context ) == DBG_CONTINUE)
-        return;  /* continue execution */
+    if (send_debug_event( rec, TRUE, context ) == DBG_CONTINUE) return;  /* continue execution */
 
     frame = NtCurrentTeb()->except;
     nested_frame = NULL;

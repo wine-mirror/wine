@@ -457,13 +457,12 @@ static void copy_context( CONTEXT *to, CONTEXT *from, int flags )
 DECL_HANDLER(get_thread_context)
 {
     struct thread *thread;
-    CONTEXT *context;
 
     if ((thread = get_thread_from_handle( req->handle, THREAD_GET_CONTEXT )))
     {
-        if ((context = get_debug_context( thread )))  /* thread is inside an exception event */
+        if (thread->context)  /* thread is inside an exception event */
         {
-            copy_context( &req->context, context, req->flags );
+            copy_context( &req->context, thread->context, req->flags );
         }
         else
         {
@@ -481,13 +480,12 @@ DECL_HANDLER(get_thread_context)
 DECL_HANDLER(set_thread_context)
 {
     struct thread *thread;
-    CONTEXT *context;
 
     if ((thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT )))
     {
-        if ((context = get_debug_context( thread )))  /* thread is inside an exception event */
+        if (thread->context)  /* thread is inside an exception event */
         {
-            copy_context( context, &req->context, req->flags );
+            copy_context( thread->context, &req->context, req->flags );
         }
         else
         {

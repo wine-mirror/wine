@@ -79,23 +79,28 @@ static void dump_context( const CONTEXT *context )
 #endif
 }
 
-static void dump_debug_event_t( const debug_event_t *event )
+static void dump_exc_record( const EXCEPTION_RECORD *rec )
 {
     int i;
+    fprintf( stderr, "{code=%lx,flags=%lx,rec=%p,addr=%p,params={",
+             rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionRecord,
+             rec->ExceptionAddress );
+    for (i = 0; i < rec->NumberParameters; i++)
+    {
+        if (i) fputc( ',', stderr );
+        fprintf( stderr, "%lx", rec->ExceptionInformation[i] );
+    }
+    fputc( '}', stderr );
+}
+
+static void dump_debug_event_t( const debug_event_t *event )
+{
     switch(event->code)
     {
     case EXCEPTION_DEBUG_EVENT:
-        fprintf( stderr, "{exception,code=%x,flags=%x,rec=%p,addr=%p,params={",
-                 event->info.exception.code, event->info.exception.flags,
-                 event->info.exception.record, event->info.exception.addr );
-        for (i = 0; i < event->info.exception.nb_params; i++)
-        {
-            if (i) fputc( ',', stderr );
-            fprintf( stderr, "%x", event->info.exception.params[i] );
-        }
-        fprintf( stderr, "},first_chance=%d,context=", event->info.exception.first_chance );
-        dump_context( &event->info.exception.context );
-        fputc( '}', stderr );
+        fprintf( stderr, "{exception," );
+        dump_exc_record( &event->info.exception.record );
+        fprintf( stderr, ",first=%d}", event->info.exception.first );
         break;
     case CREATE_THREAD_DEBUG_EVENT:
         fprintf( stderr, "{create_thread,thread=%d,teb=%p,start=%p}",
@@ -927,15 +932,26 @@ static void dump_wait_debug_event_reply( const struct wait_debug_event_request *
     dump_debug_event_t( &req->event );
 }
 
-static void dump_send_debug_event_request( const struct send_debug_event_request *req )
+static void dump_exception_event_request( const struct exception_event_request *req )
 {
-    fprintf( stderr, " event=" );
-    dump_debug_event_t( &req->event );
+    fprintf( stderr, " record=" );
+    dump_exc_record( &req->record );
+    fprintf( stderr, "," );
+    fprintf( stderr, " first=%d,", req->first );
+    fprintf( stderr, " context=" );
+    dump_context( &req->context );
 }
 
-static void dump_send_debug_event_reply( const struct send_debug_event_request *req )
+static void dump_exception_event_reply( const struct exception_event_request *req )
 {
     fprintf( stderr, " status=%d", req->status );
+}
+
+static void dump_output_debug_string_request( const struct output_debug_string_request *req )
+{
+    fprintf( stderr, " string=%p,", req->string );
+    fprintf( stderr, " unicode=%d,", req->unicode );
+    fprintf( stderr, " length=%d", req->length );
 }
 
 static void dump_continue_debug_event_request( const struct continue_debug_event_request *req )
@@ -1310,7 +1326,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_snapshot_request,
     (dump_func)dump_next_process_request,
     (dump_func)dump_wait_debug_event_request,
-    (dump_func)dump_send_debug_event_request,
+    (dump_func)dump_exception_event_request,
+    (dump_func)dump_output_debug_string_request,
     (dump_func)dump_continue_debug_event_request,
     (dump_func)dump_debug_process_request,
     (dump_func)dump_read_process_memory_request,
@@ -1411,7 +1428,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_snapshot_reply,
     (dump_func)dump_next_process_reply,
     (dump_func)dump_wait_debug_event_reply,
-    (dump_func)dump_send_debug_event_reply,
+    (dump_func)dump_exception_event_reply,
+    (dump_func)0,
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_read_process_memory_reply,
@@ -1512,7 +1530,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_snapshot",
     "next_process",
     "wait_debug_event",
-    "send_debug_event",
+    "exception_event",
+    "output_debug_string",
     "continue_debug_event",
     "debug_process",
     "read_process_memory",
@@ -1546,7 +1565,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */
 
-void trace_request( enum request req, int fd )
+void trace_request( enum request req )
 {
     current->last_req = req;
     if (req < REQ_NB_REQUESTS)
@@ -1556,7 +1575,7 @@ void trace_request( enum request req, int fd )
     }
     else
         fprintf( stderr, "%08x: %d(", (unsigned int)current, req );
-    if (fd != -1) fprintf( stderr, " ) fd=%d\n", fd );
+    if (current->pass_fd != -1) fprintf( stderr, " ) fd=%d\n", current->pass_fd );
     else fprintf( stderr, " )\n" );
 }
 

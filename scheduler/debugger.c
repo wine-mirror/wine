@@ -7,37 +7,10 @@
 #include <string.h>
 
 #include "winerror.h"
-#include "process.h"
 #include "server.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(debugstr);
-
-
-/**********************************************************************
- *           DEBUG_SendExceptionEvent
- *
- * Send an EXCEPTION_DEBUG_EVENT event to the current process debugger.
- */
-DWORD DEBUG_SendExceptionEvent( EXCEPTION_RECORD *rec, BOOL first_chance, CONTEXT *context )
-{
-    int i;
-    struct send_debug_event_request *req = get_req_buffer();
-
-    req->event.code = EXCEPTION_DEBUG_EVENT;
-    req->event.info.exception.code         = rec->ExceptionCode;
-    req->event.info.exception.flags        = rec->ExceptionFlags;
-    req->event.info.exception.record       = rec->ExceptionRecord;
-    req->event.info.exception.addr         = rec->ExceptionAddress;
-    req->event.info.exception.nb_params    = rec->NumberParameters;
-    req->event.info.exception.first_chance = first_chance;
-    req->event.info.exception.context      = *context;
-    for (i = 0; i < req->event.info.exception.nb_params; i++)
-        req->event.info.exception.params[i] = rec->ExceptionInformation[i];
-    if (!server_call_noerr( REQ_SEND_DEBUG_EVENT ))
-        *context = req->event.info.exception.context;
-    return req->status;
-}
 
 
 /******************************************************************************
@@ -54,7 +27,6 @@ DWORD DEBUG_SendExceptionEvent( EXCEPTION_RECORD *rec, BOOL first_chance, CONTEX
 BOOL WINAPI WaitForDebugEvent( LPDEBUG_EVENT event, DWORD timeout )
 {
     struct wait_debug_event_request *req = get_req_buffer();
-    int i;
 
     req->timeout = timeout;
     if (server_call( REQ_WAIT_DEBUG_EVENT )) return FALSE;
@@ -70,14 +42,8 @@ BOOL WINAPI WaitForDebugEvent( LPDEBUG_EVENT event, DWORD timeout )
         SetLastError( ERROR_SEM_TIMEOUT );
         return FALSE;
     case EXCEPTION_DEBUG_EVENT:
-        event->u.Exception.ExceptionRecord.ExceptionCode    = req->event.info.exception.code;
-        event->u.Exception.ExceptionRecord.ExceptionFlags   = req->event.info.exception.flags;
-        event->u.Exception.ExceptionRecord.ExceptionRecord  = req->event.info.exception.record;
-        event->u.Exception.ExceptionRecord.ExceptionAddress = req->event.info.exception.addr;
-        event->u.Exception.ExceptionRecord.NumberParameters = req->event.info.exception.nb_params;
-        for (i = 0; i < req->event.info.exception.nb_params; i++)
-            event->u.Exception.ExceptionRecord.ExceptionInformation[i] = req->event.info.exception.params[i];
-        event->u.Exception.dwFirstChance = req->event.info.exception.first_chance;
+        event->u.Exception.ExceptionRecord = req->event.info.exception.record;
+        event->u.Exception.dwFirstChance   = req->event.info.exception.first;
         break;
     case CREATE_THREAD_DEBUG_EVENT:
         event->u.CreateThread.hThread           = req->event.info.create_thread.handle;
@@ -158,12 +124,11 @@ BOOL WINAPI DebugActiveProcess( DWORD pid )
  */
 void WINAPI OutputDebugStringA( LPCSTR str )
 {
-    struct send_debug_event_request *req = get_req_buffer();
-    req->event.code = OUTPUT_DEBUG_STRING_EVENT;
-    req->event.info.output_string.string  = (void *)str;
-    req->event.info.output_string.unicode = 0;
-    req->event.info.output_string.length  = strlen(str) + 1;
-    server_call_noerr( REQ_SEND_DEBUG_EVENT );
+    struct output_debug_string_request *req = get_req_buffer();
+    req->string  = (void *)str;
+    req->unicode = 0;
+    req->length  = strlen(str) + 1;
+    server_call_noerr( REQ_OUTPUT_DEBUG_STRING );
     TRACE("%s\n", str);
 }
 
@@ -173,12 +138,11 @@ void WINAPI OutputDebugStringA( LPCSTR str )
  */
 void WINAPI OutputDebugStringW( LPCWSTR str )
 {
-    struct send_debug_event_request *req = get_req_buffer();
-    req->event.code = OUTPUT_DEBUG_STRING_EVENT;
-    req->event.info.output_string.string  = (void *)str;
-    req->event.info.output_string.unicode = 1;
-    req->event.info.output_string.length  = (lstrlenW(str) + 1) * sizeof(WCHAR);
-    server_call_noerr( REQ_SEND_DEBUG_EVENT );
+    struct output_debug_string_request *req = get_req_buffer();
+    req->string  = (void *)str;
+    req->unicode = 1;
+    req->length  = (lstrlenW(str) + 1) * sizeof(WCHAR);
+    server_call_noerr( REQ_OUTPUT_DEBUG_STRING );
     TRACE("%s\n", debugstr_w(str));
 }
 

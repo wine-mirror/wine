@@ -34,9 +34,10 @@
 #include "process.h"
 #include "thread.h"
 #include "stackframe.h"
+#include "server.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(seh)
+DEFAULT_DEBUG_CHANNEL(seh);
 
 
 /*******************************************************************
@@ -69,12 +70,16 @@ void WINAPI RaiseException( DWORD code, DWORD flags, DWORD nbargs, const LPDWORD
  */
 DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 {
+    struct exception_event_request *req = get_req_buffer();
     char message[80];
     PDB *pdb = PROCESS_Current();
 
-    if (DEBUG_SendExceptionEvent( epointers->ExceptionRecord, FALSE,
-                                  epointers->ContextRecord ) == DBG_CONTINUE)
-        return EXCEPTION_CONTINUE_EXECUTION;
+    /* send a last chance event to the debugger */
+    req->record  = *epointers->ExceptionRecord;
+    req->first   = 0;
+    req->context = *epointers->ContextRecord;
+    if (!server_call_noerr( REQ_EXCEPTION_EVENT )) *epointers->ContextRecord = req->context;
+    if (req->status == DBG_CONTINUE) return EXCEPTION_CONTINUE_EXECUTION;
 
     if (pdb->top_filter)
     {

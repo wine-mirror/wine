@@ -127,16 +127,16 @@ static void fatal_perror( const char *err, ... )
 }
 
 /* call a request handler */
-static void call_req_handler( struct thread *thread, enum request req, int fd )
+static inline void call_req_handler( struct thread *thread, enum request req )
 {
     current = thread;
     clear_error();
 
-    if (debug_level) trace_request( req, fd );
+    if (debug_level) trace_request( req );
 
     if (req < REQ_NB_REQUESTS)
     {
-        req_handlers[req].handler( current->buffer, fd );
+        req_handlers[req]( current->buffer );
         if (current && !current->wait) send_reply( current );
         current = NULL;
         return;
@@ -186,10 +186,8 @@ void read_request( struct thread *thread )
 
     if (ret == sizeof(req))
     {
-        int pass_fd = thread->pass_fd;
+        call_req_handler( thread, req );
         thread->pass_fd = -1;
-        call_req_handler( thread, req, pass_fd );
-        if (pass_fd != -1) close( pass_fd );
         return;
     }
     if (ret == -1)

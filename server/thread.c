@@ -126,6 +126,7 @@ struct thread *create_thread( int fd, struct process *process, int suspend )
     if (!(thread = alloc_object( &thread_ops, fd ))) return NULL;
 
     thread->unix_pid    = 0;  /* not known yet */
+    thread->context     = NULL;
     thread->teb         = NULL;
     thread->mutex       = NULL;
     thread->debug_ctx   = NULL;

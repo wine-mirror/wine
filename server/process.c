@@ -201,9 +201,9 @@ struct thread *create_process( int fd, struct process *parent,
 
     /* attach to the debugger if requested */
     if (process->create_flags & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS))
-        debugger_attach( process, current );
+        set_process_debugger( process, current );
     else if (parent && parent->debugger && !(parent->create_flags & DEBUG_ONLY_THIS_PROCESS))
-        debugger_attach( process, parent->debugger );
+        set_process_debugger( process, parent->debugger );
 
     release_object( process );
     return thread;

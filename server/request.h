@@ -22,20 +22,26 @@
 #define PROTOCOL_ERROR -3
 
 /* request handler definition */
-#define DECL_HANDLER(name) void req_##name( struct name##_request *req, int fd )
+#define DECL_HANDLER(name) void req_##name( struct name##_request *req )
 
 /* request functions */
 
+#ifdef __GNUC__
+extern void fatal_protocol_error( struct thread *thread,
+                                  const char *err, ... ) __attribute__((format (printf,2,3)));
+#else
+extern void fatal_protocol_error( struct thread *thread, const char *err, ... );
+#endif
+
 extern void read_request( struct thread *thread );
 extern int write_request( struct thread *thread );
-extern void fatal_protocol_error( struct thread *thread, const char *err, ... );
 extern void set_reply_fd( struct thread *thread, int pass_fd );
 extern void send_reply( struct thread *thread );
 extern void open_master_socket(void);
 extern void close_master_socket(void);
 extern void lock_master_socket( int locked );
 
-extern void trace_request( enum request req, int fd );
+extern void trace_request( enum request req );
 extern void trace_reply( struct thread *thread );
 
 /* get the request buffer */
@@ -138,7 +144,8 @@ DECL_HANDLER(create_device);
 DECL_HANDLER(create_snapshot);
 DECL_HANDLER(next_process);
 DECL_HANDLER(wait_debug_event);
-DECL_HANDLER(send_debug_event);
+DECL_HANDLER(exception_event);
+DECL_HANDLER(output_debug_string);
 DECL_HANDLER(continue_debug_event);
 DECL_HANDLER(debug_process);
 DECL_HANDLER(read_process_memory);
@@ -170,108 +177,108 @@ DECL_HANDLER(get_atom_name);
 
 #ifdef WANT_REQUEST_HANDLERS
 
-static const struct handler {
-    void       (*handler)( void *req, int fd );
-    unsigned int min_size;
-} req_handlers[REQ_NB_REQUESTS] = {
-    { (void(*)())req_new_process, sizeof(struct new_process_request) },
-    { (void(*)())req_new_thread, sizeof(struct new_thread_request) },
-    { (void(*)())req_boot_done, sizeof(struct boot_done_request) },
-    { (void(*)())req_init_process, sizeof(struct init_process_request) },
-    { (void(*)())req_init_process_done, sizeof(struct init_process_done_request) },
-    { (void(*)())req_init_thread, sizeof(struct init_thread_request) },
-    { (void(*)())req_get_thread_buffer, sizeof(struct get_thread_buffer_request) },
-    { (void(*)())req_terminate_process, sizeof(struct terminate_process_request) },
-    { (void(*)())req_terminate_thread, sizeof(struct terminate_thread_request) },
-    { (void(*)())req_get_process_info, sizeof(struct get_process_info_request) },
-    { (void(*)())req_set_process_info, sizeof(struct set_process_info_request) },
-    { (void(*)())req_get_thread_info, sizeof(struct get_thread_info_request) },
-    { (void(*)())req_set_thread_info, sizeof(struct set_thread_info_request) },
-    { (void(*)())req_suspend_thread, sizeof(struct suspend_thread_request) },
-    { (void(*)())req_resume_thread, sizeof(struct resume_thread_request) },
-    { (void(*)())req_load_dll, sizeof(struct load_dll_request) },
-    { (void(*)())req_unload_dll, sizeof(struct unload_dll_request) },
-    { (void(*)())req_queue_apc, sizeof(struct queue_apc_request) },
-    { (void(*)())req_get_apcs, sizeof(struct get_apcs_request) },
-    { (void(*)())req_close_handle, sizeof(struct close_handle_request) },
-    { (void(*)())req_get_handle_info, sizeof(struct get_handle_info_request) },
-    { (void(*)())req_set_handle_info, sizeof(struct set_handle_info_request) },
-    { (void(*)())req_dup_handle, sizeof(struct dup_handle_request) },
-    { (void(*)())req_open_process, sizeof(struct open_process_request) },
-    { (void(*)())req_select, sizeof(struct select_request) },
-    { (void(*)())req_create_event, sizeof(struct create_event_request) },
-    { (void(*)())req_event_op, sizeof(struct event_op_request) },
-    { (void(*)())req_open_event, sizeof(struct open_event_request) },
-    { (void(*)())req_create_mutex, sizeof(struct create_mutex_request) },
-    { (void(*)())req_release_mutex, sizeof(struct release_mutex_request) },
-    { (void(*)())req_open_mutex, sizeof(struct open_mutex_request) },
-    { (void(*)())req_create_semaphore, sizeof(struct create_semaphore_request) },
-    { (void(*)())req_release_semaphore, sizeof(struct release_semaphore_request) },
-    { (void(*)())req_open_semaphore, sizeof(struct open_semaphore_request) },
-    { (void(*)())req_create_file, sizeof(struct create_file_request) },
-    { (void(*)())req_alloc_file_handle, sizeof(struct alloc_file_handle_request) },
-    { (void(*)())req_get_read_fd, sizeof(struct get_read_fd_request) },
-    { (void(*)())req_get_write_fd, sizeof(struct get_write_fd_request) },
-    { (void(*)())req_set_file_pointer, sizeof(struct set_file_pointer_request) },
-    { (void(*)())req_truncate_file, sizeof(struct truncate_file_request) },
-    { (void(*)())req_set_file_time, sizeof(struct set_file_time_request) },
-    { (void(*)())req_flush_file, sizeof(struct flush_file_request) },
-    { (void(*)())req_get_file_info, sizeof(struct get_file_info_request) },
-    { (void(*)())req_lock_file, sizeof(struct lock_file_request) },
-    { (void(*)())req_unlock_file, sizeof(struct unlock_file_request) },
-    { (void(*)())req_create_pipe, sizeof(struct create_pipe_request) },
-    { (void(*)())req_create_socket, sizeof(struct create_socket_request) },
-    { (void(*)())req_accept_socket, sizeof(struct accept_socket_request) },
-    { (void(*)())req_set_socket_event, sizeof(struct set_socket_event_request) },
-    { (void(*)())req_get_socket_event, sizeof(struct get_socket_event_request) },
-    { (void(*)())req_enable_socket_event, sizeof(struct enable_socket_event_request) },
-    { (void(*)())req_alloc_console, sizeof(struct alloc_console_request) },
-    { (void(*)())req_free_console, sizeof(struct free_console_request) },
-    { (void(*)())req_open_console, sizeof(struct open_console_request) },
-    { (void(*)())req_set_console_fd, sizeof(struct set_console_fd_request) },
-    { (void(*)())req_get_console_mode, sizeof(struct get_console_mode_request) },
-    { (void(*)())req_set_console_mode, sizeof(struct set_console_mode_request) },
-    { (void(*)())req_set_console_info, sizeof(struct set_console_info_request) },
-    { (void(*)())req_get_console_info, sizeof(struct get_console_info_request) },
-    { (void(*)())req_write_console_input, sizeof(struct write_console_input_request) },
-    { (void(*)())req_read_console_input, sizeof(struct read_console_input_request) },
-    { (void(*)())req_create_change_notification, sizeof(struct create_change_notification_request) },
-    { (void(*)())req_create_mapping, sizeof(struct create_mapping_request) },
-    { (void(*)())req_open_mapping, sizeof(struct open_mapping_request) },
-    { (void(*)())req_get_mapping_info, sizeof(struct get_mapping_info_request) },
-    { (void(*)())req_create_device, sizeof(struct create_device_request) },
-    { (void(*)())req_create_snapshot, sizeof(struct create_snapshot_request) },
-    { (void(*)())req_next_process, sizeof(struct next_process_request) },
-    { (void(*)())req_wait_debug_event, sizeof(struct wait_debug_event_request) },
-    { (void(*)())req_send_debug_event, sizeof(struct send_debug_event_request) },
-    { (void(*)())req_continue_debug_event, sizeof(struct continue_debug_event_request) },
-    { (void(*)())req_debug_process, sizeof(struct debug_process_request) },
-    { (void(*)())req_read_process_memory, sizeof(struct read_process_memory_request) },
-    { (void(*)())req_write_process_memory, sizeof(struct write_process_memory_request) },
-    { (void(*)())req_create_key, sizeof(struct create_key_request) },
-    { (void(*)())req_open_key, sizeof(struct open_key_request) },
-    { (void(*)())req_delete_key, sizeof(struct delete_key_request) },
-    { (void(*)())req_close_key, sizeof(struct close_key_request) },
-    { (void(*)())req_enum_key, sizeof(struct enum_key_request) },
-    { (void(*)())req_query_key_info, sizeof(struct query_key_info_request) },
-    { (void(*)())req_set_key_value, sizeof(struct set_key_value_request) },
-    { (void(*)())req_get_key_value, sizeof(struct get_key_value_request) },
-    { (void(*)())req_enum_key_value, sizeof(struct enum_key_value_request) },
-    { (void(*)())req_delete_key_value, sizeof(struct delete_key_value_request) },
-    { (void(*)())req_load_registry, sizeof(struct load_registry_request) },
-    { (void(*)())req_save_registry, sizeof(struct save_registry_request) },
-    { (void(*)())req_set_registry_levels, sizeof(struct set_registry_levels_request) },
-    { (void(*)())req_create_timer, sizeof(struct create_timer_request) },
-    { (void(*)())req_open_timer, sizeof(struct open_timer_request) },
-    { (void(*)())req_set_timer, sizeof(struct set_timer_request) },
-    { (void(*)())req_cancel_timer, sizeof(struct cancel_timer_request) },
-    { (void(*)())req_get_thread_context, sizeof(struct get_thread_context_request) },
-    { (void(*)())req_set_thread_context, sizeof(struct set_thread_context_request) },
-    { (void(*)())req_get_selector_entry, sizeof(struct get_selector_entry_request) },
-    { (void(*)())req_add_atom, sizeof(struct add_atom_request) },
-    { (void(*)())req_delete_atom, sizeof(struct delete_atom_request) },
-    { (void(*)())req_find_atom, sizeof(struct find_atom_request) },
-    { (void(*)())req_get_atom_name, sizeof(struct get_atom_name_request) },
+typedef void (*req_handler)( void *req );
+static const req_handler req_handlers[REQ_NB_REQUESTS] =
+{
+    (req_handler)req_new_process,
+    (req_handler)req_new_thread,
+    (req_handler)req_boot_done,
+    (req_handler)req_init_process,
+    (req_handler)req_init_process_done,
+    (req_handler)req_init_thread,
+    (req_handler)req_get_thread_buffer,
+    (req_handler)req_terminate_process,
+    (req_handler)req_terminate_thread,
+    (req_handler)req_get_process_info,
+    (req_handler)req_set_process_info,
+    (req_handler)req_get_thread_info,
+    (req_handler)req_set_thread_info,
+    (req_handler)req_suspend_thread,
+    (req_handler)req_resume_thread,
+    (req_handler)req_load_dll,
+    (req_handler)req_unload_dll,
+    (req_handler)req_queue_apc,
+    (req_handler)req_get_apcs,
+    (req_handler)req_close_handle,
+    (req_handler)req_get_handle_info,
+    (req_handler)req_set_handle_info,
+    (req_handler)req_dup_handle,
+    (req_handler)req_open_process,
+    (req_handler)req_select,
+    (req_handler)req_create_event,
+    (req_handler)req_event_op,
+    (req_handler)req_open_event,
+    (req_handler)req_create_mutex,
+    (req_handler)req_release_mutex,
+    (req_handler)req_open_mutex,
+    (req_handler)req_create_semaphore,
+    (req_handler)req_release_semaphore,
+    (req_handler)req_open_semaphore,
+    (req_handler)req_create_file,
+    (req_handler)req_alloc_file_handle,
+    (req_handler)req_get_read_fd,
+    (req_handler)req_get_write_fd,
+    (req_handler)req_set_file_pointer,
+    (req_handler)req_truncate_file,
+    (req_handler)req_set_file_time,
+    (req_handler)req_flush_file,
+    (req_handler)req_get_file_info,
+    (req_handler)req_lock_file,
+    (req_handler)req_unlock_file,
+    (req_handler)req_create_pipe,
+    (req_handler)req_create_socket,
+    (req_handler)req_accept_socket,
+    (req_handler)req_set_socket_event,
+    (req_handler)req_get_socket_event,
+    (req_handler)req_enable_socket_event,
+    (req_handler)req_alloc_console,
+    (req_handler)req_free_console,
+    (req_handler)req_open_console,
+    (req_handler)req_set_console_fd,
+    (req_handler)req_get_console_mode,
+    (req_handler)req_set_console_mode,
+    (req_handler)req_set_console_info,
+    (req_handler)req_get_console_info,
+    (req_handler)req_write_console_input,
+    (req_handler)req_read_console_input,
+    (req_handler)req_create_change_notification,
+    (req_handler)req_create_mapping,
+    (req_handler)req_open_mapping,
+    (req_handler)req_get_mapping_info,
+    (req_handler)req_create_device,
+    (req_handler)req_create_snapshot,
+    (req_handler)req_next_process,
+    (req_handler)req_wait_debug_event,
+    (req_handler)req_exception_event,
+    (req_handler)req_output_debug_string,
+    (req_handler)req_continue_debug_event,
+    (req_handler)req_debug_process,
+    (req_handler)req_read_process_memory,
+    (req_handler)req_write_process_memory,
+    (req_handler)req_create_key,
+    (req_handler)req_open_key,
+    (req_handler)req_delete_key,
+    (req_handler)req_close_key,
+    (req_handler)req_enum_key,
+    (req_handler)req_query_key_info,
+    (req_handler)req_set_key_value,
+    (req_handler)req_get_key_value,
+    (req_handler)req_enum_key_value,
+    (req_handler)req_delete_key_value,
+    (req_handler)req_load_registry,
+    (req_handler)req_save_registry,
+    (req_handler)req_set_registry_levels,
+    (req_handler)req_create_timer,
+    (req_handler)req_open_timer,
+    (req_handler)req_set_timer,
+    (req_handler)req_cancel_timer,
+    (req_handler)req_get_thread_context,
+    (req_handler)req_set_thread_context,
+    (req_handler)req_get_selector_entry,
+    (req_handler)req_add_atom,
+    (req_handler)req_delete_atom,
+    (req_handler)req_find_atom,
+    (req_handler)req_get_atom_name,
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 

@@ -31,14 +31,8 @@ typedef WCHAR path_t[MAX_PATH+1];
 /* definitions of the event data depending on the event code */
 struct debug_event_exception
 {
-    int        code;           /* exception code */
-    int        flags;          /* exception flags */
-    void      *record;         /* exception record ptr */
-    void      *addr;           /* exception address */
-    int        nb_params;      /* exceptions parameters */
-    int        params[15];
-    int        first_chance;   /* first chance to handle it? */
-    CONTEXT    context;        /* thread context */
+    EXCEPTION_RECORD record;   /* exception record */
+    int              first;    /* first chance exception? */
 };
 struct debug_event_create_thread
 {
@@ -813,11 +807,22 @@ struct wait_debug_event_request
 };
 
 
-/* Send a debug event */
-struct send_debug_event_request
+/* Send an exception event */
+struct exception_event_request
 {
-    OUT int           status;      /* event continuation status */
-    IN  debug_event_t event;       /* debug event data */
+    IN  EXCEPTION_RECORD record;   /* exception record */
+    IN  int              first;    /* first chance exception? */
+    IN  CONTEXT          context;  /* thread context */
+    OUT int              status;   /* event continuation status */
+};
+
+
+/* Send an output string to the debugger */
+struct output_debug_string_request
+{
+    IN  void*         string;      /* string to display (in debugged process address space) */
+    IN  int           unicode;     /* is it Unicode? */
+    IN  int           length;      /* string length */
 };
 
 
@@ -1164,7 +1169,8 @@ enum request
     REQ_CREATE_SNAPSHOT,
     REQ_NEXT_PROCESS,
     REQ_WAIT_DEBUG_EVENT,
-    REQ_SEND_DEBUG_EVENT,
+    REQ_EXCEPTION_EVENT,
+    REQ_OUTPUT_DEBUG_STRING,
     REQ_CONTINUE_DEBUG_EVENT,
     REQ_DEBUG_PROCESS,
     REQ_READ_PROCESS_MEMORY,
@@ -1196,7 +1202,7 @@ enum request
     REQ_NB_REQUESTS
 };
 
-#define SERVER_PROTOCOL_VERSION 2
+#define SERVER_PROTOCOL_VERSION 3
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

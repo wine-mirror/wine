@@ -18,6 +18,7 @@
     "path_t"        => "&dump_path_t",
     "debug_event_t" => "&dump_debug_event_t",
     "CONTEXT"       => "&dump_context",
+    "EXCEPTION_RECORD" => "&dump_exc_record",
     "char[1]"       => "\\\"%s\\\"",
     "WCHAR[1]"      => "&dump_unicode_string"
 );
@@ -80,13 +81,11 @@ my @request_lines = ();
 
 foreach $req (@requests) { push @request_lines, "DECL_HANDLER($req);\n"; }
 push @request_lines, "\n#ifdef WANT_REQUEST_HANDLERS\n\n";
-push @request_lines, "static const struct handler {\n";
-push @request_lines, "    void       (*handler)( void *req, int fd );\n";
-push @request_lines, "    unsigned int min_size;\n";
-push @request_lines, "} req_handlers[REQ_NB_REQUESTS] = {\n";
+push @request_lines, "typedef void (*req_handler)( void *req );\n";
+push @request_lines, "static const req_handler req_handlers[REQ_NB_REQUESTS] =\n{\n";
 foreach $req (@requests)
 {
-    push @request_lines, "    { (void(*)())req_$req, sizeof(struct ${req}_request) },\n";
+    push @request_lines, "    (req_handler)req_$req,\n";
 }
 push @request_lines, "};\n#endif  /* WANT_REQUEST_HANDLERS */\n";
 

@@ -468,15 +468,17 @@ DECL_HANDLER(alloc_file_handle)
     struct file *file;
 
     req->handle = -1;
-    if ((fd = dup(fd)) != -1)
+    if (current->pass_fd != -1)
     {
-        if ((file = create_file_for_fd( fd, req->access, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 )))
+        if ((file = create_file_for_fd( current->pass_fd, req->access,
+                                        FILE_SHARE_READ | FILE_SHARE_WRITE, 0 )))
         {
             req->handle = alloc_handle( current->process, file, req->access, 0 );
             release_object( file );
         }
+        current->pass_fd = -1;
     }
-    else file_set_error();
+    else set_error( STATUS_INVALID_PARAMETER );
 }
 
 /* get a Unix fd to read from a file */
