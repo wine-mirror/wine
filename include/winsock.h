@@ -56,10 +56,6 @@
 #  define FD_ISSET   Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
 #  define fd_set     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
 #  define select     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
-#  define htonl      Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
-#  define htons      Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
-#  define ntohl      Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
-#  define ntohs      Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
 # else  /* FD_CLR */
 /* stdlib.h has not been included yet so it's not too late. Include it now
  * making sure that none of the select symbols is affected. Then we can
@@ -68,19 +64,11 @@
 #  define fd_set unix_fd_set
 #  define timeval unix_timeval
 #  define select unix_select
-#  define htonl unix_htonl
-#  define htons unix_htons
-#  define ntohl unix_ntohl
-#  define ntohs unix_ntohs
 #  include <sys/types.h>
 #  include <stdlib.h>
 #  undef fd_set
 #  undef timeval
 #  undef select
-#  undef htonl
-#  undef htons
-#  undef ntohl
-#  undef ntohs
 #  undef FD_SETSIZE
 #  undef FD_CLR
 #  undef FD_SET
@@ -481,13 +469,41 @@ typedef struct WS(timeval)
 #define WS_FD_ISSET(fd, set) __WSAFDIsSet((SOCKET)(fd), (WS_fd_set*)(set))
 #endif
 
-u_long WINAPI WS(htonl)(u_long);
-u_short WINAPI WS(htons)(u_short);
-u_long WINAPI WS(ntohl)(u_long);
-u_short WINAPI WS(ntohs)(u_short);
-
 #endif /* WS_DEFINE_SELECT */
 
+/* we have to define hton/ntoh as macros to avoid conflicts with Unix headers */
+#ifndef USE_WS_PREFIX
+
+#undef htonl
+#undef htons
+#undef ntohl
+#undef ntohs
+
+#ifdef WORDS_BIGENDIAN
+
+#define htonl(l) ((u_long)(l))
+#define htons(s) ((u_short)(s))
+#define ntohl(l) ((u_long)(l))
+#define ntohs(s) ((u_short)(s))
+
+#else  /* WORDS_BIGENDIAN */
+
+inline static u_short __wine_ushort_swap(u_short s)
+{
+    return (s >> 8) | (s << 8);
+}
+inline static u_long __wine_ulong_swap(u_long l)
+{
+    return ((u_long)__wine_ushort_swap(l) << 16) | __wine_ushort_swap(l >> 16);
+}
+#define htonl(l) __wine_ulong_swap(l)
+#define htons(s) __wine_ushort_swap(s)
+#define ntohl(l) __wine_ulong_swap(l)
+#define ntohs(s) __wine_ushort_swap(s)
+
+#endif  /* WORDS_BIGENDIAN */
+
+#endif  /* USE_WS_PREFIX */
 
 /*
  * Internet address (old style... should be updated)
