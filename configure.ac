@@ -258,6 +258,19 @@ then
             AC_MSG_WARN([[XFree86 VMODE extension not found, Wine will be built without it]]),
             [#include <X11/Xlib.h>])
 
+        dnl *** Check for X RandR extension
+        AC_CHECK_HEADERS(X11/extensions/Xrandr.h,
+            [ dnl *** If X11/extensions/Xrandr.h exists...
+                AC_CHECK_LIB(Xrandr, XRRSetScreenConfigAndRate,
+                  [ AC_DEFINE(HAVE_LIBXRANDR, 1, [Define if you have the Xrandr library])
+                     X_PRE_LIBS="$X_PRE_LIBS -lXrandr"
+                  ],,
+                  $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
+                )
+            ],
+            AC_MSG_WARN([[Xrandr extension not found, Wine will be built without it]]),
+            [#include <X11/Xlib.h>])
+
         dnl *** Check for XVideo extension supporting XvImages
         AC_CHECK_HEADERS(X11/extensions/Xvlib.h,
             [ dnl *** If X11/extensions/Xvlib.h exists...

@@ -251,6 +251,9 @@
 /* Define to 1 if you have the `xpg4' library (-lxpg4). */
 #undef HAVE_LIBXPG4
 
+/* Define if you have the Xrandr library */
+#undef HAVE_LIBXRANDR
+
 /* Define if you have the X Shape extension */
 #undef HAVE_LIBXSHAPE
 
@@ -694,6 +697,9 @@
 
 /* Define to 1 if you have the <X11/extensions/xf86vmode.h> header file. */
 #undef HAVE_X11_EXTENSIONS_XF86VMODE_H
+
+/* Define to 1 if you have the <X11/extensions/Xrandr.h> header file. */
+#undef HAVE_X11_EXTENSIONS_XRANDR_H
 
 /* Define to 1 if you have the <X11/extensions/Xrender.h> header file. */
 #undef HAVE_X11_EXTENSIONS_XRENDER_H
