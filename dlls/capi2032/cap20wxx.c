@@ -29,6 +29,7 @@
 # include <unistd.h>
 #endif
 
+#define __user
 #ifdef HAVE_LINUX_CAPI_H
 # include <linux/capi.h>
 #endif
