@@ -58,7 +58,7 @@ IDM_WINEFILE MENU FIXED IMPURE
 		MENUITEM SEPARATOR
 		MENUITEM "&Formatear disco..." ,		203
 #ifdef _WIN95
-		MENUITEM "&Hacer disco de sistema...", -1	/*@@ */
+		MENUITEM "&Hacer disco de sistema...",		-1	/*TODO*/
 #endif
 		MENUITEM SEPARATOR
 		MENUITEM "C&onectar unidad de red" ,		252
