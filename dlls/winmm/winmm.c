@@ -1960,9 +1960,7 @@ MMRESULT MIDI_StreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID, DWORD cMidi
     if (lphMidiStrm)
 	*lphMidiStrm = (HMIDISTRM)hMidiOut;
 
-    /* FIXME: is lpuDevice initialized upon entering midiStreamOpen ? */
-    FIXME("*lpuDeviceID=%x\n", *lpuDeviceID);
-    lpwm->mld.uDeviceID = *lpuDeviceID = 0;
+    lpwm->mld.uDeviceID = *lpuDeviceID;
 
     ret = MMDRV_Open(&lpwm->mld, MODM_OPEN, (DWORD)&lpwm->mod, fdwOpen);
     lpMidiStrm->hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
