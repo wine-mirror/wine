@@ -178,6 +178,7 @@ typedef long                                   *LPLONG;
 typedef unsigned long   DWORD,      *PDWORD,   *LPDWORD;
 typedef unsigned long   ULONG,      *PULONG;
 typedef float           FLOAT,      *PFLOAT;
+typedef char                        *PSZ;
 
 /* Macros to map Winelib names to the correct implementation name */
 /* Note that Winelib is purely Win32.                             */
