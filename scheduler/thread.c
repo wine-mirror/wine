@@ -844,6 +844,20 @@ HANDLE WINAPI GetCurrentThread(void)
 }
 
 
+/***********************************************************************
+ * ProcessIdToSessionId   (KERNEL32)
+ * This function is available on Terminal Server 4SP4 and Windows 2000
+ */
+BOOL WINAPI ProcessIdToSessionId( DWORD procid, DWORD *sessionid_ptr )
+{
+	/* According to MSDN, if the calling process is not in a terminal
+	 * services environment, then the sessionid returned is zero.
+	 */
+	*sessionid_ptr = 0;
+	return TRUE;
+}
+
+
 #ifdef __i386__
 
 /* void WINAPI SetLastError( DWORD error ); */

@@ -928,3 +928,10 @@ import  ntdll.dll
 
 #1599 wrong ordinal (249 in Win32s's W32SCOMB.DLL) !
 1599 stdcall Get16DLLAddress(long str) Get16DLLAddress
+
+# Windows 2000, Terminal Server 4.0 SP4 functions
+@ stdcall GetSystemWindowsDirectoryA(ptr long) GetSystemWindowsDirectoryA
+@ stdcall GetSystemWindowsDirectoryW(ptr long) GetSystemWindowsDirectoryW
+@ stdcall InitializeCriticalSectionAndSpinCount(ptr long) InitializeCriticalSectionAndSpinCount
+@ stdcall SetCriticalSectionSpinCount(ptr long) SetCriticalSectionSpinCount
+@ stdcall ProcessIdToSessionId(long ptr) ProcessIdToSessionId

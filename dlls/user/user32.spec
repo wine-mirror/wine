@@ -642,3 +642,7 @@ import	ntdll.dll
 @ stdcall RegisterDeviceNotificationA(long ptr long) RegisterDeviceNotificationA
 @ stub    RegisterDeviceNotificationW
 @ stub    UnregisterDeviceNotification
+# win98/win2k
+@ stdcall GetClipboardSequenceNumber () GetClipboardSequenceNumber
+@ stdcall AllowSetForegroundWindow (long) AllowSetForegroundWindow
+@ stdcall LockSetForegroundWindow (long) LockSetForegroundWindow

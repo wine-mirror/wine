@@ -28,6 +28,29 @@ void WINAPI InitializeCriticalSection( CRITICAL_SECTION *crit )
 }
 
 /***********************************************************************
+ *           InitializeCriticalSectionAndSpinCount   (KERNEL32)
+ */
+BOOL WINAPI InitializeCriticalSectionAndSpinCount( CRITICAL_SECTION *crit, DWORD spincount )
+{
+    NTSTATUS ret = RtlInitializeCriticalSectionAndSpinCount( crit, spincount );
+    if (ret) RtlRaiseStatus( ret );
+    return !ret;
+}
+
+/***********************************************************************
+ *           SetCriticalSectionSpinCount   (KERNEL32)
+ * This function is available on NT4SP3 or later, but not Win98
+ * It is SMP related
+ */
+DWORD WINAPI SetCriticalSectionSpinCount( CRITICAL_SECTION *crit, DWORD spincount )
+{
+    ULONG_PTR oldspincount = crit->SpinCount;
+    if(spincount) FIXME("critsection=%p: spincount=%ld not supported\n", crit, spincount);
+    crit->SpinCount = spincount;
+    return oldspincount;
+}
+
+/***********************************************************************
  *           MakeCriticalSectionGlobal   (KERNEL32.515)
  */
 void WINAPI MakeCriticalSectionGlobal( CRITICAL_SECTION *crit )

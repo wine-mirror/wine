@@ -191,6 +191,7 @@ import	ntdll.dll
 @ stdcall RegLoadKeyA(long str str) RegLoadKeyA
 @ stdcall RegLoadKeyW(long wstr wstr) RegLoadKeyW
 @ stdcall RegNotifyChangeKeyValue(long long long long long) RegNotifyChangeKeyValue
+@ stdcall RegOpenCurrentUser(long ptr) RegOpenCurrentUser
 @ stdcall RegOpenKeyA(long str ptr) RegOpenKeyA
 @ stdcall RegOpenKeyExA(long str long long ptr) RegOpenKeyExA
 @ stdcall RegOpenKeyExW(long wstr long long ptr) RegOpenKeyExW

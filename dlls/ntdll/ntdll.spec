@@ -411,6 +411,7 @@ type	win32
 @ stdcall RtlInitializeBitMap(long long long) RtlInitializeBitMap
 @ stub RtlInitializeContext
 @ stdcall RtlInitializeCriticalSection(ptr) RtlInitializeCriticalSection
+@ stdcall RtlInitializeCriticalSectionAndSpinCount(ptr long) RtlInitializeCriticalSectionAndSpinCount
 @ stdcall RtlInitializeGenericTable() RtlInitializeGenericTable
 @ stub RtlInitializeRXact
 @ stdcall RtlInitializeResource(ptr) RtlInitializeResource
@@ -887,6 +888,7 @@ type	win32
 @ cdecl _strnicmp(str str long) strncasecmp
 @ cdecl _strupr(str) _strupr
 @ cdecl _ultoa(long ptr long) _ultoa
+@ stub _ultow
 @ cdecl _vsnprintf(ptr long ptr ptr) vsnprintf
 @ cdecl _wcsicmp(wstr wstr) NTDLL__wcsicmp
 @ cdecl _wcslwr(wstr) NTDLL__wcslwr
@@ -936,6 +938,7 @@ type	win32
 @ cdecl strrchr(str long) strrchr
 @ cdecl strspn(str str) strspn
 @ cdecl strstr(str str) strstr
+@ cdecl strtol(str ptr long) strtol
 @ varargs swprintf(wstr wstr) wsprintfW
 @ stub tan
 @ cdecl tolower(long) tolower

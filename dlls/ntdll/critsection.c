@@ -148,6 +148,20 @@ NTSTATUS WINAPI RtlInitializeCriticalSection( RTL_CRITICAL_SECTION *crit )
     return STATUS_SUCCESS;
 }
 
+/***********************************************************************
+ *           RtlInitializeCriticalSectionAndSpinCount   (NTDLL.@)
+ * The InitializeCriticalSectionAndSpinCount (KERNEL32) function is
+ * available on NT4SP3 or later, and Win98 or later.
+ * I am assuming that this is the correct definition given the MSDN
+ * docs for the kernel32 functions.
+ */
+NTSTATUS WINAPI RtlInitializeCriticalSectionAndSpinCount( RTL_CRITICAL_SECTION *crit, DWORD spincount )
+{
+    if(spincount) FIXME("critsection=%p: spincount=%ld not supported\n", crit, spincount);
+    crit->SpinCount = spincount;
+    return RtlInitializeCriticalSection( crit );
+}
+
 
 /***********************************************************************
  *           RtlDeleteCriticalSection   (NTDLL.@)

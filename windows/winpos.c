@@ -986,6 +986,28 @@ BOOL WINAPI SetForegroundWindow( HWND hwnd )
 
 
 /*******************************************************************
+ *         AllowSetForegroundWindow    (USER32)
+ */
+BOOL WINAPI AllowSetForegroundWindow( DWORD procid )
+{
+    /* FIXME: If Win98/2000 style SetForegroundWindow behavior is
+     * implemented, then fix this function. */
+    return TRUE;
+}
+
+
+/*******************************************************************
+ *         LockSetForegroundWindow    (USER32)
+ */
+BOOL WINAPI LockSetForegroundWindow( UINT lockcode )
+{
+    /* FIXME: If Win98/2000 style SetForegroundWindow behavior is
+     * implemented, then fix this function. */
+    return TRUE;
+}
+
+
+/*******************************************************************
  *         GetShellWindow16    (USER.600)
  */
 HWND16 WINAPI GetShellWindow16(void)

@@ -248,6 +248,19 @@ DWORD WINAPI RegOpenKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
 }
 
 
+/******************************************************************************
+ *           RegOpenCurrentUser   [ADVAPI32]
+ * FIXME: This function is supposed to retrieve a handle to the
+ * HKEY_CURRENT_USER for the user the current thread is impersonating.
+ * Since Wine does not currently allow threads to impersonate other users,
+ * this stub should work fine.
+ */
+DWORD WINAPI RegOpenCurrentUser( REGSAM access, PHKEY retkey )
+{
+    return RegOpenKeyExA( HKEY_CURRENT_USER, "", 0, access, retkey );
+}
+
+
 
 /******************************************************************************
  *           RegEnumKeyExW   [ADVAPI32.139]

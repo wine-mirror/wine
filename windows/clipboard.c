@@ -1297,3 +1297,19 @@ INT WINAPI GetPriorityClipboardFormat( UINT *lpPriorityList, INT nCount )
     return -1;
 }
 
+
+/**************************************************************************
+ *             GetClipboardSequenceNumber   (USER32)
+ * Supported on Win2k/Win98
+ * MSDN: Windows clipboard code keeps a serial number for the clipboard
+ * for each window station.  The number is incremented whenever the
+ * contents change or are emptied.
+ * If you do not have WINSTA_ACCESSCLIPBOARD then the function returns 0
+ */
+DWORD WINAPI GetClipboardSequenceNumber(VOID)
+{
+	FIXME("Returning 0, see windows/clipboard.c\n");
+	/* FIXME: Use serial numbers */
+	return 0;
+}
+

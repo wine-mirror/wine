@@ -283,6 +283,24 @@ UINT WINAPI GetWindowsDirectoryW( LPWSTR path, UINT count )
 
 
 /***********************************************************************
+ *           GetSystemWindowsDirectoryA   (KERNEL32) W2K, TS4.0SP4
+ */
+UINT WINAPI GetSystemWindowsDirectoryA( LPSTR path, UINT count )
+{
+    return GetWindowsDirectoryA( path, count );
+}
+
+
+/***********************************************************************
+ *           GetSystemWindowsDirectoryW   (KERNEL32) W2K, TS4.0SP4
+ */
+UINT WINAPI GetSystemWindowsDirectoryW( LPWSTR path, UINT count )
+{
+    return GetWindowsDirectoryW( path, count );
+}
+
+
+/***********************************************************************
  *           GetSystemDirectory16   (KERNEL.135)
  */
 UINT16 WINAPI GetSystemDirectory16( LPSTR path, UINT16 count )
