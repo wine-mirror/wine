@@ -53,6 +53,7 @@
 #include "wine/unicode.h"
 #include "controls.h"
 #include "local.h"
+#include "message.h"
 #include "user.h"
 #include "wine/debug.h"
 
@@ -422,7 +423,7 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 	EDITSTATE *es = (EDITSTATE *)GetWindowLongW( hwnd, 0 );
 	LRESULT result = 0;
 
-        TRACE("hwnd=%p msg=%x wparam=%x lparam=%lx\n", hwnd, msg, wParam, lParam);
+        TRACE("hwnd=%p msg=%x (%s) wparam=%x lparam=%lx\n", hwnd, msg, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 	
 	if (!es && msg != WM_NCCREATE)
 		return DefWindowProcT(hwnd, msg, wParam, lParam, unicode);
@@ -2129,6 +2130,7 @@ static void EDIT_SetCaretPos(EDITSTATE *es, INT pos,
 			     BOOL after_wrap)
 {
 	LRESULT res = EDIT_EM_PosFromChar(es, pos, after_wrap);
+	TRACE("%d - %dx%d\n", pos, (short)LOWORD(res), (short)HIWORD(res));
 	SetCaretPos((short)LOWORD(res), (short)HIWORD(res));
 }
 
@@ -4772,7 +4774,10 @@ static LRESULT EDIT_WM_VScroll(EDITSTATE *es, INT action, INT pos)
 	case SB_LINEDOWN:
 	case SB_PAGEUP:
 	case SB_PAGEDOWN:
-		TRACE("action %d\n", action);
+		TRACE("action %d (%s)\n", action, (action == SB_LINEUP ? "SB_LINEUP" :
+						   (action == SB_LINEDOWN ? "SB_LINEDOWN" :
+						    (action == SB_PAGEUP ? "SB_PAGEUP" :
+						     "SB_PAGEDOWN"))));
 		EDIT_EM_Scroll(es, action);
 		return 0;
 	case SB_TOP:
