@@ -133,12 +133,12 @@ import ole32.dll
 148 stdcall SafeArrayPtrOfIndex(ptr ptr ptr) SafeArrayPtrOfIndex
 149 stdcall SysStringByteLen(ptr) SysStringByteLen
 150 stdcall SysAllocStringByteLen(ptr long) SysAllocStringByteLen
-160 stub CreateTypeLib
+160 stdcall CreateTypeLib(long wstr ptr) CreateTypeLib
 161 stdcall LoadTypeLib (wstr ptr) LoadTypeLib
 162 stdcall LoadRegTypeLib (ptr long long long ptr) LoadRegTypeLib
 163 stdcall RegisterTypeLib(ptr str str) RegisterTypeLib
 164 stdcall QueryPathOfRegTypeLib(ptr long long long ptr) QueryPathOfRegTypeLib
-165 stub LHashValOfNameSys
+165 stdcall LHashValOfNameSys(long long wstr) LHashValOfNameSys
 166 stdcall LHashValOfNameSysA(long long str) LHashValOfNameSysA
 170 stdcall OaBuildVersion() OaBuildVersion
 171 stub ClearCustData

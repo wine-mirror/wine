@@ -128,6 +128,19 @@ QueryPathOfRegTypeLib(
 }
 
 /******************************************************************************
+ * CreateTypeLib [OLEAUT32]  creates a typelib
+ *
+ * RETURNS
+ *    Success: S_OK
+ *    Failure: Status
+ */
+HRESULT WINAPI CreateTypeLib(
+	SYSKIND syskind, LPCOLESTR szFile, /*ICreateTypeLib*/IUnknown ** ppctlib
+) {
+    FIXME("(%d,%s,%p), stub!\n",syskind,debugstr_w(szFile),ppctlib);
+    return E_FAIL;
+}
+/******************************************************************************
  * LoadTypeLib [TYPELIB.3]  Loads and registers a type library
  * NOTES
  *    Docs: OLECHAR FAR* szFile
@@ -294,15 +307,6 @@ DWORD WINAPI OaBuildVersion16(void)
 	FIXME_(ole)("Version value not known yet. Please investigate it !");
 		return 0;
     }
-}
-
-/********************************************************************
- *           LHashValOfNameSysA     [OLEAUT32]
- */
-HRESULT WINAPI LHashValOfNameSysA(SYSKIND sys, LCID lcid, LPSTR name)
-{
-    FIXME("%s\n", name);
-    return 0;
 }
 
 /* for better debugging info leave the static out for the time being */
@@ -1129,7 +1133,12 @@ int TLB_ReadTypeLib(LPSTR pszFileName, ITypeLib2 **ppTypeLib)
             LPVOID pBase = LockResource(hGlobal);
             if (pBase)
             {
-              *ppTypeLib = ITypeLib2_Constructor(pBase);
+	      /* try to load as incore resource */
+	      dwSignature = *((DWORD*) pBase);
+	      if ( dwSignature == MSFT_SIGNATURE)
+		  *ppTypeLib = ITypeLib2_Constructor(pBase);
+	      else
+	        FIXME("Header type magic 0x%08lx not supported.\n",dwSignature);
             }
             FreeResource( hGlobal );
           }
@@ -1177,15 +1186,19 @@ static ITypeLib2* ITypeLib2_Constructor(LPVOID pLib)
 
     /* read header */
     TLB_Read((void*)&tlbHeader, sizeof(tlbHeader), &cx, 0);
-    TRACE("read header (0x%08x 0x%08x)\n",tlbHeader.magic1,tlbHeader.magic2 );
-
+    TRACE("header:\n");
+    TRACE("\tmagic1=0x%08x ,magic2=0x%08x\n",tlbHeader.magic1,tlbHeader.magic2 );
+    if (memcmp(&tlbHeader.magic1,TLBMAGIC2,4)) {
+	FIXME("Header type magic 0x%08x not supported.\n",tlbHeader.magic1);
+	return NULL;
+    }
     /* there is a small number of information here until the next important
      * part:
      * the segment directory . Try to calculate the amount of data */
-    lPSegDir = sizeof(tlbHeader) + (tlbHeader.nrtypeinfos)*4 + (tlbHeader.varflags & HELPDLLFLAG? 4 :0);
+    lPSegDir = sizeof(tlbHeader) + (tlbHeader.nrtypeinfos)*4 + ((tlbHeader.varflags & HELPDLLFLAG)? 4 :0);
 
     /* now read the segment directory */
-    TRACE("read segment directory\n");
+    TRACE("read segment directory (at %ld)\n",lPSegDir);
     TLB_Read((void*)&tlbSegDir, sizeof(tlbSegDir), &cx, lPSegDir);  
     cx.pTblDir = &tlbSegDir;
 
@@ -2932,4 +2945,3 @@ static ICOM_VTABLE(ITypeInfo2) tinfvt =
     ITypeInfo2_fnGetAllVarCustData,
     ITypeInfo2_fnGetAllImplTypeCustData,
 };
-
