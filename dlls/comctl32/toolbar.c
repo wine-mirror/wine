@@ -219,6 +219,8 @@ typedef enum
 /* how wide to treat the bitmap if it isn't present */
 #define LIST_IMAGE_ABSENT_WIDTH 2
 
+#define TOOLBAR_NOWHERE (-1)
+
 #define TOOLBAR_GetInfoPtr(hwnd) ((TOOLBAR_INFO *)GetWindowLongPtrW(hwnd,0))
 #define TOOLBAR_HasText(x, y) (TOOLBAR_GetText(x, y) ? TRUE : FALSE)
 #define TOOLBAR_HasDropDownArrows(exStyle) ((exStyle & TBSTYLE_EX_DRAWDDARROWS) ? TRUE : FALSE)
@@ -247,6 +249,7 @@ static PIMLENTRY TOOLBAR_GetImageListEntry(PIMLENTRY *pies, INT cies, INT id);
 static VOID TOOLBAR_DeleteImageList(PIMLENTRY **pies, INT *cies);
 static HIMAGELIST TOOLBAR_InsertImageList(PIMLENTRY **pies, INT *cies, HIMAGELIST himl, INT id);
 static LRESULT TOOLBAR_LButtonDown(HWND hwnd, WPARAM wParam, LPARAM lParam);
+static void TOOLBAR_SetHotItemEx (TOOLBAR_INFO *infoPtr, INT nHit, DWORD dwReason);
 
 static LRESULT
 TOOLBAR_NotifyFormat(TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam);
@@ -889,8 +892,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     if (lpText) {
         rcText.left += GetSystemMetrics(SM_CXEDGE) + OFFSET_X;
         rcText.right -= GetSystemMetrics(SM_CXEDGE) + OFFSET_X;
-        if (GETDEFIMAGELIST(infoPtr, GETHIMLID(infoPtr,btnPtr->iBitmap)) &&
-                TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
+        if (TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
         {
             if (dwStyle & TBSTYLE_LIST)
                 rcText.left += infoPtr->nBitmapWidth + TOOLBAR_GetListTextOffset(infoPtr, infoPtr->iListGap);
@@ -1661,7 +1663,7 @@ TOOLBAR_InternalHitTest (HWND hwnd, LPPOINT lpPt)
     }
 
     TRACE(" NOWHERE!\n");
-    return -1;
+    return TOOLBAR_NOWHERE;
 }
 
 
@@ -4232,7 +4234,12 @@ TOOLBAR_SetAnchorHighlight (HWND hwnd, WPARAM wParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     BOOL bOldAnchor = infoPtr->bAnchor;
 
+    TRACE("hwnd=%p, bAnchor = %s\n", hwnd, wParam ? "TRUE" : "FALSE");
+
     infoPtr->bAnchor = (BOOL)wParam;
+
+    if (!infoPtr->bAnchor)
+        TOOLBAR_SetHotItemEx(infoPtr, TOOLBAR_NOWHERE, HICF_OTHER);
 
     return (LRESULT)bOldAnchor;
 }
@@ -4573,7 +4580,10 @@ TOOLBAR_SetHotItemEx (TOOLBAR_INFO *infoPtr, INT nHit, DWORD dwReason)
         NMTBHOTITEM nmhotitem;
         TBUTTON_INFO *btnPtr = NULL, *oldBtnPtr = NULL;
         LRESULT no_highlight;
-	
+
+        if (nHit == TOOLBAR_NOWHERE && infoPtr->bAnchor)
+            return;
+
         /* Remove the effect of an old hot button if the button was
            drawn with the hot button effect */
         if(infoPtr->nHotItem >= 0)
@@ -5678,7 +5688,7 @@ TOOLBAR_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* don't remove hot effects when in drop-down */
     if (infoPtr->nOldHit < 0 || !hotBtnPtr->bDropDownPressed)
-        TOOLBAR_SetHotItemEx(infoPtr, -1, HICF_MOUSE);
+        TOOLBAR_SetHotItemEx(infoPtr, TOOLBAR_NOWHERE, HICF_MOUSE);
 
     if (infoPtr->nOldHit < 0)
       return TRUE;
