@@ -28,6 +28,7 @@ C_SRCS = \
 	spooler.c \
 	spy.c \
 	stress.c \
+	string.c \
 	system.c \
 	tapi32.c \
 	toolhelp.c \
