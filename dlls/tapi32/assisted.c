@@ -19,9 +19,10 @@
  */
 
 #include <stdarg.h>
-
+#include <stdio.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "tapi.h"
 #include "wine/debug.h"
 
@@ -32,14 +33,52 @@ WINE_DEFAULT_DEBUG_CHANNEL(tapi);
  */
 DWORD WINAPI tapiGetLocationInfo(LPSTR lpszCountryCode, LPSTR lpszCityCode)
 {
-    char temp[30];
-
-    FIXME("(%p, %p): file sections ???\n", lpszCountryCode, lpszCityCode);
-    if (!(GetPrivateProfileStringA("Locations", "CurrentLocation", "", temp, 30, "telephon.ini")))
-        return TAPIERR_REQUESTFAILED;
-    if (!(GetPrivateProfileStringA("Locations", "FIXME_ENTRY", "", lpszCityCode, 8, "telephon.ini")))
-        return TAPIERR_REQUESTFAILED;
-    return 0;
+    HKEY hkey, hsubkey;
+    DWORD currid;
+    DWORD valsize;
+    DWORD type;
+    DWORD bufsize;
+    BYTE buf[100];
+    char szlockey[20];
+    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE,
+           "Software\\Microsoft\\Windows\\CurrentVersion\\Telephony\\Locations",
+           &hkey) != ERROR_SUCCESS) { 
+        valsize = sizeof( DWORD);
+        if(!RegQueryValueExA(hkey, "CurrentID", 0, &type, (LPBYTE) &currid,
+                    &valsize) && type == REG_DWORD) {
+            /* find a subkey called Location1, Location2... */
+            sprintf( szlockey, "Location%lu", currid); 
+            if( !RegOpenKeyA( hkey, szlockey, &hsubkey)) {
+                if( lpszCityCode) {
+                    bufsize=sizeof(buf);
+                    if( !RegQueryValueExA( hsubkey, "AreaCode", 0, &type, buf,
+                                &bufsize) && type == REG_SZ) {
+                        strncpy( lpszCityCode, (char *) buf, 8);
+                        if(bufsize > 8) lpszCityCode[7] = '\0';
+                    } else 
+                        lpszCityCode[0] = '\0';
+                }
+                if( lpszCountryCode) {
+                    bufsize=sizeof(buf);
+                    if( !RegQueryValueExA( hsubkey, "Country", 0, &type, buf,
+                                &bufsize) && type == REG_DWORD)
+                        snprintf( lpszCountryCode, 8, "%lu", *(LPDWORD) buf );
+                    else
+                        lpszCountryCode[0] = '\0';
+                }
+                TRACE("(%p \"%s\", %p \"%s\"): success.\n",
+                        lpszCountryCode, debugstr_a(lpszCountryCode),
+                        lpszCityCode, debugstr_a(lpszCityCode));
+                RegCloseKey( hkey);
+                RegCloseKey( hsubkey);
+                return 0; /* SUCCESS */
+            }
+        }
+        RegCloseKey( hkey);
+    }
+    WARN("(%p, %p): failed (no telephony registry entries?).\n",
+            lpszCountryCode, lpszCityCode);
+    return TAPIERR_REQUESTFAILED;
 }
 
 /***********************************************************************
