@@ -10,6 +10,7 @@
 #include "heap.h"
 #include "win.h"
 #include "debugtools.h"
+#include "cache.h"
 #include "tweak.h"
 
 DEFAULT_DEBUG_CHANNEL(scroll)
@@ -463,6 +464,8 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
                                  BOOL top_selected, BOOL bottom_selected )
 {
     RECT r;
+    HPEN hSavePen;
+    HBRUSH hSaveBrush,hBrush;
     BOOL Save_SCROLL_MovingThumb = SCROLL_MovingThumb;
 
     if (Save_SCROLL_MovingThumb &&
@@ -472,22 +475,35 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
 
       /* Select the correct brush and pen */
 
-    SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
     if ((flags & ESB_DISABLE_BOTH) == ESB_DISABLE_BOTH)
     {
-          /* This ought to be the color of the parent window */
-        SelectObject( hdc, GetSysColorBrush(COLOR_WINDOW) );
+        /* This ought to be the color of the parent window */
+        if (TWEAK_WineLook == WIN31_LOOK) {
+            hBrush = GetSysColorBrush(COLOR_WINDOW);
+        } else { 
+            /* Under Win9x look & feel, scrollbars don't have a solid border.
+             * To make scrollbar's background different from the window 
+             * background, we need to apply a gray 0x55aa pattern brush. 
+             * Otherwise it won't look good.
+             */ 
+            hBrush = CACHE_GetPattern55AABrush();
+       }
     }
     else
     {
-        if (nBar == SB_CTL)  /* Only scrollbar controls send WM_CTLCOLOR */
-        {
-            HBRUSH hbrush = SendMessageA(GetParent(hwnd),
-                                             WM_CTLCOLORSCROLLBAR, hdc, hwnd );
-            SelectObject( hdc, hbrush );
+        /* Only scrollbar controls send WM_CTLCOLORSCROLLBAR.
+         * The window-owned scrollbars need to call DEFWND_ControlColor
+         * to correctly setup default scrollbar colors
+         */
+        if (nBar == SB_CTL) {  
+            hBrush = (HBRUSH)SendMessageA( GetParent(hwnd), WM_CTLCOLORSCROLLBAR,
+                                           (WPARAM)hdc,(LPARAM)hwnd);
+        } else {
+            hBrush = DEFWND_ControlColor( hdc, CTLCOLOR_SCROLLBAR ); 
         }
-        else SelectObject( hdc, GetSysColorBrush(COLOR_SCROLLBAR) );
     }
+    hSavePen = SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
+    hSaveBrush = SelectObject( hdc, hBrush );
 
       /* Calculate the scroll rectangle */
 
@@ -515,6 +531,10 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
     {
         PatBlt( hdc, r.left+1, r.top+1, r.right - r.left - 2,
                   r.bottom - r.top - 2, PATCOPY );
+
+        /* cleanup and return */
+        SelectObject( hdc, hSavePen );
+        SelectObject( hdc, hSaveBrush );
         return;
     }
 
@@ -565,6 +585,10 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
         (SCROLL_TrackingWin == hwnd) &&
         (SCROLL_TrackingBar == nBar))
         SCROLL_DrawMovingThumb( hdc, rect, vertical, arrowSize, thumbSize );
+
+    /* cleanup */
+    SelectObject( hdc, hSavePen );
+    SelectObject( hdc, hSaveBrush );
 }
 
 

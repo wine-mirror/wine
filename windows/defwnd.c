@@ -16,6 +16,7 @@
 #include "debug.h"
 #include "spy.h"
 #include "tweak.h"
+#include "cache.h"
 #include "wine/winuser16.h"
 
 DEFAULT_DEBUG_CHANNEL(win)
@@ -77,8 +78,22 @@ HBRUSH DEFWND_ControlColor( HDC hDC, UINT16 ctlType )
     if( ctlType == CTLCOLOR_SCROLLBAR)
     {
 	HBRUSH hb = GetSysColorBrush(COLOR_SCROLLBAR);
-	SetBkColor( hDC, RGB(255, 255, 255) );
-	SetTextColor( hDC, RGB(0, 0, 0) );
+        if (TWEAK_WineLook == WIN31_LOOK) {
+           SetTextColor( hDC, RGB(0, 0, 0) );
+           SetBkColor( hDC, RGB(255, 255, 255) );
+        } else {
+           COLORREF bk = GetSysColor(COLOR_3DHILIGHT);
+           SetTextColor( hDC, GetSysColor(COLOR_3DFACE));
+           SetBkColor( hDC, bk);
+
+           /* if COLOR_WINDOW happens to be the same as COLOR_3DHILIGHT 
+            * we better use 0x55aa bitmap brush to make scrollbar's background
+            * look different from the window background. 
+            */
+           if (bk == GetSysColor(COLOR_WINDOW)) {
+               return CACHE_GetPattern55AABrush();
+           }
+        }
 	UnrealizeObject( hb );
         return hb;
     }
