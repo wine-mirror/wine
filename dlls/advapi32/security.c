@@ -970,3 +970,14 @@ BOOL WINAPI GetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
 {
     CallWin32ToNt(RtlGetAce(pAcl, dwAceIndex, pAce));
 }
+
+/******************************************************************************
+ * PrivilegeCheck [ADVAPI32.@]
+ */
+BOOL WINAPI PrivilegeCheck( HANDLE ClientToken, PPRIVILEGE_SET RequiredPrivileges, LPBOOL pfResult)
+{
+	FIXME("stub %d %p %p\n", ClientToken, RequiredPrivileges, pfResult);
+	if (pfResult) 
+		*pfResult=TRUE;
+        return TRUE;
+}

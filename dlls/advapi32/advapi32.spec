@@ -6,8 +6,8 @@ import	ntdll.dll
 
 debug_channels (advapi crypt reg)
 
-@ stub AbortSystemShutdownA
-@ stub AbortSystemShutdownW
+@ stdcall AbortSystemShutdownA(ptr) AbortSystemShutdownA
+@ stdcall AbortSystemShutdownW(ptr) AbortSystemShutdownW
 @ stdcall AccessCheck(ptr long long ptr ptr ptr ptr ptr) AccessCheck
 @ stub AccessCheckAndAuditAlarmA
 @ stub AccessCheckAndAuditAlarmW
@@ -166,7 +166,7 @@ debug_channels (advapi crypt reg)
 @ stdcall OpenServiceA(long str long) OpenServiceA
 @ stdcall OpenServiceW(long wstr long) OpenServiceW
 @ stdcall OpenThreadToken(long long long ptr) OpenThreadToken
-@ stub PrivilegeCheck
+@ stdcall PrivilegeCheck(ptr ptr ptr) PrivilegeCheck
 @ stub PrivilegedServiceAuditAlarmA
 @ stub PrivilegedServiceAuditAlarmW
 @ stub QueryServiceConfigA

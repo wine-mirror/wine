@@ -88,3 +88,27 @@ GetUserNameW( LPWSTR lpszName, LPDWORD lpSize )
         HeapFree( GetProcessHeap(), 0, name );
 	return res;
 }
+
+/******************************************************************************
+ * AbortSystemShutdownA [ADVAPI32.@]
+ *
+ * PARAMS
+ * 	lpMachineName
+ */
+BOOL WINAPI AbortSystemShutdownA( LPSTR lpMachineName )
+{
+    TRACE("stub %s (harmless)\n", lpMachineName);
+    return TRUE;
+}
+
+/******************************************************************************
+ * AbortSystemShutdownW [ADVAPI32.@]
+ *
+ * PARAMS
+ * 	lpMachineName
+ */
+BOOL WINAPI AbortSystemShutdownW( LPCWSTR lpMachineName )
+{
+    TRACE("stub %s (harmless)\n", debugstr_w(lpMachineName));
+    return TRUE;
+}
