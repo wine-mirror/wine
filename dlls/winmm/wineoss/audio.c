@@ -589,7 +589,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
          */
         int oss_mask, oss_caps;
         ioctl(ossdev->fd, SNDCTL_DSP_GETFMTS, &oss_mask);
-        TRACE("OSS dsp out mask=%08x\n", oss_mask);
+        TRACE("OSS dsp out mask=%08x ( ", oss_mask);
         if (oss_mask & AFMT_MU_LAW) TRACE("AFMT_MU_LAW ");
         if (oss_mask & AFMT_A_LAW) TRACE("AFMT_A_LAW ");
         if (oss_mask & AFMT_IMA_ADPCM) TRACE("AFMT_IMA_ADPCM ");
@@ -614,7 +614,9 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
 #ifdef DSP_CAP_MULTI
         TRACE("\tMulti: %s\n", oss_caps & DSP_CAP_MULTI ? "true" : "false");
 #endif
+#ifdef DSP_CAP_BIND
         TRACE("\tBind: %s\n", oss_caps & DSP_CAP_BIND ? "true" : "false");
+#endif
     }
 
     /* We must first set the format and the stereo mode as some sound cards
