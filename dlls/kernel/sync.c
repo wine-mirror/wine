@@ -605,23 +605,72 @@ BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
 /***********************************************************************
  *           WaitNamedPipeA   (KERNEL32.@)
  */
-BOOL WINAPI WaitNamedPipeA (LPCSTR lpNamedPipeName, DWORD nTimeOut)
+BOOL WINAPI WaitNamedPipeA (LPCSTR name, DWORD nTimeOut)
 {
-    FIXME("%s 0x%08lx\n",lpNamedPipeName,nTimeOut);
-    SetLastError(ERROR_PIPE_NOT_CONNECTED);
-    return FALSE;
+    DWORD len = name ? MultiByteToWideChar( CP_ACP, 0, name, strlen(name), NULL, 0 ) : 0;
+    HANDLE event;
+    BOOL ret;
+
+    TRACE("%s 0x%08lx\n",debugstr_a(name),nTimeOut);
+
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return FALSE;
+    }
+
+    if (!(event = CreateEventA( NULL, 0, 0, NULL ))) return FALSE;
+
+    SERVER_START_VAR_REQ( wait_named_pipe, len * sizeof(WCHAR) )
+    {
+        req->timeout = nTimeOut;
+        req->event = event;
+        if (len) MultiByteToWideChar( CP_ACP, 0, name, strlen(name), server_data_ptr(req), len );
+        ret = !SERVER_CALL_ERR();
+    }
+    SERVER_END_REQ;
+
+    if (ret) WaitForSingleObject(event,INFINITE);
+
+    CloseHandle(event);
+    return ret;
 }
 
 
 /***********************************************************************
  *           WaitNamedPipeW   (KERNEL32.@)
  */
-BOOL WINAPI WaitNamedPipeW (LPCWSTR lpNamedPipeName, DWORD nTimeOut)
+BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
 {
-    FIXME("%s 0x%08lx\n",debugstr_w(lpNamedPipeName),nTimeOut);
-    SetLastError(ERROR_PIPE_NOT_CONNECTED);
-    return FALSE;
+    DWORD len = name ? strlenW(name) : 0;
+    HANDLE event;
+    BOOL ret;
+
+    TRACE("%s 0x%08lx\n",debugstr_w(name),nTimeOut);
+
+    if (len >= MAX_PATH)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return FALSE;
+    }
+
+    if (!(event = CreateEventA( NULL, 0, 0, NULL ))) return FALSE;
+
+    SERVER_START_VAR_REQ( wait_named_pipe, len * sizeof(WCHAR) )
+    {
+        req->timeout = nTimeOut;
+        req->event = event;
+        memcpy( server_data_ptr(req), name, len * sizeof(WCHAR) );
+        ret = !SERVER_CALL_ERR();
+    }
+    SERVER_END_REQ;
+
+    if (ret) WaitForSingleObject(event,INFINITE);
+
+    CloseHandle(event);
+    return ret;
 }
+
 
 /***********************************************************************
  *           ConnectNamedPipe   (KERNEL32.@)
@@ -631,7 +680,7 @@ BOOL WINAPI ConnectNamedPipe(HANDLE hPipe, LPOVERLAPPED overlapped)
     BOOL ret;
     HANDLE event;
 
-    TRACE("(%d,%p):stub\n",hPipe, overlapped);
+    TRACE("(%d,%p)\n",hPipe, overlapped);
 
     if(overlapped)
     {
@@ -640,29 +689,20 @@ BOOL WINAPI ConnectNamedPipe(HANDLE hPipe, LPOVERLAPPED overlapped)
         return FALSE;
     }
 
-    event = CreateEventA(NULL,0,0,NULL);
-    if(event==INVALID_HANDLE_VALUE)
-    {
-        ERR("create event failed!\n");
-        return FALSE;
-    }
+    if (!(event = CreateEventA(NULL,0,0,NULL))) return FALSE;
 
     SERVER_START_REQ( connect_named_pipe )
     {
         req->handle = hPipe;
         req->event = event;
-        ret = SERVER_CALL_ERR();
+        ret = !SERVER_CALL_ERR();
     }
     SERVER_END_REQ;
 
-    if(ret) {
-        ERR("server returned status %08lx\n",GetLastError());
-        return FALSE;
-    }
+    if (ret) WaitForSingleObject(event,INFINITE);
 
-    WaitForSingleObject(event,INFINITE);
-
-    return TRUE;
+    CloseHandle(event);
+    return ret;
 }
 
 /***********************************************************************
@@ -670,8 +710,17 @@ BOOL WINAPI ConnectNamedPipe(HANDLE hPipe, LPOVERLAPPED overlapped)
  */
 BOOL WINAPI DisconnectNamedPipe(HANDLE hPipe)
 {
-    FIXME("(%d):stub\n",hPipe);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    BOOL ret;
+
+    TRACE("(%d)\n",hPipe);
+
+    SERVER_START_REQ( disconnect_named_pipe )
+    {
+        req->handle = hPipe;
+        ret = !SERVER_CALL_ERR();
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 

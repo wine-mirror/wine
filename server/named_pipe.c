@@ -2,6 +2,10 @@
  * Server-side pipe management
  *
  * Copyright (C) 1998 Alexandre Julliard
+ * Copyright (C) 2001 Mike McCormack
+ *
+ * TODO:
+ *   improve error handling
  */
 
 #include "config.h"
@@ -23,12 +27,24 @@
 #include "thread.h"
 #include "request.h"
 
+enum pipe_state
+{
+    ps_none,
+    ps_idle_server,
+    ps_wait_open,
+    ps_wait_connect,
+    ps_connected_server,
+    ps_connected_client,
+    ps_disconnected
+};
+
 struct named_pipe;
 
 struct pipe_user
 {
     struct object       obj;
-    int                 other_fd;
+    enum pipe_state     state;
+    struct pipe_user   *other;
     struct named_pipe  *pipe;
     struct pipe_user   *next;
     struct pipe_user   *prev;
@@ -96,8 +112,7 @@ static void pipe_user_dump( struct object *obj, int verbose )
 {
     struct pipe_user *user = (struct pipe_user *)obj;
     assert( obj->ops == &pipe_user_ops );
-    fprintf( stderr, "named pipe user %p (%s)\n", user,
-             (user->other_fd != -1) ? "server" : "client" );
+    fprintf( stderr, "named pipe user %p (state %d)\n", user, user->state );
 }
 
 static void named_pipe_destroy( struct object *obj)
@@ -117,6 +132,25 @@ static void pipe_user_destroy( struct object *obj)
         /* FIXME: signal waiter of failure */
         release_object(user->event);
         user->event = NULL;
+    }
+    if(user->other)
+    {
+        close(user->other->obj.fd);
+        user->other->obj.fd = -1;
+        switch(user->other->state)
+        {
+        case ps_connected_server:
+            user->other->state = ps_idle_server;
+            break;
+        case ps_connected_client:
+            user->other->state = ps_disconnected;
+            break;
+        default:
+            fprintf(stderr,"connected pipe has strange state %d!\n",
+                            user->other->state);
+        }
+        user->other->other=NULL;
+        user->other = NULL;
     }
 
     /* remove user from pipe's user list */
@@ -157,29 +191,15 @@ static struct pipe_user *get_pipe_user_obj( struct process *process, handle_t ha
 static struct pipe_user *create_pipe_user( struct named_pipe *pipe, int fd )
 {
     struct pipe_user *user;
-    int fds[2];
 
-    if(fd == -1)
-    {
-        /* FIXME: what about messages? */
-
-        if(0>socketpair(PF_UNIX, SOCK_STREAM, 0, fds)) goto error;
-    }
-    else
-    {
-        if ((fds[0] = dup(fd)) == -1) goto error;
-        fds[1] = -1;
-    }
-    user = alloc_object( &pipe_user_ops, fds[0] );
+    user = alloc_object( &pipe_user_ops, fd );
     if(!user)
-    {
-        if (fds[1] != -1) close( fds[1] );
         return NULL;
-    }
 
     user->pipe = pipe;
-    user->other_fd = fds[1];
+    user->state = ps_none;
     user->event = NULL;   /* thread wait on this pipe */
+    user->other = NULL;
 
     /* add to list of pipe users */
     if ((user->next = pipe->users)) user->next->prev = user;
@@ -189,28 +209,20 @@ static struct pipe_user *create_pipe_user( struct named_pipe *pipe, int fd )
     grab_object(pipe);
 
     return user;
-
- error:
-    file_set_error();
-    return NULL;
 }
 
-static struct pipe_user *find_partner(struct named_pipe *pipe)
+static struct pipe_user *find_partner(struct named_pipe *pipe, enum pipe_state state)
 {
     struct pipe_user *x;
 
     for(x = pipe->users; x; x=x->next)
     {
-        /* only pair threads that are waiting */
-        if(!x->event)
-            continue;
-
-        /* only pair with pipes that haven't been connected */
-        if(x->other_fd == -1)
-            continue;
-
+        if(x->state==state)
         break;
     }
+
+    if(!x)
+        return NULL;
 
     return (struct pipe_user *)grab_object( x );
 }
@@ -229,6 +241,7 @@ DECL_HANDLER(create_named_pipe)
 
     if(user)
     {
+        user->state = ps_idle_server;
         req->handle = alloc_handle( current->process, user, GENERIC_READ|GENERIC_WRITE, 0 );
         release_object( user );
     }
@@ -239,7 +252,6 @@ DECL_HANDLER(create_named_pipe)
 DECL_HANDLER(open_named_pipe)
 {
     struct named_pipe *pipe;
-    struct pipe_user *user,*partner;
 
     req->handle = 0;
     pipe = create_named_pipe( get_req_data(req), get_req_data_size(req) );
@@ -248,26 +260,43 @@ DECL_HANDLER(open_named_pipe)
 
     if (get_error() == STATUS_OBJECT_NAME_COLLISION)
     {
-        if ((partner = find_partner(pipe)))
+        struct pipe_user *partner;
+
+        if ((partner = find_partner(pipe, ps_wait_open)))
         {
-            user = create_pipe_user (pipe, partner->other_fd);
-            if(user)
+            int fds[2];
+
+            if(!socketpair(PF_UNIX, SOCK_STREAM, 0, fds))
             {
-                set_event(partner->event);
-                release_object(partner->event);
-                partner->event = NULL;
-                close( partner->other_fd );
-                partner->other_fd = -1;
-                req->handle = alloc_handle( current->process, user, req->access, 0 );
-                release_object(user);
+                struct pipe_user *user;
+
+                if( (user = create_pipe_user (pipe, fds[1])) )
+                {
+                    partner->obj.fd = fds[0];
+                    set_event(partner->event);
+                    release_object(partner->event);
+                    partner->event = NULL;
+                    partner->state = ps_connected_server;
+                    partner->other = user;
+                    user->state = ps_connected_client;
+                    user->other = partner;
+                    req->handle = alloc_handle( current->process, user, req->access, 0 );
+                    release_object(user);
+                }
+                else
+                {
+                    close(fds[0]);
+                }
             }
             release_object( partner );
         }
-        else {
+        else
+        {
             set_error(STATUS_PIPE_NOT_AVAILABLE);
         }
     }
-    else {
+    else
+    {
         set_error(STATUS_NO_SUCH_FILE);
     }
 
@@ -276,24 +305,101 @@ DECL_HANDLER(open_named_pipe)
 
 DECL_HANDLER(connect_named_pipe)
 {
-    struct pipe_user *user;
+    struct pipe_user *user, *partner;
     struct event *event;
 
     user = get_pipe_user_obj(current->process, req->handle, 0);
     if(!user)
         return;
 
-    if( user->event || user->other_fd == -1)
+    if( user->state != ps_idle_server )
     {
-        /* fprintf(stderr,"fd = %x  event = %p\n",user->obj.fd,user->event);*/
         set_error(STATUS_PORT_ALREADY_SET);
     }
     else
     {
+        user->state = ps_wait_open;
         event = get_event_obj(current->process, req->event, 0);
         if(event)
             user->event = event;
+
+        /* notify all waiters that a pipe just became available */
+        while( (partner = find_partner(user->pipe,ps_wait_connect)) )
+        {
+            set_event(partner->event);
+            release_object(partner->event);
+            partner->event = NULL;
+            release_object(partner);
+            release_object(partner);
+        }
     }
 
+    release_object(user);
+}
+
+DECL_HANDLER(wait_named_pipe)
+{
+    struct event *event;
+    struct named_pipe *pipe;
+
+    event = get_event_obj(current->process, req->event, 0);
+    if(!event)
+        return;
+
+    pipe = create_named_pipe( get_req_data(req), get_req_data_size(req) );
+    if( pipe )
+    {
+        /* only wait if the pipe already exists */
+        if(get_error() == STATUS_OBJECT_NAME_COLLISION)
+        {
+            struct pipe_user *partner;
+
+            set_error(STATUS_SUCCESS);
+            if( (partner = find_partner(pipe,ps_wait_open)) )
+            {
+                set_event(event);
+                release_object(partner);
+            }
+            else
+            {
+                struct pipe_user *user;
+
+                if( (user = create_pipe_user (pipe, -1)) )
+                {
+                    user->event = (struct event *)grab_object( event );
+                    user->state = ps_wait_connect;
+                    /* don't release it */
+                }
+            }
+        }
+        else
+        {
+            set_error(STATUS_PIPE_NOT_AVAILABLE);
+        }
+        release_object(pipe);
+    }
+    release_object(event);
+}
+
+DECL_HANDLER(disconnect_named_pipe)
+{
+    struct pipe_user *user;
+
+    user = get_pipe_user_obj(current->process, req->handle, 0);
+    if(!user)
+        return;
+    if( (user->state == ps_connected_server) &&
+        (user->other->state == ps_connected_client) )
+    {
+        close(user->other->obj.fd);
+        user->other->obj.fd = -1;
+        user->other->state = ps_disconnected;
+        user->other->other = NULL;
+
+        close(user->obj.fd);
+        user->obj.fd = -1;
+        user->state = ps_idle_server;
+        user->other = NULL;
+    }
     release_object(user);
 }

@@ -1368,3 +1368,17 @@ enum message_type
     handle_t       handle;
     handle_t       event;      /* set this event when it's ready */
 @END
+
+
+/* Wait for a named pipe */
+@REQ(wait_named_pipe)
+    unsigned int   timeout;
+    handle_t       event;       /* set this event when it's ready */
+    VARARG(filename,string);    /* pipe name */
+@END
+
+
+/* Disconnect a named pipe */
+@REQ(disconnect_named_pipe)
+    handle_t       handle;
+@END

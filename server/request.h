@@ -185,6 +185,8 @@ DECL_HANDLER(create_async);
 DECL_HANDLER(create_named_pipe);
 DECL_HANDLER(open_named_pipe);
 DECL_HANDLER(connect_named_pipe);
+DECL_HANDLER(wait_named_pipe);
+DECL_HANDLER(disconnect_named_pipe);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -311,6 +313,8 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_create_named_pipe,
     (req_handler)req_open_named_pipe,
     (req_handler)req_connect_named_pipe,
+    (req_handler)req_wait_named_pipe,
+    (req_handler)req_disconnect_named_pipe,
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 

@@ -1532,6 +1532,24 @@ struct connect_named_pipe_request
 };
 
 
+
+struct wait_named_pipe_request
+{
+    struct request_header __header;
+    unsigned int   timeout;
+    handle_t       event;
+    /* VARARG(filename,string); */
+};
+
+
+
+struct disconnect_named_pipe_request
+{
+    struct request_header __header;
+    handle_t       handle;
+};
+
+
 enum request
 {
     REQ_new_process,
@@ -1654,6 +1672,8 @@ enum request
     REQ_create_named_pipe,
     REQ_open_named_pipe,
     REQ_connect_named_pipe,
+    REQ_wait_named_pipe,
+    REQ_disconnect_named_pipe,
     REQ_NB_REQUESTS
 };
 
@@ -1781,8 +1801,10 @@ union generic_request
     struct create_named_pipe_request create_named_pipe;
     struct open_named_pipe_request open_named_pipe;
     struct connect_named_pipe_request connect_named_pipe;
+    struct wait_named_pipe_request wait_named_pipe;
+    struct disconnect_named_pipe_request disconnect_named_pipe;
 };
 
-#define SERVER_PROTOCOL_VERSION 49
+#define SERVER_PROTOCOL_VERSION 50
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
