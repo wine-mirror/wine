@@ -268,7 +268,7 @@ file	krnl386.exe
 324 pascal16 LogError(word ptr) LogError
 325 pascal16 LogParamError(word ptr ptr) LogParamError
 326 return IsRomFile 2 0
-327 register K327() LogParamErrorRegs
+327 register K327() HandleParamError
 328 stub _DebugOutput
 329 pascal16 K329(str word) DebugFillBuffer
 332 long THHOOK(0 0 0 0 0 0 0 0)
@@ -307,7 +307,7 @@ file	krnl386.exe
 360 pascal16 OpenFileEx(str ptr word) OpenFile16
 361 return PIGLET_361 0 0
 362 stub ThunkTerminateProcess
-365 register KERNEL_365(word word) KERNEL_365
+365 register GlobalChangeLockCount(word word) GlobalChangeLockCount
 
 
 # 403-404 are common to all versions
@@ -338,7 +338,7 @@ file	krnl386.exe
 423 stub LogApiThk
 431 pascal16 IsPeFormat(str word) IsPeFormat
 432 stub FileTimeToLocalFileTime
-434 stub KERNEL_434
+434 stub UnicodeToAnsi
 435 stub GetTaskFlags
 436 stub _ConfirmSysLevel
 437 stub _CheckNotSysLevel
@@ -348,9 +348,9 @@ file	krnl386.exe
 441 pascal CreateThread16(ptr long segptr segptr long ptr) THUNK_CreateThread16
 442 pascal VWin32_EventCreate() VWin32_EventCreate
 443 pascal VWin32_EventDestroy(long) VWin32_EventDestroy
-444 stub KERNEL_444     # Local32 ???
-445 stub KERNEL_445     # Local32 ???
-446 stub KERNEL_446     # Local32 ???
+444 pascal16 Local32Info(ptr word) Local32Info
+445 pascal16 Local32First(ptr word) Local32First
+446 pascal16 Local32Next(ptr) Local32Next
 447 return KERNEL_447 0 0
 448 stub KERNEL_448
 449 pascal GetpWin16Lock() GetpWin16Lock16
@@ -387,11 +387,11 @@ file	krnl386.exe
 480 pascal16 _EnterWin16Lock() SYSLEVEL_EnterWin16Lock
 481 pascal16 _LeaveWin16Lock() SYSLEVEL_LeaveWin16Lock
 482 pascal LoadSystemLibrary32(str) LoadLibrary32A   # FIXME!
-483 pascal GetModuleFileName32(long str long) GetModuleFileName32A
+483 stub MapProcessHandle
 484 pascal SetProcessDWORD(long s_word long) SetProcessDword
 485 pascal GetProcessDWORD(long s_word) GetProcessDword
 486 pascal FreeLibrary32(long) FreeLibrary32
-487 stub MapProcessHandle
+487 pascal GetModuleFileName32(long str word) GetModuleFileName32A
 488 pascal GetModuleHandle32(str) GetModuleHandle32A
 489 stub KERNEL_489  # VWin32_BoostWithDecay
 490 pascal16 KERNEL_490(word) KERNEL_490
@@ -467,8 +467,8 @@ file	krnl386.exe
 
 # 600-653 are Win95 only
 
-600 stub KERNEL_600  # AllocSelector (?)
-601 stub KERNEL_601  # FreeSelector (?)
+600 stub AllocCodeAlias
+601 stub FreeCodeAlias
 602 register GetDummyModuleHandleDS() GetDummyModuleHandleDS
 603 stub KERNEL_603  # OutputDebugString (?)
 604 register CBClientGlueSL() CBClientGlueSL
@@ -480,8 +480,8 @@ file	krnl386.exe
 610 pascal FindSLThunkletCallback(long long) FindSLThunkletCallback
 611 return FreeThunklet 8 0
 612 pascal16 IsSLThunklet(ptr) IsSLThunklet
-613 stub KERNEL_613
-614 stub KERNEL_614
+613 stub HugeMapLS
+614 stub HugeUnMapLS
 615 pascal16 ConvertDialog32To16(long long long) ConvertDialog32To16
 616 pascal16 ConvertMenu32To16(long long long) ConvertMenu32To16
 617 pascal16 GetMenu32Size(ptr) GetMenu32Size

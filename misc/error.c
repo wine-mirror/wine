@@ -156,9 +156,9 @@ void WINAPI LogParamError(UINT16 uErr, FARPROC16 lpfn, LPVOID lpvParam)
 }
 
 /***********************************************************************
-*	LogParamErrorRegs (KERNEL.327)
+*	HandleParamError (KERNEL.327)
 */
-void WINAPI LogParamErrorRegs( CONTEXT *context )
+void WINAPI HandleParamError( CONTEXT *context )
 {
 	UINT16 uErr = BX_reg( context );
         FARPROC16 lpfn = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( CS_reg(context),
