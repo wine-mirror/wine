@@ -282,6 +282,28 @@ static const char main_key_PL[MAIN_LEN][4] =
  "<>|"
 };
 
+/*** Japanese 106 keyboard layout ***/
+static const char main_key_JA_jp106[MAIN_LEN][4] =
+{
+ "1!","2\"","3#","4$","5%","6&","7'","8(","9)","0~","-=","^~","\\|",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","@`","[{",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";+",":*","]}",
+ "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?",
+ "\\_",
+};
+
+/*** Japanese pc98x1 keyboard layout ***/
+static const char main_key_JA_pc98x1[MAIN_LEN][4] =
+{
+ "1!","2\"","3#","4$","5%","6&","7'","8(","9)","0","-=","^`","\\|",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","@~","[{",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";+",":*","]}",
+ "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?",
+ "\\_",
+};
+
+
+
 /*** Layout table. Add your keyboard mappings to this list */
 static struct {
  WORD lang, ansi_codepage, oem_codepage;
@@ -310,6 +332,8 @@ static struct {
  {MAKELANGID(LANG_ICELANDIC,SUBLANG_DEFAULT),      1252, 850, &main_key_IS},
  {MAKELANGID(LANG_HUNGARIAN,SUBLANG_DEFAULT),      1252, 850, &main_key_HU},
  {MAKELANGID(LANG_POLISH,SUBLANG_DEFAULT),         1250, 852, &main_key_PL},
+ {MAKELANGID(LANG_JAPANESE,SUBLANG_DEFAULT),        932, 932, &main_key_JA_jp106},
+ {MAKELANGID(LANG_JAPANESE,SUBLANG_DEFAULT),        932, 932, &main_key_JA_pc98x1},
 
  {0} /* sentinel */
 };
