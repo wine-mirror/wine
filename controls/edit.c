@@ -207,7 +207,7 @@ static INT	EDIT_EM_LineIndex(WND *wnd, EDITSTATE *es, INT line);
 static INT	EDIT_EM_LineLength(WND *wnd, EDITSTATE *es, INT index);
 static BOOL	EDIT_EM_LineScroll(WND *wnd, EDITSTATE *es, INT dx, INT dy);
 static LRESULT	EDIT_EM_PosFromChar(WND *wnd, EDITSTATE *es, INT index, BOOL after_wrap);
-static void	EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCSTR lpsz_replace);
+static void	EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCSTR lpsz_replace, BOOL send_update);
 static LRESULT	EDIT_EM_Scroll(WND *wnd, EDITSTATE *es, INT action);
 static void	EDIT_EM_ScrollCaret(WND *wnd, EDITSTATE *es);
 static void	EDIT_EM_SetHandle(WND *wnd, EDITSTATE *es, HLOCAL hloc);
@@ -283,7 +283,7 @@ static inline void EDIT_EM_EmptyUndoBuffer(WND *wnd, EDITSTATE *es)
  */
 static inline void EDIT_WM_Clear(WND *wnd, EDITSTATE *es)
 {
-	EDIT_EM_ReplaceSel(wnd, es, TRUE, "");
+	EDIT_EM_ReplaceSel(wnd, es, TRUE, "", TRUE);
 
 	if (es->flags & EF_UPDATE) {
 		es->flags &= ~EF_UPDATE;
@@ -572,7 +572,7 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
 		/* fall through */
 	case EM_REPLACESEL:
 		DPRINTF_EDIT_MSG32("EM_REPLACESEL");
-		EDIT_EM_ReplaceSel(wnd, es, (BOOL)wParam, (LPCSTR)lParam);
+		EDIT_EM_ReplaceSel(wnd, es, (BOOL)wParam, (LPCSTR)lParam, TRUE);
 		if (es->flags & EF_UPDATE) {
 			es->flags &= ~EF_UPDATE;
 			EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
@@ -2443,7 +2443,7 @@ static LRESULT EDIT_EM_PosFromChar(WND *wnd, EDITSTATE *es, INT index, BOOL afte
  *	FIXME: handle ES_NUMBER and ES_OEMCONVERT here
  *
  */
-static void EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCSTR lpsz_replace)
+static void EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCSTR lpsz_replace, BOOL send_update)
 {
 	INT strl = strlen(lpsz_replace);
 	INT tl = strlen(es->text);
@@ -2533,7 +2533,7 @@ static void EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCSTR lp
 
 	EDIT_EM_SetSel(wnd, es, s, s, FALSE);
 	es->flags |= EF_MODIFIED;
-	es->flags |= EF_UPDATE;
+	if (send_update) es->flags |= EF_UPDATE;
 	EDIT_EM_ScrollCaret(wnd, es);
 
 	/* FIXME: really inefficient */
@@ -2973,7 +2973,7 @@ static BOOL EDIT_EM_Undo(WND *wnd, EDITSTATE *es)
 
 	EDIT_EM_SetSel(wnd, es, es->undo_position, es->undo_position + es->undo_insert_count, FALSE);
 	EDIT_EM_EmptyUndoBuffer(wnd, es);
-	EDIT_EM_ReplaceSel(wnd, es, TRUE, utext);
+	EDIT_EM_ReplaceSel(wnd, es, TRUE, utext, TRUE);
 	EDIT_EM_SetSel(wnd, es, es->undo_position, es->undo_position + es->undo_insert_count, FALSE);
 	HeapFree(es->heap, 0, utext);
 
@@ -3008,7 +3008,7 @@ static void EDIT_WM_Char(WND *wnd, EDITSTATE *es, CHAR c, DWORD key_data)
 				EDIT_MoveHome(wnd, es, FALSE);
 				EDIT_MoveDown_ML(wnd, es, FALSE);
 			} else {
-				EDIT_EM_ReplaceSel(wnd, es, TRUE, "\r\n");
+				EDIT_EM_ReplaceSel(wnd, es, TRUE, "\r\n", TRUE);
 				if (es->flags & EF_UPDATE) {
 					es->flags &= ~EF_UPDATE;
 					EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
@@ -3019,7 +3019,7 @@ static void EDIT_WM_Char(WND *wnd, EDITSTATE *es, CHAR c, DWORD key_data)
 	case '\t':
 		if ((es->style & ES_MULTILINE) && !(es->style & ES_READONLY))
 		{
-			EDIT_EM_ReplaceSel(wnd, es, TRUE, "\t");
+			EDIT_EM_ReplaceSel(wnd, es, TRUE, "\t", TRUE);
 			if (es->flags & EF_UPDATE) {
 				es->flags &= ~EF_UPDATE;
 				EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
@@ -3053,7 +3053,7 @@ static void EDIT_WM_Char(WND *wnd, EDITSTATE *es, CHAR c, DWORD key_data)
 			char str[2];
  			str[0] = c;
  			str[1] = '\0';
- 			EDIT_EM_ReplaceSel(wnd, es, TRUE, str);
+ 			EDIT_EM_ReplaceSel(wnd, es, TRUE, str, TRUE);
 			if (es->flags & EF_UPDATE) {
 				es->flags &= ~EF_UPDATE;
 				EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
@@ -3187,7 +3187,7 @@ static LRESULT EDIT_WM_Create(WND *wnd, EDITSTATE *es, LPCREATESTRUCTA cs)
         EDIT_EM_EmptyUndoBuffer(wnd, es);
 
        if (cs->lpszName && *(cs->lpszName) != '\0') {
-	   EDIT_EM_ReplaceSel(wnd, es, FALSE, cs->lpszName);
+	   EDIT_EM_ReplaceSel(wnd, es, FALSE, cs->lpszName, TRUE);
 	   /* if we insert text to the editline, the text scrolls out
             * of the window, as the caret is placed after the insert
             * pos normally; thus we reset es->selection... to 0 and
@@ -3931,7 +3931,7 @@ static void EDIT_WM_Paste(WND *wnd, EDITSTATE *es)
 	OpenClipboard(wnd->hwndSelf);
 	if ((hsrc = GetClipboardData(CF_TEXT))) {
 		src = (LPSTR)GlobalLock(hsrc);
-		EDIT_EM_ReplaceSel(wnd, es, TRUE, src);
+		EDIT_EM_ReplaceSel(wnd, es, TRUE, src, TRUE);
 		GlobalUnlock(hsrc);
 
 		if (es->flags & EF_UPDATE) {
@@ -4027,17 +4027,12 @@ static void EDIT_WM_SetText(WND *wnd, EDITSTATE *es, LPCSTR text)
 	EDIT_EM_SetSel(wnd, es, 0, -1, FALSE);
 	if (text) {
 		TRACE("\t'%p'\n", text);
-		EDIT_EM_ReplaceSel(wnd, es, FALSE, text);
+		EDIT_EM_ReplaceSel(wnd, es, FALSE, text, !(es->style & ES_MULTILINE));
 	} else {
 		TRACE("\t<NULL>\n");
-		EDIT_EM_ReplaceSel(wnd, es, FALSE, "");
+		EDIT_EM_ReplaceSel(wnd, es, FALSE, "", !(es->style & ES_MULTILINE));
 	}
 	es->x_offset = 0;
-	if (es->style & ES_MULTILINE) {
-		es->flags &= ~EF_UPDATE;
-	} else {
-		es->flags |= EF_UPDATE;
-	}
 	es->flags &= ~EF_MODIFIED;
 	EDIT_EM_SetSel(wnd, es, 0, 0, FALSE);
 	EDIT_EM_ScrollCaret(wnd, es);
