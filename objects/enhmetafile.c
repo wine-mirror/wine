@@ -302,6 +302,8 @@ BOOL WINAPI PlayEnhMetaFileRecord(
      )
 {
   int type;
+  RECT tmprc;
+
   TRACE(
 	"hdc = %08x, handletable = %p, record = %p, numHandles = %d\n",
 	  hdc, handletable, mr, handles);
@@ -1545,6 +1547,11 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       FIXME("type %d is unimplemented\n", type);
       break;
     }
+  tmprc.left = tmprc.top = 0;
+  tmprc.right = tmprc.bottom = 1000;
+  LPtoDP(hdc, (POINT*)&tmprc, 2);
+  TRACE("L:0,0 - 1000,1000 -> D:%d,%d - %d,%d\n", tmprc.left,
+	tmprc.top, tmprc.right, tmprc.bottom);
   return TRUE;
 }
 
@@ -1586,6 +1593,7 @@ BOOL WINAPI EnumEnhMetaFile(
     HPEN hPen = (HPEN)NULL;
     HBRUSH hBrush = (HBRUSH)NULL;
     HFONT hFont = (HFONT)NULL;
+    RECT tmprc;
 
     if(!lpRect)
     {
@@ -1608,7 +1616,7 @@ BOOL WINAPI EnumEnhMetaFile(
     }
     ht->objectHandle[0] = hmf;
 
-    if (hdc)
+    if (hdc && (emh->rclFrame.right - emh->rclFrame.left) && (emh->rclFrame.bottom - emh->rclFrame.top))
     {
         TRACE("rect: %d,%d - %d,%d. rclFrame: %ld,%ld - %ld,%ld\n",
 	      lpRect->left, lpRect->top, lpRect->right, lpRect->bottom,
@@ -1644,6 +1652,11 @@ BOOL WINAPI EnumEnhMetaFile(
 	hFont = GetCurrentObject(hdc, OBJ_FONT);
     }
 
+    tmprc.left = tmprc.top = 0;
+    tmprc.right = tmprc.bottom = 1000;
+    LPtoDP(hdc, (POINT*)&tmprc, 2);
+    TRACE("L:0,0-1000,1000 maps to D:%d,%d - %d,%d\n", tmprc.left, tmprc.top,
+	  tmprc.right, tmprc.bottom);
     TRACE("nSize = %ld, nBytes = %ld, nHandles = %d, nRecords = %ld, nPalEntries = %ld\n",
 	emh->nSize, emh->nBytes, emh->nHandles, emh->nRecords, emh->nPalEntries);
 
@@ -1730,9 +1743,18 @@ HENHMETAFILE WINAPI CopyEnhMetaFileA(
 	hmfDst = EMF_Create_HENHMETAFILE( emrDst, FALSE );
     } else {
         HANDLE hFile;
-        hFile = CreateFileA( file, GENERIC_WRITE | GENERIC_READ, 0, NULL,
-			     CREATE_ALWAYS, 0, 0);
+        hFile = CreateFileA( file, GENERIC_WRITE | GENERIC_READ, 0,
+			     NULL, CREATE_ALWAYS, 0, 0);
 	WriteFile( hFile, emrSrc, emrSrc->nBytes, 0, 0);
+	CloseHandle( hFile );
+	/* Reopen file for reading only, so that apps can share
+	   read access to the file while hmf is still valid */
+        hFile = CreateFileA( file, GENERIC_READ, FILE_SHARE_READ,
+			     NULL, OPEN_EXISTING, 0, 0);
+	if(hFile == INVALID_HANDLE_VALUE) {
+	    ERR("Can't reopen emf for reading\n");
+	    return 0;
+	}
 	hmfDst = EMF_GetEnhMetaFile( hFile );
         CloseHandle( hFile );
     }
@@ -1832,9 +1854,6 @@ UINT WINAPI GetEnhMetaFilePaletteEntries( HENHMETAFILE hEmf,
  *
  *         Translate from old style to new style.
  *
- * BUGS: - This doesn't take the DC and scaling into account
- *       - Most record conversions aren't implemented
- *       - Handle slot assignement is primative and most likely doesn't work
  */
 HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
 					   CONST BYTE *lpbBuffer,
@@ -1842,400 +1861,62 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
 					   CONST METAFILEPICT *lpmfp
 					   )
 {
-     HENHMETAFILE    hMf;
-     LPVOID          lpNewEnhMetaFileBuffer = NULL;
-     UINT            uNewEnhMetaFileBufferSize = 0;
-     BOOL            bFoundEOF = FALSE;
-
-     FIXME( "(%d,%p,%04x,%p):stub\n", cbBuffer, lpbBuffer, hdcRef, lpmfp );
-
-     /* 1. Get the header - skip over this and get straight to the records  */
-
-     uNewEnhMetaFileBufferSize = sizeof( ENHMETAHEADER );
-     lpNewEnhMetaFileBuffer = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                         uNewEnhMetaFileBufferSize );
-
-     if( lpNewEnhMetaFileBuffer == NULL )
-     {
-       goto error;
-     }
-
-     /* Fill in the header record */
-     {
-       LPENHMETAHEADER lpNewEnhMetaFileHeader = (LPENHMETAHEADER)lpNewEnhMetaFileBuffer;
-
-       lpNewEnhMetaFileHeader->iType = EMR_HEADER;
-       lpNewEnhMetaFileHeader->nSize = sizeof( ENHMETAHEADER );
-
-       /* FIXME: Not right. Must be able to get this from the DC */
-       lpNewEnhMetaFileHeader->rclBounds.left   = 0;
-       lpNewEnhMetaFileHeader->rclBounds.right  = 0;
-       lpNewEnhMetaFileHeader->rclBounds.top    = 0;
-       lpNewEnhMetaFileHeader->rclBounds.bottom = 0;
-
-       /* FIXME: Not right. Must be able to get this from the DC */
-       lpNewEnhMetaFileHeader->rclFrame.left   = 0;
-       lpNewEnhMetaFileHeader->rclFrame.right  = 0;
-       lpNewEnhMetaFileHeader->rclFrame.top    = 0;
-       lpNewEnhMetaFileHeader->rclFrame.bottom = 0;
-
-       lpNewEnhMetaFileHeader->dSignature=ENHMETA_SIGNATURE;
-       lpNewEnhMetaFileHeader->nVersion=0x10000;
-       lpNewEnhMetaFileHeader->nBytes = lpNewEnhMetaFileHeader->nSize;
-       lpNewEnhMetaFileHeader->sReserved=0;
-
-        /* FIXME: if there is a description add it */
-        lpNewEnhMetaFileHeader->nDescription=0;
-        lpNewEnhMetaFileHeader->offDescription=0;
-
-        lpNewEnhMetaFileHeader->nHandles = 0; /* No handles yet */
-        lpNewEnhMetaFileHeader->nRecords = 0;
-
-        /* I am pretty sure this starts at 0 and grows as entries are added */
-        lpNewEnhMetaFileHeader->nPalEntries = 0;
-
-        /* Size in Pixels */
-        lpNewEnhMetaFileHeader->szlDevice.cx = GetDeviceCaps(hdcRef,HORZRES);
-        lpNewEnhMetaFileHeader->szlDevice.cy = GetDeviceCaps(hdcRef,VERTRES);
-
-        /* Size in mm */
-        lpNewEnhMetaFileHeader->szlMillimeters.cx =
-                                        GetDeviceCaps(hdcRef,HORZSIZE);
-        lpNewEnhMetaFileHeader->szlMillimeters.cy =
-                                        GetDeviceCaps(hdcRef,VERTSIZE);
-
-       /* FIXME: Add in the rest of the fields to the header */
-       /* cbPixelFormat
-          offPixelFormat,
-          bOpenGL */
-     }
-
-     (char*)lpbBuffer += ((METAHEADER*)lpbBuffer)->mtHeaderSize * 2; /* Point past the header - FIXME: metafile quirk? */
-
-     /* 2. Enum over individual records and convert them to the new type of records */
-     while( !bFoundEOF )
-     {
-
-        LPMETARECORD lpMetaRecord = (LPMETARECORD)lpbBuffer;
-
-#define EMF_ReAllocAndAdjustPointers( a , b ) \
-                                        { \
-                                          LPVOID lpTmp; \
-                                          lpTmp = HeapReAlloc( GetProcessHeap(), 0, \
-                                                               lpNewEnhMetaFileBuffer, \
-                                                               uNewEnhMetaFileBufferSize + (b) ); \
-                                          if( lpTmp == NULL ) { ERR( "No memory!\n" ); goto error; } \
-                                          lpNewEnhMetaFileBuffer = lpTmp; \
-                                          lpRecord = (a)( (char*)lpNewEnhMetaFileBuffer + uNewEnhMetaFileBufferSize ); \
-                                          uNewEnhMetaFileBufferSize += (b); \
-                                        }
-
-        switch( lpMetaRecord->rdFunction )
-        {
-          case META_EOF:
-          {
-             PEMREOF lpRecord;
-             size_t uRecord = sizeof(*lpRecord);
-
-             EMF_ReAllocAndAdjustPointers(PEMREOF,uRecord);
-
-             /* Fill the new record - FIXME: This is not right */
-             lpRecord->emr.iType = EMR_EOF;
-             lpRecord->emr.nSize = sizeof( *lpRecord );
-             lpRecord->nPalEntries = 0;     /* FIXME */
-             lpRecord->offPalEntries = 0;   /* FIXME */
-             lpRecord->nSizeLast = 0;       /* FIXME */
-
-             /* No more records after this one */
-             bFoundEOF = TRUE;
-
-             FIXME( "META_EOF conversion not correct\n" );
-             break;
-          }
-
-          case META_SETMAPMODE:
-          {
-             PEMRSETMAPMODE lpRecord;
-             size_t uRecord = sizeof(*lpRecord);
-
-             EMF_ReAllocAndAdjustPointers(PEMRSETMAPMODE,uRecord);
-
-             lpRecord->emr.iType = EMR_SETMAPMODE;
-             lpRecord->emr.nSize = sizeof( *lpRecord );
-
-             lpRecord->iMode = lpMetaRecord->rdParm[0];
-
-             break;
-          }
-
-          case META_DELETEOBJECT: /* Select and Delete structures are the same */
-          case META_SELECTOBJECT:
-          {
-            PEMRDELETEOBJECT lpRecord;
-            size_t uRecord = sizeof(*lpRecord);
-
-            EMF_ReAllocAndAdjustPointers(PEMRDELETEOBJECT,uRecord);
-
-            if( lpMetaRecord->rdFunction == META_DELETEOBJECT )
-            {
-              lpRecord->emr.iType = EMR_DELETEOBJECT;
-            }
-            else
-            {
-              lpRecord->emr.iType = EMR_SELECTOBJECT;
-            }
-            lpRecord->emr.nSize = sizeof( *lpRecord );
-
-            lpRecord->ihObject = lpMetaRecord->rdParm[0]; /* FIXME: Handle */
-
-            break;
-          }
-
-          case META_POLYGON: /* This is just plain busted. I don't know what I'm doing */
-          {
-             PEMRPOLYGON16 lpRecord; /* FIXME: Should it be a poly or poly16? */
-             size_t uRecord = sizeof(*lpRecord);
-
-             EMF_ReAllocAndAdjustPointers(PEMRPOLYGON16,uRecord);
-
-             /* FIXME: This is mostly all wrong */
-             lpRecord->emr.iType = EMR_POLYGON16;
-             lpRecord->emr.nSize = sizeof( *lpRecord );
-
-             lpRecord->rclBounds.left   = 0;
-             lpRecord->rclBounds.right  = 0;
-             lpRecord->rclBounds.top    = 0;
-             lpRecord->rclBounds.bottom = 0;
-
-             lpRecord->cpts = 0;
-             lpRecord->apts[0].x = 0;
-             lpRecord->apts[0].y = 0;
-
-             FIXME( "META_POLYGON conversion not correct\n" );
-
-             break;
-          }
-
-          case META_SETPOLYFILLMODE:
-          {
-             PEMRSETPOLYFILLMODE lpRecord;
-             size_t uRecord = sizeof(*lpRecord);
-
-             EMF_ReAllocAndAdjustPointers(PEMRSETPOLYFILLMODE,uRecord);
-
-             lpRecord->emr.iType = EMR_SETPOLYFILLMODE;
-             lpRecord->emr.nSize = sizeof( *lpRecord );
-
-             lpRecord->iMode = lpMetaRecord->rdParm[0];
-
-             break;
-          }
-
-          case META_SETWINDOWORG:
-          {
-             PEMRSETWINDOWORGEX lpRecord; /* Seems to be the closest thing */
-             size_t uRecord = sizeof(*lpRecord);
-
-             EMF_ReAllocAndAdjustPointers(PEMRSETWINDOWORGEX,uRecord);
-
-             lpRecord->emr.iType = EMR_SETWINDOWORGEX;
-             lpRecord->emr.nSize = sizeof( *lpRecord );
-
-             lpRecord->ptlOrigin.x = lpMetaRecord->rdParm[1];
-             lpRecord->ptlOrigin.y = lpMetaRecord->rdParm[0];
-
-             break;
-          }
-
-          case META_SETWINDOWEXT:  /* Structure is the same for SETWINDOWEXT & SETVIEWPORTEXT */
-          case META_SETVIEWPORTEXT:
-          {
-             PEMRSETWINDOWEXTEX lpRecord;
-             size_t uRecord = sizeof(*lpRecord);
-
-             EMF_ReAllocAndAdjustPointers(PEMRSETWINDOWEXTEX,uRecord);
-
-             if ( lpMetaRecord->rdFunction == META_SETWINDOWEXT )
-             {
-               lpRecord->emr.iType = EMR_SETWINDOWORGEX;
-             }
-             else
-             {
-               lpRecord->emr.iType = EMR_SETVIEWPORTEXTEX;
-             }
-             lpRecord->emr.nSize = sizeof( *lpRecord );
-
-             lpRecord->szlExtent.cx = lpMetaRecord->rdParm[1];
-             lpRecord->szlExtent.cy = lpMetaRecord->rdParm[0];
-
-             break;
-          }
-
-          case META_CREATEBRUSHINDIRECT:
-          {
-             PEMRCREATEBRUSHINDIRECT lpRecord;
-             size_t uRecord = sizeof(*lpRecord);
-
-             EMF_ReAllocAndAdjustPointers(PEMRCREATEBRUSHINDIRECT,uRecord);
-
-             lpRecord->emr.iType = EMR_CREATEBRUSHINDIRECT;
-             lpRecord->emr.nSize = sizeof( *lpRecord );
-
-             lpRecord->ihBrush    = ((LPENHMETAHEADER)lpNewEnhMetaFileBuffer)->nHandles;
-             lpRecord->lb.lbStyle = ((LPLOGBRUSH16)lpMetaRecord->rdParm)->lbStyle;
-             lpRecord->lb.lbColor = ((LPLOGBRUSH16)lpMetaRecord->rdParm)->lbColor;
-             lpRecord->lb.lbHatch = ((LPLOGBRUSH16)lpMetaRecord->rdParm)->lbHatch;
-
-             ((LPENHMETAHEADER)lpNewEnhMetaFileBuffer)->nHandles += 1; /* New handle */
-
-             break;
-          }
-
-          case META_LINETO:
-          case META_MOVETO:
-          {
-             PEMRLINETO lpRecord;
-             size_t uRecord = sizeof(*lpRecord);
-
-             EMF_ReAllocAndAdjustPointers(PEMRLINETO,uRecord);
-
-             if ( lpMetaRecord->rdFunction == META_LINETO )
-             {
-               lpRecord->emr.iType = EMR_LINETO;
-             }
-             else
-             {
-               lpRecord->emr.iType = EMR_MOVETOEX;
-             }
-             lpRecord->emr.nSize = sizeof( *lpRecord );
-
-             lpRecord->ptl.x = lpMetaRecord->rdParm[1];
-             lpRecord->ptl.y = lpMetaRecord->rdParm[0];
-
-             break;
-            }
-
-          case META_SETTEXTCOLOR:
-          case META_SETBKCOLOR:
-          {
-             PEMRSETBKCOLOR lpRecord;
-             size_t uRecord = sizeof(*lpRecord);
-
-             EMF_ReAllocAndAdjustPointers(PEMRSETBKCOLOR,uRecord);
-
-             if ( lpMetaRecord->rdFunction == META_SETTEXTCOLOR )
-             {
-               lpRecord->emr.iType = EMR_SETTEXTCOLOR;
-             }
-             else
-             {
-               lpRecord->emr.iType = EMR_SETBKCOLOR;
-             }
-             lpRecord->emr.nSize = sizeof( *lpRecord );
-
-             lpRecord->crColor = MAKELONG(lpMetaRecord->rdParm[0],
-                                    lpMetaRecord->rdParm[1]);
-
-             break;
-          }
-
-
-
-          /* These are all unimplemented and as such are intended to fall through to the default case */
-          case META_SETBKMODE:
-          case META_SETROP2:
-          case META_SETRELABS:
-          case META_SETSTRETCHBLTMODE:
-          case META_SETVIEWPORTORG:
-          case META_OFFSETWINDOWORG:
-          case META_SCALEWINDOWEXT:
-          case META_OFFSETVIEWPORTORG:
-          case META_SCALEVIEWPORTEXT:
-          case META_EXCLUDECLIPRECT:
-          case META_INTERSECTCLIPRECT:
-          case META_ARC:
-          case META_ELLIPSE:
-          case META_FLOODFILL:
-          case META_PIE:
-          case META_RECTANGLE:
-          case META_ROUNDRECT:
-          case META_PATBLT:
-          case META_SAVEDC:
-          case META_SETPIXEL:
-          case META_OFFSETCLIPRGN:
-          case META_TEXTOUT:
-          case META_POLYPOLYGON:
-          case META_POLYLINE:
-          case META_RESTOREDC:
-          case META_CHORD:
-          case META_CREATEPATTERNBRUSH:
-          case META_CREATEPENINDIRECT:
-          case META_CREATEFONTINDIRECT:
-          case META_CREATEPALETTE:
-          case META_SETTEXTALIGN:
-          case META_SELECTPALETTE:
-          case META_SETMAPPERFLAGS:
-          case META_REALIZEPALETTE:
-          case META_ESCAPE:
-          case META_EXTTEXTOUT:
-          case META_STRETCHDIB:
-          case META_DIBSTRETCHBLT:
-          case META_STRETCHBLT:
-          case META_BITBLT:
-          case META_CREATEREGION:
-          case META_FILLREGION:
-          case META_FRAMEREGION:
-          case META_INVERTREGION:
-          case META_PAINTREGION:
-          case META_SELECTCLIPREGION:
-          case META_DIBCREATEPATTERNBRUSH:
-          case META_DIBBITBLT:
-          case META_SETTEXTCHAREXTRA:
-          case META_SETTEXTJUSTIFICATION:
-          case META_EXTFLOODFILL:
-          case META_SETDIBTODEV:
-          case META_DRAWTEXT:
-          case META_ANIMATEPALETTE:
-          case META_SETPALENTRIES:
-          case META_RESIZEPALETTE:
-          case META_RESETDC:
-          case META_STARTDOC:
-          case META_STARTPAGE:
-          case META_ENDPAGE:
-          case META_ABORTDOC:
-          case META_ENDDOC:
-          case META_CREATEBRUSH:
-          case META_CREATEBITMAPINDIRECT:
-          case META_CREATEBITMAP:
-          /* Fall through to unimplemented */
-          default:
-          {
-            /* Not implemented yet */
-            FIXME( "Conversion of record type 0x%x not implemented.\n", lpMetaRecord->rdFunction );
-            break;
-          }
-       }
-
-       /* Move to the next record */
-       (char*)lpbBuffer += ((LPMETARECORD)lpbBuffer)->rdSize * 2; /* FIXME: Seem to be doing this in metafile.c */
-
-#undef ReAllocAndAdjustPointers
-     }
-
-     /* We know the last of the header information now */
-     ((LPENHMETAHEADER)lpNewEnhMetaFileBuffer)->nBytes = uNewEnhMetaFileBufferSize;
-
-     /* Create the enhanced metafile */
-     hMf = SetEnhMetaFileBits( uNewEnhMetaFileBufferSize, (const BYTE*)lpNewEnhMetaFileBuffer );
-
-     if( !hMf )
-       ERR( "Problem creating metafile. Did the conversion fail somewhere?\n" );
-
-     return hMf;
-
-error:
-     /* Free the data associated with our copy since it's been copied */
-     HeapFree( GetProcessHeap(), 0, lpNewEnhMetaFileBuffer );
-
-     return 0;
+    HMETAFILE hmf = 0;
+    HENHMETAFILE ret = 0;
+    HDC hdc = 0, hdcdisp = 0;
+    INT horzres, vertres;
+    METAFILEPICT mfp;
+    RECT rc, *prcFrame = NULL;
+
+    TRACE("(%d, %p, %08x, %p)\n", cbBuffer, lpbBuffer, hdcRef, lpmfp);
+
+    if(!(hmf = SetMetaFileBitsEx(cbBuffer, lpbBuffer))) {
+        WARN("SetMetaFileBitsEx fails\n");
+	return 0;
+    }
+
+    if(!hdcRef)
+        hdcRef = hdcdisp = CreateDCA("DISPLAY", NULL, NULL, NULL);
+
+    if(!lpmfp) {
+        lpmfp = &mfp;
+	mfp.mm = MM_ANISOTROPIC;
+	mfp.xExt = 100;
+	mfp.yExt = 100;
+	FIXME("Correct Exts from dc\n");
+    } else
+        TRACE("mm = %ld %ldx%ld\n", lpmfp->mm, lpmfp->xExt, lpmfp->yExt);
+
+    horzres = GetDeviceCaps(hdcRef, HORZRES);
+    vertres = GetDeviceCaps(hdcRef, VERTRES);
+
+    if(lpmfp->mm == MM_ISOTROPIC || lpmfp->mm == MM_ANISOTROPIC) {
+        rc.left = rc.top = 0;
+	rc.right = lpmfp->xExt;
+	rc.bottom = lpmfp->yExt;
+	prcFrame = &rc;
+    }
+
+    if(!(hdc = CreateEnhMetaFileW(hdcRef, NULL, prcFrame, NULL))) {
+        ERR("CreateEnhMetaFile fails?\n");
+	goto end;
+    }
+
+    if(hdcdisp) {
+        DeleteDC(hdcdisp);
+	hdcRef = 0;
+    }
+
+    if(lpmfp->mm != MM_TEXT)
+        SetMapMode(hdc, lpmfp->mm);
+
+    SetViewportExtEx(hdc, horzres, vertres, NULL);
+    SetWindowExtEx(hdc, horzres, vertres, NULL);
+
+    PlayMetaFile(hdc, hmf); /* It's got to be harder than this... */
+
+    ret = CloseEnhMetaFile(hdc);
+ end:
+    DeleteMetaFile(hmf);
+    return ret;
 }
