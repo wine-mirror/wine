@@ -273,7 +273,8 @@ static void EVENT_ProcessEvent( XEvent *event )
   wine_tsx11_unlock();
   if (!hWnd && event->xany.window == root_window) hWnd = GetDesktopWindow();
 
-  if (!hWnd && event->type != PropertyNotify && event->type != MappingNotify)
+  if (!hWnd && event->type != PropertyNotify &&
+      event->type != MappingNotify && event->type != KeymapNotify)
       WARN( "Got event %s for unknown Window %08lx\n",
             event_names[event->type], event->xany.window );
   else if (event->type <= MappingNotify)
