@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = user32
 SOVERSION = 1.0
-ALTNAMES  = user
+ALTNAMES  = user keyboard
 
 SPEC_SRCS = user32.spec user.spec keyboard.spec
 
