@@ -411,3 +411,8 @@
 @ stdcall SHGetFolderPathA(long long long long ptr)SHGetFolderPathA
 @ stdcall SHGetFolderPathW(long long long long ptr)SHGetFolderPathW
 @ stdcall SHGetFolderLocation(long long long long ptr)SHGetFolderLocation
+
+# version 6.0 (WinXP)
+# _WIN32_IE >= 0x600
+@ stdcall SHDefExtractIconA(str long long ptr ptr long) SHDefExtractIconA
+@ stdcall SHDefExtractIconW(wstr long long ptr ptr long) SHDefExtractIconW

@@ -569,6 +569,15 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND, INT, LPITEMIDLIST *);
 
 #define CSIDL_FLAG_MASK		0xff00
 
+/****************************************************************************
+* SHDefExtractIcon API
+*/
+HRESULT WINAPI SHDefExtractIconA(LPCSTR pszIconFile, int iIndex, UINT uFlags,
+                                 HICON* phiconLarge, HICON* phiconSmall, UINT nIconSize);
+HRESULT WINAPI SHDefExtractIconW(LPCWSTR pszIconFile, int iIndex, UINT uFlags,
+                                 HICON* phiconLarge, HICON* phiconSmall, UINT nIconSize);
+#define        SHDefExtractIcon WINELIB_NAME_AW(SHDefExtractIcon)
+
 /*
  * DROPFILES for CF_HDROP and CF_PRINTERS
  */

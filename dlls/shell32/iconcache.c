@@ -534,3 +534,44 @@ HICON WINAPI ExtractAssociatedIconExA(HINSTANCE hInst, LPSTR lpIconPath, LPWORD 
   HeapFree(GetProcessHeap(), 0, lpwstrFile);
   return ret;
 }
+
+
+/****************************************************************************
+ * SHDefExtractIconW		[SHELL32.@]
+ */
+HRESULT WINAPI SHDefExtractIconW(LPCWSTR pszIconFile, int iIndex, UINT uFlags,
+                                 HICON* phiconLarge, HICON* phiconSmall, UINT nIconSize)
+{
+	UINT ret;
+	HICON hIcons[2];
+	WARN("%s %d 0x%08x %p %p %d, semi-stub\n", debugstr_w(pszIconFile), iIndex, uFlags, phiconLarge, phiconSmall, nIconSize);
+
+	ret = PrivateExtractIconsW(pszIconFile, iIndex, nIconSize, nIconSize, hIcons, NULL, 2, LR_DEFAULTCOLOR);
+	/* FIXME: deal with uFlags parameter which contains GIL_ flags */
+	if (ret == 0xFFFFFFFF)
+	  return E_FAIL;
+	if (ret > 0) {
+	  *phiconLarge = hIcons[0];
+	  *phiconSmall = hIcons[1];
+	  return S_OK;
+	}
+	return S_FALSE;
+}
+
+/****************************************************************************
+ * SHDefExtractIconA		[SHELL32.@]
+ */
+HRESULT WINAPI SHDefExtractIconA(LPCSTR pszIconFile, int iIndex, UINT uFlags,
+                                 HICON* phiconLarge, HICON* phiconSmall, UINT nIconSize)
+{
+  HRESULT ret;
+  INT len = MultiByteToWideChar(CP_ACP, 0, pszIconFile, -1, NULL, 0);
+  LPWSTR lpwstrFile = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+
+  TRACE("%s %d 0x%08x %p %p %d\n", pszIconFile, iIndex, uFlags, phiconLarge, phiconSmall, nIconSize);
+
+  MultiByteToWideChar(CP_ACP, 0, pszIconFile, -1, lpwstrFile, len);
+  ret = SHDefExtractIconW(lpwstrFile, iIndex, uFlags, phiconLarge, phiconSmall, nIconSize);
+  HeapFree(GetProcessHeap(), 0, lpwstrFile);
+  return ret;
+}
