@@ -318,6 +318,32 @@ static HKEY getRegClass(LPSTR lpClass)
 }
 
 /******************************************************************************
+ * This is a replacement for strsep which is not portable (missing on Solaris).
+ */
+static char* getToken(char** str, const char* delims)
+{
+    char* token;
+
+    if (*str==NULL) {
+        /* No more tokens */
+        return NULL;
+    }
+
+    token=*str;
+    while (**str!='\0') {
+        if (strchr(delims,**str)!=NULL) {
+            **str='\0';
+            (*str)++;
+            return token;
+        }
+        (*str)++;
+    }
+    /* There is no other token */
+    *str=NULL;
+    return token;
+}
+
+/******************************************************************************
  * Returns an allocated buffer with a cleaned copy (removed the surrounding 
  * dbl quotes) of the passed value.
  */
@@ -616,7 +642,7 @@ static void processSetValue(LPSTR cmdline)
   for (counter=0; counter<SET_VALUE_MAX_ARGS; counter++)
     argv[counter]=NULL;
 
-  while( (token = strsep(&cmdline, setValueDelim[argCounter])) != NULL ) 
+  while( (token = getToken(&cmdline, setValueDelim[argCounter])) != NULL ) 
   {
     argv[argCounter++] = getArg(token);
 
@@ -673,7 +699,7 @@ static void processQueryValue(LPSTR cmdline)
   for (counter=0; counter<QUERY_VALUE_MAX_ARGS; counter++)
     argv[counter]=NULL;
 
-  while( (token = strsep(&cmdline, queryValueDelim[argCounter])) != NULL ) 
+  while( (token = getToken(&cmdline, queryValueDelim[argCounter])) != NULL ) 
   {
     argv[argCounter++] = getArg(token);
 
@@ -997,7 +1023,7 @@ int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
   /*
    * get the command, should be the first arg (modify cmdLine)
    */ 
-  token = strsep(&cmdline, " "); 
+  token = getToken(&cmdline, " "); 
   if (token != NULL) 
   {
     cmdIndex = getCommand(token);
