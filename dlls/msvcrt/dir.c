@@ -508,7 +508,7 @@ char* _getdcwd(int drive, char * buf, int size)
   else
   {
     char dir[MAX_PATH];
-    char drivespec[4] = {'A', ':', '\\', 0};
+    char drivespec[4] = {'A', ':', 0};
     int dir_len;
 
     drivespec[0] += drive - 1;
