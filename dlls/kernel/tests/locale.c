@@ -409,42 +409,33 @@ void TestGetDateFormatA()
   eq(error, ERROR_INVALID_PARAMETER, "GetDateFormat", "%d");
 
   /* test for a simple case of date conversion */
-  todo_wine {
-    strcpy(Expected, "Sat, May 04 02");
-    curtime.wYear = 2002;
-    curtime.wMonth = 5;
-    curtime.wDay = 4;
-    curtime.wDayOfWeek = 3;
-    memset(buffer, 0, sizeof(buffer));
-    ret = GetDateFormatA(lcid, 0, &curtime, format, buffer, COUNTOF(buffer));
-    cmp = strncmp (Expected, buffer, strlen(Expected)+1);
-    ok (cmp == 0, "GetDateFormat got %s instead of %s", buffer, Expected);
-/* Uncomment the below when todo_wine is removed */
-/*    eq (ret, lstrlenA(Expected)+1, "GetDateFormat", "%d"); */
-  }
+  strcpy(Expected, "Sat, May 04 02");
+  curtime.wYear = 2002;
+  curtime.wMonth = 5;
+  curtime.wDay = 4;
+  curtime.wDayOfWeek = 3;
+  memset(buffer, 0, sizeof(buffer));
+  ret = GetDateFormatA(lcid, 0, &curtime, format, buffer, COUNTOF(buffer));
+  cmp = strncmp (Expected, buffer, strlen(Expected)+1);
+  ok (cmp == 0, "GetDateFormat got %s instead of %s", buffer, Expected);
+  eq (ret, lstrlenA(Expected)+1, "GetDateFormat", "%d");
 
   /* test format with "'" */
-  todo_wine {
-    strcpy(format, "ddd',' MMM dd ''''yy");
-    strcpy(Expected, "Sat, May 04 '02");
-    memset(buffer, 0, sizeof(buffer));
-    ret = GetDateFormatA(lcid, 0, &curtime, format, buffer, COUNTOF(buffer));
-    cmp = strncmp (Expected, buffer, strlen(Expected)+1);
-    ok (cmp == 0, "GetDateFormat got %s instead of %s", buffer, Expected);
-/* Uncomment the below when todo_wine is removed */
-/*    eq (ret, lstrlenA(Expected)+1, "GetDateFormat", "%d"); */
-  }
+  strcpy(format, "ddd',' MMM dd ''''yy");
+  strcpy(Expected, "Sat, May 04 '02");
+  memset(buffer, 0, sizeof(buffer));
+  ret = GetDateFormatA(lcid, 0, &curtime, format, buffer, COUNTOF(buffer));
+  cmp = strncmp (Expected, buffer, strlen(Expected)+1);
+  ok (cmp == 0, "GetDateFormat got %s instead of %s", buffer, Expected);
+  eq (ret, lstrlenA(Expected)+1, "GetDateFormat", "%d");
 
   /* test for success with dummy time data */
-  todo_wine {
-    curtime.wHour = 36;
-    memset(buffer, 0, sizeof(buffer));
-    ret = GetDateFormatA(lcid, 0, &curtime, format, buffer, COUNTOF(buffer));
-    cmp = strncmp (Expected, buffer, strlen(Expected)+1);
-    ok (cmp == 0, "GetDateFormat got %s instead of %s", buffer, Expected);
-/* Uncomment the below when the todo_wine is removed */
-/*    eq (ret, lstrlenA(Expected)+1, "GetDateFormat", "%d"); */
-  }
+  curtime.wHour = 36;
+  memset(buffer, 0, sizeof(buffer));
+  ret = GetDateFormatA(lcid, 0, &curtime, format, buffer, COUNTOF(buffer));
+  cmp = strncmp (Expected, buffer, strlen(Expected)+1);
+  ok (cmp == 0, "GetDateFormat got %s instead of %s", buffer, Expected);
+  eq (ret, lstrlenA(Expected)+1, "GetDateFormat", "%d");
 
   /* test that we retrieve the expected size for the necessary output of this string */
   SetLastError(NO_ERROR);
@@ -477,15 +468,13 @@ void TestGetDateFormatA()
   }
 
 
-  todo_wine {
-    /* test for expected DATE_LONGDATE behavior with null format */
-    strcpy(Expected, "Saturday, May 04, 2002");
-    memset(buffer, '0', sizeof(buffer));
-    ret = GetDateFormat(lcid, DATE_LONGDATE, &curtime, NULL, buffer, sizeof(buffer));
-    cmp = strncmp (Expected, buffer, strlen(Expected)+1);
-    ok (cmp == 0, "GetDateFormat got '%s' instead of '%s'", buffer, Expected);
-    eq (ret, lstrlenA(Expected)+1, "GetDateFormat", "%d");
-  }
+  /* test for expected DATE_LONGDATE behavior with null format */
+  strcpy(Expected, "Saturday, May 04, 2002");
+  memset(buffer, '0', sizeof(buffer));
+  ret = GetDateFormat(lcid, DATE_LONGDATE, &curtime, NULL, buffer, sizeof(buffer));
+  cmp = strncmp (Expected, buffer, strlen(Expected)+1);
+  ok (cmp == 0, "GetDateFormat got '%s' instead of '%s'", buffer, Expected);
+  eq (ret, lstrlenA(Expected)+1, "GetDateFormat", "%d");
 
   /* test for expected DATE_YEARMONTH behavior with null format */
   /* NT4 returns ERROR_INVALID_FLAGS for DATE_YEARMONTH */
@@ -540,14 +529,16 @@ void TestGetDateFormatW()
     ok (ret != 0 && error == 0, "GetDateFormatW did not permit null buffer pointer when counting.");
 
     /* 1c An incorrect day of week is corrected. */
+    /* 1d The incorrect day of week can even be out of range. */
+    /* 1e The time doesn't matter */
     curtime.wYear = 2002;
     curtime.wMonth = 10;
     curtime.wDay = 23;
-    curtime.wDayOfWeek = 5; /* should be 3 - Wednesday */
-    curtime.wHour = 0;
-    curtime.wMinute = 0;
-    curtime.wSecond = 0;
-    curtime.wMilliseconds = 234;
+    curtime.wDayOfWeek = 45612; /* should be 3 - Wednesday */
+    curtime.wHour = 65432;
+    curtime.wMinute = 34512;
+    curtime.wSecond = 65535;
+    curtime.wMilliseconds = 12345;
     MultiByteToWideChar (CP_ACP, 0, "dddd d MMMM yyyy", -1, format, COUNTOF(format));
     ret = GetDateFormatW (lcid, 0, &curtime, format, buffer, COUNTOF(buffer));
     error = ret ? 0 : GetLastError();

@@ -1789,14 +1789,26 @@ INT WINAPI GetDateFormatW(LCID locale,DWORD flags,
         /*  because this conversion will fix invalid time values */
         /* check to see if the time/date is valid */
         /* set ERROR_INVALID_PARAMETER and return 0 if invalid */
-        if((xtime->wDay > 31) || (xtime->wDayOfWeek > 6) || (xtime->wMonth > 12))
+        if((xtime->wDay > 31) || (xtime->wMonth > 12))
         {
           SetLastError(ERROR_INVALID_PARAMETER);
           return 0;
         }
+        /* For all we know the day of week and the time may be absolute
+         * rubbish.  Therefore if we are going to use conversion through
+         * FileTime we had better use a clean time (and hopefully we won't
+         * fall over any timezone complications).
+         * If we go with an alternative method of correcting the day of week
+         * (e.g. Zeller's congruence) then we won't need to, but we will need
+         * to check the date.
+         */
+        memset (&t, 0, sizeof(t));
+        t.wYear = xtime->wYear;
+        t.wMonth = xtime->wMonth;
+        t.wDay = xtime->wDay;
 
 	/* Silently correct wDayOfWeek by transforming to FileTime and back again */
-	res=SystemTimeToFileTime(xtime,&ft);
+	res=SystemTimeToFileTime(&t,&ft);
 
 	/* Check year(?)/month and date for range and set ERROR_INVALID_PARAMETER  on error */
 	if(!res)
