@@ -31,7 +31,8 @@ MC_SRCS = \
 GLUE = utthunk.c
 
 EXTRASUBDIRS = \
-	messages
+	messages \
+	nls
 
 @MAKE_DLL_RULES@
 
