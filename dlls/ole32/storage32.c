@@ -5686,22 +5686,30 @@ HRESULT WINAPI ReadClassStg(IStorage *pstg,CLSID *pclsid){
  */
 HRESULT  WINAPI OleLoadFromStream(IStream *pStm,REFIID iidInterface,void** ppvObj)
 {
-    CLSID clsid;
-    HRESULT res;
+    CLSID	clsid;
+    HRESULT	res;
+    LPPERSISTSTREAM	xstm;
 
-    FIXME("(),stub!\n");
+    TRACE("(%p,%s,%p)\n",pStm,debugstr_guid(iidInterface),ppvObj);
 
     res=ReadClassStm(pStm,&clsid);
-
-    if (SUCCEEDED(res)){
-        
-        res=CoCreateInstance(&clsid,NULL,CLSCTX_INPROC_SERVER,iidInterface,ppvObj);
-
-        if (SUCCEEDED(res))
-
-            res=IPersistStream_Load((IPersistStream*)ppvObj,pStm);
+    if (!SUCCEEDED(res))
+	return res;
+    res=CoCreateInstance(&clsid,NULL,CLSCTX_INPROC_SERVER,iidInterface,ppvObj);
+    if (!SUCCEEDED(res))
+	return res;
+    res=IUnknown_QueryInterface((IUnknown*)*ppvObj,&IID_IPersistStream,(LPVOID*)&xstm);
+    if (!SUCCEEDED(res)) {
+	IUnknown_Release((IUnknown*)*ppvObj);
+	return res;
     }
-
+    res=IPersistStream_Load(xstm,pStm);
+    IPersistStream_Release(xstm);
+    /* FIXME: all refcounts ok at this point? I think they should be:
+     * 		pStm	: unchanged
+     *		ppvObj	: 1
+     *		xstm	: 0 (released)
+     */
     return res;
 }
 
