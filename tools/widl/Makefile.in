@@ -39,10 +39,11 @@ y.tab.o: y.tab.h
 @LEX_OUTPUT_ROOT@.o: y.tab.h
 
 install:: $(PROGRAMS)
-	$(MKINSTALLDIRS) $(bindir)
+	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
 	$(INSTALL_PROGRAM) widl$(EXEEXT) $(bindir)/widl$(EXEEXT)
+	$(INSTALL_DATA) $(SRCDIR)/widl.man $(mandir)/man$(prog_manext)/widl.$(prog_manext)
 
 uninstall::
-	$(RM) $(bindir)/widl$(EXEEXT)
+	$(RM) $(bindir)/widl$(EXEEXT) $(mandir)/man$(prog_manext)/widl.$(prog_manext)
 
 ### Dependencies:
