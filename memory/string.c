@@ -244,7 +244,7 @@ SEGPTR WINAPI lstrcpy16( SEGPTR dst, LPCSTR src )
 
 
 /***********************************************************************
- *           lstrcpy32A   (KERNEL32.608)
+ *           lstrcpyA   (KERNEL32.608)
  */
 LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
 {
@@ -257,7 +257,8 @@ LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
     	SetLastError(ERROR_INVALID_PARAMETER);
 	return 0;
     }
-    strcpy( dst, src );
+    /* this is how Windows does it */
+    memmove( dst, src, strlen(src)+1 );
     return dst;
 }
 
