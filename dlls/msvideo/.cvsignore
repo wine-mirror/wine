@@ -1,4 +1,4 @@
-*.glue.c
-*.spec.c
-*.spec.glue.s
 Makefile
+msvfw32.spec.c
+msvideo.spec.c
+msvideo_main.glue.c

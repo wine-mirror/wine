@@ -1,4 +1,5 @@
-*.spec.c
-*.spec.glue.s
 Makefile
+ole2disp.spec.c
+oleaut32.spec.c
+typelib.spec.c
 version.res

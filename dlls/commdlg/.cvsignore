@@ -1,4 +1,4 @@
-*.spec.c
-*.spec.glue.s
 Makefile
+comdlg32.spec.c
+commdlg.spec.c
 rsrc.res

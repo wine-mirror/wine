@@ -1,2 +1,2 @@
-*.spec.c
 Makefile
+mcicda.drv.spec.c

@@ -1,4 +1,3 @@
-*.spec.c
-*.spec.glue.s
 Makefile
+dplayx.spec.c
 version.res

@@ -1,2 +1,2 @@
-*.spec.c
 Makefile
+dsound.spec.c

@@ -1,2 +1,2 @@
-*.spec.c
 Makefile
+odbc32.spec.c

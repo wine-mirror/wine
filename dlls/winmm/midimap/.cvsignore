@@ -1,2 +1,2 @@
-*.spec.c
 Makefile
+midimap.drv.spec.c

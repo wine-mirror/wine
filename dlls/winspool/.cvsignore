@@ -1,2 +1,2 @@
-*.spec.c
 Makefile
+winspool.drv.spec.c

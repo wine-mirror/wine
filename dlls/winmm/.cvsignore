@@ -1,5 +1,8 @@
-*.glue.c
-*.spec.c
-*.spec.glue.s
 Makefile
+lolvldrv.glue.c
+mmsystem.glue.c
+mmsystem.spec.c
+sound.spec.c
+time.glue.c
+winmm.spec.c
 winmm_res.res

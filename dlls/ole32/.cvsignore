@@ -1,4 +1,10 @@
-*.spec.c
-*.spec.glue.s
 Makefile
+compobj.spec.c
+ole2.spec.c
+ole2conv.spec.c
+ole2nls.spec.c
+ole2prox.spec.c
+ole2thk.spec.c
+ole32.spec.c
 ole32res.res
+storage.spec.c

@@ -1,3 +1,2 @@
-*.spec.c
-*.spec.glue.s
 Makefile
+dciman32.spec.c

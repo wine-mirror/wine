@@ -1,2 +1,2 @@
-*.spec.c
 Makefile
+msnet32.spec.c

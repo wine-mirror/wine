@@ -1,2 +1,2 @@
-*.spec.c
 Makefile
+mciwave.drv.spec.c

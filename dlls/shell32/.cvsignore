@@ -1,4 +1,4 @@
-*.spec.c
-*.spec.glue.s
 Makefile
+shell.spec.c
+shell32.spec.c
 shres.res

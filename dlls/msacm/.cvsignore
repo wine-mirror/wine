@@ -1,4 +1,4 @@
-*.spec.c
-*.spec.glue.s
 Makefile
 msacm.res
+msacm.spec.c
+msacm32.spec.c

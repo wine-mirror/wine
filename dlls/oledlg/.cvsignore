@@ -1,3 +1,2 @@
-*.spec.c
-*.spec.glue.s
 Makefile
+oledlg.spec.c

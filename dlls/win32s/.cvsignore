@@ -1,3 +1,4 @@
-*.spec.c
-*.spec.glue.s
 Makefile
+w32skrnl.spec.c
+w32sys.spec.c
+win32s16.spec.c

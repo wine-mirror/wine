@@ -1,2 +1,2 @@
-*.spec.c
 Makefile
+icmp.spec.c

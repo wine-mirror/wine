@@ -1,5 +1,13 @@
-*.spec.c
 Makefile
+comm.spec.c
 kernel.res
+kernel.spec.c
+kernel32.spec.c
+stress.spec.c
+system.spec.c
+toolhelp.spec.c
 utthunk.glue.c
 version16.res
+win87em.spec.c
+windebug.spec.c
+wprocs.spec.c

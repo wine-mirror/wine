@@ -1,2 +1,2 @@
-*.spec.c
 Makefile
+mciseq.drv.spec.c

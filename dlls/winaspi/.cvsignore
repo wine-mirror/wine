@@ -1,4 +1,4 @@
-*.spec.c
-*.spec.glue.s
 Makefile
+winaspi.spec.c
 winaspi16.glue.c
+wnaspi32.spec.c
