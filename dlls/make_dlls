@@ -145,11 +145,11 @@ my %targets16 = ();
 foreach my $mod (sort keys %directories)
 {
     next if defined($special_dlls{$directories{$mod}});  # skip special dlls
-    $targets{$mod . "\$(DLLEXT)"} = 1;
+    $targets{$mod . ".so"} = 1;
     next unless defined $altnames{$mod};
     foreach my $i (sort @{$altnames{$mod}})
     {
-        $targets16{sprintf("%s\$(DLLEXT)",$i)} = 1;
+        $targets16{sprintf("%s.so",$i)} = 1;
     }
 }
 foreach my $mod (sort keys %implib_dirs) { $targets{$mod} = 1; }
@@ -166,8 +166,8 @@ printf NEWMAKE "\t%s\n", join( " \\\n\t", sort keys %targets16 );
 
 print NEWMAKE <<EOF;
 
-SYMLINKS = \\
-	\$(EXTRADIRS:%=%.dll\$(DLLEXT)) \\
+SYMLINKS_SO = \\
+	\$(EXTRADIRS:%=%.dll.so) \\
 	\@WIN16_FILES\@ \\
 EOF
 printf NEWMAKE "\t%s\n", join( " \\\n\t", sort keys %targets );
@@ -176,7 +176,16 @@ print NEWMAKE <<EOF;
 
 # Main target
 
-all: \$(SYMLINKS)
+all: symlinks\$(DLLEXT)
+
+.PHONY: symlinks symlinks.so implib
+
+symlinks.so: \$(SYMLINKS_SO)
+
+symlinks: \$(BUILDSUBDIRS)
+
+implib: \$(ALL_IMPORT_LIBS)
+
 EOF
 
 ################################################################
@@ -190,8 +199,8 @@ EOF
 
 foreach my $mod (sort keys %directories)
 {
-    printf NEWMAKE "%s\$(DLLEXT): %s/%s\$(DLLEXT)\n", $mod, $directories{$mod}, $mod;
-    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s\$(DLLEXT) \$@\n\n", $directories{$mod}, $mod;
+    printf NEWMAKE "%s.so: %s/%s.so\n", $mod, $directories{$mod}, $mod;
+    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s.so \$@\n\n", $directories{$mod}, $mod;
 
     if (defined $altnames{$mod})
     {
@@ -199,10 +208,10 @@ foreach my $mod (sort keys %directories)
         foreach my $i (sort @{$altnames{$mod}})
         {
             if ($count++ == 3) { printf NEWMAKE "\\\n  "; $count = 1; }
-            printf NEWMAKE "%s\$(DLLEXT) ", $i;
+            printf NEWMAKE "%s.so ", $i;
         }
-        printf NEWMAKE ": %s\$(DLLEXT)\n", $mod;
-        printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s\$(DLLEXT) \$@\n\n", $mod;
+        printf NEWMAKE ": %s.so\n", $mod;
+        printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s.so \$@\n\n", $mod;
     }
 }
 foreach my $mod (sort keys %implib_dirs)
@@ -266,7 +275,7 @@ print NEWMAKE "# Map library name to the corresponding directory\n\n";
 
 foreach my $mod (sort keys %directories)
 {
-    printf NEWMAKE "%s/%s\$(DLLEXT): %s\n", $directories{$mod}, $mod, $directories{$mod};
+    printf NEWMAKE "%s/%s.so: %s\n", $directories{$mod}, $mod, $directories{$mod};
 }
 foreach my $mod (sort keys %implib_dirs)
 {
@@ -295,7 +304,7 @@ doc-html: \$(SUBDIRS:%=%/__doc_html__)
 
 doc-sgml: \$(SUBDIRS:%=%/__doc_sgml__)
 
-.PHONY: man doc-html doc-sgml implib \$(SUBDIRS:%=%/__man__) \$(SUBDIRS:%=%/__doc_html__) \$(SUBDIRS:%=%/__doc_sgml__)
+.PHONY: man doc-html doc-sgml \$(SUBDIRS:%=%/__man__) \$(SUBDIRS:%=%/__doc_html__) \$(SUBDIRS:%=%/__doc_sgml__)
 
 # Misc rules
 
@@ -308,8 +317,6 @@ install install-lib:: \$(INSTALLSUBDIRS:%=%/__install__)
 uninstall::
 	\$(RM) \$(ALL_IMPORT_LIBS:%=\$(dlldir)/%)
 	-rmdir \$(dlldir)
-
-implib: \$(ALL_IMPORT_LIBS)
 
 clean::
 	\$(RM) \$(ALL_IMPORT_LIBS) \$(SYMLINKS)
