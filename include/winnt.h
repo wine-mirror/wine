@@ -20,19 +20,38 @@
 
 
 /* u.x.wProcessorArchitecture (NT) */
-#define	PROCESSOR_ARCHITECTURE_INTEL	0
-#define	PROCESSOR_ARCHITECTURE_MIPS	1
-#define	PROCESSOR_ARCHITECTURE_ALPHA	2
-#define	PROCESSOR_ARCHITECTURE_PPC	3
-#define	PROCESSOR_ARCHITECTURE_UNKNOWN	0xFFFF
+#define PROCESSOR_ARCHITECTURE_INTEL	0
+#define PROCESSOR_ARCHITECTURE_MIPS	1
+#define PROCESSOR_ARCHITECTURE_ALPHA	2
+#define PROCESSOR_ARCHITECTURE_PPC	3
+#define PROCESSOR_ARCHITECTURE_SHX	4
+#define PROCESSOR_ARCHITECTURE_ARM	5
+#define PROCESSOR_ARCHITECTURE_UNKNOWN	0xFFFF
 
 /* dwProcessorType */
-#define	PROCESSOR_INTEL_386	386
-#define	PROCESSOR_INTEL_486	486
-#define	PROCESSOR_INTEL_PENTIUM	586
-#define	PROCESSOR_MIPS_R4000	4000
-#define	PROCESSOR_ALPHA_21064	21064
-
+#define PROCESSOR_INTEL_386      386
+#define PROCESSOR_INTEL_486      486
+#define PROCESSOR_INTEL_PENTIUM  586
+#define PROCESSOR_INTEL_860      860
+#define PROCESSOR_MIPS_R2000     2000
+#define PROCESSOR_MIPS_R3000     3000
+#define PROCESSOR_MIPS_R4000     4000
+#define PROCESSOR_ALPHA_21064    21064
+#define PROCESSOR_PPC_601        601
+#define PROCESSOR_PPC_603        603
+#define PROCESSOR_PPC_604        604
+#define PROCESSOR_PPC_620        620
+#define PROCESSOR_HITACHI_SH3    10003
+#define PROCESSOR_HITACHI_SH3E   10004
+#define PROCESSOR_HITACHI_SH4    10005
+#define PROCESSOR_MOTOROLA_821   821
+#define PROCESSOR_SHx_SH3        103
+#define PROCESSOR_SHx_SH4        104
+#define PROCESSOR_STRONGARM      2577
+#define PROCESSOR_ARM720         1824    /* 0x720 */
+#define PROCESSOR_ARM820         2080    /* 0x820 */
+#define PROCESSOR_ARM920         2336    /* 0x920 */
+#define PROCESSOR_ARM_7TDMI      70001
 
 #define ANYSIZE_ARRAY 1
 
@@ -197,7 +216,200 @@ typedef CONTEXT86 CONTEXT;
 
 #endif  /* __i386__ */
 
-/* PowerPC context definitions (untested) */
+/* Alpha context definitions */
+#ifdef _ALPHA_
+
+#define CONTEXT_ALPHA   0x00020000
+ 
+#define CONTEXT_CONTROL		(CONTEXT_ALPHA | 0x00000001L)
+#define CONTEXT_FLOATING_POINT	(CONTEXT_ALPHA | 0x00000002L)
+#define CONTEXT_INTEGER		(CONTEXT_ALPHA | 0x00000004L)
+#define CONTEXT_FULL  (CONTEXT_CONTROL | CONTEXT_FLOATING_POINT | CONTEXT_INTEGER)
+
+typedef struct _CONTEXT
+{
+    /* selected by CONTEXT_FLOATING_POINT */
+    ULONGLONG FltF0;
+    ULONGLONG FltF1;
+    ULONGLONG FltF2;
+    ULONGLONG FltF3;
+    ULONGLONG FltF4;
+    ULONGLONG FltF5;
+    ULONGLONG FltF6;
+    ULONGLONG FltF7;
+    ULONGLONG FltF8;
+    ULONGLONG FltF9;
+    ULONGLONG FltF10;
+    ULONGLONG FltF11;
+    ULONGLONG FltF12;
+    ULONGLONG FltF13;
+    ULONGLONG FltF14;
+    ULONGLONG FltF15;
+    ULONGLONG FltF16;
+    ULONGLONG FltF17;
+    ULONGLONG FltF18;
+    ULONGLONG FltF19;
+    ULONGLONG FltF20;
+    ULONGLONG FltF21;
+    ULONGLONG FltF22;
+    ULONGLONG FltF23;
+    ULONGLONG FltF24;
+    ULONGLONG FltF25;
+    ULONGLONG FltF26;
+    ULONGLONG FltF27;
+    ULONGLONG FltF28;
+    ULONGLONG FltF29;
+    ULONGLONG FltF30;
+    ULONGLONG FltF31;
+
+    /* selected by CONTEXT_INTEGER */
+    ULONGLONG IntV0;
+    ULONGLONG IntT0;
+    ULONGLONG IntT1;
+    ULONGLONG IntT2;
+    ULONGLONG IntT3;
+    ULONGLONG IntT4;
+    ULONGLONG IntT5;
+    ULONGLONG IntT6;
+    ULONGLONG IntT7;
+    ULONGLONG IntS0;
+    ULONGLONG IntS1;
+    ULONGLONG IntS2;
+    ULONGLONG IntS3;
+    ULONGLONG IntS4;
+    ULONGLONG IntS5;
+    ULONGLONG IntFp;
+    ULONGLONG IntA0;
+    ULONGLONG IntA1;
+    ULONGLONG IntA2;
+    ULONGLONG IntA3;
+    ULONGLONG IntA4;
+    ULONGLONG IntA5;
+    ULONGLONG IntT8;
+    ULONGLONG IntT9;
+    ULONGLONG IntT10;
+    ULONGLONG IntT11;
+    ULONGLONG IntRa;
+    ULONGLONG IntT12;
+    ULONGLONG IntAt;
+    ULONGLONG IntGp;
+    ULONGLONG IntSp;
+    ULONGLONG IntZero;
+
+    /* selected by CONTEXT_FLOATING_POINT */
+    ULONGLONG Fpcr;
+    ULONGLONG SoftFpcr;
+
+    /* selected by CONTEXT_CONTROL */
+    ULONGLONG Fir;
+    DWORD Psr;
+    DWORD ContextFlags;
+    DWORD Fill[4];
+} CONTEXT;
+
+#define _QUAD_PSR_OFFSET   HighSoftFpcr
+#define _QUAD_FLAGS_OFFSET HighFir
+
+#endif  /* _ALPHA_ */
+
+/* Mips context definitions */
+#ifdef _MIPS_
+
+#define CONTEXT_R4000   0x00010000
+
+#define CONTEXT_CONTROL         (CONTEXT_R4000 | 0x00000001)
+#define CONTEXT_FLOATING_POINT  (CONTEXT_R4000 | 0x00000002)
+#define CONTEXT_INTEGER         (CONTEXT_R4000 | 0x00000004)
+
+#define CONTEXT_FULL (CONTEXT_CONTROL | CONTEXT_FLOATING_POINT | CONTEXT_INTEGER)
+
+typedef struct _CONTEXT
+{
+    DWORD Argument[4];
+    /* These are selected by CONTEXT_FLOATING_POINT */
+    DWORD FltF0;
+    DWORD FltF1;
+    DWORD FltF2;
+    DWORD FltF3;
+    DWORD FltF4;
+    DWORD FltF5;
+    DWORD FltF6;
+    DWORD FltF7;
+    DWORD FltF8;
+    DWORD FltF9;
+    DWORD FltF10;
+    DWORD FltF11;
+    DWORD FltF12;
+    DWORD FltF13;
+    DWORD FltF14;
+    DWORD FltF15;
+    DWORD FltF16;
+    DWORD FltF17;
+    DWORD FltF18;
+    DWORD FltF19;
+    DWORD FltF20;
+    DWORD FltF21;
+    DWORD FltF22;
+    DWORD FltF23;
+    DWORD FltF24;
+    DWORD FltF25;
+    DWORD FltF26;
+    DWORD FltF27;
+    DWORD FltF28;
+    DWORD FltF29;
+    DWORD FltF30;
+    DWORD FltF31;
+
+    /* These are selected by CONTEXT_INTEGER */
+    DWORD IntZero;
+    DWORD IntAt;
+    DWORD IntV0;
+    DWORD IntV1;
+    DWORD IntA0;
+    DWORD IntA1;
+    DWORD IntA2;
+    DWORD IntA3;
+    DWORD IntT0;
+    DWORD IntT1;
+    DWORD IntT2;
+    DWORD IntT3;
+    DWORD IntT4;
+    DWORD IntT5;
+    DWORD IntT6;
+    DWORD IntT7;
+    DWORD IntS0;
+    DWORD IntS1;
+    DWORD IntS2;
+    DWORD IntS3;
+    DWORD IntS4;
+    DWORD IntS5;
+    DWORD IntS6;
+    DWORD IntS7;
+    DWORD IntT8;
+    DWORD IntT9;
+    DWORD IntK0;
+    DWORD IntK1;
+    DWORD IntGp;
+    DWORD IntSp;
+    DWORD IntS8;
+    DWORD IntRa;
+    DWORD IntLo;
+    DWORD IntHi;
+
+    /* These are selected by CONTEXT_FLOATING_POINT */
+    DWORD Fsr;
+
+    /* These are selected by CONTEXT_CONTROL */
+    DWORD Fir;
+    DWORD Psr;
+
+    DWORD ContextFlags;
+    DWORD Fill[2];
+} CONTEXT;
+
+#endif  /* _MIPS_ */
+
+/* PowerPC context definitions */
 #ifdef __ppc__
 
 #define CONTEXT_CONTROL         0x0001
@@ -299,6 +511,25 @@ typedef struct
     DWORD Dr6;
     DWORD Dr7;
 } CONTEXT;
+
+typedef struct _STACK_FRAME_HEADER
+{
+    DWORD BackChain;
+    DWORD GlueSaved1;
+    DWORD GlueSaved2;
+    DWORD Reserved1;
+    DWORD Spare1;
+    DWORD Spare2;
+
+    DWORD Parameter0;
+    DWORD Parameter1;
+    DWORD Parameter2;
+    DWORD Parameter3;
+    DWORD Parameter4;
+    DWORD Parameter5;
+    DWORD Parameter6;
+    DWORD Parameter7;
+} STACK_FRAME_HEADER,*PSTACK_FRAME_HEADER;
 
 #endif  /* __ppc__ */
 
