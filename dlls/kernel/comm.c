@@ -203,8 +203,8 @@ BOOL WINAPI COMM_BuildOldCommDCB(LPCSTR device, LPDCB lpdcb)
 		lpdcb->fInX		= FALSE;
 		lpdcb->fOutX		= FALSE;
 		lpdcb->fOutxCtsFlow	= TRUE;
-		lpdcb->fOutxDsrFlow	= TRUE;
-		lpdcb->fDtrControl	= DTR_CONTROL_HANDSHAKE;
+		lpdcb->fOutxDsrFlow	= FALSE;
+		lpdcb->fDtrControl	= DTR_CONTROL_ENABLE;
 		lpdcb->fRtsControl	= RTS_CONTROL_HANDSHAKE;
 	} else {
 		lpdcb->fInX		= FALSE;
@@ -1061,7 +1061,7 @@ BOOL WINAPI SetCommState(
 	}
 #ifdef CRTSCTS
 	if (	lpdcb->fOutxCtsFlow 			||
-		lpdcb->fRtsControl == RTS_CONTROL_ENABLE
+		lpdcb->fRtsControl == RTS_CONTROL_HANDSHAKE
 	) 
 	  {
 	    port.c_cflag |= CRTSCTS;
@@ -1069,7 +1069,7 @@ BOOL WINAPI SetCommState(
 	  }
 #endif	
 	
-	if (lpdcb->fDtrControl == DTR_CONTROL_ENABLE)
+	if (lpdcb->fDtrControl == DTR_CONTROL_HANDSHAKE)
 	  {
              WARN("DSR/DTR flow control not supported\n");
 	  }
@@ -1250,17 +1250,17 @@ BOOL WINAPI GetCommState(
 
 	/* termios does not support DTR/DSR flow control */
 	lpdcb->fOutxDsrFlow = 0;
-	lpdcb->fDtrControl = DTR_CONTROL_DISABLE;
+	lpdcb->fDtrControl = DTR_CONTROL_ENABLE;
 
 #ifdef CRTSCTS
 
 	if (port.c_cflag & CRTSCTS) {
-		lpdcb->fRtsControl = RTS_CONTROL_ENABLE;
+		lpdcb->fRtsControl = RTS_CONTROL_HANDSHAKE;
 		lpdcb->fOutxCtsFlow = 1;
 	} else 
 #endif
 	{
-		lpdcb->fRtsControl = RTS_CONTROL_DISABLE;
+		lpdcb->fRtsControl = RTS_CONTROL_ENABLE;
 		lpdcb->fOutxCtsFlow = 0;
 	}
 	if (port.c_iflag & IXON)
@@ -1291,12 +1291,11 @@ BOOL WINAPI GetCommState(
 	      (lpdcb->fOutX)?"IXOFF":"~IXOFF");
 #ifdef CRTSCTS
 	if (	lpdcb->fOutxCtsFlow 			||
-		lpdcb->fDtrControl == DTR_CONTROL_ENABLE||
-		lpdcb->fRtsControl == RTS_CONTROL_ENABLE
+		lpdcb->fRtsControl == RTS_CONTROL_HANDSHAKE
 		) 
 	  TRACE("CRTSCTS\n");
+        else
 	
-	if (lpdcb->fDtrControl == DTR_CONTROL_DISABLE)
 	  TRACE("~CRTSCTS\n");
 	
 #endif	

@@ -422,10 +422,9 @@ INT16 COMM16_DCBtoDCB16(LPDCB lpdcb, LPDCB16 lpdcb16)
 	lpdcb16->fNull = 0;
 	lpdcb16->fChEvt = 0;
 	lpdcb16->fBinary = 1;
-	lpdcb16->fDtrDisable = 0;
 
-	lpdcb16->fDtrflow = (lpdcb->fDtrControl==DTR_CONTROL_ENABLE);
-	lpdcb16->fRtsflow = (lpdcb->fRtsControl==RTS_CONTROL_ENABLE);
+	lpdcb16->fDtrflow = (lpdcb->fDtrControl==DTR_CONTROL_HANDSHAKE);
+	lpdcb16->fRtsflow = (lpdcb->fRtsControl==RTS_CONTROL_HANDSHAKE);
 	lpdcb16->fOutxCtsFlow = lpdcb->fOutxCtsFlow;
 	lpdcb16->fOutxDsrFlow = lpdcb->fOutxDsrFlow;
 	lpdcb16->fDtrDisable = (lpdcb->fDtrControl==DTR_CONTROL_DISABLE);
@@ -1096,7 +1095,7 @@ INT16 WINAPI ReadComm16(INT16 cid,LPSTR lpvBuf,INT16 cbRead)
 	  length += status;
 	}
 
-	TRACE("%.*s\n", length, orgBuf);
+	TRACE("%s\n", debugstr_an( orgBuf, length ));
 	ptr->commerror = 0;
 	return length;
 }
@@ -1121,7 +1120,7 @@ INT16 WINAPI WriteComm16(INT16 cid, LPSTR lpvBuf, INT16 cbWrite)
 		return -1;
 	}	
 	
-	TRACE("%.*s\n", cbWrite, lpvBuf );
+	TRACE("%s\n", debugstr_an( lpvBuf, cbWrite ));
 
 	length = 0;
 	while (length < cbWrite) {
