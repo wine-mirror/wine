@@ -1198,8 +1198,7 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd,
 
         /* Now find a hardware event */
 
-        if (((msgQueue->wakeBits & mask) & (QS_MOUSE | QS_KEY)) &&
-            MSG_PeekHardwareMsg( msg, hwnd, first, last, flags & PM_REMOVE ))
+        if (MSG_PeekHardwareMsg( msg, hwnd, first, last, flags & PM_REMOVE ))
         {
             /* Got one */
 	    msgQueue->GetMessageTimeVal      = msg->time;
