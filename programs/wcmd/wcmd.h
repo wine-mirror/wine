@@ -65,6 +65,7 @@ void WCMD_setshow_prompt (void);
 void WCMD_setshow_time (void);
 void WCMD_shift (void);
 void WCMD_show_prompt (void);
+void WCMD_title (char *);
 void WCMD_type (void);
 void WCMD_verify (char *command);
 void WCMD_version (void);
@@ -126,10 +127,14 @@ typedef struct {
 #define WCMD_SET    28
 #define	WCMD_SHIFT  29
 #define WCMD_TIME   30
-#define WCMD_TYPE   31
-#define WCMD_VERIFY 32
-#define WCMD_VER    33
-#define WCMD_VOL    34
-#define WCMD_EXIT   35
+#define WCMD_TITLE  31
+#define WCMD_TYPE   32
+#define WCMD_VERIFY 33
+#define WCMD_VER    34
+#define WCMD_VOL    35
+
+/* Must be last in list */
+#define WCMD_EXIT   36
+
 
 

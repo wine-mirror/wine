@@ -755,6 +755,15 @@ void WCMD_shift () {
 }
 
 /****************************************************************************
+ * WCMD_title
+ *
+ * Set the console title
+ */
+void WCMD_title (char *command) {
+  SetConsoleTitle(command);
+}
+
+/****************************************************************************
  * WCMD_type
  *
  * Copy a file to standard output.

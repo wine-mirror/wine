@@ -30,7 +30,7 @@ char *inbuilt[] = {"ATTRIB", "CALL", "CD", "CHDIR", "CLS", "COPY", "CTTY",
 		"DATE", "DEL", "DIR", "ECHO", "ERASE", "FOR", "GOTO",
 		"HELP", "IF", "LABEL", "MD", "MKDIR", "MOVE", "PATH", "PAUSE",
 		"PROMPT", "REM", "REN", "RENAME", "RD", "RMDIR", "SET", "SHIFT",
-		"TIME", "TYPE", "VERIFY", "VER", "VOL", "EXIT"};
+		"TIME", "TITLE", "TYPE", "VERIFY", "VER", "VOL", "EXIT"  };
 
 HINSTANCE hinst;
 DWORD errorlevel;
@@ -77,6 +77,7 @@ HANDLE h;
   if (!status) WCMD_print_error();
   SetConsoleMode (GetStdHandle(STD_INPUT_HANDLE), ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT |
   	ENABLE_PROCESSED_INPUT);
+  SetConsoleTitle("Wine Command Prompt");
 
 /*
  *	Execute any command-line options.
@@ -306,7 +307,11 @@ char *whichcmd;
         break;
       case WCMD_TIME:
         WCMD_setshow_time ();
-	break;
+        break;
+      case WCMD_TITLE:
+        if (strlen(&whichcmd[count]) > 0)                                       
+          WCMD_title(&whichcmd[count+1]);                                        
+        break;
       case WCMD_TYPE:
         WCMD_type ();
 	break;

@@ -168,6 +168,8 @@ if called from the command line.\n"
 
   WCMD_TIME,   "Help about TIME\n"
 
+  WCMD_TITLE,  "Sets the window title for the wcmd window, syntax TITLE [string]"
+
   WCMD_TYPE,
 "TYPE <filename> copies <filename> to the console device (or elsewhere\
 if redirected). No check is made that the file is readable text.\n"
@@ -210,6 +212,7 @@ REN (RENAME)\tRename a file\
 RD (RMDIR)\tDelete a subdirectory\
 SET\t\tSet or show environment variables\
 TIME\t\tSet or show the current system time\
+TITLE\t\tSet the window title for the WCMD session\
 TYPE\t\tType the contents of a text file\
 VER\t\tShow the current version of WCMD\
 VOL\t\tShow the volume label of a disk device\
