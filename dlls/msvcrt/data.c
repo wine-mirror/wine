@@ -62,6 +62,8 @@ char **MSVCRT___initenv = 0;
 MSVCRT_wchar_t **MSVCRT___winitenv = 0;
 int MSVCRT_timezone;
 int MSVCRT_app_type;
+char MSVCRT_pgm[MAX_PATH];
+char* MSVCRT__pgmptr = 0;
 
 /* Get a snapshot of the current environment
  * and construct the __p__environ array
@@ -146,6 +148,12 @@ int* __p___argc(void) { return &MSVCRT___argc; }
  *		__p__commode (MSVCRT.@)
  */
 unsigned int* __p__commode(void) { return &MSVCRT__commode; }
+
+
+/***********************************************************************
+ *              __p__pgmptr (MSVCRT.@)
+ */
+char** __p__pgmptr(void) { return &MSVCRT__pgmptr; }
 
 /***********************************************************************
  *		__p__fmode (MSVCRT.@)
@@ -273,11 +281,12 @@ void msvcrt_init_args(void)
   MSVCRT___unguarded_readlc_active = 0;
   MSVCRT_timezone = 0;
 
-  /* FIXME: set app type for Winelib apps */
-
   MSVCRT___initenv= msvcrt_SnapshotOfEnvironmentA(NULL);
   MSVCRT___winitenv= msvcrt_SnapshotOfEnvironmentW(NULL);
 
+  MSVCRT_pgm[0] = '\0';
+  GetModuleFileNameA(0, MSVCRT_pgm, sizeof(MSVCRT_pgm)/sizeof(MSVCRT_pgm[0]));
+  MSVCRT__pgmptr = MSVCRT_pgm;
 }
 
 

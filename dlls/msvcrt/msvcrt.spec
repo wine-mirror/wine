@@ -119,7 +119,7 @@
 @ cdecl __p__mbctype() __p__mbctype
 @ cdecl __p__osver()  __p__osver
 @ cdecl __p__pctype() __p__pctype
-@ stub __p__pgmptr #()
+@ cdecl __p__pgmptr() __p__pgmptr
 @ stub __p__pwctype #()
 @ cdecl __p__timezone() __p__timezone
 @ stub __p__tzname #()
@@ -402,7 +402,7 @@
 @ stub _outpw #(long long)
 @ stub _pclose #(ptr)
 @ extern _pctype MSVCRT__pctype
-@ stub _pgmptr
+@ extern _pgmptr MSVCRT__pgmptr
 @ stub _pipe #(ptr long long)
 @ stub _popen #(str str)
 @ cdecl _purecall() _purecall
