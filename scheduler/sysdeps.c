@@ -85,6 +85,9 @@ void SYSDEPS_SetCurThread( TEB *teb )
 #if defined(__i386__)
     /* On the i386, the current thread is in the %fs register */
     wine_set_fs( teb->teb_sel );
+#elif defined(__powerpc__)
+    /* On PowerPC, the current TEB is in the gpr13 register */
+    __asm__ __volatile__("mr 13, %0" : : "r" (teb));
 #elif defined(HAVE__LWP_CREATE)
     /* On non-i386 Solaris, we use the LWP private pointer */
     _lwp_setprivate( teb );
@@ -249,13 +252,13 @@ __declspec(naked) void SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg )
   __asm int 3;
 }
 #endif /* defined(__GNUC__) || defined(_MSC_VER) */
-#else /* defined(__i386__) */
+#else /* !defined(__i386__) */
 void SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg )
 {
     func( arg );
     while(1); /* avoid warning */
 }
-#endif /* defined(__i386__) */
+#endif /* !defined(__i386__) */
 
 
 /***********************************************************************
@@ -335,6 +338,8 @@ struct _TEB * WINAPI NtCurrentTeb(void)
     extern void *_lwp_getprivate(void);
     return (struct _TEB *)_lwp_getprivate();
 }
+#elif defined(__powerpc__)
+__ASM_GLOBAL_FUNC( NtCurrentTeb, "\n\tmr 3,13\n\tblr" );
 #else
 # error NtCurrentTeb not defined for this architecture
 #endif  /* __i386__ */

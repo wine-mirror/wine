@@ -2314,6 +2314,14 @@ extern inline struct _TEB * WINAPI NtCurrentTeb(void)
   __asm mov teb, eax;
   return teb;
 }
+#elif defined(__powerpc__)
+extern inline struct _TEB * WINAPI NtCurrentTeb(void);
+extern inline struct _TEB * WINAPI NtCurrentTeb(void)
+{
+    struct _TEB *teb;
+    __asm__("\tmr %0, 13" : "=r" (teb));
+    return teb;
+}
 #else
 extern struct _TEB * WINAPI NtCurrentTeb(void);
 #endif
