@@ -65,9 +65,8 @@ dnl
 AC_DEFUN([WINE_CHECK_ERRNO],
 [AC_CACHE_CHECK([for reentrant libc: $1],[wine_cv_libc_r_$1],
   [AC_TRY_RUN([int myerrno = 0;
-char buf[256];
 int *$1(){return &myerrno;}
-main(){connect(0,buf,255); exit(!myerrno);}],
+main(){close(333); close(333); exit(!myerrno);}],
   wine_cv_libc_r_$1=yes, wine_cv_libc_r_$1=no,
   wine_cv_libc_r_$1=yes)])
 AS_IF([test "$wine_cv_libc_r_$1" = "yes"],[$2],[$3])])

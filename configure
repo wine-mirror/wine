@@ -10542,9 +10542,8 @@ else
 #line $LINENO "configure"
 #include "confdefs.h"
 int myerrno = 0;
-char buf[256];
 int *__errno_location(){return &myerrno;}
-main(){connect(0,buf,255); exit(!myerrno);}
+main(){close(333); close(333); exit(!myerrno);}
 _ACEOF
 rm -f conftest$ac_exeext
 if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
@@ -10585,9 +10584,8 @@ else
 #line $LINENO "configure"
 #include "confdefs.h"
 int myerrno = 0;
-char buf256;
 int *__error(){return &myerrno;}
-main(){connect(0,buf,255); exit(!myerrno);}
+main(){close(333); close(333); exit(!myerrno);}
 _ACEOF
 rm -f conftest$ac_exeext
 if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
@@ -10628,9 +10626,8 @@ else
 #line $LINENO "configure"
 #include "confdefs.h"
 int myerrno = 0;
-char buf256;
 int *___errno(){return &myerrno;}
-main(){connect(0,buf,255); exit(!myerrno);}
+main(){close(333); close(333); exit(!myerrno);}
 _ACEOF
 rm -f conftest$ac_exeext
 if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
@@ -10671,9 +10668,8 @@ else
 #line $LINENO "configure"
 #include "confdefs.h"
 int myerrno = 0;
-char buf256;
 int *__thr_errno(){return &myerrno;}
-main(){connect(0,buf,255); exit(!myerrno);}
+main(){close(333); close(333); exit(!myerrno);}
 _ACEOF
 rm -f conftest$ac_exeext
 if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
@@ -10714,9 +10710,8 @@ else
 #line $LINENO "configure"
 #include "confdefs.h"
 int myerrno = 0;
-char buf256;
 int *__errno(){return &myerrno;}
-main(){connect(0,buf,255); exit(!myerrno);}
+main(){close(333); close(333); exit(!myerrno);}
 _ACEOF
 rm -f conftest$ac_exeext
 if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
