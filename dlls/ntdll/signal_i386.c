@@ -24,16 +24,6 @@
 # endif
 #endif
 
-#include "winnt.h"
-#include "stackframe.h"
-#include "global.h"
-#include "miscemu.h"
-#include "ntddk.h"
-#include "syslevel.h"
-#include "debugtools.h"
-
-DEFAULT_DEBUG_CHANNEL(seh)
-
 /***********************************************************************
  * signal context platform-specific definitions
  */
@@ -178,8 +168,7 @@ typedef struct
 #endif  /* __EMX__ */
 
 
-#if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__) \
- || defined(__OpenBSD__) || defined(__EMX__)
+#if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__EMX__)
 
 #define EAX_sig(context)     ((context)->sc_eax)
 #define EBX_sig(context)     ((context)->sc_ebx)
@@ -282,6 +271,17 @@ typedef struct
 #endif
 
 #define T_UNKNOWN     (-1)  /* Unknown fault (TRAP_sig not defined) */
+
+#include "winnt.h"
+#include "stackframe.h"
+#include "global.h"
+#include "miscemu.h"
+#include "ntddk.h"
+#include "syslevel.h"
+#include "debugtools.h"
+
+DEFAULT_DEBUG_CHANNEL(seh)
+
 
 extern void WINAPI REGS_FUNC(RtlRaiseException)( EXCEPTION_RECORD *rec, CONTEXT *context );
 
