@@ -396,7 +396,8 @@ typedef struct tagWINE_CLIPDATA {
     struct tagWINE_CLIPDATA *NextData;
 } WINE_CLIPDATA, *LPWINE_CLIPDATA;
 
-typedef HANDLE (*DRVEXPORTFUNC)(LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
+typedef HANDLE (*DRVEXPORTFUNC)(Window requestor, Atom aTarget, Atom rprop,
+    LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
 typedef HANDLE (*DRVIMPORTFUNC)(LPBYTE hData, UINT cBytes);
 
 typedef struct tagWINE_CLIPFORMAT {

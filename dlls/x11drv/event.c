@@ -829,7 +829,8 @@ static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BO
           {
               unsigned char* lpClipData;
               DWORD cBytes;
-              HANDLE hClipData = lpFormat->lpDrvExportFunc(lpData, &cBytes);
+              HANDLE hClipData = lpFormat->lpDrvExportFunc(request, event->target,
+                  rprop, lpData, &cBytes);
 
               if (hClipData && (lpClipData = GlobalLock(hClipData)))
               {

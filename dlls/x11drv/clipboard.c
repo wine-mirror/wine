@@ -84,10 +84,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 
 #define HGDIOBJ_32(handle16)  ((HGDIOBJ)(ULONG_PTR)(handle16))
 
-/* Maximum wait time for slection notify */
+/* Maximum wait time for selection notify */
 #define SELECTION_RETRIES 500  /* wait for .1 seconds */
 #define SELECTION_WAIT    1000 /* us */
-/* Minium seconds that must lapse between owner queries */
+/* Minimum seconds that must lapse between owner queries */
 #define OWNERQUERYLAPSETIME 1
 
 /* Selection masks */
@@ -95,15 +95,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 #define S_PRIMARY        1
 #define S_CLIPBOARD      2
 
-#define _CLIPBOARD    "CLIPBOARD"              /* CLIPBOARD atom name */
+/* CLIPBOARD atom names */
+#define _CLIPBOARD     "CLIPBOARD"
 #define _TARGETS      "TARGETS"
 #define _MULTIPLE     "MULTIPLE"
 #define _SELECTIONDATA "SELECTION_DATA"
+#define _TEXT          "TEXT"
+#define _COMPOUNDTEXT  "COMPOUND_TEXT"
 
 Atom xaClipboard = None;
 Atom xaTargets = None;
 Atom xaMultiple = None;
 Atom xaSelectionData = None;
+Atom xaText = None;
+Atom xaCompoundText = None;
 
 static int selectionAcquired = 0;              /* Contains the current selection masks */
 static Window selectionWindow = None;          /* The top level X window which owns the selection */
@@ -120,14 +125,19 @@ HANDLE X11DRV_CLIPBOARD_ImportEnhMetaFile(LPBYTE lpdata, UINT cBytes);
 HANDLE X11DRV_CLIPBOARD_ImportMetaFilePict(LPBYTE lpdata, UINT cBytes);
 HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(LPBYTE lpdata, UINT cBytes);
 HANDLE X11DRV_CLIPBOARD_ImportXAString(LPBYTE lpdata, UINT cBytes);
-HANDLE X11DRV_CLIPBOARD_ExportClipboardData(LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
-HANDLE X11DRV_CLIPBOARD_ExportXAString(LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
-HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
-HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
-HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
+HANDLE X11DRV_CLIPBOARD_ExportClipboardData(Window requestor, Atom aTarget,
+    Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
+HANDLE X11DRV_CLIPBOARD_ExportString(Window requestor, Atom aTarget,
+    Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
+HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(Window requestor, Atom aTarget,
+    Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
+HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(Window requestor, Atom aTarget,
+    Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
+HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(Window requestor, Atom aTarget,
+    Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
 UINT X11DRV_CLIPBOARD_InsertClipboardFormat(LPCSTR FormatName, LPCSTR PropertyName);
 static BOOL X11DRV_CLIPBOARD_ReadSelection(LPWINE_CLIPFORMAT lpData, Window w, Atom prop);
-static BOOL X11DRV_CLIPBOARD_RenderText(UINT wFormatID);
+static BOOL X11DRV_CLIPBOARD_RenderSynthesizedText(UINT wFormatID);
 static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData);
 static BOOL X11DRV_CLIPBOARD_IsSelectionOwner(void);
 static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo);
@@ -180,7 +190,7 @@ WINE_CLIPFORMAT ClipFormats[]  =
         X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[10], &ClipFormats[12]},
 
     { CF_UNICODETEXT, "WCF_UNICODETEXT", XA_STRING, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportXAString,
-	X11DRV_CLIPBOARD_ExportXAString, &ClipFormats[11], &ClipFormats[13]},
+	X11DRV_CLIPBOARD_ExportString, &ClipFormats[11], &ClipFormats[13]},
 
     { CF_ENHMETAFILE, "WCF_ENHMETAFILE", 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportEnhMetaFile,
         X11DRV_CLIPBOARD_ExportEnhMetaFile, &ClipFormats[12], &ClipFormats[14]},
@@ -227,6 +237,8 @@ PROPERTYALIASMAP PropertyAliasMap[] =
 { 
     /* lpszProperty, Alias */
     { "text/rtf", 0, "text/richtext", 0 },
+    { "XAString", XA_STRING, _COMPOUNDTEXT, 0 },
+    { "XAString", XA_STRING, _TEXT, 0 },
 };
 
 
@@ -259,6 +271,8 @@ BOOL X11DRV_InitClipboard(Display *display)
     xaTargets = TSXInternAtom( display, _TARGETS, FALSE );
     xaMultiple = TSXInternAtom(display, _MULTIPLE, False);
     xaSelectionData = TSXInternAtom(display, _SELECTIONDATA, False);
+    xaText = TSXInternAtom(display, _TEXT, False);
+    xaCompoundText = TSXInternAtom(display, _COMPOUNDTEXT, False);
 
     if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Clipboard", &hkey))
     {
@@ -290,7 +304,9 @@ BOOL X11DRV_InitClipboard(Display *display)
     for (i = 0; i < sizeof(PropertyAliasMap)/sizeof(PROPERTYALIASMAP); i++)
     {
         lpalias = &PropertyAliasMap[i];
+        if (!lpalias->drvDataProperty)
         lpalias->drvDataProperty = TSXInternAtom(display, lpalias->lpszProperty, False);
+        if (!lpalias->drvDataAlias)
         lpalias->drvDataAlias = TSXInternAtom(display, lpalias->lpszAlias, False);
     }
 
@@ -658,7 +674,7 @@ static BOOL X11DRV_CLIPBOARD_UpdateCache(LPCLIPBOARDINFO lpcbinfo)
         {
             X11DRV_EmptyClipboard();
 
-            if (!X11DRV_CLIPBOARD_QueryAvailableData(lpcbinfo))
+            if (X11DRV_CLIPBOARD_QueryAvailableData(lpcbinfo) < 0)
             {
                 ERR("Failed to cache clipboard data owned by another process.\n");
                 bret = FALSE;
@@ -689,7 +705,9 @@ static BOOL X11DRV_CLIPBOARD_RenderFormat(LPWINE_CLIPDATA lpData)
     if (lpData->hData32 || lpData->hData16)
         return bret; /* Already rendered */
 
-    if (!X11DRV_CLIPBOARD_IsSelectionOwner())
+    if (lpData->wFlags & CF_FLAG_SYNTHESIZED)
+        bret = X11DRV_CLIPBOARD_RenderSynthesizedFormat(lpData);
+    else if (!X11DRV_CLIPBOARD_IsSelectionOwner())
     {
         if (!X11DRV_CLIPBOARD_ReadClipboardData(lpData->wFormatID))
         {
@@ -700,14 +718,9 @@ static BOOL X11DRV_CLIPBOARD_RenderFormat(LPWINE_CLIPDATA lpData)
     }
     else
     {
-        if (lpData->wFlags & CF_FLAG_SYNTHESIZED)
-            bret = X11DRV_CLIPBOARD_RenderSynthesizedFormat(lpData);
-        else
-        {
             CLIPBOARDINFO cbInfo;
 
-            if (X11DRV_CLIPBOARD_GetClipboardInfo(&cbInfo) &&
-                cbInfo.hWndOwner)
+        if (X11DRV_CLIPBOARD_GetClipboardInfo(&cbInfo) && cbInfo.hWndOwner)
             {
                 /* Send a WM_RENDERFORMAT message to notify the owner to render the
                  * data requested into the clipboard.
@@ -724,7 +737,6 @@ static BOOL X11DRV_CLIPBOARD_RenderFormat(LPWINE_CLIPDATA lpData)
                 bret = FALSE;
             }
         }
-    }
 
     return bret;
 }
@@ -791,12 +803,14 @@ static BOOL X11DRV_CLIPBOARD_RenderSynthesizedFormat(LPWINE_CLIPDATA lpData)
 {
     BOOL bret = FALSE;
 
+    TRACE("\n");
+
     if (lpData->wFlags & CF_FLAG_SYNTHESIZED)
     {
         UINT wFormatID = lpData->wFormatID;
 
         if (wFormatID == CF_UNICODETEXT || wFormatID == CF_TEXT || wFormatID == CF_OEMTEXT)
-            bret = X11DRV_CLIPBOARD_RenderText(wFormatID);
+            bret = X11DRV_CLIPBOARD_RenderSynthesizedText(wFormatID);
         else 
         {
             switch (wFormatID)
@@ -822,14 +836,11 @@ static BOOL X11DRV_CLIPBOARD_RenderSynthesizedFormat(LPWINE_CLIPDATA lpData)
 
 
 /**************************************************************************
- *                      X11DRV_CLIPBOARD_RenderText
+ *                      X11DRV_CLIPBOARD_RenderSynthesizedText
  *
- * Renders text to the clipboard buffer converting between UNIX and DOS formats.
- *
- * FIXME: Should be a pair of driver functions that convert between OEM text and Windows.
- *
+ * Renders synthesized text
  */
-static BOOL X11DRV_CLIPBOARD_RenderText(UINT wFormatID)
+static BOOL X11DRV_CLIPBOARD_RenderSynthesizedText(UINT wFormatID)
 {
     LPCSTR lpstrS;
     LPSTR  lpstrT;
@@ -839,27 +850,33 @@ static BOOL X11DRV_CLIPBOARD_RenderText(UINT wFormatID)
 
     TRACE(" %d\n", wFormatID);
 
-    if (X11DRV_CLIPBOARD_LookupData(wFormatID))
+    if ((lpSource = X11DRV_CLIPBOARD_LookupData(wFormatID)) &&
+        lpSource->hData32)
         return TRUE;
 
-    if ((lpSource = X11DRV_CLIPBOARD_LookupData(CF_UNICODETEXT)))
+    /* Look for rendered source or non-synthesized source */
+    if ((lpSource = X11DRV_CLIPBOARD_LookupData(CF_UNICODETEXT)) &&
+        (!(lpSource->wFlags & CF_FLAG_SYNTHESIZED) || lpSource->hData32))
     {
         TRACE("UNICODETEXT -> %d\n", wFormatID);
     }
-    else if ((lpSource = X11DRV_CLIPBOARD_LookupData(CF_TEXT)))
+    else if ((lpSource = X11DRV_CLIPBOARD_LookupData(CF_TEXT)) &&
+        (!(lpSource->wFlags & CF_FLAG_SYNTHESIZED) || lpSource->hData32))
     {
         TRACE("TEXT -> %d\n", wFormatID);
     }
-    else if ((lpSource = X11DRV_CLIPBOARD_LookupData(CF_OEMTEXT)))
+    else if ((lpSource = X11DRV_CLIPBOARD_LookupData(CF_OEMTEXT)) &&
+        (!(lpSource->wFlags & CF_FLAG_SYNTHESIZED) || lpSource->hData32))
     {
         TRACE("OEMTEXT -> %d\n", wFormatID);
     }
 
-    if (!lpSource)
+    if (!lpSource || (lpSource->wFlags & CF_FLAG_SYNTHESIZED &&
+        !lpSource->hData32))
         return FALSE;
 
-    /* First render the source text format */
-    if (!X11DRV_CLIPBOARD_RenderFormat(lpSource))
+    /* Ask the clipboard owner to render the source text if necessary */
+    if (!lpSource->hData32 && !X11DRV_CLIPBOARD_RenderFormat(lpSource))
         return FALSE;
 
     if (lpSource->hData32)
@@ -1042,7 +1059,8 @@ HANDLE X11DRV_CLIPBOARD_ImportClipboardData(LPBYTE lpdata, UINT cBytes)
  *
  *  Generic export clipboard data routine.
  */
-HANDLE X11DRV_CLIPBOARD_ExportClipboardData(LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
+HANDLE X11DRV_CLIPBOARD_ExportClipboardData(Window requestor, Atom aTarget,
+    Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
 {
     LPVOID lpClipData;
     UINT cBytes = 0;
@@ -1077,7 +1095,8 @@ HANDLE X11DRV_CLIPBOARD_ExportClipboardData(LPWINE_CLIPDATA lpData, LPDWORD lpBy
 /**************************************************************************
  *		X11DRV_CLIPBOARD_ExportXAString
  *
- *  Export CF_UNICODE converting the string to XA_STRING
+ *  Export CF_UNICODE converting the string to XA_STRING.
+ *  Helper function for X11DRV_CLIPBOARD_ExportString.
  */
 HANDLE X11DRV_CLIPBOARD_ExportXAString(LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
 {
@@ -1091,12 +1110,6 @@ HANDLE X11DRV_CLIPBOARD_ExportXAString(LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
 
     GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTUNIXCODEPAGE | 
         LOCALE_RETURN_NUMBER, (WCHAR *)&text_cp, (sizeof(UINT)/sizeof(WCHAR)));
-
-    if (!X11DRV_CLIPBOARD_RenderFormat(lpData))
-    {
-        ERR("Failed to export %d format\n", lpData->wFormatID);
-        return 0;
-    }
 
     uni_text = GlobalLock(lpData->hData32);
 
@@ -1129,11 +1142,75 @@ HANDLE X11DRV_CLIPBOARD_ExportXAString(LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
 
 
 /**************************************************************************
+ *		X11DRV_CLIPBOARD_ExportCompoundText
+ *
+ *  Export CF_UNICODE to COMPOUND_TEXT or TEXT
+ *  Helper function for X11DRV_CLIPBOARD_ExportString.
+ */
+HANDLE X11DRV_CLIPBOARD_ExportCompoundText(Window requestor, Atom aTarget, Atom rprop,
+    LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
+{
+    Display *display = thread_display();
+    char* lpstr = 0;
+    XTextProperty prop;
+    XICCEncodingStyle style;
+
+    lpstr = (char*) X11DRV_CLIPBOARD_ExportXAString(lpData, lpBytes);
+
+    if (lpstr)
+    {
+        if (aTarget == xaCompoundText)
+           style = XCompoundTextStyle;
+        else
+           style = XStdICCTextStyle;
+
+        /* Update the X property */
+        wine_tsx11_lock();
+        if (XmbTextListToTextProperty(display, &lpstr, 1, style, &prop) == Success)
+        {
+           XSetTextProperty(display, requestor, &prop, rprop);
+           XFree(prop.value);
+        }
+        wine_tsx11_unlock();
+
+        HeapFree( GetProcessHeap(), 0, lpstr );
+    }
+
+    return 0;
+}
+
+/**************************************************************************
+ *		X11DRV_CLIPBOARD_ExportString
+ *
+ *  Export CF_UNICODE string
+ */
+HANDLE X11DRV_CLIPBOARD_ExportString(Window requestor, Atom aTarget, Atom rprop,
+    LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
+{
+    if (X11DRV_CLIPBOARD_RenderFormat(lpData))
+    {
+        if (aTarget == XA_STRING)
+            return X11DRV_CLIPBOARD_ExportXAString(lpData, lpBytes);
+        else if (aTarget == xaCompoundText || aTarget == xaText)
+            return X11DRV_CLIPBOARD_ExportCompoundText(requestor, aTarget,
+                rprop, lpData, lpBytes);
+        else
+            ERR("Unknown target %ld to %d format\n", aTarget, lpData->wFormatID);
+    }
+    else
+        ERR("Failed to render %d format\n", lpData->wFormatID);
+
+    return 0;
+}
+
+
+/**************************************************************************
  *		X11DRV_CLIPBOARD_ExportXAPIXMAP
  *
  *  Export CF_DIB to XA_PIXMAP.
  */
-HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(Window requestor, Atom aTarget, Atom rprop,
+    LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
 {
     HDC hdc;
     Pixmap pixmap;
@@ -1161,7 +1238,8 @@ HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
  *
  *  Export MetaFilePict.
  */
-HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(Window requestor, Atom aTarget, Atom rprop,
+    LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
 {
     if (!X11DRV_CLIPBOARD_RenderFormat(lpdata))
     {
@@ -1179,7 +1257,8 @@ HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(LPWINE_CLIPDATA lpdata, LPDWORD lpByt
  *
  *  Export EnhMetaFile.
  */
-HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(Window requestor, Atom aTarget, Atom rprop,
+    LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
 {
     if (!X11DRV_CLIPBOARD_RenderFormat(lpdata))
     {
@@ -1268,7 +1347,7 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
         }
 	else
 	{
-            return 0; /* Prevent self request */
+            return -1; /* Prevent self request */
 	}
     }
 
@@ -1282,7 +1361,7 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
     if (!hWndClipWindow)
     {
         WARN("No window available to retrieve selection!n");
-        return 0;
+        return -1;
     }
 
     w = X11DRV_get_whole_window(GetAncestor(hWndClipWindow, GA_ROOT));
@@ -1290,11 +1369,17 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
     /*
      * Query the selection owner for the TARGETS property
      */
+    if (TSXGetSelectionOwner(display,XA_PRIMARY) ||
+        TSXGetSelectionOwner(display,xaClipboard))
+    {
     if (X11DRV_CLIPBOARD_QueryTargets(display, w, XA_PRIMARY, &xe))
         selectionCacheSrc = XA_PRIMARY;
     else if (X11DRV_CLIPBOARD_QueryTargets(display, w, xaClipboard, &xe))
         selectionCacheSrc = xaClipboard;
     else
+            return -1;
+    }
+    else /* No selection owner so report 0 targets available */
         return 0;
 
     /* Read the TARGETS property contents */
@@ -1659,7 +1744,7 @@ void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
 	       * this case, if we clear any selection we may clear the
 	       * new owners selection. To prevent this common case we
 	       * try to open the clipboard. If we can't, we assume it
-	       * was a wine apps that took it and has taken both selectons.
+	       * was a wine apps that took it and has taken both selections.
 	       * In this case, don't bother releasing the other selection.
 	       * Otherwise only release the selection if we still own it.
                */
@@ -1826,7 +1911,12 @@ void X11DRV_AcquireClipboard(HWND hWndClipWindow)
      */
     if (!(selectionAcquired == (S_PRIMARY | S_CLIPBOARD)))
     {
-        Window owner = X11DRV_get_whole_window(GetAncestor(hWndClipWindow, GA_ROOT));
+        Window owner;
+
+        if (!hWndClipWindow)
+            hWndClipWindow = GetActiveWindow();
+
+        owner = X11DRV_get_whole_window(GetAncestor(hWndClipWindow, GA_ROOT));
 
         /* Grab PRIMARY selection if not owned */
         if (!(selectionAcquired & S_PRIMARY))
@@ -2097,7 +2187,7 @@ void X11DRV_ResetSelectionOwner(HWND hwnd, BOOL bFooBar)
     Window selectionPrevWindow;
 
     /* There is nothing to do if we don't own the selection,
-     * or if the X window which currently owns the selecion is different
+     * or if the X window which currently owns the selection is different
      * from the one passed in.
      */
     if (!selectionAcquired || XWnd != selectionWindow
