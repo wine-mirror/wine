@@ -263,7 +263,7 @@ void WINAPI PathRemoveBlanksAW(LPVOID str)
 /*************************************************************************
  * PathQuoteSpaces [SHELL32.55]
  */
-LPVOID WINAPI PathQuoteSpacesAW (LPVOID lpszPath)
+VOID WINAPI PathQuoteSpacesAW (LPVOID lpszPath)
 {
 	if(SHELL_OsIsUnicode())
 	  return PathQuoteSpacesW(lpszPath);
@@ -634,7 +634,7 @@ HRESULT WINAPI PathProcessCommandAW (
 /*************************************************************************
  * PathSetDlgItemPath (SHELL32.48)
  */
-BOOL WINAPI PathSetDlgItemPathAW(HWND hDlg, int id, LPCVOID pszPath) 
+VOID WINAPI PathSetDlgItemPathAW(HWND hDlg, int id, LPCVOID pszPath) 
 {	if (SHELL_OsIsUnicode())
 	  return PathSetDlgItemPathW(hDlg, id, pszPath);
 	return PathSetDlgItemPathA(hDlg, id, pszPath);

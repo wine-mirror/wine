@@ -571,7 +571,7 @@ LPVOID WINAPI PathGetShortPathAW(LPVOID lpszPath);
 
 void WINAPI PathRemoveBlanksAW(LPVOID lpszPath);
 
-LPVOID  WINAPI PathQuoteSpacesAW(LPVOID path);	
+VOID  WINAPI PathQuoteSpacesAW(LPVOID path);	
 
 void WINAPI PathUnquoteSpacesAW(LPVOID lpszPath);
 
@@ -624,7 +624,7 @@ BOOL  WINAPI PathQualifyAW(LPCVOID path);
 
 BOOL WINAPI PathResolveAW(LPVOID lpszPath, LPCVOID *alpszPaths, DWORD dwFlags);
 
-BOOL WINAPI PathSetDlgItemPathAW(HWND hDlg, int nIDDlgItem, LPCVOID lpszPath);
+VOID WINAPI PathSetDlgItemPathAW(HWND hDlg, int nIDDlgItem, LPCVOID lpszPath);
 
 /* PathProcessCommand flags */
 #define PPCF_QUOTEPATH        0x01 /* implies PPCF_INCLUDEARGS */
