@@ -461,7 +461,95 @@ BOOL WINAPI wglUseFontBitmapsA(HDC hdc,
 
   TRACE("(%08x, %ld, %ld, %ld) using font %ld\n", hdc, first, count, listBase, fid);
 
-  if (fid == 0) return FALSE;
+  if (fid == 0) {
+    /* We are running using client-side rendering fonts... */
+    GLYPHMETRICS gm;
+    static const MAT2 id = { { 0, 1 }, { 0, 0 }, { 0, 0 }, { 0, 0 } };
+    int glyph;
+    int size = 0;
+    void *bitmap = NULL, *gl_bitmap = NULL;
+    int org_alignment;
+
+    ENTER_GL();
+    glGetIntegerv(GL_UNPACK_ALIGNMENT, &org_alignment);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+    LEAVE_GL();
+
+    for (glyph = first; glyph < first + count; glyph++) {
+      int needed_size = GetGlyphOutlineA(hdc, glyph, GGO_BITMAP, &gm, 0, NULL, &id);
+      int height, width_int;
+
+      if (needed_size == GDI_ERROR) goto error;
+      if (needed_size > size) {
+	size = needed_size;
+	if (bitmap) HeapFree(GetProcessHeap(), 0, bitmap);
+	if (gl_bitmap) HeapFree(GetProcessHeap(), 0, gl_bitmap);
+	bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+	gl_bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+      }
+      if (GetGlyphOutlineA(hdc, glyph, GGO_BITMAP, &gm, size, bitmap, &id) == GDI_ERROR) goto error;
+      if (TRACE_ON(opengl)) {
+	unsigned int height, width, bitmask;
+	unsigned char *bitmap_ = (unsigned char *) bitmap;
+
+	DPRINTF("Glyph : %d\n", glyph);
+	DPRINTF("  - bbox : %d x %d\n", gm.gmBlackBoxX, gm.gmBlackBoxY);
+	DPRINTF("  - origin : (%ld , %ld)\n", gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
+	DPRINTF("  - increment : %d - %d\n", gm.gmCellIncX, gm.gmCellIncY);
+	DPRINTF("  - size : %d\n", needed_size);
+	DPRINTF("  - bitmap : \n");
+	for (height = 0; height < gm.gmBlackBoxY; height++) {
+	  DPRINTF("      ");
+	  for (width = 0, bitmask = 0x80; width < gm.gmBlackBoxX; width++, bitmask >>= 1) {
+	    if (bitmask == 0) {
+	      bitmap_ += 1;
+	      bitmask = 0x80;
+	    }
+	    if (*bitmap_ & bitmask)
+	      DPRINTF("*");
+	    else
+	      DPRINTF(" ");
+	  }
+	  bitmap_ += (4 - (((unsigned int) bitmap_) & 0x03));
+	  DPRINTF("\n");
+	}
+      }
+
+      /* For some obscure reasons, I seem to need to rotate the glyph for OpenGL to be happy.
+	 As Wine does not seem to support the MAT2 field, I need to do it myself.... */
+      width_int = (gm.gmBlackBoxX + 31) / 32;
+      for (height = 0; height < gm.gmBlackBoxY; height++) {
+	int width;
+	for (width = 0; width < width_int; width++) {
+	  ((int *) gl_bitmap)[(gm.gmBlackBoxY - height - 1) * width_int + width] =
+	    ((int *) bitmap)[height * width_int + width];
+	}
+      }
+
+      ENTER_GL();
+      glNewList(listBase++, GL_COMPILE);
+      glBitmap(gm.gmBlackBoxX, gm.gmBlackBoxY, gm.gmptGlyphOrigin.x, gm.gmBlackBoxY - gm.gmptGlyphOrigin.y, gm.gmCellIncX, gm.gmCellIncY, gl_bitmap);
+      glEndList();
+      LEAVE_GL();
+    }
+
+    ENTER_GL();
+    glPixelStorei(GL_UNPACK_ALIGNMENT, org_alignment);
+    LEAVE_GL();
+
+    if (bitmap) HeapFree(GetProcessHeap(), 0, bitmap);
+    if (gl_bitmap) HeapFree(GetProcessHeap(), 0, gl_bitmap);
+    return TRUE;
+
+  error:
+    ENTER_GL();
+    glPixelStorei(GL_UNPACK_ALIGNMENT, org_alignment);
+    LEAVE_GL();
+
+    if (bitmap) HeapFree(GetProcessHeap(), 0, bitmap);
+    if (gl_bitmap) HeapFree(GetProcessHeap(), 0, gl_bitmap);
+    return FALSE;
+  }
 
   ENTER_GL();
   /* I assume that the glyphs are at the same position for X and for Windows */
