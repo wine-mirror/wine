@@ -6808,8 +6808,10 @@ static LRESULT LISTVIEW_SetBkColor(HWND hwnd, COLORREF clrBk)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
 
-  infoPtr->clrBk = clrBk;
-  InvalidateRect(hwnd, NULL, TRUE);
+  if(infoPtr->clrBk!=clrBk){
+    infoPtr->clrBk = clrBk;
+    InvalidateRect(hwnd, NULL, TRUE);
+  }
   
   return TRUE;
 }
