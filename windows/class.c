@@ -1103,6 +1103,24 @@ INT WINAPI GetClassNameW( HWND hwnd, LPWSTR buffer, INT count )
 
 
 /***********************************************************************
+ *		RealGetWindowClassA (USER32.@)
+ */
+UINT WINAPI RealGetWindowClassA( HWND hwnd, LPSTR buffer, UINT count )
+{
+    return GetClassNameA( hwnd, buffer, count );
+}
+
+
+/***********************************************************************
+ *		RealGetWindowClassW (USER32.@)
+ */
+UINT WINAPI RealGetWindowClassW( HWND hwnd, LPWSTR buffer, UINT count )
+{
+    return GetClassNameW( hwnd, buffer, count );
+}
+
+
+/***********************************************************************
  *		GetClassInfo (USER.404)
  */
 BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInst16, SEGPTR name, WNDCLASS16 *wc )

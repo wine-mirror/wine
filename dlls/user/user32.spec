@@ -448,9 +448,11 @@
 @ stdcall PostThreadMessageA(long long long long)
 @ stdcall PostThreadMessageW(long long long long)
 @ stdcall PtInRect(ptr long long)
-# @ stub RealChildWindowFromPoint
-# @ stub RealGetWindowClass
 @ stub QuerySendMessage
+# @ stub RealChildWindowFromPoint
+@ stdcall RealGetWindowClass(long ptr long) RealGetWindowClassA
+@ stdcall RealGetWindowClassA(long ptr long)
+@ stdcall RealGetWindowClassW(long ptr long)
 @ stdcall RedrawWindow(long ptr long long)
 @ stdcall RegisterClassA(ptr)
 @ stdcall RegisterClassExA(ptr)
