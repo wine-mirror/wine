@@ -12,6 +12,8 @@
 @ stdcall DirectDrawEnumerateExW(ptr ptr long)
 @ stdcall DllCanUnloadNow() DDRAW_DllCanUnloadNow
 @ stdcall DllGetClassObject(ptr ptr ptr) DDRAW_DllGetClassObject
+@ stdcall DllRegisterServer() DDRAW_DllRegisterServer
+@ stdcall DllUnregisterServer() DDRAW_DllUnregisterServer
 @ stub GetNextMipMap
 @ stub GetSurfaceFromDC
 @ stub HeapVidMemAllocAligned

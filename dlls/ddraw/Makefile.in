@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ddraw.dll
-IMPORTS   = user32 gdi32 kernel32
+IMPORTS   = ole32 user32 gdi32 advapi32 kernel32
 EXTRAINCL = @X_CFLAGS@
 EXTRALIBS = $(LIBUUID) @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@ 
 
@@ -44,6 +44,7 @@ C_SRCS = \
 	dsurface/wndproc.c \
 	helper.c \
 	main.c \
+	regsvr.c \
 	struct_convert.c
 
 RC_SRCS = version.rc
