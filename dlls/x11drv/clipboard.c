@@ -1262,13 +1262,17 @@ HANDLE X11DRV_CLIPBOARD_ImportClipboardData(LPBYTE lpdata, UINT cBytes)
     {
         /* Turn on the DDESHARE flag to enable shared 32 bit memory */
         hClipData = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, cBytes);
+        if (hClipData == 0) return NULL;
+
         if ((lpClipData = GlobalLock(hClipData)))
         {
             memcpy(lpClipData, lpdata, cBytes);
             GlobalUnlock(hClipData);
         }
-        else
+        else {
+            GlobalFree(hClipData);
             hClipData = 0;
+        }
     }
 
     return hClipData;
@@ -1296,6 +1300,7 @@ HANDLE X11DRV_CLIPBOARD_ExportClipboardData(Window requestor, Atom aTarget,
         cBytes = GlobalSize(lpData->hData32);
 
         hClipData = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, cBytes);
+        if (hClipData == 0) return NULL;
 
         if ((lpClipData = GlobalLock(hClipData)))
         {
@@ -1306,6 +1311,9 @@ HANDLE X11DRV_CLIPBOARD_ExportClipboardData(Window requestor, Atom aTarget,
 
             GlobalUnlock(lpData->hData32);
             GlobalUnlock(hClipData);
+        } else {
+            GlobalFree(hClipData);
+            hClipData = 0;
         }
     }
 
@@ -1324,7 +1332,7 @@ HANDLE X11DRV_CLIPBOARD_ExportXAString(LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
     UINT i, j;
     UINT size;
     LPWSTR uni_text;
-    LPSTR text, lpstr;
+    LPSTR text, lpstr = NULL;
 
     *lpBytes = 0; /* Assume return has zero bytes */
 
@@ -1333,14 +1341,14 @@ HANDLE X11DRV_CLIPBOARD_ExportXAString(LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
     size = WideCharToMultiByte(CP_UNIXCP, 0, uni_text, -1, NULL, 0, NULL, NULL);
 
     text = HeapAlloc(GetProcessHeap(), 0, size);
-    if (!text)
-       return None;
+    if (!text) goto done;
     WideCharToMultiByte(CP_UNIXCP, 0, uni_text, -1, text, size, NULL, NULL);
 
     /* remove carriage returns */
 
     lpstr = (char*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size-- );
-    if(lpstr == NULL) return None;
+    if(lpstr == NULL) goto done;
+
     for(i = 0,j = 0; i < size && text[i]; i++ )
     {
         if( text[i] == '\r' &&
@@ -1351,6 +1359,7 @@ HANDLE X11DRV_CLIPBOARD_ExportXAString(LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
 
     *lpBytes = j; /* Number of bytes in string */
 
+done:
     HeapFree(GetProcessHeap(), 0, text);
     GlobalUnlock(lpData->hData32);
 

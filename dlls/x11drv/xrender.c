@@ -1065,13 +1065,13 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
     if(flags & (ETO_CLIPPED | ETO_OPAQUE)) {
         if(!lprect) {
-	    if(flags & ETO_CLIPPED) return FALSE;
-	        GetTextExtentPointI(hdc, glyphs, count, &sz);
-		done_extents = TRUE;
-		rc.left = x;
-		rc.top = y;
-		rc.right = x + sz.cx;
-		rc.bottom = y + sz.cy;
+            if(flags & ETO_CLIPPED) goto done;
+            GetTextExtentPointI(hdc, glyphs, count, &sz);
+            done_extents = TRUE;
+            rc.left = x;
+            rc.top = y;
+            rc.right = x + sz.cx;
+            rc.bottom = y + sz.cy;
 	} else {
 	    rc = *lprect;
 	}
@@ -1115,7 +1115,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
     if(count == 0) {
 	retv =  TRUE;
-        goto done;
+        goto done_unlock;
     }
 
     pt.x = x;
@@ -1539,7 +1539,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
             strikeoutWidth = underlineWidth;
         } else {
             otm = HeapAlloc(GetProcessHeap(), 0, nMetricsSize);
-            if (!otm) goto done;
+            if (!otm) goto done_unlock;
 
             GetOutlineTextMetricsW(hdc, nMetricsSize, otm);
             underlinePos = otm->otmsUnderscorePosition;
@@ -1592,8 +1592,9 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
     retv = TRUE;
 
-done:
+done_unlock:
     X11DRV_UnlockDIBSection( physDev, TRUE );
+done:
     if(glyphs != wstr) HeapFree(GetProcessHeap(), 0, (WORD*)glyphs);
     return retv;
 }
