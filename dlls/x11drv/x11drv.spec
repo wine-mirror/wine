@@ -98,7 +98,7 @@
 @ cdecl RegisterClipboardFormat(str) X11DRV_RegisterClipboardFormat
 @ cdecl ReleaseDC(long long) X11DRV_ReleaseDC
 @ cdecl ResetSelectionOwner(long long) X11DRV_ResetSelectionOwner
-@ cdecl ScrollWindowEx(long long long ptr ptr long ptr long) X11DRV_ScrollWindowEx
+@ cdecl ScrollDC(long long long ptr ptr long ptr) X11DRV_ScrollDC
 @ cdecl SetClipboardData(long long long long) X11DRV_SetClipboardData
 @ cdecl SetFocus(long) X11DRV_SetFocus
 @ cdecl SetParent(long long) X11DRV_SetParent
