@@ -962,7 +962,7 @@ static inline LRESULT
 STATUSBAR_WMGetFont (HWND hwnd)
 {
     STATUSWINDOWINFO *infoPtr = STATUSBAR_GetInfoPtr (hwnd);
-    return infoPtr->hFont;
+    return infoPtr->hFont? infoPtr->hFont : infoPtr->hDefaultFont;
 }
 
 
