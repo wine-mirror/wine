@@ -35,19 +35,16 @@ static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
     char line[256], valbuf[256];
     char *cp, *item, *value, *curpos, *endpos;
     int i;
-    AFMMETRICS **insert = &afm->Metrics, *metric;
+    AFMMETRICS *metric;
 
-    for(i = 0; i < afm->NumofMetrics; i++) {
+    afm->Metrics = metric = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY,
+                                       afm->NumofMetrics * sizeof(AFMMETRICS) );
+    for(i = 0; i < afm->NumofMetrics; i++, metric++) {
 
         if(!fgets(line, sizeof(line), fp)) {
 	   ERR("Unexpected EOF\n");
 	   return;
 	}
-
-	metric = *insert = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY, 
-				      sizeof(AFMMETRICS) );
-	insert = &metric->next;
-
 	cp = line + strlen(line);
 	do {
 	    *cp = '\0';
@@ -85,7 +82,7 @@ static void PSDRV_AFMGetCharMetrics(AFM *afm, FILE *fp)
 	    }
 
 	    else if(!strncmp("N ", item, 2)) {
-	        metric->N = HEAP_strdupA( PSDRV_Heap, 0, value);
+                strncpy( metric->N, value, sizeof(metric->N) );
 	    }
 
 	    else if(!strncmp("B ", item, 2)) {
@@ -367,7 +364,7 @@ void PSDRV_AddAFMtoList(FONTFAMILY **head, AFM *afm)
  */
 static void PSDRV_ReencodeCharWidths(AFM *afm)
 {
-    int i;
+    int i, j;
     AFMMETRICS *metric;
 
     for(i = 0; i < 256; i++) {
@@ -377,13 +374,13 @@ static void PSDRV_ReencodeCharWidths(AFM *afm)
 	    afm->CharWidths[i] = 0.0;
 	    continue;
 	}
-        for(metric = afm->Metrics; metric; metric = metric->next) {
+        for (j = 0, metric = afm->Metrics; j < afm->NumofMetrics; j++, metric++) {
 	    if(!strcmp(metric->N, PSDRV_ANSIVector[i])) {
 	        afm->CharWidths[i] = metric->WX;
 		break;
 	    }
 	}
-	if(!metric) {
+	if(j == afm->NumofMetrics) {
 	    WARN("Couldn't find glyph '%s' in font '%s'\n",
 		 PSDRV_ANSIVector[i], afm->FontName);
 	    afm->CharWidths[i] = 0.0;

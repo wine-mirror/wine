@@ -26,10 +26,9 @@ typedef struct _tagAFMLIGS {
 typedef struct _tagAFMMETRICS {
     int				C;			/* character */  
     float			WX;
-    char			*N;			/* name */
+    char			N[32];			/* name */
     AFMBBOX			B;
     AFMLIGS			*L;			/* Ligatures */
-    struct _tagAFMMETRICS	*next;
 } AFMMETRICS;
 
 typedef struct _tagAFM {
