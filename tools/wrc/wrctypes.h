@@ -15,7 +15,7 @@
 #endif
 
 #ifndef VS_FFI_SIGNATURE
-#include "ver.h"
+#include "winver.h"
 #endif
 
 /* Memory/load flags */

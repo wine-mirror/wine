@@ -13,7 +13,6 @@
 #include "neexe.h"
 #include "module.h"
 #include "winver.h"
-#include "ver.h"
 #include "heap.h"
 #include "lzexpand.h"
 #include "peexe.h"

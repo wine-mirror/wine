@@ -2,7 +2,7 @@
  * Language neutral resources for Common Dialogs
  */
 
-#include "ver.h"
+#include "winver.h"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 

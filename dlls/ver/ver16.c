@@ -7,7 +7,6 @@
 #include "winbase.h"
 #include "winver.h"
 #include "ldt.h"
-#include "ver.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ver)
