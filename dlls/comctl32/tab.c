@@ -1594,10 +1594,7 @@ static void TAB_DrawItem(
     HPEN hbPen  = GetSysColorPen (COLOR_3DDKSHADOW);
     HPEN hShade = GetSysColorPen (COLOR_BTNSHADOW);
 
-    HPEN   hfocusPen = CreatePen(PS_ALTERNATE, 1, GetSysColor(COLOR_BTNTEXT));
-
     HPEN   holdPen;
-    INT    oldBkMode;
     BOOL   deleteBrush = TRUE;
 
     if (lStyle & TCS_BUTTONS)
@@ -1657,7 +1654,7 @@ static void TAB_DrawItem(
         /*
          * Draw the tab now.
          * The rectangles calculated exclude the right and bottom
-         * borders of the rectangle. To simply the following code, those
+         * borders of the rectangle. To simplify the following code, those
          * borders are shaved-off beforehand.
          */
         r.right--;
@@ -1729,7 +1726,7 @@ static void TAB_DrawItem(
       /*
        * Draw the tab now.
        * The rectangles calculated exclude the right and bottom
-       * borders of the rectangle. To simply the following code, those
+       * borders of the rectangle. To simplify the following code, those
        * borders are shaved-off beforehand.
        */
       r.right--;
@@ -1824,8 +1821,6 @@ static void TAB_DrawItem(
       }
     }
   
-    oldBkMode = SetBkMode(hdc, TRANSPARENT);
-
     /* This modifies r to be the text rectangle. */
     TAB_DrawItemInterior(hwnd, hdc, iItem, &r);
 
@@ -1834,20 +1829,14 @@ static void TAB_DrawItem(
 	 (GetFocus() == hwnd) &&
 	 (iItem == infoPtr->uFocus) )
     {
-      HBRUSH hOldBrush;
       r = itemRect;
       InflateRect(&r, -1, -1);
 
-      hOldBrush = SelectObject(hdc, GetStockObject(NULL_BRUSH));
-      SelectObject(hdc, hfocusPen);
-      Rectangle(hdc, r.left, r.top, r.right, r.bottom);
-      SelectObject(hdc, hOldBrush);
+      DrawFocusRect(hdc, &r);
     }
 
     /* Cleanup */
-    SetBkMode(hdc, oldBkMode);
     SelectObject(hdc, holdPen);
-    DeleteObject(hfocusPen);
     if (deleteBrush) DeleteObject(hbr);
   }
 }
