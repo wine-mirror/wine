@@ -378,6 +378,7 @@ INT WINAPI GDI_CallExtDeviceMode16( HWND hwnd,
     HDC hdc;
     DC *dc;
     INT ret = -1;
+    INT (*pExtDeviceMode)(LPSTR,HWND,LPDEVMODEA,LPSTR,LPSTR,LPDEVMODEA,LPSTR,DWORD);
 
     TRACE("(%04x, %p, %s, %s, %p, %s, %ld)\n",
           hwnd, lpdmOutput, lpszDevice, lpszPort, lpdmInput, lpszProfile, fwMode );
@@ -388,10 +389,11 @@ INT WINAPI GDI_CallExtDeviceMode16( HWND hwnd,
 
     if ((dc = DC_GetDCPtr( hdc )))
     {
-        if (dc->funcs->pExtDeviceMode)
-            ret = dc->funcs->pExtDeviceMode(buf, hwnd, lpdmOutput, lpszDevice, lpszPort,
+	pExtDeviceMode = dc->funcs->pExtDeviceMode;
+	GDI_ReleaseObj( hdc );
+	if (pExtDeviceMode)
+	    ret = pExtDeviceMode(buf, hwnd, lpdmOutput, lpszDevice, lpszPort,
                                             lpdmInput, lpszProfile, fwMode);
-        GDI_ReleaseObj( hdc );
     }
     DeleteDC( hdc );
     return ret;
