@@ -529,10 +529,12 @@ static int output_delayed_imports( FILE *outfile )
     fprintf( outfile, "extern void * __stdcall GetProcAddress(void *, const char*);\n");
     fprintf( outfile, "\n" );
 
-    fprintf( outfile, "void *__stdcall __wine_delay_load(struct ImgDelayDescr* imd, void **pIAT)\n" );
+    fprintf( outfile, "void *__stdcall __wine_delay_load( int idx_nr )\n" );
     fprintf( outfile, "{\n" );
-    fprintf( outfile, "  int idx = pIAT - imd->pIAT;\n" );
-    fprintf( outfile, "  const char** pINT = imd->pINT + idx;\n" );
+    fprintf( outfile, "  int idx = idx_nr >> 16, nr = idx_nr & 0xffff;\n" );
+    fprintf( outfile, "  struct ImgDelayDescr *imd = delay_imports.imp + idx;\n" );
+    fprintf( outfile, "  void **pIAT = imd->pIAT + nr;\n" );
+    fprintf( outfile, "  const char** pINT = imd->pINT + nr;\n" );
     fprintf( outfile, "  void *fn;\n\n" );
 
     fprintf( outfile, "  if (!*imd->phmod) *imd->phmod = LoadLibraryA(imd->szName);\n" );
@@ -559,41 +561,87 @@ static int output_delayed_imports( FILE *outfile )
     fprintf( outfile, "#ifndef __GNUC__\n" );
     fprintf( outfile, "static void __asm__dummy_delay_import(void) {\n" );
     fprintf( outfile, "#endif\n" );
+
     fprintf( outfile, "asm(\".align 8\\n\"\n" );
-    pos = nb_delayed * 32;
+    fprintf( outfile, "    \"\\t" __ASM_FUNC("__wine_delay_load_asm") "\\n\"\n" );
+    fprintf( outfile, "    \"" PREFIX "__wine_delay_load_asm:\\n\"\n" );
+#if defined(__i386__)
+    fprintf( outfile, "    \"\\tpushl %%ecx\\n\\tpushl %%edx\\n\\tpushl %%eax\\n\"\n" );
+    fprintf( outfile, "    \"\\tcall __wine_delay_load\\n\"\n" );
+    fprintf( outfile, "    \"\\tpopl %%edx\\n\\tpopl %%ecx\\n\\tjmp *%%eax\\n\"\n" );
+#elif defined(__sparc__)
+    fprintf( outfile, "    \"\\tsave %%sp, -96, %%sp\\n\"\n" );
+    fprintf( outfile, "    \"\\tcall __wine_delay_load\\n\"\n" );
+    fprintf( outfile, "    \"\\tmov %%g1, %%o0\\n\"\n" );
+    fprintf( outfile, "    \"\\tjmp %%o0\\n\\trestore\\n\"\n" );
+#else
+#error You need to defined delayed import thunks for your architecture!
+#endif
+
     for (i = idx = 0; i < nb_imports; i++)
     {
-        char buffer[128];
-
         if (!dll_imports[i]->delay) continue;
+        for (j = 0; j < dll_imports[i]->nb_imports; j++)
+        {
+            char buffer[128];
+            sprintf( buffer, "__wine_delay_imp_%d_%s", i, dll_imports[i]->imports[j]);
+            fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", buffer );
+            fprintf( outfile, "    \"" PREFIX "%s:\\n\"\n", buffer );
+#if defined(__i386__)
+            fprintf( outfile, "    \"\\tmovl $%d, %%eax\\n\"\n", (idx << 16) | j );
+            fprintf( outfile, "    \"\\tjmp __wine_delay_load_asm\\n\"\n" );
+#elif defined(__sparc__)
+            fprintf( outfile, "    \"\\tset %d, %%g1\\n\"\n", (idx << 16) | j );
+            fprintf( outfile, "    \"\\tb,a __wine_delay_load_asm\\n\"\n" );
+#else
+#error You need to defined delayed import thunks for your architecture!
+#endif
+        }
+        idx++;
+    }
 
-        sprintf(buffer, "__wine_dl_%d", i);
-        fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", buffer );
-        fprintf( outfile, "    \"" PREFIX "%s:\\t", buffer );
-        fprintf( outfile, "push $delay_imports+%d\\n\"\n", idx * 32 );
-        fprintf( outfile, "    \"\\tcall __wine_delay_load\\n\"\n" );
-        fprintf( outfile, "    \"\\tpop %%edx\\n\\tpop %%ecx\\n\\tjmp *%%eax\\n\"\n" );
-
+    fprintf( outfile, "\n    \".data\\n\\t.align 8\\n\"\n" );
+    pos = nb_delayed * 32;
+    for (i = 0; i < nb_imports; i++)
+    {
+        if (!dll_imports[i]->delay) continue;
         for (j = 0; j < dll_imports[i]->nb_imports; j++, pos += 4)
         {
             fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n",
                      dll_imports[i]->imports[j] );
             fprintf( outfile, "    \"\\t.globl " PREFIX "%s\\n\"\n",
                      dll_imports[i]->imports[j] );
-            fprintf( outfile, "    \"" PREFIX "%s:\\t", dll_imports[i]->imports[j] );
-            fprintf( outfile, "jmp *(delay_imports+%d)\\n\\tmovl %%esi,%%esi\\n\"\n", pos );
-
-            sprintf( buffer, "__wine_delay_imp_%d_%s", i, dll_imports[i]->imports[j]);
-            fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", buffer );
-            fprintf( outfile, "    \"" PREFIX "%s:\\t", buffer );
-            fprintf( outfile, "push %%ecx\\n\\tpush %%edx\\n\"\n" );
-            fprintf( outfile, "    \"\\tpush $delay_imports+%d\\n\"\n", pos );
-            fprintf( outfile, "    \"\\tjmp __wine_dl_%d\\n\"\n", i );
+            fprintf( outfile, "    \"" PREFIX "%s:\\n\\t", dll_imports[i]->imports[j] );
+#if defined(__i386__)
+            if (strstr( dll_imports[i]->imports[j], "__wine_call_from_16" ))
+                fprintf( outfile, ".byte 0x2e\\n\\tjmp *(delay_imports+%d)\\n\\tnop\\n", pos );
+            else
+                fprintf( outfile, "jmp *(delay_imports+%d)\\n\\tmovl %%esi,%%esi\\n", pos );
+#elif defined(__sparc__)
+            if ( !UsePIC )
+            {
+                fprintf( outfile, "sethi %%hi(delay_imports+%d), %%g1\\n\\t", pos );
+                fprintf( outfile, "ld [%%g1+%%lo(delay_imports+%d)], %%g1\\n\\t", pos );
+                fprintf( outfile, "jmp %%g1\\n\\tnop\\n" );
+            }
+            else
+            {
+                /* Hmpf.  Stupid sparc assembler always interprets global variable
+                   names as GOT offsets, so we have to do it the long way ... */
+                fprintf( outfile, "save %%sp, -96, %%sp\\n" );
+                fprintf( outfile, "0:\\tcall 1f\\n\\tnop\\n" );
+                fprintf( outfile, "1:\\tsethi %%hi(delay_imports+%d-0b), %%g1\\n\\t", pos );
+                fprintf( outfile, "or %%g1, %%lo(delay_imports+%d-0b), %%g1\\n\\t", pos );
+                fprintf( outfile, "ld [%%g1+%%o7], %%g1\\n\\t" );
+                fprintf( outfile, "jmp %%g1\\n\\trestore\\n" );
+            }
+#else
+#error You need to define import thunks for your architecture!
+#endif
+            fprintf( outfile, "\"\n" );
         }
-        idx++;
     }
-
-    fprintf( outfile, ");\n" );
+    fprintf( outfile, "\".previous\");\n" );
     fprintf( outfile, "#ifndef __GNUC__\n" );
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif\n" );
