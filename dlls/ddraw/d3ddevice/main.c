@@ -1100,15 +1100,24 @@ Main_IDirect3DDeviceImpl_3_2T_SetCurrentViewport(LPDIRECT3DDEVICE3 iface,
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
     TRACE("(%p/%p)->(%p)\n", This, iface, lpDirect3DViewport3);
 
+    /* Do nothing if the specified viewport is the same as the current one */
+    if (This->current_viewport == ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, lpDirect3DViewport3))
+      return DD_OK;
+    
     /* Should check if the viewport was added or not */
 
+    /* Release previous viewport and AddRef the new one */
+    if (This->current_viewport)
+      IDirect3DViewport3_Release(ICOM_INTERFACE(This->current_viewport, IDirect3DViewport3));
+    IDirect3DViewport3_AddRef(lpDirect3DViewport3);
+    
     /* Set this viewport as the current viewport */
     This->current_viewport = ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, lpDirect3DViewport3);
 
     /* Activate this viewport */
     This->current_viewport->active_device = This;
     This->current_viewport->activate(This->current_viewport);
-    
+
     return DD_OK;
 }
 
@@ -1120,6 +1129,10 @@ Main_IDirect3DDeviceImpl_3_2T_GetCurrentViewport(LPDIRECT3DDEVICE3 iface,
     TRACE("(%p/%p)->(%p)\n", This, iface, lplpDirect3DViewport3);
 
     *lplpDirect3DViewport3 = ICOM_INTERFACE(This->current_viewport, IDirect3DViewport3);
+
+    /* AddRef the returned viewport */
+    IDirect3DViewport3_AddRef(*lplpDirect3DViewport3);
+    
     TRACE(" returning interface %p\n", *lplpDirect3DViewport3);
     
     return DD_OK;

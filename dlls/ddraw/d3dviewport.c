@@ -180,6 +180,7 @@ Main_IDirect3DViewportImpl_3_2_1_SetViewport(LPDIRECT3DVIEWPORT3 iface,
                                              LPD3DVIEWPORT lpData)
 {
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
+    LPDIRECT3DVIEWPORT3 current_viewport;
     TRACE("(%p/%p)->(%p)\n", This, iface, lpData);
 
     if (TRACE_ON(ddraw)) {
@@ -196,7 +197,14 @@ Main_IDirect3DViewportImpl_3_2_1_SetViewport(LPDIRECT3DVIEWPORT3 iface,
     */
     This->viewports.vp1.dvMinZ = 0.0;
     This->viewports.vp1.dvMaxZ = 1.0;
-    
+
+    if (This->active_device) {
+      IDirect3DDevice3_GetCurrentViewport(ICOM_INTERFACE(This->active_device, IDirect3DDevice3), &current_viewport);
+      if (ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, current_viewport) == This)
+          This->activate(This);
+      IDirect3DViewport3_Release(current_viewport);
+    }
+
     return DD_OK;
 }
 
@@ -402,6 +410,7 @@ Main_IDirect3DViewportImpl_3_2_SetViewport2(LPDIRECT3DVIEWPORT3 iface,
                                             LPD3DVIEWPORT2 lpData)
 {
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
+    LPDIRECT3DVIEWPORT3 current_viewport;
     TRACE("(%p/%p)->(%p)\n", This, iface, lpData);
 
     if (TRACE_ON(ddraw)) {
@@ -412,6 +421,14 @@ Main_IDirect3DViewportImpl_3_2_SetViewport2(LPDIRECT3DVIEWPORT3 iface,
     This->use_vp2 = 1;
     memset(&(This->viewports.vp2), 0, sizeof(This->viewports.vp2));
     memcpy(&(This->viewports.vp2), lpData, lpData->dwSize);
+
+    if (This->active_device) {
+      IDirect3DDevice3_GetCurrentViewport(ICOM_INTERFACE(This->active_device, IDirect3DDevice3), &current_viewport);
+      if (ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, current_viewport) == This)
+        This->activate(This);
+      IDirect3DViewport3_Release(current_viewport);
+    }
+
     return DD_OK;
 }
 
