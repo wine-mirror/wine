@@ -10,8 +10,11 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/unicode.h"
+#include "wininet.h"
+#include "winreg.h"
 #include "shlwapi.h"
 #include "debugtools.h"
+#include "ordinal.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -50,6 +53,9 @@ static BOOL URL_NeedEscapeA(CHAR ch, DWORD dwFlags)
 	    return FALSE;
     }
 
+    if ((dwFlags & URL_ESCAPE_PERCENT) && (ch == '%'))
+	return TRUE;
+
     if (ch <= 31 || ch >= 127)
 	return TRUE;
 
@@ -70,6 +76,9 @@ static BOOL URL_NeedEscapeA(CHAR ch, DWORD dwFlags)
 	case '&':
 	    return TRUE;
 
+	case '/':
+	case '?':
+	    if (dwFlags & URL_ESCAPE_SEGMENT_ONLY) return TRUE;
 	default:
 	    return FALSE;
 	}
@@ -79,7 +88,7 @@ static BOOL URL_NeedEscapeA(CHAR ch, DWORD dwFlags)
 static BOOL URL_NeedEscapeW(WCHAR ch, DWORD dwFlags)
 {
 
-    if (isalnum(ch))
+    if (iswalnum(ch))
         return FALSE;
 
     if(dwFlags & URL_ESCAPE_SPACES_ONLY) {
@@ -88,6 +97,9 @@ static BOOL URL_NeedEscapeW(WCHAR ch, DWORD dwFlags)
 	else
 	    return FALSE;
     }
+
+    if ((dwFlags & URL_ESCAPE_PERCENT) && (ch == L'%'))
+	return TRUE;
 
     if (ch <= 31 || ch >= 127)
 	return TRUE;
@@ -109,70 +121,90 @@ static BOOL URL_NeedEscapeW(WCHAR ch, DWORD dwFlags)
 	case L'&':
 	    return TRUE;
 
+	case L'/':
+	case L'?':
+	    if (dwFlags & URL_ESCAPE_SEGMENT_ONLY) return TRUE;
 	default:
 	    return FALSE;
 	}
     }
 }
 
+static BOOL URL_JustLocation(LPCWSTR str)
+{
+    while(*str && (*str == L'/')) str++;
+    if (*str) {
+	while (*str && ((*str == L'-') ||
+			(*str == L'.') ||
+			iswalnum(*str))) str++;
+	if (*str == L'/') return FALSE;
+    }
+    return TRUE;
+}
+
+
 /*************************************************************************
  *        UrlCanonicalizeA     [SHLWAPI.@]
+ *
+ * Uses the W version to do job.
  */
 HRESULT WINAPI UrlCanonicalizeA(LPCSTR pszUrl, LPSTR pszCanonicalized,
 	LPDWORD pcchCanonicalized, DWORD dwFlags)
 {
-    HRESULT hr = S_OK;
+    LPWSTR base, canonical;
+    DWORD ret, len, len2;
 
-    LPSTR lpszUrlCpy;
-    INT nLen;
-
-    TRACE("(%s %p %p 0x%08lx)\n", debugstr_a(pszUrl), pszCanonicalized,
+    TRACE("(%s %p %p 0x%08lx) using W version\n",
+	  debugstr_a(pszUrl), pszCanonicalized,
 	  pcchCanonicalized, dwFlags);
 
-    nLen = strlen(pszUrl);
-    lpszUrlCpy = HeapAlloc(GetProcessHeap(), 0, nLen + 1);
+    base = (LPWSTR) HeapAlloc(GetProcessHeap(), 0, 
+			      (2*INTERNET_MAX_URL_LENGTH) * sizeof(WCHAR));
+    canonical = base + INTERNET_MAX_URL_LENGTH;
 
-    if (dwFlags & URL_DONT_SIMPLIFY)
-        memcpy(lpszUrlCpy, pszUrl, nLen + 1);
-    else {
-        FIXME("Simplify path\n");
-        memcpy(lpszUrlCpy, pszUrl, nLen + 1);
+    MultiByteToWideChar(0, 0, pszUrl, -1, base, INTERNET_MAX_URL_LENGTH);
+    len = INTERNET_MAX_URL_LENGTH;
+
+    ret = UrlCanonicalizeW(base, canonical, &len, dwFlags);
+    if (ret != S_OK) {
+	HeapFree(GetProcessHeap(), 0, base);
+	return ret;
     }
 
-    if(dwFlags & URL_UNESCAPE)
-        UrlUnescapeA(lpszUrlCpy, NULL, NULL, URL_UNESCAPE_INPLACE);
-
-    if(dwFlags & (URL_ESCAPE_UNSAFE | URL_ESCAPE_SPACES_ONLY)) {
-        DWORD EscapeFlags = dwFlags & (URL_ESCAPE_SPACES_ONLY
-				       /* | URL_ESCAPE_PERCENT */);
-	hr = UrlEscapeA(lpszUrlCpy, pszCanonicalized, pcchCanonicalized,
-			EscapeFlags);
-    } else { /* No escapping needed, just copy the string */
-        nLen = strlen(lpszUrlCpy);
-	if(nLen < *pcchCanonicalized)
-	    memcpy(pszCanonicalized, lpszUrlCpy, nLen + 1);
-	else {
-	    hr = E_POINTER;
-	    nLen++;
-	}
-	*pcchCanonicalized = nLen;
+    len2 = WideCharToMultiByte(0, 0, canonical, len, 0, 0, 0, 0);
+    if (len2 > *pcchCanonicalized) {
+	*pcchCanonicalized = len;
+	HeapFree(GetProcessHeap(), 0, base);
+	return E_POINTER;
     }
-
-    HeapFree(GetProcessHeap(), 0, lpszUrlCpy);
-  
-    return hr;
+    WideCharToMultiByte(0, 0, canonical, len+1, pszCanonicalized, 
+			*pcchCanonicalized, 0, 0);
+    *pcchCanonicalized = len2;
+    HeapFree(GetProcessHeap(), 0, base);
+    return S_OK;
 }
 
 /*************************************************************************
  *        UrlCanonicalizeW     [SHLWAPI.@]
+ *
+ *
+ * MSDN is wrong (at 10/30/01 - go figure). This should support the 
+ * following flags:                                      GLA
+ *    URL_DONT_ESCAPE_EXTRA_INFO    0x02000000
+ *    URL_ESCAPE_SPACES_ONLY        0x04000000
+ *    URL_ESCAPE_PERCENT            0x00001000
+ *    URL_ESCAPE_UNSAFE             0x10000000
+ *    URL_UNESCAPE                  0x10000000
+ *    URL_DONT_SIMPLIFY             0x08000000
+ *    URL_ESCAPE_SEGMENT_ONLY       0x00002000
  */
 HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized, 
 				LPDWORD pcchCanonicalized, DWORD dwFlags)
 {
     HRESULT hr = S_OK;
-
-    LPWSTR lpszUrlCpy;
-    INT nLen, nByteLen;
+    DWORD EscapeFlags;
+    LPWSTR lpszUrlCpy, wk1, wk2, mp, root;
+    INT nLen, nByteLen, state;
 
     TRACE("(%s %p %p 0x%08lx)\n", debugstr_w(pszUrl), pszCanonicalized,
 	  pcchCanonicalized, dwFlags);
@@ -183,16 +215,121 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
     if (dwFlags & URL_DONT_SIMPLIFY)
         memcpy(lpszUrlCpy, pszUrl, nByteLen);
     else {
-        FIXME("Simplify path\n");
-        memcpy(lpszUrlCpy, pszUrl, nByteLen);
+
+	/*
+	 * state =
+	 *         0   initial  1,3
+	 *         1   have 2[+] alnum  2,3
+	 *         2   have scheme (found :)  4,6,3
+	 *         3   failed (no location)
+	 *         4   have //  5,3
+	 *         5   have 1[+] alnum  6,3
+	 *         6   have location (found /) save root location
+	 */
+
+	wk1 = (LPWSTR)pszUrl;
+	wk2 = lpszUrlCpy;
+	state = 0;
+	while (*wk1) {
+	    switch (state) {
+	    case 0:
+		if (!iswalnum(*wk1)) {state = 3; break;}
+		*wk2++ = *wk1++;
+		if (!iswalnum(*wk1)) {state = 3; break;}
+		*wk2++ = *wk1++;
+		state = 1;
+		break;
+	    case 1:
+		*wk2++ = *wk1;
+		if (*wk1++ == L':') state = 2;
+		break;
+	    case 2:
+		if (*wk1 != L'/') {state = 3; break;}
+		*wk2++ = *wk1++;
+		if (*wk1 != L'/') {state = 6; break;}
+		*wk2++ = *wk1++;
+		state = 4;
+		break;
+	    case 3:
+		strcpyW(wk2, wk1);
+		wk1 += strlenW(wk1);
+		wk2 += strlenW(wk2);
+		break;
+	    case 4:
+		if (!iswalnum(*wk1) && (*wk1 != L'-')) {state = 3; break;}
+		while(iswalnum(*wk1) || (*wk1 == L'-')) *wk2++ = *wk1++;
+		state = 5;
+		break;
+	    case 5:
+		if (*wk1 != L'/') {state = 3; break;}
+		*wk2++ = *wk1++;
+		state = 6;
+		break;
+	    case 6:
+		/* Now at root location, cannot back up any more. */
+		/* "root" will point at the '/' */
+		root = wk2-1;
+		while (*wk1) {
+		    TRACE("wk1=%c\n", (CHAR)*wk1);
+		    mp = strchrW(wk1, L'/');
+		    if (!mp) {
+			strcpyW(wk2, wk1);
+			wk1 += strlenW(wk1);
+			wk2 += strlenW(wk2);
+			continue;
+		    }
+		    nLen = mp - wk1 + 1;
+		    strncpyW(wk2, wk1, nLen);
+		    wk2 += nLen;
+		    wk1 += nLen;
+		    if (*wk1 == L'.') {
+			TRACE("found '/.'\n");
+			if (*(wk1+1) == L'/') {
+			    /* case of /./ -> skip the ./ */
+			    wk1 += 2;
+			}
+			else if (*(wk1+1) == L'.') {
+			    /* found /..  look for next / */
+			    TRACE("found '/..'\n");
+			    if (*(wk1+2) == L'/') {
+				/* case /../ -> need to backup wk2 */
+				TRACE("found '/../'\n");
+				*(wk2-1) = L'\0';  /* set end of string */
+				mp = strrchrW(root, L'/');
+				if (mp && (mp >= root)) {
+				    /* found valid backup point */
+				    wk2 = mp + 1;
+				    wk1 += 3;
+				}
+				else {
+				    /* did not find point, restore '/' */
+				    *(wk2-1) = L'/';
+				}
+			    }
+			}
+		    }
+		}
+		*wk2 = L'\0';
+		break;
+	    default:
+		FIXME("how did we get here - state=%d\n", state);
+		return E_INVALIDARG;
+	    }
+	}
+	*wk2 = L'\0';
+	TRACE("Simplified, orig <%s>, simple <%s>\n",
+	      debugstr_w(pszUrl), debugstr_w(lpszUrlCpy));
     }
 
     if(dwFlags & URL_UNESCAPE)
         UrlUnescapeW(lpszUrlCpy, NULL, NULL, URL_UNESCAPE_INPLACE);
 
-    if(dwFlags & (URL_ESCAPE_UNSAFE | URL_ESCAPE_SPACES_ONLY)) {
-        DWORD EscapeFlags = dwFlags & (URL_ESCAPE_SPACES_ONLY
-				       /* | URL_ESCAPE_PERCENT */);
+    if((EscapeFlags = dwFlags & (URL_ESCAPE_UNSAFE | 
+                                 URL_ESCAPE_SPACES_ONLY |
+                                 URL_ESCAPE_PERCENT |
+                                 URL_DONT_ESCAPE_EXTRA_INFO |
+				 URL_ESCAPE_SEGMENT_ONLY ))) {
+	EscapeFlags &= ~URL_ESCAPE_UNSAFE;
 	hr = UrlEscapeW(lpszUrlCpy, pszCanonicalized, pcchCanonicalized,
 			EscapeFlags);
     } else { /* No escapping needed, just copy the string */
@@ -216,35 +353,46 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 
 /*************************************************************************
  *        UrlCombineA     [SHLWAPI.@]
+ *
+ * Uses the W version to do job.
  */
 HRESULT WINAPI UrlCombineA(LPCSTR pszBase, LPCSTR pszRelative,
 			   LPSTR pszCombined, LPDWORD pcchCombined,
 			   DWORD dwFlags)
 {
-    FIXME("(base %s, Relative %s, Combine size %ld, flags %08lx):stub\n",
+    LPWSTR base, relative, combined;
+    DWORD ret, len, len2;
+
+    TRACE("(base %s, Relative %s, Combine size %ld, flags %08lx) using W version\n",
 	  debugstr_a(pszBase),debugstr_a(pszRelative),
 	  *pcchCombined,dwFlags);
-    return E_INVALIDARG;
-}
 
-/*************************************************************************
- *        Helper for UrlCombineW
- */
-DWORD URL_LocateSchemeW(LPCWSTR p)
-{
-    DWORD len = 0;
+    base = (LPWSTR) HeapAlloc(GetProcessHeap(), 0, 
+			      (3*INTERNET_MAX_URL_LENGTH) * sizeof(WCHAR));
+    relative = base + INTERNET_MAX_URL_LENGTH;
+    combined = relative + INTERNET_MAX_URL_LENGTH;
 
-    while (*p) {
-	if (*p == L':') break;
-	if (!((get_char_typeW(*p) & (C1_ALPHA|C1_DIGIT)) != 0) && !(*p == L'-')) {
+    MultiByteToWideChar(0, 0, pszBase, -1, base, INTERNET_MAX_URL_LENGTH);
+    MultiByteToWideChar(0, 0, pszRelative, -1, relative, INTERNET_MAX_URL_LENGTH);
+    len = INTERNET_MAX_URL_LENGTH;
 
-	    len = -1;
-	    break;
-	}
-	p++;
-	len++;
+    ret = UrlCombineW(base, relative, combined, &len, dwFlags);
+    if (ret != S_OK) {
+	HeapFree(GetProcessHeap(), 0, base);
+	return ret;
     }
-    return len;
+
+    len2 = WideCharToMultiByte(0, 0, combined, len, 0, 0, 0, 0);
+    if (len2 > *pcchCombined) {
+	*pcchCombined = len;
+	HeapFree(GetProcessHeap(), 0, base);
+	return E_POINTER;
+    }
+    WideCharToMultiByte(0, 0, combined, len+1, pszCombined, *pcchCombined,
+			0, 0);
+    *pcchCombined = len2;
+    HeapFree(GetProcessHeap(), 0, base);
+    return S_OK;
 }
 
 /*************************************************************************
@@ -254,89 +402,254 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 			   LPWSTR pszCombined, LPDWORD pcchCombined,
 			   DWORD dwFlags)
 {
-    DWORD s1len, s2len, len, len2;
-    LPWSTR p1;
+    UNKNOWN_SHLWAPI_2 base, relative;
+    DWORD myflags, sizeloc = 0;
+    DWORD len, res1, res2, process_case = 0;
+    LPWSTR work, preliminary, mbase, mrelative;
+    WCHAR myfilestr[] = {'f','i','l','e',':','/','/','/','\0'};
+    WCHAR single_slash[] = {'/','\0'};
+    HRESULT ret;
 
     TRACE("(base %s, Relative %s, Combine size %ld, flags %08lx)\n",
 	  debugstr_w(pszBase),debugstr_w(pszRelative),
 	  *pcchCombined,dwFlags);
 
-    s1len = URL_LocateSchemeW(pszBase);
-    s2len = URL_LocateSchemeW(pszRelative);
+    base.size = 24;
+    relative.size = 24;
 
-    if ((s1len == s2len) && (strncmpiW(pszBase, pszRelative, s1len) == 0)) {
-	/* same protocol, see if can combine */
+    /* Get space for duplicates of the input and the output */
+    preliminary = HeapAlloc(GetProcessHeap(), 0, (3*INTERNET_MAX_URL_LENGTH) *
+			    sizeof(WCHAR));
+    mbase = preliminary + INTERNET_MAX_URL_LENGTH;
+    mrelative = mbase + INTERNET_MAX_URL_LENGTH;
+    *preliminary = L'\0';
 
-	/* first copy the base without the document (if it exists) */
-	len = strlenW(pszBase);
-	p1 = strrchrW(pszBase, L'/');
-	if (p1) {
-	    len = p1 - pszBase + 1;
+    /* Canonicalize the base input prior to looking for the scheme */
+    myflags = dwFlags & (URL_DONT_SIMPLIFY | URL_UNESCAPE);
+    len = INTERNET_MAX_URL_LENGTH;
+    ret = UrlCanonicalizeW(pszBase, mbase, &len, myflags);
+
+    /* Canonicalize the relative input prior to looking for the scheme */
+    len = INTERNET_MAX_URL_LENGTH;
+    ret = UrlCanonicalizeW(pszRelative, mrelative, &len, myflags);
+
+    /* See if the base has a scheme */
+    res1 = SHLWAPI_2(mbase, &base);
+    if (res1) {
+	/* if pszBase has no scheme, then return pszRelative */
+	TRACE("no scheme detected in Base\n");
+	process_case = 1;
+    }
+    else do {
+
+	/* get size of location field (if it exists) */
+	work = (LPWSTR)base.ap2;
+	sizeloc = 0;
+	if (*work++ == L'/') {
+	    if (*work++ == L'/') {
+		/* At this point have start of location and
+		 * it ends at next '/' or end of string.
+		 */
+		while(*work && (*work != L'/')) work++;
+		sizeloc = work - base.ap2;
+	    }
 	}
+
+	/* Change .sizep2 to not have the last leaf in it,
+	 * Note: we need to start after the location (if it exists)
+	 */
+	work = strrchrW((base.ap2+sizeloc), L'/');
+	if (work) {
+	    len = work - base.ap2 + 1;
+	    base.sizep2 = len;
+	}
+	/*
+	 * At this point:
+	 *    .ap2      points to location (starting with '//')
+	 *    .sizep2   length of location (above) and rest less the last
+	 *              leaf (if any)
+	 *    sizeloc   length of location (above) up to but not including 
+	 *              the last '/'
+	 */
+
+	res2 = SHLWAPI_2(mrelative, &relative);
+	if (res2) {
+	    /* no scheme in pszRelative */
+	    TRACE("no scheme detected in Relative\n");
+	    relative.ap2 = mrelative;  /* case 3,4,5 depends on this */
+	    relative.sizep2 = strlenW(mrelative);
+	    if (*pszRelative  == L':') {
+		/* case that is either left alone or uses pszBase */
+		if (dwFlags & URL_PLUGGABLE_PROTOCOL) {
+		    process_case = 5;
+		    break;
+		}
+		process_case = 1;
+		break;
+	    }
+	    if (isalnum(*mrelative) && (*(mrelative + 1) == L':')) {
+		/* case that becomes "file:///" */
+		strcpyW(preliminary, myfilestr);
+		process_case = 1;
+		break;
+	    }
+	    if ((*mrelative == L'/') && (*(mrelative+1) == L'/')) {
+		/* pszRelative has location and rest */
+		process_case = 3;
+		break;
+	    }
+	    if (*mrelative == L'/') {
+		/* case where pszRelative is root to location */
+		process_case = 4;
+		break;
+	    }
+	    process_case = (*base.ap2 == L'/') ? 5 : 3;
+	    break;
+	}
+
+	/* handle cases where pszRelative has scheme */
+	if ((base.sizep1 == relative.sizep1) && 
+	    (strncmpW(base.ap1, relative.ap1, base.sizep1) == 0)) {
+
+	    /* since the schemes are the same */
+	    if ((*relative.ap2 == L'/') && (*(relative.ap2+1) == L'/')) {
+		/* case where pszRelative replaces location and following */
+		process_case = 3;
+		break;
+	    }
+	    if (*relative.ap2 == L'/') {
+		/* case where pszRelative is root to location */
+		process_case = 4;
+		break;
+	    }
+	    /* case where scheme is followed by document path */
+	    process_case = 5;
+	    break;
+	}
+	if ((*relative.ap2 == L'/') && (*(relative.ap2+1) == L'/')) {
+	    /* case where pszRelative replaces scheme, location,
+	     * and following and handles PLUGGABLE
+	     */
+	    process_case = 2;
+	    break;
+	}
+	process_case = 1;
+	break;
+    } while(FALSE); /* a litte trick to allow easy exit from nested if's */
+
+
+    ret = S_OK;
+    switch (process_case) {
+
+    case 1:  /*
+	      * Return pszRelative appended to what ever is in pszCombined,
+	      * (which may the string "file:///"
+	      */
+	len = strlenW(mrelative) + strlenW(preliminary);
 	if (len+1 > *pcchCombined) {
 	    *pcchCombined = len;
-	    return E_POINTER;
+	    ret = E_POINTER;
+	    break;
 	} 
-	strncpyW(pszCombined, pszBase, len);
-	*(pszCombined+len) = L'\0';
+	strcatW(preliminary, mrelative);
+	break;
 
-	/* second locate the document in the relative */
-	len2 = strlenW(pszRelative);
-	p1 = strrchrW(pszRelative, L'/');
-	if (p1) {
-	    p1++;
-	    len2 -= p1 - pszRelative;
-	}
-	else
-	    p1 = (LPWSTR)pszRelative;
-	if (len2+len+1 > *pcchCombined) {
-	    *pcchCombined = len2 + len;
-	    return E_POINTER;
-	} 
-	strcatW(pszCombined, p1);
-	*pcchCombined = len2 + len;
-	TRACE("return-1 len=%ld, %s\n",
-	      *pcchCombined, debugstr_w(pszCombined));
-	return S_OK;
-    }
-
-    if ((s1len > 0) && (strlenW(pszRelative) == 0)) {
-	/* remove "document" from base */
-	len = strlenW(pszBase);
-	p1 = strrchrW(pszBase, L'/');
-	if (p1) {
-	    len = p1 - pszBase + 1;
-	}
+    case 2:  /*
+	      * Same as case 1, but if URL_PLUGGABLE_PROTOCOL was specified
+	      * and pszRelative starts with "//", then append a "/"
+	      */
+	len = strlenW(mrelative) + 1;
 	if (len+1 > *pcchCombined) {
 	    *pcchCombined = len;
-	    return E_POINTER;
+	    ret = E_POINTER;
+	    break;
 	} 
-	strncpyW(pszCombined, pszBase, len);
-	*(pszCombined+len) = L'\0';
-	*pcchCombined = len;
-	TRACE("return-2 len=%ld, %s\n",
-	      *pcchCombined, debugstr_w(pszCombined));
-	return S_OK;
-    }
+	strcpyW(preliminary, mrelative);
+	if (!(dwFlags & URL_PLUGGABLE_PROTOCOL) &&
+	    URL_JustLocation(relative.ap2))
+	    strcatW(preliminary, single_slash);
+	break;
 
-    if (s2len > 0) {
-	/* pszRelative is a protocol itself so return it only */
-	len = strlenW(pszRelative);
+    case 3:  /*
+	      * Return the pszBase scheme with pszRelative. Basicly
+	      * keeps the scheme and replaces the domain and following.
+	      */
+	len = base.sizep1 + 1 + relative.sizep2 + 1;
 	if (len+1 > *pcchCombined) {
 	    *pcchCombined = len;
-	    return E_POINTER;
+	    ret = E_POINTER;
+	    break;
 	} 
-	strcpyW(pszCombined, pszRelative);
-	*pcchCombined = len;
-	TRACE("return-3 len=%ld, %s\n",
-	      *pcchCombined, debugstr_w(pszCombined));
-	return S_OK;
+	strncpyW(preliminary, base.ap1, base.sizep1 + 1);
+	work = preliminary + base.sizep1 + 1;
+	strcpyW(work, relative.ap2);
+	if (!(dwFlags & URL_PLUGGABLE_PROTOCOL) &&
+	    URL_JustLocation(relative.ap2))
+	    strcatW(work, single_slash);
+	break;
+
+    case 4:  /*
+	      * Return the pszBase scheme and location but everything
+	      * after the location is pszRelative. (Replace document
+	      * from root on.)
+	      */
+	len = base.sizep1 + 1 + sizeloc + relative.sizep2 + 1;
+	if (len+1 > *pcchCombined) {
+	    *pcchCombined = len;
+	    ret = E_POINTER;
+	    break;
+	} 
+	strncpyW(preliminary, base.ap1, base.sizep1+1+sizeloc);
+	work = preliminary + base.sizep1 + 1 + sizeloc;
+	if (dwFlags & URL_PLUGGABLE_PROTOCOL)
+	    *(work++) = L'/';
+	strcpyW(work, relative.ap2);
+	break;
+
+    case 5:  /*
+	      * Return the pszBase without its document (if any) and 
+	      * append pszRelative after its scheme.
+	      */
+	len = base.sizep1 + 1 + base.sizep2 + relative.sizep2;
+	if (len+1 > *pcchCombined) {
+	    *pcchCombined = len;
+	    ret = E_POINTER;
+	    break;
+	} 
+	strncpyW(preliminary, base.ap1, base.sizep1+1+base.sizep2);
+	work = preliminary + base.sizep1+1+base.sizep2 - 1;
+	if (*work++ != L'/')
+	    *(work++) = L'/';
+	strcpyW(work, relative.ap2);
+	break;
+
+    default:
+	FIXME("How did we get here????? process_case=%ld\n", process_case);
+	ret = E_INVALIDARG;
     }
-    FIXME("(base %s, Relative %s, Combine size %ld, flags %08lx) unknown case\n",
-	  debugstr_w(pszBase),debugstr_w(pszRelative),
-	  *pcchCombined,dwFlags);
-    FIXME("     s1len=%ld, s2len=%ld\n", s1len, s2len);
-    return E_INVALIDARG;
+
+    if (ret == S_OK) {
+	/*
+	 * Now that the combining is done, process the escape options if 
+	 * necessary, otherwise just copy the string.
+	 */
+	myflags = dwFlags & (URL_ESCAPE_PERCENT |
+			     URL_ESCAPE_SPACES_ONLY |
+                             URL_DONT_ESCAPE_EXTRA_INFO |
+			     URL_ESCAPE_SEGMENT_ONLY);
+	if (myflags)
+	    ret = UrlEscapeW(preliminary, pszCombined,
+			     pcchCombined, myflags);
+	else {
+	    len = (strlenW(preliminary) + 1) * sizeof(WCHAR);
+	    memcpy(pszCombined, preliminary, len);
+	    *pcchCombined = strlenW(preliminary);
+	}
+	TRACE("return-%ld len=%ld, %s\n",
+	      process_case, *pcchCombined, debugstr_w(pszCombined));
+    }
+    HeapFree(GetProcessHeap(), 0, preliminary);
+    return ret;
 }
 
 /*************************************************************************
@@ -357,15 +670,15 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
  * '?' or '#'.
  *
  * BUGS:
+ *  Have now implemented the following flags:
+ *     URL_ESCAPE_SPACES_ONLY
+ *     URL_DONT_ESCAPE_EXTRA_INFO
+ *     URL_ESCAPE_SEGMENT_ONLY
+ *     URL_ESCAPE_PERCENT
+ *  Initial testing seems to indicate that this is now working like
+ *  native shlwapi version 5. Note that these functions did not work
+ *  well (or at all) in shlwapi version 4.
  *
- * None of the URL_ define values are documented, so they were
- * determined by trial and error.  MSDN mentions URL_ESCAPE_PERCENT
- * but I can't find a value that does this under win2000.
- * URL_DONT_ESCAPE_EXTRA_INFO appears to be the default which is what
- * we assume here.  URL_ESCAPE_SEGMENT_ONLY is not implemented
- * (value??).  A value of 0x2000 for dwFlags seems to escape
- * '/'s too - this is neither documented on MSDN nor implemented here.
- * For character values that are converted see URL_NeedEscape.
  */
 HRESULT WINAPI UrlEscapeA(
 	LPCSTR pszUrl,
@@ -383,20 +696,37 @@ HRESULT WINAPI UrlEscapeA(
     TRACE("(%s %p %p 0x%08lx)\n", debugstr_a(pszUrl), pszEscaped,
 	  pcchEscaped, dwFlags);
 
-    if(dwFlags & ~URL_ESCAPE_SPACES_ONLY)
+    if(dwFlags & ~(URL_ESCAPE_SPACES_ONLY |
+		   URL_ESCAPE_SEGMENT_ONLY |
+		   URL_DONT_ESCAPE_EXTRA_INFO |
+		   URL_ESCAPE_PERCENT))
         FIXME("Unimplemented flags: %08lx\n", dwFlags);
 
+    /* fix up flags */
+    if (dwFlags & URL_ESCAPE_SPACES_ONLY)
+	/* if SPACES_ONLY specified, reset the other controls */
+	dwFlags &= ~(URL_DONT_ESCAPE_EXTRA_INFO |
+		     URL_ESCAPE_PERCENT |
+		     URL_ESCAPE_SEGMENT_ONLY);
+
+    else
+	/* if SPACES_ONLY *not* specified the assume DONT_ESCAPE_EXTRA_INFO */
+	dwFlags |= URL_DONT_ESCAPE_EXTRA_INFO;
+
     for(src = pszUrl; *src; src++) {
-        if(!(dwFlags & URL_ESCAPE_SPACES_ONLY) &&
+        if(!(dwFlags & URL_ESCAPE_SEGMENT_ONLY) &&
+	   (dwFlags & URL_DONT_ESCAPE_EXTRA_INFO) &&
 	   (*src == '#' || *src == '?'))
 	    stop_escapping = TRUE;
 
 	if(URL_NeedEscapeA(*src, dwFlags) && stop_escapping == FALSE) {
+	    /* TRACE("escaping %c\n", *src); */
 	    next[0] = '%';
 	    next[1] = hex[(*src >> 4) & 0xf];
 	    next[2] = hex[*src & 0xf];
 	    len = 3;
 	} else {
+	    /* TRACE("passing %c\n", *src); */
 	    next[0] = *src;
 	    len = 1;
 	}
@@ -440,22 +770,53 @@ HRESULT WINAPI UrlEscapeW(
     TRACE("(%s %p %p 0x%08lx)\n", debugstr_w(pszUrl), pszEscaped,
 	  pcchEscaped, dwFlags);
 
-    if(dwFlags & ~URL_ESCAPE_SPACES_ONLY)
+    if(dwFlags & ~(URL_ESCAPE_SPACES_ONLY |
+		   URL_ESCAPE_SEGMENT_ONLY |
+		   URL_DONT_ESCAPE_EXTRA_INFO |
+		   URL_ESCAPE_PERCENT))
         FIXME("Unimplemented flags: %08lx\n", dwFlags);
 
+    /* fix up flags */
+    if (dwFlags & URL_ESCAPE_SPACES_ONLY)
+	/* if SPACES_ONLY specified, reset the other controls */
+	dwFlags &= ~(URL_DONT_ESCAPE_EXTRA_INFO |
+		     URL_ESCAPE_PERCENT |
+		     URL_ESCAPE_SEGMENT_ONLY);
+
+    else
+	/* if SPACES_ONLY *not* specified the assume DONT_ESCAPE_EXTRA_INFO */
+	dwFlags |= URL_DONT_ESCAPE_EXTRA_INFO;
+
     for(src = pszUrl; *src; src++) {
-        if(!(dwFlags & URL_ESCAPE_SPACES_ONLY) &&
+	/*
+	 * if(!(dwFlags & URL_ESCAPE_SPACES_ONLY) &&
+	 *   (*src == L'#' || *src == L'?'))
+	 *    stop_escapping = TRUE;
+	 */
+        if(!(dwFlags & URL_ESCAPE_SEGMENT_ONLY) &&
+	   (dwFlags & URL_DONT_ESCAPE_EXTRA_INFO) &&
 	   (*src == L'#' || *src == L'?'))
 	    stop_escapping = TRUE;
 
 	if(URL_NeedEscapeW(*src, dwFlags) && stop_escapping == FALSE) {
+	    /* TRACE("escaping %c\n", *src); */
 	    next[0] = L'%';
-	    next[1] = hex[(*src >> 12) & 0xf];
-	    next[2] = hex[(*src >> 8) & 0xf];
-	    next[3] = hex[(*src >> 4) & 0xf];
-	    next[4] = hex[*src & 0xf];
-	    len = 5;
+	    /*
+	     * I would have assumed that the W form would escape
+	     * the character with 4 hex digits (or even 8),
+	     * however, experiments show that native shlwapi escapes
+	     * with only 2 hex digits.
+	     *   next[1] = hex[(*src >> 12) & 0xf];
+	     *   next[2] = hex[(*src >> 8) & 0xf];
+	     *   next[3] = hex[(*src >> 4) & 0xf];
+	     *   next[4] = hex[*src & 0xf];
+	     *   len = 5;
+	     */
+	    next[1] = hex[(*src >> 4) & 0xf];
+	    next[2] = hex[*src & 0xf];
+	    len = 3;
 	} else {
+	    /* TRACE("passing %c\n", *src); */
 	    next[0] = *src;
 	    len = 1;
 	}
@@ -508,7 +869,7 @@ HRESULT WINAPI UrlUnescapeA(
     DWORD needed;
     BOOL stop_unescapping = FALSE;
 
-    TRACE("(%s, %p, %p, 0x%08lx): stub\n", debugstr_a(pszUrl), pszUnescaped,
+    TRACE("(%s, %p, %p, 0x%08lx)\n", debugstr_a(pszUrl), pszUnescaped,
 	  pcchUnescaped, dwFlags);
 
     if(dwFlags & URL_UNESCAPE_INPLACE)
@@ -572,7 +933,7 @@ HRESULT WINAPI UrlUnescapeW(
     DWORD needed;
     BOOL stop_unescapping = FALSE;
 
-    TRACE("(%s, %p, %p, 0x%08lx): stub\n", debugstr_w(pszUrl), pszUnescaped,
+    TRACE("(%s, %p, %p, 0x%08lx)\n", debugstr_w(pszUrl), pszUnescaped,
 	  pcchUnescaped, dwFlags);
 
     if(dwFlags & URL_UNESCAPE_INPLACE)
