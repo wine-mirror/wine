@@ -288,7 +288,7 @@
 @ stdcall SetSecurityDescriptorGroup (ptr ptr long)
 @ stdcall SetSecurityDescriptorOwner (ptr ptr long)
 @ stdcall SetSecurityDescriptorSacl(ptr long ptr long)
-@ stub SetSecurityInfo #(ptr long ptr ptr ptr ptr ptr ptr)
+@ stdcall SetSecurityInfo (long long long ptr ptr ptr ptr)
 @ stdcall SetServiceBits(long long long long)
 @ stdcall SetServiceObjectSecurity(long long ptr)
 @ stdcall SetServiceStatus(long long)
