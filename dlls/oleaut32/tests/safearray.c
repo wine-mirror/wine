@@ -273,6 +273,11 @@ static void test_safearray(void)
         hres = SafeArrayGetUBound(a, 1, &l);
 	ok(hres == S_OK, "SAGUB of 0 size dimensioned array failed with %lx\n",hres);
 	ok(l == 41, "SAGUB of 0 size dimensioned array failed to return 41, but returned %ld\n",l);
+        
+        hres = SafeArrayAccessData(a, &data);
+        ok(hres == S_OK, "SafeArrayAccessData of 0 size dimensioned array failed with %lx\n", hres);
+        SafeArrayUnaccessData(a);
+
 	bound.cElements = 2;
         hres = SafeArrayRedim(a, &bound);
 	ok(hres == S_OK,"SAR of a 0 elements dimension failed with hres %lx\n", hres);
@@ -610,6 +615,18 @@ static void test_SafeArrayAllocDestroyDescriptor(void)
 
   hres = pSafeArrayAllocDescriptorEx(VT_UI1, 1, NULL);
   ok(hres == E_POINTER,"NULL parm gave hres 0x%lx\n", hres);
+
+  hres = pSafeArrayAllocDescriptorEx(-1, 1, &sa);
+  ok(hres == S_OK, "VT = -1 gave hres 0x%lx\n", hres);
+
+  sa->rgsabound[0].cElements = 0;
+  sa->rgsabound[0].lLbound = 1;
+
+  hres = SafeArrayAllocData(sa);
+  todo_wine
+  {
+      ok(hres == S_OK, "SafeArrayAllocData gave hres 0x%lx\n", hres);
+  }
 }
 
 static void test_SafeArrayCreateLockDestroy(void)
