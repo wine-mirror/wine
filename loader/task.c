@@ -40,7 +40,6 @@
 #include "module.h"
 #include "ntddk.h"
 #include "selectors.h"
-#include "services.h"
 #include "wine/server.h"
 #include "syslevel.h"
 #include "stackframe.h"
