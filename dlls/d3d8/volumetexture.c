@@ -87,27 +87,79 @@ HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_GetDevice(LPDIRECT3DVOLUMETEX
 }
 HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_SetPrivateData(LPDIRECT3DVOLUMETEXTURE8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);
+    return D3D_OK;
 }
 HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_GetPrivateData(LPDIRECT3DVOLUMETEXTURE8 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);
+    return D3D_OK;
 }
 HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_FreePrivateData(LPDIRECT3DVOLUMETEXTURE8 iface, REFGUID refguid) {
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);
+    return D3D_OK;
 }
 DWORD    WINAPI        IDirect3DVolumeTexture8Impl_SetPriority(LPDIRECT3DVOLUMETEXTURE8 iface, DWORD PriorityNew) {
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub returning 0\n", This);    
+    return 0;
 }
 DWORD    WINAPI        IDirect3DVolumeTexture8Impl_GetPriority(LPDIRECT3DVOLUMETEXTURE8 iface) {
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub returning 0\n", This);    
+    return 0;
 }
 void     WINAPI        IDirect3DVolumeTexture8Impl_PreLoad(LPDIRECT3DVOLUMETEXTURE8 iface) {
+    int i;
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);
+    TRACE("(%p) : About to load texture\n", This);
+    for (i = 0; i < This->levels; i++) {
+      if (i == 0 && This->volumes[i]->textureName != 0 && This->Dirty == FALSE) {
+	glBindTexture(GL_TEXTURE_3D, This->volumes[i]->textureName);
+	checkGLcall("glBindTexture");
+	TRACE("Texture %p (level %d) given name %d\n", This->volumes[i], i, This->volumes[i]->textureName);
+	/* No need to walk through all mip-map levels, since already all assigned */
+	i = This->levels;
+      } else {
+	if (i == 0) {
+	  if (This->volumes[i]->textureName == 0) {
+	    glGenTextures(1, &This->volumes[i]->textureName);
+	    checkGLcall("glGenTextures");
+	    TRACE("Texture %p (level %d) given name %d\n", This->volumes[i], i, This->volumes[i]->textureName);
+	  }
+	  
+	  glBindTexture(GL_TEXTURE_3D, This->volumes[i]->textureName);
+	  checkGLcall("glBindTexture");
+	  
+	  TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->levels - 1);
+	  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, This->levels - 1); 
+	  checkGLcall("glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, This->levels - 1)");
+	}
+	
+	TRACE("Calling glTexImage3D %x i=%d, intfmt=%x, w=%d, h=%d,d=%d, 0=%d, glFmt=%x, glType=%lx, Mem=%p\n",
+	      GL_TEXTURE_3D, i, fmt2glintFmt(This->format), 
+	      This->volumes[i]->myDesc.Width, This->volumes[i]->myDesc.Height, 
+	      This->volumes[i]->myDesc.Depth,
+	      0, fmt2glFmt(This->format), fmt2glType(This->format),
+	      This->volumes[i]->allocatedMemory);
+	glTexImage3D(GL_TEXTURE_3D, 
+		     i,
+		     fmt2glintFmt(This->format),
+		     This->volumes[i]->myDesc.Width,
+		     This->volumes[i]->myDesc.Height,
+		     This->volumes[i]->myDesc.Depth,
+		     0,
+		     fmt2glFmt(This->format),
+		     fmt2glType(This->format),
+		     This->volumes[i]->allocatedMemory);
+	checkGLcall("glTexImage3D");
+	
+	/* Removed glTexParameterf now TextureStageStates are initialized at startup */
+	This->Dirty = FALSE;
+      }
+    }
+    return ;
 }
 D3DRESOURCETYPE WINAPI IDirect3DVolumeTexture8Impl_GetType(LPDIRECT3DVOLUMETEXTURE8 iface) {
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
@@ -118,11 +170,13 @@ D3DRESOURCETYPE WINAPI IDirect3DVolumeTexture8Impl_GetType(LPDIRECT3DVOLUMETEXTU
 /* IDirect3DVolumeTexture8 IDirect3DBaseTexture8 Interface follow: */
 DWORD    WINAPI        IDirect3DVolumeTexture8Impl_SetLOD(LPDIRECT3DVOLUMETEXTURE8 iface, DWORD LODNew) {
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub returning 0\n", This);    
+    return 0;
 }
 DWORD    WINAPI        IDirect3DVolumeTexture8Impl_GetLOD(LPDIRECT3DVOLUMETEXTURE8 iface) {
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub returning 0\n", This);    
+    return 0;
 }
 DWORD    WINAPI        IDirect3DVolumeTexture8Impl_GetLevelCount(LPDIRECT3DVOLUMETEXTURE8 iface) {
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
@@ -135,7 +189,7 @@ HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_GetLevelDesc(LPDIRECT3DVOLUME
     ICOM_THIS(IDirect3DVolumeTexture8Impl,iface);
     if (Level < This->levels) {
         TRACE("(%p) Level (%d)\n", This, Level);
-        return IDirect3DVolume8Impl_GetDesc((LPDIRECT3DVOLUME8)This->volumes[Level], pDesc);
+        return IDirect3DVolume8Impl_GetDesc((LPDIRECT3DVOLUME8) This->volumes[Level], pDesc);
     } else {
         FIXME("(%p) Level (%d)\n", This, Level);
     }
