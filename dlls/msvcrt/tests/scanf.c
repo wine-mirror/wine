@@ -24,9 +24,12 @@
 
 static void test_sscanf( void )
 {
-    char buffer[100];
+    char buffer[100], buffer1[100];
     char format[20];
     int result, ret;
+    float res1= -82.6267, res2= 27.76, res11, res12;
+    char pname[]=" St. Petersburg, Florida\n";
+    
 
     /* check EOF */
     strcpy(buffer,"");
@@ -51,6 +54,16 @@ static void test_sscanf( void )
     strcpy(format,"%\"%%%d%@");  /* work around gcc format check */
     ok( sscanf(buffer, format, &result) == 1, "sscanf failed" );
     ok( result == 12, "sscanf reads %x instead of %x", result, 12 );
+
+    /*Check float */
+    ret = sprintf(buffer,"%f %f",res1, res2);
+    ret = sscanf(buffer,"%f%f",&res11, &res12);
+    ok( (res11 == res1) && (res12 == res2), "Error reading floats");
+    ret = sprintf(buffer," %s", pname);
+    ret = sscanf(buffer,"%*c%[^\n]",buffer1);
+    ok( ret = 1, "Error with format \"%s\"","%*c%[^\n]");
+    ok( strncmp(pname,buffer1,strlen(buffer1)) == 0, "Error with \"%s\" \"%s\"",pname, buffer1);
+    
 }
 
 

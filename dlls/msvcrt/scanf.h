@@ -4,7 +4,7 @@
  *
  * Copyright 1996,1998 Marcus Meissner
  * Copyright 1996 Jukka Iivonen
- * Copyright 1997,2000 Uwe Bonnes
+ * Copyright 1997,2000, 2003 Uwe Bonnes
  * Copyright 2000 Jon Griffiths
  * Copyright 2002 Daniel Gudbjartsson
  *
@@ -82,12 +82,12 @@ int _FUNCTION_ {
     if (!*format) return 0;
 #ifndef WIDE_SCANF
 #ifdef CONSOLE
-    WARN("(\"%s\"): semi-stub\n", format);
+    WARN("(%s): semi-stub\n", debugstr_a(format));
 #else /* CONSOLE */
 #ifdef STRING
-    WARN("%s (\"%s\"): semi-stub\n", file, format);
+    WARN("%s (%s): semi-stub\n", file, debugstr_a(format));
 #else /* STRING */
-    WARN("%p (\"%s\"): semi-stub\n", file, format);
+    WARN("%p (%s): semi-stub\n", file, debugstr_a(format));
 #endif /* STRING */
 #endif /* CONSOLE */
 #endif /* WIDE_SCANF */
@@ -260,7 +260,7 @@ int _FUNCTION_ {
                     }
 		    /* get first digit. */
 		    if (!_ISDIGIT_(nch)) break;
-		    cur = (nch - '0') * (negative ? -1 : 1);
+		    cur = (nch - '0');
                     nch = _GETC_(file);
 		    if (width>0) width--;
                     /* read until no more digits */
@@ -409,8 +409,8 @@ int _FUNCTION_ {
 #else /* WIDE_SCANF */
 			*c = nch;
 #endif /* WIDE_SCANF */
-			st = 1;
 		    }
+		    st = 1;
  		    nch = _GETC_(file);
 	        }
 		break;
@@ -422,9 +422,9 @@ int _FUNCTION_ {
 #else /* WIDE_SCANF */
 			*c = _CONVERT_(nch);
 #endif /* WIDE_SCANF */
-			st = 1;
 		    }
 		    nch = _GETC_(file);
+		    st = 1;
 	        }
 		break;
 	    case 'n': {
