@@ -3,10 +3,11 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mscms.dll
-IMPORTS   = kernel32
+IMPORTS   = kernel32 ntdll
 
 C_SRCS = \
 	handle.c \
+	icc.c \
 	mscms_main.c \
 	profile.c
 

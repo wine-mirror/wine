@@ -1,0 +1,98 @@
+/*
+ * MSCMS - Color Management System for Wine
+ *
+ * Copyright 2004 Hans Leidekker
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#include "config.h"
+#include "wine/debug.h"
+
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
+#include "winnls.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winreg.h"
+#include "winternl.h"
+#include "icm.h"
+
+#define LCMS_API_FUNCTION(f) extern typeof(f) * p##f;
+#include "lcms_api.h"
+#undef LCMS_API_FUNCTION
+
+WINE_DEFAULT_DEBUG_CHANNEL(mscms);
+
+#ifdef HAVE_LCMS_H
+
+static inline void MSCMS_adjust_endianess32( ULONG *ptr )
+{
+#ifndef WORDS_BIGENDIAN
+    *ptr = RtlUlongByteSwap(*ptr);
+#endif
+}
+
+void MSCMS_get_profile_header( icProfile *iccprofile, PROFILEHEADER *header )
+{
+    unsigned int i;
+
+    memcpy( header, iccprofile, sizeof(PROFILEHEADER) );
+
+    /* ICC format is big-endian, swap bytes if necessary */
+    for (i = 0; i < sizeof(PROFILEHEADER) / sizeof(ULONG); i++)
+        MSCMS_adjust_endianess32( (ULONG *)header + i );
+}
+
+void MSCMS_set_profile_header( icProfile *iccprofile, PROFILEHEADER *header )
+{
+    unsigned int i;
+    icHeader *iccheader = (icHeader *)iccprofile;
+
+    memcpy( iccheader, header, sizeof(icHeader) );
+
+    /* ICC format is big-endian, swap bytes if necessary */
+    for (i = 0; i < sizeof(icHeader) / sizeof(ULONG); i++)
+        MSCMS_adjust_endianess32( (ULONG *)iccheader + i );
+}
+
+DWORD MSCMS_get_tag_count( icProfile *iccprofile )
+{
+    ULONG count = iccprofile->count;
+
+    MSCMS_adjust_endianess32( &count );
+    return count;
+}
+
+void MSCMS_get_tag_by_index( icProfile *iccprofile, DWORD index, icTag *tag )
+{
+    icTag *tmp = (icTag *)((char *)&iccprofile->data + index * sizeof(icTag));
+
+    tag->sig = tmp->sig;
+    tag->offset = tmp->offset;
+    tag->size = tmp->size;
+
+    MSCMS_adjust_endianess32( (ULONG *)&tag->sig );
+    MSCMS_adjust_endianess32( (ULONG *)&tag->offset );
+    MSCMS_adjust_endianess32( (ULONG *)&tag->size );
+}
+
+void MSCMS_get_tag_data( icProfile *iccprofile, icTag *tag, DWORD offset, void *buffer )
+{
+    memcpy( buffer, (char *)iccprofile + tag->offset + offset, tag->size - offset );
+}
+#endif /* HAVE_LCMS_H */

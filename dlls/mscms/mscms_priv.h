@@ -78,4 +78,10 @@ extern icProfile *MSCMS_hprofile2iccprofile( HPROFILE profile );
 extern HPROFILE MSCMS_create_hprofile_handle( HANDLE file, icProfile *iccprofile, cmsHPROFILE cmsprofile );
 extern void MSCMS_destroy_hprofile_handle( HPROFILE profile );
 
+extern DWORD MSCMS_get_tag_count( icProfile *iccprofile );
+extern void MSCMS_get_tag_by_index( icProfile *iccprofile, DWORD index, icTag *tag );
+extern void MSCMS_get_tag_data( icProfile *iccprofile, icTag *tag, DWORD offset, void *buffer );
+extern void MSCMS_get_profile_header( icProfile *iccprofile, PROFILEHEADER *header );
+extern void MSCMS_set_profile_header( icProfile *iccprofile, PROFILEHEADER *header );
+
 #endif /* HAVE_LCMS_H */

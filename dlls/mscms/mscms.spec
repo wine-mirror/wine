@@ -50,8 +50,8 @@
 @ stub SetColorProfileElementReference
 @ stub SetColorProfileElementSize
 @ stdcall SetColorProfileHeader(ptr ptr)
-@ stub SetStandardColorSpaceProfileA
-@ stub SetStandardColorSpaceProfileW
+@ stdcall SetStandardColorSpaceProfileA(ptr long ptr)
+@ stdcall SetStandardColorSpaceProfileW(ptr long ptr)
 @ stub SpoolerCopyFileEvent
 @ stub TranslateBitmapBits
 @ stub TranslateColors

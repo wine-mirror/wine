@@ -160,6 +160,7 @@ BOOL       WINAPI GetColorDirectoryW(PCWSTR,PWSTR,PDWORD);
 #define    GetColorDirectory WINELIB_NAME_AW(GetColorDirectory)
 BOOL       WINAPI GetColorProfileElement(HPROFILE,TAGTYPE,DWORD,PDWORD,PVOID,PBOOL);
 BOOL       WINAPI GetColorProfileElementTag(HPROFILE,DWORD,PTAGTYPE);
+BOOL       WINAPI GetColorProfileFromHandle(HPROFILE,PBYTE,PDWORD);
 BOOL       WINAPI GetColorProfileHeader(HPROFILE,PPROFILEHEADER);
 BOOL       WINAPI GetCountColorProfileElements(HPROFILE,PDWORD);
 BOOL       WINAPI GetStandardColorSpaceProfileA(PCSTR,DWORD,PSTR,PDWORD);
@@ -174,6 +175,9 @@ HPROFILE   WINAPI OpenColorProfileA(PPROFILE,DWORD,DWORD,DWORD);
 HPROFILE   WINAPI OpenColorProfileW(PPROFILE,DWORD,DWORD,DWORD);
 #define    OpenColorProfile WINELIB_NAME_AW(OpenColorProfile)
 BOOL       WINAPI SetColorProfileHeader(HPROFILE,PPROFILEHEADER);
+BOOL       WINAPI SetStandardColorSpaceProfileA(PCSTR,DWORD,PSTR);
+BOOL       WINAPI SetStandardColorSpaceProfileW(PCWSTR,DWORD,PWSTR);
+#define    SetStandardColorSpaceProfile WINELIB_NAME_AW(SetStandardColorSpaceProfile)
 BOOL       WINAPI SetupColorMatchingA(PCOLORMATCHSETUPA);
 BOOL       WINAPI SetupColorMatchingW(PCOLORMATCHSETUPW);
 #define    SetupColorMatching WINELIB_NAME_AW(SetupColorMatching)
@@ -186,6 +190,18 @@ BOOL       WINAPI UninstallColorProfileW(PCWSTR,PCWSTR,BOOL);
 
 #define PROFILE_READ        1
 #define PROFILE_READWRITE   2
+
+#define SPACE_XYZ   0x58595A20   /* 'XYZ ' */
+#define SPACE_Lab   0x4C616220   /* 'Lab ' */
+#define SPACE_Luv   0x4C757620   /* 'Luv ' */
+#define SPACE_YCbCr 0x59436272   /* 'YCbr' */
+#define SPACE_Yxy   0x59787920   /* 'Yxy ' */
+#define SPACE_RGB   0x52474220   /* 'RGB ' */
+#define SPACE_GRAY  0x47524159   /* 'GRAY' */
+#define SPACE_HSV   0x48535620   /* 'HSV ' */
+#define SPACE_HLS   0x484C5320   /* 'HLS ' */
+#define SPACE_CMYK  0x434D594B   /* 'CMYK' */
+#define SPACE_CMY   0x434D5920   /* 'CMY ' */
 
 #ifdef __cplusplus
 }
