@@ -1,6 +1,7 @@
 /* IDirectMusicTempoTrack Implementation
  *
  * Copyright (C) 2003-2004 Rok Mandeljc
+ * Copyright (C) 2004 Raphael Junqueira
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,42 +28,42 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
  */
 /* IDirectMusicTempoTrack IUnknown part: */
 HRESULT WINAPI IDirectMusicTempoTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicTempoTrack, UnknownVtbl, iface);
-	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
-
-	if (IsEqualIID (riid, &IID_IUnknown)) {
-		*ppobj = (LPUNKNOWN)&This->UnknownVtbl;
-		IDirectMusicTempoTrack_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
-		return S_OK;
-	} else if (IsEqualIID (riid, &IID_IDirectMusicTrack)
-	  || IsEqualIID (riid, &IID_IDirectMusicTrack8)) {
-		*ppobj = (LPDIRECTMUSICTRACK8)&This->TrackVtbl;
-		IDirectMusicTempoTrack_IDirectMusicTrack_AddRef ((LPDIRECTMUSICTRACK8)&This->TrackVtbl);
-		return S_OK;
-	} else if (IsEqualIID (riid, &IID_IPersistStream)) {
-		*ppobj = (LPPERSISTSTREAM)&This->PersistStreamVtbl;
-		IDirectMusicTempoTrack_IPersistStream_AddRef ((LPPERSISTSTREAM)&This->PersistStreamVtbl);
-		return S_OK;
-	}
-	
-	WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
-	return E_NOINTERFACE;
+  ICOM_THIS_MULTI(IDirectMusicTempoTrack, UnknownVtbl, iface);
+  TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
+  
+  if (IsEqualIID (riid, &IID_IUnknown)) {
+    *ppobj = (LPUNKNOWN)&This->UnknownVtbl;
+    IDirectMusicTempoTrack_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+    return S_OK;
+  } else if (IsEqualIID (riid, &IID_IDirectMusicTrack)
+	     || IsEqualIID (riid, &IID_IDirectMusicTrack8)) {
+    *ppobj = (LPDIRECTMUSICTRACK8)&This->TrackVtbl;
+    IDirectMusicTempoTrack_IDirectMusicTrack_AddRef ((LPDIRECTMUSICTRACK8)&This->TrackVtbl);
+    return S_OK;
+  } else if (IsEqualIID (riid, &IID_IPersistStream)) {
+    *ppobj = (LPPERSISTSTREAM)&This->PersistStreamVtbl;
+    IDirectMusicTempoTrack_IPersistStream_AddRef ((LPPERSISTSTREAM)&This->PersistStreamVtbl);
+    return S_OK;
+  }
+  
+  WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
+  return E_NOINTERFACE;
 }
 
 ULONG WINAPI IDirectMusicTempoTrack_IUnknown_AddRef (LPUNKNOWN iface) {
-	ICOM_THIS_MULTI(IDirectMusicTempoTrack, UnknownVtbl, iface);
-	TRACE("(%p): AddRef from %ld\n", This, This->ref);
-	return ++(This->ref);
+  ICOM_THIS_MULTI(IDirectMusicTempoTrack, UnknownVtbl, iface);
+  TRACE("(%p): AddRef from %ld\n", This, This->ref);
+  return ++(This->ref);
 }
 
 ULONG WINAPI IDirectMusicTempoTrack_IUnknown_Release (LPUNKNOWN iface) {
-	ICOM_THIS_MULTI(IDirectMusicTempoTrack, UnknownVtbl, iface);
-	ULONG ref = --This->ref;
-	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0) {
-		HeapFree(GetProcessHeap(), 0, This);
-	}
-	return ref;
+  ICOM_THIS_MULTI(IDirectMusicTempoTrack, UnknownVtbl, iface);
+  ULONG ref = --This->ref;
+  TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
+  if (ref == 0) {
+    HeapFree(GetProcessHeap(), 0, This);
+  }
+  return ref;
 }
 
 ICOM_VTABLE(IUnknown) DirectMusicTempoTrack_Unknown_Vtbl = {
@@ -98,14 +99,35 @@ HRESULT WINAPI IDirectMusicTempoTrack_IDirectMusicTrack_Init (LPDIRECTMUSICTRACK
 HRESULT WINAPI IDirectMusicTempoTrack_IDirectMusicTrack_InitPlay (LPDIRECTMUSICTRACK8 iface, IDirectMusicSegmentState* pSegmentState, IDirectMusicPerformance* pPerformance, void** ppStateData, DWORD dwVirtualTrack8ID, DWORD dwFlags)
 {
   ICOM_THIS_MULTI(IDirectMusicTempoTrack, TrackVtbl, iface);
-  FIXME("(%p, %p, %p, %p, %ld, %ld): stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
+
+  LPDMUS_PRIVATE_TEMPO_PLAY_STATE pState = NULL;
+
+  FIXME("(%p, %p, %p, %p, %ld, %ld): semi-stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
+
+  pState = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_TEMPO_PLAY_STATE));
+  if (NULL == pState) {
+    ERR(": no more memory\n");
+    return E_OUTOFMEMORY;
+  }
+  /** TODO real fill usefull datas */
+  pState->dummy = 0;
+  *ppStateData = pState;
   return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicTempoTrack_IDirectMusicTrack_EndPlay (LPDIRECTMUSICTRACK8 iface, void* pStateData)
 {
   ICOM_THIS_MULTI(IDirectMusicTempoTrack, TrackVtbl, iface);
-  FIXME("(%p, %p): stub\n", This, pStateData);
+
+  LPDMUS_PRIVATE_TEMPO_PLAY_STATE pState = pStateData;
+
+  FIXME("(%p, %p): semi-stub\n", This, pStateData);
+
+  if (NULL == pStateData) {
+    return E_POINTER;
+  }
+  /** TODO real clean up */
+  HeapFree(GetProcessHeap(), 0, pState);
   return S_OK;
 }
 
@@ -113,6 +135,7 @@ HRESULT WINAPI IDirectMusicTempoTrack_IDirectMusicTrack_Play (LPDIRECTMUSICTRACK
 {
   ICOM_THIS_MULTI(IDirectMusicTempoTrack, TrackVtbl, iface);
   FIXME("(%p, %p, %ld, %ld, %ld, %ld, %p, %p, %ld): stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
+  /** should use IDirectMusicPerformance_SendPMsg here */
   return S_OK;
 }
 

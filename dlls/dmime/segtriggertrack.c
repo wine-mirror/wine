@@ -245,6 +245,7 @@ static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegment (LPPERSIS
   HRESULT hr;
 
   IDirectMusicObject* pObject = NULL;
+  LPDMUS_PRIVATE_SEGMENT_ITEM pNewItem = NULL;
 
   if (pChunk->fccID != DMUS_FOURCC_SEGMENT_LIST) {
     ERR_(dmfile)(": %s chunk should be a SEGMENT list\n", debugstr_fourcc (pChunk->fccID));
@@ -260,18 +261,25 @@ static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegment (LPPERSIS
     TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
     switch (Chunk.fccID) { 
     case DMUS_FOURCC_SEGMENTITEM_CHUNK: {
-      TRACE_(dmfile)(": segment item chunk\n");
-      IStream_Read (pStm, &This->header, sizeof(DMUS_IO_SEGMENT_ITEM_HEADER), NULL);
-      TRACE_(dmfile)(" - lTimePhysical: %lu\n", This->header.lTimeLogical);
-      TRACE_(dmfile)(" - lTimePhysical: %lu\n", This->header.lTimePhysical);
-      TRACE_(dmfile)(" - dwPlayFlags: 0x%08lx\n", This->header.dwPlayFlags);
-      TRACE_(dmfile)(" - dwFlags: 0x%08lx\n", This->header.dwFlags);
+      TRACE_(dmfile)(": segment item chunk\n"); 
+      /** alloc new item entry */
+      pNewItem = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_SEGMENT_ITEM));
+      if (NULL == pNewItem) {
+	ERR(": no more memory\n");
+	return  E_OUTOFMEMORY;
+      }
+      IStream_Read (pStm, &pNewItem->header, sizeof(DMUS_IO_SEGMENT_ITEM_HEADER), NULL);
+      TRACE_(dmfile)(" - lTimePhysical: %lu\n", pNewItem->header.lTimeLogical);
+      TRACE_(dmfile)(" - lTimePhysical: %lu\n", pNewItem->header.lTimePhysical);
+      TRACE_(dmfile)(" - dwPlayFlags: 0x%08lx\n", pNewItem->header.dwPlayFlags);
+      TRACE_(dmfile)(" - dwFlags: 0x%08lx\n", pNewItem->header.dwFlags);
+      list_add_tail (&This->Items, &pNewItem->entry);
       break;
     }
     case DMUS_FOURCC_SEGMENTITEMNAME_CHUNK: {
       TRACE_(dmfile)(": segment item name chunk\n");
-      IStream_Read (pStm, This->wszName, Chunk.dwSize, NULL);
-      TRACE_(dmfile)(" - name: %s \n", debugstr_w(This->wszName));
+      IStream_Read (pStm, pNewItem->wszName, Chunk.dwSize, NULL);
+      TRACE_(dmfile)(" - name: %s \n", debugstr_w(pNewItem->wszName));
       break;
     }
     case FOURCC_LIST: {
@@ -287,10 +295,7 @@ static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegment (LPPERSIS
 	  ERR(": could not load Reference\n");
 	  return hr;
 	}
-	/*
-	 * TODO: what to do with the new pObject ?
-	 * for now it leaks
-	 */
+	pNewItem->pObject = pObject;
 	break;						
       }
       default: {
@@ -500,21 +505,22 @@ ICOM_VTABLE(IPersistStream) DirectMusicSegTriggerTrack_PersistStream_Vtbl = {
 
 /* for ClassFactory */
 HRESULT WINAPI DMUSIC_CreateDirectMusicSegTriggerTrack (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) {
-	IDirectMusicSegTriggerTrack* track;
+  IDirectMusicSegTriggerTrack* track;
 	
-	track = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicSegTriggerTrack));
-	if (NULL == track) {
-		*ppobj = (LPVOID) NULL;
-		return E_OUTOFMEMORY;
-	}
-	track->UnknownVtbl = &DirectMusicSegTriggerTrack_Unknown_Vtbl;
-	track->TrackVtbl = &DirectMusicSegTriggerTrack_Track_Vtbl;
-	track->PersistStreamVtbl = &DirectMusicSegTriggerTrack_PersistStream_Vtbl;
-	track->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
-	DM_STRUCT_INIT(track->pDesc);
-	track->pDesc->dwValidData |= DMUS_OBJ_CLASS;
-	memcpy (&track->pDesc->guidClass, &CLSID_DirectMusicSegTriggerTrack, sizeof (CLSID));
-	track->ref = 0; /* will be inited by QueryInterface */
-	
-	return IDirectMusicSegTriggerTrack_IUnknown_QueryInterface ((LPUNKNOWN)&track->UnknownVtbl, lpcGUID, ppobj);
+  track = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicSegTriggerTrack));
+  if (NULL == track) {
+    *ppobj = (LPVOID) NULL;
+    return E_OUTOFMEMORY;
+  }
+  track->UnknownVtbl = &DirectMusicSegTriggerTrack_Unknown_Vtbl;
+  track->TrackVtbl = &DirectMusicSegTriggerTrack_Track_Vtbl;
+  track->PersistStreamVtbl = &DirectMusicSegTriggerTrack_PersistStream_Vtbl;
+  track->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
+  DM_STRUCT_INIT(track->pDesc);
+  track->pDesc->dwValidData |= DMUS_OBJ_CLASS;
+  memcpy (&track->pDesc->guidClass, &CLSID_DirectMusicSegTriggerTrack, sizeof (CLSID));
+  track->ref = 0; /* will be inited by QueryInterface */
+  list_init (&track->Items);
+
+  return IDirectMusicSegTriggerTrack_IUnknown_QueryInterface ((LPUNKNOWN)&track->UnknownVtbl, lpcGUID, ppobj);
 }

@@ -158,6 +158,16 @@ typedef struct _DMUS_PRIVATE_TEMPO_ITEM {
   DMUS_IO_TEMPO_ITEM item;
 } DMUS_PRIVATE_TEMPO_ITEM, *LPDMUS_PRIVATE_TEMPO_ITEM;
 
+typedef struct _DMUS_PRIVATE_SEGMENT_ITEM {
+  struct list entry; /* for listing elements */
+  DMUS_IO_SEGMENT_ITEM_HEADER header;
+  IDirectMusicObject* pObject;
+  WCHAR wszName[DMUS_MAX_NAME];
+} DMUS_PRIVATE_SEGMENT_ITEM, *LPDMUS_PRIVATE_SEGMENT_ITEM;
+
+typedef struct _DMUS_PRIVATE_TEMPO_PLAY_STATE {
+  DWORD dummy;
+} DMUS_PRIVATE_TEMPO_PLAY_STATE, *LPDMUS_PRIVATE_TEMPO_PLAY_STATE;
 
 /* some sort of aux. performance channel: as far as i can understand, these are 
    used to represent a particular midi channel in particular group at particular
@@ -659,8 +669,8 @@ struct IDirectMusicSegTriggerTrack {
 
   /* IDirectMusicSegTriggerTrack fields */
   LPDMUS_OBJECTDESC pDesc;
-  DMUS_IO_SEGMENT_ITEM_HEADER header;
-  WCHAR wszName[DMUS_MAX_NAME];
+
+  struct list Items;
 };
 
 /* IUnknown: */

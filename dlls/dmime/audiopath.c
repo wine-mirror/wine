@@ -199,50 +199,50 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_Activate (LPDIREC
 }
 
 HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_SetVolume (LPDIRECTMUSICAUDIOPATH iface, long lVolume, DWORD dwDuration) {
-	ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, AudioPathVtbl, iface);
-	FIXME("(%p, %li, %ld): stub\n", This, lVolume, dwDuration);
-	return S_OK;
+  ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, AudioPathVtbl, iface);
+  FIXME("(%p, %li, %ld): stub\n", This, lVolume, dwDuration);
+  return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_ConvertPChannel (LPDIRECTMUSICAUDIOPATH iface, DWORD dwPChannelIn, DWORD* pdwPChannelOut) {
-	ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, AudioPathVtbl, iface);
-	FIXME("(%p, %ld, %p): stub\n", This, dwPChannelIn, pdwPChannelOut);
-	return S_OK;
+  ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, AudioPathVtbl, iface);
+  FIXME("(%p, %ld, %p): stub\n", This, dwPChannelIn, pdwPChannelOut);
+  return S_OK;
 }
 
 ICOM_VTABLE(IDirectMusicAudioPath) DirectMusicAudioPath_AudioPath_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	IDirectMusicAudioPathImpl_IDirectMusicAudioPath_QueryInterface,
-	IDirectMusicAudioPathImpl_IDirectMusicAudioPath_AddRef,
-	IDirectMusicAudioPathImpl_IDirectMusicAudioPath_Release,
-	IDirectMusicAudioPathImpl_IDirectMusicAudioPath_GetObjectInPath,
-	IDirectMusicAudioPathImpl_IDirectMusicAudioPath_Activate,
-	IDirectMusicAudioPathImpl_IDirectMusicAudioPath_SetVolume,
-	IDirectMusicAudioPathImpl_IDirectMusicAudioPath_ConvertPChannel
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+  IDirectMusicAudioPathImpl_IDirectMusicAudioPath_QueryInterface,
+  IDirectMusicAudioPathImpl_IDirectMusicAudioPath_AddRef,
+  IDirectMusicAudioPathImpl_IDirectMusicAudioPath_Release,
+  IDirectMusicAudioPathImpl_IDirectMusicAudioPath_GetObjectInPath,
+  IDirectMusicAudioPathImpl_IDirectMusicAudioPath_Activate,
+  IDirectMusicAudioPathImpl_IDirectMusicAudioPath_SetVolume,
+  IDirectMusicAudioPathImpl_IDirectMusicAudioPath_ConvertPChannel
 };
 
 /* IDirectMusicAudioPathImpl IDirectMusicObject part: */
 HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, ObjectVtbl, iface);
-	return IDirectMusicAudioPathImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+  ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, ObjectVtbl, iface);
+  return IDirectMusicAudioPathImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
 ULONG WINAPI IDirectMusicAudioPathImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface) {
-	ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, ObjectVtbl, iface);
-	return IDirectMusicAudioPathImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+  ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, ObjectVtbl, iface);
+  return IDirectMusicAudioPathImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 ULONG WINAPI IDirectMusicAudioPathImpl_IDirectMusicObject_Release (LPDIRECTMUSICOBJECT iface) {
-	ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, ObjectVtbl, iface);
-	return IDirectMusicAudioPathImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+  ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, ObjectVtbl, iface);
+  return IDirectMusicAudioPathImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicObject_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
-	ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, ObjectVtbl, iface);
-	TRACE("(%p, %p)\n", This, pDesc);
-	/* I think we shouldn't return pointer here since then values can be changed; it'd be a mess */
-	memcpy (pDesc, This->pDesc, This->pDesc->dwSize);
-	return S_OK;
+  ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, ObjectVtbl, iface);
+  TRACE("(%p, %p)\n", This, pDesc);
+  /* I think we shouldn't return pointer here since then values can be changed; it'd be a mess */
+  memcpy (pDesc, This->pDesc, This->pDesc->dwSize);
+  return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
