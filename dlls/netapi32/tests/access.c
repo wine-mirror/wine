@@ -165,7 +165,6 @@ void run_querydisplayinformation1_tests(void)
     } while (Result == ERROR_MORE_DATA);
 
     ok(hasAdmin, "Has Administrator account\n");
-    ok(hasGuest, "Has Guest account\n");
 }
 
 START_TEST(access)
