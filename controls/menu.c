@@ -1116,6 +1116,30 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	return;
     }
 
+      /* Setup colors */
+
+    if (lpitem->fState & MF_HILITE)
+    {
+        if(menuBar) {
+	    SetTextColor(hdc, GetSysColor(COLOR_MENUTEXT));
+            SetBkColor(hdc, GetSysColor(COLOR_MENU));
+	} else {
+	    if(lpitem->fState & MF_GRAYED)
+		SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
+	    else
+		SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
+            SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
+	}
+    }
+    else
+    {
+	if (lpitem->fState & MF_GRAYED)
+	    SetTextColor( hdc, GetSysColor( COLOR_GRAYTEXT ) );
+	else
+	    SetTextColor( hdc, GetSysColor( COLOR_MENUTEXT ) );
+	SetBkColor( hdc, GetSysColor( COLOR_MENU ) );
+    }
+
     if (lpitem->fType & MF_OWNERDRAW)
     {
         /*
@@ -1193,30 +1217,6 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	    DrawEdge (hdc, &rc, EDGE_ETCHED, BF_TOP);
 	    return;
         }
-    }
-
-      /* Setup colors */
-
-    if (lpitem->fState & MF_HILITE)
-    {
-        if(menuBar) {
-	    SetTextColor(hdc, GetSysColor(COLOR_MENUTEXT));
-            SetBkColor(hdc, GetSysColor(COLOR_MENU));
-	} else {
-	    if(lpitem->fState & MF_GRAYED)
-		SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
-	    else
-		SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
-            SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
-	}
-    }
-    else
-    {
-	if (lpitem->fState & MF_GRAYED)
-	    SetTextColor( hdc, GetSysColor( COLOR_GRAYTEXT ) );
-	else
-	    SetTextColor( hdc, GetSysColor( COLOR_MENUTEXT ) );
-	SetBkColor( hdc, GetSysColor( COLOR_MENU ) );
     }
 
 	/* helper lines for debugging */
