@@ -3,43 +3,110 @@
  *
  *      Copyright 1999  Noel Borthwick
  *
+ * USAGE:
+ *       wineclipsrv [selection_mask] [debugClass_mask] [clearAllSelections]
+ *
+ * The optional selection-mask argument is a bit mask of the selection
+ * types to be acquired. Currently two selections are supported:
+ *   1. PRIMARY (mask value 1)
+ *   2. CLIPBOARD (mask value 2).
+ *
+ * debugClass_mask is a bit mask of all debugging classes for which messages
+ * are to be output. The standard Wine debug class set FIXME(1), ERR(2),
+ * WARN(4) and TRACE(8) are supported.
+ *
+ * If clearAllSelections == 1 *all* selections are lost whenever a SelectionClear
+ * event is received.
+ *
+ * If no arguments are supplied the server aquires all selections. (mask value 3)
+ * and defaults to output of only FIXME(1) and ERR(2) messages. The default for
+ * clearAllSelections is 0.
+ *
  * NOTES:
- *    This file contains the implementation for the Clipboard server
+ *
+ *    The Wine Clipboard Server is a standalone XLib application whose 
+ * purpose is to manage the X selection when Wine exits.
+ * The server itself is started automatically with the appropriate
+ * selection masks, whenever Wine exits after acquiring the PRIMARY and/or
+ * CLIPBOARD selection. (See X11DRV_CLIPBOARD_ResetOwner)
+ * When the server starts, it first proceeds to capture the selection data from
+ * Wine and then takes over the selection ownership. It does this by querying
+ * the current selection owner(of the specified selections) for the TARGETS
+ * selection target. It then proceeds to cache all the formats exposed by
+ * TARGETS. If the selection does not support the TARGETS target, or if no
+ * target formats are exposed, the server simply exits.
+ * Once the cache has been filled, the server then actually acquires ownership
+ * of the respective selection and begins fielding selection requests.
+ * Selection requests are serviced from the cache. If a selection is lost the
+ * server flushes its internal cache, destroying all data previously saved.
+ * Once ALL selections have been lost the server terminates.
  *
  * TODO:
- *
  */
+
+#include <stdio.h>
+#include <stdlib.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
 #include <X11/Xatom.h>
-#include <stdio.h>
 
-/*  Lightweight debug definitions */
+/*
+ *  Lightweight debug definitions for Wine Clipboard Server.
+ *  The standard FIXME, ERR, WARN & TRACE classes are supported
+ *  without debug channels.
+ *  The standard defines NO_TRACE_MSGS and NO_DEBUG_MSGS will compile out
+ *  TRACE, WARN and ERR and FIXME message displays.
+ */
 
-#define __DPRINTF(dbname) (printf("%s:%s:%s ", dbname, progname, __FUNCTION__),0) ? 0 : printf
+/* Internal definitions (do not use these directly) */
+
+enum __DEBUG_CLASS { __DBCL_FIXME, __DBCL_ERR, __DBCL_WARN, __DBCL_TRACE, __DBCL_COUNT };
+
+extern char __debug_msg_enabled[__DBCL_COUNT];
+
+extern const char * const debug_cl_name[__DBCL_COUNT];
+
+#define DEBUG_CLASS_COUNT __DBCL_COUNT
+
+#define __GET_DEBUGGING(dbcl)    (__debug_msg_enabled[(dbcl)])
+#define __SET_DEBUGGING(dbcl,on) (__debug_msg_enabled[(dbcl)] = (on))
+
+
+#define __DPRINTF(dbcl) \
+    (!__GET_DEBUGGING(dbcl) || \
+    (printf("%s:%s:%s ", debug_cl_name[(dbcl)], progname, __FUNCTION__),0)) \
+    ? 0 : printf
+
 #define __DUMMY_DPRINTF 1 ? (void)0 : (void)((int (*)(char *, ...)) NULL)
 
+/* use configure to allow user to compile out debugging messages */
 #ifndef NO_TRACE_MSGS
-  #define TRACE        __DPRINTF("TRACE")
+  #define TRACE        __DPRINTF(__DBCL_TRACE)
 #else
   #define TRACE        __DUMMY_DPRINTF
 #endif /* NO_TRACE_MSGS */
 
 #ifndef NO_DEBUG_MSGS
-  #define WARN         __DPRINTF("WARN")
-  #define FIXME        __DPRINTF("FIXME")
+  #define WARN         __DPRINTF(__DBCL_WARN)
+  #define FIXME        __DPRINTF(__DBCL_FIXME)
 #else
   #define WARN         __DUMMY_DPRINTF
   #define FIXME        __DUMMY_DPRINTF
 #endif /* NO_DEBUG_MSGS */
 
-#define ERR        __DPRINTF("ERROR")
+/* define error macro regardless of what is configured */
+#define ERR        __DPRINTF(__DBCL_ERR)
 
 
 #define TRUE 1
 #define FALSE 0
 typedef int BOOL;
+
+/* Internal definitions for debugging messages(do not use these directly) */
+const char * const debug_cl_name[] = { "fixme", "err", "warn", "trace" };
+char __debug_msg_enabled[DEBUG_CLASS_COUNT] = {1, 1, 0, 0};
+
 
 /* Selection masks */
 
@@ -47,6 +114,12 @@ typedef int BOOL;
 #define S_PRIMARY        1
 #define S_CLIPBOARD      2
 
+/* Debugging class masks */
+
+#define C_FIXME          1
+#define C_ERR            2
+#define C_WARN           4
+#define C_TRACE          8
 
 /*
  * Global variables 
@@ -62,10 +135,10 @@ static char *g_szOutOfMemory = "Insufficient memory!\n";
 
 /* X selection context info */
 static char _CLIPBOARD[] = "CLIPBOARD";        /* CLIPBOARD atom name */
-static char FMT_PREFIX[] = "<WCF>";            /* Prefix for windows specific formats */
 static int  g_selectionToAcquire = 0;          /* Masks for the selection to be acquired */
 static int  g_selectionAcquired = 0;           /* Contains the current selection masks */
-
+static int  g_clearAllSelections = 0;          /* If TRUE *all* selections are lost on SelectionClear */
+    
 /* Selection cache */
 typedef struct tag_CACHEENTRY
 {
@@ -119,7 +192,6 @@ void getGC(Window win, GC *gc);
 void main(int argc, char **argv)
 {
     XEvent event;
-    unsigned int width, height;	/* window size */
 
     if ( !Init(argc, argv) )
         exit(0);
@@ -130,6 +202,8 @@ void main(int argc, char **argv)
      */
     if ( AcquireSelection() == S_NOSELECTION )
         TerminateServer(0);
+
+    TRACE("Clipboard server running...\n");
     
     /* Start an X event loop */
     while (1)
@@ -243,8 +317,23 @@ BOOL Init(int argc, char **argv)
         g_selectionToAcquire = atoi(argv[1]);
     else
         g_selectionToAcquire = S_PRIMARY | S_CLIPBOARD;
+
+    /* Set the debugging class state from the command line argument */
+    if (argc > 2)
+    {
+        int dbgClasses = atoi(argv[2]);
         
-    TRACE("Clipboard server running...\n");
+        __SET_DEBUGGING(__DBCL_FIXME, dbgClasses & C_FIXME);
+        __SET_DEBUGGING(__DBCL_ERR, dbgClasses & C_ERR);
+        __SET_DEBUGGING(__DBCL_WARN, dbgClasses & C_WARN);
+        __SET_DEBUGGING(__DBCL_TRACE, dbgClasses & C_TRACE);
+    }
+        
+    /* Set the "ClearSelections" state from the command line argument */
+    if (argc > 3)
+        g_clearAllSelections = atoi(argv[3]);
+    
+    return TRUE;
 }
 
 
@@ -287,27 +376,39 @@ int AcquireSelection()
     {
         TRACE("Acquiring PRIMARY selection...\n");
         g_cPrimaryTargets = CacheDataFormats( XA_PRIMARY, &g_pPrimaryCache );
-        if (g_cPrimaryTargets)
-            XSetSelectionOwner(g_display, XA_PRIMARY, g_win, CurrentTime);
-        else
-            TRACE("No PRIMARY targets - ownership not acquired.\n");
+        TRACE("Cached %ld formats...\n", g_cPrimaryTargets);
     }
     if (g_selectionToAcquire & S_CLIPBOARD)
     {
         TRACE("Acquiring CLIPBOARD selection...\n");
         g_cClipboardTargets = CacheDataFormats( xaClipboard, &g_pClipboardCache );
-        
-        if (g_cClipboardTargets)
-            XSetSelectionOwner(g_display, xaClipboard, g_win, CurrentTime);
-        else
-            TRACE("No CLIPBOARD targets - ownership not acquired.\n");
+        TRACE("Cached %ld formats...\n", g_cClipboardTargets);
     }
 
-    /* Remember the acquired selections */
-    if( XGetSelectionOwner(g_display,XA_PRIMARY) == g_win )
+    /*
+     * Now that we have cached the data, we proceed to acquire the selections
+     */
+    if (g_cPrimaryTargets)
+    {
+        /* Acquire the PRIMARY selection */
+        while (XGetSelectionOwner(g_display,XA_PRIMARY) != g_win)
+            XSetSelectionOwner(g_display, XA_PRIMARY, g_win, CurrentTime);
+        
         g_selectionAcquired |= S_PRIMARY;
-    if( XGetSelectionOwner(g_display,xaClipboard) == g_win )
+    }
+    else
+        TRACE("No PRIMARY targets - ownership not acquired.\n");
+    
+    if (g_cClipboardTargets)
+    {
+        /* Acquire the CLIPBOARD selection */
+        while (XGetSelectionOwner(g_display,xaClipboard) != g_win)
+            XSetSelectionOwner(g_display, xaClipboard, g_win, CurrentTime);
+
         g_selectionAcquired |= S_CLIPBOARD;
+    }
+    else
+        TRACE("No CLIPBOARD targets - ownership not acquired.\n");
 
     return g_selectionAcquired;
 }
@@ -398,7 +499,7 @@ int CacheDataFormats( Atom SelectionSrc, PCACHEENTRY *ppCache )
               
               /* Populate the cache entry */
               if (!FillCacheEntry( SelectionSrc, targetList[i], &((*ppCache)[i])))
-                  ERR("Failed to fill cache entry!");
+                  ERR("Failed to fill cache entry!\n");
 
               XFree(itemFmtName);
           }
@@ -453,8 +554,11 @@ BOOL FillCacheEntry( Atom SelectionSrc, Atom target, PCACHEENTRY pCacheEntry )
     reqType = xe.xselection.target;
     
     if(prop == None)
+    {
+        TRACE("\tOwner failed to convert selection!\n");
         return bRet;
-
+    }
+       
     TRACE("\tretrieving property %s from window %ld into %s\n",
           XGetAtomName(g_display,reqType), (long)w, XGetAtomName(g_display,prop) );
 
@@ -600,7 +704,7 @@ void EmptyCache(PCACHEENTRY pCache, int nItems)
             }
             else
             {
-                TRACE("Freeing %s (0x%x)...\n",
+                TRACE("Freeing %s (%p)...\n",
                       XGetAtomName(g_display, pCache[i].target), pCache[i].pData);
             
                 /* Free the cached data item (allocated by X) */
@@ -621,8 +725,10 @@ void EmptyCache(PCACHEENTRY pCache, int nItems)
  */
 void EVENT_ProcessEvent( XEvent *event )
 {
-//  TRACE(" event %s for Window %08lx\n", event_names[event->type], event->xany.window );
-
+  /*
+  TRACE(" event %s for Window %08lx\n", event_names[event->type], event->xany.window );
+  */
+    
   switch (event->type)
   {
       case Expose:
@@ -652,7 +758,7 @@ void EVENT_ProcessEvent( XEvent *event )
           break;
         
       case PropertyNotify:
-          EVENT_PropertyNotify( (XPropertyEvent *)event );
+          // EVENT_PropertyNotify( (XPropertyEvent *)event );
           break;
 
       default: /* ignore all other events */
@@ -771,7 +877,6 @@ void EVENT_SelectionRequest( XSelectionRequestEvent *event, BOOL bIsMultiple )
   XSelectionEvent result;
   Atom 	          rprop = None;
   Window          request = event->requestor;
-  BOOL            couldOpen = FALSE;
   Atom            xaMultiple = XInternAtom(g_display, "MULTIPLE", False);
   PCACHEENTRY     pCacheEntry = NULL;
   void            *pData = NULL;
@@ -803,7 +908,7 @@ void EVENT_SelectionRequest( XSelectionRequestEvent *event, BOOL bIsMultiple )
   }
 
   /* Update the X property */
-  TRACE("\tUpdating property %s...", XGetAtomName(g_display, rprop));
+  TRACE("\tUpdating property %s...\n", XGetAtomName(g_display, rprop));
 
   /* If we have a request for a pixmap, return a duplicate */
   
@@ -853,17 +958,36 @@ void EVENT_SelectionClear( XSelectionClearEvent *event )
     
   TRACE("()\n");
 
-  if (event->selection == XA_PRIMARY)
+  /* If we're losing the CLIPBOARD selection, or if the preferences in .winerc
+   * dictate that *all* selections should be cleared on loss of a selection,
+   * we must give up all the selections we own.
+   */
+  if ( g_clearAllSelections || (event->selection == xaClipboard) )
   {
-      g_selectionAcquired &= ~S_PRIMARY;     /* Clear the PRIMARY flag */
+      TRACE("Lost CLIPBOARD (+PRIMARY) selection\n");
+      
+      /* We really lost CLIPBOARD but want to voluntarily lose PRIMARY */
+      if ( (event->selection == xaClipboard)
+           && (g_selectionAcquired & S_PRIMARY) )
+      {
+          XSetSelectionOwner(g_display, XA_PRIMARY, None, CurrentTime);
+      }
+      
+      /* We really lost PRIMARY but want to voluntarily lose CLIPBOARD  */
+      if ( (event->selection == XA_PRIMARY)
+           && (g_selectionAcquired & S_CLIPBOARD) )
+      {
+          XSetSelectionOwner(g_display, xaClipboard, None, CurrentTime);
+      }
+      
+      g_selectionAcquired = S_NOSELECTION;   /* Clear the selection masks */
+  }
+  else if (event->selection == XA_PRIMARY)
+  {
       TRACE("Lost PRIMARY selection...\n");
+      g_selectionAcquired &= ~S_PRIMARY;     /* Clear the PRIMARY flag */
   }
-  else if (event->selection == xaClipboard)
-  {
-      g_selectionAcquired &= ~S_CLIPBOARD;   /* Clear the CLIPBOARD flag */
-      TRACE("Lost CLIPBOARD selection...\n");
-  }
-  
+
   /* Once we lose all our selections we have nothing more to do */
   if (g_selectionAcquired == S_NOSELECTION)
       TerminateServer(1);
@@ -915,7 +1039,7 @@ Pixmap DuplicatePixmap(Pixmap pixmap)
     unsigned border_width; /* Unused */
     unsigned int depth, width, height;
 
-    TRACE("\t() Pixmap=%ul\n", pixmap);
+    TRACE("\t() Pixmap=%ld\n", (long)pixmap);
           
     /* Get the Pixmap dimensions and bit depth */
     if ( 0 == XGetGeometry(g_display, pixmap, &root, &x, &y, &width, &height,
@@ -933,7 +1057,7 @@ Pixmap DuplicatePixmap(Pixmap pixmap)
 
     XDestroyImage(xi);
     
-    TRACE("\t() New Pixmap=%ul\n", newPixmap);
+    TRACE("\t() New Pixmap=%ld\n", (long)newPixmap);
     return newPixmap;
 }
 

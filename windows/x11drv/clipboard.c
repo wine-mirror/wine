@@ -49,13 +49,15 @@
 
 #ifndef X_DISPLAY_MISSING
 
+#include <errno.h>
 #include <X11/Xatom.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "ts_xlib.h"
 
 #include "wine/winuser16.h"
 #include "clipboard.h"
-#include "debugtools.h"
 #include "message.h"
 #include "win.h"
 #include "windef.h"
@@ -63,6 +65,8 @@
 #include "bitmap.h"
 #include "commctrl.h"
 #include "heap.h"
+#include "options.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(clipboard)
 
@@ -76,13 +80,14 @@ DEFAULT_DEBUG_CHANNEL(clipboard)
 
 static char _CLIPBOARD[] = "CLIPBOARD";        /* CLIPBOARD atom name */
 static char FMT_PREFIX[] = "<WCF>";            /* Prefix for windows specific formats */
-static int    selectionAcquired = 0;           /* Contains the current selection masks */
+static int selectionAcquired = 0;              /* Contains the current selection masks */
 static Window selectionWindow = None;          /* The top level X window which owns the selection */
 static Window selectionPrevWindow = None;      /* The last X window that owned the selection */
 static Window PrimarySelectionOwner = None;    /* The window which owns the primary selection */
 static Window ClipboardSelectionOwner = None;  /* The window which owns the clipboard selection */
 static unsigned long cSelectionTargets = 0;    /* Number of target formats reported by TARGETS selection */
 static Atom selectionCacheSrc = XA_PRIMARY;    /* The selection source from which the clipboard cache was filled */
+static HANDLE selectionClearEvent = NULL;      /* Synchronization object used to block until server is started */
 
 /*
  * Dynamic pointer arrays to manage destruction of Pixmap resources
@@ -202,6 +207,106 @@ BOOL X11DRV_CLIPBOARD_IsNativeProperty(Atom prop)
     
     TSXFree(itemFmtName);
     return bRet;
+}
+
+
+/**************************************************************************
+ *		X11DRV_CLIPBOARD_LaunchServer
+ * Launches the clipboard server. This is called from X11DRV_CLIPBOARD_ResetOwner
+ * when the selection can no longer be recyled to another top level window.
+ * In order to make the selection persist after Wine shuts down a server
+ * process is launched which services subsequent selection requests.
+ */
+BOOL X11DRV_CLIPBOARD_LaunchServer()
+{
+    int iWndsLocks;
+
+    /* If persistant selection has been disabled in the .winerc Clipboard section,
+     * don't launch the server
+     */
+    if ( !PROFILE_GetWineIniInt("Clipboard", "PersistentSelection", 1) )
+        return FALSE;
+
+    /*  Start up persistant WINE X clipboard server process which will
+     *  take ownership of the X selection and continue to service selection
+     *  requests from other apps.
+     */
+    selectionWindow = selectionPrevWindow;
+    if ( !fork() )
+    {
+        /* NOTE: This code only executes in the context of the child process
+         * Do note make any Wine specific calls here.
+         */
+        
+        int dbgClasses = 0;
+        char selMask[8], dbgClassMask[8], clearSelection[8];
+
+        sprintf(selMask, "%d", selectionAcquired);
+
+        /* Build the debug class mask to pass to the server, by inheriting
+         * the settings for the clipboard debug channel.
+         */
+        dbgClasses |= __GET_DEBUGGING(__DBCL_FIXME, dbch_clipboard) ? 1 : 0;
+        dbgClasses |= __GET_DEBUGGING(__DBCL_ERR, dbch_clipboard) ? 2 : 0;
+        dbgClasses |= __GET_DEBUGGING(__DBCL_WARN, dbch_clipboard) ? 4 : 0;
+        dbgClasses |= __GET_DEBUGGING(__DBCL_TRACE, dbch_clipboard) ? 8 : 0;
+        sprintf(dbgClassMask, "%d", dbgClasses);
+
+        /* Get the clear selection preference */
+        sprintf(clearSelection, "%d",
+                PROFILE_GetWineIniInt("Clipboard", "ClearAllSelections", 0));
+            
+        /* Exec the clipboard server passing it the selection and debug class masks */
+        execl( BINDIR "/wineclipsvr", "wineclipsvr",
+               selMask, dbgClassMask, clearSelection, NULL );
+        execlp( "wineclipsvr", "wineclipsvr", selMask, dbgClassMask, clearSelection, NULL );
+        execl( "./windows/x11drv/wineclipsvr", "wineclipsvr",
+               selMask, dbgClassMask, clearSelection, NULL );
+
+        /* Exec Failed! */
+        perror("Could not start Wine clipboard server");
+        exit( 1 ); /* Exit the child process */
+    }
+
+    /* Wait until the clipboard server acquires the selection.
+     * We must release the windows lock to enable Wine to process
+     * selection messages in response to the servers requests.
+     */
+    
+    iWndsLocks = WIN_SuspendWndsLock();
+
+    /* We must wait until the server finishes acquiring the selection,
+     * before proceeding, otherwise the window which owns the selection
+     * will be destroyed prematurely!
+     * Create a non-signalled, auto-reset event which will be set by
+     * X11DRV_CLIPBOARD_ReleaseSelection, and wait until this gets
+     * signalled before proceeding.
+     */
+
+    if ( !(selectionClearEvent = CreateEventA(NULL, FALSE, FALSE, NULL)) )
+        ERR("Could not create wait object. Clipboard server won't start!\n");
+    else
+    {
+        /* Make the event object's handle global */
+        selectionClearEvent = ConvertToGlobalHandle(selectionClearEvent);
+        
+        /* Wait until we lose the selection, timing out after a minute */
+
+        TRACE("Waiting for clipboard server to acquire selection\n");
+
+        if ( WaitForSingleObject( selectionClearEvent, 60000 ) != WAIT_OBJECT_0 )
+            TRACE("Server could not acquire selection, or a time out occured!\n");
+        else
+            TRACE("Server successfully acquired selection\n");
+
+        /* Release the event */
+        CloseHandle(selectionClearEvent);
+        selectionClearEvent = NULL;
+    }
+
+    WIN_RestoreWndsLock(iWndsLocks);
+    
+    return TRUE;
 }
 
 
@@ -567,14 +672,14 @@ END:
  * Release an XA_PRIMARY or XA_CLIPBOARD selection that we own, in response
  * to a SelectionClear event.
  * This can occur in response to another client grabbing the X selection.
- * If the XA_CLIPBOARD selection is lost we relinquish XA_PRIMARY as well.
+ * If the XA_CLIPBOARD selection is lost, we relinquish XA_PRIMARY as well.
  */
 void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
 {
     Atom xaClipboard = TSXInternAtom(display, "CLIPBOARD", False);
+    int clearAllSelections = PROFILE_GetWineIniInt("Clipboard", "ClearAllSelections", 0);
     
-    /* w is the window that lost selection,
-     * 
+    /* w is the window that lost the selection
      * selectionPrevWindow is nonzero if CheckSelection() was called. 
      */
 
@@ -585,12 +690,15 @@ void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
     {
 	if( w == selectionWindow || selectionPrevWindow == None)
 	{
-	    /* alright, we really lost it */
-
-            if ( selType == xaClipboard )  /* completely give up the selection */
+            /* If we're losing the CLIPBOARD selection, or if the preferences in .winerc
+             * dictate that *all* selections should be cleared on loss of a selection,
+             * we must give up all the selections we own.
+             */
+            if ( clearAllSelections || (selType == xaClipboard) )
             {
-              TRACE("Lost CLIPBOARD selection\n");
-                
+              /* completely give up the selection */
+              TRACE("Lost CLIPBOARD (+PRIMARY) selection\n");
+
               /* We are completely giving up the selection.
                * Make sure we can open the windows clipboard first. */
               
@@ -607,24 +715,23 @@ void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
                   return;
               }
 
-              selectionPrevWindow = selectionWindow;
+              /* We really lost CLIPBOARD but want to voluntarily lose PRIMARY */
+              if ( (selType == xaClipboard)
+                   && (selectionAcquired & S_PRIMARY) )
+              {
+                  XSetSelectionOwner(display, XA_PRIMARY, None, CurrentTime);
+              }
+              
+              /* We really lost PRIMARY but want to voluntarily lose CLIPBOARD  */
+              if ( (selType == XA_PRIMARY)
+                   && (selectionAcquired & S_CLIPBOARD) )
+              {
+                  XSetSelectionOwner(display, xaClipboard, None, CurrentTime);
+              }
+              
               selectionWindow = None;
               PrimarySelectionOwner = ClipboardSelectionOwner = 0;
               
-              /* Voluntarily give up the PRIMARY selection if we still own it */
-              if ( selectionAcquired & S_PRIMARY )
-              {
-                  XEvent xe;
-                  TRACE("Releasing XA_PRIMARY selection\n");
-                  
-                  TSXSetSelectionOwner(display, XA_PRIMARY, None, CurrentTime);
-
-                  /* Wait until SelectionClear is processed */
-                  if( selectionPrevWindow )
-                      while( !XCheckTypedWindowEvent( display, selectionPrevWindow,
-                                                      SelectionClear, &xe ) );
-              }
-
               /* Empty the windows clipboard.
                * We should pretend that we still own the selection BEFORE calling
                * EmptyClipboard() since otherwise this has the side effect of
@@ -633,12 +740,13 @@ void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
                */
               selectionAcquired = (S_PRIMARY | S_CLIPBOARD);
               EmptyClipboard();
-              selectionAcquired = S_NOSELECTION;
-              
               CloseClipboard();
 
               /* Give up ownership of the windows clipboard */
               CLIPBOARD_ReleaseOwner();
+
+              /* Reset the selection flags now that we are done */
+              selectionAcquired = S_NOSELECTION;
             }
             else if ( selType == XA_PRIMARY ) /* Give up only PRIMARY selection */
             {
@@ -664,6 +772,13 @@ void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
         }
     }
 
+    /* Signal to a selectionClearEvent listener if the selection is completely lost */
+    if (selectionClearEvent && !selectionAcquired)
+    {
+        TRACE("Lost all selections, signalling to selectionClearEvent listener\n");
+        SetEvent(selectionClearEvent);
+    }
+    
     selectionPrevWindow = None;
 }
 
@@ -996,21 +1111,6 @@ void X11DRV_CLIPBOARD_ResetOwner(WND *pWnd, BOOL bFooBar)
     TRACE("clipboard owner = %04x, selection window = %08x\n",
           hWndClipOwner, (unsigned)selectionWindow);
 
-#if(0)
-    /* Check if all formats are already in the clipboard cache */
-    if( !CLIPBOARD_IsCacheRendered() )
-    {
-	SendMessage16(hWndClipOwner,WM_RENDERALLFORMATS,0,0L);
-
-	/* check if all formats were rendered */
-        if ( !CLIPBOARD_IsCacheRendered() )
-        {
-	    ERR("\tCould not render all formats\n");
-            CLIPBOARD_ReleaseOwner();
-        }
-    }
-#endif
-    
     /* now try to salvage current selection from being destroyed by X */
 
     TRACE("\tchecking %08x\n", (unsigned) XWnd);
@@ -1041,7 +1141,10 @@ void X11DRV_CLIPBOARD_ResetOwner(WND *pWnd, BOOL bFooBar)
             TSXSetSelectionOwner(display, XA_PRIMARY, selectionWindow, CurrentTime);
         
         TSXSetSelectionOwner(display, xaClipboard, selectionWindow, CurrentTime);
-        
+
+        /* Restore the selection masks */
+        selectionAcquired = saveSelectionState;
+
         /* Lose the selection if something went wrong */
         if ( ( (saveSelectionState & S_PRIMARY) &&
                (TSXGetSelectionOwner(display, XA_PRIMARY) != selectionWindow) )
@@ -1053,7 +1156,6 @@ void X11DRV_CLIPBOARD_ResetOwner(WND *pWnd, BOOL bFooBar)
         else
         {
             /* Update selection state */
-            selectionAcquired = saveSelectionState;
             if (saveSelectionState & S_PRIMARY)
                PrimarySelectionOwner = selectionWindow;
             
@@ -1069,26 +1171,33 @@ void X11DRV_CLIPBOARD_ResetOwner(WND *pWnd, BOOL bFooBar)
 END:
     if (bLostSelection)
     {
-       /* Empty the windows clipboard.
-        * We should pretend that we still own the selection BEFORE calling
-        * EmptyClipboard() since otherwise this has the side effect of
-        * triggering X11DRV_CLIPBOARD_Acquire() and causing the X selection
-        * to be re-acquired by us!
-        */
+      /* Launch the clipboard server if the selection can no longer be recyled
+       * to another top level window. */
+  
+      if ( !X11DRV_CLIPBOARD_LaunchServer() )
+      {
+         /* Empty the windows clipboard if the server was not launched.
+          * We should pretend that we still own the selection BEFORE calling
+          * EmptyClipboard() since otherwise this has the side effect of
+          * triggering X11DRV_CLIPBOARD_Acquire() and causing the X selection
+          * to be re-acquired by us!
+          */
+  
+         TRACE("\tLost the selection! Emptying the clipboard...\n");
+      
+         OpenClipboard(NULL);
+         selectionAcquired = (S_PRIMARY | S_CLIPBOARD);
+         EmptyClipboard();
+         
+         CloseClipboard();
+   
+         /* Give up ownership of the windows clipboard */
+         CLIPBOARD_ReleaseOwner();
+      }
 
-       TRACE("\tLost the selection! Emptying the clipboard...\n");
-    
-       OpenClipboard(NULL);
-       selectionAcquired = (S_PRIMARY | S_CLIPBOARD);
-       EmptyClipboard();
-       selectionAcquired = S_NOSELECTION;
-       
-       CloseClipboard();
- 
-       /* Give up ownership of the windows clipboard */
-       CLIPBOARD_ReleaseOwner();
-       ClipboardSelectionOwner = PrimarySelectionOwner = 0;
-       selectionWindow = 0;
+      selectionAcquired = S_NOSELECTION;
+      ClipboardSelectionOwner = PrimarySelectionOwner = 0;
+      selectionWindow = 0;
     }
 }
 

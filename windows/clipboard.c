@@ -488,7 +488,7 @@ static LPWINE_CLIPFORMAT CLIPBOARD_RenderText( UINT wFormat )
         TRACE("\tconverting from '%s' to '%s', %i chars\n",
                                           lpSource->Name, lpTarget->Name, size);
     
-        lpTarget->hData32 = GlobalAlloc(GMEM_ZEROINIT, size);
+        lpTarget->hData32 = GlobalAlloc(GMEM_ZEROINIT | GMEM_MOVEABLE | GMEM_DDESHARE, size);
         lpstrT = (LPSTR)GlobalLock(lpTarget->hData32);
     
         if( lpstrT )
@@ -791,7 +791,8 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
     }
    
     /* Convert between 32 -> 16 bit data, if necessary */
-    if( lpRender->hData32 && !lpRender->hData16 )
+    if( lpRender->hData32 && !lpRender->hData16
+        && CLIPBOARD_IsMemoryObject(wFormat) )
     {
       int size;
       if( lpRender->wFormatID == CF_METAFILEPICT )
@@ -857,7 +858,8 @@ HANDLE WINAPI GetClipboardData( UINT wFormat )
     }
    
     /* Convert between 16 -> 32 bit data, if necessary */
-    if( lpRender->hData16 && !lpRender->hData32 )
+    if( lpRender->hData16 && !lpRender->hData32
+        && CLIPBOARD_IsMemoryObject(wFormat) )
     {
       int size;
       if( lpRender->wFormatID == CF_METAFILEPICT )

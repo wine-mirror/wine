@@ -171,11 +171,6 @@ static void USER_AppExit( HINSTANCE16 hInstance )
      * but does nothing);
      */
 
-    /*  TODO: Start up persistant WINE X clipboard server process which will
-     *  take ownership of the X selection and continue to service selection
-     *  requests from other apps.
-     */
-
     /* ModuleUnload() in "Internals" */
 
     hInstance = GetExePtr( hInstance );

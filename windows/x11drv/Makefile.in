@@ -1,4 +1,4 @@
-DEFS      = @DLLFLAGS@ -D__WINE__
+DEFS      = @DLLFLAGS@ -D__WINE__ -DBINDIR="\"$(bindir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
@@ -22,8 +22,6 @@ all: $(MODULE).o $(PROGRAMS)
 
 wineclipsrv: wineclipsrv.c
 	$(CC) $(ALLCFLAGS) -o wineclipsrv $(SRCDIR)/wineclipsrv.c $(X_LIBS) $(XLIB) $(LIBS)
-
-all: $(MODULE).o
 
 @MAKE_RULES@
 

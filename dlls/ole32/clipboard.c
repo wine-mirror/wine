@@ -146,7 +146,7 @@ static void OLEClipbrd_Destroy(OLEClipbrd* ptrToDestroy);
 static HWND OLEClipbrd_CreateWindow();
 static void OLEClipbrd_DestroyWindow(HWND hwnd);
 LRESULT CALLBACK OLEClipbrd_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-static HRESULT OLEClipbrd_RenderFormat(LPFORMATETC pFormatetc);
+static HRESULT OLEClipbrd_RenderFormat( IDataObject *pIDataObject, LPFORMATETC pFormatetc );
 static HGLOBAL OLEClipbrd_GlobalDupMem( HGLOBAL hGlobalSrc );
 
 /*
@@ -473,6 +473,7 @@ HRESULT WINAPI OleFlushClipboard()
   FORMATETC rgelt;
   HRESULT hr = S_OK;
   BOOL bClipboardOpen = FALSE;
+  IDataObject* pIDataObjectSrc = NULL;
   
   TRACE("()\n");
 
@@ -487,6 +488,13 @@ HRESULT WINAPI OleFlushClipboard()
   if (!theOleClipboard->pIDataObjectSrc)
     return S_OK;
 
+  /*
+   * Addref and save the source data object we are holding on to temporarily,
+   * since it will be released when we empty the clipboard.
+   */
+  pIDataObjectSrc = theOleClipboard->pIDataObjectSrc;
+  IDataObject_AddRef(pIDataObjectSrc);
+  
   /*
    * Open the Windows clipboard
    */
@@ -503,7 +511,7 @@ HRESULT WINAPI OleFlushClipboard()
    * Render all HGLOBAL formats supported by the source into
    * the windows clipboard.
    */
-  if ( FAILED( hr = IDataObject_EnumFormatEtc( (IDataObject*)&(theOleClipboard->lpvtbl1),
+  if ( FAILED( hr = IDataObject_EnumFormatEtc( pIDataObjectSrc,
                                                DATADIR_GET,
                                                &penumFormatetc) ))
   {
@@ -522,7 +530,7 @@ HRESULT WINAPI OleFlushClipboard()
       /*
        * Render the clipboard data
        */
-      if ( FAILED(OLEClipbrd_RenderFormat( &rgelt )) )
+      if ( FAILED(OLEClipbrd_RenderFormat( pIDataObjectSrc, &rgelt )) )
         continue;
     }
   }
@@ -530,13 +538,9 @@ HRESULT WINAPI OleFlushClipboard()
   IEnumFORMATETC_Release(penumFormatetc);
   
   /*
-   * Release the data object we are holding on to
+   * Release the source data object we are holding on to
    */
-  if ( theOleClipboard->pIDataObjectSrc )
-  {
-    IDataObject_Release(theOleClipboard->pIDataObjectSrc);
-    theOleClipboard->pIDataObjectSrc = NULL;
-  }
+  IDataObject_Release(pIDataObjectSrc);
 
 CLEANUP:
 
@@ -795,7 +799,7 @@ LRESULT CALLBACK OLEClipbrd_WndProc
        * Render the clipboard data.
        * (We must have a source data object or we wouldn't be in this WndProc)
        */
-      OLEClipbrd_RenderFormat( &rgelt );
+      OLEClipbrd_RenderFormat( (IDataObject*)&(theOleClipboard->lpvtbl1), &rgelt );
 
       break;
     }
@@ -835,7 +839,7 @@ LRESULT CALLBACK OLEClipbrd_WndProc
           /*
            * Render the clipboard data. 
            */
-          if ( FAILED(OLEClipbrd_RenderFormat( &rgelt )) )
+          if ( FAILED(OLEClipbrd_RenderFormat( (IDataObject*)&(theOleClipboard->lpvtbl1), &rgelt )) )
             continue;
         
           TRACE("(): WM_RENDERALLFORMATS(cfFormat=%d)\n", rgelt.cfFormat);
@@ -891,14 +895,13 @@ LRESULT CALLBACK OLEClipbrd_WndProc
  * source data object.
  * Note: This function assumes it is passed an HGLOBAL format to render.
  */
-static HRESULT OLEClipbrd_RenderFormat(LPFORMATETC pFormatetc)
+static HRESULT OLEClipbrd_RenderFormat(IDataObject *pIDataObject, LPFORMATETC pFormatetc)
 {
   STGMEDIUM medium;
   HGLOBAL hDup;
   HRESULT hr = S_OK;
   
-  if ( FAILED(hr = IDataObject_GetData((IDataObject*)&(theOleClipboard->lpvtbl1),
-                                       pFormatetc, &medium)) )
+  if ( FAILED(hr = IDataObject_GetData(pIDataObject, pFormatetc, &medium)) )
   {
     WARN("() : IDataObject_GetData failed to render clipboard data! (%lx)\n", hr);
     return hr;
