@@ -18,6 +18,7 @@
 #include <sys/time.h>
 #include "windef.h"
 #include "wine/winbase16.h"
+#include "winerror.h"
 #include "module.h"
 #include "peexe.h"
 #include "neexe.h"
@@ -174,11 +175,11 @@ static WORD MZ_InitEnvironment( LPDOSTASK lpDosTask, LPCSTR env, LPCSTR name )
  return seg;
 }
 
-int MZ_InitMemory( LPDOSTASK lpDosTask, NE_MODULE *pModule )
+static BOOL MZ_InitMemory( LPDOSTASK lpDosTask, NE_MODULE *pModule )
 {
  int x;
 
- if (lpDosTask->img_ofs) return 32; /* already allocated */
+ if (lpDosTask->img_ofs) return TRUE; /* already allocated */
 
  /* allocate 1MB+64K shared memory */
  lpDosTask->img_ofs=START_OFFSET;
@@ -199,7 +200,7 @@ int MZ_InitMemory( LPDOSTASK lpDosTask, NE_MODULE *pModule )
 #endif
  if (lpDosTask->img==(LPVOID)-1) {
   ERR(module,"could not map shared memory, error=%s\n",strerror(errno));
-  return 0;
+  return FALSE;
  }
  TRACE(module,"DOS VM86 image mapped at %08lx\n",(DWORD)lpDosTask->img);
  pModule->dos_image=lpDosTask->img;
@@ -210,11 +211,11 @@ int MZ_InitMemory( LPDOSTASK lpDosTask, NE_MODULE *pModule )
  MZ_InitHandlers(lpDosTask);
  MZ_InitXMS(lpDosTask);
  MZ_InitDPMI(lpDosTask);
- return lpDosTask->hModule;
+ return TRUE;
 }
 
-static int MZ_LoadImage( HFILE16 hFile, LPCSTR name, LPCSTR cmdline,
-                         LPCSTR env, LPDOSTASK lpDosTask, NE_MODULE *pModule )
+static BOOL MZ_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline,
+                          LPCSTR env, LPDOSTASK lpDosTask, NE_MODULE *pModule )
 {
  IMAGE_DOS_HEADER mz_header;
  DWORD image_start,image_size,min_size,max_size,avail;
@@ -223,14 +224,12 @@ static int MZ_LoadImage( HFILE16 hFile, LPCSTR name, LPCSTR cmdline,
  SEGPTR reloc;
  WORD env_seg;
 
- if ((_hread16(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
+ _llseek(hFile,0,FILE_BEGIN);
+ if ((_lread(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
      (mz_header.e_magic != IMAGE_DOS_SIGNATURE)) {
-#if 0
-     return 11; /* invalid exe */
-#endif
   old_com=1; /* assume .COM file */
   image_start=0;
-  image_size=GetFileSize(FILE_GetHandle(hFile),NULL);
+  image_size=GetFileSize(hFile,NULL);
   min_size=0x10000; max_size=0x100000;
   mz_header.e_crlc=0;
   mz_header.e_ss=0; mz_header.e_sp=0xFFFE;
@@ -248,20 +247,22 @@ static int MZ_LoadImage( HFILE16 hFile, LPCSTR name, LPCSTR cmdline,
  MZ_InitMemory(lpDosTask,pModule);
 
  /* allocate environment block */
- env_seg=MZ_InitEnvironment(lpDosTask,env,name);
+ env_seg=MZ_InitEnvironment(lpDosTask,env,ofs->szPathName);
 
  /* allocate memory for the executable */
  TRACE(module,"Allocating DOS memory (min=%ld, max=%ld)\n",min_size,max_size);
  avail=DOSMEM_Available(lpDosTask->hModule);
  if (avail<min_size) {
   ERR(module, "insufficient DOS memory\n");
-  return 0;
+  SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+  return FALSE;
  }
  if (avail>max_size) avail=max_size;
  psp_start=DOSMEM_GetBlock(lpDosTask->hModule,avail,&lpDosTask->psp_seg);
  if (!psp_start) {
   ERR(module, "error allocating DOS memory\n");
-  return 0;
+  SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+  return FALSE;
  }
  lpDosTask->load_seg=lpDosTask->psp_seg+(old_com?0:PSP_SIZE);
  load_start=psp_start+(PSP_SIZE<<4);
@@ -269,18 +270,22 @@ static int MZ_LoadImage( HFILE16 hFile, LPCSTR name, LPCSTR cmdline,
 
  /* load executable image */
  TRACE(module,"loading DOS %s image, %08lx bytes\n",old_com?"COM":"EXE",image_size);
- _llseek16(hFile,image_start,FILE_BEGIN);
- if ((_hread16(hFile,load_start,image_size)) != image_size)
-  return 11; /* invalid exe */
+ _llseek(hFile,image_start,FILE_BEGIN);
+ if ((_lread(hFile,load_start,image_size)) != image_size) {
+  SetLastError(ERROR_BAD_FORMAT);
+  return FALSE;
+ }
 
  if (mz_header.e_crlc) {
   /* load relocation table */
   TRACE(module,"loading DOS EXE relocation table, %d entries\n",mz_header.e_crlc);
   /* FIXME: is this too slow without read buffering? */
-  _llseek16(hFile,mz_header.e_lfarlc,FILE_BEGIN);
+  _llseek(hFile,mz_header.e_lfarlc,FILE_BEGIN);
   for (x=0; x<mz_header.e_crlc; x++) {
-   if (_lread16(hFile,&reloc,sizeof(reloc)) != sizeof(reloc))
-    return 11; /* invalid exe */
+   if (_lread(hFile,&reloc,sizeof(reloc)) != sizeof(reloc)) {
+    SetLastError(ERROR_BAD_FORMAT);
+    return FALSE;
+   }
    *(WORD*)SEGPTR16(load_start,reloc)+=lpDosTask->load_seg;
   }
  }
@@ -291,8 +296,7 @@ static int MZ_LoadImage( HFILE16 hFile, LPCSTR name, LPCSTR cmdline,
  lpDosTask->init_sp=mz_header.e_sp;
 
  TRACE(module,"entry point: %04x:%04x\n",lpDosTask->init_cs,lpDosTask->init_ip);
-
- return lpDosTask->hModule;
+ return TRUE;
 }
 
 LPDOSTASK MZ_AllocDPMITask( HMODULE16 hModule )
@@ -335,17 +339,17 @@ static void MZ_InitTimer( LPDOSTASK lpDosTask, int ver )
  }
 }
 
-int MZ_InitTask( LPDOSTASK lpDosTask )
+BOOL MZ_InitTask( LPDOSTASK lpDosTask )
 {
  int read_fd[2],write_fd[2];
  pid_t child;
  char *fname,*farg,arg[16],fproc[64],path[256],*fpath;
 
- if (!lpDosTask) return 0;
+ if (!lpDosTask) return FALSE;
  /* create read pipe */
- if (pipe(read_fd)<0) return 0;
+ if (pipe(read_fd)<0) return FALSE;
  if (pipe(write_fd)<0) {
-  close(read_fd[0]); close(read_fd[1]); return 0;
+  close(read_fd[0]); close(read_fd[1]); return FALSE;
  }
  lpDosTask->read_pipe=read_fd[0];
  lpDosTask->write_pipe=write_fd[1];
@@ -361,7 +365,7 @@ int MZ_InitTask( LPDOSTASK lpDosTask )
  TRACE(module,"Loading DOS VM support module (hmodule=%04x)\n",lpDosTask->hModule);
  if ((child=fork())<0) {
   close(write_fd[0]); close(write_fd[1]);
-  close(read_fd[0]); close(read_fd[1]); return 0;
+  close(read_fd[0]); close(read_fd[1]); return FALSE;
  }
  if (child!=0) {
   /* parent process */
@@ -376,7 +380,7 @@ int MZ_InitTask( LPDOSTASK lpDosTask )
     /* failure */
     ERR(module,"dosmod has failed to initialize\n");
     if (lpDosTask->mm_name[0]!=0) unlink(lpDosTask->mm_name);
-    return 0;
+    return FALSE;
    }
   } while (0);
   /* the child has now mmaped the temp file, it's now safe to unlink.
@@ -408,35 +412,31 @@ int MZ_InitTask( LPDOSTASK lpDosTask )
   ERR(module,"Failed to spawn dosmod, error=%s\n",strerror(errno));
   exit(1);
  }
- return lpDosTask->hModule;
+ return TRUE;
 }
 
-HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, BOOL inherit,
-                              LPSTARTUPINFOA startup, LPPROCESS_INFORMATION info )
+BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, 
+                       LPCSTR env, BOOL inherit, LPSTARTUPINFOA startup, 
+                       LPPROCESS_INFORMATION info )
 {
  LPDOSTASK lpDosTask = NULL; /* keep gcc from complaining */
  HMODULE16 hModule;
- HINSTANCE16 hInstance;
  PDB *pdb = PROCESS_Current();
  TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
  NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
- HFILE16 hFile;
- OFSTRUCT ofs;
- int err, alloc = !(pModule && pModule->dos_image);
+ int alloc = !(pModule && pModule->dos_image);
 
- GlobalUnlock16( GetCurrentTask() );
-
- if (alloc && (lpDosTask = calloc(1, sizeof(DOSTASK))) == NULL)
-  return 0;
-
- if ((hFile = OpenFile16( name, &ofs, OF_READ )) == HFILE_ERROR16)
-  return 2; /* File not found */
+ if (alloc && (lpDosTask = calloc(1, sizeof(DOSTASK))) == NULL) {
+  SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+  return FALSE;
+ }
 
  if ((!env)&&pdb) env = pdb->env_db->environ;
  if (alloc) {
-  if ((hModule = MODULE_CreateDummyModule(&ofs, NULL)) < 32)
-   return hModule;
-
+  if ((hModule = MODULE_CreateDummyModule(ofs, NULL)) < 32) {
+   SetLastError(hModule);
+   return FALSE;
+  }
   lpDosTask->hModule = hModule;
 
   pModule = (NE_MODULE *)GlobalLock16(hModule);
@@ -444,32 +444,29 @@ HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, BOOL inhe
  
   lpDosTask->img=NULL; lpDosTask->mm_name[0]=0; lpDosTask->mm_fd=-1;
  } else lpDosTask=pModule->lpDosTask;
- err = MZ_LoadImage( hFile, name, cmdline, env, lpDosTask, pModule );
- _lclose16(hFile);
- if (alloc) {
-  pModule->dos_image = lpDosTask->img;
-  if (err<32) {
+ if (!MZ_LoadImage( hFile, ofs, cmdline, env, lpDosTask, pModule )) {
+  if (alloc) {
    if (lpDosTask->mm_name[0]!=0) {
     if (lpDosTask->img!=NULL) munmap(lpDosTask->img,0x110000-START_OFFSET);
     if (lpDosTask->mm_fd>=0) close(lpDosTask->mm_fd);
     unlink(lpDosTask->mm_name);
    } else
     if (lpDosTask->img!=NULL) VirtualFree(lpDosTask->img,0x110000,MEM_RELEASE);
-   return err;
   }
-  err = MZ_InitTask( lpDosTask );
-  if (err<32) {
+  return FALSE;
+ }
+ if (alloc) {
+  pModule->dos_image = lpDosTask->img;
+  if (!MZ_InitTask( lpDosTask )) {
    MZ_KillModule( lpDosTask );
    /* FIXME: cleanup hModule */
-   return err;
+   SetLastError(ERROR_GEN_FAILURE);
+   return FALSE;
   }
-
-  hInstance = NE_CreateInstance(pModule, NULL, (cmdline == NULL));
-  PROCESS_Create( pModule, cmdline, env, hInstance, 0, inherit, startup, info );
-  return hInstance;
- } else {
-  return (err<32) ? err : pTask->hInstance;
+  if (!PROCESS_Create( pModule, cmdline, env, 0, 0, inherit, startup, info ))
+   return FALSE;
  }
+ return TRUE;
 }
 
 void MZ_KillModule( LPDOSTASK lpDosTask )
@@ -494,11 +491,13 @@ void MZ_KillModule( LPDOSTASK lpDosTask )
 
 #else /* !MZ_SUPPORTED */
 
-HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, BOOL inherit,
-                              LPSTARTUPINFOA startup, LPPROCESS_INFORMATION info )
+BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, 
+                       LPCSTR env, BOOL inherit, LPSTARTUPINFOA startup, 
+                       LPPROCESS_INFORMATION info )
 {
  WARN(module,"DOS executables not supported on this architecture\n");
- return (HMODULE16)11;  /* invalid exe */
+ SetLastError(ERROR_BAD_FORMAT);
+ return FALSE;
 }
 
 #endif

@@ -33,12 +33,12 @@ extern HRSRC PE_FindResourceExW(struct _wine_modref*,LPCWSTR,LPCWSTR,WORD);
 extern DWORD PE_SizeofResource(HMODULE,HRSRC);
 extern HMODULE PE_LoadLibraryExA(LPCSTR,HFILE,DWORD);
 extern HGLOBAL PE_LoadResource(struct _wine_modref *wm,HRSRC);
-extern HMODULE PE_LoadImage( LPCSTR name, OFSTRUCT *ofs, LPCSTR *modName );
+extern HMODULE PE_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR *modName );
 extern struct _wine_modref *PE_CreateModule( HMODULE hModule, OFSTRUCT *ofs, 
                                              DWORD flags, BOOL builtin );
-extern HINSTANCE16 PE_CreateProcess( LPCSTR name, LPCSTR cmd_line,
-                                     LPCSTR env, BOOL inherit, LPSTARTUPINFOA startup,
-                                     LPPROCESS_INFORMATION info );
+extern BOOL PE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line,
+                              LPCSTR env, BOOL inherit, LPSTARTUPINFOA startup,
+                              LPPROCESS_INFORMATION info );
 
 struct _THDB; /* forward definition */
 extern void PE_InitTls(struct _THDB*);

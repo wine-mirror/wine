@@ -30,10 +30,7 @@ typedef struct _DOSTASK {
 
 #define MZ_SUPPORTED
 
-struct _NE_MODULE;
-
-extern int MZ_InitTask( LPDOSTASK lpDosTask );
-extern int MZ_InitMemory( LPDOSTASK lpDosTask, struct _NE_MODULE *pModule );
+extern BOOL MZ_InitTask( LPDOSTASK lpDosTask );
 extern void MZ_KillModule( LPDOSTASK lpDosTask );
 extern LPDOSTASK MZ_AllocDPMITask( HMODULE16 hModule );
 
@@ -43,8 +40,9 @@ extern LPDOSTASK MZ_AllocDPMITask( HMODULE16 hModule );
 
 extern void MZ_Tick( WORD handle );
 
-extern HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, BOOL inherit,
-                                     LPSTARTUPINFOA startup, LPPROCESS_INFORMATION info );
+extern BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, 
+                              LPCSTR env, BOOL inherit, LPSTARTUPINFOA startup, 
+                              LPPROCESS_INFORMATION info );
 extern int DOSVM_Enter( PCONTEXT context );
 extern void DOSVM_SetTimer( unsigned ticks );
 extern unsigned DOSVM_GetTimer( void );

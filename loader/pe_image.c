@@ -43,6 +43,7 @@
 #include <sys/mman.h>
 #include "windef.h"
 #include "winbase.h"
+#include "winerror.h"
 #include "callback.h"
 #include "file.h"
 #include "heap.h"
@@ -452,10 +453,9 @@ static void do_relocations( unsigned int load_addr, IMAGE_BASE_RELOCATION *r )
  * BUT we have to map the whole image anyway, for Win32 programs sometimes
  * want to access them. (HMODULE32 point to the start of it)
  */
-HMODULE PE_LoadImage( LPCSTR name, OFSTRUCT *ofs, LPCSTR *modName )
+HMODULE PE_LoadImage( HFILE hFile, OFSTRUCT *ofs, LPCSTR *modName )
 {
     HMODULE	hModule;
-    HFILE	hFile;
     HANDLE	mapping;
 
     IMAGE_NT_HEADERS *nt;
@@ -464,20 +464,6 @@ HMODULE PE_LoadImage( LPCSTR name, OFSTRUCT *ofs, LPCSTR *modName )
     BY_HANDLE_FILE_INFORMATION bhfi;
     int	i, rawsize, lowest_va, lowest_fa, vma_size, file_size = 0;
     DWORD load_addr, aoep, reloc = 0;
-    char dllname[256], *p;
-
-    /* Append .DLL to name if no extension present */
-    strcpy( dllname, name );
-    if ((p = strrchr( dllname, '\\' ))) p++; else p = dllname;
-    if (!strchr( p, '.' )) strcat( dllname, ".DLL" ); 
-
-    /* Open PE file */
-    hFile = OpenFile( dllname, ofs, OF_READ | OF_SHARE_DENY_WRITE );
-    if ( hFile == HFILE_ERROR )
-    {
-        WARN( win32, "OpenFile error %ld\n", GetLastError() );
-        return 2;
-    }
 
     /* Retrieve file size */
     if ( GetFileInformationByHandle( hFile, &bhfi ) ) 
@@ -486,7 +472,6 @@ HMODULE PE_LoadImage( LPCSTR name, OFSTRUCT *ofs, LPCSTR *modName )
     /* Map the PE file somewhere */
     mapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY | SEC_COMMIT,
                                     0, 0, NULL );
-    CloseHandle( hFile );
     if (!mapping)
     {
         WARN( win32, "CreateFileMapping error %ld\n", GetLastError() );
@@ -810,26 +795,38 @@ HMODULE PE_LoadLibraryExA (LPCSTR name,
     HMODULE16	hModule16;
     NE_MODULE	*pModule;
     WINE_MODREF	*wm;
-    BOOL	builtin;
+    BOOL	builtin = TRUE;
+    char        dllname[256], *p;
 
     /* Check for already loaded module */
     if ((hModule32 = MODULE_FindModule( name ))) 
         return hModule32;
 
-    /* try to load builtin, enabled modules first */
-    if ((hModule32 = BUILTIN32_LoadImage( name, &ofs, FALSE )))
-        builtin = TRUE;
-    /* try to load the specified dll/exe */
-    else if ((hModule32 = PE_LoadImage( name, &ofs, &modName )) >= 32)
-        builtin = FALSE;
-    /* Now try the built-in even if disabled */
-    else if ((hModule32 = BUILTIN32_LoadImage( name, &ofs, TRUE ))) 
+    /* Append .DLL to name if no extension present */
+    strcpy( dllname, name );
+    if (!(p = strrchr( dllname, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
+        strcat( dllname, ".DLL" );
+
+    /* Try to load builtin enabled modules first */
+    if ( !(hModule32 = BUILTIN32_LoadImage( name, &ofs, FALSE )) )
     {
-        WARN( module, "Could not load external DLL '%s', using built-in module.\n", name );
-        builtin = TRUE;
+        /* Load PE module */
+
+        hFile = OpenFile( dllname, &ofs, OF_READ | OF_SHARE_DENY_WRITE );
+        if ( hFile != HFILE_ERROR )
+            if ( (hModule32 = PE_LoadImage( hFile, &ofs, &modName )) >= 32 )
+                builtin = FALSE;
+
+        CloseHandle( hFile );
     }
-    else
-        return 0;
+
+    /* Now try the built-in even if disabled */
+    if ( builtin )
+        if ( (hModule32 = BUILTIN32_LoadImage( name, &ofs, TRUE )) )
+            WARN( module, "Could not load external DLL '%s', using built-in module.\n", name );
+        else
+            return 0;
+
 
     /* Create 16-bit dummy module */
     if ((hModule16 = MODULE_CreateDummyModule( &ofs, modName )) < 32) return hModule16;
@@ -853,45 +850,52 @@ HMODULE PE_LoadLibraryExA (LPCSTR name,
 }
 
 /*****************************************************************************
- * Load the PE main .EXE. All other loading is done by PE_LoadLibraryEx32A
- * FIXME: this function should use PE_LoadLibraryEx32A, but currently can't
+ * Load the PE main .EXE. All other loading is done by PE_LoadLibraryExA
+ * FIXME: this function should use PE_LoadLibraryExA, but currently can't
  * due to the PROCESS_Create stuff.
  */
-HINSTANCE16 PE_CreateProcess( LPCSTR name, LPCSTR cmd_line,
-                              LPCSTR env, BOOL inherit, LPSTARTUPINFOA startup,
-                              LPPROCESS_INFORMATION info )
+BOOL PE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line,
+                       LPCSTR env, BOOL inherit, LPSTARTUPINFOA startup,
+                       LPPROCESS_INFORMATION info )
 {
     LPCSTR modName = NULL;
     HMODULE16 hModule16;
     HMODULE hModule32;
-    HINSTANCE16 hInstance;
     NE_MODULE *pModule;
-    OFSTRUCT ofs;
-    PDB *process;
 
     /* Load file */
-    if ((hModule32 = PE_LoadImage( name, &ofs, &modName )) < 32)
-        return hModule32;
+    if ( (hModule32 = PE_LoadImage( hFile, ofs, &modName )) < 32 )
+    {
+        SetLastError( hModule32 );
+        return FALSE;
+    }
 #if 0
     if (PE_HEADER(hModule32)->FileHeader.Characteristics & IMAGE_FILE_DLL)
-        return 20;  /* FIXME: not the right error code */
+    {
+        SetLastError( 20 );  /* FIXME: not the right error code */
+        return FALSE;
+    }
 #endif
 
     /* Create 16-bit dummy module */
-    if ((hModule16 = MODULE_CreateDummyModule( &ofs, modName )) < 32) return hModule16;
+    if ( (hModule16 = MODULE_CreateDummyModule( ofs, modName )) < 32 ) 
+    {
+        SetLastError( hModule16 );
+        return FALSE;
+    }
     pModule = (NE_MODULE *)GlobalLock16( hModule16 );
     pModule->flags    = NE_FFLAGS_WIN32;
     pModule->module32 = hModule32;
 
     /* Create new process */
-    hInstance = NE_CreateInstance( pModule, NULL, FALSE );
-    process = PROCESS_Create( pModule, cmd_line, env,
-                              hInstance, 0, inherit, startup, info );
+    if ( !PROCESS_Create( pModule, cmd_line, env,
+                          0, 0, inherit, startup, info ) )
+        return FALSE;
 
     /* Note: PE_CreateModule and the remaining process initialization will
              be done in the context of the new process, in TASK_CallToStart */
 
-    return hInstance;
+    return TRUE;
 }
 
 /*********************************************************************

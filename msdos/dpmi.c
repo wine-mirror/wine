@@ -14,7 +14,8 @@
 #include "miscemu.h"
 #include "msdos.h"
 #include "task.h"
-#include "thread.h"
+#include "thread.h"	/* for !MZ_SUPPORTED */
+#include "stackframe.h"	/* for !MZ_SUPPORTED */
 #include "toolhelp.h"
 #include "selectors.h"
 #include "process.h"
@@ -293,7 +294,7 @@ callrmproc_again:
     if (!(CurrRMCB || pModule->lpDosTask)) {
         FIXME(int31,"DPMI real-mode call using DOS VM task system, not fully tested!\n");
         TRACE(int31,"creating VM86 task\n");
-        if (MZ_InitTask( MZ_AllocDPMITask( pModule->self ) ) < 32) {
+        if (!MZ_InitTask( MZ_AllocDPMITask( pModule->self ) )) {
             ERR(int31,"could not setup VM86 task\n");
             return 1;
         }

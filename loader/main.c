@@ -267,7 +267,6 @@ HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
     NE_MODULE *pModule;
     OFSTRUCT ofs;
     HMODULE16 hModule;
-    HINSTANCE16 hInstance;
 
     /* Create the initial process */
     if (!PROCESS_Init()) return 0;
@@ -292,9 +291,7 @@ HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
     pModule->flags = NE_FFLAGS_WIN32;
     pModule->module32 = wm->module;
 
-    hInstance = NE_CreateInstance( pModule, NULL, TRUE );
-    PROCESS_Current()->task = TASK_Create( THREAD_Current(), pModule, hInstance, 0, FALSE );
-
+    if (!TASK_Create( THREAD_Current(), pModule, 0, 0, FALSE )) return 0;
     TASK_StartTask( PROCESS_Current()->task );
 
     /* Initialize GDI and USER */

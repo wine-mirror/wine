@@ -119,7 +119,6 @@ void MAIN_EmulatorRun( void )
 int main( int argc, char *argv[] )
 {
     NE_MODULE *pModule;
-    HINSTANCE16 hInstance;
     extern char * DEBUG_argv0;
 
     __winelib = 0;  /* First of all, clear the Winelib flag */
@@ -166,8 +165,7 @@ int main( int argc, char *argv[] )
 
     /* Create initial task */
     if ( !(pModule = NE_GetPtr( GetModuleHandle16( "KERNEL32" ) )) ) return 1;
-    hInstance = NE_CreateInstance( pModule, NULL, TRUE );
-    PROCESS_Current()->task = TASK_Create( THREAD_Current(), pModule, hInstance, 0, FALSE );
+    if ( !TASK_Create( THREAD_Current(), pModule, 0, 0, FALSE ) ) return 1;
 
     /* Initialize CALL32 routines */
     /* This needs to be done just before switching stacks */
