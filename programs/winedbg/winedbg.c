@@ -252,17 +252,23 @@ BOOL DEBUG_ProcessGetString(char* buffer, int size, HANDLE hp, LPSTR addr)
     return (addr && ReadProcessMemory(hp, addr, buffer, size, &sz));
 }
 
-BOOL DEBUG_ProcessGetStringIndirect(char* buffer, int size, HANDLE hp, LPVOID addr)
+BOOL DEBUG_ProcessGetStringIndirect(char* buffer, int size, HANDLE hp, LPVOID addr, BOOL unicode)
 {
     LPVOID	ad;
     DWORD	sz;
 
-    if (   addr
-	&& ReadProcessMemory(hp, addr, &ad, sizeof(ad), &sz)
-	&& sz == sizeof(ad)
-        && ad
-        && ReadProcessMemory(hp, ad, buffer, size, &sz))
+    if (addr && ReadProcessMemory(hp, addr, &ad, sizeof(ad), &sz) && sz == sizeof(ad) && ad)
+    {
+        if (!unicode) ReadProcessMemory(hp, ad, buffer, size, &sz);
+        else
+        {
+            WCHAR *buffW = DBG_alloc( size * sizeof(WCHAR) );
+            ReadProcessMemory(hp, ad, buffW, size*sizeof(WCHAR), &sz);
+            WideCharToMultiByte( CP_ACP, 0, buffW, sz/sizeof(WCHAR), buffer, size, NULL, NULL );
+            DBG_free(buffW);
+        }
 	return TRUE;
+    }
     *(WCHAR*)buffer = 0;
     return FALSE;
 }
@@ -742,9 +748,9 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
     case CREATE_PROCESS_DEBUG_EVENT:
         DEBUG_ProcessGetStringIndirect(buffer, sizeof(buffer),
                                        de->u.CreateProcessInfo.hProcess,
-                                       de->u.CreateProcessInfo.lpImageName);
+                                       de->u.CreateProcessInfo.lpImageName,
+                                       de->u.CreateProcessInfo.fUnicode);
 
-        /* FIXME unicode ? de->u.CreateProcessInfo.fUnicode */
         DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: create process '%s'/%p @%08lx (%ld<%ld>)\n",
                      de->dwProcessId, de->dwThreadId,
                      buffer, de->u.CreateProcessInfo.lpImageName,
@@ -834,9 +840,9 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
         }
         DEBUG_ProcessGetStringIndirect(buffer, sizeof(buffer),
                                        DEBUG_CurrThread->process->handle,
-                                       de->u.LoadDll.lpImageName);
+                                       de->u.LoadDll.lpImageName,
+                                       de->u.LoadDll.fUnicode);
 
-        /* FIXME unicode: de->u.LoadDll.fUnicode */
         DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: loads DLL %s @%08lx (%ld<%ld>)\n",
                      de->dwProcessId, de->dwThreadId,
                      buffer, (unsigned long)de->u.LoadDll.lpBaseOfDll,

@@ -456,7 +456,7 @@ static void dump_init_process_done_request( const struct init_process_done_reque
     fprintf( stderr, " exe_file=%p,", req->exe_file );
     fprintf( stderr, " gui=%d,", req->gui );
     fprintf( stderr, " filename=" );
-    dump_varargs_string( cur_size );
+    dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_init_process_done_reply( const struct init_process_done_reply *req )
@@ -565,7 +565,7 @@ static void dump_get_dll_info_reply( const struct get_dll_info_reply *req )
     fprintf( stderr, " size=%d,", req->size );
     fprintf( stderr, " entry_point=%p,", req->entry_point );
     fprintf( stderr, " filename=" );
-    dump_varargs_string( cur_size );
+    dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_suspend_thread_request( const struct suspend_thread_request *req )
@@ -597,7 +597,7 @@ static void dump_load_dll_request( const struct load_dll_request *req )
     fprintf( stderr, " dbg_size=%d,", req->dbg_size );
     fprintf( stderr, " name=%p,", req->name );
     fprintf( stderr, " filename=" );
-    dump_varargs_string( cur_size );
+    dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_unload_dll_request( const struct unload_dll_request *req )
@@ -1374,7 +1374,7 @@ static void dump_next_process_reply( const struct next_process_reply *req )
     fprintf( stderr, " priority=%d,", req->priority );
     fprintf( stderr, " handles=%d,", req->handles );
     fprintf( stderr, " filename=" );
-    dump_varargs_string( cur_size );
+    dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_next_thread_request( const struct next_thread_request *req )
@@ -1404,7 +1404,7 @@ static void dump_next_module_reply( const struct next_module_reply *req )
     fprintf( stderr, " base=%p,", req->base );
     fprintf( stderr, " size=%d,", req->size );
     fprintf( stderr, " filename=" );
-    dump_varargs_string( cur_size );
+    dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_wait_debug_event_request( const struct wait_debug_event_request *req )

@@ -279,7 +279,7 @@ typedef struct
     void*        name;         /* ptr to ptr to name (in process addr space) */
     obj_handle_t exe_file;     /* file handle for main exe */
     int          gui;          /* is it a GUI process? */
-    VARARG(filename,string);   /* file name of main exe */
+    VARARG(filename,unicode_str); /* file name of main exe */
 @REPLY
     int          debugged;     /* being debugged? */
 @END
@@ -378,7 +378,7 @@ typedef struct
 @REPLY
     size_t       size;          /* module size */
     void*        entry_point;
-    VARARG(filename,string);    /* file name of module */
+    VARARG(filename,unicode_str); /* file name of module */
 @END
 
 
@@ -406,7 +406,7 @@ typedef struct
     int          dbg_offset;   /* debug info offset */
     int          dbg_size;     /* debug info size */
     void*        name;         /* ptr to ptr to name (in process addr space) */
-    VARARG(filename,string);   /* file name of dll */
+    VARARG(filename,unicode_str); /* file name of dll */
 @END
 
 
@@ -1176,7 +1176,7 @@ enum char_info_mode
     int          threads;       /* number of threads */
     int          priority;      /* process priority */
     int          handles;       /* number of handles */
-    VARARG(filename,string);    /* file name of main exe */
+    VARARG(filename,unicode_str); /* file name of main exe */
 @END
 
 
@@ -1201,7 +1201,7 @@ enum char_info_mode
     process_id_t pid;           /* process id */
     void*        base;          /* module base address */
     size_t       size;          /* module size */
-    VARARG(filename,string);    /* file name of module */
+    VARARG(filename,unicode_str); /* file name of module */
 @END
 
 

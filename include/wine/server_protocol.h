@@ -296,7 +296,7 @@ struct init_process_done_request
     void*        name;
     obj_handle_t exe_file;
     int          gui;
-    /* VARARG(filename,string); */
+    /* VARARG(filename,unicode_str); */
 };
 struct init_process_done_reply
 {
@@ -440,7 +440,7 @@ struct get_dll_info_reply
     struct reply_header __header;
     size_t       size;
     void*        entry_point;
-    /* VARARG(filename,string); */
+    /* VARARG(filename,unicode_str); */
 };
 
 
@@ -480,7 +480,7 @@ struct load_dll_request
     int          dbg_offset;
     int          dbg_size;
     void*        name;
-    /* VARARG(filename,string); */
+    /* VARARG(filename,unicode_str); */
 };
 struct load_dll_reply
 {
@@ -1593,7 +1593,7 @@ struct next_process_reply
     int          threads;
     int          priority;
     int          handles;
-    /* VARARG(filename,string); */
+    /* VARARG(filename,unicode_str); */
 };
 
 
@@ -1628,7 +1628,7 @@ struct next_module_reply
     process_id_t pid;
     void*        base;
     size_t       size;
-    /* VARARG(filename,string); */
+    /* VARARG(filename,unicode_str); */
 };
 
 
@@ -3665,6 +3665,6 @@ union generic_reply
     struct open_token_reply open_token_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 121
+#define SERVER_PROTOCOL_VERSION 122
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

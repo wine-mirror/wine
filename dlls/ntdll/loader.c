@@ -68,12 +68,9 @@ static const WCHAR dllW[] = {'.','d','l','l',0};
 /* internal representation of 32bit modules. per process. */
 struct _wine_modref
 {
-    void                 *dlhandle;  /* handle returned by dlopen() */
     LDR_MODULE            ldr;
     int                   nDeps;
     struct _wine_modref **deps;
-    char                 *filename;
-    char                  data[1];  /* space for storing filename and modname */
 };
 
 static UINT tls_module_count;      /* number of modules with TLS directory */
@@ -459,12 +456,8 @@ static WINE_MODREF *alloc_module( HMODULE hModule, LPCWSTR filename )
     if (!(wm = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*wm) + len )))
         return NULL;
 
-    wm->dlhandle = NULL;
     wm->nDeps    = 0;
     wm->deps     = NULL;
-    wm->filename = (char *)(wm + 1);
-    RtlUnicodeToMultiByteN( wm->filename, len, NULL,
-                            filename, (strlenW(filename) + 1) * sizeof(WCHAR) );
 
     wm->ldr.BaseAddress   = hModule;
     wm->ldr.EntryPoint    = (nt->OptionalHeader.AddressOfEntryPoint) ?
@@ -519,26 +512,6 @@ static WINE_MODREF *alloc_module( HMODULE hModule, LPCWSTR filename )
     /* wait until init is called for inserting into this list */
     wm->ldr.InInitializationOrderModuleList.Flink = NULL;
     wm->ldr.InInitializationOrderModuleList.Blink = NULL;
-    return wm;
-}
-
-
-/*************************************************************************
- *		MODULE_AllocModRef
- *
- * Allocate a WINE_MODREF structure and add it to the process list
- * The loader_section must be locked while calling this function.
- *
- * FIXME: should be removed.
- */
-WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename )
-{
-    WINE_MODREF *wm;
-    UNICODE_STRING strW;
-
-    RtlCreateUnicodeStringFromAsciiz( &strW, filename );
-    wm = alloc_module( hModule, strW.Buffer );
-    RtlFreeUnicodeString( &strW );
     return wm;
 }
 
@@ -739,12 +712,13 @@ NTSTATUS MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
 
     if (!wm)
     {
-        PLIST_ENTRY mark;
-
-        mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
-        wm = CONTAINING_RECORD(CONTAINING_RECORD(mark->Flink, 
-                                                 LDR_MODULE, InLoadOrderModuleList),
-                               WINE_MODREF, ldr);
+        /* allocate the modref for the main exe */
+        if (!(wm = alloc_module( NtCurrentTeb()->Peb->ImageBaseAddress,
+                                 NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer )))
+        {
+            status = STATUS_NO_MEMORY;
+            goto done;
+        }
         wm->ldr.LoadCount = -1;  /* can't unload main exe */
         if ((status = fixup_imports( wm )) != STATUS_SUCCESS) goto done;
         if ((status = alloc_process_tls()) != STATUS_SUCCESS) goto done;
@@ -1124,8 +1098,8 @@ static void load_builtin_callback( void *module, const char *filename )
         req->size       = nt->OptionalHeader.SizeOfImage;
         req->dbg_offset = nt->FileHeader.PointerToSymbolTable;
         req->dbg_size   = nt->FileHeader.NumberOfSymbols;
-        req->name       = &wm->filename;
-        wine_server_add_data( req, wm->filename, strlen(wm->filename) );
+        req->name       = &wm->ldr.FullDllName.Buffer;
+        wine_server_add_data( req, wm->ldr.FullDllName.Buffer, wm->ldr.FullDllName.Length );
         wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -1251,10 +1225,10 @@ static NTSTATUS load_native_dll( LPCWSTR name, DWORD flags, WINE_MODREF** pwm )
         req->size       = nt->OptionalHeader.SizeOfImage;
         req->dbg_offset = nt->FileHeader.PointerToSymbolTable;
         req->dbg_size   = nt->FileHeader.NumberOfSymbols;
-        req->name       = &wm->filename;
+        req->name       = &wm->ldr.FullDllName.Buffer;
         /* don't keep the file handle open on removable media */
         if (drive_type == DRIVE_REMOVABLE || drive_type == DRIVE_CDROM) req->handle = 0;
-        wine_server_add_data( req, wm->filename, strlen(wm->filename) );
+        wine_server_add_data( req, wm->ldr.FullDllName.Buffer, wm->ldr.FullDllName.Length );
         wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -1381,7 +1355,7 @@ static NTSTATUS load_builtin_dll( LPCWSTR path, DWORD flags, WINE_MODREF** pwm )
         /* wine_dll_unload( handle );*/
         return STATUS_INVALID_IMAGE_FORMAT;
     }
-    wm->dlhandle = handle;
+    wm->ldr.SectionHandle = handle;
     *pwm = wm;
     return STATUS_SUCCESS;
 }
@@ -1714,7 +1688,7 @@ static void MODULE_FlushModrefs(void)
         if (!TRACE_ON(module))
             TRACE_(loaddll)("Unloaded module %s : %s\n",
                             debugstr_w(mod->FullDllName.Buffer),
-                            wm->dlhandle ? "builtin" : "native" );
+                            (wm->ldr.Flags & LDR_WINE_INTERNAL) ? "builtin" : "native" );
 
         SERVER_START_REQ( unload_dll )
         {
@@ -1723,7 +1697,7 @@ static void MODULE_FlushModrefs(void)
         }
         SERVER_END_REQ;
 
-        if (wm->dlhandle) wine_dll_unload( wm->dlhandle );
+        if (wm->ldr.Flags & LDR_WINE_INTERNAL) wine_dll_unload( wm->ldr.SectionHandle );
         else NtUnmapViewOfSection( GetCurrentProcess(), mod->BaseAddress );
         if (cached_modref == wm) cached_modref = NULL;
         RtlFreeUnicodeString( &mod->FullDllName );

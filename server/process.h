@@ -44,7 +44,7 @@ struct process_dll
     int                  dbg_offset;      /* debug info offset */
     int                  dbg_size;        /* debug info size */
     size_t               namelen;         /* length of dll file name */
-    char                *filename;        /* dll file name */
+    WCHAR               *filename;        /* dll file name */
 };
 
 struct process
@@ -94,7 +94,7 @@ struct module_snapshot
     void           *base;     /* module base addr */
     size_t          size;     /* module size */
     size_t          namelen;  /* length of file name */
-    char           *filename; /* module file name */
+    WCHAR          *filename; /* module file name */
 };
 
 /* process functions */

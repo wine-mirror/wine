@@ -300,6 +300,8 @@ BOOL WINAPI Thread32Next(HANDLE hSnapshot, LPTHREADENTRY32 lpte)
 static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY32 lppe, BOOL first )
 {
     BOOL ret;
+    WCHAR exe[MAX_PATH];
+    DWORD len;
 
     if (lppe->dwSize < sizeof(PROCESSENTRY32))
     {
@@ -311,18 +313,20 @@ static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY32 lppe, BOOL f
     {
         req->handle = handle;
         req->reset = first;
-        wine_server_set_reply( req, lppe->szExeFile, sizeof(lppe->szExeFile)-1 );
+        wine_server_set_reply( req, exe, sizeof(exe) );
         if ((ret = !wine_server_call_err( req )))
         {
             lppe->cntUsage            = reply->count;
-            lppe->th32ProcessID       = (DWORD)reply->pid;
+            lppe->th32ProcessID       = reply->pid;
             lppe->th32DefaultHeapID   = (DWORD)reply->heap;
             lppe->th32ModuleID        = (DWORD)reply->module;
             lppe->cntThreads          = reply->threads;
-            lppe->th32ParentProcessID = (DWORD)reply->ppid;
+            lppe->th32ParentProcessID = reply->ppid;
             lppe->pcPriClassBase      = reply->priority;
             lppe->dwFlags             = -1; /* FIXME */
-            lppe->szExeFile[wine_server_reply_size(reply)] = 0;
+            len = WideCharToMultiByte( CP_ACP, 0, exe, wine_server_reply_size(reply) / sizeof(WCHAR),
+                                       lppe->szExeFile, sizeof(lppe->szExeFile), NULL, NULL );
+            lppe->szExeFile[len] = 0;
         }
     }
     SERVER_END_REQ;
@@ -359,6 +363,8 @@ BOOL WINAPI Process32Next(HANDLE hSnapshot, LPPROCESSENTRY32 lppe)
 static BOOL TOOLHELP_Module32Next( HANDLE handle, LPMODULEENTRY32 lpme, BOOL first )
 {
     BOOL ret;
+    WCHAR exe[MAX_PATH];
+    DWORD len;
 
     if (lpme->dwSize < sizeof (MODULEENTRY32))
     {
@@ -370,18 +376,20 @@ static BOOL TOOLHELP_Module32Next( HANDLE handle, LPMODULEENTRY32 lpme, BOOL fir
     {
         req->handle = handle;
         req->reset = first;
-        wine_server_set_reply( req, lpme->szExePath, sizeof(lpme->szExePath)-1 );
+        wine_server_set_reply( req, exe, sizeof(exe) );
         if ((ret = !wine_server_call_err( req )))
         {
             lpme->th32ModuleID   = 0;  /* toolhelp internal id, never used */
-            lpme->th32ProcessID  = (DWORD)reply->pid;
+            lpme->th32ProcessID  = reply->pid;
             lpme->GlblcntUsage   = 0; /* FIXME */
             lpme->ProccntUsage   = 0; /* FIXME */
             lpme->modBaseAddr    = reply->base;
             lpme->modBaseSize    = reply->size;
-            lpme->hModule        = (HMODULE)reply->base;
+            lpme->hModule        = reply->base;
             lpme->szModule[0]    = 0;  /* FIXME */
-            lpme->szExePath[wine_server_reply_size(reply)] = 0;
+            len = WideCharToMultiByte( CP_ACP, 0, exe, wine_server_reply_size(reply) / sizeof(WCHAR),
+                                       lpme->szExePath, sizeof(lpme->szExePath), NULL, NULL );
+            lpme->szExePath[len] = 0;
         }
     }
     SERVER_END_REQ;

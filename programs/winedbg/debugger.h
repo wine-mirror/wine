@@ -539,7 +539,7 @@ extern DBG_THREAD*	DEBUG_AddThread(DBG_PROCESS* p, DWORD tid, HANDLE h, LPVOID s
 extern DBG_THREAD* 	DEBUG_GetThread(DBG_PROCESS* p, DWORD tid);
 extern void             DEBUG_DelThread(DBG_THREAD* t);
 extern BOOL             DEBUG_ProcessGetString(char* buffer, int size, HANDLE hp, LPSTR addr);
-extern BOOL             DEBUG_ProcessGetStringIndirect(char* buffer, int size, HANDLE hp, LPVOID addr);
+extern BOOL             DEBUG_ProcessGetStringIndirect(char* buffer, int size, HANDLE hp, LPVOID addr, BOOL unicode);
 extern void             DEBUG_WaitNextException(DWORD cont, int count, int mode);
 extern BOOL             DEBUG_InterruptDebuggee(void);
 extern int curr_frame;

@@ -399,7 +399,7 @@ static void init_unicode( UNICODE_STRING* us, const char** src, size_t len)
  *
  * Fill the RTL_USER_PROCESS_PARAMETERS structure from the server.
  */
-BOOL init_user_process_pmts( size_t info_size, char *main_exe_name, size_t main_exe_size )
+BOOL init_user_process_pmts( size_t info_size )
 {
     startup_info_t info;
     void *data;
@@ -435,11 +435,6 @@ BOOL init_user_process_pmts( size_t info_size, char *main_exe_name, size_t main_
     if (info.desktop_len > info_size) info.desktop_len = info_size;
     info_size -= info.desktop_len;
     if (info.title_len > info_size) info.title_len = info_size;
-
-    /* store the filename */
-    len = min( info.filename_len, main_exe_size-1 );
-    memcpy( main_exe_name, src, len );
-    main_exe_name[len] = 0;
 
     rupp = NtCurrentTeb()->Peb->ProcessParameters;
 

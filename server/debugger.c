@@ -152,7 +152,7 @@ static int fill_create_process_event( struct debug_event *event, void *arg )
     event->data.info.create_process.dbg_offset = process->exe.dbg_offset;
     event->data.info.create_process.dbg_size   = process->exe.dbg_size;
     event->data.info.create_process.name       = process->exe.name;
-    event->data.info.create_process.unicode    = 0;
+    event->data.info.create_process.unicode    = 1;
     return 1;
 }
 
@@ -183,7 +183,7 @@ static int fill_load_dll_event( struct debug_event *event, void *arg )
     event->data.info.load_dll.dbg_offset = dll->dbg_offset;
     event->data.info.load_dll.dbg_size   = dll->dbg_size;
     event->data.info.load_dll.name       = dll->name;
-    event->data.info.load_dll.unicode    = 0;
+    event->data.info.load_dll.unicode    = 1;
     return 1;
 }
 

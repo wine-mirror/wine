@@ -493,7 +493,7 @@ struct process *get_process_from_handle( obj_handle_t handle, unsigned int acces
 
 /* add a dll to a process list */
 static struct process_dll *process_load_dll( struct process *process, struct file *file,
-                                             void *base, const char *filename, size_t name_len )
+                                             void *base, const WCHAR *filename, size_t name_len )
 {
     struct process_dll *dll;
 

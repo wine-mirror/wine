@@ -94,7 +94,6 @@ BOOL WINAPI EnumProcesses(DWORD *lpidProcess, DWORD cb, DWORD *lpcbNeeded)
         {
             req->handle = hSnapshot;
             req->reset = (count == 0);
-            wine_server_set_reply( req, NULL, 0);
             if ((ret = !wine_server_call_err( req )))
                 pid = reply->pid;
         }
@@ -174,7 +173,6 @@ BOOL WINAPI EnumProcessModules(HANDLE hProcess, HMODULE *lphModule,
         {
             req->handle = hSnapshot;
             req->reset = (count == 0);
-            wine_server_set_reply( req, NULL, 0 );
             if ((ret = !wine_server_call_err( req )))
             {
                 hModule = (HMODULE)reply->base;
@@ -342,7 +340,7 @@ DWORD WINAPI GetModuleBaseNameW(HANDLE hProcess, HMODULE hModule,
 DWORD WINAPI GetModuleFileNameExA(HANDLE hProcess, HMODULE hModule, 
                                   LPSTR lpFileName, DWORD nSize)
 {
-    DWORD	len = 0;
+    WCHAR *ptr;
 
     TRACE("(hProcess=%p, hModule=%p, %p, %ld)\n",
           hProcess, hModule, lpFileName, nSize);
@@ -352,24 +350,20 @@ DWORD WINAPI GetModuleFileNameExA(HANDLE hProcess, HMODULE hModule,
     if ( hProcess == GetCurrentProcess() )
         return GetModuleFileNameA( hModule, lpFileName, nSize );
 
-    lpFileName[0] = 0;
+    if (!(ptr = HeapAlloc(GetProcessHeap(), 0, nSize * sizeof(WCHAR)))) return 0;
 
-    SERVER_START_REQ( get_dll_info )
+    if (!GetModuleFileNameExW(hProcess, hModule, ptr, nSize))
     {
-        req->handle       = hProcess;
-        req->base_address = (void*)hModule;
-        wine_server_set_reply( req, lpFileName, nSize - 1);
-        if (!wine_server_call_err( req ))
-        {
-            len = wine_server_reply_size(reply);
-            lpFileName[len] = 0;
-        }
+        lpFileName[0] = '\0';
     }
-    SERVER_END_REQ;
+    else
+    {
+        if (!WideCharToMultiByte( CP_ACP, 0, ptr, -1, lpFileName, nSize, NULL, NULL ))
+            lpFileName[nSize - 1] = 0;
+    }
 
-    TRACE("return %s (%lu)\n", lpFileName, len);
-
-    return len;
+    HeapFree(GetProcessHeap(), 0, ptr);
+    return strlen(lpFileName);
 }
 
 /***********************************************************************
@@ -378,10 +372,9 @@ DWORD WINAPI GetModuleFileNameExA(HANDLE hProcess, HMODULE hModule,
 DWORD WINAPI GetModuleFileNameExW(HANDLE hProcess, HMODULE hModule, 
                                   LPWSTR lpFileName, DWORD nSize)
 {
-    char*       ptr;
-    DWORD       len;
+    DWORD len = 0;
 
-    TRACE("(hProcess=%p,hModule=%p, %p, %ld)\n",
+    TRACE("(hProcess=%p, hModule=%p, %p, %ld)\n",
           hProcess, hModule, lpFileName, nSize);
 
     if (!lpFileName || !nSize) return 0;
@@ -389,21 +382,23 @@ DWORD WINAPI GetModuleFileNameExW(HANDLE hProcess, HMODULE hModule,
     if ( hProcess == GetCurrentProcess() )
         return GetModuleFileNameW( hModule, lpFileName, nSize );
 
-    ptr = HeapAlloc(GetProcessHeap(), 0, nSize / 2);
-    if (!ptr) return 0;
+    lpFileName[0] = 0;
 
-    len = GetModuleFileNameExA(hProcess, hModule, ptr, nSize / 2);
-    if (len == 0)
+    SERVER_START_REQ( get_dll_info )
     {
-        lpFileName[0] = '\0';
+        req->handle       = hProcess;
+        req->base_address = hModule;
+        wine_server_set_reply( req, lpFileName, (nSize - 1) * sizeof(WCHAR) );
+        if (!wine_server_call_err( req ))
+        {
+            len = wine_server_reply_size(reply) / sizeof(WCHAR);
+            lpFileName[len] = 0;
+        }
     }
-    else
-    {
-        if (!MultiByteToWideChar( CP_ACP, 0, ptr, -1, lpFileName, nSize / 2 ))
-            lpFileName[nSize / 2 - 1] = 0;
-    }
+    SERVER_END_REQ;
 
-    HeapFree(GetProcessHeap(), 0, ptr);
+    TRACE("return %s (%lu)\n", debugstr_w(lpFileName), len);
+
     return len;
 }
 

@@ -101,8 +101,6 @@ PDB current_process;
 static RTL_USER_PROCESS_PARAMETERS      process_pmts;
 static PEB_LDR_DATA                     process_ldr;
 
-static char main_exe_name[MAX_PATH];
-static char *main_exe_name_ptr = main_exe_name;
 static HANDLE main_exe_file;
 static DWORD shutdown_flags = 0;
 static DWORD shutdown_priority = 0x280;
@@ -121,10 +119,8 @@ int main_create_flags = 0;
 #define PDB32_WIN32S_PROC   0x8000  /* Win32s process */
 
 /* dlls/ntdll/env.c */
-extern BOOL init_user_process_pmts( size_t, char*, size_t );
+extern BOOL init_user_process_pmts( size_t );
 extern BOOL build_command_line( char **argv );
-
-extern WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename );  /* FIXME */
 
 extern void RELAY_InitDebugLists(void);
 extern void SHELL_LoadRegistry(void);
@@ -407,8 +403,7 @@ static BOOL process_init( char *argv[] )
     }
 
     /* Copy the parent environment */
-    if (!init_user_process_pmts( info_size, main_exe_name, sizeof(main_exe_name) ))
-        return FALSE;
+    if (!init_user_process_pmts( info_size )) return FALSE;
 
     /* Parse command line arguments */
     OPTIONS_ParseOptions( !info_size ? argv : NULL );
@@ -458,12 +453,12 @@ static void start_process( void *arg )
         LPTHREAD_START_ROUTINE entry;
         HANDLE main_file = main_exe_file;
         IMAGE_NT_HEADERS *nt;
-        WINE_MODREF *wm;
         PEB *peb = NtCurrentTeb()->Peb;
+        UNICODE_STRING *main_exe_name = &peb->ProcessParameters->ImagePathName;
 
         if (main_file)
         {
-            UINT drive_type = GetDriveTypeA( main_exe_name );
+            UINT drive_type = GetDriveTypeW( main_exe_name->Buffer );
             /* don't keep the file handle open on removable media */
             if (drive_type == DRIVE_REMOVABLE || drive_type == DRIVE_CDROM) main_file = 0;
         }
@@ -488,17 +483,16 @@ static void start_process( void *arg )
             req->module_size = nt->OptionalHeader.SizeOfImage;
             req->entry       = entry;
             /* API requires a double indirection */
-            req->name        = &main_exe_name_ptr;
+            req->name        = &main_exe_name->Buffer;
             req->exe_file    = main_file;
             req->gui         = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
-            wine_server_add_data( req, main_exe_name, strlen(main_exe_name) );
+            wine_server_add_data( req, main_exe_name->Buffer, main_exe_name->Length );
             wine_server_call( req );
             peb->BeingDebugged = reply->debugged;
         }
         SERVER_END_REQ;
 
         /* create the main modref and load dependencies */
-        if (!(wm = MODULE_AllocModRef( peb->ImageBaseAddress, main_exe_name ))) goto error;
         if (main_exe_file) CloseHandle( main_exe_file ); /* we no longer need it */
         if (MODULE_DllProcessAttach( NULL, (LPVOID)1 ) != STATUS_SUCCESS)
         {
@@ -508,7 +502,7 @@ static void start_process( void *arg )
 
         if (TRACE_ON(relay))
             DPRINTF( "%04lx:Starting process %s (entryproc=%p)\n",
-                     GetCurrentThreadId(), main_exe_name, entry );
+                     GetCurrentThreadId(), debugstr_w(main_exe_name->Buffer), entry );
         if (peb->BeingDebugged) DbgBreakPoint();
         SetLastError(0);  /* clear error code */
         ExitThread( entry( NtCurrentTeb()->Peb ) );
@@ -531,6 +525,7 @@ static void start_process( void *arg )
  */
 void __wine_process_init( int argc, char *argv[] )
 {
+    char main_exe_name[MAX_PATH];
     char error[1024], *p;
     DWORD stack_size = 0;
     int file_exists;
@@ -540,10 +535,12 @@ void __wine_process_init( int argc, char *argv[] )
 
     argv++;  /* remove argv[0] (wine itself) */
 
-    TRACE( "starting process name=%s file=%p argv[0]=%s\n",
-           debugstr_a(main_exe_name), main_exe_file, debugstr_a(argv[0]) );
-
-    if (!main_exe_name[0])
+    if (process_pmts.ImagePathName.Buffer)
+    {
+        WideCharToMultiByte( CP_ACP, 0, process_pmts.ImagePathName.Buffer, -1,
+                             main_exe_name, sizeof(main_exe_name), NULL, NULL );
+    }
+    else
     {
         if (!argv[0]) OPTIONS_Usage();
 
@@ -557,7 +554,12 @@ void __wine_process_init( int argc, char *argv[] )
             MESSAGE( "%s: cannot open '%s'\n", argv0, main_exe_name );
             ExitProcess(1);
         }
+        RtlCreateUnicodeStringFromAsciiz( &NtCurrentTeb()->Peb->ProcessParameters->ImagePathName,
+                                          main_exe_name );
     }
+
+    TRACE( "starting process name=%s file=%p argv[0]=%s\n",
+           debugstr_a(main_exe_name), main_exe_file, debugstr_a(argv[0]) );
 
     if (!main_exe_file)  /* no file handle -> Winelib app */
     {

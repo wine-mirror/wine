@@ -593,7 +593,8 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
     case CREATE_PROCESS_DEBUG_EVENT:
         DEBUG_ProcessGetStringIndirect(buffer, sizeof(buffer),
                                        de->u.CreateProcessInfo.hProcess,
-                                       de->u.CreateProcessInfo.lpImageName);
+                                       de->u.CreateProcessInfo.lpImageName,
+                                       de->u.CreateProcessInfo.fUnicode);
 
         /* FIXME unicode ? de->u.CreateProcessInfo.fUnicode */
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
@@ -648,7 +649,8 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
         assert(DEBUG_CurrThread);
         DEBUG_ProcessGetStringIndirect(buffer, sizeof(buffer),
                                        gdbctx->process->handle,
-                                       de->u.LoadDll.lpImageName);
+                                       de->u.LoadDll.lpImageName,
+                                       de->u.LoadDll.fUnicode);
 
         /* FIXME unicode: de->u.LoadDll.fUnicode */
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)

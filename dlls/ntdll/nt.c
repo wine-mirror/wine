@@ -511,8 +511,8 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             SYSTEM_PROCESS_INFORMATION* spi = (SYSTEM_PROCESS_INFORMATION*)SystemInformation;
             SYSTEM_PROCESS_INFORMATION* last = NULL;
             HANDLE hSnap = 0;
-            char procname[1024];
-            DWORD wlen;
+            WCHAR procname[1024];
+            DWORD wlen = 0;
 
             SERVER_START_REQ( create_snapshot )
             {
@@ -529,10 +529,10 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                 {
                     req->handle = hSnap;
                     req->reset = (len == 0);
-                    wine_server_set_reply( req, procname, sizeof(procname)-1 );
+                    wine_server_set_reply( req, procname, sizeof(procname) );
                     if (!(ret = wine_server_call( req )))
                     {
-                        procname[wine_server_reply_size(reply)] = 0;
+                        wlen = wine_server_reply_size(reply) + sizeof(WCHAR);
                         if (Length >= len + sizeof(*spi))
                         {
                             memset(spi, 0, sizeof(*spi));
@@ -568,7 +568,6 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                     if (ret == STATUS_NO_MORE_FILES) ret = STATUS_SUCCESS;
                     break;
                 }
-                RtlMultiByteToUnicodeN(NULL, 0, &wlen, procname, strlen(procname) + 1);
                 if (Length >= len + wlen + spi->dwThreadCount * sizeof(THREAD_INFO))
                 {
                     int     i, j;
@@ -605,7 +604,8 @@ NTSTATUS WINAPI NtQuerySystemInformation(
 
                     /* now append process name */
                     spi->pszProcessName = (WCHAR*)((char*)spi + spi->dwOffset);
-                    RtlMultiByteToUnicodeN( spi->pszProcessName, wlen, NULL, procname, strlen(procname) + 1);
+                    memcpy( spi->pszProcessName, procname, wlen - sizeof(WCHAR) );
+                    spi->pszProcessName[wlen / sizeof(WCHAR)] = 0;
                     len += wlen;
                     spi->dwOffset += wlen;
 
