@@ -103,7 +103,7 @@ static const struct fd_ops thread_fd_ops =
     no_cancel_async             /* cancel_async */
 };
 
-static struct thread *first_thread;
+static struct list thread_list = LIST_INIT(thread_list);
 static struct thread *booting_thread;
 
 /* initialize the structure for a newly allocated thread */
@@ -130,8 +130,6 @@ inline static void init_thread_structure( struct thread *thread )
     thread->state           = RUNNING;
     thread->attached        = 0;
     thread->exit_code       = 0;
-    thread->next            = NULL;
-    thread->prev            = NULL;
     thread->priority        = THREAD_PRIORITY_NORMAL;
     thread->affinity        = 1;
     thread->suspend         = 0;
@@ -164,8 +162,7 @@ struct thread *create_thread( int fd, struct process *process )
         lock_master_socket(1);
     }
 
-    if ((thread->next = first_thread) != NULL) thread->next->prev = thread;
-    first_thread = thread;
+    list_add_head( &thread_list, &thread->entry );
 
     if (!(thread->id = alloc_ptid( thread )))
     {
@@ -241,9 +238,7 @@ static void destroy_thread( struct object *obj )
     assert( obj->ops == &thread_ops );
 
     assert( !thread->debug_ctx );  /* cannot still be debugging something */
-    if (thread->next) thread->next->prev = thread->prev;
-    if (thread->prev) thread->prev->next = thread->next;
-    else first_thread = thread->next;
+    list_remove( &thread->entry );
     while ((apc = thread_dequeue_apc( thread, 0 ))) free( apc );
     cleanup_thread( thread );
     release_object( thread->process );
@@ -287,10 +282,16 @@ struct thread *get_thread_from_handle( obj_handle_t handle, unsigned int access 
 /* find a thread from a Unix pid */
 struct thread *get_thread_from_pid( int pid )
 {
-    struct thread *t;
+    struct thread *thread;
 
-    for (t = first_thread; t; t = t->next) if (t->unix_tid == pid) return t;
-    for (t = first_thread; t; t = t->next) if (t->unix_pid == pid) return t;
+    LIST_FOR_EACH_ENTRY( thread, &thread_list, struct thread, entry )
+    {
+        if (thread->unix_tid == pid) return thread;
+    }
+    LIST_FOR_EACH_ENTRY( thread, &thread_list, struct thread, entry )
+    {
+        if (thread->unix_pid == pid) return thread;
+    }
     return NULL;
 }
 
@@ -754,11 +755,11 @@ struct thread_snapshot *thread_snap( int *count )
     struct thread *thread;
     int total = 0;
 
-    for (thread = first_thread; thread; thread = thread->next)
+    LIST_FOR_EACH_ENTRY( thread, &thread_list, struct thread, entry )
         if (thread->state != TERMINATED) total++;
     if (!total || !(snapshot = mem_alloc( sizeof(*snapshot) * total ))) return NULL;
     ptr = snapshot;
-    for (thread = first_thread; thread; thread = thread->next)
+    LIST_FOR_EACH_ENTRY( thread, &thread_list, struct thread, entry )
     {
         if (thread->state == TERMINATED) continue;
         ptr->thread   = thread;

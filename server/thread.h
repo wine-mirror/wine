@@ -50,8 +50,7 @@ struct inflight_fd
 struct thread
 {
     struct object          obj;           /* object header */
-    struct thread         *next;          /* system-wide thread list */
-    struct thread         *prev;
+    struct list            entry;         /* entry in system-wide thread list */
     struct thread         *proc_next;     /* per-process thread list */
     struct thread         *proc_prev;
     struct process        *process;
