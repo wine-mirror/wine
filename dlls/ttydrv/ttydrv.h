@@ -55,6 +55,10 @@ struct tagWINDOWPOS;
  * TTY GDI driver
  */
 
+#ifndef WINE_CURSES
+typedef struct { int dummy; } WINDOW;
+#endif
+
 typedef struct {
   HDC hdc;
   DC *dc;
@@ -73,10 +77,6 @@ extern BOOL TTYDRV_GDI_Initialize(void);
 
 extern HBITMAP TTYDRV_BITMAP_CreateDIBSection(TTYDRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usage, LPVOID *bits, HANDLE section, DWORD offset);
 extern void TTYDRV_BITMAP_DeleteDIBSection(struct tagBITMAPOBJ *bmp);
-
-#ifndef WINE_CURSES
-typedef struct { int dummy; } WINDOW;
-#endif
 
 extern BOOL TTYDRV_DC_CreateBitmap(HBITMAP hbitmap);
 
