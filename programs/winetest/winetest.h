@@ -33,7 +33,7 @@ void *xrealloc (void *op, size_t len);
 void xprintf (const char *fmt, ...);
 char *vstrmake (size_t *lenp, va_list ap);
 char *strmake (size_t *lenp, ...);
-char *badtagchar (char *tag);
+const char *badtagchar (const char *tag);
 
 int send_file (const char *name);
 

@@ -103,8 +103,8 @@ void xprintf (const char *fmt, ...)
     free (buffer);
 }
 
-char *
-badtagchar (char *tag)
+const char *
+badtagchar (const char *tag)
 {
     while (*tag)
         if (('a'<=*tag && *tag<='z') ||
