@@ -80,8 +80,8 @@ extern "C" {
 
 /* Handle types */
 
-DECLARE_OLD_HANDLE(SC_HANDLE);
-DECLARE_OLD_HANDLE(SERVICE_STATUS_HANDLE);
+typedef HANDLE SC_HANDLE, *LPSC_HANDLE;
+typedef DWORD  SERVICE_STATUS_HANDLE;
 
 
 /* Service status structure */
