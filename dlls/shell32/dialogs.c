@@ -135,25 +135,6 @@ INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             return TRUE ;
 
         case WM_COMMAND :
-            {
-            STARTUPINFOA si ;
-            PROCESS_INFORMATION pi ;
-
-            si.cb = sizeof (STARTUPINFOA) ;
-            si.lpReserved = NULL ;
-            si.lpDesktop = NULL ;
-            si.lpTitle = NULL ;
-            si.dwX = 0 ;
-            si.dwY = 0 ;
-            si.dwXSize = 0 ;
-            si.dwYSize = 0 ;
-            si.dwXCountChars = 0 ;
-            si.dwYCountChars = 0 ;
-            si.dwFillAttribute = 0 ;
-            si.dwFlags = 0 ;
-            si.cbReserved2 = 0 ;
-            si.lpReserved2 = NULL ;
-
             switch (LOWORD (wParam))
                 {
                 case IDOK :
@@ -164,8 +145,7 @@ INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                         psz = malloc (ic + 2) ;
                         GetWindowTextA (htxt, psz, ic + 1) ;
 
-                        if (!CreateProcessA (NULL, psz, NULL, NULL, TRUE,
-                            NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
+                        if (ShellExecuteA(NULL, "open", psz, NULL, NULL, SW_SHOWNORMAL) < (HINSTANCE)33)
                             {
                             char *pszSysMsg = NULL ;
                             FormatMessageA (
@@ -250,7 +230,6 @@ INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                     }
                 }
             return TRUE ;
-            }
         }
     return FALSE ;
     }
