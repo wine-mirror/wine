@@ -799,11 +799,11 @@ static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCSTR lpCmd,
 /**************************************************************************
  * 				MCI_HandleReturnValues	[internal]
  */
-static	DWORD	MCI_HandleReturnValues(DWORD dwRet, LPWINE_MCIDRIVER wmd, LPCSTR lpCmd, 
+static	DWORD	MCI_HandleReturnValues(DWORD dwRet, LPWINE_MCIDRIVER wmd, DWORD retType, 
                                        LPDWORD data, LPSTR lpstrRet, UINT uRetLen)
 {
     if (lpstrRet) {
-	switch (MCI_GetReturnType(lpCmd)) {
+	switch (retType) {
 	case 0: /* nothing to return */
 	    break;
 	case MCI_INTEGER:
@@ -875,6 +875,7 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
     DWORD		dwFlags = 0, dwRet = 0;
     int			offset = 0;
     DWORD		data[MCI_DATA_SIZE];
+    DWORD		retType;
     LPCSTR		lpCmd = 0;
     LPSTR		devAlias = NULL;
     BOOL		bAutoOpen = FALSE;
@@ -1005,7 +1006,7 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
     }
 
     /* set return information */
-    switch (MCI_GetReturnType(lpCmd)) {
+    switch (retType = MCI_GetReturnType(lpCmd)) {
     case 0:		offset = 1;	break;
     case MCI_INTEGER:	offset = 2;	break;
     case MCI_STRING:	data[1] = (DWORD)lpstrRet; data[2] = uRetLen; offset = 3; break;
@@ -1043,7 +1044,7 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
 	dwRet = MCI_SendCommand(wmd->wDeviceID, MCI_GetMessage(lpCmd), dwFlags, (DWORD)data, TRUE);
     }
     TRACE("=> 1/ %lx (%s)\n", dwRet, lpstrRet);
-    dwRet = MCI_HandleReturnValues(dwRet, wmd, lpCmd, data, lpstrRet, uRetLen);
+    dwRet = MCI_HandleReturnValues(dwRet, wmd, retType, data, lpstrRet, uRetLen);
     TRACE("=> 2/ %lx (%s)\n", dwRet, lpstrRet);
 
 errCleanUp:
