@@ -71,7 +71,7 @@ DECLARE_DEBUG_CHANNEL(segment)
 
 
 /* convert PE image VirtualAddress to Real Address */
-#define RVA(x) ((unsigned int)load_addr+(unsigned int)(x))
+#define RVA(x) ((void *)((char *)load_addr+(unsigned int)(x)))
 
 #define AdjustPtr(ptr,delta) ((char *)(ptr) + (delta))
 
@@ -105,7 +105,7 @@ void dump_exports( HMODULE hModule )
       if (!*function) continue;  /* No such function */
       if (TRACE_ON(win32))
       {
-	DPRINTF( "%4ld %08lx %08x", i + pe_exports->Base, *function, RVA(*function) );
+	DPRINTF( "%4ld %08lx %p", i + pe_exports->Base, *function, RVA(*function) );
 	/* Check if we have a name for it */
 	for (j = 0; j < pe_exports->NumberOfNames; j++)
           if (ordinal[j] == i)
@@ -133,10 +133,10 @@ FARPROC PE_FindExportedFunction(
 	LPCSTR funcName,	/* [in] function name */
         BOOL snoop )
 {
-	u_short				* ordinal;
+	u_short				* ordinals;
 	u_long				* function;
-	u_char				** name, *ename;
-	int				i;
+	u_char				** name, *ename = NULL;
+	int				i, ordinal;
 	PE_MODREF			*pem = &(wm->binfmt.pe);
 	IMAGE_EXPORT_DIRECTORY 		*exports = pem->pe_export;
 	unsigned int			load_addr = wm->module;
@@ -155,7 +155,7 @@ FARPROC PE_FindExportedFunction(
 		WARN("Module %08x(%s)/MODREF %p doesn't have a exports table.\n",wm->module,wm->modname,pem);
 		return NULL;
 	}
-	ordinal	= (u_short*)  RVA(exports->AddressOfNameOrdinals);
+	ordinals= (u_short*)  RVA(exports->AddressOfNameOrdinals);
 	function= (u_long*)   RVA(exports->AddressOfFunctions);
 	name	= (u_char **) RVA(exports->AddressOfNames);
 	forward = NULL;
@@ -164,56 +164,77 @@ FARPROC PE_FindExportedFunction(
 	rva_end = rva_start + PE_HEADER(wm->module)->OptionalHeader
 		.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
 
-	if (HIWORD(funcName)) {
-		for(i=0; i<exports->NumberOfNames; i++) {
-			ename=(char*)RVA(*name);
-			if(!strcmp(ename,funcName))
-                        {
-                            addr = function[*ordinal];
-                            if (!addr) return NULL;
-                            if ((addr < rva_start) || (addr >= rva_end))
-				return snoop? SNOOP_GetProcAddress(wm->module,ename,*ordinal,(FARPROC)RVA(addr))
-                                            : (FARPROC)RVA(addr);
-                            forward = (char *)RVA(addr);
-                            break;
-			}
-			ordinal++;
-			name++;
-		}
-	} else 	{
-		int i;
-		if (LOWORD(funcName)-exports->Base > exports->NumberOfFunctions) {
-			TRACE("	ordinal %d out of range!\n", LOWORD(funcName));
-			return NULL;
-		}
-		addr = function[(int)funcName-exports->Base];
-                if (!addr) return NULL;
-		ename = "";
-		if (name) {
-		    for (i=0;i<exports->NumberOfNames;i++) {
-			    ename = (char*)RVA(*name);
-			    if (*ordinal == LOWORD(funcName)-exports->Base)
-			    	break;
-			    ordinal++;
-			    name++;
-		    }
-		    if (i==exports->NumberOfNames)
-		    	ename = "";
-		}
-		if ((addr < rva_start) || (addr >= rva_end))
-			return snoop? SNOOP_GetProcAddress(wm->module,ename,(DWORD)funcName-exports->Base,(FARPROC)RVA(addr))
-                                    : (FARPROC)RVA(addr);
-		forward = (char *)RVA(addr);
+	if (HIWORD(funcName))
+        {
+            /* first try a binary search */
+            int min = 0, max = exports->NumberOfNames - 1;
+            while (min <= max)
+            {
+                int res, pos = (min + max) / 2;
+                ename = RVA(name[pos]);
+                if (!(res = strcmp( ename, funcName )))
+                {
+                    ordinal = ordinals[pos];
+                    goto found;
+                }
+                if (res > 0) max = pos - 1;
+                else min = pos + 1;
+            }
+            /* now try a linear search in case the names aren't sorted properly */
+            for (i = 0; i < exports->NumberOfNames; i++)
+            {
+                ename = RVA(name[i]);
+                if (!strcmp( ename, funcName ))
+                {
+                    ERR( "%s.%s required a linear search\n", wm->modname, funcName );
+                    ordinal = ordinals[i];
+                    goto found;
+                }
+            }
+            return NULL;
 	}
-	if (forward)
+        else  /* find by ordinal */
+        {
+            ordinal = LOWORD(funcName) - exports->Base;
+            if (snoop && name)  /* need to find a name for it */
+            {
+                for (i = 0; i < exports->NumberOfNames; i++)
+                    if (ordinals[i] == ordinal)
+                    {
+                        ename = RVA(name[i]);
+                        break;
+                    }
+            }
+	}
+
+ found:
+        if (ordinal >= exports->NumberOfFunctions)
+        {
+            TRACE("	ordinal %ld out of range!\n", ordinal + exports->Base );
+            return NULL;
+        }
+        addr = function[ordinal];
+        if (!addr) return NULL;
+        if ((addr < rva_start) || (addr >= rva_end))
+        {
+            FARPROC proc = RVA(addr);
+            if (snoop)
+            {
+                if (!ename) ename = "@";
+                proc = SNOOP_GetProcAddress(wm->module,ename,ordinal,proc);
+            }
+            return proc;
+        }
+        else  /* forward entry point */
         {
                 WINE_MODREF *wm;
+                char *forward = RVA(addr);
 		char module[256];
 		char *end = strchr(forward, '.');
 
 		if (!end) return NULL;
-		assert(end-forward<256);
-		strncpy(module, forward, (end - forward));
+                if (end - forward >= sizeof(module)) return NULL;
+                memcpy( module, forward, end - forward );
 		module[end-forward] = 0;
                 if (!(wm = MODULE_FindModule( module )))
                 {
@@ -222,7 +243,6 @@ FARPROC PE_FindExportedFunction(
                 }
 		return MODULE_GetProcAddress( wm->module, end + 1, snoop );
 	}
-	return NULL;
 }
 
 DWORD fixup_imports( WINE_MODREF *wm )
