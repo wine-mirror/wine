@@ -1123,13 +1123,14 @@ static BOOL MSG_ConvertMsg( MSG *msg, int srcType, int dstType )
 /***********************************************************************
  *           MSG_PeekMessage
  */
-static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd, 
+static BOOL MSG_PeekMessage( int type, LPMSG msg_out, HWND hwnd, 
                              DWORD first, DWORD last, WORD flags, BOOL peek )
 {
     int changeBits, mask;
     MESSAGEQUEUE *msgQueue;
     HQUEUE16 hQueue;
     int iWndsLocks;
+    MSG msg;
 
     mask = QS_POSTMESSAGE | QS_SENDMESSAGE;  /* Always selected */
     if (first || last)
@@ -1178,10 +1179,10 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd,
 	   (!first || WM_QUIT >= first) && 
 	   (!last || WM_QUIT <= last) )
         {
-            msg->hwnd    = hwnd;
-            msg->message = WM_QUIT;
-            msg->wParam  = msgQueue->wExitCode;
-            msg->lParam  = 0;
+            msg.hwnd    = hwnd;
+            msg.message = WM_QUIT;
+            msg.wParam  = msgQueue->wExitCode;
+            msg.lParam  = 0;
             if (flags & PM_REMOVE) msgQueue->wPostQMsg = 0;
             LeaveCriticalSection( &msgQueue->cSection );
             break;
@@ -1204,9 +1205,9 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd,
                 goto retry;
             }
 
-            *msg = tmpMsg;
-            msgQueue->GetMessageTimeVal      = msg->time;
-            msgQueue->GetMessagePosVal       = MAKELONG( (INT16)msg->pt.x, (INT16)msg->pt.y );
+            msg = tmpMsg;
+            msgQueue->GetMessageTimeVal      = msg.time;
+            msgQueue->GetMessagePosVal       = MAKELONG( (INT16)msg.pt.x, (INT16)msg.pt.y );
             msgQueue->GetMessageExtraInfoVal = qmsg->extraInfo;
 
             if (flags & PM_REMOVE) QUEUE_RemoveMsg( msgQueue, qmsg );
@@ -1220,11 +1221,11 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd,
 
         /* Now find a hardware event */
 
-        if (MSG_PeekHardwareMsg( msg, hwnd, first, last, flags & PM_REMOVE ))
+        if (MSG_PeekHardwareMsg( &msg, hwnd, first, last, flags & PM_REMOVE ))
         {
             /* Got one */
-	    msgQueue->GetMessageTimeVal      = msg->time;
-            msgQueue->GetMessagePosVal       = MAKELONG( (INT16)msg->pt.x, (INT16)msg->pt.y );
+	    msgQueue->GetMessageTimeVal      = msg.time;
+            msgQueue->GetMessagePosVal       = MAKELONG( (INT16)msg.pt.x, (INT16)msg.pt.y );
 	    msgQueue->GetMessageExtraInfoVal = 0;  /* Always 0 for now */
             break;
         }
@@ -1239,21 +1240,21 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd,
 	if (QUEUE_TestWakeBit(msgQueue, mask & QS_PAINT))
 	{
 	    WND* wndPtr;
-	    msg->hwnd = WIN_FindWinToRepaint( hwnd , hQueue );
-	    msg->message = WM_PAINT;
-	    msg->wParam = 0;
-	    msg->lParam = 0;
+	    msg.hwnd = WIN_FindWinToRepaint( hwnd , hQueue );
+	    msg.message = WM_PAINT;
+	    msg.wParam = 0;
+	    msg.lParam = 0;
 
-	    if ((wndPtr = WIN_FindWndPtr(msg->hwnd)))
+	    if ((wndPtr = WIN_FindWndPtr(msg.hwnd)))
 	    {
                 if( wndPtr->dwStyle & WS_MINIMIZE &&
                     (HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICON) )
                 {
-                    msg->message = WM_PAINTICON;
-                    msg->wParam = 1;
+                    msg.message = WM_PAINTICON;
+                    msg.wParam = 1;
                 }
 
-                if( !hwnd || msg->hwnd == hwnd || IsChild16(hwnd,msg->hwnd) )
+                if( !hwnd || msg.hwnd == hwnd || IsChild16(hwnd,msg.hwnd) )
                 {
                     if( wndPtr->flags & WIN_INTERNAL_PAINT && !wndPtr->hrgnUpdate)
                     {
@@ -1278,7 +1279,7 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd,
 
 	if (QUEUE_TestWakeBit(msgQueue, mask & QS_TIMER))
 	{
-	    if (TIMER_GetTimerMsg(msg, hwnd, hQueue, flags & PM_REMOVE)) break;
+	    if (TIMER_GetTimerMsg(&msg, hwnd, hQueue, flags & PM_REMOVE)) break;
 	}
 
         if (peek)
@@ -1303,25 +1304,30 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd,
       /* We got a message */
     if (flags & PM_REMOVE)
     {
-	WORD message = msg->message;
+	WORD message = msg.message;
 
 	if (message == WM_KEYDOWN || message == WM_SYSKEYDOWN)
 	{
-	    BYTE *p = &QueueKeyStateTable[msg->wParam & 0xff];
+	    BYTE *p = &QueueKeyStateTable[msg.wParam & 0xff];
 
 	    if (!(*p & 0x80))
 		*p ^= 0x01;
 	    *p |= 0x80;
 	}
 	else if (message == WM_KEYUP || message == WM_SYSKEYUP)
-	    QueueKeyStateTable[msg->wParam & 0xff] &= ~0x80;
+	    QueueKeyStateTable[msg.wParam & 0xff] &= ~0x80;
     }
 
+    /* copy back our internal safe copy of message data to msg_out.
+     * msg_out is a variable from the *program*, so it can't be used
+     * internally as it can get "corrupted" by our use of SendMessage()
+     * (back to the program) inside the message handling itself. */
+    *msg_out = msg;
     if (peek)
         return TRUE;
 
     else
-        return (msg->message != WM_QUIT);
+        return (msg.message != WM_QUIT);
 }
 
 /***********************************************************************
