@@ -62,7 +62,7 @@ struct IDirectSoundImpl
 {
     /* IUnknown fields */
     ICOM_VFIELD(IDirectSound8);
-    DWORD                      ref;
+    DWORD                       ref;
     /* IDirectSoundImpl fields */
     GUID                        guid;
     PIDSDRIVER                  driver;
@@ -80,11 +80,25 @@ struct IDirectSoundImpl
     BOOL                        need_remix;
     int                         nrofbuffers;
     IDirectSoundBufferImpl**    buffers;
-    IDirectSound3DListenerImpl*	listener;
     RTL_RWLOCK                  lock;
     CRITICAL_SECTION            mixlock;
     DSVOLUMEPAN                 volpan;
+    PrimaryBufferImpl*          primary;
+    DSBUFFERDESC                dsbd;
+
+    /* DirectSound3DListener fields */
+    IDirectSound3DListenerImpl*	listener;
+    DS3DLISTENER                ds3dl;
+    CRITICAL_SECTION            ds3dl_lock;
+    BOOL                        ds3dl_need_recalc;
 };
+
+/* reference counted buffer memory for duplicated buffer memory */
+typedef struct BufferMemory
+{
+    DWORD                       ref;
+    LPBYTE                      memory;
+} BufferMemory;
 
 /*****************************************************************************
  * IDirectSoundBuffer implementation structure
@@ -94,30 +108,34 @@ struct IDirectSoundBufferImpl
     /* FIXME: document */
     /* IUnknown fields */
     ICOM_VFIELD(IDirectSoundBuffer8);
-    DWORD                     ref;
+    DWORD                       ref;
     /* IDirectSoundBufferImpl fields */
-    IDirectSoundImpl*         dsound;
-    IDirectSoundBufferImpl*   parent;         /* for duplicates */
-    IDirectSound3DBufferImpl* ds3db;
-    IKsPropertySetImpl*       iks;
-    CRITICAL_SECTION          lock;
-    PIDSDRIVERBUFFER          hwbuf;
-    WAVEFORMATEX              wfx;
-    LPBYTE                    buffer;
-    DWORD                     playflags,state,leadin;
-    DWORD                     playpos,startpos,writelead,buflen;
-    DWORD                     nAvgBytesPerSec;
-    DWORD                     freq;
-    DSVOLUMEPAN               volpan, cvolpan;
-    DSBUFFERDESC              dsbd;
+    IDirectSoundImpl*           dsound;
+    IDirectSound3DBufferImpl*   ds3db;
+    IKsPropertySetImpl*         iks;
+    CRITICAL_SECTION            lock;
+    PIDSDRIVERBUFFER            hwbuf;
+    WAVEFORMATEX                wfx;
+    BufferMemory*               buffer;
+    DWORD                       playflags,state,leadin;
+    DWORD                       playpos,startpos,writelead,buflen;
+    DWORD                       nAvgBytesPerSec;
+    DWORD                       freq;
+    DSVOLUMEPAN                 volpan, cvolpan;
+    DSBUFFERDESC                dsbd;
     /* used for frequency conversion (PerfectPitch) */
-    ULONG                     freqAdjust, freqAcc;
+    ULONG                       freqAdjust, freqAcc;
     /* used for intelligent (well, sort of) prebuffering */
-    DWORD                     probably_valid_to, last_playpos;
-    DWORD                     primary_mixpos, buf_mixpos;
-    BOOL                      need_remix;
+    DWORD                       probably_valid_to, last_playpos;
+    DWORD                       primary_mixpos, buf_mixpos;
+    BOOL                        need_remix;
     /* IDirectSoundNotifyImpl fields */
-    IDirectSoundNotifyImpl    *notify;
+    IDirectSoundNotifyImpl*     notify;
+
+    /* DirectSound3DBuffer fields */
+    DS3DBUFFER                  ds3db_ds3db;
+    LONG                        ds3db_lVolume;
+    BOOL                        ds3db_need_recalc;
 };
 
 HRESULT WINAPI SecondaryBuffer_Create(
@@ -126,10 +144,9 @@ HRESULT WINAPI SecondaryBuffer_Create(
 	LPDSBUFFERDESC dsbd);
 
 struct PrimaryBufferImpl {
-	ICOM_VFIELD(IDirectSoundBuffer8);
-	DWORD			ref;
-	IDirectSoundImpl*	dsound;
-	DSBUFFERDESC		dsbd;
+    ICOM_VFIELD(IDirectSoundBuffer8);
+    DWORD                       ref;
+    IDirectSoundImpl*           dsound;
 };
 
 HRESULT WINAPI PrimaryBuffer_Create(
@@ -182,15 +199,15 @@ struct IDirectSoundCaptureBufferImpl
 {
     /* IUnknown fields */
     ICOM_VFIELD(IDirectSoundCaptureBuffer8);
-    DWORD                              ref;
+    DWORD                               ref;
 
     /* IDirectSoundCaptureBufferImpl fields */
-    IDirectSoundCaptureImpl*           dsound;
+    IDirectSoundCaptureImpl*            dsound;
     /* FIXME: don't need this */
-    LPDSCBUFFERDESC                    pdscbd;
-    DWORD                              flags;
+    LPDSCBUFFERDESC                     pdscbd;
+    DWORD                               flags;
     /* IDirectSoundNotifyImpl fields */
-    IDirectSoundNotifyImpl             *notify;
+    IDirectSoundNotifyImpl*             notify;
 };
 
 /*****************************************************************************
@@ -200,10 +217,10 @@ struct IDirectSoundFullDuplexImpl
 {
     /* IUnknown fields */
     ICOM_VFIELD(IDirectSoundFullDuplex);
-    DWORD                              ref;
+    DWORD                       ref;
 
     /* IDirectSoundFullDuplexImpl fields */
-    CRITICAL_SECTION                   lock;
+    CRITICAL_SECTION            lock;
 };
 
 /*****************************************************************************
@@ -213,12 +230,12 @@ struct IDirectSoundNotifyImpl
 {
     /* IUnknown fields */
     ICOM_VFIELD(IDirectSoundNotify);
-    DWORD                            ref;
+    DWORD                       ref;
     /* IDirectSoundNotifyImpl fields */
-    LPDSBPOSITIONNOTIFY              notifies;
-    int                              nrofnotifies;
+    LPDSBPOSITIONNOTIFY         notifies;
+    int                         nrofnotifies;
 
-    PIDSDRIVERNOTIFY                 hwnotify;
+    PIDSDRIVERNOTIFY            hwnotify;
 };
 
 /*****************************************************************************
@@ -228,12 +245,9 @@ struct IDirectSound3DListenerImpl
 {
     /* IUnknown fields */
     ICOM_VFIELD(IDirectSound3DListener);
-    DWORD                                ref;
+    DWORD                       ref;
     /* IDirectSound3DListenerImpl fields */
-    PrimaryBufferImpl*      dsb;
-    DS3DLISTENER            ds3dl;
-    CRITICAL_SECTION        lock;
-    BOOL                    need_recalc;
+    IDirectSoundImpl*           dsound;
 };
 
 HRESULT WINAPI IDirectSound3DListenerImpl_Create(
@@ -263,13 +277,10 @@ struct IDirectSound3DBufferImpl
 {
     /* IUnknown fields */
     ICOM_VFIELD(IDirectSound3DBuffer);
-    DWORD                              ref;
+    DWORD                       ref;
     /* IDirectSound3DBufferImpl fields */
-    IDirectSoundBufferImpl* dsb;
-    DS3DBUFFER              ds3db;
-    LONG                    lVolume;
-    CRITICAL_SECTION        lock;
-    BOOL                    need_recalc;
+    IDirectSoundBufferImpl*     dsb;
+    CRITICAL_SECTION            lock;
 };
 
 HRESULT WINAPI IDirectSound3DBufferImpl_Create(
@@ -302,6 +313,10 @@ void DSOUND_PerformMix(void);
 void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2);
 void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2);
 
+/* sound3d.c */
+
+void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb);
+
 #define STATE_STOPPED   0
 #define STATE_STARTING  1
 #define STATE_PLAYING   2
@@ -312,12 +327,6 @@ void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, D
 
 extern IDirectSoundImpl* dsound;
 extern IDirectSoundCaptureImpl* dsound_capture;
-
-struct PrimaryBuffer {
-	DWORD ref;
-	PIDSDRIVERBUFFER hwbuf;
-	DWORD state;
-};
 
 extern ICOM_VTABLE(IDirectSoundNotify) dsnvt;
 extern HRESULT mmErr(UINT err);

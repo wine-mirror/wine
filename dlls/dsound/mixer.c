@@ -50,6 +50,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan)
 {
 	double temp;
+	TRACE("(%p)\n",volpan);
 
 	/* the AmpFactors are expressed in 16.16 fixed point */
 	volpan->dwVolAmpFactor = (ULONG) (pow(2.0, volpan->lVolume / 600.0) * 65536);
@@ -190,7 +191,7 @@ static INT DSOUND_MixerNorm(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 	INT	iAdvance = dsb->wfx.nBlockAlign;
 	INT	oAdvance = dsb->dsound->wfx.nBlockAlign;
 
-	ibp = dsb->buffer + dsb->buf_mixpos;
+	ibp = dsb->buffer->memory + dsb->buf_mixpos;
 	obp = buf;
 
 	TRACE("(%p, %p, %p), buf_mixpos=%ld\n", dsb, ibp, obp, dsb->buf_mixpos);
@@ -204,7 +205,7 @@ static INT DSOUND_MixerNorm(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 			memcpy(obp, ibp, len);
 		else { /* wrap */
 			memcpy(obp, ibp, bytesleft );
-			memcpy(obp + bytesleft, dsb->buffer, len - bytesleft);
+			memcpy(obp + bytesleft, dsb->buffer->memory, len - bytesleft);
 		}
 		return len;
 	}
@@ -219,8 +220,8 @@ static INT DSOUND_MixerNorm(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 			ibp += iAdvance;
 			ilen += iAdvance;
 			obp += oAdvance;
-			if (ibp >= (BYTE *)(dsb->buffer + dsb->buflen))
-				ibp = dsb->buffer;	/* wrap */
+			if (ibp >= (BYTE *)(dsb->buffer->memory + dsb->buflen))
+				ibp = dsb->buffer->memory;	/* wrap */
 		}
 		return (ilen);
 	}
@@ -240,7 +241,7 @@ static INT DSOUND_MixerNorm(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 	ilen = 0;
 	ipos = dsb->buf_mixpos;
 	for (i = 0; i < size; i++) {
-                cp_fields(dsb, (dsb->buffer + ipos), obp);
+                cp_fields(dsb, (dsb->buffer->memory + ipos), obp);
 		obp += oAdvance;
 		dsb->freqAcc += dsb->freqAdjust;
 		if (dsb->freqAcc >= (1<<DSOUND_FREQSHIFT)) {
@@ -380,7 +381,8 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 
 	ilen = DSOUND_MixerNorm(dsb, ibuf, len);
 	if ((dsb->dsbd.dwFlags & DSBCAPS_CTRLPAN) ||
-	    (dsb->dsbd.dwFlags & DSBCAPS_CTRLVOLUME))
+	    (dsb->dsbd.dwFlags & DSBCAPS_CTRLVOLUME) ||
+	    (dsb->dsbd.dwFlags & DSBCAPS_CTRL3D))
 		DSOUND_MixerVol(dsb, ibuf, len);
 
 	obuf = dsb->dsound->buffer + writepos;
@@ -450,7 +452,8 @@ static void DSOUND_PhaseCancel(IDirectSoundBufferImpl *dsb, DWORD writepos, DWOR
 
 	ilen = DSOUND_MixerNorm(dsb, ibuf, len);
 	if ((dsb->dsbd.dwFlags & DSBCAPS_CTRLPAN) ||
-	    (dsb->dsbd.dwFlags & DSBCAPS_CTRLVOLUME))
+	    (dsb->dsbd.dwFlags & DSBCAPS_CTRLVOLUME) ||
+	    (dsb->dsbd.dwFlags & DSBCAPS_CTRL3D))
 		DSOUND_MixerVol(dsb, ibuf, len);
 
 	/* subtract instead of add, to phase out premixed data */
@@ -844,21 +847,12 @@ void DSOUND_PerformMix(void)
 
 	TRACE("()\n");
 
-	RtlAcquireResourceShared(&(dsound->lock), TRUE);
-
-	if (!dsound || !dsound->ref) {
-		/* seems the dsound object is currently being released */
-		RtlReleaseResource(&(dsound->lock));
-		return;
-	}
-
 	/* the sound of silence */
 	nfiller = dsound->wfx.wBitsPerSample == 8 ? 128 : 0;
 
 	/* whether the primary is forced to play even without secondary buffers */
 	forced = ((dsound->state == STATE_PLAYING) || (dsound->state == STATE_STARTING));
 
-        TRACE("entering at %ld\n", GetTickCount());
 	if (dsound->priolevel != DSSCL_WRITEPRIMARY) {
 		BOOL paused = ((dsound->state == STATE_STOPPED) || (dsound->state == STATE_STARTING));
 		/* FIXME: document variables */
@@ -866,7 +860,7 @@ void DSOUND_PerformMix(void)
  		if (dsound->hwbuf) {
 			hres = IDsDriverBuffer_GetPosition(dsound->hwbuf, &playpos, &writepos);
 			if (hres) {
-			    RtlReleaseResource(&(dsound->lock));
+			    WARN("IDsDriverBuffer_GetPosition failed\n");
 			    return;
 			}
 			/* Well, we *could* do Just-In-Time mixing using the writepos,
@@ -954,7 +948,7 @@ void DSOUND_PerformMix(void)
 				hres = IDsDriverBuffer_GetPosition(dsound->hwbuf, &playpos, NULL);
 				if (hres) {
 					LeaveCriticalSection(&(dsound->mixlock));
-					RtlReleaseResource(&(dsound->lock));
+					WARN("IDsDriverBuffer_GetPosition failed\n");
 					return;
 				}
 			} else {
@@ -1012,12 +1006,13 @@ void DSOUND_PerformMix(void)
 				dsound->state = STATE_STOPPED;
 		}
 	}
-	TRACE("completed processing at %ld\n", GetTickCount());
-	RtlReleaseResource(&(dsound->lock));
 }
 
 void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2)
 {
+	TRACE("(%d,%d,0x%lx,0x%lx,0x%lx)\n",timerID,msg,dwUser,dw1,dw2);
+        TRACE("entering at %ld\n", GetTickCount());
+
 	if (!dsound) {
 		ERR("dsound died without killing us?\n");
 		timeKillEvent(timerID);
@@ -1025,8 +1020,15 @@ void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw1, DWOR
 		return;
 	}
 
-	TRACE("entered\n");
-	DSOUND_PerformMix();
+	RtlAcquireResourceShared(&(dsound->lock), TRUE);
+
+	if (dsound->ref) {
+		DSOUND_PerformMix();
+	}
+
+	RtlReleaseResource(&(dsound->lock));
+
+	TRACE("completed processing at %ld\n", GetTickCount());
 }
 
 void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2)

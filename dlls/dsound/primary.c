@@ -430,7 +430,7 @@ static HRESULT WINAPI PrimaryBufferImpl_SetVolume(
 	TRACE("(%p,%ld)\n",This,vol);
 
 	/* I'm not sure if we need this for primary buffer */
-	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLVOLUME)) {
+	if (!(This->dsound->dsbd.dwFlags & DSBCAPS_CTRLVOLUME)) {
 		WARN("control unavailable\n");
 		return DSERR_CONTROLUNAVAIL;
 	}
@@ -479,6 +479,11 @@ static HRESULT WINAPI PrimaryBufferImpl_GetVolume(
 ) {
 	ICOM_THIS(PrimaryBufferImpl,iface);
 	TRACE("(%p,%p)\n",This,vol);
+
+	if (!(This->dsound->dsbd.dwFlags & DSBCAPS_CTRLVOLUME)) {
+		WARN("control unavailable\n");
+		return DSERR_CONTROLUNAVAIL;
+	}
 
 	if (vol == NULL) {
 		WARN("invalid parameter: vol = NULL\n");
@@ -555,29 +560,21 @@ static DWORD WINAPI PrimaryBufferImpl_AddRef(LPDIRECTSOUNDBUFFER8 iface) {
 	ICOM_THIS(PrimaryBufferImpl,iface);
 	DWORD ref;
 
-	TRACE("(%p) ref was %ld, thread is %lx\n",This, This->ref, GetCurrentThreadId());
-
+	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 	ref = InterlockedIncrement(&(This->ref));
-	if (!ref) {
-		FIXME("thread-safety alert! AddRef-ing with a zero refcount!\n");
-	}
+
 	return ref;
 }
+
 static DWORD WINAPI PrimaryBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface) {
 	ICOM_THIS(PrimaryBufferImpl,iface);
 	DWORD ref;
 
-	TRACE("(%p) ref was %ld, thread is %lx\n",This, This->ref, GetCurrentThreadId());
-
+	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 	ref = InterlockedDecrement(&(This->ref));
 
-	if (ref == 0) {
-		IDirectSound_Release((LPDIRECTSOUND)This->dsound);
-
-		if (This->dsound->listener) {
-			IDirectSound3DListener_Release((LPDIRECTSOUND3DLISTENER)This->dsound->listener);
-			This->dsound->listener = NULL;
-		}
+	if (ref == -1) {
+		This->dsound->primary = NULL;
 		HeapFree(GetProcessHeap(),0,This);
 	}
 
@@ -611,7 +608,7 @@ static HRESULT WINAPI PrimaryBufferImpl_GetStatus(
 	LPDIRECTSOUNDBUFFER8 iface,LPDWORD status
 ) {
 	ICOM_THIS(PrimaryBufferImpl,iface);
-	TRACE("(%p,%p), thread is %lx\n",This,status,GetCurrentThreadId());
+	TRACE("(%p,%p), thread is %04lx\n",This,status,GetCurrentThreadId());
 
 	if (status == NULL) {
 		WARN("invalid parameter: status == NULL\n");
@@ -812,6 +809,11 @@ static HRESULT WINAPI PrimaryBufferImpl_GetFrequency(
 		return DSERR_INVALIDPARAM;
 	}
 
+	if (!(This->dsound->dsbd.dwFlags & DSBCAPS_CTRLFREQUENCY)) {
+		WARN("control unavailable\n");
+		return DSERR_CONTROLUNAVAIL;
+	}
+
 	*freq = This->dsound->wfx.nSamplesPerSec;
 	TRACE("-> %ld\n", *freq);
 
@@ -885,7 +887,7 @@ static HRESULT WINAPI PrimaryBufferImpl_GetCaps(
 		return DSERR_INVALIDPARAM;
 	}
 
-	caps->dwFlags = This->dsbd.dwFlags;
+	caps->dwFlags = This->dsound->dsbd.dwFlags;
 	if (This->dsound->hwbuf) caps->dwFlags |= DSBCAPS_LOCHARDWARE;
 	else caps->dwFlags |= DSBCAPS_LOCSOFTWARE;
 
@@ -905,56 +907,58 @@ static HRESULT WINAPI PrimaryBufferImpl_QueryInterface(
 	LPDIRECTSOUNDBUFFER8 iface,REFIID riid,LPVOID *ppobj
 ) {
 	ICOM_THIS(PrimaryBufferImpl,iface);
-
 	TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
+
+	*ppobj = NULL;	/* assume failure */
+
+	if ( IsEqualGUID(riid, &IID_IUnknown) || 
+	     IsEqualGUID(riid, &IID_IDirectSoundBuffer) ) {
+		IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER)This);
+		*ppobj = This;
+		return S_OK;
+	}
+
+	/* DirectSoundBuffer and DirectSoundBuffer8 are different and */
+	/* a primary buffer can't have a DirectSoundBuffer8 interface */
+	if ( IsEqualGUID( &IID_IDirectSoundBuffer8, riid ) ) {
+		WARN("app requested DirectSoundBuffer8 on primary buffer\n");
+		return E_NOINTERFACE;
+	}
 
 	if ( IsEqualGUID( &IID_IDirectSoundNotify, riid ) ) {
 		ERR("app requested IDirectSoundNotify on primary buffer\n");
 		/* FIXME: should we support this? */
-		*ppobj = NULL;
-		return E_FAIL;
+		return E_NOINTERFACE;
 	}
 
 	if ( IsEqualGUID( &IID_IDirectSound3DBuffer, riid ) ) {
 		ERR("app requested IDirectSound3DBuffer on primary buffer\n");
-		*ppobj = NULL;
 		return E_NOINTERFACE;
 	}
 
         if ( IsEqualGUID( &IID_IDirectSound3DListener, riid ) ) {
-		if (!This->dsound->listener)
-			IDirectSound3DListenerImpl_Create(This, &This->dsound->listener);
-		*ppobj = This->dsound->listener;
-		if (This->dsound->listener) {
-                        IDirectSound3DListener_AddRef((LPDIRECTSOUND3DLISTENER)*ppobj);
-                        return DS_OK;
+		if (This->dsound->dsbd.dwFlags & DSBCAPS_CTRL3D) {
+			if (!This->dsound->listener)
+				IDirectSound3DListenerImpl_Create(This, &This->dsound->listener);
+	
+			*ppobj = This->dsound->listener;
+	
+			if (This->dsound->listener) {
+				IDirectSound3DListener_AddRef((LPDIRECTSOUND3DLISTENER)*ppobj);
+				return S_OK;
+			}
 		}
+
 		WARN("IID_IDirectSound3DListener failed\n");
-		*ppobj = NULL;
-		return E_FAIL;
+		return E_NOINTERFACE;
 	}
 
 	if ( IsEqualGUID( &IID_IKsPropertySet, riid ) ) {
-#if 0
-		if (!This->iks)
-			IKsPropertySetImpl_Create(This, &This->iks);
-		*ppobj = This->iks;
-		if (*ppobj) {
-			IKsPropertySet_AddRef((LPKSPROPERTYSET)*ppobj);
-			return S_OK;
-		}
-		return E_FAIL;
-#else
 		FIXME("app requested IKsPropertySet on primary buffer\n");
-		*ppobj = NULL;
-		return E_FAIL;
-#endif
+		return E_NOINTERFACE;
 	}
 
 	FIXME( "Unknown IID %s\n", debugstr_guid( riid ) );
-
-	*ppobj = NULL;
-
 	return E_NOINTERFACE;
 }
 
@@ -1010,11 +1014,11 @@ HRESULT WINAPI PrimaryBuffer_Create(
 		return DSERR_OUTOFMEMORY;
 	}
 
-	dsb->ref = 1;
+	dsb->ref = -1;
 	dsb->dsound = This;
 	dsb->lpVtbl = &dspbvt;
 
-	memcpy(&dsb->dsbd, dsbd, sizeof(*dsbd));
+	memcpy(&This->dsbd, dsbd, sizeof(*dsbd));
 
 	TRACE("Created primary buffer at %p\n", dsb);
 	TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld,"
@@ -1022,18 +1026,6 @@ HRESULT WINAPI PrimaryBuffer_Create(
 		This->wfx.wFormatTag, This->wfx.nChannels, This->wfx.nSamplesPerSec,
 		This->wfx.nAvgBytesPerSec, This->wfx.nBlockAlign,
 		This->wfx.wBitsPerSample, This->wfx.cbSize);
-
-	if (dsbd->dwFlags & DSBCAPS_CTRL3D) {
-		HRESULT	hres;
-		hres = IDirectSound3DListenerImpl_Create(dsb, &This->listener);
-		if (hres != DS_OK) {
-			WARN("IDirectSound3DListenerImpl_Create failed\n");
-		} else {
-                        IDirectSound3DListener_AddRef((LPDIRECTSOUND3DLISTENER)This->listener);
-		}
-	}
-
-	IDirectSound8_AddRef((LPDIRECTSOUND8)This);
 
 	*pdsb = dsb;
 	return S_OK;
