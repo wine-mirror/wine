@@ -1495,6 +1495,20 @@ BOOL WINAPI AccessCheckAndAuditAlarmW(LPCWSTR Subsystem, LPVOID HandleId, LPWSTR
 
 
 /******************************************************************************
+ * GetSecurityInfo [ADVAPI32.@]
+ */
+DWORD WINAPI GetSecurityInfo(
+    HANDLE hObject, SE_OBJECT_TYPE ObjectType,
+    SECURITY_INFORMATION SecurityInfo, PSID *ppsidOwner,
+    PSID *ppsidGroup, PACL *ppDacl, PACL *ppSacl,
+    PSECURITY_DESCRIPTOR *ppSecurityDescriptor
+)
+{
+  FIXME("stub!\n");
+  return ERROR_BAD_PROVIDER;
+}
+
+/******************************************************************************
  * GetSecurityInfoExW [ADVAPI32.@]
  */
 DWORD WINAPI GetSecurityInfoExW(

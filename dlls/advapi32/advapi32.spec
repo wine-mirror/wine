@@ -122,7 +122,7 @@
 @ stdcall GetSecurityDescriptorLength(ptr)
 @ stdcall GetSecurityDescriptorOwner(ptr ptr ptr)
 @ stdcall GetSecurityDescriptorSacl (ptr ptr ptr ptr)
-@ stub GetSecurityInfo #(long long long ptr ptr ptr ptr ptr) GetSecurityInfo
+@ stdcall GetSecurityInfo (long long long ptr ptr ptr ptr ptr)
 @ stdcall GetSecurityInfoExW (long long long wstr wstr ptr ptr wstr wstr)
 @ stub GetServiceDisplayNameA
 @ stub GetServiceDisplayNameW
