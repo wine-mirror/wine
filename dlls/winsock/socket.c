@@ -1019,7 +1019,7 @@ INT WINAPI WSOCK32_connect(SOCKET s, struct sockaddr *name, INT namelen)
 	{
 	    int result;
 	    /* block here */
-	    do_block(fd, 6);
+	    do_block(fd, 7);
 	    _sync_sock_state(s); /* let wineserver notice connection */
 	    /* retrieve any error codes from it */
 	    result = _get_sock_error(s, FD_CONNECT_BIT);
