@@ -43,8 +43,8 @@ extern WORD DOSVM_retval;  /* return value of previous DOS task */
 extern DWORD DOS_LOLSeg;
 extern const struct DPMI_segments *DOSVM_dpmi_segments;
 
-#if defined(linux) && defined(__i386__)
-#define MZ_SUPPORTED
+#if defined(linux) && defined(__i386__) && defined(HAVE_SYS_VM86_H)
+# define MZ_SUPPORTED
 #endif /* linux-i386 */
 
 #define V86_FLAG 0x00020000
