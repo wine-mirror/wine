@@ -1,4 +1,955 @@
 ----------------------------------------------------------------
+2003-03-18  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/user/message.c, include/wine/server_protocol.h,
+	  server/protocol.def, server/queue.c, server/trace.c:
+	Fixed bug that could cause SendMessage to return too early in certain
+	cases.
+
+	* dlls/ntdll/ntdll.spec, dlls/ntdll/rtl.c, include/winternl.h:
+	Implemented Rtl*ByteSwap() functions, based on a patch by Jon
+	Griffiths.
+
+	* dlls/ntdll/ntdll.spec, dlls/ntdll/rtl.c, include/winternl.h:
+	Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Correct the agument count for RtlInitializeGenericTable().
+	Fix my own brown paper bag in RtlFillMemoryUlong().
+	RtlGetNtVersionNumbers() should never return < 5.
+	Remove RtlCopyMemory(), its not an ntdll export.
+	Implement RtlCompareMemoryUlong(), RtlComputeCrc32().
+	Documentation updates.
+
+	* loader/module.c:
+	Make GetModuleFileNameA call GetModuleFileNameW. Small cleanups.
+
+	* dlls/ntdll/tests/rtlbitmap.c: Avoid explicit long long constants.
+
+	* include/ddrawi.h: Fixed a few function pointer typedefs.
+
+	* dlls/shlwapi/shlwapi.spec, dlls/shlwapi/url.c:
+	Maxime Bellengé <maxime.bellenge@laposte.net>
+	Stub for SHAutoComplete.
+
+	* dlls/advapi32/advapi.c, dlls/advapi32/registry.c,
+	  dlls/advapi32/security.c, dlls/comctl32/comctl32undoc.c,
+	  dlls/comctl32/commctrl.c, dlls/kernel/thunk.c, dlls/kernel/time.c,
+	  dlls/ntdll/critsection.c, dlls/ntdll/heap.c, dlls/ntdll/om.c,
+	  dlls/ntdll/time.c, dlls/oleaut32/dispatch.c,
+	  dlls/oleaut32/ole2disp.c, dlls/oleaut32/typelib16.c,
+	  dlls/shell32/pidl.c, dlls/shell32/shell.c, dlls/shell32/shellole.c,
+	  dlls/shell32/shellord.c, dlls/shell32/shfldr_fs.c,
+	  dlls/shell32/shlfileop.c, dlls/shlwapi/path.c, dlls/shlwapi/reg.c,
+	  dlls/shlwapi/regstream.c, dlls/shlwapi/shlwapi_main.c,
+	  dlls/shlwapi/string.c, dlls/shlwapi/thread.c, dlls/shlwapi/url.c,
+	  dlls/shlwapi/wsprintf.c, dlls/urlmon/umon.c, dlls/wsock32/service.c,
+	  ole/ole2nls.c, windows/dce.c:
+	Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Documentation updates.
+
+	* dlls/ntdll/loader.c, dlls/ntdll/ntdll.spec, include/module.h,
+	  include/winternl.h, loader/module.c:
+	Eric Pouech <pouech-eric@wanadoo.fr>
+	- added LDR_MODULE structure to WINE_MODREF and made dummy filling of
+	  this structure
+	- implementation of LdrFindEntry
+	- implementation of GetModuleFileName[AW] on top of LdrFindEntry
+
+	* dlls/ntdll/tests/.cvsignore, dlls/ntdll/tests/Makefile.in,
+	  dlls/ntdll/tests/string.c:
+	Thomas Mertes <thomas.mertes@gmx.at>
+	Tests for _itoa, _ltoa, _ultoa, _i64toa, _ui64toa, _itow, _ltow,
+	_ultow, _i64tow, _ui64tow, _atoi64, _wtoi, _wtol, _wtoi64.
+
+	* server/fd.c, server/file.h:
+	Gerald Pfeifer <pfeifer@dbai.tuwien.ac.at>
+	Fix signature of open_fd().
+
+	* dlls/msvcrt/cppexcept.c, dlls/msvcrt/cppexcept.h:
+	Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Add __CxxDetectRethrow(),  __CxxQueryExceptionSize().
+	Constify parameters (enabling static RTTI).
+	Move type definitions into a header for sharing with cpp.c objects.
+
+	* tools/winebuild/build.h, tools/winebuild/import.c,
+	  tools/winebuild/main.c, tools/winebuild/parser.c,
+	  tools/winebuild/spec16.c, tools/winebuild/spec32.c,
+	  tools/winebuild/utils.c, tools/winebuild/winebuild.man.in:
+	Handle end of line as a syntactic element in the spec file parser;
+	backslashes can be used to continue lines. This allows us to skip over
+	errors to continue parsing, and also to make specification of an entry
+	point link name optional.
+
+	* dlls/kernel/tests/file.c, files/file.c, include/winbase.h,
+	  include/wine/server_protocol.h, server/fd.c, server/file.c,
+	  server/file.h, server/list.h, server/process.c, server/process.h,
+	  server/protocol.def, server/trace.c:
+	Implemented file locking functions (partly based on my old Corel
+	patch). Added a few regression tests.
+
+2003-03-17  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/dsound/mixer.c: Ove Kaaven <ovek@transgaming.com>
+	Somewhat more reliable dsound position notifications.
+
+	* dlls/commdlg/printdlg.c:
+	Tony Lambregts <tony_lambregts@telusplanet.net>
+	Janitorial. Get rid of W->A call.
+
+	* include/msvcrt/sys/types.h, include/winsock.h:
+	Dimitrie O. Paun <dpaun@rogers.com>
+	Define the u_{char,short,int,long} in msvcrt/sys/types.h for Unix
+	compatibility (needed by winsock.h as well).
+
+	* dlls/msvcrt/main.c, dlls/msvcrt/msvcrt.h:
+	Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Move a couple of shared definitions into msvcrt.h.
+	init_vtables() is redundant with upcoming fixes to cxx functions.
+
+	* dlls/msvcrt/mtdll.h: Jon Griffiths <jon_p_griffiths@yahoo.com>
+	_EXIT_LOCK2 is used by type_info objects.
+
+	* include/winreg.h: Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Added prototypes for the Remote Shutdown Api calls.
+
+	* dlls/ntdll/sec.c: Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Documentation updates.
+
+	* programs/wineconsole/wineconsole.c:
+	Tony Lambregts <tony_lambregts@telusplanet.net>
+	Convert WINE_DPRINTF calls to WINE_TRACE.
+
+	* tools/winebuild/build.h, tools/winebuild/parser.c,
+	  tools/winebuild/spec32.c, tools/winebuild/winebuild.man.in:
+	Removed support for the 'forward' ordinal type.
+
+	* dlls/crtdll/crtdll.spec, dlls/msvcrt20/msvcrt20.spec:
+	Replaced forwards by normal function declarations.
+
+	* dlls/msvcrt/msvcrt.spec:
+	Fixed a couple of relay arguments, and updated some of the stub
+	comments.
+
+	* dlls/comctl32/tab.c: Mike Hearn <mike@theoretic.com>
+	Fix the tab height so the labels don't clip, and restore the offset
+	constant to what it was before.
+
+	* dlls/comctl32/imagelist.c: Mike Hearn <mike@theoretic.com>
+	Fix a typo.
+
+	* dlls/shell32/shellpath.c, include/shlobj.h:
+	Paul Rupe <prupe@myrealbox.com>
+	Add CSIDL_PROFILES.  Improved logging for non-existent CSIDL values.
+
+	* dlls/gdi/freetype.c: Paul Rupe <prupe@myrealbox.com>
+	Fix a couple INT/UINT comparisons.
+
+	* dlls/winsock/socket.c: Paul Rupe <prupe@myrealbox.com>
+	Treat blank protocol the same as NULL in getservbyname &
+	getservbyport.
+
+	* dlls/advapi32/advapi32.spec, dlls/dplay/dplay.spec,
+	  dlls/kernel/kernel32.spec, dlls/msvcrt/msvcrt.spec,
+	  dlls/netapi32/netapi32.spec, dlls/ole32/ole32.spec,
+	  dlls/oleaut32/oleaut32.spec, dlls/olecli/olecli32.spec,
+	  dlls/olepro32/olepro32.spec, dlls/opengl32/opengl32.spec,
+	  dlls/shell32/shell32.spec, dlls/shfolder/shfolder.spec,
+	  dlls/shlwapi/shlwapi.spec, dlls/urlmon/urlmon.spec,
+	  dlls/version/version.spec, dlls/win32s/w32skrnl.spec,
+	  dlls/winsock/ws2_32.spec, dlls/wow32/wow32.spec,
+	  dlls/wsock32/wsock32.spec:
+	Replaced forwards by normal function declarations.
+
+	* dlls/msvcrt/msvcrt.spec, dlls/msvcrt/process.c:
+	Implemented _getdllprocaddr(), it cannot be simply a forward to
+	GetProcAddress.
+
+	* tools/winebuild/parser.c, tools/winebuild/spec32.c,
+	  tools/winebuild/winebuild.man.in:
+	Disable 'variable' in Win32 spec files.
+	Added support for forwarded 'extern' ordinals.
+
+	* dlls/winmm/wineoss/audio.c: Avoid warnings.
+
+2003-03-16  Alexandre Julliard  <julliard@winehq.com>
+
+	* tools/winebuild/import.c:
+	Don't enter an imported dll in the import table at all if we didn't
+	need to import any symbol from it.
+
+	* include/basetsd.h, include/wtypes.h, include/wtypes.idl:
+	Properly import basetsd.h and guiddef.h.
+
+	* tools/widl/parser.l, tools/widl/utils.c, tools/widl/widl.c:
+	Make sure we display the correct file name and line in error messages.
+
+	* dlls/shell32/shell32_main.c:
+	Vitaliy Margolen <wine-patch@kievinfo.com>
+	- make SHGetFileInfo handle relative paths
+	- fix requests for large icons
+
+2003-03-15  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/msvcrt/misc.c:
+	Implemented _chkesp, based on a patch by Jon Griffiths.
+
+	* dlls/msvcrt/Makefile.in, dlls/msvcrt/exit.c:
+	Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Display abnormal exit text in a message box for GUI apps.
+
+	* include/wtypes.h, include/wtypes.idl:
+	Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Add some missing types needed for the upcoming ocidl.idl.
+	Add missing variant types.
+	Correct the definition of DECIMAL type.
+
+	* dlls/winmm/wineoss/audio.c: Added #ifdef checks for SOUND_MIXER_INFO.
+
+	* documentation/authors.ent: Added Jon Griffiths.
+
+	* Make.rules.in, Makefile.in, documentation/Makefile.in:
+	Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Updated rules for API doc generation.
+	Add sgmlpages target for making a docbook 'Wine API Guide'.
+
+	* tools/c2man.pl: Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Improve the look/content of the man page output.
+	Generate for all exported functions (that have docs).
+	Add dll summary page, HTML and SGML output.
+
+	* documentation/documentation.sgml:
+	Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Document the API generation process and format.
+	Provide an overview of the Wine documentation system.
+	A couple of minor other fixes.
+
+	* dlls/ntdll/ntdll.spec, dlls/ntdll/rtlstr.c:
+	Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Add RtlDowncaseUnicodeChar(), RtlEqualComputerName(),
+	RtlEqualDomainName(). Documentation updates.
+
+	* dlls/shlwapi/istream.c: Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Documentation updates.
+
+	* include/shlwapi.h: Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Add some missing prototypes.
+
+	* dlls/shlwapi/shlwapi.spec: Jon Griffiths <jon_p_griffiths@yahoo.com>
+	SHCreateThread is exported by name _and_ ordinal.
+
+	* dlls/shlwapi/clist.c, dlls/shlwapi/tests/clist.c:
+	Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Correct behaviour for some error conditions.
+	Documentation updates.
+
+	* include/wine/debug.h: Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Really get rid of debug code/strings if we're building without them.
+
+	* dlls/msvcrt/data.c, dlls/msvcrt/msvcrt.spec:
+	Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Implemented __p__pgmptr, _pgmptr.
+
+	* tools/winedump/pe.c: Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Only sort the number of symbols actually found.
+
+	* tools/winapi/msvcmaker: Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Output a dummy function for linking.
+	Define __WINE_USE_NATIVE_HEADERS for tests that need to care.
+	Change the debug information format to prevent winedbg from crashing.
+
+	* include/wingdi.h: Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Protect the TEXTMETRIC struct from redefinition.
+
+	* controls/listbox.c, controls/scroll.c, dlls/ddraw/d3ddevice/main.c,
+	  dlls/ddraw/d3ddevice/mesa.c, dlls/ddraw/ddraw/main.c,
+	  dlls/ddraw/dsurface/main.c:
+	Tony Lambregts <tony_lambregts@telusplanet.net>
+	Replace DPRINTF with TRACE.
+
+	* dlls/dsound/buffer.c, dlls/dsound/capture.c, dlls/dsound/dsound.spec,
+	  dlls/dsound/dsound_main.c, dlls/dsound/dsound_private.h,
+	  dlls/dsound/mixer.c, dlls/dsound/primary.c, dlls/winmm/lolvldrv.c,
+	  dlls/winmm/winealsa/Makefile.in, dlls/winmm/winealsa/audio.c,
+	  dlls/winmm/wineoss/audio.c, documentation/samples/config,
+	  include/mmddk.h:
+	Robert Reif <reif@earthlink.net>
+	Added support for multiple direct sound devices.
+
+	* dlls/comcat/information.c, dlls/ddraw/d3dexecutebuffer.c,
+	  dlls/ddraw/d3dvertexbuffer.c, dlls/ddraw/main.c,
+	  dlls/dinput/joystick/linux.c, dlls/dinput/joystick/linuxinput.c,
+	  dlls/dinput/keyboard/main.c, dlls/dinput/mouse/main.c,
+	  dlls/odbc32/proxyodbc.c, dlls/richedit/richedit.c,
+	  dlls/setupapi/parser.c, dlls/version/info.c,
+	  dlls/winaspi/winaspi16.c, dlls/winaspi/winaspi32.c,
+	  dlls/x11drv/keyboard.c, files/smb.c:
+	Tony Lambregts <tony_lambregts@telusplanet.net>
+	Replace DPRINTF with TRACE.
+
+	* winedefault.reg: Maxime Bellengé <maxime.bellenge@laposte.net>
+	Rename "Shortcut" to "Desktop".
+
+	* scheduler/sysdeps.c:
+	Init signals before calling CLIENT_InitThread since we can receive a
+	signal there.
+
+	* dlls/comctl32/listview.c: Vitaliy Margolen <wine-patch@kievinfo.com>
+	Changes for Icon and SmallIcon modes:
+	 - fix typo causing wrong scroll boundaries
+	 - reverse mouse wheel scroll directions
+	 - fix navigation with keyboard when auto arranged
+
+2003-03-14  Alexandre Julliard  <julliard@winehq.com>
+
+	* loader/module.c: Cleaned up load_library_as_datafile().
+
+	* dlls/ntdll/reg.c, dlls/ntdll/rtl.c, dlls/ntdll/rtlstr.c,
+	  dlls/ntdll/sec.c:
+	Avoid GetProcessHeap() inside ntdll.
+
+	* dlls/kernel/kernel32.spec, win32/newfns.c:
+	Rein Klazes <rklazes@xs4all.nl>
+	Added stub for GetDevicePowerState().
+
+	* dlls/msnet32/msnet32.spec, dlls/msnet32/msnet_main.c:
+	Rein Klazes <rklazes@xs4all.nl>
+	Added a stub for msnet32.57
+
+	* dlls/comctl32/listview.c: Dimitrie O. Paun <dpaun@rogers.com>
+	Spacing information is signed (debugged and fixed by Vitaliy
+	Margolen).
+	Decode spacing information in the window procedure.
+	Some spelling fixes.
+
+	* dlls/ntdll/loader.c, dlls/ntdll/ntdll.spec, dlls/ntdll/ntdll_misc.h,
+	  include/module.h, include/winternl.h, loader/module.c,
+	  loader/pe_image.c, relay32/builtin32.c:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	- implementation of LdrLoadDll out of loader/module.c
+	- in impacted functions, ensure that we only use ntdll functions
+	- for internal loading, start using NTDLL style for error reporting
+	- making use of new LdrLoadDll
+
+	* dlls/advapi32/Makefile.in, dlls/advapi32/registry.c:
+	Tony Lambregts <tony_lambregts@telusplanet.net>
+	Janitorial. Get rid of W->A calls.
+
+	* dlls/comctl32/rebar.c, windows/dialog.c, windows/win.c,
+	  windows/winpos.c:
+	Tony Lambregts <tony_lambregts@telusplanet.net>
+	Replace DPRINTF with TRACE.
+
+	* server/main.c, server/object.h, server/request.c:
+	Added -f option to make wineserver remain in the foreground for
+	debugging.
+	Close stdin/stdout when not in the foreground (based on a patch by
+	Francois Gouget).
+
+	* dlls/kernel/tests/profile.c: Warning fixes.
+
+	* dlls/ntdll/debugtools.c:
+	Only print the trace header when we are at the beginning of a new
+	line (suggested by Dimitrie O. Paun).
+
+	* dlls/ntdll/loader.c, dlls/ntdll/ntdll.spec, dlls/ntdll/ntdll_misc.h,
+	  include/module.h, loader/module.c:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	- implementation of LdrUnloadDll out of loader/module.c
+	- in impacted functions, ensure that we only use ntdll functions
+	- making use of new LdrUnloadDll
+
+2003-03-12  Alexandre Julliard  <julliard@winehq.com>
+
+	* server/fd.c, server/file.c, server/file.h, server/named_pipe.c,
+	  server/pipe.c, server/process.c, server/request.c, server/serial.c,
+	  server/smb.c, server/sock.c, server/thread.c:
+	Added an inode object to keep track of all file descriptors open for a
+	given file.
+	Plugged a couple of potential file descriptor leaks.
+
+	* dlls/msvcrt/wcs.c, dlls/ntdll/wcstring.c, include/wine/unicode.h,
+	  unicode/string.c, unicode/wine_unicode.def:
+	Dmitry Timoshkov <dmitry@baikal.ru>
+	Move vsnwprintf implementation to libwine_unicode, export snprintfW
+	and vsnprintfW from there, forward MSVCRT and NTDLL functions to
+	libwine_unicode.
+
+	* dlls/shell32/shpolicy.c: Jon Griffiths <jon_p_griffiths@yahoo.com>
+	Constify the strings in the policy cache.
+	Documentation updates.
+
+	* dlls/msvcrt/msvcrt.spec, dlls/msvcrt/wcs.c,
+	  dlls/msvcrt20/msvcrt20.spec:
+	Thomas Mertes <thomas.mertes@gmx.at>
+	Forward to the ntdll functions _itoa, _ltoa, _ultoa, _i64toa,
+	_ui64toa, _itow, _ltow, _ultow, _i64tow, _ui64tow, _atoi64, _wtoi,
+	_wtol, _wtoi64 from msvcrt / msvcrt20.
+
+	* dlls/ntdll/ntdll.spec, dlls/ntdll/string.c, dlls/ntdll/wcstring.c:
+	Thomas Mertes <thomas.mertes@gmx.at>
+	Implement _itoa, _ltoa, _ultoa, _i64toa, _ui64toa, _itow, _ltow,
+	_ultow, _i64tow, _ui64tow, _atoi64, _wtoi, _wtol, _wtoi64.
+
+	* dlls/kernel/comm.c: Marcus Meissner <meissner@suse.de>
+	Fixed 2 fd leaks in comm functions.
+	Removed erroneous GetLastError() check in WaitCommEvent().
+
+	* documentation/packaging.sgml, programs/wineboot/wineboot.c:
+	Shachar Shemesh <wine-patches@sun.consumer.org.il>
+	- Implement finer grained control over what gets run.
+	- Implement command line to control presets of said control for
+	  various scenarios:
+	  o start - session startup - run everything.
+	  o restart - session close (presumeably after reboot) - only perform
+	    *once operations.
+
+	* include/winnt.h: Tony Lambregts <tony_lambregts@telusplanet.net>
+	Add flags for RegRestoreKey.
+
+	* dlls/comctl32/tab.c: Mike Hearn <mike@theoretic.com>
+	- Reduced tab offset constant slightly to avoid clipping the label.
+	- Prevent label overdraw of updown control by reducing the width of
+	  the invalidated region.
+
+2003-03-11  Alexandre Julliard  <julliard@winehq.com>
+
+	* server/context_i386.c, server/context_powerpc.c,
+	  server/context_sparc.c, server/debugger.c, server/process.c,
+	  server/ptrace.c, server/thread.h:
+	Attaching the debugger to a running process should work again
+	(reported by Eric Pouech). Misc cleanups.
+
+	* dlls/ole32/Makefile.in, dlls/ole32/compobj.c,
+	  dlls/ole32/compobj_private.h, dlls/ole32/git.c, winedefault.reg,
+	  dlls/ole32/marshal.c:
+	Mike Hearn <mike@theoretic.com>
+	Implemented the global interface table object using a simple linked
+	list.
+
+2003-03-10  Alexandre Julliard  <julliard@winehq.com>
+
+	* documentation/consoles.sgml, documentation/running.sgml,
+	  documentation/samples/config:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	Put console documentation in sync with current console status.
+
+	* dlls/dsound/sound3d.c: Rok Mandeljc <rokmandeljc@hotmail.com>
+	- implemented panning
+	- implemented coning
+	- many minor fixes
+
+	* relay32/snoop.c: Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	SNOOP_PrintArg: don't try to decipher snoop args when seh chanel is
+	on.
+
+	* server/ptrace.c: Eric Pouech <eric.pouech@wanadoo.fr>
+	Fixed typo.
+
+	* dlls/user/exticon.c: Vitaliy Margolen <wine-patch@kievinfo.com>
+	Fixed typo in PrivateExtractIconExW function.
+
+	* dlls/comctl32/tab.c: Mike Hearn <mike@theoretic.com>
+	It's not just height that can be set to the default by passing zero to
+	TCM_SETITEMSIZE, but also width.
+
+	* programs/wineconsole/wineconsole.c:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	- fixed another regression in sub-process creation (curses backend
+	  must be default for AllocConsole() invocation)
+	- fixed endless loop when unknown argument was passed on commandline
+
+	* dlls/winmm/wavemap/wavemap.c: Eric Pouech <eric.pouech@wanadoo.fr>
+	Fixed error code when no mapping is found for wave input.
+
+	* dlls/shlwapi/reg.c, dlls/shlwapi/shlwapi.spec:
+	Maxime Bellengé <maxime.bellenge@laposte.net>
+	Implemented SHRegSetUSValueA and SHRegSetUSValueW.
+
+2003-03-07  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/ntdll/rtlbitmap.c:
+	Rewrote RtlFind{Most,Least}SignificantBit in a more portable way.
+
+	* dlls/gdi/enhmfdrv/init.c:
+	Tony Lambregts <tony_lambregts@telusplanet.net>
+	Janitorial. Get rid of W->A call.
+
+	* controls/scroll.c: Andrew Johnston <johnstonam@logica.com>
+	Move keyboard event processing from WndProc code into the existing
+	helper.
+	Create a helper function for the create event and clean up code.
+	Remove macro for detecting invalid SCROLLINFO structures and make it
+	an inline function.
+
+	* controls/menu.c: Adam Gundy <arg@cyberscience.com>
+	Allow modifying a menu string to be NULL.
+
+	* dlls/comctl32/toolbar.c: Adam Gundy <arg@cyberscience.com>
+	TOOLBAR_AddBitmap() and TOOLBAR_ReplaceBitmap() are not supposed to
+	modify the bitmap - we call ImageList_AddMasked() which turns all
+	masked pixels black. Fixed by making a copy of the bitmap to give to
+	ImageList_AddMasked().
+
+	* controls/scroll.c: Andrew Johnston <johnstonam@logica.com>
+	- GetScrollRange zeros the return parameters for no infoPtr
+	- GetScrollRange, GetScrollPos and GetScrollInfo send a message to the
+	  window for the SB_CTL case
+	- Moved code for GetScroll* to into worker functions
+
+	* dlls/winmm/wineoss/audio.c: Robert Reif <reif@earthlink.net>
+	Fixed bug where the enable state of the output and input were not set
+	properly when doing full duplex.
+	Fixed bug where resetting the output would affect the capture when
+	doing full duplex.
+
+	* dlls/dsound/tests/dsound.c: Robert Reif <reif@earthlink.net>
+	Fixed a bug where a capture device was used after it failed to open
+	due to a missing driver.
+	Added tests to try all possible combinations of sample rate, sample
+	size and mono/stereo.
+
+	* dlls/wineps/init.c, dlls/winspool/info.c:
+	Marcus Meissner <meissner@suse.de>
+	Was using the wrong define for the CUPS soname.
+
+	* dlls/comctl32/listview.c: Adam Gundy <arg@cyberscience.com>
+	When shifting the list's indices, we must not send notify messages if
+	we have to refocus. Item modification handlers are not supposed to be
+	called here.
+
+	* programs/wineconsole/wineconsole.c:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	Fixed regression in sub-process creation.
+
+	* dlls/ddraw/d3ddevice/mesa.c, dlls/ddraw/ddraw/user.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- some Caps clean-up when no OpenGL compiled in
+	- fix some fonts displaying problems
+
+	* documentation/patches.sgml:
+	Tony Lambregts <tony_lambregts@telusplanet.net>
+	Clarify patch requirements.
+
+	* dlls/winmm/Makefile.in: Steven Edwards <steven_ed4153@yahoo.com>
+	Add import of ntdll.
+
+	* dlls/comctl32/propsheet.c: Adam Gundy <arg@cyberscience.com>
+	PROPSHEET_CreateDialog() is documented to return -1 on failure, and
+	the dialog handle on success.
+
+	* dlls/commdlg/filedlg95.c: Adam Gundy <arg@cyberscience.com>
+	ArrangeCtrlPositions() did not cope correctly with a templated dialog
+	which has an extra 'preview' control to the right of the 'marker'
+	control.
+	FILEDLG95_Handle_GetFilePath() did not return the path - it wasn't
+	combining the path with the filename.
+
+2003-03-06  Alexandre Julliard  <julliard@winehq.com>
+
+	* library/ldt.c:
+	Hardcode set_thread_area syscall number to avoid trouble with broken
+	headers.
+
+	* dlls/ntdll/loader.c, dlls/ntdll/ntdll_misc.h, include/module.h,
+	  loader/module.c, loader/pe_image.c:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	- implemented LdrGetProcedureAddress and made use of it for
+	  GetProcAddress
+	- implemented LdrGetDllHandle and made use of it in GetModuleHandle
+	- removed MODULE_DllThreadDetach from loader/module.c (should have
+	  been removed in a previous patch)
+
+	* dlls/opengl32/make_opengl, dlls/opengl32/opengl32.spec, dlls/opengl32/wgl.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	Support 'stub' wglGetExtensionsStringEXT function.
+
+	* dlls/dsound/capture.c, dlls/dsound/dsound_main.c,
+	  dlls/dsound/dsound_private.h, dlls/dsound/mixer.c,
+	  dlls/dsound/primary.c:
+	Robert Reif <reif@earthlink.net>
+	Added a configuration option for setting the hardware acceleration
+	level just like the direct sound control panel app.
+	More work on the full duplex interface so the compile warning is no
+	longer generated.  Full duplex interface is still stubbed out.
+	Moved full duplex mixer reset fix into wineoss driver where it
+	belongs.
+	Added some more locking fixes.
+	Capture and full duplex are now stable.
+
+	* include/dsound.h: Robert Reif <reif@earthlink.net>
+	Fixed a FIXME for full duplex.
+
+	* dlls/commdlg/printdlg.c, dlls/comctl32/imagelist.c:
+	Tony Lambregts <tony_lambregts@telusplanet.net>
+	Janitorial. Get rid of W->A call.
+
+	* dlls/oleaut32/variant.c: Adam Gundy <arg@cyberscience.com>
+	Handle coercing VT_DISPATCH into VT_PTR.
+
+	* dlls/comctl32/treeview.c: Adam Gundy <arg@cyberscience.com>
+	TREEVIEW_UpdateScrollBars() now copes with an empty tree.
+
+2003-03-05  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/ntdll/Makefile.in, documentation/configuring.sgml,
+	  documentation/wine.conf.man, documentation/wine.man.in,
+	  include/module.h, loader/elf.c, loader/loadorder.c, loader/module.c,
+	  loader/ne/module.c:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	Removed SO loading type.
+
+	* programs/wcmd/wcmdmain.c: Sylvain Petreolle <spetreolle@yahoo.fr>
+	Allow to run autoexec.bat when launching wcmd, it was broken due to a
+	function change.
+
+	* dlls/shell32/shlfolder.c: Vitaliy Margolen <wine-patch@kievinfo.com>
+	Add few SFGAO_CAN* attributes to supported list.
+
+	* tools/examine-relay: Duane Clark <dclark@akamail.com>
+	Add full listing format option.
+	Fix an infinite loop if the last line is a partial line.
+
+	* dlls/dsound/sound3d.c: Rok Mandeljc <rokmandeljc@hotmail.com>
+	Changed some stuff so distance attenuation works for both 3d
+	processing modes.
+
+2003-03-04  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/ntdll/signal_i386.c, dlls/ntdll/signal_powerpc.c,
+	  dlls/ntdll/signal_sparc.c, include/wine/server_protocol.h,
+	  scheduler/client.c, scheduler/process.c, server/context_i386.c,
+	  server/context_powerpc.c, server/context_sparc.c, server/process.c,
+	  server/ptrace.c, server/thread.c, server/thread.h, server/trace.c:
+	Use SIGUSR1 instead of SIGSTOP to suspend threads.
+
+	* dlls/winmm/tests/wave.c, dlls/winmm/winmm.c:
+	Robert Reif <reif@earthlink.net>
+	Added waveIn tests.
+
+	* files/profile.c:
+	Fixed int conversion in GetPrivateProfileInt so that all the tests
+	succeed.
+
+	* dlls/ntdll/loader.c, dlls/ntdll/ntdll.spec, include/module.h,
+	  include/winternl.h, loader/module.c, scheduler/process.c,
+	  scheduler/thread.c:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	- added Ldr* information to include/winternl.h
+	- exported a few functions/global vars from module.h while we move
+	  code from loader/module.c to dlls/ntdll/loader.c
+	- implemented LdrShutdownProcess, LdrShutdownThread and
+	  LdrDisableThreadCalloutsForDll (and made use of them)
+
+	* dlls/kernel/tests/.cvsignore, dlls/kernel/tests/Makefile.in,
+	  dlls/kernel/tests/profile.c:
+	Stefan Leichter <Stefan.Leichter@camLine.com>
+	Added tests for GetPrivateProfileInt.
+
+	* dlls/comctl32/tab.c: Vitaliy Margolen <wine-patch@kievinfo.com>
+	Fix invisible tabs in TabControls with fixed tab width.
+
+	* documentation/samples/config: Sylvain Petreolle <spetreolle@yahoo.fr>
+	Document [WinMM] drivers options.
+
+	* dlls/msvcrt/msvcrt.spec, dlls/msvcrt/time.c:
+	Marcus Meissner <marcus@jet.franken.de>
+	Added _daylight stub int, and __p__daylight function.
+
+	* programs/winedbg/dbg.y, programs/winedbg/debugger.h,
+	  programs/winedbg/intvar.h, programs/winedbg/winedbg.c:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	Added support for Ctrl-C handling if not running in a console.
+	Added (maintenance) configuration var to trigger external debugger on
+	winedbg's exceptions.
+
+	* dlls/shlwapi/string.c:
+	Rolf Kalbermatter <rolf.kalbermatter@citeng.com>
+	Fix endless loop in StrPBrkW.
+
+	* dlls/opengl32/make_opengl, dlls/opengl32/opengl_ext.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	- update to latest GL spec files
+	- added KTX Buffer Region extension
+
+	* dlls/winedos/dosexe.h, dlls/winedos/dosvm.c, dlls/winedos/int31.c,
+	  dlls/winedos/interrupts.c:
+	Jukka Heinonen <jhei@iki.fi>
+	Move real mode interrupt emulation code to file interrupts.c.
+	Remove last wrapper check from int31 handler.
+	Move RM/PM hardware interrupt emulation code to separate functions.
+
+	* dlls/kernel/kernel32.spec, dlls/winedos/int21.c, msdos/int21.c:
+	Jukka Heinonen <jhei@iki.fi>
+	Move decoding of long file name functions to winedos.
+	Move some int21 functions to winedos.
+
+	* files/drive.c: Enrico Horn <farmboy1@subdimension.com>
+	Simple way to get the label of mixed-mode cd.
+
+	* controls/menu.c: Tony Lambregts <tony_lambregts@telusplanet.net>
+	Janitorial. Get rid of W->A call.
+
+	* dlls/oleaut32/variant.c: Marcus Meissner <marcus@jet.franken.de>
+	VarAdd: set 'rc' correctly from BSTR addition.
+
+	* dlls/oleaut32/typelib.c: Marcus Meissner <marcus@jet.franken.de>
+	Handle VT_PTR->VT_VARIANT arguments of Invoke.
+
+	* programs/wineconsole/wineconsole.c:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	- added ability to use --backend=(curses|user) as wineconsole parameter
+	- rewrote wineconsole command line option parsing
+
+	* programs/wineconsole/curses.c: Eric Pouech <eric.pouech@wanadoo.fr>
+	In curses backend, apply the quick-edit directive from registry.
+
+	* dlls/dsound/buffer.c, dlls/dsound/capture.c,
+	  dlls/dsound/dsound_main.c, dlls/dsound/dsound_private.h,
+	  dlls/dsound/mixer.c, dlls/dsound/tests/dsound.c:
+	Robert Reif <reif@earthlink.net>
+	Fixed code to handle full duplex properly.
+	Added support for capture driver (disabled).
+	Fixed direct sound capture test to handle notifications properly.
+
+	* dlls/winmm/wineoss/audio.c, include/dsdriver.h:
+	Robert Reif <reif@earthlink.net>
+	Capture thread checks queue for more headers before giving error.
+	Capture driver work started.
+
+2003-02-28  Alexandre Julliard  <julliard@winehq.com>
+
+	* loader/module.c:
+	Only do the unload_dll server call at the time we actually unload the
+	dll.
+
+	* server/process.c, server/thread.c, server/thread.h:
+	Peter Hunnisett <peter@transgaming.com>
+	Suspended threads should not acquire synchronization objects.
+
+	* documentation/faq.sgml: Andreas Mohr <andi@rhlx01.fht-esslingen.de>
+	- supported Platforms didn't mention MacOS X prominently enough by
+	  far...
+	- add some URLs, correct URL handling
+	- remove linux.corel.com, as it's DEAD :-\
+
+2003-02-27  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/ntdll/signal_i386.c, include/thread.h, scheduler/sysdeps.c,
+	  tools/winebuild/relay.c:
+	Properly save/restore %gs register across 16-bit calls.
+
+	* controls/edit.c, dlls/gdi/.cvsignore, dlls/gdi/Makefile.in,
+	  dlls/gdi/gdi16.c, dlls/gdi/printdrv.c, dlls/kernel/.cvsignore,
+	  dlls/kernel/Makefile.in, dlls/kernel/utthunk.c,
+	  dlls/msvideo/.cvsignore, dlls/msvideo/Makefile.in,
+	  dlls/msvideo/msvideo16.c, dlls/setupapi/.cvsignore,
+	  dlls/setupapi/Makefile.in, dlls/setupapi/virtcopy.c,
+	  dlls/user/.cvsignore, dlls/user/Makefile.in, dlls/user/hook16.c,
+	  dlls/user/dde/ddeml16.c, dlls/user/property.c, dlls/user/user16.c,
+	  dlls/user/wnd16.c, dlls/winaspi/.cvsignore, dlls/winaspi/Makefile.in,
+	  dlls/winaspi/winaspi16.c, dlls/winmm/.cvsignore,
+	  dlls/winmm/Makefile.in, dlls/winmm/message16.c,
+	  dlls/winmm/mmsystem.c, include/wownt32.h, objects/dc.c,
+	  objects/font.c, objects/metafile.c, windows/driver.c,
+	  windows/painting.c:
+	Replaced most uses of the auto-generated glue code by explicit calls
+	to WOWCallback16Ex.
+
+	* dlls/shell32/shlfolder.c: Alberto Massari <amassari@progress.com>
+	Fixes to IShellFolder::GetAttributesOf:
+	- before computing the flags for the requested entry, reset the bits
+	  we don't support, or we will tell something we didn't want to.
+	- instead of using an hexadecimal mask for the unsupported flags, use
+	  a mask made of the supported ones
+	- replace the obscure hexadecimal values with the proper macros
+
+	* dlls/kernel/wowthunk.c, scheduler/thread.c:
+	Moved CreateThread16 to kernel, and made it use WOWCallback16.
+
+	* documentation/debugger.sgml, programs/winedbg/intvar.h,
+	  programs/winedbg/winedbg.c:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	Removed no longer needed UseXTerm internal variable.
+
+	* programs/wcmd/builtins.c, programs/wcmd/directory.c,
+	  programs/wcmd/wcmdmain.c:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	- don't create a new console upon startup
+	- no longer assume we're always attached to a console
+
+	* configure, configure.ac, dlls/gdi/Makefile.in:
+	Get rid of win16drv directory.
+
+	* dlls/gdi/Makefile.in, dlls/gdi/driver.c, dlls/gdi/gdi.exe.spec:
+	Removed the 16-bit graphics driver support; this has been broken for a
+	long time anyway.
+
+2003-02-26  Alexandre Julliard  <julliard@winehq.com>
+
+	* dlls/kernel/kernel_main.c, dlls/winedos/int31.c, include/miscemu.h,
+	  include/selectors.h, include/wine/library.h, library/ldt.c,
+	  loader/task.c, memory/instr.c, memory/selector.c,
+	  scheduler/sysdeps.c, scheduler/thread.c:
+	Moved LDT selector allocation routines to libwine.
+	Added support for correct locking of all LDT operations.
+	Added separate functions to manipulate the %fs selector, which allows
+	using a global GDT selector on recent Linux kernels.
+
+	* files/file.c:
+	MoveFile[AW] should simply call MoveFileEx[AW]. Should fix issue
+	reported by Roderick Colenbrander.
+
+	* dlls/winedos/soundblaster.c: Sylvain Petreolle <spetreolle@yahoo.fr>
+	Implemented DSP Version command.
+
+	* tools/wrc/wrc.c, tools/wrc/wrc.h, tools/wrc/wrc.man,
+	  tools/wrc/writeres.c, tools/wrc/writeres.h:
+	Dimitrie O. Paun <dpaun@rogers.com>
+	Remove assembly generation from wrc.
+
+	* dlls/winedos/int10.c, include/miscemu.h, msdos/dosmem.c:
+	Jukka Heinonen <jhei@iki.fi>
+	Move controller info and state/functionality info initialization to
+	winedos. Convert many incorrectly static fields into dynamic
+	fields. Fix vesa mode reporting and realloc memory block consistency
+	checks.
+
+	* programs/wineconsole/wineconsole.c:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	Fixed behavior when changing both sb and win size, as the order of
+	operation is important to keep sb always bigger than win.
+
+	* scheduler/process.c, windows/winproc.c:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	Only print 4 hexdigits for tid.
+
+	* dlls/oleaut32/typelib.c: Mike Hearn <m.hearn@signal.qinetiq.com>
+	Check both pointers in GetContainingTypeLib.
+
+	* dlls/kernel/kernel32.spec, include/winbase.h, memory/global.c:
+	Mike Hearn <m.hearn@signal.qinetiq.com>
+	Implemented GlobalMemoryStatusEx().
+
+	* include/docobj.h: Mike Hearn <m.hearn@signal.qinetiq.com>
+	Add some OLECMDIDs present in MS headers.
+
+	* documentation/authors.ent, documentation/running.sgml:
+	Mike Hearn <m.hearn@signal.qinetiq.com>
+	Added a "basic usage" section that deals with installation,
+	uninstallation and control panel applets to the "Running Wine" part of
+	the users guide.
+
+2003-02-25  Alexandre Julliard  <julliard@winehq.com>
+
+	* server/console.c, server/debugger.c, server/process.c,
+	  server/ptrace.c, server/thread.c, server/thread.h:
+	Added send_thread_signal() function and properly handle errors caused
+	by the thread having already died when we send it a signal.
+	Use -1 instead of 0 as invalid Unix pid value.
+
+	* server/registry.c: Avoid some redundant calls to time(NULL).
+	touch_key() must not be called in create_key.
+
+	* configure, configure.ac: Mike McCormack <mike@codeweavers.com>
+	Turn off -Wpointer-arith if it generates warnings when including
+	string.h.
+
+	* dlls/comctl32/treeview.c: Tim Segall <tim@cobber.com>
+	Accept either TVI_ROOT or NULL for the parent to imply sort the entire
+	tree.
+
+	* programs/wcmd/directory.c, programs/wcmd/wcmd.h,
+	  programs/wcmd/wcmdmain.c:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	- made support for paged output a generic feature in wcmd
+	- rewrote DIR command accordingly
+
+	* programs/wineconsole/user.c: Eric Pouech <eric.pouech@wanadoo.fr>
+	Forbids selecting (for clipboard) areas larger than the actual
+	screen-buffer size.
+
+	* dlls/wininet/http.c, dlls/wininet/internet.c,
+	  dlls/wininet/tests/http.c:
+	Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
+	InternetOpenUrlA (http/s case): Use client for HttpOpenRequestA, don't
+	insert HOST: twice.
+	HttpAddRequestHeadersA: allow lpszHeader == NULL.
+
+	* tools/winewrap.c: Dimitrie O. Paun <dpaun@rogers.com>
+	No need to support -mwindows as a synonim for -mgui: it's a gcc-ism
+	that is handled in winegcc.
+	Link in GDI only in gui mode.
+
+	* dlls/kernel/tests/pipe.c: Dan Kegel <dank@kegel.com>
+	Now compiles on windows.  Added a couple more checks.
+
+	* dlls/ntdll/cdrom.c: Gerald Pfeifer <pfeifer@dbai.tuwien.ac.at>
+	Define CD_SECS and CD_FRAMES also on non-Linux systems.  Avoid a
+	non-portable TRACE on non-Linux systems.
+
+2003-02-24  Alexandre Julliard  <julliard@winehq.com>
+
+	* include/wine/server_protocol.h, scheduler/process.c,
+	  server/process.c, server/protocol.def, server/thread.c,
+	  server/thread.h, server/trace.c:
+	Pass the pid of the new process in the new_process request, don't
+	depend on the parent pid to find the startup info.
+
+	* dlls/comctl32/rebar.c, dlls/winedos/vga.c, dlls/wininet/internet.c,
+	  dlls/winsock/socket.c:
+	Michael Stefaniuc <mstefani@redhat.de>
+	Remove some unreachable code.
+
+	* dlls/dsound/tests/dsound.c: Robert Reif <reif@earthlink.net>
+	Fixed a problem getting the GUID to compile under windows and wine.
+
+	* dlls/winedos/int10.c: Gerald Pfeifer <pfeifer@dbai.tuwien.ac.at>
+	Fix TRACE format string.
+
+	* dlls/dinput/dinput_main.c, dlls/dinput/keyboard/main.c:
+	Lionel Ulmer <lionel.ulmer@free.fr>
+	Implement GetDeviceInfo and GetObjectInfo for the keyboard device.
+
+	* programs/wineconsole/dialog.c,
+	  programs/wineconsole/wineconsole_De.rc,
+	  programs/wineconsole/wineconsole_En.rc,
+	  programs/wineconsole/wineconsole_Fr.rc,
+	  programs/wineconsole/wineconsole_Hu.rc,
+	  programs/wineconsole/wineconsole_Zh.rc,
+	  programs/wineconsole/wineconsole_res.h:
+	Eric Pouech <eric.pouech@wanadoo.fr>
+	Added checks when editing window and sb size so that they are kept
+	consistent.
+
+	* dlls/comctl32/propsheet.c: Eric Pouech <eric.pouech@wanadoo.fr>
+	Added handling for PSNRET_INVALID in PSN_APPLY notification.
+
+	* programs/wineconsole/registry.c: Eric Pouech <eric.pouech@wanadoo.fr>
+	Set a default 50 lines in history for console apps.
+
+	* programs/wcmd/wcmdmain.c: Dan Kegel <dank@kegel.com>
+	Make 'cmd /c cl /MUMBLE foo.c' pass /MUMBLE to cl.
+
+	* dlls/dsound/capture.c: Michael Stefaniuc <mstefani@redhat.de>
+	Add missing LeaveCriticalSection's in error path.
+
+	* programs/winedbg/winedbg.c: Marcus Meissner <meissner@suse.de>
+	Print out name of float exceptions.
+
+	* tools/winegcc.c: Dimitrie O. Paun <dpaun@rogers.com>
+	Link in shell32 only in gui mode.
+	Add all the standard defines that MinGW provides (with the exception
+	of __MINGW__, that's MinGW prerogative).
+	Do not pass along linker options when only compiling.
+
+	* include/dsound.h: Robert Reif <reif@earthlink.net>
+	Added definitions for DirectSoundFullDuplex and moved some GUIDs
+	around.
+
+2003-02-19  Alexandre Julliard  <julliard@winehq.com>
+
+	* ANNOUNCE, ChangeLog, VERSION, configure: Release 20030219.
+
+----------------------------------------------------------------
 2003-02-19  Alexandre Julliard  <julliard@winehq.com>
 
 	* dlls/kernel/tests/.cvsignore: Added pipe.ok.
