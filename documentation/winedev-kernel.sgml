@@ -813,6 +813,147 @@ ExitProcess( entry( peb ) );
 	</para>
       </sect2>
     </sect1>
+
+    <sect1 id="seh">
+      <title>Structured Exception Handling</title>
+      
+      <para>
+        Structured Exception Handling (or SEH) is an implementation of
+        exceptions inside the Windows core. It allows code written in
+        different languages to throw exceptions across DLL boundaries, and
+        Windows reports various errors like access violations by throwing
+        them. This section looks at how it works, and how it's implemented
+        in Wine.
+      </para>
+
+      <sect2>
+        <title> How SEH works </title>
+
+        <para>
+          SEH is based on embedding EXCEPTION_REGISTRATION_RECORD
+          structures in the stack. Together they form a linked list rooted
+          at offset zero in the TEB (see the threading section if you
+          don't know what this is). A registration record points to a
+          handler function, and when an exception is thrown the handlers
+          are executed in turn. Each handler returns a code, and they can
+          elect to either continue through the handler chain or it can
+          handle the exception and then restart the program. This is
+          referred to as unwinding the stack. After each handler is called
+          it's popped off the chain.
+        </para>
+
+        <para>
+          Before the system begins unwinding the stack, it runs vectored
+          handlers. This is an extension to SEH available in Windows XP,
+          and allows registered functions to get a first chance to watch
+          or deal with any exceptions thrown in the entire program, from
+          any thread.
+        </para>
+
+        <para>
+          A thrown exception is represented by an EXCEPTION_RECORD
+          structure. It consists of a code, flags, an address and an
+          arbitrary number of DWORD parameters. Language runtimes can use
+          these parameters to associate language-specific information with
+          the exception.
+        </para>
+        
+        <para>
+          Exceptions can be triggered by many things. They can be thrown
+          explicitly by using the RaiseException API, or they can be
+          triggered by a crash (ie, translated from a signal). They may be
+          used internally by a language runtime to implement
+          language-specific exceptions. They can also be thrown across
+          DCOM connections.
+        </para>
+
+        <para>
+          Visual C++ has various extensions to SEH which it uses to
+          implement, eg, object destruction on stack unwind as well as the
+          ability to throw arbitrary types. The code for this is in dlls/msvcrt/except.c
+        </para>
+
+      </sect2>
+      
+      <sect2>
+        <title> Translating signals to exceptions </title>
+
+        <para>
+          In Windows, compilers are expected to use the system exception
+          interface, and the kernel itself uses the same interface to
+          dynamically insert exceptions into a running program. By contrast
+          on Linux the exception ABI is implemented at the compiler level
+          (inside GCC and the linker) and the kernel tells a thread of
+          exceptional events by sending <emphasis>signals</emphasis>. The
+          language runtime may or may not translate these signals into
+          native exceptions, but whatever happens the kernel does not care.
+        </para>
+
+        <para>
+          You may think that if an app crashes, it's game over and it
+          really shouldn't matter how Wine handles this. It's what you might
+          intuitively guess, but you'd be wrong. In fact some Windows
+          programs expect to be able to crash themselves and recover later
+          without the user noticing, some contain buggy binary-only
+          components from third parties and use SEH to swallow crashes, and
+          still others execute priviledged (kernel-level) instructions and
+          expect it to work. In fact, at least one set of APIs (the
+          IsBad*Ptr series) can only be implemented by performing an
+          operation that may crash and returning TRUE if it does, and FALSE
+          if it doesn't! So, Wine needs to not only implement the SEH
+          infrastructure but also translate Unix signals into SEH
+          exceptions.
+        </para>
+
+        <para>
+          The code to translate signals into exceptions is a part of NTDLL,
+          and can be found in dlls/ntdll/signal_i386.c. This file sets up
+          handlers for various signals during Wine startup, and for the ones
+          that indicate exceptional conditions translates them into
+          exceptions. Some signals are used by Wine internally and have
+          nothing to do with SEH.
+        </para>
+
+        <para>
+          Signal handlers in Wine run on their own stack. Each thread has
+          its own signal stack which resides 4k after the TEB. This is
+          important for a couple of reasons. Firstly, because there's no
+          guarantee that the app thread which triggered the signal has
+          enough stack space for the Wine signal handling code. In
+          Windows, if a thread hits the limits of its stack it triggers a
+          fault on the stack guard page. The language runtime can use this
+          to grow the stack if it wants to.
+
+          <!-- fixme: is it really the language runtime that does this? i
+               can't find any code in Wine to reallocate the stack on
+               STATUS_GUARD_PAGE_VIOLATION -->
+
+          However, because a guard page violation is just a regular
+          segfault to the kernel, that would lead to a nested signal
+          handler and that gets messy really quick so we disallow that in
+          Wine. Secondly, setting up the exception to throw requires
+          modifying the stack of the thread which triggered it, which is
+          quite hard to do when you're still running on it.
+        </para>
+
+        <para>
+          Windows exceptions typically contain more information than the
+          Unix standard APIs provide. For instance, a
+          STATUS_ACCESS_VIOLATION exception (0xC0000005) structure
+          contains the faulting address, whereas a standard Unix SIGSEGV
+          just tells the app that it crashed. Usually this information is
+          passed as an extra parameter to the signal handler, however its
+          location and contents vary between kernels (BSD, Solaris,
+          etc). This data is provided in a SIGCONTEXT structure, and on
+          entry to the signal handler it contains the register state of
+          the CPU before the signal was sent. Modifying it will cause the
+          kernel to adjust the context before restarting the thread.
+        </para>
+        
+      </sect2>
+      
+    </sect1>
+
   </chapter>
 
 <!-- Keep this comment at the end of the file

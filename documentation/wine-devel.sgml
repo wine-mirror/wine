@@ -15,7 +15,6 @@
 <!entity opengl SYSTEM "opengl.sgml">
 <!entity ddraw SYSTEM "ddraw.sgml">
 <!entity multimedia SYSTEM "multimedia.sgml">
-
 ]>
 
 <book id="index">
