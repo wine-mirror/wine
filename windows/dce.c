@@ -178,6 +178,13 @@ void DCE_FreeWindowDCE( WND* pWnd )
 	    {
 		if( pDCE->DCXflags & DCX_DCEBUSY ) /* shared cache DCE */
 		{
+                    /* FIXME: AFAICS we are doing the right thing here so 
+                     * this should be a WARN. But this is best left as an ERR 
+                     * because the 'application error' is likely to come from 
+                     * another part of Wine (i.e. it's our fault after all). 
+                     * We should change this to WARN when Wine is more stable
+                     * (for 1.0?).
+                     */
 		    ERR("[%04x] GetDC() without ReleaseDC()!\n", 
 			pWnd->hwndSelf);
 		    DCE_ReleaseDC( pDCE );
