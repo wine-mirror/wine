@@ -485,7 +485,7 @@ file	user.exe
 602 stub SetCheckCursorTimer
 604 stub BroadcastSystemMessage
 605 stub HackTaskMonitor
-606 pascal FormatMessage(long ptr word word ptr word ptr) FormatMessage16
+606 pascal16 FormatMessage(long segptr word word ptr word ptr) FormatMessage16
 608 pascal16 GetForegroundWindow() GetForegroundWindow16
 609 pascal16 SetForegroundWindow(word) SetForegroundWindow16
 610 pascal16 DestroyIcon32(word word) CURSORICON_Destroy

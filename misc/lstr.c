@@ -489,10 +489,10 @@ BOOL WINAPI IsCharUpperW(WCHAR x)
  */
 DWORD WINAPI FormatMessage16(
     DWORD   dwFlags,
-    LPCVOID lpSource,
+    SEGPTR lpSource, /*not always a valid pointer*/
     WORD   dwMessageId,
     WORD   dwLanguageId,
-    LPSTR   lpBuffer,
+    LPSTR  lpBuffer, /* *((HLOCAL16*)) for FORMAT_MESSAGE_ALLOCATE_BUFFER*/
     WORD   nSize,
     LPDWORD args /* va_list *args */
 ) {
@@ -503,26 +503,28 @@ DWORD WINAPI FormatMessage16(
     LPSTR	from,f;
     DWORD	width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
     DWORD	nolinefeed = 0;
+    LPSTR       allocstring;
 
-    TRACE("(0x%lx,%p,%d,0x%x,%p,%d,%p)\n",
+    TRACE("(0x%lx,%lx,%d,0x%x,%p,%d,%p)\n",
 	  dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
     if (width) 
         FIXME("line wrapping not supported.\n");
     from = NULL;
     if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
-        from = HEAP_strdupA( GetProcessHeap(), 0, (LPSTR)lpSource);
+        from = HEAP_strdupA( GetProcessHeap(), 0, PTR_SEG_TO_LIN(lpSource));
     if (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) {
         from = HeapAlloc( GetProcessHeap(),0,200 );
 	sprintf(from,"Systemmessage, messageid = 0x%08x\n",dwMessageId);
     }
     if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE) {
-        INT	bufsize;
+        INT16	bufsize;
+	HINSTANCE16 hinst16 = ((HMODULE)lpSource & 0xffff);
 
 	dwMessageId &= 0xFFFF;
-	bufsize=LoadMessageA((HMODULE)lpSource,dwMessageId,dwLanguageId,NULL,100);
+	bufsize=LoadString16(hinst16,dwMessageId,NULL,0);
 	if (bufsize) {
-	    from = HeapAlloc( GetProcessHeap(), 0, bufsize + 1 );
-	    LoadMessageA((HMODULE)lpSource,dwMessageId,dwLanguageId,from,bufsize+1);
+	    from = HeapAlloc( GetProcessHeap(), 0, bufsize +1);
+	    LoadString16(hinst16,dwMessageId,from,bufsize+1);
 	}
     }
     target	= HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 100);
@@ -642,14 +644,15 @@ DWORD WINAPI FormatMessage16(
     TRACE("-- %s\n",debugstr_a(target));
     if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
         /* nSize is the MINIMUM size */
-        *((LPVOID*)lpBuffer) = (LPVOID)LocalAlloc(GMEM_ZEROINIT,talloced);
-	memcpy(*(LPSTR*)lpBuffer,target,talloced);
+        *((HLOCAL16*)lpBuffer)=  LocalAlloc16(LPTR,talloced);
+	allocstring=PTR_SEG_OFF_TO_LIN(CURRENT_DS,*((HLOCAL16*)lpBuffer));
+	memcpy( allocstring,target,talloced);
     } else
         strncpy(lpBuffer,target,nSize);
     HeapFree(GetProcessHeap(),0,target);
     if (from) HeapFree(GetProcessHeap(),0,from);
     return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? 
-        strlen(*(LPSTR*)lpBuffer):
+        strlen(allocstring):
 	strlen(lpBuffer);
 #else
 	return 0;
