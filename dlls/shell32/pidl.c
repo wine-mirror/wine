@@ -335,6 +335,32 @@ LPITEMIDLIST WINAPI ILCreateFromPath(LPVOID path)
 	}
 	return pidlnew;
 }
+/*************************************************************************
+ *  SHSimpleIDListFromPath [SHELL32.162]
+ *
+ */
+LPITEMIDLIST WINAPI SHSimpleIDListFromPath32AW (LPVOID lpszPath)
+{	LPCSTR	lpszElement;
+	char	lpszTemp[MAX_PATH];
+
+	if (!lpszPath)
+	  return 0;
+
+	if ( VERSION_OsIsUnicode())
+	{ TRACE(pidl,"(path=L%s)\n",debugstr_w((LPWSTR)lpszPath));
+	  WideCharToLocal32(lpszTemp, lpszPath, MAX_PATH);
+  	}
+	else
+	{ TRACE(pidl,"(path=%s)\n",(LPSTR)lpszPath);
+	  strcpy(lpszTemp, lpszPath);
+	}
+		
+	lpszElement = PathFindFilename32A(lpszTemp);
+	if( GetFileAttributes32A(lpszTemp) & FILE_ATTRIBUTE_DIRECTORY )
+	{ return _ILCreateFolder(lpszElement);
+	}
+	return _ILCreateValue(lpszElement);
+}
 
 /**************************************************************************
 * internal functions

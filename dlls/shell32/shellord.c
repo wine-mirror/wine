@@ -218,28 +218,36 @@ LPSTR WINAPI PathRemoveBlanks(LPSTR str)
  * NOTES
  *     basename(char *fn);
  */
-LPVOID WINAPI PathFindFilename(LPVOID fn)
-{	LPSTR aslash,aptr;
-	LPWSTR wslash,wptr;
-	
-	if(VERSION_OsIsUnicode())
-	{ wslash = wptr = (LPWSTR) fn;
-	  TRACE(shell,"L%s\n",debugstr_w(wslash));
-	  while (wptr[0]) 
-	  { if (((wptr[0]=='\\') || (wptr[0]==':')) && wptr[1] && wptr[1]!='\\')
-	      wslash = wptr+1;
-	    wptr++;
-	  }
-	  return (LPVOID) wslash;
-	}
-	aslash = aptr = (LPSTR) fn;
+LPCSTR WINAPI PathFindFilename32A(LPCSTR aptr)
+{	LPCSTR aslash;
+	aslash = aptr;
+
 	TRACE(shell,"%s\n",aslash);
 	while (aptr[0]) 
 	{ if (((aptr[0]=='\\') || (aptr[0]==':')) && aptr[1] && aptr[1]!='\\')
 	      aslash = aptr+1;
-	    aptr++;
+	  aptr++;
 	}
-	return (LPVOID) aslash;
+	return aslash;
+
+}
+LPCWSTR WINAPI PathFindFilename32W(LPCWSTR wptr)
+{	LPCWSTR wslash;
+	wslash = wptr;
+
+	TRACE(shell,"L%s\n",debugstr_w(wslash));
+	while (wptr[0]) 
+	{ if (((wptr[0]=='\\') || (wptr[0]==':')) && wptr[1] && wptr[1]!='\\')
+	    wslash = wptr+1;
+	  wptr++;
+	}
+	return wslash;	
+}
+LPCVOID WINAPI PathFindFilename32AW(LPCVOID fn)
+{
+	if(VERSION_OsIsUnicode())
+	  return PathFindFilename32W(fn);
+	return PathFindFilename32A(fn);
 }
 
 /*************************************************************************
@@ -740,7 +748,6 @@ LPCVOID WINAPI PathGetExtension32AW(LPCVOID path,DWORD y,DWORD z)
 {	if (VERSION_OsIsUnicode())
 	  return PathGetExtension32W(path,y,z);
 	return PathGetExtension32A(path,y,z);
-
 }
 
 /*************************************************************************
@@ -1038,15 +1045,6 @@ HRESULT WINAPI SHWinHelp (DWORD v, DWORD w, DWORD x, DWORD z)
  */
 HRESULT WINAPI SHRunControlPanel (DWORD x, DWORD z)
 {	FIXME(shell,"0x%08lx 0x%08lx stub\n",x,z);
-	return 0;
-}
-/*************************************************************************
- *  SHSimpleIDListFromPath [SHELL32.162]
- *
- */
-LPITEMIDLIST WINAPI SHSimpleIDListFromPath (LPCSTR lpszPath)
-{
-	FIXME(shell,"(%s): stub\n",lpszPath);
 	return 0;
 }
 /*************************************************************************

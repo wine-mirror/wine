@@ -273,8 +273,12 @@ LPCWSTR WINAPI PathGetExtension32W(LPCWSTR path, DWORD y, DWORD x);
 #define  PathGetExtension WINELIB_NAME_AW(PathGetExtension)
 LPCVOID WINAPI PathGetExtension32AW(LPCVOID path, DWORD y, DWORD x); 
 
+LPCSTR WINAPI PathFindFilename32A(LPCSTR path);
+LPCWSTR WINAPI PathFindFilename32W(LPCWSTR path);
+#define  PathFindFilename WINELIB_NAME_AW(PathFindFilename)
+LPCVOID WINAPI PathFindFilename32AW(LPCVOID path); 
+
 LPSTR WINAPI PathRemoveBlanks(LPSTR str);
-LPVOID WINAPI PathFindFilename(LPVOID fn);
 /****************************************************************************
 *  other functions
 */

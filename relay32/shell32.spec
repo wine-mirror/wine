@@ -34,15 +34,15 @@ init	Shell32LibMain
   26 stub ILLoadFromStream@8
   27 stub ILSaveToStream@8
   28 stub SHILCreateFromPath@12
-  29 stdcall PathIsRoot(str) PathIsRoot32AW
+  29 stdcall PathIsRoot(ptr) PathIsRoot32AW
   30 stdcall PathBuildRoot(ptr long) PathBuildRoot
-  31 stdcall PathFindExtension(str) PathFindExtension32AW
-  32 stdcall PathAddBackslash(str) PathAddBackslash32AW
+  31 stdcall PathFindExtension(ptr) PathFindExtension32AW
+  32 stdcall PathAddBackslash(ptr) PathAddBackslash32AW
   33 stdcall PathRemoveBlanks(str) PathRemoveBlanks
-  34 stdcall PathFindFilename(str) PathFindFilename
+  34 stdcall PathFindFilename(ptr) PathFindFilename32AW
   35 stdcall PathRemoveFileSpec(str) PathRemoveFileSpec
   36 stdcall PathAppend(str str) PathAppend
-  37 stdcall PathCombine(ptr str str) PathCombine32AW
+  37 stdcall PathCombine(ptr ptr ptr) PathCombine32AW
   38 stub PathStripPath
   39 stdcall PathIsUNC(str) PathIsUNC
   40 stub PathIsRelative
@@ -167,7 +167,7 @@ init	Shell32LibMain
  159 stub PathIsDirectory
  160 stub SHNetConnectionDialog
  161 stdcall SHRunControlPanel (long long) SHRunControlPanel
- 162 stdcall SHSimpleIDListFromPath (ptr) SHSimpleIDListFromPath
+ 162 stdcall SHSimpleIDListFromPath (ptr) SHSimpleIDListFromPath32AW
  163 stub StrToOleStr
  164 stub Win32DeleteFile
  165 stdcall SHCreateDirectory(long long) SHCreateDirectory

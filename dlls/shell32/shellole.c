@@ -36,7 +36,7 @@ static GetClassPtr SH_find_moduleproc(LPSTR dllname,HMODULE32 *xhmod,LPSTR name)
 	if (xhmod)
 	{ *xhmod = 0;
 	}
-	if (!strcasecmp(PathFindFilename(dllname),"shell32.dll"))
+	if (!strcasecmp(PathFindFilename32A(dllname),"shell32.dll"))
 	{ return (GetClassPtr)SHELL32_DllGetClassObject;
 	}
 
