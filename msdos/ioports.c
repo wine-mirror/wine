@@ -239,6 +239,9 @@ DWORD IO_inport( int port, int count )
         case 0x201:
             b = 0xff; /* no joystick */
             break;
+        case 0x3da:
+            b = VGA_ioport_in( port );
+            break;
         default:
             WARN( int, "Direct I/O read attempted from port %x\n", port);
             b = 0xff;

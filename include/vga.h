@@ -19,5 +19,6 @@ LPSTR VGA_Lock(unsigned*Pitch,unsigned*Height,unsigned*Width,unsigned*Depth);
 void VGA_Unlock(void);
 void VGA_Poll(void);
 void VGA_ioport_out(WORD port, BYTE val);
+BYTE VGA_ioport_in(WORD port);
 
 #endif /* __WINE_VGA_H */

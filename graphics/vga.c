@@ -21,7 +21,7 @@ static IDirectDrawPalette *lpddpal;
 static DDSURFACEDESC sdesc;
 static WORD poll_timer;
 static CRITICAL_SECTION vga_crit;
-static int vga_polling;
+static int vga_polling,vga_refresh;
 
 int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
 {
@@ -47,6 +47,7 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
             lpddraw=NULL;
             return 1;
         }
+        vga_refresh=0;
         InitializeCriticalSection(&vga_crit);
         /* poll every 20ms (50fps should provide adequate responsiveness) */
         poll_timer = CreateSystemTimer( 20, (FARPROC16)VGA_Poll );
@@ -141,6 +142,7 @@ void VGA_Poll(void)
             for (X=0; X<Width; X++) if (dat[X]) TRACE(ddraw,"data(%d) at (%d,%d)\n",dat[X],X,Y);
         }
         VGA_Unlock();
+        vga_refresh=1;
         EnterCriticalSection(&vga_crit);
         vga_polling--;
     }
@@ -161,5 +163,25 @@ void VGA_ioport_out( WORD port, BYTE val )
                 VGA_SetPalette(&paldat,palreg,1);
                 palreg++;
             }
+            break;
     }
+}
+
+BYTE VGA_ioport_in( WORD port )
+{
+    BYTE ret;
+
+    switch (port) {
+        case 0x3da:
+            /* since we don't (yet?) serve DOS VM requests while VGA_Poll is running,
+               we need to fake the occurrence of the vertical refresh */
+            if (lpddraw) {
+                ret=vga_refresh?0x00:0x08;
+                vga_refresh=0;
+            } else ret=0x08;
+            break;
+        default:
+            ret=0xff;
+    }
+    return ret;
 }
