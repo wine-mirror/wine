@@ -429,12 +429,13 @@ VOID WINAPI GetSystemInfo(
 			cachedsi.wProcessorLevel = 4;
 			break;
 		case 5:
-		case 6: /* PPro/2/3 has same info as P1 */
+		case 6:
+		case 15: /* PPro/2/3/4 has same info as P1 */
 			cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
 			cachedsi.wProcessorLevel = 5;
 			break;
 		default:
-			FIXME("unknown cpu family %d, please report! (-> setting to 386)\n", \
+			FIXME("unknown FreeBSD cpu family %d, please report! (-> setting to 386)\n", \
 				(regs2[0] >> 8)&0xf);
 			break;
 		}
