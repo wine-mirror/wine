@@ -886,11 +886,27 @@ DWORD WINAPI GetLongPathName32A( LPCSTR shortpath, LPSTR longpath,
                                   DWORD longlen )
 {
     DOS_FULL_NAME full_name;
-
-    /* FIXME: Is it correct to return a UNIX style path here? */
+    char *p;
+    char *longfilename;
+    DWORD shortpathlen;
+    
     if (!DOSFS_GetFullName( shortpath, TRUE, &full_name )) return 0;
-    lstrcpyn32A( longpath, full_name.long_name, longlen );
-    return strlen( full_name.long_name );
+    lstrcpyn32A( longpath, full_name.short_name, longlen );
+    /* Do some hackery to get the long filename.
+     * FIXME: Would be better if it returned the
+     * long version of the directories too
+     */
+    longfilename = strrchr(full_name.long_name, '/')+1;
+    if (longpath != NULL) {
+      if ((p = strrchr( longpath, '\\' )) != NULL) {
+	p++;
+	longlen -= (p-longpath);
+	lstrcpyn32A( p, longfilename , longlen);
+      }
+    }
+    shortpathlen =
+      ((strrchr( full_name.short_name, '\\' ) - full_name.short_name) + 1);
+    return shortpathlen + strlen( longfilename );
 }
 
 
