@@ -719,7 +719,6 @@ TOOLBAR_AddButtonsA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     LPTBBUTTON lpTbb = (LPTBBUTTON)lParam;
     INT nOldButtons, nNewButtons, nAddButtons, nCount;
-    HDC hdc;
 
     TRACE (toolbar, "adding %d buttons!\n", wParam);
 
@@ -770,9 +769,7 @@ TOOLBAR_AddButtonsA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     TOOLBAR_CalcToolbar (hwnd);
 
-    hdc = GetDC (hwnd);
-    TOOLBAR_Refresh (hwnd, hdc);
-    ReleaseDC (hwnd, hdc);
+    InvalidateRect(hwnd, NULL, FALSE);
 
     return TRUE;
 }
@@ -1127,7 +1124,6 @@ TOOLBAR_DeleteButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_CalcToolbar (hwnd);
 
     InvalidateRect (hwnd, NULL, TRUE);
-    UpdateWindow (hwnd);
 
     return TRUE;
 }
@@ -1525,7 +1521,6 @@ TOOLBAR_HideButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_CalcToolbar (hwnd);
 
     InvalidateRect (hwnd, NULL, TRUE);
-    UpdateWindow (hwnd);
 
     return TRUE;
 }
@@ -1571,7 +1566,6 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     LPTBBUTTON lpTbb = (LPTBBUTTON)lParam;
     INT nIndex = (INT)wParam;
     TBUTTON_INFO *oldButtons;
-    HDC hdc;
 
     if (lpTbb == NULL)
 	return FALSE;
@@ -1625,9 +1619,7 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     TOOLBAR_CalcToolbar (hwnd);
 
-    hdc = GetDC (hwnd);
-    TOOLBAR_Refresh (hwnd, hdc);
-    ReleaseDC (hwnd, hdc);
+    InvalidateRect (hwnd, NULL, FALSE);
 
     return TRUE;
 }
@@ -1999,15 +1991,12 @@ static LRESULT
 TOOLBAR_SetIndent (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
-    HDC hdc;
 
     infoPtr->nIndent = (INT)wParam;
 
     TOOLBAR_CalcToolbar (hwnd);
 
-    hdc = GetDC (hwnd);
-    TOOLBAR_Refresh (hwnd, hdc);
-    ReleaseDC (hwnd, hdc);
+    InvalidateRect(hwnd, NULL, FALSE);
 
     return TRUE;
 }
@@ -2066,7 +2055,6 @@ TOOLBAR_SetRows (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     LPRECT lprc = (LPRECT)lParam;
-    HDC hdc;
 
     if (LOWORD(wParam) > 1) {
 
@@ -2086,9 +2074,7 @@ TOOLBAR_SetRows (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
 
     /* repaint toolbar */
-    hdc = GetDC (hwnd);
-    TOOLBAR_Refresh (hwnd, hdc);
-    ReleaseDC (hwnd, hdc);
+    InvalidateRect(hwnd, NULL, FALSE);
 
     return 0;
 }
@@ -2673,13 +2659,9 @@ TOOLBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TOOLBAR_StyleChanged (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    HDC hdc;
-
     TOOLBAR_AutoSize (hwnd, wParam, lParam);
 
-    hdc = GetDC (hwnd);
-    TOOLBAR_Refresh (hwnd, hdc);
-    ReleaseDC (hwnd, hdc);
+    InvalidateRect(hwnd, NULL, FALSE);
 
     return 0;
 }
