@@ -934,5 +934,6 @@ PPD *PSDRV_ParsePPD(char *fname)
 		  slot->InvocationString);
     }
 
+    fclose(fp);
     return ppd;
 }
