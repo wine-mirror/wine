@@ -161,63 +161,63 @@ static char psrotate[] = /* ang */
 "%.1f rotate\n";
 
 char *PSDRV_ANSIVector[256] = {
-NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x00 */
 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x10 */
 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-"space",	"exclam",	"quotedbl",	"numbersign",
+"space",	"exclam",	"quotedbl",	"numbersign", /* 0x20 */
 "dollar",	"percent",	"ampersand",	"quotesingle",
 "parenleft",	"parenright",	"asterisk",	"plus",
 "comma",	"hyphen",	"period",	"slash",
-"zero",		"one",		"two",		"three",
+"zero",		"one",		"two",		"three", /* 0x30 */
 "four",		"five",		"six",		"seven",
 "eight",	"nine",		"colon",	"semicolon",
 "less",		"equal",	"greater",	"question",
-"at",		"A",		"B",		"C",
+"at",		"A",		"B",		"C", /* 0x40 */
 "D",		"E",		"F",		"G",
 "H",		"I",		"J",		"K",
 "L",		"M",		"N",		"O",
-"P",		"Q",		"R",		"S",
+"P",		"Q",		"R",		"S", /* 0x50 */
 "T",		"U",		"V",		"W",
 "X",		"Y",		"Z",		"bracketleft",
 "backslash",	"bracketright",	"asciicircum",	"underscore",
-"grave",	"a",		"b",		"c",
+"grave",	"a",		"b",		"c", /* 0x60 */
 "d",		"e",		"f",		"g",
 "h",		"i",		"j",		"k",
 "l",		"m",		"n",		"o",
-"p",		"q",		"r",		"s",
+"p",		"q",		"r",		"s", /* 0x70 */
 "t",		"u",		"v",		"w",
 "x",		"y",		"z",		"braceleft",
 "bar",		"braceright",	"asciitilde",	NULL,
+NULL,		NULL,		NULL,		NULL, /* 0x80 */
 NULL,		NULL,		NULL,		NULL,
 NULL,		NULL,		NULL,		NULL,
 NULL,		NULL,		NULL,		NULL,
+NULL,		"quoteleft",	"quoteright",	"quotedblleft", /* 0x90 */
+"quotedblright","bullet",	"endash",	"emdash",
 NULL,		NULL,		NULL,		NULL,
-NULL,		"quoteleft",	"quoteright",	NULL,
 NULL,		NULL,		NULL,		NULL,
-NULL,		NULL,		NULL,		NULL,
-NULL,		NULL,		NULL,		NULL,
-NULL,		"exclamdown",	"cent",		"sterling",
+"space",	"exclamdown",	"cent",		"sterling", /* 0xa0 */
 "currency",	"yen",		"brokenbar",	"section",
 "dieresis",	"copyright",	"ordfeminine",	"guillemotleft",
 "logicalnot",	"hyphen",	"registered",	"macron",
-"degree",	"plusminus",	"twosuperior",	"threesuperior",
+"degree",	"plusminus",	"twosuperior",	"threesuperior", /* 0xb0 */
 "acute",	"mu",		"paragraph",	"periodcentered",
 "cedilla",	"onesuperior",	"ordmasculine",	"guillemotright",
 "onequarter",	"onehalf",	"threequarters","questiondown",
-"Agrave",	"Aacute",	"Acircumflex",	"Atilde",
+"Agrave",	"Aacute",	"Acircumflex",	"Atilde", /* 0xc0 */
 "Adieresis",	"Aring",	"AE",		"Ccedilla",
 "Egrave",	"Eacute",	"Ecircumflex",	"Edieresis",
 "Igrave",	"Iacute",	"Icircumflex",	"Idieresis",
-"Eth",		"Ntilde",	"Ograve",	"Oacute",
+"Eth",		"Ntilde",	"Ograve",	"Oacute", /* 0xd0 */
 "Ocircumflex",	"Otilde",	"Odieresis",	"multiply",
 "Oslash",	"Ugrave",	"Uacute",	"Ucircumflex",
 "Udieresis",	"Yacute",	"Thorn",	"germandbls",
-"agrave",	"aacute",	"acircumflex",	"atilde",
+"agrave",	"aacute",	"acircumflex",	"atilde", /* 0xe0 */
 "adieresis",	"aring",	"ae",		"ccedilla",
 "egrave",	"eacute",	"ecircumflex",	"edieresis",
 "igrave",	"iacute",	"icircumflex",	"idieresis",
-"eth",		"ntilde",	"ograve",	"oacute",
+"eth",		"ntilde",	"ograve",	"oacute", /* 0xf0 */
 "ocircumflex",	"otilde",	"odieresis",	"divide",
 "oslash",	"ugrave",	"uacute",	"ucircumflex",
 "udieresis",	"yacute",	"thorn",	"ydieresis"
