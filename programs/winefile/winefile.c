@@ -180,9 +180,9 @@ LRESULT CALLBACK TreeWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
 /* load resource string */
 static LPTSTR load_string(LPTSTR buffer, UINT id)
 {
- LoadString(Globals.hInstance, id, buffer, BUFFER_LEN);
+	LoadString(Globals.hInstance, id, buffer, BUFFER_LEN);
 
- return buffer;
+	return buffer;
 }
 
 #define RS(b, i) load_string(b, i)
@@ -191,14 +191,14 @@ static LPTSTR load_string(LPTSTR buffer, UINT id)
 /* display error message for the specified WIN32 error code */
 static void display_error(HWND hwnd, DWORD error)
 {
- TCHAR b1[BUFFER_LEN], b2[BUFFER_LEN];
+	TCHAR b1[BUFFER_LEN], b2[BUFFER_LEN];
 	PTSTR msg;
 
 	if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
 		0, error, MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT), (PTSTR)&msg, 0, NULL))
-  MessageBox(hwnd, msg, RS(b2,IDS_WINEFILE), MB_OK);
+		MessageBox(hwnd, msg, RS(b2,IDS_WINEFILE), MB_OK);
 	else
-  MessageBox(hwnd, RS(b1,IDS_ERROR), RS(b2,IDS_WINEFILE), MB_OK);
+		MessageBox(hwnd, RS(b1,IDS_ERROR), RS(b2,IDS_WINEFILE), MB_OK);
 
 	LocalFree(msg);
 }
@@ -1238,7 +1238,7 @@ static void read_directory(Entry* dir, LPCTSTR path, SORT_ORDER sortOrder, HWND 
 static ChildWnd* alloc_child_window(LPCTSTR path, LPITEMIDLIST pidl, HWND hwnd)
 {
 	TCHAR drv[_MAX_DRIVE+1], dir[_MAX_DIR], name[_MAX_FNAME], ext[_MAX_EXT];
- TCHAR b1[BUFFER_LEN];
+	TCHAR b1[BUFFER_LEN];
 
 	ChildWnd* child = (ChildWnd*) malloc(sizeof(ChildWnd));
 	Root* root = &child->root;
@@ -1318,10 +1318,10 @@ static ChildWnd* alloc_child_window(LPCTSTR path, LPITEMIDLIST pidl, HWND hwnd)
 
 #ifdef _SHELL_FOLDERS
 	if (root->entry.etype == ET_SHELL)
-  load_string(root->entry.data.cFileName, IDS_DESKTOP);
+		load_string(root->entry.data.cFileName, IDS_DESKTOP);
 	else
 #endif
-  wsprintf(root->entry.data.cFileName, RS(b1,IDS_TITLEFMT), drv, root->fs);
+		wsprintf(root->entry.data.cFileName, RS(b1,IDS_TITLEFMT), drv, root->fs);
 
 	root->entry.data.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
 
@@ -1561,7 +1561,7 @@ static BOOL CALLBACK ExecuteDialogWndProg(HWND hwnd, UINT nmsg, WPARAM wparam, L
 
 static BOOL CALLBACK DestinationDlgProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
 {
- TCHAR b1[BUFFER_LEN], b2[BUFFER_LEN];
+	TCHAR b1[BUFFER_LEN], b2[BUFFER_LEN];
 
 	switch(nmsg) {
 		case WM_INITDIALOG:
@@ -1583,7 +1583,7 @@ static BOOL CALLBACK DestinationDlgProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPA
 				break;
 
 			  case 254:
-    MessageBox(hwnd, RS(b1,IDS_NO_IMPL), RS(b2,IDS_WINEFILE), MB_OK);
+				MessageBox(hwnd, RS(b1,IDS_NO_IMPL), RS(b2,IDS_WINEFILE), MB_OK);
 				break;
 			}
 
@@ -1761,7 +1761,7 @@ BOOL activate_fs_window(LPCTSTR filesys)
 
 LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
 {
- TCHAR b1[BUFFER_LEN], b2[BUFFER_LEN];
+	TCHAR b1[BUFFER_LEN], b2[BUFFER_LEN];
 
 	switch(nmsg) {
 		case WM_CLOSE:
@@ -1921,7 +1921,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 					break;}
 
 				case ID_HELP:
-     WinHelp(hwnd, RS(b1,IDS_WINEFILE), HELP_INDEX, 0);
+					WinHelp(hwnd, RS(b1,IDS_WINEFILE), HELP_INDEX, 0);
 					break;
 
 #ifndef _NO_EXTENSIONS
@@ -1934,7 +1934,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 					TCHAR path[MAX_PATH];
 					ChildWnd* child;
 
-     if (activate_fs_window(RS(b1,IDS_UNIXFS)))
+					if (activate_fs_window(RS(b1,IDS_UNIXFS)))
 						break;
 
 					getcwd(path, MAX_PATH);
@@ -1949,7 +1949,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 					TCHAR path[MAX_PATH];
 					ChildWnd* child;
 
-     if (activate_fs_window(RS(b1,IDS_SHELL)))
+					if (activate_fs_window(RS(b1,IDS_SHELL)))
 						break;
 
 					GetCurrentDirectory(MAX_PATH, path);
@@ -1975,11 +1975,11 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 #endif
 
 				case ID_ABOUT_WINE:
-     ShellAbout(hwnd, RS(b2,IDS_WINE), RS(b1,IDS_WINEFILE), 0);
+					ShellAbout(hwnd, RS(b2,IDS_WINE), RS(b1,IDS_WINEFILE), 0);
 					break;
 
 				case ID_ABOUT:	/*ID_ABOUT_WINE: */
-     ShellAbout(hwnd, RS(b1,IDS_WINEFILE), NULL, 0);
+					ShellAbout(hwnd, RS(b1,IDS_WINEFILE), NULL, 0);
 					break;
 #endif	/* _NO_EXTENSIONS */
 
@@ -1988,7 +1988,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 						STRING_SelectLanguageByNumber(wParam - PM_FIRST_LANGUAGE);
 					else */if ((cmd<IDW_FIRST_CHILD || cmd>=IDW_FIRST_CHILD+0x100) &&
 						(cmd<SC_SIZE || cmd>SC_RESTORE))
-      MessageBox(hwnd, RS(b2,IDS_NO_IMPL), RS(b1,IDS_WINEFILE), MB_OK);
+						MessageBox(hwnd, RS(b2,IDS_NO_IMPL), RS(b1,IDS_WINEFILE), MB_OK);
 
 					return DefFrameProc(hwnd, Globals.hmdiclient, nmsg, wparam, lparam);
 			}
@@ -3782,7 +3782,7 @@ static void InitInstance(HINSTANCE hinstance)
 
 void show_frame(HWND hwndParent, int cmdshow)
 {
- TCHAR path[MAX_PATH], b1[BUFFER_LEN];
+	TCHAR path[MAX_PATH], b1[BUFFER_LEN];
 	ChildWnd* child;
 	HMENU hMenuFrame, hMenuWindow;
 
@@ -3805,7 +3805,7 @@ void show_frame(HWND hwndParent, int cmdshow)
 
 
 	/* create main window */
- Globals.hMainWnd = CreateWindowEx(0, (LPCTSTR)(int)Globals.hframeClass, RS(b1,IDS_WINE_FILE), WS_OVERLAPPEDWINDOW,
+	Globals.hMainWnd = CreateWindowEx(0, (LPCTSTR)(int)Globals.hframeClass, RS(b1,IDS_WINE_FILE), WS_OVERLAPPEDWINDOW,
 					CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 					hwndParent, Globals.hMenuFrame, Globals.hInstance, 0/*lpParam*/);
 
@@ -3841,9 +3841,9 @@ void show_frame(HWND hwndParent, int cmdshow)
 #endif
 #ifdef _SHELL_FOLDERS
 		/* insert shell namespace button */
-  load_string(b1, IDS_SHELL);
-  b1[lstrlen(b1)+1] = '\0';
-  SendMessage(Globals.hdrivebar, TB_ADDSTRING, 0, (LPARAM)b1);
+		load_string(b1, IDS_SHELL);
+		b1[lstrlen(b1)+1] = '\0';
+		SendMessage(Globals.hdrivebar, TB_ADDSTRING, 0, (LPARAM)b1);
 
 		drivebarBtn.idCommand = ID_DRIVE_SHELL_NS;
 		SendMessage(Globals.hdrivebar, TB_INSERTBUTTON, btn++, (LPARAM)&drivebarBtn);
