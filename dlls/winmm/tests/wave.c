@@ -111,7 +111,7 @@ const char* mmsys_error(MMRESULT error)
 #undef ERR_TO_STR
 }
 
-static const char * wave_out_error(MMRESULT error)
+const char* wave_out_error(MMRESULT error)
 {
     static char msg[1024];
     static char long_msg[1100];

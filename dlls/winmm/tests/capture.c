@@ -143,6 +143,47 @@ static void wave_in_test_deviceIn(int device, LPWAVEFORMATEX pwfx, DWORD format,
        "waveInClose: device=%s rc=%s\n",dev_name(device),wave_in_error(rc));
     res=WaitForSingleObject(hevent,1000);
     ok(res==WAIT_OBJECT_0,"WaitForSingleObject failed for close\n");
+
+    if (winetest_interactive)
+    {
+        /*
+         * Now play back what we recorded
+         */
+        HWAVEOUT wout;
+
+        trace("Playing back recorded sound\n");
+        rc=waveOutOpen(&wout,WAVE_MAPPER,pwfx,(DWORD)hevent,0,CALLBACK_EVENT);
+        ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID ||
+           rc==MMSYSERR_NOTENABLED || rc==MMSYSERR_NODRIVER || rc==MMSYSERR_ALLOCATED ||
+           ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
+            !(pcaps->dwFormats & format)),
+           "waveOutOpen: device=%s format=%ldx%2dx%d flags=%lx(%s) rc=%s\n",dev_name(device),
+           pwfx->nSamplesPerSec,pwfx->wBitsPerSample,pwfx->nChannels,CALLBACK_EVENT|flags,
+           wave_open_flags(CALLBACK_EVENT),wave_out_error(rc));
+        if (rc==MMSYSERR_NOERROR)
+        {
+            rc=waveOutPrepareHeader(wout, &frag, sizeof(frag));
+            ok(rc==MMSYSERR_NOERROR,
+               "waveOutPrepareHeader: device=%s rc=%s\n",dev_name(device),wave_out_error(rc));
+
+            if (rc==MMSYSERR_NOERROR)
+            {
+                WaitForSingleObject(hevent,INFINITE);
+                rc=waveOutWrite(wout, &frag, sizeof(frag));
+                ok(rc==MMSYSERR_NOERROR,"waveOutWrite: device=%s rc=%s\n",dev_name(device),wave_out_error(rc));
+                WaitForSingleObject(hevent,INFINITE);
+
+                rc=waveOutUnprepareHeader(wout, &frag, sizeof(frag));
+                ok(rc==MMSYSERR_NOERROR,
+                   "waveOutUnprepareHeader: device=%s rc=%s\n",dev_name(device),wave_out_error(rc));
+            }
+            rc=waveOutClose(wout);
+            ok(rc==MMSYSERR_NOERROR,"waveOutClose: device=%s rc=%s\n",dev_name(device),wave_out_error(rc));
+        }
+        else
+            trace("Unable to play back the recorded sound\n");
+    }
+
     free(frag.lpData);
     CloseHandle(hevent);
 }
