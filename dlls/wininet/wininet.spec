@@ -81,7 +81,7 @@
 @ stdcall HttpSendRequestW(ptr wstr long ptr long) HttpSendRequestW
 @ stub IncrementUrlCacheHeaderData
 @ stdcall InternetAttemptConnect(long) InternetAttemptConnect
-@ stdcall InternetAutodial(long ptr) InternetAutoDial
+@ stdcall InternetAutodial(long ptr) InternetAutodial
 @ stub InternetAutodialCallback
 @ stdcall InternetAutodialHangup(long) InternetAutodialHangup
 @ stdcall InternetCanonicalizeUrlA(str str ptr long) InternetCanonicalizeUrlA

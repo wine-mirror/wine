@@ -2271,7 +2271,7 @@ BOOL WINAPI InternetUnlockRequestFile( HANDLE hLockHandle)
 
 
 /***********************************************************************
- *           InternetAutoDial
+ *           InternetAutodial
  *
  * On windows this function is supposed to dial the default internet
  * connection. We don't want to have Wine dial out to the internet so
@@ -2282,7 +2282,7 @@ BOOL WINAPI InternetUnlockRequestFile( HANDLE hLockHandle)
  *   FALSE on failure
  *
  */
-BOOL WINAPI InternetAutoDial(DWORD dwFlags, HWND hwndParent)
+BOOL WINAPI InternetAutodial(DWORD dwFlags, HWND hwndParent)
 {
     FIXME("STUB\n");
 
@@ -2291,9 +2291,9 @@ BOOL WINAPI InternetAutoDial(DWORD dwFlags, HWND hwndParent)
 }
 
 /***********************************************************************
- *           InternetAutoDialHangup
+ *           InternetAutodialHangup
  *
- * Hangs up an connection made with InternetAutoDial
+ * Hangs up an connection made with InternetAutodial
  *
  * PARAM
  *    dwReserved
