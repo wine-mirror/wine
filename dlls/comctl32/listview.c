@@ -5478,8 +5478,11 @@ static LRESULT LISTVIEW_GetStringWidthT(LISTVIEW_INFO *infoPtr, LPCWSTR lpszText
  */
 static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BOOL subitem, BOOL select)
 {
+    WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-    RECT rcBounds, rcIcon, rcLabel;
+    RECT rcBounds, rcState, rcIcon, rcLabel;
+    POINT Origin, Position, opt;
+    LVITEMW lvItem;
     
     TRACE("(pt=%s, subitem=%d, select=%d)\n", debugpoint(&lpht->pt), subitem, select);
     
@@ -5500,9 +5503,11 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
     if (lpht->flags) return -1;
 
     lpht->flags |= LVHT_NOWHERE;
+
+    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return -1;
    
     /* first deal with the large items */
-    if (uView == LVS_ICON && (infoPtr->dwStyle & LVS_OWNERDRAWFIXED) &&
+    if (uView == LVS_ICON && !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED) &&
 	PtInRect (&infoPtr->rcFocus, lpht->pt))
     {
 	lpht->iItem = infoPtr->nFocusedItem;
@@ -5530,10 +5535,8 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
 	}
 	else
 	{
-	    POINT Origin, Position;
 	    INT nPerCol = (uView == LVS_REPORT) ? infoPtr->nItemCount : LISTVIEW_GetCountPerColumn(infoPtr);
 
-	    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return -1;
 	    Position.x = lpht->pt.x - Origin.x;
 	    Position.y = lpht->pt.y - Origin.y;
 	    TRACE("Position=%s, nPerCol=%d, nItemHeight=%d, nColHeight=%d\n", 
@@ -5550,45 +5553,29 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
    
     if (lpht->iItem == -1) return -1;
 
-    if (!LISTVIEW_GetItemMeasures(infoPtr, lpht->iItem, 0, &rcBounds, &rcIcon, &rcLabel)) return -1;
+    lvItem.mask = LVIF_STATE | LVIF_TEXT;
+    if (uView == LVS_REPORT) lvItem.mask |= LVIF_INDENT;
+    lvItem.stateMask = LVIS_STATEIMAGEMASK;
+    if (uView == LVS_ICON && infoPtr->bFocus) lvItem.stateMask |= LVIS_FOCUSED;
+    lvItem.iItem = lpht->iItem;
+    lvItem.iSubItem = 0;
+    lvItem.pszText = szDispText;
+    lvItem.cchTextMax = DISP_TEXT_SIZE;
+    if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return -1;
     
-    if (!PtInRect(&rcBounds, lpht->pt)) return -1;
+    if (!LISTVIEW_GetItemMetrics(infoPtr, &lvItem, 0, &rcBounds, &rcState, &rcIcon, &rcLabel)) return -1;
+    if (!LISTVIEW_GetItemListOrigin(infoPtr, lpht->iItem, &Position)) return -1;
+    opt.x = lpht->pt.x - Position.x - Origin.x;
+    opt.y = lpht->pt.y - Position.y - Origin.y;
+    
+    if (!PtInRect(&rcBounds, opt)) return -1;
 
-    if (PtInRect(&rcIcon, lpht->pt))
+    if (PtInRect(&rcIcon, opt))
 	lpht->flags |= LVHT_ONITEMICON;
-    else if (PtInRect(&rcLabel, lpht->pt))
+    else if (PtInRect(&rcLabel, opt))
 	lpht->flags |= LVHT_ONITEMLABEL;
-    else if (infoPtr->himlState)
-    {
-	/* FIXME: move this to GetItemMeasures */
-	LVITEMW lvItem;
-
-	lvItem.mask = LVIF_STATE;
-	lvItem.stateMask = LVIS_STATEIMAGEMASK;
-	lvItem.iItem = lpht->iItem;
-	lvItem.iSubItem = 0;
-	if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return -1;
-	{
-            UINT uStateImage = (lvItem.state & LVIS_STATEIMAGEMASK) >> 12;
-	    RECT rcState;
-
-	    if (uView == LVS_ICON)
-	    {
-     		rcState.left = rcIcon.left - infoPtr->iconStateSize.cx + 10;
-		rcState.top = rcIcon.top + infoPtr->iconSize.cy - infoPtr->iconStateSize.cy + 4;
-	    }
-	    else
-	    {
-		rcState.left = rcIcon.left - infoPtr->iconStateSize.cx - IMAGE_PADDING;
-		rcState.top = rcIcon.top;
-	    }
-	    rcState.right = rcState.left + infoPtr->iconStateSize.cx;
-	    rcState.bottom = rcState.top + infoPtr->iconStateSize.cy;
-	    
- 	    if (uStateImage > 0 && PtInRect(&rcState, lpht->pt))
-		lpht->flags |= LVHT_ONITEMSTATEICON;
-	}
-    }
+    else if (infoPtr->himlState && ((lvItem.state & LVIS_STATEIMAGEMASK) >> 12) && PtInRect(&rcState, opt))
+	lpht->flags |= LVHT_ONITEMSTATEICON;
     if (lpht->flags & LVHT_ONITEM)
 	lpht->flags &= ~LVHT_NOWHERE;
     
@@ -5600,7 +5587,7 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
         {
 	    rcBounds.left = rcBounds.right;
 	    rcBounds.right += LISTVIEW_GetColumnWidth(infoPtr, j);
-	    if (PtInRect(&rcBounds, lpht->pt))
+	    if (PtInRect(&rcBounds, opt))
 	    {
 		lpht->iSubItem = j;
 		break;
