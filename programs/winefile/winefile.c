@@ -190,8 +190,6 @@ static void display_error(HWND hwnd, DWORD error)
 	LocalFree(msg);
 }
 
-
-/* allocate and initialise a directory entry */
 static Entry* alloc_entry()
 {
 	Entry* entry = (Entry*) malloc(sizeof(Entry));
@@ -1490,7 +1488,7 @@ static HWND create_child_window(ChildWnd* child)
 	mcs.y       = child->pos.rcNormalPosition.top;
 	mcs.cx      = child->pos.rcNormalPosition.right-child->pos.rcNormalPosition.left;
 	mcs.cy      = child->pos.rcNormalPosition.bottom-child->pos.rcNormalPosition.top;
-	mcs.style   = 0;
+	mcs.style   = 1;
 	mcs.lParam  = 0;
 
 	hcbthook = SetWindowsHookEx(WH_CBT, CBTProc, 0, GetCurrentThreadId());
@@ -1504,6 +1502,8 @@ static HWND create_child_window(ChildWnd* child)
 
 	UnhookWindowsHookEx(hcbthook);
 
+	ListBox_SetItemHeight(child->left.hwnd, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
+	ListBox_SetItemHeight(child->right.hwnd, 1, max(Globals.spaceSize.cy,IMAGE_HEIGHT+3));
 	idx = ListBox_FindItemData(child->left.hwnd, ListBox_GetCurSel(child->left.hwnd), child->left.cur);
 	ListBox_SetCurSel(child->left.hwnd, idx);
 
@@ -1538,6 +1538,29 @@ static BOOL CALLBACK ExecuteDialogWndProg(HWND hwnd, UINT nmsg, WPARAM wparam, L
 				EndDialog(hwnd, id);
 
 			return 1;}
+	}
+
+	return 0;
+}
+
+static BOOL CALLBACK sDestinationWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
+{
+	switch(nmsg) {
+		case WM_INITDIALOG:
+			return 1;
+
+		case WM_COMMAND:{
+			int id = (int)wparam;
+			if (id == IDOK) {
+				char *dest;
+				dest = malloc(MAX_PATH);
+				GetWindowText(GetDlgItem(hwnd, 201), dest, MAX_PATH);
+				EndDialog(hwnd, (int)dest);
+			}
+			else if (id == IDCANCEL) EndDialog(hwnd, id);
+			else if (id == 254) MessageBox(hwnd, TEXT("Not yet implemented"), TEXT("Winefile"), MB_OK);
+			return 1;
+			}
 	}
 
 	return 0;
@@ -1792,6 +1815,42 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 				case ID_WINDOW_ARRANGE:
 					SendMessage(Globals.hmdiclient, WM_MDIICONARRANGE, 0, 0);
 					break;
+					
+				case ID_SELECT_FONT: {
+					CHOOSEFONT chFont;
+					LOGFONT    lFont;
+					HDC hdc = GetDC(hwnd);
+					char dlg_name[255], dlg_info[255];
+					chFont.lStructSize = sizeof(CHOOSEFONT);
+					chFont.hwndOwner = hwnd;
+					chFont.hDC = NULL;
+					chFont.lpLogFont = &lFont;
+					chFont.Flags = CF_SCREENFONTS | CF_FORCEFONTEXIST | CF_LIMITSIZE | CF_NOSCRIPTSEL;
+					chFont.rgbColors = RGB(0,0,0);
+					chFont.lCustData = 0;
+					chFont.lpfnHook = NULL;
+					chFont.lpTemplateName = NULL;
+					chFont.hInstance = Globals.hInstance;
+					chFont.lpszStyle = NULL;
+					chFont.nFontType = SIMULATED_FONTTYPE;
+					chFont.nSizeMin = 0;
+					chFont.nSizeMax = 24;
+					if(ChooseFont(&chFont)) {
+						LoadString(Globals.hInstance, IDS_FONT_SEL_DLG_NAME, dlg_name, MAX_LOAD_STRING);
+						LoadString(Globals.hInstance, IDS_FONT_SEL_DLG_INFO, dlg_info, MAX_LOAD_STRING);
+						MessageBox(hwnd,dlg_info,dlg_name,MB_OK|MB_ICONINFORMATION);
+						Globals.hfont = CreateFontIndirect(&lFont);
+						SelectFont(hdc, Globals.hfont);
+						GetTextExtentPoint32(hdc, TEXT(" "), 1, &Globals.spaceSize);
+					}
+					else if(CommDlgExtendedError()) {
+						LoadString(Globals.hInstance, IDS_FONT_SEL_DLG_NAME, dlg_name, MAX_LOAD_STRING);
+						LoadString(Globals.hInstance, IDS_FONT_SEL_ERROR, dlg_info, MAX_LOAD_STRING);
+						MessageBox(hwnd,dlg_info,dlg_name,MB_OK);
+					}
+					ReleaseDC(hwnd,hdc);
+					break;
+				}
 
 				case ID_VIEW_TOOL_BAR:
 					toggle_child(hwnd, cmd, Globals.htoolbar);
@@ -2473,7 +2532,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 
 	if (pane->treePane) {
 		if (entry) {
-			img_pos = dis->rcItem.left + entry->level*(IMAGE_WIDTH+Globals.spaceSize.cx);
+			img_pos = dis->rcItem.left + entry->level*(IMAGE_WIDTH+TREE_LINE_DX);
 
 			if (calcWidthCol == -1) {
 				int x;
@@ -2506,7 +2565,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 					x = img_pos - IMAGE_WIDTH/2;
 
 					do {
-						x -= IMAGE_WIDTH+Globals.spaceSize.cx;
+						x -= IMAGE_WIDTH+TREE_LINE_DX;
 
 						if (up->next
 #ifndef _LEFT_FILES
@@ -2532,8 +2591,8 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 					LineTo(dis->hDC, x, dis->rcItem.bottom);
 
 				if (entry->down && entry->expanded) {
-					x += IMAGE_WIDTH+Globals.spaceSize.cx;
-					MoveToEx(dis->hDC, x, dis->rcItem.top+IMAGE_HEIGHT, 0);
+					x += IMAGE_WIDTH+TREE_LINE_DX;
+					MoveToEx(dis->hDC, x, dis->rcItem.top+IMAGE_HEIGHT+2, 0);
 					LineTo(dis->hDC, x, dis->rcItem.bottom);
 				}
 
@@ -2541,7 +2600,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 				if (hrgn_org) DeleteObject(hrgn_org);
 				/* SelectObject(dis->hDC, holdPen); */
 			} else if (calcWidthCol==col || calcWidthCol==COLUMNS) {
-				int right = img_pos + IMAGE_WIDTH - Globals.spaceSize.cx;
+				int right = img_pos + IMAGE_WIDTH - TREE_LINE_DX;
 
 				if (right > pane->widths[col])
 					pane->widths[col] = right;
@@ -2565,7 +2624,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 
 			DrawText(dis->hDC, entry->data.cFileName, -1, &rt, DT_CALCRECT|DT_SINGLELINE|DT_NOPREFIX);
 
-			focusRect.right = dis->rcItem.left+pane->positions[col+1]+Globals.spaceSize.cx + rt.right +2;
+			focusRect.right = dis->rcItem.left+pane->positions[col+1]+TREE_LINE_DX + rt.right +2;
 		}
 #else
 
@@ -2584,6 +2643,10 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 
 		hbrush = CreateSolidBrush(bkcolor);
 		FillRect(dis->hDC, &focusRect, hbrush);
+		if (entry->down && entry->expanded) {
+			MoveToEx(dis->hDC, img_pos + IMAGE_WIDTH/2 + TREE_LINE_DX, dis->rcItem.top+IMAGE_HEIGHT+2, 0);
+			LineTo(dis->hDC, img_pos + IMAGE_WIDTH/2 + TREE_LINE_DX, dis->rcItem.bottom);
+		}
 		DeleteObject(hbrush);
 
 		SetBkMode(dis->hDC, TRANSPARENT);
@@ -2592,6 +2655,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 		cx = pane->widths[col];
 
 		if (cx && img!=IMG_NONE) {
+
 			if (cx > IMAGE_WIDTH)
 				cx = IMAGE_WIDTH;
 
@@ -3278,6 +3342,8 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 			LPDRAWITEMSTRUCT dis = (LPDRAWITEMSTRUCT)lparam;
 			Entry* entry = (Entry*) dis->itemData;
 
+			/*dis->rcItem.top*=2;
+			dis->rcItem.bottom*=2;*/
 			if (dis->CtlID == IDW_TREE_LEFT)
 				draw_item(&child->left, dis, entry, -1);
 			else
@@ -3451,6 +3517,39 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 				case ID_ACTIVATE:
 					activate_entry(child, pane, hwnd);
 					break;
+
+				case ID_FILE_MOVE: {
+					char *new_name,*old_name;
+					int len;
+					if((int)(new_name=(char *)DialogBox(Globals.hInstance, MAKEINTRESOURCE(IDD_SELECT_DESTINATION), hwnd, sDestinationWndProc))==1|| (int)new_name==IDCANCEL) break;
+					old_name = malloc(MAX_PATH);
+					if(new_name[1]!=':' && new_name[0]!='/') {
+						get_path(pane->cur->up, old_name);
+						len = strlen(old_name);
+						if(old_name[len-1]!='\\') {
+							old_name[len]='\\';
+							len++;
+							old_name[len]='\n';
+						}
+						strcpy(&old_name[len], new_name);
+						strcpy(new_name, old_name);
+					}
+					get_path(pane->cur, old_name);
+					if(MoveFileEx(old_name,new_name,MOVEFILE_COPY_ALLOWED)) {
+						if(pane->treePane) {
+							pane->root->scanned=FALSE;
+							pane->cur=pane->root;
+							activate_entry(child, pane, hwnd);
+						}
+						else scan_entry(child, pane->root, hwnd);
+					}
+					else {
+						LoadString(Globals.hInstance, IDS_FILE_MOVE_ERROR, old_name, MAX_PATH);
+						MessageBox(hwnd, old_name, "WineFile", MB_OK);
+					}
+					free(old_name);
+					free(new_name);
+					break;}
 
 				default:
 					return pane_command(pane, LOWORD(wparam));

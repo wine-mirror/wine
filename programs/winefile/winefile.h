@@ -36,6 +36,7 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
+#include <commdlg.h>
 #include <shellapi.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -74,10 +75,13 @@ enum IMAGE {
 	IMG_FOLDER,		IMG_OPEN_FOLDER,	IMG_FOLDER_PLUS,IMG_OPEN_PLUS,	IMG_OPEN_MINUS,
 	IMG_FOLDER_UP,	IMG_FOLDER_CUR
 };
-
+#ifndef MAX_LOAD_STRING
+#define MAX_LOAD_STRING		256
+#endif
 #define	IMAGE_WIDTH			16
-#define	IMAGE_HEIGHT		13
+#define	IMAGE_HEIGHT			13
 #define	SPLIT_WIDTH			5
+#define TREE_LINE_DX			3
 
 #define IDW_STATUSBAR		0x100
 #define IDW_TOOLBAR			0x101

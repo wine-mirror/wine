@@ -32,16 +32,19 @@
 /* dialogs */
 
 #define	IDD_EXECUTE					103
+#define IDD_SELECT_DESTINATION				104
 
 
 /* control ids */
 
 #define	ID_ACTIVATE					101
 #define	ID_EXECUTE					105
+#define ID_FILE_MOVE					106
 #define	ID_FILE_EXIT					115
 #define	ID_VIEW_NAME					401
 #define	ID_VIEW_ALL_ATTRIBUTES				402
 #define	ID_VIEW_SELECTED_ATTRIBUTES			403
+#define ID_SELECT_FONT					510
 #define	ID_VIEW_TOOL_BAR				508
 #define	ID_VIEW_DRIVE_BAR				507
 #define	ID_VIEW_STATUSBAR				503
@@ -66,6 +69,12 @@
 #define	ID_WINDOW_AUTOSORT				0x8003
 #define	ID_VIEW_FULLSCREEN				0x8004
 #define	ID_PREFERED_SIZES				0x8005
+
+/* string table */
+#define IDS_FONT_SEL_DLG_NAME				1101
+#define IDS_FONT_SEL_DLG_INFO				1102
+#define IDS_FONT_SEL_ERROR				1103
+#define IDS_FILE_MOVE_ERROR				1104
 
 /* range for drive bar command ids: 0x9000..0x90FF */
 #ifdef __WINE__
