@@ -370,7 +370,7 @@ sub parse_c_file($$) {
 	    }
 	    next;
 	} elsif(/(extern\s+|static\s+)?((struct\s+|union\s+|enum\s+|signed\s+|unsigned\s+)?\w+((\s*\*)+\s*|\s+))
-            ((__cdecl|__stdcall|CDECL|VFWAPIV|VFWAPI|WINAPIV|WINAPI|CALLBACK)\s+)?
+            ((__cdecl|__stdcall|CDECL|NET_API_FUNCTION|RPC_ENTRY|VFWAPIV|VFWAPI|WINAPIV|WINAPI|CALLBACK)\s+)?
 	    (\w+(\(\w+\))?)\s*\((.*?)\)\s*(\{|\;)/sx)
         {
 	    my @lines = split(/\n/, $&);
@@ -443,8 +443,8 @@ sub parse_c_file($$) {
 			((?:struct\s+|union\s+|enum\s+|register\s+|(?:signed\s+|unsigned\s+)
 			  (?:short\s+(?=int)|long\s+(?=int))?)?\w+)\s*
 			((?:const)?\s*(?:\*\s*(?:const)?\s*?)*)\s*
-			(?:__cdecl\s+|__stdcall\s+|CALLBACK\s+|WINAPI\s+)?
-			\(\s*(?:__cdecl|__stdcall|CALLBACK|WINAPI)?\s*\*\s*((?:\w+)?)\s*\)\s*
+			(?:__cdecl\s+|__stdcall\s+|CALLBACK\s+|CDECL\s+|NET_API_FUNCTION\s+|RPC_ENTRY\s+|VFWAPIV\s+|VFWAPI\s+|WINAPIV\s+|WINAPI\s+)?
+			\(\s*(?:__cdecl|__stdcall|CALLBACK|CDECL|NET_API_FUNCTION|RPC_ENTRY|VFWAPIV|VFWAPI|WINAPIV|WINAPI)?\s*\*\s*((?:\w+)?)\s*\)\s*
 			\(\s*(.*?)\s*\)$/x) 
 		{
 		    my $return_type = $1;
