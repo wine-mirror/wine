@@ -351,7 +351,7 @@ static HRESULT WINAPI DGA_IDirectDrawSurface3_Unlock(
 static HRESULT WINAPI Xlib_IDirectDrawSurface3_Unlock(
 	LPDIRECTDRAWSURFACE3 this,LPVOID surface
 ) {
-	Xlib_MessagePump(this->s.ddraw->e.xlib.window);
+	/* Xlib_MessagePump(this->s.ddraw->e.xlib.window); */
 
 	TRACE(ddraw,"(%p)->Unlock(%p)\n",this,surface);
 
@@ -414,7 +414,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Flip(
 	LPDIRECTDRAWSURFACE3 this,LPDIRECTDRAWSURFACE3 flipto,DWORD dwFlags
 ) {
 	TRACE(ddraw,"(%p)->Flip(%p,%08lx)\n",this,flipto,dwFlags);
-	Xlib_MessagePump(this->s.ddraw->e.xlib.window);
+	/* Xlib_MessagePump(this->s.ddraw->e.xlib.window); */
 	if (!this->s.ddraw->e.xlib.paintable)
 		return 0;
 
@@ -826,28 +826,176 @@ static HRESULT WINAPI IDirectDrawSurface3_SetColorKey(
 	return DD_OK;
 }
 
+static HRESULT WINAPI IDirectDrawSurface3_AddOverlayDirtyRect(
+        LPDIRECTDRAWSURFACE3 this, 
+        LPRECT32 lpRect )
+{
+  FIXME(ddraw,"(%p)->(%p),stub!\n",this,lpRect); 
+
+  return DD_OK;
+}
+
+static HRESULT WINAPI IDirectDrawSurface3_DeleteAttachedSurface(
+        LPDIRECTDRAWSURFACE3 this, 
+        DWORD dwFlags,
+        LPDIRECTDRAWSURFACE3 lpDDSAttachedSurface )
+{
+  FIXME(ddraw,"(%p)->(0x%08lx,%p),stub!\n",this,dwFlags,lpDDSAttachedSurface);
+
+  return DD_OK;
+}
+
+static HRESULT WINAPI IDirectDrawSurface3_EnumOverlayZOrders(
+        LPDIRECTDRAWSURFACE3 this,
+        DWORD dwFlags,
+        LPVOID lpContext,
+        LPDDENUMSURFACESCALLBACK lpfnCallback )
+{
+  FIXME(ddraw,"(%p)->(0x%08lx,%p,%p),stub!\n", this,dwFlags,
+          lpContext, lpfnCallback );
+
+  return DD_OK;
+}
+
+static HRESULT WINAPI IDirectDrawSurface3_GetClipper(
+        LPDIRECTDRAWSURFACE3 this,
+        LPDIRECTDRAWCLIPPER* lplpDDClipper )
+{
+  FIXME(ddraw,"(%p)->(%p),stub!\n", this, lplpDDClipper);
+
+  return DD_OK;
+}
+
+static HRESULT WINAPI IDirectDrawSurface3_GetColorKey(
+        LPDIRECTDRAWSURFACE3 this,
+        DWORD dwFlags,
+        LPDDCOLORKEY lpDDColorKey )
+{
+  FIXME(ddraw,"(%p)->(0x%08lx,%p),stub!\n", this, dwFlags, lpDDColorKey);
+
+  return DD_OK;
+}
+
+static HRESULT WINAPI IDirectDrawSurface3_GetFlipStatus(
+        LPDIRECTDRAWSURFACE3 this,
+        DWORD dwFlags ) 
+{
+  FIXME(ddraw,"(%p)->(0x%08lx),stub!\n", this, dwFlags);
+
+  return DD_OK;
+}
+
+static HRESULT WINAPI IDirectDrawSurface3_GetPalette(
+        LPDIRECTDRAWSURFACE3 this,
+        LPDIRECTDRAWPALETTE* lplpDDPalette )
+{
+  FIXME(ddraw,"(%p)->(%p),stub!\n", this, lplpDDPalette);
+
+  return DD_OK;
+}
+
+static HRESULT WINAPI IDirectDrawSurface3_SetOverlayPosition(
+        LPDIRECTDRAWSURFACE3 this,
+        LONG lX,
+        LONG lY)
+{
+  FIXME(ddraw,"(%p)->(%ld,%ld),stub!\n", this, lX, lY);
+
+  return DD_OK;
+}
+
+static HRESULT WINAPI IDirectDrawSurface3_UpdateOverlay(
+        LPDIRECTDRAWSURFACE3 this,
+        LPRECT32 lpSrcRect,
+        LPDIRECTDRAWSURFACE3 lpDDDestSurface,
+        LPRECT32 lpDestRect,
+        DWORD dwFlags,
+        LPDDOVERLAYFX lpDDOverlayFx )
+{
+  FIXME(ddraw,"(%p)->(%p,%p,%p,0x%08lx,%p),stub!\n", this,
+         lpSrcRect, lpDDDestSurface, lpDestRect, dwFlags, lpDDOverlayFx );  
+
+  return DD_OK;
+}
+ 
+static HRESULT WINAPI IDirectDrawSurface3_UpdateOverlayDisplay(
+        LPDIRECTDRAWSURFACE3 this,
+        DWORD dwFlags )
+{
+  FIXME(ddraw,"(%p)->(0x%08lx),stub!\n", this, dwFlags); 
+
+  return DD_OK;
+}
+
+static HRESULT WINAPI IDirectDrawSurface3_UpdateOverlayZOrder(
+        LPDIRECTDRAWSURFACE3 this,
+        DWORD dwFlags,
+        LPDIRECTDRAWSURFACE3 lpDDSReference )
+{
+  FIXME(ddraw,"(%p)->(0x%08lx,%p),stub!\n", this, dwFlags, lpDDSReference);
+
+  return DD_OK;
+}
+
+static HRESULT WINAPI IDirectDrawSurface3_GetDDInterface(
+        LPDIRECTDRAWSURFACE3 this,
+        LPVOID* lplpDD )
+{
+  FIXME(ddraw,"(%p)->(%p),stub!\n", this, lplpDD);
+
+  return DD_OK;
+}
+
+static HRESULT WINAPI IDirectDrawSurface3_PageLock(
+        LPDIRECTDRAWSURFACE3 this,
+        DWORD dwFlags )
+{
+  FIXME(ddraw,"(%p)->(0x%08lx),stub!\n", this, dwFlags);
+
+  return DD_OK;
+}
+
+static HRESULT WINAPI IDirectDrawSurface3_PageUnlock(
+        LPDIRECTDRAWSURFACE3 this,
+        DWORD dwFlags )
+{
+  FIXME(ddraw,"(%p)->(0x%08lx),stub!\n", this, dwFlags);
+
+  return DD_OK;
+}
+
+static HRESULT WINAPI IDirectDrawSurface3_SetSurfaceDesc(
+        LPDIRECTDRAWSURFACE3 this,
+        LPDDSURFACEDESC lpDDSD,
+        DWORD dwFlags )
+{
+  FIXME(ddraw,"(%p)->(%p,0x%08lx),stub!\n", this, lpDDSD, dwFlags);
+
+  return DD_OK;
+}
+
 static struct IDirectDrawSurface3_VTable dga_dds3vt = {
 	IDirectDrawSurface3_QueryInterface,
 	IDirectDrawSurface3_AddRef,
 	DGA_IDirectDrawSurface3_Release,
 	IDirectDrawSurface3_AddAttachedSurface,
-	(void*)5,
+	IDirectDrawSurface3_AddOverlayDirtyRect,
 	IDirectDrawSurface3_Blt,
 	IDirectDrawSurface3_BltBatch,
 	IDirectDrawSurface3_BltFast,
-	(void*)9,
+	IDirectDrawSurface3_DeleteAttachedSurface,
 	IDirectDrawSurface3_EnumAttachedSurfaces,
-	(void*)11,
+	IDirectDrawSurface3_EnumOverlayZOrders,
 	DGA_IDirectDrawSurface3_Flip,
 	IDirectDrawSurface3_GetAttachedSurface,
 	IDirectDrawSurface3_GetBltStatus,
 	IDirectDrawSurface3_GetCaps,
-	(void*)16,
-	(void*)17,
+	IDirectDrawSurface3_GetClipper,
+	IDirectDrawSurface3_GetColorKey,
 	IDirectDrawSurface3_GetDC,
-	(void*)19,
+	IDirectDrawSurface3_GetFlipStatus,
 	IDirectDrawSurface3_GetOverlayPosition,
-	(void*)21,
+	IDirectDrawSurface3_GetPalette,
 	IDirectDrawSurface3_GetPixelFormat,
 	IDirectDrawSurface3_GetSurfaceDesc,
 	IDirectDrawSurface3_Initialize,
@@ -857,16 +1005,16 @@ static struct IDirectDrawSurface3_VTable dga_dds3vt = {
 	IDirectDrawSurface3_Restore,
 	IDirectDrawSurface3_SetClipper,
 	IDirectDrawSurface3_SetColorKey,
-	(void*)31,
+	IDirectDrawSurface3_SetOverlayPosition,
 	DGA_IDirectDrawSurface3_SetPalette,
 	DGA_IDirectDrawSurface3_Unlock,
-	(void*)34,
-	(void*)35,
-	(void*)36,
-	(void*)37,
-	(void*)38,
-	(void*)39,
-	(void*)40,
+	IDirectDrawSurface3_UpdateOverlay,
+	IDirectDrawSurface3_UpdateOverlayDisplay,
+	IDirectDrawSurface3_UpdateOverlayZOrder,
+	IDirectDrawSurface3_GetDDInterface,
+	IDirectDrawSurface3_PageLock,
+	IDirectDrawSurface3_PageUnlock,
+	IDirectDrawSurface3_SetSurfaceDesc,
 };
 
 static struct IDirectDrawSurface3_VTable xlib_dds3vt = {
@@ -874,23 +1022,23 @@ static struct IDirectDrawSurface3_VTable xlib_dds3vt = {
 	IDirectDrawSurface3_AddRef,
 	Xlib_IDirectDrawSurface3_Release,
 	IDirectDrawSurface3_AddAttachedSurface,
-	(void*)5,
+	IDirectDrawSurface3_AddOverlayDirtyRect,
 	IDirectDrawSurface3_Blt,
 	IDirectDrawSurface3_BltBatch,
 	IDirectDrawSurface3_BltFast,
-	(void*)9,
+	IDirectDrawSurface3_DeleteAttachedSurface,
 	IDirectDrawSurface3_EnumAttachedSurfaces,
-	(void*)11,
+	IDirectDrawSurface3_EnumOverlayZOrders,
 	Xlib_IDirectDrawSurface3_Flip,
 	IDirectDrawSurface3_GetAttachedSurface,
 	IDirectDrawSurface3_GetBltStatus,
 	IDirectDrawSurface3_GetCaps,
-	(void*)16,
-	(void*)17,
+	IDirectDrawSurface3_GetClipper,
+	IDirectDrawSurface3_GetColorKey,
 	IDirectDrawSurface3_GetDC,
-	(void*)19,
+	IDirectDrawSurface3_GetFlipStatus,
 	IDirectDrawSurface3_GetOverlayPosition,
-	(void*)21,
+	IDirectDrawSurface3_GetPalette,
 	IDirectDrawSurface3_GetPixelFormat,
 	IDirectDrawSurface3_GetSurfaceDesc,
 	IDirectDrawSurface3_Initialize,
@@ -900,16 +1048,16 @@ static struct IDirectDrawSurface3_VTable xlib_dds3vt = {
 	IDirectDrawSurface3_Restore,
 	IDirectDrawSurface3_SetClipper,
 	IDirectDrawSurface3_SetColorKey,
-	(void*)31,
+	IDirectDrawSurface3_SetOverlayPosition,
 	Xlib_IDirectDrawSurface3_SetPalette,
 	Xlib_IDirectDrawSurface3_Unlock,
-	(void*)34,
-	(void*)35,
-	(void*)36,
-	(void*)37,
-	(void*)38,
-	(void*)39,
-	(void*)40,
+	IDirectDrawSurface3_UpdateOverlay,
+	IDirectDrawSurface3_UpdateOverlayDisplay,
+	IDirectDrawSurface3_UpdateOverlayZOrder,
+	IDirectDrawSurface3_GetDDInterface,
+	IDirectDrawSurface3_PageLock,
+	IDirectDrawSurface3_PageUnlock,
+	IDirectDrawSurface3_SetSurfaceDesc,
 };
 
 /******************************************************************************
