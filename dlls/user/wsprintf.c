@@ -312,6 +312,7 @@ static INT16 wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec,
         case WPR_WCHAR:  /* No Unicode in Win16 */
         case WPR_CHAR:
             *p= cur_arg.char_view;
+            /* wsprintf16 (unlike wsprintf) ignores null characters */
             if (*p != '\0') p++;
             else if (format.width > 1) *p++ = ' ';
             else len = 0;
@@ -400,16 +401,10 @@ INT WINAPI wvsnprintfA( LPSTR buffer, UINT maxlen, LPCSTR spec, va_list args )
         switch(format.type)
         {
         case WPR_WCHAR:
-            *p = argData.wchar_view;
-            if (*p != '\0') p++;
-            else if (format.width > 1) *p++ = ' ';
-            else len = 0;
+            *p++ = argData.wchar_view;
             break;
         case WPR_CHAR:
-            *p = argData.char_view;
-            if (*p != '\0') p++;
-            else if (format.width > 1) *p++ = ' ';
-            else len = 0;
+            *p++ = argData.char_view;
             break;
         case WPR_STRING:
             memcpy( p, argData.lpcstr_view, len );
@@ -501,16 +496,10 @@ INT WINAPI wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec, va_list args )
         switch(format.type)
         {
         case WPR_WCHAR:
-            *p = argData.wchar_view;
-            if (*p != '\0') p++;
-            else if (format.width > 1) *p++ = ' ';
-            else len = 0;
+            *p++ = argData.wchar_view;
             break;
         case WPR_CHAR:
-            *p = argData.char_view;
-            if (*p != '\0') p++;
-            else if (format.width > 1) *p++ = ' ';
-            else len = 0;
+            *p++ = argData.char_view;
             break;
         case WPR_STRING:
             {
