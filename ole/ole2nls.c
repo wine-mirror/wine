@@ -2441,14 +2441,14 @@ INT WINAPI LCMapStringA(
       SetLastError(ERROR_INSUFFICIENT_BUFFER);
       return 0;
     }
-
+#if 0
     /*FIXME the Pointercheck should not be nessesary */
     if (IsBadWritePtr (dststr,room))
     { ERR_(string)("bad destination buffer (dststr) : %p,%d\n",dststr,dstlen);
       SetLastError(ERROR_INSUFFICIENT_BUFFER);
       return 0;
     }
-
+#endif
     /* locate each component, write separators */
     diacritic_component = dststr + 2*unicode_len ;
     *diacritic_component++ = '\1'; 
