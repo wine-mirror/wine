@@ -19,9 +19,9 @@
  */
 
 #include "wine/test.h"
-#include <shellapi.h>
 #include <stdio.h>
 #include <winbase.h>
+#include <shellapi.h>
 
 CHAR CURR_DIR[MAX_PATH];
 

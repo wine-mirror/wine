@@ -20,6 +20,7 @@
 
 #include <assert.h>
 #include "wine/test.h"
+#include "winbase.h"
 #include "winreg.h"
 #include "winerror.h"
 
