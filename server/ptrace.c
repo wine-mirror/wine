@@ -166,12 +166,12 @@ int suspend_for_ptrace( struct thread *thread )
         suspend_thread( thread, 0 );
         return 1;
     }
-    if (attach_thread( thread ))
-    {
-        /* the attach will have suspended it */
-        thread->suspend++;
-        return 1;
-    }
+    /* can't stop a thread while initialisation is in progress */
+    if (!thread->unix_pid || thread->process->init_event) goto error;
+    thread->suspend++;
+    if (attach_thread( thread )) return 1;
+    thread->suspend--;
+ error:
     set_error( STATUS_ACCESS_DENIED );
     return 0;
 }
