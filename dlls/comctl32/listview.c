@@ -843,7 +843,7 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
     }
     do {
         if (idx == nSize) {
-            if (endidx == nSize)
+            if (endidx == nSize || endidx == 0)
                 break;
             idx=0;
         }
