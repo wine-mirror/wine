@@ -772,8 +772,7 @@ static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr,
                 return NULL;
 
             *uaddrlen=sizeof(struct sockaddr_ipx);
-            uipx=malloc(*uaddrlen);
-            memset(uipx,0,sizeof(*uipx));
+            uipx=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *uaddrlen);
             uipx->sipx_family=AF_IPX;
             uipx->sipx_port=wsipx->sa_socket;
             /* copy sa_netnum and sa_nodenum to sipx_network and sipx_node
@@ -816,7 +815,7 @@ inline struct sockaddr* ws_sockaddr_alloc(const struct WS_sockaddr* wsaddr, int*
     else
         *uaddrlen=max(sizeof(struct sockaddr),*wsaddrlen);
 
-    return malloc(*uaddrlen);
+    return HeapAlloc(GetProcessHeap(), 0, *uaddrlen);
 }
 
 /* Returns 0 if successful, -1 if the buffer is too small */
@@ -885,8 +884,8 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, struct W
  */
 inline void ws_sockaddr_free(const struct sockaddr* uaddr, const struct WS_sockaddr* wsaddr)
 {
-    if (uaddr!=NULL && uaddr!=(const struct sockaddr*)wsaddr)
-        free((void*)uaddr);
+    if (uaddr!=(const struct sockaddr*)wsaddr)
+        HeapFree(GetProcessHeap(), 0, (void *)uaddr);
 }
 
 /**************************************************************************
@@ -1576,6 +1575,7 @@ int WINAPI WS_getsockname(SOCKET s, struct WS_sockaddr *name, int *namelen)
         {
             res=0;
         }
+        ws_sockaddr_free(uaddr,name);
         release_sock_fd( s, fd );
     }
     return res;
