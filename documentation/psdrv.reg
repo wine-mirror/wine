@@ -10,6 +10,15 @@
 "Status"="dword:00000000"
 "Until Time"="dword:00000000"
 
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Print\Printers\Wine PostScript Driver\PrinterDriverData]
+"PPD File"="/unix/path/to/PPD/file"
+
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Print\Printers\Wine PostScript Driver\PrinterDriverData\FontSubTable]
+"Courier New"="Courier"
+"Arial"="Helvetica"
+"Helv"="Helvetica"
+"Times New Roman"="Times"
+
 [HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Print\Environments\Windows 4.0\Drivers\PS Driver]
 "Configuration File"="WINEPS.DRV"
 "Data File"=""

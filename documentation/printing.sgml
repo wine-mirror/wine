@@ -1,8 +1,8 @@
-  <chapter id="printing">
+  <sect1 id="printing">
     <title>Printing in Wine</title>
     <para>How to print documents in Wine...</para>
 
-    <sect1 id="wine-printing">
+    <sect2 id="wine-printing">
       <title>Printing</title>
 
       <para>
@@ -33,7 +33,7 @@
 	their Windows printer drivers.  It is unclear whether they ever will.
       </para>
 
-      <sect2>
+      <sect3>
         <title>External printer drivers</title>
         <para>
           At present only 16 bit drivers will work (note that these include win9x
@@ -55,19 +55,18 @@ printer=on
           to the [TrueType] section of <filename>~/.wine/config</filename>. The code for
           the driver interface is in <filename>graphics/win16drv</filename>.
         </para>
-      </sect2>
+      </sect3>
 
-      <sect2>
+      <sect3>
         <title>Builtin Wine PostScript driver</title>
         <para>
           Enables printing of PostScript files via a driver built into Wine. See
-          <filename>documentation/psdriver</filename> for installation
-          instructions. The code for the PostScript driver is in
-          <filename>graphics/psdrv</filename>.
+          below for installation instructions. The code for the PostScript
+	  driver is in <filename>graphics/psdrv</filename>.
         </para>
-      </sect2>
+      </sect3>
 
-      <sect2>
+      <sect3>
         <title>Spooling</title>
         <para>
           Spooling is rather primitive. The [spooler] section of
@@ -85,10 +84,10 @@ printer=on
           with that port's name e.g. for <systemitem>LPT3:</systemitem> a file
           called <systemitem>LPT3:</systemitem> would be created.
         </para>
-      </sect2>
-    </sect1>
+      </sect3>
+    </sect2>
 
-    <sect1 id="psdriver">
+    <sect2 id="psdriver">
       <title>The Wine PostScript Driver</title>
 
       <para>
@@ -104,7 +103,7 @@ printer=on
         non PostScript printer by filtering the output through ghostscript.
       </para>
 
-      <sect2>
+      <sect3>
         <title>Installation</title>
         <para>
           The driver behaves as if it were a DRV file called
@@ -136,16 +135,34 @@ printer=on
           <emphasis>[sic]</emphasis>
         </para>
         <para>
-          To run 32 bit apps (and 16 bit apps using the
-          <literal>builtin</literal> commdlg) you also need to add certain
-          entries to the registry.  The easiest way to do that at the moment is
-          to use the winelib program <command>programs/regapi/regapi</command>
-          with the file <filename>documentation/psdrv.reg</filename>.  To do this
-          <command>cd</command> to <filename>programs/regapi/regapi</filename>
-          and type <userinput>make</userinput> to actually make the program, then
-          type <userinput>./regapi setValue
-            &lt;../../documentation/psdrv.reg</userinput>.  You can obviously
-          edit <filename>psdrv.reg</filename> to suit your requirements.
+	  You also need to add certain entries to the registry.  The easiest way
+	  to do this is to customise the contents of
+	  <filename>documentation/psdrv.reg</filename> (see below) and use the
+	  Winelib program <command>programs/regapi/regapi</command>.  For
+	  example, if you have installed the Wine source tree in
+	  <filename>/usr/src/wine</filename>, you could use the following
+	  series of commands:
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		<userinput>cp /usr/src/wine/documentation/psdrv.reg ~</userinput>
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para><userinput>vi ~/psdrv.reg</userinput></para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		Edit the copy of <filename>psdrv.reg</filename> to suit your
+		requirements.  At a minimum, you must specify a PPD file for
+		each printer.
+	      </para>
+	    </listitem>
+	      <para>
+		<userinput>regapi setValue &lt; ~/psdrv.reg</userinput>
+	      </para>
+	    </listitem>
+	  </itemizedlist>
         </para>
         <para>
           You will need Adobe Font Metric (AFM) files for the (type 1 PostScript)
@@ -156,35 +173,33 @@ printer=on
           are good places to start. Note that these are only the font metrics and
           not the fonts themselves. At the moment the driver does not download
           additional fonts, so you can only use fonts that are already present on
-          the printer.
+          the printer.  (Actually, the driver can use any font that is listed in
+	  the PPD file, for which it has an AFM file.  If you use fonts that are
+	  <emphasis>not</emphasis> installed in your printer, or in
+	  Ghostscript, you will need to use some means of embedding the font in
+	  the print job or downloading the font to the printer.  Note also that
+	  the driver does not yet properly list required fonts in its DSC
+	  comments, so a print manager that depends on these comments to
+	  download the proper fonts to the printer may not work properly.)
         </para>
         <para>
-          Then create a [afmfiles] section in your
+          Then create a [afmdirs] section in your
           <filename>wine.conf</filename> (or
           <filename>~/.wine/config</filename>) and add a line of the form
         </para>
         <screen>
-"file&lt;n&gt;" = "/unix/path/name/filename.afm"
+"dir&lt;n&gt;" = "/unix/path/name/"
         </screen>
         <para>
-          for each AFM file that you wish to use. [This might change in the future]
+          for each directory that contains AFM files you wish to use.
         </para>
         <para>
           You also require a PPD file for your printer.  This describes certain
           characteristics of the printer such as which fonts are installed, how
           to select manual feed etc. Adobe also has many of these on its website,
           have a look in <ulink url="ftp://ftp.adobe.com/pub/adobe/printerdrivers/win/all/">
-            ftp://ftp.adobe.com/pub/adobe/printerdrivers/win/all/</ulink>. Create
-          a [psdrv] section in your <filename>wine.conf</filename> (or
-          <filename>~/.wine/config</filename>) and add the  following entry:
-        </para>
-        <screen>
-"ppdfile" = "/somewhere/file.ppd"
-        </screen>
-        <para>
-          By default, the driver will look for a file named
-          <filename>default.ppd</filename> in the directory from which
-          you started wine.
+          ftp://ftp.adobe.com/pub/adobe/printerdrivers/win/all/</ulink>. See
+	  above for information on configuring the driver to use this file.
         </para>
         <para>
           To enable colour printing you need to have the
@@ -196,7 +211,7 @@ printer=on
           Note that you need not set <literal>printer=on</literal> in
           the [wine] section of <filename>wine.conf</filename>, this
           enables printing via external printer drivers and does not
-          affect wineps.
+          affect the builtin PostScript driver.
         </para>
         <para>
           If you're lucky you should now be able to produce PS files
@@ -208,9 +223,9 @@ printer=on
           Powerpoint2000 with some degree of success - you should be
           able to get something out, it may not be in the right place.
         </para>
-      </sect2>
+      </sect3>
 
-      <sect2>
+      <sect3>
         <title>TODO / Bugs</title>
 
         <itemizedlist>
@@ -258,9 +273,9 @@ printer=on
         <para>
           &name-huw-davies; <email>&email-huw-davies;</email>
         </para>
-      </sect2>
-    </sect1>
-  </chapter>
+      </sect3>
+    </sect2>
+  </sect1>
 
 <!-- Keep this comment at the end of the file
 Local variables:

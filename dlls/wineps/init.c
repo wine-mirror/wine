@@ -416,18 +416,17 @@ static BOOL PSDRV_DeleteDC( DC *dc )
 }
 
 
-	
-
 /**********************************************************************
  *		PSDRV_FindPrinterInfo
  */
 PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name) 
 {
     static PRINTERINFO *PSDRV_PrinterList;
-    DWORD type = REG_BINARY, needed, res;
+    DWORD type = REG_BINARY, needed, res, dwPaperSize;
     PRINTERINFO *pi = PSDRV_PrinterList, **last = &PSDRV_PrinterList;
     FONTNAME *font;
     AFM *afm;
+    HANDLE hPrinter;
 
     TRACE("'%s'\n", name);
     
@@ -454,10 +453,134 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 			  (LPBYTE)pi->Devmode, needed, &needed);
     }
 
-    PROFILE_GetWineIniString("psdrv", "ppdfile", "default.ppd",
-                             pi->Devmode->dmDrvPrivate.ppdFileName, 256);
+    if (OpenPrinterA (pi->FriendlyName, &hPrinter, NULL) == 0)
+    {
+	ERR ("OpenPrinterA failed with code %li\n", GetLastError ());
+	if (HeapFree (PSDRV_Heap, 0, pi->FriendlyName) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+	if (HeapFree (PSDRV_Heap, 0, pi->Devmode) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+	if (HeapFree (PSDRV_Heap, 0, pi) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+	*last = NULL;
+	return NULL;
+    }
+
+    res = GetPrinterDataA (hPrinter, "PPD File", NULL,
+	    pi->Devmode->dmDrvPrivate.ppdFileName, 256, &needed);
+    if (res != ERROR_SUCCESS)
+    {
+	ERR ("Error %li getting PPD file name for printer '%s'\n", res, name);
+	if (ClosePrinter (hPrinter) == 0)
+	    WARN ("ClosePrinter failed with code %li\n", GetLastError ());
+        if (HeapFree(PSDRV_Heap, 0, pi->FriendlyName) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+        if (HeapFree(PSDRV_Heap, 0, pi->Devmode) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+        if (HeapFree(PSDRV_Heap, 0, pi) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+	*last = NULL;
+	return NULL;
+    }
+
+    res = GetPrinterDataA (hPrinter, "Paper Size", NULL, (LPBYTE) &dwPaperSize,
+	    sizeof (DWORD), &needed);
+    if (res == ERROR_SUCCESS)
+	pi->Devmode->dmPublic.u1.s1.dmPaperSize = (SHORT) dwPaperSize;
+    else if (res == ERROR_FILE_NOT_FOUND)
+	TRACE ("No 'Paper Size' for printer '%s'\n", name);
+    else
+    {
+	ERR ("GetPrinterDataA returned %li\n", res);
+	if (ClosePrinter (hPrinter) == 0)
+	    WARN ("ClosePrinter failed with code %li\n", GetLastError ());
+        if (HeapFree(PSDRV_Heap, 0, pi->FriendlyName) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+        if (HeapFree(PSDRV_Heap, 0, pi->Devmode) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+        if (HeapFree(PSDRV_Heap, 0, pi) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+	*last = NULL;
+	return NULL;
+    }
+
+    res = EnumPrinterDataExA (hPrinter, "PrinterDriverData\\FontSubTable", NULL,
+	    0, &needed, &pi->FontSubTableSize);
+    if (res == ERROR_SUCCESS)
+	TRACE ("No 'FontSubTable' for printer '%s'\n", name);
+    else if (res == ERROR_MORE_DATA)
+    {
+	pi->FontSubTable = HeapAlloc (PSDRV_Heap, 0, needed);
+	if (pi->FontSubTable == NULL)
+	{
+	    ERR ("Failed to allocate %li bytes from heap\n", needed);
+	    if (ClosePrinter (hPrinter) == 0)
+		WARN ("ClosePrinter failed with code %li\n", GetLastError ());
+            if (HeapFree(PSDRV_Heap, 0, pi->FriendlyName) == 0)
+		WARN ("HeapFree failed with code %li\n", GetLastError ());
+            if (HeapFree(PSDRV_Heap, 0, pi->Devmode) == 0)
+		WARN ("HeapFree failed with code %li\n", GetLastError ());
+            if (HeapFree(PSDRV_Heap, 0, pi) == 0)
+		WARN ("HeapFree failed with code %li\n", GetLastError ());
+	    *last = NULL;
+	    return NULL;
+	}
+
+	res = EnumPrinterDataExA (hPrinter, "PrinterDriverData\\FontSubTable",
+		(LPBYTE) pi->FontSubTable, needed, &needed,
+		&pi->FontSubTableSize);
+	if (res != ERROR_SUCCESS)
+	{
+	    ERR ("EnumPrinterDataExA returned %li\n", res);
+	    if (ClosePrinter (hPrinter) == 0)
+		WARN ("ClosePrinter failed with code %li\n", GetLastError ());
+	    if (HeapFree (PSDRV_Heap, 0, pi->FontSubTable) == 0)
+		WARN ("HeapFree failed with code %li\n", GetLastError ());
+            if (HeapFree(PSDRV_Heap, 0, pi->FriendlyName) == 0)
+		WARN ("HeapFree failed with code %li\n", GetLastError ());
+            if (HeapFree(PSDRV_Heap, 0, pi->Devmode) == 0)
+		WARN ("HeapFree failed with code %li\n", GetLastError ());
+            if (HeapFree(PSDRV_Heap, 0, pi) == 0)
+		WARN ("HeapFree failed with code %li\n", GetLastError ());
+	    *last = NULL;
+	    return NULL;
+	}
+    }
+    else	/* error in 1st call to EnumPrinterDataExA */
+    {
+	ERR ("EnumPrinterDataExA returned %li\n", res);
+	if (ClosePrinter (hPrinter) == 0)
+	    WARN ("ClosePrinter failed with code %li\n", GetLastError ());
+        if (HeapFree(PSDRV_Heap, 0, pi->FriendlyName) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+        if (HeapFree(PSDRV_Heap, 0, pi->Devmode) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+        if (HeapFree(PSDRV_Heap, 0, pi) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+	*last = NULL;
+	return NULL;
+    }
+
+    if (ClosePrinter (hPrinter) == 0)
+    {
+	ERR ("ClosePrinter failed with code %li\n", GetLastError ());
+	if (ClosePrinter (hPrinter) == 0)
+	    WARN ("ClosePrinter failed with code %li\n", GetLastError ());
+	if (HeapFree (PSDRV_Heap, 0, pi->FontSubTable) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+        if (HeapFree(PSDRV_Heap, 0, pi->FriendlyName) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+        if (HeapFree(PSDRV_Heap, 0, pi->Devmode) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+        if (HeapFree(PSDRV_Heap, 0, pi) == 0)
+	    WARN ("HeapFree failed with code %li\n", GetLastError ());
+	*last = NULL;
+	return NULL;
+    }
+
     pi->ppd = PSDRV_ParsePPD(pi->Devmode->dmDrvPrivate.ppdFileName);
     if(!pi->ppd) {
+	HeapFree(PSDRV_Heap, 0, pi->FontSubTable);
         HeapFree(PSDRV_Heap, 0, pi->FriendlyName);
         HeapFree(PSDRV_Heap, 0, pi->Devmode);
         HeapFree(PSDRV_Heap, 0, pi);

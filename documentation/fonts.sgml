@@ -1,7 +1,7 @@
-  <chapter id="fonts">
+  <sect1 id="fonts">
     <title>Dealing with Fonts</title>
 
-    <sect1 id="windows-fonts">
+    <sect2 id="windows-fonts">
       <title>Fonts</title>
 
       <para>
@@ -23,7 +23,7 @@
         </note>
       </para>
 
-      <sect2>
+      <sect3>
         <title>How To Convert Windows Fonts</title>
         <para>
           If you have access to a Windows installation you should use
@@ -109,9 +109,9 @@ STUB: AddFontResource( SOMEFILE.FON )
           However, there is a possibility of the native TrueType
           support via FreeType renderer in the future (hint, hint :-)
         </para>
-      </sect2>
+      </sect3>
 
-      <sect2>
+      <sect3>
         <title>How To Add Font Aliases To <filename>~/.wine/config</filename></title>
         <para>
           Many Windows applications assume that fonts included in
@@ -323,9 +323,9 @@ Default = -adobe-times-
           <filename>../fonts/Type1</filename> and
           <filename>../fonts/Speedo</filename> directories.
         </para>
-      </sect2>
+      </sect3>
 
-      <sect2>
+      <sect3>
         <title>How To Manage Cached Font Metrics</title>
         <para>
           WINE stores detailed information about available fonts in
@@ -342,9 +342,9 @@ FontMetrics = &lt;file with metrics&gt;
           <filename>~/.wine/.cachedmetrics</filename> with  the new
           information. This process can take a while.
         </para>
-      </sect2>
+      </sect3>
 
-      <sect2>
+      <sect3>
         <title>Too Small Or Too Large Fonts</title>
         <para>
           Windows programs may ask WINE to render a font with the
@@ -363,9 +363,9 @@ Resolution = &lt;integer value&gt;
           experiment with values in the 60 - 120 range. 96 is a good
           starting point.
         </para>
-      </sect2>
+      </sect3>
 
-      <sect2>
+      <sect3>
         <title>"FONT_Init: failed to load ..." Messages On Startup</title>
         <para>
           The most likely cause is a broken
@@ -376,10 +376,10 @@ Resolution = &lt;integer value&gt;
           machine as you are not root, use <command>xset -fp
             xxx</command> to remove the broken font path.
         </para>
-      </sect2>
-    </sect1>
+      </sect3>
+    </sect2>
 
-    <sect1 id="ttfont-server">
+    <sect2 id="ttfont-server">
     <title>Setting up a TrueType Font Server</title>
       <para>
         written by ???
@@ -486,9 +486,9 @@ FontPath "tcp/localhost:7100"
       <para>
         Hope this helps...
     </para>
-  </sect1>
+  </sect2>
 
-</chapter>
+</sect1>
 
 <!-- Keep this comment at the end of the file
 Local variables:

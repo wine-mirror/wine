@@ -1850,6 +1850,10 @@ diff -u the_backup_file_you_made windows/x11drv/keyboard.c > layout.diff
         Good luck.
       </para>
     </sect1>
+
+    &fonts;
+    &printing;
+
   </chapter>
 
 <!-- Keep this comment at the end of the file

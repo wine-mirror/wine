@@ -12,6 +12,7 @@
 #include "pen.h"
 #include "brush.h"
 #include "wine/wingdi16.h"
+#include "winspool.h"
 
 typedef struct {
     float	llx, lly, urx, ury;
@@ -163,11 +164,13 @@ numInstalledOptions of OPTIONs
 } PSDRV_DEVMODEA;
 
 typedef struct _tagPI {
-    char		*FriendlyName;
-    PPD			*ppd;
-    PSDRV_DEVMODEA	*Devmode;
-    FONTFAMILY		*Fonts;
-    struct _tagPI	*next;
+    char		    *FriendlyName;
+    PPD			    *ppd;
+    PSDRV_DEVMODEA	    *Devmode;
+    FONTFAMILY		    *Fonts;
+    PPRINTER_ENUM_VALUESA   FontSubTable;
+    DWORD		    FontSubTableSize;
+    struct _tagPI	    *next;
 } PRINTERINFO;
 
 typedef struct {
@@ -379,6 +382,7 @@ extern DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
 				      WORD fwCapability, LPSTR lpszOutput,
 				      LPDEVMODEA lpdm);
 VOID PSDRV_DrawLine( DC *dc );
+
 #endif
 
 

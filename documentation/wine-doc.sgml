@@ -10,12 +10,10 @@
 <!entity installing SYSTEM "installing.sgml">
 <!entity configuring SYSTEM "configuring.sgml">
 <!entity registry SYSTEM "registry.sgml">
-<!entity running SYSTEM "running.sgml">
-<!entity bugs SYSTEM "bugs.sgml">
-
-<!-- *** Not currently used (???) *** -->
 <!entity fonts SYSTEM "fonts.sgml">
 <!entity printing SYSTEM "printing.sgml">
+<!entity running SYSTEM "running.sgml">
+<!entity bugs SYSTEM "bugs.sgml">
 
 <!-- *** Entities for Wine Developer Guide *** -->
 <!entity compiling SYSTEM "compiling.sgml">
@@ -79,10 +77,6 @@
     &configuring;
     &running;
     &bugs;
-    <!--
-    &fonts;
-    &printing;
-    -->
   </book>
 
   <!-- *** Wine Developer Guide *** -->

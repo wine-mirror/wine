@@ -8,13 +8,11 @@
 <!entity getting SYSTEM "getting.sgml">
 <!entity installing SYSTEM "installing.sgml">
 <!entity configuring SYSTEM "configuring.sgml">
-<!entity running SYSTEM "running.sgml">
-<!entity bugs SYSTEM "bugs.sgml">
-
-<!-- *** Not currently used *** -->
 <!entity registry SYSTEM "registry.sgml">
 <!entity fonts SYSTEM "fonts.sgml">
 <!entity printing SYSTEM "printing.sgml">
+<!entity running SYSTEM "running.sgml">
+<!entity bugs SYSTEM "bugs.sgml">
 ]>
 
 <book id="index">
@@ -29,10 +27,5 @@
   &configuring;
   &running;
   &bugs;
-<!--
-  &registry;
-  &fonts;
-  &printing;
--->
 
 </book>

@@ -74,6 +74,29 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
 	}
     }
 
+    if (physDev->pi->FontSubTableSize != 0)
+    {
+	DWORD i;
+
+	for (i = 0; i < physDev->pi->FontSubTableSize; ++i)
+	{
+	    if (!strcasecmp (FaceName,
+		    physDev->pi->FontSubTable[i].pValueName))
+	    {
+		TRACE ("substituting facename '%s' for '%s'\n",
+			(LPSTR) physDev->pi->FontSubTable[i].pData, FaceName);
+		if (strlen ((LPSTR) physDev->pi->FontSubTable[i].pData) <
+			LF_FACESIZE)
+		    strcpy (FaceName,
+			    (LPSTR) physDev->pi->FontSubTable[i].pData);
+		else
+		    WARN ("Facename '%s' is too long; ignoring substitution\n",
+			    (LPSTR) physDev->pi->FontSubTable[i].pData);
+		break;
+	    }
+	}
+    }
+
     TRACE("Trying to find facename '%s'\n", FaceName);
 
     /* Look for a matching font family */
