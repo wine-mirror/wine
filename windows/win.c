@@ -3264,9 +3264,9 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
     MSG	msg;
     LPDRAGINFO16 lpDragInfo;
     SEGPTR	spDragInfo;
-    HCURSOR16 	hOldCursor=0, hBummer=0;
+    HCURSOR 	hOldCursor=0, hBummer=0;
     HGLOBAL16	hDragInfo  = GlobalAlloc16( GMEM_SHARE | GMEM_ZEROINIT, 2*sizeof(DRAGINFO16));
-    HCURSOR16	hCurrentCursor = 0;
+    HCURSOR	hCurrentCursor = 0;
     HWND16	hCurrentWnd = 0;
 
     lpDragInfo = (LPDRAGINFO16) GlobalLock16(hDragInfo);
@@ -3280,7 +3280,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
         return 0L;
     }
 
-    if(hCursor) hOldCursor = SetCursor(hCursor);
+    if(hCursor) hOldCursor = SetCursor(HCURSOR_32(hCursor));
 
     lpDragInfo->hWnd   = hWnd;
     lpDragInfo->hScope = 0;
@@ -3305,7 +3305,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
 	TRACE_(msg)("lpDI->hScope = %04x\n",lpDragInfo->hScope);
 
 	if( DRAG_QueryUpdate16(WIN_Handle32(hwndScope), spDragInfo) > 0 )
-	    hCurrentCursor = hCursor;
+	    hCurrentCursor = HCURSOR_32(hCursor);
 	else
         {
             hCurrentCursor = hBummer;
@@ -3337,7 +3337,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
     ReleaseCapture();
     ShowCursor( FALSE );
 
-    if( hCursor ) SetCursor( hOldCursor );
+    if( hCursor ) SetCursor(hOldCursor);
 
     if( hCurrentCursor != hBummer )
 	msg.lParam = SendMessage16( lpDragInfo->hScope, WM_DROPOBJECT,

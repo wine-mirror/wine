@@ -2566,11 +2566,11 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         else
           hIcon = psInfo->ppshheader.u.hIcon;
 
-        SendMessageW(hwnd, WM_SETICON, 0, hIcon);
+        SendMessageW(hwnd, WM_SETICON, 0, (LPARAM)hIcon);
       }
 
       if (psInfo->ppshheader.dwFlags & PSH_USEHICON)
-        SendMessageW(hwnd, WM_SETICON, 0, psInfo->ppshheader.u.hIcon);
+        SendMessageW(hwnd, WM_SETICON, 0, (LPARAM)psInfo->ppshheader.u.hIcon);
 
       psInfo->strPropertiesFor = strCaption;
 

@@ -431,7 +431,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 	    if( hdc )
 	    {
               HICON hIcon;
-	      if (IsIconic(hwnd) && ((hIcon = GetClassLongW( hwnd, GCL_HICON))) )
+	      if (IsIconic(hwnd) && ((hIcon = (HICON)GetClassLongW( hwnd, GCL_HICON))) )
 	      {
                   RECT rc;
                   int x, y;
@@ -621,9 +621,9 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         {
             UINT len;
 
-            HICON hIcon = GetClassLongW( hwnd, GCL_HICON );
+            HICON hIcon = (HICON)GetClassLongW( hwnd, GCL_HICON );
             HINSTANCE instance = GetWindowLongW( hwnd, GWL_HINSTANCE );
-            if (hIcon) return hIcon;
+            if (hIcon) return (LRESULT)hIcon;
             for(len=1; len<64; len++)
                 if((hIcon = LoadIconW(instance, MAKEINTRESOURCEW(len))))
                     return (LRESULT)hIcon;
@@ -649,14 +649,14 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
     case WM_SETICON:
         if (USER_Driver.pSetWindowIcon)
-            return USER_Driver.pSetWindowIcon( hwnd, lParam, (wParam != ICON_SMALL) );
+            return (LRESULT)USER_Driver.pSetWindowIcon( hwnd, (HICON)lParam, (wParam != ICON_SMALL) );
         else
 	{
-            HICON hOldIcon = SetClassLongW( hwnd, (wParam != ICON_SMALL) ? GCL_HICON : GCL_HICONSM,
+            HICON hOldIcon = (HICON)SetClassLongW( hwnd, (wParam != ICON_SMALL) ? GCL_HICON : GCL_HICONSM,
                                             lParam);
             SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE |
                          SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
-            return hOldIcon;
+            return (LRESULT)hOldIcon;
 	}
 
     case WM_GETICON:

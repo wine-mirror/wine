@@ -142,7 +142,14 @@ extern HPEN SYSCOLOR_GetPen( INT index );
 extern DWORD USER16_AlertableWait;
 
 /* HANDLE16 <-> HANDLE conversions */
-#define HACCEL_32(h16)  ((HACCEL)(ULONG_PTR)(h16))
 #define HACCEL_16(h32)  (LOWORD(h32))
+#define HBRUSH_16(h32)  (LOWORD(h32))
+#define HCURSOR_16(h32) (LOWORD(h32))
+#define HICON_16(h32)   (LOWORD(h32))
+
+#define HACCEL_32(h16)  ((HACCEL)(ULONG_PTR)(h16))
+#define HBRUSH_32(h16)  ((HBRUSH)(ULONG_PTR)(h16))
+#define HCURSOR_32(h16) ((HCURSOR)(ULONG_PTR)(h16))
+#define HICON_32(h16)   ((HICON)(ULONG_PTR)(h16))
 
 #endif  /* __WINE_USER_H */

@@ -1708,7 +1708,7 @@ LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 
     case HTCLIENT:
 	{
-	    HCURSOR hCursor = GetClassLongA(hwnd, GCL_HCURSOR);
+	    HCURSOR hCursor = (HCURSOR)GetClassLongA(hwnd, GCL_HCURSOR);
 	    if(hCursor) {
 		SetCursor(hCursor);
 		return TRUE;

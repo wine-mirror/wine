@@ -553,12 +553,12 @@ ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
     iSmIconWidth  = GetSystemMetrics(SM_CXSMICON);
     iSmIconHeight = GetSystemMetrics(SM_CYSMICON);
 
-    classPtr->hIcon         = wc->hIcon;
+    classPtr->hIcon         = HICON_32(wc->hIcon);
     classPtr->hIconSm       = CopyImage(wc->hIcon, IMAGE_ICON,
 					iSmIconWidth, iSmIconHeight,
 					LR_COPYFROMRESOURCE);
-    classPtr->hCursor       = wc->hCursor;
-    classPtr->hbrBackground = wc->hbrBackground;
+    classPtr->hCursor       = HCURSOR_32(wc->hCursor);
+    classPtr->hbrBackground = HBRUSH_32(wc->hbrBackground);
 
     WINPROC_SetProc( &classPtr->winprocA, (HWINDOWPROC)wc->lpfnWndProc,
                      WIN_PROC_16, WIN_PROC_CLASS );
@@ -602,8 +602,8 @@ ATOM WINAPI RegisterClassA( const WNDCLASSA* wc ) /* [in] Address of structure w
     classPtr->hIconSm       = CopyImage(wc->hIcon, IMAGE_ICON,
 					iSmIconWidth, iSmIconHeight,
 					LR_COPYFROMRESOURCE);
-    classPtr->hCursor       = (HCURSOR16)wc->hCursor;
-    classPtr->hbrBackground = (HBRUSH16)wc->hbrBackground;
+    classPtr->hCursor       = wc->hCursor;
+    classPtr->hbrBackground = wc->hbrBackground;
 
     WINPROC_SetProc( &classPtr->winprocA, (HWINDOWPROC)wc->lpfnWndProc,
                      WIN_PROC_32A, WIN_PROC_CLASS );
@@ -642,8 +642,8 @@ ATOM WINAPI RegisterClassW( const WNDCLASSW* wc )
     classPtr->hIconSm       = CopyImage(wc->hIcon, IMAGE_ICON,
 					iSmIconWidth, iSmIconHeight,
 					LR_COPYFROMRESOURCE);
-    classPtr->hCursor       = (HCURSOR16)wc->hCursor;
-    classPtr->hbrBackground = (HBRUSH16)wc->hbrBackground;
+    classPtr->hCursor       = wc->hCursor;
+    classPtr->hbrBackground = wc->hbrBackground;
 
     WINPROC_SetProc( &classPtr->winprocW, (HWINDOWPROC)wc->lpfnWndProc,
                      WIN_PROC_32W, WIN_PROC_CLASS );
@@ -674,10 +674,10 @@ ATOM WINAPI RegisterClassEx16( const WNDCLASSEX16 *wc )
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
 
-    classPtr->hIcon         = wc->hIcon;
-    classPtr->hIconSm       = wc->hIconSm;
-    classPtr->hCursor       = wc->hCursor;
-    classPtr->hbrBackground = wc->hbrBackground;
+    classPtr->hIcon         = HICON_32(wc->hIcon);
+    classPtr->hIconSm       = HICON_32(wc->hIconSm);
+    classPtr->hCursor       = HCURSOR_32(wc->hCursor);
+    classPtr->hbrBackground = HBRUSH_32(wc->hbrBackground);
 
     WINPROC_SetProc( &classPtr->winprocA, (HWINDOWPROC)wc->lpfnWndProc,
                      WIN_PROC_16, WIN_PROC_CLASS );
@@ -708,10 +708,10 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
 
-    classPtr->hIcon         = (HICON16)wc->hIcon;
-    classPtr->hIconSm       = (HICON16)wc->hIconSm;
-    classPtr->hCursor       = (HCURSOR16)wc->hCursor;
-    classPtr->hbrBackground = (HBRUSH16)wc->hbrBackground;
+    classPtr->hIcon         = wc->hIcon;
+    classPtr->hIconSm       = wc->hIconSm;
+    classPtr->hCursor       = wc->hCursor;
+    classPtr->hbrBackground = wc->hbrBackground;
     WINPROC_SetProc( &classPtr->winprocA, (HWINDOWPROC)wc->lpfnWndProc,
                      WIN_PROC_32A, WIN_PROC_CLASS );
     CLASS_SetMenuNameA( classPtr, wc->lpszMenuName );
@@ -741,10 +741,10 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
 
-    classPtr->hIcon         = (HICON16)wc->hIcon;
-    classPtr->hIconSm       = (HICON16)wc->hIconSm;
-    classPtr->hCursor       = (HCURSOR16)wc->hCursor;
-    classPtr->hbrBackground = (HBRUSH16)wc->hbrBackground;
+    classPtr->hIcon         = wc->hIcon;
+    classPtr->hIconSm       = wc->hIconSm;
+    classPtr->hCursor       = wc->hCursor;
+    classPtr->hbrBackground = wc->hbrBackground;
     WINPROC_SetProc( &classPtr->winprocW, (HWINDOWPROC)wc->lpfnWndProc,
                      WIN_PROC_32W, WIN_PROC_CLASS );
     CLASS_SetMenuNameW( classPtr, wc->lpszMenuName );
@@ -1014,15 +1014,15 @@ LONG WINAPI SetClassLongA( HWND hwnd, INT offset, LONG newval )
         break;
     case GCL_HCURSOR:
         retval = (LONG)class->hCursor;
-        class->hCursor = newval;
+        class->hCursor = (HCURSOR)newval;
         break;
     case GCL_HICON:
         retval = (LONG)class->hIcon;
-        class->hIcon = newval;
+        class->hIcon = (HICON)newval;
         break;
     case GCL_HICONSM:
         retval = (LONG)class->hIconSm;
-        class->hIconSm = newval;
+        class->hIconSm = (HICON)newval;
         break;
     case GCL_STYLE:
         retval = (LONG)class->style;
@@ -1125,9 +1125,9 @@ BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASS16 *wc
     wc->cbClsExtra    = (INT16)classPtr->cbClsExtra;
     wc->cbWndExtra    = (INT16)classPtr->cbWndExtra;
     wc->hInstance     = classPtr->style & CS_GLOBALCLASS ? GetModuleHandle16("USER") : (HINSTANCE16)classPtr->hInstance;
-    wc->hIcon         = classPtr->hIcon;
-    wc->hCursor       = classPtr->hCursor;
-    wc->hbrBackground = classPtr->hbrBackground;
+    wc->hIcon         = HICON_16(classPtr->hIcon);
+    wc->hCursor       = HCURSOR_16(classPtr->hCursor);
+    wc->hbrBackground = HBRUSH_16(classPtr->hbrBackground);
     wc->lpszClassName = name;
     wc->lpszMenuName  = CLASS_GetMenuName16( classPtr );
     return TRUE;
@@ -1234,10 +1234,10 @@ BOOL16 WINAPI GetClassInfoEx16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASSEX16
     wc->cbClsExtra    = (INT16)classPtr->cbClsExtra;
     wc->cbWndExtra    = (INT16)classPtr->cbWndExtra;
     wc->hInstance     = (HINSTANCE16)classPtr->hInstance;
-    wc->hIcon         = classPtr->hIcon;
-    wc->hIconSm       = classPtr->hIconSm;
-    wc->hCursor       = classPtr->hCursor;
-    wc->hbrBackground = classPtr->hbrBackground;
+    wc->hIcon         = HICON_16(classPtr->hIcon);
+    wc->hIconSm       = HICON_16(classPtr->hIconSm);
+    wc->hCursor       = HCURSOR_16(classPtr->hCursor);
+    wc->hbrBackground = HBRUSH_16(classPtr->hbrBackground);
     wc->lpszClassName = (SEGPTR)0;
     wc->lpszMenuName  = CLASS_GetMenuName16( classPtr );
     wc->lpszClassName = name;

@@ -1112,7 +1112,7 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    return STATUSBAR_GetBorders ((INT *)lParam);
 
 	case SB_GETICON:
-	    return STATUSBAR_GetIcon (infoPtr, nPart);
+	    return (LRESULT)STATUSBAR_GetIcon (infoPtr, nPart);
 
 	case SB_GETPARTS:
 	    return STATUSBAR_GetParts (infoPtr, (INT)wParam, (INT *)lParam);

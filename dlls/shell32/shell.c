@@ -207,7 +207,7 @@ BOOL16 WINAPI AboutDlgProc16( HWND16 hWnd, UINT16 msg, WPARAM16 wParam,
  */
 BOOL16 WINAPI ShellAbout16( HWND16 hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
                             HICON16 hIcon )
-{ return ShellAboutA( HWND_32(hWnd), szApp, szOtherStuff, hIcon );
+{ return ShellAboutA( HWND_32(hWnd), szApp, szOtherStuff, HICON_32(hIcon) );
 }
 
 /*************************************************************************
@@ -245,7 +245,7 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 	    int i;
 	    for (i=nIconIndex; i < nIconIndex + n; i++)
 	      RetPtr[i-nIconIndex] =
-		      (HICON16)LoadIconA(hInst, (LPCSTR)(DWORD)i);
+		      HICON_16(LoadIconA(hInst, (LPCSTR)(DWORD)i));
 	    FreeLibrary(hInst);
 	    return hRet;
 	  }
@@ -269,7 +269,7 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
             if (!res)
             {
                 int i;
-                for (i = 0; i < n; i++) RetPtr[i] = (HICON16)icons[i];
+                for (i = 0; i < n; i++) RetPtr[i] = HICON_16(icons[i]);
             }
             else
             {
@@ -287,7 +287,7 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 HICON16 WINAPI ExtractIcon16( HINSTANCE16 hInstance, LPCSTR lpszExeFileName,
 	UINT16 nIconIndex )
 {   TRACE("\n");
-    return ExtractIconA( hInstance, lpszExeFileName, nIconIndex );
+    return HICON_16(ExtractIconA(HINSTANCE_32(hInstance), lpszExeFileName, nIconIndex));
 }
 
 /*************************************************************************
@@ -309,15 +309,15 @@ HICON16 WINAPI ExtractIconEx16(
     	ismall = (HICON*)HeapAlloc(GetProcessHeap(),0,nIcons*sizeof(HICON));
     else
     	ismall = NULL;
-    ret = ExtractIconExA(lpszFile,nIconIndex,ilarge,ismall,nIcons);
+    ret = HICON_16(ExtractIconExA(lpszFile,nIconIndex,ilarge,ismall,nIcons));
     if (ilarge) {
     	for (i=0;i<nIcons;i++)
-	    phiconLarge[i]=ilarge[i];
+	    phiconLarge[i]=HICON_16(ilarge[i]);
 	HeapFree(GetProcessHeap(),0,ilarge);
     }
     if (ismall) {
     	for (i=0;i<nIcons;i++)
-	    phiconSmall[i]=ismall[i];
+	    phiconSmall[i]=HICON_16(ismall[i]);
 	HeapFree(GetProcessHeap(),0,ismall);
     }
     return ret;
@@ -330,39 +330,9 @@ HICON16 WINAPI ExtractIconEx16(
  * executable) and patch parameters if needed.
  */
 HICON16 WINAPI ExtractAssociatedIcon16(HINSTANCE16 hInst, LPSTR lpIconPath, LPWORD lpiIcon)
-{	HICON16 hIcon;
-	WORD wDummyIcon = 0;
-
-	TRACE("\n");
-
-	if(lpiIcon == NULL)
-	    lpiIcon = &wDummyIcon;
-
-	hIcon = ExtractIcon16(hInst, lpIconPath, *lpiIcon);
-
-	if( hIcon < 2 )
-	{ if( hIcon == 1 ) /* no icons found in given file */
-	  { char  tempPath[0x80];
-	    UINT16  uRet = FindExecutable16(lpIconPath,NULL,tempPath);
-
-	    if( uRet > 32 && tempPath[0] )
-	    { strcpy(lpIconPath,tempPath);
-	      hIcon = ExtractIcon16(hInst, lpIconPath, *lpiIcon);
-	      if( hIcon > 2 )
-	        return hIcon;
-	    }
-	    else hIcon = 0;
-	  }
-
-	  if( hIcon == 1 )
-	    *lpiIcon = 2;   /* MSDOS icon - we found .exe but no icons in it */
-	  else
-	    *lpiIcon = 6;   /* generic icon - found nothing */
-
-	  GetModuleFileName16(hInst, lpIconPath, 0x80);
-	  hIcon = LoadIconA( hInst, MAKEINTRESOURCEA(*lpiIcon));
-	}
-	return hIcon;
+{
+    return HICON_16(ExtractAssociatedIconA(HINSTANCE_32(hInst), lpIconPath,
+		    lpiIcon));
 }
 
 /*************************************************************************

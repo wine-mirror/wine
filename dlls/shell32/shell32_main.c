@@ -531,7 +531,7 @@ HICON WINAPI ExtractIconA( HINSTANCE hInstance, LPCSTR lpszExeFileName,
 	HICON16  hIcon = *ptr;
 
 	GlobalFree16(handle);
-	return hIcon;
+	return HICON_32(hIcon);
     }
     return 0;
 }
@@ -567,7 +567,7 @@ typedef struct
 #define		DROP_FIELD_TOP		(-15)
 #define		DROP_FIELD_HEIGHT	15
 
-static HICON hIconTitleFont;
+static HFONT hIconTitleFont;
 
 static BOOL __get_dropline( HWND hWnd, LPRECT lprect )
 { HWND hWndCtl = GetDlgItem(hWnd, IDC_WINE_TEXT);
@@ -674,7 +674,7 @@ BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
       { ABOUT_INFO *info = (ABOUT_INFO *)lParam;
             if (info)
         { const char* const *pstr = SHELL_People;
-                SendDlgItemMessageA(hWnd, stc1, STM_SETICON,info->hIcon, 0);
+                SendDlgItemMessageA(hWnd, stc1, STM_SETICON,(WPARAM)info->hIcon, 0);
                 GetWindowTextA( hWnd, Template, sizeof(Template) );
                 sprintf( AppTitle, Template, info->szApp );
                 SetWindowTextA( hWnd, AppTitle );

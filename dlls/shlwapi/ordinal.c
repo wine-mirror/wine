@@ -2206,7 +2206,7 @@ BOOL WINAPI SHLWAPI_335(LPSHELLEXECUTEINFOW lpExecInfo)
  *
  * Late bound call to shell32.SHFileOperationW.
  */
-DWORD WINAPI SHLWAPI_336(LPSHFILEOPSTRUCTW lpFileOp)
+HICON WINAPI SHLWAPI_336(LPSHFILEOPSTRUCTW lpFileOp)
 {
   GET_FUNC(pSHFileOperationW, shell32, "SHFileOperationW", 0);
   return pSHFileOperationW(lpFileOp);

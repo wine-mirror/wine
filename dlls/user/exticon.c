@@ -340,17 +340,17 @@ static HRESULT ICO_ExtractIconExW(
 	        /* .ICO files have only one icon directory */
 	        if( lpiID == NULL )	/* *.ico */
 	          pCIDir = USER32_LoadResource( peimage, pIconDir + i, *(WORD*)pData, &uSize );
-	        RetPtr[i-nIconIndex] = LookupIconIdFromDirectoryEx( pCIDir, TRUE, cxDesired, cyDesired, 0);
+	        RetPtr[i-nIconIndex] = (HICON)LookupIconIdFromDirectoryEx( pCIDir, TRUE, cxDesired, cyDesired, 0);
 	      }
 
 	      for( icon = nIconIndex; icon < nIconIndex + nIcons; icon++ )
 	      {
 	        pCIDir = NULL;
 	        if( lpiID )
-	          pCIDir = ICO_LoadIcon( peimage, lpiID->idEntries + RetPtr[icon-nIconIndex], &uSize);
+	          pCIDir = ICO_LoadIcon( peimage, lpiID->idEntries + (int)RetPtr[icon-nIconIndex], &uSize);
 	        else
 		  for( i = 0; i < iconCount; i++ )
-		    if( pIconStorage[i].id == (RetPtr[icon-nIconIndex] | 0x8000) )
+		    if( pIconStorage[i].id == ((int)RetPtr[icon-nIconIndex] | 0x8000) )
 		      pCIDir = USER32_LoadResource( peimage, pIconStorage + i,*(WORD*)pData, &uSize );
 
 	        if( pCIDir )
@@ -508,7 +508,7 @@ static HRESULT ICO_ExtractIconExW(
 	  for (i=0; i<nIcons; i++)
 	  {
               const IMAGE_RESOURCE_DIRECTORY *xresdir;
-              xresdir = find_entry_by_id(iconresdir,RetPtr[i],rootresdir);
+              xresdir = find_entry_by_id(iconresdir,LOWORD(RetPtr[i]),rootresdir);
               xresdir = find_entry_default(xresdir,rootresdir);
 	    idataent = (PIMAGE_RESOURCE_DATA_ENTRY)xresdir;
 	    idata = NULL;

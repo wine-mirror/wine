@@ -93,19 +93,19 @@ const struct builtin_class_descr STATIC_builtin_class =
 static HICON STATIC_SetIcon( HWND hwnd, HICON hicon, DWORD style )
 {
     HICON prevIcon;
-    CURSORICONINFO *info = hicon?(CURSORICONINFO *) GlobalLock16( hicon ):NULL;
+    CURSORICONINFO *info = hicon?(CURSORICONINFO *) GlobalLock16(HICON_16(hicon)):NULL;
 
     if ((style & SS_TYPEMASK) != SS_ICON) return 0;
     if (hicon && !info) {
 	ERR("huh? hicon!=0, but info=0???\n");
     	return 0;
     }
-    prevIcon = SetWindowLongA( hwnd, HICON_GWL_OFFSET, hicon );
+    prevIcon = (HICON)SetWindowLongA( hwnd, HICON_GWL_OFFSET, (LONG)hicon );
     if (hicon)
     {
         SetWindowPos( hwnd, 0, 0, 0, info->nWidth, info->nHeight,
                         SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
-        GlobalUnlock16( hicon );
+        GlobalUnlock16(HICON_16(hicon));
     }
     return prevIcon;
 }
@@ -362,7 +362,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 	    lResult = STATIC_SetBitmap( hwnd, (HBITMAP)lParam, style );
 	    break;
 	case IMAGE_ICON:
-	    lResult = STATIC_SetIcon( hwnd, (HICON)lParam, style );
+	    lResult = (LRESULT)STATIC_SetIcon( hwnd, (HICON)lParam, style );
 	    break;
 	default:
 	    FIXME("STM_SETIMAGE: Unhandled type %x\n", wParam);
@@ -373,7 +373,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 
     case STM_SETICON16:
     case STM_SETICON:
-        lResult = STATIC_SetIcon( hwnd, (HICON)wParam, style );
+        lResult = (LRESULT)STATIC_SetIcon( hwnd, (HICON)wParam, style );
         InvalidateRect( hwnd, NULL, TRUE );
         break;
 
@@ -530,7 +530,7 @@ static void STATIC_PaintIconfn( HWND hwnd, HDC hdc, DWORD style )
     GetClientRect( hwnd, &rc );
     hbrush = SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC, hdc, (LPARAM)hwnd );
     FillRect( hdc, &rc, hbrush );
-    if ((hIcon = GetWindowLongA( hwnd, HICON_GWL_OFFSET )))
+    if ((hIcon = (HICON)GetWindowLongA( hwnd, HICON_GWL_OFFSET )))
         DrawIcon( hdc, rc.left, rc.top, hIcon );
 }
 
@@ -538,24 +538,23 @@ static void STATIC_PaintBitmapfn(HWND hwnd, HDC hdc, DWORD style )
 {
     RECT rc;
     HBRUSH hbrush;
-    HICON hIcon;
     HDC hMemDC;
-    HBITMAP oldbitmap;
+    HBITMAP hBitmap, oldbitmap;
 
     GetClientRect( hwnd, &rc );
     hbrush = SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC, hdc, (LPARAM)hwnd );
     FillRect( hdc, &rc, hbrush );
 
-    if ((hIcon = GetWindowLongA( hwnd, HICON_GWL_OFFSET )))
+    if ((hBitmap = (HBITMAP)GetWindowLongA( hwnd, HICON_GWL_OFFSET )))
     {
         BITMAP bm;
 	SIZE sz;
 
-        if(GetObjectType(hIcon) != OBJ_BITMAP) return;
+        if(GetObjectType(hBitmap) != OBJ_BITMAP) return;
         if (!(hMemDC = CreateCompatibleDC( hdc ))) return;
-	GetObjectW(hIcon, sizeof(bm), &bm);
-	GetBitmapDimensionEx(hIcon, &sz);
-	oldbitmap = SelectObject(hMemDC, hIcon);
+	GetObjectW(hBitmap, sizeof(bm), &bm);
+	GetBitmapDimensionEx(hBitmap, &sz);
+	oldbitmap = SelectObject(hMemDC, hBitmap);
 	BitBlt(hdc, sz.cx, sz.cy, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0,
 	       SRCCOPY);
 	SelectObject(hMemDC, oldbitmap);

@@ -236,7 +236,7 @@ inline static void destroy_icon_window( Display *display, WND *win )
 static void set_icon_hints( Display *display, WND *wndPtr, XWMHints *hints )
 {
     X11DRV_WND_DATA *data = wndPtr->pDriverData;
-    HICON hIcon = GetClassLongA( wndPtr->hwndSelf, GCL_HICON );
+    HICON hIcon = (HICON)GetClassLongA( wndPtr->hwndSelf, GCL_HICON );
 
     if (data->hWMIconBitmap) DeleteObject( data->hWMIconBitmap );
     if (data->hWMIconMask) DeleteObject( data->hWMIconMask);
@@ -1206,7 +1206,7 @@ HICON X11DRV_SetWindowIcon( HWND hwnd, HICON icon, BOOL small )
 {
     WND *wndPtr;
     Display *display = thread_display();
-    HICON old = SetClassLongW( hwnd, small ? GCL_HICONSM : GCL_HICON, icon );
+    HICON old = (HICON)SetClassLongW(hwnd, small ? GCL_HICONSM : GCL_HICON, (LONG)icon );
 
     SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE |
                   SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER );

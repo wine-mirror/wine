@@ -1840,7 +1840,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     HDC hdc;
     HWND parent;
     LONG hittest = (LONG)(wParam & 0x0f);
-    HCURSOR16 hDragCursor = 0, hOldCursor = 0;
+    HCURSOR hDragCursor = 0, hOldCursor = 0;
     POINT minTrack, maxTrack;
     POINT capturePoint, pt;
     LONG style = GetWindowLongA( hwnd, GWL_STYLE );
@@ -1929,7 +1929,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
 
     if( iconic ) /* create a cursor for dragging */
     {
-        hDragCursor = GetClassLongA( hwnd, GCL_HICON);
+        hDragCursor = (HCURSOR)GetClassLongA( hwnd, GCL_HICON);
         if( !hDragCursor ) hDragCursor = (HCURSOR)SendMessageA( hwnd, WM_QUERYDRAGICON, 0, 0L);
         if( !hDragCursor ) iconic = FALSE;
     }

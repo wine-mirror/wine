@@ -493,7 +493,7 @@ HBITMAP X11DRV_BITMAP_CreateBitmapFromPixmap(Pixmap pixmap, BOOL bDeletePixmap)
     width = pBmp->bitmap.bmWidth;
     height = pBmp->bitmap.bmHeight;
 
-    hBmpCopy = CopyImage(hBmp, IMAGE_BITMAP, width, height, LR_CREATEDIBSECTION);
+    hBmpCopy = (HBITMAP)CopyImage(hBmp, IMAGE_BITMAP, width, height, LR_CREATEDIBSECTION);
 
     /* We can now get rid of the HBITMAP wrapper we created earlier.
      * Note: Simply calling DeleteObject will free the embedded Pixmap as well.

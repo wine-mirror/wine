@@ -8483,7 +8483,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return (LRESULT)infoPtr->hwndHeader;
 
   case LVM_GETHOTCURSOR:
-    return infoPtr->hHotCursor;
+    return (LRESULT)infoPtr->hHotCursor;
 
   case LVM_GETHOTITEM:
     return infoPtr->nHotItem;
@@ -8661,7 +8661,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   /* case LVN_SETGROUPMETRICS: */
 
   case LVM_SETHOTCURSOR:
-    return LISTVIEW_SetHotCursor(infoPtr, (HCURSOR)lParam);
+    return (LRESULT)LISTVIEW_SetHotCursor(infoPtr, (HCURSOR)lParam);
 
   case LVM_SETHOTITEM:
     return LISTVIEW_SetHotItem(infoPtr, (INT)wParam);

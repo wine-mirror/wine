@@ -197,7 +197,7 @@ static HICON WINE_UNUSED SIC_GetIcon (LPCSTR sSourceFile, INT dwSourceIndex, BOO
 
 	if (INVALID_INDEX == index)
 	{
-	  return INVALID_INDEX;
+	  return (HICON)INVALID_INDEX;
 	}
 
 	if (bSmallIcon)
@@ -415,11 +415,11 @@ HICON WINAPI ExtractIconExA ( LPCSTR lpszFile, INT nIconIndex, HICON * phiconLar
 	TRACE("file=%s idx=%i %p %p num=%i\n", lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons );
 
 	if (nIconIndex==-1)	/* Number of icons requested */
-            return PrivateExtractIconsA( lpszFile, -1, 0, 0, NULL, 0, 0, 0 );
+            return (HICON)PrivateExtractIconsA( lpszFile, -1, 0, 0, NULL, 0, 0, 0 );
 
 	if (phiconLarge)
         {
-          ret = PrivateExtractIconsA( lpszFile, nIconIndex, 32, 32, phiconLarge, 0, nIcons, 0 );
+          ret = (HICON)PrivateExtractIconsA( lpszFile, nIconIndex, 32, 32, phiconLarge, 0, nIcons, 0 );
 	  if ( nIcons==1)
 	  { ret = phiconLarge[0];
 	  }
@@ -431,7 +431,7 @@ HICON WINAPI ExtractIconExA ( LPCSTR lpszFile, INT nIconIndex, HICON * phiconLar
 
 	if (phiconSmall)
         {
-          ret = PrivateExtractIconsA( lpszFile, nIconIndex, 16, 16, phiconSmall, 0, nIcons, 0 );
+          ret = (HICON)PrivateExtractIconsA( lpszFile, nIconIndex, 16, 16, phiconSmall, 0, nIcons, 0 );
 	  if ( nIcons==1 )
 	  { ret = phiconSmall[0];
 	  }
@@ -444,7 +444,7 @@ HICON WINAPI ExtractIconExA ( LPCSTR lpszFile, INT nIconIndex, HICON * phiconLar
  */
 HICON WINAPI ExtractIconExW ( LPCWSTR lpszFile, INT nIconIndex, HICON * phiconLarge, HICON * phiconSmall, UINT nIcons )
 {	LPSTR sFile;
-	DWORD ret;
+	HICON ret;
 
 	TRACE("file=%s idx=%i %p %p num=%i\n", debugstr_w(lpszFile), nIconIndex, phiconLarge, phiconSmall, nIcons );
 
@@ -461,8 +461,40 @@ HICON WINAPI ExtractIconExW ( LPCWSTR lpszFile, INT nIconIndex, HICON * phiconLa
  * executable) and patch parameters if needed.
  */
 HICON WINAPI ExtractAssociatedIconA(HINSTANCE hInst, LPSTR lpIconPath, LPWORD lpiIcon)
-{	TRACE("\n");
-	return ExtractAssociatedIcon16(hInst,lpIconPath,lpiIcon);
+{	
+	HICON hIcon;
+	WORD wDummyIcon = 0;
+	
+	TRACE("\n");
+
+	if(lpiIcon == NULL)
+	    lpiIcon = &wDummyIcon;
+
+	hIcon = ExtractIconA(hInst, lpIconPath, *lpiIcon);
+
+	if( hIcon < (HICON)2 )
+	{ if( hIcon == (HICON)1 ) /* no icons found in given file */
+	  { char  tempPath[0x80];
+	    UINT16  uRet = FindExecutable16(lpIconPath,NULL,tempPath);
+
+	    if( uRet > 32 && tempPath[0] )
+	    { strcpy(lpIconPath,tempPath);
+	      hIcon = ExtractIconA(hInst, lpIconPath, *lpiIcon);
+	      if( hIcon > (HICON)2 )
+	        return hIcon;
+	    }
+	    else hIcon = 0;
+	  }
+
+	  if( hIcon == (HICON)1 )
+	    *lpiIcon = 2;   /* MSDOS icon - we found .exe but no icons in it */
+	  else
+	    *lpiIcon = 6;   /* generic icon - found nothing */
+
+	  GetModuleFileName16(hInst, lpIconPath, 0x80);
+	  hIcon = LoadIconA( hInst, MAKEINTRESOURCEA(*lpiIcon));
+	}
+	return hIcon;
 }
 
 /*************************************************************************

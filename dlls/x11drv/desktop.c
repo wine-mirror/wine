@@ -46,7 +46,7 @@ static LRESULT WINAPI desktop_winproc( HWND hwnd, UINT message, WPARAM wParam, L
         break;
 
     case WM_SETCURSOR:
-        return SetCursor( LoadCursorA( 0, IDC_ARROWA ) );
+        return (LRESULT)SetCursor( LoadCursorA( 0, IDC_ARROWA ) );
 
     case WM_NCHITTEST:
         return HTCLIENT;

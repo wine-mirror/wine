@@ -102,7 +102,7 @@ FARPROC48 INT_GetPMHandler48( BYTE intnum )
  */
 void INT_SetPMHandler48( BYTE intnum, FARPROC48 handler )
 {
-    TRACE("Set 32-bit protected mode interrupt vector %02x <- %04x:%08x\n",
+    TRACE("Set 32-bit protected mode interrupt vector %02x <- %04x:%08lx\n",
           intnum, handler.selector, handler.offset );
     INT_Vectors48[intnum] = handler;
 }

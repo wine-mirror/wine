@@ -49,6 +49,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 WINE_DECLARE_DEBUG_CHANNEL(accel);
 
 #define HACCEL_16(h32)		(LOWORD(h32))
+#define HICON_16(h32)		(LOWORD(h32))
+
+#define HDC_32(h16)		((HDC)(ULONG_PTR)(h16))
+#define HICON_32(h16)		((HICON)(ULONG_PTR)(h16))
 
 /******************************************************************************
  * These are static/global variables and internal data structures that the
@@ -2241,15 +2245,15 @@ HGLOBAL16 WINAPI OleMetaFilePictFromIconAndLabel16(
 	    HINSTANCE16 hInstance = LoadLibrary16(lpszSourceFile);
 
 	    /* load the icon at index from lpszSourceFile */
-	    hIcon = (HICON16)LoadIconA(hInstance, (LPCSTR)(DWORD)iIconIndex);
+	    hIcon = HICON_16(LoadIconA(hInstance, (LPCSTR)(DWORD)iIconIndex));
 	    FreeLibrary16(hInstance);
 	} else
 	    return (HGLOBAL)NULL;
     }
 
     hdc = CreateMetaFile16(NULL);
-    DrawIcon(hdc, 0, 0, hIcon); /* FIXME */
-    TextOutA(hdc, 0, 0, lpszLabel, 1); /* FIXME */
+    DrawIcon(HDC_32(hdc), 0, 0, HICON_32(hIcon)); /* FIXME */
+    TextOutA(HDC_32(hdc), 0, 0, lpszLabel, 1); /* FIXME */
     hmf = GlobalAlloc16(0, sizeof(METAFILEPICT16));
     mf = (METAFILEPICT16 *)GlobalLock16(hmf);
     mf->mm = MM_ANISOTROPIC;

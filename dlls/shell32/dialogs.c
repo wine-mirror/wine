@@ -120,7 +120,7 @@ BOOL CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         case WM_INITDIALOG :
             prfdp = (RUNFILEDLGPARAMS *)lParam ;
             SetWindowTextA (hwnd, prfdp->lpstrTitle) ;
-            SetClassLongA (hwnd, GCL_HICON, prfdp->hIcon) ;
+            SetClassLongA (hwnd, GCL_HICON, (LPARAM)prfdp->hIcon) ;
             SendMessageA (GetDlgItem (hwnd, 12297), STM_SETICON, (WPARAM)LoadIconA ((HINSTANCE)NULL, IDI_WINLOGOA), 0) ;
             FillList (GetDlgItem (hwnd, 12298), NULL) ;
             SetFocus (GetDlgItem (hwnd, 12298)) ;

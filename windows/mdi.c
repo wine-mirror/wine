@@ -1029,9 +1029,9 @@ static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
 
   if(TWEAK_WineLook > WIN31_LOOK)
   {
-    HICON hIcon = GetClassLongA(hChild, GCL_HICONSM);
+    HICON hIcon = (HICON)GetClassLongA(hChild, GCL_HICONSM);
     if (!hIcon)
-      hIcon = GetClassLongA(hChild, GCL_HICON);
+      hIcon = (HICON)GetClassLongA(hChild, GCL_HICON);
     if (hIcon)
     {
       HDC hMemDC;

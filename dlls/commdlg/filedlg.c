@@ -69,12 +69,12 @@ static const WCHAR FILE_star[] = {'*','.','*', 0};
 static const WCHAR FILE_bslash[] = {'\\', 0};
 static const WCHAR FILE_specc[] = {'%','c',':', 0};
 
-static HICON16 hFolder = 0;
-static HICON16 hFolder2 = 0;
-static HICON16 hFloppy = 0;
-static HICON16 hHDisk = 0;
-static HICON16 hCDRom = 0;
-static HICON16 hNet = 0;
+static HICON hFolder = 0;
+static HICON hFolder2 = 0;
+static HICON hFloppy = 0;
+static HICON hHDisk = 0;
+static HICON hCDRom = 0;
+static HICON hNet = 0;
 static const int fldrHeight = 16;
 static const int fldrWidth = 20;
 
