@@ -348,13 +348,13 @@ BOOL32 WINAPI PlaySound32A(LPCSTR pszSound, HMODULE32 hmod, DWORD fdwSound)
     
     if (PlaySound_hThread == 0) { /* This is the first time they called us */
 	DWORD	id;
-	if ((PlaySound_hThread = CreateThread(NULL, 0, PlaySound_Thread, 0, 0, &id)) == 0) 
-	    return FALSE;
 	if ((PlaySound_hReadyEvent = CreateEvent32A(NULL, TRUE, FALSE, NULL)) == 0)
 	    return FALSE;
 	if ((PlaySound_hMiddleEvent = CreateEvent32A(NULL, FALSE, FALSE, NULL)) == 0)
 	    return FALSE;
 	if ((PlaySound_hPlayEvent = CreateEvent32A(NULL, FALSE, FALSE, NULL)) == 0)
+	    return FALSE;
+	if ((PlaySound_hThread = CreateThread(NULL, 0, PlaySound_Thread, 0, 0, &id)) == 0) 
 	    return FALSE;
     }
     
