@@ -25,6 +25,7 @@ C_SRCS = \
 	$(TOPOBJDIR)/files/smb.c \
 	$(TOPOBJDIR)/misc/options.c \
 	$(TOPOBJDIR)/misc/registry.c \
+	actctx.c \
 	atom.c \
 	change.c \
 	comm.c \
