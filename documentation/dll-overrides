@@ -1,0 +1,216 @@
+DLL overrides
+-------------
+   
+   The wine.conf directives [DllDefaults] and [DllOverrides] are the
+   subject of some confusion. The overall purpose of most of these
+   directives are clear enough, though - given a choice, should Wine use
+   its own built-in DLLs, or should it use .DLL files found in an
+   existing Windows installation? This document explains how this feature
+   works.
+   
+DLL types
+
+   native
+          A "native" DLL is a .DLL file written for the real Microsoft
+          Windows.
+          
+   builtin
+          A "builtin" DLL is a Wine DLL. These can either be a part of
+          libwine.so, or more recently, in a special .so file that Wine
+          is able to load on demand.
+          
+   elfdll
+          An "elfdll" is a Wine .so file with a special Windows-like file
+          structure that is as close to Windows as possible, and that can
+          also seamlessly link dynamically with "native" DLLs, by using
+          special ELF loader and linker tricks. Bertho Stultiens did some
+          work on this, but this feature has not yet been merged back
+          into Wine (because of political reasons and lack of time), so
+          this DLL type does not exist in the official Wine at this time.
+          In the meantime, the "builtin" DLL type gained some of the
+          features of elfdlls (such as dynamic loading), so it's possible
+          that "elfdll" functionality will be folded into "builtin" at
+          some point.
+          
+   so
+          A native Unix .so file, with calling convention conversion
+          thunks generated on the fly as the library is loaded. This is
+          mostly useful for libraries such as "glide" that has exactly
+          the same API on both Windows and Unix.
+          
+The [DllDefaults] section
+
+   EXTRA_LD_LIBRARY_PATH
+          This specifies the location of the Wine's DLL .so files. Wine
+          will search this path when trying to locate a DLL of the type
+          "builtin" or "elfdll". (This does not apply to libwine.so,
+          since libwine.so is not a DLL in this sense.)
+          
+   DefaultLoadOrder
+          This specifies in what order Wine should search for available
+          DLL types, if the DLL in question was not found in the
+          [DllOverrides] section.
+          
+The [DllPairs] section
+
+   At one time, there was a section called [DllPairs] in the default
+   configuration file, but this has been obsoleted because the pairing
+   information has now been embedded into Wine itself. (The purpose of
+   this section was merely to be able to issue warnings if the user
+   attempted to pair codependent 16-bit/32-bit DLLs of different types.)
+   If you still have this in your wine.conf or .winerc, you may safely
+   delete it.
+   
+The [DllOverrides] section
+
+   This section specifies how you want specific DLLs to be handled, in
+   particular whether you want to use "native" DLLs or not, if you have
+   some from a real Windows configuration. Because builtins do not mix
+   seamlessly with native DLLs yet, certain DLL dependencies may be
+   problematic, but workarounds exist in Wine for many popular DLL
+   configurations. Also see WWN's [16]Status Page to figure out how well
+   your favorite DLL is implemented in Wine.
+   
+   It is of course also possible to override these settings by explictly
+   using Wine's --dll command-line option (see the man page for details).
+   
+   Some hints for choosing your optimal configuration (listed by
+   16/32-bit DLL pair):
+   
+   krnl386, kernel32
+          Native versions of these will never work, so don't try. Leave
+          at builtin.
+          
+   gdi, gdi32
+          Graphics Device Interface. No effort has been made at trying to
+          run native GDI. Leave at builtin.
+          
+   user, user32
+          Window management and standard controls. It was possible to use
+          Win95's native versions at some point (if all other DLLs that
+          depend on it, such as comctl32 and comdlg32, were also run
+          native). However, this is no longer possible after the Address
+          Space Separation, so leave at builtin.
+          
+   ntdll
+          NT kernel API. Although badly documented, the native version of
+          this will never work. Leave at builtin.
+          
+   w32skrnl
+          Win32s (for Win3.x). Native version will probably never work.
+          Leave at builtin.
+          
+   wow32
+          Win16 support library for NT. Native version will probably
+          never work. Leave at builtin.
+          
+   system
+          Win16 kernel stuff. Will never work native. Leave at builtin.
+          
+   display
+          Display driver. Definitely leave at builtin.
+          
+   toolhelp
+          Tool helper routines. This is rarely a source of problems.
+          Leave at builtin.
+          
+   ver, version
+          Versioning. Seldom useful to mess with.
+          
+   advapi32
+          Registry and security features. Trying the native version of
+          this may or may not work.
+          
+   commdlg, comdlg32
+          Common Dialogs, such as color picker, font dialog, print
+          dialog, open/save dialog, etc. It is safe to try native.
+          
+   commctrl, comctl32
+          Common Controls. This is toolbars, status bars, list controls,
+          the works. It is safe to try native.
+          
+   shell, shell32
+          Shell interface (desktop, filesystem, etc). Being one of the
+          most undocumented pieces of Windows, you may have luck with the
+          native version, should you need it.
+          
+   winsock, wsock32
+          Windows Sockets. The native version will not work under Wine,
+          so leave at builtin.
+          
+   icmp
+          ICMP routines for wsock32. As with wsock32, leave at builtin.
+          
+   mpr
+          The native version may not work due to thunking issues. Leave
+          at builtin.
+          
+   lzexpand, lz32
+          Lempel-Ziv decompression. Wine's builtin version ought to work
+          fine.
+          
+   winaspi, wnaspi32
+          Advanced SCSI Peripheral Interface. The native version will
+          probably never work. Leave at builtin.
+          
+   crtdll
+          C Runtime library. The native version will easily work better
+          than Wine's on this one.
+          
+   winspool.drv
+          Printer spooler. You are not likely to have more luck with the
+          native version.
+          
+   ddraw
+          DirectDraw/Direct3D. Since Wine does not implement the DirectX
+          HAL, the native version will not work at this time.
+          
+   dinput
+          DirectInput. Running this native may or may not work.
+          
+   dsound
+          DirectSound. It may be possible to run this native, but don't
+          count on it.
+          
+   dplay/dplayx
+          DirectPlay. Native ought to work best on this, if at all.
+          
+   mmsystem, winmm
+          Multimedia system. The native version is not likely to work.
+          Leave at builtin.
+          
+   msacm, msacm32
+          Audio Compression Manager. Builtin works best, if you set
+          msacm.drv to the same.
+          
+   msvideo, msvfw32
+          Video for Windows. It is safe (and recommended) to try native.
+          
+   mcicda.drv
+          CD Audio MCI driver.
+          
+   mciseq.drv
+          MIDI Sequencer MCI driver (.MID playback).
+          
+   mciwave.drv
+          Wave audio MCI driver (.WAV playback).
+          
+   mciavi.drv
+          AVI MCI driver (.AVI video playback). Best to use native.
+          
+   mcianim.drv
+          Animation MCI driver.
+          
+   msacm.drv
+          Audio Compression Manager. Set to same as msacm32.
+          
+   midimap.drv
+          MIDI Mapper.
+          
+   wprocs
+          This is a pseudo-DLL used by Wine for thunking purposes. A
+          native version of this doesn't exist.
+          
+   Have fun...
+   
+                                                              - Ove Kåven
