@@ -20,7 +20,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <pwd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -1257,20 +1256,18 @@ static void XFONT_LoadPenalties( char** buffer, int *buf_size )
  */
 static char* XFONT_UserMetricsCache( char* buffer, int* buf_size )
 {
-    struct passwd* pwd;
-    char* pchDisplay;
+    char* pchDisplay, *home;
 
     pchDisplay = getenv( "DISPLAY" );
     if( !pchDisplay ) pchDisplay = "0";
 
-    pwd = getpwuid(getuid());
-    if( pwd && pwd->pw_dir )
+    if ((home = getenv( "HOME" )) != NULL)
     {
-	int i = strlen( pwd->pw_dir ) + strlen( INIWinePrefix ) + 
+	int i = strlen( home ) + strlen( INIWinePrefix ) + 
 		strlen( INIFontMetrics ) + strlen( pchDisplay ) + 2;
 	if( i > *buf_size ) 
 	    buffer = (char*) HeapReAlloc( SystemHeap, 0, buffer, *buf_size = i );
-	strcpy( buffer, pwd->pw_dir );
+	strcpy( buffer, home );
 	strcat( buffer, INIWinePrefix );
 	strcat( buffer, INIFontMetrics );
 	strcat( buffer, pchDisplay );
