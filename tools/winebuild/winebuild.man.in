@@ -273,12 +273,6 @@ for a Win16 or Win32 function using the C calling convention
 .B varargs
 for a Win16 or Win32 function using the C calling convention with a
 variable number of arguments
-.TP
-.B pascal16
-for a Win16 function returning a 16-bit value; this type is
-deprecated, use
-.B pascal -ret16
-instead
 .RE
 .PP
 .I args

@@ -11,9 +11,9 @@
 12  stub WINNLSSETIMESTATUS
 14  stub WINNLSSETIMEHOTKEY
 15  stub WINNLSGETIMEHOTKEY
-16  pascal16 WINNLSEnableIME(word word) WINNLSEnableIME16
+16  pascal -ret16 WINNLSEnableIME(word word) WINNLSEnableIME16
 17  stub WINNLSGETKEYSTATE
-18  pascal16 WINNLSGetEnableStatus(word) WINNLSGetEnableStatus16
+18  pascal -ret16 WINNLSGetEnableStatus(word) WINNLSGetEnableStatus16
 19  stub WINNLSSETKEYSTATE
 20  stub IMPADDIME
 21  stub IMPDELETEIME

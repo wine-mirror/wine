@@ -5,12 +5,12 @@
 6 stub OLECLONE
 7 stub OLECOPYFROMLINK
 8 stub OLEEQUAL
-9 pascal16 OleQueryLinkFromClip(str word word) OleQueryLinkFromClip16
-10 pascal16 OleQueryCreateFromClip(str word word) OleQueryCreateFromClip16
-11 pascal16 OleCreateLinkFromClip (str segptr long str segptr word word) OleCreateLinkFromClip16
-12 pascal16 OleCreateFromClip(str segptr long str long word word) OleCreateFromClip16
+9 pascal -ret16 OleQueryLinkFromClip(str word word) OleQueryLinkFromClip16
+10 pascal -ret16 OleQueryCreateFromClip(str word word) OleQueryCreateFromClip16
+11 pascal -ret16 OleCreateLinkFromClip (str segptr long str segptr word word) OleCreateLinkFromClip16
+12 pascal -ret16 OleCreateFromClip(str segptr long str long word word) OleCreateFromClip16
 13 stub OLECOPYTOCLIPBOARD
-14 pascal16 OleQueryType(ptr segptr) OleQueryType16
+14 pascal -ret16 OleQueryType(ptr segptr) OleQueryType16
 15 stub OLESETHOSTNAMES
 16 stub OLESETTARGETDEVICE
 17 stub OLESETBOUNDS
@@ -40,10 +40,10 @@
 41  pascal OleRegisterClientDoc(ptr ptr long ptr) OleRegisterClientDoc16
 42  pascal OleRevokeClientDoc(long) OleRevokeClientDoc16
 43  pascal OleRenameClientDoc(long ptr) OleRenameClientDoc16
-44 pascal16 OleRevertClientDoc(long) OleRevertClientDoc16
+44 pascal -ret16 OleRevertClientDoc(long) OleRevertClientDoc16
 45  pascal OleSavedClientDoc(long) OleSavedClientDoc16
 46 stub OLERENAME
-47 pascal16 OleEnumObjects(long segptr) OleEnumObjects16
+47 pascal -ret16 OleEnumObjects(long segptr) OleEnumObjects16
 48 stub OLEQUERYNAME
 49 stub OLESETCOLORSCHEME
 50 stub OLEREQUESTDATA
@@ -53,7 +53,7 @@
 57 stub OLEEXECUTE
 58 stub OLECREATEINVISIBLE
 59 stub OLEQUERYCLIENTVERSION
-60 pascal16 OleIsDcMeta(word) OleIsDcMeta16
+60 pascal -ret16 OleIsDcMeta(word) OleIsDcMeta16
 100 stub DOCWNDPROC
 101 stub SRVRWNDPROC
 102 stub MFCALLBACKFUNC

@@ -4,7 +4,7 @@
 5      pascal  mmsystemGetVersion() mmsystemGetVersion16
 6      pascal  DriverProc(long word word long long) DriverProc16
 8      pascal  WMMMidiRunOnce() WMMMidiRunOnce16
-30     pascal16 OutputDebugStr(str) OutputDebugStr16
+30     pascal -ret16 OutputDebugStr(str) OutputDebugStr16
 31     pascal  DriverCallback(long word word word long long long) DriverCallback16
 32     pascal  StackEnter() StackEnter16
 33     pascal  StackLeave() StackLeave16
@@ -131,7 +131,7 @@
 900    pascal  mmTaskCreate(long ptr long) mmTaskCreate16
 902    pascal  mmTaskBlock(word) mmTaskBlock16
 903    pascal  mmTaskSignal(word) mmTaskSignal16
-904    pascal16 mmGetCurrentTask() mmGetCurrentTask16
+904    pascal -ret16 mmGetCurrentTask() mmGetCurrentTask16
 905    pascal  mmTaskYield() mmTaskYield16
 1100   pascal  DrvOpen(str str long) DrvOpen16
 1101   pascal  DrvClose(word long long) DrvClose16

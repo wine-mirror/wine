@@ -453,17 +453,8 @@ static int ParseOrdinal(int ordinal)
 
     if (odp->type >= TYPE_NBTYPES)
     {
-        /* special case for backwards compatibility */
-        if (!strcmp( token, "pascal16" ))
-        {
-            odp->type = TYPE_PASCAL;
-            odp->flags |= FLAG_RET16;
-        }
-        else
-        {
-            error( "Expected type after ordinal, found '%s' instead\n", token );
-            goto error;
-        }
+        error( "Expected type after ordinal, found '%s' instead\n", token );
+        goto error;
     }
 
     if (!(token = GetToken(0))) goto error;

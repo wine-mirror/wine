@@ -40,16 +40,16 @@
 90  stub Do_Polylines
 91  stub Do_Scanlines
 92  stub SaveScreenBitmap
-101 pascal16 Inquire(ptr) DISPLAY_Inquire
-102 pascal16 SetCursor(ptr) DISPLAY_SetCursor
-103 pascal16 MoveCursor(word word) DISPLAY_MoveCursor
-104 pascal16 CheckCursor() DISPLAY_CheckCursor
+101 pascal -ret16 Inquire(ptr) DISPLAY_Inquire
+102 pascal -ret16 SetCursor(ptr) DISPLAY_SetCursor
+103 pascal -ret16 MoveCursor(word word) DISPLAY_MoveCursor
+104 pascal -ret16 CheckCursor() DISPLAY_CheckCursor
 400 stub PExtTextOut
 401 stub PStrBlt
 402 stub RExtTextOut
 403 stub RStrBlt
 450 pascal GetDriverResourceID(word str) DISPLAY_GetDriverResourceID
-500 pascal16 UserRepaintDisable(word) UserRepaintDisable16
+500 pascal -ret16 UserRepaintDisable(word) UserRepaintDisable16
 501 stub ORDINAL_ONLY1
 502 stub ORDINAL_ONLY2
 600 stub InkReady

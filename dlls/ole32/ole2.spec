@@ -53,7 +53,7 @@
 53 stub OLEGETICONOFCLASS
 54 pascal CreateILockBytesOnHGlobal(word word ptr) CreateILockBytesOnHGlobal16
 55 stub GETHGLOBALFROMILOCKBYTES
-56 pascal16 OleMetaFilePictFromIconAndLabel(word str str word) OleMetaFilePictFromIconAndLabel16
+56 pascal -ret16 OleMetaFilePictFromIconAndLabel(word str str word) OleMetaFilePictFromIconAndLabel16
 57 stub GETCLASSFILE
 58 stub OLEDRAW
 59 stub OLECREATEDEFAULTHANDLER
@@ -71,7 +71,7 @@
 71 stub OLECONVERTOLESTREAMTOISTORAGE
 74 stub READFMTUSERTYPESTG
 75 stub WRITEFMTUSERTYPESTG
-76 pascal16 OleFlushClipboard() OleFlushClipboard16
+76 pascal -ret16 OleFlushClipboard() OleFlushClipboard16
 77 stub OLEISCURRENTCLIPBOARD
 78 stub OLETRANSLATEACCELERATOR
 79 stub OLEDOAUTOCONVERT

@@ -1,10 +1,10 @@
-1   pascal16 Inquire(ptr) KEYBOARD_Inquire
-2   pascal16 Enable(segptr ptr) KEYBOARD_Enable
-3   pascal16 Disable() KEYBOARD_Disable
-4   pascal16 ToAscii(word word ptr ptr word) ToAscii16
-5   pascal16 AnsiToOem(str ptr) AnsiToOem16
-6   pascal16 OemToAnsi(str ptr) OemToAnsi16
-7   pascal16 SetSpeed(word) SetSpeed16
+1   pascal -ret16 Inquire(ptr) KEYBOARD_Inquire
+2   pascal -ret16 Enable(segptr ptr) KEYBOARD_Enable
+3   pascal -ret16 Disable() KEYBOARD_Disable
+4   pascal -ret16 ToAscii(word word ptr ptr word) ToAscii16
+5   pascal -ret16 AnsiToOem(str ptr) AnsiToOem16
+6   pascal -ret16 OemToAnsi(str ptr) OemToAnsi16
+7   pascal -ret16 SetSpeed(word) SetSpeed16
 8   stub WEP
 9   stub INQUIREEX
 10  stub TOASCIIEX
@@ -17,12 +17,12 @@
 #126	pascal	GetTableSeg
 #127	pascal	NewTable
 128 pascal   OemKeyScan(word) OemKeyScan
-129 pascal16 VkKeyScan(word) VkKeyScan16
-130 pascal16 GetKeyboardType(word) GetKeyboardType16
-131 pascal16 MapVirtualKey(word word) MapVirtualKey16
-132 pascal16 GetKBCodePage() GetKBCodePage16
-133 pascal16 GetKeyNameText(long ptr word) GetKeyNameText16
-134 pascal16 AnsiToOemBuff(ptr ptr word) AnsiToOemBuff16
-135 pascal16 OemToAnsiBuff(ptr ptr word) OemToAnsiBuff16
+129 pascal -ret16 VkKeyScan(word) VkKeyScan16
+130 pascal -ret16 GetKeyboardType(word) GetKeyboardType16
+131 pascal -ret16 MapVirtualKey(word word) MapVirtualKey16
+132 pascal -ret16 GetKBCodePage() GetKBCodePage16
+133 pascal -ret16 GetKeyNameText(long ptr word) GetKeyNameText16
+134 pascal -ret16 AnsiToOemBuff(ptr ptr word) AnsiToOemBuff16
+135 pascal -ret16 OemToAnsiBuff(ptr ptr word) OemToAnsiBuff16
 #136	pascal	EnableKbSysReq
 #137	pascal	GetBiosKeyProc

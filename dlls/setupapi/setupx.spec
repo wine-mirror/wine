@@ -1,7 +1,7 @@
 1    stub     WEP
-2    pascal16 IpOpen(str ptr) IpOpen16
+2    pascal -ret16 IpOpen(str ptr) IpOpen16
 3    stub     IpOpenAppend #(str word)
-4    pascal16 IpClose(word) IpClose16
+4    pascal -ret16 IpClose(word) IpClose16
 5    stub     IpGetLongField #(word ptr word ptr)
 6    stub     IpGetStringField #(word ptr word ptr word ptr)
 7    stub     IpFindFirstLine #(word str str ptr)
@@ -10,11 +10,11 @@
 10   stub     IpGetIntField #(word ptr word ptr)
 11   stub     IpFindNextLine #(word ptr)
 12   stub     IpGetFileName #(word ptr word)
-13   pascal16 VcpQueueCopy(str str str str word word ptr word long) VcpQueueCopy16
+13   pascal -ret16 VcpQueueCopy(str str str str word word ptr word long) VcpQueueCopy16
 14   stub     NOAUTORUNWNDPROC
 15   stub     __DEBUGMSG
 16   stub     __ASSERTMSG
-17   pascal16 VcpQueueDelete(str str word long) VcpQueueDelete16
+17   pascal -ret16 VcpQueueDelete(str str word long) VcpQueueDelete16
 18   stub     TpOpenFile #(str ptr word)
 19   stub     TpCloseFile #(word)
 20   stub     TpOpenSection #(word ptr str word)
@@ -30,12 +30,12 @@
 30   stub     TpGetPrivateProfileString #(str str str ptr word str)
 31   stub     TpWritePrivateProfileString #(str str str str)
 32   stub     TpGetProfileString #(str str str ptr word)
-33   pascal16 CtlSetLdd(ptr) CtlSetLdd16
-34   pascal16 CtlGetLdd(ptr) CtlGetLdd16
-35   pascal16 CtlFindLdd(ptr) CtlFindLdd16
-36   pascal16 CtlAddLdd(ptr) CtlAddLdd16
-37   pascal16 CtlDelLdd(word) CtlDelLdd16
-38   pascal16 CtlGetLddPath(word ptr) CtlGetLddPath16
+33   pascal -ret16 CtlSetLdd(ptr) CtlSetLdd16
+34   pascal -ret16 CtlGetLdd(ptr) CtlGetLdd16
+35   pascal -ret16 CtlFindLdd(ptr) CtlFindLdd16
+36   pascal -ret16 CtlAddLdd(ptr) CtlAddLdd16
+37   pascal -ret16 CtlDelLdd(word) CtlDelLdd16
+38   pascal -ret16 CtlGetLddPath(word ptr) CtlGetLddPath16
 39   stub     SURegCloseKey #(word)
 40   stub     SURegCreateKey #(word)
 41   stub     SURegDeleteKey #(word str)
@@ -56,12 +56,12 @@
 56   stub     SURegUnLoadKey #(word str)
 60   stub     DiskInfoFromLdid #(word ptr)
 61   pascal   suErrorToIds(word word) suErrorToIds16
-62   pascal16 TPWriteProfileString(str str str) TPWriteProfileString16
+62   pascal -ret16 TPWriteProfileString(str str str) TPWriteProfileString16
 63   stub     SURPLSETUP
 # does SUSTORELDIDPATH set the path of an LDID in the registry ?
 64   stub     SUSTORELDIDPATH
 65   stub     WILDCARDSTRCMPI
-101  pascal16 GenInstall(word str word) GenInstall16
+101  pascal -ret16 GenInstall(word str word) GenInstall16
 102  stub     GenWinInitRename #(str str word)
 103  pascal   GenFormStrWithoutPlaceHolders(str str word) GenFormStrWithoutPlaceHolders16
 104  stub     SETUPX
@@ -121,27 +121,27 @@
 171  stub     WriteDMFBootData #(word ptr word)
 200  pascal   VcpOpen(segptr ptr) VcpOpen16
 201  pascal   VcpClose(word str) VcpClose16
-202  pascal16 vcpDefCallbackProc(ptr word word long long) vcpDefCallbackProc16
+202  pascal -ret16 vcpDefCallbackProc(ptr word word long long) vcpDefCallbackProc16
 203  stub     vcpEnumFiles #(ptr long)
-204  pascal16 VcpQueueRename(str str str str word word long) VcpQueueRename16
-205  pascal16 vsmGetStringName(word ptr word) vsmGetStringName16
-206  pascal16 vsmStringDelete(word) vsmStringDelete16
-207  pascal16 vsmStringAdd(str) vsmStringAdd16
+204  pascal -ret16 VcpQueueRename(str str str str word word long) VcpQueueRename16
+205  pascal -ret16 vsmGetStringName(word ptr word) vsmGetStringName16
+206  pascal -ret16 vsmStringDelete(word) vsmStringDelete16
+207  pascal -ret16 vsmStringAdd(str) vsmStringAdd16
 208  pascal   vsmGetStringRawName(word) vsmGetStringRawName16
 209  stub     IpSaveRestorePosition #(word word)
-210  pascal16 IpGetProfileString(word str str ptr word) IpGetProfileString16
+210  pascal -ret16 IpGetProfileString(word str str ptr word) IpGetProfileString16
 211  stub     IpOpenEx #(str ptr word)
 212  stub     IpOpenAppendEx #(str word word)
-213  pascal16 vcpUICallbackProc(ptr word word long long) vcpUICallbackProc16
+213  pascal -ret16 vcpUICallbackProc(ptr word word long long) vcpUICallbackProc16
 214  stub     VcpAddMRUPath #(str)
-300  pascal16 DiBuildCompatDrvList (ptr) DiBuildCompatDrvList16
+300  pascal -ret16 DiBuildCompatDrvList (ptr) DiBuildCompatDrvList16
 301  stub     DiBuildClassDrvList #(ptr)
 302  stub     DiDestroyDriverNodeList #(ptr)
-303  pascal16 DiCreateDeviceInfo (ptr str long long str str word) DiCreateDeviceInfo16
-304  pascal16 DiGetClassDevs(ptr str word word) DiGetClassDevs16
-305  pascal16 DiDestroyDeviceInfoList (ptr) DiDestroyDeviceInfoList16
+303  pascal -ret16 DiCreateDeviceInfo (ptr str long long str str word) DiCreateDeviceInfo16
+304  pascal -ret16 DiGetClassDevs(ptr str word word) DiGetClassDevs16
+305  pascal -ret16 DiDestroyDeviceInfoList (ptr) DiDestroyDeviceInfoList16
 306  stub     DiRemoveDevice #(ptr)
-308  pascal16 DiCallClassInstaller (word ptr) DiCallClassInstaller16
+308  pascal -ret16 DiCallClassInstaller (word ptr) DiCallClassInstaller16
 309  stub     DiCreateDriverNode #(ptr word word word str str str str str str long)
 310  stub     DiDrawMiniIcon
 311  stub     DiGetClassBitmapIndex #(str ptr)
@@ -151,8 +151,8 @@
 315  stub     DiAskForOEMDisk #(ptr)
 316  stub     Display_SetMode #(ptr word word word)
 317  stub     Display_ClassInstaller #(word ptr)
-318  pascal16 DiCreateDevRegKey (ptr ptr word str word) DiCreateDevRegKey16
-319  pascal16 DiOpenDevRegKey (ptr ptr word) DiOpenDevRegKey16
+318  pascal -ret16 DiCreateDevRegKey (ptr ptr word str word) DiCreateDevRegKey16
+319  pascal -ret16 DiOpenDevRegKey (ptr ptr word) DiOpenDevRegKey16
 320  stub     DiInstallDrvSection #(str str str str long)
 321  stub     DiInstallClass #(str long)
 322  stub     DiOpenClassRegKey #(ptr str)
@@ -166,7 +166,7 @@
 341  stub     DiBuildClassInfoList #(ptr)
 342  stub     DiDestroyClassInfoList #(ptr)
 343  stub     DiGetDeviceClassInfo #(ptr ptr)
-344  pascal16 DiDeleteDevRegKey (ptr word) DiDeleteDevRegKey16
+344  pascal -ret16 DiDeleteDevRegKey (ptr word) DiDeleteDevRegKey16
 350  stub     DiSelectOEMDrv #(word ptr)
 351  stub     DiGetINFClass #(str word str long)
 353  stub     DIPICKBESTDRIVER
@@ -217,7 +217,7 @@
 504  stub     SXOCPAGEDLG
 506  stub     SXOCBATCHSETTINGS
 507  stub     SXOCFIXNEEDS
-508  pascal16 CtlSetLddPath(word str) CtlSetLddPath16
+508  pascal -ret16 CtlSetLddPath(word str) CtlSetLddPath16
 509  stub     SXCALLOCPROC
 510  stub     BUILDINFOCS
 511  stub     BUILDREGOCS
@@ -229,7 +229,7 @@
 524  stub     DISELECTBESTCOMPATDRV
 525  stub     FirstBootMoveToDOSSTART #(str word)
 526  stub     DOSOptEnableCurCfg #(str)
-527  pascal16 InstallHinfSection(word word str word) InstallHinfSection16
+527  pascal -ret16 InstallHinfSection(word word str word) InstallHinfSection16
 528  stub     SXMAKEUNCPATH
 529  stub     SXISSBSSERVERFILE
 530  stub     SXFINDBATCHFILES

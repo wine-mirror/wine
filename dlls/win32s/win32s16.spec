@@ -1,5 +1,5 @@
 1 stub WEP
-2 pascal16 BootTask() BootTask16
+2 pascal -ret16 BootTask() BootTask16
 3 stub CREATEPROCESS
 4 stub WAITFORDEBUGEVENT
 5 pascal ContinueDebugEvent(long long long) ContinueDebugEvent16

@@ -14,8 +14,8 @@
 14 stub STRINGFROMIID
 15 pascal CoDisconnectObject(ptr long) CoDisconnectObject
 16 stub CORELEASEMARSHALDATA
-17 pascal16 CoFreeUnusedLibraries() CoFreeUnusedLibraries
-18 pascal16 IsEqualGUID(ptr ptr) IsEqualGUID16
+17 pascal -ret16 CoFreeUnusedLibraries() CoFreeUnusedLibraries
+18 pascal -ret16 IsEqualGUID(ptr ptr) IsEqualGUID16
 19 pascal StringFromCLSID(ptr ptr) StringFromCLSID16
 20 pascal CLSIDFromString(str ptr) CLSIDFromString16
 21 stub ISVALIDPTRIN
@@ -27,8 +27,8 @@
 27 pascal CoRegisterMessageFilter(ptr ptr) CoRegisterMessageFilter16
 28 stub COISHANDLERCONNECTED
 29 stub SHRADDREF
-30 pascal16 CoFileTimeToDosDateTime(ptr ptr ptr) CoFileTimeToDosDateTime16
-31 pascal16 CoDosDateTimeToFileTime(word word ptr) CoDosDateTimeToFileTime16
+30 pascal -ret16 CoFileTimeToDosDateTime(ptr ptr ptr) CoFileTimeToDosDateTime16
+31 pascal -ret16 CoDosDateTimeToFileTime(word word ptr) CoDosDateTimeToFileTime16
 32 stub COMARSHALHRESULT
 33 stub COUNMARSHALHRESULT
 34 pascal CoGetCurrentProcess() CoGetCurrentProcess
@@ -91,7 +91,7 @@
 92 stub LRPCGETTHREADWINDOW
 93 stub TIMERCALLBACKPROC
 94 pascal LookupETask(ptr ptr) LookupETask16
-95 pascal16 SetETask(word ptr) SetETask16
+95 pascal -ret16 SetETask(word ptr) SetETask16
 96 stub LRPCFREEMONITORDATA
 97 stub REMLOOKUPSHUNK
 98 stub SHRGETSIZE
