@@ -267,7 +267,6 @@ DEFINE_COMMON_NOTIFICATIONS(LISTVIEW_INFO, hwndSelf);
  * forward declarations
  */
 static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *, LPLVITEMW, BOOL);
-static INT LISTVIEW_SuperHitTestItem(LISTVIEW_INFO *, LPLVHITTESTINFO, BOOL, BOOL);
 static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *, INT, LPRECT, LPRECT, LPRECT, LPRECT);
 static void LISTVIEW_AlignLeft(LISTVIEW_INFO *);
 static void LISTVIEW_AlignTop(LISTVIEW_INFO *);
@@ -4361,45 +4360,6 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPart
 
 /***
  * DESCRIPTION:
- * Retrieves the nearest item, given a position and a direction.
- *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- * [I] POINT : start position
- * [I] UINT : direction
- *
- * RETURN:
- * Item index if successdful, -1 otherwise.
- */
-static INT LISTVIEW_GetNearestItem(LISTVIEW_INFO *infoPtr, POINT pt, UINT vkDirection)
-{
-    LVHITTESTINFO ht;
-    RECT rcView;
-
-    TRACE("point %ld,%ld, direction %s\n", pt.x, pt.y,
-          (vkDirection == VK_DOWN) ? "VK_DOWN" :
-          ((vkDirection == VK_UP) ? "VK_UP" :
-          ((vkDirection == VK_LEFT) ? "VK_LEFT" : "VK_RIGHT")));
-
-    if (!LISTVIEW_GetViewRect(infoPtr, &rcView)) return -1;
-    
-    if (!LISTVIEW_GetOrigin(infoPtr, &ht.pt)) return -1;
-    
-    ht.pt.x += pt.x;
-    ht.pt.y += pt.y;
-
-    if (vkDirection == VK_DOWN)       ht.pt.y += infoPtr->nItemHeight;
-    else if (vkDirection == VK_UP)    ht.pt.y -= infoPtr->nItemHeight;
-    else if (vkDirection == VK_LEFT)  ht.pt.x -= infoPtr->nItemWidth;
-    else if (vkDirection == VK_RIGHT) ht.pt.x += infoPtr->nItemWidth;
-
-    if (!PtInRect(&rcView, ht.pt)) return -1;
-    
-    return LISTVIEW_SuperHitTestItem(infoPtr, &ht, TRUE, TRUE);
-}
-
-/***
- * DESCRIPTION:
  * Searches for an item with specific characteristics.
  *
  * PARAMETER(S):
@@ -4414,101 +4374,109 @@ static INT LISTVIEW_GetNearestItem(LISTVIEW_INFO *infoPtr, POINT pt, UINT vkDire
 static LRESULT LISTVIEW_FindItemW(LISTVIEW_INFO *infoPtr, INT nStart,
                                   LPLVFINDINFOW lpFindInfo)
 {
-  POINT ptItem;
-  WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
-  LVITEMW lvItem;
-  BOOL bWrap = FALSE;
-  INT nItem = nStart;
-  INT nLast = infoPtr->nItemCount;
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
+    WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
+    BOOL bWrap = FALSE, bNearest = FALSE;
+    INT nItem = nStart + 1, nLast = infoPtr->nItemCount, nNearestItem = -1;
+    ULONG xdist, ydist, dist, mindist = 0x7fffffff;
+    POINT Position, Destination;
+    LVITEMW lvItem;
 
-  if ((nItem >= -1) && (lpFindInfo != NULL))
-  {
+    if (!lpFindInfo || nItem < 0) return -1;
+    
     lvItem.mask = 0;
-    if (lpFindInfo->flags & LVFI_PARAM)
-    {
-      lvItem.mask |= LVIF_PARAM;
-    }
-
     if (lpFindInfo->flags & (LVFI_STRING | LVFI_PARTIAL))
     {
-      lvItem.mask |= LVIF_TEXT;
-      lvItem.pszText = szDispText;
-      lvItem.cchTextMax = DISP_TEXT_SIZE;
+        lvItem.mask |= LVIF_TEXT;
+        lvItem.pszText = szDispText;
+        lvItem.cchTextMax = DISP_TEXT_SIZE;
     }
 
     if (lpFindInfo->flags & LVFI_WRAP)
-      bWrap = TRUE;
+        bWrap = TRUE;
 
-    if (lpFindInfo->flags & LVFI_NEARESTXY)
+    if ((lpFindInfo->flags & LVFI_NEARESTXY) && 
+	(uView == LVS_ICON || uView ==LVS_SMALLICON))
     {
-      ptItem.x = lpFindInfo->pt.x;
-      ptItem.y = lpFindInfo->pt.y;
+	POINT Origin;
+	
+	FIXME("LVFI_NEARESTXY is slow.\n");
+        if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return -1;
+	Destination.x = lpFindInfo->pt.x + Origin.x;
+	Destination.y = lpFindInfo->pt.y + Origin.y;
+	switch(lpFindInfo->vkDirection)
+	{
+	case VK_DOWN:  Destination.y += infoPtr->nItemHeight; break;
+	case VK_UP:    Destination.y -= infoPtr->nItemHeight; break;
+	case VK_RIGHT: Destination.x += infoPtr->nItemWidth; break;
+	case VK_LEFT:  Destination.x -= infoPtr->nItemWidth; break;
+	case VK_HOME:  Destination.x = Destination.y = 0; break;
+	case VK_END:   Destination.x = infoPtr->rcView.right; Destination.y = infoPtr->rcView.bottom; break;
+	case VK_NEXT:  Destination.y += infoPtr->rcList.bottom - infoPtr->rcList.top; break;
+	case VK_PRIOR: Destination.y -= infoPtr->rcList.bottom - infoPtr->rcList.top; break;
+	default: FIXME("Unknown vkDirection=%d\n", lpFindInfo->vkDirection);
+	}
+	bNearest = TRUE;
     }
 
-    while (1)
+    /* if LVFI_PARAM is specified, all other flags are ignored */
+    if (lpFindInfo->flags & LVFI_PARAM)
     {
-      while (nItem < nLast)
-      {
-        if (lpFindInfo->flags & LVFI_NEARESTXY)
-        {
-          nItem = LISTVIEW_GetNearestItem(infoPtr, ptItem,
-                                          lpFindInfo->vkDirection);
-          if (nItem != -1)
-          {
-            /* get position of the new item index */
-            if (!ListView_GetItemPosition(infoPtr->hwndSelf, nItem, &ptItem))
-              return -1;
-          }
-          else
-            return -1;
-        }
-        else
-        {
-          nItem++;
-        }
+        lvItem.mask |= LVIF_PARAM;
+	bNearest = FALSE;
+	lvItem.mask &= ~LVIF_TEXT;
+    }
 
+again:
+    for (; nItem < nLast; nItem++)
+    {
         lvItem.iItem = nItem;
         lvItem.iSubItem = 0;
-        if (LISTVIEW_GetItemW(infoPtr, &lvItem))
-        {
-          if (lvItem.mask & LVIF_TEXT)
-          {
+        if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) continue;
+
+	if (lvItem.mask & LVIF_PARAM && lpFindInfo->lParam == lvItem.lParam)
+	    return nItem;
+	
+        if (lvItem.mask & LVIF_TEXT)
+	{
             if (lpFindInfo->flags & LVFI_PARTIAL)
             {
-              if (strstrW(lvItem.pszText, lpFindInfo->psz) == NULL)
-                continue;
+            	if (strstrW(lvItem.pszText, lpFindInfo->psz) == NULL) continue;
             }
             else
             {
-              if (lstrcmpW(lvItem.pszText, lpFindInfo->psz) != 0)
-                continue;
+            	if (lstrcmpW(lvItem.pszText, lpFindInfo->psz) != 0) continue;
             }
-          }
+	}
 
-          if (lvItem.mask & LVIF_PARAM)
-          {
-            if (lpFindInfo->lParam != lvItem.lParam)
-              continue;
-          }
+        if (!bNearest) return nItem;
+	
+	/* This is very inefficient. To do a good job here,
+	 * we need a sorted array of (x,y) item positions */
+	if (!LISTVIEW_GetItemListOrigin(infoPtr, nItem, &Position)) continue;
 
-          return nItem;
-        }
-      }
+	/* compute the distance^2 to the destination */
+	xdist = Destination.x - Position.x;
+	ydist = Destination.y - Position.y;
+	dist = xdist * xdist + ydist * ydist;
 
-      if (bWrap)
-      {
-        nItem = -1;
-        nLast = nStart + 1;
-        bWrap = FALSE;
-      }
-      else
-      {
-        return -1;
-      }
+	/* remember the distance, and item if it's closer */
+	if (dist < mindist)
+	{
+	    mindist = dist;
+	    nNearestItem = nItem;
+	}
     }
-  }
 
- return -1;
+    if (bWrap)
+    {
+        nItem = 0;
+        nLast = min(nStart + 1, infoPtr->nItemCount);
+        bWrap = FALSE;
+	goto again;
+    }
+
+    return nNearestItem;
 }
 
 /***
@@ -5567,124 +5535,6 @@ static LRESULT LISTVIEW_GetStringWidthT(LISTVIEW_INFO *infoPtr, LPCWSTR lpszText
     }
     return stringSize.cx;
 }
-
-
-/***
- * DESCRIPTION:
- * Determines item if a hit or closest if not
- *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- * [IO] lpht : hit test information
- * [I] subitem : fill out iSubItem.
- * [I] bNearItem : return the nearest item
- *
- * RETURN:
- *   SUCCESS : item index of hit
- *   FAILURE : -1
- */
-static INT LISTVIEW_SuperHitTestItem(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BOOL subitem, BOOL bNearItem)
-{
-  LONG lStyle = infoPtr->dwStyle;
-  UINT uView = lStyle & LVS_TYPEMASK;
-  INT i,j,topindex,bottomindex,nearestItem;
-  RECT rcItem,rcSubItem;
-  DWORD xterm, yterm, dist, mindist;
-
-  TRACE("(lpht->pt=%s, subitem=%d\n", debugpoint(&lpht->pt), subitem);
-
-  nearestItem = -1;
-  mindist = -1;
-  
-  /* FIXME: get the visible range */
-  topindex = LISTVIEW_GetTopIndex(infoPtr);
-  if (uView == LVS_REPORT)
-  {
-    bottomindex = topindex + LISTVIEW_GetCountPerColumn(infoPtr) + 1;
-    bottomindex = min(bottomindex,infoPtr->nItemCount);
-  }
-  else
-  {
-    bottomindex = infoPtr->nItemCount;
-  }
-
-  /* FIXME iter */
-  for (i = topindex; i < bottomindex; i++)
-  {
-    rcItem.left = LVIR_BOUNDS;
-    if (LISTVIEW_GetItemRect(infoPtr, i, &rcItem))
-    {
-      if (PtInRect(&rcItem, lpht->pt))
-      {
-        rcSubItem = rcItem;
-        rcItem.left = LVIR_ICON;
-        if (LISTVIEW_GetItemRect(infoPtr, i, &rcItem))
-        {
-          if (PtInRect(&rcItem, lpht->pt))
-          {
-            lpht->flags = LVHT_ONITEMICON;
-            lpht->iItem = i;
-            goto set_subitem;
-          }
-        }
-
-        rcItem.left = LVIR_LABEL;
-        if (LISTVIEW_GetItemRect(infoPtr, i, &rcItem))
-        {
-          if (PtInRect(&rcItem, lpht->pt))
-          {
-            lpht->flags = LVHT_ONITEMLABEL;
-            lpht->iItem = i;
-            goto set_subitem;
-          }
-        }
-
-        lpht->flags = LVHT_ONITEMSTATEICON;
-        lpht->iItem = i;
-       set_subitem:
-        if (subitem)
-        {
-	  INT nColumnCount = Header_GetItemCount(infoPtr->hwndHeader);
-          lpht->iSubItem = 0;
-          rcSubItem.right = rcSubItem.left;
-          for (j = 0; j < nColumnCount; j++)
-          {
-            rcSubItem.left = rcSubItem.right;
-            rcSubItem.right += LISTVIEW_GetColumnWidth(infoPtr, j);
-            if (PtInRect(&rcSubItem, lpht->pt))
-            {
-              lpht->iSubItem = j;
-              break;
-            }
-          }
-        }
-	TRACE("hit on item %d\n", i);
-        return i;
-      }
-      else if (bNearItem)
-      {
-        /*
-         * Now compute distance from point to center of boundary
-         * box. Since we are only interested in the relative
-         * distance, we can skip the nasty square root operation
-         */
-        xterm = rcItem.left + (rcItem.right - rcItem.left)/2 - lpht->pt.x;
-        yterm = rcItem.top + (rcItem.bottom - rcItem.top)/2 - lpht->pt.y;
-        dist = xterm * xterm + yterm * yterm;
-	if (mindist < 0 || dist < mindist)
-	{
-	    mindist = dist;
-	    nearestItem = i;
-	}
-      }
-    }
-  }
-
-  lpht->flags = LVHT_NOWHERE;
-
-  return bNearItem ? nearestItem : -1;
-}
-
 
 /***
  * DESCRIPTION:
