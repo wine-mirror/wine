@@ -621,7 +621,7 @@ BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel,
     ldtent->HighWord.Bits.Sys = 0;
     ldtent->HighWord.Bits.Pres = 1;
     ldtent->HighWord.Bits.Type = 0x10|(ldtentry.type << 2);
-    if (ldtentry.read_only)
+    if (!ldtentry.read_only)
     	ldtent->HighWord.Bits.Type|=0x2;
     ldtent->HighWord.Bits.Granularity = ldtentry.limit_in_pages;
     ldtent->HighWord.Bits.Default_Big = ldtentry.seg_32bit;
