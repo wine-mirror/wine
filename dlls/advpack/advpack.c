@@ -19,8 +19,12 @@
  */
 
 #include <stdarg.h>
+
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
+#include "setupapi.h"
+#include "advpub.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(advpack);
@@ -50,4 +54,41 @@ void WINAPI LaunchINFSection( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT sh
 void WINAPI LaunchINFSectionEx( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
 {
     FIXME("%p %p %s %d\n", hWnd, hInst, debugstr_a(cmdline), show );
+}
+
+/* this structure very closely resembles parameters of RunSetupCommand() */
+typedef struct
+{
+    HWND hwnd;
+    LPCSTR title;
+    LPCSTR inf_name;
+    LPCSTR dir;
+    LPCSTR section_name;
+} SETUPCOMMAND_PARAMS;
+
+/***********************************************************************
+ *		DoInfInstall  (ADVPACK.@)
+ */
+BOOL WINAPI DoInfInstall(const SETUPCOMMAND_PARAMS *setup)
+{
+    BOOL ret;
+    HINF hinf;
+    void *callback_context;
+
+    TRACE("%p %s %s %s %s\n", setup->hwnd, debugstr_a(setup->title),
+          debugstr_a(setup->inf_name), debugstr_a(setup->dir),
+          debugstr_a(setup->section_name));
+
+    hinf = SetupOpenInfFileA(setup->inf_name, NULL, INF_STYLE_WIN4, NULL);
+    if (hinf == INVALID_HANDLE_VALUE) return FALSE;
+
+    callback_context = SetupInitDefaultQueueCallback(setup->hwnd);
+
+    ret = SetupInstallFromInfSectionA(NULL, hinf, setup->section_name, SPINST_ALL,
+                                      NULL, NULL, 0, SetupDefaultQueueCallbackA,
+                                      callback_context, NULL, NULL);
+    SetupTermDefaultQueueCallback(callback_context);
+    SetupCloseInfFile(hinf);
+
+    return ret;
 }

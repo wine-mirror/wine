@@ -4,7 +4,7 @@
 @ stub DelNode
 @ stub DelNodeRunDLL32
 @ stub DllMain
-@ stub DoInfInstall
+@ stdcall DoInfInstall(ptr)
 @ stub ExecuteCab
 @ stub ExtractFiles
 @ stub FileSaveMarkNotExist
