@@ -356,6 +356,9 @@ identifier:
     | identifier '.' tIDENTIFIER { char* ptr = DBG_alloc(strlen($1) + 1 + strlen($3)+ 1);
                                    sprintf(ptr, "%s.%s", $1, $3); $$ = DEBUG_MakeSymbol(ptr);
                                    DBG_free(ptr); } 
+    | identifier ':' ':' tIDENTIFIER { char* ptr = DBG_alloc(strlen($1) + 2 + strlen($4) + 1);
+                                   sprintf(ptr, "%s::%s", $1, $4); $$ = DEBUG_MakeSymbol(ptr);
+                                   DBG_free(ptr); } 
 
 %%
 
