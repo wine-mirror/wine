@@ -20,9 +20,7 @@
 #define __WINE_OLECTL_H
 
 #include <windef.h>
-#define __WINE_INCLUDE_OCIDL
 #include <ocidl.h>
-#undef __WINE_INCLUDE_OCIDL
 
 #ifdef __cplusplus
 extern "C" {
@@ -361,5 +359,3 @@ HRESULT WINAPI OleTranslateColor( OLE_COLOR clr, HPALETTE hpal,
 #endif
 
 #endif /*  __WINE_OLECTL_H */
-
-

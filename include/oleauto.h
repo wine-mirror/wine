@@ -20,9 +20,7 @@
 #define __WINE_OLEAUTO_H
 
 #include <winbase.h>
-#define __WINE_INCLUDE_OAIDL
 #include <oaidl.h>
-#undef __WINE_INCLUDE_OAIDL
 
 #ifdef __cplusplus
 extern "C" {

@@ -25,9 +25,7 @@
 #include <winerror.h>
 #include <objbase.h>
 #include <oleauto.h>
-#define __WINE_INCLUDE_OLEIDL
 #include <oleidl.h>
-#undef __WINE_INCLUDE_OLEIDL
 
 struct tagMSG;
 

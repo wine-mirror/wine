@@ -31,9 +31,7 @@
 #include <wingdi.h>
 #include <winuser.h>
 #include <ole2.h>
-#define __WINE_INCLUDE_OAIDL
 #include <oaidl.h>
-#undef __WINE_INCLUDE_OAIDL
 
 /*****************************************************************************
  * Declare the structures
