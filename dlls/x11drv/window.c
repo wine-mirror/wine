@@ -49,10 +49,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
 extern Pixmap X11DRV_BITMAP_Pixmap( HBITMAP );
 
-#define HAS_DLGFRAME(style,exStyle) \
-    (((exStyle) & WS_EX_DLGMODALFRAME) || \
-     (((style) & WS_DLGFRAME) && !((style) & WS_THICKFRAME)))
-
 /* X context to associate a hwnd to an X window */
 XContext winContext = 0;
 
@@ -358,7 +354,7 @@ static void set_size_hints( Display *display, WND *win )
         size_hints->y = data->whole_rect.top;
         size_hints->flags = PWinGravity | PPosition;
 
-        if (HAS_DLGFRAME( win->dwStyle, win->dwExStyle ))
+        if ( !(win->dwStyle & WS_THICKFRAME) )
         {
             size_hints->max_width = data->whole_rect.right - data->whole_rect.left;
             size_hints->max_height = data->whole_rect.bottom - data->whole_rect.top;
