@@ -24,6 +24,15 @@ VideoForWindowsVersion(void) {
 	return 0x040003B6; /* 4.950 */
 }
 
+/****************************************************************************
+ *		VideoCapDriverDescAndVer	[MSVIDEO.22]
+ */
+DWORD WINAPI
+VideoCapDriverDescAndVer(WORD nr,LPVOID buf1,WORD buf1len,LPVOID buf2,WORD buf2len) {
+	FIXME("(%d,%p,%d,%p,%d), stub!\n",nr,buf1,buf1len,buf2,buf2len);
+	return 0;
+}
+
 /* system.ini: [drivers] */
 
 /**************************************************************************
