@@ -917,7 +917,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 #endif
 
         if (hasDropDownArrow)
-	    TOOLBAR_DrawArrow(hdc, rcArrow.left+1, rcArrow.top, COLOR_WINDOWFRAME);
+	    TOOLBAR_DrawArrow(hdc, rcArrow.left+1, rcArrow.top + (rcArrow.bottom - rcArrow.top - ARROW_HEIGHT) / 2, COLOR_WINDOWFRAME);
 
 	if (btnPtr->bHot) {
             HIMAGELIST himlHot = GETHOTIMAGELIST(infoPtr, 
@@ -1704,7 +1704,13 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (TOOLBAR_SendNotify ((NMHDR *) &nmtb, infoPtr, TBN_INITCUSTOMIZE) ==
                     TBNRF_HIDEHELP)
                 {
-                    FIXME("TBNRF_HIDEHELP not supported\n");
+                    TRACE("TBNRF_HIDEHELP requested\n");
+                    ShowWindow(GetDlgItem(hwnd, IDC_HELP_BTN), SW_HIDE);
+                }
+                else
+                {
+                    FIXME("Help button not implemented\n");
+                    EnableWindow(GetDlgItem(hwnd, IDC_HELP_BTN), FALSE);
                 }
 
 		/* add items to 'toolbar buttons' list and check if removable */
