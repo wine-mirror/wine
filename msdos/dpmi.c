@@ -33,6 +33,7 @@
 #include "selectors.h"
 #include "callback.h"
 #include "wine/debug.h"
+#include "stackframe.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int31);
 
@@ -198,7 +199,45 @@ static void RawModeSwitch( CONTEXT86 *context )
       ERR("could not setup real-mode calls\n");
       return;
     }
-    else Dosvm.RawModeSwitch( context );
+    else
+    {
+      /*
+       * FIXME: This routine will not work if it is called
+       *        from 32 bit DPMI program and the program returns
+       *        to protected mode while ESP or EIP is over 0xffff.
+       * FIXME: This routine will not work if it is not called
+       *        using 16-bit-to-Wine callback glue function.
+       */
+      STACK16FRAME frame = *CURRENT_STACK16;
+
+      Dosvm.RawModeSwitch( context );
+
+      /*
+       * After this function returns to relay code, protected mode
+       * 16 bit stack will contain STACK16FRAME and single WORD 
+       * (EFlags, see next comment).
+       */
+      NtCurrentTeb()->cur_stack = 
+        MAKESEGPTR( context->SegSs, 
+                    context->Esp - sizeof(STACK16FRAME) - sizeof(WORD) );
+
+      /*
+       * After relay code returns to glue function, protected
+       * mode 16 bit stack will contain interrupt return record:
+       * IP, CS and EFlags. Since EFlags is ignored, it won't 
+       * need to be initialized.
+       */
+      context->Esp -= 3 * sizeof(WORD);
+
+      /*
+       * Restore stack frame so that relay code won't be confused.
+       * It should be noted that relay code overwrites IP and CS 
+       * in STACK16FRAME with values taken from current CONTEXT86.
+       * These values are what is returned to glue function 
+       * (see previous comment).
+       */
+      *CURRENT_STACK16 = frame;
+    }
 }
 
 /**********************************************************************
