@@ -34,9 +34,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 static const WCHAR wszOutputPinName[] = { 'O','u','t','p','u','t',0 };
 
-/* see IAsyncReader::Request on MSDN for the explanation of this */
-#define BYTES_FROM_MEDIATIME(time) ((time) / 10000000)
-
 typedef struct AsyncReader
 {
     const struct IBaseFilterVtbl * lpVtbl;
@@ -877,7 +874,7 @@ static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter
     piOutput.pFilter = pBaseFilter;
     strcpyW(piOutput.achName, wszOutputPinName);
 
-    if (SUCCEEDED(OutputPin_Init(&piOutput, pBaseFilter, AcceptProcAFR, pCritSec, &pPinImpl->pin)))
+    if (SUCCEEDED(OutputPin_Init(&piOutput, NULL, pBaseFilter, AcceptProcAFR, pCritSec, &pPinImpl->pin)))
     {
         pPinImpl->pin.pin.lpVtbl = &FileAsyncReaderPin_Vtbl;
         pPinImpl->lpVtblAR = &FileAsyncReader_Vtbl;

@@ -32,6 +32,11 @@
 #include "winuser.h"
 #include "dshow.h"
 
+#define MEDIATIME_FROM_BYTES(x) ((LONGLONG)(x) * 10000000)
+#define SEC_FROM_MEDIATIME(time) ((time) / 10000000)
+#define BYTES_FROM_MEDIATIME(time) SEC_FROM_MEDIATIME(time)
+#define MSEC_FROM_MEDIATIME(time) ((time) / 10000)
+
 HRESULT FILTERGRAPH_create(IUnknown *pUnkOuter, LPVOID *ppObj) ;
 HRESULT FilterMapper2_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv);
