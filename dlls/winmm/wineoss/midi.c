@@ -29,6 +29,7 @@
 #include "config.h"
 
 #include <string.h>
+#include <stdio.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -52,7 +53,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(midi);
 #define MIDI_SEQ "/dev/sequencer"
 
 typedef struct {
-    int			state;
+    int			state;                  /* -1 disabled, 0 is no recording started, 1 in recording, bit 2 set if in sys exclusive recording */
     DWORD		bufsize;
     MIDIOPENDESC	midiDesc;
     WORD		wFlags;
@@ -62,53 +63,36 @@ typedef struct {
     unsigned char	incPrev;
     char		incLen;
     DWORD		startTime;
+    MIDIINCAPSA         caps;
 } WINE_MIDIIN;
 
 typedef struct {
-    int			state;
+    BOOL                bEnabled;
     DWORD		bufsize;
     MIDIOPENDESC	midiDesc;
     WORD		wFlags;
     LPMIDIHDR	 	lpQueueHdr;
     DWORD		dwTotalPlayed;
     void*		lpExtra;	 	/* according to port type (MIDI, FM...), extra data when needed */
+    MIDIOUTCAPSA        caps;
 } WINE_MIDIOUT;
 
 static WINE_MIDIIN	MidiInDev [MAX_MIDIINDRV ];
 static WINE_MIDIOUT	MidiOutDev[MAX_MIDIOUTDRV];
 
-/* this is the total number of MIDI out devices found */
-static	int 		MODM_NUMDEVS = 0;
-/* this is the number of FM synthetizers (index from 0 to
-   NUMFMSYNTHDEVS - 1) */
-static	int		MODM_NUMFMSYNTHDEVS = 0;
-/* this is the number of Midi ports (index from NUMFMSYNTHDEVS to
-   NUMFMSYNTHDEVS + NUMMIDIDEVS - 1) */
-static	int		MODM_NUMMIDIDEVS = 0;
+/* this is the total number of MIDI out devices found (synth and port) */
+static	int 		MODM_NumDevs = 0;
+/* this is the number of FM synthetizers (index from 0 to NUMFMSYNTHDEVS - 1) */
+static	int		MODM_NumFMSynthDevs = 0;
+/* the Midi ports have index from NUMFMSYNTHDEVS to NumDevs - 1 */
 
 /* this is the total number of MIDI out devices found */
-static	int 		MIDM_NUMDEVS = 0;
+static	int 		MIDM_NumDevs = 0;
 
 static	int		midiSeqFD = -1;
 static	int		numOpenMidiSeq = 0;
 static	UINT		midiInTimerID = 0;
 static	int		numStartedMidiIn = 0;
-
-/* this structure holds pointers with information for each MIDI
- * out device found.
- */
-static	LPMIDIOUTCAPSA	midiOutDevices[MAX_MIDIOUTDRV];
-
-/* this structure holds pointers with information for each MIDI
- * in device found.
- */
-static	LPMIDIINCAPSA	midiInDevices [MAX_MIDIINDRV];
-
-/*
- * FIXME : all tests on device ID for midXXX and modYYY are made against
- * MAX_MIDIxxDRV (when they are made) but should be done against the actual
- * number of midi devices found...
- */
 
 /*======================================================================*
  *                  Low level MIDI implementation			*
@@ -186,51 +170,51 @@ BOOL OSS_MidiInit(void)
     }
 
     for (i = 0; i < numsynthdevs; i++) {
-	LPMIDIOUTCAPSA	tmplpCaps;
-
-	sinfo.device = i;
-	status = ioctl(midiSeqFD, SNDCTL_SYNTH_INFO, &sinfo);
-	if (status == -1) {
-	    ERR("ioctl for synth info failed.\n");
-	    midiCloseSeq();
-	    return TRUE;
-	}
-
-	tmplpCaps = HeapAlloc(GetProcessHeap(), 0, sizeof(MIDIOUTCAPSA));
-	if (!tmplpCaps)
-	    break;
-	/* We also have the information sinfo.synth_subtype, not used here
-	 */
-
 	/* Manufac ID. We do not have access to this with soundcard.h
 	 * Does not seem to be a problem, because in mmsystem.h only
 	 * Microsoft's ID is listed.
 	 */
-	tmplpCaps->wMid = 0x00FF;
-	tmplpCaps->wPid = 0x0001; 	/* FIXME Product ID  */
+	MidiOutDev[i].caps.wMid = 0x00FF;
+	MidiOutDev[i].caps.wPid = 0x0001; 	/* FIXME Product ID  */
 	/* Product Version. We simply say "1" */
-	tmplpCaps->vDriverVersion = 0x001;
-	strcpy(tmplpCaps->szPname, sinfo.name);
-
-	tmplpCaps->wTechnology = MIDI_UnixToWindowsDeviceType(sinfo.synth_type);
-	tmplpCaps->wVoices     = sinfo.nr_voices;
-
-	/* FIXME Is it possible to know the maximum
-	 * number of simultaneous notes of a soundcard ?
-	 * I believe we don't have this information, but
-	 * it's probably equal or more than wVoices
-	 */
-	tmplpCaps->wNotes      = sinfo.nr_voices;
-	tmplpCaps->wChannelMask= 0xFFFF;
+	MidiOutDev[i].caps.vDriverVersion = 0x001;
+	MidiOutDev[i].caps.wChannelMask   = 0xFFFF;
 
 	/* FIXME Do we have this information?
 	 * Assuming the soundcards can handle
 	 * MIDICAPS_VOLUME and MIDICAPS_LRVOLUME but
 	 * not MIDICAPS_CACHE.
 	 */
-	tmplpCaps->dwSupport   = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
+	MidiOutDev[i].caps.dwSupport      = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
 
-	midiOutDevices[i] = tmplpCaps;
+	sinfo.device = i;
+	status = ioctl(midiSeqFD, SNDCTL_SYNTH_INFO, &sinfo);
+	if (status == -1) {
+	    ERR("ioctl for synth info failed on %d, disabling it.\n", i);
+
+            sprintf(MidiOutDev[i].caps.szPname, "Wine OSS Midi Out (#%d) - disabled", i);
+
+            MidiOutDev[i].caps.wTechnology = MOD_MIDIPORT;
+            MidiOutDev[i].caps.wVoices     = 16;
+            MidiOutDev[i].caps.wNotes      = 16;
+            MidiOutDev[i].bEnabled = FALSE;
+	} else {
+            strcpy(MidiOutDev[i].caps.szPname, sinfo.name);
+
+            MidiOutDev[i].caps.wTechnology = MIDI_UnixToWindowsDeviceType(sinfo.synth_type);
+            MidiOutDev[i].caps.wVoices     = sinfo.nr_voices;
+
+            /* FIXME Is it possible to know the maximum
+             * number of simultaneous notes of a soundcard ?
+             * I believe we don't have this information, but
+             * it's probably equal or more than wVoices
+             */
+            MidiOutDev[i].caps.wNotes      = sinfo.nr_voices;
+            MidiOutDev[i].bEnabled = TRUE;
+        }
+
+	/* We also have the information sinfo.synth_subtype, not used here
+	 */
 
 	if (sinfo.capabilities & SYNTH_CAP_INPUT) {
 	    FIXME("Synthesizer support MIDI in. Not supported yet (please report)\n");
@@ -238,8 +222,9 @@ BOOL OSS_MidiInit(void)
 
 	TRACE("SynthOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%ld\n"
 	      "\tOSS info: synth subtype=%d capa=%lx\n",
-	      i, tmplpCaps->szPname, tmplpCaps->wTechnology, tmplpCaps->wVoices,
-	      tmplpCaps->wNotes, tmplpCaps->wChannelMask, tmplpCaps->dwSupport,
+	      i, MidiOutDev[i].caps.szPname, MidiOutDev[i].caps.wTechnology, 
+              MidiOutDev[i].caps.wVoices, MidiOutDev[i].caps.wNotes, 
+              MidiOutDev[i].caps.wChannelMask, MidiOutDev[i].caps.dwSupport,
 	      sinfo.synth_subtype, (long)sinfo.capabilities);
     }
 
@@ -247,8 +232,8 @@ BOOL OSS_MidiInit(void)
     status = ioctl(midiSeqFD, SNDCTL_SEQ_NRMIDIS, &nummididevs);
     if (status == -1) {
 	ERR("ioctl on nr midi failed.\n");
-	midiCloseSeq();
-	return TRUE;
+        nummididevs = 0;
+        goto wrapup;
     }
 
     /* FIXME: the two restrictions below could be loosen in some cases */
@@ -265,20 +250,10 @@ BOOL OSS_MidiInit(void)
     }
 
     for (i = 0; i < nummididevs; i++) {
-	LPMIDIOUTCAPSA	tmplpOutCaps;
-	LPMIDIINCAPSA	tmplpInCaps;
-
 	minfo.device = i;
 	status = ioctl(midiSeqFD, SNDCTL_MIDI_INFO, &minfo);
-	if (status == -1) {
-	    ERR("ioctl on midi info for device %d failed.\n", i);
-	    midiCloseSeq();
-	    return TRUE;
-	}
+	if (status == -1) WARN("ioctl on midi info for device %d failed.\n", i);
 
-	tmplpOutCaps = HeapAlloc(GetProcessHeap(), 0, sizeof(MIDIOUTCAPSA));
-	if (!tmplpOutCaps)
-	    break;
 	/* This whole part is somewhat obscure to me. I'll keep trying to dig
 	   info about it. If you happen to know, please tell us. The very
 	   descritive minfo.dev_type was not used here.
@@ -286,27 +261,27 @@ BOOL OSS_MidiInit(void)
 	/* Manufac ID. We do not have access to this with soundcard.h
 	   Does not seem to be a problem, because in mmsystem.h only
 	   Microsoft's ID is listed */
-	tmplpOutCaps->wMid = 0x00FF;
-	tmplpOutCaps->wPid = 0x0001; 	/* FIXME Product ID */
+	MidiOutDev[numsynthdevs + i].caps.wMid = 0x00FF;
+	MidiOutDev[numsynthdevs + i].caps.wPid = 0x0001; 	/* FIXME Product ID */
 	/* Product Version. We simply say "1" */
-	tmplpOutCaps->vDriverVersion = 0x001;
-	strcpy(tmplpOutCaps->szPname, minfo.name);
-
-	tmplpOutCaps->wTechnology = MOD_MIDIPORT; /* FIXME Is this right? */
+	MidiOutDev[numsynthdevs + i].caps.vDriverVersion = 0x001;
+        if (status == -1) {
+            sprintf(MidiOutDev[numsynthdevs + i].caps.szPname, "Wine OSS Midi Out (#%d) - disabled", numsynthdevs + i);
+            MidiOutDev[numsynthdevs + i].bEnabled = FALSE;
+        } else {
+            strcpy(MidiOutDev[numsynthdevs + i].caps.szPname, minfo.name);
+            MidiOutDev[numsynthdevs + i].bEnabled = TRUE;
+        }
+	MidiOutDev[numsynthdevs + i].caps.wTechnology = MOD_MIDIPORT; /* FIXME Is this right? */
 	/* Does it make any difference? */
-	tmplpOutCaps->wVoices     = 16;
+	MidiOutDev[numsynthdevs + i].caps.wVoices     = 16;
 	/* Does it make any difference? */
-	tmplpOutCaps->wNotes      = 16;
-	tmplpOutCaps->wChannelMask= 0xFFFF;
+	MidiOutDev[numsynthdevs + i].caps.wNotes      = 16;
+	MidiOutDev[numsynthdevs + i].caps.wChannelMask= 0xFFFF;
 
 	/* FIXME Does it make any difference? */
-	tmplpOutCaps->dwSupport   = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
+	MidiOutDev[numsynthdevs + i].caps.dwSupport   = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
 
-	midiOutDevices[numsynthdevs + i] = tmplpOutCaps;
-
-	tmplpInCaps = HeapAlloc(GetProcessHeap(), 0, sizeof(MIDIINCAPSA));
-	if (!tmplpInCaps)
-	    break;
 	/* This whole part is somewhat obscure to me. I'll keep trying to dig
 	   info about it. If you happen to know, please tell us. The very
 	   descritive minfo.dev_type was not used here.
@@ -314,33 +289,36 @@ BOOL OSS_MidiInit(void)
 	/* Manufac ID. We do not have access to this with soundcard.h
 	   Does not seem to be a problem, because in mmsystem.h only
 	   Microsoft's ID is listed */
-	tmplpInCaps->wMid = 0x00FF;
-	tmplpInCaps->wPid = 0x0001; 	/* FIXME Product ID */
+	MidiInDev[i].caps.wMid = 0x00FF;
+	MidiInDev[i].caps.wPid = 0x0001; 	/* FIXME Product ID */
 	/* Product Version. We simply say "1" */
-	tmplpInCaps->vDriverVersion = 0x001;
-	strcpy(tmplpInCaps->szPname, minfo.name);
-
+	MidiInDev[i].caps.vDriverVersion = 0x001;
+        if (status == -1) {
+            sprintf(MidiInDev[i].caps.szPname, "Wine OSS Midi In (#%d) - disabled", numsynthdevs + i);
+            MidiInDev[i].state = -1;
+        } else {
+            strcpy(MidiInDev[i].caps.szPname, minfo.name);
+            MidiInDev[i].state = 0;
+        }
 	/* FIXME : could we get better information than that ? */
-	tmplpInCaps->dwSupport   = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
-
-	midiInDevices[i] = tmplpInCaps;
+	MidiInDev[i].caps.dwSupport   = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
 
 	TRACE("MidiOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%ld\n"
               "MidiIn [%d]\tname='%s' support=%ld\n"
 	      "\tOSS info: midi dev-type=%d, capa=%lx\n",
-	      i, tmplpOutCaps->szPname, tmplpOutCaps->wTechnology,
-	      tmplpOutCaps->wVoices, tmplpOutCaps->wNotes,
-	      tmplpOutCaps->wChannelMask, tmplpOutCaps->dwSupport,
-	      i, tmplpInCaps->szPname, tmplpInCaps->dwSupport,
+	      i, MidiOutDev[numsynthdevs + i].caps.szPname, MidiOutDev[numsynthdevs + i].caps.wTechnology,
+	      MidiOutDev[numsynthdevs + i].caps.wVoices, MidiOutDev[numsynthdevs + i].caps.wNotes,
+	      MidiOutDev[numsynthdevs + i].caps.wChannelMask, MidiOutDev[numsynthdevs + i].caps.dwSupport,
+	      i, MidiInDev[i].caps.szPname, MidiInDev[i].caps.dwSupport,
 	      minfo.dev_type, (long)minfo.capabilities);
     }
 
+ wrapup:
     /* windows does not seem to differentiate Synth from MIDI devices */
-    MODM_NUMFMSYNTHDEVS = numsynthdevs;
-    MODM_NUMMIDIDEVS    = nummididevs;
-    MODM_NUMDEVS        = numsynthdevs + nummididevs;
+    MODM_NumFMSynthDevs = numsynthdevs;
+    MODM_NumDevs        = numsynthdevs + nummididevs;
 
-    MIDM_NUMDEVS        = nummididevs;
+    MIDM_NumDevs        = nummididevs;
 
     /* close file and exit */
     midiCloseSeq();
@@ -366,8 +344,8 @@ static DWORD MIDI_NotifyClient(UINT wDevID, WORD wMsg,
     case MOM_OPEN:
     case MOM_CLOSE:
     case MOM_DONE:
-	if (wDevID > MAX_MIDIOUTDRV)
-	    return MCIERR_INTERNAL;
+	if (wDevID > MODM_NumDevs)
+	    return MMSYSERR_BADDEVICEID;
 
 	dwCallBack = MidiOutDev[wDevID].midiDesc.dwCallback;
 	uFlags = MidiOutDev[wDevID].wFlags;
@@ -379,8 +357,8 @@ static DWORD MIDI_NotifyClient(UINT wDevID, WORD wMsg,
     case MIM_CLOSE:
     case MIM_DATA:
     case MIM_ERROR:
-	if (wDevID > MAX_MIDIINDRV)
-	    return MCIERR_INTERNAL;
+	if (wDevID > MIDM_NumDevs)
+	    return MMSYSERR_BADDEVICEID;
 
 	dwCallBack = MidiInDev[wDevID].midiDesc.dwCallback;
 	uFlags = MidiInDev[wDevID].wFlags;
@@ -389,11 +367,11 @@ static DWORD MIDI_NotifyClient(UINT wDevID, WORD wMsg,
 	break;
     default:
 	WARN("Unsupported MSW-MIDI message %u\n", wMsg);
-	return MCIERR_INTERNAL;
+	return MMSYSERR_ERROR;
     }
 
     return DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwInstance, dwParam1, dwParam2) ?
-	0 : MCIERR_INTERNAL;
+	0 : MMSYSERR_ERROR;
 }
 
 static int midi_warn = 1;
@@ -476,12 +454,12 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 
     TRACE("Adding %02xh to %d[%d]\n", value, wDevID, MidiInDev[wDevID].incLen);
 
-    if (wDevID >= MAX_MIDIINDRV) {
+    if (wDevID >= MIDM_NumDevs) {
 	WARN("bad devID\n");
 	return;
     }
-    if (MidiInDev[wDevID].state == 0) {
-	TRACE("input not started, thrown away\n");
+    if (MidiInDev[wDevID].state <= 0) {
+	TRACE("disabled or input not started, thrown away\n");
 	return;
     }
 
@@ -627,10 +605,10 @@ static DWORD midGetDevCaps(WORD wDevID, LPMIDIINCAPSA lpCaps, DWORD dwSize)
 {
     TRACE("(%04X, %p, %08lX);\n", wDevID, lpCaps, dwSize);
 
-    if (wDevID >= MIDM_NUMDEVS) return MMSYSERR_BADDEVICEID;
+    if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
     if (lpCaps == NULL)		return MMSYSERR_INVALPARAM;
 
-    memcpy(lpCaps, midiInDevices[wDevID], min(dwSize, sizeof(*lpCaps)));
+    memcpy(lpCaps, &MidiInDev[wDevID].caps, min(dwSize, sizeof(*lpCaps)));
 
     return MMSYSERR_NOERROR;
 }
@@ -650,9 +628,13 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     /* FIXME :
      *	how to check that content of lpDesc is correct ?
      */
-    if (wDevID >= MAX_MIDIINDRV) {
+    if (wDevID >= MIDM_NumDevs) {
 	WARN("wDevID too large (%u) !\n", wDevID);
 	return MMSYSERR_BADDEVICEID;
+    }
+    if (MidiInDev[wDevID].state == -1) {        
+        WARN("device disabled\n");
+        return MIDIERR_NODEVICE;
     }
     if (MidiInDev[wDevID].midiDesc.hMidi != 0) {
 	WARN("device already open !\n");
@@ -708,7 +690,7 @@ static DWORD midClose(WORD wDevID)
 
     TRACE("(%04X);\n", wDevID);
 
-    if (wDevID >= MAX_MIDIINDRV) {
+    if (wDevID >= MIDM_NumDevs) {
 	WARN("wDevID too big (%u) !\n", wDevID);
 	return MMSYSERR_BADDEVICEID;
     }
@@ -748,6 +730,9 @@ static DWORD midClose(WORD wDevID)
 static DWORD midAddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
     TRACE("(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
+
+    if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
+    if (MidiInDev[wDevID].state == -1) return MIDIERR_NODEVICE;
 
     if (lpMidiHdr == NULL)	return MMSYSERR_INVALPARAM;
     if (sizeof(MIDIHDR) > dwSize) return MMSYSERR_INVALPARAM;
@@ -794,6 +779,9 @@ static DWORD midUnprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
     TRACE("(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
 
+    if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
+    if (MidiInDev[wDevID].state == -1) return MIDIERR_NODEVICE;
+
     if (dwSize < sizeof(MIDIHDR) || lpMidiHdr == 0 ||
 	lpMidiHdr->lpData == 0 || lpMidiHdr->dwBufferLength >= 0x10000ul)
 	return MMSYSERR_INVALPARAM;
@@ -814,6 +802,9 @@ static DWORD midReset(WORD wDevID)
     DWORD		dwTime = GetTickCount();
 
     TRACE("(%04X);\n", wDevID);
+
+    if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
+    if (MidiInDev[wDevID].state == -1) return MIDIERR_NODEVICE;
 
     while (MidiInDev[wDevID].lpQueueHdr) {
 	MidiInDev[wDevID].lpQueueHdr->dwFlags &= ~MHDR_INQUEUE;
@@ -837,7 +828,8 @@ static DWORD midStart(WORD wDevID)
 {
     TRACE("(%04X);\n", wDevID);
 
-    /* FIXME : should test value of wDevID */
+    if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
+    if (MidiInDev[wDevID].state == -1) return MIDIERR_NODEVICE;
 
     MidiInDev[wDevID].state = 1;
     MidiInDev[wDevID].startTime = GetTickCount();
@@ -851,7 +843,9 @@ static DWORD midStop(WORD wDevID)
 {
     TRACE("(%04X);\n", wDevID);
 
-    /* FIXME : should test value of wDevID */
+    if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
+    if (MidiInDev[wDevID].state == -1) return MIDIERR_NODEVICE;
+
     MidiInDev[wDevID].state = 0;
     return MMSYSERR_NOERROR;
 }
@@ -942,7 +936,7 @@ static	void modFMReset(WORD wDevID)
     sChannel*	channel = extra->channel;
     int		i;
 
-    for (i = 0; i < midiOutDevices[wDevID]->wVoices; i++) {
+    for (i = 0; i < MidiOutDev[wDevID].caps.wVoices; i++) {
 	if (voice[i].status != sVS_UNUSED) {
 	    SEQ_STOP_NOTE(wDevID, i, voice[i].note, 64);
 	}
@@ -977,10 +971,10 @@ static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPSA lpCaps, DWORD dwSize)
 {
     TRACE("(%04X, %p, %08lX);\n", wDevID, lpCaps, dwSize);
 
-    if (wDevID >= MODM_NUMDEVS)	return MMSYSERR_BADDEVICEID;
+    if (wDevID >= MODM_NumDevs)	return MMSYSERR_BADDEVICEID;
     if (lpCaps == NULL) 	return MMSYSERR_INVALPARAM;
 
-    memcpy(lpCaps, midiOutDevices[wDevID], min(dwSize, sizeof(*lpCaps)));
+    memcpy(lpCaps, &MidiOutDev[wDevID].caps, min(dwSize, sizeof(*lpCaps)));
 
     return MMSYSERR_NOERROR;
 }
@@ -995,7 +989,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	WARN("Invalid Parameter !\n");
 	return MMSYSERR_INVALPARAM;
     }
-    if (wDevID >= MAX_MIDIOUTDRV) {
+    if (wDevID >= MODM_NumDevs) {
 	TRACE("MAX_MIDIOUTDRV reached !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1003,23 +997,29 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	WARN("device already open !\n");
 	return MMSYSERR_ALLOCATED;
     }
+    if (!MidiOutDev[wDevID].bEnabled) {
+	WARN("device disabled !\n");
+	return MIDIERR_NODEVICE;
+    }
     if ((dwFlags & ~CALLBACK_TYPEMASK) != 0) {
 	WARN("bad dwFlags\n");
 	return MMSYSERR_INVALFLAG;
     }
-    if (midiOutDevices[wDevID] == NULL) {
-	TRACE("un-allocated wDevID\n");
-	return MMSYSERR_BADDEVICEID;
+    if (!MidiOutDev[wDevID].bEnabled) {
+	TRACE("disabled wDevID\n");
+	return MMSYSERR_NOTENABLED;
     }
 
     MidiOutDev[wDevID].lpExtra = 0;
 
-    switch (midiOutDevices[wDevID]->wTechnology) {
+    switch (MidiOutDev[wDevID].caps.wTechnology) {
     case MOD_FMSYNTH:
 	{
-	    void*	extra = HeapAlloc(GetProcessHeap(), 0,
-					  sizeof(struct sFMextra) +
-					  sizeof(struct sVoice) * (midiOutDevices[wDevID]->wVoices - 1));
+	    void*	extra;
+
+            extra = HeapAlloc(GetProcessHeap(), 0,
+                              sizeof(struct sFMextra) +
+                              sizeof(struct sVoice) * (MidiOutDev[wDevID].caps.wVoices - 1));
 
 	    if (extra == 0) {
 		WARN("can't alloc extra data !\n");
@@ -1047,7 +1047,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	break;
     default:
 	WARN("Technology not supported (yet) %d !\n",
-	     midiOutDevices[wDevID]->wTechnology);
+	     MidiOutDev[wDevID].caps.wTechnology);
 	return MMSYSERR_NOTENABLED;
     }
 
@@ -1088,14 +1088,14 @@ static DWORD modClose(WORD wDevID)
 	return MMSYSERR_ERROR;
     }
 
-    switch (midiOutDevices[wDevID]->wTechnology) {
+    switch (MidiOutDev[wDevID].caps.wTechnology) {
     case MOD_FMSYNTH:
     case MOD_MIDIPORT:
 	midiCloseSeq();
 	break;
     default:
 	WARN("Technology not supported (yet) %d !\n",
-	     midiOutDevices[wDevID]->wTechnology);
+	     MidiOutDev[wDevID].caps.wTechnology);
 	return MMSYSERR_NOTENABLED;
     }
 
@@ -1124,11 +1124,14 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 
     TRACE("(%04X, %08lX);\n", wDevID, dwParam);
 
+    if (wDevID >= MODM_NumDevs) return MMSYSERR_BADDEVICEID;
+    if (!MidiOutDev[wDevID].bEnabled) return MIDIERR_NODEVICE;
+
     if (midiSeqFD == -1) {
 	WARN("can't play !\n");
 	return MIDIERR_NODEVICE;
     }
-    switch (midiOutDevices[wDevID]->wTechnology) {
+    switch (MidiOutDev[wDevID].caps.wTechnology) {
     case MOD_FMSYNTH:
 	/* FIXME:
 	 *	- chorus depth controller is not used
@@ -1142,7 +1145,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 
 	    switch (evt & 0xF0) {
 	    case MIDI_NOTEOFF:
-		for (i = 0; i < midiOutDevices[wDevID]->wVoices; i++) {
+		for (i = 0; i < MidiOutDev[wDevID].caps.wVoices; i++) {
 				/* don't stop sustained notes */
 		    if (voice[i].status == sVS_PLAYING && voice[i].channel == chn && voice[i].note == d1) {
 			voice[i].status = sVS_UNUSED;
@@ -1152,7 +1155,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		break;
 	    case MIDI_NOTEON:
 		if (d2 == 0) { /* note off if velocity == 0 */
-		    for (i = 0; i < midiOutDevices[wDevID]->wVoices; i++) {
+		    for (i = 0; i < MidiOutDev[wDevID].caps.wVoices; i++) {
 			/* don't stop sustained notes */
 			if (voice[i].status == sVS_PLAYING && voice[i].channel == chn && voice[i].note == d1) {
 			    voice[i].status = sVS_UNUSED;
@@ -1166,7 +1169,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		 *	- if replaying the same note on the same channel
 		 *	- the older voice (LRU)
 		 */
-		for (i = nv = 0; i < midiOutDevices[wDevID]->wVoices; i++) {
+		for (i = nv = 0; i < MidiOutDev[wDevID].caps.wVoices; i++) {
 		    if (voice[i].status == sVS_UNUSED ||
 			(voice[i].note == d1 && voice[i].channel == chn)) {
 			nv = i;
@@ -1203,7 +1206,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		voice[nv].cntMark = extra->counter++;
 		break;
 	    case MIDI_KEY_PRESSURE:
-		for (i = 0; i < midiOutDevices[wDevID]->wVoices; i++) {
+		for (i = 0; i < MidiOutDev[wDevID].caps.wVoices; i++) {
 		    if (voice[i].status != sVS_UNUSED && voice[i].channel == chn && voice[i].note == d1) {
 			SEQ_KEY_PRESSURE(wDevID, i, d1, d2);
 		    }
@@ -1217,13 +1220,13 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		case CTL_EXPRESSION:	channel[chn].expression = d2;	break;
 		case CTL_SUSTAIN:	channel[chn].sustain = d2;
 		    if (d2) {
-			for (i = 0; i < midiOutDevices[wDevID]->wVoices; i++) {
+			for (i = 0; i < MidiOutDev[wDevID].caps.wVoices; i++) {
 			    if (voice[i].status == sVS_PLAYING && voice[i].channel == chn) {
 				voice[i].status = sVS_SUSTAINED;
 			    }
 			}
 		    } else {
-			for (i = 0; i < midiOutDevices[wDevID]->wVoices; i++) {
+			for (i = 0; i < MidiOutDev[wDevID].caps.wVoices; i++) {
 			    if (voice[i].status == sVS_SUSTAINED && voice[i].channel == chn) {
 				voice[i].status = sVS_UNUSED;
 				SEQ_STOP_NOTE(wDevID, i, voice[i].note, 64);
@@ -1240,7 +1243,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		    case 0x0000:
 			if (channel[chn].benderRange != d2) {
 			    channel[chn].benderRange = d2;
-			    for (i = 0; i < midiOutDevices[wDevID]->wVoices; i++) {
+			    for (i = 0; i < MidiOutDev[wDevID].caps.wVoices; i++) {
 				if (voice[i].channel == chn) {
 				    SEQ_BENDER_RANGE(wDevID, i, channel[chn].benderRange);
 				}
@@ -1250,7 +1253,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 
 		    case 0x7F7F:
 			channel[chn].benderRange = 2;
-			for (i = 0; i < midiOutDevices[wDevID]->wVoices; i++) {
+			for (i = 0; i < MidiOutDev[wDevID].caps.wVoices; i++) {
 			    if (voice[i].channel == chn) {
 				SEQ_BENDER_RANGE(wDevID, i, channel[chn].benderRange);
 			    }
@@ -1269,7 +1272,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		    /* FIXME: I don't know if I have to take care of the channel
 		     * for this control ?
 		     */
-		    for (i = 0; i < midiOutDevices[wDevID]->wVoices; i++) {
+		    for (i = 0; i < MidiOutDev[wDevID].caps.wVoices; i++) {
 			if (voice[i].status != sVS_UNUSED && voice[i].channel == chn) {
 			    voice[i].status = sVS_UNUSED;
 			    SEQ_STOP_NOTE(wDevID, i, voice[i].note, 64);
@@ -1280,7 +1283,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		    /* FIXME: I don't know if I have to take care of the channel
 		     * for this control ?
 		     */
-		    for (i = 0; i < midiOutDevices[wDevID]->wVoices; i++) {
+		    for (i = 0; i < MidiOutDev[wDevID].caps.wVoices; i++) {
 			if (voice[i].status == sVS_PLAYING && voice[i].channel == chn) {
 			    voice[i].status = sVS_UNUSED;
 			    SEQ_STOP_NOTE(wDevID, i, voice[i].note, 64);
@@ -1297,7 +1300,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		channel[chn].program = d1;
 		break;
 	    case MIDI_CHN_PRESSURE:
-		for (i = 0; i < midiOutDevices[wDevID]->wVoices; i++) {
+		for (i = 0; i < MidiOutDev[wDevID].caps.wVoices; i++) {
 		    if (voice[i].status != sVS_UNUSED && voice[i].channel == chn) {
 			SEQ_KEY_PRESSURE(wDevID, i, voice[i].note, d1);
 		    }
@@ -1305,7 +1308,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		break;
 	    case MIDI_PITCH_BEND:
 		channel[chn].bender = (d2 << 7) + d1;
-		for (i = 0; i < midiOutDevices[wDevID]->wVoices; i++) {
+		for (i = 0; i < MidiOutDev[wDevID].caps.wVoices; i++) {
 		    if (voice[i].channel == chn) {
 			SEQ_BENDER(wDevID, i, channel[chn].bender);
 		    }
@@ -1328,7 +1331,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 	break;
     case MOD_MIDIPORT:
 	{
-	    int	dev = wDevID - MODM_NUMFMSYNTHDEVS;
+	    int	dev = wDevID - MODM_NumFMSynthDevs;
 	    if (dev < 0) {
 		WARN("Internal error on devID (%u) !\n", wDevID);
 		return MIDIERR_NODEVICE;
@@ -1392,7 +1395,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 	break;
     default:
 	WARN("Technology not supported (yet) %d !\n",
-	     midiOutDevices[wDevID]->wTechnology);
+	     MidiOutDev[wDevID].caps.wTechnology);
 	return MMSYSERR_NOTENABLED;
     }
 
@@ -1410,6 +1413,9 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
     LPBYTE	lpData;
 
     TRACE("(%04X, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
+
+    if (wDevID >= MODM_NumDevs) return MMSYSERR_BADDEVICEID;
+    if (!MidiOutDev[wDevID].bEnabled) return MIDIERR_NODEVICE;
 
     if (midiSeqFD == -1) {
 	WARN("can't play !\n");
@@ -1441,23 +1447,23 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	  lpData[0], lpData[1], lpData[2], lpData[lpMidiHdr->dwBufferLength-3],
 	  lpData[lpMidiHdr->dwBufferLength-2], lpData[lpMidiHdr->dwBufferLength-1]);
 
-    switch (midiOutDevices[wDevID]->wTechnology) {
+    switch (MidiOutDev[wDevID].caps.wTechnology) {
     case MOD_FMSYNTH:
 	/* FIXME: I don't think there is much to do here */
 	break;
     case MOD_MIDIPORT:
 	if (lpData[0] != 0xF0) {
 	    /* Send end of System Exclusive */
-	    SEQ_MIDIOUT(wDevID - MODM_NUMFMSYNTHDEVS, 0xF0);
+	    SEQ_MIDIOUT(wDevID - MODM_NumFMSynthDevs, 0xF0);
 	    WARN("Adding missing 0xF0 marker at the beginning of "
 		 "system exclusive byte stream\n");
 	}
 	for (count = 0; count < lpMidiHdr->dwBytesRecorded; count++) {
-	    SEQ_MIDIOUT(wDevID - MODM_NUMFMSYNTHDEVS, lpData[count]);
+	    SEQ_MIDIOUT(wDevID - MODM_NumFMSynthDevs, lpData[count]);
 	}
 	if (lpData[count - 1] != 0xF7) {
 	    /* Send end of System Exclusive */
-	    SEQ_MIDIOUT(wDevID - MODM_NUMFMSYNTHDEVS, 0xF7);
+	    SEQ_MIDIOUT(wDevID - MODM_NumFMSynthDevs, 0xF7);
 	    WARN("Adding missing 0xF7 marker at the end of "
 		 "system exclusive byte stream\n");
 	}
@@ -1465,7 +1471,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	break;
     default:
 	WARN("Technology not supported (yet) %d !\n",
-	     midiOutDevices[wDevID]->wTechnology);
+	     MidiOutDev[wDevID].caps.wTechnology);
 	return MMSYSERR_NOTENABLED;
     }
 
@@ -1537,6 +1543,9 @@ static DWORD modReset(WORD wDevID)
 
     TRACE("(%04X);\n", wDevID);
 
+    if (wDevID >= MODM_NumDevs) return MMSYSERR_BADDEVICEID;
+    if (!MidiOutDev[wDevID].bEnabled) return MIDIERR_NODEVICE;
+
     /* stop all notes */
     /* FIXME: check if 0x78B0 is channel dependant or not. I coded it so that
      * it's channel dependent...
@@ -1585,7 +1594,7 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case MIDM_GETDEVCAPS:
 	return midGetDevCaps(wDevID, (LPMIDIINCAPSA)dwParam1,dwParam2);
     case MIDM_GETNUMDEVS:
-	return MIDM_NUMDEVS;
+	return MIDM_NumDevs;
     case MIDM_RESET:
 	return midReset(wDevID);
     case MIDM_START:
@@ -1631,7 +1640,7 @@ DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case MODM_GETDEVCAPS:
 	return modGetDevCaps(wDevID, (LPMIDIOUTCAPSA)dwParam1, dwParam2);
     case MODM_GETNUMDEVS:
-	return MODM_NUMDEVS;
+	return MODM_NumDevs;
     case MODM_GETVOLUME:
 	return 0;
     case MODM_SETVOLUME:
