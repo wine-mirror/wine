@@ -117,6 +117,14 @@ BigBlockFile * BIGBLOCKFILE_Construct(
 
   This->fileBased = fileBased;
 
+  This->flProtect = BIGBLOCKFILE_GetProtectMode(openFlags);
+
+  This->blocksize = blocksize;
+
+  /* initialize the block list
+   */
+  This->headblock = NULL;
+
   if (This->fileBased)
   {
     if (!BIGBLOCKFILE_FileInit(This, hFile))
@@ -133,14 +141,6 @@ BigBlockFile * BIGBLOCKFILE_Construct(
       return NULL;
     }
   }
-
-  This->flProtect = BIGBLOCKFILE_GetProtectMode(openFlags);
-
-  This->blocksize = blocksize;
-
-  /* initialize the block list
-   */
-  This->headblock = NULL;
 
   return This;
 }
