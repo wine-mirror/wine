@@ -1726,9 +1726,6 @@ DWORD       WINAPI GetFileAttributesW(LPCWSTR);
 UINT      WINAPI GetLogicalDriveStringsA(UINT,LPSTR);
 UINT      WINAPI GetLogicalDriveStringsW(UINT,LPWSTR);
 #define     GetLogicalDriveStrings WINELIB_NAME_AW(GetLogicalDriveStrings)
-INT       WINAPI GetLocaleInfoA(LCID,LCTYPE,LPSTR,INT);
-INT       WINAPI GetLocaleInfoW(LCID,LCTYPE,LPWSTR,INT);
-#define     GetLocaleInfo WINELIB_NAME_AW(GetLocaleInfo)
 DWORD       WINAPI GetModuleFileNameA(HMODULE,LPSTR,DWORD);
 DWORD       WINAPI GetModuleFileNameW(HMODULE,LPWSTR,DWORD);
 #define     GetModuleFileName WINELIB_NAME_AW(GetModuleFileName)

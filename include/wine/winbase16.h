@@ -3,6 +3,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "wine/windef16.h"
 
 #include "pshpack1.h"

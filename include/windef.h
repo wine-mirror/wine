@@ -195,7 +195,6 @@ typedef HANDLE          HHOOK;
 typedef HANDLE          HMONITOR;
 typedef DWORD           LCID;
 typedef WORD            LANGID;
-typedef DWORD           LCTYPE;
 typedef float           FLOAT;
 
 /* Pointers types. These are the same for emulator and library. */
@@ -351,6 +350,8 @@ typedef LRESULT CALLBACK (*WNDPROC)(HWND,UINT,WPARAM,LPARAM);
 #define OUT
 #define OPTIONAL
 #endif  /* __WINE__ */
+
+#include "winnt.h"
 
 /* Macro for structure packing. */
 
