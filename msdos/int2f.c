@@ -28,7 +28,7 @@
 #define VXD_BASE 400
 
 static void do_int2f_16( CONTEXT *context );
-static void do_mscdex( CONTEXT *context );
+static void MSCDEX_Handler( CONTEXT *context );
 
 /**********************************************************************
  *	    INT_Int2fHandler
@@ -97,7 +97,7 @@ void WINAPI INT_Int2fHandler( CONTEXT *context )
         break;
    
     case 0x15: /* mscdex */
-        do_mscdex(context);
+        MSCDEX_Handler(context);
         break;
 
     case 0x16:
@@ -301,7 +301,7 @@ static void do_int2f_16( CONTEXT *context )
                                         VXD_BASE + BX_reg(context) );
         if (!addr)  /* not supported */
         {
-	    ERR(int,"Accessing unknown VxD %04x - Expect a failure now.\n",
+	    ERR(int, "Accessing unknown VxD %04x - Expect a failure now.\n",
                      BX_reg(context) );
         }
 	ES_reg(context) = SELECTOROF(addr);
@@ -346,7 +346,66 @@ static void do_int2f_16( CONTEXT *context )
     }
 }
 
-void do_mscdex( CONTEXT *context )
+/* FIXME: this macro may have to be changed on architectures where <size> reads/writes 
+ * must be <size> aligned
+ * <size> could be WORD, DWORD...
+ * in this case, we would need two macros, one for read, the other one for write
+ * Note: PTR_AT can be used as an l-value
+ */
+#define	PTR_AT(_ptr, _ofs, _typ)	(*((_typ*)(((char*)_ptr)+(_ofs))))
+
+/* Use #if 1 if you want full int 2f debug... normal users can leave it at 0 */
+#if 0
+/**********************************************************************
+ *	    MSCDEX_Dump					[internal]
+ *
+ * Dumps mscdex requests to int debug channel.
+ */
+static	void	MSCDEX_Dump(char* pfx, BYTE* req, int dorealmode)
+{
+    int 	i;
+    BYTE	buf[2048];
+    BYTE*	ptr;
+    BYTE*	ios;
+    
+    ptr = buf;
+    ptr += sprintf(ptr, "%s\tCommand => ", pfx);
+    for (i = 0; i < req[0]; i++) {
+	ptr += sprintf(ptr, "%02x ", req[i]);
+    }
+
+    switch (req[2]) {
+    case 3:
+    case 12:
+	ptr += sprintf(ptr, "\n\t\t\t\tIO_struct => ");
+	ios = (dorealmode) ? 
+		DOSMEM_MapRealToLinear(MAKELONG(PTR_AT(req, 14, WORD), PTR_AT(req, 16, WORD))) :
+		    PTR_SEG_OFF_TO_LIN(PTR_AT(req, 16, WORD), PTR_AT(req, 14, WORD));
+
+	for (i = 0; i < PTR_AT(req, 18, WORD); i++) {
+	    ptr += sprintf(ptr, "%02x ", ios[i]);
+	    if ((i & 0x1F) == 0x1F) {
+		*ptr++ = '\n';
+		*ptr = 0;
+	    }
+	}
+	break;
+    }
+    TRACE(int, "%s\n", buf);
+}
+#else
+#define MSCDEX_Dump(pfx, req, drm)
+#endif
+
+static	void	MSCDEX_StoreMSF(DWORD frame, BYTE* val)
+{
+    val[3] = 0;	/* zero */
+    val[2] = frame / CDFRAMES_PERMIN; /* minutes */
+    val[1] = (frame - CDFRAMES_PERMIN * val[2]) / CDFRAMES_PERSEC; /* seconds */
+    val[0] = frame - CDFRAMES_PERMIN * val[2] - CDFRAMES_PERSEC * val[1]; /* frames */
+}
+
+static void MSCDEX_Handler(CONTEXT* context)
 {
     int 	drive, count;
     char*	p;
@@ -373,246 +432,351 @@ void do_mscdex( CONTEXT *context )
 	
     case 0x0C: /* get version */
 	BX_reg(context) = 0x020a;
+	TRACE(int, "Version number => %04x\n", BX_reg(context));
 	break;
 	
     case 0x0D: /* get drive letters */
 	p = CTX_SEG_OFF_TO_LIN(context, ES_reg(context), EBX_reg(context));
-	memset( p, 0, MAX_DOS_DRIVES );
+	memset(p, 0, MAX_DOS_DRIVES);
 	for (drive = 0; drive < MAX_DOS_DRIVES; drive++) {
 	    if (DRIVE_GetType(drive) == TYPE_CDROM) *p++ = drive;
 	}
+	TRACE(int, "Get drive letters\n");
 	break;
 	
     case 0x10: /* direct driver acces */
-    {
-	static 	WINE_CDAUDIO	wcda;
-	BYTE* 	driver_request;
-	BYTE* 	io_stru;	
-	u_char 	Error = 255; /* No Error */ 
-	int	dorealmode = ISV86(context);
-	
-	driver_request = (dorealmode) ? 
-	    DOSMEM_MapRealToLinear(MAKELONG(BX_reg(context),ES_reg(context))) : 
-	    PTR_SEG_OFF_TO_LIN(ES_reg(context),BX_reg(context));
-	
-	if (!driver_request) {
-	    /* FIXME - to be deleted ?? */
-	    ERR(int,"   ES:BX==0 ! SEGFAULT ?\n");
-	    ERR(int," -->BX=0x%04x, ES=0x%04lx, DS=0x%04lx, CX=0x%04x\n",
-		BX_reg(context), ES_reg(context), DS_reg(context), CX_reg(context));
-	} else {
-	    /* FIXME - would be best to open the device at the begining of the wine session .... 
+	{
+	    static 	WINE_CDAUDIO	wcda;
+	    BYTE* 	driver_request;
+	    BYTE* 	io_stru;	
+	    BYTE 	Error = 255; /* No Error */ 
+	    int		dorealmode = ISV86(context);
+	    
+	    driver_request = (dorealmode) ? 
+		DOSMEM_MapRealToLinear(MAKELONG(BX_reg(context), ES_reg(context))) : 
+		PTR_SEG_OFF_TO_LIN(ES_reg(context), BX_reg(context));
+	    
+	    if (!driver_request) {
+		/* FIXME - to be deleted ?? */
+		ERR(int, "ES:BX==0 ! SEGFAULT ?\n");
+		ERR(int, "-->BX=0x%04x, ES=0x%04lx, DS=0x%04lx, CX=0x%04x\n",
+		    BX_reg(context), ES_reg(context), DS_reg(context), CX_reg(context));
+		driver_request[4] |= 0x80;
+		driver_request[3] = 5;	/* bad request length */
+		return;
+	    }
+	    /* FIXME - would be better to open the device at the begining of the wine session...
+	     *       - the device is also never closed...
+	     *       - the current implementation only supports a single CD ROM
 	     */
 	    if (wcda.unixdev <= 0) 
 		CDAUDIO_Open(&wcda);
-	}
-	TRACE(int,"CDROM device driver -> command <%d>\n", (unsigned char)driver_request[2]);
-	
-	/* set status to 0 */
-	driver_request[3] = driver_request[4] = 0;
-	CDAUDIO_GetCDStatus(&wcda);
-	
-	switch (driver_request[2]) {
-	case 3:
-	    io_stru = (dorealmode) ? 
-		DOSMEM_MapRealToLinear(MAKELONG(*((WORD*)(driver_request + 14)), *((WORD*)(driver_request + 16)))) :
-		    PTR_SEG_OFF_TO_LIN(*((WORD*)(driver_request + 16)), *((WORD*)(driver_request + 18)));
+	    TRACE(int, "CDROM device driver -> command <%d>\n", (unsigned char)driver_request[2]);
 	    
-	    TRACE(int," --> IOCTL INPUT <%d>\n", io_stru[0]); 
-	    switch (io_stru[0]) {
+	    for (drive = 0; 
+		 drive < MAX_DOS_DRIVES && DRIVE_GetType(drive) != TYPE_CDROM; 
+		 drive++);
+	    /* drive contains the first CD ROM */
+	    if (CX_reg(context) != drive) {
+		WARN(int, "Request made doesn't match a CD ROM drive (%d/%d)\n", CX_reg(context), drive);
+		driver_request[4] |= 0x80;
+		driver_request[3] = 1;	/* unknown unit */
+		return;
+	    }
+
+	    MSCDEX_Dump("Beg", driver_request, dorealmode);
+	    
+	    /* set status to 0 */
+	    PTR_AT(driver_request, 3, WORD) = 0;
+	    CDAUDIO_GetCDStatus(&wcda);
+	    
+	    switch (driver_request[2]) {
+	    case 3:
+		io_stru = (dorealmode) ? 
+		    DOSMEM_MapRealToLinear(MAKELONG(PTR_AT(driver_request, 14, WORD), PTR_AT(driver_request, 16, WORD))) :
+			PTR_SEG_OFF_TO_LIN(PTR_AT(driver_request, 16, WORD), PTR_AT(driver_request, 14, WORD));
+		
+		TRACE(int, " --> IOCTL INPUT <%d>\n", io_stru[0]); 
+		switch (io_stru[0]) {
 #if 0
-	    case 0: /* Get device Header */
-	    {
-		static	LPSTR ptr = 0;
-		if (ptr == 0)	{
-		    ptr = SEGPTR_ALLOC(22);
-		    *((DWORD*)(ptr     )) = ~1;		/* Next Device Driver */
-		    *((WORD* )(ptr +  4)) = 0xC800;	/* Device attributes  */
-		    *((WORD* )(ptr +  6)) = 0x1234;	/* Pointer to device strategy routine: FIXME */
-		    *((WORD* )(ptr +  8)) = 0x3142;	/* Pointer to device interrupt routine: FIXME */
-		    *((char*) (ptr + 10)) = 'W';  	/* 8-byte character device name field */
-		    *((char*) (ptr + 11)) = 'I';
-		    *((char*) (ptr + 12)) = 'N';
-		    *((char*) (ptr + 13)) = 'E';
-		    *((char*) (ptr + 14)) = '_';
-		    *((char*) (ptr + 15)) = 'C';
-		    *((char*) (ptr + 16)) = 'D';
-		    *((char*) (ptr + 17)) = '_';
-		    *((WORD*) (ptr + 18)) = 0;		/* Reserved (must be zero) */
-		    *((BYTE*) (ptr + 20)) = 0;          /* Drive letter (must be zero) */
-		    *((BYTE*) (ptr + 21)) = 1;          /* Number of units supported (one or more) FIXME*/
-		}
-		((DWORD*)io_stru+1)[0] = SEGPTR_GET(ptr);
-	    }
-	    break;
+		case 0: /* Get device Header */
+		    {
+			static	LPSTR ptr = 0;
+			if (ptr == 0)	{
+			    ptr = SEGPTR_ALLOC(22);
+			    PTR_AT(ptr,  0, DWORD) = ~1;	/* Next Device Driver */
+			    PTR_AT(ptr,  4,  WORD) = 0xC800;	/* Device attributes  */
+			    PTR_AT(ptr,  6,  WORD) = 0x1234;	/* Pointer to device strategy routine: FIXME */
+			    PTR_AT(ptr,  8,  WORD) = 0x3142;	/* Pointer to device interrupt routine: FIXME */
+			    PTR_AT(ptr, 10,  char) = 'W';  	/* 8-byte character device name field */
+			    PTR_AT(ptr, 11,  char) = 'I';
+			    PTR_AT(ptr, 12,  char) = 'N';
+			    PTR_AT(ptr, 13,  char) = 'E';
+			    PTR_AT(ptr, 14,  char) = '_';
+			    PTR_AT(ptr, 15,  char) = 'C';
+			    PTR_AT(ptr, 16,  char) = 'D';
+			    PTR_AT(ptr, 17,  char) = '_';
+			    PTR_AT(ptr, 18,  WORD) = 0;		/* Reserved (must be zero) */
+			    PTR_AT(ptr, 20,  BYTE) = 0;         /* Drive letter (must be zero) */
+			    PTR_AT(ptr, 21,  BYTE) = 1;         /* Number of units supported (one or more) FIXME*/
+			}
+			PTR_AT(io_stru, DWORD,  0) = SEGPTR_GET(ptr);
+		    }
+		    break;
 #endif
-	    
-	    case 1: /* location of head */
-		if (io_stru[1] == 0) {
-		    /* FIXME: what if io_stru+2 is not DWORD aligned ? */
-		    ((DWORD*)io_stru+2)[0] = wcda.dwCurFrame;
-		    TRACE(int," ----> HEAD LOCATION <%ld>\n", ((DWORD*)io_stru+2)[0]); 
-		} else {
-		    ERR(int,"CDRom-Driver: Unsupported addressing mode !!\n");
+		    
+		case 1: /* location of head */
+		    switch (io_stru[1]) {
+		    case 0:
+			PTR_AT(io_stru, 2, DWORD) = wcda.dwCurFrame;
+			break;
+		    case 1:
+			MSCDEX_StoreMSF(wcda.dwCurFrame, io_stru + 2);
+			break;
+		    default:
+			ERR(int, "CDRom-Driver: Unsupported addressing mode !!\n");
+			Error = 0x0c;
+		    }	
+		    TRACE(int, " ----> HEAD LOCATION <%ld>\n", PTR_AT(io_stru, 2, DWORD)); 
+		    break;
+		    
+		case 4: /* Audio channel info */
+		    io_stru[1] = 0;
+		    io_stru[2] = 0xff;
+		    io_stru[3] = 1;
+		    io_stru[4] = 0xff;
+		    io_stru[5] = 2;
+		    io_stru[6] = 0;
+		    io_stru[7] = 3;
+		    io_stru[8] = 0;
+		    TRACE(int, " ----> AUDIO CHANNEL INFO\n"); 
+		    break;
+		    
+		case 6: /* device status */
+		    PTR_AT(io_stru, 1, DWORD) = 0x00000290;
+		    /* 290 => 
+		     * 1	Supports HSG and Red Book addressing modes	
+		     * 0	Supports audio channel manipulation	
+		     *
+		     * 1	Supports prefetching requests	
+		     * 0	Reserved
+		     * 0	No interleaving
+		     * 1	Data read and plays audio/video tracks
+		     *
+		     * 0	Read only
+		     * 0	Supports only cooked reading
+		     * 0	Door locked
+		     * 0	see below (Door closed/opened)
+		     */
+		    if (wcda.cdaMode == WINE_CDA_OPEN)
+			io_stru[1] |= 1;
+		    TRACE(int, " ----> DEVICE STATUS <0x%08lx>\n", PTR_AT(io_stru, 1, DWORD));
+		    break;
+		    
+		case 8: /* Volume size */
+		    PTR_AT(io_stru, 1, DWORD) = wcda.dwTotalLen;
+		    TRACE(int, " ----> VOLUME SIZE <%ld>\n", PTR_AT(io_stru, 1, DWORD));
+		    break;
+		    
+		case 9: /* media changed ? */
+		    /* answers don't know... -1/1 for yes/no would be better */
+		    io_stru[1] = 0; /* FIXME? 1? */
+		    TRACE(int, " ----> MEDIA CHANGED <%d>\n", io_stru[1]); 
+		    break;
+		    
+		case 10: /* audio disk info */
+		    io_stru[1] = wcda.nFirstTrack; /* starting track of the disc */
+		    io_stru[2] = wcda.nLastTrack;  /* ending track */
+		    MSCDEX_StoreMSF(wcda.dwTotalLen, io_stru + 3);
+		    
+		    TRACE(int, " ----> AUDIO DISK INFO <%d-%d/%08lx>\n",
+			  io_stru[1], io_stru[2], PTR_AT(io_stru, 3, DWORD));
+		    break;
+		    
+		case 11: /* audio track info */
+		    if (io_stru[1] >= wcda.nFirstTrack && io_stru[1] <= wcda.nLastTrack) {
+			int	 nt = io_stru[1] - wcda.nFirstTrack;
+			MSCDEX_StoreMSF(wcda.lpdwTrackPos[nt], io_stru + 2);
+			/* starting point if the track */
+			io_stru[6] = (wcda.lpbTrackFlags[nt] & 0xF0) >> 4;
+		    } else {
+			PTR_AT(io_stru, 2, DWORD) = 0;
+			io_stru[6] = 0;
+		    }
+		    TRACE(int, " ----> AUDIO TRACK INFO[%d] = [%08lx:%d]\n",
+			  io_stru[1], PTR_AT(io_stru, 2, DWORD), io_stru[6]); 
+		    break;
+		    
+		case 12: /* get Q-Channel info */
+		    io_stru[1] = wcda.lpbTrackFlags[wcda.nCurTrack - 1];
+		    io_stru[2] = wcda.nCurTrack;
+		    io_stru[3] = 0; /* FIXME ?? */ 
+
+		    /* why the heck did MS use another format for 0MSF information... sigh */
+		    {
+			BYTE	bTmp[4];
+
+			MSCDEX_StoreMSF(wcda.dwCurFrame - wcda.lpdwTrackPos[wcda.nCurTrack - 1], bTmp);
+			io_stru[ 4] = bTmp[2];
+			io_stru[ 5] = bTmp[1];
+			io_stru[ 6] = bTmp[0];
+			io_stru[ 7] = 0;
+
+			MSCDEX_StoreMSF(wcda.dwCurFrame, bTmp);
+			io_stru[ 8] = bTmp[2];
+			io_stru[ 9] = bTmp[1];
+			io_stru[10] = bTmp[0];
+			io_stru[11] = 0;
+		    }		    
+		    TRACE(int, "Q-Channel info: Ctrl/adr=%02x TNO=%02x X=%02x rtt=%02x:%02x:%02x rtd=%02x:%02x:%02x (cf=%08lx, tp=%08lx)\n",
+			  io_stru[ 1], io_stru[ 2], io_stru[ 3], 
+			  io_stru[ 4], io_stru[ 5], io_stru[ 6], 
+			  io_stru[ 8], io_stru[ 9], io_stru[10],
+			  wcda.dwCurFrame, wcda.lpdwTrackPos[wcda.nCurTrack - 1]);
+		    break;
+		    
+		case 15: /* Audio status info */
+		    /* !!!! FIXME FIXME FIXME !! */
+		    PTR_AT(io_stru, 1,  WORD) = 2 | ((wcda.cdaMode == WINE_CDA_PAUSE) ? 1 : 0);
+		    PTR_AT(io_stru, 3, DWORD) = wcda.lpdwTrackPos[0];
+		    PTR_AT(io_stru, 7, DWORD) = wcda.lpdwTrackPos[wcda.nTracks - 1];
+		    TRACE(int, "Audio status info: status=%04x startLoc=%ld endLoc=%ld\n",
+			  PTR_AT(io_stru, 1, WORD), PTR_AT(io_stru, 3, DWORD), PTR_AT(io_stru, 7, DWORD));
+		    break;
+		    
+		default:
+		    FIXME(int, "IOCTL INPUT: Unimplemented <%d>!!\n", io_stru[0]); 
+		    Error = 0x0c; 
+		    break;	
+		}	
+		break;
+		
+	    case 12:
+		io_stru = (dorealmode) ? 
+		    DOSMEM_MapRealToLinear(MAKELONG(PTR_AT(driver_request, 14, WORD), PTR_AT(driver_request, 16, WORD))) :
+			PTR_SEG_OFF_TO_LIN(PTR_AT(driver_request, 16, WORD), PTR_AT(driver_request, 14, WORD));
+		
+		TRACE(int, " --> IOCTL OUTPUT <%d>\n", io_stru[0]); 
+		switch (io_stru[0]) {
+		case 0: /* eject */ 
+		    CDAUDIO_SetDoor(&wcda, 1);
+		    TRACE(int, " ----> EJECT\n"); 
+		    break;
+		case 2: /* reset drive */
+		    CDAUDIO_Reset(&wcda);
+		    TRACE(int, " ----> RESET\n"); 
+		    break;
+		case 3: /* Audio Channel Control */
+		    FIXME(int, " ----> AUDIO CHANNEL CONTROL (NIY)\n");
+		    break;
+		case 5: /* close tray */
+		    CDAUDIO_SetDoor(&wcda, 0);
+		    TRACE(int, " ----> CLOSE TRAY\n"); 
+		    break;
+		default:
+		    FIXME(int, " IOCTL OUPUT: Unimplemented <%d>!!\n", io_stru[0]); 
 		    Error = 0x0c;
-		}
+		    break;	
+		}	
 		break;
 		
-	    case 4: /* Audio channel info */
-		io_stru[1] = 0;
-		io_stru[2] = 0xff;
-		io_stru[3] = 1;
-		io_stru[4] = 0xff;
-		io_stru[5] = 2;
-		io_stru[6] = 0xff;
-		io_stru[7] = 3;
-		io_stru[8] = 0xff;
-		TRACE(int," ----> AUDIO CHANNEL CONTROL\n"); 
-		break;
-		
-	    case 6: /* device status */
-		/* FIXME .. does this work properly ?? */
-		io_stru[3] = io_stru[4] = 0;
-		io_stru[2] = 1;  /* supports audio channels (?? FIXME ??) */
-		io_stru[1] = 16; /* data read and plays audio tracks */
-		if (wcda.cdaMode == WINE_CDA_OPEN)
-		    io_stru[1] |= 1;
-		TRACE(int," ----> DEVICE STATUS <0x%08lx>\n", (DWORD)io_stru[1]); 
-		break;
-		
-	    case 8: /* Volume size */
-		*((DWORD*)(io_stru+1)) = wcda.dwTotalLen;
-		TRACE(int," ----> VOLMUE SIZE <0x%08lx>\n", *((DWORD*)(io_stru+1))); 
-		break;
-		
-	    case 9: /* media changed ? */
-		/* answers don't know... -1/1 for yes/no would be better */
-		io_stru[0] = 0; /* FIXME? 1? */
-		break;
-		
-	    case 10: /* audio disk info */
-		io_stru[1] = wcda.nFirstTrack; /* starting track of the disc */
-		io_stru[2] = wcda.nLastTrack; /* ending track */
-		((DWORD*)io_stru+3)[0] = wcda.dwFirstOffset;
-		TRACE(int," ----> AUDIO DISK INFO <%d-%d/%ld>\n",
-		      io_stru[1], io_stru[2], ((DWORD *)io_stru+3)[0]); 
-		break;
-		
-	    case 11: /* audio track info */
-		((DWORD*)io_stru+2)[0] = wcda.lpdwTrackPos[io_stru[1]];
-		/* starting point if the track */
-		io_stru[6] = wcda.lpbTrackFlags[io_stru[1]];
-		TRACE(int," ----> AUDIO TRACK INFO <track=%d>[%ld:%d]\n",
-		      io_stru[1],((DWORD *)io_stru+2)[0], io_stru[6]); 
-		break;
-		
-	    case 12: /* get Q-Channel / Subchannel (??) info */
-		io_stru[ 1] = wcda.lpbTrackFlags[wcda.nCurTrack];
-		io_stru[ 2] = wcda.nCurTrack;
-		io_stru[ 3] = 0; /* FIXME ?? */
+	    case 131: /* seek */
 		{
-		    DWORD  f = wcda.lpdwTrackPos[wcda.nCurTrack] - wcda.dwCurFrame;
-		    io_stru[ 4] = f / CDFRAMES_PERMIN;
-		    io_stru[ 5] = (f - CDFRAMES_PERMIN * io_stru[4]) / CDFRAMES_PERSEC;
-		    io_stru[ 6] = f - CDFRAMES_PERMIN * io_stru[4] - CDFRAMES_PERSEC * io_stru[5];
+		    DWORD	at;
+		    
+		    at = PTR_AT(driver_request, 20, DWORD);
+		    
+		    TRACE(int, " --> SEEK AUDIO mode :<0x%02X>, [%ld]\n", 
+			  (BYTE)driver_request[13], at);
+		    
+		    switch (driver_request[13]) {
+		    case 1: /* Red book addressing mode = 0:m:s:f */
+			/* FIXME : frame <=> msf conversion routines could be shared
+			 * between mscdex and mcicda
+			 */
+			at = LOBYTE(HIWORD(at)) * CDFRAMES_PERMIN +
+			    HIBYTE(LOWORD(at)) * CDFRAMES_PERSEC +
+			    LOBYTE(LOWORD(at));
+			/* fall thru */
+		    case 0: /* HSG addressing mode */
+			CDAUDIO_Seek(&wcda, at);
+			break;
+		    default:
+			ERR(int, "Unsupported address mode !!\n");
+			Error = 0x0c;
+			break;
+		    }
 		}
-		io_stru[ 7] = 0;
+		break;
+
+	    case 132: /* play */
 		{
-		    DWORD  f = wcda.dwCurFrame;
-		    io_stru[ 8] = f / CDFRAMES_PERMIN;
-		    io_stru[ 9] = (f - CDFRAMES_PERMIN * io_stru[4]) / CDFRAMES_PERSEC;
-		    io_stru[10] = f - CDFRAMES_PERMIN * io_stru[4] - CDFRAMES_PERSEC * io_stru[5];
+		    DWORD	beg, end;
+		    
+		    beg = end = PTR_AT(driver_request, 14, DWORD);
+		    end += PTR_AT(driver_request, 18, DWORD);
+		    
+		    TRACE(int, " --> PLAY AUDIO mode :<0x%02X>, [%ld-%ld]\n", 
+			  (BYTE)driver_request[13], beg, end);
+		    
+		    switch (driver_request[13]) {
+		    case 1: /* Red book addressing mode = 0:m:s:f */
+			/* FIXME : frame <=> msf conversion routines could be shared
+			 * between mscdex and mcicda
+			 */
+			beg = LOBYTE(HIWORD(beg)) * CDFRAMES_PERMIN +
+			    HIBYTE(LOWORD(beg)) * CDFRAMES_PERSEC +
+			    LOBYTE(LOWORD(beg));
+			end = LOBYTE(HIWORD(end)) * CDFRAMES_PERMIN +
+			    HIBYTE(LOWORD(end)) * CDFRAMES_PERSEC +
+			    LOBYTE(LOWORD(end));
+			/* fall thru */
+		    case 0: /* HSG addressing mode */
+			CDAUDIO_Play(&wcda, beg, end);
+			break;
+		    default:
+			ERR(int, "Unsupported address mode !!\n");
+			Error = 0x0c;
+			break;
+		    }
 		}
 		break;
 		
-	    case 15: /* Audio status info */
-		/* !!!! FIXME FIXME FIXME !! */
-		*((WORD*)(io_stru+1))  = (wcda.cdaMode == WINE_CDA_PAUSE);
-		*((DWORD*)(io_stru+3)) = wcda.lpdwTrackPos[0];
-		*((DWORD*)(io_stru+7)) = wcda.lpdwTrackPos[wcda.nTracks - 1];
+	    case 133:
+		if (wcda.cdaMode == WINE_CDA_PLAY) {
+		    CDAUDIO_Pause(&wcda, 1);
+		    TRACE(int, " --> STOP AUDIO (Paused)\n");
+		} else {
+		    CDAUDIO_Stop(&wcda);
+		    TRACE(int, " --> STOP AUDIO (Stopped)\n");
+		}
+		break;
+		
+	    case 136:
+		TRACE(int, " --> RESUME AUDIO\n");
+		CDAUDIO_Pause(&wcda, 0);
 		break;
 		
 	    default:
-		FIXME(int," Cdrom-driver: IOCTL INPUT: Unimplemented <%d>!!\n", io_stru[0]); 
-		Error=0x0c; 
-		break;	
-	    }	
-	    break;
-	    
-	case 12:
-	    io_stru = (dorealmode) ? 
-		DOSMEM_MapRealToLinear(MAKELONG(*((WORD*)(driver_request + 14)), *((WORD*)(driver_request + 16)))) :
-		    PTR_SEG_OFF_TO_LIN(*((WORD*)(driver_request + 16)), *((WORD*)(driver_request + 18)));
-	    
-	    TRACE(int," --> IOCTL OUTPUT <%d>\n",io_stru[0]); 
-	    switch (io_stru[0]) {
-	    case 0: /* eject */ 
-		CDAUDIO_SetDoor(&wcda, 1);
-		TRACE(int," ----> EJECT\n"); 
-		break;
-	    case 2: /* reset drive */
-		CDAUDIO_Reset(&wcda);
-		TRACE(int," ----> RESET\n"); 
-		break;
-	    case 3: /* Audio Channel Control */
-		FIXME(int, " ----> AUDIO CHANNEL CONTROL (NIY)\n");
-		break;
-	    case 5: /* close tray */
-		CDAUDIO_SetDoor(&wcda, 0);
-		TRACE(int," ----> CLOSE TRAY\n"); 
-		break;
-	    default:
-		FIXME(int," Cdrom-driver: IOCTL OUPUT: Unimplemented <%d>!!\n",
-		      io_stru[0]); 
-		Error=0x0c;
-		break;	
-	    }	
-	    break;
-	    
-	case 132:  /* FIXME - It didn't function for me... */
-	    TRACE(int," --> PLAY AUDIO\n");
-	    if (driver_request[13] == 0) {
-		TRACE(int,"Mode :<0x%02X> , [%ld-%ld]\n",
-		      (unsigned char)driver_request[13],
-		      ((DWORD*)driver_request+14)[0],
-		      ((DWORD*)driver_request+18)[0]);
-		CDAUDIO_Play(&wcda, ((DWORD*)driver_request+14)[0], ((DWORD*)driver_request+14)[0] + ((DWORD*)driver_request+18)[0]);
-	    } else {
-		ERR(int, "CDRom-Driver: Unsupported address mode !!\n");
-		Error=0x0c;
+		FIXME(int, " ioctl uninplemented <%d>\n", driver_request[2]); 
+		Error = 0x0c;	
 	    }
-	    break;
 	    
-	case 133:
-	    if (wcda.cdaMode == WINE_CDA_PLAY) {
-		CDAUDIO_Pause(&wcda, 1);
-		TRACE(int," --> STOP AUDIO (Paused)\n");
-	    } else {
-		CDAUDIO_Stop(&wcda);
-		TRACE(int," --> STOP AUDIO (Stopped)\n");
+	    /* setting error codes if any */
+	    if (Error < 255) {
+		driver_request[4] |= 0x80;
+		driver_request[3] = Error;
 	    }
-	    break;
 	    
-	case 136:
-	    TRACE(int," --> RESUME AUDIO\n");
-	    CDAUDIO_Pause(&wcda, 0);
-	    break;
+	    /* setting status bits
+	     * 3 == playing && done
+	     * 1 == done 
+	     */
+	    driver_request[4] |= (wcda.cdaMode == WINE_CDA_PLAY) ? 3 : 1;
 	    
-	default:
-	    FIXME(int," CDRom-Driver - ioctl uninplemented <%d>\n",driver_request[2]); 
-	    Error=0x0c;	
+	    MSCDEX_Dump("End", driver_request, dorealmode);
 	}
-	
-	if (Error<255) {
-	    driver_request[4] |= 127;
-	    driver_request[3] = Error;
-	}
-	driver_request[4] |= 2 * (wcda.cdaMode = WINE_CDA_PLAY);
-	
-	/*  close (fdcd); FIXME !! -- cannot use close when ejecting 
-	    the cd-rom - close would close it again */ 
-    }
-    break;
+	break;
     default:
 	FIXME(int, "Unimplemented MSCDEX function 0x%02X.\n", AL_reg(context));
 	break;
