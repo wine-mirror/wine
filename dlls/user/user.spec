@@ -398,7 +398,7 @@ owner	user32
 416 pascal16 TrackPopupMenu(word word s_word s_word s_word word ptr) TrackPopupMenu16
 417 pascal   GetMenuCheckMarkDimensions() GetMenuCheckMarkDimensions
 418 pascal16 SetMenuItemBitmaps(word word word word word) SetMenuItemBitmaps16
-420 pascal16 _wsprintf() WIN16_wsprintf16
+420 pascal16 _wsprintf() wsprintf16
 421 pascal16 wvsprintf(ptr str ptr) wvsprintf16
 422 pascal16 DlgDirSelectEx(word ptr word word) DlgDirSelectEx16
 423 pascal16 DlgDirSelectComboBoxEx(word ptr word word) DlgDirSelectComboBoxEx16

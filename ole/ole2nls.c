@@ -581,7 +581,7 @@ INT WINAPI GetLocaleInfoW(LCID lcid,LCTYPE LCType,LPWSTR wbuf,INT len)
 	wlen = GetLocaleInfoA(lcid, LCType, abuf, len);
 
 	if (wlen && len)	/* if len=0 return only the length*/
-	  lstrcpynAtoW(wbuf,abuf,len);
+            MultiByteToWideChar( CP_ACP, 0, abuf, -1, wbuf, len );
 
 	HeapFree(GetProcessHeap(),0,abuf);
 	return wlen;
@@ -2799,6 +2799,7 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
    INT   inpos, outpos;
    int     count, type=0, inquote;
    int     Overflow; /* loop check */
+   char    tmp[16];
    WCHAR   buf[40];
    int     buflen=0;
    WCHAR   arg0[] = {0}, arg1[] = {'%','d',0};
@@ -2862,8 +2863,10 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 			(count==2 && type =='m') ||
 			(count==2 && type =='s') ||
 			(count==2 && type =='t') )  ) {
-	 if        (type == 'd') {
-	    if        (count == 3) {
+          switch(type)
+          {
+          case 'd':
+	    if        (count == 4) {
 	       GetLocaleInfoW(locale,
 			     LOCALE_SDAYNAME1 + (xtime->wDayOfWeek +6)%7,
 			     buf, sizeof(buf)/sizeof(WCHAR) );
@@ -2873,9 +2876,12 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 				(xtime->wDayOfWeek +6)%7,
 				buf, sizeof(buf)/sizeof(WCHAR) );
 	    } else {
-	       wsnprintfW(buf, 5, argarr[count], xtime->wDay );
-	    };
-	 } else if (type == 'M') {
+                sprintf( tmp, "%.*d", count, xtime->wDay );
+                MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
+	    }
+            break;
+
+          case 'M':
 	    if        (count == 4) {
 	       GetLocaleInfoW(locale,  LOCALE_SMONTHNAME1 +
 				xtime->wMonth -1, buf,
@@ -2885,47 +2891,62 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 				xtime->wMonth -1, buf,
 				sizeof(buf)/sizeof(WCHAR) );
 	    } else {
-	       wsnprintfW(buf, 5, argarr[count], xtime->wMonth);
+                sprintf( tmp, "%.*d", count, xtime->wMonth );
+                MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
 	    }
-	 } else if (type == 'y') {
+            break;
+          case 'y':
 	    if        (count == 4) {
-	       wsnprintfW(buf, 6, argarr[1] /* "%d" */,
-			 xtime->wYear);
+                sprintf( tmp, "%d", xtime->wYear );
 	    } else if (count == 3) {
-	       lstrcpynAtoW(buf, "yyy", 5);
+                strcpy( tmp, "yyy" );
 	    } else {
-	       wsnprintfW(buf, 6, argarr[count],
-			    xtime->wYear % 100);
+                sprintf( tmp, "%.*d", count, xtime->wYear % 100 );
 	    }
-	 } else if (type == 'g') {
+            MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
+            break;
+
+          case 'g':
 	    if        (count == 2) {
 	       FIXME("LOCALE_ICALENDARTYPE unimplemented\n");
-	       lstrcpynAtoW(buf, "AD", 5);
+               strcpy( tmp, "AD" );
 	    } else {
 	       /* Win API sez we copy it verbatim */
-	       lstrcpynAtoW(buf, "g", 5);
+                strcpy( tmp, "g" );
 	    }
-	 } else if (type == 'h') {
-	    /* hours 1:00-12:00 --- is this right? */
-	    wsnprintfW(buf, 5, argarr[count], 
-			 (xtime->wHour-1)%12 +1);
-	 } else if (type == 'H') {
-	    wsnprintfW(buf, 5, argarr[count], 
-			 xtime->wHour);
-	 } else if (type == 'm' ) {
-	    wsnprintfW(buf, 5, argarr[count],
-			 xtime->wMinute);
-	 } else if (type == 's' ) {
-	    wsnprintfW(buf, 5, argarr[count],
-			 xtime->wSecond);
-	 } else if (type == 't') {
+            MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
+            break;
+
+          case 'h':
+              /* hours 1:00-12:00 --- is this right? */
+              sprintf( tmp, "%.*d", count, (xtime->wHour-1)%12 +1);
+              MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
+              break;
+
+          case 'H':
+              sprintf( tmp, "%.*d", count, xtime->wHour );
+              MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
+              break;
+
+          case 'm':
+              sprintf( tmp, "%.*d", count, xtime->wMinute );
+              MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
+              break;
+
+          case 's':
+              sprintf( tmp, "%.*d", count, xtime->wSecond );
+              MultiByteToWideChar( CP_ACP, 0, tmp, -1, buf, sizeof(buf)/sizeof(WCHAR) );
+              break;
+
+          case 't':
 	    GetLocaleInfoW(locale, (xtime->wHour < 12) ?
 			     LOCALE_S1159 : LOCALE_S2359,
 			     buf, sizeof(buf) );
 	    if        (count == 1) {
 	       buf[1] = 0;
 	    }
-}
+            break;
+          }
 
 	 /* no matter what happened,  we need to check this next 
 	    character the next time we loop through */

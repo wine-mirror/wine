@@ -490,7 +490,7 @@ debug_channels (crtdll)
 @ cdecl strtol(str ptr long) strtol
 @ cdecl strtoul(str ptr long) strtoul
 @ cdecl strxfrm(ptr str long) strxfrm
-@ varargs swprintf(wstr wstr) wsprintfW
+@ stub swprintf
 @ stub swscanf
 @ cdecl system(str) CRTDLL_system
 @ cdecl tan(double) tan
@@ -508,7 +508,7 @@ debug_channels (crtdll)
 @ stub vfwprintf
 @ stub vprintf
 @ cdecl vsprintf(ptr str ptr) vsprintf
-@ cdecl vswprintf(ptr wstr ptr) CRTDLL_vswprintf
+@ stub vswprintf
 @ stub vwprintf
 @ forward wcscat ntdll.wcscat
 @ forward wcschr ntdll.wcschr

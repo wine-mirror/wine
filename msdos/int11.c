@@ -2,6 +2,7 @@
  * BIOS interrupt 11h handler
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "config.h"
@@ -58,12 +59,12 @@ void WINAPI INT_Int11Handler( CONTEXT86 *context )
     {
         char temp[16],name[16];
 
-        wsprintfA(name,"COM%d",x+1);
+        sprintf(name,"COM%d",x+1);
         PROFILE_GetWineIniString("serialports",name,"*",temp,sizeof temp);
         if(strcmp(temp,"*"))
 	    serialports++;
 
-        wsprintfA(name,"LPT%d",x+1);
+        sprintf(name,"LPT%d",x+1);
         PROFILE_GetWineIniString("parallelports",name,"*",temp,sizeof temp);
         if(strcmp(temp,"*"))
 	    parallelports++;

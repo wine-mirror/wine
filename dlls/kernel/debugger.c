@@ -4,10 +4,13 @@
  * Copyright (C) 1999 Alexandre Julliard
  */
 
+#include <stdio.h>
 #include <string.h>
 
 #include "winerror.h"
+#include "wine/winbase16.h"
 #include "server.h"
+#include "stackframe.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(debugstr);
@@ -228,4 +231,30 @@ BOOL WINAPI IsDebuggerPresent(void)
     }
     SERVER_END_REQ;
     return ret;
+}
+
+
+/***********************************************************************
+ *           _DebugOutput                    (KERNEL.328)
+ */
+void WINAPIV _DebugOutput( void )
+{
+    VA_LIST16 valist;
+    WORD flags;
+    SEGPTR spec;
+    char caller[101];
+
+    /* Decode caller address */
+    if (!GetModuleName16( GetExePtr(CURRENT_STACK16->cs), caller, sizeof(caller) ))
+        sprintf( caller, "%04X:%04X", CURRENT_STACK16->cs, CURRENT_STACK16->ip );
+
+    /* Build debug message string */
+    VA_START16( valist );
+    flags = VA_ARG16( valist, WORD );
+    spec  = VA_ARG16( valist, SEGPTR );
+    /* FIXME: cannot use wvsnprintf16 from kernel */
+    /* wvsnprintf16( temp, sizeof(temp), (LPCSTR)PTR_SEG_TO_LIN(spec), valist ); */
+
+    /* Output */
+    FIXME("%s %04x %s\n", caller, flags, debugstr_a(PTR_SEG_TO_LIN(spec)) );
 }

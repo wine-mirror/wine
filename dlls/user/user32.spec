@@ -651,3 +651,9 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stdcall GetClipboardSequenceNumber () GetClipboardSequenceNumber
 @ stdcall AllowSetForegroundWindow (long) AllowSetForegroundWindow
 @ stdcall LockSetForegroundWindow (long) LockSetForegroundWindow
+
+###################################################
+# Extra useful functions not exported under Windows
+#
+@ stdcall wvsnprintfA(ptr long str ptr) wvsnprintfA
+@ stdcall wvsnprintfW(ptr long wstr ptr) wvsnprintfW

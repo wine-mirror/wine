@@ -770,7 +770,7 @@ HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam
                 /* Prepend the current path */
                 COMDLG32_SHGetPathFromIDListA(fodInfos->ShellInfos.pidlAbsCurrent,lpstrCurrentDir);
                 if ((LPSTR)lParam!=NULL)
-                    wsnprintfA((LPSTR)lParam,(int)wParam,"%s\\%s",lpstrCurrentDir,lpstrPath);
+                    snprintf((LPSTR)lParam,(int)wParam,"%s\\%s",lpstrCurrentDir,lpstrPath);
                 reqSize=strlen(lpstrCurrentDir)+1+strlen(lpstrPath)+1;
             } 
 	    else 

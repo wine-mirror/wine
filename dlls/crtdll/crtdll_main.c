@@ -598,15 +598,6 @@ double  __cdecl CRTDLL__scalb(double x, LONG y)
 
 
 /*********************************************************************
- *                  vswprintf      (CRTDLL.501)
- */
-INT __cdecl CRTDLL_vswprintf( LPWSTR buffer, LPCWSTR spec, va_list args )
-{
-    return wvsprintfW( buffer, spec, args );
-}
-
-
-/*********************************************************************
  *                  longjmp        (CRTDLL.426)
  */
 VOID __cdecl CRTDLL_longjmp(jmp_buf env, int val)

@@ -17,8 +17,7 @@ C_SRCS = \
 	registry.c \
 	system.c \
 	tweak.c \
-	version.c \
-	wsprintf.c
+	version.c
 
 all: $(MODULE).o
 

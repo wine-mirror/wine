@@ -20,7 +20,8 @@ C_SRCS = \
 	resource.c \
 	text.c \
 	thunk.c \
-	user_main.c
+	user_main.c \
+	wsprintf.c
 
 RC_SRCS = \
 	resources/display.rc \
