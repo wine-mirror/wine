@@ -435,8 +435,15 @@ void QUEUE_FlushMessages( HQUEUE16 hQueue )
     MESSAGEQUEUE *senderQ = (MESSAGEQUEUE*)GlobalLock16( queue->hSendingTask);
     QSMCTRL*      CtrlPtr = queue->smResultCurrent;
 
+    TRACE(msg,"Flushing queue %04x:\n", hQueue );
+
     while( senderQ )
     {
+      if( !CtrlPtr )
+	   CtrlPtr = senderQ->smResultInit;
+
+      TRACE(msg,"\tfrom queue %04x, smResult %08x\n", queue->hSendingTask, (unsigned)CtrlPtr );
+
       if( !(queue->hSendingTask = senderQ->hPrevSendingTask) )
             queue->wakeBits &= ~QS_SENDMESSAGE;
       QUEUE_SetWakeBit( senderQ, QS_SMPARAMSFREE );
@@ -448,8 +455,8 @@ void QUEUE_FlushMessages( HQUEUE16 hQueue )
       senderQ->smResult = queue->smResultCurrent;
       QUEUE_SetWakeBit( senderQ, QS_SMRESULT);
 
-      if( (senderQ = (MESSAGEQUEUE*)GlobalLock16( queue->hSendingTask)) )
-	   CtrlPtr = senderQ->smResultInit;
+      senderQ = (MESSAGEQUEUE*)GlobalLock16( queue->hSendingTask);
+      CtrlPtr = NULL;
     }
     queue->InSendMessageHandle = 0;
   }  
