@@ -35,111 +35,177 @@ static const WCHAR wszFaceName[]          = {'F','a','c','e','N','a','m','e',0};
 static const WCHAR wszFontSize[]          = {'F','o','n','t','S','i','z','e',0};
 static const WCHAR wszFontWeight[]        = {'F','o','n','t','W','e','i','g','h','t',0};
 static const WCHAR wszHistoryBufferSize[] = {'H','i','s','t','o','r','y','B','u','f','f','e','r','S','i','z','e',0};
+static const WCHAR wszHistoryNoDup[]      = {'H','i','s','t','o','r','y','N','o','D','u','p',0};
 static const WCHAR wszMenuMask[]          = {'M','e','n','u','M','a','s','k',0};
 static const WCHAR wszQuickEdit[]         = {'Q','u','i','c','k','E','d','i','t',0};
 static const WCHAR wszScreenBufferSize[]  = {'S','c','r','e','e','n','B','u','f','f','e','r','S','i','z','e',0};
 static const WCHAR wszScreenColors[]      = {'S','c','r','e','e','n','C','o','l','o','r','s',0};
 static const WCHAR wszWindowSize[]        = {'W','i','n','d','o','w','S','i','z','e',0};
 
+void WINECON_DumpConfig(const char* pfx, const struct config_data* cfg)
+{
+    WINE_TRACE("%s cell=(%u,%u) cursor=(%d,%d) attr=%02lx font=%s/%lu hist=%lu/%d flags=%c%c msk=%08lx sb=(%u,%u) win=(%u,%u)x(%u,%u) registry=%s\n",
+               pfx, cfg->cell_width, cfg->cell_height, cfg->cursor_size, cfg->cursor_visible, cfg->def_attr,
+               wine_dbgstr_w(cfg->face_name), cfg->font_weight, cfg->history_size, cfg->history_nodup ? 1 : 2,
+               cfg->quick_edit ? 'Q' : 'q', cfg->exit_on_die ? 'X' : 'x',
+               cfg->menu_mask, cfg->sb_width, cfg->sb_height, cfg->win_pos.X, cfg->win_pos.Y, cfg->win_width, cfg->win_height,
+               wine_dbgstr_w(cfg->registry));
+}
+
+/******************************************************************
+ *		WINECON_CreateKeyName
+ *
+ * Get a proper key name from an appname (mainly convert '\\' to '_')
+ */
+static LPWSTR   WINECON_CreateKeyName(LPCWSTR kn)
+{
+    LPWSTR      ret = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(kn) + 1) * sizeof(WCHAR));
+    LPWSTR      ptr = ret;
+
+    if (!ptr) WINECON_Fatal("OOM");
+
+    do
+    {
+        *ptr++ = *kn == '\\' ? '_' : *kn;
+    } while (*kn++ != 0);
+    return ret;
+}
+
+/******************************************************************
+ *		WINECON_RegLoadHelper
+ *
+ * Read the basic configuration from any console key or subkey
+ */
+static void WINECON_RegLoadHelper(HKEY hConKey, struct config_data* cfg)
+{
+    DWORD 	type;
+    DWORD 	count;
+    DWORD       val;
+
+    count = sizeof(val);
+    if (!RegQueryValueEx(hConKey, wszCursorSize, 0, &type, (char*)&val, &count))
+        cfg->cursor_size = val;
+
+    count = sizeof(val);
+    if (!RegQueryValueEx(hConKey, wszCursorVisible, 0, &type, (char*)&val, &count))
+        cfg->cursor_visible = val;
+
+    count = sizeof(val);
+    if (!RegQueryValueEx(hConKey, wszExitOnDie, 0, &type, (char*)&val, &count))
+        cfg->exit_on_die = val;
+
+    count = sizeof(cfg->face_name);
+    RegQueryValueEx(hConKey, wszFaceName, 0, &type, (char*)&cfg->face_name, &count);
+
+    count = sizeof(val);
+    if (!RegQueryValueEx(hConKey, wszFontSize, 0, &type, (char*)&val, &count))
+    {
+        cfg->cell_height = HIWORD(val);
+        cfg->cell_width  = LOWORD(val);
+    }
+
+    count = sizeof(val);
+    if (!RegQueryValueEx(hConKey, wszFontWeight, 0, &type, (char*)&val, &count))
+        cfg->font_weight = val;
+
+    count = sizeof(val);
+    if (!RegQueryValueEx(hConKey, wszHistoryBufferSize, 0, &type, (char*)&val, &count))
+        cfg->history_size = val;
+
+    count = sizeof(val);
+    if (!RegQueryValueEx(hConKey, wszHistoryNoDup, 0, &type, (char*)&val, &count))
+        cfg->history_nodup = val;
+
+    count = sizeof(val);
+    if (!RegQueryValueEx(hConKey, wszMenuMask, 0, &type, (char*)&val, &count))
+        cfg->menu_mask = val;
+
+    count = sizeof(val);
+    if (!RegQueryValueEx(hConKey, wszQuickEdit, 0, &type, (char*)&val, &count))
+        cfg->quick_edit = val;
+
+    count = sizeof(val);
+    if (!RegQueryValueEx(hConKey, wszScreenBufferSize, 0, &type, (char*)&val, &count))
+    {
+        cfg->sb_height = HIWORD(val);
+        cfg->sb_width  = LOWORD(val);
+    }
+
+    count = sizeof(val);
+    if (!RegQueryValueEx(hConKey, wszScreenColors, 0, &type, (char*)&val, &count))
+        cfg->def_attr = val;
+
+    count = sizeof(val);
+    if (!RegQueryValueEx(hConKey, wszWindowSize, 0, &type, (char*)&val, &count))
+    {
+        cfg->win_height = HIWORD(val);
+        cfg->win_width  = LOWORD(val);
+    }
+
+    /* win_pos isn't read from registry */
+}
+
 /******************************************************************
  *		WINECON_RegLoad
  *
  *
  */
-BOOL WINECON_RegLoad(struct config_data* cfg)
+void WINECON_RegLoad(const WCHAR* appname, struct config_data* cfg)
 {
     HKEY        hConKey;
-    DWORD 	type;
-    DWORD 	count;
-    DWORD       val;
 
-    WINE_TRACE("loading registry settings.\n");
-    if (RegOpenKey(HKEY_CURRENT_USER, wszConsole, &hConKey)) hConKey = 0;
+    WINE_TRACE("loading %s registry settings.\n", appname ? wine_dbgstr_w(appname) : "default");
 
-    count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszCursorSize, 0, &type, (char*)&val, &count))
-        val = 25;
-    cfg->cursor_size = val;
+    /* first set default values */
+    cfg->cursor_size = 25;
+    cfg->cursor_visible = 1;
+    cfg->exit_on_die = 1;
+    cfg->face_name[0] = 0;
+    cfg->cell_height = 12;
+    cfg->cell_width  = 8;
+    cfg->font_weight = 0;
+    cfg->history_size = 0;
+    cfg->history_nodup = 0;
+    cfg->menu_mask = 0;
+    cfg->quick_edit = 0;
+    cfg->sb_height = 25;
+    cfg->sb_width  = 80;
+    cfg->def_attr = 0x000F;
+    cfg->win_height = 25;
+    cfg->win_width  = 80;
+    cfg->registry = NULL;
 
-    count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszCursorVisible, 0, &type, (char*)&val, &count))
-        val = 1;
-    cfg->cursor_visible = val;
+    /* then read global settings */
+    if (!RegOpenKey(HKEY_CURRENT_USER, wszConsole, &hConKey))
+    {
+        WINECON_RegLoadHelper(hConKey, cfg);
+        /* if requested, load part related to console title */
+        if (appname)
+        {
+            HKEY        hAppKey;
 
-    count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszExitOnDie, 0, &type, (char*)&val, &count))
-        val = 1;
-    cfg->exit_on_die = val;
-
-    count = sizeof(cfg->face_name);
-    if (!hConKey || RegQueryValueEx(hConKey, wszFaceName, 0, &type, (char*)&cfg->face_name, &count))
-        cfg->face_name[0] = 0;
-
-    count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszFontSize, 0, &type, (char*)&val, &count))
-        val = 0x000C0008;
-    cfg->cell_height = HIWORD(val);
-    cfg->cell_width  = LOWORD(val);
-
-    count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszFontWeight, 0, &type, (char*)&val, &count))
-        val = 0;
-    cfg->font_weight = val;
-
-    count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszHistoryBufferSize, 0, &type, (char*)&val, &count))
-        val = 0;
-    cfg->history_size = val;
-
-    count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszMenuMask, 0, &type, (char*)&val, &count))
-        val = 0;
-    cfg->menu_mask = val;
-
-    count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszQuickEdit, 0, &type, (char*)&val, &count))
-        val = 0;
-    cfg->quick_edit = val;
-
-    count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszScreenBufferSize, 0, &type, (char*)&val, &count))
-        val = 0x00190050;
-    cfg->sb_height = HIWORD(val);
-    cfg->sb_width  = LOWORD(val);
-
-    count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszScreenColors, 0, &type, (char*)&val, &count))
-        val = 0x000F;
-    cfg->def_attr = val;
-
-    count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszWindowSize, 0, &type, (char*)&val, &count))
-        val = 0x00190050;
-    cfg->win_height = HIWORD(val);
-    cfg->win_width  = LOWORD(val);
-
-    /* win_pos isn't read from registry */
-
-    if (hConKey) RegCloseKey(hConKey);
-    return TRUE;
+            cfg->registry = WINECON_CreateKeyName(appname);
+            if (!RegOpenKey(hConKey, cfg->registry, &hAppKey))
+            {
+                WINECON_RegLoadHelper(hAppKey, cfg);
+                RegCloseKey(hAppKey);
+            }
+        }
+        RegCloseKey(hConKey);
+    }
+    WINECON_DumpConfig("load", cfg);
 }
 
 /******************************************************************
- *		WINECON_RegSave
+ *		WINECON_RegSaveHelper
  *
  *
  */
-BOOL WINECON_RegSave(const struct config_data* cfg)
+static void WINECON_RegSaveHelper(HKEY hConKey, const struct config_data* cfg)
 {
-    HKEY        hConKey;
     DWORD       val;
 
-    WINE_TRACE("saving registry settings.\n");
-    if (RegCreateKey(HKEY_CURRENT_USER, wszConsole, &hConKey))
-    {
-        WINE_ERR("Can't open registry for saving\n");
-        return FALSE;
-    }
+    WINECON_DumpConfig("save", cfg);
 
     val = cfg->cursor_size;
     RegSetValueEx(hConKey, wszCursorSize, 0, REG_DWORD, (char*)&val, sizeof(val));
@@ -161,6 +227,9 @@ BOOL WINECON_RegSave(const struct config_data* cfg)
     val = cfg->history_size;
     RegSetValueEx(hConKey, wszHistoryBufferSize, 0, REG_DWORD, (char*)&val, sizeof(val));
 
+    val = cfg->history_nodup;
+    RegSetValueEx(hConKey, wszHistoryNoDup, 0, REG_DWORD, (char*)&val, sizeof(val));
+
     val = cfg->menu_mask;
     RegSetValueEx(hConKey, wszMenuMask, 0, REG_DWORD, (char*)&val, sizeof(val));
 
@@ -175,7 +244,40 @@ BOOL WINECON_RegSave(const struct config_data* cfg)
 
     val = MAKELONG(cfg->win_width, cfg->win_height);
     RegSetValueEx(hConKey, wszWindowSize, 0, REG_DWORD, (char*)&val, sizeof(val));
+}
 
-    RegCloseKey(hConKey);
-    return TRUE;
+/******************************************************************
+ *		WINECON_RegSave
+ *
+ *
+ */
+void WINECON_RegSave(const struct config_data* cfg)
+{
+    HKEY        hConKey;
+
+    WINE_TRACE("saving registry settings.\n");
+    if (RegCreateKey(HKEY_CURRENT_USER, wszConsole, &hConKey))
+    {
+        WINE_ERR("Can't open registry for saving\n");
+    }
+    else
+    {
+        if (cfg->registry)
+        {
+            HKEY    hAppKey;
+
+            if (RegCreateKey(hConKey, cfg->registry, &hAppKey))
+            {
+                WINE_ERR("Can't open registry for saving\n");
+            }
+            else
+            {
+                /* FIXME: maybe only save the values different from the default value ? */
+                WINECON_RegSaveHelper(hAppKey, cfg);
+                RegCloseKey(hAppKey);
+            }
+        }
+        else WINECON_RegSaveHelper(hConKey, cfg);
+        RegCloseKey(hConKey);
+    }
 }

@@ -1,6 +1,6 @@
 /* dialog management for wineconsole
  * USER32 backend
- * Copyright (c) 2001 Eric Pouech
+ * Copyright (c) 2001, 2002 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,20 +27,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wineconsole);
 
-enum WCUSER_ApplyTo {
-    /* Prop sheet CFG */
-    WCUSER_ApplyToCursorSize,
-    WCUSER_ApplyToHistorySize, WCUSER_ApplyToHistoryMode, WCUSER_ApplyToMenuMask,
-    WCUSER_ApplyToEditMode,
-    /* Prop sheet FNT */
-    WCUSER_ApplyToFont, WCUSER_ApplyToAttribute,
-    /* Prop sheep CNF */
-    WCUSER_ApplyToBufferSize, WCUSER_ApplyToWindow
-};
-
 struct dialog_info
 {
-    struct config_data* config;         /* pointer to configuration used for dialog box */
+    struct config_data  config;         /* configuration used for dialog box */
     struct inner_data*	data;	        /* pointer to current winecon info */
     HWND		hDlg;		/* handle to active propsheet */
     int			nFont;		/* number of font size in size LB */
@@ -50,102 +39,7 @@ struct dialog_info
         UINT                    weight;
         WCHAR                   faceName[LF_FACESIZE];
     } 			*font;		/* array of nFont. index sync'ed with SIZE LB */
-    void        (*apply)(struct dialog_info*, HWND, enum WCUSER_ApplyTo, DWORD);
 };
-
-/******************************************************************
- *		WCUSER_ApplyDefault
- *
- *
- */
-static void WCUSER_ApplyDefault(struct dialog_info* di, HWND hDlg, enum WCUSER_ApplyTo apply, DWORD val)
-{
-    switch (apply)
-    {
-    case WCUSER_ApplyToCursorSize:
-    case WCUSER_ApplyToHistorySize:
-    case WCUSER_ApplyToHistoryMode:
-    case WCUSER_ApplyToBufferSize:
-    case WCUSER_ApplyToWindow:
-        /* not saving those for now... */
-        break;
-    case WCUSER_ApplyToMenuMask:
-        di->config->menu_mask = val;
-        break;
-    case WCUSER_ApplyToEditMode:
-        di->config->quick_edit = val;
-        break;
-    case WCUSER_ApplyToFont:
-        {
-            LOGFONT     lf;
-            HFONT       hFont;
-
-            WCUSER_FillLogFont(&lf, di->font[val].faceName,
-                               di->font[val].height, di->font[val].weight);
-            hFont = WCUSER_CopyFont(di->config, PRIVATE(di->data)->hWnd, &lf);
-            DeleteObject(hFont);
-        }
-        break;
-    case WCUSER_ApplyToAttribute:
-        di->config->def_attr = val;
-        break;
-    }
-    WINECON_RegSave(di->config);
-}
-
-/******************************************************************
- *		WCUSER_ApplyCurrent
- *
- *
- */
-static void WCUSER_ApplyCurrent(struct dialog_info* di, HWND hDlg, enum WCUSER_ApplyTo apply, DWORD val)
-{
-    switch (apply)
-    {
-    case WCUSER_ApplyToCursorSize:
-        {
-            CONSOLE_CURSOR_INFO cinfo;
-            cinfo.dwSize = val;
-            cinfo.bVisible = di->config->cursor_visible;
-            /* this shall update (through notif) curcfg */
-            SetConsoleCursorInfo(di->data->hConOut, &cinfo);
-        }
-        break;
-    case WCUSER_ApplyToHistorySize:
-        di->config->history_size = val;
-        WINECON_SetHistorySize(di->data->hConIn, val);
-        break;
-    case WCUSER_ApplyToHistoryMode:
-        WINECON_SetHistoryMode(di->data->hConIn, val);
-        break;
-    case WCUSER_ApplyToMenuMask:
-        di->config->menu_mask = val;
-        break;
-    case WCUSER_ApplyToEditMode:
-        di->config->quick_edit = val;
-        break;
-    case WCUSER_ApplyToFont:
-        {
-            LOGFONT lf;
-            WCUSER_FillLogFont(&lf, di->font[val].faceName,
-                               di->font[val].height, di->font[val].weight);
-            WCUSER_SetFont(di->data, &lf);
-        }
-        break;
-    case WCUSER_ApplyToAttribute:
-        di->config->def_attr = val;
-        SetConsoleTextAttribute(di->data->hConOut, val);
-        break;
-    case WCUSER_ApplyToBufferSize:
-        /* this shall update (through notif) curcfg */
-        SetConsoleScreenBufferSize(di->data->hConOut, *(COORD*)val);
-        break;
-    case WCUSER_ApplyToWindow:
-        /* this shall update (through notif) curcfg */
-        SetConsoleWindowInfo(di->data->hConOut, FALSE, (SMALL_RECT*)val);
-        break;
-    }
-}
 
 /******************************************************************
  *		WCUSER_OptionDlgProc
@@ -164,19 +58,19 @@ static BOOL WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 	di->hDlg = hDlg;
 	SetWindowLong(hDlg, DWL_USER, (DWORD)di);
 
-	if (di->config->cursor_size <= 25)	idc = IDC_OPT_CURSOR_SMALL;
-	else if (di->config->cursor_size <= 50)	idc = IDC_OPT_CURSOR_MEDIUM;
+	if (di->config.cursor_size <= 25)	idc = IDC_OPT_CURSOR_SMALL;
+	else if (di->config.cursor_size <= 50)	idc = IDC_OPT_CURSOR_MEDIUM;
 	else				        idc = IDC_OPT_CURSOR_LARGE;
 	SendDlgItemMessage(hDlg, idc, BM_SETCHECK, BST_CHECKED, 0L);
 	SetDlgItemInt(hDlg, IDC_OPT_HIST_SIZE, WINECON_GetHistorySize(di->data->hConIn),  FALSE);
-	if (WINECON_GetHistoryMode(di->data->hConIn))
-	    SendDlgItemMessage(hDlg, IDC_OPT_HIST_DOUBLE, BM_SETCHECK, BST_CHECKED, 0L);
+        SendDlgItemMessage(hDlg, IDC_OPT_HIST_NODOUBLE, BM_SETCHECK,
+                           (di->config.history_nodup) ? BST_CHECKED : BST_UNCHECKED, 0L);
         SendDlgItemMessage(hDlg, IDC_OPT_CONF_CTRL, BM_SETCHECK,
-                           (di->config->menu_mask & MK_CONTROL) ? BST_CHECKED : BST_UNCHECKED, 0L);
+                           (di->config.menu_mask & MK_CONTROL) ? BST_CHECKED : BST_UNCHECKED, 0L);
         SendDlgItemMessage(hDlg, IDC_OPT_CONF_SHIFT, BM_SETCHECK,
-                           (di->config->menu_mask & MK_SHIFT) ? BST_CHECKED : BST_UNCHECKED, 0L);
+                           (di->config.menu_mask & MK_SHIFT) ? BST_CHECKED : BST_UNCHECKED, 0L);
         SendDlgItemMessage(hDlg, IDC_OPT_QUICK_EDIT, BM_SETCHECK,
-                           (di->config->quick_edit) ? BST_CHECKED : BST_UNCHECKED, 0L);
+                           (di->config.quick_edit) ? BST_CHECKED : BST_UNCHECKED, 0L);
 	return FALSE; /* because we set the focus */
     case WM_COMMAND:
 	break;
@@ -207,22 +101,22 @@ static BOOL WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 	case PSN_APPLY:
 	    if (IsDlgButtonChecked(hDlg, IDC_OPT_CURSOR_SMALL) == BST_CHECKED) val = 25;
 	    else if (IsDlgButtonChecked(hDlg, IDC_OPT_CURSOR_MEDIUM) == BST_CHECKED) val = 50;
-	    else val = 99;
-            (di->apply)(di, hDlg, WCUSER_ApplyToCursorSize, val);
+	    else val = 100;
+            di->config.cursor_size = val;
 
  	    val = GetDlgItemInt(hDlg, IDC_OPT_HIST_SIZE, &done, FALSE);
-	    if (done) (di->apply)(di, hDlg, WCUSER_ApplyToHistorySize, val);
+	    if (done) di->config.history_size = val;
 
-	    (di->apply)(di, hDlg, WCUSER_ApplyToHistoryMode,
-                        IsDlgButtonChecked(hDlg, IDC_OPT_HIST_DOUBLE) & BST_CHECKED);
+            val = (IsDlgButtonChecked(hDlg, IDC_OPT_HIST_NODOUBLE) & BST_CHECKED) ? TRUE : FALSE;
+            di->config.history_nodup = val;
 
             val = 0;
             if (IsDlgButtonChecked(hDlg, IDC_OPT_CONF_CTRL) & BST_CHECKED)  val |= MK_CONTROL;
             if (IsDlgButtonChecked(hDlg, IDC_OPT_CONF_SHIFT) & BST_CHECKED) val |= MK_SHIFT;
-            (di->apply)(di, hDlg, WCUSER_ApplyToMenuMask, val);
+            di->config.menu_mask = val;
 
             val = (IsDlgButtonChecked(hDlg, IDC_OPT_QUICK_EDIT) & BST_CHECKED) ? TRUE : FALSE;
-            (di->apply)(di, hDlg, WCUSER_ApplyToEditMode, val);
+            di->config.quick_edit = val;
 
             SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_NOERROR);
 	    return TRUE;
@@ -570,9 +464,9 @@ static BOOL  fill_list_size(struct dialog_info* di, BOOL doInit)
 
 	for (idx = 0; idx < di->nFont; idx++)
 	{
-            if (!lstrcmp(di->font[idx].faceName, di->config->face_name) &&
-                di->font[idx].height == di->config->cell_height &&
-                di->font[idx].weight == di->config->font_weight)
+            if (!lstrcmp(di->font[idx].faceName, di->config.face_name) &&
+                di->font[idx].height == di->config.cell_height &&
+                di->font[idx].weight == di->config.font_weight)
             {
                 if (ref == -1) ref = idx;
                 else WINE_TRACE("Several matches found: ref=%d idx=%d\n", ref, idx);
@@ -597,7 +491,7 @@ static BOOL fill_list_font(struct dialog_info* di)
     SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_RESETCONTENT, 0L, 0L);
     EnumFontFamilies(PRIVATE(di->data)->hMemDC, NULL, font_enum, (LPARAM)di);
     if (SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_SELECTSTRING,
-			   (WPARAM)-1, (LPARAM)di->config->face_name) == LB_ERR)
+			   (WPARAM)-1, (LPARAM)di->config.face_name) == LB_ERR)
 	SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_SETCURSEL, 0L, 0L);
     fill_list_size(di, TRUE);
     return TRUE;
@@ -621,8 +515,8 @@ static BOOL WINAPI WCUSER_FontDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM
         /* remove dialog from this control, font will be reset when listboxes are filled */
         SendDlgItemMessage(hDlg, IDC_FNT_PREVIEW, WM_SETFONT, 0L, 0L);
 	fill_list_font(di);
-        SetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_BK), 0, (di->config->def_attr >> 4) & 0x0F);
-        SetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_FG), 0, di->config->def_attr & 0x0F);
+        SetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_BK), 0, (di->config.def_attr >> 4) & 0x0F);
+        SetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_FG), 0, di->config.def_attr & 0x0F);
 	break;
     case WM_COMMAND:
 	di = (struct dialog_info*)GetWindowLong(hDlg, DWL_USER);
@@ -656,11 +550,19 @@ static BOOL WINAPI WCUSER_FontDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM
 	case PSN_APPLY:
  	    val = SendDlgItemMessage(hDlg, IDC_FNT_LIST_SIZE, LB_GETCURSEL, 0L, 0L);
 
-	    if (val < di->nFont) (di->apply)(di, hDlg, WCUSER_ApplyToFont, val);
+	    if (val < di->nFont)
+            {
+                LOGFONT lf;
 
-            (di->apply)(di, hDlg, WCUSER_ApplyToAttribute,
-                        (GetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_BK), 0) << 4) |
-                        GetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_FG), 0));
+                WCUSER_FillLogFont(&lf, di->font[val].faceName,
+                                   di->font[val].height, di->font[val].weight);
+                DeleteObject(WCUSER_CopyFont(&di->config,
+                                             PRIVATE(di->data)->hWnd, &lf));
+            }
+
+            val = (GetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_BK), 0) << 4) |
+                GetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_FG), 0);
+            di->config.def_attr = val;
 
             SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_NOERROR);
 	    return TRUE;
@@ -690,10 +592,12 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 	di = (struct dialog_info*)((PROPSHEETPAGEA*)lParam)->lParam;
 	di->hDlg = hDlg;
 	SetWindowLong(hDlg, DWL_USER, (DWORD)di);
-	SetDlgItemInt(hDlg, IDC_CNF_SB_WIDTH,   di->config->sb_width,   FALSE);
-	SetDlgItemInt(hDlg, IDC_CNF_SB_HEIGHT,  di->config->sb_height,  FALSE);
-	SetDlgItemInt(hDlg, IDC_CNF_WIN_WIDTH,  di->config->win_width,  FALSE);
-	SetDlgItemInt(hDlg, IDC_CNF_WIN_HEIGHT, di->config->win_height, FALSE);
+	SetDlgItemInt(hDlg, IDC_CNF_SB_WIDTH,   di->config.sb_width,   FALSE);
+	SetDlgItemInt(hDlg, IDC_CNF_SB_HEIGHT,  di->config.sb_height,  FALSE);
+	SetDlgItemInt(hDlg, IDC_CNF_WIN_WIDTH,  di->config.win_width,  FALSE);
+	SetDlgItemInt(hDlg, IDC_CNF_WIN_HEIGHT, di->config.win_height, FALSE);
+        SendDlgItemMessage(hDlg, IDC_CNF_CLOSE_EXIT, BM_SETCHECK,
+                           (di->config.exit_on_die) ? BST_CHECKED : BST_UNCHECKED, 0L);
 	break;
     case WM_COMMAND:
 	di = (struct dialog_info*)GetWindowLong(hDlg, DWL_USER);
@@ -704,9 +608,8 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
     case WM_NOTIFY:
     {
 	NMHDR*	        nmhdr = (NMHDR*)lParam;
-        COORD           sb;
-        SMALL_RECT	pos;
-        BOOL	        st_w, st_h;
+        int             x, y;
+        BOOL            st1, st2;
 
 	di = (struct dialog_info*)GetWindowLong(hDlg, DWL_USER);
 	switch (nmhdr->code)
@@ -715,22 +618,23 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
             di->hDlg = hDlg;
             break;
 	case PSN_APPLY:
-            sb.X = GetDlgItemInt(hDlg, IDC_CNF_SB_WIDTH,  &st_w, FALSE);
-            sb.Y = GetDlgItemInt(hDlg, IDC_CNF_SB_HEIGHT, &st_h, FALSE);
-            if (st_w && st_h && (sb.X != di->config->sb_width || sb.Y != di->config->sb_height))
+            x = GetDlgItemInt(hDlg, IDC_CNF_SB_WIDTH,  &st1, FALSE);
+            y = GetDlgItemInt(hDlg, IDC_CNF_SB_HEIGHT, &st2, FALSE);
+            if (st1 && st2)
             {
-                (di->apply)(di, hDlg, WCUSER_ApplyToBufferSize, (DWORD)&sb);
+                di->config.sb_width  = x;
+                di->config.sb_height = y;
             }
 
-            pos.Right  = GetDlgItemInt(hDlg, IDC_CNF_WIN_WIDTH,  &st_w, FALSE);
-            pos.Bottom = GetDlgItemInt(hDlg, IDC_CNF_WIN_HEIGHT, &st_h, FALSE);
-            if (st_w && st_h &&
-                (pos.Right != di->config->win_width || pos.Bottom != di->config->win_height))
+            x = GetDlgItemInt(hDlg, IDC_CNF_WIN_WIDTH,  &st1, FALSE);
+            y = GetDlgItemInt(hDlg, IDC_CNF_WIN_HEIGHT, &st2, FALSE);
+            if (st1 && st2)
             {
-                pos.Left = pos.Top = 0;
-                pos.Right--; pos.Bottom--;
-                (di->apply)(di, hDlg, WCUSER_ApplyToWindow, (DWORD)&pos);
+                di->config.win_width  = x;
+                di->config.win_height = y;
             }
+            di->config.exit_on_die = IsDlgButtonChecked(hDlg, IDC_CNF_CLOSE_EXIT) ? 1 : 0;
+
             SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_NOERROR);
 	    return TRUE;
 	default:
@@ -740,6 +644,36 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
     }
     default:
 	return FALSE;
+    }
+    return TRUE;
+}
+
+/******************************************************************
+ *		WCUSER_SaveDlgProc
+ *
+ *      Dialog Procedure for choosing how to handle modification to the
+ * console settings.
+ */
+static BOOL WINAPI WCUSER_SaveDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+	break;
+    case WM_COMMAND:
+	switch (LOWORD(wParam))
+	{
+        case IDOK:
+            EndDialog(hDlg,
+                      (IsDlgButtonChecked(hDlg, IDC_SAV_SAVE) == BST_CHECKED) ?
+                      IDC_SAV_SAVE : IDC_SAV_SESSION);
+            break;
+        case IDCANCEL:
+            EndDialog(hDlg, IDCANCEL); break;
+	}
+        break;
+    default:
+        return FALSE;
     }
     return TRUE;
 }
@@ -759,22 +693,28 @@ BOOL WCUSER_GetProperties(struct inner_data* data, BOOL current)
     static const WCHAR szFntPreview[] = {'W','i','n','e','C','o','n','F','o','n','t','P','r','e','v','i','e','w',0};
     static const WCHAR szColorPreview[] = {'W','i','n','e','C','o','n','C','o','l','o','r','P','r','e','v','i','e','w',0};
     struct dialog_info	di;
+    struct config_data  defcfg;
+    struct config_data* refcfg;
+    BOOL                save, modify_session;
 
     InitCommonControls();
 
     di.data = data;
     if (current)
     {
-        di.config = &data->curcfg;
-        di.apply = WCUSER_ApplyCurrent;
+        refcfg = &data->curcfg;
+        save = FALSE;
     }
     else
     {
-        di.config = &data->defcfg;
-        di.apply = WCUSER_ApplyDefault;
+        WINECON_RegLoad(NULL, refcfg = &defcfg);
+        save = TRUE;
     }
+    di.config = *refcfg;
     di.nFont = 0;
     di.font = NULL;
+
+    modify_session = FALSE;
 
     wndclass.style         = 0;
     wndclass.lpfnWndProc   = WCUSER_FontPreviewProc;
@@ -838,7 +778,29 @@ BOOL WCUSER_GetProperties(struct inner_data* data, BOOL current)
     psHead.hwndParent = PRIVATE(data)->hWnd;
     psHead.u3.phpage = psPage;
 
+    WINECON_DumpConfig("init", refcfg);
+
     PropertySheet(&psHead);
+
+    if (memcmp(refcfg, &di.config, sizeof(*refcfg)) == 0)
+        return TRUE;
+
+    WINECON_DumpConfig("ref", refcfg);
+    WINECON_DumpConfig("cur", &di.config);
+    if (refcfg == &data->curcfg)
+    {
+        switch (DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_SAVE_SETTINGS),
+                          PRIVATE(data)->hWnd, WCUSER_SaveDlgProc))
+        {
+        case IDC_SAV_SAVE:      save = TRUE; modify_session = TRUE; break;
+        case IDC_SAV_SESSION:   modify_session = TRUE; break;
+        case IDCANCEL:          break;
+        default: WINE_ERR("ooch\n");
+        }
+    }
+
+    if (modify_session) WINECON_SetConfig(data, &di.config, FALSE);
+    if (save)           WINECON_RegSave(&di.config);
 
     return TRUE;
 }

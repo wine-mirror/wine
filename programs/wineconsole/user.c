@@ -36,6 +36,8 @@ COLORREF	WCUSER_ColorMap[16] =
     RGB(0xFF, 0x00, 0x00), RGB(0xFF, 0x00, 0xFF), RGB(0xFF, 0xFF, 0x00), RGB(0xFF, 0xFF, 0xFF),
 };
 
+static BOOL WCUSER_SetFont(struct inner_data* data, const LOGFONT* font);
+
 /******************************************************************
  *		WCUSER_FillMemDC
  *
@@ -54,8 +56,11 @@ static void WCUSER_FillMemDC(const struct inner_data* data, int upd_tp, int upd_
      */
     if (!PRIVATE(data)->hFont) return;
 
+    /* FIXME: could set up a mechanism to reuse the line between different
+     * calls to this function
+     */
     if (!(line = HeapAlloc(GetProcessHeap(), 0, data->curcfg.sb_width * sizeof(WCHAR))))
-    {WINE_ERR("OOM\n"); return;}
+        WINECON_Fatal("OOM\n");
 
     hOldFont = SelectObject(PRIVATE(data)->hMemDC, PRIVATE(data)->hFont);
     for (j = upd_tp; j <= upd_bm; j++)
@@ -85,7 +90,7 @@ static void WCUSER_FillMemDC(const struct inner_data* data, int upd_tp, int upd_
  * Either the font geometry or the sb geometry has changed. we need
  * to recreate the bitmap geometry.
  */
-static void WCUSER_NewBitmap(struct inner_data* data, BOOL fill)
+static void WCUSER_NewBitmap(struct inner_data* data)
 {
     HDC         hDC;
     HBITMAP	hnew, hold;
@@ -107,8 +112,7 @@ static void WCUSER_NewBitmap(struct inner_data* data, BOOL fill)
 	    WINE_FIXME("leak\n");
     }
     PRIVATE(data)->hBitmap = hnew;
-    if (fill)
-	WCUSER_FillMemDC(data, 0, data->curcfg.sb_height - 1);
+    WCUSER_FillMemDC(data, 0, data->curcfg.sb_height - 1);
 }
 
 /******************************************************************
@@ -118,7 +122,7 @@ static void WCUSER_NewBitmap(struct inner_data* data, BOOL fill)
  */
 static void WCUSER_ResizeScreenBuffer(struct inner_data* data)
 {
-    WCUSER_NewBitmap(data, FALSE);
+    WCUSER_NewBitmap(data);
 }
 
 /******************************************************************
@@ -140,7 +144,7 @@ static void	WCUSER_PosCursor(const struct inner_data* data)
  *
  * Sets a new shape for the cursor
  */
-void	WCUSER_ShapeCursor(struct inner_data* data, int size, int vis, BOOL force)
+static void	WCUSER_ShapeCursor(struct inner_data* data, int size, int vis, BOOL force)
 {
     if (force || size != data->curcfg.cursor_size)
     {
@@ -155,7 +159,7 @@ void	WCUSER_ShapeCursor(struct inner_data* data, int size, int vis, BOOL force)
 
 	    w16b = ((data->curcfg.cell_width + 15) & ~15) / 8;
 	    ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, w16b * data->curcfg.cell_height);
-	    if (!ptr) {WINE_ERR("OOM\n"); return;}
+	    if (!ptr) WINECON_Fatal("OOM");
 	    nbl = max((data->curcfg.cell_height * size) / 100, 1);
 	    for (j = data->curcfg.cell_height - nbl; j < data->curcfg.cell_height; j++)
 	    {
@@ -190,6 +194,7 @@ void	WCUSER_ShapeCursor(struct inner_data* data, int size, int vis, BOOL force)
 	    }
 	}
     }
+    WINECON_DumpConfig("crsr", &data->curcfg);
 }
 
 /******************************************************************
@@ -207,11 +212,7 @@ void	WCUSER_ComputePositions(struct inner_data* data)
     r.right = data->curcfg.win_width * data->curcfg.cell_width;
     r.bottom = data->curcfg.win_height * data->curcfg.cell_height;
 
-    if (IsRectEmpty(&r))
-    {
-	ShowWindow(PRIVATE(data)->hWnd, SW_HIDE);
-	return;
-    }
+    if (IsRectEmpty(&r)) return;
 
     AdjustWindowRect(&r, GetWindowLong(PRIVATE(data)->hWnd, GWL_STYLE), FALSE);
 
@@ -243,7 +244,7 @@ void	WCUSER_ComputePositions(struct inner_data* data)
     }
 
     SetWindowPos(PRIVATE(data)->hWnd, 0, 0, 0, r.right - r.left + dx, r.bottom - r.top + dy,
-		 SWP_NOMOVE|SWP_NOZORDER|SWP_SHOWWINDOW);
+		 SWP_NOMOVE|SWP_NOZORDER);
     WCUSER_ShapeCursor(data, data->curcfg.cursor_size, data->curcfg.cursor_visible, TRUE);
     WCUSER_PosCursor(data);
 }
@@ -367,18 +368,21 @@ static int CALLBACK get_first_font_enum_2(const LOGFONT* lf, const TEXTMETRIC* t
         mlf.lfHeight = fc->data->curcfg.cell_height;
         if (WCUSER_SetFont(fc->data, &mlf))
         {
+            struct      config_data     defcfg;
+
             WCUSER_DumpLogFont("InitChoosing: ", &mlf, FontType);
             fc->done = 1;
             /* since we've modified the current config with new font information,
              * set this information as the new default.
              */
-            fc->data->defcfg.cell_width = fc->data->curcfg.cell_width;
-            fc->data->defcfg.cell_height = fc->data->curcfg.cell_height;
-            lstrcpyW(fc->data->defcfg.face_name, fc->data->curcfg.face_name);
+            WINECON_RegLoad(NULL, &defcfg);
+            defcfg.cell_width = fc->data->curcfg.cell_width;
+            defcfg.cell_height = fc->data->curcfg.cell_height;
+            lstrcpyW(defcfg.face_name, fc->data->curcfg.face_name);
             /* Force also its writing back to the registry so that we can get it
              * the next time.
              */
-            WINECON_RegSave(&fc->data->defcfg);
+            WINECON_RegSave(&defcfg);
             return 0;
         }
     }
@@ -510,7 +514,7 @@ BOOL	WCUSER_SetFont(struct inner_data* data, const LOGFONT* logfont)
     PRIVATE(data)->hFont = hFont;
 
     WCUSER_ComputePositions(data);
-    WCUSER_NewBitmap(data, TRUE);
+    WCUSER_NewBitmap(data);
     InvalidateRect(PRIVATE(data)->hWnd, NULL, FALSE);
     UpdateWindow(PRIVATE(data)->hWnd);
 
@@ -518,30 +522,27 @@ BOOL	WCUSER_SetFont(struct inner_data* data, const LOGFONT* logfont)
 }
 
 /******************************************************************
- *		WCUSER_InitFont
+ *		WCUSER_SetFontPmt
  *
- * create a hFont from the settings saved in registry...
- * (called on init, assuming no font has been created before)
+ * Sets a new font for the console.
+ * In fact a wrapper for WCUSER_SetFont
  */
-static BOOL	WCUSER_InitFont(struct inner_data* data)
+static void     WCUSER_SetFontPmt(struct inner_data* data, const WCHAR* font,
+                                  unsigned height, unsigned weight)
 {
+    LOGFONT             lf;
     struct font_chooser fc;
 
-    WINE_TRACE_(wc_font)("=> %s\n", wine_dbgstr_wn(data->curcfg.face_name, -1));
-    if (data->curcfg.face_name[0] != '\0' &&
-        data->curcfg.cell_height != 0 &&
-        data->curcfg.font_weight != 0)
+    WINE_TRACE_(wc_font)("=> %s h=%u w=%u\n",
+                         wine_dbgstr_wn(font, -1), height, weight);
+
+    if (font[0] != '\0' && height != 0 && weight != 0)
     {
-        LOGFONT             lf;
-
-        WCUSER_FillLogFont(&lf, data->curcfg.face_name,
-                           data->curcfg.cell_height, data->curcfg.font_weight);
-        if (PRIVATE(data)->hFont != 0) WINE_FIXME("Oh strange\n");
-
+        WCUSER_FillLogFont(&lf, font, height, weight);
         if (WCUSER_SetFont(data, &lf))
         {
             WCUSER_DumpLogFont("InitReuses: ", &lf, 0);
-            return TRUE;
+            return;
         }
     }
 
@@ -550,8 +551,7 @@ static BOOL	WCUSER_InitFont(struct inner_data* data)
     fc.data = data;
     fc.done = 0;
     EnumFontFamilies(PRIVATE(data)->hMemDC, NULL, get_first_font_enum, (LPARAM)&fc);
-    if (!fc.done) WINE_WARN("Couldn't find a decent font, aborting\n");
-    return fc.done;
+    if (!fc.done) WINECON_Fatal("Couldn't find a decent font, aborting\n");
 }
 
 /******************************************************************
@@ -857,8 +857,6 @@ static LRESULT WCUSER_Create(HWND hWnd, LPCREATESTRUCT lpcs)
     data = lpcs->lpCreateParams;
     SetWindowLong(hWnd, 0L, (DWORD)data);
     PRIVATE(data)->hWnd = hWnd;
-
-    data->curcfg.cursor_size = 101; /* invalid value, will trigger a complete cleanup */
 
     hSysMenu = GetSystemMenu(hWnd, FALSE);
     if (!hSysMenu) return 0;
@@ -1343,9 +1341,10 @@ static int WCUSER_MainLoop(struct inner_data* data)
 {
     MSG		msg;
 
+    ShowWindow(PRIVATE(data)->hWnd, SW_SHOW);
     for (;;)
     {
-	switch(MsgWaitForMultipleObjects(1, &data->hSynchro, FALSE, INFINITE, QS_ALLINPUT))
+	switch (MsgWaitForMultipleObjects(1, &data->hSynchro, FALSE, INFINITE, QS_ALLINPUT))
 	{
 	case WAIT_OBJECT_0:
 	    if (!WINECON_GrabChanges(data) && data->curcfg.exit_on_die)
@@ -1392,6 +1391,7 @@ BOOL WCUSER_InitBackend(struct inner_data* data)
     data->fnRefresh = WCUSER_Refresh;
     data->fnResizeScreenBuffer = WCUSER_ResizeScreenBuffer;
     data->fnSetTitle = WCUSER_SetTitle;
+    data->fnSetFont = WCUSER_SetFontPmt;
     data->fnScroll = WCUSER_Scroll;
     data->fnDeleteBackend = WCUSER_DeleteBackend;
 
@@ -1412,11 +1412,6 @@ BOOL WCUSER_InitBackend(struct inner_data* data)
 		 WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MINIMIZEBOX|WS_HSCROLL|WS_VSCROLL,
 		 CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, 0, 0, wndclass.hInstance, data);
     if (!PRIVATE(data)->hWnd) return FALSE;
-
-    /* force update of current data */
-    if (!WINECON_GrabChanges(data)) return FALSE;
-
-    if (!WCUSER_InitFont(data)) return FALSE;
 
     return TRUE;
 }

@@ -32,7 +32,8 @@ struct config_data {
     DWORD       def_attr;
     WCHAR       face_name[32];  /* name of font (size is LF_FACESIZE) */
     DWORD       font_weight;
-    DWORD       history_size;
+    DWORD       history_size;   /* number of commands in history buffer */
+    DWORD       history_nodup;  /* TRUE if commands are not stored twice in buffer */
     DWORD       menu_mask;      /* MK_CONTROL MK_SHIFT mask to drive submenu opening */
     DWORD       quick_edit;     /* whether mouse ops are sent to app (false) or used for content selection (true) */
     unsigned	sb_width;	/* active screen buffer width */
@@ -41,11 +42,11 @@ struct config_data {
     unsigned	win_height;
     COORD	win_pos;	/* position (in cells) of visible part of screen buffer in window */
     BOOL        exit_on_die;    /* whether the wineconsole should quit if server destroys the console */
+    WCHAR*      registry;       /* <x> part of HKLU\\<x>\\Console where config is read from (NULL if default settings) */
 };
 
 struct inner_data {
     struct config_data  curcfg;
-    struct config_data  defcfg;
 
     CHAR_INFO*		cells;		/* local copy of cells (sb_width * sb_height) */
 
@@ -63,12 +64,14 @@ struct inner_data {
     void		(*fnResizeScreenBuffer)(struct inner_data* data);
     void		(*fnSetTitle)(const struct inner_data* data);
     void		(*fnScroll)(struct inner_data* data, int pos, BOOL horz);
+    void                (*fnSetFont)(struct inner_data* data, const WCHAR* font, unsigned height, unsigned weight);
     void		(*fnDeleteBackend)(struct inner_data* data);
 
     void*               private;        /* data part belonging to the choosen backed */
 };
 
 /* from wineconsole.c */
+extern void WINECON_Fatal(const char* msg);
 extern void WINECON_NotifyWindowChange(struct inner_data* data);
 extern int  WINECON_GetHistorySize(HANDLE hConIn);
 extern BOOL WINECON_SetHistorySize(HANDLE hConIn, int size);
@@ -77,10 +80,13 @@ extern BOOL WINECON_SetHistoryMode(HANDLE hConIn, int mode);
 extern BOOL WINECON_GetConsoleTitle(HANDLE hConIn, WCHAR* buffer, size_t len);
 extern void WINECON_FetchCells(struct inner_data* data, int upd_tp, int upd_bm);
 extern int  WINECON_GrabChanges(struct inner_data* data);
-
+extern VOID WINECON_SetConfig(struct inner_data* data,
+                              const struct config_data* cfg, BOOL force);
 /* from registry.c */
-extern BOOL WINECON_RegLoad(struct config_data* cfg);
-extern BOOL WINECON_RegSave(const struct config_data* cfg);
+extern void WINECON_RegLoad(const WCHAR* appname, struct config_data* cfg);
+extern void WINECON_RegSave(const struct config_data* cfg);
+extern void WINECON_DumpConfig(const char* pfx, const struct config_data* cfg);
 
 /* backends... */
 extern BOOL WCUSER_InitBackend(struct inner_data* data);
+extern BOOL WCCURSE_InitBackend(struct inner_data* data);

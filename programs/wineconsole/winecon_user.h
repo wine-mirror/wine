@@ -43,7 +43,6 @@ struct inner_data_user {
 /* from user.c */
 extern COLORREF	WCUSER_ColorMap[16];
 extern BOOL WCUSER_GetProperties(struct inner_data*, BOOL);
-extern BOOL WCUSER_SetFont(struct inner_data* data, const LOGFONT* font);
 extern BOOL WCUSER_ValidateFont(const struct inner_data* data, const LOGFONT* lf);
 extern BOOL WCUSER_ValidateFontMetric(const struct inner_data* data,
                                       const TEXTMETRIC* tm, DWORD fontType);

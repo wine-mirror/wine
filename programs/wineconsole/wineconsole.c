@@ -1,7 +1,7 @@
 /*
  * an application for displaying Win32 console
  *
- * Copyright 2001 Eric Pouech
+ * Copyright 2001, 2002 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,6 +29,12 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wineconsole);
+
+void WINECON_Fatal(const char* msg)
+{
+    WINE_ERR("%s\n", msg);
+    ExitProcess(0);
+}
 
 /******************************************************************
  *		WINECON_FetchCells
@@ -261,7 +267,7 @@ int	WINECON_GrabChanges(struct inner_data* data)
 	    break;
 	case CONSOLE_RENDERER_SB_RESIZE_EVENT:
 	    if (data->curcfg.sb_width != evts[i].u.resize.width ||
-		data->curcfg.sb_height != evts[i].u.resize.height)
+		data->curcfg.sb_height != evts[i].u.resize.height || !data->cells)
 	    {
 		if (WINE_TRACE_ON(wineconsole))
                     WINE_DPRINTF(" resize(%d,%d)", evts[i].u.resize.width, evts[i].u.resize.height);
@@ -270,7 +276,7 @@ int	WINECON_GrabChanges(struct inner_data* data)
 
 		data->cells = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, data->cells,
 					  data->curcfg.sb_width * data->curcfg.sb_height * sizeof(CHAR_INFO));
-		if (!data->cells) {WINE_ERR("OOM\n"); exit(0);}
+		if (!data->cells) WINECON_Fatal("OOM\n");
 		data->fnResizeScreenBuffer(data);
 		data->fnComputePositions(data);
 	    }
@@ -339,6 +345,81 @@ int	WINECON_GrabChanges(struct inner_data* data)
 }
 
 /******************************************************************
+ *		WINECON_SetConfig
+ *
+ * Apply to data all the configuration elements from cfg. This includes modification
+ * of server side equivalent and visual parts.
+ * If force is FALSE, only the changed items are modified.
+ */
+void     WINECON_SetConfig(struct inner_data* data,
+                           const struct config_data* cfg, BOOL force)
+{
+    if (force || data->curcfg.cursor_size != cfg->cursor_size ||
+        data->curcfg.cursor_visible != cfg->cursor_visible)
+    {
+        CONSOLE_CURSOR_INFO cinfo;
+        cinfo.dwSize = cfg->cursor_size;
+        /* <FIXME>: this hack is needed to pass thru the invariant test operation on server side
+         * (no notification is sent when invariant operation is requested
+         */
+        cinfo.bVisible = !cfg->cursor_visible;
+        SetConsoleCursorInfo(data->hConOut, &cinfo);
+        /* </FIXME> */
+        cinfo.bVisible = cfg->cursor_visible;
+        /* this shall update (through notif) curcfg */
+        SetConsoleCursorInfo(data->hConOut, &cinfo);
+    }
+    if (force || data->curcfg.history_size != cfg->history_size)
+    {
+        data->curcfg.history_size = cfg->history_size;
+        WINECON_SetHistorySize(data->hConIn, cfg->history_size);
+    }
+    if (force || data->curcfg.history_nodup != cfg->history_nodup)
+    {
+        data->curcfg.history_nodup = cfg->history_nodup;
+        WINECON_SetHistoryMode(data->hConIn, cfg->history_nodup);
+    }
+    data->curcfg.menu_mask = cfg->menu_mask;
+    data->curcfg.quick_edit = cfg->quick_edit;
+    if (force || 1 /* FIXME: font info has changed */)
+    {
+        data->fnSetFont(data, cfg->face_name, cfg->cell_height, cfg->font_weight);
+    }
+    if (force || data->curcfg.def_attr != cfg->def_attr)
+    {
+        data->curcfg.def_attr = cfg->def_attr;
+        SetConsoleTextAttribute(data->hConOut, cfg->def_attr);
+    }
+    if (force || data->curcfg.sb_width != cfg->sb_width ||
+        data->curcfg.sb_height != cfg->sb_height)
+    {
+        COORD       c;
+
+        c.X = cfg->sb_width;
+        c.Y = cfg->sb_height;
+
+        /* this shall update (through notif) curcfg */
+        SetConsoleScreenBufferSize(data->hConOut, c);
+    }
+    if (force || data->curcfg.win_width != cfg->win_width ||
+        data->curcfg.win_height != cfg->win_height)
+    {
+        SMALL_RECT  pos;
+
+        pos.Left = pos.Top = 0;
+        pos.Right = cfg->win_width - 1;
+        pos.Bottom = cfg->win_height - 1;
+        /* this shall update (through notif) curcfg */
+        SetConsoleWindowInfo(data->hConOut, FALSE, &pos);
+    }
+    data->curcfg.exit_on_die = cfg->exit_on_die;
+    /* we now need to gather all events we got from the operations above,
+     * in order to get data correctly updated
+     */
+    WINECON_GrabChanges(data);
+}
+
+/******************************************************************
  *		WINECON_Delete
  *
  * Destroy wineconsole internal data
@@ -361,18 +442,40 @@ static void WINECON_Delete(struct inner_data* data)
  * Initialisation part I. Creation of server object (console input and
  * active screen buffer)
  */
-static struct inner_data* WINECON_Init(HINSTANCE hInst, void* pid)
+static struct inner_data* WINECON_Init(HINSTANCE hInst, void* pid, LPCWSTR appname,
+                                       BOOL (*backend)(struct inner_data*))
 {
     struct inner_data*	data = NULL;
     DWORD		ret;
-    WCHAR		szTitle[] = {'W','i','n','e',' ','c','o','n','s','o','l','e',0};
+    struct config_data  cfg;
+    STARTUPINFOW        si;
 
     data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data));
     if (!data) return 0;
 
-    /* load default registry settings, and copy them into our current configuration */
-    WINECON_RegLoad(&data->defcfg);
-    data->curcfg = data->defcfg;
+    GetStartupInfo(&si);
+
+    if (pid == 0)
+    {
+        if (!si.lpTitle) WINECON_Fatal("Should have a title set");
+        appname = si.lpTitle;
+    }
+
+    /* load settings */
+    WINECON_RegLoad(appname, &cfg);
+
+    /* some overrides */
+    if (pid == 0)
+    {
+        if (si.dwFlags & STARTF_USECOUNTCHARS)
+        {
+            cfg.sb_width  = si.dwXCountChars;
+            cfg.sb_height = si.dwYCountChars;
+        }
+        if (si.dwFlags & STARTF_USEFILLATTRIBUTE)
+            cfg.def_attr = si.dwFillAttribute;
+        /* should always be defined */
+    }
 
     /* the handles here are created without the whistles and bells required by console
      * (mainly because wineconsole doesn't need it)
@@ -390,13 +493,13 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, void* pid)
     }
     SERVER_END_REQ;
     if (!ret) goto error;
-    WINE_TRACE("using hConIn event %p, hSynchro event %p\n", data->hConIn, data->hSynchro);
+    WINE_TRACE("using hConIn %p, hSynchro event %p\n", data->hConIn, data->hSynchro);
 
     SERVER_START_REQ( set_console_input_info )
     {
         req->handle = (obj_handle_t)data->hConIn;
         req->mask = SET_CONSOLE_INPUT_INFO_TITLE;
-        wine_server_add_data( req, szTitle, strlenW(szTitle) * sizeof(WCHAR) );
+        wine_server_add_data( req, appname, strlenW(appname) * sizeof(WCHAR) );
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
@@ -408,12 +511,25 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, void* pid)
         req->access    = GENERIC_WRITE|GENERIC_READ;
         req->share     = FILE_SHARE_READ|FILE_SHARE_WRITE;
         req->inherit   = FALSE;
-        data->hConOut  = (HANDLE)(wine_server_call_err( req ) ? 0 : reply->handle_out);
+        ret = !wine_server_call_err( req );
+        data->hConOut  = (HANDLE)reply->handle_out;
     }
     SERVER_END_REQ;
-    if (data->hConOut) return data;
+    if (!ret) goto error;
+    WINE_TRACE("using hConOut %p\n", data->hConOut);
+
+    /* filling data->curcfg from cfg */
+    if ((*backend)(data))
+    {
+        WINECON_SetConfig(data, &cfg, TRUE);
+        data->curcfg.registry = cfg.registry;
+        WINECON_DumpConfig("fint", &data->curcfg);
+        return data;
+    }
 
  error:
+    WINE_ERR("failed to init.\n");
+
     WINECON_Delete(data);
     return NULL;
 }
@@ -423,11 +539,10 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, void* pid)
  *
  * Spawn the child process when invoked with wineconsole foo bar
  */
-static BOOL WINECON_Spawn(struct inner_data* data, LPCSTR lpCmdLine)
+static BOOL WINECON_Spawn(struct inner_data* data, LPWSTR cmdLine)
 {
     PROCESS_INFORMATION	info;
     STARTUPINFO		startup;
-    LPWSTR		ptr = GetCommandLine(); /* we're unicode... */
     BOOL		done;
 
     /* we're in the case wineconsole <exe> <options>... spawn the new process */
@@ -443,21 +558,14 @@ static BOOL WINECON_Spawn(struct inner_data* data, LPCSTR lpCmdLine)
 	!DuplicateHandle(GetCurrentProcess(), data->hConOut, GetCurrentProcess(),
 			 &startup.hStdOutput, GENERIC_READ|GENERIC_WRITE, TRUE, 0) ||
 	!DuplicateHandle(GetCurrentProcess(), data->hConOut, GetCurrentProcess(),
-			     &startup.hStdError, GENERIC_READ|GENERIC_WRITE, TRUE, 0))
+                         &startup.hStdError, GENERIC_READ|GENERIC_WRITE, TRUE, 0))
     {
 	WINE_ERR("Can't dup handles\n");
 	/* no need to delete handles, we're exiting the programm anyway */
 	return FALSE;
     }
 
-    /* we could have several ' ' in process command line... so try first space...
-     * FIXME:
-     * the correct way would be to check the existence of the left part of ptr
-     * (to be a file)
-     */
-    while (*ptr && *ptr++ != ' ');
-
-    done = *ptr && CreateProcess(NULL, ptr, NULL, NULL, TRUE, 0L, NULL, NULL, &startup, &info);
+    done = CreateProcess(NULL, cmdLine, NULL, NULL, TRUE, 0L, NULL, NULL, &startup, &info);
 
     /* we no longer need the handles passed to the child for the console */
     CloseHandle(startup.hStdInput);
@@ -492,15 +600,14 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdSh
     struct inner_data*	data;
     int			ret = 1;
     unsigned		evt;
+    BOOL                (*backend)(struct inner_data*);
+
+    backend = WCUSER_InitBackend;
 
     /* case of wineconsole <evt>, signal process that created us that we're up and running */
     if (WINECON_HasEvent(lpCmdLine, &evt))
     {
-        if (!(data = WINECON_Init(hInst, 0)))
-	{
-	    WINE_ERR("failed to init1 wineconsole.\n");
-	    return 0;
-	}
+        if (!(data = WINECON_Init(hInst, 0, NULL, backend))) return 0;
 	ret = SetEvent((HANDLE)evt);
 	if (!ret)
 	{
@@ -510,12 +617,26 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdSh
     }
     else
     {
-        if (!(data = WINECON_Init(hInst, (void*)GetCurrentProcessId())))
-	{
-	    WINE_ERR("failed to init2 wineconsole.\n");
-	    return 0;
-	}
-	ret = WINECON_Spawn(data, lpCmdLine);
+        LPWSTR		wcmdLine = GetCommandLine() /* we're unicode... */;
+        LPWSTR          src, dst;
+        WCHAR           buffer[256];
+
+        /* remove wineconsole from commandline...
+         * we could have several ' ' in process command line... so try first space...
+         */
+        /* FIXME:
+         * the correct way would be to check the existence of the left part of ptr
+         * (to be a file)
+         */
+        while (*wcmdLine && *wcmdLine++ != ' ');
+
+        /* FIXME: see above */
+        src = wcmdLine; dst = buffer;
+        while (*src && *src != ' ') *dst++ = *src++;
+        *dst = 0;
+
+        if (!(data = WINECON_Init(hInst, (void*)GetCurrentProcessId(), buffer, backend))) return 0;
+	ret = WINECON_Spawn(data, wcmdLine);
         if (!ret)
 	{
 	    WINE_MESSAGE("wineconsole: spawning client program failed. Invalid/missing command line arguments ?\n");
@@ -523,13 +644,11 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdSh
 	}
     }
 
-    if (WCUSER_InitBackend(data))
+    if (ret)
     {
 	WINE_TRACE("calling MainLoop.\n");
 	ret = data->fnMainLoop(data);
     }
-    else
-	WINE_ERR("WCUSER_InitBackend failed.\n");
 
 cleanup:
     WINECON_Delete(data);
