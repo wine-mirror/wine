@@ -1907,6 +1907,7 @@ static void PROPSHEET_CleanUp(HWND hwndDlg)
                                                        PropSheetInfoStr);
 
   TRACE("\n");
+  if (!psInfo) return;
   if (HIWORD(psInfo->ppshheader.pszCaption))
       HeapFree(GetProcessHeap(), 0, (LPVOID)psInfo->ppshheader.pszCaption);
 
