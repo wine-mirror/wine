@@ -86,7 +86,7 @@ typedef struct
 
 INT16 WINAPI __WSAFDIsSet16( SOCKET16, ws_fd_set16 * );
 INT32 WINAPI __WSAFDIsSet32( SOCKET32, ws_fd_set32 * );
-#define __WSAFDIsSet WINELIB_NAME(__WSAFDIsSet);
+#define __WSAFDIsSet WINELIB_NAME(__WSAFDIsSet)
 
 #define __WS_FD_CLR(fd, set, cast) do { \
     UINT16 __i; \
@@ -107,7 +107,7 @@ INT32 WINAPI __WSAFDIsSet32( SOCKET32, ws_fd_set32 * );
 } while(0)
 #define WS_FD_CLR16(fd, set)	__WS_FD_CLR((fd),(set), ws_fd_set16)
 #define WS_FD_CLR32(fd, set)	__WS_FD_CLR((fd),(set), ws_fd_set32)
-#define WS_FD_CLR 		WINELIB_NAME(WS_FD_CLR);
+#define WS_FD_CLR 		WINELIB_NAME(WS_FD_CLR)
 
 #define __WS_FD_SET(fd, set, cast) do { \
     if (((cast*)(set))->fd_count < FD_SETSIZE) \
@@ -115,15 +115,15 @@ INT32 WINAPI __WSAFDIsSet32( SOCKET32, ws_fd_set32 * );
 } while(0)
 #define WS_FD_SET16(fd, set)    __WS_FD_SET((fd),(set), ws_fd_set16)
 #define WS_FD_SET32(fd, set)    __WS_FD_SET((fd),(set), ws_fd_set32)
-#define WS_FD_SET		WINELIB_NAME(WS_FD_SET);
+#define WS_FD_SET		WINELIB_NAME(WS_FD_SET)
 
 #define WS_FD_ZERO16(set) (((ws_fd_set16*)(set))->fd_count=0)
 #define WS_FD_ZERO32(set) (((ws_fd_set32*)(set))->fd_count=0)
-#define WS_FD_ZERO		WINELIB_NAME(WS_FD_ZERO);
+#define WS_FD_ZERO		WINELIB_NAME(WS_FD_ZERO)
 
 #define WS_FD_ISSET16(fd, set) __WSAFDIsSet16((SOCKET16)(fd), (ws_fd_set16*)(set))
 #define WS_FD_ISSET32(fd, set) __WSAFDIsSet32((SOCKET32)(fd), (ws_fd_set32*)(set))
-#define WS_FD_ISSET		WINELIB_NAME(WS_FD_ISSET);
+#define WS_FD_ISSET		WINELIB_NAME(WS_FD_ISSET)
 
 /* 
  * Internet address (old style... should be updated) 
@@ -371,10 +371,10 @@ extern "C" {
 
 INT16     WINAPI WSAStartup16(UINT16 wVersionRequired, LPWSADATA lpWSAData);
 INT32     WINAPI WSAStartup32(UINT32 wVersionRequired, LPWSADATA lpWSAData);
-#define   WSAStartup WINELIB_NAME(WSAStartup);
+#define   WSAStartup WINELIB_NAME(WSAStartup)
 void      WINAPI WSASetLastError16(INT16 iError);
 void      WINAPI WSASetLastError32(INT32 iError);
-#define   WSASetLastError WINELIB_NAME(WSASetLastError);
+#define   WSASetLastError WINELIB_NAME(WSASetLastError)
 INT32     WINAPI WSACleanup(void);
 INT32     WINAPI WSAGetLastError(void);
 BOOL32    WINAPI WSAIsBlocking(void);

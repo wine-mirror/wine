@@ -87,7 +87,6 @@ extern LPEXTRACTICON	IExtractIcon_Constructor(LPITEMIDLIST);
 
 /* FIXME should be moved to a header file. IsEqualGUID 
 is declared but not exported in compobj.c !!!*/
-#define IsEqualGUID(rguid1, rguid2) (!memcmp(rguid1, rguid2, sizeof(GUID)))
 #define IsEqualIID(riid1, riid2) IsEqualGUID(riid1, riid2)
 #define IsEqualCLSID(rclsid1, rclsid2) IsEqualGUID(rclsid1, rclsid2)
 
