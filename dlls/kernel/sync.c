@@ -45,9 +45,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(win32);
 
-/*
- * Events
- */
+/* check if current version is NT or Win95 */
+inline static int is_version_nt(void)
+{
+    return !(GetVersion() & 0x80000000);
+}
 
 
 /***********************************************************************
@@ -145,6 +147,8 @@ HANDLE WINAPI OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
+    if (!is_version_nt()) access = EVENT_ALL_ACCESS;
+
     SERVER_START_REQ( open_event )
     {
         req->access  = access;
@@ -327,6 +331,8 @@ HANDLE WINAPI OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
+    if (!is_version_nt()) access = MUTEX_ALL_ACCESS;
+
     SERVER_START_REQ( open_mutex )
     {
         req->access  = access;
@@ -446,6 +452,8 @@ HANDLE WINAPI OpenSemaphoreW( DWORD access, BOOL inherit, LPCWSTR name )
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
+    if (!is_version_nt()) access = SEMAPHORE_ALL_ACCESS;
+
     SERVER_START_REQ( open_semaphore )
     {
         req->access  = access;
