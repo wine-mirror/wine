@@ -1,3 +1,4 @@
 Makefile
+propvariant.ok
 storage32.ok
 testlist.c
