@@ -3987,9 +3987,7 @@ typedef enum tagSID_NAME_USE {
 				KEY_CREATE_SUB_KEY)  \
 				& (~SYNCHRONIZE)  \
 			      )
-#define KEY_EXECUTE	      ((KEY_READ)  \
-				& (~SYNCHRONIZE))  \
-			      )
+#define KEY_EXECUTE           ((KEY_READ) & (~SYNCHRONIZE))
 #define KEY_ALL_ACCESS        ((STANDARD_RIGHTS_ALL|  \
 				KEY_QUERY_VALUE|  \
 				KEY_SET_VALUE|  \
