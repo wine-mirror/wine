@@ -359,6 +359,36 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 			
 			format = GL_RGBA;
 			pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
+		    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x7C00) &&
+			       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x03E0) &&
+			       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x001F) &&
+			       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000)) {
+		        /* Converting the 0555 format in 5551 packed */
+		        DWORD i;
+			WORD *src = (WORD *) src_d->lpSurface, *dst;
+			
+			surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+						     src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+			dst = (WORD *) surface;
+			
+			if (src_d->dwFlags & DDSD_CKSRCBLT) {
+			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+			        WORD color = *src++;
+				*dst = (color & 0x7FFF) << 1;
+				if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+				    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+				    *dst |= 0x0001;
+				dst++;
+			    }
+			} else {
+			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+			        WORD color = *src++;
+				*dst++ = ((color & 0x7FFF) << 1) | 0x0001;
+			    }
+			}
+			
+			format = GL_RGBA;
+			pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
 		    } else {
 		        error = TRUE;
 		    }
@@ -443,6 +473,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 			        DWORD color = *src++; 
 				*dst  = (color & 0x00FFFFFF) << 8; 
 				*dst |= (color & 0xFF000000) >> 24;
+				dst++;
 			    }
 			}
 			format = GL_RGBA;
@@ -470,8 +501,8 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 			} else {
 			    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
 			        *dst++ = (*src++ << 8) | 0xFF;
-			      }
-			  }
+			    }
+			}
 			format = GL_RGBA;
 			pixel_format = GL_UNSIGNED_INT_8_8_8_8;
 		    } else {

@@ -360,17 +360,6 @@ Thunk_IDirect3DImpl_2_EnumDevices(LPDIRECT3D2 iface,
 }
 
 HRESULT WINAPI
-Thunk_IDirect3DImpl_1_EnumDevices(LPDIRECT3D iface,
-                                  LPD3DENUMDEVICESCALLBACK lpEnumDevicesCallback,
-                                  LPVOID lpUserArg)
-{
-    TRACE("(%p)->(%p,%p) thunking to IDirect3D3 interface.\n", iface, lpEnumDevicesCallback, lpUserArg);
-    return IDirect3D3_EnumDevices(COM_INTERFACE_CAST(IDirect3DImpl, IDirect3D, IDirect3D3, iface),
-                                  lpEnumDevicesCallback,
-                                  lpUserArg);
-}
-
-HRESULT WINAPI
 Thunk_IDirect3DImpl_2_CreateLight(LPDIRECT3D2 iface,
                                   LPDIRECT3DLIGHT* lplpDirect3DLight,
                                   IUnknown* pUnkOuter)

@@ -461,7 +461,8 @@ void set_render_state(IDirect3DDeviceImpl* This,
 		break;
 
 	    default:
-	        ERR("Unhandled dwRenderStateType %s (%08x) !\n", _get_renderstate(dwRenderStateType), dwRenderStateType);
+	        ERR("Unhandled dwRenderStateType %s (%08x) value : %08lx !\n",
+		    _get_renderstate(dwRenderStateType), dwRenderStateType, dwRenderState);
 	}
 	LEAVE_GL();
     }

@@ -37,6 +37,7 @@
 #include "main.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
+WINE_DECLARE_DEBUG_CHANNEL(ddraw_geom);
 
 /* x11drv GDI escapes */
 #define X11DRV_ESCAPE 6789
@@ -278,7 +279,7 @@ static void fill_device_capabilities(IDirectDrawImpl* ddraw)
 
 
 
-HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context)
+HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context, DWORD version)
 {
     D3DDEVICEDESC dref, d1, d2;
     HRESULT ret_value;
@@ -290,14 +291,15 @@ HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context)
 
     fill_opengl_caps(&dref);
 
-#if 0 /* FIXME: Reference device enumeration should be enable/disable in the configuration file */
-    TRACE(" enumerating OpenGL D3DDevice interface using reference IID (IID %s).\n", debugstr_guid(&IID_IDirect3DRefDevice));
-    d1 = dref;
-    d2 = dref;
-    ret_value = cb((LPIID) &IID_IDirect3DRefDevice, "WINE Reference Direct3DX using OpenGL", device_name, &d1, &d2, context);
-    if (ret_value != D3DENUMRET_OK)
-        return ret_value;
-#endif
+    if (version > 1) {
+        /* It seems that enumerating the reference IID on Direct3D 1 games (AvP / Motoracer2) breaks them */
+        TRACE(" enumerating OpenGL D3DDevice interface using reference IID (IID %s).\n", debugstr_guid(&IID_IDirect3DRefDevice));
+	d1 = dref;
+	d2 = dref;
+	ret_value = cb((LPIID) &IID_IDirect3DRefDevice, "WINE Reference Direct3DX using OpenGL", device_name, &d1, &d2, context);
+	if (ret_value != D3DENUMRET_OK)
+	    return ret_value;
+    }
     
     TRACE(" enumerating OpenGL D3DDevice interface (IID %s).\n", debugstr_guid(&IID_D3DDEVICE_OpenGL));
     d1 = dref;
@@ -441,16 +443,6 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
     if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
     if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
 
-    TRACE("Enumerating GL_RGB packed GL_UNSIGNED_SHORT_5_6_5 (16)\n");
-    pformat->dwFlags = DDPF_RGB;
-    pformat->u1.dwRGBBitCount = 16;
-    pformat->u2.dwRBitMask = 0x0000F800;
-    pformat->u3.dwGBitMask = 0x000007E0;
-    pformat->u4.dwBBitMask = 0x0000001F;
-    pformat->u5.dwRGBAlphaBitMask = 0x00000000;
-    if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
-    if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
-
     /* Note : even if this is an 'emulated' texture format, it needs to be first
               as some dumb applications seem to rely on that. */
     TRACE("Enumerating GL_RGBA packed GL_UNSIGNED_SHORT_1_5_5_5 (ARGB) (16)\n");
@@ -473,6 +465,26 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
     if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
     if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
 
+    TRACE("Enumerating GL_RGB packed GL_UNSIGNED_SHORT_5_6_5 (16)\n");
+    pformat->dwFlags = DDPF_RGB;
+    pformat->u1.dwRGBBitCount = 16;
+    pformat->u2.dwRBitMask = 0x0000F800;
+    pformat->u3.dwGBitMask = 0x000007E0;
+    pformat->u4.dwBBitMask = 0x0000001F;
+    pformat->u5.dwRGBAlphaBitMask = 0x00000000;
+    if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
+    if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
+
+    TRACE("Enumerating GL_RGB packed GL_UNSIGNED_SHORT_5_5_5 (16)\n");
+    pformat->dwFlags = DDPF_RGB;
+    pformat->u1.dwRGBBitCount = 16;
+    pformat->u2.dwRBitMask = 0x00007C00;
+    pformat->u3.dwGBitMask = 0x000003E0;
+    pformat->u4.dwBBitMask = 0x0000001F;
+    pformat->u5.dwRGBAlphaBitMask = 0x00000000;
+    if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
+    if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
+    
 #if 0
     /* This is a compromise : some games choose the first 16 bit texture format with alpha they
        find enumerated, others the last one. And both want to have the ARGB one.
@@ -1073,6 +1085,10 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 {
     BOOLEAN vertex_lighted = FALSE;
     IDirect3DDeviceGLImpl* glThis = (IDirect3DDeviceGLImpl*) This;
+    int num_active_stages = 0;
+
+    /* Compute the number of active texture stages */
+    while (This->current_texture[num_active_stages] != NULL) num_active_stages++;
 
     /* This is to prevent 'thread contention' between a thread locking the device and another
        doing 3D display on it... */
@@ -1097,7 +1113,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
     draw_primitive_start_GL(d3dptPrimitiveType);
 
     /* Some fast paths first before the generic case.... */
-    if (d3dvtVertexType == D3DFVF_VERTEX) {
+    if ((d3dvtVertexType == D3DFVF_VERTEX) && (num_active_stages <= 1)) {
 	int index;
 	
 	for (index = 0; index < dwIndexCount; index++) {
@@ -1113,12 +1129,12 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 	    handle_texture(tex_coord);
 	    handle_xyz(position);
 	    
-	    TRACE(" %f %f %f / %f %f %f (%f %f)\n",
-		  position[0], position[1], position[2],
-		  normal[0], normal[1], normal[2],
-		  tex_coord[0], tex_coord[1]);
+	    TRACE_(ddraw_geom)(" %f %f %f / %f %f %f (%f %f)\n",
+			       position[0], position[1], position[2],
+			       normal[0], normal[1], normal[2],
+			       tex_coord[0], tex_coord[1]);
 	}
-    } else if (d3dvtVertexType == D3DFVF_TLVERTEX) {
+    } else if ((d3dvtVertexType == D3DFVF_TLVERTEX) && (num_active_stages <= 1)) {
 	int index;
 	
 	for (index = 0; index < dwIndexCount; index++) {
@@ -1136,17 +1152,17 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 	    handle_texture(tex_coord);
 	    handle_xyzrhw(position);
 
-	    TRACE(" %f %f %f %f / %02lx %02lx %02lx %02lx - %02lx %02lx %02lx %02lx (%f %f)\n",
-		  position[0], position[1], position[2], position[3], 
-		  (*color_d >> 16) & 0xFF,
-		  (*color_d >>  8) & 0xFF,
-		  (*color_d >>  0) & 0xFF,
-		  (*color_d >> 24) & 0xFF,
-		  (*color_s >> 16) & 0xFF,
-		  (*color_s >>  8) & 0xFF,
-		  (*color_s >>  0) & 0xFF,
-		  (*color_s >> 24) & 0xFF,
-		  tex_coord[0], tex_coord[1]);
+	    TRACE_(ddraw_geom)(" %f %f %f %f / %02lx %02lx %02lx %02lx - %02lx %02lx %02lx %02lx (%f %f)\n",
+			       position[0], position[1], position[2], position[3], 
+			       (*color_d >> 16) & 0xFF,
+			       (*color_d >>  8) & 0xFF,
+			       (*color_d >>  0) & 0xFF,
+			       (*color_d >> 24) & 0xFF,
+			       (*color_s >> 16) & 0xFF,
+			       (*color_s >>  8) & 0xFF,
+			       (*color_s >>  0) & 0xFF,
+			       (*color_s >> 24) & 0xFF,
+			       tex_coord[0], tex_coord[1]);
 	} 
     } else if (((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZ) ||
 	       ((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW)) {
@@ -1154,8 +1170,12 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 	   Note that people should write a fast path for all vertex formats out there...
 	*/  
 	int index;
+	int num_tex_index = ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT);
+	static const D3DVALUE no_index[] = { 0.0, 0.0, 0.0, 0.0 };
+	  
 	for (index = 0; index < dwIndexCount; index++) {
 	    int i = (dwIndices == NULL) ? index : dwIndices[index];
+	    int tex_stage;
 
 	    if (d3dvtVertexType & D3DFVF_NORMAL) { 
 	        D3DVALUE *normal = 
@@ -1179,21 +1199,19 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 		    handle_diffuse(&(This->state_block), color_d, vertex_lighted);
 		}
 	    }
-		
-	    if (((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT) == 1) {
-                /* Special case for single texture... */
-	        D3DVALUE *tex_coord =
-		  (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->textureCoords[0].lpvData) + i * lpD3DDrawPrimStrideData->textureCoords[0].dwStride);
-	        handle_texture(tex_coord);
-	    } else {
-	        int tex_index;
-		for (tex_index = 0; tex_index < ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); tex_index++) {
-                    D3DVALUE *tex_coord =
-		      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->textureCoords[tex_index].lpvData) + 
-				    i * lpD3DDrawPrimStrideData->textureCoords[tex_index].dwStride);
-		    handle_textures(tex_coord, tex_index);
+
+	    for (tex_stage = 0; tex_stage < num_active_stages; tex_stage++) {
+	        int tex_index = This->state_block.texture_stage_state[tex_stage][D3DTSS_TEXCOORDINDEX - 1] & 0xFFFF000;
+		if (tex_index >= num_tex_index) {
+		    handle_textures((D3DVALUE *) no_index, tex_stage);
+		 } else {
+		     D3DVALUE *tex_coord =
+		       (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->textureCoords[tex_index].lpvData) + 
+				     i * lpD3DDrawPrimStrideData->textureCoords[tex_index].dwStride);
+		     handle_textures(tex_coord, tex_stage);
 		}
 	    }
+	    
 	    if ((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZ) {
 	        D3DVALUE *position =
 		  (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->position.lpvData) + i * lpD3DDrawPrimStrideData->position.dwStride);
@@ -1204,48 +1222,48 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 		handle_xyzrhw(position);
 	    }
 
-	    if (TRACE_ON(ddraw)) {
+	    if (TRACE_ON(ddraw_geom)) {
 	        int tex_index;
 
 		if ((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZ) {
 		    D3DVALUE *position =
 		      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->position.lpvData) + i * lpD3DDrawPrimStrideData->position.dwStride);
-		    TRACE(" %f %f %f", position[0], position[1], position[2]);
+		    TRACE_(ddraw_geom)(" %f %f %f", position[0], position[1], position[2]);
 		} else if ((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW) {
 		    D3DVALUE *position =
 		      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->position.lpvData) + i * lpD3DDrawPrimStrideData->position.dwStride);
-		    TRACE(" %f %f %f %f", position[0], position[1], position[2], position[3]);
+		    TRACE_(ddraw_geom)(" %f %f %f %f", position[0], position[1], position[2], position[3]);
 		}
 	        if (d3dvtVertexType & D3DFVF_NORMAL) { 
 		    D3DVALUE *normal = 
 		      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->normal.lpvData) + i * lpD3DDrawPrimStrideData->normal.dwStride);	    
-		    TRACE(" / %f %f %f", normal[0], normal[1], normal[2]);
+		    TRACE_(ddraw_geom)(" / %f %f %f", normal[0], normal[1], normal[2]);
 		}
 		if (d3dvtVertexType & D3DFVF_DIFFUSE) {
 		    DWORD *color_d = 
 		      (DWORD *) (((char *) lpD3DDrawPrimStrideData->diffuse.lpvData) + i * lpD3DDrawPrimStrideData->diffuse.dwStride);
-		    TRACE(" / %02lx %02lx %02lx %02lx",
-			    (*color_d >> 16) & 0xFF,
-			    (*color_d >>  8) & 0xFF,
-			    (*color_d >>  0) & 0xFF,
-			    (*color_d >> 24) & 0xFF);
+		    TRACE_(ddraw_geom)(" / %02lx %02lx %02lx %02lx",
+				       (*color_d >> 16) & 0xFF,
+				       (*color_d >>  8) & 0xFF,
+				       (*color_d >>  0) & 0xFF,
+				       (*color_d >> 24) & 0xFF);
 		}
 	        if (d3dvtVertexType & D3DFVF_SPECULAR) { 
 		    DWORD *color_s = 
 		      (DWORD *) (((char *) lpD3DDrawPrimStrideData->specular.lpvData) + i * lpD3DDrawPrimStrideData->specular.dwStride);
-		    TRACE(" / %02lx %02lx %02lx %02lx",
-			    (*color_s >> 16) & 0xFF,
-			    (*color_s >>  8) & 0xFF,
-			    (*color_s >>  0) & 0xFF,
-			    (*color_s >> 24) & 0xFF);
+		    TRACE_(ddraw_geom)(" / %02lx %02lx %02lx %02lx",
+				       (*color_s >> 16) & 0xFF,
+				       (*color_s >>  8) & 0xFF,
+				       (*color_s >>  0) & 0xFF,
+				       (*color_s >> 24) & 0xFF);
 		}
 		for (tex_index = 0; tex_index < ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); tex_index++) {
                     D3DVALUE *tex_coord =
 		      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->textureCoords[tex_index].lpvData) + 
 				    i * lpD3DDrawPrimStrideData->textureCoords[tex_index].dwStride);
-		    TRACE(" / %f %f", tex_coord[0], tex_coord[1]);
+		    TRACE_(ddraw_geom)(" / %f %f", tex_coord[0], tex_coord[1]);
 		}
-		TRACE("\n");
+		TRACE_(ddraw_geom)("\n");
 	    }
 	}
     } else {
@@ -1516,22 +1534,22 @@ handle_color_alpha_args(DWORD dwStage, D3DTEXTURESTAGESTATETYPE d3dTexStageState
 
     switch (dwState) {
         case D3DTA_CURRENT: src = GL_PREVIOUS_EXT; break;
-	case D3DTA_DIFFUSE: src = GL_PRIMARY_COLOR_ARB; break;
+	case D3DTA_DIFFUSE: src = GL_PRIMARY_COLOR_EXT; break;
 	case D3DTA_TEXTURE: src = GL_TEXTURE; break;
-	case D3DTA_TFACTOR: src = GL_CONSTANT_ARB; FIXME(" no handling yet of setting of constant value !\n"); break;
+	case D3DTA_TFACTOR: src = GL_CONSTANT_EXT; FIXME(" no handling yet of setting of constant value !\n"); break;
 	default: src = GL_TEXTURE; handled = FALSE; break;
     }
 
     if (is_color) {
-        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB + num, src);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT + num, src);
 	if (is_alpha_replicate) {
-	    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_ARB + num, is_complement ? GL_ONE_MINUS_SRC_ALPHA : GL_SRC_ALPHA);
+	    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT + num, is_complement ? GL_ONE_MINUS_SRC_ALPHA : GL_SRC_ALPHA);
 	} else {
-	    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_ARB + num, is_complement ? GL_ONE_MINUS_SRC_COLOR : GL_SRC_COLOR);
+	    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT + num, is_complement ? GL_ONE_MINUS_SRC_COLOR : GL_SRC_COLOR);
 	}
     } else {
-        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB + num, src);
-	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_ARB + num, is_complement ? GL_ONE_MINUS_SRC_ALPHA : GL_SRC_ALPHA);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_EXT + num, src);
+	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_EXT + num, is_complement ? GL_ONE_MINUS_SRC_ALPHA : GL_SRC_ALPHA);
     }
 
     return handled;
@@ -1652,7 +1670,7 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 	case D3DTSS_ALPHAOP:
 	case D3DTSS_COLOROP: {
             int scale = 1;
-            GLenum parm = (d3dTexStageStateType == D3DTSS_ALPHAOP) ? GL_COMBINE_ALPHA_ARB : GL_COMBINE_RGB_ARB;
+            GLenum parm = (d3dTexStageStateType == D3DTSS_ALPHAOP) ? GL_COMBINE_ALPHA_EXT : GL_COMBINE_RGB_EXT;
 	    const char *value;
 	    int handled = 1;
 	    
@@ -1697,9 +1715,9 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 		    TRACE(" enabling 2D texturing.\n");
 		}
 		
-                /* Re-Enable GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB */
+                /* Re-Enable GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT */
                 if (dwState != D3DTOP_DISABLE) {
-                    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
+                    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
                 }
 
                 /* Now set up the operand correctly */
@@ -1730,7 +1748,7 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 		    case D3DTOP_ADDSIGNED2X:
 			scale = scale * 2;  /* Drop through */
 		    case D3DTOP_ADDSIGNED:
-			glTexEnvi(GL_TEXTURE_ENV, parm, GL_ADD_SIGNED_ARB);
+			glTexEnvi(GL_TEXTURE_ENV, parm, GL_ADD_SIGNED_EXT);
 			break;
 
 		    default:
@@ -1763,7 +1781,7 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 	        if (d3dTexStageStateType == D3DTSS_ALPHAOP) {
 		    glTexEnvi(GL_TEXTURE_ENV, GL_ALPHA_SCALE, scale);
 		} else {
-		    glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, scale);
+		    glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, scale);
 		}			
 		TRACE(" Stage type is : %s => %s\n", type, value);
 	    } else {
@@ -1808,6 +1826,88 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 	        TRACE(" Stage type : %s => %s%s%s\n", type, value, value_comp, value_alpha);
 	    } else {
 	        FIXME(" Unhandled stage type : %s => %s%s%s\n", type, value, value_comp, value_alpha);
+	    }
+	} break;
+
+	case D3DTSS_MIPMAPLODBIAS: {
+	    D3DVALUE value = *((D3DVALUE *) &dwState);
+	    BOOLEAN handled = TRUE;
+	    
+	    if (value != 0.0)
+	        handled = FALSE;
+
+	    if (handled) {
+	        TRACE(" Stage type : D3DTSS_MIPMAPLODBIAS => %f\n", value);
+	    } else {
+	        FIXME(" Unhandled stage type : D3DTSS_MIPMAPLODBIAS => %f\n", value);
+	    }
+	} break;
+
+	case D3DTSS_MAXMIPLEVEL: 
+	    if (dwState == 0) {
+	        TRACE(" Stage type : D3DTSS_MAXMIPLEVEL => 0 (disabled) \n");
+	    } else {
+	        FIXME(" Unhandled stage type : D3DTSS_MAXMIPLEVEL => %ld\n", dwState);
+	    }
+	    break;
+
+	case D3DTSS_BORDERCOLOR: {
+	    GLfloat color[4];
+
+	    color[0] = ((dwState >> 16) & 0xFF) / 255.0;
+	    color[1] = ((dwState >>  8) & 0xFF) / 255.0;
+	    color[2] = ((dwState >>  0) & 0xFF) / 255.0;
+	    color[3] = ((dwState >> 24) & 0xFF) / 255.0;
+
+	    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
+	} break;
+	    
+	case D3DTSS_TEXCOORDINDEX: {
+	    BOOLEAN handled = TRUE;
+	    const char *value;
+	    
+	    switch (dwState & 0xFFFF0000) {
+#define GEN_CASE(a) case a: value = #a; break
+	        GEN_CASE(D3DTSS_TCI_PASSTHRU);
+		GEN_CASE(D3DTSS_TCI_CAMERASPACENORMAL);
+		GEN_CASE(D3DTSS_TCI_CAMERASPACEPOSITION);
+		GEN_CASE(D3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR);
+#undef GEN_CASE
+		default: value = "UNKNOWN";
+	    }
+	    if ((dwState & 0xFFFF0000) != D3DTSS_TCI_PASSTHRU)
+	        handled = FALSE;
+
+	    if (handled) {
+	        TRACE(" Stage type : D3DTSS_TEXCOORDINDEX => %ld | %s\n", dwState & 0x0000FFFF, value);
+	    } else {
+	        FIXME(" Unhandled stage type : D3DTSS_TEXCOORDINDEX => %ld | %s\n", dwState & 0x0000FFFF, value);
+	    }
+	} break;
+	    
+	case D3DTSS_TEXTURETRANSFORMFLAGS: {
+	    const char *projected = "", *value;
+	    BOOLEAN handled = TRUE;
+	    switch (dwState & 0xFF) {
+#define GEN_CASE(a) case a: value = #a; break
+	        GEN_CASE(D3DTTFF_DISABLE);
+		GEN_CASE(D3DTTFF_COUNT1);
+		GEN_CASE(D3DTTFF_COUNT2);
+		GEN_CASE(D3DTTFF_COUNT3);
+		GEN_CASE(D3DTTFF_COUNT4);
+#undef GEN_CASE
+		default: value = "UNKNOWN";
+	    }
+	    if (dwState & D3DTTFF_PROJECTED)
+	        projected = " | D3DTTFF_PROJECTED";
+
+	    if (dwState != D3DTTFF_DISABLE)
+	        handled = FALSE;
+
+	    if (handled == TRUE) {
+	        TRACE(" Stage type : D3DTSS_TEXTURETRANSFORMFLAGS => %s%s\n", value, projected);
+	    } else {
+	        FIXME(" Unhandled stage type : D3DTSS_TEXTURETRANSFORMFLAGS => %s%s\n", value, projected);
 	    }
 	} break;
 	    
