@@ -18,8 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __WINE_WINNT_H
-#define __WINE_WINNT_H
+#ifndef _WINNT_
+#define _WINNT_
 
 #include <basetsd.h>
 
@@ -3648,4 +3648,4 @@ ULONGLONG WINAPI VerSetConditionMask(ULONGLONG,DWORD,BYTE);
 #define	VER_AND					6
 #define	VER_OR					7
 
-#endif  /* __WINE_WINNT_H */
+#endif  /* _WINNT_ */
