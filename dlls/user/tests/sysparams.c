@@ -1312,6 +1312,10 @@ START_TEST(sysparams)
     DWORD dwThreadId;
     HANDLE hInstance = GetModuleHandleA( NULL );
 
+    /* This test requires interactivity, if we don't have it, give up */
+    if (!SystemParametersInfoA( SPI_SETBEEP, TRUE, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE ) &&
+        GetLastError()==ERROR_REQUIRES_INTERACTIVE_WINDOWSTATION) return;
+
     argc = winetest_get_mainargs(&argv);
     strict=(argc >= 3 && strcmp(argv[2],"strict")==0);
     trace("strict=%d\n",strict);
