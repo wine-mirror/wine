@@ -513,7 +513,9 @@ void WINAPI FatalAppExitA( UINT action, LPCSTR str )
  */
 void WINAPI FatalAppExitW( UINT action, LPCWSTR str )
 {
-    HMODULE mod = GetModuleHandleA( "user32.dll" );
+    static const WCHAR User32DllW[] = {'u','s','e','r','3','2','.','d','l','l',0};
+
+    HMODULE mod = GetModuleHandleW( User32DllW );
     MessageBoxW_funcptr pMessageBoxW = NULL;
 
     WARN("AppExit\n");
