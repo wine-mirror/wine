@@ -130,7 +130,6 @@ typedef struct _wine_modref
 {
 	struct _wine_modref *next;
 	struct _wine_modref *prev;
-	HMODULE16            hDummyMod; /* Win16 dummy module */
 	void                *dlhandle;  /* handle returned by dlopen() */
         LDR_MODULE           ldr;
 
@@ -184,7 +183,7 @@ enum binary_type
 extern NTSTATUS MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved );
 extern NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved );
 extern WINE_MODREF *MODULE_FindModule( LPCSTR path );
-extern HMODULE16 MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 );
+extern HMODULE16 MODULE_CreateDummyModule( HMODULE module32 );
 extern enum binary_type MODULE_GetBinaryType( HANDLE hfile );
 extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hmodule, LPCSTR name );
 extern SEGPTR WINAPI HasGPHandler16( SEGPTR address );

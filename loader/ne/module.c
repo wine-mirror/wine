@@ -1714,7 +1714,9 @@ BOOL16 WINAPI IsRomFile16( HFILE16 unused )
 /***************************************************************************
  *		MapHModuleLS			(KERNEL32.@)
  */
-HMODULE16 WINAPI MapHModuleLS(HMODULE hmod) {
+HMODULE16 WINAPI MapHModuleLS(HMODULE hmod)
+{
+	HMODULE16 ret;
 	NE_MODULE	*pModule;
 
 	if (!hmod)
@@ -1727,7 +1729,12 @@ HMODULE16 WINAPI MapHModuleLS(HMODULE hmod) {
 			return pModule->self;
 		pModule = (NE_MODULE*)GlobalLock16(pModule->next);
 	}
-	return 0;
+        if ((ret = MODULE_CreateDummyModule( hmod )) < 32)
+        {
+            SetLastError(ret);
+            ret = 0;
+        }
+        return ret;
 }
 
 /***************************************************************************

@@ -1272,7 +1272,6 @@ static void MODULE_FlushModrefs(void)
 
         if (wm->dlhandle) wine_dll_unload( wm->dlhandle );
         else NtUnmapViewOfSection( GetCurrentProcess(), wm->ldr.BaseAddress );
-        FreeLibrary16( wm->hDummyMod );
         if (cached_modref == wm) cached_modref = NULL;
         RtlFreeHeap( ntdll_get_process_heap(), 0, wm->deps );
         RtlFreeHeap( ntdll_get_process_heap(), 0, wm );

@@ -90,7 +90,7 @@ BOOL WINAPI DisableThreadLibraryCalls( HMODULE hModule )
  *
  * Create a dummy NE module for Win32 or Winelib.
  */
-HMODULE16 MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 )
+HMODULE16 MODULE_CreateDummyModule( HMODULE module32 )
 {
     HMODULE16 hModule;
     NE_MODULE *pModule;
@@ -100,8 +100,13 @@ HMODULE16 MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 )
     const char* basename;
     OFSTRUCT *ofs;
     int of_size, size;
+    char filename[MAX_PATH];
+    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( module32 );
+
+    if (!nt) return (HMODULE16)11;  /* invalid exe */
 
     /* Extract base filename */
+    GetModuleFileNameA( module32, filename, sizeof(filename) );
     basename = strrchr(filename, '\\');
     if (!basename) basename = filename;
     else basename++;
@@ -131,7 +136,7 @@ HMODULE16 MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 )
     pModule->magic            = IMAGE_OS2_SIGNATURE;
     pModule->count            = 1;
     pModule->next             = 0;
-    pModule->flags            = 0;
+    pModule->flags            = NE_FFLAGS_WIN32;
     pModule->dgroup           = 0;
     pModule->ss               = 1;
     pModule->cs               = 2;
@@ -146,15 +151,10 @@ HMODULE16 MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 )
     pModule->module32         = module32;
 
     /* Set version and flags */
-    if (module32)
-    {
-        IMAGE_NT_HEADERS *nt = RtlImageNtHeader( module32 );
-        pModule->expected_version = ((nt->OptionalHeader.MajorSubsystemVersion & 0xff) << 8 ) |
-                                     (nt->OptionalHeader.MinorSubsystemVersion & 0xff);
-        pModule->flags |= NE_FFLAGS_WIN32;
-        if (nt->FileHeader.Characteristics & IMAGE_FILE_DLL)
-            pModule->flags |= NE_FFLAGS_LIBMODULE | NE_FFLAGS_SINGLEDATA;
-    }
+    pModule->expected_version = ((nt->OptionalHeader.MajorSubsystemVersion & 0xff) << 8 ) |
+                                (nt->OptionalHeader.MinorSubsystemVersion & 0xff);
+    if (nt->FileHeader.Characteristics & IMAGE_FILE_DLL)
+        pModule->flags |= NE_FFLAGS_LIBMODULE | NE_FFLAGS_SINGLEDATA;
 
     /* Set loaded file information */
     ofs = (OFSTRUCT *)(pModule + 1);
@@ -186,6 +186,7 @@ HMODULE16 MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 )
 		(int)pStr - (int)pModule;
 
     NE_RegisterModule( pModule );
+    LoadLibraryA( filename );  /* increment the ref count of the 32-bit module */
     return hModule;
 }
 

@@ -41,7 +41,7 @@
 #include <sys/mman.h>
 #endif
 #include <string.h>
-#include "wine/winbase16.h"
+#include "winbase.h"
 #include "winerror.h"
 #include "snoop.h"
 #include "wine/server.h"
@@ -183,7 +183,6 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
     IMAGE_DATA_DIRECTORY *dir;
     IMAGE_EXPORT_DIRECTORY *pe_export = NULL;
     WINE_MODREF *wm;
-    HMODULE16 hModule16;
 
     /* Retrieve DataDirectory entries */
 
@@ -247,29 +246,12 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
     dir = nt->OptionalHeader.DataDirectory+15;
     if (dir->Size) FIXME("Unknown directory 15 ignored\n" );
 
-    /* Create 16-bit dummy module */
-
-    if ((hModule16 = MODULE_CreateDummyModule( filename, hModule )) < 32)
-    {
-        SetLastError( (DWORD)hModule16 );	/* This should give the correct error */
-        return NULL;
-    }
-
     /* Allocate and fill WINE_MODREF */
 
-    if (!(wm = MODULE_AllocModRef( hModule, filename )))
-    {
-        FreeLibrary16( hModule16 );
-        return NULL;
-    }
-    wm->hDummyMod = hModule16;
+    if (!(wm = MODULE_AllocModRef( hModule, filename ))) return NULL;
 
     if ( builtin )
-    {
-        NE_MODULE *pModule = (NE_MODULE *)GlobalLock16( hModule16 );
-        pModule->flags |= NE_FFLAGS_BUILTIN;
         wm->ldr.Flags |= LDR_WINE_INTERNAL;
-    }
     else if ( flags & DONT_RESOLVE_DLL_REFERENCES )
         wm->ldr.Flags |= LDR_DONT_RESOLVE_REFS;
 
