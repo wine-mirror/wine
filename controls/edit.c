@@ -2990,27 +2990,24 @@ static void EDIT_WM_ContextMenu(WND *wnd, EDITSTATE *es, HWND32 hwnd, INT32 x, I
  *
  *	WM_COPY
  *
- *	FIXME:	replace with 32 bit calls as soon as they are implemented
- *		in the clipboard code
- *
  */
 static void EDIT_WM_Copy(WND *wnd, EDITSTATE *es)
 {
 	INT32 s = es->selection_start;
 	INT32 e = es->selection_end;
-	HGLOBAL16 hdst;
+	HGLOBAL32 hdst;
 	LPSTR dst;
 
 	if (e == s)
 		return;
 	ORDER_INT32(s, e);
-	hdst = GlobalAlloc16(GMEM_MOVEABLE, (DWORD)(e - s + 1));
-	dst = GlobalLock16(hdst);
+	hdst = GlobalAlloc32(GMEM_MOVEABLE, (DWORD)(e - s + 1));
+	dst = GlobalLock32(hdst);
 	lstrcpyn32A(dst, es->text + s, e - s + 1);
-	GlobalUnlock16(hdst);
+	GlobalUnlock32(hdst);
 	OpenClipboard32(wnd->hwndSelf);
 	EmptyClipboard32();
-	SetClipboardData16(CF_TEXT, hdst);
+	SetClipboardData32(CF_TEXT, hdst);
 	CloseClipboard32();
 }
 
@@ -3703,20 +3700,17 @@ static void EDIT_WM_Paint(WND *wnd, EDITSTATE *es)
  *
  *	WM_PASTE
  *
- *	FIXME: replace with 32 bit handler once GetClipboardData32() is
- *		implemented in misc/clipboard.c
- *
  */
 static void EDIT_WM_Paste(WND *wnd, EDITSTATE *es)
 {
-	HGLOBAL16 hsrc;
+	HGLOBAL32 hsrc;
 	LPSTR src;
 
 	OpenClipboard32(wnd->hwndSelf);
-	if ((hsrc = GetClipboardData16(CF_TEXT))) {
-		src = (LPSTR)GlobalLock16(hsrc);
+	if ((hsrc = GetClipboardData32(CF_TEXT))) {
+		src = (LPSTR)GlobalLock32(hsrc);
 		EDIT_EM_ReplaceSel(wnd, es, TRUE, src);
-		GlobalUnlock16(hsrc);
+		GlobalUnlock32(hsrc);
 	}
 	CloseClipboard32();
 }
