@@ -195,13 +195,13 @@ static void do_sigchld()
 }
 
 /* SIGIO handler */
+#ifdef HAVE_SIGINFO_T_SI_FD
 static void do_sigio( int signum, siginfo_t *si, void *x )
 {
     do_signal( handler_sigio );
-#ifdef HAVE_SIGINFO_T_SI_FD
     do_change_notify( si->si_fd );
-#endif
 }
+#endif
 
 void init_signals(void)
 {
@@ -232,9 +232,11 @@ void init_signals(void)
     action.sa_handler = do_sigterm;
     sigaction( SIGQUIT, &action, NULL );
     sigaction( SIGTERM, &action, NULL );
+#ifdef HAVE_SIGINFO_T_SI_FD
     action.sa_sigaction = do_sigio;
     action.sa_flags = SA_SIGINFO;
     sigaction( SIGIO, &action, NULL );
+#endif
     return;
 
 error:
