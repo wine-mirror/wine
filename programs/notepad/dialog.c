@@ -20,7 +20,7 @@
   #define LCC_HASASSERT
   #include "lcc.h"
 #else
-  #include "version.h"
+  #include "wine/version.h"
   #include "winnls.h"
 #endif
 

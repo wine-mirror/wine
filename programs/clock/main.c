@@ -13,7 +13,7 @@
 #include "windows.h"
 #include "main.h"
 #include "license.h"
-#include "version.h"
+#include "wine/version.h"
 #include "language.h"
 #include "winclock.h"
 #include "commdlg.h"

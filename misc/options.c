@@ -12,9 +12,9 @@
 #include "winnls.h"
 #include "ntddk.h"
 #include "wine/library.h"
+#include "wine/version.h"
 #include "options.h"
 #include "module.h"
-#include "version.h"
 #include "debugtools.h"
 
 struct option_descr

@@ -6,7 +6,7 @@
 */
 
 #include "windows.h"
-#include "version.h"
+#include "wine/version.h"
 
 int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 {
