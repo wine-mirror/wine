@@ -100,6 +100,7 @@ static const char * const SHELL_People[] =
     "John Richardson",
     "Rick Richardson",
     "Doug Ridgway",
+    "Robert Riggs",
     "Bernhard Rosenkraenzer",
     "Johannes Ruscheinski",
     "Thomas Sandford",
