@@ -53,6 +53,7 @@ BOOL16 joyOpenDriver(WORD wID)
 	char dev_name[] = "/dev/js%d";
 	char	buf[20];
 
+	if (wID>3) return FALSE;
 	if (joy_dev[wID] >= 0) return TRUE;
         sprintf(buf,dev_name,wID);
         if ((joy_dev[wID] = open(buf, O_RDONLY)) >= 0) {
