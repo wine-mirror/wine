@@ -1,4 +1,4 @@
-Release 1.1.0 of wrc (01-May-2000), the wine resource compiler.
+Release 1.1.2 of wrc (08-May-2000), the wine resource compiler.
 
 See the file CHANGES for differences between the version and what has been
 corrected in the current version.
@@ -13,6 +13,7 @@ Wrc features:
 - indirect loadable resources
 - NE/PE resource directory generation
 - binary .res file generation/reading
+- byte-order conversions
 
 Wrc generates an assembly file that can be assembled with GNU's gas, or
 passed to gcc. The assembly became necessary for two reasons. First, C does
@@ -68,6 +69,8 @@ in case of normal compile a .s file. You must use the '-H header.h'
 option to override the header-filename.
 If no input filename is given and the output name is not overridden
 with -o and/or -H, then the output is written to "wrc.tab.[sh]"
+
+For more info see the wrc manpage.
 
 
 Preprocessing
@@ -264,7 +267,6 @@ though):
 - grep for FIXME in the source
 - Memory options are wrong under some conditions. There seems to be a
   different action for win32 and win16
-- Little/big-endian
 
 Reporting bugs and patches
 --------------------------

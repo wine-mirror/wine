@@ -207,7 +207,7 @@ static struct keyword keywords[] = {
 
 #define NKEYWORDS	(sizeof(keywords)/sizeof(keywords[0]))
 #define KWP(p)		((struct keyword *)(p))
-int kw_cmp_func(const void *s1, const void *s2)
+static int kw_cmp_func(const void *s1, const void *s2)
 {
 	int ret;
 	ret = strcasecmp(KWP(s1)->keyword, KWP(s2)->keyword);
@@ -219,7 +219,7 @@ int kw_cmp_func(const void *s1, const void *s2)
 
 #define KW_BSEARCH
 #define DO_SORT
-struct keyword *iskeyword(char *kw)
+static struct keyword *iskeyword(char *kw)
 {
 	struct keyword *kwp;
 	struct keyword key;

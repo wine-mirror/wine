@@ -105,6 +105,7 @@
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #endif
+#include <endian.h>
 
 #include "wrc.h"
 #include "utils.h"
@@ -131,8 +132,6 @@ static characts_t *tagstt_characts;
 static version_t *tagstt_version;
 
 /* Prototypes of here defined functions */
-static int alloc_cursor_id(language_t *);
-static int alloc_icon_id(language_t *);
 static event_t *get_event_head(event_t *p);
 static control_t *get_control_head(control_t *p);
 static ver_value_t *get_ver_value_head(ver_value_t *p);
@@ -2103,7 +2102,6 @@ static raw_data_t *load_file(string_t *name)
 	rd->data = (char *)xmalloc(rd->size);
 	fread(rd->data, rd->size, 1, fp);
 	fclose(fp);
-	HEAPCHECK();
 	return rd;
 }
 
@@ -2117,7 +2115,19 @@ static raw_data_t *int2raw_data(int i)
 	rd = new_raw_data();
 	rd->size = sizeof(short);
 	rd->data = (char *)xmalloc(rd->size);
-	*(short *)(rd->data) = (short)i;
+	switch(byteorder)
+	{
+#if BYTE_ORDER == LITTLE_ENDIAN
+	case WRC_BO_BIG:
+#else
+	case WRC_BO_LITTLE:
+#endif
+		*(WORD *)(rd->data) = BYTESWAP_WORD((WORD)i);
+		break;
+	default:
+		*(WORD *)(rd->data) = (WORD)i;
+		break;
+	}
 	return rd;
 }
 
@@ -2127,7 +2137,19 @@ static raw_data_t *long2raw_data(int i)
 	rd = new_raw_data();
 	rd->size = sizeof(int);
 	rd->data = (char *)xmalloc(rd->size);
-	*(int *)(rd->data) = i;
+	switch(byteorder)
+	{
+#if BYTE_ORDER == LITTLE_ENDIAN
+	case WRC_BO_BIG:
+#else
+	case WRC_BO_LITTLE:
+#endif
+		*(DWORD *)(rd->data) = BYTESWAP_DWORD((DWORD)i);
+		break;
+	default:
+		*(DWORD *)(rd->data) = (DWORD)i;
+		break;
+	}
 	return rd;
 }
 
@@ -2137,7 +2159,29 @@ static raw_data_t *str2raw_data(string_t *str)
 	rd = new_raw_data();
 	rd->size = str->size * (str->type == str_char ? 1 : 2);
 	rd->data = (char *)xmalloc(rd->size);
-	memcpy(rd->data, str->str.cstr, rd->size);
+	if(str->type == str_char)
+		memcpy(rd->data, str->str.cstr, rd->size);
+	else if(str->type == str_unicode)
+	{
+		int i;
+		switch(byteorder)
+		{
+#if BYTE_ORDER == LITTLE_ENDIAN
+		case WRC_BO_BIG:
+#else
+		case WRC_BO_LITTLE:
+#endif
+			for(i = 0; i < str->size; i++)
+				*(WORD *)&(rd->data[2*i]) = BYTESWAP_WORD((WORD)str->str.wstr[i]);
+			break;
+		default:
+			for(i = 0; i < str->size; i++)
+				*(WORD *)&(rd->data[2*i]) = (WORD)str->str.wstr[i];
+			break;
+		}
+	}
+	else
+		internal_error(__FILE__, __LINE__, "Invalid stringtype");
 	return rd;
 }
 
@@ -2380,165 +2424,6 @@ static resource_t *build_stt_resources(stringtable_t *stthead)
 	}
 	return rsclist;
 }
-
-/* Cursor and icon splitter functions */
-typedef struct {
-	language_t	lan;
-	int		id;
-} id_alloc_t;
-
-static int get_new_id(id_alloc_t **list, int *n, language_t *lan)
-{
-	int i;
-	assert(lan != NULL);
-	assert(list != NULL);
-	assert(n != NULL);
-
-	if(!*list)
-	{
-		*list = (id_alloc_t *)xmalloc(sizeof(id_alloc_t));
-		*n = 1;
-		(*list)[0].lan = *lan;
-		(*list)[0].id = 1;
-		return 1;
-	}
-
-	for(i = 0; i < *n; i++)
-	{
-		if((*list)[i].lan.id == lan->id && (*list)[i].lan.sub == lan->sub)
-			return ++((*list)[i].id);
-	}
-
-	*list = (id_alloc_t *)xrealloc(*list, sizeof(id_alloc_t) * (*n+1));
-	(*list)[*n].lan = *lan;
-	(*list)[*n].id = 1;
-	*n += 1;
-	return 1;
-}
-
-static int alloc_icon_id(language_t *lan)
-{
-	static id_alloc_t *idlist = NULL;
-	static int nid = 0;
-
-	return get_new_id(&idlist, &nid, lan);
-}
-
-static int alloc_cursor_id(language_t *lan)
-{
-	static id_alloc_t *idlist = NULL;
-	static int nid = 0;
-
-	return get_new_id(&idlist, &nid, lan);
-}
-
-#define BPTR(base)	((char *)(rd->data + (base)))
-#define WPTR(base)	((WORD *)(rd->data + (base)))
-#define DPTR(base)	((DWORD *)(rd->data + (base)))
-void split_icons(raw_data_t *rd, icon_group_t *icog, int *nico)
-{
-	int cnt;
-	int i;
-	icon_dir_entry_t *ide;
-	icon_t *ico;
-	icon_t *list = NULL;
-
-	/* FIXME: Distinguish between normal and animated icons (RIFF format) */
-	if(WPTR(0)[1] != 1)
-		yyerror("Icon resource data has invalid type id %d", WPTR(0)[1]);
-	cnt = WPTR(0)[2];
-	ide = (icon_dir_entry_t *)&(WPTR(0)[3]);
-	for(i = 0; i < cnt; i++)
-	{
-		ico = new_icon();
-		ico->id = alloc_icon_id(icog->lvc.language);
-		ico->lvc.language = dup_language(icog->lvc.language);
-		if(ide[i].offset > rd->size
-		|| ide[i].offset + ide[i].ressize > rd->size)
-			yyerror("Icon resource data corrupt");
-		ico->width = ide[i].width;
-		ico->height = ide[i].height;
-		ico->nclr = ide[i].nclr;
-		ico->planes = ide[i].planes;
-		ico->bits = ide[i].bits;
-		if(!ico->planes)
-		{
-			/* Argh! They did not fill out the resdir structure */
-			ico->planes = ((BITMAPINFOHEADER *)BPTR(ide[i].offset))->biPlanes;
-		}
-		if(!ico->bits)
-		{
-			/* Argh! They did not fill out the resdir structure */
-			ico->bits = ((BITMAPINFOHEADER *)BPTR(ide[i].offset))->biBitCount;
-		}
-		ico->data = new_raw_data();
-		copy_raw_data(ico->data, rd, ide[i].offset, ide[i].ressize);
-		if(!list)
-		{
-			list = ico;
-		}
-		else
-		{
-			ico->next = list;
-			list->prev = ico;
-			list = ico;
-		}
-	}
-	icog->iconlist = list;
-	*nico = cnt;
-}
-
-void split_cursors(raw_data_t *rd, cursor_group_t *curg, int *ncur)
-{
-	int cnt;
-	int i;
-	cursor_dir_entry_t *cde;
-	cursor_t *cur;
-	cursor_t *list = NULL;
-
-	/* FIXME: Distinguish between normal and animated cursors (RIFF format)*/
-	if(WPTR(0)[1] != 2)
-		yyerror("Cursor resource data has invalid type id %d", WPTR(0)[1]);
-	cnt = WPTR(0)[2];
-	cde = (cursor_dir_entry_t *)&(WPTR(0)[3]);
-	for(i = 0; i < cnt; i++)
-	{
-		cur = new_cursor();
-		cur->id = alloc_cursor_id(curg->lvc.language);
-		cur->lvc.language = dup_language(curg->lvc.language);
-		if(cde[i].offset > rd->size
-		|| cde[i].offset + cde[i].ressize > rd->size)
-			yyerror("Cursor resource data corrupt");
-		cur->width = cde[i].width;
-		cur->height = cde[i].height;
-		cur->nclr = cde[i].nclr;
-		/* The next two are to support color cursors */
-		cur->planes = ((BITMAPINFOHEADER *)BPTR(cde[i].offset))->biPlanes;
-		cur->bits = ((BITMAPINFOHEADER *)BPTR(cde[i].offset))->biBitCount;
-		if(!win32 && (cur->planes != 1 || cur->bits != 1))
-			yywarning("Win16 cursor contains colors");
-		cur->xhot = cde[i].xhot;
-		cur->yhot = cde[i].yhot;
-		cur->data = new_raw_data();
-		copy_raw_data(cur->data, rd, cde[i].offset, cde[i].ressize);
-		if(!list)
-		{
-			list = cur;
-		}
-		else
-		{
-			cur->next = list;
-			list->prev = cur;
-			list = cur;
-		}
-	}
-	curg->cursorlist = list;
-	*ncur = cnt;
-}
-
-#undef	BPTR
-#undef	WPTR
-#undef	DPTR
 
 
 static toolbar_item_t *ins_tlbr_button(toolbar_item_t *prev, toolbar_item_t *idrec)

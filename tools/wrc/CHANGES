@@ -1,4 +1,31 @@
 ---------------------------------------------------------------------------
+Version 1.1.2 (08-May-2000)
+
+Bertho Stultiens <bertho@akhphd.au.dk>
+- Bugfix: Corrected a SEGV in the rawdata handling. Mistakingly took the
+  address of a pointer instead of its value. This probably slipped in
+  during the merge of my tree into the winetree.
+  Lesson learned: always double check.
+- Verified most resources so that win16 compile also generates correct
+  output for reversed endian.
+
+---------------------------------------------------------------------------
+Version 1.1.1 (07-May-2000)
+
+Bertho Stultiens <bertho@akhphd.au.dk>
+- Implemented byte-ordering for resources. All resources can be forced
+  to be little-, big- or native endian with command-line option -B.
+- Reading resources from .res-files are only accepted in native byte-
+  ordering so that no additional semantic analysis is required.
+- Resource directory is still written in native-only format, including
+  the strings.
+- Wrc is now installed through the makefile with 'make install' and also
+  uninstalled with 'make uninstall'.
+- Wrote a man-page for better reference. The manpage also gets installed
+  and uninstalled.
+- Cleaned up the namespace a bit by more agressive use of static.
+
+---------------------------------------------------------------------------
 Version 1.1.0 (01-May-2000)
 
 Bertho Stultiens <bertho@akhphd.au.dk>

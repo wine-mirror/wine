@@ -12,8 +12,6 @@ extern int yydebug;
 extern int want_nl;		/* Set when getting line-numers */
 
 int yyparse(void);
-void split_icons(raw_data_t *rd, icon_group_t *icog, int *nico);
-void split_cursors(raw_data_t *rd, cursor_group_t *curg, int *ncur);
 
 /* From parser.l */
 extern FILE *yyin;

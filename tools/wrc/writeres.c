@@ -24,7 +24,7 @@ char Underscore[] = "_";
 char Underscore[] = "";
 #endif
 
-char s_file_head_str[] =
+static char s_file_head_str[] =
         "/* This file is generated with wrc version " WRC_FULLVERSION ". Do not edit! */\n"
         "/* Source : %s */\n"
         "/* Cmdline: %s */\n"
@@ -34,12 +34,12 @@ char s_file_head_str[] =
         "\n"
 	;
 
-char s_file_tail_str[] =
+static char s_file_tail_str[] =
         "/* <eof> */\n"
         "\n"
 	;
 
-char s_file_autoreg_str[] =
+static char s_file_autoreg_str[] =
 	"\t.text\n"
 	".LAuto_Register:\n"
 	"\tpushl\t$%s%s\n"
@@ -58,7 +58,7 @@ char s_file_autoreg_str[] =
 #endif
 	;
 
-char h_file_head_str[] =
+static char h_file_head_str[] =
 	"/*\n"
 	" * This file is generated with wrc version " WRC_FULLVERSION ". Do not edit!\n"
 	" * Source : %s\n"
@@ -73,7 +73,7 @@ char h_file_head_str[] =
 	"\n"
 	;
 
-char h_file_tail_str[] =
+static char h_file_tail_str[] =
 	"#endif\n"
 	"/* <eof> */\n\n"
 	;
@@ -174,7 +174,7 @@ void write_resfile(char *outname, resource_t *top)
  *****************************************************************************
 */
 #define BYTESPERLINE	8
-void write_s_res(FILE *fp, res_t *res)
+static void write_s_res(FILE *fp, res_t *res)
 {
 	int idx = res->dataidx;
 	int end = res->size;
@@ -203,6 +203,7 @@ void write_s_res(FILE *fp, res_t *res)
 		fprintf(fp, "\n");
 	}
 }
+#undef BYTESPERLINE
 
 /*
  *****************************************************************************
@@ -214,7 +215,7 @@ void write_s_res(FILE *fp, res_t *res)
  * Remarks	: One level self recursive for string type conversion
  *****************************************************************************
 */
-void write_name_str(FILE *fp, name_id_t *nid)
+static void write_name_str(FILE *fp, name_id_t *nid)
 {
 	res_t res;
 	assert(nid->type == name_str);
@@ -229,7 +230,7 @@ void write_name_str(FILE *fp, name_id_t *nid)
 		res.dataidx = 0;
 		res.data = (char *)xmalloc(res.size + 1);
 		res.data[0] = (char)res.size;
-		res.size++;	/* We need to write the lenth byte as well */
+		res.size++;	/* We need to write the length byte as well */
 		strcpy(res.data+1, nid->name.s_name->str.cstr);
 		write_s_res(fp, &res);
 		free(res.data);
@@ -291,7 +292,7 @@ void write_name_str(FILE *fp, name_id_t *nid)
  * Remarks	:
  *****************************************************************************
 */
-int compare_name_id(name_id_t *n1, name_id_t *n2)
+static int compare_name_id(name_id_t *n1, name_id_t *n2)
 {
 	if(n1->type == name_ord && n2->type == name_ord)
 	{
@@ -335,7 +336,7 @@ int compare_name_id(name_id_t *n1, name_id_t *n2)
  * Remarks	:
  *****************************************************************************
 */
-res_count_t *find_counter(name_id_t *type)
+static res_count_t *find_counter(name_id_t *type)
 {
 	int i;
 	for(i = 0; i < rccount; i++)
@@ -362,12 +363,12 @@ res_count_t *find_counter(name_id_t *type)
 */
 #define RCT(v)	(*((resource_t **)(v)))
 /* qsort sorting function */
-int sort_name_id(const void *e1, const void *e2)
+static int sort_name_id(const void *e1, const void *e2)
 {
 	return compare_name_id(RCT(e1)->name, RCT(e2)->name);
 }
 
-int sort_language(const void *e1, const void *e2)
+static int sort_language(const void *e1, const void *e2)
 {
 	assert((RCT(e1)->lan) != NULL);
 	assert((RCT(e2)->lan) != NULL);
@@ -377,13 +378,13 @@ int sort_language(const void *e1, const void *e2)
 }
 #undef RCT
 #define RCT(v)	((res_count_t *)(v))
-int sort_type(const void *e1, const void *e2)
+static int sort_type(const void *e1, const void *e2)
 {
 	return compare_name_id(&(RCT(e1)->type), &(RCT(e2)->type));
 }
 #undef RCT
 
-void count_resources(resource_t *top)
+static void count_resources(resource_t *top)
 {
 	resource_t *rsc;
 	res_count_t *rcp;
@@ -560,7 +561,7 @@ void count_resources(resource_t *top)
  * Remarks	:
  *****************************************************************************
 */
-void write_pe_segment(FILE *fp, resource_t *top)
+static void write_pe_segment(FILE *fp, resource_t *top)
 {
 	int i;
 
@@ -760,7 +761,7 @@ void write_pe_segment(FILE *fp, resource_t *top)
  * Remarks	:
  *****************************************************************************
 */
-void write_ne_segment(FILE *fp, resource_t *top)
+static void write_ne_segment(FILE *fp, resource_t *top)
 {
 	int i, j;
 
@@ -839,7 +840,7 @@ void write_ne_segment(FILE *fp, resource_t *top)
  * Remarks	:
  *****************************************************************************
 */
-void write_rsc_names(FILE *fp, resource_t *top)
+static void write_rsc_names(FILE *fp, resource_t *top)
 {
 	int i, j;
 	
@@ -1176,5 +1177,4 @@ void write_h_file(char *outname, resource_t *top)
 	fprintf(fo, h_file_tail_str);
 	fclose(fo);
 }
-
 

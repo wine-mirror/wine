@@ -30,7 +30,8 @@ struct resheader32 {
 	WORD	language;	/* 0 */
 	DWORD	version;	/* 0 */
 	DWORD	characts;	/* 0 */
-} emptyheader = {0, 0x20, 0xffff, 0, 0xffff, 0, 0, 0, 0, 0, 0};
+} emptyheader		= {0, 0x20, 0xffff, 0, 0xffff, 0, 0, 0, 0, 0, 0},
+  emptyheaderSWAPPED	= {0, BYTESWAP_DWORD(0x20), 0xffff, 0, 0xffff, 0, 0, 0, 0, 0, 0};
 
 /*
  *****************************************************************************
@@ -135,7 +136,7 @@ enum res_e res_type_from_id(name_id_t *nid)
 #define get_word(idx)	(*((WORD *)(&res->data[idx])))
 #define get_dword(idx)	(*((DWORD *)(&res->data[idx])))
 
-resource_t *read_res32(FILE *fp)
+static resource_t *read_res32(FILE *fp)
 {
 	static char wrong_format[] = "Wrong resfile format (32bit)";
 	DWORD ressize;
@@ -311,7 +312,7 @@ resource_t *read_res32(FILE *fp)
  * Remarks	:
  *****************************************************************************
 */
-resource_t *read_res16(FILE *fp)
+static resource_t *read_res16(FILE *fp)
 {
 	internal_error(__FILE__, __LINE__, "Can't yet read 16 bit .res files");
 	return NULL;
@@ -331,7 +332,7 @@ resource_t *read_resfile(char *inname)
 {
 	FILE *fp;
 	struct resheader32 rh;
-	int is32bit;
+	int is32bit = 1;
 	resource_t *top;
 
 	fp = fopen(inname, "rb");
@@ -345,6 +346,8 @@ resource_t *read_resfile(char *inname)
 	{
 		if(!memcmp(&emptyheader, &rh, sizeof(rh)))
 			is32bit = 1;
+		else if(!memcmp(&emptyheaderSWAPPED, &rh, sizeof(rh)))
+			error("Binary .res-file has its byteorder swapped");
 		else
 			is32bit = 0;
 	}

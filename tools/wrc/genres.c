@@ -3,6 +3,9 @@
  *
  * Copyright 1998 Bertho A. Stultiens
  *
+ * 05-May-2000 BS	- Added code to support endian conversions. The
+ * 			  extra functions also aid unaligned access, but
+ * 			  this is not yet implemented.
  * 25-May-1998 BS	- Added simple unicode -> char conversion for resource
  *			  names in .s and .h files.  
  */
@@ -14,6 +17,7 @@
 #include <string.h>
 #include <assert.h>
 #include <ctype.h>
+#include <endian.h>
 
 #include "wrc.h"
 #include "genres.h"
@@ -22,8 +26,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 
-#define SetResSize(res, tag)	*(DWORD *)&((res)->data[(tag)]) = \
-				(res)->size - *(DWORD *)&((res)->data[(tag)])
+#define SetResSize(res, tag)	set_dword((res), (tag), (res)->size - get_dword((res), (tag)))
 
 res_t *new_res(void)
 {
@@ -71,7 +74,19 @@ void put_word(res_t *res, unsigned w)
 {
 	if(res->allocsize - res->size < sizeof(WORD))
 		grow_res(res, RES_BLOCKSIZE);
-	*(WORD *)&(res->data[res->size]) = (WORD)w;
+	switch(byteorder)
+	{
+#if BYTE_ORDER == LITTLE_ENDIAN
+	case WRC_BO_BIG:
+#else
+	case WRC_BO_LITTLE:
+#endif
+		*(WORD *)&(res->data[res->size]) = BYTESWAP_WORD((WORD)w);
+		break;
+	default:
+		*(WORD *)&(res->data[res->size]) = (WORD)w;
+		break;
+	}
 	res->size += sizeof(WORD);
 }
 
@@ -79,7 +94,19 @@ void put_dword(res_t *res, unsigned d)
 {
 	if(res->allocsize - res->size < sizeof(DWORD))
 		grow_res(res, RES_BLOCKSIZE);
-	*(DWORD *)&(res->data[res->size]) = (DWORD)d;
+	switch(byteorder)
+	{
+#if BYTE_ORDER == LITTLE_ENDIAN
+	case WRC_BO_BIG:
+#else
+	case WRC_BO_LITTLE:
+#endif
+		*(DWORD *)&(res->data[res->size]) = BYTESWAP_DWORD((DWORD)d);
+		break;
+	default:
+		*(DWORD *)&(res->data[res->size]) = (DWORD)d;
+		break;
+	}
 	res->size += sizeof(DWORD);
 }
 
@@ -87,6 +114,101 @@ void put_pad(res_t *res)
 {
 	while(res->size & 0x3)
 		put_byte(res, 0);
+}
+
+/*
+ *****************************************************************************
+ * Function	: set_word
+ *		  set_dword
+ * Syntax	: void set_word(res_t *res, int ofs, unsigned w)
+ *		  void set_dword(res_t *res, int ofs, unsigned d)
+ * Input	:
+ *	res	- Binary resource to put the data in
+ *	ofs	- Byte offset in data-array
+ *	w, d	- Data to put
+ * Output	: nop
+ * Description	: Set the value of a binary resource data array to a
+ * 		  specific value.
+ * Remarks	:
+ *****************************************************************************
+*/
+void set_word(res_t *res, int ofs, unsigned w)
+{
+	switch(byteorder)
+	{
+#if BYTE_ORDER == LITTLE_ENDIAN
+	case WRC_BO_BIG:
+#else
+	case WRC_BO_LITTLE:
+#endif
+		*(WORD *)&(res->data[ofs]) = BYTESWAP_WORD((WORD)w);
+		break;
+	default:
+		*(WORD *)&(res->data[ofs]) = (WORD)w;
+		break;
+	}
+}
+
+void set_dword(res_t *res, int ofs, unsigned d)
+{
+	switch(byteorder)
+	{
+#if BYTE_ORDER == LITTLE_ENDIAN
+	case WRC_BO_BIG:
+#else
+	case WRC_BO_LITTLE:
+#endif
+		*(DWORD *)&(res->data[ofs]) = BYTESWAP_DWORD((DWORD)d);
+		break;
+	default:
+		*(DWORD *)&(res->data[ofs]) = (DWORD)d;
+		break;
+	}
+}
+
+/*
+ *****************************************************************************
+ * Function	: get_word
+ *		  get_dword
+ * Syntax	: WORD get_word(res_t *res, int ofs)
+ *		  DWORD get_dword(res_t *res, int ofs)
+ * Input	:
+ *	res	- Binary resource to put the data in
+ *	ofs	- Byte offset in data-array
+ * Output	: The data in native endian
+ * Description	: Get the value of a binary resource data array in native
+ * 		  endian.
+ * Remarks	:
+ *****************************************************************************
+*/
+WORD get_word(res_t *res, int ofs)
+{
+	switch(byteorder)
+	{
+#if BYTE_ORDER == LITTLE_ENDIAN
+	case WRC_BO_BIG:
+#else
+	case WRC_BO_LITTLE:
+#endif
+		return BYTESWAP_WORD(*(WORD *)&(res->data[ofs]));
+	default:
+		return *(WORD *)&(res->data[ofs]);
+	}
+}
+
+DWORD get_dword(res_t *res, int ofs)
+{
+	switch(byteorder)
+	{
+#if BYTE_ORDER == LITTLE_ENDIAN
+	case WRC_BO_BIG:
+#else
+	case WRC_BO_LITTLE:
+#endif
+		return BYTESWAP_DWORD(*(DWORD *)&(res->data[ofs]));
+	default:
+		return *(DWORD *)&(res->data[ofs]);
+	}
 }
 
 /*
@@ -313,8 +435,8 @@ int put_res_header(res_t *res, int type, name_id_t *ntype, name_id_t *name,
 		put_dword(res, 0);		/* DataVersion */
 		put_word(res, memopt);		/* Memory options */
 		put_lvc(res, lvc);		/* Language, version and characts */
-		((DWORD *)res->data)[0] = res->size;	/* Set preliminary resource */
-		((DWORD *)res->data)[1] = res->size;	/* Set HeaderSize */
+		set_dword(res, 0*sizeof(DWORD), res->size);	/* Set preliminary resource */
+		set_dword(res, 1*sizeof(DWORD), res->size);	/* Set HeaderSize */
 		res->dataidx = res->size;
 		return 0;
 	}
@@ -332,7 +454,7 @@ int put_res_header(res_t *res, int type, name_id_t *ntype, name_id_t *name,
 		put_word(res, memopt);		/* Memory options */
 		tag = res->size;
 		put_dword(res, 0);		/* ResSize overwritten later*/
-		*(DWORD *)&(res->data[tag]) = res->size;
+		set_dword(res, tag, res->size);
 		res->dataidx = res->size;
 		return tag;
 	}
@@ -350,7 +472,7 @@ int put_res_header(res_t *res, int type, name_id_t *ntype, name_id_t *name,
  * Remarks	:
  *****************************************************************************
 */
-res_t *accelerator2res(name_id_t *name, accelerator_t *acc)
+static res_t *accelerator2res(name_id_t *name, accelerator_t *acc)
 {
 	int restag;
 	res_t *res;
@@ -401,7 +523,7 @@ res_t *accelerator2res(name_id_t *name, accelerator_t *acc)
  * Remarks	:
  *****************************************************************************
 */
-res_t *dialog2res(name_id_t *name, dialog_t *dlg)
+static res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 {
 	int restag;
 	res_t *res;
@@ -477,7 +599,7 @@ res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 			ctrl = ctrl->next;
 		}
 		/* Set number of controls */
-		*(WORD *)&((char *)res->data)[tag_nctrl] = (WORD)nctrl;
+		set_word(res, tag_nctrl, (WORD)nctrl);
 	}
 	else /* win16 */
 	{
@@ -560,7 +682,7 @@ res_t *dialog2res(name_id_t *name, dialog_t *dlg)
  * Remarks	:
  *****************************************************************************
 */
-res_t *dialogex2res(name_id_t *name, dialogex_t *dlgex)
+static res_t *dialogex2res(name_id_t *name, dialogex_t *dlgex)
 {
 	int restag;
 	res_t *res;
@@ -653,7 +775,7 @@ res_t *dialogex2res(name_id_t *name, dialogex_t *dlgex)
 			ctrl = ctrl->next;
 		}
 		/* Set number of controls */
-		*(WORD *)&((char *)res->data)[tag_nctrl] = (WORD)nctrl;
+		set_word(res, tag_nctrl, (WORD)nctrl);
 		/* Set ResourceSize */
 		SetResSize(res, restag);
 		put_pad(res);
@@ -678,7 +800,7 @@ res_t *dialogex2res(name_id_t *name, dialogex_t *dlgex)
  * Remarks	: Self recursive
  *****************************************************************************
 */
-void menuitem2res(res_t *res, menu_item_t *menitem)
+static void menuitem2res(res_t *res, menu_item_t *menitem)
 {
 	menu_item_t *itm = menitem;
 	if(win32)
@@ -728,7 +850,7 @@ void menuitem2res(res_t *res, menu_item_t *menitem)
  * Remarks	:
  *****************************************************************************
 */
-res_t *menu2res(name_id_t *name, menu_t *men)
+static res_t *menu2res(name_id_t *name, menu_t *men)
 {
 	int restag;
 	res_t *res;
@@ -757,7 +879,7 @@ res_t *menu2res(name_id_t *name, menu_t *men)
  * Remarks	: Self recursive
  *****************************************************************************
 */
-void menuexitem2res(res_t *res, menuex_item_t *menitem)
+static void menuexitem2res(res_t *res, menuex_item_t *menitem)
 {
 	menuex_item_t *itm = menitem;
 	assert(win32 != 0);
@@ -794,7 +916,7 @@ void menuexitem2res(res_t *res, menuex_item_t *menitem)
  * Remarks	:
  *****************************************************************************
 */
-res_t *menuex2res(name_id_t *name, menuex_t *menex)
+static res_t *menuex2res(name_id_t *name, menuex_t *menex)
 {
 	int restag;
 	res_t *res;
@@ -837,7 +959,7 @@ res_t *menuex2res(name_id_t *name, menuex_t *menex)
  * Remarks	:
  *****************************************************************************
 */
-res_t *cursorgroup2res(name_id_t *name, cursor_group_t *curg)
+static res_t *cursorgroup2res(name_id_t *name, cursor_group_t *curg)
 {
 	int restag;
 	res_t *res;
@@ -945,7 +1067,7 @@ res_t *cursorgroup2res(name_id_t *name, cursor_group_t *curg)
  * Remarks	:
  *****************************************************************************
 */
-res_t *cursor2res(cursor_t *cur)
+static res_t *cursor2res(cursor_t *cur)
 {
 	int restag;
 	res_t *res;
@@ -980,7 +1102,7 @@ res_t *cursor2res(cursor_t *cur)
  * Remarks	:
  *****************************************************************************
 */
-res_t *icongroup2res(name_id_t *name, icon_group_t *icog)
+static res_t *icongroup2res(name_id_t *name, icon_group_t *icog)
 {
 	int restag;
 	res_t *res;
@@ -1048,7 +1170,7 @@ res_t *icongroup2res(name_id_t *name, icon_group_t *icog)
  * Remarks	:
  *****************************************************************************
 */
-res_t *icon2res(icon_t *ico)
+static res_t *icon2res(icon_t *ico)
 {
 	int restag;
 	res_t *res;
@@ -1078,21 +1200,19 @@ res_t *icon2res(icon_t *ico)
  *	bmp	- The bitmap descriptor
  * Output	: New .res format structure
  * Description	:
- * Remarks	:
+ * Remarks	: The endian of the bitmap structures have been converted
+ * 		  to native by the loader.
  *****************************************************************************
 */
-res_t *bitmap2res(name_id_t *name, bitmap_t *bmp)
+static res_t *bitmap2res(name_id_t *name, bitmap_t *bmp)
 {
 	int restag;
 	res_t *res;
 	assert(name != NULL);
 	assert(bmp != NULL);
 
-	HEAPCHECK();
 	res = new_res();
-	HEAPCHECK();
 	restag = put_res_header(res, WRC_RT_BITMAP, NULL, name, bmp->memopt, NULL);
-	HEAPCHECK();
 	if(bmp->data->data[0] == 'B'
 	&& bmp->data->data[1] == 'M'
 	&& ((BITMAPFILEHEADER *)bmp->data->data)->bfSize == bmp->data->size
@@ -1105,13 +1225,10 @@ res_t *bitmap2res(name_id_t *name, bitmap_t *bmp)
 	{
 		put_raw_data(res, bmp->data, 0);
 	}
-	HEAPCHECK();
 	/* Set ResourceSize */
 	SetResSize(res, restag);
-	HEAPCHECK();
 	if(win32)
 		put_pad(res);
-	HEAPCHECK();
 	return res;
 }
 
@@ -1127,7 +1244,7 @@ res_t *bitmap2res(name_id_t *name, bitmap_t *bmp)
  * Remarks	:
  *****************************************************************************
 */
-res_t *font2res(name_id_t *name, font_t *fnt)
+static res_t *font2res(name_id_t *name, font_t *fnt)
 {
 	assert(name != NULL);
 	assert(fnt != NULL);
@@ -1147,7 +1264,7 @@ res_t *font2res(name_id_t *name, font_t *fnt)
  * Remarks	:
  *****************************************************************************
 */
-res_t *rcdata2res(name_id_t *name, rcdata_t *rdt)
+static res_t *rcdata2res(name_id_t *name, rcdata_t *rdt)
 {
 	int restag;
 	res_t *res;
@@ -1176,7 +1293,7 @@ res_t *rcdata2res(name_id_t *name, rcdata_t *rdt)
  * Remarks	:
  *****************************************************************************
 */
-res_t *messagetable2res(name_id_t *name, messagetable_t *msg)
+static res_t *messagetable2res(name_id_t *name, messagetable_t *msg)
 {
 	assert(name != NULL);
 	assert(msg != NULL);
@@ -1195,7 +1312,7 @@ res_t *messagetable2res(name_id_t *name, messagetable_t *msg)
  * Remarks	:
  *****************************************************************************
 */
-res_t *stringtable2res(stringtable_t *stt)
+static res_t *stringtable2res(stringtable_t *stt)
 {
 	res_t *res;
 	name_id_t name;
@@ -1255,7 +1372,7 @@ res_t *stringtable2res(stringtable_t *stt)
  * Remarks	:
  *****************************************************************************
 */
-res_t *user2res(name_id_t *name, user_t *usr)
+static res_t *user2res(name_id_t *name, user_t *usr)
 {
 	int restag;
 	res_t *res;
@@ -1284,7 +1401,7 @@ res_t *user2res(name_id_t *name, user_t *usr)
  * Remarks	: Self recursive
  *****************************************************************************
 */
-void versionblock2res(res_t *res, ver_block_t *blk, int level)
+static void versionblock2res(res_t *res, ver_block_t *blk, int level)
 {
 	ver_value_t *val;
 	int blksizetag;
@@ -1317,10 +1434,10 @@ void versionblock2res(res_t *res, ver_block_t *blk, int level)
 			tag = res->size;
 			put_string(res, val->value.str, win32 ? str_unicode : str_char, TRUE);
 			if(win32)
-				*(WORD *)&(res->data[valvalsizetag]) = (WORD)((res->size - tag) >> 1);
+				set_word(res, valvalsizetag, (WORD)((res->size - tag) >> 1));
 			else
-				*(WORD *)&(res->data[valvalsizetag]) = (WORD)(res->size - tag);
-			*(WORD *)&(res->data[valblksizetag]) = (WORD)(res->size - valblksizetag);
+				set_word(res, valvalsizetag, (WORD)(res->size - tag));
+			set_word(res, valblksizetag, (WORD)(res->size - valblksizetag));
 			put_pad(res);
 		}
 		else if(val->type == val_words)
@@ -1340,8 +1457,8 @@ void versionblock2res(res_t *res, ver_block_t *blk, int level)
 			{
 				put_word(res, val->value.words->words[i]);
 			}
-			*(WORD *)&(res->data[valvalsizetag]) = (WORD)(res->size - tag);
-			*(WORD *)&(res->data[valblksizetag]) = (WORD)(res->size - valblksizetag);
+			set_word(res, valvalsizetag, (WORD)(res->size - tag));
+			set_word(res, valblksizetag, (WORD)(res->size - valblksizetag));
 			put_pad(res);
 		}
 		else if(val->type == val_block)
@@ -1355,7 +1472,7 @@ void versionblock2res(res_t *res, ver_block_t *blk, int level)
 	}
 
 	/* Set blocksize */
-	*(WORD *)&(res->data[blksizetag]) = (WORD)(res->size - blksizetag);
+	set_word(res, blksizetag, (WORD)(res->size - blksizetag));
 }
 
 /*
@@ -1370,7 +1487,7 @@ void versionblock2res(res_t *res, ver_block_t *blk, int level)
  * Remarks	:
  *****************************************************************************
 */
-res_t *versioninfo2res(name_id_t *name, versioninfo_t *ver)
+static res_t *versioninfo2res(name_id_t *name, versioninfo_t *ver)
 {
 	int restag;
 	int rootblocksizetag;
@@ -1413,12 +1530,12 @@ res_t *versioninfo2res(name_id_t *name, versioninfo_t *ver)
 	put_dword(res, 0);		/* FileDateMS */
 	put_dword(res, 0);		/* FileDateLS */
 	/* Set ValueSize */
-	*(WORD *)&(res->data[valsizetag]) = (WORD)(res->size - tag);
+	set_word(res, valsizetag, (WORD)(res->size - tag));
 	/* Descend into the blocks */
 	for(blk = ver->blocks; blk; blk = blk->next)
 		versionblock2res(res, blk, 0);
 	/* Set root block's size */
-	*(WORD *)&(res->data[rootblocksizetag]) = (WORD)(res->size - rootblocksizetag);
+	set_word(res, rootblocksizetag, (WORD)(res->size - rootblocksizetag));
 
 	SetResSize(res, restag);
 	if(win32)
@@ -1437,7 +1554,7 @@ res_t *versioninfo2res(name_id_t *name, versioninfo_t *ver)
  * Remarks	: Self recursive
  *****************************************************************************
 */
-void toolbaritem2res(res_t *res, toolbar_item_t *tbitem)
+static void toolbaritem2res(res_t *res, toolbar_item_t *tbitem)
 {
 	toolbar_item_t *itm = tbitem;
 	assert(win32 != 0);
@@ -1461,7 +1578,7 @@ void toolbaritem2res(res_t *res, toolbar_item_t *tbitem)
  * Remarks	:
  *****************************************************************************
 */
-res_t *toolbar2res(name_id_t *name, toolbar_t *toolbar)
+static res_t *toolbar2res(name_id_t *name, toolbar_t *toolbar)
 {
 	int restag;
 	res_t *res;
@@ -1505,7 +1622,7 @@ res_t *toolbar2res(name_id_t *name, toolbar_t *toolbar)
  * Remarks	:
  *****************************************************************************
 */
-res_t *dlginit2res(name_id_t *name, dlginit_t *dit)
+static res_t *dlginit2res(name_id_t *name, dlginit_t *dit)
 {
 	int restag;
 	res_t *res;

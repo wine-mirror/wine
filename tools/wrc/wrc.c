@@ -42,6 +42,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <signal.h>
+#include <endian.h>
 
 #include "wrc.h"
 #include "utils.h"
@@ -53,10 +54,28 @@
 #include "preproc.h"
 #include "parser.h"
 
-char usage[] = "Usage: wrc [options...] [infile[.rc|.res]]\n"
+#ifndef BYTE_ORDER
+# error BYTE_ORDER is not defined. Please report.
+#endif
+
+#if (!defined(BIG_ENDIAN) && !defined(LITTLE_ENDIAN)) || (BYTE_ORDER != BIG_ENDIAN && BYTE_ORDER != LITTLE_ENDIAN)
+# error Neither BIG_ENDIAN nor LITTLE_ENDIAN system. This system is not supported. Please report.
+#endif
+
+
+static char usage[] =
+	"Usage: wrc [options...] [infile[.rc|.res]]\n"
 	"   -a n        Alignment of resource (win16 only, default is 4)\n"
 	"   -A          Auto register resources (only with gcc 2.7 and better)\n"
-	"   -b          Create a C array from a binary .res file\n"
+	"   -b          Create an assembly array from a binary .res file\n"
+	"   -B x        Set output byte-order x={n[ative], l[ittle], b[ig]}\n"
+	"               (win32 only; default is n[ative] which equals "
+#if BYTE_ORDER == BIG_ENDIAN
+	"big"
+#else
+	"little"
+#endif
+	"-endian)\n"
 	"   -c          Add 'const' prefix to C constants\n"
 	"   -C cp       Set the resource's codepage to cp (default is 0)\n"
 	"   -d n        Set debug level to 'n'\n"
@@ -210,6 +229,11 @@ int auto_register = 0;
 int leave_case = 0;
 
 /*
+ * The output byte-order of resources (set with -B)
+ */
+int byteorder = WRC_BO_NATIVE;
+
+/*
  * Set when _only_ to run the preprocessor (-E option)
  */
 int preprocess_only = 0;
@@ -265,7 +289,7 @@ int main(int argc,char *argv[])
 			strcat(cmdline, " ");
 	}
 
-	while((optc = getopt(argc, argv, "a:AbcC:d:D:eEghH:I:l:LnNo:p:rstTVw:W")) != EOF)
+	while((optc = getopt(argc, argv, "a:AbB:cC:d:D:eEghH:I:l:LnNo:p:rstTVw:W")) != EOF)
 	{
 		switch(optc)
 		{
@@ -277,6 +301,26 @@ int main(int argc,char *argv[])
 			break;
 		case 'b':
 			binary = 1;
+			break;
+		case 'B':
+			switch(optarg[0])
+			{
+			case 'n':
+			case 'N':
+				byteorder = WRC_BO_NATIVE;
+				break;
+			case 'l':
+			case 'L':
+				byteorder = WRC_BO_LITTLE;
+				break;
+			case 'b':
+			case 'B':
+				byteorder = WRC_BO_BIG;
+				break;
+			default:
+				fprintf(stderr, "Byteordering must be n[ative], l[ittle] or b[ig]\n");
+				lose++;
+			}
 			break;
 		case 'c':
 			constant = 1;
@@ -426,6 +470,12 @@ int main(int argc,char *argv[])
 		{
 			error("Option -r and -b cannot be used together\n");
 		}
+	}
+
+	if(byteorder != WRC_BO_NATIVE)
+	{
+		if(binary)
+			error("Forced byteordering not supported for binary resources\n");
 	}
 
 	if(preprocess_only)

@@ -16,16 +16,14 @@
 
 #define WRC_MAJOR_VERSION	1
 #define WRC_MINOR_VERSION	1
-#define WRC_MICRO_VERSION	0
-#define WRC_RELEASEDATE		"(01-May-2000)"
+#define WRC_MICRO_VERSION	2
+#define WRC_RELEASEDATE		"(08-May-2000)"
 
 #define WRC_STRINGIZE(a)	#a
 #define WRC_VERSIONIZE(a,b,c)	WRC_STRINGIZE(a) "." WRC_STRINGIZE(b) "." WRC_STRINGIZE(c)  
 #define WRC_VERSION		WRC_VERSIONIZE(WRC_MAJOR_VERSION, WRC_MINOR_VERSION, WRC_MICRO_VERSION)
 #define WRC_FULLVERSION 	WRC_VERSION " " WRC_RELEASEDATE
 
-/* Only used in heavy debugging sessions */
-#define HEAPCHECK()
 
 /* From wrc.c */
 extern int debuglevel;
@@ -54,6 +52,7 @@ extern DWORD codepage;
 extern int pedantic;
 extern int auto_register;
 extern int leave_case;
+extern int byteorder;
 extern int preprocess_only;
 extern int no_preprocess;
 

@@ -55,6 +55,17 @@
 #define CT_SCROLLBAR	0x84
 #define CT_COMBOBOX	0x85
 
+/* Byteordering defines */
+#define WRC_BO_NATIVE	0x00
+#define WRC_BO_LITTLE	0x01
+#define WRC_BO_BIG	0x02
+
+#define WRC_LOBYTE(w)		((WORD)(w) & 0xff)
+#define WRC_HIBYTE(w)		(((WORD)(w) >> 8) & 0xff)
+#define WRC_LOWORD(d)		((DWORD)(d) & 0xffff)
+#define WRC_HIWORD(d)		(((DWORD)(d) >> 16) & 0xffff)
+#define BYTESWAP_WORD(w)	((WORD)(((WORD)WRC_LOBYTE(w) << 8) + (WORD)WRC_HIBYTE(w)))
+#define BYTESWAP_DWORD(d)	((DWORD)(((DWORD)BYTESWAP_WORD(WRC_LOWORD(d)) << 16) + ((DWORD)BYTESWAP_WORD(WRC_HIWORD(d)))))
 
 /* Binary resource structure */
 #define RES_BLOCKSIZE	512
@@ -281,6 +292,15 @@ typedef struct font {
 	raw_data_t	*data;
 } font_t;
 
+/*
+ * Icon resources
+ */
+typedef struct icon_header {
+	WORD	reserved;	/* Don't know, should be 0 I guess */
+	WORD	type;		/* Always 1 for icons */
+	WORD	count;		/* Number of packed icons in resource */
+} icon_header_t;
+
 typedef struct icon_dir_entry {
     BYTE  width;	/* From the SDK doc. */
     BYTE  height;
@@ -311,6 +331,15 @@ typedef struct icon_group {
 	icon_t		*iconlist;
 	int		nicon;
 } icon_group_t;
+
+/*
+ * Cursor resources
+ */
+typedef struct cursor_header {
+	WORD	reserved;	/* Don't know, should be 0 I guess */
+	WORD	type;		/* Always 2 for cursors */
+	WORD	count;		/* Number of packed cursors in resource */
+} cursor_header_t;
 
 typedef struct cursor_dir_entry {
     BYTE  width;	/* From the SDK doc. */
