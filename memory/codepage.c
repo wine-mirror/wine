@@ -396,3 +396,43 @@ BOOL WINAPI GetStringTypeExW( LCID locale, DWORD type, LPCWSTR src, INT count, L
     /* locale is ignored for Unicode */
     return GetStringTypeW( type, src, count, chartype );
 }
+
+/******************************************************************************
+ *		GetStringTypeA	[KERNEL32.@]
+ */
+BOOL WINAPI GetStringTypeA(LCID locale, DWORD type, LPCSTR src, INT count, LPWORD chartype)
+{
+    char buf[20];
+    UINT cp;
+    INT countW;
+    LPWSTR srcW;
+    BOOL ret = FALSE;
+
+    if(count == -1) count = strlen(src) + 1;
+
+    if(!GetLocaleInfoA(locale, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_NOUSEROVERRIDE,
+		   buf, sizeof(buf)))
+    {
+	FIXME("For locale %04lx using current ANSI code page\n", locale);
+	cp = GetACP();
+    }
+    else
+	cp = atoi(buf);
+
+    countW = MultiByteToWideChar(cp, 0, src, count, NULL, 0);
+    if((srcW = HeapAlloc(GetProcessHeap(), 0, countW * sizeof(WCHAR))))
+    {
+	MultiByteToWideChar(cp, 0, src, count, srcW, countW);
+	ret = GetStringTypeW(type, srcW, count, chartype);
+	HeapFree(GetProcessHeap(), 0, srcW);
+    }
+    return ret;
+}
+
+/******************************************************************************
+ *		GetStringTypeExA	[KERNEL32.@]
+ */
+BOOL WINAPI GetStringTypeExA(LCID locale, DWORD type, LPCSTR src, INT count, LPWORD chartype)
+{
+    return GetStringTypeA(locale, type, src, count, chartype);
+}
