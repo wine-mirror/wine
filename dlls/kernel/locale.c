@@ -251,7 +251,6 @@ void LOCALE_InitRegistry(void)
       LOCALE_STIME, LOCALE_ITIME,
       LOCALE_ITLZERO,
       LOCALE_SSHORTDATE,
-      LOCALE_IDATE,
       LOCALE_SLONGDATE,
       LOCALE_SDATE,
       LOCALE_SCURRENCY, LOCALE_ICURRENCY,
@@ -830,6 +829,8 @@ INT WINAPI GetLocaleInfoA( LCID lcid, LCTYPE lctype, LPSTR buffer, INT len )
     WCHAR *bufferW;
     INT lenW, ret;
 
+    TRACE( "(lcid=0x%lx,lctype=0x%lx,%p,%d)\n", lcid, lctype, buffer, len );
+
     if (len < 0 || (len && !buffer))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
@@ -899,6 +900,8 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
 
     lcflags = lctype & LOCALE_LOCALEINFOFLAGSMASK;
     lctype &= 0xffff;
+
+    TRACE( "(lcid=0x%lx,lctype=0x%lx,%p,%d)\n", lcid, lctype, buffer, len );
 
     /* first check for overrides in the registry */
 
@@ -1090,7 +1093,7 @@ BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
              lcid, GetUserDefaultLCID());
     }
 
-    TRACE("setting %lx to %s\n", lctype, debugstr_w(data) );
+    TRACE("setting %lx (%s) to %s\n", lctype, debugstr_w(value), debugstr_w(data) );
 
     /* FIXME: should check that data to set is sane */
 
@@ -1101,15 +1104,15 @@ BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
     RtlInitUnicodeString( &valueW, value );
     status = NtSetValueKey( hkey, &valueW, 0, REG_SZ, data, (strlenW(data)+1)*sizeof(WCHAR) );
 
-    if (lctype == LOCALE_SDATE || lctype == LOCALE_SLONGDATE)
+    if (lctype == LOCALE_SSHORTDATE || lctype == LOCALE_SLONGDATE)
     {
       /* Set I-value from S value */
       WCHAR *lpD, *lpM, *lpY;
       WCHAR szBuff[2];
 
-      lpD = strchrW(data, 'd');
-      lpM = strchrW(data, 'M');
-      lpY = strchrW(data, 'y');
+      lpD = strrchrW(data, 'd');
+      lpM = strrchrW(data, 'M');
+      lpY = strrchrW(data, 'y');
 
       if (lpD <= lpM)
       {
@@ -1125,7 +1128,7 @@ BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
 
       szBuff[1] = '\0';
 
-      if (lctype == LOCALE_SDATE)
+      if (lctype == LOCALE_SSHORTDATE)
         lctype = LOCALE_IDATE;
       else
         lctype = LOCALE_ILDATE;
