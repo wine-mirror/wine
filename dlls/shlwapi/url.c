@@ -1417,7 +1417,7 @@ HRESULT WINAPI UrlHashW(LPCWSTR pszUrl, unsigned char *lpDest, DWORD nDestLen)
    * return the same digests for the same URL.
    */
   WideCharToMultiByte(0, 0, pszUrl, -1, szUrl, MAX_PATH, 0, 0);
-  HashData((PBYTE)szUrl, (int)strlen(szUrl), lpDest, nDestLen);
+  HashData((const BYTE*)szUrl, (int)strlen(szUrl), lpDest, nDestLen);
   return S_OK;
 }
 
