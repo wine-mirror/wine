@@ -981,6 +981,7 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
         return 1;
     case WM_MDIGETACTIVE:
         *plparam = (LPARAM)HeapAlloc( SystemHeap, 0, sizeof(BOOL32) );
+        *(BOOL32*)(*plparam) = 0;
         return 1;
     case WM_MDISETMENU:
         if(wParam16==TRUE)
