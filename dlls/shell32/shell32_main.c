@@ -299,9 +299,9 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	  return 0;
       }
 
-      /* psfi is NULL normally to query EXE type, if not none of the below makes 
-           sense anyway. Windows allows this and just returns FALSE              */
-      if (psfi != NULL) return FALSE;
+      /* psfi is NULL normally to query EXE type. If it is NULL, none of the
+       * below makes sense anyway. Windows allows this and just returns FALSE */
+      if (psfi == NULL) return FALSE;
 
 	/* translate the path into a pidl only when SHGFI_USEFILEATTRIBUTES
     	 * is not specified.
