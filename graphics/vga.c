@@ -7,11 +7,11 @@
 
 #include <string.h>
 #include "winbase.h"
-#include "winuser.h"
-#include "wine/winuser16.h"
+#include "wincon.h"
 #include "miscemu.h"
 #include "vga.h"
 #include "ddraw.h"
+#include "services.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ddraw)
@@ -20,9 +20,32 @@ static IDirectDraw *lpddraw = NULL;
 static IDirectDrawSurface *lpddsurf;
 static IDirectDrawPalette *lpddpal;
 static DDSURFACEDESC sdesc;
-static WORD poll_timer;
-static CRITICAL_SECTION vga_crit;
-static int vga_polling,vga_refresh;
+static LONG vga_polling,vga_refresh;
+static HANDLE poll_timer;
+
+static void VGA_DeinstallTimer(void)
+{
+    if (poll_timer) {
+        SERVICE_Delete( poll_timer );
+        poll_timer = 0;
+    }
+}
+
+static void VGA_InstallTimer(unsigned Rate)
+{
+    VGA_DeinstallTimer();
+    if (!poll_timer)
+        poll_timer = SERVICE_AddTimer( Rate, VGA_Poll, 0 );
+}
+
+HANDLE VGA_AlphaConsole(void)
+{
+    /* this assumes that no Win32 redirection has taken place, but then again,
+     * only 16-bit apps are likely to use this part of Wine... */
+    return GetStdHandle(STD_OUTPUT_HANDLE);
+}
+
+/*** GRAPHICS MODE ***/
 
 int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
 {
@@ -51,10 +74,8 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
             return 1;
         }
         vga_refresh=0;
-        InitializeCriticalSection(&vga_crit);
-        MakeCriticalSectionGlobal(&vga_crit);
         /* poll every 20ms (50fps should provide adequate responsiveness) */
-        poll_timer = CreateSystemTimer( 20, VGA_Poll );
+        VGA_InstallTimer(20000);
     }
     return 0;
 }
@@ -72,8 +93,7 @@ int VGA_GetMode(unsigned*Height,unsigned*Width,unsigned*Depth)
 void VGA_Exit(void)
 {
     if (lpddraw) {
-        SYSTEM_KillSystemTimer(poll_timer);
-        DeleteCriticalSection(&vga_crit);
+        VGA_DeinstallTimer();
         IDirectDrawSurface_Release(lpddsurf);
         lpddsurf=NULL;
         IDirectDraw_Release(lpddraw);
@@ -124,37 +144,96 @@ void VGA_Unlock(void)
     IDirectDrawSurface_Unlock(lpddsurf,sdesc.u1.lpSurface);
 }
 
-/* We are called from SIGALRM, aren't we? We should _NOT_ do synchronization
- * stuff!
- */
-void VGA_Poll( WORD timer )
+/*** TEXT MODE ***/
+
+int VGA_SetAlphaMode(unsigned Xres,unsigned Yres)
+{
+    COORD siz;
+
+    if (lpddraw) VGA_Exit();
+
+    /* the xterm is slow, so refresh only every 200ms (5fps) */
+    VGA_InstallTimer(200000);
+
+    siz.x = Xres;
+    siz.y = Yres;
+    SetConsoleScreenBufferSize(VGA_AlphaConsole(),siz);
+    return 0;
+}
+
+void VGA_GetAlphaMode(unsigned*Xres,unsigned*Yres)
+{
+    CONSOLE_SCREEN_BUFFER_INFO info;
+    GetConsoleScreenBufferInfo(VGA_AlphaConsole(),&info);
+    if (Xres) *Xres=info.dwSize.x;
+    if (Yres) *Yres=info.dwSize.y;
+}
+
+void VGA_SetCursorPos(unsigned X,unsigned Y)
+{
+    COORD pos;
+    
+    pos.x = X;
+    pos.y = Y;
+    SetConsoleCursorPosition(VGA_AlphaConsole(),pos);
+}
+
+void VGA_GetCursorPos(unsigned*X,unsigned*Y)
+{
+    CONSOLE_SCREEN_BUFFER_INFO info;
+    GetConsoleScreenBufferInfo(VGA_AlphaConsole(),&info);
+    if (X) *X=info.dwCursorPosition.x;
+    if (Y) *Y=info.dwCursorPosition.y;
+}
+
+/*** CONTROL ***/
+
+void CALLBACK VGA_Poll( ULONG_PTR arg )
 {
     char *dat;
     unsigned Pitch,Height,Width;
     char *surf;
-    int Y;
-    /* int X; */
+    int Y,X;
 
-    EnterCriticalSection(&vga_crit);
-    if (!vga_polling) {
-        vga_polling++;
-        LeaveCriticalSection(&vga_crit);
+    if (!InterlockedExchangeAdd(&vga_polling, 1)) {
         /* FIXME: optimize by doing this only if the data has actually changed
          *        (in a way similar to DIBSection, perhaps) */
-        surf = VGA_Lock(&Pitch,&Height,&Width,NULL);
-        if (!surf) return;
-        dat = DOSMEM_MapDosToLinear(0xa0000);
-        /* copy from virtual VGA frame buffer to DirectDraw surface */
-        for (Y=0; Y<Height; Y++,surf+=Pitch,dat+=Width) {
-            memcpy(surf,dat,Width);
-            /*for (X=0; X<Width; X++) if (dat[X]) TRACE(ddraw,"data(%d) at (%d,%d)\n",dat[X],X,Y);*/
+        if (lpddraw) {
+          /* graphics mode */
+          surf = VGA_Lock(&Pitch,&Height,&Width,NULL);
+          if (!surf) return;
+          dat = DOSMEM_MapDosToLinear(0xa0000);
+          /* copy from virtual VGA frame buffer to DirectDraw surface */
+          for (Y=0; Y<Height; Y++,surf+=Pitch,dat+=Width) {
+              memcpy(surf,dat,Width);
+              /*for (X=0; X<Width; X++) if (dat[X]) TRACE(ddraw,"data(%d) at (%d,%d)\n",dat[X],X,Y);*/
+          }
+          VGA_Unlock();
+        } else {
+          /* text mode */
+          CHAR_INFO ch[80];
+          COORD siz, off;
+          SMALL_RECT dest;
+          HANDLE con = VGA_AlphaConsole();
+
+          VGA_GetAlphaMode(&Width,&Height);
+          dat = DOSMEM_MapDosToLinear(0xb8000);
+          siz.x = 80; siz.y = 1;
+          off.x = 0; off.y = 0;
+          /* copy from virtual VGA frame buffer to console */
+          for (Y=0; Y<Height; Y++) {
+              dest.Top=Y; dest.Bottom=Y;
+              for (X=0; X<Width; X++) {
+                  ch[X].Char.AsciiChar = *dat++;
+                  ch[X].Attributes = *dat++;
+              }
+              dest.Left=0; dest.Right=Width+1;
+              WriteConsoleOutputA(con, ch, siz, off, &dest);
+          }
         }
-        VGA_Unlock();
         vga_refresh=1;
-        EnterCriticalSection(&vga_crit);
-        vga_polling--;
     }
-    LeaveCriticalSection(&vga_crit);
+    InterlockedDecrement(&vga_polling);
 }
 
 static BYTE palreg,palcnt;
@@ -183,13 +262,17 @@ BYTE VGA_ioport_in( WORD port )
         case 0x3da:
             /* since we don't (yet?) serve DOS VM requests while VGA_Poll is running,
                we need to fake the occurrence of the vertical refresh */
-            if (lpddraw) {
-                ret=vga_refresh?0x00:0x08;
-                vga_refresh=0;
-            } else ret=0x08;
+            ret=vga_refresh?0x00:0x08;
+            vga_refresh=0;
             break;
         default:
             ret=0xff;
     }
     return ret;
+}
+
+void VGA_Clean(void)
+{
+    VGA_Exit();
+    VGA_DeinstallTimer();
 }
