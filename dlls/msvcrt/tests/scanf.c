@@ -78,11 +78,17 @@ static void test_sscanf( void )
 static void test_sprintf( void )
 {
     char buffer[100];
+    const char *I64d = "%I64d";
     double pnumber=789456123;
     sprintf(buffer,"%+#23.15e",pnumber);
     todo_wine
       {
 	ok(strstr(buffer,"e+008") != 0,"Sprintf different \"%s\"\n",buffer);
+      }
+    sprintf(buffer,I64d,((ULONGLONG)0xffffffff)*0xffffffff);
+    todo_wine
+      {
+	ok(strlen(buffer) == 19,"Problem with long long \"%s\"\n",buffer);
       }
 }
 
