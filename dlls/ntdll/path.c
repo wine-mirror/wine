@@ -262,12 +262,12 @@ ULONG WINAPI RtlDosSearchPath_U(LPCWSTR paths, LPCWSTR search, LPCWSTR ext,
     if (type == RELATIVE_PATH)
     {
         ULONG allocated = 0, needed, filelen;
-        WCHAR *p, *name = NULL;
+        WCHAR *name = NULL;
 
         filelen = 1 /* for \ */ + strlenW(search) + 1 /* \0 */;
 
-        p = strrchrW( search, '.' );
-        if (p && !strchrW( p, '\\' ) && !strchrW( p, '/')) ext = NULL;
+        /* Windows only checks for '.' without worrying about path components */
+        if (strchrW( search, '.' )) ext = NULL;
         if (ext != NULL) filelen += strlenW(ext);
 
         while (*paths)
@@ -495,6 +495,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
                         if (prev < buffer + mark) prev = p - 1;
                         reqsize -= (p + 2 - prev) * sizeof(WCHAR);
                         memmove(prev, p + 2, buffer + reqsize - prev + sizeof(WCHAR));
+                        p = prev;
                     }
                     break;
                 case '\0':
@@ -531,6 +532,7 @@ done:
 DWORD WINAPI RtlGetFullPathName_U(const WCHAR* name, ULONG size, WCHAR* buffer,
                                   WCHAR** file_part)
 {
+    WCHAR*      ptr;
     DWORD       dosdev;
     DWORD       reqsize;
 
@@ -558,17 +560,20 @@ DWORD WINAPI RtlGetFullPathName_U(const WCHAR* name, ULONG size, WCHAR* buffer,
     reqsize = get_full_path_helper(name, buffer, size);
     if (reqsize > size)
     {
-        LPWSTR  tmp = RtlAllocateHeap(ntdll_get_process_heap(), 0, reqsize);
-        reqsize = get_full_path_helper(name, tmp, reqsize) + sizeof(WCHAR);
+        LPWSTR tmp = RtlAllocateHeap(ntdll_get_process_heap(), 0, reqsize);
+        reqsize = get_full_path_helper(name, tmp, reqsize);
+        if (reqsize > size)  /* it may have worked the second time */
+        {
+            RtlFreeHeap(ntdll_get_process_heap(), 0, tmp);
+            return reqsize + sizeof(WCHAR);
+        }
+        memcpy( buffer, tmp, reqsize + sizeof(WCHAR) );
         RtlFreeHeap(ntdll_get_process_heap(), 0, tmp);
     }
-    else
-    {
-        WCHAR*      ptr;
-        /* find file part */
-        if (file_part && (ptr = strrchrW(buffer, '\\')) != NULL && ptr >= buffer + 2 && *++ptr)
-            *file_part = ptr;
-    }
+
+    /* find file part */
+    if (file_part && (ptr = strrchrW(buffer, '\\')) != NULL && ptr >= buffer + 2 && *++ptr)
+        *file_part = ptr;
     return reqsize;
 }
 
