@@ -97,7 +97,7 @@ struct _DMUS_VOICE_STATE {
 DECLARE_INTERFACE_(IDirectMusicSynth,IUnknown) { IDirectMusicSynth_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicSynth_QueryInterface(p,a,b)       (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicSynth_AddRef(p)                   (p)->lpVtbl->AddRef(p)
@@ -138,7 +138,7 @@ DECLARE_INTERFACE_(IDirectMusicSynth,IUnknown) { IDirectMusicSynth_METHODS };
 DECLARE_INTERFACE_(IDirectMusicSynth8,IDirectMusicSynth) { IDirectMusicSynth8_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicSynth8_QueryInterface(p,a,b)            (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicSynth8_AddRef(p)                        (p)->lpVtbl->AddRef(p)
@@ -188,7 +188,7 @@ DECLARE_INTERFACE_(IDirectMusicSynth8,IDirectMusicSynth) { IDirectMusicSynth8_ME
 DECLARE_INTERFACE_(IDirectMusicSynthSink,IUnknown) { IDirectMusicSynthSink_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicSynthSink_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicSynthSink_AddRef(p)                  (p)->lpVtbl->AddRef(p)

@@ -799,7 +799,7 @@ typedef NOTIFCALLBACK *LPNOTIFCALLBACK;
 DECLARE_INTERFACE_(IMAPITable,IUnknown) { IMAPITable_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
         /*** IUnknown methods ***/
 #define IMAPITable_QueryInterface(p,a,b)         (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMAPITable_AddRef(p)                     (p)->lpVtbl->AddRef(p)
@@ -840,7 +840,7 @@ DECLARE_INTERFACE_(IMAPITable,IUnknown) { IMAPITable_METHODS };
 DECLARE_INTERFACE_(IMAPIAdviseSink,IUnknown) { IMAPIAdviseSink_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
         /*** IUnknown methods ***/
 #define IMAPIAdviseSink_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMAPIAdviseSink_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -873,7 +873,7 @@ DECLARE_INTERFACE_(IMAPIAdviseSink,IUnknown) { IMAPIAdviseSink_METHODS };
 DECLARE_INTERFACE_(IMAPIProp,IUnknown) { IMAPIProp_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
         /*** IUnknown methods ***/
 #define IMAPIProp_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMAPIProp_AddRef(p)                    (p)->lpVtbl->AddRef(p)

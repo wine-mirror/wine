@@ -135,7 +135,7 @@ MAPIFREEBUFFER MAPIFreeBuffer;
 DECLARE_INTERFACE_(IMAPISession,IUnknown) { IMAPISession_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
         /*** IUnknown methods ***/
 #define IMAPISession_QueryInterface(p,a,b)          (p)->lpVtbl->QueryInterface(p,a,b)
 #define IMAPISession_AddRef(p)                      (p)->lpVtbl->AddRef(p)

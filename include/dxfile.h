@@ -70,7 +70,7 @@ STDAPI DirectXFileCreate(LPDIRECTXFILE *lplpDirectXFile);
 DECLARE_INTERFACE_(IDirectXFile,IUnknown) { IDirectXFile_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
     /*** IUnknown methods ***/
 #define IDirectXFile_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectXFile_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -90,7 +90,7 @@ DECLARE_INTERFACE_(IDirectXFile,IUnknown) { IDirectXFile_METHODS };
 DECLARE_INTERFACE_(IDirectXFileEnumObject,IUnknown) { IDirectXFileEnumObject_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
     /*** IUnknown methods ***/
 #define IDirectXFileEnumObject_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectXFileEnumObject_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -110,7 +110,7 @@ DECLARE_INTERFACE_(IDirectXFileEnumObject,IUnknown) { IDirectXFileEnumObject_MET
 DECLARE_INTERFACE_(IDirectXFileSaveObject,IUnknown) { IDirectXFileSaveObject_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
     /*** IUnknown methods ***/
 #define IDirectXFileSaveObject_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectXFileSaveObject_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -132,7 +132,7 @@ DECLARE_INTERFACE_(IDirectXFileSaveObject,IUnknown) { IDirectXFileSaveObject_MET
 DECLARE_INTERFACE_(IDirectXFileObject,IUnknown) { IDirectXFileObject_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
     /*** IUnknown methods ***/
 #define IDirectXFileObject_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectXFileObject_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -155,7 +155,7 @@ DECLARE_INTERFACE_(IDirectXFileObject,IUnknown) { IDirectXFileObject_METHODS };
 DECLARE_INTERFACE_(IDirectXFileData,IDirectXFileObject) { IDirectXFileData_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
     /*** IUnknown methods ***/
 #define IDirectXFileData_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectXFileData_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -180,7 +180,7 @@ DECLARE_INTERFACE_(IDirectXFileData,IDirectXFileObject) { IDirectXFileData_METHO
 DECLARE_INTERFACE_(IDirectXFileDataReference,IDirectXFileObject) { IDirectXFileDataReference_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
     /*** IUnknown methods ***/
 #define IDirectXFileData_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectXFileData_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -202,7 +202,7 @@ DECLARE_INTERFACE_(IDirectXFileDataReference,IDirectXFileObject) { IDirectXFileD
 DECLARE_INTERFACE_(IDirectXFileBinary,IDirectXFileObject) { IDirectXFileBinary_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
     /*** IUnknown methods ***/
 #define IDirectXFileBinary_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectXFileBinary_AddRef(p)             (p)->lpVtbl->AddRef(p)

@@ -136,7 +136,7 @@ enum enumDMUS_TRACKF_FLAGS {
 DECLARE_INTERFACE_(IDirectMusicTool,IUnknown) { IDirectMusicTool_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicTool_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicTool_AddRef(p)                  (p)->lpVtbl->AddRef(p)
@@ -162,7 +162,7 @@ DECLARE_INTERFACE_(IDirectMusicTool,IUnknown) { IDirectMusicTool_METHODS };
 DECLARE_INTERFACE_(IDirectMusicTool8,IDirectMusicTool) { IDirectMusicTool8_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicTool8_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicTool8_AddRef(p)                  (p)->lpVtbl->AddRef(p)
@@ -199,7 +199,7 @@ DECLARE_INTERFACE_(IDirectMusicTool8,IDirectMusicTool) { IDirectMusicTool8_METHO
 DECLARE_INTERFACE_(IDirectMusicTrack,IUnknown) { IDirectMusicTrack_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicTrack_QueryInterface(p,a,b)       (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicTrack_AddRef(p)                   (p)->lpVtbl->AddRef(p)
@@ -233,7 +233,7 @@ DECLARE_INTERFACE_(IDirectMusicTrack,IUnknown) { IDirectMusicTrack_METHODS };
 DECLARE_INTERFACE_(IDirectMusicTrack8,IDirectMusicTrack) { IDirectMusicTrack8_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicTrack8_QueryInterface(p,a,b)       (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicTrack8_AddRef(p)                   (p)->lpVtbl->AddRef(p)

@@ -1007,7 +1007,7 @@ DEFINE_AVIGUID(CLSID_AVIFile,           0x00020000, 0, 0);
 DECLARE_INTERFACE_(IAVIStream, IUnknown) { IAVIStream_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IAVIStream_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAVIStream_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -1121,7 +1121,7 @@ LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime);
 DECLARE_INTERFACE_(IAVIStreaming, IUnknown) { IAVIStreaming_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IAVIStreaming_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAVIStreaming_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -1145,7 +1145,7 @@ DECLARE_INTERFACE_(IAVIStreaming, IUnknown) { IAVIStreaming_METHODS };
 DECLARE_INTERFACE_(IAVIEditStream,IUnknown) { IAVIEditStream_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IAVIEditStream_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAVIEditStream_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -1194,7 +1194,7 @@ HRESULT WINAPI EditStreamSetNameW(PAVISTREAM pstream, LPCWSTR szName);
 DECLARE_INTERFACE_(IAVIFile,IUnknown) { IAVIFile_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IAVIFile_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IAVIFile_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -1242,7 +1242,7 @@ HRESULT WINAPI AVIFileEndRecord(PAVIFILE pfile);
 DECLARE_INTERFACE_(IGetFrame,IUnknown) { IGetFrame_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IGetFrame_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IGetFrame_AddRef(p)             (p)->lpVtbl->AddRef(p)

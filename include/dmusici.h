@@ -799,7 +799,7 @@ struct _DMUS_VARIATIONS_PARAM {
 DECLARE_INTERFACE_(IDirectMusicBand,IUnknown) { IDirectMusicBand_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicBand_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicBand_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -824,7 +824,7 @@ DECLARE_INTERFACE_(IDirectMusicBand,IUnknown) { IDirectMusicBand_METHODS };
 DECLARE_INTERFACE_(IDirectMusicObject,IUnknown) { IDirectMusicObject_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicObject_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicObject_AddRef(p)              (p)->lpVtbl->AddRef(p)
@@ -855,7 +855,7 @@ DECLARE_INTERFACE_(IDirectMusicObject,IUnknown) { IDirectMusicObject_METHODS };
 DECLARE_INTERFACE_(IDirectMusicLoader,IUnknown) { IDirectMusicLoader_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicLoader_QueryInterface(p,a,b)       (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicLoader_AddRef(p)                   (p)->lpVtbl->AddRef(p)
@@ -886,7 +886,7 @@ DECLARE_INTERFACE_(IDirectMusicLoader,IUnknown) { IDirectMusicLoader_METHODS };
 DECLARE_INTERFACE_(IDirectMusicLoader8,IDirectMusicLoader) { IDirectMusicLoader8_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicLoader8_QueryInterface(p,a,b)         (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicLoader8_AddRef(p)                     (p)->lpVtbl->AddRef(p)
@@ -919,7 +919,7 @@ DECLARE_INTERFACE_(IDirectMusicLoader8,IDirectMusicLoader) { IDirectMusicLoader8
 DECLARE_INTERFACE_(IDirectMusicGetLoader,IUnknown) { IDirectMusicGetLoader_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicGetLoader_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicGetLoader_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -962,7 +962,7 @@ DECLARE_INTERFACE_(IDirectMusicGetLoader,IUnknown) { IDirectMusicGetLoader_METHO
 DECLARE_INTERFACE_(IDirectMusicSegment,IUnknown) { IDirectMusicSegment_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicSegment_QueryInterface(p,a,b)       (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicSegment_AddRef(p)                   (p)->lpVtbl->AddRef(p)
@@ -1009,7 +1009,7 @@ DECLARE_INTERFACE_(IDirectMusicSegment,IUnknown) { IDirectMusicSegment_METHODS }
 DECLARE_INTERFACE_(IDirectMusicSegment8,IDirectMusicSegment) { IDirectMusicSegment8_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicSegment8_QueryInterface(p,a,b)       (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicSegment8_AddRef(p)                   (p)->lpVtbl->AddRef(p)
@@ -1062,7 +1062,7 @@ DECLARE_INTERFACE_(IDirectMusicSegment8,IDirectMusicSegment) { IDirectMusicSegme
 DECLARE_INTERFACE_(IDirectMusicSegmentState,IUnknown) { IDirectMusicSegmentState_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicSegmentState_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicSegmentState_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -1088,7 +1088,7 @@ DECLARE_INTERFACE_(IDirectMusicSegmentState,IUnknown) { IDirectMusicSegmentState
 DECLARE_INTERFACE_(IDirectMusicSegmentState8,IDirectMusicSegmentState) { IDirectMusicSegmentState8_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicSegmentState8_QueryInterface(p,a,b)            (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicSegmentState8_AddRef(p)                        (p)->lpVtbl->AddRef(p)
@@ -1119,7 +1119,7 @@ DECLARE_INTERFACE_(IDirectMusicSegmentState8,IDirectMusicSegmentState) { IDirect
 DECLARE_INTERFACE_(IDirectMusicAudioPath,IUnknown) { IDirectMusicAudioPath_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicAudioPath_QueryInterface(p,a,b)            (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicAudioPath_AddRef(p)                        (p)->lpVtbl->AddRef(p)
@@ -1183,7 +1183,7 @@ DECLARE_INTERFACE_(IDirectMusicAudioPath,IUnknown) { IDirectMusicAudioPath_METHO
 DECLARE_INTERFACE_(IDirectMusicPerformance,IUnknown) { IDirectMusicPerformance_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicPerformance_QueryInterface(p,a,b)                 (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicPerformance_AddRef(p)                             (p)->lpVtbl->AddRef(p)
@@ -1252,7 +1252,7 @@ DECLARE_INTERFACE_(IDirectMusicPerformance,IUnknown) { IDirectMusicPerformance_M
 DECLARE_INTERFACE_(IDirectMusicPerformance8,IDirectMusicPerformance) { IDirectMusicPerformance8_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicPerformance8_QueryInterface(p,a,b)                 (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicPerformance8_AddRef(p)                             (p)->lpVtbl->AddRef(p)
@@ -1326,7 +1326,7 @@ DECLARE_INTERFACE_(IDirectMusicPerformance8,IDirectMusicPerformance) { IDirectMu
 DECLARE_INTERFACE_(IDirectMusicGraph,IUnknown) { IDirectMusicGraph_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicGraph_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicGraph_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -1360,7 +1360,7 @@ DECLARE_INTERFACE_(IDirectMusicGraph,IUnknown) { IDirectMusicGraph_METHODS };
 DECLARE_INTERFACE_(IDirectMusicStyle,IUnknown) { IDirectMusicStyle_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicStyle_QueryInterface(p,a,b)             (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicStyle_AddRef(p)                         (p)->lpVtbl->AddRef(p)
@@ -1391,7 +1391,7 @@ DECLARE_INTERFACE_(IDirectMusicStyle,IUnknown) { IDirectMusicStyle_METHODS };
 DECLARE_INTERFACE_(IDirectMusicStyle8,IDirectMusicStyle) { IDirectMusicStyle8_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicStyle8_QueryInterface(p,a,b)             (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicStyle8_AddRef(p)                         (p)->lpVtbl->AddRef(p)
@@ -1424,7 +1424,7 @@ DECLARE_INTERFACE_(IDirectMusicStyle8,IDirectMusicStyle) { IDirectMusicStyle8_ME
 DECLARE_INTERFACE_(IDirectMusicChordMap,IUnknown) { IDirectMusicChordMap_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicChordMap_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicChordMap_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -1450,7 +1450,7 @@ DECLARE_INTERFACE_(IDirectMusicChordMap,IUnknown) { IDirectMusicChordMap_METHODS
 DECLARE_INTERFACE_(IDirectMusicComposer,IUnknown) { IDirectMusicComposer_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicComposer_QueryInterface(p,a,b)                      (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicComposer_AddRef(p)                                  (p)->lpVtbl->AddRef(p)
@@ -1478,7 +1478,7 @@ DECLARE_INTERFACE_(IDirectMusicComposer,IUnknown) { IDirectMusicComposer_METHODS
 DECLARE_INTERFACE_(IDirectMusicPatternTrack,IUnknown) { IDirectMusicPatternTrack_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicPatternTrack_QueryInterface(p,a,b)         (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicPatternTrack_AddRef(p)                     (p)->lpVtbl->AddRef(p)
@@ -1510,7 +1510,7 @@ DECLARE_INTERFACE_(IDirectMusicPatternTrack,IUnknown) { IDirectMusicPatternTrack
 DECLARE_INTERFACE_(IDirectMusicScript,IUnknown) { IDirectMusicScript_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicScript_QueryInterface(p,a,b)               (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicScript_AddRef(p)                           (p)->lpVtbl->AddRef(p)
@@ -1540,7 +1540,7 @@ DECLARE_INTERFACE_(IDirectMusicScript,IUnknown) { IDirectMusicScript_METHODS };
 DECLARE_INTERFACE_(IDirectMusicContainer,IUnknown) { IDirectMusicContainer_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirectMusicContainer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IDirectMusicContainer_AddRef(p)             (p)->lpVtbl->AddRef(p)

@@ -192,7 +192,7 @@ typedef GUID SHELLVIEWID;
 DECLARE_INTERFACE_(IShellIcon, IUnknown) { IShellIcon_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IShellIcon_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
 #define IShellIcon_AddRef(p)                  (p)->lpVtbl->AddRef(p)
@@ -809,7 +809,7 @@ typedef struct IShellChangeNotify IShellChangeNotify, *LPSHELLCHANGENOTIFY;
 DECLARE_INTERFACE_(IShellChangeNotify, IUnknown) { IShellChangeNotify_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IShellChangeNotify_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
 #define IShellChangeNotify_AddRef(p)                  (p)->lpVtbl->AddRef(p)

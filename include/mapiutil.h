@@ -139,7 +139,7 @@ typedef void (WINAPI CALLERRELEASE)(ULONG,LPTABLEDATA,LPMAPITABLE);
 DECLARE_INTERFACE_(ITableData,IUnknown) { ITableData_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
         /*** IUnknown methods ***/
 #define ITableData_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ITableData_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -223,7 +223,7 @@ static inline FILETIME FtMulDwDw(DWORD dwLeft, DWORD dwRight)
 DECLARE_INTERFACE_(IPropData,IMAPIProp) { IPropData_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
         /*** IUnknown methods ***/
 #define IPropData_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
 #define IPropData_AddRef(p)                    (p)->lpVtbl->AddRef(p)

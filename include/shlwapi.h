@@ -255,7 +255,7 @@ typedef struct IQueryAssociations IQueryAssociations,*LPQUERYASSOCIATIONS;
 DECLARE_INTERFACE_(IQueryAssociations,IUnknown) { IQueryAssociations_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 #define IQueryAssociations_QueryInterface(p,a,b)   (p)->lpVtbl->QueryInterface(p,a,b)
 #define IQueryAssociations_AddRef(p)               (p)->lpVtbl->AddRef(p)
 #define IQueryAssociations_Release(p)              (p)->lpVtbl->Release(p)

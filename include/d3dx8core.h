@@ -64,7 +64,7 @@ typedef struct ID3DXFont                ID3DXFont, *LPD3DXFONT;
 DECLARE_INTERFACE_(ID3DXBuffer,IUnknown) { ID3DXBuffer_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define ID3DXBuffer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ID3DXBuffer_AddRef(p)             (p)->lpVtbl->AddRef(p)
@@ -87,7 +87,7 @@ DECLARE_INTERFACE_(ID3DXBuffer,IUnknown) { ID3DXBuffer_METHODS };
 DECLARE_INTERFACE_(ID3DXFont,IUnknown) { ID3DXFont_METHODS };
 #undef INTERFACE
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define ID3DXFont_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define ID3DXFont_AddRef(p)             (p)->lpVtbl->AddRef(p)

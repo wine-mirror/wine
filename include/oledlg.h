@@ -696,7 +696,7 @@ DECL_WINELIB_TYPE_AW(IOleUILinkContainer)
 DECL_WINELIB_TYPE_AW(POLEUILINKCONTAINER)
 DECL_WINELIB_TYPE_AW(LPOLEUILINKCONTAINER)
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IOleUILinkContainer_QueryInterface(p,a,b)          (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleUILinkContainer_AddRef(p)                      (p)->lpVtbl->AddRef(p)
@@ -734,7 +734,7 @@ DECL_WINELIB_TYPE_AW(IOleUILinkInfo)
 DECL_WINELIB_TYPE_AW(POLEUILINKINFO)
 DECL_WINELIB_TYPE_AW(LPOLEUILINKINFO)
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IOleUILinkInfo_QueryInterface(p,a,b)          (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleUILinkInfo_AddRef(p)                      (p)->lpVtbl->AddRef(p)
@@ -788,7 +788,7 @@ DECL_WINELIB_TYPE_AW(IOleUIObjInfo)
 DECL_WINELIB_TYPE_AW(POLEUIOBJINFO)
 DECL_WINELIB_TYPE_AW(LPOLEUIOBJINFO)
 
-#ifdef COBJMACROS
+#if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IOleUIObjInfo_QueryInterface(p,a,b)            (p)->lpVtbl->QueryInterface(p,a,b)
 #define IOleUIObjInfo_AddRef(p)                        (p)->lpVtbl->AddRef(p)
