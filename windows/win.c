@@ -129,7 +129,8 @@ void WIN_WalkWindows( HWND32 hwnd, int indent )
 
     if (!indent)  /* first time around */
        DUMP( "%-16.16s %-8.8s %-6.6s %-17.17s %-8.8s %s\n",
-                 "hwnd", " wndPtr", "queue", "Class Name", " Style", " WndProc");
+                 "hwnd", " wndPtr", "queue", "Class Name", " Style", " WndProc"
+                 " Text");
 
     while (ptr)
     {
@@ -137,9 +138,10 @@ void WIN_WalkWindows( HWND32 hwnd, int indent )
 
         GlobalGetAtomName16(ptr->class->atomName,className,sizeof(className));
         
-        DUMP( "%08lx %-6.4x %-17.17s %08x %08x\n",
+        DUMP( "%08lx %-6.4x %-17.17s %08x %08x %.14s\n",
                  (DWORD)ptr, ptr->hmemTaskQ, className,
-                 (UINT32)ptr->dwStyle, (UINT32)ptr->winproc );
+                 (UINT32)ptr->dwStyle, (UINT32)ptr->winproc,
+                 ptr->text?ptr->text:"<null>");
         
         if (ptr->child) WIN_WalkWindows( ptr->child->hwndSelf, indent+1 );
         ptr = ptr->next;
