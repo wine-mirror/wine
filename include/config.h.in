@@ -395,21 +395,6 @@
 /* Define to 1 if you have the `pread' function. */
 #undef HAVE_PREAD
 
-/* Define to 1 if you have the `pthread_getspecific' function. */
-#undef HAVE_PTHREAD_GETSPECIFIC
-
-/* Define to 1 if you have the `pthread_key_create' function. */
-#undef HAVE_PTHREAD_KEY_CREATE
-
-/* Define to 1 if you have the `pthread_mutex_lock' function. */
-#undef HAVE_PTHREAD_MUTEX_LOCK
-
-/* Define to 1 if you have the `pthread_mutex_unlock' function. */
-#undef HAVE_PTHREAD_MUTEX_UNLOCK
-
-/* Define to 1 if you have the `pthread_setspecific' function. */
-#undef HAVE_PTHREAD_SETSPECIFIC
-
 /* Define to 1 if you have the <pty.h> header file. */
 #undef HAVE_PTY_H
 

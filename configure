@@ -8198,6 +8198,10 @@ if test $ac_cv_lib_GLU_gluLookAt = yes; then
 
 fi
 
+                if test -n "$OPENGL_LIBS"
+                then
+                  OPENGL_LIBS="$OPENGL_LIBS -lpthread"
+                fi
 	     fi
 	 fi
     fi
@@ -13370,11 +13374,6 @@ fi
 
 
 
-
-
-
-
-
 for ac_func in \
 	_lwp_create \
 	_lwp_self \
@@ -13408,11 +13407,6 @@ for ac_func in \
 	pclose \
 	popen \
 	pread \
-	pthread_getspecific \
-	pthread_key_create \
-	pthread_mutex_lock \
-	pthread_mutex_unlock \
-	pthread_setspecific \
 	pwrite \
 	rfork \
 	select \

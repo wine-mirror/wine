@@ -341,6 +341,10 @@ This prevents linking to OpenGL. Delete the file and restart configure.])
 			     ,,
 			     $OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS
 		)
+                if test -n "$OPENGL_LIBS"
+                then
+                  OPENGL_LIBS="$OPENGL_LIBS -lpthread"
+                fi
 	     fi
 	 fi
     fi
@@ -958,11 +962,6 @@ AC_CHECK_FUNCS(\
 	pclose \
 	popen \
 	pread \
-	pthread_getspecific \
-	pthread_key_create \
-	pthread_mutex_lock \
-	pthread_mutex_unlock \
-	pthread_setspecific \
 	pwrite \
 	rfork \
 	select \

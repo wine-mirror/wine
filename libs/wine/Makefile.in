@@ -10,7 +10,6 @@ EXTRALIBS = $(LIBPORT) @DLLIBS@ @CRTLIBS@
 C_SRCS = \
 	config.c \
 	debug.c \
-	errno.c \
 	ldt.c \
 	loader.c
 
