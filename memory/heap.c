@@ -1678,7 +1678,7 @@ LPSTR HEAP_strdupA( HANDLE heap, DWORD flags, LPCSTR str )
  */
 LPWSTR HEAP_strdupW( HANDLE heap, DWORD flags, LPCWSTR str )
 {
-    INT len = lstrlenW(str) + 1;
+    INT len = strlenW(str) + 1;
     LPWSTR p = HeapAlloc( heap, flags, len * sizeof(WCHAR) );
     if(p) {
         SET_EIP(p);
@@ -1694,12 +1694,14 @@ LPWSTR HEAP_strdupW( HANDLE heap, DWORD flags, LPCWSTR str )
 LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str )
 {
     LPWSTR ret;
+    INT len;
 
     if (!str) return NULL;
-    ret = HeapAlloc( heap, flags, (strlen(str)+1) * sizeof(WCHAR) );
+    len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+    ret = HeapAlloc( heap, flags, len * sizeof(WCHAR) );
     if (ret) {
         SET_EIP(ret);
-        lstrcpyAtoW( ret, str );
+        MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
     }
     return ret;
 }
