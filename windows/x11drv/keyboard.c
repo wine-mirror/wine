@@ -746,7 +746,9 @@ void X11DRV_KEYBOARD_HandleEvent( XKeyEvent *event, int x, int y )
     ascii_chars = TSXLookupString(event, Str, sizeof(Str), &keysym, NULL);
 
     /* Ignore some unwanted events */
-    if (keysym == XK_ISO_Prev_Group || keysym == XK_ISO_Next_Group)
+    if (keysym == XK_ISO_Prev_Group ||
+	keysym == XK_ISO_Next_Group ||
+	keysym == XK_Mode_switch)
     {
 	TRACE("Ignoring %s keyboard event\n", TSXKeysymToString(keysym));
 	return;
