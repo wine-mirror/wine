@@ -91,7 +91,6 @@
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
-#include <alloca.h>
 
 #include <config.h>
 #include "wrc.h"
