@@ -53,5 +53,6 @@ extern void  DCE_FreeWindowDCE( WND* );
 extern INT16 DCE_ExcludeRgn( HDC, WND*, HRGN );
 extern HRGN DCE_GetVisRgn( HWND, WORD, HWND, WORD );
 extern BOOL DCE_InvalidateDCE( WND*, const RECT* );
+extern BOOL DCE_IsDCBusy(HDC hdc);
 
 #endif  /* __WINE_DCE_H */

@@ -628,6 +628,35 @@ INT16 DCE_ExcludeRgn( HDC hDC, WND* wnd, HRGN hRgn )
 }
 
 /***********************************************************************
+ *           DCE_IsDCBusy
+ * 
+ *  Utility function to determine if a particular DC is currently
+ *  in a busy state..
+ */
+BOOL DCE_IsDCBusy(HDC hdc)
+{
+    DCE* dce;
+    BOOL isBusy = FALSE;
+
+    WIN_LockWnds();
+    dce = firstDCE;
+            
+    while (dce && (dce->hDC != hdc)) dce = dce->next;
+
+    if ( dce ) 
+    {
+      if ( dce->DCXflags & DCX_DCEBUSY )
+      {
+	isBusy = TRUE;
+      }
+    }
+
+    WIN_UnlockWnds();
+
+    return isBusy;
+}
+
+/***********************************************************************
  *           GetDCEx16    (USER.359)
  */
 HDC16 WINAPI GetDCEx16( HWND16 hwnd, HRGN16 hrgnClip, DWORD flags )

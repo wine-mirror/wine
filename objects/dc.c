@@ -657,7 +657,20 @@ BOOL16 WINAPI DeleteDC16( HDC16 hdc )
  */
 BOOL WINAPI DeleteDC( HDC hdc )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC * dc;
+
+    /*
+     * Windows will not let you delete a DC that is busy
+     * (between GetDC and ReleaseDC)
+     */
+    if (DCE_IsDCBusy(hdc))
+    {
+      WARN(dc, " Application trying to delete a busy DC\n");
+      return TRUE;
+    }
+
+    dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+
     if (!dc) return FALSE;
 
     TRACE(dc, "%04x\n", hdc );
