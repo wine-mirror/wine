@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * NOTES
- *    Tested primarily with the controlspy Pager application.
- *       Susan Farley (susan@codeweavers.com)
  *
  * This code was audited for completeness against the documented features
  * of Comctl32.dll version 6.0 on Sep. 18, 2004, by Robert Shearman.
@@ -36,6 +34,20 @@
  *      PGS_DRAGNDROP
  *    Notifications:
  *      PGN_HOTITEMCHANGE
+ *
+ * TESTING:
+ *    Tested primarily with the controlspy Pager application.
+ *       Susan Farley (susan@codeweavers.com)
+ *
+ * IMPLEMENTATION NOTES:
+ *    This control uses WM_NCPAINT instead of WM_PAINT to paint itself
+ *    as we need to scroll a child window. In order to do this we move 
+ *    the child window in the control's client area, using the clipping
+ *    region that is automatically set around the client area. As the 
+ *    entire client area now consists of the child window, we must 
+ *    allocate space (WM_NCCALCSIZE) for the buttons and draw them as 
+ *    a non-client area (WM_NCPAINT).
+ *       Robert Shearman <rob@codeweavers.com>
  */
 
 #include <stdarg.h>
