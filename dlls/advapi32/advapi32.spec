@@ -6,8 +6,8 @@
 @ stub AccessCheckByType #(ptr ptr long long ptr long ptr ptr ptr ptr ptr) AccessCheckByType
 @ stdcall AddAccessAllowedAce (ptr long long ptr)
 @ stub AddAccessAllowedAceEx #(ptr long long long ptr) AddAccessAllowedAceEx
-@ stub AddAccessDeniedAce
-@ stub AddAce
+@ stdcall AddAccessDeniedAce(ptr long long ptr)
+@ stdcall AddAce(ptr long long ptr long)
 @ stub AddAuditAccessAce
 @ stub AdjustTokenGroups
 @ stdcall AdjustTokenPrivileges(long long ptr long ptr ptr)
@@ -87,7 +87,7 @@
 @ stdcall EnumServicesStatusW (long long long ptr long ptr ptr ptr)
 @ stdcall EqualPrefixSid(ptr ptr)
 @ stdcall EqualSid(ptr ptr)
-@ stub FindFirstFreeAce
+@ stdcall FindFirstFreeAce(ptr ptr)
 @ stdcall FreeSid(ptr)
 @ stdcall GetAce(ptr long ptr)
 @ stub GetAclInformation
@@ -135,7 +135,7 @@
 @ stub IsProcessRestricted
 @ stdcall IsTextUnicode(ptr long ptr) ntdll.RtlIsTextUnicode
 @ stub IsTokenRestricted
-@ stub IsValidAcl
+@ stdcall IsValidAcl(ptr)
 @ stdcall IsValidSecurityDescriptor(ptr)
 @ stdcall IsValidSid(ptr)
 @ stdcall LockServiceDatabase(ptr)

@@ -651,6 +651,67 @@ DWORD WINAPI InitializeAcl(PACL acl, DWORD size, DWORD rev)
 	CallWin32ToNt (RtlCreateAcl(acl, size, rev));
 }
 
+/******************************************************************************
+ *  AddAccessAllowedAce [ADVAPI32.@]
+ */
+BOOL WINAPI AddAccessAllowedAce(
+        IN OUT PACL pAcl,
+        IN DWORD dwAceRevision,
+        IN DWORD AccessMask,
+        IN PSID pSid)
+{
+	CallWin32ToNt(RtlAddAccessAllowedAce(pAcl, dwAceRevision, AccessMask, pSid));
+}
+
+/******************************************************************************
+ *  AddAccessDeniedAce [ADVAPI32.@]
+ */
+BOOL WINAPI AddAccessDeniedAce(
+        IN OUT PACL pAcl,
+        IN DWORD dwAceRevision,
+        IN DWORD AccessMask,
+        IN PSID pSid)
+{
+	CallWin32ToNt(RtlAddAccessDeniedAce(pAcl, dwAceRevision, AccessMask, pSid));
+}
+
+/******************************************************************************
+ *  AddAccessDeniedAce [ADVAPI32.@]
+ */
+BOOL WINAPI AddAce(
+        IN OUT PACL pAcl,
+        IN DWORD dwAceRevision,
+        IN DWORD dwStartingAceIndex,
+        LPVOID pAceList,
+        DWORD nAceListLength)
+{
+	CallWin32ToNt(RtlAddAce(pAcl, dwAceRevision, dwStartingAceIndex, pAceList, nAceListLength));
+}
+
+/******************************************************************************
+ *  FindFirstFreeAce [ADVAPI32.@]
+ */
+BOOL WINAPI FindFirstFreeAce(IN PACL pAcl, LPVOID * pAce)
+{
+	return RtlFirstFreeAce(pAcl, (PACE_HEADER *)pAce);
+}
+
+/******************************************************************************
+ * GetAce [ADVAPI32.@]
+ */
+BOOL WINAPI GetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
+{
+    CallWin32ToNt(RtlGetAce(pAcl, dwAceIndex, pAce));
+}
+
+/******************************************************************************
+ *  IsValidAcl [ADVAPI32.@]
+ */
+BOOL WINAPI IsValidAcl(IN PACL pAcl)
+{
+	return RtlValidAcl(pAcl);
+}
+
 /*	##############################
 	######	MISC FUNCTIONS	######
 	##############################
@@ -1108,18 +1169,6 @@ BOOL WINAPI SetKernelObjectSecurity (
 }
 
 /******************************************************************************
- *  AddAccessAllowedAce [ADVAPI32.@]
- */
-BOOL WINAPI AddAccessAllowedAce(
-        IN OUT PACL pAcl,
-        IN DWORD dwAceRevision,
-        IN DWORD AccessMask,
-        IN PSID pSid)
-{
-        return RtlAddAccessAllowedAce(pAcl, dwAceRevision, AccessMask, pSid);
-}
-
-/******************************************************************************
  * LookupAccountNameA [ADVAPI32.@]
  */
 BOOL WINAPI
@@ -1134,14 +1183,6 @@ LookupAccountNameA(
 {
     FIXME("(%s,%s,%p,%p,%p,%p,%p), stub.\n",system,account,sid,cbSid,ReferencedDomainName,cbReferencedDomainName,name_use);
     return FALSE;
-}
-
-/******************************************************************************
- * GetAce [ADVAPI32.@]
- */
-BOOL WINAPI GetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
-{
-    CallWin32ToNt(RtlGetAce(pAcl, dwAceIndex, pAce));
 }
 
 /******************************************************************************

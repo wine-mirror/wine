@@ -314,8 +314,7 @@ DWORD WINAPI RtlCopySid( DWORD nDestinationSidLength, PSID pDestinationSid, PSID
  *   TRUE if pSid is valid,
  *   FALSE otherwise.
  */
-BOOL WINAPI
-RtlValidSid( PSID pSid )
+BOOLEAN WINAPI RtlValidSid( PSID pSid )
 {
     BOOL ret;
     __TRY
@@ -711,15 +710,122 @@ NTSTATUS WINAPI RtlAddAce(
 /******************************************************************************
  *  RtlAddAccessAllowedAce		[NTDLL.@]
  */
-BOOL WINAPI RtlAddAccessAllowedAce(
+NTSTATUS WINAPI RtlAddAccessAllowedAce(
 	IN OUT PACL pAcl,
 	IN DWORD dwAceRevision,
 	IN DWORD AccessMask,
 	IN PSID pSid)
 {
-	FIXME("(%p,0x%08lx,0x%08lx,%p),stub!\n",
-	pAcl, dwAceRevision, AccessMask, pSid);
-	return TRUE;
+	DWORD dwLengthSid;
+	ACCESS_ALLOWED_ACE * pAaAce;
+	DWORD dwSpaceLeft;
+
+	TRACE("(%p,0x%08lx,0x%08lx,%p)\n",
+		pAcl, dwAceRevision, AccessMask, pSid);
+
+	if (!RtlValidSid(pSid))
+		return STATUS_INVALID_SID;
+	if (!RtlValidAcl(pAcl))
+		return STATUS_INVALID_ACL;
+
+	dwLengthSid = RtlLengthSid(pSid);
+	if (!RtlFirstFreeAce(pAcl, (PACE_HEADER *) &pAaAce))
+		return STATUS_INVALID_ACL;
+
+	if (!pAaAce)
+		return STATUS_ALLOTTED_SPACE_EXCEEDED;
+
+	dwSpaceLeft = (DWORD)pAcl + pAcl->AclSize - (DWORD)pAaAce;
+	if (dwSpaceLeft < sizeof(*pAaAce) - sizeof(pAaAce->SidStart) + dwLengthSid)
+		return STATUS_ALLOTTED_SPACE_EXCEEDED;
+
+	pAaAce->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
+	pAaAce->Header.AceFlags = 0;
+	pAaAce->Header.AceSize = sizeof(*pAaAce) - sizeof(pAaAce->SidStart) + dwLengthSid;
+	pAaAce->Mask = AccessMask;
+	pAcl->AceCount++;
+	RtlCopySid(dwLengthSid, (PSID)&pAaAce->SidStart, pSid);
+	return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ *  RtlAddAccessDeniedAce		[NTDLL.@]
+ */
+NTSTATUS WINAPI RtlAddAccessDeniedAce(
+	IN OUT PACL pAcl,
+	IN DWORD dwAceRevision,
+	IN DWORD AccessMask,
+	IN PSID pSid)
+{
+	DWORD dwLengthSid;
+	DWORD dwSpaceLeft;
+	ACCESS_DENIED_ACE * pAdAce;
+
+	TRACE("(%p,0x%08lx,0x%08lx,%p)\n",
+		pAcl, dwAceRevision, AccessMask, pSid);
+
+	if (!RtlValidSid(pSid))
+		return STATUS_INVALID_SID;
+	if (!RtlValidAcl(pAcl))
+		return STATUS_INVALID_ACL;
+
+	dwLengthSid = RtlLengthSid(pSid);
+	if (!RtlFirstFreeAce(pAcl, (PACE_HEADER *) &pAdAce))
+		return STATUS_INVALID_ACL;
+
+	if (!pAdAce)
+		return STATUS_ALLOTTED_SPACE_EXCEEDED;
+
+	dwSpaceLeft = (DWORD)pAcl + pAcl->AclSize - (DWORD)pAdAce;
+	if (dwSpaceLeft < sizeof(*pAdAce) - sizeof(pAdAce->SidStart) + dwLengthSid)
+		return STATUS_ALLOTTED_SPACE_EXCEEDED;
+
+	pAdAce->Header.AceType = ACCESS_DENIED_ACE_TYPE;
+	pAdAce->Header.AceFlags = 0;
+	pAdAce->Header.AceSize = sizeof(*pAdAce) - sizeof(pAdAce->SidStart) + dwLengthSid;
+	pAdAce->Mask = AccessMask;
+	pAcl->AceCount++;
+	RtlCopySid(dwLengthSid, (PSID)&pAdAce->SidStart, pSid);
+	return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ *  RtlValidAcl		[NTDLL.@]
+ */
+BOOLEAN WINAPI RtlValidAcl(PACL pAcl)
+{
+        BOOLEAN ret;
+	TRACE("(%p)\n", pAcl);
+
+	__TRY
+	{
+		PACE_HEADER	ace;
+		int		i;
+
+                if (pAcl->AclRevision != ACL_REVISION)
+                    ret = FALSE;
+                else
+                {
+                    ace = (PACE_HEADER)(pAcl+1);
+                    ret = TRUE;
+                    for (i=0;i<=pAcl->AceCount;i++)
+                    {
+                        if ((char *)ace > (char *)pAcl + pAcl->AclSize)
+                        {
+                            ret = FALSE;
+                            break;
+                        }
+                        ace = (PACE_HEADER)(((BYTE*)ace)+ace->AceSize);
+                    }
+                }
+	}
+	__EXCEPT(page_fault)
+	{
+		WARN("(%p): invalid pointer!\n", pAcl);
+		return 0;
+	}
+	__ENDTRY
+        return ret;
 }
 
 /******************************************************************************
@@ -727,8 +833,20 @@ BOOL WINAPI RtlAddAccessAllowedAce(
  */
 DWORD WINAPI RtlGetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
 {
-	FIXME("(%p,%ld,%p),stub!\n",pAcl,dwAceIndex,pAce);
-	return 0;
+	PACE_HEADER ace;
+
+	TRACE("(%p,%ld,%p)\n",pAcl,dwAceIndex,pAce);
+
+	if ((dwAceIndex < 0) || (dwAceIndex > pAcl->AceCount))
+		return STATUS_INVALID_PARAMETER;
+
+	ace = (PACE_HEADER)(pAcl + 1);
+	for (;dwAceIndex;dwAceIndex--)
+		ace = (PACE_HEADER)(((BYTE*)ace)+ace->AceSize);
+
+	*pAce = (LPVOID) ace;
+
+	return STATUS_SUCCESS;
 }
 
 /*

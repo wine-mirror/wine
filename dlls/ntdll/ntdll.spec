@@ -268,8 +268,8 @@
 @ stdcall RtlAcquirePebLock()
 @ stdcall RtlAcquireResourceExclusive(ptr long)
 @ stdcall RtlAcquireResourceShared(ptr long)
-@ stdcall RtlAddAccessAllowedAce(long long long long)
-@ stub RtlAddAccessDeniedAce
+@ stdcall RtlAddAccessAllowedAce(ptr long long ptr)
+@ stdcall RtlAddAccessDeniedAce(ptr long long ptr)
 @ stdcall RtlAddAce(ptr long long ptr long)
 @ stub RtlAddActionToRXact
 @ stub RtlAddAttributeActionToRXact
@@ -561,7 +561,7 @@
 @ stdcall RtlUpperString(ptr ptr)
 @ stub RtlUsageHeap
 @ cdecl -i386 -norelay RtlUshortByteSwap() NTDLL_RtlUshortByteSwap
-@ stub RtlValidAcl
+@ stdcall RtlValidAcl(ptr)
 @ stdcall RtlValidSecurityDescriptor(ptr)
 @ stdcall RtlValidSid(ptr)
 @ stdcall RtlValidateHeap(long long ptr)
