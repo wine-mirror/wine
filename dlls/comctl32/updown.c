@@ -478,23 +478,22 @@ static BOOL UPDOWN_SetBuddy (HWND hwnd, HWND hwndBud)
 	// its already been subclassed, don't overwrite BUDDY_SUPERCLASS_WNDPROC
   }
 
-  /* do we need to do any adjustments? */
-  if(!(dwStyle & (UDS_ALIGNLEFT | UDS_ALIGNRIGHT)))
-    return TRUE;
-
   /* Get the rect of the buddy relative to its parent */
   GetWindowRect(infoPtr->Buddy, &budRect);
   MapWindowPoints(HWND_DESKTOP, GetParent(infoPtr->Buddy),
 		  (POINT *)(&budRect.left), 2);
 
   /* now do the positioning */
-  if(dwStyle & UDS_ALIGNRIGHT){
+  if  (dwStyle & UDS_ALIGNLEFT) {
+    x  = budRect.left;
+    budRect.left += DEFAULT_WIDTH+DEFAULT_XSEP;
+  }
+  else if (dwStyle & UDS_ALIGNRIGHT){
     budRect.right -= DEFAULT_WIDTH+DEFAULT_XSEP;
     x  = budRect.right+DEFAULT_XSEP;
   }
-  else{ /* UDS_ALIGNLEFT */
-    x  = budRect.left;
-    budRect.left += DEFAULT_WIDTH+DEFAULT_XSEP;
+  else {
+    x  = budRect.right+DEFAULT_XSEP;
   }
 
   /* first adjust the buddy to accomodate the up/down */
@@ -514,10 +513,10 @@ static BOOL UPDOWN_SetBuddy (HWND hwnd, HWND hwndBud)
    */
   if (UPDOWN_HasBuddyBorder(hwnd))
   {
-    if(dwStyle & UDS_ALIGNRIGHT)
-      x-=DEFAULT_BUDDYBORDER;
-    else
+    if(dwStyle & UDS_ALIGNLEFT)
       width+=DEFAULT_BUDDYBORDER;
+    else
+      x-=DEFAULT_BUDDYBORDER;
   }
 
   SetWindowPos (hwnd, infoPtr->Buddy, 
@@ -822,6 +821,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	case VK_UP:  
 	case VK_DOWN:
 	  UPDOWN_GetBuddyInt (hwnd);
+	  /* Fixme: Paint the according button pressed for some time, like win95 does*/
 	  UPDOWN_DoAction (hwnd, 1, wParam==VK_UP);
 	  break;
 	}
