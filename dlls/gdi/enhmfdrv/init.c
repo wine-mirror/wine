@@ -319,6 +319,10 @@ HDC WINAPI CreateEnhMetaFileW(
     physDev->horzsize = GetDeviceCaps(hRefDC, HORZSIZE);
     physDev->vertsize = GetDeviceCaps(hRefDC, VERTSIZE);
     physDev->bitspixel = GetDeviceCaps(hRefDC, BITSPIXEL);
+    physDev->textcaps = GetDeviceCaps(hRefDC, TEXTCAPS);
+    physDev->rastercaps = GetDeviceCaps(hRefDC, RASTERCAPS);
+    physDev->technology = GetDeviceCaps(hRefDC, TECHNOLOGY);
+    physDev->planes = GetDeviceCaps(hRefDC, PLANES);
 
     physDev->emh->iType = EMR_HEADER;
     physDev->emh->nSize = size;
@@ -356,6 +360,10 @@ HDC WINAPI CreateEnhMetaFileW(
     /* Size in millimeters */
     physDev->emh->szlMillimeters.cx = physDev->horzsize;
     physDev->emh->szlMillimeters.cy = physDev->vertsize;
+
+    /* Size in micrometers */
+    physDev->emh->szlMicrometers.cx = physDev->horzsize * 1000;
+    physDev->emh->szlMicrometers.cy = physDev->vertsize * 1000;
 
     memcpy((char *)physDev->emh + sizeof(ENHMETAHEADER), description, length);
 

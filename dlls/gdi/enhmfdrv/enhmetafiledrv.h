@@ -38,6 +38,10 @@ typedef struct
     INT        horzsize, vertsize;
     INT        logpixelsx, logpixelsy;
     INT        bitspixel;
+    INT        textcaps;
+    INT        rastercaps;
+    INT        technology;
+    INT        planes;
 } EMFDRV_PDEVICE;
 
 

@@ -290,6 +290,14 @@ INT EMFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
         return physDev->vertsize;
     case BITSPIXEL:
         return physDev->bitspixel;
+    case TEXTCAPS:
+        return physDev->textcaps;
+    case RASTERCAPS:
+        return physDev->rastercaps;
+    case TECHNOLOGY:
+        return physDev->technology;
+    case PLANES:
+        return physDev->planes;
 
     default:
         FIXME("Unimplemented cap %d\n", cap);
