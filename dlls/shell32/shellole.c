@@ -6,22 +6,26 @@
  *
  */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <string.h>
 
-#include "shlobj.h"
 #include "shellapi.h"
+#include "shlobj.h"
 #include "shlguid.h"
 #include "winreg.h"
-#include "wine/unicode.h"
 #include "winerror.h"
-#include "debugtools.h"
 
+#include "wine/undocshell.h"
+#include "wine/unicode.h"
 #include "shell32_main.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 
-DWORD WINAPI SHCLSIDFromStringA (LPSTR clsid, CLSID *id);
+DWORD WINAPI SHCLSIDFromStringA (LPCSTR clsid, CLSID *id);
 extern IShellFolder * IShellFolder_Constructor(
 	IShellFolder * psf,
 	LPITEMIDLIST pidl);
@@ -37,9 +41,9 @@ extern HRESULT IFSFolder_Constructor(
  *     exported by ordinal
  */
 LRESULT WINAPI SHCoCreateInstance(
-	LPSTR aclsid,
+	LPCSTR aclsid,
 	REFCLSID clsid,
-	IUnknown * unknownouter,
+	LPUNKNOWN unknownouter,
 	REFIID refiid,
 	LPVOID *ppv)
 {
@@ -114,7 +118,7 @@ HRESULT WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv
  * NOTES
  *     exported by ordinal
  */
-DWORD WINAPI SHCLSIDFromStringA (LPSTR clsid, CLSID *id)
+DWORD WINAPI SHCLSIDFromStringA (LPCSTR clsid, CLSID *id)
 {
     WCHAR buffer[40];
     TRACE("(%p(%s) %p)\n", clsid, clsid, id);
@@ -489,7 +493,7 @@ HRESULT WINAPI SHCreateDefClassObject(
 	REFIID	riid,				
 	LPVOID*	ppv,	
 	LPFNCREATEINSTANCE lpfnCI,	/* [in] create instance callback entry */
-	PLONG	pcRefDll,		/* [in/out] ref count of the dll */
+	LPDWORD	pcRefDll,		/* [in/out] ref count of the dll */
 	REFIID	riidInst)		/* [in] optional interface to the instance */
 {
 	TRACE("\n\tIID:\t%s %p %p %p \n\tIIDIns:\t%s\n",

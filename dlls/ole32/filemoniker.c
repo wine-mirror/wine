@@ -84,7 +84,7 @@ static HRESULT WINAPI FileMonikerROTDataImpl_GetComparaisonData(IROTData* iface,
 /* Local function used by filemoniker implementation */
 HRESULT WINAPI FileMonikerImpl_Construct(FileMonikerImpl* iface, LPCOLESTR lpszPathName);
 HRESULT WINAPI FileMonikerImpl_Destroy(FileMonikerImpl* iface);
-int     WINAPI FileMonikerImpl_DecomposePath(LPOLESTR str, LPOLESTR** tabStr);
+int     WINAPI FileMonikerImpl_DecomposePath(LPCOLESTR str, LPOLESTR** tabStr);
 
 
 /********************************************************************************/
@@ -1068,7 +1068,7 @@ HRESULT WINAPI FileMonikerImpl_CommonPrefixWith(IMoniker* iface,IMoniker* pmkOth
 /******************************************************************************
  *        DecomposePath (local function)
  ******************************************************************************/
-int WINAPI FileMonikerImpl_DecomposePath(LPOLESTR str, LPOLESTR** stringTable)
+int WINAPI FileMonikerImpl_DecomposePath(LPCOLESTR str, LPOLESTR** stringTable)
 {
     WCHAR bSlash[] = {'\\',0};
     WCHAR word[MAX_PATH];

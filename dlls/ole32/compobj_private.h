@@ -12,6 +12,6 @@ HRESULT WINAPI RunningObjectTableImpl_Initialize();
 HRESULT WINAPI RunningObjectTableImpl_UnInitialize();
 
 /* This function decomposes a String path to a String Table containing all the elements ("\" or "subDirectory" or "Directory" or "FileName") of the path */
-int WINAPI FileMonikerImpl_DecomposePath(LPOLESTR str, LPOLESTR** stringTable);
+int WINAPI FileMonikerImpl_DecomposePath(LPCOLESTR str, LPOLESTR** stringTable);
 
 #endif /* __WINE_OLE_COMPOBJ_H */

@@ -17,11 +17,13 @@
 #include <string.h>
 
 #include "windef.h"
-#include "wingdi.h"
 #include "winerror.h"
 #include "winreg.h"
-#include "debugtools.h"
+
+#include "wine/undocshell.h"
 #include "wine/winuser16.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 

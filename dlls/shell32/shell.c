@@ -3,22 +3,28 @@
  *
  *  1998 Marcus Meissner
  */
+
+#include "config.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
-#include "windef.h"
-#include "wingdi.h"
-#include "wine/winuser16.h"
-#include "wine/winbase16.h"
-#include "wine/shell16.h"
-#include "winerror.h"
+
 #include "dlgs.h"
 #include "shellapi.h"
 #include "shlobj.h"
-#include "debugtools.h"
-#include "winreg.h"
 #include "shlwapi.h"
+#include "windef.h"
+#include "winerror.h"
+#include "winreg.h"
+
+#include "wine/shell16.h"
+#include "wine/winbase16.h"
+#include "wine/winuser16.h"
+#include "shell32_main.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 DECLARE_DEBUG_CHANNEL(exec);

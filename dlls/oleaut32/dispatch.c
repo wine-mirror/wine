@@ -8,16 +8,23 @@
  * TODO: Type coercion is implemented in variant.c but not called yet.
  */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+
+#include "windef.h"
+#include "ole.h"
+#include "oleauto.h"
 #include "winerror.h"
 #include "winreg.h"         /* for HKEY_LOCAL_MACHINE */
 #include "winnls.h"         /* for PRIMARYLANGID */
-#include "ole.h"
-#include "heap.h"
+
 #include "wine/obj_oleaut.h"
+#include "heap.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);

@@ -6,10 +6,15 @@
  *
  */
 
+#include "config.h"
+
 #include <string.h>
+
+#include "windef.h"
+#include "objbase.h"
+#include "ole2.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "objbase.h"
 
 #include "debugtools.h"
 

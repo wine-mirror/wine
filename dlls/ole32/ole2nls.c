@@ -5,6 +5,9 @@
  *      Copyright 1998  David Lee Lambert
  *      Copyright 2000  Julio César Gázquez
  */
+
+#include "config.h"
+
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -13,14 +16,16 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winerror.h"
 #include "wingdi.h"
-#include "winuser.h"
-#include "wine/windef16.h"
-#include "heap.h"
-#include "winver.h"
 #include "winnls.h"
 #include "winreg.h"
-#include "winerror.h"
+#include "winuser.h"
+#include "winver.h"
+
+#include "wine/winbase16.h"
+#include "heap.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);

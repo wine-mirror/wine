@@ -12,14 +12,16 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
-
 #include <sys/ucontext.h>
 
-#include "wine/exception.h"
-#include "winnt.h"
+#include "ntddk.h"
 #include "winbase.h"
+#include "winnt.h"
+
+#include "wine/exception.h"
 #include "global.h"
 #include "stackframe.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(seh);

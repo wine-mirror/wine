@@ -65,11 +65,6 @@ typedef struct {
 
 #include "poppack.h"
 
-
-LRESULT VFWAPI	ICSendMessage16(HIC16 hic, UINT16 msg, DWORD dw1, DWORD dw2);
-HIC16   VFWAPI	ICOpen16(DWORD fccType, DWORD fccHangler, UINT16 wMode);
-HIC16	VFWAPI	ICLocate16(DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn, LPBITMAPINFOHEADER lpbiOut, WORD wFlags);
-
 typedef struct {
 	DWORD dwFlags;
 	LPBITMAPINFOHEADER lpbiIn;
@@ -81,24 +76,28 @@ typedef struct {
 	HIC16 hicDecompressor;
 } ICDRAWSUGGEST16;
 
-DWORD	VFWAPIV	ICDrawBegin16(
-        HIC16			hic,
-        DWORD			dwFlags,/* flags */
-        HPALETTE16		hpal,	/* palette to draw with */
-        HWND16			hwnd,	/* window to draw to */
-        HDC16			hdc,	/* HDC to draw to */
-	INT16			xDst,	/* destination rectangle */
-        INT16			yDst,
-        INT16			dxDst,
-        INT16			dyDst,
-        LPBITMAPINFOHEADER	lpbi,	/* format of frame to draw */
-        INT16			xSrc,	/* source rectangle */
-        INT16			ySrc,
-        INT16			dxSrc,
-        INT16			dySrc,
-        DWORD			dwRate,	/* frames/second = (dwRate/dwScale) */
-        DWORD			dwScale
-);
+DWORD   VFWAPIV ICDraw16(HIC16,DWORD,LPVOID,LPVOID,DWORD,LONG);
+DWORD   VFWAPIV ICDrawBegin16(HIC16,DWORD,HPALETTE16,HWND16,HDC16,INT16,
+                              INT16,INT16,INT16,LPBITMAPINFOHEADER,
+                              INT16,INT16,INT16,INT16,DWORD,DWORD);
+LRESULT WINAPI  ICClose16(HIC16);
+DWORD   VFWAPIV ICCompress16(HIC16,DWORD,LPBITMAPINFOHEADER,LPVOID,
+                             LPBITMAPINFOHEADER,LPVOID,LPDWORD,
+                             LPDWORD,LONG,DWORD,DWORD,
+                             LPBITMAPINFOHEADER,LPVOID);
+DWORD   VFWAPIV ICDecompress16(HIC16,DWORD,LPBITMAPINFOHEADER,LPVOID,
+                               LPBITMAPINFOHEADER,LPVOID);
+HIC16   VFWAPI  ICGetDisplayFormat16(HIC16,LPBITMAPINFOHEADER,
+                                     LPBITMAPINFOHEADER,INT16,INT16,
+                                     INT16);
+LRESULT VFWAPI  ICGetInfo16(HIC16,ICINFO16 *,DWORD);
+BOOL16  VFWAPI  ICInfo16(DWORD,DWORD,ICINFO16 *);
+HIC16   VFWAPI  ICLocate16(DWORD,DWORD,LPBITMAPINFOHEADER,
+                           LPBITMAPINFOHEADER,WORD);
+LRESULT VFWAPIV ICMessage16(void);
+HIC16   VFWAPI  ICOpen16(DWORD,DWORD,UINT16);
+HIC16   VFWAPI  ICOpenFunction16(DWORD,DWORD,UINT16,FARPROC16);
+LRESULT VFWAPI  ICSendMessage16(HIC16,UINT16,DWORD,DWORD);
 
 #ifdef __cplusplus
 }

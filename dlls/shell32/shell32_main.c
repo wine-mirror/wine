@@ -4,28 +4,31 @@
  *  1998 Marcus Meissner
  *  1998 Juergen Schmied (jsch)  *  <juergen.schmied@metronet.de>
  */
+
+#include "config.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-#include "windef.h"
-#include "wingdi.h"
-#include "wine/winuser16.h"
-#include "winerror.h"
-#include "heap.h"
 #include "dlgs.h"
-#include "debugtools.h"
-#include "winreg.h"
-#include "authors.h"
-
 #include "shellapi.h"
-#include "pidl.h"
-
-#include "shell32_main.h"
-#include "wine/undocshell.h"
 #include "shlobj.h"
 #include "shlguid.h"
 #include "shlwapi.h"
+#include "windef.h"
+#include "winerror.h"
+#include "winreg.h"
+
+#include "wine/shell16.h"
+#include "wine/undocshell.h"
+#include "wine/winuser16.h"
+#include "authors.h"
+#include "heap.h"
+#include "pidl.h"
+#include "shell32_main.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 

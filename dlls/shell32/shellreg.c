@@ -1,17 +1,23 @@
 /*
 	Shell Registry Access
 */
+
+#include "config.h"
+
 #include <string.h>
 #include <stdio.h>
-#include "winerror.h"
-#include "winreg.h"
-#include "debugtools.h"
-#include "winnls.h"
 
 #include "shellapi.h"
 #include "shlobj.h"
-#include "shell32_main.h"
+#include "winerror.h"
+#include "winreg.h"
+#include "winnls.h"
+
 #include "wine/undocshell.h"
+#include "wine/winbase16.h"
+#include "shell32_main.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 

@@ -4,11 +4,17 @@
  * Copyright 1998 Alexandre Julliard
  */
 
+#include "config.h"
+
 #include <string.h>
+
+#include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
-#include "wine/unicode.h"
+
 #include "wine/server.h"
+#include "wine/unicode.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win32);

@@ -11,20 +11,24 @@
  * have to be changed.
  */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
 #include "windef.h"
-#include "winnls.h"
-#include "wine/winbase16.h"
-#include "wine/unicode.h"
 #include "winerror.h"
+
+#include "wine/server.h"
+#include "wine/unicode.h"
+#include "wine/winbase16.h"
+#include "global.h"
 #include "instance.h"
 #include "stackframe.h"
+
 #include "debugtools.h"
-#include "wine/server.h"
 
 DEFAULT_DEBUG_CHANNEL(atom);
 
