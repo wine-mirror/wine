@@ -488,7 +488,7 @@ static INT LISTBOX_GetItemFromPoint( WND *wnd, LB_DESCR *descr,
  * Paint an item.
  */
 static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC hdc,
-                               const RECT *rect, INT index, UINT action )
+                               const RECT *rect, INT index, UINT action, BOOL ignoreFocus )
 {
     LB_ITEMDATA *item = NULL;
     if (index < descr->nb_items) item = &descr->items[index];
@@ -525,7 +525,7 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC hdc,
         dis.itemID       = index;
         dis.itemState    = 0;
         if (item && item->selected) dis.itemState |= ODS_SELECTED;
-        if ((descr->focus_item == index) &&
+        if (!ignoreFocus && (descr->focus_item == index) &&
             (descr->caret_on) &&
             (descr->in_focus)) dis.itemState |= ODS_FOCUS;
         if (wnd->dwStyle & WS_DISABLED) dis.itemState |= ODS_DISABLED;
@@ -578,7 +578,7 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC hdc,
             SetBkColor( hdc, oldBk );
             SetTextColor( hdc, oldText );
         }
-        if ((descr->focus_item == index) &&
+        if (!ignoreFocus && (descr->focus_item == index) &&
             (descr->caret_on) &&
             (descr->in_focus)) DrawFocusRect( hdc, rect );
     }
@@ -641,7 +641,7 @@ static void LISTBOX_RepaintItem( WND *wnd, LB_DESCR *descr, INT index,
     if (wnd->dwStyle & WS_DISABLED)
         SetTextColor( hdc, GetSysColor( COLOR_GRAYTEXT ) );
     SetWindowOrgEx( hdc, descr->horz_pos, 0, NULL );
-    LISTBOX_PaintItem( wnd, descr, hdc, &rect, index, action );
+    LISTBOX_PaintItem( wnd, descr, hdc, &rect, index, action, FALSE );
     if (oldFont) SelectObject( hdc, oldFont );
     if (oldBrush) SelectObject( hdc, oldBrush );
     ReleaseDC( wnd->hwndSelf, hdc );
@@ -935,7 +935,6 @@ static LRESULT LISTBOX_Paint( WND *wnd, LB_DESCR *descr, HDC hdc )
     RECT focusRect = {-1, -1, -1, -1};
     HFONT oldFont = 0;
     HBRUSH hbrush, oldBrush = 0;
-    INT focusItem;
 
     if (descr->style & LBS_NOREDRAW) return 0;
 
@@ -961,14 +960,12 @@ static LRESULT LISTBOX_Paint( WND *wnd, LB_DESCR *descr, HDC hdc )
         /* Special case for empty listbox: paint focus rect */
         rect.bottom = rect.top + descr->item_height;
         LISTBOX_PaintItem( wnd, descr, hdc, &rect, descr->focus_item,
-                           ODA_FOCUS );
+                           ODA_FOCUS, FALSE );
         rect.top = rect.bottom;
     }
 
     /* Paint all the item, regarding the selection
        Focus state will be painted after  */
-    focusItem = descr->focus_item;
-    descr->focus_item = -1;
 
     for (i = descr->top_item; i < descr->nb_items; i++)
     {
@@ -977,7 +974,7 @@ static LRESULT LISTBOX_Paint( WND *wnd, LB_DESCR *descr, HDC hdc )
         else
             rect.bottom = rect.top + descr->items[i].height;
 
-        if (i == focusItem)
+        if (i == descr->focus_item)
         {
 	    /* keep the focus rect, to paint the focus item after */
 	    focusRect.left = rect.left;
@@ -985,7 +982,7 @@ static LRESULT LISTBOX_Paint( WND *wnd, LB_DESCR *descr, HDC hdc )
 	    focusRect.top = rect.top;
 	    focusRect.bottom = rect.bottom;
         }
-        LISTBOX_PaintItem( wnd, descr, hdc, &rect, i, ODA_DRAWENTIRE );
+        LISTBOX_PaintItem( wnd, descr, hdc, &rect, i, ODA_DRAWENTIRE, TRUE );
         rect.top = rect.bottom;
 
         if ((descr->style & LBS_MULTICOLUMN) && !col_pos)
@@ -1015,9 +1012,8 @@ static LRESULT LISTBOX_Paint( WND *wnd, LB_DESCR *descr, HDC hdc )
     }
 
     /* Paint the focus item now */
-    descr->focus_item = focusItem;
     if (focusRect.top != focusRect.bottom && descr->caret_on)
-        LISTBOX_PaintItem( wnd, descr, hdc, &focusRect, descr->focus_item, ODA_FOCUS );
+        LISTBOX_PaintItem( wnd, descr, hdc, &focusRect, descr->focus_item, ODA_FOCUS, FALSE );
 
     if (!IS_OWNERDRAW(descr))
     {
