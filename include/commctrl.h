@@ -1479,6 +1479,7 @@ typedef struct _RB_HITTESTINFO
 #define TBS_FIXEDLENGTH         0x0040
 #define TBS_NOTHUMB             0x0080
 #define TBS_TOOLTIPS            0x0100
+#define TBS_REVERSED	         0x0200
 
 #define TBTS_TOP                0
 #define TBTS_LEFT               1
@@ -2663,76 +2664,62 @@ typedef INT (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
 
 /* TabCtrl Macros */
 #define TabCtrl_GetImageList(hwnd) \
-				    (HIMAGELIST)SNDMSG((hwnd), TCM_GETIMAGELIST, 0, 0L)
-
+    (HIMAGELIST)SendMessageA((hwnd), TCM_GETIMAGELIST, 0, 0L)
 #define TabCtrl_SetImageList(hwnd, himl) \
-				    (HIMAGELIST)SNDMSG((hwnd), TCM_SETIMAGELIST, 0, (LPARAM)(UINT)(HIMAGELIST)(himl))
-
+    (HIMAGELIST)SendMessageA((hwnd), TCM_SETIMAGELIST, 0, (LPARAM)(UINT)(HIMAGELIST)(himl))
 #define TabCtrl_GetItemCount(hwnd) \
-				    (int)SNDMSG((hwnd), TCM_GETITEMCOUNT, 0, 0L)
-
-#define TabCtrl_GetItem(hwnd, iItem, pitem) \
-				    (BOOL)SNDMSG((hwnd), TCM_GETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM FAR*)(pitem))
-
-#define TabCtrl_SetItem(hwnd, iItem, pitem) \
-				    (BOOL)SNDMSG((hwnd), TCM_SETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM FAR*)(pitem))
-				 
-#define TabCtrl_InsertItem(hwnd, iItem, pitem)   \
-				    (int)SNDMSG((hwnd), TCM_INSERTITEM, (WPARAM)(int)iItem, (LPARAM)(const TC_ITEM FAR*)(pitem))
-
+    (int)SendMessageA((hwnd), TCM_GETITEMCOUNT, 0, 0L)
+#define TabCtrl_GetItemA(hwnd, iItem, pitem) \
+    (BOOL)SendMessageA((hwnd), TCM_GETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM *)(pitem))
+#define TabCtrl_GetItemW(hwnd, iItem, pitem) \
+    (BOOL)SendMessageW((hwnd), TCM_GETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM *)(pitem))
+#define TabCtrl_GetItem WINELIB_NAME_AW(TabCtrl_GetItem)
+#define TabCtrl_SetItemA(hwnd, iItem, pitem) \
+    (BOOL)SendMessageA((hwnd), TCM_SETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM *)(pitem))
+#define TabCtrl_SetItemW(hwnd, iItem, pitem) \
+    (BOOL)SendMessageW((hwnd), TCM_SETITEM, (WPARAM)(int)iItem, (LPARAM)(TC_ITEM *)(pitem))
+#define TabCtrl_SetItem WINELIB_NAME_AW(TabCtrl_GetItem)
+#define TabCtrl_InsertItemA(hwnd, iItem, pitem)   \
+    (int)SendMessageA((hwnd), TCM_INSERTITEM, (WPARAM)(int)iItem, (LPARAM)(const TC_ITEM *)(pitem))
+#define TabCtrl_InsertItemW(hwnd, iItem, pitem)   \
+    (int)SendMessageW((hwnd), TCM_INSERTITEM, (WPARAM)(int)iItem, (LPARAM)(const TC_ITEM *)(pitem))
+#define TabCtrl_InsertItem WINELIB_NAME_AW(TabCtrl_InsertItem)
 #define TabCtrl_DeleteItem(hwnd, i) \
-				    (BOOL)SNDMSG((hwnd), TCM_DELETEITEM, (WPARAM)(int)(i), 0L)
-
+    (BOOL)SendMessageA((hwnd), TCM_DELETEITEM, (WPARAM)(int)(i), 0L)
 #define TabCtrl_DeleteAllItems(hwnd) \
-				    (BOOL)SNDMSG((hwnd), TCM_DELETEALLITEMS, 0, 0L)
-
+    (BOOL)SendMessageA((hwnd), TCM_DELETEALLITEMS, 0, 0L)
 #define TabCtrl_GetItemRect(hwnd, i, prc) \
-				    (BOOL)SNDMSG((hwnd), TCM_GETITEMRECT, (WPARAM)(int)(i), (LPARAM)(RECT FAR*)(prc))
-
+    (BOOL)SendMessageA((hwnd), TCM_GETITEMRECT, (WPARAM)(int)(i), (LPARAM)(RECT *)(prc))
 #define TabCtrl_GetCurSel(hwnd) \
-				    (int)::SNDMSG((hwnd), TCM_GETCURSEL, 0, 0)
-
+    (int)SendMessageA((hwnd), TCM_GETCURSEL, 0, 0)
 #define TabCtrl_SetCurSel(hwnd, i) \
-				    (int)SNDMSG((hwnd), TCM_SETCURSEL, (WPARAM)i, 0)
-
+    (int)SendMessageA((hwnd), TCM_SETCURSEL, (WPARAM)i, 0)
 #define TabCtrl_HitTest(hwndTC, pinfo) \
-				    (int)SNDMSG((hwndTC), TCM_HITTEST, 0, (LPARAM)(TC_HITTESTINFO FAR*)(pinfo))
-
+    (int)SendMessageA((hwndTC), TCM_HITTEST, 0, (LPARAM)(TC_HITTESTINFO *)(pinfo))
 #define TabCtrl_SetItemExtra(hwndTC, cb) \
-				    (BOOL)SNDMSG((hwndTC), TCM_SETITEMEXTRA, (WPARAM)(cb), 0L)
-
+    (BOOL)SendMessageA((hwndTC), TCM_SETITEMEXTRA, (WPARAM)(cb), 0L)
 #define TabCtrl_AdjustRect(hwnd, bLarger, prc) \
-				    (int)SNDMSG(hwnd, TCM_ADJUSTRECT, (WPARAM)(BOOL)bLarger, (LPARAM)(RECT FAR *)prc)
-
+    (int)SendMessageA(hwnd, TCM_ADJUSTRECT, (WPARAM)(BOOL)bLarger, (LPARAM)(RECT *)prc)
 #define TabCtrl_SetItemSize(hwnd, x, y) \
-				    (DWORD)SNDMSG((hwnd), TCM_SETITEMSIZE, 0, MAKELPARAM(x,y))
-
+    (DWORD)SendMessageA((hwnd), TCM_SETITEMSIZE, 0, MAKELPARAM(x,y))
 #define TabCtrl_RemoveImage(hwnd, i) \
-				        (void)SNDMSG((hwnd), TCM_REMOVEIMAGE, i, 0L)
-
+    (void)SendMessageA((hwnd), TCM_REMOVEIMAGE, i, 0L)
 #define TabCtrl_SetPadding(hwnd,  cx, cy) \
-				        (void)SNDMSG((hwnd), TCM_SETPADDING, 0, MAKELPARAM(cx, cy))
-
+    (void)SendMessageA((hwnd), TCM_SETPADDING, 0, MAKELPARAM(cx, cy))
 #define TabCtrl_GetRowCount(hwnd) \
-				        (int)SNDMSG((hwnd), TCM_GETROWCOUNT, 0, 0L)
-
+    (int)SendMessageA((hwnd), TCM_GETROWCOUNT, 0, 0L)
 #define TabCtrl_GetToolTips(hwnd) \
-				        (HWND)SNDMSG((hwnd), TCM_GETTOOLTIPS, 0, 0L)
-
+    (HWND)SendMessageA((hwnd), TCM_GETTOOLTIPS, 0, 0L)
 #define TabCtrl_SetToolTips(hwnd, hwndTT) \
-				        (void)SNDMSG((hwnd), TCM_SETTOOLTIPS, (WPARAM)hwndTT, 0L)
-
+    (void)SendMessageA((hwnd), TCM_SETTOOLTIPS, (WPARAM)hwndTT, 0L)
 #define TabCtrl_GetCurFocus(hwnd) \
-				    (int)SNDMSG((hwnd), TCM_GETCURFOCUS, 0, 0)
-
+    (int)SendMessageA((hwnd), TCM_GETCURFOCUS, 0, 0)
 #define TabCtrl_SetCurFocus(hwnd, i) \
-				    SNDMSG((hwnd),TCM_SETCURFOCUS, i, 0)
-
+    SendMessageA((hwnd),TCM_SETCURFOCUS, i, 0)
 #define TabCtrl_SetMinTabWidth(hwnd, x) \
-				        (int)SNDMSG((hwnd), TCM_SETMINTABWIDTH, 0, x)
-
+    (int)SendMessageA((hwnd), TCM_SETMINTABWIDTH, 0, x)
 #define TabCtrl_DeselectAll(hwnd, fExcludeFocus)\
-				        (void)SNDMSG((hwnd), TCM_DESELECTALL, fExcludeFocus, 0)
+    (void)SendMessageA((hwnd), TCM_DESELECTALL, fExcludeFocus, 0)
 
 
 /* constants for TCHITTESTINFO */
@@ -3046,51 +3033,51 @@ typedef struct tagNMDAYSTATE
 /* macros */
 
 #define MonthCal_GetCurSel(hmc, pst) \
-		(BOOL)SNDMSG(hmc, MCM_GETCURSEL, 0, (LPARAM)(pst))
+		(BOOL)SendMessageA(hmc, MCM_GETCURSEL, 0, (LPARAM)(pst))
 #define MonthCal_SetCurSel(hmc, pst)  \
-		(BOOL)SNDMSG(hmc, MCM_SETCURSEL, 0, (LPARAM)(pst))
+		(BOOL)SendMessageA(hmc, MCM_SETCURSEL, 0, (LPARAM)(pst))
 #define MonthCal_GetMaxSelCount(hmc) \
-		(DWORD)SNDMSG(hmc, MCM_GETMAXSELCOUNT, 0, 0L)
+		(DWORD)SendMessageA(hmc, MCM_GETMAXSELCOUNT, 0, 0L)
 #define MonthCal_SetMaxSelCount(hmc, n) \
-		(BOOL)SNDMSG(hmc, MCM_SETMAXSELCOUNT, (WPARAM)(n), 0L)
+		(BOOL)SendMessageA(hmc, MCM_SETMAXSELCOUNT, (WPARAM)(n), 0L)
 #define MonthCal_GetSelRange(hmc, rgst) \
-		SNDMSG(hmc, MCM_GETSELRANGE, 0, (LPARAM) (rgst))
+		SendMessageA(hmc, MCM_GETSELRANGE, 0, (LPARAM) (rgst))
 #define MonthCal_SetSelRange(hmc, rgst) \
-		SNDMSG(hmc, MCM_SETSELRANGE, 0, (LPARAM) (rgst))
+		SendMessageA(hmc, MCM_SETSELRANGE, 0, (LPARAM) (rgst))
 #define MonthCal_GetMonthRange(hmc, gmr, rgst) \
-		(DWORD)SNDMSG(hmc, MCM_GETMONTHRANGE, (WPARAM)(gmr), (LPARAM)(rgst))
+		(DWORD)SendMessageA(hmc, MCM_GETMONTHRANGE, (WPARAM)(gmr), (LPARAM)(rgst))
 #define MonthCal_SetDayState(hmc, cbds, rgds) \
-		SNDMSG(hmc, MCM_SETDAYSTATE, (WPARAM)(cbds), (LPARAM)(rgds))
+		SendMessageA(hmc, MCM_SETDAYSTATE, (WPARAM)(cbds), (LPARAM)(rgds))
 #define MonthCal_GetMinReqRect(hmc, prc) \
-		SNDMSG(hmc, MCM_GETMINREQRECT, 0, (LPARAM)(prc))
+		SendMessageA(hmc, MCM_GETMINREQRECT, 0, (LPARAM)(prc))
 #define MonthCal_SetColor(hmc, iColor, clr)\
-		SNDMSG(hmc, MCM_SETCOLOR, iColor, clr
+		SendMessageA(hmc, MCM_SETCOLOR, iColor, clr
 #define MonthCal_GetColor(hmc, iColor) \
-		SNDMSG(hmc, MCM_SETCOLOR, iColor, 0)
+		SendMessageA(hmc, MCM_SETCOLOR, iColor, 0)
 #define MonthCal_GetToday(hmc, pst)\
-		(BOOL)SNDMSG(hmc, MCM_GETTODAY, 0, (LPARAM)pst)
+		(BOOL)SendMessageA(hmc, MCM_GETTODAY, 0, (LPARAM)pst)
 #define MonthCal_SetToday(hmc, pst)\
-		SNDMSG(hmc, MCM_SETTODAY, 0, (LPARAM)pst)
+		SendMessageA(hmc, MCM_SETTODAY, 0, (LPARAM)pst)
 #define MonthCal_HitTest(hmc, pinfo) \
-        SNDMSG(hmc, MCM_HITTEST, 0, (LPARAM)(PMCHITTESTINFO)pinfo)
+        SendMessageA(hmc, MCM_HITTEST, 0, (LPARAM)(PMCHITTESTINFO)pinfo)
 #define MonthCal_SetFirstDayOfWeek(hmc, iDay) \
-        SNDMSG(hmc, MCM_SETFIRSTDAYOFWEEK, 0, iDay)
+        SendMessageA(hmc, MCM_SETFIRSTDAYOFWEEK, 0, iDay)
 #define MonthCal_GetFirstDayOfWeek(hmc) \
-        (DWORD)SNDMSG(hmc, MCM_GETFIRSTDAYOFWEEK, 0, 0)
+        (DWORD)SendMessageA(hmc, MCM_GETFIRSTDAYOFWEEK, 0, 0)
 #define MonthCal_GetRange(hmc, rgst) \
-        (DWORD)SNDMSG(hmc, MCM_GETRANGE, 0, (LPARAM)(rgst))
+        (DWORD)SendMessageA(hmc, MCM_GETRANGE, 0, (LPARAM)(rgst))
 #define MonthCal_SetRange(hmc, gd, rgst) \
-        (BOOL)SNDMSG(hmc, MCM_SETRANGE, (WPARAM)(gd), (LPARAM)(rgst))
+        (BOOL)SendMessageA(hmc, MCM_SETRANGE, (WPARAM)(gd), (LPARAM)(rgst))
 #define MonthCal_GetMonthDelta(hmc) \
-        (int)SNDMSG(hmc, MCM_GETMONTHDELTA, 0, 0)
+        (int)SendMessageA(hmc, MCM_GETMONTHDELTA, 0, 0)
 #define MonthCal_SetMonthDelta(hmc, n) \
-        (int)SNDMSG(hmc, MCM_SETMONTHDELTA, n, 0)
+        (int)SendMessageA(hmc, MCM_SETMONTHDELTA, n, 0)
 #define MonthCal_GetMaxTodayWidth(hmc) \
-        (DWORD)SNDMSG(hmc, MCM_GETMAXTODAYWIDTH, 0, 0)
+        (DWORD)SendMessageA(hmc, MCM_GETMAXTODAYWIDTH, 0, 0)
 #define MonthCal_SetUnicodeFormat(hwnd, fUnicode)  \
-        (BOOL)SNDMSG((hwnd), MCM_SETUNICODEFORMAT, (WPARAM)(fUnicode), 0)
+        (BOOL)SendMessageA((hwnd), MCM_SETUNICODEFORMAT, (WPARAM)(fUnicode), 0)
 #define MonthCal_GetUnicodeFormat(hwnd)  \
-        (BOOL)SNDMSG((hwnd), MCM_GETUNICODEFORMAT, 0, 0)
+        (BOOL)SendMessageA((hwnd), MCM_GETUNICODEFORMAT, 0, 0)
 
 
 /**************************************************************************
