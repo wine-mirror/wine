@@ -412,3 +412,9 @@ debug_channels (bitblt bitmap clipping dc ddraw driver enhmetafile font gdi
 @ extern pfnRealizePalette pfnRealizePalette
 @ extern pfnSelectPalette pfnSelectPalette
 @ stub pstackConnect
+
+################################################################
+# Wine extensions: Win16 functions that are needed by other dlls
+#
+@ stdcall CreateMetaFile16(str) CreateMetaFile16
+@ stdcall CloseMetaFile16(long) CloseMetaFile16

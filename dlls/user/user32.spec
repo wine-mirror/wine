@@ -653,8 +653,16 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stdcall AllowSetForegroundWindow (long) AllowSetForegroundWindow
 @ stdcall LockSetForegroundWindow (long) LockSetForegroundWindow
 
-###################################################
-# Extra useful functions not exported under Windows
+################################################################
+# Wine extensions: Win16 functions that are needed by other dlls
 #
+@ stdcall CallWindowProc16(long long long long long) CallWindowProc16
+@ stdcall CreateDialogIndirectParam16(long ptr long long long) CreateDialogIndirectParam16
+@ stdcall DialogBoxIndirectParam16(long long long long long) DialogBoxIndirectParam16
+
+################################################################
+# Wine extensions: extra useful functions not exported under Windows
+#
+@ stdcall GetSysColorPen(long) GetSysColorPen
 @ stdcall wvsnprintfA(ptr long str ptr) wvsnprintfA
 @ stdcall wvsnprintfW(ptr long wstr ptr) wvsnprintfW

@@ -938,8 +938,19 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall SetCriticalSectionSpinCount(ptr long) SetCriticalSectionSpinCount
 @ stdcall ProcessIdToSessionId(long ptr) ProcessIdToSessionId
 
-##################
-# Wine extensions
+################################################################
+# Wine extensions: Win16 functions that are needed by other dlls
+#
+@ stdcall ConvertDialog32To16(ptr long ptr) ConvertDialog32To16
+@ stdcall FindResource16(long str str) FindResource16
+@ stdcall FreeResource16(long) FreeResource16
+@ stdcall GetCurrentTask() GetCurrentTask
+@ stdcall GetModuleHandle16(str) GetModuleHandle16
+@ stdcall LoadResource16(long long) LoadResource16
+@ stdcall LockResource16(long) LockResource16
+
+################################################################
+# Wine internal extensions
 #
 # All functions must be prefixed with '__wine_' (for internal functions)
 # or 'wine_' (for user-visible functions) to avoid namespace conflicts.
