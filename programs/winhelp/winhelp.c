@@ -54,7 +54,7 @@ static void    WINHELP_DeleteWindow(WINHELP_WINDOW*);
 static void    WINHELP_SetupText(HWND hWnd);
 static WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW*, WPARAM, LPARAM);
 
-WINHELP_GLOBALS Globals = {3, 0, 0, 0, 1, 0, 0, NULL};
+WINHELP_GLOBALS Globals = {3, NULL, NULL, 0, TRUE, NULL, NULL, NULL, NULL};
 
 /***********************************************************************
  *
@@ -129,7 +129,7 @@ HLPFILE_WINDOWINFO*     WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name)
  *
  *
  */
-HLPFILE_WINDOWINFO*     WINHELP_GetPopupWindowInfo(HLPFILE* hlpfile, HWND hParentWnd, POINT* mouse)
+static HLPFILE_WINDOWINFO*     WINHELP_GetPopupWindowInfo(HLPFILE* hlpfile, HWND hParentWnd, POINT* mouse)
 {
     static      HLPFILE_WINDOWINFO      wi;
 
@@ -165,6 +165,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     LONG        lHash = 0;
     HLPFILE*    hlpfile;
     CHAR*       quote;
+    WINHELP_DLL*        dll;
 
     Globals.hInstance = hInstance;
     
@@ -205,7 +206,12 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     }
 
     /* Create primary window */
-    WINHELP_RegisterWinClasses();
+    if (!WINHELP_RegisterWinClasses())
+    {
+        WINE_FIXME("Couldn't register classes\n");
+        return 0;
+    }
+
     if (*cmdline)
     {
         if ((*cmdline == '"') && (quote = strchr(cmdline+1, '"')))
@@ -225,6 +231,10 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
+    }
+    for (dll = Globals.dlls; dll; dll = dll->next)
+    {
+        if (dll->class & DC_INITTERM) dll->handler(DW_TERM, 0, 0);
     }
     return 0;
 }
@@ -473,7 +483,7 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
                     sizeof(WINHELP_WINDOW) + strlen(wi->name) + 1);
     if (!win) return FALSE;
 
-    win->next  = Globals.win_list;
+    win->next = Globals.win_list;
     Globals.win_list = win;
 
     win->lpszName = (char*)win + sizeof(WINHELP_WINDOW);
@@ -544,9 +554,10 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
     }
 
     hWnd = CreateWindow(bPopup ? TEXT_WIN_CLASS_NAME : MAIN_WIN_CLASS_NAME,
-                        wi->caption, wi->win_style,
+                        wi->caption, 
+                        bPrimary ? WS_OVERLAPPEDWINDOW : wi->win_style,
                         wi->origin.x, wi->origin.y, wi->size.cx, wi->size.cy,
-                        0, bPrimary ? LoadMenu(Globals.hInstance, MAKEINTRESOURCE(MAIN_MENU)) : 0,
+                        NULL, bPrimary ? LoadMenu(Globals.hInstance, MAKEINTRESOURCE(MAIN_MENU)) : 0,
                         Globals.hInstance, win);
 
     ShowWindow(hWnd, nCmdShow);
@@ -965,7 +976,7 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
 	    if (CurPos > Max)
                 CurPos = Max;
 	    else if (CurPos < Min)
-                CurPos = Min;		    
+                CurPos = Min;
 	    dy = GetScrollPos(hWnd, SB_VERT) - CurPos;
 	    SetScrollPos(hWnd, SB_VERT, CurPos, TRUE);
 	    ScrollWindow(hWnd, 0, dy, NULL, NULL);

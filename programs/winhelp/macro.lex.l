@@ -132,7 +132,7 @@ static const char* ts(int t)
     }
 }
 
-static int MACRO_CallBoolFunc(BOOL (*fn)(), const char* args, void** ret);
+static int MACRO_CallBoolFunc(FARPROC fn, const char* args, void** ret);
 
 /******************************************************************
  *		MACRO_CheckArgs
@@ -173,7 +173,7 @@ static int MACRO_CheckArgs(void* pa[], unsigned max, const char* args)
             case 'B':
                 if (t != BOOL_FUNCTION) 
                 {WINE_WARN("missing B\n");return -1;}   
-                if (MACRO_CallBoolFunc(yylval.bool_function, yylval.proto, &pa[idx]) == 0)
+                if (MACRO_CallBoolFunc(yylval.function, yylval.proto, &pa[idx]) == 0)
                     return -1;
                 break;
             default: 
@@ -196,7 +196,7 @@ static int MACRO_CheckArgs(void* pa[], unsigned max, const char* args)
  * Invokes boolean function fn, which arguments are defined by args
  * stores bool result into ret
  */
-static int MACRO_CallBoolFunc(BOOL (*fn)(), const char* args, void** ret)
+static int MACRO_CallBoolFunc(FARPROC fn, const char* args, void** ret)
 {
     void*       pa[2];
     int         idx = MACRO_CheckArgs(pa, sizeof(pa)/sizeof(pa[0]), args);
@@ -221,7 +221,7 @@ static int MACRO_CallBoolFunc(BOOL (*fn)(), const char* args, void** ret)
  *
  *
  */
-static int MACRO_CallVoidFunc(void (*fn)(), const char* args)
+static int MACRO_CallVoidFunc(FARPROC fn, const char* args)
 {
     void*       pa[6];
     int         idx = MACRO_CheckArgs(pa, sizeof(pa)/sizeof(pa[0]), args);
@@ -229,7 +229,7 @@ static int MACRO_CallVoidFunc(void (*fn)(), const char* args)
     if (idx == -1) return 0;
     if (!fn)       return 1;
 
-    WINE_TRACE("calling with %u pmts\n", idx);
+    WINE_TRACE("calling %p with %u pmts\n", fn, idx);
 
     switch (idx)
     {
@@ -260,7 +260,7 @@ BOOL MACRO_ExecuteMacro(LPCSTR macro)
         {
         case VOID_FUNCTION:
             WINE_TRACE("got type void func(%s)\n", yylval.proto);
-            MACRO_CallVoidFunc(yylval.void_function, yylval.proto);
+            MACRO_CallVoidFunc(yylval.function, yylval.proto);
             break;
         case BOOL_FUNCTION:
             WINE_WARN("got type bool func(%s)\n", yylval.proto);

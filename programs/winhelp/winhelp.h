@@ -122,6 +122,36 @@ typedef struct tagWinHelp
     struct tagWinHelp*  next;
 } WINHELP_WINDOW;
 
+#define DC_NOMSG     0x00000000
+#define DC_MINMAX    0x00000001
+#define DC_INITTERM  0x00000002
+#define DC_JUMP      0x00000004
+#define DC_ACTIVATE  0x00000008
+#define DC_CALLBACKS 0x00000010
+
+#define DW_NOTUSED    0
+#define DW_WHATMSG    1
+#define DW_MINMAX     2
+#define DW_SIZE       3
+#define DW_INIT       4
+#define DW_TERM       5
+#define DW_STARTJUMP  6
+#define DW_ENDJUMP    7
+#define DW_CHGFILE    8
+#define DW_ACTIVATE   9
+#define	DW_CALLBACKS 10
+
+typedef long (CALLBACK *WINHELP_LDLLHandler)(WORD, LONG, LONG);
+
+typedef struct tagDll
+{
+    HANDLE              hLib;
+    const char*         name;
+    WINHELP_LDLLHandler handler;
+    DWORD               class;
+    struct tagDll*      next;
+} WINHELP_DLL;
+
 typedef struct
 {
     UINT                wVersion;
@@ -132,9 +162,11 @@ typedef struct
     WINHELP_WINDOW*     active_win;
     WINHELP_WINDOW*     win_list;
     WNDPROC             button_proc;
+    WINHELP_DLL*        dlls;
 } WINHELP_GLOBALS;
 
 extern WINHELP_GLOBALS Globals;
+extern FARPROC         Callbacks[];
 
 BOOL WINHELP_CreateHelpWindowByHash(HLPFILE*, LONG, HLPFILE_WINDOWINFO*, int);
 BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE*, HLPFILE_WINDOWINFO*, int);

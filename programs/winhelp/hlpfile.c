@@ -91,11 +91,12 @@ static BOOL  HLPFILE_Uncompress3(char*, const char*, const BYTE*, const BYTE*);
 static void  HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE** dst, unsigned dstsz);
 static BOOL  HLPFILE_ReadFont(HLPFILE* hlpfile);
 
+#if 0
 /***********************************************************************
  *
  *           HLPFILE_PageByNumber
  */
-HLPFILE_PAGE *HLPFILE_PageByNumber(LPCSTR lpszPath, UINT wNum)
+static HLPFILE_PAGE *HLPFILE_PageByNumber(LPCSTR lpszPath, UINT wNum)
 {
     HLPFILE_PAGE *page;
     HLPFILE *hlpfile = HLPFILE_ReadHlpFile(lpszPath);
@@ -110,6 +111,7 @@ HLPFILE_PAGE *HLPFILE_PageByNumber(LPCSTR lpszPath, UINT wNum)
 
     return page;
 }
+#endif
 
 /* FIXME:
  * this finds the page containing the offset. The offset can either
@@ -534,7 +536,7 @@ static BYTE*    HLPFILE_DecompressGfx(BYTE* src, unsigned csz, unsigned sz, BYTE
         if (!dst) return NULL;
         HLPFILE_UncompressRLE(src, src + csz, &tmp, sz);
         if (tmp - dst != sz)
-            WINE_FIXME("Bogus gfx sizes (RunLen): %u/%u\n", tmp - dst, sz);
+            WINE_WARN("Bogus gfx sizes (RunLen): %u/%u\n", tmp - dst, sz);
         break;
     case 2: /* LZ77 */
         sz77 = HLPFILE_UncompressedLZ77_Size(src, src + csz);
@@ -671,7 +673,7 @@ static BOOL     HLPFILE_LoadMetaFile(BYTE* beg, BYTE pack, HLPFILE_PARAGRAPH* pa
     hsoff = GET_UINT(ptr, 4);
     ptr += 8;
 
-    WINE_FIXME("sz=%lu csz=%lu (%ld,%ld) offs=%lu/%u,%lu\n", 
+    WINE_TRACE("sz=%lu csz=%lu (%ld,%ld) offs=%lu/%u,%lu\n", 
                size, csize, mfp.xExt, mfp.yExt, off, ptr - beg, hsoff);
 
     bits = HLPFILE_DecompressGfx(beg + off, csize, size, pack);
@@ -1785,10 +1787,10 @@ static void HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE** dst, 
     while (src < end)
     {
         ch = *src++;
+        if (!(ch & 0x7F)) continue;
         if (ch & 0x80)
         {
             ch &= 0x7F;
-            if (ch == 0) WINE_FIXME("Null length 1, next is %u\n", *src);
             if ((*dst) + ch < sdst)
                 memcpy(*dst, src, ch);
             src += ch;
@@ -1796,18 +1798,13 @@ static void HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE** dst, 
         else
         {
             if ((*dst) + ch < sdst)
-                memset(*dst, (char)*src, ch);
-            src++;
-            if (ch == 0)
-            {
-                WINE_FIXME("Null length 2, next is %u\n", *src);
-            }
+                memset(*dst, (char)*src++, ch);
         }
         *dst += ch;
     }
     if (*dst != sdst)
-        WINE_FIXME("Buffer X-flow: d(%u) instead of d(%u)\n",
-                   *dst - (sdst - dstsz), dstsz);
+        WINE_WARN("Buffer X-flow: d(%u) instead of d(%u)\n",
+                  *dst - (sdst - dstsz), dstsz);
 }
 
 /******************************************************************

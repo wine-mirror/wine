@@ -8,10 +8,11 @@ IMPORTS   = comdlg32 shell32 user32 gdi32 kernel32
 PROGRAMS  = hlp2sgml
 
 C_SRCS = \
-	winhelp.c \
+	callback.c \
 	hlpfile.c \
 	macro.c \
-	string.c
+	string.c \
+	winhelp.c
 
 EXTRA_SRCS = macro.lex.l
 EXTRA_OBJS = @LEX_OUTPUT_ROOT@.o
