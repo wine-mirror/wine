@@ -17,11 +17,11 @@
  */
 
 #define WINE_FILEDESCRIPTION_STR "DMO Runtime"
-#define WINE_FILENAME_STR	 "msdmo.dll"
-#define WINE_FILEVERSION	 6,3,1,400
-#define WINE_FILEVERSION_STR	 "6.3.1.400"
-#define WINE_PRODUCTVERSION	 6,3,1,400
-#define WINE_PRODUCTVERSION_STR	 "6.3.1.400"
-#define WINE_PRODUCTNAME_STR	 "DirectShow"
+#define WINE_FILENAME_STR "msdmo.dll"
+#define WINE_FILEVERSION 6,3,1,400
+#define WINE_FILEVERSION_STR "6.3.1.400"
+#define WINE_PRODUCTVERSION 6,3,1,400
+#define WINE_PRODUCTVERSION_STR "6.3"
+#define WINE_PRODUCTNAME_STR "DirectX"
 
 #include "wine/wine_common_ver.rc"
