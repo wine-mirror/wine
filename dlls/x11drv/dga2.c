@@ -51,25 +51,25 @@ void X11DRV_XF86DGA2_Init(void)
   if (xf86dga2_modes) return; /* already initialized? */
 
   /* if in desktop mode, don't use DGA */
-  if (root_window != DefaultRootWindow(display)) return;
+  if (root_window != DefaultRootWindow(gdi_display)) return;
 
   if (!usedga) return;
 
-  if (!TSXDGAQueryExtension(display, &dga_event, &dga_error)) return;
+  if (!TSXDGAQueryExtension(gdi_display, &dga_event, &dga_error)) return;
 
-  if (!TSXDGAQueryVersion(display, &major, &minor)) return;
+  if (!TSXDGAQueryVersion(gdi_display, &major, &minor)) return;
   
   if (major < 2) return; /* only bother with DGA 2+ */
 
   /* test that it works */
-  if (!TSXDGAOpenFramebuffer(display, DefaultScreen(display))) {
+  if (!TSXDGAOpenFramebuffer(gdi_display, DefaultScreen(gdi_display))) {
     TRACE("disabling XF86DGA2 (insufficient permissions?)\n");
     return;
   }
-  TSXDGACloseFramebuffer(display, DefaultScreen(display));
+  TSXDGACloseFramebuffer(gdi_display, DefaultScreen(gdi_display));
 
   /* retrieve modes */
-  modes = TSXDGAQueryModes(display, DefaultScreen(display), &nmodes);
+  modes = TSXDGAQueryModes(gdi_display, DefaultScreen(gdi_display), &nmodes);
   if (!modes) return;
 
   TRACE("DGA modes: count=%d\n", nmodes);
@@ -102,6 +102,7 @@ static DWORD PASCAL X11DRV_XF86DGA2_SetMode(LPDDHAL_SETMODEDATA data)
 {
   LPDDRAWI_DIRECTDRAW_LCL ddlocal = data->lpDD->lpExclusiveOwner;
   DWORD vram;
+  Display *display = thread_display();
 
   data->ddRVal = DD_OK;
   if (data->dwModeIndex) {
@@ -173,6 +174,7 @@ static DWORD PASCAL X11DRV_XF86DGA2_CreateSurface(LPDDHAL_CREATESURFACEDATA data
 
 static DWORD PASCAL X11DRV_XF86DGA2_CreatePalette(LPDDHAL_CREATEPALETTEDATA data)
 {
+  Display *display = thread_display();
   data->lpDDPalette->u1.dwReserved1 = TSXDGACreateColormap(display, DefaultScreen(display), dga_dev, AllocAll);
   if (data->lpColorTable)
     X11DRV_DDHAL_SetPalEntries(data->lpDDPalette->u1.dwReserved1, 0, 256,
@@ -183,6 +185,7 @@ static DWORD PASCAL X11DRV_XF86DGA2_CreatePalette(LPDDHAL_CREATEPALETTEDATA data
 
 static DWORD PASCAL X11DRV_XF86DGA2_Flip(LPDDHAL_FLIPDATA data)
 {
+  Display *display = thread_display();
   if (data->lpSurfCurr == X11DRV_DD_Primary) {
     DWORD ofs = data->lpSurfCurr->lpGbl->fpVidMem - dga_mem.fpStart;
     TSXDGASetViewport(display, DefaultScreen(display),
@@ -196,6 +199,7 @@ static DWORD PASCAL X11DRV_XF86DGA2_Flip(LPDDHAL_FLIPDATA data)
 
 static DWORD PASCAL X11DRV_XF86DGA2_SetPalette(LPDDHAL_SETPALETTEDATA data)
 {
+  Display *display = thread_display();
   if ((data->lpDDSurface == X11DRV_DD_Primary) &&
       data->lpDDPalette && data->lpDDPalette->u1.dwReserved1) {
     TSXDGAInstallColormap(display, DefaultScreen(display), data->lpDDPalette->u1.dwReserved1);
