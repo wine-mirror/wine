@@ -34,30 +34,41 @@ DEFAULT_DEBUG_CHANNEL(aspi)
 static ASPI_DEVICE_INFO *ASPI_open_devices = NULL;
 static CRITICAL_SECTION ASPI_CritSection;
 
+#endif /* defined(linux) */
+
+
 BOOL WINAPI WNASPI32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
+#ifdef linux
 	static BOOL	bInitDone=FALSE;
-//	TRACE("0x%x 0x%1x %p\n", hInstDLL, fdwReason, fImpLoad);
+#if 0
+	TRACE("0x%x 0x%1x %p\n", hInstDLL, fdwReason, fImpLoad);
+#endif
 	switch( fdwReason )
 	{
 	case DLL_PROCESS_ATTACH:
-		// Create instance data
+		/* Create instance data */
 		if(!bInitDone)
 		{
-			// Initialize global stuff just once
+			/* Initialize global stuff just once */
 			InitializeCriticalSection(&ASPI_CritSection);
 			bInitDone=TRUE;
 		}
 		break;
 	case DLL_PROCESS_DETACH:
-		// Destroy instance data
+		/* Destroy instance data */
 		break;
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
 		break;
 	}
 	return TRUE;
+#else /* defined(linux) */
+	return TRUE;
+#endif /* defined(linux) */
 }
+
+#ifdef linux
 
 static int
 ASPI_OpenDevice(SRB_ExecSCSICmd *prb)
@@ -370,7 +381,8 @@ error_exit:
   HeapFree(GetProcessHeap(), 0, sg_hd);
   return lpPRB->SRB_Status;
 }
-#endif
+
+#endif /* defined(linux) */
 
 
 /*******************************************************************
