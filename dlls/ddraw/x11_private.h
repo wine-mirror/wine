@@ -50,6 +50,7 @@ typedef struct x11_ds_private {
 #ifdef HAVE_LIBXXSHM
     XShmSegmentInfo	shminfo;
 #endif
+    int		*oldDIBmap;
 } x11_ds_private;
 
 #ifdef HAVE_LIBXXSHM

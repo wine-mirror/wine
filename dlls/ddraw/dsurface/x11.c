@@ -16,6 +16,7 @@
 #include "options.h"
 #include "debugtools.h"
 #include "x11_private.h"
+#include "bitmap.h"
 
 #ifdef HAVE_OPENGL
 /* for d3d texture stuff */
@@ -313,6 +314,14 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_SetPalette(
 	This->s.palette = ipal; 
 	/* Perform the refresh */
 	TSXSetWindowColormap(display,ddpriv->drawable,dppriv->cm);
+
+	if (This->s.hdc != 0) {
+	    /* hack: set the DIBsection color map */
+	    BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr(This->s.DIBsection, BITMAP_MAGIC);
+	    X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *)bmp->dib;
+	    dib->colorMap = This->s.palette ? This->s.palette->screen_palents : NULL;
+	    GDI_HEAP_UNLOCK(This->s.DIBsection);
+	}
     }
     return DD_OK;
 }
@@ -370,6 +379,12 @@ ULONG WINAPI Xlib_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 iface) {
 
     /* Free the DIBSection (if any) */
     if (This->s.hdc != 0) {
+	/* hack: restore the original DIBsection color map */
+	BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr(This->s.DIBsection, BITMAP_MAGIC);
+	X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *)bmp->dib;
+	dib->colorMap = dspriv->oldDIBmap;
+	GDI_HEAP_UNLOCK(This->s.DIBsection);
+
 	SelectObject(This->s.hdc, This->s.holdbitmap);
 	DeleteDC(This->s.hdc);
 	DeleteObject(This->s.DIBsection);
@@ -381,6 +396,22 @@ ULONG WINAPI Xlib_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 iface) {
     HeapFree(GetProcessHeap(),0,This->private);
     HeapFree(GetProcessHeap(),0,This);
     return S_OK;
+}
+
+HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_GetDC(LPDIRECTDRAWSURFACE4 iface,HDC* lphdc) {
+    ICOM_THIS(IDirectDrawSurface4Impl,iface);
+    DSPRIVATE(This);
+    int was_ok = This->s.hdc != 0;
+    HRESULT result = IDirectDrawSurface4Impl_GetDC(iface,lphdc);
+    if (This->s.hdc && !was_ok) {
+	/* hack: take over the DIBsection color map */
+	BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr(This->s.DIBsection, BITMAP_MAGIC);
+	X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *)bmp->dib;
+	dspriv->oldDIBmap = dib->colorMap;
+	dib->colorMap = This->s.palette ? This->s.palette->screen_palents : NULL;
+	GDI_HEAP_UNLOCK(This->s.DIBsection);
+    }
+    return result;
 }
 
 ICOM_VTABLE(IDirectDrawSurface4) xlib_dds4vt = 
@@ -403,7 +434,7 @@ ICOM_VTABLE(IDirectDrawSurface4) xlib_dds4vt =
     IDirectDrawSurface4Impl_GetCaps,
     IDirectDrawSurface4Impl_GetClipper,
     IDirectDrawSurface4Impl_GetColorKey,
-    IDirectDrawSurface4Impl_GetDC,
+    Xlib_IDirectDrawSurface4Impl_GetDC,
     IDirectDrawSurface4Impl_GetFlipStatus,
     IDirectDrawSurface4Impl_GetOverlayPosition,
     IDirectDrawSurface4Impl_GetPalette,

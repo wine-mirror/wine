@@ -28,12 +28,14 @@ typedef x11_dp_private dga_dp_private;	/* reuse X11 palette stuff */
 
 typedef struct dga_ds_private {
     DWORD	fb_height;
+    int		*oldDIBmap;
 } dga_ds_private;
 
 /* For usage in DGA2 */
 extern ULONG WINAPI DGA_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 iface) ;
 extern HRESULT WINAPI DGA_IDirectDrawSurface4Impl_SetPalette(LPDIRECTDRAWSURFACE4 iface,LPDIRECTDRAWPALETTE pal) ;
 extern HRESULT WINAPI DGA_IDirectDrawSurface4Impl_Unlock(LPDIRECTDRAWSURFACE4 iface,LPVOID surface) ;
+extern HRESULT WINAPI DGA_IDirectDrawSurface4Impl_GetDC(LPDIRECTDRAWSURFACE4 iface,HDC* lphdc);
 
 extern HRESULT WINAPI DGA_IDirectDraw2Impl_CreateSurface_no_VT(LPDIRECTDRAW2 iface,LPDDSURFACEDESC lpddsd,
 							       LPDIRECTDRAWSURFACE *lpdsf,IUnknown *lpunk) ;

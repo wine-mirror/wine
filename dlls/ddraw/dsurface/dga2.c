@@ -89,7 +89,7 @@ ICOM_VTABLE(IDirectDrawSurface4) dga2_dds4vt =
     IDirectDrawSurface4Impl_GetCaps,
     IDirectDrawSurface4Impl_GetClipper,
     IDirectDrawSurface4Impl_GetColorKey,
-    IDirectDrawSurface4Impl_GetDC,
+    DGA_IDirectDrawSurface4Impl_GetDC,
     IDirectDrawSurface4Impl_GetFlipStatus,
     IDirectDrawSurface4Impl_GetOverlayPosition,
     IDirectDrawSurface4Impl_GetPalette,
