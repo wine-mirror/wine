@@ -8,13 +8,13 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
+#include "olectl.h"
 #include "oleauto.h"
-#include "wine/obj_base.h"
 #include "heap.h"
 #include "ldt.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
 
 /* This implementation of the BSTR API is 16-bit only. It
    represents BSTR as a 16:16 far pointer, and the strings
@@ -336,8 +336,8 @@ HRESULT WINAPI RegisterActiveObject16(
  * pColorRef can be NULL. In that case the user only wants to test the 
  * conversion.
  */
-INT WINAPI OleTranslateColor(
-  LONG clr,
+HRESULT WINAPI OleTranslateColor(
+  OLE_COLOR clr,
   HPALETTE  hpal,
   COLORREF* pColorRef)
 {
