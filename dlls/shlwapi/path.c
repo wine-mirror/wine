@@ -1078,7 +1078,7 @@ BOOL WINAPI PathFileExistsDefExtW(LPWSTR lpszPath,DWORD dwWhich)
       int iLen = lstrlenW(lpszPath);
       if (iLen > (MAX_PATH - 5))
         return FALSE;
-      while (dwWhich & 0x1 && iChoose < sizeof(pszExts))
+      while ( (dwWhich & 0x1) && pszExts[iChoose][0] )
       {
         lstrcpyW(lpszPath + iLen, pszExts[iChoose]);
         if (PathFileExistsW(lpszPath))
