@@ -3171,6 +3171,10 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
 
         if ((file->State == 1) || (file->State == 2))
         {
+            LPWSTR p;
+            INT len;
+            MSICOMPONENT* comp = NULL;
+
             TRACE("Installing %s\n",debugstr_w(file->File));
             rc = ready_media_for_file(package,file->Sequence,path_to_source,
                             file->File);
@@ -3189,6 +3193,19 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
 
             create_component_directory( package, file->ComponentIndex);
 
+            /* recalculate file paths because things may have changed */
+
+            if (file->ComponentIndex >= 0)
+                comp = &package->components[file->ComponentIndex];
+
+            p = resolve_folder(package, comp->Directory, FALSE, FALSE, NULL);
+            if (file->TargetPath)
+                HeapFree(GetProcessHeap(),0,file->TargetPath);
+
+            file->TargetPath = build_directory_name(2, p, file->FileName);
+
+            len = strlenW(path_to_source) + strlenW(file->File) + 2;
+            file->SourcePath = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
             strcpyW(file->SourcePath, path_to_source);
             strcatW(file->SourcePath, file->File);
 
@@ -3523,7 +3540,7 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
         LPSTR value_data = NULL;
         HKEY  root_key, hkey;
         DWORD type,size;
-        LPWSTR value, key, name, component;
+        LPWSTR value, key, name, component, deformated;
         LPCWSTR szRoot;
         INT component_index;
         MSIRECORD * uirow;
@@ -3594,27 +3611,33 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
             goto next;
         }
 
-        size = strlenW(key) + strlenW(szRoot) + 1;
+        deformat_string(package, key , &deformated);
+        size = strlenW(deformated) + strlenW(szRoot) + 1;
         uikey = HeapAlloc(GetProcessHeap(), 0, size*sizeof(WCHAR));
         strcpyW(uikey,szRoot);
-        strcatW(uikey,key);
-        if (RegCreateKeyW( root_key, key, &hkey))
+        strcatW(uikey,deformated);
+
+        if (RegCreateKeyW( root_key, deformated, &hkey))
         {
-            ERR("Could not create key %s\n",debugstr_w(key));
+            ERR("Could not create key %s\n",debugstr_w(deformated));
             msiobj_release(&row->hdr);
+            HeapFree(GetProcessHeap(),0,deformated);
             goto next;
         }
+        HeapFree(GetProcessHeap(),0,deformated);
 
         value = load_dynamic_stringW(row,5);
         value_data = parse_value(package, value, &type, &size); 
 
+        deformat_string(package, name, &deformated);
+
         if (value_data)
         {
-            TRACE("Setting value %s\n",debugstr_w(name));
-            RegSetValueExW(hkey, name, 0, type, value_data, size);
+            TRACE("Setting value %s\n",debugstr_w(deformated));
+            RegSetValueExW(hkey, deformated, 0, type, value_data, size);
 
             uirow = MSI_CreateRecord(3);
-            MSI_RecordSetStringW(uirow,2,name);
+            MSI_RecordSetStringW(uirow,2,deformated);
             MSI_RecordSetStringW(uirow,1,uikey);
 
             if (type == REG_SZ)
@@ -3628,6 +3651,7 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
             HeapFree(GetProcessHeap(),0,value_data);
         }
         HeapFree(GetProcessHeap(),0,value);
+        HeapFree(GetProcessHeap(),0,deformated);
 
         msiobj_release(&row->hdr);
         RegCloseKey(hkey);
