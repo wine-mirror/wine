@@ -2194,6 +2194,43 @@ static void test_mouse_input(HWND hwnd)
     DestroyWindow(popup);
 }
 
+static void test_validatergn(HWND hwnd)
+{
+    HWND child;
+    RECT rc, rc2;
+    HRGN rgn;
+    int ret;
+    child = CreateWindowExA(0, "static", NULL, WS_CHILD| WS_VISIBLE, 10, 10, 10, 10, hwnd, 0, 0, NULL);
+    ShowWindow(hwnd, SW_SHOW);
+    UpdateWindow( hwnd);
+    /* test that ValidateRect validates children*/
+    InvalidateRect( child, NULL, 1);
+    GetWindowRect( child, &rc);
+    MapWindowPoints( NULL, hwnd, (POINT*) &rc, 2);
+    ret = GetUpdateRect( child, &rc2, 0);
+    ok( rc2.right > rc2.left && rc2.bottom > rc2.top,
+            "Update rectangle is empty!\n");
+    ValidateRect( hwnd, &rc);
+    ret = GetUpdateRect( child, &rc2, 0);
+    ok( rc2.left == 0 && rc2.top == 0 && rc2.right == 0 && rc2.bottom == 0,
+            "Update rectangle %ld,%ld-%ld,%ld is not empty!\n", rc2.left, rc2.top,
+            rc2.right, rc2.bottom);
+
+    /* now test ValidateRgn */
+    InvalidateRect( child, NULL, 1);
+    GetWindowRect( child, &rc);
+    MapWindowPoints( NULL, hwnd, (POINT*) &rc, 2);
+    rgn = CreateRectRgnIndirect( &rc);
+    ValidateRgn( hwnd, rgn);
+    ret = GetUpdateRect( child, &rc2, 0);
+    ok( rc2.left == 0 && rc2.top == 0 && rc2.right == 0 && rc2.bottom == 0,
+            "Update rectangle %ld,%ld-%ld,%ld is not empty!\n", rc2.left, rc2.top,
+            rc2.right, rc2.bottom);
+
+    DeleteObject( rgn);
+    DestroyWindow( child );
+}
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -2249,6 +2286,7 @@ START_TEST(win)
     test_children_zorder(hwndMain);
     test_keyboard_input(hwndMain);
     test_mouse_input(hwndMain);
+    test_validatergn(hwndMain);
 
     UnhookWindowsHookEx(hhook);
 }
