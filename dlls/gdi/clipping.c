@@ -51,6 +51,18 @@ void CLIPPING_UpdateGCRegion( DC * dc )
         dc->funcs->pSetDeviceClipping( dc->physDev, dc->hVisRgn, dc->hClipRgn );
 }
 
+/***********************************************************************
+ *           create_default_clip_rgn
+ *
+ * Create a default clipping region when none already exists.
+ */
+static inline void create_default_clip_region( DC * dc )
+{
+    dc->hClipRgn = CreateRectRgn(0, 0,
+        GetDeviceCaps( dc->hSelf, HORZRES ),
+        GetDeviceCaps( dc->hSelf, VERTRES ));
+}
+
 
 /***********************************************************************
  *           SelectClipRgn    (GDI32.@)
@@ -97,11 +109,7 @@ INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
     else
     {
         if (!dc->hClipRgn)
-        {
-            RECT rect;
-            GetRgnBox( dc->hVisRgn, &rect );
-            dc->hClipRgn = CreateRectRgnIndirect( &rect );
-        }
+            create_default_clip_region( dc );
 
         if(fnMode == RGN_COPY)
             CombineRgn( dc->hClipRgn, hrgn, 0, fnMode );
@@ -206,10 +214,7 @@ INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
         else
         {
             if (!dc->hClipRgn)
-            {
-                dc->hClipRgn = CreateRectRgn( 0, 0, 0, 0 );
-                CombineRgn( dc->hClipRgn, dc->hVisRgn, 0, RGN_COPY );
-            }
+                create_default_clip_region( dc );
             ret = CombineRgn( dc->hClipRgn, dc->hClipRgn, newRgn, RGN_DIFF );
             DeleteObject( newRgn );
         }
