@@ -890,6 +890,11 @@ static BOOL PRINTDLG_ValidateAndDuplicateSettings(HWND hDlg,
            }
        }
 
+    /* set DC */
+    if (lppd->Flags & PD_RETURNDC){
+      lppd->hDC = CreateDCA(NULL, lpPi->pPrinterName, NULL, NULL);
+    }
+
 
     GlobalUnlock(lppd->hDevMode);
 
