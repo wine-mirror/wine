@@ -354,13 +354,13 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
        than the window itself, so we need to intersect the cliprect with
        the window  */
     
-    GetClipBox( lps->hdc, &clipRect );
     GetClientRect( hwnd, &clientRect );
 
-    /* The rect obtained by GetClipBox is in logical, so make the client in logical to*/
-    DPtoLP(lps->hdc, (LPPOINT)&clientRect, 2);    
+    GetClipBox( lps->hdc, &clipRect );
+    LPtoDP(lps->hdc, (LPPOINT)&clipRect, 2);      /* GetClipBox returns LP */
 
     IntersectRect(&lps->rcPaint, &clientRect, &clipRect);
+    DPtoLP(lps->hdc, (LPPOINT)&lps->rcPaint, 2);  /* we must return LP */
 
     TRACE("box = (%i,%i - %i,%i)\n", lps->rcPaint.left, lps->rcPaint.top,
 		    lps->rcPaint.right, lps->rcPaint.bottom );

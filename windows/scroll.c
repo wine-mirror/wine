@@ -97,17 +97,26 @@ BOOL WINAPI ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
 	  dc->wndOrgY, dc->wndExtY, dc->vportOrgY, dc->vportExtY );
 */
 
-    /* compute device clipping region */
+    /* compute device clipping region (in device coordinates) */
 
     if ( rc )
 	rect = *rc;
     else /* maybe we should just return FALSE? */
 	GetClipBox( hdc, &rect );
 
+    LPtoDP( hdc, (LPPOINT)&rect, 2 );
+
     if (prLClip)
-	IntersectRect( &rClip,&rect,prLClip );
+    {
+        rClip = *prLClip;
+        LPtoDP( hdc, (LPPOINT)&rClip, 2 );
+	IntersectRect( &rClip, &rect, &rClip );
+    }
     else
         rClip = rect;
+
+    dx = XLPTODP ( dc, rect.left + dx ) - XLPTODP ( dc, rect.left );
+    dy = YLPTODP ( dc, rect.top + dy ) - YLPTODP ( dc, rect.top );
 
     rSrc = rClip;
     OffsetRect( &rSrc, -dx, -dy );
@@ -121,6 +130,10 @@ BOOL WINAPI ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
             dest.y = (src.y = rSrc.top) + dy;
 
             /* copy bits */
+    
+            DPtoLP( hdc, (LPPOINT)&rSrc, 2 );
+            DPtoLP( hdc, &src, 1 );
+            DPtoLP( hdc, &dest, 1 );
 
             if (!BitBlt( hdc, dest.x, dest.y,
                            rSrc.right - rSrc.left, rSrc.bottom - rSrc.top,
@@ -139,10 +152,6 @@ BOOL WINAPI ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
               (hrgnUpdate) ? hrgnUpdate : CreateRectRgn( 0,0,0,0 );
             HRGN hrgn2;
 
-            dx = XLPTODP ( dc, rect.left + dx) - XLPTODP ( dc, rect.left);
-            dy = YLPTODP ( dc, rect.top + dy) - YLPTODP ( dc, rect.top);
-            LPtoDP( hdc, (LPPOINT)&rect, 2 );
-            LPtoDP( hdc, (LPPOINT)&rClip, 2 );
             hrgn2 = CreateRectRgnIndirect( &rect );
             OffsetRgn( hrgn2, dc->w.DCOrgX, dc->w.DCOrgY );
             CombineRgn( hrgn2, hrgn2, dc->w.hVisRgn, RGN_AND );

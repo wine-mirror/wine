@@ -1190,8 +1190,15 @@ BOOL REGION_LPTODP( HDC hdc, HRGN hDest, HRGN hSrc )
 	tmpRect.top = YLPTODP( dc, tmpRect.top );
 	tmpRect.right = XLPTODP( dc, tmpRect.right );
 	tmpRect.bottom = YLPTODP( dc, tmpRect.bottom );
+
+        if (tmpRect.left > tmpRect.right) 
+        { INT tmp = tmpRect.left; tmpRect.left = tmpRect.right; tmpRect.right = tmp; }
+        if (tmpRect.top > tmpRect.bottom) 
+        { INT tmp = tmpRect.top; tmpRect.top = tmpRect.bottom; tmpRect.bottom = tmp; }
+
 	REGION_UnionRectWithRegion( &tmpRect, destObj->rgn );
     }
+    ret = TRUE;
     
     GDI_ReleaseObj( hDest );
     GDI_ReleaseObj( hSrc );
