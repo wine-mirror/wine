@@ -748,6 +748,18 @@ static const char main_key_vnc[MAIN_LEN][4] =
  "aA","bB","cC","dD","eE","fF","gG","hH","iI","jJ","kK","lL","mM","nN","oO","pP","qQ","rR","sS","tT","uU","vV","wW","xX","yY","zZ"
 };
 
+/*** Dutch keyboard layout (setxkbmap nl) ***/
+static const char main_key_NL[MAIN_LEN][4] =
+{
+ "@§","1!","2\"","3#","4$","5%","6&","7_","8(","9)","0'","/?","°~",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","¨~","*|",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","+±","'`","<>",
+ "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-=",
+ "[]"
+};
+
+
+
 /*** Layout table. Add your keyboard mappings to this list */
 static const struct {
     LCID lcid; /* input locale identifier, look for LOCALE_ILANGUAGE
@@ -812,6 +824,7 @@ static const struct {
  {0x0409, "VNC keyboard layout", &main_key_vnc, &main_key_scan_vnc, &main_key_vkey_vnc},
  {0x0408, "Greek keyboard layout", &main_key_EL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x041e, "Thai (Kedmanee)  keyboard layout", &main_key_th, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0x0413, "Dutch keyboard layout", &main_key_NL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
 
  {0, NULL, NULL, NULL, NULL} /* sentinel */
 };
