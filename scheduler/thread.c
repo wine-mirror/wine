@@ -27,6 +27,9 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
+#ifdef HAVE_SYS_TIMES_H
+#include <sys/times.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -708,6 +711,37 @@ BOOL WINAPI GetThreadTimes(
             }
         }
         SERVER_END_REQ;
+    }
+    if (ret && (kerneltime || usertime))
+    {
+        /* We call times(2) for kernel time or user time */
+        /* We can only (portably) do this for the current thread */
+        if (thread == GetCurrentThread())
+        {
+            ULONGLONG time;
+            struct tms time_buf;
+            long clocks_per_sec = sysconf(_SC_CLK_TCK);
+
+            times(&time_buf);
+            if (kerneltime)
+            {
+                time = (ULONGLONG)time_buf.tms_stime * 10000000 / clocks_per_sec;
+                kerneltime->dwHighDateTime = time >> 32;
+                kerneltime->dwLowDateTime = (DWORD)time;
+            }
+            if (usertime)
+            {
+                time = (ULONGLONG)time_buf.tms_utime * 10000000 / clocks_per_sec;
+                usertime->dwHighDateTime = time >> 32;
+                usertime->dwLowDateTime = (DWORD)time;
+            }
+        }
+        else
+        {
+            if (kerneltime) kerneltime->dwHighDateTime = kerneltime->dwLowDateTime = 0;
+            if (usertime) usertime->dwHighDateTime = usertime->dwLowDateTime = 0;
+            FIXME("Cannot get kerneltime or usertime of other threads\n");
+        }
     }
     return ret;
 }

@@ -481,13 +481,11 @@ VOID test_GetThreadTimes(DWORD version)
         "creationTime was invalid");
      ok(exitTime.dwLowDateTime!=99 || exitTime.dwHighDateTime!=99,
         "exitTime was invalid");
-     todo_wine {
-       ok(kernelTime.dwLowDateTime!=99 || kernelTime.dwHighDateTime!=99,
-          "kernelTime was invalid");
-       ok(userTime.dwLowDateTime!=99 || userTime.dwHighDateTime!=99,
-          "userTime was invalid");
-     }
-     ok(CloseHandle(thread)!=0,"ClosewHandle failed");
+     ok(kernelTime.dwLowDateTime!=99 || kernelTime.dwHighDateTime!=99,
+        "kernelTime was invalid");
+     ok(userTime.dwLowDateTime!=99 || userTime.dwHighDateTime!=99,
+        "userTime was invalid");
+     ok(CloseHandle(thread)!=0,"CloseHandle failed");
 }
 
 /* Check the processor affinity functions */
