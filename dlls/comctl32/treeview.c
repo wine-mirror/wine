@@ -4804,6 +4804,29 @@ TREEVIEW_KeyDown(TREEVIEW_INFO *infoPtr, WPARAM wParam)
 }
 
 static LRESULT
+TREEVIEW_Notify(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+{
+    LPNMHDR lpnmh = (LPNMHDR)lParam;
+
+    if (lpnmh->code == PGN_CALCSIZE) {
+	LPNMPGCALCSIZE lppgc = (LPNMPGCALCSIZE)lParam;
+
+	if (lppgc->dwFlag == PGF_CALCWIDTH) {
+	    lppgc->iWidth = infoPtr->treeWidth;
+	    TRACE("got PGN_CALCSIZE, returning horz size = %ld, client=%ld\n", 
+		  infoPtr->treeWidth, infoPtr->clientWidth);
+	}
+	else {
+	    lppgc->iHeight = infoPtr->treeHeight;
+	    TRACE("got PGN_CALCSIZE, returning vert size = %ld, client=%ld\n", 
+		  infoPtr->treeHeight, infoPtr->clientHeight);
+	}
+	return 0;
+    }
+    return DefWindowProcA(infoPtr->hwnd, WM_NOTIFY, wParam, lParam);
+}
+
+static LRESULT
 TREEVIEW_Size(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     if (wParam == SIZE_RESTORED)
@@ -5083,7 +5106,8 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	/* WM_MOUSEMOVE */
 
-	/* WM_NOTIFY */
+    case WM_NOTIFY:
+	return TREEVIEW_Notify(infoPtr, wParam, lParam);
 
 	/* WM_NOTIFYFORMAT */
 
