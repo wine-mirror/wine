@@ -34,6 +34,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(driver);
 
 static LPWINE_DRIVER	lpDrvItemList = NULL;
 
+WINE_MMTHREAD* (*pFnGetMMThread16)(HANDLE16 h) /* = NULL */;
+
 /**************************************************************************
  *			DRIVER_GetNumberOfModuleRefs		[internal]
  *

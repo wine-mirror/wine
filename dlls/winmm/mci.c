@@ -489,7 +489,6 @@ static	DWORD	MCI_LoadMciDriver(LPCSTR _strDevTyp, LPWINE_MCIDRIVER* lpwmd)
 
     wmd->lpfnYieldProc = MCI_DefYieldProc;
     wmd->dwYieldData = VK_CANCEL;
-    wmd->hCreatorTask = GetCurrentTask();
     wmd->CreatorThread = GetCurrentThreadId();
 
     EnterCriticalSection(&WINMM_IData->cs);

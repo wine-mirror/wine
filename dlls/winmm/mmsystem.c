@@ -49,6 +49,7 @@ extern LONG CALLBACK MMSYSTEM_CallTo16_long_l    (FARPROC16,LONG);
 extern LONG CALLBACK MMSYSTEM_CallTo16_long_lwll (LPMMIOPROC16,LONG,WORD,LONG,LONG);
 /* ### stop build ### */
 
+static WINE_MMTHREAD*   WINMM_GetmmThread(HANDLE16);
 static LRESULT          MMIO_Callback16(SEGPTR, LPMMIOINFO, UINT, LPARAM, LPARAM);
 
 /* ###################################################
@@ -85,10 +86,12 @@ BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
 	WINMM_IData->h16Module32 = hndl;
         /* hook in our 16 bit function pointers */
         pFnMmioCallback16 = MMIO_Callback16;
+        pFnGetMMThread16  = WINMM_GetmmThread;
 	break;
     case DLL_PROCESS_DETACH:
 	FreeLibrary(WINMM_IData->h16Module32);
         pFnMmioCallback16 = NULL;
+        pFnGetMMThread16  = NULL;
 	break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
@@ -625,7 +628,7 @@ HTASK16 WINAPI mciGetCreatorTask16(UINT16 uDeviceID)
     LPWINE_MCIDRIVER wmd;
     HTASK16 ret = 0;
 
-    if ((wmd = MCI_GetDriver(uDeviceID))) ret = wmd->hCreatorTask;
+    if ((wmd = MCI_GetDriver(uDeviceID))) ret = K32WOWHandle16(wmd->CreatorThread, WOW_TYPE_HTASK);
 
     TRACE("(%u) => %04x\n", uDeviceID, ret);
     return ret;
@@ -1829,6 +1832,18 @@ void	WINAPI	mmTaskYield16(void)
 
 extern DWORD	WINAPI	GetProcessFlags(DWORD);
 
+/******************************************************************
+ *		WINMM_GetmmThread
+ *
+ *
+ */
+static  WINE_MMTHREAD*	WINMM_GetmmThread(HANDLE16 h)
+{
+    return (WINE_MMTHREAD*)MapSL( MAKESEGPTR(h, 0) );
+}
+
+void WINAPI WINE_mmThreadEntryPoint(DWORD);
+
 /**************************************************************************
  * 				mmThreadCreate		[MMSYSTEM.1120]
  *
@@ -1850,7 +1865,7 @@ LRESULT	WINAPI mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE lpHndl, DWORD d
     if (hndl == 0) {
 	ret = 2;
     } else {
-	WINE_MMTHREAD*	lpMMThd = MapSL( MAKESEGPTR(hndl, 0) );
+	WINE_MMTHREAD*	lpMMThd = WINMM_GetmmThread(hndl);
 
 #if 0
 	/* force mmtask routines even if mmthread is required */
@@ -1938,7 +1953,7 @@ void WINAPI mmThreadSignal16(HANDLE16 hndl)
     TRACE("(%04x)!\n", hndl);
 
     if (hndl) {
-	WINE_MMTHREAD*	lpMMThd = MapSL( MAKESEGPTR(hndl, 0) );
+	WINE_MMTHREAD*	lpMMThd = WINMM_GetmmThread(hndl);
 
 	lpMMThd->dwCounter++;
 	if (lpMMThd->hThread != 0) {
@@ -1994,7 +2009,7 @@ void	WINAPI mmThreadBlock16(HANDLE16 hndl)
     TRACE("(%04x)!\n", hndl);
 
     if (hndl) {
-	WINE_MMTHREAD*	lpMMThd = MapSL( MAKESEGPTR(hndl, 0) );
+	WINE_MMTHREAD*	lpMMThd = WINMM_GetmmThread(hndl);
 
 	if (lpMMThd->hThread != 0) {
 	    DWORD	lc;
@@ -2019,7 +2034,7 @@ BOOL16	WINAPI mmThreadIsCurrent16(HANDLE16 hndl)
     TRACE("(%04x)!\n", hndl);
 
     if (hndl && mmThreadIsValid16(hndl)) {
-	WINE_MMTHREAD*	lpMMThd = MapSL( MAKESEGPTR(hndl, 0) );
+	WINE_MMTHREAD*	lpMMThd = WINMM_GetmmThread(hndl);
 	ret = (GetCurrentThreadId() == lpMMThd->dwThreadID);
     }
     TRACE("=> %d\n", ret);
@@ -2036,7 +2051,7 @@ BOOL16	WINAPI	mmThreadIsValid16(HANDLE16 hndl)
     TRACE("(%04x)!\n", hndl);
 
     if (hndl) {
-	WINE_MMTHREAD*	lpMMThd = MapSL( MAKESEGPTR(hndl, 0) );
+	WINE_MMTHREAD*	lpMMThd = WINMM_GetmmThread(hndl);
 
 	if (!IsBadWritePtr(lpMMThd, sizeof(WINE_MMTHREAD)) &&
 	    lpMMThd->dwSignature == WINE_MMTHREAD_CREATED &&
@@ -2068,19 +2083,19 @@ HANDLE16 WINAPI mmThreadGetTask16(HANDLE16 hndl)
     TRACE("(%04x)\n", hndl);
 
     if (mmThreadIsValid16(hndl)) {
-	WINE_MMTHREAD*	lpMMThd = MapSL( MAKESEGPTR(hndl, 0) );
+	WINE_MMTHREAD*	lpMMThd = WINMM_GetmmThread(hndl);
 	ret = lpMMThd->hTask;
     }
     return ret;
 }
 
 /**************************************************************************
- * 				__wine_mmThreadEntryPoint (MMSYSTEM.2047)
+ * 			        WINE_mmThreadEntryPoint (MMSYSTEM.2047)
  */
 void WINAPI WINE_mmThreadEntryPoint(DWORD _pmt)
 {
     HANDLE16		hndl = (HANDLE16)_pmt;
-    WINE_MMTHREAD*	lpMMThd = MapSL( MAKESEGPTR(hndl, 0) );
+    WINE_MMTHREAD*	lpMMThd = WINMM_GetmmThread(hndl);
 
     TRACE("(%04x %p)\n", hndl, lpMMThd);
 

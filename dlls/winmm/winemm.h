@@ -147,7 +147,6 @@ typedef struct tagWINE_MCIDRIVER {
         YIELDPROC		lpfnYieldProc;
         DWORD	                dwYieldData;
         BOOL			bIs32;
-        HTASK16			hCreatorTask;
         DWORD                   CreatorThread;
         UINT			uTypeCmdTable;
         UINT			uSpecificCmdTable;
@@ -255,8 +254,6 @@ DWORD		MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2,
 DWORD		MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2);
 DWORD		MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2);
 
-void CALLBACK	WINE_mmThreadEntryPoint(DWORD _pmt);
-
 void 		MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16);
 void 		MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32);
 
@@ -338,12 +335,13 @@ void	CALLBACK MMDRV_WaveOut_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance, DW
 BOOL	MMDRV_GetDescription16(const char* fname, char* buf, int buflen);
 
 /* Global variables */
-extern LPWINE_MM_IDATA		WINMM_IData;
+extern LPWINE_MM_IDATA  WINMM_IData;
 
 /* pointers to 16 bit functions (if sibling MMSYSTEM.DLL is loaded
  * NULL otherwise
  */
-extern LRESULT         (*pFnMmioCallback16)(SEGPTR,LPMMIOINFO,UINT,LPARAM,LPARAM);
+extern LRESULT          (*pFnMmioCallback16)(SEGPTR,LPMMIOINFO,UINT,LPARAM,LPARAM);
+extern WINE_MMTHREAD*   (*pFnGetMMThread16)(HANDLE16);
 
 /* HANDLE16 -> HANDLE conversions */
 #define HDRVR_32(h16)		((HDRVR)(ULONG_PTR)(h16))
