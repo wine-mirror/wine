@@ -227,14 +227,14 @@ static void test_LongtoShortA(CHAR *teststr,CHAR *goodstr,
          Get(Short|Long)PathNameA should never pass, but GetFullPathNameA
          should.
 */
-static void test_FunnyChars(CHAR *curdir,CHAR *filename, INT valid,CHAR *errstr)
+static void test_FunnyChars(CHAR *curdir,CHAR *curdir_short,CHAR *filename, INT valid,CHAR *errstr)
 {
   CHAR tmpstr[MAX_PATH],tmpstr1[MAX_PATH];
   SLpassfail passfail;
 
   test_ValidPathA(curdir,"",filename,tmpstr,&passfail,errstr);
   if(valid) {
-    sprintf(tmpstr1,"%s\\%s",curdir,filename);
+    sprintf(tmpstr1,"%s\\%s",curdir_short,filename);
       ok((passfail.shortlen==0 &&
           (passfail.shorterror==ERROR_FILE_NOT_FOUND || passfail.shorterror==ERROR_PATH_NOT_FOUND || !passfail.shorterror)) ||
          (passfail.shortlen==strlen(tmpstr1) && lstrcmpiA(tmpstr,tmpstr1)==0),
@@ -643,7 +643,7 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
 /* Non-existent directories */
   sprintf(tmpstr,"%s\\",NONDIR_SHORT);
   test_ValidPathA(curdir,"",tmpstr,tmpstr1,&passfail,"test15");
-  sprintf(tmpstr2,"%s\\%s",curdir,tmpstr);
+  sprintf(tmpstr2,"%s\\%s",curdir_short,tmpstr);
   ok((passfail.shortlen==0 &&
       (passfail.shorterror==ERROR_PATH_NOT_FOUND ||
        passfail.shorterror==ERROR_FILE_NOT_FOUND)) ||
@@ -765,25 +765,25 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
     valid=(is_char_ok[i]=='0') ? 0 : 1;
     sprintf(tmpstr1,"check%d-1",i);
     sprintf(tmpstr,"file%c000.ext",funny_chars[i]);
-    test_FunnyChars(curdir,tmpstr,valid,tmpstr1);
+    test_FunnyChars(curdir,curdir_short,tmpstr,valid,tmpstr1);
     sprintf(tmpstr1,"check%d-2",i);
     sprintf(tmpstr,"file000.e%ct",funny_chars[i]);
-    test_FunnyChars(curdir,tmpstr,valid,tmpstr1);
+    test_FunnyChars(curdir,curdir_short,tmpstr,valid,tmpstr1);
     sprintf(tmpstr1,"check%d-3",i);
     sprintf(tmpstr,"%cfile000.ext",funny_chars[i]);
-    test_FunnyChars(curdir,tmpstr,valid,tmpstr1);
+    test_FunnyChars(curdir,curdir_short,tmpstr,valid,tmpstr1);
     sprintf(tmpstr1,"check%d-4",i);
     sprintf(tmpstr,"file000%c.ext",funny_chars[i]);
-    test_FunnyChars(curdir,tmpstr,valid,tmpstr1);
+    test_FunnyChars(curdir,curdir_short,tmpstr,valid,tmpstr1);
     sprintf(tmpstr1,"check%d-5",i);
     sprintf(tmpstr,"Long %c File",funny_chars[i]);
-    test_FunnyChars(curdir,tmpstr,valid,tmpstr1);
+    test_FunnyChars(curdir,curdir_short,tmpstr,valid,tmpstr1);
     sprintf(tmpstr1,"check%d-6",i);
     sprintf(tmpstr,"%c Long File",funny_chars[i]);
-    test_FunnyChars(curdir,tmpstr,valid,tmpstr1);
+    test_FunnyChars(curdir,curdir_short,tmpstr,valid,tmpstr1);
     sprintf(tmpstr1,"check%d-7",i);
     sprintf(tmpstr,"Long File %c",funny_chars[i]);
-    test_FunnyChars(curdir,tmpstr,valid,tmpstr1);
+    test_FunnyChars(curdir,curdir_short,tmpstr,valid,tmpstr1);
   }
 }
 
