@@ -114,7 +114,9 @@ foreach my $spec_file (@spec_files) {
     }
 }
 
+my @gdi32_dirs = qw(dlls/gdi/enhmfdrv dlls/gdi/mfdrv dlls/gdi/win16drv graphics objects);
 my @ntdll_dirs = qw(files if1632 loader/ne loader memory misc msdos ole relay32 scheduler win32);
+my @user32_dirs = qw(controls dlls/user/dde windows);
 
 push @makefile_in_files, "library/Makefile.in";
 push @makefile_in_files, "unicode/Makefile.in";
@@ -249,7 +251,32 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
     my $dsp_file = $makefile_in_file;
     $dsp_file =~ s/Makefile.in$/$project.dsp/;
 
-    if($module eq "ntdll.dll") {
+    if($module eq "gdi32.dll") {
+	foreach my $dir (@gdi32_dirs) {
+	    my $dir2 = $dir;
+	    $dir2 =~ s%^.*?/([^/]+)$%$1%;
+
+	    my $module = "gdi32_$dir2.lib";
+	    $module =~ s%/%_%g;
+
+	    my $project = "gdi32_$dir2";
+	    $project =~ s%/%_%g;
+
+	    my $type = "lib";
+	    my $dsp_file = "$dir/$project.dsp";
+
+	    ($source_files, my $local_source_files) = filter_files($source_files, "$dir2/");
+	    ($header_files, my $local_header_files) = filter_files($header_files, "$dir2/");
+	    ($resource_files, my $local_resource_files) = filter_files($resource_files, "$dir2/");
+
+	    $modules{$module}{project} = $project;
+	    $modules{$module}{type} = $type;
+	    $modules{$module}{dsp_file} = $dsp_file;
+	    $modules{$module}{source_files} = $local_source_files;
+	    $modules{$module}{header_files} = $local_header_files;
+	    $modules{$module}{resource_files} = $local_resource_files;
+	}
+    } elsif($module eq "ntdll.dll") {
 	foreach my $dir (@ntdll_dirs) {
 	    my $module = "ntdll_$dir.lib";
 	    $module =~ s%/%_%g;
@@ -263,6 +290,31 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	    ($source_files, my $local_source_files) = filter_files($source_files, "/$dir/");
 	    ($header_files, my $local_header_files) = filter_files($header_files, "/$dir/");
 	    ($resource_files, my $local_resource_files) = filter_files($resource_files, "/$dir/");
+
+	    $modules{$module}{project} = $project;
+	    $modules{$module}{type} = $type;
+	    $modules{$module}{dsp_file} = $dsp_file;
+	    $modules{$module}{source_files} = $local_source_files;
+	    $modules{$module}{header_files} = $local_header_files;
+	    $modules{$module}{resource_files} = $local_resource_files;
+	}
+    } elsif($module eq "user32.dll") {
+	foreach my $dir (@user32_dirs) {
+	    my $dir2 = $dir;
+	    $dir2 =~ s%^.*?/([^/]+)$%$1%;
+
+	    my $module = "user32_$dir2.lib";
+	    $module =~ s%/%_%g;
+
+	    my $project = "user32_$dir2";
+	    $project =~ s%/%_%g;
+
+	    my $type = "lib";
+	    my $dsp_file = "$dir/$project.dsp";
+
+	    ($source_files, my $local_source_files) = filter_files($source_files, "$dir2/");
+	    ($header_files, my $local_header_files) = filter_files($header_files, "$dir2/");
+	    ($resource_files, my $local_resource_files) = filter_files($resource_files, "$dir2/");
 
 	    $modules{$module}{project} = $project;
 	    $modules{$module}{type} = $type;
@@ -329,7 +381,7 @@ sub _generate_dsp {
     my @resource_files = @{$modules{$module}{resource_files}};
 
     if($project !~ /^(?:wine(?:_unicode)?|winebuild)$/ &&
-       $project !~ /^ntdll_.+?$/)
+       $project !~ /^(?:gdi32|ntdll|user32)_.+?$/)
     {
 	push @source_files, "$project.spec";
 	# push @source_files, "$project.spec.c";
@@ -497,19 +549,33 @@ sub _generate_dsp {
 	    }
 	}
 
+	my @includes = ();
 	if($wine) {
 	    push @defines2, "_\U${project}\E_";
 	    push @defines2, "__WINE__" if $module !~ /^winebuild\.exe$/;
 	    push @defines2, qw(__i386__ _X86_);
 
-	    print OUT " /X" if $msvc_headers;
-
-	    my @includes = ();
 	    if($msvc_headers) {
 		push @includes, $msvc_include;
 	    }
 
+	    if($project =~ /^gdi32_(?:enhmfdrv|mfdrv|win16drv)$/) {
+		push @includes, "..";
+	    }
+
+	    if($project =~ /^user32_(?:controls|windows)$/) {
+		push @includes, "..\\dlls\\user";
+	    }
+
+	    if($project =~ /^user32_dde$/) {
+		push @includes, "..";
+	    }
+
 	    push @includes, $wine_include_dir;
+	}
+
+	if($wine) {
+	    print OUT " /X" if $msvc_headers;
 
 	    foreach my $include (@includes) {
 		print OUT " /I \"$include\"";
@@ -535,13 +601,25 @@ sub _generate_dsp {
 	    print OUT "# ADD BASE MTL /nologo /D \"_DEBUG\" /mktyplib203 /win32\r\n" if !$lib;
 	    print OUT "# ADD MTL /nologo /D \"_DEBUG\" /mktyplib203 /win32\r\n" if !$lib;
 	    print OUT "# ADD BASE RSC /l 0x41d /d \"_DEBUG\"\r\n";
-	    print OUT "# ADD RSC /l 0x41d /d \"_DEBUG\"\r\n";
+	    print OUT "# ADD RSC /l 0x41d";
+	    if($wine) {
+		foreach my $include (@includes) {
+		    print OUT " /I \"$include\"";
+		}
+	    }
+	    print OUT " /d \"_DEBUG\"\r\n";
 	} else {
 	    print OUT "# SUBTRACT CPP /YX\r\n" if !$lib;;
 	    print OUT "# ADD BASE MTL /nologo /D \"NDEBUG\" /mktyplib203 /win32\r\n" if !$lib;
 	    print OUT "# ADD MTL /nologo /D \"NDEBUG\" /mktyplib203 /win32\r\n" if !$lib;
 	    print OUT "# ADD BASE RSC /l 0x41d /d \"NDEBUG\"\r\n";
-	    print OUT "# ADD RSC /l 0x41d /d \"NDEBUG\"\r\n";
+	    print OUT "# ADD RSC /l 0x41d";
+	    if($wine) {
+		foreach my $include (@includes) {
+		    print OUT " /I \"$include\"";
+		}
+	    }
+	    print OUT "/d \"NDEBUG\"\r\n";
 	}
 	print OUT "BSC32=bscmake.exe\r\n";
 	print OUT "# ADD BASE BSC32 /nologo\r\n";
@@ -604,30 +682,56 @@ sub _generate_dsp {
     print OUT "# PROP Default_Filter \"cpp;c;cxx;rc;def;r;odl;idl;hpj;bat\"\r\n";
 
     foreach my $source_file (@source_files) {
-	print OUT "# Begin Source File\r\n";
-	print OUT "\r\n";
-
 	$source_file =~ s%/%\\%g;
 	if($source_file !~ /^\./) {
 	    $source_file = ".\\$source_file";
 	}
 
+	if($source_file =~ /^(.*?)\.spec$/) {
+	    my $basename = $1;
+
+	    $basename = "$basename.dll" if $basename !~ /\..{1,3}$/;
+	    my $dbg_c_file = "$basename.dbg.c";
+
+	    print OUT "# Begin Source File\r\n";
+	    print OUT "\r\n";
+	    print OUT "SOURCE=$dbg_c_file\r\n";
+	    print OUT "# End Source File\r\n";
+	}
+
+	print OUT "# Begin Source File\r\n";
+	print OUT "\r\n";
+
 	print OUT "SOURCE=$source_file\r\n";
 
 	if($source_file =~ /^(.*?)\.spec$/) {
+	    my $basename = $1;
+
 	    my $spec_file = $source_file;
-	    # my $spec_c_file = "$1.spec.c";
-	    my $def_file = "$1.def";
+	    my $def_file = "$basename.def";
+
+	    $basename = "$basename.dll" if $basename !~ /\..{1,3}$/;
+	    my $dbg_c_file = "$basename.dbg.c";
+
+	    my $srcdir = "."; # FIXME: Is this really always correct?
+	    my $c_srcs = join(" ", grep(/\.c$/, @source_files));
 
 	    print OUT "\r\n";
 	    print OUT "# Begin Custom Build\r\n";
 	    print OUT "InputPath=$spec_file\r\n";
 	    print OUT "\r\n";
-	    # print OUT "\"$def_file $spec_c_file\" : \$(SOURCE) \"\$(INTDIR)\" \"\$(OUTDIR)\"\r\n";
-	    print OUT "\"$def_file\" : \$(SOURCE) \"\$(INTDIR)\" \"\$(OUTDIR)\"\r\n";
-	    print OUT "\t..\\..\\tools\\winebuild\\$output_dir\\winebuild.exe -def $spec_file > $def_file\r\n";
-	    # print OUT "\t..\\..\\tools\\winebuild\\$output_dir\\winebuild.exe -spec $spec_file > $spec_c_file\r\n";
+	    print OUT "BuildCmds= \\\r\n";
+	    print OUT "\t..\\..\\tools\\winebuild\\$output_dir\\winebuild.exe -def $spec_file > $def_file \\\r\n";
+	    print OUT "\t..\\..\\tools\\winebuild\\$output_dir\\winebuild.exe -o $dbg_c_file -debug -C$srcdir $c_srcs \\\r\n";
 	    print OUT "\r\n";
+	    print OUT "\r\n";
+	    print OUT "\"$def_file\" : \$(SOURCE) \"\$(INTDIR)\" \"\$(OUTDIR)\"\r\n";
+	    print OUT "   \$(BuildCmds)\r\n";
+	    print OUT "\r\n";
+	    print OUT "\"$dbg_c_file\" : \$(SOURCE) \"\$(INTDIR)\" \"\$(OUTDIR)\"\r\n";
+	    print OUT "   \$(BuildCmds)\r\n";
+	    print OUT "\r\n";
+
 	    print OUT "# End Custom Build\r\n";
 	}
 
@@ -690,15 +794,33 @@ sub _generate_dsw {
 	    @dependencies = ();
 	} elsif($project =~ /^winebuild$/) {
 	    @dependencies = ("wine", "wine_unicode");
-	} elsif($project =~ /^ntdll_.+?$/) {
+	} elsif($project =~ /^(?:gdi32|ntdll|user32)_.+?$/) {
 	    @dependencies = ();
 	} else {
 	    @dependencies = ("wine", "wine_unicode", "winebuild");
 	}
 
-        if($project =~ /^ntdll$/) {
+        if($project =~ /^gdi32$/) {
+	    foreach my $dir (@gdi32_dirs) {
+		my $dir2 = $dir;
+		$dir2 =~ s%^.*?/([^/]+)$%$1%;
+
+		my $module = "gdi32_$dir2";
+		$module =~ s%/%_%g;
+		push @dependencies, $module;
+	    }
+        } elsif($project =~ /^ntdll$/) {
 	    foreach my $dir (@ntdll_dirs) {
 		my $module = "ntdll_$dir";
+		$module =~ s%/%_%g;
+		push @dependencies, $module;
+	    }
+        } elsif($project =~ /^user32$/) {
+	    foreach my $dir (@user32_dirs) {
+		my $dir2 = $dir;
+		$dir2 =~ s%^.*?/([^/]+)$%$1%;
+
+		my $module = "user32_$dir2";
 		$module =~ s%/%_%g;
 		push @dependencies, $module;
 	    }
@@ -788,6 +910,21 @@ sub _generate_config_h {
 
     print OUT "/* Define to a macro to generate an assembly name from a C symbol */\n";
     print OUT "#define __ASM_NAME(name) name\n";
+
+    print OUT "/* Define to the address where bug reports for this package should be sent. */\n";
+    print OUT "#define PACKAGE_BUGREPORT \"\"\n";
+
+    print OUT "/* Define to the full name of this package. */\n";
+    print OUT "#define PACKAGE_NAME \"Wine\"\n";
+
+    print OUT "/* Define to the full name and version of this package. */\n";
+    print OUT "#define PACKAGE_STRING \"Wine YYYYMMDD\"\n";
+
+    print OUT "/* Define to the one symbol short name of this package. */\n";
+    print OUT "#define PACKAGE_TARNAME \"wine\"\n";
+
+    print OUT "/* Define to the version of this package. */\n";
+    print OUT "#define PACKAGE_VERSION \"YYYYMMDD\"\n";
 
     close(OUT);
 }
