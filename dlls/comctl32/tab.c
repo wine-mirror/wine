@@ -1431,7 +1431,7 @@ TAB_DrawItemInterior
     /* get the rectangle that the text fits in */
     DrawTextW(hdc, infoPtr->items[iItem].pszText, -1,
               &rcText, DT_CALCRECT);
-
+    rcText.right += 4;
     /*
      * If not owner draw, then do the drawing ourselves.
      *
@@ -1536,15 +1536,28 @@ TAB_DrawItemInterior
       hOldFont = SelectObject(hdc, hFont);
     }
 
-    ExtTextOutW(hdc,
-       ((lStyle & TCS_VERTICAL) && (lStyle & TCS_BOTTOM)) ? drawRect->right : drawRect->left,
-       ((lStyle & TCS_VERTICAL) && !(lStyle & TCS_BOTTOM)) ? drawRect->bottom : drawRect->top,
-       0,
-       0,
-       infoPtr->items[iItem].pszText,
-       lstrlenW(infoPtr->items[iItem].pszText),
-       0);
-
+    if (lStyle & TCS_VERTICAL)
+    {
+      ExtTextOutW(hdc,
+      (lStyle & TCS_BOTTOM) ? drawRect->right : drawRect->left,
+      (!(lStyle & TCS_BOTTOM)) ? drawRect->bottom : drawRect->top,
+      0,
+      0,
+      infoPtr->items[iItem].pszText,
+      lstrlenW(infoPtr->items[iItem].pszText),
+      0);
+    }
+    else
+    {
+      DrawTextW
+      (
+        hdc,
+        infoPtr->items[iItem].pszText,
+        lstrlenW(infoPtr->items[iItem].pszText),
+        drawRect,
+        uHorizAlign | DT_SINGLELINE
+        );
+    }
 
     /* clean things up */
     *drawRect = rcTemp; /* restore drawRect */
