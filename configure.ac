@@ -373,11 +373,13 @@ else
     ac_save_LIBS="$LIBS"
     CPPFLAGS="$CPPFLAGS $SANEINCL"
     LIBS="$LIBS $SANELIBS"
-    AC_CHECK_HEADER(sane/sane.h,[
-	    AC_CHECK_LIB(sane,sane_open,[AC_DEFINE(HAVE_SANE, 1, [Define if we have SANE development environment])],
-	    SANELIBS=""
-	    ])
-    )
+    AC_CHECK_HEADER(sane/sane.h,
+                    [AC_CHECK_LIB(sane,sane_open,
+                                  [AC_DEFINE(HAVE_SANE, 1, [Define if we have SANE development environment])],
+                                  [SANELIBS=""
+                                  SANEINCL=""])],
+                    [SANELIBS=""
+                    SANEINCL=""])
     LIBS="$ac_save_LIBS"
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
