@@ -213,6 +213,42 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
 
 
 /***********************************************************************
+ *                      TEXT_DrawUnderscore
+ *
+ *  Draw the underline under the prefixed character
+ *
+ * Parameters
+ *   hdc        [in] The handle of the DC for drawing
+ *   x          [in] The x location of the line segment (logical coordinates)
+ *   y          [in] The y location of where the underscore should appear
+ *                   (logical coordinates)
+ *   str        [in] The text of the line segment
+ *   offset     [in] The offset of the underscored character within str
+ */
+
+static void TEXT_DrawUnderscore (HDC hdc, int x, int y, const WCHAR *str, int offset)
+{
+    int prefix_x;
+    int prefix_end;
+    SIZE size;
+    HPEN hpen;
+    HPEN oldPen;
+
+    GetTextExtentPointW (hdc, str, offset, &size);
+    prefix_x = x + size.cx;
+    GetTextExtentPointW (hdc, str, offset+1, &size);
+    prefix_end = x + size.cx - 1;
+    /* The above method may eventually be slightly wrong due to kerning etc. */
+
+    hpen = CreatePen (PS_SOLID, 1, GetTextColor (hdc));
+    oldPen = SelectObject (hdc, hpen);
+    MoveToEx (hdc, prefix_x, y, NULL);
+    LineTo (hdc, prefix_end, y);
+    SelectObject (hdc, oldPen);
+    DeleteObject (hpen);
+}
+
+/***********************************************************************
  *           DrawTextExW    (USER32.@)
  */
 #define MAX_STATIC_BUFFER 1024
@@ -223,8 +259,6 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
     const WCHAR *strPtr;
     static WCHAR line[MAX_STATIC_BUFFER];
     int len, lh, count=i_count;
-    int prefix_x = 0;
-    int prefix_end = 0;
     TEXTMETRICW tm;
     int lmargin = 0, rmargin = 0;
     int x = rect->left, y = rect->top;
@@ -275,14 +309,6 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 	len = MAX_STATIC_BUFFER;
 	strPtr = TEXT_NextLineW(hdc, strPtr, &count, line, &len, width, flags);
 
-	if (prefix_offset != -1)
-	{
-	    GetTextExtentPointW(hdc, line, prefix_offset, &size);
-	    prefix_x = size.cx;
-	    GetTextExtentPointW(hdc, line, prefix_offset + 1, &size);
-	    prefix_end = size.cx - 1;
-	}
-
 	if (!GetTextExtentPointW(hdc, line, len, &size)) return 0;
 	if (flags & DT_CENTER) x = (rect->left + rect->right -
 				    size.cx) / 2;
@@ -302,6 +328,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 	        WCHAR* fnameDelim = NULL;
 	        int totalLen = i_count >= 0 ? i_count : strlenW(str);
 	            int fnameLen = totalLen;
+                int old_prefix_offset = prefix_offset;
 
 	            /* allow room for '...' */
 	            count = min(totalLen+3, countof(line)-3);
@@ -338,6 +365,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 
                     len = MAX_STATIC_BUFFER;
 	            TEXT_NextLineW(hdc, swapStr, &count, line, &len, width, flags);
+                    prefix_offset = old_prefix_offset;
 
 	            /* if only the ELLIPSIS will fit, just let it be clipped */
 	            len = max(3, len);
@@ -376,13 +404,15 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 	            line[len] = '\0';
 	            strPtr = NULL;
 
-               if (flags & DT_MODIFYSTRING)
-                    strcpyW(str, swapStr);
-
                /* Note that really we ought to refigure the location of
                 * the underline for the prefix; it might be currently set for
                 * something we have just ellipsified out.
+                * NB We had better do it before modifying the string and
+                * loosing the ampersands
                 */
+
+               if (flags & DT_MODIFYSTRING)
+                    strcpyW(str, swapStr);
 	}
 	if (!(flags & DT_CALCRECT))
 	{
@@ -391,14 +421,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
                              ((flags & DT_RTLREADING) ? ETO_RTLREADING : 0),
                     rect, line, len, NULL ))  return 0;
             if (prefix_offset != -1)
-            {
-                HPEN hpen = CreatePen( PS_SOLID, 1, GetTextColor(hdc) );
-                HPEN oldPen = SelectObject( hdc, hpen );
-                MoveToEx(hdc, x + prefix_x, y + tm.tmAscent + 1, NULL );
-                LineTo(hdc, x + prefix_end + 1, y + tm.tmAscent + 1 );
-                SelectObject( hdc, oldPen );
-                DeleteObject( hpen );
-            }
+                TEXT_DrawUnderscore (hdc, x, y + tm.tmAscent + 1, line, prefix_offset);
 	}
 	else if (size.cx > max_width)
 	    max_width = size.cx;
