@@ -142,7 +142,8 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tFLOAT
 %token tHANDLE
 %token tHANDLET
-%token tHELPSTRING
+%token tHELPCONTEXT tHELPFILE
+%token tHELPSTRING tHELPSTRINGCONTEXT tHELPSTRINGDLL
 %token tHIDDEN
 %token tHYPER tID tIDEMPOTENT
 %token tIIDIS
@@ -358,7 +359,11 @@ attribute:
 	| tENTRY '(' aSTRING ')'		{ $$ = make_attrp(ATTR_ENTRY_STRING, $3); }
 	| tENTRY '(' expr_const ')'		{ $$ = make_attrp(ATTR_ENTRY_ORDINAL, $3); }
 	| tHANDLE				{ $$ = make_attr(ATTR_HANDLE); }
+	| tHELPCONTEXT '(' expr_const ')'	{ $$ = make_attrp(ATTR_HELPCONTEXT, $3); }
+	| tHELPFILE '(' aSTRING ')'		{ $$ = make_attrp(ATTR_HELPFILE, $3); }
 	| tHELPSTRING '(' aSTRING ')'		{ $$ = make_attrp(ATTR_HELPSTRING, $3); }
+	| tHELPSTRINGCONTEXT '(' expr_const ')'	{ $$ = make_attrp(ATTR_HELPSTRINGCONTEXT, $3); }
+	| tHELPSTRINGDLL '(' aSTRING ')'	{ $$ = make_attrp(ATTR_HELPSTRINGDLL, $3); }
 	| tHIDDEN				{ $$ = make_attr(ATTR_HIDDEN); }
 	| tID '(' expr_const ')'		{ $$ = make_attrp(ATTR_ID, $3); }
 	| tIDEMPOTENT				{ $$ = make_attr(ATTR_IDEMPOTENT); }

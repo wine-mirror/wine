@@ -91,6 +91,8 @@ typedef struct _msft_typelib_t
     INT *typelib_namehash_segment;
     INT *typelib_guidhash_segment;
 
+    INT help_string_dll_offset;
+
     struct _msft_typeinfo_t *typeinfos;
     struct _msft_typeinfo_t *last_typeinfo;
 } msft_typelib_t;
@@ -1460,10 +1462,54 @@ static void set_doc_string(msft_typelib_t *typelib)
 static void set_help_file_name(msft_typelib_t *typelib)
 {
     int offset;
-    offset = ctl2_alloc_string(typelib, "help file name");
-    if (offset == -1) return;
-    typelib->typelib_header.helpfile = offset;
-    typelib->typelib_header.varflags |= 0x10;
+    attr_t *attr;
+    for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
+        if(attr->type == ATTR_HELPFILE) {
+            offset = ctl2_alloc_string(typelib, attr->u.pval);
+            if (offset == -1) return;
+            typelib->typelib_header.helpfile = offset;
+            typelib->typelib_header.varflags |= 0x10;
+        }
+    }
+    return;
+}
+
+static void set_help_context(msft_typelib_t *typelib)
+{
+    attr_t *attr;
+    for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
+        if(attr->type == ATTR_HELPCONTEXT) {
+            expr_t *expr = (expr_t *)attr->u.pval;
+            typelib->typelib_header.helpcontext = expr->cval;
+        }
+    }
+    return;
+}
+
+static void set_help_string_dll(msft_typelib_t *typelib)
+{
+    int offset;
+    attr_t *attr;
+    for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
+        if(attr->type == ATTR_HELPSTRINGDLL) {
+            offset = ctl2_alloc_string(typelib, attr->u.pval);
+            if (offset == -1) return;
+            typelib->help_string_dll_offset = offset;
+            typelib->typelib_header.varflags |= 0x100;
+        }
+    }
+    return;
+}
+
+static void set_help_string_context(msft_typelib_t *typelib)
+{
+    attr_t *attr;
+    for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
+        if(attr->type == ATTR_HELPSTRINGCONTEXT) {
+            expr_t *expr = (expr_t *)attr->u.pval;
+            typelib->typelib_header.helpstringcontext = expr->cval;
+        }
+    }
     return;
 }
 
@@ -1570,6 +1616,7 @@ static int save_all_changes(msft_typelib_t *typelib)
     if (fd == -1) return retval;
 
     filepos = sizeof(MSFT_Header) + sizeof(MSFT_SegDir);
+    if(typelib->typelib_header.varflags & 0x100) filepos += 4; /* helpstringdll */
     filepos += typelib->typelib_header.nrtypeinfos * 4;
 
     filepos += ctl2_finalize_segment(typelib, filepos, MSFT_SEG_TYPEINFO);
@@ -1589,6 +1636,7 @@ static int save_all_changes(msft_typelib_t *typelib)
     ctl2_finalize_typeinfos(typelib, filepos);
 
     if (!ctl2_write_chunk(fd, &typelib->typelib_header, sizeof(typelib->typelib_header))) return retval;
+    if (!ctl2_write_chunk(fd, &typelib->help_string_dll_offset, sizeof(typelib->help_string_dll_offset))) return retval;    
     if (!ctl2_write_chunk(fd, typelib->typelib_typeinfo_offsets, typelib->typelib_header.nrtypeinfos * 4)) return retval;
     if (!ctl2_write_chunk(fd, &typelib->typelib_segdir, sizeof(typelib->typelib_segdir))) return retval;
     if (!ctl2_write_segment(typelib, fd, MSFT_SEG_TYPEINFO    )) return retval;
@@ -1649,12 +1697,15 @@ int create_msft_typelib(typelib_t *typelib)
 
     set_lib_flags(msft);
     set_lcid(msft);
-/*    set_help_file_name(msft);*/
+    set_help_file_name(msft);
     set_doc_string(msft);
     set_guid(msft);
     set_version(msft);
     set_name(msft);
-
+    set_help_context(msft);
+    set_help_string_dll(msft);
+    set_help_string_context(msft);
+    
     typelib_idx = 0;
     for(entry = typelib->entry; NEXT_LINK(entry); entry = NEXT_LINK(entry))
         ;

@@ -226,7 +226,11 @@ static struct keyword {
 	{"handle",			tHANDLE},
 	{"handle_t",			tHANDLET},
 /* ... */
+	{"helpcontext",			tHELPCONTEXT},
+	{"helpfile",			tHELPFILE},
 	{"helpstring",			tHELPSTRING},
+	{"helpstringcontext",		tHELPSTRINGCONTEXT},
+	{"helpstringdll",		tHELPSTRINGDLL},
 /* ... */
 	{"hidden",                      tHIDDEN},
 	{"hyper",			tHYPER},
