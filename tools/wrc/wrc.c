@@ -59,7 +59,9 @@
 #include <assert.h>
 #include <ctype.h>
 #include <signal.h>
-#include <getopt.h>
+#ifdef HAVE_GETOPT_H
+# include <getopt.h>
+#endif
 
 #include "wrc.h"
 #include "utils.h"
@@ -284,6 +286,7 @@ int getopt (int argc, char *const *argv, const char *optstring);
 static void rm_tempfile(void);
 static void segvhandler(int sig);
 
+#ifdef HAVE_GETOPT_LONG
 static struct option long_options[] = {
 	{ "input", 1, 0, 'i' },
 	{ "output", 1, 0, 'o' },
@@ -297,6 +300,7 @@ static struct option long_options[] = {
 	{ "version", 0, 0, 3 },
 	{ 0, 0, 0, 0 }
 };
+#endif
 
 int main(int argc,char *argv[])
 {
@@ -327,7 +331,11 @@ int main(int argc,char *argv[])
 			strcat(cmdline, " ");
 	}
 
+#ifdef HAVE_GETOPT_LONG
 	while((optc = getopt_long(argc, argv, "a:AbB:cC:d:D:eEF:ghH:i:I:l:LmnNo:O:p:rstTVw:W", long_options, &opti)) != EOF)
+#else
+	while((optc = getopt(argc, argv, "a:AbB:cC:d:D:eEF:ghH:i:I:l:LmnNo:O:p:rstTVw:W")) != EOF)
+#endif
 	{
 		switch(optc)
 		{

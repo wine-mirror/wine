@@ -11554,6 +11554,7 @@ fi
 
 
 
+
 for ac_func in \
 	_lwp_create \
 	_pclose \
@@ -11570,6 +11571,7 @@ for ac_func in \
 	ftruncate64 \
 	getnetbyaddr \
 	getnetbyname \
+	getopt_long \
 	getpagesize \
 	getprotobyname \
 	getprotobynumber \
@@ -11745,6 +11747,7 @@ done
 
 
 
+
 for ac_header in \
 	arpa/inet.h \
 	arpa/nameser.h \
@@ -11752,6 +11755,7 @@ for ac_header in \
 	direct.h \
 	elf.h \
 	float.h \
+	getopt.h \
 	ieeefp.h \
 	io.h \
 	libio.h \

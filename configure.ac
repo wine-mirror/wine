@@ -932,6 +932,7 @@ AC_CHECK_FUNCS(\
 	ftruncate64 \
 	getnetbyaddr \
 	getnetbyname \
+	getopt_long \
 	getpagesize \
 	getprotobyname \
 	getprotobynumber \
@@ -980,6 +981,7 @@ AC_CHECK_HEADERS(\
 	direct.h \
 	elf.h \
 	float.h \
+	getopt.h \
 	ieeefp.h \
 	io.h \
 	libio.h \
