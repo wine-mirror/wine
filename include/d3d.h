@@ -1,11 +1,14 @@
-#ifndef _WINE_D3D_H
-#define _WINE_D3D_H
+#ifndef __WINE_D3D_H
+#define __WINE_D3D_H
 
 #include "ddraw.h"
 
 /* This is needed for GL_LIGHT */
 #include "wine_gl.h"
 
+/*****************************************************************************
+ * Predeclare the interfaces
+ */
 DEFINE_GUID(IID_IDirect3D,		0x3BBA0080,0x2421,0x11CF,0xA3,0x1A,0x00,0xAA,0x00,0xB9,0x33,0x56 );
 DEFINE_GUID(IID_IDirect3D2,		0x6aae1ec1,0x662a,0x11d0,0x88,0x9d,0x00,0xaa,0x00,0xbb,0xb7,0x6a);
 
@@ -34,6 +37,7 @@ typedef struct IDirect3DViewport2     IDirect3DViewport, IDirect3DViewport2, *LP
 typedef struct IDirect3DMaterial2     IDirect3DMaterial, *LPDIRECT3DMATERIAL, IDirect3DMaterial2, *LPDIRECT3DMATERIAL2;
 typedef struct IDirect3DTexture2      IDirect3DTexture, *LPDIRECT3DTEXTURE, IDirect3DTexture2,  *LPDIRECT3DTEXTURE2;
 typedef struct IDirect3DExecuteBuffer IDirect3DExecuteBuffer, *LPDIRECT3DEXECUTEBUFFER;
+
 
 /* ********************************************************************
    Error Codes
@@ -1122,464 +1126,465 @@ typedef struct _D3DINSTRUCTION {
 } D3DINSTRUCTION, *LPD3DINSTRUCTION; 
 
 
-/* ********************************************************************
-   Direct3D
-   ******************************************************************** */
-#define STDMETHOD(xfn) HRESULT (CALLBACK *fn##xfn)
-#define STDMETHOD_(ret,xfn) ret (CALLBACK *fn##xfn)
-#define PURE
-#define FAR
-#define THIS_ THIS ,
+/*****************************************************************************
+ * IDirect3D interface
+ */
+#define ICOM_INTERFACE IDirect3D
+#define IDirect3D_METHODS \
+    ICOM_METHOD1(HRESULT,Initialize,     REFIID,riid) \
+    ICOM_METHOD2(HRESULT,EnumDevices,    LPD3DENUMDEVICESCALLBACK,lpEnumDevicesCallback, LPVOID,lpUserArg) \
+    ICOM_METHOD2(HRESULT,CreateLight,    LPDIRECT3DLIGHT*,lplpDirect3DLight, IUnknown*,pUnkOuter) \
+    ICOM_METHOD2(HRESULT,CreateMaterial, LPDIRECT3DMATERIAL*,lplpDirect3DMaterial, IUnknown*,pUnkOuter) \
+    ICOM_METHOD2(HRESULT,CreateViewport, LPDIRECT3DVIEWPORT*,lplpD3DViewport, IUnknown*,pUnkOuter) \
+    ICOM_METHOD2(HRESULT,FindDevice,     LPD3DFINDDEVICESEARCH,lpD3DDFS, LPD3DFINDDEVICERESULT,lplpD3DDevice)
+#define IDirect3D_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirect3D_METHODS
+ICOM_DEFINE(IDirect3D,IUnknown)
+#undef ICOM_INTERFACE
 
-#define THIS LPDIRECT3D	this
-typedef struct IDirect3D_VTable {
+#ifdef ICOM_CINTERFACE
 	/*** IUnknown methods ***/
-	STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID* ppvObj) PURE;
-	STDMETHOD_(ULONG, AddRef) (THIS) PURE;
-	STDMETHOD_(ULONG, Release) (THIS) PURE;
+#define IDirect3D_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirect3D_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirect3D_Release(p)            ICOM_CALL (Release,p)
 	/*** IDirect3D methods ***/
-	STDMETHOD(Initialize) (THIS_ REFIID) PURE;
-	STDMETHOD(EnumDevices)(THIS_ LPD3DENUMDEVICESCALLBACK, LPVOID) PURE;
-	STDMETHOD(CreateLight) (THIS_ LPDIRECT3DLIGHT*, IUnknown*) PURE;
-	STDMETHOD(CreateMaterial) (THIS_ LPDIRECT3DMATERIAL*, IUnknown*) PURE;
-	STDMETHOD(CreateViewport) (THIS_ LPDIRECT3DVIEWPORT*, IUnknown*) PURE;
-	STDMETHOD(FindDevice)(THIS_ LPD3DFINDDEVICESEARCH, LPD3DFINDDEVICERESULT) PURE;
-} *LPDIRECT3D_VTABLE,IDirect3D_VTable;
-
-struct IDirect3D {
-	LPDIRECT3D_VTABLE	lpvtbl;
-	DWORD			ref;
-	LPDIRECTDRAW		ddraw;
-};
-#undef THIS
-
-/* ********************************************************************
-   Direct3D2
-   ******************************************************************** */
-#define THIS LPDIRECT3D2 this
-typedef struct IDirect3D2_VTable {
-	/*** IUnknown methods ***/
-	STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID* ppvObj) PURE;
-	STDMETHOD_(ULONG, AddRef) (THIS) PURE;
-	STDMETHOD_(ULONG, Release) (THIS) PURE;
-	/*** IDirect3D2 methods ***/
-	STDMETHOD(EnumDevices)(THIS_ LPD3DENUMDEVICESCALLBACK, LPVOID) PURE;
-	STDMETHOD(CreateLight) (THIS_ LPDIRECT3DLIGHT*, IUnknown*) PURE;
-	STDMETHOD(CreateMaterial) (THIS_ LPDIRECT3DMATERIAL2*, IUnknown*) PURE;
-	STDMETHOD(CreateViewport) (THIS_ LPDIRECT3DVIEWPORT2*, IUnknown*) PURE;
-	STDMETHOD(FindDevice)(THIS_ LPD3DFINDDEVICESEARCH, LPD3DFINDDEVICERESULT) PURE;
-	STDMETHOD(CreateDevice)(THIS_ REFCLSID, LPDIRECTDRAWSURFACE, LPDIRECT3DDEVICE2 *) PURE;
-} *LPDIRECT3D2_VTABLE,IDirect3D2_VTable;
-
-struct IDirect3D2 {
-	LPDIRECT3D2_VTABLE	lpvtbl;
-	DWORD			ref;
-	LPDIRECTDRAW		ddraw;
-};
-#undef THIS
-
-/* ********************************************************************
-   Direct3DLight
-   ******************************************************************** */
-#define THIS LPDIRECT3DLIGHT this
-typedef struct IDirect3DLight_VTable {
-	/*** IUnknown methods ***/
-	STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID* ppvObj) PURE;
-	STDMETHOD_(ULONG, AddRef) (THIS) PURE;
-	STDMETHOD_(ULONG, Release) (THIS) PURE;
-	/*** IDirect3DLight methods ***/
-	STDMETHOD(Initialize) (THIS_ LPDIRECT3D) PURE;
-	STDMETHOD(SetLight) (THIS_ LPD3DLIGHT) PURE;
-	STDMETHOD(GetLight) (THIS_ LPD3DLIGHT) PURE;
-} IDirect3DLight_VTable,*LPDIRECT3DLIGHT_VTABLE;
-
-struct IDirect3DLight {
-	LPDIRECT3DLIGHT_VTABLE	lpvtbl;
-	DWORD			ref;
-
-  union {
-    LPDIRECT3D            d3d;
-    LPDIRECT3D2           d3d2;
-  } d3d;
-  int type;
-  
-  D3DLIGHT2               light;
-
-  /* Chained list used for adding / removing from viewports */
-  LPDIRECT3DLIGHT next, prev;
-
-  /* Activation function */
-  void (*activate)(THIS);
-  int is_active;
-  
-  /* Awful OpenGL code !!! */
-#ifdef HAVE_MESAGL
-  GLenum light_num;
+#define IDirect3D_Initialize(p,a)       ICOM_CALL2(Initialize,p,a)
+#define IDirect3D_EnumDevices(p,a,b)    ICOM_CALL2(EnumDevices,p,a,b)
+#define IDirect3D_CreateLight(p,a,b)    ICOM_CALL2(CreateLight,p,a,b)
+#define IDirect3D_CreateMaterial(p,a,b) ICOM_CALL2(CreateMaterial,p,a,b)
+#define IDirect3D_CreateViewport(p,a,b) ICOM_CALL2(CreateViewport,p,a,b)
+#define IDirect3D_FindDevice(p,a,b)     ICOM_CALL2(FindDevice,p,a,b)
 #endif
-};
-
-#undef THIS
-
-/* ********************************************************************
-   Direct3DMaterial
-   ******************************************************************** */
-#define THIS LPDIRECT3DMATERIAL this
-typedef struct IDirect3DMaterial_VTable {
-  /*** IUnknown methods ***/
-  STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID* ppvObj) PURE;
-  STDMETHOD_(ULONG, AddRef) (THIS) PURE;
-  STDMETHOD_(ULONG, Release) (THIS) PURE;
-  /*** IDirect3DMaterial2 methods ***/
-  STDMETHOD(Initialize) (THIS_ LPDIRECT3D) PURE;
-  STDMETHOD(SetMaterial) (THIS_ LPD3DMATERIAL) PURE;
-  STDMETHOD(GetMaterial) (THIS_ LPD3DMATERIAL) PURE;
-  STDMETHOD(GetHandle) (THIS_ LPDIRECT3DDEVICE2, LPD3DMATERIALHANDLE) PURE;
-  STDMETHOD_(HRESULT, Reserve) (THIS) PURE;
-  STDMETHOD_(HRESULT, Unreserve) (THIS) PURE;
-} IDirect3DMaterial_VTable,*LPDIRECT3DMATERIAL_VTABLE;
-
-#undef THIS
 
 
-/* ********************************************************************
-   Direct3DMaterial2
-   ******************************************************************** */
-#define THIS LPDIRECT3DMATERIAL2 this
-typedef struct IDirect3DMaterial2_VTable {
-  /*** IUnknown methods ***/
-  STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID* ppvObj) PURE;
-  STDMETHOD_(ULONG, AddRef) (THIS) PURE;
-  STDMETHOD_(ULONG, Release) (THIS) PURE;
-  /*** IDirect3DMaterial2 methods ***/
-  STDMETHOD(SetMaterial) (THIS_ LPD3DMATERIAL) PURE;
-  STDMETHOD(GetMaterial) (THIS_ LPD3DMATERIAL) PURE;
-  STDMETHOD(GetHandle) (THIS_ LPDIRECT3DDEVICE2, LPD3DMATERIALHANDLE) PURE;
-} IDirect3DMaterial2_VTable,*LPDIRECT3DMATERIAL2_VTABLE;
-
-struct IDirect3DMaterial2 {
-  LPDIRECT3DMATERIAL2_VTABLE  lpvtbl;
-  DWORD                       ref;
-
-  union {
-    LPDIRECT3D                d3d1;
-    LPDIRECT3D2               d3d2;
-  } d3d;
-  union {
-    LPDIRECT3DDEVICE  active_device1;
-    LPDIRECT3DDEVICE2 active_device2;
-  } device;
-  int use_d3d2;
+/*****************************************************************************
+ * IDirect3D2 interface
+ */
+#define ICOM_INTERFACE IDirect3D2
+#define IDirect3D2_METHODS \
+    ICOM_METHOD2(HRESULT,EnumDevices,    LPD3DENUMDEVICESCALLBACK,lpEnumDevicesCallback, LPVOID,lpUserArg) \
+    ICOM_METHOD2(HRESULT,CreateLight,    LPDIRECT3DLIGHT*,lplpDirect3DLight, IUnknown*,pUnkOuter) \
+    ICOM_METHOD2(HRESULT,CreateMaterial, LPDIRECT3DMATERIAL2*,lplpDirect3DMaterial2, IUnknown*,pUnkOuter) \
+    ICOM_METHOD2(HRESULT,CreateViewport, LPDIRECT3DVIEWPORT2*,lplpD3DViewport2, IUnknown*,pUnkOuter) \
+    ICOM_METHOD2(HRESULT,FindDevice,     LPD3DFINDDEVICESEARCH,lpD3DDFS, LPD3DFINDDEVICERESULT,lpD3DFDR) \
+    ICOM_METHOD3(HRESULT,CreateDevice,   REFCLSID,rclsid, LPDIRECTDRAWSURFACE,lpDDS, LPDIRECT3DDEVICE2*,lplpD3DDevice2)
+#define IDirect3D2_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirect3D2_METHODS
+ICOM_DEFINE(IDirect3D2,IUnknown)
+#undef ICOM_INTERFACE
   
-  D3DMATERIAL                 mat;
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IDirect3D2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirect3D2_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirect3D2_Release(p)            ICOM_CALL (Release,p)
+/*** IDirect3D2 methods ***/
+#define IDirect3D2_EnumDevices(p,a,b)    ICOM_CALL2(EnumDevices,p,a,b)
+#define IDirect3D2_CreateLight(p,a,b)    ICOM_CALL2(CreateLight,p,a,b)
+#define IDirect3D2_CreateMaterial(p,a,b) ICOM_CALL2(CreateMaterial,p,a,b)
+#define IDirect3D2_CreateViewport(p,a,b) ICOM_CALL2(CreateViewport,p,a,b)
+#define IDirect3D2_FindDevice(p,a,b)     ICOM_CALL2(FindDevice,p,a,b)
+#define IDirect3D2_CreateDevice(p,a,b,c) ICOM_CALL3(CreateDevice,p,a,b,c)
+#endif
+
+
+/*****************************************************************************
+ * IDirect3DLight interface
+ */
+#define ICOM_INTERFACE IDirect3DLight
+#define IDirect3DLight_METHODS \
+    ICOM_METHOD1(HRESULT,Initialize, LPDIRECT3D,lpDirect3D) \
+    ICOM_METHOD1(HRESULT,SetLight,   LPD3DLIGHT,lpLight) \
+    ICOM_METHOD1(HRESULT,GetLight,   LPD3DLIGHT,lpLight)
+#define IDirect3DLight_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirect3DLight_METHODS
+ICOM_DEFINE(IDirect3DLight,IUnknown)
+#undef ICOM_INTERFACE
   
-  void (*activate)(LPDIRECT3DMATERIAL2 this);
-};
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IDirect3DLight_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirect3DLight_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirect3DLight_Release(p)            ICOM_CALL (Release,p)
+/*** IDirect3DLight methods ***/
+#define IDirect3DLight_Initialize(p,a) ICOM_CALL1(Initialize,p,a)
+#define IDirect3DLight_SetLight(p,a)   ICOM_CALL1(SetLight,p,a)
+#define IDirect3DLight_GetLight(p,a)   ICOM_CALL1(GetLight,p,a)
+#endif
 
-#undef THIS
 
-/* ********************************************************************
-   Direct3DTexture
-   ******************************************************************** */
-#define THIS LPDIRECT3DTEXTURE this
-typedef struct IDirect3DTexture_VTable {
+/*****************************************************************************
+ * IDirect3DMaterial interface
+ */
+#define ICOM_INTERFACE IDirect3DMaterial
+#define IDirect3DMaterial_METHODS \
+    ICOM_METHOD1(HRESULT,Initialize,  LPDIRECT3D,lpDirect3D) \
+    ICOM_METHOD1(HRESULT,SetMaterial, LPD3DMATERIAL,lpMat) \
+    ICOM_METHOD1(HRESULT,GetMaterial, LPD3DMATERIAL,lpMat) \
+    ICOM_METHOD2(HRESULT,GetHandle,   LPDIRECT3DDEVICE2,lpDirect3DDevice2, LPD3DMATERIALHANDLE,lpHandle) \
+    ICOM_METHOD (HRESULT,Reserve) \
+    ICOM_METHOD (HRESULT,Unreserve)
+#define IDirect3DMaterial_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirect3DMaterial_METHODS
+ICOM_DEFINE(IDirect3DMaterial,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
   /*** IUnknown methods ***/
-  STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID* ppvObj) PURE;
-  STDMETHOD_(ULONG, AddRef) (THIS) PURE;
-  STDMETHOD_(ULONG, Release) (THIS) PURE;
+#define IDirect3DMaterial_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirect3DMaterial_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirect3DMaterial_Release(p)            ICOM_CALL (Release,p)
+/*** IDirect3DMaterial methods ***/
+#define IDirect3DMaterial_Initialize(p,a)  ICOM_CALL1(Initialize,p,a)
+#define IDirect3DMaterial_SetMaterial(p,a) ICOM_CALL1(SetMaterial,p,a)
+#define IDirect3DMaterial_GetMaterial(p,a) ICOM_CALL1(GetMaterial,p,a)
+#define IDirect3DMaterial_GetHandle(p,a,b) ICOM_CALL2(GetHandle,p,a,b)
+#define IDirect3DMaterial_Reserve(p)       ICOM_CALL (Reserve,p)
+#define IDirect3DMaterial_Unreserve(p)     ICOM_CALL (Unreserve,p)
+#endif
+
+
+/*****************************************************************************
+ * IDirect3DMaterial2 interface
+ */
+#define ICOM_INTERFACE IDirect3DMaterial2
+#define IDirect3DMaterial2_METHODS \
+    ICOM_METHOD1(HRESULT,SetMaterial, LPD3DMATERIAL,lpMat) \
+    ICOM_METHOD1(HRESULT,GetMaterial, LPD3DMATERIAL,lpMat) \
+    ICOM_METHOD2(HRESULT,GetHandle,   LPDIRECT3DDEVICE2,lpDirect3DDevice2, LPD3DMATERIALHANDLE,lpHandle)
+#define IDirect3DMaterial2_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirect3DMaterial2_METHODS
+ICOM_DEFINE(IDirect3DMaterial2,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+  /*** IUnknown methods ***/
+#define IDirect3DMaterial2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirect3DMaterial2_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirect3DMaterial2_Release(p)            ICOM_CALL (Release,p)
+  /*** IDirect3DMaterial2 methods ***/
+#define IDirect3DMaterial2_SetMaterial(p,a) ICOM_CALL1(SetMaterial,p,a)
+#define IDirect3DMaterial2_GetMaterial(p,a) ICOM_CALL1(GetMaterial,p,a)
+#define IDirect3DMaterial2_GetHandle(p,a,b) ICOM_CALL2(GetHandle,p,a,b)
+#endif
+  
+
+/*****************************************************************************
+ * IDirect3DTexture interface
+ */
+#define ICOM_INTERFACE IDirect3DTexture
+#define IDirect3DTexture_METHODS \
+    ICOM_METHOD2(HRESULT,Initialize,     LPDIRECT3DDEVICE,lpDirect3DDevice, LPDIRECTDRAWSURFACE,) \
+    ICOM_METHOD2(HRESULT,GetHandle,      LPDIRECT3DDEVICE,lpDirect3DDevice, LPD3DTEXTUREHANDLE,) \
+    ICOM_METHOD2(HRESULT,PaletteChanged, DWORD,dwStart, DWORD,dwCount) \
+    ICOM_METHOD1(HRESULT,Load,           LPDIRECT3DTEXTURE,lpD3DTexture) \
+    ICOM_METHOD (HRESULT,Unload)
+#define IDirect3DTexture_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirect3DTexture_METHODS
+ICOM_DEFINE(IDirect3DTexture,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+  /*** IUnknown methods ***/
+#define IDirect3DTexture_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirect3DTexture_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirect3DTexture_Release(p)            ICOM_CALL (Release,p)
   /*** IDirect3DTexture methods ***/
-  STDMETHOD(Initialize) (THIS_ LPDIRECT3DDEVICE, LPDIRECTDRAWSURFACE) PURE;
-  STDMETHOD(GetHandle) (THIS_ LPDIRECT3DDEVICE, LPD3DTEXTUREHANDLE) PURE;
-  STDMETHOD(PaletteChanged) (THIS_ DWORD, DWORD) PURE;
-  STDMETHOD(Load) (THIS_ LPDIRECT3DTEXTURE) PURE;
-  STDMETHOD_(HRESULT, Unload) (THIS) PURE;
-} IDirect3DTexture_VTable,*LPDIRECT3DTEXTURE_VTABLE;
+#define IDirect3DTexture_Initialize(p,a,b,c) ICOM_CALL(Initialize,p,a,b,c)
+#define IDirect3DTexture_GetHandle(p,a,b,c) ICOM_CALL(GetHandle,p,a,b,c)
+#define IDirect3DTexture_PaletteChanged(p,a,b,c) ICOM_CALL(PaletteChanged,p,a,b,c)
+#define IDirect3DTexture_Load(p,a,b,c) ICOM_CALL(Load,p,a,b,c)
+#define IDirect3DTexture_Unload(p,a,b,c) ICOM_CALL(Unload,p,a,b,c)
+#endif
 
-/* The structure is the same as for Direct3DTexture2 */
 
-#undef THIS
+/*****************************************************************************
+ * IDirect3DTexture2 interface
+ */
+#define ICOM_INTERFACE IDirect3DTexture2
+#define IDirect3DTexture2_METHODS \
+    ICOM_METHOD2(HRESULT,GetHandle,      LPDIRECT3DDEVICE2,lpDirect3DDevice2, LPD3DTEXTUREHANDLE,lpHandle) \
+    ICOM_METHOD2(HRESULT,PaletteChanged, DWORD,dwStart, DWORD,dwCount) \
+    ICOM_METHOD1(HRESULT,Load,           LPDIRECT3DTEXTURE2,lpD3DTexture2)
+#define IDirect3DTexture2_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirect3DTexture2_METHODS
+ICOM_DEFINE(IDirect3DTexture2,IUnknown)
+#undef ICOM_INTERFACE
 
-/* ********************************************************************
-   Direct3DTexture2
-   ******************************************************************** */
-#define THIS LPDIRECT3DTEXTURE2 this
-typedef struct IDirect3DTexture2_VTable {
+#ifdef ICOM_CINTERFACE
   /*** IUnknown methods ***/
-  STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID* ppvObj) PURE;
-  STDMETHOD_(ULONG, AddRef) (THIS) PURE;
-  STDMETHOD_(ULONG, Release) (THIS) PURE;
+#define IDirect3DTexture2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirect3DTexture2_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirect3DTexture2_Release(p)            ICOM_CALL (Release,p)
   /*** IDirect3DTexture2 methods ***/
-  STDMETHOD(GetHandle) (THIS_ LPDIRECT3DDEVICE2, LPD3DTEXTUREHANDLE) PURE;
-  STDMETHOD(PaletteChanged) (THIS_ DWORD, DWORD) PURE;
-  STDMETHOD(Load) (THIS_ LPDIRECT3DTEXTURE2) PURE;  
-} IDirect3DTexture2_VTable,*LPDIRECT3DTEXTURE2_VTABLE;
-
-struct IDirect3DTexture2 {
-  LPDIRECT3DTEXTURE2_VTABLE  lpvtbl;
-  DWORD                      ref;
-
-  void *D3Ddevice; /* I put (void *) to use the same pointer for both
-		      Direct3D and Direct3D2 */
-#ifdef HAVE_MESAGL
-  GLuint tex_name;
+#define IDirect3DTexture2_GetHandle(p,a,b)      ICOM_CALL2(GetHandle,p,a,b)
+#define IDirect3DTexture2_PaletteChanged(p,a,b) ICOM_CALL2(PaletteChanged,p,a,b)
+#define IDirect3DTexture2_Load(p,a)             ICOM_CALL1(Load,p,a)
 #endif  
-  LPDIRECTDRAWSURFACE4       surface;
-};
-
-#undef THIS
 
 
-/* ********************************************************************
-   Direct3DViewport
-   ******************************************************************** */
-#define THIS LPDIRECT3DVIEWPORT this
-typedef struct IDirect3Viewport_VTable {
+/*****************************************************************************
+ * IDirect3DViewport interface
+ */
+#define ICOM_INTERFACE IDirect3DViewport
+#define IDirect3DViewport_METHODS \
+    ICOM_METHOD1(HRESULT,Initialize,         LPDIRECT3D,lpDirect3D) \
+    ICOM_METHOD1(HRESULT,GetViewport,        LPD3DVIEWPORT,lpData) \
+    ICOM_METHOD1(HRESULT,SetViewport,        LPD3DVIEWPORT,lpData) \
+    ICOM_METHOD4(HRESULT,TransformVertices,  DWORD,dwVertexCount, LPD3DTRANSFORMDATA,lpData, DWORD,dwFlags, LPDWORD,lpOffScreen) \
+    ICOM_METHOD2(HRESULT,LightElements,      DWORD,dwElementCount, LPD3DLIGHTDATA,lpData) \
+    ICOM_METHOD1(HRESULT,SetBackground,      D3DMATERIALHANDLE,hMat) \
+    ICOM_METHOD2(HRESULT,GetBackground,      LPD3DMATERIALHANDLE,, LPBOOL,) \
+    ICOM_METHOD1(HRESULT,SetBackgroundDepth, LPDIRECTDRAWSURFACE,lpDDSurface) \
+    ICOM_METHOD2(HRESULT,GetBackgroundDepth, LPDIRECTDRAWSURFACE*,lplpDDSurface, LPBOOL,lpValid) \
+    ICOM_METHOD3(HRESULT,Clear,              DWORD,dwCount, LPD3DRECT,lpRects, DWORD,dwFlags) \
+    ICOM_METHOD1(HRESULT,AddLight,           LPDIRECT3DLIGHT,lpDirect3DLight) \
+    ICOM_METHOD1(HRESULT,DeleteLight,        LPDIRECT3DLIGHT,lpDirect3DLight) \
+    ICOM_METHOD3(HRESULT,NextLight,          LPDIRECT3DLIGHT,lpDirect3DLight, LPDIRECT3DLIGHT*,lplpDirect3DLight, DWORD,dwFlags)
+#define IDirect3DViewport_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirect3DViewport_METHODS
+ICOM_DEFINE(IDirect3DViewport,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
   /*** IUnknown methods ***/
-  STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID* ppvObj) PURE;
-  STDMETHOD_(ULONG, AddRef) (THIS) PURE;
-  STDMETHOD_(ULONG, Release) (THIS) PURE;
+#define IDirect3DViewport_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirect3DViewport_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirect3DViewport_Release(p)            ICOM_CALL (Release,p)
   /*** IDirect3DViewport methods ***/
-  STDMETHOD(Initialize) (THIS_ LPDIRECT3D) PURE;
-  STDMETHOD(GetViewport) (THIS_ LPD3DVIEWPORT) PURE;
-  STDMETHOD(SetViewport) (THIS_ LPD3DVIEWPORT) PURE;
-  STDMETHOD(TransformVertices) (THIS_ DWORD, LPD3DTRANSFORMDATA, DWORD, LPDWORD) PURE;
-  STDMETHOD(LightElements) (THIS_ DWORD, LPD3DLIGHTDATA) PURE;
-  STDMETHOD(SetBackground) (THIS_ D3DMATERIALHANDLE) PURE;
-  STDMETHOD(GetBackground) (THIS_ LPD3DMATERIALHANDLE, LPBOOL) PURE;
-  STDMETHOD(SetBackgroundDepth) (THIS_ LPDIRECTDRAWSURFACE) PURE;
-  STDMETHOD(GetBackgroundDepth) (THIS_ LPDIRECTDRAWSURFACE*, LPBOOL) PURE;
-  STDMETHOD(Clear) (THIS_ DWORD, LPD3DRECT, DWORD) PURE;
-  STDMETHOD(AddLight) (THIS_ LPDIRECT3DLIGHT) PURE;
-  STDMETHOD(DeleteLight) (THIS_ LPDIRECT3DLIGHT) PURE;
-  STDMETHOD(NextLight) (THIS_ LPDIRECT3DLIGHT, LPDIRECT3DLIGHT*, DWORD) PURE;
-} IDirect3DViewport_VTable,*LPDIRECT3DVIEWPORT_VTABLE;
-
-#undef THIS
+#define IDirect3DViewport_Initialize(p,a)              ICOM_CALL1(Initialize,p,a)
+#define IDirect3DViewport_GetViewport(p,a)             ICOM_CALL1(GetViewport,p,a)
+#define IDirect3DViewport_SetViewport(p,a)             ICOM_CALL1(SetViewport,p,a)
+#define IDirect3DViewport_TransformVertices(p,a,b,c,d) ICOM_CALL4(TransformVertices,p,a,b,c,d)
+#define IDirect3DViewport_LightElements(p,a,b)         ICOM_CALL2(LightElements,p,a,b)
+#define IDirect3DViewport_SetBackground(p,a)           ICOM_CALL1(SetBackground,p,a)
+#define IDirect3DViewport_GetBackground(p,a,b)         ICOM_CALL2(GetBackground,p,a,b)
+#define IDirect3DViewport_SetBackgroundDepth(p,a)      ICOM_CALL1(SetBackgroundDepth,p,a)
+#define IDirect3DViewport_GetBackgroundDepth(p,a,b)    ICOM_CALL2(GetBackgroundDepth,p,a,b)
+#define IDirect3DViewport_Clear(p,a,b,c)               ICOM_CALL3(Clear,p,a,b,c)
+#define IDirect3DViewport_AddLight(p,a)                ICOM_CALL1(AddLight,p,a)
+#define IDirect3DViewport_DeleteLight(p,a)             ICOM_CALL1(DeleteLight,p,a)
+#define IDirect3DViewport_NextLight(p,a,b,c)           ICOM_CALL3(NextLight,p,a,b,c)
+#endif
 
 
-/* ********************************************************************
-   Direct3DViewport2
-   ******************************************************************** */
-#define THIS LPDIRECT3DVIEWPORT2 this
-typedef struct IDirect3Viewport2_VTable {
+/*****************************************************************************
+ * IDirect3DViewport2 interface
+ */
+#define ICOM_INTERFACE IDirect3DViewport2
+#define IDirect3DViewport2_METHODS \
+    ICOM_METHOD1(HRESULT,GetViewport2, LPD3DVIEWPORT2,lpData) \
+    ICOM_METHOD1(HRESULT,SetViewport2, LPD3DVIEWPORT2,lpData)
+#define IDirect3DViewport2_IMETHODS \
+    IDirect3DViewport_IMETHODS \
+    IDirect3DViewport2_METHODS
+ICOM_DEFINE(IDirect3DViewport2,IDirect3DViewport)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
   /*** IUnknown methods ***/
-  STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID* ppvObj) PURE;
-  STDMETHOD_(ULONG, AddRef) (THIS) PURE;
-  STDMETHOD_(ULONG, Release) (THIS) PURE;
-  /*** IDirect3DViewport methods ***/
-  STDMETHOD(Initialize) (THIS_ LPDIRECT3D) PURE;
-  STDMETHOD(GetViewport) (THIS_ LPD3DVIEWPORT) PURE;
-  STDMETHOD(SetViewport) (THIS_ LPD3DVIEWPORT) PURE;
-  STDMETHOD(TransformVertices) (THIS_ DWORD, LPD3DTRANSFORMDATA, DWORD, LPDWORD) PURE;
-  STDMETHOD(LightElements) (THIS_ DWORD, LPD3DLIGHTDATA) PURE;
-  STDMETHOD(SetBackground) (THIS_ D3DMATERIALHANDLE) PURE;
-  STDMETHOD(GetBackground) (THIS_ LPD3DMATERIALHANDLE, LPBOOL) PURE;
-  STDMETHOD(SetBackgroundDepth) (THIS_ LPDIRECTDRAWSURFACE) PURE;
-  STDMETHOD(GetBackgroundDepth) (THIS_ LPDIRECTDRAWSURFACE*, LPBOOL) PURE;
-  STDMETHOD(Clear) (THIS_ DWORD, LPD3DRECT, DWORD) PURE;
-  STDMETHOD(AddLight) (THIS_ LPDIRECT3DLIGHT) PURE;
-  STDMETHOD(DeleteLight) (THIS_ LPDIRECT3DLIGHT) PURE;
-  STDMETHOD(NextLight) (THIS_ LPDIRECT3DLIGHT, LPDIRECT3DLIGHT*, DWORD) PURE;
+#define IDirect3DViewport2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirect3DViewport2_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirect3DViewport2_Release(p)            ICOM_CALL (Release,p)
+/*** IDirect3Viewport methods ***/
+#define IDirect3DViewport2_Initialize(p,a)              ICOM_CALL1(Initialize,p,a)
+#define IDirect3DViewport2_GetViewport(p,a)             ICOM_CALL1(GetViewport,p,a)
+#define IDirect3DViewport2_SetViewport(p,a)             ICOM_CALL1(SetViewport,p,a)
+#define IDirect3DViewport2_TransformVertices(p,a,b,c,d) ICOM_CALL4(TransformVertices,p,a,b,c,d)
+#define IDirect3DViewport2_LightElements(p,a,b)         ICOM_CALL2(LightElements,p,a,b)
+#define IDirect3DViewport2_SetBackground(p,a)           ICOM_CALL1(SetBackground,p,a)
+#define IDirect3DViewport2_GetBackground(p,a,b)         ICOM_CALL2(GetBackground,p,a,b)
+#define IDirect3DViewport2_SetBackgroundDepth(p,a)      ICOM_CALL1(SetBackgroundDepth,p,a)
+#define IDirect3DViewport2_GetBackgroundDepth(p,a,b)    ICOM_CALL2(GetBackgroundDepth,p,a,b)
+#define IDirect3DViewport2_Clear(p,a,b,c)               ICOM_CALL3(Clear,p,a,b,c)
+#define IDirect3DViewport2_AddLight(p,a)                ICOM_CALL1(AddLight,p,a)
+#define IDirect3DViewport2_DeleteLight(p,a)             ICOM_CALL1(DeleteLight,p,a)
+#define IDirect3DViewport2_NextLight(p,a,b,c)           ICOM_CALL3(NextLight,p,a,b,c)
   /*** IDirect3DViewport2 methods ***/
-  STDMETHOD(GetViewport2) (THIS_ LPD3DVIEWPORT2) PURE;
-  STDMETHOD(SetViewport2) (THIS_ LPD3DVIEWPORT2) PURE;
-} IDirect3DViewport2_VTable,*LPDIRECT3DVIEWPORT2_VTABLE;
-
-struct IDirect3DViewport2 {
-  LPDIRECT3DVIEWPORT2_VTABLE  lpvtbl;
-  DWORD                       ref;
-
-  union {
-    LPDIRECT3D                d3d1;
-    LPDIRECT3D2               d3d2;
-  } d3d;
-  /* If this viewport is active for one device, put the device here */
-  union {
-    LPDIRECT3DDEVICE  active_device1;
-    LPDIRECT3DDEVICE2 active_device2;
-  } device;
-  int use_d3d2;
-
-  union {
-    D3DVIEWPORT              vp1;
-    D3DVIEWPORT2             vp2;
-  } viewport;
-  int use_vp2;
-
-  /* Activation function */
-  void (*activate)(THIS);
-  
-  /* Field used to chain viewports together */
-  LPDIRECT3DVIEWPORT2 next;
-
-  /* Lights list */
-  LPDIRECT3DLIGHT lights;
-
-  /* OpenGL code */
-#ifdef HAVE_MESAGL
-  GLenum nextlight;
+#define IDirect3DViewport2_GetViewport2(p,a) ICOM_CALL1(GetViewport2,p,a)
+#define IDirect3DViewport2_SetViewport2(p,a) ICOM_CALL1(SetViewport2,p,a)
 #endif
-};
 
-#undef THIS
 
-/* ********************************************************************
-   Direct3DExecuteBuffer
-   ******************************************************************** */
-#define THIS LPDIRECT3DEXECUTEBUFFER this
-typedef struct IDirect3DExecuteBuffer_VTable {
+/*****************************************************************************
+ * IDirect3DExecuteBuffer interface
+ */
+#define ICOM_INTERFACE IDirect3DExecuteBuffer
+#define IDirect3DExecuteBuffer_METHODS \
+    ICOM_METHOD2(HRESULT,Initialize,     LPDIRECT3DDEVICE,lpDirect3DDevice, LPD3DEXECUTEBUFFERDESC,lpDesc) \
+    ICOM_METHOD1(HRESULT,Lock,           LPD3DEXECUTEBUFFERDESC,lpDesc) \
+    ICOM_METHOD (HRESULT,Unlock) \
+    ICOM_METHOD1(HRESULT,SetExecuteData, LPD3DEXECUTEDATA,lpData) \
+    ICOM_METHOD1(HRESULT,GetExecuteData, LPD3DEXECUTEDATA,lpData) \
+    ICOM_METHOD4(HRESULT,Validate,       LPDWORD,lpdwOffset, LPD3DVALIDATECALLBACK,lpFunc, LPVOID,lpUserArg, DWORD,dwReserved) \
+    ICOM_METHOD1(HRESULT,Optimize,       DWORD,)
+#define IDirect3DExecuteBuffer_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirect3DExecuteBuffer_METHODS
+ICOM_DEFINE(IDirect3DExecuteBuffer,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
   /*** IUnknown methods ***/
-  STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID* ppvObj) PURE;
-  STDMETHOD_(ULONG, AddRef) (THIS) PURE;
-  STDMETHOD_(ULONG, Release) (THIS) PURE;
+#define IDirect3DExecuteBuffer_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirect3DExecuteBuffer_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirect3DExecuteBuffer_Release(p)            ICOM_CALL (Release,p)
   /*** IDirect3DExecuteBuffer methods ***/
-  STDMETHOD(Initialize) (THIS_ LPDIRECT3DDEVICE, LPD3DEXECUTEBUFFERDESC) PURE;
-  STDMETHOD(Lock) (THIS_ LPD3DEXECUTEBUFFERDESC) PURE;
-  STDMETHOD_(HRESULT, Unlock) (THIS) PURE;
-  STDMETHOD(SetExecuteData) (THIS_ LPD3DEXECUTEDATA) PURE;
-  STDMETHOD(GetExecuteData) (THIS_ LPD3DEXECUTEDATA) PURE;
-  STDMETHOD(Validate) (THIS_ LPDWORD, LPD3DVALIDATECALLBACK, LPVOID, DWORD) PURE;
-  STDMETHOD(Optimize) (THIS_ DWORD) PURE;
-} *LPDIRECT3DEXECUTEBUFFER_VTABLE,IDirect3DExecuteBuffer_VTable;
-
-struct IDirect3DExecuteBuffer {
-  LPDIRECT3DEXECUTEBUFFER_VTABLE lpvtbl;
-  DWORD ref;
-  
-  LPDIRECT3DDEVICE d3ddev;
-
-  D3DEXECUTEBUFFERDESC desc;
-  D3DEXECUTEDATA data;
-
-  /* This buffer will store the transformed vertices */
-  void *vertex_data;
-  D3DVERTEXTYPE vertex_type;
-
-  /* This flags is set to TRUE if we allocated ourselves the
-     data buffer */
-  BOOL need_free;
-
-  void (*execute)(LPDIRECT3DEXECUTEBUFFER this,
-		  LPDIRECT3DDEVICE dev,
-		  LPDIRECT3DVIEWPORT vp);
-};
-
-#undef THIS
-
-/* ********************************************************************
-   Direct3DDevice
-   ******************************************************************** */
-#define THIS LPDIRECT3DDEVICE this
-typedef struct IDirect3DDevice_VTable {
-  /*** IUnknown methods ***/
-  STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID* ppvObj) PURE;
-  STDMETHOD_(ULONG, AddRef) (THIS) PURE;
-  STDMETHOD_(ULONG, Release) (THIS) PURE;
-  /*** IDirect3DDevice methods ***/
-  STDMETHOD(Initialize) (THIS_ LPDIRECT3D, LPGUID, LPD3DDEVICEDESC) PURE;
-  STDMETHOD(GetCaps) (THIS_ LPD3DDEVICEDESC, LPD3DDEVICEDESC) PURE;
-  STDMETHOD(SwapTextureHandles) (THIS_ LPDIRECT3DTEXTURE, LPDIRECT3DTEXTURE) PURE;
-  STDMETHOD(CreateExecuteBuffer) (THIS_ LPD3DEXECUTEBUFFERDESC, LPDIRECT3DEXECUTEBUFFER*, IUnknown*) PURE;
-  STDMETHOD(GetStats) (THIS_ LPD3DSTATS) PURE;
-  STDMETHOD(Execute) (THIS_ LPDIRECT3DEXECUTEBUFFER, LPDIRECT3DVIEWPORT, DWORD) PURE;
-  STDMETHOD(AddViewport) (THIS_ LPDIRECT3DVIEWPORT) PURE;
-  STDMETHOD(DeleteViewport) (THIS_ LPDIRECT3DVIEWPORT) PURE;
-  STDMETHOD(NextViewport) (THIS_ LPDIRECT3DVIEWPORT, LPDIRECT3DVIEWPORT*, DWORD) PURE;
-  STDMETHOD(Pick) (THIS_ LPDIRECT3DEXECUTEBUFFER, LPDIRECT3DVIEWPORT, DWORD, LPD3DRECT) PURE;
-  STDMETHOD(GetPickRecords)(THIS_ LPDWORD, LPD3DPICKRECORD) PURE;
-  STDMETHOD(EnumTextureFormats) (THIS_ LPD3DENUMTEXTUREFORMATSCALLBACK, LPVOID) PURE;
-  STDMETHOD(CreateMatrix) (THIS_ LPD3DMATRIXHANDLE) PURE;
-  STDMETHOD(SetMatrix) (THIS_ D3DMATRIXHANDLE, const LPD3DMATRIX) PURE;
-  STDMETHOD(GetMatrix) (THIS_ D3DMATRIXHANDLE, LPD3DMATRIX) PURE;
-  STDMETHOD(DeleteMatrix) (THIS_ D3DMATRIXHANDLE) PURE;
-  STDMETHOD_(HRESULT, BeginScene) (THIS) PURE;
-  STDMETHOD_(HRESULT, EndScene) (THIS) PURE;
-  STDMETHOD(GetDirect3D) (THIS_ LPDIRECT3D*) PURE;
-} *LPDIRECT3DDEVICE_VTABLE,IDirect3DDevice_VTable;
-
-struct IDirect3DDevice {
-  /* This are the fields common to all Direct3DDevice implementations */
-  LPDIRECT3DDEVICE_VTABLE lpvtbl;
-  DWORD ref;
-  
-  LPDIRECT3D d3d;
-  LPDIRECTDRAWSURFACE surface;
-
-  LPDIRECT3DVIEWPORT viewport_list;
-  LPDIRECT3DVIEWPORT current_viewport;
-
-  void (*set_context)(THIS) ;
-};
-
-#undef THIS
-
-/* ********************************************************************
-   Direct3DDevice2
-   ******************************************************************** */
-#define THIS LPDIRECT3DDEVICE2 this
-typedef struct IDirect3DDevice2_VTable {
-  /*** IUnknown methods ***/
-  STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID* ppvObj) PURE;
-  STDMETHOD_(ULONG, AddRef) (THIS) PURE;
-  STDMETHOD_(ULONG, Release) (THIS) PURE;
-  /*** IDirect3DDevice2 methods ***/
-  STDMETHOD(GetCaps) (THIS_ LPD3DDEVICEDESC, LPD3DDEVICEDESC) PURE;
-  STDMETHOD(SwapTextureHandles) (THIS_ LPDIRECT3DTEXTURE2, LPDIRECT3DTEXTURE2) PURE;
-  STDMETHOD(GetStats) (THIS_ LPD3DSTATS) PURE;
-  STDMETHOD(AddViewport) (THIS_ LPDIRECT3DVIEWPORT2) PURE;
-  STDMETHOD(DeleteViewport) (THIS_ LPDIRECT3DVIEWPORT2) PURE;
-  STDMETHOD(NextViewport) (THIS_ LPDIRECT3DVIEWPORT2, LPDIRECT3DVIEWPORT2*, DWORD) PURE;
-  STDMETHOD(EnumTextureFormats) (THIS_ LPD3DENUMTEXTUREFORMATSCALLBACK, LPVOID) PURE;
-  STDMETHOD_(HRESULT, BeginScene) (THIS) PURE;
-  STDMETHOD_(HRESULT, EndScene) (THIS) PURE;
-  STDMETHOD(GetDirect3D) (THIS_ LPDIRECT3D2*) PURE;
-  
-  /*** DrawPrimitive API ***/
-  STDMETHOD(SetCurrentViewport) (THIS_ LPDIRECT3DVIEWPORT2) PURE;
-  STDMETHOD(GetCurrentViewport) (THIS_ LPDIRECT3DVIEWPORT2 *) PURE;
-  
-  STDMETHOD(SetRenderTarget) (THIS_ LPDIRECTDRAWSURFACE, DWORD) PURE;
-  STDMETHOD(GetRenderTarget) (THIS_ LPDIRECTDRAWSURFACE *) PURE;
-  
-  STDMETHOD(Begin) (THIS_ D3DPRIMITIVETYPE, D3DVERTEXTYPE, DWORD) PURE;
-  STDMETHOD(BeginIndexed) (THIS_ D3DPRIMITIVETYPE, D3DVERTEXTYPE, LPVOID, DWORD, DWORD) PURE;
-  STDMETHOD(Vertex) (THIS_ LPVOID) PURE;
-  STDMETHOD(Index) (THIS_ WORD) PURE;
-  STDMETHOD(End) (THIS_ DWORD) PURE;
-  
-  STDMETHOD(GetRenderState) (THIS_ D3DRENDERSTATETYPE, LPDWORD) PURE;
-  STDMETHOD(SetRenderState) (THIS_ D3DRENDERSTATETYPE, DWORD) PURE;
-  STDMETHOD(GetLightState) (THIS_ D3DLIGHTSTATETYPE, LPDWORD) PURE;
-  STDMETHOD(SetLightState) (THIS_ D3DLIGHTSTATETYPE, DWORD) PURE;
-  STDMETHOD(SetTransform) (THIS_ D3DTRANSFORMSTATETYPE, LPD3DMATRIX) PURE;
-  STDMETHOD(GetTransform) (THIS_ D3DTRANSFORMSTATETYPE, LPD3DMATRIX) PURE;
-  STDMETHOD(MultiplyTransform) (THIS_ D3DTRANSFORMSTATETYPE, LPD3DMATRIX) PURE;
-  
-  STDMETHOD(DrawPrimitive) (THIS_ D3DPRIMITIVETYPE, D3DVERTEXTYPE, LPVOID, DWORD, DWORD) PURE;
-  STDMETHOD(DrawIndexedPrimitive) (THIS_ D3DPRIMITIVETYPE, D3DVERTEXTYPE, LPVOID, DWORD, LPWORD, DWORD, DWORD) PURE;
-  
-  STDMETHOD(SetClipStatus) (THIS_ LPD3DCLIPSTATUS) PURE;
-  STDMETHOD(GetClipStatus) (THIS_ LPD3DCLIPSTATUS) PURE;
-} *LPDIRECT3DDEVICE2_VTABLE,IDirect3DDevice2_VTable;
-
-struct IDirect3DDevice2 {
-  /* This are the fields common to all Direct3DDevice2 implementations */
-  LPDIRECT3DDEVICE2_VTABLE lpvtbl;
-  DWORD ref;
-  
-  LPDIRECT3D2 d3d;
-  LPDIRECTDRAWSURFACE surface;
-
-  LPDIRECT3DVIEWPORT2 viewport_list;
-  LPDIRECT3DVIEWPORT2 current_viewport;
-
-  void (*set_context)(THIS) ;
-};
-#undef THIS
-
-
-#undef THIS_
-#undef STDMETHOD
-#undef STDMETHOD_
-#undef PURE
-#undef FAR
+#define IDirect3DExecuteBuffer_Initialize(p,a,b)   ICOM_CALL2(Initialize,p,a,b)
+#define IDirect3DExecuteBuffer_Lock(p,a)           ICOM_CALL1(Lock,p,a)
+#define IDirect3DExecuteBuffer_Unlock(p)           ICOM_CALL (Unlock,p)
+#define IDirect3DExecuteBuffer_SetExecuteData(p,a) ICOM_CALL1(SetExecuteData,p,a)
+#define IDirect3DExecuteBuffer_GetExecuteData(p,a) ICOM_CALL1(GetExecuteData,p,a)
+#define IDirect3DExecuteBuffer_Validate(p,a,b,c,d) ICOM_CALL4(Validate,p,a,b,c,d)
+#define IDirect3DExecuteBuffer_Optimize(p,a)       ICOM_CALL1(Optimize,p,a)
 #endif
+
+
+/*****************************************************************************
+ * IDirect3DDevice interface
+ */
+#define ICOM_INTERFACE IDirect3DDevice
+#define IDirect3DDevice_METHODS \
+    ICOM_METHOD3(HRESULT,Initialize,          LPDIRECT3D,lpDirect3D, LPGUID,lpGUID, LPD3DDEVICEDESC,lpD3DDVDesc) \
+    ICOM_METHOD2(HRESULT,GetCaps,             LPD3DDEVICEDESC,lpD3DHWDevDesc, LPD3DDEVICEDESC,lpD3DHELDevDesc) \
+    ICOM_METHOD2(HRESULT,SwapTextureHandles,  LPDIRECT3DTEXTURE,lpD3Dtex1, LPDIRECT3DTEXTURE,lpD3DTex2) \
+    ICOM_METHOD3(HRESULT,CreateExecuteBuffer, LPD3DEXECUTEBUFFERDESC,lpDesc, LPDIRECT3DEXECUTEBUFFER*,lplpDirect3DExecuteBuffer, IUnknown*,pUnkOuter) \
+    ICOM_METHOD1(HRESULT,GetStats,            LPD3DSTATS,lpD3DStats) \
+    ICOM_METHOD3(HRESULT,Execute,             LPDIRECT3DEXECUTEBUFFER,lpDirect3DExecuteBuffer, LPDIRECT3DVIEWPORT,lpDirect3DViewport, DWORD,dwFlags) \
+    ICOM_METHOD1(HRESULT,AddViewport,         LPDIRECT3DVIEWPORT,lpDirect3DViewport) \
+    ICOM_METHOD1(HRESULT,DeleteViewport,      LPDIRECT3DVIEWPORT,lpDirect3DViewport) \
+    ICOM_METHOD3(HRESULT,NextViewport,        LPDIRECT3DVIEWPORT,lpDirect3DViewport, LPDIRECT3DVIEWPORT*,lplpDirect3DViewport, DWORD,dwFlags) \
+    ICOM_METHOD4(HRESULT,Pick,                LPDIRECT3DEXECUTEBUFFER,lpDirect3DExecuteBuffer, LPDIRECT3DVIEWPORT,lpDirect3DViewport, DWORD,dwFlags, LPD3DRECT,lpRect) \
+    ICOM_METHOD2(HRESULT,GetPickRecords,      LPDWORD,lpCount, LPD3DPICKRECORD,lpD3DPickRec) \
+    ICOM_METHOD2(HRESULT,EnumTextureFormats,  LPD3DENUMTEXTUREFORMATSCALLBACK,lpD3DEnumTextureProc, LPVOID,lpArg) \
+    ICOM_METHOD1(HRESULT,CreateMatrix,        LPD3DMATRIXHANDLE,lpD3DMatHandle) \
+    ICOM_METHOD2(HRESULT,SetMatrix,           D3DMATRIXHANDLE,D3DMatHandle, LPD3DMATRIX,lpD3DMatrix) \
+    ICOM_METHOD2(HRESULT,GetMatrix,           D3DMATRIXHANDLE,D3DMatHandle, LPD3DMATRIX,lpD3DMatrix) \
+    ICOM_METHOD1(HRESULT,DeleteMatrix,        D3DMATRIXHANDLE,D3DMatHandle) \
+    ICOM_METHOD (HRESULT,BeginScene) \
+    ICOM_METHOD (HRESULT,EndScene) \
+    ICOM_METHOD1(HRESULT,GetDirect3D,         LPDIRECT3D*,lplpDirect3D)
+#define IDirect3DDevice_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirect3DDevice_METHODS
+ICOM_DEFINE(IDirect3DDevice,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+  /*** IUnknown methods ***/
+#define IDirect3DDevice_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirect3DDevice_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirect3DDevice_Release(p)            ICOM_CALL (Release,p)
+  /*** IDirect3DDevice methods ***/
+#define IDirect3DDevice_Initialize(p,a,b,c)          ICOM_CALL3(Initialize,p,a,b,c)
+#define IDirect3DDevice_GetCaps(p,a,b)               ICOM_CALL2(GetCaps,p,a,b)
+#define IDirect3DDevice_SwapTextureHandles(p,a,b)    ICOM_CALL2(SwapTextureHandles,p,a,b)
+#define IDirect3DDevice_CreateExecuteBuffer(p,a,b,c) ICOM_CALL3(CreateExecuteBuffer,p,a,b,c)
+#define IDirect3DDevice_GetStats(p,a)                ICOM_CALL1(GetStats,p,a)
+#define IDirect3DDevice_Execute(p,a,b,c)             ICOM_CALL3(Execute,p,a,b,c)
+#define IDirect3DDevice_AddViewport(p,a)             ICOM_CALL1(AddViewport,p,a)
+#define IDirect3DDevice_DeleteViewport(p,a)          ICOM_CALL1(DeleteViewport,p,a)
+#define IDirect3DDevice_NextViewport(p,a,b,c)        ICOM_CALL3(NextViewport,p,a,b,c)
+#define IDirect3DDevice_Pick(p,a,b,c,d)              ICOM_CALL4(Pick,p,a,b,c,d)
+#define IDirect3DDevice_GetPickRecords(p,a,b)        ICOM_CALL2(GetPickRecords,p,a,b)
+#define IDirect3DDevice_EnumTextureFormats(p,a,b)    ICOM_CALL2(EnumTextureFormats,p,a,b)
+#define IDirect3DDevice_CreateMatrix(p,a)            ICOM_CALL1(CreateMatrix,p,a)
+#define IDirect3DDevice_SetMatrix(p,a,b)             ICOM_CALL2(SetMatrix,p,a,b)
+#define IDirect3DDevice_GetMatrix(p,a,b)             ICOM_CALL2(GetMatrix,p,a,b)
+#define IDirect3DDevice_DeleteMatrix(p,a)            ICOM_CALL1(DeleteMatrix,p,a)
+#define IDirect3DDevice_BeginScene(p)                ICOM_CALL (BeginScene,p)
+#define IDirect3DDevice_EndScene(p)                  ICOM_CALL (EndScene,p)
+#define IDirect3DDevice_GetDirect3D(p,a)             ICOM_CALL1(GetDirect3D,p,a)
+#endif
+
+
+/*****************************************************************************
+ * IDirect3DDevice2 interface
+ */
+#define ICOM_INTERFACE IDirect3DDevice2
+#define IDirect3DDevice2_METHODS \
+    ICOM_METHOD2(HRESULT,GetCaps,              LPD3DDEVICEDESC,lpD3DHWDevDesc, LPD3DDEVICEDESC,lpD3DHELDevDesc) \
+    ICOM_METHOD2(HRESULT,SwapTextureHandles,   LPDIRECT3DTEXTURE2,lpD3DTex1, LPDIRECT3DTEXTURE2,lpD3DTex2) \
+    ICOM_METHOD1(HRESULT,GetStats,             LPD3DSTATS,lpD3DStats) \
+    ICOM_METHOD1(HRESULT,AddViewport,          LPDIRECT3DVIEWPORT2,lpDirect3DViewport2) \
+    ICOM_METHOD1(HRESULT,DeleteViewport,       LPDIRECT3DVIEWPORT2,lpDirect3DViewport2) \
+    ICOM_METHOD3(HRESULT,NextViewport,         LPDIRECT3DVIEWPORT2,lpDirect3DViewport2, LPDIRECT3DVIEWPORT2*,lplpDirect3DViewport2, DWORD,dwFlags) \
+    ICOM_METHOD2(HRESULT,EnumTextureFormats,   LPD3DENUMTEXTUREFORMATSCALLBACK,lpD3DEnumTextureProc, LPVOID,lpArg) \
+    ICOM_METHOD (HRESULT,BeginScene) \
+    ICOM_METHOD (HRESULT,EndScene) \
+    ICOM_METHOD1(HRESULT,GetDirect3D,          LPDIRECT3D2*,lplpDirect3D2) \
+    /*** DrawPrimitive API ***/ \
+    ICOM_METHOD1(HRESULT,SetCurrentViewport,   LPDIRECT3DVIEWPORT2,lpDirect3DViewport2) \
+    ICOM_METHOD1(HRESULT,GetCurrentViewport,   LPDIRECT3DVIEWPORT2*,lplpDirect3DViewport2) \
+    ICOM_METHOD2(HRESULT,SetRenderTarget,      LPDIRECTDRAWSURFACE,lpNewRenderTarget, DWORD,dwFlags) \
+    ICOM_METHOD1(HRESULT,GetRenderTarget,      LPDIRECTDRAWSURFACE*,lplpRenderTarget) \
+    ICOM_METHOD3(HRESULT,Begin,                D3DPRIMITIVETYPE,, D3DVERTEXTYPE,, DWORD,) \
+    ICOM_METHOD5(HRESULT,BeginIndexed,         D3DPRIMITIVETYPE,d3dptPrimitiveType, D3DVERTEXTYPE,d3dvtVertexType, LPVOID,lpvVertices, DWORD,dwNumVertices, DWORD,dwFlags) \
+    ICOM_METHOD1(HRESULT,Vertex,               LPVOID,lpVertexType) \
+    ICOM_METHOD1(HRESULT,Index,                WORD,wVertexIndex) \
+    ICOM_METHOD1(HRESULT,End,                  DWORD,dwFlags) \
+    ICOM_METHOD2(HRESULT,GetRenderState,       D3DRENDERSTATETYPE,dwRenderStateType, LPDWORD,lpdwRenderState) \
+    ICOM_METHOD2(HRESULT,SetRenderState,       D3DRENDERSTATETYPE,dwRenderStateType, DWORD,dwRenderState) \
+    ICOM_METHOD2(HRESULT,GetLightState,        D3DLIGHTSTATETYPE,dwLightStateType, LPDWORD,lpdwLightState) \
+    ICOM_METHOD2(HRESULT,SetLightState,        D3DLIGHTSTATETYPE,dwLightStateType, DWORD,dwLightState) \
+    ICOM_METHOD2(HRESULT,SetTransform,         D3DTRANSFORMSTATETYPE,dtstTransformStateType, LPD3DMATRIX,lpD3DMatrix) \
+    ICOM_METHOD2(HRESULT,GetTransform,         D3DTRANSFORMSTATETYPE,dtstTransformStateType, LPD3DMATRIX,lpD3DMatrix) \
+    ICOM_METHOD2(HRESULT,MultiplyTransform,    D3DTRANSFORMSTATETYPE,dtstTransformStateType, LPD3DMATRIX,lpD3DMatrix) \
+    ICOM_METHOD5(HRESULT,DrawPrimitive,        D3DPRIMITIVETYPE,d3dptPrimitiveType, D3DVERTEXTYPE,d3dvtVertexType, LPVOID,lpvVertices, DWORD,dwVertexCount, DWORD,dwFlags) \
+    ICOM_METHOD7(HRESULT,DrawIndexedPrimitive, D3DPRIMITIVETYPE,d3dptPrimitiveType, D3DVERTEXTYPE,d3dvtVertexType, LPVOID,lpvVertices, DWORD,dwVertexCount, LPWORD,dwIndices, DWORD,dwIndexCount, DWORD,dwFlags) \
+    ICOM_METHOD1(HRESULT,SetClipStatus,        LPD3DCLIPSTATUS,lpD3DClipStatus) \
+    ICOM_METHOD1(HRESULT,GetClipStatus,        LPD3DCLIPSTATUS,lpD3DClipStatus)
+#define IDirect3DDevice2_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirect3DDevice2_METHODS
+ICOM_DEFINE(IDirect3DDevice2,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+  /*** IUnknown methods ***/
+#define IDirect3DDevice2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirect3DDevice2_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirect3DDevice2_Release(p)            ICOM_CALL (Release,p)
+  /*** IDirect3DDevice2 methods ***/
+#define IDirect3DDevice2_GetCaps(p,a,b)                        ICOM_CALL2(GetCaps,p,a,b)
+#define IDirect3DDevice2_SwapTextureHandles(p,a,b)             ICOM_CALL2(SwapTextureHandles,p,a,b)
+#define IDirect3DDevice2_GetStats(p,a)                         ICOM_CALL1(GetStats,p,a)
+#define IDirect3DDevice2_AddViewport(p,a)                      ICOM_CALL1(AddViewport,p,a)
+#define IDirect3DDevice2_DeleteViewport(p,a)                   ICOM_CALL1(DeleteViewport,p,a)
+#define IDirect3DDevice2_NextViewport(p,a,b,c)                 ICOM_CALL3(NextViewport,p,a,b,c)
+#define IDirect3DDevice2_EnumTextureFormats(p,a,b)             ICOM_CALL2(EnumTextureFormats,p,a,b)
+#define IDirect3DDevice2_BeginScene(p)                         ICOM_CALL (BeginScene,p)
+#define IDirect3DDevice2_EndScene(p)                           ICOM_CALL (EndScene,p)
+#define IDirect3DDevice2_GetDirect3D(p,a)                      ICOM_CALL1(GetDirect3D,p,a)
+#define IDirect3DDevice2_SetCurrentViewport(p,a)               ICOM_CALL1(SetCurrentViewport,p,a)
+#define IDirect3DDevice2_GetCurrentViewport(p,a)               ICOM_CALL1(GetCurrentViewport,p,a)
+#define IDirect3DDevice2_SetRenderTarget(p,a,b)                ICOM_CALL2(SetRenderTarget,p,a,b)
+#define IDirect3DDevice2_GetRenderTarget(p,a)                  ICOM_CALL1(GetRenderTarget,p,a)
+#define IDirect3DDevice2_Begin(p,a,b,c)                        ICOM_CALL3(Begin,p,a,b,c)
+#define IDirect3DDevice2_BeginIndexed(p,a,b,c,d,e)             ICOM_CALL5(BeginIndexed,p,a,b,c,d,e)
+#define IDirect3DDevice2_Vertex(p,a)                           ICOM_CALL1(Vertex,p,a)
+#define IDirect3DDevice2_Index(p,a)                            ICOM_CALL1(Index,p,a)
+#define IDirect3DDevice2_End(p,a)                              ICOM_CALL1(End,p,a)
+#define IDirect3DDevice2_GetRenderState(p,a,b)                 ICOM_CALL2(GetRenderState,p,a,b)
+#define IDirect3DDevice2_SetRenderState(p,a,b)                 ICOM_CALL2(SetRenderState,p,a,b)
+#define IDirect3DDevice2_GetLightState(p,a,b)                  ICOM_CALL2(GetLightState,p,a,b)
+#define IDirect3DDevice2_SetLightState(p,a,b)                  ICOM_CALL2(SetLightState,p,a,b)
+#define IDirect3DDevice2_SetTransform(p,a,b)                   ICOM_CALL2(SetTransform,p,a,b)
+#define IDirect3DDevice2_GetTransform(p,a,b)                   ICOM_CALL2(GetTransform,p,a,b)
+#define IDirect3DDevice2_MultiplyTransform(p,a,b)              ICOM_CALL2(MultiplyTransform,p,a,b)
+#define IDirect3DDevice2_DrawPrimitive(p,a,b,c,d,e)            ICOM_CALL5(DrawPrimitive,p,a,b,c,d,e)
+#define IDirect3DDevice2_DrawIndexedPrimitive(p,a,b,c,d,e,f,g) ICOM_CALL7(DrawIndexedPrimitive,p,a,b,c,d,e,f,g)
+#define IDirect3DDevice2_SetClipStatus(p,a)                    ICOM_CALL1(SetClipStatus,p,a)
+#define IDirect3DDevice2_GetClipStatus(p,a)                    ICOM_CALL1(GetClipStatus,p,a)
+#endif
+
+
+#endif /* __WINE_D3D_H */
