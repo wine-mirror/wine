@@ -251,6 +251,7 @@ typedef struct tagLISTVIEW_INFO
   INT ntmHeight;		/* From GetTextMetrics from above font */
   BOOL bRedraw;  		/* Turns on/off repaints & invalidations */
   BOOL bFirstPaint;		/* Flags if the control has never painted before */
+  BOOL bAutoarrange;		/* Autoarrange flag when NOT in LVS_AUTOARRANGE */
   BOOL bFocus;
   INT nFocusedItem;
   RECT rcFocus;
@@ -1173,7 +1174,8 @@ static inline BOOL is_autoarrange(LISTVIEW_INFO *infoPtr)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     
-    return (infoPtr->dwStyle & LVS_AUTOARRANGE) && (uView == LVS_ICON || uView == LVS_SMALLICON);
+    return ((infoPtr->dwStyle & LVS_AUTOARRANGE) || infoPtr->bAutoarrange) &&
+	   (uView == LVS_ICON || uView == LVS_SMALLICON);
 }
 
 /******** Internal API functions ************************************/
@@ -2056,7 +2058,8 @@ static BOOL LISTVIEW_Arrange(LISTVIEW_INFO *infoPtr, INT nAlignCode)
     case LVA_SNAPTOGRID: next_pos = LISTVIEW_NextIconPosTop;  break; /* FIXME */
     default: return FALSE;
     }
-
+    
+    infoPtr->bAutoarrange = TRUE;
     infoPtr->currIconPos.x = infoPtr->currIconPos.y = 0;
     for (i = 0; i < infoPtr->nItemCount; i++)
     {
@@ -6561,6 +6564,8 @@ static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, POINT pt
     }
     pt.x -= Origin.x;
     pt.y -= Origin.y;
+
+    infoPtr->bAutoarrange = FALSE;
 
     return LISTVIEW_MoveIconTo(infoPtr, nItem, &pt, FALSE);
 }
