@@ -112,10 +112,11 @@ CONSOLE_string_to_IR( HANDLE hConsoleInput,unsigned char *buf,int len) {
 		ir.Event.KeyEvent.wVirtualScanCode = 0x0e;
 		ir.Event.KeyEvent.wVirtualKeyCode = VK_BACK;
 	    } else {
-		if (inchar=='\n') {
+		if ((inchar=='\n')||(inchar=='\r')) {
 		    ir.Event.KeyEvent.uChar.AsciiChar	= '\r';
 		    ir.Event.KeyEvent.wVirtualKeyCode	= VK_RETURN;
 		    ir.Event.KeyEvent.wVirtualScanCode	= 0x1c;
+		    ir.Event.KeyEvent.dwControlKeyState = 0;
 		} else {
 		    if (inchar<' ') {
 			/* FIXME: find good values for ^X */
