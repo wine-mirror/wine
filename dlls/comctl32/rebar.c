@@ -1497,10 +1497,7 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 
 	/* separator from previous band */
 	cxsep = (cntonrow == 0) ? 0 : SEP_WIDTH;
-
-	/* Header: includes gripper, text, image */
-	cx = lpBand->cxHeader;
-	if (lpBand->fStyle & RBBS_FIXEDSIZE) cx = lpBand->lcx;
+	cx = lpBand->lcx;
 
 	if (infoPtr->dwStyle & CCS_VERT)
 	    dobreak = (y + cx + cxsep > adjcy);
