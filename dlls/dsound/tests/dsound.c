@@ -89,10 +89,13 @@ static void IDirectSound_test(LPDIRECTSOUND dso, BOOL initialized,
            DXGetErrorString8(rc));
 
         rc=IDirectSound_Initialize(dso,lpGuid);
-        ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+        ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
            "IDirectSound_Initialize() failed: %s\n",DXGetErrorString8(rc));
         if (rc==DSERR_NODRIVER) {
             trace("  No Driver\n");
+            return;
+        } else if (rc==E_FAIL) {
+            trace("  No Device\n");
             return;
         } else if (rc==DSERR_ALLOCATED) {
             trace("  Already Allocated\n");
@@ -210,14 +213,14 @@ static void IDirectSound_tests()
 
     /* try with no device specified */
     rc=DirectSoundCreate(NULL,&dso,NULL);
-    ok(rc==S_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+    ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
        "DirectSoundCreate(NULL) failed: %s\n",DXGetErrorString8(rc));
     if (rc==S_OK && dso)
         IDirectSound_test(dso, TRUE, NULL);
 
     /* try with default playback device specified */
     rc=DirectSoundCreate(&DSDEVID_DefaultPlayback,&dso,NULL);
-    ok(rc==S_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+    ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
        "DirectSoundCreate(DSDEVID_DefaultPlayback) failed: %s\n",
        DXGetErrorString8(rc));
     if (rc==DS_OK && dso)
@@ -225,7 +228,7 @@ static void IDirectSound_tests()
 
     /* try with default voice playback device specified */
     rc=DirectSoundCreate(&DSDEVID_DefaultVoicePlayback,&dso,NULL);
-    ok(rc==S_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+    ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
        "DirectSoundCreate(DSDEVID_DefaultVoicePlayback) failed: %s\n",
        DXGetErrorString8(rc));
     if (rc==DS_OK && dso)
@@ -250,7 +253,7 @@ static HRESULT test_dsound(LPGUID lpGuid)
 
     /* Create the DirectSound object */
     rc=DirectSoundCreate(lpGuid,&dso,NULL);
-    ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+    ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
        "DirectSoundCreate() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return rc;
