@@ -532,16 +532,14 @@ extern BOOL PSDRV_EmptyDownloadList(PSDRV_PDEVICE *physDev, BOOL write_undef);
 #define MAX_G_NAME 31 /* max length of PS glyph name */
 extern void get_glyph_name(HDC hdc, WORD index, char *name);
 
-extern TYPE1 *T1_download_header(PSDRV_PDEVICE *physDev,
-				 LPOUTLINETEXTMETRICA potm,
-				 char *ps_name);
+extern TYPE1 *T1_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
+                                 RECT *bbox, UINT emsize);
 extern BOOL T1_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl,
 			      DWORD index, char *glyph_name);
 extern void T1_free(TYPE1 *t1);
 
-extern TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev,
-				   LPOUTLINETEXTMETRICA ptom,
-				   char *ps_name);
+extern TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
+                                   RECT *bbox, UINT emsize);
 extern BOOL T42_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl,
 			       DWORD index, char *glyph_name);
 extern void T42_free(TYPE42 *t42);

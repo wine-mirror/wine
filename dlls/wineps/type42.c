@@ -133,8 +133,8 @@ static BOOL get_glyf_pos(TYPE42 *t42, DWORD index, DWORD *start, DWORD *end)
     return TRUE;
 }
 
-TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
-			    char *ps_name)
+TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
+                            RECT *bbox, UINT emsize)
 {
     DWORD i, j, tablepos, nb_blocks, glyf_off = 0, loca_off = 0, cur_off;
     WORD num_of_tables = sizeof(tables_templ) / sizeof(tables_templ[0]) - 1;
@@ -158,14 +158,14 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
     const char storage[] ="]\nhavetype42gdir{pop}{{string} forall}ifelse\n";
     const char end[] = "] def\n"
       "havetype42gdir{/GlyphDirectory 256 dict def\n"
-      " sfnts 0 get dup %ld (x) putinterval %ld (x) putinterval}if\n"
+      " sfnts 0 get dup %ld (locx) putinterval %ld (glfx) putinterval}if\n"
       "currentdict end dup /FontName get exch definefont pop\n";
 
 
     t42 = HeapAlloc(GetProcessHeap(), 0, sizeof(*t42));
     memcpy(t42->tables, tables_templ, sizeof(tables_templ));
     t42->loca_tab = t42->glyf_tab = t42->head_tab = t42->hmtx_tab = -1;
-    t42->emsize = potm->otmEMSquare;
+    t42->emsize = emsize;
     t42->num_of_written_tables = 0;
 
     for(i = 0; i < num_of_tables; i++) {
@@ -198,10 +198,8 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
 		    100);
 
     sprintf(buf, start, ps_name,
-	    (float)potm->otmrcFontBox.left / potm->otmEMSquare,
-	    (float)potm->otmrcFontBox.bottom / potm->otmEMSquare,
-	    (float)potm->otmrcFontBox.right / potm->otmEMSquare,
-	    (float)potm->otmrcFontBox.top / potm->otmEMSquare);
+	    (float)bbox->left / emsize, (float)bbox->bottom / emsize,
+	    (float)bbox->right / emsize, (float)bbox->top / emsize);
 
     PSDRV_WriteSpool(physDev, buf, strlen(buf));
 

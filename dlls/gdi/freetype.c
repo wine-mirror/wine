@@ -2267,10 +2267,10 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
     font->potm->otmLineGap = (pFT_MulFix(pOS2->sTypoLineGap, y_scale) + 32) >> 6;
     font->potm->otmsCapEmHeight = (pFT_MulFix(pOS2->sCapHeight, y_scale) + 32) >> 6;
     font->potm->otmsXHeight = (pFT_MulFix(pOS2->sxHeight, y_scale) + 32) >> 6;
-    font->potm->otmrcFontBox.left = ft_face->bbox.xMin;
-    font->potm->otmrcFontBox.right = ft_face->bbox.xMax;
-    font->potm->otmrcFontBox.top = ft_face->bbox.yMin;
-    font->potm->otmrcFontBox.bottom = ft_face->bbox.yMax;
+    font->potm->otmrcFontBox.left = (pFT_MulFix(ft_face->bbox.xMin, x_scale) + 32) >> 6;
+    font->potm->otmrcFontBox.right = (pFT_MulFix(ft_face->bbox.xMax, x_scale) + 32) >> 6;
+    font->potm->otmrcFontBox.top = (pFT_MulFix(ft_face->bbox.yMax, y_scale) + 32) >> 6;
+    font->potm->otmrcFontBox.bottom = (pFT_MulFix(ft_face->bbox.yMin, y_scale) + 32) >> 6;
     font->potm->otmMacAscent = 0; /* where do these come from ? */
     font->potm->otmMacDescent = 0;
     font->potm->otmMacLineGap = 0;

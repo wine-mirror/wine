@@ -35,6 +35,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
+#define MS_MAKE_TAG( _x1, _x2, _x3, _x4 ) \
+          ( ( (DWORD)_x4 << 24 ) |     \
+            ( (DWORD)_x3 << 16 ) |     \
+            ( (DWORD)_x2 <<  8 ) |     \
+              (DWORD)_x1         )
+
+#define GET_BE_WORD(ptr)  MAKEWORD( ((BYTE *)(ptr))[1], ((BYTE *)(ptr))[0] )
+#define GET_BE_DWORD(ptr) ((DWORD)MAKELONG( GET_BE_WORD(&((WORD *)(ptr))[1]), \
+                                            GET_BE_WORD(&((WORD *)(ptr))[0]) ))
 
 /****************************************************************************
  *  get_download_name
@@ -83,6 +92,31 @@ static BOOL is_room_for_font(PSDRV_PDEVICE *physDev)
 
     if(count > 1)
         return FALSE;
+    return TRUE;
+}
+
+/****************************************************************************
+ *  get_bbox
+ *
+ * This retrieves the bounding box of the font in font units as well as
+ * the size of the emsquare.  To avoid having to worry about mapping mode and
+ * the font size we'll get the data directly from the TrueType HEAD table rather
+ * than using GetOutlineTextMetrics.
+ */
+static BOOL get_bbox(PSDRV_PDEVICE *physDev, RECT *rc, UINT *emsize)
+{
+    BYTE head[54]; /* the head table is 54 bytes long */
+
+    if(GetFontData(physDev->hdc, MS_MAKE_TAG('h','e','a','d'), 0, head,
+                   sizeof(head)) == GDI_ERROR) {
+        ERR("Can't retrieve head table\n");
+        return FALSE;
+    }
+    *emsize = GET_BE_WORD(head + 18); /* unitsPerEm */
+    rc->left = (signed short)GET_BE_WORD(head + 36); /* xMin */
+    rc->bottom = (signed short)GET_BE_WORD(head + 38); /* yMin */
+    rc->right = (signed short)GET_BE_WORD(head + 40); /* xMax */
+    rc->top = (signed short)GET_BE_WORD(head + 42); /* yMax */
     return TRUE;
 }
 
@@ -140,21 +174,24 @@ BOOL PSDRV_WriteSetDownloadFont(PSDRV_PDEVICE *physDev)
     get_download_name(physDev, potm, &ps_name);
 
     if(physDev->font.fontinfo.Download == NULL) {
+        RECT bbox;
+        UINT emsize;
+
         pdl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pdl));
 	pdl->ps_name = HeapAlloc(GetProcessHeap(), 0, strlen(ps_name)+1);
 	strcpy(pdl->ps_name, ps_name);
 	pdl->next = NULL;
 
+        get_bbox(physDev, &bbox, &emsize);
         if(!is_room_for_font(physDev))
             PSDRV_EmptyDownloadList(physDev, TRUE);
 
         if(physDev->pi->ppd->TTRasterizer == RO_Type42) {
-	    pdl->typeinfo.Type42 = T42_download_header(physDev, potm,
-						       ps_name);
+	    pdl->typeinfo.Type42 = T42_download_header(physDev, ps_name, &bbox, emsize);
 	    pdl->type = Type42;
 	}
 	if(pdl->typeinfo.Type42 == NULL) {
-	    pdl->typeinfo.Type1 = T1_download_header(physDev, potm, ps_name);
+	    pdl->typeinfo.Type1 = T1_download_header(physDev, ps_name, &bbox, emsize);
 	    pdl->type = Type1;
 	}
 	pdl->next = physDev->downloaded_fonts;

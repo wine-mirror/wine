@@ -55,8 +55,7 @@ enum t1_cmds {
 };
 
 
-TYPE1 *T1_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
-			  char *ps_name)
+TYPE1 *T1_download_header(PSDRV_PDEVICE *physDev, char *ps_name, RECT *bbox, UINT emsize)
 {
     char *buf;
     TYPE1 *t1;
@@ -86,7 +85,7 @@ TYPE1 *T1_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
       "currentdict end dup /FontName get exch definefont pop\n";
 
     t1 = HeapAlloc(GetProcessHeap(), 0, sizeof(*t1));
-    t1->emsize = potm->otmEMSquare;
+    t1->emsize = emsize;
 
     t1->glyph_sent_size = GLYPH_SENT_INC;
     t1->glyph_sent = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -97,8 +96,7 @@ TYPE1 *T1_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
 		    100);
 
     sprintf(buf, dict, ps_name, t1->emsize, t1->emsize,
-	    potm->otmrcFontBox.left, potm->otmrcFontBox.bottom,
-	    potm->otmrcFontBox.right, potm->otmrcFontBox.top);
+	    bbox->left, bbox->bottom, bbox->right, bbox->top);
 
     PSDRV_WriteSpool(physDev, buf, strlen(buf));
 
