@@ -9,6 +9,8 @@ IMPORTS   = kernel32
 C_SRCS = \
 	regsvr32.c
 
+RC_SRCS = regsvr32.rc
+
 @MAKE_PROG_RULES@
 
 ### Dependencies:

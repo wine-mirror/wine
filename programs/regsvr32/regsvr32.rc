@@ -1,0 +1,53 @@
+/* Language neutral resources.
+ *
+ * Copyright 2003 Stefan Leichter
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * FIXME: not sure about values of FILEFLAGSMASK, FILEOS, Translation
+ */
+
+#include "windef.h"
+#include "winbase.h"
+#include "winver.h"
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+1 VERSIONINFO
+FILEVERSION	5, 0, 1586, 1
+PRODUCTVERSION	5, 0, 1586, 1
+FILEFLAGSMASK	VS_FFI_FILEFLAGSMASK
+FILEOS		VOS_DOS_WINDOWS32
+FILETYPE	VFT_APP
+{
+	BLOCK "StringFileInfo"
+	{
+		BLOCK "040904B0"
+		{
+			VALUE "CompanyName", "Wine Developer Team"
+			VALUE "FileDescription", "Wine Register Server"
+			VALUE "FileVersion", "0.01"
+			VALUE "InternalName", "REGSVR32"
+			VALUE "LegalCopyright", "Copyright (c) 2003 the Wine project authors"
+			VALUE "OriginalFilename", "REGSVR32.EXE"
+			VALUE "ProductName", "Wine"
+			VALUE "ProductVersion", "1.00"
+		}
+	}
+	BLOCK "VarFileInfo"
+	{
+		VALUE "Translation", 1030, 1200
+	}
+}
