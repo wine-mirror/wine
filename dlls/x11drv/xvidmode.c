@@ -36,7 +36,10 @@ static void convert_modeinfo( const XF86VidModeModeInfo *mode, LPDDHALMODEINFO i
 {
   info->dwWidth      = mode->hdisplay;
   info->dwHeight     = mode->vdisplay;
-  info->wRefreshRate = mode->dotclock * 1000 / (mode->htotal * mode->vtotal);
+  if (mode->htotal!=0 && mode->vtotal!=0)
+      info->wRefreshRate = mode->dotclock * 1000 / (mode->htotal * mode->vtotal);
+  else
+      info->wRefreshRate = 0;
   TRACE(" width=%ld, height=%ld, refresh=%d\n",
         info->dwWidth, info->dwHeight, info->wRefreshRate);
   /* XVidMode cannot change display depths... */
@@ -54,7 +57,10 @@ static void convert_modeline(int dotclock, const XF86VidModeModeLine *mode, LPDD
 {
   info->dwWidth      = mode->hdisplay;
   info->dwHeight     = mode->vdisplay;
-  info->wRefreshRate = dotclock * 1000 / (mode->htotal * mode->vtotal);
+  if (mode->htotal!=0 && mode->vtotal!=0)
+      info->wRefreshRate = dotclock * 1000 / (mode->htotal * mode->vtotal);
+  else
+      info->wRefreshRate = 0;
   TRACE(" width=%ld, height=%ld, refresh=%d\n",
         info->dwWidth, info->dwHeight, info->wRefreshRate);
   /* XVidMode cannot change display depths... */
