@@ -7,7 +7,6 @@
 #include "wine/winbase16.h"
 #include "ntddk.h"
 #include "module.h"
-#include "callback.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(thunk);

@@ -16,7 +16,6 @@
 #include "builtin16.h"
 #include "syslevel.h"
 #include "debugtools.h"
-#include "callback.h"
 
 DEFAULT_DEBUG_CHANNEL(relay);
 

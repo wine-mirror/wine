@@ -6,7 +6,6 @@
 #include "wine/winaspi.h"
 #include "debugtools.h"
 #include "miscemu.h" /* DOSMEM_* */
-#include "callback.h"
 #include "winerror.h"
 
 DEFAULT_DEBUG_CHANNEL(aspi);

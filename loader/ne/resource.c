@@ -20,7 +20,6 @@
 #include "wine/winbase16.h"
 #include "wine/library.h"
 #include "module.h"
-#include "callback.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(resource);

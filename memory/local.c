@@ -23,7 +23,6 @@
 #include "stackframe.h"
 #include "toolhelp.h"
 #include "debugtools.h"
-#include "callback.h"
 
 DEFAULT_DEBUG_CHANNEL(local);
 DECLARE_DEBUG_CHANNEL(heap);

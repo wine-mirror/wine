@@ -11,9 +11,9 @@
 #include <unistd.h>
 #include <errno.h>
 #include "wine/winbase16.h"
+#include "winuser.h"
 #include "win16drv.h"
 #include "heap.h"
-#include "callback.h"
 #include "debugtools.h"
 #include "bitmap.h"
 

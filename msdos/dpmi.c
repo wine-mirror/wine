@@ -12,7 +12,6 @@
 
 #include "windef.h"
 #include "wine/winbase16.h"
-#include "builtin16.h"
 #include "miscemu.h"
 #include "msdos.h"
 #include "task.h"

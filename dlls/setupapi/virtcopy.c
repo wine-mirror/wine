@@ -6,12 +6,12 @@
  */
 
 #include <string.h>
-#include "debugtools.h"
-#include "windef.h"
+#include "winbase.h"
+#include "winuser.h"
 #include "setupx16.h"
-#include "callback.h"
 #include "winreg.h"
 #include "setupapi_private.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(setupapi);
 

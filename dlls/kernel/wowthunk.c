@@ -10,7 +10,6 @@
 #include "file.h"
 #include "miscemu.h"
 #include "stackframe.h"
-#include "builtin16.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(thunk);

@@ -10,7 +10,6 @@
 
 #include "winbase.h"
 #include "bitmap.h"
-#include "callback.h"
 #include "selectors.h"
 #include "gdi.h"
 #include "debugtools.h"
