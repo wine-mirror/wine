@@ -62,9 +62,9 @@ WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hmod )
 }
 
 /*************************************************************************
- *		MODULE_InitDll
+ *		MODULE_InitDLL
  */
-static BOOL MODULE_InitDll( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
+static BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
 {
     BOOL retv = TRUE;
 
@@ -163,7 +163,7 @@ BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
     /* Call DLL entry point */
     if ( retv )
     {
-        retv = MODULE_InitDll( wm, DLL_PROCESS_ATTACH, lpReserved );
+        retv = MODULE_InitDLL( wm, DLL_PROCESS_ATTACH, lpReserved );
         if ( retv )
             wm->flags |= WINE_MODREF_PROCESS_ATTACHED;
     }
@@ -212,7 +212,7 @@ void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved )
 
             /* Call detach notification */
             wm->flags &= ~WINE_MODREF_PROCESS_ATTACHED;
-            MODULE_InitDll( wm, DLL_PROCESS_DETACH, lpReserved );
+            MODULE_InitDLL( wm, DLL_PROCESS_DETACH, lpReserved );
 
             /* Restart at head of WINE_MODREF list, as entries might have
                been added and/or removed while performing the call ... */
@@ -247,7 +247,7 @@ void MODULE_DllThreadAttach( LPVOID lpReserved )
         if ( wm->flags & WINE_MODREF_NO_DLL_CALLS )
             continue;
 
-        MODULE_InitDll( wm, DLL_THREAD_ATTACH, lpReserved );
+        MODULE_InitDLL( wm, DLL_THREAD_ATTACH, lpReserved );
     }
 
     LeaveCriticalSection( &PROCESS_Current()->crit_section );
@@ -273,7 +273,7 @@ void MODULE_DllThreadDetach( LPVOID lpReserved )
         if ( wm->flags & WINE_MODREF_NO_DLL_CALLS )
             continue;
 
-        MODULE_InitDll( wm, DLL_THREAD_DETACH, lpReserved );
+        MODULE_InitDLL( wm, DLL_THREAD_DETACH, lpReserved );
     }
 
     LeaveCriticalSection( &PROCESS_Current()->crit_section );
