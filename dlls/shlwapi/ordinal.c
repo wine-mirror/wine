@@ -3978,7 +3978,7 @@ VOID WINAPI FixSlashesAndColonW(LPWSTR lpwstr)
 /*************************************************************************
  *      @	[SHLWAPI.461]
  */
-DWORD WINAPI SHGetAppCompatFlags()
+DWORD WINAPI SHGetAppCompatFlags(DWORD Unknown)
 {
   FIXME("stub\n");
   return 0;
