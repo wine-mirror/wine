@@ -404,7 +404,7 @@ write=0x378,x379,0x37a,0x37c,0x77a
         the file your trace will be stored in:
       </para>
       <programlisting>
-wine -debugmsg +io XXXX 2&gt; &gt;(sed 's/^[^:]*:io:[^ ]* //' &gt; YYYY)
+WINEDEBUG=+io wine XXXX 2&gt; &gt;(sed 's/^[^:]*:io:[^ ]* //' &gt; YYYY)
       </programlisting>
       <para>
         You will need large amounts of hard disk space (read hundreds
