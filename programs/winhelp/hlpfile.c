@@ -227,6 +227,9 @@ HLPFILE *HLPFILE_ReadHlpFile(LPCSTR lpszPath)
     hlpfile->numFonts           = 0;
     hlpfile->fonts              = NULL;
 
+    hlpfile->numWindows         = 0;
+    hlpfile->windows            = NULL;
+
     strcpy(hlpfile->lpszPath, lpszPath);
 
     first_hlpfile = hlpfile;
@@ -800,21 +803,20 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
                     strcpy((char*)paragraph->link->lpszString, attributes.link.lpszString);
                     paragraph->link->lHash      = attributes.link.lHash;
                     paragraph->link->bClrChange = attributes.link.bClrChange;
+                    paragraph->link->window     = attributes.link.window;
 
-                    WINE_TRACE("Link[%d] to %s@%08lx\n",
-                               paragraph->link->cookie, paragraph->link->lpszString, paragraph->link->lHash);
+                    WINE_TRACE("Link[%d] to %s@%08lx:%d\n",
+                               paragraph->link->cookie, paragraph->link->lpszString, 
+                               paragraph->link->lHash, paragraph->link->window);
                 }
-#if 0
-                memset(&attributes, 0, sizeof(attributes));
-#else
                 attributes.hBitmap = 0;
                 attributes.link.lpszString = NULL;
                 attributes.link.bClrChange = FALSE;
                 attributes.link.lHash = 0;
+                attributes.link.window = -1;
                 attributes.wVSpace = 0;
                 attributes.wHSpace = 0;
                 attributes.wIndent = 0;
-#endif
             }
             /* else: null text, keep on storing attributes */
             text += textsize;
@@ -969,7 +971,7 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
                     attributes.link.bClrChange = !(*format & 1);
                     
                     if (type == 1) 
-                    {WINE_FIXME("Unsupported wnd number %d for link\n", *ptr); ptr++;}
+                        attributes.link.window = *ptr++;
                     if (type == 4 || type == 6)
                     {
                         attributes.link.lpszString = ptr;
@@ -978,7 +980,20 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
                     else
                         attributes.link.lpszString = hlpfile->lpszPath;
                     if (type == 6)
-                        WINE_FIXME("Unsupported wnd name '%s' for link\n", ptr);
+                    {
+                        int     i;
+
+                        for (i = 0; i < hlpfile->numWindows; i++)
+                        {
+                            if (!strcmp(ptr, hlpfile->windows[i].name))
+                            {
+                                attributes.link.window = i;
+                                break;
+                            }
+                        }
+                        if (attributes.link.window == -1)
+                            WINE_WARN("Couldn't find window info for %s\n", ptr);
+                    }
                 }
                 format += 3 + GET_USHORT(format, 1);
                 break;
@@ -1257,10 +1272,35 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
 
         case 6:
             if (GET_USHORT(ptr, 2) != 90) {WINE_WARN("system6\n");break;}
-            WINE_FIXME("System-Window: flags=%4x type=%s name=%s caption=%s (%d,%d)x(%d,%d)\n",
-                       GET_USHORT(ptr, 4), ptr + 6, ptr + 16, ptr + 25, 
-                       GET_SHORT(ptr, 76), GET_USHORT(ptr, 78),
-                       GET_SHORT(ptr, 80), GET_USHORT(ptr, 82));
+            hlpfile->windows = HeapReAlloc(GetProcessHeap(), 0, hlpfile->windows, 
+                                           sizeof(HLPFILE_WINDOWINFO) * ++hlpfile->numWindows);
+            if (hlpfile->windows)
+            {
+                unsigned flags = GET_USHORT(ptr, 4);
+                HLPFILE_WINDOWINFO* wi = &hlpfile->windows[hlpfile->numWindows - 1];
+
+                if (flags & 0x0001) strcpy(wi->type, ptr + 6); else wi->type[0] = '\0';
+                if (flags & 0x0002) strcpy(wi->name, ptr + 16); else wi->name[0] = '\0';
+                if (flags & 0x0004) strcpy(wi->caption, ptr + 25); else strncpy(wi->caption, hlpfile->lpszTitle, sizeof(wi->caption));
+                wi->origin.x = (flags & 0x0008) ? GET_USHORT(ptr, 76) : CW_USEDEFAULT;
+                wi->origin.y = (flags & 0x0010) ? GET_USHORT(ptr, 78) : CW_USEDEFAULT;
+                wi->size.cx = (flags & 0x0020) ? GET_USHORT(ptr, 80) : CW_USEDEFAULT;
+                wi->size.cy = (flags & 0x0040) ? GET_USHORT(ptr, 82) : CW_USEDEFAULT;
+                wi->style = (flags & 0x0080) ? GET_USHORT(ptr, 84) : SW_SHOW;
+                wi->sr_color = (flags & 0x0100) ? GET_UINT(ptr, 86) : 0xFFFFFF;
+                wi->nsr_color = (flags & 0x0200) ? GET_UINT(ptr, 90) : 0xFFFFFF;
+                WINE_FIXME("System-Window: flags=%c%c%c%c%c%c%c%c type=%s name=%s caption=%s (%ld,%ld)x(%ld,%ld)\n",
+                           flags & 0x0001 ? 'T' : 't',
+                           flags & 0x0002 ? 'N' : 'n',
+                           flags & 0x0004 ? 'C' : 'c',
+                           flags & 0x0008 ? 'X' : 'x',
+                           flags & 0x0010 ? 'Y' : 'y',
+                           flags & 0x0020 ? 'W' : 'w',
+                           flags & 0x0040 ? 'H' : 'h',
+                           flags & 0x0080 ? 'S' : 's',
+                           wi->type, wi->name, wi->caption, wi->origin.x, wi->origin.y,
+                           wi->size.cx, wi->size.cy);
+            }
             break;
 	default:
             WINE_WARN("Unsupported SystemRecord[%d]\n", GET_USHORT(ptr, 0));
@@ -1790,6 +1830,7 @@ void HLPFILE_FreeHlpFile(HLPFILE* hlpfile)
     HLPFILE_DeletePage(hlpfile->first_page);
     HLPFILE_DeleteMacro(hlpfile->first_macro);
 
+    if (hlpfile->numWindows)    HeapFree(GetProcessHeap(), 0, hlpfile->windows);
     if (hlpfile->Context)       HeapFree(GetProcessHeap(), 0, hlpfile->Context);
     if (hlpfile->lpszTitle)     HeapFree(GetProcessHeap(), 0, hlpfile->lpszTitle);
     if (hlpfile->lpszCopyright) HeapFree(GetProcessHeap(), 0, hlpfile->lpszCopyright);

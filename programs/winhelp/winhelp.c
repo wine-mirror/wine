@@ -20,6 +20,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include "winbase.h"
@@ -47,7 +48,102 @@ static WINHELP_LINE_PART* WINHELP_IsOverLink(HWND hWnd, WPARAM wParam, LPARAM lP
 
 WINHELP_GLOBALS Globals = {3, 0, 0, 0, 1, 0, 0};
 
-static BOOL MacroTest = FALSE;
+/***********************************************************************
+ *
+ *           WINHELP_LookupHelpFile
+ */
+HLPFILE* WINHELP_LookupHelpFile(LPCSTR lpszFile)
+{
+    HLPFILE*        hlpfile;
+
+    hlpfile = HLPFILE_ReadHlpFile(lpszFile);
+
+    /* Add Suffix `.hlp' */
+    if (!hlpfile && lstrcmpi(lpszFile + strlen(lpszFile) - 4, ".hlp") != 0)
+    {
+        char      szFile_hlp[MAX_PATHNAME_LEN];
+
+        lstrcpyn(szFile_hlp, lpszFile, sizeof(szFile_hlp) - 4);
+        szFile_hlp[sizeof(szFile_hlp) - 5] = '\0';
+        lstrcat(szFile_hlp, ".hlp");
+
+        hlpfile = HLPFILE_ReadHlpFile(szFile_hlp);
+    }
+    if (!hlpfile)
+    {
+        WINHELP_MessageBoxIDS_s(STID_HLPFILE_ERROR_s, lpszFile, STID_WHERROR, MB_OK);
+        if (Globals.win_list) return NULL;
+    }
+    return hlpfile;
+}
+
+/******************************************************************
+ *		WINHELP_GetWindowInfo
+ *
+ *
+ */
+HLPFILE_WINDOWINFO*     WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name)
+{
+    static      HLPFILE_WINDOWINFO      mwi;
+    int         i;
+
+    if (!name || !name[0])
+        name = Globals.active_win->lpszName;
+
+    for (i = 0; i < hlpfile->numWindows; i++)
+        if (!strcmp(hlpfile->windows[i].name, name))
+            return &hlpfile->windows[i];
+
+    if (strcmp(name, "main") != 0)
+    {
+        WINE_FIXME("Couldn't find window info for %s\n", name);
+        assert(0);
+        return NULL;
+    }
+    if (!mwi.name[0])
+    {
+        strcpy(mwi.type, "primary");
+        strcpy(mwi.name, "main");
+        LoadString(Globals.hInstance, STID_WINE_HELP, 
+                   mwi.caption, sizeof(mwi.caption));
+        /*strcpy(mwi.caption, hlpfile->lpszTitle); */
+        mwi.origin.x = mwi.origin.y = mwi.size.cx = mwi.size.cy = CW_USEDEFAULT;
+        mwi.style = SW_SHOW;
+        mwi.sr_color = mwi.sr_color = 0xFFFFFF;
+    }
+    return &mwi;
+}
+
+/******************************************************************
+ *		HLPFILE_GetPopupWindowInfo
+ *
+ *
+ */
+HLPFILE_WINDOWINFO*     WINHELP_GetPopupWindowInfo(HLPFILE* hlpfile, HWND hParentWnd, POINT* mouse)
+{
+    static      HLPFILE_WINDOWINFO      wi;
+
+    RECT parent_rect;
+    
+    wi.type[0] = wi.name[0] = wi.caption[0] = '\0';
+
+    /* Calculate horizontal size and position of a popup window */
+    GetWindowRect(hParentWnd, &parent_rect);
+    wi.size.cx = (parent_rect.right  - parent_rect.left) / 2;
+    wi.size.cy = 10; /* need a non null value, so that border are taken into account while computing */
+
+    wi.origin = *mouse;
+    ClientToScreen(hParentWnd, &wi.origin);
+    wi.origin.x -= wi.size.cx / 2;
+    wi.origin.x  = min(wi.origin.x, GetSystemMetrics(SM_CXSCREEN) - wi.size.cx);
+    wi.origin.x  = max(wi.origin.x, 0);
+
+    wi.style = SW_SHOW;
+    wi.win_style = WS_POPUPWINDOW;
+    wi.sr_color = wi.sr_color = 0xFFFFFF;
+
+    return &wi;
+}
 
 /***********************************************************************
  *
@@ -57,6 +153,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
     MSG         msg;
     LONG        lHash = 0;
+    HLPFILE*    hlpfile;
 
     Globals.hInstance = hInstance;
     
@@ -85,10 +182,6 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
             Globals.wVersion = option - '0';
             break;
 
-	case 't':
-            MacroTest = TRUE;
-            break;
-
         case 'x':
             show = SW_HIDE; 
             Globals.isBook = FALSE;
@@ -102,7 +195,9 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 
     /* Create primary window */
     WINHELP_RegisterWinClasses();
-    WINHELP_CreateHelpWindowByHash(cmdline, lHash, "main", FALSE, NULL, NULL, show);
+    hlpfile = WINHELP_LookupHelpFile(cmdline);
+    WINHELP_CreateHelpWindowByHash(hlpfile, lHash, 
+                                   WINHELP_GetWindowInfo(hlpfile, "main"), show);
 
     /* Message loop */
     while (GetMessage(&msg, 0, 0, 0))
@@ -219,54 +314,25 @@ static LRESULT  WINHELP_HandleCommand(HWND hSrcWnd, LPARAM lParam)
  *
  *           WINHELP_CreateHelpWindow
  */
-
-static BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, LPCSTR lpszWindow,
-                                     BOOL bPopup, HWND hParentWnd, LPPOINT mouse, INT nCmdShow)
+BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
+                              int nCmdShow)
 {
-    CHAR    szCaption[MAX_STRING_LEN];
-    SIZE    size   = {CW_USEDEFAULT, 0/*CW_USEDEFAULT*/};
-    POINT   origin = {240, 0};
-    LPSTR   ptr;
     WINHELP_WINDOW *win, *oldwin;
-    HLPFILE_MACRO  *macro;
     HWND hWnd;
     BOOL bPrimary;
 
-    if (bPopup)
-        lpszWindow = NULL;
-    else if (!lpszWindow || !lpszWindow[0])
-        lpszWindow = Globals.active_win->lpszName;
-    bPrimary = lpszWindow && !lstrcmpi(lpszWindow, "main");
-
-    /* Calculate horizontal size and position of a popup window */
-    if (bPopup)
-    {
-        RECT parent_rect;
-        GetWindowRect(hParentWnd, &parent_rect);
-        size.cx = (parent_rect.right  - parent_rect.left) / 2;
-        size.cy = 10; /* need a non null value, so that border are taken into account while computing */
-
-        origin = *mouse;
-        ClientToScreen(hParentWnd, &origin);
-        origin.x -= size.cx / 2;
-        origin.x  = min(origin.x, GetSystemMetrics(SM_CXSCREEN) - size.cx);
-        origin.x  = max(origin.x, 0);
-    }
+    bPrimary = !lstrcmpi(wi->name, "main");
 
     /* Initialize WINHELP_WINDOW struct */
     win = HeapAlloc(GetProcessHeap(), 0,
-                    sizeof(WINHELP_WINDOW) + (lpszWindow ? strlen(lpszWindow) + 1 : 0));
+                    sizeof(WINHELP_WINDOW) + strlen(wi->name) + 1);
     if (!win) return FALSE;
 
     win->next  = Globals.win_list;
     Globals.win_list = win;
-    if (lpszWindow)
-    {
-        ptr = (char*)win + sizeof(WINHELP_WINDOW);
-        lstrcpy(ptr, (LPSTR) lpszWindow);
-        win->lpszName = ptr;
-    }
-    else win->lpszName = NULL;
+
+    win->lpszName = (char*)win + sizeof(WINHELP_WINDOW);
+    lstrcpy((char*)win->lpszName, wi->name);
 
     win->page = page;
     win->first_button = 0;
@@ -279,11 +345,11 @@ static BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, LPCSTR lpszWindow,
     win->hArrowCur = LoadCursorA(0, IDC_ARROWA);
     win->hHandCur = LoadCursorA(0, IDC_HANDA);
 
+    win->info = wi;
+
     Globals.active_win = win;
 
     /* Initialize default pushbuttons */
-    if (MacroTest && !bPopup)
-        MACRO_CreateButton("BTN_TEST", "&Test", "MacroTest");
     if (bPrimary && page)
     {
         CHAR    buffer[MAX_STRING_LEN];
@@ -301,14 +367,19 @@ static BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, LPCSTR lpszWindow,
     }
 
     /* Initialize file specific pushbuttons */
-    if (!bPopup && page)
+    if (!(wi->win_style & WS_POPUP) && page)
+    {
+        HLPFILE_MACRO  *macro;
         for (macro = page->file->first_macro; macro; macro = macro->next)
             MACRO_ExecuteMacro(macro->lpszMacro);
+    }
 
     /* Reuse existing window */
-    if (lpszWindow)
+    if (!(wi->win_style & WS_POPUP))
+    {
         for (oldwin = win->next; oldwin; oldwin = oldwin->next)
-            if (oldwin->lpszName && !lstrcmpi(oldwin->lpszName, lpszWindow))
+        {
+            if (!lstrcmpi(oldwin->lpszName, wi->name))
             {
                 WINHELP_BUTTON *button;
 
@@ -317,9 +388,9 @@ static BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, LPCSTR lpszWindow,
                 win->hTextWnd      = oldwin->hTextWnd;
                 oldwin->hMainWnd = oldwin->hButtonBoxWnd = oldwin->hTextWnd = 0;
 
-                SetWindowLong(win->hMainWnd,      0, (LONG) win);
-                SetWindowLong(win->hButtonBoxWnd, 0, (LONG) win);
-                SetWindowLong(win->hTextWnd,      0, (LONG) win);
+                SetWindowLong(win->hMainWnd,      0, (LONG)win);
+                SetWindowLong(win->hButtonBoxWnd, 0, (LONG)win);
+                SetWindowLong(win->hTextWnd,      0, (LONG)win);
 
                 WINHELP_InitFonts(win->hMainWnd);
 
@@ -340,13 +411,12 @@ static BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, LPCSTR lpszWindow,
                 WINHELP_DeleteWindow(oldwin);
                 return TRUE;
             }
+        }
+    }
 
-    /* Create main Window */
-    if (!page) LoadString(Globals.hInstance, STID_WINE_HELP, szCaption, sizeof(szCaption));
-    hWnd = CreateWindow(bPopup ? TEXT_WIN_CLASS_NAME : MAIN_WIN_CLASS_NAME,
-                        page ? page->file->lpszTitle : szCaption,
-                        bPopup ? WS_POPUPWINDOW | WS_BORDER : WS_OVERLAPPEDWINDOW,
-                        origin.x, origin.y, size.cx, size.cy,
+    hWnd = CreateWindow((wi->win_style & WS_POPUP) ? TEXT_WIN_CLASS_NAME : MAIN_WIN_CLASS_NAME,
+                        wi->caption, wi->win_style,
+                        wi->origin.x, wi->origin.y, wi->size.cx, wi->size.cy,
                         0, bPrimary ? LoadMenu(Globals.hInstance, MAKEINTRESOURCE(MAIN_MENU)) : 0,
                         Globals.hInstance, win);
 
@@ -358,53 +428,18 @@ static BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, LPCSTR lpszWindow,
 
 /***********************************************************************
  *
- *           WINHELP_CreateHelpWindowByPage
- */
-BOOL WINHELP_CreateHelpWindowByPage(HLPFILE_PAGE* page, LPCSTR lpszWindow,
-                                    BOOL bPopup, HWND hParentWnd, LPPOINT mouse, INT nCmdShow)
-{
-    if (page) page->file->wRefCount++;
-    return WINHELP_CreateHelpWindow(page, lpszWindow, bPopup, hParentWnd, mouse, nCmdShow);
-}
-
-/***********************************************************************
- *
  *           WINHELP_CreateHelpWindowByHash
  */
-BOOL WINHELP_CreateHelpWindowByHash(LPCSTR lpszFile, LONG lHash, LPCSTR lpszWindow,
-                                    BOOL bPopup, HWND hParentWnd, LPPOINT mouse, INT nCmdShow)
+BOOL WINHELP_CreateHelpWindowByHash(HLPFILE* hlpfile, LONG lHash, 
+                                    HLPFILE_WINDOWINFO* wi, int nCmdShow)
 {
     HLPFILE_PAGE*       page = NULL;
 
-    /* Read help file */
-    if (lpszFile[0])
-    {
-        HLPFILE*        hlpfile;
-
-        hlpfile = HLPFILE_ReadHlpFile(lpszFile);
-
-        /* Add Suffix `.hlp' */
-        if (!hlpfile && lstrcmpi(lpszFile + strlen(lpszFile) - 4, ".hlp") != 0)
-	{
-            CHAR      szFile_hlp[MAX_PATHNAME_LEN];
-
-            lstrcpyn(szFile_hlp, lpszFile, sizeof(szFile_hlp) - 4);
-            szFile_hlp[sizeof(szFile_hlp) - 5] = '\0';
-            lstrcat(szFile_hlp, ".hlp");
-
-            hlpfile = HLPFILE_ReadHlpFile(szFile_hlp);
-	}
-        if (!hlpfile)
-        {
-            WINHELP_MessageBoxIDS_s(STID_HLPFILE_ERROR_s, lpszFile, STID_WHERROR, MB_OK);
-            if (Globals.win_list) return FALSE;
-        }
-        else 
-            page = lHash ? HLPFILE_PageByHash(hlpfile, lHash) : 
-                HLPFILE_Contents(hlpfile);
-    }
-    else page = NULL;
-    return WINHELP_CreateHelpWindowByPage(page, lpszWindow, bPopup, hParentWnd, mouse, nCmdShow);
+    if (hlpfile)
+        page = lHash ? HLPFILE_PageByHash(hlpfile, lHash) : 
+            HLPFILE_Contents(hlpfile);
+    if (page) page->file->wRefCount++;
+    return WINHELP_CreateHelpWindow(page, wi, nCmdShow);
 }
 
 /***********************************************************************
@@ -599,7 +634,7 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         win = (WINHELP_WINDOW*) ((LPCREATESTRUCT) lParam)->lpCreateParams;
         SetWindowLong(hWnd, 0, (LONG) win);
         win->hTextWnd = hWnd;
-        if (!win->lpszName) Globals.hPopupWnd = win->hMainWnd = hWnd;
+        if (win->info->win_style & WS_POPUP) Globals.hPopupWnd = win->hMainWnd = hWnd;
         WINHELP_InitFonts(hWnd);
         break;
 
@@ -607,7 +642,7 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
 
         /* Calculate vertical size and position of a popup window */
-        if (!win->lpszName)
+        if (win->info->win_style & WS_POPUP)
 	{
             POINT origin;
             RECT old_window_rect;
@@ -773,6 +808,9 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         part = WINHELP_IsOverLink(hWnd, wParam, lParam);
         if (part)
         {
+            HLPFILE*            hlpfile;
+            HLPFILE_WINDOWINFO* wi;
+
             mouse.x = LOWORD(lParam);
             mouse.y = HIWORD(lParam);
 
@@ -781,12 +819,24 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
             case hlp_link_none:
                 break;
             case hlp_link_link:
-                WINHELP_CreateHelpWindowByHash(part->link.lpszString, part->link.lHash, NULL,
-                                               FALSE, hWnd, &mouse, SW_NORMAL);
+                hlpfile = WINHELP_LookupHelpFile(part->link.lpszString);
+                if (part->link.window == -1)
+                    wi = win->info;
+                else if (part->link.window < hlpfile->numWindows)
+                    wi = &hlpfile->windows[part->link.window];
+                else
+                {
+                    WINE_WARN("link to window %d/%d\n", part->link.window, hlpfile->numWindows);
+                    break;
+                }
+                WINHELP_CreateHelpWindowByHash(hlpfile, part->link.lHash, wi,
+                                               SW_NORMAL);
                 break;
             case hlp_link_popup:
-                WINHELP_CreateHelpWindowByHash(part->link.lpszString, part->link.lHash, NULL,
-                                               TRUE, hWnd, &mouse, SW_NORMAL);
+                hlpfile = WINHELP_LookupHelpFile(part->link.lpszString);
+                WINHELP_CreateHelpWindowByHash(hlpfile, part->link.lHash, 
+                                               WINHELP_GetPopupWindowInfo(hlpfile, hWnd, &mouse),
+                                               SW_NORMAL);
                 break;
             case hlp_link_macro:
                 MACRO_ExecuteMacro(part->link.lpszString);
@@ -932,6 +982,7 @@ static BOOL WINHELP_AppendText(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp
         part->link.cookie     = link->cookie;
         part->link.lHash      = link->lHash;
         part->link.bClrChange = link->bClrChange;
+        part->link.window     = link->window;
     }
     else part->link.cookie = hlp_link_none;
 
@@ -1009,6 +1060,7 @@ static BOOL WINHELP_AppendBitmap(WINHELP_LINE ***linep, WINHELP_LINE_PART ***par
         part->link.cookie     = link->cookie;
         part->link.lHash      = link->lHash;
         part->link.bClrChange = link->bClrChange;
+        part->link.window     = link->window;
     }
     else part->link.cookie = hlp_link_none;
 

@@ -535,7 +535,12 @@ void MACRO_FileOpen(void)
     openfilename.lpTemplateName    = 0;
 
     if (GetOpenFileName(&openfilename))
-        WINHELP_CreateHelpWindowByHash(szPath, 0, "main", FALSE, 0, NULL, SW_SHOWNORMAL);
+    {
+        HLPFILE*        hlpfile = WINHELP_LookupHelpFile(szPath);
+
+        WINHELP_CreateHelpWindowByHash(hlpfile, 0, 
+                                       WINHELP_GetWindowInfo(hlpfile, "main"), SW_SHOWNORMAL);
+    }
 }
 
 void MACRO_Find(void)
@@ -643,8 +648,13 @@ BOOL MACRO_IsNotMark(LPCSTR str)
 
 void MACRO_JumpContents(LPCSTR lpszPath, LPCSTR lpszWindow)
 {
+    HLPFILE*    hlpfile;
+
     WINE_TRACE("(\"%s\", \"%s\")\n", lpszPath, lpszWindow);
-    WINHELP_CreateHelpWindowByHash(lpszPath, 0, lpszWindow, FALSE, 0, NULL, SW_NORMAL);
+    hlpfile = WINHELP_LookupHelpFile(lpszPath);
+    WINHELP_CreateHelpWindowByHash(hlpfile, 0, 
+                                   WINHELP_GetWindowInfo(hlpfile, lpszWindow),
+                                   SW_NORMAL);
 }
 
 void MACRO_JumpContext(LPCSTR lpszPath, LPCSTR lpszWindow, LONG context)
@@ -654,8 +664,13 @@ void MACRO_JumpContext(LPCSTR lpszPath, LPCSTR lpszWindow, LONG context)
 
 void MACRO_JumpHash(LPCSTR lpszPath, LPCSTR lpszWindow, LONG lHash)
 {
+    HLPFILE*    hlpfile;
+
     WINE_TRACE("(\"%s\", \"%s\", %lu)\n", lpszPath, lpszWindow, lHash);
-    WINHELP_CreateHelpWindowByHash(lpszPath, lHash, lpszWindow, FALSE, 0, NULL, SW_NORMAL);
+    hlpfile = WINHELP_LookupHelpFile(lpszPath);
+    WINHELP_CreateHelpWindowByHash(hlpfile, lHash, 
+                                   WINHELP_GetWindowInfo(hlpfile, lpszWindow),
+                                   SW_NORMAL);
 }
 
 void MACRO_JumpHelpOn(void)
@@ -699,9 +714,14 @@ void MACRO_MPrintID(LPCSTR str)
 
 void MACRO_Next(void)
 {
+    HLPFILE_PAGE*   page;
+
     WINE_TRACE("()\n");
-    if (Globals.active_win->page->next)
-        WINHELP_CreateHelpWindowByPage(Globals.active_win->page->next, "main", FALSE, 0, NULL, SW_NORMAL);
+    if ((page = Globals.active_win->page->next) != NULL)
+    {
+        page->file->wRefCount++;
+        WINHELP_CreateHelpWindow(page, Globals.active_win->info, SW_NORMAL);
+    }
 }
 
 void MACRO_NoShow(void)
@@ -731,9 +751,14 @@ void MACRO_PositionWindow(LONG i1, LONG i2, LONG u1, LONG u2, LONG u3, LPCSTR st
 
 void MACRO_Prev(void)
 {
+    HLPFILE_PAGE*   page;
+
     WINE_TRACE("()\n");
-    if (Globals.active_win->page->prev)
-        WINHELP_CreateHelpWindowByPage(Globals.active_win->page->prev, "main", FALSE, 0, NULL, SW_NORMAL);
+    if ((page = Globals.active_win->page->prev) != NULL)
+    {
+        page->file->wRefCount++;
+        WINHELP_CreateHelpWindow(page, Globals.active_win->info, SW_NORMAL);
+    }
 }
 
 void MACRO_Print(void)

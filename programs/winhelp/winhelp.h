@@ -85,7 +85,7 @@ typedef struct tagHelpButton
 
 typedef struct tagWinHelp
 {
-    LPCSTR lpszName;
+    LPCSTR              lpszName;
 
     WINHELP_BUTTON*     first_button;
     HLPFILE_PAGE*       page;
@@ -101,6 +101,8 @@ typedef struct tagWinHelp
 
     HCURSOR             hArrowCur;
     HCURSOR             hHandCur;
+
+    HLPFILE_WINDOWINFO* info;
 
     struct tagWinHelp*  next;
 } WINHELP_WINDOW;
@@ -118,10 +120,12 @@ typedef struct
 
 extern WINHELP_GLOBALS Globals;
 
-BOOL WINHELP_CreateHelpWindowByHash(LPCSTR, LONG, LPCSTR, BOOL, HWND, LPPOINT, INT);
-BOOL WINHELP_CreateHelpWindowByPage(HLPFILE_PAGE*, LPCSTR, BOOL, HWND, LPPOINT, INT);
+BOOL WINHELP_CreateHelpWindowByHash(HLPFILE*, LONG, HLPFILE_WINDOWINFO*, int);
+BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE*, HLPFILE_WINDOWINFO*, int);
 INT  WINHELP_MessageBoxIDS(UINT, UINT, WORD);
 INT  WINHELP_MessageBoxIDS_s(UINT, LPCSTR, UINT, WORD);
+HLPFILE* WINHELP_LookupHelpFile(LPCSTR lpszFile);
+HLPFILE_WINDOWINFO* WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name);
 
 extern char MAIN_WIN_CLASS_NAME[];
 extern char BUTTON_BOX_WIN_CLASS_NAME[];

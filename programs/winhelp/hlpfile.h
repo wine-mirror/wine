@@ -21,12 +21,26 @@
 
 struct tagHelpFile;
 
+typedef struct 
+{
+    char        type[10];
+    char        name[9];
+    char        caption[51];
+    POINT       origin;
+    SIZE        size;
+    int         style;
+    DWORD       win_style;
+    COLORREF    sr_color;          /* color for scrollable region */
+    COLORREF    nsr_color;      /* color for non scrollable region */
+} HLPFILE_WINDOWINFO;
+
 typedef struct
 {
     enum {hlp_link_none, hlp_link_link, hlp_link_popup, hlp_link_macro} cookie;
-    LPCSTR    lpszString;
-    LONG      lHash;
-    BOOL      bClrChange;
+    LPCSTR      lpszString;
+    LONG        lHash;
+    BOOL        bClrChange;
+    unsigned    window;
 } HLPFILE_LINK;
 
 enum para_type {para_normal_text, para_debug_text, para_image};
@@ -113,6 +127,9 @@ typedef struct tagHlpFileFile
 
     unsigned                    numFonts;
     HLPFILE_FONT*               fonts;
+
+    unsigned                    numWindows;
+    HLPFILE_WINDOWINFO*         windows;
 } HLPFILE;
 
 HLPFILE      *HLPFILE_ReadHlpFile(LPCSTR lpszPath);
