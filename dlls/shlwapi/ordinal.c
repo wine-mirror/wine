@@ -202,7 +202,7 @@ DWORD WINAPI SHLWAPI_2 (LPCWSTR x, UNKNOWN_SHLWAPI_2 *y)
 HRESULT WINAPI SHLWAPI_7 (
 	LPVOID w,
 	LPVOID x,
-	LPVOID y)    /* appears to be result of GetCurrentProcessId() */
+	LPVOID y)    /* [???] appears to be result of GetCurrentProcessId() */
 {
     FIXME("(%p %p %p) stub\n", w, x, y);
     return 0;
@@ -230,8 +230,8 @@ HRESULT WINAPI SHLWAPI_7 (
  * appears to return MapViewOfFile+4 (used as input to 9 below)
  */
 LONG WINAPI SHLWAPI_8 (
-	LPVOID w,    /* possibly HANDLE */
-	LPVOID x)    /* appears to be result of GetCurrentProcessId() */
+	LPVOID w,    /* [???] possibly HANDLE */
+	LPVOID x)    /* [???] appears to be result of GetCurrentProcessId() */
 {
     FIXME("(%p %p) stub\n", w, x);
     return 0;
@@ -337,7 +337,7 @@ HRESULT WINAPI SHLWAPI_13 (
 }
 
 /*************************************************************************
- *      SHLWAPI_14	[SHLWAPI.14]
+ *      @	[SHLWAPI.14]
  *
  * Function:
  *    Retrieves IE "AcceptLanguage" value from registry. ASCII mode.
@@ -390,7 +390,7 @@ HRESULT WINAPI SHLWAPI_14 (
 }
 
 /*************************************************************************
- *      SHLWAPI_15	[SHLWAPI.15]
+ *      @	[SHLWAPI.15]
  *
  * Function:
  *    Retrieves IE "AcceptLanguage" value from registry. UNICODE mode.
@@ -568,7 +568,7 @@ DWORD WINAPI SHLWAPI_24 (
 }
 
 /*************************************************************************
- *      SHLWAPI_25	[SHLWAPI.25]
+ *      @	[SHLWAPI.25]
  *
  * Seems to be iswalpha
  */
@@ -578,7 +578,7 @@ BOOL WINAPI SHLWAPI_25(WCHAR wc)
 }
 
 /*************************************************************************
- *      SHLWAPI_26	[SHLWAPI.26]
+ *      @	[SHLWAPI.26]
  *
  * Seems to be iswupper
  */
@@ -588,7 +588,7 @@ BOOL WINAPI SHLWAPI_26(WCHAR wc)
 }
 
 /*************************************************************************
- *      SHLWAPI_27	[SHLWAPI.27]
+ *      @	[SHLWAPI.27]
  *
  * Seems to be iswlower
  */
@@ -598,7 +598,7 @@ BOOL WINAPI SHLWAPI_27(WCHAR wc)
 }
 
 /*************************************************************************
- *      SHLWAPI_28	[SHLWAPI.28]
+ *      @	[SHLWAPI.28]
  *
  * Seems to be iswalnum
  */
@@ -608,7 +608,7 @@ BOOL WINAPI SHLWAPI_28(WCHAR wc)
 }
 
 /*************************************************************************
- *      SHLWAPI_29	[SHLWAPI.29]
+ *      @	[SHLWAPI.29]
  *
  * Seems to be iswspace
  */
@@ -618,7 +618,7 @@ BOOL WINAPI SHLWAPI_29(WCHAR wc)
 }
 
 /*************************************************************************
- *      SHLWAPI_30	[SHLWAPI.30]
+ *      @	[SHLWAPI.30]
  *
  * Seems to be iswblank
  */
@@ -628,7 +628,7 @@ BOOL WINAPI SHLWAPI_30(WCHAR wc)
 }
 
 /*************************************************************************
- *      SHLWAPI_31	[SHLWAPI.31]
+ *      @	[SHLWAPI.31]
  *
  * Seems to be iswpunct
  */
@@ -648,7 +648,7 @@ BOOL WINAPI SHLWAPI_32(WCHAR wc)
 }
 
 /*************************************************************************
- *      SHLWAPI_33	[SHLWAPI.33]
+ *      @	[SHLWAPI.33]
  *
  * Seems to be iswdigit
  */
@@ -658,7 +658,7 @@ BOOL WINAPI SHLWAPI_33(WCHAR wc)
 }
 
 /*************************************************************************
- *      SHLWAPI_34	[SHLWAPI.34]
+ *      @	[SHLWAPI.34]
  *
  * Seems to be iswxdigit
  */
@@ -668,7 +668,7 @@ BOOL WINAPI SHLWAPI_34(WCHAR wc)
 }
 
 /*************************************************************************
- *      SHLWAPI_35	[SHLWAPI.35]
+ *      @	[SHLWAPI.35]
  *
  */
 BOOL WINAPI SHLWAPI_35(LPVOID p1, DWORD dw2, LPVOID p3)
@@ -678,7 +678,7 @@ BOOL WINAPI SHLWAPI_35(LPVOID p1, DWORD dw2, LPVOID p3)
 }
 
 /*************************************************************************
- *      SHLWAPI_36	[SHLWAPI.36]
+ *      @	[SHLWAPI.36]
  *
  */
 BOOL WINAPI SHLWAPI_36(HMENU h1, UINT ui2, UINT h3, LPCWSTR p4)

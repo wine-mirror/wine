@@ -87,6 +87,9 @@ void WINAPI INT_Int09SendScan( BYTE scan, BYTE ascii )
   Dosvm.QueueEvent(1,DOS_PRIORITY_KEYBOARD,KbdRelay,NULL);
 }
 
+/**********************************************************************
+ *	    KbdReadScan (WINEDOS.@)
+ */
 BYTE WINAPI INT_Int09ReadScan( BYTE*ascii )
 {
     if (ascii) *ascii = kbdinfo.ascii[0];

@@ -2183,6 +2183,8 @@ static WINE_EXCEPTION_FILTER(page_fault)
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
+/*********************************************************************/
+
 HANDLE WINAPI LoadImageA( HINSTANCE hinst, LPCSTR name, UINT type,
                               INT desiredx, INT desiredy, UINT loadflags)
 {

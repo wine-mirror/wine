@@ -64,7 +64,7 @@ HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, const ITEMID
 }
 
 /*************************************************************************
- * StrRetToStrNW				[SHELL32.]
+ * StrRetToStrNW				[SHELL32.96]
  * 
  * converts a STRRET to a normal string
  *

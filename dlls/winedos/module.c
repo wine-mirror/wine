@@ -421,6 +421,9 @@ LPDOSTASK WINAPI MZ_AllocDPMITask( void )
   return lpDosTask;
 }
 
+/***********************************************************************
+ *		RunInThread (WINEDOS.@)
+ */
 void WINAPI MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg )
 {
   proc(arg);
