@@ -24,17 +24,21 @@ To compile Wine, you must have one of:
 
 You also need to have libXpm installed on your system. The sources for
 it are probably available on the ftp site where you got Wine. They can
-also be found on ftp.x.org and all its mirror sites.
+also be found on ftp.x.org and all its mirror sites. If you are using
+RedHat, install the xpm and xpm-devel packages.
 
-On x86 Systems gcc >= 2.7.0 is required. You will probably need flex too.
+On x86 Systems gcc >= 2.7.0 is required. You also need flex and yacc.
+Bison will work as a replacement for yacc. If you are using RedHat, 
+install the flex and bison packages.
 
-To build Wine, first do a "./configure" and then a "make depend; make".
+To build Wine, first run "./configure" and then run "make depend; make".
 This will build the library "libwine.a" and the program "wine".
 
 The program "wine" will load and run Windows executables.
 The library "libwine.a" can be used to compile and link Windows source
 code under Unix.  If you have an ELF compiler, you can use
-"./configure --enable-dll" to build a shared library instead.
+"./configure --enable-dll" to build a shared library instead. To see
+other configuration options, do ./configure --help.
 
 To upgrade to a new release by using a patch file, first cd to the
 top-level directory of the release (the one containing this README
@@ -50,7 +54,8 @@ run "make depend; make".
 3. SETUP
 
 Once Wine has been built correctly, you can do "make install"; this
-will install the wine executable and the man page.
+will install the wine executable, the Wine man page, and a few other
+needed files.
 
 Wine requires you to have a file /usr/local/etc/wine.conf (you can
 supply a different name when configuring wine) or a file called .winerc
@@ -62,7 +67,7 @@ wine.ini contains a config file example.
 
 4. RUNNING PROGRAMS
 
-When invoking Wine, you must specify the entire path to the executable,
+When invoking Wine, you may specify the entire path to the executable,
 or a filename only.
 
 For example: to run Solitaire:
@@ -78,28 +83,32 @@ Note: the path of the file will also be added to the path when
       a full name is supplied on the commandline.
 
 Wine is not yet complete, so some programs may crash. You will be dropped
-into a debugger so that you can investigate and fix the problem.
+into a debugger so that you can investigate and fix the problem. For more
+information on how to do this, please read the file documentation/debugging.
+If you post a bug report, please read the file documentation/bugreports to
+see what information is required.
+
 
 5. GETTING MORE INFORMATION
 
-Usenet:	The best place to get help or to report bugs is the Usenet newsgroup
-	comp.emulators.ms-windows.wine. The Wine FAQ is posted there every
-	month. 
+FAQ:	The Wine FAQ is located at http://pw1.netcom.com/~dagar/wine.html.
 
-WWW:	Please browse old messages on http://www.dejanews.com/ to check whether 
-	your problem is already fixed before posting a bug report to the 
-	newsgroup. 
-
-	A great deal of information about Wine is available from WineHQ at
+WWW:	A great deal of information about Wine is available from WineHQ at
 	http://www.winehq.com/. Untested patches against the current release
 	are available on the wine-patches mailing list; see 
 	http://www.winehq.com/dev.html#ml for more information.
 
+Usenet:	Please browse old messages on http://www.dejanews.com/ to check whether 
+	your problem is already fixed before posting a bug report to the 
+	newsgroup. 
+
+	The best place to get help or to report bugs is the Usenet newsgroup
+	comp.emulators.ms-windows.wine. Please read the file 
+	documentation/bugreports to see what information should be included 
+	in a bug report.
+
 CVS:	The current Wine development tree is available through CVS.
 	Go to http://www.winehq.com/dev.html for more information.
-
-FAQ:	The Wine FAQ is located at http://pw1.netcom.com/~dagar/wine.html.
-
 
 If you add something, or fix a bug, please send a patch ('diff -u'
 format preferred) to julliard@lrc.epfl.ch for inclusion in the next

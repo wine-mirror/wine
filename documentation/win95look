@@ -1,7 +1,7 @@
 Win95/Win98 interface code is being introduced.
 
 Instead of compiling Wine for Win3.1 vs. Win95 using #define switches,
-the code now looks in a special [Tweaks.Layout] section of wine.conf
+the code now looks in a special [Tweak.Layout] section of wine.conf
 for a "WineLook=Win95" or "WineLook=Win98" entry.
 
 A few new sections and a number of entries have been added to the

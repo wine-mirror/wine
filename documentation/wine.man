@@ -1,15 +1,14 @@
 .\" -*- nroff -*-
-.TH WINE 1 "November 22, 1998" "Version 981108" "Windows On Unix"
+.TH WINE 1 "December 30, 1998" "Version 981211" "Windows On Unix"
 .SH NAME
 wine \- run Windows programs on Unix
 .SH SYNOPSIS
-.BI "wine " "[wine_options]"
-"
-.BI "program_name [program_args]"
-" "
-.IB "[program_name [program_args] "
-"
-.BI "..." " ]"
+.BI "wine " "[wine_options] " "program1 " "[program2 ... ]"
+.PP
+For instructions on passing arguments to Windows programs, please see the 
+.B
+PROGRAM/ARGUMENTS
+section of the man page.
 .SH DESCRIPTION
 .B wine
 .I program
@@ -25,7 +24,11 @@ are still several major pieces of work left to do.
 At present, 
 .B wine
 will run under any Linux kernel more recent than 0.99.13, or
-under recent releases of NetBSD/i386, FreeBSD and OpenBSD/i386.
+under recent releases of NetBSD/i386, FreeBSD and OpenBSD/i386. Some bugs
+were fixed and additional features were added late in the Linux 2.0.x 
+series, so if you have an old Linux kernel, you may want to upgrade to the
+latest 2.0.x release. If you have FreeBSD, make sure you have the USER_LDT,
+SYSVSEM, and SYSVMSG options turned on in your kernel. 
 .PP
 The current support for multithreaded applications relies on the 
 .BR clone (2)
@@ -39,10 +42,11 @@ compiled the X libraries yourself, they were probably compiled with the
 reetrant option enabled.  
 .PP
 .B libXpm
-must be installed.  If you're using Red Hat, the name of the package is
-XFree86-devel.  If you're using Debian, the packages you need are xpm4g
-and xpm4g-dev. If you have some other distribution, please send email to
-the address listed in the 
+must be installed.  If you're using Red Hat, make sure the following
+packages are installed: XFree86-devel, xpm, and xpm-devel. If you're
+using Debian, the packages you need are xpm4g and xpm4g-dev. If you 
+have some other distribution, please send a list of packages required
+to the address listed in the 
 .B
 BUGS
 section to get it included in this man page.
@@ -55,6 +59,12 @@ compiled with optimization.
 .B
 pgcc
 currently doesn't work with wine.  The cause of this problem is unknown. 
+.PP
+.B flex
+and 
+.B yacc
+are required.  Bison can be used in replace of yacc. If you have Redhat,
+make sure the bison and flex packages are installed.
 .SH INSTALLATION
 To install 
 .B Wine,
@@ -119,10 +129,10 @@ local, mci, mcianim, mciwave, mdi, menu, message, metafile, midi, mmaux, mmio,
 mmsys, mmtime, module, monthcal, mpr, msacm, msg, nativefont, nonclient, ntdll, 
 ole, pager, palette, pidl, print, process, profile, progress, prop, psapi, 
 psdrv, rebar, reg, region, relay, resource, s, scroll, security, segment, 
-selector, sem, sendmsg, shell, shm, snoop, sound, static, statusbar, stress, 
-string, syscolor, system, tab, task, text, thread, thunk, timer, toolbar, 
-toolhelp, tooltips, trackbar, treeview, tweak, uitools, updown, ver, virtual, 
-vxd, win, win16drv, win32, wing, winsock, wnet, x11, x11drv.
+selector, sem, sendmsg, server, shell, shm, snoop, sound, static, statusbar, 
+stress, string, syscolor, system, tab, task, text, thread, thunk, timer, 
+toolbar, toolhelp, tooltips, trackbar, treeview, tweak, uitools, updown, ver, 
+virtual, vxd, win, win16drv, win32, wing, winsock, wnet, x11, x11drv.
 .PP
 For more information on debugging messages, see the file 
 .I documentation/debug-msgs
@@ -218,7 +228,7 @@ conform to the following rules (the format is just like a Windows .ini
 file).  The actual file name may be specified during the execution of
 the
 .B configure
-script.  Alternatively, you may have a 
+script with the --sysconfdir option.  Alternatively, you may have a 
 .I .winerc
 file of this format in your home directory or have the environment variable
 .B WINE_INI
@@ -367,59 +377,9 @@ default: Win31
 .br 
 Use Win95-like window displays or Win3.1-like window displays.
 .SH SAMPLE CONFIGURATION FILE
-[Drive A]
-.br
-Path=/mnt/fd0
-.br
-Type=floppy
-.PP
-[Drive C]
-.br
-Path=/dos
-.br
-Type=hd
-.br
-Label=DOS disk
-.PP
-[Drive D]
-.br
-Path=${HOME}/Wine
-.PP
-[wine]
-.br
-windows=c:\\windows
-.br
-system=c:\\windows\\system
-.br
-temp=c:\\temp
-.br
-path=c:\\windows;c:\\windows\\system;c:\\winapps\\word
-.br
-symboltablefile=/usr/local/lib/wine.sym
-.PP
-[serialports]
-.br
-com1=/dev/cua1
-.br
-com2=/dev/cua1
-.PP
-[parallelports]
-.br
-lpt1=/dev/lp0
-.PP
-[spy]
-.br
-;File=CON
-.br
-;File=spy.log
-.br
-Exclude=WM_TIMER;WM_SETCURSOR;WM_MOUSEMOVE;WM_NCHITTEST;
-.br
-Include=WM_COMMAND;
-.PP
-[Tweak.Layout]
-.br 
-WineLook=Win95
+A sample configuration file is distributed as
+.B wine.ini
+in the top-level directory of the source distribution.
 .SH AUTHORS
 .B Wine
 is available thanks to the work of many developers. For a listing
@@ -434,18 +394,19 @@ Please add entries to this list for applications you currently run.
 .PP
 Bug reports and successes may be posted to 
 .I comp.emulators.ms-windows.wine.
-If you do so, please read the file
+If you want to post a bug report, please read the file
 .I documentation/bugreports
-in the Wine source.
+in the Wine source to see what information is necessary.
 .PP
 For problems and suggestions with this manpage, please send a note to
 James Juran <jrj120@psu.edu>.
 .SH AVAILABILITY
 The most recent public version of 
 .B wine
-can be obtained via FTP from sunsite.unc.edu or tsx-11.mit.edu in the /pub/linux/ALPHA/Wine/development 
-directory.  The releases are in the format 'Wine-yymmdd.tar.gz', 
-or 'Wine-yymmdd.diff.gz' for the diff's from the previous release.
+can be obtained via FTP from metalab.unc.edu or tsx-11.mit.edu in the 
+/pub/linux/ALPHA/Wine/development directory.  The releases are in the 
+format 'Wine-yymmdd.tar.gz', or 'Wine-yymmdd.diff.gz' for the diff's 
+from the previous release.
 .PP
 The latest snapshot of the code may be obtained via CVS.  For information
 on how to do this, please see
