@@ -145,20 +145,39 @@ static HRESULT WINAPI ISVBgCm_fnQueryContextMenu(
 	UINT idCmdLast,
 	UINT uFlags)
 {
-	HMENU	hMyMenu;
-	UINT	idMax;
+    HMENU	hMyMenu;
+    UINT	idMax;
+    HRESULT hr;
 
-	ICOM_THIS(BgCmImpl, iface);
+    ICOM_THIS(BgCmImpl, iface);
 
-	TRACE("(%p)->(hmenu=%x indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",This, hMenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
+    TRACE("(%p)->(hmenu=%x indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",
+          This, hMenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
 
-	hMyMenu = LoadMenuA(shell32_hInstance, "MENU_002");
 
-	idMax = Shell_MergeMenus (hMenu, GetSubMenu(hMyMenu,0), indexMenu, idCmdFirst, idCmdLast, MM_SUBMENUSHAVEIDS);
+    hMyMenu = LoadMenuA(shell32_hInstance, "MENU_002");
+    if (uFlags & CMF_DEFAULTONLY)
+    {
+        HMENU ourMenu = GetSubMenu(hMyMenu,0);
+        UINT oldDef = GetMenuDefaultItem(hMenu,TRUE,GMDI_USEDISABLED);
+        UINT newDef = GetMenuDefaultItem(ourMenu,TRUE,GMDI_USEDISABLED);
+        if (newDef != oldDef)
+            SetMenuDefaultItem(hMenu,newDef,TRUE);
+        if (newDef!=0xFFFFFFFF)
+            hr =  MAKE_HRESULT(SEVERITY_SUCCESS, FACILITY_NULL, newDef+1);
+        else
+            hr =  MAKE_HRESULT(SEVERITY_SUCCESS, FACILITY_NULL, 0);
+    }
+    else
+    {
+        idMax = Shell_MergeMenus (hMenu, GetSubMenu(hMyMenu,0), indexMenu,
+                                  idCmdFirst, idCmdLast, MM_SUBMENUSHAVEIDS);
+        hr =  MAKE_HRESULT(SEVERITY_SUCCESS, FACILITY_NULL, idMax-idCmdFirst+1);
+    }
+    DestroyMenu(hMyMenu);
 
-	DestroyMenu(hMyMenu);
-
-	return ResultFromShort(idMax - idCmdFirst);
+    TRACE("(%p)->returning 0x%lx\n",This,hr);
+    return hr;
 }
 
 /**************************************************************************
