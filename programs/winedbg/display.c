@@ -159,8 +159,7 @@ static void print_one_display(int i)
         dbg_printf("(disabled)\n");
     else
 	if (displaypoints[i].format == 'i')
-            memory_examine((void*)types_extract_as_integer(&lvalue), 
-                           displaypoints[i].count, displaypoints[i].format);
+            memory_examine(&lvalue, displaypoints[i].count, displaypoints[i].format);
 	else
             print_value(&lvalue, displaypoints[i].format, 0);
 }

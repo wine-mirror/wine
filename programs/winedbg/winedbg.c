@@ -472,6 +472,7 @@ static unsigned dbg_exception_prolog(BOOL is_debug, DWORD code)
         case AddrModeFlat: dbg_printf(" in 32-bit code (0x%08lx)", addr.Offset); break;
         case AddrModeReal: dbg_printf(" in vm86 code (%04x:%04lx)", addr.Segment, addr.Offset); break;
         case AddrMode1616: dbg_printf(" in 16-bit code (%04x:%04lx)", addr.Segment, addr.Offset); break;
+        case AddrMode1632: dbg_printf(" in 32-bit code (%04x:%08lx)", addr.Segment, addr.Offset); break;
         default: dbg_printf(" bad address");
         }
 	dbg_printf(".\n");
@@ -496,7 +497,7 @@ static unsigned dbg_exception_prolog(BOOL is_debug, DWORD code)
         switch (addr.Mode)
         {
         case AddrMode1616: name = "16 bit";     break;
-        case AddrMode1632: name = "X?X??X";     break;
+        case AddrMode1632: name = "32 bit";     break;
         case AddrModeReal: name = "vm86";       break;
         case AddrModeFlat: name = "32 bit";     break;
         }

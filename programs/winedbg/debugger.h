@@ -306,7 +306,7 @@ extern void             info_wine_dbg_channel(BOOL add, const char* chnl, const 
   /* memory.c */
 extern BOOL             memory_read_value(const struct dbg_lvalue* lvalue, DWORD size, void* result);
 extern BOOL             memory_write_value(const struct dbg_lvalue* val, DWORD size, void* value);
-extern void             memory_examine(void* linear, int count, char format);
+extern void             memory_examine(const struct dbg_lvalue *lvalue, int count, char format);
 extern void             memory_report_invalid_addr(const void* addr);
 extern void*            memory_to_linear_addr(const ADDRESS* address);
 extern BOOL             memory_get_current_pc(ADDRESS* address);
