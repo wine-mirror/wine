@@ -47,6 +47,11 @@ HANDLE VGA_AlphaConsole(void)
     return GetStdHandle(STD_OUTPUT_HANDLE);
 }
 
+char*VGA_AlphaBuffer(void)
+{
+    return DOSMEM_MapDosToLinear(0xb8000);
+}
+
 /*** GRAPHICS MODE ***/
 
 int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
@@ -80,6 +85,8 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
             lpddraw=NULL;
             return 1;
         }
+        FIXME("no default palette entries\n");
+        IDirectDrawSurface_SetPalette(lpddsurf,lpddpal);
         vga_refresh=0;
         /* poll every 20ms (50fps should provide adequate responsiveness) */
         VGA_InstallTimer(20);
@@ -101,8 +108,11 @@ void VGA_Exit(void)
 {
     if (lpddraw) {
         VGA_DeinstallTimer();
+        IDirectDrawSurface_SetPalette(lpddsurf,NULL);
         IDirectDrawSurface_Release(lpddsurf);
         lpddsurf=NULL;
+        IDirectDrawPalette_Release(lpddpal);
+        lpddpal=NULL;
         IDirectDraw_Release(lpddraw);
         lpddraw=NULL;
     }
@@ -112,7 +122,6 @@ void VGA_SetPalette(PALETTEENTRY*pal,int start,int len)
 {
     if (!lpddraw) return;
     IDirectDrawPalette_SetEntries(lpddpal,0,start,len,pal);
-    IDirectDrawSurface_SetPalette(lpddsurf,lpddpal);
 }
 
 void VGA_SetQuadPalette(RGBQUAD*color,int start,int len)
@@ -128,7 +137,6 @@ void VGA_SetQuadPalette(RGBQUAD*color,int start,int len)
         pal[c].peFlags=0;
     }
     IDirectDrawPalette_SetEntries(lpddpal,0,start,len,pal);
-    IDirectDrawSurface_SetPalette(lpddsurf,lpddpal);
 }
 
 LPSTR VGA_Lock(unsigned*Pitch,unsigned*Height,unsigned*Width,unsigned*Depth)
@@ -193,6 +201,21 @@ void VGA_GetCursorPos(unsigned*X,unsigned*Y)
     if (Y) *Y=info.dwCursorPosition.Y;
 }
 
+void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count)
+{
+    unsigned XR, YR;
+    char*dat;
+
+    VGA_GetAlphaMode(&XR, &YR);
+    dat = VGA_AlphaBuffer() + ((XR*Y + X) * 2);
+    /* FIXME: also call WriteConsoleOutputA, for better responsiveness */
+    while (count--) {
+        *dat++ = ch;
+        if (attr>=0) *dat = attr;
+        dat++;
+    }
+}
+
 /*** CONTROL ***/
 
 void CALLBACK VGA_Poll( ULONG_PTR arg )
@@ -224,7 +247,7 @@ void CALLBACK VGA_Poll( ULONG_PTR arg )
           HANDLE con = VGA_AlphaConsole();
 
           VGA_GetAlphaMode(&Width,&Height);
-          dat = DOSMEM_MapDosToLinear(0xb8000);
+          dat = VGA_AlphaBuffer();
           siz.X = 80; siz.Y = 1;
           off.X = 0; off.Y = 0;
           /* copy from virtual VGA frame buffer to console */

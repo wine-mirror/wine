@@ -25,6 +25,7 @@ int VGA_SetAlphaMode(unsigned Xres,unsigned Yres);
 void VGA_GetAlphaMode(unsigned*Xres,unsigned*Yres);
 void VGA_SetCursorPos(unsigned X,unsigned Y);
 void VGA_GetCursorPos(unsigned*X,unsigned*Y);
+void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count);
 
 /* control */
 void CALLBACK VGA_Poll(ULONG_PTR arg);
