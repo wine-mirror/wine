@@ -455,7 +455,10 @@ else
                          freetype/ftsnames.h \
                          freetype/ttnameid.h \
                          freetype/ftoutln.h \
-                         freetype/internal/sfnt.h)
+                         freetype/internal/sfnt.h,,,
+                         [#if HAVE_FT2BUILD_H
+                          #include <ft2build.h>
+                          #endif])
 	AC_TRY_CPP([#include <ft2build.h>
                     #include <freetype/fttrigon.h>],
                     [AC_DEFINE(HAVE_FREETYPE_FTTRIGON_H, 1,
