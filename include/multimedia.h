@@ -1,3 +1,5 @@
+/* -*- tab-width: 8; c-basic-offset: 4 -*- */
+
 /*****************************************************************************
  * Copyright 1998, Luiz Otavio L. Zorzella
  *
@@ -50,6 +52,7 @@ struct WINE_MCIDRIVER {
         YIELDPROC		lpfnYieldProc;
         DWORD	                dwYieldData;
         BOOL			bIs32;
+        HTASK16			hCreatorTask;
 };
 
 extern struct WINE_MCIDRIVER mciDrv[MAXMCIDRIVERS];
