@@ -737,7 +737,7 @@ static BOOL GetLinkLocation( LPCWSTR linkfile, DWORD *loc )
     return FALSE;
 }
 
-static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link )
+static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bAgain )
 {
     char *link_name = NULL, *icon_name = NULL, *work_dir = NULL;
     char *escaped_path = NULL, *escaped_args = NULL, *escaped_description = NULL;
@@ -800,8 +800,12 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link )
     /* fail - try once again at reboot time */
     if( !icon_name )
     {
+        if (bAgain)
+        {
+            WINE_WARN("Unable to extract icon, deferring.\n");
+            goto cleanup;
+        }
         WINE_ERR("failed to extract icon.\n");
-        return FALSE;
     }
 
     /* check the path */
@@ -835,7 +839,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link )
     if( !link_name )
     {
         WINE_ERR("Couldn't clean up link name %s\n", wine_dbgstr_w(link));
-        return FALSE;
+        goto cleanup;
     }
 
     /* escape the path and parameters */
@@ -847,6 +851,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link )
                       in_desktop_dir(csidl), escaped_args, icon_name,
                       work_dir ? work_dir : "", escaped_description);
 
+cleanup:
     HeapFree( GetProcessHeap(), 0, icon_name );
     HeapFree( GetProcessHeap(), 0, work_dir );
     HeapFree( GetProcessHeap(), 0, link_name );
@@ -915,7 +920,7 @@ static BOOL Process_Link( LPCWSTR linkname, BOOL bAgain )
         /* If something fails (eg. Couldn't extract icon)
          * defer this menu entry to reboot via runonce
          */
-        if( ! InvokeShellLinker( sl, fullname ) && bAgain )
+        if( ! InvokeShellLinker( sl, fullname, bAgain ) && bAgain )
             DeferToRunOnce( fullname );
         else
             WINE_TRACE("Success.\n");
