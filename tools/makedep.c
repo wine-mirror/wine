@@ -207,6 +207,21 @@ static FILE *open_include_file( INCL_FILE *pFile )
         }
         free( filename );
     }
+    /* try in src file directory */
+    if (!file)
+    {
+        char *p = strrchr(pFile->included_by->name, '/');
+        if (p)
+        {
+            int l = p - pFile->included_by->name + 1;
+            char *filename = xmalloc(l + strlen(pFile->name) + 1);
+            memcpy( filename, pFile->included_by->name, l );
+            strcpy( filename + l, pFile->name );
+            if ((file = fopen( filename, "r" ))) pFile->filename = filename;
+            else free( filename );
+        }
+    }
+
     if (!file)
     {
         if (firstPath) perror( pFile->name );
