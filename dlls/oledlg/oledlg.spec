@@ -28,4 +28,4 @@ debug_channels (ole)
  20 stdcall OleUIInsertObjectW(ptr) OleUIInsertObjectW
  21 stdcall OleUIObjectPropertiesW(ptr) OleUIObjectPropertiesW
  22 stdcall OleUIPasteSpecialW(ptr) OleUIPasteSpecialW
-
+ 23 stdcall OleUIUpdateLinksW(ptr long wstr long) OleUIUpdateLinksW

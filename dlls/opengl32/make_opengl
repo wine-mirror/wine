@@ -127,9 +127,10 @@ sub GenerateThunk {
     my ($trace_arg) = ("");
 
     # If for opengl_norm.c, generate a nice heading otherwise Patrik won't be happy :-)
+    # Patrik says: Well I would be even happier if a (OPENGL.@) was added as well. Done. :-)
     if ($comment eq 1) {
 	$ret = $ret . "/***********************************************************************\n";
-	$ret = $ret . " *              " . $func_ref->[0] . "\n";
+	$ret = $ret . " *              " . $func_ref->[0] . " (OPENGL.@)\n";
 	$ret = $ret . " */\n";
     }
     $ret = $ret . $func_ref->[1] . " WINAPI wine_" . $func_ref->[0] . "( ";

@@ -18,7 +18,7 @@ owner	ole32
 14 stub STRINGFROMIID
 15 pascal CoDisconnectObject(ptr long) CoDisconnectObject
 16 stub CORELEASEMARSHALDATA
-17 pascal16 COFREEUNUSEDLIBRARIES() CoFreeUnusedLibraries
+17 pascal16 CoFreeUnusedLibraries() CoFreeUnusedLibraries
 18 pascal16 IsEqualGUID(ptr ptr) IsEqualGUID16
 19 pascal StringFromCLSID(ptr ptr) StringFromCLSID16
 20 pascal CLSIDFromString(str ptr) CLSIDFromString16

@@ -607,19 +607,19 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ stub ZwCreateToken
 @ stub ZwDelayExecution
 @ stub ZwDeleteFile
-@ stub ZwDeleteKey
-@ stub ZwDeleteValueKey
+@ stdcall ZwDeleteKey(long) NtDeleteKey
+@ stdcall ZwDeleteValueKey(long ptr) NtDeleteValueKey
 @ stdcall ZwDeviceIoControlFile(long long long long long long long long long long) NtDeviceIoControlFile
 @ stub ZwDisplayString
 @ stdcall ZwDuplicateObject(long long long long long long long) NtDuplicateObject
 @ stdcall ZwDuplicateToken(long long long long long long) NtDuplicateToken
 @ stub ZwEnumerateBus
-@ stub ZwEnumerateKey
-@ stub ZwEnumerateValueKey
+@ stdcall ZwEnumerateKey(long long long ptr long ptr) NtEnumerateKey
+@ stdcall ZwEnumerateValueKey(long long long ptr long ptr) NtEnumerateValueKey
 @ stub ZwExtendSection
 @ stub ZwFlushBuffersFile
 @ stub ZwFlushInstructionCache
-@ stub ZwFlushKey
+@ stdcall ZwFlushKey(long) NtFlushKey
 @ stub ZwFlushVirtualMemory
 @ stub ZwFlushWriteBuffer
 @ stub ZwFreeVirtualMemory
@@ -632,13 +632,13 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ stub ZwInitializeRegistry
 @ stdcall ZwListenPort(long long) NtListenPort
 @ stub ZwLoadDriver
-@ stub ZwLoadKey
+@ stdcall ZwLoadKey(ptr ptr) NtLoadKey
 @ stub ZwLockFile
 @ stub ZwLockVirtualMemory
 @ stub ZwMakeTemporaryObject
 @ stdcall ZwMapViewOfSection(long long long long long long long long long long) NtMapViewOfSection
 @ stub ZwNotifyChangeDirectoryFile
-@ stub ZwNotifyChangeKey
+@ stdcall ZwNotifyChangeKey(long long ptr ptr ptr long long ptr long long) NtNotifyChangeKey
 @ stdcall ZwOpenDirectoryObject(long long long) NtOpenDirectoryObject
 @ stdcall ZwOpenEvent(long long long) NtOpenEvent
 @ stub ZwOpenEventPair
@@ -674,7 +674,7 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ stdcall ZwQueryInformationToken(long long long long long) NtQueryInformationToken
 @ stub ZwQueryIntervalProfile
 @ stub ZwQueryIoCompletion
-@ stub ZwQueryKey
+@ stdcall ZwQueryKey(long long ptr long ptr) NtQueryKey
 @ stub ZwQueryMutant
 @ stdcall ZwQueryObject(long long long long long) NtQueryObject
 @ stub ZwQueryPerformanceCounter
@@ -687,7 +687,7 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ stdcall ZwQuerySystemTime(ptr) NtQuerySystemTime
 @ stub ZwQueryTimer
 @ stub ZwQueryTimerResolution
-@ stub ZwQueryValueKey
+@ stdcall ZwQueryValueKey(long ptr long ptr long ptr) NtQueryValueKey
 @ stub ZwQueryVirtualMemory
 @ stdcall ZwQueryVolumeInformationFile(long ptr ptr long long) NtQueryVolumeInformationFile
 @ stub ZwRaiseException
@@ -701,16 +701,16 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ stub ZwReleaseProcessMutant
 @ stub ZwReleaseSemaphore
 @ stub ZwRemoveIoCompletion
-@ stub ZwReplaceKey
+@ stdcall ZwReplaceKey(ptr long ptr) NtReplaceKey
 @ stub ZwReplyPort
 @ stdcall ZwReplyWaitReceivePort(long long long long) NtReplyWaitReceivePort
 @ stub ZwReplyWaitReplyPort
 @ stub ZwRequestPort
 @ stdcall ZwRequestWaitReplyPort(long long long) NtRequestWaitReplyPort
 @ stub ZwResetEvent
-@ stub ZwRestoreKey
+@ stdcall ZwRestoreKey(long long long) NtRestoreKey
 @ stdcall ZwResumeThread(long long) NtResumeThread
-@ stub ZwSaveKey
+@ stdcall ZwSaveKey(long long) NtSaveKey
 @ stub ZwSetContextThread
 @ stub ZwSetDefaultHardErrorPort
 @ stub ZwSetDefaultLocale
@@ -720,7 +720,7 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ stub ZwSetHighWaitLowEventPair
 @ stub ZwSetHighWaitLowThread
 @ stdcall ZwSetInformationFile(long long long long long) NtSetInformationFile
-@ stub ZwSetInformationKey
+@ stdcall ZwSetInformationKey(long long ptr long) NtSetInformationKey
 @ stub ZwSetInformationObject
 @ stdcall ZwSetInformationProcess(long long long long) NtSetInformationProcess
 @ stdcall ZwSetInformationThread(long long long long) NtSetInformationThread
@@ -749,7 +749,7 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ stdcall ZwTerminateThread(long long) NtTerminateThread
 @ stub ZwTestAlert
 @ stub ZwUnloadDriver
-@ stub ZwUnloadKey
+@ stdcall ZwUnloadKey(long) NtUnloadKey
 @ stub ZwUnlockFile
 @ stub ZwUnlockVirtualMemory
 @ stub ZwUnmapViewOfSection
