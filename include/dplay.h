@@ -384,6 +384,8 @@ typedef BOOL (CALLBACK* LPDPENUMSESSIONSCALLBACK2)(
     DWORD               dwFlags,
     LPVOID              lpContext );
 
+#define DPESC_TIMEDOUT          0x00000001
+
 #include "poppack.h"
 
 /*****************************************************************************
@@ -449,7 +451,7 @@ ICOM_DEFINE(IDirectPlay,IUnknown)
 
 
 /*****************************************************************************
- * IDirectPlay2 interface
+ * IDirectPlay2 and IDirectPlay2A interface
  */
 #define ICOM_INTERFACE IDirectPlay2
 #define IDirectPlay2_METHODS \
@@ -525,7 +527,7 @@ ICOM_DEFINE(IDirectPlay2,IUnknown)
 
 
 /*****************************************************************************
- * IDirectPlay3 interface
+ * IDirectPlay3 and IDirectPlay3A interface
  */
 #define ICOM_INTERFACE IDirectPlay3
 #define IDirectPlay3_METHODS \
@@ -602,11 +604,7 @@ ICOM_DEFINE(IDirectPlay3,IDirectPlay2)
 #define IDirectPlay3_GetPlayerFlags(p,a,b)                 ICOM_CALL2(GetPlayerFlags,p,a,b)
 
 /*****************************************************************************
- * IDirectPlay4 interface - this is also known as IDirectPlayX. Apparently people
- * are realizing that declaring all the darn interfaces as IDirectPlay{2,3,...} is
- * just plain dumb. It's now going to be just IDirectPlayX since they're just macros
- * anyways. That's good because I'm tired of typing these entries :)
- * The compiler should catch any problems with invocation of invalid method :)
+ * IDirectPlay4 and IDirectPlay4A interface 
  */
 #define ICOM_INTERFACE IDirectPlay4
 #define IDirectPlay4_METHODS \
@@ -617,11 +615,10 @@ ICOM_DEFINE(IDirectPlay3,IDirectPlay2)
     ICOM_METHOD2( HRESULT, CancelMessage,        DWORD,, DWORD, ) \
     ICOM_METHOD3( HRESULT, CancelPriority,       DWORD,, DWORD,, DWORD, )
 
-#define IDirectPlay4_IMETHODS
+#define IDirectPlay4_IMETHODS \
     IDirectPlay3_IMETHODS \
     IDirectPlay4_METHODS 
 ICOM_DEFINE(IDirectPlay4,IDirectPlay3)
-
 #undef ICOM_INTERFACE
 
 /*** IUnknown methods ***/
@@ -681,6 +678,7 @@ ICOM_DEFINE(IDirectPlay4,IDirectPlay3)
 #define IDirectPlayX_GetMessageQueue(p,a,b,c,d,e)          ICOM_CALL5(GetMessageQueue,a,b,c,d,e)
 #define IDirectPlayX_CancelMessage(p,a,b)                  ICOM_CALL2(CancelMessage,a,b)
 #define IDirectPlayX_CancelPriority(p,a,b,c)               ICOM_CALL3(CancelPriority,a,b,c)
+
 
 /* For DirectPlay::EnumConnections */
 #define DPCONNECTION_DIRECTPLAY      0x00000001

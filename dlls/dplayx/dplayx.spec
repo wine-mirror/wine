@@ -1,5 +1,6 @@
 name dplayx
 type win32
+init DPLAYX_LibMain
 
   1 stdcall DirectPlayCreate(ptr ptr ptr ptr) DirectPlayCreate
   2 stdcall DirectPlayEnumerateA(ptr ptr) DirectPlayEnumerateA

@@ -9,7 +9,9 @@ SPEC_SRCS = dplay.spec dplayx.spec
 
 C_SRCS = dplay.c \
          dplobby.c \
-         dpclassfactory.c
+         dpclassfactory.c \
+         dplayx_main.c \
+         dplayx_global.c
 
 all: $(MODULE).o
 

@@ -6,25 +6,40 @@
  *
  */
 #include <string.h>
+
 #include "winerror.h"
 #include "winnt.h"
 #include "winreg.h"
-#include "dplobby.h"
 #include "heap.h"
 #include "debugtools.h"
 
+#include "dplobby.h"
+#include "dpinit.h"
+#include "dplayx_global.h"
+
 DEFAULT_DEBUG_CHANNEL(dplay)
+
+
+/* FIXME: All the data structures are presently not needed except for unk */
+/* FIXME: Move lock from unk to dpl */
+
+/* Forward declarations for this module helper methods */
+static HRESULT DPL_CreateCompoundAddress ( LPCDPCOMPOUNDADDRESSELEMENT lpElements, DWORD dwElementCount,
+                                           LPVOID lpAddress, LPDWORD lpdwAddressSize, BOOL bAnsiInterface );
+
+static HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, LPCVOID lpAddress,
+                                DWORD dwAddressSize, LPVOID lpContext );
+
 
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-typedef struct IDirectPlayLobbyImpl IDirectPlayLobbyImpl;
-typedef struct IDirectPlayLobbyImpl IDirectPlayLobbyAImpl;
-typedef struct IDirectPlayLobbyImpl IDirectPlayLobbyWImpl;
-typedef struct IDirectPlayLobbyImpl IDirectPlayLobby2Impl;
-typedef struct IDirectPlayLobbyImpl IDirectPlayLobby2AImpl;
-typedef struct IDirectPlayLobbyImpl IDirectPlayLobby3Impl;
-typedef struct IDirectPlayLobbyImpl IDirectPlayLobby3AImpl;
+typedef struct IDirectPlayLobbyImpl  IDirectPlayLobbyAImpl;
+typedef struct IDirectPlayLobbyImpl  IDirectPlayLobbyWImpl;
+typedef struct IDirectPlayLobby2Impl IDirectPlayLobby2AImpl;
+typedef struct IDirectPlayLobby2Impl IDirectPlayLobby2WImpl;
+typedef struct IDirectPlayLobby3Impl IDirectPlayLobby3AImpl;
+typedef struct IDirectPlayLobby3Impl IDirectPlayLobby3WImpl;
 
 /*****************************************************************************
  * IDirectPlayLobby {1,2,3} implementation structure
@@ -46,15 +61,9 @@ typedef struct tagDirectPlayLobbyIUnknownData
   CRITICAL_SECTION  DPL_lock;
 } DirectPlayLobbyIUnknownData;
 
-/* FIXME: I don't think that everything belongs here...*/
 typedef struct tagDirectPlayLobbyData
 {
-  DWORD                     dwConnFlags;
-  DPSESSIONDESC2            sessionDesc;
-  DPNAME                    playerName;
-  GUID                      guidSP;
-  LPVOID                    lpAddress;
-  DWORD                     dwAddressSize;
+  HKEY hkCallbackKeyHack;
 } DirectPlayLobbyData;
 
 typedef struct tagDirectPlayLobby2Data
@@ -67,30 +76,38 @@ typedef struct tagDirectPlayLobby3Data
   BOOL dummy;
 } DirectPlayLobby3Data;
 
+#define LOBBY_IMPL_FIELDS DirectPlayLobbyIUnknownData*  unk; \
+                          DirectPlayLobbyData*          dpl; \
+                          DirectPlayLobby2Data*         dpl2; \
+                          DirectPlayLobby3Data*         dpl3;
+
 struct IDirectPlayLobbyImpl
 {
     ICOM_VFIELD(IDirectPlayLobby);
- 
-    /* IUnknown fields */
-    DirectPlayLobbyIUnknownData*  unk;
-
-    /* IDirectPlayLobby 1 fields */
-    DirectPlayLobbyData*          dpl;
-
-    /* IDirectPlayLobby 2 fields */
-    DirectPlayLobby2Data*         dpl2;
-
-    /* IDirectPlayLobby 3 fields */
-    DirectPlayLobby3Data*         dpl3;
+    LOBBY_IMPL_FIELDS 
 };
 
+struct IDirectPlayLobby2Impl
+{
+    ICOM_VFIELD(IDirectPlayLobby2);
+    LOBBY_IMPL_FIELDS
+};
+
+struct IDirectPlayLobby3Impl
+{
+    ICOM_VFIELD(IDirectPlayLobby3);
+    LOBBY_IMPL_FIELDS
+};
+
+
 /* Forward declarations of virtual tables */
-static ICOM_VTABLE(IDirectPlayLobby) directPlayLobbyAVT;
-static ICOM_VTABLE(IDirectPlayLobby) directPlayLobbyWVT;
-static ICOM_VTABLE(IDirectPlayLobby2) directPlayLobby2AVT;
+static ICOM_VTABLE(IDirectPlayLobby)  directPlayLobbyWVT;
 static ICOM_VTABLE(IDirectPlayLobby2) directPlayLobby2WVT;
-static ICOM_VTABLE(IDirectPlayLobby3) directPlayLobby3AVT;
 static ICOM_VTABLE(IDirectPlayLobby3) directPlayLobby3WVT;
+
+static ICOM_VTABLE(IDirectPlayLobby)  directPlayLobbyAVT;
+static ICOM_VTABLE(IDirectPlayLobby2) directPlayLobby2AVT;
+static ICOM_VTABLE(IDirectPlayLobby3) directPlayLobby3AVT;
 
 
 
@@ -123,15 +140,17 @@ static ICOM_VTABLE(IDirectPlayLobby3) directPlayLobby3WVT;
  */
 
 
-BOOL DPL_CreateIUnknown( IDirectPlayLobbyImpl* lpDPL ) 
+BOOL DPL_CreateIUnknown( LPVOID lpDPL ) 
 {
-  lpDPL->unk = (DirectPlayLobbyIUnknownData*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
-                                                        sizeof( *(lpDPL->unk) ) ); 
-  if ( lpDPL->unk != NULL )
-  {
-    InitializeCriticalSection( &lpDPL->unk->DPL_lock );
+  ICOM_THIS(IDirectPlayLobbyAImpl,lpDPL);
 
-    IDirectPlayLobby_AddRef( (IDirectPlayLobby*)lpDPL );
+  This->unk = (DirectPlayLobbyIUnknownData*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
+                                                       sizeof( *(This->unk) ) ); 
+  if ( This->unk != NULL )
+  {
+    InitializeCriticalSection( &This->unk->DPL_lock );
+
+    IDirectPlayLobby_AddRef( (LPDIRECTPLAYLOBBYA)lpDPL );
 
     return TRUE; 
   }
@@ -139,53 +158,47 @@ BOOL DPL_CreateIUnknown( IDirectPlayLobbyImpl* lpDPL )
   return FALSE;
 }
 
-BOOL DPL_DestroyIUnknown( IDirectPlayLobbyImpl* lpDPL )
+BOOL DPL_DestroyIUnknown( LPVOID lpDPL )
 {
-  DeleteCriticalSection( &lpDPL->unk->DPL_lock );
-  HeapFree( GetProcessHeap(), 0, lpDPL->unk );
+  ICOM_THIS(IDirectPlayLobbyAImpl,lpDPL);
+
+  DeleteCriticalSection( &This->unk->DPL_lock );
+  HeapFree( GetProcessHeap(), 0, This->unk );
 
   return TRUE;
 }
 
-BOOL DPL_CreateLobby1( IDirectPlayLobbyImpl* lpDPL )
+BOOL DPL_CreateLobby1( LPVOID lpDPL )
 {
-  lpDPL->dpl = (DirectPlayLobbyIUnknownData*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                                        sizeof( *(lpDPL->dpl) ) );
-  if ( lpDPL->dpl == NULL )
+  ICOM_THIS(IDirectPlayLobbyAImpl,lpDPL);
+
+  This->dpl = (DirectPlayLobbyData*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                               sizeof( *(This->dpl) ) );
+  if ( This->dpl == NULL )
   {
     return FALSE;
   }
 
-  /* Initialize the dwSize fields for internal structures */
-
-  lpDPL->dpl->sessionDesc.dwSize = sizeof( lpDPL->dpl->sessionDesc ); 
-  lpDPL->dpl->playerName.dwSize = sizeof( lpDPL->dpl->playerName );
-  /* lpDPL->dpl->dwAddressSize = 0; Done in HeapAlloc */
-  
   return TRUE;  
 }
 
-BOOL DPL_DestroyLobby1( IDirectPlayLobbyImpl* lpDPL )
+BOOL DPL_DestroyLobby1( LPVOID lpDPL )
 {
+  ICOM_THIS(IDirectPlayLobbyAImpl,lpDPL);
+
   /* Delete the contents */
-  HeapFree( GetProcessHeap(), 0, lpDPL->dpl->sessionDesc.sess.lpszSessionNameA );
-  HeapFree( GetProcessHeap(), 0, lpDPL->dpl->sessionDesc.pass.lpszPasswordA );
-
-  HeapFree( GetProcessHeap(), 0, lpDPL->dpl->playerName.psn.lpszShortNameA );
-  HeapFree( GetProcessHeap(), 0, lpDPL->dpl->playerName.pln.lpszLongNameA );
-
-  HeapFree( GetProcessHeap(), 0, lpDPL->dpl->lpAddress );
-
-  HeapFree( GetProcessHeap(), 0, lpDPL->dpl );
+  HeapFree( GetProcessHeap(), 0, This->dpl );
 
   return TRUE;
 }
 
-BOOL DPL_CreateLobby2( IDirectPlayLobbyImpl* lpDPL )
+BOOL DPL_CreateLobby2( LPVOID lpDPL )
 {
-  lpDPL->dpl2 = (DirectPlayLobbyIUnknownData*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                                         sizeof( *(lpDPL->dpl2) ) );
-  if ( lpDPL->dpl2 == NULL )
+  ICOM_THIS(IDirectPlayLobby2AImpl,lpDPL);
+
+  This->dpl2 = (DirectPlayLobby2Data*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                                 sizeof( *(This->dpl2) ) );
+  if ( This->dpl2 == NULL )
   {
     return FALSE;
   }
@@ -193,18 +206,22 @@ BOOL DPL_CreateLobby2( IDirectPlayLobbyImpl* lpDPL )
   return TRUE;
 }
 
-BOOL DPL_DestroyLobby2( IDirectPlayLobbyImpl* lpDPL )
+BOOL DPL_DestroyLobby2( LPVOID lpDPL )
 {
-  HeapFree( GetProcessHeap(), 0, lpDPL->dpl2 );
+  ICOM_THIS(IDirectPlayLobby2AImpl,lpDPL);
+
+  HeapFree( GetProcessHeap(), 0, This->dpl2 );
 
   return TRUE;
 }
 
-BOOL DPL_CreateLobby3( IDirectPlayLobbyImpl* lpDPL )
+BOOL DPL_CreateLobby3( LPVOID lpDPL )
 {
-  lpDPL->dpl3 = (DirectPlayLobbyIUnknownData*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                                         sizeof( *(lpDPL->dpl3) ) );
-  if ( lpDPL->dpl3 == NULL )
+  ICOM_THIS(IDirectPlayLobby3AImpl,lpDPL);
+
+  This->dpl3 = (DirectPlayLobby3Data*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                                 sizeof( *(This->dpl3) ) );
+  if ( This->dpl3 == NULL )
   {
     return FALSE;
   }
@@ -212,9 +229,11 @@ BOOL DPL_CreateLobby3( IDirectPlayLobbyImpl* lpDPL )
   return TRUE;
 }
 
-BOOL DPL_DestroyLobby3( IDirectPlayLobbyImpl* lpDPL )
+BOOL DPL_DestroyLobby3( LPVOID lpDPL )
 {
-  HeapFree( GetProcessHeap(), 0, lpDPL->dpl3 );
+  ICOM_THIS(IDirectPlayLobby3AImpl,lpDPL);
+
+  HeapFree( GetProcessHeap(), 0, This->dpl3 );
 
   return TRUE;
 }
@@ -225,153 +244,179 @@ extern
 HRESULT directPlayLobby_QueryInterface
          ( REFIID riid, LPVOID* ppvObj )
 {
-  IDirectPlayLobby3AImpl* lpDPL = NULL;
-
   if( IsEqualGUID( &IID_IDirectPlayLobby, riid ) )
   {
-    lpDPL = (IDirectPlayLobbyImpl*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                              sizeof( *lpDPL ) );
+    *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                         sizeof( IDirectPlayLobbyWImpl ) );
 
-    if( !lpDPL )
+    if( *ppvObj == NULL )
     {
       return E_OUTOFMEMORY;
     }
+    
+    /* new scope for variable declaration */
+    {
+      ICOM_THIS(IDirectPlayLobbyWImpl,*ppvObj);
 
-    ICOM_VTBL(lpDPL) = &directPlayLobbyWVT;
+      ICOM_VTBL(This) = &directPlayLobbyWVT;
 
-    if ( DPL_CreateIUnknown( lpDPL ) &&
-         DPL_CreateLobby1( lpDPL ) 
-       )
-    { 
-      *ppvObj = lpDPL;
-      return S_OK;
+      if ( DPL_CreateIUnknown( (LPVOID)This ) &&
+           DPL_CreateLobby1( (LPVOID)This ) 
+         )
+      { 
+        return S_OK;
+      }
+
     }
+
+    goto error;
   }
   else if( IsEqualGUID( &IID_IDirectPlayLobbyA, riid ) )
   {
-    lpDPL = (IDirectPlayLobbyAImpl*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                               sizeof( *lpDPL ) );
+    *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                         sizeof( IDirectPlayLobbyAImpl ) );
 
-    if( !lpDPL )
+    if( *ppvObj == NULL )
     {
       return E_OUTOFMEMORY;
     }
 
-    ICOM_VTBL(lpDPL) = &directPlayLobbyAVT;
+    {
+      ICOM_THIS(IDirectPlayLobbyAImpl,*ppvObj);
 
-    if ( DPL_CreateIUnknown( lpDPL ) &&
-         DPL_CreateLobby1( lpDPL ) 
-       )
-    { 
-      *ppvObj = lpDPL;
-      return S_OK;
+      ICOM_VTBL(This) = &directPlayLobbyAVT;
+
+      if ( DPL_CreateIUnknown( (LPVOID)This ) &&
+           DPL_CreateLobby1( (LPVOID)This ) 
+         )
+      { 
+        return S_OK;
+      }
     }
+
+    goto error;
   }
   else if( IsEqualGUID( &IID_IDirectPlayLobby2, riid ) )
   {
-    lpDPL = (IDirectPlayLobby2Impl*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                               sizeof( *lpDPL ) );
+    *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                         sizeof( IDirectPlayLobby2WImpl ) );
 
-    if( !lpDPL )
+    if( *ppvObj == NULL )
     {
       return E_OUTOFMEMORY;
     }
 
-    ICOM_VTBL(lpDPL) = &directPlayLobby2WVT;
-
-    if ( DPL_CreateIUnknown( lpDPL ) &&
-         DPL_CreateLobby1( lpDPL ) &&
-         DPL_CreateLobby2( lpDPL )
-       )
     {
-      *ppvObj = lpDPL;
-      return S_OK;
+      ICOM_THIS(IDirectPlayLobby2WImpl,*ppvObj);
+
+      ICOM_VTBL(This) = &directPlayLobby2WVT;
+
+      if ( DPL_CreateIUnknown( (LPVOID)This ) &&
+           DPL_CreateLobby1( (LPVOID)This ) &&
+           DPL_CreateLobby2( (LPVOID)This )
+         )
+      {
+        return S_OK;
+      }
     }
+
+    goto error;
   }
   else if( IsEqualGUID( &IID_IDirectPlayLobby2A, riid ) )
   {
-    lpDPL = (IDirectPlayLobby2AImpl*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                                sizeof( *lpDPL ) );
+    *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                         sizeof( IDirectPlayLobby2AImpl ) );
 
-    if( !lpDPL )
+    if( *ppvObj == NULL )
     {
       return E_OUTOFMEMORY;
     }
 
-    ICOM_VTBL(lpDPL) = &directPlayLobby2AVT;
-
-    if ( DPL_CreateIUnknown( lpDPL ) &&
-         DPL_CreateLobby1( lpDPL )  &&
-         DPL_CreateLobby2( lpDPL )
-       )
     {
-      *ppvObj = lpDPL;
-      return S_OK;
+      ICOM_THIS(IDirectPlayLobby2AImpl,*ppvObj);
+
+      ICOM_VTBL(This) = &directPlayLobby2AVT;
+
+      if ( DPL_CreateIUnknown( (LPVOID)This ) &&
+           DPL_CreateLobby1( (LPVOID)This )  &&
+           DPL_CreateLobby2( (LPVOID)This )
+         )
+      {
+        return S_OK;
+      }
     }
+
+    goto error;
   }
   else if( IsEqualGUID( &IID_IDirectPlayLobby3, riid ) )
   {
-    lpDPL = (IDirectPlayLobby3Impl*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                               sizeof( *lpDPL ) );
+    *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                         sizeof( IDirectPlayLobby3WImpl ) );
 
-    if( !lpDPL )
+    if( *ppvObj == NULL )
     {
       return E_OUTOFMEMORY;
     }
 
-    ICOM_VTBL(lpDPL) = &directPlayLobby3WVT;
-
-    if ( DPL_CreateIUnknown( lpDPL ) &&
-         DPL_CreateLobby1( lpDPL ) &&
-         DPL_CreateLobby2( lpDPL ) &&
-         DPL_CreateLobby3( lpDPL )
-       )
     {
-      *ppvObj = lpDPL;
-      return S_OK;
-    }
+      ICOM_THIS(IDirectPlayLobby3WImpl,*ppvObj);
+
+      ICOM_VTBL(This) = &directPlayLobby3WVT;
+
+      if ( DPL_CreateIUnknown( *ppvObj ) &&
+           DPL_CreateLobby1( *ppvObj ) &&
+           DPL_CreateLobby2( *ppvObj ) &&
+           DPL_CreateLobby3( *ppvObj )
+         )
+      {
+        return S_OK;
+      }
+    }    
+ 
+    goto error;
   }
   else if( IsEqualGUID( &IID_IDirectPlayLobby3A, riid ) )
   {
-     lpDPL = (IDirectPlayLobby3AImpl*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                             sizeof( *lpDPL ) );
+     *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                          sizeof( IDirectPlayLobby3AImpl ) );
 
-    if( !lpDPL )
+    if( *ppvObj == NULL )
     {
       return E_OUTOFMEMORY;
     }
 
-    ICOM_VTBL(lpDPL) = &directPlayLobby3AVT;
-
-    if ( DPL_CreateIUnknown( lpDPL ) &&
-         DPL_CreateLobby1( lpDPL ) &&
-         DPL_CreateLobby2( lpDPL ) &&
-         DPL_CreateLobby3( lpDPL )
-       )
     {
-      *ppvObj = lpDPL;
-      return S_OK;
+      ICOM_THIS(IDirectPlayLobby3AImpl,*ppvObj);
+
+      ICOM_VTBL(This) = &directPlayLobby3AVT;
+
+      if ( DPL_CreateIUnknown( *ppvObj ) &&
+           DPL_CreateLobby1( *ppvObj ) &&
+           DPL_CreateLobby2( *ppvObj ) &&
+           DPL_CreateLobby3( *ppvObj )
+         )
+      {
+        return S_OK;
+      }
     }
+
+    goto error;
   }
 
-  /* Check if we had problems creating an interface */
-  if ( lpDPL != NULL )
-  {
-    DPL_DestroyLobby3( lpDPL );
-    DPL_DestroyLobby2( lpDPL );
-    DPL_DestroyLobby1( lpDPL );
-    DPL_DestroyIUnknown( lpDPL );
-    HeapFree( GetProcessHeap(), 0, lpDPL );
+  /* Unsupported interface */
+  *ppvObj = NULL;
+  return E_NOINTERFACE;
+
+error:
+
+    DPL_DestroyLobby3( *ppvObj );
+    DPL_DestroyLobby2( *ppvObj );
+    DPL_DestroyLobby1( *ppvObj );
+    DPL_DestroyIUnknown( *ppvObj );
+    HeapFree( GetProcessHeap(), 0, *ppvObj );
 
     *ppvObj = NULL;
-
     return DPERR_NOMEMORY;
-  }
-  else /* Unsupported interface */
-  {
-    *ppvObj = NULL;
-    return E_NOINTERFACE;
-  }
 }
 
 static HRESULT WINAPI IDirectPlayLobbyAImpl_QueryInterface
@@ -379,7 +424,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_QueryInterface
   REFIID riid,
   LPVOID* ppvObj )
 {
-  ICOM_THIS(IDirectPlayLobby2Impl,iface);
+  ICOM_THIS(IDirectPlayLobbyAImpl,iface);
   TRACE("(%p)->(%p,%p)\n", This, riid, ppvObj );
 
   if( IsEqualGUID( &IID_IUnknown, riid )  ||
@@ -400,7 +445,7 @@ static HRESULT WINAPI IDirectPlayLobbyW_QueryInterface
   REFIID riid,
   LPVOID* ppvObj )
 {
-  ICOM_THIS(IDirectPlayLobbyImpl,iface);
+  ICOM_THIS(IDirectPlayLobbyWImpl,iface);
   TRACE("(%p)->(%p,%p)\n", This, riid, ppvObj );
 
   if( IsEqualGUID( &IID_IUnknown, riid )  ||
@@ -421,7 +466,7 @@ static HRESULT WINAPI IDirectPlayLobby2AImpl_QueryInterface
   REFIID riid,
   LPVOID* ppvObj )
 {
-  ICOM_THIS(IDirectPlayLobby2Impl,iface);
+  ICOM_THIS(IDirectPlayLobby2AImpl,iface);
   TRACE("(%p)->(%p,%p)\n", This, riid, ppvObj );
 
   /* Compare riids. We know this object is a direct play lobby 2A object.
@@ -443,7 +488,7 @@ static HRESULT WINAPI IDirectPlayLobby2WImpl_QueryInterface
   REFIID riid,
   LPVOID* ppvObj )
 {
-  ICOM_THIS(IDirectPlayLobby2Impl,iface);
+  ICOM_THIS(IDirectPlayLobby2WImpl,iface);
 
   /* Compare riids. We know this object is a direct play lobby 2 object.
      If we are asking about the same type of interface we're fine.
@@ -466,7 +511,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_QueryInterface
   REFIID riid,
   LPVOID* ppvObj )
 {
-  ICOM_THIS(IDirectPlayLobby3Impl,iface);
+  ICOM_THIS(IDirectPlayLobby3AImpl,iface);
 
   /* Compare riids. We know this object is a direct play lobby 3 object.
      If we are asking about the same type of interface we're fine.
@@ -475,7 +520,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_QueryInterface
       IsEqualGUID( &IID_IDirectPlayLobby3A, riid )
     )
   {
-    IDirectPlayLobby_AddRef( This );
+    IDirectPlayLobby_AddRef( iface );
     *ppvObj = This;
     return S_OK;
   }
@@ -489,7 +534,7 @@ static HRESULT WINAPI IDirectPlayLobby3WImpl_QueryInterface
   REFIID riid,
   LPVOID* ppvObj )
 {
-  ICOM_THIS(IDirectPlayLobby3Impl,iface);
+  ICOM_THIS(IDirectPlayLobby3WImpl,iface);
 
   /* Compare riids. We know this object is a direct play lobby 3 object.
      If we are asking about the same type of interface we're fine.
@@ -511,11 +556,11 @@ static HRESULT WINAPI IDirectPlayLobby3WImpl_QueryInterface
  * Simple procedure. Just increment the reference count to this
  * structure and return the new reference count.
  */
-static ULONG WINAPI IDirectPlayLobbyAImpl_AddRef
-( LPDIRECTPLAYLOBBYA iface )
+static ULONG WINAPI IDirectPlayLobbyImpl_AddRef
+( LPDIRECTPLAYLOBBY iface )
 {
   ULONG refCount;
-  ICOM_THIS(IDirectPlayLobby2Impl,iface);
+  ICOM_THIS(IDirectPlayLobbyWImpl,iface);
 
   EnterCriticalSection( &This->unk->DPL_lock );
   {
@@ -538,7 +583,7 @@ static ULONG WINAPI IDirectPlayLobbyAImpl_Release
 {
   ULONG refCount;
 
-  ICOM_THIS(IDirectPlayLobby2Impl,iface);
+  ICOM_THIS(IDirectPlayLobbyAImpl,iface);
 
   EnterCriticalSection( &This->unk->DPL_lock );
   {
@@ -576,11 +621,11 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_Connect
   LPDIRECTPLAY2A* lplpDP,
   IUnknown* pUnk)
 {
-  ICOM_THIS(IDirectPlayLobbyImpl,iface);
+  ICOM_THIS(IDirectPlayLobbyAImpl,iface);
 
   LPDIRECTPLAY2A      lpDirectPlay2A;
-  LPDIRECTPLAY3A      lpDirectPlay3A;
-  LPDIRECTPLAYLOBBY2A lpDirectPlayLobby2A;
+  /* LPDIRECTPLAY3A      lpDirectPlay3A; */
+  /* LPDIRECTPLAYLOBBY2A lpDirectPlayLobby2A; */
   HRESULT             rc;
 
   FIXME("(%p)->(0x%08lx,%p,%p): stub\n", This, dwFlags, lplpDP, pUnk );
@@ -590,54 +635,25 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_Connect
      return DPERR_INVALIDPARAMS;
   }
 
-  if( ( rc = DirectPlayCreate( (LPGUID)&IID_IDirectPlay2A, lplpDP, pUnk ) ) != DP_OK )
+  /* Create the DirectPlay interface */
+  if( ( rc = directPlay_QueryInterface( &IID_IDirectPlay2A, (LPVOID*)lplpDP ) ) != DP_OK )
   {
-     ERR("error creating Direct Play 2W interface. Return Code = 0x%lx.\n", rc );
+     ERR("error creating Direct Play 2A interface. Return Code = 0x%lx.\n", rc );
      return rc;
   }
 
   lpDirectPlay2A = *lplpDP;
 
-  /* This should invoke IDirectPlay3::InitializeConnection IDirectPlay3::Open */
-  /* - Use This object to get a DPL2 object using QueryInterface
-   * - Need to call CreateCompoundAddress to create the lpConnection param for IDirectPlay::InitializeConnection
+  /* - Need to call IDirectPlay::EnumConnections with the service provider to get that good information
+   * - Need to call CreateAddress to create the lpConnection param for IDirectPlay::InitializeConnection
    * - Call IDirectPlay::InitializeConnection
    * - Call IDirectPlay::Open 
    */
 #if 0
-  create_address:
-  {
-    DPCOMPOUNDADDRESSELEMENT compoundAddress;
-
-    /* Get lobby version capable of supporting CreateCompoundAddress */ 
-    if( ( rc = IDirectPlayLobby_QueryInterface( This, &IID_IDirectPlayLobby2A, &lpDirectPlayLobby2A ) ) != DP_OK )
-    {
-      return rc;
-    }
-
-    EnterCriticalSection( &This->unk->DPL_lock );
-
-    /* Actually create the compound address */
-    memcpy( compoundAddress.guidDataType, This->dpl->guidSP, sizeof( compoundAddress.guidDataType ) );
-
-    LeaveCriticalSection( &This->unk->DPL_lock );
-
-    rc = IDirectPlayLobby_CreateCompoundAddress( lpDirectPlayLobby2A, lpElements, dwElementCount, lpAddress, lpdwAddressSize ) 
-
-    /* Free the lobby object since we're done with it */
-    IDirectPlayLobby_Release( lpDirectPlayLobby2A );
-
-    if( rc != DP_OK )
-    {
-      return rc; 
-    }
-  }
-
-  if( ( rc = IDirectPlayX_QueryInterface( directPlay2A, &IID_IDirectPlay3A, &lpDirectPlay3A ) ) != DP_OK )
-  {
-    return rc;
-  }
+  IDirectPlayLobby_EnumAddress( iface, RunApplicationA_Callback, 
+                                lpConn->lpAddress, lpConn->dwAddressSize, NULL );
 #endif
+
 
   return DP_OK;
 
@@ -649,7 +665,7 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_Connect
   LPDIRECTPLAY2* lplpDP,
   IUnknown* pUnk)
 {
-  ICOM_THIS(IDirectPlayLobbyImpl,iface);
+  ICOM_THIS(IDirectPlayLobbyWImpl,iface);
   LPDIRECTPLAY2* directPlay2W;
   HRESULT        createRC;
 
@@ -660,7 +676,8 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_Connect
      return DPERR_INVALIDPARAMS;
   }
 
-  if( ( createRC = DirectPlayCreate( (LPGUID)&IID_IDirectPlay2, lplpDP, pUnk ) ) != DP_OK )
+  /* Create the DirectPlay interface */
+  if( ( createRC = directPlay_QueryInterface( &IID_IDirectPlay2, (LPVOID*)lplpDP ) ) != DP_OK )
   {
      ERR("error creating Direct Play 2W interface. Return Code = 0x%lx.\n", createRC );
      return createRC;
@@ -681,6 +698,8 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_Connect
  * (GUID) of the service provider and data that the service provider can
  * interpret as a network address.
  *
+ * NOTE: It appears that this method is supposed to be really really stupid
+ *       with no error checking on the contents.
  */
 static HRESULT WINAPI IDirectPlayLobbyAImpl_CreateAddress
 ( LPDIRECTPLAYLOBBYA iface,
@@ -691,8 +710,27 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_CreateAddress
   LPVOID lpAddress, 
   LPDWORD lpdwAddressSize )
 {
-  FIXME(":stub\n");
-  return DPERR_OUTOFMEMORY;
+  ICOM_THIS(IDirectPlayLobbyAImpl,iface);
+
+  const DWORD dwNumAddElements = 2; /* Service Provide & address data type */
+  DPCOMPOUNDADDRESSELEMENT addressElements[ dwNumAddElements ];
+
+  TRACE( "(%p)->(%p,%p,%p,0x%08lx,%p,%p)\n", This, guidSP, guidDataType, lpData, 
+                                             dwDataSize, lpAddress, lpdwAddressSize );
+
+  addressElements[ 0 ].guidDataType = DPAID_ServiceProvider;
+  addressElements[ 0 ].dwDataSize = sizeof( GUID );
+  addressElements[ 0 ].lpData = (LPVOID)guidSP;
+
+  addressElements[ 1 ].guidDataType = *guidDataType;
+  addressElements[ 1 ].dwDataSize = dwDataSize;
+  addressElements[ 1 ].lpData = (LPVOID)lpData;
+
+  /* Call CreateCompoundAddress to cut down on code.
+     NOTE: We can do this because we don't support DPL 1 interfaces! */
+  return IDirectPlayLobby_CreateCompoundAddress( (LPDIRECTPLAYLOBBY2A)iface,
+                                                 addressElements, dwNumAddElements,
+                                                 lpAddress, lpdwAddressSize ); 
 }
 
 static HRESULT WINAPI IDirectPlayLobbyWImpl_CreateAddress
@@ -704,8 +742,26 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_CreateAddress
   LPVOID lpAddress,
   LPDWORD lpdwAddressSize )
 {
-  FIXME(":stub\n");
-  return DPERR_OUTOFMEMORY;
+  ICOM_THIS(IDirectPlayLobbyWImpl,iface);
+  const DWORD dwNumAddElements = 2; /* Service Provide & address data type */
+  DPCOMPOUNDADDRESSELEMENT addressElements[ dwNumAddElements ];
+
+  TRACE( "(%p)->(%p,%p,%p,0x%08lx,%p,%p)\n", This, guidSP, guidDataType, lpData,
+                                             dwDataSize, lpAddress, lpdwAddressSize );
+
+  addressElements[ 0 ].guidDataType = DPAID_ServiceProvider;
+  addressElements[ 0 ].dwDataSize = sizeof( GUID );
+  addressElements[ 0 ].lpData = (LPVOID)guidSP;
+
+  addressElements[ 1 ].guidDataType = *guidDataType;
+  addressElements[ 1 ].dwDataSize = dwDataSize;
+  addressElements[ 1 ].lpData = (LPVOID)lpData;
+
+  /* Call CreateCompoundAddress to cut down on code.
+     NOTE: We can do this because we don't support DPL 1 interfaces! */
+  return IDirectPlayLobby_CreateCompoundAddress( (LPDIRECTPLAYLOBBY2)iface,
+                                                 addressElements, dwNumAddElements,
+                                                 lpAddress, lpdwAddressSize );
 }
 
 
@@ -722,10 +778,14 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumAddress
   DWORD dwAddressSize,
   LPVOID lpContext )
 {
-  FIXME(":stub\n");
-  return DPERR_OUTOFMEMORY;
-}
+  ICOM_THIS(IDirectPlayLobbyAImpl,iface);
 
+  TRACE("(%p)->(%p,%p,0x%08lx,%p)\n", This, lpEnumAddressCallback, lpAddress, 
+                                      dwAddressSize, lpContext );
+
+  return DPL_EnumAddress( lpEnumAddressCallback, lpAddress, dwAddressSize, lpContext );
+}
+  
 static HRESULT WINAPI IDirectPlayLobbyWImpl_EnumAddress
 ( LPDIRECTPLAYLOBBY iface,
   LPDPENUMADDRESSCALLBACK lpEnumAddressCallback,
@@ -733,8 +793,39 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_EnumAddress
   DWORD dwAddressSize,
   LPVOID lpContext )
 {
-  FIXME(":stub\n");
-  return DPERR_OUTOFMEMORY;
+  ICOM_THIS(IDirectPlayLobbyWImpl,iface);
+
+  TRACE("(%p)->(%p,%p,0x%08lx,%p)\n", This, lpEnumAddressCallback, lpAddress,     
+                                      dwAddressSize, lpContext );
+
+  return DPL_EnumAddress( lpEnumAddressCallback, lpAddress, dwAddressSize, lpContext );
+}
+
+static HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, LPCVOID lpAddress,
+                                DWORD dwAddressSize, LPVOID lpContext )
+{ 
+  DWORD dwTotalSizeEnumerated = 0;
+
+  /* FIXME: First chunk is always the total size chunk - Should we report it? */ 
+
+  while ( dwTotalSizeEnumerated < dwAddressSize )
+  {
+    LPDPADDRESS lpElements = (LPDPADDRESS)lpAddress;
+    DWORD dwSizeThisEnumeration; 
+
+    /* Invoke the enum method. If false is returned, stop enumeration */
+    if ( !lpEnumAddressCallback( &lpElements->guidDataType, lpElements->dwDataSize, 
+                                 lpElements + sizeof( DPADDRESS ), lpContext ) )
+    {
+      break;
+    }
+
+    dwSizeThisEnumeration  = sizeof( DPADDRESS ) + lpElements->dwDataSize;
+    lpAddress             += dwSizeThisEnumeration;
+    dwTotalSizeEnumerated += dwSizeThisEnumeration;
+  }
+
+  return DP_OK;
 }
 
 /********************************************************************
@@ -750,8 +841,121 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumAddressTypes
   LPVOID lpContext,
   DWORD dwFlags )
 {
-  FIXME(":stub\n");
-  return DPERR_OUTOFMEMORY;
+  ICOM_THIS(IDirectPlayLobbyAImpl,iface);
+
+  HKEY   hkResult;
+  LPCSTR searchSubKey    = "SOFTWARE\\Microsoft\\DirectPlay\\Service Providers";
+  DWORD  dwIndex, sizeOfSubKeyName=50;
+  char   subKeyName[51];
+
+  TRACE(" (%p)->(%p,%p,%p,0x%08lx)\n", This, lpEnumAddressTypeCallback, guidSP, lpContext, dwFlags );
+
+  if( dwFlags != 0 )
+  {
+    return DPERR_INVALIDPARAMS;
+  }
+
+  if( !lpEnumAddressTypeCallback || !*lpEnumAddressTypeCallback )
+  {
+     return DPERR_INVALIDPARAMS;
+  }
+
+  if( guidSP == NULL )
+  {
+    return DPERR_INVALIDOBJECT;
+  }
+
+    /* Need to loop over the service providers in the registry */
+    if( RegOpenKeyExA( HKEY_LOCAL_MACHINE, searchSubKey,
+                         0, KEY_ENUMERATE_SUB_KEYS, &hkResult ) != ERROR_SUCCESS )
+    {
+      /* Hmmm. Does this mean that there are no service providers? */
+      ERR(": no service providers?\n");
+      return DP_OK;
+    }
+
+    /* Traverse all the service providers we have available */
+    for( dwIndex=0;
+         RegEnumKeyA( hkResult, dwIndex, subKeyName, sizeOfSubKeyName ) != ERROR_NO_MORE_ITEMS;
+         ++dwIndex )
+    {
+
+      HKEY     hkServiceProvider, hkServiceProviderAt;
+      GUID     serviceProviderGUID;
+      DWORD    returnTypeGUID, sizeOfReturnBuffer = 50;
+      char     atSubKey[51];
+      char     returnBuffer[51];
+      LPWSTR   lpWGUIDString;
+      DWORD    dwAtIndex;
+      LPSTR    atKey = "Address Types";
+      LPSTR    guidDataSubKey   = "Guid";
+
+
+      TRACE(" this time through: %s\n", subKeyName );
+
+      /* Get a handle for this particular service provider */
+      if( RegOpenKeyExA( hkResult, subKeyName, 0, KEY_QUERY_VALUE,
+                         &hkServiceProvider ) != ERROR_SUCCESS )
+      {
+         ERR(": what the heck is going on?\n" );
+         continue;
+      }
+
+      if( RegQueryValueExA( hkServiceProvider, guidDataSubKey,
+                            NULL, &returnTypeGUID, returnBuffer,
+                            &sizeOfReturnBuffer ) != ERROR_SUCCESS )
+      {
+        ERR(": missing GUID registry data members\n" );
+        continue;
+      }
+
+      /* FIXME: Check return types to ensure we're interpreting data right */
+      lpWGUIDString = HEAP_strdupAtoW( GetProcessHeap(), 0, returnBuffer );
+      CLSIDFromString( (LPCOLESTR)lpWGUIDString, &serviceProviderGUID );
+      HeapFree( GetProcessHeap(), 0, lpWGUIDString );
+      /* FIXME: Have I got a memory leak on the serviceProviderGUID? */
+
+      /* Determine if this is the Service Provider that the user asked for */
+      if( !IsEqualGUID( &serviceProviderGUID, guidSP ) )
+      {
+        continue;
+      }
+
+      /* Get a handle for this particular service provider */
+      if( RegOpenKeyExA( hkServiceProvider, atKey, 0, KEY_QUERY_VALUE,
+                         &hkServiceProviderAt ) != ERROR_SUCCESS )
+      {
+        WARN(": No Address Types registry data sub key/members\n" );
+        break;
+      }
+
+      /* Traverse all the address type we have available */
+      for( dwAtIndex=0;
+           RegEnumKeyA( hkServiceProviderAt, dwAtIndex, atSubKey, sizeOfSubKeyName ) != ERROR_NO_MORE_ITEMS;
+           ++dwAtIndex )
+      {
+        TRACE( "Found Address Type GUID %s\n", atSubKey );
+
+        /* FIXME: Check return types to ensure we're interpreting data right */
+        lpWGUIDString = HEAP_strdupAtoW( GetProcessHeap(), 0, atSubKey );
+        CLSIDFromString( (LPCOLESTR)lpWGUIDString, &serviceProviderGUID );
+        HeapFree( GetProcessHeap(), 0, lpWGUIDString );
+        /* FIXME: Have I got a memory leak on the serviceProviderGUID? */
+    
+        /* The enumeration will return FALSE if we are not to continue */
+        if( !lpEnumAddressTypeCallback( &serviceProviderGUID, lpContext, 0 ) )
+        {
+           WARN("lpEnumCallback returning FALSE\n" );
+           break; /* FIXME: This most likely has to break from the procedure...*/
+        }
+
+      }
+
+      /* We only enumerate address types for 1 GUID. We've found it, so quit looking */
+      break;
+    } 
+
+  return DP_OK;
 }
 
 static HRESULT WINAPI IDirectPlayLobbyWImpl_EnumAddressTypes
@@ -777,7 +981,7 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_EnumLocalApplications
   LPVOID lpContext,
   DWORD dwFlags )
 {
-  ICOM_THIS(IDirectPlayLobbyImpl,iface);
+  ICOM_THIS(IDirectPlayLobbyWImpl,iface);
 
   FIXME("(%p)->(%p,%p,0x%08lx):stub\n", This, lpEnumLocalAppCallback, lpContext, dwFlags );
 
@@ -790,11 +994,90 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumLocalApplications
   LPVOID lpContext,
   DWORD dwFlags )
 {
-  ICOM_THIS(IDirectPlayLobbyImpl,iface);
+  ICOM_THIS(IDirectPlayLobbyAImpl,iface);
 
-  FIXME("(%p)->(%p,%p,0x%08lx):stub\n", This, lpEnumLocalAppCallback, lpContext, dwFlags );
+  HKEY hkResult;
+  LPCSTR searchSubKey    = "SOFTWARE\\Microsoft\\DirectPlay\\Applications";
+  LPSTR guidDataSubKey   = "Guid";
+  DWORD dwIndex, sizeOfSubKeyName=50;
+  char subKeyName[51];
 
-  return DPERR_OUTOFMEMORY;
+  TRACE("(%p)->(%p,%p,0x%08lx)\n", This, lpEnumLocalAppCallback, lpContext, dwFlags );
+
+  if( dwFlags != 0 )
+  {
+    return DPERR_INVALIDPARAMS;
+  }
+
+  if( !lpEnumLocalAppCallback || !*lpEnumLocalAppCallback )
+  {
+     return DPERR_INVALIDPARAMS;
+  }
+
+  /* Need to loop over the service providers in the registry */
+  if( RegOpenKeyExA( HKEY_LOCAL_MACHINE, searchSubKey,
+                     0, KEY_ENUMERATE_SUB_KEYS, &hkResult ) != ERROR_SUCCESS )
+  {
+    /* Hmmm. Does this mean that there are no service providers? */
+    ERR(": no service providers?\n");
+    return DP_OK;
+  }
+
+  /* Traverse all registered applications */
+  for( dwIndex=0;
+       RegEnumKeyA( hkResult, dwIndex, subKeyName, sizeOfSubKeyName ) != ERROR_NO_MORE_ITEMS;
+       ++dwIndex )
+  {
+
+    HKEY       hkServiceProvider;
+    GUID       serviceProviderGUID;
+    DWORD      returnTypeGUID, sizeOfReturnBuffer = 50;
+    char       returnBuffer[51];
+    LPWSTR     lpWGUIDString;
+    DPLAPPINFO dplAppInfo;
+
+    TRACE(" this time through: %s\n", subKeyName );
+
+    /* Get a handle for this particular service provider */
+    if( RegOpenKeyExA( hkResult, subKeyName, 0, KEY_QUERY_VALUE,
+                       &hkServiceProvider ) != ERROR_SUCCESS )
+    {
+       ERR(": what the heck is going on?\n" );
+       continue;
+    }
+
+    if( RegQueryValueExA( hkServiceProvider, guidDataSubKey,
+                          NULL, &returnTypeGUID, returnBuffer,
+                          &sizeOfReturnBuffer ) != ERROR_SUCCESS )
+    {
+      ERR(": missing GUID registry data members\n" );
+      continue;
+    }
+
+    /* FIXME: Check return types to ensure we're interpreting data right */
+    lpWGUIDString = HEAP_strdupAtoW( GetProcessHeap(), 0, returnBuffer );
+    CLSIDFromString( (LPCOLESTR)lpWGUIDString, &serviceProviderGUID );
+    HeapFree( GetProcessHeap(), 0, lpWGUIDString );
+    /* FIXME: Have I got a memory leak on the serviceProviderGUID? */
+
+    dplAppInfo.dwSize               = sizeof( dplAppInfo );
+    dplAppInfo.guidApplication      = serviceProviderGUID;
+    dplAppInfo.appName.lpszAppNameA = subKeyName; 
+
+    EnterCriticalSection( &This->unk->DPL_lock );
+ 
+    memcpy( &This->dpl->hkCallbackKeyHack, &hkServiceProvider, sizeof( hkServiceProvider ) );
+
+    if( !lpEnumLocalAppCallback( &dplAppInfo, lpContext, dwFlags ) )
+    {
+       LeaveCriticalSection( &This->unk->DPL_lock );
+       break;
+    }
+
+    LeaveCriticalSection( &This->unk->DPL_lock );
+  }
+
+  return DP_OK;
 }
 
 /********************************************************************
@@ -813,77 +1096,18 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_GetConnectionSettings
   LPVOID lpData,
   LPDWORD lpdwDataSize )
 {
-  ICOM_THIS(IDirectPlayLobbyImpl,iface);
-  LPDPLCONNECTION lpDplConnection;
+  ICOM_THIS(IDirectPlayLobbyAImpl,iface);
+  HRESULT hr; 
 
-  FIXME(": semi stub (%p)->(0x%08lx,%p,%p)\n", This, dwAppID, lpData, lpdwDataSize );
- 
-  /* Application is requesting us to give the required size */
-  if ( lpData == NULL )
-  {
-    *lpdwDataSize = sizeof( DPLCONNECTION );
-    return DPERR_BUFFERTOOSMALL;
-  }
+  TRACE("(%p)->(0x%08lx,%p,%p)\n", This, dwAppID, lpData, lpdwDataSize );
 
-  /* Let's check the size of the buffer that the application has allocated */
-  if ( *lpdwDataSize < sizeof( DPLCONNECTION ) )
-  {
-    *lpdwDataSize = sizeof( DPLCONNECTION );
-    return DPERR_BUFFERTOOSMALL;
-  }
+  EnterCriticalSection( &This->unk->DPL_lock );
 
-  /* FIXME: Who's supposed to own the data */
+  hr = DPLAYX_GetConnectionSettingsA( dwAppID, lpData, lpdwDataSize );
 
-  /* Fill in the fields - let them just use the ptrs */
-  lpDplConnection = (LPDPLCONNECTION)lpData;
+  LeaveCriticalSection( &This->unk->DPL_lock );
 
-  /* Copy everything we've got into here */
-  /* Need to actually store the stuff here. Check if we've already allocated each field first. */
-  lpDplConnection->dwFlags = This->dpl->dwConnFlags;
-
-  /* Copy LPDPSESSIONDESC2 struct */
-  lpDplConnection->lpSessionDesc = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( This->dpl->sessionDesc ) );
-  memcpy( lpDplConnection->lpSessionDesc, &This->dpl->sessionDesc, sizeof( This->dpl->sessionDesc ) );
-
-  if( This->dpl->sessionDesc.sess.lpszSessionName )
-  {
-    lpDplConnection->lpSessionDesc->sess.lpszSessionName = 
-      HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, This->dpl->sessionDesc.sess.lpszSessionNameA );
-  }
-
-  if( This->dpl->sessionDesc.pass.lpszPassword )
-  {
-    lpDplConnection->lpSessionDesc->pass.lpszPassword = 
-      HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, This->dpl->sessionDesc.pass.lpszPasswordA );
-  }
-     
-  lpDplConnection->lpSessionDesc->dwReserved1 = This->dpl->sessionDesc.dwReserved1;
-  lpDplConnection->lpSessionDesc->dwReserved2 = This->dpl->sessionDesc.dwReserved2;
-
-  /* Copy DPNAME struct - seems to be optional - check for existance first */
-  lpDplConnection->lpPlayerName = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof( This->dpl->playerName ) );
-  memcpy( lpDplConnection->lpPlayerName, &(This->dpl->playerName), sizeof( This->dpl->playerName ) );
-
-  if( This->dpl->playerName.psn.lpszShortName )
-  {
-    lpDplConnection->lpPlayerName->psn.lpszShortName =
-      HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, This->dpl->playerName.psn.lpszShortNameA );  
-  }
-
-  if( This->dpl->playerName.pln.lpszLongName )
-  {
-    lpDplConnection->lpPlayerName->pln.lpszLongName =
-      HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, This->dpl->playerName.pln.lpszLongNameA );
-  }
-
-  memcpy( &lpDplConnection->guidSP, &This->dpl->guidSP, sizeof( This->dpl->guidSP ) );
-
-  lpDplConnection->lpAddress = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, This->dpl->dwAddressSize );
-  memcpy( lpDplConnection->lpAddress, This->dpl->lpAddress, This->dpl->dwAddressSize );
-
-  lpDplConnection->dwAddressSize = This->dpl->dwAddressSize;
-
-  return DP_OK;
+  return hr;
 }
 
 static HRESULT WINAPI IDirectPlayLobbyWImpl_GetConnectionSettings
@@ -892,28 +1116,18 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_GetConnectionSettings
   LPVOID lpData,
   LPDWORD lpdwDataSize )
 {
-  ICOM_THIS(IDirectPlayLobbyImpl,iface);
-  FIXME(":semi stub %p %08lx %p %p \n", This, dwAppID, lpData, lpdwDataSize );
+  ICOM_THIS(IDirectPlayLobbyWImpl,iface);
+  HRESULT hr;
 
-  /* Application is requesting us to give the required size */ 
-  if ( !lpData )
-  {
-    /* Let's check the size of the buffer that the application has allocated */
-    if( *lpdwDataSize >= sizeof( DPLCONNECTION ) )
-    {
-      return DP_OK;  
-    }
-    else
-    {
-      *lpdwDataSize = sizeof( DPLCONNECTION );
-      return DPERR_BUFFERTOOSMALL;
-    }
-  }
+  TRACE("(%p)->(0x%08lx,%p,%p)\n", This, dwAppID, lpData, lpdwDataSize );
+ 
+  EnterCriticalSection( &This->unk->DPL_lock );
 
-  /* Fill in the fields - see above */
-  FIXME("stub\n" );
+  hr = DPLAYX_GetConnectionSettingsW( dwAppID, lpData, lpdwDataSize );
 
-  return DP_OK;
+  LeaveCriticalSection( &This->unk->DPL_lock );
+
+  return hr;
 }
 
 /********************************************************************
@@ -930,7 +1144,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_ReceiveLobbyMessage
   LPVOID lpData,
   LPDWORD lpdwDataSize )
 {
-  ICOM_THIS(IDirectPlayLobbyImpl,iface);
+  ICOM_THIS(IDirectPlayLobbyAImpl,iface);
   FIXME(":stub %p %08lx %08lx %p %p %p\n", This, dwFlags, dwAppID, lpdwMessageFlags, lpData,
          lpdwDataSize );
   return DPERR_OUTOFMEMORY;
@@ -944,10 +1158,99 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_ReceiveLobbyMessage
   LPVOID lpData,
   LPDWORD lpdwDataSize )
 {
-  ICOM_THIS(IDirectPlayLobbyImpl,iface);
+  ICOM_THIS(IDirectPlayLobbyWImpl,iface);
   FIXME(":stub %p %08lx %08lx %p %p %p\n", This, dwFlags, dwAppID, lpdwMessageFlags, lpData,
          lpdwDataSize );
   return DPERR_OUTOFMEMORY;
+}
+
+typedef struct tagRunApplicationEnumStruct
+{
+  IDirectPlayLobbyAImpl* This;
+
+  GUID  appGUID;
+  LPSTR lpszPath;
+  LPSTR lpszFileName;
+  LPSTR lpszCommandLine;
+  LPSTR lpszCurrentDirectory;
+} RunApplicationEnumStruct, *lpRunApplicationEnumStruct;
+
+/* To be called by RunApplication to find how to invoke the function */
+static BOOL CALLBACK RunApplicationA_EnumLocalApplications
+( LPCDPLAPPINFO   lpAppInfo,
+  LPVOID          lpContext,
+  DWORD           dwFlags )
+{
+  lpRunApplicationEnumStruct lpData = (lpRunApplicationEnumStruct)lpContext;
+
+  if( IsEqualGUID( &lpAppInfo->guidApplication, &lpData->appGUID ) )
+  {
+    char  returnBuffer[200];
+    DWORD returnType, sizeOfReturnBuffer;
+    LPSTR clSubKey   = "CommandLine";
+    LPSTR cdSubKey   = "CurrentDirectory";  
+    LPSTR fileSubKey = "File";
+    LPSTR pathSubKey = "Path";
+
+    /* FIXME: Lazy man hack - dplay struct has the present reg key saved */ 
+
+    sizeOfReturnBuffer = 200;
+    
+    /* Get all the appropriate data from the registry */
+    if( RegQueryValueExA( lpData->This->dpl->hkCallbackKeyHack, clSubKey,
+                          NULL, &returnType, returnBuffer,
+                          &sizeOfReturnBuffer ) != ERROR_SUCCESS )
+    {
+       ERR( ": missing CommandLine registry data member\n" );
+    }
+    else
+    {
+      lpData->lpszCommandLine = HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, returnBuffer ); 
+    }
+
+    sizeOfReturnBuffer = 200;
+
+    if( RegQueryValueExA( lpData->This->dpl->hkCallbackKeyHack, cdSubKey,
+                          NULL, &returnType, returnBuffer,
+                          &sizeOfReturnBuffer ) != ERROR_SUCCESS )
+    {
+       ERR( ": missing CurrentDirectory registry data member\n" );
+    }
+    else
+    {
+      lpData->lpszCurrentDirectory = HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, returnBuffer );
+    }
+
+    sizeOfReturnBuffer = 200;
+
+    if( RegQueryValueExA( lpData->This->dpl->hkCallbackKeyHack, fileSubKey,
+                          NULL, &returnType, returnBuffer,
+                          &sizeOfReturnBuffer ) != ERROR_SUCCESS )
+    {
+       ERR( ": missing File registry data member\n" );
+    }
+    else
+    {
+      lpData->lpszFileName = HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, returnBuffer );
+    }
+
+    sizeOfReturnBuffer = 200;
+
+    if( RegQueryValueExA( lpData->This->dpl->hkCallbackKeyHack, pathSubKey,
+                          NULL, &returnType, returnBuffer,
+                          &sizeOfReturnBuffer ) != ERROR_SUCCESS )
+    {
+       ERR( ": missing Path registry data member\n" );
+    }
+    else
+    {
+      lpData->lpszPath = HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, returnBuffer );
+    }
+
+    return FALSE; /* No need to keep going as we found what we wanted */
+  }
+
+  return TRUE; /* Keep enumerating, haven't found the application yet */ 
 }
 
 /********************************************************************
@@ -963,8 +1266,103 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_RunApplication
   LPDPLCONNECTION lpConn,
   HANDLE hReceiveEvent )
 {
-  FIXME(":stub\n");
-  return DPERR_OUTOFMEMORY;
+  ICOM_THIS(IDirectPlayLobbyAImpl,iface);
+  HRESULT hr;
+  RunApplicationEnumStruct enumData;
+  char temp[200];
+  STARTUPINFOA startupInfo;
+  PROCESS_INFORMATION newProcessInfo;
+  LPSTR appName;
+
+  FIXME( "(%p)->(0x%08lx,%p,%p,%p):semi stub\n", This, dwFlags, lpdwAppID, lpConn, hReceiveEvent );
+
+  if( dwFlags != 0 )
+  {
+    return DPERR_INVALIDPARAMS;
+  }
+
+  EnterCriticalSection( &This->unk->DPL_lock );
+
+  ZeroMemory( &enumData, sizeof( enumData ) );
+  enumData.This    = This;
+  enumData.appGUID = lpConn->lpSessionDesc->guidApplication;
+
+  /* Our callback function will fill up the enumData structure with all the information 
+     required to start a new process */
+  IDirectPlayLobby_EnumLocalApplications( iface, RunApplicationA_EnumLocalApplications,
+                                          (LPVOID)(&enumData), 0 );
+
+  /* First the application name */
+  strcpy( temp, enumData.lpszPath );
+  strcat( temp, "\\" );
+  strcat( temp, enumData.lpszFileName ); 
+  HeapFree( GetProcessHeap(), 0, enumData.lpszPath );   
+  HeapFree( GetProcessHeap(), 0, enumData.lpszFileName );
+  appName = HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, temp );
+
+  /* Now the command line */
+  strcat( temp, " " ); 
+  strcat( temp, enumData.lpszCommandLine );
+  HeapFree( GetProcessHeap(), 0, enumData.lpszCommandLine );
+  enumData.lpszCommandLine = HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, temp );
+
+  ZeroMemory( &startupInfo, sizeof( startupInfo ) );
+  startupInfo.cb = sizeof( startupInfo );
+  /* FIXME: Should any fields be filled in? */
+
+  ZeroMemory( &newProcessInfo, sizeof( newProcessInfo ) );
+
+#if !defined( WORKING_PROCESS_SUSPEND )
+  DPLAYX_AquireSemaphoreHack(); 
+#endif
+
+  if( !CreateProcessA( appName,
+                       enumData.lpszCommandLine,
+                       NULL,
+                       NULL,
+                       FALSE,
+                       CREATE_DEFAULT_ERROR_MODE | CREATE_NEW_CONSOLE | CREATE_SUSPENDED, /* Creation Flags */
+                       NULL,
+                       enumData.lpszCurrentDirectory,
+                       &startupInfo,
+                       &newProcessInfo
+                     )
+    )
+  {
+    FIXME( "Failed to create process for app %s\n", appName );
+  } 
+
+  HeapFree( GetProcessHeap(), 0, appName );
+  HeapFree( GetProcessHeap(), 0, enumData.lpszCommandLine );
+  HeapFree( GetProcessHeap(), 0, enumData.lpszCurrentDirectory );
+
+  /* Reserve this global application id! */
+  if( !DPLAYX_CreateLobbyApplication( newProcessInfo.dwProcessId, hReceiveEvent ) )
+  {
+    ERR( "Unable to create global application data\n" );
+  }
+
+  hr = IDirectPlayLobby_SetConnectionSettings( iface, 0, newProcessInfo.dwProcessId, lpConn );
+ 
+  if( hr != DP_OK )
+  {
+    FIXME( "SetConnectionSettings failure 0x%08lx\n", hr );
+    return hr;
+  }
+
+  /* Everything seems to have been set correctly, update the dwAppID */
+  *lpdwAppID = newProcessInfo.dwProcessId;
+
+#if !defined( WORKING_PROCESS_SUSPEND )
+  FIXME( ": It would be at this point that we would allow the process to resume\n" ); 
+  DPLAYX_ReleaseSemaphoreHack();
+#else
+  ResumeThread( newProcessInfo.dwThreadId );
+#endif
+
+  LeaveCriticalSection( &This->unk->DPL_lock );
+
+  return DP_OK;
 }
 
 static HRESULT WINAPI IDirectPlayLobbyWImpl_RunApplication
@@ -974,7 +1372,8 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_RunApplication
   LPDPLCONNECTION lpConn,
   HANDLE hReceiveEvent )
 {
-  FIXME(":stub\n");
+  ICOM_THIS(IDirectPlayLobbyWImpl,iface);
+  FIXME( "(%p)->(0x%08lx,%p,%p,%p):stub\n", This, dwFlags, lpdwAppID, lpConn, hReceiveEvent );
   return DPERR_OUTOFMEMORY;
 }
 
@@ -1018,93 +1417,18 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_SetConnectionSettings
   DWORD dwAppID,
   LPDPLCONNECTION lpConn )
 {
-  ICOM_THIS(IDirectPlayLobbyImpl,iface);
-  TRACE(": This=%p, dwFlags=%08lx, dwAppId=%08lx, lpConn=%p\n",
-         This, dwFlags, dwAppID, lpConn );
+  ICOM_THIS(IDirectPlayLobbyWImpl,iface);
+  HRESULT hr;
 
-  /* Paramater check */
-  if( dwFlags || !This || !lpConn )
-  {
-    ERR("invalid parameters.\n");
-    return DPERR_INVALIDPARAMS;
-  }
-
-  /* See if there is a connection associated with this request.
-   * dwAppID == 0 indicates that this request isn't associated with a connection.
-   */
-  if( dwAppID )
-  {
-     FIXME(": Connection dwAppID=%08lx given. Not implemented yet.\n",
-            dwAppID );
-
-     /* Need to add a check for this application Id...*/
-     return DPERR_NOTLOBBIED;
-  }
-
-  if(  lpConn->dwSize != sizeof(DPLCONNECTION) )
-  {
-    ERR(": old/new DPLCONNECTION type? Size=%08lx vs. expected=%ul bytes\n", 
-         lpConn->dwSize, sizeof( DPLCONNECTION ) );
-    return DPERR_INVALIDPARAMS;
-  }
-
-  /* Need to investigate the lpConn->lpSessionDesc to figure out
-   * what type of session we need to join/create.
-   */
-  if(  (!lpConn->lpSessionDesc ) || 
-       ( lpConn->lpSessionDesc->dwSize != sizeof( DPSESSIONDESC2 ) )
-    )
-  {
-    ERR("DPSESSIONDESC passed in? Size=%08lx vs. expected=%ul bytes\n",
-         lpConn->lpSessionDesc->dwSize, sizeof( DPSESSIONDESC2 ) );
-    return DPERR_INVALIDPARAMS;
-  }
+  TRACE("(%p)->(0x%08lx,0x%08lx,%p)\n", This, dwFlags, dwAppID, lpConn );
 
   EnterCriticalSection( &This->unk->DPL_lock );
 
-  /* Need to actually store the stuff here. Check if we've already allocated each field first. */
-  This->dpl->dwConnFlags = lpConn->dwFlags;
-
-  /* Copy LPDPSESSIONDESC2 struct - this is required */
-  memcpy( &This->dpl->sessionDesc, lpConn->lpSessionDesc, sizeof( *(lpConn->lpSessionDesc) ) );
-
-  /* FIXME: Can this just be shorted? Does it handle the NULL case correctly? */
-  if( lpConn->lpSessionDesc->sess.lpszSessionName )
-    This->dpl->sessionDesc.sess.lpszSessionName = HEAP_strdupW( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->lpSessionDesc->sess.lpszSessionName );
-  else
-    This->dpl->sessionDesc.sess.lpszSessionName = NULL;
- 
-  if( lpConn->lpSessionDesc->pass.lpszPassword )
-    This->dpl->sessionDesc.pass.lpszPassword = HEAP_strdupW( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->lpSessionDesc->pass.lpszPassword );
-  else
-    This->dpl->sessionDesc.pass.lpszPassword = NULL;
-
-  This->dpl->sessionDesc.dwReserved1 = lpConn->lpSessionDesc->dwReserved1;
-  This->dpl->sessionDesc.dwReserved2 = lpConn->lpSessionDesc->dwReserved2;
-
-  /* Copy DPNAME struct - seems to be optional - check for existance first */
-  if( lpConn->lpPlayerName )
-  {
-     memcpy( &This->dpl->playerName, lpConn->lpPlayerName, sizeof( *lpConn->lpPlayerName ) ); 
-
-     if( lpConn->lpPlayerName->psn.lpszShortName )
-       This->dpl->playerName.psn.lpszShortName = HEAP_strdupW( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->lpPlayerName->psn.lpszShortName );
-
-     if( lpConn->lpPlayerName->pln.lpszLongName )
-       This->dpl->playerName.pln.lpszLongName = HEAP_strdupW( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->lpPlayerName->pln.lpszLongName );
-
-  }
-
-  memcpy( &This->dpl->guidSP, &lpConn->guidSP, sizeof( lpConn->guidSP ) );  
-  
-  This->dpl->lpAddress = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->dwAddressSize ); 
-  memcpy( This->dpl->lpAddress, lpConn->lpAddress, lpConn->dwAddressSize );
-
-  This->dpl->dwAddressSize = lpConn->dwAddressSize;
+  hr = DPLAYX_SetConnectionSettingsW( dwFlags, dwAppID, lpConn );
 
   LeaveCriticalSection( &This->unk->DPL_lock );
 
-  return DP_OK;
+  return hr;
 }
 
 static HRESULT WINAPI IDirectPlayLobbyAImpl_SetConnectionSettings
@@ -1113,93 +1437,18 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_SetConnectionSettings
   DWORD dwAppID,
   LPDPLCONNECTION lpConn )
 {
-  ICOM_THIS(IDirectPlayLobbyImpl,iface);
-  TRACE(": This=%p, dwFlags=%08lx, dwAppId=%08lx, lpConn=%p\n",
-         This, dwFlags, dwAppID, lpConn );
+  ICOM_THIS(IDirectPlayLobbyAImpl,iface);
+  HRESULT hr;
 
-  /* Paramater check */
-  if( dwFlags || !This || !lpConn )
-  {
-    ERR("invalid parameters.\n");
-    return DPERR_INVALIDPARAMS;
-  }
-
-  /* See if there is a connection associated with this request.
-   * dwAppID == 0 indicates that this request isn't associated with a connection.
-   */
-  if( dwAppID )
-  {
-     FIXME(": Connection dwAppID=%08lx given. Not implemented yet.\n",
-            dwAppID );
-
-     /* Need to add a check for this application Id...*/
-     return DPERR_NOTLOBBIED;
-  }
-
-  if(  lpConn->dwSize != sizeof(DPLCONNECTION) )
-  {
-    ERR(": old/new DPLCONNECTION type? Size=%08lx vs. expected=%ul bytes\n",
-         lpConn->dwSize, sizeof( DPLCONNECTION ) );
-    return DPERR_INVALIDPARAMS;
-  }
-
-  /* Need to investigate the lpConn->lpSessionDesc to figure out
-   * what type of session we need to join/create.
-   */
-  if(  (!lpConn->lpSessionDesc ) ||
-       ( lpConn->lpSessionDesc->dwSize != sizeof( DPSESSIONDESC2 ) )
-    )
-  {
-    ERR("DPSESSIONDESC passed in? Size=%08lx vs. expected=%ul bytes\n",
-         lpConn->lpSessionDesc->dwSize, sizeof( DPSESSIONDESC2 ) );
-    return DPERR_INVALIDPARAMS;
-  }
+  TRACE("(%p)->(0x%08lx,0x%08lx,%p)\n", This, dwFlags, dwAppID, lpConn );
 
   EnterCriticalSection( &This->unk->DPL_lock );
 
-  /* Need to actually store the stuff here. Check if we've already allocated each field first. */
-  This->dpl->dwConnFlags = lpConn->dwFlags;
-
-  /* Copy LPDPSESSIONDESC2 struct - this is required */
-  memcpy( &This->dpl->sessionDesc, lpConn->lpSessionDesc, sizeof( *(lpConn->lpSessionDesc) ) );
-
-  /* FIXME: Can this just be shorted? Does it handle the NULL case correctly? */
-  if( lpConn->lpSessionDesc->sess.lpszSessionNameA )
-    This->dpl->sessionDesc.sess.lpszSessionNameA = HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->lpSessionDesc->sess.lpszSessionNameA );
-  else
-    This->dpl->sessionDesc.sess.lpszSessionNameA = NULL;
-
-  if( lpConn->lpSessionDesc->pass.lpszPasswordA )
-    This->dpl->sessionDesc.pass.lpszPasswordA = HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->lpSessionDesc->pass.lpszPasswordA );
-  else
-    This->dpl->sessionDesc.pass.lpszPasswordA = NULL;
-
-  This->dpl->sessionDesc.dwReserved1 = lpConn->lpSessionDesc->dwReserved1;
-  This->dpl->sessionDesc.dwReserved2 = lpConn->lpSessionDesc->dwReserved2;
-
-  /* Copy DPNAME struct - seems to be optional - check for existance first */
-  if( lpConn->lpPlayerName )
-  {
-     memcpy( &This->dpl->playerName, lpConn->lpPlayerName, sizeof( *lpConn->lpPlayerName ) );
-
-     if( lpConn->lpPlayerName->psn.lpszShortNameA )
-       This->dpl->playerName.psn.lpszShortNameA = HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->lpPlayerName->psn.lpszShortNameA );
-
-     if( lpConn->lpPlayerName->pln.lpszLongNameA )
-       This->dpl->playerName.pln.lpszLongNameA = HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->lpPlayerName->pln.lpszLongNameA );
-
-  }
-
-  memcpy( &This->dpl->guidSP, &lpConn->guidSP, sizeof( lpConn->guidSP ) );
-
-  This->dpl->lpAddress = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, lpConn->dwAddressSize );
-  memcpy( This->dpl->lpAddress, lpConn->lpAddress, lpConn->dwAddressSize );
-
-  This->dpl->dwAddressSize = lpConn->dwAddressSize;
+  hr = DPLAYX_SetConnectionSettingsA( dwFlags, dwAppID, lpConn );
 
   LeaveCriticalSection( &This->unk->DPL_lock );
 
-  return DP_OK;
+  return hr;
 }
 
 /********************************************************************
@@ -1228,7 +1477,7 @@ static HRESULT WINAPI IDirectPlayLobbyWImpl_SetLobbyMessageEvent
 }
 
 
-/* DPL 2 methods - well actuall only one */
+/* DPL 2 methods */
 
 /********************************************************************
  *
@@ -1242,8 +1491,7 @@ static HRESULT WINAPI IDirectPlayLobby2WImpl_CreateCompoundAddress
   LPVOID lpAddress,
   LPDWORD lpdwAddressSize )
 {
-  FIXME(":stub\n");
-  return DPERR_OUTOFMEMORY;
+  return DPL_CreateCompoundAddress( lpElements, dwElementCount, lpAddress, lpdwAddressSize, FALSE );
 }
 
 static HRESULT WINAPI IDirectPlayLobby2AImpl_CreateCompoundAddress
@@ -1253,8 +1501,185 @@ static HRESULT WINAPI IDirectPlayLobby2AImpl_CreateCompoundAddress
   LPVOID lpAddress,
   LPDWORD lpdwAddressSize )
 {
-  FIXME(":stub\n");
-  return DPERR_OUTOFMEMORY;
+  return DPL_CreateCompoundAddress( lpElements, dwElementCount, lpAddress, lpdwAddressSize, TRUE );
+}
+
+static HRESULT DPL_CreateCompoundAddress
+( LPCDPCOMPOUNDADDRESSELEMENT lpElements,
+  DWORD dwElementCount,
+  LPVOID lpAddress,
+  LPDWORD lpdwAddressSize,
+  BOOL bAnsiInterface )
+{
+  DWORD dwSizeRequired = 0;
+  DWORD dwElements;
+  LPCDPCOMPOUNDADDRESSELEMENT lpOrigElements = lpElements;
+
+  TRACE("(%p,0x%08lx,%p,%p)\n", lpElements, dwElementCount, lpAddress, lpdwAddressSize );
+
+  /* Parameter check */
+  if( ( lpElements == NULL ) ||
+      ( dwElementCount == 0 )   /* FIXME: Not sure if this is a failure case */
+    )
+  {
+    return DPERR_INVALIDPARAMS;
+  }
+
+  /* Add the total size chunk */
+  dwSizeRequired += sizeof( DPADDRESS ) + sizeof( DWORD );
+
+  /* Calculate the size of the buffer required */
+  for ( dwElements = dwElementCount; dwElements > 0; --dwElements, ++lpElements ) 
+  {
+    if ( ( IsEqualGUID( &lpElements->guidDataType, &DPAID_ServiceProvider ) ) ||
+         ( IsEqualGUID( &lpElements->guidDataType, &DPAID_LobbyProvider ) )
+       )
+    {
+      dwSizeRequired += sizeof( DPADDRESS ) + sizeof( GUID ); 
+    }
+    else if ( ( IsEqualGUID( &lpElements->guidDataType, &DPAID_Phone ) ) ||
+              ( IsEqualGUID( &lpElements->guidDataType, &DPAID_Modem ) ) ||
+              ( IsEqualGUID( &lpElements->guidDataType, &DPAID_INet ) )
+            )
+    {
+      if( !bAnsiInterface )
+      { 
+        ERR( "Ansi GUIDs used for unicode interface\n" );
+        return DPERR_INVALIDFLAGS;
+      }
+
+      dwSizeRequired += sizeof( DPADDRESS ) + lpElements->dwDataSize;
+    }
+    else if ( ( IsEqualGUID( &lpElements->guidDataType, &DPAID_PhoneW ) ) ||
+              ( IsEqualGUID( &lpElements->guidDataType, &DPAID_ModemW ) ) ||
+              ( IsEqualGUID( &lpElements->guidDataType, &DPAID_INetW ) )
+            )
+    {
+      if( bAnsiInterface )
+      {
+        ERR( "Unicode GUIDs used for ansi interface\n" );
+        return DPERR_INVALIDFLAGS;
+      }
+
+      FIXME( "Right size for unicode interface?\n" );
+      dwSizeRequired += sizeof( DPADDRESS ) + lpElements->dwDataSize * sizeof( WCHAR );
+    }
+    else if ( IsEqualGUID( &lpElements->guidDataType, &DPAID_INetPort ) )
+    {
+      dwSizeRequired += sizeof( DPADDRESS ) + sizeof( WORD );
+    }
+    else if ( IsEqualGUID( &lpElements->guidDataType, &DPAID_ComPort ) )
+    {
+      FIXME( "Right size for unicode interface?\n" );
+      dwSizeRequired += sizeof( DPADDRESS ) + sizeof( DPCOMPORTADDRESS ); /* FIXME: Right size? */
+    }
+    else
+    {
+      char lpGUIDString[51];
+      WINE_StringFromCLSID( &lpElements->guidDataType, &lpGUIDString[0] );
+
+      ERR( "Unknown GUID %s\n", &lpGUIDString[0] );
+
+      return DPERR_INVALIDFLAGS; 
+    }
+  }
+
+  /* The user wants to know how big a buffer to allocate for us */
+  if( ( lpAddress == NULL ) ||
+      ( *lpdwAddressSize < dwSizeRequired ) 
+    )
+  {
+    *lpdwAddressSize = dwSizeRequired; 
+    return DPERR_BUFFERTOOSMALL;
+  }  
+
+  /* Add the total size chunk */
+  {
+    LPDPADDRESS lpdpAddress = (LPDPADDRESS)lpAddress;
+
+    lpdpAddress->guidDataType = DPAID_TotalSize;
+    lpdpAddress->dwDataSize = sizeof( DWORD );
+    lpAddress += sizeof( DPADDRESS );
+
+    *(LPDWORD)lpAddress = dwSizeRequired;
+    lpAddress += sizeof( DWORD );
+  }
+
+  /* Calculate the size of the buffer required */
+  for( dwElements = dwElementCount, lpElements = lpOrigElements; 
+       dwElements > 0; 
+       --dwElements, ++lpElements ) 
+  {
+    if ( ( IsEqualGUID( &lpElements->guidDataType, &DPAID_ServiceProvider ) ) ||
+         ( IsEqualGUID( &lpElements->guidDataType, &DPAID_LobbyProvider ) )
+       )
+    {
+      LPDPADDRESS lpdpAddress = (LPDPADDRESS)lpAddress;
+
+      lpdpAddress->guidDataType = lpElements->guidDataType;
+      lpdpAddress->dwDataSize = sizeof( GUID );
+      lpAddress += sizeof( DPADDRESS );
+
+      *((LPGUID)lpAddress) = *((LPGUID)lpElements->lpData);
+      lpAddress += sizeof( GUID );
+    }
+    else if ( ( IsEqualGUID( &lpElements->guidDataType, &DPAID_Phone ) ) ||
+              ( IsEqualGUID( &lpElements->guidDataType, &DPAID_Modem ) ) || 
+              ( IsEqualGUID( &lpElements->guidDataType, &DPAID_INet ) )
+            )
+    {
+      LPDPADDRESS lpdpAddress = (LPDPADDRESS)lpAddress;
+
+      lpdpAddress->guidDataType = lpElements->guidDataType;
+      lpdpAddress->dwDataSize = lpElements->dwDataSize;
+      lpAddress += sizeof( DPADDRESS );
+
+      lstrcpynA( (LPSTR)lpAddress, 
+                 (LPCSTR)lpElements->lpData, 
+                 lpElements->dwDataSize );
+      lpAddress += lpElements->dwDataSize;
+    }
+    else if ( ( IsEqualGUID( &lpElements->guidDataType, &DPAID_PhoneW ) ) ||
+              ( IsEqualGUID( &lpElements->guidDataType, &DPAID_ModemW ) ) ||
+              ( IsEqualGUID( &lpElements->guidDataType, &DPAID_INetW ) )
+            )
+    {
+      LPDPADDRESS lpdpAddress = (LPDPADDRESS)lpAddress;
+
+      lpdpAddress->guidDataType = lpElements->guidDataType;
+      lpdpAddress->dwDataSize = lpElements->dwDataSize;
+      lpAddress += sizeof( DPADDRESS );
+
+      lstrcpynW( (LPWSTR)lpAddress,
+                 (LPCWSTR)lpElements->lpData,
+                 lpElements->dwDataSize );
+      lpAddress += lpElements->dwDataSize * sizeof( WCHAR );
+    }
+    else if ( IsEqualGUID( &lpElements->guidDataType, &DPAID_INetPort ) )
+    {
+      LPDPADDRESS lpdpAddress = (LPDPADDRESS)lpAddress;
+
+      lpdpAddress->guidDataType = lpElements->guidDataType;
+      lpdpAddress->dwDataSize = lpElements->dwDataSize;
+      lpAddress += sizeof( DPADDRESS );
+
+      *((LPWORD)lpAddress) = *((LPWORD)lpElements->lpData);
+      lpAddress += sizeof( WORD );
+    }
+    else if ( IsEqualGUID( &lpElements->guidDataType, &DPAID_ComPort ) )
+    {
+      LPDPADDRESS lpdpAddress = (LPDPADDRESS)lpAddress;
+
+      lpdpAddress->guidDataType = lpElements->guidDataType;
+      lpdpAddress->dwDataSize = lpElements->dwDataSize;
+      lpAddress += sizeof( DPADDRESS );
+
+      memcpy( lpAddress, lpElements->lpData, sizeof( DPADDRESS ) ); 
+      lpAddress += sizeof( DPADDRESS );
+    }
+  }
+
+  return DP_OK;
 }
 
 /* DPL 3 methods */
@@ -1332,7 +1757,7 @@ static struct ICOM_VTABLE(IDirectPlayLobby) directPlayLobbyAVT =
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
   IDirectPlayLobbyAImpl_QueryInterface,
-  XCAST(AddRef)IDirectPlayLobbyAImpl_AddRef,
+  XCAST(AddRef)IDirectPlayLobbyImpl_AddRef,
   XCAST(Release)IDirectPlayLobbyAImpl_Release,
 
   IDirectPlayLobbyAImpl_Connect,
@@ -1363,7 +1788,7 @@ static ICOM_VTABLE(IDirectPlayLobby) directPlayLobbyWVT =
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
   IDirectPlayLobbyW_QueryInterface,
-  XCAST(AddRef)IDirectPlayLobbyAImpl_AddRef,
+  XCAST(AddRef)IDirectPlayLobbyImpl_AddRef,
   XCAST(Release)IDirectPlayLobbyAImpl_Release,
 
   IDirectPlayLobbyWImpl_Connect,
@@ -1393,7 +1818,7 @@ static ICOM_VTABLE(IDirectPlayLobby2) directPlayLobby2AVT =
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
   IDirectPlayLobby2AImpl_QueryInterface,
-  XCAST(AddRef)IDirectPlayLobbyAImpl_AddRef,
+  XCAST(AddRef)IDirectPlayLobbyImpl_AddRef,
   XCAST(Release)IDirectPlayLobbyAImpl_Release,
 
   XCAST(Connect)IDirectPlayLobbyAImpl_Connect,
@@ -1425,7 +1850,7 @@ static ICOM_VTABLE(IDirectPlayLobby2) directPlayLobby2WVT =
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 
   IDirectPlayLobby2WImpl_QueryInterface,
-  XCAST(AddRef)IDirectPlayLobbyAImpl_AddRef, 
+  XCAST(AddRef)IDirectPlayLobbyImpl_AddRef, 
   XCAST(Release)IDirectPlayLobbyAImpl_Release,
 
   XCAST(Connect)IDirectPlayLobbyWImpl_Connect,
@@ -1457,7 +1882,7 @@ static ICOM_VTABLE(IDirectPlayLobby3) directPlayLobby3AVT =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirectPlayLobby3AImpl_QueryInterface,
-  XCAST(AddRef)IDirectPlayLobbyAImpl_AddRef,
+  XCAST(AddRef)IDirectPlayLobbyImpl_AddRef,
   XCAST(Release)IDirectPlayLobbyAImpl_Release,
 
   XCAST(Connect)IDirectPlayLobbyAImpl_Connect,
@@ -1494,7 +1919,7 @@ static ICOM_VTABLE(IDirectPlayLobby3) directPlayLobby3WVT =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirectPlayLobby3WImpl_QueryInterface,
-  XCAST(AddRef)IDirectPlayLobbyAImpl_AddRef,
+  XCAST(AddRef)IDirectPlayLobbyImpl_AddRef,
   XCAST(Release)IDirectPlayLobbyAImpl_Release,
 
   XCAST(Connect)IDirectPlayLobbyWImpl_Connect,

@@ -34,7 +34,7 @@ DEFINE_GUID(IID_IDirectPlayLobby3, 0x2db72490, 0x652c, 0x11d1, 0xa7, 0xa8, 0x0, 
 typedef struct IDirectPlayLobby3 IDirectPlayLobby3, *LPDIRECTPLAYLOBBY3;
 
 DEFINE_GUID(IID_IDirectPlayLobby3A, 0x2db72491, 0x652c, 0x11d1, 0xa7, 0xa8, 0x0, 0x0, 0xf8, 0x3, 0xab, 0xfc);
-typedef struct IDirectPlayLobby3A IDirectPlayLobby3A, *LPDIRECTPLAYLOBBY3A;
+typedef struct IDirectPlayLobby3 IDirectPlayLobby3A, *LPDIRECTPLAYLOBBY3A;
 
 
 /*****************************************************************************
@@ -223,7 +223,7 @@ DEFINE_GUID(DPAID_INet, 0xc4a54da0, 0xe0af, 0x11cf, 0x9c, 0x4e, 0x0, 0xa0, 0xc9,
 DEFINE_GUID(DPAID_INetW, 0xe63232a0, 0x9dbf, 0x11d0, 0x9c, 0xc1, 0x0, 0xa0, 0xc9, 0x5, 0x42, 0x5e);
 
 /* DPAID_INetPort {E4524541-8EA5-11d1-8A96-006097B01411}
- * Chunk purpose: Chunk is a port number used for creating TCP and UDP sockets.
+ * Chunk purpose: Chunk is a port number used for creating TCP and UDP sockets. (WORD)
  */
 DEFINE_GUID(DPAID_INetPort, 0xe4524541, 0x8ea5, 0x11d1, 0x8a, 0x96, 0x0, 0x60, 0x97, 0xb0, 0x14, 0x11);
 
@@ -331,8 +331,8 @@ typedef struct tagDPAPPLICATIONDESC
 
 
 
-extern HRESULT WINAPI DirectPlayLobbyCreateW(LPGUID, LPDIRECTPLAYLOBBY *, IUnknown *, LPVOID, DWORD );
-extern HRESULT WINAPI DirectPlayLobbyCreateA(LPGUID, LPDIRECTPLAYLOBBYA *, IUnknown *, LPVOID, DWORD );
+extern HRESULT WINAPI DirectPlayLobbyCreateW(LPGUID, LPDIRECTPLAYLOBBY*,  IUnknown*, LPVOID, DWORD );
+extern HRESULT WINAPI DirectPlayLobbyCreateA(LPGUID, LPDIRECTPLAYLOBBYA*, IUnknown*, LPVOID, DWORD );
 
 
 
@@ -355,7 +355,7 @@ typedef BOOL (CALLBACK* LPDPLENUMLOCALAPPLICATIONSCALLBACK)(
 #include "poppack.h"
 
 /*****************************************************************************
- * IDirectPlayLobby interface
+ * IDirectPlayLobby and IDirectPlayLobbyA interface
  */
 #define ICOM_INTERFACE IDirectPlayLobby
 #define IDirectPlayLobby_METHODS \
@@ -377,7 +377,7 @@ ICOM_DEFINE(IDirectPlayLobby,IUnknown)
 #undef ICOM_INTERFACE
 
 /*****************************************************************************
- * IDirectPlayLobby2 interface
+ * IDirectPlayLobby2 and IDirectPlayLobby2A interface
  */
 #define ICOM_INTERFACE IDirectPlayLobby2
 #define IDirectPlayLobby2_METHODS \
@@ -389,9 +389,8 @@ ICOM_DEFINE(IDirectPlayLobby2,IDirectPlayLobby)
 #undef ICOM_INTERFACE
 
 /*****************************************************************************
- * IDirectPlayLobby3 interface
+ * IDirectPlayLobby3 and IDirectPlayLobby3A interface
  */
-
 #define ICOM_INTERFACE IDirectPlayLobby3
 #define IDirectPlayLobby3_METHODS \
     ICOM_METHOD4( HRESULT, ConnectEx,                 DWORD,, REFIID,, LPVOID *,, IUnknown *,) \
@@ -405,11 +404,9 @@ ICOM_DEFINE(IDirectPlayLobby2,IDirectPlayLobby)
 ICOM_DEFINE(IDirectPlayLobby3,IDirectPlayLobby2)
 #undef ICOM_INTERFACE
 
-/*** IUnknown methods ***/
 #define IDirectPlayLobby_QueryInterface(p,a,b)              ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectPlayLobby_AddRef(p)                          ICOM_CALL (AddRef,p)
 #define IDirectPlayLobby_Release(p)                         ICOM_CALL (Release,p)
-/*** IDirectPlayLobby methods ***/
 #define IDirectPlayLobby_Connect(p,a,b,c)                   ICOM_CALL3(Connect,p,a,b,c)
 #define IDirectPlayLobby_ConnectEx(p,a,b,c,d)               ICOM_CALL4(ConnectEx,p,a,b,c,d)
 #define IDirectPlayLobby_CreateAddress(p,a,b,c,d,e,f)       ICOM_CALL6(CreateAddress,p,a,b,c,d,e,f)

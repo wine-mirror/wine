@@ -6,12 +6,15 @@
  *
  */
 #include <string.h>
+
 #include "winerror.h"
 #include "winnt.h"
 #include "winreg.h"
 #include "dplay.h"
 #include "heap.h"
 #include "debugtools.h"
+
+#include "dpinit.h"
 
 DEFAULT_DEBUG_CHANNEL(dplay)
 
@@ -27,12 +30,13 @@ typedef struct IDirectPlayImpl IDirectPlay4AImpl;
 typedef struct IDirectPlayImpl IDirectPlay4Impl;
 
 /* Forward declarations of virtual tables */
-static ICOM_VTABLE(IDirectPlay2) directPlay2WVT;
 static ICOM_VTABLE(IDirectPlay2) directPlay2AVT;
-static ICOM_VTABLE(IDirectPlay3) directPlay3WVT;
 static ICOM_VTABLE(IDirectPlay3) directPlay3AVT;
-static ICOM_VTABLE(IDirectPlay4) directPlay4WVT;
 static ICOM_VTABLE(IDirectPlay4) directPlay4AVT;
+
+static ICOM_VTABLE(IDirectPlay2) directPlay2WVT;
+static ICOM_VTABLE(IDirectPlay3) directPlay3WVT;
+static ICOM_VTABLE(IDirectPlay4) directPlay4WVT;
 
 /*****************************************************************************
  * IDirectPlay implementation structure
@@ -48,6 +52,7 @@ struct IDirectPlayImpl
     /* IDirectPlay4Impl fields */
     /* none so far */
 };
+
 
 
 /* Get a new interface. To be used by QueryInterface. */ 
@@ -71,7 +76,7 @@ HRESULT directPlay_QueryInterface
     ICOM_VTBL(lpDP) = &directPlay2WVT;
 
     InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( lpDP );
+    IDirectPlayX_AddRef( (LPDIRECTPLAY2A)lpDP );
 
     *ppvObj = lpDP;
 
@@ -90,8 +95,9 @@ HRESULT directPlay_QueryInterface
     }
 
     ICOM_VTBL(lpDP) = &directPlay2AVT;
+
     InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( lpDP );
+    IDirectPlayX_AddRef( (LPDIRECTPLAY2A)lpDP );
 
     *ppvObj = lpDP;
 
@@ -110,8 +116,9 @@ HRESULT directPlay_QueryInterface
     }
 
     ICOM_VTBL(lpDP) = &directPlay3WVT;
+
     InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( lpDP );
+    IDirectPlayX_AddRef( (LPDIRECTPLAY2A)lpDP );
 
     *ppvObj = lpDP;
 
@@ -130,8 +137,9 @@ HRESULT directPlay_QueryInterface
     }
 
     ICOM_VTBL(lpDP) = &directPlay3AVT;
+
     InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( lpDP );
+    IDirectPlayX_AddRef( (LPDIRECTPLAY2A)lpDP );
 
     *ppvObj = lpDP;
 
@@ -150,8 +158,9 @@ HRESULT directPlay_QueryInterface
     }
 
     ICOM_VTBL(lpDP) = &directPlay4WVT;
+
     InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( lpDP );
+    IDirectPlayX_AddRef( (LPDIRECTPLAY2A)lpDP );
 
     *ppvObj = lpDP;
 
@@ -170,8 +179,9 @@ HRESULT directPlay_QueryInterface
     }
 
     ICOM_VTBL(lpDP) = &directPlay4AVT;
+
     InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( lpDP );
+    IDirectPlayX_AddRef( (LPDIRECTPLAY2A)lpDP );
 
     *ppvObj = lpDP;
 
@@ -859,29 +869,11 @@ static HRESULT WINAPI DirectPlay3WImpl_DeleteGroupFromGroup
   return DP_OK;
 }
 
-#if 0
-typedef BOOL (CALLBACK* LPDPENUMDPCALLBACKA)(
-    LPGUID      lpguidSP,
-    LPSTR       lpSPName,       /* ptr to str w/ driver description */
-    DWORD       dwMajorVersion, /* Major # of driver spec in lpguidSP */
-    DWORD       dwMinorVersion, /* Minor # of driver spec in lpguidSP */
-    LPVOID      lpContext);     /* User given */
-
-typedef BOOL (CALLBACK* LPDPENUMCONNECTIONSCALLBACK)(
-    LPCGUID     lpguidSP,
-    LPVOID      lpConnection,
-    DWORD       dwConnectionSize,
-    LPCDPNAME   lpName,
-    DWORD       dwFlags,
-    LPVOID      lpContext);
-
-#endif
-
 static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
           ( LPDIRECTPLAY3A iface, LPCGUID lpguidApplication, LPDPENUMCONNECTIONSCALLBACK lpEnumCallback, LPVOID lpContext, DWORD dwFlags )
 {
   ICOM_THIS(IDirectPlay3Impl,iface);
-  FIXME("(%p)->(%p,%p,%p,0x%08lx): stub\n", This, lpguidApplication, lpEnumCallback, lpContext, dwFlags );
+  TRACE("(%p)->(%p,%p,%p,0x%08lx)\n", This, lpguidApplication, lpEnumCallback, lpContext, dwFlags );
 
   /* A default dwFlags (0) is backwards compatible -- DPCONNECTION_DIRECTPLAY */
   if( dwFlags == 0 )
@@ -896,21 +888,85 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
     return DPERR_INVALIDFLAGS;
   }
 
-  if( lpguidApplication != NULL )
+  if( !lpEnumCallback || !*lpEnumCallback )
   {
-    FIXME( ": don't know how to deal with a non NULL lpguidApplication yet\n" );
+     return DPERR_INVALIDPARAMS;
   }
 
   /* Enumerate DirectPlay service providers */
   if( dwFlags & DPCONNECTION_DIRECTPLAY )
   {
+    HKEY hkResult;
+    LPCSTR searchSubKey    = "SOFTWARE\\Microsoft\\DirectPlay\\Service Providers";
+    LPSTR guidDataSubKey   = "Guid";
+    DWORD dwIndex, sizeOfSubKeyName=50;
+    char subKeyName[51]; 
 
+    /* Need to loop over the service providers in the registry */
+    if( RegOpenKeyExA( HKEY_LOCAL_MACHINE, searchSubKey,
+                         0, KEY_ENUMERATE_SUB_KEYS, &hkResult ) != ERROR_SUCCESS )
+    {
+      /* Hmmm. Does this mean that there are no service providers? */
+      ERR(": no service providers?\n");
+      return DP_OK;
+    }
+
+
+    /* Traverse all the service providers we have available */
+    for( dwIndex=0;
+         RegEnumKeyA( hkResult, dwIndex, subKeyName, sizeOfSubKeyName ) != ERROR_NO_MORE_ITEMS;
+         ++dwIndex )
+    {
+
+      HKEY     hkServiceProvider;
+      GUID     serviceProviderGUID;
+      DWORD    returnTypeGUID, sizeOfReturnBuffer = 50;
+      char     returnBuffer[51];
+      LPWSTR   lpWGUIDString;
+      DPNAME   dpName;
+
+      TRACE(" this time through: %s\n", subKeyName );
+
+      /* Get a handle for this particular service provider */
+      if( RegOpenKeyExA( hkResult, subKeyName, 0, KEY_QUERY_VALUE,
+                         &hkServiceProvider ) != ERROR_SUCCESS )
+      {
+         ERR(": what the heck is going on?\n" );
+         continue;
+      }
+
+      if( RegQueryValueExA( hkServiceProvider, guidDataSubKey,
+                            NULL, &returnTypeGUID, returnBuffer,
+                            &sizeOfReturnBuffer ) != ERROR_SUCCESS )
+      {
+        ERR(": missing GUID registry data members\n" );
+        continue;
+      }
+
+      /* FIXME: Check return types to ensure we're interpreting data right */
+      lpWGUIDString = HEAP_strdupAtoW( GetProcessHeap(), 0, returnBuffer );
+      CLSIDFromString( (LPCOLESTR)lpWGUIDString, &serviceProviderGUID );
+      HeapFree( GetProcessHeap(), 0, lpWGUIDString );
+      /* FIXME: Have I got a memory leak on the serviceProviderGUID? */
+
+      dpName.dwSize             = sizeof( dpName );
+      dpName.dwFlags            = 0;
+      dpName.psn.lpszShortNameA = subKeyName; /* FIXME: Is this right? */
+      dpName.pln.lpszLongNameA  = subKeyName; /* FIXME: Is this right? */
+
+      /* The enumeration will return FALSE if we are not to continue */
+      if( !lpEnumCallback( &serviceProviderGUID, NULL,0, &dpName, 0, lpContext ) )
+      {
+         WARN("lpEnumCallback returning FALSE\n" );
+         break;
+      }
+    }
   }
 
   /* Enumerate DirectPlayLobby service providers */
   if( dwFlags & DPCONNECTION_DIRECTPLAYLOBBY )
   {
-
+    FIXME( "DPCONNECTION_DIRECTPLAYLOBBY flag not handled\n" );
   }
 
   return DP_OK;
@@ -961,6 +1017,12 @@ static HRESULT WINAPI DirectPlay3AImpl_InitializeConnection
 {
   ICOM_THIS(IDirectPlay3Impl,iface);
   FIXME("(%p)->(%p,0x%08lx): stub\n", This, lpConnection, dwFlags );
+
+  if( dwFlags != 0 )
+  {
+    return DPERR_INVALIDFLAGS;
+  }
+
   return DP_OK;
 }
 
@@ -1579,13 +1641,11 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
                                      LPVOID lpContext )
 {
 
-  HKEY hkResult; 
+  HKEY   hkResult; 
   LPCSTR searchSubKey    = "SOFTWARE\\Microsoft\\DirectPlay\\Service Providers";
-  LPSTR guidDataSubKey   = "Guid";
-  LPSTR majVerDataSubKey = "dwReserved1";  
-  LPSTR minVerDataSubKey = "dwReserved0";  
-  DWORD dwIndex, sizeOfSubKeyName=50;
-  char subKeyName[51]; 
+  DWORD  dwIndex;
+  DWORD  sizeOfSubKeyName=50;
+  char   subKeyName[51]; 
 
   TRACE(": lpEnumCallback=%p lpContext=%p\n", lpEnumCallback, lpContext );
 
@@ -1608,6 +1668,9 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
        RegEnumKeyA( hkResult, dwIndex, subKeyName, sizeOfSubKeyName ) != ERROR_NO_MORE_ITEMS;
        ++dwIndex )
   {
+    LPSTR    majVerDataSubKey = "dwReserved1";  
+    LPSTR    minVerDataSubKey = "dwReserved2";  
+    LPSTR    guidDataSubKey   = "Guid";
     HKEY     hkServiceProvider;
     GUID     serviceProviderGUID;
     DWORD    returnTypeGUID, returnTypeReserved, sizeOfReturnBuffer = 50;
@@ -1641,8 +1704,9 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
     CLSIDFromString( (LPCOLESTR)lpWGUIDString, &serviceProviderGUID ); 
     HeapFree( GetProcessHeap(), 0, lpWGUIDString );
 
+    /* FIXME: Need to know which of dwReserved1 and dwReserved2 are maj and min */
+
     sizeOfReturnBuffer = 50;
- 
     if( RegQueryValueExA( hkServiceProvider, majVerDataSubKey,
                             NULL, &returnTypeReserved, returnBuffer,
                             &sizeOfReturnBuffer ) != ERROR_SUCCESS )
@@ -1651,17 +1715,14 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
       continue; 
     }
 
-    /* FIXME: This couldn't possibly be right...*/
     majVersionNum = GET_DWORD( returnBuffer );
 
-
     sizeOfReturnBuffer = 50;
-
     if( RegQueryValueExA( hkServiceProvider, minVerDataSubKey,
                             NULL, &returnTypeReserved, returnBuffer,
                             &sizeOfReturnBuffer ) != ERROR_SUCCESS )
     {
-      ERR(": missing dwReserved0 registry data members\n") ;
+      ERR(": missing dwReserved2 registry data members\n") ;
       continue;
     }
 
@@ -1701,25 +1762,54 @@ HRESULT WINAPI DirectPlayEnumerateW( LPDPENUMDPCALLBACKW lpEnumCallback, LPVOID 
 HRESULT WINAPI DirectPlayCreate
 ( LPGUID lpGUID, LPDIRECTPLAY2 *lplpDP, IUnknown *pUnk)
 {
+  char lpGUIDString[51];
+ 
+  WINE_StringFromCLSID( lpGUID, &lpGUIDString[0] );
 
-  TRACE("lpGUID=%p lplpDP=%p pUnk=%p\n", lpGUID,lplpDP,pUnk);
+  TRACE( "lpGUID=%s lplpDP=%p pUnk=%p\n", &lpGUIDString[0], lplpDP, pUnk );
 
   if( pUnk != NULL )
   {
-    /* Hmmm...wonder what this means! */
-    ERR("What does a NULL here mean?\n" ); 
-    return DPERR_OUTOFMEMORY;
+    return CLASS_E_NOAGGREGATION;
   }
 
+  /* One possibility is that they want an exact dplay interface */  
   if( IsEqualGUID( &IID_IDirectPlay2A, lpGUID ) )
   {
-    return directPlay_QueryInterface( lpGUID, lplpDP );
+    return directPlay_QueryInterface( lpGUID, (LPVOID*)lplpDP );
   }
   else if( IsEqualGUID( &IID_IDirectPlay2, lpGUID ) )
   {
-    return directPlay_QueryInterface( lpGUID, lplpDP );
+    return directPlay_QueryInterface( lpGUID, (LPVOID*)lplpDP );
   }
 
-  /* Unknown interface type */
-  return DPERR_NOINTERFACE;
+
+  /* Create an IDirectPlay object. We don't support that so we'll cheat and
+     give them an IDirectPlay2A object and hope that doesn't cause problems */
+  if( directPlay_QueryInterface( &IID_IDirectPlay2A, (LPVOID*)lplpDP ) != DP_OK )
+  {
+    return DPERR_UNAVAILABLE;
+  } 
+
+
+  /* Bind the desired service provider */
+  if( IsEqualGUID( lpGUID, &DPSPGUID_MODEM ) )
+  {
+     FIXME( "Modem binding not supported yet\n" );
+     IDirectPlayX_Release( *lplpDP );
+     *lplpDP = NULL;
+     return DPERR_INVALIDPARAMS; 
+  }
+
+  /* The GUID_NULL means don't bind a service provider. Just return the
+     interface. However, if it isn't we were given a bogus GUID, return an ERROR */
+  if( !IsEqualGUID( lpGUID, &GUID_NULL ) )
+  {
+    WARN( "unknown GUID %s\n", &lpGUIDString[0] );
+  }
+
+  IDirectPlayX_Release( *lplpDP );
+  *lplpDP = NULL;
+
+  return DPERR_INVALIDPARAMS;
 }

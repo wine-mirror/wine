@@ -32,34 +32,42 @@ TODO:
   - (done) Create and move to correct dll directories (dplay and dplayx)
   - (done) Implement dplay in terms of dplayx
   - (started) Need a better internal implementation for the objects which scales and 
-    preferably doesn't involve casting structures
+    preferably doesn't involve casting structures (dplobby done)
   - (started) More generic initialization and destruction helper methods based off
-    the chosen internal implementation
-  - How to deal with all the incorrect interfaces for IUnknown methods. The standard
-    wine macros are incorrect in that they always give IUnknown* rather than DirectPlayLobby2A
-    for instance. Are we forced to cast?
-  - Implement a lib main for the dplayx dll
+    the chosen internal implementation (dplobby done)
+  - Use only windows routines where an equivalent is available
+  - (done) Fix wine dplay.h and dplobby.h header files to allow apps to create the ansi versions
+  - (started) Port some WineLib test programs using sdk programs (both C and C++ progs)  
+  - (done) Implement a lib main for the dplayx dll (required for RunApplication, etc.)
+  - Figure out how to share the global memory correctly
   - Ensure that all dll stubs are present and the ordinals are correct
-  - Implementation of functionality
+  - (started)Implementation of functionality
+  - Addition of DirectX 7.0 functionality for direct play (try to catch that moving train)
   - bug fixes ;)
+  - Implement some WineLib test programs using sdk programs as a skeleton
 
 Programs to make work:
   - lserver.exe (from sdk)
   - override.exe (from sdk)
   - dpchat.exe (from sdk)
   - duel.exe (from sdk)
+  - dplaunch.exe (from sdk)
 
 Next API to implement on a per program basis:
   override.exe
-  - IDirectPlay3AImp_EnumConnections
+  - fixme:dplay:DirectPlayCreate Modem binding not supported yet
+  - DirectPlay3AImpl_InitializeConnection
+  - DirectPlay2AImpl_Open
   - ?
 
   dplaunch.exe
-  - IDirectPlayLobbyAImpl_EnumLocalApplications
+  - IDirectPlayLobby2AImpl_CreateCompoundAddress
+  - IDirectPlayLobbyAImpl_RunApplication
   - ?
 
   lserver.exe
   - IDirectPlayLobby2WImpl_Connect 
+  - fixme:dplay:DirectPlayCreate Modem binding not supported yet
   - IDirectPlay3WImpl_CreatePlayer 
   - IDirectPlay3WImpl_CreateGroup
   - IDirectPlay3WImpl_SetGroupData
@@ -67,12 +75,19 @@ Next API to implement on a per program basis:
   - ?
  
   bellhop.exe
-  - DirectPlay3AImpl_EnumConnections
+  - DirectPlay3AImpl_EnumConnections (lobby applications)
   - ?
 
   dpslots.exe
-  - IDirectPlayLobbyAImpl_SetConnectionSettings
-  - IDirectPlayAImpl_EnumConnections 
+  - IDirectPlayLobby3AImpl_ConnectEx
   - ?
+
+Other TODO:
+
+- look at problem with parsing the resource file for dplaunch. wrc problem?
+- I should be getting the dialog box to come up for dpchat when something is selected
+Call OLE32.7: CoCreateInstance(010017f0,00000000,00000001,010017e0,010094b4) ret=01002f38 fs=0237
+Call ADVAPI32.188: RegOpenKeyExA(80000002,5e08dd90 "Software\\Microsoft\\DirectPlay\\Compatibility",00000000,00020019,40e7f49c) ret=5e0b6e5a fs=0237
+
    
 Peter Hunnisett  -  hunnise@nortelnetworks.com
