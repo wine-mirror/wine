@@ -26,8 +26,7 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include "msdos.h"
-#include "miscemu.h"
+#include "dosexe.h"
 #include "drive.h"
 #include "wine/debug.h"
 

@@ -30,7 +30,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
-#include "miscemu.h"
+#include "dosexe.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int31);

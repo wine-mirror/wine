@@ -41,6 +41,7 @@ WINE_DECLARE_DEBUG_CHANNEL(io);
 #define SET_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD(val))
 #define SET_LOBYTE(dw,val)  ((dw) = ((dw) & 0xffffff00) | LOBYTE(val))
 #define ADD_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD((DWORD)(dw)+(val)))
+#define ISV86(context)      ((context)->EFlags & 0x00020000)
 
 inline static void add_stack( CONTEXT86 *context, int offset )
 {
@@ -52,7 +53,7 @@ inline static void add_stack( CONTEXT86 *context, int offset )
 
 inline static void *make_ptr( CONTEXT86 *context, DWORD seg, DWORD off, int long_addr )
 {
-    if (ISV86(context)) return PTR_REAL_TO_LIN( seg, off );
+    if (ISV86(context)) return (void *)((seg << 4) + LOWORD(off));
     if (IS_SELECTOR_SYSTEM(seg)) return (void *)off;
     if (!long_addr) off = LOWORD(off);
     return (char *) MapSL( MAKESEGPTR( seg, 0 ) ) + off;
@@ -60,7 +61,7 @@ inline static void *make_ptr( CONTEXT86 *context, DWORD seg, DWORD off, int long
 
 inline static void *get_stack( CONTEXT86 *context )
 {
-    if (ISV86(context)) return PTR_REAL_TO_LIN( context->SegSs, context->Esp );
+    if (ISV86(context)) return (void *)((context->SegSs << 4) + LOWORD(context->Esp));
     return wine_ldt_get_ptr( context->SegSs, context->Esp );
 }
 

@@ -23,9 +23,8 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "miscemu.h"
+#include "dosexe.h"
 #include "wine/debug.h"
-#include "msdos.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 

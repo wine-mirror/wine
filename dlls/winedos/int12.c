@@ -2,7 +2,7 @@
  * BIOS interrupt 12h handler
  */
 
-#include "miscemu.h"
+#include "dosexe.h"
 
 /**********************************************************************
  *         DOSVM_Int12Handler (WINEDOS16.118)

@@ -53,7 +53,6 @@
 #include "wine/winbase16.h"
 #include "drive.h"
 #include "file.h"
-#include "msdos.h"
 #include "winternl.h"
 #include "wine/server.h"
 #include "excpt.h"

@@ -39,7 +39,6 @@
 #include "ntstatus.h"
 #include "winnt.h"
 #include "winternl.h"
-#include "miscemu.h"
 #include "kernel_private.h"
 #include "wine/debug.h"
 
@@ -1085,8 +1084,8 @@ static DWORD VxDCall_VWin32( DWORD service, CONTEXT86 *context )
 
         TRACE("Int31/DPMI dispatch(%08lx)\n", callnum);
 
-	SET_AX( context, callnum );
-        SET_CX( context, parm );
+        context->Eax = callnum;
+        context->Ecx = parm;
         INSTR_CallBuiltinHandler( context, 0x31 );
 
 	return LOWORD(context->Eax);

@@ -47,7 +47,6 @@
 #include "wine/unicode.h"
 #include "drive.h"
 #include "file.h"
-#include "msdos.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dosfs);

@@ -524,7 +524,7 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
             SYSLEVEL_CheckNotLevel( 2 );
         }
 
-        if (ISV86(context))
+        if (context->EFlags & 0x00020000)  /* v86 mode */
         {
             EXCEPTION_REGISTRATION_RECORD frame;
             frame.Handler = vm86_handler;

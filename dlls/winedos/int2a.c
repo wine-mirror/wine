@@ -3,8 +3,7 @@
  */
 
 #include <stdlib.h>
-#include "msdos.h"
-#include "miscemu.h"
+#include "dosexe.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);

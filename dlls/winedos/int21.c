@@ -37,8 +37,6 @@
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "dosexe.h"
-#include "miscemu.h"
-#include "msdos.h"
 #include "file.h"
 #include "task.h"
 #include "winerror.h"
@@ -168,7 +166,84 @@ struct XFCB {
     BYTE  fcb[37];
 };
 
+/* DTA layout for FindFirst/FindNext */
+typedef struct
+{
+    BYTE   drive;        /* 00 drive letter */
+    char   mask[11];     /* 01 search template */
+    BYTE   search_attr;  /* 0c search attributes */
+    WORD   count;        /* 0d entry count within directory */
+    WORD   cluster;      /* 0f cluster of parent directory */
+    WCHAR *fullPath;     /* 11 full path (was: reserved) */
+    BYTE   fileattr;     /* 15 file attributes */
+    WORD   filetime;     /* 16 file time */
+    WORD   filedate;     /* 18 file date */
+    DWORD  filesize;     /* 1a file size */
+    char   filename[13]; /* 1e file name + extension */
+} FINDFILE_DTA;
+
+/* FCB layout for FindFirstFCB/FindNextFCB */
+typedef struct
+{
+    BYTE   drive;                /* 00 drive letter */
+    char   filename[11];         /* 01 filename 8+3 format */
+    int    count;                /* 0c entry count (was: reserved) */
+    WCHAR *fullPath;             /* 10 full path (was: reserved) */
+} FINDFILE_FCB;
+
+/* DOS directory entry for FindFirstFCB/FindNextFCB */
+typedef struct
+{
+    char   filename[11];         /* 00 filename 8+3 format */
+    BYTE   fileattr;             /* 0b file attributes */
+    BYTE   reserved[10];         /* 0c reserved */
+    WORD   filetime;             /* 16 file time */
+    WORD   filedate;             /* 18 file date */
+    WORD   cluster;              /* 1a file first cluster */
+    DWORD  filesize;             /* 1c file size */
+} DOS_DIRENTRY_LAYOUT;
+
 #include "poppack.h"
+
+/* dos file attributes */
+#define FA_NORMAL    0x00        /* Normal file, no attributes */
+#define FA_RDONLY    0x01        /* Read only attribute */
+#define FA_HIDDEN    0x02        /* Hidden file */
+#define FA_SYSTEM    0x04        /* System file */
+#define FA_LABEL     0x08        /* Volume label */
+#define FA_DIRECTORY 0x10        /* Directory */
+#define FA_ARCHIVE   0x20        /* Archive */
+#define FA_UNUSED    0x40        /* Unused */
+
+/* Error codes */
+#define ER_NoNetwork         0x49
+
+/* Error classes */
+#define EC_OutOfResource     0x01
+#define EC_Temporary         0x02
+#define EC_AccessDenied      0x03
+#define EC_InternalError     0x04
+#define EC_HardwareFailure   0x05
+#define EC_SystemFailure     0x06
+#define EC_ProgramError      0x07
+#define EC_NotFound          0x08
+#define EC_MediaError        0x0b
+#define EC_Exists            0x0c
+#define EC_Unknown           0x0d
+
+/* Suggested actions */
+#define SA_Retry             0x01
+#define SA_DelayedRetry      0x02
+#define SA_Abort             0x04
+#define SA_Ignore            0x06
+#define SA_Ask4Retry         0x07
+
+/* Error locus */
+#define EL_Unknown           0x01
+#define EL_Disk              0x02
+#define EL_Network           0x03
+#define EL_Serial            0x04
+#define EL_Memory            0x05
 
 
 /* Many calls translate a drive argument like this:
@@ -2121,6 +2196,12 @@ static void INT21_GetPSP( CONTEXT86 *context )
         SET_BX( context, DOSVM_psp );
 }
 
+static inline void setword( BYTE *ptr, WORD w )
+{
+    ptr[0] = (BYTE)w;
+    ptr[1] = (BYTE)(w >> 8);
+}
+
 static void CreateBPB(int drive, BYTE *data, BOOL16 limited)
 /* limited == TRUE is used with INT 0x21/0x440d */
 {
@@ -2497,9 +2578,7 @@ static void INT21_Ioctl( CONTEXT86 *context )
         }
         else
         {
-            DOSMEM_LOL()->sharing_retry_delay = CX_reg(context);
-            if (DX_reg(context))
-                DOSMEM_LOL()->sharing_retry_count = DX_reg(context);
+            DOSDEV_SetSharingRetry( CX_reg(context), DX_reg(context) );
             RESET_CFLAG( context );
         }
         break;
@@ -3163,7 +3242,7 @@ static void INT21_GetExtendedError( CONTEXT86 *context )
         action = SA_Abort;
         locus  = EL_Disk;
         break;
-    case ER_GeneralFailure:
+    case ERROR_GEN_FAILURE:
         class  = EC_SystemFailure;
         action = SA_Abort;
         locus  = EL_Unknown;
@@ -4611,15 +4690,8 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x52: /* "SYSVARS" - GET LIST OF LISTS */
-        if (!ISV86(context) && DOSVM_IsWin16())
         {
-            SEGPTR ptr = DOSMEM_LOL()->wine_pm_lol;
-            context->SegEs = SELECTOROF(ptr);
-            SET_BX( context, OFFSETOF(ptr) );
-        }
-        else
-        {
-            SEGPTR ptr = DOSMEM_LOL()->wine_rm_lol;
+            SEGPTR ptr = DOSDEV_GetLOL( ISV86(context) || !DOSVM_IsWin16() );
             context->SegEs = SELECTOROF(ptr);
             SET_BX( context, OFFSETOF(ptr) );
         }

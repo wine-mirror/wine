@@ -41,7 +41,6 @@
 #include "file.h"
 #include "winioctl.h"
 #include "winnt.h"
-#include "msdos.h"
 #include "kernel_private.h"
 #include "wine/server.h"
 #include "wine/debug.h"

@@ -19,7 +19,7 @@
  */
 
 #include <stdlib.h>
-#include "miscemu.h"
+#include "dosexe.h"
 #include "wine/debug.h"
 #include "wine/winbase16.h"
 

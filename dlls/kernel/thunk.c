@@ -42,7 +42,6 @@
 #include "wine/library.h"
 #include "flatthunk.h"
 #include "module.h"
-#include "miscemu.h"
 #include "selectors.h"
 #include "stackframe.h"
 #include "task.h"
@@ -716,7 +715,7 @@ void WINAPI Common32ThkLS( CONTEXT86 *context )
     context->Eax = context16.Eax;
 
     /* Clean up caller's stack frame */
-    context->Esp += BL_reg(&context16);
+    context->Esp += LOBYTE(context16.Ebx);
 }
 
 /***********************************************************************
@@ -1456,7 +1455,7 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
     else
     {
         struct ThunkDataSL *td = (struct ThunkDataSL *)context->Edx;
-        DWORD targetNr = CX_reg(context) / 4;
+        DWORD targetNr = LOWORD(context->Ecx) / 4;
         struct SLTargetDB *tdb;
 
         TRACE("Process %08lx calling target %ld of ThunkDataSL %08lx\n",
@@ -1485,8 +1484,8 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
         else
         {
             WORD *stack = MapSL( MAKESEGPTR(context->SegSs, LOWORD(context->Esp)) );
-            SET_DX( context, HIWORD(td->apiDB[targetNr].errorReturnValue) );
-            SET_AX( context, LOWORD(td->apiDB[targetNr].errorReturnValue) );
+            context->Edx = (context->Edx & ~0xffff) | HIWORD(td->apiDB[targetNr].errorReturnValue);
+            context->Eax = (context->Eax & ~0xffff) | LOWORD(td->apiDB[targetNr].errorReturnValue);
             context->Eip = stack[2];
             context->SegCs  = stack[3];
             context->Esp += td->apiDB[targetNr].nrArgBytes + 4;
@@ -1932,8 +1931,8 @@ void WINAPI CBClientThunkSLEx( CONTEXT86 *context )
     /* Restore registers saved by CBClientGlueSL */
     stackLin = (LPWORD)((LPBYTE)CURRENT_STACK16 + sizeof(STACK16FRAME) - 4);
     context->Ebp = (context->Ebp & ~0xffff) | stackLin[3];
-    SET_SI( context, stackLin[2] );
-    SET_DI( context, stackLin[1] );
+    context->Esi = (context->Esi & ~0xffff) | stackLin[2];
+    context->Edi = (context->Edi & ~0xffff) | stackLin[1];
     context->SegDs = stackLin[0];
     context->Esp += 16+nArgs;
 
@@ -2090,7 +2089,7 @@ void WINAPI Catch16( LPCATCHBUF lpbuf, CONTEXT86 *context )
     lpbuf[6] = context->SegDs;
     lpbuf[7] = 0;
     lpbuf[8] = context->SegSs;
-    SET_AX( context, 0 );  /* Return 0 */
+    context->Eax &= ~0xffff;  /* Return 0 */
 }
 
 
@@ -2105,7 +2104,7 @@ void WINAPI Throw16( LPCATCHBUF lpbuf, INT16 retval, CONTEXT86 *context )
     STACK16FRAME *pFrame;
     STACK32FRAME *frame32;
 
-    SET_AX( context, retval );
+    context->Eax = (context->Eax & ~0xffff) | (WORD)retval;
 
     /* Find the frame32 corresponding to the frame16 we are jumping to */
     pFrame = CURRENT_STACK16;

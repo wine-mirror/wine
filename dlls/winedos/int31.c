@@ -27,9 +27,7 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "wownt32.h"
-#include "miscemu.h"
 #include "task.h"
-#include "msdos.h"
 #include "dosexe.h"
 
 #include "excpt.h"

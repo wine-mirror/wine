@@ -17,7 +17,7 @@
  */
 
 #include <stdlib.h>
-#include "miscemu.h"
+#include "windef.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
@@ -59,7 +59,7 @@ static WORD Inthandler02hVar = 1;
 
 static void WIN87_ClearCtrlWord( CONTEXT86 *context )
 {
-    SET_AX( context, 0 );
+    context->Eax &= ~0xffff;  /* set AX to 0 */
     if (Installed)
 #ifdef __i386__
         __asm__("fclex");
@@ -71,15 +71,15 @@ static void WIN87_ClearCtrlWord( CONTEXT86 *context )
 
 static void WIN87_SetCtrlWord( CONTEXT86 *context )
 {
-    CtrlWord_1 = AX_reg(context);
+    CtrlWord_1 = LOWORD(context->Eax);
     context->Eax &= ~0x00c3;
     if (Installed) {
-        CtrlWord_Internal = AX_reg(context);
+        CtrlWord_Internal = LOWORD(context->Eax);
 #ifdef __i386__
         __asm__("wait;fldcw %0" : : "m" (CtrlWord_Internal));
 #endif
     }
-    CtrlWord_2 = AX_reg(context);
+    CtrlWord_2 = LOWORD(context->Eax);
 }
 
 void WIN87_Init( CONTEXT86 *context )
@@ -91,7 +91,7 @@ void WIN87_Init( CONTEXT86 *context )
 #endif
     }
     StackBottom = StackTop;
-    SET_AX( context, 0x1332 );
+    context->Eax = (context->Eax & ~0xffff) | 0x1332;
     WIN87_SetCtrlWord(context);
     WIN87_ClearCtrlWord(context);
 }
@@ -101,12 +101,12 @@ void WIN87_Init( CONTEXT86 *context )
  */
 void WINAPI WIN87_fpmath( CONTEXT86 *context )
 {
-    TRACE("(cs:eip=%x:%lx es=%x bx=%04x ax=%04x dx==%04x)\n",
+    TRACE("(cs:eip=%x:%lx es=%x bx=%04x ax=%04x dx=%04x)\n",
                  (WORD)context->SegCs, context->Eip,
-                 (WORD)context->SegEs, BX_reg(context),
-                 AX_reg(context), DX_reg(context) );
+                 (WORD)context->SegEs, (WORD)context->Ebx,
+                 (WORD)context->Eax, (WORD)context->Edx );
 
-    switch(BX_reg(context))
+    switch(LOWORD(context->Ebx))
     {
     case 0: /* install (increase instanceref) emulator, install NMI vector */
         RefCount++;
@@ -115,7 +115,7 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
             InstallIntVecs02hAnd75h();
 #endif
         WIN87_Init(context);
-        SET_AX( context, 0 );
+        context->Eax &= ~0xffff;  /* set AX to 0 */
         break;
 
     case 1: /* Init Emulator */
@@ -144,7 +144,7 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
         break;
 
     case 5: /* return internal control word in AX */
-        SET_AX( context, CtrlWord_1 );
+        context->Eax = (context->Eax & ~0xffff) | CtrlWord_1;
         break;
 
     case 6: /* round top of stack to integer using method AX & 0x0C00 */
@@ -179,21 +179,21 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
 /* FIXME: could someone who really understands asm() fix this please? --AJ */
 /*            __asm__("fistp %0;wait" : "=m" (dw) : : "memory"); */
             TRACE("On top of stack was %ld\n",dw);
-            SET_AX( context, LOWORD(dw) );
-            SET_DX( context, HIWORD(dw) );
+            context->Eax = (context->Eax & ~0xffff) | LOWORD(dw);
+            context->Edx = (context->Edx & ~0xffff) | HIWORD(dw);
         }
         break;
 
     case 8: /* restore internal status words from emulator status word */
-        SET_AX( context, 0 );
+        context->Eax &= ~0xffff;  /* set AX to 0 */
         if (Installed) {
 #ifdef __i386__
             __asm__("fstsw %0;wait" : "=m" (StatusWord_1));
 #endif
-            SET_AL( context, (BYTE)StatusWord_1 & 0x3f );
+            context->Eax |= StatusWord_1 & 0x3f;
         }
         context->Eax = (context->Eax | StatusWord_2) & ~0xe000;
-        StatusWord_2 = AX_reg(context);
+        StatusWord_2 = LOWORD(context->Eax);
         break;
 
     case 9: /* clear emu control word and some other things */
@@ -201,22 +201,22 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
         break;
 
     case 10: /* dunno. but looks like returning nr. of things on stack in AX */
-	SET_AX( context, 0 );
+        context->Eax &= ~0xffff;  /* set AX to 0 */
         break;
 
     case 11: /* just returns the installed flag in DX:AX */
-        SET_DX( context, 0 );
-        SET_AX( context, Installed );
+        context->Edx &= ~0xffff;  /* set DX to 0 */
+        context->Eax = (context->Eax & ~0xffff) | Installed;
         break;
 
     case 12: /* save AX in some internal state var */
-        Inthandler02hVar = AX_reg(context);
+        Inthandler02hVar = LOWORD(context->Eax);
         break;
 
     default: /* error. Say that loud and clear */
-        FIXME("unhandled switch %d\n",BX_reg(context));
-        SET_AX( context, 0xFFFF );
-        SET_DX( context, 0xFFFF );
+        FIXME("unhandled switch %d\n",LOWORD(context->Ebx));
+        context->Eax |= 0xffff;
+        context->Edx |= 0xffff;
         break;
     }
 }

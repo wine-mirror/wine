@@ -69,10 +69,8 @@
 
 #include "drive.h"
 #include "file.h"
-#include "heap.h"
-#include "msdos.h"
 #include "wincon.h"
-#include "../kernel/kernel_private.h"
+#include "kernel_private.h"
 
 #include "smb.h"
 #include "wine/unicode.h"

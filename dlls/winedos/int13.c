@@ -19,9 +19,6 @@
  */
 
 #include "config.h"
-#include "miscemu.h"
-#include "wine/debug.h"
-#include "drive.h"
 
 #include <stdlib.h>
 #include <sys/types.h>
@@ -36,6 +33,10 @@
 #ifdef linux
 # include <linux/fd.h>
 #endif
+
+#include "dosexe.h"
+#include "wine/debug.h"
+#include "drive.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 

@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
-#include "miscemu.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dll);
@@ -34,8 +33,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dll);
  */
 void WINAPI WinNotify16(CONTEXT86 *context)
 {
-	FIXME("(AX=%04x):stub.\n", AX_reg(context));
-	switch (AX_reg(context))
+	FIXME("(AX=%04x):stub.\n", LOWORD(context->Eax));
+	switch (LOWORD(context->Eax))
 	{
 		case 0x000D:
 		case 0x000E:
@@ -50,7 +49,7 @@ void WINAPI WinNotify16(CONTEXT86 *context)
 		case 0x0065:	/* do something complicated */
 				break;
 		case 0x0050:	/* do something complicated, now just return error */
-				SET_CFLAG(context);
+				context->EFlags |= 0x0001;  /* set C flag */
 				break;
 		case 0x0052:	/* do something complicated */
 				break;

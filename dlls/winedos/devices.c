@@ -21,8 +21,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "wine/winbase16.h"
-#include "msdos.h"
-#include "miscemu.h"
 #include "dosexe.h"
 #include "wine/debug.h"
 
@@ -56,6 +54,54 @@ typedef struct {
   REQUEST_HEADER hdr;
   BYTE data;
 } REQ_SAFEINPUT;
+
+typedef struct
+{
+    DWORD next_dev;
+    WORD  attr;
+    WORD  strategy;
+    WORD  interrupt;
+    char  name[8];
+} DOS_DEVICE_HEADER;
+
+/* Warning: need to return LOL ptr w/ offset 0 (&ptr_first_DPB) to programs ! */
+typedef struct _DOS_LISTOFLISTS
+{
+    WORD  CX_Int21_5e01;        /* -24d contents of CX from INT 21/AX=5E01h */
+    WORD  LRU_count_FCB_cache;  /* -22d */
+    WORD  LRU_count_FCB_open;   /* -20d */
+    DWORD OEM_func_handler;     /* -18d OEM function of INT 21/AH=F8h */
+    WORD  INT21_offset;         /* -14d offset in DOS CS of code to return from INT 21 call */
+    WORD  sharing_retry_count;  /* -12d */
+    WORD  sharing_retry_delay;  /* -10d */
+    DWORD ptr_disk_buf;         /* -8d ptr to current disk buf */
+    WORD  offs_unread_CON;      /* -4d pointer in DOS data segment of unread CON input */
+    WORD  seg_first_MCB;        /* -2d */
+    DWORD ptr_first_DPB;        /* 00 */
+    DWORD ptr_first_SysFileTable; /* 04 */
+    DWORD ptr_clock_dev_hdr;    /* 08 */
+    DWORD ptr_CON_dev_hdr;      /* 0C */
+    WORD  max_byte_per_sec;     /* 10 maximum bytes per sector of any block device */
+    DWORD ptr_disk_buf_info;    /* 12 */
+    DWORD ptr_array_CDS;        /* 16 current directory structure */
+    DWORD ptr_sys_FCB;          /* 1A */
+    WORD  nr_protect_FCB;       /* 1E */
+    BYTE  nr_block_dev;         /* 20 */
+    BYTE  nr_avail_drive_letters; /* 21 */
+    DOS_DEVICE_HEADER NUL_dev;  /* 22 */
+    BYTE  nr_drives_JOINed;     /* 34 */
+    WORD  ptr_spec_prg_names;   /* 35 */
+    DWORD ptr_SETVER_prg_list;  /* 37 */
+    WORD DOS_HIGH_A20_func_offs;/* 3B */
+    WORD PSP_last_exec;         /* 3D if DOS in HMA: PSP of program executed last; if DOS low: 0000h */
+    WORD BUFFERS_val;           /* 3F */
+    WORD BUFFERS_nr_lookahead;  /* 41 */
+    BYTE boot_drive;            /* 43 */
+    BYTE flag_DWORD_moves;      /* 44 01h for 386+, 00h otherwise */
+    WORD size_extended_mem;     /* 45 size of extended mem in KB */
+    SEGPTR wine_rm_lol;         /* -- wine: Real mode pointer to LOL */
+    SEGPTR wine_pm_lol;         /* -- wine: Protected mode pointer to LOL */
+} DOS_LISTOFLISTS;
 
 #include "poppack.h"
 
@@ -150,7 +196,7 @@ typedef struct
 
 DWORD DOS_LOLSeg;
 
-struct _DOS_LISTOFLISTS * DOSMEM_LOL()
+static struct _DOS_LISTOFLISTS * DOSMEM_LOL()
 {
     return PTR_REAL_TO_LIN(HIWORD(DOS_LOLSeg),0);
 }
@@ -570,7 +616,7 @@ static void DOSDEV_DoReq(void*req, DWORD dev)
     switch (hdr->status & STAT_MASK) {
     case 0x0F: /* invalid disk change */
       /* this error seems to fit the bill */
-      SetLastError(ER_NotSameDevice);
+      SetLastError(ERROR_NOT_SAME_DEVICE);
       break;
     default:
       SetLastError((hdr->status & STAT_MASK) + 0x13);
@@ -634,4 +680,16 @@ int DOSDEV_IoctlRead(DWORD dev, DWORD buf, int buflen)
 int DOSDEV_IoctlWrite(DWORD dev, DWORD buf, int buflen)
 {
   return DOSDEV_IO(CMD_OUTIOCTL, dev, buf, buflen);
+}
+
+void DOSDEV_SetSharingRetry(WORD delay, WORD count)
+{
+    DOSMEM_LOL()->sharing_retry_delay = delay;
+    if (count) DOSMEM_LOL()->sharing_retry_count = count;
+}
+
+SEGPTR DOSDEV_GetLOL(BOOL v86)
+{
+    if (v86) return DOSMEM_LOL()->wine_rm_lol;
+    else return DOSMEM_LOL()->wine_pm_lol;
 }

@@ -39,10 +39,7 @@
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "wine/server.h"
-
-#include "msdos.h"
 #include "kernel_private.h"
-
 #include "wine/unicode.h"
 #include "wine/debug.h"
 

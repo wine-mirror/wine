@@ -40,7 +40,6 @@
 #include "winescsi.h"
 #include "wine/winaspi.h"
 #include "wine/debug.h"
-#include "miscemu.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(aspi);
 
@@ -52,6 +51,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(aspi);
  */
 
 #ifdef linux
+
+#define PTR_TO_LIN(ptr,mode) \
+  ((mode) == ASPI_DOS ? ((void*)(((unsigned int)SELECTOROF(ptr) << 4) + OFFSETOF(ptr))) : MapSL(ptr))
 
 static ASPI_DEVICE_INFO *ASPI_open_devices = NULL;
 
@@ -127,19 +129,7 @@ ASPI_DebugPrintCmd(SRB_ExecSCSICmd16 *prb, UINT16 mode)
   BYTE	cmd;
   int	i;
   BYTE *cdb;
-  BYTE *lpBuf = 0;
-
-  switch (mode)
-  {
-      case ASPI_DOS:
-	/* translate real mode address */
-	if (prb->SRB_BufPointer)
-	    lpBuf = PTR_REAL_TO_LIN( SELECTOROF(prb->SRB_BufPointer), OFFSETOF(prb->SRB_BufPointer));
-	break;
-      case ASPI_WIN16:
-	lpBuf = MapSL(prb->SRB_BufPointer);
-	break;
-  }
+  BYTE *lpBuf = PTR_TO_LIN( prb->SRB_BufPointer, mode );
 
   switch (prb->CDBByte[0]) {
   case CMD_INQUIRY:
@@ -216,19 +206,7 @@ ASPI_PrintSenseArea16(SRB_ExecSCSICmd16 *prb)
 static void
 ASPI_DebugPrintResult(SRB_ExecSCSICmd16 *prb, UINT16 mode)
 {
-  BYTE *lpBuf = 0;
-
-  switch (mode)
-  {
-      case ASPI_DOS:
-	/* translate real mode address */
-	if (prb->SRB_BufPointer)
-	    lpBuf = PTR_REAL_TO_LIN( SELECTOROF(prb->SRB_BufPointer), OFFSETOF(prb->SRB_BufPointer));
-	break;
-      case ASPI_WIN16:
-	lpBuf = MapSL(prb->SRB_BufPointer);
-	break;
-  }
+  BYTE *lpBuf = PTR_TO_LIN( prb->SRB_BufPointer, mode );
 
   switch (prb->CDBByte[0]) {
   case CMD_INQUIRY:
@@ -243,24 +221,13 @@ ASPI_DebugPrintResult(SRB_ExecSCSICmd16 *prb, UINT16 mode)
 static WORD
 ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
 {
-  SRB_ExecSCSICmd16 *lpPRB = 0;
+  SRB_ExecSCSICmd16 *lpPRB = PTR_TO_LIN( ptrPRB, mode );
   struct sg_header *sg_hd, *sg_reply_hdr;
   int	status;
   BYTE *lpBuf = 0;
   int	in_len, out_len;
   int	error_code = 0;
   int	fd;
-
-  switch (mode)
-  {
-      case ASPI_DOS:
-	if (ptrPRB)
-	    lpPRB = PTR_REAL_TO_LIN( SELECTOROF(ptrPRB), OFFSETOF(ptrPRB));
-	break;
-      case ASPI_WIN16:
-	lpPRB = MapSL(ptrPRB);
-	break;
-  }
 
   ASPI_DebugPrintCmd(lpPRB, mode);
 
@@ -275,19 +242,7 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
   sg_reply_hdr = NULL;
 
   lpPRB->SRB_Status = SS_PENDING;
-
-  switch (mode)
-  {
-      case ASPI_DOS:
-	/* translate real mode address */
-	if (ptrPRB)
-	    lpBuf = PTR_REAL_TO_LIN( SELECTOROF(lpPRB->SRB_BufPointer),
-                                     OFFSETOF(lpPRB->SRB_BufPointer));
-	break;
-      case ASPI_WIN16:
-	lpBuf = MapSL(lpPRB->SRB_BufPointer);
-	break;
-  }
+  lpBuf = PTR_TO_LIN( lpPRB->SRB_BufPointer, mode );
 
   if (!lpPRB->SRB_CDBLen) {
       WARN("Failed: lpPRB->SRB_CDBLen = 0.\n");
@@ -435,27 +390,17 @@ WORD WINAPI GetASPISupportInfo16(void)
 DWORD ASPI_SendASPICommand(DWORD ptrSRB, UINT16 mode)
 {
 #ifdef linux
-  LPSRB16 lpSRB = 0;
+  LPSRB16 lpSRB = PTR_TO_LIN( ptrSRB, mode );
 
-  switch (mode)
+  if (mode == ASPI_WIN16 && ASPIChainFunc)
   {
-      case ASPI_DOS:
-	if (ptrSRB)
-	    lpSRB = PTR_REAL_TO_LIN( SELECTOROF(ptrSRB), OFFSETOF(ptrSRB));
-	break;
-      case ASPI_WIN16:
-	lpSRB = MapSL(ptrSRB);
-	if (ASPIChainFunc)
-	{
-	    /* This is not the post proc, it's the chain proc this time */
-	    DWORD ret = WOWCallback16((DWORD)ASPIChainFunc, ptrSRB);
-	    if (ret)
-	    {
-		lpSRB->inquiry.SRB_Status = SS_INVALID_SRB;
-		return ret;
-	    }
-	}
-	break;
+      /* This is not the post proc, it's the chain proc this time */
+      DWORD ret = WOWCallback16((DWORD)ASPIChainFunc, ptrSRB);
+      if (ret)
+      {
+          lpSRB->inquiry.SRB_Status = SS_INVALID_SRB;
+          return ret;
+      }
   }
 
   switch (lpSRB->common.SRB_Cmd) {

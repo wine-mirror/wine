@@ -41,11 +41,9 @@
 #include "ntstatus.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "msdos.h"
-#include "miscemu.h"
+#include "dosexe.h"
 #include "selectors.h"
 #include "task.h"
-#include "file.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vxd);

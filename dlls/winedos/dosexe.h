@@ -30,6 +30,8 @@
 #include "wincon.h"    /* for MOUSE_EVENT_RECORD */
 #include "miscemu.h"
 
+#define MAX_DOS_DRIVES  26
+
 struct _DOSEVENT;
 
 /* amount of space reserved for relay stack */
@@ -102,6 +104,79 @@ extern struct DPMI_segments *DOSVM_dpmi_segments;
 
 #define ADD_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD((DWORD)(dw)+(val)))
 
+#define PTR_REAL_TO_LIN(seg,off) ((void*)(((unsigned int)(seg) << 4) + LOWORD(off)))
+
+/* NOTE: Interrupts might get called from four modes: real mode, 16-bit,
+ *       32-bit segmented (DPMI32) and 32-bit linear (via DeviceIoControl).
+ *       For automatic conversion of pointer
+ *       parameters, interrupt handlers should use CTX_SEG_OFF_TO_LIN with
+ *       the contents of a segment register as second and the contents of
+ *       a *32-bit* general register as third parameter, e.g.
+ *          CTX_SEG_OFF_TO_LIN( context, DS_reg(context), EDX_reg(context) )
+ *       This will generate a linear pointer in all three cases:
+ *         Real-Mode:   Seg*16 + LOWORD(Offset)
+ *         16-bit:      convert (Seg, LOWORD(Offset)) to linear
+ *         32-bit segmented: convert (Seg, Offset) to linear
+ *         32-bit linear:    use Offset as linear address (DeviceIoControl!)
+ *
+ *       Real-mode is recognized by checking the V86 bit in the flags register,
+ *       32-bit linear mode is recognized by checking whether 'seg' is
+ *       a system selector (0 counts also as 32-bit segment) and 32-bit
+ *       segmented mode is recognized by checking whether 'seg' is 32-bit
+ *       selector which is neither system selector nor zero.
+ */
+#define CTX_SEG_OFF_TO_LIN(context,seg,off) \
+    (ISV86(context) ? PTR_REAL_TO_LIN((seg),(off)) : wine_ldt_get_ptr((seg),(off)))
+
+#define INT_BARF(context,num) \
+    ERR( "int%x: unknown/not implemented parameters:\n" \
+                     "int%x: AX %04x, BX %04x, CX %04x, DX %04x, " \
+                     "SI %04x, DI %04x, DS %04x, ES %04x\n", \
+             (num), (num), LOWORD((context)->Eax), LOWORD((context)->Ebx), \
+             LOWORD((context)->Ecx), LOWORD((context)->Edx), LOWORD((context)->Esi), \
+             LOWORD((context)->Edi), (WORD)(context)->SegDs, (WORD)(context)->SegEs )
+
+/* Macros for easier access to i386 context registers */
+
+#define AX_reg(context)      ((WORD)(context)->Eax)
+#define BX_reg(context)      ((WORD)(context)->Ebx)
+#define CX_reg(context)      ((WORD)(context)->Ecx)
+#define DX_reg(context)      ((WORD)(context)->Edx)
+#define SI_reg(context)      ((WORD)(context)->Esi)
+#define DI_reg(context)      ((WORD)(context)->Edi)
+
+#define AL_reg(context)      ((BYTE)(context)->Eax)
+#define AH_reg(context)      ((BYTE)((context)->Eax >> 8))
+#define BL_reg(context)      ((BYTE)(context)->Ebx)
+#define BH_reg(context)      ((BYTE)((context)->Ebx >> 8))
+#define CL_reg(context)      ((BYTE)(context)->Ecx)
+#define CH_reg(context)      ((BYTE)((context)->Ecx >> 8))
+#define DL_reg(context)      ((BYTE)(context)->Edx)
+#define DH_reg(context)      ((BYTE)((context)->Edx >> 8))
+
+#define SET_CFLAG(context)   ((context)->EFlags |= 0x0001)
+#define RESET_CFLAG(context) ((context)->EFlags &= ~0x0001)
+#define SET_ZFLAG(context)   ((context)->EFlags |= 0x0040)
+#define RESET_ZFLAG(context) ((context)->EFlags &= ~0x0040)
+#define ISV86(context)       ((context)->EFlags & 0x00020000)
+
+#define SET_AX(context,val)  ((void)((context)->Eax = ((context)->Eax & ~0xffff) | (WORD)(val)))
+#define SET_BX(context,val)  ((void)((context)->Ebx = ((context)->Ebx & ~0xffff) | (WORD)(val)))
+#define SET_CX(context,val)  ((void)((context)->Ecx = ((context)->Ecx & ~0xffff) | (WORD)(val)))
+#define SET_DX(context,val)  ((void)((context)->Edx = ((context)->Edx & ~0xffff) | (WORD)(val)))
+#define SET_SI(context,val)  ((void)((context)->Esi = ((context)->Esi & ~0xffff) | (WORD)(val)))
+#define SET_DI(context,val)  ((void)((context)->Edi = ((context)->Edi & ~0xffff) | (WORD)(val)))
+
+#define SET_AL(context,val)  ((void)((context)->Eax = ((context)->Eax & ~0xff) | (BYTE)(val)))
+#define SET_BL(context,val)  ((void)((context)->Ebx = ((context)->Ebx & ~0xff) | (BYTE)(val)))
+#define SET_CL(context,val)  ((void)((context)->Ecx = ((context)->Ecx & ~0xff) | (BYTE)(val)))
+#define SET_DL(context,val)  ((void)((context)->Edx = ((context)->Edx & ~0xff) | (BYTE)(val)))
+
+#define SET_AH(context,val)  ((void)((context)->Eax = ((context)->Eax & ~0xff00) | (((BYTE)(val)) << 8)))
+#define SET_BH(context,val)  ((void)((context)->Ebx = ((context)->Ebx & ~0xff00) | (((BYTE)(val)) << 8)))
+#define SET_CH(context,val)  ((void)((context)->Ecx = ((context)->Ecx & ~0xff00) | (((BYTE)(val)) << 8)))
+#define SET_DH(context,val)  ((void)((context)->Edx = ((context)->Edx & ~0xff00) | (((BYTE)(val)) << 8)))
+
 /* module.c */
 extern void WINAPI MZ_LoadImage( LPCSTR filename, HANDLE hFile );
 extern BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk );
@@ -132,7 +207,8 @@ extern int DOSDEV_Read(DWORD dev, DWORD buf, int buflen);
 extern int DOSDEV_Write(DWORD dev, DWORD buf, int buflen, int verify);
 extern int DOSDEV_IoctlRead(DWORD dev, DWORD buf, int buflen);
 extern int DOSDEV_IoctlWrite(DWORD dev, DWORD buf, int buflen);
-extern struct _DOS_LISTOFLISTS * DOSMEM_LOL();
+extern void DOSDEV_SetSharingRetry(WORD delay, WORD count);
+extern SEGPTR DOSDEV_GetLOL(BOOL v86);
 
 /* dma.c */
 extern int DMA_Transfer(int channel,int reqlength,void* buffer);

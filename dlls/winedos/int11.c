@@ -29,9 +29,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
-#include "miscemu.h"
-#include "msdos.h"
-#include "file.h"
+#include "dosexe.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
