@@ -860,11 +860,14 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEW lpMl, DWORD fdwInfo)
               getComponentType(lpMl->dwComponentType));
 	switch (lpMl->dwComponentType)
 	{
+	case MIXERLINE_COMPONENTTYPE_DST_HEADPHONES:
 	case MIXERLINE_COMPONENTTYPE_DST_SPEAKERS:
-	    ret = MIX_GetLineInfoDst(mix, lpMl, 0);
+	    ret = MIX_GetLineInfoDst(mix, lpMl, LINEID_SPEAKER);
 	    break;
+	case MIXERLINE_COMPONENTTYPE_DST_LINE:
+	case MIXERLINE_COMPONENTTYPE_DST_VOICEIN:
 	case MIXERLINE_COMPONENTTYPE_DST_WAVEIN:
-	    ret = MIX_GetLineInfoDst(mix, lpMl, 1);
+	    ret = MIX_GetLineInfoDst(mix, lpMl, LINEID_RECORD);
 	    break;
 	case MIXERLINE_COMPONENTTYPE_SRC_SYNTHESIZER:
 	    ret = MIX_GetLineInfoSrc(mix, lpMl, SOUND_MIXER_SYNTH, 0);
