@@ -38,7 +38,6 @@ SUBDIRS = \
 	controls \
 	debugger \
 	dlls \
-	dlls/advapi32 \
 	dlls/ntdll \
 	documentation \
 	files \
@@ -81,7 +80,6 @@ INSTALLSUBDIRS = \
 LIBOBJS = \
 	controls/controls.o \
 	console/console.o \
-	dlls/advapi32/advapi32.o \
 	dlls/ntdll/ntdll.o \
 	files/files.o \
 	graphics/graphics.o \

@@ -13,6 +13,7 @@ XFILES = \
 
 DLLFILES = \
 	@XFILES@ \
+	advapi32/libadvapi32.@LIBEXT@ \
 	avifil32/libavifil32.@LIBEXT@ \
 	comctl32/libcomctl32.@LIBEXT@ \
 	commdlg/libcomdlg32.@LIBEXT@ \
@@ -118,6 +119,7 @@ EXTRADLLNAMES = \
 	wprocs
 
 SUBDIRS = \
+	advapi32 \
 	avifil32 \
 	comctl32 \
 	commdlg \
@@ -179,6 +181,9 @@ SUBDIRS = \
 all: $(DLLS:%=lib%.@LIBEXT@) $(EXTRADLLNAMES:%=lib%.@LIBEXT@)
 
 # Map library name to directory
+
+libadvapi32.@LIBEXT@: advapi32/libadvapi32.@LIBEXT@
+	$(RM) $@ && $(LN_S) advapi32/libadvapi32.@LIBEXT@ $@
 
 libavifil32.@LIBEXT@ libavifile.@LIBEXT@: avifil32/libavifil32.@LIBEXT@
 	$(RM) $@ && $(LN_S) avifil32/libavifil32.@LIBEXT@ $@

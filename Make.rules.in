@@ -93,6 +93,7 @@ X_DLLS = \
 
 DLLS = \
 	@X_DLLS@ \
+	advapi32 \
 	avifil32 \
 	comctl32 \
 	comdlg32 \

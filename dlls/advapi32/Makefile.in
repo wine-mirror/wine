@@ -1,23 +1,18 @@
-DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = advapi32
-
-SPEC_SRCS = advapi32.spec
+SOVERSION = 1.0
 
 C_SRCS = \
 	advapi.c \
 	crypt.c \
 	eventlog.c \
-	registry.c \
 	security.c \
 	service.c
 
-all: check_wrc $(MODULE).o
-
-@MAKE_RULES@
+@MAKE_DLL_RULES@
 
 ### Dependencies:
 

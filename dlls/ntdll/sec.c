@@ -58,24 +58,24 @@ BOOLEAN WINAPI RtlAllocateAndInitializeSid (
 
 	if (pIdentifierAuthority)
 	  memcpy(&(*pSid)->IdentifierAuthority, pIdentifierAuthority, sizeof (SID_IDENTIFIER_AUTHORITY));
-	*GetSidSubAuthorityCount(*pSid) = nSubAuthorityCount;
+	*RtlSubAuthorityCountSid(*pSid) = nSubAuthorityCount;
 
 	if (nSubAuthorityCount > 0)
-          *GetSidSubAuthority(*pSid, 0) = nSubAuthority0;
+          *RtlSubAuthoritySid(*pSid, 0) = nSubAuthority0;
 	if (nSubAuthorityCount > 1)
-          *GetSidSubAuthority(*pSid, 1) = nSubAuthority1;
+          *RtlSubAuthoritySid(*pSid, 1) = nSubAuthority1;
 	if (nSubAuthorityCount > 2)
-          *GetSidSubAuthority(*pSid, 2) = nSubAuthority2;
+          *RtlSubAuthoritySid(*pSid, 2) = nSubAuthority2;
 	if (nSubAuthorityCount > 3)
-          *GetSidSubAuthority(*pSid, 3) = nSubAuthority3;
+          *RtlSubAuthoritySid(*pSid, 3) = nSubAuthority3;
 	if (nSubAuthorityCount > 4)
-          *GetSidSubAuthority(*pSid, 4) = nSubAuthority4;
+          *RtlSubAuthoritySid(*pSid, 4) = nSubAuthority4;
 	if (nSubAuthorityCount > 5)
-          *GetSidSubAuthority(*pSid, 5) = nSubAuthority5;
+          *RtlSubAuthoritySid(*pSid, 5) = nSubAuthority5;
         if (nSubAuthorityCount > 6)
-	  *GetSidSubAuthority(*pSid, 6) = nSubAuthority6;
+	  *RtlSubAuthoritySid(*pSid, 6) = nSubAuthority6;
 	if (nSubAuthorityCount > 7)
-          *GetSidSubAuthority(*pSid, 7) = nSubAuthority7;
+          *RtlSubAuthoritySid(*pSid, 7) = nSubAuthority7;
 
 	return STATUS_SUCCESS;
 }
@@ -91,7 +91,7 @@ BOOL WINAPI RtlEqualSid( PSID pSid1, PSID pSid2 )
     if (*RtlSubAuthorityCountSid(pSid1) != *RtlSubAuthorityCountSid(pSid2))
         return FALSE;
 
-    if (memcmp(pSid1, pSid2, GetLengthSid(pSid1)) != 0)
+    if (memcmp(pSid1, pSid2, RtlLengthSid(pSid1)) != 0)
         return FALSE;
 
     return TRUE;
@@ -164,7 +164,7 @@ BOOL WINAPI RtlInitializeSid(
 	  memcpy(&pSid->IdentifierAuthority, pIdentifierAuthority, sizeof (SID_IDENTIFIER_AUTHORITY));
 
 	for (i = 0; i < nSubAuthorityCount; i++)
-	  *GetSidSubAuthority(pSid, i) = 0;
+	  *RtlSubAuthoritySid(pSid, i) = 0;
 
 	return TRUE;
 }
