@@ -266,8 +266,8 @@ int main(int argc, char **argv)
 	}
 	if (use_stdlib && use_msvcrt) gcc_argv[i++] = "-lmsvcrt";
 	if (gui_app) gcc_argv[i++] = "-lcomdlg32";
-	if (gui_app) gcc_argv[i++] = "-lshell32";
 	gcc_argv[i++] = "-ladvapi32";
+	gcc_argv[i++] = "-lshell32";
     }
     else
     {
@@ -277,11 +277,30 @@ int main(int argc, char **argv)
 	gcc_argv[i++] = "-fPIC";
 	if (use_stdinc)
 	{
-	    if (use_msvcrt) gcc_argv[i++] = "-I" INCLUDEDIR "/msvcrt";
+	    if (use_msvcrt)
+	    {
+		gcc_argv[i++] = "-I" INCLUDEDIR "/msvcrt";
+	    	gcc_argv[i++] = "-D__MSVCRT__";
+	    }
 	    gcc_argv[i++] = "-I" INCLUDEDIR "/windows";
 	}
-	gcc_argv[i++] = "-D__WINE__";
+	gcc_argv[i++] = "-DWIN32";
+	gcc_argv[i++] = "-D_WIN32";
+	gcc_argv[i++] = "-D__WIN32";
 	gcc_argv[i++] = "-D__WIN32__";
+	gcc_argv[i++] = "-D__WINNT";
+	gcc_argv[i++] = "-D__WINNT__";
+
+	gcc_argv[i++] = "-D__stdcall=__attribute__((__stdcall__))";
+	gcc_argv[i++] = "-D__cdecl=__attribute__((__cdecl__))";
+	gcc_argv[i++] = "-D__fastcall=__attribute__((__fastcall__))";
+	gcc_argv[i++] = "-D_stdcall=__attribute__((__stdcall__))";
+	gcc_argv[i++] = "-D_cdecl=__attribute__((__cdecl__))";
+	gcc_argv[i++] = "-D_fastcall=__attribute__((__fastcall__))";
+	gcc_argv[i++] = "-D__declspec(x)=__attribute__((x))";
+    
+	/* Wine specific defines */
+	gcc_argv[i++] = "-D__WINE__";
 	gcc_argv[i++] = "-DWINE_UNICODE_NATIVE";
 	gcc_argv[i++] = "-D__int8=char";
 	gcc_argv[i++] = "-D__int16=short";
@@ -294,6 +313,8 @@ int main(int argc, char **argv)
 	    	; /* ignore this option */
 	    else if (strcmp("-mwindows", argv[j]) == 0)
 	    	; /* ignore this option */
+	    else if (strncmp("-Wl,", argv[j], 4) == 0)
+		; /* do not pass linking options to compiler */
 	    else if (strcmp("-s", argv[j]) == 0)
 	    	; /* ignore this option */
             else
