@@ -1816,7 +1816,7 @@ BOOL        WINAPI wine_get_unix_file_name( LPCSTR dos, LPSTR buffer, DWORD len 
 
 /* a few optimizations for i386/gcc */
 
-#if defined(__i386__) && defined(__GNUC__) && defined(__WINESRC__)
+#if defined(__i386__) && defined(__GNUC__) && defined(__WINESRC__) && !defined(_NTSYSTEM_)
 
 extern inline LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare );
 extern inline LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare )
@@ -1895,79 +1895,7 @@ extern inline HANDLE WINAPI GetProcessHeap(void)
     return pdb[0x18 / sizeof(HANDLE)];  /* get dword at offset 0x18 in pdb */
 }
 
-#elif defined(__GNUC__) && defined(__powerpc__) && defined(__WINESRC__)
-
-extern inline LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare );
-extern inline LONG WINAPI InterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare )
-{
-    LONG ret = 0;
-    LONG scratch;
-    __asm__ __volatile__(
-        "0:    lwarx %0,0,%2\n"
-        "      xor. %1,%4,%0\n"
-        "      bne 1f\n"
-        "      stwcx. %3,0,%2\n"
-        "      bne- 0b\n"
-        "      isync\n"
-        "1:    "
-        : "=&r"(ret), "=&r"(scratch)
-        : "r"(dest), "r"(xchg), "r"(compare)
-        : "cr0","memory","r0");
-    return ret;
-}
-
-extern inline LONG WINAPI InterlockedExchange( PLONG dest, LONG val );
-extern inline LONG WINAPI InterlockedExchange( PLONG dest, LONG val )
-{
-    LONG ret = 0;
-    __asm__ __volatile__(
-        "0:    lwarx %0,0,%1\n"
-        "      stwcx. %2,0,%1\n"
-        "      bne- 0b\n"
-        "      isync\n"
-        : "=&r"(ret)
-        : "r"(dest), "r"(val)
-        : "cr0","memory","r0");
-    return ret;
-}
-
-extern inline LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr );
-extern inline LONG WINAPI InterlockedExchangeAdd( PLONG dest, LONG incr )
-{
-    LONG ret = 0;
-    LONG zero = 0;
-    __asm__ __volatile__(
-        "0:    lwarx %0, %3, %1\n"
-        "      add %0, %2, %0\n"
-        "      stwcx. %0, %3, %1\n"
-        "      bne- 0b\n"
-        "      isync\n"
-        : "=&r" (ret)
-        : "r"(dest), "r"(incr), "r"(zero)
-        : "cr0", "memory", "r0"
-    );
-    return ret-incr;
-}
-
-extern inline LONG WINAPI InterlockedIncrement( PLONG dest );
-extern inline LONG WINAPI InterlockedIncrement( PLONG dest )
-{
-    return InterlockedExchangeAdd( dest, 1 ) + 1;
-}
-
-extern inline LONG WINAPI InterlockedDecrement( PLONG dest );
-extern inline LONG WINAPI InterlockedDecrement( PLONG dest )
-{
-    return InterlockedExchangeAdd( dest, -1 ) - 1;
-}
-
-DWORD       WINAPI GetLastError(void);
-DWORD       WINAPI GetCurrentProcessId(void);
-DWORD       WINAPI GetCurrentThreadId(void);
-void        WINAPI SetLastError( DWORD err );
-HANDLE      WINAPI GetProcessHeap(void);
-
-#else  /* __powerpc__ && __GNUC__ && __WINESRC__ */
+#else  /* __i386__ && __GNUC__ && __WINESRC__ && !_NTSYSTEM_ */
 
 DWORD       WINAPI GetCurrentProcessId(void);
 DWORD       WINAPI GetCurrentThreadId(void);
@@ -1980,7 +1908,7 @@ LONG        WINAPI InterlockedExchangeAdd(PLONG,LONG);
 LONG        WINAPI InterlockedIncrement(PLONG);
 VOID        WINAPI SetLastError(DWORD);
 
-#endif  /* __i386__ && __GNUC__ && __WINESRC__ */
+#endif  /* __i386__ && __GNUC__ && __WINESRC__ && !_NTSYSTEM_ */
 
 /* FIXME: should handle platforms where sizeof(void*) != sizeof(long) */
 static inline PVOID WINAPI InterlockedCompareExchangePointer( PVOID *dest, PVOID xchg, PVOID compare )
