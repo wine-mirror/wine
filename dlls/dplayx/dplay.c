@@ -1853,6 +1853,11 @@ static HRESULT WINAPI DP_IF_DestroyPlayer
   FIXME( "(%p)->(%p,0x%08lx,%u): semi stub\n",
          This, lpMsgHdr, idPlayer, bAnsi );
 
+  if( This->dp2->connectionInitialized == NO_PROVIDER )
+  {
+    return DPERR_UNINITIALIZED;
+  }
+
   if( DP_FindPlayer( This, idPlayer ) == NULL )
   {
     return DPERR_INVALIDPLAYER;
@@ -1949,6 +1954,11 @@ static HRESULT WINAPI DP_IF_EnumGroupPlayers
   FIXME("(%p)->(0x%08lx,%p,%p,%p,0x%08lx,%u): semi stub\n",
           This, idGroup, lpguidInstance, lpEnumPlayersCallback2,
           lpContext, dwFlags, bAnsi );
+
+  if( This->dp2->connectionInitialized == NO_PROVIDER )
+  {
+    return DPERR_UNINITIALIZED;
+  }
 
   /* Find the group */
   if( ( lpGData = DP_FindAnyGroup( This, idGroup ) ) == NULL )
@@ -2609,6 +2619,11 @@ static HRESULT WINAPI DP_IF_GetPlayerData
   TRACE( "(%p)->(0x%08lx,%p,%p,0x%08lx,%u)\n",
          This, idPlayer, lpData, lpdwDataSize, dwFlags, bAnsi );
 
+  if( This->dp2->connectionInitialized == NO_PROVIDER )
+  {
+    return DPERR_UNINITIALIZED;
+  }
+
   if( ( lpPList = DP_FindPlayer( This, idPlayer ) ) == NULL )
   {
     return DPERR_INVALIDPLAYER;
@@ -2749,6 +2764,11 @@ static HRESULT WINAPI DP_GetSessionDesc
   DWORD dwRequiredSize;
 
   TRACE( "(%p)->(%p,%p,%u)\n", This, lpData, lpdwDataSize, bAnsi );
+
+  if( This->dp2->connectionInitialized == NO_PROVIDER )
+  {
+    return DPERR_UNINITIALIZED;
+  }
 
   if( ( lpData == NULL ) && ( lpdwDataSize == NULL ) )
   {
@@ -2929,6 +2949,11 @@ static HRESULT WINAPI DP_IF_Receive
 
   FIXME( "(%p)->(%p,%p,0x%08lx,%p,%p,%u): stub\n",
          This, lpidFrom, lpidTo, dwFlags, lpData, lpdwDataSize, bAnsi );
+
+  if( This->dp2->connectionInitialized == NO_PROVIDER )
+  {
+    return DPERR_UNINITIALIZED;
+  }
 
   if( dwFlags == 0 )
   {
@@ -3212,6 +3237,11 @@ static HRESULT WINAPI DP_SetSessionDesc
 
   TRACE( "(%p)->(%p,0x%08lx,%u,%u)\n",
          This, lpSessDesc, dwFlags, bInitial, bAnsi );
+
+  if( This->dp2->connectionInitialized == NO_PROVIDER )
+  {
+    return DPERR_UNINITIALIZED;
+  }
 
   if( dwFlags )
   {
