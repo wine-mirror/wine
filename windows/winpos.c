@@ -136,7 +136,8 @@ static POINT16 WINPOS_FindIconPos( WND* wndPtr, POINT16 pt )
     y = rectParent.bottom;
     for (;;)
     {
-        for (x = rectParent.left; x <= rectParent.right-xspacing; x += xspacing)
+        x = rectParent.left;
+        do 
         {
               /* Check if another icon already occupies this spot */
             WND *childPtr = WIN_LockWndPtr(wndPtr->parent->child);
@@ -159,7 +160,8 @@ static POINT16 WINPOS_FindIconPos( WND* wndPtr, POINT16 pt )
 		pt.y = y - (yspacing + GetSystemMetrics(SM_CYICON)) / 2;
 		return pt;
             }
-        }
+	    x += xspacing;
+        } while(x <= rectParent.right-xspacing);
         y -= yspacing;
     }
 }
