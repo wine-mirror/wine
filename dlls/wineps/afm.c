@@ -1,6 +1,6 @@
 /*
  *	Adobe Font Metric (AFM) file parsing
- *	See http://www.adobe.com/supportservice/devrelations/PDFS/TN/5004.AFM_Spec.pdf
+ *	See http://partners.adobe.com/asn/developer/PDFS/TN/5004.AFM_Spec.pdf
  *
  *	Copyright 1998  Huw D M Davies
  * 
