@@ -741,6 +741,9 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1970(
 	LPFILETIME ft,
 	LPDWORD timeret);
 
+void WINAPI RtlSecondsSince1970ToTime( DWORD time, LPFILETIME ft );
+void WINAPI RtlSecondsSince1980ToTime( DWORD time, LPFILETIME ft );
+
 /*	heap functions */
 
 /* Data structure for heap definition. This includes various
@@ -958,6 +961,18 @@ NTSTATUS WINAPI NtUnloadKey(
 
 NTSTATUS WINAPI NtClose(
 	HANDLE Handle);
+
+NTSTATUS WINAPI NtTerminateProcess( HANDLE handle, LONG exit_code );
+
+NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
+                                   IN ACCESS_MASK DesiredAccess,
+                                   IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
+                                   IN ULONG InitialCount,
+                                   IN ULONG MaximumCount);
+NTSTATUS WINAPI NtReleaseSemaphore( IN HANDLE SemaphoreHandle,
+                                    IN ULONG ReleaseCount,
+                                    IN PULONG PreviousCount);
+
 
 /*	misc */
 

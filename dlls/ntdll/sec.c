@@ -11,8 +11,6 @@
 #include <math.h>
 #include "windef.h"
 #include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
 #include "wine/winestring.h"
 #include "file.h"
 #include "heap.h"

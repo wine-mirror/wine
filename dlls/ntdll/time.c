@@ -178,17 +178,6 @@ VOID WINAPI RtlSystemTimeToLocalTime(
 
 	memcpy (LocalTime, SystemTime, sizeof (PLARGE_INTEGER));
 }
-/******************************************************************************
- *  RtlTimeToSecondsSince1980		[NTDLL] 
- */
-BOOLEAN WINAPI RtlTimeToSecondsSince1980(
-	LPFILETIME ft,
-	LPDWORD timeret) 
-{
-	/* 1980 = 1970+10*365 days +  29. februar 1972 + 29.februar 1976 */
-	*timeret = DOSFS_FileTimeToUnixTime(ft,NULL) - (10*365+2)*24*3600;
-	return 1;
-}
 
 /******************************************************************************
  *  RtlTimeToSecondsSince1970		[NTDLL] 
@@ -197,8 +186,37 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1970(
 	LPFILETIME ft,
 	LPDWORD timeret) 
 {
-	*timeret = DOSFS_FileTimeToUnixTime(ft,NULL);
-	return 1;
+    *timeret = DOSFS_FileTimeToUnixTime(ft,NULL);
+    return TRUE;
+}
+
+/******************************************************************************
+ *  RtlTimeToSecondsSince1980		[NTDLL] 
+ */
+BOOLEAN WINAPI RtlTimeToSecondsSince1980(
+	LPFILETIME ft,
+	LPDWORD timeret) 
+{
+    /* 1980 = 1970+10*365 days +  29. februar 1972 + 29.februar 1976 */
+    if (!RtlTimeToSecondsSince1970( ft, timeret )) return FALSE;
+    *timeret -= (10*365+2)*24*60*60;
+    return TRUE;
+}
+
+/******************************************************************************
+ *  RtlSecondsSince1970ToTime		[NTDLL] 
+ */
+void WINAPI RtlSecondsSince1970ToTime( DWORD time, LPFILETIME ft )
+{
+    DOSFS_UnixTimeToFileTime( time, ft, 0 );
+}
+
+/******************************************************************************
+ *  RtlSecondsSince1980ToTime		[NTDLL] 
+ */
+void WINAPI RtlSecondsSince1980ToTime( DWORD time, LPFILETIME ft )
+{
+    RtlSecondsSince1970ToTime( time + (10*365+2)*24*60*60, ft );
 }
 
 /******************************************************************************

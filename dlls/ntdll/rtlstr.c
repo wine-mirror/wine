@@ -31,7 +31,7 @@ VOID WINAPI RtlInitString(PSTRING target,LPCSTR source)
 	target->Buffer = (LPSTR)source;
 	if (source)
 	{
-	  target->Length = lstrlenA(source);
+	  target->Length = strlen(source);
 	  target->MaximumLength = target->Length+1;
 	}
 	else
@@ -56,7 +56,7 @@ VOID WINAPI RtlInitAnsiString(
 	target->Buffer = (LPSTR)source;
 	if (source)
 	{
-	  target->Length = lstrlenA(source);
+	  target->Length = strlen(source);
 	  target->MaximumLength = target->Length+1;
 	}
 	else
@@ -94,7 +94,7 @@ VOID WINAPI RtlInitUnicodeString(
 	target->Buffer = (LPWSTR)source;
 	if (source)
 	{
-	  target->Length = lstrlenW(source)*2;
+	  target->Length = strlenW(source)*2;
 	  target->MaximumLength = target->Length + 2;
 	}
 	else

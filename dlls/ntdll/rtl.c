@@ -8,19 +8,18 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include "heap.h"
 #include "debugtools.h"
 #include "windef.h"
-#include "wingdi.h"
-#include "winuser.h"
 #include "winerror.h"
 #include "stackframe.h"
 
 #include "ntddk.h"
 #include "winreg.h"
 
-DEFAULT_DEBUG_CHANNEL(ntdll)
+DEFAULT_DEBUG_CHANNEL(ntdll);
 
 
 /*
@@ -43,8 +42,8 @@ void WINAPI RtlInitializeResource(LPRTL_RWLOCK rwl)
 	rwl->hOwningThreadId = 0;
 	rwl->dwTimeoutBoost = 0; /* no info on this one, default value is 0 */
 	InitializeCriticalSection( &rwl->rtlCS );
-	rwl->hExclusiveReleaseSemaphore = CreateSemaphoreA( NULL, 0, 65535, NULL );
-	rwl->hSharedReleaseSemaphore = CreateSemaphoreA( NULL, 0, 65535, NULL );
+        NtCreateSemaphore( &rwl->hExclusiveReleaseSemaphore, 0, NULL, 0, 65535 );
+        NtCreateSemaphore( &rwl->hSharedReleaseSemaphore, 0, NULL, 0, 65535 );
     }
 }
 
@@ -62,8 +61,8 @@ void WINAPI RtlDeleteResource(LPRTL_RWLOCK rwl)
 	rwl->hOwningThreadId = 0;
 	rwl->uExclusiveWaiters = rwl->uSharedWaiters = 0;
 	rwl->iNumberActive = 0;
-	CloseHandle( rwl->hExclusiveReleaseSemaphore );
-	CloseHandle( rwl->hSharedReleaseSemaphore );
+	NtClose( rwl->hExclusiveReleaseSemaphore );
+	NtClose( rwl->hSharedReleaseSemaphore );
 	LeaveCriticalSection( &rwl->rtlCS );
 	DeleteCriticalSection( &rwl->rtlCS );
     }
@@ -171,7 +170,7 @@ void WINAPI RtlReleaseResource(LPRTL_RWLOCK rwl)
 	    {
 wake_exclusive:
 		rwl->uExclusiveWaiters--;
-		ReleaseSemaphore( rwl->hExclusiveReleaseSemaphore, 1, NULL );
+		NtReleaseSemaphore( rwl->hExclusiveReleaseSemaphore, 1, NULL );
 	    }
 	}
     }
@@ -190,7 +189,7 @@ wake_exclusive:
 		    rwl->iNumberActive = rwl->uSharedWaiters; /* prevent new writers from joining until
 							       * all queued readers have done their thing */
 		    rwl->uSharedWaiters = 0;
-		    ReleaseSemaphore( rwl->hSharedReleaseSemaphore, n, NULL );
+		    NtReleaseSemaphore( rwl->hSharedReleaseSemaphore, n, NULL );
 		}
 	}
     }
@@ -278,12 +277,13 @@ BOOLEAN WINAPI RtlDestroyHeap(
 /******************************************************************************
  *	DbgPrint	[NTDLL] 
  */
-void WINAPIV DbgPrint(LPCSTR fmt, ...) {
-	char buf[512];
+void WINAPIV DbgPrint(LPCSTR fmt, ...)
+{
+       char buf[512];
        va_list args;
 
        va_start(args, fmt);
-       wvsprintfA(buf,fmt, args);
+       vsprintf(buf,fmt, args);
        va_end(args); 
 
 	MESSAGE("DbgPrint says: %s",buf);
@@ -428,6 +428,24 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(
 		RtlInitUnicodeString(us,HEAP_strdupW(GetProcessHeap(),0,from));
 	return TRUE;
 }
+
+
+/***********************************************************************
+ *           RtlImageNtHeader   (NTDLL)
+ */
+PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
+{
+    IMAGE_NT_HEADERS *ret = NULL;
+    IMAGE_DOS_HEADER *dos = (IMAGE_DOS_HEADER *)hModule;
+
+    if (dos->e_magic == IMAGE_DOS_SIGNATURE)
+    {
+        ret = (IMAGE_NT_HEADERS *)((char *)dos + dos->e_lfanew);
+        if (ret->Signature != IMAGE_NT_SIGNATURE) ret = NULL;
+    }
+    return ret;
+}
+
 
 /******************************************************************************
  *  RtlCreateEnvironment		[NTDLL] 

@@ -12,9 +12,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "windef.h"
-#include "wingdi.h"
 #include "wine/winbase16.h"
-#include "wine/winuser16.h"
 #include "winerror.h"
 #include "file.h"
 #include "global.h"
@@ -1616,22 +1614,6 @@ FARPROC MODULE_GetProcAddress(
     	SetLastError(ERROR_INVALID_HANDLE);
     	return (FARPROC)0;
     }
-}
-
-
-/***********************************************************************
- *           RtlImageNtHeader   (NTDLL)
- */
-PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
-{
-    /* basically:
-     * return  hModule+(((IMAGE_DOS_HEADER*)hModule)->e_lfanew); 
-     * but we could get HMODULE16 or the like (think builtin modules)
-     */
-
-    WINE_MODREF	*wm = MODULE32_LookupHMODULE( hModule );
-    if (!wm || (wm->type != MODULE32_PE)) return (PIMAGE_NT_HEADERS)0;
-    return PE_HEADER(wm->module);
 }
 
 

@@ -480,8 +480,8 @@ type	win32
 @ stub RtlResetRtlTranslations
 @ stub RtlRunDecodeUnicodeString
 @ stub RtlRunEncodeUnicodeString
-@ stub RtlSecondsSince1970ToTime
-@ stub RtlSecondsSince1980ToTime
+@ stdcall RtlSecondsSince1970ToTime(long ptr) RtlSecondsSince1970ToTime
+@ stdcall RtlSecondsSince1980ToTime(long ptr) RtlSecondsSince1980ToTime
 @ stub RtlSelfRelativeToAbsoluteSD
 @ stub RtlSetAllBits
 @ stdcall RtlSetBits(long long long) RtlSetBits
@@ -873,7 +873,7 @@ type	win32
 @ cdecl _ltoa(long ptr long) _ltoa
 @ stub _memccpy
 @ cdecl _memicmp(str str long) _memicmp
-@ stub _snprintf
+@ varargs _snprintf(ptr long ptr) snprintf
 @ stub _snwprintf
 @ stub _splitpath
 @ cdecl _strcmpi(str str) strcasecmp
@@ -882,7 +882,7 @@ type	win32
 @ cdecl _strnicmp(str str long) strncasecmp
 @ cdecl _strupr(str) _strupr
 @ cdecl _ultoa(long ptr long) _ultoa
-@ stub _vsnprintf
+@ cdecl _vsnprintf(ptr long ptr ptr) vsnprintf
 @ cdecl _wcsicmp(wstr wstr) NTDLL__wcsicmp
 @ cdecl _wcslwr(wstr) NTDLL__wcslwr
 @ cdecl _wcsnicmp(wstr wstr long) NTDLL__wcsnicmp
@@ -915,7 +915,7 @@ type	win32
 @ stub pow
 @ stub qsort
 @ stub sin
-@ varargs sprintf(str str) wsprintfA
+@ varargs sprintf(str str) sprintf
 @ stub sqrt
 @ varargs sscanf() sscanf
 @ cdecl strcat(str str) strcat

@@ -15,6 +15,7 @@
 
 #include "ntddk.h"
 #include "ntdll_misc.h"
+#include "server.h"
 
 DEFAULT_DEBUG_CHANNEL(ntdll);
 
@@ -70,19 +71,15 @@ NTSTATUS WINAPI NtQueryTimerResolution(DWORD x1,DWORD x2,DWORD x3)
  *  NtTerminateProcess			[NTDLL.] 
  *
  *  Native applications must kill themselves when done
- * FIXME: return value 0-success
  */
-NTSTATUS WINAPI NtTerminateProcess(
-	HANDLE ProcessHandle,
-	LONG ExitStatus)
+NTSTATUS WINAPI NtTerminateProcess( HANDLE handle, LONG exit_code )
 {
-	TRACE("0x%08x 0x%08lx\n", ProcessHandle, ExitStatus );
-
-	/* win32 (0x7fffffff) to nt (-1) */
-	if ( NtCurrentProcess() == ProcessHandle )
-	  ProcessHandle = GetCurrentProcess();
-
-	return (! TerminateProcess( ProcessHandle, ExitStatus ));
+    NTSTATUS ret;
+    struct terminate_process_request *req = get_req_buffer();
+    req->handle    = handle;
+    req->exit_code = exit_code;
+    if (!(ret = server_call_noerr( REQ_TERMINATE_PROCESS )) && req->self) exit( exit_code );
+    return ret;
 }
 
 /******************************************************************************
@@ -140,14 +137,19 @@ NTSTATUS WINAPI NtResumeThread(
 /******************************************************************************
  *  NtTerminateThread	[NTDLL] 
  */
-NTSTATUS WINAPI NtTerminateThread(
-	IN HANDLE ThreadHandle,
-	IN NTSTATUS ExitStatus)
+NTSTATUS WINAPI NtTerminateThread( IN HANDLE handle,
+                                   IN NTSTATUS exit_code )
 {
-	if ( TerminateThread(ThreadHandle,ExitStatus) )
-	  return 0;
-
-	return 0xc0000000; /* FIXME: lasterror->ntstatus */
+    NTSTATUS ret;
+    struct terminate_thread_request *req = get_req_buffer();
+    req->handle    = handle;
+    req->exit_code = exit_code;
+    if (!(ret = server_call_noerr( REQ_TERMINATE_THREAD )) && req->self)
+    {
+        if (req->last) exit( exit_code );
+        else SYSDEPS_ExitThread( exit_code );
+    }
+    return ret;
 }
 
 /******************************************************************************

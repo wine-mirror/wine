@@ -117,7 +117,7 @@ static void EXC_DefaultHandling( EXCEPTION_RECORD *rec, CONTEXT *context )
     else
         ERR("Unhandled exception code %lx flags %lx addr %p\n",
             rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
-    TerminateProcess( GetCurrentProcess(), 1 );
+    NtTerminateProcess( NtCurrentProcess(), 1 );
 }
 
 

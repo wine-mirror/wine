@@ -8,8 +8,9 @@
 
 #include "ntddk.h"
 #include "ntdll_misc.h"
+#include "server.h"
 
-DEFAULT_DEBUG_CHANNEL(ntdll)
+DEFAULT_DEBUG_CHANNEL(ntdll);
 
 /* move to somewhere */
 typedef void * POBJDIR_INFORMATION;
@@ -212,13 +213,11 @@ NTSTATUS WINAPI NtDuplicateObject(
  * ARGUMENTS:
  *	Handle	handle to close
  */
-NTSTATUS WINAPI NtClose(
-	HANDLE Handle) 
+NTSTATUS WINAPI NtClose( HANDLE Handle )
 {
-	TRACE("(0x%08x)\n",Handle);
-	if (CloseHandle(Handle))
-	  return STATUS_SUCCESS;
-	return STATUS_UNSUCCESSFUL; /*fixme*/
+    struct close_handle_request *req = get_req_buffer();
+    req->handle = Handle;
+    return server_call_noerr( REQ_CLOSE_HANDLE );
 }
 
 /******************************************************************************

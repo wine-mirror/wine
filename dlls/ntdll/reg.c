@@ -12,7 +12,6 @@
 #include "winreg.h"
 #include "winerror.h"
 #include "wine/unicode.h"
-#include "file.h"
 #include "server.h"
 #include "ntddk.h"
 #include "ntdll_misc.h"
@@ -25,7 +24,7 @@ static inline NTSTATUS copy_nameU( LPWSTR Dest, PUNICODE_STRING Name, UINT Offse
 	if (Name->Buffer) 
 	{
 	  if ((Name->Length-Offset) > MAX_PATH) return STATUS_BUFFER_OVERFLOW;
-	  lstrcpyW( Dest, Name->Buffer+Offset );
+	  strcpyW( Dest, Name->Buffer+Offset );
 	}
 	else Dest[0] = 0;
 	return STATUS_SUCCESS;
@@ -63,19 +62,19 @@ static BOOLEAN _NtKeyToWinKey(
 	  len = 0;
 	  *KeyHandle = ObjectAttributes->RootDirectory;
 	}
-	else if((ObjectName->Length > (len=lstrlenW(KeyPath_HKLM)))
+	else if((ObjectName->Length > (len=strlenW(KeyPath_HKLM)))
 	&& (0==strncmpiW(ObjectName->Buffer,KeyPath_HKLM,len)))
 	{  *KeyHandle = HKEY_LOCAL_MACHINE;
 	}
-	else if((ObjectName->Length > (len=lstrlenW(KeyPath_HKU)))
+	else if((ObjectName->Length > (len=strlenW(KeyPath_HKU)))
 	&& (0==strncmpiW(ObjectName->Buffer,KeyPath_HKU,len)))
 	{  *KeyHandle = HKEY_USERS;
 	}
-	else if((ObjectName->Length > (len=lstrlenW(KeyPath_HCR)))
+	else if((ObjectName->Length > (len=strlenW(KeyPath_HCR)))
 	&& (0==strncmpiW(ObjectName->Buffer,KeyPath_HCR,len)))
 	{  *KeyHandle = HKEY_CLASSES_ROOT;
 	}
-	else if((ObjectName->Length > (len=lstrlenW(KeyPath_HCC)))
+	else if((ObjectName->Length > (len=strlenW(KeyPath_HCC)))
 	&& (0==strncmpiW(ObjectName->Buffer,KeyPath_HCC,len)))
 	{  *KeyHandle = HKEY_CURRENT_CONFIG;
 	}
@@ -132,7 +131,8 @@ NTSTATUS WINAPI NtCreateKey(
 	{
 	  int ClassLen = Class->Length+1;
 	  if ( ClassLen*sizeof(WCHAR) > server_remaining(req->class)) return STATUS_BUFFER_OVERFLOW;
-	  lstrcpynW( req->class, Class->Buffer, ClassLen);
+	  memcpy( req->class, Class->Buffer, ClassLen );
+          req->class[ClassLen] = 0;
 	}
 	else
 	  req->class[0] = 0x0000;
@@ -237,11 +237,11 @@ NTSTATUS WINAPI NtEnumerateKey(
 	  case KeyBasicInformation:
 	    {
 	      PKEY_BASIC_INFORMATION kbi = KeyInformation;
-	      UINT NameLength = lstrlenW(req->name) * sizeof(WCHAR);
+	      UINT NameLength = strlenW(req->name) * sizeof(WCHAR);
 	      *ResultLength = sizeof(KEY_BASIC_INFORMATION) - sizeof(WCHAR) + NameLength;
 	      if (Length < *ResultLength) return STATUS_BUFFER_OVERFLOW;
 
-	      DOSFS_UnixTimeToFileTime(req->modif, &kbi->LastWriteTime, 0);
+	      RtlSecondsSince1970ToTime(req->modif, &kbi->LastWriteTime);
 	      kbi->TitleIndex = 0;
 	      kbi->NameLength = NameLength;
 	      memcpy (kbi->Name, req->name, NameLength);
@@ -250,13 +250,13 @@ NTSTATUS WINAPI NtEnumerateKey(
 	  case KeyFullInformation:
 	    {
 	      PKEY_FULL_INFORMATION kfi = KeyInformation;
-	      kfi->ClassLength = lstrlenW(req->class) * sizeof(WCHAR);
+	      kfi->ClassLength = strlenW(req->class) * sizeof(WCHAR);
 	      kfi->ClassOffset = (kfi->ClassLength) ?
 	        sizeof(KEY_FULL_INFORMATION) - sizeof(WCHAR) : 0xffffffff;
 	      *ResultLength = sizeof(KEY_FULL_INFORMATION) - sizeof(WCHAR) + kfi->ClassLength;
 	      if (Length < *ResultLength) return STATUS_BUFFER_OVERFLOW;
 
-	      DOSFS_UnixTimeToFileTime(req->modif, &kfi->LastWriteTime, 0);
+	      RtlSecondsSince1970ToTime(req->modif, &kfi->LastWriteTime);
 	      kfi->TitleIndex = 0;
 /*	      kfi->SubKeys = req->subkeys;
 	      kfi->MaxNameLength = req->max_subkey;
@@ -272,15 +272,15 @@ NTSTATUS WINAPI NtEnumerateKey(
 	  case KeyNodeInformation:
 	    {
 	      PKEY_NODE_INFORMATION kni = KeyInformation;
-	      kni->ClassLength = lstrlenW(req->class) * sizeof(WCHAR);
-	      kni->NameLength = lstrlenW(req->name) * sizeof(WCHAR);
+	      kni->ClassLength = strlenW(req->class) * sizeof(WCHAR);
+	      kni->NameLength = strlenW(req->name) * sizeof(WCHAR);
 	      kni->ClassOffset = (kni->ClassLength) ?
 	        sizeof(KEY_NODE_INFORMATION) - sizeof(WCHAR) + kni->NameLength : 0xffffffff;
 
 	      *ResultLength = sizeof(KEY_NODE_INFORMATION) - sizeof(WCHAR) + kni->NameLength + kni->ClassLength;
 	      if (Length < *ResultLength) return STATUS_BUFFER_OVERFLOW;
 
-	      DOSFS_UnixTimeToFileTime(req->modif, &kni->LastWriteTime, 0);
+	      RtlSecondsSince1970ToTime(req->modif, &kni->LastWriteTime);
 	      kni->TitleIndex = 0;
 	      memcpy (kni->Name, req->name, kni->NameLength);
 	      if (kni->ClassLength) memcpy ((char *) KeyInformation + kni->ClassOffset, req->class, kni->ClassLength);
@@ -319,11 +319,11 @@ NTSTATUS WINAPI NtQueryKey(
 	  case KeyBasicInformation:
 	    {
 	      PKEY_BASIC_INFORMATION kbi = KeyInformation;
-	      UINT NameLength = lstrlenW(req->name) * sizeof(WCHAR);
+	      UINT NameLength = strlenW(req->name) * sizeof(WCHAR);
 	      *ResultLength = sizeof(KEY_BASIC_INFORMATION) - sizeof(WCHAR) + NameLength;
 	      if (Length < *ResultLength) return STATUS_BUFFER_OVERFLOW;
 
-	      DOSFS_UnixTimeToFileTime(req->modif, &kbi->LastWriteTime, 0);
+	      RtlSecondsSince1970ToTime(req->modif, &kbi->LastWriteTime);
 	      kbi->TitleIndex = 0;
 	      kbi->NameLength = NameLength;
 	      memcpy (kbi->Name, req->name, NameLength);
@@ -332,14 +332,14 @@ NTSTATUS WINAPI NtQueryKey(
 	  case KeyFullInformation:
 	    {
 	      PKEY_FULL_INFORMATION kfi = KeyInformation;
-	      kfi->ClassLength = lstrlenW(req->class) * sizeof(WCHAR);
+	      kfi->ClassLength = strlenW(req->class) * sizeof(WCHAR);
 	      kfi->ClassOffset = (kfi->ClassLength) ?
 	        sizeof(KEY_FULL_INFORMATION) - sizeof(WCHAR) : 0xffffffff;
 
 	      *ResultLength = sizeof(KEY_FULL_INFORMATION) - sizeof(WCHAR) + kfi->ClassLength;
 	      if (Length < *ResultLength) return STATUS_BUFFER_OVERFLOW;
 
-	      DOSFS_UnixTimeToFileTime(req->modif, &kfi->LastWriteTime, 0);
+	      RtlSecondsSince1970ToTime(req->modif, &kfi->LastWriteTime);
 	      kfi->TitleIndex = 0;
 	      kfi->SubKeys = req->subkeys;
 	      kfi->MaxNameLen = req->max_subkey;
@@ -353,15 +353,15 @@ NTSTATUS WINAPI NtQueryKey(
 	  case KeyNodeInformation:
 	    {
 	      PKEY_NODE_INFORMATION kni = KeyInformation;
-	      kni->ClassLength = lstrlenW(req->class) * sizeof(WCHAR);
-	      kni->NameLength = lstrlenW(req->name) * sizeof(WCHAR);
+	      kni->ClassLength = strlenW(req->class) * sizeof(WCHAR);
+	      kni->NameLength = strlenW(req->name) * sizeof(WCHAR);
 	      kni->ClassOffset = (kni->ClassLength) ?
 	        sizeof(KEY_NODE_INFORMATION) - sizeof(WCHAR) + kni->NameLength : 0xffffffff;
 
 	      *ResultLength = sizeof(KEY_NODE_INFORMATION) - sizeof(WCHAR) + kni->NameLength + kni->ClassLength;
 	      if (Length < *ResultLength) return STATUS_BUFFER_OVERFLOW;
 
-	      DOSFS_UnixTimeToFileTime(req->modif, &kni->LastWriteTime, 0);
+	      RtlSecondsSince1970ToTime(req->modif, &kni->LastWriteTime);
 	      kni->TitleIndex = 0;
 	      memcpy (kni->Name, req->name, kni->NameLength);
 	      if(kni->ClassLength) memcpy ((char *) KeyInformation + kni->ClassOffset, req->class, kni->ClassLength);
@@ -403,7 +403,7 @@ NTSTATUS WINAPI NtEnumerateValueKey(
 	    {
 	      PKEY_VALUE_BASIC_INFORMATION kbi = KeyInformation;
 	      
-	      NameLength = lstrlenW(req->name) * sizeof(WCHAR);
+	      NameLength = strlenW(req->name) * sizeof(WCHAR);
 	      *ResultLength = sizeof(KEY_VALUE_BASIC_INFORMATION) - sizeof(WCHAR) + NameLength;
 	      if (*ResultLength > Length) return STATUS_BUFFER_TOO_SMALL;
 
@@ -418,7 +418,7 @@ NTSTATUS WINAPI NtEnumerateValueKey(
 	      PKEY_VALUE_FULL_INFORMATION kbi = KeyInformation;
 	      UINT DataOffset;
 
-	      NameLength = lstrlenW(req->name) * sizeof(WCHAR);
+	      NameLength = strlenW(req->name) * sizeof(WCHAR);
 	      DataOffset = sizeof(KEY_VALUE_FULL_INFORMATION) - sizeof(WCHAR) + NameLength;
 	      *ResultLength = DataOffset + req->len;
 

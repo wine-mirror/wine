@@ -9,6 +9,7 @@
 #include "debugtools.h"
 
 #include "winerror.h"
+#include "wine/unicode.h"
 #include "server.h"
 #include "ntddk.h"
 #include "ntdll_misc.h"
@@ -21,7 +22,7 @@ static inline NTSTATUS copy_nameU( LPWSTR Dest, const OBJECT_ATTRIBUTES *attr )
     if (attr && attr->ObjectName && attr->ObjectName->Buffer)
     {
         if ((attr->ObjectName->Length) > MAX_PATH) return STATUS_BUFFER_OVERFLOW;
-        lstrcpyW( Dest, attr->ObjectName->Buffer );
+        strcpyW( Dest, attr->ObjectName->Buffer );
     }
     else Dest[0] = 0;
     return STATUS_SUCCESS;
