@@ -2830,12 +2830,17 @@ DWORD WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
 
     TRACE("(%p, %u, %ld, %ld)\n", hWaveIn, uMessage, dwParam1, dwParam2);
 
+    if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL) {
+	if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, TRUE)) != NULL) {
+	    return MMDRV_PhysicalFeatures(wmld, uMessage, dwParam1, dwParam2);
+	}
+	return MMSYSERR_INVALHANDLE;
+    }
+
     /* from M$ KB */
     if (uMessage < DRVM_IOCTL || (uMessage >= DRVM_IOCTL_LAST && uMessage < DRVM_MAPPER))
 	return MMSYSERR_INVALPARAM;
 
-    if ((wmld = MMDRV_Get(hWaveIn, MMDRV_WAVEIN, FALSE)) == NULL)
-	return MMSYSERR_INVALHANDLE;
 
     return MMDRV_Message(wmld, uMessage, dwParam1, dwParam2, TRUE);
 }
