@@ -1417,7 +1417,7 @@ static HRESULT WINAPI IDsDriverImpl_GetDriverDesc(PIDSDRIVER iface, PDSDRIVERDES
 static HRESULT WINAPI IDsDriverImpl_Open(PIDSDRIVER iface)
 {
     ICOM_THIS(IDsDriverImpl,iface);
-    int enable;
+    int enable = 0;
 
     TRACE("(%p)\n",iface);
     /* make sure the card doesn't start playing before we want it to */
@@ -1552,10 +1552,6 @@ static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
     (*idrv)->primary	= NULL;
     return MMSYSERR_NOERROR;
 }
-
-/*======================================================================*
- *                  Low level WAVE IN implemantation			*
- *======================================================================*/
 
 /*======================================================================*
  *                  Low level WAVE IN implemantation			*

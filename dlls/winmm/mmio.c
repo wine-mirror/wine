@@ -10,7 +10,6 @@
 /* Still to be done:
  * 	+ correct handling of global/local IOProcs
  *	+ mode of mmio objects is not used (read vs write vs readwrite)
- *	+ IO buffering is limited to 64k
  *	+ optimization of internal buffers (seg / lin)
  *	+ even in 32 bit only, a seg ptr IO buffer is allocated (after this is 
  *	  fixed, we'll have a proper 32/16 separation)
@@ -614,20 +613,18 @@ static	BOOL		MMIO_Destroy(LPWINE_MMIO wm)
  */
 static	LRESULT	MMIO_Flush(WINE_MMIO* wm, UINT uFlags)
 {
-    if ((!wm->info.cchBuffer) || (wm->info.fccIOProc == FOURCC_MEM)) {
-	return 0;
+    if (wm->info.cchBuffer && (wm->info.fccIOProc != FOURCC_MEM)) {
+	/* not quite sure what to do here, but I'll guess */
+	if (wm->info.dwFlags & MMIO_DIRTY) {
+	    MMIO_SendMessage(wm, MMIOM_SEEK, wm->info.lDiskOffset,
+			     SEEK_SET, MMIO_PROC_32A);
+	    MMIO_SendMessage(wm, MMIOM_WRITE, (LPARAM)wm->info.pchBuffer,
+			     wm->info.pchNext - wm->info.pchBuffer, MMIO_PROC_32A);
+	}
+	if (uFlags & MMIO_EMPTYBUF)
+	    wm->info.pchNext = wm->info.pchBuffer;
     }
-
-    /* not quite sure what to do here, but I'll guess */
-    if (wm->info.dwFlags & MMIO_DIRTY) {
-	MMIO_SendMessage(wm, MMIOM_SEEK, wm->info.lDiskOffset,
-			 SEEK_SET, MMIO_PROC_32A);
-	MMIO_SendMessage(wm, MMIOM_WRITE, (LPARAM)wm->info.pchBuffer,
-			 wm->info.pchNext - wm->info.pchBuffer, MMIO_PROC_32A);
-	wm->info.dwFlags &= ~MMIO_DIRTY;
-    }
-    if (uFlags & MMIO_EMPTYBUF)
-        wm->info.pchNext = wm->info.pchBuffer;
+    wm->info.dwFlags &= ~MMIO_DIRTY;
 
     return 0;
 }
@@ -667,10 +664,8 @@ static	UINT	MMIO_SetBuffer(WINE_MMIO* wm, void* pchBuffer, LONG cchBuffer,
     TRACE("(%p %p %ld %u %d)\n", wm, pchBuffer, cchBuffer, uFlags, bFrom32);
 
     if (uFlags)			return MMSYSERR_INVALPARAM;
-    if (cchBuffer > 0xFFFF) {
-	FIXME("Not handling huge mmio buffers yet (%ld >= 64k)\n", cchBuffer);
-	return MMSYSERR_INVALPARAM;
-    }
+    if (cchBuffer > 0xFFFF)
+	WARN("Untested handling of huge mmio buffers (%ld >= 64k)\n", cchBuffer);
 	
     if (MMIO_Flush(wm, MMIO_EMPTYBUF) != 0)
 	return MMIOERR_CANNOTWRITE;
@@ -790,6 +785,7 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo,
 					      type != MMIO_PROC_16);
 	if (refmminfo->wErrorRet != MMSYSERR_NOERROR)
 	    goto error1;
+	wm->bBufferLoaded = TRUE;
     } /* else => unbuffered, wm->info.pchBuffer == NULL */
     
     /* see mmioDosIOProc for that one */
