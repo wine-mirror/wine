@@ -1320,11 +1320,15 @@ TOOLBAR_InternalHitTest (HWND hwnd, LPPOINT lpPt)
 
 
 static INT
-TOOLBAR_GetButtonIndex (TOOLBAR_INFO *infoPtr, INT idCommand)
+TOOLBAR_GetButtonIndex (TOOLBAR_INFO *infoPtr, INT idCommand, BOOL CommandIsIndex)
 {
     TBUTTON_INFO *btnPtr;
     INT i;
 
+    if (CommandIsIndex) {
+	TRACE("command is really index command=%d\n", idCommand);
+	return idCommand;
+    }
     btnPtr = infoPtr->buttons;
     for (i = 0; i < infoPtr->nNumButtons; i++, btnPtr++) {
 	if (btnPtr->idCommand == idCommand) {
@@ -1474,7 +1478,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    TRACE("style: %x\n", nmtb.tbButton.fsStyle);		
 
 		    /* insert button into the apropriate list */
-		    index = TOOLBAR_GetButtonIndex (custInfo->tbInfo, nmtb.tbButton.idCommand);
+		    index = TOOLBAR_GetButtonIndex (custInfo->tbInfo, nmtb.tbButton.idCommand, FALSE);
 		    if (index == -1)
 		    {
 			btnInfo = (PCUSTOMBUTTON)COMCTL32_Alloc(sizeof(CUSTOMBUTTON));
@@ -2415,7 +2419,7 @@ TOOLBAR_ChangeBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TBUTTON_INFO *btnPtr;
     INT nIndex;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return FALSE;
 
@@ -2439,7 +2443,7 @@ TOOLBAR_CheckButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     INT nOldIndex = -1;
     BOOL bChecked = FALSE;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return FALSE;
 
@@ -2485,7 +2489,7 @@ TOOLBAR_CommandToIndex (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
-    return TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    return TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
 }
 
 
@@ -2590,7 +2594,7 @@ TOOLBAR_EnableButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     INT nIndex;
     DWORD bState;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return FALSE;
 
@@ -2631,7 +2635,7 @@ TOOLBAR_GetBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     INT nIndex;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return -1;
 
@@ -2690,7 +2694,8 @@ TOOLBAR_GetButtonInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (lpTbInfo->cbSize < sizeof(TBBUTTONINFOA))
 	return -1;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam,
+				     lpTbInfo->dwMask & 0x80000000);
     if (nIndex == -1)
 	return -1;
 
@@ -2736,7 +2741,8 @@ TOOLBAR_GetButtonInfoW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (lpTbInfo->cbSize < sizeof(TBBUTTONINFOW))
 	return -1;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, 
+				     lpTbInfo->dwMask & 0x80000000);
     if (nIndex == -1)
 	return -1;
 
@@ -2784,7 +2790,7 @@ TOOLBAR_GetButtonTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     INT nIndex, nStringIndex;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return -1;
 
@@ -2809,7 +2815,7 @@ TOOLBAR_GetButtonTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     INT nIndex, nStringIndex;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return -1;
 
@@ -2950,7 +2956,7 @@ TOOLBAR_GetRect (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if (infoPtr == NULL)
 	return FALSE;
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     btnPtr = &infoPtr->buttons[nIndex];
     if ((nIndex < 0) || (nIndex >= infoPtr->nNumButtons))
 	return FALSE;
@@ -2985,7 +2991,7 @@ TOOLBAR_GetState (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     INT nIndex;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return -1;
 
@@ -2999,7 +3005,7 @@ TOOLBAR_GetStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     INT nIndex;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return -1;
 
@@ -3059,7 +3065,7 @@ TOOLBAR_HideButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     TRACE("\n");
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return FALSE;
 
@@ -3091,7 +3097,7 @@ TOOLBAR_Indeterminate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TBUTTON_INFO *btnPtr;
     INT nIndex;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return FALSE;
 
@@ -3275,7 +3281,7 @@ TOOLBAR_IsButtonChecked (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     INT nIndex;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return FALSE;
 
@@ -3289,7 +3295,7 @@ TOOLBAR_IsButtonEnabled (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     INT nIndex;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return FALSE;
 
@@ -3303,7 +3309,7 @@ TOOLBAR_IsButtonHidden (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     INT nIndex;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return TRUE;
 
@@ -3317,7 +3323,7 @@ TOOLBAR_IsButtonHighlighted (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     INT nIndex;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return FALSE;
 
@@ -3331,7 +3337,7 @@ TOOLBAR_IsButtonIndeterminate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     INT nIndex;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return FALSE;
 
@@ -3345,7 +3351,7 @@ TOOLBAR_IsButtonPressed (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     INT nIndex;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return FALSE;
 
@@ -3366,7 +3372,7 @@ TOOLBAR_PressButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TBUTTON_INFO *btnPtr;
     INT nIndex;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return FALSE;
 
@@ -3498,7 +3504,8 @@ TOOLBAR_SetButtonInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (lptbbi->cbSize < sizeof(TBBUTTONINFOA))
 	return FALSE;
     
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam,
+				     lptbbi->dwMask & 0x80000000);
     if (nIndex == -1)
 	return FALSE;
 
@@ -3548,7 +3555,8 @@ TOOLBAR_SetButtonInfoW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (lptbbi->cbSize < sizeof(TBBUTTONINFOW))
 	return FALSE;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam,
+				     lptbbi->dwMask & 0x80000000);
     if (nIndex == -1)
 	return FALSE;
 
@@ -3904,7 +3912,7 @@ TOOLBAR_SetState (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TBUTTON_INFO *btnPtr;
     INT nIndex;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return FALSE;
 
@@ -3937,7 +3945,7 @@ TOOLBAR_SetStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TBUTTON_INFO *btnPtr;
     INT nIndex;
 
-    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam);
+    nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return FALSE;
 
