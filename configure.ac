@@ -1093,6 +1093,9 @@ AC_CHECK_HEADERS([resolv.h],,,
      #endif
      #if HAVE_NETINET_IN_H
      # include <netinet/in.h>
+     #endif
+     #if HAVE_ARPA_NAMESER_H
+     # include <arpa/nameser.h>
      #endif])
 
 AC_CHECK_HEADERS(netinet/ip.h,,,

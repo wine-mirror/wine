@@ -14014,6 +14014,9 @@ cat >>conftest.$ac_ext <<_ACEOF
      #if HAVE_NETINET_IN_H
      # include <netinet/in.h>
      #endif
+     #if HAVE_ARPA_NAMESER_H
+     # include <arpa/nameser.h>
+     #endif
 
 #include <$ac_header>
 _ACEOF
