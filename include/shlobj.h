@@ -7,6 +7,7 @@
 #include "ole2.h"
 #include "oleobj.h"
 #include "commctrl.h"
+#include "prsht.h"
 #include "wintypes.h"
 
 #define STDMETHOD(xfn) HRESULT (CALLBACK *fn##xfn)
@@ -760,6 +761,7 @@ struct IShellLink {
 	/* IPersistfile interface */
 	LPPERSISTFILE		lppf;
 };
+#define IShellLinkA IShellLink 
 
 #undef THIS
 
