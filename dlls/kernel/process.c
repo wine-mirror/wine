@@ -401,6 +401,56 @@ static BOOL build_initial_environment( char **environ )
 
 
 /***********************************************************************
+ *           set_registry_environment
+ *
+ * Set the environment variables specified in the registry.
+ */
+static void set_registry_environment(void)
+{
+    static const WCHAR env_keyW[] = {'M','a','c','h','i','n','e','\\',
+                                     'S','y','s','t','e','m','\\',
+                                     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                     'C','o','n','t','r','o','l','\\',
+                                     'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r','\\',
+                                     'E','n','v','i','r','o','n','m','e','n','t',0};
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW, env_name, env_value;
+    NTSTATUS status;
+    HKEY hkey;
+    DWORD size;
+    int index;
+    char buffer[1024 + sizeof(KEY_VALUE_FULL_INFORMATION)];
+    KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, env_keyW );
+    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) return;
+
+    for (index = 0; ; index++)
+    {
+        status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
+                                      buffer, sizeof(buffer), &size );
+        if (status == STATUS_BUFFER_OVERFLOW) continue;
+        if (status != STATUS_SUCCESS) break;
+        if (info->Type != REG_SZ) continue;  /* FIXME: handle REG_EXPAND_SZ */
+        env_name.Buffer = info->Name;
+        env_name.Length = env_name.MaximumLength = info->NameLength;
+        env_value.Buffer = (WCHAR *)(buffer + info->DataOffset);
+        env_value.Length = env_value.MaximumLength = info->DataLength;
+        if (env_value.Length && !env_value.Buffer[env_value.Length/sizeof(WCHAR)-1])
+            env_value.Length--;  /* don't count terminating null if any */
+        RtlSetEnvironmentVariable( NULL, &env_name, &env_value );
+    }
+    NtClose( hkey );
+}
+
+
+/***********************************************************************
  *              set_library_wargv
  *
  * Set the Wine library Unicode argv global variables.
@@ -749,6 +799,8 @@ static BOOL process_init( char *argv[], char **environ )
         wine_server_call( req );
     }
     SERVER_END_REQ;
+
+    if (!info_size) set_registry_environment();
 
     return TRUE;
 }
