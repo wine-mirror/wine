@@ -63,6 +63,8 @@ VOID WINAPI InitMUILanguage (LANGID uiLang);
 #define ICC_INTERNET_CLASSES   0x00000800  /* IP address, ... */
 #define ICC_PAGESCROLLER_CLASS 0x00001000  /* page scroller */
 #define ICC_NATIVEFNTCTL_CLASS 0x00002000  /* native font control ???*/
+#define ICC_STANDARD_CLASSES   0x00004000
+#define ICC_LINK_CLASS         0x00008000
 
 
 /* common control styles */
