@@ -29,15 +29,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "wine/unicode.h"
 #include "crypt.h"
 #include "winnls.h"
-#include "wincrypt.h"
-#include "windef.h"
-#include "winerror.h"
 #include "winreg.h"
-#include "winbase.h"
-#include "winuser.h"
 #include "wine/debug.h"
 #include "winternl.h"
 #include "ntstatus.h"

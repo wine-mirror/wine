@@ -36,7 +36,6 @@
 #include <stdarg.h>
 
 #include "windef.h"
-#include "winbase.h"
 
 typedef struct
 {

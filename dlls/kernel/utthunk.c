@@ -26,7 +26,6 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "wownt32.h"
-#include "module.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thunk);

@@ -32,19 +32,14 @@
 #endif
 #include <ctype.h>
 
-#include "ntstatus.h"
 #include "windef.h"
-#include "winbase.h"
 #include "wine/winbase16.h"
-#include "winerror.h"
 #include "wownt32.h"
 #include "module.h"
 #include "toolhelp.h"
 #include "builtin16.h"
 #include "stackframe.h"
 #include "excpt.h"
-#include "kernel_private.h"
-#include "wine/unicode.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 

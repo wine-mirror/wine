@@ -27,10 +27,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winerror.h"
-#include "wingdi.h"
 #include "winuser.h"
-#include "winnls.h"
-#include "commctrl.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(commctrl);
