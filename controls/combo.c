@@ -748,6 +748,8 @@ static void CBPaintText(
 
    if( lphc->wState & CBF_NOREDRAW ) return;
 
+   TRACE("\n");
+
    /* follow Windows combobox that sends a bunch of text 
     * inquiries to its listbox while processing WM_PAINT. */
 
@@ -981,6 +983,7 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC hParamDC)
   hDC = (hParamDC) ? hParamDC
 		   : BeginPaint( lphc->self->hwndSelf, &ps);
 
+  TRACE("hdc=%04x\n", hDC);
 
   if( hDC && !(lphc->wState & CBF_NOREDRAW) )
   {
@@ -1429,17 +1432,6 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 		else lphc->wState &= ~CBF_NOROLLUP;
 
 		CB_NOTIFY( lphc, CBN_SELCHANGE );
-
-		/* added due to traces from native */
-		if( CB_OWNERDRAWN(lphc) ) 
-		{
-		    HDC hDC;
-
-		    hDC = GetDC( hWnd );
-		    CBPaintText( lphc, hDC, lphc->textRect);
-		    ReleaseDC( hWnd, hDC );
-		}
-		/* end of added due to traces from native */
 
 		/* fall through */
 
