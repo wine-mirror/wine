@@ -305,6 +305,8 @@ static BOOL URLCacheContainers_AddContainer(LPCWSTR cache_prefix, LPCWSTR path, 
     if ((pContainer->hMutex = CreateMutexW(NULL, FALSE, mutex_name)) == NULL)
     {
         ERR("couldn't create mutex (error is %ld)\n", GetLastError());
+        HeapFree(GetProcessHeap(), 0, pContainer->path);
+        HeapFree(GetProcessHeap(), 0, pContainer);
         return FALSE;
     }
 
