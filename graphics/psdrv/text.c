@@ -11,14 +11,14 @@
 
 DEFAULT_DEBUG_CHANNEL(psdrv)
 
-static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCSTR str, UINT count,
+static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCWSTR str, UINT count,
 		       BOOL bDrawBackground);
 
 /***********************************************************************
  *           PSDRV_ExtTextOut
  */
 BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
-		       const RECT *lprect, LPCSTR str, UINT count,
+		       const RECT *lprect, LPCWSTR str, UINT count,
 		       const INT *lpDx )
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
@@ -27,8 +27,8 @@ BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     BOOL bOpaque = FALSE;
     RECT rect;
 
-    TRACE("(x=%d, y=%d, flags=0x%08x, str='%.*s', count=%d)\n", x, y,
-	  flags, (int)count, str, count);
+    TRACE("(x=%d, y=%d, flags=0x%08x, str=%s, count=%d)\n", x, y,
+	  flags, debugstr_wn(str, count), count);
 
     /* write font if not already written */
     PSDRV_SetFont(dc);
@@ -74,14 +74,14 @@ BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 /***********************************************************************
  *           PSDRV_Text
  */
-static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCSTR str, UINT count,
+static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCWSTR str, UINT count,
 		       BOOL bDrawBackground)
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-    char *strbuf;
+    LPWSTR strbuf;
     SIZE sz;
 
-    strbuf = (char *)HeapAlloc( PSDRV_Heap, 0, count + 1);
+    strbuf = HeapAlloc( PSDRV_Heap, 0, (count + 1) * sizeof(WCHAR));
     if(!strbuf) {
         WARN("HeapAlloc failed\n");
         return FALSE;
@@ -95,7 +95,7 @@ static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCSTR str, UINT count,
     x = XLPTODP(dc, x);
     y = YLPTODP(dc, y);
 
-    GetTextExtentPoint32A(dc->hSelf, str, count, &sz);
+    GetTextExtentPoint32W(dc->hSelf, str, count, &sz);
     sz.cx = XLSTODS(dc, sz.cx);
     sz.cy = YLSTODS(dc, sz.cy);
 
@@ -129,7 +129,7 @@ static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCSTR str, UINT count,
 	break;
     }
 
-    memcpy(strbuf, str, count);
+    memcpy(strbuf, str, count * sizeof(WCHAR));
     *(strbuf + count) = '\0';
     
     if ((dc->w.backgroundMode != TRANSPARENT) && (bDrawBackground != FALSE))
@@ -145,7 +145,7 @@ static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCSTR str, UINT count,
     }
 
     PSDRV_WriteMoveTo(dc, x, y);
-    PSDRV_WriteShow(dc, strbuf, strlen(strbuf));
+    PSDRV_WriteShow(dc, strbuf, lstrlenW(strbuf));
 
     /*
      * Underline and strikeout attributes.
@@ -165,7 +165,7 @@ static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCSTR str, UINT count,
 
         /* Get the width of the text */
 
-        PSDRV_GetTextExtentPoint(dc, strbuf, strlen(strbuf), &size);
+        PSDRV_GetTextExtentPoint(dc, strbuf, lstrlenW(strbuf), &size);
         size.cx = XLSTODS(dc, size.cx);
 
         /* Do the underline */

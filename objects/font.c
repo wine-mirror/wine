@@ -852,7 +852,10 @@ BOOL16 WINAPI GetTextExtentPoint16( HDC16 hdc, LPCSTR str, INT16 count,
                                     LPSIZE16 size )
 {
     SIZE size32;
-    BOOL ret = GetTextExtentPoint32A( hdc, str, count, &size32 );
+    BOOL ret;
+    TRACE("%04x, %p (%s), %d, %p\n", hdc, str, debugstr_an(str, count), count,
+	  size);
+    ret = GetTextExtentPoint32A( hdc, str, count, &size32 );
     CONV_SIZE32TO16( &size32, size );
     return (BOOL16)ret;
 }
@@ -864,20 +867,19 @@ BOOL16 WINAPI GetTextExtentPoint16( HDC16 hdc, LPCSTR str, INT16 count,
 BOOL WINAPI GetTextExtentPoint32A( HDC hdc, LPCSTR str, INT count,
                                      LPSIZE size )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc)
-    {
-        if (!(dc = (DC *)GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC )))
-            return FALSE;
-    }
+    LPWSTR p;
+    BOOL ret;
 
-    if (!dc->funcs->pGetTextExtentPoint ||
-        !dc->funcs->pGetTextExtentPoint( dc, str, count, size ))
-        return FALSE;
+  /* str may not be 0 terminated so we can't use HEAP_strdupWtoA.
+   * We allocate one more than we need so that lstrcpynWtoA can write a
+   * trailing 0 if it wants.
+   */
 
-    TRACE("(%08x %s %d %p): returning %d,%d\n",
-          hdc, debugstr_an (str, count), count, size, size->cx, size->cy );
-    return TRUE;
+    p = HeapAlloc( GetProcessHeap(), 0, (count+1) * sizeof(WCHAR) );
+    lstrcpynAtoW(p, str, count+1);
+    ret = GetTextExtentPoint32W( hdc, p, count, size );
+    HeapFree( GetProcessHeap(), 0, p );
+    return ret;
 }
 
 
@@ -896,20 +898,14 @@ BOOL WINAPI GetTextExtentPoint32W(
     INT count,   /* [in]  Number of characters in string */
     LPSIZE size) /* [out] Address of structure for string size */
 {
-    LPSTR p;
-    BOOL ret;
+    DC * dc = DC_GetDCPtr( hdc );
+    if (!dc || !dc->funcs->pGetTextExtentPoint ||
+        !dc->funcs->pGetTextExtentPoint( dc, str, count, size ))
+        return FALSE;
 
-  /* str may not be 0 terminated so we can't use HEAP_strdupWtoA.
-   * We allocate one more than we need so that lstrcpynWtoA can write a
-   * trailing 0 if it wants.
-   */
-
-    if(!count) count = lstrlenW(str);
-    p = HeapAlloc( GetProcessHeap(), 0, count+1 );
-    lstrcpynWtoA(p, str, count+1);
-    ret = GetTextExtentPoint32A( hdc, p, count, size );
-    HeapFree( GetProcessHeap(), 0, p );
-    return ret;
+    TRACE("(%08x %s %d %p): returning %d,%d\n",
+          hdc, debugstr_wn (str, count), count, size, size->cx, size->cy );
+    return TRUE;
 }
 
 
@@ -938,19 +934,36 @@ BOOL WINAPI GetTextExtentPointW( HDC hdc, LPCWSTR str, INT count,
  *           GetTextExtentExPointA    (GDI32.228)
  */
 BOOL WINAPI GetTextExtentExPointA( HDC hdc, LPCSTR str, INT count,
-                                       INT maxExt, LPINT lpnFit,
-                                       LPINT alpDx, LPSIZE size )
+				   INT maxExt, LPINT lpnFit,
+				   LPINT alpDx, LPSIZE size )
+{
+    LPWSTR p;
+    BOOL ret;
+
+  /* Docs say str should be 0 terminated here, but we'll use count just in case
+   */ 
+
+    p = HeapAlloc( GetProcessHeap(), 0, (count+1) * sizeof(WCHAR) );
+    lstrcpynAtoW(p, str, count+1);
+    ret = GetTextExtentExPointW( hdc, p, count, maxExt, lpnFit, alpDx, size);
+    HeapFree( GetProcessHeap(), 0, p );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           GetTextExtentExPointW    (GDI32.229)
+ */
+
+BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
+				   INT maxExt, LPINT lpnFit,
+				   LPINT alpDx, LPSIZE size )
 {
     int index, nFit, extent;
     SIZE tSize;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC * dc = DC_GetDCPtr( hdc );
 
-    if (!dc)
-    {
-	if (!(dc = (DC *)GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC )))
-	    return FALSE;
-    }
-    if (!dc->funcs->pGetTextExtentPoint) return FALSE;
+    if (!dc || !dc->funcs->pGetTextExtentPoint) return FALSE;
 
     size->cx = size->cy = nFit = extent = 0;
     for(index = 0; index < count; index++)
@@ -967,35 +980,11 @@ BOOL WINAPI GetTextExtentExPointA( HDC hdc, LPCSTR str, INT count,
         else break;
     }
     size->cx = extent;
-   *lpnFit = nFit;
+    *lpnFit = nFit;
 
-    TRACE("(%08x '%.*s' %d) returning %d %d %d\n",
-          hdc,count,str,maxExt,nFit, size->cx,size->cy);
+    TRACE("(%08x %s %d) returning %d %d %d\n",
+          hdc,debugstr_wn(str,count),maxExt,nFit, size->cx,size->cy);
     return TRUE;
-}
-
-
-/***********************************************************************
- *           GetTextExtentExPointW    (GDI32.229)
- */
-
-BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
-                                       INT maxExt, LPINT lpnFit,
-                                       LPINT alpDx, LPSIZE size )
-{
-    LPSTR p;
-    BOOL ret;
-
-  /* Docs say str should be 0 terminated here, but we'll use count just in case
-   */ 
-
-    if(!count) count = lstrlenW(str);
-    p = HeapAlloc( GetProcessHeap(), 0, count+1 );
-    lstrcpynWtoA(p, str, count+1);
-    ret = GetTextExtentExPointA( hdc, p, count, maxExt,
-                                        lpnFit, alpDx, size);
-    HeapFree( GetProcessHeap(), 0, p );
-    return ret;
 }
 
 /***********************************************************************

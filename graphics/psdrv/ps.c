@@ -631,7 +631,7 @@ BOOL PSDRV_WriteReencodeFont(DC *dc)
     return TRUE;
 }    
 
-BOOL PSDRV_WriteShow(DC *dc, char *str, INT count)
+BOOL PSDRV_WriteShow(DC *dc, LPCWSTR str, INT count)
 {
     char *buf, *buf1;
     INT buflen = count + 10, i, done;
@@ -639,20 +639,21 @@ BOOL PSDRV_WriteShow(DC *dc, char *str, INT count)
     buf = (char *)HeapAlloc( PSDRV_Heap, 0, buflen );
     
     for(i = done = 0; i < count; i++) {
-        if(!isprint(str[i])) {
+        char c = PSDRV_UnicodeToANSI(str[i]);
+        if(!isprint(c)) {
 	    if(done + 4 >= buflen)
 	        buf = HeapReAlloc( PSDRV_Heap, 0, buf, buflen += 10 );
-	    sprintf(buf + done, "\\%03o", (int)(unsigned char)str[i] );
+	    sprintf(buf + done, "\\%03o", (int)(unsigned char)c);
 	    done += 4;
-	} else if(str[i] == '\\' || str[i] == '(' || str[i] == ')' ) {
+	} else if(c == '\\' || c == '(' || c == ')' ) {
 	    if(done + 2 >= buflen)
 	        buf = HeapReAlloc( PSDRV_Heap, 0, buf, buflen += 10 );
 	    buf[done++] = '\\';
-	    buf[done++] = str[i];
+	    buf[done++] = c;
 	} else {
 	    if(done + 1 >= buflen)
 	        buf = HeapReAlloc( PSDRV_Heap, 0, buf, buflen += 10 );
-	    buf[done++] = str[i];
+	    buf[done++] = c;
 	}
     }
     buf[done] = '\0';

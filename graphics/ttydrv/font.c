@@ -32,12 +32,12 @@ BOOL TTYDRV_DC_GetCharWidth(DC *dc, UINT firstChar, UINT lastChar,
 /***********************************************************************
  *		TTYDRV_DC_GetTextExtentPoint
  */
-BOOL TTYDRV_DC_GetTextExtentPoint(DC *dc, LPCSTR str, INT count,
+BOOL TTYDRV_DC_GetTextExtentPoint(DC *dc, LPCWSTR str, INT count,
 				  LPSIZE size)
 {
   TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
 
-  TRACE("(%p, %s, %d, %p)\n", dc, debugstr_an(str, count), count, size);
+  TRACE("(%p, %s, %d, %p)\n", dc, debugstr_wn(str, count), count, size);
 
   size->cx = count * physDev->cellWidth;
   size->cy = physDev->cellHeight;

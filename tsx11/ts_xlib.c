@@ -598,25 +598,25 @@ int  TSXDrawSegments(Display* a0, Drawable a1, GC a2, XSegment* a3, int a4)
   return r;
 }
 
-int  TSXDrawString(Display* a0, Drawable a1, GC a2, int a3, int a4, const  char* a5, int a6)
+int  TSXDrawString16(Display* a0, Drawable a1, GC a2, int a3, int a4, const  XChar2b* a5, int a6)
 {
   int  r;
-  TRACE("Call XDrawString\n");
+  TRACE("Call XDrawString16\n");
   EnterCriticalSection( &X11DRV_CritSection );
-  r = XDrawString(a0, a1, a2, a3, a4, a5, a6);
+  r = XDrawString16(a0, a1, a2, a3, a4, a5, a6);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDrawString\n");
+  TRACE("Ret XDrawString16\n");
   return r;
 }
 
-int  TSXDrawText(Display* a0, Drawable a1, GC a2, int a3, int a4, XTextItem* a5, int a6)
+int  TSXDrawText16(Display* a0, Drawable a1, GC a2, int a3, int a4, XTextItem16* a5, int a6)
 {
   int  r;
-  TRACE("Call XDrawText\n");
+  TRACE("Call XDrawText16\n");
   EnterCriticalSection( &X11DRV_CritSection );
-  r = XDrawText(a0, a1, a2, a3, a4, a5, a6);
+  r = XDrawText16(a0, a1, a2, a3, a4, a5, a6);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XDrawText\n");
+  TRACE("Ret XDrawText16\n");
   return r;
 }
 
@@ -1258,25 +1258,25 @@ int  TSXSync(Display* a0, int a1)
   return r;
 }
 
-int  TSXTextExtents(XFontStruct* a0, const  char* a1, int a2, int* a3, int* a4, int* a5, XCharStruct* a6)
+int  TSXTextExtents16(XFontStruct* a0, const  XChar2b* a1, int a2, int* a3, int* a4, int* a5, XCharStruct* a6)
 {
   int  r;
-  TRACE("Call XTextExtents\n");
+  TRACE("Call XTextExtents16\n");
   EnterCriticalSection( &X11DRV_CritSection );
-  r = XTextExtents(a0, a1, a2, a3, a4, a5, a6);
+  r = XTextExtents16(a0, a1, a2, a3, a4, a5, a6);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XTextExtents\n");
+  TRACE("Ret XTextExtents16\n");
   return r;
 }
 
-int  TSXTextWidth(XFontStruct* a0, const  char* a1, int a2)
+int  TSXTextWidth16(XFontStruct* a0, const  XChar2b* a1, int a2)
 {
   int  r;
-  TRACE("Call XTextWidth\n");
+  TRACE("Call XTextWidth16\n");
   EnterCriticalSection( &X11DRV_CritSection );
-  r = XTextWidth(a0, a1, a2);
+  r = XTextWidth16(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE("Ret XTextWidth\n");
+  TRACE("Ret XTextWidth16\n");
   return r;
 }
 

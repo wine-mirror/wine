@@ -264,6 +264,7 @@ extern BOOL PSDRV_CmpColor(PSCOLOR *col1, PSCOLOR *col2);
 extern BOOL PSDRV_CopyColor(PSCOLOR *col1, PSCOLOR *col2);
 extern void PSDRV_CreateColor( PSDRV_PDEVICE *physDev, PSCOLOR *pscolor,
 		     COLORREF wincolor );
+extern char PSDRV_UnicodeToANSI(int u);
 
 
 extern INT PSDRV_WriteHeader( DC *dc, LPCSTR title );
@@ -278,7 +279,7 @@ extern BOOL PSDRV_WriteRectangle(DC *dc, INT x, INT y, INT width,
 extern BOOL PSDRV_WriteRRectangle(DC *dc, INT x, INT y, INT width, 
 			INT height);
 extern BOOL PSDRV_WriteSetFont(DC *dc, BOOL UseANSI);
-extern BOOL PSDRV_WriteShow(DC *dc, char *str, INT count);
+extern BOOL PSDRV_WriteShow(DC *dc, LPCWSTR str, INT count);
 extern BOOL PSDRV_WriteReencodeFont(DC *dc);
 extern BOOL PSDRV_WriteSetPen(DC *dc);
 extern BOOL PSDRV_WriteArc(DC *dc, INT x, INT y, INT w, INT h,
@@ -328,11 +329,11 @@ extern BOOL PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
 extern INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput, 
 			   SEGPTR lpInData, SEGPTR lpOutData );
 extern BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
-				const RECT *lprect, LPCSTR str, UINT count,
+				const RECT *lprect, LPCWSTR str, UINT count,
 				const INT *lpDx );
 extern BOOL PSDRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
 				  LPINT buffer );
-extern BOOL PSDRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT count,
+extern BOOL PSDRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
 					LPSIZE size );
 extern BOOL PSDRV_GetTextMetrics( DC *dc, TEXTMETRICA *metrics );
 extern BOOL PSDRV_LineTo( DC *dc, INT x, INT y );

@@ -19,15 +19,18 @@ DEFAULT_DEBUG_CHANNEL(win16drv)
 /***********************************************************************
  *           WIN16DRV_GetTextExtentPoint
  */
-BOOL WIN16DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT count,
-                                    LPSIZE size )
+BOOL WIN16DRV_GetTextExtentPoint( DC *dc, LPCWSTR wstr, INT count,
+				  LPSIZE size )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
     DWORD dwRet;
-    
-    TRACE("%04x %s %d %p\n",
-		                dc->hSelf, str, count, size);
+    char *str;
 
+    TRACE("%04x %s %d %p\n",
+	  dc->hSelf, debugstr_wn(wstr, count), count, size);
+
+    str = HeapAlloc( GetProcessHeap(), 0, count+1 );
+    lstrcpynWtoA( str, wstr, count+1 );
     dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, 0, 0, 
 			      NULL, str, 
 			      -count,  physDev->FontInfo, 
@@ -37,6 +40,7 @@ BOOL WIN16DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT count,
     size->cy = YDSTOLS(dc,HIWORD(dwRet));
     TRACE("cx=0x%x, cy=0x%x\n",
 		size->cx, size->cy );
+    HeapFree( GetProcessHeap(), 0, str );
     return TRUE;
 }
 
@@ -184,7 +188,7 @@ BOOL	WIN16DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
     /* EnumDFontCallback is GDI.158 */
     FARPROC16 pfnCallback = NE_GetEntryPoint( GetModuleHandle16("GDI"), 158 );
 
-    wepfc.proc = proc;
+    wepfc.proc = (int (*)(LPENUMLOGFONT16,LPNEWTEXTMETRIC16,UINT16,LPARAM))proc;
     wepfc.lp = lp;
 
     wRet = PRTDRV_EnumDFonts(physDev->segptrPDEVICE, plf->lfFaceName[0] ?

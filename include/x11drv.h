@@ -93,7 +93,7 @@ extern BOOL X11DRV_EnumDeviceFonts( struct tagDC *dc, LPLOGFONT16 plf,
 				      DEVICEFONTENUMPROC dfeproc, LPARAM lp );
 extern BOOL X11DRV_GetCharWidth( struct tagDC *dc, UINT firstChar,
                                    UINT lastChar, LPINT buffer );
-extern BOOL X11DRV_GetTextExtentPoint( struct tagDC *dc, LPCSTR str,
+extern BOOL X11DRV_GetTextExtentPoint( struct tagDC *dc, LPCWSTR str,
                                          INT count, LPSIZE size );
 extern BOOL X11DRV_GetTextMetrics(struct tagDC *dc, TEXTMETRICA *metrics);
 extern BOOL X11DRV_PatBlt( struct tagDC *dc, INT left, INT top,
@@ -139,7 +139,7 @@ extern BOOL X11DRV_ExtFloodFill( struct tagDC *dc, INT x, INT y,
 				   COLORREF color, UINT fillType );
 extern BOOL X11DRV_ExtTextOut( struct tagDC *dc, INT x, INT y,
 				 UINT flags, const RECT *lprect,
-				 LPCSTR str, UINT count, const INT *lpDx );
+				 LPCWSTR str, UINT count, const INT *lpDx );
 extern BOOL X11DRV_CreateBitmap( HBITMAP hbitmap );
 extern BOOL X11DRV_DeleteObject( HGDIOBJ handle );
 extern LONG X11DRV_BitmapBits( HBITMAP hbitmap, void *bits, LONG count,

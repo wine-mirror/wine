@@ -168,11 +168,37 @@ BOOL PSDRV_GetTextMetrics(DC *dc, TEXTMETRICA *metrics)
     return TRUE;
 }
 
-
+/***********************************************************************
+ *           PSDRV_UnicodeToANSI
+ */
+char PSDRV_UnicodeToANSI(int u)
+{
+    if((u & 0xff) == u)
+        return u;
+    switch(u) {
+    case 0x2013: /* endash */
+        return 0x96;
+    case 0x2014: /* emdash */
+        return 0x97;
+    case 0x2018: /* quoteleft */
+        return 0x91;
+    case 0x2019: /* quoteright */
+        return 0x92;
+    case 0x201c: /* quotedblleft */
+       return 0x93;
+    case 0x201d: /* quotedblright */
+        return 0x94;
+    case 0x2022: /* bullet */
+        return 0x95;
+    default:
+        WARN("Umapped unicode char U%04x\n", u);
+	return 0xff;
+    }
+}
 /***********************************************************************
  *           PSDRV_GetTextExtentPoint
  */
-BOOL PSDRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT count,
+BOOL PSDRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
                                   LPSIZE size )
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
@@ -183,7 +209,8 @@ BOOL PSDRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT count,
     width = 0.0;
 
     for(i = 0; i < count && str[i]; i++) {
-        width += physDev->font.afm->CharWidths[ *((unsigned char *)str + i) ];
+        char c = PSDRV_UnicodeToANSI(str[i]);
+        width += physDev->font.afm->CharWidths[(int)(unsigned char)c];
 /*	TRACE(psdrv, "Width after %dth char '%c' = %f\n", i, str[i], width);*/
     }
     width *= physDev->font.scale;

@@ -34,7 +34,7 @@ static BOOL MFDRV_MetaExtTextOut(DC*dc, short x, short y, UINT16 flags,
         len += sizeof(RECT16);
     if (lpDx)
      len+=count*sizeof(INT16);
-    if (!(mr = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, len)))
+    if (!(mr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len)))
 	return FALSE;
 
     mr->rdSize = len / 2;
@@ -49,7 +49,7 @@ static BOOL MFDRV_MetaExtTextOut(DC*dc, short x, short y, UINT16 flags,
      memcpy(mr->rdParm + (rect ? 8 : 4) + ((count + 1) >> 1),lpDx,
       count*sizeof(INT16));
     ret = MFDRV_WriteRecord( dc, mr, mr->rdSize * 2);
-    HeapFree( SystemHeap, 0, mr);
+    HeapFree( GetProcessHeap(), 0, mr);
     return ret;
 }
 
@@ -60,23 +60,27 @@ static BOOL MFDRV_MetaExtTextOut(DC*dc, short x, short y, UINT16 flags,
  */
 BOOL
 MFDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
-                  const RECT *lprect, LPCSTR str, UINT count,
+                  const RECT *lprect, LPCWSTR str, UINT count,
                   const INT *lpDx )
 {
     RECT16	rect16;
     LPINT16	lpdx16 = NULL;
     BOOL	ret;
     int		i;
+    LPSTR       ascii;
 
     if(lpDx)
-        lpdx16 = HeapAlloc( SystemHeap, 0, sizeof(INT16)*count );
+        lpdx16 = HeapAlloc( GetProcessHeap(), 0, sizeof(INT16)*count );
     if (lprect)	CONV_RECT32TO16(lprect,&rect16);
     if (lpdx16)
         for (i=count;i--;)
 	    lpdx16[i]=lpDx[i];
-    ret = MFDRV_MetaExtTextOut(dc,x,y,flags,lprect?&rect16:NULL,str,count,
+    ascii = HeapAlloc( GetProcessHeap(), 0, count+1 );
+    lstrcpynWtoA(ascii, str, count+1);
+    ret = MFDRV_MetaExtTextOut(dc,x,y,flags,lprect?&rect16:NULL,ascii,count,
 			       lpdx16);
-    if (lpdx16)	HeapFree( SystemHeap, 0, lpdx16 );
+    HeapFree( GetProcessHeap(), 0, ascii );
+    if (lpdx16)	HeapFree( GetProcessHeap(), 0, lpdx16 );
     return ret;
 }
 

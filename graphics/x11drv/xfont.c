@@ -3038,23 +3038,30 @@ BOOL	X11DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
 /***********************************************************************
  *           X11DRV_GetTextExtentPoint
  */
-BOOL X11DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT count,
+BOOL X11DRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
                                   LPSIZE size )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     fontObject* pfo = XFONT_GetFontObject( physDev->font );
+
+    TRACE("%s %d\n", debugstr_wn(str,count), count);
     if( pfo ) {
         if( !pfo->lpX11Trans ) {
-	    int dir, ascent, descent;
+	    int dir, ascent, descent, i;
 	    XCharStruct info;
-
-	    TSXTextExtents( pfo->fs, str, count, &dir, &ascent, &descent, &info );
+	    XChar2b *p = HeapAlloc( GetProcessHeap(), 0,
+				    count * sizeof(XChar2b) );
+	    for(i = 0; i < count; i++) {
+	        p[i].byte1 = str[i] >> 8;
+		p[i].byte2 = str[i] & 0xff;
+	    }
+	    TSXTextExtents16( pfo->fs, p, count, &dir, &ascent, &descent, &info );
 	    size->cx = abs((info.width + dc->w.breakRem + count * 
 			    dc->w.charExtra) * dc->wndExtX / dc->vportExtX);
 	    size->cy = abs((pfo->fs->ascent + pfo->fs->descent) * 
 			   dc->wndExtY / dc->vportExtY);
+	    HeapFree( GetProcessHeap(), 0, p );
 	} else {
-
 	    INT i;
 	    float x = 0.0, y = 0.0;
 	    for(i = 0; i < count; i++) {

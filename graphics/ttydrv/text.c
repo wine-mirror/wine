@@ -18,15 +18,16 @@ DEFAULT_DEBUG_CHANNEL(ttydrv)
  *		TTYDRV_DC_ExtTextOut
  */
 BOOL TTYDRV_DC_ExtTextOut(DC *dc, INT x, INT y, UINT flags,
-			  const RECT *lpRect, LPCSTR str, UINT count,
+			  const RECT *lpRect, LPCWSTR str, UINT count,
 			  const INT *lpDx)
 {
 #ifdef HAVE_LIBCURSES
   TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
   INT row, col;
+  LPSTR ascii;
 
   TRACE("(%p, %d, %d, 0x%08x, %p, %s, %d, %p)\n",
-	dc, x, y, flags, lpRect, debugstr_a(str), count, lpDx);
+	dc, x, y, flags, lpRect, debugstr_wn(str, count), count, lpDx);
 
   if(!physDev->window)
     return FALSE;
@@ -42,19 +43,21 @@ BOOL TTYDRV_DC_ExtTextOut(DC *dc, INT x, INT y, UINT flags,
   
   row = (dc->w.DCOrgY + y) / physDev->cellHeight;
   col = (dc->w.DCOrgX + x) / physDev->cellWidth;
-
-  mvwaddnstr(physDev->window, row, col, str, count);
+  ascii = HeapAlloc( GetProcessHeap(), 0, count+1 );
+  lstrcpynWtoA(ascii, str, count+1);
+  mvwaddnstr(physDev->window, row, col, ascii, count);
+  HeapFree( GetProcessHeap(), 0, ascii );
   wrefresh(physDev->window);
 
   if(dc->w.textAlign & TA_UPDATECP) {
     dc->w.CursPosX += count * physDev->cellWidth;
-    dc->w.CursPosY += count * physDev->cellHeight;
+    dc->w.CursPosY += physDev->cellHeight;
   }
 
   return TRUE;
 #else /* defined(HAVE_LIBCURSES) */
   FIXME("(%p, %d, %d, 0x%08x, %p, %s, %d, %p): stub\n",
-	dc, x, y, flags, lpRect, debugstr_a(str), count, lpDx);
+	dc, x, y, flags, lpRect, debugstr_wn(str,count), count, lpDx);
 
   return TRUE;
 #endif /* defined(HAVE_LIBCURSES) */

@@ -374,29 +374,33 @@ BOOL16 WINAPI ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
 
 
 /***********************************************************************
- *           ExtTextOut32A    (GDI32.98)
+ *           ExtTextOutA    (GDI32.98)
  */
 BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
                              const RECT *lprect, LPCSTR str, UINT count,
                              const INT *lpDx )
 {
-    DC * dc = DC_GetDCPtr( hdc );
-    return dc && dc->funcs->pExtTextOut && 
-    	   dc->funcs->pExtTextOut(dc,x,y,flags,lprect,str,count,lpDx);
+    /* str need not be \0 terminated but lstrcpynAtoW adds \0 so we allocate one
+       more byte */
+    LPWSTR p = HeapAlloc( GetProcessHeap(), 0, (count+1) * sizeof(WCHAR) );
+    INT ret;
+    lstrcpynAtoW( p, str, count+1 );
+    ret = ExtTextOutW( hdc, x, y, flags, lprect, p, count, lpDx );
+    HeapFree( GetProcessHeap(), 0, p );
+    return ret;
 }
 
 
 /***********************************************************************
- *           ExtTextOut32W    (GDI32.99)
+ *           ExtTextOutW    (GDI32.99)
  */
 BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
                              const RECT *lprect, LPCWSTR str, UINT count,
                              const INT *lpDx )
 {
-    LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
-    INT ret = ExtTextOutA( hdc, x, y, flags, lprect, p, count, lpDx );
-    HeapFree( GetProcessHeap(), 0, p );
-    return ret;
+    DC * dc = DC_GetDCPtr( hdc );
+    return dc && dc->funcs->pExtTextOut && 
+        dc->funcs->pExtTextOut(dc,x,y,flags,lprect,str,count,lpDx);
 }
 
 

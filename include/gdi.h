@@ -198,7 +198,7 @@ typedef struct tagDC_FUNCS
     INT      (*pExtDeviceMode)(LPSTR,HWND,LPDEVMODEA,LPSTR,LPSTR,LPDEVMODEA,
 			       LPSTR,DWORD); 
     BOOL     (*pExtFloodFill)(DC*,INT,INT,COLORREF,UINT);
-    BOOL     (*pExtTextOut)(DC*,INT,INT,UINT,const RECT*,LPCSTR,UINT,
+    BOOL     (*pExtTextOut)(DC*,INT,INT,UINT,const RECT*,LPCWSTR,UINT,
 			    const INT*);
     BOOL     (*pFillPath)(DC*);
     BOOL     (*pFillRgn)(DC*,HRGN,HBRUSH);
@@ -206,7 +206,7 @@ typedef struct tagDC_FUNCS
     BOOL     (*pFrameRgn)(DC*,HRGN,HBRUSH,INT,INT);
     BOOL     (*pGetCharWidth)(DC*,UINT,UINT,LPINT);
     COLORREF (*pGetPixel)(DC*,INT,INT);
-    BOOL     (*pGetTextExtentPoint)(DC*,LPCSTR,INT,LPSIZE);
+    BOOL     (*pGetTextExtentPoint)(DC*,LPCWSTR,INT,LPSIZE);
     BOOL     (*pGetTextMetrics)(DC*,TEXTMETRICA*);
     INT      (*pIntersectClipRect)(DC*,INT,INT,INT,INT);
     BOOL     (*pInvertRgn)(DC*,HRGN);    

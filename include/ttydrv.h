@@ -75,11 +75,11 @@ extern BOOL TTYDRV_DC_Chord(struct tagDC *dc, INT left, INT top, INT right, INT 
 extern BOOL TTYDRV_DC_Ellipse(struct tagDC *dc, INT left, INT top, INT right, INT bottom);
 extern INT TTYDRV_DC_Escape(struct tagDC *dc, INT nEscape, INT cbInput, SEGPTR lpInData, SEGPTR lpOutData);
 extern BOOL TTYDRV_DC_ExtFloodFill(struct tagDC *dc, INT x, INT y, COLORREF color, UINT fillType);
-extern BOOL TTYDRV_DC_ExtTextOut(struct tagDC *dc, INT x, INT y, UINT flags, const RECT *lpRect, LPCSTR str, UINT count, const INT *lpDx);
+extern BOOL TTYDRV_DC_ExtTextOut(struct tagDC *dc, INT x, INT y, UINT flags, const RECT *lpRect, LPCWSTR str, UINT count, const INT *lpDx);
 extern BOOL TTYDRV_DC_GetCharWidth(struct tagDC *dc, UINT firstChar, UINT lastChar, LPINT buffer);
 extern COLORREF TTYDRV_DC_GetPixel(struct tagDC *dc, INT x, INT y);
 
-extern BOOL TTYDRV_DC_GetTextExtentPoint(struct tagDC *dc, LPCSTR str, INT count, LPSIZE size);
+extern BOOL TTYDRV_DC_GetTextExtentPoint(struct tagDC *dc, LPCWSTR str, INT count, LPSIZE size);
 extern BOOL TTYDRV_DC_GetTextMetrics(struct tagDC *dc, TEXTMETRICA *metrics);
 extern BOOL TTYDRV_DC_LineTo(struct tagDC *dc, INT x, INT y);
 extern HANDLE TTYDRV_DC_LoadOEMResource(WORD resid, WORD type);

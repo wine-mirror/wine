@@ -46,8 +46,8 @@ XDrawLines
 XDrawPoint
 XDrawRectangle
 XDrawSegments
-XDrawString
-XDrawText
+XDrawString16
+XDrawText16
 XEmptyRegion
 XEqualRegion
 XFillArc
@@ -157,8 +157,8 @@ XSubImage
 XSubtractRegion
 XSync
 XSynchronize
-XTextExtents
-XTextWidth
+XTextExtents16
+XTextWidth16
 XUngrabKeyboard
 XUngrabPointer
 XUngrabServer

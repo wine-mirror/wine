@@ -208,12 +208,12 @@ extern BOOL WIN16DRV_Init(void);
 extern BOOL WIN16DRV_GetCharWidth( struct tagDC *dc, UINT firstChar, UINT lastChar,
 				   LPINT buffer );
 
-extern BOOL WIN16DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT count,
+extern BOOL WIN16DRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
                                            LPSIZE size );
 extern BOOL WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRICA *metrics );
 
 extern BOOL WIN16DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
-                                  const RECT *lprect, LPCSTR str, UINT count,
+                                  const RECT *lprect, LPCWSTR str, UINT count,
                                   const INT *lpDx );
 extern BOOL WIN16DRV_LineTo( DC *dc, INT x, INT y );
 extern BOOL WIN16DRV_MoveToEx(DC *dc,INT x,INT y,LPPOINT pt);

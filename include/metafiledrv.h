@@ -54,7 +54,7 @@ extern INT MFDRV_ExcludeClipRect( DC *dc, INT left, INT top, INT right, INT
 extern BOOL MFDRV_ExtFloodFill( DC *dc, INT x, INT y,
 				COLORREF color, UINT fillType );
 extern BOOL MFDRV_ExtTextOut( DC *dc, INT x, INT y,
-			      UINT flags, const RECT *lprect, LPCSTR str,
+			      UINT flags, const RECT *lprect, LPCWSTR str,
 			      UINT count, const INT *lpDx );
 extern BOOL MFDRV_FillPath( DC *dc );
 extern BOOL MFDRV_FillRgn( DC *dc, HRGN hrgn, HBRUSH hbrush );
