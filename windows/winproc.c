@@ -432,8 +432,9 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM *plparam 
             *plparam = (LPARAM)ptr;
         }
         return 1;
-
+    /* lparam is string (0-terminated) */
     case WM_SETTEXT:
+    case WM_WININICHANGE:
     case CB_DIR:
     case CB_FINDSTRING:
     case CB_FINDSTRINGEXACT:
@@ -527,7 +528,6 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM *plparam 
     case WM_DEVMODECHANGE:
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
-    case WM_WININICHANGE:
     case EM_SETPASSWORDCHAR:
         FIXME(msg, "message %s (0x%x) needs translation, please report\n", SPY_GetMsgName(msg), msg );
         return -1;
@@ -578,6 +578,7 @@ void WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         break;
 
     case WM_SETTEXT:
+    case WM_WININICHANGE:
     case CB_DIR:
     case CB_FINDSTRING:
     case CB_FINDSTRINGEXACT:
@@ -654,6 +655,7 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM *plparam 
         return 1;
 
     case WM_SETTEXT:
+    case WM_WININICHANGE:
     case CB_DIR:
     case CB_FINDSTRING:
     case CB_FINDSTRINGEXACT:
@@ -747,7 +749,6 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM *plparam 
     case WM_DEVMODECHANGE:
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
-    case WM_WININICHANGE:
     case EM_SETPASSWORDCHAR:
         FIXME(msg, "message %s (%04x) needs translation, please report\n",SPY_GetMsgName(msg),msg );
         return -1;
@@ -775,6 +776,7 @@ void WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         break;
 
     case WM_SETTEXT:
+    case WM_WININICHANGE:
     case CB_DIR:
     case CB_FINDSTRING:
     case CB_FINDSTRINGEXACT:
