@@ -1599,11 +1599,11 @@ async_end:
 }
 
 /***********************************************************************
- *              FILE_WriteFileEx                (KERNEL32.@)
+ *              FILE_WriteFileEx
  */
-BOOL WINAPI FILE_WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
-			 LPOVERLAPPED overlapped, 
-			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+static BOOL FILE_WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
+                             LPOVERLAPPED overlapped,
+                             LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
     async_private *ovp;
 
