@@ -746,6 +746,7 @@ INT WINAPI GetDIBits(
 					       info->bmiHeader.biHeight,
 					       info->bmiHeader.biBitCount );
 	}
+	lines = info->bmiHeader.biHeight;
     }
 
     TRACE("biSizeImage = %ld, biWidth = %ld, biHeight = %ld\n",
