@@ -273,10 +273,10 @@ rsrc	resources/version16.res
 265 pascal16 ShowOwnedPopups(word word) ShowOwnedPopups16
 266 pascal16 SetMessageQueue(word) SetMessageQueue16
 267 pascal16 ShowScrollBar(word word word) ShowScrollBar16
-268 pascal16 GlobalAddAtom(str) GlobalAddAtomA
-269 pascal16 GlobalDeleteAtom(word) GlobalDeleteAtom
-270 pascal16 GlobalFindAtom(str) GlobalFindAtomA
-271 pascal16 GlobalGetAtomName(word ptr s_word) GlobalGetAtomNameA
+268 pascal16 GlobalAddAtom(str) GlobalAddAtom16
+269 pascal16 GlobalDeleteAtom(word) GlobalDeleteAtom16
+270 pascal16 GlobalFindAtom(str) GlobalFindAtom16
+271 pascal16 GlobalGetAtomName(word ptr s_word) GlobalGetAtomName16
 272 pascal16 IsZoomed(word) IsZoomed16
 273 pascal16 ControlPanelInfo(word word str) ControlPanelInfo16
 274 stub GetNextQueueWindow

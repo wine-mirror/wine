@@ -71,6 +71,7 @@ C_SRCS = \
 	property.c \
 	resource.c \
 	text.c \
+	user16.c \
 	user_main.c \
 	wnd16.c \
 	wsprintf.c
