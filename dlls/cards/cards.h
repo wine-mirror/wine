@@ -29,9 +29,9 @@
 
 
 /* 0-51 = normal 52 cards of deck */
-/* 52 = ? */
+/* 52 = ghost card mask */
 /* 53-68 = card backs */
-#define CARD_UNKNOWN          52
+#define CARD_FREE_MASK        52
 #define CARD_BACK_CROSSHATCH  53
 #define CARD_BACK_WEAVE1      54
 #define CARD_BACK_WEAVE2      55

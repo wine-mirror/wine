@@ -86,6 +86,8 @@ BOOL WINAPI cdtDrawExt(HDC hdc, int x, int y, int dx, int dy, int card, int mode
 	DWORD rasterOp = SRCCOPY;
 	BOOL roundCornersFlag;
 	COLORREF savedPixels[12];
+	BOOL eraseFlag = FALSE;
+	BOOL drawFlag = TRUE;
 
 	TRACE("(%p, %d, %d, %d, %d, %d, %d, %ld)\n", hdc, x, y, dx, dy, card, mode, color);
 
@@ -105,17 +107,41 @@ BOOL WINAPI cdtDrawExt(HDC hdc, int x, int y, int dx, int dy, int card, int mode
 		return FALSE;
 	}
 
-	if(mode == MODE_INVISIBLEGHOST || mode == MODE_DECKX || mode == MODE_DECKO)
+	switch(mode)
 	{
-		FIXME("Mode %d not implemented.\n", mode);
-		return FALSE;
+	case MODE_FACEUP:
+		break;
+	case MODE_FACEDOWN:
+		break;
+	case MODE_HILITE:
+		rasterOp = NOTSRCCOPY;
+		break;
+	case MODE_GHOST:
+		card = CARD_FREE_MASK;
+		eraseFlag = TRUE;
+		rasterOp = SRCAND;
+		break;
+	case MODE_REMOVE:
+		eraseFlag = TRUE;
+		drawFlag = FALSE;
+		break;
+	case MODE_INVISIBLEGHOST:
+		card = CARD_FREE_MASK;
+		rasterOp = SRCAND;
+		break;
+	case MODE_DECKX:
+		card = CARD_BACK_THE_X;
+		break;
+	case MODE_DECKO:
+		card = CARD_BACK_THE_O;
+		break;
 	}
 
 	hMemoryDC = CreateCompatibleDC(hdc);
 	if(hMemoryDC == 0)
 		return FALSE;
 
-	if((mode == MODE_REMOVE) || (mode == MODE_GHOST))
+	if(eraseFlag)
 	{
 		HBRUSH hBrush;
 		RECT rect;
@@ -125,18 +151,10 @@ BOOL WINAPI cdtDrawExt(HDC hdc, int x, int y, int dx, int dy, int card, int mode
 		rect.right = x + cardWidth - 1;
 		rect.bottom = y + cardHeight - 1;
 		FillRect(hdc, &rect, hBrush);
-
-		if(mode == MODE_GHOST)
-		{
-			hBrush = CreateSolidBrush(RGB(255, 255, 255));
-			FrameRect(hdc, &rect, hBrush);
-		}
 	}
-	else	/* MODE_FACEUP, MODE_FACEDOWN, MODE_HILITE */
-	{
-		if(mode == MODE_HILITE)
-			rasterOp = NOTSRCCOPY;
 
+	if(drawFlag)
+	{
 		hCardBitmap = cardBitmaps[card];
 		if(hCardBitmap == 0)
 			return FALSE;
@@ -204,7 +222,7 @@ BOOL WINAPI cdtDrawExt(HDC hdc, int x, int y, int dx, int dy, int card, int mode
  *   MODE_HILITE                ; draw face up, with NOTSRCCOPY
  *   MODE_GHOST                 ; draw 'ghost' card
  *   MODE_REMOVE                ; draw with background color
- *   MODE_INVISIBLEGHOST        ; ?
+ *   MODE_INVISIBLEGHOST        ; draw 'ghost' card, without clearing background
  *   MODE_DECKX                 ; draw X
  *   MODE_DECKO                 ; draw O
  *

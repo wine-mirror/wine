@@ -42,6 +42,7 @@ RC_BINARIES = \
 	dj.bmp \
 	dk.bmp \
 	dq.bmp \
+	free.bmp \
 	h1.bmp \
 	h2.bmp \
 	h3.bmp \
@@ -68,7 +69,9 @@ RC_BINARIES = \
 	s10.bmp \
 	sj.bmp \
 	sk.bmp \
-	sq.bmp
+	sq.bmp \
+	theo.bmp \
+	thex.bmp
 
 @MAKE_DLL_RULES@
 
