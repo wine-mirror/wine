@@ -447,6 +447,34 @@ then
     AC_DEFINE(HAVE_PPDEV, 1, [Define if we can use ppdev.h for parallel port access])
 fi
 
+dnl **** Check for va_copy ****
+AC_CACHE_CHECK([for va_copy], ac_cv_c_va_copy,
+ AC_TRY_LINK(
+   [#include <stdarg.h>],
+   [va_list ap1, ap2;
+    va_copy(ap1,ap2);
+   ],
+   [ac_cv_c_va_copy="yes"],
+   [ac_cv_c_va_copy="no"])
+ )
+if test "$ac_cv_c_va_copy" = "yes"
+then
+    AC_DEFINE(HAVE_VA_COPY, 1, [Define if we have va_copy])
+fi
+AC_CACHE_CHECK([for __va_copy], ac_cv_c___va_copy,
+ AC_TRY_LINK(
+   [#include <stdarg.h>],
+   [va_list ap1, ap2;
+    __va_copy(ap1,ap2);
+   ],
+   [ac_cv_c___va_copy="yes"],
+   [ac_cv_c___va_copy="no"])
+ )
+if test "$ac_cv_c___va_copy" = "yes"
+then
+    AC_DEFINE(HAVE___VA_COPY, 1, [Define if we have __va_copy])
+fi
+
 dnl **** Check for IPX (currently Linux only) ****
 AC_CACHE_CHECK([for GNU style IPX support], ac_cv_c_ipx_gnu,
  AC_TRY_COMPILE(

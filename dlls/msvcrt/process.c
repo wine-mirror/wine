@@ -25,6 +25,10 @@
  *  open file handles, sometimes not. The docs are confusing
  * -No check for maximum path/argument/environment size is done
  */
+#include "config.h"
+
+#include <stdarg.h>
+
 #include "msvcrt.h"
 #include "ms_errno.h"
 
@@ -141,11 +145,21 @@ static char* msvcrt_argvtos(const char* const* arg, char delim)
  */
 static char* msvcrt_valisttos(const char* arg0, va_list alist, char delim)
 {
-  va_list alist2 = alist;
+  va_list alist2;
   long size;
   const char *arg;
   char* p;
   char *ret;
+
+#if HAVE_VA_COPY
+  va_copy(alist2,alist);
+#else
+# if HAVE___VA_COPY
+  __va_copy(alist2,alist);
+# else
+  alist2 = alist;
+# endif
+#endif
 
   if (!arg0 && !delim)
   {

@@ -575,6 +575,9 @@
 /* Define to 1 if you have the `usleep' function. */
 #undef HAVE_USLEEP
 
+/* Define if we have va_copy */
+#undef HAVE_VA_COPY
+
 /* Define to 1 if you have the `vfscanf' function. */
 #undef HAVE_VFSCANF
 
@@ -637,6 +640,9 @@
 
 /* Define to 1 if you have the `__libc_fork' function. */
 #undef HAVE___LIBC_FORK
+
+/* Define if we have __va_copy */
+#undef HAVE___VA_COPY
 
 /* Define if stdcall symbols need to be decorated */
 #undef NEED_STDCALL_DECORATION
