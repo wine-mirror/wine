@@ -31,10 +31,16 @@ DEFAULT_DEBUG_CHANNEL(system);
 #define SPI_SETKEYBOARDSPEED_IDX                3
 #define SPI_ICONHORIZONTALSPACING_IDX           4
 #define SPI_SETSCREENSAVETIMEOUT_IDX            5
-#define SPI_SETKEYBOARDDELAY_IDX                6
-#define SPI_ICONVERTICALSPACING_IDX             7
-#define SPI_SETSHOWSOUNDS_IDX                   8
-#define SPI_SETSCREENSAVERRUNNING_IDX           9
+#define SPI_SETGRIDGRANULARITY_IDX              6
+#define SPI_SETKEYBOARDDELAY_IDX                7
+#define SPI_ICONVERTICALSPACING_IDX             8
+#define SPI_SETICONTITLEWRAP_IDX                9
+#define SPI_SETMENUDROPALIGNMENT_IDX            10
+#define SPI_SETDOUBLECLKWIDTH_IDX               11
+#define SPI_SETDOUBLECLKHEIGHT_IDX              12
+#define SPI_SETDOUBLECLICKTIME_IDX              13
+#define SPI_SETSHOWSOUNDS_IDX                   14
+#define SPI_SETSCREENSAVERRUNNING_IDX           15
 #define SPI_WINE_IDX                            SPI_SETSCREENSAVERRUNNING_IDX
 
 /**
@@ -58,10 +64,22 @@ DEFAULT_DEBUG_CHANNEL(system);
 #define SPI_ICONHORIZONTALSPACING_VALNAME       "IconSpacing"
 #define SPI_SETSCREENSAVETIMEOUT_REGKEY         "Control Panel\\Desktop"
 #define SPI_SETSCREENSAVETIMEOUT_VALNAME        "ScreenSaveTimeOut"
+#define SPI_SETGRIDGRANULARITY_REGKEY           "Control Panel\\Desktop"
+#define SPI_SETGRIDGRANULARITY_VALNAME          "GridGranularity"
 #define SPI_SETKEYBOARDDELAY_REGKEY             "Control Panel\\Keyboard"
 #define SPI_SETKEYBOARDDELAY_VALNAME            "KeyboardDelay"
 #define SPI_ICONVERTICALSPACING_REGKEY          "Control Panel\\Desktop"
 #define SPI_ICONVERTICALSPACING_VALNAME         "IconVerticalSpacing"
+#define SPI_SETICONTITLEWRAP_REGKEY             "Control Panel\\Desktop"
+#define SPI_SETICONTITLEWRAP_VALNAME            "IconTitleWrap"
+#define SPI_SETMENUDROPALIGNMENT_REGKEY         "Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows"
+#define SPI_SETMENUDROPALIGNMENT_VALNAME        "MenuDropAlignment"
+#define SPI_SETDOUBLECLKWIDTH_REGKEY            "Control Panel\\Mouse"
+#define SPI_SETDOUBLECLKWIDTH_VALNAME           "DoubleClickWidth"
+#define SPI_SETDOUBLECLKHEIGHT_REGKEY           "Control Panel\\Mouse"
+#define SPI_SETDOUBLECLKHEIGHT_VALNAME          "DoubleClickHeight"
+#define SPI_SETDOUBLECLICKTIME_REGKEY           "Control Panel\\Mouse"
+#define SPI_SETDOUBLECLICKTIME_VALNAME          "DoubleClickSpeed"
 #define SPI_SETSHOWSOUNDS_REGKEY        "Control Panel\\Accessibility\\ShowSounds"
 #define SPI_SETSHOWSOUNDS_VALNAME       "On"
 #define SPI_SETSCREENSAVERRUNNING_REGKEY        "Control Panel\\Desktop"
@@ -83,7 +101,10 @@ static int mouse_speed = 1;
 static int border = 1;
 static int keyboard_speed = 31;
 static int screensave_timeout = 300;
+static int grid_granularity = 0;
 static int keyboard_delay = 1;
+static BOOL icon_title_wrap = TRUE;
+static int double_click_time = 500;
 static BOOL screensaver_running = FALSE;
 
 /***********************************************************************
@@ -221,7 +242,10 @@ void SYSPARAMS_Reset( UINT uiAction )
     WINE_RELOAD_SPI(SPI_ICONHORIZONTALSPACING);
     WINE_RELOAD_SPI(SPI_ICONVERTICALSPACING);
     WINE_IGNORE_SPI(SPI_SETSCREENSAVEACTIVE);
+    WINE_RELOAD_SPI(SPI_SETDOUBLECLKWIDTH);
+    WINE_RELOAD_SPI(SPI_SETDOUBLECLKHEIGHT);
     WINE_RELOAD_SPI(SPI_SETSHOWSOUNDS);
+    WINE_RELOAD_SPI(SPI_SETMENUDROPALIGNMENT);
 
     default:
         if (uiAction)
@@ -233,7 +257,10 @@ void SYSPARAMS_Reset( UINT uiAction )
             WINE_INVALIDATE_SPI(SPI_SETMOUSE);
             WINE_INVALIDATE_SPI(SPI_SETKEYBOARDSPEED);
             WINE_INVALIDATE_SPI(SPI_SETSCREENSAVETIMEOUT);
+            WINE_INVALIDATE_SPI(SPI_SETGRIDGRANULARITY);
             WINE_INVALIDATE_SPI(SPI_SETKEYBOARDDELAY);
+            WINE_INVALIDATE_SPI(SPI_SETICONTITLEWRAP);
+            WINE_INVALIDATE_SPI(SPI_SETDOUBLECLICKTIME);
             WINE_INVALIDATE_SPI(SPI_SETSCREENSAVERRUNNING);
             default:
                 FIXME( "Unknown action reset: %u\n", uiAction );
@@ -354,6 +381,41 @@ BOOL SYSPARAMS_Save( LPSTR lpRegKey, LPSTR lpValName, LPSTR lpValue,
     }
     return ret;
 }
+
+
+/***********************************************************************
+ *           SYSPARAMS_GetDoubleClickSize
+ *
+ * There is no SPI_GETDOUBLECLK* so we export this function instead.
+ */
+void SYSPARAMS_GetDoubleClickSize( INT *width, INT *height )
+{
+    char buf[10];
+
+    if (!spi_loaded[SPI_SETDOUBLECLKWIDTH_IDX])
+    {
+        char buf[10];
+
+        if (SYSPARAMS_Load( SPI_SETDOUBLECLKWIDTH_REGKEY,
+                            SPI_SETDOUBLECLKWIDTH_VALNAME, buf ))
+        {
+            SYSMETRICS_Set( SM_CXDOUBLECLK, atoi( buf ) );
+        }
+        spi_loaded[SPI_SETDOUBLECLKWIDTH_IDX] = TRUE;
+    }
+    if (!spi_loaded[SPI_SETDOUBLECLKHEIGHT_IDX])
+    {
+        if (SYSPARAMS_Load( SPI_SETDOUBLECLKHEIGHT_REGKEY,
+                            SPI_SETDOUBLECLKHEIGHT_VALNAME, buf ))
+        {
+            SYSMETRICS_Set( SM_CYDOUBLECLK, atoi( buf ) );
+        }
+        spi_loaded[SPI_SETDOUBLECLKHEIGHT_IDX] = TRUE;
+    }
+    *width  = GetSystemMetrics( SM_CXDOUBLECLK );
+    *height = GetSystemMetrics( SM_CYDOUBLECLK );
+}
+
 
 /***********************************************************************
  *		SystemParametersInfoA (USER32.@)
@@ -646,10 +708,40 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         break;
     }
         
-    case SPI_GETGRIDGRANULARITY:		/*     18 */
-	*(INT *)pvParam = GetProfileIntA( "desktop", "GridGranularity", 1 );
+    case SPI_GETGRIDGRANULARITY:                /*     18 */
+        spi_idx = SPI_SETGRIDGRANULARITY_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[10];
+
+            if (SYSPARAMS_Load( SPI_SETGRIDGRANULARITY_REGKEY,
+                                SPI_SETGRIDGRANULARITY_VALNAME,
+                                buf ))
+                grid_granularity = atoi( buf );
+            
+            spi_loaded[spi_idx] = TRUE;
+        }
+	*(INT *)pvParam = grid_granularity;
 	break;
-    WINE_SPI_FIXME(SPI_SETGRIDGRANULARITY);	/*     19 */
+
+    case SPI_SETGRIDGRANULARITY:                /*     19 */
+    {
+        char buf[10];
+
+        spi_idx = SPI_SETGRIDGRANULARITY_IDX;
+        sprintf(buf, "%u", uiParam);
+
+        if (SYSPARAMS_Save( SPI_SETGRIDGRANULARITY_REGKEY,
+                            SPI_SETGRIDGRANULARITY_VALNAME,
+                            buf, fWinIni ))
+        {
+            grid_granularity = uiParam;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
 
     case SPI_SETDESKWALLPAPER:			/*     20 */
 	ret = SetDeskWallPaper( (LPSTR)pvParam );
@@ -745,18 +837,111 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         
 	break;
 
-    case SPI_GETICONTITLEWRAP:			/*     25 */
-	*(BOOL *)pvParam = GetProfileIntA( "desktop", "IconTitleWrap", TRUE );
-	break;
-    WINE_SPI_FIXME(SPI_SETICONTITLEWRAP);	/*     26 */
+    case SPI_GETICONTITLEWRAP:                  /*     25 */
+        spi_idx = SPI_SETICONTITLEWRAP_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[5];
 
-    case SPI_GETMENUDROPALIGNMENT:		/*     27 */
-	*(BOOL *)pvParam = GetSystemMetrics( SM_MENUDROPALIGNMENT ); /* XXX check this */
-	break;
-    WINE_SPI_FIXME(SPI_SETMENUDROPALIGNMENT);	/*     28 */
+            if (SYSPARAMS_Load( SPI_SETICONTITLEWRAP_REGKEY,
+                                SPI_SETICONTITLEWRAP_VALNAME, buf ))
+                icon_title_wrap  = atoi(buf);
+            spi_loaded[spi_idx] = TRUE;
+        }
+        
+	*(BOOL *)pvParam = icon_title_wrap;
+        break;
 
-    WINE_SPI_WARN(SPI_SETDOUBLECLKWIDTH);	/*     29 */
-    WINE_SPI_WARN(SPI_SETDOUBLECLKHEIGHT);	/*     30 */
+    case SPI_SETICONTITLEWRAP:                  /*     26 */
+    {
+        char buf[5];
+
+        spi_idx = SPI_SETICONTITLEWRAP_IDX;
+        sprintf(buf, "%u", uiParam);
+        if (SYSPARAMS_Save( SPI_SETICONTITLEWRAP_REGKEY,
+                            SPI_SETICONTITLEWRAP_VALNAME,
+                            buf, fWinIni ))
+        {
+            icon_title_wrap = uiParam;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
+    
+    case SPI_GETMENUDROPALIGNMENT:              /*     27 */
+        spi_idx = SPI_SETMENUDROPALIGNMENT_IDX;
+
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[5];
+            
+            if (SYSPARAMS_Load( SPI_SETMENUDROPALIGNMENT_REGKEY,
+                                SPI_SETMENUDROPALIGNMENT_VALNAME, buf ))
+            {
+                SYSMETRICS_Set( SM_MENUDROPALIGNMENT, atoi( buf ) );
+            }
+            spi_loaded[spi_idx] = TRUE;
+        }
+        
+
+        *(BOOL *)pvParam = GetSystemMetrics( SM_MENUDROPALIGNMENT );
+        break;
+
+    case SPI_SETMENUDROPALIGNMENT:              /*     28 */
+    {
+        char buf[5];
+        spi_idx = SPI_SETMENUDROPALIGNMENT_IDX;
+
+        sprintf(buf, "%u", uiParam);
+        if (SYSPARAMS_Save( SPI_SETMENUDROPALIGNMENT_REGKEY,
+                            SPI_SETMENUDROPALIGNMENT_VALNAME,
+                            buf, fWinIni ))
+        {
+            SYSMETRICS_Set( SM_MENUDROPALIGNMENT, uiParam );
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
+
+    case SPI_SETDOUBLECLKWIDTH:                 /*     29 */
+    {
+        char buf[10];
+        spi_idx = SPI_SETDOUBLECLKWIDTH_IDX;
+
+        sprintf(buf, "%u", uiParam);
+        if (SYSPARAMS_Save( SPI_SETDOUBLECLKWIDTH_REGKEY,
+                            SPI_SETDOUBLECLKWIDTH_VALNAME,
+                            buf, fWinIni ))
+        {
+            SYSMETRICS_Set( SM_CXDOUBLECLK, uiParam );
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
+
+    case SPI_SETDOUBLECLKHEIGHT:                /*     30 */
+    {
+        char buf[10];
+        spi_idx = SPI_SETDOUBLECLKHEIGHT_IDX;
+
+        sprintf(buf, "%u", uiParam);
+        if (SYSPARAMS_Save( SPI_SETDOUBLECLKHEIGHT_REGKEY,
+                            SPI_SETDOUBLECLKHEIGHT_VALNAME,
+                            buf, fWinIni ))
+        {
+            SYSMETRICS_Set( SM_CYDOUBLECLK, uiParam );
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
 
     case SPI_GETICONTITLELOGFONT:		/*     31 */
     {
@@ -780,7 +965,27 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	break;
     }
 
-    WINE_SPI_WARN(SPI_SETDOUBLECLICKTIME);	/*     32 */
+    case SPI_SETDOUBLECLICKTIME:                /*     32 */
+    {
+        char buf[10];
+
+        spi_idx = SPI_SETDOUBLECLICKTIME_IDX;
+        sprintf(buf, "%u", uiParam);
+
+        if (SYSPARAMS_Save( SPI_SETDOUBLECLICKTIME_REGKEY,
+                            SPI_SETDOUBLECLICKTIME_VALNAME,
+                            buf, fWinIni ))
+        {
+            if (!uiParam)
+                uiParam = 500;
+            double_click_time = uiParam;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
+
     
     WINE_SPI_FIXME(SPI_SETMOUSEBUTTONSWAP);	/*     33 */
     WINE_SPI_FIXME(SPI_SETICONTITLELOGFONT);	/*     34 */
@@ -1319,4 +1524,35 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         break;
     }
     return ret;
+}
+
+
+/**********************************************************************
+ *		SetDoubleClickTime (USER32.@)
+ */
+BOOL WINAPI SetDoubleClickTime( UINT interval )
+{
+    return SystemParametersInfoA(SPI_SETDOUBLECLICKTIME, interval, 0, 0);
+}
+
+
+/**********************************************************************
+ *		GetDoubleClickTime (USER32.@)
+ */
+UINT WINAPI GetDoubleClickTime(void)
+{
+    char buf[10];
+
+    if (!spi_loaded[SPI_SETDOUBLECLICKTIME_IDX])
+    {
+        if (SYSPARAMS_Load( SPI_SETDOUBLECLICKTIME_REGKEY,
+                            SPI_SETDOUBLECLICKTIME_VALNAME,
+                            buf ))
+        {
+            double_click_time = atoi( buf );
+            if (!double_click_time) double_click_time = 500;
+        }
+        spi_loaded[SPI_SETDOUBLECLICKTIME_IDX] = TRUE;
+    }
+    return double_click_time;
 }

@@ -180,10 +180,10 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CYSIZE] = sysMetrics[SM_CXSIZE];
     sysMetrics[SM_CXMINTRACK] = sysMetrics[SM_CXMIN];
     sysMetrics[SM_CYMINTRACK] = sysMetrics[SM_CYMIN];
-    sysMetrics[SM_CXDOUBLECLK] =
-	(GetProfileIntA("Windows", "DoubleClickWidth", 4) + 1) & ~1;
-    sysMetrics[SM_CYDOUBLECLK] =
-	(GetProfileIntA("Windows","DoubleClickHeight", 4) + 1) & ~1;
+
+    sysMetrics[SM_CXDOUBLECLK] = 4;
+    sysMetrics[SM_CYDOUBLECLK] = 4;
+    SYSPARAMS_GetDoubleClickSize( &sysMetrics[SM_CXDOUBLECLK], &sysMetrics[SM_CYDOUBLECLK] );
 
     sysMetrics[SM_CXICONSPACING] = 75;
     SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, 0,
@@ -192,8 +192,8 @@ void SYSMETRICS_Init(void)
     SystemParametersInfoA( SPI_ICONVERTICALSPACING, 0,
                            &sysMetrics[SM_CYICONSPACING], 0 );
 
-    sysMetrics[SM_MENUDROPALIGNMENT] =
-	GetProfileIntA("Windows", "MenuDropAlignment", 0);
+    SystemParametersInfoA( SPI_GETMENUDROPALIGNMENT, 0,
+                           &sysMetrics[SM_MENUDROPALIGNMENT], 0 );
     sysMetrics[SM_PENWINDOWS] = 0;
     sysMetrics[SM_DBCSENABLED] = 0;
 

@@ -230,9 +230,6 @@ static BOOL process_attach(void)
     /* Initialize message spying */
     if (!SPY_Init()) return FALSE;
 
-    /* Set double click time */
-    SetDoubleClickTime( GetProfileIntA("windows","DoubleClickSpeed",452) );
-
     /* Create message queue of initial thread */
     InitThreadInput16( 0, 0 );
 

@@ -38,7 +38,6 @@ DECLARE_DEBUG_CHANNEL(key);
 #define WM_NCMOUSELAST          WM_NCMBUTTONDBLCLK
 
 static BYTE QueueKeyStateTable[256];
-static UINT doubleClickSpeed = 452;
 
 
 /***********************************************************************
@@ -407,7 +406,7 @@ static BOOL process_raw_mouse_message( MSG *msg, ULONG_PTR extra_info )
         {
            if ((msg->message == clk_msg.message) &&
                (msg->hwnd == clk_msg.hwnd) &&
-               (msg->time - clk_msg.time < doubleClickSpeed) &&
+               (msg->time - clk_msg.time < GetDoubleClickTime()) &&
                (abs(msg->pt.x - clk_msg.pt.x) < GetSystemMetrics(SM_CXDOUBLECLK)/2) &&
                (abs(msg->pt.y - clk_msg.pt.y) < GetSystemMetrics(SM_CYDOUBLECLK)/2))
            {
@@ -649,25 +648,6 @@ BOOL WINAPI SetKeyboardState(LPBYTE lpKeyState)
     if (lpKeyState) memcpy(QueueKeyStateTable, lpKeyState, 256);
     return TRUE;
 }
-
-
-/**********************************************************************
- *		SetDoubleClickTime (USER32.@)
- */
-BOOL WINAPI SetDoubleClickTime( UINT interval )
-{
-    doubleClickSpeed = interval ? interval : 500;
-    return TRUE;
-}		
-
-
-/**********************************************************************
- *		GetDoubleClickTime (USER32.@)
- */
-UINT WINAPI GetDoubleClickTime(void)
-{
-    return doubleClickSpeed;
-}		
 
 
 /***********************************************************************
