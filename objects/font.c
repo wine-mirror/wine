@@ -34,6 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
 WINE_DECLARE_DEBUG_CHANNEL(gdi);
 
 #define ENUM_UNICODE	0x00000001
+#define ENUM_CALLED     0x00000002
 
 typedef struct
 {
@@ -52,8 +53,7 @@ typedef struct
   LPLOGFONTW          lpLogFontParam;
   FONTENUMPROCEXW     lpEnumFunc;
   LPARAM              lpData;
-
-  DWORD                 dwFlags;
+  DWORD               dwFlags;
 } fontEnum32;
  
 /*
@@ -670,6 +670,7 @@ static INT FONT_EnumInstance( LPENUMLOGFONTEXW plf, LPNEWTEXTMETRICEXW ptm,
     {
 	/* convert font metrics */
 
+        pfe->dwFlags |= ENUM_CALLED;
 	if( pfe->dwFlags & ENUM_UNICODE )
 	{
 	    return pfe->lpEnumFunc( plf, ptm, fType, pfe->lpData );
@@ -737,13 +738,15 @@ static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf,
 				    LPARAM lParam, DWORD dwUnicode)
 {
     BOOL (*enum_func)(HDC,LPLOGFONTW,DEVICEFONTENUMPROC,LPARAM);
-    INT ret = 1;
+    INT ret = 1, ret2;
     DC *dc = DC_GetDCPtr( hDC );
     fontEnum32 fe32;
     BOOL enum_gdi_fonts;
 
     if (!dc) return 0;
 
+    TRACE("lfFaceName = %s lfCharset = %d\n", debugstr_w(plf->lfFaceName),
+	  plf->lfCharSet);
     fe32.lpLogFontParam = plf;
     fe32.lpEnumFunc = efproc;
     fe32.lpData = lParam;
@@ -757,8 +760,12 @@ static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf,
     
     if (enum_gdi_fonts)
         ret = WineEngEnumFonts( plf, FONT_EnumInstance, (LPARAM)&fe32 );
-    if (ret && enum_func)
-	ret = enum_func( hDC, plf, FONT_EnumInstance, (LPARAM)&fe32 );
+    fe32.dwFlags &= ~ENUM_CALLED;
+    if (ret && enum_func) {
+	ret2 = enum_func( hDC, plf, FONT_EnumInstance, (LPARAM)&fe32 );
+	if(fe32.dwFlags & ENUM_CALLED) /* update ret iff a font gets enumed */
+	    ret = ret2;
+    }
     return ret;
 }
 
