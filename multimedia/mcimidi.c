@@ -827,8 +827,9 @@ static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 	}
 	
 	if (hiPulse > wmm->dwPulse) {
+	    wmm->dwPositionMS += MIDI_ConvertPulseToMS(wmm, hiPulse - wmm->dwPulse);
 	    if (doPlay) {
-		DWORD	togo = wmm->dwStartTicks + wmm->dwPositionMS + MIDI_ConvertPulseToMS(wmm, hiPulse - wmm->dwPulse);
+		DWORD	togo = wmm->dwStartTicks + wmm->dwPositionMS;
 		DWORD	tc = GetTickCount();
 		
 		TRACE(mcimidi, "Pulses hi=0x%08lx <> cur=0x%08lx\n", hiPulse, wmm->dwPulse);
@@ -837,7 +838,6 @@ static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 		if (tc < togo)	
 		    Sleep(togo - tc);
 	    }
-	    wmm->dwPositionMS += MIDI_ConvertPulseToMS(wmm, hiPulse - wmm->dwPulse);
 	    wmm->dwPulse = hiPulse;
 	}
 	
