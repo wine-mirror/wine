@@ -171,7 +171,7 @@ MMRESULT WINAPI acmDriverEnum(ACMDRIVERENUMCB fnCallback, DWORD dwInstance, DWOR
 
     if (!fnCallback) return MMSYSERR_INVALPARAM;
     
-    if (fdwEnum && ~(ACM_DRIVERENUMF_NOLOCAL|ACM_DRIVERENUMF_DISABLED))
+    if (fdwEnum & ~(ACM_DRIVERENUMF_NOLOCAL|ACM_DRIVERENUMF_DISABLED))
 	return MMSYSERR_INVALFLAG;
     
     for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
