@@ -75,7 +75,7 @@ will turn on DLL warning messages and all heap messages.
 will turn off all FIXME messages, turn on cursor warning messages, and turn
 on all relay messages (API calls).
 .br 
-.I --debugmsg -relay
+.I --debugmsg +relay
 will turn on all relay messages. For more control on including or excluding
 functions and dlls look into the [Debug] section of the wine configuration file.
 .PP
