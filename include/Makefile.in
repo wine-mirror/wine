@@ -28,6 +28,9 @@ INSTALLED_INCLUDES = \
 	dinput.h \
 	dispdib.h \
 	dlgs.h \
+	dmo.h \
+	dmoreg.h \
+	dmort.h \
 	docobj.h \
 	dplay.h \
 	dplobby.h \
@@ -47,6 +50,8 @@ INSTALLED_INCLUDES = \
 	mapidefs.h \
 	mciavi.h \
 	mcx.h \
+	mediaerr.h \
+	mediaobj.h \
 	minmax.h \
 	mmreg.h \
 	mmsystem.h \
