@@ -821,7 +821,11 @@ DWORD getInterfaceMtuByName(const char *name, PDWORD mtu)
     if ((ioctl(fd, SIOCGIFMTU, &ifr)))
       ret = ERROR_INVALID_DATA;
     else {
+#ifndef __sun
       *mtu = ifr.ifr_mtu;
+#else
+      *mtu = ifr.ifr_metric;
+#endif
       ret = NO_ERROR;
     }
   }
