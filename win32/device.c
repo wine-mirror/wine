@@ -1080,8 +1080,8 @@ static DWORD VxDCall_VWin32( DWORD service, CONTEXT86 *context )
 
         TRACE("Int31/DPMI dispatch(%08lx)\n", callnum);
 
-	AX_reg(context) = callnum;
-        CX_reg(context) = parm;
+	SET_AX( context, callnum );
+        SET_CX( context, parm );
 	INT_Int31Handler(context);
 
 	return LOWORD(context->Eax);

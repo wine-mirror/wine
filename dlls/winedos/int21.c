@@ -55,7 +55,7 @@ void WINAPI DOSVM_Int21Handler_Ioctl( CONTEXT86 *context )
            CX_reg(context), DX_reg(context));
       if (!CX_reg(context))
       {
-         AX_reg(context) = 1;
+         SET_AX( context, 1 );
          SET_CFLAG(context);
          break;
       }
@@ -76,6 +76,7 @@ void WINAPI DOSVM_Int21Handler_Ioctl( CONTEXT86 *context )
  */
 void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
 {
+    BYTE ascii;
     RESET_CFLAG(context);  /* Not sure if this is a good idea */
 
     if(AH_reg(context) == 0x0c) /* FLUSH BUFFER AND READ STANDARD INPUT */
@@ -91,7 +92,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         if(al != 0x01 && al != 0x06 && al != 0x07 && al != 0x08 && al != 0x0a)
             return;
 
-        AH_reg(context) = al;
+        SET_AH( context, al );
     }
 
     switch(AH_reg(context))
@@ -103,9 +104,10 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
 
     case 0x01: /* READ CHARACTER FROM STANDARD INPUT, WITH ECHO */
         TRACE("DIRECT CHARACTER INPUT WITH ECHO\n");
-        DOSVM_Int16ReadChar(&AL_reg(context), NULL, FALSE);
+        DOSVM_Int16ReadChar(&ascii, NULL, FALSE);
+        SET_AL( context, ascii );
         DOSVM_PutChar(AL_reg(context));
-	break;
+        break;
 
     case 0x02: /* WRITE CHARACTER TO STANDARD OUTPUT */
         TRACE("Write Character to Standard Output\n");
@@ -119,21 +121,20 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
             TRACE("Direct Console Input\n");
             if (scan) {
                 /* return pending scancode */
-                AL_reg(context) = scan;
+                SET_AL( context, scan );
                 RESET_ZFLAG(context);
                 scan = 0;
             } else {
-                char ascii;
                 if (DOSVM_Int16ReadChar(&ascii,&scan,TRUE)) {
                     DOSVM_Int16ReadChar(&ascii,&scan,FALSE);
                     /* return ASCII code */
-                    AL_reg(context) = ascii;
+                    SET_AL( context, ascii );
                     RESET_ZFLAG(context);
                     /* return scan code on next call only if ascii==0 */
                     if (ascii) scan = 0;
                 } else {
                     /* nothing pending, clear everything */
-                    AL_reg(context) = 0;
+                    SET_AL( context, 0 );
                     SET_ZFLAG(context);
                     scan = 0; /* just in case */
                 }
@@ -147,22 +148,24 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
     case 0x07: /* DIRECT CHARACTER INPUT WITHOUT ECHO */
         /* FIXME: Use DOSDEV_Peek/Read(DOSDEV_Console(),...) !! */
         TRACE("DIRECT CHARACTER INPUT WITHOUT ECHO\n");
-        DOSVM_Int16ReadChar(&AL_reg(context), NULL, FALSE);
+        DOSVM_Int16ReadChar(&ascii, NULL, FALSE);
+        SET_AL( context, ascii );
         break;
 
     case 0x08: /* CHARACTER INPUT WITHOUT ECHO */
         /* FIXME: Use DOSDEV_Peek/Read(DOSDEV_Console(),...) !! */
         TRACE("CHARACTER INPUT WITHOUT ECHO\n");
-        DOSVM_Int16ReadChar(&AL_reg(context), NULL, FALSE);
+        DOSVM_Int16ReadChar(&ascii, NULL, FALSE);
+        SET_AL( context, ascii );
         break;
 
     case 0x0b: /* GET STDIN STATUS */
         {
             BIOSDATA *data = BIOS_DATA;
             if(data->FirstKbdCharPtr == data->NextKbdCharPtr)
-                AL_reg(context) = 0;
+                SET_AL( context, 0 );
             else
-                AL_reg(context) = 0xff;
+                SET_AL( context, 0xff );
         }
         break;
 
@@ -176,7 +179,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         {
             FARPROC16 addr = DOSVM_GetRMHandler( AL_reg(context) );
             context->SegEs = SELECTOROF(addr);
-            BX_reg(context) = OFFSETOF(addr);
+            SET_BX( context, OFFSETOF(addr) );
         }
         break;
 
@@ -203,7 +206,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         if (!MZ_Exec( context, CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx),
                       AL_reg(context), CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Ebx) ))
         {
-            AX_reg(context) = GetLastError();
+            SET_AX( context, GetLastError() );
             SET_CFLAG(context);
         }
         break;
@@ -215,7 +218,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
 
     case 0x4d: /* GET RETURN CODE */
         TRACE("GET RETURN CODE (ERRORLEVEL)\n");
-        AX_reg(context) = DOSVM_retval;
+        SET_AX( context, DOSVM_retval );
         DOSVM_retval = 0;
         break;
 
@@ -228,14 +231,14 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         TRACE("GET CURRENT PROCESS ID (GET PSP ADDRESS)\n");
         /* FIXME: should we return the original DOS PSP upon */
         /*        Windows startup ? */
-        BX_reg(context) = DOSVM_psp;
+        SET_BX( context, DOSVM_psp );
         break;
 
     case 0x52: /* "SYSVARS" - GET LIST OF LISTS */
         TRACE("SYSVARS - GET LIST OF LISTS\n");
         {
             context->SegEs = HIWORD(DOS_LOLSeg);
-            BX_reg(context) = FIELD_OFFSET(DOS_LISTOFLISTS, ptr_first_DPB);
+            SET_BX( context, FIELD_OFFSET(DOS_LISTOFLISTS, ptr_first_DPB) );
         }
         break;
 
@@ -243,7 +246,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         TRACE("GET CURRENT PSP ADDRESS\n");
         /* FIXME: should we return the original DOS PSP upon */
         /*        Windows startup ? */
-        BX_reg(context) = DOSVM_psp;
+        SET_BX( context, DOSVM_psp );
         break;
 
     default:

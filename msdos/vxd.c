@@ -72,13 +72,13 @@ void WINAPI VXD_VMM ( CONTEXT86 *context )
     switch(service)
     {
     case 0x0000: /* version */
-        AX_reg(context) = VXD_WinVersion();
+        SET_AX( context, VXD_WinVersion() );
         RESET_CFLAG(context);
         break;
 
     case 0x026d: /* Get_Debug_Flag '/m' */
     case 0x026e: /* Get_Debug_Flag '/n' */
-        AL_reg(context) = 0;
+        SET_AL( context, 0 );
         RESET_CFLAG(context);
         break;
 
@@ -102,13 +102,13 @@ void WINAPI VXD_PageFile( CONTEXT86 *context )
     {
     case 0x00: /* get version, is this windows version? */
 	TRACE("returning version\n");
-        AX_reg(context) = VXD_WinVersion();
+        SET_AX( context, VXD_WinVersion() );
 	RESET_CFLAG(context);
 	break;
 
     case 0x01: /* get swap file info */
 	TRACE("VxD PageFile: returning swap file info\n");
-	AX_reg(context) = 0x00; /* paging disabled */
+	SET_AX( context, 0x00 ); /* paging disabled */
 	context->Ecx = 0;   /* maximum size of paging file */
 	/* FIXME: do I touch DS:SI or DS:DI? */
 	RESET_CFLAG(context);
@@ -145,7 +145,7 @@ void WINAPI VXD_Reboot ( CONTEXT86 *context )
     switch(service)
     {
     case 0x0000: /* version */
-        AX_reg(context) = VXD_WinVersion();
+        SET_AX( context, VXD_WinVersion() );
         RESET_CFLAG(context);
         break;
 
@@ -166,7 +166,7 @@ void WINAPI VXD_VDD ( CONTEXT86 *context )
     switch(service)
     {
     case 0x0000: /* version */
-        AX_reg(context) = VXD_WinVersion();
+        SET_AX( context, VXD_WinVersion() );
         RESET_CFLAG(context);
         break;
 
@@ -187,7 +187,7 @@ void WINAPI VXD_VMD ( CONTEXT86 *context )
     switch(service)
     {
     case 0x0000: /* version */
-        AX_reg(context) = VXD_WinVersion();
+        SET_AX( context, VXD_WinVersion() );
         RESET_CFLAG(context);
         break;
 
@@ -209,8 +209,8 @@ void WINAPI VXD_VXDLoader( CONTEXT86 *context )
     {
     case 0x0000: /* get version */
 	TRACE("returning version\n");
-	AX_reg(context) = 0x0000;
-	DX_reg(context) = VXD_WinVersion();
+	SET_AX( context, 0x0000 );
+	SET_DX( context, VXD_WinVersion() );
 	RESET_CFLAG(context);
 	break;
 
@@ -218,21 +218,21 @@ void WINAPI VXD_VXDLoader( CONTEXT86 *context )
 	FIXME("load device %04lx:%04x (%s)\n",
 	      context->SegDs, DX_reg(context),
 	      debugstr_a(MapSL(MAKESEGPTR(context->SegDs, DX_reg(context)))));
-	AX_reg(context) = 0x0000;
+	SET_AX( context, 0x0000 );
 	context->SegEs = 0x0000;
-	DI_reg(context) = 0x0000;
+	SET_DI( context, 0x0000 );
 	RESET_CFLAG(context);
 	break;
 
     case 0x0002: /* unload device */
 	FIXME("unload device (%08lx)\n", context->Ebx);
-	AX_reg(context) = 0x0000;
+	SET_AX( context, 0x0000 );
 	RESET_CFLAG(context);
 	break;
 
     default:
 	VXD_BARF( context, "VXDLDR" );
-	AX_reg(context) = 0x000B; /* invalid function number */
+	SET_AX( context, 0x000B ); /* invalid function number */
 	SET_CFLAG(context);
 	break;
     }
@@ -251,7 +251,7 @@ void WINAPI VXD_Shell( CONTEXT86 *context )
     {
     case 0x0000:
 	TRACE("returning version\n");
-        AX_reg(context) = VXD_WinVersion();
+        SET_AX( context, VXD_WinVersion() );
 	context->Ebx = 1; /* system VM Handle */
 	break;
 
@@ -310,7 +310,7 @@ void WINAPI VXD_Shell( CONTEXT86 *context )
 
     /* the new Win95 shell API */
     case 0x0100:     /* get version */
-        AX_reg(context) = VXD_WinVersion();
+        SET_AX( context, VXD_WinVersion() );
 	break;
 
     case 0x0104:   /* retrieve Hook_Properties list */
@@ -344,7 +344,7 @@ void WINAPI VXD_Comm( CONTEXT86 *context )
     {
     case 0x0000: /* get version */
 	TRACE("returning version\n");
-        AX_reg(context) = VXD_WinVersion();
+        SET_AX( context, VXD_WinVersion() );
 	RESET_CFLAG(context);
 	break;
 
@@ -368,7 +368,7 @@ void WINAPI VXD_Timer( CONTEXT86 *context )
     switch(service)
     {
     case 0x0000: /* version */
-	AX_reg(context) = VXD_WinVersion();
+	SET_AX( context, VXD_WinVersion() );
 	RESET_CFLAG(context);
 	break;
 
@@ -404,7 +404,7 @@ void WINAPI VXD_TimerAPI ( CONTEXT86 *context )
     switch(service)
     {
     case 0x0000: /* version */
-        AX_reg(context) = VXD_WinVersion();
+        SET_AX( context, VXD_WinVersion() );
         RESET_CFLAG(context);
         break;
 
@@ -415,7 +415,7 @@ void WINAPI VXD_TimerAPI ( CONTEXT86 *context )
             CreateSystemTimer( 55, System_Time_Tick );
         }
 
-        AX_reg(context) = System_Time_Selector;
+        SET_AX( context, System_Time_Selector );
         RESET_CFLAG(context);
         break;
 
@@ -436,7 +436,7 @@ void WINAPI VXD_ConfigMG ( CONTEXT86 *context )
     switch(service)
     {
     case 0x0000: /* version */
-        AX_reg(context) = VXD_WinVersion();
+        SET_AX( context, VXD_WinVersion() );
         RESET_CFLAG(context);
         break;
 
@@ -457,7 +457,7 @@ void WINAPI VXD_Enable ( CONTEXT86 *context )
     switch(service)
     {
     case 0x0000: /* version */
-        AX_reg(context) = VXD_WinVersion();
+        SET_AX( context, VXD_WinVersion() );
         RESET_CFLAG(context);
         break;
 
@@ -478,7 +478,7 @@ void WINAPI VXD_APM ( CONTEXT86 *context )
     switch(service)
     {
     case 0x0000: /* version */
-        AX_reg(context) = VXD_WinVersion();
+        SET_AX( context, VXD_WinVersion() );
         RESET_CFLAG(context);
         break;
 

@@ -53,7 +53,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
     switch(AH_reg(context))
     {
     case 0x10:
-        AL_reg(context) = 0xff; /* share is installed */
+        SET_AL( context, 0xff ); /* share is installed */
         break;
 
     case 0x11:  /* Network Redirector / IFSFUNC */
@@ -93,7 +93,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
             case 0x04:
             case 0x06:
                 context->SegEs = 0x0001;
-                DI_reg(context) = 0x0000;
+                SET_DI( context, 0x0000 );
                 break;
             case 0x08:
                 FIXME("No real-mode handler for errors yet! (bye!)\n");
@@ -125,12 +125,12 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
 	{
 	case 0x00:   /* XMS v2+ installation check */
 	    WARN("XMS is not fully implemented\n");
-	    AL_reg(context) = 0x80;
+	    SET_AL( context, 0x80 );
 	    break;
 	case 0x10:   /* XMS v2+ get driver address */
 	{
             context->SegEs = DOSMEM_xms_seg;
-            BX_reg(context) = 0;
+            SET_BX( context, 0 );
             break;
 	}
 	default:
@@ -138,7 +138,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
 	}
 #else
     	FIXME("check for XMS (not supported)\n");
-	AL_reg(context) = 0x42; /* != 0x80 */
+	SET_AL( context, 0x42 ); /* != 0x80 */
 #endif
     	break;
 
@@ -194,7 +194,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
 	switch(LOBYTE(context->Eax))
 	{
 	case 0x01:  /* check if redirected drive */
-	    AL_reg(context) = 0; /* not redirected */
+	    SET_AL( context, 0 ); /* not redirected */
 	    break;
 	default:
 	    INT_BARF( context, 0x2f );
@@ -204,7 +204,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
         switch (LOBYTE(context->Eax))
         {
 	case 0x0:  /* Low-level Netware installation check AL=0 not installed.*/
-            AL_reg(context) = 0;
+            SET_AL( context, 0 );
             break;
         case 0x20:  /* Get VLM Call Address */
             /* return nothing -> NetWare not installed */
@@ -215,7 +215,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
         }
         break;
     case 0xb7:  /* append */
-        AL_reg(context) = 0; /* not installed */
+        SET_AL( context, 0 ); /* not installed */
         break;
     case 0xb8:  /* network */
         switch (LOBYTE(context->Eax))
@@ -229,7 +229,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
         }
         break;
     case 0xbd:  /* some Novell network install check ??? */
-        AX_reg(context) = 0xa5a5; /* pretend to have Novell IPX installed */
+        SET_AX( context, 0xa5a5 ); /* pretend to have Novell IPX installed */
 	break;
     case 0xbf:  /* REDIRIFS.EXE */
         switch (LOBYTE(context->Eax))
@@ -298,15 +298,13 @@ static void do_int2f_16( CONTEXT86 *context )
     switch(LOBYTE(context->Eax))
     {
     case 0x00:  /* Windows enhanced mode installation check */
-        AX_reg(context) = (GetWinFlags16() & WF_ENHANCED) ?
-                                                  LOWORD(GetVersion16()) : 0;
+        SET_AX( context, (GetWinFlags16() & WF_ENHANCED) ? LOWORD(GetVersion16()) : 0 );
         break;
 
     case 0x0a:  /* Get Windows version and type */
-        AX_reg(context) = 0;
-        BX_reg(context) = (LOWORD(GetVersion16()) << 8) |
-                          (LOWORD(GetVersion16()) >> 8);
-        CX_reg(context) = (GetWinFlags16() & WF_ENHANCED) ? 3 : 2;
+        SET_AX( context, 0 );
+        SET_BX( context, (LOWORD(GetVersion16()) << 8) | (LOWORD(GetVersion16()) >> 8) );
+        SET_CX( context, (GetWinFlags16() & WF_ENHANCED) ? 3 : 2 );
         break;
 
     case 0x0b:  /* Identify Windows-aware TSRs */
@@ -331,7 +329,7 @@ static void do_int2f_16( CONTEXT86 *context )
 	 * *doesn't* use 100% CPU...
 	 */
 	Sleep(55); /* just wait 55ms (one "timer tick") for now. */
-	AL_reg(context) = 0;
+	SET_AL( context, 0 );
         break;
 
     case 0x81: /* Begin critical section.  */
@@ -348,7 +346,7 @@ static void do_int2f_16( CONTEXT86 *context )
          * According to Ralf Brown's Interrupt List, never return 0. But it
          * seems to work okay (returning 0), just to be sure we return 1.
          */
-	BX_reg(context) = 1; /* VM 1 is probably the System VM */
+	SET_BX( context, 1 ); /* VM 1 is probably the System VM */
 	break;
 
     case 0x84:  /* Get device API entry point */
@@ -359,25 +357,25 @@ static void do_int2f_16( CONTEXT86 *context )
             if (!addr)  /* not supported */
                 ERR("Accessing unknown VxD %04x - Expect a failure now.\n", BX_reg(context) );
             context->SegEs = SELECTOROF(addr);
-            DI_reg(context) = OFFSETOF(addr);
+            SET_DI( context, OFFSETOF(addr) );
         }
 	break;
 
     case 0x86:  /* DPMI detect mode */
-        AX_reg(context) = 0;  /* Running under DPMI */
+        SET_AX( context, 0 );  /* Running under DPMI */
         break;
 
     case 0x87: /* DPMI installation check */
         {
 	    SYSTEM_INFO si;
 	    GetSystemInfo(&si);
-	    AX_reg(context) = 0x0000; /* DPMI Installed */
-            BX_reg(context) = 0x0001; /* 32bits available */
-            CL_reg(context) = si.wProcessorLevel;
-            DX_reg(context) = 0x005a; /* DPMI major/minor 0.90 */
-            SI_reg(context) = 0;      /* # of para. of DOS extended private data */
+	    SET_AX( context, 0x0000 ); /* DPMI Installed */
+            SET_BX( context, 0x0001 ); /* 32bits available */
+            SET_CL( context, si.wProcessorLevel );
+            SET_DX( context, 0x005a ); /* DPMI major/minor 0.90 */
+            SET_SI( context, 0 );      /* # of para. of DOS extended private data */
             context->SegEs = DOSMEM_dpmi_seg;
-            DI_reg(context) = 0;      /* ES:DI is DPMI switch entry point */
+            SET_DI( context, 0 );      /* ES:DI is DPMI switch entry point */
             break;
         }
     case 0x8a:  /* DPMI get vendor-specific API entry point. */
@@ -477,17 +475,17 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	    }
 	}
 	TRACE("Installation check: %d cdroms, starting at %d\n", count, drive);
-	BX_reg(context) = count;
-	CX_reg(context) = (drive < 26) ? drive : 0;
+	SET_BX( context, count );
+	SET_CX( context, (drive < 26) ? drive : 0 );
 	break;
 
     case 0x0B: /* drive check */
-	AX_reg(context) = is_cdrom(CX_reg(context));
-	BX_reg(context) = 0xADAD;
+	SET_AX( context, is_cdrom(CX_reg(context)) );
+	SET_BX( context, 0xADAD );
 	break;
 
     case 0x0C: /* get version */
-	BX_reg(context) = 0x020a;
+	SET_BX( context, 0x020a );
 	TRACE("Version number => %04x\n", BX_reg(context));
 	break;
 

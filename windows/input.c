@@ -369,11 +369,11 @@ void WINAPI keybd_event16( CONTEXT86 *context )
 {
     DWORD dwFlags = 0;
 
-    if (AH_reg(context) & 0x80) dwFlags |= KEYEVENTF_KEYUP;
-    if (BH_reg(context) & 1   ) dwFlags |= KEYEVENTF_EXTENDEDKEY;
+    if (HIBYTE(context->Eax) & 0x80) dwFlags |= KEYEVENTF_KEYUP;
+    if (HIBYTE(context->Ebx) & 0x01) dwFlags |= KEYEVENTF_EXTENDEDKEY;
 
-    keybd_event( AL_reg(context), BL_reg(context),
-                 dwFlags, MAKELONG(SI_reg(context), DI_reg(context)) );
+    keybd_event( LOBYTE(context->Eax), LOBYTE(context->Ebx),
+                 dwFlags, MAKELONG(LOWORD(context->Esi), LOWORD(context->Edi)) );
 }
 
 
@@ -401,8 +401,8 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
  */
 void WINAPI mouse_event16( CONTEXT86 *context )
 {
-    mouse_event( AX_reg(context), BX_reg(context), CX_reg(context),
-                 DX_reg(context), MAKELONG(SI_reg(context), DI_reg(context)) );
+    mouse_event( LOWORD(context->Eax), LOWORD(context->Ebx), LOWORD(context->Ecx),
+                 LOWORD(context->Edx), MAKELONG(context->Esi, context->Edi) );
 }
 
 /***********************************************************************

@@ -51,13 +51,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
 
 void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
 {
+    BYTE ascii, scan;
    switch AH_reg(context) {
 
    case 0x00: /* Get Keystroke */
       /* Returns: AH = Scan code
                   AL = ASCII character */
       TRACE("Get Keystroke\n");
-      DOSVM_Int16ReadChar(&AL_reg(context), &AH_reg(context), FALSE);
+      DOSVM_Int16ReadChar(&ascii, &scan, FALSE);
+      SET_AL( context, ascii );
+      SET_AH( context, scan );
       break;
 
    case 0x01: /* Check for Keystroke */
@@ -65,12 +68,14 @@ void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
       /*          AH = Scan code */
       /*          AL = ASCII character */
       TRACE("Check for Keystroke\n");
-      if (!DOSVM_Int16ReadChar(&AL_reg(context), &AH_reg(context), TRUE))
+      if (!DOSVM_Int16ReadChar(&ascii, &scan, TRUE))
       {
           SET_ZFLAG(context);
       }
       else
       {
+          SET_AL( context, ascii );
+          SET_AH( context, scan );
           RESET_ZFLAG(context);
       }
       /* don't miss the opportunity to break some tight timing loop in DOS
@@ -79,24 +84,24 @@ void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
       break;
 
    case 0x02: /* Get Shift Flags */
-      AL_reg(context) = 0;
+      SET_AL( context, 0 );
 
       if (GetAsyncKeyState(VK_RSHIFT))
-          AL_reg(context) |= 0x01;
+          context->Eax |= 0x01;
       if (GetAsyncKeyState(VK_LSHIFT))
-          AL_reg(context) |= 0x02;
+          context->Eax |= 0x02;
       if (GetAsyncKeyState(VK_LCONTROL) || GetAsyncKeyState(VK_RCONTROL))
-          AL_reg(context) |= 0x04;
+          context->Eax |= 0x04;
       if (GetAsyncKeyState(VK_LMENU) || GetAsyncKeyState(VK_RMENU))
-          AL_reg(context) |= 0x08;
+          context->Eax |= 0x08;
       if (GetAsyncKeyState(VK_SCROLL))
-          AL_reg(context) |= 0x10;
+          context->Eax |= 0x10;
       if (GetAsyncKeyState(VK_NUMLOCK))
-          AL_reg(context) |= 0x20;
+          context->Eax |= 0x20;
       if (GetAsyncKeyState(VK_CAPITAL))
-          AL_reg(context) |= 0x40;
+          context->Eax |= 0x40;
       if (GetAsyncKeyState(VK_INSERT))
-          AL_reg(context) |= 0x80;
+          context->Eax |= 0x80;
       TRACE("Get Shift Flags: returning 0x%02x\n", AL_reg(context));
       break;
 
@@ -107,7 +112,7 @@ void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
    case 0x09: /* Get Keyboard Functionality */
       FIXME("Get Keyboard Functionality - Not Supported\n");
       /* As a temporary measure, say that "nothing" is supported... */
-      AL_reg(context) = 0;
+      SET_AL( context, 0 );
       break;
 
    case 0x0a: /* Get Keyboard ID */
@@ -118,7 +123,9 @@ void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
       TRACE("Get Enhanced Keystroke - Partially supported\n");
       /* Returns: AH = Scan code
                   AL = ASCII character */
-      DOSVM_Int16ReadChar(&AL_reg(context), &AH_reg(context), FALSE);
+      DOSVM_Int16ReadChar(&ascii, &scan, FALSE);
+      SET_AL( context, ascii );
+      SET_AH( context, scan );
       break;
 
 
@@ -127,12 +134,14 @@ void WINAPI DOSVM_Int16Handler( CONTEXT86 *context )
       /*          AH = Scan code */
       /*          AL = ASCII character */
       TRACE("Check for Enhanced Keystroke - Partially supported\n");
-      if (!DOSVM_Int16ReadChar(&AL_reg(context), &AH_reg(context), TRUE))
+      if (!DOSVM_Int16ReadChar(&ascii, &scan, TRUE))
       {
           SET_ZFLAG(context);
       }
       else
       {
+          SET_AL( context, ascii );
+          SET_AH( context, scan );
           RESET_ZFLAG(context);
       }
       break;

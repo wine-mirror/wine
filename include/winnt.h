@@ -1084,32 +1084,6 @@ typedef CONTEXT *PCONTEXT;
 
 #ifdef __WINE__
 
-/* Macros for easier access to i386 context registers */
-
-#define AX_reg(context)      (*(WORD*)&(context)->Eax)
-#define BX_reg(context)      (*(WORD*)&(context)->Ebx)
-#define CX_reg(context)      (*(WORD*)&(context)->Ecx)
-#define DX_reg(context)      (*(WORD*)&(context)->Edx)
-#define SI_reg(context)      (*(WORD*)&(context)->Esi)
-#define DI_reg(context)      (*(WORD*)&(context)->Edi)
-#define BP_reg(context)      (*(WORD*)&(context)->Ebp)
-
-#define AL_reg(context)      (*(BYTE*)&(context)->Eax)
-#define AH_reg(context)      (*((BYTE*)&(context)->Eax + 1))
-#define BL_reg(context)      (*(BYTE*)&(context)->Ebx)
-#define BH_reg(context)      (*((BYTE*)&(context)->Ebx + 1))
-#define CL_reg(context)      (*(BYTE*)&(context)->Ecx)
-#define CH_reg(context)      (*((BYTE*)&(context)->Ecx + 1))
-#define DL_reg(context)      (*(BYTE*)&(context)->Edx)
-#define DH_reg(context)      (*((BYTE*)&(context)->Edx + 1))
-
-#define SET_CFLAG(context)   ((context)->EFlags |= 0x0001)
-#define RESET_CFLAG(context) ((context)->EFlags &= ~0x0001)
-#define SET_ZFLAG(context)   ((context)->EFlags |= 0x0040)
-#define RESET_ZFLAG(context) ((context)->EFlags &= ~0x0040)
-#define ISV86(context)       ((context)->EFlags & 0x00020000)
-
-
 /* Macros to retrieve the current context */
 
 #ifdef __i386__

@@ -219,12 +219,12 @@ void WINAPI DOSVM_ASPIHandler( CONTEXT86 *context )
 
 		*p = DPMI_AllocInternalRMCB(ASPI_DOS_func);
 		TRACE("allocated real mode proc %p\n", *p);
-		AX_reg(context) = CX_reg(context);
+		SET_AX( context, CX_reg(context) );
 
 		return;
 	}
 error_exit:
 	/* Return some error... General Failure sounds okay */
-	AX_reg(context) = ERROR_GEN_FAILURE;
+	SET_AX( context, ERROR_GEN_FAILURE );
 	SET_CFLAG(context);
 }

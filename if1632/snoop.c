@@ -330,14 +330,16 @@ void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 		if (max!=ret->dll->funs[ret->ordinal].nrofargs)
 			DPRINTF(" ...");
 		DPRINTF(") retval = %04x:%04x ret=%04x:%04x\n",
-			DX_reg(context),AX_reg(context),HIWORD(ret->origreturn),LOWORD(ret->origreturn)
+                        (WORD)context->Edx,(WORD)context->Eax,
+                        HIWORD(ret->origreturn),LOWORD(ret->origreturn)
 		);
 		HeapFree(GetProcessHeap(),0,ret->args);
 		ret->args = NULL;
 	} else
 		DPRINTF("RET  %s.%ld: %s() retval = %04x:%04x ret=%04x:%04x\n",
 			ret->dll->name,ret->ordinal,ret->dll->funs[ret->ordinal].name,
-			DX_reg(context),AX_reg(context),HIWORD(ret->origreturn),LOWORD(ret->origreturn)
+                        (WORD)context->Edx,(WORD)context->Eax,
+                        HIWORD(ret->origreturn),LOWORD(ret->origreturn)
 		);
 	ret->origreturn = NULL; /* mark as empty */
 }

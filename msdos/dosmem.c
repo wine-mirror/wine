@@ -91,8 +91,6 @@ WORD DOSMEM_xms_seg;
 WORD DOSMEM_dpmi_seg;
 WORD DOSMEM_dpmi_sel;
 
-DWORD DOS_LOLSeg;
-
 /***********************************************************************
  *           DOSMEM_MemoryTop
  *

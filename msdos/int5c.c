@@ -35,6 +35,6 @@ void WINAPI NetBIOSCall16( CONTEXT86 *context )
     BYTE* ptr;
     ptr = MapSL( MAKESEGPTR(context->SegEs,BX_reg(context)) );
     FIXME("(%p): command code %02x (ignored)\n",context, *ptr);
-    AL_reg(context) = *(ptr+0x01) = 0xFB; /* NetBIOS emulator not found */
+    *(ptr+0x01) = 0xFB; /* NetBIOS emulator not found */
+    SET_AL( context, 0xFB );
 }
-

@@ -118,20 +118,20 @@ static void EMS_alloc( CONTEXT86 *context )
     hindex++;
 
   if(hindex == EMS_MAX_HANDLES) {
-    AH_reg(context) = 0x85; /* status: no more handles available */
+    SET_AH( context, 0x85 ); /* status: no more handles available */
   } else {
     int   pages = BX_reg(context);
     void *buffer = HeapAlloc( GetProcessHeap(), 0, pages * EMS_PAGE_SIZE );
 
     if(!buffer) {
-      AH_reg(context) = 0x88; /* status: insufficient pages available */
+      SET_AH( context, 0x88 ); /* status: insufficient pages available */
     } else {
       EMS_record->handle[hindex].address = buffer;
       EMS_record->handle[hindex].pages = pages;
       EMS_record->used_pages += pages;
 
-      DX_reg(context) = hindex; /* handle to allocated memory*/
-      AH_reg(context) = 0;      /* status: ok */
+      SET_DX( context, hindex ); /* handle to allocated memory*/
+      SET_AH( context, 0 );      /* status: ok */
     }
   }
 }
@@ -146,7 +146,7 @@ static void EMS_access_name( CONTEXT86 *context )
   char *ptr;
   int hindex = DX_reg(context);
   if(hindex < 0 || hindex >= EMS_MAX_HANDLES) {
-    AH_reg(context) = 0x83; /* invalid handle */
+    SET_AH( context, 0x83 ); /* invalid handle */
     return;
   }
 
@@ -154,13 +154,13 @@ static void EMS_access_name( CONTEXT86 *context )
   case 0x00: /* get name */
     ptr = PTR_REAL_TO_LIN(context->SegEs, DI_reg(context));
     memcpy(ptr, EMS_record->handle[hindex].name, 8);
-    AH_reg(context) = 0;
+    SET_AH( context, 0 );
     break;
 
   case 0x01: /* set name */
     ptr = PTR_REAL_TO_LIN(context->SegDs, SI_reg(context));
     memcpy(EMS_record->handle[hindex].name, ptr, 8);
-    AH_reg(context) = 0;
+    SET_AH( context, 0 );
     break;
 
   default:
@@ -241,7 +241,7 @@ static void EMS_map_multiple( CONTEXT86 *context )
       status = 0x8f; /* status: undefined subfunction */
     }
 
-  AH_reg(context) = status;
+  SET_AH( context, status );
 }
 
 /**********************************************************************
@@ -255,12 +255,12 @@ static void EMS_free( CONTEXT86 *context )
   int i;
 
   if(hindex < 0 || hindex >= EMS_MAX_HANDLES) {
-    AH_reg(context) = 0x83; /* status: invalid handle */
+    SET_AH( context, 0x83 ); /* status: invalid handle */
     return;
   }
 
   if(!EMS_record->handle[hindex].address) {
-    AH_reg(context) = 0; /* status: ok */
+    SET_AH( context, 0 ); /* status: ok */
     return;
   }
 
@@ -275,7 +275,7 @@ static void EMS_free( CONTEXT86 *context )
   HeapFree( GetProcessHeap(), 0, EMS_record->handle[hindex].address );
   EMS_record->handle[hindex].address = 0;
 
-  AH_reg(context) = 0;    /* status: ok */
+  SET_AH( context, 0 );    /* status: ok */
 }
 
 /**********************************************************************
@@ -293,7 +293,7 @@ static void EMS_save_context( CONTEXT86 *context )
     EMS_record->mapping_save_area[h][i].logical_page = EMS_record->mapping[i].logical_page;
   }
 
-  AX_reg(context) = 0; /* status: ok */
+  SET_AX( context, 0 ); /* status: ok */
 }
 
 
@@ -312,12 +312,12 @@ static void EMS_restore_context( CONTEXT86 *context )
     int logical_page = EMS_record->mapping_save_area[handle][i].logical_page;
 
     if(EMS_map( i, hindex, logical_page )) {
-      AX_reg(context) = 0x8e; /* status: restore of mapping context failed */
+      SET_AX( context, 0x8e ); /* status: restore of mapping context failed */
       return;
     }
   }
 
-  AX_reg(context) = 0; /* status: ok */
+  SET_AX( context, 0 ); /* status: ok */
 }
 
 /**********************************************************************
@@ -330,23 +330,23 @@ void WINAPI DOSVM_Int67Handler( CONTEXT86 *context )
   switch AH_reg(context) {
 
   case 0x40: /* EMS - GET MANAGER STATUS */
-    AH_reg(context) = 0; /* status: ok */
+    SET_AH( context, 0 ); /* status: ok */
     break;
 
   case 0x41: /* EMS - GET PAGE FRAME SEGMENT */
     EMS_init();
-    BX_reg(context) = EMS_record->frame_selector; /* segment of page frame */
-    AH_reg(context) = 0;                          /* status: ok */
+    SET_BX( context, EMS_record->frame_selector ); /* segment of page frame */
+    SET_AH( context, 0 );                          /* status: ok */
     break;
 
   case 0x42: /* EMS - GET NUMBER OF PAGES */
     EMS_init();
     /* unallocated 16k pages */
-    BX_reg(context) = EMS_MAX_PAGES - EMS_record->used_pages;
+    SET_BX( context, EMS_MAX_PAGES - EMS_record->used_pages );
     /* total number of 16k pages */
-    DX_reg(context) = EMS_MAX_PAGES;
+    SET_DX( context, EMS_MAX_PAGES );
     /* status: ok */
-    AH_reg(context) = 0;
+    SET_AH( context, 0 );
     break;
 
   case 0x43: /* EMS - GET HANDLE AND ALLOCATE MEMORY */
@@ -356,7 +356,7 @@ void WINAPI DOSVM_Int67Handler( CONTEXT86 *context )
 
   case 0x44: /* EMS - MAP MEMORY */
     EMS_init();
-    AH_reg(context) = EMS_map( AL_reg(context), DX_reg(context), BX_reg(context) );
+    SET_AH( context, EMS_map( AL_reg(context), DX_reg(context), BX_reg(context) ) );
     break;
 
   case 0x45: /* EMS - RELEASE HANDLE AND MEMORY */
@@ -365,8 +365,8 @@ void WINAPI DOSVM_Int67Handler( CONTEXT86 *context )
     break;
 
   case 0x46: /* EMS - GET EMM VERSION */
-    AL_reg(context) = 0x40; /* version 4.0 */
-    AH_reg(context) = 0;    /* status: ok */
+    SET_AL( context, 0x40 ); /* version 4.0 */
+    SET_AH( context, 0 );    /* status: ok */
     break;
 
   case 0x47: /* EMS - SAVE MAPPING CONTEXT */
@@ -385,8 +385,8 @@ void WINAPI DOSVM_Int67Handler( CONTEXT86 *context )
     break;
 
   case 0x4b: /* EMS - GET NUMBER OF EMM HANDLES */
-    BX_reg(context) = EMS_MAX_HANDLES; /* EMM handles */
-    AH_reg(context) = 0;               /* status: ok */
+    SET_BX( context, EMS_MAX_HANDLES ); /* EMM handles */
+    SET_AH( context, 0 );               /* status: ok */
     break;
 
   case 0x4c: /* EMS - GET PAGES OWNED BY HANDLE */
@@ -423,11 +423,11 @@ void WINAPI DOSVM_Int67Handler( CONTEXT86 *context )
     if(AL_reg(context) == 0x01) {
       EMS_init();
       /* unallocated raw pages */
-      BX_reg(context) = EMS_MAX_PAGES - EMS_record->used_pages;
+      SET_BX( context, EMS_MAX_PAGES - EMS_record->used_pages );
       /* total number raw pages */
-      DX_reg(context) = EMS_MAX_PAGES;
+      SET_DX( context, EMS_MAX_PAGES );
       /* status: ok */
-      AH_reg(context) = 0;
+      SET_AH( context, 0 );
     } else
       INT_BARF(context,0x67);
     break;
@@ -454,7 +454,7 @@ void WINAPI EMS_Ioctl_Handler( CONTEXT86 *context )
   switch AL_reg(context) {
   case 0x00: /* IOCTL - GET DEVICE INFORMATION */
       RESET_CFLAG(context); /* operation was successful */
-      DX_reg(context) = 0x4080; /* bit 14 (support ioctl read) and
+      SET_DX( context, 0x4080 ); /* bit 14 (support ioctl read) and
                                  * bit 7 (is_device) */
       break;
 
@@ -471,7 +471,7 @@ void WINAPI EMS_Ioctl_Handler( CONTEXT86 *context )
 
   case 0x07: /* IOCTL - GET OUTPUT STATUS */
       RESET_CFLAG(context); /* operation was successful */
-      AL_reg(context) = 0xff; /* device is ready */
+      SET_AL( context, 0xff ); /* device is ready */
       break;
 
   default:

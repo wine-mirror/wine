@@ -163,9 +163,6 @@ extern WORD DOSMEM_xms_seg;
 extern WORD DOSMEM_dpmi_seg;
 extern WORD DOSMEM_dpmi_sel;
 
-extern DWORD DOS_LOLSeg;
-extern struct _DOS_LISTOFLISTS * DOSMEM_LOL();
-
 extern BOOL DOSMEM_Init(BOOL);
 extern void   DOSMEM_Tick(WORD timer);
 extern WORD   DOSMEM_AllocSelector(WORD);
@@ -276,5 +273,46 @@ extern char IO_pp_init(void);
              (num), (num), LOWORD((context)->Eax), LOWORD((context)->Ebx), \
              LOWORD((context)->Ecx), LOWORD((context)->Edx), LOWORD((context)->Esi), \
              LOWORD((context)->Edi), (WORD)(context)->SegDs, (WORD)(context)->SegEs )
+
+/* Macros for easier access to i386 context registers */
+
+#define AX_reg(context)      ((WORD)(context)->Eax)
+#define BX_reg(context)      ((WORD)(context)->Ebx)
+#define CX_reg(context)      ((WORD)(context)->Ecx)
+#define DX_reg(context)      ((WORD)(context)->Edx)
+#define SI_reg(context)      ((WORD)(context)->Esi)
+#define DI_reg(context)      ((WORD)(context)->Edi)
+
+#define AL_reg(context)      ((BYTE)(context)->Eax)
+#define AH_reg(context)      ((BYTE)((context)->Eax >> 8))
+#define BL_reg(context)      ((BYTE)(context)->Ebx)
+#define BH_reg(context)      ((BYTE)((context)->Ebx >> 8))
+#define CL_reg(context)      ((BYTE)(context)->Ecx)
+#define CH_reg(context)      ((BYTE)((context)->Ecx >> 8))
+#define DL_reg(context)      ((BYTE)(context)->Edx)
+#define DH_reg(context)      ((BYTE)((context)->Edx >> 8))
+
+#define SET_CFLAG(context)   ((context)->EFlags |= 0x0001)
+#define RESET_CFLAG(context) ((context)->EFlags &= ~0x0001)
+#define SET_ZFLAG(context)   ((context)->EFlags |= 0x0040)
+#define RESET_ZFLAG(context) ((context)->EFlags &= ~0x0040)
+#define ISV86(context)       ((context)->EFlags & 0x00020000)
+
+#define SET_AX(context,val)  ((context)->Eax = ((context)->Eax & ~0xffff) | (WORD)(val))
+#define SET_BX(context,val)  ((context)->Ebx = ((context)->Ebx & ~0xffff) | (WORD)(val))
+#define SET_CX(context,val)  ((context)->Ecx = ((context)->Ecx & ~0xffff) | (WORD)(val))
+#define SET_DX(context,val)  ((context)->Edx = ((context)->Edx & ~0xffff) | (WORD)(val))
+#define SET_SI(context,val)  ((context)->Esi = ((context)->Esi & ~0xffff) | (WORD)(val))
+#define SET_DI(context,val)  ((context)->Edi = ((context)->Edi & ~0xffff) | (WORD)(val))
+
+#define SET_AL(context,val)  ((context)->Eax = ((context)->Eax & ~0xff) | (BYTE)(val))
+#define SET_BL(context,val)  ((context)->Ebx = ((context)->Ebx & ~0xff) | (BYTE)(val))
+#define SET_CL(context,val)  ((context)->Ecx = ((context)->Ecx & ~0xff) | (BYTE)(val))
+#define SET_DL(context,val)  ((context)->Edx = ((context)->Edx & ~0xff) | (BYTE)(val))
+
+#define SET_AH(context,val)  ((context)->Eax = ((context)->Eax & ~0xff00) | (((BYTE)(val)) << 8))
+#define SET_BH(context,val)  ((context)->Ebx = ((context)->Ebx & ~0xff00) | (((BYTE)(val)) << 8))
+#define SET_CH(context,val)  ((context)->Ecx = ((context)->Ecx & ~0xff00) | (((BYTE)(val)) << 8))
+#define SET_DH(context,val)  ((context)->Edx = ((context)->Edx & ~0xff00) | (((BYTE)(val)) << 8))
 
 #endif /* __WINE_MISCEMU_H */

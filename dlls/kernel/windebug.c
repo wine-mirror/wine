@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include "windef.h"
 #include "module.h"
+#include "miscemu.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dll);

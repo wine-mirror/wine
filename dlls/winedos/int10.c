@@ -93,14 +93,14 @@ static void DOSVM_Int10Handler_VESA( CONTEXT86 *context )
         memcpy(CTX_SEG_OFF_TO_LIN(context,context->SegEs,context->Edi),
                (char *)BIOS_SYS + DOSMEM_GetBiosSysStructOffset(OFF_VESAINFO),
                sizeof(VESAINFO));
-        AL_reg(context) = 0x4f;
-        AH_reg(context) = 0x00; /* 0x00 = successful 0x01 = failed */
+        SET_AL( context, 0x4f );
+        SET_AH( context, 0x00 ); /* 0x00 = successful 0x01 = failed */
         break;
 
     case 0x01: /* GET SuperVGA MODE INFORMATION */
         FIXME("VESA GET SuperVGA Mode Information - Not supported\n");
-        AL_reg(context) = 0x4f;
-        AH_reg(context) = 0x01; /* 0x00 = successful 0x01 = failed */
+        SET_AL( context, 0x4f );
+        SET_AH( context, 0x01 ); /* 0x00 = successful 0x01 = failed */
         break;
 
     case 0x02: /* SET SuperVGA VIDEO MODE */
@@ -240,14 +240,14 @@ static void DOSVM_Int10Handler_VESA( CONTEXT86 *context )
             FIXME("VESA Set Video Mode (0x%x) - Not Supported\n", BX_reg(context));
         }
         data->VideoMode = BX_reg(context);
-        AL_reg(context) = 0x4f;
-        AH_reg(context) = 0x00;
+        SET_AL( context, 0x4f );
+        SET_AH( context, 0x00 );
         break;
 
     case 0x03: /* VESA SuperVGA BIOS - GET CURRENT VIDEO MODE */
-        AL_reg(context) = 0x4f;
-        AH_reg(context) = 0x00; /* should probly check if a vesa mode has ben set */
-        BX_reg(context) = data->VideoMode;
+        SET_AL( context, 0x4f );
+        SET_AH( context, 0x00 ); /* should probly check if a vesa mode has ben set */
+        SET_BX( context, data->VideoMode );
         break;
 
     case 0x04: /* VESA SuperVGA BIOS - SAVE/RESTORE SuperVGA VIDEO STATE */
@@ -264,20 +264,20 @@ static void DOSVM_Int10Handler_VESA( CONTEXT86 *context )
          */
         switch(BH_reg(context)) {
         case 0x00: /* select video memory window */
-            AL_reg(context) = 0x4f; /* function supported */
+            SET_AL( context, 0x4f ); /* function supported */
             if(BL_reg(context) == 0) {
                 VGA_SetWindowStart(DX_reg(context) * 64 * 1024);
-                AH_reg(context) = 0x00; /* status: successful */
+                SET_AH( context, 0x00 ); /* status: successful */
             } else
-                AH_reg(context) = 0x01; /* status: failed */
+                SET_AH( context, 0x01 ); /* status: failed */
             break;
         case 0x01: /* get video memory window */
-            AL_reg(context) = 0x4f; /* function supported */
+            SET_AL( context, 0x4f ); /* function supported */
             if(BL_reg(context) == 0) {
-                DX_reg(context) = VGA_GetWindowStart() / 64 / 1024;
-                AH_reg(context) = 0x00; /* status: successful */
+                SET_DX( context, VGA_GetWindowStart() / 64 / 1024 );
+                SET_AH( context, 0x00 ); /* status: successful */
             } else
-                AH_reg(context) = 0x01; /* status: failed */
+                SET_AH( context, 0x01 ); /* status: failed */
             break;
 	default:
             INT_BARF( context, 0x10 );
@@ -321,7 +321,7 @@ static void DOSVM_Int10Handler_VESA( CONTEXT86 *context )
         /* There's no reason to really support this  */
         /* is there?....................(A.C.)       */
         TRACE("Just report the video not hercules compatible\n");
-        DX_reg(context) = 0xffff;
+        SET_DX( context, 0xffff );
         break;
 
     case 0xff: /* Turn VESA ON/OFF */
@@ -358,7 +358,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         }
 
         /* FIXME: Should we keep the bit 7 in the Bios Data memory? */
-        AL_reg(context) &= ~0x80;
+        context->Eax &= ~0x80;
 
         switch (AL_reg(context)) {
             case 0x00: /* 40x25 */
@@ -437,17 +437,17 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
           unsigned row, col;
 
           TRACE("Get cursor position and size (page %d)\n", BH_reg(context));
-          CX_reg(context) = data->VideoCursorType;
+          SET_CX( context, data->VideoCursorType );
           BIOS_GetCursorPos(data,BH_reg(context),&col,&row);
-          DH_reg(context) = row;
-          DL_reg(context) = col;
+          SET_DH( context, row );
+          SET_DL( context, col );
           TRACE("Cursor Position: %d %d\n", DH_reg(context), DL_reg(context));
         }
         break;
 
     case 0x04: /* READ LIGHT PEN POSITION */
         FIXME("Read Light Pen Position - Not Supported\n");
-        AH_reg(context) = 0x00; /* Not down */
+        SET_AH( context, 0x00 ); /* Not down */
         break;
 
     case 0x05: /* SELECT ACTIVE DISPLAY PAGE */
@@ -483,13 +483,16 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
             {
                 FIXME("Read character and attribute at cursor position -"
                       " Can't read from non-0 page\n");
-                AL_reg(context) = ' '; /* That page is blank */
-                AH_reg(context) = 7;
+                SET_AL( context, ' ' ); /* That page is blank */
+                SET_AH( context, 7 );
             }
             else
            {
+                BYTE ascii, attr;
                 TRACE("Read Character and Attribute at Cursor Position\n");
-                VGA_GetCharacterAtCursor(&AL_reg(context), &AH_reg(context));
+                VGA_GetCharacterAtCursor(&ascii, &attr);
+                SET_AL( context, ascii );
+                SET_AH( context, attr );
             }
         }
         break;
@@ -563,9 +566,9 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
     case 0x0f: /* GET CURRENT VIDEO MODE */
         TRACE("Get current video mode\n");
         /* Note: This should not be a constant value. */
-        AL_reg(context) = data->VideoMode;
-        AH_reg(context) = data->VideoColumns;
-        BH_reg(context) = 0; /* Display page 0 */
+        SET_AL( context, data->VideoMode );
+        SET_AH( context, data->VideoColumns );
+        SET_BH( context, 0 ); /* Display page 0 */
         break;
 
     case 0x10:
@@ -595,11 +598,11 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         case 0x07: /* GET INDIVIDUAL PALETTE REGISTER  - A.C.*/
             TRACE("Get Individual Palette Register 0x0%x\n",BL_reg(context));
 		/* BL is register to read [ 0-15 ] BH is return value */
-	        BH_reg(context) = VGA_GetColor16((int)BL_reg(context));
+	        SET_BH( context, VGA_GetColor16((int)BL_reg(context)) );
             break;
         case 0x08: /* READ OVERSCAN (BORDER COLOR) REGISTER  - A.C. */
             TRACE("Read Overscan (Border Color) Register \n");
-	        BH_reg(context) = VGA_GetColor16(16);
+	        SET_BH( context, VGA_GetColor16(16) );
             break;
         case 0x09: /* READ ALL PALETTE REGISTERS AND OVERSCAN REGISTER - A.C.*/
             TRACE("Read All Palette Registers and Overscan Register \n");
@@ -719,11 +722,9 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         switch BL_reg(context) {
         case 0x10: /* GET EGA INFO */
             TRACE("EGA info requested\n");
-            BH_reg(context) = 0x00;   /* Color screen */
-            BL_reg(context) =
-                data->ModeOptions >> 5; /* EGA memory size */
-            CX_reg(context) =
-                data->FeatureBitsSwitches;
+            SET_BH( context, 0x00 );   /* Color screen */
+            SET_BL( context, data->ModeOptions >> 5 ); /* EGA memory size */
+            SET_CX( context, data->FeatureBitsSwitches );
             break;
         case 0x20: /* ALTERNATE PRTSC */
             FIXME("Install Alternate Print Screen - Not Supported\n");
@@ -767,9 +768,9 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         switch AL_reg(context) {
         case 0x00: /* GET DISPLAY COMBINATION CODE */
             TRACE("Get Display Combination Code\n");
-            AX_reg(context) = 0x001a;
-            BL_reg(context) = 0x08; /* VGA w/ color analog display */
-            BH_reg(context) = 0x00; /* No secondary hardware */
+            SET_AX( context, 0x001a );
+            SET_BL( context, 0x08 ); /* VGA w/ color analog display */
+            SET_BH( context, 0x00 ); /* No secondary hardware */
             break;
         case 0x01: /* SET DISPLAY COMBINATION CODE */
             FIXME("Set Display Combination Code - Not Supported\n");
@@ -785,7 +786,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         TRACE("Get functionality/state information\n");
         if (BX_reg(context) == 0x0)
         {
-          AL_reg(context) = 0x1b;
+          SET_AL( context, 0x1b );
           /* Copy state information structure to ES:DI */
           memcpy(CTX_SEG_OFF_TO_LIN(context,context->SegEs,context->Edi),
                  (char *)BIOS_SYS + DOSMEM_GetBiosSysStructOffset(OFF_VIDEOSTATE),sizeof(VIDEOSTATE));
@@ -800,7 +801,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
                     /* There's no reason to really support this  */
                     /* is there?....................(A.C.)       */
                 TRACE("Just report the video not hercules compatible\n");
-                DX_reg(context) = 0xffff;
+                SET_DX( context, 0xffff );
                 break;
 
     case 0x4f: /* VESA */

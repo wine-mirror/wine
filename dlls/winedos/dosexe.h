@@ -38,6 +38,7 @@ typedef void (*DOSRELAY)(CONTEXT86*,void*);
 
 extern WORD DOSVM_psp;     /* psp of current DOS task */
 extern WORD DOSVM_retval;  /* return value of previous DOS task */
+extern DWORD DOS_LOLSeg;
 
 #if defined(linux) && defined(__i386__)
 #define MZ_SUPPORTED
@@ -74,6 +75,7 @@ extern int DOSDEV_Read(DWORD dev, DWORD buf, int buflen);
 extern int DOSDEV_Write(DWORD dev, DWORD buf, int buflen, int verify);
 extern int DOSDEV_IoctlRead(DWORD dev, DWORD buf, int buflen);
 extern int DOSDEV_IoctlWrite(DWORD dev, DWORD buf, int buflen);
+extern struct _DOS_LISTOFLISTS * DOSMEM_LOL();
 
 /* dma.c */
 extern int DMA_Transfer(int channel,int reqlength,void* buffer);

@@ -41,13 +41,13 @@ void WINAPI INT_Int15Handler( CONTEXT86 *context )
         switch(DX_reg(context))
         {
         case 0x0: /* read joystick switches */
-            AL_reg(context) = 0x0; /* all switches open */
+            SET_AL( context, 0x0 ); /* all switches open */
             break;
         case 0x1: /* read joystick position */
-            AX_reg(context) = 0x0;
-            BX_reg(context) = 0x0;
-            CX_reg(context) = 0x0;
-            DX_reg(context) = 0x0;
+            SET_AX( context, 0x0 );
+            SET_BX( context, 0x0 );
+            SET_CX( context, 0x0 );
+            SET_DX( context, 0x0 );
             break;
 	default:
             INT_BARF( context, 0x15 );
@@ -59,7 +59,7 @@ void WINAPI INT_Int15Handler( CONTEXT86 *context )
         break;
 
     case 0x88: /* get size of memory above 1 M */
-        AX_reg(context) = 64;  /* FIXME: are 64K ok? */
+        SET_AX( context, 64 );  /* FIXME: are 64K ok? */
         RESET_CFLAG(context);
         break;
 
@@ -68,8 +68,8 @@ void WINAPI INT_Int15Handler( CONTEXT86 *context )
             context->SegEs = 0xf000;
         else
             context->SegEs = DOSMEM_BiosSysSeg;
-        BX_reg(context) = 0xe6f5;
-        AH_reg(context) = 0x0;
+        SET_BX( context, 0xe6f5 );
+        SET_AH( context, 0x0 );
         RESET_CFLAG(context);
         break;
     case 0xc2:
@@ -89,16 +89,16 @@ void WINAPI INT_Int15Handler( CONTEXT86 *context )
 		    INT_BARF( context, 0x15 );
 		    break;
 	    }
-	    AH_reg(context) = 0x00; /* successful */
+	    SET_AH( context, 0x00 ); /* successful */
 	    break;
 	case 0x02: /* Set Sampling Rate */
 	    /* BH = sampling rate */
 	    FIXME("Set Sampling Rate - not implemented\n");
-	    AH_reg(context) = 0x00; /* successful */
+	    SET_AH( context, 0x00 ); /* successful */
 	    break;
 	case 0x04: /* Get Pointing Device Type */
 	    FIXME("Get Pointing Device Type - not implemented\n");
-	    BH_reg(context) = 0x01;/*Device id FIXME what is it supposed to be?*/
+	    SET_BH( context, 0x01 );/*Device id FIXME what is it supposed to be?*/
 	    break;
 	default:
 	    INT_BARF( context, 0x15 );

@@ -59,7 +59,7 @@ static WORD Inthandler02hVar = 1;
 
 static void WIN87_ClearCtrlWord( CONTEXT86 *context )
 {
-    AX_reg(context) = 0;
+    SET_AX( context, 0 );
     if (Installed)
 #ifdef __i386__
         __asm__("fclex");
@@ -72,7 +72,7 @@ static void WIN87_ClearCtrlWord( CONTEXT86 *context )
 static void WIN87_SetCtrlWord( CONTEXT86 *context )
 {
     CtrlWord_1 = AX_reg(context);
-    AX_reg(context) &= 0xff3c;
+    context->Eax &= ~0x00c3;
     if (Installed) {
         CtrlWord_Internal = AX_reg(context);
 #ifdef __i386__
@@ -91,7 +91,7 @@ void WIN87_Init( CONTEXT86 *context )
 #endif
     }
     StackBottom = StackTop;
-    AX_reg(context) = 0x1332;
+    SET_AX( context, 0x1332 );
     WIN87_SetCtrlWord(context);
     WIN87_ClearCtrlWord(context);
 }
@@ -115,7 +115,7 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
             InstallIntVecs02hAnd75h();
 #endif
         WIN87_Init(context);
-        AX_reg(context) = 0;
+        SET_AX( context, 0 );
         break;
 
     case 1: /* Init Emulator */
@@ -144,7 +144,7 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
         break;
 
     case 5: /* return internal control word in AX */
-        AX_reg(context) = CtrlWord_1;
+        SET_AX( context, CtrlWord_1 );
         break;
 
     case 6: /* round top of stack to integer using method AX & 0x0C00 */
@@ -179,21 +179,20 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
 /* FIXME: could someone who really understands asm() fix this please? --AJ */
 /*            __asm__("fistp %0;wait" : "=m" (dw) : : "memory"); */
             TRACE("On top of stack was %ld\n",dw);
-            AX_reg(context) = LOWORD(dw);
-            DX_reg(context) = HIWORD(dw);
+            SET_AX( context, LOWORD(dw) );
+            SET_DX( context, HIWORD(dw) );
         }
         break;
 
     case 8: /* restore internal status words from emulator status word */
-        AX_reg(context) = 0;
+        SET_AX( context, 0 );
         if (Installed) {
 #ifdef __i386__
             __asm__("fstsw %0;wait" : "=m" (StatusWord_1));
 #endif
-            AL_reg(context) = (BYTE)StatusWord_1 & 0x3f;
+            SET_AL( context, (BYTE)StatusWord_1 & 0x3f );
         }
-        AX_reg(context) |= StatusWord_2;
-        AX_reg(context) &= 0x1fff;
+        context->Eax = (context->Eax | StatusWord_2) & ~0xe000;
         StatusWord_2 = AX_reg(context);
         break;
 
@@ -202,12 +201,12 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
         break;
 
     case 10: /* dunno. but looks like returning nr. of things on stack in AX */
-	AX_reg(context) = 0;
+	SET_AX( context, 0 );
         break;
 
     case 11: /* just returns the installed flag in DX:AX */
-        DX_reg(context) = 0;
-        AX_reg(context) = Installed;
+        SET_DX( context, 0 );
+        SET_AX( context, Installed );
         break;
 
     case 12: /* save AX in some internal state var */
@@ -216,7 +215,8 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
 
     default: /* error. Say that loud and clear */
         FIXME("unhandled switch %d\n",BX_reg(context));
-        AX_reg(context) = DX_reg(context) = 0xFFFF;
+        SET_AX( context, 0xFFFF );
+        SET_DX( context, 0xFFFF );
         break;
     }
 }
@@ -248,4 +248,3 @@ void WINAPI WIN87_WinEm87Save(void *pWin87EmSaveArea, int cbWin87EmSaveArea)
   FIXME("(%p,%d), stub !\n",
 	pWin87EmSaveArea,cbWin87EmSaveArea);
 }
-

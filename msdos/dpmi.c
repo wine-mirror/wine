@@ -344,8 +344,8 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
         }
         else
         {
-            CX_reg(context) = HIWORD(W32S_WINE2APP(dw));
-            DX_reg(context) = LOWORD(W32S_WINE2APP(dw));
+            SET_CX( context, HIWORD(W32S_WINE2APP(dw)) );
+            SET_DX( context, LOWORD(W32S_WINE2APP(dw)) );
         }
         break;
 
@@ -373,9 +373,9 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
 
     case 0x000a:  /* Allocate selector alias */
     	TRACE("allocate selector alias (0x%04x)\n",BX_reg(context));
-        if (!(AX_reg(context) = AllocCStoDSAlias16( BX_reg(context) )))
+        if (!SET_AX( context, AllocCStoDSAlias16( BX_reg(context) )))
         {
-            AX_reg(context) = 0x8011;  /* descriptor unavailable */
+            SET_AX( context, 0x8011 );  /* descriptor unavailable */
             SET_CFLAG(context);
         }
         break;
@@ -401,18 +401,18 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
 
     case 0x000d:  /* Allocate specific LDT descriptor */
     	FIXME("allocate descriptor (0x%04x), stub!\n",BX_reg(context));
-        AX_reg(context) = 0x8011; /* descriptor unavailable */
+        SET_AX( context, 0x8011 ); /* descriptor unavailable */
         SET_CFLAG(context);
         break;
     case 0x0100:  /* Allocate DOS memory block */
         TRACE("allocate DOS memory block (0x%x paragraphs)\n",BX_reg(context));
         dw = GlobalDOSAlloc16((DWORD)BX_reg(context)<<4);
         if (dw) {
-            AX_reg(context) = HIWORD(dw);
-            DX_reg(context) = LOWORD(dw);
+            SET_AX( context, HIWORD(dw) );
+            SET_DX( context, LOWORD(dw) );
         } else {
-            AX_reg(context) = 0x0008; /* insufficient memory */
-            BX_reg(context) = DOSMEM_Available()>>4;
+            SET_AX( context, 0x0008 ); /* insufficient memory */
+            SET_BX( context, DOSMEM_Available()>>4 );
             SET_CFLAG(context);
         }
         break;
@@ -420,7 +420,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
         TRACE("free DOS memory block (0x%04x)\n",DX_reg(context));
         dw = GlobalDOSFree16(DX_reg(context));
         if (!dw) {
-            AX_reg(context) = 0x0009; /* memory block address invalid */
+            SET_AX( context, 0x0009 ); /* memory block address invalid */
             SET_CFLAG(context);
         }
         break;
@@ -436,8 +436,8 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
     case 0x0204:  /* Get protected mode interrupt vector */
     	TRACE("get protected mode interrupt handler (0x%02x), stub!\n",BL_reg(context));
 	dw = (DWORD)INT_GetPMHandler( BL_reg(context) );
-	CX_reg(context) = HIWORD(dw);
-	DX_reg(context) = LOWORD(dw);
+	SET_CX( context, HIWORD(dw) );
+	SET_DX( context, LOWORD(dw) );
 	break;
 
     case 0x0205:  /* Set protected mode interrupt vector */
@@ -470,23 +470,23 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
     case 0x0305:  /* Get State Save/Restore Addresses */
         TRACE("get state save/restore addresses\n");
         /* we probably won't need this kind of state saving */
-        AX_reg(context) = 0;
+        SET_AX( context, 0 );
 	/* real mode: just point to the lret */
-	BX_reg(context) = DOSMEM_wrap_seg;
+	SET_BX( context, DOSMEM_wrap_seg );
 	context->Ecx = 2;
 	/* protected mode: don't have any handler yet... */
 	FIXME("no protected-mode dummy state save/restore handler yet\n");
-	SI_reg(context) = 0;
+	SET_SI( context, 0 );
 	context->Edi = 0;
         break;
 
     case 0x0306:  /* Get Raw Mode Switch Addresses */
         TRACE("get raw mode switch addresses\n");
         /* real mode, point to standard DPMI return wrapper */
-        BX_reg(context) = DOSMEM_wrap_seg;
+        SET_BX( context, DOSMEM_wrap_seg );
         context->Ecx = 0;
         /* protected mode, point to DPMI call wrapper */
-        SI_reg(context) = DOSMEM_dpmi_sel;
+        SET_SI( context, DOSMEM_dpmi_sel );
         context->Edi = 8; /* offset of the INT 0x31 call */
 	break;
     case 0x0400:  /* Get DPMI version */
@@ -495,10 +495,10 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
 	    SYSTEM_INFO si;
 
 	    GetSystemInfo(&si);
-	    AX_reg(context) = 0x005a;  /* DPMI version 0.90 */
-	    BX_reg(context) = 0x0005;  /* Flags: 32-bit, virtual memory */
-	    CL_reg(context) = si.wProcessorLevel;
-	    DX_reg(context) = 0x0102;  /* Master/slave interrupt controller base*/
+	    SET_AX( context, 0x005a );  /* DPMI version 0.90 */
+	    SET_BX( context, 0x0005 );  /* Flags: 32-bit, virtual memory */
+	    SET_CL( context, si.wProcessorLevel );
+	    SET_DX( context, 0x0102 );  /* Master/slave interrupt controller base*/
 	    break;
 	}
     case 0x0500:  /* Get free memory information */
@@ -519,11 +519,13 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
         TRACE("allocate memory block (%ld)\n",MAKELONG(CX_reg(context),BX_reg(context)));
 	if (!(ptr = (BYTE *)DPMI_xalloc(MAKELONG(CX_reg(context), BX_reg(context)))))
         {
-            AX_reg(context) = 0x8012;  /* linear memory not available */
+            SET_AX( context, 0x8012 );  /* linear memory not available */
             SET_CFLAG(context);
         } else {
-            BX_reg(context) = SI_reg(context) = HIWORD(W32S_WINE2APP(ptr));
-            CX_reg(context) = DI_reg(context) = LOWORD(W32S_WINE2APP(ptr));
+            SET_BX( context, HIWORD(W32S_WINE2APP(ptr)) );
+            SET_CX( context, LOWORD(W32S_WINE2APP(ptr)) );
+            SET_SI( context, HIWORD(W32S_WINE2APP(ptr)) );
+            SET_DI( context, LOWORD(W32S_WINE2APP(ptr)) );
         }
         break;
 
@@ -541,11 +543,13 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
                 (void *)W32S_APP2WINE(MAKELONG(DI_reg(context),SI_reg(context))),
                 MAKELONG(CX_reg(context),BX_reg(context)))))
         {
-            AX_reg(context) = 0x8012;  /* linear memory not available */
+            SET_AX( context, 0x8012 );  /* linear memory not available */
             SET_CFLAG(context);
         } else {
-            BX_reg(context) = SI_reg(context) = HIWORD(W32S_WINE2APP(ptr));
-            CX_reg(context) = DI_reg(context) = LOWORD(W32S_WINE2APP(ptr));
+            SET_BX( context, HIWORD(W32S_WINE2APP(ptr)) );
+            SET_CX( context, LOWORD(W32S_WINE2APP(ptr)) );
+            SET_SI( context, HIWORD(W32S_WINE2APP(ptr)) );
+            SET_DI( context, LOWORD(W32S_WINE2APP(ptr)) );
         }
         break;
 
@@ -571,8 +575,8 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
 
     case 0x0604:  /* Get page size */
         TRACE("get pagesize\n");
-        BX_reg(context) = 0;
-        CX_reg(context) = getpagesize();
+        SET_BX( context, 0 );
+        SET_CX( context, getpagesize() );
 	break;
 
     case 0x0702:  /* Mark page as demand-paging candidate */
@@ -587,20 +591,20 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
         FIXME("map real to linear (0x%08lx)\n",MAKELONG(CX_reg(context),BX_reg(context)));
          if(!(ptr=DOSMEM_MapRealToLinear(MAKELONG(CX_reg(context),BX_reg(context)))))
          {
-             AX_reg(context) = 0x8021;
+             SET_AX( context, 0x8021 );
              SET_CFLAG(context);
          }
          else
          {
-             BX_reg(context) = HIWORD(W32S_WINE2APP(ptr));
-             CX_reg(context) = LOWORD(W32S_WINE2APP(ptr));
+             SET_BX( context, HIWORD(W32S_WINE2APP(ptr)) );
+             SET_CX( context, LOWORD(W32S_WINE2APP(ptr)) );
              RESET_CFLAG(context);
          }
          break;
 
     default:
         INT_BARF( context, 0x31 );
-        AX_reg(context) = 0x8001;  /* unsupported function */
+        SET_AX( context, 0x8001 );  /* unsupported function */
         SET_CFLAG(context);
         break;
     }

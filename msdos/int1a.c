@@ -75,9 +75,9 @@ void WINAPI INT_Int1aHandler( CONTEXT86 *context )
     {
 	case 0x00:
             ticks = INT1A_GetTicksSinceMidnight();
-            CX_reg(context) = HIWORD(ticks);
-            DX_reg(context) = LOWORD(ticks);
-            AX_reg(context) = 0;  /* No midnight rollover */
+            SET_CX( context, HIWORD(ticks) );
+            SET_DX( context, LOWORD(ticks) );
+            SET_AX( context, 0 );  /* No midnight rollover */
             TRACE("int1a: AH=00 -- ticks=%ld\n", ticks);
             break;
 
@@ -85,17 +85,17 @@ void WINAPI INT_Int1aHandler( CONTEXT86 *context )
 		ltime = time(NULL);
 		bdtime = localtime(&ltime);
 
-		CX_reg(context) = (BIN_TO_BCD(bdtime->tm_hour)<<8) |
-                                   BIN_TO_BCD(bdtime->tm_min);
-		DX_reg(context) = (BIN_TO_BCD(bdtime->tm_sec)<<8);
+		SET_CX( context, (BIN_TO_BCD(bdtime->tm_hour)<<8) |
+                                  BIN_TO_BCD(bdtime->tm_min) );
+		SET_DX( context, (BIN_TO_BCD(bdtime->tm_sec)<<8) );
 
 	case 0x04:
 		ltime = time(NULL);
 		bdtime = localtime(&ltime);
-		CX_reg(context) = (BIN_TO_BCD(bdtime->tm_year/100)<<8) |
-                                   BIN_TO_BCD((bdtime->tm_year-1900)%100);
-		DX_reg(context) = (BIN_TO_BCD(bdtime->tm_mon)<<8) |
-                                   BIN_TO_BCD(bdtime->tm_mday);
+		SET_CX( context, (BIN_TO_BCD(bdtime->tm_year/100)<<8) |
+                                  BIN_TO_BCD((bdtime->tm_year-1900)%100) );
+		SET_DX( context, (BIN_TO_BCD(bdtime->tm_mon)<<8) |
+                                  BIN_TO_BCD(bdtime->tm_mday) );
 		break;
 
 		/* setting the time,date or RTC is not allow -EB */

@@ -169,8 +169,7 @@ static void call_timer_proc16( WORD timer )
     context.Eip   = OFFSETOF( proc );
     context.Ebp   = OFFSETOF( NtCurrentTeb()->cur_stack )
                           + (WORD)&((STACK16FRAME*)0)->bp;
-
-    AX_reg( &context ) = timer;
+    context.Eax   = timer;
 
     wine_call_to_16_regs_short( &context, 0 );
 }
@@ -247,4 +246,3 @@ void WINAPI Restore80x87State16( const char *ptr )
     __asm__(".byte 0x66; frstor %0" : : "m" (ptr) );
 #endif
 }
-

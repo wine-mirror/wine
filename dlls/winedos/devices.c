@@ -148,6 +148,8 @@ typedef struct
 
 #define DOS_DATASEG_OFF(xxx) FIELD_OFFSET(DOS_DATASEG, xxx)
 
+DWORD DOS_LOLSeg;
+
 struct _DOS_LISTOFLISTS * DOSMEM_LOL()
 {
     return PTR_REAL_TO_LIN(HIWORD(DOS_LOLSeg),0);

@@ -1135,7 +1135,7 @@ void WINAPI SwitchStackBack16( CONTEXT86 *context )
 
     /* Pop bp from the previous stack */
 
-    BP_reg(context) = *(WORD *)MapSL(pData->old_ss_sp);
+    context->Ebp = (context->Ebp & ~0xffff) | *(WORD *)MapSL(pData->old_ss_sp);
     pData->old_ss_sp += sizeof(WORD);
 
     /* Switch back to the old stack */

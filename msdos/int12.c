@@ -11,5 +11,5 @@
  */
 void WINAPI INT_Int12Handler( CONTEXT86 *context )
 {
-    AX_reg(context) = 640;
+    SET_AX( context, 640 );
 }

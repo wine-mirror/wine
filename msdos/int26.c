@@ -45,7 +45,7 @@ void WINAPI INT_Int26Handler( CONTEXT86 *context )
     if (!DRIVE_IsValid(LOBYTE(context->Eax)))
     {
         SET_CFLAG(context);
-        AX_reg(context) = 0x0201;        /* unknown unit */
+        SET_AX( context, 0x0201 );        /* unknown unit */
         return;
     }
 

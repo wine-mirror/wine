@@ -349,8 +349,8 @@ void RELAY_DebugCallFrom16( CONTEXT86 *context )
 
     if (call->arg_types[0] & ARG_REGISTER)
         DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
-                AX_reg(context), BX_reg(context), CX_reg(context),
-                DX_reg(context), SI_reg(context), DI_reg(context),
+                (WORD)context->Eax, (WORD)context->Ebx, (WORD)context->Ecx,
+                (WORD)context->Edx, (WORD)context->Esi, (WORD)context->Edi,
                 (WORD)context->SegEs, context->EFlags );
 
     SYSLEVEL_CheckNotLevel( 2 );
@@ -379,8 +379,8 @@ void RELAY_DebugCallFrom16Ret( CONTEXT86 *context, int ret_val )
         DPRINTF("retval=none ret=%04x:%04x ds=%04x\n",
                 (WORD)context->SegCs, LOWORD(context->Eip), (WORD)context->SegDs);
         DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
-                AX_reg(context), BX_reg(context), CX_reg(context),
-                DX_reg(context), SI_reg(context), DI_reg(context),
+                (WORD)context->Eax, (WORD)context->Ebx, (WORD)context->Ecx,
+                (WORD)context->Edx, (WORD)context->Esi, (WORD)context->Edi,
                 (WORD)context->SegEs, context->EFlags );
     }
     else if (call->arg_types[0] & ARG_RET16)
@@ -427,9 +427,9 @@ void RELAY_DebugCallTo16( LPVOID target, int nb_args, BOOL reg_func )
         DPRINTF(") ss:sp=%04x:%04x", SELECTOROF(teb->cur_stack),
                 OFFSETOF(teb->cur_stack) );
         DPRINTF(" ax=%04x bx=%04x cx=%04x dx=%04x si=%04x di=%04x bp=%04x es=%04x fs=%04x\n",
-                AX_reg(context), BX_reg(context), CX_reg(context),
-                DX_reg(context), SI_reg(context), DI_reg(context),
-                BP_reg(context), (WORD)context->SegEs, (WORD)context->SegFs );
+                (WORD)context->Eax, (WORD)context->Ebx, (WORD)context->Ecx,
+                (WORD)context->Edx, (WORD)context->Esi, (WORD)context->Edi,
+                (WORD)context->Ebp, (WORD)context->SegEs, (WORD)context->SegFs );
     }
     else
     {
@@ -468,8 +468,8 @@ void RELAY_DebugCallTo16Ret( BOOL reg_func, int ret_val )
                 SELECTOROF(NtCurrentTeb()->cur_stack),
                 OFFSETOF(NtCurrentTeb()->cur_stack));
         DPRINTF(" ax=%04x bx=%04x cx=%04x dx=%04x bp=%04x sp=%04x\n",
-                AX_reg(context), BX_reg(context), CX_reg(context),
-                DX_reg(context), BP_reg(context), LOWORD(context->Esp));
+                (WORD)context->Eax, (WORD)context->Ebx, (WORD)context->Ecx,
+                (WORD)context->Edx, (WORD)context->Ebp, (WORD)context->Esp );
     }
 
     SYSLEVEL_CheckNotLevel( 2 );

@@ -47,7 +47,7 @@ void WINAPI INT_Int25Handler( CONTEXT86 *context )
     if (!DRIVE_IsValid(LOBYTE(context->Eax)))
     {
         SET_CFLAG(context);
-        AX_reg(context) = 0x0201;        /* unknown unit */
+        SET_AX( context, 0x0201 );        /* unknown unit */
         return;
     }
 
@@ -70,4 +70,3 @@ void WINAPI INT_Int25Handler( CONTEXT86 *context )
     DRIVE_RawRead(LOBYTE(context->Eax), begin, length, dataptr, TRUE);
     RESET_CFLAG(context);
 }
-

@@ -98,6 +98,5 @@ void WINAPI INT_Int11Handler( CONTEXT86 *context )
     if (parallelports > 3)		/* 2 bits -- maximum value = 3 */
         parallelports=3;
 
-    AX_reg(context) = (diskdrives << 6) | (serialports << 9) |
-                      (parallelports << 14) | 0x02;
+    SET_AX( context, (diskdrives << 6) | (serialports << 9) | (parallelports << 14) | 0x02 );
 }

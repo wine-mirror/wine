@@ -51,8 +51,8 @@ void WINAPI DOSVM_Int33Handler( CONTEXT86 *context )
   switch (LOWORD(context->Eax)) {
   case 0x00:
     TRACE("Reset mouse driver and request status\n");
-    AX_reg(context) = 0xFFFF; /* installed */
-    BX_reg(context) = 3;      /* # of buttons */
+    SET_AX( context, 0xFFFF ); /* installed */
+    SET_BX( context, 3 );      /* # of buttons */
     memset( &mouse_info, 0, sizeof(mouse_info) );
     /* Set the default mickey/pixel ratio */
     mouse_info.HMPratio = 8;
@@ -67,9 +67,9 @@ void WINAPI DOSVM_Int33Handler( CONTEXT86 *context )
   case 0x03:
     TRACE("Return mouse position and button status: (%ld,%ld) and %ld\n",
          mouse_info.x, mouse_info.y, mouse_info.but);
-    BX_reg(context) = mouse_info.but;
-    CX_reg(context) = mouse_info.x;
-    DX_reg(context) = mouse_info.y;
+    SET_BX( context, mouse_info.but );
+    SET_CX( context, mouse_info.x );
+    SET_DX( context, mouse_info.y );
     break;
   case 0x04:
     FIXME("Position mouse cursor\n");
@@ -78,17 +78,17 @@ void WINAPI DOSVM_Int33Handler( CONTEXT86 *context )
     TRACE("Return Mouse button press Information for %s mouse button\n",
           BX_reg(context) ? "right" : "left");
     if (BX_reg(context)) {
-      BX_reg(context) = mouse_info.rbcount;
+      SET_BX( context, mouse_info.rbcount );
       mouse_info.rbcount = 0;
-      CX_reg(context) = mouse_info.rlastx;
-      DX_reg(context) = mouse_info.rlasty;
+      SET_CX( context, mouse_info.rlastx );
+      SET_DX( context, mouse_info.rlasty );
     } else {
-      BX_reg(context) = mouse_info.lbcount;
+      SET_BX( context, mouse_info.lbcount );
       mouse_info.lbcount = 0;
-      CX_reg(context) = mouse_info.llastx;
-      DX_reg(context) = mouse_info.llasty;
+      SET_CX( context, mouse_info.llastx );
+      SET_DX( context, mouse_info.llasty );
     }
-    AX_reg(context) = mouse_info.but;
+    SET_AX( context, mouse_info.but );
     break;
   case 0x07:
     FIXME("Define horizontal mouse cursor range\n");
@@ -104,8 +104,8 @@ void WINAPI DOSVM_Int33Handler( CONTEXT86 *context )
     break;
   case 0x0B:
     TRACE("Read Mouse motion counters\n");
-    CX_reg(context) = (mouse_info.x - mouse_info.oldx) * (mouse_info.HMPratio / 8);
-    DX_reg(context) = (mouse_info.y - mouse_info.oldy) * (mouse_info.VMPratio / 8);
+    SET_CX( context, (mouse_info.x - mouse_info.oldx) * (mouse_info.HMPratio / 8) );
+    SET_DX( context, (mouse_info.y - mouse_info.oldy) * (mouse_info.VMPratio / 8) );
     mouse_info.oldx = mouse_info.x;
     mouse_info.oldy = mouse_info.y;
     break;
