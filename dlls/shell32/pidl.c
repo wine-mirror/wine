@@ -842,8 +842,10 @@ HRESULT WINAPI SHGetDataFromIDListA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
 	       CHAR	pszPath[MAX_PATH];
 	       HANDLE	handle;
 
-	       if ( len < sizeof (WIN32_FIND_DATAA))
+	       if ( len < sizeof (WIN32_FIND_DATAA)) {
+		 ERR_(shell)("%d does not find sizeof(finddata)\n",len);
 	         return E_INVALIDARG;
+	       }
 
 	       SHGetPathFromIDListA(pidl, pszPath);
 
@@ -869,8 +871,29 @@ HRESULT WINAPI SHGetDataFromIDListA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
  */
 HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID dest, int len)
 {
-	FIXME_(shell)("sf=%p pidl=%p 0x%04x %p 0x%04x stub\n",psf,pidl,nFormat,dest,len);
+	if (! psf || !dest )  return E_INVALIDARG;
 
+	switch (nFormat)
+	{
+	  case SHGDFIL_FINDDATA:
+	    {
+	       WIN32_FIND_DATAW * pfd = dest;
+	       WCHAR	pszPath[MAX_PATH];
+	       HANDLE	handle;
+
+	       if ( len < sizeof (WIN32_FIND_DATAW)) {
+		 ERR_(shell)("%d does not find sizeof(finddata)\n",len);
+	         return E_INVALIDARG;
+	       }
+	       SHGetPathFromIDListW(pidl, pszPath);
+	       if ((handle  = FindFirstFileW ( pszPath, pfd)))
+	         FindClose (handle);
+	    }
+	    return NOERROR;
+	  default: /* fallthrough */
+	    break;
+	}
+	FIXME_(shell)("(sf=%p pidl=%p nFormat=0x%04x %p 0x%04x), unhandled.\n",psf,pidl,nFormat,dest,len);
 	return SHGetDataFromIDListA( psf, pidl, nFormat, dest, len);
 }
 
@@ -1506,4 +1529,3 @@ BOOL WINAPI _ILGetExtension (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 
 	return TRUE;
 }
-
