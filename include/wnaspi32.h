@@ -198,7 +198,15 @@ typedef union tagSRB32 {
     SRB_Abort           abort;
     SRB_BusDeviceReset  reset;
     SRB_GDEVBlock       devtype;
+    SRB_GetDiskInfo	diskinfo;
 } SRB, *PSRB, *LPSRB;
+
+typedef struct tagASPI32BUFF { 
+    LPBYTE AB_BufPointer;	/* pointer to buffer */
+    DWORD AB_BufLen;		/* length of buffer */
+    DWORD AB_ZeroFill;		/* set to 1 if zeroing */
+    DWORD AB_Reserved;		/* 0 */
+} ASPI32BUFF, *PASPI32BUFF;
 
 #include "poppack.h"
 
@@ -206,6 +214,7 @@ typedef union tagSRB32 {
 extern DWORD __cdecl SendASPI32Command (PSRB);
 extern DWORD __cdecl GetASPI32SupportInfo (void);
 extern DWORD __cdecl GetASPI32DLLVersion(void);
+extern BOOL  __cdecl GetASPI32Buffer(PASPI32BUFF pab);
 
 #ifdef __cplusplus
 }

@@ -82,12 +82,14 @@ ASPI_OpenDevice(SRB_ExecSCSICmd *prb)
     }
     LeaveCriticalSection(&ASPI_CritSection);
 
+    if (prb->SRB_HaId > ASPI_GetNumControllers())
+	return -1;
+
     hc = ASPI_GetHCforController( prb->SRB_HaId );
     fd = SCSI_OpenDevice( HIWORD(hc), LOWORD(hc), prb->SRB_Target, prb->SRB_Lun);
 
-    if (fd == -1) {
+    if (fd == -1)
 	return -1;
-    }
 
     /* device is now open */
     /* FIXME: Let users specify SCSI timeout in registry */
@@ -276,6 +278,7 @@ static WORD
 ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
 {
   struct sg_header *sg_hd, *sg_reply_hdr;
+  WORD ret;
   DWORD	status;
   int	in_len, out_len;
   int	error_code = 0;
@@ -286,7 +289,7 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
 #define MAKE_TARGET_TO_HOST(lpPRB) \
   	if (!TARGET_TO_HOST(lpPRB)) { \
 	    WARN("program was not sending target_to_host for cmd %x (flags=%x),correcting.\n",lpPRB->CDBByte[0],lpPRB->SRB_Flags); \
-	    lpPRB->SRB_Flags |= 8; \
+	    lpPRB->SRB_Flags |= 0x08; \
 	}
 #define MAKE_HOST_TO_TARGET(lpPRB) \
   	if (!HOST_TO_TARGET(lpPRB)) { \
@@ -313,6 +316,12 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
 	break;
   }
   ASPI_DebugPrintCmd(lpPRB);
+  if (lpPRB->SRB_HaId > ASPI_GetNumControllers()) {
+      ERR("Failed: Wanted hostadapter %d, but we have only %d.\n",
+	  lpPRB->SRB_HaId,ASPI_GetNumControllers()
+      );
+      return WNASPI32_DoPosting( lpPRB, SS_INVALID_HA );
+  }
   fd = ASPI_OpenDevice(lpPRB);
   if (fd == -1) {
       return WNASPI32_DoPosting( lpPRB, SS_NO_DEVICE );
@@ -415,9 +424,21 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
 
   ASPI_DebugPrintResult(lpPRB);
   /* now do posting */
-  return WNASPI32_DoPosting( lpPRB, SRB_Status );
+  ret = WNASPI32_DoPosting( lpPRB, SRB_Status );
+
+  switch (lpPRB->CDBByte[0]) {
+  case CMD_INQUIRY:
+      if (SRB_Status == SS_COMP)
+	  return SS_COMP; /* some junk expects ss_comp here. */
+      /*FALLTHROUGH*/
+  default:
+      /*FALLTHROUGH*/
+  }
+
   /* In real WNASPI32 stuff really is always pending because ASPI does things
      in the background, but we are not doing that (yet) */
+
+  return ret;
   
 error_exit:
   SRB_Status = SS_ERR;
@@ -452,9 +473,12 @@ error_exit:
  */
 DWORD __cdecl GetASPI32SupportInfo(void)
 {
-    return ((SS_COMP << 8) | ASPI_GetNumControllers());
-}
+    DWORD controllers = ASPI_GetNumControllers();
 
+    if (!controllers)
+	return SS_NO_ADAPTERS << 8;
+    return (SS_COMP << 8) | controllers ;
+}
 
 /***********************************************************************
  *             SendASPI32Command (WNASPI32.1)
@@ -465,7 +489,7 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
   switch (lpSRB->common.SRB_Cmd) {
   case SC_HA_INQUIRY:
     lpSRB->inquiry.SRB_Status = SS_COMP;       /* completed successfully */
-    lpSRB->inquiry.HA_Count = 1;               /* not always */
+    lpSRB->inquiry.HA_Count = ASPI_GetNumControllers();
     lpSRB->inquiry.HA_SCSI_ID = 7;             /* not always ID 7 */
     strcpy(lpSRB->inquiry.HA_ManagerId, "ASPI for WIN32"); /* max 15 chars, don't change */
     strcpy(lpSRB->inquiry.HA_Identifier, "Wine host"); /* FIXME: return host adapter name */
@@ -517,12 +541,13 @@ DWORD __cdecl SendASPI32Command(LPSRB lpSRB)
   case SC_RESET_DEV:
     FIXME("Not implemented SC_RESET_DEV\n");
     break;
-#ifdef SC_GET_DISK_INFO
   case SC_GET_DISK_INFO:
-    /* NT Doesn't implement this either.. so don't feel bad */
-    FIXME("Not implemented SC_GET_DISK_INFO\n");
-    break;
-#endif
+    /* here we have to find out the int13 / bios association. 
+     * We just say we do not have any.
+     */
+    FIXME("SC_GET_DISK_INFO always return 'int13 unassociated disk'.\n");
+    lpSRB->diskinfo.SRB_DriveFlags = 0; /* disk is not int13 served */
+    return SS_COMP;
   default:
     FIXME("Unknown command %d\n", lpSRB->common.SRB_Cmd);
   }
@@ -549,19 +574,26 @@ DWORD __cdecl GetASPI32DLLVersion(void)
 
 /***********************************************************************
  *             GetASPI32Buffer   (WNASPI32.@)
+ * Supposed to return a DMA capable large SCSI buffer.
+ * Our implementation does not use those at all, all buffer stuff is 
+ * done in the kernel SG device layer. So we just heapalloc the buffer.
  */
-BOOL __cdecl GetASPI32Buffer(LPVOID pab) /* [???] FIXME: PASPI32BUFF */
+BOOL __cdecl GetASPI32Buffer(PASPI32BUFF pab) 
 {
-    FIXME("(%p), stub !\n", pab);
+    pab->AB_BufPointer = HeapAlloc(GetProcessHeap(),
+	    	pab->AB_ZeroFill?HEAP_ZERO_MEMORY:0,
+		pab->AB_BufLen
+    );
+    if (!pab->AB_BufPointer) return FALSE;
     return TRUE;
 }
 
 /***********************************************************************
  *             FreeASPI32Buffer   (WNASPI32.@)
  */
-BOOL __cdecl FreeASPI32Buffer(LPVOID pab) /* [???] FIXME: PASPI32BUFF */
+BOOL __cdecl FreeASPI32Buffer(PASPI32BUFF pab)
 {
-    FIXME("(%p), stub !\n", pab);
+    HeapFree(GetProcessHeap(),0,pab->AB_BufPointer);
     return TRUE;
 }
 
