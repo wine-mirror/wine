@@ -156,8 +156,7 @@ typedef struct {
     /* ALSA information (ALSA 0.9/1.x uses two different devices for playback/capture) */
     char*                       device;
     char                        interface_name[64];
-    snd_pcm_t*                  p_handle;                 /* handle to ALSA playback device */
-    snd_pcm_t*                  c_handle;                 /* handle to ALSA capture device */
+    snd_pcm_t*                  handle;                 /* handle to ALSA playback device */
     snd_pcm_hw_params_t *	hw_params;		/* ALSA Hw params */
 
     snd_ctl_t *                 ctl;                    /* control handle for the playback volume */
@@ -203,9 +202,13 @@ typedef struct {
     /* ALSA information (ALSA 0.9/1.x uses two different devices for playback/capture) */
     char*                       device;
     char                        interface_name[64];
-    snd_pcm_t*                  p_handle;                 /* handle to ALSA playback device */
-    snd_pcm_t*                  c_handle;                 /* handle to ALSA capture device */
+    snd_pcm_t*                  handle;                 /* handle to ALSA capture device */
     snd_pcm_hw_params_t *	hw_params;		/* ALSA Hw params */
+
+    snd_ctl_t *                 ctl;                    /* control handle for the playback volume */
+    snd_ctl_elem_id_t *         playback_eid;		/* element id of the playback volume control */
+    snd_ctl_elem_value_t *      playback_evalue;	/* element value of the playback volume control */
+    snd_ctl_elem_info_t *       playback_einfo;         /* element info of the playback volume control */
 
     snd_pcm_sframes_t           (*read)(snd_pcm_t *, void *, snd_pcm_uframes_t );
 
@@ -527,15 +530,15 @@ static int ALSA_InitializeVolumeCtl(WINE_WAVEOUT * wwo)
 static int ALSA_XRUNRecovery(WINE_WAVEOUT * wwo, int err)
 {
     if (err == -EPIPE) {    /* under-run */
-        err = snd_pcm_prepare(wwo->p_handle);
+        err = snd_pcm_prepare(wwo->handle);
         if (err < 0)
              ERR( "underrun recovery failed. prepare failed: %s\n", snd_strerror(err));
         return 0;
     } else if (err == -ESTRPIPE) {
-        while ((err = snd_pcm_resume(wwo->p_handle)) == -EAGAIN)
+        while ((err = snd_pcm_resume(wwo->handle)) == -EAGAIN)
             sleep(1);       /* wait until the suspend flag is released */
         if (err < 0) {
-            err = snd_pcm_prepare(wwo->p_handle);
+            err = snd_pcm_prepare(wwo->handle);
             if (err < 0)
                 ERR("recovery from suspend failed, prepare failed: %s\n", snd_strerror(err));
         }
@@ -1184,10 +1187,10 @@ static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD
 static BOOL wodUpdatePlayedTotal(WINE_WAVEOUT* wwo, snd_pcm_status_t* ps)
 {
     snd_pcm_sframes_t delay = 0;
-    snd_pcm_delay(wwo->p_handle, &delay);
-    if (snd_pcm_state(wwo->p_handle) != SND_PCM_STATE_RUNNING)
+    snd_pcm_delay(wwo->handle, &delay);
+    if (snd_pcm_state(wwo->handle) != SND_PCM_STATE_RUNNING)
         delay=0;
-    wwo->dwPlayedTotal = wwo->dwWrittenTotal - snd_pcm_frames_to_bytes(wwo->p_handle, delay);
+    wwo->dwPlayedTotal = wwo->dwWrittenTotal - snd_pcm_frames_to_bytes(wwo->handle, delay);
     return TRUE;
 }
 
@@ -1300,18 +1303,18 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* frames)
 {
     /* Only attempt to write to free frames */
     LPWAVEHDR lpWaveHdr = wwo->lpPlayPtr;
-    DWORD dwLength = snd_pcm_bytes_to_frames(wwo->p_handle, lpWaveHdr->dwBufferLength - wwo->dwPartialOffset);
+    DWORD dwLength = snd_pcm_bytes_to_frames(wwo->handle, lpWaveHdr->dwBufferLength - wwo->dwPartialOffset);
     int toWrite = min(dwLength, *frames);
     int written;
 
     TRACE("Writing wavehdr %p.%lu[%lu]\n", lpWaveHdr, wwo->dwPartialOffset, lpWaveHdr->dwBufferLength);
 
     if (toWrite > 0) {
-	written = (wwo->write)(wwo->p_handle, lpWaveHdr->lpData + wwo->dwPartialOffset, toWrite);
+	written = (wwo->write)(wwo->handle, lpWaveHdr->lpData + wwo->dwPartialOffset, toWrite);
 	if ( written < 0) {
 	    /* XRUN occurred. let's try to recover */
 	    ALSA_XRUNRecovery(wwo, written);
-	    written = (wwo->write)(wwo->p_handle, lpWaveHdr->lpData + wwo->dwPartialOffset, toWrite);
+	    written = (wwo->write)(wwo->handle, lpWaveHdr->lpData + wwo->dwPartialOffset, toWrite);
 	}
 	if (written <= 0) {
 	    /* still in error */
@@ -1321,7 +1324,7 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* frames)
     } else
 	written = 0;
 
-    wwo->dwPartialOffset += snd_pcm_frames_to_bytes(wwo->p_handle, written);
+    wwo->dwPartialOffset += snd_pcm_frames_to_bytes(wwo->handle, written);
     if ( wwo->dwPartialOffset >= lpWaveHdr->dwBufferLength) {
 	/* this will be used to check if the given wave header has been fully played or not... */
 	wwo->dwPartialOffset = lpWaveHdr->dwBufferLength;
@@ -1329,7 +1332,7 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* frames)
 	wodPlayer_PlayPtrNext(wwo);
     }
     *frames -= written;
-    wwo->dwWrittenTotal += snd_pcm_frames_to_bytes(wwo->p_handle, written);
+    wwo->dwWrittenTotal += snd_pcm_frames_to_bytes(wwo->handle, written);
     TRACE("dwWrittenTotal=%lu\n", wwo->dwWrittenTotal);
 
     return written;
@@ -1424,19 +1427,19 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo)
     int                         err;
 
     /* flush all possible output */
-    wait_for_poll(wwo->p_handle, wwo->ufds, wwo->count);
+    wait_for_poll(wwo->handle, wwo->ufds, wwo->count);
 
     wodUpdatePlayedTotal(wwo, NULL);
     /* updates current notify list */
     wodPlayer_NotifyCompletions(wwo, FALSE);
 
-    if ( (err = snd_pcm_drop(wwo->p_handle)) < 0) {
+    if ( (err = snd_pcm_drop(wwo->handle)) < 0) {
 	FIXME("flush: %s\n", snd_strerror(err));
 	wwo->hThread = 0;
 	wwo->state = WINE_WS_STOPPED;
 	ExitThread(-1);
     }
-    if ( (err = snd_pcm_prepare(wwo->p_handle)) < 0 )
+    if ( (err = snd_pcm_prepare(wwo->handle)) < 0 )
         ERR("pcm prepare failed: %s\n", snd_strerror(err));
 
     /* remove any buffer */
@@ -1484,9 +1487,9 @@ static void wodPlayer_ProcessMessages(WINE_WAVEOUT* wwo)
 
 	switch (msg) {
 	case WINE_WM_PAUSING:
-	    if ( snd_pcm_state(wwo->p_handle) == SND_PCM_STATE_RUNNING )
+	    if ( snd_pcm_state(wwo->handle) == SND_PCM_STATE_RUNNING )
 	     {
-		err = snd_pcm_pause(wwo->p_handle, 1);
+		err = snd_pcm_pause(wwo->handle, 1);
 		if ( err < 0 )
 		    ERR("pcm_pause failed: %s\n", snd_strerror(err));
 	     }
@@ -1496,9 +1499,9 @@ static void wodPlayer_ProcessMessages(WINE_WAVEOUT* wwo)
 	case WINE_WM_RESTARTING:
             if (wwo->state == WINE_WS_PAUSED)
             {
-		if ( snd_pcm_state(wwo->p_handle) == SND_PCM_STATE_PAUSED )
+		if ( snd_pcm_state(wwo->handle) == SND_PCM_STATE_PAUSED )
 		 {
-		    err = snd_pcm_pause(wwo->p_handle, 0);
+		    err = snd_pcm_pause(wwo->handle, 0);
 		    if ( err < 0 )
 		        ERR("pcm_pause failed: %s\n", snd_strerror(err));
 		 }
@@ -1560,7 +1563,7 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
     DWORD               availInQ;
 
     wodUpdatePlayedTotal(wwo, NULL);
-    availInQ = snd_pcm_avail_update(wwo->p_handle);
+    availInQ = snd_pcm_avail_update(wwo->handle);
 
 #if 0
     /* input queue empty and output buffer with less than one fragment to play */
@@ -1703,7 +1706,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	/* not supported, ignore it */
 	dwFlags &= ~WAVE_DIRECTSOUND;
 
-    wwo->p_handle = 0;
+    wwo->handle = 0;
     flags = SND_PCM_NONBLOCK;
 #if 0
     if ( dwFlags & WAVE_DIRECTSOUND )
@@ -1829,13 +1832,13 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwo->dwBufferSize = buffer_size;
     wwo->lpQueuePtr = wwo->lpPlayPtr = wwo->lpLoopPtr = NULL;
-    wwo->p_handle = pcm;
+    wwo->handle = pcm;
     wwo->dwPlayedTotal = wwo->dwWrittenTotal = 0;
     wwo->dwPartialOffset = 0;
 
     ALSA_InitRingMessage(&wwo->msgRing);
 
-    wwo->count = snd_pcm_poll_descriptors_count (wwo->p_handle);
+    wwo->count = snd_pcm_poll_descriptors_count (wwo->handle);
     if (wwo->count <= 0) {
 	ERR("Invalid poll descriptors count\n");
 	return MMSYSERR_ERROR;
@@ -1846,7 +1849,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	ERR("No enough memory\n");
 	return MMSYSERR_NOMEM;
     }
-    if ((err = snd_pcm_poll_descriptors(wwo->p_handle, wwo->ufds, wwo->count)) < 0) {
+    if ((err = snd_pcm_poll_descriptors(wwo->handle, wwo->ufds, wwo->count)) < 0) {
 	ERR("Unable to obtain poll descriptors for playback: %s\n", snd_strerror(err));
 	return MMSYSERR_ERROR;
     }
@@ -1862,7 +1865,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
     wwo->hStartUpEvent = INVALID_HANDLE_VALUE;
 
-    TRACE("handle=%08lx \n", (DWORD)wwo->p_handle);
+    TRACE("handle=%08lx \n", (DWORD)wwo->handle);
 /*    if (wwo->dwFragmentSize % wwo->format.Format.nBlockAlign)
 	ERR("Fragment doesn't contain an integral number of data blocks\n");
 */
@@ -1885,7 +1888,7 @@ static DWORD wodClose(WORD wDevID)
 
     TRACE("(%u);\n", wDevID);
 
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].p_handle == NULL) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1903,8 +1906,8 @@ static DWORD wodClose(WORD wDevID)
 	snd_pcm_hw_params_free(wwo->hw_params);
 	wwo->hw_params = NULL;
 
-        snd_pcm_close(wwo->p_handle);
-	wwo->p_handle = NULL;
+        snd_pcm_close(wwo->handle);
+	wwo->handle = NULL;
 
 	ret = wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
     }
@@ -1923,7 +1926,7 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
 
     /* first, do the sanity checks... */
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].p_handle == NULL) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
         WARN("bad dev ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1950,7 +1953,7 @@ static DWORD wodPause(WORD wDevID)
 {
     TRACE("(%u);!\n", wDevID);
 
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].p_handle == NULL) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1967,7 +1970,7 @@ static DWORD wodRestart(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
 
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].p_handle == NULL) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1991,7 +1994,7 @@ static DWORD wodReset(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
 
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].p_handle == NULL) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -2010,7 +2013,7 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 
     TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
 
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].p_handle == NULL) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -2030,7 +2033,7 @@ static DWORD wodBreakLoop(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
 
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].p_handle == NULL) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -2049,7 +2052,7 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
     long               min, max;
 
     TRACE("(%u, %p);\n", wDevID, lpdwVol);
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].p_handle == NULL) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -2099,7 +2102,7 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
     long               min, max;
 
     TRACE("(%u, %08lX);\n", wDevID, dwParam);
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].p_handle == NULL) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -2251,21 +2254,21 @@ struct IDsDriverBufferImpl
 static void DSDB_CheckXRUN(IDsDriverBufferImpl* pdbi)
 {
     WINE_WAVEOUT *     wwo = &(WOutDev[pdbi->drv->wDevID]);
-    snd_pcm_state_t    state = snd_pcm_state(wwo->p_handle);
+    snd_pcm_state_t    state = snd_pcm_state(wwo->handle);
 
     if ( state == SND_PCM_STATE_XRUN )
     {
-	int            err = snd_pcm_prepare(wwo->p_handle);
+	int            err = snd_pcm_prepare(wwo->handle);
 	TRACE("xrun occurred\n");
 	if ( err < 0 )
             ERR("recovery from xrun failed, prepare failed: %s\n", snd_strerror(err));
     }
     else if ( state == SND_PCM_STATE_SUSPENDED )
     {
-	int            err = snd_pcm_resume(wwo->p_handle);
+	int            err = snd_pcm_resume(wwo->handle);
 	TRACE("recovery from suspension occurred\n");
         if (err < 0 && err != -EAGAIN){
-            err = snd_pcm_prepare(wwo->p_handle);
+            err = snd_pcm_prepare(wwo->handle);
             if (err < 0)
                 ERR("recovery from suspend failed, prepare failed: %s\n", snd_strerror(err));
         }
@@ -2282,14 +2285,14 @@ static void DSDB_MMAPCopy(IDsDriverBufferImpl* pdbi)
     int err;
     int dir=0;
 
-    if ( !pdbi->mmap_buffer || !wwo->hw_params || !wwo->p_handle)
+    if ( !pdbi->mmap_buffer || !wwo->hw_params || !wwo->handle)
     	return;
 
     err = snd_pcm_hw_params_get_channels(wwo->hw_params, &channels);
     err = snd_pcm_hw_params_get_format(wwo->hw_params, &format);
     dir=0;
     err = snd_pcm_hw_params_get_period_size(wwo->hw_params, &period_size, &dir);
-    avail = snd_pcm_avail_update(wwo->p_handle);
+    avail = snd_pcm_avail_update(wwo->handle);
 
     DSDB_CheckXRUN(pdbi);
 
@@ -2306,16 +2309,16 @@ static void DSDB_MMAPCopy(IDsDriverBufferImpl* pdbi)
 
 	EnterCriticalSection(&pdbi->mmap_crst);
 
-	snd_pcm_mmap_begin(wwo->p_handle, &areas, &ofs, &frames);
+	snd_pcm_mmap_begin(wwo->handle, &areas, &ofs, &frames);
 	snd_pcm_areas_copy(areas, ofs, pdbi->mmap_areas, ofs, channels, frames, format);
-	err = snd_pcm_mmap_commit(wwo->p_handle, ofs, frames);
+	err = snd_pcm_mmap_commit(wwo->handle, ofs, frames);
 
 	LeaveCriticalSection(&pdbi->mmap_crst);
 
 	if ( err != (snd_pcm_sframes_t) frames)
 	    ERR("mmap partially failed.\n");
 
-	avail = snd_pcm_avail_update(wwo->p_handle);
+	avail = snd_pcm_avail_update(wwo->handle);
     }
  }
 
@@ -2353,7 +2356,7 @@ static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
           snd_pcm_format_name(format), frames, channels, bits_per_sample, bits_per_frame);
 
     pdbi->mmap_buflen_frames = frames;
-    pdbi->mmap_buflen_bytes = snd_pcm_frames_to_bytes( wwo->p_handle, frames );
+    pdbi->mmap_buflen_bytes = snd_pcm_frames_to_bytes( wwo->handle, frames );
     pdbi->mmap_buffer = HeapAlloc(GetProcessHeap(),0,pdbi->mmap_buflen_bytes);
     if (!pdbi->mmap_buffer)
 	return DSERR_OUTOFMEMORY;
@@ -2378,7 +2381,7 @@ static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
 
     InitializeCriticalSection(&pdbi->mmap_crst);
 
-    err = snd_async_add_pcm_handler(&pdbi->mmap_async_handler, wwo->p_handle, DSDB_PCMCallback, pdbi);
+    err = snd_async_add_pcm_handler(&pdbi->mmap_async_handler, wwo->handle, DSDB_PCMCallback, pdbi);
     if ( err < 0 )
      {
  	ERR("add_pcm_handler failed. reason: %s\n", snd_strerror(err));
@@ -2504,18 +2507,18 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
     dir=0;
     err = snd_pcm_hw_params_get_period_size(wwo->hw_params, &period_size, &dir);
 
-    if (wwo->p_handle == NULL) return DSERR_GENERIC;
+    if (wwo->handle == NULL) return DSERR_GENERIC;
     /** we need to track down buffer underruns */
     DSDB_CheckXRUN(This);
 
     EnterCriticalSection(&This->mmap_crst);
     /* FIXME: snd_pcm_mmap_hw_ptr() should not be accessed by a user app. */
     /*        It will NOT return what why want anyway. */
-    hw_ptr = _snd_pcm_mmap_hw_ptr(wwo->p_handle);
+    hw_ptr = _snd_pcm_mmap_hw_ptr(wwo->handle);
     if (lpdwPlay)
-	*lpdwPlay = snd_pcm_frames_to_bytes(wwo->p_handle, hw_ptr/ period_size  * period_size) % This->mmap_buflen_bytes;
+	*lpdwPlay = snd_pcm_frames_to_bytes(wwo->handle, hw_ptr/ period_size  * period_size) % This->mmap_buflen_bytes;
     if (lpdwWrite)
-	*lpdwWrite = snd_pcm_frames_to_bytes(wwo->p_handle, (hw_ptr / period_size + 1) * period_size ) % This->mmap_buflen_bytes;
+	*lpdwWrite = snd_pcm_frames_to_bytes(wwo->handle, (hw_ptr / period_size + 1) * period_size ) % This->mmap_buflen_bytes;
     LeaveCriticalSection(&This->mmap_crst);
 
     TRACE("hw_ptr=0x%08x, playpos=%ld, writepos=%ld\n", (unsigned int)hw_ptr, lpdwPlay?*lpdwPlay:-1, lpdwWrite?*lpdwWrite:-1);
@@ -2531,18 +2534,18 @@ static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwR
 
     TRACE("(%p,%lx,%lx,%lx)\n",iface,dwRes1,dwRes2,dwFlags);
 
-    if (wwo->p_handle == NULL) return DSERR_GENERIC;
+    if (wwo->handle == NULL) return DSERR_GENERIC;
 
-    state = snd_pcm_state(wwo->p_handle);
+    state = snd_pcm_state(wwo->handle);
     if ( state == SND_PCM_STATE_SETUP )
     {
-	err = snd_pcm_prepare(wwo->p_handle);
-        state = snd_pcm_state(wwo->p_handle);
+	err = snd_pcm_prepare(wwo->handle);
+        state = snd_pcm_state(wwo->handle);
     }
     if ( state == SND_PCM_STATE_PREPARED )
      {
 	DSDB_MMAPCopy(This);
-	err = snd_pcm_start(wwo->p_handle);
+	err = snd_pcm_start(wwo->handle);
      }
     return DS_OK;
 }
@@ -2557,7 +2560,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
 
     TRACE("(%p)\n",iface);
 
-    if (wwo->p_handle == NULL) return DSERR_GENERIC;
+    if (wwo->handle == NULL) return DSERR_GENERIC;
 
     /* ring buffer wrap up detection */
     IDsDriverBufferImpl_GetPosition(iface, &play, &write);
@@ -2567,7 +2570,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
     	return DS_OK;
     }
 
-    if ( ( err = snd_pcm_drop(wwo->p_handle)) < 0 )
+    if ( ( err = snd_pcm_drop(wwo->handle)) < 0 )
     {
    	ERR("error while stopping pcm: %s\n", snd_strerror(err));
 	return DSERR_GENERIC;
@@ -2879,7 +2882,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
     /* make sleep time to be # of ms to output a period */
     dwSleepTime = (1024/*wwi-dwPeriodSize => overrun!*/ * 1000) / wwi->format.Format.nAvgBytesPerSec;
-    frames_per_period = snd_pcm_bytes_to_frames(wwi->p_handle, wwi->dwPeriodSize); 
+    frames_per_period = snd_pcm_bytes_to_frames(wwi->handle, wwi->dwPeriodSize); 
     TRACE("sleeptime=%ld ms\n", dwSleepTime);
 
     for (;;) {
@@ -2896,8 +2899,8 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
             lpWaveHdr = wwi->lpQueuePtr;
             /* read all the fragments accumulated so far */
-	    frames = snd_pcm_avail_update(wwi->p_handle);
-	    bytes = snd_pcm_frames_to_bytes(wwi->p_handle, frames);
+	    frames = snd_pcm_avail_update(wwi->handle);
+	    bytes = snd_pcm_frames_to_bytes(wwi->handle, frames);
 	    TRACE("frames = %ld  bytes = %ld\n", frames, bytes);
 	    periods = bytes / wwi->dwPeriodSize;
             while ((periods > 0) && (wwi->lpQueuePtr))
@@ -2908,8 +2911,8 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
                 if (lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded >= wwi->dwPeriodSize)
                 {
                     /* directly read fragment in wavehdr */
-                    read = wwi->read(wwi->p_handle, lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded, frames_per_period);
-		    bytesRead = snd_pcm_frames_to_bytes(wwi->p_handle, read);
+                    read = wwi->read(wwi->handle, lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded, frames_per_period);
+		    bytesRead = snd_pcm_frames_to_bytes(wwi->handle, read);
 			
                     TRACE("bytesRead=%ld (direct)\n", bytesRead);
 		    if (bytesRead != (DWORD) -1)
@@ -2942,8 +2945,8 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		else
 		{
                     /* read the fragment in a local buffer */
-		    read = wwi->read(wwi->p_handle, buffer, frames_per_period);
-		    bytesRead = snd_pcm_frames_to_bytes(wwi->p_handle, read);
+		    read = wwi->read(wwi->handle, buffer, frames_per_period);
+		    bytesRead = snd_pcm_frames_to_bytes(wwi->handle, read);
                     pOffset = buffer;
 
                     TRACE("bytesRead=%ld (local)\n", bytesRead);
@@ -3036,7 +3039,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		break;
 	    case WINE_WM_STARTING:
 		wwi->state = WINE_WS_PLAYING;
-		snd_pcm_start(wwi->p_handle);
+		snd_pcm_start(wwi->handle);
 		SetEvent(ev);
 		break;
 	    case WINE_WM_HEADER:
@@ -3053,7 +3056,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 	    case WINE_WM_STOPPING:
 		if (wwi->state != WINE_WS_STOPPED)
 		{
-		    snd_pcm_drain(wwi->p_handle);
+		    snd_pcm_drain(wwi->handle);
 
 		    /* read any headers in queue */
 		    widRecorder_ReadHeaders(wwi);
@@ -3076,7 +3079,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 	    case WINE_WM_RESETTING:
 		if (wwi->state != WINE_WS_STOPPED)
 		{
-		    snd_pcm_drain(wwi->p_handle);
+		    snd_pcm_drain(wwi->handle);
 		}
 		wwi->state = WINE_WS_STOPPED;
     		wwi->dwTotalRecorded = 0;
@@ -3172,7 +3175,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	/* not supported, ignore it */
 	dwFlags &= ~WAVE_DIRECTSOUND;
 
-    wwi->p_handle = 0;
+    wwi->handle = 0;
     flags = SND_PCM_NONBLOCK;
 #if 0
     if ( dwFlags & WAVE_DIRECTSOUND )
@@ -3300,11 +3303,11 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwi->dwBufferSize = buffer_size;
     wwi->lpQueuePtr = wwi->lpPlayPtr = wwi->lpLoopPtr = NULL;
-    wwi->p_handle = pcm;
+    wwi->handle = pcm;
 
     ALSA_InitRingMessage(&wwi->msgRing);
 
-    wwi->count = snd_pcm_poll_descriptors_count (wwi->p_handle);
+    wwi->count = snd_pcm_poll_descriptors_count (wwi->handle);
     if (wwi->count <= 0) {
 	ERR("Invalid poll descriptors count\n");
 	return MMSYSERR_ERROR;
@@ -3315,7 +3318,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	ERR("No enough memory\n");
 	return MMSYSERR_NOMEM;
     }
-    if ((err = snd_pcm_poll_descriptors(wwi->p_handle, wwi->ufds, wwi->count)) < 0) {
+    if ((err = snd_pcm_poll_descriptors(wwi->handle, wwi->ufds, wwi->count)) < 0) {
 	ERR("Unable to obtain poll descriptors for playback: %s\n", snd_strerror(err));
 	return MMSYSERR_ERROR;
     }
@@ -3355,7 +3358,7 @@ static DWORD widClose(WORD wDevID)
 
     TRACE("(%u);\n", wDevID);
 
-    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].p_handle == NULL) {
+    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].handle == NULL) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -3373,8 +3376,8 @@ static DWORD widClose(WORD wDevID)
 	snd_pcm_hw_params_free(wwi->hw_params);
 	wwi->hw_params = NULL;
 
-        snd_pcm_close(wwi->p_handle);
-	wwi->p_handle = NULL;
+        snd_pcm_close(wwi->handle);
+	wwi->handle = NULL;
 
 	ret = widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
     }
@@ -3392,7 +3395,7 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
 
     /* first, do the sanity checks... */
-    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].p_handle == NULL) {
+    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].handle == NULL) {
         WARN("bad dev ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -3442,7 +3445,7 @@ static DWORD widStop(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
 
     /* first, do the sanity checks... */
-    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].p_handle == NULL) {
+    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].handle == NULL) {
         WARN("bad dev ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
