@@ -305,7 +305,7 @@ static int NTDLL_dbg_vlog( unsigned int cls, const char *channel,
 /***********************************************************************
  *		debug_init
  */
-DECL_GLOBAL_CONSTRUCTOR(debug_init)
+void debug_init(void)
 {
     __wine_dbgstr_an    = NTDLL_dbgstr_an;
     __wine_dbgstr_wn    = NTDLL_dbgstr_wn;

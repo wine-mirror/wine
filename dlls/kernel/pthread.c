@@ -51,10 +51,6 @@
 
 #define P_OUTPUT(stuff) write(2,stuff,strlen(stuff))
 
-static const struct wine_pthread_functions functions;
-
-DECL_GLOBAL_CONSTRUCTOR(pthread_init) { wine_pthread_init_process( &functions ); }
-
 /* NOTE: This is a truly extremely incredibly ugly hack!
  * But it does seem to work... */
 
@@ -574,5 +570,10 @@ static const struct wine_pthread_functions functions =
     wine_pthread_cond_wait,         /* ptr_pthread_cond_wait */
     wine_pthread_cond_timedwait     /* ptr_pthread_cond_timedwait */
 };
+
+void PTHREAD_Init(void)
+{
+    wine_pthread_init_process( &functions );
+}
 
 #endif /* HAVE_PTHREAD_H */

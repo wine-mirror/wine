@@ -106,9 +106,6 @@ void thread_init(void)
     struct wine_pthread_thread_info thread_info;
     static struct debug_info debug_info;  /* debug info for initial thread */
 
-    debug_info.str_pos = debug_info.strings;
-    debug_info.out_pos = debug_info.output;
-
     peb.ProcessParameters = &params;
     peb.TlsBitmap         = &tls_bitmap;
     peb.LdrData           = &ldr;
@@ -133,6 +130,11 @@ void thread_init(void)
     thread_info.teb_size   = size;
     thread_info.teb_sel    = teb->teb_sel;
     wine_pthread_init_thread( &thread_info );
+
+    debug_info.str_pos = debug_info.strings;
+    debug_info.out_pos = debug_info.output;
+    debug_init();
+    virtual_init();
 
     /* setup the server connection */
     server_init_process();

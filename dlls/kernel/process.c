@@ -619,6 +619,8 @@ static BOOL process_init( char *argv[], char **environ )
     PEB *peb = NtCurrentTeb()->Peb;
     HANDLE hstdin, hstdout, hstderr;
 
+    PTHREAD_Init();
+
     setbuf(stdout,NULL);
     setbuf(stderr,NULL);
     setlocale(LC_CTYPE,"");

@@ -47,7 +47,9 @@ extern NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handl
 
 /* init routines */
 extern BOOL SIGNAL_Init(void);
+extern void debug_init(void);
 extern void thread_init(void);
+extern void virtual_init(void);
 
 /* server support */
 extern void server_init_process(void);

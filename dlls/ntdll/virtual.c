@@ -785,19 +785,19 @@ static BOOL is_current_process( HANDLE handle )
 
 
 /***********************************************************************
- *           VIRTUAL_Init
+ *           virtual_init
  */
-#ifndef page_mask
-DECL_GLOBAL_CONSTRUCTOR(VIRTUAL_Init)
+void virtual_init(void)
 {
+#ifndef page_mask
     page_size = getpagesize();
     page_mask = page_size - 1;
     /* Make sure we have a power of 2 */
     assert( !(page_size & page_mask) );
     page_shift = 0;
     while ((1 << page_shift) != page_size) page_shift++;
-}
 #endif  /* page_mask */
+}
 
 
 /***********************************************************************
