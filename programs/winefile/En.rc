@@ -78,7 +78,7 @@ IDM_WINEFILE MENU FIXED IMPURE
 		MENUITEM "Expand &all\tStrg+*" ,		303
 		MENUITEM "Collapse &Tree\t-" ,			304
 		MENUITEM SEPARATOR
-		MENUITEM "&Mark Childs" ,				505
+		MENUITEM "&Mark Children" ,				505
 	}
 
 	POPUP "&View"  {
