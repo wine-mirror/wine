@@ -225,6 +225,19 @@ extern void WINAPI INT_Int2aHandler(CONTEXT86*);
 /* msdos/int2f.c */
 extern void WINAPI INT_Int2fHandler(CONTEXT86*);
 
+/* fpu.c */
+extern void WINAPI INT_Int34Handler(CONTEXT86*);
+extern void WINAPI INT_Int35Handler(CONTEXT86*);
+extern void WINAPI INT_Int36Handler(CONTEXT86*);
+extern void WINAPI INT_Int37Handler(CONTEXT86*);
+extern void WINAPI INT_Int38Handler(CONTEXT86*);
+extern void WINAPI INT_Int39Handler(CONTEXT86*);
+extern void WINAPI INT_Int3aHandler(CONTEXT86*);
+extern void WINAPI INT_Int3bHandler(CONTEXT86*);
+extern void WINAPI INT_Int3cHandler(CONTEXT86*);
+extern void WINAPI INT_Int3dHandler(CONTEXT86*);
+extern void WINAPI INT_Int3eHandler(CONTEXT86*);
+
 /* msdos/dpmi.c */
 typedef void (WINAPI *RMCBPROC)(CONTEXT86*);
 extern void WINAPI INT_Int31Handler(CONTEXT86*);
@@ -259,7 +272,7 @@ extern char IO_pp_init(void);
  */
 #define CTX_SEG_OFF_TO_LIN(context,seg,off) \
     (ISV86(context) ? PTR_REAL_TO_LIN((seg),(off)) : \
-     (!seg || IS_SELECTOR_SYSTEM(seg))? (void *)(off) : MapSL(MAKESEGPTR((seg),(off))))
+     (!seg || IS_SELECTOR_SYSTEM(seg))? (void *)(ULONG_PTR)(off) : MapSL(MAKESEGPTR((seg),(off))))
 
 #define INT_BARF(context,num) \
     ERR( "int%x: unknown/not implemented parameters:\n" \
