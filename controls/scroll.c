@@ -1428,12 +1428,16 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
-            HDC hdc = BeginPaint( hwnd, &ps );
+            HDC hdc = wParam ? (HDC)wParam : BeginPaint(hwnd, &ps);
             if (GetWindowLongW( hwnd, GWL_STYLE ) & SBS_SIZEBOX)
-                FillRect( hdc, &ps.rcPaint, GetSysColorBrush(COLOR_SCROLLBAR) );
+            {
+                RECT rc;
+                GetClientRect( hwnd, &rc );
+                FillRect( hdc, &rc, GetSysColorBrush(COLOR_SCROLLBAR) );
+            }
             else
                 SCROLL_DrawScrollBar( hwnd, hdc, SB_CTL, TRUE, TRUE );
-            EndPaint( hwnd, &ps );
+            if (!wParam) EndPaint(hwnd, &ps);
         }
         break;
 

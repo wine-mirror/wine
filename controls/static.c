@@ -252,10 +252,10 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
-            BeginPaint(hwnd, &ps);
+            HDC hdc = wParam ? (HDC)wParam : BeginPaint(hwnd, &ps);
             if (staticPaintFunc[style])
-                (staticPaintFunc[style])( hwnd, ps.hdc, full_style );
-            EndPaint(hwnd, &ps);
+                (staticPaintFunc[style])( hwnd, hdc, full_style );
+            if (!wParam) EndPaint(hwnd, &ps);
         }
         break;
 
