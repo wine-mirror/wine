@@ -133,6 +133,14 @@ static WORD arrow_bitmap_width = 0, arrow_bitmap_height = 0;
 static HBITMAP32 hStdRadioCheck = 0;
 static HBITMAP32 hStdCheck = 0;
 static HBITMAP32 hStdMnArrow = 0;
+
+// Minimze/restore/close buttons to be inserted in menubar
+static HBITMAP32 hBmpMinimize = 0;
+static HBITMAP32 hBmpMinimizeD = 0;
+static HBITMAP32 hBmpMaximize = 0;
+static HBITMAP32 hBmpMaximizeD = 0;
+static HBITMAP32 hBmpClose = 0;
+
 static HBRUSH32 hShadeBrush = 0;
 static HMENU32 MENU_DefSysPopup = 0;  /* Default system menu popup */
 
@@ -321,6 +329,12 @@ BOOL32 MENU_Init()
     hStdCheck = LoadBitmap32A(0, MAKEINTRESOURCE32A(OBM_CHECK));
     hStdRadioCheck = LoadBitmap32A(0, MAKEINTRESOURCE32A(OBM_RADIOCHECK));
     hStdMnArrow = LoadBitmap32A(0, MAKEINTRESOURCE32A(OBM_MNARROW));
+    /* Load system buttons bitmaps */
+    hBmpMinimize = LoadBitmap32A(0,MAKEINTRESOURCE32A(OBM_REDUCE));
+    hBmpMinimizeD = LoadBitmap32A(0,MAKEINTRESOURCE32A(OBM_REDUCED));
+    hBmpMaximize = LoadBitmap32A(0,MAKEINTRESOURCE32A(OBM_RESTORE));
+    hBmpMaximizeD = LoadBitmap32A(0,MAKEINTRESOURCE32A(OBM_RESTORED));
+    hBmpClose = LoadBitmap32A(0,MAKEINTRESOURCE32A(OBM_CLOSE));
 
     if (hStdCheck)
     {
@@ -581,7 +595,29 @@ static UINT32 MENU_FindItemByKey( HWND32 hwndOwner, HMENU32 hmenu,
     }
     return (UINT32)(-1);
 }
+/***********************************************************************
+ *           MENU_LoadMagicItem
+ *
+ * Load the bitmap associated with the magic menu item and its style
+ */
 
+static HBITMAP32 MENU_LoadMagicItem(UINT32 id,BOOL32 hilite)
+{
+    // Magic menu item id's section
+    // These magic id's are used by windows to insert "standard" mdi
+    // buttons (minimize,restore,close) on menu. Under windows,
+    // these magic id's make sure the right things appear when those
+    // bitmap buttons are pressed/selected/released.
+
+    switch(id)
+    {
+    case 3  : return (hilite ? hBmpMinimizeD : hBmpMinimize);
+    case 2  : return (hilite ? hBmpMaximizeD: hBmpMaximize);
+    case 5  : return (hilite ? hBmpClose : hBmpClose);
+    default : return 0;
+    }
+
+}
 
 /***********************************************************************
  *           MENU_CalcItemSize
@@ -633,12 +669,26 @@ static void MENU_CalcItemSize( HDC32 hdc, MENUITEM *lpitem, HWND32 hwndOwner,
     if (lpitem->fType & MF_BITMAP)
     {
 	BITMAP32 bm;
-        if (GetObject32A( (HBITMAP32)lpitem->text, sizeof(bm), &bm ))
+        HBITMAP32 resBmp = 0;
+
+        // Check if there is a magic menu item associated with this item
+        if((LOWORD((int)lpitem->text))<6)
+        {
+            resBmp = MENU_LoadMagicItem((int)lpitem->text,
+                                        (lpitem->fType & MF_HILITE));
+        }
+        else
+            resBmp = (HBITMAP32)lpitem->text;
+
+        if (GetObject32A(resBmp, sizeof(bm), &bm ))
         {
             lpitem->rect.right  += bm.bmWidth;
             lpitem->rect.bottom += bm.bmHeight;
+
         }
+        
 	return;
+	
     }
     
     /* If we get here, then it must be a text item */
@@ -882,7 +932,7 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
 	*/
     }
 
-    if (lpitem->fState & MF_HILITE)
+     if ((lpitem->fState & MF_HILITE) && !(lpitem->fType & MF_BITMAP) )
 	FillRect32( hdc, &rect, GetSysColorBrush32(COLOR_HIGHLIGHT) );
     else
 	FillRect32( hdc, &rect, GetSysColorBrush32(COLOR_MENU) );
@@ -927,7 +977,7 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
 
       /* Setup colors */
 
-    if (lpitem->fState & MF_HILITE)
+     if ((lpitem->fState & MF_HILITE) && !(lpitem->fType & MF_BITMAP) )
     {
 	if (lpitem->fState & MF_GRAYED)
 	    SetTextColor32( hdc, GetSysColor32( COLOR_GRAYTEXT ) );
@@ -999,13 +1049,27 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
 
     if (lpitem->fType & MF_BITMAP)
     {
+        HBITMAP32 resBmp = 0;
+
         HDC32 hdcMem = CreateCompatibleDC32( hdc );
 
-	SelectObject32( hdcMem, (HBITMAP32)lpitem->text );
-	BitBlt32( hdc, rect.left, rect.top, rect.right - rect.left,
+        // Check if there is a magic menu item associated with this item
+        // and load the appropriate bitmap
+        if((LOWORD((int)lpitem->text)) < 6)
+        {
+            resBmp = MENU_LoadMagicItem((int)lpitem->text,
+                                        (lpitem->fState & MF_HILITE));
+        }
+        else
+            resBmp = (HBITMAP32)lpitem->text;
+        
+        SelectObject32(hdcMem,resBmp );
+	BitBlt32( hdc, rect.left, rect.top+3, rect.right - rect.left+3,
 		  rect.bottom - rect.top, hdcMem, 0, 0, SRCCOPY );
 	DeleteDC32( hdcMem );
+        
 	return;
+
     }
     /* No bitmap - process text if present */
     else if (IS_STRING_ITEM(lpitem->fType))
