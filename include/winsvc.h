@@ -23,6 +23,21 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
+/* Service database names */
+#define SERVICES_ACTIVE_DATABASEA     "ServicesActive"
+#define SERVICES_FAILED_DATABASEA     "ServicesFailed"
+
+#if defined(__GNUC__)
+# define SERVICES_ACTIVE_DATABASEW    (const WCHAR []){ 'S','e','r','v','i','c','e','s','A','c','t','i','v','e',0 }
+# define SERVICES_FAILED_DATABASEW    (const WCHAR []){ 'S','e','r','v','i','c','e','s','F','a','i','l','e','d',0 }
+#elif defined(_MSC_VER)
+# define SERVICES_ACTIVE_DATABASEW    L"ServicesActive"
+# define SERVICES_FAILED_DATABASEW    L"ServicesFailed"
+#endif
+
+#define SERVICES_ACTIVE_DATABASE      WINELIB_NAME_AW( SERVICES_ACTIVE_DATABASE )
+#define SERVICES_FAILED_DATABASE      WINELIB_NAME_AW( SERVICES_FAILED_DATABASE )
+
 /* Controls */
 #define SERVICE_CONTROL_STOP                  0x00000001
 #define SERVICE_CONTROL_PAUSE                 0x00000002
