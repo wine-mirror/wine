@@ -64,14 +64,27 @@ typedef struct {
 
 /* DOS memory base */
 static char *DOSMEM_dosmem;
-/* bios area; normally at offset 0x400, but can be moved to trap NULL pointers */
-static void *DOSMEM_biosdata;
+/* DOS system base (for interrupt vector table and BIOS data area)
+ * ...should in theory (i.e. Windows) be equal to DOSMEM_dosmem (NULL),
+ * but is normally set to 0xf0000 in Wine to allow trapping of NULL pointers,
+ * and only relocated to NULL when absolutely necessary */
+static char *DOSMEM_sysmem;
 
 /* various real-mode code stubs */
 WORD DOSMEM_wrap_seg;
 WORD DOSMEM_xms_seg;
 WORD DOSMEM_dpmi_seg;
 WORD DOSMEM_dpmi_sel;
+
+/***********************************************************************
+ *           DOSMEM_SystemBase
+ *
+ * Gets the virtual DOS memory base (interrupt table).
+ */
+char *DOSMEM_SystemBase(void)
+{
+    return DOSMEM_sysmem;
+}
 
 /***********************************************************************
  *           DOSMEM_MemoryBase
@@ -129,11 +142,17 @@ static dosmem_entry *DOSMEM_RootBlock(void)
  */
 static void DOSMEM_FillIsrTable(void)
 {
-    SEGPTR *isr = (SEGPTR*)DOSMEM_dosmem;
-    DWORD *stub = (DWORD*)((char*)isr + (VM_STUB_SEGMENT << 4));
+    SEGPTR *isr = (SEGPTR*)DOSMEM_sysmem;
     int x;
  
     for (x=0; x<256; x++) isr[x]=PTR_SEG_OFF_TO_SEGPTR(VM_STUB_SEGMENT,x*4);
+} 
+
+static void DOSMEM_MakeIsrStubs(void)
+{
+    DWORD *stub = (DWORD*)(DOSMEM_dosmem + (VM_STUB_SEGMENT << 4));
+    int x;
+ 
     for (x=0; x<256; x++) stub[x]=VM_STUB(x);
 } 
 
@@ -198,7 +217,7 @@ static void DOSMEM_InitDPMI(void)
 
 BIOSDATA * DOSMEM_BiosData()
 {
-    return (BIOSDATA *)DOSMEM_biosdata;
+    return (BIOSDATA *)(DOSMEM_sysmem + 0x400);
 }
 
 BYTE * DOSMEM_BiosSys()
@@ -429,7 +448,7 @@ static void DOSMEM_InitMemory(void)
  */
 static void setup_dos_mem( int dos_init )
 {
-    int bios_offset = 0x400;
+    int sys_offset = 0;
     int page_size = VIRTUAL_GetPageSize();
     void *addr = VIRTUAL_mmap( -1, (void *)page_size, 0x110000-page_size, 0,
                                PROT_READ | PROT_WRITE | PROT_EXEC, 0 );
@@ -451,8 +470,8 @@ static void setup_dos_mem( int dos_init )
         if (!dos_init)
         {
             VirtualProtect( addr, 0x10000, PAGE_NOACCESS, NULL );
-            /* move the BIOS data from 0x400 to 0xf0400 */
-            bios_offset += 0xf0000;
+            /* move the BIOS and ISR area from 0x00000 to 0xf0000 */
+            sys_offset += 0xf0000;
         }
     }
     else
@@ -468,7 +487,7 @@ static void setup_dos_mem( int dos_init )
         }
     }
     DOSMEM_dosmem = addr;
-    DOSMEM_biosdata = (char *)addr + bios_offset;
+    DOSMEM_sysmem = (char*)addr + sys_offset;
 }
 
 
@@ -480,19 +499,20 @@ static void setup_dos_mem( int dos_init )
  */
 BOOL DOSMEM_Init(BOOL dos_init)
 {
-    static int already_done;
+    static int already_done, already_mapped;
 
     if (!already_done)
     {
         setup_dos_mem( dos_init );
 
-        DOSMEM_0000H = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_biosdata - 0x400,
+        DOSMEM_0000H = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_sysmem,
                                            0x10000, 0, FALSE, FALSE, FALSE );
-        DOSMEM_BiosDataSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_biosdata,
+        DOSMEM_BiosDataSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_sysmem + 0x400,
                                                 0x100, 0, FALSE, FALSE, FALSE );
         DOSMEM_BiosSysSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0xf0000,
                                                0x10000, 0, FALSE, FALSE, FALSE );
         DOSMEM_FillBiosSegments();
+        DOSMEM_FillIsrTable();
         DOSMEM_InitMemory();
         DOSMEM_InitCollateTable();
         DOSMEM_InitErrorTable();
@@ -500,7 +520,7 @@ BOOL DOSMEM_Init(BOOL dos_init)
         DOSDEV_InstallDOSDevices();
         already_done = 1;
     }
-    else if (dos_init)
+    else if (dos_init && !already_mapped)
     {
         if (DOSMEM_dosmem)
         {
@@ -510,14 +530,16 @@ BOOL DOSMEM_Init(BOOL dos_init)
         MESSAGE( "Warning: unprotecting the first 64KB of memory to allow real-mode calls.\n"
                  "         NULL pointer accesses will no longer be caught.\n" );
         VirtualProtect( NULL, 0x10000, PAGE_EXECUTE_READWRITE, NULL );
-        /* copy the BIOS area down to 0x400 */
-        memcpy( DOSMEM_dosmem + 0x400, DOSMEM_biosdata, 0x100 );
-        DOSMEM_biosdata = DOSMEM_dosmem + 0x400;
+        /* copy the BIOS and ISR area down */
+        memcpy( DOSMEM_dosmem, DOSMEM_sysmem, 0x400 + 0x100 );
+        DOSMEM_sysmem = DOSMEM_dosmem;
         SetSelectorBase( DOSMEM_0000H, 0 );
         SetSelectorBase( DOSMEM_BiosDataSeg, 0x400 );
+        /* we may now need the actual interrupt stubs, and since we've just moved the
+         * interrupt vector table away, we can fill the area with stubs instead... */
+        DOSMEM_MakeIsrStubs();
+        already_mapped = 1;
     }
-    /* interrupt table is at addr 0, so only do this when setting up DOS mode */
-    if (dos_init) DOSMEM_FillIsrTable();
     return TRUE;
 }
 

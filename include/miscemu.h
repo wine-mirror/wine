@@ -143,6 +143,7 @@ extern BOOL DOSMEM_Init(BOOL);
 extern void   DOSMEM_Tick(WORD timer);
 extern WORD   DOSMEM_AllocSelector(WORD);
 extern char * DOSMEM_MemoryBase(void);
+extern char * DOSMEM_SystemBase(void);
 extern LPVOID DOSMEM_GetBlock(UINT size, WORD* p);
 extern BOOL DOSMEM_FreeBlock(void* ptr);
 extern LPVOID DOSMEM_ResizeBlock(void* ptr, UINT size, WORD* p);
