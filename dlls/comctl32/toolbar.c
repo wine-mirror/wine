@@ -884,7 +884,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (infoPtr)
 		    lpmis->itemHeight = infoPtr->nBitmapHeight + 8;
 		else
-		    lpmis->itemHeight = 16 + 8; /* default height */
+		    lpmis->itemHeight = 15 + 8; /* default height */
 
 		return TRUE;
 	    }
