@@ -502,6 +502,7 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
     IMAGE_SECTION_HEADER *sec;
+    IMAGE_DATA_DIRECTORY *imports;
     int i, pos;
     DWORD err = GetLastError();
     FILE_VIEW *view;
@@ -535,6 +536,9 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
 
     sec = (IMAGE_SECTION_HEADER*)((char*)&nt->OptionalHeader+nt->FileHeader.SizeOfOptionalHeader);
     if ((char *)(sec + nt->FileHeader.NumberOfSections) > ptr + header_size) goto error;
+
+    imports = nt->OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_IMPORT;
+    if (!imports->Size || !imports->VirtualAddress) imports = NULL;
 
     /* check the architecture */
 
@@ -594,6 +598,19 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
             {
                 ERR_(module)( "Could not map shared section %.8s\n", sec->Name );
                 goto error;
+            }
+
+            /* check if the import directory falls inside this section */
+            if (imports && imports->VirtualAddress >= sec->VirtualAddress &&
+                imports->VirtualAddress < sec->VirtualAddress + size)
+            {
+                DWORD base = imports->VirtualAddress & ~page_mask;
+                DWORD end = imports->VirtualAddress + ROUND_SIZE( imports->VirtualAddress,
+                                                                  imports->Size );
+                if (end > sec->VirtualAddress + size) end = sec->VirtualAddress + size;
+                if (end > base) VIRTUAL_mmap( shared_fd, ptr + base, end - base,
+                                              pos, 0, PROT_READ|PROT_WRITE|PROT_EXEC,
+                                              MAP_PRIVATE|MAP_FIXED, NULL );
             }
             pos += size;
             continue;
