@@ -108,7 +108,7 @@ LPCWSTR GetNextElementW (LPCWSTR pszNext, LPWSTR pszOut, DWORD dwOut)
 HRESULT SHELL32_ParseNextElement (IShellFolder2 * psf, HWND hwndOwner, LPBC pbc,
 				  LPITEMIDLIST * pidlInOut, LPOLESTR szNext, DWORD * pEaten, DWORD * pdwAttributes)
 {
-    HRESULT hr = E_OUTOFMEMORY;
+    HRESULT hr = E_INVALIDARG;
     LPITEMIDLIST pidlOut = NULL,
       pidlTemp = NULL;
     IShellFolder *psfChild;
@@ -123,6 +123,9 @@ HRESULT SHELL32_ParseNextElement (IShellFolder2 * psf, HWND hwndOwner, LPBC pbc,
 	IShellFolder_Release (psfChild);
 
 	pidlTemp = ILCombine (*pidlInOut, pidlOut);
+
+	if (!pidlTemp)
+	    hr = E_OUTOFMEMORY;
 
 	if (pidlOut)
 	    ILFree (pidlOut);
@@ -150,17 +153,18 @@ HRESULT SHELL32_CoCreateInitSF (LPCITEMIDLIST pidlRoot,
     TRACE ("%p %p\n", pidlRoot, pidlChild);
 
     if (SUCCEEDED ((hr = SHCoCreateInstance (NULL, clsid, NULL, iid, ppvOut)))) {
-
 	IPersistFolder *pPF;
 
 	if (SUCCEEDED ((hr = IUnknown_QueryInterface ((IUnknown *) * ppvOut, &IID_IPersistFolder, (LPVOID *) & pPF)))) {
-
 	    LPITEMIDLIST pidlAbsolute;
 
 	    pidlAbsolute = ILCombine (pidlRoot, pidlChild);
 	    IPersistFolder_Initialize (pPF, pidlAbsolute);
 	    IPersistFolder_Release (pPF);
 	    SHFree (pidlAbsolute);
+
+	    if (!pidlAbsolute)
+		hr = E_OUTOFMEMORY;
 	}
     }
 
@@ -207,8 +211,14 @@ HRESULT SHELL32_CoCreateInitSFEx (LPCITEMIDLIST pidlRoot,
 		szDestPath[0] = '\0';
 	    }
 
-	    if (pidlChild)
-		lstrcatA (szDestPath, _ILGetTextPointer (pidlChild));
+	    if (pidlChild) {
+		LPSTR pszChild = _ILGetTextPointer(pidlChild);
+
+		if (pszChild)
+		    lstrcatA (szDestPath, pszChild);
+		else
+		    hr = E_INVALIDARG;
+	    }
 
 	    /* fill the PERSIST_FOLDER_TARGET_INFO */
 	    ppfti.dwAttributes = -1;
@@ -289,7 +299,7 @@ HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf,
 				       LPCITEMIDLIST pidl, DWORD dwFlags, LPSTR szOut, DWORD dwOutLen)
 {
     LPITEMIDLIST pidlFirst;
-    HRESULT hr = E_OUTOFMEMORY;
+    HRESULT hr = E_INVALIDARG;
 
     TRACE ("(%p)->(pidl=%p 0x%08lx %p 0x%08lx)\n", psf, pidl, dwFlags, szOut, dwOutLen);
     pdump (pidl);
@@ -310,7 +320,8 @@ HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf,
 	    IShellFolder_Release (psfChild);
 	}
 	ILFree (pidlFirst);
-    }
+    } else
+	hr = E_OUTOFMEMORY;
 
     TRACE ("-- ret=0x%08lx %s\n", hr, szOut);
 
@@ -346,6 +357,7 @@ HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPCITEMIDLIST pidl, LPDWO
                           SFGAO_CANDELETE |         /*0x00000020 */
                           SFGAO_HASPROPSHEET |      /*0x00000040 */
                           SFGAO_DROPTARGET |        /*0x00000100 */
+                          SFGAO_LINK |              /*0x00010000 */
                           SFGAO_READONLY |          /*0x00040000 */
                           SFGAO_HIDDEN |            /*0x00080000 */
                           SFGAO_FILESYSANCESTOR |   /*0x10000000 */
@@ -381,6 +393,13 @@ HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPCITEMIDLIST pidl, LPDWO
 
 	if ((SFGAO_READONLY & *pdwAttributes) && !(dwAttributes & FILE_ATTRIBUTE_READONLY))
 	    *pdwAttributes &= ~SFGAO_READONLY;
+
+	if (SFGAO_LINK & *pdwAttributes) {
+	    char ext[MAX_PATH];
+
+	    if (!_ILGetExtension(pidl, ext, MAX_PATH) || strcasecmp(ext, "lnk"))
+		*pdwAttributes &= ~SFGAO_LINK;
+	}
     } else {
 	*pdwAttributes &= SFGAO_HASSUBFOLDER|SFGAO_FOLDER|SFGAO_FILESYSANCESTOR|SFGAO_DROPTARGET|SFGAO_HASPROPSHEET|SFGAO_CANRENAME|SFGAO_CANLINK;
     }
