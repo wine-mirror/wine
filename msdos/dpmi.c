@@ -65,6 +65,7 @@ BOOL DPMI_LoadDosSystem(void)
     GET_ADDR(CallRMProc);
     GET_ADDR(AllocRMCB);
     GET_ADDR(FreeRMCB);
+    GET_ADDR(RawModeSwitch);
     GET_ADDR(SetTimer);
     GET_ADDR(GetTimer);
     GET_ADDR(inport);
@@ -190,6 +191,15 @@ static void FreeRMCB( CONTEXT86 *context )
     else Dosvm.FreeRMCB( context );
 }
 
+static void RawModeSwitch( CONTEXT86 *context )
+{
+    if (!Dosvm.RawModeSwitch)
+    {
+      ERR("could not setup real-mode calls\n");
+      return;
+    }
+    else Dosvm.RawModeSwitch( context );
+}
 
 /**********************************************************************
  *	    INT_Int31Handler (WPROCS.149)
@@ -206,6 +216,11 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
      */
     DWORD dw;
     BYTE *ptr;
+
+    if (context->SegCs == DOSMEM_dpmi_sel) { 
+        RawModeSwitch( context );
+        return;
+    }
 
     RESET_CFLAG(context);
     switch(AX_reg(context))

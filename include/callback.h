@@ -32,6 +32,7 @@ typedef struct {
     void (WINAPI *CallRMProc)( CONTEXT86 *context, int iret );
     void (WINAPI *AllocRMCB)( CONTEXT86 *context );
     void (WINAPI *FreeRMCB)( CONTEXT86 *context );
+    void (WINAPI *RawModeSwitch)( CONTEXT86 *context );
 
     /* I/O functions */
     void (WINAPI *SetTimer)( unsigned ticks );

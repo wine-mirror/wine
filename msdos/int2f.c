@@ -356,9 +356,6 @@ static void do_int2f_16( CONTEXT86 *context )
         break;
 
     case 0x87: /* DPMI installation check */
-#if 1   /* DPMI still breaks pkunzip */
-        if (ISV86(context)) break; /* so bail out for now if in v86 mode */
-#endif
         {
 	    SYSTEM_INFO si;
 	    GetSystemInfo(&si);
