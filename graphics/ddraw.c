@@ -690,7 +690,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Flip(
 			iflipto = This;
 	}
   
-	Xlib_copy_surface_on_screen(This);
+	Xlib_copy_surface_on_screen(iflipto);
 	
 	if (iflipto->s.palette && iflipto->s.palette->cm) {
 	  TSXSetWindowColormap(display,This->s.ddraw->d.drawable,iflipto->s.palette->cm);
