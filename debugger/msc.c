@@ -38,8 +38,8 @@
 */
 static void LocateDebugInfoFile(char *filename, char *dbg_filename)
 {
-    char	  str1[MAX_PATHNAME_LEN*10];
-    char	  str2[MAX_PATHNAME_LEN];
+    char	  *str1 = xmalloc(MAX_PATHNAME_LEN*10);
+    char	  *str2 = xmalloc(MAX_PATHNAME_LEN);
     char	  *file;
     char	  *name_part;
     DOS_FULL_NAME fullname;
@@ -57,7 +57,10 @@ static void LocateDebugInfoFile(char *filename, char *dbg_filename)
 	goto ok;
     else
     {
-quit:	memcpy(dbg_filename, filename, MAX_PATHNAME_LEN);
+quit:	
+        memcpy(dbg_filename, filename, MAX_PATHNAME_LEN);
+	free(str1);
+	free(str2);
 	return;
     }
 ok:
@@ -65,6 +68,8 @@ ok:
 	memcpy(dbg_filename, fullname.long_name, MAX_PATHNAME_LEN);
     else
 	goto quit;
+    free(str1);
+    free(str2);
     return;
 }
 /*
