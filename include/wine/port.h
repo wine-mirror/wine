@@ -7,7 +7,7 @@
 #define __WINE_WINE_PORT_H
 
 #include "config.h"
-#include "winnt.h"
+
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/time.h>
