@@ -150,37 +150,35 @@ BOOL DIALOG_DisableOwner( HWND hOwner )
 /***********************************************************************
  *           DIALOG_GetCharSizeFromDC
  *
- * 
- *  Calculates the *true* average size of English characters in the 
- *  specified font as oppposed to the one returned by GetTextMetrics.
- *
- *  Latest: the X font driver will now compute a proper average width
- *  so this code can be removed
+ * Despite most of MSDN insisting that the horizontal base unit is
+ * tmAveCharWidth it isn't.  Knowledge base article Q145994
+ * "HOWTO: Calculate Dialog Units When Not Using the System Font",
+ * says that we should take the average of the 52 English upper and lower
+ * case characters.
  */
 static BOOL DIALOG_GetCharSizeFromDC( HDC hDC, HFONT hFont, SIZE * pSize )
 {
-    BOOL Success = FALSE;
     HFONT hFontPrev = 0;
+    char *alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    SIZE sz;
+    TEXTMETRICA tm;
+
     pSize->cx = xBaseUnit;
     pSize->cy = yBaseUnit;
-    if ( hDC ) 
-    {
-        /* select the font */
-        TEXTMETRICA tm;
-        memset(&tm,0,sizeof(tm));
-        if (hFont) hFontPrev = SelectFont(hDC,hFont);
-        if ((Success = GetTextMetricsA(hDC,&tm)))
-        {
-            pSize->cx = tm.tmAveCharWidth;
-            pSize->cy = tm.tmHeight;
-            TRACE("Using tm: %ldx%ld (dlg: %ld x %ld) (%s)\n",
-                  tm.tmAveCharWidth, tm.tmHeight, pSize->cx, pSize->cy,
-                  tm.tmPitchAndFamily & TMPF_FIXED_PITCH ? "variable" : "fixed");
-        }
-        /* select the original font */
-        if (hFontPrev) SelectFont(hDC,hFontPrev);
-    }
-    return (Success);
+
+    if(!hDC) return FALSE; 
+
+    if(hFont) hFontPrev = SelectFont(hDC, hFont);
+    if(!GetTextMetricsA(hDC, &tm)) return FALSE;
+    if(!GetTextExtentPointA(hDC, alphabet, 52, &sz)) return FALSE;
+
+    pSize->cy = tm.tmHeight;
+    pSize->cx = (sz.cx / 26 + 1) / 2;
+
+    if (hFontPrev) SelectFont(hDC, hFontPrev);
+
+    TRACE("dlg base units: %ld x %ld\n", pSize->cx, pSize->cy);
+    return TRUE;
 }
 
 /***********************************************************************
@@ -731,19 +729,13 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 
     if (template.style & DS_SETFONT)
     {
-	  /* The font height must be negative as it is a point size */
-	  /* and must be converted to pixels first */
-          /* (see CreateFont() documentation in the Windows SDK).   */
+          /* We convert the size to pixels and then make it -ve.  This works
+           * for both +ve and -ve template.pointSize */
         HDC dc;
         int pixels;
-        if (((short)template.pointSize) < 0)
-            pixels = -((short)template.pointSize);
-        else
-        {
-            dc = GetDC(0);
-            pixels = template.pointSize * GetDeviceCaps(dc , LOGPIXELSY)/72;
-            ReleaseDC(0, dc);
-        }
+	dc = GetDC(0);
+	pixels = MulDiv(template.pointSize, GetDeviceCaps(dc , LOGPIXELSY), 72);
+	ReleaseDC(0, dc);
 	if (win32Template)
             dlgInfo->hUserFont = CreateFontW( -pixels, 0, 0, 0, template.weight,
                                               template.italic, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
