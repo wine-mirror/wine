@@ -73,6 +73,8 @@ static WCHAR Print_ProcessorW[] = {'P','r','i','n','t',' ','P','r','o','c','e',
 				   's','s','o','r',0};
 static WCHAR Printer_DriverW[] = {'P','r','i','n','t','e','r',' ','D','r','i',
 				  'v','e','r',0};
+static WCHAR PrinterDriverDataW[] = {'P','r','i','n','t','e','r','D','r','i',
+				     'v','e','r','D','a','t','a',0};
 static WCHAR Separator_FileW[] = {'S','e','p','a','r','a','t','o','r',' ','F',
 				  'i','l','e',0};
 static WCHAR Share_NameW[] = {'S','h','a','r','e',' ','N','a','m','e',0};
@@ -149,6 +151,34 @@ static LPOPENEDPRINTER WINSPOOL_GetOpenedPrinter(int printerHandle)
     pOpenedPrinter = WINSPOOL_DPA_GetPtr(pOpenedPrinterDPA, printerHandle-1);
 
     return pOpenedPrinter;
+}
+
+/******************************************************************
+ *  WINSPOOL_GetOpenedPrinterRegKey
+ *
+ */
+static DWORD WINSPOOL_GetOpenedPrinterRegKey(HANDLE hPrinter, HKEY *phkey)
+{
+    LPOPENEDPRINTER lpOpenedPrinter = WINSPOOL_GetOpenedPrinter(hPrinter);
+    DWORD ret;
+    HKEY hkeyPrinters;
+
+    if(!lpOpenedPrinter)
+        return ERROR_INVALID_HANDLE;
+
+    if((ret = RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters)) !=
+       ERROR_SUCCESS)
+        return ret;
+
+    if(RegOpenKeyW(hkeyPrinters, lpOpenedPrinter->lpsPrinterName, phkey)
+       != ERROR_SUCCESS) {
+        ERR("Can't find opened printer %s in registry\n",
+	    debugstr_w(lpOpenedPrinter->lpsPrinterName));
+	RegCloseKey(hkeyPrinters);
+        return ERROR_INVALID_PRINTER_NAME; /* ? */
+    }
+    RegCloseKey(hkeyPrinters);
+    return ERROR_SUCCESS;
 }
 
 /***********************************************************
@@ -2370,4 +2400,164 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE ports,DWORD bufsize,
 {
     FIXME("(%s,%ld,%p,%ld,%p,%p), stub!\n",name,level,ports,bufsize,bufneeded,bufreturned);
     return FALSE;
+}
+
+/******************************************************************************
+ *		SetPrinterDataExA   (WINSPOOL)
+ */
+DWORD WINAPI SetPrinterDataExA(HANDLE hPrinter, LPSTR pKeyName,
+			       LPSTR pValueName, DWORD Type,
+			       LPBYTE pData, DWORD cbData)
+{
+    HKEY hkeyPrinter, hkeySubkey;
+    DWORD ret;
+
+    TRACE("(%08x, %s, %s %08lx, %p, %08lx)\n", hPrinter, debugstr_a(pKeyName),
+	  debugstr_a(pValueName), Type, pData, cbData);
+
+    if((ret = WINSPOOL_GetOpenedPrinterRegKey(hPrinter, &hkeyPrinter))
+       != ERROR_SUCCESS)
+        return ret;
+
+    if((ret = RegCreateKeyA(hkeyPrinter, pKeyName, &hkeySubkey))
+       != ERROR_SUCCESS) {
+        ERR("Can't create subkey %s\n", debugstr_a(pKeyName));
+	RegCloseKey(hkeyPrinter);
+	return ret;
+    }
+    ret = RegSetValueExA(hkeySubkey, pValueName, 0, Type, pData, cbData);
+    RegCloseKey(hkeySubkey);
+    RegCloseKey(hkeyPrinter);
+    return ret;
+}
+
+/******************************************************************************
+ *		SetPrinterDataExW   (WINSPOOL)
+ */
+DWORD WINAPI SetPrinterDataExW(HANDLE hPrinter, LPWSTR pKeyName,
+			       LPWSTR pValueName, DWORD Type,
+			       LPBYTE pData, DWORD cbData)
+{
+    HKEY hkeyPrinter, hkeySubkey;
+    DWORD ret;
+
+    TRACE("(%08x, %s, %s %08lx, %p, %08lx)\n", hPrinter, debugstr_w(pKeyName),
+	  debugstr_w(pValueName), Type, pData, cbData);
+
+    if((ret = WINSPOOL_GetOpenedPrinterRegKey(hPrinter, &hkeyPrinter))
+       != ERROR_SUCCESS)
+        return ret;
+
+    if((ret = RegCreateKeyW(hkeyPrinter, pKeyName, &hkeySubkey))
+       != ERROR_SUCCESS) {
+        ERR("Can't create subkey %s\n", debugstr_w(pKeyName));
+	RegCloseKey(hkeyPrinter);
+	return ret;
+    }
+    ret = RegSetValueExW(hkeySubkey, pValueName, 0, Type, pData, cbData);
+    RegCloseKey(hkeySubkey);
+    RegCloseKey(hkeyPrinter);
+    return ret;
+}
+
+/******************************************************************************
+ *		SetPrinterDataA   (WINSPOOL)
+ */
+DWORD WINAPI SetPrinterDataA(HANDLE hPrinter, LPSTR pValueName, DWORD Type,
+			       LPBYTE pData, DWORD cbData)
+{
+    return SetPrinterDataExA(hPrinter, "PrinterDriverData", pValueName, Type,
+			     pData, cbData);
+}
+
+/******************************************************************************
+ *		SetPrinterDataW   (WINSPOOL)
+ */
+DWORD WINAPI SetPrinterDataW(HANDLE hPrinter, LPWSTR pValueName, DWORD Type,
+			     LPBYTE pData, DWORD cbData)
+{
+    return SetPrinterDataExW(hPrinter, PrinterDriverDataW, pValueName, Type,
+			     pData, cbData);
+}
+
+/******************************************************************************
+ *		GetPrinterDataExA   (WINSPOOL)
+ */
+DWORD WINAPI GetPrinterDataExA(HANDLE hPrinter, LPSTR pKeyName,
+			       LPSTR pValueName, LPDWORD pType,
+			       LPBYTE pData, DWORD nSize, LPDWORD pcbNeeded)
+{
+    HKEY hkeyPrinter, hkeySubkey;
+    DWORD ret;
+
+    TRACE("(%08x, %s, %s %p, %p, %08lx, %p)\n", hPrinter,
+	  debugstr_a(pKeyName), debugstr_a(pValueName), pType, pData, nSize,
+	  pcbNeeded);
+
+    if((ret = WINSPOOL_GetOpenedPrinterRegKey(hPrinter, &hkeyPrinter))
+       != ERROR_SUCCESS)
+        return ret;
+
+    if((ret = RegOpenKeyA(hkeyPrinter, pKeyName, &hkeySubkey))
+       != ERROR_SUCCESS) {
+        WARN("Can't open subkey %s\n", debugstr_a(pKeyName));
+	RegCloseKey(hkeyPrinter);
+	return ret;
+    }
+    *pcbNeeded = nSize;
+    ret = RegQueryValueExA(hkeySubkey, pValueName, 0, pType, pData, pcbNeeded);
+    RegCloseKey(hkeySubkey);
+    RegCloseKey(hkeyPrinter);
+    return ret;
+}
+
+/******************************************************************************
+ *		GetPrinterDataExW   (WINSPOOL)
+ */
+DWORD WINAPI GetPrinterDataExW(HANDLE hPrinter, LPWSTR pKeyName,
+			       LPWSTR pValueName, LPDWORD pType,
+			       LPBYTE pData, DWORD nSize, LPDWORD pcbNeeded)
+{
+    HKEY hkeyPrinter, hkeySubkey;
+    DWORD ret;
+
+    TRACE("(%08x, %s, %s %p, %p, %08lx, %p)\n", hPrinter,
+	  debugstr_w(pKeyName), debugstr_w(pValueName), pType, pData, nSize,
+	  pcbNeeded);
+
+    if((ret = WINSPOOL_GetOpenedPrinterRegKey(hPrinter, &hkeyPrinter))
+       != ERROR_SUCCESS)
+        return ret;
+
+    if((ret = RegOpenKeyW(hkeyPrinter, pKeyName, &hkeySubkey))
+       != ERROR_SUCCESS) {
+        WARN("Can't open subkey %s\n", debugstr_w(pKeyName));
+	RegCloseKey(hkeyPrinter);
+	return ret;
+    }
+    *pcbNeeded = nSize;
+    ret = RegQueryValueExW(hkeySubkey, pValueName, 0, pType, pData, pcbNeeded);
+    RegCloseKey(hkeySubkey);
+    RegCloseKey(hkeyPrinter);
+    return ret;
+}
+
+/******************************************************************************
+ *		GetPrinterDataA   (WINSPOOL)
+ */
+DWORD WINAPI GetPrinterDataA(HANDLE hPrinter, LPSTR pValueName, LPDWORD pType,
+			     LPBYTE pData, DWORD nSize, LPDWORD pcbNeeded)
+{
+    return GetPrinterDataExA(hPrinter, "PrinterDriverData", pValueName, pType,
+			     pData, nSize, pcbNeeded);
+}
+
+/******************************************************************************
+ *		GetPrinterDataW   (WINSPOOL)
+ */
+DWORD WINAPI GetPrinterDataW(HANDLE hPrinter, LPWSTR pValueName, LPDWORD pType,
+			     LPBYTE pData, DWORD nSize, LPDWORD pcbNeeded)
+{
+    return GetPrinterDataExW(hPrinter, PrinterDriverDataW, pValueName, pType,
+			     pData, nSize, pcbNeeded);
 }
