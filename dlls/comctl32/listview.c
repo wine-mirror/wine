@@ -103,6 +103,7 @@ typedef struct tagLISTVIEW_ITEM
   INT iIndent;
   POINT ptPosition;
   BOOL valid;
+  RECT rcLastDraw;
 } LISTVIEW_ITEM;
 
 typedef struct tagRANGE
@@ -129,10 +130,18 @@ typedef struct tagLISTVIEW_INFO
   INT nSelectionMark;
   INT nHotItem;
   SHORT notifyFormat;
-  RECT rcList;
-  RECT rcView;
+  RECT rcList;                 /* This rectangle is really the window
+				* client rectangle possibly reduced by the 
+				* horizontal scroll bar and/or header - see 
+				* LISTVIEW_UpdateSize. This rectangle offset
+				* by the LISTVIEW_GetOrigin value is within
+				* the rcView rectangle  */
+  RECT rcView;                 /* This rectangle contains all items - 
+				* contructed in LISTVIEW_AlignTop and
+				* LISTVIEW_AlignLeft   */
   SIZE iconSize;
   SIZE iconSpacing;
+  SIZE iconStateSize;
   UINT uCallbackMask;
   HWND hwndHeader;
   HFONT hDefaultFont;
@@ -189,12 +198,17 @@ DEFINE_COMMON_NOTIFICATIONS(LISTVIEW_INFO, hwndSelf);
  *   ICON_TOP_PADDING - sum of the two above.
  *   ICON_BOTTOM_PADDING - between bottom of icon and top of text
  *   LABEL_VERT_PADDING - between bottom of text and end of box
+ *
+ *   ICON_LR_PADDING - additional width above icon size.
+ *   ICON_LR_HALF - half of the above value
  */
 #define ICON_TOP_PADDING_NOTHITABLE  2
 #define ICON_TOP_PADDING_HITABLE     2
 #define ICON_TOP_PADDING (ICON_TOP_PADDING_NOTHITABLE + ICON_TOP_PADDING_HITABLE)
 #define ICON_BOTTOM_PADDING          4
 #define LABEL_VERT_PADDING           7
+#define ICON_LR_PADDING              16
+#define ICON_LR_HALF                 (ICON_LR_PADDING/2)
 
 /* default label width for items in list and small icon display modes */
 #define DEFAULT_LABEL_WIDTH 40
@@ -227,9 +241,10 @@ DEFINE_COMMON_NOTIFICATIONS(LISTVIEW_INFO, hwndSelf);
   TRACE("hwndSelf=%08x, clrBk=0x%06lx, clrText=0x%06lx, clrTextBk=0x%06lx, ItemHeight=%d, ItemWidth=%d, Style=0x%08lx\n", \
         iP->hwndSelf, iP->clrBk, iP->clrText, iP->clrTextBk, \
         iP->nItemHeight, iP->nItemWidth, GetWindowLongW (iP->hwndSelf, GWL_STYLE)); \
-  TRACE("hwndSelf=%08x, himlNor=%p, himlSml=%p, himlState=%p, Focused=%d, Hot=%d, exStyle=0x%08lx\n", \
+  TRACE("hwndSelf=%08x, himlNor=%p, himlSml=%p, himlState=%p, Focused=%d, Hot=%d, exStyle=0x%08lx, Focus=%s\n", \
         iP->hwndSelf, iP->himlNormal, iP->himlSmall, iP->himlState, \
-        iP->nFocusedItem, iP->nHotItem, iP->dwExStyle); \
+        iP->nFocusedItem, iP->nHotItem, iP->dwExStyle, \
+        (iP->bFocus) ? "true" : "false"); \
   TRACE("hwndSelf=%08x, ntmH=%d, icSz.cx=%ld, icSz.cy=%ld, icSp.cx=%ld, icSp.cy=%ld, notifyFmt=%d\n", \
         iP->hwndSelf, iP->ntmHeight, iP->iconSize.cx, iP->iconSize.cy, \
         iP->iconSpacing.cx, iP->iconSpacing.cy, iP->notifyFormat); \
@@ -442,6 +457,22 @@ static char* debuglvcolumn_t(LPLVCOLUMNW lpColumn, BOOL isW)
 	     lpColumn->mask & LVCF_TEXT ? lpColumn->cchTextMax: 0, lpColumn->iSubItem);
     return buf;
 }
+
+#if 0
+/******  enable to trace all InvalidateRect calls  *******/
+static void LISTVIEW_InvRect(int line, HWND hwnd, const RECT* lprc, BOOL bol)
+{
+    if (lprc)
+      TRACE("doing InvalidateRect at line %d, rect=(%d,%d)-(%d,%d), bool=%d\n",
+	    line, lprc->left, lprc->top, lprc->right, lprc->bottom, bol);
+    else
+      TRACE("doing InvalidateRect at line %d, rect=<null>, bool=%d\n",
+	    line, bol);
+    InvalidateRect(hwnd, lprc, bol);
+}
+#define InvalidateRect(a,b,c) LISTVIEW_InvRect(__LINE__, a, b, c)
+#endif
+
 
 /******** Notification functions i************************************/
 
@@ -1111,6 +1142,293 @@ static void LISTVIEW_UnsupportedStyles(LONG lStyle)
 
   if (lStyle & LVS_SORTDESCENDING)
     FIXME("  LVS_SORTDESCENDING\n");
+}
+
+/***
+ * DESCRIPTION:            [INTERNAL]
+ * Compute sizes and rectangles of an item.  This is to localize all
+ * the computations in one place.
+ *
+ *                                          supported for style:
+ *                                                   IC SI LI RP
+ * PARAMETER(S):
+ * [I] HWND : window handle
+ * [I] INT  : item number
+ * [O] LPPOINT : ptr to Origin point or NULL         x  x  x  x
+ * [O] LPPOINT : ptr to Position point or NULL       x  x  x  x
+ *                the Position point is relative to infoPtr->rcList
+ *                (has *NOT* been adjusted by the origin)
+ * [O] LPRECT  : ptr to Boundary rectangle or NULL   x  x  x  x
+ *                the Boundary rectangle is relative to infoPtr->rcList
+ *                (has *NOT* been adjusted by the origin)
+ * [O] LPRECT  : ptr to Icon rectangle or NULL       x  x  x  x
+ *                the Icon rectangle is relative to infoPtr->rcView
+ *                (has already been adjusted by the origin)
+ * [O] LPRECT  : ptr to Label rectangle or NULL      x  x  -  -
+ *              - the Label rectangle is relative to infoPtr->rcView
+ *                (has already been adjusted by the origin)
+ *              - the Label rectangle encloses the label text only
+ * [O] LPRECT  : ptr to FullText rectangle or NULL   x  x  -  -
+ *              - the FullText rectangle is relative to infoPtr->rcView
+ *                (has already been adjusted by the origin)
+ *              - the FullText rectangle contains the Label rectangle
+ *                but may be bigger. Used for filling the background.
+ *
+ * RETURN:
+ *   TRUE if computations OK
+ *   FALSE otherwise
+ */
+static BOOL LISTVIEW_GetAllMeasure(LISTVIEW_INFO *infoPtr, INT nItem,
+				  LPPOINT lpptOrigin,
+				  LPPOINT lpptPosition,
+				  LPRECT lprcBoundary,
+				  LPRECT lprcIcon,
+				  LPRECT lprcLabel,
+				  LPRECT lprcFText)
+{
+  LONG lStyle = GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE);
+  UINT uView = lStyle & LVS_TYPEMASK;
+  BOOL bResult = TRUE;
+  HDPA hdpaSubItems;
+  LISTVIEW_ITEM *lpItem;
+  POINT Origin, Position;
+  RECT Icon, Boundary, Label;
+  INT nHorzPos = 0, nVertPos = 0;
+
+  /************************************************************/
+  /* compute Origin point                                     */
+  /*  (we can always do this even with bad/invalid nItem)     */
+  /************************************************************/
+  SCROLLINFO scrollInfo;
+  ZeroMemory(&Origin, sizeof(POINT));
+  ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
+  scrollInfo.cbSize = sizeof(SCROLLINFO);    
+  scrollInfo.fMask = SIF_POS;
+    
+  if ((lStyle & WS_HSCROLL) && GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo))
+      nHorzPos = scrollInfo.nPos;
+  if ((lStyle & WS_VSCROLL) && GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo))
+      nVertPos = scrollInfo.nPos;
+
+  TRACE("nHorzPos=%d, nVertPos=%d\n", nHorzPos, nVertPos);
+
+  Origin.x = infoPtr->rcList.left;
+  Origin.y = infoPtr->rcList.top;
+  if (uView == LVS_LIST)
+      {
+	  nHorzPos *= LISTVIEW_GetCountPerColumn(infoPtr);
+	  nVertPos = 0;
+      }
+  else if (uView == LVS_REPORT)
+      {
+	  nVertPos *= infoPtr->nItemHeight;
+      }
+    
+  Origin.x -= nHorzPos;
+  Origin.y -= nVertPos;
+
+  TRACE("hwnd=%x, item=%d, origin=(%ld,%ld)\n",
+	infoPtr->hwndSelf, nItem, Origin.x, Origin.y);
+  if (lpptOrigin) *lpptOrigin = Origin;
+    
+
+  /************************************************************/
+  /* do some basic checks on the item for correctness         */
+  /************************************************************/
+  if (!((nItem >= 0) && (nItem < GETITEMCOUNT(infoPtr))))
+      return FALSE;
+  if (!(hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)))
+      return FALSE;
+  if (!(lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)))
+      return FALSE;
+
+  /***********************************************************************/
+  /* compute boundary box for the item (assumes nItemWidth and Height    */
+  /***********************************************************************/
+  if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
+  {
+      Boundary.left = lpItem->ptPosition.x;
+      Boundary.top = lpItem->ptPosition.y;
+  }
+  else if (uView == LVS_LIST)
+  {
+      INT nCountPerColumn;
+      INT nRow, adjItem;
+
+      adjItem = nItem - LISTVIEW_GetTopIndex(infoPtr);
+      nCountPerColumn = LISTVIEW_GetCountPerColumn(infoPtr);
+      if (adjItem < 0)
+      {
+	  nRow = adjItem % nCountPerColumn;
+	  if (nRow == 0)
+	  {
+	      Boundary.left = adjItem / nCountPerColumn * infoPtr->nItemWidth;
+	      Boundary.top = 0;
+	  }
+	  else
+	  {
+	      Boundary.left = (adjItem / nCountPerColumn -1) * infoPtr->nItemWidth;
+	      Boundary.top = (nRow + nCountPerColumn) * infoPtr->nItemHeight;
+	  }
+      }
+      else
+      {
+	  Boundary.left = adjItem / nCountPerColumn * infoPtr->nItemWidth;
+	  Boundary.top = adjItem % nCountPerColumn * infoPtr->nItemHeight;
+      }
+  }
+  else  /* LVS_REPORT */
+  {
+      Boundary.left = REPORT_MARGINX;
+      Boundary.top = ((nItem - LISTVIEW_GetTopIndex(infoPtr)) *
+                         infoPtr->nItemHeight) + infoPtr->rcList.top;
+
+      if (!(lStyle & LVS_NOSCROLL))
+      {
+	  SCROLLINFO scrollInfo;
+	  /* Adjust position by scrollbar offset */
+	  ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
+	  scrollInfo.cbSize = sizeof(SCROLLINFO);
+	  scrollInfo.fMask = SIF_POS;
+	  GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo);
+	  Boundary.left -= scrollInfo.nPos;
+      }
+  }
+  Boundary.right = Boundary.left + infoPtr->nItemWidth;
+  Boundary.bottom = Boundary.top + infoPtr->nItemHeight;
+  TRACE("hwnd=%x, item=%d, boundary=(%d,%d)-(%d,%d)\n",
+	infoPtr->hwndSelf, nItem,
+	Boundary.left, Boundary.top, Boundary.right, Boundary.bottom);
+  if (lprcBoundary) *lprcBoundary = Boundary;
+
+  /************************************************************/
+  /* compute position point (ala LVM_GETITEMPOSITION)         */
+  /************************************************************/
+  Position.x = Boundary.left;
+  Position.y = Boundary.top;
+  if (uView == LVS_ICON)
+  {
+      Position.y += ICON_TOP_PADDING;
+      Position.x += (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2;
+  }
+  if (lpptPosition) *lpptPosition = Position;
+  TRACE("hwnd=%x, item=%d, position=(%ld,%ld)\n",
+	infoPtr->hwndSelf, nItem, Position.x, Position.y);
+
+  /************************************************************/
+  /* compute ICON bounding box (ala LVM_GETITEMRECT)          */
+  /************************************************************/
+  if (uView == LVS_ICON)
+  {
+      if (infoPtr->himlNormal != NULL)
+      {
+	  Icon.left   = Position.x + Origin.x - ICON_LR_HALF;
+	  Icon.top    = Position.y + Origin.y - ICON_TOP_PADDING;
+	  Icon.right  = Icon.left + infoPtr->iconSize.cx + ICON_LR_PADDING;
+	  Icon.bottom = Icon.top + infoPtr->iconSize.cy + ICON_TOP_PADDING;
+      }
+      else bResult = FALSE;
+  }
+  else if (uView == LVS_SMALLICON)
+  {
+      Icon.left   = Position.x + Origin.x;
+      Icon.top    = Position.y + Origin.y;
+      Icon.bottom = Icon.top + infoPtr->nItemHeight;
+
+      if (infoPtr->himlState != NULL)
+	  Icon.left += infoPtr->iconSize.cx;
+
+      if (infoPtr->himlSmall != NULL)
+	  Icon.right = Icon.left + infoPtr->iconSize.cx;
+      else
+	  Icon.right = Icon.left;
+  }
+  else /* LVS_LIST or LVS_REPORT */
+  {
+      Icon.left = Position.x;
+      Icon.top = Position.y;
+      Icon.bottom = Icon.top + infoPtr->nItemHeight;
+
+      if (infoPtr->himlState != NULL)
+	  Icon.left += infoPtr->iconSize.cx;
+
+      if (infoPtr->himlSmall != NULL)
+	  Icon.right = Icon.left + infoPtr->iconSize.cx;
+      else
+	  Icon.right = Icon.left;
+  }
+  if(lprcIcon) *lprcIcon = Icon;
+  TRACE("hwnd=%x, item=%d, icon=(%d,%d)-(%d,%d)\n",
+	infoPtr->hwndSelf, nItem,
+	Icon.left, Icon.top, Icon.right, Icon.bottom);
+
+  /************************************************************/
+  /* compute LABEL bounding box (ala LVM_GETITEMRECT)         */
+  /************************************************************/
+  if (uView == LVS_ICON)
+  {
+      if (infoPtr->himlNormal != NULL)
+      {
+	  INT nLabelWidth;
+	  RECT FullText;
+
+	  Label.left = Boundary.left + Origin.x;
+	  Label.top = Boundary.top + Origin.y + ICON_TOP_PADDING_HITABLE +
+	              infoPtr->iconSize.cy + ICON_BOTTOM_PADDING;
+
+	  nLabelWidth = LISTVIEW_GetLabelWidth(infoPtr, nItem);
+	  if (infoPtr->iconSpacing.cx - nLabelWidth > 1)
+	  {
+	      Label.left += (infoPtr->iconSpacing.cx - nLabelWidth) / 2;
+	      Label.right = Label.left + nLabelWidth;
+	      Label.bottom = Label.top + infoPtr->ntmHeight + 1;
+	      Label.bottom += HEIGHT_PADDING;
+	  }
+	  else
+	  {
+	      Label.right = Label.left + infoPtr->nItemWidth;
+	      Label.bottom = Label.top + infoPtr->nItemHeight + HEIGHT_PADDING;
+	      LISTVIEW_UpdateLargeItemLabelRect (infoPtr, nItem,
+						 &Label);
+	  }
+	  FullText = Label;
+	  InflateRect(&FullText, 2, 0);
+	  if (lprcLabel) *lprcLabel = Label;
+	  if (lprcFText) *lprcFText = FullText;
+	  TRACE("hwnd=%x, item=%d, label=(%d,%d)-(%d,%d), fulltext=(%d,%d)-(%d,%d)\n",
+		infoPtr->hwndSelf, nItem,
+		Label.left, Label.top, Label.right, Label.bottom,
+		FullText.left, FullText.top, FullText.right, FullText.bottom);
+      }
+      else bResult = FALSE;
+  }
+  else if (uView == LVS_SMALLICON)
+  {
+      INT nLeftPos, nLabelWidth;
+
+      nLeftPos = Label.left = Position.x + Origin.x;
+      Label.top = Position.y + Origin.y;
+      Label.bottom = Label.top + infoPtr->nItemHeight;
+
+      if (infoPtr->himlState != NULL)
+	  Label.left += infoPtr->iconSize.cx;
+
+      if (infoPtr->himlSmall != NULL)
+	  Label.left += infoPtr->iconSize.cx;
+
+      nLabelWidth = LISTVIEW_GetLabelWidth(infoPtr, nItem);
+      nLabelWidth += TRAILING_PADDING;
+      if (Label.left + nLabelWidth < nLeftPos + infoPtr->nItemWidth)
+	  Label.right = Label.left + nLabelWidth;
+      else
+	  Label.right = nLeftPos + infoPtr->nItemWidth;
+      if (lprcLabel) *lprcLabel = Label;
+      if (lprcFText) *lprcFText = Label;
+      TRACE("hwnd=%x, item=%d, label=(%d,%d)-(%d,%d)\n",
+	    infoPtr->hwndSelf, nItem,
+	    Label.left, Label.top, Label.right, Label.bottom);
+  }
+  return bResult;
 }
 
 /***
@@ -2171,6 +2489,80 @@ static BOOL LISTVIEW_RemoveSubItem(HDPA hdpaSubItems, INT nSubItem)
 }
 
 
+ /***
+  * DESCRIPTION:          [INTERNAL]
+  * Sets rectangle that the item was last drawn at.
+  *
+  * PARAMETER(S):
+  * [I] HWND : window handle
+  * [I] INT : item index
+  * [I] LPRECT : coordinate information
+  *
+  * RETURN:
+  *   SUCCESS : TRUE
+  *   FAILURE : FALSE
+  */
+static BOOL LISTVIEW_SetItemDrawRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lpRect)
+{
+  BOOL bResult = FALSE;
+  HDPA hdpaSubItems;
+  LISTVIEW_ITEM *lpItem;
+
+  TRACE("(hwnd=%x,nItem=%d,rect=(%d,%d)-(%d,%d))\n",
+	infoPtr->hwndSelf, nItem,
+	lpRect->left, lpRect->top, lpRect->right, lpRect->bottom);
+
+  if ((nItem >= 0) && (nItem < GETITEMCOUNT(infoPtr)) && (lpRect != NULL))
+  {
+    if ((hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)))
+    {
+      if ((lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)))
+      {
+        bResult = TRUE;
+        lpItem->rcLastDraw = *lpRect;
+      }
+    }
+  }
+  return bResult;
+}
+
+ /***
+  * DESCRIPTION:          [INTERNAL]
+  * Gets rectangle that the item was last drawn at.
+  *
+  * PARAMETER(S):
+  * [I] HWND : window handle
+  * [I] INT : item index
+  * [O] LPRECT : coordinate information
+  *
+  * RETURN:
+  *   SUCCESS : TRUE
+  *   FAILURE : FALSE
+  */
+static BOOL LISTVIEW_GetItemDrawRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lpRect)
+{
+  BOOL bResult = FALSE;
+  HDPA hdpaSubItems;
+  LISTVIEW_ITEM *lpItem;
+
+  if ((nItem >= 0) && (nItem < GETITEMCOUNT(infoPtr)) && (lpRect != NULL))
+  {
+    if ((hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)))
+    {
+      if ((lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)))
+      {
+        bResult = TRUE;
+        if (lpRect) *lpRect = lpItem->rcLastDraw;
+	TRACE("(hwnd=%x,nItem=%d,rect=(%d,%d)-(%d,%d))\n",
+	      infoPtr->hwndSelf, nItem,
+	      lpRect->left, lpRect->top, lpRect->right, lpRect->bottom);
+      }
+    }
+  }
+  return bResult;
+}
+
+
 /***
  * Tests wheather the item is assignable to a list with style lStyle 
  */
@@ -2437,7 +2829,6 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 {
     INT oldFocus = infoPtr->nFocusedItem;
     LPWSTR pszText = NULL;
-    RECT rcItem;
     BOOL bResult;
     
     if (!lpLVItem || lpLVItem->iItem < 0 ||
@@ -2445,7 +2836,7 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 	return FALSE;
    
     /* For efficiency, we transform the lpLVItem->pszText to Unicode here */
-    if ((lpLVItem->mask & LVIF_TEXT) && lpLVItem->pszText)
+    if ((lpLVItem->mask & LVIF_TEXT) && is_textW(lpLVItem->pszText))
     {
 	pszText = lpLVItem->pszText;
 	lpLVItem->pszText = textdupTtoW(lpLVItem->pszText, isW);
@@ -2458,11 +2849,35 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     /* redraw item, if necessary */
     if (bResult && !infoPtr->bIsDrawing)
     {
+	RECT rcOldItem={0,0,0,0}, rcIcon, rcFullText, rcNewItem;
+
 	if (oldFocus != infoPtr->nFocusedItem && infoPtr->bFocus)
 	    LISTVIEW_ToggleFocusRect(infoPtr);
-	rcItem.left = LVIR_BOUNDS;
-	LISTVIEW_GetItemRect(infoPtr, lpLVItem->iItem, &rcItem);
-	InvalidateRect(infoPtr->hwndSelf, &rcItem, FALSE);
+
+	/* Note that ->rcLastDraw is normally all zero, so
+	 * no second InvalidateRect is issued.
+	 *
+	 * However, when a large icon style is drawn (LVS_ICON),
+	 * the rectangle drawn is saved in rcLastDraw. That way
+	 * the InvalidateRect will invalidate the entire area drawn
+	 */
+	if ((oldFocus >= 0) && (oldFocus < GETITEMCOUNT(infoPtr)))
+	{
+	    LISTVIEW_GetItemDrawRect(infoPtr, oldFocus, &rcOldItem);
+	    if(!IsRectEmpty(&rcOldItem))
+		InvalidateRect(infoPtr->hwndSelf, &rcOldItem, TRUE);
+	}
+
+	LISTVIEW_GetAllMeasure(infoPtr, lpLVItem->iItem, NULL, NULL,
+			      NULL, &rcIcon, NULL, &rcFullText);
+	UnionRect(&rcNewItem, &rcIcon, &rcFullText);
+	if(!IsRectEmpty(&rcNewItem))
+	    InvalidateRect(infoPtr->hwndSelf, &rcNewItem, TRUE);
+        TRACE("old item(%d)=(%d,%d)-(%d,%d), new item(%d)=(%d,%d)-(%d,%d)\n",
+	      oldFocus,
+	      rcOldItem.left, rcOldItem.top, rcOldItem.right, rcOldItem.bottom,
+	      lpLVItem->iItem,
+	      rcNewItem.left, rcNewItem.top, rcNewItem.right, rcNewItem.bottom);
     }
     /* restore text */
     if (pszText)
@@ -2532,6 +2947,9 @@ static inline BOOL LISTVIEW_FillBkgnd(LISTVIEW_INFO *infoPtr, HDC hdc, const REC
 {
     if (!infoPtr->hBkBrush) return FALSE;
     FillRect(hdc, lprcBox, infoPtr->hBkBrush);
+    TRACE("filling (%d,%d)-(%d,%d) using brush %x\n",
+	  lprcBox->left, lprcBox->top, lprcBox->right, lprcBox->bottom,
+	  infoPtr->hBkBrush);
 
     return TRUE;
 }
@@ -2721,7 +3139,7 @@ static void LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
        ImageList_Draw(infoPtr->himlState, uStateImage - 1, hdc, rcItem.left,
                       rcItem.top, ILD_NORMAL);
 
-     rcItem.left += infoPtr->iconSize.cx;
+     rcItem.left += infoPtr->iconStateSize.cx;
      bImage = TRUE;
   }
 
@@ -2863,14 +3281,15 @@ static void LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
   WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
   LVITEMW lvItem;
   UINT uFormat = LISTVIEW_DTFLAGS;
-  RECT rcFill;
+  RECT rcIcon, rcFill, rcFocus, rcFullText, rcLabel;
+  POINT ptOrg;
 
   TRACE("(hdc=%x, nItem=%d, left=%d, top=%d, right=%d, bottom=%d)\n",
         hdc, nItem, rcItem.left, rcItem.top, rcItem.right, rcItem.bottom);
 
   /* get information needed for drawing the item */
   lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_STATE;
-  lvItem.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
+  lvItem.stateMask = LVIS_SELECTED | LVIS_FOCUSED | LVIS_STATEIMAGEMASK;
   lvItem.iItem = nItem;
   lvItem.iSubItem = 0;
   lvItem.cchTextMax = DISP_TEXT_SIZE;
@@ -2879,12 +3298,29 @@ static void LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
   LISTVIEW_GetItemW(infoPtr, &lvItem, FALSE);
   TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
 
-  rcFill = rcItem;
+  LISTVIEW_GetAllMeasure(infoPtr, nItem, &ptOrg, NULL,
+			&rcFill, &rcIcon, &rcLabel, &rcFullText);
+  rcFill.left += ptOrg.x;
+  rcFill.top += ptOrg.y;
+  rcFill.right += ptOrg.x;
+  rcFill.bottom += ptOrg.y;
 
   TRACE("background rect (%d,%d)-(%d,%d)\n",
         rcFill.left, rcFill.top, rcFill.right, rcFill.bottom);
 
   LISTVIEW_FillBkgnd(infoPtr, hdc, &rcFill);
+
+  /* Set the item to the boundary box for now */
+  rcItem = rcFill;
+  TRACE("bound box for text+icon (%d,%d)-(%d,%d), iS.cx=%ld, nItemWidth=%d\n",
+        rcItem.left, rcItem.top, rcItem.right, rcItem.bottom,
+        infoPtr->iconSize.cx, infoPtr->nItemWidth);
+
+  TRACE("rcList (%d,%d)-(%d,%d), rcView (%d,%d)-(%d,%d)\n",
+        infoPtr->rcList.left,    infoPtr->rcList.top,
+        infoPtr->rcList.right,   infoPtr->rcList.bottom,
+        infoPtr->rcView.left,    infoPtr->rcView.top,
+        infoPtr->rcView.right,   infoPtr->rcView.bottom);
 
   /* Figure out text colours etc. depending on state
    * At least the following states exist; there may be more.
@@ -2941,16 +3377,33 @@ static void LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
    */
   uFormat |= lprcFocus ?  DT_NOCLIP : DT_WORD_ELLIPSIS | DT_END_ELLIPSIS;
 
+  /* state icons */
+  if (infoPtr->himlState != NULL)
+  {
+     UINT uStateImage = (lvItem.state & LVIS_STATEIMAGEMASK) >> 12;
+     INT x, y;
+
+     x = rcIcon.left - infoPtr->iconStateSize.cx + 10;
+     y = rcIcon.top + infoPtr->iconSize.cy - infoPtr->iconStateSize.cy + 4;
+     if (uStateImage > 0)
+     {
+       ImageList_Draw(infoPtr->himlState, uStateImage - 1, hdc, x,
+                      y, ILD_NORMAL);
+     }
+  }
+
   /* draw the icon */
   if (infoPtr->himlNormal != NULL)
   {
     if (lvItem.iImage >= 0)
     {
-      ImageList_Draw (infoPtr->himlNormal, lvItem.iImage, hdc, rcItem.left,
-                      rcItem.top,
+      ImageList_Draw (infoPtr->himlNormal, lvItem.iImage, hdc,
+		      rcIcon.left+ICON_LR_HALF,
+		      rcIcon.top+ICON_TOP_PADDING_HITABLE,
                       (lvItem.state & LVIS_SELECTED) ? ILD_SELECTED : ILD_NORMAL);
       TRACE("icon %d at (%d,%d)\n",
-	    lvItem.iImage, rcItem.left, rcItem.top);
+	    lvItem.iImage, rcIcon.left+ICON_LR_HALF,
+	    rcIcon.top+ICON_TOP_PADDING_HITABLE);
     }
   }
 
@@ -2963,21 +3416,9 @@ static void LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
     return;
   }
 
-  /* Since rcItem.left is left point of icon, compute left point of item box */
-  rcItem.left -= ((infoPtr->nItemWidth - infoPtr->iconSize.cx) / 2);
-  rcItem.right = rcItem.left + infoPtr->nItemWidth;
-  rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
-  TRACE("bound box for text+icon (%d,%d)-(%d,%d), iS.cx=%ld, nItemWidth=%d\n",
-        rcItem.left, rcItem.top, rcItem.right, rcItem.bottom,
-        infoPtr->iconSize.cx, infoPtr->nItemWidth);
-  TRACE("rcList (%d,%d)-(%d,%d), rcView (%d,%d)-(%d,%d)\n",
-        infoPtr->rcList.left,    infoPtr->rcList.top,
-        infoPtr->rcList.right,   infoPtr->rcList.bottom,
-        infoPtr->rcView.left,    infoPtr->rcView.top,
-        infoPtr->rcView.right,   infoPtr->rcView.bottom);
-
+  /* adjust item for just text instead of entire item */
   InflateRect(&rcItem, -(2*CAPTION_BORDER), 0);
-  rcItem.top += infoPtr->iconSize.cy + ICON_BOTTOM_PADDING;
+  rcItem.top += infoPtr->iconSize.cy + ICON_TOP_PADDING + ICON_BOTTOM_PADDING;
 
 
   /* draw label */
@@ -2995,34 +3436,31 @@ static void LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
    * need to jump through a few hoops to ensure that it all gets displayed and
    * that the background is complete
    */
-  if (uFormat & DT_NOCLIP)
+  rcFocus = rcLabel;  /* save for focus */
+  if ((uFormat & DT_NOCLIP) || (lvItem.state & LVIS_SELECTED))
   {
-      RECT rcBack=rcItem;
       HBRUSH hBrush = CreateSolidBrush(GetBkColor (hdc));
-      int dx, dy, old_wid, new_wid;
-      DrawTextW (hdc, lvItem.pszText, -1, &rcItem, uFormat | DT_CALCRECT);
-      /* Microsoft, in their great wisdom, have decided that the rectangle
-       * returned by DrawText on DT_CALCRECT will only guarantee the dimension,
-       * not the location.  So we have to do the centring ourselves (and take
-       * responsibility for agreeing off-by-one consistency with them).
-       */
-      old_wid = rcItem.right-rcItem.left;
-      new_wid = rcBack.right - rcBack.left;
-      dx = rcBack.left - rcItem.left + (new_wid-old_wid)/2;
-      dy = rcBack.top - rcItem.top;
-      OffsetRect (&rcItem, dx, dy);
-      FillRect(hdc, &rcItem, hBrush);
+
+      FillRect(hdc, &rcFullText, hBrush);
+      rcFocus = rcFullText;
       DeleteObject(hBrush);
+
+      /* Save size of item drawing for next InvalidateRect */
+      LISTVIEW_SetItemDrawRect(infoPtr, nItem, &rcFullText);
+      TRACE("focused/selected, rcFocus=(%d,%d)-(%d,%d), rclabel=(%d,%d)-(%d,%d)\n",
+	    rcFocus.left, rcFocus.top, rcFocus.right, rcFocus.bottom,
+	    rcLabel.left, rcLabel.top, rcLabel.right, rcLabel.bottom);
   }
   /* else ? What if we are losing the focus? will we not get a complete
    * background?
    */
-  DrawTextW (hdc, lvItem.pszText, -1, &rcItem, uFormat);
+
+  DrawTextW (hdc, lvItem.pszText, -1, &rcLabel, uFormat);
   TRACE("text at (%d,%d)-(%d,%d) is %s\n",
-	rcItem.left, rcItem.top, rcItem.right, rcItem.bottom,
+	rcLabel.left, rcLabel.top, rcLabel.right, rcLabel.bottom,
 	debugstr_w(lvItem.pszText));
 
-  if(lprcFocus) CopyRect(lprcFocus, &rcItem);
+  if(lprcFocus) CopyRect(lprcFocus, &rcFocus);
 }
 
 /***
@@ -3258,7 +3696,7 @@ static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, BOOL bSmall, D
 {
   POINT ptPosition;
   POINT ptOrigin;
-  RECT rcItem, *lprcFocus;
+  RECT rcItem, *lprcFocus, rcClip, rcTemp;
   INT i;
   DWORD cditemmode = CDRF_DODEFAULT;
 
@@ -3271,8 +3709,71 @@ static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, BOOL bSmall, D
     return;
 
   LISTVIEW_GetOrigin(infoPtr, &ptOrigin);
+
+  GetClipBox(hdc, &rcClip);
+
+  /* Draw the visible non-selected items */
   for (i = 0; i < GETITEMCOUNT(infoPtr); i++)
   {
+    if (LISTVIEW_GetItemState(infoPtr,i,LVIS_SELECTED))
+	continue;
+
+    rcItem.left = LVIR_BOUNDS;
+    LISTVIEW_GetItemRect(infoPtr, i, &rcItem);
+    if (!IntersectRect(&rcTemp, &rcItem, &rcClip))
+	continue;
+
+    if (cdmode & CDRF_NOTIFYITEMDRAW)
+      cditemmode = notify_customdrawitem (infoPtr, hdc, i, 0, CDDS_ITEMPREPAINT);
+    if (cditemmode & CDRF_SKIPDEFAULT)
+        continue;
+
+    LISTVIEW_GetItemPosition(infoPtr, i, &ptPosition);
+    ptPosition.x += ptOrigin.x;
+    ptPosition.y += ptOrigin.y;
+
+    if (ptPosition.y + infoPtr->nItemHeight > infoPtr->rcList.top)
+    {
+      if (ptPosition.x + infoPtr->nItemWidth > infoPtr->rcList.left)
+      {
+        if (ptPosition.y < infoPtr->rcList.bottom)
+        {
+          if (ptPosition.x < infoPtr->rcList.right)
+          {
+            rcItem.top = ptPosition.y;
+            rcItem.left = ptPosition.x;
+            rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
+            rcItem.right = rcItem.left + infoPtr->nItemWidth;
+	    
+            /* if we have focus, calculate focus rect */
+            if (infoPtr->bFocus && LISTVIEW_GetItemState(infoPtr, i, LVIS_FOCUSED))
+	      lprcFocus = &infoPtr->rcFocus;
+            else
+	      lprcFocus = 0;
+      
+            if (bSmall)
+              LISTVIEW_DrawItem(infoPtr, hdc, i, rcItem, FALSE, lprcFocus);
+            else
+              LISTVIEW_DrawLargeItem(infoPtr, hdc, i, rcItem, lprcFocus);
+          }
+        }
+      }
+    }
+    if (cditemmode & CDRF_NOTIFYPOSTPAINT)
+        notify_customdrawitem(infoPtr, hdc, i, 0, CDDS_ITEMPOSTPAINT);
+  }
+
+  /* Draw the visible selected items */
+  for (i = 0; i < GETITEMCOUNT(infoPtr); i++)
+  {
+    if (!LISTVIEW_GetItemState(infoPtr,i,LVIS_SELECTED))
+	continue;
+
+    rcItem.left = LVIR_BOUNDS;
+    LISTVIEW_GetItemRect(infoPtr, i, &rcItem);
+    if (!IntersectRect(&rcTemp, &rcItem, &rcClip))
+	continue;
+
     if (cdmode & CDRF_NOTIFYITEMDRAW)
       cditemmode = notify_customdrawitem (infoPtr, hdc, i, 0, CDDS_ITEMPREPAINT);
     if (cditemmode & CDRF_SKIPDEFAULT)
@@ -4092,13 +4593,20 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPart
           nScrollPosHeight = 1;
           rcItem.top += infoPtr->rcList.top;
         }
+	else
+	{
+	    ERR("LVS_LIST top unknown, nScrollPosWidth=%d\n", nScrollPosWidth);
+	}
 
-        if (rcItem.top % nScrollPosHeight == 0)
-          scrollInfo.nPos += rcItem.top / nScrollPosHeight;
-        else
-          scrollInfo.nPos += rcItem.top / nScrollPosHeight - 1;
+	if (nScrollPosHeight)
+	{
+	    if (rcItem.top % nScrollPosHeight == 0)
+		scrollInfo.nPos += rcItem.top / nScrollPosHeight;
+	    else
+		scrollInfo.nPos += rcItem.top / nScrollPosHeight - 1;
 
-        SetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo, TRUE);
+	    SetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo, TRUE);
+	}
       }
     }
     else if (rcItem.bottom > infoPtr->rcList.bottom)
@@ -4117,13 +4625,20 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPart
           nScrollPosHeight = 1;
           rcItem.bottom -= infoPtr->rcList.bottom;
         }
+	else  /* LVS_LIST */
+	{
+	    ERR("LVS_LIST bottom unknown, nScrollPosWidth=%d\n", nScrollPosWidth);
+	}
 
-        if (rcItem.bottom % nScrollPosHeight == 0)
-          scrollInfo.nPos += rcItem.bottom / nScrollPosHeight;
-        else
-          scrollInfo.nPos += rcItem.bottom / nScrollPosHeight + 1;
+	if (nScrollPosHeight)
+	{
+	    if (rcItem.bottom % nScrollPosHeight == 0)
+		scrollInfo.nPos += rcItem.bottom / nScrollPosHeight;
+	    else
+		scrollInfo.nPos += rcItem.bottom / nScrollPosHeight + 1;
 
-        SetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo, TRUE);
+	    SetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo, TRUE);
+	}
       }
     }
   }
@@ -4792,76 +5307,16 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
  */
 static BOOL LISTVIEW_GetItemBoundBox(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lpRect)
 {
-  LONG lStyle = GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE);
-  UINT uView = lStyle & LVS_TYPEMASK;
   BOOL bResult = FALSE;
-  HDPA hdpaSubItems;
-  LISTVIEW_ITEM *lpItem;
-  INT nCountPerColumn;
-  INT nRow;
 
   TRACE("(nItem=%d,lpRect=%p)\n", nItem, lpRect);
 
   if ((nItem >= 0) && (nItem < GETITEMCOUNT(infoPtr)) &&
       (lpRect != NULL))
   {
-    if (uView == LVS_LIST)
-    {
-      bResult = TRUE;
-      nItem = nItem - ListView_GetTopIndex(infoPtr->hwndSelf);
-      nCountPerColumn = LISTVIEW_GetCountPerColumn(infoPtr);
-      if (nItem < 0)
-      {
-        nRow = nItem % nCountPerColumn;
-        if (nRow == 0)
-        {
-          lpRect->left = nItem / nCountPerColumn * infoPtr->nItemWidth;
-          lpRect->top = 0;
-        }
-        else
-        {
-          lpRect->left = (nItem / nCountPerColumn -1) * infoPtr->nItemWidth;
-          lpRect->top = (nRow + nCountPerColumn) * infoPtr->nItemHeight;
-        }
-      }
-      else
-      {
-        lpRect->left = nItem / nCountPerColumn * infoPtr->nItemWidth;
-        lpRect->top = nItem % nCountPerColumn * infoPtr->nItemHeight;
-      }
-    }
-    else if (uView == LVS_REPORT)
-    {
-      bResult = TRUE;
-      lpRect->left = REPORT_MARGINX;
-      lpRect->top = ((nItem - ListView_GetTopIndex(infoPtr->hwndSelf)) *
-                         infoPtr->nItemHeight) + infoPtr->rcList.top;
-
-      if (!(lStyle & LVS_NOSCROLL))
-      {
-        SCROLLINFO scrollInfo;
-        /* Adjust position by scrollbar offset */
-        scrollInfo.cbSize = sizeof(SCROLLINFO);
-        scrollInfo.fMask = SIF_POS;
-        GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo);
-        lpRect->left -= scrollInfo.nPos;
-      }
-    }
-    else /* either LVS_ICON or LVS_SMALLICON */
-    {
-      if ((hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, nItem)))
-      {
-        if ((lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0)))
-        {
-          bResult = TRUE;
-          lpRect->left = lpItem->ptPosition.x;
-          lpRect->top = lpItem->ptPosition.y;
-        }
-      }
-    }
+      bResult = LISTVIEW_GetAllMeasure(infoPtr, nItem, NULL, NULL,
+				      lpRect, NULL, NULL, NULL);
   }
-  lpRect->right = lpRect->left + infoPtr->nItemWidth;
-  lpRect->bottom = lpRect->top + infoPtr->nItemHeight;
   TRACE("result %s: (%d,%d)-(%d,%d)\n", bResult ? "TRUE" : "FALSE",
 	lpRect->left, lpRect->top, lpRect->right, lpRect->bottom);
   return bResult;
@@ -4884,23 +5339,15 @@ static BOOL LISTVIEW_GetItemBoundBox(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT l
  */
 static BOOL LISTVIEW_GetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, LPPOINT lpptPosition)
 {
-  UINT uView = LISTVIEW_GetType(infoPtr);
   BOOL bResult = FALSE;
-  RECT rcBounding;
 
   TRACE("(nItem=%d, lpptPosition=%p)\n", nItem, lpptPosition);
 
   if ((nItem >= 0) && (nItem < GETITEMCOUNT(infoPtr)) &&
       (lpptPosition != NULL))
   {
-    bResult = LISTVIEW_GetItemBoundBox(infoPtr, nItem, &rcBounding);
-    lpptPosition->x = rcBounding.left;
-    lpptPosition->y = rcBounding.top;
-    if (uView == LVS_ICON)
-    {
-       lpptPosition->y += ICON_TOP_PADDING;
-       lpptPosition->x += (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2;
-    }
+    bResult = LISTVIEW_GetAllMeasure(infoPtr, nItem, NULL, lpptPosition,
+				    NULL, NULL, NULL, NULL);
     TRACE("result %s (%ld,%ld)\n", bResult ? "TRUE" : "FALSE",
           lpptPosition->x, lpptPosition->y);
    }
@@ -4947,7 +5394,7 @@ static void LISTVIEW_GetIntegralLines(
  * PARAMETER
  * [I] infoPtr : pointer to the listview structure
  * [I] nItem : the item for which we are calculating this
- * [I] rect : the rectangle to be updated
+ * [I/O] rect : the rectangle to be updated
  *
  * This appears to be weird, even in the Microsoft implementation.
  */
@@ -4960,6 +5407,7 @@ static void LISTVIEW_UpdateLargeItemLabelRect (LISTVIEW_INFO *infoPtr, int nItem
     RECT rcBack = *rect;
     BOOL focused, selected;
     int dx, dy, old_wid, new_wid;
+    LVITEMW lvItem;
 
     TRACE("%s, focus item=%d, cur item=%d\n",
 	  (infoPtr->bFocus) ? "Window has focus" : "Window not focused",
@@ -4971,67 +5419,48 @@ static void LISTVIEW_UpdateLargeItemLabelRect (LISTVIEW_INFO *infoPtr, int nItem
 
     uFormat |= (focused) ? DT_NOCLIP : DT_WORD_ELLIPSIS | DT_END_ELLIPSIS;
 
-    if (focused || selected)
+    /* We (aim to) display the full text.  In Windows 95 it appears to
+     * calculate the size assuming the specified font and then it draws
+     * the text in that region with the specified font except scaled to
+     * 10 point (or the height of the system font or ...).  Thus if the
+     * window has 24 point Helvetica the highlit rectangle will be
+     * taller than the text and if it is 7 point Helvetica then the text
+     * will be clipped.
+     * For now we will simply say that it is the correct size to display
+     * the text in the specified font.
+     */
+    lvItem.mask = LVIF_TEXT;
+    lvItem.iItem = nItem;
+    lvItem.iSubItem = 0;
+    /* We will specify INTERNAL and so will receive back a const
+     * pointer to the text, rather than specifying a buffer to which
+     * to copy it.
+     */
+    LISTVIEW_GetItemW (infoPtr, &lvItem, TRUE);
+
+    InflateRect(&rcText, -2, 0);
+    DrawTextW (hdc, lvItem.pszText, -1, &rcText, uFormat);
+    /* Microsoft, in their great wisdom, have decided that the rectangle
+     * returned by DrawText on DT_CALCRECT will only guarantee the dimension,
+     * not the location.  So we have to do the centring ourselves (and take
+     * responsibility for agreeing off-by-one consistency with them).
+     */
+
+    old_wid = rcText.right - rcText.left;
+    new_wid = rcBack.right - rcBack.left;
+    dx = rcBack.left - rcText.left + (new_wid-old_wid)/2;
+    dy = rcBack.top - rcText.top;
+    OffsetRect (&rcText, dx, dy);
+
+    if (focused)
     {
-        /* We (aim to) display the full text.  In Windows 95 it appears to
-         * calculate the size assuming the specified font and then it draws
-         * the text in that region with the specified font except scaled to
-         * 10 point (or the height of the system font or ...).  Thus if the
-         * window has 24 point Helvetica the highlit rectangle will be
-         * taller than the text and if it is 7 point Helvetica then the text
-         * will be clipped.
-         * For now we will simply say that it is the correct size to display
-         * the text in the specified font.
-         */
-        LVITEMW lvItem;
-        lvItem.mask = LVIF_TEXT;
-        lvItem.iItem = nItem;
-        lvItem.iSubItem = 0;
-        /* We will specify INTERNAL and so will receive back a const
-         * pointer to the text, rather than specifying a buffer to which
-         * to copy it.
-         */
-        LISTVIEW_GetItemW (infoPtr, &lvItem, TRUE);
-
-	InflateRect(&rcText, -2, 0);
-	DrawTextW (hdc, lvItem.pszText, -1, &rcText, uFormat);
-	/* Microsoft, in their great wisdom, have decided that the rectangle
-	 * returned by DrawText on DT_CALCRECT will only guarantee the dimension,
-	 * not the location.  So we have to do the centring ourselves (and take
-	 * responsibility for agreeing off-by-one consistency with them).
-	 */
-
-	old_wid = rcText.right - rcText.left;
-	new_wid = rcBack.right - rcBack.left;
-	dx = rcBack.left - rcText.left + (new_wid-old_wid)/2;
-	dy = rcBack.top - rcText.top;
-	OffsetRect (&rcText, dx, dy);
-
-	if (!focused)
-	{
-	    LISTVIEW_GetIntegralLines(infoPtr, &rcText);
-	}
-	else
-	{
-	    rcText.bottom += LABEL_VERT_PADDING - 2;
-	}
-	*rect = rcBack;
-	rect->bottom = rcText.bottom;
+	rcText.bottom += 2;
     }
-    else
+    else /* not focused, may or may not be selected */
     {
-        /* As far as I can see the text region seems to be trying to be
-         * "tall enough for two lines of text".  Once again (comctl32.dll ver
-         * 5.81?) it measures this on the basis of the selected font and then
-         * draws it with the same font except in 10 point size.  This can lead
-         * to more or less than the two rows appearing.
-         * Question; are we  supposed to be including DT_EXTERNALLEADING?
-         * Question; should the width be shrunk to the space required to
-         * display the two lines?
-         */
 	LISTVIEW_GetIntegralLines(infoPtr, &rcText);
-	rect->bottom = rcText.bottom;
     }
+    *rect = rcText;
 
     TRACE("%s and %s, bounding rect=(%d,%d)-(%d,%d)\n",
 	  (focused) ? "focused(full text)" : "not focused",
@@ -5113,7 +5542,6 @@ static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
   INT nLabelWidth;
   INT nIndent;
   LVITEMW lvItem;
-  RECT rcInternal;
 
   TRACE("(hwnd=%x, nItem=%d, lprc=%p, uview=%d)\n",
 	infoPtr->hwndSelf, nItem, lprc, uView);
@@ -5139,119 +5567,24 @@ static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
       switch(lprc->left)
       {
       case LVIR_ICON:
-	if (!LISTVIEW_GetItemPosition(infoPtr, nItem, &ptItem)) break;
-        if (uView == LVS_ICON)
-        {
-          if (infoPtr->himlNormal != NULL)
-          {
-            if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin))
-            {
-              bResult = TRUE;
-              lprc->left = ptItem.x + ptOrigin.x - 8;
-              lprc->top = ptItem.y + ptOrigin.y - ICON_TOP_PADDING;
-	      lprc->right = lprc->left + infoPtr->iconSize.cx + 16;
-              lprc->bottom = lprc->top + infoPtr->iconSize.cy +
-                              ICON_TOP_PADDING;
-            }
-          }
-        }
-        else if (uView == LVS_SMALLICON)
-        {
-          if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin))
-          {
-            bResult = TRUE;
-            lprc->left = ptItem.x + ptOrigin.x;
-            lprc->top = ptItem.y + ptOrigin.y;
-            lprc->bottom = lprc->top + infoPtr->nItemHeight;
-
-            if (infoPtr->himlState != NULL)
-              lprc->left += infoPtr->iconSize.cx;
-
-            if (infoPtr->himlSmall != NULL)
-              lprc->right = lprc->left + infoPtr->iconSize.cx;
-            else
-              lprc->right = lprc->left;
-          }
-        }
-        else
-        {
-          bResult = TRUE;
-          lprc->left = ptItem.x;
-          if (uView & LVS_REPORT)
+	bResult = LISTVIEW_GetAllMeasure(infoPtr, nItem, NULL, NULL,
+					NULL, lprc, NULL, NULL);
+	if (uView & LVS_REPORT)
+	{
             lprc->left += nIndent;
-          lprc->top = ptItem.y;
-          lprc->bottom = lprc->top + infoPtr->nItemHeight;
-
-          if (infoPtr->himlState != NULL)
-            lprc->left += infoPtr->iconSize.cx;
-
-          if (infoPtr->himlSmall != NULL)
-            lprc->right = lprc->left + infoPtr->iconSize.cx;
-          else
-            lprc->right = lprc->left;
+	    lprc->right += nIndent;
         }
         break;
 
       case LVIR_LABEL:
-	if (!LISTVIEW_GetItemPosition(infoPtr, nItem, &ptItem)) break;
-        if (uView == LVS_ICON)
+	if ((uView == LVS_ICON) || (uView == LVS_SMALLICON))
         {
-          if (infoPtr->himlNormal != NULL)
-          {
-            if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin))
-            {
-              bResult = TRUE;
-
-              /* Correct ptItem to icon upper-left */
-              ptItem.x -= (infoPtr->nItemWidth - infoPtr->iconSize.cx)/2;
-              ptItem.y -= ICON_TOP_PADDING;
-
-              lprc->left = ptItem.x + ptOrigin.x;
-              lprc->top = ptItem.y + ptOrigin.y + infoPtr->iconSize.cy +
-                           6;
-              nLabelWidth = LISTVIEW_GetLabelWidth(infoPtr, nItem);
-              if (infoPtr->iconSpacing.cx - nLabelWidth > 1)
-              {
-                lprc->left += (infoPtr->iconSpacing.cx - nLabelWidth) / 2;
-                lprc->right = lprc->left + nLabelWidth;
-		lprc->bottom = lprc->top + infoPtr->ntmHeight + 1;
-		InflateRect(lprc, 2, 0);
-	      }
-              else
-              {
-                lprc->right = lprc->left + infoPtr->iconSpacing.cx - 1;
-		lprc->bottom = lprc->top + infoPtr->nItemHeight;
-                LISTVIEW_UpdateLargeItemLabelRect (infoPtr, nItem, lprc);
-              }
-              lprc->bottom += HEIGHT_PADDING;
-            }
-          }
-        }
-        else if (uView == LVS_SMALLICON)
-        {
-          if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin))
-          {
-            bResult = TRUE;
-            nLeftPos = lprc->left = ptItem.x + ptOrigin.x;
-            lprc->top = ptItem.y + ptOrigin.y;
-            lprc->bottom = lprc->top + infoPtr->nItemHeight;
-
-            if (infoPtr->himlState != NULL)
-              lprc->left += infoPtr->iconSize.cx;
-
-            if (infoPtr->himlSmall != NULL)
-              lprc->left += infoPtr->iconSize.cx;
-
-            nLabelWidth = LISTVIEW_GetLabelWidth(infoPtr, nItem);
-            nLabelWidth += TRAILING_PADDING;
-            if (lprc->left + nLabelWidth < nLeftPos + infoPtr->nItemWidth)
-              lprc->right = lprc->left + nLabelWidth;
-            else
-              lprc->right = nLeftPos + infoPtr->nItemWidth;
-          }
+          bResult = LISTVIEW_GetAllMeasure(infoPtr, nItem, NULL, NULL,
+					  NULL, NULL, lprc, NULL);
         }
         else
         {
+	  if (!LISTVIEW_GetItemPosition(infoPtr, nItem, &ptItem)) break;
           bResult = TRUE;
           if (uView == LVS_REPORT)
             nLeftPos = lprc->left = ptItem.x + nIndent;
@@ -5283,85 +5616,21 @@ static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
         break;
 
       case LVIR_BOUNDS:
-	if (!LISTVIEW_GetItemBoundBox(infoPtr, nItem, &rcInternal)) break;
-	ptItem.x = rcInternal.left;
-	ptItem.y = rcInternal.top;
-        if (uView == LVS_ICON)
+        if ((uView == LVS_ICON) || (uView == LVS_SMALLICON))
         {
-          if (infoPtr->himlNormal != NULL)
-          {
-            if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin))
-            {
-              RECT label_rect, icon_rect;
+	  RECT label_rect, icon_rect;
 
-	      if (!LISTVIEW_GetItemPosition(infoPtr, nItem, &ptItem)) break;
-
-	      /* make icon rectangle */
-              icon_rect.left = ptItem.x + ptOrigin.x - 8;
-              icon_rect.top = ptItem.y + ptOrigin.y - ICON_TOP_PADDING;
-	      icon_rect.right = icon_rect.left + infoPtr->iconSize.cx + 16;
-              icon_rect.bottom = icon_rect.top + infoPtr->iconSize.cy +
-                              ICON_TOP_PADDING;
-
-	      /* make label rectangle */
-              /* Correct ptItem to icon upper-left */
-              ptItem.x -= (infoPtr->nItemWidth - infoPtr->iconSize.cx)/2;
-              ptItem.y -= ICON_TOP_PADDING;
-
-              label_rect.left = ptItem.x + ptOrigin.x;
-              label_rect.top = ptItem.y + ptOrigin.y + infoPtr->iconSize.cy +
-                           6;
-	      nLabelWidth = LISTVIEW_GetLabelWidth(infoPtr, nItem);
-              if (infoPtr->iconSpacing.cx - nLabelWidth > 1)
-              {
-                label_rect.left += (infoPtr->iconSpacing.cx - nLabelWidth) / 2;
-                label_rect.right = label_rect.left + nLabelWidth;
-		label_rect.bottom = label_rect.top + infoPtr->ntmHeight + 1;
-		InflateRect(&label_rect, 2, 0);
-              }
-              else
-              {
-                label_rect.right = label_rect.left + infoPtr->iconSpacing.cx - 1;
-		label_rect.bottom = label_rect.top + infoPtr->nItemHeight;
-		LISTVIEW_UpdateLargeItemLabelRect (infoPtr, nItem, &label_rect);
-              }
-              label_rect.bottom += HEIGHT_PADDING;
-              bResult = TRUE;
-	      UnionRect (lprc, &icon_rect, &label_rect);
-            }
-          }
-        }
-        else if (uView == LVS_SMALLICON)
-        {
-          if (LISTVIEW_GetOrigin(infoPtr, &ptOrigin))
-          {
-            bResult = TRUE;
-            lprc->left = ptItem.x + ptOrigin.x;
-            lprc->right = lprc->left;
-            lprc->top = ptItem.y + ptOrigin.y;
-            lprc->bottom = lprc->top + infoPtr->nItemHeight;
-            if (infoPtr->himlState != NULL)
-              lprc->right += infoPtr->iconSize.cx;
-            if (infoPtr->himlSmall != NULL)
-              lprc->right += infoPtr->iconSize.cx;
-
-	    nLabelWidth = LISTVIEW_GetLabelWidth(infoPtr, nItem);
-            nLabelWidth += TRAILING_PADDING;
-            if (infoPtr->himlSmall)
-              nLabelWidth += IMAGE_PADDING;
-	    if (lprc->right + nLabelWidth < lprc->left + infoPtr->nItemWidth)
-	      lprc->right += nLabelWidth;
-	    else
-	      lprc->right = lprc->left + infoPtr->nItemWidth;
-          }
+	  bResult = LISTVIEW_GetAllMeasure(infoPtr, nItem, NULL, NULL,
+					  NULL, &icon_rect, &label_rect, NULL);
+	  UnionRect (lprc, &icon_rect, &label_rect);
         }
         else
         {
+	  if (!LISTVIEW_GetAllMeasure(infoPtr, nItem, NULL, NULL,
+				     lprc, NULL, NULL, NULL)) break;
           bResult = TRUE;
-          lprc->left = ptItem.x;
           if (!(infoPtr->dwExStyle&LVS_EX_FULLROWSELECT) && uView&LVS_REPORT)
             lprc->left += nIndent;
-          lprc->right = lprc->left;
           lprc->top = ptItem.y;
           lprc->bottom = lprc->top + infoPtr->nItemHeight;
 
@@ -5701,7 +5970,7 @@ static LRESULT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFla
         while (nItem < GETITEMCOUNT(infoPtr))
         {
           nItem++;
-          if ((ListView_GetItemState(infoPtr->hwndSelf, nItem, uMask) & uMask) == uMask)
+          if ((LISTVIEW_GetItemState(infoPtr, nItem, uMask) & uMask) == uMask)
             return nItem;
         }
       }
@@ -5712,7 +5981,7 @@ static LRESULT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFla
         ListView_GetItemPosition(infoPtr->hwndSelf, nItem, &lvFindInfo.pt);
         while ((nItem = ListView_FindItemW(infoPtr->hwndSelf, nItem, &lvFindInfo)) != -1)
         {
-          if ((ListView_GetItemState(infoPtr->hwndSelf, nItem, uMask) & uMask) == uMask)
+          if ((LISTVIEW_GetItemState(infoPtr, nItem, uMask) & uMask) == uMask)
             return nItem;
         }
       }
@@ -5725,7 +5994,7 @@ static LRESULT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFla
         while (nItem - nCountPerColumn >= 0)
         {
           nItem -= nCountPerColumn;
-          if ((ListView_GetItemState(infoPtr->hwndSelf, nItem, uMask) & uMask) == uMask)
+          if ((LISTVIEW_GetItemState(infoPtr, nItem, uMask) & uMask) == uMask)
             return nItem;
         }
       }
@@ -5760,7 +6029,7 @@ static LRESULT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFla
         ListView_GetItemPosition(infoPtr->hwndSelf, nItem, &lvFindInfo.pt);
         while ((nItem = ListView_FindItemW(infoPtr->hwndSelf, nItem, &lvFindInfo)) != -1)
         {
-          if ((ListView_GetItemState(infoPtr->hwndSelf, nItem, uMask) & uMask) == uMask)
+          if ((LISTVIEW_GetItemState(infoPtr, nItem, uMask) & uMask) == uMask)
             return nItem;
         }
       }
@@ -5772,7 +6041,7 @@ static LRESULT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFla
       /* search by index */
       for (i = nItem; i < GETITEMCOUNT(infoPtr); i++)
       {
-        if ((ListView_GetItemState(infoPtr->hwndSelf, i, uMask) & uMask) == uMask)
+        if ((LISTVIEW_GetItemState(infoPtr, i, uMask) & uMask) == uMask)
           return i;
       }
     }
@@ -5797,40 +6066,13 @@ static LRESULT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFla
  */
 static BOOL LISTVIEW_GetOrigin(LISTVIEW_INFO *infoPtr, LPPOINT lpptOrigin)
 {
-    LONG lStyle = GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE);
-    UINT uView = lStyle & LVS_TYPEMASK;
-    INT nHorzPos = 0, nVertPos = 0;
-    SCROLLINFO scrollInfo;
-
     if (!lpptOrigin) return FALSE;
-    
-    scrollInfo.cbSize = sizeof(SCROLLINFO);    
-    scrollInfo.fMask = SIF_POS;
-    
-    if ((lStyle & WS_HSCROLL) && GetScrollInfo(infoPtr->hwndSelf, SB_HORZ, &scrollInfo))
-	nHorzPos = scrollInfo.nPos;
-    if ((lStyle & WS_VSCROLL) && GetScrollInfo(infoPtr->hwndSelf, SB_VERT, &scrollInfo))
-	nVertPos = scrollInfo.nPos;
 
-    TRACE("nHorzPos=%d, nVertPos=%d\n", nHorzPos, nVertPos);
-
-    lpptOrigin->x = infoPtr->rcList.left;
-    lpptOrigin->y = infoPtr->rcList.top;
-    if (uView == LVS_LIST)
-    {
-	nHorzPos *= LISTVIEW_GetCountPerColumn(infoPtr);
-	nVertPos = 0;
-    }
-    else if (uView == LVS_REPORT)
-    {
-	nVertPos *= infoPtr->nItemHeight;
-    }
-    
-    lpptOrigin->x -= nHorzPos;
-    lpptOrigin->y -= nVertPos;
+    LISTVIEW_GetAllMeasure(infoPtr, -1, lpptOrigin, NULL,
+			  NULL, NULL, NULL, NULL);
 
     TRACE("(pt=(%ld,%ld))\n", lpptOrigin->x, lpptOrigin->y);
-    
+
     return TRUE;
 }
 
@@ -6008,6 +6250,7 @@ static INT LISTVIEW_SuperHitTestItem(LISTVIEW_INFO *infoPtr, LPLV_INTHIT lpInt, 
             }
           }
         }
+	TRACE("hit on item %d\n", i);
         return i;
       }
       else
@@ -6493,6 +6736,8 @@ static LRESULT LISTVIEW_Scroll(LISTVIEW_INFO *infoPtr, INT dx, INT dy)
  */
 static LRESULT LISTVIEW_SetBkColor(LISTVIEW_INFO *infoPtr, COLORREF clrBk)
 {
+    TRACE("(clrBk=%lx)\n", clrBk);
+
     if(infoPtr->clrBk != clrBk) {
 	if (infoPtr->clrBk != CLR_NONE) DeleteObject(infoPtr->hBkBrush);
 	infoPtr->clrBk = clrBk;
@@ -7036,7 +7281,7 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
       while (infoPtr->hdpaSelectionRanges->nItemCount>0);
 
       precount = infoPtr->hdpaItems->nItemCount;
-      topvisible = ListView_GetTopIndex(infoPtr->hwndSelf) +
+      topvisible = LISTVIEW_GetTopIndex(infoPtr) +
                    LISTVIEW_GetCountPerColumn(infoPtr) + 1;
 
       infoPtr->hdpaItems->nItemCount = nItems;
@@ -7533,6 +7778,9 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
     infoPtr->iconSize.cy = GetSystemMetrics(SM_CYSMICON);
   }
 
+  infoPtr->iconStateSize.cx = GetSystemMetrics(SM_CXSMICON);
+  infoPtr->iconStateSize.cy = GetSystemMetrics(SM_CYSMICON);
+
   /* display unsupported listview window styles */
   LISTVIEW_UnsupportedStyles(lpcs->style);
 
@@ -7960,12 +8208,12 @@ static LRESULT LISTVIEW_KillFocus(LISTVIEW_INFO *infoPtr)
     /* if we have a focus rectagle, get rid of it */
     LISTVIEW_ToggleFocusRect(infoPtr);
     
+    /* invalidate the selected items before reseting focus flag */
+    LISTVIEW_InvalidateSelectedItems(infoPtr);
+    
     /* set window focus flag */
     infoPtr->bFocus = FALSE;
 
-    /* redraw the selected items */
-    LISTVIEW_InvalidateSelectedItems(infoPtr);
-    
     return 0;
 }
 
