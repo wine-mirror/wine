@@ -3,6 +3,10 @@
 
 #include "wintypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #pragma pack(1)
 
 typedef struct _ABCFLOAT {
@@ -44,7 +48,7 @@ typedef struct
     BOOL  fRestore;
     BOOL  fIncUpdate;
     BYTE    rgbReserved[32];
-} PAINTSTRUCT, *LPPAINTSTRUCT;
+} PAINTSTRUCT, *PPAINTSTRUCT, *LPPAINTSTRUCT;
 
 
 
@@ -93,6 +97,56 @@ typedef struct tagCOLORADJUSTMENT
 	SHORT  caRedGreenTint;
 } COLORADJUSTMENT, *PCOLORADJUSTMENT, *LPCOLORADJUSTMENT;
 
+typedef LONG FXPT16DOT16, *LPFXPT16DOT16;
+typedef LONG FXPT2DOT30, *LPFXPT2DOT30;
+typedef LONG LCSCSTYPE;
+typedef LONG LCSGAMUTMATCH;
+
+typedef struct tagCIEXYZ
+{
+  FXPT2DOT30 ciexyzX;
+  FXPT2DOT30 ciexyzY;
+  FXPT2DOT30 ciexyzZ;
+} CIEXYZ, *LPCIEXYZ;
+
+typedef struct tagCIEXYZTRIPLE
+{
+  CIEXYZ ciexyzRed;
+  CIEXYZ ciexyzGreen;
+  CIEXYZ ciexyzBlue;
+} CIEXYZTRIPLE, *LPCIEXYZTRIPLE;
+
+typedef struct tagLOGCOLORSPACEA
+{
+  DWORD lcsSignature;
+  DWORD lcsVersion;
+  DWORD lcsSize;
+  LCSCSTYPE lcsCSType;
+  LCSGAMUTMATCH lcsIntent;
+  CIEXYZTRIPLE lcsEndpoints;
+  DWORD lcsGammaRed;
+  DWORD lcsGammaGreen;
+  DWORD lcsGammaBlue;
+  CHAR lcsFilename[_MAX_PATH];
+} LOGCOLORSPACEA, *LPLOGCOLORSPACEA;
+
+ typedef struct tagLOGCOLORSPACEW
+{
+  DWORD lcsSignature;
+  DWORD lcsVersion;
+  DWORD lcsSize;
+  LCSCSTYPE lcsCSType;
+  LCSGAMUTMATCH lcsIntent;
+  CIEXYZTRIPLE lcsEndpoints;
+  DWORD lcsGammaRed;
+  DWORD lcsGammaGreen;
+  DWORD lcsGammaBlue;
+  WCHAR lcsFilename[_MAX_PATH];
+} LOGCOLORSPACEW, *LPLOGCOLORSPACEW;
+
+DECL_WINELIB_TYPE_AW(LPLOGCOLORSPACE)
+DECL_WINELIB_TYPE_AW(LOGCOLORSPACE)
+
 #define DC_FIELDS		1
 #define DC_PAPERS		2
 #define DC_PAPERSIZE		3
@@ -111,6 +165,12 @@ typedef struct tagCOLORADJUSTMENT
 #define DC_PAPERNAMES		16
 #define DC_ORIENTATION		17
 #define DC_COPIES		18
+#define DC_BINADJUST            19
+#define DC_EMF_COMPLIANT        20
+#define DC_DATATYPE_PRODUCED    21
+#define DC_COLLATE              22
+#define DC_MANUFACTURER         23
+#define DC_MODEL                24
 
 /* Flag returned from Escape QUERYDIBSUPPORT */
 #define	QDI_SETDIBITS		1
@@ -257,7 +317,7 @@ typedef struct tagCOLORADJUSTMENT
 
   /* Colors */
 
-typedef DWORD COLORREF;
+typedef DWORD COLORREF, *LPCOLORREF;
 
 #define RGB(r,g,b)          ((COLORREF)((r) | ((g) << 8) | ((b) << 16)))
 #define PALETTERGB(r,g,b)   (0x02000000 | RGB(r,g,b))
@@ -432,7 +492,7 @@ typedef struct
     BYTE   lfQuality;
     BYTE   lfPitchAndFamily;
     CHAR   lfFaceName[LF_FACESIZE];
-} LOGFONTA, *LPLOGFONTA;
+} LOGFONTA, *PLOGFONTA, *LPLOGFONTA;
 
 typedef struct
 {
@@ -450,9 +510,10 @@ typedef struct
     BYTE   lfQuality;
     BYTE   lfPitchAndFamily;
     WCHAR  lfFaceName[LF_FACESIZE];
-} LOGFONTW, *LPLOGFONTW;
+} LOGFONTW, *PLOGFONTW, *LPLOGFONTW;
 
 DECL_WINELIB_TYPE_AW(LOGFONT)
+DECL_WINELIB_TYPE_AW(PLOGFONT)
 DECL_WINELIB_TYPE_AW(LPLOGFONT)
 
 typedef struct
@@ -1150,7 +1211,7 @@ typedef struct
 typedef struct tagPALETTEENTRY
 {
 	BYTE peRed, peGreen, peBlue, peFlags;
-} PALETTEENTRY, *LPPALETTEENTRY;
+} PALETTEENTRY, *PPALETTEENTRY, *LPPALETTEENTRY;
 
 /* Logical palette entry flags */
 #define PC_RESERVED     0x01
@@ -1162,7 +1223,7 @@ typedef struct
     WORD           palVersion;
     WORD           palNumEntries;
     PALETTEENTRY   palPalEntry[1] WINE_PACKED;
-} LOGPALETTE, *LPLOGPALETTE;
+} LOGPALETTE, *PLOGPALETTE, *LPLOGPALETTE;
 
   /* Pens */
 
@@ -1484,8 +1545,18 @@ typedef struct tagEXTLOGPEN
 
   /* Device-independent bitmaps */
 
-typedef struct { BYTE rgbBlue, rgbGreen, rgbRed, rgbReserved; } RGBQUAD;
-typedef struct { BYTE rgbtBlue, rgbtGreen, rgbtRed; } RGBTRIPLE;
+typedef struct {
+  BYTE rgbBlue;
+  BYTE rgbGreen;
+  BYTE rgbRed;
+  BYTE rgbReserved;
+} RGBQUAD, *LPRGBQUAD;
+
+typedef struct {
+  BYTE rgbtBlue;
+  BYTE rgbtGreen;
+  BYTE rgbtRed;
+} RGBTRIPLE;
 
 typedef struct
 {
@@ -1509,7 +1580,7 @@ typedef struct
     LONG  	biYPelsPerMeter;
     DWORD 	biClrUsed;
     DWORD 	biClrImportant;
-} BITMAPINFOHEADER, *LPBITMAPINFOHEADER;
+} BITMAPINFOHEADER, *PBITMAPINFOHEADER, *LPBITMAPINFOHEADER;
 
   /* biCompression */
 #define BI_RGB           0
@@ -1921,7 +1992,7 @@ typedef struct
     DWORD  dmDitherType;
     DWORD  dmReserved1;
     DWORD  dmReserved2;
-} DEVMODEA, *LPDEVMODEA;
+} DEVMODEA, *PDEVMODEA, *LPDEVMODEA;
 
 typedef struct
 {
@@ -1957,9 +2028,10 @@ typedef struct
     DWORD  dmDitherType;
     DWORD  dmReserved1;
     DWORD  dmReserved2;
-} DEVMODEW, *LPDEVMODEW;
+} DEVMODEW, *PDEVMODEW, *LPDEVMODEW;
 
 DECL_WINELIB_TYPE_AW(DEVMODE)
+DECL_WINELIB_TYPE_AW(PDEVMODE)
 DECL_WINELIB_TYPE_AW(LPDEVMODE)
 
 typedef struct 
@@ -2377,6 +2449,9 @@ DWORD       WINAPI GetCharacterPlacementW(HDC,LPCWSTR,INT,INT,GCP_RESULTSW*,DWOR
 BOOL16      WINAPI GetCharWidth16(HDC16,UINT16,UINT16,LPINT16);
 BOOL      WINAPI GetCharWidth32A(HDC,UINT,UINT,LPINT);
 BOOL      WINAPI GetCharWidth32W(HDC,UINT,UINT,LPINT);
+#define     GetCharWidthA GetCharWidth32A
+#define     GetCharWidthW GetCharWidth32W
+#define     GetCharWidth32 WINELIB_NAME_AW(GetCharWidth32)
 #define     GetCharWidth WINELIB_NAME_AW(GetCharWidth)
 INT16       WINAPI GetClipBox16(HDC16,LPRECT16);
 INT       WINAPI GetClipBox(HDC,LPRECT);
@@ -2665,5 +2740,9 @@ INT16       WINAPI UpdateColors16(HDC16);
 BOOL      WINAPI UpdateColors(HDC);
 BOOL16      WINAPI WidenPath16(HDC16);
 BOOL      WINAPI WidenPath(HDC);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WINE_WINGDI_H */
