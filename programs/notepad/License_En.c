@@ -1,8 +1,8 @@
 #include <windows.h>
 #include "license.h"
 
-static CHAR LicenseCaption_En[] = "LICENSE";
-static CHAR License_En[] =
+static const CHAR LicenseCaption_En[] = "LICENSE";
+static const CHAR License_En[] =
 "This library is free software; you can redistribute it and/or "
 "modify it under the terms of the GNU Lesser General Public "
 "License as published by the Free Software Foundation; either "
@@ -17,8 +17,8 @@ static CHAR License_En[] =
 "License along with this library; if not, write to the Free Software "
 "Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA";
 
-static CHAR NoWarrantyCaption_En[] = "NO WARRANTY";
-static CHAR NoWarranty_En[] =
+static const CHAR NoWarrantyCaption_En[] = "NO WARRANTY";
+static const CHAR NoWarranty_En[] =
 "This library is distributed in the hope that it will be useful, "
 "but WITHOUT ANY WARRANTY; without even the implied warranty of "
 "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU "
@@ -26,4 +26,3 @@ static CHAR NoWarranty_En[] =
 
 LICENSE WineLicense_En = {License_En, LicenseCaption_En,
                           NoWarranty_En, NoWarrantyCaption_En};
-

@@ -24,6 +24,20 @@
 #include "commctrl.h"
 #include "notepad_res.h"
 
+ID_ACCEL ACCELERATORS
+{
+    "^A", CMD_SELECT_ALL
+    "^C", CMD_COPY
+    "^F", CMD_SEARCH
+    "^O", CMD_OPEN
+    "^S", CMD_SAVE
+    "^V", CMD_PASTE
+    "^X", CMD_CUT
+    "^Z", CMD_UNDO
+    VK_F3, CMD_SEARCH_NEXT, VIRTKEY
+    VK_F5, CMD_TIME_DATE, VIRTKEY
+}
+
 #include "Da.rc"
 #include "De.rc"
 #include "En.rc"

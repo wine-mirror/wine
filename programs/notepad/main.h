@@ -19,26 +19,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define SIZEOF(a) sizeof(a)/sizeof((a)[0])
+
 #include "notepad_res.h"
 
 #define MAX_STRING_LEN      255
-#define HELPFILE  "notepad.hlp"
-
-/* hide the following from winerc */
-#ifndef RC_INVOKED
-
-#define WINE_RELEASE_INFO "Wine (www.winehq.com)"
-
-#include "commdlg.h"
-
-VOID SetFileName(LPSTR szFileName);
-
-/***** Compatibility *****/
-
-#ifndef OIC_WINLOGO
-#define OIC_WINLOGO 32517
-#endif
-#define DEFAULTICON OIC_WINLOGO
 
 typedef struct
 {
@@ -48,26 +33,21 @@ typedef struct
   HWND    hEdit;
   HFONT   hFont; /* Font used by the edit control */
   LOGFONT lfFont;
-  HICON   hMainIcon;
-  HICON   hDefaultIcon;
-  LPCSTR  lpszIcoFile;
   BOOL    bWrapLongLines;
-  CHAR    szFindText[MAX_PATH];
-  CHAR    szFileName[MAX_PATH];
-  CHAR    szFileTitle[MAX_PATH];
-  CHAR    szFilter[2 * MAX_STRING_LEN + 100];
-  CHAR    szMarginTop[MAX_PATH];
-  CHAR    szMarginBottom[MAX_PATH];
-  CHAR    szMarginLeft[MAX_PATH];
-  CHAR    szMarginRight[MAX_PATH];
-  CHAR    szHeader[MAX_PATH];
-  CHAR    szFooter[MAX_PATH];
+  WCHAR   szFindText[MAX_PATH];
+  WCHAR   szFileName[MAX_PATH];
+  WCHAR   szFileTitle[MAX_PATH];
+  WCHAR   szFilter[2 * MAX_STRING_LEN + 100];
+  WCHAR   szMarginTop[MAX_PATH];
+  WCHAR   szMarginBottom[MAX_PATH];
+  WCHAR   szMarginLeft[MAX_PATH];
+  WCHAR   szMarginRight[MAX_PATH];
+  WCHAR   szHeader[MAX_PATH];
+  WCHAR   szFooter[MAX_PATH];
 
   FINDREPLACE find;
 } NOTEPAD_GLOBALS;
 
 extern NOTEPAD_GLOBALS Globals;
 
-#else  /* RC_INVOKED */
-
-#endif
+VOID SetFileName(LPCWSTR szFileName);

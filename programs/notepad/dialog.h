@@ -34,11 +34,11 @@ VOID DIALOG_EditPaste(VOID);
 VOID DIALOG_EditDelete(VOID);
 VOID DIALOG_EditSelectAll(VOID);
 VOID DIALOG_EditTimeDate(VOID);
+VOID DIALOG_EditWrap(VOID);
 
 VOID DIALOG_Search(VOID);
 VOID DIALOG_SearchNext(VOID);
 
-VOID DIALOG_EditWrap(VOID);
 VOID DIALOG_SelectFont(VOID);
 
 VOID DIALOG_HelpContents(VOID);
@@ -48,11 +48,10 @@ VOID DIALOG_HelpLicense(VOID);
 VOID DIALOG_HelpNoWarranty(VOID);
 VOID DIALOG_HelpAboutWine(VOID);
 
-VOID DIALOG_PageSetup(VOID);
 VOID DIALOG_TimeDate(VOID);
 
 /* utility functions */
 VOID ShowLastError();
-BOOL FileExists(LPSTR szFilename);
+BOOL FileExists(LPCWSTR szFilename);
 BOOL DoCloseFile(void);
-void DoOpenFile(LPSTR szFileName);
+void DoOpenFile(LPCWSTR szFileName);

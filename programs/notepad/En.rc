@@ -95,16 +95,6 @@ PUSHBUTTON    "Cancel",     0x152,               180, 21, 40, 15, WS_TABSTOP
 PUSHBUTTON    "&Help",       0x153,                180, 39, 40, 15, WS_TABSTOP
 }
 
-ID_ACCEL ACCELERATORS
-{
-    "^A",       CMD_SELECT_ALL
-    "^F",       CMD_SEARCH
-    "^O",       CMD_OPEN
-    "^S",       CMD_SAVE
-    VK_F3,      CMD_SEARCH_NEXT,  VIRTKEY
-    VK_F5,      CMD_TIME_DATE,  VIRTKEY
-}
-
 STRINGTABLE DISCARDABLE
 {
 STRING_PAGESETUP_HEADERVALUE,   "&n"        /* FIXME */

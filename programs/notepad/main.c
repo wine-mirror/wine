@@ -22,8 +22,9 @@
  *
  */
 
+#define UNICODE
+
 #include <windows.h>
-#include <richedit.h>
 #include <stdio.h>
 
 #include "main.h"
@@ -31,6 +32,7 @@
 #include "notepad_res.h"
 
 NOTEPAD_GLOBALS Globals;
+static ATOM aFINDMSGSTRING;
 
 /***********************************************************************
  *
@@ -38,7 +40,7 @@ NOTEPAD_GLOBALS Globals;
  *
  *  Sets Global File Name.
  */
-VOID SetFileName(LPSTR szFileName)
+VOID SetFileName(LPCWSTR szFileName)
 {
     lstrcpy(Globals.szFileName, szFileName);
     Globals.szFileTitle[0] = 0;
@@ -51,8 +53,7 @@ VOID SetFileName(LPSTR szFileName)
  *
  *  All handling of main menu events
  */
-
-int NOTEPAD_MenuCommand(WPARAM wParam)
+static int NOTEPAD_MenuCommand(WPARAM wParam)
 {
     switch (wParam)
     {
@@ -85,6 +86,9 @@ int NOTEPAD_MenuCommand(WPARAM wParam)
     case CMD_LICENSE:          DIALOG_HelpLicense(); break;
     case CMD_NO_WARRANTY:      DIALOG_HelpNoWarranty(); break;
     case CMD_ABOUT_WINE:       DIALOG_HelpAboutWine(); break;
+
+    default:
+	break;
     }
    return 0;
 }
@@ -92,18 +96,20 @@ int NOTEPAD_MenuCommand(WPARAM wParam)
 /***********************************************************************
  * Data Initialization
  */
-VOID NOTEPAD_InitData(VOID)
+static VOID NOTEPAD_InitData(VOID)
 {
-    LPSTR p = Globals.szFilter;
+    LPWSTR p = Globals.szFilter;
+    static const WCHAR txt_files[] = { '*','.','t','x','t',0 };
+    static const WCHAR all_files[] = { '*','.','*',0 };
 
     LoadString(Globals.hInstance, STRING_TEXT_FILES_TXT, p, MAX_STRING_LEN);
-    p += strlen(p) + 1;
-    lstrcpy(p, "*.txt");
-    p += strlen(p) + 1;
+    p += lstrlen(p) + 1;
+    lstrcpy(p, txt_files);
+    p += lstrlen(p) + 1;
     LoadString(Globals.hInstance, STRING_ALL_FILES, p, MAX_STRING_LEN);
-    p += strlen(p) + 1;
-    lstrcpy(p, "*.*");
-    p += strlen(p) + 1;
+    p += lstrlen(p) + 1;
+    lstrcpy(p, all_files);
+    p += lstrlen(p) + 1;
     *p = '\0';
 }
 
@@ -111,16 +117,17 @@ VOID NOTEPAD_InitData(VOID)
  *
  *           NOTEPAD_WndProc
  */
-LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
+static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
                                LPARAM lParam)
 {
     switch (msg) {
 
     case WM_CREATE:
     {
+        static const WCHAR editW[] = { 'e','d','i','t',0 };
         RECT rc;
         GetClientRect(hWnd, &rc);
-        Globals.hEdit = CreateWindow("EDIT", "",
+        Globals.hEdit = CreateWindow(editW, NULL,
                              WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL |
                              ES_AUTOVSCROLL | ES_MULTILINE,
                              0, 0, rc.right, rc.bottom, hWnd,
@@ -133,7 +140,7 @@ LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
         break;
 
     case WM_DESTROYCLIPBOARD:
-        MessageBox(Globals.hMainWnd, "Empty clipboard", "Debug", MB_ICONEXCLAMATION);
+        /*MessageBox(Globals.hMainWnd, "Empty clipboard", "Debug", MB_ICONEXCLAMATION);*/
         break;
 
     case WM_CLOSE:
@@ -151,12 +158,16 @@ LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
                      SWP_NOOWNERZORDER | SWP_NOZORDER);
         break;
 
+    case WM_SETFOCUS:
+        SetFocus(Globals.hEdit);
+        break;
+
     case WM_DROPFILES:
     {
-        CHAR szFileName[MAX_PATH];
+        WCHAR szFileName[MAX_PATH];
         HANDLE hDrop = (HANDLE) wParam;
 
-        DragQueryFile(hDrop, 0, (CHAR *) &szFileName, sizeof(szFileName));
+        DragQueryFile(hDrop, 0, szFileName, SIZEOF(szFileName));
         DragFinish(hDrop);
         DoOpenFile(szFileName);
         break;
@@ -168,30 +179,45 @@ LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
     return 0;
 }
 
-int AlertFileDoesNotExist(LPSTR szFileName) {
-
+static int AlertFileDoesNotExist(LPCWSTR szFileName)
+{
    int nResult;
-   CHAR szMessage[MAX_STRING_LEN];
-   CHAR szRessource[MAX_STRING_LEN];
+   WCHAR szMessage[MAX_STRING_LEN];
+   WCHAR szResource[MAX_STRING_LEN];
 
-   LoadString(Globals.hInstance, STRING_DOESNOTEXIST, szRessource,
-              sizeof(szRessource));
-   wsprintf(szMessage, szRessource, szFileName);
+   LoadString(Globals.hInstance, STRING_DOESNOTEXIST, szResource, SIZEOF(szResource));
+   wsprintf(szMessage, szResource, szFileName);
 
-   LoadString(Globals.hInstance, STRING_ERROR,  szRessource, sizeof(szRessource));
+   LoadString(Globals.hInstance, STRING_ERROR, szResource, SIZEOF(szResource));
 
-   nResult = MessageBox(Globals.hMainWnd, szMessage, szRessource,
+   nResult = MessageBox(Globals.hMainWnd, szMessage, szResource,
                         MB_ICONEXCLAMATION | MB_YESNO);
 
    return(nResult);
 }
 
-void HandleCommandLine(LPSTR cmdline)
+static void HandleCommandLine(LPWSTR cmdline)
 {
+    WCHAR delimiter;
+    
+    /* skip white space */
+    while (*cmdline && *cmdline == ' ') cmdline++;
+
+    /* skip executable name */
+    delimiter = ' ';
+    if (*cmdline == '"')
+	delimiter = '"';
+
+    do
+    {
+        cmdline++;
+    }
+    while (*cmdline && *cmdline != delimiter);
+    if (*cmdline == delimiter) cmdline++;
 
     while (*cmdline && (*cmdline == ' ' || *cmdline == '-'))
     {
-        CHAR   option;
+        WCHAR option;
 
         if (*cmdline++ == ' ') continue;
 
@@ -211,15 +237,16 @@ void HandleCommandLine(LPSTR cmdline)
     if (*cmdline)
     {
         /* file name is passed in the command line */
-        char *file_name;
+        LPCWSTR file_name;
         BOOL file_exists;
-        char buf[MAX_PATH];
+        WCHAR buf[MAX_PATH];
 
         if (cmdline[0] == '"')
         {
             cmdline++;
-            cmdline[strlen(cmdline) - 1] = 0;
+            cmdline[lstrlen(cmdline) - 1] = 0;
         }
+
         if (FileExists(cmdline))
         {
             file_exists = TRUE;
@@ -227,16 +254,18 @@ void HandleCommandLine(LPSTR cmdline)
         }
         else
         {
-            /* try to find file with ".txt" extension */
-            if (!strcmp(".txt", cmdline + strlen(cmdline) - strlen(".txt")))
+            static const WCHAR txtW[] = { '.','t','x','t',0 };
+
+            /* try to find file with ".txt" extention */
+            if (!lstrcmp(txtW, cmdline + lstrlen(cmdline) - lstrlen(txtW)))
             {
                 file_exists = FALSE;
                 file_name = cmdline;
             }
             else
             {
-                strncpy(buf, cmdline, MAX_PATH - strlen(".txt") - 1);
-                strcat(buf, ".txt");
+                lstrcpyn(buf, cmdline, MAX_PATH - lstrlen(txtW) - 1);
+                lstrcat(buf, txtW);
                 file_name = buf;
                 file_exists = FileExists(buf);
             }
@@ -270,8 +299,10 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     MSG        msg;
     HACCEL      hAccel;
     WNDCLASSEX class;
-    char className[] = "NPClass";
-    char winName[]   = "Notepad";
+    static const WCHAR className[] = {'N','P','C','l','a','s','s',0};
+    static const WCHAR winName[]   = {'N','o','t','e','p','a','d',0};
+
+    aFINDMSGSTRING = RegisterWindowMessage(FINDMSGSTRING);
 
     ZeroMemory(&Globals, sizeof(Globals));
     Globals.hInstance       = hInstance;
@@ -307,24 +338,17 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     UpdateWindow(Globals.hMainWnd);
     DragAcceptFiles(Globals.hMainWnd, TRUE);
 
-    HandleCommandLine(cmdline);
+    HandleCommandLine(GetCommandLine());
 
-    hAccel=LoadAccelerators( hInstance, MAKEINTRESOURCE(ID_ACCEL) );
+    hAccel = LoadAccelerators( hInstance, MAKEINTRESOURCE(ID_ACCEL) );
 
-    if( hAccel!=NULL )
+    while (GetMessage(&msg, 0, 0, 0))
     {
-        while( GetMessage(&msg, 0, 0, 0)) {
-            if( !TranslateAccelerator( Globals.hMainWnd, hAccel, &msg ) ) {
-                TranslateMessage( &msg );
-                DispatchMessage( &msg );
-            }
-        }
-    } else
-    {
-        while (GetMessage(&msg, 0, 0, 0)) {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
+	if (!TranslateAccelerator(Globals.hMainWnd, hAccel, &msg) && !IsDialogMessage(Globals.hFindReplaceDlg, &msg))
+	{
+	    TranslateMessage(&msg);
+	    DispatchMessage(&msg);
+	}
     }
     return msg.wParam;
 }
