@@ -144,6 +144,11 @@ typedef struct
     struct expr * condition;
 } DBG_BREAKPOINT;
 
+enum dbg_mode
+{
+    MODE_INVALID, MODE_16, MODE_32, MODE_VM86
+};
+
 typedef struct tagDBG_THREAD {
     struct tagDBG_PROCESS*	process;
     HANDLE			handle;
@@ -151,7 +156,7 @@ typedef struct tagDBG_THREAD {
     LPVOID			start;
     LPVOID			teb;
     int				wait_for_first_exception;
-    int				dbg_mode;
+    enum dbg_mode		dbg_mode;
     enum exec_mode 		dbg_exec_mode;
     int 			dbg_exec_count;
     DBG_BREAKPOINT		stepOverBP;
@@ -326,12 +331,11 @@ extern BOOL DEBUG_Normalize(struct name_hash * nh );
 
   /* debugger/info.c */
 extern void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format );
-extern struct symbol_info DEBUG_PrintAddress( const DBG_ADDR *addr, 
-					      int addrlen, int flag );
+extern struct symbol_info DEBUG_PrintAddress( const DBG_ADDR *addr, enum dbg_mode mode, int flag );
 extern void DEBUG_Help(void);
 extern void DEBUG_HelpInfo(void);
 extern struct symbol_info DEBUG_PrintAddressAndArgs( const DBG_ADDR *addr, 
-						     int addrlen, 
+						     enum dbg_mode mode,
 						     unsigned int ebp, 
 						     int flag );
 extern void DEBUG_InfoClass(const char* clsName);
@@ -357,10 +361,9 @@ extern void DEBUG_InvalLinAddr( void* addr );
 extern DWORD DEBUG_ToLinear( const DBG_ADDR *address );
 extern void DEBUG_GetCurrentAddress( DBG_ADDR * );
 extern BOOL DEBUG_GrabAddress( DBG_VALUE* value, BOOL fromCode );
+extern enum dbg_mode DEBUG_GetSelectorType( WORD sel );
 #ifdef __i386__
 extern void DEBUG_FixAddress( DBG_ADDR *address, DWORD def );
-extern BOOL DEBUG_FixSegment( DBG_ADDR* addr );
-extern int  DEBUG_GetSelectorType( WORD sel );
 extern int  DEBUG_IsSelectorSystem( WORD sel );
 #endif
 

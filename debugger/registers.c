@@ -82,7 +82,7 @@ void DEBUG_InfoRegisters(void)
 		  (WORD)DEBUG_context.SegCs, (WORD)DEBUG_context.SegSs,
 		  (WORD)DEBUG_context.SegDs, (WORD)DEBUG_context.SegEs,
 		  (WORD)DEBUG_context.SegFs, (WORD)DEBUG_context.SegGs );
-    if (DEBUG_CurrThread->dbg_mode == 16)
+    if (DEBUG_CurrThread->dbg_mode != MODE_32)
     {
         char flag[33];
 

@@ -15,10 +15,7 @@
 #include "winbase.h"
 
 #ifdef __i386__
-#include "wine/winbase16.h"
-
-#define DBG_V86_MODULE(seg) ((seg)>>16)
-#define IS_SELECTOR_V86(seg) DBG_V86_MODULE(seg)
+#define IS_VM86_MODE() (DEBUG_context.EFlags & V86_FLAG)
 #endif
 
 static	void	DEBUG_Die(const char* msg)
@@ -52,41 +49,33 @@ char*	DEBUG_XStrDup(const char *str)
    return res;
 }
 
+enum dbg_mode DEBUG_GetSelectorType( WORD sel )
+{
+#ifdef __i386__
+    LDT_ENTRY	le;
+
+    if (IS_VM86_MODE()) return MODE_VM86;
+    if (sel == 0) return MODE_32;
+    if (GetThreadSelectorEntry( DEBUG_CurrThread->handle, sel, &le)) 
+        return le.HighWord.Bits.Default_Big ? MODE_32 : MODE_16;
+    /* selector doesn't exist */
+    return MODE_INVALID;
+#else
+    return MODE_32;
+#endif
+}
 #ifdef __i386__
 void DEBUG_FixAddress( DBG_ADDR *addr, DWORD def) 
 {
    if (addr->seg == 0xffffffff) addr->seg = def;
-   if (!IS_SELECTOR_V86(addr->seg) && DEBUG_IsSelectorSystem(addr->seg)) addr->seg = 0;
-}
-
-BOOL  DEBUG_FixSegment( DBG_ADDR* addr )
-{
-   /* V86 mode ? */
-   if (DEBUG_context.EFlags & V86_FLAG) {
-      addr->seg |= (DWORD)(GetExePtr(GetCurrentTask())) << 16;
-      return TRUE;
-   }
-   return FALSE;
-}
-
-int	DEBUG_GetSelectorType( WORD sel )
-{
-    LDT_ENTRY	le;
-
-    if (sel == 0)
-        return 32;
-    if (IS_SELECTOR_V86(sel))
-        return 16;
-    if (GetThreadSelectorEntry( DEBUG_CurrThread->handle, sel, &le)) 
-        return le.HighWord.Bits.Default_Big ? 32 : 16;
-	 /* selector doesn't exist */
-    return 0;
+   if (DEBUG_IsSelectorSystem(addr->seg)) addr->seg = 0;
 }
 
 /* Determine if sel is a system selector (i.e. not managed by Wine) */
 BOOL	DEBUG_IsSelectorSystem(WORD sel)
 {
-   return !(sel & 4) || (((sel & 0xFFFF) >> 3) < 17);
+    if (IS_VM86_MODE()) return FALSE;  /* no system selectors in vm86 mode */
+    return !(sel & 4) || ((sel >> 3) < 17);
 }
 #endif /* __i386__ */
 
@@ -95,10 +84,8 @@ DWORD DEBUG_ToLinear( const DBG_ADDR *addr )
 #ifdef __i386__
    LDT_ENTRY	le;
    
-#if 0
-   if (IS_SELECTOR_V86(addr->seg))
-      return (DWORD) DOSMEM_MemoryBase(DBG_V86_MODULE(addr->seg)) + (((addr->seg)&0xFFFF)<<4) + addr->off;
-#endif
+   if (IS_VM86_MODE()) return (DWORD)(LOWORD(addr->seg) << 4) + addr->off;
+
    if (DEBUG_IsSelectorSystem(addr->seg))
       return addr->off;
    
@@ -116,7 +103,7 @@ void DEBUG_GetCurrentAddress( DBG_ADDR *addr )
 #ifdef __i386__
     addr->seg  = DEBUG_context.SegCs;
 
-    if (!DEBUG_FixSegment( addr ) && DEBUG_IsSelectorSystem(addr->seg)) 
+    if (DEBUG_IsSelectorSystem(addr->seg))
        addr->seg = 0;
     addr->off  = DEBUG_context.Eip;
 #elif defined(__sparc__)

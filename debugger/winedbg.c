@@ -282,15 +282,24 @@ static  BOOL	DEBUG_ExceptionProlog(BOOL is_debug, BOOL force, DWORD code)
     DEBUG_SuspendExecution();
 
     if (!is_debug) {
-#ifdef __i386__
-        if (DEBUG_IsSelectorSystem(DEBUG_context.SegCs))
+        if (!addr.seg)
             DEBUG_Printf(DBG_CHN_MESG, " in 32-bit code (0x%08lx).\n", addr.off);
         else
-            DEBUG_Printf(DBG_CHN_MESG, " in 16-bit code (%04x:%04lx).\n",
-			 LOWORD(addr.seg), addr.off);
-#else
-        DEBUG_Printf(DBG_CHN_MESG, " (0x%08lx).\n", addr.off);
-#endif
+            switch(DEBUG_GetSelectorType(addr.seg))
+            {
+            case MODE_32:
+                DEBUG_Printf(DBG_CHN_MESG, " in 32-bit code (%04lx:%08lx).\n", addr.seg, addr.off);
+                break;
+            case MODE_16:
+                DEBUG_Printf(DBG_CHN_MESG, " in 16-bit code (%04lx:%04lx).\n", addr.seg, addr.off);
+                break;
+            case MODE_VM86:
+                DEBUG_Printf(DBG_CHN_MESG, " in vm86 code (%04lx:%04lx).\n", addr.seg, addr.off);
+                break;
+            case MODE_INVALID:
+                DEBUG_Printf(DBG_CHN_MESG, "bad CS (%lx)\n", addr.seg);
+                break;
+        }
     }
 
     DEBUG_LoadEntryPoints("Loading new modules symbols:\n");
@@ -302,16 +311,13 @@ static  BOOL	DEBUG_ExceptionProlog(BOOL is_debug, BOOL force, DWORD code)
 			     &DEBUG_CurrThread->dbg_exec_count))
 	return FALSE;
 
-#ifdef __i386__
-    switch (newmode = DEBUG_GetSelectorType(addr.seg)) {
-    case 16: case 32: break;
-    default: DEBUG_Printf(DBG_CHN_MESG, "Bad CS (%ld)\n", addr.seg); newmode = 32;
-    }
-#else
-    newmode = 32;
-#endif
+    if ((newmode = DEBUG_GetSelectorType(addr.seg)) == MODE_INVALID) newmode = MODE_32;
     if (newmode != DEBUG_CurrThread->dbg_mode)
-	DEBUG_Printf(DBG_CHN_MESG,"In %d bit mode.\n", DEBUG_CurrThread->dbg_mode = newmode);
+    {
+        static const char * const names[] = { "???", "16-bit", "32-bit", "vm86" };
+        DEBUG_Printf(DBG_CHN_MESG,"In %s mode.\n", names[newmode] );
+        DEBUG_CurrThread->dbg_mode = newmode;
+    }
 
     DEBUG_DoDisplay();
 
@@ -326,7 +332,7 @@ static  BOOL	DEBUG_ExceptionProlog(BOOL is_debug, BOOL force, DWORD code)
 	DEBUG_InfoRegisters();
 	DEBUG_InfoStack();
 #ifdef __i386__
-	if (DEBUG_CurrThread->dbg_mode == 16) {
+	if (DEBUG_CurrThread->dbg_mode == MODE_16) {
 	    DEBUG_InfoSegments(DEBUG_context.SegDs >> 3, 1);
 	    if (DEBUG_context.SegEs != DEBUG_context.SegDs)
 		DEBUG_InfoSegments(DEBUG_context.SegEs >> 3, 1);
@@ -374,7 +380,6 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
     BOOL	ret = TRUE;
 
     *cont = DBG_CONTINUE;
-    if (first_chance && !force && !DBG_IVAR(BreakOnFirstChance)) return TRUE;
 
     switch (rec->ExceptionCode)
     {
@@ -382,6 +387,13 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
     case EXCEPTION_SINGLE_STEP:
         is_debug = TRUE;
         break;
+    }
+
+    if (first_chance && !force && !DBG_IVAR(BreakOnFirstChance))
+    {
+        /* pass exception to program except for debug exceptions */
+        *cont = is_debug ? DBG_CONTINUE : DBG_EXCEPTION_NOT_HANDLED;
+        return TRUE;
     }
 
     if (!is_debug)
@@ -431,6 +443,16 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
 		DEBUG_Printf(DBG_CHN_MESG, "\n");
 		return TRUE;
 	    }
+            break;
+        case EXCEPTION_VM86_INTx:
+            DEBUG_Printf(DBG_CHN_MESG, "interrupt %02lx in vm86 mode",
+                         rec->ExceptionInformation[0]);
+            break;
+        case EXCEPTION_VM86_STI:
+            DEBUG_Printf(DBG_CHN_MESG, "sti in vm86 mode");
+            break;
+        case EXCEPTION_VM86_PICRETURN:
+            DEBUG_Printf(DBG_CHN_MESG, "PIC return in vm86 mode");
             break;
         default:
             DEBUG_Printf(DBG_CHN_MESG, "%08lx", rec->ExceptionCode);
@@ -728,7 +750,7 @@ static	DWORD	DEBUG_MainLoop(void)
     DWORD		cont;
     BOOL		ret;
 
-    DEBUG_Printf(DBG_CHN_MESG, " on pid %ld\n", DEBUG_CurrPid);
+    DEBUG_Printf(DBG_CHN_MESG, " on pid %lx\n", DEBUG_CurrPid);
     
     for (ret = TRUE; ret; ) {
 	/* wait until we get at least one loaded process */
@@ -741,7 +763,7 @@ static	DWORD	DEBUG_MainLoop(void)
 	}
     };
     
-    DEBUG_Printf(DBG_CHN_MESG, "WineDbg terminated on pid %ld\n", DEBUG_CurrPid);
+    DEBUG_Printf(DBG_CHN_MESG, "WineDbg terminated on pid %lx\n", DEBUG_CurrPid);
 
     return 0;
 }

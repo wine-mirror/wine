@@ -1033,7 +1033,7 @@ static void db_task_printsym(unsigned int addr, int size)
     address.seg = 0;
     address.off = addr;
 
-    DEBUG_PrintAddress( &address, db_disasm_16 ? 16 : 32, TRUE );
+    DEBUG_PrintAddress( &address, db_disasm_16 ? MODE_16 : MODE_32, TRUE );
 }
 
 void db_print_address(char *seg, int size, struct i_addr *addrp, int byref)
@@ -1189,10 +1189,12 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 	 * Set this so we get can supress the printout if we need to.
 	 */
 	db_display = display;
-        switch (DEBUG_GetSelectorType(addr->seg)) {
-	case 16: db_disasm_16 = 1; break;
-	case 32: db_disasm_16 = 0; break;
-	default: DEBUG_Printf(DBG_CHN_MESG, "Bad selector %ld\n", addr->seg); return;
+        switch (DEBUG_GetSelectorType(addr->seg))
+        {
+        case MODE_VM86:
+	case MODE_16: db_disasm_16 = 1; break;
+	case MODE_32: db_disasm_16 = 0; break;
+	default: DEBUG_Printf(DBG_CHN_MESG, "Bad selector %lx\n", addr->seg); return;
 	}
 
 	get_value_inc( inst, addr, 1, FALSE );
@@ -1625,8 +1627,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
                                        2, FALSE );
 			if( db_display )
 			  {
-			    DEBUG_PrintAddress( &address, short_addr ? 16 : 32, 
-						TRUE );
+			    DEBUG_PrintAddress( &address, short_addr ? MODE_16 : MODE_32, TRUE );
 			  }
 		      
                     }

@@ -41,6 +41,7 @@ STRING     \"[^\n"]+\"
 %s DEL_CMD
 %s WALK_CMD
 %s SHOW_CMD
+%s MODE_CMD
 %s NOCMD
 
 %x ASTRING_EXPECTED
@@ -111,7 +112,7 @@ STRING     \"[^\n"]+\"
 <INITIAL>abort|abor|abo         	{ BEGIN(NOCMD); return tABORT; }
 <INITIAL>print|prin|pri|pr|p		{ BEGIN(FORMAT_EXPECTED); return tPRINT; }
 
-<INITIAL>mode				{ BEGIN(NOCMD); return tMODE; }
+<INITIAL>mode				{ BEGIN(MODE_CMD); return tMODE; }
 <INITIAL>show|sho|sh			{ BEGIN(SHOW_CMD); return tSHOW; }
 <INITIAL>symbolfile|symbols|symbol|sf   { BEGIN(PATH_EXPECTED); return tSYMBOLFILE; }
 
@@ -134,6 +135,7 @@ STRING     \"[^\n"]+\"
 <INFO_CMD>maps|map			{ return tMAPS; }
 <INFO_CMD,WALK_CMD>window|windo|wind|win|wnd	{ return tWND; }
 <HELP_CMD>info|inf|in                   { return tINFO; }
+<MODE_CMD>vm86                          { return tVM86; }
 
 <INITIAL,SHOW_CMD>directories|directorie|directori|director|directo|direct|direc|direc|dir { 
 			                  BEGIN(PATH_EXPECTED); return tDIR; }

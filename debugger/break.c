@@ -269,27 +269,27 @@ static	int	DEBUG_InitXPoint(int type, DBG_ADDR* addr)
    {
       if (breakpoints[num].refcount == 0) 
       {
-	 breakpoints[num].refcount = 1;
-	 breakpoints[num].enabled = TRUE;
-	 breakpoints[num].type    = type;
-	 breakpoints[num].skipcount = 0;
-	 breakpoints[num].addr = *addr;
-	 breakpoints[num].is32 = 1;
-#ifdef __i386__
-	 if (addr->seg) 
-	 {
-	    switch (DEBUG_GetSelectorType( addr->seg )) 
-	    {
-	       case 32: break;
-	       case 16: breakpoints[num].is32 = 0; break;
-	       default: RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
-	    }
-	 }
-#endif
-	 return num;
+          breakpoints[num].refcount = 1;
+          breakpoints[num].enabled = TRUE;
+          breakpoints[num].type    = type;
+          breakpoints[num].skipcount = 0;
+          breakpoints[num].addr = *addr;
+          switch (DEBUG_GetSelectorType( addr->seg ))
+          {
+          case MODE_32:
+              breakpoints[num].is32 = 1;
+              break;
+          case MODE_VM86:
+          case MODE_16:
+              breakpoints[num].is32 = 0;
+              break;
+          default:
+              RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
+          }
+          return num;
       }
    }
-   
+
    DEBUG_Printf( DBG_CHN_MESG, "Too many breakpoints. Please delete some.\n" );
    return -1;
 }
@@ -360,7 +360,7 @@ void DEBUG_AddBreakpoint( const DBG_VALUE *_value, BOOL (*func)(void) )
     breakpoints[num].u.b.func = func;
 
     DEBUG_Printf( DBG_CHN_MESG, "Breakpoint %d at ", num );
-    DEBUG_PrintAddress( &breakpoints[num].addr, breakpoints[num].is32 ? 32 : 16,
+    DEBUG_PrintAddress( &breakpoints[num].addr, breakpoints[num].is32 ? MODE_32 : MODE_16,
 			TRUE );
     DEBUG_Printf( DBG_CHN_MESG, "\n" );
 }
@@ -472,7 +472,7 @@ void DEBUG_AddWatchpoint( const DBG_VALUE *_value, BOOL is_write )
       breakpoints[reg].u.w.reg = reg;
    
       DEBUG_Printf( DBG_CHN_MESG, "Watchpoint %d at ", num );
-      DEBUG_PrintAddress( &breakpoints[num].addr, breakpoints[num].is32 ? 32:16, TRUE );
+      DEBUG_PrintAddress( &breakpoints[num].addr, breakpoints[num].is32 ? MODE_32 : MODE_16, TRUE );
       DEBUG_Printf( DBG_CHN_MESG, "\n" );
    }
 }
@@ -623,7 +623,7 @@ void DEBUG_InfoBreakpoints(void)
         {
             DEBUG_Printf( DBG_CHN_MESG, "%d: %c ", i, breakpoints[i].enabled ? 'y' : 'n');
             DEBUG_PrintAddress( &breakpoints[i].addr, 
-				breakpoints[i].is32 ? 32 : 16, TRUE);
+				breakpoints[i].is32 ? MODE_32 : MODE_16, TRUE);
             DEBUG_Printf( DBG_CHN_MESG, " (%u)\n", breakpoints[i].refcount );
 	    if( breakpoints[i].condition != NULL )
 	    {
@@ -640,7 +640,7 @@ void DEBUG_InfoBreakpoints(void)
         {
             DEBUG_Printf( DBG_CHN_MESG, "%d: %c ", i, breakpoints[i].enabled ? 'y' : 'n');
             DEBUG_PrintAddress( &breakpoints[i].addr, 
-				breakpoints[i].is32 ? 32 : 16, TRUE);
+				breakpoints[i].is32 ? MODE_32 : MODE_16, TRUE);
             DEBUG_Printf( DBG_CHN_MESG, " on %d byte%s (%c)\n", 
 		     breakpoints[i].u.w.len + 1, 
 		     breakpoints[i].u.w.len > 0 ? "s" : "",
@@ -702,7 +702,7 @@ BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, enum exec_mode mode, int 
     int 	bpnum;
     DWORD	oldval;
     int 	wpnum;
-    int		addrlen = 32;
+    enum dbg_mode addr_mode;
     struct symbol_info syminfo;
 
 #ifdef __i386__
@@ -723,7 +723,7 @@ BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, enum exec_mode mode, int 
 
         DEBUG_Printf( DBG_CHN_MESG, "Stopped on breakpoint %d at ", bpnum );
         syminfo = DEBUG_PrintAddress( &breakpoints[bpnum].addr,
-				      breakpoints[bpnum].is32 ? 32 : 16, TRUE );
+				      breakpoints[bpnum].is32 ? MODE_32 : MODE_16, TRUE );
         DEBUG_Printf( DBG_CHN_MESG, "\n" );
 	
 	if( syminfo.list.sourcefile != NULL )
@@ -744,11 +744,9 @@ BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, enum exec_mode mode, int 
        }
        if (!DEBUG_ShallBreak(wpnum)) return TRUE;
        
-#ifdef __i386__
-       if (addr->seg) addrlen = DEBUG_GetSelectorType( addr->seg );
-#endif
+       addr_mode = DEBUG_GetSelectorType( addr->seg );
        DEBUG_Printf(DBG_CHN_MESG, "Stopped on watchpoint %d at ", wpnum);
-       syminfo = DEBUG_PrintAddress( addr, addrlen, TRUE );
+       syminfo = DEBUG_PrintAddress( addr, addr_mode, TRUE );
        
        DEBUG_Printf(DBG_CHN_MESG, " values: old=%lu new=%lu\n", 
 	       oldval, breakpoints[wpnum].u.w.oldval);

@@ -513,9 +513,6 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
 	  rtn.type = NULL;
 	  rtn.addr.seg = VAL(exp1);
 	  rtn.addr.off = VAL(exp2);
-#ifdef __i386__
-	  DEBUG_FixSegment(&rtn.addr);
-#endif
 	  break;
 	case EXP_OP_LOR:
 	  exp->un.binop.result = (VAL(exp1) || VAL(exp2));

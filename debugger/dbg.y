@@ -40,7 +40,7 @@ int yyerror(char *);
 }
 
 %token tCONT tPASS tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK tUP tDOWN
-%token tENABLE tDISABLE tBREAK tWATCH tDELETE tSET tMODE tPRINT tEXAM tABORT
+%token tENABLE tDISABLE tBREAK tWATCH tDELETE tSET tMODE tPRINT tEXAM tABORT tVM86
 %token tCLASS tMAPS tMODULE tSTACK tSEGMENTS tREGS tWND tQUEUE tLOCAL
 %token tPROCESS tTHREAD tMODREF tEOL
 %token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY tDISASSEMBLE
@@ -117,6 +117,7 @@ command:
                                   DEBUG_CurrThread->dbg_exec_mode = EXEC_STEPI_OVER; return TRUE; }
     | tABORT tEOL              	{ kill(getpid(), SIGABRT); }
     | tMODE tNUM tEOL          	{ mode_command($2); }
+    | tMODE tVM86 tEOL         	{ DEBUG_CurrThread->dbg_mode = MODE_VM86; }
     | tENABLE tNUM tEOL        	{ DEBUG_EnableBreakpoint( $2, TRUE ); }
     | tDISABLE tNUM tEOL       	{ DEBUG_EnableBreakpoint( $2, FALSE ); }
     | tDELETE tBREAK tNUM tEOL 	{ DEBUG_DelBreakpoint( $3 ); }
@@ -346,8 +347,12 @@ static void issue_prompt(void)
 
 static void mode_command(int newmode)
 {
-    if ((newmode == 16) || (newmode == 32)) DEBUG_CurrThread->dbg_mode = newmode;
-    else DEBUG_Printf(DBG_CHN_MESG,"Invalid mode (use 16 or 32)\n");
+    switch(newmode)
+    {
+    case 16: DEBUG_CurrThread->dbg_mode = MODE_16; break;
+    case 32: DEBUG_CurrThread->dbg_mode = MODE_32; break;
+    default: DEBUG_Printf(DBG_CHN_MESG,"Invalid mode (use 16, 32 or vm86)\n");
+    }
 }
 
 void DEBUG_Exit(DWORD ec)

@@ -120,7 +120,7 @@ void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format )
  * Print an 16- or 32-bit address, with the nearest symbol if any.
  */
 struct symbol_info
-DEBUG_PrintAddress( const DBG_ADDR *addr, int addrlen, int flag )
+DEBUG_PrintAddress( const DBG_ADDR *addr, enum dbg_mode mode, int flag )
 {
     struct symbol_info rtn;
 
@@ -128,7 +128,7 @@ DEBUG_PrintAddress( const DBG_ADDR *addr, int addrlen, int flag )
 						&rtn.list );
 
     if (addr->seg) DEBUG_Printf( DBG_CHN_MESG, "0x%04lx:", addr->seg&0xFFFF );
-    if (addrlen == 16) DEBUG_Printf( DBG_CHN_MESG, "0x%04lx", addr->off );
+    if (mode != MODE_32) DEBUG_Printf( DBG_CHN_MESG, "0x%04lx", addr->off );
     else DEBUG_Printf( DBG_CHN_MESG, "0x%08lx", addr->off );
     if (name) DEBUG_Printf( DBG_CHN_MESG, " (%s)", name );
     return rtn;
@@ -141,7 +141,7 @@ DEBUG_PrintAddress( const DBG_ADDR *addr, int addrlen, int flag )
  * each function (if known).  This is useful in a backtrace.
  */
 struct symbol_info
-DEBUG_PrintAddressAndArgs( const DBG_ADDR *addr, int addrlen, 
+DEBUG_PrintAddressAndArgs( const DBG_ADDR *addr, enum dbg_mode mode,
 			   unsigned int ebp, int flag )
 {
     struct symbol_info rtn;
@@ -150,7 +150,7 @@ DEBUG_PrintAddressAndArgs( const DBG_ADDR *addr, int addrlen,
 						&rtn.list );
 
     if (addr->seg) DEBUG_Printf( DBG_CHN_MESG, "0x%04lx:", addr->seg );
-    if (addrlen == 16) DEBUG_Printf( DBG_CHN_MESG, "0x%04lx", addr->off );
+    if (mode != MODE_32) DEBUG_Printf( DBG_CHN_MESG, "0x%04lx", addr->off );
     else DEBUG_Printf( DBG_CHN_MESG, "0x%08lx", addr->off );
     if (name) DEBUG_Printf( DBG_CHN_MESG, " (%s)", name );
 
@@ -186,7 +186,7 @@ void DEBUG_Help(void)
 "  show dir                               dir <path>",
 "  display <expr>                         undisplay <disnum>",
 "  delete display <disnum>                debugmsg <class>[-+]<type>\n",
-"  mode [16,32]                           walk [wnd,class,queue,module,",
+"  mode [16,32,vm86]                      walk [wnd,class,queue,module,",
 "  whatis                                       process,modref <pid>]",
 "  info (see 'help info' for options)\n",
 

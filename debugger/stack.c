@@ -63,11 +63,13 @@ void DEBUG_InfoStack(void)
     value.addr.off = DEBUG_context.Esp;
 
     DEBUG_Printf(DBG_CHN_MESG,"Stack dump:\n");
-    switch (DEBUG_GetSelectorType(value.addr.seg)) {
-    case 32: /* 32-bit mode */
+    switch (DEBUG_GetSelectorType(value.addr.seg))
+    {
+    case MODE_32: /* 32-bit mode */
        DEBUG_ExamineMemory( &value, 24, 'x' );
        break;
-    case 16:  /* 16-bit mode */
+    case MODE_16:  /* 16-bit mode */
+    case MODE_VM86:
         value.addr.off &= 0xffff;
         DEBUG_ExamineMemory( &value, 24, 'w' );
 	break;
@@ -79,7 +81,8 @@ void DEBUG_InfoStack(void)
 }
 
 #ifdef __i386__
-static void DEBUG_ForceFrame(DBG_ADDR *stack, DBG_ADDR *code, int frameno, int bits, int noisy, const char *caveat)
+static void DEBUG_ForceFrame(DBG_ADDR *stack, DBG_ADDR *code, int frameno, enum dbg_mode mode,
+                             int noisy, const char *caveat)
 {
     int theframe = nframe++;
     frames = (struct bt_info *)DBG_realloc(frames,
@@ -90,8 +93,7 @@ static void DEBUG_ForceFrame(DBG_ADDR *stack, DBG_ADDR *code, int frameno, int b
     frames[theframe].cs = code->seg;
     frames[theframe].eip = code->off;
     if (noisy)
-      frames[theframe].frame = DEBUG_PrintAddressAndArgs( code, bits, 
-							  stack->off, TRUE );
+        frames[theframe].frame = DEBUG_PrintAddressAndArgs( code, mode, stack->off, TRUE );
     else
       DEBUG_FindNearestSymbol( code, TRUE, 
 			       &frames[theframe].frame.sym, stack->off, 
@@ -99,7 +101,8 @@ static void DEBUG_ForceFrame(DBG_ADDR *stack, DBG_ADDR *code, int frameno, int b
     frames[theframe].ss = stack->seg;
     frames[theframe].ebp = stack->off;
     if (noisy) {
-      DEBUG_Printf( DBG_CHN_MESG, (bits == 16) ? " (bp=%04lx%s)\n" : " (ebp=%08lx%s)\n", stack->off, caveat?caveat:"" );
+      DEBUG_Printf( DBG_CHN_MESG, (mode != MODE_32) ? " (bp=%04lx%s)\n" : " (ebp=%08lx%s)\n",
+                    stack->off, caveat?caveat:"" );
     }
 }
 
@@ -136,7 +139,8 @@ static BOOL DEBUG_Frame16(DBG_ADDR *addr, unsigned int *cs, int frameno, int noi
     code.seg = *cs;
     code.off = frame.ip;
     addr->off = frame.bp & ~1;
-    DEBUG_ForceFrame(addr, &code, frameno, 16, noisy, possible_cs ? ", far call assumed" : NULL );
+    DEBUG_ForceFrame(addr, &code, frameno, MODE_16, noisy,
+                     possible_cs ? ", far call assumed" : NULL );
     return TRUE;
 }
 
@@ -158,7 +162,7 @@ static BOOL DEBUG_Frame32(DBG_ADDR *addr, unsigned int *cs, int frameno, int noi
     code.seg = *cs;
     code.off = frame.ip;
     addr->off = frame.bp;
-    DEBUG_ForceFrame(addr, &code, frameno, 32, noisy, NULL);
+    DEBUG_ForceFrame(addr, &code, frameno, MODE_32, noisy, NULL);
     if (addr->off == old_bp) return FALSE;
     return TRUE;
 }
@@ -195,12 +199,12 @@ void DEBUG_BackTrace(BOOL noisy)
     /* first stack frame from registers */
     switch (DEBUG_GetSelectorType(ss))
     {
-    case 32:
+    case MODE_32:
         code.seg = cs;
         code.off = DEBUG_context.Eip;
         addr.seg = ss;
 	addr.off = DEBUG_context.Ebp;
-        DEBUG_ForceFrame( &addr, &code, frameno, 32, noisy, NULL );
+        DEBUG_ForceFrame( &addr, &code, frameno, MODE_32, noisy, NULL );
         if (!(code.seg || code.off)) {
             /* trying to execute a null pointer... yuck...
              * if it was a call to null, the return EIP should be
@@ -208,21 +212,22 @@ void DEBUG_BackTrace(BOOL noisy)
             tmp.seg = ss;
             tmp.off = DEBUG_context.Esp;
             if (DEBUG_READ_MEM((void *)DEBUG_ToLinear(&tmp), &code.off, sizeof(code.off))) {
-                DEBUG_ForceFrame( &addr, &code, ++frameno, 32, noisy, ", null call assumed" );
+                DEBUG_ForceFrame( &addr, &code, ++frameno, MODE_32, noisy, ", null call assumed" );
             }
         }
         is16 = FALSE;
 	break;
-    case 16:
+    case MODE_16:
+    case MODE_VM86:
         code.seg = cs;
         code.off = LOWORD(DEBUG_context.Eip);
         addr.seg = ss;
 	addr.off = LOWORD(DEBUG_context.Ebp);
-        DEBUG_ForceFrame( &addr, &code, frameno, 16, noisy, NULL );
+        DEBUG_ForceFrame( &addr, &code, frameno, MODE_16, noisy, NULL );
         is16 = TRUE;
 	break;
     default:
-        if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad segment '%u'\n", ss);
+        if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad segment '%x'\n", ss);
 	return;
     }
 
@@ -282,7 +287,7 @@ void DEBUG_BackTrace(BOOL noisy)
 	       cs = 0;
 	       addr.seg = 0;
 	       addr.off = frame32.ebp;
-	       DEBUG_ForceFrame( &addr, &code, ++frameno, 32, noisy, NULL );
+	       DEBUG_ForceFrame( &addr, &code, ++frameno, MODE_32, noisy, NULL );
 	       
 	       next_switch = cur_switch;
 	       tmp.seg = SELECTOROF(next_switch);
@@ -316,7 +321,7 @@ void DEBUG_BackTrace(BOOL noisy)
 	      cs = frame16.cs;
 	      addr.seg = SELECTOROF(next_switch);
 	      addr.off = frame16.bp;
-	      DEBUG_ForceFrame( &addr, &code, ++frameno, 16, noisy, NULL );
+	      DEBUG_ForceFrame( &addr, &code, ++frameno, MODE_16, noisy, NULL );
 	      
 	      next_switch = cur_switch;
 	      if (!DEBUG_READ_MEM((void*)next_switch, &frame32, sizeof(STACK32FRAME))) {
