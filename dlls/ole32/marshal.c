@@ -76,11 +76,6 @@ get_facbuf_for_iid(REFIID riid,IPSFactoryBuffer **facbuf) {
     return CoGetClassObject(&pxclsid,CLSCTX_INPROC_SERVER,NULL,&IID_IPSFactoryBuffer,(LPVOID*)facbuf);
 }
 
-typedef struct _wine_marshal_data {
-    DWORD	dwDestContext;
-    DWORD	mshlflags;
-} wine_marshal_data;
-
 IRpcStubBuffer *mid_to_stubbuffer(wine_marshal_id *mid)
 {
     IRpcStubBuffer *ret;
@@ -477,7 +472,7 @@ StdMarshalImpl_GetMarshalSizeMax(
   LPMARSHAL iface, REFIID riid, void* pv, DWORD dwDestContext,
   void* pvDestContext, DWORD mshlflags, DWORD* pSize
 ) {
-  *pSize = sizeof(wine_marshal_id)+sizeof(wine_marshal_data);
+  *pSize = sizeof(wine_marshal_id);
   return S_OK;
 }
 
@@ -487,7 +482,6 @@ StdMarshalImpl_MarshalInterface(
   void* pvDestContext, DWORD mshlflags
 ) {
   wine_marshal_id       mid;
-  wine_marshal_data     md;
   IUnknown             *pUnk;  
   ULONG                 res;
   HRESULT               hres;
@@ -541,12 +535,6 @@ StdMarshalImpl_MarshalInterface(
   hres = IStream_Write(pStm,&mid,sizeof(mid),&res);
   if (hres) return hres;
 
-  /* and then the marshal data */
-  md.dwDestContext      = dwDestContext;
-  md.mshlflags          = mshlflags;
-  hres = IStream_Write(pStm,&md,sizeof(md),&res);
-  if (hres) return hres;
-   
   return S_OK;
 }
 
@@ -555,7 +543,6 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
 {
   struct stub_manager  *stubmgr;
   wine_marshal_id       mid;
-  wine_marshal_data     md;
   ULONG			res;
   HRESULT		hres;
   IRpcChannelBuffer	*chanbuf;
@@ -568,8 +555,6 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
 
   hres = IStream_Read(pStm,&mid,sizeof(mid),&res);
   if (hres) return hres;
-  hres = IStream_Read(pStm,&md,sizeof(md),&res);
-  if (hres) return hres;
   
   /* check if we're marshalling back to ourselves */
   /* FIXME: commented out until we can get the tests passing with it uncommented. */
@@ -578,8 +563,6 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
       TRACE("Unmarshalling object marshalled in same apartment for iid %s, returning original object %p\n", debugstr_guid(riid), stubmgr->object);
     
       hres = IUnknown_QueryInterface(stubmgr->object, riid, ppv);
-      if ((md.mshlflags & MSHLFLAGS_TABLESTRONG) || (md.mshlflags & MSHLFLAGS_TABLEWEAK))
-          FIXME("table marshalling unimplemented\n");
       
       /* unref the ifstub. FIXME: only do this on success? */
       stub_manager_ext_release(stubmgr, 1);
