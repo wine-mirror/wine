@@ -88,7 +88,7 @@ int symbol_search (parsed_symbol *sym)
       }
       grep_buff[i] = '\0';
 
-      /* Definitly not in these: */
+      /* Definitely not in these: */
       if (strcmp(extension,".dll") == 0 ||
 	  strcmp(extension,".lib") == 0 ||
 	  strcmp(extension,".so")  == 0 ||

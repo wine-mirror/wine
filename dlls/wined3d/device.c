@@ -1187,7 +1187,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, D3DRENDE
     IWineD3DDeviceImpl  *This     = (IWineD3DDeviceImpl *)iface;
     DWORD                OldValue = This->stateBlock->renderState[State];
     
-    /* Simple way of refering to either a DWORD or a 4 byte float */
+    /* Simple way of referring to either a DWORD or a 4 byte float */
     union {
         DWORD d;
         float f;
