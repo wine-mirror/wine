@@ -105,7 +105,7 @@ extern MSVCRT(wchar_t)***    __p___wargv(void);
 extern char***               __p__environ(void);
 extern MSVCRT(wchar_t)***    __p__wenviron(void);
 extern int*                  __p___mb_cur_max(void);
-extern unsigned long*        __doserrno(void);
+extern unsigned long*        MSVCRT(__doserrno)(void);
 extern unsigned int*         __p__fmode(void);
 /* FIXME: We need functions to access these:
  * int _sys_nerr;
@@ -131,7 +131,7 @@ extern int*           MSVCRT(_errno)(void);
 #endif
 
 
-typedef int (*_onexit_t)(void);
+typedef int (*MSVCRT(_onexit_t))(void);
 
 
 __int64     _atoi64(const char*);
@@ -148,7 +148,7 @@ unsigned long _lrotl(unsigned long,int);
 unsigned long _lrotr(unsigned long,int);
 void        _makepath(char*,const char*,const char*,const char*,const char*);
 MSVCRT(size_t) _mbstrlen(const char*);
-_onexit_t   _onexit(_onexit_t);
+MSVCRT(_onexit_t) MSVCRT(_onexit)(MSVCRT(_onexit_t));
 int         _putenv(const char*);
 unsigned int _rotl(unsigned int,int);
 unsigned int _rotr(unsigned int,int);
@@ -158,7 +158,7 @@ void        _seterrormode(int);
 void        _sleep(unsigned long);
 void        _splitpath(const char*,char*,char*,char*,char*);
 long double _strtold(const char*,char**);
-void        _swab(char*,char*,int);
+void        MSVCRT(_swab)(char*,char*,int);
 char*       _ui64toa(unsigned __int64,char*,int);
 char*       _ultoa(unsigned long,char*,int);
 

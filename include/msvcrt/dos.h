@@ -22,7 +22,7 @@
 
 #ifndef MSVCRT_DISKFREE_T_DEFINED
 #define MSVCRT_DISKFREE_T_DEFINED
-struct _diskfree_t {
+struct MSVCRT(_diskfree_t) {
   unsigned int total_clusters;
   unsigned int avail_clusters;
   unsigned int sectors_per_cluster;
@@ -35,7 +35,7 @@ struct _diskfree_t {
 extern "C" {
 #endif
 
-unsigned int _getdiskfree(unsigned int, struct _diskfree_t *);
+unsigned int MSVCRT(_getdiskfree)(unsigned int, struct MSVCRT(_diskfree_t) *);
 
 #ifdef __cplusplus
 }
@@ -43,7 +43,7 @@ unsigned int _getdiskfree(unsigned int, struct _diskfree_t *);
 
 
 #ifndef USE_MSVCRT_PREFIX
-#define diskfree_t _diskfree_t
+#define MSVCRT(diskfree_t) MSVCRT(_diskfree_t)
 #endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_DOS_H */

@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define LOCK_EXIT   _mlock(_EXIT_LOCK1)
 #define UNLOCK_EXIT _munlock(_EXIT_LOCK1)
 
-static _onexit_t *MSVCRT_atexit_table = NULL;
+static MSVCRT__onexit_t *MSVCRT_atexit_table = NULL;
 static int MSVCRT_atexit_table_size = 0;
 static int MSVCRT_atexit_registered = 0; /* Points to free slot */
 
@@ -63,9 +63,9 @@ void __MSVCRT__call_atexit(void)
 /*********************************************************************
  *		__dllonexit (MSVCRT.@)
  */
-_onexit_t __dllonexit(_onexit_t func, _onexit_t **start, _onexit_t **end)
+MSVCRT__onexit_t __dllonexit(MSVCRT__onexit_t func, MSVCRT__onexit_t **start, MSVCRT__onexit_t **end)
 {
-  _onexit_t *tmp;
+  MSVCRT__onexit_t *tmp;
   int len;
 
   TRACE("(%p,%p,%p)\n", func, start, end);
@@ -83,7 +83,7 @@ _onexit_t __dllonexit(_onexit_t func, _onexit_t **start, _onexit_t **end)
   if (++len <= 0)
     return NULL;
 
-  tmp = (_onexit_t *)MSVCRT_realloc(*start, len * sizeof(tmp));
+  tmp = (MSVCRT__onexit_t *)MSVCRT_realloc(*start, len * sizeof(tmp));
   if (!tmp)
     return NULL;
   *start = tmp;
@@ -200,7 +200,7 @@ void MSVCRT__cexit(void)
 /*********************************************************************
  *		_onexit (MSVCRT.@)
  */
-_onexit_t _onexit(_onexit_t func)
+MSVCRT__onexit_t MSVCRT__onexit(MSVCRT__onexit_t func)
 {
   TRACE("(%p)\n",func);
 
@@ -210,7 +210,7 @@ _onexit_t _onexit(_onexit_t func)
   LOCK_EXIT;
   if (MSVCRT_atexit_registered > MSVCRT_atexit_table_size - 1)
   {
-    _onexit_t *newtable;
+    MSVCRT__onexit_t *newtable;
     TRACE("expanding table\n");
     newtable = MSVCRT_calloc(sizeof(void *),MSVCRT_atexit_table_size + 32);
     if (!newtable)
@@ -249,7 +249,7 @@ void MSVCRT_exit(int exitcode)
 int MSVCRT_atexit(void (*func)(void))
 {
   TRACE("(%p)\n", func);
-  return _onexit((_onexit_t)func) == (_onexit_t)func ? 0 : -1;
+  return MSVCRT__onexit((MSVCRT__onexit_t)func) == (MSVCRT__onexit_t)func ? 0 : -1;
 }
 
 

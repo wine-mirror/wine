@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #include "config.h"
-#include "msvcrt.h"
-#include "msvcrt/errno.h"
 
 #include <stdio.h>
 #define __USE_ISOC9X 1
@@ -29,7 +27,11 @@
 #include <ieeefp.h>
 #endif
 
+#include "msvcrt.h"
+#include "msvcrt/errno.h"
 #include "msvcrt/stdlib.h"
+#include "msvcrt/math.h"
+#include "msvcrt/float.h"
 
 #include "wine/debug.h"
 
@@ -49,70 +51,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define signbit(x) 0
 #endif
 
-/* fpclass constants */
-#define _FPCLASS_SNAN 1
-#define _FPCLASS_QNAN 2
-#define _FPCLASS_NINF 4
-#define _FPCLASS_NN   8
-#define _FPCLASS_ND   16
-#define _FPCLASS_NZ   32
-#define _FPCLASS_PZ   64
-#define _FPCLASS_PD   128
-#define _FPCLASS_PN   256
-#define _FPCLASS_PINF 512
-
-/* _statusfp bit flags */
-#define _SW_INEXACT    0x1
-#define _SW_UNDERFLOW  0x2
-#define _SW_OVERFLOW   0x4
-#define _SW_ZERODIVIDE 0x8
-#define _SW_INVALID    0x10
-#define _SW_DENORMAL   0x80000
-
-/* _controlfp masks and bitflags - x86 only so far*/
-#ifdef __i386__
-#define _MCW_EM        0x8001f
-#define _EM_INEXACT    0x1
-#define _EM_UNDERFLOW  0x2
-#define _EM_OVERFLOW   0x4
-#define _EM_ZERODIVIDE 0x8
-#define _EM_INVALID    0x10
-
-#define _MCW_RC        0x300
-#define _RC_NEAR       0x0
-#define _RC_DOWN       0x100
-#define _RC_UP         0x200
-#define _RC_CHOP       0x300
-
-#define _MCW_PC        0x30000
-#define _PC_64         0x0
-#define _PC_53         0x10000
-#define _PC_24         0x20000
-
-#define _MCW_IC        0x40000
-#define _IC_AFFINE     0x40000
-#define _IC_PROJECTIVE 0x0
-
-#define _EM_DENORMAL   0x80000
-#endif
-
-typedef struct __MSVCRT_complex
-{
-  double real;
-  double imaginary;
-} MSVCRT_complex;
-
-typedef struct __MSVCRT_exception
-{
-  int type;
-  char *name;
-  double arg1;
-  double arg2;
-  double retval;
-} MSVCRT_exception;
-
-
-typedef int (*MSVCRT_matherr_func)(MSVCRT_exception *);
+typedef int (*MSVCRT_matherr_func)(struct MSVCRT__exception *);
 
 static MSVCRT_matherr_func MSVCRT_default_matherr_func = NULL;
 
@@ -409,7 +348,7 @@ double _scalb(double num, long power)
 /*********************************************************************
  *		_matherr (MSVCRT.@)
  */
-int _matherr(MSVCRT_exception *e)
+int MSVCRT__matherr(struct MSVCRT__exception *e)
 {
   if (e)
     TRACE("(%p = %d, %s, %g %g %g)\n",e, e->type, e->name, e->arg1, e->arg2,
@@ -492,9 +431,9 @@ double MSVCRT_ldexp(double num, long exp)
 /*********************************************************************
  *		_cabs (MSVCRT.@)
  */
-double _cabs(MSVCRT_complex num)
+double MSVCRT__cabs(struct MSVCRT__complex num)
 {
-  return sqrt(num.real * num.real + num.imaginary * num.imaginary);
+  return sqrt(num.x * num.x + num.y * num.y);
 }
 
 /*********************************************************************

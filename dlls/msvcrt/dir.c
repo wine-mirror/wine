@@ -36,18 +36,17 @@
 #include "msvcrt/errno.h"
 
 #include "wine/unicode.h"
-#include "msvcrt/direct.h"
-#include "msvcrt/dos.h"
 #include "msvcrt/io.h"
 #include "msvcrt/stdlib.h"
 #include "msvcrt/string.h"
+#include "msvcrt/dos.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* INTERNAL: Translate WIN32_FIND_DATAA to finddata_t  */
-static void msvcrt_fttofd( const WIN32_FIND_DATAA *fd, struct _finddata_t* ft)
+static void msvcrt_fttofd( const WIN32_FIND_DATAA *fd, struct MSVCRT__finddata_t* ft)
 {
   DWORD dw;
 
@@ -67,7 +66,7 @@ static void msvcrt_fttofd( const WIN32_FIND_DATAA *fd, struct _finddata_t* ft)
 }
 
 /* INTERNAL: Translate WIN32_FIND_DATAW to wfinddata_t  */
-static void msvcrt_wfttofd( const WIN32_FIND_DATAW *fd, struct _wfinddata_t* ft)
+static void msvcrt_wfttofd( const WIN32_FIND_DATAW *fd, struct MSVCRT__wfinddata_t* ft)
 {
   DWORD dw;
 
@@ -87,7 +86,7 @@ static void msvcrt_wfttofd( const WIN32_FIND_DATAW *fd, struct _wfinddata_t* ft)
 }
 
 /* INTERNAL: Translate WIN32_FIND_DATAA to finddatai64_t  */
-static void msvcrt_fttofdi64( const WIN32_FIND_DATAA *fd, struct _finddatai64_t* ft)
+static void msvcrt_fttofdi64( const WIN32_FIND_DATAA *fd, struct MSVCRT__finddatai64_t* ft)
 {
   DWORD dw;
 
@@ -107,7 +106,7 @@ static void msvcrt_fttofdi64( const WIN32_FIND_DATAA *fd, struct _finddatai64_t*
 }
 
 /* INTERNAL: Translate WIN32_FIND_DATAW to wfinddatai64_t  */
-static void msvcrt_wfttofdi64( const WIN32_FIND_DATAW *fd, struct _wfinddatai64_t* ft)
+static void msvcrt_wfttofdi64( const WIN32_FIND_DATAW *fd, struct MSVCRT__wfinddatai64_t* ft)
 {
   DWORD dw;
 
@@ -239,7 +238,7 @@ int _findclose(long hand)
  * NOTES
  *  See FindFirstFileA.
  */
-long _findfirst(const char * fspec, struct _finddata_t* ft)
+long MSVCRT__findfirst(const char * fspec, struct MSVCRT__finddata_t* ft)
 {
   WIN32_FIND_DATAA find_data;
   HANDLE hfind;
@@ -260,7 +259,7 @@ long _findfirst(const char * fspec, struct _finddata_t* ft)
  *
  * Unicode version of _findfirst.
  */
-long _wfindfirst(const MSVCRT_wchar_t * fspec, struct _wfinddata_t* ft)
+long MSVCRT__wfindfirst(const MSVCRT_wchar_t * fspec, struct MSVCRT__wfinddata_t* ft)
 {
   WIN32_FIND_DATAW find_data;
   HANDLE hfind;
@@ -281,7 +280,7 @@ long _wfindfirst(const MSVCRT_wchar_t * fspec, struct _wfinddata_t* ft)
  *
  * 64-bit version of _findfirst.
  */
-long _findfirsti64(const char * fspec, struct _finddatai64_t* ft)
+long MSVCRT__findfirsti64(const char * fspec, struct MSVCRT__finddatai64_t* ft)
 {
   WIN32_FIND_DATAA find_data;
   HANDLE hfind;
@@ -302,7 +301,7 @@ long _findfirsti64(const char * fspec, struct _finddatai64_t* ft)
  *
  * Unicode version of _findfirsti64.
  */
-long _wfindfirsti64(const MSVCRT_wchar_t * fspec, struct _wfinddatai64_t* ft)
+long MSVCRT__wfindfirsti64(const MSVCRT_wchar_t * fspec, struct MSVCRT__wfinddatai64_t* ft)
 {
   WIN32_FIND_DATAW find_data;
   HANDLE hfind;
@@ -334,7 +333,7 @@ long _wfindfirsti64(const MSVCRT_wchar_t * fspec, struct _wfinddatai64_t* ft)
  * NOTES
  *  See FindNextFileA.
  */
-int _findnext(long hand, struct _finddata_t * ft)
+int MSVCRT__findnext(long hand, struct MSVCRT__finddata_t * ft)
 {
   WIN32_FIND_DATAA find_data;
 
@@ -353,7 +352,7 @@ int _findnext(long hand, struct _finddata_t * ft)
  *
  * Unicode version of _findnext.
  */
-int _wfindnext(long hand, struct _wfinddata_t * ft)
+int MSVCRT__wfindnext(long hand, struct MSVCRT__wfinddata_t * ft)
 {
   WIN32_FIND_DATAW find_data;
 
@@ -372,7 +371,7 @@ int _wfindnext(long hand, struct _wfinddata_t * ft)
  *
  * 64-bit version of _findnext.
  */
-int _findnexti64(long hand, struct _finddatai64_t * ft)
+int MSVCRT__findnexti64(long hand, struct MSVCRT__finddatai64_t * ft)
 {
   WIN32_FIND_DATAA find_data;
 
@@ -391,7 +390,7 @@ int _findnexti64(long hand, struct _finddatai64_t * ft)
  *
  * Unicode version of _findnexti64.
  */
-int _wfindnexti64(long hand, struct _wfinddatai64_t * ft)
+int MSVCRT__wfindnexti64(long hand, struct MSVCRT__wfinddatai64_t * ft)
 {
   WIN32_FIND_DATAW find_data;
 
@@ -600,7 +599,7 @@ MSVCRT_wchar_t* _wgetdcwd(int drive, MSVCRT_wchar_t * buf, int size)
  * NOTES
  *  See GetLastError().
  */
-unsigned int _getdiskfree(unsigned int disk, struct _diskfree_t* d)
+unsigned int MSVCRT__getdiskfree(unsigned int disk, struct MSVCRT(_diskfree_t)* d)
 {
   WCHAR drivespec[4] = {'@', ':', '\\', 0};
   DWORD ret[4];

@@ -48,8 +48,8 @@ typedef unsigned int MSVCRT(size_t);
 extern "C" {
 #endif
 
-void*       _memccpy(void*,const void*,int,MSVCRT(size_t));
-int         _memicmp(const void*,const void*,MSVCRT(size_t));
+void*       _memccpy(void*,const void*,int,unsigned int);
+int         _memicmp(const void*,const void*,unsigned int);
 int         _strcmpi(const char*,const char*);
 char*       _strdup(const char*);
 char*       _strerror(const char*);

@@ -35,12 +35,12 @@ typedef unsigned short MSVCRT(wchar_t);
 #endif
 
 #ifndef MSVCRT_DEV_T_DEFINED
-typedef unsigned int   _dev_t;
+typedef unsigned int MSVCRT(_dev_t);
 #define MSVCRT_DEV_T_DEFINED
 #endif
 
 #ifndef MSVCRT_INO_T_DEFINED
-typedef unsigned short _ino_t;
+typedef unsigned short MSVCRT(_ino_t);
 #define MSVCRT_INO_T_DEFINED
 #endif
 
@@ -71,14 +71,14 @@ typedef int MSVCRT(_off_t);
 #ifndef MSVCRT_STAT_DEFINED
 #define MSVCRT_STAT_DEFINED
 
-struct _stat {
-  _dev_t         st_dev;
-  _ino_t         st_ino;
+struct MSVCRT(_stat) {
+  MSVCRT(_dev_t) st_dev;
+  MSVCRT(_ino_t) st_ino;
   unsigned short st_mode;
   short          st_nlink;
   short          st_uid;
   short          st_gid;
-  _dev_t         st_rdev;
+  MSVCRT(_dev_t) st_rdev;
   MSVCRT(_off_t) st_size;
   MSVCRT(time_t) st_atime;
   MSVCRT(time_t) st_mtime;
@@ -86,27 +86,27 @@ struct _stat {
 };
 
 struct MSVCRT(stat) {
-  _dev_t         st_dev;
-  _ino_t         st_ino;
+  MSVCRT(_dev_t) st_dev;
+  MSVCRT(_ino_t) st_ino;
   unsigned short st_mode;
   short          st_nlink;
   short          st_uid;
   short          st_gid;
-  _dev_t         st_rdev;
+  MSVCRT(_dev_t) st_rdev;
   MSVCRT(_off_t) st_size;
   MSVCRT(time_t) st_atime;
   MSVCRT(time_t) st_mtime;
   MSVCRT(time_t) st_ctime;
 };
 
-struct _stati64 {
-  _dev_t         st_dev;
-  _ino_t         st_ino;
+struct MSVCRT(_stati64) {
+  MSVCRT(_dev_t) st_dev;
+  MSVCRT(_ino_t) st_ino;
   unsigned short st_mode;
   short          st_nlink;
   short          st_uid;
   short          st_gid;
-  _dev_t         st_rdev;
+  MSVCRT(_dev_t) st_rdev;
   __int64        st_size;
   MSVCRT(time_t) st_atime;
   MSVCRT(time_t) st_mtime;
@@ -118,16 +118,16 @@ struct _stati64 {
 extern "C" {
 #endif
 
-int MSVCRT(_fstat)(int,struct _stat*);
-int MSVCRT(_stat)(const char*,struct _stat*);
-int _fstati64(int,struct _stati64*);
-int _stati64(const char*,struct _stati64*);
+int MSVCRT(_fstat)(int,struct MSVCRT(_stat)*);
+int MSVCRT(_stat)(const char*,struct MSVCRT(_stat)*);
+int MSVCRT(_fstati64)(int,struct MSVCRT(_stati64)*);
+int MSVCRT(_stati64)(const char*,struct MSVCRT(_stati64)*);
 int _umask(int);
 
 #ifndef MSVCRT_WSTAT_DEFINED
 #define MSVCRT_WSTAT_DEFINED
-int _wstat(const MSVCRT(wchar_t)*,struct _stat*);
-int _wstati64(const MSVCRT(wchar_t)*,struct _stati64*);
+int MSVCRT(_wstat)(const MSVCRT(wchar_t)*,struct MSVCRT(_stat)*);
+int MSVCRT(_wstati64)(const MSVCRT(wchar_t)*,struct MSVCRT(_stati64)*);
 #endif /* MSVCRT_WSTAT_DEFINED */
 
 #ifdef __cplusplus

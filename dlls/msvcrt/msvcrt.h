@@ -36,8 +36,8 @@ extern DWORD MSVCRT_tls_index;
 
 typedef struct __MSVCRT_thread_data
 {
-    int                      errno;
-    unsigned long            doserrno;
+    int                      thread_errno;
+    unsigned long            thread_doserrno;
     char                    *mbstok_next;        /* next ptr for mbstok() */
     char                    *efcvt_buffer;       /* buffer for ecvt/fcvt */
     int                      fpecode;

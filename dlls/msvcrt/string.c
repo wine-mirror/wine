@@ -102,7 +102,7 @@ char* _strset(char* str, int value)
 /*********************************************************************
  *		_swab (MSVCRT.@)
  */
-void _swab(char* src, char* dst, int len)
+void MSVCRT__swab(char* src, char* dst, int len)
 {
   if (len > 1)
   {

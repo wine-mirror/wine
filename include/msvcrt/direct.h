@@ -37,7 +37,7 @@ typedef unsigned int MSVCRT(size_t);
 
 #ifndef MSVCRT_DISKFREE_T_DEFINED
 #define MSVCRT_DISKFREE_T_DEFINED
-struct _diskfree_t {
+struct MSVCRT(_diskfree_t) {
   unsigned int total_clusters;
   unsigned int avail_clusters;
   unsigned int sectors_per_cluster;

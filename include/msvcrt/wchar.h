@@ -130,16 +130,16 @@ typedef struct MSVCRT(_iobuf)
 #ifndef MSVCRT_WFINDDATA_T_DEFINED
 #define MSVCRT_WFINDDATA_T_DEFINED
 
-struct _wfinddata_t {
+struct MSVCRT(_wfinddata_t) {
   unsigned attrib;
   MSVCRT(time_t) time_create;
   MSVCRT(time_t) time_access;
   MSVCRT(time_t) time_write;
-  _fsize_t       size;
+  MSVCRT(_fsize_t) size;
   MSVCRT(wchar_t) name[260];
 };
 
-struct _wfinddatai64_t {
+struct MSVCRT(_wfinddatai64_t) {
   unsigned attrib;
   MSVCRT(time_t) time_create;
   MSVCRT(time_t) time_access;
@@ -153,28 +153,28 @@ struct _wfinddatai64_t {
 #ifndef MSVCRT_STAT_DEFINED
 #define MSVCRT_STAT_DEFINED
 
-struct _stat {
-  _dev_t         st_dev;
-  _ino_t         st_ino;
+struct MSVCRT(_stat) {
+  MSVCRT(_dev_t) st_dev;
+  MSVCRT(_ino_t) st_ino;
   unsigned short st_mode;
   short          st_nlink;
   short          st_uid;
   short          st_gid;
-  _dev_t         st_rdev;
+  MSVCRT(_dev_t) st_rdev;
   MSVCRT(_off_t) st_size;
   MSVCRT(time_t) st_atime;
   MSVCRT(time_t) st_mtime;
   MSVCRT(time_t) st_ctime;
 };
 
-struct _stati64 {
-  _dev_t         st_dev;
-  _ino_t         st_ino;
+struct MSVCRT(_stati64) {
+  MSVCRT(_dev_t) st_dev;
+  MSVCRT(_ino_t) st_ino;
   unsigned short st_mode;
   short          st_nlink;
   short          st_uid;
   short          st_gid;
-  _dev_t         st_rdev;
+  MSVCRT(_dev_t) st_rdev;
   __int64        st_size;
   MSVCRT(time_t) st_atime;
   MSVCRT(time_t) st_mtime;
@@ -268,8 +268,8 @@ int         _wsystem(const MSVCRT(wchar_t)*);
 
 #ifndef MSVCRT_WSTAT_DEFINED
 #define MSVCRT_WSTAT_DEFINED
-int _wstat(const MSVCRT(wchar_t)*,struct _stat*);
-int _wstati64(const MSVCRT(wchar_t)*,struct _stati64*);
+int _wstat(const MSVCRT(wchar_t)*,struct MSVCRT(_stat)*);
+int _wstati64(const MSVCRT(wchar_t)*,struct MSVCRT(_stati64)*);
 #endif /* MSVCRT_WSTAT_DEFINED */
 
 #ifndef MSVCRT_WSTDIO_DEFINED

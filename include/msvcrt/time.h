@@ -105,8 +105,8 @@ MSVCRT(time_t) MSVCRT(time)(MSVCRT(time_t)*);
 
 #ifndef MSVCRT_WTIME_DEFINED
 #define MSVCRT_WTIME_DEFINED
-MSVCRT(wchar_t)*_wasctime(const struct MSVCRT(tm)*);
-MSVCRT(size_t)  wcsftime(MSVCRT(wchar_t)*,MSVCRT(size_t),const MSVCRT(wchar_t)*,const struct MSVCRT(tm)*);
+MSVCRT(wchar_t)* MSVCRT(_wasctime)(const struct MSVCRT(tm)*);
+MSVCRT(size_t)  MSVCRT(wcsftime)(MSVCRT(wchar_t)*,MSVCRT(size_t),const MSVCRT(wchar_t)*,const struct MSVCRT(tm)*);
 MSVCRT(wchar_t)*_wctime(const MSVCRT(time_t)*);
 MSVCRT(wchar_t)*_wstrdate(MSVCRT(wchar_t)*);
 MSVCRT(wchar_t)*_wstrtime(MSVCRT(wchar_t)*);

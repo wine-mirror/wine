@@ -88,7 +88,7 @@
 @ stub __crtGetLocaleInfoW
 @ cdecl __crtLCMapStringA(long long str long ptr long long long)
 @ cdecl __dllonexit(ptr ptr ptr)
-@ cdecl __doserrno()
+@ cdecl __doserrno() MSVCRT___doserrno
 @ cdecl __fpecode()
 @ cdecl __getmainargs(ptr ptr ptr long ptr)
 @ extern __initenv MSVCRT___initenv
@@ -170,7 +170,7 @@
 @ cdecl _beginthread (ptr long ptr)
 @ cdecl _beginthreadex (ptr long ptr ptr long ptr)
 @ cdecl _c_exit() MSVCRT__c_exit
-@ cdecl _cabs(long)
+@ cdecl _cabs(long) MSVCRT__cabs
 @ cdecl _callnewh(long)
 @ cdecl _cexit() MSVCRT__cexit
 @ cdecl _cgets(str)
@@ -215,23 +215,23 @@
 @ cdecl _execvpe(str str str)
 @ cdecl _exit(long) MSVCRT__exit
 @ cdecl _expand(ptr long)
-@ cdecl _fcloseall()
+@ cdecl _fcloseall() MSVCRT__fcloseall
 @ cdecl _fcvt(double long ptr ptr)
-@ cdecl _fdopen(long str)
+@ cdecl _fdopen(long str) MSVCRT__fdopen
 @ cdecl _fgetchar()
 @ cdecl _fgetwchar()
-@ cdecl _filbuf(ptr)
+@ cdecl _filbuf(ptr) MSVCRT__filbuf
 @ stub _fileinfo
 @ cdecl _filelength(long)
 @ cdecl -ret64 _filelengthi64(long)
-@ cdecl _fileno(ptr)
+@ cdecl _fileno(ptr) MSVCRT__fileno
 @ cdecl _findclose(long)
-@ cdecl _findfirst(str ptr)
-@ cdecl _findfirsti64(str ptr)
-@ cdecl _findnext(long ptr)
-@ cdecl _findnexti64(long ptr)
+@ cdecl _findfirst(str ptr) MSVCRT__findfirst
+@ cdecl _findfirsti64(str ptr) MSVCRT__findfirsti64
+@ cdecl _findnext(long ptr) MSVCRT__findnext
+@ cdecl _findnexti64(long ptr) MSVCRT__findnexti64
 @ cdecl _finite( double )
-@ cdecl _flsbuf(long ptr)
+@ cdecl _flsbuf(long ptr) MSVCRT__flsbuf
 @ cdecl _flushall()
 @ extern _fmode MSVCRT__fmode
 @ cdecl _fpclass(double)
@@ -241,7 +241,7 @@
 @ cdecl _fputwchar(long)
 @ cdecl _fsopen(str str long)
 @ cdecl _fstat(long ptr) MSVCRT__fstat
-@ cdecl _fstati64(long ptr)
+@ cdecl _fstati64(long ptr) MSVCRT__fstati64
 @ cdecl _ftime(ptr)
 @ cdecl -ret64 _ftol() ntdll._ftol
 @ cdecl _fullpath(ptr str long)
@@ -253,7 +253,7 @@
 @ cdecl _getche()
 @ cdecl _getcwd(str long)
 @ cdecl _getdcwd(long str long)
-@ cdecl _getdiskfree(long ptr)
+@ cdecl _getdiskfree(long ptr) MSVCRT__getdiskfree
 @ cdecl _getdllprocaddr(long str long)
 @ cdecl _getdrive()
 @ cdecl _getdrives() kernel32.GetLogicalDrives
@@ -261,7 +261,7 @@
 @ cdecl _getmbcp()
 @ cdecl _getpid() kernel32.GetCurrentProcessId
 @ stub _getsystime #(ptr)
-@ cdecl _getw(ptr)
+@ cdecl _getw(ptr) MSVCRT__getw
 @ cdecl _getws(ptr) MSVCRT__getws
 @ cdecl _global_unwind2(ptr)
 @ cdecl _heapadd (ptr long)
@@ -331,7 +331,7 @@
 @ cdecl _ltoa(long ptr long) ntdll._ltoa
 @ cdecl _ltow(long ptr long) ntdll._ltow
 @ cdecl _makepath(str str str str str)
-@ cdecl _matherr(ptr)
+@ cdecl _matherr(ptr) MSVCRT__matherr
 @ cdecl _mbbtombc(long)
 @ stub _mbbtype #(long long)
 @ stub _mbcasemap
@@ -393,22 +393,22 @@
 @ cdecl _mktemp(str)
 @ cdecl _msize(ptr)
 @ cdecl _nextafter(double double)
-@ cdecl _onexit(ptr)
+@ cdecl _onexit(ptr) MSVCRT__onexit
 @ varargs _open(str long)
 @ cdecl _open_osfhandle(long long)
 @ extern _osver MSVCRT__osver
 @ stub _outp #(long long)
 @ stub _outpd #(long long)
 @ stub _outpw #(long long)
-@ cdecl _pclose (ptr)
+@ cdecl _pclose (ptr) MSVCRT__pclose
 @ extern _pctype MSVCRT__pctype
 @ extern _pgmptr MSVCRT__pgmptr
 @ stub _pipe #(ptr long long)
-@ cdecl _popen (str str)
+@ cdecl _popen (str str) MSVCRT__popen
 @ cdecl _purecall()
 @ cdecl _putch(long)
 @ cdecl _putenv(str)
-@ cdecl _putw(long ptr)
+@ cdecl _putw(long ptr) MSVCRT__putw
 @ cdecl _putws(wstr)
 @ stub _pwctype
 @ cdecl _read(long ptr long)
@@ -446,7 +446,7 @@
 @ cdecl _spawnvpe(long str ptr ptr)
 @ cdecl _splitpath(str ptr ptr ptr ptr) ntdll._splitpath
 @ cdecl _stat(str ptr) MSVCRT__stat
-@ cdecl _stati64(str ptr)
+@ cdecl _stati64(str ptr) MSVCRT__stati64
 @ cdecl _statusfp()
 @ cdecl _strcmpi(str str) strcasecmp
 @ cdecl _strdate(ptr)
@@ -463,7 +463,7 @@
 @ cdecl _strset(str long)
 @ cdecl _strtime(ptr)
 @ cdecl _strupr(str) ntdll._strupr
-@ cdecl _swab(str str long)
+@ cdecl _swab(str str long) MSVCRT__swab
 @ extern _sys_errlist MSVCRT__sys_errlist
 @ extern _sys_nerr MSVCRT__sys_nerr
 @ cdecl _tell(long)
@@ -487,7 +487,7 @@
 @ cdecl _vsnprintf(ptr long ptr ptr) vsnprintf
 @ cdecl _vsnwprintf(ptr long wstr long)
 @ cdecl _waccess(wstr long)
-@ stub _wasctime #(ptr)
+@ stub _wasctime #(ptr) MSVCRT__wasctime
 @ cdecl _wchdir(wstr)
 @ cdecl _wchmod(wstr long)
 @ extern _wcmdln MSVCRT__wcmdln
@@ -513,14 +513,14 @@
 @ stub _wexecve #(wstr ptr ptr)
 @ stub _wexecvp #(wstr ptr)
 @ stub _wexecvpe #(wstr ptr ptr)
-@ cdecl _wfdopen(long wstr)
-@ cdecl _wfindfirst(wstr ptr)
-@ cdecl _wfindfirsti64(wstr ptr)
-@ cdecl _wfindnext(long ptr)
-@ cdecl _wfindnexti64(long ptr)
-@ cdecl _wfopen(wstr wstr)
-@ stub _wfreopen #(wstr wstr ptr)
-@ cdecl _wfsopen(wstr wstr long)
+@ cdecl _wfdopen(long wstr) MSVCRT__wfdopen
+@ cdecl _wfindfirst(wstr ptr) MSVCRT__wfindfirst
+@ cdecl _wfindfirsti64(wstr ptr) MSVCRT__wfindfirsti64
+@ cdecl _wfindnext(long ptr) MSVCRT__wfindnext
+@ cdecl _wfindnexti64(long ptr) MSVCRT__wfindnexti64
+@ cdecl _wfopen(wstr wstr) MSVCRT__wfopen
+@ stub _wfreopen #(wstr wstr ptr) MSVCRT__wfreopen
+@ cdecl _wfsopen(wstr wstr long) MSVCRT__wfsopen
 @ cdecl _wfullpath(ptr wstr long)
 @ cdecl _wgetcwd(wstr long)
 @ cdecl _wgetdcwd(long wstr long)
@@ -534,7 +534,7 @@
 @ varargs _wopen(wstr long)
 @ stub _wperror #(wstr)
 @ extern _wpgmptr MSVCRT__wpgmptr
-@ cdecl _wpopen (wstr wstr)
+@ cdecl _wpopen (wstr wstr) MSVCRT__wpopen
 @ cdecl _wputenv(wstr)
 @ cdecl _wremove(wstr)
 @ cdecl _wrename(wstr wstr)
@@ -552,8 +552,8 @@
 @ stub _wspawnvp #(long wstr ptr)
 @ stub _wspawnvpe #(long wstr ptr ptr)
 @ cdecl _wsplitpath(wstr wstr wstr wstr wstr)
-@ cdecl _wstat(wstr ptr)
-@ cdecl _wstati64(wstr ptr)
+@ cdecl _wstat(wstr ptr) MSVCRT__wstat
+@ cdecl _wstati64(wstr ptr) MSVCRT__wstati64
 @ stub _wstrdate #(ptr)
 @ stub _wstrtime #(ptr)
 @ stub _wsystem #(wstr)
@@ -744,7 +744,7 @@
 @ cdecl wcscoll(wstr wstr) MSVCRT_wcscoll
 @ cdecl wcscpy(ptr wstr) ntdll.wcscpy
 @ cdecl wcscspn(wstr wstr) ntdll.wcscspn
-@ stub wcsftime #(ptr long wstr ptr)
+@ stub wcsftime #(ptr long wstr ptr) MSVCRT_wcsftime
 @ cdecl wcslen(wstr) ntdll.wcslen
 @ cdecl wcsncat(wstr wstr long) ntdll.wcsncat
 @ cdecl wcsncmp(wstr wstr long) ntdll.wcsncmp

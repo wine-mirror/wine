@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 void MSVCRT__set_errno(int err)
 {
   int *errno = MSVCRT__errno();
-  unsigned long *doserrno = __doserrno();
+  unsigned long *doserrno = MSVCRT___doserrno();
 
   *doserrno = err;
 
@@ -99,15 +99,15 @@ void MSVCRT__set_errno(int err)
  */
 int* MSVCRT__errno(void)
 {
-    return &msvcrt_get_thread_data()->errno;
+    return &msvcrt_get_thread_data()->thread_errno;
 }
 
 /*********************************************************************
  *		__doserrno (MSVCRT.@)
  */
-unsigned long* __doserrno(void)
+unsigned long* MSVCRT___doserrno(void)
 {
-    return &msvcrt_get_thread_data()->doserrno;
+    return &msvcrt_get_thread_data()->thread_doserrno;
 }
 
 /*********************************************************************
@@ -124,7 +124,7 @@ char* MSVCRT_strerror(int err)
 char* _strerror(const char* err)
 {
   static char strerrbuff[256]; /* FIXME: Per thread, nprintf */
-  sprintf(strerrbuff,"%s: %s\n",err,MSVCRT_strerror(msvcrt_get_thread_data()->errno));
+  sprintf(strerrbuff,"%s: %s\n",err,MSVCRT_strerror(msvcrt_get_thread_data()->thread_errno));
   return strerrbuff;
 }
 
@@ -133,7 +133,7 @@ char* _strerror(const char* err)
  */
 void MSVCRT_perror(const char* str)
 {
-  _cprintf("%s: %s\n",str,MSVCRT_strerror(msvcrt_get_thread_data()->errno));
+  _cprintf("%s: %s\n",str,MSVCRT_strerror(msvcrt_get_thread_data()->thread_errno));
 }
 
 /******************************************************************************
