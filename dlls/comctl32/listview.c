@@ -3441,6 +3441,10 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
 	    nmlvcd.clrText   = comctl32_color.clrBtnText;
 	}
     }
+
+    /* in full row select, subitems, will just use main item's colors */
+    if (nSubItem && uView == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))
+	nmlvcd.clrTextBk = CLR_NONE;
     
     /* state icons */
     if (infoPtr->himlState && !IsRectEmpty(&rcState))
