@@ -40,6 +40,38 @@ DWORD WINAPI SetNamedSecurityInfoW(LPWSTR, SE_OBJECT_TYPE,
          SECURITY_INFORMATION, PSID, PSID, PACL, PACL);
 #define     SetNamedSecurityInfo WINELIB_NAME_AW(SetNamedSecurityInfo)
 
+DWORD WINAPI SetEntriesInAclA( ULONG, PEXPLICIT_ACCESSA, PACL, PACL*);
+DWORD WINAPI SetEntriesInAclW( ULONG, PEXPLICIT_ACCESSW, PACL, PACL*);
+#define     SetEntriesInAcl WINELIB_NAME_AW(SetEntriesInAcl)
+
+TRUSTEE_FORM WINAPI GetTrusteeFormA( PTRUSTEEA );
+TRUSTEE_FORM WINAPI GetTrusteeFormW( PTRUSTEEW );
+#define     GetTrusteeForm WINELIB_NAME_AW(GetTrusteeForm)
+
+LPSTR WINAPI GetTrusteeNameA( PTRUSTEEA );
+LPWSTR WINAPI GetTrusteeNameW( PTRUSTEEW );
+#define     GetTrusteeName WINELIB_NAME_AW(GetTrusteeName)
+
+TRUSTEE_TYPE WINAPI GetTrusteeTypeA( PTRUSTEEA );
+TRUSTEE_TYPE WINAPI GetTrusteeTypeW( PTRUSTEEW );
+#define     GetTrusteeType WINELIB_NAME_AW(GetTrusteeType)
+
+void WINAPI BuildTrusteeWithNameA( PTRUSTEEA, LPSTR );
+void WINAPI BuildTrusteeWithNameW( PTRUSTEEW, LPWSTR );
+#define     BuildTrusteeWithName WINELIB_NAME_AW(BuildTrusteeWithName)
+
+void WINAPI BuildTrusteeWithObjectsAndNameA( PTRUSTEEA,
+    POBJECTS_AND_NAME_A, SE_OBJECT_TYPE, LPSTR, LPSTR, LPSTR );
+void WINAPI BuildTrusteeWithObjectsAndNameW( PTRUSTEEW,
+    POBJECTS_AND_NAME_W, SE_OBJECT_TYPE, LPWSTR, LPWSTR, LPWSTR );
+#define     BuildTrusteeWithObjectsAndName WINELIB_NAME_AW(BuildTrusteeWithObjectsAndName)
+
+void BuildTrusteeWithObjectsAndSidA( PTRUSTEEA,
+    POBJECTS_AND_SID, GUID*, GUID*, PSID );
+void BuildTrusteeWithObjectsAndSidW( PTRUSTEEW,
+    POBJECTS_AND_SID, GUID*, GUID*, PSID );
+#define     BuildTrusteeWithObjectsAndSid WINELIB_NAME_AW(BuildTrusteeWithObjectsAndSid)
+
 #ifdef __cplusplus
 }
 #endif
