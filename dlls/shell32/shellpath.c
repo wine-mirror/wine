@@ -714,6 +714,9 @@ typedef struct
 
 #define HKLM HKEY_LOCAL_MACHINE
 #define HKCU HKEY_CURRENT_USER
+#define HKEY_UNIMPLEMENTED (HKEY)1
+#define HKEY_WINDOWSPATH   (HKEY)2
+#define HKEY_EMPTY         (HKEY)3
 static const CSIDL_DATA CSIDL_Data[] =
 {
     { /* CSIDL_DESKTOP */
@@ -722,7 +725,7 @@ static const CSIDL_DATA CSIDL_Data[] =
 	"Desktop"
     },
     { /* CSIDL_INTERNET */
-	0, (HKEY)1, /* FIXME */
+	0, HKEY_UNIMPLEMENTED, /* FIXME */
 	NULL,
 	NULL,
     },
@@ -767,7 +770,7 @@ static const CSIDL_DATA CSIDL_Data[] =
 	"SendTo"
     },
     { /* CSIDL_BITBUCKET - Recycle Bin */
-	0, (HKEY)1, /* FIXME */
+	0, HKEY_UNIMPLEMENTED, /* FIXME */
 	NULL,
 	"recycled"
     },
@@ -777,7 +780,7 @@ static const CSIDL_DATA CSIDL_Data[] =
 	"Start Menu"
     },
     { /* CSIDL_MYDOCUMENTS */
-	0, (HKEY)1, /* FIXME */
+	0, HKEY_UNIMPLEMENTED, /* FIXME */
 	NULL,
 	NULL
     },
@@ -802,12 +805,12 @@ static const CSIDL_DATA CSIDL_Data[] =
 	"Desktop"
     },
     { /* CSIDL_DRIVES */
-	0, (HKEY)1, /* FIXME */
+	0, HKEY_UNIMPLEMENTED, /* FIXME */
 	NULL,
 	"My Computer"
     },
     { /* CSIDL_NETWORK */
-	0, (HKEY)1, /* FIXME */
+	0, HKEY_EMPTY,
 	NULL,
 	"Network Neighborhood"
     },
@@ -862,12 +865,12 @@ static const CSIDL_DATA CSIDL_Data[] =
 	"Local Settings\\Application Data",
     },
     { /* CSIDL_ALTSTARTUP */
-	0, (HKEY)1, /* FIXME */
+	0, HKEY_UNIMPLEMENTED, /* FIXME */
 	NULL,
 	NULL
     },
     { /* CSIDL_COMMON_ALTSTARTUP */
-	0, (HKEY)1, /* FIXME */
+	0, HKEY_UNIMPLEMENTED, /* FIXME */
 	NULL,
 	NULL
     },
@@ -997,7 +1000,7 @@ static const CSIDL_DATA CSIDL_Data[] =
 	/*"Documents and Settings\\"*/"All Users\\Documents\\My Video"
     },
     { /* CSIDL_RESOURCES */
-	0, (HKEY)2,
+	0, HKEY_WINDOWSPATH,
 	NULL,
 	"Resources"
     },
@@ -1059,19 +1062,19 @@ HRESULT WINAPI SHGetFolderPathW(
 	    ERR("folder 0x%04lx unknown or not allowed\n", folder);
 	    return E_FAIL;
 	}
-	if (CSIDL_Data[folder].hRootKey == (HKEY)1)
+	if (CSIDL_Data[folder].hRootKey == HKEY_UNIMPLEMENTED)
 	{
 	    FIXME("folder 0x%04lx unknown, please add.\n", folder);
 	    return E_FAIL;
 	}
-
-	dwCsidlFlags = CSIDL_Data[folder].dwFlags;
-	hRootKey = CSIDL_Data[folder].hRootKey;
-	MultiByteToWideChar(CP_ACP, 0, CSIDL_Data[folder].szValueName, -1, szValueName, MAX_PATH);
-	MultiByteToWideChar(CP_ACP, 0, CSIDL_Data[folder].szDefaultPath, -1, szDefaultPath, MAX_PATH);
+    if (CSIDL_Data[folder].hRootKey == HKEY_EMPTY)
+    {
+        *pszPath = '\0';
+        return S_OK;
+    }
 
 	/* Special case for some values that don't exist in registry */
-	if (CSIDL_Data[folder].hRootKey == (HKEY)2)
+	if (CSIDL_Data[folder].hRootKey == HKEY_WINDOWSPATH)
 	{
 	    GetWindowsDirectoryW(pszPath, MAX_PATH);
 	    PathAddBackslashW(pszPath);
@@ -1079,6 +1082,11 @@ HRESULT WINAPI SHGetFolderPathW(
 	    return S_OK;
 	}
         
+	dwCsidlFlags = CSIDL_Data[folder].dwFlags;
+	hRootKey = CSIDL_Data[folder].hRootKey;
+	MultiByteToWideChar(CP_ACP, 0, CSIDL_Data[folder].szValueName, -1, szValueName, MAX_PATH);
+	MultiByteToWideChar(CP_ACP, 0, CSIDL_Data[folder].szDefaultPath, -1, szDefaultPath, MAX_PATH);
+
 	if (dwCsidlFlags & CSIDL_MYFLAG_SHFOLDER)
 	{
 	  /*   user shell folders */
