@@ -605,7 +605,7 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 };
 
 
-#define SPY_MAX_LVMMSGNUM   139
+#define SPY_MAX_LVMMSGNUM   140
 static const char * const LVMMessageTypeNames[SPY_MAX_LVMMSGNUM + 1] =
 {
     "LVM_GETBKCOLOR",		/* 1000 */
@@ -640,6 +640,7 @@ static const char * const LVMMessageTypeNames[SPY_MAX_LVMMSGNUM + 1] =
     "LVM_GETCOLUMNWIDTH",
     "LVM_SETCOLUMNWIDTH",
     "LVM_GETHEADER",
+    NULL,
     "LVM_CREATEDRAGIMAGE",
     "LVM_GETVIEWRECT",
     "LVM_GETTEXTCOLOR",
@@ -749,6 +750,193 @@ static const char * const LVMMessageTypeNames[SPY_MAX_LVMMSGNUM + 1] =
     "LVM_SETBKIMAGEW",
     "LVM_GETBKIMAGEW"	/* 0x108B */
 };
+
+
+#define SPY_MAX_TVMSGNUM   65
+static const char * const TVMessageTypeNames[SPY_MAX_TVMSGNUM + 1] =
+{
+    "TVM_INSERTITEMA",		/* 1100 */
+    "TVM_DELETEITEM",
+    "TVM_EXPAND",
+    NULL,
+    "TVM_GETITEMRECT",
+    "TVM_GETCOUNT",
+    "TVM_GETINDENT",
+    "TVM_SETINDENT",
+    "TVM_GETIMAGELIST",
+    "TVM_SETIMAGELIST",
+    "TVM_GETNEXTITEM",
+    "TVM_SELECTITEM",
+    "TVM_GETITEMA",
+    "TVM_SETITEMA",
+    "TVM_EDITLABELA",
+    "TVM_GETEDITCONTROL",
+    "TVM_GETVISIBLECOUNT",
+    "TVM_HITTEST",
+    "TVM_CREATEDRAGIMAGE",
+    "TVM_SORTCHILDREN",
+    "TVM_ENSUREVISIBLE",
+    "TVM_SORTCHILDRENCB",
+    "TVM_ENDEDITLABELNOW",
+    "TVM_GETISEARCHSTRINGA",
+    "TVM_SETTOOLTIPS",
+    "TVM_GETTOOLTIPS",
+    "TVM_SETINSERTMARK",
+    "TVM_SETITEMHEIGHT",
+    "TVM_GETITEMHEIGHT",
+    "TVM_SETBKCOLOR",
+    "TVM_SETTEXTCOLOR",
+    "TVM_GETBKCOLOR",
+    "TVM_GETTEXTCOLOR",
+    "TVM_SETSCROLLTIME",
+    "TVM_GETSCROLLTIME",
+    "TVM_UNKNOWN35",
+    "TVM_UNKNOWN36",
+    "TVM_SETINSERTMARKCOLOR",
+    "TVM_GETINSERTMARKCOLOR",
+    "TVM_GETITEMSTATE",
+    "TVM_SETLINECOLOR",
+    "TVM_GETLINECOLOR",
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    "TVM_INSERTITEMW",
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    "TVM_GETITEMW",
+    "TVM_SETITEMW",
+    "TVM_GETISEARCHSTRINGW",
+    "TVM_EDITLABELW"
+};
+
+
+#define SPY_MAX_HDMMSGNUM   19
+static const char * const HDMMessageTypeNames[SPY_MAX_HDMMSGNUM + 1] =
+{
+    "HDM_GETITEMCOUNT",		/* 1200 */
+    "HDM_INSERTITEMA",
+    "HDM_DELETEITEM",
+    "HDM_GETITEMA",
+    "HDM_SETITEMA",
+    "HDM_LAYOUT",
+    "HDM_HITTEST",
+    "HDM_GETITEMRECT",
+    "HDM_SETIMAGELIST",
+    "HDM_GETIMAGELIST",
+    "HDM_INSERTITEMW",
+    "HDM_GETITEMW",
+    "HDM_SETITEMW",
+    NULL,
+    NULL,
+    "HDM_ORDERTOINDEX",
+    "HDM_CREATEDRAGIMAGE",
+    "GETORDERARRAYINDEX",
+    "SETORDERARRAYINDEX",
+    "SETHOTDIVIDER"
+};
+
+
+#define SPY_MAX_TCMMSGNUM   62
+static const char * const TCMMessageTypeNames[SPY_MAX_TCMMSGNUM + 1] =
+{
+    NULL,		/* 1300 */
+    NULL,
+    "TCM_SETIMAGELIST",
+    "TCM_GETIMAGELIST",
+    "TCM_GETITEMCOUNT",
+    "TCM_GETITEMA",
+    "TCM_SETITEMA",
+    "TCM_INSERTITEMA",
+    "TCM_DELETEITEM",
+    "TCM_DELETEALLITEMS",
+    "TCM_GETITEMRECT",
+    "TCM_GETCURSEL",
+    "TCM_SETCURSEL",
+    "TCM_HITTEST",
+    "TCM_SETITEMEXTRA",
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    "TCM_ADJUSTRECT",
+    "TCM_SETITEMSIZE",
+    "TCM_REMOVEIMAGE",
+    "TCM_SETPADDING",
+    "TCM_GETROWCOUNT",
+    "TCM_GETTOOLTIPS",
+    "TCM_SETTOOLTIPS",
+    "TCM_GETCURFOCUS",
+    "TCM_SETCURFOCUS",
+    "TCM_SETMINTABWIDTH",
+    "TCM_DESELECTALL",
+    "TCM_HIGHLIGHTITEM",
+    "TCM_SETEXTENDEDSTYLE",
+    "TCM_GETEXTENDEDSTYLE",
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    "TCM_GETITEMW",
+    "TCM_SETITEMW",
+    "TCM_INSERTITEMW"
+};
+
+#define SPY_MAX_PGMMSGNUM   13
+static const char * const PGMMessageTypeNames[SPY_MAX_PGMMSGNUM + 1] =
+{
+    NULL,		/* 1400 */
+    "PGM_SETCHILD",
+    "PGM_RECALCSIZE",
+    "PGM_FORWARDMOUSE",
+    "PGM_SETBKCOLOR",
+    "PGM_GETBKCOLOR",
+    "PGM_SETBORDER",
+    "PGM_GETBORDER",
+    "PGM_SETPOS",
+    "PGM_GETPOS",
+    "PGM_SETBUTTONSIZE",
+    "PGM_GETBUTTONSIZE",
+    "PGM_GETBUTTONSTATE",
+    "PGM_GETDROPTARGET"
+};
+
 
 #define SPY_MAX_CCMMSGNUM   6
 static const char * const CCMMessageTypeNames[SPY_MAX_CCMMSGNUM + 1] =
@@ -1059,10 +1247,80 @@ static const SPY_NOTIFY spnfy_array[] = {
     SPNFY(NM_CHAR,               NMCHAR),
     SPNFY(NM_TOOLTIPSCREATED,    NMTOOLTIPSCREATED),  
     /* Listview       0U-100U  to  0U-199U  */
+    SPNFY(LVN_ITEMCHANGING,      NMHDR),
+    SPNFY(LVN_ITEMCHANGED,       NMHDR),
+    SPNFY(LVN_INSERTITEM,        NMHDR),
+    SPNFY(LVN_DELETEITEM,        NMHDR),
+    SPNFY(LVN_DELETEALLITEMS,    NMHDR),
+    SPNFY(LVN_BEGINLABELEDITA,   NMHDR),
+    SPNFY(LVN_ENDLABELEDITA,     NMHDR),
+    SPNFY(LVN_COLUMNCLICK,       NMHDR),
+    SPNFY(LVN_BEGINDRAG,         NMHDR),
+    SPNFY(LVN_BEGINRDRAG,        NMHDR),
+    SPNFY(LVN_ODCACHEHINT,       NMHDR),
+    SPNFY(LVN_ITEMACTIVATE,      NMHDR),
+    SPNFY(LVN_ODSTATECHANGED,    NMHDR),
+    SPNFY(LVN_HOTTRACK,          NMHDR),
+    SPNFY(LVN_GETDISPINFOA,      NMHDR),
+    SPNFY(LVN_SETDISPINFOA,      NMHDR),
+    SPNFY(LVN_KEYDOWN,           NMHDR),
+    SPNFY(LVN_MARQUEEBEGIN,      NMHDR),
+    SPNFY(LVN_GETINFOTIPA,       NMHDR),
+    SPNFY(LVN_GETINFOTIPW,      NMHDR),
+    SPNFY(LVN_BEGINLABELEDITW,   NMHDR),
+    SPNFY(LVN_ENDLABELEDITW,     NMHDR),
+    SPNFY(LVN_GETDISPINFOW,      NMHDR),
+    SPNFY(LVN_SETDISPINFOW,      NMHDR),
+    SPNFY(LVN_ODFINDITEMW,       NMHDR),
     /* Header         0U-300U  to  0U-399U  */
+    SPNFY(HDN_ITEMCHANGINGA,     NMHDR),
+    SPNFY(HDN_ITEMCHANGEDA,      NMHDR),
+    SPNFY(HDN_ITEMCLICKA,        NMHDR),
+    SPNFY(HDN_ITEMDBLCLICKA,     NMHDR),
+    SPNFY(HDN_DIVIDERDBLCLICKA,  NMHDR),
+    SPNFY(HDN_BEGINTRACKA,       NMHDR),
+    SPNFY(HDN_ENDTRACKA,         NMHDR),
+    SPNFY(HDN_GETDISPINFOA,      NMHDR),
+    SPNFY(HDN_BEGINDRAG,         NMHDR),
+    SPNFY(HDN_ENDDRAG,           NMHDR),
+    SPNFY(HDN_ITEMCHANGINGW,     NMHDR),
+    SPNFY(HDN_ITEMCHANGEDW,      NMHDR),
+    SPNFY(HDN_ITEMCLICKW,        NMHDR),
+    SPNFY(HDN_ITEMDBLCLICKW,     NMHDR),
+    SPNFY(HDN_DIVIDERDBLCLICKW,  NMHDR),
+    SPNFY(HDN_BEGINTRACKW,       NMHDR),
+    SPNFY(HDN_ENDTRACKW,         NMHDR),
+    SPNFY(HDN_GETDISPINFOW,      NMHDR),
     /* Treeview       0U-400U  to  0U-499U  */
+    SPNFY(TVN_SELCHANGINGA,      NMHDR),
+    SPNFY(TVN_SELCHANGEDA,       NMHDR),
+    SPNFY(TVN_GETDISPINFOA,      NMHDR),
+    SPNFY(TVN_SETDISPINFOA,      NMHDR),
+    SPNFY(TVN_ITEMEXPANDINGA,    NMHDR),
+    SPNFY(TVN_ITEMEXPANDEDA,     NMHDR),
+    SPNFY(TVN_BEGINDRAGA,        NMHDR),
+    SPNFY(TVN_BEGINRDRAGA,       NMHDR),
+    SPNFY(TVN_DELETEITEMA,       NMHDR),
+    SPNFY(TVN_BEGINLABELEDITA,   NMHDR),
+    SPNFY(TVN_ENDLABELEDITA,     NMHDR),
+    SPNFY(TVN_KEYDOWN,           NMHDR),
+    SPNFY(TVN_SELCHANGINGW,      NMHDR),
+    SPNFY(TVN_SELCHANGEDW,       NMHDR),
+    SPNFY(TVN_GETDISPINFOW,      NMHDR),
+    SPNFY(TVN_SETDISPINFOW,      NMHDR),
+    SPNFY(TVN_ITEMEXPANDINGW,    NMHDR),
+    SPNFY(TVN_ITEMEXPANDEDW,     NMHDR),
+    SPNFY(TVN_BEGINDRAGW,        NMHDR),
+    SPNFY(TVN_BEGINRDRAGW,       NMHDR),
+    SPNFY(TVN_DELETEITEMW,       NMHDR),
+    SPNFY(TVN_BEGINLABELEDITW,   NMHDR),
+    SPNFY(TVN_ENDLABELEDITW,     NMHDR),
     /* Tooltips       0U-520U  to  0U-549U  */
     /* Tab            0U-550U  to  0U-580U  */
+    SPNFY(TCN_KEYDOWN,           NMHDR),
+    SPNFY(TCN_SELCHANGE,         NMHDR),
+    SPNFY(TCN_SELCHANGING,       NMHDR),
+    SPNFY(TCN_GETOBJECT,         NMHDR),
     /* Common Dialog  0U-601U  to  0U-699U  */
     /* Toolbar        0U-700U  to  0U-720U  */
     SPNFY(TBN_GETBUTTONINFOA,    NMTOOLBARA),
@@ -1140,6 +1398,30 @@ const char *SPY_GetMsgName( UINT msg )
     {
         if (!LVMMessageTypeNames[msg-LVM_FIRST]) return "LVM_?";
         return LVMMessageTypeNames[msg-LVM_FIRST];
+    }
+
+    if (msg >= TV_FIRST && msg <= TV_FIRST + SPY_MAX_TVMSGNUM)
+    {
+        if (!TVMessageTypeNames[msg-TV_FIRST]) return "TV_?";
+        return TVMessageTypeNames[msg-TV_FIRST];
+    }
+
+    if (msg >= HDM_FIRST && msg <= HDM_FIRST + SPY_MAX_HDMMSGNUM)
+    {
+        if (!HDMMessageTypeNames[msg-HDM_FIRST]) return "HDM_?";
+        return HDMMessageTypeNames[msg-HDM_FIRST];
+    }
+
+    if (msg >= TCM_FIRST && msg <= TCM_FIRST + SPY_MAX_TCMMSGNUM)
+    {
+        if (!TCMMessageTypeNames[msg-TCM_FIRST]) return "TCM_?";
+        return TCMMessageTypeNames[msg-TCM_FIRST];
+    }
+
+    if (msg >= PGM_FIRST && msg <= PGM_FIRST + SPY_MAX_PGMMSGNUM)
+    {
+        if (!PGMMessageTypeNames[msg-PGM_FIRST]) return "PGM_?";
+        return PGMMessageTypeNames[msg-PGM_FIRST];
     }
 
     if (msg >= CCM_FIRST && msg <= CCM_FIRST + SPY_MAX_CCMMSGNUM)
