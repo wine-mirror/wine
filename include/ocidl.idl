@@ -68,23 +68,23 @@ interface IFont : IUnknown
     typedef IFont *LPFONT;
     typedef TEXTMETRICW TEXTMETRICOLE, *LPTEXTMETRICOLE;
 
-    HRESULT get_Name( [out] BSTR *pname);
-    HRESULT put_Name( [in] BSTR name );
-    HRESULT get_Size( [out] CY *psize );
-    HRESULT put_Size( [in] CY size );
-    HRESULT get_Bold( [out] BOOL *pbold );
-    HRESULT put_Bold( [in] BOOL bold );
-    HRESULT get_Italic( [out] BOOL *pitalic );
-    HRESULT put_Italic( [in] BOOL italic );
-    HRESULT get_Underline( [out] BOOL *punderline );
-    HRESULT put_Underline( [in] BOOL underline );
-    HRESULT get_Strikethrough( [out] BOOL *pstrikethrough );
-    HRESULT put_Strikethrough( [in] BOOL strikethrough );
-    HRESULT get_Weight( [out] SHORT *pweight );
-    HRESULT put_Weight( [in] SHORT weight );
-    HRESULT get_Charset( [out] SHORT *pcharset );
-    HRESULT put_Charset( [in] SHORT charset );
-    HRESULT get_hFont( [out] HFONT *phfont );
+    [propget] HRESULT Name( [out] BSTR *pname);
+    [propput] HRESULT Name( [in] BSTR name );
+    [propget] HRESULT Size( [out] CY *psize );
+    [propput] HRESULT Size( [in] CY size );
+    [propget] HRESULT Bold( [out] BOOL *pbold );
+    [propput] HRESULT Bold( [in] BOOL bold );
+    [propget] HRESULT Italic( [out] BOOL *pitalic );
+    [propput] HRESULT Italic( [in] BOOL italic );
+    [propget] HRESULT Underline( [out] BOOL *punderline );
+    [propput] HRESULT Underline( [in] BOOL underline );
+    [propget] HRESULT Strikethrough( [out] BOOL *pstrikethrough );
+    [propput] HRESULT Strikethrough( [in] BOOL strikethrough );
+    [propget] HRESULT Weight( [out] SHORT *pweight );
+    [propput] HRESULT Weight( [in] SHORT weight );
+    [propget] HRESULT Charset( [out] SHORT *pcharset );
+    [propput] HRESULT Charset( [in] SHORT charset );
+    [propget] HRESULT hFont( [out] HFONT *phfont );
     HRESULT Clone( [out] IFont **ppfont );
     HRESULT IsEqual( [in] IFont *pFontOther );
     HRESULT SetRatio( [in] LONG cyLogical, [in] LONG cyHimetric );
@@ -133,11 +133,11 @@ interface IPicture : IUnknown
     typedef LONG OLE_XSIZE_HIMETRIC;
     typedef LONG OLE_YSIZE_HIMETRIC;
 
-    HRESULT get_Handle( [out] OLE_HANDLE *pHandle );
-    HRESULT get_hPal( [out] OLE_HANDLE *phPal );
-    HRESULT get_Type( [out] SHORT *pType );
-    HRESULT get_Width( [out] OLE_XSIZE_HIMETRIC *pWidth );
-    HRESULT get_Height( [out] OLE_YSIZE_HIMETRIC *pHeight );
+    [propget] HRESULT Handle( [out] OLE_HANDLE *pHandle );
+    [propget] HRESULT hPal( [out] OLE_HANDLE *phPal );
+    [propget] HRESULT Type( [out] SHORT *pType );
+    [propget] HRESULT Width( [out] OLE_XSIZE_HIMETRIC *pWidth );
+    [propget] HRESULT Height( [out] OLE_YSIZE_HIMETRIC *pHeight );
 
     HRESULT Render(
         [in] HDC hdc,
@@ -153,16 +153,16 @@ interface IPicture : IUnknown
 
     HRESULT set_hPal( [in] OLE_HANDLE hPal );
 
-    HRESULT get_CurDC( [out] HDC *phDC );
+    [propget] HRESULT CurDC( [out] HDC *phDC );
 
     HRESULT SelectPicture(
         [in] HDC hDCIn,
         [out] HDC * phDCOut,
         [out] OLE_HANDLE * phBmpOut);
 
-    HRESULT get_KeepOriginalFormat( [out] BOOL *pKeep );
+    [propget] HRESULT KeepOriginalFormat( [out] BOOL *pKeep );
 
-    HRESULT put_KeepOriginalFormat( [in] BOOL keep );
+    [propput] HRESULT KeepOriginalFormat( [in] BOOL keep );
 
     HRESULT PictureChanged();
 
@@ -171,7 +171,7 @@ interface IPicture : IUnknown
         [in] BOOL fSaveMemCopy,
         [out] LONG *pCbSize);
 
-    HRESULT get_Attributes( [out] DWORD *pDwAttr );
+    [propget] HRESULT Attributes( [out] DWORD *pDwAttr );
 }
 
 

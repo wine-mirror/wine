@@ -89,12 +89,12 @@ interface IDirectDrawVideo : IUnknown
 ]
 interface IQualProp : IUnknown
 {
-    HRESULT get_FramesDroppedInRenderer([out] int * pcFrames);
-    HRESULT get_FramesDrawn([out] int * pcFramesDrawn);
-    HRESULT get_AvgFrameRate([out] int * piAvgFrameRate);
-    HRESULT get_Jitter([out] int * iJitter);
-    HRESULT get_AvgSyncOffset([out] int * piAvg);
-    HRESULT get_DevSyncOffset([out] int * piDev);
+    [propget] HRESULT FramesDroppedInRenderer([out] int * pcFrames);
+    [propget] HRESULT FramesDrawn([out] int * pcFramesDrawn);
+    [propget] HRESULT AvgFrameRate([out] int * piAvgFrameRate);
+    [propget] HRESULT Jitter([out] int * iJitter);
+    [propget] HRESULT AvgSyncOffset([out] int * piAvg);
+    [propget] HRESULT DevSyncOffset([out] int * piDev);
 }
 
 [
