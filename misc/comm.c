@@ -64,7 +64,8 @@
 #include "server.h"
 #include "process.h"
 #include "winerror.h"
-#include "async.h"
+#include "services.h"
+#include "file.h"
 
 #include "debugtools.h"
 
@@ -213,12 +214,12 @@ static int COMM_WhackModem(int fd, unsigned int andy, unsigned int orrie)
     return ioctl(fd, TIOCMSET, &mstat);
 }
 	
-static void comm_notification(int fd,void*private)
+static void CALLBACK comm_notification( ULONG_PTR private )
 {
   struct DosDeviceStruct *ptr = (struct DosDeviceStruct *)private;
   int prev, bleft, len;
   WORD mask = 0;
-  int cid = GetCommPort_fd(fd);
+  int cid = GetCommPort_fd(ptr->fd);
 
   TRACE("async notification\n");
   /* read data from comm port */
@@ -226,7 +227,7 @@ static void comm_notification(int fd,void*private)
   do {
     bleft = ((ptr->ibuf_tail > ptr->ibuf_head) ? (ptr->ibuf_tail-1) : ptr->ibuf_size)
       - ptr->ibuf_head;
-    len = read(fd, ptr->inbuf + ptr->ibuf_head, bleft?bleft:1);
+    len = read(ptr->fd, ptr->inbuf + ptr->ibuf_head, bleft?bleft:1);
     if (len > 0) {
       if (!bleft) {
 	ptr->commerror = CE_RXOVER;
@@ -257,7 +258,7 @@ static void comm_notification(int fd,void*private)
 
   /* write any TransmitCommChar character */
   if (ptr->xmit>=0) {
-    len = write(fd, &(ptr->xmit), 1);
+    len = write(ptr->fd, &(ptr->xmit), 1);
     if (len > 0) ptr->xmit = -1;
   }
   /* write from output queue */
@@ -265,7 +266,7 @@ static void comm_notification(int fd,void*private)
   do {
     bleft = ((ptr->obuf_tail <= ptr->obuf_head) ? ptr->obuf_head : ptr->obuf_size)
       - ptr->obuf_tail;
-    len = bleft ? write(fd, ptr->outbuf + ptr->obuf_tail, bleft) : 0;
+    len = bleft ? write(ptr->fd, ptr->outbuf + ptr->obuf_tail, bleft) : 0;
     if (len > 0) {
       ptr->obuf_tail += len;
       if (ptr->obuf_tail >= ptr->obuf_size)
@@ -455,10 +456,12 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			  return IE_MEMORY;
 			}
 
-			/* enable async notifications */
-			ASYNC_RegisterFD(COM[port].fd,comm_notification,&COM[port]);
+                        COM[port].service = SERVICE_AddObject( FILE_DupUnixHandle( COM[port].fd,
+                                                     GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE ),
+                                                               comm_notification,
+                                                               (ULONG_PTR)&COM[port] );
 			/* bootstrap notifications, just in case */
-			comm_notification(COM[port].fd,&COM[port]);
+			comm_notification( (ULONG_PTR)&COM[port] );
 			return port;
 		}
 	} 
@@ -499,8 +502,7 @@ INT16 WINAPI CloseComm16(INT16 cid)
 		/* COM port */
 		SEGPTR_FREE(unknown[cid]); /* [LW] */
 
-		/* disable async notifications */
-		ASYNC_UnregisterFD(COM[cid].fd,comm_notification);
+                SERVICE_Delete( COM[cid].service );
 		/* free buffers */
 		free(ptr->outbuf);
 		free(ptr->inbuf);
