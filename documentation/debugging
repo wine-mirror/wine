@@ -121,7 +121,7 @@ Program reports an error with a Messagebox
 
   Since the failure happens usually directly before setting up the Messagebox
   you can start wine with "-debug" added to the commandline, set a breakpoint
-  at "MessageBox32A" (called by win16 and win32 programs) and proceed with
+  at "MessageBoxA" (called by win16 and win32 programs) and proceed with
   "continue". With "-debugmsg +all" Wine will now stop directly before 
   setting up the Messagebox.  Proceed as explained above.
 
@@ -195,8 +195,8 @@ Sample debugging session:
 |Loading symbols: /home/marcus/wine/wine...
 |Stopped on breakpoint 1 at 0x01d7:0x001a
 |In 16 bit mode.
-|Wine-dbg>break MessageBox32A                          <---- Set Breakpoint
-|Breakpoint 2 at 0x40189100 (MessageBox32A [msgbox.c:190])
+|Wine-dbg>break MessageBoxA                          <---- Set Breakpoint
+|Breakpoint 2 at 0x40189100 (MessageBoxA [msgbox.c:190])
 |Wine-dbg>c                                            <---- Continue
 |Call KERNEL.91: INITTASK() ret=0157:0022 ds=08a7
 |     AX=0000 BX=3cb4 CX=1f40 DX=0000 SI=0000 DI=08a7 ES=11d7 EFL=00000286
@@ -249,7 +249,7 @@ This fails, since my C: drive is in this case mounted readonly.
            
 And MessageBox'ed.
 
-|Stopped on breakpoint 2 at 0x40189100 (MessageBox32A [msgbox.c:190])
+|Stopped on breakpoint 2 at 0x40189100 (MessageBoxA [msgbox.c:190])
 |190     {		<- the sourceline
 In 32 bit mode.
 Wine-dbg>
