@@ -35,7 +35,6 @@
 #include "wine/debug.h"
 #include "wine/exception.h"
 #include "thread.h"
-#include "toolhelp.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int31);
 
@@ -1193,18 +1192,36 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
     case 0x0500:  /* Get free memory information */
         TRACE("get free memory information\n");
         {
-            MEMMANINFO mmi;
-            void *ptr = CTX_SEG_OFF_TO_LIN( context,
-                                            context->SegEs, 
-                                            context->Edi );
-
-            mmi.dwSize = sizeof( mmi );
-            MemManInfo16( &mmi );
+            MEMORYSTATUS status;
 
             /* the layout is just the same as MEMMANINFO, but without
              * the dwSize entry.
              */
-            memcpy( ptr, ((char*)&mmi)+4, sizeof(mmi)-4 );
+            struct
+            {
+                DWORD dwLargestFreeBlock;
+                DWORD dwMaxPagesAvailable;
+                DWORD dwMaxPagesLockable;
+                DWORD dwTotalLinearSpace;
+                DWORD dwTotalUnlockedPages;
+                DWORD dwFreePages;
+                DWORD dwTotalPages;
+                DWORD dwFreeLinearSpace;
+                DWORD dwSwapFilePages;
+                WORD  wPageSize;
+            } *info = CTX_SEG_OFF_TO_LIN( context, context->SegEs, context->Edi );
+
+            GlobalMemoryStatus( &status );
+            info->wPageSize            = getpagesize();
+            info->dwLargestFreeBlock   = status.dwAvailVirtual;
+            info->dwMaxPagesAvailable  = info->dwLargestFreeBlock / info->wPageSize;
+            info->dwMaxPagesLockable   = info->dwMaxPagesAvailable;
+            info->dwTotalLinearSpace   = status.dwTotalVirtual / info->wPageSize;
+            info->dwTotalUnlockedPages = info->dwTotalLinearSpace;
+            info->dwFreePages          = info->dwMaxPagesAvailable;
+            info->dwTotalPages         = info->dwTotalLinearSpace;
+            info->dwFreeLinearSpace    = info->dwMaxPagesAvailable;
+            info->dwSwapFilePages      = status.dwTotalPageFile / info->wPageSize;
             break;
         }
 

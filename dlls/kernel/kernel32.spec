@@ -1111,7 +1111,6 @@
 @ stdcall LocalLock16(long)
 @ stdcall LocalUnlock16(long)
 @ stdcall LockResource16(long)
-@ stdcall MemManInfo16(ptr)
 @ stdcall SelectorAccessRights16(long long long)
 @ stdcall SetSelectorBase(long long)
 @ stdcall SetSelectorLimit16(long long)
