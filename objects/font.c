@@ -2002,7 +2002,7 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
  *
  *   All flags except GCP_REORDER are not yet implemented.
  *   Reordering is not 100% complient to the Windows BiDi method.
- *   Caret positioning is not yet implemented.
+ *   Caret positioning is not yet implemented for BiDi.
  *   Classes are not yet implemented.
  *
  */
@@ -2030,8 +2030,9 @@ GetCharacterPlacementW(
 	    lpResults->lpGlyphs, lpResults->nGlyphs, lpResults->nMaxFit);
 
     if(dwFlags&(~GCP_REORDER))			FIXME("flags 0x%08lx ignored\n", dwFlags);
-    if(lpResults->lpCaretPos)	FIXME("caret positions not implemented\n");
     if(lpResults->lpClass)	FIXME("classes not implemented\n");
+    if (lpResults->lpCaretPos && (dwFlags & GCP_REORDER))
+        FIXME("Caret positions for complex scripts not implemented\n");
 
 	nSet = (UINT)uCount;
 	if(nSet > lpResults->nGlyphs)
@@ -2069,6 +2070,16 @@ GetCharacterPlacementW(
 		}
 	}
 
+    if (lpResults->lpCaretPos && !(dwFlags & GCP_REORDER))
+    {
+        int pos = 0;
+       
+        lpResults->lpCaretPos[0] = 0;
+        for (i = 1; i < nSet; i++)
+            if (GetTextExtentPoint32W(hdc, &(lpString[i - 1]), 1, &size))
+                lpResults->lpCaretPos[i] = (pos += size.cx);
+    }
+   
     if(lpResults->lpGlyphs)
 	GetGlyphIndicesW(hdc, lpString, nSet, lpResults->lpGlyphs, 0);
 
