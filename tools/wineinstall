@@ -319,7 +319,7 @@ then {
   }
   done
   echo "Configuring Wine for a no-windows install in $CROOT..."
-  for tdir in "$CROOT/windows" "$CROOT/windows/system" "$CROOT/windows/Start Menu" "$CROOT/windows/Start Menu/Programs" "$CROOT/Common Files"
+  for tdir in "$CROOT/windows" "$CROOT/windows/system" "$CROOT/windows/Start Menu" "$CROOT/windows/Start Menu/Programs" "$CROOT/Common Files" "$CROOT/windows/Profiles/Administrator" "$CROOT/Program Files"
   do [ -d "$tdir" ] || mkdir "$tdir"
   done
   [ -f "$CROOT/windows/win.ini" ]    || cp "$WININI"    "$CROOT/windows/win.ini"
