@@ -12,7 +12,6 @@
 #include "bitmap.h"
 #include "file.h"
 #include "metafile.h"
-#include "stackframe.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -327,7 +326,7 @@ BOOL EnumMetaFile(HDC hdc, HMETAFILE16 hmf, MFENUMPROC16 lpEnumFunc,LPARAM lpDat
 {
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     METARECORD *mr;
-    SEGPTR ht;
+    SEGPTR ht, spRecord;
     int offset = 0;
   
     dprintf_metafile(stddeb,"EnumMetaFile(%04x, %04x, %08lx, %08lx)\n",
@@ -343,10 +342,12 @@ BOOL EnumMetaFile(HDC hdc, HMETAFILE16 hmf, MFENUMPROC16 lpEnumFunc,LPARAM lpDat
     
     /* loop through metafile records */
     
+    spRecord = WIN16_GlobalLock16(hmf);
     while (offset < (mh->mtSize * 2))
     {
 	mr = (METARECORD *)((char *)mh + offset);
-        if (!lpEnumFunc( hdc, ht, MAKE_SEGPTR(mr),  /* FIXME!! */
+        if (!lpEnumFunc( hdc, (HANDLETABLE16 *)ht,
+                         (METARECORD *)((UINT32)spRecord + offset),
                          mh->mtNoObjects, (LONG)lpData))
 	    break;
 

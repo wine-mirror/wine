@@ -22,7 +22,6 @@
 #include "driver.h"
 #include "mmsystem.h"
 #include "ldt.h"
-#include "stackframe.h"
 
 #ifdef linux
 #include <linux/soundcard.h>

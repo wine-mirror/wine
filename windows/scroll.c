@@ -41,6 +41,8 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRec
                                 (int)((clipRect)?clipRect->right:0), 
                                 (int)((clipRect)?clipRect->bottom:0));
 
+    if ( !wndScroll || !WIN_IsWindowDrawable( wndScroll, TRUE ) ) return;
+
     if ( !rect ) /* do not clip children */
        {
 	  GetClientRect16(hwnd, &rc);
@@ -87,10 +89,8 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRec
                      SWP_DEFERERASE );
     }
 
-    /* RDW_ALLCHILDREN is to account for dialog controls */
-
-    RedrawWindow32( hwnd, NULL, hrgnUpdate, RDW_ALLCHILDREN |
-					    RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW);
+    PAINT_RedrawWindow( hwnd, NULL, hrgnUpdate, RDW_ALLCHILDREN |
+			    RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW, RDW_C_USEHRGN );
 
     DeleteObject(hrgnUpdate);
     if( hCaretWnd ) ShowCaret(hCaretWnd);
@@ -250,8 +250,8 @@ int ScrollWindowEx(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRe
 
     if (flags | SW_INVALIDATE)
     {
-	RedrawWindow32( hwnd, NULL, hrgnUpdate, RDW_INVALIDATE | RDW_ERASE |
-                        ((flags & SW_ERASE) ? RDW_ERASENOW : 0));
+	PAINT_RedrawWindow( hwnd, NULL, hrgnUpdate, RDW_INVALIDATE | RDW_ERASE |
+                        ((flags & SW_ERASE) ? RDW_ERASENOW : 0), 0 );
     }
 
     ReleaseDC(hwnd, hdc);

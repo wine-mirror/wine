@@ -55,10 +55,7 @@ const char people[] = "Wine is available thanks to the work of "
 "Jan Willamowius, Carl Williams, Karl Guenter Wuensch, Eric Youngdale, "
 "and James Youngman. ";
 
-const struct _langentry {
-	char *name;
-	WORD langid;
-} languages[] =
+const WINE_LANGUAGE_DEF Languages[] =
 {
     {"En",0x0409},	/* LANG_En */
     {"Es",0x040A},	/* LANG_Es */
@@ -289,19 +286,20 @@ BOOL ParseDebugOptions(char *options)
  */
 static void MAIN_ParseLanguageOption( char *arg )
 {
-    const struct _langentry *p = languages;
+    const WINE_LANGUAGE_DEF *p = Languages;
 
     Options.language = LANG_En;  /* First language */
     for (;p->name;p++)
     {
-        if (!lstrcmpi32A( p->name, arg )) {
+        if (!lstrcmpi32A( p->name, arg ))
+        {
 	    WINE_LanguageId = p->langid;
 	    return;
 	}
         Options.language++;
     }
     fprintf( stderr, "Invalid language specified '%s'. Supported languages are: ", arg );
-    for (p = languages; p->name; p++) fprintf( stderr, "%s ", p->name );
+    for (p = Languages; p->name; p++) fprintf( stderr, "%s ", p->name );
     fprintf( stderr, "\n" );
     exit(1);
 }

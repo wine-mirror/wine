@@ -16,22 +16,22 @@ all: check_winerc $(PROGRAMS)
 
 @MAKE_RULES@
 
-hello: hello.o $(WINELIB)
+hello: hello.o
 	$(CC) -o hello hello.o $(LDOPTIONS) $(ALL_LIBS)
 
-hello2: hello2.o $(WINELIB)
+hello2: hello2.o
 	$(CC) -o hello2 hello2.o $(LDOPTIONS) $(ALL_LIBS)
 
-hello3: hello3res.o hello3.o $(WINELIB)
+hello3: hello3res.o hello3.o
 	$(CC) -o hello3 hello3.o hello3res.o $(LDOPTIONS) $(ALL_LIBS)
 
-hello4: hello4.o $(WINELIB)
+hello4: hello4.o
 	$(CC) -o hello4 hello4.o $(LDOPTIONS) $(ALL_LIBS)
 
-new: new.o $(WINELIB)
+new: new.o
 	$(CC) -o new new.o $(LDOPTIONS) $(ALL_LIBS)
 
-rolex: rolex.o $(WINELIB)
+rolex: rolex.o
 	$(CC) -o rolex rolex.o $(LDOPTIONS) $(ALL_LIBS)
 
 clean::

@@ -18,7 +18,7 @@ struct FindFileContext32 {
 
 typedef struct FindFileContext32 FindFileContext32;
 
-const char *DOSFS_Hash(const char *, int);
+const char *DOSFS_Hash(const char *, int, int);
 
 /* example D:\*.dbs */
 
@@ -70,7 +70,7 @@ BOOL32 FindNextFile32A(HANDLE32 handle, LPWIN32_FIND_DATA32A data)
 	    strcmp(dirent->d_name, ".") == 0)
 	    continue;
 
-	strcpy(dosname, DOSFS_Hash(dirent->d_name, FALSE));
+	strcpy(dosname, DOSFS_Hash(dirent->d_name, FALSE, FALSE));
 
 	if (MatchWildCard(dirent->d_name, context->mask)) {
 	    /* Full file name - is this a long file name?

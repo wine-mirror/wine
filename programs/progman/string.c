@@ -122,8 +122,8 @@ VOID STRING_SelectLanguageByNumber(UINT num)
 
 #ifdef WINELIB
   /* Update system menus */
-  for (i = 0; langNames[i] && lstrcmp(lang, langNames[i]);) i++;
-  if (langNames[i]) Options.language = i;
+  for (i = 0; Languages[i].name && lstrcmp(lang, Languages[i].name);) i++;
+  if (Languages[i].name) Options.language = i;
 
   GetSystemMenu(Globals.hMainWnd, TRUE);
   for (hGroup = GROUP_FirstGroup(); hGroup;

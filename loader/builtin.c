@@ -29,10 +29,11 @@ typedef struct
 
 typedef struct
 {
-    int                 base;      /* Ordinal base */
-    int                 size;      /* Number of functions */
-    const void        **functions; /* Pointer to functions table */
-    const char * const *names;     /* Pointer to names table */
+    int                 base;       /* Ordinal base */
+    int                 size;       /* Number of functions */
+    const void         *code_start; /* Start of DLL code */
+    const void        **functions;  /* Pointer to functions table */
+    const char * const *names;      /* Pointer to names table */
 } WIN32_DESCRIPTOR;
 
 typedef struct
@@ -356,8 +357,8 @@ LPCSTR BUILTIN_GetEntryPoint32( void *relay )
 
     for (dll = BuiltinDLLs; dll->descr; dll++)
         if ((dll->flags & DLL_FLAG_WIN32) &&
-            (dll->descr->u.win32.functions[0] <= relay) &&
-            (dll->descr->u.win32.functions[dll->descr->u.win32.size-1] >relay))
+            (dll->descr->u.win32.code_start <= relay) &&
+            ((void *)dll->descr->u.win32.functions > relay))
             break;
     if (!dll->descr)
     {

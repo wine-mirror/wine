@@ -16,7 +16,6 @@
 #include "menu.h"
 #include "winpos.h"
 #include "scroll.h"
-#include "stackframe.h"
 #include "nonclient.h"
 #include "graphics.h"
 #include "queue.h"
@@ -235,17 +234,20 @@ LONG NC_HandleNCCalcSize( WND *pWnd, RECT16 *winRect )
 {
     RECT16 tmpRect = { 0, 0, 0, 0 };
 
-    NC_AdjustRect( &tmpRect, pWnd->dwStyle, FALSE, pWnd->dwExStyle );
-    winRect->left   -= tmpRect.left;
-    winRect->top    -= tmpRect.top;
-    winRect->right  -= tmpRect.right;
-    winRect->bottom -= tmpRect.bottom;
-
-    if (HAS_MENU(pWnd))
+    if( !( pWnd->dwStyle & WS_MINIMIZE ) )
     {
+      NC_AdjustRect( &tmpRect, pWnd->dwStyle, FALSE, pWnd->dwExStyle );
+      winRect->left   -= tmpRect.left;
+      winRect->top    -= tmpRect.top;
+      winRect->right  -= tmpRect.right;
+      winRect->bottom -= tmpRect.bottom;
+
+      if (HAS_MENU(pWnd))
+      {
 	winRect->top += MENU_GetMenuBarHeight( pWnd->hwndSelf,
                                                winRect->right - winRect->left,
-                                             -tmpRect.left, -tmpRect.top ) + 1;
+                                              -tmpRect.left, -tmpRect.top ) + 1;
+      }
     }
     return 0;
 }
@@ -430,14 +432,17 @@ void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
     HBITMAP hbitmap;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-    NC_GetInsideRect( hwnd, &rect );
-    hdcMem = CreateCompatibleDC( hdc );
-    hbitmap = SelectObject( hdcMem, hbitmapClose );
-    BitBlt( hdc, rect.left, rect.top, SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
-            hdcMem, (wndPtr->dwStyle & WS_CHILD) ? SYSMETRICS_CXSIZE : 0, 0,
-            down ? NOTSRCCOPY : SRCCOPY );
-    SelectObject( hdcMem, hbitmap );
-    DeleteDC( hdcMem );
+    if( !(wndPtr->flags & WIN_MANAGED) )
+    {
+      NC_GetInsideRect( hwnd, &rect );
+      hdcMem = CreateCompatibleDC( hdc );
+      hbitmap = SelectObject( hdcMem, hbitmapClose );
+      BitBlt( hdc, rect.left, rect.top, SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
+              hdcMem, (wndPtr->dwStyle & WS_CHILD) ? SYSMETRICS_CXSIZE : 0, 0,
+              down ? NOTSRCCOPY : SRCCOPY );
+      SelectObject( hdcMem, hbitmap );
+      DeleteDC( hdcMem );
+    }
 }
 
 
@@ -447,12 +452,17 @@ void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
 static void NC_DrawMaxButton( HWND hwnd, HDC hdc, BOOL down )
 {
     RECT16 rect;
-    NC_GetInsideRect( hwnd, &rect );
-    GRAPH_DrawBitmap( hdc, (IsZoomed(hwnd) ?
-			    (down ? hbitmapRestoreD : hbitmapRestore) :
-			    (down ? hbitmapMaximizeD : hbitmapMaximize)),
-		     rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
-		     0, 0, SYSMETRICS_CXSIZE+1, SYSMETRICS_CYSIZE );
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+
+    if( !(wndPtr->flags & WIN_MANAGED) )
+    {
+      NC_GetInsideRect( hwnd, &rect );
+      GRAPH_DrawBitmap( hdc, (IsZoomed(hwnd) ?
+			     (down ? hbitmapRestoreD : hbitmapRestore) :
+			     (down ? hbitmapMaximizeD : hbitmapMaximize)),
+		        rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
+		        0, 0, SYSMETRICS_CXSIZE+1, SYSMETRICS_CYSIZE );
+    }
 }
 
 
@@ -463,11 +473,15 @@ static void NC_DrawMinButton( HWND hwnd, HDC hdc, BOOL down )
 {
     RECT16 rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-    NC_GetInsideRect( hwnd, &rect );
-    if (wndPtr->dwStyle & WS_MAXIMIZEBOX) rect.right -= SYSMETRICS_CXSIZE + 1;
-    GRAPH_DrawBitmap( hdc, (down ? hbitmapMinimizeD : hbitmapMinimize),
-		     rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
-		     0, 0, SYSMETRICS_CXSIZE+1, SYSMETRICS_CYSIZE );
+
+    if( !(wndPtr->flags & WIN_MANAGED) )
+    {
+      NC_GetInsideRect( hwnd, &rect );
+      if (wndPtr->dwStyle & WS_MAXIMIZEBOX) rect.right -= SYSMETRICS_CXSIZE + 1;
+      GRAPH_DrawBitmap( hdc, (down ? hbitmapMinimizeD : hbitmapMinimize),
+		        rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
+		        0, 0, SYSMETRICS_CXSIZE+1, SYSMETRICS_CYSIZE );
+    }
 }
 
 
@@ -587,6 +601,8 @@ static void NC_DrawCaption( HDC hdc, RECT16 *rect, HWND hwnd,
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     char buffer[256];
 
+    if (wndPtr->flags & WIN_MANAGED) return;
+
     if (!hbitmapClose)
     {
 	if (!(hbitmapClose = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_CLOSE) )))
@@ -658,36 +674,14 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-    if (!wndPtr || !(wndPtr->dwStyle & WS_VISIBLE)) return; /* Nothing to do */
+    if (!wndPtr || wndPtr->dwStyle & WS_MINIMIZE ||
+	!WIN_IsWindowDrawable( wndPtr, 0 )) return; /* Nothing to do */
 
     active  = wndPtr->flags & WIN_NCACTIVATED;
 
     dprintf_nonclient(stddeb, "NC_DoNCPaint: %04x %d\n", hwnd, active );
 
     if (!(hdc = GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW ))) return;
-
-    /*
-     * If this is an icon, we don't want to do any more nonclient painting
-     * of the window manager.
-     * If there is a class icon to draw, draw it
-     */
-    if (IsIconic(hwnd))
-    {
-        if (wndPtr->class->hIcon)
-        {
-            SendMessage16(hwnd, WM_ICONERASEBKGND, (WPARAM)hdc, 0);
-            DrawIcon( hdc, 0, 0, wndPtr->class->hIcon );
-        }
-        ReleaseDC(hwnd, hdc);
-        wndPtr->flags &= ~WIN_INTERNAL_PAINT;
-        if( wndPtr->hrgnUpdate )
-          {
-            DeleteObject( wndPtr->hrgnUpdate );
-            QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
-            wndPtr->hrgnUpdate = 0;
-          }
-        return;
-    }
 
     if (ExcludeVisRect( hdc, wndPtr->rectClient.left-wndPtr->rectWindow.left,
 		        wndPtr->rectClient.top-wndPtr->rectWindow.top,
@@ -776,14 +770,23 @@ LONG NC_HandleNCPaint( HWND hwnd , HRGN clip)
  *
  * Handle a WM_NCACTIVATE message. Called from DefWindowProc().
  */
-LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
+LONG NC_HandleNCActivate( WND *wndPtr, WPARAM wParam )
 {
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
+    WORD wStateChange;
 
-    if (wParam != 0) wndPtr->flags |= WIN_NCACTIVATED;
-    else wndPtr->flags &= ~WIN_NCACTIVATED;
+    if( wParam ) wStateChange = !(wndPtr->flags & WIN_NCACTIVATED);
+    else wStateChange = wndPtr->flags & WIN_NCACTIVATED;
 
-    NC_DoNCPaint( hwnd, (HRGN)1, FALSE );
+    if( wStateChange )
+    {
+      if (wParam) wndPtr->flags |= WIN_NCACTIVATED;
+      else wndPtr->flags &= ~WIN_NCACTIVATED;
+
+      if( wndPtr->dwStyle & WS_MINIMIZE )
+	PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW, 0 );
+      else
+	NC_DoNCPaint( wndPtr->hwndSelf, (HRGN)1, FALSE );
+    }
     return TRUE;
 }
 
@@ -841,6 +844,21 @@ LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
     return (LONG)SetCursor( LoadCursor16( 0, IDC_ARROW ) );
 }
 
+/***********************************************************************
+ *           NC_GetSysPopupPos
+ */
+BOOL NC_GetSysPopupPos( WND* wndPtr, RECT16* rect )
+{
+  if( !wndPtr->hSysMenu ) return FALSE;
+
+  NC_GetInsideRect( wndPtr->hwndSelf, rect );
+  OffsetRect16( rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top );
+  if (wndPtr->dwStyle & WS_CHILD)
+     ClientToScreen16( wndPtr->parent->hwndSelf, (POINT16 *)rect );
+  rect->right = rect->left + SYSMETRICS_CXSIZE;
+  rect->bottom = rect->top + SYSMETRICS_CYSIZE;
+  return TRUE;
+}
 
 /***********************************************************************
  *           NC_TrackSysMenu
@@ -854,19 +872,16 @@ static void NC_TrackSysMenu( HWND hwnd, HDC hdc, POINT16 pt )
     int iconic = wndPtr->dwStyle & WS_MINIMIZE;
 
     if (!(wndPtr->dwStyle & WS_SYSMENU)) return;
+
     /* If window has a menu, track the menu bar normally if it not minimized */
     if (HAS_MENU(wndPtr) && !iconic) MENU_TrackMouseMenuBar( hwnd, pt );
     else
     {
 	  /* Otherwise track the system menu like a normal popup menu */
-	NC_GetInsideRect( hwnd, &rect );
-	OffsetRect16( &rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top );
-	if (wndPtr->dwStyle & WS_CHILD)
-	    ClientToScreen16( wndPtr->parent->hwndSelf, (POINT16 *)&rect );
-	rect.right = rect.left + SYSMETRICS_CXSIZE;
-	rect.bottom = rect.top + SYSMETRICS_CYSIZE;
+
+	NC_GetSysPopupPos( wndPtr, &rect );
 	if (!iconic) NC_DrawSysButton( hwnd, hdc, TRUE );
-	TrackPopupMenu16( wndPtr->hSysMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
+	TrackPopupMenu16( GetSystemMenu(hwnd, 0), TPM_LEFTALIGN | TPM_LEFTBUTTON,
                           rect.left, rect.bottom, 0, hwnd, &rect );
 	if (!iconic) NC_DrawSysButton( hwnd, hdc, FALSE );
     }
@@ -908,8 +923,7 @@ static LONG NC_StartSizeMove( HWND hwnd, WPARAM wParam, POINT16 *capturePoint )
 	SetCapture(hwnd);
 	while(!hittest)
 	{
-            MSG_InternalGetMessage( MAKE_SEGPTR(&msg), 0, 0, MSGF_SIZE,
-                                    PM_REMOVE, FALSE );
+            MSG_InternalGetMessage( &msg, 0, 0, MSGF_SIZE, PM_REMOVE, FALSE );
 	    switch(msg.message)
 	    {
 	    case WM_MOUSEMOVE:
@@ -1048,8 +1062,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
     {
         int dx = 0, dy = 0;
 
-        MSG_InternalGetMessage( MAKE_SEGPTR(&msg), 0, 0, MSGF_SIZE,
-                                PM_REMOVE, FALSE );
+        MSG_InternalGetMessage( &msg, 0, 0, MSGF_SIZE, PM_REMOVE, FALSE );
 
 	  /* Exit on button-up, Return, or Esc */
 	if ((msg.message == WM_LBUTTONUP) ||
@@ -1151,7 +1164,7 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
     do
     {
 	BOOL oldstate = pressed;
-        MSG_InternalGetMessage( MAKE_SEGPTR(&msg), 0, 0, 0, PM_REMOVE, FALSE );
+        MSG_InternalGetMessage( &msg, 0, 0, 0, PM_REMOVE, FALSE );
 
 	pressed = (NC_HandleNCHitTest( hwnd, msg.pt ) == wParam);
 	if (pressed != oldstate)

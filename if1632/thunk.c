@@ -6,6 +6,8 @@
 
 #include "windows.h"
 #include "callback.h"
+#include "stddebug.h"
+#include "debug.h"
 #include "heap.h"
 
 typedef void (*RELAY)();
@@ -248,3 +250,31 @@ BOOL16 THUNK_GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 func,
                            x, y, cx, cy );
 }
 
+
+struct thunkstruct
+{
+	char	magic[4];
+	DWORD	x1;
+	DWORD	x2;
+};
+
+UINT32 ThunkConnect32( struct thunkstruct *ths, LPSTR thunkfun16,
+                       LPSTR module16, LPSTR module32, HMODULE32 hmod32,
+                       DWORD dllinitarg1 )
+{
+	HINSTANCE16	hmm;
+
+	fprintf(stdnimp,"ThunkConnect32(<struct>,%s,%s,%s,%lx,%lx)\n",
+		thunkfun16,module32,module16,hmod32,dllinitarg1
+	);
+	fprintf(stdnimp,"	magic = %c%c%c%c\n",
+		ths->magic[0],
+		ths->magic[1],
+		ths->magic[2],
+		ths->magic[3]
+	);
+	fprintf(stdnimp,"	x1 = %lx\n",ths->x1);
+	fprintf(stdnimp,"	x2 = %lx\n",ths->x2);
+	hmm=LoadModule(module16,NULL);
+	return TRUE;
+}

@@ -14,6 +14,7 @@
 #include "winpos.h"
 #include "string32.h"
 #include "syscolor.h"
+#include "sysmetrics.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "spy.h"
@@ -101,7 +102,6 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 {
     switch(msg)
     {
-    case WM_PAINTICON: 
     case WM_NCPAINT:
 	return NC_HandleNCPaint( wndPtr->hwndSelf, (HRGN)wParam );
 
@@ -116,7 +116,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	return NC_HandleNCLButtonDblClk( wndPtr, wParam, lParam );
 
     case WM_NCACTIVATE:
-	return NC_HandleNCActivate( wndPtr->hwndSelf, wParam );
+	return NC_HandleNCActivate( wndPtr, wParam );
 
     case WM_NCDESTROY:
 	if (wndPtr->text) HeapFree( SystemHeap, 0, wndPtr->text );
@@ -125,12 +125,26 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	if (wndPtr->pHScroll) HeapFree( SystemHeap, 0, wndPtr->pHScroll );
         wndPtr->pVScroll = wndPtr->pHScroll = NULL;
 	return 0;
-	
+
+    case WM_PAINTICON:
     case WM_PAINT:
 	{
-	    PAINTSTRUCT16 paintstruct;
-	    BeginPaint16( wndPtr->hwndSelf, &paintstruct );
-	    EndPaint16( wndPtr->hwndSelf, &paintstruct );
+	    PAINTSTRUCT16 ps;
+	    HDC		  hdc = BeginPaint16( wndPtr->hwndSelf, &ps );
+	    if( hdc ) 
+	    {
+	      if( (wndPtr->dwStyle & WS_MINIMIZE) && wndPtr->class->hIcon )
+	      {
+	        int x = (wndPtr->rectWindow.right - wndPtr->rectWindow.left -
+			SYSMETRICS_CXICON)/2;
+	        int y = (wndPtr->rectWindow.bottom - wndPtr->rectWindow.top -
+			SYSMETRICS_CYICON)/2;
+		dprintf_win(stddeb,"Painting class icon: vis rect=(%i,%i - %i,%i)\n",
+		ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom );
+	        DrawIcon( hdc, x, y, wndPtr->class->hIcon );
+	      }
+	      EndPaint16( wndPtr->hwndSelf, &ps );
+	    }
 	    return 0;
 	}
 
@@ -164,18 +178,33 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
     case WM_ICONERASEBKGND:
 	{
 	    if (!wndPtr->class->hbrBackground) return 0;
-            if (wndPtr->class->hbrBackground <= (HBRUSH)(COLOR_MAX+1))
+
+	    /* FIXME: should fill icon text with hbrushActiveCaption 
+		      instead of this */
+
+	    if (wndPtr->dwStyle & WS_MINIMIZE )
+	    {
+		 if( wndPtr->flags & WIN_NCACTIVATED )
+		 {
+		   FillWindow( GetParent(wndPtr->hwndSelf), wndPtr->hwndSelf,
+                               (HDC)wParam, sysColorObjects.hbrushActiveCaption );
+		   return 1;
+		 }
+
+		 /* FIXME: should draw parent' background somehow
+			     (e.g for textured desktop) ? */
+	    }
+
+	    if (wndPtr->class->hbrBackground <= (HBRUSH)(COLOR_MAX+1))
             {
-                 HBRUSH hbrush;
-                 hbrush = CreateSolidBrush(
-                     GetSysColor(((DWORD)wndPtr->class->hbrBackground)-1));
+                HBRUSH hbrush = CreateSolidBrush( 
+			        GetSysColor(((DWORD)wndPtr->class->hbrBackground)-1));
                  FillWindow( GetParent(wndPtr->hwndSelf), wndPtr->hwndSelf,
                              (HDC)wParam, hbrush);
                  DeleteObject (hbrush);
             }
-            else
-	         FillWindow( GetParent(wndPtr->hwndSelf), wndPtr->hwndSelf,
-                             (HDC)wParam, wndPtr->class->hbrBackground );
+            else FillWindow( GetParent(wndPtr->hwndSelf), wndPtr->hwndSelf,
+                                  (HDC)wParam, wndPtr->class->hbrBackground );
 	    return 1;
 	}
 

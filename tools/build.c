@@ -1089,7 +1089,8 @@ static void BuildSpec32Files(void)
     printf( "\t.long Module_Start\n" );     /* Module start */
     printf( "\t.long %d\n", module_size );  /* Module size */
     printf( "\t.long %d\n", Base );         /* Base */
-    printf( "\t.long %d\n", Limit );        /* Limit */
+    printf( "\t.long %d\n", Limit+1 );      /* Size */
+    printf( "\t.long Code_Start\n" );       /* Code start */
     printf( "\t.long Functions\n" );        /* Functions */
     printf( "\t.long FuncNames\n" );        /* Function names */
 }

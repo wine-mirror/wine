@@ -36,7 +36,7 @@ all: check_winerc $(PROGRAMS)
 @MAKE_RULES@
 
 # Some strings need addresses >= 0x10000
-winhelp: $(MOSTOBJS) $(STRINGOBJS) $(WINELIB)
+winhelp: $(MOSTOBJS) $(STRINGOBJS)
 	$(CC) -o winhelp $(MOSTOBJS) $(LDOPTIONS) $(ALL_LIBS) $(STRINGOBJS)
 
 hlp2sgml: hlp2sgml.o hlpfile.o

@@ -40,7 +40,7 @@ all: check_winerc $(PROGRAMS)
 @MAKE_RULES@
 
 # Some strings need addresses >= 0x10000
-progman: $(MOSTOBJS) $(STRINGOBJS) $(WINELIB)
+progman: $(MOSTOBJS) $(STRINGOBJS)
 	$(CC) -o progman $(MOSTOBJS) $(LDOPTIONS) $(ALL_LIBS) $(STRINGOBJS)
 
 install: dummy

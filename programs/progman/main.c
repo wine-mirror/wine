@@ -71,7 +71,7 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
 
   /* Select Language */
 #ifdef WINELIB
-  Globals.lpszLanguage = langNames[Options.language];
+  Globals.lpszLanguage = Languages[Options.language].name;
 #else
   Globals.lpszLanguage = "En";
 #endif

@@ -232,7 +232,7 @@ base	1
 0227    stdcall GetLastError() GetLastError
 0228    stdcall GetLocalTime(ptr) GetLocalTime
 0229 stdcall GetLocaleInfoA(long long ptr long) GetLocaleInfoA
-0230 stub GetLocaleInfoW
+0230 stdcall GetLocaleInfoW(long long ptr long) GetLocaleInfo32W
 0231 stdcall GetLogicalDriveStringsA(long ptr) GetLogicalDriveStrings32A
 0232 stdcall GetLogicalDriveStringsW(long ptr) GetLogicalDriveStrings32W
 0233 stdcall GetLogicalDrives() GetLogicalDrives
@@ -637,3 +637,5 @@ base	1
 0631 stub WritePrivateProfileStructA
 0632 stub WritePrivateProfileStructW
 0633 stub MakeCriticalSectionGlobal
+#extra late additions
+0634 stdcall ThunkConnect32(ptr ptr ptr ptr ptr ptr) ThunkConnect32

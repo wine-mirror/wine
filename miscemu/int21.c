@@ -1127,8 +1127,8 @@ void DOS3Call( SIGCONTEXT *context )
         break;
 
     case 0x39: /* "MKDIR" - CREATE SUBDIRECTORY */
-        if (!CreateDirectory32A( PTR_SEG_OFF_TO_LIN( DS_reg(context),
-                                                     DX_reg(context) ), NULL))
+        if (!CreateDirectory16( PTR_SEG_OFF_TO_LIN( DS_reg(context),
+                                                    DX_reg(context) ), NULL))
         {
             AX_reg(context) = DOS_ExtendedError;
             SET_CFLAG(context);
@@ -1136,8 +1136,8 @@ void DOS3Call( SIGCONTEXT *context )
         break;
 	
     case 0x3a: /* "RMDIR" - REMOVE SUBDIRECTORY */
-        if (!RemoveDirectory32A( PTR_SEG_OFF_TO_LIN( DS_reg(context),
-                                                     DX_reg(context) )))
+        if (!RemoveDirectory16( PTR_SEG_OFF_TO_LIN( DS_reg(context),
+                                                    DX_reg(context) )))
         {
             AX_reg(context) = DOS_ExtendedError;
             SET_CFLAG(context);
@@ -1584,8 +1584,43 @@ void DOS3Call( SIGCONTEXT *context )
         ExtendedOpenCreateFile(context);
         break;
 	
+    case 0x71: /* MS-DOS 7 (Windows95) - LONG FILENAME FUNCTIONS */
+        switch(AL_reg(context))
+        {
+        case 0x39:  /* Create directory */
+            if (!CreateDirectory32A( PTR_SEG_OFF_TO_LIN( DS_reg(context),
+                                                     DX_reg(context) ), NULL))
+            {
+                AX_reg(context) = DOS_ExtendedError;
+                SET_CFLAG(context);
+            }
+            break;
+        case 0x3a:  /* Remove directory */
+            if (!RemoveDirectory32A( PTR_SEG_OFF_TO_LIN( DS_reg(context),
+                                                         DX_reg(context) )))
+            {
+                AX_reg(context) = DOS_ExtendedError;
+                SET_CFLAG(context);
+            }
+            break;
+        case 0x3b:  /* Change directory */
+        case 0x41:  /* Delete file */
+        case 0x43:  /* Get/Set file attributes */
+        case 0x47:  /* Get current directory */
+        case 0x4e:  /* Find first file */
+        case 0x4f:  /* Find next file */
+        case 0x56:  /* Move (rename) file */
+        case 0x6c:  /* Create/Open file */
+        default:
+            fprintf( stderr, "Unimplemented int21 long file name function:\n");
+            INT_BARF( context, 0x21 );
+            SET_CFLAG(context);
+            AL_reg(context) = 0;
+            break;
+        }
+        break;
+
     case 0x70: /* MS-DOS 7 (Windows95) - ??? (country-specific?)*/
-    case 0x71: /* MS-DOS 7 (Chicago) - LONG FILENAME FUNCTIONS */
     case 0x72: /* MS-DOS 7 (Windows95) - ??? */
     case 0x73: /* MS-DOS 7 (Windows95) - DRIVE LOCKING ??? */
         dprintf_int(stddeb,"int21: windows95 function AX %04x\n",

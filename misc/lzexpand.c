@@ -16,8 +16,8 @@
 #include <sys/stat.h>
 #include "windows.h"
 #include "file.h"
+#include "ldt.h"
 #include "lzexpand.h"
-#include "stackframe.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"

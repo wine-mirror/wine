@@ -7,6 +7,8 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
+#include "wintypes.h"
+
   /* Supported languages */
 typedef enum
 {
@@ -23,7 +25,13 @@ typedef enum
     LANG_Ko   /* Korean */
 } WINE_LANGUAGE;
 
-extern const char *langNames[];
+typedef struct
+{
+    const char *name;
+    WORD        langid;
+} WINE_LANGUAGE_DEF;
+
+extern const WINE_LANGUAGE_DEF Languages[];
 
 /* Supported modes */
 typedef enum

@@ -1224,6 +1224,16 @@ LPSTR LOCAL_Lock( HANDLE16 ds, HLOCAL16 handle )
 
 
 /***********************************************************************
+ *           LOCAL_LockSegptr
+ */
+SEGPTR LOCAL_LockSegptr( HANDLE16 ds, HLOCAL16 handle )
+{
+    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
+    return PTR_SEG_OFF_TO_SEGPTR( ds, LOCAL_InternalLock( ptr, handle ) );
+}
+
+
+/***********************************************************************
  *           LOCAL_Unlock
  */
 BOOL16 LOCAL_Unlock( HANDLE16 ds, HLOCAL16 handle )
@@ -1401,9 +1411,7 @@ HLOCAL16 LocalFree16( HLOCAL16 handle )
  */
 SEGPTR LocalLock16( HLOCAL16 handle )
 {
-    HANDLE16 ds = CURRENT_DS;
-    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
-    return PTR_SEG_OFF_TO_SEGPTR( ds, LOCAL_InternalLock( ptr, handle ) );
+    return LOCAL_LockSegptr( CURRENT_DS, handle );
 }
 
 

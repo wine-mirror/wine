@@ -92,7 +92,7 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
     }
 
 #ifdef WINELIB
-  opt_lang = langNames[Options.language];
+  opt_lang = Languages[Options.language].name;
 #endif
 
   /* Find language specific string table */

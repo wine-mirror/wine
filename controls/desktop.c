@@ -77,6 +77,11 @@ static HBITMAP DESKTOP_LoadBitmap( HDC hdc, const char *filename )
 static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc, DESKTOPINFO *infoPtr )
 {
     RECT16 rect;
+    WND*   Wnd = WIN_FindWndPtr( hwnd );
+
+    if( Wnd->hrgnUpdate > 1 ) DeleteObject( Wnd->hrgnUpdate );
+    Wnd->hrgnUpdate = 0;
+
     GetClientRect16( hwnd, &rect );    
 
     /* Paint desktop pattern (only if wall paper does not cover everything) */

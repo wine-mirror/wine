@@ -88,9 +88,12 @@ void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
  */
 HDC16 BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps ) 
 {
+    BOOL32 bIcon;
     HRGN hrgnUpdate;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
+
+    bIcon = (wndPtr->dwStyle & WS_MINIMIZE && wndPtr->class->hIcon);
 
     wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
 
@@ -107,12 +110,14 @@ HDC16 BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
 
     dprintf_win(stddeb,"hrgnUpdate = %04x, ", hrgnUpdate);
 
-    lps->hdc = GetDCEx( hwnd, hrgnUpdate, DCX_INTERSECTRGN | DCX_WINDOWPAINT | DCX_USESTYLE );
+    /* When bIcon is TRUE hrgnUpdate is automatically in window coordinates
+     * (because rectClient == rectWindow for WS_MINIMIZE windows).
+     */
+
+    lps->hdc = GetDCEx( hwnd, hrgnUpdate, DCX_INTERSECTRGN | DCX_WINDOWPAINT |
+                        DCX_USESTYLE | (bIcon ? DCX_WINDOW : 0) );
 
     dprintf_win(stddeb,"hdc = %04x\n", lps->hdc);
-
-    /* pseudocode from "Internals" doesn't delete hrgnUpdate - yet another clue
-       that ReleaseDC should take care of it (hence DCX_KEEPCLIPRGN) */
 
     if (!lps->hdc)
     {
@@ -126,7 +131,9 @@ HDC16 BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
     if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
     {
         wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
-        lps->fErase = !SendMessage16(hwnd, WM_ERASEBKGND, (WPARAM)lps->hdc, 0);
+        lps->fErase = !SendMessage16(hwnd, (bIcon) ? WM_ICONERASEBKGND
+                                                   : WM_ERASEBKGND,
+                                     (WPARAM)lps->hdc, 0 );
     }
     else lps->fErase = TRUE;
 
@@ -218,20 +225,32 @@ HBRUSH GetControlBrush( HWND hwnd, HDC hdc, WORD control )
 
 
 /***********************************************************************
- *           RedrawWindow32    (USER32.425)
+ *           PAINT_RedrawWindow
+ *
+ * Note: Windows uses WM_SYNCPAINT to cut down the number of intertask
+ * SendMessage() calls. From SDK:
+ *   This message avoids lots of inter-app message traffic
+ *   by switching to the other task and continuing the
+ *   recursion there.
+ * 
+ * wParam         = flags
+ * LOWORD(lParam) = hrgnClip
+ * HIWORD(lParam) = hwndSkip  (not used; always NULL)
  */
-BOOL32 RedrawWindow32( HWND32 hwnd, const RECT32 *rectUpdate,
-                       HRGN32 hrgnUpdate, UINT32 flags )
+BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
+                         HRGN32 hrgnUpdate, UINT32 flags, UINT32 control )
 {
+    BOOL32 bIcon;
     HRGN hrgn;
     RECT32 rectClient;
-    WND * wndPtr;
+    WND* wndPtr;
 
     if (!hwnd) hwnd = GetDesktopWindow();
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
     if (!IsWindowVisible(hwnd) || (wndPtr->flags & WIN_NO_REDRAW))
         return TRUE;  /* No redraw needed */
 
+    bIcon = (wndPtr->dwStyle & WS_MINIMIZE && wndPtr->class->hIcon);
     if (rectUpdate)
     {
         dprintf_win(stddeb, "RedrawWindow: %04x %d,%d-%d,%d %04x flags=%04x\n",
@@ -283,7 +302,7 @@ BOOL32 RedrawWindow32( HWND32 hwnd, const RECT32 *rectUpdate,
 	   }
 	else
              if (flags & RDW_ERASE) wndPtr->flags |= WIN_NEEDS_ERASEBKGND;
-	flags |= RDW_FRAME;  /* Force invalidating the frame of children */
+	flags |= RDW_FRAME;  /* Force children frame invalidation */
     }
     else if (flags & RDW_VALIDATE)  /* Validate */
     {
@@ -335,7 +354,8 @@ BOOL32 RedrawWindow32( HWND32 hwnd, const RECT32 *rectUpdate,
 
     if (flags & RDW_UPDATENOW)
     {
-        if (wndPtr->hrgnUpdate) SendMessage16( hwnd, WM_PAINT, 0, 0 );
+        if (wndPtr->hrgnUpdate) /* wm_painticon wparam is 1 */
+            SendMessage16( hwnd, (bIcon) ? WM_PAINTICON : WM_PAINT, bIcon, 0 );
     }
     else if (flags & RDW_ERASENOW)
     {
@@ -345,18 +365,16 @@ BOOL32 RedrawWindow32( HWND32 hwnd, const RECT32 *rectUpdate,
         if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
         {
             HDC hdc = GetDCEx( hwnd, wndPtr->hrgnUpdate,
-                               DCX_INTERSECTRGN | DCX_USESTYLE | DCX_KEEPCLIPRGN | DCX_WINDOWPAINT);
+                               DCX_INTERSECTRGN | DCX_USESTYLE |
+                               DCX_KEEPCLIPRGN | DCX_WINDOWPAINT |
+                               (bIcon ? DCX_WINDOW : 0) );
             if (hdc)
             {
-              /* Don't send WM_ERASEBKGND to icons */
-              /* (WM_ICONERASEBKGND is sent during processing of WM_NCPAINT) */
-                if (!(wndPtr->dwStyle & WS_MINIMIZE) ||
-                    !wndPtr->class->hIcon)
-                {
-                    if (SendMessage16( hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0 ))
-                        wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
-                }
-                ReleaseDC( hwnd, hdc );
+               if (SendMessage16( hwnd, (bIcon) ? WM_ICONERASEBKGND
+						: WM_ERASEBKGND,
+                                  (WPARAM)hdc, 0 ))
+                  wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
+               ReleaseDC( hwnd, hdc );
             }
         }
     }
@@ -364,38 +382,61 @@ BOOL32 RedrawWindow32( HWND32 hwnd, const RECT32 *rectUpdate,
       /* Recursively process children */
 
     if (!(flags & RDW_NOCHILDREN) &&
-	((flags & RDW_ALLCHILDREN) || !(wndPtr->dwStyle & WS_CLIPCHILDREN)))
+        ((flags & RDW_ALLCHILDREN) || !(wndPtr->dwStyle & WS_CLIPCHILDREN)) &&
+	!(wndPtr->dwStyle & WS_MINIMIZE) )
     {
-	if (hrgnUpdate)
+        if ( hrgnUpdate || rectUpdate )
 	{
-	    HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
-	    if (!hrgn) return TRUE;
-	    for (wndPtr = wndPtr->child; wndPtr; wndPtr = wndPtr->next)
-	    {
-		CombineRgn( hrgn, hrgnUpdate, 0, RGN_COPY );
-		OffsetRgn( hrgn, -wndPtr->rectClient.left,
-			         -wndPtr->rectClient.top );
-		RedrawWindow32( wndPtr->hwndSelf, NULL, hrgn, flags );
-	    }
-	    DeleteObject( hrgn );
+	   if( !(hrgn = CreateRectRgn( 0, 0, 0, 0 )) ) return TRUE;
+	   if( !hrgnUpdate )
+	     {
+	        control |= (RDW_C_DELETEHRGN | RDW_C_USEHRGN);
+ 	        if( !(hrgnUpdate = CreateRectRgnIndirect32( rectUpdate )) )
+                {
+                    DeleteObject( hrgn );
+                    return TRUE;
+                }
+	     }
+           for (wndPtr = wndPtr->child; wndPtr; wndPtr = wndPtr->next)
+	     if( wndPtr->dwStyle & WS_VISIBLE )
+	       {
+                 SetRectRgn( hrgn, wndPtr->rectWindow.left, wndPtr->rectWindow.top,
+                                   wndPtr->rectWindow.right, wndPtr->rectWindow.bottom);
+                 if( CombineRgn( hrgn, hrgn, hrgnUpdate, RGN_AND ) != NULLREGION )
+                 {
+		   if( control & RDW_C_USEHRGN &&
+		       wndPtr->dwStyle & WS_CLIPSIBLINGS ) 
+		       CombineRgn( hrgnUpdate, hrgnUpdate, hrgn, RGN_DIFF );
+
+                   OffsetRgn( hrgn, -wndPtr->rectClient.left,
+                                 -wndPtr->rectClient.top );
+                   PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, hrgn, flags, RDW_C_USEHRGN );
+                 }
+               }
+	   DeleteObject( hrgn );
+	   if( control & RDW_C_DELETEHRGN ) DeleteObject( hrgnUpdate );
 	}
-	else
-	{
-	    RECT32 rect;
-	    for (wndPtr = wndPtr->child; wndPtr; wndPtr = wndPtr->next)
-	    {
-		if (rectUpdate)
-		{
-		    rect = *rectUpdate;
-		    OffsetRect32( &rect, -wndPtr->rectClient.left,
-                                         -wndPtr->rectClient.top );
-		    RedrawWindow32( wndPtr->hwndSelf, &rect, 0, flags );
-		}
-		else RedrawWindow32( wndPtr->hwndSelf, NULL, 0, flags );
-	    }
-	}
+	else for (wndPtr = wndPtr->child; wndPtr; wndPtr = wndPtr->next)
+		  PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, 0, flags, 0 );
+
     }
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           RedrawWindow32    (USER32.425)
+ */
+BOOL32 RedrawWindow32( HWND32 hwnd, const RECT32 *rectUpdate,
+                       HRGN32 hrgnUpdate, UINT32 flags )
+{
+    WND* wnd = WIN_FindWndPtr( hwnd );
+
+    /* check if there is something to redraw */
+
+    return ( wnd && WIN_IsWindowDrawable( wnd, !(flags & RDW_FRAME) ) )
+           ? PAINT_RedrawWindow( hwnd, rectUpdate, hrgnUpdate, flags, 0 )
+	   : 1;
 }
 
 
@@ -429,7 +470,7 @@ void UpdateWindow( HWND32 hwnd )
  */
 void InvalidateRgn( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
 {
-    RedrawWindow32(hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0));
+    RedrawWindow32(hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
 }
 
 

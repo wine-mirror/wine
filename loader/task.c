@@ -35,7 +35,6 @@
 #define MIN_THUNKS  32
 
   /* 32-bit stack size for each task */
-  /* Must not be greater than 64k, or MAKE_SEGPTR won't work */
 #define STACK32_SIZE 0x10000
 
 extern void USER_AppExit( HTASK16, HINSTANCE16, HQUEUE16 );

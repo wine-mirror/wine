@@ -63,10 +63,11 @@ BYTE DOS_ErrorLocus;
  * (i.e. contains only valid DOS chars, lower-case only, fits in 8.3 format).
  * File name can be terminated by '\0', '\\' or '/'.
  */
-static int DOSFS_ValidDOSName( const char *name )
+static int DOSFS_ValidDOSName( const char *name, int ignore_case )
 {
-    static const char invalid_chars[] = INVALID_DOS_CHARS "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    static const char invalid_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" INVALID_DOS_CHARS;
     const char *p = name;
+    const char *invalid = ignore_case ? (invalid_chars + 26) : invalid_chars;
     int len = 0;
 
     if (*p == '.')
@@ -79,7 +80,7 @@ static int DOSFS_ValidDOSName( const char *name )
     }
     while (!IS_END_OF_NAME(*p))
     {
-        if (strchr( invalid_chars, *p )) return 0;  /* Invalid char */
+        if (strchr( invalid, *p )) return 0;  /* Invalid char */
         if (*p == '.') break;  /* Start of the extension */
         if (++len > 8) return 0;  /* Name too long */
         p++;
@@ -90,7 +91,7 @@ static int DOSFS_ValidDOSName( const char *name )
     len = 0;
     while (!IS_END_OF_NAME(*p))
     {
-        if (strchr( invalid_chars, *p )) return 0;  /* Invalid char */
+        if (strchr( invalid, *p )) return 0;  /* Invalid char */
         if (*p == '.') return 0;  /* Second extension not allowed */
         if (++len > 3) return 0;  /* Extension too long */
         p++;
@@ -280,7 +281,7 @@ void DOSFS_ToDosDateTime( time_t unixtime, WORD *pDate, WORD *pTime )
  * hashed version that fits in 8.3 format.
  * File name can be terminated by '\0', '\\' or '/'.
  */
-const char *DOSFS_Hash( const char *name, int dir_format )
+const char *DOSFS_Hash( const char *name, int dir_format, int ignore_case )
 {
     static const char invalid_chars[] = INVALID_DOS_CHARS "~.";
     static const char hash_chars[32] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
@@ -293,7 +294,7 @@ const char *DOSFS_Hash( const char *name, int dir_format )
 
     if (dir_format) strcpy( buffer, "           " );
 
-    if (DOSFS_ValidDOSName( name ))
+    if (DOSFS_ValidDOSName( name, ignore_case ))
     {
         /* Check for '.' and '..' */
         if (*name == '.')
@@ -322,10 +323,19 @@ const char *DOSFS_Hash( const char *name, int dir_format )
         /* Compute the hash code of the file name */
         /* If you know something about hash functions, feel free to */
         /* insert a better algorithm here... */
-        for (p = name, hash = 0xbeef; !IS_END_OF_NAME(p[1]); p++)
-            hash = (hash << 3) ^ (hash >> 5) ^ *p ^ (p[1] << 8);
-        hash = (hash << 3) ^ (hash >> 5) ^ *p;  /* Last character */
-        
+        if (ignore_case)
+        {
+            for (p = name, hash = 0xbeef; !IS_END_OF_NAME(p[1]); p++)
+                hash = (hash << 3) ^ (hash >> 5) ^ tolower(*p) ^ (tolower(p[1]) << 8);
+            hash = (hash << 3) ^ (hash >> 5) ^ tolower(*p); /* Last character*/
+        }
+        else
+        {
+            for (p = name, hash = 0xbeef; !IS_END_OF_NAME(p[1]); p++)
+                hash = (hash << 3) ^ (hash >> 5) ^ *p ^ (p[1] << 8);
+            hash = (hash << 3) ^ (hash >> 5) ^ *p;  /* Last character */
+        }
+
         /* Find last dot for start of the extension */
         for (p = name+1, ext = NULL; !IS_END_OF_NAME(*p); p++)
             if (*p == '.') ext = p;
@@ -368,7 +378,7 @@ const char *DOSFS_Hash( const char *name, int dir_format )
  * Return 1 if OK, 0 if no file name matches.
  */
 static int DOSFS_FindUnixName( const char *path, const char *name,
-                               char *buffer, int maxlen )
+                               char *buffer, int maxlen, UINT32 drive_flags )
 {
     DIR *dir;
     struct dirent *dirent;
@@ -390,12 +400,22 @@ static int DOSFS_FindUnixName( const char *path, const char *name,
     while ((dirent = readdir( dir )) != NULL)
     {
         /* Check against Unix name */
-        if ((len == strlen(dirent->d_name) &&
-             !memcmp( dirent->d_name, name, len ))) break;
+        if (len == strlen(dirent->d_name))
+        {
+            if (drive_flags & DRIVE_CASE_SENSITIVE)
+            {
+                if (!lstrncmp32A( dirent->d_name, name, len )) break;
+            }
+            else
+            {
+                if (!lstrncmpi32A( dirent->d_name, name, len )) break;
+            }
+        }
         if (dos_name)
         {
             /* Check against hashed DOS name */
-            const char *hash_name = DOSFS_Hash( dirent->d_name, TRUE );
+            const char *hash_name = DOSFS_Hash( dirent->d_name, TRUE,
+                                       !(drive_flags & DRIVE_CASE_SENSITIVE) );
             if (!strcmp( dos_name, hash_name )) break;
         }
     }
@@ -445,6 +465,7 @@ const char * DOSFS_GetUnixFileName( const char * name, int check_last )
 {
     static char buffer[MAX_PATHNAME_LEN];
     int drive, len, found;
+    UINT32 flags;
     char *p, *root;
 
     dprintf_dosfs( stddeb, "DOSFS_GetUnixFileName: %s\n", name );
@@ -470,6 +491,7 @@ const char * DOSFS_GetUnixFileName( const char * name, int check_last )
         DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
         return NULL;
     }
+    flags = DRIVE_GetFlags(drive);
     lstrcpyn32A( buffer, DRIVE_GetRoot(drive), MAX_PATHNAME_LEN );
     if (buffer[1]) root = buffer + strlen(buffer);
     else root = buffer;  /* root directory */
@@ -502,7 +524,7 @@ const char * DOSFS_GetUnixFileName( const char * name, int check_last )
             DOS_ERROR( ER_PathNotFound, EC_NotFound, SA_Abort, EL_Disk );
             return NULL;
         }
-        if ((found = DOSFS_FindUnixName( buffer, name, p+1, len-1 )))
+        if ((found = DOSFS_FindUnixName( buffer, name, p+1, len-1, flags )))
         {
             *p = '/';
             len -= strlen(p);
@@ -548,6 +570,7 @@ const char * DOSFS_GetDosTrueName( const char *name, int unix_format )
 {
     static char buffer[MAX_PATHNAME_LEN];
     int drive, len;
+    UINT32 flags;
     char *p;
 
     dprintf_dosfs( stddeb, "DOSFS_GetDosTrueName(%s,%d)\n", name, unix_format);
@@ -589,6 +612,7 @@ const char * DOSFS_GetDosTrueName( const char *name, int unix_format )
     }
     *p = '\0';
     len = MAX_PATHNAME_LEN - (int)(p - buffer);
+    flags = DRIVE_GetFlags(drive);
 
     while (*name)
     {
@@ -607,7 +631,9 @@ const char * DOSFS_GetDosTrueName( const char *name, int unix_format )
         *p++ = '\\';
         if (unix_format)  /* Hash it into a DOS name */
         {
-            lstrcpyn32A( p, DOSFS_Hash( name, FALSE ), len );
+            lstrcpyn32A( p, DOSFS_Hash( name, FALSE,
+                                     !(flags & DRIVE_CASE_SENSITIVE) ),
+                         len );
             len -= strlen(p);
             p += strlen(p);
             while (!IS_END_OF_NAME(*name)) name++;
@@ -651,7 +677,8 @@ int DOSFS_FindNext( const char *path, const char *mask, int drive,
     static int drive_root = 0;
     char *p;
     const char *hash_name;
-    
+    UINT32 flags;
+
     if ((attr & ~(FA_UNUSED | FA_ARCHIVE | FA_RDONLY)) == FA_LABEL)
     {
         if (skip) return 0;
@@ -686,12 +713,14 @@ int DOSFS_FindNext( const char *path, const char *mask, int drive,
     strcat( buffer, "/" );
     p = buffer + strlen(buffer);
     attr |= FA_UNUSED | FA_ARCHIVE | FA_RDONLY;
+    flags = DRIVE_GetFlags( drive );
 
     while ((dirent = readdir( dir )) != NULL)
     {
         if (skip-- > 0) continue;
         count++;
-        hash_name = DOSFS_Hash( dirent->d_name, TRUE );
+        hash_name = DOSFS_Hash( dirent->d_name, TRUE,
+                                !(flags & DRIVE_CASE_SENSITIVE) );
         if (!DOSFS_Match( mask, hash_name )) continue;
         /* Don't return '.' and '..' in the root of the drive */
         if (drive_root && (dirent->d_name[0] == '.') &&
@@ -708,6 +737,7 @@ int DOSFS_FindNext( const char *path, const char *mask, int drive,
         if (entry->attr & ~attr) continue;
         strcpy( entry->name, hash_name );
         lstrcpyn32A( entry->unixname, dirent->d_name, sizeof(entry->unixname));
+        if (!(flags & DRIVE_CASE_PRESERVING)) AnsiLower( entry->unixname );
         dprintf_dosfs( stddeb, "DOSFS_FindNext: returning %s %02x %ld\n",
                        entry->name, entry->attr, entry->size );
         cur_pos += count;
@@ -730,7 +760,7 @@ DWORD GetShortPathName32A( LPCSTR longpath, LPSTR shortpath, DWORD shortlen )
     dprintf_dosfs( stddeb, "GetShortPathName32A(%s,%p,%ld)\n",
                    longpath, shortpath, shortlen );
 
-    dostruename = DOSFS_GetDosTrueName( longpath, 0 );
+    dostruename = DOSFS_GetDosTrueName( longpath, TRUE );
     lstrcpyn32A( shortpath, dostruename, shortlen );
     return strlen(dostruename);
 }
@@ -742,7 +772,7 @@ DWORD GetShortPathName32A( LPCSTR longpath, LPSTR shortpath, DWORD shortlen )
 DWORD GetShortPathName32W( LPCWSTR longpath, LPWSTR shortpath, DWORD shortlen )
 {
     LPSTR longpatha = STRING32_DupUniToAnsi( longpath );
-    LPCSTR dostruename = DOSFS_GetDosTrueName( longpatha, 0 );
+    LPCSTR dostruename = DOSFS_GetDosTrueName( longpatha, TRUE );
     free( longpatha );
     lstrcpynAtoW( shortpath, dostruename, shortlen );
     return strlen(dostruename);

@@ -1215,10 +1215,17 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 
     if (!(pModule->flags & NE_FFLAGS_LIBMODULE) && (paramBlock != (LPVOID)-1))
     {
+        WORD	showcmd;
+
+	/* PowerPoint passes NULL as showCmd */
+	if (params->showCmd)
+		showcmd = *((WORD *)PTR_SEG_TO_LIN(params->showCmd)+1);
+	else
+		showcmd = 0; /* FIXME: correct */
         TASK_CreateTask( hModule, hInstance, hPrevInstance,
                          params->hEnvironment,
                          (LPSTR)PTR_SEG_TO_LIN( params->cmdLine ),
-                         *((WORD *)PTR_SEG_TO_LIN(params->showCmd)+1) );
+                         showcmd );
     }
 
     return hInstance;
@@ -1284,6 +1291,18 @@ int GetModuleFileName( HANDLE hModule, LPSTR lpFileName, short nSize )
     lstrcpyn32A( lpFileName, NE_MODULE_NAME(pModule), nSize );
     dprintf_module( stddeb, "GetModuleFilename: %s\n", lpFileName );
     return strlen(lpFileName);
+}
+
+/**********************************************************************
+ *	    GetModuleName    (KERNEL.27)
+ */
+BOOL16 GetModuleName( HINSTANCE16 hinst, LPSTR buf, INT16 nSize )
+{
+    LPSTR name = MODULE_GetModuleName(hinst);
+
+    if (!name) return FALSE;
+    lstrcpyn32A( buf, name, nSize );
+    return TRUE;
 }
 
 

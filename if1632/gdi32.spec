@@ -58,7 +58,7 @@ base	1
 0051 stub CreateMetaFileA
 0052 stub CreateMetaFileW
 0053 stdcall CreatePalette(ptr) CreatePalette
-0054 stub CreatePatternBrush
+0054 stdcall CreatePatternBrush(long) CreatePatternBrush
 0055 stdcall CreatePen(long long long) CreatePen
 0056 stub CreatePenIndirect
 0057 stub CreatePolyPolygonRgn

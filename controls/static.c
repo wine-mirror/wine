@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <windows.h>
 #include "win.h"
-#include "user.h"
 #include "static.h"
 
 static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc );

@@ -12,7 +12,8 @@ Addresses used by 16-bit code are segmented addresses (16:16), formed
 by a 16-bit selector and a 16-bit offset.  Those used by the Wine code
 are regular 32-bit linear addresses.
 
-There's three ways to obtain a segmented pointer:
+There are four ways to obtain a segmented pointer:
+  - Use the SEGPTR_* macros in include/heap.h (recommended).
   - Allocate a block of memory from the global heap and use
     WIN16_GlobalLock to get its segmented address.
   - Allocate a block of memory from a local heap, and build the

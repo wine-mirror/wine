@@ -82,23 +82,6 @@ typedef struct sigcontext SIGCONTEXT;
 #define EDI_reg(context)     ((context)->sc_edi)
 #define EBP_reg(context)     ((context)->sc_ebp)
                             
-#define AX_reg(context)      (*(WORD*)&((context)->sc_eax))
-#define BX_reg(context)      (*(WORD*)&((context)->sc_ebx))
-#define CX_reg(context)      (*(WORD*)&((context)->sc_ecx))
-#define DX_reg(context)      (*(WORD*)&((context)->sc_edx))
-#define SI_reg(context)      (*(WORD*)&((context)->sc_esi))
-#define DI_reg(context)      (*(WORD*)&((context)->sc_edi))
-#define BP_reg(context)      (*(WORD*)&((context)->sc_ebp))
-                            
-#define AL_reg(context)      (*(BYTE*)(&(context)->sc_eax))
-#define AH_reg(context)      (*(((BYTE*)(&(context)->sc_eax)+1)))
-#define BL_reg(context)      (*(BYTE*)(&(context)->sc_ebx))
-#define BH_reg(context)      (*(((BYTE*)(&(context)->sc_ebx)+1)))
-#define CL_reg(context)      (*(BYTE*)(&(context)->sc_ecx))
-#define CH_reg(context)      (*(((BYTE*)(&(context)->sc_ecx)+1)))
-#define DL_reg(context)      (*(BYTE*)(&(context)->sc_edx))
-#define DH_reg(context)      (*(((BYTE*)(&(context)->sc_edx)+1)))
-                            
 #define CS_reg(context)      ((context)->sc_cs)
 #define DS_reg(context)      ((context)->sc_ds)
 #define ES_reg(context)      ((context)->sc_es)
@@ -112,17 +95,12 @@ typedef struct sigcontext SIGCONTEXT;
                             
 #ifndef __FreeBSD__         
 #define EFL_reg(context)     ((context)->sc_eflags)
-#define FL_reg(context)      (*(WORD*)(&(context)->sc_eflags))
 #else                       
 #define EFL_reg(context)     ((context)->sc_efl)
-#define FL_reg(context)      (*(WORD*)(&(context)->sc_efl))
 #endif                      
                             
 #define EIP_reg(context)     ((context)->sc_eip)
 #define ESP_reg(context)     ((context)->sc_esp)
-                            
-#define IP_reg(context)      (*(WORD*)(&(context)->sc_eip))
-#define SP_reg(context)      (*(WORD*)(&(context)->sc_esp))
                             
 #else  /* __svr4__ || _SCO_DS */
 
@@ -130,30 +108,13 @@ typedef struct sigcontext SIGCONTEXT;
 #define gregs regs
 #endif
 
-#define EAX_reg(context)      ((context)->uc_mcontext.gregs[EAX])
-#define EBX_reg(context)      ((context)->uc_mcontext.gregs[EBX])
-#define ECX_reg(context)      ((context)->uc_mcontext.gregs[ECX])
-#define EDX_reg(context)      ((context)->uc_mcontext.gregs[EDX])
-#define ESI_reg(context)      ((context)->uc_mcontext.gregs[ESI])
-#define EDI_reg(context)      ((context)->uc_mcontext.gregs[EDI])
-#define EBP_reg(context)      ((context)->uc_mcontext.gregs[EBP])
-                            
-#define AX_reg(context)      (*(WORD*)&((context)->uc_mcontext.gregs[EAX]))
-#define BX_reg(context)      (*(WORD*)&((context)->uc_mcontext.gregs[EBX]))
-#define CX_reg(context)      (*(WORD*)&((context)->uc_mcontext.gregs[ECX]))
-#define DX_reg(context)      (*(WORD*)&((context)->uc_mcontext.gregs[EDX]))
-#define SI_reg(context)      (*(WORD*)&((context)->uc_mcontext.gregs[ESI]))
-#define DI_reg(context)      (*(WORD*)&((context)->uc_mcontext.gregs[EDI]))
-#define BP_reg(context)      (*(WORD*)&((context)->uc_mcontext.gregs[EBP]))
-                            
-#define AL_reg(context)      (*(BYTE*)(&(context)->uc_mcontext.gregs[EAX]))
-#define AH_reg(context)      (*(((BYTE*)(&(context)->uc_mcontext.gregs[EAX])+1)))
-#define BL_reg(context)      (*(BYTE*)(&(context)->uc_mcontext.gregs[EBX]))
-#define BH_reg(context)      (*(((BYTE*)(&(context)->uc_mcontext.gregs[EBX])+1)))
-#define CL_reg(context)      (*(BYTE*)(&(context)->uc_mcontext.gregs[ECX]))
-#define CH_reg(context)      (*(((BYTE*)(&(context)->uc_mcontext.gregs[ECX])+1)))
-#define DL_reg(context)      (*(BYTE*)(&(context)->uc_mcontext.gregs[EDX]))
-#define DH_reg(context)      (*(((BYTE*)(&(context)->uc_mcontext.gregs[EDX])+1)))
+#define EAX_reg(context)     ((context)->uc_mcontext.gregs[EAX])
+#define EBX_reg(context)     ((context)->uc_mcontext.gregs[EBX])
+#define ECX_reg(context)     ((context)->uc_mcontext.gregs[ECX])
+#define EDX_reg(context)     ((context)->uc_mcontext.gregs[EDX])
+#define ESI_reg(context)     ((context)->uc_mcontext.gregs[ESI])
+#define EDI_reg(context)     ((context)->uc_mcontext.gregs[EDI])
+#define EBP_reg(context)     ((context)->uc_mcontext.gregs[EBP])
                             
 #define CS_reg(context)      ((context)->uc_mcontext.gregs[CS])
 #define DS_reg(context)      ((context)->uc_mcontext.gregs[DS])
@@ -163,26 +124,38 @@ typedef struct sigcontext SIGCONTEXT;
 #define FS_reg(context)      ((context)->uc_mcontext.gregs[FS])
 #define GS_reg(context)      ((context)->uc_mcontext.gregs[GS])
 
-                            
 #define EFL_reg(context)     ((context)->uc_mcontext.gregs[EFL])
-#define FL_reg(context)      (*(WORD*)(&(context)->uc_mcontext.gregs[EFL]))
-
                             
-#define EIP_reg(context)      ((context)->uc_mcontext.gregs[EIP])
+#define EIP_reg(context)     ((context)->uc_mcontext.gregs[EIP])
 #ifdef R_ESP
 #define ESP_reg(context)     ((context)->uc_mcontext.gregs[R_ESP])
 #else
 #define ESP_reg(context)     ((context)->uc_mcontext.gregs[ESP])
 #endif
                             
-#define IP_reg(context)      (*(WORD*)(&(context)->uc_mcontext.gregs[EIP]))
-#ifdef R_ESP
-#define SP_reg(context)      (*(WORD*)(&(context)->uc_mcontext.gregs[R_ESP]))
-#else
-#define SP_reg(context)      (*(WORD*)(&(context)->uc_mcontext.gregs[ESP]))
-#endif
-                            
 #endif  /* __svr4__ || _SCO_DS */
+
+#define AX_reg(context)      (*(WORD*)&EAX_reg(context))
+#define BX_reg(context)      (*(WORD*)&EBX_reg(context))
+#define CX_reg(context)      (*(WORD*)&ECX_reg(context))
+#define DX_reg(context)      (*(WORD*)&EDX_reg(context))
+#define SI_reg(context)      (*(WORD*)&ESI_reg(context))
+#define DI_reg(context)      (*(WORD*)&EDI_reg(context))
+#define BP_reg(context)      (*(WORD*)&EBP_reg(context))
+
+#define AL_reg(context)      (*(BYTE*)&EAX_reg(context))
+#define AH_reg(context)      (*((BYTE*)&EAX_reg(context)+1))
+#define BL_reg(context)      (*(BYTE*)&EBX_reg(context))
+#define BH_reg(context)      (*((BYTE*)&EBX_reg(context)+1))
+#define CL_reg(context)      (*(BYTE*)&ECX_reg(context))
+#define CH_reg(context)      (*((BYTE*)&ECX_reg(context)+1))
+#define DL_reg(context)      (*(BYTE*)&EDX_reg(context))
+#define DH_reg(context)      (*((BYTE*)&EDX_reg(context)+1))
+                            
+#define IP_reg(context)      (*(WORD*)&EIP_reg(context))
+#define SP_reg(context)      (*(WORD*)&ESP_reg(context))
+                            
+#define FL_reg(context)      (*(WORD*)&EFL_reg(context))
 
 #define SET_CFLAG(context)   (EFL_reg(context) |= 0x0001)
 #define RESET_CFLAG(context) (EFL_reg(context) &= 0xfffffffe)

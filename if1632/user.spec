@@ -194,7 +194,7 @@ heap	65520
 192 pascal16 InSendMessage() InSendMessage
 193 pascal16 IsClipboardFormatAvailable(word) IsClipboardFormatAvailable
 194 pascal16 DlgDirSelectComboBox(word ptr word) DlgDirSelectComboBox
-195 pascal16 DlgDirListComboBox(word ptr word word word) DlgDirListComboBox16
+195 pascal16 DlgDirListComboBox(word segptr word word word) DlgDirListComboBox16
 196 pascal   TabbedTextOut(word s_word s_word ptr s_word s_word ptr s_word)
              TabbedTextOut
 197 pascal   GetTabbedTextExtent(word ptr word word ptr) GetTabbedTextExtent

@@ -27,7 +27,7 @@ type	win16
 24  pascal16 UnlockSegment(word) UnlockSegment16
 25  pascal GlobalCompact(long) GlobalCompact16
 26  pascal16 GlobalFreeAll(word) GlobalFreeAll
-27  stub GetModuleName
+27  pascal16 GetModuleName(word ptr word) GetModuleName
 28  stub GlobalMasterHandle
 29  pascal16 Yield() Yield
 30  pascal16 WaitEvent(word) WaitEvent

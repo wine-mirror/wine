@@ -205,6 +205,14 @@ default: 12345678
 Used to specify the drive serial number, as an 8-character hexadecimal
 number.
 .PP
+.I format: Filesystem = <fstype>
+.br
+default: unix
+.br
+Used to specify the type of the filesystem on which the drive resides;
+supported types are msdos (or fat), win95 (or vfat), unix. If the
+drive spans several different filesystems, say unix.
+.PP
 .B [wine]
 .br
 .I format: windows = <directory>

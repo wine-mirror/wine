@@ -12,7 +12,6 @@
 #include "heap.h"
 #include "win.h"
 #include "ldt.h"
-#include "stackframe.h"
 #include "string32.h"
 #include "user.h"
 #include "winproc.h"
@@ -724,33 +723,28 @@ static INT32 DIALOG_DoDialogBox( HWND hwnd, HWND owner )
 {
     WND * wndPtr;
     DIALOGINFO * dlgInfo;
-    HANDLE msgHandle;
-    MSG16* lpmsg;
+    MSG16 msg;
     INT32 retval;
 
       /* Owner must be a top-level window */
     owner = WIN_GetTopParent( owner );
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return -1;
-    if (!(msgHandle = USER_HEAP_ALLOC( sizeof(MSG16) ))) return -1;
-    lpmsg = (MSG16 *) USER_HEAP_LIN_ADDR( msgHandle );
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
     EnableWindow( owner, FALSE );
     ShowWindow( hwnd, SW_SHOW );
 
-    while (MSG_InternalGetMessage( (SEGPTR)USER_HEAP_SEG_ADDR(msgHandle), hwnd, owner,
-                                   MSGF_DIALOGBOX, PM_REMOVE,
-                                   !(wndPtr->dwStyle & DS_NOIDLEMSG) ))
+    while (MSG_InternalGetMessage(&msg, hwnd, owner, MSGF_DIALOGBOX, PM_REMOVE,
+                                  !(wndPtr->dwStyle & DS_NOIDLEMSG) ))
     {
-	if (!IsDialogMessage( hwnd, lpmsg))
+	if (!IsDialogMessage( hwnd, &msg))
 	{
-	    TranslateMessage( lpmsg );
-	    DispatchMessage( lpmsg );
+	    TranslateMessage( &msg );
+	    DispatchMessage( &msg );
 	}
 	if (dlgInfo->fEnd) break;
     }
     retval = dlgInfo->msgResult;
     DestroyWindow( hwnd );
-    USER_HEAP_FREE( msgHandle );
     EnableWindow( owner, TRUE );
     return retval;
 }

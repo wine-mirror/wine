@@ -853,8 +853,12 @@ DWORD SearchPath32A(
 	strcat(testpath,name);
 	if ((unixName=DOSFS_GetUnixFileName((LPCSTR)testpath,TRUE))!=NULL) {
 	    goto found;
-	} else
+	} else {
+	    strcpy(testpath,name);
+	    if ((unixName=DOSFS_GetUnixFileName((LPCSTR)testpath,TRUE))!=NULL)
+		goto found;
 	    return 0;
+	}
     }
     if ((len=sizeof(testpath)-strlen(name)-1)<0)
     	return 0;

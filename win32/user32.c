@@ -12,7 +12,7 @@
 #include <stdarg.h>
 #include "windows.h"
 #include "winerror.h"
-#include "stackframe.h"
+#include "heap.h"
 #include "xmalloc.h"
 #include "handle32.h"
 #include "struct32.h"
@@ -27,9 +27,11 @@
 BOOL USER32_GetMessageA(MSG32* lpmsg,DWORD hwnd,DWORD min,DWORD max)
 {
 	BOOL ret;
-	MSG16 msg;
-	ret=GetMessage(MAKE_SEGPTR(&msg),(HWND)hwnd,min,max);
-	STRUCT32_MSG16to32(&msg,lpmsg);
+	MSG16 *msg = SEGPTR_NEW(MSG16);
+        if (!msg) return 0;
+        ret=GetMessage(SEGPTR_GET(msg),(HWND)hwnd,min,max);
+	STRUCT32_MSG16to32(msg,lpmsg);
+        SEGPTR_FREE(msg);
 	return ret;
 }
 

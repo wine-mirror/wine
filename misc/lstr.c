@@ -14,7 +14,6 @@
 #include "windows.h"
 #include "ldt.h"
 #include "module.h"
-#include "stackframe.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"

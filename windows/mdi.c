@@ -25,7 +25,6 @@
 #include "user.h"
 #include "menu.h"
 #include "resource.h"
-#include "stackframe.h"
 #include "struct32.h"
 #include "sysmetrics.h"
 #include "stddebug.h"
@@ -129,8 +128,7 @@ static BOOL MDI_MenuDeleteItem(WND* clientWnd, HWND hWndChild )
  DeleteMenu(clientInfo->hWindowMenu,id,MF_BYCOMMAND);
 
  /* walk the rest of MDI children to prevent gaps in the id 
-  * sequence and in the menu child list 
-  */
+  * sequence and in the menu child list */
 
  for( index = id+1; index <= clientInfo->nActiveChildren + 
                              clientInfo->idFirstChild; index++ )
@@ -1223,6 +1221,29 @@ LRESULT DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient, UINT16 message,
 	    MoveWindow(hwndMDIClient, 0, 0, 
 		       LOWORD(lParam), HIWORD(lParam), TRUE);
 	    break;
+
+	  case WM_NEXTMENU:
+
+            wndPtr = WIN_FindWndPtr(hwndMDIClient);
+            ci     = (MDICLIENTINFO*)wndPtr->wExtra;
+
+	    if( !(wndPtr->parent->dwStyle & WS_MINIMIZE) 
+		&& ci->hwndActiveChild && !ci->hwndChildMaximized )
+	      {
+		/* control menu is between the frame system menu and 
+		 * the first entry of menu bar */
+
+		if( wParam == VK_LEFT ) 
+		  { if( wndPtr->parent->wIDmenu != LOWORD(lParam) ) break; }
+		else if( wParam == VK_RIGHT )
+		  { if( GetSystemMenu( wndPtr->parent->hwndSelf, 0) 
+				       != LOWORD(lParam) ) break; }
+		else break;
+		
+		return MAKELONG( GetSystemMenu(ci->hwndActiveChild, 0), 
+				 ci->hwndActiveChild );
+	      }
+	    break;
 	}
     }
     
@@ -1420,13 +1441,19 @@ LRESULT DefMDIChildProc16( HWND16 hwnd, UINT16 message,
 
       case WM_MENUCHAR:
 
-	/* MDI children don't have menus */
+	/* MDI children don't have menu bars */
 	PostMessage( clientWnd->parent->hwndSelf, WM_SYSCOMMAND, 
 				          (WPARAM)SC_KEYMENU, (LPARAM)wParam);
 	return 0x00010000L;
 
       case WM_NEXTMENU:
-	   /* set current menu to child system menu */
+
+	if( wParam == VK_LEFT )		/* switch to frame system menu */
+	  return MAKELONG( GetSystemMenu(clientWnd->parent->hwndSelf, 0), 
+			   clientWnd->parent->hwndSelf );
+	if( wParam == VK_RIGHT )	/* to frame menu bar */
+	  return MAKELONG( clientWnd->parent->wIDmenu,
+			   clientWnd->parent->hwndSelf );
 
 	break;	
     }
@@ -1468,7 +1495,7 @@ LRESULT DefMDIChildProc32A( HWND32 hwnd, UINT32 message,
 
       case WM_MENUCHAR:
 
-	/* MDI children don't have menus */
+	/* MDI children don't have menu bars */
 	PostMessage( clientWnd->parent->hwndSelf, WM_SYSCOMMAND, 
                      (WPARAM)SC_KEYMENU, (LPARAM)LOWORD(wParam) );
 	return 0x00010000L;

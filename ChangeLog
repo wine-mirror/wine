@@ -1,4 +1,76 @@
 ----------------------------------------------------------------------
+Sun Aug 18 12:17:54 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [files/drive.c]
+	Added 'Filesystem' option in drives configuration.
+
+	* [files/dos_fs.c] 
+	Added handling of case-insensitive filesystems.
+
+	* [memory/selector.c] [include/stackframe.h]
+	Removed MAKE_SEGPTR.
+
+	* [misc/commdlg.c] [multimedia/mcistring.c]
+	Replaced MAKE_SEGPTR by the SEGPTR_* macros.
+
+	* [objects/bitblt.c] [windows/graphics.c]
+	Use an intermediary pixmap to avoid some BadMatch errors on
+	XGetImage().
+
+Sun Aug 18 09:21:27 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [windows/message.c]
+	Added handling of WM_NC...mouse messages in JOURNALRECORD hook.
+
+	* [misc/ver.c]
+	Fixed a bad string result in VerQueryValue[16|32A|32W].
+
+Fri Aug 16 19:55:04 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [if1632/crtdll.spec] [misc/crtdll.c]
+	More additions to get win95 programs further down the road.
+
+	* [if1632/kernel.spec] [loader/module.c]
+	GetModuleName() added.
+	LoadModule(): params->showCmd can be NULL.
+
+	* [if1632/kernel32.spec] [if1632/thunk.c]
+	ThunkConnect32() stub added.
+
+	* [loader/resource.c]
+	Entries include lastentry.
+
+	* [misc/shell.c] [files/file.c]
+	Made progman work again.
+
+Fri Aug 16 09:00:00 1996  Alex Korobka <alex@phm30.pharm.sunysb.edu>
+	
+	* [windows/defwnd.c] [windows/winpos.c] [windows/painting.c]
+	Icon painting fixes.
+
+	* [windows/winpos.c] [windows/painting.c]
+	Enforce and follow hrgnUpdate more closely to cut down on
+	redundant RedrawWindow() calls.
+
+	* [windows/event.c]
+	Process ConfigureNotify only for managed windows.
+
+	* [windows/winpos.c]
+	Do not redraw parent if the window was hidden before SetWindowPos().
+
+	* [windows/nonclient.c]
+	Omit some nonclient decoration painting for managed windows.
+
+	* [controls/menu.c] [windows/mdi.c] [windows/nonclient.c]
+	Implemented WM_NEXTMENU.
+
+	* [controls/listbox.c]
+	Multicolumn listboxes return WVR_VREDRAW on WM_NCCALCSIZE.
+
+	* [misc/shell.c]
+	Added .ICO file handling to ExtractIcon().
+
+----------------------------------------------------------------------
 Sun Aug 11 13:00:20 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [configure.in] [include/acconfig.h] [tools/build.c]

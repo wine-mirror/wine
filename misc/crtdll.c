@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <time.h>
 #include <ctype.h>
@@ -175,4 +176,45 @@ CRTDLL_toupper(CHAR x) {
 void
 CRTDLL_putchar(INT32 x) {
 	putchar(x);
+}
+
+int
+CRTDLL__mbsicmp(unsigned char *x,unsigned char *y)
+{
+	do {
+		if (!*x)
+			return !!*y;
+		if (!*y)
+			return !!*x;
+		/* FIXME: MBCS handling... */
+		if (*x!=*y)
+			return 1;
+                x++;
+                y++;
+	} while (1);
+}
+
+unsigned char*
+CRTDLL__mbsinc(unsigned char *x)
+{
+    /* FIXME: mbcs */
+    return x++;
+}
+
+int
+CRTDLL_vsprintf(DWORD *args)
+{
+    return vsprintf((char *)args[0],(char *)args[1],args+2);
+}
+
+unsigned char*
+CRTDLL__mbscpy(unsigned char *x,unsigned char *y)
+{
+    return strcpy(x,y);
+}
+
+unsigned char*
+CRTDLL__mbscat(unsigned char *x,unsigned char *y)
+{
+    return strcat(x,y);
 }

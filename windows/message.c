@@ -16,7 +16,6 @@
 #include "heap.h"
 #include "hook.h"
 #include "spy.h"
-#include "stackframe.h"
 #include "winpos.h"
 #include "atom.h"
 #include "dde.h"
@@ -59,11 +58,12 @@ static BOOL MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
     WND *pWnd;
     BOOL eatMsg = FALSE;
     INT16 hittest;
+    MOUSEHOOKSTRUCT16 *hook;
+    BOOL32 ret;
     static DWORD lastClickTime = 0;
     static WORD  lastClickMsg = 0;
     static POINT16 lastClickPos = { 0, 0 };
     POINT16 pt = msg->pt;
-    MOUSEHOOKSTRUCT16 hook = { msg->pt, 0, HTCLIENT, 0 };
 
     BOOL mouseClick = ((msg->message == WM_LBUTTONDOWN) ||
 		       (msg->message == WM_RBUTTONDOWN) ||
@@ -73,12 +73,23 @@ static BOOL MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
 
     if ((msg->hwnd = GetCapture()) != 0)
     {
+        BOOL32 ret;
+
 	ScreenToClient16( msg->hwnd, &pt );
 	msg->lParam = MAKELONG( pt.x, pt.y );
         /* No need to further process the message */
-        hook.hwnd = msg->hwnd;
-        return !HOOK_CallHooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
-                                msg->message, (LPARAM)MAKE_SEGPTR(&hook));
+
+        if (!HOOK_GetHook( WH_MOUSE, GetTaskQueue(0)) ||
+            !(hook = SEGPTR_NEW(MOUSEHOOKSTRUCT16)))
+            return TRUE;
+        hook->pt           = msg->pt;
+        hook->hwnd         = msg->hwnd;
+        hook->wHitTestCode = HTCLIENT;
+        hook->dwExtraInfo  = 0;
+        ret = !HOOK_CallHooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
+                               msg->message, (LPARAM)SEGPTR_GET(hook));
+        SEGPTR_FREE(hook);
+        return ret;
     }
    
     hittest = WINPOS_WindowFromPoint( msg->pt, &pWnd );
@@ -100,7 +111,7 @@ static BOOL MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
         /* Send the WM_PARENTNOTIFY message */
 
         WIN_SendParentNotify( msg->hwnd, msg->message, 0,
-                              MAKELONG( msg->pt.x, msg->pt.y ) );
+                              MAKELPARAM( msg->pt.x, msg->pt.y ) );
 
         /* Activate the window if needed */
 
@@ -167,11 +178,21 @@ static BOOL MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
 	msg->message += WM_NCLBUTTONDOWN - WM_LBUTTONDOWN;
     }
     msg->lParam = MAKELONG( pt.x, pt.y );
-    
-    hook.hwnd = msg->hwnd;
-    hook.wHitTestCode = hittest;
-    return !HOOK_CallHooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
-                            msg->message, (LPARAM)MAKE_SEGPTR(&hook));
+
+    /* Call the WH_MOUSE hook */
+
+    if (!HOOK_GetHook( WH_MOUSE, GetTaskQueue(0)) ||
+        !(hook = SEGPTR_NEW(MOUSEHOOKSTRUCT16)))
+        return TRUE;
+
+    hook->pt           = msg->pt;
+    hook->hwnd         = msg->hwnd;
+    hook->wHitTestCode = hittest;
+    hook->dwExtraInfo  = 0;
+    ret = !HOOK_CallHooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
+                           msg->message, (LPARAM)SEGPTR_GET(hook) );
+    SEGPTR_FREE(hook);
+    return ret;
 }
 
 
@@ -214,6 +235,46 @@ static BOOL MSG_TranslateKeyboardMsg( MSG16 *msg, BOOL remove )
                             msg->wParam, msg->lParam );
 }
 
+/***********************************************************************
+ *           MSG_JournalRecordMsg
+ *
+ * Build an EVENTMSG structure and call JOURNALRECORD hook
+ */
+static void MSG_JournalRecordMsg( MSG16 *msg )
+{
+    EVENTMSG16 *event = SEGPTR_NEW(EVENTMSG16);
+    if (!event) return;
+    event->message = msg->message;
+    event->time = msg->time;
+    if ((msg->message >= WM_KEYFIRST) && (msg->message <= WM_KEYLAST))
+    {
+        event->paramL = (msg->wParam & 0xFF) | (HIWORD(msg->lParam) << 8);
+        event->paramH = msg->lParam & 0x7FFF;  
+        if (HIWORD(msg->lParam) & 0x0100)
+            event->paramH |= 0x8000;               /* special_key - bit */
+        HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION, 0,
+                        (LPARAM)SEGPTR_GET(event) );
+    }
+    else if ((msg->message >= WM_MOUSEFIRST) && (msg->message <= WM_MOUSELAST))
+    {
+        event->paramL = LOWORD(msg->lParam);       /* X pos */
+        event->paramH = HIWORD(msg->lParam);       /* Y pos */ 
+        ClientToScreen16( msg->hwnd, (LPPOINT16)&event->paramL );
+        HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION, 0,
+                        (LPARAM)SEGPTR_GET(event) );
+    }
+    else if ((msg->message >= WM_NCMOUSEMOVE) &&
+             (msg->message <= WM_NCMBUTTONDBLCLK))
+    {
+        event->paramL = LOWORD(msg->lParam);       /* X pos */
+        event->paramH = HIWORD(msg->lParam);       /* Y pos */ 
+        event->message += WM_MOUSEMOVE-WM_NCMOUSEMOVE;/* give no info about NC area */
+        HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION, 0,
+                        (LPARAM)SEGPTR_GET(event) );
+    }
+    SEGPTR_FREE(event);
+}
+
 
 /***********************************************************************
  *           MSG_PeekHardwareMsg
@@ -246,10 +307,20 @@ static BOOL MSG_PeekHardwareMsg( MSG16 *msg, HWND hwnd, WORD first, WORD last,
         }
         else  /* Non-standard hardware event */
         {
-            HARDWAREHOOKSTRUCT16 hook = { msg->hwnd, msg->message,
-                                          msg->wParam, msg->lParam };
-            if (HOOK_CallHooks( WH_HARDWARE, remove ? HC_ACTION : HC_NOREMOVE,
-                                0, (LPARAM)MAKE_SEGPTR(&hook) )) continue;
+            HARDWAREHOOKSTRUCT16 *hook;
+            if ((hook = SEGPTR_NEW(HARDWAREHOOKSTRUCT16)))
+            {
+                BOOL32 ret;
+                hook->hWnd     = msg->hwnd;
+                hook->wMessage = msg->message;
+                hook->wParam   = msg->wParam;
+                hook->lParam   = msg->lParam;
+                ret = HOOK_CallHooks( WH_HARDWARE,
+                                      remove ? HC_ACTION : HC_NOREMOVE,
+                                      0, (LPARAM)SEGPTR_GET(hook) );
+                SEGPTR_FREE(hook);
+                if (ret) continue;
+            }
         }
 
           /* Check message against filters */
@@ -261,35 +332,7 @@ static BOOL MSG_PeekHardwareMsg( MSG16 *msg, HWND hwnd, WORD first, WORD last,
             (GetWindowTask16(msg->hwnd) != GetCurrentTask()))
             continue;  /* Not for this task */
         if (remove && HOOK_GetHook( WH_JOURNALRECORD, GetTaskQueue(0) ))
-        {
-            EVENTMSG16 *event = SEGPTR_NEW(EVENTMSG16);
-            if (event)
-            {
-                event->message = msg->message;
-                event->time = msg->time;
-                if ((msg->message >= WM_KEYFIRST) &&
-                    (msg->message <= WM_KEYLAST))
-                {
-                    event->paramL = (msg->wParam & 0xFF) |
-                                    (HIWORD(msg->lParam) << 8);
-                    event->paramH = msg->lParam & 0x7FFF;  
-                    if (HIWORD(msg->lParam) & 0x0100)
-                        event->paramH |= 0x8000;  /* special_key - bit */
-                    HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION,
-                                    0, (LPARAM)SEGPTR_GET(event) );
-                }
-                else if ((msg->message >= WM_MOUSEFIRST) &&
-                         (msg->message <= WM_MOUSELAST))
-                {
-                    event->paramL = LOWORD(msg->lParam);       /* X pos */
-                    event->paramH = HIWORD(msg->lParam);       /* Y pos */ 
-                    ClientToScreen16( msg->hwnd, (LPPOINT16)&event->paramL );
-                    HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION,
-                                    0, (LPARAM)SEGPTR_GET(event) );
-                }
-                SEGPTR_FREE(event);
-            }
-        }
+            MSG_JournalRecordMsg( msg );
         if (remove) QUEUE_RemoveMsg( sysMsgQueue, pos );
         return TRUE;
     }
@@ -336,7 +379,7 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND hwnd, UINT msg,
 
     if (queue->hWnd)
     {
-        fprintf( stderr, "Nested SendMessage() not supported\n" );
+        fprintf( stderr, "Nested SendMessage(), msg %04x skipped\n", msg );
         return 0;
     }
     queue->hWnd   = hwnd;
@@ -479,24 +522,31 @@ static BOOL MSG_PeekMessage( LPMSG16 msg, HWND hwnd, WORD first, WORD last,
 
 	if ((msgQueue->wakeBits & mask) & QS_PAINT)
 	{
+	    WND* wndPtr;
 	    msg->hwnd = WIN_FindWinToRepaint( hwnd , hQueue );
 	    msg->message = WM_PAINT;
 	    msg->wParam = 0;
 	    msg->lParam = 0;
-            if( msg->hwnd &&
-              (!hwnd || msg->hwnd == hwnd || IsChild(hwnd,msg->hwnd)) )
-              {
-                WND* wndPtr = WIN_FindWndPtr(msg->hwnd);
 
-	        /* FIXME: WM_PAINTICON should be sent sometimes */
+	    if ((wndPtr = WIN_FindWndPtr(msg->hwnd)))
+	    {
+                if( wndPtr->dwStyle & WS_MINIMIZE &&
+                    wndPtr->class->hIcon )
+                {
+                    msg->message = WM_PAINTICON;
+                    msg->wParam = 1;
+                }
 
-                if( wndPtr->flags & WIN_INTERNAL_PAINT && !wndPtr->hrgnUpdate)
-                  {
-                    wndPtr->flags &= ~WIN_INTERNAL_PAINT;
-                    QUEUE_DecPaintCount( hQueue );
-                  }
-                break;
-              }
+                if( !hwnd || msg->hwnd == hwnd || IsChild(hwnd,msg->hwnd) )
+                {
+                    if( wndPtr->flags & WIN_INTERNAL_PAINT && !wndPtr->hrgnUpdate)
+                    {
+                        wndPtr->flags &= ~WIN_INTERNAL_PAINT;
+                        QUEUE_DecPaintCount( hQueue );
+                    }
+                    break;
+                }
+	    }
 	}
 
         /* Check for timer messages, but yield first */
@@ -535,36 +585,52 @@ static BOOL MSG_PeekMessage( LPMSG16 msg, HWND hwnd, WORD first, WORD last,
  * 'hwnd' must be the handle of the dialog or menu window.
  * 'code' is the message filter value (MSGF_??? codes).
  */
-BOOL MSG_InternalGetMessage( SEGPTR msg, HWND hwnd, HWND hwndOwner, short code,
+BOOL MSG_InternalGetMessage( MSG16 *msg, HWND hwnd, HWND hwndOwner, short code,
 			     WORD flags, BOOL sendIdle ) 
 {
     for (;;)
     {
 	if (sendIdle)
 	{
-	    if (!MSG_PeekMessage( (MSG16 *)PTR_SEG_TO_LIN(msg),
-                                  0, 0, 0, flags, TRUE ))
+	    if (!MSG_PeekMessage( msg, 0, 0, 0, flags, TRUE ))
 	    {
 		  /* No message present -> send ENTERIDLE and wait */
                 if (IsWindow(hwndOwner))
                     SendMessage16( hwndOwner, WM_ENTERIDLE,
                                    code, (LPARAM)hwnd );
-		MSG_PeekMessage( (MSG16 *)PTR_SEG_TO_LIN(msg),
-                                 0, 0, 0, flags, FALSE );
+		MSG_PeekMessage( msg, 0, 0, 0, flags, FALSE );
 	    }
 	}
 	else  /* Always wait for a message */
-	    MSG_PeekMessage( (MSG16 *)PTR_SEG_TO_LIN(msg),
-                             0, 0, 0, flags, FALSE );
+	    MSG_PeekMessage( msg, 0, 0, 0, flags, FALSE );
 
-	if (!CallMsgFilter( msg, code ))
-            return (((MSG16 *)PTR_SEG_TO_LIN(msg))->message != WM_QUIT);
+        /* Call message filters */
 
-	  /* Message filtered -> remove it from the queue */
-	  /* if it's still there. */
-	if (!(flags & PM_REMOVE))
-	    MSG_PeekMessage( (MSG16 *)PTR_SEG_TO_LIN(msg),
-                             0, 0, 0, PM_REMOVE, TRUE );
+        if (HOOK_GetHook( WH_SYSMSGFILTER, GetTaskQueue(0) ) ||
+            HOOK_GetHook( WH_MSGFILTER, GetTaskQueue(0) ))
+        {
+            MSG16 *pmsg = SEGPTR_NEW(MSG16);
+            if (pmsg)
+            {
+                BOOL32 ret;
+                *pmsg = *msg;
+                ret = (HOOK_CallHooks( WH_SYSMSGFILTER, code, 0,
+                                       (LPARAM)SEGPTR_GET(pmsg) ) ||
+                       HOOK_CallHooks( WH_MSGFILTER, code, 0,
+                                       (LPARAM)SEGPTR_GET(pmsg) ));
+                SEGPTR_FREE(pmsg);
+                if (ret)
+                {
+                    /* Message filtered -> remove it from the queue */
+                    /* if it's still there. */
+                    if (!(flags & PM_REMOVE))
+                        MSG_PeekMessage( msg, 0, 0, 0, PM_REMOVE, TRUE );
+                    continue;
+                }
+            }
+        }
+
+        return (msg->message != WM_QUIT);
     }
 }
 
@@ -665,13 +731,6 @@ LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
 {
     WND * wndPtr;
     LRESULT ret;
-    struct
-    {
-	LPARAM   lParam;
-	WPARAM16 wParam;
-	UINT16   wMsg;
-	HWND16   hWnd;
-    } msgstruct = { lParam, wParam, msg, hwnd };
 
 #ifdef CONFIG_IPC
     MSG16 DDE_msg = { hwnd, msg, wParam, lParam };
@@ -694,19 +753,37 @@ LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
         return TRUE;
     }
 
-    HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 1,
-                    (LPARAM)MAKE_SEGPTR(&msgstruct) );
-    hwnd   = msgstruct.hWnd;
-    msg    = msgstruct.wMsg;
-    wParam = msgstruct.wParam;
-    lParam = msgstruct.lParam;
+    if (HOOK_GetHook( WH_CALLWNDPROC, GetTaskQueue(0) ))
+    { 
+        struct msgstruct
+        {
+            LPARAM   lParam;
+            WPARAM16 wParam;
+            UINT16   wMsg;
+            HWND16   hWnd;
+        } *pmsg;
+        
+        if ((pmsg = SEGPTR_NEW(struct msgstruct)))
+        {
+            pmsg->hWnd   = hwnd;
+            pmsg->wMsg   = msg;
+            pmsg->wParam = wParam;
+            pmsg->lParam = lParam;
+            HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 1,
+                            (LPARAM)SEGPTR_GET(pmsg) );
+            hwnd   = pmsg->hWnd;
+            msg    = pmsg->wMsg;
+            wParam = pmsg->wParam;
+            lParam = pmsg->lParam;
+        }
+    }
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd )))
     {
         fprintf( stderr, "SendMessage16: invalid hwnd %04x\n", hwnd );
         return 0;
     }
-    if (wndPtr->hmemTaskQ == QUEUE_GetDoomedQueue())
+    if (QUEUE_IsDoomedQueue(wndPtr->hmemTaskQ))
         return 0;  /* Don't send anything if the task is dying */
     if (wndPtr->hmemTaskQ != GetTaskQueue(0))
         return MSG_SendMessage( wndPtr->hmemTaskQ, hwnd, msg, wParam, lParam );
@@ -758,8 +835,9 @@ LRESULT SendMessage32A(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
         return ret;
     }
 
-    if (wndPtr->hmemTaskQ == QUEUE_GetDoomedQueue())
+    if (QUEUE_IsDoomedQueue(wndPtr->hmemTaskQ))
         return 0;  /* Don't send anything if the task is dying */
+
     if (wndPtr->hmemTaskQ != GetTaskQueue(0))
     {
         fprintf( stderr, "SendMessage32A: intertask message not supported\n" );
@@ -800,7 +878,7 @@ LRESULT SendMessage32W(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
         fprintf( stderr, "SendMessage32W: invalid hwnd %08x\n", hwnd );
         return 0;
     }
-    if (wndPtr->hmemTaskQ == QUEUE_GetDoomedQueue())
+    if (QUEUE_IsDoomedQueue(wndPtr->hmemTaskQ))
         return 0;  /* Don't send anything if the task is dying */
     if (wndPtr->hmemTaskQ != GetTaskQueue(0))
     {

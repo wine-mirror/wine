@@ -199,15 +199,15 @@ base	1
 194 stub _mbctoupper
 195 stub _mbctype
 196 stub _mbsbtype
-197 stub _mbscat
+197 cdecl _mbscat(ptr ptr) CRTDLL__mbscat
 198 stub _mbschr
 199 stub _mbscmp
-200 stub _mbscpy
+200 cdecl _mbscpy(ptr ptr) CRTDLL__mbscpy
 201 stub _mbscspn
 202 stub _mbsdec
 203 stub _mbsdup
-204 stub _mbsicmp
-205 stub _mbsinc
+204 cdecl _mbsicmp(ptr ptr) CRTDLL__mbsicmp
+205 cdecl _mbsinc(ptr) CRTDLL__mbsinc
 206 stub _mbslen
 207 stub _mbslwr
 208 stub _mbsnbcat
@@ -502,7 +502,7 @@ base	1
 497 stub vfprintf
 498 stub vfwprintf
 499 stub vprintf
-500 stub vsprintf
+500 cdecl vsprintf() CRTDLL_vsprintf
 501 stub vswprintf
 502 stub vwprintf
 503 stub wcscat

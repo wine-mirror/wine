@@ -13,7 +13,6 @@
 #include "desktop.h"
 #include "mdi.h"
 #include "gdi.h"
-#include "user.h"
 #include "module.h"
 #include "heap.h"
 

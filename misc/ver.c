@@ -674,10 +674,8 @@ VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,UINT16 *buflen)
 	db=(struct db*)b;
 	*buflen	= db->datalen;
 	/* let b point to data area */
-	b	= b+4+((strlen(db->name)+4)&3);
-	/* now look up what the resp. SEGPTR would be ... 
-	 * we could use MAKE_SEGPTR , but we don't need to
-	 */
+	b	= b+4+((strlen(db->name)+4)&~3);
+	/* now look up what the resp. SEGPTR would be ... */
 	*buffer	= (b-block)+segblock;
 	fprintf(stderr,"	-> %s=%s\n",subblock,b);
 	return 1;
@@ -703,7 +701,7 @@ VerQueryValue32A(LPVOID vblock,LPCSTR subblock,LPVOID *vbuffer,UINT32 *buflen)
 	db=(struct db*)b;
 	*buflen	= db->datalen;
 	/* let b point to data area */
-	b	= b+4+((strlen(db->name)+4)&3);
+	b	= b+4+((strlen(db->name)+4)&~3);
 	*buffer	= b;
 	fprintf(stderr,"	-> %s=%s\n",subblock,b);
 	return 1;
@@ -733,7 +731,7 @@ VerQueryValue32W(LPVOID vblock,LPCWSTR subblock,LPVOID *vbuffer,UINT32 *buflen)
 	db=(struct db*)b;
 	*buflen	= db->datalen;
 	/* let b point to data area */
-	b	= b+4+((strlen(db->name)+4)&3);
+	b	= b+4+((strlen(db->name)+4)&~3);
 	*buffer	= b;
 	fprintf(stderr,"	-> %s=%s\n",sb,b);
 	free(sb);

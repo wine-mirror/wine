@@ -17,7 +17,6 @@
 #include "sysmetrics.h"
 #include "win.h"
 #include "combo.h"
-#include "stackframe.h"
 #include "user.h"
 #include "graphics.h"
 #include "heap.h"
@@ -715,7 +714,9 @@ static LRESULT CBCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                   case EN_UPDATE:GetWindowText32A(lphc->hWndEdit,buffer,255);
                                  if (*buffer)
                                  {
-                                  newFocused=ListBoxFindString(lphl, -1, MAKE_SEGPTR(buffer));
+                                  char *str = SEGPTR_STRDUP(buffer);
+                                  newFocused=ListBoxFindString(lphl, -1, SEGPTR_GET(str));
+                                  SEGPTR_FREE(str);
                                   dprintf_combo(stddeb,"CBCommand: new selection #%d is= %s\n",
                                                 newFocused,buffer);
                                   if (newFocused != (WORD)LB_ERR)
@@ -1259,11 +1260,11 @@ static INT32 COMBO_DlgDirList( HWND32 hDlg, LPARAM path, INT32 idCBox,
 /***********************************************************************
  *           DlgDirListComboBox16   (USER.195)
  */
-INT16 DlgDirListComboBox16( HWND16 hDlg, LPCSTR path, INT16 idCBox,
+INT16 DlgDirListComboBox16( HWND16 hDlg, SEGPTR path, INT16 idCBox,
                             INT16 idStatic, UINT16 wType )
 {
-    dprintf_combo( stddeb,"DlgDirListComboBox16(%04x,'%s',%d,%d,%04x)\n",
-                   hDlg, path, idCBox, idStatic, wType );
+    dprintf_combo( stddeb,"DlgDirListComboBox16(%04x,%08x,%d,%d,%04x)\n",
+                   hDlg, (UINT32)path, idCBox, idStatic, wType );
     return COMBO_DlgDirList( hDlg, (LPARAM)path, idCBox,
                              idStatic, wType, FALSE );
 }

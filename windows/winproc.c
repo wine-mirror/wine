@@ -679,10 +679,6 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
             *pwparam32 = MAKEWPARAM( wParam16, HIWORD(*plparam) );
             *plparam   = (LPARAM)(HWND32)LOWORD(*plparam);
         }
-        else
-        {
-            *pwparam32 = MAKEWPARAM( wParam16, 0  /* FIXME? */ );
-        }
         return 0;
     case WM_SETTEXT:
         *plparam = (LPARAM)PTR_SEG_TO_LIN(*plparam);

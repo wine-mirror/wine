@@ -398,9 +398,9 @@ static void EVENT_Expose( WND *pWnd, XExposeEvent *event )
     rect.right  = rect.left + event->width;
     rect.bottom = rect.top + event->height;
 
-    RedrawWindow32( pWnd->hwndSelf, &rect, 0,
-                    RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE |
-                    (event->count ? 0 : RDW_ERASENOW) );
+    PAINT_RedrawWindow( pWnd->hwndSelf, &rect, 0,
+                        RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE |
+                        (event->count ? 0 : RDW_ERASENOW), 0 );
 }
 
 
@@ -420,9 +420,9 @@ static void EVENT_GraphicsExpose( WND *pWnd, XGraphicsExposeEvent *event )
     rect.right  = rect.left + event->width;
     rect.bottom = rect.top + event->height;
 
-    RedrawWindow32( pWnd->hwndSelf, &rect, 0,
-                    RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE |
-                    (event->count ? 0 : RDW_ERASENOW) );
+    PAINT_RedrawWindow( pWnd->hwndSelf, &rect, 0,
+                        RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE |
+                        (event->count ? 0 : RDW_ERASENOW), 0 );
 }
 
 
@@ -683,26 +683,17 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
     }
     else
     {
-      /* Managed window; most of this code is shamelessly
-       * stolen from SetWindowPos - FIXME: outdated
-       */
-      
         WND *wndPtr;
 	WINDOWPOS16 *winpos;
 	RECT16 newWindowRect, newClientRect;
         HRGN hrgnOldPos, hrgnNewPos;
 
-	if (!(wndPtr = WIN_FindWndPtr( hwnd )))
-	{
-	    dprintf_event(stddeb,"ConfigureNotify: invalid HWND %04x\n",hwnd);
+	if (!(wndPtr = WIN_FindWndPtr( hwnd )) ||
+	    !(wndPtr->flags & WIN_MANAGED) )
 	    return;
-	}
 	
         if (!(winpos = SEGPTR_NEW(WINDOWPOS16))) return;
 
-        /* Artificial messages - what is this for? */
-	SendMessage16(hwnd, WM_ENTERSIZEMOVE, 0, 0);
-	SendMessage16(hwnd, WM_EXITSIZEMOVE, 0, 0);
 
 	/* Fill WINDOWPOS struct */
 	winpos->flags = SWP_NOACTIVATE | SWP_NOZORDER;
@@ -744,8 +735,9 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
         SEGPTR_FREE(winpos);
 
         /* full window drag leaves unrepainted garbage without this */
-        RedrawWindow32( 0, NULL, hrgnOldPos, RDW_INVALIDATE |
-                        RDW_ALLCHILDREN | RDW_ERASE | RDW_ERASENOW );
+        PAINT_RedrawWindow( 0, NULL, hrgnOldPos, RDW_INVALIDATE |
+                            RDW_ALLCHILDREN | RDW_ERASE | RDW_ERASENOW,
+                            RDW_C_USEHRGN );
         DeleteObject(hrgnOldPos);
         DeleteObject(hrgnNewPos);
     }

@@ -224,7 +224,11 @@ HWND32 WIN_FindWinToRepaint( HWND32 hwnd, HQUEUE16 hQueue )
     HWND hwndRet;
     WND *pWnd = pWndDesktop;
 
-    /* Note: the desktop window never gets WM_PAINT messages */
+    /* Note: the desktop window never gets WM_PAINT messages 
+     * The real reason why is because Windows DesktopWndProc
+     * does ValidateRgn inside WM_ERASEBKGND handler.
+     */
+
     pWnd = hwnd ? WIN_FindWndPtr( hwnd ) : pWndDesktop->child;
 
     for ( ; pWnd ; pWnd = pWnd->next )
@@ -265,7 +269,7 @@ HWND32 WIN_FindWinToRepaint( HWND32 hwnd, HQUEUE16 hQueue )
  * Send a WM_PARENTNOTIFY to all ancestors of the given window, unless
  * the window has the WS_EX_NOPARENTNOTIFY style.
  */
-void WIN_SendParentNotify( HWND32 hwnd, WORD event, WORD idChild, LONG lValue )
+void WIN_SendParentNotify(HWND32 hwnd, WORD event, WORD idChild, LPARAM lValue)
 {
     LPPOINT16 lppt = (LPPOINT16)&lValue;
     WND     *wndPtr = WIN_FindWndPtr( hwnd );
@@ -274,10 +278,7 @@ void WIN_SendParentNotify( HWND32 hwnd, WORD event, WORD idChild, LONG lValue )
     /* if lValue contains cursor coordinates they have to be
      * mapped to the client area of parent window */
 
-    if (bMouse) MapWindowPoints16(0, hwnd, lppt, 1);
-#ifndef WINELIB32
-    else lValue = MAKELONG( LOWORD(lValue), idChild );
-#endif
+    if (bMouse) MapWindowPoints16( 0, hwnd, lppt, 1 );
 
     while (wndPtr)
     {
@@ -291,12 +292,8 @@ void WIN_SendParentNotify( HWND32 hwnd, WORD event, WORD idChild, LONG lValue )
         }
 
         wndPtr = wndPtr->parent;
-#ifdef WINELIB32
 	SendMessage32A( wndPtr->hwndSelf, WM_PARENTNOTIFY, 
                         MAKEWPARAM( event, idChild ), lValue );
-#else
-	SendMessage16( wndPtr->hwndSelf, WM_PARENTNOTIFY, event, (LPARAM)lValue);
-#endif
     }
 }
 
@@ -364,7 +361,6 @@ void WIN_DestroyQueueWindows( WND* wnd, HQUEUE16 hQueue )
 BOOL32 WIN_CreateDesktopWindow(void)
 {
     CLASS *class;
-    HDC hdc;
     HWND hwndDesktop;
 
     dprintf_win(stddeb,"Creating desktop window\n");
@@ -415,11 +411,7 @@ BOOL32 WIN_CreateDesktopWindow(void)
     WINPROC_SetProc( &pWndDesktop->winproc, (WNDPROC16)class->winproc, 0 );
     EVENT_RegisterWindow( pWndDesktop );
     SendMessage32A( hwndDesktop, WM_NCCREATE, 0, 0 );
-    if ((hdc = GetDC( hwndDesktop )) != 0)
-    {
-        SendMessage32A( hwndDesktop, WM_ERASEBKGND, hdc, 0 );
-        ReleaseDC( hwndDesktop, hdc );
-    }
+    pWndDesktop->flags |= WIN_NEEDS_ERASEBKGND;
     return TRUE;
 }
 
@@ -705,7 +697,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
                                                    wndPtr->rectClient.top ));
     } 
 
-    WIN_SendParentNotify( hwnd, WM_CREATE, wndPtr->wIDmenu, (LONG)hwnd );
+    WIN_SendParentNotify( hwnd, WM_CREATE, wndPtr->wIDmenu, (LPARAM)hwnd );
     if (!IsWindow(hwnd)) return 0;
 
     /* Show the window, maximizing or minimizing if needed */
@@ -904,7 +896,7 @@ BOOL DestroyWindow( HWND hwnd )
 		      SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE );
     if ((hwnd == GetCapture()) || IsChild( hwnd, GetCapture() ))
 	ReleaseCapture();
-    WIN_SendParentNotify( hwnd, WM_DESTROY, wndPtr->wIDmenu, (LONG)hwnd );
+    WIN_SendParentNotify( hwnd, WM_DESTROY, wndPtr->wIDmenu, (LPARAM)hwnd );
 
     CLIPBOARD_DisOwn( hwnd );
 
@@ -1543,8 +1535,29 @@ BOOL IsWindowVisible( HWND hwnd )
     return (wndPtr && (wndPtr->dwStyle & WS_VISIBLE));
 }
 
- 
- 
+/***********************************************************************
+ *           WIN_IsWindowDrawable
+ * 
+ * hwnd is drawable when it is visible, all parents are not 
+ * minimized, and it is itself not minimized unless we are 
+ * trying to draw icon and the default class icon is set.
+ */
+BOOL32 WIN_IsWindowDrawable( WND* wnd , BOOL32 icon )
+{
+  HWND   hwnd= wnd->hwndSelf;
+  BOOL32 yes = TRUE;
+
+  while(wnd && yes)
+  { 
+    if( wnd->dwStyle & WS_MINIMIZE )
+	if( wnd->hwndSelf != hwnd ) break;
+	else if( icon && wnd->class->hIcon ) break;
+
+    yes = yes && (wnd->dwStyle & WS_VISIBLE);
+    wnd = wnd->parent; }      
+  return (!wnd && yes);
+}
+
 /*******************************************************************
  *         GetTopWindow    (USER.229)
  */
@@ -1824,8 +1837,8 @@ BOOL FlashWindow(HWND hWnd, BOOL bInvert)
         }
         else
         {
-            RedrawWindow32( hWnd, 0, 0, RDW_INVALIDATE | RDW_ERASE |
-                            RDW_UPDATENOW | RDW_FRAME );
+            PAINT_RedrawWindow( hWnd, 0, 0, RDW_INVALIDATE | RDW_ERASE |
+					  RDW_UPDATENOW | RDW_FRAME, 0 );
             wndPtr->flags &= ~WIN_NCACTIVATED;
         }
         return TRUE;

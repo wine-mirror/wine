@@ -726,7 +726,7 @@ LoadMessage32A(
     stre = NULL;
     se = (struct _subentry*)(p+4);
     for (i=nrofentries;i--;) {
-    	if ((id>=se->firstentry) && (id<se->lastentry)) {
+    	if ((id>=se->firstentry) && (id<=se->lastentry)) {
 	    stre = (struct _stringentry*)(p+se->offset);
 	    id	-= se->firstentry;
 	    break;

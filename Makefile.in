@@ -121,8 +121,13 @@ $(ALLSUBDIRS): dummy
 install_programs: dummy
 	@cd programs; $(SUBMAKE) install
 
-depend:
-	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) depend); done
+depend: libdepend emudepend
+
+libdepend: dummy
+	for i in $(COMMONSUBDIRS) $(LIBSUBDIRS); do (cd $$i; $(MAKE) depend); done
+
+emudepend: dummy
+	for i in $(EMUSUBDIRS); do (cd $$i; $(MAKE) depend); done
 
 etags:
 	etags `find . -name '*.[chS]' -print`

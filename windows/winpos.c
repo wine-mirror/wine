@@ -16,7 +16,6 @@
 #include "hook.h"
 #include "message.h"
 #include "queue.h"
-#include "stackframe.h"
 #include "options.h"
 #include "winpos.h"
 #include "dce.h"
@@ -31,6 +30,11 @@
     (SWP_AGG_NOGEOMETRYCHANGE | SWP_NOZORDER)
 #define  SWP_AGG_STATUSFLAGS \
     (SWP_AGG_NOPOSCHANGE | SWP_FRAMECHANGED | SWP_HIDEWINDOW | SWP_SHOWWINDOW)
+
+#define SMC_NOCOPY		0x0001
+#define SMC_NOPARENTERASE	0x0002
+#define SMC_DRAWFRAME		0x0004
+#define SMC_SETXPOS		0x0008
 
 /* ----- external functions ----- */
 
@@ -574,6 +578,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
                 y  = wndPtr->ptIconPos.y;
                 cx = SYSMETRICS_CXICON;
                 cy = SYSMETRICS_CYICON;
+		swpflags |= SWP_NOCOPYBITS;
             }
             else swpflags |= SWP_NOSIZE | SWP_NOMOVE;
 	    break;
@@ -597,6 +602,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
 		         swpflags |= SWP_NOSIZE | SWP_NOMOVE;
 			 break;
 			}
+		    else swpflags |= SWP_NOCOPYBITS;
 
                 cx = maxSize.x;
                 cy = maxSize.y;
@@ -650,6 +656,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
                     cx = wndPtr->rectNormal.right - wndPtr->rectNormal.left;
                     cy = wndPtr->rectNormal.bottom - wndPtr->rectNormal.top;
                 }
+		swpflags |= SWP_NOCOPYBITS;
             }
             else if (wndPtr->dwStyle & WS_MAXIMIZE)
             {
@@ -1179,11 +1186,14 @@ static void WINPOS_MoveWindowZOrder( HWND hwnd, HWND hwndAfter )
         pWndCur = wndPtr->next;
         while (pWndCur != pWndPrevAfter)
         {
-            RECT16 rect = pWndCur->rectWindow;
-            OffsetRect16( &rect, -wndPtr->rectClient.left,
+            RECT32 rect = { pWndCur->rectWindow.left,
+			    pWndCur->rectWindow.top,
+			    pWndCur->rectWindow.right,
+			    pWndCur->rectWindow.bottom };
+            OffsetRect32( &rect, -wndPtr->rectClient.left,
                           -wndPtr->rectClient.top );
-            RedrawWindow16( hwnd, &rect, 0, RDW_INVALIDATE | RDW_ALLCHILDREN |
-                            RDW_FRAME | RDW_ERASE );
+            PAINT_RedrawWindow( hwnd, &rect, 0, RDW_INVALIDATE | RDW_ALLCHILDREN |
+                              RDW_FRAME | RDW_ERASE, 0 );
             pWndCur = pWndCur->next;
         }
     }
@@ -1194,11 +1204,14 @@ static void WINPOS_MoveWindowZOrder( HWND hwnd, HWND hwndAfter )
         WIN_LinkWindow( hwnd, hwndAfter );
         while (pWndCur != wndPtr)
         {
-            RECT16 rect = wndPtr->rectWindow;
-            OffsetRect16( &rect, -pWndCur->rectClient.left,
+            RECT32 rect = { pWndCur->rectWindow.left,
+                            pWndCur->rectWindow.top,
+                            pWndCur->rectWindow.right,
+                            pWndCur->rectWindow.bottom };
+            OffsetRect32( &rect, -pWndCur->rectClient.left,
                           -pWndCur->rectClient.top );
-            RedrawWindow16( pWndCur->hwndSelf, &rect, 0, RDW_INVALIDATE |
-                            RDW_ALLCHILDREN | RDW_FRAME | RDW_ERASE );
+            PAINT_RedrawWindow( pWndCur->hwndSelf, &rect, 0, RDW_INVALIDATE |
+                              RDW_ALLCHILDREN | RDW_FRAME | RDW_ERASE, 0 );
             pWndCur = pWndCur->next;
         }
     }
@@ -1288,7 +1301,7 @@ HWND WINPOS_ReorderOwnedPopups(HWND hwndInsertAfter, WND* wndPtr, WORD flags)
  * update regions are in window client coordinates
  * client and window rectangles are in parent client coordinates
  */
-static void WINPOS_SizeMoveClean(WND* Wnd, HRGN oldVisRgn, LPRECT16 lpOldWndRect, LPRECT16 lpOldClientRect, BOOL bNoCopy )
+static UINT WINPOS_SizeMoveClean(WND* Wnd, HRGN oldVisRgn, LPRECT16 lpOldWndRect, LPRECT16 lpOldClientRect, UINT uFlags )
 {
  HRGN newVisRgn    = DCE_GetVisRgn(Wnd->hwndSelf, DCX_WINDOW | DCX_CLIPSIBLINGS );
  HRGN dirtyRgn     = CreateRectRgn(0,0,0,0);
@@ -1301,16 +1314,14 @@ static void WINPOS_SizeMoveClean(WND* Wnd, HRGN oldVisRgn, LPRECT16 lpOldWndRect
 		   Wnd->rectClient.left,Wnd->rectClient.top,Wnd->rectClient.right,Wnd->rectClient.bottom,
 		   lpOldClientRect->left,lpOldClientRect->top,lpOldClientRect->right,lpOldClientRect->bottom);
 
+ if( (lpOldWndRect->right - lpOldWndRect->left) != (Wnd->rectWindow.right - Wnd->rectWindow.left) ||
+     (lpOldWndRect->bottom - lpOldWndRect->top) != (Wnd->rectWindow.bottom - Wnd->rectWindow.top) )
+     uFlags |= SMC_DRAWFRAME;
+
  CombineRgn( dirtyRgn, newVisRgn, 0, RGN_COPY);
 
- if( !bNoCopy )
-   {
-     HRGN hRgn = CreateRectRgn( lpOldClientRect->left - lpOldWndRect->left, lpOldClientRect->top - lpOldWndRect->top,
-				lpOldClientRect->right - lpOldWndRect->left, lpOldClientRect->bottom - lpOldWndRect->top);
-     CombineRgn( newVisRgn, newVisRgn, oldVisRgn, RGN_AND ); 
-     CombineRgn( newVisRgn, newVisRgn, hRgn, RGN_AND );
-     DeleteObject(hRgn);
-   }
+ if( !(uFlags & SMC_NOCOPY) )
+   CombineRgn( newVisRgn, newVisRgn, oldVisRgn, RGN_AND ); 
 
  /* map regions to the parent client area */
  
@@ -1331,72 +1342,78 @@ static void WINPOS_SizeMoveClean(WND* Wnd, HRGN oldVisRgn, LPRECT16 lpOldWndRect
  my =  (Wnd->hrgnUpdate > 1)? CombineRgn( newVisRgn, newVisRgn, Wnd->hrgnUpdate, RGN_DIFF)
                             : COMPLEXREGION;
 
- if( bNoCopy )		/* invalidate Wnd visible region */
+ if( uFlags & SMC_NOCOPY )	/* invalidate Wnd visible region */
    {
-     if (my != NULLREGION)  RedrawWindow32( Wnd->hwndSelf, NULL, newVisRgn, RDW_INVALIDATE |
-		            RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE );
+     if (my != NULLREGION)  PAINT_RedrawWindow( Wnd->hwndSelf, NULL, newVisRgn, RDW_INVALIDATE |
+		            RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE, RDW_C_USEHRGN );
    } 
  else			/* bitblt old client area */
    { 
      HDC   hDC;
      int   update;
      HRGN  updateRgn;
+     int   xfrom,yfrom,xto,yto,width,height;
 
-     /* client rect */
+     if( uFlags & SMC_DRAWFRAME )
+       {
+	 /* copy only client area, frame will be redrawn anyway */
 
-     updateRgn = CreateRectRgn( 0,0, Wnd->rectClient.right - Wnd->rectClient.left,
-				Wnd->rectClient.bottom - Wnd->rectClient.top );
+         xfrom = lpOldClientRect->left; yfrom = lpOldClientRect->top;
+         xto = Wnd->rectClient.left; yto = Wnd->rectClient.top;
+         width = lpOldClientRect->right - xfrom; height = lpOldClientRect->bottom - yfrom;
+	 updateRgn = CreateRectRgn( 0, 0, width, height );
+	 CombineRgn( newVisRgn, newVisRgn, updateRgn, RGN_AND );
+	 SetRectRgn( updateRgn, 0, 0, Wnd->rectClient.right - xto, Wnd->rectClient.bottom - yto );
+       }
+     else
+       {
+         xfrom = lpOldWndRect->left; yfrom = lpOldWndRect->top;
+         xto = Wnd->rectWindow.left; yto = Wnd->rectWindow.top;
+         width = lpOldWndRect->right - xfrom; height = lpOldWndRect->bottom - yfrom;
+	 updateRgn = CreateRectRgn( xto - Wnd->rectClient.left,
+				    yto - Wnd->rectClient.top,
+				    Wnd->rectWindow.right - Wnd->rectClient.left,
+				    Wnd->rectWindow.bottom - Wnd->rectClient.top );
+       }
 
-     /* clip visible region with client rect */
+     CombineRgn( newVisRgn, newVisRgn, updateRgn, RGN_AND );
 
-     my = CombineRgn( newVisRgn, newVisRgn, updateRgn, RGN_AND );
-
-     /* substract result from client rect to get region that won't be copied */
+     /* substract new visRgn from target rect to get a region that won't be copied */
 
      update = CombineRgn( updateRgn, updateRgn, newVisRgn, RGN_DIFF );
 
      /* Blt valid bits using parent window DC */
 
-     if( my != NULLREGION )
+     if( my != NULLREGION && (xfrom != xto || yfrom != yto) )
        {
-	 int xfrom = lpOldClientRect->left;
-	 int yfrom = lpOldClientRect->top;
-	 int xto = Wnd->rectClient.left;
-	 int yto = Wnd->rectClient.top;
+	 
+	 /* compute clipping region in parent client coordinates */
 
-	 /* check if we can skip copying */
+	 OffsetRgn( newVisRgn, Wnd->rectClient.left, Wnd->rectClient.top);
+	 CombineRgn( oldVisRgn, oldVisRgn, newVisRgn, RGN_OR );
 
-	 if( xfrom != xto || yfrom != yto )
-	   {
-	     /* compute clipping region in parent client coordinates */
+         hDC = GetDCEx( Wnd->parent->hwndSelf, oldVisRgn, DCX_KEEPCLIPRGN | DCX_INTERSECTRGN | DCX_CACHE | DCX_CLIPSIBLINGS);
 
-	     OffsetRgn( newVisRgn, Wnd->rectClient.left, Wnd->rectClient.top);
-	     CombineRgn( oldVisRgn, oldVisRgn, newVisRgn, RGN_OR );
-
-             hDC = GetDCEx( Wnd->parent->hwndSelf, oldVisRgn, DCX_KEEPCLIPRGN | DCX_INTERSECTRGN | DCX_CACHE | DCX_CLIPSIBLINGS);
-
-             BitBlt(hDC, xto, yto, lpOldClientRect->right - lpOldClientRect->left, 
-				   lpOldClientRect->bottom - lpOldClientRect->top,
-				   hDC, xfrom, yfrom, SRCCOPY );
+         BitBlt( hDC, xto, yto, width, height, hDC, xfrom, yfrom, SRCCOPY );
     
-             ReleaseDC( Wnd->parent->hwndSelf, hDC); 
-	  }
+	 ReleaseDC( Wnd->parent->hwndSelf, hDC); 
        }
 
      if( update != NULLREGION )
-         RedrawWindow32( Wnd->hwndSelf, NULL, updateRgn, RDW_INVALIDATE |
-                         RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE );
+         PAINT_RedrawWindow( Wnd->hwndSelf, NULL, updateRgn, RDW_INVALIDATE |
+                         RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE, RDW_C_USEHRGN );
+     else if( uFlags & SMC_DRAWFRAME ) Wnd->flags |= WIN_NEEDS_NCPAINT;
      DeleteObject( updateRgn );
    }
 
  /* erase uncovered areas */
 
- if( other != NULLREGION )
-     RedrawWindow32( Wnd->parent->hwndSelf, NULL, dirtyRgn,
-                     RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE );
-
+ if( !(uFlags & SMC_NOPARENTERASE) && (other != NULLREGION ) )
+      PAINT_RedrawWindow( Wnd->parent->hwndSelf, NULL, dirtyRgn,
+                        RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE, RDW_C_USEHRGN );
  DeleteObject(dirtyRgn);
  DeleteObject(newVisRgn);
+ return uFlags;
 }
 
 
@@ -1510,11 +1527,13 @@ static void WINPOS_SetXWindowPos( WINDOWPOS16 *winpos )
 BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 		   INT cx, INT cy, WORD flags )
 {
-    WINDOWPOS16 winpos;
+    WINDOWPOS16 *winpos;
     WND *	wndPtr;
-    RECT16 	newWindowRect, newClientRect;
+    RECT16 	newWindowRect, newClientRect, oldWindowRect;
     HRGN	visRgn = 0;
+    HWND	tempInsertAfter= 0;
     int 	result = 0;
+    UINT 	uFlags = 0;
 
     dprintf_win(stddeb,"SetWindowPos: hwnd %04x, (%i,%i)-(%i,%i) flags %08x\n", 
 						 hwnd, x, y, x+cx, y+cy, flags);  
@@ -1526,15 +1545,16 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
     if (wndPtr->dwStyle & WS_VISIBLE) flags &= ~SWP_SHOWWINDOW;
     else
     {
+	uFlags |= SMC_NOPARENTERASE; 
 	flags &= ~SWP_HIDEWINDOW;
 	if (!(flags & SWP_SHOWWINDOW)) flags |= SWP_NOREDRAW;
     }
 
 /*     Check for windows that may not be resized 
        FIXME: this should be done only for Windows 3.0 programs 
- */    if (flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW ) )
+       if (flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW ) )
            flags |= SWP_NOSIZE | SWP_NOMOVE;
-
+*/
       /* Check dimensions */
 
     if (cx <= 0) cx = 1;
@@ -1578,45 +1598,48 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 
       /* Fill the WINDOWPOS structure */
 
-    winpos.hwnd = hwnd;
-    winpos.hwndInsertAfter = hwndInsertAfter;
-    winpos.x = x;
-    winpos.y = y;
-    winpos.cx = cx;
-    winpos.cy = cy;
-    winpos.flags = flags;
+    if (!(winpos = SEGPTR_NEW(WINDOWPOS16))) return FALSE;
+    winpos->hwnd = hwnd;
+    winpos->hwndInsertAfter = hwndInsertAfter;
+    winpos->x = x;
+    winpos->y = y;
+    winpos->cx = cx;
+    winpos->cy = cy;
+    winpos->flags = flags;
     
       /* Send WM_WINDOWPOSCHANGING message */
 
     if (!(flags & SWP_NOSENDCHANGING))
-	SendMessage16( hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)MAKE_SEGPTR(&winpos) );
+	SendMessage16( hwnd, WM_WINDOWPOSCHANGING, 0,
+                       (LPARAM)SEGPTR_GET(winpos) );
 
       /* Calculate new position and size */
 
     newWindowRect = wndPtr->rectWindow;
-    newClientRect = wndPtr->rectClient;
+    newClientRect = (wndPtr->dwStyle & WS_MINIMIZE) ? wndPtr->rectWindow
+						    : wndPtr->rectClient;
 
-    if (!(winpos.flags & SWP_NOSIZE))
+    if (!(winpos->flags & SWP_NOSIZE))
     {
-        newWindowRect.right  = newWindowRect.left + winpos.cx;
-        newWindowRect.bottom = newWindowRect.top + winpos.cy;
+        newWindowRect.right  = newWindowRect.left + winpos->cx;
+        newWindowRect.bottom = newWindowRect.top + winpos->cy;
     }
-    if (!(winpos.flags & SWP_NOMOVE))
+    if (!(winpos->flags & SWP_NOMOVE))
     {
-        newWindowRect.left    = winpos.x;
-        newWindowRect.top     = winpos.y;
-        newWindowRect.right  += winpos.x - wndPtr->rectWindow.left;
-        newWindowRect.bottom += winpos.y - wndPtr->rectWindow.top;
+        newWindowRect.left    = winpos->x;
+        newWindowRect.top     = winpos->y;
+        newWindowRect.right  += winpos->x - wndPtr->rectWindow.left;
+        newWindowRect.bottom += winpos->y - wndPtr->rectWindow.top;
 
-	OffsetRect16( &newClientRect, winpos.x - wndPtr->rectWindow.left, 
-                                      winpos.y - wndPtr->rectWindow.top );
+	OffsetRect16( &newClientRect, winpos->x - wndPtr->rectWindow.left, 
+                                      winpos->y - wndPtr->rectWindow.top );
     }
 
-    winpos.flags |= SWP_NOCLIENTMOVE | SWP_NOCLIENTSIZE;
+    winpos->flags |= SWP_NOCLIENTMOVE | SWP_NOCLIENTSIZE;
 
       /* Reposition window in Z order */
 
-    if (!(winpos.flags & SWP_NOZORDER))
+    if (!(winpos->flags & SWP_NOZORDER))
     {
 	/* reorder owned popups if hwnd is top-level window 
          */
@@ -1626,10 +1649,10 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 
         if (wndPtr->window)
         {
-            WIN_UnlinkWindow( winpos.hwnd );
-            WIN_LinkWindow( winpos.hwnd, hwndInsertAfter );
+            WIN_UnlinkWindow( winpos->hwnd );
+            WIN_LinkWindow( winpos->hwnd, hwndInsertAfter );
         }
-        else WINPOS_MoveWindowZOrder( winpos.hwnd, hwndInsertAfter );
+        else WINPOS_MoveWindowZOrder( winpos->hwnd, hwndInsertAfter );
     }
 
     if ( !wndPtr->window && !(flags & SWP_NOREDRAW) && 
@@ -1640,26 +1663,26 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
       /* Send WM_NCCALCSIZE message to get new client area */
     if( (flags & (SWP_FRAMECHANGED | SWP_NOSIZE)) != SWP_NOSIZE )
       {
-         result = WINPOS_SendNCCalcSize( winpos.hwnd, TRUE, &newWindowRect,
+         result = WINPOS_SendNCCalcSize( winpos->hwnd, TRUE, &newWindowRect,
 				    &wndPtr->rectWindow, &wndPtr->rectClient,
-				    MAKE_SEGPTR(&winpos), &newClientRect );
+				    SEGPTR_GET(winpos), &newClientRect );
 
          /* FIXME: WVR_ALIGNxxx */
 
          if( newClientRect.left != wndPtr->rectClient.left ||
              newClientRect.top != wndPtr->rectClient.top )
-             winpos.flags &= ~SWP_NOCLIENTMOVE;
+             winpos->flags &= ~SWP_NOCLIENTMOVE;
 
          if( (newClientRect.right - newClientRect.left !=
              wndPtr->rectClient.right - wndPtr->rectClient.left) ||
   	    (newClientRect.bottom - newClientRect.top !=
 	     wndPtr->rectClient.bottom - wndPtr->rectClient.top) )
-	     winpos.flags &= ~SWP_NOCLIENTSIZE;
+	     winpos->flags &= ~SWP_NOCLIENTSIZE;
       }
     else
       if( !(flags & SWP_NOMOVE) && (newClientRect.left != wndPtr->rectClient.left ||
 				    newClientRect.top != wndPtr->rectClient.top) )
-	    winpos.flags &= ~SWP_NOCLIENTMOVE;
+	    winpos->flags &= ~SWP_NOCLIENTMOVE;
 
     /* Update active DCEs */
 
@@ -1673,33 +1696,40 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
         DCE_InvalidateDCE(wndPtr->parent, &rect);
       }
 
-    /* Perform the moving and resizing */
+    /* change geometry */
+
+    oldWindowRect = wndPtr->rectWindow;
 
     if (wndPtr->window)
     {
-        RECT16 oldWindowRect = wndPtr->rectWindow;
         RECT16 oldClientRect = wndPtr->rectClient;
 
-        HWND bogusInsertAfter = winpos.hwndInsertAfter;
+        tempInsertAfter = winpos->hwndInsertAfter;
 
-        winpos.hwndInsertAfter = hwndInsertAfter;
-        WINPOS_SetXWindowPos( &winpos );
+        winpos->hwndInsertAfter = hwndInsertAfter;
+
+	/* postpone geometry change */
+
+	if( !(flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW)) )
+	  {
+              WINPOS_SetXWindowPos( winpos );
+	      winpos->hwndInsertAfter = tempInsertAfter;
+	  }
+	else  uFlags |= SMC_SETXPOS;
 
         wndPtr->rectWindow = newWindowRect;
         wndPtr->rectClient = newClientRect;
-        winpos.hwndInsertAfter = bogusInsertAfter;
 
-	/*  FIXME: should do something like WINPOS_SizeMoveClean */
+	if( !(flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW)) )
+	  if( (oldClientRect.left - oldWindowRect.left !=
+	       newClientRect.left - newWindowRect.left) ||
+	      (oldClientRect.top - oldWindowRect.top !=
+	       newClientRect.top - newWindowRect.top) || winpos->flags & SWP_NOCOPYBITS )
 
-	if( (oldClientRect.left - oldWindowRect.left !=
-	     newClientRect.left - newWindowRect.left) ||
-	    (oldClientRect.top - oldWindowRect.top !=
-	     newClientRect.top - newWindowRect.top) )
-
-	    RedrawWindow32( wndPtr->hwndSelf, NULL, 0, RDW_INVALIDATE |
-                            RDW_ALLCHILDREN | RDW_FRAME | RDW_ERASE );
-	else
-	    if( winpos.flags & SWP_FRAMECHANGED )
+	      PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, 0, RDW_INVALIDATE |
+                              RDW_ALLCHILDREN | RDW_FRAME | RDW_ERASE, 0 );
+	  else
+	      if( winpos->flags & SWP_FRAMECHANGED )
 	      {
 		WORD wErase = 0;
 		RECT32 rect;
@@ -1709,8 +1739,8 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 		    rect.left = newClientRect.right; rect.top = newClientRect.top;
 		    rect.right = oldClientRect.right; rect.bottom = newClientRect.bottom;
 		    wErase = 1;
-		    RedrawWindow32( wndPtr->hwndSelf, &rect, 0,
-                                RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN );
+		    PAINT_RedrawWindow( wndPtr->hwndSelf, &rect, 0,
+                                      RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN, 0 );
                 }
 		if( oldClientRect.bottom > newClientRect.bottom )
                 {
@@ -1718,33 +1748,41 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 		    rect.right = (wErase)?oldClientRect.right:newClientRect.right;
 		    rect.bottom = oldClientRect.bottom;
 		    wErase = 1;
-		    RedrawWindow32( wndPtr->hwndSelf, &rect, 0,
-                                RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN );
+		    PAINT_RedrawWindow( wndPtr->hwndSelf, &rect, 0,
+                                      RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN, 0 );
                 }
 		if( !wErase ) wndPtr->flags |= WIN_NEEDS_NCPAINT;
 	      }
     }
     else
     {
-        RECT16 oldWindowRect = wndPtr->rectWindow;
 	RECT16 oldClientRect = wndPtr->rectClient;
 
         wndPtr->rectWindow = newWindowRect;
         wndPtr->rectClient = newClientRect;
 
-        if( !(flags & SWP_NOREDRAW) )
+	if( oldClientRect.bottom - oldClientRect.top ==
+	    newClientRect.bottom - newClientRect.top ) result &= ~WVR_VREDRAW;
+
+	if( oldClientRect.right - oldClientRect.left ==
+	    newClientRect.right - newClientRect.left ) result &= ~WVR_HREDRAW;
+
+        if( !(flags & (SWP_NOREDRAW | SWP_HIDEWINDOW | SWP_SHOWWINDOW)) )
 	  {
-	    BOOL bNoCopy = (flags & SWP_NOCOPYBITS) || 
-			   (result >= WVR_HREDRAW && result < WVR_VALIDRECTS);
+	    uFlags |=  ((winpos->flags & SWP_NOCOPYBITS) || 
+			(result >= WVR_HREDRAW && result < WVR_VALIDRECTS)) ? SMC_NOCOPY : 0;
+	    uFlags |=  (winpos->flags & SWP_FRAMECHANGED) ? SMC_DRAWFRAME : 0;
 
-	    if( (winpos.flags & SWP_AGG_NOGEOMETRYCHANGE) != SWP_AGG_NOGEOMETRYCHANGE )
-	        /* optimize cleanup by BitBlt'ing where possible */
-
-	        WINPOS_SizeMoveClean(wndPtr, visRgn, &oldWindowRect, &oldClientRect, bNoCopy);
+	    if( (winpos->flags & SWP_AGG_NOGEOMETRYCHANGE) != SWP_AGG_NOGEOMETRYCHANGE )
+		uFlags = WINPOS_SizeMoveClean(wndPtr, visRgn, &oldWindowRect, 
+							      &oldClientRect, uFlags);
 	    else
-	       if( winpos.flags & SWP_FRAMECHANGED )
-        	  RedrawWindow32( winpos.hwnd, NULL, 0, RDW_NOCHILDREN | RDW_FRAME ); 
+	      { 
+		/* adjust frame and do not erase parent */
 
+		if( winpos->flags & SWP_FRAMECHANGED ) wndPtr->flags |= WIN_NEEDS_NCPAINT;
+		if( winpos->flags & SWP_NOZORDER ) uFlags |= SMC_NOPARENTERASE;
+	      }
 	  }
         DeleteObject(visRgn);
     }
@@ -1754,14 +1792,19 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 	wndPtr->dwStyle |= WS_VISIBLE;
         if (wndPtr->window)
         {
+	    if( uFlags & SMC_SETXPOS )
+	    {
+              WINPOS_SetXWindowPos( winpos );
+              winpos->hwndInsertAfter = tempInsertAfter;
+	    }
             XMapWindow( display, wndPtr->window );
         }
         else
         {
             if (!(flags & SWP_NOREDRAW))
-                RedrawWindow32( winpos.hwnd, NULL, 0,
+                PAINT_RedrawWindow( winpos->hwnd, NULL, 0,
                                 RDW_INVALIDATE | RDW_ALLCHILDREN |
-                                RDW_FRAME | RDW_ERASE );
+                                RDW_FRAME | RDW_ERASENOW | RDW_ERASE, 0 );
         }
     }
     else if (flags & SWP_HIDEWINDOW)
@@ -1770,25 +1813,35 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
         if (wndPtr->window)
         {
             XUnmapWindow( display, wndPtr->window );
+	    if( uFlags & SMC_SETXPOS )
+	    {
+              WINPOS_SetXWindowPos( winpos );
+              winpos->hwndInsertAfter = tempInsertAfter;
+	    }
         }
         else
         {
             if (!(flags & SWP_NOREDRAW))
-                RedrawWindow16( wndPtr->parent->hwndSelf, &wndPtr->rectWindow, 0,
-                                RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE );
+	    {
+	        RECT32 rect = { oldWindowRect.left, oldWindowRect.top,
+				oldWindowRect.right, oldWindowRect.bottom };
+                PAINT_RedrawWindow( wndPtr->parent->hwndSelf, &rect, 0, 
+			RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE | RDW_ERASENOW, 0);
+	    }
+	    uFlags |= SMC_NOPARENTERASE;
         }
 
-        if ((winpos.hwnd == GetFocus()) || IsChild(winpos.hwnd, GetFocus()))
-            SetFocus( GetParent(winpos.hwnd) );  /* Revert focus to parent */
+        if ((winpos->hwnd == GetFocus()) || IsChild(winpos->hwnd, GetFocus()))
+            SetFocus( GetParent(winpos->hwnd) );  /* Revert focus to parent */
 
-	if (winpos.hwnd == hwndActive)
+	if (winpos->hwnd == hwndActive)
 	{
 	      /* Activate previously active window if possible */
 	    HWND newActive = hwndPrevActive;
-	    if (!IsWindow(newActive) || (newActive == winpos.hwnd))
+	    if (!IsWindow(newActive) || (newActive == winpos->hwnd))
 	    {
 		newActive = GetTopWindow( GetDesktopWindow() );
-		if (newActive == winpos.hwnd)
+		if (newActive == winpos->hwnd)
                     newActive = wndPtr->next ? wndPtr->next->hwndSelf : 0;
 	    }	    
 	    WINPOS_ChangeActiveWindow( newActive, FALSE );
@@ -1798,7 +1851,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
       /* Activate the window */
 
     if (!(flags & SWP_NOACTIVATE))
-	    WINPOS_ChangeActiveWindow( winpos.hwnd, FALSE );
+	    WINPOS_ChangeActiveWindow( winpos->hwnd, FALSE );
     
       /* Repaint the window */
 
@@ -1806,19 +1859,21 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 
     EVENT_DummyMotionNotify(); /* Simulate a mouse event to set the cursor */
 
-    if (!(flags & SWP_DEFERERASE))
-        RedrawWindow32( wndPtr->parent->hwndSelf, NULL, 0,
-                        RDW_ALLCHILDREN | RDW_ERASENOW );
+    if (!(flags & SWP_DEFERERASE) && !(uFlags & SMC_NOPARENTERASE) )
+        PAINT_RedrawWindow( wndPtr->parent->hwndSelf, NULL, 0, RDW_ALLCHILDREN | RDW_ERASENOW, 0 );
+    else if( wndPtr->parent == WIN_GetDesktop() && wndPtr->parent->flags & WIN_NEEDS_ERASEBKGND )
+	PAINT_RedrawWindow( wndPtr->parent->hwndSelf, NULL, 0, RDW_NOCHILDREN | RDW_ERASENOW, 0 );
 
       /* And last, send the WM_WINDOWPOSCHANGED message */
 
-    dprintf_win(stddeb,"\tstatus flags = %04x\n", winpos.flags & SWP_AGG_STATUSFLAGS);
+    dprintf_win(stddeb,"\tstatus flags = %04x\n", winpos->flags & SWP_AGG_STATUSFLAGS);
 
-    if ( ((winpos.flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOPOSCHANGE) && 
-	!(winpos.flags & SWP_NOSENDCHANGING))
-        SendMessage16( winpos.hwnd, WM_WINDOWPOSCHANGED,
-                       0, (LPARAM)MAKE_SEGPTR(&winpos) );
+    if ( ((winpos->flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOPOSCHANGE) && 
+	!(winpos->flags & SWP_NOSENDCHANGING))
+        SendMessage16( winpos->hwnd, WM_WINDOWPOSCHANGED,
+                       0, (LPARAM)SEGPTR_GET(winpos) );
 
+    SEGPTR_FREE(winpos);
     return TRUE;
 }
 

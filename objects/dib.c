@@ -12,7 +12,6 @@
 #include "bitmap.h"
 #include "callback.h"
 #include "palette.h"
-#include "stackframe.h"
 #include "stddebug.h"
 #include "color.h"
 #include "debug.h"

@@ -61,17 +61,4 @@ extern DWORD IF1632_Original32_esp;
 
 #define CURRENT_DS   (CURRENT_STACK16->ds)
 
-#ifndef WINELIB
-  /* Make a segmented pointer from a pointer to a variable located */
-  /* on the 32-bit stack for the current task. */
-#if 0
-#define MAKE_SEGPTR(ptr) \
-     ((SEGPTR)IF1632_Stack32_base + \
-      ((DWORD)(ptr) - (DWORD)PTR_SEG_TO_LIN(IF1632_Stack32_base)))
-#endif
-SEGPTR MAKE_SEGPTR(void *ptr);
-#else
-#define MAKE_SEGPTR(ptr)   ((SEGPTR)ptr)
-#endif
-
 #endif /* __WINE_STACKFRAME_H */

@@ -98,7 +98,7 @@ base	1
 0091 stub DdeConnect
 0092 stub DdeConnectList
 0093 stub DdeCreateDataHandle
-0094 stub DdeCreateStringHandleA
+0094 return DdeCreateStringHandleA 12 0
 0095 stub DdeCreateStringHandleW
 0096 stub DdeDisconnect
 0097 stub DdeDisconnectList
@@ -109,10 +109,10 @@ base	1
 0102 stub DdeGetLastError
 0103 stub DdeGetQualityOfService
 0104 stub DdeImpersonateClient
-0105 stub DdeInitializeA
+0105 return DdeInitializeA 16 0
 0106 stub DdeInitializeW
 0107 stub DdeKeepStringHandle
-0108 stub DdeNameService
+0108 return DdeNameService 16 0
 0109 stub DdePostAdvise
 0110 stub DdeQueryConvInfo
 0111 stub DdeQueryNextServer
@@ -145,7 +145,7 @@ base	1
 0138 stdcall DialogBoxParamA(long ptr long ptr long) DialogBoxParam32A
 0139 stdcall DialogBoxParamW(long ptr long ptr long) DialogBoxParam32W
 0140 stdcall DispatchMessageA(ptr) USER32_DispatchMessageA
-0141 stub DispatchMessageW
+0141 stdcall DispatchMessageW(ptr) USER32_DispatchMessageA
 0142 stub DlgDirListA
 0143 stdcall DlgDirListComboBoxA(long ptr long long long) DlgDirListComboBox32A
 0144 stdcall DlgDirListComboBoxW(long ptr long long long) DlgDirListComboBox32W
@@ -229,7 +229,7 @@ base	1
 0222 stub GetClipboardFormatNameA
 0223 stub GetClipboardFormatNameW
 0224 stub GetClipboardOwner
-0225 stub GetClipboardViewer
+0225 stdcall GetClipboardViewer(long) GetClipboardViewer
 0226 stub GetCursor
 0227 stub GetCursorInfo
 0228 stdcall GetCursorPos(ptr) GetCursorPos32
@@ -277,7 +277,7 @@ base	1
 0270 stub GetMessageExtraInfo
 0271 stub GetMessagePos
 0272 stub GetMessageTime
-0273 stub GetMessageW
+0273 stdcall GetMessageW(ptr long long long) USER32_GetMessageA
 0274 stub GetNextDlgGroupItem
 0275 stub GetNextDlgTabItem
 0276 stub GetOpenClipboardWindow
@@ -355,7 +355,7 @@ base	1
 0348 stdcall IsWindowEnabled(long) IsWindowEnabled
 0349 stdcall IsWindowUnicode(long) IsWindowUnicode
 0350 stdcall IsWindowVisible(long) IsWindowVisible
-0351 stub IsZoomed
+0351 stdcall IsZoomed(long) IsZoomed
 0352 stdcall KillSystemTimer(long long) KillSystemTimer32
 0353 stdcall KillTimer(long long) KillTimer32
 0354 stdcall LoadAcceleratorsA(long ptr) LoadAccelerators32A
@@ -423,7 +423,7 @@ base	1
 0416 stdcall PeekMessageW(ptr long long long long) PeekMessage32W
 0417 stub PlaySoundEvent
 0418 stdcall PostMessageA(long long long long) PostMessage
-0419 stub PostMessageW
+0419 stdcall PostMessageW(long long long long) PostMessage
 0420 stdcall PostQuitMessage(long) PostQuitMessage
 0421 stub PostThreadMessageA
 0422 stub PostThreadMessageW
@@ -474,7 +474,7 @@ base	1
 0467 stdcall SetClassLongW(long long long) SetClassLong32W
 0468 stdcall SetClassWord(long long long) SetClassWord
 0469 stub SetClipboardData
-0470 stub SetClipboardViewer
+0470 stdcall SetClipboardViewer(long) SetClipboardViewer
 0471 	stdcall SetCursor(long) SetCursor
 0472 stub SetCursorContents
 0473 stub SetCursorPos
@@ -554,9 +554,9 @@ base	1
 0547 stub ToUnicode
 0548 stdcall TrackPopupMenu(long long long long long long ptr) TrackPopupMenu32
 0549 stub TrackPopupMenuEx
-0550 stub TranslateAccelerator
+0550 stdcall TranslateAccelerator(long long ptr) TranslateAccelerator
 0551 stdcall TranslateAcceleratorA(long long ptr) TranslateAccelerator
-0552 stub TranslateAcceleratorW
+0552 stdcall TranslateAcceleratorW(long long ptr) TranslateAccelerator
 0553 stub TranslateCharsetInfo
 0554 stub TranslateMDISysAccel
 0555 stdcall TranslateMessage(ptr) USER32_TranslateMessage

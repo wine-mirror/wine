@@ -14,10 +14,37 @@
 #include "resource.h"
 #include "dlgs.h"
 #include "win.h"
+#include "cursoricon.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
 #include "winreg.h"
+
+/* .ICO file ICONDIR definitions */
+
+#pragma pack(1)
+
+typedef struct
+{
+    BYTE        bWidth;          /* Width, in pixels, of the image	*/
+    BYTE        bHeight;         /* Height, in pixels, of the image	*/
+    BYTE        bColorCount;     /* Number of colors in image (0 if >=8bpp) */
+    BYTE        bReserved;       /* Reserved ( must be 0)		*/
+    WORD        wPlanes;         /* Color Planes			*/
+    WORD        wBitCount;       /* Bits per pixel			*/
+    DWORD       dwBytesInRes;    /* How many bytes in this resource?	*/
+    DWORD       dwImageOffset;   /* Where in the file is this image?	*/
+} icoICONDIRENTRY, *LPicoICONDIRENTRY;
+
+typedef struct
+{
+    WORD            idReserved;   /* Reserved (must be 0)		*/
+    WORD            idType;       /* Resource Type (1 for icons)	*/
+    WORD            idCount;      /* How many images?			*/
+    icoICONDIRENTRY idEntries[1]; /* An entry for each image (idCount of 'em) */
+} icoICONDIR, *LPicoICONDIR;
+
+#pragma pack(4)
 
 extern HANDLE 	CURSORICON_LoadHandler( HANDLE, HINSTANCE, BOOL);
 extern WORD 	GetIconID( HANDLE hResource, DWORD resType );
@@ -124,7 +151,7 @@ static HINSTANCE SHELL_FindExecutable( LPCSTR lpFile,
     HINSTANCE retval=31;    /* default - 'No association was found' */
     char *tok;              /* token pointer */
     int i;                  /* random counter */
-    char xlpFile[256];          /* result of SearchPath */
+    char xlpFile[256];      /* result of SearchPath */
 
     dprintf_exec(stddeb, "SHELL_FindExecutable: File %s, Dir %s\n", 
 		 (lpFile != NULL?lpFile:"-"), 
@@ -140,6 +167,10 @@ static HINSTANCE SHELL_FindExecutable( LPCSTR lpFile,
     }
     if (SearchPath32A(lpDirectory,lpFile,NULL,sizeof(xlpFile),xlpFile,NULL))
     	lpFile = xlpFile;
+    else {
+    	if (SearchPath32A(lpDirectory,lpFile,".exe",sizeof(xlpFile),xlpFile,NULL))
+	    lpFile = xlpFile;
+    }
 
     /* First thing we need is the file's extension */
     extension = strrchr( xlpFile, '.' ); /* Assume last "." is the one; */
@@ -376,7 +407,7 @@ INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON16 hIcon)
  *
  * FIXME: Implement GetPEResourceTable in w32sys.c and call it here.
  */
-BYTE* SHELL_GetResourceTable(HFILE hFile)
+static BYTE* SHELL_GetResourceTable(HFILE hFile)
 {
   struct mz_header_s mz_header;
   struct ne_header_s ne_header;
@@ -391,7 +422,7 @@ BYTE* SHELL_GetResourceTable(HFILE hFile)
       return NULL;
 
   if (ne_header.ne_magic == PE_SIGNATURE) 
-     { fprintf(stdnimp,"Win32 FIXME: file %s line %i\n", __FILE__, __LINE__ );
+     { fprintf(stdnimp,"Win32s FIXME: file %s line %i\n", __FILE__, __LINE__ );
        return NULL; }
 
   if (ne_header.ne_magic != NE_SIGNATURE) return NULL;
@@ -417,7 +448,7 @@ BYTE* SHELL_GetResourceTable(HFILE hFile)
 /*************************************************************************
  *			SHELL_LoadResource
  */
-HANDLE	SHELL_LoadResource(HINSTANCE hInst, HFILE hFile, NE_NAMEINFO* pNInfo, WORD sizeShift)
+static HANDLE	SHELL_LoadResource(HINSTANCE hInst, HFILE hFile, NE_NAMEINFO* pNInfo, WORD sizeShift)
 {
  BYTE*	ptr;
  HANDLE handle = DirectResAlloc( hInst, 0x10, (DWORD)pNInfo->length << sizeShift);
@@ -429,6 +460,74 @@ HANDLE	SHELL_LoadResource(HINSTANCE hInst, HFILE hFile, NE_NAMEINFO* pNInfo, WOR
      return handle;
    }
  return (HANDLE)0;
+}
+
+/*************************************************************************
+ *                      ICO_LoadIcon
+ */
+static HANDLE   ICO_LoadIcon(HINSTANCE hInst, HFILE hFile, LPicoICONDIRENTRY lpiIDE)
+{
+ BYTE*  ptr;
+ HANDLE handle = DirectResAlloc( hInst, 0x10, lpiIDE->dwBytesInRes);
+
+ if( (ptr = (BYTE*)GlobalLock16( handle )) )
+   {
+    _llseek( hFile, lpiIDE->dwImageOffset, SEEK_SET);
+     FILE_Read( hFile, (char*)ptr, lpiIDE->dwBytesInRes);
+     return handle;
+   }
+ return (HANDLE)0;
+}
+
+/*************************************************************************
+ *                      ICO_GetIconDirectory
+ *
+ *  Read .ico file and build phony ICONDIR struct for GetIconID
+ */
+static HANDLE ICO_GetIconDirectory(HINSTANCE hInst, HFILE hFile, LPicoICONDIR* lplpiID ) 
+{
+  WORD		id[3];	/* idReserved, idType, idCount */
+  LPicoICONDIR	lpiID;
+  int		i;
+ 
+  _llseek( hFile, 0, SEEK_SET );
+  if( FILE_Read(hFile,(char*)id,sizeof(id)) != sizeof(id) ) return 0;
+
+  /* check .ICO header 
+   *
+   * - see http://www.microsoft.com/win32dev/ui/icons.htm
+   */
+
+  if( id[0] || id[1] != 1 || !id[2] ) return 0;
+
+  i = id[2]*sizeof(icoICONDIRENTRY) + sizeof(id);
+
+  lpiID = (LPicoICONDIR)xmalloc(i);
+
+  if( FILE_Read(hFile,(char*)lpiID->idEntries,i) == i )
+  {  
+     HANDLE	handle = DirectResAlloc( hInst, 0x10,
+					 id[2]*sizeof(ICONDIRENTRY) + sizeof(id) );
+     if( handle ) 
+     {
+       CURSORICONDIR*     lpID = (CURSORICONDIR*)GlobalLock16( handle );
+       lpID->idReserved = lpiID->idReserved = id[0];
+       lpID->idType = lpiID->idType = id[1];
+       lpID->idCount = lpiID->idCount = id[2];
+       for( i=0; i < lpiID->idCount; i++ )
+         {
+	    memcpy((void*)(lpID->idEntries + i), 
+		   (void*)(lpiID->idEntries + i), sizeof(ICONDIRENTRY) - 2);
+	    lpID->idEntries[i].icon.wResId = i;
+         }
+      *lplpiID = lpiID;
+       return handle;
+     }
+  }
+  /* fail */
+
+  free(lpiID);
+  return 0;
 }
 
 /*************************************************************************
@@ -449,79 +548,87 @@ HICON16 InternalExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, UINT nI
 
   if( hFile == HFILE_ERROR || !n ) return 0;
 
-  hRet = GlobalAlloc16( GMEM_FIXED, sizeof(HICON16)*n);
+  hRet = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, sizeof(HICON16)*n);
   RetPtr = (HICON16*)GlobalLock16(hRet);
 
  *RetPtr = (n == 0xFFFF)? 0: 1;				/* error return values */
 
   pData = SHELL_GetResourceTable(hFile);
   if( pData ) 
+  {
+    HICON16	 hIcon = 0;
+    BOOL	 icoFile = FALSE;
+    UINT         iconDirCount = 0;
+    UINT         iconCount = 0;
+    NE_TYPEINFO* pTInfo = (NE_TYPEINFO*)(pData + 2);
+    NE_NAMEINFO* pIconStorage = NULL;
+    NE_NAMEINFO* pIconDir = NULL;
+    LPicoICONDIR lpiID = NULL;
+ 
     if( pData == (BYTE*)-1 )
       {
-	/* FIXME: possible .ICO file */
+	/* check for .ICO file */
 
-	fprintf(stddeb,"InternalExtractIcon: cannot handle file %s\n", lpszExeFileName);
+	hIcon = ICO_GetIconDirectory(hInstance, hFile, &lpiID);
+	if( hIcon )
+	  { icoFile = TRUE; iconDirCount = 1; iconCount = lpiID->idCount; }
       }
-    else						/* got resource table */
+    else while( pTInfo->type_id && !(pIconStorage && pIconDir) )
       {
-	UINT	     iconDirCount = 0;
-	UINT	     iconCount = 0;
-	NE_TYPEINFO* pTInfo = (NE_TYPEINFO*)(pData + 2);
-	NE_NAMEINFO* pIconStorage = NULL;
-	NE_NAMEINFO* pIconDir = NULL;
-
 	/* find icon directory and icon repository */
 
-        while( pTInfo->type_id && !(pIconStorage && pIconDir) )
+	if( pTInfo->type_id == NE_RSCTYPE_GROUP_ICON ) 
 	  {
-	   if( pTInfo->type_id == NE_RSCTYPE_GROUP_ICON ) 
-	       {
-		 iconDirCount = pTInfo->count;
-	         pIconDir = ((NE_NAMEINFO*)(pTInfo + 1));
-		 dprintf_reg(stddeb,"\tfound directory - %i icon families\n", iconDirCount);
-	       }
-	   if( pTInfo->type_id == NE_RSCTYPE_ICON ) 
-	       { 
-		 iconCount = pTInfo->count;
-		 pIconStorage = ((NE_NAMEINFO*)(pTInfo + 1));
-		 dprintf_reg(stddeb,"\ttotal icons - %i\n", iconCount);
-	       }
-  	   pTInfo = (NE_TYPEINFO *)((char*)(pTInfo+1)+pTInfo->count*sizeof(NE_NAMEINFO));
-          }
-
-	/* load resources and create icons */
-
-        if( pIconStorage && pIconDir )
-
-            if( nIconIndex == (UINT)-1 ) RetPtr[0] = iconDirCount;
-	    else if( nIconIndex < iconDirCount )
-	      {
-		  HICON16 hIcon;
-		  UINT   i, icon;
-
-		  if( n > iconDirCount - nIconIndex ) n = iconDirCount - nIconIndex;
-
-		  for( i = nIconIndex; i < nIconIndex + n; i++ ) 
-		     {
-		       hIcon = SHELL_LoadResource( hInstance, hFile, pIconDir + i, 
-								  *(WORD*)pData );
-		       RetPtr[i-nIconIndex] = GetIconID( hIcon, 3 );
-		       GlobalFree16(hIcon); 
-		     }
-
-		  for( icon = nIconIndex; icon < nIconIndex + n; icon++ )
-		     {
-		       hIcon = 0;
-		       for( i = 0; i < iconCount; i++ )
-			  if( pIconStorage[i].id == (RetPtr[icon-nIconIndex] | 0x8000) )
-			      hIcon = SHELL_LoadResource( hInstance, hFile, pIconStorage + i,
-									     *(WORD*)pData );
-	               RetPtr[icon-nIconIndex] = (hIcon)?CURSORICON_LoadHandler( hIcon, hInstance, FALSE ):0;
-		     }
-	      }
-	free(pData);
+	     iconDirCount = pTInfo->count;
+	     pIconDir = ((NE_NAMEINFO*)(pTInfo + 1));
+	     dprintf_reg(stddeb,"\tfound directory - %i icon families\n", iconDirCount);
+	  }
+	if( pTInfo->type_id == NE_RSCTYPE_ICON ) 
+	  { 
+	     iconCount = pTInfo->count;
+	     pIconStorage = ((NE_NAMEINFO*)(pTInfo + 1));
+	     dprintf_reg(stddeb,"\ttotal icons - %i\n", iconCount);
+	  }
+  	pTInfo = (NE_TYPEINFO *)((char*)(pTInfo+1)+pTInfo->count*sizeof(NE_NAMEINFO));
       }
 
+    /* load resources and create icons */
+
+    if( (pIconStorage && pIconDir) || icoFile )
+      if( nIconIndex == (UINT)-1 ) RetPtr[0] = iconDirCount;
+      else if( nIconIndex < iconDirCount )
+        {
+	   UINT   i, icon;
+
+	   if( n > iconDirCount - nIconIndex ) n = iconDirCount - nIconIndex;
+
+	   for( i = nIconIndex; i < nIconIndex + n; i++ ) 
+	     {
+	       /* .ICO files have only one icon directory */
+
+	       if( !icoFile )
+	         hIcon = SHELL_LoadResource( hInstance, hFile, pIconDir + i, 
+							    *(WORD*)pData );
+	       RetPtr[i-nIconIndex] = GetIconID( hIcon, 3 );
+	       GlobalFree16(hIcon); 
+             }
+
+	   for( icon = nIconIndex; icon < nIconIndex + n; icon++ )
+	     {
+	       hIcon = 0;
+	       if( icoFile )
+		 hIcon = ICO_LoadIcon( hInstance, hFile, lpiID->idEntries + RetPtr[icon-nIconIndex]);
+	       else
+	         for( i = 0; i < iconCount; i++ )
+		    if( pIconStorage[i].id == (RetPtr[icon-nIconIndex] | 0x8000) )
+		      hIcon = SHELL_LoadResource( hInstance, hFile, pIconStorage + i,
+								     *(WORD*)pData );
+	       RetPtr[icon-nIconIndex] = (hIcon)?CURSORICON_LoadHandler( hIcon, hInstance, FALSE ):0;
+	     }
+        }
+    if( icoFile ) free(lpiID);
+    else free(pData);
+ } 
  _lclose( hFile );
  
   /* return array with icon handles */

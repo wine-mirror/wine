@@ -29,7 +29,6 @@
 #include "drive.h"
 #include "file.h"
 #include "heap.h"
-#include "stackframe.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
@@ -274,20 +273,23 @@ int ListBoxFindMouse(LPHEADLIST lphl, int X, int Y)
   return LB_ERR;
 }
 
-BOOL lbDeleteItemNotify(LPHEADLIST lphl, LPLISTSTRUCT lpls)
+BOOL32 lbDeleteItemNotify(LPHEADLIST lphl, LPLISTSTRUCT lpls)
 {
-  /* called only for owner drawn listboxes */
+    /* called only for owner drawn listboxes */
+    BOOL32 ret;
+    DELETEITEMSTRUCT16 *delItem = SEGPTR_NEW(DELETEITEMSTRUCT16);
+    if (!delItem) return FALSE;
 
-  DELETEITEMSTRUCT16   delItem;
+    delItem->CtlType  = lphl->DrawCtlType;
+    delItem->CtlID    = lphl->CtlID;
+    delItem->itemID   = lpls->mis.itemID;
+    delItem->hwndItem = lphl->hSelf;
+    delItem->itemData = lpls->mis.itemData;
 
-  delItem.CtlType = lphl->DrawCtlType;
-  delItem.CtlID   = lphl->CtlID;
-  delItem.itemID  = lpls->mis.itemID;
-  delItem.hwndItem= lphl->hSelf;
-  delItem.itemData= lpls->mis.itemData;
-
-  return (BOOL) SendMessage16(lphl->hParent, WM_DELETEITEM, (WPARAM)lphl->CtlID,
-                                          (LPARAM)MAKE_SEGPTR(&delItem));
+    ret = SendMessage16( lphl->hParent, WM_DELETEITEM, (WPARAM)lphl->CtlID,
+                         (LPARAM)SEGPTR_GET(delItem) );
+    SEGPTR_FREE(delItem);
+    return ret;
 }
 
 void ListBoxAskMeasure(LPHEADLIST lphl, LPLISTSTRUCT lpls)  
@@ -338,7 +340,7 @@ int ListBoxAskCompare(LPHEADLIST lphl, int startItem, SEGPTR matchData, BOOL exa
   *  MATCH_SUBSTR  (2) - same as exact match but with strncmp for string comparision
   */
 
- COMPAREITEMSTRUCT16    itemCmp;
+ COMPAREITEMSTRUCT16   *itemCmp;
  LPLISTSTRUCT		currentItem = NULL;
  LPCSTR			matchStr = (lphl->HasStrings)?(LPCSTR)PTR_SEG_TO_LIN(matchData):NULL;
  int                    head, pos = -1, tail, loop = 1;
@@ -369,9 +371,10 @@ int ListBoxAskCompare(LPHEADLIST lphl, int startItem, SEGPTR matchData, BOOL exa
 
  dprintf_listbox(stddeb,"AskCompare: head = %i, tail = %i, data = %08x\n", head, tail, (unsigned)matchData );
 
- itemCmp.CtlType        = lphl->DrawCtlType;
- itemCmp.CtlID          = lphl->CtlID;
- itemCmp.hwndItem       = lphl->hSelf;
+ if (!(itemCmp = SEGPTR_NEW(COMPAREITEMSTRUCT16))) return 0;
+ itemCmp->CtlType        = lphl->DrawCtlType;
+ itemCmp->CtlID          = lphl->CtlID;
+ itemCmp->hwndItem       = lphl->hSelf;
 
  /* search from startItem */
 
@@ -384,22 +387,25 @@ int ListBoxAskCompare(LPHEADLIST lphl, int startItem, SEGPTR matchData, BOOL exa
 
        if( lphl->HasStrings )
 	 {
-           b = ( s_length )? strncasecmp( currentItem->itemText, matchStr, s_length)
-                           : strcasecmp( currentItem->itemText, matchStr);
+           b = ( s_length )? lstrncmpi32A( currentItem->itemText, matchStr, s_length)
+                           : lstrcmpi32A( currentItem->itemText, matchStr);
 	 }
        else
          {
-           itemCmp.itemID1      = pos;
-           itemCmp.itemData1    = currentItem->mis.itemData;
-           itemCmp.itemID2      = -1;
-           itemCmp.itemData2    = matchData;
+           itemCmp->itemID1      = pos;
+           itemCmp->itemData1    = currentItem->mis.itemData;
+           itemCmp->itemID2      = -1;
+           itemCmp->itemData2    = matchData;
 
            b = SendMessage16( lphl->hParent, WM_COMPAREITEM, (WPARAM)lphl->CtlID, 
-                                                             (LPARAM)MAKE_SEGPTR(&itemCmp) );
+                              (LPARAM)SEGPTR_GET(itemCmp) );
          }
 
-       if( b == 0 ) 
+       if( b == 0 )
+       {
+           SEGPTR_FREE(itemCmp);
            return pos;  /* found exact match */
+       }
        else
          if( b < 0 ) head = ++pos;
          else
@@ -411,6 +417,7 @@ int ListBoxAskCompare(LPHEADLIST lphl, int startItem, SEGPTR matchData, BOOL exa
   }
 
  dprintf_listbox(stddeb,"\t-> pos = %i\n", pos );
+ SEGPTR_FREE(itemCmp);
 
  /* if we got here match is not exact */
 
@@ -612,8 +619,8 @@ int lbFindString(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr, BOOL match)
   {
     if (lphl->HasStrings) 
     {
-      if ( ( s_length )? !strncasecmp(lpls->itemText, lpMatchStr, s_length)
-                       : !strcasecmp(lpls->itemText, lpMatchStr)  ) return Count;
+      if ( ( s_length )? !lstrncmpi32A(lpls->itemText, lpMatchStr, s_length)
+                       : !lstrcmpi32A(lpls->itemText, lpMatchStr)  ) return Count;
     }
     else
       if ( lpls->mis.itemData == (DWORD)lpMatchStr ) return Count;
@@ -630,8 +637,8 @@ int lbFindString(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr, BOOL match)
   {
     if (lphl->HasStrings) 
     {
-      if ( ( s_length )? !strncasecmp(lpls->itemText, lpMatchStr, s_length)
-                       : !strcasecmp(lpls->itemText, lpMatchStr)  ) return Count;
+      if ( ( s_length )? !lstrncmpi32A(lpls->itemText, lpMatchStr, s_length)
+                       : !lstrcmpi32A(lpls->itemText, lpMatchStr)  ) return Count;
     }
     else
       if ( lpls->mis.itemData == (DWORD)lpMatchStr ) return Count;
@@ -911,6 +918,18 @@ static LONG LBDestroy(HWND hwnd, WORD wParam, LONG lParam)
   dprintf_listbox(stddeb,"ListBox destroyed: lphl = %p\n",lphl);
   return 0;
 }
+
+
+/***********************************************************************
+ *           LBNCCalcSize
+ */
+static LONG LBNCCalcSize(HWND hwnd, WORD wParam, LONG lParam)
+{
+  LONG	     ret = DefWindowProc16(hwnd, WM_NCCALCSIZE, wParam, lParam);
+
+  return (GetWindowLong32A(hwnd,GWL_STYLE) & LBS_MULTICOLUMN)? WVR_VREDRAW : ret;
+}
+
 
 /***********************************************************************
  *           LBVScroll
@@ -2073,6 +2092,7 @@ LRESULT ListBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
      case WM_PAINT: return LBPaint(hwnd, wParam, lParam);
      case WM_SETFOCUS: return LBSetFocus(hwnd, wParam, lParam);
      case WM_KILLFOCUS: return LBKillFocus(hwnd, wParam, lParam);
+     case WM_NCCALCSIZE: return LBNCCalcSize(hwnd, wParam, lParam);
      case LB_RESETCONTENT: return LBResetContent(hwnd, wParam, lParam);
      case LB_DIR: return LBDir(hwnd, wParam, lParam);
      case LB_ADDSTRING: return LBAddString(hwnd, wParam, lParam);

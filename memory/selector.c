@@ -480,37 +480,3 @@ DWORD MemoryWrite( WORD sel, DWORD offset, void *buffer, DWORD count )
     memcpy( ((char *)GET_SEL_BASE(sel)) + offset, buffer, count );
     return count;
 }
-
-#ifndef WINELIB
-SEGPTR MAKE_SEGPTR(void * ptr)
-
-{
-    SEGPTR result;
-    int entry;
-
-    if (!ptr)
-	return ptr;
-    if (!((unsigned)ptr & 0xffff0000)) {
- 	fprintf(stderr, "Invalid pointer %p has been passed to MAKE_SEGPTR. This was\n", ptr);
-	fprintf(stderr, "probably caused by an unnecessary call to PTR_SEG_TO_LIN.\n");
-	fprintf(stderr, "Forcing call to debugger\n");
-	ptr = *(void **)0;
-    }
-    result = (SEGPTR) (IF1632_Stack32_base) +
-	     ((DWORD)(ptr) - (DWORD) PTR_SEG_TO_LIN(IF1632_Stack32_base));
-    if (PTR_SEG_TO_LIN(result) == ptr)
-	return result;
-    
-    for (entry = 0; entry < LDT_SIZE; entry++) {
-	if (ldt_copy[entry].base && 
-	    (ldt_copy[entry].limit < 0x10000) &&
-	    ((unsigned) ptr >= ldt_copy[entry].base) &&
-	    ((unsigned) ptr < (ldt_copy[entry].base + ldt_copy[entry].limit))) {
-		return ((ENTRY_TO_SELECTOR(entry) << 16) | 
-                       ((unsigned) ptr - ldt_copy[entry].base));
-	}
-    }
-    entry = SELECTOR_AllocBlock((void *)((unsigned)ptr & 0xffff0000), 0x10000, SEGMENT_DATA, 0, 0);
-    return ((entry << 16) | ((unsigned) ptr & 0xffff));
-}
-#endif

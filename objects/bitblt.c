@@ -786,6 +786,7 @@ static void BITBLT_GetSrcAreaStretch( DC *dcSrc, DC *dcDst,
     RECT16 rectDst = *visRectDst;
     OffsetRect16( &rectSrc, -xSrc, -ySrc );
     OffsetRect16( &rectDst, -xDst, -yDst );
+    /* FIXME: avoid BadMatch errors */
     imageSrc = XGetImage( display, dcSrc->u.x.drawable,
                           visRectSrc->left, visRectSrc->top,
                           visRectSrc->right - visRectSrc->left,
@@ -830,9 +831,19 @@ static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
         }
         else  /* color -> color */
         {
-            imageSrc = XGetImage( display, dcSrc->u.x.drawable,
-                                  visRectSrc->left, visRectSrc->top,
-                                  width, height, AllPlanes, ZPixmap );
+            if (dcSrc->w.flags & DC_MEMORY)
+                imageSrc = XGetImage( display, dcSrc->u.x.drawable,
+                                      visRectSrc->left, visRectSrc->top,
+                                      width, height, AllPlanes, ZPixmap );
+            else
+            {
+                /* Make sure we don't get a BadMatch error */
+                XCopyArea( display, dcSrc->u.x.drawable, pixmap, gc,
+                           visRectSrc->left, visRectSrc->top,
+                           width, height, 0, 0);
+                imageSrc = XGetImage( display, pixmap, 0, 0, width, height,
+                                      AllPlanes, ZPixmap );
+            }
             for (y = 0; y < height; y++)
                 for (x = 0; x < width; x++)
                     XPutPixel(imageSrc, x, y,
@@ -864,6 +875,7 @@ static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
         }
         else  /* color -> monochrome */
         {
+            /* FIXME: avoid BadMatch error */
             imageSrc = XGetImage( display, dcSrc->u.x.drawable,
                                   visRectSrc->left, visRectSrc->top,
                                   width, height, AllPlanes, ZPixmap );
@@ -901,9 +913,20 @@ static void BITBLT_GetDstArea(DC *dc, Pixmap pixmap, GC gc, RECT16 *visRectDst)
     else
     {
         register short x, y;
-        XImage *image = XGetImage( display, dc->u.x.drawable,
-                                   visRectDst->left, visRectDst->top,
-                                   width, height, AllPlanes, ZPixmap );
+        XImage *image;
+
+        if (dc->w.flags & DC_MEMORY)
+            image = XGetImage( display, dc->u.x.drawable,
+                               visRectDst->left, visRectDst->top,
+                               width, height, AllPlanes, ZPixmap );
+        else
+        {
+            /* Make sure we don't get a BadMatch error */
+            XCopyArea( display, dc->u.x.drawable, pixmap, gc,
+                       visRectDst->left, visRectDst->top, width, height, 0, 0);
+            image = XGetImage( display, pixmap, 0, 0, width, height,
+                               AllPlanes, ZPixmap );
+        }
         for (y = 0; y < height; y++)
             for (x = 0; x < width; x++)
                 XPutPixel( image, x, y,

@@ -15,11 +15,11 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include "windows.h"
+#include "heap.h"
 #include "ldt.h"
 #include "user.h"
 #include "driver.h"
 #include "mmsystem.h"
-#include "stackframe.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
@@ -303,18 +303,19 @@ static DWORD
 MCISTR_Open(_MCISTR_PROTO_) {
 	int		res,i;
 	char		*s;
-	union {
+	union U {
 		MCI_OPEN_PARMS	openParams;
 		MCI_WAVE_OPEN_PARMS	waveopenParams;
 		MCI_ANIM_OPEN_PARMS	animopenParams;
 		MCI_OVLY_OPEN_PARMS	ovlyopenParams;
-	} U;
+	};
+        union U *pU = SEGPTR_NEW(union U);
 
-	U.openParams.lpstrElementName = NULL;
+	pU->openParams.lpstrElementName = NULL;
 	s=strchr(dev,'!');
 	if (s!=NULL) {
 		*s++='\0';
-		_MCI_STRDUP_TO_SEG(U.openParams.lpstrElementName,s);
+		_MCI_STRDUP_TO_SEG(pU->openParams.lpstrElementName,s);
 	}
 	if (!STRCMP(dev,"cdaudio")) {
 		uDevTyp=MCI_DEVTYPE_CD_AUDIO;
@@ -338,26 +339,26 @@ MCISTR_Open(_MCISTR_PROTO_) {
 	}
 	mciDrv[wDevID].wType		= uDevTyp;
 	mciDrv[wDevID].wDeviceID	= wDevID;
-	U.openParams.dwCallback		= 0;
-	U.openParams.wDeviceID		= wDevID;
-	U.ovlyopenParams.dwStyle	= 0; 
-	U.animopenParams.dwStyle	= 0; 
+	pU->openParams.dwCallback		= 0;
+	pU->openParams.wDeviceID		= wDevID;
+	pU->ovlyopenParams.dwStyle	= 0; 
+	pU->animopenParams.dwStyle	= 0; 
 
-	_MCI_STRDUP_TO_SEG(U.openParams.lpstrDeviceType,dev);
-	U.openParams.lpstrAlias		= NULL;
+	_MCI_STRDUP_TO_SEG(pU->openParams.lpstrDeviceType,dev);
+	pU->openParams.lpstrAlias		= NULL;
 	dwFlags |= MCI_OPEN_TYPE;
 	i=0;
 	while (i<nrofkeywords) {
 		FLAG1("shareable",MCI_OPEN_SHAREABLE);
 		if (!strcmp(keywords[i],"alias") && (i+1<nrofkeywords)) {
 			dwFlags |= MCI_OPEN_ALIAS;
-			_MCI_STRDUP_TO_SEG(U.openParams.lpstrAlias,keywords[i]);
+			_MCI_STRDUP_TO_SEG(pU->openParams.lpstrAlias,keywords[i]);
 			i+=2;
 			continue;
 		}
 		if (!strcmp(keywords[i],"element") && (i+1<nrofkeywords)) {
 			dwFlags |= MCI_OPEN_ELEMENT;
-			_MCI_STRDUP_TO_SEG(U.openParams.lpstrElementName,keywords[i]);
+			_MCI_STRDUP_TO_SEG(pU->openParams.lpstrElementName,keywords[i]);
 			i+=2;
 			continue;
 		}
@@ -367,7 +368,7 @@ MCISTR_Open(_MCISTR_PROTO_) {
 			FLAG1("nostatic",MCI_ANIM_OPEN_NOSTATIC);
 			if (!STRCMP(keywords[i],"parent") && (i+1<nrofkeywords)) {
 				dwFlags |= MCI_ANIM_OPEN_PARENT;
-				sscanf(keywords[i+1],"%hu",&(U.animopenParams.hWndParent));
+				sscanf(keywords[i+1],"%hu",&(pU->animopenParams.hWndParent));
 				i+=2;
 				continue;
 			}
@@ -376,13 +377,13 @@ MCISTR_Open(_MCISTR_PROTO_) {
 
 				dwFlags |= MCI_ANIM_OPEN_WS;
 				if (!STRCMP(keywords[i+1],"popup")) {
-					U.animopenParams.dwStyle |= WS_POPUP; 
+					pU->animopenParams.dwStyle |= WS_POPUP; 
 				} else if (!STRCMP(keywords[i+1],"overlap")) {
-					U.animopenParams.dwStyle |= WS_OVERLAPPED; 
+					pU->animopenParams.dwStyle |= WS_OVERLAPPED; 
 				} else if (!STRCMP(keywords[i+1],"child")) {
-					U.animopenParams.dwStyle |= WS_CHILD; 
+					pU->animopenParams.dwStyle |= WS_CHILD; 
 				} else if (sscanf(keywords[i+1],"%ld",&st)) {
-					U.animopenParams.dwStyle |= st; 
+					pU->animopenParams.dwStyle |= st; 
 				} else
 					fprintf(stdnimp,__FILE__":MCISTR_Open:unknown 'style' keyword %s, please report.\n",keywords[i+1]);
 				i+=2;
@@ -392,14 +393,14 @@ MCISTR_Open(_MCISTR_PROTO_) {
 		case MCI_DEVTYPE_WAVEFORM_AUDIO:
 			if (!STRCMP(keywords[i],"buffer") && (i+1<nrofkeywords)) {
 				dwFlags |= MCI_WAVE_OPEN_BUFFER;
-				sscanf(keywords[i+1],"%ld",&(U.waveopenParams.dwBufferSeconds));
+				sscanf(keywords[i+1],"%ld",&(pU->waveopenParams.dwBufferSeconds));
 			}
 			break;
 		case MCI_DEVTYPE_OVERLAY:
 			/* looks just like anim, but without NOSTATIC */
 			if (!STRCMP(keywords[i],"parent") && (i+1<nrofkeywords)) {
 				dwFlags |= MCI_OVLY_OPEN_PARENT;
-				sscanf(keywords[i+1],"%hd",&(U.ovlyopenParams.hWndParent));
+				sscanf(keywords[i+1],"%hd",&(pU->ovlyopenParams.hWndParent));
 				i+=2;
 				continue;
 			}
@@ -408,13 +409,13 @@ MCISTR_Open(_MCISTR_PROTO_) {
 
 				dwFlags |= MCI_OVLY_OPEN_WS;
 				if (!STRCMP(keywords[i+1],"popup")) {
-					U.ovlyopenParams.dwStyle |= WS_POPUP; 
+					pU->ovlyopenParams.dwStyle |= WS_POPUP; 
 				} else if (!STRCMP(keywords[i+1],"overlap")) {
-					U.ovlyopenParams.dwStyle |= WS_OVERLAPPED; 
+					pU->ovlyopenParams.dwStyle |= WS_OVERLAPPED; 
 				} else if (!STRCMP(keywords[i+1],"child")) {
-					U.ovlyopenParams.dwStyle |= WS_CHILD; 
+					pU->ovlyopenParams.dwStyle |= WS_CHILD; 
 				} else if (sscanf(keywords[i+1],"%ld",&st)) {
-					U.ovlyopenParams.dwStyle |= st; 
+					pU->ovlyopenParams.dwStyle |= st; 
 				} else
 					fprintf(stdnimp,__FILE__":MCISTR_Open:unknown 'style' keyword %s, please report.\n",keywords[i+1]);
 				i+=2;
@@ -425,9 +426,10 @@ MCISTR_Open(_MCISTR_PROTO_) {
 		fprintf(stdnimp,__FILE__":MCISTR_Open:unknown parameter passed %s, please report.\n",keywords[i]);
 		i++;
 	}
-	_MCI_CALL_DRIVER( MCI_OPEN, MAKE_SEGPTR(&U) );
+	_MCI_CALL_DRIVER( MCI_OPEN, SEGPTR_GET(pU) );
 	if (res==0)
-		memcpy(&mciOpenDrv[wDevID],&U.openParams,sizeof(MCI_OPEN_PARMS));
+		memcpy(&mciOpenDrv[wDevID],&pU->openParams,sizeof(MCI_OPEN_PARMS));
+        SEGPTR_FREE(pU);
 	return res;
 }
 
@@ -435,17 +437,19 @@ MCISTR_Open(_MCISTR_PROTO_) {
  * for instance status/play/record/seek etc.
  */
 DWORD
-_MCISTR_determine_timeformat(LPCSTR dev,WORD wDevID,WORD uDevTyp,int *timef) {
-	MCI_STATUS_PARMS	statusParams;
-	DWORD			dwFlags;
-	int			res;
+_MCISTR_determine_timeformat(LPCSTR dev,WORD wDevID,WORD uDevTyp,int *timef)
+{
+    int			res;
+    DWORD dwFlags = MCI_STATUS_ITEM;
+    MCI_STATUS_PARMS *statusParams = SEGPTR_NEW(MCI_STATUS_PARMS);
 
-	dwFlags	= MCI_STATUS_ITEM;
-	statusParams.dwItem	= MCI_STATUS_TIME_FORMAT;
-	statusParams.dwReturn	= 0;
-	_MCI_CALL_DRIVER( MCI_STATUS, MAKE_SEGPTR(&statusParams) );
-	if (res==0) *timef=statusParams.dwReturn;
-	return res;
+    if (!statusParams) return 0;
+    statusParams->dwItem	= MCI_STATUS_TIME_FORMAT;
+    statusParams->dwReturn	= 0;
+    _MCI_CALL_DRIVER( MCI_STATUS, SEGPTR_GET(statusParams) );
+    if (res==0) *timef = statusParams->dwReturn;
+    SEGPTR_FREE(statusParams);
+    return res;
 }
 
 /* query status of MCI drivers
@@ -503,7 +507,7 @@ _MCISTR_determine_timeformat(LPCSTR dev,WORD wDevID,WORD uDevTyp,int *timef) {
 
 #define ITEM1(str,item,xtype) \
 	if (!STRCMP(keywords[i],str)) {\
-		statusParams.dwItem = item;\
+		statusParams->dwItem = item;\
 		type = xtype;\
 		i++;\
 		continue;\
@@ -513,7 +517,7 @@ _MCISTR_determine_timeformat(LPCSTR dev,WORD wDevID,WORD uDevTyp,int *timef) {
 		(i+1<nrofkeywords) &&\
 		!STRCMP(keywords[i+1],str2)\
 	) {\
-		statusParams.dwItem = item;\
+		statusParams->dwItem = item;\
 		type = xtype;\
 		i+=2;\
 		continue;\
@@ -524,28 +528,28 @@ _MCISTR_determine_timeformat(LPCSTR dev,WORD wDevID,WORD uDevTyp,int *timef) {
 		!STRCMP(keywords[i+1],str2) &&\
 		!STRCMP(keywords[i+2],str3)\
 	) {\
-		statusParams.dwItem = item;\
+		statusParams->dwItem = item;\
 		type = xtype;\
 		i+=3;\
 		continue;\
 	}
 static DWORD
 MCISTR_Status(_MCISTR_PROTO_) {
-	MCI_STATUS_PARMS	statusParams;
+	MCI_STATUS_PARMS	*statusParams = SEGPTR_NEW(MCI_STATUS_PARMS);
 	int			type = 0,i,res,timef;
 
-	statusParams.dwCallback = 0;
+	statusParams->dwCallback = 0;
 	dwFlags	|= MCI_STATUS_ITEM;
 	res = _MCISTR_determine_timeformat(dev,wDevID,uDevTyp,&timef);
 	if (res) return res;
 
-	statusParams.dwReturn	= 0;
-	statusParams.dwItem	= 0;
+	statusParams->dwReturn	= 0;
+	statusParams->dwItem	= 0;
 	i = 0;
 
 	while (i<nrofkeywords) {
 		if (!STRCMP(keywords[i],"track") && (i+1<nrofkeywords)) {
-			sscanf(keywords[i+1],"%ld",&(statusParams.dwTrack));
+			sscanf(keywords[i+1],"%ld",&(statusParams->dwTrack));
 			dwFlags |= MCI_TRACK;
 			i+=2;
 			continue;
@@ -610,12 +614,13 @@ MCISTR_Status(_MCISTR_PROTO_) {
 		fprintf(stdnimp,__FILE__":MCISTR_Status:unknown keyword '%s'\n",keywords[i]);
 		i++;
 	}
-	if (!statusParams.dwItem) 
+	if (!statusParams->dwItem) 
 		return MCIERR_MISSING_STRING_ARGUMENT;
 
-	_MCI_CALL_DRIVER( MCI_STATUS, MAKE_SEGPTR(&statusParams) );
+	_MCI_CALL_DRIVER( MCI_STATUS, SEGPTR_GET(statusParams) );
 	if (res==0)
-		_MCISTR_convreturn(type,statusParams.dwReturn,lpstrReturnString,uReturnLength,uDevTyp,timef);
+		_MCISTR_convreturn(type,statusParams->dwReturn,lpstrReturnString,uReturnLength,uDevTyp,timef);
+        SEGPTR_FREE(statusParams);
 	return res;
 }
 #undef ITEM1
@@ -654,14 +659,15 @@ MCISTR_Status(_MCISTR_PROTO_) {
  */
 static DWORD
 MCISTR_Set(_MCISTR_PROTO_) {
-	union	{
+	union U {
 		MCI_SET_PARMS		setParams;
 		MCI_WAVE_SET_PARMS	wavesetParams;
 		MCI_SEQ_SET_PARMS	seqsetParams;
-	} U;
+	};
+        union U *pU = SEGPTR_NEW(union U);
 	int	i,res;
 
-	U.setParams.dwCallback = 0;
+	pU->setParams.dwCallback = 0;
 	i = 0;
 	while (i<nrofkeywords) {
 		FLAG2("door","open",MCI_SET_DOOR_OPEN);
@@ -676,38 +682,38 @@ MCISTR_Set(_MCISTR_PROTO_) {
 			/* FIXME:is this a shortcut for milliseconds or
 			 *	 minutes:seconds? */
 			if (!STRCMP(keywords[i+2],"ms"))
-				U.setParams.dwTimeFormat = MCI_FORMAT_MILLISECONDS;
+				pU->setParams.dwTimeFormat = MCI_FORMAT_MILLISECONDS;
 
 			if (!STRCMP(keywords[i+2],"milliseconds"))
-				U.setParams.dwTimeFormat = MCI_FORMAT_MILLISECONDS;
+				pU->setParams.dwTimeFormat = MCI_FORMAT_MILLISECONDS;
 			if (!STRCMP(keywords[i+2],"msf"))
-				U.setParams.dwTimeFormat = MCI_FORMAT_MSF;
+				pU->setParams.dwTimeFormat = MCI_FORMAT_MSF;
 			if (!STRCMP(keywords[i+2],"hms"))
-				U.setParams.dwTimeFormat = MCI_FORMAT_HMS;
+				pU->setParams.dwTimeFormat = MCI_FORMAT_HMS;
 			if (!STRCMP(keywords[i+2],"frames"))
-				U.setParams.dwTimeFormat = MCI_FORMAT_FRAMES;
+				pU->setParams.dwTimeFormat = MCI_FORMAT_FRAMES;
 			if (!STRCMP(keywords[i+2],"track"))
-				U.setParams.dwTimeFormat = MCI_VD_FORMAT_TRACK;
+				pU->setParams.dwTimeFormat = MCI_VD_FORMAT_TRACK;
 			if (!STRCMP(keywords[i+2],"bytes"))
-				U.setParams.dwTimeFormat = MCI_FORMAT_BYTES;
+				pU->setParams.dwTimeFormat = MCI_FORMAT_BYTES;
 			if (!STRCMP(keywords[i+2],"samples"))
-				U.setParams.dwTimeFormat = MCI_FORMAT_SAMPLES;
+				pU->setParams.dwTimeFormat = MCI_FORMAT_SAMPLES;
 			if (!STRCMP(keywords[i+2],"tmsf"))
-				U.setParams.dwTimeFormat = MCI_FORMAT_TMSF;
+				pU->setParams.dwTimeFormat = MCI_FORMAT_TMSF;
 			if (	!STRCMP(keywords[i+2],"song") && 
 				(i+3<nrofkeywords) &&
 				!STRCMP(keywords[i+3],"pointer")
 			)
-				U.setParams.dwTimeFormat = MCI_SEQ_FORMAT_SONGPTR;
+				pU->setParams.dwTimeFormat = MCI_SEQ_FORMAT_SONGPTR;
 			if (!STRCMP(keywords[i+2],"smpte") && (i+3<nrofkeywords)) {
 				if (!STRCMP(keywords[i+3],"24"))
-					U.setParams.dwTimeFormat = MCI_FORMAT_SMPTE_24;
+					pU->setParams.dwTimeFormat = MCI_FORMAT_SMPTE_24;
 				if (!STRCMP(keywords[i+3],"25"))
-					U.setParams.dwTimeFormat = MCI_FORMAT_SMPTE_25;
+					pU->setParams.dwTimeFormat = MCI_FORMAT_SMPTE_25;
 				if (!STRCMP(keywords[i+3],"30"))
-					U.setParams.dwTimeFormat = MCI_FORMAT_SMPTE_30;
+					pU->setParams.dwTimeFormat = MCI_FORMAT_SMPTE_30;
 				if (!STRCMP(keywords[i+3],"drop") && (i+4<nrofkeywords) && !STRCMP(keywords[i+4],"30")) {
-					U.setParams.dwTimeFormat = MCI_FORMAT_SMPTE_30DROP;
+					pU->setParams.dwTimeFormat = MCI_FORMAT_SMPTE_30DROP;
 					i++;
 				}
 				i++;
@@ -719,11 +725,11 @@ MCISTR_Set(_MCISTR_PROTO_) {
 		if (!STRCMP(keywords[i],"audio") && (i+1<nrofkeywords)) {
 			dwFlags |= MCI_SET_AUDIO;
 			if (!STRCMP(keywords[i+1],"all"))
-				U.setParams.dwAudio = MCI_SET_AUDIO_ALL;
+				pU->setParams.dwAudio = MCI_SET_AUDIO_ALL;
 			if (!STRCMP(keywords[i+1],"left"))
-				U.setParams.dwAudio = MCI_SET_AUDIO_LEFT;
+				pU->setParams.dwAudio = MCI_SET_AUDIO_LEFT;
 			if (!STRCMP(keywords[i+1],"right"))
-				U.setParams.dwAudio = MCI_SET_AUDIO_RIGHT;
+				pU->setParams.dwAudio = MCI_SET_AUDIO_RIGHT;
 			i+=2;
 			continue;
 		}
@@ -740,7 +746,7 @@ MCISTR_Set(_MCISTR_PROTO_) {
 				!STRCMP(keywords[i+1],"pcm")
 			) {
 				dwFlags |= MCI_WAVE_SET_FORMATTAG;
-				U.wavesetParams.wFormatTag = WAVE_FORMAT_PCM;
+				pU->wavesetParams.wFormatTag = WAVE_FORMAT_PCM;
 				i+=2;
 				continue;
 			}
@@ -748,7 +754,7 @@ MCISTR_Set(_MCISTR_PROTO_) {
 			/* <keyword> <integer> */
 #define WII(str,flag,fmt,element) \
 			if (!STRCMP(keywords[i],str) && (i+1<nrofkeywords)) {\
-				sscanf(keywords[i+1],fmt,&(U.wavesetParams. element ));\
+				sscanf(keywords[i+1],fmt,&(pU->wavesetParams. element ));\
 				dwFlags |= flag;\
 				i+=2;\
 				continue;\
@@ -767,26 +773,26 @@ MCISTR_Set(_MCISTR_PROTO_) {
 			if (!STRCMP(keywords[i],"master") && (i+1<nrofkeywords)) {
 				dwFlags |= MCI_SEQ_SET_MASTER;
 				if (!STRCMP(keywords[i+1],"midi"))
-					U.seqsetParams.dwMaster = MCI_SEQ_MIDI;
+					pU->seqsetParams.dwMaster = MCI_SEQ_MIDI;
 				if (!STRCMP(keywords[i+1],"file"))
-					U.seqsetParams.dwMaster = MCI_SEQ_FILE;
+					pU->seqsetParams.dwMaster = MCI_SEQ_FILE;
 				if (!STRCMP(keywords[i+1],"smpte"))
-					U.seqsetParams.dwMaster = MCI_SEQ_SMPTE;
+					pU->seqsetParams.dwMaster = MCI_SEQ_SMPTE;
 				if (!STRCMP(keywords[i+1],"none"))
-					U.seqsetParams.dwMaster = MCI_SEQ_NONE;
+					pU->seqsetParams.dwMaster = MCI_SEQ_NONE;
 				i+=2;
 				continue;
 			}
 			if (!STRCMP(keywords[i],"slave") && (i+1<nrofkeywords)) {
 				dwFlags |= MCI_SEQ_SET_SLAVE;
 				if (!STRCMP(keywords[i+1],"midi"))
-					U.seqsetParams.dwMaster = MCI_SEQ_MIDI;
+					pU->seqsetParams.dwMaster = MCI_SEQ_MIDI;
 				if (!STRCMP(keywords[i+1],"file"))
-					U.seqsetParams.dwMaster = MCI_SEQ_FILE;
+					pU->seqsetParams.dwMaster = MCI_SEQ_FILE;
 				if (!STRCMP(keywords[i+1],"smpte"))
-					U.seqsetParams.dwMaster = MCI_SEQ_SMPTE;
+					pU->seqsetParams.dwMaster = MCI_SEQ_SMPTE;
 				if (!STRCMP(keywords[i+1],"none"))
-					U.seqsetParams.dwMaster = MCI_SEQ_NONE;
+					pU->seqsetParams.dwMaster = MCI_SEQ_NONE;
 				i+=2;
 				continue;
 			}
@@ -794,14 +800,14 @@ MCISTR_Set(_MCISTR_PROTO_) {
 				(i+1<nrofkeywords) &&
 				!STRCMP(keywords[i+1],"mapper")
 			) {
-				U.seqsetParams.dwPort=-1;/* FIXME:not sure*/
+				pU->seqsetParams.dwPort=-1;/* FIXME:not sure*/
 				dwFlags |= MCI_SEQ_SET_PORT;
 				i+=2;
 				continue;
 			}
 #define SII(str,flag,element) \
 			if (!STRCMP(keywords[i],str) && (i+1<nrofkeywords)) {\
-				sscanf(keywords[i+1],"%ld",&(U.seqsetParams. element ));\
+				sscanf(keywords[i+1],"%ld",&(pU->seqsetParams. element ));\
 				dwFlags |= flag;\
 				i+=2;\
 				continue;\
@@ -814,7 +820,8 @@ MCISTR_Set(_MCISTR_PROTO_) {
 	}
 	if (!dwFlags)
 		return MCIERR_MISSING_STRING_ARGUMENT;
-	_MCI_CALL_DRIVER( MCI_SET, MAKE_SEGPTR(&U) );
+	_MCI_CALL_DRIVER( MCI_SET, SEGPTR_GET(pU) );
+        SEGPTR_FREE(pU);
 	return res;
 }
 
@@ -828,29 +835,32 @@ MCISTR_Set(_MCISTR_PROTO_) {
  * Returns nothing.
  */
 static DWORD
-MCISTR_Break(_MCISTR_PROTO_) {
-	MCI_BREAK_PARMS	breakParams;
-	int	res,i;
+MCISTR_Break(_MCISTR_PROTO_)
+{
+    MCI_BREAK_PARMS *breakParams = SEGPTR_NEW(MCI_BREAK_PARMS);
+    int res,i;
 
+    if (!breakParams) return 0;
 	/*breakParams.hwndBreak ? */
-	i=0;while (i<nrofkeywords) {
+    for (i = 0; i < nrofkeywords; i++)
+    {
 		FLAG1("off",MCI_BREAK_OFF);
 		if (!strcmp(keywords[i],"on") && (nrofkeywords>i+1)) {
 			dwFlags&=~MCI_BREAK_OFF;
 			dwFlags|=MCI_BREAK_KEY;
-			sscanf(keywords[i+1],"%d",&(breakParams.nVirtKey));
+			sscanf(keywords[i+1],"%d",&(breakParams->nVirtKey));
 			i+=2;
 			continue;
 		}
-		i++;
-	}
-	_MCI_CALL_DRIVER( MCI_BREAK, MAKE_SEGPTR(&breakParams) );
-	return res;
+    }
+    _MCI_CALL_DRIVER( MCI_BREAK, SEGPTR_GET(breakParams) );
+    SEGPTR_FREE(breakParams);
+    return res;
 }
 
 #define ITEM1(str,item,xtype) \
 	if (!STRCMP(keywords[i],str)) {\
-		gdcParams.dwItem = item;\
+		gdcParams->dwItem = item;\
 		type = xtype;\
 		i++;\
 		continue;\
@@ -860,7 +870,7 @@ MCISTR_Break(_MCISTR_PROTO_) {
 		(i+1<nrofkeywords) &&\
 		!STRCMP(keywords[i+1],str2)\
 	) {\
-		gdcParams.dwItem = item;\
+		gdcParams->dwItem = item;\
 		type = xtype;\
 		i+=2;\
 		continue;\
@@ -871,7 +881,7 @@ MCISTR_Break(_MCISTR_PROTO_) {
 		!STRCMP(keywords[i+1],str2) &&\
 		!STRCMP(keywords[i+2],str3)\
 	) {\
-		gdcParams.dwItem = item;\
+		gdcParams->dwItem = item;\
 		type = xtype;\
 		i+=3;\
 		continue;\
@@ -913,15 +923,15 @@ MCISTR_Break(_MCISTR_PROTO_) {
  */
 static DWORD
 MCISTR_Capability(_MCISTR_PROTO_) {
-	MCI_GETDEVCAPS_PARMS	gdcParams;
+	MCI_GETDEVCAPS_PARMS *gdcParams = SEGPTR_NEW(MCI_GETDEVCAPS_PARMS);
 	int	type=0,i,res;
 
-	gdcParams.dwCallback = 0;
+	gdcParams->dwCallback = 0;
 	if (!nrofkeywords)
 		return MCIERR_MISSING_STRING_ARGUMENT;
 	/* well , thats default */
 	dwFlags |= MCI_GETDEVCAPS_ITEM;
-	gdcParams.dwItem = 0;
+	gdcParams->dwItem = 0;
 	i=0;
 	while (i<nrofkeywords) {
 		ITEM2("device","type",MCI_GETDEVCAPS_DEVICE_TYPE,_MCISTR_devtype);
@@ -963,10 +973,12 @@ MCISTR_Capability(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER( MCI_GETDEVCAPS, MAKE_SEGPTR(&gdcParams) );
+	_MCI_CALL_DRIVER( MCI_GETDEVCAPS, SEGPTR_GET(gdcParams) );
 	/* no timeformat needed */
 	if (res==0)
-		_MCISTR_convreturn(type,gdcParams.dwReturn,lpstrReturnString,uReturnLength,uDevTyp,0);
+            _MCISTR_convreturn( type, gdcParams->dwReturn, lpstrReturnString,
+                                uReturnLength, uDevTyp, 0 );
+        SEGPTR_FREE(gdcParams);
 	return res;
 }
 #undef ITEM1
@@ -974,33 +986,35 @@ MCISTR_Capability(_MCISTR_PROTO_) {
 #undef ITEM3
 /* resumes operation of device. no arguments, no return values */
 static DWORD
-MCISTR_Resume(_MCISTR_PROTO_) {
-	MCI_GENERIC_PARMS	genParams;
-	int	res;
-
-	genParams.dwCallback=0;
-	_MCI_CALL_DRIVER( MCI_RESUME, MAKE_SEGPTR(&genParams) );
-	return res;
+MCISTR_Resume(_MCISTR_PROTO_)
+{
+    MCI_GENERIC_PARMS *genParams = SEGPTR_NEW(MCI_GENERIC_PARMS);
+    int	res;
+    genParams->dwCallback = 0;
+    _MCI_CALL_DRIVER( MCI_RESUME, SEGPTR_GET(genParams) );
+    return res;
 }
 
 /* pauses operation of device. no arguments, no return values */
 static DWORD
-MCISTR_Pause(_MCISTR_PROTO_) {
-	MCI_GENERIC_PARMS	genParams;
-	int			res;
-	genParams.dwCallback=0;
-	_MCI_CALL_DRIVER( MCI_PAUSE, MAKE_SEGPTR(&genParams) );
-	return res;
+MCISTR_Pause(_MCISTR_PROTO_)
+{
+    MCI_GENERIC_PARMS *genParams = SEGPTR_NEW(MCI_GENERIC_PARMS);
+    int res;
+    genParams->dwCallback = 0;
+    _MCI_CALL_DRIVER( MCI_PAUSE, SEGPTR_GET(genParams) );
+    return res;
 }
 
 /* stops operation of device. no arguments, no return values */
 static DWORD
-MCISTR_Stop(_MCISTR_PROTO_) {
-	MCI_GENERIC_PARMS	genParams;
-	int			res;
-	genParams.dwCallback=0;
-	_MCI_CALL_DRIVER( MCI_STOP, MAKE_SEGPTR(&genParams) );
-	return res;
+MCISTR_Stop(_MCISTR_PROTO_)
+{
+    MCI_GENERIC_PARMS *genParams = SEGPTR_NEW(MCI_GENERIC_PARMS);
+    int res;
+    genParams->dwCallback = 0;
+    _MCI_CALL_DRIVER( MCI_STOP, SEGPTR_GET(genParams) );
+    return res;
 }
 
 /* starts recording.
@@ -1014,7 +1028,7 @@ static DWORD
 MCISTR_Record(_MCISTR_PROTO_) {
 	int			i,res,timef,nrargs,j,k,a[4];
 	char			*parsestr;
-	MCI_RECORD_PARMS	recordParams;
+	MCI_RECORD_PARMS	*recordParams = SEGPTR_NEW(MCI_RECORD_PARMS);
 
 	res = _MCISTR_determine_timeformat(dev,wDevID,uDevTyp,&timef);
 	if (res) return res;
@@ -1041,7 +1055,7 @@ MCISTR_Record(_MCISTR_PROTO_) {
 		nrargs=1;
 		break;
 	}
-	recordParams.dwCallback = 0;
+	recordParams->dwCallback = 0;
 	i = 0;
 	while (i<nrofkeywords) {
 		if (!strcmp(keywords[i],"to") && (i+1<nrofkeywords)) {
@@ -1052,9 +1066,9 @@ MCISTR_Record(_MCISTR_PROTO_) {
 			 * shift them. (Well I should use the macros in 
 			 * mmsystem.h, right).
 			 */
-			recordParams.dwTo=0;
+			recordParams->dwTo=0;
 			for (k=0;k<j;k++)
-				recordParams.dwTo+=a[k]<<(8*(nrargs-k));
+				recordParams->dwTo+=a[k]<<(8*(nrargs-k));
 			i+=2;
 			continue;
 		}
@@ -1063,9 +1077,9 @@ MCISTR_Record(_MCISTR_PROTO_) {
 			a[0]=a[1]=a[2]=a[3]=0;
 			j=sscanf(keywords[i+1],parsestr,&a[0],&a[1],&a[2],&a[3]);
 			/* dito. */
-			recordParams.dwFrom=0;
+			recordParams->dwFrom=0;
 			for (k=0;k<j;k++)
-				recordParams.dwFrom+=a[k]<<(8*(nrargs-k));
+				recordParams->dwFrom+=a[k]<<(8*(nrargs-k));
 			i+=2;
 			continue;
 		}
@@ -1073,7 +1087,8 @@ MCISTR_Record(_MCISTR_PROTO_) {
 		FLAG1("overwrite",MCI_RECORD_OVERWRITE);
 		i++;
 	}
-	_MCI_CALL_DRIVER( MCI_RECORD, MAKE_SEGPTR(&recordParams) );
+	_MCI_CALL_DRIVER( MCI_RECORD, SEGPTR_GET(recordParams) );
+        SEGPTR_FREE(recordParams);
 	return res;
 }
 
@@ -1098,11 +1113,12 @@ static DWORD
 MCISTR_Play(_MCISTR_PROTO_) {
 	int			i,res,timef,nrargs,j,k,a[4];
 	char			*parsestr;
-	union {
+	union U {
 		MCI_PLAY_PARMS		playParams;
 		MCI_VD_PLAY_PARMS	vdplayParams;
 		MCI_ANIM_PLAY_PARMS	animplayParams;
-	} U;
+	};
+        union U *pU = SEGPTR_NEW(union U);
 
 	res = _MCISTR_determine_timeformat(dev,wDevID,uDevTyp,&timef);
 	if (res) return res;
@@ -1128,7 +1144,7 @@ MCISTR_Play(_MCISTR_PROTO_) {
 		nrargs=1;
 		break;
 	}
-	U.playParams.dwCallback=0;
+	pU->playParams.dwCallback=0;
 	i=0;
 	while (i<nrofkeywords) {
 		if (!strcmp(keywords[i],"to") && (i+1<nrofkeywords)) {
@@ -1139,9 +1155,9 @@ MCISTR_Play(_MCISTR_PROTO_) {
 			 * shift them. (Well I should use the macros in 
 			 * mmsystem.h, right).
 			 */
-			U.playParams.dwTo=0;
+			pU->playParams.dwTo=0;
 			for (k=0;k<j;k++)
-				U.playParams.dwTo+=a[k]<<(8*(nrargs-k));
+				pU->playParams.dwTo+=a[k]<<(8*(nrargs-k));
 			i+=2;
 			continue;
 		}
@@ -1150,9 +1166,9 @@ MCISTR_Play(_MCISTR_PROTO_) {
 			a[0]=a[1]=a[2]=a[3]=0;
 			j=sscanf(keywords[i+1],parsestr,&a[0],&a[1],&a[2],&a[3]);
 			/* dito. */
-			U.playParams.dwFrom=0;
+			pU->playParams.dwFrom=0;
 			for (k=0;k<j;k++)
-				U.playParams.dwFrom+=a[k]<<(8*(nrargs-k));
+				pU->playParams.dwFrom+=a[k]<<(8*(nrargs-k));
 			i+=2;
 			continue;
 		}
@@ -1164,7 +1180,7 @@ MCISTR_Play(_MCISTR_PROTO_) {
 			FLAG1("reverse",MCI_VD_PLAY_REVERSE);
 			if (!STRCMP(keywords[i],"speed") && (i+1<nrofkeywords)) {
 				dwFlags |= MCI_VD_PLAY_SPEED;
-				sscanf(keywords[i+1],"%ld",&(U.vdplayParams.dwSpeed));
+				sscanf(keywords[i+1],"%ld",&(pU->vdplayParams.dwSpeed));
 				i+=2;
 				continue;
 			}
@@ -1176,7 +1192,7 @@ MCISTR_Play(_MCISTR_PROTO_) {
 			FLAG1("reverse",MCI_ANIM_PLAY_REVERSE);
 			if (!STRCMP(keywords[i],"speed") && (i+1<nrofkeywords)) {
 				dwFlags |= MCI_ANIM_PLAY_SPEED;
-				sscanf(keywords[i+1],"%ld",&(U.animplayParams.dwSpeed));
+				sscanf(keywords[i+1],"%ld",&(pU->animplayParams.dwSpeed));
 				i+=2;
 				continue;
 			}
@@ -1184,7 +1200,8 @@ MCISTR_Play(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER( MCI_PLAY, MAKE_SEGPTR(&U) );
+	_MCI_CALL_DRIVER( MCI_PLAY, SEGPTR_GET(pU) );
+        SEGPTR_FREE(pU);
 	return res;
 }
 
@@ -1198,7 +1215,7 @@ static DWORD
 MCISTR_Seek(_MCISTR_PROTO_) {
 	int		i,res,timef,nrargs,j,k,a[4];
 	char		*parsestr;
-	MCI_SEEK_PARMS	seekParams;
+	MCI_SEEK_PARMS	*seekParams = SEGPTR_NEW(MCI_SEEK_PARMS);
 
 	res = _MCISTR_determine_timeformat(dev,wDevID,uDevTyp,&timef);
 	if (res) return res;
@@ -1224,19 +1241,19 @@ MCISTR_Seek(_MCISTR_PROTO_) {
 		nrargs=1;
 		break;
 	}
-	seekParams.dwCallback=0;
+	seekParams->dwCallback=0;
 	i=0;
 	while (i<nrofkeywords) {
 		if (	!STRCMP(keywords[i],"to") && (i+1<nrofkeywords)) {
 			if (!STRCMP(keywords[i+1],"start")) {
 				dwFlags|=MCI_SEEK_TO_START;
-				seekParams.dwTo=0;
+				seekParams->dwTo=0;
 				i+=2;
 				continue;
 			}
 			if (!STRCMP(keywords[i+1],"end")) {
 				dwFlags|=MCI_SEEK_TO_END;
-				seekParams.dwTo=0;
+				seekParams->dwTo=0;
 				i+=2;
 				continue;
 			}
@@ -1244,9 +1261,9 @@ MCISTR_Seek(_MCISTR_PROTO_) {
 			i+=2;
 			a[0]=a[1]=a[2]=a[3]=0;
 			j=sscanf(keywords[i+1],parsestr,&a[0],&a[1],&a[2],&a[3]);
-			seekParams.dwTo=0;
+			seekParams->dwTo=0;
 			for (k=0;k<j;k++)
-				seekParams.dwTo+=a[k]<<(8*(nrargs-k));
+				seekParams->dwTo+=a[k]<<(8*(nrargs-k));
 			continue;
 		}
 		switch (uDevTyp) {
@@ -1256,18 +1273,20 @@ MCISTR_Seek(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER( MCI_SEEK, MAKE_SEGPTR(&seekParams) );
+	_MCI_CALL_DRIVER( MCI_SEEK, SEGPTR_GET(seekParams) );
+        SEGPTR_FREE(seekParams);
 	return res;
 }
 
 /* close media/driver */
 static DWORD
-MCISTR_Close(_MCISTR_PROTO_) {
-	MCI_GENERIC_PARMS	closeParams;
-	int			res;
-
-	_MCI_CALL_DRIVER( MCI_CLOSE, MAKE_SEGPTR(&closeParams) );
-	return res;
+MCISTR_Close(_MCISTR_PROTO_)
+{
+    MCI_GENERIC_PARMS *closeParams = SEGPTR_NEW(MCI_GENERIC_PARMS);
+    int res;
+    _MCI_CALL_DRIVER( MCI_CLOSE, SEGPTR_GET(closeParams) );
+    SEGPTR_FREE(closeParams);
+    return res;
 }
 
 /* return information.
@@ -1280,8 +1299,9 @@ MCISTR_Close(_MCISTR_PROTO_) {
  *	"text"		returns text?
  */
 static DWORD
-MCISTR_Info(_MCISTR_PROTO_) {
-	MCI_INFO_PARMS	infoParams;
+MCISTR_Info(_MCISTR_PROTO_)
+{
+	MCI_INFO_PARMS	*infoParams = SEGPTR_NEW(MCI_INFO_PARMS);
 	DWORD		sflags;
 	int		i,res;
 
@@ -1304,9 +1324,10 @@ MCISTR_Info(_MCISTR_PROTO_) {
 	/* MCI driver will fill in lpstrReturn, dwRetSize.
 	 * FIXME: I don't know if this is correct behaviour
 	 */
-	_MCI_CALL_DRIVER( MCI_INFO, MAKE_SEGPTR(&infoParams) );
+	_MCI_CALL_DRIVER( MCI_INFO, SEGPTR_GET(infoParams) );
 	if (res==0)
-		_MCI_STR(infoParams.lpstrReturn);
+		_MCI_STR(infoParams->lpstrReturn);
+        SEGPTR_FREE(infoParams);
 	return res;
 }
 
@@ -1360,13 +1381,13 @@ MCISTR_Sysinfo(_MCISTR_PROTO_) {
  */
 static DWORD
 MCISTR_Load(_MCISTR_PROTO_) {
-	union {
+	union U {
 		MCI_LOAD_PARMS	loadParams;
 		MCI_OVLY_LOAD_PARMS	ovlyloadParams;
-	} U;
+	};
+        union U *pU = SEGPTR_NEW(union U);
 	int		i,len,res;
 	char		*s;
-	HANDLE		x;
 
 	i=0;len=0;
 	while (i<nrofkeywords) {
@@ -1374,10 +1395,10 @@ MCISTR_Load(_MCISTR_PROTO_) {
 		case MCI_DEVTYPE_OVERLAY:
 			if (!STRCMP(keywords[i],"at") && (i+4<nrofkeywords)) {
 				dwFlags |= MCI_OVLY_RECT;
-				sscanf(keywords[i+1],"%hd",&(U.ovlyloadParams.rc.left));
-				sscanf(keywords[i+2],"%hd",&(U.ovlyloadParams.rc.top));
-				sscanf(keywords[i+3],"%hd",&(U.ovlyloadParams.rc.right));
-				sscanf(keywords[i+4],"%hd",&(U.ovlyloadParams.rc.bottom));
+				sscanf(keywords[i+1],"%hd",&(pU->ovlyloadParams.rc.left));
+				sscanf(keywords[i+2],"%hd",&(pU->ovlyloadParams.rc.top));
+				sscanf(keywords[i+3],"%hd",&(pU->ovlyloadParams.rc.right));
+				sscanf(keywords[i+4],"%hd",&(pU->ovlyloadParams.rc.bottom));
 				memcpy(keywords+i,keywords+(i+5),nrofkeywords-(i+5));
 				continue;
 			}
@@ -1386,23 +1407,18 @@ MCISTR_Load(_MCISTR_PROTO_) {
 		len+=strlen(keywords[i])+1;
 		i++;
 	}
-	s=(char*)xmalloc(len);
+	s=(char*)SEGPTR_ALLOC(len);
 	*s='\0';
 	while (i<nrofkeywords) {
 		strcat(s,keywords[i]);
 		i++;
 		if (i<nrofkeywords) strcat(s," ");
 	}
-	/* FIXME: messy, but I strongly suspect we have to use a 
-	 * segmented pointer, so I am doing that
-	 */
-	x=USER_HEAP_ALLOC(len);
-	U.loadParams.lpfilename=(LPSTR)MAKELONG(x,USER_HeapSel);
-	strcpy(PTR_SEG_TO_LIN(U.loadParams.lpfilename),s);
-	free(s);
+	pU->loadParams.lpfilename=(LPSTR)SEGPTR_GET(s);
 	dwFlags |= MCI_LOAD_FILE;
-	_MCI_CALL_DRIVER( MCI_LOAD, MAKE_SEGPTR(&U) );
-	USER_HEAP_FREE(x);
+	_MCI_CALL_DRIVER( MCI_LOAD, SEGPTR_GET(pU) );
+	SEGPTR_FREE(s);
+        SEGPTR_FREE(pU);
 	return res;
 }
 
@@ -1412,13 +1428,13 @@ MCISTR_Load(_MCISTR_PROTO_) {
  */
 static DWORD
 MCISTR_Save(_MCISTR_PROTO_) {
-	union {
+	union U {
 		MCI_SAVE_PARMS	saveParams;
 		MCI_OVLY_SAVE_PARMS	ovlysaveParams;
-	} U;
+	};
+        union U *pU = SEGPTR_NEW(union U);
 	int		i,len,res;
 	char		*s;
-	HANDLE		x;
 
 	i=0;len=0;
 	while (i<nrofkeywords) {
@@ -1426,10 +1442,10 @@ MCISTR_Save(_MCISTR_PROTO_) {
 		case MCI_DEVTYPE_OVERLAY:
 			if (!STRCMP(keywords[i],"at") && (i+4<nrofkeywords)) {
 				dwFlags |= MCI_OVLY_RECT;
-				sscanf(keywords[i+1],"%hd",&(U.ovlysaveParams.rc.left));
-				sscanf(keywords[i+2],"%hd",&(U.ovlysaveParams.rc.top));
-				sscanf(keywords[i+3],"%hd",&(U.ovlysaveParams.rc.right));
-				sscanf(keywords[i+4],"%hd",&(U.ovlysaveParams.rc.bottom));
+				sscanf(keywords[i+1],"%hd",&(pU->ovlysaveParams.rc.left));
+				sscanf(keywords[i+2],"%hd",&(pU->ovlysaveParams.rc.top));
+				sscanf(keywords[i+3],"%hd",&(pU->ovlysaveParams.rc.right));
+				sscanf(keywords[i+4],"%hd",&(pU->ovlysaveParams.rc.bottom));
 				memcpy(keywords+i,keywords+(i+5),nrofkeywords-(i+5));
 				continue;
 			}
@@ -1438,23 +1454,18 @@ MCISTR_Save(_MCISTR_PROTO_) {
 		len+=strlen(keywords[i])+1;
 		i++;
 	}
-	s=(char*)xmalloc(len);
+	s=(char*)SEGPTR_ALLOC(len);
 	*s='\0';
 	while (i<nrofkeywords) {
 		strcat(s,keywords[i]);
 		i++;
 		if (i<nrofkeywords) strcat(s," ");
 	}
-	/* FIXME: messy, but I strongly suspect we have to use a 
-	 * segmented pointer, so I am doing that
-	 */
-	x=USER_HEAP_ALLOC(len);
-	U.saveParams.lpfilename=(LPSTR)MAKELONG(x,USER_HeapSel);
-	strcpy(PTR_SEG_TO_LIN(U.saveParams.lpfilename),s);
-	free(s);
+	pU->saveParams.lpfilename=(LPSTR)SEGPTR_GET(s);
 	dwFlags |= MCI_LOAD_FILE;
-	_MCI_CALL_DRIVER( MCI_SAVE, MAKE_SEGPTR(&U) );
-	USER_HEAP_FREE(x);
+	_MCI_CALL_DRIVER( MCI_SAVE, SEGPTR_GET(pU) );
+	SEGPTR_FREE(s);
+        SEGPTR_FREE(pU);
 	return res;
 }
 
@@ -1463,7 +1474,7 @@ MCISTR_Save(_MCISTR_PROTO_) {
  */
 static DWORD
 MCISTR_Cue(_MCISTR_PROTO_) {
-	MCI_GENERIC_PARMS	cueParams;
+	MCI_GENERIC_PARMS	*cueParams = SEGPTR_NEW(MCI_GENERIC_PARMS);
 	int			i,res;
 
 	i=0;
@@ -1476,7 +1487,8 @@ MCISTR_Cue(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER( MCI_CUE, MAKE_SEGPTR(&cueParams) );
+	_MCI_CALL_DRIVER( MCI_CUE, SEGPTR_GET(cueParams) );
+        SEGPTR_FREE(cueParams);
 	return res;
 }
 
@@ -1485,7 +1497,7 @@ static DWORD
 MCISTR_Delete(_MCISTR_PROTO_) {
 	int	timef,nrargs,i,j,k,a[4],res;
 	char	*parsestr;
-	MCI_WAVE_DELETE_PARMS	deleteParams;
+	MCI_WAVE_DELETE_PARMS *deleteParams = SEGPTR_NEW(MCI_WAVE_DELETE_PARMS);
 
 	/* only implemented for waveform audio */
 	if (uDevTyp != MCI_DEVTYPE_WAVEFORM_AUDIO)
@@ -1524,9 +1536,9 @@ MCISTR_Delete(_MCISTR_PROTO_) {
 			 * shift them. (Well I should use the macros in 
 			 * mmsystem.h, right).
 			 */
-			deleteParams.dwTo=0;
+			deleteParams->dwTo=0;
 			for (k=0;k<j;k++)
-				deleteParams.dwTo+=a[k]<<(8*(nrargs-k));
+				deleteParams->dwTo+=a[k]<<(8*(nrargs-k));
 			i+=2;
 			continue;
 		}
@@ -1535,25 +1547,26 @@ MCISTR_Delete(_MCISTR_PROTO_) {
 			a[0]=a[1]=a[2]=a[3]=0;
 			j=sscanf(keywords[i+1],parsestr,&a[0],&a[1],&a[2],&a[3]);
 			/* dito. */
-			deleteParams.dwFrom=0;
+			deleteParams->dwFrom=0;
 			for (k=0;k<j;k++)
-				deleteParams.dwFrom+=a[k]<<(8*(nrargs-k));
+				deleteParams->dwFrom+=a[k]<<(8*(nrargs-k));
 			i+=2;
 			continue;
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER( MCI_DELETE, MAKE_SEGPTR(&deleteParams) );
+	_MCI_CALL_DRIVER( MCI_DELETE, SEGPTR_GET(deleteParams) );
+        SEGPTR_FREE(deleteParams);
 	return res;
 }
 
 /* send command to device. only applies to videodisc */
 static DWORD
-MCISTR_Escape(_MCISTR_PROTO_) {
-	MCI_VD_ESCAPE_PARMS	escapeParams;
+MCISTR_Escape(_MCISTR_PROTO_)
+{
+	MCI_VD_ESCAPE_PARMS *escapeParams = SEGPTR_NEW(MCI_VD_ESCAPE_PARMS);
 	int			i,len,res;
 	char		*s;
-	HANDLE		x;
 
 	if (uDevTyp != MCI_DEVTYPE_VIDEODISC)
 		return MCIERR_UNSUPPORTED_FUNCTION;
@@ -1562,23 +1575,18 @@ MCISTR_Escape(_MCISTR_PROTO_) {
 		len+=strlen(keywords[i])+1;
 		i++;
 	}
-	s=(char*)xmalloc(len);
+	s=(char*)SEGPTR_ALLOC(len);
 	*s='\0';
 	while (i<nrofkeywords) {
 		strcat(s,keywords[i]);
 		i++;
 		if (i<nrofkeywords) strcat(s," ");
 	}
-	/* FIXME: messy, but I strongly suspect we have to use a 
-	 * segmented pointer, so I am doing that
-	 */
-	x=USER_HEAP_ALLOC(len);
-	escapeParams.lpstrCommand=(LPSTR)MAKELONG(x,USER_HeapSel);
-	strcpy(PTR_SEG_TO_LIN(escapeParams.lpstrCommand),s);
-	free(s);
+	escapeParams->lpstrCommand = (LPSTR)SEGPTR_GET(s);
 	dwFlags |= MCI_VD_ESCAPE_STRING;
-	_MCI_CALL_DRIVER( MCI_ESCAPE, MAKE_SEGPTR(&escapeParams) );
-	USER_HEAP_FREE(x);
+	_MCI_CALL_DRIVER( MCI_ESCAPE, SEGPTR_GET(escapeParams) );
+        SEGPTR_FREE(s);
+        SEGPTR_FREE(escapeParams);
 	return res;
 }
 
@@ -1586,50 +1594,54 @@ MCISTR_Escape(_MCISTR_PROTO_) {
  * only applyable to Overlay devices
  */
 static DWORD
-MCISTR_Unfreeze(_MCISTR_PROTO_) {
-	MCI_OVLY_RECT_PARMS	unfreezeParams;
+MCISTR_Unfreeze(_MCISTR_PROTO_)
+{
+	MCI_OVLY_RECT_PARMS *unfreezeParams = SEGPTR_NEW(MCI_OVLY_RECT_PARMS);
 	int			i,res;
 
 	if (uDevTyp != MCI_DEVTYPE_OVERLAY)
 		return MCIERR_UNSUPPORTED_FUNCTION;
 	i=0;while (i<nrofkeywords) {
 		if (!STRCMP(keywords[i],"at") && (i+4<nrofkeywords)) {
-			sscanf(keywords[i+1],"%hd",&(unfreezeParams.rc.left));
-			sscanf(keywords[i+2],"%hd",&(unfreezeParams.rc.top));
-			sscanf(keywords[i+3],"%hd",&(unfreezeParams.rc.right));
-			sscanf(keywords[i+4],"%hd",&(unfreezeParams.rc.bottom));
+			sscanf(keywords[i+1],"%hd",&(unfreezeParams->rc.left));
+			sscanf(keywords[i+2],"%hd",&(unfreezeParams->rc.top));
+			sscanf(keywords[i+3],"%hd",&(unfreezeParams->rc.right));
+			sscanf(keywords[i+4],"%hd",&(unfreezeParams->rc.bottom));
 			dwFlags |= MCI_OVLY_RECT;
 			i+=5;
 			continue;
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER( MCI_UNFREEZE, MAKE_SEGPTR(&unfreezeParams) );
+	_MCI_CALL_DRIVER( MCI_UNFREEZE, SEGPTR_GET(unfreezeParams) );
+        SEGPTR_FREE(unfreezeParams);
 	return res;
 }
 /* freeze [part of] the overlayed video 
  * only applyable to Overlay devices
  */
 static DWORD
-MCISTR_Freeze(_MCISTR_PROTO_) {
-	MCI_OVLY_RECT_PARMS	freezeParams;
+MCISTR_Freeze(_MCISTR_PROTO_)
+{
+	MCI_OVLY_RECT_PARMS *freezeParams = SEGPTR_NEW(MCI_OVLY_RECT_PARMS);
 	int			i,res;
 
 	if (uDevTyp != MCI_DEVTYPE_OVERLAY)
 		return MCIERR_UNSUPPORTED_FUNCTION;
 	i=0;while (i<nrofkeywords) {
 		if (!STRCMP(keywords[i],"at") && (i+4<nrofkeywords)) {
-			sscanf(keywords[i+1],"%hd",&(freezeParams.rc.left));
-			sscanf(keywords[i+2],"%hd",&(freezeParams.rc.top));
-			sscanf(keywords[i+3],"%hd",&(freezeParams.rc.right));
-			sscanf(keywords[i+4],"%hd",&(freezeParams.rc.bottom));
+			sscanf(keywords[i+1],"%hd",&(freezeParams->rc.left));
+			sscanf(keywords[i+2],"%hd",&(freezeParams->rc.top));
+			sscanf(keywords[i+3],"%hd",&(freezeParams->rc.right));
+			sscanf(keywords[i+4],"%hd",&(freezeParams->rc.bottom));
 			dwFlags |= MCI_OVLY_RECT;
 			i+=5;
 			continue;
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER( MCI_FREEZE, MAKE_SEGPTR(&freezeParams) );
+	_MCI_CALL_DRIVER( MCI_FREEZE, SEGPTR_GET(freezeParams) );
+        SEGPTR_FREE(freezeParams);
 	return res;
 }
 
@@ -1649,10 +1661,11 @@ MCISTR_Freeze(_MCISTR_PROTO_) {
  */
 static DWORD
 MCISTR_Put(_MCISTR_PROTO_) {
-	union {
+	union U {
 		MCI_OVLY_RECT_PARMS	ovlyputParams;
 		MCI_ANIM_RECT_PARMS	animputParams;
-	} U;
+	};
+        union U *pU = SEGPTR_NEW(union U);
 	int	i,res;
 	i=0;while (i<nrofkeywords) {
 		switch (uDevTyp) {
@@ -1660,10 +1673,10 @@ MCISTR_Put(_MCISTR_PROTO_) {
 			FLAG1("source",MCI_ANIM_PUT_SOURCE);
 			FLAG1("destination",MCI_ANIM_PUT_DESTINATION);
 			if (!STRCMP(keywords[i],"at") && (i+4<nrofkeywords)) {
-				sscanf(keywords[i+1],"%hd",&(U.animputParams.rc.left));
-				sscanf(keywords[i+2],"%hd",&(U.animputParams.rc.top));
-				sscanf(keywords[i+3],"%hd",&(U.animputParams.rc.right));
-				sscanf(keywords[i+4],"%hd",&(U.animputParams.rc.bottom));
+				sscanf(keywords[i+1],"%hd",&(pU->animputParams.rc.left));
+				sscanf(keywords[i+2],"%hd",&(pU->animputParams.rc.top));
+				sscanf(keywords[i+3],"%hd",&(pU->animputParams.rc.right));
+				sscanf(keywords[i+4],"%hd",&(pU->animputParams.rc.bottom));
 				dwFlags |= MCI_ANIM_RECT;
 				i+=5;
 				continue;
@@ -1675,10 +1688,10 @@ MCISTR_Put(_MCISTR_PROTO_) {
 			FLAG1("video",MCI_OVLY_PUT_VIDEO);
 			FLAG1("frame",MCI_OVLY_PUT_FRAME);
 			if (!STRCMP(keywords[i],"at") && (i+4<nrofkeywords)) {
-				sscanf(keywords[i+1],"%hd",&(U.ovlyputParams.rc.left));
-				sscanf(keywords[i+2],"%hd",&(U.ovlyputParams.rc.top));
-				sscanf(keywords[i+3],"%hd",&(U.ovlyputParams.rc.right));
-				sscanf(keywords[i+4],"%hd",&(U.ovlyputParams.rc.bottom));
+				sscanf(keywords[i+1],"%hd",&(pU->ovlyputParams.rc.left));
+				sscanf(keywords[i+2],"%hd",&(pU->ovlyputParams.rc.top));
+				sscanf(keywords[i+3],"%hd",&(pU->ovlyputParams.rc.right));
+				sscanf(keywords[i+4],"%hd",&(pU->ovlyputParams.rc.bottom));
 				dwFlags |= MCI_OVLY_RECT;
 				i+=5;
 				continue;
@@ -1687,7 +1700,8 @@ MCISTR_Put(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER( MCI_PUT, MAKE_SEGPTR(&U) );
+	_MCI_CALL_DRIVER( MCI_PUT, SEGPTR_GET(pU) );
+        SEGPTR_FREE(pU);
 	return res;
 }
 
@@ -1697,8 +1711,9 @@ MCISTR_Put(_MCISTR_PROTO_) {
  * 	"background"	realize the palette as background palette
  */
 static DWORD
-MCISTR_Realize(_MCISTR_PROTO_) {
-	MCI_GENERIC_PARMS	realizeParams;
+MCISTR_Realize(_MCISTR_PROTO_)
+{
+	MCI_GENERIC_PARMS	*realizeParams = SEGPTR_NEW(MCI_GENERIC_PARMS);
 	int			i,res;
 
 	if (uDevTyp != MCI_DEVTYPE_ANIMATION)
@@ -1709,7 +1724,8 @@ MCISTR_Realize(_MCISTR_PROTO_) {
 		FLAG1("normal",MCI_ANIM_REALIZE_NORM);
 		i++;
 	}
-	_MCI_CALL_DRIVER( MCI_REALIZE, MAKE_SEGPTR(&realizeParams) );
+	_MCI_CALL_DRIVER( MCI_REALIZE, SEGPTR_GET(realizeParams) );
+        SEGPTR_FREE(realizeParams);
 	return res;
 }
 
@@ -1718,8 +1734,9 @@ MCISTR_Realize(_MCISTR_PROTO_) {
  *	"down"
  */
 static DWORD
-MCISTR_Spin(_MCISTR_PROTO_) {
-	MCI_GENERIC_PARMS	spinParams;
+MCISTR_Spin(_MCISTR_PROTO_)
+{
+	MCI_GENERIC_PARMS	*spinParams = SEGPTR_NEW(MCI_GENERIC_PARMS);
 	int			i,res;
 
 	if (uDevTyp != MCI_DEVTYPE_VIDEODISC)
@@ -1730,7 +1747,8 @@ MCISTR_Spin(_MCISTR_PROTO_) {
 		FLAG1("down",MCI_VD_SPIN_UP);
 		i++;
 	}
-	_MCI_CALL_DRIVER( MCI_SPIN, MAKE_SEGPTR(&spinParams) );
+	_MCI_CALL_DRIVER( MCI_SPIN, SEGPTR_GET(spinParams) );
+        SEGPTR_FREE(spinParams);
 	return res;
 }
 
@@ -1740,10 +1758,11 @@ MCISTR_Spin(_MCISTR_PROTO_) {
  */
 static DWORD
 MCISTR_Step(_MCISTR_PROTO_) {
-	union	{
+	union U {
 		MCI_ANIM_STEP_PARMS	animstepParams;
 		MCI_VD_STEP_PARMS	vdstepParams;
-	} U;
+	};
+        union U *pU = SEGPTR_NEW(union U);
 	int	i,res;
 
 	i=0;
@@ -1752,7 +1771,7 @@ MCISTR_Step(_MCISTR_PROTO_) {
 		case MCI_DEVTYPE_ANIMATION:
 			FLAG1("reverse",MCI_ANIM_STEP_REVERSE);
 			if (!STRCMP(keywords[i],"by") && (i+1<nrofkeywords)) {
-				sscanf(keywords[i+1],"%ld",&(U.animstepParams.dwFrames));
+				sscanf(keywords[i+1],"%ld",&(pU->animstepParams.dwFrames));
 				dwFlags |= MCI_ANIM_STEP_FRAMES;
 				i+=2;
 				continue;
@@ -1761,7 +1780,7 @@ MCISTR_Step(_MCISTR_PROTO_) {
 		case MCI_DEVTYPE_VIDEODISC:
 			FLAG1("reverse",MCI_VD_STEP_REVERSE);
 			if (!STRCMP(keywords[i],"by") && (i+1<nrofkeywords)) {
-				sscanf(keywords[i+1],"%ld",&(U.vdstepParams.dwFrames));
+				sscanf(keywords[i+1],"%ld",&(pU->vdstepParams.dwFrames));
 				dwFlags |= MCI_VD_STEP_FRAMES;
 				i+=2;
 				continue;
@@ -1770,7 +1789,8 @@ MCISTR_Step(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER( MCI_STEP, MAKE_SEGPTR(&U) );
+	_MCI_CALL_DRIVER( MCI_STEP, SEGPTR_GET(pU) );
+        SEGPTR_FREE(pU);
 	return res;
 }
 
@@ -1782,28 +1802,29 @@ MCISTR_Step(_MCISTR_PROTO_) {
 static DWORD
 MCISTR_Update(_MCISTR_PROTO_) {
 	int		i,res;
-	MCI_ANIM_UPDATE_PARMS	updateParams;
+	MCI_ANIM_UPDATE_PARMS *updateParams = SEGPTR_NEW(MCI_ANIM_UPDATE_PARMS);
 
 	i=0;
 	while (i<nrofkeywords) {
 		if (!STRCMP(keywords[i],"at") && (i+4<nrofkeywords)) {
-			sscanf(keywords[i+1],"%hd",&(updateParams.rc.left));
-			sscanf(keywords[i+2],"%hd",&(updateParams.rc.top));
-			sscanf(keywords[i+3],"%hd",&(updateParams.rc.right));
-			sscanf(keywords[i+4],"%hd",&(updateParams.rc.bottom));
+			sscanf(keywords[i+1],"%hd",&(updateParams->rc.left));
+			sscanf(keywords[i+2],"%hd",&(updateParams->rc.top));
+			sscanf(keywords[i+3],"%hd",&(updateParams->rc.right));
+			sscanf(keywords[i+4],"%hd",&(updateParams->rc.bottom));
 			dwFlags |= MCI_ANIM_RECT;
 			i+=5;
 			continue;
 		}
 		if (!STRCMP(keywords[i],"hdc") && (i+1<nrofkeywords)) {
 			dwFlags |= MCI_ANIM_UPDATE_HDC;
-			sscanf(keywords[i+1],"%hd",&(updateParams.hDC));
+			sscanf(keywords[i+1],"%hd",&(updateParams->hDC));
 			i+=2;
 			continue;
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER( MCI_UPDATE, MAKE_SEGPTR(&updateParams) );
+	_MCI_CALL_DRIVER( MCI_UPDATE, SEGPTR_GET(updateParams) );
+        SEGPTR_FREE(updateParams);
 	return res;
 }
 
@@ -1818,10 +1839,11 @@ MCISTR_Update(_MCISTR_PROTO_) {
  */
 static DWORD
 MCISTR_Where(_MCISTR_PROTO_) {
-	union {
+	union U {
 		MCI_ANIM_RECT_PARMS	animwhereParams;
 		MCI_OVLY_RECT_PARMS	ovlywhereParams;
-	} U;
+	};
+        union U *pU = SEGPTR_NEW(union U);
 	int	i,res;
 
 	i=0;
@@ -1840,30 +1862,31 @@ MCISTR_Where(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER( MCI_WHERE, MAKE_SEGPTR(&U) );
+	_MCI_CALL_DRIVER( MCI_WHERE, SEGPTR_GET(pU) );
 	if (res==0) {
 		char	buf[100];
 		switch (uDevTyp) {
 		case MCI_DEVTYPE_ANIMATION:
 			sprintf(buf,"%d %d %d %d",
-				U.animwhereParams.rc.left,
-				U.animwhereParams.rc.top,
-				U.animwhereParams.rc.right,
-				U.animwhereParams.rc.bottom
+				pU->animwhereParams.rc.left,
+				pU->animwhereParams.rc.top,
+				pU->animwhereParams.rc.right,
+				pU->animwhereParams.rc.bottom
 			);
 			break;
 		case MCI_DEVTYPE_OVERLAY:
 			sprintf(buf,"%d %d %d %d",
-				U.ovlywhereParams.rc.left,
-				U.ovlywhereParams.rc.top,
-				U.ovlywhereParams.rc.right,
-				U.ovlywhereParams.rc.bottom
+				pU->ovlywhereParams.rc.left,
+				pU->ovlywhereParams.rc.top,
+				pU->ovlywhereParams.rc.right,
+				pU->ovlywhereParams.rc.bottom
 			);
 			break;
 		default:strcpy(buf,"0 0 0 0");break;
 		}
 		_MCI_STR(buf);
 	}
+        SEGPTR_FREE(pU);
 	return	res;
 }
 
@@ -1871,10 +1894,11 @@ static DWORD
 MCISTR_Window(_MCISTR_PROTO_) {
 	int	i,res;
 	char	*s;
-	union 	{
+	union U {
 		MCI_ANIM_WINDOW_PARMS	animwindowParams;
 		MCI_OVLY_WINDOW_PARMS	ovlywindowParams;
-	} U;
+	};
+        union U *pU = SEGPTR_NEW(union U);
 
 	s=NULL;
 	i=0;
@@ -1884,33 +1908,33 @@ MCISTR_Window(_MCISTR_PROTO_) {
 			if (!STRCMP(keywords[i],"handle") && (i+1<nrofkeywords)) {
 				dwFlags |= MCI_ANIM_WINDOW_HWND;
 				if (!STRCMP(keywords[i+1],"default")) 
-					U.animwindowParams.hWnd = MCI_OVLY_WINDOW_DEFAULT;
+					pU->animwindowParams.hWnd = MCI_OVLY_WINDOW_DEFAULT;
 				else
-					sscanf(keywords[i+1],"%hd",&(U.animwindowParams.hWnd));
+					sscanf(keywords[i+1],"%hd",&(pU->animwindowParams.hWnd));
 				i+=2;
 				continue;
 			}
 			if (!STRCMP(keywords[i],"state") && (i+1<nrofkeywords)) {
 				dwFlags |= MCI_ANIM_WINDOW_STATE;
 				if (!STRCMP(keywords[i+1],"hide"))
-					U.animwindowParams.nCmdShow = SW_HIDE;
+					pU->animwindowParams.nCmdShow = SW_HIDE;
 				if (!STRCMP(keywords[i+1],"iconic"))
-					U.animwindowParams.nCmdShow = SW_SHOWMINNOACTIVE; /* correct? */
+					pU->animwindowParams.nCmdShow = SW_SHOWMINNOACTIVE; /* correct? */
 				if (!STRCMP(keywords[i+1],"minimized"))
-					U.animwindowParams.nCmdShow = SW_SHOWMINIMIZED;
+					pU->animwindowParams.nCmdShow = SW_SHOWMINIMIZED;
 				if (!STRCMP(keywords[i+1],"maximized"))
-					U.animwindowParams.nCmdShow = SW_SHOWMAXIMIZED;
+					pU->animwindowParams.nCmdShow = SW_SHOWMAXIMIZED;
 				if (!STRCMP(keywords[i+1],"minimize"))
-					U.animwindowParams.nCmdShow = SW_MINIMIZE;
+					pU->animwindowParams.nCmdShow = SW_MINIMIZE;
 				if (!STRCMP(keywords[i+1],"normal"))
-					U.animwindowParams.nCmdShow = SW_NORMAL;
+					pU->animwindowParams.nCmdShow = SW_NORMAL;
 				if (!STRCMP(keywords[i+1],"show"))
-					U.animwindowParams.nCmdShow = SW_SHOW;
+					pU->animwindowParams.nCmdShow = SW_SHOW;
 				if (!STRCMP(keywords[i+1],"no") && (i+2<nrofkeywords)) {
 					if (!STRCMP(keywords[i+2],"active"))
-						U.animwindowParams.nCmdShow = SW_SHOWNOACTIVATE;
+						pU->animwindowParams.nCmdShow = SW_SHOWNOACTIVATE;
 					if (!STRCMP(keywords[i+2],"action"))
-						U.animwindowParams.nCmdShow = SW_SHOWNA;/* correct?*/
+						pU->animwindowParams.nCmdShow = SW_SHOWNA;/* correct?*/
 					i++;
 				}
 				i+=2;
@@ -1943,7 +1967,7 @@ MCISTR_Window(_MCISTR_PROTO_) {
 				}
 				if ((t=strchr(s,'"'))) *t='\0';
 				/* FIXME: segmented pointer? */
-				U.animwindowParams.lpstrText = s;
+				pU->animwindowParams.lpstrText = s;
 				i=k+1;
 				continue;
 			}
@@ -1953,33 +1977,33 @@ MCISTR_Window(_MCISTR_PROTO_) {
 			if (!STRCMP(keywords[i],"handle") && (i+1<nrofkeywords)) {
 				dwFlags |= MCI_OVLY_WINDOW_HWND;
 				if (!STRCMP(keywords[i+1],"default")) 
-					U.ovlywindowParams.hWnd = MCI_OVLY_WINDOW_DEFAULT;
+					pU->ovlywindowParams.hWnd = MCI_OVLY_WINDOW_DEFAULT;
 				else
-					sscanf(keywords[i+1],"%hd",&(U.ovlywindowParams.hWnd));
+					sscanf(keywords[i+1],"%hd",&(pU->ovlywindowParams.hWnd));
 				i+=2;
 				continue;
 			}
 			if (!STRCMP(keywords[i],"state") && (i+1<nrofkeywords)) {
 				dwFlags |= MCI_OVLY_WINDOW_STATE;
 				if (!STRCMP(keywords[i+1],"hide"))
-					U.ovlywindowParams.nCmdShow = SW_HIDE;
+					pU->ovlywindowParams.nCmdShow = SW_HIDE;
 				if (!STRCMP(keywords[i+1],"iconic"))
-					U.ovlywindowParams.nCmdShow = SW_SHOWMINNOACTIVE; /* correct? */
+					pU->ovlywindowParams.nCmdShow = SW_SHOWMINNOACTIVE; /* correct? */
 				if (!STRCMP(keywords[i+1],"minimized"))
-					U.ovlywindowParams.nCmdShow = SW_SHOWMINIMIZED;
+					pU->ovlywindowParams.nCmdShow = SW_SHOWMINIMIZED;
 				if (!STRCMP(keywords[i+1],"maximized"))
-					U.ovlywindowParams.nCmdShow = SW_SHOWMAXIMIZED;
+					pU->ovlywindowParams.nCmdShow = SW_SHOWMAXIMIZED;
 				if (!STRCMP(keywords[i+1],"minimize"))
-					U.ovlywindowParams.nCmdShow = SW_MINIMIZE;
+					pU->ovlywindowParams.nCmdShow = SW_MINIMIZE;
 				if (!STRCMP(keywords[i+1],"normal"))
-					U.ovlywindowParams.nCmdShow = SW_NORMAL;
+					pU->ovlywindowParams.nCmdShow = SW_NORMAL;
 				if (!STRCMP(keywords[i+1],"show"))
-					U.ovlywindowParams.nCmdShow = SW_SHOW;
+					pU->ovlywindowParams.nCmdShow = SW_SHOW;
 				if (!STRCMP(keywords[i+1],"no") && (i+2<nrofkeywords)) {
 					if (!STRCMP(keywords[i+2],"active"))
-						U.ovlywindowParams.nCmdShow = SW_SHOWNOACTIVATE;
+						pU->ovlywindowParams.nCmdShow = SW_SHOWNOACTIVATE;
 					if (!STRCMP(keywords[i+2],"action"))
-						U.ovlywindowParams.nCmdShow = SW_SHOWNA;/* correct?*/
+						pU->ovlywindowParams.nCmdShow = SW_SHOWNA;/* correct?*/
 					i++;
 				}
 				i+=2;
@@ -2012,7 +2036,7 @@ MCISTR_Window(_MCISTR_PROTO_) {
 				}
 				if ((t=strchr(s,'"'))) *t='\0';
 				/* FIXME: segmented pointer? */
-				U.ovlywindowParams.lpstrText = s;
+				pU->ovlywindowParams.lpstrText = s;
 				i=k+1;
 				continue;
 			}
@@ -2021,8 +2045,9 @@ MCISTR_Window(_MCISTR_PROTO_) {
 		}
 		i++;
 	}
-	_MCI_CALL_DRIVER( MCI_WINDOW, MAKE_SEGPTR(&U) );
+	_MCI_CALL_DRIVER( MCI_WINDOW, SEGPTR_GET(pU) );
 	if (s) free(s);
+        SEGPTR_FREE(pU);
 	return res;
 }
 

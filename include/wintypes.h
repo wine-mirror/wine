@@ -79,7 +79,7 @@ typedef unsigned short  WCHAR;
 typedef unsigned short  BOOL16;
 typedef int             BOOL32;
 
-/* Handles types. These are the same for emulator and library. */
+/* Integer types. These are the same for emulator and library. */
 
 typedef UINT16          HANDLE16;
 typedef UINT32          HANDLE32;
@@ -96,6 +96,8 @@ typedef INT16           HFILE;
 typedef HANDLE32        HHOOK;
 typedef HANDLE32        HKEY;
 typedef HANDLE32        HMIXEROBJ;
+typedef DWORD           LCID;
+typedef DWORD           LCTYPE;
 
 /* Pointers types. These are the same for emulator and library. */
 

@@ -17,7 +17,6 @@
 #include <windows.h>
 #include "win.h"
 #include "local.h"
-#include "stackframe.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
@@ -614,13 +613,21 @@ static void EDIT_BuildLineDefs(WND *wndPtr)
  */
 static INT EDIT_CallWordBreakProc(WND *wndPtr, char *s, INT index, INT count, INT action)
 {
-	EDITWORDBREAKPROC wbp = (EDITWORDBREAKPROC)EDIT_EM_GetWordBreakProc(wndPtr, 0, 0L);
+    EDITWORDBREAKPROC wbp = (EDITWORDBREAKPROC)EDIT_EM_GetWordBreakProc(wndPtr, 0, 0L);
 
-	if (wbp) {
-		return CallWordBreakProc((FARPROC16)wbp,
-				(LONG)MAKE_SEGPTR(s), index, count, action);
-	} else
-		return EDIT_WordBreakProc(s, index, count, action);
+    if (!wbp) return EDIT_WordBreakProc(s, index, count, action);
+    else
+    {
+        /* We need a SEGPTR here */
+
+        EDITSTATE *es = EDITSTATEPTR(wndPtr);
+        SEGPTR ptr = LOCAL_LockSegptr( wndPtr->hInstance, es->hBuf ) +
+                     (UINT16)(s - EDIT_GetPointer(wndPtr));
+        INT ret = CallWordBreakProc( (FARPROC16)wbp, ptr,
+                                     index, count, action);
+        LOCAL_Unlock( wndPtr->hInstance, es->hBuf );
+        return ret;
+    }
 }
 
 
@@ -1836,7 +1843,6 @@ static LRESULT EDIT_EM_LineScroll(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	INT dx;
 	INT dy;
 	POINT16 pos;
-	HRGN hRgn;
 
 	if (nfv >= lc)
 		nfv = lc - 1;
@@ -1848,15 +1854,8 @@ static LRESULT EDIT_EM_LineScroll(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	if (dx || dy) {
 		if (wndPtr->hwndSelf == GetFocus())
 			HideCaret(wndPtr->hwndSelf);
-		if (EDIT_GetRedraw(wndPtr)) {
-			hRgn = CreateRectRgn(0, 0, 0, 0);
-			GetUpdateRgn(wndPtr->hwndSelf, hRgn, FALSE);
-			ValidateRgn(wndPtr->hwndSelf, 0);
-			OffsetRgn(hRgn, dx, dy);
-			InvalidateRgn( wndPtr->hwndSelf, hRgn, TRUE );
-			DeleteObject(hRgn);
+		if (EDIT_GetRedraw(wndPtr)) 
 			ScrollWindow(wndPtr->hwndSelf, dx, dy, NULL, NULL);
-		}
 		es->FirstVisibleLine = nfv;
 		es->XOffset = nxoff;
 		if (IsVScrollBar(wndPtr))
@@ -2580,7 +2579,7 @@ static LRESULT EDIT_WM_LButtonDblClk(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	UINT ll = (UINT)EDIT_EM_LineLength(wndPtr, e, 0L);
 	char *text = EDIT_GetPointer(wndPtr);
 
-	s = li + EDIT_CallWordBreakProc(wndPtr, text + li, e - li, ll, WB_LEFT);
+	s = li + EDIT_CallWordBreakProc (wndPtr, text + li, e - li, ll, WB_LEFT);
 	e = li + EDIT_CallWordBreakProc(wndPtr, text + li, e - li, ll, WB_RIGHT);
 	EDIT_EM_SetSel(wndPtr, 0, MAKELPARAM(s, e));
 	return 0L;

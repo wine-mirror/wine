@@ -20,6 +20,13 @@ typedef enum
     TYPE_INVALID
 } DRIVETYPE;
 
+/* Drive flags */
+
+#define DRIVE_DISABLED        0x0001  /* Drive is disabled */
+#define DRIVE_SHORT_NAMES     0x0002  /* Drive fs has 8.3 file names */
+#define DRIVE_CASE_SENSITIVE  0x0004  /* Drive fs is case sensitive */
+#define DRIVE_CASE_PRESERVING 0x0008  /* Drive fs is case preserving */
+
 extern int DRIVE_Init(void);
 extern int DRIVE_IsValid( int drive );
 extern int DRIVE_GetCurrentDrive(void);
@@ -32,6 +39,7 @@ extern const char * DRIVE_GetLabel( int drive );
 extern DWORD DRIVE_GetSerialNumber( int drive );
 extern int DRIVE_SetSerialNumber( int drive, DWORD serial );
 extern DRIVETYPE DRIVE_GetType( int drive );
+extern UINT32 DRIVE_GetFlags( int drive );
 extern int DRIVE_Chdir( int drive, const char *path );
 extern int DRIVE_Disable( int drive  );
 extern int DRIVE_Enable( int drive  );

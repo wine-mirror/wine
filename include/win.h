@@ -28,6 +28,10 @@
 #define WINSWITCH_CLASS_ATOM MAKEINTATOM(32771)  /* WinSwitch */
 #define ICONTITLE_CLASS_ATOM MAKEINTATOM(32772)  /* IconTitle */
 
+  /* PAINT_RedrawWindow() control flags */
+#define RDW_C_USEHRGN		0x0001
+#define RDW_C_DELETEHRGN	0x0002
+
 typedef struct tagWND
 {
     struct tagWND *next;          /* Next sibling */
@@ -84,15 +88,20 @@ extern BOOL32 WIN_UnlinkWindow( HWND32 hwnd );
 extern BOOL32 WIN_LinkWindow( HWND32 hwnd, HWND32 hwndInsertAfter );
 extern HWND32 WIN_FindWinToRepaint( HWND32 hwnd, HQUEUE16 hQueue );
 extern void WIN_SendParentNotify( HWND32 hwnd, WORD event,
-                                  WORD idChild, LONG lValue );
+                                  WORD idChild, LPARAM lValue );
 extern BOOL32 WIN_CreateDesktopWindow(void);
 extern HWND32 WIN_GetTopParent( HWND32 hwnd );
+extern BOOL32 WIN_IsWindowDrawable(WND*, BOOL32 );
 extern HINSTANCE16 WIN_GetWindowInstance( HWND32 hwnd );
 extern WND **WIN_BuildWinArray( WND *wndPtr );
 
 extern void DEFWND_SetText( WND *wndPtr, LPCSTR text );  /* windows/defwnd.c */
 
 extern void PROPERTY_RemoveWindowProps( WND *pWnd );   /* windows/property.c */
+
+extern BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
+                                  HRGN32 hrgnUpdate, UINT32 flags,
+                                  UINT32 control );    /* windows/painting.c */
 
 extern Display * display;
 extern Screen * screen;

@@ -13,7 +13,7 @@
 extern DWORD MSG_WineStartTicks;  /* Ticks at Wine startup */
 
 /* message.c */
-extern BOOL MSG_InternalGetMessage( SEGPTR msg, HWND hwnd, HWND hwndOwner,
+extern BOOL MSG_InternalGetMessage( MSG16 *msg, HWND hwnd, HWND hwndOwner,
 				    short code, WORD flags, BOOL sendIdle );
 
 /* timer.c */

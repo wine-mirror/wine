@@ -84,11 +84,11 @@ void QUEUE_WalkQueues(void)
 
 
 /***********************************************************************
- *	     QUEUE_GetDoomedQueue/QUEUE_SetDoomedQueue
+ *	     QUEUE_IsDoomedQueue
  */
-HQUEUE16 QUEUE_GetDoomedQueue()
+BOOL32 QUEUE_IsDoomedQueue( HQUEUE16 hQueue )
 {
-    return hDoomedQueue;
+    return (hDoomedQueue && (hQueue == hDoomedQueue));
 }
 
 

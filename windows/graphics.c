@@ -581,6 +581,7 @@ COLORREF SetPixel( HDC hdc, short x, short y, COLORREF color )
  */
 COLORREF GetPixel( HDC hdc, short x, short y )
 {
+    static Pixmap pixmap = 0;
     XImage * image;
     int pixel;
 
@@ -595,8 +596,21 @@ COLORREF GetPixel( HDC hdc, short x, short y )
 
     x = dc->w.DCOrgX + XLPTODP( dc, x );
     y = dc->w.DCOrgY + YLPTODP( dc, y );
-    image = XGetImage( display, dc->u.x.drawable, x, y,
-		       1, 1, AllPlanes, ZPixmap );
+    if (dc->w.flags & DC_MEMORY)
+    {
+        image = XGetImage( display, dc->u.x.drawable, x, y, 1, 1,
+                           AllPlanes, ZPixmap );
+    }
+    else
+    {
+        /* If we are reading from the screen, use a temporary copy */
+        /* to avoid a BadMatch error */
+        if (!pixmap) pixmap = XCreatePixmap( display, rootWindow,
+                                             1, 1, dc->w.bitsPerPixel );
+        XCopyArea( display, dc->u.x.drawable, pixmap, BITMAP_colorGC,
+                   x, y, 1, 1, 0, 0 );
+        image = XGetImage( display, pixmap, 0, 0, 1, 1, AllPlanes, ZPixmap );
+    }
     pixel = XGetPixel( image, 0, 0 );
     XDestroyImage( image );
     
