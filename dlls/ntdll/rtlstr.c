@@ -26,7 +26,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -389,7 +388,7 @@ LONG WINAPI RtlCompareString( const STRING *s1, const STRING *s2, BOOLEAN CaseIn
 
     if (CaseInsensitive)
     {
-        while (!ret && len--) ret = toupper(*p1++) - toupper(*p2++);
+        while (!ret && len--) ret = RtlUpperChar(*p1++) - RtlUpperChar(*p2++);
     }
     else
     {
@@ -481,7 +480,7 @@ BOOLEAN WINAPI RtlPrefixString( const STRING *s1, const STRING *s2, BOOLEAN igno
     if (ignore_case)
     {
         for (i = 0; i < s1->Length; i++)
-            if (toupper(s1->Buffer[i]) != toupper(s2->Buffer[i])) return FALSE;
+            if (RtlUpperChar(s1->Buffer[i]) != RtlUpperChar(s2->Buffer[i])) return FALSE;
     }
     else
     {
