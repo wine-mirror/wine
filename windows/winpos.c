@@ -2856,8 +2856,13 @@ Pos:  /* -----------------------------------------------------------------------
 		else
 		{
 		    if( (winpos.flags & SWP_AGG_NOPOSCHANGE) != SWP_AGG_NOPOSCHANGE )
+		    {
+			/* if window was not resized and not moved try to repaint itself */
+			if((winpos.flags & SWP_AGG_NOGEOMETRYCHANGE) == SWP_AGG_NOGEOMETRYCHANGE)
+			    uFlags |= SWP_EX_PAINTSELF;
 		         uFlags = SWP_CopyValidBits(wndPtr, &visRgn, &oldWindowRect, 
 							    &oldClientRect, uFlags);
+		    }
 	            else
 		    {
 			/* nothing moved, redraw frame if needed */
