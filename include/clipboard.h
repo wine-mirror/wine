@@ -1,8 +1,9 @@
 #ifndef __WINE_CLIPBOARD_H
 #define __WINE_CLIPBOARD_H
 
-#include "win.h"
 #include "windef.h"
+
+struct tagWND;
 
 typedef struct tagWINE_CLIPFORMAT {
     WORD	wFormatID;
@@ -16,15 +17,15 @@ typedef struct tagWINE_CLIPFORMAT {
     HANDLE16    hData16;
 } WINE_CLIPFORMAT, *LPWINE_CLIPFORMAT;
 
-typedef struct _CLIPBOARD_DRIVER
+typedef struct tagCLIPBOARD_DRIVER
 {
     void (*pEmptyClipboard)(void);
     void (*pSetClipboardData)(UINT);
     BOOL (*pRequestSelection)(void);
-    void (*pResetOwner)(WND *, BOOL);
+    void (*pResetOwner)(struct tagWND *, BOOL);
 } CLIPBOARD_DRIVER;
 
-CLIPBOARD_DRIVER *CLIPBOARD_GetDriver(void);
+extern CLIPBOARD_DRIVER *CLIPBOARD_Driver;
 
 extern void CLIPBOARD_ResetLock(HQUEUE16 hqRef, HQUEUE16 hqNew);
 extern void CLIPBOARD_DeleteRecord(LPWINE_CLIPFORMAT lpFormat, BOOL bChange);

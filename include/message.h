@@ -32,20 +32,21 @@ extern BOOL TIMER_GetTimerMsg( MSG *msg, HWND hwnd,
 #define EVENT_IO_EXCEPT		2
 
 /* event.c */
-
-typedef struct _EVENT_DRIVER {
-  BOOL (*pInit)(void);
+typedef struct tagEVENT_DRIVER {
+  BOOL   (*pInit)(void);
   void   (*pAddIO)(int, unsigned);
   void   (*pDeleteIO)(int, unsigned);
-  BOOL (*pWaitNetEvent)(BOOL, BOOL);
+  BOOL   (*pWaitNetEvent)(BOOL, BOOL);
   void   (*pSynchronize)(void);
-  BOOL (*pCheckFocus)(void);
-  BOOL (*pQueryPointer)(DWORD *, DWORD *, DWORD *);
+  BOOL   (*pCheckFocus)(void);
+  BOOL   (*pQueryPointer)(DWORD *, DWORD *, DWORD *);
   void   (*pDummyMotionNotify)(void);
-  BOOL (*pPending)(void);
+  BOOL   (*pPending)(void);
   BOOL16 (*pIsUserIdle)(void);
   void   (*pWakeUp)(void);
 } EVENT_DRIVER;
+
+extern EVENT_DRIVER *EVENT_Driver;
 
 extern void EVENT_AddIO( int fd, unsigned flag );
 extern void EVENT_DeleteIO( int fd, unsigned flag );

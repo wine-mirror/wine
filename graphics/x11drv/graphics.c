@@ -96,10 +96,10 @@ BOOL X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL fMapColors )
 	val.foreground = physDev->brush.pixel;
 	val.background = physDev->backgroundPixel;
     }
-    if (fMapColors && COLOR_PixelToPalette)
+    if (fMapColors && X11DRV_PALETTE_XPixelToPalette)
     {
-        val.foreground = COLOR_PixelToPalette[val.foreground];
-        val.background = COLOR_PixelToPalette[val.background];
+        val.foreground = X11DRV_PALETTE_XPixelToPalette[val.foreground];
+        val.background = X11DRV_PALETTE_XPixelToPalette[val.background];
     }
 
     if (dc->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion(dc);
@@ -126,7 +126,7 @@ BOOL X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL fMapColors )
         break;
 
     case FillTiled:
-        if (fMapColors && COLOR_PixelToPalette)
+        if (fMapColors && X11DRV_PALETTE_XPixelToPalette)
         {
             register int x, y;
             XImage *image;
@@ -140,7 +140,7 @@ BOOL X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL fMapColors )
             for (y = 0; y < 8; y++)
                 for (x = 0; x < 8; x++)
                     XPutPixel( image, x, y,
-                               COLOR_PixelToPalette[XGetPixel( image, x, y)] );
+                               X11DRV_PALETTE_XPixelToPalette[XGetPixel( image, x, y)] );
             XPutImage( display, pixmap, gc, image, 0, 0, 0, 0, 8, 8 );
             XDestroyImage( image );
             LeaveCriticalSection( &X11DRV_CritSection );
@@ -829,7 +829,7 @@ X11DRV_SetPixel( DC *dc, INT x, INT y, COLORREF color )
     
     x = dc->w.DCOrgX + XLPTODP( dc, x );
     y = dc->w.DCOrgY + YLPTODP( dc, y );
-    pixel = COLOR_ToPhysical( dc, color );
+    pixel = X11DRV_PALETTE_ToPhysical( dc, color );
     
     TSXSetForeground( display, physDev->gc, pixel );
     TSXSetFunction( display, physDev->gc, GXcopy );
@@ -837,7 +837,7 @@ X11DRV_SetPixel( DC *dc, INT x, INT y, COLORREF color )
 
     /* inefficient but simple... */
 
-    return COLOR_ToLogical(pixel);
+    return X11DRV_PALETTE_ToLogical(pixel);
 }
 
 
@@ -874,7 +874,7 @@ X11DRV_GetPixel( DC *dc, INT x, INT y )
     XDestroyImage( image );
     LeaveCriticalSection( &X11DRV_CritSection );
     
-    return COLOR_ToLogical(pixel);
+    return X11DRV_PALETTE_ToLogical(pixel);
 }
 
 
@@ -1171,7 +1171,7 @@ static BOOL X11DRV_DoFloodFill( const struct FloodFill_params *params )
                                  YLPTODP(dc,params->y) + dc->w.DCOrgY - rect.top,
                                  rect.left,
                                  rect.top,
-                                 COLOR_ToPhysical( dc, params->color ),
+                                 X11DRV_PALETTE_ToPhysical( dc, params->color ),
                                  params->fillType );
     }
 
@@ -1416,7 +1416,7 @@ X11DRV_SetBkColor( DC *dc, COLORREF color )
     oldColor = dc->w.backgroundColor;
     dc->w.backgroundColor = color;
 
-    physDev->backgroundPixel = COLOR_ToPhysical( dc, color );
+    physDev->backgroundPixel = X11DRV_PALETTE_ToPhysical( dc, color );
 
     return oldColor;
 }
@@ -1433,7 +1433,7 @@ X11DRV_SetTextColor( DC *dc, COLORREF color )
     oldColor = dc->w.textColor;
     dc->w.textColor = color;
 
-    physDev->textPixel = COLOR_ToPhysical( dc, color );
+    physDev->textPixel = X11DRV_PALETTE_ToPhysical( dc, color );
 
     return oldColor;
 }

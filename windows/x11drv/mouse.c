@@ -12,7 +12,7 @@
 
 #include "callback.h"
 #include "debug.h"
-#include "display.h"
+#include "mouse.h"
 #include "win.h"
 #include "windef.h"
 #include "x11drv.h"
@@ -21,7 +21,7 @@
 
 Cursor X11DRV_MOUSE_XCursor = None;    /* Current X cursor */
 
-BOOL X11DRV_MOUSE_DisableWarpPointer = FALSE;  /* hack; see DISPLAY_MoveCursor */
+static BOOL X11DRV_MOUSE_WarpPointer = FALSE;  /* hack; see DISPLAY_MoveCursor */
 
 /***********************************************************************
  *		X11DRV_MOUSE_DoSetCursor
@@ -203,7 +203,7 @@ void X11DRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY)
   int rootX, rootY, winX, winY;
   unsigned int xstate;
   
-  if (X11DRV_MOUSE_DisableWarpPointer) return;
+  if (!X11DRV_MOUSE_WarpPointer) return;
 
   if (!TSXQueryPointer( display, X11DRV_GetXRootWindow(), &root, &child,
 			&rootX, &rootY, &winX, &winY, &xstate ))
@@ -216,6 +216,18 @@ void X11DRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY)
   
   TSXWarpPointer( display, X11DRV_GetXRootWindow(), X11DRV_GetXRootWindow(), 
 		  0, 0, 0, 0, wAbsX, wAbsY );
+}
+
+/***********************************************************************
+ *           X11DRV_MOUSE_EnableWarpPointer
+ */
+BOOL X11DRV_MOUSE_EnableWarpPointer(BOOL bEnable)
+{
+  BOOL bOldEnable = X11DRV_MOUSE_WarpPointer;
+
+  X11DRV_MOUSE_WarpPointer = bEnable;
+
+  return bOldEnable;
 }
 
 #endif /* !defined(X_DISPLAY_MISSING) */

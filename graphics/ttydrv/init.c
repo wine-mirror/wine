@@ -4,25 +4,30 @@
  * Copyright 1998 Patrik Stridvall
  */
 
+#include "gdi.h"
+#include "bitmap.h"
 #include "color.h"
 #include "dc.h"
 #include "debug.h"
 #include "heap.h"
+#include "palette.h"
 #include "ttydrv.h"
 
-static const DC_FUNCTIONS TTYDRV_GDI_Driver =
+static const DC_FUNCTIONS TTYDRV_DC_Driver =
 {
   NULL,                /* pArc */
   NULL,                /* pBitBlt */
   NULL,                /* pBitmapBits */
   NULL,                /* pChord */
   NULL,                /* pCreateBitmap */
-  TTYDRV_GDI_CreateDC, /* pCreateDC */
-  TTYDRV_GDI_DeleteDC, /* pDeleteDC */
+  TTYDRV_DC_CreateDC,  /* pCreateDC */
+  TTYDRV_DC_DeleteDC,  /* pDeleteDC */
+  NULL,                /* pCreateDIBSection */
+  NULL,                /* pCreateDIBSection16 */
   NULL,                /* pDeleteObject */
   NULL,                /* pEllipse */
   NULL,                /* pEnumDeviceFonts */
-  TTYDRV_GDI_Escape,   /* pEscape */
+  TTYDRV_DC_Escape,    /* pEscape */
   NULL,                /* pExcludeClipRect */
   NULL,                /* pExcludeVisRect */
   NULL,                /* pExtFloodFill */
@@ -80,9 +85,29 @@ static const DC_FUNCTIONS TTYDRV_GDI_Driver =
   NULL                 /* pStretchDIBits */
 };
 
+
+GDI_DRIVER TTYDRV_GDI_Driver =
+{
+  TTYDRV_GDI_Initialize,
+  TTYDRV_GDI_Finalize
+};
+
+BITMAP_DRIVER TTYDRV_BITMAP_Driver =
+{
+  TTYDRV_BITMAP_SetDIBits,
+  TTYDRV_BITMAP_GetDIBits,
+  TTYDRV_BITMAP_DeleteDIBSection
+};
+
+PALETTE_DRIVER TTYDRV_PALETTE_Driver = 
+{
+  TTYDRV_PALETTE_SetMapping,
+  TTYDRV_PALETTE_UpdateMapping
+};
+
 /* FIXME: Adapt to the TTY driver. Copied from the X11 driver */
 
-static DeviceCaps TTYDRV_GDI_DevCaps = {
+static DeviceCaps TTYDRV_DC_DevCaps = {
 /* version */		0, 
 /* technology */	DT_RASDISPLAY,
 /* size, resolution */	0, 0, 0, 0, 0, 
@@ -110,37 +135,41 @@ static DeviceCaps TTYDRV_GDI_DevCaps = {
  */
 BOOL TTYDRV_GDI_Initialize(void)
 {
+  BITMAP_Driver = &TTYDRV_BITMAP_Driver;
+  PALETTE_Driver = &TTYDRV_PALETTE_Driver;
 
-  TTYDRV_GDI_DevCaps.version = 0x300;
-  TTYDRV_GDI_DevCaps.horzSize = 0;    /* FIXME: Screen width in mm */
-  TTYDRV_GDI_DevCaps.vertSize = 0;    /* FIXME: Screen height in mm */
-  TTYDRV_GDI_DevCaps.horzRes = 640;   /* FIXME: Screen width in pixel */
-  TTYDRV_GDI_DevCaps.vertRes = 480;   /* FIXME: Screen height in pixel */
-  TTYDRV_GDI_DevCaps.bitsPixel = 1;   /* FIXME: Bits per pixel */
-  TTYDRV_GDI_DevCaps.sizePalette = 0; /* FIXME: ??? */
+  TTYDRV_DC_DevCaps.version = 0x300;
+  TTYDRV_DC_DevCaps.horzSize = 0;    /* FIXME: Screen width in mm */
+  TTYDRV_DC_DevCaps.vertSize = 0;    /* FIXME: Screen height in mm */
+  TTYDRV_DC_DevCaps.horzRes = 640;   /* FIXME: Screen width in pixel */
+  TTYDRV_DC_DevCaps.vertRes = 480;   /* FIXME: Screen height in pixel */
+  TTYDRV_DC_DevCaps.bitsPixel = 1;   /* FIXME: Bits per pixel */
+  TTYDRV_DC_DevCaps.sizePalette = 0; /* FIXME: ??? */
   
   /* Resolution will be adjusted during the font init */
   
-  TTYDRV_GDI_DevCaps.logPixelsX = (int) (TTYDRV_GDI_DevCaps.horzRes * 25.4 / TTYDRV_GDI_DevCaps.horzSize);
-  TTYDRV_GDI_DevCaps.logPixelsY = (int) (TTYDRV_GDI_DevCaps.vertRes * 25.4 / TTYDRV_GDI_DevCaps.vertSize);
+  TTYDRV_DC_DevCaps.logPixelsX = (int) (TTYDRV_DC_DevCaps.horzRes * 25.4 / TTYDRV_DC_DevCaps.horzSize);
+  TTYDRV_DC_DevCaps.logPixelsY = (int) (TTYDRV_DC_DevCaps.vertRes * 25.4 / TTYDRV_DC_DevCaps.vertSize);
  
-  if( !COLOR_Init() ) return FALSE;
+  if(!TTYDRV_PALETTE_Initialize())
+    return FALSE;
 
-  return DRIVER_RegisterDriver( "DISPLAY", &TTYDRV_GDI_Driver );
+  return DRIVER_RegisterDriver( "DISPLAY", &TTYDRV_DC_Driver );
 }
 
 /**********************************************************************
  *	     TTYDRV_GDI_Finalize
  */
-void TTDRV_GDI_Finalize()
+void TTYDRV_GDI_Finalize(void)
 {
+    TTYDRV_PALETTE_Finalize();
 }
 
 /**********************************************************************
- *	     TTYDRV_GDI_CreateDC
+ *	     TTYDRV_DC_CreateDC
  */
-BOOL TTYDRV_GDI_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
-			   LPCSTR output, const DEVMODE16 *initData)
+BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
+			    LPCSTR output, const DEVMODE16 *initData)
 {
   FIXME(ttydrv, "(%p, %s, %s, %s, %p): semistub\n",
     dc, debugstr_a(driver), debugstr_a(device), 
@@ -155,16 +184,16 @@ BOOL TTYDRV_GDI_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
     return FALSE;
   }
 
-  dc->w.devCaps = &TTYDRV_GDI_DevCaps;
+  dc->w.devCaps = &TTYDRV_DC_DevCaps;
   
   return TRUE;
 }
 
 
 /**********************************************************************
- *	     TTYDRV_GDI_DeleteDC
+ *	     TTYDRV_DC_DeleteDC
  */
-BOOL TTYDRV_GDI_DeleteDC(DC *dc)
+BOOL TTYDRV_DC_DeleteDC(DC *dc)
 {
   FIXME(ttydrv, "(%p): semistub\n", dc);
 
@@ -175,11 +204,10 @@ BOOL TTYDRV_GDI_DeleteDC(DC *dc)
 }
 
 /**********************************************************************
- *           TTYDRV_GDI_Escape
+ *           TTYDRV_DC_Escape
  */
-INT TTYDRV_GDI_Escape(DC *dc, INT nEscape, INT cbInput,
-			SEGPTR lpInData, SEGPTR lpOutData)
+INT TTYDRV_DC_Escape(DC *dc, INT nEscape, INT cbInput,
+			 SEGPTR lpInData, SEGPTR lpOutData)
 {
     return 0;
 }
-

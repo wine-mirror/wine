@@ -1144,6 +1144,40 @@ INT16 X11DRV_KEYBOARD_ToAscii(
     return ret;
 }
 
-#endif /* !defined(X_DISPLAY_MISSING) */
+/***********************************************************************
+ *		X11DRV_KEYBOARD_GetBeepActive
+ */
+BOOL X11DRV_KEYBOARD_GetBeepActive()
+{
+  XKeyboardState  keyboard_state;
 
+  TSXGetKeyboardControl(display, &keyboard_state);
+
+  return keyboard_state.bell_percent != 0;
+}
+
+/***********************************************************************
+ *		X11DRV_KEYBOARD_SetBeepActive
+ */
+void X11DRV_KEYBOARD_SetBeepActive(BOOL bActivate)
+{
+  XKeyboardControl keyboard_value;
+  
+  if(bActivate)
+    keyboard_value.bell_percent = -1;
+  else
+    keyboard_value.bell_percent = 0;
+  
+  TSXChangeKeyboardControl(display, KBBellPercent, &keyboard_value);
+}
+
+/***********************************************************************
+ *		X11DRV_KEYBOARD_Beep
+ */
+void X11DRV_KEYBOARD_Beep()
+{
+  TSXBell(display, 0);
+}
+
+#endif /* !defined(X_DISPLAY_MISSING) */
 

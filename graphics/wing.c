@@ -6,28 +6,19 @@
 
 #include "config.h"
 
-#include "ts_xlib.h"
-#ifdef HAVE_LIBXXSHM
-#include <sys/types.h>
-#include <sys/ipc.h>
-#ifndef __EMX__
-#include <sys/shm.h>
-#endif /* !defined(__EMX__) */
-#include "ts_xshm.h"
-#endif /* defined(HAVE_LIBXXSHM) */
+#ifndef X_DISPLAY_MISSING
 #include "x11drv.h"
+#endif /* !defined(X_DISPLAY_MISSING) */
 
 #include "wine/winuser16.h"
 #include "bitmap.h"
-#include "palette.h"
-#include "dc.h"
 #include "debug.h"
-#include "gdi.h"
-#include "heap.h"
-#include "selectors.h"
+#include "ldt.h"
 #include "monitor.h"
+#include "palette.h"
 #include "windef.h"
-#include "xmalloc.h"
+#include "wine/winuser16.h"
+
 
 typedef enum WING_DITHER_TYPE
 {
@@ -105,7 +96,11 @@ SEGPTR WINAPI WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
     if (bmpi)
 	FIXME(wing, ": Todo - implement setting BITMAPINFO\n");
 
-    return PTR_SEG_OFF_TO_SEGPTR(bmp->dib->selector, 0);
+#ifndef X_DISPLAY_MISSING
+    return PTR_SEG_OFF_TO_SEGPTR(((X11DRV_DIBSECTION *) bmp->dib)->selector, 0);
+#else /* !defined(X_DISPLAY_MISSING) */
+    return NULL;
+#endif /* !defined(X_DISPLAY_MISSING) */
 }
 
 /***********************************************************************

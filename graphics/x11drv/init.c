@@ -11,14 +11,15 @@
 #include "ts_xlib.h"
 
 #include <string.h>
-#include "x11drv.h"
-#include "color.h"
+
 #include "bitmap.h"
-#include "winnt.h"
-#include "local.h"
+#include "color.h"
 #include "debug.h"
 #include "ldt.h"
+#include "local.h"
 #include "monitor.h"
+#include "winnt.h"
+#include "x11drv.h"
 
 static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                LPCSTR output, const DEVMODE16* initData );
@@ -36,6 +37,8 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     X11DRV_CreateBitmap,             /* pCreateBitmap */
     X11DRV_CreateDC,                 /* pCreateDC */
     X11DRV_DeleteDC,                 /* pDeleteDC */
+    X11DRV_DIB_CreateDIBSection,     /* pCreateDIBSection */
+    X11DRV_DIB_CreateDIBSection16,   /* pCreateDIBSection16 */
     X11DRV_DeleteObject,             /* pDeleteObject */
     X11DRV_Ellipse,                  /* pEllipse */
     X11DRV_EnumDeviceFonts,          /* pEnumDeviceFonts */
@@ -97,7 +100,26 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL                             /* pStretchDIBits */
 };
 
-static DeviceCaps X11DRV_DevCaps = {
+GDI_DRIVER X11DRV_GDI_Driver =
+{
+  X11DRV_GDI_Initialize,
+  X11DRV_GDI_Finalize
+};
+
+BITMAP_DRIVER X11DRV_BITMAP_Driver =
+{
+  X11DRV_DIB_SetDIBits,
+  X11DRV_DIB_GetDIBits,
+  X11DRV_DIB_DeleteDIBSection
+};
+
+PALETTE_DRIVER X11DRV_PALETTE_Driver =
+{
+  X11DRV_PALETTE_SetMapping,
+  X11DRV_PALETTE_UpdateMapping
+};
+
+DeviceCaps X11DRV_DevCaps = {
 /* version */		0, 
 /* technology */	DT_RASDISPLAY,
 /* size, resolution */	0, 0, 0, 0, 0, 
@@ -120,15 +142,18 @@ static DeviceCaps X11DRV_DevCaps = {
 /* ..etc */		0, 0 };
 
 /**********************************************************************
- *	     X11DRV_Init
+ *	     X11DRV_GDI_Initialize
  */
-BOOL X11DRV_Init(void)
+BOOL X11DRV_GDI_Initialize(void)
 {
+    BITMAP_Driver = &X11DRV_BITMAP_Driver;
+    PALETTE_Driver = &X11DRV_PALETTE_Driver;
+
     /* FIXME: colormap management should be merged with the X11DRV */
 
     if( !X11DRV_DIB_Init() ) return FALSE;
 
-    if( !COLOR_Init() ) return FALSE;
+    if( !X11DRV_PALETTE_Init() ) return FALSE;
 
     if( !X11DRV_OBM_Init() ) return FALSE;
 
@@ -146,14 +171,6 @@ BOOL X11DRV_Init(void)
     X11DRV_DevCaps.horzRes = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
     X11DRV_DevCaps.vertRes = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
     X11DRV_DevCaps.bitsPixel = MONITOR_GetDepth(&MONITOR_PrimaryMonitor);
-
-    if( COLOR_GetSystemPaletteFlags() & COLOR_VIRTUAL ) 
-	X11DRV_DevCaps.sizePalette = 0;
-    else
-    {
-	X11DRV_DevCaps.rasterCaps |= RC_PALETTE;
-	X11DRV_DevCaps.sizePalette = DefaultVisual(display,DefaultScreen(display))->map_entries;
-    }
  
     /* Resolution will be adjusted during the font init */
 
@@ -173,6 +190,14 @@ BOOL X11DRV_Init(void)
     if (!X11DRV_FONT_Init( &X11DRV_DevCaps )) return FALSE;
 
     return DRIVER_RegisterDriver( "DISPLAY", &X11DRV_Funcs );
+}
+
+/**********************************************************************
+ *	     X11DRV_GDI_Finalize
+ */
+void X11DRV_GDI_Finalize(void)
+{
+  X11DRV_PALETTE_Cleanup();
 }
 
 /**********************************************************************

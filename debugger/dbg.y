@@ -6,16 +6,13 @@
  * Copyright 1995 Morten Welinder
  */
 
-#include "config.h"
-#include "ts_xlib.h"
-#include "x11drv.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
 #include "winbase.h"
 #include "class.h"
 #include "module.h"
@@ -30,6 +27,7 @@
 #include "process.h"
 #include "main.h"
 #include "expr.h"
+#include "user.h"
 
 extern FILE * yyin;
 unsigned int dbg_mode = 0;
@@ -494,9 +492,7 @@ static void DEBUG_Main( int signal )
         GlobalUnlock16( GetCurrentTask() );
 
         /* Put the display in a correct state */
-
-        TSXUngrabServer( display );
-        TSXFlush( display );
+	USER_Driver->pBeginDebugging();
 
         newmode = ISV86(&DEBUG_context) ? 16 : IS_SELECTOR_32BIT(addr.seg) ? 32 : 16;
         if (newmode != dbg_mode)
@@ -569,6 +565,8 @@ static void DEBUG_Main( int signal )
       }
 
     in_debugger = FALSE;
+
+    USER_Driver->pEndDebugging();
 }
 
 

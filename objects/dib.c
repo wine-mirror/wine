@@ -3,24 +3,14 @@
  *
  * Copyright 1993,1994  Alexandre Julliard
  *
- * TODO: Still contains some references to X11DRV.
  */
 
-#include "ts_xlib.h"
-#include "x11drv.h"
-
-#include <stdlib.h>
-#include "dc.h"
 #include "bitmap.h"
 #include "callback.h"
-#include "palette.h"
-#include "global.h"
-#include "selectors.h"
+#include "dc.h"
 #include "debug.h"
-#include "local.h"
-#include "xmalloc.h" /* for XCREATEIMAGE macro */
 #include "monitor.h"
-
+#include "palette.h"
 
 /***********************************************************************
  *           DIB_GetDIBWidthBytes
@@ -187,86 +177,34 @@ INT16 WINAPI SetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
  *    Failure: 0
  */
 INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
-                          UINT lines, LPCVOID bits, const BITMAPINFO *info,
-                          UINT coloruse )
+		      UINT lines, LPCVOID bits, const BITMAPINFO *info,
+		      UINT coloruse )
 {
-    DIB_SETIMAGEBITS_DESCR descr;
-    BITMAPOBJ * bmp;
-    int height, tmpheight;
+    DC *dc;
+    BITMAPOBJ *bitmap;
     INT result;
 
-      /* Check parameters */
-
-    descr.dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!descr.dc) 
+    /* Check parameters */
+    dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) 
     {
-	descr.dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!descr.dc) return 0;
+	dc = (DC *) GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!dc) return 0;
     }
-    if (!(bmp = (BITMAPOBJ *)GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
+
+    if (!(bitmap = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
     {
         GDI_HEAP_UNLOCK( hdc );
         return 0;
     }
-    if (DIB_GetBitmapInfo( &info->bmiHeader, &descr.infoWidth, &height,
-                           &descr.infoBpp, &descr.compression ) == -1)
-    {
-        GDI_HEAP_UNLOCK( hbitmap );
-        GDI_HEAP_UNLOCK( hdc );
-        return 0;
-    }
-    tmpheight = height;
-    if (height < 0) height = -height;
-    if (!lines || (startscan >= height))
-    {
-        GDI_HEAP_UNLOCK( hbitmap );
-        GDI_HEAP_UNLOCK( hdc );
-        return 0;
-    }
-    if (startscan + lines > height) lines = height - startscan;
 
-    if (descr.infoBpp <= 8)
-    {
-        descr.colorMap = X11DRV_DIB_BuildColorMap( descr.dc, coloruse,
-						   bmp->bitmap.bmBitsPixel,
-						   info, &descr.nColorMap );
-        if (!descr.colorMap)
-        {
-            GDI_HEAP_UNLOCK( hbitmap );
-            GDI_HEAP_UNLOCK( hdc );
-            return 0;
-        } 
-    } else
-    	descr.colorMap = 0;
-
-    /* HACK for now */
-    if(!bmp->DDBitmap)
-        X11DRV_CreateBitmap(hbitmap);
-{
-    X11DRV_PHYSBITMAP *pbitmap = bmp->DDBitmap->physBitmap;
-
-
-    descr.bits      = bits;
-    descr.image     = NULL;
-    descr.lines     = tmpheight >= 0 ? lines : -lines;
-    descr.depth     = bmp->bitmap.bmBitsPixel;
-    descr.drawable  = pbitmap->pixmap;
-    descr.gc        = BITMAP_GC(bmp);
-    descr.xSrc      = 0;
-    descr.ySrc      = 0;
-    descr.xDest     = 0;
-    descr.yDest     = height - startscan - lines;
-    descr.width     = bmp->bitmap.bmWidth;
-    descr.height    = lines;
-}
-    EnterCriticalSection( &X11DRV_CritSection );
-    result = CALL_LARGE_STACK( X11DRV_DIB_SetImageBits, &descr );
-    LeaveCriticalSection( &X11DRV_CritSection );
-
-    if (descr.colorMap) HeapFree(GetProcessHeap(), 0, descr.colorMap);
+    result = BITMAP_Driver->pSetDIBits(bitmap, dc, startscan, 
+				       lines, bits, info, 
+				       coloruse, hbitmap);
 
     GDI_HEAP_UNLOCK( hdc );
     GDI_HEAP_UNLOCK( hbitmap );
+
     return result;
 }
 
@@ -466,34 +404,6 @@ static RGBQUAD DefLogPalette[20] = { /* Copy of Default Logical Palette */
     { 0xff, 0xff, 0xff, 0x00 }
 };
 
-/*********************************************************************
- *         DIB_GetNearestIndex
- *
- * Helper for GetDIBits.
- * Returns the nearest colour table index for a given RGB.
- * Nearest is defined by minimizing the sum of the squares.
- */
-static INT DIB_GetNearestIndex(BITMAPINFO *info, BYTE r, BYTE g, BYTE b)
-{
-    INT i, best = -1, diff, bestdiff = -1;
-    RGBQUAD *color;
-
-    for(color = info->bmiColors, i = 0; i < (1 << info->bmiHeader.biBitCount);
-	color++, i++) {
-        diff = (r - color->rgbRed) * (r - color->rgbRed) +
-	       (g - color->rgbGreen) * (g - color->rgbGreen) +
-	       (b - color->rgbBlue) * (b - color->rgbBlue);
-	if(diff == 0)
-	    return i;
-	if(best == -1 || diff < bestdiff) {
-	    best = i;
-	    bestdiff = diff;
-	}
-    }
-    return best;
-}
-
-
 /***********************************************************************
  *           GetDIBits16    (GDI.441)
  */
@@ -527,8 +437,7 @@ INT WINAPI GetDIBits(
     BITMAPOBJ * bmp;
     PALETTEENTRY * palEntry;
     PALETTEOBJ * palette;
-    XImage * bmpImage;
-    int i, x, y;
+    int i;
 
     if (!lines) return 0;
     if (!info) return 0;
@@ -539,9 +448,13 @@ INT WINAPI GetDIBits(
 	if (!dc) return 0;
     }
     if (!(bmp = (BITMAPOBJ *)GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
+    {
+        GDI_HEAP_UNLOCK( hdc );
 	return 0;
+    }
     if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->w.hPalette, PALETTE_MAGIC )))
     {
+        GDI_HEAP_UNLOCK( hdc );
         GDI_HEAP_UNLOCK( hbitmap );
         return 0;
     }
@@ -602,379 +515,17 @@ INT WINAPI GetDIBits(
 	}
     }
 
+    GDI_HEAP_UNLOCK( dc->w.hPalette );
+
     if (bits)
-    {	
-	BYTE    *bbits = (BYTE*)bits, *linestart;
-	int	dstwidth, yend, xend = bmp->bitmap.bmWidth;
-
-        TRACE(bitmap, "%u scanlines of (%i,%i) -> (%i,%i) starting from %u\n",
-	      lines, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
-	      (int)info->bmiHeader.biWidth, (int)info->bmiHeader.biHeight,
-	      startscan );
-
-	/* adjust number of scanlines to copy */
-
-	if( lines > info->bmiHeader.biHeight )
-	    lines = info->bmiHeader.biHeight;
-
-	yend = startscan + lines;
-	if( startscan >= bmp->bitmap.bmHeight ) 
+    {
+	if(!BITMAP_Driver->pGetDIBits(bmp, dc, startscan, lines, bits, info, coloruse, hbitmap))	
         {
-            GDI_HEAP_UNLOCK( hbitmap );
-            GDI_HEAP_UNLOCK( dc->w.hPalette );
-            return FALSE;
-        }
-	if( yend > bmp->bitmap.bmHeight ) yend = bmp->bitmap.bmHeight;
+	    GDI_HEAP_UNLOCK( hdc );
+	    GDI_HEAP_UNLOCK( hbitmap );
 
-	/* adjust scanline width */
-
-	if(bmp->bitmap.bmWidth > info->bmiHeader.biWidth)
-            xend = info->bmiHeader.biWidth;
-
-	/* HACK for now */
-	if(!bmp->DDBitmap)
-	    X11DRV_CreateBitmap(hbitmap);
-
-	dstwidth = DIB_GetDIBWidthBytes( info->bmiHeader.biWidth,
-					 info->bmiHeader.biBitCount );
-
-        EnterCriticalSection( &X11DRV_CritSection );
-	bmpImage = (XImage *)CALL_LARGE_STACK( X11DRV_BITMAP_GetXImage, bmp );
-
-	linestart = bbits;
-	switch( info->bmiHeader.biBitCount ) {
-
-	case 1: /* 1 bit DIB */
-	    {
-	        unsigned long white = (1 << bmp->bitmap.bmBitsPixel) - 1;
-
-		for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
-		    for( x = 0; x < xend; x++ ) {
-		        if (!(x&7)) *bbits = 0;
-			*bbits |= (XGetPixel( bmpImage, x, y) >= white) 
-			  << (7 - (x&7));
-			if ((x&7)==7) bbits++;
-		    }
-		    bbits = (linestart += dstwidth);
-		}
-	    }
-	    break;
-
-
-	case 4: /* 4 bit DIB */
-	    switch(bmp->bitmap.bmBitsPixel) {
-
-	    case 1: /* 1/4 bit bmp -> 4 bit DIB */
-	    case 4:
-	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
-		    for( x = 0; x < xend; x++ ) {
-		        if (!(x&1)) *bbits = 0;
-			*bbits |= XGetPixel( bmpImage, x, y)<<(4*(1-(x&1)));
-			if ((x&1)==1) bbits++;
-		    }
-		    bbits = (linestart += dstwidth);
-		}
-		break;
-
-	    case 8: /* 8 bit bmp -> 4 bit DIB */
-	        palEntry = palette->logpalette.palPalEntry;
-	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
-		    for( x = 0; x < xend; x++ ) {
-		        unsigned long pixel = XGetPixel( bmpImage, x, y );
-			if (!(x&1)) *bbits = 0;
-			*bbits |= ( DIB_GetNearestIndex(info,
-				    palEntry[pixel].peRed,
-				    palEntry[pixel].peGreen,
-				    palEntry[pixel].peBlue )
-					  << (4*(1-(x&1))) );
-			if ((x&1)==1) bbits++;
-		    }
-		    bbits = (linestart += dstwidth);
-		}
-		break;
-
-	    case 15: /* 15/16 bit bmp -> 4 bit DIB */
-	    case 16:
-	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
-		    for( x = 0; x < xend; x++ ) {
-		        unsigned long pixel = XGetPixel( bmpImage, x, y );
-			if (!(x&1)) *bbits = 0;
-			*bbits |= ( DIB_GetNearestIndex(info,
-				     ((pixel << 3) & 0xf8) |
-				     ((pixel >> 2) &  0x7),
-				     ((pixel >> 2) & 0xf8) |
-				     ((pixel >> 7) & 0x7),
-				     ((pixel >> 7) & 0xf8) |
-				     ((pixel >> 12) & 0x7) ) 
-					  << (4*(1-(x&1))) );
-			if ((x&1)==1) bbits++;
-		    }
-		    bbits = (linestart += dstwidth);
-		}
-		break;
-
-	    case 24: /* 24/32 bit bmp -> 4 bit DIB */
-	    case 32:
-	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
-		    for( x = 0; x < xend; x++ ) {
-		        unsigned long pixel = XGetPixel( bmpImage, x, y );
-			if (!(x&1)) *bbits = 0;
-			*bbits |= ( DIB_GetNearestIndex( info,
-				     (pixel >> 16) & 0xff,
-				     (pixel >>  8) & 0xff,
-				      pixel & 0xff )
-					  << (4*(1-(x&1))) );
-			if ((x&1)==1) bbits++;
-		    }
-		    bbits = (linestart += dstwidth);
-		}
-		break;
-
-	    default: /* ? bit bmp -> 4 bit DIB */
-	        FIXME(bitmap, "4 bit DIB %d bit bitmap\n",
-				  bmp->bitmap.bmBitsPixel);
-		break;
-	    }
-	    break;
-
-
-	case 8: /* 8 bit DIB */
-	    switch(bmp->bitmap.bmBitsPixel) {
-
-	    case 1: /* 1/4/8 bit bmp -> 8 bit DIB */
-	    case 4:
-	    case 8:
-	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
-		    for( x = 0; x < xend; x++ )
-		        *bbits++ = XGetPixel( bmpImage, x, y );
-		    bbits = (linestart += dstwidth);
-		}
-		break;
-
-	    case 15: /* 15/16 bit bmp -> 8 bit DIB */
-	    case 16:
-	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
-		    for( x = 0; x < xend; x++ ) {
-		        unsigned long pixel = XGetPixel( bmpImage, x, y );
-		        *bbits++ = DIB_GetNearestIndex( info, 
-					 ((pixel << 3) & 0xf8) |
-					 ((pixel >> 2) &  0x7),
-					 ((pixel >> 2) & 0xf8) |
-					 ((pixel >> 7) & 0x7),
-					 ((pixel >> 7) & 0xf8) |
-					 ((pixel >> 12) & 0x7) );
-		    }
-		    bbits = (linestart += dstwidth);
-		}
-		break;
-
-	    case 24: /* 24/32 bit bmp -> 8 bit DIB */
-	    case 32:
-	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
-		    for( x = 0; x < xend; x++ ) {
-		        unsigned long pixel = XGetPixel( bmpImage, x, y );
-		        *bbits++ = DIB_GetNearestIndex( info,
-					 (pixel >> 16) & 0xff,
-					 (pixel >>  8) & 0xff,
-					  pixel & 0xff );
-		    }
-		    bbits = (linestart += dstwidth);
-		}
-		break;
-
-	    default: /* ? bit bmp -> 8 bit DIB */
-	        FIXME(bitmap, "8 bit DIB %d bit bitmap\n",
-				  bmp->bitmap.bmBitsPixel);
-		break;
-	    }
-	    break;
-
-
-	case 15: /* 15/16 bit DIB */
-	case 16:
-	    switch(bmp->bitmap.bmBitsPixel) {
-
-	    case 15: /* 15/16 bit bmp -> 16 bit DIB */
-	    case 16:
-	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
-		    for( x = 0; x < xend; x++ ) {
-		        unsigned long pixel=XGetPixel( bmpImage, x, y);
-			*bbits++ = pixel & 0xff;
-			*bbits++ = (pixel >> 8) & 0xff;
-		    }
-		    bbits = (linestart += dstwidth);
-		}
-		break;
-		   
-	    case 24: /* 24/32 bit bmp -> 16 bit DIB */
-	    case 32:
-	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
-		    for( x = 0; x < xend; x++ ) {
-		        unsigned long pixel=XGetPixel( bmpImage, x, y);
-			*bbits++ = ((pixel >> 6) & 0xe0) |
-			           ((pixel >> 3) & 0x1f);
-			*bbits++ = ((pixel >> 17) & 0x7c) |
-			           ((pixel >> 14) & 0x3);
-		    }
-		    bbits = (linestart += dstwidth);
-		}
-		break;
-
-	    case 1: /* 1/4/8 bit bmp -> 16 bit DIB */
-	    case 4:
-	    case 8:
-	        palEntry = palette->logpalette.palPalEntry;
-	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
-		    for( x = 0; x < xend; x++ ) {
-		        unsigned long pixel=XGetPixel( bmpImage, x, y);
-			*bbits++ = ((palEntry[pixel].peBlue >> 3) & 0x1f) |
-			           ((palEntry[pixel].peGreen << 2) & 0xe0); 
-			*bbits++ = ((palEntry[pixel].peGreen >> 6) & 0x3) |
-			           ((palEntry[pixel].peRed >> 1) & 0x7c);
-		    }
-		    bbits = (linestart += dstwidth);
-		}
-		break;
-
-	    default: /* ? bit bmp -> 16 bit DIB */
-	        FIXME(bitmap, "15/16 bit DIB %d bit bitmap\n",
-				  bmp->bitmap.bmBitsPixel);
-		break;
-	    }
-	    break;
-
-
-	case 24: /* 24 bit DIB */
-	    switch(bmp->bitmap.bmBitsPixel) {
-
-	    case 24: /* 24/32 bit bmp -> 24 bit DIB */
-	    case 32:
-	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
-		    for( x = 0; x < xend; x++ ) {
-		        unsigned long pixel=XGetPixel( bmpImage, x, y);
-			*bbits++ = (pixel >>16) & 0xff;
-			*bbits++ = (pixel >> 8) & 0xff;
-			*bbits++ =  pixel       & 0xff;
-		    }
-		    bbits = (linestart += dstwidth);
-		}
-		break;
-
-	    case 15: /* 15/16 bit bmp -> 24 bit DIB */
-	    case 16:
-	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
-		    for( x = 0; x < xend; x++ ) {
-		        unsigned long pixel=XGetPixel( bmpImage, x, y);
-		        *bbits++ = ((pixel >> 7) & 0xf8) |
-			           ((pixel >> 12) & 0x7);
-			*bbits++ = ((pixel >> 2) & 0xf8) |
-			           ((pixel >> 7) & 0x7);
-			*bbits++ = ((pixel << 3) & 0xf8) |
-			           ((pixel >> 2) & 0x7);
-		    }
-		    bbits = (linestart += dstwidth);
-		}
-		break;
-
-	    case 1: /* 1/4/8 bit bmp -> 24 bit DIB */
-	    case 4:
-	    case 8:
-	        palEntry = palette->logpalette.palPalEntry;
-	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
-		    for( x = 0; x < xend; x++ ) {
-		        unsigned long pixel=XGetPixel( bmpImage, x, y);
-			*bbits++ = palEntry[pixel].peBlue;
-			*bbits++ = palEntry[pixel].peGreen;
-			*bbits++ = palEntry[pixel].peRed;
-		    }
-		    bbits = (linestart += dstwidth);
-		}
-		break;
-
-	    default: /* ? bit bmp -> 24 bit DIB */
-	        FIXME(bitmap, "24 bit DIB %d bit bitmap\n",
-		      bmp->bitmap.bmBitsPixel);
-		break;
-	    }
-	    break;
-
-
-	case 32: /* 32 bit DIB */
-	    switch(bmp->bitmap.bmBitsPixel) {
-
-	    case 24: /* 24/32 bit bmp -> 32 bit DIB */
-	    case 32:
-	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
-		    for( x = 0; x < xend; x++ ) {
-		        unsigned long pixel=XGetPixel( bmpImage, x, y);
-			*bbits++ = (pixel >>16) & 0xff;
-			*bbits++ = (pixel >> 8) & 0xff;
-			*bbits++ =  pixel       & 0xff;
-			*bbits++ = 0;
-		    }
-		    bbits = (linestart += dstwidth);
-		}
-		break;
-
-	    case 15: /* 15/16 bit bmp -> 32 bit DIB */
-	    case 16:
-	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
-		    for( x = 0; x < xend; x++ ) {
-		        unsigned long pixel=XGetPixel( bmpImage, x, y);
-		        *bbits++ = ((pixel >> 7) & 0xf8) |
-			           ((pixel >> 12) & 0x7);
-			*bbits++ = ((pixel >> 2) & 0xf8) |
-			           ((pixel >> 7) & 0x7);
-			*bbits++ = ((pixel << 3) & 0xf8) |
-			           ((pixel >> 2) & 0x7);
-			*bbits++ = 0;
-		    }
-		    bbits = (linestart += dstwidth);
-		}
-		break;
-
-	    case 1: /* 1/4/8 bit bmp -> 32 bit DIB */
-	    case 4:
-	    case 8:
-	        palEntry = palette->logpalette.palPalEntry;
-	        for( y = yend - 1; (int)y >= (int)startscan; y-- ) {
-		    for( x = 0; x < xend; x++ ) {
-		        unsigned long pixel=XGetPixel( bmpImage, x, y);
-			*bbits++ = palEntry[pixel].peBlue;
-			*bbits++ = palEntry[pixel].peGreen;
-			*bbits++ = palEntry[pixel].peRed;
-			*bbits++ = 0;
-		    }
-		    bbits = (linestart += dstwidth);
-		}
-		break;
-
-	    default: /* ? bit bmp -> 32 bit DIB */
-	        FIXME(bitmap, "32 bit DIB %d bit bitmap\n",
-		      bmp->bitmap.bmBitsPixel);
-		break;
-	    }
-	    break;
-
-
-	default: /* ? bit DIB */
-	    FIXME(bitmap,"Unsupported DIB depth %d\n",
-		  info->bmiHeader.biBitCount);
-	    break;
+	    return FALSE;
 	}
-
-	XDestroyImage( bmpImage );
-        LeaveCriticalSection( &X11DRV_CritSection );
-
-	if(info->bmiHeader.biSizeImage == 0) /* Fill in biSizeImage */
-	    info->bmiHeader.biSizeImage = info->bmiHeader.biHeight *
-	                    DIB_GetDIBWidthBytes( info->bmiHeader.biWidth,
-						  info->bmiHeader.biBitCount );
-
-	if(bbits - (BYTE *)bits > info->bmiHeader.biSizeImage)
-	    ERR(bitmap, "Buffer overrun. Please investigate.\n");
-
-	info->bmiHeader.biCompression = 0;
     }
     else if( info->bmiHeader.biSize >= sizeof(BITMAPINFOHEADER) ) 
     {
@@ -1002,8 +553,10 @@ INT WINAPI GetDIBits(
     TRACE(bitmap, "biSizeImage = %ld, biWidth = %ld, biHeight = %ld\n",
 	  info->bmiHeader.biSizeImage, info->bmiHeader.biWidth,
 	  info->bmiHeader.biHeight);
+
+    GDI_HEAP_UNLOCK( hdc );
     GDI_HEAP_UNLOCK( hbitmap );
-    GDI_HEAP_UNLOCK( dc->w.hPalette );
+
     return lines;
 }
 
@@ -1089,198 +642,6 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
     return handle;
 }
 
-
-/***********************************************************************
- *           DIB_DoProtectDIBSection
- */
-static void DIB_DoProtectDIBSection( BITMAPOBJ *bmp, DWORD new_prot )
-{
-    DIBSECTION *dib = &bmp->dib->dibSection;
-    INT effHeight = dib->dsBm.bmHeight >= 0? dib->dsBm.bmHeight
-                                             : -dib->dsBm.bmHeight;
-    INT totalSize = dib->dsBmih.biSizeImage? dib->dsBmih.biSizeImage
-                         : dib->dsBm.bmWidthBytes * effHeight;
-    DWORD old_prot;
-
-    VirtualProtect(dib->dsBm.bmBits, totalSize, new_prot, &old_prot);
-    TRACE(bitmap, "Changed protection from %ld to %ld\n", 
-                  old_prot, new_prot);
-}
-
-/***********************************************************************
- *           DIB_DoUpdateDIBSection
- */
-static void DIB_DoUpdateDIBSection( BITMAPOBJ *bmp, BOOL toDIB )
-{
-    DIBSECTIONOBJ *dib = bmp->dib;
-    DIB_SETIMAGEBITS_DESCR descr;
-
-    if (DIB_GetBitmapInfo( &dib->dibSection.dsBmih, &descr.infoWidth, &descr.lines,
-                           &descr.infoBpp, &descr.compression ) == -1)
-	return;
-
-    descr.dc        = NULL;
-    descr.image     = dib->image;
-    descr.colorMap  = dib->colorMap;
-    descr.nColorMap = dib->nColorMap;
-    descr.bits      = dib->dibSection.dsBm.bmBits;
-    descr.depth     = bmp->bitmap.bmBitsPixel;
-    
-    /* Hack for now */
-    descr.drawable  = ((X11DRV_PHYSBITMAP *)bmp->DDBitmap->physBitmap)->pixmap;
-    descr.gc        = BITMAP_GC(bmp);
-    descr.xSrc      = 0;
-    descr.ySrc      = 0;
-    descr.xDest     = 0;
-    descr.yDest     = 0;
-    descr.width     = bmp->bitmap.bmWidth;
-    descr.height    = bmp->bitmap.bmHeight;
-
-    if (toDIB)
-    {
-        TRACE(bitmap, "Copying from Pixmap to DIB bits\n");
-        EnterCriticalSection( &X11DRV_CritSection );
-        CALL_LARGE_STACK( X11DRV_DIB_GetImageBits, &descr );
-        LeaveCriticalSection( &X11DRV_CritSection );
-    }
-    else
-    {
-	TRACE(bitmap, "Copying from DIB bits to Pixmap\n"); 
-        EnterCriticalSection( &X11DRV_CritSection );
-        CALL_LARGE_STACK( X11DRV_DIB_SetImageBits, &descr );
-        LeaveCriticalSection( &X11DRV_CritSection );
-    }
-}
-
-/***********************************************************************
- *           DIB_FaultHandler
- */
-static BOOL DIB_FaultHandler( LPVOID res, LPCVOID addr )
-{
-    BOOL handled = FALSE;
-    BITMAPOBJ *bmp;
-
-    bmp = (BITMAPOBJ *)GDI_GetObjPtr( (HBITMAP)res, BITMAP_MAGIC );
-    if (!bmp) return FALSE;
-
-    if (bmp->dib)
-        switch (bmp->dib->status)
-        {
-        case DIB_GdiMod:
-            TRACE( bitmap, "called in status DIB_GdiMod\n" );
-            DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
-            DIB_DoUpdateDIBSection( bmp, TRUE );
-            DIB_DoProtectDIBSection( bmp, PAGE_READONLY );
-            bmp->dib->status = DIB_InSync;
-            handled = TRUE;
-            break;
-
-        case DIB_InSync:
-            TRACE( bitmap, "called in status DIB_InSync\n" );
-            DIB_DoProtectDIBSection( bmp, PAGE_READWRITE );
-            bmp->dib->status = DIB_AppMod;
-            handled = TRUE;
-            break;
-
-        case DIB_AppMod:
-            FIXME( bitmap, "called in status DIB_AppMod: "
-                           "this can't happen!\n" );
-            break;
-
-        case DIB_NoHandler:
-            FIXME( bitmap, "called in status DIB_NoHandler: "
-                           "this can't happen!\n" );
-            break;
-        }
-
-    GDI_HEAP_UNLOCK( (HBITMAP)res );
-    return handled;
-}
-
-/***********************************************************************
- *           DIB_UpdateDIBSection
- */
-void DIB_UpdateDIBSection( DC *dc, BOOL toDIB )
-{
-    BITMAPOBJ *bmp;
-
-    /* Ensure this is a Compatible DC that has a DIB section selected */
-
-    if (!dc) return;
-    if (!(dc->w.flags & DC_MEMORY)) return;
-
-    bmp = (BITMAPOBJ *)GDI_GetObjPtr( dc->w.hBitmap, BITMAP_MAGIC );
-    if (!bmp) return;
-
-    if (!bmp->dib)
-    {
-	GDI_HEAP_UNLOCK(dc->w.hBitmap);
-	return;
-    }
-
-
-    if (!toDIB)
-    {
-        /* Prepare for access to the DIB by GDI functions */
-
-        switch (bmp->dib->status)
-        {
-        default:
-        case DIB_NoHandler:
-            DIB_DoUpdateDIBSection( bmp, FALSE );
-            break;
-
-        case DIB_GdiMod:
-            TRACE( bitmap, "fromDIB called in status DIB_GdiMod\n" );
-            /* nothing to do */
-            break;
-
-        case DIB_InSync:
-            TRACE( bitmap, "fromDIB called in status DIB_InSync\n" );
-            /* nothing to do */
-            break;
-
-        case DIB_AppMod:
-            TRACE( bitmap, "fromDIB called in status DIB_AppMod\n" );
-            DIB_DoUpdateDIBSection( bmp, FALSE );
-            DIB_DoProtectDIBSection( bmp, PAGE_READONLY );
-            bmp->dib->status = DIB_InSync;
-            break;
-        }
-    }
-    else
-    {
-        /* Acknowledge write access to the DIB by GDI functions */
-
-        switch (bmp->dib->status)
-        {
-        default:
-        case DIB_NoHandler:
-            DIB_DoUpdateDIBSection( bmp, TRUE );
-            break;
-
-        case DIB_GdiMod:
-            TRACE( bitmap, "  toDIB called in status DIB_GdiMod\n" );
-            /* nothing to do */
-            break;
-
-        case DIB_InSync:
-            TRACE( bitmap, "  toDIB called in status DIB_InSync\n" );
-            DIB_DoProtectDIBSection( bmp, PAGE_NOACCESS );
-            bmp->dib->status = DIB_GdiMod;
-            break;
-
-        case DIB_AppMod:
-            FIXME( bitmap, "  toDIB called in status DIB_AppMod: "
-                           "this can't happen!\n" );
-            break;
-        }
-    }
-
-  
-    GDI_HEAP_UNLOCK(dc->w.hBitmap);
-}
-
 /***********************************************************************
  *           CreateDIBSection16    (GDI.489)
  */
@@ -1288,163 +649,35 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
 				     SEGPTR *bits, HANDLE section,
 				     DWORD offset)
 {
-    HBITMAP res = CreateDIBSection(hdc, bmi, usage, NULL, section,
-				       offset);
+    HBITMAP16 hbitmap;
+    DC *dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
+    if(!dc) dc = (DC *) GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+    if(!dc) return (HBITMAP16) NULL;
 
-    if ( res )
-    {
-	BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr(res, BITMAP_MAGIC);
-	if ( bmp && bmp->dib )
-	{
-	    DIBSECTION *dib = &bmp->dib->dibSection;
-	    INT height = dib->dsBm.bmHeight >= 0 ?
-		dib->dsBm.bmHeight : -dib->dsBm.bmHeight;
-	    INT size = dib->dsBmih.biSizeImage ?
-		dib->dsBmih.biSizeImage : dib->dsBm.bmWidthBytes * height;
-	    if ( dib->dsBm.bmBits )
-	    {
-		bmp->dib->selector = 
-		    SELECTOR_AllocBlock( dib->dsBm.bmBits, size, 
-					 SEGMENT_DATA, FALSE, FALSE );
-	    }
-	    printf("ptr = %p, size =%d, selector = %04x, segptr = %ld\n",
-		   dib->dsBm.bmBits, size, bmp->dib->selector,
-		   PTR_SEG_OFF_TO_SEGPTR(bmp->dib->selector, 0));
-}
-	GDI_HEAP_UNLOCK( res );
+    hbitmap = dc->funcs->pCreateDIBSection16(dc, bmi, usage, bits, section, offset);
 
-	if ( bits ) 
-	    *bits = PTR_SEG_OFF_TO_SEGPTR( bmp->dib->selector, 0 );
-    }
+    GDI_HEAP_UNLOCK(hdc);
 
-    return res;
+    return hbitmap;
 }
 
 /***********************************************************************
  *           CreateDIBSection32    (GDI32.36)
  */
-HBITMAP WINAPI CreateDIBSection (HDC hdc, BITMAPINFO *bmi, UINT usage,
-				     LPVOID *bits,HANDLE section,
-				     DWORD offset)
+HBITMAP WINAPI CreateDIBSection(HDC hdc, BITMAPINFO *bmi, UINT usage,
+				LPVOID *bits, HANDLE section,
+				DWORD offset)
 {
-    HBITMAP res = 0;
-    BITMAPOBJ *bmp = NULL;
-    DIBSECTIONOBJ *dib = NULL;
-    int *colorMap = NULL;
-    int nColorMap;
+    HBITMAP hbitmap;
+    DC *dc = (DC *) GDI_GetObjPtr(hdc, DC_MAGIC);
+    if(!dc) dc = (DC *) GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+    if(!dc) return (HBITMAP) NULL;
 
-    /* Fill BITMAP32 structure with DIB data */
-    BITMAPINFOHEADER *bi = &bmi->bmiHeader;
-    INT effHeight, totalSize;
-    BITMAP bm;
+    hbitmap = dc->funcs->pCreateDIBSection(dc, bmi, usage, bits, section, offset);
 
-    TRACE(bitmap, "format (%ld,%ld), planes %d, bpp %d, size %ld, colors %ld (%s)\n",
-	  bi->biWidth, bi->biHeight, bi->biPlanes, bi->biBitCount,
-	  bi->biSizeImage, bi->biClrUsed, usage == DIB_PAL_COLORS? "PAL" : "RGB");
+    GDI_HEAP_UNLOCK(hdc);
 
-    bm.bmType = 0;
-    bm.bmWidth = bi->biWidth;
-    bm.bmHeight = bi->biHeight;
-    bm.bmWidthBytes = DIB_GetDIBWidthBytes(bm.bmWidth, bi->biBitCount);
-    bm.bmPlanes = bi->biPlanes;
-    bm.bmBitsPixel = bi->biBitCount;
-    bm.bmBits = NULL;
-
-    /* Get storage location for DIB bits */
-    effHeight = bm.bmHeight >= 0 ? bm.bmHeight : -bm.bmHeight;
-    totalSize = bi->biSizeImage? bi->biSizeImage : bm.bmWidthBytes * effHeight;
-
-    if (section)
-        bm.bmBits = MapViewOfFile(section, FILE_MAP_ALL_ACCESS, 
-                                  0L, offset, totalSize);
-    else
-	bm.bmBits = VirtualAlloc(NULL, totalSize, 
-                                 MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
-
-    /* Create Color Map */
-    if (bm.bmBits && bm.bmBitsPixel <= 8)
-    {
-        DC *dc = hdc? (DC *)GDI_GetObjPtr(hdc, DC_MAGIC) : NULL;
-        if (hdc && !dc) dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-
-        if (!hdc || dc)
-            colorMap = X11DRV_DIB_BuildColorMap( dc, usage, bm.bmBitsPixel,
-						 bmi, &nColorMap );
-        GDI_HEAP_UNLOCK(hdc);
-    }
-
-    /* Allocate Memory for DIB and fill structure */
-    if (bm.bmBits)
-	dib = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DIBSECTIONOBJ));
-    if (dib)
-    {
-	dib->dibSection.dsBm = bm;
-	dib->dibSection.dsBmih = *bi;
-	/* FIXME: dib->dibSection.dsBitfields ??? */
-	dib->dibSection.dshSection = section;
-	dib->dibSection.dsOffset = offset;
-
-        dib->status    = DIB_NoHandler;
-	dib->selector  = 0;
-        
-	dib->nColorMap = nColorMap;
-        dib->colorMap  = colorMap;
-    }
-
-    /* Create Device Dependent Bitmap and add DIB pointer */
-    if (dib) 
-    {
-       res = CreateDIBitmap(hdc, bi, 0, NULL, bmi, usage);
-       if (res)
-       {
-           bmp = (BITMAPOBJ *) GDI_GetObjPtr(res, BITMAP_MAGIC);
-           if (bmp)
-           {
-               bmp->dib = dib;
-               /* HACK for now */
-               if(!bmp->DDBitmap)
-                   X11DRV_CreateBitmap(res); 
-           }
-       }
-    }
-
-    /* Create XImage */
-    if (dib && bmp)
-        XCREATEIMAGE( dib->image, bm.bmWidth, effHeight, bmp->bitmap.bmBitsPixel );
-
-    /* Clean up in case of errors */
-    if (!res || !bmp || !dib || !bm.bmBits || (bm.bmBitsPixel <= 8 && !colorMap))
-    {
-        TRACE(bitmap, "got an error res=%08x, bmp=%p, dib=%p, bm.bmBits=%p\n",
-              res, bmp, dib, bm.bmBits);
-	if (bm.bmBits)
-        {
-            if (section)
-                UnmapViewOfFile(bm.bmBits), bm.bmBits = NULL;
-            else
-                VirtualFree(bm.bmBits, MEM_RELEASE, 0L), bm.bmBits = NULL;
-        }
-
-        if (dib && dib->image) { XDestroyImage(dib->image); dib->image = NULL; }
-	if (colorMap) { HeapFree(GetProcessHeap(), 0, colorMap); colorMap = NULL; }
-	if (dib) { HeapFree(GetProcessHeap(), 0, dib); dib = NULL; }
-	if (res) { DeleteObject(res); res = 0; }
-    }
-
-    /* Install fault handler, if possible */
-    if (bm.bmBits)
-    {
-        if (VIRTUAL_SetFaultHandler(bm.bmBits, DIB_FaultHandler, (LPVOID)res))
-        {
-            DIB_DoProtectDIBSection( bmp, PAGE_READONLY );
-            if (dib) dib->status = DIB_InSync;
-        }
-    }
-
-    /* Return BITMAP handle and storage location */
-    if (res) GDI_HEAP_UNLOCK(res);
-    if (bm.bmBits && bits) *bits = bm.bmBits;
-    return res;
+    return hbitmap;
 }
 
 /***********************************************************************
@@ -1454,27 +687,17 @@ void DIB_DeleteDIBSection( BITMAPOBJ *bmp )
 {
     if (bmp && bmp->dib)
     {
-        DIBSECTIONOBJ *dib = bmp->dib;
+        DIBSECTION *dib = bmp->dib;
 
-        if (dib->dibSection.dsBm.bmBits)
+        if (dib->dsBm.bmBits)
         {
-            if (dib->dibSection.dshSection)
-                UnmapViewOfFile(dib->dibSection.dsBm.bmBits);
+            if (dib->dshSection)
+                UnmapViewOfFile(dib->dsBm.bmBits);
             else
-                VirtualFree(dib->dibSection.dsBm.bmBits, MEM_RELEASE, 0L);
+                VirtualFree(dib->dsBm.bmBits, MEM_RELEASE, 0L);
         }
 
-        if (dib->image) 
-            XDestroyImage( dib->image );
-
-        if (dib->colorMap)
-            HeapFree(GetProcessHeap(), 0, dib->colorMap);
-
-        if (dib->selector)
-        {
-            WORD count = (GET_SEL_LIMIT( dib->selector ) >> 16) + 1;
-            SELECTOR_FreeBlock( dib->selector, count );
-        }
+	BITMAP_Driver->pDeleteDIBSection(bmp);
 
         HeapFree(GetProcessHeap(), 0, dib);
         bmp->dib = NULL;

@@ -53,6 +53,27 @@ INT16 TTYDRV_KEYBOARD_ToAscii(
   return 0;
 }
 
+/***********************************************************************
+ *		TTYDRV_KEYBOARD_GetBeepActive
+ */
+BOOL TTYDRV_KEYBOARD_GetBeepActive()
+{
+  return FALSE;
+}
+
+/***********************************************************************
+ *		TTYDRV_KEYBOARD_SetBeepActive
+ */
+void TTYDRV_KEYBOARD_SetBeepActive(BOOL bActivate)
+{
+}
+
+/***********************************************************************
+ *		TTYDRV_KEYBOARD_Beep
+ */
+void TTYDRV_KEYBOARD_Beep()
+{
+}
 
 
 

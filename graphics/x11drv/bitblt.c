@@ -596,11 +596,11 @@ static void BITBLT_GetRow( XImage *image, int *pdata, INT row,
     pdata += swap ? start+width-1 : start;
     if (image->depth == depthDst)  /* color -> color */
     {
-        if (COLOR_PixelToPalette && (depthDst != 1))
+        if (X11DRV_PALETTE_XPixelToPalette && (depthDst != 1))
             if (swap) for (i = 0; i < width; i++)
-                *pdata-- = COLOR_PixelToPalette[XGetPixel( image, i, row )];
+                *pdata-- = X11DRV_PALETTE_XPixelToPalette[XGetPixel( image, i, row )];
             else for (i = 0; i < width; i++)
-                *pdata++ = COLOR_PixelToPalette[XGetPixel( image, i, row )];
+                *pdata++ = X11DRV_PALETTE_XPixelToPalette[XGetPixel( image, i, row )];
         else
             if (swap) for (i = 0; i < width; i++)
                 *pdata-- = XGetPixel( image, i, row );
@@ -611,10 +611,10 @@ static void BITBLT_GetRow( XImage *image, int *pdata, INT row,
     {
         if (image->depth == 1)  /* monochrome -> color */
         {
-            if (COLOR_PixelToPalette)
+            if (X11DRV_PALETTE_XPixelToPalette)
             {
-                fg = COLOR_PixelToPalette[fg];
-                bg = COLOR_PixelToPalette[bg];
+                fg = X11DRV_PALETTE_XPixelToPalette[fg];
+                bg = X11DRV_PALETTE_XPixelToPalette[bg];
             }
             if (swap) for (i = 0; i < width; i++)
                 *pdata-- = XGetPixel( image, i, row ) ? bg : fg;
@@ -873,7 +873,7 @@ static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
 
     if (dcSrc->w.bitsPerPixel == dcDst->w.bitsPerPixel)
     {
-        if (!COLOR_PixelToPalette ||
+        if (!X11DRV_PALETTE_XPixelToPalette ||
             (dcDst->w.bitsPerPixel == 1))  /* monochrome -> monochrome */
         {
             XCopyArea( display, physDevSrc->drawable, pixmap, gc,
@@ -897,7 +897,7 @@ static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
             for (y = 0; y < height; y++)
                 for (x = 0; x < width; x++)
                     XPutPixel(imageSrc, x, y,
-                              COLOR_PixelToPalette[XGetPixel(imageSrc, x, y)]);
+                              X11DRV_PALETTE_XPixelToPalette[XGetPixel(imageSrc, x, y)]);
             XPutImage( display, pixmap, gc, imageSrc,
                        0, 0, 0, 0, width, height );
             XDestroyImage( imageSrc );
@@ -907,12 +907,12 @@ static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
     {
         if (dcSrc->w.bitsPerPixel == 1)  /* monochrome -> color */
         {
-            if (COLOR_PixelToPalette)
+            if (X11DRV_PALETTE_XPixelToPalette)
             {
                 XSetBackground( display, gc, 
-                             COLOR_PixelToPalette[physDevDst->textPixel] );
+                             X11DRV_PALETTE_XPixelToPalette[physDevDst->textPixel] );
                 XSetForeground( display, gc,
-                             COLOR_PixelToPalette[physDevDst->backgroundPixel]);
+                             X11DRV_PALETTE_XPixelToPalette[physDevDst->backgroundPixel]);
             }
             else
             {
@@ -955,8 +955,8 @@ static void BITBLT_GetDstArea(DC *dc, Pixmap pixmap, GC gc, RECT *visRectDst)
     INT height = visRectDst->bottom - visRectDst->top;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    if (!COLOR_PixelToPalette || (dc->w.bitsPerPixel == 1) ||
-	(COLOR_GetSystemPaletteFlags() & COLOR_VIRTUAL) )
+    if (!X11DRV_PALETTE_XPixelToPalette || (dc->w.bitsPerPixel == 1) ||
+	(X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL) )
     {
         XCopyArea( display, physDev->drawable, pixmap, gc,
                    visRectDst->left, visRectDst->top, width, height, 0, 0 );
@@ -981,7 +981,7 @@ static void BITBLT_GetDstArea(DC *dc, Pixmap pixmap, GC gc, RECT *visRectDst)
         for (y = 0; y < height; y++)
             for (x = 0; x < width; x++)
                 XPutPixel( image, x, y,
-                           COLOR_PixelToPalette[XGetPixel( image, x, y )]);
+                           X11DRV_PALETTE_XPixelToPalette[XGetPixel( image, x, y )]);
         XPutImage( display, pixmap, gc, image, 0, 0, 0, 0, width, height );
 	XDestroyImage( image );
     }
@@ -1000,10 +1000,10 @@ static void BITBLT_PutDstArea(DC *dc, Pixmap pixmap, GC gc, RECT *visRectDst)
     INT height = visRectDst->bottom - visRectDst->top;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    /* !COLOR_PaletteToPixel is _NOT_ enough */
+    /* !X11DRV_PALETTE_PaletteToXPixel is _NOT_ enough */
 
-    if (!COLOR_PaletteToPixel || (dc->w.bitsPerPixel == 1) || 
-        (COLOR_GetSystemPaletteFlags() & COLOR_VIRTUAL) )
+    if (!X11DRV_PALETTE_PaletteToXPixel || (dc->w.bitsPerPixel == 1) || 
+        (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL) )
     {
         XCopyArea( display, pixmap, physDev->drawable, gc, 0, 0,
                    width, height, visRectDst->left, visRectDst->top );
@@ -1017,7 +1017,7 @@ static void BITBLT_PutDstArea(DC *dc, Pixmap pixmap, GC gc, RECT *visRectDst)
             for (x = 0; x < width; x++)
             {
                 XPutPixel( image, x, y,
-                           COLOR_PaletteToPixel[XGetPixel( image, x, y )]);
+                           X11DRV_PALETTE_PaletteToXPixel[XGetPixel( image, x, y )]);
             }
         XPutImage( display, physDev->drawable, gc, image, 0, 0,
                    visRectDst->left, visRectDst->top, width, height );
@@ -1192,12 +1192,12 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
     if (!fStretch) switch(rop)  /* A few optimisations */
     {
     case BLACKNESS:  /* 0x00 */
-        if ((dcDst->w.bitsPerPixel == 1) || !COLOR_PaletteToPixel)
+        if ((dcDst->w.bitsPerPixel == 1) || !X11DRV_PALETTE_PaletteToXPixel)
             XSetFunction( display, physDevDst->gc, GXclear );
         else
         {
             XSetFunction( display, physDevDst->gc, GXcopy );
-            XSetForeground( display, physDevDst->gc, COLOR_PaletteToPixel[0] );
+            XSetForeground( display, physDevDst->gc, X11DRV_PALETTE_PaletteToXPixel[0] );
             XSetFillStyle( display, physDevDst->gc, FillSolid );
         }
         XFillRectangle( display, physDevDst->drawable, physDevDst->gc,
@@ -1205,12 +1205,12 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
         return TRUE;
 
     case DSTINVERT:  /* 0x55 */
-        if ((dcDst->w.bitsPerPixel == 1) || !COLOR_PaletteToPixel ||
+        if ((dcDst->w.bitsPerPixel == 1) || !X11DRV_PALETTE_PaletteToXPixel ||
             !Options.perfectGraphics)
         {
             XSetFunction( display, physDevDst->gc, GXinvert );
 
-            if( COLOR_GetSystemPaletteFlags() & (COLOR_PRIVATE | COLOR_VIRTUAL) )
+            if( X11DRV_PALETTE_PaletteFlags & (X11DRV_PALETTE_PRIVATE | X11DRV_PALETTE_VIRTUAL) )
                 XSetFunction( display, physDevDst->gc, GXinvert);
             else
             {
@@ -1287,13 +1287,13 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
         return TRUE;
 
     case WHITENESS:  /* 0xff */
-        if ((dcDst->w.bitsPerPixel == 1) || !COLOR_PaletteToPixel)
+        if ((dcDst->w.bitsPerPixel == 1) || !X11DRV_PALETTE_PaletteToXPixel)
             XSetFunction( display, physDevDst->gc, GXset );
         else
         {
             XSetFunction( display, physDevDst->gc, GXcopy );
             XSetForeground( display, physDevDst->gc, 
-                            COLOR_PaletteToPixel[COLOR_GetSystemPaletteSize() - 1]);
+                            X11DRV_PALETTE_PaletteToXPixel[X11DRV_DevCaps.sizePalette - 1]);
             XSetFillStyle( display, physDevDst->gc, FillSolid );
         }
         XFillRectangle( display, physDevDst->drawable, physDevDst->gc,
@@ -1407,11 +1407,11 @@ BOOL X11DRV_PatBlt( DC *dc, INT left, INT top,
     struct StretchBlt_params params = { dc, left, top, width, height,
                                         NULL, 0, 0, 0, 0, rop };
     BOOL result;
-    DIB_UpdateDIBSection( dc, FALSE );
+    X11DRV_DIB_UpdateDIBSection( dc, FALSE );
     EnterCriticalSection( &X11DRV_CritSection );
     result = (BOOL)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
     LeaveCriticalSection( &X11DRV_CritSection );
-    DIB_UpdateDIBSection( dc, TRUE );
+    X11DRV_DIB_UpdateDIBSection( dc, TRUE );
     return result;
 }
 
@@ -1426,12 +1426,12 @@ BOOL X11DRV_BitBlt( DC *dcDst, INT xDst, INT yDst,
     struct StretchBlt_params params = { dcDst, xDst, yDst, width, height,
                                         dcSrc, xSrc, ySrc, width, height, rop};
     BOOL result;
-    DIB_UpdateDIBSection( dcDst, FALSE );
-    DIB_UpdateDIBSection( dcSrc, FALSE );
+    X11DRV_DIB_UpdateDIBSection( dcDst, FALSE );
+    X11DRV_DIB_UpdateDIBSection( dcSrc, FALSE );
     EnterCriticalSection( &X11DRV_CritSection );
     result = (BOOL)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
     LeaveCriticalSection( &X11DRV_CritSection );
-    DIB_UpdateDIBSection( dcDst, TRUE );
+    X11DRV_DIB_UpdateDIBSection( dcDst, TRUE );
     return result;
 }
 
@@ -1448,12 +1448,12 @@ BOOL X11DRV_StretchBlt( DC *dcDst, INT xDst, INT yDst,
                                         dcSrc, xSrc, ySrc, widthSrc, heightSrc,
                                         rop };
     BOOL result;
-    DIB_UpdateDIBSection( dcDst, FALSE );
-    DIB_UpdateDIBSection( dcSrc, FALSE );
+    X11DRV_DIB_UpdateDIBSection( dcDst, FALSE );
+    X11DRV_DIB_UpdateDIBSection( dcSrc, FALSE );
     EnterCriticalSection( &X11DRV_CritSection );
     result = (BOOL)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
     LeaveCriticalSection( &X11DRV_CritSection );
-    DIB_UpdateDIBSection( dcDst, TRUE );
+    X11DRV_DIB_UpdateDIBSection( dcDst, TRUE );
     return result;
 }
 

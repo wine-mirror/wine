@@ -70,6 +70,13 @@ typedef struct tagDeviceCaps
     WORD   colorRes;      /* 108: color resolution */    
 } DeviceCaps;
 
+typedef struct tagGDI_DRIVER 
+{
+    BOOL (*pInitialize)(void);
+    void (*pFinalize)(void);
+} GDI_DRIVER;
+
+extern GDI_DRIVER *GDI_Driver;
 
   /* Device independent DC information */
 typedef struct
@@ -159,6 +166,8 @@ typedef struct tagDC_FUNCS
     BOOL     (*pCreateBitmap)(HBITMAP); 
     BOOL     (*pCreateDC)(DC*,LPCSTR,LPCSTR,LPCSTR,const DEVMODE16*);
     BOOL     (*pDeleteDC)(DC*);
+    HBITMAP  (*pCreateDIBSection)(DC *,BITMAPINFO *,UINT,LPVOID *,HANDLE,DWORD);
+    HBITMAP16 (*pCreateDIBSection16)(DC *,BITMAPINFO *,UINT16,SEGPTR *,HANDLE,DWORD);
     BOOL     (*pDeleteObject)(HGDIOBJ);
     BOOL     (*pEllipse)(DC*,INT,INT,INT,INT);
     BOOL     (*pEnumDeviceFonts)(DC*,LPLOGFONT16,DEVICEFONTENUMPROC,LPARAM);

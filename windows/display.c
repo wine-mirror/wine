@@ -5,29 +5,11 @@
  *
  */
 
-#include "config.h"
-
-#include "display.h"
 #include "debug.h"
+#include "display.h"
+#include "mouse.h"
 #include "windef.h"
-
-#ifndef X_DISPLAY_MISSING
-extern MOUSE_DRIVER X11DRV_MOUSE_Driver;
-#else /* X_DISPLAY_MISSING */
-extern MOUSE_DRIVER TTYDRV_MOUSE_Driver;
-#endif /* X_DISPLAY_MISSING */
-
-/***********************************************************************
- *           MOUSE_GetDriver()
- */
-MOUSE_DRIVER *MOUSE_GetDriver()
-{
-#ifndef X_DISPLAY_MISSING
-  return &X11DRV_MOUSE_Driver;
-#else /* X_DISPLAY_MISSING */
-  return &TTYDRV_MOUSE_Driver;
-#endif /* X_DISPLAY_MISSING */
-}
+#include "wine/winuser16.h"
 
 /***********************************************************************
  *           DISPLAY_Inquire			(DISPLAY.101)
@@ -45,7 +27,7 @@ WORD WINAPI DISPLAY_Inquire(LPCURSORINFO lpCursorInfo)
  */
 VOID WINAPI DISPLAY_SetCursor( CURSORICONINFO *lpCursor )
 {
-   MOUSE_GetDriver()->pSetCursor(lpCursor);
+   MOUSE_Driver->pSetCursor(lpCursor);
 }
 
 /***********************************************************************
@@ -53,7 +35,7 @@ VOID WINAPI DISPLAY_SetCursor( CURSORICONINFO *lpCursor )
  */
 VOID WINAPI DISPLAY_MoveCursor( WORD wAbsX, WORD wAbsY )
 {
-   MOUSE_GetDriver()->pMoveCursor(wAbsX, wAbsY);
+   MOUSE_Driver->pMoveCursor(wAbsX, wAbsY);
 }
 
 /***********************************************************************

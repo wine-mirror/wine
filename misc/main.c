@@ -7,11 +7,10 @@
 #include "config.h"
 
 #ifndef X_DISPLAY_MISSING
-#include "ts_xlib.h"
 #include "x11drv.h"
-#else /* X_DISPLAY_MISSING */
+#else /* !defined(X_DISPLAY_MISSING) */
 #include "ttydrv.h"
-#endif /* X_DISPLAY_MISSING */
+#endif /* !defined(X_DISPLAY_MISSING) */
 
 #include <locale.h>
 #include <ctype.h>
@@ -21,7 +20,7 @@
 #ifdef MALLOC_DEBUGGING
 # include <malloc.h>
 #endif
-#include "wine/winuser16.h"
+
 #include "winbase.h"
 #include "winsock.h"
 #include "heap.h"
@@ -39,6 +38,14 @@
 #include "winnls.h"
 #include "console.h"
 #include "monitor.h"
+#include "keyboard.h"
+#include "gdi.h"
+#include "user.h"
+#include "wine/winuser16.h"
+
+/**********************************************************************/
+
+USER_DRIVER *USER_Driver = NULL;
 
 /* when adding new languages look at ole/ole2nls.c 
  * for proper iso name and Windows code (add 0x0400 
@@ -100,7 +107,6 @@ struct options Options =
 static char szUsage[] =
   "%s\n"
   "Usage:  %s [options] \"program_name [arguments]\"\n"
-#ifndef X_DISPLAY_MISSING
   "\n"
   "Options:\n"
   "    -backingstore   Turn on backing store\n"
@@ -128,7 +134,6 @@ static char szUsage[] =
   "    -version        Display the Wine version\n"
   "    -winver         Version to imitate (one of win31,win95,nt351,nt40)\n"
   "    -dosver         DOS version to imitate (x.xx, e.g. 6.22). Only valid with -winver win31\n"
-#endif /* X_DISPLAY_MISSING */
   ;
 
 /***********************************************************************
@@ -744,12 +749,6 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
             exit(0);
         }
     }
-
-#ifndef X_DISPLAY_MISSING
-    X11DRV_MAIN_ParseOptions(argc,argv);
-#else /* X_DISPLAY_MISSING */
-    TTYDRV_MAIN_ParseOptions(argc,argv);
-#endif /* X_DISPLAY_MISSING */
 }
 
 /***********************************************************************
@@ -757,12 +756,9 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
  */
 static void called_at_exit(void)
 {
-#ifndef X_DISPLAY_MISSING
-    X11DRV_MAIN_RestoreSetup();
-#else /* X_DISPLAY_MISSING */
-    TTYDRV_MAIN_RestoreSetup();
-#endif /* X_DISPLAY_MISSING */
-    COLOR_Cleanup();
+    GDI_Driver->pFinalize();
+    USER_Driver->pFinalize();
+
     WINSOCK_Shutdown();
     CONSOLE_Close();
 }
@@ -798,23 +794,16 @@ BOOL MAIN_WineInit( int *argc, char *argv[] )
     gettimeofday( &tv, NULL);
     MSG_WineStartTicks = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
     
-#ifndef X_DISPLAY_MISSING
-    X11DRV_MAIN_Initialize();
-    MAIN_ParseOptions( argc, argv );
-    X11DRV_MAIN_Create();
-    X11DRV_MAIN_SaveSetup();
-#else /* !defined(X_DISPLAY_MISSING) */
-    TTYDRV_MAIN_Initialize();
-    MAIN_ParseOptions( argc, argv );
-    TTYDRV_MAIN_Create();
-    TTYDRV_MAIN_SaveSetup();
-#endif /* !defined(X_DISPLAY_MISSING) */
+    MAIN_ParseOptions(argc, argv);
 
 #ifndef X_DISPLAY_MISSING
-    MONITOR_PrimaryMonitor.pDriver = &X11DRV_MONITOR_Driver;
+    USER_Driver = &X11DRV_USER_Driver;
 #else /* !defined(X_DISPLAY_MISSING) */
-    MONITOR_PrimaryMonitor.pDriver = &TTYDRV_MONITOR_Driver;
+    USER_Driver = &TTYDRV_USER_Driver;
 #endif /* !defined(X_DISPLAY_MISSING) */
+
+    USER_Driver->pInitialize();
+
     MONITOR_Initialize(&MONITOR_PrimaryMonitor);
 
     if (Options.dllFlags)
@@ -839,7 +828,7 @@ void WINAPI MessageBeep16( UINT16 i )
  */
 BOOL WINAPI MessageBeep( UINT i )
 {
-    TSXBell( display, 0 );
+    KEYBOARD_Beep();
     return TRUE;
 }
 
@@ -850,7 +839,7 @@ BOOL WINAPI MessageBeep( UINT i )
 BOOL WINAPI Beep( DWORD dwFreq, DWORD dwDur )
 {
     /* dwFreq and dwDur are ignored by Win95 */
-    TSXBell(display, 0);
+    KEYBOARD_Beep();
     return TRUE;
 }
 
@@ -870,17 +859,14 @@ BOOL WINAPI SystemParametersInfoA( UINT uAction, UINT uParam,
                                        LPVOID lpvParam, UINT fuWinIni )
 {
 	int timeout;
-	int temp;
-	XKeyboardState		keyboard_state;
 
 	switch (uAction) {
 	case SPI_GETBEEP:
-		TSXGetKeyboardControl(display, &keyboard_state);
-		if (keyboard_state.bell_percent == 0)
-			*(BOOL *) lpvParam = FALSE;
-		else
-			*(BOOL *) lpvParam = TRUE;
+	        *(BOOL *) lpvParam = KEYBOARD_GetBeepActive();
 		break;
+	case SPI_SETBEEP:
+	       KEYBOARD_SetBeepActive(uParam);
+	       break;
 
 	case SPI_GETBORDER:
 		*(INT *)lpvParam = GetSystemMetrics( SM_CXFRAME );
@@ -920,19 +906,18 @@ BOOL WINAPI SystemParametersInfoA( UINT uAction, UINT uParam,
 		*(BOOL*)lpvParam=GetSystemMetrics(SM_MENUDROPALIGNMENT); /* XXX check this */
 		break;
 
-	case SPI_GETSCREENSAVEACTIVE:
-		if ( GetProfileIntA( "windows", "ScreenSaveActive", 1 ) == 1 )
-			*(BOOL*)lpvParam = TRUE;
+	case SPI_GETSCREENSAVEACTIVE:	        
+	       if(MONITOR_GetScreenSaveActive(&MONITOR_PrimaryMonitor) || 
+		  GetProfileIntA( "windows", "ScreenSaveActive", 1 ) == 1)
+	        	*(BOOL*)lpvParam = TRUE;
 		else
 			*(BOOL*)lpvParam = FALSE;
 		break;
 
 	case SPI_GETSCREENSAVETIMEOUT:
-#ifndef X_DISPLAY_MISSING
-	        TSXGetScreenSaver(display, &timeout, &temp,&temp,&temp);
-#else /* X_DISPLAY_MISSING */
-		timeout = GetProfileIntA( "windows", "ScreenSaveTimeout", 300 );
-#endif /* X_DISPLAY_MISSING */
+	        timeout = MONITOR_GetScreenSaveTimeout(&MONITOR_PrimaryMonitor);
+		if(!timeout)
+			timeout = GetProfileIntA( "windows", "ScreenSaveTimeout", 300 );
 		*(INT *) lpvParam = timeout * 1000;
 		break;
 
@@ -1056,18 +1041,11 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 {
 	int timeout; 
 	char buffer[256];
-	int temp;
-	XKeyboardState		keyboard_state;
-	XKeyboardControl	keyboard_value;
 
 	switch (uAction)
         {
 		case SPI_GETBEEP:
-			TSXGetKeyboardControl(display, &keyboard_state);
-			if (keyboard_state.bell_percent == 0)
-				*(BOOL16 *) lpvParam = FALSE;
-			else
-				*(BOOL16 *) lpvParam = TRUE;
+  		        *(BOOL *) lpvParam = KEYBOARD_GetBeepActive();
 			break;
 		
 		case SPI_GETBORDER:
@@ -1109,18 +1087,17 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 			break;
 
 		case SPI_GETSCREENSAVEACTIVE:
-                    if ( GetProfileIntA( "windows", "ScreenSaveActive", 1 ) == 1 )
-                        *(BOOL16 *) lpvParam = TRUE;
+		  if(MONITOR_GetScreenSaveActive(&MONITOR_PrimaryMonitor) ||
+		     GetProfileIntA( "windows", "ScreenSaveActive", 1 ) == 1)
+   		        *(BOOL16 *) lpvParam = TRUE;
                     else
                         *(BOOL16 *) lpvParam = FALSE;
                     break;
 
 		case SPI_GETSCREENSAVETIMEOUT:
-#ifndef X_DISPLAY_MISSING
-			TSXGetScreenSaver(display, &timeout, &temp,&temp,&temp);
-#else /* X_DISPLAY_MISSING */
-			timeout = GetProfileIntA( "windows", "ScreenSaveTimeout", 300 );
-#endif /* X_DISPLAY_MISSING */
+			timeout = MONITOR_GetScreenSaveTimeout(&MONITOR_PrimaryMonitor);
+			if(!timeout)
+			    timeout = GetProfileIntA( "windows", "ScreenSaveTimeout", 300 );
 			*(INT16 *) lpvParam = timeout;
 			break;
 
@@ -1141,24 +1118,15 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
                     break;
 
 		case SPI_SETBEEP:
-			if (uParam == TRUE)
-				keyboard_value.bell_percent = -1;
-			else
-				keyboard_value.bell_percent = 0;			
-   			TSXChangeKeyboardControl(display, KBBellPercent, 
-   							&keyboard_value);
+		        KEYBOARD_SetBeepActive(uParam);
 			break;
 
 		case SPI_SETSCREENSAVEACTIVE:
-			if (uParam == TRUE)
-				TSXActivateScreenSaver(display);
-			else
-				TSXResetScreenSaver(display);
+			MONITOR_SetScreenSaveActive(&MONITOR_PrimaryMonitor, uParam);
 			break;
 
 		case SPI_SETSCREENSAVETIMEOUT:
-			TSXSetScreenSaver(display, uParam, 60, DefaultBlanking, 
-							DefaultExposures);
+			MONITOR_SetScreenSaveTimeout(&MONITOR_PrimaryMonitor, uParam);
 			break;
 
 		case SPI_SETDESKWALLPAPER:

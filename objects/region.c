@@ -821,7 +821,6 @@ BOOL REGION_FrameRgn( HRGN hDest, HRGN hSrc, INT x, INT y )
  *           REGION_LPTODP
  *
  * Convert region to device co-ords for the supplied dc. 
- * Used by X11DRV_PaintRgn.
  */
 BOOL REGION_LPTODP( HDC hdc, HRGN hDest, HRGN hSrc )
 {

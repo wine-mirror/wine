@@ -37,7 +37,7 @@ HPEN X11DRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
                     dc->wndExtX / 2) / dc->wndExtX;
     if (physDev->pen.width < 0) physDev->pen.width = -physDev->pen.width;
     if (physDev->pen.width == 1) physDev->pen.width = 0;  /* Faster */
-    physDev->pen.pixel = COLOR_ToPhysical( dc, pen->logpen.lopnColor );    
+    physDev->pen.pixel = X11DRV_PALETTE_ToPhysical( dc, pen->logpen.lopnColor );    
     switch(pen->logpen.lopnStyle & PS_STYLE_MASK)
     {
       case PS_DASH:

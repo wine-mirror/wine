@@ -34,6 +34,14 @@ void TTYDRV_MONITOR_Finalize(MONITOR *pMonitor)
 }
 
 /***********************************************************************
+ *              TTYDRV_MONITOR_IsSingleWindow
+ */
+BOOL TTYDRV_MONITOR_IsSingleWindow(MONITOR *pMonitor)
+{
+  return TRUE;
+}
+
+/***********************************************************************
  *              TTYDRV_MONITOR_GetWidth
  *
  * Return the width of the monitor
@@ -70,4 +78,43 @@ int TTYDRV_MONITOR_GetDepth(MONITOR *pMonitor)
     (TTYDRV_MONITOR_DATA *) pMonitor->pDriverData;
 
   return pTTYMonitor->depth;
+}
+
+/***********************************************************************
+ *              TTYDRV_MONITOR_GetScreenSaveActive
+ *
+ * Returns the active status of the screen saver
+ */
+BOOL TTYDRV_MONITOR_GetScreenSaveActive(MONITOR *pMonitor)
+{
+  return FALSE;
+}
+
+/***********************************************************************
+ *              TTYDRV_MONITOR_SetScreenSaveActive
+ *
+ * Activate/Deactivate the screen saver
+ */
+void TTYDRV_MONITOR_SetScreenSaveActive(MONITOR *pMonitor, BOOL bActivate)
+{
+}
+
+/***********************************************************************
+ *              TTYDRV_MONITOR_GetScreenSaveTimeout
+ *
+ * Return the screen saver timeout
+ */
+int TTYDRV_MONITOR_GetScreenSaveTimeout(MONITOR *pMonitor)
+{
+  return 0;
+}
+
+/***********************************************************************
+ *              TTYDRV_MONITOR_SetScreenSaveTimeout
+ *
+ * Set the screen saver timeout
+ */
+void TTYDRV_MONITOR_SetScreenSaveTimeout(
+  MONITOR *pMonitor, int nTimeout)
+{
 }

@@ -4,9 +4,13 @@
  * Copyright 1998 Turchanov Sergey
  */
 
+#include "monitor.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "monitor.h"
+
+/**********************************************************************/
+
+MONITOR_DRIVER *MONITOR_Driver;
 
 /**********************************************************************/
 
@@ -15,11 +19,26 @@
 MONITOR MONITOR_PrimaryMonitor;
 
 /***********************************************************************
+ *              MONITOR_GetMonitor
+ */
+MONITOR *MONITOR_GetMonitor(HMONITOR hMonitor)
+{
+  if(hMonitor == xPRIMARY_MONITOR)
+    {
+      return &MONITOR_PrimaryMonitor;
+    }
+  else
+    {
+      return NULL;
+    }
+}
+
+/***********************************************************************
  *              MONITOR_Initialize
  */
 void MONITOR_Initialize(MONITOR *pMonitor)
 {
-  pMonitor->pDriver->pInitialize(pMonitor);
+  MONITOR_Driver->pInitialize(pMonitor);
 }
 
 /***********************************************************************
@@ -27,7 +46,15 @@ void MONITOR_Initialize(MONITOR *pMonitor)
  */
 void MONITOR_Finalize(MONITOR *pMonitor)
 {
-  pMonitor->pDriver->pFinalize(pMonitor);
+  MONITOR_Driver->pFinalize(pMonitor);
+}
+
+/***********************************************************************
+ *              MONITOR_IsSingleWindow
+ */
+BOOL MONITOR_IsSingleWindow(MONITOR *pMonitor)
+{
+  return MONITOR_Driver->pIsSingleWindow(pMonitor);
 }
 
 /***********************************************************************
@@ -35,7 +62,7 @@ void MONITOR_Finalize(MONITOR *pMonitor)
  */
 int MONITOR_GetWidth(MONITOR *pMonitor)
 {
-  return pMonitor->pDriver->pGetWidth(pMonitor);
+  return MONITOR_Driver->pGetWidth(pMonitor);
 }
 
 /***********************************************************************
@@ -43,7 +70,7 @@ int MONITOR_GetWidth(MONITOR *pMonitor)
  */
 int MONITOR_GetHeight(MONITOR *pMonitor)
 {
-  return pMonitor->pDriver->pGetHeight(pMonitor);
+  return MONITOR_Driver->pGetHeight(pMonitor);
 }
 
 /***********************************************************************
@@ -51,8 +78,41 @@ int MONITOR_GetHeight(MONITOR *pMonitor)
  */
 int MONITOR_GetDepth(MONITOR *pMonitor)
 {
-  return pMonitor->pDriver->pGetDepth(pMonitor);
+  return MONITOR_Driver->pGetDepth(pMonitor);
 }
+
+/***********************************************************************
+ *              MONITOR_GetScreenSaveActive
+ */
+BOOL MONITOR_GetScreenSaveActive(MONITOR *pMonitor)
+{
+  return MONITOR_Driver->pGetScreenSaveActive(pMonitor);
+}
+
+/***********************************************************************
+ *              MONITOR_SetScreenSaveActive
+ */
+void MONITOR_SetScreenSaveActive(MONITOR *pMonitor, BOOL bActivate)
+{
+  MONITOR_Driver->pSetScreenSaveActive(pMonitor, bActivate);
+}
+
+/***********************************************************************
+ *              MONITOR_GetScreenSaveTimeout
+ */
+int MONITOR_GetScreenSaveTimeout(MONITOR *pMonitor)
+{
+  return MONITOR_Driver->pGetScreenSaveTimeout(pMonitor);
+}
+
+/***********************************************************************
+ *              MONITOR_SetScreenSaveTimeout
+ */
+void MONITOR_SetScreenSaveTimeout(MONITOR *pMonitor, int nTimeout)
+{
+  MONITOR_Driver->pSetScreenSaveTimeout(pMonitor, nTimeout);
+}
+
 
 /**********************************************************************/
 

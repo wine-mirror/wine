@@ -27,6 +27,8 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pCreateBitmap */
     PSDRV_CreateDC,                  /* pCreateDC */
     PSDRV_DeleteDC,                  /* pDeleteDC */
+    NULL,                            /* pCreateDIBSection */
+    NULL,                            /* pCreateDIBSection16 */
     NULL,                            /* pDeleteObject */
     PSDRV_Ellipse,                   /* pEllipse */
     PSDRV_EnumDeviceFonts,           /* pEnumDeviceFonts */

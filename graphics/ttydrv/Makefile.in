@@ -6,7 +6,9 @@ VPATH     = @srcdir@
 MODULE    = ttydrv
 
 C_SRCS = \
-	init.c
+	bitmap.c \
+	init.c \
+	palette.c
 
 all: $(MODULE).o
 

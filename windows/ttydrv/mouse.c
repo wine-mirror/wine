@@ -19,3 +19,11 @@ void TTYDRV_MOUSE_SetCursor( CURSORICONINFO *lpCursor )
 void TTYDRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY)
 {
 }
+
+/***********************************************************************
+ *           TTYDRV_MOUSE_EnableWarpPointer
+ */
+BOOL TTYDRV_MOUSE_EnableWarpPointer(BOOL bEnable)
+{
+  return TRUE;
+}

@@ -4,15 +4,14 @@
  * Copyright 1993 Alexandre Julliard
  */
 
-#include "config.h"
-
 #ifndef X_DISPLAY_MISSING
 #include "x11drv.h"
 #else /* !defined(X_DISPLAY_MISSING) */
 #include "ttydrv.h"
-#endif /* !defined(X_DISPLAY_MISSING) */
+#endif /* !defined(X_DISPLAY_MISSING */
 
 #include <stdlib.h>
+
 #include "bitmap.h"
 #include "brush.h"
 #include "dc.h"
@@ -24,6 +23,10 @@
 #include "region.h"
 #include "debug.h"
 #include "gdi.h"
+
+/**********************************************************************/
+
+GDI_DRIVER *GDI_Driver = NULL;
 
 /***********************************************************************
  *          GDI stock objects 
@@ -251,16 +254,16 @@ BOOL GDI_Init(void)
     /* Initialize drivers */
 
 #ifndef X_DISPLAY_MISSING
-    if( ! X11DRV_Init() )
-        return FALSE;
+    GDI_Driver = &X11DRV_GDI_Driver;
 #else /* !defined(X_DISPLAY_MISSING) */
-    if( ! TTYDRV_GDI_Initialize() )
-        return FALSE;    
-#endif /* !defined(X_DISPLAY_MISSING) */
+    GDI_Driver = &TTYDRV_GDI_Driver;
+#endif /* !defined(X_DISPLAY_MISSING */
 
-	/* Create default palette */
+    GDI_Driver->pInitialize();
 
-      /* DR well *this* palette can't be moveable (?) */
+    /* Create default palette */
+
+    /* DR well *this* palette can't be moveable (?) */
     {
     HPALETTE16 hpalette = PALETTE_Init();
     if( !hpalette )

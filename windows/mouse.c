@@ -5,17 +5,14 @@
  * 
  */
 
-#include <assert.h>
-#include "winuser.h"
-#include "gdi.h"
-#include "mouse.h"
 #include "debug.h"
-#include "debugtools.h"
+#include "mouse.h"
 #include "monitor.h"
+#include "winuser.h"
 
 /**********************************************************************/
 
-extern BOOL X11DRV_MOUSE_DisableWarpPointer;
+MOUSE_DRIVER *MOUSE_Driver = NULL;
 
 static LPMOUSE_EVENT_PROC DefMouseEventProc = NULL;
 
@@ -62,6 +59,7 @@ void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
     int width  = MONITOR_GetWidth (&MONITOR_PrimaryMonitor);
     int height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
     WINE_MOUSEEVENT wme;
+    BOOL bOldWarpPointer;
 
     if ( !DefMouseEventProc ) return;
 
@@ -76,8 +74,7 @@ void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
     wme.time     = time;
     wme.hWnd     = hWnd;
 
-    X11DRV_MOUSE_DisableWarpPointer = TRUE;
+    bOldWarpPointer = MOUSE_Driver->pEnableWarpPointer(FALSE);
     DefMouseEventProc( mouseStatus, posX, posY, 0, (DWORD)&wme );
-    X11DRV_MOUSE_DisableWarpPointer = FALSE;
+    MOUSE_Driver->pEnableWarpPointer(bOldWarpPointer);
 }
-

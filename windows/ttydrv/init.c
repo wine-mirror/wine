@@ -6,11 +6,21 @@
 
 #include "clipboard.h"
 #include "desktop.h"
-#include "display.h"
 #include "keyboard.h"
 #include "message.h"
 #include "monitor.h"
+#include "mouse.h"
+#include "user.h"
+#include "win.h"
 #include "ttydrv.h"
+
+USER_DRIVER TTYDRV_USER_Driver =
+{
+  TTYDRV_USER_Initialize,
+  TTYDRV_USER_Finalize,
+  TTYDRV_USER_BeginDebugging,
+  TTYDRV_USER_EndDebugging
+};
 
 CLIPBOARD_DRIVER TTYDRV_CLIPBOARD_Driver =
 {
@@ -47,22 +57,31 @@ KEYBOARD_DRIVER TTYDRV_KEYBOARD_Driver =
   TTYDRV_KEYBOARD_VkKeyScan,
   TTYDRV_KEYBOARD_MapVirtualKey,
   TTYDRV_KEYBOARD_GetKeyNameText,
-  TTYDRV_KEYBOARD_ToAscii
+  TTYDRV_KEYBOARD_ToAscii,
+  TTYDRV_KEYBOARD_GetBeepActive,
+  TTYDRV_KEYBOARD_SetBeepActive,
+  TTYDRV_KEYBOARD_Beep
 };
 
 MONITOR_DRIVER TTYDRV_MONITOR_Driver =
 {
   TTYDRV_MONITOR_Initialize,
   TTYDRV_MONITOR_Finalize,
+  TTYDRV_MONITOR_IsSingleWindow,
   TTYDRV_MONITOR_GetWidth,
   TTYDRV_MONITOR_GetHeight,
-  TTYDRV_MONITOR_GetDepth
+  TTYDRV_MONITOR_GetDepth,
+  TTYDRV_MONITOR_GetScreenSaveActive,
+  TTYDRV_MONITOR_SetScreenSaveActive,
+  TTYDRV_MONITOR_GetScreenSaveTimeout,
+  TTYDRV_MONITOR_SetScreenSaveTimeout
 };
 
 MOUSE_DRIVER TTYDRV_MOUSE_Driver =
 {
   TTYDRV_MOUSE_SetCursor,
-  TTYDRV_MOUSE_MoveCursor
+  TTYDRV_MOUSE_MoveCursor,
+  TTYDRV_MOUSE_EnableWarpPointer
 };
 
 WND_DRIVER TTYDRV_WND_Driver =

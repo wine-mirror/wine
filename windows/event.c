@@ -5,27 +5,11 @@
  * 
  */
 
-#include "config.h"
-
 #include "message.h"
 
-#ifndef X_DISPLAY_MISSING
-extern EVENT_DRIVER X11DRV_EVENT_Driver;
-#else /* X_DISPLAY_MISSING */
-extern EVENT_DRIVER TTYDRV_EVENT_Driver;
-#endif /* X_DISPLAY_MISSING */
+/**********************************************************************/
 
-/***********************************************************************
- *		EVENT_GetDriver
- */
-EVENT_DRIVER *EVENT_GetDriver(void)
-{
-#ifndef X_DISPLAY_MISSING
-  return &X11DRV_EVENT_Driver;
-#else /* X_DISPLAY_MISSING */
-  return &TTYDRV_EVENT_Driver;
-#endif /* X_DISPLAY_MISSING */
-}
+EVENT_DRIVER *EVENT_Driver = NULL;
 
 /***********************************************************************
  *		EVENT_Init
@@ -34,7 +18,7 @@ EVENT_DRIVER *EVENT_GetDriver(void)
  */
 BOOL EVENT_Init(void)
 {
-  return EVENT_GetDriver()->pInit();
+  return EVENT_Driver->pInit();
 }
 
 /***********************************************************************
@@ -42,7 +26,7 @@ BOOL EVENT_Init(void)
  */
 void EVENT_AddIO(int fd, unsigned io_type)
 {
-  EVENT_GetDriver()->pAddIO(fd, io_type);
+  EVENT_Driver->pAddIO(fd, io_type);
 }
 
 /***********************************************************************
@@ -50,7 +34,7 @@ void EVENT_AddIO(int fd, unsigned io_type)
  */
 void EVENT_DeleteIO(int fd, unsigned io_type)
 {
-  EVENT_GetDriver()->pDeleteIO(fd, io_type);
+  EVENT_Driver->pDeleteIO(fd, io_type);
 }
 
 /***********************************************************************
@@ -62,7 +46,7 @@ void EVENT_DeleteIO(int fd, unsigned io_type)
  */
 BOOL EVENT_WaitNetEvent(BOOL sleep, BOOL peek)
 {
-  return EVENT_GetDriver()->pWaitNetEvent(sleep, peek);
+  return EVENT_Driver->pWaitNetEvent(sleep, peek);
 }
 
 /***********************************************************************
@@ -72,7 +56,7 @@ BOOL EVENT_WaitNetEvent(BOOL sleep, BOOL peek)
  */
 void EVENT_Synchronize(void)
 {
-  EVENT_GetDriver()->pSynchronize();
+  EVENT_Driver->pSynchronize();
 }
 
 /**********************************************************************
@@ -80,7 +64,7 @@ void EVENT_Synchronize(void)
  */
 BOOL EVENT_CheckFocus(void)
 {
-  return EVENT_GetDriver()->pCheckFocus();
+  return EVENT_Driver->pCheckFocus();
 }
 
 /***********************************************************************
@@ -88,7 +72,7 @@ BOOL EVENT_CheckFocus(void)
  */
 BOOL EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state)
 {
-  return EVENT_GetDriver()->pQueryPointer(posX, posY, state);
+  return EVENT_Driver->pQueryPointer(posX, posY, state);
 }
 
 
@@ -99,15 +83,15 @@ BOOL EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state)
  */
 void EVENT_DummyMotionNotify(void)
 {
-  EVENT_GetDriver()->pDummyMotionNotify();
+  EVENT_Driver->pDummyMotionNotify();
 }
 
 /**********************************************************************
- *		X11DRV_EVENT_Pending
+ *		EVENT_Pending
  */
 BOOL EVENT_Pending()
 {
-  return EVENT_GetDriver()->pPending();
+  return EVENT_Driver->pPending();
 }
 
 /***********************************************************************
@@ -117,7 +101,7 @@ BOOL EVENT_Pending()
  */
 BOOL16 WINAPI IsUserIdle16(void)
 {
-  return EVENT_GetDriver()->pIsUserIdle();
+  return EVENT_Driver->pIsUserIdle();
 }
 
 /***********************************************************************
@@ -129,5 +113,5 @@ BOOL16 WINAPI IsUserIdle16(void)
  */
 void EVENT_WakeUp(void)
 {
-  EVENT_GetDriver()->pWakeUp();
+  EVENT_Driver->pWakeUp();
 }

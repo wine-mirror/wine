@@ -4,8 +4,6 @@
  * Copyright 1994 Alexandre Julliard
  */
 
-#include "x11drv.h"
-
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -16,6 +14,19 @@
 #include "monitor.h"
 #include "win.h"
 #include "wine/winuser16.h"
+
+/**********************************************************************/
+
+DESKTOP_DRIVER *DESKTOP_Driver = NULL;
+
+/***********************************************************************
+ *		DESKTOP_IsSingleWindow
+ */
+BOOL DESKTOP_IsSingleWindow()
+{
+  DESKTOP *pDesktop = (DESKTOP *) WIN_GetDesktop()->wExtra;
+  return MONITOR_IsSingleWindow(pDesktop->pPrimaryMonitor);
+}
 
 /***********************************************************************
  *              DESKTOP_GetScreenWidth
@@ -206,8 +217,7 @@ LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message,
         goto END;
 	
     case WM_ERASEBKGND:
-	if (X11DRV_WND_GetXRootWindow(wndPtr) == 
-	    DefaultRootWindow(display))
+	if(!DESKTOP_IsSingleWindow())
         {
             retvalue = 1;
             goto END;

@@ -31,7 +31,9 @@
 
 #include <string.h>
 #include <stdlib.h>
+
 #include "wine/winbase16.h"
+#include "wine/winuser16.h"
 #include "heap.h"
 #include "color.h"
 #include "bitmap.h"
@@ -827,7 +829,6 @@ HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL bSemiTransparent)
            unsigned xor_width, and_width, val_base = 0xffffffff >> (32 - bpp);
            BYTE* pbc = NULL;
 
-           COLORREF       col;
            CURSORICONINFO cI;
 
 	   TRACE(icon, "[%04x] %ix%i %ibpp (bogus %ibps)\n", 
@@ -867,8 +868,7 @@ HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL bSemiTransparent)
 
 		  unsigned *psc = (unsigned*)(psPtr + (ix * bpp)/8);
                   unsigned  val = ((*psc) >> (ix * bpp)%8) & val_base;
-                  col = COLOR_ToLogical(val);
-		  if( (GetRValue(col) + GetGValue(col) + GetBValue(col)) > 0x180 )
+		  if(!PALETTE_Driver->pIsDark(val))
                   {
                     pbc = pxbPtr + ix/8;
                    *pbc |= 0x80 >> (ix%8);

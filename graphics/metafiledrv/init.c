@@ -24,6 +24,8 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pCreateBitmap */
     NULL, /* no implementation */    /* pCreateDC */
     NULL, /* no implementation */    /* pDeleteDC */
+    NULL,                            /* pCreateDIBSection */
+    NULL,                            /* pCreateDIBSection16 */
     NULL,                            /* pDeleteObject */
     MFDRV_Ellipse,                   /* pEllipse */
     NULL,                            /* pEnumDeviceFonts */

@@ -88,7 +88,7 @@ static const int EGAmapping[TOTAL_LEVELS] =
 };
 
 #define PIXEL_VALUE(r,g,b) \
-    COLOR_mapEGAPixel[EGAmapping[((r)*PRIMARY_LEVELS+(g))*PRIMARY_LEVELS+(b)]]
+    X11DRV_PALETTE_mapEGAPixel[EGAmapping[((r)*PRIMARY_LEVELS+(g))*PRIMARY_LEVELS+(b)]]
 
   /* X image for building dithered pixmap */
 static XImage *ditherImage = NULL;
@@ -163,7 +163,7 @@ static void BRUSH_SelectSolidBrush( DC *dc, COLORREF color )
     else
     {
 	  /* Solid brush */
-	physDev->brush.pixel = COLOR_ToPhysical( dc, color );
+	physDev->brush.pixel = X11DRV_PALETTE_ToPhysical( dc, color );
 	physDev->brush.fillStyle = FillSolid;
     }
 }
@@ -258,7 +258,7 @@ HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 	
       case BS_HATCHED:
 	TRACE(gdi, "BS_HATCHED\n" );
-	physDev->brush.pixel = COLOR_ToPhysical( dc, brush->logbrush.lbColor );
+	physDev->brush.pixel = X11DRV_PALETTE_ToPhysical( dc, brush->logbrush.lbColor );
 	physDev->brush.pixmap = TSXCreateBitmapFromData( display, X11DRV_GetXRootWindow(),
 				 HatchBrushes[brush->logbrush.lbHatch], 8, 8 );
 	physDev->brush.fillStyle = FillStippled;

@@ -17,8 +17,7 @@
  * DCX_WINDOWPAINT - BeginPaint() is in effect
  */
 
-#include "x11drv.h"
-
+#include "desktop.h"
 #include "options.h"
 #include "dce.h"
 #include "class.h"
@@ -798,11 +797,9 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 		hrgnVisible = CreateRectRgn( 0, 0, 0, 0 );
             WIN_ReleaseWndPtr(parentPtr);
         }
-        else 
-	    if ((hwnd == GetDesktopWindow()) &&
-                (X11DRV_WND_GetXRootWindow(wndPtr) == DefaultRootWindow(display)))
-                 hrgnVisible = CreateRectRgn( 0, 0, SYSMETRICS_CXSCREEN,
-						      SYSMETRICS_CYSCREEN );
+        else
+	    if ((hwnd == GetDesktopWindow()) && !DESKTOP_IsSingleWindow())
+                 hrgnVisible = CreateRectRgn( 0, 0, SYSMETRICS_CXSCREEN, SYSMETRICS_CYSCREEN );
 	    else 
             {
                 hrgnVisible = DCE_GetVisRgn( hwnd, flags, 0, 0 );

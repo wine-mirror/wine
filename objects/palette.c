@@ -10,12 +10,15 @@
 
 #include <stdlib.h>
 #include <string.h>
+
 #include "gdi.h"
 #include "color.h"
 #include "palette.h"
 #include "xmalloc.h"
 #include "debug.h"
 #include "wine/winuser16.h"
+
+PALETTE_DRIVER *PALETTE_Driver = NULL;
 
 FARPROC pfnSelectPalette = NULL;
 FARPROC pfnRealizePalette = NULL;
@@ -134,7 +137,7 @@ HPALETTE16 WINAPI CreateHalftonePalette16(
     HDC16 hdc) /* [in] Handle to device context */
 {
     return CreateHalftonePalette(hdc);
-	}
+}
 
 	
 /***********************************************************************
@@ -381,8 +384,9 @@ BOOL WINAPI AnimatePalette(
 	    UINT u;
 	    for( u = 0; u < NumEntries; u++ )
 		palPtr->logpalette.palPalEntry[u + StartIndex] = PaletteColors[u];
-	    COLOR_SetMapping(palPtr, StartIndex, NumEntries,
-                             hPal != hPrimaryPalette );
+	    PALETTE_Driver->
+	      pSetMapping(palPtr, StartIndex, NumEntries,
+			  hPal != hPrimaryPalette );
             GDI_HEAP_UNLOCK( hPal );
 	    return TRUE;
 	}
@@ -469,7 +473,7 @@ UINT WINAPI GetSystemPaletteEntries(
     TRACE(palette, "hdc=%04x,start=%i,count=%i\n", hdc,start,count);
 
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
-    if (!entries) return COLOR_GetSystemPaletteSize();
+    if (!entries) return dc->w.devCaps->sizePalette;
     if (start >= dc->w.devCaps->sizePalette)
       {
 	GDI_HEAP_UNLOCK( hdc );
@@ -516,9 +520,9 @@ UINT WINAPI GetNearestPaletteIndex(
     UINT index  = 0;
 
     if( palObj )
-        index = COLOR_PaletteLookupPixel( palObj->logpalette.palPalEntry, 
-				          palObj->logpalette.palNumEntries,
-                                          NULL, color, FALSE );
+      index = COLOR_PaletteLookupPixel(palObj->logpalette.palPalEntry, 
+				       palObj->logpalette.palNumEntries,
+				       NULL, color, FALSE );
 
     TRACE(palette,"(%04x,%06lx): returning %d\n", hpalette, color, index );
     GDI_HEAP_UNLOCK( hpalette );
@@ -660,9 +664,10 @@ UINT16 WINAPI GDIRealizePalette16( HDC16 hdc )
 		return 0;
 	}
         
-        realized = COLOR_SetMapping(palPtr,0,palPtr->logpalette.palNumEntries,
-                                    (dc->w.hPalette != hPrimaryPalette) ||
-                                    (dc->w.hPalette == STOCK_DEFAULT_PALETTE));
+        realized = PALETTE_Driver->
+	  pSetMapping(palPtr,0,palPtr->logpalette.palNumEntries,
+		      (dc->w.hPalette != hPrimaryPalette) ||
+		      (dc->w.hPalette == STOCK_DEFAULT_PALETTE));
 	GDI_HEAP_UNLOCK( dc->w.hPalette );
 	hLastRealizedPalette = dc->w.hPalette;
     }
@@ -682,7 +687,6 @@ UINT16 WINAPI RealizeDefaultPalette16( HDC16 hdc )
 {
     DC          *dc;
     PALETTEOBJ*  palPtr;
-    int          i, index, realized = 0;
 
     TRACE(palette,"%04x\n", hdc );
 
@@ -707,15 +711,7 @@ UINT16 WINAPI RealizeDefaultPalette16( HDC16 hdc )
 
     /* lookup is needed to account for SetSystemPaletteUse() stuff */
 
-    for( i = 0; i < 20; i++ )
-       {
-         index = COLOR_LookupSystemPixel(*(COLORREF*)(palPtr->logpalette.palPalEntry + i));
-
-         /* mapping is allocated in COLOR_InitPalette() */
-
-         if( index != palPtr->mapping[i] ) { palPtr->mapping[i]=index; realized++; }
-       }
-    return realized;
+    return PALETTE_Driver->pUpdateMapping(palPtr);
 }
 
 /***********************************************************************
@@ -798,12 +794,17 @@ UINT16 WINAPI RealizePalette16( HDC16 hDC )
 UINT WINAPI RealizePalette(
     HDC hDC) /* [in] Handle of device context */
 {
-    UINT realized = GDIRealizePalette16( hDC );
+    DC *dc;
+    UINT realized;
+
+    if (!(dc = (DC *) GDI_GetObjPtr( hDC, DC_MAGIC ))) return 0;
+    
+    realized = GDIRealizePalette16( hDC );
 
     /* do not send anything if no colors were changed */
 
-    if( IsDCCurrentPalette16( hDC ) && realized && 
-        !(COLOR_GetSystemPaletteFlags() & COLOR_VIRTUAL) )
+    if( IsDCCurrentPalette16( hDC ) && realized &&
+	dc->w.devCaps->sizePalette )
     {
 	/* Send palette change notification */
 
@@ -811,6 +812,8 @@ UINT WINAPI RealizePalette(
  	if( (hWnd = WindowFromDC( hDC )) )
             SendMessage16( HWND_BROADCAST, WM_PALETTECHANGED, hWnd, 0L);
     }
+
+    GDI_HEAP_UNLOCK( hDC );
     return realized;
 }
 
@@ -820,13 +823,21 @@ UINT WINAPI RealizePalette(
  */
 INT16 WINAPI UpdateColors16( HDC16 hDC )
 {
-    HWND hWnd = WindowFromDC( hDC );
+    DC *dc;
+    HWND hWnd;
+
+    if (!(dc = (DC *) GDI_GetObjPtr( hDC, DC_MAGIC ))) return 0;
+
+    hWnd = WindowFromDC( hDC );
 
     /* Docs say that we have to remap current drawable pixel by pixel
      * but it would take forever given the speed of XGet/PutPixel.
      */
-    if (hWnd && !(COLOR_GetSystemPaletteFlags() & COLOR_VIRTUAL) ) 
+    if (hWnd && dc->w.devCaps->sizePalette ) 
 	InvalidateRect( hWnd, NULL, FALSE );
+
+    GDI_HEAP_UNLOCK( hDC );
+
     return 0x666;
 }
 

@@ -1156,7 +1156,10 @@ static void EVENT_DropFromOffiX( WND *pWnd, XClientMessageEvent *event )
   unsigned char*	p_data = NULL;
   union {
     Atom		atom_aux;
-    POINT	pt_aux;
+    struct {
+      int x;
+      int y;
+    } pt_aux;
     int		i;
   }		u;
   int			x, y;
@@ -1278,7 +1281,6 @@ static void EVENT_DropURLs( WND *pWnd, XClientMessageEvent *event )
   int		x, y, drop32 = FALSE ;
   union {
     Atom	atom_aux;
-    POINT	pt_aux;
     int         i;
     Window      w_aux;
   }		u; /* unused */
@@ -1456,7 +1458,7 @@ void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event )
 {
   if( !Options.managed && X11DRV_GetXRootWindow() == DefaultRootWindow(display) &&
       (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE) && GetFocus() )
-    TSXInstallColormap( display, X11DRV_COLOR_GetColormap() );
+    TSXInstallColormap( display, X11DRV_PALETTE_GetColormap() );
 }
 #endif
 

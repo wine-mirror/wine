@@ -21,17 +21,13 @@
 #include "xmalloc.h"
 #include "debug.h"
 
-#ifndef X_DISPLAY_MISSING
-extern CLIPBOARD_DRIVER X11DRV_CLIPBOARD_Driver;
-#else /* X_DISPLAY_MISSING */
-extern CLIPBOARD_DRIVER TTYDRV_CLIPBOARD_Driver;
-#endif /* X_DISPLAY_MISSING */
-
 #define  CF_REGFORMATBASE 	0xC000
 
 /**************************************************************************
  *			internal variables
  */
+
+CLIPBOARD_DRIVER *CLIPBOARD_Driver = NULL;
 
 static HQUEUE16 hqClipLock   = 0;
 static BOOL bCBHasChanged  = FALSE;
@@ -71,19 +67,6 @@ static LPWINE_CLIPFORMAT __lookup_format( LPWINE_CLIPFORMAT lpFormat, WORD wID )
     }
     return lpFormat;
 }
-
-
-/**************************************************************************
- *		CLIPBOARD_GetDriver
- */
-CLIPBOARD_DRIVER *CLIPBOARD_GetDriver()
-{
-#ifndef X_DISPLAY_MISSING
-  return &X11DRV_CLIPBOARD_Driver;
-#else /* X_DISPLAY_MISSING */
-  return &TTYDRV_CLIPBOARD_Driver;
-#endif /* X_DISPLAY_MISSING */
-};
 
 /**************************************************************************
  *                      CLIPBOARD_ResetLock
@@ -267,7 +250,7 @@ BOOL WINAPI EmptyClipboard(void)
 
     hWndClipOwner = hWndClipWindow;
 
-    CLIPBOARD_GetDriver()->pEmptyClipboard();
+    CLIPBOARD_Driver->pEmptyClipboard();
 
     return TRUE;
 }
@@ -310,7 +293,7 @@ HANDLE16 WINAPI SetClipboardData16( UINT16 wFormat, HANDLE16 hData )
     if( (hqClipLock != GetFastQueue16()) || !lpFormat ||
 	(!hData && (!hWndClipOwner || (hWndClipOwner != hWndClipWindow))) ) return 0; 
 
-    CLIPBOARD_GetDriver()->pSetClipboardData(wFormat);
+    CLIPBOARD_Driver->pSetClipboardData(wFormat);
 
     if ( lpFormat->wDataPresent || lpFormat->hData16 || lpFormat->hData32 ) 
     {
@@ -358,7 +341,7 @@ HANDLE WINAPI SetClipboardData( UINT wFormat, HANDLE hData )
     if( (hqClipLock != GetFastQueue16()) || !lpFormat ||
 	(!hData && (!hWndClipOwner || (hWndClipOwner != hWndClipWindow))) ) return 0; 
 
-    CLIPBOARD_GetDriver()->pSetClipboardData(wFormat);
+    CLIPBOARD_Driver->pSetClipboardData(wFormat);
 
     if ( lpFormat->wDataPresent || lpFormat->hData16 || lpFormat->hData32 ) 
     {
@@ -626,7 +609,7 @@ INT WINAPI CountClipboardFormats(void)
     TRACE(clipboard,"(void)\n");
 
     /* FIXME: Returns BOOL32 */
-    CLIPBOARD_GetDriver()->pRequestSelection();
+    CLIPBOARD_Driver->pRequestSelection();
 
     FormatCount += abs(lpFormat[CF_TEXT-1].wDataPresent -
 		       lpFormat[CF_OEMTEXT-1].wDataPresent); 
@@ -668,7 +651,7 @@ UINT WINAPI EnumClipboardFormats( UINT wFormat )
     if( hqClipLock != GetFastQueue16() ) return 0;
 
     if( (!wFormat || wFormat == CF_TEXT || wFormat == CF_OEMTEXT) ) 
-        CLIPBOARD_GetDriver()->pRequestSelection();
+        CLIPBOARD_Driver->pRequestSelection();
 
     if (wFormat == 0)
     {
@@ -895,7 +878,7 @@ BOOL WINAPI IsClipboardFormatAvailable( UINT wFormat )
     TRACE(clipboard,"(%04X) !\n", wFormat);
 
     if( (wFormat == CF_TEXT || wFormat == CF_OEMTEXT) )
-        CLIPBOARD_GetDriver()->pRequestSelection();
+        CLIPBOARD_Driver->pRequestSelection();
 
     return CLIPBOARD_IsPresent(wFormat);
 }

@@ -18,17 +18,30 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "clipboard.h"
 #include "console.h"
 #include "debug.h"
 #include "desktop.h"
+#include "keyboard.h"
 #include "main.h"
+#include "message.h"
 #include "monitor.h"
+#include "mouse.h"
 #include "options.h"
 #include "win.h"
 #include "windef.h"
 #include "x11drv.h"
 #include "xmalloc.h"
 #include "version.h"
+#include "win.h"
+
+/**********************************************************************/
+
+void X11DRV_USER_ParseOptions(int *argc, char *argv[]);
+void X11DRV_USER_Create(void);
+void X11DRV_USER_SaveSetup(void);
+void X11DRV_USER_RestoreSetup(void);
 
 /**********************************************************************/
 
@@ -89,10 +102,18 @@ Window X11DRV_GetXRootWindow()
 }
 
 /***********************************************************************
- *              X11DRV_MAIN_Initialize
+ *              X11DRV_USER_Initialize
  */
-void X11DRV_MAIN_Initialize()
+BOOL X11DRV_USER_Initialize(void)
 {
+  CLIPBOARD_Driver = &X11DRV_CLIPBOARD_Driver;
+  DESKTOP_Driver = &X11DRV_DESKTOP_Driver;
+  EVENT_Driver = &X11DRV_EVENT_Driver;
+  KEYBOARD_Driver = &X11DRV_KEYBOARD_Driver;
+  MONITOR_Driver = &X11DRV_MONITOR_Driver;
+  MOUSE_Driver = &X11DRV_MOUSE_Driver;
+  WND_Driver = &X11DRV_WND_Driver;
+
   /* We need this before calling any Xlib function */
   InitializeCriticalSection( &X11DRV_CritSection );
   MakeCriticalSectionGlobal( &X11DRV_CritSection );
@@ -100,22 +121,43 @@ void X11DRV_MAIN_Initialize()
   TSXrmInitialize();
   
   putenv("XKB_DISABLE="); /* Disable XKB extension if present. */
+
+  X11DRV_USER_ParseOptions( Options.argc, Options.argv );
+  X11DRV_USER_Create();
+  X11DRV_USER_SaveSetup();
 }
 
 /***********************************************************************
- *              X11DRV_MAIN_Finalize
+ *              X11DRV_USER_Finalize
  */
-void X11DRV_MAIN_Finalize()
+void X11DRV_USER_Finalize(void)
+{
+  X11DRV_USER_RestoreSetup();
+}
+
+/**************************************************************************
+ *		X11DRV_USER_BeginDebugging
+ */
+void X11DRV_USER_BeginDebugging(void)
+{
+  TSXUngrabServer(display);
+  TSXFlush(display);
+}
+
+/**************************************************************************
+ *		X11DRV_USER_EndDebugging
+ */
+void X11DRV_USER_EndDebugging(void)
 {
 }
 
 /***********************************************************************
- *		 X11DRV_MAIN_GetResource
+ *		 X11DRV_USER_GetResource
  *
  * Fetch the value of resource 'name' using the correct instance name.
  * 'name' must begin with '.' or '*'
  */
-static int X11DRV_MAIN_GetResource( XrmDatabase db, char *name, XrmValue *value )
+static int X11DRV_USER_GetResource( XrmDatabase db, char *name, XrmValue *value )
 {
   char *buff_instance, *buff_class;
   char *dummy;
@@ -135,10 +177,10 @@ static int X11DRV_MAIN_GetResource( XrmDatabase db, char *name, XrmValue *value 
 }
 
 /***********************************************************************
- *              X11DRV_MAIN_ParseOptions
+ *              X11DRV_USER_ParseOptions
  * Parse command line options and open display.
  */
-void X11DRV_MAIN_ParseOptions(int *argc, char *argv[])
+void X11DRV_USER_ParseOptions(int *argc, char *argv[])
 {
   int i;
   char *display_name = NULL;
@@ -155,7 +197,7 @@ void X11DRV_MAIN_ParseOptions(int *argc, char *argv[])
   /* Open display */
   
   if (display_name == NULL &&
-      X11DRV_MAIN_GetResource( db, ".display", &value )) display_name = value.addr;
+      X11DRV_USER_GetResource( db, ".display", &value )) display_name = value.addr;
   
   if (!(display = TSXOpenDisplay( display_name )))
     {
@@ -184,35 +226,35 @@ void X11DRV_MAIN_ParseOptions(int *argc, char *argv[])
 		     Options.programName, argc, argv );
   
   /* Get all options */
-  if (X11DRV_MAIN_GetResource( db, ".iconic", &value ))
+  if (X11DRV_USER_GetResource( db, ".iconic", &value ))
     Options.cmdShow = SW_SHOWMINIMIZED;
-  if (X11DRV_MAIN_GetResource( db, ".privatemap", &value ))
+  if (X11DRV_USER_GetResource( db, ".privatemap", &value ))
     Options.usePrivateMap = TRUE;
-  if (X11DRV_MAIN_GetResource( db, ".fixedmap", &value ))
+  if (X11DRV_USER_GetResource( db, ".fixedmap", &value ))
     Options.useFixedMap = TRUE;
-  if (X11DRV_MAIN_GetResource( db, ".synchronous", &value ))
+  if (X11DRV_USER_GetResource( db, ".synchronous", &value ))
     Options.synchronous = TRUE;
-  if (X11DRV_MAIN_GetResource( db, ".backingstore", &value ))
+  if (X11DRV_USER_GetResource( db, ".backingstore", &value ))
     Options.backingstore = TRUE;	
-  if (X11DRV_MAIN_GetResource( db, ".debug", &value ))
+  if (X11DRV_USER_GetResource( db, ".debug", &value ))
     Options.debug = TRUE;
-  if (X11DRV_MAIN_GetResource( db, ".failreadonly", &value ))
+  if (X11DRV_USER_GetResource( db, ".failreadonly", &value ))
     Options.failReadOnly = TRUE;
-  if (X11DRV_MAIN_GetResource( db, ".perfect", &value ))
+  if (X11DRV_USER_GetResource( db, ".perfect", &value ))
     Options.perfectGraphics = TRUE;
-  if (X11DRV_MAIN_GetResource( db, ".depth", &value))
+  if (X11DRV_USER_GetResource( db, ".depth", &value))
     Options.screenDepth = atoi( value.addr );
-  if (X11DRV_MAIN_GetResource( db, ".desktop", &value))
+  if (X11DRV_USER_GetResource( db, ".desktop", &value))
     Options.desktopGeometry = value.addr;
-  if (X11DRV_MAIN_GetResource( db, ".language", &value))
+  if (X11DRV_USER_GetResource( db, ".language", &value))
     MAIN_ParseLanguageOption( (char *)value.addr );
-  if (X11DRV_MAIN_GetResource( db, ".managed", &value))
+  if (X11DRV_USER_GetResource( db, ".managed", &value))
     Options.managed = TRUE;
-  if (X11DRV_MAIN_GetResource( db, ".mode", &value))
+  if (X11DRV_USER_GetResource( db, ".mode", &value))
     MAIN_ParseModeOption( (char *)value.addr );
-  if (X11DRV_MAIN_GetResource( db, ".debugoptions", &value))
+  if (X11DRV_USER_GetResource( db, ".debugoptions", &value))
     MAIN_ParseDebugOptions((char*)value.addr);
-  if (X11DRV_MAIN_GetResource( db, ".debugmsg", &value))
+  if (X11DRV_USER_GetResource( db, ".debugmsg", &value))
     {
 #ifndef DEBUG_RUNTIME
       MSG("%s: Option \"-debugmsg\" not implemented.\n" \
@@ -224,7 +266,7 @@ void X11DRV_MAIN_ParseOptions(int *argc, char *argv[])
 #endif
     }
   
-  if (X11DRV_MAIN_GetResource( db, ".dll", &value))
+  if (X11DRV_USER_GetResource( db, ".dll", &value))
   {
       if (Options.dllFlags)
       {
@@ -236,35 +278,35 @@ void X11DRV_MAIN_ParseOptions(int *argc, char *argv[])
       else Options.dllFlags = xstrdup((char *)value.addr);
   }
   
-  if (X11DRV_MAIN_GetResource( db, ".winver", &value))
+  if (X11DRV_USER_GetResource( db, ".winver", &value))
     VERSION_ParseWinVersion( (char*)value.addr );
-  if (X11DRV_MAIN_GetResource( db, ".dosver", &value))
+  if (X11DRV_USER_GetResource( db, ".dosver", &value))
     VERSION_ParseDosVersion( (char*)value.addr );
-  if (X11DRV_MAIN_GetResource( db, ".config", &value))
+  if (X11DRV_USER_GetResource( db, ".config", &value))
     Options.configFileName = xstrdup((char *)value.addr);
-  if (X11DRV_MAIN_GetResource( db, ".nodga", &value))
+  if (X11DRV_USER_GetResource( db, ".nodga", &value))
     Options.noDGA = TRUE;
-  if (X11DRV_MAIN_GetResource( db, ".console", &value))
+  if (X11DRV_USER_GetResource( db, ".console", &value))
       driver.driver_list = xstrdup((char *)value.addr);
   else
       driver.driver_list = CONSOLE_DEFAULT_DRIVER;
 }
 
 /***********************************************************************
- *		X11DRV_MAIN_ErrorHandler
+ *		X11DRV_USER_ErrorHandler
  */
-static int X11DRV_MAIN_ErrorHandler(Display *display, XErrorEvent *error_evt)
+static int X11DRV_USER_ErrorHandler(Display *display, XErrorEvent *error_evt)
 {
     kill( getpid(), SIGHUP ); /* force an entry in the debugger */
     return 0;
 }
 
 /***********************************************************************
- *		X11DRV_MAIN_Create
+ *		X11DRV_USER_Create
  */
-void X11DRV_MAIN_Create()
+void X11DRV_USER_Create()
 {
-  if (Options.synchronous) XSetErrorHandler( X11DRV_MAIN_ErrorHandler );
+  if (Options.synchronous) XSetErrorHandler( X11DRV_USER_ErrorHandler );
   
   if (Options.desktopGeometry && Options.managed)
     {
@@ -279,17 +321,17 @@ void X11DRV_MAIN_Create()
 }
 
 /***********************************************************************
- *           X11DRV_MAIN_SaveSetup
+ *           X11DRV_USER_SaveSetup
  */
-void X11DRV_MAIN_SaveSetup()
+void X11DRV_USER_SaveSetup()
 {
   TSXGetKeyboardControl(display, &X11DRV_XKeyboardState);
 }
 
 /***********************************************************************
- *           X11DRV_MAIN_RestoreSetup
+ *           X11DRV_USER_RestoreSetup
  */
-void X11DRV_MAIN_RestoreSetup()
+void X11DRV_USER_RestoreSetup()
 {
   XKeyboardControl keyboard_value;
   

@@ -48,7 +48,7 @@ BOOL TTYDRV_WND_DestroyWindow(WND *wndPtr)
 }
 
 /*****************************************************************
- *		X11DRV_WND_SetParent
+ *		TTYDRV_WND_SetParent
  */
 WND *TTYDRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
 {
@@ -64,8 +64,6 @@ void TTYDRV_WND_ForceWindowRaise(WND *wndPtr)
 
 /***********************************************************************
  *           WINPOS_SetXWindowPos
- *
- * SetWindowPos() for an X window. Used by the real SetWindowPos().
  */
 void TTYDRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bSMC_SETXPOS)
 {
@@ -131,4 +129,3 @@ BOOL TTYDRV_WND_IsSelfClipping(WND *wndPtr)
 {
   return FALSE;
 }
-

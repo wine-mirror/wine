@@ -7,30 +7,9 @@
 #ifndef __WINE_BITMAP_H
 #define __WINE_BITMAP_H
 
-#include <X11/Xlib.h>
-
 #include "gdi.h"
 
-  /* Additional info for DIB section objects */
-typedef struct
-{
-    /* Windows DIB section */
-    DIBSECTION  dibSection;
-
-    /* Mapping status */
-    enum { DIB_NoHandler, DIB_InSync, DIB_AppMod, DIB_GdiMod } status;
-
-    /* Color map info */
-    int         nColorMap;
-    int        *colorMap;
-
-    /* Cached XImage */
-    XImage     *image;
-
-    /* Selector for 16-bit access to bits */
-    WORD selector;
-
-} DIBSECTIONOBJ;
+struct tagGDI_BITMAP_DRIVER;
 
 /* Flags used for BitmapBits. We only use the first two at the moment */
 
@@ -48,15 +27,23 @@ typedef struct {
 typedef struct tagBITMAPOBJ
 {
     GDIOBJHDR   header;
-    BITMAP    bitmap;
-    SIZE      size;   /* For SetBitmapDimension() */
+    BITMAP      bitmap;
+    SIZE        size;   /* For SetBitmapDimension() */
 
-    DDBITMAP	*DDBitmap;
+    DDBITMAP   *DDBitmap;
 
     /* For device-independent bitmaps: */
-    DIBSECTIONOBJ *dib;
-
+    DIBSECTION *dib;
 } BITMAPOBJ;
+
+typedef struct tagBITMAP_DRIVER
+{
+  INT  (*pSetDIBits)(struct tagBITMAPOBJ *,struct tagDC *,UINT,UINT,LPCVOID,const BITMAPINFO *,UINT,HBITMAP);
+  INT  (*pGetDIBits)(struct tagBITMAPOBJ *,struct tagDC *,UINT,UINT,LPVOID,BITMAPINFO *,UINT,HBITMAP);
+  VOID (*pDeleteDIBSection)(struct tagBITMAPOBJ *);
+} BITMAP_DRIVER;
+
+extern BITMAP_DRIVER *BITMAP_Driver;
 
   /* objects/bitmap.c */
 extern INT16   BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer );

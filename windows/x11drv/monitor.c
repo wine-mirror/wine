@@ -184,6 +184,17 @@ void X11DRV_MONITOR_Finalize(MONITOR *pMonitor)
 }
 
 /***********************************************************************
+ *              X11DRV_MONITOR_IsSingleWindow
+ */
+BOOL X11DRV_MONITOR_IsSingleWindow(MONITOR *pMonitor)
+{
+  X11DRV_MONITOR_DATA *pX11Monitor =
+    (X11DRV_MONITOR_DATA *) pMonitor->pDriverData;
+
+  return (pX11Monitor->rootWindow != DefaultRootWindow(display));
+}
+
+/***********************************************************************
  *              X11DRV_MONITOR_GetWidth
  *
  * Return the width of the monitor
@@ -222,6 +233,53 @@ int X11DRV_MONITOR_GetDepth(MONITOR *pMonitor)
   return pX11Monitor->depth;
 }
 
+/***********************************************************************
+ *              X11DRV_MONITOR_GetScreenSaveActive
+ *
+ * Returns the active status of the screen saver
+ */
+BOOL X11DRV_MONITOR_GetScreenSaveActive(MONITOR *pMonitor)
+{
+  int timeout, temp;
+  TSXGetScreenSaver(display, &timeout, &temp, &temp, &temp);
+  return timeout!=NULL;
+}
+
+/***********************************************************************
+ *              X11DRV_MONITOR_SetScreenSaveActive
+ *
+ * Activate/Deactivate the screen saver
+ */
+void X11DRV_MONITOR_SetScreenSaveActive(MONITOR *pMonitor, BOOL bActivate)
+{
+  if(bActivate)
+    TSXActivateScreenSaver(display);
+  else
+    TSXResetScreenSaver(display);
+}
+
+/***********************************************************************
+ *              X11DRV_MONITOR_GetScreenSaveTimeout
+ *
+ * Return the screen saver timeout
+ */
+int X11DRV_MONITOR_GetScreenSaveTimeout(MONITOR *pMonitor)
+{
+  int timeout, temp;
+  TSXGetScreenSaver(display, &timeout, &temp, &temp, &temp);
+  return timeout;
+}
+
+/***********************************************************************
+ *              X11DRV_MONITOR_SetScreenSaveTimeout
+ *
+ * Set the screen saver timeout
+ */
+void X11DRV_MONITOR_SetScreenSaveTimeout(
+  MONITOR *pMonitor, int nTimeout)
+{
+  TSXSetScreenSaver(display, nTimeout, 60, 
+		    DefaultBlanking, DefaultExposures);
+}
+
 #endif /* X_DISPLAY_MISSING */
-
-

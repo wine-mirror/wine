@@ -10,12 +10,21 @@
 
 #include "clipboard.h"
 #include "desktop.h"
-#include "display.h"
 #include "keyboard.h"
 #include "message.h"
 #include "monitor.h"
+#include "mouse.h"
+#include "user.h"
 #include "win.h"
 #include "x11drv.h"
+
+USER_DRIVER X11DRV_USER_Driver =
+{
+  X11DRV_USER_Initialize,
+  X11DRV_USER_Finalize,
+  X11DRV_USER_BeginDebugging,
+  X11DRV_USER_EndDebugging
+};
 
 CLIPBOARD_DRIVER X11DRV_CLIPBOARD_Driver =
 {
@@ -52,22 +61,31 @@ KEYBOARD_DRIVER X11DRV_KEYBOARD_Driver =
   X11DRV_KEYBOARD_VkKeyScan,
   X11DRV_KEYBOARD_MapVirtualKey,
   X11DRV_KEYBOARD_GetKeyNameText,
-  X11DRV_KEYBOARD_ToAscii
+  X11DRV_KEYBOARD_ToAscii,
+  X11DRV_KEYBOARD_GetBeepActive,
+  X11DRV_KEYBOARD_SetBeepActive,
+  X11DRV_KEYBOARD_Beep
 };
 
 MONITOR_DRIVER X11DRV_MONITOR_Driver =
 {
   X11DRV_MONITOR_Initialize,
   X11DRV_MONITOR_Finalize,
+  X11DRV_MONITOR_IsSingleWindow,
   X11DRV_MONITOR_GetWidth,
   X11DRV_MONITOR_GetHeight,
-  X11DRV_MONITOR_GetDepth
+  X11DRV_MONITOR_GetDepth,
+  X11DRV_MONITOR_GetScreenSaveActive,
+  X11DRV_MONITOR_SetScreenSaveActive,
+  X11DRV_MONITOR_GetScreenSaveTimeout,
+  X11DRV_MONITOR_SetScreenSaveTimeout
 };
 
 MOUSE_DRIVER X11DRV_MOUSE_Driver =
 {
   X11DRV_MOUSE_SetCursor,
-  X11DRV_MOUSE_MoveCursor
+  X11DRV_MOUSE_MoveCursor,
+  X11DRV_MOUSE_EnableWarpPointer
 };
 
 WND_DRIVER X11DRV_WND_Driver =

@@ -196,7 +196,7 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
       wndPtr->flags |= WIN_NATIVE;
 
       win_attr.bit_gravity   = BGNorthWest;
-      win_attr.colormap      = X11DRV_COLOR_GetColormap();
+      win_attr.colormap      = X11DRV_PALETTE_PaletteXColormap;
       win_attr.backing_store = Options.backingstore ? WhenMapped : NotUseful;
       win_attr.save_under    = ((classPtr->style & CS_SAVEBITS) != 0);
       win_attr.cursor        = X11DRV_MOUSE_XCursor;
@@ -548,8 +548,8 @@ void X11DRV_WND_SetFocus(WND *wndPtr)
   
   if (!hwnd)	/* If setting the focus to 0, uninstall the colormap */
     {
-      if (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE)
-	TSXUninstallColormap( display, X11DRV_COLOR_GetColormap() );
+      if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_PRIVATE)
+	TSXUninstallColormap( display, X11DRV_PALETTE_PaletteXColormap );
       return;
     }
   
@@ -561,8 +561,8 @@ void X11DRV_WND_SetFocus(WND *wndPtr)
     return;  /* If window is not viewable, don't change anything */
   
   TSXSetInputFocus( display, win, RevertToParent, CurrentTime );
-  if (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE)
-    TSXInstallColormap( display, X11DRV_COLOR_GetColormap() );
+  if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_PRIVATE)
+    TSXInstallColormap( display, X11DRV_PALETTE_PaletteXColormap );
   
   EVENT_Synchronize();
 }
@@ -716,10 +716,7 @@ BOOL X11DRV_WND_SetHostAttr(WND* wnd, INT ha, INT value)
  */
 BOOL X11DRV_WND_IsSelfClipping(WND *wndPtr)
 {
-  if( X11DRV_WND_GetXWindow(wndPtr) ) 
-      return TRUE; /* X itself will do the clipping */
-
-  return FALSE;
+  return X11DRV_WND_GetXWindow(wndPtr) != None;
 }
 
 #endif /* !defined(X_DISPLAY_MISSING) */

@@ -322,10 +322,10 @@ static BOOL OBM_InitColorSymbols()
     for (i = 0; i < NB_COLOR_SYMBOLS; i++)
     {
         if (OBM_Colors[i].pixel & 0xff000000)  /* PALETTEINDEX */
-            OBM_Colors[i].pixel = COLOR_ToPhysical( NULL,
+            OBM_Colors[i].pixel = X11DRV_PALETTE_ToPhysical( NULL,
                                     GetSysColor(OBM_Colors[i].pixel & 0xff));
         else  /* RGB*/
-            OBM_Colors[i].pixel = COLOR_ToPhysical( NULL, OBM_Colors[i].pixel);
+            OBM_Colors[i].pixel = X11DRV_PALETTE_ToPhysical( NULL, OBM_Colors[i].pixel);
     }
     return TRUE;
 }
@@ -387,7 +387,7 @@ static BOOL OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
     attrs = (XpmAttributes *)HEAP_xalloc( GetProcessHeap(), 0,
                                           XpmAttributesSize() );
     attrs->valuemask    = XpmColormap | XpmDepth | XpmColorSymbols |XpmHotspot;
-    attrs->colormap     = X11DRV_COLOR_GetColormap();
+    attrs->colormap     = X11DRV_PALETTE_PaletteXColormap;
     attrs->depth        = descr->color ? MONITOR_GetDepth(&MONITOR_PrimaryMonitor) : 1;
     attrs->colorsymbols = (attrs->depth > 1) ? OBM_Colors : OBM_BlackAndWhite;
     attrs->numsymbols   = (attrs->depth > 1) ? NB_COLOR_SYMBOLS : 2;
@@ -543,7 +543,7 @@ static HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL fCursor )
         {
 	    X11DRV_PHYSBITMAP *pbitmapXor = bmpXor->DDBitmap->physBitmap;
             TSXSetForeground( display, BITMAP_colorGC,
-                            COLOR_ToPhysical( NULL, RGB(0,0,0) ));
+                            X11DRV_PALETTE_ToPhysical( NULL, RGB(0,0,0) ));
             TSXSetBackground( display, BITMAP_colorGC, 0 );
             TSXSetFunction( display, BITMAP_colorGC, GXor );
             TSXCopyPlane(display, pbitmapAnd->pixmap, pbitmapXor->pixmap, BITMAP_colorGC,

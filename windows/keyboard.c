@@ -9,11 +9,10 @@
  *
  */
 
-#include "config.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
 #include "winuser.h"
 #include "wine/keyboard16.h"
 #include "win.h"
@@ -25,26 +24,12 @@
 #include "struct32.h"
 #include "winerror.h"
 
+/**********************************************************************/
+
+KEYBOARD_DRIVER *KEYBOARD_Driver = NULL;
+
 static LPKEYBD_EVENT_PROC DefKeybEventProc = NULL;
 LPBYTE pKeyStateTable = NULL;
-
-#ifndef X_DISPLAY_MISSING
-extern KEYBOARD_DRIVER X11DRV_KEYBOARD_Driver;
-#else /* X_DISPLAY_MISSING */
-extern KEYBOARD_DRIVER TTYDRV_KEYBOARD_Driver;
-#endif /* X_DISPLAY_MISSING */
-
-/***********************************************************************
- *           KEYBOARD_GetDriver
- */
-KEYBOARD_DRIVER *KEYBOARD_GetDriver()
-{
-#ifndef X_DISPLAY_MISSING
-  return &X11DRV_KEYBOARD_Driver;
-#else /* X_DISPLAY_MISSING */
-  return &TTYDRV_KEYBOARD_Driver;
-#endif /* X_DISPLAY_MISSING */
-}
 
 /***********************************************************************
  *           KEYBOARD_Inquire			(KEYBOARD.1)
@@ -74,7 +59,7 @@ VOID WINAPI KEYBOARD_Enable( LPKEYBD_EVENT_PROC lpKeybEventProc,
   /* all states to false */
   memset( lpKeyState, 0, sizeof(lpKeyState) );
   
-  if (!initDone) KEYBOARD_GetDriver()->pInit();
+  if (!initDone) KEYBOARD_Driver->pInit();
   initDone = TRUE;
 }
 
@@ -145,7 +130,7 @@ DWORD WINAPI OemKeyScan(WORD wOemChar)
 
 WORD WINAPI VkKeyScan16(CHAR cChar)
 {
-  return KEYBOARD_GetDriver()->pVkKeyScan(cChar);
+  return KEYBOARD_Driver->pVkKeyScan(cChar);
 }
 
 /******************************************************************************
@@ -178,7 +163,7 @@ INT16 WINAPI GetKeyboardType16(INT16 nTypeFlag)
  */
 UINT16 WINAPI MapVirtualKey16(UINT16 wCode, UINT16 wMapType)
 {
-  return KEYBOARD_GetDriver()->pMapVirtualKey(wCode,wMapType);
+  return KEYBOARD_Driver->pMapVirtualKey(wCode,wMapType);
 }
 
 /****************************************************************************
@@ -195,7 +180,7 @@ INT16 WINAPI GetKBCodePage16(void)
  */
 INT16 WINAPI GetKeyNameText16(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 {
-  return KEYBOARD_GetDriver()->pGetKeyNameText(lParam, lpBuffer, nSize);
+  return KEYBOARD_Driver->pGetKeyNameText(lParam, lpBuffer, nSize);
 }
 
 /****************************************************************************
@@ -219,8 +204,32 @@ INT16 WINAPI GetKeyNameText16(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 INT16 WINAPI ToAscii16(UINT16 virtKey,UINT16 scanCode, LPBYTE lpKeyState, 
                        LPVOID lpChar, UINT16 flags) 
 {
-    return KEYBOARD_GetDriver()->pToAscii(
+    return KEYBOARD_Driver->pToAscii(
         virtKey, scanCode, lpKeyState, lpChar, flags
     );
+}
+
+/***********************************************************************
+ *		KEYBOARD_GetBeepActive
+ */
+BOOL KEYBOARD_GetBeepActive()
+{
+  return KEYBOARD_Driver->pGetBeepActive();
+}
+
+/***********************************************************************
+ *		KEYBOARD_SetBeepActive
+ */
+void KEYBOARD_SetBeepActive(BOOL bActivate)
+{
+  KEYBOARD_Driver->pSetBeepActive(bActivate);
+}
+
+/***********************************************************************
+ *		KEYBOARD_Beep
+ */
+void KEYBOARD_Beep(void)
+{
+  KEYBOARD_Driver->pBeep();
 }
 

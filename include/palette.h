@@ -12,12 +12,21 @@
 #define NB_RESERVED_COLORS              20 /* number of fixed colors in system palette */
 
   /* GDI logical palette object */
-typedef struct
+typedef struct tagPALETTEOBJ
 {
-    GDIOBJHDR   header;
-    int        *mapping;
-    LOGPALETTE  logpalette; /* _MUST_ be the last field */
+    GDIOBJHDR                    header;
+    int                          *mapping;
+    LOGPALETTE                   logpalette; /* _MUST_ be the last field */
 } PALETTEOBJ;
+
+typedef struct tagPALETTE_DRIVER
+{
+  int  (*pSetMapping)(struct tagPALETTEOBJ *, UINT, UINT, BOOL);
+  int  (*pUpdateMapping)(struct tagPALETTEOBJ *);
+  BOOL (*pIsDark)(int pixel);
+} PALETTE_DRIVER;
+
+extern PALETTE_DRIVER *PALETTE_Driver;
 
 extern HPALETTE16 PALETTE_Init(void);
 extern int PALETTE_GetObject( PALETTEOBJ * palette, int count, LPSTR buffer );

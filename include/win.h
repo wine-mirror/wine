@@ -52,7 +52,7 @@ typedef enum
 struct tagCLASS;
 struct tagDCE;
 struct tagDC;
-struct _WND_DRIVER;
+struct tagWND_DRIVER;
 
 typedef struct tagWND
 {
@@ -83,7 +83,7 @@ typedef struct tagWND
     HMENU16        hSysMenu;      /* window's copy of System Menu */
     int            irefCount;     /* window's reference count*/
     DWORD          userdata;      /* User private data */
-    struct _WND_DRIVER *pDriver;  /* Window driver */
+    struct tagWND_DRIVER *pDriver;  /* Window driver */
     void          *pDriverData;   /* Window driver data */
     DWORD          wExtra[1];     /* Window extra bytes */
 } WND;
@@ -107,7 +107,7 @@ typedef struct tagWND
 #define BGSouthEast        9
 #define BGStatic           10
 
-typedef struct _WND_DRIVER
+typedef struct tagWND_DRIVER
 {
     void   (*pInitialize)(WND *);
     void   (*pFinalize)(WND *);
@@ -126,6 +126,8 @@ typedef struct _WND_DRIVER
     BOOL   (*pSetHostAttr)(WND *, INT haKey, INT value);
     BOOL (*pIsSelfClipping)(WND *);
 } WND_DRIVER;
+
+extern WND_DRIVER *WND_Driver;
 
 typedef struct
 {

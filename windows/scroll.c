@@ -8,6 +8,7 @@
  */
 
 #include <stdlib.h>
+
 #include "winuser.h"
 #include "class.h"
 #include "dc.h"

@@ -49,6 +49,8 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pCreateBitmap */
     WIN16DRV_CreateDC,               /* pCreateDC */
     NULL,                            /* pDeleteDC */
+    NULL,                            /* pCreateDIBSection */
+    NULL,                            /* pCreateDIBSection16 */
     NULL,                            /* pDeleteObject */
     WIN16DRV_Ellipse,                /* pEllipse */
     WIN16DRV_EnumDeviceFonts,        /* pEnumDeviceFonts */

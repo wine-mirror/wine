@@ -20,6 +20,50 @@
 #include "monitor.h"
 #include "wine/winuser16.h"
 
+/**********************************************************************/
+
+BITMAP_DRIVER *BITMAP_Driver = NULL;
+
+/***********************************************************************
+ *           BITMAP_GetPadding
+ *
+ * Return number of bytes to pad a scanline of 16-bit aligned Windows DDB data.
+ */
+INT BITMAP_GetPadding( int bmWidth, int bpp )
+{
+    INT pad;
+
+    switch (bpp) 
+    {
+    case 1:
+        pad = ((bmWidth-1) & 8) ? 0 : 1;
+	break;
+
+    case 8:
+	pad = (2 - (bmWidth & 1)) & 1;
+	break;
+
+    case 24:
+	pad = (bmWidth*3) & 1;
+	break;
+
+    case 32:
+    case 16:
+    case 15:
+	pad = 0; /* we have 16bit alignment already */
+	break;
+
+    case 4:
+	if (!(bmWidth & 3)) pad = 0;
+	else pad = ((4 - (bmWidth & 3)) + 1) / 2;
+	break;
+
+    default:
+	WARN(bitmap,"Unknown depth %d, please report.\n", bpp );
+        return -1;
+    }
+    return pad;
+}
 
 /***********************************************************************
  *           BITMAP_GetWidthBytes
@@ -717,7 +761,7 @@ INT16 BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer )
     {
         if ( count <= sizeof(BITMAP16) )
         {
-            BITMAP *bmp32 = &bmp->dib->dibSection.dsBm;
+            BITMAP *bmp32 = &bmp->dib->dsBm;
 	    BITMAP16 bmp16;
 	    bmp16.bmType       = bmp32->bmType;
 	    bmp16.bmWidth      = bmp32->bmWidth;
@@ -768,7 +812,7 @@ INT BITMAP_GetObject( BITMAPOBJ * bmp, INT count, LPVOID buffer )
 	    if (count > sizeof(DIBSECTION)) count = sizeof(DIBSECTION);
 	}
 
-	memcpy( buffer, &bmp->dib->dibSection, count );
+	memcpy( buffer, bmp->dib, count );
 	return count;
     }
     else

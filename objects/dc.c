@@ -5,8 +5,10 @@
  *
  */
 
+#ifndef X_DISPLAY_MISSING
 #include "ts_xlib.h"
 #include "x11drv.h"
+#endif  /* !defined(X_DISPLAY_MISSING) */
 
 #include <stdlib.h>
 #include <string.h>
@@ -856,21 +858,27 @@ UINT WINAPI SetTextAlign( HDC hdc, UINT textAlign )
 BOOL WINAPI GetDCOrgEx( HDC hDC, LPPOINT lpp )
 {
     DC * dc;
-    X11DRV_PDEVICE *physDev;
 
     if (!lpp) return FALSE;
     if (!(dc = (DC *) GDI_GetObjPtr( hDC, DC_MAGIC ))) return FALSE;
-    physDev = (X11DRV_PDEVICE *)dc->physDev;
 
+#ifndef X_DISPLAY_MISSING
     if (!(dc->w.flags & DC_MEMORY))
     {
+       X11DRV_PDEVICE *physDev;
        Window root;
        int w, h, border, depth;
+
+       physDev = (X11DRV_PDEVICE *) dc->physDev;
+
        /* FIXME: this is not correct for managed windows */
        TSXGetGeometry( display, physDev->drawable, &root,
                     (int*)&lpp->x, (int*)&lpp->y, &w, &h, &border, &depth );
     }
-    else lpp->x = lpp->y = 0;
+    else 
+#endif  /* !defined(X_DISPLAY_MISSING) */
+      lpp->x = lpp->y = 0;
+
     lpp->x += dc->w.DCOrgX; lpp->y += dc->w.DCOrgY;
     GDI_HEAP_UNLOCK( hDC );
     return TRUE;

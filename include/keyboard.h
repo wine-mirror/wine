@@ -29,15 +29,22 @@ VOID WINAPI KEYBOARD_Disable(VOID);
 
 /* Wine internals */
 
-typedef struct _KEYBOARD_DRIVER {
+typedef struct tagKEYBOARD_DRIVER {
   void   (*pInit)(void);
   WORD   (*pVkKeyScan)(CHAR);
   UINT16 (*pMapVirtualKey)(UINT16, UINT16);
   INT16  (*pGetKeyNameText)(LONG, LPSTR, INT16);
   INT16  (*pToAscii)(UINT16, UINT16, LPBYTE, LPVOID, UINT16);
+  BOOL   (*pGetBeepActive)(void);
+  void   (*pSetBeepActive)(BOOL bActivate);
+  void   (*pBeep)(void);
 } KEYBOARD_DRIVER;
 
-extern KEYBOARD_DRIVER *KEYBOARD_GetDriver(void);
+extern KEYBOARD_DRIVER *KEYBOARD_Driver;
+
+extern BOOL KEYBOARD_GetBeepActive(void);
+extern void KEYBOARD_SetBeepActive(BOOL bActivate);
+extern void KEYBOARD_Beep(void);
 
 extern void KEYBOARD_SendEvent(BYTE bVk, BYTE bScan, DWORD dwFlags, DWORD posX, DWORD posY, DWORD time);
 

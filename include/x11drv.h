@@ -1,5 +1,5 @@
 /*
- * X11 display driver definitions
+ * X11 driver definitions
  */
 
 #ifndef __WINE_X11DRV_H
@@ -18,13 +18,15 @@
 #include "gdi.h"
 #include "windef.h"
 
+struct tagBITMAPOBJ;
 struct tagCLASS;
+struct tagCREATESTRUCTA;
+struct tagCURSORICONINFO;
 struct tagDC;
 struct tagDeviceCaps;
+struct tagPALETTEOBJ;
 struct tagWND;
-struct tagCREATESTRUCTA;
 struct tagWINDOWPOS;
-struct tagCURSORICONINFO;
 
   /* X physical pen */
 typedef struct
@@ -74,6 +76,7 @@ extern GC BITMAP_monoGC, BITMAP_colorGC;
 #define BITMAP_GC(bmp) \
   (((bmp)->bitmap.bmBitsPixel == 1) ? BITMAP_monoGC : BITMAP_colorGC)
 
+extern DeviceCaps X11DRV_DevCaps;
 
 /* Wine driver X11 functions */
 
@@ -188,6 +191,26 @@ extern void _XInitImageFuncPtrs(XImage *);
 
 /* exported dib functions for now */
 
+/* Additional info for DIB section objects */
+typedef struct
+{
+    /* Windows DIB section */
+    DIBSECTION  dibSection;
+
+    /* Mapping status */
+    enum { X11DRV_DIB_NoHandler, X11DRV_DIB_InSync, X11DRV_DIB_AppMod, X11DRV_DIB_GdiMod } status;
+
+    /* Color map info */
+    int         nColorMap;
+    int        *colorMap;
+
+    /* Cached XImage */
+    XImage     *image;
+
+    /* Selector for 16-bit access to bits */
+    WORD selector;
+} X11DRV_DIBSECTION;
+
 /* This structure holds the arguments for DIB_SetImageBits() */
 typedef struct
 {
@@ -209,17 +232,86 @@ typedef struct
     int               yDest;
     int               width;
     int               height;
-} DIB_SETIMAGEBITS_DESCR;
+} X11DRV_DIB_SETIMAGEBITS_DESCR;
 
-extern int X11DRV_DIB_GetImageBits( const DIB_SETIMAGEBITS_DESCR *descr );
-extern int X11DRV_DIB_SetImageBits( const DIB_SETIMAGEBITS_DESCR *descr );
+extern int X11DRV_DIB_GetImageBits( const X11DRV_DIB_SETIMAGEBITS_DESCR *descr );
+extern int X11DRV_DIB_SetImageBits( const X11DRV_DIB_SETIMAGEBITS_DESCR *descr );
 extern int *X11DRV_DIB_BuildColorMap( struct tagDC *dc, WORD coloruse,
 				      WORD depth, const BITMAPINFO *info,
 				      int *nColors );
+extern void X11DRV_DIB_UpdateDIBSection(struct tagDC *dc, BOOL toDIB);
+
+extern HBITMAP X11DRV_DIB_CreateDIBSection(struct tagDC *dc, BITMAPINFO *bmi, UINT usage,
+					   LPVOID *bits, HANDLE section, DWORD offset);
+extern HBITMAP16 X11DRV_DIB_CreateDIBSection16(struct tagDC *dc, BITMAPINFO *bmi, UINT16 usage,
+					       SEGPTR *bits, HANDLE section, DWORD offset);
+
+extern struct tagBITMAP_DRIVER X11DRV_BITMAP_Driver;
+
+extern INT X11DRV_DIB_SetDIBits(struct tagBITMAPOBJ *bmp, struct tagDC *dc, UINT startscan,
+				UINT lines, LPCVOID bits, const BITMAPINFO *info,
+				UINT coloruse, HBITMAP hbitmap);
+extern INT X11DRV_DIB_GetDIBits(struct tagBITMAPOBJ *bmp, struct tagDC *dc, UINT startscan,
+				UINT lines, LPVOID bits, BITMAPINFO *info,
+				UINT coloruse, HBITMAP hbitmap);
+extern void X11DRV_DIB_DeleteDIBSection(struct tagBITMAPOBJ *bmp);
+
+/**************************************************************************
+ * X11 GDI driver
+ */
+
+extern struct tagGDI_DRIVER X11DRV_GDI_Driver;
+
+BOOL X11DRV_GDI_Initialize(void);
+void X11DRV_GDI_Finalize(void);
+
+/* X11 GDI palette driver */
+
+#define X11DRV_PALETTE_FIXED    0x0001 /* read-only colormap - have to use XAllocColor (if not virtual)*/
+#define X11DRV_PALETTE_VIRTUAL  0x0002 /* no mapping needed - pixel == pixel color */
+
+#define X11DRV_PALETTE_PRIVATE  0x1000 /* private colormap, identity mapping */
+#define X11DRV_PALETTE_WHITESET 0x2000
+
+extern Colormap X11DRV_PALETTE_PaletteXColormap;
+extern UINT16 X11DRV_PALETTE_PaletteFlags;
+
+extern int *X11DRV_PALETTE_PaletteToXPixel;
+extern int *X11DRV_PALETTE_XPixelToPalette;
+
+extern int X11DRV_PALETTE_mapEGAPixel[16];
+
+extern BOOL X11DRV_PALETTE_Init(void);
+extern void X11DRV_PALETTE_Cleanup(void);
+
+extern COLORREF X11DRV_PALETTE_ToLogical(int pixel);
+extern int X11DRV_PALETTE_ToPhysical(struct tagDC *dc, COLORREF color);
+extern int X11DRV_PALETTE_LookupSystemXPixel(COLORREF col);
+
+extern struct tagPALETTE_DRIVER X11DRV_PALETTE_Driver;
+
+extern int X11DRV_PALETTE_SetMapping(struct tagPALETTEOBJ *palPtr, UINT uStart, UINT uNum, BOOL mapOnly);
+extern int X11DRV_PALETTE_UpdateMapping(struct tagPALETTEOBJ *palPtr);
+extern BOOL X11DRV_PALETTE_IsDark(int pixel);
+
+/**************************************************************************
+ * X11 USER driver
+ */
+
+extern struct tagUSER_DRIVER X11DRV_USER_Driver;
+
+extern Display *display;
+extern Screen *X11DRV_GetXScreen(void);
+extern Window X11DRV_GetXRootWindow(void);
+
+extern BOOL X11DRV_USER_Initialize(void);
+extern void X11DRV_USER_Finalize(void);
+extern void X11DRV_USER_BeginDebugging(void);
+extern void X11DRV_USER_EndDebugging(void);
 
 /* X11 clipboard driver */
 
-extern struct _CLIPBOARD_DRIVER X11DRV_CLIPBOARD_Driver;
+extern struct tagCLIPBOARD_DRIVER X11DRV_CLIPBOARD_Driver;
 
 extern void X11DRV_CLIPBOARD_EmptyClipboard(void);
 extern void X11DRV_CLIPBOARD_SetClipboardData(UINT wFormat);
@@ -229,15 +321,12 @@ extern void X11DRV_CLIPBOARD_ResetOwner(struct tagWND *pWnd, BOOL bFooBar);
 void X11DRV_CLIPBOARD_ReadSelection(Window w, Atom prop);
 void X11DRV_CLIPBOARD_ReleaseSelection(Window w, HWND hwnd);
 
-/* X11 color driver */
-
-extern Colormap	X11DRV_COLOR_GetColormap(void);
-
 /* X11 desktop driver */
 
-extern struct _DESKTOP_DRIVER X11DRV_DESKTOP_Driver;
+extern struct tagDESKTOP_DRIVER X11DRV_DESKTOP_Driver;
 
 typedef struct _X11DRV_DESKTOP_DATA {
+  int dummy;
 } X11DRV_DESKTOP_DATA;
 
 struct tagDESKTOP;
@@ -253,7 +342,7 @@ extern int X11DRV_DESKTOP_GetScreenDepth(struct tagDESKTOP *pDesktop);
 
 /* X11 event driver */
 
-extern struct _EVENT_DRIVER X11DRV_EVENT_Driver;
+extern struct tagEVENT_DRIVER X11DRV_EVENT_Driver;
 
 extern BOOL X11DRV_EVENT_Init(void);
 extern void X11DRV_EVENT_AddIO(int fd, unsigned flag);
@@ -269,28 +358,18 @@ extern void X11DRV_EVENT_WakeUp(void);
 
 /* X11 keyboard driver */
 
-extern struct _KEYBOARD_DRIVER X11DRV_KEYBOARD_Driver;
+extern struct tagKEYBOARD_DRIVER X11DRV_KEYBOARD_Driver;
 
 extern void X11DRV_KEYBOARD_Init(void);
 extern WORD X11DRV_KEYBOARD_VkKeyScan(CHAR cChar);
 extern UINT16 X11DRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType);
 extern INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize);
 extern INT16 X11DRV_KEYBOARD_ToAscii(UINT16 virtKey, UINT16 scanCode, LPBYTE lpKeyState, LPVOID lpChar, UINT16 flags);
-extern void KEYBOARD_HandleEvent( struct tagWND *pWnd, XKeyEvent *event );
-extern void KEYBOARD_UpdateState ( void );
+extern BOOL X11DRV_KEYBOARD_GetBeepActive(void);
+extern void X11DRV_KEYBOARD_SetBeepActive(BOOL bActivate);
+extern void X11DRV_KEYBOARD_Beep(void);
 
-/* X11 main driver */
-
-extern Display *display;
-extern Screen *X11DRV_GetXScreen(void);
-extern Window X11DRV_GetXRootWindow(void);
-
-extern void X11DRV_MAIN_Finalize(void);
-extern void X11DRV_MAIN_Initialize(void);
-extern void X11DRV_MAIN_ParseOptions(int *argc, char *argv[]);
-extern void X11DRV_MAIN_Create(void);
-extern void X11DRV_MAIN_SaveSetup(void);
-extern void X11DRV_MAIN_RestoreSetup(void);
+extern void X11DRV_KEYBOARD_HandleEvent(struct tagWND *pWnd, XKeyEvent *event);
 
 /* X11 monitor driver */
 
@@ -311,20 +390,28 @@ extern Window X11DRV_MONITOR_GetXRootWindow(struct tagMONITOR *pMonitor);
 
 extern void X11DRV_MONITOR_Initialize(struct tagMONITOR *pMonitor);
 extern void X11DRV_MONITOR_Finalize(struct tagMONITOR *pMonitor);
+extern BOOL X11DRV_MONITOR_IsSingleWindow(struct tagMONITOR *pMonitor);
 extern int X11DRV_MONITOR_GetWidth(struct tagMONITOR *pMonitor);
 extern int X11DRV_MONITOR_GetHeight(struct tagMONITOR *pMonitor);
 extern int X11DRV_MONITOR_GetDepth(struct tagMONITOR *pMonitor);
+extern BOOL X11DRV_MONITOR_GetScreenSaveActive(struct tagMONITOR *pMonitor);
+extern void X11DRV_MONITOR_SetScreenSaveActive(struct tagMONITOR *pMonitor, BOOL bActivate);
+extern int X11DRV_MONITOR_GetScreenSaveTimeout(struct tagMONITOR *pMonitor);
+extern void X11DRV_MONITOR_SetScreenSaveTimeout(struct tagMONITOR *pMonitor, int nTimeout);
 
 /* X11 mouse driver */
 
-extern struct _MOUSE_DRIVER X11DRV_MOUSE_Driver;
+extern struct tagMOUSE_DRIVER X11DRV_MOUSE_Driver;
+
+extern BOOL X11DRV_MOUSE_DisableWarpPointer;
 
 extern void X11DRV_MOUSE_SetCursor(struct tagCURSORICONINFO *lpCursor);
 extern void X11DRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY);
+extern BOOL X11DRV_MOUSE_EnableWarpPointer(BOOL bEnable);
 
 /* X11 windows driver */
 
-extern struct _WND_DRIVER X11DRV_WND_Driver;
+extern struct tagWND_DRIVER X11DRV_WND_Driver;
 
 typedef struct _X11DRV_WND_DATA {
   Window window;

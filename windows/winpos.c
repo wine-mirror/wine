@@ -5,8 +5,6 @@
  *                       1995, 1996, 1999 Alex Korobka
  */
 
-#include "x11drv.h"
-
 #include <string.h>
 #include "sysmetrics.h"
 #include "heap.h"

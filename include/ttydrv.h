@@ -6,27 +6,67 @@
 #define __WINE_TTYDRV_H
 
 #include "windef.h"
+#include "wingdi.h"
 #include "wine/winuser16.h"
 
+struct tagBITMAPOBJ;
 struct tagCLASS;
 struct tagDC;
 struct tagDESKTOP;
+struct tagPALETTEOBJ;
 struct tagWND;
 
-/* TTY GDI driver */
+/**************************************************************************
+ * TTY GDI driver
+ */
 
-typedef struct {
-} TTYDRV_PDEVICE;
+extern struct tagGDI_DRIVER TTYDRV_GDI_Driver;
 
 extern BOOL TTYDRV_GDI_Initialize(void);
-extern void TTDRV_GDI_Finalize(void);
-extern BOOL TTYDRV_GDI_CreateDC(struct tagDC *dc, LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE16 *initData);
-extern BOOL TTYDRV_GDI_DeleteDC(struct tagDC *dc);
-extern INT TTYDRV_GDI_Escape(struct tagDC *dc, INT nEscape, INT cbInput, SEGPTR lpInData, SEGPTR lpOutData);
+extern void TTYDRV_GDI_Finalize(void);
+
+/* TTY GDI bitmap driver */
+
+extern HBITMAP TTYDRV_BITMAP_CreateDIBSection(struct tagDC *dc, BITMAPINFO *bmi, UINT usage, LPVOID *bits, HANDLE section, DWORD offset);
+extern HBITMAP16 TTYDRV_BITMAP_CreateDIBSection16(struct tagDC *dc, BITMAPINFO *bmi, UINT16 usage, SEGPTR *bits, HANDLE section, DWORD offset);
+
+extern INT TTYDRV_BITMAP_SetDIBits(struct tagBITMAPOBJ *bmp, struct tagDC *dc, UINT startscan, UINT lines, LPCVOID bits, const BITMAPINFO *info, UINT coloruse, HBITMAP hbitmap);
+extern INT TTYDRV_BITMAP_GetDIBits(struct tagBITMAPOBJ *bmp, struct tagDC *dc, UINT startscan, UINT lines, LPVOID bits, BITMAPINFO *info, UINT coloruse, HBITMAP hbitmap);
+extern void TTYDRV_BITMAP_DeleteDIBSection(struct tagBITMAPOBJ *bmp);
+
+typedef struct {
+  int dummy;
+} TTYDRV_PDEVICE;
+
+extern BOOL TTYDRV_DC_CreateDC(struct tagDC *dc, LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE16 *initData);
+extern BOOL TTYDRV_DC_DeleteDC(struct tagDC *dc);
+extern INT TTYDRV_DC_Escape(struct tagDC *dc, INT nEscape, INT cbInput, SEGPTR lpInData, SEGPTR lpOutData);
+
+/* TTY GDI palette driver */
+
+extern struct tagPALETTE_DRIVER TTYDRV_PALETTE_Driver;
+
+extern BOOL TTYDRV_PALETTE_Initialize(void);
+extern void TTYDRV_PALETTE_Finalize(void);
+
+extern int TTYDRV_PALETTE_SetMapping(struct tagPALETTEOBJ *palPtr, UINT uStart, UINT uNum, BOOL mapOnly);
+extern int TTYDRV_PALETTE_UpdateMapping(struct tagPALETTEOBJ *palPtr);
+extern BOOL TTYDRV_PALETTE_IsDark(int pixel);
+
+/**************************************************************************
+ * TTY USER driver
+ */
+
+extern struct tagUSER_DRIVER TTYDRV_USER_Driver;
+
+extern BOOL TTYDRV_USER_Initialize(void);
+extern void TTYDRV_USER_Finalize(void);
+extern void TTYDRV_USER_BeginDebugging(void);
+extern void TTYDRV_USER_EndDebugging(void);
 
 /* TTY clipboard driver */
 
-extern struct _CLIPBOARD_DRIVER TTYDRV_CLIPBOARD_Driver;
+extern struct tagCLIPBOARD_DRIVER TTYDRV_CLIPBOARD_Driver;
 
 extern void TTYDRV_CLIPBOARD_EmptyClipboard(void);
 extern void TTYDRV_CLIPBOARD_SetClipboardData(UINT wFormat);
@@ -35,7 +75,7 @@ extern void TTYDRV_CLIPBOARD_ResetOwner(struct tagWND *pWnd, BOOL bFooBar);
 
 /* TTY desktop driver */
 
-extern struct _DESKTOP_DRIVER TTYDRV_DESKTOP_Driver;
+extern struct tagDESKTOP_DRIVER TTYDRV_DESKTOP_Driver;
 
 extern void TTYDRV_DESKTOP_Initialize(struct tagDESKTOP *pDesktop);
 extern void TTYDRV_DESKTOP_Finalize(struct tagDESKTOP *pDesktop);
@@ -45,7 +85,7 @@ extern int TTYDRV_DESKTOP_GetScreenDepth(struct tagDESKTOP *pDesktop);
 
 /* TTY event driver */
 
-extern struct _EVENT_DRIVER TTYDRV_EVENT_Driver;
+extern struct tagEVENT_DRIVER TTYDRV_EVENT_Driver;
 
 extern BOOL TTYDRV_EVENT_Init(void);
 extern void TTYDRV_EVENT_AddIO(int fd, unsigned flag);
@@ -61,22 +101,16 @@ extern void TTYDRV_EVENT_WakeUp(void);
 
 /* TTY keyboard driver */
 
-extern struct _KEYBOARD_DRIVER TTYDRV_KEYBOARD_Driver;
+extern struct tagKEYBOARD_DRIVER TTYDRV_KEYBOARD_Driver;
 
 extern void TTYDRV_KEYBOARD_Init(void);
 extern WORD TTYDRV_KEYBOARD_VkKeyScan(CHAR cChar);
 extern UINT16 TTYDRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType);
 extern INT16 TTYDRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize);
 extern INT16 TTYDRV_KEYBOARD_ToAscii(UINT16 virtKey, UINT16 scanCode, LPBYTE lpKeyState, LPVOID lpChar, UINT16 flags);
-
-/* TTY main driver */
-
-extern void TTYDRV_MAIN_Finalize(void);
-extern void TTYDRV_MAIN_Initialize(void);
-extern void TTYDRV_MAIN_ParseOptions(int *argc, char *argv[]);
-extern void TTYDRV_MAIN_Create(void);
-extern void TTYDRV_MAIN_SaveSetup(void);
-extern void TTYDRV_MAIN_RestoreSetup(void);
+extern BOOL TTYDRV_KEYBOARD_GetBeepActive(void);
+extern void TTYDRV_KEYBOARD_SetBeepActive(BOOL bActivate);
+extern void TTYDRV_KEYBOARD_Beep(void);
 
 /* TTY monitor driver */
 
@@ -92,20 +126,26 @@ struct tagMONITOR;
 
 extern void TTYDRV_MONITOR_Initialize(struct tagMONITOR *pMonitor);
 extern void  TTYDRV_MONITOR_Finalize(struct tagMONITOR *pMonitor);
+extern BOOL TTYDRV_MONITOR_IsSingleWindow(struct tagMONITOR *pMonitor);
 extern int TTYDRV_MONITOR_GetWidth(struct tagMONITOR *pMonitor);
 extern int TTYDRV_MONITOR_GetHeight(struct tagMONITOR *pMonitor);
 extern int TTYDRV_MONITOR_GetDepth(struct tagMONITOR *pMonitor);
+extern BOOL TTYDRV_MONITOR_GetScreenSaveActive(struct tagMONITOR *pMonitor);
+extern void TTYDRV_MONITOR_SetScreenSaveActive(struct tagMONITOR *pMonitor, BOOL bActivate);
+extern int TTYDRV_MONITOR_GetScreenSaveTimeout(struct tagMONITOR *pMonitor);
+extern void TTYDRV_MONITOR_SetScreenSaveTimeout(struct tagMONITOR *pMonitor, int nTimeout);
 
 /* TTY mouse driver */
 
-extern struct _MOUSE_DRIVER TTYDRV_MOUSE_Driver;
+extern struct tagMOUSE_DRIVER TTYDRV_MOUSE_Driver;
 
 extern void TTYDRV_MOUSE_SetCursor(CURSORICONINFO *lpCursor);
 extern void TTYDRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY);
+extern BOOL TTYDRV_MOUSE_EnableWarpPointer(BOOL bEnable);
 
 /* TTY windows driver */
 
-extern struct _WND_DRIVER TTYDRV_WND_Driver;
+extern struct tagWND_DRIVER TTYDRV_WND_Driver;
 
 extern void TTYDRV_WND_Initialize(struct tagWND *wndPtr);
 extern void TTYDRV_WND_Finalize(struct tagWND *wndPtr);

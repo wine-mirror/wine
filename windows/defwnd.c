@@ -6,6 +6,7 @@
  */
 
 #include <string.h>
+
 #include "win.h"
 #include "user.h"
 #include "heap.h"
