@@ -401,6 +401,8 @@ int   main (int argc, char *argv[])
 	break;
 
     case SPEC:
+        if (globals.input_name == NULL)
+            fatal("No file name has been given\n");
 	set_module_name(1);
 	dll_open (globals.input_name);
 
@@ -453,6 +455,8 @@ int   main (int argc, char *argv[])
 	do_usage();
 	break;
     case DUMP:
+        if (globals.input_name == NULL)
+            fatal("No file name has been given\n");
 	set_module_name(0);
 	dump_file(globals.input_name);
 	break;
