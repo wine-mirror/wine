@@ -5,8 +5,6 @@ VPATH	  = @srcdir@
 MODULE	  = none
 
 INSTALLED_INCLUDES = \
-	amaudio.h \
-	amvideo.h \
 	audevcod.h \
 	basetsd.h \
 	cderr.h \
@@ -15,7 +13,6 @@ INSTALLED_INCLUDES = \
 	commctrl.h \
 	commdlg.h \
 	compobj.h \
-	control.h \
 	cpl.h \
 	d3d.h \
 	d3dcaps.h \
@@ -37,8 +34,6 @@ INSTALLED_INCLUDES = \
 	dshow.h \
 	dsound.h \
 	dvdmedia.h \
-	errors.h \
-	evcode.h \
 	guiddef.h \
 	imagehlp.h \
 	imm.h \
@@ -126,7 +121,6 @@ INSTALLED_INCLUDES = \
 	sqlext.h \
 	sqltypes.h \
 	storage.h \
-	strmif.h \
 	tapi.h \
 	tlhelp32.h \
 	unknwn.h \

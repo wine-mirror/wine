@@ -517,8 +517,8 @@ advapi32/advapi32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 avicap32/avicap32.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
 	@cd avicap32 && $(MAKE) avicap32.dll$(DLLEXT)
 
-avifil32/avifil32.dll$(DLLEXT): dummy msvfw32.dll$(DLLEXT) ole32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+avifil32/avifil32.dll$(DLLEXT): dummy msvfw32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
+  ntdll.dll$(DLLEXT)
 	@cd avifil32 && $(MAKE) avifil32.dll$(DLLEXT)
 
 comctl32/comctl32.dll$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
@@ -577,8 +577,7 @@ icmp/icmp.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 imagehlp/imagehlp.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd imagehlp && $(MAKE) imagehlp.dll$(DLLEXT)
 
-imm32/imm32.dll$(DLLEXT): dummy user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
-  advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+imm32/imm32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd imm32 && $(MAKE) imm32.dll$(DLLEXT)
 
 kernel/kernel32.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT) libntdll.dll.$(LIBEXT)
@@ -674,9 +673,7 @@ psapi/psapi.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 qcap/qcap.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
 	@cd qcap && $(MAKE) qcap.dll$(DLLEXT)
 
-quartz/quartz.dll$(DLLEXT): dummy oleaut32.dll$(DLLEXT) ole32.dll$(DLLEXT) \
-  msvfw32.dll$(DLLEXT) msacm32.dll$(DLLEXT) winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
-  gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+quartz/quartz.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
 	@cd quartz && $(MAKE) quartz.dll$(DLLEXT)
 
 rasapi32/rasapi32.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)

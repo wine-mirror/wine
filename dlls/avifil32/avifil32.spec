@@ -1,9 +1,7 @@
 name	avifil32
 type	win32
-init	AVIFILE_DllMain
 
 import msvfw32.dll
-import ole32.dll
 import kernel32.dll
 import ntdll.dll
 
@@ -13,11 +11,11 @@ debug_channels (avifile)
 @ stub    AVIBuildFilterA
 @ stub    AVIBuildFilterW
 @ stub    AVIClearClipboard
-@ stdcall AVIFileAddRef(ptr) AVIFileAddRef
+@ stub    AVIFileAddRef
 @ stub    AVIFileCreateStream
 @ stdcall AVIFileCreateStreamA(ptr ptr ptr) AVIFileCreateStreamA
 @ stdcall AVIFileCreateStreamW(ptr ptr ptr) AVIFileCreateStreamW
-@ stdcall AVIFileEndRecord(ptr) AVIFileEndRecord
+@ stub    AVIFileEndRecord
 @ stdcall AVIFileExit() AVIFileExit
 @ stdcall AVIFileGetStream(ptr ptr long long) AVIFileGetStream
 @ stdcall AVIFileInfo (ptr ptr long) AVIFileInfoA # A in both Win95 and NT
@@ -26,10 +24,10 @@ debug_channels (avifile)
 @ stdcall AVIFileInit() AVIFileInit
 @ stub    AVIFileOpen
 @ stdcall AVIFileOpenA(ptr str long ptr) AVIFileOpenA
-@ stdcall AVIFileOpenW(ptr wstr long ptr) AVIFileOpenW
-@ stdcall AVIFileReadData(ptr long ptr ptr) AVIFileReadData
+@ stub    AVIFileOpenW
+@ stub    AVIFileReadData
 @ stdcall AVIFileRelease(ptr) AVIFileRelease
-@ stdcall AVIFileWriteData(ptr long ptr long) AVIFileWriteData
+@ stub    AVIFileWriteData
 @ stub    AVIGetFromClipboard
 @ stdcall AVIMakeCompressedStream(ptr ptr ptr ptr) AVIMakeCompressedStream
 @ stub    AVIMakeFileFromStreams
@@ -43,11 +41,11 @@ debug_channels (avifile)
 @ stub    AVISaveVA
 @ stub    AVISaveVW
 @ stub    AVISaveW
-@ stdcall AVIStreamAddRef(ptr) AVIStreamAddRef
-@ stdcall AVIStreamBeginStreaming(ptr long long long) AVIStreamBeginStreaming
-@ stdcall AVIStreamCreate(ptr long long ptr) AVIStreamCreate
-@ stdcall AVIStreamEndStreaming(ptr) AVIStreamEndStreaming
-@ stdcall AVIStreamFindSample(ptr long long) AVIStreamFindSample
+@ stub    AVIStreamAddRef
+@ stub    AVIStreamBeginStreaming
+@ stub    AVIStreamCreate
+@ stub    AVIStreamEndStreaming
+@ stub    AVIStreamFindSample
 @ stdcall AVIStreamGetFrame(ptr long) AVIStreamGetFrame
 @ stdcall AVIStreamGetFrameClose(ptr) AVIStreamGetFrameClose
 @ stdcall AVIStreamGetFrameOpen(ptr ptr) AVIStreamGetFrameOpen
@@ -56,16 +54,16 @@ debug_channels (avifile)
 @ stdcall AVIStreamInfoW(ptr ptr long) AVIStreamInfoW
 @ stdcall AVIStreamLength(ptr) AVIStreamLength
 @ stub    AVIStreamOpenFromFile
-@ stdcall AVIStreamOpenFromFileA(ptr str long long long ptr) AVIStreamOpenFromFileA
-@ stdcall AVIStreamOpenFromFileW(ptr wstr long long long ptr) AVIStreamOpenFromFileW
+@ stub    AVIStreamOpenFromFileA
+@ stub    AVIStreamOpenFromFileW
 @ stdcall AVIStreamRead(ptr long long ptr long ptr ptr) AVIStreamRead
 @ stdcall AVIStreamReadData(ptr long ptr ptr) AVIStreamReadData
 @ stdcall AVIStreamReadFormat(ptr long ptr long) AVIStreamReadFormat
 @ stdcall AVIStreamRelease(ptr) AVIStreamRelease
-@ stdcall AVIStreamSampleToTime(ptr long) AVIStreamSampleToTime
+@ stub    AVIStreamSampleToTime
 @ stdcall AVIStreamSetFormat(ptr long ptr long) AVIStreamSetFormat
 @ stdcall AVIStreamStart(ptr) AVIStreamStart
-@ stdcall AVIStreamTimeToSample(ptr long) AVIStreamTimeToSample
+@ stub    AVIStreamTimeToSample
 @ stdcall AVIStreamWrite(ptr long long ptr long long ptr ptr) AVIStreamWrite
 @ stdcall AVIStreamWriteData(ptr long ptr long) AVIStreamWriteData
 @ stub    CLSID_AVISimpleUnMarshal

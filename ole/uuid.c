@@ -69,8 +69,8 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "vfw.h"
 
 /* for dshow */
-#include "strmif.h"
-#include "control.h"
+/*#include "strmif.h"*/
+/*#include "control.h"*/
 #include "uuids.h"
 
 /* GUIDs not declared in an exported header file */

@@ -10,15 +10,8 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	api.c \
-	comentry.c \
-	iafile.c \
-	iastream.c \
-	igframe.c \
-	main.c \
-	string.c
+	avifile.c
 
 @MAKE_DLL_RULES@
 
 ### Dependencies:
-

@@ -3,57 +3,12 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = quartz.dll
-EXTRALIBS = $(LIBUUID) @JPEGLIB@
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	acmwrap.c \
-	amundoc.c \
-	asyncsrc.c \
-	audioutl.c \
-	audren.c \
-	avidec.c \
-	aviparse.c \
-	basefilt.c \
-	basepin.c \
-	capgraph.c \
-	complist.c \
-	csconv.c \
-	devenum.c \
-	enumunk.c \
-	fgevent.c \
-	fgpass.c \
-	fgraph.c \
-	filesink.c \
-	fmap.c \
-	ifgraph.c \
-	ijgdec.c \
-	imcntl.c \
-	imfilter.c \
-	impos.c \
-	imseek.c \
-	iunk.c \
-	main.c \
-	memalloc.c \
-	midparse.c \
-	mjpgdec.c \
-	mpadec.c \
-	mpgparse.c \
-	mpvdec.c \
-	mtype.c \
-	parser.c \
-	qtdec.c \
-	qtparse.c \
-	regsvr.c \
-	sample.c \
-	seekpass.c \
-	sysclock.c \
-	videoblt.c \
-	vidren.c \
-	wavparse.c \
-	xform.c
+	main.c
 
 @MAKE_DLL_RULES@
 
