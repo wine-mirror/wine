@@ -771,12 +771,22 @@ HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
     if (DIALOG_CreateControls( wndPtr, dlgTemplate, &template,
                                hInst, win32Template ))
     {
-       /* Send initialisation messages and set focus */
+        HWND hwndPreInitFocus;
+
+        /* Send initialisation messages and set focus */
 
 	dlgInfo->hwndFocus = GetNextDlgTabItem( hwnd, 0, FALSE );
 
+	hwndPreInitFocus = GetFocus();
 	if (SendMessageA( hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, param ))
             SetFocus( dlgInfo->hwndFocus );
+	else
+	{
+	  /* If the dlgproc has returned FALSE (indicating handling of keyboard focus)
+	     but the focus has not changed, set the focus where we expect it. */
+	  if ( GetFocus() == hwndPreInitFocus )
+	    SetFocus( dlgInfo->hwndFocus );
+	}
 
 	if (template.style & WS_VISIBLE && !(wndPtr->dwStyle & WS_VISIBLE)) 
 	{
