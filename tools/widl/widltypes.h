@@ -62,6 +62,7 @@ enum attr_type
     ATTR_DUAL,
     ATTR_ENTRY_STRING,
     ATTR_ENTRY_ORDINAL,
+    ATTR_HANDLE,
     ATTR_HELPSTRING,
     ATTR_ID,
     ATTR_IDEMPOTENT,
@@ -109,6 +110,7 @@ enum expr_type
     EXPR_SUB,
     EXPR_AND,
     EXPR_OR,
+    EXPR_COND,
 };
 
 struct _attr_t {
@@ -130,6 +132,7 @@ struct _expr_t {
     expr_t *ext;
     typeref_t *tref;
   } u;
+  expr_t *ext2;
   int is_const;
   long cval;
   /* parser-internal */

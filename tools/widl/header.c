@@ -378,6 +378,15 @@ static void do_write_expr(FILE *h, expr_t *e, int p)
     do_write_expr(h, e->u.ext, 1);
     if (p) fprintf(h, ")");
     break;
+  case EXPR_COND:
+    if (p) fprintf(h, "(");
+    do_write_expr(h, e->ref, 1);
+    fprintf(h, " ? ");
+    do_write_expr(h, e->u.ext, 1);
+    fprintf(h, " : ");
+    do_write_expr(h, e->ext2, 1);
+    if (p) fprintf(h, ")");
+    break;
   }
 }
 

@@ -221,6 +221,7 @@ static struct keyword {
 /* ... */
 	{"float",			tFLOAT},
 /* ... */
+	{"handle",			tHANDLE},
 	{"handle_t",			tHANDLET},
 /* ... */
 	{"helpstring",			tHELPSTRING},

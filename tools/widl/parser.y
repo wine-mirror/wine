@@ -72,6 +72,7 @@ static expr_t *make_exprs(enum expr_type type, char *val);
 static expr_t *make_exprt(enum expr_type type, typeref_t *tref, expr_t *expr);
 static expr_t *make_expr1(enum expr_type type, expr_t *expr);
 static expr_t *make_expr2(enum expr_type type, expr_t *exp1, expr_t *exp2);
+static expr_t *make_expr3(enum expr_type type, expr_t *exp1, expr_t *exp2, expr_t *exp3);
 static type_t *make_type(BYTE type, type_t *ref);
 static typeref_t *make_tref(char *name, type_t *ref);
 static typeref_t *uniq_tref(typeref_t *ref);
@@ -134,6 +135,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tENTRY tENUM tERRORSTATUST
 %token tEXTERN
 %token tFLOAT
+%token tHANDLE
 %token tHANDLET
 %token tHELPSTRING
 %token tHYPER tID tIDEMPOTENT
@@ -327,6 +329,7 @@ attribute:
 	| tDUAL					{ $$ = make_attr(ATTR_DUAL); }
 	| tENTRY '(' aSTRING ')'		{ $$ = make_attrp(ATTR_ENTRY_STRING, $3); }
 	| tENTRY '(' expr_const ')'		{ $$ = make_attrp(ATTR_ENTRY_ORDINAL, $3); }
+	| tHANDLE				{ $$ = make_attr(ATTR_HANDLE); }
 	| tHELPSTRING '(' aSTRING ')'		{ $$ = make_attrp(ATTR_HELPSTRING, $3); }
 	| tID '(' expr_const ')'		{ $$ = make_attrp(ATTR_ID, $3); }
 	| tIDEMPOTENT				{ $$ = make_attr(ATTR_IDEMPOTENT); }
@@ -430,6 +433,7 @@ m_expr:						{ $$ = make_expr(EXPR_VOID); }
 expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
 	| aHEXNUM				{ $$ = make_exprl(EXPR_HEXNUM, $1); }
 	| aIDENTIFIER				{ $$ = make_exprs(EXPR_IDENTIFIER, $1); }
+	| expr '?' expr ':' expr		{ $$ = make_expr3(EXPR_COND, $1, $3, $5); }
 	| expr '|' expr				{ $$ = make_expr2(EXPR_OR , $1, $3); }
 	| expr '&' expr				{ $$ = make_expr2(EXPR_AND, $1, $3); }
 	| expr '+' expr				{ $$ = make_expr2(EXPR_ADD, $1, $3); }
@@ -875,6 +879,31 @@ static expr_t *make_expr2(enum expr_type type, expr_t *expr1, expr_t *expr2)
       break;
     case EXPR_SHR:
       e->cval = expr1->cval >> expr2->cval;
+      break;
+    default:
+      e->is_const = FALSE;
+      break;
+    }
+  }
+  return e;
+}
+
+static expr_t *make_expr3(enum expr_type type, expr_t *expr1, expr_t *expr2, expr_t *expr3)
+{
+  expr_t *e;
+  e = xmalloc(sizeof(expr_t));
+  e->type = type;
+  e->ref = expr1;
+  e->u.ext = expr2;
+  e->ext2 = expr3;
+  e->is_const = FALSE;
+  INIT_LINK(e);
+  /* check for compile-time optimization */
+  if (expr1->is_const && expr2->is_const && expr3->is_const) {
+    e->is_const = TRUE;
+    switch (type) {
+    case EXPR_COND:
+      e->cval = expr1->cval ? expr2->cval : expr3->cval;
       break;
     default:
       e->is_const = FALSE;
