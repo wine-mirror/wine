@@ -1334,6 +1334,14 @@ INT16 X11DRV_KEYBOARD_ToAscii(
             *(char*)lpChar = 0;
             ret = 0;
         }
+        
+        /* We have another special case for delete key (XK_Delete) on an
+         extended keyboard. X returns a char for it, but Windows doesn't */
+        if (keysym == XK_Delete)
+        {
+            *(char*)lpChar = 0;
+            ret = 0;
+        }
     }
 
     TRACE_(key)("ToAscii about to return %d with char %x\n",
