@@ -747,8 +747,10 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
 	unsigned wod, wodn;
 	HRESULT err = DSERR_INVALIDPARAM;
 	GUID devGuid;
-	TRACE("(%p,%p,%p)\n",lpcGUID,ippDS,pUnkOuter);
+	BOOLEAN found = FALSE;
 
+	TRACE("(%s,%p,%p)\n",debugstr_guid(lpcGUID),ippDS,pUnkOuter);
+	
 	if (ippDS == NULL) {
 		WARN("invalid parameter\n");
 		return DSERR_INVALIDPARAM;
@@ -758,7 +760,10 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
         setup_dsound_options();
 
 	/* Default device? */
-	if ( !lpcGUID || IsEqualGUID(lpcGUID, &GUID_NULL) )
+	if ( !lpcGUID ||
+	    IsEqualGUID(lpcGUID, &GUID_NULL) ||
+	    IsEqualGUID(lpcGUID, &IID_IDirectSound) ||
+	    IsEqualGUID(lpcGUID, &IID_IDirectSound8))
 		lpcGUID = &DSDEVID_DefaultPlayback;
 
 	if (GetDeviceID(lpcGUID, &devGuid) != DS_OK) {
@@ -781,6 +786,8 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
 	wodn = waveOutGetNumDevs();
 	if (!wodn) return DSERR_NODRIVER;
 
+	TRACE(" expecting GUID %s.\n", debugstr_guid(&devGuid));
+	
 	for (wod=0; wod<wodn; wod++) {
 		GUID guid;
 		err = mmErr(waveOutMessage((HWAVEOUT)wod,DRV_QUERYDSOUNDGUID,(DWORD)(&guid),0));
@@ -788,8 +795,10 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
 			WARN("waveOutMessage failed; err=%lx\n",err);
 			return err;
 		}
+		TRACE("got GUID %s for wod %d.\n", debugstr_guid(&guid), wod);
 		if (IsEqualGUID( &devGuid, &guid) ) {
 			err = DS_OK;
+			found = TRUE;
 			break;
 		}
 	}
@@ -799,6 +808,11 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
 		return DSERR_INVALIDPARAM;
 	}
 
+	if (found == FALSE) {
+		WARN("No device found matching given ID - trying with default one !\n");
+		wod = ds_default_playback;	
+	}
+	
 	/* DRV_QUERYDSOUNDIFACE is a "Wine extension" to get the DSound interface */
 	waveOutMessage((HWAVEOUT)wod, DRV_QUERYDSOUNDIFACE, (DWORD)&drv, 0);
 
@@ -994,14 +1008,14 @@ static IClassFactoryImpl DSOUND_CF = {&DSCF_Vtbl, 1 };
  */
 DWORD WINAPI DSOUND_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
 {
-    TRACE("(%p,%p,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+    TRACE("(%s,%s,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     if ( IsEqualCLSID( &IID_IClassFactory, riid ) ) {
     	*ppv = (LPVOID)&DSOUND_CF;
 	IClassFactory_AddRef((IClassFactory*)*ppv);
-    return S_OK;
+	return S_OK;
     }
 
-    FIXME("(%p,%p,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+    FIXME("(%s,%s,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
