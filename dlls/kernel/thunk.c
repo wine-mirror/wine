@@ -27,6 +27,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "ntddk.h"
 #include "wine/winbase16.h"
 
 #include "wine/debug.h"
@@ -2091,6 +2092,7 @@ void WINAPI Throw16( LPCATCHBUF lpbuf, INT16 retval, CONTEXT86 *context )
         }
         frame32 = ((STACK16FRAME *)MapSL(frame32->frame16))->frame32;
     }
+    RtlUnwind( &pFrame->frame32->frame, NULL, NULL, 0 );
 
     context->Eip = lpbuf[0];
     context->SegCs  = lpbuf[1];

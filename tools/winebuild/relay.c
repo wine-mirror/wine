@@ -501,12 +501,6 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
         fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.Lwine_call_to_16_%s.getgot1], %%ebx\n", name );
     }
 
-    /* Enter Win16 Mutex */
-    if ( UsePIC )
-        fprintf( outfile, "\tcall " __ASM_NAME("_EnterWin16Lock@PLT") "\n" );
-    else
-        fprintf( outfile, "\tcall " __ASM_NAME("_EnterWin16Lock") "\n" );
-
     /* Print debugging info */
     if (debugging)
     {
@@ -523,6 +517,21 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
         fprintf( outfile, "\taddl $12, %%esp\n" );
     }
 
+    /* Enter Win16 Mutex */
+    if ( UsePIC )
+        fprintf( outfile, "\tcall " __ASM_NAME("_EnterWin16Lock@PLT") "\n" );
+    else
+        fprintf( outfile, "\tcall " __ASM_NAME("_EnterWin16Lock") "\n" );
+
+    /* Setup exception frame */
+    fprintf( outfile, "\t.byte 0x64\n\tpushl (%d)\n", STACKOFFSET );
+    if (UsePIC)
+        fprintf( outfile, "\tpushl " __ASM_NAME("__wine_callto16_handler@GOT") "(%%ebx)\n" );
+    else
+        fprintf( outfile, "\tpushl $" __ASM_NAME("__wine_callto16_handler") "\n" );
+    fprintf( outfile, "\t.byte 0x64\n\tpushl (%d)\n", STRUCTOFFSET(TEB,except) );
+    fprintf( outfile, "\t.byte 0x64\n\tmovl %%esp,(%d)\n", STRUCTOFFSET(TEB,except) );
+
     /* Get return address */
     if ( UsePIC )
     {
@@ -534,7 +543,12 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
 
     /* Call the actual CallTo16 routine (simulate a lcall) */
     fprintf( outfile, "\tpushl %%cs\n" );
-    fprintf( outfile, "\tcall .Lwine_call_to_16_%s\n", name );
+    fprintf( outfile, "\tcall .Lwine_call_to_16_%s\n", reg_func ? name : "long" );
+
+    /* Remove exception frame */
+    fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STRUCTOFFSET(TEB,except) );
+    fprintf( outfile, "\taddl $4, %%esp\n" );
+    fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
 
     if ( !reg_func )
     {
@@ -563,7 +577,9 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
          *        at the cost of a somewhat less efficient return path.]
          */
 
-        fprintf( outfile, "\tmovl %d(%%esp), %%edi\n", STACK32OFFSET(target)-12 );
+        fprintf( outfile, "\tmovl %d(%%esp), %%edi\n", STACK32OFFSET(target) - STACK32OFFSET(edi));
+                /* everything above edi has been popped already */
+
         fprintf( outfile, "\tmovl %%eax, %d(%%edi)\n", CONTEXTOFFSET(Eax) );
         fprintf( outfile, "\tmovl %%ebx, %d(%%edi)\n", CONTEXTOFFSET(Ebx) );
         fprintf( outfile, "\tmovl %%ecx, %d(%%edi)\n", CONTEXTOFFSET(Ecx) );
@@ -584,6 +600,12 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
         fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.Lwine_call_to_16_%s.getgot2], %%ebx\n", name );
     }
 
+    /* Leave Win16 Mutex */
+    if ( UsePIC )
+        fprintf( outfile, "\tcall " __ASM_NAME("_LeaveWin16Lock@PLT") "\n" );
+    else
+        fprintf( outfile, "\tcall " __ASM_NAME("_LeaveWin16Lock") "\n" );
+
     /* Print debugging info */
     if (debugging)
     {
@@ -596,12 +618,6 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
 
         fprintf( outfile, "\taddl $4, %%esp\n" );
     }
-
-    /* Leave Win16 Mutex */
-    if ( UsePIC )
-        fprintf( outfile, "\tcall " __ASM_NAME("_LeaveWin16Lock@PLT") "\n" );
-    else
-        fprintf( outfile, "\tcall " __ASM_NAME("_LeaveWin16Lock") "\n" );
 
     /* Get return value */
     fprintf( outfile, "\tpopl %%eax\n" );
@@ -620,13 +636,12 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
 
     /* Start of the actual CallTo16 routine */
 
+    if (!reg_func && short_ret) return;  /* call_to_16_word uses call_to_16_long backend routine */
+
     fprintf( outfile, ".Lwine_call_to_16_%s:\n", name );
 
-    /* Complete STACK32FRAME */
-    fprintf( outfile, "\t.byte 0x64\n\tpushl (%d)\n", STACKOFFSET );
-    fprintf( outfile, "\tmovl %%esp,%%edx\n" );
-
     /* Switch to the 16-bit stack */
+    fprintf( outfile, "\tmovl %%esp,%%edx\n" );
 #ifdef __svr4__
     fprintf( outfile,"\tdata16\n");
 #endif
@@ -739,7 +754,6 @@ static void BuildRet16Func( FILE *outfile )
 #endif
     fprintf( outfile, "\tmovw %%di,%%ss\n" );
     fprintf( outfile, "\t.byte 0x64\n\tmovl (%d),%%esp\n", STACKOFFSET );
-    fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
 
     /* Return to caller */
 
