@@ -158,20 +158,23 @@ void DCE_FreeWindowDCE( WND* pWnd )
     {
 	if( pDCE->hwndCurrent == pWnd->hwndSelf )
 	{
-	    if( pDCE == pWnd->dce ) /* owned DCE */
+	    if( pDCE == pWnd->dce ) /* owned or Class DCE*/
 	    {
-		pDCE = DCE_FreeDCE( pDCE );
-		pWnd->dce = NULL;
-		continue;
+                if (pWnd->class->style & CS_OWNDC)	/* owned DCE*/
+		{
+                    pDCE = DCE_FreeDCE( pDCE );
+                    pWnd->dce = NULL;
+                    continue;
+                }
+		else if( pDCE->DCXflags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN) )	/* Class DCE*/
+		{
+                    DCE_DeleteClipRgn( pDCE );
+                    pDCE->hwndCurrent = 0;
+		}
 	    }
 	    else
 	    {
-		if(!(pDCE->DCXflags & DCX_CACHE) ) /* class DCE */
-		{
-		    if( pDCE->DCXflags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN) )
-			DCE_DeleteClipRgn( pDCE );
-		}
-		else if( pDCE->DCXflags & DCX_DCEBUSY ) /* shared cache DCE */
+		if( pDCE->DCXflags & DCX_DCEBUSY ) /* shared cache DCE */
 		{
 		    ERR("[%04x] GetDC() without ReleaseDC()!\n", 
 			pWnd->hwndSelf);
