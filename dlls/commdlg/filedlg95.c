@@ -294,7 +294,7 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
   BOOL ret;
   FileOpenDlgInfos *fodInfos;
   HINSTANCE hInstance;
-  LPCSTR lpstrInitialDir = (LPCSTR)-1;
+  LPCSTR lpstrInitialDir = ofn->lpstrInitialDir;
   LPSTR lpstrSavDir = NULL;
   DWORD dwFlags = 0;
 
@@ -342,7 +342,8 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
       MemFree(lpstrSavDir);
   }
 
-  if (lpstrInitialDir != (LPCSTR)-1)
+  /* If directory was changed during initialization, free the storage */
+  if (lpstrInitialDir != ofn->lpstrInitialDir)
   {
     MemFree((LPVOID)(ofn->lpstrInitialDir));
     ofn->lpstrInitialDir = lpstrInitialDir;
@@ -942,6 +943,12 @@ HRESULT WINAPI FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
  */
 static LRESULT FILEDLG95_InitControls(HWND hwnd)
 {
+  int win2000plus = 0;
+  int win98plus   = 0;
+  int handledPath = FALSE;
+  LPSTR initDir;
+  OSVERSIONINFOA osVi;
+
   TBBUTTON tbb[] =
   {
    {0,                 0,                   TBSTATE_ENABLED, TBSTYLE_SEP, {0, 0}, 0, 0 },
@@ -965,6 +972,17 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
 
   TRACE("%p\n", fodInfos);
+
+  /* Get windows version emulating */
+  osVi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+  GetVersionExA(&osVi);
+  if (osVi.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
+    win98plus   = ((osVi.dwMajorVersion > 4) || ((osVi.dwMajorVersion == 4) && (osVi.dwMinorVersion > 0)));
+  } else if (osVi.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+    win2000plus = (osVi.dwMajorVersion > 4);
+    if (win2000plus) win98plus = TRUE;
+  }
+  TRACE("Running on 2000+ %d, 98+ %d\n", win2000plus, win98plus);
 
   /* Get the hwnd of the controls */
   fodInfos->DlgInfos.hwndFileName = GetDlgItem(hwnd,IDC_FILENAME);
@@ -1004,11 +1022,166 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   }
 
   /* Initialise the file name edit control */
+  handledPath = FALSE;
+  TRACE("Before manipilation, file = '%s', dir = '%s'\n", fodInfos->ofnInfos->lpstrFile, fodInfos->ofnInfos->lpstrInitialDir);
+  
   if(fodInfos->ofnInfos->lpstrFile)
   {
-      LPSTR lpstrFile = PathFindFileNameA(fodInfos->ofnInfos->lpstrFile);
-      SetDlgItemTextA(hwnd, IDC_FILENAME, lpstrFile);
+      /* 1. If win2000 or higher and filename contains a path, use it
+         in preference over the lpstrInitialDir                       */
+      if (win2000plus && *fodInfos->ofnInfos->lpstrFile && 
+          strstr(fodInfos->ofnInfos->lpstrFile, "\\")) {
+         char tmpBuf[MAX_PATH];
+         char *nameBit;
+         DWORD result;
+
+         result = GetFullPathNameA(fodInfos->ofnInfos->lpstrFile, MAX_PATH, 
+                                  tmpBuf, &nameBit);
+         if (result) {
+            strcpy(fodInfos->ofnInfos->lpstrFile, (LPSTR)nameBit);
+            *nameBit = 0x00;
+            if (fodInfos->ofnInfos->lpstrInitialDir == NULL) {
+                initDir = MemAlloc(strlen(tmpBuf) + 1);
+                fodInfos->ofnInfos->lpstrInitialDir = initDir;
+                strcpy(initDir, tmpBuf);
+                handledPath = TRUE;
+            } else {
+               strcpy((LPSTR)fodInfos->ofnInfos->lpstrInitialDir, tmpBuf);
+            }
+            handledPath = TRUE;
+            TRACE("Value in lpstrFile includes path, overriding lpstrInitialDir: %s, %s\n", 
+                    fodInfos->ofnInfos->lpstrFile, fodInfos->ofnInfos->lpstrInitialDir);
+         }
+         SetDlgItemTextA(hwnd, IDC_FILENAME, fodInfos->ofnInfos->lpstrFile);
+
+      } else {
+         SetDlgItemTextA(hwnd, IDC_FILENAME, fodInfos->ofnInfos->lpstrFile);
+      }
   }
+
+  /* 2. (All platforms) If lpstrInitialDir is not null, then use it */
+  if ((handledPath == FALSE) && (fodInfos->ofnInfos->lpstrInitialDir!=NULL) &&
+                                (*fodInfos->ofnInfos->lpstrInitialDir!=0x00))
+  {
+      /* Work out the proper path as supplied one might be relative          */
+      /* (Here because supplying '.' as dir browses to My Computer)          */
+      if (handledPath==FALSE) {
+          char tmpBuf[MAX_PATH];
+          char tmpBuf2[MAX_PATH];
+          char *nameBit;
+          DWORD result;
+
+          strcpy(tmpBuf, fodInfos->ofnInfos->lpstrInitialDir);
+          if (tmpBuf[strlen(tmpBuf)-1] != '\\') {
+             strcat(tmpBuf, "\\");
+          }
+          strcat(tmpBuf, "*");
+          result = GetFullPathNameA(tmpBuf, MAX_PATH, tmpBuf2, &nameBit);
+          if (result) {
+             *nameBit = 0x00;
+             strcpy((LPSTR)fodInfos->ofnInfos->lpstrInitialDir, tmpBuf2);
+             handledPath = TRUE;
+             TRACE("Value in lpstrInitialDir changed to %s\n", fodInfos->ofnInfos->lpstrInitialDir);
+          }
+      }
+  }
+
+  if ((handledPath == FALSE) && ((fodInfos->ofnInfos->lpstrInitialDir==NULL) ||
+                                 (*fodInfos->ofnInfos->lpstrInitialDir==0x00)))
+  {
+      /* 3. All except w2k+: if filename contains a path use it */
+      if (!win2000plus && fodInfos->ofnInfos->lpstrFile &&
+          *fodInfos->ofnInfos->lpstrFile && 
+          strstr(fodInfos->ofnInfos->lpstrFile, "\\")) {
+         char tmpBuf[MAX_PATH];
+         char *nameBit;
+         DWORD result;
+
+         result = GetFullPathNameA(fodInfos->ofnInfos->lpstrFile, MAX_PATH, 
+                                  tmpBuf, &nameBit);
+         if (result) {
+            strcpy(fodInfos->ofnInfos->lpstrFile, nameBit);
+            *nameBit = 0x00;
+            strcpy((LPSTR) fodInfos->ofnInfos->lpstrInitialDir, tmpBuf);
+            handledPath = TRUE;
+            TRACE("Value in lpstrFile includes path, overriding lpstrInitialDir: %s, %s\n", 
+                 fodInfos->ofnInfos->lpstrFile, fodInfos->ofnInfos->lpstrInitialDir);
+         }
+         SetDlgItemTextA(hwnd, IDC_FILENAME, fodInfos->ofnInfos->lpstrFile);
+      }
+
+      /* 4. win98+ and win2000+ if any files of specified filter types in
+            current directory, use it                                      */
+      if ( win98plus && handledPath == FALSE && 
+           fodInfos->ofnInfos->lpstrFilter && 
+          *fodInfos->ofnInfos->lpstrFilter) {
+
+         BOOL   searchMore = TRUE;
+         LPCSTR lpstrPos = fodInfos->ofnInfos->lpstrFilter;
+         WIN32_FIND_DATAA FindFileData;
+         HANDLE hFind;
+
+         while (searchMore) 
+         {
+           /* filter is a list...  title\0ext\0......\0\0 */
+
+           /* Skip the title */
+           if(! *lpstrPos) break;	/* end */
+           lpstrPos += strlen(lpstrPos) + 1;
+
+           /* See if any files exist in the current dir with this extension */
+           if(! *lpstrPos) break;	/* end */
+
+           hFind = FindFirstFileA(lpstrPos, &FindFileData);
+
+           if (hFind == INVALID_HANDLE_VALUE) {
+               /* None found - continue search */
+               lpstrPos += strlen(lpstrPos) + 1;
+
+           } else {
+               searchMore = FALSE;
+               
+               initDir = MemAlloc(MAX_PATH);
+               GetCurrentDirectoryA(MAX_PATH, initDir);
+               fodInfos->ofnInfos->lpstrInitialDir = initDir;
+               handledPath = TRUE;
+               TRACE("No initial dir specified, but files of type %s found in current, so using it\n",
+                 lpstrPos);
+               break;
+           }
+         }
+      }
+
+      /* 5. Win2000+: FIXME: Next, Recently used? Not sure how windows does this */
+
+      /* 6. Win98+ and 2000+: Use personal files dir, others use current dir */
+      if (handledPath == FALSE && (win2000plus || win98plus)) {
+          initDir = MemAlloc(MAX_PATH);
+          fodInfos->ofnInfos->lpstrInitialDir = initDir;
+
+          if(FAILED(COMDLG32_SHGetFolderPathA(hwnd, CSIDL_PERSONAL, 0, 0, initDir)))
+          {
+            if(FAILED(COMDLG32_SHGetFolderPathA(hwnd, CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE, 0, 0, initDir)))
+            {
+                /* last fallback */
+                GetCurrentDirectoryA(MAX_PATH, initDir);
+                TRACE("No personal or desktop dir, using cwd as failsafe: %s\n", fodInfos->ofnInfos->lpstrInitialDir);
+            } else {
+                TRACE("No personal dir, using desktop instead: %s\n", fodInfos->ofnInfos->lpstrInitialDir);
+            }
+          } else {
+            TRACE("No initial dir specified, using personal files dir of %s\n", fodInfos->ofnInfos->lpstrInitialDir);
+          }
+          handledPath = TRUE;
+      } else if (handledPath==FALSE) {
+          initDir = MemAlloc(MAX_PATH);
+          GetCurrentDirectoryA(MAX_PATH, initDir);
+          fodInfos->ofnInfos->lpstrInitialDir = initDir;
+          handledPath = TRUE;
+          TRACE("No initial dir specified, using current dir of %s\n", fodInfos->ofnInfos->lpstrInitialDir);
+      }
+  }
+  TRACE("After manipilation, file = '%s', dir = '%s'\n", fodInfos->ofnInfos->lpstrFile, fodInfos->ofnInfos->lpstrInitialDir);
 
   /* Must the open as read only check box be checked ?*/
   if(fodInfos->ofnInfos->Flags & OFN_READONLY)
@@ -1367,13 +1540,12 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
   nOpenAction = ONOPEN_BROWSE;
 
   /* dont apply any checks with OFN_NOVALIDATE */
-  if(!(fodInfos->ofnInfos->Flags & OFN_NOVALIDATE))
   {
     LPSTR lpszTemp, lpszTemp1;
     LPITEMIDLIST pidl = NULL;
 
     /* check for invalid chars */
-    if(strpbrk(lpstrPathAndFile+3, "/:<>|") != NULL)
+    if((strpbrk(lpstrPathAndFile+3, "/:<>|") != NULL) && !(fodInfos->ofnInfos->Flags & OFN_NOVALIDATE))
     {
       FILEDLG95_OnOpenMessage(hwnd, IDS_INVALID_FILENAME_TITLE, IDS_INVALID_FILENAME);
       ret = FALSE;
@@ -1444,7 +1616,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 	COMDLG32_SHFree(pidl);
 	pidl = NULL;
       }
-      else
+      else if (!(fodInfos->ofnInfos->Flags & OFN_NOVALIDATE))
       {
 	if(*lpszTemp)	/* points to trailing null for last path element */
         {
@@ -1464,6 +1636,11 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 	}
 	/* change to the current folder */
         nOpenAction = ONOPEN_OPEN;
+	break;
+      }
+      else
+      {
+	nOpenAction = ONOPEN_OPEN;
 	break;
       }
     }
@@ -1556,10 +1733,12 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
           LPSTR lpszTemp;
 
           /* fill destination buffer */
-          strcpy(fodInfos->ofnInfos->lpstrFile, lpstrPathAndFile);
-          if (fodInfos->ofnInfos->Flags & OFN_ALLOWMULTISELECT)
-            fodInfos->ofnInfos->lpstrFile[strlen(fodInfos->ofnInfos->lpstrFile)
-                + 1] = '\0';
+          if (fodInfos->ofnInfos->lpstrFile) {
+             strcpy(fodInfos->ofnInfos->lpstrFile, lpstrPathAndFile);
+             if (fodInfos->ofnInfos->Flags & OFN_ALLOWMULTISELECT)
+               fodInfos->ofnInfos->lpstrFile[strlen(fodInfos->ofnInfos->lpstrFile)
+                   + 1] = '\0';
+          }
 
           /* set filename offset */
           lpszTemp = PathFindFileNameA(lpstrPathAndFile);
@@ -2452,13 +2631,12 @@ void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd)
 	    {
               strcpy( lpstrAllFile, lpstrTemp );
 	    }
-	  }
+          }
           COMDLG32_SHFree( (LPVOID) pidl );
 	}
       }
+      SetWindowTextA( fodInfos->DlgInfos.hwndFileName, lpstrAllFile );
     }
-
-    SetWindowTextA( fodInfos->DlgInfos.hwndFileName, lpstrAllFile );
     HeapFree(GetProcessHeap(),0, lpstrAllFile );
 }
 
