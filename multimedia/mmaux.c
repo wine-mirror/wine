@@ -20,19 +20,33 @@
 
 DEFAULT_DEBUG_CHANNEL(mmaux)
     
+#ifdef HAVE_OSS
+
 #define MIXER_DEV "/dev/mixer"
     
 static int	NumDev = 6;
 
 /*-----------------------------------------------------------------------*/
 
+static	int	AUXDRV_Init(void)
+{
+    int	mixer;
+
+    if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
+	WARN("mixer device not available !\n");
+	NumDev = 0;
+    } else {
+	close(mixer);
+	NumDev = 6;
+    }
+    return NumDev;
+}
 
 /**************************************************************************
  * 				AUX_GetDevCaps			[internal]
  */
 static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPSA lpCaps, DWORD dwSize)
 {
-#ifdef HAVE_OSS
     int 	mixer,volume;
     
     TRACE("(%04X, %p, %lu);\n", wDevID, lpCaps, dwSize);
@@ -43,7 +57,7 @@ static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPSA lpCaps, DWORD dwSize)
     }
     if (ioctl(mixer, SOUND_MIXER_READ_LINE, &volume) == -1) {
 	close(mixer);
-	WARN("unable read mixer !\n");
+	WARN("unable to read mixer !\n");
 	return MMSYSERR_NOTENABLED;
     }
     close(mixer);
@@ -92,9 +106,6 @@ static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPSA lpCaps, DWORD dwSize)
     lpCaps->dwSupport = AUXCAPS_VOLUME | AUXCAPS_LRVOLUME;
 #endif
     return MMSYSERR_NOERROR;
-#else
-    return MMSYSERR_NOTENABLED;
-#endif
 }
 
 
@@ -103,7 +114,6 @@ static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPSA lpCaps, DWORD dwSize)
  */
 static DWORD AUX_GetVolume(WORD wDevID, LPDWORD lpdwVol)
 {
-#ifdef HAVE_OSS
     int 	mixer, volume, left, right, cmd;
     
     TRACE("(%04X, %p);\n", wDevID, lpdwVol);
@@ -142,7 +152,7 @@ static DWORD AUX_GetVolume(WORD wDevID, LPDWORD lpdwVol)
 	return MMSYSERR_NOTENABLED;
     }
     if (ioctl(mixer, cmd, &volume) == -1) {
-	WARN("unable read mixer !\n");
+	WARN("unable to read mixer !\n");
 	return MMSYSERR_NOTENABLED;
     }
     close(mixer);
@@ -151,9 +161,6 @@ static DWORD AUX_GetVolume(WORD wDevID, LPDWORD lpdwVol)
     TRACE("left=%d right=%d !\n", left, right);
     *lpdwVol = MAKELONG((left * 0xFFFFL) / 100, (right * 0xFFFFL) / 100);
     return MMSYSERR_NOERROR;
-#else
-    return MMSYSERR_NOTENABLED;
-#endif
 }
 
 /**************************************************************************
@@ -161,8 +168,7 @@ static DWORD AUX_GetVolume(WORD wDevID, LPDWORD lpdwVol)
  */
 static DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
 {
-#ifdef HAVE_OSS
-    int 		mixer;
+    int 	mixer;
     int		volume, left, right;
     int		cmd;
     
@@ -207,16 +213,14 @@ static DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
 	return MMSYSERR_NOTENABLED;
     }
     if (ioctl(mixer, cmd, &volume) == -1) {
-	WARN("unable set mixer !\n");
+	WARN("unable to set mixer !\n");
 	return MMSYSERR_NOTENABLED;
     }
     close(mixer);
     return MMSYSERR_NOERROR;
-#else
-    return MMSYSERR_NOTENABLED;
-#endif
 }
 
+#endif
 
 /**************************************************************************
  *		OSS_auxMessage				[sample driver]
@@ -226,8 +230,12 @@ DWORD WINAPI OSS_auxMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 {
     TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n", 
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
-    switch(wMsg) {
+
+#ifdef HAVE_OSS
+    switch (wMsg) {
     case DRVM_INIT:
+	AUXDRV_Init();
+	/* fall thru */
     case DRVM_EXIT:
     case DRVM_ENABLE:
     case DRVM_DISABLE:
@@ -246,4 +254,7 @@ DWORD WINAPI OSS_auxMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 	WARN("unknown message !\n");
     }
     return MMSYSERR_NOTSUPPORTED;
+#else
+    return MMSYSERR_NOTENABLED;
+#endif
 }

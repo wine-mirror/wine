@@ -328,9 +328,20 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEA lpMl, DWORD fdwInfo)
  */
 static DWORD MIX_Open(WORD wDevID, LPMIXEROPENDESC lpMod, DWORD flags)
 {
+    int	mixer;
+
     TRACE("(%04X, %p, %lu);\n", wDevID, lpMod, flags);
     if (lpMod == NULL) return MMSYSERR_INVALPARAM;
-    /* hmm. We don't keep the mixer device open. So just pretend it works */
+    /* hmm. We don't keep the mixer device open. only check if it's present */
+    if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
+	if (errno == ENODEV || errno == ENXIO) {	
+	    /* no driver present */
+	    return MMSYSERR_NODRIVER;
+	}
+    } else {
+	close(mixer);
+    }
+
     return MMSYSERR_NOERROR;
 }
 
@@ -502,6 +513,22 @@ static	DWORD	MIX_SetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd, DWO
     return MMSYSERR_NOTSUPPORTED;
 }
 
+static	DWORD	MIX_GetNumDevs(UINT wDevID)
+{
+    int	mixer;
+    int	ret;
+
+    if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
+	/* FIXME: ENXIO => no mixer installed */
+	WARN("mixer device not available !\n");
+	ret = 0;
+    } else {
+	close(mixer);
+	ret = 1;
+    }
+    TRACE("return %d;\n", ret);
+    return ret;
+}
 #endif /* HAVE_OSS */
 
 /**************************************************************************
@@ -526,8 +553,7 @@ DWORD WINAPI OSS_mixMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case MXDM_GETLINEINFO:
 	return MIX_GetLineInfo(wDevID, (LPMIXERLINEA)dwParam1, dwParam2);
     case MXDM_GETNUMDEVS:
-	TRACE("return 1;\n");
-	return 1;
+	return MIX_GetNumDevs(wDevID);
     case MXDM_OPEN:
 	return MIX_Open(wDevID, (LPMIXEROPENDESC)dwParam1, dwParam2);
     case MXDM_CLOSE:
