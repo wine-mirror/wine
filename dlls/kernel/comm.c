@@ -94,7 +94,7 @@ DEFAULT_DEBUG_CHANNEL(comm);
 
 struct DosDeviceStruct {
     char *devicename;   /* /dev/ttyS0 */
-    int fd;
+    HANDLE handle;
     int suspended;
     int unget,xmit;
     int baudrate;
@@ -168,7 +168,7 @@ void COMM_Init(void)
 				if ((COM[x].devicename = malloc(strlen(temp)+1)) == NULL) 
 					WARN("Can't malloc for device info!\n");
 				else {
-					COM[x].fd = 0;
+					COM[x].handle = 0;
 					strcpy(COM[x].devicename, temp);
 				}
                 TRACE("%s = %s\n", option, COM[x].devicename);
@@ -190,7 +190,7 @@ void COMM_Init(void)
 				if ((LPT[x].devicename = malloc(strlen(temp)+1)) == NULL) 
 					WARN("Can't malloc for device info!\n");
 				else {
-					LPT[x].fd = 0;
+					LPT[x].handle = 0;
 					strcpy(LPT[x].devicename, temp);
 				}
                 TRACE("%s = %s\n", option, LPT[x].devicename);
@@ -200,28 +200,28 @@ void COMM_Init(void)
 }
 
 
-static struct DosDeviceStruct *GetDeviceStruct(int fd)
+static struct DosDeviceStruct *GetDeviceStruct(int index)
 {
-	if ((fd&0x7F)<=MAX_PORTS) {
-            if (!(fd&FLAG_LPT)) {
-		if (COM[fd].fd)
-		    return &COM[fd];
+	if ((index&0x7F)<=MAX_PORTS) {
+            if (!(index&FLAG_LPT)) {
+		if (COM[index].handle)
+		    return &COM[index];
 	    } else {
-		fd &= 0x7f;
-		if (LPT[fd].fd)
-		    return &LPT[fd];
+		index &= 0x7f;
+		if (LPT[index].handle)
+		    return &LPT[index];
 	    }
 	}
 
 	return NULL;
 }
 
-static int    GetCommPort_fd(int fd)
+static int    GetCommPort_fd(HANDLE handle)
 {
         int x;
         
         for (x=0; x<MAX_PORTS; x++) {
-             if (COM[x].fd == fd)
+             if (COM[x].handle == handle)
                  return x;
        }
        
@@ -268,13 +268,14 @@ static int COMM_WhackModem(int fd, unsigned int andy, unsigned int orrie)
     mstat |= orrie;
     return ioctl(fd, TIOCMSET, &mstat);
 }
-	
+
 static void CALLBACK comm_notification( ULONG_PTR private )
 {
   struct DosDeviceStruct *ptr = (struct DosDeviceStruct *)private;
-  int prev, bleft, len;
+  int prev, bleft;
+  DWORD len;
   WORD mask = 0;
-  int cid = GetCommPort_fd(ptr->fd);
+  int cid = GetCommPort_fd(ptr->handle);
 
   TRACE("async notification\n");
   /* read data from comm port */
@@ -282,7 +283,8 @@ static void CALLBACK comm_notification( ULONG_PTR private )
   do {
     bleft = ((ptr->ibuf_tail > ptr->ibuf_head) ? (ptr->ibuf_tail-1) : ptr->ibuf_size)
       - ptr->ibuf_head;
-    len = read(ptr->fd, ptr->inbuf + ptr->ibuf_head, bleft?bleft:1);
+    if(!ReadFile(ptr->handle, ptr->inbuf + ptr->ibuf_head, bleft?bleft:1, &len, NULL))
+      len = -1;
     if (len > 0) {
       if (!bleft) {
 	ptr->commerror = CE_RXOVER;
@@ -313,7 +315,8 @@ static void CALLBACK comm_notification( ULONG_PTR private )
 
   /* write any TransmitCommChar character */
   if (ptr->xmit>=0) {
-    len = write(ptr->fd, &(ptr->xmit), 1);
+    if(!WriteFile(ptr->handle, &(ptr->xmit), 1, &len, NULL))
+      len = -1;
     if (len > 0) ptr->xmit = -1;
   }
   /* write from output queue */
@@ -321,7 +324,11 @@ static void CALLBACK comm_notification( ULONG_PTR private )
   do {
     bleft = ((ptr->obuf_tail <= ptr->obuf_head) ? ptr->obuf_head : ptr->obuf_size)
       - ptr->obuf_tail;
-    len = bleft ? write(ptr->fd, ptr->outbuf + ptr->obuf_tail, bleft) : 0;
+    if(bleft) {
+       if(!WriteFile(ptr->handle, ptr->outbuf + ptr->obuf_tail, bleft, &len, NULL))
+          len = -1;
+    } else
+       len = bleft;
     if (len > 0) {
       ptr->obuf_tail += len;
       if (ptr->obuf_tail >= ptr->obuf_size)
@@ -355,20 +362,26 @@ static void CALLBACK comm_notification( ULONG_PTR private )
 
 static void comm_waitread(struct DosDeviceStruct *ptr)
 {
-  if (ptr->s_read != INVALID_HANDLE_VALUE) return;
-  ptr->s_read = SERVICE_AddObject( FILE_DupUnixHandle( ptr->fd,
-                                     GENERIC_READ | SYNCHRONIZE ),
-                                    comm_notification,
-                                    (ULONG_PTR)ptr );
+  HANDLE dup=INVALID_HANDLE_VALUE;
+
+  if (ptr->s_read != INVALID_HANDLE_VALUE)
+    return;
+  if(!DuplicateHandle(GetCurrentProcess(), ptr->handle,
+                  GetCurrentProcess(), &dup, GENERIC_READ|SYNCHRONIZE, FALSE, 0 ))
+    return;
+  ptr->s_read = SERVICE_AddObject( dup, comm_notification, (ULONG_PTR)ptr );
 }
 
 static void comm_waitwrite(struct DosDeviceStruct *ptr)
 {
-  if (ptr->s_write != INVALID_HANDLE_VALUE) return;
-  ptr->s_write = SERVICE_AddObject( FILE_DupUnixHandle( ptr->fd,
-                                      GENERIC_WRITE | SYNCHRONIZE ),
-                                     comm_notification,
-                                     (ULONG_PTR)ptr );
+  HANDLE dup=INVALID_HANDLE_VALUE;
+
+  if (ptr->s_write != INVALID_HANDLE_VALUE)
+    return;
+  if(!DuplicateHandle(GetCurrentProcess(), ptr->handle,
+                  GetCurrentProcess(), &dup, GENERIC_WRITE|SYNCHRONIZE, FALSE, 0 ))
+    return;
+  ptr->s_write = SERVICE_AddObject( dup, comm_notification, (ULONG_PTR)ptr );
 }
 
 /**************************************************************************
@@ -507,7 +520,8 @@ INT16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
  */
 INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 {
-	int port,fd;
+	int port;
+	HANDLE handle;
 
     	TRACE("%s, %d, %d\n", device, cbInQueue, cbOutQueue);
 
@@ -526,22 +540,25 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 		if (!ValidCOMPort(port))
 			return IE_BADID;
 
-		if (COM[port].fd)
+		if (COM[port].handle)
 			return IE_OPEN;
 
-		fd = open(COM[port].devicename, O_RDWR | O_NONBLOCK);
-		if (fd == -1) {
+		handle = CreateFileA(device, GENERIC_READ|GENERIC_WRITE,
+			FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, 0 );
+		if (handle == INVALID_HANDLE_VALUE) {
 			ERR("Couldn't open %s ! (%s)\n", COM[port].devicename, strerror(errno));
 			return IE_HARDWARE;
 		} else {
                         unknown[port] = SEGPTR_ALLOC(40);
 			memset(unknown[port], 0, 40);
-			COM[port].fd = fd;
+			COM[port].handle = handle;
 			COM[port].commerror = 0;
 			COM[port].eventmask = 0;
 			COM[port].evtchar = 0; /* FIXME: default? */
                         /* save terminal state */
+			{int fd = FILE_GetUnixHandle(handle,GENERIC_READ);
                         tcgetattr(fd,&m_stat[port]);
+			close(fd);}
                         /* set default parameters */
                         if(COM[port].baudrate>-1){
                             DCB16 dcb;
@@ -569,8 +586,10 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			} else COM[port].outbuf = NULL;
 			if (!COM[port].outbuf) {
 			  /* not enough memory */
-			  tcsetattr(COM[port].fd,TCSANOW,&m_stat[port]);
-			  close(COM[port].fd);
+			  {int fd = FILE_GetUnixHandle(handle,GENERIC_READ);
+			  tcsetattr(fd,TCSANOW,&m_stat[port]);
+			  close(fd);}
+			  CloseHandle(COM[port].handle);
 			  ERR("out of memory\n");
 			  return IE_MEMORY;
 			}
@@ -587,14 +606,15 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 		if (!ValidLPTPort(port))
 			return IE_BADID;
 
-		if (LPT[port].fd)
+		if (LPT[port].handle)
 			return IE_OPEN;
 
-		fd = open(LPT[port].devicename, O_RDWR | O_NONBLOCK, 0);
-		if (fd == -1) {
+		handle = CreateFileA(device, GENERIC_READ|GENERIC_WRITE,
+			FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, 0 );
+		if (handle == INVALID_HANDLE_VALUE) {
 			return IE_HARDWARE;
 		} else {
-			LPT[port].fd = fd;
+			LPT[port].handle = handle;
 			LPT[port].commerror = 0;
 			LPT[port].eventmask = 0;
 			return port|FLAG_LPT;
@@ -626,16 +646,18 @@ INT16 WINAPI CloseComm16(INT16 cid)
 		free(ptr->inbuf);
 
 		/* reset modem lines */
-		tcsetattr(ptr->fd,TCSANOW,&m_stat[cid]);
+		{int fd = FILE_GetUnixHandle(ptr->handle,GENERIC_READ);
+		tcsetattr(fd,TCSANOW,&m_stat[cid]);
+		close(fd);}
 	}
 
-	if (close(ptr->fd) == -1) {
+	if (!CloseHandle(ptr->handle)) {
 		ptr->commerror = WinError();
-		/* FIXME: should we clear ptr->fd here? */
+		/* FIXME: should we clear ptr->handle here? */
 		return -1;
 	} else {
 		ptr->commerror = 0;
-		ptr->fd = 0;
+		ptr->handle = 0;
 		return 0;
 	}
 }
@@ -680,77 +702,93 @@ INT16 WINAPI ClearCommBreak16(INT16 cid)
  */
 LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
 {
-	int	max;
+	int	r,fd;
 	struct DosDeviceStruct *ptr;
 	struct termios port;
 
     	TRACE("cid=%d, function=%d\n", cid, nFunction);
-	if ((nFunction != GETMAXCOM) && (nFunction != GETMAXLPT)) {
-		if ((ptr = GetDeviceStruct(cid)) == NULL) {
-			FIXME("no cid=%d found!\n", cid);
-			return -1;
+
+	if (nFunction == GETMAXCOM) {
+		int	max;
+	        TRACE("GETMAXCOM\n"); 
+		for (max = MAX_PORTS;!COM[max].devicename;max--)
+			;
+		return max;
+	}
+
+	if (nFunction == GETMAXLPT) {
+		int	max;
+		TRACE("GETMAXLPT\n"); 
+		for (max = MAX_PORTS;!LPT[max].devicename;max--)
+			;
+		return FLAG_LPT + max;
+	}
+
+	if (nFunction == GETBASEIRQ) {
+		TRACE("GETBASEIRQ\n"); 
+		/* FIXME: use tables */
+		/* just fake something for now */
+		if (cid & FLAG_LPT) {
+			/* LPT1: irq 7, LPT2: irq 5 */
+			return (cid & 0x7f) ? 5 : 7;
+		} else {
+			/* COM1: irq 4, COM2: irq 3,
+			   COM3: irq 4, COM4: irq 3 */
+			return 4 - (cid & 1);
 		}
-		if (tcgetattr(ptr->fd,&port) == -1) {
-		        TRACE("tcgetattr failed\n");
-			ptr->commerror=WinError();	
-			return -1;
-		}
-	} else ptr = NULL;
+	}
+
+	if ((ptr = GetDeviceStruct(cid)) == NULL) {
+		FIXME("no cid=%d found!\n", cid);
+		return -1;
+	}
+
+	/* FIXME: replace with a call to EscapeCommFunction */
+
+	if ( (fd = FILE_GetUnixHandle(ptr->handle,GENERIC_READ)) == 0 )
+		return -1;
+
+	if (tcgetattr(fd,&port) == -1) {
+	        TRACE("tcgetattr failed\n");
+		close(fd);
+		ptr->commerror=WinError();	
+		return -1;
+	}
 
 	switch (nFunction) {
 		case RESETDEV:
 		        TRACE("RESETDEV\n");
 			break;					
 
-		case GETMAXCOM:
-		        TRACE("GETMAXCOM\n"); 
-			for (max = MAX_PORTS;!COM[max].devicename;max--)
-				;
-			return max;
-			break;
-
-		case GETMAXLPT:
-		        TRACE("GETMAXLPT\n"); 
-			for (max = MAX_PORTS;!LPT[max].devicename;max--)
-				;
-			return FLAG_LPT + max;
-			break;
-
-		case GETBASEIRQ:
-		        TRACE("GETBASEIRQ\n"); 
-			/* FIXME: use tables */
-			/* just fake something for now */
-			if (cid & FLAG_LPT) {
-				/* LPT1: irq 7, LPT2: irq 5 */
-				return (cid & 0x7f) ? 5 : 7;
-			} else {
-				/* COM1: irq 4, COM2: irq 3,
-				   COM3: irq 4, COM4: irq 3 */
-				return 4 - (cid & 1);
-			}
-			break;
-
 		case CLRDTR:
 		        TRACE("CLRDTR\n"); 
 #ifdef TIOCM_DTR
-			return COMM_WhackModem(ptr->fd, ~TIOCM_DTR, 0);
+			r = COMM_WhackModem(fd, ~TIOCM_DTR, 0);
+			close(fd);
+			return r;
 #endif
 		case CLRRTS:
 		        TRACE("CLRRTS\n"); 
 #ifdef TIOCM_RTS
-			return COMM_WhackModem(ptr->fd, ~TIOCM_RTS, 0);
+			r = COMM_WhackModem(fd, ~TIOCM_RTS, 0);
+			close(fd);
+			return r;
 #endif
 	
 		case SETDTR:
 		        TRACE("SETDTR\n"); 
 #ifdef TIOCM_DTR
-			return COMM_WhackModem(ptr->fd, 0, TIOCM_DTR);
+			r = COMM_WhackModem(fd, 0, TIOCM_DTR);
+			close(fd);
+			return r;
 #endif
 
 		case SETRTS:
 		        TRACE("SETRTS\n"); 
 #ifdef TIOCM_RTS			
-			return COMM_WhackModem(ptr->fd, 0, TIOCM_RTS);
+			r = COMM_WhackModem(fd, 0, TIOCM_RTS);
+			close(fd);
+			return r;
 #endif
 
 		case SETXOFF:
@@ -769,7 +807,9 @@ LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
 			break;				
 	}
 	
-	if (tcsetattr(ptr->fd, TCSADRAIN, &port) == -1) {
+	r = tcsetattr(fd, TCSADRAIN, &port);
+	close(fd);
+	if (r<0) {
 		ptr->commerror = WinError();
 		return -1;	
 	} else {
@@ -785,6 +825,7 @@ INT16 WINAPI FlushComm16(INT16 cid,INT16 fnQueue)
 {
 	int queue;
 	struct DosDeviceStruct *ptr;
+	int fd,r;
 
     	TRACE("cid=%d, queue=%d\n", cid, fnQueue);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
@@ -805,7 +846,13 @@ INT16 WINAPI FlushComm16(INT16 cid,INT16 fnQueue)
 		            cid, fnQueue);
 		  return -1;
 		}
-	if (tcflush(ptr->fd, queue)) {
+
+	/* FIXME: replace with a call to PurgeComm */
+	if ( (fd = FILE_GetUnixHandle(ptr->handle,GENERIC_READ)) == 0 )
+		return -1;
+	r = tcflush(fd, queue);
+	close(fd);
+	if (r) {
 		ptr->commerror = WinError();
 		return -1;	
 	} else {
@@ -823,6 +870,7 @@ INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
 	struct DosDeviceStruct *ptr;
         unsigned char *stol;
         unsigned int mstat;
+	int fd;
 
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
 		FIXME("no handle for cid = %0x!\n",cid);
@@ -833,7 +881,10 @@ INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
             return CE_MODE;
         }
         stol = (unsigned char *)unknown[cid] + COMM_MSR_OFFSET;
-        ioctl(ptr->fd,TIOCMGET,&mstat);
+	if ( (fd = FILE_GetUnixHandle(ptr->handle,GENERIC_READ)) == 0 )
+		return -1;
+        ioctl(fd,TIOCMGET,&mstat);
+	close(fd);
         COMM_MSRUpdate( stol, mstat);
 
 	if (lpStat) {
@@ -865,6 +916,7 @@ SEGPTR WINAPI SetCommEventMask16(INT16 cid,UINT16 fuEvtMask)
         unsigned char *stol;
         int repid;
         unsigned int mstat;
+	int fd;
 
     	TRACE("cid %d,mask %d\n",cid,fuEvtMask);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
@@ -880,7 +932,10 @@ SEGPTR WINAPI SetCommEventMask16(INT16 cid,UINT16 fuEvtMask)
         }
         /* it's a COM port ? -> modify flags */
         stol = (unsigned char *)unknown[cid] + COMM_MSR_OFFSET;
-	repid = ioctl(ptr->fd,TIOCMGET,&mstat);
+	if ( (fd = FILE_GetUnixHandle(ptr->handle,GENERIC_READ)) == 0 )
+		return (SEGPTR)NULL;
+	repid = ioctl(fd,TIOCMGET,&mstat);
+	close(fd);
 	TRACE(" ioctl  %d, msr %x at %p %p\n",repid,mstat,stol,unknown[cid]);
         COMM_MSRUpdate( stol, mstat);
 
@@ -921,13 +976,19 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 	struct DosDeviceStruct *ptr;
         int bytesize, stopbits;
         int fail=0;
+	int fd,r=0;
 
     	TRACE("cid %d, ptr %p\n", lpdcb->Id, lpdcb);
 	if ((ptr = GetDeviceStruct(lpdcb->Id)) == NULL) {
 		FIXME("no handle for cid = %0x!\n",lpdcb->Id);
 		return -1;
 	}
-	if (tcgetattr(ptr->fd, &port) == -1) {
+
+	/* FIXME: replace with a call to SetCommState */
+	if ( (fd = FILE_GetUnixHandle(ptr->handle,GENERIC_READ)) == 0 )
+		return -1;
+	if (tcgetattr(fd, &port) == -1) {
+		close(fd);
 		ptr->commerror = WinError();	
 		return -1;
 	}
@@ -1157,10 +1218,14 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 
 	ptr->evtchar = lpdcb->EvtChar;
 
+	if(!fail)
+		r = tcsetattr(fd, TCSADRAIN, &port);
+	close(fd);
+
         if(fail)
-            return -1;
+		return -1;
         
-	if (tcsetattr(ptr->fd, TCSADRAIN, &port) == -1) {
+	if (r == -1) {
 		ptr->commerror = WinError();	
 		return -1;
 	} else {
@@ -1177,13 +1242,18 @@ INT16 WINAPI GetCommState16(INT16 cid, LPDCB16 lpdcb)
 	int speed;
 	struct DosDeviceStruct *ptr;
 	struct termios port;
+	int fd,r;
 
     	TRACE("cid %d, ptr %p\n", cid, lpdcb);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
 		FIXME("no handle for cid = %0x!\n",cid);
 		return -1;
 	}
-	if (tcgetattr(ptr->fd, &port) == -1) {
+	if ( (fd = FILE_GetUnixHandle(ptr->handle,GENERIC_READ)) == 0 )
+		return -1;
+	r = tcgetattr(fd, &port);
+	close(fd);
+	if (r == -1) {
 		ptr->commerror = WinError();	
 		return -1;
 	}
@@ -1354,7 +1424,8 @@ INT16 WINAPI TransmitCommChar16(INT16 cid,CHAR chTransmit)
 
 	if (ptr->obuf_head == ptr->obuf_tail) {
 	  /* transmit queue empty, try to transmit directly */
-	  if (write(ptr->fd, &chTransmit, 1) == -1) {
+	  DWORD len;
+	  if(!WriteFile(ptr->handle, &chTransmit, 1, &len, NULL)) {
 	    /* didn't work, queue it */
 	    ptr->xmit = chTransmit;
 	    comm_waitwrite(ptr);
@@ -1476,7 +1547,8 @@ INT16 WINAPI WriteComm16(INT16 cid, LPSTR lpvBuf, INT16 cbWrite)
 	while (length < cbWrite) {
 	  if ((ptr->obuf_head == ptr->obuf_tail) && (ptr->xmit < 0)) {
 	    /* no data queued, try to write directly */
-	    status = write(ptr->fd, lpvBuf, cbWrite - length);
+	    if(!WriteFile(ptr->handle, lpvBuf, cbWrite - length, (LPDWORD)&status, NULL))
+	      status = -1;
 	    if (status > 0) {
 	      lpvBuf += status;
 	      length += status;
