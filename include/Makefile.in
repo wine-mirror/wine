@@ -42,6 +42,7 @@ WINDOWS_INCLUDES = \
 	$(IDL_INCLUDES) \
 	accctrl.h \
 	aclapi.h \
+	advpub.h \
 	audevcod.h \
 	aviriff.h \
 	basetsd.h \

@@ -17,6 +17,7 @@ EXTRADIRS = @GLU32FILES@ @GLUT32FILES@ @OPENGLFILES@ @XFILES@
 
 BASEDIRS = \
 	advapi32 \
+	advpack \
 	amstream \
 	atl \
 	avicap32 \
@@ -242,6 +243,7 @@ SYMLINKS_SO = \
 	$(EXTRADIRS:%=%.dll.so) \
 	@WIN16_FILES@ \
 	advapi32.dll.so \
+	advpack.dll.so \
 	amstream.dll.so \
 	atl.dll.so \
 	avicap32.dll.so \
@@ -407,6 +409,9 @@ symlinks: $(BUILDSUBDIRS)
 
 advapi32.dll.so: advapi32/advapi32.dll.so
 	$(RM) $@ && $(LN_S) advapi32/advapi32.dll.so $@
+
+advpack.dll.so: advpack/advpack.dll.so
+	$(RM) $@ && $(LN_S) advpack/advpack.dll.so $@
 
 amstream.dll.so: amstream/amstream.dll.so
 	$(RM) $@ && $(LN_S) amstream/amstream.dll.so $@
@@ -973,6 +978,7 @@ libuuid.a: uuid/libuuid.a
 
 IMPORT_LIBS = \
 	libadvapi32.$(IMPLIBEXT) \
+	libadvpack.$(IMPLIBEXT) \
 	libamstream.$(IMPLIBEXT) \
 	libatl.$(IMPLIBEXT) \
 	libavicap32.$(IMPLIBEXT) \
@@ -1109,6 +1115,11 @@ libadvapi32.def: advapi32/advapi32.spec.def
 	$(RM) $@ && $(LN_S) advapi32/advapi32.spec.def $@
 libadvapi32.a: advapi32/advapi32.spec.def
 	$(DLLTOOL) -k -l $@ -d advapi32/advapi32.spec.def
+
+libadvpack.def: advpack/advpack.spec.def
+	$(RM) $@ && $(LN_S) advpack/advpack.spec.def $@
+libadvpack.a: advpack/advpack.spec.def
+	$(DLLTOOL) -k -l $@ -d advpack/advpack.spec.def
 
 libamstream.def: amstream/amstream.spec.def
 	$(RM) $@ && $(LN_S) amstream/amstream.spec.def $@
@@ -1731,6 +1742,7 @@ libx11drv.a: x11drv/x11drv.spec.def
 	$(DLLTOOL) -k -l $@ -d x11drv/x11drv.spec.def
 
 advapi32/advapi32.spec.def: $(WINEBUILD)
+advpack/advpack.spec.def: $(WINEBUILD)
 amstream/amstream.spec.def: $(WINEBUILD)
 atl/atl.spec.def: $(WINEBUILD)
 avicap32/avicap32.spec.def: $(WINEBUILD)
@@ -1862,6 +1874,7 @@ $(INSTALLSUBDIRS:%=%/__install__): $(IMPORT_LIBS)
 # Map library name to the corresponding directory
 
 advapi32/advapi32.dll.so: advapi32
+advpack/advpack.dll.so: advpack
 amstream/amstream.dll.so: amstream
 atl/atl.dll.so: atl
 avicap32/avicap32.dll.so: avicap32
