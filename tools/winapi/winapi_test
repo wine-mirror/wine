@@ -157,6 +157,8 @@ my %defines = (
     "LF_FACESIZE" => 32,
     "LF_FULLFACESIZE" => 64,
     "MAXIMUM_SUPPORTED_EXTENSION" => 512,
+    "MAX_GOPHER_DISPLAY_TEXT + 1" => 129,
+    "MAX_GOPHER_LOCATOR_LENGTH + 1" => 654,
     "MAX_PATH" => 260,
     "MAX_PROFILE_LEN" => 80, 
     "OFS_MAXPATHNAME" => 128,
@@ -233,7 +235,7 @@ sub _find_align_kind_size {
 	$align = 4;
 	$kind = "struct";
 	$size = 8;
-    } elsif (/^(?:LARGE_INTEGER|LONGLONG)$/) {
+    } elsif (/^(?:LARGE_INTEGER)$/) {
 	$align = 4;
 	$kind = "signed";
 	$size = 8;
@@ -282,10 +284,10 @@ sub _find_align_kind_size {
     } elsif (defined($count)) {
 	if ($count =~ /^\d+$/) {
 	    $size *= int($count);
-	} elsif (defined($count = $defines{$count})) {
-	    $size *= int($count);
+	} elsif (defined(my $count2 = $defines{$count})) {
+	    $size *= int($count2);
 	} else {
-	    $output->write("$type_name: can't parse type\n");
+	    $output->write("$type_name: can't parse type ('$_') ('$count')\n");
 	    $size = undef;
 	}
     } elsif (defined($bits)) {
@@ -453,6 +455,7 @@ sub output_header {
     print OUT "\n";
 
     print OUT "#define WINVER 0x0501\n";
+    print OUT "#define _WIN32_IE 0x0501\n";
     print OUT "#define _WIN32_WINNT 0x0501\n";
     print OUT "\n";
     print OUT "#define WINE_NOWINSOCK\n";

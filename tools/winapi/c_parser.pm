@@ -2003,16 +2003,17 @@ sub parse_c_variable {
 	$name = $2;
 
 	$finished = 1;
+    } elsif($self->_parse_c('DEFINE_GUID', \$_, \$line, \$column, \$match)) { # Windows specific
+	$type = $match;
+	$finished = 1;
     } else {
 	$self->_parse_c_warning($_, $line, $column, "variable", "'$_'");
+	$finished = 1;
     }
 
     if($finished) {
 	# Nothing
     } elsif($self->_parse_c('SEQ_DEFINEBUF', \$_, \$line, \$column, \$match)) { # Linux specific
-	$type = $match;
-	$finished = 1;
-    } elsif($self->_parse_c('DEFINE_GUID', \$_, \$line, \$column, \$match)) { # Windows specific
 	$type = $match;
 	$finished = 1;
     } elsif($self->_parse_c('DEFINE_REGS_ENTRYPOINT_\w+|DPQ_DECL_\w+|HANDLER_DEF|IX86_ONLY', # Wine specific

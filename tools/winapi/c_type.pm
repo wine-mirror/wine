@@ -256,7 +256,7 @@ sub _refresh {
     my $n = 0;
     foreach my $field ($self->fields) {
 	my $type_name = $field->type_name;
-	my $size = &$$find_size($type_name);
+	my $type_size = &$$find_size($type_name);
 
 	my $base_type_name = $type_name;
 	if ($base_type_name =~ s/^(.*?)\s*(?:\[\s*(.*?)\s*\]|:(\d+))?$/$1/) {
@@ -279,11 +279,11 @@ sub _refresh {
 	    $$kind = &$$find_kind($type_name) || "";
 	}
 
-	if (!defined($size)) {
+	if (!defined($type_size)) {
 	    $$align = undef;
 	    $$size = undef;
 	    return;
-	} elsif ($size >= 0) {
+	} elsif ($type_size >= 0) {
 	    if ($offset_bits) {
 		$offset += $pack * int(($offset_bits + 8 * $pack - 1 ) / (8 * $pack));
 		$offset_bits = 0;
@@ -292,16 +292,16 @@ sub _refresh {
 	    $$$field_aligns[$n] = $align;
 	    $$$field_base_sizes[$n] = $base_size;
 	    $$$field_offsets[$n] = $offset;
-	    $$$field_sizes[$n] = $size;
+	    $$$field_sizes[$n] = $type_size;
 
-	    $offset += $size;
+	    $offset += $type_size;
 	} else {
 	    $$$field_aligns[$n] = $align;
 	    $$$field_base_sizes[$n] = $base_size;
 	    $$$field_offsets[$n] = $offset;
-	    $$$field_sizes[$n] = $size;
+	    $$$field_sizes[$n] = $type_size;
 
-	    $offset_bits += -$size;
+	    $offset_bits += -$type_size;
 	}
 
 	$n++;
@@ -309,6 +309,11 @@ sub _refresh {
 
     $$align = $pack;
     $$align = $max_field_align if $max_field_align < $pack;
+
+    if ($offset_bits) {
+	$offset += $pack * int(($offset_bits + 8 * $pack - 1 ) / (8 * $pack));
+	$offset_bits = 0;
+    }
 
     $$size = $offset;
     if ($$kind =~ /^(?:struct|union)$/) {
