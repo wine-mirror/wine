@@ -39,7 +39,6 @@
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "dosexe.h"
-#include "file.h"
 #include "winerror.h"
 #include "winuser.h"
 #include "wine/unicode.h"
@@ -3548,10 +3547,9 @@ static BOOL INT21_CreateTempFile( CONTEXT86 *context )
  * 'buffer' must be at least 12 characters long.
  */
 /* Chars we don't want to see in DOS file names */
-#define INVALID_DOS_CHARS  "*?<>|\"+=,;[] \345"
 static BOOL INT21_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer )
 {
-    static const char invalid_chars[] = INVALID_DOS_CHARS;
+    static const WCHAR invalid_chars[] = {'*','?','<','>','|','\\','"','+','=',',',';','[',']',' ','\345',0};
     LPCWSTR p = name;
     int i;
 
@@ -3587,7 +3585,7 @@ static BOOL INT21_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer )
             buffer[i] = '?';
             break;
         default:
-            if (*p < 256 && strchr( invalid_chars, (char)*p )) return FALSE;
+            if (strchrW( invalid_chars, *p )) return FALSE;
             buffer[i] = toupperW(*p);
             p++;
             break;
@@ -3624,7 +3622,7 @@ static BOOL INT21_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer )
             buffer[i] = '?';
             break;
         default:
-            if (*p < 256 && strchr( invalid_chars, (char)*p )) return FALSE;
+            if (strchrW( invalid_chars, *p )) return FALSE;
             buffer[i] = toupperW(*p);
             p++;
             break;
@@ -3636,7 +3634,7 @@ static BOOL INT21_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer )
      * is something behind this ?
      */
     while (*p == '*' || *p == ' ') p++; /* skip wildcards and spaces */
-    return IS_END_OF_NAME(*p);
+    return (!*p || (*p == '/') || (*p == '\\'));
 }
 
 static HANDLE       INT21_FindHandle;

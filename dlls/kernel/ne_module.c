@@ -40,7 +40,6 @@
 #include "wownt32.h"
 #include "module.h"
 #include "toolhelp.h"
-#include "file.h"
 #include "builtin16.h"
 #include "stackframe.h"
 #include "excpt.h"
@@ -127,6 +126,34 @@ inline static void patch_code_segment( void *code_segment )
 
 
 /***********************************************************************
+ *              NE_strcasecmp
+ *
+ * locale-independent case conversion for module lookups
+ */
+static int NE_strcasecmp( const char *str1, const char *str2 )
+{
+    int ret = 0;
+    for ( ; ; str1++, str2++)
+        if ((ret = RtlUpperChar(*str1) - RtlUpperChar(*str2)) || !*str1) break;
+    return ret;
+}
+
+
+/***********************************************************************
+ *              NE_strncasecmp
+ *
+ * locale-independent case conversion for module lookups
+ */
+static int NE_strncasecmp( const char *str1, const char *str2, int len )
+{
+    int ret = 0;
+    for ( ; len > 0; len--, str1++, str2++)
+        if ((ret = RtlUpperChar(*str1) - RtlUpperChar(*str2)) || !*str1) break;
+    return ret;
+}
+
+
+/***********************************************************************
  *           find_dll_descr
  *
  * Find a descriptor in the list
@@ -144,9 +171,9 @@ static const BUILTIN16_DESCRIPTOR *find_dll_descr( const char *dllname )
             BYTE *name_table = (BYTE *)pModule + pModule->name_table;
 
             /* check the dll file name */
-            if (!FILE_strcasecmp( pOfs->szPathName, dllname )) return descr;
+            if (!NE_strcasecmp( pOfs->szPathName, dllname )) return descr;
             /* check the dll module name (without extension) */
-            if (!FILE_strncasecmp( dllname, name_table+1, *name_table ) &&
+            if (!NE_strncasecmp( dllname, name_table+1, *name_table ) &&
                 !strcmp( dllname + *name_table, ".dll" ))
                 return descr;
         }
@@ -410,7 +437,7 @@ WORD NE_GetOrdinal( HMODULE16 hModule, const char *name )
       /* Now copy and uppercase the string */
 
     strcpy( buffer, name );
-    for (cpnt = buffer; *cpnt; cpnt++) *cpnt = FILE_toupper(*cpnt);
+    for (cpnt = buffer; *cpnt; cpnt++) *cpnt = RtlUpperChar(*cpnt);
     len = cpnt - buffer;
 
       /* First search the resident names */
@@ -1143,7 +1170,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
         strcpy( dllname, basename );
         p = strrchr( dllname, '.' );
         if (!p) strcat( dllname, ".dll" );
-        for (p = dllname; *p; p++) *p = FILE_tolower(*p);
+        for (p = dllname; *p; p++) if (*p >= 'A' && *p <= 'Z') *p += 32;
 
         if (!(descr = find_dll_descr( dllname )))
         {
@@ -1577,7 +1604,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
     /* If uppercased 'name' matches exactly the module name of a module:
      * Return its handle
      */
-    for (s = tmpstr; *s; s++) *s = FILE_toupper(*s);
+    for (s = tmpstr; *s; s++) *s = RtlUpperChar(*s);
 
     for (hModule = hFirstModule; hModule ; hModule = pModule->next)
     {
@@ -1592,7 +1619,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 	 * 'i' compare is just a quickfix until the loader handles that
 	 * correctly. -MM 990705
 	 */
-        if ((*name_table == len) && !FILE_strncasecmp(tmpstr, name_table+1, len))
+        if ((*name_table == len) && !NE_strncasecmp(tmpstr, name_table+1, len))
             return hModule;
     }
 
@@ -1631,7 +1658,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 	    loadedfn--;
 	}
 	/* case insensitive compare ... */
-	if (!FILE_strcasecmp(loadedfn, s))
+	if (!NE_strcasecmp(loadedfn, s))
 	    return hModule;
     }
     return 0;
@@ -1943,7 +1970,7 @@ static HMODULE16 NE_GetModuleByFilename( LPCSTR name )
             loadedfn--;
         }
         /* case insensitive compare ... */
-        if (!FILE_strcasecmp(loadedfn, s))
+        if (!NE_strcasecmp(loadedfn, s))
             return hModule;
     }
     /* If basename (without ext) matches the module name of a module:
@@ -1960,7 +1987,7 @@ static HMODULE16 NE_GetModuleByFilename( LPCSTR name )
         if (pModule->flags & NE_FFLAGS_WIN32) continue;
 
         name_table = (BYTE *)pModule + pModule->name_table;
-        if ((*name_table == len) && !FILE_strncasecmp(s, name_table+1, len))
+        if ((*name_table == len) && !NE_strncasecmp(s, name_table+1, len))
             return hModule;
     }
 

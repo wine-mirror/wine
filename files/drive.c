@@ -55,7 +55,6 @@
 #include "winioctl.h"
 #include "ntddstor.h"
 #include "ntddcdrm.h"
-#include "drive.h"
 #include "file.h"
 #include "wine/unicode.h"
 #include "wine/library.h"
@@ -88,6 +87,8 @@ static const WCHAR DRIVE_Types[][8] =
     {'c','d','r','o','m',0}, /* DRIVE_CDROM */
     {'r','a','m','d','i','s','k',0} /* DRIVE_RAMDISK */
 };
+
+#define MAX_DOS_DRIVES  26
 
 static DOSDRIVE DOSDrives[MAX_DOS_DRIVES];
 static int DRIVE_CurDrive = -1;

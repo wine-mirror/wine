@@ -45,7 +45,6 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "wine/unicode.h"
-#include "drive.h"
 #include "file.h"
 #include "wine/debug.h"
 
@@ -338,26 +337,6 @@ UINT WINAPI GetTempPathW( UINT count, LPWSTR path )
 
     TRACE("returning %u, %s\n", ret, debugstr_w(path));
     return ret;
-}
-
-
-/***********************************************************************
- *           DIR_GetWindowsUnixDir
- */
-UINT DIR_GetWindowsUnixDir( LPSTR path, UINT count )
-{
-    if (path) lstrcpynA( path, DIR_Windows.long_name, count );
-    return strlen( DIR_Windows.long_name );
-}
-
-
-/***********************************************************************
- *           DIR_GetSystemUnixDir
- */
-UINT DIR_GetSystemUnixDir( LPSTR path, UINT count )
-{
-    if (path) lstrcpynA( path, DIR_System.long_name, count );
-    return strlen( DIR_System.long_name );
 }
 
 

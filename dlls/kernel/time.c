@@ -24,7 +24,9 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+#include <stdarg.h>
 #include <stdlib.h>
+#include <time.h>
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
@@ -34,8 +36,10 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "ntstatus.h"
-#include "file.h"
 #include "winternl.h"
 #include "winerror.h"
 #include "winnls.h"

@@ -55,8 +55,8 @@
 
 #include "wine/unicode.h"
 #include "wine/winbase16.h"
-#include "drive.h"
 #include "file.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "wine/server.h"
 #include "wine/exception.h"
@@ -93,6 +93,7 @@ typedef struct
 #endif  /* linux */
 
 #define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
+#define IS_END_OF_NAME(ch) (!(ch) || ((ch) == '/') || ((ch) == '\\'))
 
 /* Chars we don't want to see in DOS file names */
 #define INVALID_DOS_CHARS  "*?<>|\"+=,;[] \345"
@@ -224,7 +225,7 @@ static int DOSFS_ValidDOSName( LPCWSTR name )
  * Return FALSE if the name is not a valid DOS name.
  * 'buffer' must be at least 12 characters long.
  */
-BOOL DOSFS_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer )
+static BOOL DOSFS_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer )
 {
     static const char invalid_chars[] = INVALID_DOS_CHARS;
     LPCWSTR p = name;

@@ -22,16 +22,8 @@
 #define __WINE_FILE_H
 
 #include <stdarg.h>
-#include <time.h> /* time_t */
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
-#include <sys/types.h>
 #include <windef.h>
 #include <winbase.h>
-#include <wine/windef16.h>  /* HFILE16 */
-#include <winreg.h>
-#include <winternl.h>
 
 #define MAX_PATHNAME_LEN   1024
 
@@ -43,24 +35,8 @@ typedef struct
     int   drive;
 } DOS_FULL_NAME;
 
-#define IS_END_OF_NAME(ch)  (!(ch) || ((ch) == '/') || ((ch) == '\\'))
-
-/* locale-independent case conversion */
-inline static char FILE_tolower( char c )
-{
-    if (c >= 'A' && c <= 'Z') c += 32;
-    return c;
-}
-inline static char FILE_toupper( char c )
-{
-    if (c >= 'a' && c <= 'z') c -= 32;
-    return c;
-}
-
 /* files/file.c */
 extern mode_t FILE_umask;
-extern int FILE_strcasecmp( const char *str1, const char *str2 );
-extern int FILE_strncasecmp( const char *str1, const char *str2, int len );
 extern void FILE_SetDosError(void);
 extern BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info, BOOL *is_symlink );
 extern HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
@@ -68,22 +44,35 @@ extern HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                                DWORD attributes, HANDLE template, BOOL fail_read_only,
                                UINT drive_type );
 
-extern LONG WINAPI WIN16_hread(HFILE16,SEGPTR,LONG);
-
 /* files/directory.c */
 extern int DIR_Init(void);
-extern UINT DIR_GetWindowsUnixDir( LPSTR path, UINT count );
-extern UINT DIR_GetSystemUnixDir( LPSTR path, UINT count );
 extern DWORD DIR_SearchPath( LPCWSTR path, LPCWSTR name, LPCWSTR ext,
                              DOS_FULL_NAME *full_name, BOOL win32 );
 
 /* files/dos_fs.c */
-extern BOOL DOSFS_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer );
 extern HANDLE DOSFS_OpenDevice( LPCWSTR name, DWORD access, DWORD attributes, LPSECURITY_ATTRIBUTES sa);
 extern BOOL DOSFS_FindUnixName( const DOS_FULL_NAME *path, LPCWSTR name, char *long_buf,
                                 INT long_len, LPWSTR short_buf );
 extern BOOL DOSFS_GetFullName( LPCWSTR name, BOOL check_last,
                                  DOS_FULL_NAME *full );
+
+/* drive.c */
+
+#define DRIVE_FAIL_READ_ONLY  0x0001  /* Fail opening read-only files for writing */
+
+extern int DRIVE_Init(void);
+extern int DRIVE_IsValid( int drive );
+extern int DRIVE_GetCurrentDrive(void);
+extern int DRIVE_SetCurrentDrive( int drive );
+extern int DRIVE_FindDriveRoot( const char **path );
+extern int DRIVE_FindDriveRootW( LPCWSTR *path );
+extern const char * DRIVE_GetRoot( int drive );
+extern LPCWSTR DRIVE_GetDosCwd( int drive );
+extern const char * DRIVE_GetUnixCwd( int drive );
+extern const char * DRIVE_GetDevice( int drive );
+extern UINT DRIVE_GetFlags( int drive );
+extern int DRIVE_Chdir( int drive, LPCWSTR path );
+extern WCHAR *DRIVE_BuildEnv(void);
 
 /* vxd.c */
 extern HANDLE VXD_Open( LPCWSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );

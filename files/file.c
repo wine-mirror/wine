@@ -67,7 +67,6 @@
 #include "wine/winbase16.h"
 #include "wine/server.h"
 
-#include "drive.h"
 #include "file.h"
 #include "wincon.h"
 #include "kernel_private.h"
@@ -109,34 +108,6 @@ void FILE_ConvertOFMode( INT mode, DWORD *access, DWORD *sharing )
     case OF_SHARE_COMPAT:
     default:                  *sharing = FILE_SHARE_READ | FILE_SHARE_WRITE; break;
     }
-}
-
-
-/***********************************************************************
- *              FILE_strcasecmp
- *
- * locale-independent case conversion for file I/O
- */
-int FILE_strcasecmp( const char *str1, const char *str2 )
-{
-    int ret = 0;
-    for ( ; ; str1++, str2++)
-        if ((ret = FILE_toupper(*str1) - FILE_toupper(*str2)) || !*str1) break;
-    return ret;
-}
-
-
-/***********************************************************************
- *              FILE_strncasecmp
- *
- * locale-independent case conversion for file I/O
- */
-int FILE_strncasecmp( const char *str1, const char *str2, int len )
-{
-    int ret = 0;
-    for ( ; len > 0; len--, str1++, str2++)
-        if ((ret = FILE_toupper(*str1) - FILE_toupper(*str2)) || !*str1) break;
-    return ret;
 }
 
 

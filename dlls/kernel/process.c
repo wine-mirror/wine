@@ -27,12 +27,16 @@
 #include <locale.h>
 #include <signal.h>
 #include <stdio.h>
+#include <time.h>
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#endif
+#include <sys/types.h>
 
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "ntstatus.h"
 #include "thread.h"
-#include "drive.h"
 #include "file.h"
 #include "module.h"
 #include "options.h"
