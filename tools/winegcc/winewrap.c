@@ -29,6 +29,8 @@
 #include <errno.h>
 #include <sys/stat.h>
 
+#include "utils.h"
+
 #ifndef WINEDLLS
 #define WINEDLLS "/usr/local/lib/wine"
 #endif
@@ -213,50 +215,15 @@ static const char *wrapper_code =
 ;
 
 static char *output_name;
-static char **arh_files,  **dll_files,  **lib_files,  **lib_paths,  **obj_files;
-static int nb_arh_files, nb_dll_files, nb_lib_files, nb_lib_paths, nb_obj_files;
-static int verbose = 0;
+static strarray *arh_files, *dll_files, *lib_files, *lib_paths, *obj_files;
 static int keep_generated = 0;
 
-void error(const char *s, ...)
-{
-    va_list ap;
-    
-    va_start(ap, s);
-    fprintf(stderr, "Error: ");
-    vfprintf(stderr, s, ap);
-    fprintf(stderr, "\n");
-    va_end(ap);
-    exit(2);
-}
-
-char *strmake(const char *fmt, ...) 
-{
-    int n, size = 100;
-    char *p;
-    va_list ap;
-
-    if ((p = malloc (size)) == NULL)
-	error("Can not malloc %d bytes.", size);
-    
-    while (1) 
-    {
-        va_start(ap, fmt);
-	n = vsnprintf (p, size, fmt, ap);
-	va_end(ap);
-        if (n > -1 && n < size) return p;
-        size *= 2;
-	if ((p = realloc (p, size)) == NULL)
-	    error("Can not realloc %d bytes.", size);
-    }
-}
-
-void rm_temp_file(const char *file)
+static void rm_temp_file(const char *file)
 {
     if (!keep_generated) unlink(file);
 }
 
-void create_file(const char *name, const char *fmt, ...)
+static void create_file(const char *name, const char *fmt, ...)
 {
     va_list ap;
     FILE *file;
@@ -270,23 +237,7 @@ void create_file(const char *name, const char *fmt, ...)
     fclose(file);
 }
 
-void spawn(char *const argv[])
-{
-    int i, status;
-    
-    if (verbose)
-    {	
-	for(i = 0; argv[i]; i++) printf("%s ", argv[i]);
-	printf("\n");
-    }
-    if (!(status = spawnvp( _P_WAIT, argv[0], argv))) return;
-    
-    if (status > 0) error("%s failed.", argv[0]);
-    else perror("Error:");
-    exit(3);
-}
-
-int is_resource(const char* file)
+static int is_resource(const char* file)
 {
     /* see tools/winebuild/res32.c: check_header for details */
     static const char res_sig[] = { 0,0,0,0, 32,0,0,0, 0xff,0xff, 0,0, 0xff,0xff, 0,0, 0,0,0,0, 0,0, 0,0, 0,0,0,0, 0,0,0,0 };
@@ -334,14 +285,14 @@ static char *try_lib_path( const char *path, const char *name )
 }
 
 /* open the .def library for a given dll */
-static char *open_dll(const char *name)
+static char *find_dll(const char *name)
 {
     char *fullname;
     int i;
 
-    for (i = 0; i < nb_lib_paths; i++)
+    for (i = 0; i < lib_paths->size; i++)
     {
-        if ((fullname = try_dll_path( lib_paths[i], name ))) return fullname;
+        if ((fullname = try_dll_path( lib_paths->base[i], name ))) return fullname;
     }
     return try_dll_path( ".", name );
 }
@@ -353,9 +304,9 @@ static char *find_lib(const char *name)
     char *fullname;
     int i;
     
-    for (i = 0; i < nb_lib_paths; i++)
+    for (i = 0; i < lib_paths->size; i++)
     {
-        if ((fullname = try_lib_path( lib_paths[i], name ))) return fullname;
+        if ((fullname = try_lib_path( lib_paths->base[i], name ))) return fullname;
     }
 
     for (i = 0; i < sizeof(std_paths)/sizeof(std_paths[0]); i++)
@@ -366,48 +317,127 @@ static char *find_lib(const char *name)
     return 0;
 }
 
-void add_lib_path(const char* path)
+static void add_lib_path(const char* path)
 {
-    lib_paths = realloc( lib_paths, (nb_lib_paths+1) * sizeof(*lib_paths) );
-    lib_paths[nb_lib_paths++] = strdup(path);
-    dll_files = realloc( dll_files, (nb_dll_files+1) * sizeof(*dll_files) );
-    dll_files[nb_dll_files++] = strmake("-L%s", path);
-    lib_files = realloc( lib_files, (nb_lib_files+1) * sizeof(*lib_files) );
-    lib_files[nb_lib_files++] = strmake("-L%s", path);
+    strarray_add(lib_paths, strdup(path));
+    strarray_add(dll_files, strmake("-L%s", path));
+    strarray_add(lib_files, strmake("-L%s", path));
 }
 
-void add_lib_file(const char* library)
+static void add_lib_file(const char* library)
 {
     char *lib;
     
-    if (open_dll(library))
+    if (find_dll(library))
     {
-        dll_files = realloc( dll_files, (nb_dll_files+1) * sizeof(*dll_files) );
-        dll_files[nb_dll_files++] = strmake("-l%s", library);
+	strarray_add(dll_files, strmake("-l%s", library));
     }
     else if ((lib = find_lib(library)))
     {
-        arh_files = realloc( arh_files, (nb_arh_files+1) * sizeof(*arh_files) );
-        arh_files[nb_arh_files++] = lib;
+        strarray_add(arh_files, lib);
     }
     else
     {
-        lib_files = realloc( lib_files, (nb_lib_files+1) * sizeof(*lib_files) );
-        lib_files[nb_lib_files++] = strmake("-l%s", library);
+        strarray_add(lib_files, strmake("-l%s", library));
     }
+}
+
+static void create_the_wrapper(char* base_file, char* base_name, int gui_mode, int cpp)
+{
+    char *wrp_temp_name, *wspec_name, *wspec_c_name, *wspec_o_name;
+    char *wrap_c_name, *wrap_o_name;
+    strarray *wwrap_args, *wspec_args, *wcomp_args, *wlink_args;
+    int i;
+
+    wrp_temp_name = tempnam(0, "wwrp");
+    wspec_name = strmake("%s.spec", wrp_temp_name);
+    wspec_c_name = strmake("%s.c", wspec_name);
+    wspec_o_name = strmake("%s.o", wspec_name);
+
+    wrap_c_name = strmake("%s.c", wrp_temp_name);
+    wrap_o_name = strmake("%s.o", wrp_temp_name);
+
+    /* build wrapper compile argument list */
+    wwrap_args = strarray_alloc();
+    strarray_add(wwrap_args, "gcc");
+    strarray_add(wwrap_args, "-fPIC");
+    strarray_add(wwrap_args, "-I" INCLUDEDIR "/windows");
+    strarray_add(wwrap_args, "-o");
+    strarray_add(wwrap_args, wrap_o_name);
+    strarray_add(wwrap_args, "-c");
+    strarray_add(wwrap_args, wrap_c_name);
+    strarray_add(wwrap_args, NULL);
+
+    create_file(wrap_c_name, wrapper_code, base_name, gui_mode);
+    spawn(wwrap_args);
+    strarray_free(wwrap_args);
+    rm_temp_file(wrap_c_name);
+
+    /* build wrapper winebuild's argument list */
+    wspec_args = strarray_alloc();
+    strarray_add(wspec_args, "winebuild");
+    strarray_add(wspec_args, "-o");
+    strarray_add(wspec_args, wspec_c_name);
+    strarray_add(wspec_args, "--exe");
+    strarray_add(wspec_args, strmake("%s.exe", base_name));
+    strarray_add(wspec_args, gui_mode ? "-mgui" : "-mcui");
+    strarray_add(wspec_args, wrap_o_name);
+    for (i = 0; i < lib_files->size; i++)
+	strarray_add(wspec_args, lib_files->base[i]);
+    for (i = 0; i < dll_files->size; i++)
+	strarray_add(wspec_args, dll_files->base[i]);
+    strarray_add(wspec_args, NULL);
+
+    spawn(wspec_args);
+    strarray_free(wspec_args);
+
+    /* build wrapper gcc's argument list */
+    wcomp_args = strarray_alloc();
+    strarray_add(wcomp_args, "gcc");
+    strarray_add(wcomp_args, "-fPIC");
+    strarray_add(wcomp_args, "-o");
+    strarray_add(wcomp_args, wspec_o_name);
+    strarray_add(wcomp_args, "-c");
+    strarray_add(wcomp_args, wspec_c_name);
+    strarray_add(wcomp_args, NULL);
+
+    spawn(wcomp_args);
+    strarray_free(wcomp_args);
+    rm_temp_file(wspec_c_name);
+
+    /* build wrapper ld's argument list */
+    wlink_args = strarray_alloc();
+    strarray_add(wlink_args, cpp ? "g++" : "gcc");
+    strarray_add(wlink_args, "-shared");
+    strarray_add(wlink_args, "-Wl,-Bsymbolic,-z,defs");
+    strarray_add(wlink_args, "-lwine");
+    strarray_add(wlink_args, "-ldl");
+    strarray_add(wlink_args, "-o");
+    strarray_add(wlink_args, strmake("%s.exe.so", base_file));
+    strarray_add(wlink_args, wspec_o_name);
+    strarray_add(wlink_args, wrap_o_name);
+    strarray_add(wlink_args, NULL);
+
+    spawn(wlink_args);
+    strarray_free(wlink_args);
+    rm_temp_file(wspec_o_name);
+    rm_temp_file(wrap_o_name);
 }
 
 int main(int argc, char **argv)
 {
     char *library = 0, *path = 0;
-    int i, j, len, cpp = 0, no_opt = 0, gui_mode = 0, create_wrapper = -1;
-    char *base_name, *base_file, *app_temp_name, *wrp_temp_name;
+    int i, len, cpp = 0, no_opt = 0, gui_mode = 0, create_wrapper = -1;
+    char *base_name, *base_file, *app_temp_name;
     char *spec_name, *spec_c_name, *spec_o_name;
-    char *wspec_name, *wspec_c_name, *wspec_o_name;
-    char *wrap_c_name, *wrap_o_name;
-    char **spec_args, **comp_args, **link_args;
-    char **wwrap_args, **wspec_args, **wcomp_args, **wlink_args;
-   
+    strarray *spec_args, *comp_args, *link_args;
+
+    arh_files = strarray_alloc();
+    dll_files = strarray_alloc();
+    lib_files = strarray_alloc();
+    lib_paths = strarray_alloc();
+    obj_files = strarray_alloc();
+    
     /* include the standard DLL path first */
     add_lib_path(WINEDLLS);
 	
@@ -468,8 +498,7 @@ int main(int argc, char **argv)
 	}
 	
 	/* it's a filename, add it to its list */
-	obj_files = realloc( obj_files, (nb_obj_files+1) * sizeof(*obj_files) );
-	obj_files[nb_obj_files++] = strdup(argv[i]);
+	strarray_add(obj_files, strdup(argv[i]));
     }
 
     /* create wrapper only in C++ by default */
@@ -481,8 +510,6 @@ int main(int argc, char **argv)
     add_lib_file("kernel32");
 
     app_temp_name = tempnam(0, "wapp");
-    wrp_temp_name = tempnam(0, "wwrp");
-   
     /* get base filename by removing the .exe extension, if present */ 
     base_file = strdup(output_name);
     len = strlen(base_file);
@@ -497,151 +524,83 @@ int main(int argc, char **argv)
     spec_c_name = strmake("%s.c", spec_name);
     spec_o_name = strmake("%s.o", spec_name);
 
-    wspec_name = strmake("%s.spec", wrp_temp_name);
-    wspec_c_name = strmake("%s.c", wspec_name);
-    wspec_o_name = strmake("%s.o", wspec_name);
-
-    wrap_c_name = strmake("%s.c", wrp_temp_name);
-    wrap_o_name = strmake("%s.o", wrp_temp_name);
-
     /* build winebuild's argument list */
-    spec_args = malloc( (nb_arh_files + nb_dll_files + nb_obj_files + 20) * sizeof (char *) );
-    j = 0;
-    spec_args[j++] = "winebuild";
-    spec_args[j++] = "-o";
-    spec_args[j++] = spec_c_name;
-    if (create_wrapper)
-    {
-	spec_args[j++] = "-F";
-	spec_args[j++] = strmake("%s-wrap.dll", base_name);
-	spec_args[j++] = "--spec";
-	spec_args[j++] = spec_name;
-    }
-    else
-    {
-	spec_args[j++] = "--exe";
-	spec_args[j++] = strmake("%s.exe", base_name);
-        spec_args[j++] = gui_mode ? "-mgui" : "-mcui";
-    }
-    for (i = 0; i < nb_dll_files; i++)
-	spec_args[j++] = dll_files[i];
-    for (i = 0; i < nb_obj_files; i++)
-	spec_args[j++] = obj_files[i];
-    for (i = 0; i < nb_arh_files; i++)
-	spec_args[j++] = arh_files[i];
-    spec_args[j] = 0;
-
-    /* build gcc's argument list */
-    comp_args = malloc ( 20 * sizeof (char *) );
-    j = 0;
-    comp_args[j++] = "gcc";
-    comp_args[j++] = "-fPIC";
-    comp_args[j++] = "-o";
-    comp_args[j++] = spec_o_name;
-    comp_args[j++] = "-c";
-    comp_args[j++] = spec_c_name;
-    comp_args[j] = 0;
-    
-    /* build ld's argument list */
-    link_args = malloc( (nb_arh_files + nb_obj_files + nb_lib_files + 20) * sizeof (char *) );
-    j = 0;
-    link_args[j++] = cpp ? "g++" : "gcc";
-    link_args[j++] = "-shared";
-    link_args[j++] = "-Wl,-Bsymbolic,-z,defs";
-    link_args[j++] = "-lwine";
-    link_args[j++] = "-lm";
-    for (i = 0; i < nb_lib_files; i++)
-	link_args[j++] = lib_files[i];
-    link_args[j++] = "-o";
-    if (create_wrapper) link_args[j++] = strmake("%s-wrap.dll.so", base_file);
-    else link_args[j++] = strmake("%s.exe.so", base_file);
-    link_args[j++] = spec_o_name;
-    for (i = 0; i < nb_obj_files; i++)
-	if (!is_resource(obj_files[i])) link_args[j++] = obj_files[i];
-    for (i = 0; i < nb_arh_files; i++)
-	link_args[j++] = arh_files[i];
-    link_args[j] = 0;
-  
-    /* build wrapper compile argument list */
-    wwrap_args = malloc ( 20 * sizeof (char *) );
-    j = 0;
-    wwrap_args[j++] = "gcc";
-    wwrap_args[j++] = "-fPIC";
-    wwrap_args[j++] = "-I" INCLUDEDIR "/windows";
-    wwrap_args[j++] = "-o";
-    wwrap_args[j++] = wrap_o_name;
-    wwrap_args[j++] = "-c";
-    wwrap_args[j++] = wrap_c_name;
-    wwrap_args[j] = 0;
-     
-    /* build wrapper winebuild's argument list */
-    wspec_args = malloc( (nb_dll_files + 20) * sizeof (char *) );
-    j = 0;
-    wspec_args[j++] = "winebuild";
-    wspec_args[j++] = "-o";
-    wspec_args[j++] = wspec_c_name;
-    wspec_args[j++] = "--exe";
-    wspec_args[j++] = strmake("%s.exe", base_name);
-    wspec_args[j++] = gui_mode ? "-mgui" : "-mcui";
-    wspec_args[j++] = wrap_o_name;
-    for (i = 0; i < nb_dll_files; i++)
-	wspec_args[j++] = dll_files[i];
-    wspec_args[j] = 0;
-
-    /* build wrapper gcc's argument list */
-    wcomp_args = malloc ( 20 * sizeof (char *) );
-    j = 0;
-    wcomp_args[j++] = "gcc";
-    wcomp_args[j++] = "-fPIC";
-    wcomp_args[j++] = "-o";
-    wcomp_args[j++] = wspec_o_name;
-    wcomp_args[j++] = "-c";
-    wcomp_args[j++] = wspec_c_name;
-    wcomp_args[j] = 0;
-    
-    /* build wrapper ld's argument list */
-    wlink_args = malloc( 20 * sizeof (char *) );
-    j = 0;
-    wlink_args[j++] = cpp ? "g++" : "gcc";
-    wlink_args[j++] = "-shared";
-    wlink_args[j++] = "-Wl,-Bsymbolic,-z,defs";
-    wlink_args[j++] = "-lwine";
-    wlink_args[j++] = "-ldl";
-    wlink_args[j++] = "-o";
-    wlink_args[j++] = strmake("%s.exe.so", base_file);
-    wlink_args[j++] = wspec_o_name;
-    wlink_args[j++] = wrap_o_name;
-    wlink_args[j] = 0;
-    
-    /* run winebuild to get the .spec.c file */
+    spec_args = strarray_alloc();
+    strarray_add(spec_args, "winebuild");
+    strarray_add(spec_args, "-o");
+    strarray_add(spec_args, spec_c_name);
     if (create_wrapper)
     {
 	create_file(spec_name, gui_mode ? app_gui_spec : app_cui_spec);
-        spawn(spec_args);
-        rm_temp_file(spec_name);
-	spawn(comp_args);
-	rm_temp_file(spec_c_name);
-	spawn(link_args);
-	rm_temp_file(spec_o_name);
-
-	create_file(wrap_c_name, wrapper_code, base_name, gui_mode);
-	spawn(wwrap_args);
-	rm_temp_file(wrap_c_name);
-	spawn(wspec_args);
-	spawn(wcomp_args);
-	rm_temp_file(wspec_c_name);
-	spawn(wlink_args);
-	rm_temp_file(wspec_o_name);
-	rm_temp_file(wrap_o_name);
+	strarray_add(spec_args, "-F");
+	strarray_add(spec_args, strmake("%s-wrap.dll", base_name));
+	strarray_add(spec_args, "--spec");
+	strarray_add(spec_args, spec_name);
     }
     else
     {
-	spawn(spec_args);
-	spawn(comp_args);
-	rm_temp_file(spec_c_name);
-	spawn(link_args);
-	rm_temp_file(spec_o_name);
+	strarray_add(spec_args, "--exe");
+	strarray_add(spec_args, strmake("%s.exe", base_name));
+        strarray_add(spec_args, gui_mode ? "-mgui" : "-mcui");
     }
+    for (i = 0; i < dll_files->size; i++)
+	strarray_add(spec_args, dll_files->base[i]);
+    for (i = 0; i < obj_files->size; i++)
+	strarray_add(spec_args, obj_files->base[i]);
+    for (i = 0; i < arh_files->size; i++)
+	strarray_add(spec_args, arh_files->base[i]);
+    strarray_add(spec_args, NULL);
+
+    /* run winebuild to get the .spec.c file */
+    spawn(spec_args);
+    strarray_free(spec_args);
+
+    if (create_wrapper)
+        rm_temp_file(spec_name);
+
+    /* build gcc's argument list */
+    comp_args = strarray_alloc();
+    strarray_add(comp_args, "gcc");
+    strarray_add(comp_args, "-fPIC");
+    strarray_add(comp_args, "-o");
+    strarray_add(comp_args, spec_o_name);
+    strarray_add(comp_args, "-c");
+    strarray_add(comp_args, spec_c_name);
+    strarray_add(comp_args, NULL);
+
+    spawn(comp_args);
+    strarray_free(comp_args);
+    rm_temp_file(spec_c_name);
+    
+    /* build ld's argument list */
+    link_args = strarray_alloc();
+    strarray_add(link_args, cpp ? "g++" : "gcc");
+    strarray_add(link_args, "-shared");
+    strarray_add(link_args, "-Wl,-Bsymbolic,-z,defs");
+    strarray_add(link_args, "-lwine");
+    strarray_add(link_args, "-lm");
+    for (i = 0; i < lib_files->size; i++)
+	strarray_add(link_args, lib_files->base[i]);
+    strarray_add(link_args, "-o");
+    if (create_wrapper)
+	strarray_add(link_args, strmake("%s-wrap.dll.so", base_file));
+    else
+	strarray_add(link_args, strmake("%s.exe.so", base_file));
+    strarray_add(link_args, spec_o_name);
+
+    for (i = 0; i < obj_files->size; i++)
+	if (!is_resource(obj_files->base[i]))
+	    strarray_add(link_args, obj_files->base[i]);
+    for (i = 0; i < arh_files->size; i++)
+	strarray_add(link_args, arh_files->base[i]);
+    strarray_add(link_args, NULL);
+  
+    spawn(link_args);
+    strarray_free(link_args);
+    rm_temp_file(spec_o_name);
+
+    if (create_wrapper)
+	create_the_wrapper(base_file, base_name, gui_mode, cpp);
 
     /* create the loader script */
     create_file(base_file, app_loader_script, base_name);

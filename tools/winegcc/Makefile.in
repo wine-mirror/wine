@@ -10,6 +10,7 @@ PROGRAMS = \
 	winewrap
 
 C_SRCS = \
+	utils.c \
 	winegcc.c \
 	winewrap.c
 
@@ -17,11 +18,11 @@ all: $(PROGRAMS)
 
 @MAKE_RULES@
 
-winegcc: winegcc.o
-	$(CC) $(CFLAGS) -o $@ winegcc.o $(LIBPORT)
+winegcc: winegcc.o utils.o
+	$(CC) $(CFLAGS) -o $@ winegcc.o utils.o $(LIBPORT)
 
-winewrap: winewrap.o
-	$(CC) $(CFLAGS) -o $@ winewrap.o $(LIBPORT)
+winewrap: winewrap.o utils.o
+	$(CC) $(CFLAGS) -o $@ winewrap.o utils.o $(LIBPORT)
 
 install:: $(PROGRAMS)
 	$(MKINSTALLDIRS) $(bindir)

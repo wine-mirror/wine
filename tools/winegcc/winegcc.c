@@ -27,63 +27,13 @@
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
-#include <sys/stat.h>
 
-static char **tmp_files;
-static int nb_tmp_files;
-static int verbose = 0;
+#include "utils.h"
+
 static int keep_generated = 0;
+static strarray *tmp_files;
 
-void error(const char *s, ...)
-{
-    va_list ap;
-    
-    va_start(ap, s);
-    fprintf(stderr, "Error: ");
-    vfprintf(stderr, s, ap);
-    fprintf(stderr, "\n");
-    va_end(ap);
-    exit(2);
-}
-
-char *strmake(const char *fmt, ...) 
-{
-    int n, size = 100;
-    char *p;
-    va_list ap;
-
-    if ((p = malloc (size)) == NULL)
-	error("Can not malloc %d bytes.", size);
-    
-    while (1) 
-    {
-        va_start(ap, fmt);
-	n = vsnprintf (p, size, fmt, ap);
-	va_end(ap);
-        if (n > -1 && n < size) return p;
-        size *= 2;
-	if ((p = realloc (p, size)) == NULL)
-	    error("Can not realloc %d bytes.", size);
-    }
-}
-
-void spawn(char *const argv[])
-{
-    int i, status;
-    
-    if (verbose)
-    {	
-	for(i = 0; argv[i]; i++) printf("%s ", argv[i]);
-	printf("\n");
-    }
-    if (!(status = spawnvp( _P_WAIT, argv[0], argv))) return;
-    
-    if (status > 0) error("%s failed.", argv[0]);
-    else perror("Error:");
-    exit(3);
-}
-
-int strendswith(const char *str, const char *end)
+static int strendswith(const char *str, const char *end)
 {
     int l = strlen(str);
     int m = strlen(end);
@@ -91,17 +41,18 @@ int strendswith(const char *str, const char *end)
     return l >= m && strcmp(str + l - m, end) == 0; 
 }
 
-void clean_temp_files()
+static void clean_temp_files()
 {
-    int i;
-    
-    if (keep_generated) return;
-
-    for (i = 0; i < nb_tmp_files; i++)
-	unlink(tmp_files[i]);
+    if (!keep_generated)
+    {
+        int i;
+	for (i = 0; i < tmp_files->size; i++)
+	    unlink(tmp_files->base[i]);
+    }
+    strarray_free(tmp_files);
 }
 
-char *get_temp_file(const char *suffix)
+static char *get_temp_file(const char *suffix)
 {
     char *tmp = strmake("wgcc.XXXXXX%s", suffix);
     int fd = mkstemps( tmp, strlen(suffix) );
@@ -114,33 +65,34 @@ char *get_temp_file(const char *suffix)
         if (fd == -1) error( "could not create temp file" );
     }
     close( fd );
-    tmp_files = realloc( tmp_files, (nb_tmp_files+1) * sizeof(*tmp_files) );
-    tmp_files[nb_tmp_files++] = tmp;
+    strarray_add(tmp_files, tmp);
 
     return tmp;
 }
 
-char *get_obj_file(char **argv, int n)
+static char *get_obj_file(char **argv, int n)
 {
-    char *tmpobj, **compargv;
-    int i, j;
+    char *tmpobj;
+    strarray* compargv;
+    int j;
 
     if (strendswith(argv[n], ".o")) return argv[n];
     if (strendswith(argv[n], ".a")) return argv[n];
     if (strendswith(argv[n], ".res")) return argv[n];
     
     tmpobj = get_temp_file(".o");
-    compargv = malloc(sizeof(char*) * (n + 10));
-    i = 0;
-    compargv[i++] = "winegcc";
-    compargv[i++] = "-c";
-    compargv[i++] = "-o";
-    compargv[i++] = tmpobj;
+
+    compargv = strarray_alloc();
+    strarray_add(compargv,"winegcc");
+    strarray_add(compargv, "-c");
+    strarray_add(compargv, "-o");
+    strarray_add(compargv, tmpobj);
     for (j = 1; j <= n; j++)
-	if (argv[j]) compargv[i++] = argv[j];
-    compargv[i] = 0;
+	if (argv[j]) strarray_add(compargv, argv[j]);
+    strarray_add(compargv, NULL);
     
     spawn(compargv);
+    strarray_free(compargv);
 
     return tmpobj;
 }
@@ -148,11 +100,12 @@ char *get_obj_file(char **argv, int n)
 
 int main(int argc, char **argv)
 {
-    char **gcc_argv;
+    strarray *gcc_argv;
     int i, j;
     int linking = 1, cpp = 0, use_static_linking = 0;
     int use_stdinc = 1, use_stdlib = 1, use_msvcrt = 0, gui_app = 0;
 
+    tmp_files = strarray_alloc();
     atexit(clean_temp_files);
     
     if (strendswith(argv[0], "++")) cpp = 1;
@@ -210,23 +163,29 @@ int main(int argc, char **argv)
 
     if (use_static_linking) error("Static linking is not supported.");
 
-    gcc_argv = malloc(sizeof(char*) * (argc + 20));
+    gcc_argv = strarray_alloc();
 
     i = 0;
     if (linking)
     {
 	int has_output_name = 0;
 	int has_input_files = 0;
-	char **temp_argv;
 
-	/* we need this to erase some of the parameters as we go along */
-	temp_argv = malloc(sizeof(char*) * argc);
-	memcpy(temp_argv, argv, sizeof(char*) * argc);
+	strarray *copy_argv;
 
-	gcc_argv[i++] = "winewrap";
-	if (gui_app) gcc_argv[i++] = "-mgui";
+	/* we need a copy in case we decide to pass args straight to gcc
+	 * and we erase some of the original parameters as we go along
+	 */
+	copy_argv = strarray_alloc();
+	strarray_add(copy_argv, cpp ? "g++" : "gcc");
+	for( j = 1; j < argc ; j++ )
+	    strarray_add(copy_argv, argv[j]);
 
-	if (cpp) gcc_argv[i++] = "-C";	
+	strarray_add(gcc_argv, "winewrap");
+	if (gui_app) strarray_add(gcc_argv, "-mgui");
+
+	if (cpp) strarray_add(gcc_argv, "-C");
+
     	for ( j = 1 ; j < argc ; j++ ) 
     	{
 	    if ( argv[j][0] == '-' )
@@ -235,18 +194,18 @@ int main(int argc, char **argv)
 		{
 		case 'L':
 		case 'o':
-		    gcc_argv[i++] = argv[j];
-		    temp_argv[j] = 0;
-		    if (!gcc_argv[i-1][2] && j + 1 < argc)
+		    strarray_add(gcc_argv, argv[j]);
+		    if (!argv[j][2] && j + 1 < argc)
 		    {
-			gcc_argv[i++] = argv[++j];
-			temp_argv[j] = 0;
+			argv[j] = 0;
+			strarray_add(gcc_argv, argv[++j]);
 		    }
 		    has_output_name = 1;
+		    argv[j] = 0;
 		    break;
 		case 'l':
-		    gcc_argv[i++] = strcmp(argv[j], "-luuid") ? argv[j] : "-lwine_uuid"; 
-		    temp_argv[j] = 0;
+		    strarray_add(gcc_argv, strcmp(argv[j], "-luuid") ? argv[j] : "-lwine_uuid"); 
+		    argv[j] = 0;
 		    break;
 		default:
 		    ; /* ignore the rest */
@@ -254,8 +213,8 @@ int main(int argc, char **argv)
 	    }
 	    else
 	    {
-		gcc_argv[i++] = get_obj_file(temp_argv, j);
-		temp_argv[j] = 0;
+		strarray_add(gcc_argv, get_obj_file(argv, j));
+		argv[j] = 0;
 		has_input_files = 1;
 	    }
 	}
@@ -265,71 +224,70 @@ int main(int argc, char **argv)
 	    /* Support the a.out default name, to appease configure */
 	    if (!has_output_name)
 	    {
-		gcc_argv[i++] = "-o";
-		gcc_argv[i++] = "a.out";
+		strarray_add(gcc_argv, "-o");
+		strarray_add(gcc_argv, "a.out");
 	    }
-	    if (use_stdlib && use_msvcrt) gcc_argv[i++] = "-lmsvcrt";
-	    if (gui_app) gcc_argv[i++] = "-lcomdlg32";
-	    gcc_argv[i++] = "-ladvapi32";
-	    gcc_argv[i++] = "-lshell32";
+	    if (use_stdlib && use_msvcrt) strarray_add(gcc_argv, "-lmsvcrt");
+	    if (gui_app) strarray_add(gcc_argv, "-lcomdlg32");
+	    strarray_add(gcc_argv, "-ladvapi32");
+	    strarray_add(gcc_argv, "-lshell32");
 	}
 	else
 	{
 	    /* if we have nothing to process, just forward stuff to gcc */
-	    memcpy(gcc_argv, argv,  sizeof(char*) * argc);
-	    gcc_argv[0] = cpp ? "g++" : "gcc";
-	    i = argc;
+	    strarray_free(gcc_argv);
+	    gcc_argv = copy_argv;
 	}
     }
     else
     {
-	gcc_argv[i++] = cpp ? "g++" : "gcc";
+        strarray_add(gcc_argv, cpp ? "g++" : "gcc");
 
-	gcc_argv[i++] = "-fshort-wchar";
-	gcc_argv[i++] = "-fPIC";
-	if (use_stdinc)
-	{
-	    if (use_msvcrt)
-	    {
-		gcc_argv[i++] = "-I" INCLUDEDIR "/msvcrt";
-	    	gcc_argv[i++] = "-D__MSVCRT__";
-	    }
-	    gcc_argv[i++] = "-I" INCLUDEDIR "/windows";
-	}
-	gcc_argv[i++] = "-DWIN32";
-	gcc_argv[i++] = "-D_WIN32";
-	gcc_argv[i++] = "-D__WIN32";
-	gcc_argv[i++] = "-D__WIN32__";
-	gcc_argv[i++] = "-D__WINNT";
-	gcc_argv[i++] = "-D__WINNT__";
+        strarray_add(gcc_argv, "-fshort-wchar");
+        strarray_add(gcc_argv, "-fPIC");
+        if (use_stdinc)
+        {
+            if (use_msvcrt)
+            {
+                strarray_add(gcc_argv, "-I" INCLUDEDIR "/msvcrt");
+                strarray_add(gcc_argv, "-D__MSVCRT__");
+            }
+            strarray_add(gcc_argv, "-I" INCLUDEDIR "/windows");
+        }
+        strarray_add(gcc_argv, "-DWIN32");
+        strarray_add(gcc_argv, "-D_WIN32");
+        strarray_add(gcc_argv, "-D__WIN32");
+        strarray_add(gcc_argv, "-D__WIN32__");
+        strarray_add(gcc_argv, "-D__WINNT");
+        strarray_add(gcc_argv, "-D__WINNT__");
 
-	gcc_argv[i++] = "-D__stdcall=__attribute__((__stdcall__))";
-	gcc_argv[i++] = "-D__cdecl=__attribute__((__cdecl__))";
-	gcc_argv[i++] = "-D__fastcall=__attribute__((__fastcall__))";
-	gcc_argv[i++] = "-D_stdcall=__attribute__((__stdcall__))";
-	gcc_argv[i++] = "-D_cdecl=__attribute__((__cdecl__))";
-	gcc_argv[i++] = "-D_fastcall=__attribute__((__fastcall__))";
-	gcc_argv[i++] = "-D__declspec(x)=__declspec_##x";
-        gcc_argv[i++] = "-D__declspec_align(x)=__attribute__((aligned(x)))";
-        gcc_argv[i++] = "-D__declspec_allocate(x)=__attribute__((section(x)))";
-        gcc_argv[i++] = "-D__declspec_deprecated=__attribute__((deprecated))";
-        gcc_argv[i++] = "-D__declspec_dllimport=__attribute__((dllimport))";
-        gcc_argv[i++] = "-D__declspec_dllexport=__attribute__((dllexport))";
-        gcc_argv[i++] = "-D__declspec_naked=__attribute__((naked))";
-        gcc_argv[i++] = "-D__declspec_noinline=__attribute__((noinline))";
-        gcc_argv[i++] = "-D__declspec_noreturn=__attribute__((noreturn))";
-        gcc_argv[i++] = "-D__declspec_nothrow=__attribute__((nothrow))";
-        gcc_argv[i++] = "-D__declspec_novtable=__attribute__(())"; /* ignore it */
-        gcc_argv[i++] = "-D__declspec_selectany=__attribute__((weak))";
-        gcc_argv[i++] = "-D__declspec_thread=__thread";
-    
-	/* Wine specific defines */
-	gcc_argv[i++] = "-D__WINE__";
-	gcc_argv[i++] = "-DWINE_UNICODE_NATIVE";
-	gcc_argv[i++] = "-D__int8=char";
-	gcc_argv[i++] = "-D__int16=short";
-	gcc_argv[i++] = "-D__int32=int";
-	gcc_argv[i++] = "-D__int64=long long";
+        strarray_add(gcc_argv, "-D__stdcall=__attribute__((__stdcall__))");
+        strarray_add(gcc_argv, "-D__cdecl=__attribute__((__cdecl__))");
+        strarray_add(gcc_argv, "-D__fastcall=__attribute__((__fastcall__))");
+        strarray_add(gcc_argv, "-D_stdcall=__attribute__((__stdcall__))");
+        strarray_add(gcc_argv, "-D_cdecl=__attribute__((__cdecl__))");
+        strarray_add(gcc_argv, "-D_fastcall=__attribute__((__fastcall__))");
+        strarray_add(gcc_argv, "-D__declspec(x)=__declspec_##x");
+        strarray_add(gcc_argv, "-D__declspec_align(x)=__attribute__((aligned(x)))");
+        strarray_add(gcc_argv, "-D__declspec_allocate(x)=__attribute__((section(x)))");
+        strarray_add(gcc_argv, "-D__declspec_deprecated=__attribute__((deprecated))");
+        strarray_add(gcc_argv, "-D__declspec_dllimport=__attribute__((dllimport))");
+        strarray_add(gcc_argv, "-D__declspec_dllexport=__attribute__((dllexport))");
+        strarray_add(gcc_argv, "-D__declspec_naked=__attribute__((naked))");
+        strarray_add(gcc_argv, "-D__declspec_noinline=__attribute__((noinline))");
+        strarray_add(gcc_argv, "-D__declspec_noreturn=__attribute__((noreturn))");
+        strarray_add(gcc_argv, "-D__declspec_nothrow=__attribute__((nothrow))");
+        strarray_add(gcc_argv, "-D__declspec_novtable=__attribute__(())"); /* ignore it */
+        strarray_add(gcc_argv, "-D__declspec_selectany=__attribute__((weak))");
+        strarray_add(gcc_argv, "-D__declspec_thread=__thread");
+
+        /* Wine specific defines */
+        strarray_add(gcc_argv, "-D__WINE__");
+        strarray_add(gcc_argv, "-DWINE_UNICODE_NATIVE");
+        strarray_add(gcc_argv, "-D__int8=char");
+        strarray_add(gcc_argv, "-D__int16=short");
+        strarray_add(gcc_argv, "-D__int32=int");
+        strarray_add(gcc_argv, "-D__int64=long long");
 
     	for ( j = 1 ; j < argc ; j++ ) 
     	{
@@ -346,13 +304,15 @@ int main(int argc, char **argv)
 	    else if (strcmp("-s", argv[j]) == 0)
 	    	; /* ignore this option */
             else
-            	gcc_argv[i++] = argv[j];
+            	strarray_add(gcc_argv, argv[j]);
     	}
     }
 
-    gcc_argv[i] = NULL;
+    strarray_add(gcc_argv, NULL);
 
     spawn(gcc_argv);
+
+    strarray_free(gcc_argv);
 
     return 0;
 }
