@@ -74,6 +74,8 @@ typedef struct StdGlobalInterfaceTableImpl
   
 } StdGlobalInterfaceTableImpl;
 
+void* StdGlobalInterfaceTableInstance;
+
 
 /* IUnknown */
 static HRESULT WINAPI StdGlobalInterfaceTable_QueryInterface(IGlobalInterfaceTable* iface, REFIID riid, void** ppvObject);
@@ -104,6 +106,8 @@ static ICOM_VTABLE(IGlobalInterfaceTable) StdGlobalInterfaceTableImpl_Vtbl =
 /** This function constructs the GIT. It should only be called once **/
 void* StdGlobalInterfaceTable_Construct() {
   StdGlobalInterfaceTableImpl* newGIT;
+
+  TRACE("constructing\n");
 
   newGIT = HeapAlloc(GetProcessHeap(), 0, sizeof(StdGlobalInterfaceTableImpl));
   if (newGIT == 0) return newGIT;
@@ -141,6 +145,7 @@ StdGITEntry* StdGlobalInterfaceTable_FindEntry(IGlobalInterfaceTable* iface, DWO
     if (e->cookie == cookie) return e;
     e = e->next;
   }
+  TRACE("Entry not found\n");
   return NULL;
 }
 
@@ -198,7 +203,7 @@ HRESULT WINAPI StdGlobalInterfaceTable_RegisterInterfaceInGlobal(IGlobalInterfac
   HRESULT hres;
   StdGITEntry* entry;
 
-  TRACE("iface=%p, pUnk=%p, riid=%s, pdwCookie=%p\n", iface, pUnk, debugstr_guid(riid), pdwCookie);
+  TRACE("iface=%p, pUnk=%p, riid=%s, pdwCookie=0x%p\n", iface, pUnk, debugstr_guid(riid), pdwCookie);
 
   if (pUnk == NULL) return E_INVALIDARG;
   
@@ -222,6 +227,7 @@ HRESULT WINAPI StdGlobalInterfaceTable_RegisterInterfaceInGlobal(IGlobalInterfac
 
   /* and return the cookie */
   *pdwCookie = entry->cookie;
+  TRACE("Cookie is 0x%ld\n", entry->cookie);
   return S_OK;
 }
 
@@ -249,6 +255,8 @@ HRESULT WINAPI StdGlobalInterfaceTable_RevokeInterfaceFromGlobal(IGlobalInterfac
 HRESULT WINAPI StdGlobalInterfaceTable_GetInterfaceFromGlobal(IGlobalInterfaceTable* iface, DWORD dwCookie, REFIID riid, void **ppv) {
   StdGITEntry* entry;
   HRESULT hres;
+
+  TRACE("dwCookie=0x%lx, riid=%s\n", dwCookie, debugstr_guid(riid));
   
   entry = StdGlobalInterfaceTable_FindEntry(iface, dwCookie);
   if (entry == NULL) return E_INVALIDARG;
@@ -258,5 +266,50 @@ HRESULT WINAPI StdGlobalInterfaceTable_GetInterfaceFromGlobal(IGlobalInterfaceTa
   hres = CoGetInterfaceAndReleaseStream(entry->stream, riid, *ppv);
   if (hres) return hres;
   
+  return S_OK;
+}
+
+/* Classfactory definition - despite what MSDN says, some programs need this */
+
+static HRESULT WINAPI GITCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid, LPVOID *ppv) {
+  *ppv = NULL;
+  if (IsEqualIID(riid,&IID_IUnknown) || IsEqualIID(riid,&IID_IGlobalInterfaceTable)) {
+    *ppv = (LPVOID)iface;
+    return S_OK;
+  }
+  return E_NOINTERFACE;
+}
+static ULONG WINAPI GITCF_AddRef(LPCLASSFACTORY iface) { return 2; }
+static ULONG WINAPI GITCF_Release(LPCLASSFACTORY iface) { return 1; }
+
+static HRESULT WINAPI GITCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pUnk, REFIID riid, LPVOID *ppv) {
+  if (IsEqualIID(riid,&IID_IGlobalInterfaceTable)) {
+    if (StdGlobalInterfaceTableInstance == NULL) 
+      StdGlobalInterfaceTableInstance = StdGlobalInterfaceTable_Construct();
+    return IGlobalInterfaceTable_QueryInterface( (IGlobalInterfaceTable*) StdGlobalInterfaceTableInstance, riid, ppv);
+  }
+
+  FIXME("(%s), not supported.\n",debugstr_guid(riid));
+  return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI GITCF_LockServer(LPCLASSFACTORY iface, BOOL fLock) {
+    FIXME("(%d), stub!\n",fLock);
+    return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) GITClassFactoryVtbl = {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    GITCF_QueryInterface,
+    GITCF_AddRef,
+    GITCF_Release,
+    GITCF_CreateInstance,
+    GITCF_LockServer
+};
+static ICOM_VTABLE(IClassFactory) *PGITClassFactoryVtbl = &GITClassFactoryVtbl;
+
+HRESULT StdGlobalInterfaceTable_GetFactory(LPVOID *ppv) {
+  *ppv = &PGITClassFactoryVtbl;
+  TRACE("Returning GIT classfactory\n");
   return S_OK;
 }

@@ -98,9 +98,12 @@ extern APARTMENT MTA, *apts;
 
 extern void* StdGlobalInterfaceTable_Construct();
 extern void  StdGlobalInterfaceTable_Destroy(void* self);
+extern HRESULT StdGlobalInterfaceTable_GetFactory(LPVOID *ppv);
 
 extern HRESULT WINE_StringFromCLSID(const CLSID *id,LPSTR idstr);
 extern HRESULT create_marshalled_proxy(REFCLSID rclsid, REFIID iid, LPVOID *ppv);
+
+extern void* StdGlobalInterfaceTableInstance;
 
 inline static HRESULT
 get_facbuf_for_iid(REFIID riid,IPSFactoryBuffer **facbuf) {

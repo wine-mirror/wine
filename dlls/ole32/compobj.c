@@ -62,7 +62,7 @@ static void COM_ExternalLockFreeList();
 
 const CLSID CLSID_StdGlobalInterfaceTable = { 0x00000323, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0, 0x46} };
 
-static void* StdGlobalInterfaceTableInstance;
+
 
 APARTMENT MTA, *apts;
 static CRITICAL_SECTION csApartment = CRITICAL_SECTION_INIT("csApartment");
