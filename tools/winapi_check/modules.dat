@@ -58,6 +58,10 @@ dlls/dplayx
 
 dlls/dsound
 
+% dlls/gdi/dispdib.spec
+
+graphics
+
 % dlls/gdi/gdi.spec
 
 dlls/gdi
@@ -332,6 +336,14 @@ dlls/winaspi
 
 dlls/windebug
 
+% dlls/wineps/wineps.spec
+
+dlls/wineps
+
+% dlls/wineps/wineps16.spec
+
+dlls/wineps
+
 % dlls/wing/wing.spec
 
 dlls/wing
@@ -405,10 +417,6 @@ dlls/x11drv
 
 % if1632/comm.spec
 
-% if1632/dispdib.spec
-
-graphics
-
 % if1632/kernel.spec
 
 files
@@ -433,10 +441,6 @@ loader
 memory
 misc
 windows
-
-% if1632/wineps.spec
-
-graphics/psdrv
 
 % if1632/wprocs.spec
 
