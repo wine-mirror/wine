@@ -3,7 +3,7 @@
 .SH NAME
 wine \- run Windows programs on Unix
 .SH SYNOPSIS
-.BI "wine " "[wine_options] " "program1 " "[program2 ... ]"
+.BI "wine " "[wine_options] " "program " "[arguments ... ]"
 .PP
 For instructions on passing arguments to Windows programs, please see the 
 .B
@@ -240,28 +240,88 @@ or in Unix format (
 ).  The program being executed may be passed arguments by adding them on 
 to the end of the command line invoking
 .B wine
-(such as: wine "notepad C:\\TEMP\\README.TXT").  Note that
-the program name and its arguments 
-.I must
-be passed as a single parameter, which is usually accomplished by placing
-them together in quotation marks.  Multiple applications may be started
-by placing all of them on the command line (such as: 
+(such as: wine notepad C:\\TEMP\\README.TXT). Command line processing goes as
+follows: first 
+.B wine
+checks, if one or more of the above mentioned 
 .B wine 
-notepad clock).
+options have been specified. These
+are removed from the command line, which is passed to the windows program. You can use
+the Parameter 
+.I -- 
+to indicate, that 
+.B wine 
+should stop command line processing. This is needed, if a windows program understands 
+a option, which is usually interpreted (and thus removed from the command line) 
+by 
+.B wine. 
+For example, if you want to execute 
+.B wine 
+with the options 
+.I --managed --config myapp.winerc
+and if 
+.B wine 
+should run the program 
+.I myapp.exe
+with the arguments
+.I --config my.ini somefile
+, then you could use the following command line to invoke 
+.B wine:
+.PP
+.I wine --managed --config myapp.winerc -- myapp.exe --config my.ini somefile
+.PP 
+Note that in contrast to previous versions of 
+.B wine, 
+you must not pass 
+program name and program option in one argument to 
+.B wine. 
+To run more
+that one windows program, just execute 
+.B wine 
+once with the name 
+of each program as argument. 
 .SH ENVIRONMENT VARIABLES
 .B wine
 makes the environment variables of the shell from which
 .B wine
 is started accessible to the windows/dos processes started. So use the
 appropriate syntax for your shell to enter environment variables you need.
+.TP 
+.I WINEPREFIX
+If set, the content of this variable is taken as the name of the directory, where
+.B wine
+stores its data (usually 
+.I $HOME/.wine
+). This directory contains also the socket, which is used to communicate with the
+.I wineserver.
+All 
+.B wine
+processes, using the same 
+.B wineserver
+share certain things like registry and shared memory. By setting 
+.I WINEPREFIX
+to different values for different 
+.B wine
+processes, it is possible to run a number of truly independent 
+.B wine
+processes. 
+
 .SH CONFIGURATION FILE
 .B wine
 expects a configuration file (
 .I @sysconfdir@/wine.conf
 ), which must conform to the format specified in the
 .BR wine.conf (5)
-man page. A sample configuration file is wine.ini in the home directory of the 
-.B wine source archive.
+man page. A sample configuration file is wine.ini in the base directory of the 
+.B wine 
+source archive. Alternatively a configuration file with the name
+.I winerc 
+in the home directory of the user running 
+.B wine 
+can be used. The third option is to specify the name of the 
+configuration file with the 
+.B --config
+option. 
 .SH AUTHORS
 .B wine
 is available thanks to the work of many developers. For a listing
@@ -289,7 +349,7 @@ The most recent public version of
 .B wine
 can be obtained via FTP from metalab.unc.edu or tsx-11.mit.edu in the 
 /pub/linux/ALPHA/Wine/development directory.  The releases are in the 
-format 'Wine-yymmdd.tar.gz', or 'Wine-yymmdd.diff.gz' for the diff's 
+format 'Wine-yyyymmdd.tar.gz', or 'Wine-yyyymmdd.diff.gz' for the diff's 
 from the previous release.
 .PP
 The latest snapshot of the code may be obtained via CVS.  For information
