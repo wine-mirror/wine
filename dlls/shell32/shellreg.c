@@ -156,7 +156,7 @@ HRESULT WINAPI SHRegCloseKey (HKEY hkey)
  */
 static inline void fix_win16_hkey( HKEY *hkey )
 {
-    if (*hkey == 0 || *hkey == 1) *hkey = HKEY_CLASSES_ROOT;
+    if (*hkey == 0 || *hkey == (HKEY)1) *hkey = HKEY_CLASSES_ROOT;
 }
 
 /******************************************************************************

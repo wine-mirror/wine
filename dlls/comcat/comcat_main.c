@@ -53,7 +53,7 @@ static const WCHAR tm_valname[15] = {
     'e', 'l', 0 };
 static const WCHAR tm_value[5] = { 'B', 'o', 't', 'h', 0 };
 static struct regsvr_entry regsvr_entries[6] = {
-    { HKEY_CLASSES_ROOT, 0, clsid_keyname },
+    { (int)HKEY_CLASSES_ROOT, 0, clsid_keyname },
     { 0,                 1, class_keyname },
     { 1,                 1, NULL, class_name },
     { 1,                 1, ips32_keyname },

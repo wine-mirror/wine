@@ -690,7 +690,7 @@ static const CSIDL_DATA CSIDL_Data[] =
 	"Desktop"
     },
     { /* CSIDL_INTERNET */
-	0, 1, /* FIXME */
+	0, (HKEY)1, /* FIXME */
 	NULL,
 	NULL,
     },
@@ -735,7 +735,7 @@ static const CSIDL_DATA CSIDL_Data[] =
 	"SendTo"
     },
     { /* CSIDL_BITBUCKET (is this c:\recycled ?) */
-	0, 1, /* FIXME */
+	0, (HKEY)1, /* FIXME */
 	NULL,
 	"recycled"
     },
@@ -745,17 +745,17 @@ static const CSIDL_DATA CSIDL_Data[] =
 	"Start Menu"
     },
     { /* CSIDL_MYDOCUMENTS */
-	0, 1, /* FIXME */
+	0, (HKEY)1, /* FIXME */
 	NULL,
 	NULL,
     },
     { /* CSIDL_MYMUSIC */
-	0, 1, /* FIXME */
+	0, (HKEY)1, /* FIXME */
 	NULL,
 	NULL,
     },
     { /* CSIDL_MYVIDEO */
-	0, 1, /* FIXME */
+	0, (HKEY)1, /* FIXME */
 	NULL,
 	NULL,
     },
@@ -770,12 +770,12 @@ static const CSIDL_DATA CSIDL_Data[] =
 	"Desktop"
     },
     { /* CSIDL_DRIVES */
-	0, 1, /* FIXME */
+	0, (HKEY)1, /* FIXME */
 	NULL,
 	"My Computer"
     },
     { /* CSIDL_NETWORK */
-	0, 1, /* FIXME */
+	0, (HKEY)1, /* FIXME */
 	NULL,
 	"Network Neighborhood"
     },
@@ -830,12 +830,12 @@ static const CSIDL_DATA CSIDL_Data[] =
 	"Local Settings\\Application Data",
     },
     { /* CSIDL_ALTSTARTUP */
-	0, 1, /* FIXME */
+	0, (HKEY)1, /* FIXME */
 	NULL,
 	NULL
     },
     { /* CSIDL_COMMON_ALTSTARTUP */
-	0, 1, /* FIXME */
+	0, (HKEY)1, /* FIXME */
 	NULL,
 	NULL
     },
@@ -910,17 +910,17 @@ static const CSIDL_DATA CSIDL_Data[] =
 	"Program Files\\Common Files" /* ? */
     },
     { /* CSIDL_COMMON_TEMPLATES */
-	0, 1, /* FIXME */
+	0, (HKEY)1, /* FIXME */
 	NULL,
 	NULL
     },
     { /* CSIDL_COMMON_DOCUMENTS */
-	0, 1, /* FIXME */
+	0, (HKEY)1, /* FIXME */
 	NULL,
 	NULL
     },
     { /* CSIDL_COMMON_ADMINTOOLS */
-	0, 1, /* FIXME */
+	0, (HKEY)1, /* FIXME */
 	NULL,
 	NULL
     },
@@ -930,7 +930,7 @@ static const CSIDL_DATA CSIDL_Data[] =
 	"Start Menu\\Programs\\Administrative Tools"
     },
     { /* CSIDL_CONNECTIONS */
-	0, 1, /* FIXME */
+	0, (HKEY)1, /* FIXME */
 	NULL,
 	NULL
     },
@@ -1020,7 +1020,7 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 	    ERR("folder unknown or not allowed\n");
 	    return FALSE;
 	}
-	if (CSIDL_Data[folder].hRootKey == 1)
+	if (CSIDL_Data[folder].hRootKey == (HKEY)1)
 	{
 	    FIXME("folder unknown, please add.\n");
 	    return FALSE;
