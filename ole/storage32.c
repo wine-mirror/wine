@@ -76,6 +76,16 @@ static LONG propertyNameCmp(
   OLECHAR32 *newProperty,
   OLECHAR32 *currentProperty);
 
+
+/***********************************************************************
+ * Declaration of miscellaneous functions...
+ */
+static HRESULT validateSTGM(DWORD stgmValue); 
+
+static DWORD GetShareModeFromSTGM(DWORD stgm);
+static DWORD GetAccessModeFromSTGM(DWORD stgm);
+static DWORD GetCreationModeFromSTGM(DWORD stgm);
+
 /*
  * Virtual function table for the IStorage32Impl class.
  */
@@ -145,6 +155,9 @@ static ICOM_VTABLE(IEnumSTATSTG) IEnumSTATSTGImpl_Vtbl =
   VTABLE_FUNC(IEnumSTATSTGImpl_Reset),
   VTABLE_FUNC(IEnumSTATSTGImpl_Clone)
 };
+
+
+
 
 
 /************************************************************************
@@ -284,6 +297,20 @@ HRESULT WINAPI Storage32BaseImpl_OpenStream(
   *ppstm = 0;
   
   /*
+   * Validate the STGM flags
+   */
+  if ( FAILED( validateSTGM(grfMode) ))
+    return STG_E_INVALIDFLAG;
+
+  /*
+   * As documented.
+   */
+  if ( !(grfMode & STGM_SHARE_EXCLUSIVE) ||
+        (grfMode & STGM_DELETEONRELEASE) ||
+        (grfMode & STGM_TRANSACTED) )
+    return STG_E_INVALIDFUNCTION;
+
+  /*
    * Create a property enumeration to search the properties
    */
   propertyEnumeration = IEnumSTATSTGImpl_Construct(
@@ -357,6 +384,20 @@ HRESULT WINAPI Storage32BaseImpl_OpenStorage(
   if ( (This==0) || (pwcsName==NULL) || (ppstg==0) )
     return E_INVALIDARG;
   
+  /*
+   * Validate the STGM flags
+   */
+  if ( FAILED( validateSTGM(grfMode) ))
+    return STG_E_INVALIDFLAG;
+
+  /*
+   * As documented.
+   */
+  if ( !(grfMode & STGM_SHARE_EXCLUSIVE) || 
+        (grfMode & STGM_DELETEONRELEASE) ||
+        (grfMode & STGM_PRIORITY) )
+    return STG_E_INVALIDFUNCTION;
+
   /*
    * Initialize the out parameter
    */
@@ -683,6 +724,20 @@ HRESULT WINAPI Storage32BaseImpl_CreateStream(
     return STG_E_INVALIDNAME;
 
   /*
+   * Validate the STGM flags
+   */
+  if ( FAILED( validateSTGM(grfMode) ))
+    return STG_E_INVALIDFLAG;
+
+  /*
+   * As documented.
+   */
+  if ( !(grfMode & STGM_SHARE_EXCLUSIVE) ||
+        (grfMode & STGM_DELETEONRELEASE) ||
+        (grfMode & STGM_TRANSACTED) )
+    return STG_E_INVALIDFUNCTION;
+
+  /*
    * Initialize the out parameter
    */
   *ppstm = 0;
@@ -852,6 +907,13 @@ HRESULT WINAPI Storage32Impl_CreateStorage(
 
   if (pwcsName == 0)
     return STG_E_INVALIDNAME;
+
+  /*
+   * Validate the STGM flags
+   */
+  if ( FAILED( validateSTGM(grfMode) ) ||
+       (grfMode & STGM_DELETEONRELEASE) )
+    return STG_E_INVALIDFLAG;
 
   /*
    * Initialize the out parameter
@@ -1212,7 +1274,8 @@ HRESULT WINAPI Storage32Impl_Commit(
   Storage32Impl *This,
   DWORD         grfCommitFlags)/* [in] */ 
 {
-  return E_NOTIMPL;
+  FIXME(ole, "(%ld): stub!\n", grfCommitFlags);
+  return S_OK;
 }
         
 HRESULT WINAPI Storage32Impl_Revert( 
@@ -1441,7 +1504,7 @@ static HRESULT deleteStreamProperty(
          (Storage32BaseImpl*)parentStorage,
          (OLECHAR32*)propertyToDelete.name,
          NULL,
-         0,
+         STGM_SHARE_EXCLUSIVE,
          0,
          &pis);
     
@@ -1750,6 +1813,9 @@ HRESULT Storage32Impl_Construct(
   BOOL32      readSucessful;
   ULONG       currentPropertyIndex;
   
+  if ( FAILED( validateSTGM(openFlags) ))
+    return STG_E_INVALIDFLAG;
+
   memset(This, 0, sizeof(Storage32Impl));
   
   /*
@@ -1850,7 +1916,6 @@ HRESULT Storage32Impl_Construct(
     lstrcpyAtoW(rootProp.name, rootPropertyName);
 
     rootProp.sizeOfNameString = (lstrlen32W(rootProp.name)+1) * sizeof(WCHAR);
-    rootProp.blockType        = BIG_BLOCK_TYPE;
     rootProp.propertyType     = PROPTYPE_ROOT;
     rootProp.previousProperty = PROPERTY_NULL;
     rootProp.nextProperty     = PROPERTY_NULL;
@@ -2345,7 +2410,6 @@ BOOL32 Storage32Impl_ReadProperty(
       PROPERTY_NAME_BUFFER_LEN );
 
     memcpy(&buffer->propertyType, currentProperty + OFFSET_PS_PROPERTYTYPE, 1);
-    memcpy(&buffer->blockType, currentProperty + OFFSET_PS_BLOCKTYPE, 1);
     
     StorageUtl_ReadWord(
       currentProperty,  
@@ -2432,7 +2496,6 @@ BOOL32 Storage32Impl_WriteProperty(
     PROPERTY_NAME_BUFFER_LEN );
 
   memcpy(currentProperty + OFFSET_PS_PROPERTYTYPE, &buffer->propertyType, 1);
-  memcpy(currentProperty + OFFSET_PS_BLOCKTYPE, &buffer->blockType, 1);
 
   /* 
    * Reassign the size in case of mistake....
@@ -2563,6 +2626,99 @@ void Storage32Impl_ReleaseBigBlock(
   void*          pBigBlock)
 {
   BIGBLOCKFILE_ReleaseBigBlock(This->bigBlockFile, pBigBlock);
+}
+
+/******************************************************************************
+ *              Storage32Impl_SmallBlocksToBigBlocks
+ *
+ * This method will convert a small block chain to a big block chain.
+ * The small block chain will be destroyed.
+ */
+BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
+                      Storage32Impl* This,
+                      SmallBlockChainStream** ppsbChain)
+{
+  ULONG bbHeadOfChain = BLOCK_END_OF_CHAIN;
+  ULARGE_INTEGER size, offset;
+  ULONG cbRead, cbWritten;
+  ULONG propertyIndex;
+  BOOL32 successRead, successWrite;
+  StgProperty chainProperty;
+  BYTE buffer[DEF_SMALL_BLOCK_SIZE];
+  BlockChainStream *bbTempChain = NULL;
+  BlockChainStream *bigBlockChain = NULL;
+
+  /*
+   * Create a temporary big block chain that doesn't have
+   * an associated property. This temporary chain will be
+   * used to copy data from small blocks to big blocks.
+   */
+  bbTempChain = BlockChainStream_Construct(This,
+                                           &bbHeadOfChain,
+                                           PROPERTY_NULL);
+
+  /*
+   * Grow the big block chain.
+   */
+  size = SmallBlockChainStream_GetSize(*ppsbChain);
+  BlockChainStream_SetSize(bbTempChain, size);
+
+  /*
+   * Copy the contents of the small block chain to the big block chain
+   * by small block size increments.
+   */
+  offset.LowPart = 0;
+  offset.HighPart = 0;
+
+  do
+  {
+    successRead = SmallBlockChainStream_ReadAt(*ppsbChain,
+                                               offset,
+                                               sizeof(buffer),
+                                               buffer,
+                                               &cbRead);
+    
+    successWrite = BlockChainStream_WriteAt(bbTempChain,
+                                            offset,
+                                            sizeof(buffer),
+                                            buffer,
+                                            &cbWritten);
+    offset.LowPart += This->smallBlockSize;
+
+  } while (successRead && successWrite);
+
+  assert(cbRead == cbWritten);
+
+  /*
+   * Destroy the small block chain.
+   */
+  propertyIndex = (*ppsbChain)->ownerPropertyIndex;
+  size.HighPart = 0;
+  size.LowPart  = 0;
+  SmallBlockChainStream_SetSize(*ppsbChain, size);
+  SmallBlockChainStream_Destroy(*ppsbChain);
+  *ppsbChain = 0;
+
+  /*
+   * Change the property information. This chain is now a big block chain
+   * and it doesn't reside in the small blocks chain anymore.
+   */
+  Storage32Impl_ReadProperty(This, propertyIndex, &chainProperty);
+
+  chainProperty.startingBlock = bbHeadOfChain;
+
+  Storage32Impl_WriteProperty(This, propertyIndex, &chainProperty);
+
+  /*
+   * Destroy the temporary propertyless big block chain.
+   * Create a new big block chain associated with this property.
+   */
+  BlockChainStream_Destroy(bbTempChain);
+  bigBlockChain = BlockChainStream_Construct(This,
+                                             NULL,
+                                             propertyIndex);
+
+  return bigBlockChain;
 }
 
 /******************************************************************************
@@ -3532,10 +3688,21 @@ BOOL32 BlockChainStream_Enlarge(BlockChainStream* This,
   blockIndex = BlockChainStream_GetHeadOfChain(This);
 
   /*
-   * Empty chain
+   * Empty chain. Create the head.
    */
   if (blockIndex == BLOCK_END_OF_CHAIN)
   {
+    blockIndex = Storage32Impl_GetNextFreeBigBlock(This->parentStorage);
+    Storage32Impl_SetNextBlockInChain(This->parentStorage,
+                                      blockIndex,
+                                      BLOCK_END_OF_CHAIN);
+
+    if (This->headOfStreamPlaceHolder != 0)
+    {
+      *(This->headOfStreamPlaceHolder) = blockIndex;
+    }
+    else
+    {
     StgProperty chainProp;
     assert(This->ownerPropertyIndex != PROPERTY_NULL);
 
@@ -3544,20 +3711,13 @@ BOOL32 BlockChainStream_Enlarge(BlockChainStream* This,
       This->ownerPropertyIndex,
       &chainProp);
 
-    chainProp.startingBlock = Storage32Impl_GetNextFreeBigBlock(
-                                This->parentStorage);
-
-    blockIndex = chainProp.startingBlock;
-
-    Storage32Impl_SetNextBlockInChain(
-      This->parentStorage, 
-      blockIndex, 
-      BLOCK_END_OF_CHAIN);
+      chainProp.startingBlock = blockIndex; 
 
     Storage32Impl_WriteProperty(
       This->parentStorage, 
       This->ownerPropertyIndex,
       &chainProp);
+  }
   }
 
   currentBlock = blockIndex;
@@ -4343,21 +4503,6 @@ BOOL32 SmallBlockChainStream_SetSize(
   }
   else
   {
-    ULARGE_INTEGER fileSize = 
-      BIGBLOCKFILE_GetSize(This->parentStorage->bigBlockFile);
-
-    ULONG diff = newSize.LowPart - size.LowPart;
-
-    /*
-     * Make sure the file stays a multiple of blocksize
-     */
-    if ((diff % This->parentStorage->bigBlockSize) != 0)
-      diff += (This->parentStorage->bigBlockSize - 
-                (diff % This->parentStorage->bigBlockSize));
-
-    fileSize.LowPart += diff;
-    BIGBLOCKFILE_SetSize(This->parentStorage->bigBlockFile, fileSize);
-
     SmallBlockChainStream_Enlarge(This, newSize);
   }
 
@@ -4394,9 +4539,37 @@ HRESULT WINAPI StgCreateDocfile32(
   Storage32Impl* newStorage = 0;
   HANDLE32       hFile      = INVALID_HANDLE_VALUE32;
   HRESULT        hr         = S_OK;
+  DWORD          shareMode;
+  DWORD          accessMode;
+  DWORD          creationMode;
+  DWORD          fileAttributes;
 
+  /*
+   * Validate the parameters
+   */
   if ((ppstgOpen == 0) || (pwcsName == 0))
     return STG_E_INVALIDPOINTER;
+
+  /*
+   * Validate the STGM flags
+   */
+  if ( FAILED( validateSTGM(grfMode) ))
+    return STG_E_INVALIDFLAG;
+
+  /*
+   * Interpret the STGM value grfMode 
+   */
+  shareMode    = GetShareModeFromSTGM(grfMode);
+  accessMode   = GetAccessModeFromSTGM(grfMode);
+  creationMode = GetCreationModeFromSTGM(grfMode);
+
+  if (grfMode & STGM_DELETEONRELEASE)
+    fileAttributes = FILE_FLAG_RANDOM_ACCESS | FILE_FLAG_DELETE_ON_CLOSE;
+  else
+    fileAttributes = FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS;
+
+  if (grfMode & STGM_TRANSACTED)
+    FIXME(ole, "Transacted mode not implemented.\n");
 
   /*
    * Initialize the "out" parameter.
@@ -4404,11 +4577,11 @@ HRESULT WINAPI StgCreateDocfile32(
   *ppstgOpen = 0;
 
   hFile = CreateFile32W(pwcsName,
-            GENERIC_READ | GENERIC_WRITE,
-            0, /*FILE_SHARE_READ,*/
+                        accessMode,
+                        shareMode,
             NULL,
-            CREATE_NEW,
-            FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS,
+                        creationMode,
+                        fileAttributes,
             0);
  
   if (hFile == INVALID_HANDLE_VALUE32)
@@ -4437,7 +4610,7 @@ HRESULT WINAPI StgCreateDocfile32(
    */
   hr = Storage32BaseImpl_QueryInterface(
          (Storage32BaseImpl*)newStorage,
-         &IID_IStorage,
+         (REFIID)&IID_IStorage,
          (void**)ppstgOpen);
 
   return hr;
@@ -4457,6 +4630,8 @@ HRESULT WINAPI StgOpenStorage32(
   Storage32Impl* newStorage = 0;
   HRESULT        hr = S_OK;
   HANDLE32       hFile = 0;
+  DWORD          shareMode;
+  DWORD          accessMode;
 
   /*
    * Perform a sanity check
@@ -4465,13 +4640,25 @@ HRESULT WINAPI StgOpenStorage32(
     return STG_E_INVALIDPOINTER;
 
   /*
+   * Validate the STGM flags
+   */
+  if ( FAILED( validateSTGM(grfMode) ))
+    return STG_E_INVALIDFLAG;
+
+  /*
+   * Interpret the STGM value grfMode
+   */
+  shareMode    = GetShareModeFromSTGM(grfMode);
+  accessMode   = GetAccessModeFromSTGM(grfMode);
+
+  /*
    * Initialize the "out" parameter.
    */
   *ppstgOpen = 0;
   
   hFile = CreateFile32W( pwcsName, 
-            GENERIC_READ | GENERIC_WRITE,
-            0, /*FILE_SHARE_READ,*/
+                        accessMode,
+                        shareMode,
             NULL,
             OPEN_EXISTING,
             FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS,
@@ -4504,7 +4691,7 @@ HRESULT WINAPI StgOpenStorage32(
    */
   hr = Storage32BaseImpl_QueryInterface(
          (Storage32BaseImpl*)newStorage,
-         &IID_IStorage,
+         (REFIID)&IID_IStorage,
          (void**)ppstgOpen);
   
   return hr;
@@ -4526,4 +4713,193 @@ HRESULT WINAPI WriteClassStg32(IStorage32* pStg, REFCLSID rclsid)
   return hRes;
 }
 
+
+/****************************************************************************
+ * This method validate a STGM parameter that can contain the values below
+ *
+ * STGM_DIRECT               0x00000000
+ * STGM_TRANSACTED           0x00010000
+ * STGM_SIMPLE               0x08000000
+ * 
+ * STGM_READ                 0x00000000
+ * STGM_WRITE                0x00000001
+ * STGM_READWRITE            0x00000002
+ * 
+ * STGM_SHARE_DENY_NONE      0x00000040
+ * STGM_SHARE_DENY_READ      0x00000030
+ * STGM_SHARE_DENY_WRITE     0x00000020
+ * STGM_SHARE_EXCLUSIVE      0x00000010
+ * 
+ * STGM_PRIORITY             0x00040000
+ * STGM_DELETEONRELEASE      0x04000000
+ *
+ * STGM_CREATE               0x00001000
+ * STGM_CONVERT              0x00020000
+ * STGM_FAILIFTHERE          0x00000000
+ *
+ * STGM_NOSCRATCH            0x00100000
+ * STGM_NOSNAPSHOT           0x00200000
+ */
+static HRESULT validateSTGM(DWORD stgm)
+{
+  BOOL32 bSTGM_TRANSACTED       = ((stgm & STGM_TRANSACTED) == STGM_TRANSACTED);
+  BOOL32 bSTGM_SIMPLE           = ((stgm & STGM_SIMPLE) == STGM_SIMPLE);
+  BOOL32 bSTGM_DIRECT           = ! (bSTGM_TRANSACTED || bSTGM_SIMPLE);
+   
+  BOOL32 bSTGM_WRITE            = ((stgm & STGM_WRITE) == STGM_WRITE);
+  BOOL32 bSTGM_READWRITE        = ((stgm & STGM_READWRITE) == STGM_READWRITE);
+  BOOL32 bSTGM_READ             = ! (bSTGM_WRITE || bSTGM_READWRITE);
+   
+  BOOL32 bSTGM_SHARE_DENY_NONE  =
+                     ((stgm & STGM_SHARE_DENY_NONE)  == STGM_SHARE_DENY_NONE);
+
+  BOOL32 bSTGM_SHARE_DENY_READ  =
+                     ((stgm & STGM_SHARE_DENY_READ)  == STGM_SHARE_DENY_READ);
+
+  BOOL32 bSTGM_SHARE_DENY_WRITE =
+                     ((stgm & STGM_SHARE_DENY_WRITE) == STGM_SHARE_DENY_WRITE);
+
+  BOOL32 bSTGM_SHARE_EXCLUSIVE  =
+                     ((stgm & STGM_SHARE_EXCLUSIVE)  == STGM_SHARE_EXCLUSIVE);
+
+  BOOL32 bSTGM_CREATE           = ((stgm & STGM_CREATE) == STGM_CREATE);
+  BOOL32 bSTGM_CONVERT          = ((stgm & STGM_CONVERT) == STGM_CONVERT);
+   
+  BOOL32 bSTGM_NOSCRATCH        = ((stgm & STGM_NOSCRATCH) == STGM_NOSCRATCH);
+  BOOL32 bSTGM_NOSNAPSHOT       = ((stgm & STGM_NOSNAPSHOT) == STGM_NOSNAPSHOT);
+
+  /* 
+   * STGM_DIRECT | STGM_TRANSACTED | STGM_SIMPLE
+   */
+  if ( ! bSTGM_DIRECT )
+    if( bSTGM_TRANSACTED && bSTGM_SIMPLE )
+      return E_FAIL;
+
+  /* 
+   * STGM_WRITE |  STGM_READWRITE | STGM_READ
+   */
+  if ( ! bSTGM_READ )
+    if( bSTGM_WRITE && bSTGM_READWRITE )
+      return E_FAIL;
+
+  /*
+   * STGM_SHARE_DENY_NONE | others 
+   * (I assume here that DENY_READ implies DENY_WRITE)
+   */
+  if ( bSTGM_SHARE_DENY_NONE )
+    if ( bSTGM_SHARE_DENY_READ ||
+         bSTGM_SHARE_DENY_WRITE || 
+         bSTGM_SHARE_EXCLUSIVE) 
+      return E_FAIL;
+
+  /*
+   * STGM_CREATE | STGM_CONVERT
+   * if both are false, STGM_FAILIFTHERE is set to TRUE
+   */
+  if ( bSTGM_CREATE && bSTGM_CONVERT )
+    return E_FAIL;
+
+  /*
+   * STGM_NOSCRATCH requires STGM_TRANSACTED
+   */
+  if ( bSTGM_NOSCRATCH && ! bSTGM_TRANSACTED )
+    return E_FAIL;
+  
+  /*
+   * STGM_NOSNAPSHOT requires STGM_TRANSACTED and 
+   * not STGM_SHARE_EXCLUSIVE or STGM_SHARE_DENY_WRITE`
+   */
+  if (bSTGM_NOSNAPSHOT)
+  {
+    if ( ! ( bSTGM_TRANSACTED && 
+           !(bSTGM_SHARE_EXCLUSIVE || bSTGM_SHARE_DENY_WRITE)) )
+    return E_FAIL;
+  }
+
+  return S_OK;
+}
+
+/****************************************************************************
+ *      GetShareModeFromSTGM
+ *
+ * This method will return a share mode flag from a STGM value.
+ * The STGM value is assumed valid. 
+ */
+static DWORD GetShareModeFromSTGM(DWORD stgm)
+{
+  DWORD dwShareMode = 0;
+  BOOL32 bSTGM_SHARE_DENY_NONE  =
+                     ((stgm & STGM_SHARE_DENY_NONE)  == STGM_SHARE_DENY_NONE);
+
+  BOOL32 bSTGM_SHARE_DENY_READ  =
+                     ((stgm & STGM_SHARE_DENY_READ)  == STGM_SHARE_DENY_READ);
+
+  BOOL32 bSTGM_SHARE_DENY_WRITE =
+                     ((stgm & STGM_SHARE_DENY_WRITE) == STGM_SHARE_DENY_WRITE);
+
+  BOOL32 bSTGM_SHARE_EXCLUSIVE  =
+                     ((stgm & STGM_SHARE_EXCLUSIVE)  == STGM_SHARE_EXCLUSIVE);
+
+  if ((bSTGM_SHARE_EXCLUSIVE) || (bSTGM_SHARE_DENY_READ))
+    dwShareMode = 0;
+
+  if (bSTGM_SHARE_DENY_NONE)
+    dwShareMode = FILE_SHARE_READ | FILE_SHARE_WRITE;
+
+  if (bSTGM_SHARE_DENY_WRITE)
+    dwShareMode = FILE_SHARE_READ;
+
+  return dwShareMode;
+}
+
+/****************************************************************************
+ *      GetAccessModeFromSTGM
+ *
+ * This method will return an access mode flag from a STGM value.
+ * The STGM value is assumed valid.
+ */
+static DWORD GetAccessModeFromSTGM(DWORD stgm)
+{
+  DWORD dwDesiredAccess = 0;
+  BOOL32 bSTGM_WRITE     = ((stgm & STGM_WRITE) == STGM_WRITE);
+  BOOL32 bSTGM_READWRITE = ((stgm & STGM_READWRITE) == STGM_READWRITE);
+  BOOL32 bSTGM_READ      = ! (bSTGM_WRITE || bSTGM_READWRITE);
+
+  if (bSTGM_READ)
+    dwDesiredAccess = GENERIC_READ;
+
+  if (bSTGM_WRITE)
+    dwDesiredAccess |= GENERIC_WRITE;
+
+  if (bSTGM_READWRITE)
+    dwDesiredAccess = GENERIC_READ | GENERIC_WRITE;
+
+  return dwDesiredAccess;
+}
+
+/****************************************************************************
+ *      GetCreationModeFromSTGM
+ *
+ * This method will return a creation mode flag from a STGM value.
+ * The STGM value is assumed valid.
+ */
+static DWORD GetCreationModeFromSTGM(DWORD stgm)
+{
+  DWORD dwCreationDistribution;
+  BOOL32 bSTGM_CREATE      = ((stgm & STGM_CREATE) == STGM_CREATE);
+  BOOL32 bSTGM_CONVERT     = ((stgm & STGM_CONVERT) == STGM_CONVERT);
+  BOOL32 bSTGM_FAILIFTHERE = ! (bSTGM_CREATE || bSTGM_CONVERT);
+
+  if (bSTGM_CREATE)
+    dwCreationDistribution = CREATE_NEW;
+  else if (bSTGM_FAILIFTHERE)
+    dwCreationDistribution = CREATE_NEW;
+  else if (bSTGM_CONVERT)
+  {
+    FIXME(ole, "STGM_CONVERT not implemented!\n");
+    dwCreationDistribution = CREATE_NEW;
+  }
+
+  return dwCreationDistribution;
+}
 

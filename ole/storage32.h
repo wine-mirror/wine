@@ -69,12 +69,6 @@ static const ULONG PROPERTY_NULL             = 0xFFFFFFFF;
 #define PROPTYPE_ROOT    0x05
 
 /*
- * Block type constants
- */
-#define SMALL_BLOCK_TYPE 0x00
-#define BIG_BLOCK_TYPE   0x01
-
-/*
  * This define allows me to assign a function to a vtable without having the 
  * nasty warning about incompatible types.
  *
@@ -121,7 +115,6 @@ struct StgProperty
   WCHAR	         name[PROPERTY_NAME_MAX_LEN];
   WORD	         sizeOfNameString;
   BYTE	         propertyType;
-  BYTE           blockType;
   ULONG	         previousProperty;
   ULONG	         nextProperty;
   ULONG          dirProperty;
@@ -433,6 +426,9 @@ BOOL32 Storage32Impl_WriteProperty(
 	    ULONG          index,
 	    StgProperty*   buffer);
 
+BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
+                      Storage32Impl* This,
+                      SmallBlockChainStream** ppsbChain);
 
 /****************************************************************************
  * Storage32InternalImpl definitions.

@@ -281,7 +281,6 @@ void StgStreamImpl_OpenBlockChain(
 	This->smallBlockChain = SmallBlockChainStream_Construct(
 								This->parentStorage->ancestorStorage,	
 								This->ownerProperty);
-	
       }
       else
       {
@@ -574,19 +573,29 @@ HRESULT WINAPI StgStreamImpl_SetSize(
                                        This->ownerProperty,
                                        &curProperty); 
   /*
-   * TODO
-   * determine if we have to switch from small to big blocks or vice versa
+   * Determine if we have to switch from small to big blocks or vice versa
    */
   
+  if (curProperty.size.LowPart < LIMIT_TO_USE_SMALL_BLOCK)
+  {
+    if (libNewSize.LowPart >= LIMIT_TO_USE_SMALL_BLOCK)
+    {
+      /*
+       * Transform the small block chain into a big block chain
+       */
+      This->bigBlockChain = Storage32Impl_SmallBlocksToBigBlocks(
+                                This->parentStorage->ancestorStorage,
+                                &This->smallBlockChain);
+    }
+  }
+
   if (This->smallBlockChain!=0)
   {
     Success = SmallBlockChainStream_SetSize(This->smallBlockChain, libNewSize);
-    curProperty.blockType = SMALL_BLOCK_TYPE;
   }
   else
   {
     Success = BlockChainStream_SetSize(This->bigBlockChain, libNewSize);
-    curProperty.blockType = BIG_BLOCK_TYPE;
   }
 
   /*

@@ -655,7 +655,7 @@ static void * BIGBLOCKFILE_GetMappedView(
 
       /* actually map the page
        */
-      if (This->filesize.LowPart < PAGE_SIZE)
+      if (This->filesize.LowPart <= PAGE_SIZE)
       {
         newMappedPage->lpBytes = MapViewOfFile(This->hfilemap,
 					       desired_access,
@@ -664,11 +664,12 @@ static void * BIGBLOCKFILE_GetMappedView(
       }
       else
       {
+        DWORD numBytesToMap = This->filesize.LowPart - (pagenum*PAGE_SIZE);
         newMappedPage->lpBytes = MapViewOfFile(This->hfilemap,
 					       desired_access,
 					       hioffset,
 					       lowoffset,
-					       PAGE_SIZE);
+					       numBytesToMap);
       }
 
       return newMappedPage->lpBytes;
@@ -698,7 +699,7 @@ static void * BIGBLOCKFILE_GetMappedView(
 
     /* actually map the page
      */
-    if (This->filesize.LowPart < PAGE_SIZE)
+    if (This->filesize.LowPart <= PAGE_SIZE)
     {
       newMappedPage->lpBytes = MapViewOfFile(This->hfilemap,
 					     desired_access,
@@ -708,11 +709,12 @@ static void * BIGBLOCKFILE_GetMappedView(
     }
     else
     {
+      DWORD numBytesToMap = This->filesize.LowPart - (pagenum*PAGE_SIZE);
       newMappedPage->lpBytes = MapViewOfFile(This->hfilemap,
 					     desired_access,
 					     hioffset, 
 					     lowoffset,
-					     PAGE_SIZE);
+					     numBytesToMap);
     }
 
     return newMappedPage->lpBytes;
