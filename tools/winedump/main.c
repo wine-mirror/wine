@@ -36,7 +36,7 @@ static void do_spec (const char *arg)
 {
     if (globals.mode != NONE) fatal("Only one mode can be specified\n");
     globals.mode = SPEC;
-    globals.input_name = strip_ext (arg);
+    globals.input_name = arg;
 }
 
 
@@ -162,7 +162,7 @@ static const struct option option_table[] = {
   {"-e",    SPEC, 1, do_end,      "-e num       End prototype search after symbol 'num'"},
   {"-q",    SPEC, 0, do_quiet,    "-q           Don't show progress (quiet)."},
   {"-v",    SPEC, 0, do_verbose,  "-v           Show lots of detail while working (verbose)."},
-  {"dump",  DUMP, 2, do_dump,     "dump <dll>   Dumps the content of the dll named <dll>"},
+  {"dump",  DUMP, 2, do_dump,     "dump <mod>   Dumps the content of the module (dll, exe...) named <mod>"},
   {"-C",    DUMP, 0, do_symdmngl, "-C           Turns on symbol demangling"},
   {"-f",    DUMP, 0, do_dumphead, "-f           Dumps file header information"},
   {"-j",    DUMP, 1, do_dumpsect, "-j sect_name Dumps only the content of section sect_name (import, export, debug)"},
@@ -247,6 +247,29 @@ static void parse_options (char *argv[])
     fatal ("Options -v and -q are mutually exclusive");
 }
 
+static void set_module_name(unsigned setUC)
+{
+    const char*	ptr;
+    char*	buf;
+    int		len;
+
+    /* FIXME: we shouldn't assume all module extensions are .dll in winedump
+     * in some cases, we could have some .drv for example
+     */
+    /* get module name from name */
+    if ((ptr = strrchr (globals.input_name, '/')))
+	ptr++;
+    else
+	ptr = globals.input_name;
+    len = strlen(ptr);
+    if (len > 4 && strcmp(ptr + len - 4, ".dll") == 0)
+	len -= 4;
+    buf = malloc(len + 1);
+    memcpy(buf, (void*)ptr, len);
+    buf[len] = 0;
+    globals.input_module = buf;
+    OUTPUT_UC_DLL_NAME = (setUC) ? str_toupper( strdup (OUTPUT_DLL_NAME)) : "";
+}
 
 /*******************************************************************
  *         main
@@ -274,6 +297,7 @@ int   main (int argc, char *argv[])
 	VERBOSE = 1;
 
 	symbol_init (&symbol, globals.input_name);
+	globals.input_module = "";
 	if (symbol_demangle (&symbol) == -1)
 	    fatal( "Symbol hasn't got a mangled name\n");
 	if (symbol.flags & SYM_DATA)
@@ -285,6 +309,7 @@ int   main (int argc, char *argv[])
 	break;
 
     case SPEC:
+	set_module_name(1);
 	dll_open (globals.input_name);
 
 	output_spec_preamble ();
@@ -335,7 +360,7 @@ int   main (int argc, char *argv[])
 	do_usage();
 	break;
     case DUMP:
-	globals.uc_dll_name = "";
+	set_module_name(0);
 	dump_file(globals.input_name);
 	break;
     }

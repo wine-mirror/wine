@@ -33,7 +33,7 @@ void  output_spec_preamble (void)
     puts ("Creating .spec preamble");
 
   fprintf (specfile,
-           "# Generated from %s.dll by winedump\nname    %s\n"
+           "# Generated from %s by winedump\nname    %s\n"
            "type    win32\ninit    %s_Init\n\nimport kernel32.dll\n"
            "import ntdll.dll\n", globals.input_name, OUTPUT_DLL_NAME,
            OUTPUT_UC_DLL_NAME);
@@ -199,7 +199,7 @@ void  output_c_preamble (void)
   atexit (output_c_postamble);
 
   fprintf (cfile,
-           "/*\n * %s.dll\n *\n * Generated from %s.dll by winedump.\n *\n"
+           "/*\n * %s.dll\n *\n * Generated from %s by winedump.\n *\n"
            " * DO NOT SUBMIT GENERATED DLLS FOR INCLUSION INTO WINE!\n * \n */"
            "\n\n#include \"%s_dll.h\"\n\nDEFAULT_DEBUG_CHANNEL(%s);\n\n",
            OUTPUT_DLL_NAME, globals.input_name, OUTPUT_DLL_NAME,
@@ -419,7 +419,7 @@ void  output_makefile (void)
     puts ("Creating makefile");
 
   fprintf (makefile,
-           "# Generated from %s.dll by winedump.\nTOPSRCDIR = @top_srcdir@\n"
+           "# Generated from %s by winedump.\nTOPSRCDIR = @top_srcdir@\n"
            "TOPOBJDIR = ../..\nSRCDIR    = @srcdir@\nVPATH     = @srcdir@\n"
            "MODULE    = %s\nEXTRALIBS = $(LIBUNICODE)\n\n"
            "LDDLLFLAGS = @LDDLLFLAGS@\nSYMBOLFILE = $(MODULE).tmp.o\n\n"

@@ -88,6 +88,7 @@ typedef struct __globals
 
   /* Option arguments: generic */
   const char *input_name;  /* */
+  const char *input_module; /* input module name generated after input_name according mode */
 
   /* Options: spec mode */
   int   do_code;           /* -c, -t, -f */
@@ -118,7 +119,7 @@ extern _globals globals;
 
 /* Names to use for output DLL */
 #define OUTPUT_DLL_NAME \
-          (globals.dll_name ? globals.dll_name : globals.input_name)
+          (globals.dll_name ? globals.dll_name : (globals.input_module ? globals.input_module : globals.input_name))
 #define OUTPUT_UC_DLL_NAME globals.uc_dll_name
 
 /* Verbosity levels */

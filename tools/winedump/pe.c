@@ -653,20 +653,13 @@ static	enum FileSig	check_headers(void)
 int pe_analysis(const char* name, void (*fn)(void), enum FileSig wanted_sig)
 {
     int			fd;
-    int                 len;
     enum FileSig	effective_sig;
     int			ret = 1;
     struct stat		s;
-    char                *name_suffix;
 
     setbuf(stdout, NULL);
-    
-    len = strlen(name) + 5;
-    name_suffix = malloc(len);
-    strcpy(name_suffix, name);
-    strcat(name_suffix, ".dll");
 
-    fd = open(name_suffix, O_RDONLY);
+    fd = open(name, O_RDONLY);
     if (fd == -1) fatal("Can't open file");
     
     if (fstat(fd, &s) < 0) fatal("Can't get size");
@@ -798,11 +791,6 @@ static	void	do_grab_sym(void)
     pFunc = RVA(exportDir->AddressOfFunctions, exportDir->NumberOfFunctions * sizeof(DWORD));
     if (!pFunc) {printf("Can't grab functions' address table\n"); return;}
         
-    /* Set DLL output names */
-    if ((ptr = strrchr (globals.input_name, '/')))
-	globals.input_name = ptr + 1; /* Strip path */
-    OUTPUT_UC_DLL_NAME = str_toupper( strdup (OUTPUT_DLL_NAME));
-
     for (i = 0; i < exportDir->NumberOfFunctions; i++)
     {
 	if (pFunc[i] && !(map[i / 32] & (1 << (i % 32))))

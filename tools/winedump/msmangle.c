@@ -487,15 +487,43 @@ static char *demangle_datatype (char **str, compound_type *ct,
         /* FIXME: P6 = Function pointer, others who knows.. */
         if (isdigit (*iter))
 	{
-	  if (*iter == '6') printf("Function pointer in argument list is not handled yet\n");
-          return NULL;
+	  if (*iter == '6') 
+	  {
+	      /* FIXME: there are a tons of memory leaks here */
+	      /* FIXME: this is still broken in some cases and it has to be
+	       * merged with the function prototype parsing above...
+	       */
+	      iter += 3; /* FIXME */
+	      if (!demangle_datatype (&iter, &sub_ct, sym))
+		  return NULL;
+	      ct->expression = str_create(2, sub_ct.expression, " (*)(");
+	      if (*iter != '@')
+	      {
+		  while (*iter != 'Z')
+		  {
+		      FREE_CT (sub_ct);
+		      INIT_CT (sub_ct);
+		      if (!demangle_datatype (&iter, &sub_ct, sym))
+			  return NULL;
+		      ct->expression = str_create(3, ct->expression, ", ", sub_ct.expression);
+		      while (*iter == '@') iter++;
+		  }
+	      } else while (*iter == '@') iter++;
+	      iter++;
+	      ct->expression = str_create(2, ct->expression, ")");
+	      FREE_CT (sub_ct);
+	  }
+	  else 
+	      return NULL;
 	}
+	else
+	{
+	    /* Recurse to get the pointed-to type */
+	    if (!demangle_datatype (&iter, &sub_ct, sym))
+		return NULL;
 
-        /* Recurse to get the pointed-to type */
-        if (!demangle_datatype (&iter, &sub_ct, sym))
-          return NULL;
-
-        ct->expression = get_pointer_type_string (ct, sub_ct.expression);
+	    ct->expression = get_pointer_type_string (ct, sub_ct.expression);
+	}
 
         FREE_CT (sub_ct);
       }
