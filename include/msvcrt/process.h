@@ -123,22 +123,35 @@ int         _wsystem(const MSVCRT(wchar_t)*);
 
 static inline int cwait(int *status, int pid, int action) { return _cwait(status, pid, action); }
 static inline int getpid(void) { return _getpid(); }
-#define execl    _execl
-#define execle   _execle
-#define execlp   _execlp
-#define execlpe  _execlpe
 static inline int execv(const char* name, char* const* argv) { return _execv(name, argv); }
 static inline int execve(const char* name, char* const* argv, const char* const* envv) { return _execve(name, argv, envv); }
 static inline int execvp(const char* name, char* const* argv) { return _execvp(name, argv); }
 static inline int execvpe(const char* name, char* const* argv, const char* const* envv) { return _execvpe(name, argv, envv); }
-#define spawnl   _spawnl
-#define spawnle  _spawnle
-#define spawnlp  _spawnlp
-#define spawnlpe _spawnlpe
 static inline int spawnv(int flags, const char* name, const char* const* argv) { return _spawnv(flags, name, argv); }
 static inline int spawnve(int flags, const char* name, const char* const* argv, const char* const* envv) { return _spawnve(flags, name, argv, envv); }
 static inline int spawnvp(int flags, const char* name, const char* const* argv) { return _spawnvp(flags, name, argv); }
 static inline int spawnvpe(int flags, const char* name, const char* const* argv, const char* const* envv) { return _spawnvpe(flags, name, argv, envv); }
+
+#ifdef __GNUC__
+extern int execl(const char*,const char*,...) __attribute__((alias("_execl")));
+extern int execle(const char*,const char*,...) __attribute__((alias("_execle")));
+extern int execlp(const char*,const char*,...) __attribute__((alias("_execlp")));
+extern int execlpe(const char*,const char*,...) __attribute__((alias("_execlpe")));
+extern int spawnl(int,const char*,const char*,...) __attribute__((alias("_spawnl")));
+extern int spawnle(int,const char*,const char*,...) __attribute__((alias("_spawnle")));
+extern int spawnlp(int,const char*,const char*,...) __attribute__((alias("_spawnlp")));
+extern int spawnlpe(int,const char*,const char*,...) __attribute__((alias("_spawnlpe")));
+#else
+#define execl    _execl
+#define execle   _execle
+#define execlp   _execlp
+#define execlpe  _execlpe
+#define spawnl   _spawnl
+#define spawnle  _spawnle
+#define spawnlp  _spawnlp
+#define spawnlpe _spawnlpe
+#endif  /* __GNUC__ */
+
 #endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_PROCESS_H */

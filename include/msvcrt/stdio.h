@@ -272,7 +272,7 @@ static inline MSVCRT(wint_t) fgetwchar(void) { return _fgetwchar(); }
 static inline MSVCRT(wint_t) fputwchar(MSVCRT(wint_t) wc) { return _fputwchar(wc); }
 static inline int getw(MSVCRT(FILE)* file) { return _getw(file); }
 static inline int putw(int val, MSVCRT(FILE)* file) { return _putw(val, file); }
-#define wpopen   _wpopen
+static inline MSVCRT(FILE)* wpopen(const MSVCRT(wchar_t)* command,const MSVCRT(wchar_t)* mode) { return _wpopen(command, mode); }
 #endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_STDIO_H */

@@ -169,10 +169,8 @@ static inline int isatty(int fd) { return _isatty(fd); }
 static inline int locking(int fd, int mode, long size) { return _locking(fd, mode, size); }
 static inline long lseek(int fd, long off, int where) { return _lseek(fd, off, where); }
 static inline char* mktemp(char* pat) { return _mktemp(pat); }
-#define open _open
 static inline int read(int fd, void* buf, unsigned int size) { return _read(fd, buf, size); }
 static inline int setmode(int fd, int mode) { return _setmode(fd, mode); }
-#define sopen _sopen
 static inline long tell(int fd) { return _tell(fd); }
 #ifndef MSVCRT_UMASK_DEFINED
 static inline int umask(int fd) { return _umask(fd); }
@@ -183,6 +181,15 @@ static inline int unlink(const char* path) { return _unlink(path); }
 #define MSVCRT_UNLINK_DEFINED
 #endif
 static inline int write(int fd, const void* buf, unsigned int size) { return _write(fd, buf, size); }
+
+#ifdef __GNUC__
+extern int open(const char*,int,...) __attribute__((alias("_open")));
+extern int sopen(const char*,int,int,...) __attribute__((alias("_sopen")));
+#else
+#define open _open
+#define sopen _sopen
+#endif /* __GNUC__ */
+
 #endif /* USE _MSVCRT_PREFIX */
 
 #endif /* __WINE_IO_H */

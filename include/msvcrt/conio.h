@@ -40,9 +40,7 @@ unsigned short _outpw(unsigned short, unsigned short);
 
 #ifndef USE_MSVCRT_PREFIX
 static inline char* cgets(char* str) { return _cgets(str); }
-#define cprintf _cprintf
 static inline int cputs(const char* str) { return _cputs(str); }
-#define cscanf _cscanf
 static inline int getch(void) { return _getch(); }
 static inline int getche(void) { return _getche(); }
 static inline int kbhit(void) { return _kbhit(); }
@@ -54,6 +52,15 @@ static inline unsigned short inpw(unsigned short i) { return _inpw(i); }
 static inline int outp(unsigned short i, int j) { return _outp(i, j); }
 static inline unsigned short outpw(unsigned short i, unsigned short j) { return _outpw(i, j); }
 #endif
+
+#ifdef __GNUC__
+extern int cprintf(const char*,...) __attribute__((alias("_cprintf"),format(printf,1,2)));
+extern int cscanf(const char*,...) __attribute__((alias("_cscanf"),format(scanf,1,2)));
+#else
+#define cprintf _cprintf
+#define cscanf _cscanf
+#endif /* __GNUC__ */
+
 #endif /* USE_MSVCRT_PREFIX */
 
 #endif /* __WINE_CONIO_H */
