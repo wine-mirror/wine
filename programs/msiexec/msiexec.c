@@ -181,6 +181,7 @@ int main(int argc, char *argv[])
 	BOOL FunctionDllUnregisterServer = FALSE;
 	BOOL FunctionRegServer = FALSE;
 	BOOL FunctionUnregServer = FALSE;
+	BOOL FunctionUnknown = FALSE;
 
 	BOOL GotProductCode = FALSE;
 	LPCSTR PackageName = NULL;
@@ -523,6 +524,11 @@ int main(int argc, char *argv[])
 			{
 				InstallUILevel = INSTALLUILEVEL_BASIC|INSTALLUILEVEL_PROGRESSONLY;
 			}
+			else if(!strcasecmp(argv[i]+2, "b+!"))
+            		{
+				InstallUILevel = INSTALLUILEVEL_BASIC|INSTALLUILEVEL_ENDDIALOG;
+				WINE_FIXME("Unknown modifier: !\n");
+			}
 			else
 			{
 				fprintf(stderr, "Unknown option \"%s\" for UI level\n", argv[i]+2);
@@ -555,6 +561,16 @@ int main(int argc, char *argv[])
 		else if(!strcasecmp(argv[i], "/h") || !strcasecmp(argv[i], "/?"))
 		{
 			ShowUsage(0);
+		}
+		else if(!strcasecmp(argv[i], "/m"))
+		{
+			FunctionUnknown = TRUE;
+			WINE_FIXME("Unknown parameter /m\n");
+		}
+		else if(!strcasecmp(argv[i], "/D"))
+		{
+			FunctionUnknown = TRUE;
+			WINE_FIXME("Unknown parameter /D\n");
 		}
 		else if(strchr(argv[i], '='))
 		{
@@ -637,6 +653,10 @@ int main(int argc, char *argv[])
 	else if (FunctionUnregServer)
 	{
 		WINE_FIXME( "/unregserver not implemented yet, ignoring\n" );
+	}
+	else if (FunctionUnknown)
+	{
+		WINE_FIXME( "Unknown function, ignoring\n" );
 	}
 	else
 		ShowUsage(1);
