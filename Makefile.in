@@ -30,6 +30,7 @@ LIBSUBDIRS = \
 	console \
 	dlls/advapi32 \
 	dlls/comctl32 \
+	dlls/commdlg \
 	dlls/imagehlp \
 	dlls/msacm \
 	dlls/msacm32 \
@@ -101,6 +102,7 @@ LIBOBJS = \
 	console/console.o \
 	dlls/advapi32/advapi32.o \
 	dlls/comctl32/comctl32.o \
+	dlls/commdlg/commdlg.o \
 	dlls/imagehlp/imagehlp.o \
 	dlls/msacm/msacm.o \
 	dlls/msacm32/msacm32.o \

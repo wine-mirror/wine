@@ -9,7 +9,6 @@ C_SRCS = \
 	callback.c \
 	cdrom.c \
 	comm.c \
-	commdlg.c \
 	crtdll.c \
 	cpu.c \
 	ddeml.c \

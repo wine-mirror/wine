@@ -1,0 +1,20 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = commdlg
+
+C_SRCS = \
+	colordlg.c \
+	filedlg.c \
+	finddlg.c \
+	fontdlg.c \
+	generic.c \
+	printdlg.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:

@@ -1,6 +1,7 @@
 SUBDIRS = \
 	advapi32 \
 	comctl32 \
+	commdlg \
 	imagehlp \
 	msacm \
 	msacm32 \

@@ -623,6 +623,7 @@ debugger/Makefile
 dlls/Makefile
 dlls/advapi32/Makefile
 dlls/comctl32/Makefile
+dlls/commdlg/Makefile
 dlls/imagehlp/Makefile
 dlls/msacm/Makefile
 dlls/msacm32/Makefile
