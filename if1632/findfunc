@@ -1,0 +1,10 @@
+#! /bin/sh
+
+name="blah"
+
+while [ "$name" != "" ]
+do
+    echo -n 'Function: '
+    read name
+    grep -i $name *.spec
+done

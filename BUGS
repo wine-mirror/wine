@@ -1,0 +1,1 @@
+- EBP and ESP are sometimes corrupted while running 16-bit code.

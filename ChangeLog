@@ -1,3 +1,248 @@
+Fri Sep  3 11:52:18 1993  Bob Amstadt
+
+	* [windows/timer.c]
+	Changed to use CallWindowProc() rather directly calling callback.
+
+	* [windows/event.c]
+	Implemented SetCapture() and ReleaseCapture()
+
+	* [windows/keyboard.c]
+	Created stub for GetKeyState()
+
+	* [objects/linedda.c]
+	Created stub for LineDDA()
+
+	* [if1632/callback.c]
+	Created callback handler for LineDDA callback procedure.
+
+	* [if1632/callback.c]
+	Created FreeProcInstance()
+
+Fri Sep  3 08:36:52 1993  David Metcalfe
+
+	* [loader/signal.c]
+	Patch to and code for INT 1A
+
+Thu Sep  2 00:31:54 1993  Alexandre Julliard
+
+	* [objects/font.c] [objects/text.c]
+	More text support: implemented justification and underlining.
+
+	* [windows/clipping.c] [objects/clipping.c]
+	Moved low-level clipping functions to objects/clipping.c.
+
+	* [windows/clipping.c] [windows/event.c] [windows/message.c]
+	Implemented window update regions.
+
+	* [windows/dc.c] [objects/dcvalues.c]
+	Moved some device-independent DC functions to objects/dcvalues.c.
+
+	* [windows/graphics.c]
+	Implemented InvertRect() and GetPixel().
+
+Sat Aug 28 08:40:23 1993  Eric Youngdale
+
+	* [include/neexe.h] [loader/wine.c]
+	Added code to handle relocation type 4.
+
+	* [loader/signal.h] [loader/wine.c] [loader/selector.c]
+	Added support for dos interrupts.
+
+Thu 26 Aug 19:15:00 1993  Eric Youngdale
+
+	* [loader/selector.c]
+	Fixed bug dealing with loading DLLs.
+
+Thu Aug 26 19:22:40 1993  Alexandre Julliard
+
+        * [include/gdi.h] [objects/font.c] [windows/dc.c]
+        Beginning of real font support.
+
+        * [windows/graphics.c]
+        Implemented PatBlt().
+
+        * [memory/global.c]
+        Corrected a bug with linked list handling in GlobalAlloc().
+
+        * [objects/bitmap.c]
+        Corrected a bug in BITMAP_SelectObject().
+
+Tue Aug 24 19:22:40 1993  David Metcalfe
+
+        * [controls/Command*] [controls/Label*] [controls[MenuButto*]
+	  [controls/SmeMenuButt*]
+	Change code to support & as a special character in menu item text.
+
+Tue Aug 24 19:22:40 1993  Alexandre Julliard
+
+	* [include/gdi.h] [windows/dc.c]
+	Heavily modified the DC structure for better device-independence.
+
+	* [objects/bitmap.c]
+	Implemented bitmap dimensions.
+
+	* [windows/dc.c] [windows/dce.c]
+	Implemented DC state saving and restoring.
+
+	* [windows/dc.c]
+	Implemented ROP mode.
+
+	* [windows/graphics.c]
+	Implemented FillRect().
+
+Mon Aug 23 22:08:34 1993  Bob Amstadt  (bob at pooh)
+
+	* [misc/xt.c]
+	Fixed bug in InvalidateRect().  Solitaire attempted to
+	clear window before it was realized.
+
+	* [loader/resource.c]
+	Began rewrite of LoadBitmap().
+
+	* [loader/wine.c]
+	Fixed code which set Argv and Argc global variables.
+
+	* [loader/selector.c]
+	Added code to set up command line arguments.
+
+	* [include/neexe.h]
+	Fixed error in PSP structure.
+
+Tue Aug 17 20:41:12 1993  Alexandre Julliard
+
+	* [include/gdi.h] [windows/dc.c]
+	Implemented device capabilities.
+
+	* [objects/region.c]
+	Implemented EqualRgn() and CombineRgn().
+
+	* [windows/clipping.c]
+	Implemented Save/RestoreVisRgn().
+
+	* [windows/graphics.c]
+	Implemented PaintRgn() and FillRgn().
+
+	* [windows/mapping.c]
+	Implemented mapping modes.
+
+Tue Aug 10 14:07:38 1993  Alexandre Julliard
+
+	* [if1632/user.spec] [misc/rect.c]
+	Implemented rectangle API functions.
+
+	* [if1632/gdi.spec] [include/gdi.h] [objects/region.c]
+	Implemented regions.
+
+	* [windows/class.c]
+	Corrected a typo in UnregisterClass().
+
+	* [windows/clipping.c] [windows/dc.c]
+	Implemented DC clipping and visible region.
+
+Tue Aug 10 20:57:56 1993  Bob Amstadt  (bob at pooh)
+
+	* [controls/menu.c] [windows/win.c]
+	SetMenu(), GetMenu(), CheckMenuItem() implemented
+
+Thu Aug  5 22:33:22 1993  Bob Amstadt  (bob at pooh)
+
+	* [controls/menu.c] [windows/win.c]
+	Many improvements menus.  LoadMenu() should work.
+
+Wed Aug  4 14:55:36 1993  Alexandre Julliard
+
+        * [objects/dib.c]
+        Started the implementation of device-independent bitmaps.
+
+        * [objects/bitmap.c]
+        Added support for multiple bitmap depths.
+
+        * [objects/brush.c]
+        Implemented pattern brushes.
+
+        * [windows/dc.c] [windows/graphics.c]
+        Implemented some GDI graphics primitives.
+
+Tue Aug  3 21:16:47 1993  Bob Amstadt  (bob at pooh)
+
+	* [controls/menu.c] [windows/win.c] [include/menu.h]
+	Code to load class menus from executable file.
+
+	* [if1632/user.spec]
+	Fixed specification of SendMessage() and PostMessage.
+
+Mon Jul 26 21:53:24 1993  Alexandre Julliard
+
+	* [if1632/call.S]
+	Corrected a bug in KERNEL_InitTask().
+
+	* [include/windows.h]
+	Added a lot of constants.
+
+	* [loader/selector.c]
+	Corrected a bug in segment allocation in CreateSelectors().
+
+	* [objects/bitmap.c]
+	Implemented SelectObject() for bitmaps.
+
+	* [objects/brush.c]
+	Implemented hatched brushes and SelectObject().
+
+	* [objects/gdiobj.c]
+	Removed linked list (not needed).
+
+	* [objects/palette.c]
+	Implemented system palette creation and misc. palette API functions.
+
+	* [windows/timer.c]
+	Implemented timers.
+
+	* [windows/dc.c]
+	Implemented memory device contexts.
+
+Tue Jul 20 10:38:59 1993  Bob Amstadt  (bob at pooh)
+
+        * [dos.c]
+	Split DOS3Call() out of kernel.c.  Added support for get date
+	and time functions.
+
+	* [call.S]
+	Added function ReturnFromRegisterFunc() to allow DOS calls
+	to return values in registers.
+
+	* [regfunc.h]
+	Macros to access registers saved on stack.
+
+Tue Jul 20 10:38:59 1993  Alexandre Julliard
+
+        * [win.c]
+        Corrected allocation of the WM_CREATE data structure.
+
+        * [dce.c] [dce.h]
+        Implemented DCE handling.
+
+        * [bitmap.c] [brush.c] [dc.c] [font.c] [gdi.h] [gdi.spec] 
+          [gdiobj.c] [palette.c] [pen.c]
+        Implemented the GDI objects data structures and allocation.
+
+        * [windows.h]
+        Added several structures and constants for GDI objects.
+
+Mon Jul 19 12:51:10 1993  Bob Amstadt  (bob at pooh)
+
+	* [ldtlib.c]
+	Modified system calls to match Linus' new interface for
+	the LDT modification.
+
+	* [win.c]
+	Fixed bug with WM_CREATE message.
+
+	* [heap.c] [kernel.spec]
+	Completed local heap allocation functions.
+
+	* [global.c]
+	Created function GlobalQuickAlloc() for easy allocation from DLLs
+
 Tue Jul 13 20:31:31 1993  Bob Amstadt  (bob at pooh)
 
 	* [global.c]
