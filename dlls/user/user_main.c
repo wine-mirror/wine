@@ -15,7 +15,6 @@
 #include "keyboard.h"
 #include "menu.h"
 #include "message.h"
-#include "module.h"
 #include "mouse.h"
 #include "queue.h"
 #include "spy.h"
@@ -29,23 +28,14 @@
  */
 BOOL WINAPI USER_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    NE_MODULE *pModule;
+    HINSTANCE16 instance;
     int queueSize;
 
     if ( USER_HeapSel ) return TRUE;
 
     /* Create USER heap */
-    pModule = NE_GetPtr( GetModuleHandle16( "USER" ) );
-    if ( pModule )
-    {
-        USER_HeapSel = GlobalHandleToSel16( (NE_SEG_TABLE( pModule ) + 
-                                           pModule->dgroup - 1)->hSeg );
-    }
-    else
-    {
-        USER_HeapSel = GlobalAlloc16( GMEM_FIXED, 0x10000 );
-        LocalInit16( USER_HeapSel, 0, 0xffff );
-    }
+    if ((instance = LoadLibrary16( "USER.EXE" )) < 32) return FALSE;
+    USER_HeapSel = GlobalHandleToSel16( instance );
 
      /* Global atom table initialisation */
     if (!ATOM_Init( USER_HeapSel )) return FALSE;

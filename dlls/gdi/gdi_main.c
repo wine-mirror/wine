@@ -8,7 +8,6 @@
 
 #include "gdi.h"
 #include "global.h"
-#include "module.h"
 #include "psdrv.h"
 #include "tweak.h"
 #include "win16drv.h"
@@ -19,22 +18,13 @@
  */
 BOOL WINAPI MAIN_GdiInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    NE_MODULE *pModule;
+    HINSTANCE16 instance;
 
     if ( GDI_HeapSel ) return TRUE;
 
     /* Create GDI heap */
-    pModule = NE_GetPtr( GetModuleHandle16( "GDI" ) );
-    if ( pModule )
-    {
-        GDI_HeapSel = GlobalHandleToSel16( (NE_SEG_TABLE( pModule ) + 
-                                          pModule->dgroup - 1)->hSeg );
-    }
-    else
-    {
-        GDI_HeapSel = GlobalAlloc16( GMEM_FIXED, GDI_HEAP_SIZE );
-        LocalInit16( GDI_HeapSel, 0, GDI_HEAP_SIZE-1 );
-    }
+    if ((instance = LoadLibrary16( "GDI.EXE" )) < 32) return FALSE;
+    GDI_HeapSel = GlobalHandleToSel16( instance );
 
     if (!TWEAK_Init()) return FALSE;
 
