@@ -59,6 +59,7 @@ typedef struct tagSNOOP_DLL {
 	HMODULE	hmod;
 	SNOOP_FUN	*funs;
 	LPCSTR		name;
+	DWORD		ordbase;
 	DWORD		nrofordinals;
 	struct tagSNOOP_DLL	*next;
 } SNOOP_DLL;
@@ -126,7 +127,7 @@ int SNOOP_ShowDebugmsgSnoop(const char *dll, int ord, const char *fname) {
 }
 
 void
-SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD nrofordinals) {
+SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD ordbase,DWORD nrofordinals) {
 	SNOOP_DLL	**dll = &(firstdll);
 	char		*s;
 
@@ -139,6 +140,7 @@ SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD nrofordinals) {
 	*dll = (SNOOP_DLL*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SNOOP_DLL));
 	(*dll)->next	= NULL;
 	(*dll)->hmod	= hmod;
+	(*dll)->ordbase = ordbase;
 	(*dll)->nrofordinals = nrofordinals;
 	(*dll)->name	= HEAP_strdupA(GetProcessHeap(),0,name);
 	if ((s=strrchr((*dll)->name,'.')))
@@ -322,7 +324,7 @@ void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
 
 	context->Eip = (DWORD)fun->origfun;
 
-	DPRINTF("%08lx:CALL %s.%ld: %s(",GetCurrentThreadId(),dll->name,ordinal,fun->name);
+	DPRINTF("%08lx:CALL %s.%ld: %s(",GetCurrentThreadId(),dll->name,dll->ordbase+ordinal,fun->name);
 	if (fun->nrofargs>0) {
 		max = fun->nrofargs; if (max>16) max=16;
 		for (i=0;i<max;i++)
@@ -355,7 +357,7 @@ void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
 
 		DPRINTF("%08lx:RET  %s.%ld: %s(",
 		        GetCurrentThreadId(),
-		        ret->dll->name,ret->ordinal,ret->dll->funs[ret->ordinal].name);
+		        ret->dll->name,ret->dll->ordbase+ret->ordinal,ret->dll->funs[ret->ordinal].name);
 		max = ret->dll->funs[ret->ordinal].nrofargs;
 		if (max>16) max=16;
 
@@ -368,7 +370,7 @@ void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
 	} else
 		DPRINTF("%08lx:RET  %s.%ld: %s() retval = %08lx ret=%08lx tid=%08lx\n",
 			GetCurrentThreadId(),
-			ret->dll->name,ret->ordinal,ret->dll->funs[ret->ordinal].name,
+			ret->dll->name,ret->dll->ordbase+ret->ordinal,ret->dll->funs[ret->ordinal].name,
 			context->Eax, (DWORD)ret->origreturn, GetCurrentThreadId());
 	ret->origreturn = NULL; /* mark as empty */
 }

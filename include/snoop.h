@@ -6,7 +6,7 @@
 
 #include "module.h"
 
-extern void SNOOP_RegisterDLL(HMODULE,LPCSTR,DWORD);
+extern void SNOOP_RegisterDLL(HMODULE,LPCSTR,DWORD,DWORD);
 extern FARPROC SNOOP_GetProcAddress(HMODULE,LPCSTR,DWORD,FARPROC);
 extern void SNOOP16_RegisterDLL(NE_MODULE*,LPCSTR);
 extern FARPROC16 SNOOP16_GetProcAddress16(HMODULE16,DWORD,FARPROC16);

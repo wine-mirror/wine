@@ -115,13 +115,13 @@ void dump_exports( HMODULE hModule )
   }
 }
 
-/* Look up the specified function or ordinal in the exportlist:
+/* Look up the specified function or ordinal in the export list:
  * If it is a string:
- * 	- look up the name in the Name list. 
+ * 	- look up the name in the name list. 
  *	- look up the ordinal with that index.
  *	- use the ordinal as offset into the functionlist
- * If it is a ordinal:
- *	- use ordinal-pe_export->Base as offset into the functionlist
+ * If it is an ordinal:
+ *	- use ordinal-pe_export->Base as offset into the function list
  */
 static FARPROC PE_FindExportedFunction( 
 	WINE_MODREF *wm,	/* [in] WINE modreference */
@@ -656,7 +656,7 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
     }
 
     if (pe_export)
-        SNOOP_RegisterDLL( hModule, wm->modname, pe_export->NumberOfFunctions );
+        SNOOP_RegisterDLL( hModule, wm->modname, pe_export->Base, pe_export->NumberOfFunctions );
 
     /* Send DLL load event */
     /* we don't need to send a dll event for the main exe */
