@@ -166,10 +166,10 @@ static int DRIVER_UnMapMsg32To16(WORD wMsg, DWORD lParam1, DWORD lParam2)
 	    LPDRVCONFIGINFO16	dci16 = MapSL(lParam2);
             HeapFree( GetProcessHeap(), 0, MapSL(dci16->lpszDCISectionName) );
             HeapFree( GetProcessHeap(), 0, MapSL(dci16->lpszDCIAliasName) );
-            HeapFree( GetProcessHeap(), 0, dci16 );
             UnMapLS( lParam2 );
             UnMapLS( dci16->lpszDCISectionName );
             UnMapLS( dci16->lpszDCIAliasName );
+            HeapFree( GetProcessHeap(), 0, dci16 );
 	}
 	ret = 0;
 	break;
