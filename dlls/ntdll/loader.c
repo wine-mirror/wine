@@ -104,6 +104,7 @@ static CRITICAL_SECTION loader_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static WINE_MODREF *cached_modref;
 static WINE_MODREF *current_modref;
+static WINE_MODREF *last_failed_modref;
 
 static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_MODREF** pwm );
 static FARPROC find_named_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
@@ -893,9 +894,16 @@ static NTSTATUS process_attach( WINE_MODREF *wm, LPVOID lpReserved )
         WINE_MODREF *prev = current_modref;
         current_modref = wm;
         if (MODULE_InitDLL( wm, DLL_PROCESS_ATTACH, lpReserved ))
+        {
             wm->ldr.Flags |= LDR_PROCESS_ATTACHED;
+        }
         else
+        {
+            /* point to the name so LdrInitializeThunk can print it */
+            last_failed_modref = wm;
+            WARN("Initialization of %s failed\n", debugstr_w(wm->ldr.BaseDllName.Buffer));
             status = STATUS_DLL_INIT_FAILED;
+        }
         current_modref = prev;
     }
 
@@ -1980,7 +1988,12 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, ULONG unknown2, ULONG unknown3
     if ((status = fixup_imports( wm, load_path )) != STATUS_SUCCESS) goto error;
     if ((status = alloc_process_tls()) != STATUS_SUCCESS) goto error;
     if ((status = alloc_thread_tls()) != STATUS_SUCCESS) goto error;
-    if ((status = process_attach( wm, (LPVOID)1 )) != STATUS_SUCCESS) goto error;
+    if ((status = process_attach( wm, (LPVOID)1 )) != STATUS_SUCCESS)
+    {
+        if (last_failed_modref)
+            ERR( "%s failed to initialize, aborting\n", debugstr_w(last_failed_modref->ldr.BaseDllName.Buffer) + 1 );
+        goto error;
+    }
 
     RtlLeaveCriticalSection( &loader_section );
 
