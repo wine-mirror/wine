@@ -1,3 +1,5 @@
+init URLMON_DllEntryPoint
+
 1 stub CDLGetLongPathNameA
 2 stub CDLGetLongPathNameW
 @ stub AsyncGetClassBits
@@ -19,14 +21,14 @@
 @ stub CreateAsyncBindCtx
 @ stdcall CreateAsyncBindCtxEx(ptr long ptr ptr ptr long) CreateAsyncBindCtxEx
 @ stub CreateFormatEnumerator
-@ stdcall CreateURLMoniker(ptr str ptr) CreateURLMoniker
+@ stdcall CreateURLMoniker(ptr wstr ptr) CreateURLMoniker
 @ stdcall DllCanUnloadNow() URLMON_DllCanUnloadNow
 @ stdcall DllGetClassObject(ptr ptr ptr) URLMON_DllGetClassObject
 @ stdcall DllInstall(long ptr) URLMON_DllInstall
 @ stdcall DllRegisterServer() URLMON_DllRegisterServer
 @ stdcall DllRegisterServerEx() URLMON_DllRegisterServerEx
 @ stdcall DllUnregisterServer() URLMON_DllUnregisterServer
-@ stdcall Extract(long long) Extract
+@ stdcall Extract(long str) Extract
 @ stub FaultInIEFeature
 @ stub FindMediaType
 @ stub FindMediaTypeClass
@@ -46,7 +48,7 @@
 @ stub IsLoggingEnabledA
 @ stub IsLoggingEnabledW
 @ stub IsValidURL
-@ stub MkParseDisplayNameEx
+@ forward MkParseDisplayNameEx ole32.MkParseDisplayName
 @ stdcall ObtainUserAgentString(long str ptr) ObtainUserAgentString
 @ stub PrivateCoInstall
 @ stdcall RegisterBindStatusCallback(ptr ptr ptr long) RegisterBindStatusCallback

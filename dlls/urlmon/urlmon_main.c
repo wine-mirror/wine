@@ -24,7 +24,32 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(win32);
+#include "urlmon_main.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
+
+HINSTANCE URLMON_hInstance = 0;
+
+/***********************************************************************
+ *		DllEntryPoint (OLE32.@)
+ */
+
+BOOL WINAPI URLMON_DllEntryPoint(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
+{
+    TRACE("0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
+
+    switch(fdwReason) {
+    case DLL_PROCESS_ATTACH:
+        URLMON_hInstance = hinstDLL;
+	break;
+
+    case DLL_PROCESS_DETACH:
+        URLMON_hInstance = 0;
+	break;
+    }
+    return TRUE;
+}
+
 
 /***********************************************************************
  *		DllInstall (URLMON.@)
@@ -99,28 +124,6 @@ HRESULT WINAPI URLMON_DllUnregisterServer(void)
 
     return S_OK;
 }
-
-/**************************************************************************
- *                 CoInternetGetSession (URLMON.@)
- */
-HRESULT WINAPI CoInternetGetSession(DWORD dwSessionMode,
-                                    LPVOID /* IInternetSession ** */ ppIInternetSession,
-                                    DWORD dwReserved)
-{
-    FIXME("(%ld, %p, %ld): stub\n", dwSessionMode, ppIInternetSession,
-	  dwReserved);
-
-    if(dwSessionMode) {
-      ERR("dwSessionMode: %ld, must be zero\n", dwSessionMode);
-    }
-
-    if(dwReserved) {
-      ERR("dwReserved: %ld, must be zero\n", dwReserved);
-    }
-
-    return S_OK;
-}
-
 
 /**************************************************************************
  *                 ObtainUserAgentString (URLMON.@)

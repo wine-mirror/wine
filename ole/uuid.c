@@ -48,6 +48,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "wine/obj_dragdrophelper.h"
 
 #include "comcat.h"
+#include "urlmon.h"
 
 /* FIXME: cguids declares GUIDs but does not define their values */
 
