@@ -53,7 +53,7 @@
          of the functions etc. have been changed to protect the innocent).
          A large Windows application includes a DLL that links to a third-party
          DLL.  For various reasons the third-party DLL does not work too well
-         under Wine.  However the third-party DLL is also available for the
+         under Wine.  However the third-party library is also available for the
          Linux environment.  Conveniently the DLL and Linux shared library 
          export only a small number of functions and the application only uses
          one of those.
@@ -62,8 +62,7 @@
          Specifically, the application calls a function:
 <programlisting>
 signed short WINAPI MyWinFunc (unsigned short a, void *b, void *c,
-        unsigned long *d, void *e, unsigned char f, char g,
-        unsigned char *h);
+        unsigned long *d, void *e, int f, char g, unsigned char *h);
 </programlisting>
          and the linux library exports a corresponding function:
 <programlisting>
@@ -83,8 +82,7 @@ signed short MyLinuxFunc (unsigned short a, void *b, void *c,
       <para>
         In the simple example we want a Wine built-in Dll that corresponds to
         the MyWin Dll.  The spec file is <filename>MyWin.dll.spec</filename> and
-        looks something like this (depending on changes to the way that the
-        specfile is formatted since this was written).
+        looks something like this:
 <programlisting>
 #
 # File: MyWin.dll.spec
@@ -102,21 +100,13 @@ signed short MyLinuxFunc (unsigned short a, void *b, void *c,
 # End of file
 </programlisting>
         Notice that the arguments are flagged as long even though they are
-        smaller than that.
-        Notice also that we do not specify an initial function.  With this
-        example we will link directly to the Linux shared library whereas 
-        with the ODBC example we will load the Linux shared library dynamically.
+        smaller than that.  With this example we will link directly to the 
+	Linux shared library whereas with the ODBC example we will load the 
+	Linux shared library dynamically.
       </para>
       <para>
         In the case of the ODBC example you can see this in the file 
         <filename>odbc32.spec</filename>.
-      </para>
-    </sect1>
-
-    <sect1 id="bindlls-cxx-apis">
-      <title id="bindlls-cxx-apis.title">How to deal with C++ APIs</title>
-      <para>
-        names are mangled, how to demangle them, how to call them
       </para>
     </sect1>
 
@@ -126,10 +116,11 @@ signed short MyLinuxFunc (unsigned short a, void *b, void *c,
         Firstly we will look at the simple example.  The main complication of
         this case is the slightly different argument lists.  The f parameter
         does not have to be passed to the Linux function and the d parameter
-        (theoretically) has to be converted between unsigned long * and
-        unsigned short *.  Doing this ensures that the "high" bits of the
-        returned value are set correctly.  Also unlike with the ODBC example we
-        will link directly to the Linux Shared Library.
+        (theoretically) has to be converted between 
+	<literal>unsigned long *i</literal> and <literal>unsigned short *</literal>.  
+	Doing this ensures that the "high" bits of the returned value are set 
+	correctly.  Also unlike with the ODBC example we will link directly to
+	the Linux Shared Library.
         <programlisting>
 /*
  * File: MyWin.c
@@ -153,9 +144,6 @@ signed short MyLinuxFunc (unsigned short a, void *b, void *c,
 #include &lt; &lt;3rd party linux header&gt; &gt;
 #include &lt;windef.h&gt; /* Part of the Wine header files */
 
-signed short WINAPI MyProxyWinFunc (unsigned short a, void *b, void *c,
-                unsigned long *d, void *e, unsigned char f, char g, 
-                unsigned char *h)
 /* This declaration is as defined in the spec file.  It is deliberately not
  * specified in terms of &lt;3rd party&gt; types since we are messing about here
  * between two operating systems (making it look like a Windows thing when
@@ -163,6 +151,8 @@ signed short WINAPI MyProxyWinFunc (unsigned short a, void *b, void *c,
  * inconsistencies.
  * For example the fourth argument needs care
  */
+signed short WINAPI MyProxyWinFunc (unsigned short a, void *b, void *c,
+                unsigned long *d, void *e, int f, char g, unsigned char *h)
 {
     unsigned short d1;
     signed short ret;
@@ -282,22 +272,15 @@ signed short WINAPI MyProxyWinFunc (unsigned short a, void *b, void *c,
       </para>
     </sect1>
 
-    <sect1 id="bindlls-advanced">
-      <title id="binary-dlls-advanced.title">Advanced options</title>
+    <sect1 id="bindlls-filenames">
+      <title id="binary-dlls-filenames.title">Converting filenames</title>
       <para>
-        Here are a few more advanced options.
+        Suppose you want to convert incoming DOS format filenames to their
+        Unix equivalent.  Of course there is no suitable function in the true
+        Microsoft Windows API, but wine provides a function for just this
+        task and exports it from its copy of the kernel32 DLL.  The function
+        is <function>wine_get_unix_file_name</function> (defined in winbase.h).
       </para>
-      <sect2 id="bindlls-adv-filenames">
-        <title id="binary-dlls-adv-filenames.title">Converting filenames</title>
-        <para>
-          Suppose you want to convert incoming DOS format filenames to their
-          Unix equivalent.  Of course there is no suitable function in the true
-          Microsoft Windows API, but wine provides a function for just this
-          task and exports it from its copy of the kernel32 DLL.  The function
-          is wine_get_unix_file_name (defined in winbase.h).  Use the -ikernel32
-          option to winemaker to link to it.
-        </para>
-      </sect2>
     </sect1>
   </chapter>
 

@@ -149,31 +149,6 @@
       </para>
     </sect1>
 
-    <sect1 id="com-support">
-      <title id="com-support.title">VC's native COM support</title>
-      <para>
-        don't use it,
-        guide on how to replace it with normal C++ code (yes, how???):
-        extracting a .h and .lib from a COM DLL
-        Can '-fno-rtti' be of some use or even required?
-      </para>
-    </sect1>
-
-    <sect1 id="SEH">
-      <title id="SEH.title">SEH</title>
-      <para>
-        how to modify the syntax so that it works both with gcc's macros and Wine's macros,
-        is it even possible?
-      </para>
-    </sect1>
-
-    <sect1 id="others">
-      <title id="others.title">Others</title>
-      <para>
-        -fpermissive and -fno-for-scope,
-        maybe other options
-      </para>
-    </sect1>
   </chapter>
 
 <!-- Keep this comment at the end of the file

@@ -5,7 +5,6 @@
 <!entity toolkit SYSTEM "winelib-toolkit.sgml">
 <!entity mfc SYSTEM "winelib-mfc.sgml">
 <!entity bindlls SYSTEM "winelib-bindlls.sgml">
-<!entity packaging SYSTEM "winelib-pkg.sgml">
 
 ]>
 
@@ -35,6 +34,5 @@
   &toolkit;
   &mfc;
   &bindlls;
-  &packaging;
 
 </book>

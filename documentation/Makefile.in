@@ -43,7 +43,6 @@ WINELIB_USER_SRCS = \
 	winelib-bindlls.sgml \
 	winelib-intro.sgml \
 	winelib-mfc.sgml \
-	winelib-pkg.sgml \
 	winelib-porting.sgml \
 	winelib-toolkit.sgml
 
