@@ -158,7 +158,7 @@ extern int wine_dlclose( void *handle, char *error, int errorsize );
                   ((BYTE *)(ptr))[1] )
 #define PUT_LE_DWORD(ptr, d) \
         do { PUT_LE_WORD(&((WORD *)(ptr))[0], LOWORD(d)); \
-             PUT_LE_WORD(&((WORD *)(ptr))[1], HIBYTE(d)); } while (0)
+             PUT_LE_WORD(&((WORD *)(ptr))[1], HIWORD(d)); } while (0)
 #define GET_LE_DWORD(ptr) \
         ((DWORD)MAKELONG( GET_LE_WORD(&((WORD *)(ptr))[0]), \
                           GET_LE_WORD(&((WORD *)(ptr))[1]) ))
@@ -171,7 +171,7 @@ extern int wine_dlclose( void *handle, char *error, int errorsize );
                   ((BYTE *)(ptr))[0] )
 #define PUT_BE_DWORD(ptr, d) \
         do { PUT_BE_WORD(&((WORD *)(ptr))[1], LOWORD(d)); \
-             PUT_BE_WORD(&((WORD *)(ptr))[0], HIBYTE(d)); } while (0)
+             PUT_BE_WORD(&((WORD *)(ptr))[0], HIWORD(d)); } while (0)
 #define GET_BE_DWORD(ptr) \
         ((DWORD)MAKELONG( GET_BE_WORD(&((WORD *)(ptr))[1]), \
                           GET_BE_WORD(&((WORD *)(ptr))[0]) ))
