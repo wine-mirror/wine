@@ -53,7 +53,7 @@ my %options = (
 	description => "argument forbidden checking"
     },
     "argument-kind" => {
-	default => { active => 0, filter => 0, hash => {} },
+	default => { active => 1, filter => 1, hash => { double => 1 } },
 	parent => "argument",
 	parser => \&parser_comma_list,
 	description => "argument kind checking"

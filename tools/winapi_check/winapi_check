@@ -311,17 +311,21 @@ foreach my $file ($options->c_files) {
 	    $function->module16($module16);
 	    $function->module32($module32);
 
-	    my $output_module = sub { 
-		my $module = shift;
-		return sub {
-		    my $msg = shift;
-		    $output->write("$file: $module: $return_type ");
-		    $output->write("$calling_convention ") if $calling_convention;
-		    $output->write("$internal_name(" . join(",", @argument_types) . "): $msg\n");
-		}
-	    };
-	    my $output16 = &$output_module($module16);
-	    my $output32 = &$output_module($module32);
+	    my $prefix = "";
+	    $prefix .= "$file: ";
+	    if(defined($module16) && !defined($module32)) {
+		$prefix .= "$module16: ";
+	    } elsif(!defined($module16) && defined($module32)) {
+		$prefix .= "$module32: ";
+	    } elsif(defined($module16) && defined($module32)) {
+		$prefix .= "$module16 & $module32: ";
+	    } else {
+		$prefix .= "<>: ";
+	    }
+            $prefix .= "$return_type ";
+	    $prefix .= "$calling_convention " if $calling_convention;
+	    $prefix .= "$internal_name(" . join(",", @argument_types) . "): ";
+	    $output->prefix($prefix);
 
 	    if($options->local && $options->misplaced &&
 	       $linkage ne "extern" && $statements) 
@@ -336,7 +340,7 @@ foreach my $file ($options->c_files) {
 			}
 		    }
 		    if(!$match) {
-			&$output16("is misplaced\n");
+			$output->write("is misplaced\n");
 		    }
 		}
 
@@ -350,7 +354,7 @@ foreach my $file ($options->c_files) {
 			}
 		    }
 		    if(!$match) {
-			&$output32("is misplaced");
+			$output->write("is misplaced\n");
 		    }
 		}
 	    }
@@ -364,7 +368,7 @@ foreach my $file ($options->c_files) {
 			    $internal_name !~ /^I(?:Malloc|Storage)16_fn/ &&
 			    $internal_name !~ /^(?:\Q$module16\E|THUNK|WIN16)_\Q$external_name16\E(?:16)?$/))
 			{
-			    &$output16("no prototype");
+			    $output->write("no prototype\n");
 			}
 		    }
 		}
@@ -378,7 +382,7 @@ foreach my $file ($options->c_files) {
 			   $internal_name !~ /^COMCTL32_Str/ &&
 			   $internal_name !~ /^(?:\Q$module32\E|wine)_(?:\Q$external_name32\E|\d+)$/))
 			{
-			    &$output32("no prototype");
+			    $output->write("no prototype\n");
 			}
 		    }
 		}
@@ -386,22 +390,22 @@ foreach my $file ($options->c_files) {
 
 	    if($options->local && $options->argument) {
 		if($options->win16 && $options->report_module($module16)) {
-		  winapi_local::check_function $options, $output16,
+		  winapi_local::check_function $options, $output,
 		    $return_type, $calling_convention, $external_name16, $internal_name, [@argument_types], $nativeapi, $win16api;
 		}	
 		if($options->win32 && $options->report_module($module32)) {
-		  winapi_local::check_function $options, $output32,
+		  winapi_local::check_function $options, $output,
 		    $return_type, $calling_convention, $external_name32, $internal_name, [@argument_types], $nativeapi, $win32api;
 		}
 	    }
 
 	    if($options->local && $options->statements) {
 		if($options->win16 && $options->report_module($module16)) {
-		  winapi_local::check_statements $options, $output16, $win16api, \%functions, $function;
+		  winapi_local::check_statements $options, $output, $win16api, \%functions, $function;
 		}
 
 		if($options->win32 && $options->report_module($module32)) {
-		  winapi_local::check_statements $options, $output32, $win32api, \%functions, $function;
+		  winapi_local::check_statements $options, $output, $win32api, \%functions, $function;
 		}
 	    }
 
@@ -463,8 +467,7 @@ foreach my $file ($options->c_files) {
 		}
 
 		if($documentation !~ /\b($internal_name|$name1|$name2)\b/) {
-		    $output->write("$file: $internal_name: \\\n");
-		    $output->write("$documentation\n");
+		    $output->write("\\\n$documentation\n");
 		}
 
 		if($options->documentation_width) {		
@@ -473,11 +476,12 @@ foreach my $file ($options->c_files) {
 			
 			$comment_width{$width}++;
 			if($width <= 65 || $width >= 81) {
-			    $output->write("$file: $internal_name: comment is $width columns wide\n");
+			    $output->write("comment is $width columns wide\n");
 			}
 		    }
 		}
 	    }
+	    $output->prefix("");
 	}
     };
 

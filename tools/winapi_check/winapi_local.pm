@@ -21,18 +21,18 @@ sub check_function {
 	$name16 =~ s/16$//;
 	if($name16 ne $internal_name && $winapi->function_stub($name16)) {
 	    if($options->implemented) {
-		&$output("function implemented but declared as stub in .spec file");
+		$output->write("function implemented but declared as stub in .spec file\n");
 	    }
 	    return;
 	} elsif($winapi->function_stub($internal_name)) {
 	    if($options->implemented_win32) {
-		&$output("32-bit variant of function implemented but declared as stub in .spec file");
+		$output->write("32-bit variant of function implemented but declared as stub in .spec file\n");
 	    }
 	    return;
 	}
     } elsif($winapi->function_stub($internal_name)) {
 	if($options->implemented) {
-	    &$output("function implemented but declared as stub in .spec file");
+	    $output->write("function implemented but declared as stub in .spec file\n");
 	}
 	return;
     }
@@ -42,12 +42,12 @@ sub check_function {
     $winapi->type_used_in_module($return_type,$module);
     if(!defined($implemented_return_kind = $winapi->translate_argument($return_type))) {
 	if($return_type ne "") {
-	    &$output("no translation defined: " . $return_type);
+	    $output->write("no translation defined: " . $return_type . "\n");
 	}
     } elsif(!$winapi->is_allowed_kind($implemented_return_kind) || !$winapi->allowed_type_in_module($return_type,$module)) {
 	$forbidden_return_type = 1;
 	if($options->report_argument_forbidden($return_type)) {
-	    &$output("forbidden return type: $return_type ($implemented_return_kind)");
+	    $output->write("forbidden return type: $return_type ($implemented_return_kind)" . "\n");
 	}
     }
     
@@ -102,7 +102,7 @@ sub check_function {
             ($options->calling_convention_win32 && $winapi->name eq "win32")) &&
 	    !$nativeapi->is_function($internal_name))
         {
-	    &$output("calling convention mismatch: $implemented_calling_convention != $declared_calling_convention");
+	    $output->write("calling convention mismatch: $implemented_calling_convention != $declared_calling_convention\n");
 	}
     }
 
@@ -110,10 +110,10 @@ sub check_function {
 	if($#argument_types != -1 && $argument_types[$#argument_types] eq "...") {
 	    pop @argument_types;
 	} else {
-	    &$output("function not implemented as vararg");
+	    $output->write("function not implemented as vararg\n");
 	}
     } elsif($#argument_types != -1 && $argument_types[$#argument_types] eq "...") {
-	&$output("function not declared as vararg");
+	$output->write("function not declared as vararg\n");
     }
 
     if($#argument_types != -1 && $argument_types[$#argument_types] eq "CONTEXT *" &&
@@ -131,11 +131,11 @@ sub check_function {
 	    my $kind = "unknown";
 	    $winapi->type_used_in_module($type,$module);
 	    if(!defined($kind = $winapi->translate_argument($type))) {
-		&$output("no translation defined: " . $type);
+		$output->write("no translation defined: " . $type . "\n");
 	    } elsif(!$winapi->is_allowed_kind($kind) ||
 		    !$winapi->allowed_type_in_module($type, $module)) {
 		if($options->report_argument_forbidden($type)) {
-		    &$output("forbidden argument " . ($n + 1) . " type " . $type . " (" . $kind . ")");
+		    $output->write("forbidden argument " . ($n + 1) . " type " . $type . " (" . $kind . ")\n");
 		}
 	    }
 	    if(defined($kind) && $kind eq "longlong") {
@@ -160,21 +160,24 @@ sub check_function {
 		if($options->report_argument_kind($argument_kinds[$n]) ||
 		   $options->report_argument_kind($declared_argument_kinds[$n]))
 		{
-		    &$output("argument " . ($n + 1) . " type mismatch: " .
-			     $argument_types[$n] . " ($argument_kinds[$n]) != " . $declared_argument_kinds[$n]);
+		    $output->write("argument " . ($n + 1) . " type mismatch: " .
+			     $argument_types[$n] . " ($argument_kinds[$n]) != " . 
+			     $declared_argument_kinds[$n] . "\n");
 		}
 	    }
 	}
         if($#argument_kinds != $#declared_argument_kinds) {
 	    if($options->argument_count) {
-		&$output("argument count differs: " . ($#argument_types + 1) . " != " . ($#declared_argument_kinds + 1));
+		$output->write("argument count differs: " . 
+		    ($#argument_types + 1) . " != " . 
+		    ($#declared_argument_kinds + 1) . "\n");
 	    }
 	}
 
     }
 
     if($segmented && $options->shared_segmented && $winapi->is_shared_function($internal_name)) {
-	&$output("function using segmented pointers shared between Win16 och Win32");
+	$output->write("function using segmented pointers shared between Win16 och Win32\n");
     }
 }
 
@@ -225,15 +228,15 @@ sub check_statements {
 			    $format =~ s/^\\\"(.*?)\\\"$/$1/;
 
 			    if($argument !~ /$name/) {
-				&$output("$called_name: argument $n is wrong ($name != '$argument')");
+				$output->write("$called_name: argument $n is wrong ($name != '$argument')\n");
 			    } elsif(!$winapi->is_allowed_type_format($module, $type, $format)) {
-				&$output("$called_name: argument $n ($type $name) has illegal format ($format)");
+				$output->write("$called_name: argument $n ($type $name) has illegal format ($format)\n");
 			    }
 			}
 
 			my $count = $#{$function->argument_types} + 1; 
 			if($n != $count) {
-			    &$output("$called_name: argument count mismatch ($n != $count)");
+			    $output->write("$called_name: argument count mismatch ($n != $count)\n");
 			}
 		    }
 		}

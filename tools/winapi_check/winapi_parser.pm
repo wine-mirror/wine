@@ -191,7 +191,10 @@ sub parse_c_file {
 		&$function_end;
 	    }
 	    next;	    
-	} elsif(/(extern\s+|static\s+)?((struct\s+|union\s+|enum\s+)?\w+((\s*\*)+\s*|\s+))((__cdecl|__stdcall|VFWAPIV|VFWAPI|WINAPIV|WINAPI|CALLBACK)\s+)?(\w+(\(\w+\))?)\s*\(([^\)]*)\)\s*(\{|\;)/s) {
+	} elsif(/(extern\s+|static\s+)?((struct\s+|union\s+|enum\s+)?\w+((\s*\*)+\s*|\s+))
+            ((__cdecl|__stdcall|CDECL|VFWAPIV|VFWAPI|WINAPIV|WINAPI|CALLBACK)\s+)?
+	    (\w+(\(\w+\))?)\s*\(([^\)]*)\)\s*(\{|\;)/sx)
+        {
 	    $_ = $'; $again = 1;
 	    
 	    if($11 eq "{")  {

@@ -219,12 +219,14 @@ sub parse_spec_file {
     my $function_stub = \%{$self->{FUNCTION_STUB}};
     my $function_module = \%{$self->{FUNCTION_MODULE}};
     my $modules = \%{$self->{MODULES}};
+    my $module_files = \%{$self->{MODULE_FILES}};
 
     my $file = shift;
 
     my %ordinals;
     my $type;
     my $module;
+    my $module_file;
 
     if($$options->progress) {
 	$$output->progress("$file");
@@ -242,6 +244,7 @@ sub parse_spec_file {
 
 	if($header)  {
 	    if(/^name\s*(\S*)/) { $module = $1; }
+	    if(/^file\s*(\S*)/) { $module_file = $1; }
 	    if(/^type\s*(\w+)/) { $type = $1; }
 	    if(/^\d+|@/) { $header = 0; $lookahead = 1; }
 	    next;
@@ -338,6 +341,11 @@ sub parse_spec_file {
     close(IN);
 
     $$modules{$module}++;
+    if(defined($module_file)) {
+	$$module_files{$module} = $module_file;
+    } else {
+	$$module_files{$module} = "$module.drv";
+    }
 }
 
 sub name {
@@ -524,6 +532,16 @@ sub is_module {
     my $name = shift;
 
     return $$modules{$name};
+}
+
+sub module_file {
+    my $self = shift;
+
+    my $module = shift;
+
+    my $module_files = \%{$self->{MODULE_FILES}};
+
+    return $$module_files{$module};
 }
 
 sub all_functions {

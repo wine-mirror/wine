@@ -148,10 +148,6 @@ dlls/lzexpand
 
 dlls/lzexpand
 
-% dlls/mouse/mouse.spec
-
-dlls/mouse
-
 % dlls/mpr/mpr.spec
 
 dlls/mpr
@@ -310,12 +306,6 @@ dlls/ttydrv
 
 dlls/urlmon
 
-% dlls/user/keyboard.spec
-
-dlls/user
-memory
-windows
-
 % dlls/user/ddeml.spec
 
 dlls/user
@@ -325,6 +315,16 @@ misc
 
 dlls/user
 objects
+
+% dlls/user/keyboard.spec
+
+dlls/user
+memory
+windows
+
+% dlls/user/mouse.spec
+
+dlls/user
 
 % dlls/user/user.spec
 

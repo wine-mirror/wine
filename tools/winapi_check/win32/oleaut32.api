@@ -1,6 +1,7 @@
 %double
 
 CY
+DATE
 double
 
 %long
@@ -8,7 +9,6 @@ double
 BOOL
 BYTE
 CHAR
-DATE
 DWORD
 FLOAT
 HCURSOR

@@ -11,10 +11,12 @@ sub new {
     my $progress = \${$self->{PROGRESS}};
     my $last_progress = \${$self->{LAST_PROGRESS}};
     my $progress_count = \${$self->{PROGRESS_COUNT}};
+    my $prefix = \${$self->{PREFIX}};
 
     $$progress = "";
     $$last_progress = "";
-    $progress_count = 0;
+    $$progress_count = 0;
+    $$prefix = "";
 
     return $self;
 }
@@ -87,14 +89,22 @@ sub progress {
     $self->update_progress;
 }
 
+sub prefix {
+    my $self = shift;
+    my $prefix = \${$self->{PREFIX}};
+
+    $$prefix = shift;
+}
+
 sub write {
     my $self = shift;
 
     my $message = shift;
 
+    my $prefix = \${$self->{PREFIX}};
 
     $self->hide_progress;
-    print $message;
+    print $$prefix . $message;
     $self->show_progress;
 }
 
