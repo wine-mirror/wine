@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINE 1 "December 30, 1998" "Version 981211" "Windows On Unix"
+.TH WINE 1 "February 3, 1999" "Version 990131" "Windows On Unix"
 .SH NAME
 wine \- run Windows programs on Unix
 .SH SYNOPSIS
@@ -28,12 +28,14 @@ under recent releases of NetBSD/i386, FreeBSD and OpenBSD/i386. Some bugs
 were fixed and additional features were added late in the Linux 2.0.x 
 series, so if you have an old Linux kernel, you may want to upgrade to the
 latest 2.0.x release. If you have FreeBSD, make sure you have the USER_LDT,
-SYSVSEM, and SYSVMSG options turned on in your kernel. 
+SYSVSHM, SYSVSEM, and SYSVMSG options turned on in your kernel. If you
+are building Wine on Solaris, you will most likely need to build Wine
+with the GNU toolchain (gcc, gas, etc.)
 .PP
 The current support for multithreaded applications relies on the 
 .BR clone (2)
-system call, which is currently available only on Linux systems running
-libc6 (aka glibc2).
+system call, which is currently only available on Linux. It should be
+possible to implement this for other operating systems, however.
 .PP
 .B X
 must be installed.  To use Wine's support for multithreaded applications,
