@@ -34,6 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dialog);
 
 #define MSGBOX_IDICON 1088
 #define MSGBOX_IDTEXT 100
+#define IDS_ERROR     2
 
 static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 {
@@ -61,8 +62,17 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     if (HIWORD(lpmb->lpszCaption)) {
        SetWindowTextW(hwnd, lpmb->lpszCaption);
     } else {
-       if (LoadStringW(lpmb->hInstance, LOWORD(lpmb->lpszCaption), buf, 256))
-	  SetWindowTextW(hwnd, buf);
+       UINT res_id = LOWORD(lpmb->lpszCaption);
+       if (res_id)
+       {
+           if (LoadStringW(lpmb->hInstance, res_id, buf, 256))
+               SetWindowTextW(hwnd, buf);
+       }
+       else
+       {
+           if (LoadStringW(0, IDS_ERROR, buf, 256))
+               SetWindowTextW(hwnd, buf);
+       }
     }
     if (HIWORD(lpmb->lpszText)) {
        lpszText = lpmb->lpszText;

@@ -77,5 +77,6 @@ END
 
 STRINGTABLE DISCARDABLE
 {
-    MDI_IDS_MOREWINDOWS  "&More Windows..." /* defined in mdi.h */
+    IDS_ERROR "Error"
+    IDS_MDI_MOREWINDOWS "&More Windows..."
 }

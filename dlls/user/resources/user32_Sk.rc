@@ -77,5 +77,6 @@ END
 
 STRINGTABLE DISCARDABLE
 {
-    MDI_IDS_MOREWINDOWS  "&Viac okien..." /* defined in mdi.h */
+    IDS_ERROR "Error"
+    IDS_MDI_MOREWINDOWS "&Viac okien..."
 }

@@ -72,7 +72,8 @@ END
 
 STRINGTABLE DISCARDABLE
 {
-    MDI_IDS_MOREWINDOWS  "更多窗口(&M)..." /* defined in mdi.h */
+    IDS_ERROR "Error"
+    IDS_MDI_MOREWINDOWS  "更多窗口(&M)..." /* defined in mdi.h */
 }
 
 LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
@@ -132,7 +133,8 @@ END
 
 STRINGTABLE DISCARDABLE
 {
-    MDI_IDS_MOREWINDOWS  "更多視窗(&M)..." /* defined in mdi.h */
+    IDS_ERROR "Error"
+    IDS_MDI_MOREWINDOWS "更多視窗(&M)..."
 }
 
 #pragma code_page(default)

@@ -114,7 +114,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mdi);
 #define MDI_MOREWINDOWSLIMIT    9       /* after this number of windows, a "More Windows..."
                                            option will appear under the Windows menu */
 #define MDI_IDC_LISTBOX         100
-#define MDI_IDS_MOREWINDOWS     13
+#define IDS_MDI_MOREWINDOWS     13
 
 #define MDIF_NEEDUPDATE		0x0001
 
@@ -279,7 +279,7 @@ static BOOL MDI_MenuDeleteItem( HWND client, HWND hWndChild )
     if (clientInfo->nActiveChildren - 1 > MDI_MOREWINDOWSLIMIT)
     {
         WCHAR szTmp[50];
-        LoadStringW(GetModuleHandleA("USER32"), MDI_IDS_MOREWINDOWS, szTmp, sizeof(szTmp)/sizeof(szTmp[0]));
+        LoadStringW(GetModuleHandleA("USER32"), IDS_MDI_MOREWINDOWS, szTmp, sizeof(szTmp)/sizeof(szTmp[0]));
         AppendMenuW(clientInfo->hWindowMenu, MF_STRING, clientInfo->idFirstChild + MDI_MOREWINDOWSLIMIT, szTmp);
     }
     return TRUE;
@@ -596,7 +596,7 @@ static HWND MDICreateChild( HWND parent, MDICLIENTINFO *ci,
         if (ci->nActiveChildren == MDI_MOREWINDOWSLIMIT + 1)
         {
             WCHAR szTmp[50];
-            LoadStringW(GetModuleHandleA("USER32"), MDI_IDS_MOREWINDOWS, szTmp, sizeof(szTmp)/sizeof(szTmp[0]));
+            LoadStringW(GetModuleHandleA("USER32"), IDS_MDI_MOREWINDOWS, szTmp, sizeof(szTmp)/sizeof(szTmp[0]));
 
             ModifyMenuW(ci->hWindowMenu,
                         ci->idFirstChild + MDI_MOREWINDOWSLIMIT,

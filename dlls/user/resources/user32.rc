@@ -24,7 +24,8 @@
 #include "dlgs.h"
 
 #define MDI_IDC_LISTBOX         100
-#define MDI_IDS_MOREWINDOWS     13
+#define IDS_MDI_MOREWINDOWS     13
+#define IDS_ERROR               2
 
 /*
  * Everything that does not depend on language,
