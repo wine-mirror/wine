@@ -115,6 +115,22 @@ static void CALLBACK THREAD_Start( void *ptr )
 
 
 /***********************************************************************
+ *           cleanup_teb
+ *
+ * Cleanup the TEB structure; might be called from a different thread.
+ */
+static void cleanup_teb( struct wine_pthread_thread_info *info )
+{
+    TEB *teb = (TEB *)info->teb_base;
+
+    close( teb->wait_fd[0] );
+    close( teb->wait_fd[1] );
+    close( teb->reply_fd );
+    close( teb->request_fd );
+}
+
+
+/***********************************************************************
  *           CreateThread   (KERNEL32.@)
  */
 HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, SIZE_T stack,
@@ -213,6 +229,7 @@ void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
         info.stack_base  = NtCurrentTeb()->DeallocationStack;
         info.teb_base    = NtCurrentTeb();
         info.teb_sel     = wine_get_fs();
+        info.cleanup     = cleanup_teb;
         info.exit_status = code;
 
         size = 0;
@@ -233,11 +250,6 @@ void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
         sigaddset( &block_set, SIGUSR2 );
         sigaddset( &block_set, SIGTERM );
         sigprocmask( SIG_BLOCK, &block_set, NULL );
-
-        close( NtCurrentTeb()->wait_fd[0] );
-        close( NtCurrentTeb()->wait_fd[1] );
-        close( NtCurrentTeb()->reply_fd );
-        close( NtCurrentTeb()->request_fd );
 
         wine_pthread_exit_thread( &info );
     }

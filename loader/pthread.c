@@ -62,20 +62,6 @@ void wine_pthread_init_process( const struct wine_pthread_functions *functions )
  */
 void wine_pthread_init_thread( struct wine_pthread_thread_info *info )
 {
-#ifdef __i386__
-    /* On the i386, the current thread is in the %fs register */
-    LDT_ENTRY fs_entry;
-
-    wine_ldt_set_base( &fs_entry, info->teb_base );
-    wine_ldt_set_limit( &fs_entry, info->teb_size - 1 );
-    wine_ldt_set_flags( &fs_entry, WINE_LDT_FLAGS_DATA|WINE_LDT_FLAGS_32BIT );
-    wine_ldt_init_fs( info->teb_sel, &fs_entry );
-#else
-    if (!funcs.ptr_set_thread_data)  /* first thread */
-        pthread_key_create( &teb_key, NULL );
-    pthread_setspecific( teb_key, info->teb_base );
-#endif
-
     /* retrieve the stack info (except for main thread) */
     if (funcs.ptr_set_thread_data)
     {
@@ -91,10 +77,6 @@ void wine_pthread_init_thread( struct wine_pthread_thread_info *info )
         info->stack_base = stack_top - info->stack_size;
 #endif
     }
-
-    /* set pid and tid */
-    info->pid = getpid();
-    info->tid = gettid();
 }
 
 
@@ -112,6 +94,33 @@ int wine_pthread_create_thread( struct wine_pthread_thread_info *info )
     if (pthread_create( &id, &attr, (void * (*)(void *))info->entry, info )) ret = -1;
     pthread_attr_destroy( &attr );
     return ret;
+}
+
+
+/***********************************************************************
+ *           wine_pthread_init_current_teb
+ *
+ * Set the current TEB for a new thread.
+ */
+void wine_pthread_init_current_teb( struct wine_pthread_thread_info *info )
+{
+#ifdef __i386__
+    /* On the i386, the current thread is in the %fs register */
+    LDT_ENTRY fs_entry;
+
+    wine_ldt_set_base( &fs_entry, info->teb_base );
+    wine_ldt_set_limit( &fs_entry, info->teb_size - 1 );
+    wine_ldt_set_flags( &fs_entry, WINE_LDT_FLAGS_DATA|WINE_LDT_FLAGS_32BIT );
+    wine_ldt_init_fs( info->teb_sel, &fs_entry );
+#else
+    if (!funcs.ptr_set_thread_data)  /* first thread */
+        pthread_key_create( &teb_key, NULL );
+    pthread_setspecific( teb_key, info->teb_base );
+#endif
+
+    /* set pid and tid */
+    info->pid = getpid();
+    info->tid = gettid();
 }
 
 
@@ -153,6 +162,7 @@ void wine_pthread_exit_thread( struct wine_pthread_thread_info *info )
     if ((free_info = interlocked_xchg_ptr( (void **)&previous_info, cleanup_info )) != NULL)
     {
         pthread_join( free_info->self, &ptr );
+        if (free_info->thread_info.cleanup) free_info->thread_info.cleanup( &free_info->thread_info );
         wine_ldt_free_fs( free_info->thread_info.teb_sel );
         munmap( free_info->thread_info.teb_base, free_info->thread_info.teb_size );
     }

@@ -189,6 +189,7 @@ static void cleanup_thread( void *ptr )
 {
     /* copy the info structure since it is on the stack we will free */
     struct wine_pthread_thread_info info = *(struct wine_pthread_thread_info *)ptr;
+    if (info.cleanup) info.cleanup( &info );
     wine_ldt_free_fs( info.teb_sel );
     munmap( info.stack_base, info.stack_size );
     munmap( info.teb_base, info.teb_size );
@@ -219,34 +220,6 @@ void wine_pthread_init_process( const struct wine_pthread_functions *functions )
 void wine_pthread_init_thread( struct wine_pthread_thread_info *info )
 {
     struct pthread_descr_struct *descr;
-
-#ifdef __i386__
-    /* On the i386, the current thread is in the %fs register */
-    LDT_ENTRY fs_entry;
-
-    wine_ldt_set_base( &fs_entry, info->teb_base );
-    wine_ldt_set_limit( &fs_entry, info->teb_size - 1 );
-    wine_ldt_set_flags( &fs_entry, WINE_LDT_FLAGS_DATA|WINE_LDT_FLAGS_32BIT );
-    wine_ldt_init_fs( info->teb_sel, &fs_entry );
-#elif defined(__powerpc__)
-    /* On PowerPC, the current TEB is in the gpr13 register */
-# ifdef __APPLE__
-    __asm__ __volatile__("mr r13, %0" : : "r" (info->teb_base));
-# else
-    __asm__ __volatile__("mr 2, %0" : : "r" (info->teb_base));
-# endif
-#elif defined(HAVE__LWP_CREATE)
-    /* On non-i386 Solaris, we use the LWP private pointer */
-    _lwp_setprivate( info->teb_base );
-#endif
-
-    /* set pid and tid */
-    info->pid = getpid();
-#ifdef HAVE__LWP_SELF
-    info->tid = _lwp_self();
-#else
-    info->tid = -1;
-#endif
 
     if (funcs.ptr_set_thread_data)
     {
@@ -315,6 +288,43 @@ int wine_pthread_create_thread( struct wine_pthread_thread_info *info )
     }
 #endif
     return -1;
+}
+
+
+/***********************************************************************
+ *           wine_pthread_init_current_teb
+ *
+ * Set the current TEB for a new thread.
+ */
+void wine_pthread_init_current_teb( struct wine_pthread_thread_info *info )
+{
+#ifdef __i386__
+    /* On the i386, the current thread is in the %fs register */
+    LDT_ENTRY fs_entry;
+
+    wine_ldt_set_base( &fs_entry, info->teb_base );
+    wine_ldt_set_limit( &fs_entry, info->teb_size - 1 );
+    wine_ldt_set_flags( &fs_entry, WINE_LDT_FLAGS_DATA|WINE_LDT_FLAGS_32BIT );
+    wine_ldt_init_fs( info->teb_sel, &fs_entry );
+#elif defined(__powerpc__)
+    /* On PowerPC, the current TEB is in the gpr13 register */
+# ifdef __APPLE__
+    __asm__ __volatile__("mr r13, %0" : : "r" (info->teb_base));
+# else
+    __asm__ __volatile__("mr 2, %0" : : "r" (info->teb_base));
+# endif
+#elif defined(HAVE__LWP_CREATE)
+    /* On non-i386 Solaris, we use the LWP private pointer */
+    _lwp_setprivate( info->teb_base );
+#endif
+
+    /* set pid and tid */
+    info->pid = getpid();
+#ifdef HAVE__LWP_SELF
+    info->tid = _lwp_self();
+#else
+    info->tid = -1;
+#endif
 }
 
 

@@ -129,6 +129,7 @@ void thread_init(void)
     thread_info.teb_base   = teb;
     thread_info.teb_size   = size;
     thread_info.teb_sel    = teb->teb_sel;
+    wine_pthread_init_current_teb( &thread_info );
     wine_pthread_init_thread( &thread_info );
 
     debug_info.str_pos = debug_info.strings;
@@ -171,9 +172,10 @@ static void start_thread( struct wine_pthread_thread_info *info )
     debug_info.out_pos = debug_info.output;
     teb->debug_info = &debug_info;
 
-    wine_pthread_init_thread( info );
+    wine_pthread_init_current_teb( info );
     SIGNAL_Init();
     server_init_thread( info->pid, info->tid, func );
+    wine_pthread_init_thread( info );
 
     /* allocate a memory view for the stack */
     size = info->stack_size;

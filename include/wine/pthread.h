@@ -94,12 +94,14 @@ struct wine_pthread_thread_info
     int            pid;         /* Unix process id */
     int            tid;         /* Unix thread id */
     void         (*entry)( struct wine_pthread_thread_info *info );  /* thread entry point */
+    void         (*cleanup)( struct wine_pthread_thread_info *info );  /* thread cleanup function */
     int            exit_status; /* thread exit status when calling wine_pthread_exit_thread */
 };
 
 extern void wine_pthread_init_process( const struct wine_pthread_functions *functions );
 extern void wine_pthread_init_thread( struct wine_pthread_thread_info *info );
 extern int wine_pthread_create_thread( struct wine_pthread_thread_info *info );
+extern void wine_pthread_init_current_teb( struct wine_pthread_thread_info *info );
 extern void *wine_pthread_get_current_teb(void);
 extern void DECLSPEC_NORETURN wine_pthread_exit_thread( struct wine_pthread_thread_info *info );
 extern void DECLSPEC_NORETURN wine_pthread_abort_thread( int status );

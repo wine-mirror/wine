@@ -67,6 +67,13 @@ int wine_pthread_create_thread( struct wine_pthread_thread_info *info )
 }
 
 /***********************************************************************
+ *           wine_pthread_init_current_teb
+ */
+void wine_pthread_init_current_teb( struct wine_pthread_thread_info *info )
+{
+}
+
+/***********************************************************************
  *           wine_pthread_get_current_teb
  */
 void *wine_pthread_get_current_teb(void)

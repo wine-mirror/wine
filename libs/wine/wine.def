@@ -59,6 +59,7 @@ EXPORTS
     wine_pthread_abort_thread
     wine_pthread_create_thread
     wine_pthread_exit_thread
+    wine_pthread_init_current_teb
     wine_pthread_init_process
     wine_pthread_init_thread
     wine_set_fs
