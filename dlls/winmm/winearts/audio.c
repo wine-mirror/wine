@@ -719,7 +719,7 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* bytes)
     {
       if(wwo->sound_buffer)
       {
-	HeapRealloc(GetProcessHeap(), 0, wwo->sound_buffer, toWrite);
+	wwo->sound_buffer = HeapReAlloc(GetProcessHeap(), 0, wwo->sound_buffer, toWrite);
 	wwo->buffer_size = toWrite;
       }
     }
