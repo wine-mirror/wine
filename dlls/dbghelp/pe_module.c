@@ -117,12 +117,18 @@ static BOOL pe_load_dbg_file(const struct process* pcs, struct module* module,
         }
         if (hdr->Signature == IMAGE_SEPARATE_DEBUG_SIGNATURE)
         {
+            /* section headers come immediately after debug header */
+            const IMAGE_SECTION_HEADER *sectp =
+                (const IMAGE_SECTION_HEADER*)(hdr + 1);
+            /* and after that and the exported names comes the debug directory */
             dbg = (const IMAGE_DEBUG_DIRECTORY*) 
                 (dbg_mapping + sizeof(*hdr) + 
                  hdr->NumberOfSections * sizeof(IMAGE_SECTION_HEADER) +
                  hdr->ExportedNamesSize);
-    
-            ret = pe_load_debug_directory(pcs, module, dbg_mapping, dbg, 
+
+
+            ret = pe_load_debug_directory(pcs, module, dbg_mapping, sectp,
+                                          hdr->NumberOfSections, dbg,
                                           hdr->DebugDirectorySize / sizeof(*dbg));
         }
         else
@@ -178,8 +184,10 @@ static BOOL pe_load_msc_debug_info(const struct process* pcs,
     }
     else
     {
+        const IMAGE_SECTION_HEADER *sectp = (const IMAGE_SECTION_HEADER*)((const char*)&nth->OptionalHeader + nth->FileHeader.SizeOfOptionalHeader);
         /* Debug info is embedded into PE module */
-        ret = pe_load_debug_directory(pcs, module, mapping, dbg, nDbg);
+        ret = pe_load_debug_directory(pcs, module, mapping, sectp,
+            nth->FileHeader.NumberOfSections, dbg, nDbg);
     }
 
     return ret;

@@ -638,6 +638,28 @@ union codeview_type
         short int          id;
         unsigned char      list[1];
     } fieldlist;
+
+    struct
+    {
+        unsigned short int len;
+        short int          id;
+        unsigned short int rvtype;
+        unsigned char      call;
+        unsigned char      reserved;
+        unsigned short int params;
+        unsigned short int arglist;
+    } procedure;
+
+    struct
+    {
+        unsigned short int len;
+        short int          id;
+        unsigned int       rvtype;
+        unsigned char      call;
+        unsigned char      reserved;
+        unsigned short int params;
+        unsigned int       arglist;
+    } procedure32;
 };
 
 union codeview_fieldtype
@@ -1708,6 +1730,14 @@ static int codeview_parse_type_table(struct module* module, const char* table, i
             retv = codeview_add_type_enum(module, curr_type, terminate_string(type->enumeration32.name),
                                           type->enumeration32.field);
             break;
+
+        case LF_PROCEDURE:
+            FIXME("LF_PROCEDURE unhandled\n");
+            break; 
+
+        case LF_PROCEDURE_32:
+            FIXME("LF_PROCEDURE_32 unhandled\n");
+            break; 
 
         default:
             FIXME("Unhandled leaf %x\n", type->generic.id);
@@ -2991,18 +3021,17 @@ static BOOL codeview_process_info(const struct process* pcs,
  * Process debug directory.
  */
 BOOL pe_load_debug_directory(const struct process* pcs, struct module* module, 
-                             const BYTE* mapping, const IMAGE_DEBUG_DIRECTORY* dbg, 
-                             int nDbg)
+                             const BYTE* mapping,
+                             const IMAGE_SECTION_HEADER* sectp, DWORD nsect,
+                             const IMAGE_DEBUG_DIRECTORY* dbg, int nDbg)
 {
     BOOL                        ret;
     int                         i;
     struct msc_debug_info       msc_dbg;
-    const IMAGE_SEPARATE_DEBUG_HEADER* dbg_hdr = (const IMAGE_SEPARATE_DEBUG_HEADER*)mapping;
 
     msc_dbg.module = module;
-    msc_dbg.nsect  = dbg_hdr->NumberOfSections;
-    /* section headers come immediately after debug header */
-    msc_dbg.sectp  = (const IMAGE_SECTION_HEADER*)(dbg_hdr + 1);
+    msc_dbg.nsect  = nsect;
+    msc_dbg.sectp  = sectp;
     msc_dbg.nomap  = 0;
     msc_dbg.omapp  = NULL;
 

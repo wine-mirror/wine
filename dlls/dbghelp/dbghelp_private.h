@@ -334,7 +334,8 @@ extern BOOL         module_remove(struct process* pcs,
 /* msc.c */
 extern BOOL         pe_load_debug_directory(const struct process* pcs, 
                                             struct module* module, 
-                                            const BYTE* file_map,
+                                            const BYTE* mapping,
+                                            const IMAGE_SECTION_HEADER* sectp, DWORD nsect,
                                             const IMAGE_DEBUG_DIRECTORY* dbg, int nDbg);
 /* pe_module.c */
 extern struct module*
