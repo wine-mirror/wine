@@ -1468,14 +1468,18 @@ BOOL WINAPI ChooseColorA( LPCHOOSECOLORA lpChCol )
   lpcc->Flags = lpChCol->Flags;
   lpcc->lCustData = lpChCol->lCustData;
   lpcc->lpfnHook = (LPCCHOOKPROC) lpChCol->lpfnHook;
-  if ((lpcc->Flags & CC_ENABLETEMPLATE) && (lpChCol->lpTemplateName))
-      lpcc->lpTemplateName = HEAP_strdupAtoW(GetProcessHeap(), 0, lpChCol->lpTemplateName);
-  
+  if ((lpcc->Flags & CC_ENABLETEMPLATE) && (lpChCol->lpTemplateName)) {
+      if (HIWORD(lpChCol->lpTemplateName))
+	  lpcc->lpTemplateName = HEAP_strdupAtoW(GetProcessHeap(), 0, lpChCol->lpTemplateName);
+      else
+	  lpcc->lpTemplateName = (LPWSTR)lpChCol->lpTemplateName;
+  }
+
   ret = ChooseColorW(lpcc);
 
   if (ret)
       lpChCol->rgbResult = lpcc->rgbResult;
-  if (lpcc->lpTemplateName) HeapFree(GetProcessHeap(), 0, (LPSTR)lpcc->lpTemplateName);
+  if (HIWORD(lpcc->lpTemplateName)) HeapFree(GetProcessHeap(), 0, (LPSTR)lpcc->lpTemplateName);
   HeapFree(GetProcessHeap(), 0, lpcc);
   return ret;
 }
