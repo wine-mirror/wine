@@ -63,7 +63,6 @@ BEGIN
 
     CONTROL	    "Can DirectX programs prevent the mouse leaving their window?",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
     CONTROL	    "Enable desktop double buffering",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
-    CONTROL	    "UseTakeFocus (FIXME)",IDC_USE_TAKE_FOCUS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,55,230,8
     
     GROUPBOX        " Window settings ",IDC_STATIC,8,25,244,120
 

@@ -145,13 +145,6 @@ void initX11DrvDlg (HWND hDlg)
 	CheckDlgButton(hDlg, IDC_DOUBLE_BUFFER, BST_UNCHECKED);
     free(buf);
     
-    buf = getConfigValue(section, "UseTakeFocus", "N");
-    if (IS_OPTION_TRUE(*buf))
-	CheckDlgButton(hDlg, IDC_USE_TAKE_FOCUS, BST_CHECKED);
-    else
-	CheckDlgButton(hDlg, IDC_USE_TAKE_FOCUS, BST_UNCHECKED);
-    free(buf);
-    
     updatingUI = FALSE;
 }
 
@@ -219,14 +212,6 @@ void onDoubleBufferClicked(HWND hDlg) {
 	addTransaction(section, "DesktopDoubleBuffered", ACTION_SET, "N");
 }
 
-void onUseTakeFocusClicked(HWND hDlg) {
-    if (IsDlgButtonChecked(hDlg, IDC_USE_TAKE_FOCUS) == BST_CHECKED)
-	addTransaction(section, "UseTakeFocus", ACTION_SET, "Y");
-    else
-	addTransaction(section, "UseTakeFocus", ACTION_SET, "N");
-}
-
-
 INT_PTR CALLBACK
 X11DrvDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -247,7 +232,6 @@ X11DrvDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    switch(LOWORD(wParam)) {
 			case IDC_ENABLE_DESKTOP: onEnableDesktopClicked(hDlg); break;
 			case IDC_DX_MOUSE_GRAB:  onDXMouseGrabClicked(hDlg); break;
-			case IDC_USE_TAKE_FOCUS: onUseTakeFocusClicked(hDlg); break;
 			case IDC_DOUBLE_BUFFER:  onDoubleBufferClicked(hDlg); break;
 		    };
 		    break;
