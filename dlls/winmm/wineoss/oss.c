@@ -12,6 +12,8 @@
 #include "mmddk.h"
 #include "oss.h"
 
+#ifdef HAVE_OSS
+
 static	struct WINE_OSS* oss = NULL;
 
 /**************************************************************************
@@ -39,6 +41,9 @@ static	DWORD	OSS_drvClose(DWORD dwDevID)
     return 0;
 }
 
+#endif
+
+
 /**************************************************************************
  * 				OSS_DriverProc			[internal]
  */
@@ -49,6 +54,7 @@ LONG CALLBACK	OSS_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 /* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */
     
     switch(wMsg) {
+#ifdef HAVE_OSS
     case DRV_LOAD:		OSS_WaveInit(); OSS_MidiInit(); return 1;
     case DRV_FREE:		return 1;
     case DRV_OPEN:		return OSS_drvOpen((LPSTR)dwParam1);
@@ -59,6 +65,7 @@ LONG CALLBACK	OSS_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case DRV_CONFIGURE:		MessageBoxA(0, "OSS MultiMedia Driver !", "OSS Driver", MB_OK);	return 1;
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
+#endif
     default:
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
