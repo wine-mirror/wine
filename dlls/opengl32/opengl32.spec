@@ -3,6 +3,7 @@ name opengl32
 type win32
 
 init OpenGL32_Init
+import user32
 import x11drv
 import kernel32
 
