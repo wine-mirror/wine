@@ -9,18 +9,7 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
-	console.c \
-	crtdll_main.c \
-	dir.c \
-	exit.c \
-	file.c \
-	locale.c \
-	mbstring.c \
-	memory.c \
-	spawn.c \
-	string.c \
-	time.c \
-	wcstring.c
+	crtdll_main.c
 
 @MAKE_DLL_RULES@
 

@@ -1,536 +1,537 @@
-# C RunTime DLL. All functions use cdecl!
+# Old C runtime library. All functions provided by msvcrt
 name    crtdll
 type    win32
 init    CRTDLL_Init
 
+import msvcrt.dll
 import kernel32.dll
 import ntdll.dll
 
 debug_channels (crtdll)
 
-@ cdecl ??2@YAPAXI@Z(long) CRTDLL_new
-@ cdecl ??3@YAXPAX@Z(long) CRTDLL_delete
-@ cdecl ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z(ptr) CRTDLL_set_new_handler
-@ cdecl _CIacos() CRTDLL__CIacos
-@ cdecl _CIasin() CRTDLL__CIasin
-@ cdecl _CIatan() CRTDLL__CIatan
-@ cdecl _CIatan2() CRTDLL__CIatan2
-@ cdecl _CIcos() CRTDLL__CIcos
-@ cdecl _CIcosh() CRTDLL__CIcosh
-@ cdecl _CIexp() CRTDLL__CIexp
-@ cdecl _CIfmod() CRTDLL__CIfmod
-@ cdecl _CIlog() CRTDLL__CIlog
-@ cdecl _CIlog10() CRTDLL__CIlog10
-@ cdecl _CIpow() CRTDLL__CIpow
-@ cdecl _CIsin() CRTDLL__CIsin
-@ cdecl _CIsinh() CRTDLL__CIsinh
-@ cdecl _CIsqrt() CRTDLL__CIsqrt
-@ cdecl _CItan() CRTDLL__CItan
-@ cdecl _CItanh() CRTDLL__CItanh
-@ extern _HUGE_dll CRTDLL_HUGE_dll
-@ stub _XcptFilter
-@ cdecl __GetMainArgs(ptr ptr ptr long) CRTDLL__GetMainArgs
-@ extern __argc_dll CRTDLL_argc_dll
-@ extern __argv_dll CRTDLL_argv_dll
-@ cdecl __dllonexit() CRTDLL___dllonexit
-@ cdecl __doserrno() CRTDLL___doserrno
-@ stub __fpecode
-@ cdecl __isascii(long) CRTDLL___isascii
-@ cdecl __iscsym(long) CRTDLL___iscsym
-@ cdecl __iscsymf(long) CRTDLL___iscsymf
-@ extern __mb_cur_max_dll CRTDLL__mb_cur_max_dll
-@ stub __pxcptinfoptrs
-@ forward __threadhandle kernel32.GetCurrentThread
-@ forward __threadid kernel32.GetCurrentThreadId
-@ cdecl __toascii(long) CRTDLL___toascii
-@ cdecl _abnormal_termination() CRTDLL__abnormal_termination
-@ cdecl _access(str long) CRTDLL__access
-@ extern _acmdln_dll CRTDLL_acmdln_dll
-@ stub _aexit_rtn_dll
-@ cdecl _amsg_exit(long) CRTDLL__amsg_exit
-@ cdecl _assert(ptr ptr long) CRTDLL__assert
-@ extern _basemajor_dll CRTDLL_basemajor_dll
-@ extern _baseminor_dll CRTDLL_baseminor_dll
-@ extern _baseversion_dll CRTDLL_baseversion_dll
-@ cdecl _beep(long long) CRTDLL__beep
-@ stub _beginthread
-@ cdecl _c_exit() CRTDLL__c_exit
-@ cdecl _cabs(long) CRTDLL__cabs
-@ cdecl _cexit() CRTDLL__cexit
-@ cdecl _cgets(str) CRTDLL__cgets
-@ cdecl _chdir(str) CRTDLL__chdir
-@ cdecl _chdrive(long) CRTDLL__chdrive
-@ cdecl _chgsign(double) CRTDLL__chgsign
-@ cdecl _chmod(str long) CRTDLL__chmod
-@ stub _chsize
-@ cdecl _clearfp() CRTDLL__clearfp
-@ cdecl _close(long) CRTDLL__close
-@ cdecl _commit(long) CRTDLL__commit
-@ extern _commode_dll CRTDLL_commode_dll
-@ cdecl _control87(long long) CRTDLL__control87
-@ cdecl _controlfp(long long) CRTDLL__controlfp
-@ cdecl _copysign(double double) CRTDLL__copysign
-@ varargs _cprintf(str) CRTDLL__cprintf
-@ stub _cpumode_dll
-@ cdecl _cputs(str) CRTDLL__cputs
-@ cdecl _creat(str long) CRTDLL__creat
-@ varargs _cscanf(str) CRTDLL__cscanf
-@ extern _ctype CRTDLL_ctype
-@ cdecl _cwait(ptr long long) CRTDLL__cwait
-@ stub _daylight_dll
-@ stub _dup
-@ stub _dup2
-@ cdecl _ecvt(double long ptr ptr) ecvt
-@ stub _endthread
-@ extern _environ_dll CRTDLL_environ_dll
-@ cdecl _eof(long) CRTDLL__eof
-@ cdecl _errno() CRTDLL__errno
-@ cdecl _except_handler2(ptr ptr ptr ptr) CRTDLL__except_handler2
-@ stub _execl
-@ stub _execle
-@ stub _execlp
-@ stub _execlpe
-@ stub _execv
-@ stub _execve
-@ stub _execvp
-@ stub _execvpe
-@ cdecl _exit(long) CRTDLL__exit
-@ cdecl _expand(ptr long) CRTDLL__expand
-@ cdecl _fcloseall() CRTDLL__fcloseall
-@ cdecl _fcvt(double long ptr ptr) fcvt
-@ cdecl _fdopen(long ptr) CRTDLL__fdopen
-@ cdecl _fgetchar() CRTDLL__fgetchar
-@ cdecl _fgetwchar() CRTDLL__fgetwchar
-@ cdecl _filbuf(ptr) CRTDLL__filbuf
-@ stub _fileinfo_dll
-@ cdecl _filelength(long) CRTDLL__filelength
-@ cdecl _fileno(ptr) CRTDLL__fileno
-@ cdecl _findclose(long) CRTDLL__findclose
-@ cdecl _findfirst(str ptr) CRTDLL__findfirst
-@ cdecl _findnext(long ptr) CRTDLL__findnext
-@ cdecl _finite(double) CRTDLL__finite
-@ cdecl _flsbuf(long ptr) CRTDLL__flsbuf
-@ cdecl _flushall() CRTDLL__flushall
-@ extern _fmode_dll CRTDLL_fmode_dll
-@ cdecl _fpclass(double) CRTDLL__fpclass
-@ stub _fpieee_flt
-@ cdecl _fpreset() CRTDLL__fpreset
-@ cdecl _fputchar(long) CRTDLL__fputchar
-@ cdecl _fputwchar(long)  CRTDLL__fputwchar
-@ cdecl _fsopen(str str long) CRTDLL__fsopen
-@ cdecl _fstat(long ptr) CRTDLL__fstat
-@ cdecl _ftime(ptr) CRTDLL__ftime
-@ forward _ftol ntdll._ftol
-@ cdecl _fullpath(ptr str long) CRTDLL__fullpath
-@ cdecl _futime(long ptr) CRTDLL__futime
-@ cdecl _gcvt(double long str) gcvt
-@ cdecl _get_osfhandle(long) CRTDLL__get_osfhandle
-@ cdecl _getch() CRTDLL__getch
-@ cdecl _getche() CRTDLL__getche
-@ cdecl _getcwd(ptr long) CRTDLL__getcwd
-@ cdecl _getdcwd(long ptr long) CRTDLL__getdcwd
-@ cdecl _getdiskfree(long ptr) CRTDLL__getdiskfree
-@ forward _getdllprocaddr kernel32.GetProcAddress
-@ cdecl _getdrive() CRTDLL__getdrive
-@ forward _getdrives kernel32.GetLogicalDrives
-@ forward _getpid kernel32.GetCurrentProcessId
-@ stub _getsystime
-@ cdecl _getw(ptr) CRTDLL__getw
-@ cdecl _global_unwind2(ptr) CRTDLL__global_unwind2
-@ cdecl _heapchk() CRTDLL__heapchk
-@ cdecl _heapmin() CRTDLL__heapmin
-@ cdecl _heapset(long) CRTDLL__heapset
-@ cdecl _heapwalk(ptr) CRTDLL__heapwalk
-@ cdecl _hypot(double double) hypot
-@ cdecl _initterm(ptr ptr) CRTDLL__initterm
-@ extern _iob __CRTDLL_iob
-@ cdecl _isatty(long) CRTDLL__isatty
-@ cdecl _isctype(long long) CRTDLL__isctype
-@ stub _ismbbalnum
-@ stub _ismbbalpha
-@ stub _ismbbgraph
-@ stub _ismbbkalnum
-@ cdecl _ismbbkana(long) CRTDLL__ismbbkana
-@ stub _ismbbkpunct
-@ cdecl _ismbblead(long) CRTDLL__ismbblead
-@ stub _ismbbprint
-@ stub _ismbbpunct
-@ cdecl _ismbbtrail(long) CRTDLL__ismbbtrail
-@ stub _ismbcalpha
-@ stub _ismbcdigit
-@ cdecl _ismbchira(long) CRTDLL__ismbchira
-@ cdecl _ismbckata(long) CRTDLL__ismbckata
-@ stub _ismbcl0
-@ stub _ismbcl1
-@ stub _ismbcl2
-@ stub _ismbclegal
-@ stub _ismbclower
-@ stub _ismbcprint
-@ stub _ismbcspace
-@ stub _ismbcsymbol
-@ stub _ismbcupper
-@ cdecl _ismbslead(ptr ptr) CRTDLL__ismbslead
-@ cdecl _ismbstrail(ptr ptr) CRTDLL__ismbstrail
-@ cdecl _isnan(double) CRTDLL__isnan
-@ forward _itoa ntdll._itoa
-@ cdecl _j0(double) j0
-@ cdecl _j1(double) j1
-@ cdecl _jn(long double) jn
-@ cdecl _kbhit() CRTDLL__kbhit
-@ cdecl _lfind(ptr ptr ptr long ptr) CRTDLL__lfind
-@ cdecl _loaddll(str) CRTDLL__loaddll
-@ cdecl _local_unwind2(ptr long) CRTDLL__local_unwind2
-@ stub _locking
-@ cdecl _logb(double) CRTDLL__logb
-@ cdecl _lrotl (long long) CRTDLL__lrotl
-@ cdecl _lrotr (long long) CRTDLL__lrotr
-@ cdecl _lsearch(ptr ptr long long ptr) CRTDLL__lsearch
-@ cdecl _lseek(long long long) CRTDLL__lseek
-@ forward _ltoa ntdll._ltoa
-@ cdecl _makepath (ptr str str str str) CRTDLL__makepath
-@ cdecl _matherr(ptr) CRTDLL__matherr
-@ cdecl _mbbtombc(long) CRTDLL__mbbtombc
-@ stub _mbbtype
-@ cdecl _mbccpy (str str) strcpy
-@ stub _mbcjistojms
-@ stub _mbcjmstojis
-@ cdecl _mbclen(long) CRTDLL__mbclen
-@ stub _mbctohira
-@ stub _mbctokata
-@ stub _mbctolower
-@ stub _mbctombb
-@ stub _mbctoupper
-@ extern _mbctype CRTDLL_mbctype
-@ stub _mbsbtype
-@ cdecl _mbscat(str str) strcat
-@ cdecl _mbschr(str long) CRTDLL__mbschr
-@ cdecl _mbscmp(str str) CRTDLL__mbscmp
-@ cdecl _mbscpy(ptr str) strcpy
-@ stub _mbscspn
-@ cdecl _mbsdec(str str) CRTDLL__mbsdec
-@ cdecl _mbsdup(str) CRTDLL__strdup
-@ cdecl _mbsicmp(str str) CRTDLL__mbsicmp
-@ cdecl _mbsinc(str) CRTDLL__mbsinc
-@ cdecl _mbslen(str) CRTDLL__mbslen
-@ stub _mbslwr
-@ stub _mbsnbcat
-@ stub _mbsnbcmp
-@ stub _mbsnbcnt
-@ stub _mbsnbcpy
-@ stub _mbsnbicmp
-@ stub _mbsnbset
-@ cdecl _mbsncat(str str long) CRTDLL__mbsncat
-@ cdecl _mbsnccnt(str long) CRTDLL__mbsnccnt
-@ cdecl _mbsncmp(str str long) CRTDLL__mbsncmp
-@ cdecl _mbsncpy(str str long) CRTDLL__mbsncpy
-@ cdecl _mbsnextc(str) CRTDLL__mbsnextc
-@ cdecl _mbsnicmp(str str long) CRTDLL__mbsncmp
-@ cdecl _mbsninc(str long) CRTDLL__mbsninc
-@ cdecl _mbsnset(str long long) CRTDLL__mbsnset
-@ stub _mbspbrk
-@ cdecl _mbsrchr(str long) CRTDLL__mbsrchr
-@ stub _mbsrev
-@ cdecl _mbsset(str long) CRTDLL__mbsset
-@ stub _mbsspn
-@ stub _mbsspnp
-@ cdecl _mbsstr(str str) strstr
-@ stub _mbstok
-@ cdecl _mbstrlen(str) CRTDLL__mbstrlen
-@ stub _mbsupr
-@ cdecl _memccpy(ptr ptr long long) memccpy
-@ forward _memicmp ntdll._memicmp
-@ cdecl _mkdir(str) CRTDLL__mkdir
-@ cdecl _mktemp(str) CRTDLL__mktemp
-@ cdecl _msize(ptr) CRTDLL__msize
-@ cdecl _nextafter(double double) CRTDLL__nextafter
-@ cdecl _onexit(ptr) CRTDLL__onexit
-@ cdecl _open(str long) CRTDLL__open
-@ cdecl _open_osfhandle(long long) CRTDLL__open_osfhandle
-@ extern _osmajor_dll CRTDLL_osmajor_dll
-@ extern _osminor_dll CRTDLL_osminor_dll
-@ extern _osmode_dll CRTDLL_osmode_dll
-@ extern _osver_dll CRTDLL_osver_dll
-@ extern _osversion_dll CRTDLL_osversion_dll
-@ stub _pclose
-@ extern _pctype_dll CRTDLL_pctype_dll
-@ stub _pgmptr_dll
-@ stub _pipe
-@ stub _popen
-@ cdecl _purecall() CRTDLL__purecall
-@ cdecl _putch(long) CRTDLL__putch
-@ stub _putenv
-@ cdecl _putw(long ptr) CRTDLL__putw
-@ stub _pwctype_dll
-@ cdecl _read(long ptr long) CRTDLL__read
-@ cdecl _rmdir(str) CRTDLL__rmdir
-@ cdecl _rmtmp() CRTDLL__rmtmp
-@ cdecl _rotl (long long) CRTDLL__rotl
-@ cdecl _rotr (long long) CRTDLL__rotr
-@ cdecl _scalb (double long) CRTDLL__scalb
-@ cdecl _searchenv(str str str) CRTDLL__searchenv
-@ stub _seterrormode
-@ cdecl _setjmp (ptr) CRTDLL__setjmp
-@ cdecl _setmode(long long) CRTDLL__setmode
-@ stub _setsystime
-@ cdecl _sleep(long) CRTDLL__sleep
-@ varargs _snprintf(ptr long ptr) snprintf
-@ stub _snwprintf
-@ stub _sopen
-@ stub _spawnl
-@ stub _spawnle
-@ stub _spawnlp
-@ stub _spawnlpe
-@ cdecl _spawnv(long str ptr) CRTDLL__spawnv
-@ cdecl _spawnve(long str ptr ptr) CRTDLL__spawnve
-@ cdecl _spawnvp(long str ptr) CRTDLL__spawnvp
-@ cdecl _spawnvpe(long str ptr ptr) CRTDLL__spawnvpe
-@ cdecl _splitpath (str ptr ptr ptr ptr) CRTDLL__splitpath
-@ cdecl _stat (str ptr) CRTDLL__stat
-@ cdecl _statusfp() CRTDLL__statusfp
-@ cdecl _strcmpi(str str) strcasecmp
-@ cdecl _strdate(str) CRTDLL__strdate
-@ cdecl _strdec(str str) CRTDLL__strdec
-@ cdecl _strdup(str) CRTDLL__strdup
-@ cdecl _strerror(long) CRTDLL__strerror
-@ cdecl _stricmp(str str) strcasecmp
-@ stub _stricoll
-@ cdecl _strinc(str) CRTDLL__strinc
-@ forward _strlwr ntdll._strlwr
-@ cdecl _strncnt(str long) CRTDLL__strncnt
-@ cdecl _strnextc(str) CRTDLL__strnextc
-@ cdecl _strnicmp(str str long) strncasecmp
-@ cdecl _strninc(str long) CRTDLL__strninc
-@ cdecl _strnset(str long long) CRTDLL__strnset
-@ cdecl _strrev(str) CRTDLL__strrev
-@ cdecl _strset(str long) CRTDLL__strset
-@ cdecl _strspnp(str str) CRTDLL__strspnp
-@ cdecl _strtime(str) CRTDLL__strtime
-@ forward _strupr ntdll._strupr
-@ cdecl _swab(str str long) CRTDLL__swab
-@ extern _sys_errlist sys_errlist
-@ extern _sys_nerr_dll CRTDLL__sys_nerr
-@ cdecl _tell(long) CRTDLL__tell
-@ cdecl _tempnam(str ptr) CRTDLL__tempnam
-@ extern _timezone_dll CRTDLL_timezone_dll
-@ cdecl _tolower(long) CRTDLL__toupper
-@ cdecl _toupper(long) CRTDLL__tolower
-@ stub _tzname
-@ stub _tzset
-@ forward _ultoa ntdll._ultoa
-@ cdecl _ultow(long str long) CRTDLL__ultow
-@ cdecl _umask(long) CRTDLL__umask
-@ cdecl _ungetch(long) CRTDLL__ungetch
-@ cdecl _unlink(str) CRTDLL__unlink
-@ cdecl _unloaddll(long) CRTDLL__unloaddll
-@ cdecl _utime(str ptr) CRTDLL__utime
-@ cdecl _vsnprintf(ptr long ptr ptr) vsnprintf
-@ stub _vsnwprintf
-@ cdecl _wcsdup(wstr) CRTDLL__wcsdup
-@ forward _wcsicmp ntdll._wcsicmp
-@ cdecl _wcsicoll(wstr wstr) CRTDLL__wcsicoll
-@ forward _wcslwr ntdll._wcslwr
-@ forward _wcsnicmp ntdll._wcsnicmp
-@ cdecl _wcsnset(wstr long long) CRTDLL__wcsnset
-@ cdecl _wcsrev(wstr) CRTDLL__wcsrev
-@ cdecl _wcsset(wstr long) CRTDLL__wcsset
-@ forward _wcsupr ntdll._wcsupr
-@ extern _winmajor_dll CRTDLL_winmajor_dll
-@ extern _winminor_dll CRTDLL_winminor_dll
-@ extern _winver_dll CRTDLL_winver_dll
-@ cdecl _write(long ptr long) CRTDLL__write
-@ forward _wtoi NTDLL._wtoi
-@ forward _wtol NTDLL._wtol
-@ cdecl _y0(double) CRTDLL__y0
-@ cdecl _y1(double) CRTDLL__y1
-@ cdecl _yn(long double) CRTDLL__yn
-@ cdecl abort() CRTDLL_abort
-@ cdecl abs(long) abs
-@ cdecl acos(double) acos
-@ cdecl asctime(ptr) asctime
-@ cdecl asin(double) asin
-@ cdecl atan(double) atan
-@ cdecl atan2(double double) atan2
-@ cdecl atexit(ptr) CRTDLL_atexit
-@ cdecl atof(str) atof
-@ cdecl atoi(str) atoi
-@ cdecl atol(str) atol
-@ cdecl bsearch(ptr ptr long long ptr) bsearch
-@ cdecl calloc(long long) CRTDLL_calloc
-@ cdecl ceil(double) ceil
-@ cdecl clearerr(ptr) CRTDLL_clearerr
-@ cdecl clock() CRTDLL_clock
-@ cdecl cos(double) cos
-@ cdecl cosh(double) cosh
-@ cdecl ctime(ptr) ctime
-@ cdecl difftime(long long) CRTDLL_difftime
-@ cdecl -noimport div(long long) CRTDLL_div
-@ cdecl exit(long) CRTDLL_exit
-@ cdecl exp(double) exp
-@ cdecl fabs(double) fabs
-@ cdecl fclose(ptr) CRTDLL_fclose
-@ cdecl feof(ptr) CRTDLL_feof
-@ cdecl ferror(ptr) CRTDLL_ferror
-@ cdecl fflush(ptr) CRTDLL_fflush
-@ cdecl fgetc(ptr) CRTDLL_fgetc
-@ cdecl fgetpos(ptr ptr) CRTDLL_fgetpos
-@ cdecl fgets(ptr long ptr) CRTDLL_fgets
-@ cdecl fgetwc(ptr) CRTDLL_fgetwc
-@ cdecl floor(double) floor
-@ cdecl fmod(double double) fmod
-@ cdecl fopen(str str) CRTDLL_fopen
-@ varargs fprintf(ptr str) CRTDLL_fprintf
-@ cdecl fputc(long ptr) CRTDLL_fputc
-@ cdecl fputs(str ptr) CRTDLL_fputs
-@ cdecl fputwc(long ptr) CRTDLL_fputwc
-@ cdecl fread(ptr long long ptr) CRTDLL_fread
-@ cdecl free(ptr) CRTDLL_free
-@ cdecl freopen(str str ptr) CRTDLL_freopen
-@ cdecl frexp(double ptr) frexp
-@ varargs fscanf(ptr str) CRTDLL_fscanf
-@ cdecl fseek(ptr long long) CRTDLL_fseek
-@ cdecl fsetpos(ptr ptr) CRTDLL_fsetpos
-@ cdecl ftell(ptr) CRTDLL_ftell
-@ stub fwprintf
-@ cdecl fwrite(ptr long long ptr) CRTDLL_fwrite 
-@ stub fwscanf
-@ cdecl getc(ptr) CRTDLL_getc
-@ cdecl getchar() CRTDLL_getchar
-@ cdecl getenv (str) CRTDLL_getenv
-@ cdecl gets(ptr) CRTDLL_gets
-@ cdecl gmtime(ptr) gmtime
-@ forward is_wctype ntdll.iswctype
-@ cdecl isalnum(long) CRTDLL_isalnum
-@ cdecl isalpha(long) CRTDLL_isalpha
-@ cdecl iscntrl(long) CRTDLL_iscntrl
-@ cdecl isdigit(long) CRTDLL_isdigit
-@ cdecl isgraph(long) CRTDLL_isgraph
-@ cdecl isleadbyte(long) CRTDLL_isleadbyte
-@ cdecl islower(long) CRTDLL_islower
-@ cdecl isprint(long) CRTDLL_isprint
-@ cdecl ispunct(long) CRTDLL_ispunct
-@ cdecl isspace(long) CRTDLL_isspace
-@ cdecl isupper(long) CRTDLL_isupper
-@ cdecl iswalnum(long) CRTDLL_iswalnum
-@ forward iswalpha ntdll.iswalpha
-@ cdecl iswascii(long) CRTDLL_iswascii
-@ cdecl iswcntrl(long) CRTDLL_iswcntrl
-@ forward iswctype ntdll.iswctype
-@ cdecl iswdigit(long) CRTDLL_iswdigit
-@ cdecl iswgraph(long) CRTDLL_iswgraph
-@ cdecl iswlower(long) CRTDLL_iswlower
-@ cdecl iswprint(long) CRTDLL_iswprint
-@ cdecl iswpunct(long) CRTDLL_iswpunct
-@ cdecl iswspace(long) CRTDLL_iswspace
-@ cdecl iswupper(long) CRTDLL_iswupper
-@ cdecl iswxdigit(long) CRTDLL_iswxdigit
-@ cdecl isxdigit(long) CRTDLL_isxdigit
-@ cdecl labs(long) labs
-@ cdecl ldexp(double long) CRTDLL_ldexp
-@ cdecl -noimport ldiv(long long) CRTDLL_ldiv
-@ stub localeconv
-@ cdecl localtime(ptr) localtime
-@ cdecl log(double) log
-@ cdecl log10(double) log10
-@ cdecl longjmp(ptr long) CRTDLL_longjmp
-@ cdecl malloc(ptr) CRTDLL_malloc
-@ cdecl mblen(str long) mblen
-@ forward mbstowcs ntdll.mbstowcs
-@ cdecl mbtowc(ptr ptr long) CRTDLL_mbtowc
-@ cdecl memchr(ptr long long) memchr
-@ cdecl memcmp(ptr ptr long) memcmp
-@ cdecl memcpy(ptr ptr long) memcpy
-@ cdecl memmove(ptr ptr long) memmove
-@ cdecl memset(ptr long long) memset 
-@ cdecl mktime(ptr) mktime
-@ cdecl modf(double ptr) modf
-@ cdecl perror(str) CRTDLL_perror
-@ cdecl pow(double double) pow
-@ varargs printf() printf
-@ cdecl putc(long ptr) CRTDLL_putc
-@ cdecl putchar(long) CRTDLL_putchar
-@ cdecl puts(str) CRTDLL_puts
-@ cdecl qsort(ptr long long ptr) qsort
-@ stub raise
-@ cdecl rand() CRTDLL_rand
-@ cdecl realloc(ptr long) CRTDLL_realloc
-@ cdecl remove(str) CRTDLL_remove
-@ cdecl rename(str str) CRTDLL_rename
-@ cdecl rewind(ptr) CRTDLL_rewind
-@ varargs scanf(str) CRTDLL_scanf
-@ cdecl setbuf(ptr ptr) CRTDLL_setbuf
-@ cdecl setlocale(long ptr) CRTDLL_setlocale
-@ stub setvbuf
-@ cdecl signal(long ptr) CRTDLL_signal
-@ cdecl sin(double) sin
-@ cdecl sinh(double) sinh
-@ varargs sprintf(ptr ptr) sprintf
-@ cdecl sqrt(double) sqrt
-@ cdecl srand(long) srand
-@ varargs sscanf() sscanf
-@ cdecl strcat(str str) strcat
-@ cdecl strchr(str long) strchr
-@ cdecl strcmp(str str) strcmp
-@ cdecl strcoll(str str) strcoll
-@ cdecl strcpy(ptr str) strcpy
-@ cdecl strcspn(str str) strcspn
-@ cdecl strerror(long) CRTDLL_strerror
-@ cdecl strftime(ptr long str ptr) strftime
-@ cdecl strlen(str) strlen
-@ cdecl strncat(str str long) strncat
-@ cdecl strncmp(str str long) strncmp
-@ cdecl strncpy(ptr str long) strncpy
-@ cdecl strpbrk(str str) strpbrk
-@ cdecl strrchr(str long) strrchr
-@ cdecl strspn(str str) strspn
-@ cdecl strstr(str str) strstr
-@ cdecl strtod(str ptr) strtod
-@ cdecl strtok(str str) strtok
-@ cdecl strtol(str ptr long) strtol
-@ cdecl strtoul(str ptr long) strtoul
-@ cdecl strxfrm(ptr str long) strxfrm
-@ stub swprintf
-@ stub swscanf
-@ cdecl system(str) CRTDLL_system
-@ cdecl tan(double) tan
-@ cdecl tanh(double) tanh
-@ cdecl time(ptr) CRTDLL_time
-@ cdecl tmpfile() CRTDLL_tmpfile
-@ cdecl tmpnam(str) CRTDLL_tmpnam
-@ cdecl tolower(long) tolower
-@ cdecl toupper(long) toupper
-@ forward towlower ntdll.towlower
-@ forward towupper ntdll.towupper
-@ stub ungetc
-@ stub ungetwc
-@ cdecl vfprintf(ptr str ptr) CRTDLL_vfprintf
-@ stub vfwprintf
-@ stub vprintf
-@ cdecl vsprintf(ptr str ptr) vsprintf
-@ stub vswprintf
-@ stub vwprintf
-@ forward wcscat ntdll.wcscat
-@ forward wcschr ntdll.wcschr
-@ forward wcscmp ntdll.wcscmp
-@ cdecl wcscoll(wstr wstr) CRTDLL_wcscoll
-@ forward wcscpy ntdll.wcscpy
-@ forward wcscspn ntdll.wcscspn
-@ stub wcsftime
-@ forward wcslen ntdll.wcslen
-@ forward wcsncat ntdll.wcsncat
-@ forward wcsncmp ntdll.wcsncmp
-@ forward wcsncpy ntdll.wcsncpy
-@ cdecl wcspbrk(wstr wstr) CRTDLL_wcspbrk
-@ forward wcsrchr ntdll.wcsrchr
-@ forward wcsspn ntdll.wcsspn
-@ forward wcsstr ntdll.wcsstr
-@ stub wcstod
-@ forward wcstok ntdll.wcstok
-@ forward wcstol ntdll.wcstol
-@ forward wcstombs ntdll.wcstombs
-@ stub wcstoul
-@ stub wcsxfrm
-@ cdecl wctomb(ptr long) CRTDLL_wctomb
-@ stub wprintf
-@ stub wscanf
-#@ cdecl _itow(long str long) CRTDLL__itow
-#@ cdecl _ltow(long str long) CRTDLL__ltow
+@ forward ??2@YAPAXI@Z msvcrt.??2@YAPAXI@Z
+@ forward ??3@YAXPAX@Z msvcrt.??3@YAXPAX@Z
+@ forward ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z msvcrt.?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z
+@ forward _CIacos msvcrt._CIacos
+@ forward _CIasin msvcrt._CIasin
+@ forward _CIatan msvcrt._CIatan
+@ forward _CIatan2 msvcrt._CIatan2
+@ forward _CIcos msvcrt._CIcos
+@ forward _CIcosh msvcrt._CIcosh
+@ forward _CIexp msvcrt._CIexp
+@ forward _CIfmod msvcrt._CIfmod
+@ forward _CIlog msvcrt._CIlog
+@ forward _CIlog10 msvcrt._CIlog10
+@ forward _CIpow msvcrt._CIpow
+@ forward _CIsin msvcrt._CIsin
+@ forward _CIsinh msvcrt._CIsinh
+@ forward _CIsqrt msvcrt._CIsqrt
+@ forward _CItan msvcrt._CItan
+@ forward _CItanh msvcrt._CItanh
+@ forward _HUGE_dll msvcrt._HUGE
+@ forward _XcptFilter msvcrt._XcptFilter
+@ forward __GetMainArgs msvcrt.__getmainargs
+@ forward __argc_dll msvcrt.__argc
+@ forward __argv_dll msvcrt.__argv
+@ forward __dllonexit msvcrt.__dllonexit
+@ forward __doserrno msvcrt.__doserrno
+@ forward __fpecode msvcrt.__fpecode
+@ forward __isascii msvcrt.__isascii
+@ forward __iscsym msvcrt.__iscsym
+@ forward __iscsymf msvcrt.__iscsymf
+@ forward __mb_cur_max_dll msvcrt.__mb_cur_max
+@ forward __pxcptinfoptrs msvcrt.__pxcptinfoptrs
+@ forward __threadhandle msvcrt.__threadhandle
+@ forward __threadid msvcrt.__threadid
+@ forward __toascii msvcrt.__toascii
+@ forward _abnormal_termination msvcrt._abnormal_termination
+@ forward _access msvcrt._access
+@ forward _acmdln_dll msvcrt._acmdln
+@ forward _aexit_rtn_dll msvcrt._aexit_rtn
+@ forward _amsg_exit msvcrt._amsg_exit
+@ forward _assert msvcrt._assert
+@ extern _basemajor_dll CRTDLL__basemajor_dll
+@ extern _baseminor_dll CRTDLL__basemajor_dll
+@ extern _baseversion_dll CRTDLL__basemajor_dll
+@ forward _beep msvcrt._beep
+@ forward _beginthread msvcrt._beginthread
+@ forward _c_exit msvcrt._c_exit
+@ forward _cabs msvcrt._cabs
+@ forward _cexit msvcrt._cexit
+@ forward _cgets msvcrt._cgets
+@ forward _chdir msvcrt._chdir
+@ forward _chdrive msvcrt._chdrive
+@ forward _chgsign msvcrt._chgsign
+@ forward _chmod msvcrt._chmod
+@ forward _chsize msvcrt._chsize
+@ forward _clearfp msvcrt._clearfp
+@ forward _close msvcrt._close
+@ forward _commit msvcrt._commit
+@ forward _commode_dll msvcrt._commode
+@ forward _control87 msvcrt._control87
+@ forward _controlfp msvcrt._controlfp
+@ forward _copysign msvcrt._copysign
+@ forward _cprintf msvcrt._cprintf
+@ extern _cpumode_dll CRTDLL__cpumode_dll
+@ forward _cputs msvcrt._cputs
+@ forward _creat msvcrt._creat
+@ forward _cscanf msvcrt._cscanf
+@ forward _ctype msvcrt._ctype
+@ forward _cwait msvcrt._cwait
+@ forward _daylight_dll msvcrt._daylight
+@ forward _dup msvcrt._dup
+@ forward _dup2 msvcrt._dup2
+@ forward _ecvt msvcrt._ecvt
+@ forward _endthread msvcrt._endthread
+@ forward _environ_dll msvcrt._environ
+@ forward _eof msvcrt._eof
+@ forward _errno msvcrt._errno
+@ forward _except_handler2 msvcrt._except_handler2
+@ forward _execl msvcrt._execl
+@ forward _execle msvcrt._execle
+@ forward _execlp msvcrt._execlp
+@ forward _execlpe msvcrt._execlpe
+@ forward _execv msvcrt._execv
+@ forward _execve msvcrt._execve
+@ forward _execvp msvcrt._execvp
+@ forward _execvpe msvcrt._execvpe
+@ forward _exit msvcrt._exit
+@ forward _expand msvcrt._expand
+@ forward _fcloseall msvcrt._fcloseall
+@ forward _fcvt msvcrt._fcvt
+@ forward _fdopen msvcrt._fdopen
+@ forward _fgetchar msvcrt._fgetchar
+@ forward _fgetwchar msvcrt._fgetwchar
+@ forward _filbuf msvcrt._filbuf
+@ forward _fileinfo_dll msvcrt._fileinfo
+@ forward _filelength msvcrt._filelength
+@ forward _fileno msvcrt._fileno
+@ forward _findclose msvcrt._findclose
+@ forward _findfirst msvcrt._findfirst
+@ forward _findnext msvcrt._findnext
+@ forward _finite msvcrt._finite
+@ forward _flsbuf msvcrt._flsbuf
+@ forward _flushall msvcrt._flushall
+@ forward _fmode_dll msvcrt._fmode
+@ forward _fpclass msvcrt._fpclass
+@ forward _fpieee_flt msvcrt._fpieee_flt
+@ forward _fpreset msvcrt._fpreset
+@ forward _fputchar msvcrt._fputchar
+@ forward _fputwchar msvcrt._fputwchar
+@ forward _fsopen msvcrt._fsopen
+@ forward _fstat msvcrt._fstat
+@ forward _ftime msvcrt._ftime
+@ forward _ftol msvcrt._ftol
+@ forward _fullpath msvcrt._fullpath
+@ forward _futime msvcrt._futime
+@ forward _gcvt msvcrt._gcvt
+@ forward _get_osfhandle msvcrt._get_osfhandle
+@ forward _getch msvcrt._getch
+@ forward _getche msvcrt._getche
+@ forward _getcwd msvcrt._getcwd
+@ forward _getdcwd msvcrt._getdcwd
+@ forward _getdiskfree msvcrt._getdiskfree
+@ forward _getdllprocaddr msvcrt._getdllprocaddr
+@ forward _getdrive msvcrt._getdrive
+@ forward _getdrives msvcrt._getdrives
+@ forward _getpid msvcrt._getpid
+@ forward _getsystime msvcrt._getsystime
+@ forward _getw msvcrt._getw
+@ forward _global_unwind2 msvcrt._global_unwind2
+@ forward _heapchk msvcrt._heapchk
+@ forward _heapmin msvcrt._heapmin
+@ forward _heapset msvcrt._heapset
+@ forward _heapwalk msvcrt._heapwalk
+@ forward _hypot msvcrt._hypot
+@ forward _initterm msvcrt._initterm
+@ forward _iob msvcrt._iob
+@ forward _isatty msvcrt._isatty
+@ forward _isctype msvcrt._isctype
+@ forward _ismbbalnum msvcrt._ismbbalnum
+@ forward _ismbbalpha msvcrt._ismbbalpha
+@ forward _ismbbgraph msvcrt._ismbbgraph
+@ forward _ismbbkalnum msvcrt._ismbbkalnum
+@ forward _ismbbkana msvcrt._ismbbkana
+@ forward _ismbbkpunct msvcrt._ismbbkpunct
+@ forward _ismbblead msvcrt._ismbblead
+@ forward _ismbbprint msvcrt._ismbbprint
+@ forward _ismbbpunct msvcrt._ismbbpunct
+@ forward _ismbbtrail msvcrt._ismbbtrail
+@ forward _ismbcalpha msvcrt._ismbcalpha
+@ forward _ismbcdigit msvcrt._ismbcdigit
+@ forward _ismbchira msvcrt._ismbchira
+@ forward _ismbckata msvcrt._ismbckata
+@ forward _ismbcl0 msvcrt._ismbcl0
+@ forward _ismbcl1 msvcrt._ismbcl1
+@ forward _ismbcl2 msvcrt._ismbcl2
+@ forward _ismbclegal msvcrt._ismbclegal
+@ forward _ismbclower msvcrt._ismbclower
+@ forward _ismbcprint msvcrt._ismbcprint
+@ forward _ismbcspace msvcrt._ismbcspace
+@ forward _ismbcsymbol msvcrt._ismbcsymbol
+@ forward _ismbcupper msvcrt._ismbcupper
+@ forward _ismbslead msvcrt._ismbslead
+@ forward _ismbstrail msvcrt._ismbstrail
+@ forward _isnan msvcrt._isnan
+@ forward _itoa msvcrt._itoa
+@ forward _j0 msvcrt._j0
+@ forward _j1 msvcrt._j1
+@ forward _jn msvcrt._jn
+@ forward _kbhit msvcrt._kbhit
+@ forward _lfind msvcrt._lfind
+@ forward _loaddll msvcrt._loaddll
+@ forward _local_unwind2 msvcrt._local_unwind2
+@ forward _locking msvcrt._locking
+@ forward _logb msvcrt._logb
+@ forward _lrotl msvcrt._lrotl
+@ forward _lrotr msvcrt._lrotr
+@ forward _lsearch msvcrt._lsearch
+@ forward _lseek msvcrt._lseek
+@ forward _ltoa msvcrt._ltoa
+@ forward _makepath msvcrt._makepath
+@ forward _matherr msvcrt._matherr
+@ forward _mbbtombc msvcrt._mbbtombc
+@ forward _mbbtype msvcrt._mbbtype
+@ forward _mbccpy msvcrt._mbccpy
+@ forward _mbcjistojms msvcrt._mbcjistojms
+@ forward _mbcjmstojis msvcrt._mbcjmstojis
+@ forward _mbclen msvcrt._mbclen
+@ forward _mbctohira msvcrt._mbctohira
+@ forward _mbctokata msvcrt._mbctokata
+@ forward _mbctolower msvcrt._mbctolower
+@ forward _mbctombb msvcrt._mbctombb
+@ forward _mbctoupper msvcrt._mbctoupper
+@ forward _mbctype msvcrt._mbctype
+@ forward _mbsbtype msvcrt._mbsbtype
+@ forward _mbscat msvcrt._mbscat
+@ forward _mbschr msvcrt._mbschr
+@ forward _mbscmp msvcrt._mbscmp
+@ forward _mbscpy msvcrt._mbscpy
+@ forward _mbscspn msvcrt._mbscspn
+@ forward _mbsdec msvcrt._mbsdec
+@ forward _mbsdup msvcrt._mbsdup
+@ forward _mbsicmp msvcrt._mbsicmp
+@ forward _mbsinc msvcrt._mbsinc
+@ forward _mbslen msvcrt._mbslen
+@ forward _mbslwr msvcrt._mbslwr
+@ forward _mbsnbcat msvcrt._mbsnbcat
+@ forward _mbsnbcmp msvcrt._mbsnbcmp
+@ forward _mbsnbcnt msvcrt._mbsnbcnt
+@ forward _mbsnbcpy msvcrt._mbsnbcpy
+@ forward _mbsnbicmp msvcrt._mbsnbicmp
+@ forward _mbsnbset msvcrt._mbsnbset
+@ forward _mbsncat msvcrt._mbsncat
+@ forward _mbsnccnt msvcrt._mbsnccnt
+@ forward _mbsncmp msvcrt._mbsncmp
+@ forward _mbsncpy msvcrt._mbsncpy
+@ forward _mbsnextc msvcrt._mbsnextc
+@ forward _mbsnicmp msvcrt._mbsnicmp
+@ forward _mbsninc msvcrt._mbsninc
+@ forward _mbsnset msvcrt._mbsnset
+@ forward _mbspbrk msvcrt._mbspbrk
+@ forward _mbsrchr msvcrt._mbsrchr
+@ forward _mbsrev msvcrt._mbsrev
+@ forward _mbsset msvcrt._mbsset
+@ forward _mbsspn msvcrt._mbsspn
+@ forward _mbsspnp msvcrt._mbsspnp
+@ forward _mbsstr msvcrt._mbsstr
+@ forward _mbstok msvcrt._mbstok
+@ forward _mbstrlen msvcrt._mbstrlen
+@ forward _mbsupr msvcrt._mbsupr
+@ forward _memccpy msvcrt._memccpy
+@ forward _memicmp msvcrt._memicmp
+@ forward _mkdir msvcrt._mkdir
+@ forward _mktemp msvcrt._mktemp
+@ forward _msize msvcrt._msize
+@ forward _nextafter msvcrt._nextafter
+@ forward _onexit msvcrt._onexit
+@ forward _open msvcrt._open
+@ forward _open_osfhandle msvcrt._open_osfhandle
+@ extern _osmajor_dll CRTDLL__osmajor_dll
+@ extern _osminor_dll CRTDLL__osminor_dll
+@ extern _osmode_dll CRTDLL__osmode_dll
+@ forward _osver_dll msvcrt._osver
+@ extern _osversion_dll CRTDLL__osversion_dll
+@ forward _pclose msvcrt._pclose
+@ forward _pctype_dll msvcrt._pctype
+@ forward _pgmptr_dll msvcrt._pgmptr
+@ forward _pipe msvcrt._pipe
+@ forward _popen msvcrt._popen
+@ forward _purecall msvcrt._purecall
+@ forward _putch msvcrt._putch
+@ forward _putenv msvcrt._putenv
+@ forward _putw msvcrt._putw
+@ forward _pwctype_dll msvcrt._pwctype
+@ forward _read msvcrt._read
+@ forward _rmdir msvcrt._rmdir
+@ forward _rmtmp msvcrt._rmtmp
+@ forward _rotl msvcrt._rotl
+@ forward _rotr msvcrt._rotr
+@ forward _scalb msvcrt._scalb
+@ forward _searchenv msvcrt._searchenv
+@ forward _seterrormode msvcrt._seterrormode
+@ forward _setjmp msvcrt._setjmp
+@ forward _setmode msvcrt._setmode
+@ forward _setsystime msvcrt._setsystime
+@ forward _sleep msvcrt._sleep
+@ forward _snprintf msvcrt._snprintf
+@ forward _snwprintf msvcrt._snwprintf
+@ forward _sopen msvcrt._sopen
+@ forward _spawnl msvcrt._spawnl
+@ forward _spawnle msvcrt._spawnle
+@ forward _spawnlp msvcrt._spawnlp
+@ forward _spawnlpe msvcrt._spawnlpe
+@ forward _spawnv msvcrt._spawnv
+@ forward _spawnve msvcrt._spawnve
+@ forward _spawnvp msvcrt._spawnvp
+@ forward _spawnvpe msvcrt._spawnvpe
+@ forward _splitpath msvcrt._splitpath
+@ forward _stat msvcrt._stat
+@ forward _statusfp msvcrt._statusfp
+@ forward _strcmpi msvcrt._strcmpi
+@ forward _strdate msvcrt._strdate
+@ forward _strdec msvcrt._strdec
+@ forward _strdup msvcrt._strdup
+@ forward _strerror msvcrt._strerror
+@ forward _stricmp msvcrt._stricmp
+@ forward _stricoll msvcrt._stricoll
+@ forward _strinc msvcrt._strinc
+@ forward _strlwr msvcrt._strlwr
+@ forward _strncnt msvcrt._strncnt
+@ forward _strnextc msvcrt._strnextc
+@ forward _strnicmp msvcrt._strnicmp
+@ forward _strninc msvcrt._strninc
+@ forward _strnset msvcrt._strnset
+@ forward _strrev msvcrt._strrev
+@ forward _strset msvcrt._strset
+@ forward _strspnp msvcrt._strspnp
+@ forward _strtime msvcrt._strtime
+@ forward _strupr msvcrt._strupr
+@ forward _swab msvcrt._swab
+@ forward _sys_errlist msvcrt._sys_errlist
+@ forward _sys_nerr_dll msvcrt._sys_nerr
+@ forward _tell msvcrt._tell
+@ forward _tempnam msvcrt._tempnam
+@ forward _timezone_dll msvcrt._timezone
+@ forward _tolower msvcrt._tolower
+@ forward _toupper msvcrt._toupper
+@ forward _tzname msvcrt._tzname
+@ forward _tzset msvcrt._tzset
+@ forward _ultoa msvcrt._ultoa
+@ forward _umask msvcrt._umask
+@ forward _ungetch msvcrt._ungetch
+@ forward _unlink msvcrt._unlink
+@ forward _unloaddll msvcrt._unloaddll
+@ forward _utime msvcrt._utime
+@ forward _vsnprintf msvcrt._vsnprintf
+@ forward _vsnwprintf msvcrt._vsnwprintf
+@ forward _wcsdup msvcrt._wcsdup
+@ forward _wcsicmp msvcrt._wcsicmp
+@ forward _wcsicoll msvcrt._wcsicoll
+@ forward _wcslwr msvcrt._wcslwr
+@ forward _wcsnicmp msvcrt._wcsnicmp
+@ forward _wcsnset msvcrt._wcsnset
+@ forward _wcsrev msvcrt._wcsrev
+@ forward _wcsset msvcrt._wcsset
+@ forward _wcsupr msvcrt._wcsupr
+@ forward _winmajor_dll msvcrt._winmajor
+@ forward _winminor_dll msvcrt._winminor
+@ forward _winver_dll msvcrt._winver
+@ forward _write msvcrt._write
+@ forward _wtoi msvcrt._wtoi
+@ forward _wtol msvcrt._wtol
+@ forward _y0 msvcrt._y0
+@ forward _y1 msvcrt._y1
+@ forward _yn msvcrt._yn
+@ forward abort msvcrt.abort
+@ forward abs msvcrt.abs
+@ forward acos msvcrt.acos
+@ forward asctime msvcrt.asctime
+@ forward asin msvcrt.asin
+@ forward atan msvcrt.atan
+@ forward atan2 msvcrt.atan2
+@ forward atexit msvcrt.atexit
+@ forward atof msvcrt.atof
+@ forward atoi msvcrt.atoi
+@ forward atol msvcrt.atol
+@ forward bsearch msvcrt.bsearch
+@ forward calloc msvcrt.calloc
+@ forward ceil msvcrt.ceil
+@ forward clearerr msvcrt.clearerr
+@ forward clock msvcrt.clock
+@ forward cos msvcrt.cos
+@ forward cosh msvcrt.cosh
+@ forward ctime msvcrt.ctime
+@ forward difftime msvcrt.difftime
+@ forward div msvcrt.div
+@ forward exit msvcrt.exit
+@ forward exp msvcrt.exp
+@ forward fabs msvcrt.fabs
+@ forward fclose msvcrt.fclose
+@ forward feof msvcrt.feof
+@ forward ferror msvcrt.ferror
+@ forward fflush msvcrt.fflush
+@ forward fgetc msvcrt.fgetc
+@ forward fgetpos msvcrt.fgetpos
+@ forward fgets msvcrt.fgets
+@ forward fgetwc msvcrt.fgetwc
+@ forward floor msvcrt.floor
+@ forward fmod msvcrt.fmod
+@ forward fopen msvcrt.fopen
+@ forward fprintf msvcrt.fprintf
+@ forward fputc msvcrt.fputc
+@ forward fputs msvcrt.fputs
+@ forward fputwc msvcrt.fputwc
+@ forward fread msvcrt.fread
+@ forward free msvcrt.free
+@ forward freopen msvcrt.freopen
+@ forward frexp msvcrt.frexp
+@ forward fscanf msvcrt.fscanf
+@ forward fseek msvcrt.fseek
+@ forward fsetpos msvcrt.fsetpos
+@ forward ftell msvcrt.ftell
+@ forward fwprintf msvcrt.fwprintf
+@ forward fwrite msvcrt.fwrite
+@ forward fwscanf msvcrt.fwscanf
+@ forward getc msvcrt.getc
+@ forward getchar msvcrt.getchar
+@ forward getenv msvcrt.getenv
+@ forward gets msvcrt.gets
+@ forward gmtime msvcrt.gmtime
+@ forward is_wctype msvcrt.is_wctype
+@ forward isalnum msvcrt.isalnum
+@ forward isalpha msvcrt.isalpha
+@ forward iscntrl msvcrt.iscntrl
+@ forward isdigit msvcrt.isdigit
+@ forward isgraph msvcrt.isgraph
+@ forward isleadbyte msvcrt.isleadbyte
+@ forward islower msvcrt.islower
+@ forward isprint msvcrt.isprint
+@ forward ispunct msvcrt.ispunct
+@ forward isspace msvcrt.isspace
+@ forward isupper msvcrt.isupper
+@ forward iswalnum msvcrt.iswalnum
+@ forward iswalpha msvcrt.iswalpha
+@ forward iswascii msvcrt.iswascii
+@ forward iswcntrl msvcrt.iswcntrl
+@ forward iswctype msvcrt.iswctype
+@ forward iswdigit msvcrt.iswdigit
+@ forward iswgraph msvcrt.iswgraph
+@ forward iswlower msvcrt.iswlower
+@ forward iswprint msvcrt.iswprint
+@ forward iswpunct msvcrt.iswpunct
+@ forward iswspace msvcrt.iswspace
+@ forward iswupper msvcrt.iswupper
+@ forward iswxdigit msvcrt.iswxdigit
+@ forward isxdigit msvcrt.isxdigit
+@ forward labs msvcrt.labs
+@ forward ldexp msvcrt.ldexp
+@ forward ldiv msvcrt.ldiv
+@ forward localeconv msvcrt.localeconv
+@ forward localtime msvcrt.localtime
+@ forward log msvcrt.log
+@ forward log10 msvcrt.log10
+@ forward longjmp msvcrt.longjmp
+@ forward malloc msvcrt.malloc
+@ forward mblen msvcrt.mblen
+@ forward mbstowcs msvcrt.mbstowcs
+@ forward mbtowc msvcrt.mbtowc
+@ forward memchr msvcrt.memchr
+@ forward memcmp msvcrt.memcmp
+@ forward memcpy msvcrt.memcpy
+@ forward memmove msvcrt.memmove
+@ forward memset msvcrt.memset
+@ forward mktime msvcrt.mktime
+@ forward modf msvcrt.modf
+@ forward perror msvcrt.perror
+@ forward pow msvcrt.pow
+@ forward printf msvcrt.printf
+@ forward putc msvcrt.putc
+@ forward putchar msvcrt.putchar
+@ forward puts msvcrt.puts
+@ forward qsort msvcrt.qsort
+@ forward raise msvcrt.raise
+@ forward rand msvcrt.rand
+@ forward realloc msvcrt.realloc
+@ forward remove msvcrt.remove
+@ forward rename msvcrt.rename
+@ forward rewind msvcrt.rewind
+@ forward scanf msvcrt.scanf
+@ forward setbuf msvcrt.setbuf
+@ forward setlocale msvcrt.setlocale
+@ forward setvbuf msvcrt.setvbuf
+@ forward signal msvcrt.signal
+@ forward sin msvcrt.sin
+@ forward sinh msvcrt.sinh
+@ forward sprintf msvcrt.sprintf
+@ forward sqrt msvcrt.sqrt
+@ forward srand msvcrt.srand
+@ forward sscanf msvcrt.sscanf
+@ forward strcat msvcrt.strcat
+@ forward strchr msvcrt.strchr
+@ forward strcmp msvcrt.strcmp
+@ forward strcoll msvcrt.strcoll
+@ forward strcpy msvcrt.strcpy
+@ forward strcspn msvcrt.strcspn
+@ forward strerror msvcrt.strerror
+@ forward strftime msvcrt.strftime
+@ forward strlen msvcrt.strlen
+@ forward strncat msvcrt.strncat
+@ forward strncmp msvcrt.strncmp
+@ forward strncpy msvcrt.strncpy
+@ forward strpbrk msvcrt.strpbrk
+@ forward strrchr msvcrt.strrchr
+@ forward strspn msvcrt.strspn
+@ forward strstr msvcrt.strstr
+@ forward strtod msvcrt.strtod
+@ forward strtok msvcrt.strtok
+@ forward strtol msvcrt.strtol
+@ forward strtoul msvcrt.strtoul
+@ forward strxfrm msvcrt.strxfrm
+@ forward swprintf msvcrt.swprintf
+@ forward swscanf msvcrt.swscanf
+@ forward system msvcrt.system
+@ forward tan msvcrt.tan
+@ forward tanh msvcrt.tanh
+@ forward time msvcrt.time
+@ forward tmpfile msvcrt.tmpfile
+@ forward tmpnam msvcrt.tmpnam
+@ forward tolower msvcrt._tolower
+@ forward toupper msvcrt._toupper
+@ forward towlower msvcrt.towlower
+@ forward towupper msvcrt.towupper
+@ forward ungetc msvcrt.ungetc
+@ forward ungetwc msvcrt.ungetwc
+@ forward vfprintf msvcrt.vfprintf
+@ forward vfwprintf msvcrt.vfwprintf
+@ forward vprintf msvcrt.vprintf
+@ forward vsprintf msvcrt.vsprintf
+@ forward vswprintf msvcrt.vswprintf
+@ forward vwprintf msvcrt.vwprintf
+@ forward wcscat msvcrt.wcscat
+@ forward wcschr msvcrt.wcschr
+@ forward wcscmp msvcrt.wcscmp
+@ forward wcscoll msvcrt.wcscoll
+@ forward wcscpy msvcrt.wcscpy
+@ forward wcscspn msvcrt.wcscspn
+@ forward wcsftime msvcrt.wcsftime
+@ forward wcslen msvcrt.wcslen
+@ forward wcsncat msvcrt.wcsncat
+@ forward wcsncmp msvcrt.wcsncmp
+@ forward wcsncpy msvcrt.wcsncpy
+@ forward wcspbrk msvcrt.wcspbrk
+@ forward wcsrchr msvcrt.wcsrchr
+@ forward wcsspn msvcrt.wcsspn
+@ forward wcsstr msvcrt.wcsstr
+@ forward wcstod msvcrt.wcstod
+@ forward wcstok msvcrt.wcstok
+@ forward wcstol msvcrt.wcstol
+@ forward wcstombs msvcrt.wcstombs
+@ forward wcstoul msvcrt.wcstoul
+@ forward wcsxfrm msvcrt.wcsxfrm
+@ forward wctomb msvcrt.wctomb
+@ forward wprintf msvcrt.wprintf
+@ forward wscanf msvcrt.wscanf
+@ forward _itow msvcrt._itow
+@ forward _ltow msvcrt._ltow
+
