@@ -82,7 +82,7 @@ static	BOOL	start_console_renderer(void)
     STARTUPINFOA	si;
     PROCESS_INFORMATION	pi;
     HANDLE		hEvent = 0;
-    LPSTR		p, path = NULL;
+    LPSTR		p;
     OBJECT_ATTRIBUTES	attr;
 
     attr.Length                   = sizeof(attr);
@@ -109,55 +109,6 @@ static	BOOL	start_console_renderer(void)
 	ERR("Couldn't launch Wine console from WINECONSOLE env var... trying default access\n");
     }
 
-    /* then the regular installation dir */
-    ret = snprintf(buffer, sizeof(buffer), "%s --use-event=%d", BINDIR "/wineconsole", hEvent);
-    if ((ret > -1) && (ret < sizeof(buffer)) &&
-	CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
-	goto succeed;
-
-    /* then try the dir where we were started from */
-    if ((path = HeapAlloc(GetProcessHeap(), 0, strlen(full_argv0) + sizeof(buffer))))
-    {
-	int	n;
-
-	if ((p = strrchr(strcpy( path, full_argv0 ), '/')))
-	{
-	    p++;
-	    sprintf(p, "wineconsole --use-event=%d", hEvent);
-	    if (CreateProcessA(NULL, path, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
-		goto succeed;
-	    sprintf(p, "programs/wineconsole/wineconsole --use-event=%d", hEvent);
-	    if (CreateProcessA(NULL, path, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
-		goto succeed;
-	}
-
-	n = readlink(full_argv0, buffer, sizeof(buffer));
-	if (n != -1 && n < sizeof(buffer))
-	{
-	    buffer[n] = 0;
-	    if (buffer[0] == '/') /* absolute path ? */
-		strcpy(path, buffer);
-	    else if ((p = strrchr(strcpy( path, full_argv0 ), '/')))
-	    {
-		strcpy(p + 1, buffer);
-	    }
-	    else *path = 0;
-
-	    if ((p = strrchr(path, '/')))
-	    {
-		p++;
-		sprintf(p, "wineconsole --use-event=%d", hEvent);
-		if (CreateProcessA(NULL, path, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
-		    goto succeed;
-		sprintf(p, "programs/wineconsole/wineconsole --use-event=%d", hEvent);
-		if (CreateProcessA(NULL, path, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
-		    goto succeed;
-	    }
-	} else perror("readlink");
-
-	HeapFree(GetProcessHeap(), 0, path);	path = NULL;
-    }
-	
     /* then try the regular PATH */
     sprintf(buffer, "wineconsole --use-event=%d\n", hEvent);
     if (CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi))
@@ -166,7 +117,6 @@ static	BOOL	start_console_renderer(void)
     goto the_end;
 
  succeed:    
-    if (path) HeapFree(GetProcessHeap(), 0, path);
     if (WaitForSingleObject(hEvent, INFINITE) != WAIT_OBJECT_0) goto the_end;
     CloseHandle(hEvent);
     
@@ -176,7 +126,6 @@ static	BOOL	start_console_renderer(void)
 
  the_end:
     ERR("Can't allocate console\n");
-    if (path) 		HeapFree(GetProcessHeap(), 0, path);
     CloseHandle(hEvent);
     return FALSE;
 }

@@ -28,13 +28,6 @@ all: wtmain.o
 wine.c: wine.xs
 	perl $(XSUBPPDIR)/xsubpp -typemap $(XSUBPPDIR)/typemap $(SRCDIR)/wine.xs >wine.c || $(RM) wine.c
 
-install::
-	$(MKINSTALLDIRS) $(libdir)
-	$(INSTALL_DATA) wine.pm $(libdir)/wine.pm
-
-uninstall::
-	$(RM) $(libdir)/wine.pm
-
 clean::
 	$(RM) wine.c
 

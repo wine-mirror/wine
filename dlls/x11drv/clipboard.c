@@ -288,8 +288,6 @@ BOOL X11DRV_CLIPBOARD_LaunchServer()
         execl( BINDIR "/wineclipsrv", "wineclipsrv",
                selMask, dbgClassMask, clearSelection, NULL );
         execlp( "wineclipsrv", "wineclipsrv", selMask, dbgClassMask, clearSelection, NULL );
-        execl( "./windows/x11drv/wineclipsrv", "wineclipsrv",
-               selMask, dbgClassMask, clearSelection, NULL );
 
         /* Exec Failed! */
         perror("Could not start Wine clipboard server");

@@ -119,11 +119,12 @@ if (defined($topobjdir))
 {
     chop($topobjdir = `cd $topobjdir && pwd`);
     $ENV{LD_LIBRARY_PATH} = $topobjdir . ":" . $ENV{LD_LIBRARY_PATH};
-    $ENV{WINEDLLPATH} = $topobjdir . "/dlls";
+    $ENV{WINEDLLPATH} = $topobjdir . "/dlls:" . $topobjdir . "/programs";
     $ENV{WINESERVER} = $topobjdir . "/server/wineserver";
     $ENV{WINELOADER} = $topobjdir . "/wine";
     $ENV{WINETEST_PLATFORM} = $platform || "wine";
-    $program ||= $topobjdir . "/programs/winetest/winetest";
+    $program ||= "winetest.exe";
+    exec $ENV{WINELOADER}, $program, $infile, @ARGV;
 }
 else
 {
@@ -131,7 +132,7 @@ else
 }
 
 # and now exec the program
-$program ||= "winetest";
+$program ||= "winetest.exe";
 exec $program, $infile, @ARGV;
 print STDERR "Could not exec $program\n";
 exit 1;

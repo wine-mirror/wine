@@ -186,6 +186,19 @@ enum loadorder_type
     LOADORDER_NTYPES
 };
 
+/* return values for MODULE_GetBinaryType */
+enum binary_type
+{
+    BINARY_UNKNOWN,
+    BINARY_PE_EXE,
+    BINARY_PE_DLL,
+    BINARY_WIN16,
+    BINARY_OS216,
+    BINARY_DOS,
+    BINARY_UNIX_EXE,
+    BINARY_UNIX_LIB
+};
+
 /* module.c */
 extern WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename );
 extern FARPROC MODULE_GetProcAddress( HMODULE hModule, LPCSTR function, BOOL snoop );
@@ -197,6 +210,7 @@ extern WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD fl
 extern BOOL MODULE_FreeLibrary( WINE_MODREF *wm );
 extern WINE_MODREF *MODULE_FindModule( LPCSTR path );
 extern HMODULE16 MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 );
+extern enum binary_type MODULE_GetBinaryType( HANDLE hfile );
 extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hmodule, LPCSTR name );
 extern SEGPTR WINAPI HasGPHandler16( SEGPTR address );
 extern void MODULE_WalkModref( DWORD id );
@@ -287,10 +301,5 @@ extern int BUILTIN32_dlclose( void *handle );
 
 /* scheduler/process.c */
 extern void PROCESS_CallUserSignalProc( UINT uCode, HMODULE16 hModule );
-extern BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
-                            LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                            BOOL inherit, DWORD flags,
-                            STARTUPINFOA *startup, PROCESS_INFORMATION *info,
-                            LPCSTR lpCurrentDirectory );
 
 #endif  /* __WINE_MODULE_H */

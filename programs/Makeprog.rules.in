@@ -32,8 +32,8 @@ $(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(WINEBUILD)
 $(MODULE).so: $(MODULE).spec.o $(ALL_OBJS) Makefile.in
 	$(LDSHARED) $(LDDLLFLAGS) $(MODULE).spec.o $(ALL_OBJS) -o $@ $(ALL_LIBS)
 
-$(BASEMODULE): $(MODULE).so
-	$(RM) $(BASEMODULE) && $(LN_S) $(TOPOBJDIR)/wine $(BASEMODULE)
+$(BASEMODULE): $(WINEWRAPPER)
+	$(RM) $@ && $(LN_S) $(WINEWRAPPER) $@
 
 # Rules for .exe main module
 
@@ -42,8 +42,10 @@ $(MODULE): $(ALL_OBJS) $(RCOBJS) Makefile.in
 
 # Rules for checking that no imports are missing
 
+CHECKLINK_RPATH = library tsx11 unicode
+
 checklink:: $(MODULE).so
-	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c $(MODULE).so && $(RM) checklink
+	$(CC) -o checklink $(CHECKLINK_RPATH:%=-Wl,-rpath,$(TOPOBJDIR)/%) $(TOPSRCDIR)/library/checklink.c $(MODULE).so && $(RM) checklink
 
 # Rules for testing
 
@@ -51,21 +53,25 @@ $(TESTRESULTS): $(MODULE)$(DLLEXT)
 
 # Rules for installation
 
-.PHONY: install_prog install_prog.so
+.PHONY: install_prog install_prog.so uninstall_prog uninstall_prog.so
 
-install_prog.so:: $(MODULE).so
-	$(MKINSTALLDIRS) $(bindir)
-	$(INSTALL_PROGRAM) $(MODULE).so $(bindir)/$(MODULE).so
-	cd $(bindir) && $(RM) $(BASEMODULE) && $(LN_S) wine $(BASEMODULE)
+install_prog.so: $(MODULE).so
+	$(MKINSTALLDIRS) $(dlldir)
+	$(INSTALL_PROGRAM) $(MODULE).so $(dlldir)/$(MODULE).so
 
-install_prog.exe:: $(MODULE)
+install_prog: $(MODULE)
 	$(MKINSTALLDIRS) $(bindir)
 	$(INSTALL_PROGRAM) $(MODULE) $(bindir)/$(MODULE)
 
+uninstall_prog.so: dummy
+	$(RM) $(dlldir)/$(MODULE).so
+
+uninstall_prog: dummy
+	$(RM) $(bindir)/$(MODULE)
+
 install:: install_prog$(DLLEXT)
 
-uninstall::
-	$(RM) $(bindir)/$(BASEMODULE) $(bindir)/$(MODULE) $(bindir)/$(MODULE).so
+uninstall:: uninstall_prog$(DLLEXT)
 
 clean::
 	$(RM) $(BASEMODULE) $(MODULE)

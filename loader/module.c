@@ -518,10 +518,11 @@ WINE_MODREF *MODULE_FindModule(
  * FIXME: is reading the module imports the only way of discerning
  *        old Windows binaries from OS/2 ones ? At least it seems so...
  */
-static DWORD MODULE_Decide_OS2_OldWin(HANDLE hfile, IMAGE_DOS_HEADER *mz, IMAGE_OS2_HEADER *ne)
+static enum binary_type MODULE_Decide_OS2_OldWin(HANDLE hfile, const IMAGE_DOS_HEADER *mz,
+                                                 const IMAGE_OS2_HEADER *ne)
 {
     DWORD currpos = SetFilePointer( hfile, 0, NULL, SEEK_CUR);
-    DWORD type = SCS_OS216_BINARY;
+    enum binary_type ret = BINARY_OS216;
     LPWORD modtab = NULL;
     LPSTR nametab = NULL;
     DWORD len;
@@ -548,7 +549,7 @@ static DWORD MODULE_Decide_OS2_OldWin(HANDLE hfile, IMAGE_DOS_HEADER *mz, IMAGE_
 	if (!(strncmp(&module[1], "KERNEL", module[0])))
 	{ /* very old Windows file */
 	    MESSAGE("This seems to be a very old (pre-3.0) Windows executable. Expect crashes, especially if this is a real-mode binary !\n");
-	    type = SCS_WOW_BINARY;
+            ret = BINARY_WIN16;
 	    goto good;
 	}
     }
@@ -560,11 +561,120 @@ good:
     HeapFree( GetProcessHeap(), 0, modtab);
     HeapFree( GetProcessHeap(), 0, nametab);
     SetFilePointer( hfile, currpos, NULL, SEEK_SET); /* restore filepos */
-    return type;
+    return ret;
 }
 
 /***********************************************************************
  *           MODULE_GetBinaryType
+ */
+enum binary_type MODULE_GetBinaryType( HANDLE hfile )
+{
+    union
+    {
+        struct
+        {
+            unsigned char magic[4];
+            unsigned char ignored[12];
+            unsigned short type;
+        } elf;
+        IMAGE_DOS_HEADER mz;
+    } header;
+
+    char magic[4];
+    DWORD len;
+
+    /* Seek to the start of the file and read the header information. */
+    if (SetFilePointer( hfile, 0, NULL, SEEK_SET ) == -1)
+        return BINARY_UNKNOWN;
+    if (!ReadFile( hfile, &header, sizeof(header), &len, NULL ) || len != sizeof(header))
+        return BINARY_UNKNOWN;
+
+    if (!memcmp( header.elf.magic, "\177ELF", 4 ))
+    {
+        /* FIXME: we don't bother to check byte order, architecture, etc. */
+        switch(header.elf.type)
+        {
+        case 2: return BINARY_UNIX_EXE;
+        case 3: return BINARY_UNIX_LIB;
+        }
+        return BINARY_UNKNOWN;
+    }
+
+    /* Not ELF, try DOS */
+
+    if (header.mz.e_magic == IMAGE_DOS_SIGNATURE)
+    {
+        /* We do have a DOS image so we will now try to seek into
+         * the file by the amount indicated by the field
+         * "Offset to extended header" and read in the
+         * "magic" field information at that location.
+         * This will tell us if there is more header information
+         * to read or not.
+         */
+        /* But before we do we will make sure that header
+         * structure encompasses the "Offset to extended header"
+         * field.
+         */
+        if ((header.mz.e_cparhdr << 4) < sizeof(IMAGE_DOS_HEADER))
+            return BINARY_DOS;
+        if (header.mz.e_crlc && (header.mz.e_lfarlc < sizeof(IMAGE_DOS_HEADER)))
+            return BINARY_DOS;
+        if (header.mz.e_lfanew < sizeof(IMAGE_DOS_HEADER))
+            return BINARY_DOS;
+        if (SetFilePointer( hfile, header.mz.e_lfanew, NULL, SEEK_SET ) == -1)
+            return BINARY_DOS;
+        if (!ReadFile( hfile, magic, sizeof(magic), &len, NULL ) || len != sizeof(magic))
+            return BINARY_DOS;
+
+        /* Reading the magic field succeeded so
+         * we will try to determine what type it is.
+         */
+        if (!memcmp( magic, "PE\0\0", 4 ))
+        {
+            IMAGE_NT_HEADERS nt;
+
+            if (SetFilePointer( hfile, header.mz.e_lfanew, NULL, SEEK_SET ) != -1 &&
+                ReadFile( hfile, &nt, sizeof(nt), &len, NULL ) && len == sizeof(nt))
+            {
+                if (nt.FileHeader.Characteristics & IMAGE_FILE_DLL) return BINARY_PE_DLL;
+                return BINARY_PE_EXE;
+            }
+            return BINARY_UNKNOWN;
+        }
+
+        if (!memcmp( magic, "NE", 2 ))
+        {
+            /* This is a Windows executable (NE) header.  This can
+             * mean either a 16-bit OS/2 or a 16-bit Windows or even a
+             * DOS program (running under a DOS extender).  To decide
+             * which, we'll have to read the NE header.
+             */
+            IMAGE_OS2_HEADER ne;
+            if (    SetFilePointer( hfile, header.mz.e_lfanew, NULL, SEEK_SET ) != -1
+                    && ReadFile( hfile, &ne, sizeof(ne), &len, NULL )
+                    && len == sizeof(ne) )
+            {
+                switch ( ne.ne_exetyp )
+                {
+                case 2:  return BINARY_WIN16;
+                case 5:  return BINARY_DOS;
+                default: return MODULE_Decide_OS2_OldWin(hfile, &header.mz, &ne);
+                }
+            }
+            /* Couldn't read header, so abort. */
+            return BINARY_UNKNOWN;
+        }
+
+        /* Unknown extended header, but this file is nonetheless DOS-executable. */
+        return BINARY_DOS;
+    }
+
+    return BINARY_UNKNOWN;
+}
+
+/***********************************************************************
+ *             GetBinaryTypeA                     [KERNEL32.@]
+ *             GetBinaryType                      [KERNEL32.@]
  *
  * The GetBinaryType function determines whether a file is executable
  * or not and if it is it returns what type of executable it is.
@@ -593,133 +703,11 @@ good:
  * Note that .COM and .PIF files are only recognized by their
  * file name extension; but Windows does it the same way ...
  */
-static BOOL MODULE_GetBinaryType( HANDLE hfile, LPCSTR filename, LPDWORD lpBinaryType )
-{
-    IMAGE_DOS_HEADER mz_header;
-    char magic[4], *ptr;
-    DWORD len;
-
-    /* Seek to the start of the file and read the DOS header information.
-     */
-    if (    SetFilePointer( hfile, 0, NULL, SEEK_SET ) != -1  
-         && ReadFile( hfile, &mz_header, sizeof(mz_header), &len, NULL )
-         && len == sizeof(mz_header) )
-    {
-        /* Now that we have the header check the e_magic field
-         * to see if this is a dos image.
-         */
-        if ( mz_header.e_magic == IMAGE_DOS_SIGNATURE )
-        {
-            BOOL lfanewValid = FALSE;
-            /* We do have a DOS image so we will now try to seek into
-             * the file by the amount indicated by the field
-             * "Offset to extended header" and read in the
-             * "magic" field information at that location.
-             * This will tell us if there is more header information
-             * to read or not.
-             */
-            /* But before we do we will make sure that header
-             * structure encompasses the "Offset to extended header"
-             * field.
-             */
-            if ( (mz_header.e_cparhdr<<4) >= sizeof(IMAGE_DOS_HEADER) )
-                if ( ( mz_header.e_crlc == 0 ) ||
-                     ( mz_header.e_lfarlc >= sizeof(IMAGE_DOS_HEADER) ) )
-                    if (    mz_header.e_lfanew >= sizeof(IMAGE_DOS_HEADER)
-                         && SetFilePointer( hfile, mz_header.e_lfanew, NULL, SEEK_SET ) != -1  
-                         && ReadFile( hfile, magic, sizeof(magic), &len, NULL )
-                         && len == sizeof(magic) )
-                        lfanewValid = TRUE;
-
-            if ( !lfanewValid )
-            {
-                /* If we cannot read this "extended header" we will
-                 * assume that we have a simple DOS executable.
-                 */
-                *lpBinaryType = SCS_DOS_BINARY;
-                return TRUE;
-            }
-            else
-            {
-                /* Reading the magic field succeeded so
-                 * we will try to determine what type it is.
-                 */
-                if ( *(DWORD*)magic      == IMAGE_NT_SIGNATURE )
-                {
-                    /* This is an NT signature.
-                     */
-                    *lpBinaryType = SCS_32BIT_BINARY;
-                    return TRUE;
-                }
-                else if ( *(WORD*)magic == IMAGE_OS2_SIGNATURE )
-                {
-                    /* The IMAGE_OS2_SIGNATURE indicates that the
-                     * "extended header is a Windows executable (NE)
-                     * header."  This can mean either a 16-bit OS/2
-                     * or a 16-bit Windows or even a DOS program 
-                     * (running under a DOS extender).  To decide
-                     * which, we'll have to read the NE header.
-                     */
-
-                     IMAGE_OS2_HEADER ne;
-                     if (    SetFilePointer( hfile, mz_header.e_lfanew, NULL, SEEK_SET ) != -1  
-                          && ReadFile( hfile, &ne, sizeof(ne), &len, NULL )
-                          && len == sizeof(ne) )
-                     {
-                         switch ( ne.ne_exetyp )
-                         {
-                         case 2:  *lpBinaryType = SCS_WOW_BINARY;   return TRUE;
-                         case 5:  *lpBinaryType = SCS_DOS_BINARY;   return TRUE;
-                         default: *lpBinaryType =
-				  MODULE_Decide_OS2_OldWin(hfile, &mz_header, &ne);
-				  return TRUE;
-                         }
-                     }
-                     /* Couldn't read header, so abort. */
-                     return FALSE;
-                }
-                else
-                {
-                    /* Unknown extended header, but this file is nonetheless
-		       DOS-executable.
-                     */
-                    *lpBinaryType = SCS_DOS_BINARY;
-	            return TRUE;
-                }
-            }
-        }
-    }
-
-    /* If we get here, we don't even have a correct MZ header.
-     * Try to check the file extension for known types ...
-     */
-    ptr = strrchr( filename, '.' );
-    if ( ptr && !strchr( ptr, '\\' ) && !strchr( ptr, '/' ) )
-    {
-        if ( !FILE_strcasecmp( ptr, ".COM" ) )
-        {
-            *lpBinaryType = SCS_DOS_BINARY;
-            return TRUE;
-        }
-
-        if ( !FILE_strcasecmp( ptr, ".PIF" ) )
-        {
-            *lpBinaryType = SCS_PIF_BINARY;
-            return TRUE;
-        }
-    }
-
-    return FALSE;
-}
-
-/***********************************************************************
- *             GetBinaryTypeA                     [KERNEL32.@]
- *             GetBinaryType                      [KERNEL32.@]
- */
 BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
 {
     BOOL ret = FALSE;
     HANDLE hfile;
+    char *ptr;
 
     TRACE_(win32)("%s\n", lpApplicationName );
 
@@ -737,12 +725,47 @@ BOOL WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType )
 
     /* Check binary type
      */
-    ret = MODULE_GetBinaryType( hfile, lpApplicationName, lpBinaryType );
+    switch(MODULE_GetBinaryType( hfile ))
+    {
+    case BINARY_UNKNOWN:
+        /* try to determine from file name */
+        ptr = strrchr( lpApplicationName, '.' );
+        if (!ptr) break;
+        if (!FILE_strcasecmp( ptr, ".COM" ))
+        {
+            *lpBinaryType = SCS_DOS_BINARY;
+            ret = TRUE;
+        }
+        else if (!FILE_strcasecmp( ptr, ".PIF" ))
+        {
+            *lpBinaryType = SCS_PIF_BINARY;
+            ret = TRUE;
+        }
+        break;
+    case BINARY_PE_EXE:
+    case BINARY_PE_DLL:
+        *lpBinaryType = SCS_32BIT_BINARY;
+        ret = TRUE;
+        break;
+    case BINARY_WIN16:
+        *lpBinaryType = SCS_WOW_BINARY;
+        ret = TRUE;
+        break;
+    case BINARY_OS216:
+        *lpBinaryType = SCS_OS216_BINARY;
+        ret = TRUE;
+        break;
+    case BINARY_DOS:
+        *lpBinaryType = SCS_DOS_BINARY;
+        ret = TRUE;
+        break;
+    case BINARY_UNIX_EXE:
+    case BINARY_UNIX_LIB:
+        ret = FALSE;
+        break;
+    }
 
-    /* Close the file.
-     */
     CloseHandle( hfile );
-
     return ret;
 }
 
@@ -967,238 +990,6 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
 }
 
 
-/*************************************************************************
- *               get_file_name
- *
- * Helper for CreateProcess: retrieve the file name to load from the
- * app name and command line. Store the file name in buffer, and
- * return a possibly modified command line.
- */
-static LPSTR get_file_name( LPCSTR appname, LPSTR cmdline, LPSTR buffer, int buflen )
-{
-    char *name, *pos, *ret = NULL;
-    const char *p;
-
-    /* if we have an app name, everything is easy */
-
-    if (appname)
-    {
-        /* use the unmodified app name as file name */
-        lstrcpynA( buffer, appname, buflen );
-        if (!(ret = cmdline))
-        {
-            /* no command-line, create one */
-            if ((ret = HeapAlloc( GetProcessHeap(), 0, strlen(appname) + 3 )))
-                sprintf( ret, "\"%s\"", appname );
-        }
-        return ret;
-    }
-
-    if (!cmdline)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return NULL;
-    }
-
-    /* first check for a quoted file name */
-
-    if ((cmdline[0] == '"') && ((p = strchr( cmdline + 1, '"' ))))
-    {
-        int len = p - cmdline - 1;
-        /* extract the quoted portion as file name */
-        if (!(name = HeapAlloc( GetProcessHeap(), 0, len + 1 ))) return NULL;
-        memcpy( name, cmdline + 1, len );
-        name[len] = 0;
-
-        if (SearchPathA( NULL, name, ".exe", buflen, buffer, NULL ) ||
-            SearchPathA( NULL, name, NULL, buflen, buffer, NULL ))
-            ret = cmdline;  /* no change necessary */
-        goto done;
-    }
-
-    /* now try the command-line word by word */
-
-    if (!(name = HeapAlloc( GetProcessHeap(), 0, strlen(cmdline) + 1 ))) return NULL;
-    pos = name;
-    p = cmdline;
-
-    while (*p)
-    {
-        do *pos++ = *p++; while (*p && *p != ' ');
-        *pos = 0;
-        TRACE("trying '%s'\n", name );
-        if (SearchPathA( NULL, name, ".exe", buflen, buffer, NULL ) ||
-            SearchPathA( NULL, name, NULL, buflen, buffer, NULL ))
-        {
-            ret = cmdline;
-            break;
-        }
-    }
-
-    if (!ret || !strchr( name, ' ' )) goto done;  /* no change necessary */
-
-    /* now build a new command-line with quotes */
-
-    if (!(ret = HeapAlloc( GetProcessHeap(), 0, strlen(cmdline) + 3 ))) goto done;
-    sprintf( ret, "\"%s\"%s", name, p );
-
- done:
-    HeapFree( GetProcessHeap(), 0, name );
-    return ret;
-}
-
-
-/**********************************************************************
- *       CreateProcessA          (KERNEL32.@)
- */
-BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine, 
-                            LPSECURITY_ATTRIBUTES lpProcessAttributes,
-                            LPSECURITY_ATTRIBUTES lpThreadAttributes,
-                            BOOL bInheritHandles, DWORD dwCreationFlags,
-                            LPVOID lpEnvironment, LPCSTR lpCurrentDirectory,
-                            LPSTARTUPINFOA lpStartupInfo,
-                            LPPROCESS_INFORMATION lpProcessInfo )
-{
-    BOOL retv = FALSE;
-    HANDLE hFile;
-    DWORD type;
-    char name[MAX_PATH];
-    LPSTR tidy_cmdline;
-
-    /* Process the AppName and/or CmdLine to get module name and path */
-
-    TRACE("app %s cmdline %s\n", debugstr_a(lpApplicationName), debugstr_a(lpCommandLine) );
-
-    if (!(tidy_cmdline = get_file_name( lpApplicationName, lpCommandLine, name, sizeof(name) )))
-        return FALSE;
-
-    /* Warn if unsupported features are used */
-
-    if (dwCreationFlags & NORMAL_PRIORITY_CLASS)
-        FIXME("(%s,...): NORMAL_PRIORITY_CLASS ignored\n", name);
-    if (dwCreationFlags & IDLE_PRIORITY_CLASS)
-        FIXME("(%s,...): IDLE_PRIORITY_CLASS ignored\n", name);
-    if (dwCreationFlags & HIGH_PRIORITY_CLASS)
-        FIXME("(%s,...): HIGH_PRIORITY_CLASS ignored\n", name);
-    if (dwCreationFlags & REALTIME_PRIORITY_CLASS)
-        FIXME("(%s,...): REALTIME_PRIORITY_CLASS ignored\n", name);
-    if (dwCreationFlags & CREATE_NEW_PROCESS_GROUP)
-        FIXME("(%s,...): CREATE_NEW_PROCESS_GROUP ignored\n", name);
-    if (dwCreationFlags & CREATE_UNICODE_ENVIRONMENT)
-        FIXME("(%s,...): CREATE_UNICODE_ENVIRONMENT ignored\n", name);
-    if (dwCreationFlags & CREATE_SEPARATE_WOW_VDM)
-        FIXME("(%s,...): CREATE_SEPARATE_WOW_VDM ignored\n", name);
-    if (dwCreationFlags & CREATE_SHARED_WOW_VDM)
-        FIXME("(%s,...): CREATE_SHARED_WOW_VDM ignored\n", name);
-    if (dwCreationFlags & CREATE_DEFAULT_ERROR_MODE)
-        FIXME("(%s,...): CREATE_DEFAULT_ERROR_MODE ignored\n", name);
-    if (dwCreationFlags & CREATE_NO_WINDOW)
-        FIXME("(%s,...): CREATE_NO_WINDOW ignored\n", name);
-    if (dwCreationFlags & PROFILE_USER)
-        FIXME("(%s,...): PROFILE_USER ignored\n", name);
-    if (dwCreationFlags & PROFILE_KERNEL)
-        FIXME("(%s,...): PROFILE_KERNEL ignored\n", name);
-    if (dwCreationFlags & PROFILE_SERVER)
-        FIXME("(%s,...): PROFILE_SERVER ignored\n", name);
-    if (lpStartupInfo->lpDesktop)
-        FIXME("(%s,...): lpStartupInfo->lpDesktop %s ignored\n", 
-                      name, debugstr_a(lpStartupInfo->lpDesktop));
-    if (lpStartupInfo->dwFlags & STARTF_RUNFULLSCREEN)
-        FIXME("(%s,...): STARTF_RUNFULLSCREEN ignored\n", name);
-    if (lpStartupInfo->dwFlags & STARTF_FORCEONFEEDBACK)
-        FIXME("(%s,...): STARTF_FORCEONFEEDBACK ignored\n", name);
-    if (lpStartupInfo->dwFlags & STARTF_FORCEOFFFEEDBACK)
-        FIXME("(%s,...): STARTF_FORCEOFFFEEDBACK ignored\n", name);
-    if (lpStartupInfo->dwFlags & STARTF_USEHOTKEY)
-        FIXME("(%s,...): STARTF_USEHOTKEY ignored\n", name);
-
-    /* Open file and determine executable type */
-
-    hFile = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
-    if (hFile == INVALID_HANDLE_VALUE) goto done;
-
-    if ( !MODULE_GetBinaryType( hFile, name, &type ) )
-    { /* unknown file, try as unix executable */
-        CloseHandle( hFile );
-        retv = PROCESS_Create( 0, name, tidy_cmdline, lpEnvironment, 
-                               lpProcessAttributes, lpThreadAttributes,
-                               bInheritHandles, dwCreationFlags,
-                               lpStartupInfo, lpProcessInfo, lpCurrentDirectory );
-        goto done;
-    }
-
-    /* Create process */
-
-    switch ( type )
-    {
-    case SCS_32BIT_BINARY:
-    case SCS_WOW_BINARY:
-    case SCS_DOS_BINARY:
-        retv = PROCESS_Create( hFile, name, tidy_cmdline, lpEnvironment, 
-                               lpProcessAttributes, lpThreadAttributes,
-                               bInheritHandles, dwCreationFlags,
-                               lpStartupInfo, lpProcessInfo, lpCurrentDirectory);
-        break;
-
-    case SCS_PIF_BINARY:
-    case SCS_POSIX_BINARY:
-    case SCS_OS216_BINARY:
-        FIXME("Unsupported executable type: %ld\n", type );
-        /* fall through */
-
-    default:
-        SetLastError( ERROR_BAD_FORMAT );
-        break;
-    }
-    CloseHandle( hFile );
-
- done:
-    if (tidy_cmdline != lpCommandLine) HeapFree( GetProcessHeap(), 0, tidy_cmdline );
-    return retv;
-}
-
-/**********************************************************************
- *       CreateProcessW          (KERNEL32.@)
- * NOTES
- *  lpReserved is not converted
- */
-BOOL WINAPI CreateProcessW( LPCWSTR lpApplicationName, LPWSTR lpCommandLine, 
-                                LPSECURITY_ATTRIBUTES lpProcessAttributes,
-                                LPSECURITY_ATTRIBUTES lpThreadAttributes,
-                                BOOL bInheritHandles, DWORD dwCreationFlags,
-                                LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory,
-                                LPSTARTUPINFOW lpStartupInfo,
-                                LPPROCESS_INFORMATION lpProcessInfo )
-{   BOOL ret;
-    STARTUPINFOA StartupInfoA;
-    
-    LPSTR lpApplicationNameA = HEAP_strdupWtoA (GetProcessHeap(),0,lpApplicationName);
-    LPSTR lpCommandLineA = HEAP_strdupWtoA (GetProcessHeap(),0,lpCommandLine);
-    LPSTR lpCurrentDirectoryA = HEAP_strdupWtoA (GetProcessHeap(),0,lpCurrentDirectory);
-
-    memcpy (&StartupInfoA, lpStartupInfo, sizeof(STARTUPINFOA));
-    StartupInfoA.lpDesktop = HEAP_strdupWtoA (GetProcessHeap(),0,lpStartupInfo->lpDesktop);
-    StartupInfoA.lpTitle = HEAP_strdupWtoA (GetProcessHeap(),0,lpStartupInfo->lpTitle);
-
-    TRACE_(win32)("(%s,%s,...)\n", debugstr_w(lpApplicationName), debugstr_w(lpCommandLine));
-
-    if (lpStartupInfo->lpReserved)
-      FIXME_(win32)("StartupInfo.lpReserved is used, please report (%s)\n", debugstr_w(lpStartupInfo->lpReserved));
-      
-    ret = CreateProcessA(  lpApplicationNameA,  lpCommandLineA, 
-                             lpProcessAttributes, lpThreadAttributes,
-                             bInheritHandles, dwCreationFlags,
-                             lpEnvironment, lpCurrentDirectoryA,
-                             &StartupInfoA, lpProcessInfo );
-
-    HeapFree( GetProcessHeap(), 0, lpCurrentDirectoryA );
-    HeapFree( GetProcessHeap(), 0, lpCommandLineA );
-    HeapFree( GetProcessHeap(), 0, StartupInfoA.lpDesktop );
-    HeapFree( GetProcessHeap(), 0, StartupInfoA.lpTitle );
-
-    return ret;
-}
-
 /***********************************************************************
  *              GetModuleHandleA         (KERNEL32.@)
  *              GetModuleHandle32        (KERNEL.488)
@@ -1297,17 +1088,20 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
                                             NULL, OPEN_EXISTING, 0, 0 );
                 if (hFile != INVALID_HANDLE_VALUE)
                 {
-                    DWORD type;
-                    MODULE_GetBinaryType( hFile, filename, &type );
-                    if (type == SCS_32BIT_BINARY)
+                    HANDLE mapping;
+                    switch (MODULE_GetBinaryType( hFile ))
                     {
-                        HANDLE mapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY,
-                                                             0, 0, NULL );
+                    case BINARY_PE_EXE:
+                    case BINARY_PE_DLL:
+                        mapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY, 0, 0, NULL );
                         if (mapping)
                         {
                             hmod = (HMODULE)MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
                             CloseHandle( mapping );
                         }
+                        break;
+                    default:
+                        break;
                     }
                     CloseHandle( hFile );
                 }

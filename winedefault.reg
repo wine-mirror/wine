@@ -87,7 +87,7 @@
 #
 [HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\AeDebug]
 # command line to start a debugger when an exception occurs
-"Debugger"="debugger/winedbg %ld %ld"
+"Debugger"="winedbg %ld %ld"
 # to 0 if a message box has to be presented before running the debugger
 "Auto"="1"
 

@@ -20,50 +20,33 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 LDCONFIG  = @LDCONFIG@
-MODULE    = wine
-LDIMPORTS = ntdll.dll
+MODULE    = none
 
-# Stand-alone programs
-PROGRAMS = \
-	server/wineserver
+# Sub-directories containing stand-alone programs
+PROGSUBDIRS = \
+	server
 
-# Programs that link with libwine
-LIBPROGRAMS = \
-	debugger \
+# Sub-directories containing programs that use some Wine dlls
+LIBPROGSUBDIRS = \
+	miscemu \
 	programs
 
-# Libraries (not dlls) to build
-LIBRARIES = \
-	library/libwine.$(LIBEXT) \
-	ole/libwine_uuid.a \
-	tsx11/libwine_tsx11.$(LIBEXT) \
-	unicode/libwine_unicode.$(LIBEXT)
-
-# Dlls that we need to link against (should go away)
-LINKABLE_DLLS = user32.dll gdi32.dll kernel32.dll ntdll.dll
-
-# Libraries symlinks to create at the top level
-LIBSYMLINKS = \
-	$(LINKABLE_DLLS:%=lib%.$(LIBEXT)) \
-	libwine.$(LIBEXT) \
-	libwine_tsx11.$(LIBEXT) \
-	libwine_unicode.$(LIBEXT) \
-	libwine_uuid.a
+# Sub-directories containing libraries (not dlls) to build
+LIBSUBDIRS = \
+	library \
+	ole \
+	tsx11 \
+	unicode
 
 # Sub-directories to run make depend/clean/install into
 SUBDIRS = \
-	debugger \
+	$(LIBPROGSUBDIRS) \
+	$(LIBSUBDIRS) \
+	$(PROGSUBDIRS) \
 	dlls \
 	documentation \
 	include \
-	library \
-	miscemu \
-	ole \
-	programs \
-	server \
-	tools \
-	tsx11 \
-	unicode
+	tools
 
 # Sub-directories to run make test into
 TESTSUBDIRS = \
@@ -73,7 +56,7 @@ TESTSUBDIRS = \
 EMUOBJS = \
 	miscemu/miscemu.o
 
-all: Make.rules $(PROGRAMS) $(LIBPROGRAMS) $(LIBSYMLINKS) wine
+all: Make.rules $(PROGSUBDIRS) $(LIBPROGSUBDIRS) wine
 	@echo "Wine build complete."
 
 WINAPI_CHECK_EXTRA_FLAGS = --global
@@ -84,68 +67,30 @@ Make.rules: Make.rules.in configure
 	@echo $? is newer than 'Make.rules', please rerun ./configure!
 	@exit 1
 
-wine: $(EMUOBJS) $(LDIMPORTS:%=lib%.$(LIBEXT)) library/libwine.$(LIBEXT) unicode/libwine_unicode.$(LIBEXT)
-	$(CC) -o wine $(EMUOBJS) -L. $(LDIMPORTS:%=-l%) $(LIBWINE) $(LIBUNICODE) $(LIBS) $(LDFLAGS)
+wine: $(WINEWRAPPER)
+	$(RM) $@ && $(LN_S) $(WINEWRAPPER) $@
 
-install_wine: dummy
-	$(MKINSTALLDIRS) $(bindir)
-	$(INSTALL_PROGRAM) wine $(bindir)/wine
-
-install:: all install_wine $(SUBDIRS:%=%/__install__)
+install:: all $(SUBDIRS:%=%/__install__)
 	-$(LDCONFIG)
 
 uninstall:: $(SUBDIRS:%=%/__uninstall__)
-	$(RM) $(bindir)/wine
-
-$(EMUOBJS) $(PROGRAMS) $(LIBRARIES): dummy
-	@cd `dirname $@` && $(MAKE) `basename $@`
-
-# Symlinks to libraries that we need to link against
-
-libwine.$(LIBEXT): library/libwine.$(LIBEXT)
-	$(RM) $@ && $(LN_S) library/libwine.$(LIBEXT) $@
-
-libwine_tsx11.$(LIBEXT): tsx11/libwine_tsx11.$(LIBEXT)
-	$(RM) $@ && $(LN_S) tsx11/libwine_tsx11.$(LIBEXT) $@
-
-libwine_unicode.$(LIBEXT): unicode/libwine_unicode.$(LIBEXT)
-	$(RM) $@ && $(LN_S) unicode/libwine_unicode.$(LIBEXT) $@
-
-libwine_uuid.a: ole/libwine_uuid.a
-	$(RM) $@ && $(LN_S) ole/libwine_uuid.a $@
-
-libuser32.dll.$(LIBEXT): dlls/user32.dll$(DLLEXT)
-	$(RM) $@ && $(LN_S) dlls/user32.dll$(DLLEXT) $@
-
-libgdi32.dll.$(LIBEXT): dlls/gdi32.dll$(DLLEXT)
-	$(RM) $@ && $(LN_S) dlls/gdi32.dll$(DLLEXT) $@
-
-libkernel32.dll.$(LIBEXT): dlls/kernel32.dll$(DLLEXT)
-	$(RM) $@ && $(LN_S) dlls/kernel32.dll$(DLLEXT) $@
-
-libntdll.dll.$(LIBEXT): dlls/ntdll.dll$(DLLEXT)
-	$(RM) $@ && $(LN_S) dlls/ntdll.dll$(DLLEXT) $@
-
-$(LINKABLE_DLLS:%=dlls/%$(DLLEXT)): dlls
 
 # Dependencies between directories
 
-$(PROGRAMS): tools
+$(LIBPROGSUBDIRS): tools dlls $(LIBSUBDIRS)
 
-$(EMUOBJS): tools dlls
+$(PROGSUBDIRS): tools $(LIBSUBDIRS)
 
-$(LIBPROGRAMS): tools dlls wine
+dlls: tools $(LIBSUBDIRS)
 
-server tools: $(LIBRARIES)
-
-dlls: tools $(LIBRARIES)
+tools: $(LIBSUBDIRS)
 
 checklink::
 	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c && $(RM) checklink
 
 checklink::
 	@cd dlls && $(MAKE) checklink
-	@cd debugger && $(MAKE) checklink
+	@cd programs && $(MAKE) checklink
 
 test_environment: dummy
 	@cd programs/winetest && $(MAKE) all

@@ -254,31 +254,30 @@ processes, it is possible to run a number of truly independent
 .B wine
 processes. 
 .TP
-.I WINEPRELOAD
-If set, specifies the full name of a shared library that
-.B wine
-loads and runs as a Winelib application.
-.TP
 .I WINESERVER
 Specifies the path and name of the
 .B wineserver
-binary. If not set, a file named "wineserver" is searched in the
-path and in a few other likely locations.
+binary. If not set, Wine will try to load
+.B @bindir@/wineserver,
+and if this doesn't exist will then look for a file named "wineserver"
+in the path and in a few other likely locations.
 .TP
 .I WINELOADER
 Specifies the path and name of the
 .B wine
-binary to use to launch new Windows processes. If not set, a binary
-named "wine" is searched in the path and in a few other likely
-locations.
+binary to use to launch new Windows processes. If not set, Wine will
+try to load
+.B @bindir@/wine,
+and if this doesn't exist will then look for a file named "wine" in
+the path and in a few other likely locations.
 .TP
 .I WINEDLLPATH
-Specifies the path(s) in which to search for builtin dll files. This
-is a list of directories separated by ":". Builtin dlls are also
-searched in the directories specified by the standard
-.I LD_LIBRARY_PATH
-if they are not found in the directories listed in
-.I WINEDLLPATH.
+Specifies the path(s) in which to search for builtin dlls and Winelib
+applications. This is a list of directories separated by ":". In
+addition to any directory specified in
+.I WINEDLLPATH,
+Wine will also look in
+.B @dlldir@.
 .TP
 .I DISPLAY
 Specifies the X11 display to use.
@@ -378,12 +377,12 @@ The
 .B wine 
 debugger
 .TP 
-.I @bindir@/wineclpsrv
+.I @bindir@/wineclipsrv
 The 
 .B wine 
 clipboard server
 .TP 
-.I @libdir@
+.I @dlldir@
 Directory containing 
 .B wine's
 shared libraries 

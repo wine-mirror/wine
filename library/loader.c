@@ -118,7 +118,7 @@ inline static int file_exists( const char *name )
 
 /* open a library for a given dll, searching in the dll path
  * 'name' must be the Windows dll name (e.g. "kernel32.dll") */
-static void *dlopen_dll( const char *name, char *error, int errorsize )
+static void *dlopen_dll( const char *name, char *error, int errorsize, int test_only )
 {
     int i, namelen = strlen(name);
     char *buffer, *p;
@@ -139,17 +139,16 @@ static void *dlopen_dll( const char *name, char *error, int errorsize )
         int len = strlen(dll_paths[i]);
         p = buffer + dll_path_maxlen - len;
         memcpy( p, dll_paths[i], len );
-        if ((ret = wine_dlopen( p, RTLD_NOW, error, errorsize ))) break;
-        if (file_exists( p ))  /* exists but cannot be loaded, return the error */
+        if (test_only)  /* just test for file existence */
         {
-            free( buffer );
-            return NULL;
+            if ((ret = (void *)file_exists( p ))) break;
+        }
+        else
+        {
+            if ((ret = wine_dlopen( p, RTLD_NOW, error, errorsize ))) break;
+            if (file_exists( p )) break; /* exists but cannot be loaded, return the error */
         }
     }
-
-    /* now try the default dlopen search path */
-    if (!ret)
-        ret = wine_dlopen( buffer + dll_path_maxlen + 1, RTLD_NOW, error, errorsize );
     free( buffer );
     return ret;
 }
@@ -374,7 +373,7 @@ void *wine_dll_load( const char *filename, char *error, int errorsize )
             return (void *)1;
         }
     }
-    return dlopen_dll( filename, error, errorsize );
+    return dlopen_dll( filename, error, errorsize, 0 );
 }
 
 
@@ -393,46 +392,9 @@ void wine_dll_unload( void *handle )
 /***********************************************************************
  *           wine_dll_load_main_exe
  *
- * Try to load the .so for the main exe, optionally searching for it in PATH.
+ * Try to load the .so for the main exe.
  */
-void *wine_dll_load_main_exe( const char *name, int search_path, char *error, int errorsize )
+void *wine_dll_load_main_exe( const char *name, char *error, int errorsize, int test_only )
 {
-    void *ret = NULL;
-    const char *path = NULL;
-    if (search_path) path = getenv( "PATH" );
-
-    if (!path)
-    {
-        /* no path, try only the specified name */
-        ret = wine_dlopen( name, RTLD_NOW, error, errorsize );
-    }
-    else
-    {
-        char buffer[128], *tmp = buffer;
-        size_t namelen = strlen(name);
-        size_t pathlen = strlen(path);
-
-        if (namelen + pathlen + 2 > sizeof(buffer)) tmp = malloc( namelen + pathlen + 2 );
-        if (tmp)
-        {
-            char *basename = tmp + pathlen;
-            *basename = '/';
-            strcpy( basename + 1, name );
-            for (;;)
-            {
-                int len;
-                const char *p = strchr( path, ':' );
-                if (!p) p = path + strlen(path);
-                if ((len = p - path) > 0)
-                {
-                    memcpy( basename - len, path, len );
-                    if ((ret = wine_dlopen( basename - len, RTLD_NOW, error, errorsize ))) break;
-                }
-                if (!*p) break;
-                path = p + 1;
-            }
-            if (tmp != buffer) free( tmp );
-        }
-    }
-    return ret;
+    return dlopen_dll( name, error, errorsize, test_only );
 }

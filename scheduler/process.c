@@ -36,6 +36,7 @@
 #include "drive.h"
 #include "module.h"
 #include "file.h"
+#include "heap.h"
 #include "thread.h"
 #include "winerror.h"
 #include "wincon.h"
@@ -236,6 +237,118 @@ void PROCESS_CallUserSignalProc( UINT uCode, HMODULE16 hModule )
         proc( uCode, GetCurrentProcessId(), dwFlags, hModule );
 }
 
+
+/***********************************************************************
+ *           get_basename
+ */
+inline static const char *get_basename( const char *name )
+{
+    char *p;
+
+    if ((p = strrchr( name, '/' ))) name = p + 1;
+    if ((p = strrchr( name, '\\' ))) name = p + 1;
+    return name;
+}
+
+
+/***********************************************************************
+ *           open_exe_file
+ *
+ * Open an exe file, taking load order into account.
+ * Returns the file handle or 0 for a builtin exe.
+ */
+static HANDLE open_exe_file( const char *name )
+{
+    enum loadorder_type loadorder[LOADORDER_NTYPES];
+    HANDLE handle;
+    int i;
+
+    SetLastError( ERROR_FILE_NOT_FOUND );
+    MODULE_GetLoadOrder( loadorder, name, TRUE );
+
+    for(i = 0; i < LOADORDER_NTYPES; i++)
+    {
+        if (loadorder[i] == LOADORDER_INVALID) break;
+        switch(loadorder[i])
+        {
+        case LOADORDER_DLL:
+            TRACE( "Trying native exe %s\n", debugstr_a(name) );
+            if ((handle = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ,
+                                       NULL, OPEN_EXISTING, 0, 0 )) != INVALID_HANDLE_VALUE)
+                return handle;
+            if (GetLastError() != ERROR_FILE_NOT_FOUND) return INVALID_HANDLE_VALUE;
+            break;
+        case LOADORDER_BI:
+            TRACE( "Trying built-in exe %s\n", debugstr_a(name) );
+            if (wine_dll_load_main_exe( get_basename(name), NULL, 0, 1 )) return 0;
+            break;
+        default:
+            break;
+        }
+    }
+    return INVALID_HANDLE_VALUE;
+}
+
+
+/***********************************************************************
+ *           find_exe_file
+ *
+ * Open an exe file, and return the full name and file handle.
+ * Returns FALSE if file could not be found.
+ * If file exists but cannot be opened, returns TRUE and set handle to INVALID_HANDLE_VALUE.
+ * If file is a builtin exe, returns TRUE and sets handle to 0.
+ */
+static BOOL find_exe_file( const char *name, char *buffer, int buflen, HANDLE *handle )
+{
+    enum loadorder_type loadorder[LOADORDER_NTYPES];
+    int i;
+
+    TRACE("looking for %s\n", debugstr_a(name) );
+
+    if (SearchPathA( NULL, name, ".exe", buflen, buffer, NULL ))
+    {
+        *handle = open_exe_file( buffer );
+        return TRUE;
+    }
+
+    /* no such file in path, try builtin with .exe extension */
+
+    lstrcpynA( buffer, get_basename(name), buflen );
+    if (!strchr( buffer, '.' ))
+    {
+        char *p = buffer + strlen(buffer);
+        lstrcpynA( p, ".exe", buflen - (p - buffer) );
+    }
+
+    MODULE_GetLoadOrder( loadorder, buffer, TRUE );
+    for (i = 0; i < LOADORDER_NTYPES; i++)
+    {
+        if (loadorder[i] == LOADORDER_BI)
+        {
+            TRACE( "Trying built-in exe %s\n", debugstr_a(buffer) );
+            if (wine_dll_load_main_exe( buffer, NULL, 0, 1 ))
+            {
+                *handle = 0;
+                return TRUE;
+            }
+            break;
+        }
+        if (loadorder[i] == LOADORDER_INVALID) break;
+    }
+
+    /* no builtin found, try native without extension in case it is a Unix app */
+
+    if (SearchPathA( NULL, name, NULL, buflen, buffer, NULL ))
+    {
+        TRACE( "Trying native/Unix binary %s\n", debugstr_a(buffer) );
+        if ((*handle = CreateFileA( buffer, GENERIC_READ, FILE_SHARE_READ,
+                                    NULL, OPEN_EXISTING, 0, 0 )) != INVALID_HANDLE_VALUE)
+            return TRUE;
+    }
+    return FALSE;
+}
+
+
 /***********************************************************************
  *           process_init
  *
@@ -266,16 +379,13 @@ static BOOL process_init( char *argv[] )
     {
         req->ldt_copy  = &wine_ldt_copy;
         req->ppid      = getppid();
-        wine_server_set_reply( req, main_exe_name, sizeof(main_exe_name)-1 );
         if ((ret = !wine_server_call_err( req )))
         {
-            size_t len = wine_server_reply_size( reply );
-            main_exe_name[len] = 0;
-            main_exe_file      = reply->exe_file;
-            main_create_flags  = reply->create_flags;
-            info_size     = reply->info_size;
-            info          = reply->info;
-            server_startticks               = reply->server_start;
+            main_exe_file     = reply->exe_file;
+            main_create_flags = reply->create_flags;
+            info_size         = reply->info_size;
+            info              = reply->info;
+            server_startticks = reply->server_start;
             current_startupinfo.hStdInput   = reply->hstdin;
             current_startupinfo.hStdOutput  = reply->hstdout;
             current_startupinfo.hStdError   = reply->hstderr;
@@ -419,112 +529,92 @@ static void start_process(void)
 
 
 /***********************************************************************
- *           open_winelib_app
- *
- * Try to open the Winelib app .so file based on argv[0] or WINEPRELOAD.
- */
-void *open_winelib_app( char *argv[] )
-{
-    void *ret = NULL;
-    char *tmp;
-    const char *name;
-    char errStr[100];
-
-    if ((name = getenv( "WINEPRELOAD" )))
-    {
-        if (!(ret = wine_dll_load_main_exe( name, 0, errStr, sizeof(errStr) )))
-        {
-            MESSAGE( "%s: could not load '%s' as specified in the WINEPRELOAD environment variable: %s\n",
-                     argv[0], name, errStr );
-            ExitProcess(1);
-        }
-    }
-    else
-    {
-        const char *argv0 = main_exe_name;
-        if (!*argv0)
-        {
-            /* if argv[0] is "wine", don't try to load anything */
-            argv0 = argv[0];
-            if (!(name = strrchr( argv0, '/' ))) name = argv0;
-            else name++;
-            if (!strcmp( name, "wine" )) return NULL;
-        }
-        /* now try argv[0] with ".so" appended */
-        if ((tmp = HeapAlloc( GetProcessHeap(), 0, strlen(argv0) + 8 )))
-        {
-            strcpy( tmp, argv0 );
-            strcat( tmp, ".exe.so" );
-            /* search in PATH only if there was no '/' in argv[0] */
-            ret = wine_dll_load_main_exe( tmp, (name == argv0), errStr, sizeof(errStr) );
-            if (!ret && !argv[1] && !main_exe_name[0])
-            {
-                /* if no argv[1], this will be better than displaying usage */
-                MESSAGE( "%s: could not load library '%s' as Winelib application: %s\n",
-                         argv[0], tmp, errStr );
-                ExitProcess(1);
-            }
-            HeapFree( GetProcessHeap(), 0, tmp );
-        }
-    }
-    return ret;
-}
-
-/***********************************************************************
  *           PROCESS_InitWine
  *
  * Wine initialisation: load and start the main exe file.
  */
 void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win16_exe_file )
 {
+    char error[100];
     DWORD stack_size = 0;
 
     /* Initialize everything */
     if (!process_init( argv )) exit(1);
 
-    if (open_winelib_app( argv )) goto found; /* try to open argv[0] as a winelib app */
-
     argv++;  /* remove argv[0] (wine itself) */
+
+    TRACE( "starting process name=%s file=%x argv[0]=%s\n",
+           debugstr_a(main_exe_name), main_exe_file, debugstr_a(argv[0]) );
 
     if (!main_exe_name[0])
     {
         if (!argv[0]) OPTIONS_Usage();
 
-        /* open the exe file */
-        if (!SearchPathA( NULL, argv[0], ".exe", sizeof(main_exe_name), main_exe_name, NULL) &&
-            !SearchPathA( NULL, argv[0], NULL, sizeof(main_exe_name), main_exe_name, NULL))
+        if (!find_exe_file( argv[0], main_exe_name, sizeof(main_exe_name), &main_exe_file ))
         {
             MESSAGE( "%s: cannot find '%s'\n", argv0, argv[0] );
-            goto error;
+            ExitProcess(1);
         }
-    }
-
-    if (!main_exe_file)
-    {
-        if ((main_exe_file = CreateFileA( main_exe_name, GENERIC_READ, FILE_SHARE_READ,
-                                          NULL, OPEN_EXISTING, 0, 0)) == INVALID_HANDLE_VALUE)
+        if (main_exe_file == INVALID_HANDLE_VALUE)
         {
             MESSAGE( "%s: cannot open '%s'\n", argv0, main_exe_name );
-            goto error;
+            ExitProcess(1);
         }
     }
 
-    /* first try Win32 format; this will fail if the file is not a PE binary */
-    if ((current_process.module = PE_LoadImage( main_exe_file, main_exe_name, 0 )))
+    if (!main_exe_file)  /* no file handle -> Winelib app */
     {
-        if (PE_HEADER(current_process.module)->FileHeader.Characteristics & IMAGE_FILE_DLL)
-            ExitProcess( ERROR_BAD_EXE_FORMAT );
-        goto found;
+        TRACE( "starting Winelib app %s\n", debugstr_a(main_exe_name) );
+        if (wine_dll_load_main_exe( get_basename(main_exe_name), error, sizeof(error), 0 ))
+            goto found;
+        MESSAGE( "%s: cannot open builtin library for '%s': %s\n", argv0, main_exe_name, error );
+        ExitProcess(1);
     }
 
-    /* it must be 16-bit or DOS format */
-    NtCurrentTeb()->tibflags &= ~TEBF_WIN32;
-    current_process.flags |= PDB32_WIN16_PROC;
-    strcpy( win16_exe_name, main_exe_name );
-    main_exe_name[0] = 0;
-    *win16_exe_file = main_exe_file;
-    main_exe_file = 0;
-    _EnterWin16Lock();
+    switch( MODULE_GetBinaryType( main_exe_file ))
+    {
+    case BINARY_UNKNOWN:
+        MESSAGE( "%s: cannot determine executable type for '%s'\n", argv0, main_exe_name );
+        ExitProcess(1);
+    case BINARY_PE_EXE:
+        TRACE( "starting Win32 binary %s\n", debugstr_a(main_exe_name) );
+        if ((current_process.module = PE_LoadImage( main_exe_file, main_exe_name, 0 ))) goto found;
+        MESSAGE( "%s: could not load '%s' as Win32 binary\n", argv0, main_exe_name );
+        ExitProcess(1);
+    case BINARY_PE_DLL:
+        MESSAGE( "%s: '%s' is a DLL, not an executable\n", argv0, main_exe_name );
+        ExitProcess(1);
+    case BINARY_WIN16:
+    case BINARY_DOS:
+        TRACE( "starting Win16/DOS binary %s\n", debugstr_a(main_exe_name) );
+        NtCurrentTeb()->tibflags &= ~TEBF_WIN32;
+        current_process.flags |= PDB32_WIN16_PROC;
+        strcpy( win16_exe_name, main_exe_name );
+        main_exe_name[0] = 0;
+        *win16_exe_file = main_exe_file;
+        main_exe_file = 0;
+        _EnterWin16Lock();
+        goto found;
+    case BINARY_OS216:
+        MESSAGE( "%s: '%s' is an OS/2 binary, not supported\n", argv0, main_exe_name );
+        ExitProcess(1);
+    case BINARY_UNIX_EXE:
+        MESSAGE( "%s: '%s' is a Unix binary, not supported\n", argv0, main_exe_name );
+        ExitProcess(1);
+    case BINARY_UNIX_LIB:
+        {
+            DOS_FULL_NAME full_name;
+            const char *name = main_exe_name;
+
+            TRACE( "starting Winelib app %s\n", debugstr_a(main_exe_name) );
+            if (DOSFS_GetFullName( name, TRUE, &full_name )) name = full_name.long_name;
+            CloseHandle( main_exe_file );
+            main_exe_file = 0;
+            if (wine_dlopen( name, RTLD_NOW, error, sizeof(error) )) goto found;
+            MESSAGE( "%s: could not load '%s': %s\n", argv0, main_exe_name, error );
+            ExitProcess(1);
+        }
+    }
 
  found:
     /* build command line */
@@ -680,7 +770,6 @@ static char **build_envp( const char *env, const char *extra_env )
         {
             if (memcmp( p, "PATH=", 5 ) &&
                 memcmp( p, "HOME=", 5 ) &&
-                memcmp( p, "WINEPRELOAD=", 12 ) &&
                 memcmp( p, "WINEPREFIX=", 11 )) *envptr++ = (char *)p;
         }
         *envptr = 0;
@@ -734,10 +823,6 @@ static void exec_wine_binary( char **argv, char **envp )
         }
     }
     free( argv[0] );
-
-    /* finally try the current directory */
-    argv[0] = "./wine";
-    execve( argv[0], argv, envp );
 }
 
 
@@ -796,42 +881,20 @@ static int fork_and_exec( const char *filename, char *cmdline,
 
 
 /***********************************************************************
- *           PROCESS_Create
+ *           create_process
  *
  * Create a new process. If hFile is a valid handle we have an exe
- * file, and we exec a new copy of wine to load it; otherwise we
- * simply exec the specified filename as a Unix process.
+ * file, otherwise it is a Winelib app.
  */
-BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
-                     LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                     BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
-                     LPPROCESS_INFORMATION info, LPCSTR lpCurrentDirectory )
+static BOOL create_process( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
+                            LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+                            BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
+                            LPPROCESS_INFORMATION info, LPCSTR unixdir )
 {
     BOOL ret;
-    const char *unixfilename = NULL;
-    const char *unixdir = NULL;
-    DOS_FULL_NAME full_dir, full_name;
     HANDLE load_done_evt = 0;
     HANDLE process_info;
     startup_info_t startup_info;
-
-    info->hThread = info->hProcess = 0;
-    info->dwProcessId = info->dwThreadId = 0;
-
-    if (lpCurrentDirectory)
-    {
-        if (DOSFS_GetFullName( lpCurrentDirectory, TRUE, &full_dir ))
-            unixdir = full_dir.long_name;
-    }
-    else
-    {
-        char buf[MAX_PATH];
-        if (GetCurrentDirectoryA(sizeof(buf),buf))
-        {
-            if (DOSFS_GetFullName( buf, TRUE, &full_dir ))
-                unixdir = full_dir.long_name;
-        }
-    }
 
     /* fill the startup info structure */
 
@@ -874,20 +937,11 @@ BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
             req->hstderr = GetStdHandle( STD_ERROR_HANDLE );
         }
 
-        if (!hFile)  /* unix process */
-        {
-            unixfilename = filename;
-            if (DOSFS_GetFullName( filename, TRUE, &full_name ))
-                unixfilename = full_name.long_name;
-            nameptr = unixfilename;
-        }
-        else  /* new wine process */
-        {
-            if (GetLongPathNameA( filename, buf, MAX_PATH ))
-                nameptr = buf;
-            else
-                nameptr = filename;
-        }
+        if (GetLongPathNameA( filename, buf, MAX_PATH ))
+            nameptr = buf;
+        else
+            nameptr = filename;
+
         startup_info.filename_len = strlen(nameptr);
         wine_server_add_data( req, &startup_info, sizeof(startup_info) );
         wine_server_add_data( req, nameptr, startup_info.filename_len );
@@ -903,7 +957,7 @@ BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
 
     /* fork and execute */
 
-    if (fork_and_exec( unixfilename, cmd_line, env, unixdir ) == -1)
+    if (fork_and_exec( NULL, cmd_line, env, unixdir ) == -1)
     {
         CloseHandle( process_info );
         return FALSE;
@@ -953,6 +1007,260 @@ BOOL PROCESS_Create( HANDLE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
         }
     }
     return TRUE;
+}
+
+
+/*************************************************************************
+ *               get_file_name
+ *
+ * Helper for CreateProcess: retrieve the file name to load from the
+ * app name and command line. Store the file name in buffer, and
+ * return a possibly modified command line.
+ * Also returns a handle to the opened file if it's a Windows binary.
+ */
+static LPSTR get_file_name( LPCSTR appname, LPSTR cmdline, LPSTR buffer,
+                            int buflen, HANDLE *handle )
+{
+    char *name, *pos, *ret = NULL;
+    const char *p;
+
+    /* if we have an app name, everything is easy */
+
+    if (appname)
+    {
+        /* use the unmodified app name as file name */
+        lstrcpynA( buffer, appname, buflen );
+        *handle = open_exe_file( buffer );
+        if (!(ret = cmdline))
+        {
+            /* no command-line, create one */
+            if ((ret = HeapAlloc( GetProcessHeap(), 0, strlen(appname) + 3 )))
+                sprintf( ret, "\"%s\"", appname );
+        }
+        return ret;
+    }
+
+    if (!cmdline)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+
+    /* first check for a quoted file name */
+
+    if ((cmdline[0] == '"') && ((p = strchr( cmdline + 1, '"' ))))
+    {
+        int len = p - cmdline - 1;
+        /* extract the quoted portion as file name */
+        if (!(name = HeapAlloc( GetProcessHeap(), 0, len + 1 ))) return NULL;
+        memcpy( name, cmdline + 1, len );
+        name[len] = 0;
+
+        if (find_exe_file( name, buffer, buflen, handle ))
+            ret = cmdline;  /* no change necessary */
+        goto done;
+    }
+
+    /* now try the command-line word by word */
+
+    if (!(name = HeapAlloc( GetProcessHeap(), 0, strlen(cmdline) + 1 ))) return NULL;
+    pos = name;
+    p = cmdline;
+
+    while (*p)
+    {
+        do *pos++ = *p++; while (*p && *p != ' ');
+        *pos = 0;
+        if (find_exe_file( name, buffer, buflen, handle ))
+        {
+            ret = cmdline;
+            break;
+        }
+    }
+
+    if (!ret || !strchr( name, ' ' )) goto done;  /* no change necessary */
+
+    /* now build a new command-line with quotes */
+
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, strlen(cmdline) + 3 ))) goto done;
+    sprintf( ret, "\"%s\"%s", name, p );
+
+ done:
+    HeapFree( GetProcessHeap(), 0, name );
+    return ret;
+}
+
+
+/**********************************************************************
+ *       CreateProcessA          (KERNEL32.@)
+ */
+BOOL WINAPI CreateProcessA( LPCSTR app_name, LPSTR cmd_line, LPSECURITY_ATTRIBUTES process_attr,
+                            LPSECURITY_ATTRIBUTES thread_attr, BOOL inherit,
+                            DWORD flags, LPVOID env, LPCSTR cur_dir,
+                            LPSTARTUPINFOA startup_info, LPPROCESS_INFORMATION info )
+{
+    BOOL retv = FALSE;
+    HANDLE hFile = 0;
+    const char *unixdir = NULL;
+    DOS_FULL_NAME full_dir;
+    char name[MAX_PATH];
+    LPSTR tidy_cmdline;
+
+    /* Process the AppName and/or CmdLine to get module name and path */
+
+    TRACE("app %s cmdline %s\n", debugstr_a(app_name), debugstr_a(cmd_line) );
+
+    if (!(tidy_cmdline = get_file_name( app_name, cmd_line, name, sizeof(name), &hFile )))
+        return FALSE;
+    if (hFile == INVALID_HANDLE_VALUE) goto done;
+
+    /* Warn if unsupported features are used */
+
+    if (flags & NORMAL_PRIORITY_CLASS)
+        FIXME("(%s,...): NORMAL_PRIORITY_CLASS ignored\n", name);
+    if (flags & IDLE_PRIORITY_CLASS)
+        FIXME("(%s,...): IDLE_PRIORITY_CLASS ignored\n", name);
+    if (flags & HIGH_PRIORITY_CLASS)
+        FIXME("(%s,...): HIGH_PRIORITY_CLASS ignored\n", name);
+    if (flags & REALTIME_PRIORITY_CLASS)
+        FIXME("(%s,...): REALTIME_PRIORITY_CLASS ignored\n", name);
+    if (flags & CREATE_NEW_PROCESS_GROUP)
+        FIXME("(%s,...): CREATE_NEW_PROCESS_GROUP ignored\n", name);
+    if (flags & CREATE_UNICODE_ENVIRONMENT)
+        FIXME("(%s,...): CREATE_UNICODE_ENVIRONMENT ignored\n", name);
+    if (flags & CREATE_SEPARATE_WOW_VDM)
+        FIXME("(%s,...): CREATE_SEPARATE_WOW_VDM ignored\n", name);
+    if (flags & CREATE_SHARED_WOW_VDM)
+        FIXME("(%s,...): CREATE_SHARED_WOW_VDM ignored\n", name);
+    if (flags & CREATE_DEFAULT_ERROR_MODE)
+        FIXME("(%s,...): CREATE_DEFAULT_ERROR_MODE ignored\n", name);
+    if (flags & CREATE_NO_WINDOW)
+        FIXME("(%s,...): CREATE_NO_WINDOW ignored\n", name);
+    if (flags & PROFILE_USER)
+        FIXME("(%s,...): PROFILE_USER ignored\n", name);
+    if (flags & PROFILE_KERNEL)
+        FIXME("(%s,...): PROFILE_KERNEL ignored\n", name);
+    if (flags & PROFILE_SERVER)
+        FIXME("(%s,...): PROFILE_SERVER ignored\n", name);
+    if (startup_info->lpDesktop)
+        FIXME("(%s,...): startup_info->lpDesktop %s ignored\n",
+              name, debugstr_a(startup_info->lpDesktop));
+    if (startup_info->dwFlags & STARTF_RUNFULLSCREEN)
+        FIXME("(%s,...): STARTF_RUNFULLSCREEN ignored\n", name);
+    if (startup_info->dwFlags & STARTF_FORCEONFEEDBACK)
+        FIXME("(%s,...): STARTF_FORCEONFEEDBACK ignored\n", name);
+    if (startup_info->dwFlags & STARTF_FORCEOFFFEEDBACK)
+        FIXME("(%s,...): STARTF_FORCEOFFFEEDBACK ignored\n", name);
+    if (startup_info->dwFlags & STARTF_USEHOTKEY)
+        FIXME("(%s,...): STARTF_USEHOTKEY ignored\n", name);
+
+    if (cur_dir)
+    {
+        if (DOSFS_GetFullName( cur_dir, TRUE, &full_dir ))
+            unixdir = full_dir.long_name;
+    }
+    else
+    {
+        char buf[MAX_PATH];
+        if (GetCurrentDirectoryA(sizeof(buf),buf))
+        {
+            if (DOSFS_GetFullName( buf, TRUE, &full_dir )) unixdir = full_dir.long_name;
+        }
+    }
+
+    info->hThread = info->hProcess = 0;
+    info->dwProcessId = info->dwThreadId = 0;
+
+    /* Determine executable type */
+
+    if (!hFile)  /* builtin exe */
+    {
+        TRACE( "starting %s as Winelib app\n", debugstr_a(name) );
+        retv = create_process( 0, name, tidy_cmdline, env, process_attr, thread_attr,
+                               inherit, flags, startup_info, info, unixdir );
+        goto done;
+    }
+
+    switch( MODULE_GetBinaryType( hFile ))
+    {
+    case BINARY_PE_EXE:
+    case BINARY_WIN16:
+    case BINARY_DOS:
+        TRACE( "starting %s as Windows binary\n", debugstr_a(name) );
+        retv = create_process( hFile, name, tidy_cmdline, env, process_attr, thread_attr,
+                               inherit, flags, startup_info, info, unixdir );
+        break;
+    case BINARY_OS216:
+        FIXME( "%s is OS/2 binary, not supported\n", debugstr_a(name) );
+        SetLastError( ERROR_BAD_EXE_FORMAT );
+        break;
+    case BINARY_PE_DLL:
+        TRACE( "not starting %s since it is a dll\n", debugstr_a(name) );
+        SetLastError( ERROR_BAD_EXE_FORMAT );
+        break;
+    case BINARY_UNIX_LIB:
+        TRACE( "%s is a Unix library, starting as Winelib app\n", debugstr_a(name) );
+        retv = create_process( hFile, name, tidy_cmdline, env, process_attr, thread_attr,
+                               inherit, flags, startup_info, info, unixdir );
+        break;
+    case BINARY_UNIX_EXE:
+    case BINARY_UNKNOWN:
+        {
+            /* unknown file, try as unix executable */
+
+            DOS_FULL_NAME full_name;
+            const char *unixfilename = name;
+
+            TRACE( "starting %s as Unix binary\n", debugstr_a(name) );
+            if (DOSFS_GetFullName( name, TRUE, &full_name )) unixfilename = full_name.long_name;
+            retv = (fork_and_exec( unixfilename, tidy_cmdline, env, unixdir ) != -1);
+        }
+        break;
+    }
+    CloseHandle( hFile );
+
+ done:
+    if (tidy_cmdline != cmd_line) HeapFree( GetProcessHeap(), 0, tidy_cmdline );
+    return retv;
+}
+
+
+/**********************************************************************
+ *       CreateProcessW          (KERNEL32.@)
+ * NOTES
+ *  lpReserved is not converted
+ */
+BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIBUTES process_attr,
+                            LPSECURITY_ATTRIBUTES thread_attr, BOOL inherit, DWORD flags,
+                            LPVOID env, LPCWSTR cur_dir, LPSTARTUPINFOW startup_info,
+                            LPPROCESS_INFORMATION info )
+{
+    BOOL ret;
+    STARTUPINFOA StartupInfoA;
+
+    LPSTR app_nameA = HEAP_strdupWtoA (GetProcessHeap(),0,app_name);
+    LPSTR cmd_lineA = HEAP_strdupWtoA (GetProcessHeap(),0,cmd_line);
+    LPSTR cur_dirA = HEAP_strdupWtoA (GetProcessHeap(),0,cur_dir);
+
+    memcpy (&StartupInfoA, startup_info, sizeof(STARTUPINFOA));
+    StartupInfoA.lpDesktop = HEAP_strdupWtoA (GetProcessHeap(),0,startup_info->lpDesktop);
+    StartupInfoA.lpTitle = HEAP_strdupWtoA (GetProcessHeap(),0,startup_info->lpTitle);
+
+    TRACE_(win32)("(%s,%s,...)\n", debugstr_w(app_name), debugstr_w(cmd_line));
+
+    if (startup_info->lpReserved)
+      FIXME_(win32)("StartupInfo.lpReserved is used, please report (%s)\n",
+                    debugstr_w(startup_info->lpReserved));
+
+    ret = CreateProcessA( app_nameA,  cmd_lineA, process_attr, thread_attr,
+                          inherit, flags, env, cur_dirA, &StartupInfoA, info );
+
+    HeapFree( GetProcessHeap(), 0, cur_dirA );
+    HeapFree( GetProcessHeap(), 0, cmd_lineA );
+    HeapFree( GetProcessHeap(), 0, StartupInfoA.lpDesktop );
+    HeapFree( GetProcessHeap(), 0, StartupInfoA.lpTitle );
+
+    return ret;
 }
 
 

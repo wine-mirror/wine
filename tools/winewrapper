@@ -1,0 +1,92 @@
+#!/bin/sh
+#
+# Wrapper script to run Wine and Winelib apps from inside the source tree
+#
+# Copyright (C) 2002 Alexandre Julliard
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+
+# first determine the directory that contains the app itself
+
+appdir=""
+case "$0" in
+  */*)
+    # $0 contains a path, use it
+    appdir=`dirname "$0"`
+    ;;
+  *)
+    # no directory in $0, search in PATH
+    saved_ifs=$IFS
+    IFS=:
+    for d in $PATH
+    do
+      IFS=$saved_ifs
+      if [ -x "$d/$0" ]
+      then
+        appdir="$d"
+        break
+      fi
+    done
+    ;;
+esac
+
+# now find the top-level directory of the source tree
+
+if [ -x "$appdir/server/wineserver" ]
+then topdir="$appdir"
+elif [ -x "$appdir/../server/wineserver" ]
+then topdir="$appdir/.."
+elif [ -x "$appdir/../../server/wineserver" ]
+then topdir="$appdir/../.."
+elif [ -x "$appdir/../../../server/wineserver" ]
+then topdir="$appdir/../../.."
+else
+  echo "$0: could not locate Wine source tree"
+  exit 1
+fi
+
+# setup the environment
+
+topdir=`cd "$topdir" && pwd`
+
+if [ -n "$LD_LIBRARY_PATH" ]
+then
+  LD_LIBRARY_PATH="$topdir/dlls:$topdir/library:$topdir/unicode:$topdir/tsx11:$LD_LIBRARY_PATH"
+else
+  LD_LIBRARY_PATH="$topdir/dlls:$topdir/library:$topdir/unicode:$topdir/tsx11"
+fi
+WINEDLLPATH="$topdir/dlls:$topdir/programs"
+WINESERVER="$topdir/server/wineserver"
+WINELOADER="$topdir/miscemu/wine"
+export LD_LIBRARY_PATH WINEDLLPATH WINESERVER WINELOADER
+
+# and run the application
+
+case "$0" in
+  wine|*/wine)
+    exec "$WINELOADER" "$@"
+    ;;
+  */*)
+    [ -f "$0.exe.so" ] && exec "$WINELOADER" "$0.exe.so" "$@"
+    echo "$0: cannot find corresponding application"
+    exit 1
+    ;;
+  *)
+    [ -f "$appdir/$0.exe.so" ] && exec "$WINELOADER" "$appdir/$0.exe.so" "$@"
+    echo "$0: cannot find corresponding application"
+    exit 1
+    ;;
+esac
