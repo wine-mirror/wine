@@ -356,7 +356,7 @@ DATETIME_SetFormatW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static void
-DATETIME_ReturnTxt (DATETIME_INFO *infoPtr, int count, char *result)
+DATETIME_ReturnTxt (DATETIME_INFO *infoPtr, int count, char *result, int resultSize)
 {
  SYSTEMTIME date = infoPtr->date;
  int spec;
@@ -375,7 +375,9 @@ DATETIME_ReturnTxt (DATETIME_INFO *infoPtr, int count, char *result)
  if (spec & DT_STRING) {
 	int txtlen=infoPtr->buflen[count];
 
-	strncpy (result, infoPtr->textbuf + (spec &~ DT_STRING), txtlen);
+        if (txtlen > resultSize)
+            txtlen = resultSize - 1;
+	memcpy (result, infoPtr->textbuf + (spec &~ DT_STRING), txtlen);
 	result[txtlen]=0;
 	TRACE ("arg%d=%x->[%s]\n",count,infoPtr->fieldspec[count],result);
 	return;
@@ -399,8 +401,7 @@ DATETIME_ReturnTxt (DATETIME_INFO *infoPtr, int count, char *result)
 		break;
 	case FULLDAY:
 	        GetLocaleInfoA( LOCALE_USER_DEFAULT,LOCALE_SDAYNAME1+ (date.wDayOfWeek+6)%7,
-				buffer,sizeof(buffer));
-		strcpy  (result,buffer);
+                               result, resultSize);
 		break;
 	case ONEDIGIT12HOUR:
 		if (date.wHour>12)
@@ -440,12 +441,12 @@ DATETIME_ReturnTxt (DATETIME_INFO *infoPtr, int count, char *result)
 		break;
 	case THREECHARMONTH:
 		GetLocaleInfoA( GetSystemDefaultLCID(),LOCALE_SMONTHNAME1+date.wMonth -1,
-		  buffer,sizeof(buffer));
+                               buffer,sizeof(buffer));
 		sprintf (result,"%.3s",buffer);
 		break;
 	case FULLMONTH:
 		GetLocaleInfoA( GetSystemDefaultLCID(),LOCALE_SMONTHNAME1+date.wMonth -1,
-		  result,sizeof(result));
+                               result, resultSize);
 		break;
 	case ONELETTERAMPM:
 		if (date.wHour<12)
@@ -764,7 +765,7 @@ static void DATETIME_Refresh (HWND hwnd, HDC hdc)
     HFONT oldFont;
     oldFont = SelectObject (hdc, infoPtr->hFont);
 
-    DATETIME_ReturnTxt (infoPtr, 0, txt);
+    DATETIME_ReturnTxt (infoPtr, 0, txt, sizeof(txt));
     GetTextExtentPoint32A (hdc, txt, strlen (txt), &size);
     rcDraw->bottom = size.cy+2;
 
@@ -773,7 +774,7 @@ static void DATETIME_Refresh (HWND hwnd, HDC hdc)
     prevright = checkbox->right;
 
     for (i=0; i<infoPtr->nrFields; i++) {
-      DATETIME_ReturnTxt (infoPtr, i, txt);
+      DATETIME_ReturnTxt (infoPtr, i, txt, sizeof(txt));
       GetTextExtentPoint32A (hdc, txt, strlen (txt), &size);
       field = & infoPtr->fieldRect[i];
       field->left  = prevright;
