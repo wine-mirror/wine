@@ -304,7 +304,7 @@
 @ stdcall GetTabbedTextExtentA(long str long long ptr)
 @ stdcall GetTabbedTextExtentW(long wstr long long ptr)
 @ stdcall GetThreadDesktop(long)
-# @ stub GetTitleBarInfo
+@ stdcall GetTitleBarInfo(long ptr)
 @ stdcall GetTopWindow(long)
 @ stdcall GetUpdateRect(long ptr long)
 @ stdcall GetUpdateRgn(long long long)

@@ -2259,3 +2259,72 @@ BOOL NC_DrawGrayButton(HDC hdc, int x, int y)
 
     return TRUE;
 }
+
+/***********************************************************************
+ *		GetTitleBarInfo (USER32.@)
+ * TODO: Handle STATE_SYSTEM_PRESSED
+ */
+BOOL WINAPI GetTitleBarInfo(HWND hwnd, PTITLEBARINFO tbi) {
+    DWORD dwStyle;
+    DWORD dwExStyle;
+    RECT wndRect;
+
+    TRACE("(%p %p)\n", hwnd, tbi);
+
+    if(tbi->cbSize != sizeof(TITLEBARINFO)) {
+        TRACE("Invalid TITLEBARINFO size: %ld\n", tbi->cbSize);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    dwStyle = GetWindowLongW(hwnd, GWL_STYLE);
+    dwExStyle = GetWindowLongW(hwnd, GWL_EXSTYLE);
+    NC_GetInsideRect(hwnd, &tbi->rcTitleBar);
+
+    GetWindowRect(hwnd, &wndRect);
+
+    tbi->rcTitleBar.top += wndRect.top;
+    tbi->rcTitleBar.left += wndRect.left;
+    tbi->rcTitleBar.right += wndRect.left;
+
+    tbi->rcTitleBar.bottom = tbi->rcTitleBar.top;
+    if(dwExStyle & WS_EX_TOOLWINDOW)
+        tbi->rcTitleBar.bottom += GetSystemMetrics(SM_CYSMCAPTION);
+    else {
+        tbi->rcTitleBar.bottom += GetSystemMetrics(SM_CYCAPTION);
+        tbi->rcTitleBar.left += GetSystemMetrics(SM_CXSIZE);
+    }
+
+    ZeroMemory(&tbi->rgstate, sizeof(tbi->rgstate));
+    /* Does the title bar always have STATE_SYSTEM_FOCUSABLE?
+     * Under XP it seems to
+     */
+    tbi->rgstate[0] = STATE_SYSTEM_FOCUSABLE;
+    if(dwStyle & WS_CAPTION) {
+        tbi->rgstate[1] = STATE_SYSTEM_INVISIBLE;
+        if(dwStyle & WS_SYSMENU) {
+            if(!(dwStyle & (WS_MINIMIZEBOX|WS_MAXIMIZEBOX))) {
+                tbi->rgstate[2] = STATE_SYSTEM_INVISIBLE;
+                tbi->rgstate[3] = STATE_SYSTEM_INVISIBLE;
+            }
+            else {
+                if(!(dwStyle & WS_MINIMIZEBOX))
+                    tbi->rgstate[2] = STATE_SYSTEM_UNAVAILABLE;
+                if(!(dwStyle & WS_MAXIMIZEBOX))
+                    tbi->rgstate[3] = STATE_SYSTEM_UNAVAILABLE;
+            }
+            if(!(dwExStyle & WS_EX_CONTEXTHELP))
+                tbi->rgstate[4] = STATE_SYSTEM_INVISIBLE;
+            if(GetClassLongW(hwnd, GCL_STYLE) & CS_NOCLOSE)
+                tbi->rgstate[5] = STATE_SYSTEM_UNAVAILABLE;
+        }
+        else {
+            tbi->rgstate[2] = STATE_SYSTEM_INVISIBLE;
+            tbi->rgstate[3] = STATE_SYSTEM_INVISIBLE;
+            tbi->rgstate[4] = STATE_SYSTEM_INVISIBLE;
+            tbi->rgstate[5] = STATE_SYSTEM_INVISIBLE;
+        }
+    }
+    else
+        tbi->rgstate[0] |= STATE_SYSTEM_INVISIBLE;
+    return TRUE;
+}
