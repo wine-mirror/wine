@@ -9,7 +9,8 @@ C_SRCS = \
 	handle.c \
 	icc.c \
 	mscms_main.c \
-	profile.c
+	profile.c \
+	stub.c
 
 RC_SRCS = version.rc
 

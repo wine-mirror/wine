@@ -29,6 +29,112 @@ typedef HANDLE HTRANSFORM;
 
 typedef DWORD TAGTYPE, *PTAGTYPE, *LPTAGTYPE;
 
+typedef char COLOR_NAME[32];
+typedef COLOR_NAME *PCOLOR_NAME, *LPCOLOR_NAME;
+
+typedef struct tagNAMED_PROFILE_INFO
+{
+    DWORD       dwFlags;
+    DWORD       dwCount;
+    DWORD       dwCountDevCoordinates;
+    COLOR_NAME  szPrefix;
+    COLOR_NAME  szSuffix;
+} NAMED_PROFILE_INFO, *PNAMED_PROFILE_INFO, *LPNAMED_PROFILE_INFO;
+
+#define MAX_COLOR_CHANNELS  8
+
+struct GRAYCOLOR
+{
+    WORD    gray;
+};
+
+struct RGBCOLOR
+{
+    WORD    red;
+    WORD    green;
+    WORD    blue;
+};
+
+struct CMYKCOLOR
+{
+    WORD    cyan;
+    WORD    magenta;
+    WORD    yellow;
+    WORD    black;
+};
+
+struct XYZCOLOR
+{
+    WORD    X;
+    WORD    Y;
+    WORD    Z;
+};
+
+struct YxyCOLOR
+{
+    WORD    Y;
+    WORD    x;
+    WORD    y;
+};
+
+struct LabCOLOR
+{
+    WORD    L;
+    WORD    a;
+    WORD    b;
+};
+
+struct GENERIC3CHANNEL
+{
+    WORD    ch1;
+    WORD    ch2;
+    WORD    ch3;
+};
+
+struct NAMEDCOLOR
+{
+    DWORD   dwIndex;
+};
+
+struct HiFiCOLOR
+{
+    BYTE    channel[MAX_COLOR_CHANNELS];
+};
+
+typedef union tagCOLOR
+{
+    struct GRAYCOLOR        gray;
+    struct RGBCOLOR         rgb;
+    struct CMYKCOLOR        cmyk;
+    struct XYZCOLOR         XYZ;
+    struct YxyCOLOR         Yxy;
+    struct LabCOLOR         Lab;
+    struct GENERIC3CHANNEL  gen3ch;
+    struct NAMEDCOLOR       named;
+    struct HiFiCOLOR        hifi;
+    struct
+    {
+        DWORD reserved1;
+        VOID *reserved2;
+    } DUMMYSTRUCTNAME;
+} COLOR, *PCOLOR, *LPCOLOR;
+
+typedef enum
+{
+    COLOR_GRAY  = 1,
+    COLOR_RGB,
+    COLOR_XYZ,
+    COLOR_Yxy,
+    COLOR_Lab,
+    COLOR_3_CHANNEL,
+    COLOR_CMYK,
+    COLOR_5_CHANNEL,
+    COLOR_6_CHANNEL,
+    COLOR_7_CHANNEL,
+    COLOR_8_CHANNEL,
+    COLOR_NAMED,
+} COLORTYPE, *PCOLORTYPE, *LPCOLORTYPE;
+
 typedef enum
 {
     BM_x555RGB     = 0x00,
@@ -101,6 +207,53 @@ typedef struct tagPROFILE
     DWORD cbDataSize;
 } PROFILE, *PPROFILE, *LPPROFILE;
 
+typedef struct tagENUMTYPEA
+{
+    DWORD   dwSize;
+    DWORD   dwVersion;
+    DWORD   dwFields;
+    PCSTR   pDeviceName;
+    DWORD   dwMediaType;
+    DWORD   dwDitheringMode;
+    DWORD   dwResolution[2];
+    DWORD   dwCMMType;
+    DWORD   dwClass;
+    DWORD   dwDataColorSpace;
+    DWORD   dwConnectionSpace;
+    DWORD   dwSignature;
+    DWORD   dwPlatform;
+    DWORD   dwProfileFlags;
+    DWORD   dwManufacturer;
+    DWORD   dwModel;
+    DWORD   dwAttributes[2];
+    DWORD   dwRenderingIntent;
+    DWORD   dwCreator;
+    DWORD   dwDeviceClass;
+} ENUMTYPEA, *PENUMTYPEA, *LPENUMTYPEA;
+
+typedef struct tagENUMTYPEW
+{
+    DWORD   dwSize;
+    DWORD   dwVersion;
+    DWORD   dwFields;
+    PCWSTR  pDeviceName;
+    DWORD   dwMediaType;
+    DWORD   dwDitheringMode;
+    DWORD   dwResolution[2];
+    DWORD   dwCMMType;
+    DWORD   dwClass;
+    DWORD   dwDataColorSpace;
+    DWORD   dwConnectionSpace;
+    DWORD   dwSignature;
+    DWORD   dwPlatform;
+    DWORD   dwProfileFlags;
+    DWORD   dwManufacturer;
+    DWORD   dwModel;
+    DWORD   dwAttributes[2];
+    DWORD   dwRenderingIntent;
+    DWORD   dwCreator;
+    DWORD   dwDeviceClass;
+} ENUMTYPEW, *PENUMTYPEW, *LPENUMTYPEW;
 
 struct _tagCOLORMATCHSETUPA;
 struct _tagCOLORMATCHSETUPW;

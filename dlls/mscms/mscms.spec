@@ -1,23 +1,23 @@
-@ stub AssociateColorProfileWithDeviceA
-@ stub AssociateColorProfileWithDeviceW
-@ stub CheckBitmapBits
-@ stub CheckColors
+@ stdcall AssociateColorProfileWithDeviceA(ptr ptr ptr)
+@ stdcall AssociateColorProfileWithDeviceW(ptr ptr ptr)
+@ stdcall CheckBitmapBits(ptr ptr long long long ptr ptr ptr)
+@ stdcall CheckColors(ptr ptr long long ptr)
 @ stdcall CloseColorProfile(ptr)
-@ stub ConvertColorNameToIndex
-@ stub ConvertIndexToColorName
-@ stub CreateColorTransformA
-@ stub CreateColorTransformW
-@ stub CreateDeviceLinkProfile
-@ stub CreateMultiProfileTransform
-@ stub CreateProfileFromLogColorSpaceA
-@ stub CreateProfileFromLogColorSpaceW
-@ stub DeleteColorTransform
-@ stub DisassociateColorProfileFromDeviceA
-@ stub DisassociateColorProfileFromDeviceW
-@ stub EnumColorProfilesA
-@ stub EnumColorProfilesW
+@ stdcall ConvertColorNameToIndex(ptr ptr ptr long)
+@ stdcall ConvertIndexToColorName(ptr ptr ptr long)
+@ stdcall CreateColorTransformA(ptr ptr ptr long)
+@ stdcall CreateColorTransformW(ptr ptr ptr long)
+@ stdcall CreateDeviceLinkProfile(ptr long ptr long long ptr long)
+@ stdcall CreateMultiProfileTransform(ptr long ptr long long long)
+@ stdcall CreateProfileFromLogColorSpaceA(ptr ptr)
+@ stdcall CreateProfileFromLogColorSpaceW(ptr ptr)
+@ stdcall DeleteColorTransform(ptr)
+@ stdcall DisassociateColorProfileFromDeviceA(ptr ptr ptr)
+@ stdcall DisassociateColorProfileFromDeviceW(ptr ptr ptr)
+@ stdcall EnumColorProfilesA(ptr ptr ptr ptr ptr)
+@ stdcall EnumColorProfilesW(ptr ptr ptr ptr ptr)
 @ stub GenerateCopyFilePaths
-@ stub GetCMMInfo
+@ stdcall GetCMMInfo(ptr long)
 @ stdcall GetColorDirectoryA(ptr ptr long)
 @ stdcall GetColorDirectoryW(ptr ptr long)
 @ stdcall GetColorProfileElement(ptr long long ptr ptr ptr)
@@ -25,10 +25,10 @@
 @ stdcall GetColorProfileFromHandle(ptr ptr ptr)
 @ stdcall GetColorProfileHeader(ptr ptr)
 @ stdcall GetCountColorProfileElements(ptr long)
-@ stub GetNamedProfileInfo
-@ stub GetPS2ColorRenderingDictionary
-@ stub GetPS2ColorRenderingIntent
-@ stub GetPS2ColorSpaceArray
+@ stdcall GetNamedProfileInfo(ptr ptr)
+@ stdcall GetPS2ColorRenderingDictionary(ptr long ptr ptr ptr)
+@ stdcall GetPS2ColorRenderingIntent(ptr long ptr ptr)
+@ stdcall GetPS2ColorSpaceArray(ptr long long ptr ptr ptr)
 @ stdcall GetStandardColorSpaceProfileA(ptr long ptr ptr)
 @ stdcall GetStandardColorSpaceProfileW(ptr long ptr ptr)
 @ stdcall InstallColorProfileA(ptr ptr)
@@ -43,19 +43,19 @@
 @ stdcall IsColorProfileValid(ptr long)
 @ stdcall OpenColorProfileA(ptr long long long)
 @ stdcall OpenColorProfileW(ptr long long long)
-@ stub RegisterCMMA
-@ stub RegisterCMMW
-@ stub SelectCMM
+@ stdcall RegisterCMMA(ptr long ptr)
+@ stdcall RegisterCMMW(ptr long ptr)
+@ stdcall SelectCMM(long)
 @ stdcall SetColorProfileElement(ptr long long ptr ptr)
-@ stub SetColorProfileElementReference
-@ stub SetColorProfileElementSize
+@ stdcall SetColorProfileElementReference(ptr long long)
+@ stdcall SetColorProfileElementSize(ptr long long)
 @ stdcall SetColorProfileHeader(ptr ptr)
 @ stdcall SetStandardColorSpaceProfileA(ptr long ptr)
 @ stdcall SetStandardColorSpaceProfileW(ptr long ptr)
 @ stub SpoolerCopyFileEvent
-@ stub TranslateBitmapBits
-@ stub TranslateColors
+@ stdcall TranslateBitmapBits(ptr ptr long long long long ptr long long ptr long)
+@ stdcall TranslateColors(ptr ptr long long ptr long)
 @ stdcall UninstallColorProfileA(ptr ptr long)
 @ stdcall UninstallColorProfileW(ptr ptr long)
-@ stub UnregisterCMMA
-@ stub UnregisterCMMW
+@ stdcall UnregisterCMMA(ptr long)
+@ stdcall UnregisterCMMW(ptr long)

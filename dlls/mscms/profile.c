@@ -269,6 +269,8 @@ BOOL WINAPI GetColorProfileFromHandle( HPROFILE profile, PBYTE buffer, PDWORD si
 
     /* No endian conversion needed */
     memcpy( buffer, iccprofile, header.phSize );
+
+    *size = header.phSize;
     ret = TRUE;
 
 #endif /* HAVE_LCMS_H */
