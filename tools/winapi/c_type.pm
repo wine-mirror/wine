@@ -246,7 +246,7 @@ sub _refresh {
     my $field_sizes = \${$self->{FIELD_SIZES}};
 
     my $pack = $self->pack;
-    $pack = 4 if !defined($pack);
+    $pack = 8 if !defined($pack);
 
     my $max_field_align = 0;
 

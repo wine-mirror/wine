@@ -191,7 +191,7 @@ sub _find_align_kind_size {
 	$align = 4;
 	$kind = "pointer";
 	$size = 4;
-    } elsif(/^(?:(signed|unsigned)\s+)?(?:__int8|char)$/) {
+    } elsif(/^(?:(signed|unsigned)\s+)?(?:__int8|char|byte)$/) {
 	$align = 1;
 	$kind = defined($1) ? $1 : "signed";
 	$size = 1;
@@ -216,18 +216,18 @@ sub _find_align_kind_size {
 	$kind = defined($1) ? $1 : "signed";
 	$size = 8;
     } elsif (/^(?:double)$/) {
-	$align = 4;
+	$align = 8;
 	$kind = "float";
 	$size = 8;
     } elsif (/^(?:long\s+double)$/) {
 	$align = 4;
 	$kind = "float";
 	$size = 12;
-    } elsif (/^H(?:DC|BITMAP|BRUSH|ICON|INSTANCE|MENU|METAFILE|WND)$/) {
+    } elsif (/^H(?:DC|BITMAP|BRUSH|ICON|INSTANCE|KEY|MENU|METAFILE|RESULT|WND)$/) {
 	$align = 4;
 	$kind = "unsigned";
 	$size = 4;
-    } elsif (/^LP(?:CSTR|CWSTR|DWORD|VOID|WSTR)$/) {
+    } elsif (/^LP(?:BYTE|CSTR|CWSTR|DWORD|STR|VOID|WSTR)$/) {
 	$align = 4;
 	$kind = "pointer";
 	$size = 4;
@@ -235,9 +235,29 @@ sub _find_align_kind_size {
 	$align = 4;
 	$kind = "struct";
 	$size = 8;
-    } elsif (/^(?:LARGE_INTEGER)$/) {
+    } elsif (/^(?:VOID)$/) {
+    $align = 4;
+    $kind = "signed";
+    $size = 4;
+    } elsif (/^(?:SHORT)$/) {
+	$align = 2;
+	$kind = "unsigned";
+	$size = 2;
+    } elsif (/^(?:BYTE)$/) {
+	$align = 1;
+	$kind = "unsigned";
+	$size = 1;
+    } elsif (/^(?:DWORD)$/) {
 	$align = 4;
-	$kind = "signed";
+	$kind = "unsigned";
+	$size = 4;
+    } elsif (/^(?:WORD)$/) {
+	$align = 2;
+	$kind = "unsigned";
+	$size = 2;
+    } elsif (/^(?:LARGE_INTEGER)$/) {
+	$align = 8;
+	$kind = "union";
 	$size = 8;
     } elsif (/^(struct|union)$/) {
 	$kind = $1;
