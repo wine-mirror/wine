@@ -5,7 +5,7 @@ import	kernel32.dll
 import	ntdll.dll
 
 @ stub    DCIBeginAccess
-@ stub    DCICloseProvider
+@ stdcall DCICloseProvider(long) DCICloseProvider
 @ stub    DCICreateOffscreen
 @ stub    DCICreateOverlay
 @ stub    DCICreatePrimary
