@@ -55,16 +55,7 @@ void WINAPI NdrProxyInitialize(void *This,
   HRESULT hr;
 
   TRACE("(%p,%p,%p,%p,%d)\n", This, pRpcMsg, pStubMsg, pStubDescriptor, ProcNum);
-  memset(pRpcMsg, 0, sizeof(RPC_MESSAGE));
-  memset(pStubMsg, 0, sizeof(MIDL_STUB_MESSAGE));
-  pRpcMsg->ProcNum = ProcNum;
-  pRpcMsg->RpcInterfaceInformation = pStubDescriptor->RpcInterfaceInformation;
-  pStubMsg->RpcMsg = pRpcMsg;
-  pStubMsg->IsClient = 1;
-  pStubMsg->ReuseBuffer = 1;
-  pStubMsg->pfnAllocate = pStubDescriptor->pfnAllocate;
-  pStubMsg->pfnFree = pStubDescriptor->pfnFree;
-  pStubMsg->StubDesc = pStubDescriptor;
+  NdrClientInitializeNew(pRpcMsg, pStubMsg, pStubDescriptor, ProcNum);
   if (This) StdProxy_GetChannel(This, &pStubMsg->pRpcChannelBuffer);
   if (pStubMsg->pRpcChannelBuffer) {
     hr = IRpcChannelBuffer_GetDestCtx(pStubMsg->pRpcChannelBuffer,
@@ -139,18 +130,8 @@ void WINAPI NdrStubInitialize(PRPC_MESSAGE pRpcMsg,
                              LPRPCCHANNELBUFFER pRpcChannelBuffer)
 {
   TRACE("(%p,%p,%p,%p)\n", pRpcMsg, pStubMsg, pStubDescriptor, pRpcChannelBuffer);
-  memset(pStubMsg, 0, sizeof(MIDL_STUB_MESSAGE));
-  pStubMsg->RpcMsg = pRpcMsg;
-  pStubMsg->IsClient = 0;
-  pStubMsg->ReuseBuffer = 1;
-  pStubMsg->pfnAllocate = pStubDescriptor->pfnAllocate;
-  pStubMsg->pfnFree = pStubDescriptor->pfnFree;
-  pStubMsg->StubDesc = pStubDescriptor;
+  NdrServerInitializeNew(pRpcMsg, pStubMsg, pStubDescriptor);
   pStubMsg->pRpcChannelBuffer = pRpcChannelBuffer;
-  pStubMsg->BufferLength = pStubMsg->RpcMsg->BufferLength;
-  pStubMsg->BufferStart = pStubMsg->RpcMsg->Buffer;
-  pStubMsg->BufferEnd = pStubMsg->BufferStart + pStubMsg->BufferLength;
-  pStubMsg->Buffer = pStubMsg->BufferStart;
 }
 
 /***********************************************************************
@@ -183,7 +164,7 @@ void WINAPI NdrClientInitializeNew( PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE
   memset(pRpcMessage, 0, sizeof(RPC_MESSAGE));
   memset(pStubMsg, 0, sizeof(MIDL_STUB_MESSAGE));
 
-  pStubMsg->ReuseBuffer = TRUE;
+  pStubMsg->ReuseBuffer = FALSE;
   pStubMsg->IsClient = TRUE;
   pStubMsg->StubDesc = pStubDesc;
   pStubMsg->pfnAllocate = pStubDesc->pfnAllocate;
@@ -212,8 +193,9 @@ unsigned char* WINAPI NdrServerInitializeNew( PRPC_MESSAGE pRpcMsg, PMIDL_STUB_M
   pStubMsg->pfnAllocate = pStubDesc->pfnAllocate;
   pStubMsg->pfnFree = pStubDesc->pfnFree;
   pStubMsg->RpcMsg = pRpcMsg;
-  pStubMsg->Buffer = pRpcMsg->Buffer;
+  pStubMsg->Buffer = pStubMsg->BufferStart = pRpcMsg->Buffer;
   pStubMsg->BufferLength = pRpcMsg->BufferLength;
+  pStubMsg->BufferEnd = pStubMsg->Buffer + pStubMsg->BufferLength;
 
   /* FIXME: determine the proper return value */
   return NULL;
@@ -235,8 +217,9 @@ unsigned char *WINAPI NdrGetBuffer(MIDL_STUB_MESSAGE *stubmsg, unsigned long buf
   if (I_RpcGetBuffer(stubmsg->RpcMsg) != S_OK)
     return NULL;
 
+  stubmsg->Buffer = stubmsg->BufferStart = stubmsg->RpcMsg->Buffer;
   stubmsg->BufferLength = stubmsg->RpcMsg->BufferLength;
-  stubmsg->BufferEnd = stubmsg->BufferStart = 0;
+  stubmsg->BufferEnd = stubmsg->Buffer + stubmsg->BufferLength;
   return (stubmsg->Buffer = (unsigned char *)stubmsg->RpcMsg->Buffer);
 }
 /***********************************************************************
@@ -247,7 +230,7 @@ void WINAPI NdrFreeBuffer(MIDL_STUB_MESSAGE *pStubMsg)
   TRACE("(pStubMsg == ^%p): wild guess.\n", pStubMsg);
   I_RpcFreeBuffer(pStubMsg->RpcMsg);
   pStubMsg->BufferLength = 0;
-  pStubMsg->Buffer = (unsigned char *)(pStubMsg->RpcMsg->Buffer = NULL);
+  pStubMsg->Buffer = pStubMsg->BufferEnd = (unsigned char *)(pStubMsg->RpcMsg->Buffer = NULL);
 }
 
 /************************************************************************
@@ -270,7 +253,7 @@ unsigned char *WINAPI NdrSendReceive( MIDL_STUB_MESSAGE *stubmsg, unsigned char 
     ERR("Ambiguous buffer doesn't match rpc message buffer.  No action taken.\n");
     return NULL;
   }
-  
+
   /* not sure where MS does this; for now I'll stick it here */
   stubmsg->RpcMsg->DataRepresentation = NDR_LOCAL_DATA_REPRESENTATION;
 
