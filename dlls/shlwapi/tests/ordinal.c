@@ -98,25 +98,55 @@ static void test_GetAcceptLanguagesA(void)
     buffersize = buffersize2 = 1;
     memset(buffer, 0, sizeof(buffer));
     retval = pGetAcceptLanguagesA( buffer, &buffersize);
-    ok(retval == E_INVALIDARG, "function result wrong: got %08lx; expected E_INVALIDARG\n", retval);
-    ok(buffersize == 0,
-                 "buffersize wrong: got %08lx, expected 0 (2nd parameter;Win2k)\n", buffersize);
-    ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
-                 "last error wrong: got %08lx; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
-    ok(buffersize2 == strlen(buffer),
-                 "buffer content (length) wrong: got %08x, expected %08lx \n", strlen(buffer), buffersize2);
+    switch(retval) {
+	case 0L:
+            ok(buffersize == exactsize,
+                 "buffersize wrong: got %08lx, expected %08lx (2nd parameter;Win2k)\n", buffersize, exactsize);
+            ok(ERROR_NO_IMPERSONATION_TOKEN == GetLastError(),
+                 "last error wrong: got %08lx; expected ERROR_NO_IMPERSONATION_TOKEN\n", GetLastError());
+            ok(exactsize == strlen(buffer),
+                 "buffer content (length) wrong: got %08x, expected %08lx \n", strlen(buffer), exactsize);
+            break;
+	case E_INVALIDARG:
+            ok(buffersize == 0,
+               "buffersize wrong: got %08lx, expected 0 (2nd parameter;Win2k)\n", buffersize);
+            ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
+               "last error wrong: got %08lx; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
+            ok(buffersize2 == strlen(buffer),
+               "buffer content (length) wrong: got %08x, expected %08lx \n", strlen(buffer), buffersize2);
+            break;
+        default:
+            ok( 0, "retval %08lx, size %08lx, buffer (%s), last error %ld\n",
+                retval, buffersize, buffer, GetLastError());
+            break;
+    }
 
     buffersize = buffersize2 = exactsize;
     memset(buffer, 0, sizeof(buffer));
     SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( buffer, &buffersize);
-    ok(retval == E_INVALIDARG, "function result wrong: got %08lx; expected E_INVALIDARG\n", retval);
-    ok(buffersize == 0,
-                 "buffersize wrong: got %08lx, expected 0 (2nd parameter;Win2k)\n", buffersize);
-    ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
-                 "last error wrong: got %08lx; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
-    ok(buffersize2 == strlen(buffer),
-       "buffer content (length) wrong: got %08x, expected %08lx \n", strlen(buffer), buffersize2);
+    switch(retval) {
+	case 0L:
+            ok(buffersize == exactsize,
+                 "buffersize wrong: got %08lx, expected %08lx (2nd parameter;Win2k)\n", buffersize, exactsize);
+            ok(ERROR_SUCCESS == GetLastError(),
+                 "last error wrong: got %08lx; expected ERROR_SUCCESS\n", GetLastError());
+            ok(exactsize == strlen(buffer),
+                 "buffer content (length) wrong: got %08x, expected %08lx \n", strlen(buffer), exactsize);
+            break;
+	case E_INVALIDARG:
+            ok(buffersize == 0,
+               "buffersize wrong: got %08lx, expected 0 (2nd parameter;Win2k)\n", buffersize);
+            ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
+               "last error wrong: got %08lx; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
+            ok(buffersize2 == strlen(buffer),
+               "buffer content (length) wrong: got %08x, expected %08lx \n", strlen(buffer), buffersize2);
+            break;
+        default:
+            ok( 0, "retval %08lx, size %08lx, buffer (%s), last error %ld\n",
+                retval, buffersize, buffer, GetLastError());
+            break;
+    }
 }
 
 static void test_SHSearchMapInt(void)
