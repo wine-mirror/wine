@@ -81,6 +81,7 @@ INSTALLED_INCLUDES = \
 	msvcrt/time.h \
 	msvcrt/wchar.h \
 	msvcrt/wctype.h \
+	mswsock.h \
 	nb30.h \
 	nspapi.h \
 	ntsecapi.h \

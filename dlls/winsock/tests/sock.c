@@ -24,6 +24,7 @@
 #include <winerror.h>
 #undef USE_WS_PREFIX
 #include <winsock2.h>
+#include <mswsock.h>
 
 #define MAX_CLIENTS 4      /* Max number of clients */
 #define NUM_TESTS   2      /* Number of tests performed */

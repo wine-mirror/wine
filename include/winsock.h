@@ -614,9 +614,6 @@ typedef struct WS(WSAData)
 #define SO_ERROR                   0x1007
 #define SO_TYPE                    0x1008
 
-#define SO_OPENTYPE                0x7008
-#define SO_SYNCHRONOUS_ALERT       0x10
-#define SO_SYNCHRONOUS_NONALERT    0x20
 
 #define IOCPARM_MASK               0x7f
 #define IOC_VOID                   0x20000000
@@ -649,10 +646,6 @@ typedef struct WS(WSAData)
 #define WS_SO_RCVTIMEO             0x1006
 #define WS_SO_ERROR                0x1007
 #define WS_SO_TYPE                 0x1008
-
-#define WS_SO_OPENTYPE             0x7008
-#define WS_SO_SYNCHRONOUS_ALERT    0x10
-#define WS_SO_SYNCHRONOUS_NONALERT 0x20
 
 #define WS_IOCPARM_MASK            0x7f
 #define WS_IOC_VOID                0x20000000
@@ -946,7 +939,7 @@ u_short WINAPI WS(ntohs)(u_short);
 #if defined(__WINE__) || !defined(__WINE_WINSOCK2__)
 /* Stuff specific to winsock.h */
 
-int WINAPI WSARecvEx(SOCKET,char*,int,int*);
+#include "mswsock.h"
 
 #endif /* __WINE_WINSOCK2__ */
 #endif /* !defined(__WINE_WINSOCK2__) || WS_API_PROTOTYPES */
