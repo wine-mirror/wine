@@ -203,6 +203,7 @@ static unsigned vector_position(const struct vector* v, const void* elt)
         }
     }
     assert(0);
+    return 0;
 }
 
 void* vector_iter_up(const struct vector* v, void* elt)
