@@ -302,28 +302,17 @@ static BOOL process_raw_mouse_message( MSG *msg, ULONG_PTR extra_info )
 
     /* find the window to dispatch this mouse message to */
 
-    if (!(msg->hwnd = GetCapture()))
+    hittest = HTCLIENT;
+    if (!(msg->hwnd = PERQDATA_GetCaptureWnd( &ht )))
     {
         /* If no capture HWND, find window which contains the mouse position.
          * Also find the position of the cursor hot spot (hittest) */
         HWND hWndScope = (HWND)extra_info;
-        WND *pWndScope = IsWindow(hWndScope) ? WIN_FindWndPtr(hWndScope) : WIN_GetDesktop();
-        WND *pWnd;
 
-        ht = hittest = WINPOS_WindowFromPoint( pWndScope, msg->pt, &pWnd );
-        msg->hwnd = pWnd ? pWnd->hwndSelf : GetDesktopWindow();
-        WIN_ReleaseWndPtr( pWndScope );
-    }
-    else
-    {
-        MESSAGEQUEUE *queue = QUEUE_Lock( GetFastQueue16() );
-
-        ht = hittest = HTCLIENT;
-        if (queue)
-        {
-            ht = PERQDATA_GetCaptureInfo( queue->pQData );
-            QUEUE_Unlock(queue);
-        }
+        if (!IsWindow(hWndScope)) hWndScope = 0;
+        if (!(msg->hwnd = WINPOS_WindowFromPoint( hWndScope, msg->pt, &hittest )))
+            msg->hwnd = GetDesktopWindow();
+        ht = hittest;
     }
 
     if (HOOK_IsHooked( WH_JOURNALRECORD ))

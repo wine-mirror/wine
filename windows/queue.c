@@ -23,12 +23,54 @@
 
 DEFAULT_DEBUG_CHANNEL(msg);
 
-#define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
 
 static HQUEUE16 hExitingQueue = 0;
 static PERQUEUEDATA *pQDataWin16 = NULL;  /* Global perQData for Win16 tasks */
 
 HQUEUE16 hActiveQueue = 0;
+
+
+/***********************************************************************
+ *           PERQDATA_Addref
+ *
+ * Increment reference count for the PERQUEUEDATA instance
+ * Returns reference count for debugging purposes
+ */
+static void PERQDATA_Addref( PERQUEUEDATA *pQData )
+{
+    assert(pQData != 0 );
+    TRACE_(msg)("(): current refcount %lu ...\n", pQData->ulRefCount);
+
+    InterlockedIncrement( &pQData->ulRefCount );
+}
+
+
+/***********************************************************************
+ *           PERQDATA_Release
+ *
+ * Release a reference to a PERQUEUEDATA instance.
+ * Destroy the instance if no more references exist
+ * Returns reference count for debugging purposes
+ */
+static void PERQDATA_Release( PERQUEUEDATA *pQData )
+{
+    assert(pQData != 0 );
+    TRACE_(msg)("(): current refcount %lu ...\n",
+          (LONG)pQData->ulRefCount );
+
+    if (!InterlockedDecrement( &pQData->ulRefCount ))
+    {
+        DeleteCriticalSection( &pQData->cSection );
+
+        TRACE_(msg)("(): deleting PERQUEUEDATA instance ...\n" );
+
+        /* Deleting our global 16 bit perQData? */
+        if ( pQData == pQDataWin16 ) pQDataWin16 = 0;
+
+        /* Free the PERQUEUEDATA instance */
+        HeapFree( GetProcessHeap(), 0, pQData );
+    }
+}
 
 
 /***********************************************************************
@@ -43,7 +85,7 @@ HQUEUE16 hActiveQueue = 0;
  * We only store the current values for Active, Capture and focus windows
  * currently.
  */
-PERQUEUEDATA * PERQDATA_CreateInstance( )
+static PERQUEUEDATA * PERQDATA_CreateInstance(void)
 {
     PERQUEUEDATA *pQData;
     
@@ -84,61 +126,6 @@ PERQUEUEDATA * PERQDATA_CreateInstance( )
         pQDataWin16 = pQData;
         
     return pQData;
-}
-
-
-/***********************************************************************
- *           PERQDATA_Addref
- *
- * Increment reference count for the PERQUEUEDATA instance
- * Returns reference count for debugging purposes
- */
-ULONG PERQDATA_Addref( PERQUEUEDATA *pQData )
-{
-    assert(pQData != 0 );
-    TRACE_(msg)("(): current refcount %lu ...\n", pQData->ulRefCount);
-
-    EnterCriticalSection( &pQData->cSection );
-    ++pQData->ulRefCount;
-    LeaveCriticalSection( &pQData->cSection );
-
-    return pQData->ulRefCount;
-}
-
-
-/***********************************************************************
- *           PERQDATA_Release
- *
- * Release a reference to a PERQUEUEDATA instance.
- * Destroy the instance if no more references exist
- * Returns reference count for debugging purposes
- */
-ULONG PERQDATA_Release( PERQUEUEDATA *pQData )
-{
-    assert(pQData != 0 );
-    TRACE_(msg)("(): current refcount %lu ...\n",
-          (LONG)pQData->ulRefCount );
-
-    EnterCriticalSection( &pQData->cSection );
-    if ( --pQData->ulRefCount == 0 )
-    {
-        LeaveCriticalSection( &pQData->cSection );
-        DeleteCriticalSection( &pQData->cSection );
-
-        TRACE_(msg)("(): deleting PERQUEUEDATA instance ...\n" );
-
-        /* Deleting our global 16 bit perQData? */
-        if ( pQData == pQDataWin16 )
-            pQDataWin16 = 0;
-            
-        /* Free the PERQUEUEDATA instance */
-        HeapFree( GetProcessHeap(), 0, pQData );
-
-        return 0;
-    }
-    LeaveCriticalSection( &pQData->cSection );
-
-    return pQData->ulRefCount;
 }
 
 
@@ -221,15 +208,21 @@ HWND PERQDATA_SetActiveWnd( PERQUEUEDATA *pQData, HWND hWndActive )
  *
  * Get the capture hwnd member in a threadsafe manner
  */
-HWND PERQDATA_GetCaptureWnd( PERQUEUEDATA *pQData )
+HWND PERQDATA_GetCaptureWnd( INT *hittest )
 {
+    MESSAGEQUEUE *queue;
+    PERQUEUEDATA *pQData;
     HWND hWndCapture;
-    assert(pQData != 0 );
+
+    if (!(queue = QUEUE_Lock( GetFastQueue16() ))) return 0;
+    pQData = queue->pQData;
 
     EnterCriticalSection( &pQData->cSection );
     hWndCapture = pQData->hWndCapture;
+    *hittest = pQData->nCaptureHT;
     LeaveCriticalSection( &pQData->cSection );
 
+    QUEUE_Unlock( queue );
     return hWndCapture;
 }
 
@@ -239,55 +232,25 @@ HWND PERQDATA_GetCaptureWnd( PERQUEUEDATA *pQData )
  *
  * Set the capture hwnd member in a threadsafe manner
  */
-HWND PERQDATA_SetCaptureWnd( PERQUEUEDATA *pQData, HWND hWndCapture )
+HWND PERQDATA_SetCaptureWnd( HWND hWndCapture, INT hittest )
 {
+    MESSAGEQUEUE *queue;
+    PERQUEUEDATA *pQData;
     HWND hWndCapturePrv;
-    assert(pQData != 0 );
+
+    if (!(queue = QUEUE_Lock( GetFastQueue16() ))) return 0;
+    pQData = queue->pQData;
 
     EnterCriticalSection( &pQData->cSection );
     hWndCapturePrv = pQData->hWndCapture;
     pQData->hWndCapture = hWndCapture;
+    pQData->nCaptureHT = hittest;
     LeaveCriticalSection( &pQData->cSection );
 
+    QUEUE_Unlock( queue );
     return hWndCapturePrv;
 }
 
-
-/***********************************************************************
- *           PERQDATA_GetCaptureInfo
- *
- * Get the capture info member in a threadsafe manner
- */
-INT16 PERQDATA_GetCaptureInfo( PERQUEUEDATA *pQData )
-{
-    INT16 nCaptureHT;
-    assert(pQData != 0 );
-
-    EnterCriticalSection( &pQData->cSection );
-    nCaptureHT = pQData->nCaptureHT;
-    LeaveCriticalSection( &pQData->cSection );
-
-    return nCaptureHT;
-}
-
-
-/***********************************************************************
- *           PERQDATA_SetCaptureInfo
- *
- * Set the capture info member in a threadsafe manner
- */
-INT16 PERQDATA_SetCaptureInfo( PERQUEUEDATA *pQData, INT16 nCaptureHT )
-{
-    INT16 nCaptureHTPrv;
-    assert(pQData != 0 );
-
-    EnterCriticalSection( &pQData->cSection );
-    nCaptureHTPrv = pQData->nCaptureHT;
-    pQData->nCaptureHT = nCaptureHT;
-    LeaveCriticalSection( &pQData->cSection );
-
-    return nCaptureHTPrv;
-}
 
 
 /***********************************************************************
@@ -330,7 +293,6 @@ void QUEUE_Unlock( MESSAGEQUEUE *queue )
 
         if ( --queue->lockCount == 0 )
         {
-            DeleteCriticalSection ( &queue->cSection );
             if (queue->server_queue)
                 CloseHandle( queue->server_queue );
             GlobalFree16( queue->self );
@@ -338,36 +300,6 @@ void QUEUE_Unlock( MESSAGEQUEUE *queue )
     
         HeapUnlock( GetProcessHeap() );
     }
-}
-
-
-/***********************************************************************
- *	     QUEUE_DumpQueue
- */
-void QUEUE_DumpQueue( HQUEUE16 hQueue )
-{
-    MESSAGEQUEUE *pq; 
-
-    if (!(pq = QUEUE_Lock( hQueue )) )
-    {
-        WARN_(msg)("%04x is not a queue handle\n", hQueue );
-        return;
-    }
-
-    EnterCriticalSection( &pq->cSection );
-
-    DPRINTF( "thread: %10p  Intertask SendMessage:\n"
-             "firstMsg: %8p   lastMsg:  %8p\n"
-             "lockCount: %7.4x\n"
-             "paints: %10.4x\n"
-             "hCurHook: %8.4x\n",
-             pq->teb, pq->firstMsg, pq->lastMsg,
-             (unsigned)pq->lockCount, pq->wPaintCount,
-             pq->hCurHook);
-
-    LeaveCriticalSection( &pq->cSection );
-
-    QUEUE_Unlock( pq );
 }
 
 
@@ -428,10 +360,6 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
     }
 
     msgQueue->self = hQueue;
-
-    InitializeCriticalSection( &msgQueue->cSection );
-    MakeCriticalSectionGlobal( &msgQueue->cSection );
-
     msgQueue->lockCount = 1;
     msgQueue->magic = QUEUE_MAGIC;
     
@@ -465,6 +393,7 @@ BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
     msgQueue->magic = 0;
 
     if( hActiveQueue == hQueue ) hActiveQueue = 0;
+    if (hExitingQueue == hQueue) hExitingQueue = 0;
 
     HeapLock( GetProcessHeap() );  /* FIXME: a bit overkill */
 

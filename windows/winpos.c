@@ -364,20 +364,23 @@ BOOL WINAPI ScreenToClient( HWND hwnd, LPPOINT lppnt )
  *
  * Find the window and hittest for a given point.
  */
-INT16 WINPOS_WindowFromPoint( WND* wndScope, POINT pt, WND **ppWnd )
+HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest )
 {
-    WND *wndPtr;
-    INT16 hittest = HTERROR;
-    INT16 retvalue;
+    WND *wndScope, *wndPtr, *wndTmp;
+    HWND hwnd_ret = 0;
     POINT xy = pt;
 
-    TRACE("scope %04x %ld,%ld\n", wndScope->hwndSelf, pt.x, pt.y);
-   *ppWnd = NULL;
+    TRACE("scope %04x %ld,%ld\n", hwndScope, pt.x, pt.y);
+
+    if (!hwndScope) hwndScope = GetDesktopWindow();
+    if (!(wndScope = WIN_FindWndPtr( hwndScope ))) return 0;
+
+    *hittest = HTERROR;
     wndPtr = WIN_LockWndPtr(wndScope->child);
 
     if( wndScope->dwStyle & WS_DISABLED )
     {
-        retvalue = HTERROR;
+        *hittest = HTERROR;
         goto end;
     }
 
@@ -413,17 +416,17 @@ INT16 WINPOS_WindowFromPoint( WND* wndScope, POINT pt, WND **ppWnd )
 		 (xy.y < wndPtr->rectWindow.bottom))))
             {
                 TRACE("%ld,%ld is inside %04x\n", xy.x, xy.y, wndPtr->hwndSelf);
-                *ppWnd = wndPtr;  /* Got a suitable window */
+                hwnd_ret = wndPtr->hwndSelf;  /* Got a suitable window */
 
                 /* If window is minimized or disabled, return at once */
                 if (wndPtr->dwStyle & WS_MINIMIZE)
                 {
-                    retvalue = HTCAPTION;
+                    *hittest = HTCAPTION;
                     goto end;
                 }
                 if (wndPtr->dwStyle & WS_DISABLED)
                 {
-                    retvalue = HTERROR;
+                    *hittest = HTERROR;
                     goto end;
                 }
 
@@ -445,40 +448,43 @@ INT16 WINPOS_WindowFromPoint( WND* wndScope, POINT pt, WND **ppWnd )
 
 hittest:
         /* If nothing found, try the scope window */
-        if (!*ppWnd) *ppWnd = wndScope;
+        if (!hwnd_ret) hwnd_ret = hwndScope;
 
         /* Send the WM_NCHITTEST message (only if to the same task) */
-        if ((*ppWnd)->hmemTaskQ == GetFastQueue16())
+        if (GetWindowThreadProcessId( hwnd_ret, NULL ) == GetCurrentThreadId())
 	{
-            hittest = SendMessageA( (*ppWnd)->hwndSelf, WM_NCHITTEST,
-                                    0, MAKELONG( pt.x, pt.y ) );
-            if (hittest != HTTRANSPARENT)
+            INT res = SendMessageA( hwnd_ret, WM_NCHITTEST, 0, MAKELONG( pt.x, pt.y ) );
+            if (res != HTTRANSPARENT)
             {
-                retvalue = hittest;  /* Found the window */
+                *hittest = res;  /* Found the window */
                 goto end;
 	    }
 	}
         else
         {
-            retvalue = HTCLIENT;
+            *hittest = HTCLIENT;
             goto end;
 	}
+
+        if (!(wndTmp = WIN_FindWndPtr( hwnd_ret ))) break;
 
         /* If no children found in last search, make point relative to parent */
         if (!wndPtr)
         {
-            xy.x += (*ppWnd)->rectClient.left;
-            xy.y += (*ppWnd)->rectClient.top;
+            xy.x += wndTmp->rectClient.left;
+            xy.y += wndTmp->rectClient.top;
         }
 
         /* Restart the search from the next sibling */
-        WIN_UpdateWndPtr(&wndPtr,(*ppWnd)->next);
-        *ppWnd = (*ppWnd)->parent;
+        WIN_UpdateWndPtr(&wndPtr,wndTmp->next);
+        hwnd_ret = wndTmp->parent ? wndTmp->parent->hwndSelf : 0;
+        WIN_ReleaseWndPtr( wndTmp );
     }
 
 end:
     WIN_ReleaseWndPtr(wndPtr);
-    return retvalue;
+    WIN_ReleaseWndPtr(wndScope);
+    return hwnd_ret;
 }
 
 
@@ -499,10 +505,8 @@ HWND16 WINAPI WindowFromPoint16( POINT16 pt )
  */
 HWND WINAPI WindowFromPoint( POINT pt )
 {
-    WND *pWnd;
-    WINPOS_WindowFromPoint( WIN_GetDesktop(), pt, &pWnd );
-    WIN_ReleaseDesktop();
-    return (HWND)pWnd->hwndSelf;
+    INT hittest;
+    return WINPOS_WindowFromPoint( 0, pt, &hittest );
 }
 
 
@@ -1577,13 +1581,13 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
 
         if ((list = WIN_BuildWinArray( pDesktop, 0, NULL )))
         {
+            DWORD new_thread = GetWindowThreadProcessId( hwndActive, NULL );
             for (ppWnd = list; *ppWnd; ppWnd++)
             {
                 if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
 
                 if ((*ppWnd)->hmemTaskQ == hOldActiveQueue)
-                   SendMessage16( (*ppWnd)->hwndSelf, WM_ACTIVATEAPP,
-                                   0, QUEUE_GetQueueTask(hNewActiveQueue) );
+                    SendMessageW( (*ppWnd)->hwndSelf, WM_ACTIVATEAPP, 0, new_thread );
             }
             WIN_ReleaseWinArray(list);
         }
@@ -1592,13 +1596,13 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
 
         if ((list = WIN_BuildWinArray(pDesktop, 0, NULL )))
         {
+            DWORD old_thread = GetWindowThreadProcessId( hwndPrevActive, NULL );
             for (ppWnd = list; *ppWnd; ppWnd++)
             {
                 if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
 
                 if ((*ppWnd)->hmemTaskQ == hNewActiveQueue)
-                   SendMessage16( (*ppWnd)->hwndSelf, WM_ACTIVATEAPP,
-                                  1, QUEUE_GetQueueTask( hOldActiveQueue ) );
+                    SendMessageW( (*ppWnd)->hwndSelf, WM_ACTIVATEAPP, 1, old_thread );
             }
             WIN_ReleaseWinArray(list);
         }

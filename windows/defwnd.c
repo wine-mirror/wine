@@ -322,19 +322,18 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
         break;
 
     case WM_RBUTTONUP:
-        if (wndPtr->hwndSelf == GetCapture())
         {
-            /* release capture if we took it on WM_NCRBUTTONDOWN */
-            ReleaseCapture();
-        }
-        if ((wndPtr->flags & WIN_ISWIN32) || (TWEAK_WineLook > WIN31_LOOK))
-        {
-	    POINT pt;
+            POINT pt;
+
+            if (wndPtr->hwndSelf == GetCapture())
+                /* release capture if we took it on WM_NCRBUTTONDOWN */
+                ReleaseCapture();
+
 	    pt.x = SLOWORD(lParam);
 	    pt.y = SHIWORD(lParam);
 	    ClientToScreen(wndPtr->hwndSelf, &pt);
-	    lParam = MAKELPARAM(pt.x, pt.y);
-	    pSendMessage( wndPtr->hwndSelf, WM_CONTEXTMENU, wndPtr->hwndSelf, lParam );
+	    pSendMessage( wndPtr->hwndSelf, WM_CONTEXTMENU,
+                          wndPtr->hwndSelf, MAKELPARAM(pt.x, pt.y) );
         }
         break;
 

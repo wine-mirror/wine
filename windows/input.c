@@ -400,19 +400,11 @@ HWND EVENT_Capture(HWND hwnd, INT16 ht)
     WND* wndPtr = 0;
     INT16 captureHT = 0;
 
-    /* Get the messageQ for the current thread */
-    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
-    {
-        WARN_(win)("\tCurrent message queue not found. Exiting!\n" );
-        goto CLEANUP;
-    }
-    
-    /* Get the current capture window from the perQ data of the current message Q */
-    capturePrev = PERQDATA_GetCaptureWnd( pCurMsgQ->pQData );
+    capturePrev = GetCapture();
 
     if (!hwnd)
     {
-        captureWnd = 0L;
+        captureWnd = 0;
         captureHT = 0;
     }
     else
@@ -424,6 +416,13 @@ HWND EVENT_Capture(HWND hwnd, INT16 ht)
             captureWnd   = hwnd;
             captureHT    = ht;
         }
+    }
+
+    /* Get the messageQ for the current thread */
+    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
+    {
+        WARN_(win)("\tCurrent message queue not found. Exiting!\n" );
+        goto CLEANUP;
     }
 
     /* Update the perQ capture window and send messages */
@@ -438,7 +437,7 @@ HWND EVENT_Capture(HWND hwnd, INT16 ht)
                 WARN_(win)("\tMessage queue not found. Exiting!\n" );
                 goto CLEANUP;
             }
-    
+
             /* Make sure that message queue for the window we are setting capture to
              * shares the same perQ data as the current threads message queue.
              */
@@ -446,17 +445,9 @@ HWND EVENT_Capture(HWND hwnd, INT16 ht)
                 goto CLEANUP;
         }
 
-        PERQDATA_SetCaptureWnd( pCurMsgQ->pQData, captureWnd );
-        PERQDATA_SetCaptureInfo( pCurMsgQ->pQData, captureHT );
-        
-        if( capturePrev )
-    {
-        WND* xwndPtr = WIN_FindWndPtr( capturePrev );
-        if( xwndPtr && (xwndPtr->flags & WIN_ISWIN32) )
-            SendMessageA( capturePrev, WM_CAPTURECHANGED, 0L, hwnd);
-	WIN_ReleaseWndPtr(xwndPtr);
+        PERQDATA_SetCaptureWnd( captureWnd, captureHT );
+        if (capturePrev) SendMessageA( capturePrev, WM_CAPTURECHANGED, 0, hwnd );
     }
-}
 
 CLEANUP:
     /* Unlock the queues before returning */
@@ -510,21 +501,8 @@ HWND16 WINAPI GetCapture16(void)
  */
 HWND WINAPI GetCapture(void)
 {
-    MESSAGEQUEUE *pCurMsgQ = 0;
-    HWND hwndCapture = 0;
-
-    /* Get the messageQ for the current thread */
-    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
-{
-        TRACE_(win)("GetCapture: Current message queue not found. Exiting!\n" );
-        return 0;
-    }
-    
-    /* Get the current capture window from the perQ data of the current message Q */
-    hwndCapture = PERQDATA_GetCaptureWnd( pCurMsgQ->pQData );
-
-    QUEUE_Unlock( pCurMsgQ );
-    return hwndCapture;
+    INT hittest;
+    return PERQDATA_GetCaptureWnd( &hittest );
 }
 
 /**********************************************************************
