@@ -454,7 +454,7 @@ HRESULT WINAPI OleRegGetUserType(
     return E_OUTOFMEMORY;
   }
 
-  hres = RegQueryValueExA(HKEY_CLASSES_ROOT,
+  hres = RegQueryValueExA(clsidKey,
 			  "",
 			  NULL,
 			  &dwKeyType,
