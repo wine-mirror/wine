@@ -205,6 +205,7 @@ typedef struct {
 } PSBRUSH;
 
 typedef struct {
+    INT                 style;
     INT		width;
     char		*dash;
     PSCOLOR		color;
@@ -369,7 +370,7 @@ extern DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
 				      LPCSTR lpszPort,
 				      WORD fwCapability, LPSTR lpszOutput,
 				      LPDEVMODEA lpdm);
-
+VOID PSDRV_DrawLine( DC *dc );
 #endif
 
 

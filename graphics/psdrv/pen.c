@@ -33,36 +33,37 @@ extern HPEN PSDRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
         physDev->pen.width = -physDev->pen.width;
 
     PSDRV_CreateColor(physDev, &physDev->pen.color, pen->logpen.lopnColor);
+    physDev->pen.style = pen->logpen.lopnStyle & PS_STYLE_MASK;
+ 
+    switch(physDev->pen.style) {
+    case PS_DASH:
+	physDev->pen.dash = PEN_dash;
+	break;
 
-    if(physDev->pen.width > 1) { /* dashes only for 0 or 1 pixel pens */
-        physDev->pen.dash = NULL;
-    } else {
-        switch(pen->logpen.lopnStyle & PS_STYLE_MASK) {
-	case PS_DASH:
-	    physDev->pen.dash = PEN_dash;
-	    break;
+    case PS_DOT:
+	physDev->pen.dash = PEN_dot;
+	break;
 
-	case PS_DOT:
-	    physDev->pen.dash = PEN_dot;
-	    break;
+    case PS_DASHDOT:
+	physDev->pen.dash = PEN_dashdot;
+	break;
 
-	case PS_DASHDOT:
-	    physDev->pen.dash = PEN_dashdot;
-	    break;
+    case PS_DASHDOTDOT:
+	physDev->pen.dash = PEN_dashdotdot;
+	break;
 
-	case PS_DASHDOTDOT:
-            physDev->pen.dash = PEN_dashdotdot;
-	    break;
+    case PS_ALTERNATE:
+	physDev->pen.dash = PEN_alternate;
+	break;
 
-	case PS_ALTERNATE:
-            physDev->pen.dash = PEN_alternate;
-	    break;
+    default:
+	physDev->pen.dash = NULL;
+    }	    
 
-	default:
-            physDev->pen.dash = NULL;
-	    break;
-	}
-    }
+    if ((physDev->pen.width > 1) && (physDev->pen.dash != NULL)) {
+	physDev->pen.style = PS_SOLID;
+         physDev->pen.dash = NULL;
+    } 
 
     physDev->pen.set = FALSE;
     return prevpen;
@@ -78,11 +79,13 @@ BOOL PSDRV_SetPen(DC *dc)
 {
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
 
-    PSDRV_WriteSetColor(dc, &physDev->pen.color);
-
-    if(!physDev->pen.set) {
-        PSDRV_WriteSetPen(dc);
-	physDev->pen.set = TRUE;
+    if (physDev->pen.style != PS_NULL) {
+	PSDRV_WriteSetColor(dc, &physDev->pen.color);
+	
+	if(!physDev->pen.set) {
+	    PSDRV_WriteSetPen(dc);
+	    physDev->pen.set = TRUE;
+	}    
     }
 
     return TRUE;

@@ -48,7 +48,7 @@ BOOL PSDRV_LineTo(DC *dc, INT x, INT y)
     PSDRV_WriteMoveTo(dc, XLPTODP(dc, dc->w.CursPosX),
 		          YLPTODP(dc, dc->w.CursPosY));
     PSDRV_WriteLineTo(dc, XLPTODP(dc, x), YLPTODP(dc, y));
-    PSDRV_WriteStroke(dc);
+    PSDRV_DrawLine(dc);
 
     dc->w.CursPosX = x;
     dc->w.CursPosY = y;
@@ -73,7 +73,7 @@ BOOL PSDRV_Rectangle( DC *dc, INT left, INT top, INT right,
 
     PSDRV_Brush(dc,0);
     PSDRV_SetPen(dc);
-    PSDRV_WriteStroke(dc);
+    PSDRV_DrawLine(dc);
     return TRUE;
 }
 
@@ -113,7 +113,7 @@ BOOL PSDRV_RoundRect( DC *dc, INT left, INT top, INT right,
 
     PSDRV_Brush(dc,0);
     PSDRV_SetPen(dc);
-    PSDRV_WriteStroke(dc);
+    PSDRV_DrawLine(dc);
     return TRUE;
 }
 
@@ -161,7 +161,7 @@ static BOOL PSDRV_DrawArc( DC *dc, INT left, INT top,
 	PSDRV_Brush(dc,0);
     }
     PSDRV_SetPen(dc);
-    PSDRV_WriteStroke(dc);
+    PSDRV_DrawLine(dc);
     return TRUE;
 }
 
@@ -213,11 +213,12 @@ BOOL PSDRV_Ellipse( DC *dc, INT left, INT top, INT right, INT bottom)
     w = XLSTODS(dc, (right - left));
     h = YLSTODS(dc, (bottom - top));
 
+    PSDRV_WriteNewPath(dc);
     PSDRV_WriteArc(dc, x, y, w, h, 0.0, 360.0);
     PSDRV_WriteClosePath(dc);
     PSDRV_Brush(dc,0);
     PSDRV_SetPen(dc);
-    PSDRV_WriteStroke(dc);
+    PSDRV_DrawLine(dc);
     return TRUE;
 }
 
@@ -242,7 +243,7 @@ BOOL PSDRV_PolyPolyline( DC *dc, const POINT* pts, const DWORD* counts,
 	}
     }
     PSDRV_SetPen(dc);
-    PSDRV_WriteStroke(dc);
+    PSDRV_DrawLine(dc);
     return TRUE;
 }   
 
@@ -282,7 +283,7 @@ BOOL PSDRV_PolyPolygon( DC *dc, const POINT* pts, const INT* counts,
     else /* WINDING */
         PSDRV_Brush(dc, 0);
     PSDRV_SetPen(dc);
-    PSDRV_WriteStroke(dc);
+    PSDRV_DrawLine(dc);
     return TRUE;
 }
 
@@ -312,4 +313,18 @@ COLORREF PSDRV_SetPixel( DC *dc, INT x, INT y, COLORREF color )
     PSDRV_WriteSetColor( dc, &pscolor );
     PSDRV_WriteFill( dc );
     return color;
+}
+
+
+/***********************************************************************
+ *           PSDRV_DrawLine
+ */
+VOID PSDRV_DrawLine( DC *dc )
+{
+    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
+
+    if (physDev->pen.style == PS_NULL)
+	PSDRV_WriteNewPath(dc);
+    else
+	PSDRV_WriteStroke(dc);
 }
