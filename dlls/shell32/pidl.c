@@ -1392,10 +1392,20 @@ HRESULT WINAPI SHBindToParent(LPCITEMIDLIST pidl, REFIID riid, LPVOID *ppv, LPCI
 
 	if (_ILIsPidlSimple(pidl))
 	{
+	  IShellFolder* desktop;
+
 	  /* we are on desktop level */
-	  if (ppidlLast)
-	    *ppidlLast = ILClone(pidl);
-	  hr = SHGetDesktopFolder((IShellFolder**)ppv);
+	  hr = SHGetDesktopFolder(&desktop);
+
+	  if (SUCCEEDED(hr))
+	  {
+	    hr = IShellFolder_QueryInterface(desktop, riid, ppv);
+
+	    if (SUCCEEDED(hr) && ppidlLast)
+	      *ppidlLast = ILClone(pidl);
+
+	    IShellFolder_Release(desktop);
+	  }
 	}
 	else
 	{
@@ -1583,7 +1593,7 @@ LPITEMIDLIST _ILCreateFromFindDataA(WIN32_FIND_DATAA * stffile )
             pData->type = type;
             FileTimeToDosDateTime(&(stffile->ftLastWriteTime),&pData->u.folder.uFileDate,&pData->u.folder.uFileTime);
             pData->u.folder.dwFileSize = stffile->nFileSizeLow;
-            pData->u.folder.uFileAttribs = stffile->dwFileAttributes;
+            pData->u.folder.uFileAttribs = (WORD)stffile->dwFileAttributes;
         }
         if ((pszDest = _ILGetTextPointer(pidl)))
         {
