@@ -11,6 +11,7 @@
 #include "windef.h"
 
 #ifndef RC_INVOKED
+#include <ctype.h>
 #include <string.h>
 #endif
 
