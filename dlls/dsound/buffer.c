@@ -106,8 +106,8 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
 	ICOM_THIS(IDirectSoundNotifyImpl,iface);
 	TRACE("(%p,0x%08lx,%p)\n",This,howmuch,notify);
 
-	if (!notify) {
-	    WARN("invalid parameter\n");
+	if (notify == NULL) {
+	    WARN("invalid parameter: notify == NULL\n");
 	    return DSERR_INVALIDPARAM;
 	}
 
@@ -119,13 +119,20 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
 	}
 
 	if (This->hwnotify) {
-	    return IDsDriverNotify_SetNotificationPositions(This->hwnotify, howmuch, notify);
-	}
-	else {
+	    HRESULT hres;
+	    hres = IDsDriverNotify_SetNotificationPositions(This->hwnotify, howmuch, notify);
+	    if (hres != DS_OK)
+		    WARN("IDsDriverNotify_SetNotificationPositions failed\n");
+	    return hres;
+	} else {
 	    /* Make an internal copy of the caller-supplied array.
 	     * Replace the existing copy if one is already present. */
 	    This->notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
 	        This->notifies, howmuch * sizeof(DSBPOSITIONNOTIFY));
+	    if (This->notifies == NULL) {
+		    WARN("out of memory\n");
+		    return DSERR_OUTOFMEMORY;
+	    }
 	    memcpy(This->notifies, notify, howmuch * sizeof(DSBPOSITIONNOTIFY));
 	    This->nrofnotifies = howmuch;
 	}
@@ -153,6 +160,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFormat(
 
 	TRACE("(%p,%p)\n",This,wfex);
 	/* This method is not available on secondary buffers */
+	WARN("invalid call\n");
 	return DSERR_INVALIDCALL;
 }
 
@@ -164,11 +172,15 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetVolume(
 
 	TRACE("(%p,%ld)\n",This,vol);
 
-	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLVOLUME))
+	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLVOLUME)) {
+		WARN("control unavailable: This->dsbd.dwFlags = 0x%08lx\n", This->dsbd.dwFlags);
 		return DSERR_CONTROLUNAVAIL;
+	}
 
-	if ((vol > DSBVOLUME_MAX) || (vol < DSBVOLUME_MIN))
+	if ((vol > DSBVOLUME_MAX) || (vol < DSBVOLUME_MIN)) {
+		WARN("invalid parameter: vol = %ld\n", vol);
 		return DSERR_INVALIDPARAM;
+	}
 
 	/* **** */
 	EnterCriticalSection(&(This->lock));
@@ -179,14 +191,18 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetVolume(
 	} else {
 		oldVol = This->volpan.lVolume;
 		This->volpan.lVolume = vol;
-		if (vol != oldVol) DSOUND_RecalcVolPan(&(This->volpan));
+		if (vol != oldVol) 
+			DSOUND_RecalcVolPan(&(This->volpan));
 	}
 
 	if (vol != oldVol) {
 		if (This->hwbuf) {
-			IDsDriverBuffer_SetVolumePan(This->hwbuf, &(This->volpan));
-		}
-		else DSOUND_ForceRemix(This);
+	    		HRESULT hres;
+			hres = IDsDriverBuffer_SetVolumePan(This->hwbuf, &(This->volpan));
+	    		if (hres != DS_OK)
+		    		WARN("IDsDriverBuffer_SetVolumePan failed\n");
+		} else 
+			DSOUND_ForceRemix(This);
 	}
 
 	LeaveCriticalSection(&(This->lock));
@@ -201,8 +217,10 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetVolume(
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	TRACE("(%p,%p)\n",This,vol);
 
-	if (vol == NULL)
+	if (vol == NULL) {
+		WARN("invalid parameter: vol == NULL\n");
 		return DSERR_INVALIDPARAM;
+	}
 
 	if (This->dsbd.dwFlags & DSBCAPS_CTRL3D)
 		*vol = This->ds3db->lVolume;
@@ -219,14 +237,18 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFrequency(
 
 	TRACE("(%p,%ld)\n",This,freq);
 
-	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLFREQUENCY))
+	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLFREQUENCY)) {
+		WARN("control unavailable\n");
 		return DSERR_CONTROLUNAVAIL;
+	}
 
 	if (freq == DSBFREQUENCY_ORIGINAL)
 		freq = This->wfx.nSamplesPerSec;
 
-	if ((freq < DSBFREQUENCY_MIN) || (freq > DSBFREQUENCY_MAX))
+	if ((freq < DSBFREQUENCY_MIN) || (freq > DSBFREQUENCY_MAX)) {
+		WARN("invalid parameter: freq = %ld\n", freq);
 		return DSERR_INVALIDPARAM;
+	}
 
 	/* **** */
 	EnterCriticalSection(&(This->lock));
@@ -237,7 +259,8 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFrequency(
 		This->freqAdjust = (freq << DSOUND_FREQSHIFT) / This->dsound->wfx.nSamplesPerSec;
 		This->nAvgBytesPerSec = freq * This->wfx.nBlockAlign;
 		DSOUND_RecalcFormat(This);
-		if (!This->hwbuf) DSOUND_ForceRemix(This);
+		if (!This->hwbuf) 
+			DSOUND_ForceRemix(This);
 	}
 
 	LeaveCriticalSection(&(This->lock));
@@ -249,10 +272,9 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFrequency(
 static HRESULT WINAPI IDirectSoundBufferImpl_Play(
 	LPDIRECTSOUNDBUFFER8 iface,DWORD reserved1,DWORD reserved2,DWORD flags
 ) {
+	HRESULT hres = DS_OK;
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
-	TRACE("(%p,%08lx,%08lx,%08lx)\n",
-		This,reserved1,reserved2,flags
-	);
+	TRACE("(%p,%08lx,%08lx,%08lx)\n",This,reserved1,reserved2,flags);
 
 	/* **** */
 	EnterCriticalSection(&(This->lock));
@@ -265,18 +287,22 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Play(
 	} else if (This->state == STATE_STOPPING)
 		This->state = STATE_PLAYING;
 	if (This->hwbuf) {
-		IDsDriverBuffer_Play(This->hwbuf, 0, 0, This->playflags);
-		This->state = STATE_PLAYING;
+		hres = IDsDriverBuffer_Play(This->hwbuf, 0, 0, This->playflags);
+		if (hres != DS_OK)
+			WARN("IDsDriverBuffer_Play failed\n");
+		else
+			This->state = STATE_PLAYING;
 	}
 
 	LeaveCriticalSection(&(This->lock));
 	/* **** */
 
-	return DS_OK;
+	return hres;
 }
 
 static HRESULT WINAPI IDirectSoundBufferImpl_Stop(LPDIRECTSOUNDBUFFER8 iface)
 {
+	HRESULT hres = DS_OK;
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	TRACE("(%p)\n",This);
 
@@ -288,15 +314,18 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Stop(LPDIRECTSOUNDBUFFER8 iface)
 	else if (This->state == STATE_STARTING)
 		This->state = STATE_STOPPED;
 	if (This->hwbuf) {
-		IDsDriverBuffer_Stop(This->hwbuf);
-		This->state = STATE_STOPPED;
+		hres = IDsDriverBuffer_Stop(This->hwbuf);
+		if (hres != DS_OK)
+			WARN("IDsDriverBuffer_Stop failed\n");
+		else
+			This->state = STATE_STOPPED;
 	}
 	DSOUND_CheckEvent(This, 0);
 
 	LeaveCriticalSection(&(This->lock));
 	/* **** */
 
-	return DS_OK;
+	return hres;
 }
 
 static DWORD WINAPI IDirectSoundBufferImpl_AddRef(LPDIRECTSOUNDBUFFER8 iface) {
@@ -345,8 +374,11 @@ static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface) {
 	else if (!This->parent)
 		HeapFree(GetProcessHeap(),0,This->buffer);
 	if (This->ds3db) {
-		DeleteCriticalSection(&This->ds3db->lock);
-		HeapFree(GetProcessHeap(), 0, This->ds3db);
+		IDirectSound3DBuffer_Release((LPDIRECTSOUND3DBUFFER)This->ds3db);
+	}
+	if (This->dsound->listener) {
+		if (IDirectSound3DListener_Release((LPDIRECTSOUND3DLISTENER)This->dsound->listener) == 0)
+			This->dsound->listener = 0;
 	}
 	if (This->iks) {
 		HeapFree(GetProcessHeap(), 0, This->iks);
@@ -418,8 +450,10 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 	TRACE("(%p,%p,%p)\n",This,playpos,writepos);
 	if (This->hwbuf) {
 		hres=IDsDriverBuffer_GetPosition(This->hwbuf,playpos,writepos);
-		if (hres)
+		if (hres != DS_OK) {
+		    WARN("IDsDriverBuffer_GetPosition failed\n");
 		    return hres;
+		}
 	}
 	else {
 		if (playpos && (This->state != STATE_PLAYING)) {
@@ -430,7 +464,8 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 			DWORD pplay, pwrite, lplay, splay, pstate;
 			/* let's get this exact; first, recursively call GetPosition on the primary */
 			EnterCriticalSection(&(This->dsound->mixlock));
-			DSOUND_PrimaryGetPosition(This->dsound, &pplay, &pwrite);
+			if (DSOUND_PrimaryGetPosition(This->dsound, &pplay, &pwrite) != DS_OK)
+				WARN("DSOUND_PrimaryGetPosition failed\n");
 			/* detect HEL mode underrun */
 			pstate = This->dsound->state;
 			if (!(This->dsound->hwbuf || This->dsound->pwqueue)) {
@@ -481,8 +516,10 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetStatus(
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	TRACE("(%p,%p), thread is %04lx\n",This,status,GetCurrentThreadId());
 
-	if (status == NULL)
+	if (status == NULL) {
+		WARN("invalid parameter: status = NULL\n");
 		return DSERR_INVALIDPARAM;
+	}
 
 	*status = 0;
 	if ((This->state == STATE_STARTING) || (This->state == STATE_PLAYING)) {
@@ -508,11 +545,14 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetFormat(
 		memcpy(lpwf,&(This->wfx),wfsize);
 		if (wfwritten)
 			*wfwritten = wfsize;
-	} else
+	} else {
 		if (wfwritten)
 			*wfwritten = sizeof(This->wfx);
-		else
+		else {
+			WARN("invalid parameter: wfwritten == NULL\n");
 			return DSERR_INVALIDPARAM;
+		}
+	}
 
 	return DS_OK;
 }
@@ -520,6 +560,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetFormat(
 static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 	LPDIRECTSOUNDBUFFER8 iface,DWORD writecursor,DWORD writebytes,LPVOID lplpaudioptr1,LPDWORD audiobytes1,LPVOID lplpaudioptr2,LPDWORD audiobytes2,DWORD flags
 ) {
+	HRESULT hres = DS_OK;
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 
 	TRACE("(%p,%ld,%ld,%p,%p,%p,%p,0x%08lx) at %ld\n",
@@ -537,7 +578,11 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 	if (flags & DSBLOCK_FROMWRITECURSOR) {
 		DWORD writepos;
 		/* GetCurrentPosition does too much magic to duplicate here */
-		IDirectSoundBufferImpl_GetCurrentPosition(iface, NULL, &writepos);
+		hres = IDirectSoundBufferImpl_GetCurrentPosition(iface, NULL, &writepos);
+		if (hres != DS_OK) {
+			WARN("IDirectSoundBufferImpl_GetCurrentPosition failed\n");
+			return hres;
+		}
 		writecursor += writepos;
 	}
 	while (writecursor >= This->buflen)
@@ -564,13 +609,17 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 		This->probably_valid_to = writecursor;
 
 	if (!(This->dsound->drvdesc.dwFlags & DSDDESC_DONTNEEDSECONDARYLOCK) && This->hwbuf) {
-		IDsDriverBuffer_Lock(This->hwbuf,
+		hres = IDsDriverBuffer_Lock(This->hwbuf,
 				     lplpaudioptr1, audiobytes1,
 				     lplpaudioptr2, audiobytes2,
 				     writecursor, writebytes,
 				     0);
-	}
-	else {
+		if (hres != DS_OK) {
+			WARN("IDsDriverBuffer_Lock failed\n");
+			LeaveCriticalSection(&(This->lock));
+			return hres;
+		}
+	} else {
 		BOOL remix = FALSE;
 		if (writecursor+writebytes <= This->buflen) {
 			*(LPBYTE*)lplpaudioptr1 = This->buffer+writecursor;
@@ -618,6 +667,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 static HRESULT WINAPI IDirectSoundBufferImpl_SetCurrentPosition(
 	LPDIRECTSOUNDBUFFER8 iface,DWORD newpos
 ) {
+	HRESULT hres = DS_OK;
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	TRACE("(%p,%ld)\n",This,newpos);
 
@@ -627,30 +677,38 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetCurrentPosition(
 	while (newpos >= This->buflen)
 		newpos -= This->buflen;
 	This->buf_mixpos = newpos;
-	if (This->hwbuf)
-		IDsDriverBuffer_SetPosition(This->hwbuf, This->buf_mixpos);
+	if (This->hwbuf) {
+		hres = IDsDriverBuffer_SetPosition(This->hwbuf, This->buf_mixpos);
+		if (hres != DS_OK)
+			WARN("IDsDriverBuffer_SetPosition failed\n");
+	}
 
 	LeaveCriticalSection(&(This->lock));
 	/* **** */
 
-	return DS_OK;
+	return hres;
 }
 
 static HRESULT WINAPI IDirectSoundBufferImpl_SetPan(
 	LPDIRECTSOUNDBUFFER8 iface,LONG pan
 ) {
+	HRESULT hres = DS_OK;
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	LONG oldPan;
 
 	TRACE("(%p,%ld)\n",This,pan);
 
-	if ((pan > DSBPAN_RIGHT) || (pan < DSBPAN_LEFT))
+	if ((pan > DSBPAN_RIGHT) || (pan < DSBPAN_LEFT)) {
+		WARN("invalid parameter: pan = %ld\n", pan);
 		return DSERR_INVALIDPARAM;
+	}
 
 	/* You cannot use both pan and 3D controls */
 	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLPAN) ||
-	    (This->dsbd.dwFlags & DSBCAPS_CTRL3D))
+	    (This->dsbd.dwFlags & DSBCAPS_CTRL3D)) {
+		WARN("control unavailable\n");
 		return DSERR_CONTROLUNAVAIL;
+	}
 
 	/* **** */
 	EnterCriticalSection(&(This->lock));
@@ -662,15 +720,17 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetPan(
 		DSOUND_RecalcVolPan(&(This->volpan));
 
 		if (This->hwbuf) {
-			IDsDriverBuffer_SetVolumePan(This->hwbuf, &(This->volpan));
-		}
-		else DSOUND_ForceRemix(This);
+			hres = IDsDriverBuffer_SetVolumePan(This->hwbuf, &(This->volpan));
+			if (hres != DS_OK)
+				WARN("IDsDriverBuffer_SetVolumePan failed\n");
+		} else 
+			DSOUND_ForceRemix(This);
 	}
 
 	LeaveCriticalSection(&(This->lock));
 	/* **** */
 
-	return DS_OK;
+	return hres;
 }
 
 static HRESULT WINAPI IDirectSoundBufferImpl_GetPan(
@@ -679,8 +739,10 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetPan(
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	TRACE("(%p,%p)\n",This,pan);
 
-	if (pan == NULL)
+	if (pan == NULL) {
+		WARN("invalid parameter: pan = NULL\n");
 		return DSERR_INVALIDPARAM;
+	}
 
 	*pan = This->volpan.lPan;
 
@@ -704,7 +766,12 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 #endif
 
 	if (!(This->dsound->drvdesc.dwFlags & DSDDESC_DONTNEEDSECONDARYLOCK) && This->hwbuf) {
-		IDsDriverBuffer_Unlock(This->hwbuf, p1, x1, p2, x2);
+		HRESULT hres;
+		hres = IDsDriverBuffer_Unlock(This->hwbuf, p1, x1, p2, x2);
+		if (hres != DS_OK) {
+			WARN("IDsDriverBuffer_Unlock failed\n");
+			return hres;
+		}
 	}
 
 	if (p2) probably_valid_to = (((LPBYTE)p2)-This->buffer) + x2;
@@ -735,8 +802,10 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetFrequency(
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	TRACE("(%p,%p)\n",This,freq);
 
-	if (freq == NULL)
+	if (freq == NULL) {
+		WARN("invalid parameter: freq = NULL\n");
 		return DSERR_INVALIDPARAM;
+	}
 
 	*freq = This->freq;
 	TRACE("-> %ld\n", *freq);
@@ -755,6 +824,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFX(
 	if (pdwResultCodes)
 		for (u=0; u<dwEffectsCount; u++) pdwResultCodes[u] = DSFXR_UNKNOWN;
 
+	WARN("control unavailable\n");
 	return DSERR_CONTROLUNAVAIL;
 }
 
@@ -769,6 +839,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_AcquireResources(
 	if (pdwResultCodes)
 		for (u=0; u<dwEffectsCount; u++) pdwResultCodes[u] = DSFXR_UNKNOWN;
 
+	WARN("control unavailable\n");
 	return DSERR_CONTROLUNAVAIL;
 }
 
@@ -779,6 +850,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetObjectInPath(
 
 	FIXME("(%p,%s,%lu,%s,%p): stub\n",This,debugstr_guid(rguidObject),dwIndex,debugstr_guid(rguidInterface),ppObject);
 
+	WARN("control unavailable\n");
 	return DSERR_CONTROLUNAVAIL;
 }
 
@@ -788,6 +860,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Initialize(
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	FIXME("(%p,%p,%p):stub\n",This,dsound,dbsd);
 	DPRINTF("Re-Init!!!\n");
+	WARN("already initialized\n");
 	return DSERR_ALREADYINITIALIZED;
 }
 
@@ -797,8 +870,15 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCaps(
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
   	TRACE("(%p)->(%p)\n",This,caps);
 
-	if (caps == NULL || caps->dwSize!=sizeof(*caps))
+	if (caps == NULL) {
+		WARN("invalid parameter: caps == NULL\n");
 		return DSERR_INVALIDPARAM;
+	}
+
+	if (caps->dwSize < sizeof(*caps)) {
+		WARN("invalid parameter: caps->dwSize = %ld < %d\n",caps->dwSize, sizeof(*caps));
+		return DSERR_INVALIDPARAM;
+	}
 
 	caps->dwFlags = This->dsbd.dwFlags;
 	if (This->hwbuf) caps->dwFlags |= DSBCAPS_LOCHARDWARE;
@@ -839,6 +919,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 			return S_OK;
 		}
 		*ppobj = NULL;
+		WARN("IID_IDirectSoundNotify\n");
 		return E_FAIL;
 	}
 
@@ -851,6 +932,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 			return S_OK;
 		}
 		*ppobj = NULL;
+		WARN("IID_IDirectSound3DBuffer\n");
 		return E_FAIL;
 	}
 
@@ -869,6 +951,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 			return S_OK;
 		}
 		*ppobj = NULL;
+		WARN("IID_IKsPropertySet\n");
 		return E_FAIL;
 	}
 
@@ -926,11 +1009,18 @@ HRESULT WINAPI SecondaryBuffer_Create(
 	int use_hw;
 
 	if (dsbd->dwBufferBytes < DSBSIZE_MIN || dsbd->dwBufferBytes > DSBSIZE_MAX) {
-		ERR("invalid sound buffer size %ld\n", dsbd->dwBufferBytes);
+		ERR("invalid parameter: dsbd->dwBufferBytes = %ld\n", dsbd->dwBufferBytes);
+		*pdsb = NULL;
 		return DSERR_INVALIDPARAM; /* FIXME: which error? */
 	}
 
 	dsb = (IDirectSoundBufferImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*dsb));
+
+	if (dsb == 0) {
+		WARN("out of memory\n");
+		*pdsb = NULL;
+		return DSERR_OUTOFMEMORY;
+	}
 	dsb->ref = 1;
 	dsb->dsound = This;
 	dsb->parent = NULL;
@@ -960,24 +1050,29 @@ HRESULT WINAPI SecondaryBuffer_Create(
 	/* Allocate system memory if applicable */
 	if ((This->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) || !use_hw) {
 		dsb->buffer = (LPBYTE)HeapAlloc(GetProcessHeap(),0,dsb->buflen);
-		if (dsb->buffer == NULL)
-			err = DSERR_OUTOFMEMORY;
+		if (dsb->buffer == NULL) {
+			WARN("out of memory\n");
+			HeapFree(GetProcessHeap(),0,dsb);
+			*pdsb = NULL;
+			return DSERR_OUTOFMEMORY;
+		}
 	}
 
 	/* Allocate the hardware buffer */
-	if (use_hw && (err == DS_OK)) {
+	if (use_hw) {
 		err = IDsDriver_CreateSoundBuffer(This->driver,wfex,dsbd->dwFlags,0,
 						  &(dsb->buflen),&(dsb->buffer),
 						  (LPVOID*)&(dsb->hwbuf));
+		if (err != DS_OK) {
+			WARN("IDsDriver_CreateSoundBuffer failed\n");
+			if (dsb->buffer)
+				HeapFree(GetProcessHeap(),0,dsb->buffer);
+			HeapFree(GetProcessHeap(),0,dsb);
+			*pdsb = NULL;
+			return err;
+		}
 	}
 
-	if (err != DS_OK) {
-		if (dsb->buffer)
-			HeapFree(GetProcessHeap(),0,dsb->buffer);
-		HeapFree(GetProcessHeap(),0,dsb);
-		dsb = NULL;
-		return err;
-	}
 	/* calculate fragment size and write lead */
 	DSOUND_RecalcFormat(dsb);
 
@@ -993,9 +1088,16 @@ HRESULT WINAPI SecondaryBuffer_Create(
 		dsbd->lpwfxFormat->nBlockAlign;
 
 	if (dsbd->dwFlags & DSBCAPS_CTRL3D) {
-		IDirectSound3DBufferImpl_Create(dsb, &dsb->ds3db);
-	}
-	else
+		err = IDirectSound3DBufferImpl_Create(dsb, &dsb->ds3db);
+		if (err != DS_OK) {
+			WARN("IDirectSound3DBufferImpl_Create failed\n");
+			if (dsb->buffer)
+				HeapFree(GetProcessHeap(),0,dsb->buffer);
+			HeapFree(GetProcessHeap(),0,dsb);
+			dsb = NULL;
+			return err;
+		}
+	} else
 		DSOUND_RecalcVolPan(&(dsb->volpan));
 
 	InitializeCriticalSection(&(dsb->lock));
@@ -1011,19 +1113,17 @@ HRESULT WINAPI SecondaryBuffer_Create(
 			TRACE("buffer count is now %d\n", This->nrofbuffers);
 		} else {
 			ERR("out of memory for buffer list! Current buffer count is %d\n", This->nrofbuffers);
-			err = DSERR_OUTOFMEMORY;
+			if (dsb->buffer)
+				HeapFree(GetProcessHeap(),0,dsb->buffer);
+			DeleteCriticalSection(&(dsb->lock));
+			RtlReleaseResource(&(This->lock));
+			HeapFree(GetProcessHeap(),0,dsb);
+			dsb = NULL;
+			return DSERR_OUTOFMEMORY;
 		}
 	}
 	RtlReleaseResource(&(This->lock));
 	IDirectSound8_AddRef((LPDIRECTSOUND8)This);
-
-	if (err != DS_OK) {
-		/* oops... */
-		IDirectSoundBuffer8_Release((LPDIRECTSOUNDBUFFER8)dsb);
-		*pdsb = NULL;
-		return err;
-	}
-
 	*pdsb = dsb;
 	return S_OK;
 }

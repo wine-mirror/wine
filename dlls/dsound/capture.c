@@ -128,11 +128,9 @@ DirectSoundCaptureCreate8(
         HEAP_ZERO_MEMORY, sizeof(IDirectSoundCaptureImpl));
 
     if (*ippDSC == NULL) {
-        TRACE("couldn't allocate memory\n");
+	WARN("out of memory\n");
         return DSERR_OUTOFMEMORY;
-    }
-    else
-    {
+    } else {
         ICOM_THIS(IDirectSoundCaptureImpl, *ippDSC);
 
         This->ref = 1;
@@ -143,10 +141,15 @@ DirectSoundCaptureCreate8(
         This->lpVtbl = &dscvt;
         dsound_capture = This;
 
-        if (GetDeviceID(lpcGUID, &This->guid) == DS_OK)
-            return IDirectSoundCaptureImpl_Initialize( (LPDIRECTSOUNDCAPTURE)This, &This->guid);
+        if (GetDeviceID(lpcGUID, &This->guid) == DS_OK) {
+	    HRESULT	hres; 
+            hres = IDirectSoundCaptureImpl_Initialize( (LPDIRECTSOUNDCAPTURE)This, &This->guid);
+	    if (hres != DS_OK)
+		WARN("IDirectSoundCaptureImpl_Initialize failed\n");
+	    return hres;
+	}
     }
-    WARN("invalid GUID\n");
+    WARN("invalid GUID: %s\n", debugstr_guid(lpcGUID));
     return DSERR_INVALIDPARAM;
 }
 
@@ -350,9 +353,15 @@ IDirectSoundCaptureImpl_QueryInterface(
     ICOM_THIS(IDirectSoundCaptureImpl,iface);
     TRACE( "(%p,%s,%p)\n", This, debugstr_guid(riid), ppobj );
 
-    if (This->driver) 
-        return IDsCaptureDriver_QueryInterface(This->driver, riid, ppobj);
+    if (This->driver) {
+	HRESULT	hres; 
+        hres = IDsCaptureDriver_QueryInterface(This->driver, riid, ppobj);
+	if (hres != DS_OK)
+	    WARN("IDsCaptureDriver_QueryInterface failed\n");
+	return hres;
+    }
 
+    WARN("unsupported riid: %s\n", debugstr_guid(riid));
     return E_FAIL;
 }
 
@@ -420,20 +429,37 @@ IDirectSoundCaptureImpl_CreateCaptureBuffer(
 
     TRACE( "(%p,%p,%p,%p)\n",This,lpcDSCBufferDesc,lplpDSCaptureBuffer,pUnk );
 
-    if ( (This == NULL) || (lpcDSCBufferDesc== NULL) || 
-        (lplpDSCaptureBuffer == NULL) || pUnk ) {
-	WARN("invalid parameters\n");
+    if (This == NULL) {
+	WARN("invalid parameter: This == NULL\n");
+	return DSERR_INVALIDPARAM;
+    }
+
+    if (lpcDSCBufferDesc == NULL) {
+	WARN("invalid parameter: lpcDSCBufferDesc == NULL)\n");
+	return DSERR_INVALIDPARAM;
+    }
+
+    if (lplpDSCaptureBuffer == NULL) {
+	WARN("invalid parameter: lplpDSCaptureBuffer == NULL\n");
+	return DSERR_INVALIDPARAM;
+    }
+
+    if (pUnk != NULL) {
+	WARN("invalid parameter: pUnk != NULL\n");
 	return DSERR_INVALIDPARAM;
     }
 
     /* FIXME: We can only have one buffer so what do we do here? */
     if (This->capture_buffer) {
-	WARN("already has buffer\n");
+	WARN("lnvalid parameter: already has buffer\n");
 	return DSERR_INVALIDPARAM;    /* DSERR_GENERIC ? */
     }
 
     hr = DSOUND_CreateDirectSoundCaptureBuffer( This, lpcDSCBufferDesc, 
         (LPVOID*)lplpDSCaptureBuffer );
+
+    if (hr != DS_OK)
+	WARN("DSOUND_CreateDirectSoundCaptureBuffer failed\n");
 
     return hr;
 }
@@ -446,8 +472,14 @@ IDirectSoundCaptureImpl_GetCaps(
     ICOM_THIS(IDirectSoundCaptureImpl,iface);
     TRACE("(%p,%p)\n",This,lpDSCCaps);
 
-    if ( (lpDSCCaps== NULL) || (lpDSCCaps->dwSize != sizeof(*lpDSCCaps)) ) {
-	WARN("invalid parameters\n");
+    if (lpDSCCaps== NULL) {
+	WARN("invalid parameter: lpDSCCaps== NULL\n");
+	return DSERR_INVALIDPARAM;
+    }
+
+    if (lpDSCCaps->dwSize < sizeof(*lpDSCCaps)) {
+	WARN("invalid parameter: lpDSCCaps->dwSize = %ld < %d\n", 
+	    lpDSCCaps->dwSize, sizeof(*lpDSCCaps));
 	return DSERR_INVALIDPARAM;
     }
 
@@ -477,7 +509,7 @@ IDirectSoundCaptureImpl_Initialize(
     TRACE("(%p)\n", This);
 
     if (!This) {
-	WARN("invalid parameter\n");
+	WARN("invalid parameter: This == NULL\n");
 	return DSERR_INVALIDPARAM;
     }
 
@@ -600,8 +632,18 @@ DSOUND_CreateDirectSoundCaptureBuffer(
     LPWAVEFORMATEX  wfex;
     TRACE( "(%p,%p)\n", lpcDSCBufferDesc, ppobj );
 
-    if ( (ipDSC == NULL) || (lpcDSCBufferDesc == NULL) || (ppobj == NULL) ) {
-	WARN("invalid parameters\n");
+    if (ipDSC == NULL) {
+	WARN("invalid parameter: ipDSC == NULL\n");
+	return DSERR_INVALIDPARAM;
+    }
+
+    if (lpcDSCBufferDesc == NULL) {
+	WARN("invalid parameter: lpcDSCBufferDesc == NULL\n");
+	return DSERR_INVALIDPARAM;
+    }
+
+    if (ppobj == NULL) {
+	WARN("invalid parameter: ppobj == NULL\n");
 	return DSERR_INVALIDPARAM;
     }
 
@@ -609,11 +651,13 @@ DSOUND_CreateDirectSoundCaptureBuffer(
         (lpcDSCBufferDesc->dwBufferBytes == 0) ||
         (lpcDSCBufferDesc->lpwfxFormat == NULL) ) {
 	WARN("invalid lpcDSCBufferDesc\n");
+	*ppobj = NULL;
 	return DSERR_INVALIDPARAM;
     }
 
     if ( !ipDSC->initialized ) {
 	WARN("not initialized\n");
+	*ppobj = NULL;
 	return DSERR_UNINITIALIZED;
     }
 
@@ -630,10 +674,12 @@ DSOUND_CreateDirectSoundCaptureBuffer(
             memcpy(&(ipDSC->wfx), wfex, sizeof(WAVEFORMATEX));
         else {
             WARN("non PCM formats not supported\n");
+	    *ppobj = NULL;
             return DSERR_BADFORMAT;
         }
     } else {
 	WARN("lpcDSCBufferDesc->lpwfxFormat == 0\n");
+	*ppobj = NULL;
 	return DSERR_INVALIDPARAM; /* FIXME: DSERR_BADFORMAT ? */
     }
 
@@ -642,6 +688,7 @@ DSOUND_CreateDirectSoundCaptureBuffer(
 
     if ( *ppobj == NULL ) {
 	WARN("out of memory\n");
+	*ppobj = NULL;
 	return DSERR_OUTOFMEMORY;
     } else {
     	HRESULT err = DS_OK;
@@ -749,6 +796,7 @@ IDirectSoundCaptureBufferImpl_QueryInterface(
 	}
 
 	*ppobj = 0;
+	WARN("IID_IDirectSoundNotify\n");
 	return E_FAIL;
     }
 
@@ -843,13 +891,24 @@ IDirectSoundCaptureBufferImpl_GetCaps(
     ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
     TRACE( "(%p,%p)\n", This, lpDSCBCaps );
 
-    if ( (This == NULL) || (lpDSCBCaps == NULL) ) {
-        WARN("invalid parameters\n");
+    if (This == NULL) {
+        WARN("invalid parameter: This == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
-    if ( (lpDSCBCaps->dwSize < sizeof(DSCBCAPS)) || (This->dsound == NULL) ) {
-        WARN("invalid parameters\n");
+    if (lpDSCBCaps == NULL) {
+        WARN("invalid parameter: lpDSCBCaps == NULL\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (lpDSCBCaps->dwSize < sizeof(DSCBCAPS)) {
+        WARN("invalid parameter: lpDSCBCaps->dwSize = %ld < %d\n", 
+	    lpDSCBCaps->dwSize, sizeof(DSCBCAPS));
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (This->dsound == NULL) {
+        WARN("invalid parameter: This->dsound == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
@@ -871,13 +930,23 @@ IDirectSoundCaptureBufferImpl_GetCurrentPosition(
     ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
     TRACE( "(%p,%p,%p)\n", This, lpdwCapturePosition, lpdwReadPosition );
 
-    if ( (This == NULL) || (This->dsound == NULL) ) {
-        WARN("invalid parameter\n");
+    if (This == NULL) {
+        WARN("invalid parameter: This == NULL\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (This->dsound == NULL) {
+        WARN("invalid parameter: This->dsound == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
     if (This->dsound->driver) {
-        return IDsCaptureDriverBuffer_GetPosition(This->dsound->hwbuf, lpdwCapturePosition, lpdwReadPosition );
+	HRESULT	hres;
+        hres = IDsCaptureDriverBuffer_GetPosition(This->dsound->hwbuf, lpdwCapturePosition, lpdwReadPosition );
+	if (hres != DS_OK) {
+	    WARN("IDsCaptureDriverBuffer_GetPosition failed\n");
+	    return hres;
+	}
     } else if (This->dsound->hwi) {
 	EnterCriticalSection(&(This->dsound->lock));
 	TRACE("old This->dsound->state=%ld\n",This->dsound->state);
@@ -923,8 +992,13 @@ IDirectSoundCaptureBufferImpl_GetFormat(
     TRACE( "(%p,%p,0x%08lx,%p)\n", This, lpwfxFormat, dwSizeAllocated, 
         lpdwSizeWritten );
 
-    if ( (This == NULL) || (This->dsound == NULL) ) {
-        WARN("invalid parameter\n");
+    if (This == NULL) {
+        WARN("invalid parameter: This == NULL\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (This->dsound == NULL) {
+        WARN("invalid parameter: This->dsound == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
@@ -939,7 +1013,7 @@ IDirectSoundCaptureBufferImpl_GetFormat(
         if (lpdwSizeWritten)
             *lpdwSizeWritten = sizeof(This->dsound->wfx);
         else {
-            TRACE("invalid parameter\n");
+            TRACE("invalid parameter: lpdwSizeWritten = NULL\n");
             return DSERR_INVALIDPARAM;
         }
     }
@@ -956,8 +1030,18 @@ IDirectSoundCaptureBufferImpl_GetStatus(
     ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
     TRACE( "(%p, %p), thread is %04lx\n", This, lpdwStatus, GetCurrentThreadId() );
 
-    if ( (This == NULL ) || (This->dsound == NULL) || (lpdwStatus == NULL) ) {
-        WARN("invalid parameter\n");
+    if (This == NULL) {
+        WARN("invalid parameter: This == NULL\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (This->dsound == NULL) {
+        WARN("invalid parameter: This->dsound == NULL\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (lpdwStatus == NULL) {
+        WARN("invalid parameter: lpdwStatus == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
@@ -1009,9 +1093,23 @@ IDirectSoundCaptureBufferImpl_Lock(
         dwReadBytes, lplpvAudioPtr1, lpdwAudioBytes1, lplpvAudioPtr2,
         lpdwAudioBytes2, dwFlags, GetTickCount() );
 
-    if ( (This == NULL) || (This->dsound == NULL) || (lplpvAudioPtr1 == NULL) ||
-        (lpdwAudioBytes1 == NULL) ) {
-        WARN("invalid parameter\n");
+    if (This == NULL) {
+        WARN("invalid parameter: This == NULL\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (This->dsound == NULL) {
+        WARN("invalid parameter: This->dsound == NULL\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (lplpvAudioPtr1 == NULL) {
+        WARN("invalid parameter: lplpvAudioPtr1 == NULL\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (lpdwAudioBytes1 == NULL) {
+        WARN("invalid parameter: lpdwAudioBytes1 == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
@@ -1021,6 +1119,8 @@ IDirectSoundCaptureBufferImpl_Lock(
         err = IDsCaptureDriverBuffer_Lock(This->dsound->hwbuf, lplpvAudioPtr1, 
 					   lpdwAudioBytes1, lplpvAudioPtr2, lpdwAudioBytes2,
 					   dwReadCusor, dwReadBytes, dwFlags);
+	if (err != DS_OK)
+	    WARN("IDsCaptureDriverBuffer_Lock failed\n");
     } else if (This->dsound->hwi) {
         *lplpvAudioPtr1 = This->dsound->buffer + dwReadCusor;
         if ( (dwReadCusor + dwReadBytes) > This->dsound->buflen) {
@@ -1055,8 +1155,13 @@ IDirectSoundCaptureBufferImpl_Start(
     ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
     TRACE( "(%p,0x%08lx)\n", This, dwFlags );
 
-    if ( (This == NULL) || (This->dsound == NULL) ) {
-        WARN("invalid parameter\n");
+    if (This == NULL) {
+        WARN("invalid parameter: This == NULL\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (This->dsound == NULL) {
+        WARN("invalid parameter: This->dsound == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
@@ -1079,6 +1184,8 @@ IDirectSoundCaptureBufferImpl_Start(
 
     if (This->dsound->driver) {
         err = IDsCaptureDriverBuffer_Start(This->dsound->hwbuf, dwFlags);
+	if (err != DS_OK)
+	    WARN("IDsCaptureDriverBuffer_Start failed\n");
         return err;
     } else {
         IDirectSoundCaptureImpl* ipDSC = This->dsound;
@@ -1134,6 +1241,7 @@ IDirectSoundCaptureBufferImpl_Start(
                 err = mmErr(waveInPrepareHeader(ipDSC->hwi,
                     &(ipDSC->pwave[0]),sizeof(WAVEHDR)));
                 if (err != DS_OK) {
+		    WARN("waveInPrepareHeader failed\n");
                     waveInUnprepareHeader(ipDSC->hwi,
                         &(ipDSC->pwave[0]),sizeof(WAVEHDR));
 		}
@@ -1151,8 +1259,10 @@ IDirectSoundCaptureBufferImpl_Start(
 	        if (err == DS_OK) {
 	    	    /* start filling the first buffer */
 	            err = mmErr(waveInStart(ipDSC->hwi));
-		}
-	    }
+		} else
+		    WARN("waveInAddBuffer failed\n");
+	    } else
+		WARN("waveInReset failed\n");
         }
     }
 
@@ -1173,8 +1283,13 @@ IDirectSoundCaptureBufferImpl_Stop( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
     ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
     TRACE( "(%p)\n", This );
 
-    if ( (This == NULL) || (This->dsound == NULL) ) {
-        WARN("invalid parameter\n");
+    if (This == NULL) {
+        WARN("invalid parameter: This == NULL\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (This->dsound == NULL) {
+        WARN("invalid parameter: This->dsound == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
@@ -1201,7 +1316,8 @@ IDirectSoundCaptureBufferImpl_Stop( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
 		WARN("IDsCaptureDriver_CreateCaptureBuffer failed\n");
 		This->dsound->hwbuf = 0;
 	    }
-	}
+	} else if (err != DS_OK) 
+	    WARN("IDsCaptureDriverBuffer_Stop failed\n");
     } else if (This->dsound->hwi) {
         err = waveInStop(This->dsound->hwi);
     } else {
@@ -1225,14 +1341,23 @@ IDirectSoundCaptureBufferImpl_Unlock(
     TRACE( "(%p,%p,%08lu,%p,%08lu)\n", This, lpvAudioPtr1, dwAudioBytes1, 
         lpvAudioPtr2, dwAudioBytes2 );
 
-    if ( (This == NULL) || (lpvAudioPtr1 == NULL) ) {
-        WARN("invalid parameters\n");
+    if (This == NULL) {
+        WARN("invalid parameter: This == NULL\n");
+        return DSERR_INVALIDPARAM;
+    }
+
+    if (lpvAudioPtr1 == NULL) {
+        WARN("invalid parameter: lpvAudioPtr1 == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
     if (This->dsound->driver) {
-        return IDsCaptureDriverBuffer_Unlock(This->dsound->hwbuf, lpvAudioPtr1, 
+	HRESULT	hres;
+        hres = IDsCaptureDriverBuffer_Unlock(This->dsound->hwbuf, lpvAudioPtr1, 
 					   dwAudioBytes1, lpvAudioPtr2, dwAudioBytes2);
+	if (hres != DS_OK)
+	    WARN("IDsCaptureDriverBuffer_Unlock failed\n");
+	return hres;
     } else if (This->dsound->hwi) {
         This->dsound->read_position = (This->dsound->read_position + 
             (dwAudioBytes1 + dwAudioBytes2)) % This->dsound->buflen;
@@ -1346,11 +1471,10 @@ DirectSoundFullDuplexCreate8(
 	HEAP_ZERO_MEMORY, sizeof(IDirectSoundFullDuplexImpl));
 
     if (*ippDSFD == NULL) {
-	TRACE("couldn't allocate memory\n");
+	WARN("out of memory\n");
 	return DSERR_OUTOFMEMORY;
-    }
-    else
-    {
+    } else {
+	HRESULT hres;
         ICOM_THIS(IDirectSoundFullDuplexImpl, *ippDSFD);
 
         This->ref = 1;
@@ -1358,11 +1482,16 @@ DirectSoundFullDuplexCreate8(
 
         InitializeCriticalSection( &(This->lock) );
 
-        return IDirectSoundFullDuplexImpl_Initialize( (LPDIRECTSOUNDFULLDUPLEX)This,
+        hres = IDirectSoundFullDuplexImpl_Initialize( (LPDIRECTSOUNDFULLDUPLEX)This,
                                                       pcGuidCaptureDevice, pcGuidRenderDevice,
                                                       pcDSCBufferDesc, pcDSBufferDesc,
                                                       hWnd, dwLevel, ppDSCBuffer8, ppDSBuffer8);
+	if (hres != DS_OK)
+	    WARN("IDirectSoundFullDuplexImpl_Initialize failed\n");
+	return hres;
     }
+
+    return DSERR_GENERIC;
 }
 
 static HRESULT WINAPI
@@ -1431,7 +1560,7 @@ IDirectSoundFullDuplexImpl_Initialize(
     IDirectSoundCaptureBufferImpl** ippdscb=(IDirectSoundCaptureBufferImpl**)lplpDirectSoundCaptureBuffer8;
     IDirectSoundBufferImpl** ippdsc=(IDirectSoundBufferImpl**)lplpDirectSoundBuffer8;
 
-    TRACE( "(%p,%s,%s,%p,%p,%lx,%lx,%p,%p)\n", This, debugstr_guid(pCaptureGuid), 
+    FIXME( "(%p,%s,%s,%p,%p,%lx,%lx,%p,%p) stub!\n", This, debugstr_guid(pCaptureGuid), 
 	debugstr_guid(pRendererGuid), lpDscBufferDesc, lpDsBufferDesc, (DWORD)hWnd, dwLevel,
 	ippdscb, ippdsc);
 

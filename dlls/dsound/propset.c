@@ -68,6 +68,7 @@ static ULONG WINAPI IKsPropertySetImpl_AddRef(LPKSPROPERTYSET iface) {
 	ICOM_THIS(IKsPropertySetImpl,iface);
 	ULONG ulReturn;
 
+	TRACE("(%p) ref was %ld\n", This, This->ref);
 	ulReturn = InterlockedIncrement(&This->ref);
 	if (ulReturn == 1)
 		IDirectSoundBuffer_AddRef((LPDIRECTSOUND3DBUFFER)This->dsb);
@@ -78,6 +79,7 @@ static ULONG WINAPI IKsPropertySetImpl_Release(LPKSPROPERTYSET iface) {
 	ICOM_THIS(IKsPropertySetImpl,iface);
 	ULONG ulReturn;
 
+	TRACE("(%p) ref was %ld\n", This, This->ref);
 	ulReturn = InterlockedDecrement(&This->ref);
 	if (ulReturn)
 		return ulReturn;

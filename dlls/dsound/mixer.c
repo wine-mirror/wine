@@ -877,8 +877,7 @@ void DSOUND_PerformMix(void)
 				while (writepos >= dsound->buflen)
 					writepos -= dsound->buflen;
 			} else writepos = playpos;
-		}
-		else {
+		} else {
  			playpos = dsound->pwplay * dsound->fraglen;
  			writepos = playpos;
  			if (!paused) {
@@ -887,8 +886,9 @@ void DSOUND_PerformMix(void)
  					writepos -= dsound->buflen;
 	 		}
 		}
-		TRACE("primary playpos=%ld, writepos=%ld, clrpos=%ld, mixpos=%ld\n",
-		      playpos,writepos,dsound->playpos,dsound->mixpos);
+		TRACE("primary playpos=%ld, writepos=%ld, clrpos=%ld, mixpos=%ld, buflen=%ld\n",
+		      playpos,writepos,dsound->playpos,dsound->mixpos,dsound->buflen);
+		assert(dsound->playpos < dsound->buflen);
 		/* wipe out just-played sound data */
 		if (playpos < dsound->playpos) {
 			memset(dsound->buffer + dsound->playpos, nfiller, dsound->buflen - dsound->playpos);
@@ -943,7 +943,8 @@ void DSOUND_PerformMix(void)
 			/* DSOUND_callback may need this lock */
 			LeaveCriticalSection(&(dsound->mixlock));
 #endif
-			DSOUND_PrimaryStop(dsound);
+			if (DSOUND_PrimaryStop(dsound) != DS_OK)
+				WARN("DSOUND_PrimaryStop failed\n");
 #ifdef SYNC_CALLBACK
 			EnterCriticalSection(&(dsound->mixlock));
 #endif
@@ -988,8 +989,10 @@ void DSOUND_PerformMix(void)
 			}
 			LeaveCriticalSection(&(dsound->mixlock));
 			if (paused) {
-				DSOUND_PrimaryPlay(dsound);
-				TRACE("starting playback\n");
+				if (DSOUND_PrimaryPlay(dsound) != DS_OK)
+					WARN("DSOUND_PrimaryPlay failed\n");
+				else
+					TRACE("starting playback\n");
 			}
 		}
 		else
@@ -997,12 +1000,16 @@ void DSOUND_PerformMix(void)
 	} else {
 		/* in the DSSCL_WRITEPRIMARY mode, the app is totally in charge... */
 		if (dsound->state == STATE_STARTING) {
-			DSOUND_PrimaryPlay(dsound);
-			dsound->state = STATE_PLAYING;
+			if (DSOUND_PrimaryPlay(dsound) != DS_OK)
+				WARN("DSOUND_PrimaryPlay failed\n");
+			else
+				dsound->state = STATE_PLAYING;
 		}
 		else if (dsound->state == STATE_STOPPING) {
-			DSOUND_PrimaryStop(dsound);
-			dsound->state = STATE_STOPPED;
+			if (DSOUND_PrimaryStop(dsound) != DS_OK)
+				WARN("DSOUND_PrimaryStop failed\n");
+			else
+				dsound->state = STATE_STOPPED;
 		}
 	}
 	TRACE("completed processing at %ld\n", GetTickCount());

@@ -187,7 +187,8 @@ static inline D3DVALUE ProjectVector (LPD3DVECTOR a, LPD3DVECTOR p)
 static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
 {
 	IDirectSound3DListenerImpl *dsl;
-	
+	TRACE("(%p)\n",ds3db);
+
 	/* volume, at which the sound will be played after all calcs. */
 	D3DVALUE lVolume = 0;
 	/* intensity (used for distance related stuff) */
@@ -333,6 +334,7 @@ static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
 static void WINAPI DSOUND_ChangeListener(IDirectSound3DListenerImpl *ds3dl)
 {
 	int i;
+	TRACE("(%p)\n",ds3dl);
 	for (i = 0; i < ds3dl->dsb->dsound->nrofbuffers; i++)
 	{
 		/* some buffers don't have 3d buffer (Ultima IX seems to
@@ -687,8 +689,15 @@ HRESULT WINAPI IDirectSound3DBufferImpl_Create(
 	IDirectSound3DBufferImpl **pds3db)
 {
 	IDirectSound3DBufferImpl *ds3db;
+	TRACE("(%p,%p)\n",This,pds3db);
 
-	ds3db = (IDirectSound3DBufferImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(*ds3db));
+	ds3db = (IDirectSound3DBufferImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*ds3db));
+
+	if (ds3db == NULL) {
+		WARN("out of memory\n");
+		return DSERR_OUTOFMEMORY;
+	}
+
 	ds3db->ref = 0;
 	ds3db->dsb = This;
 	ds3db->lpVtbl = &ds3dbvt;
@@ -732,6 +741,7 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_QueryInterface(
 static ULONG WINAPI IDirectSound3DListenerImpl_AddRef(LPDIRECTSOUND3DLISTENER iface)
 {
 	ICOM_THIS(IDirectSound3DListenerImpl,iface);
+	TRACE("(%p) ref was %ld\n", This, This->ref);
 	return InterlockedIncrement(&This->ref);
 }
 
@@ -1000,8 +1010,15 @@ HRESULT WINAPI IDirectSound3DListenerImpl_Create(
 	IDirectSound3DListenerImpl **pdsl)
 {
 	IDirectSound3DListenerImpl *dsl;
+	TRACE("(%p,%p)\n",This,pdsl);
 
-	dsl = (IDirectSound3DListenerImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(*dsl));
+	dsl = (IDirectSound3DListenerImpl*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(*dsl));
+
+	if (dsl == NULL) {
+		WARN("out of memory\n");
+		return DSERR_OUTOFMEMORY;
+	}
+
 	dsl->ref = 1;
 	dsl->lpVtbl = &ds3dlvt;
 
