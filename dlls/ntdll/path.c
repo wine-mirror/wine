@@ -231,7 +231,7 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PWSTR dos_path,
     ntpath->Length = strlenW(ntpath->Buffer) * sizeof(WCHAR);
 
     if (file_part && *file_part)
-        *file_part = ntpath->Buffer + ntpath->Length / sizeof(WCHAR) - lstrlenW(*file_part);
+        *file_part = ntpath->Buffer + ntpath->Length / sizeof(WCHAR) - strlenW(*file_part);
 
     /* FIXME: cd filling */
 

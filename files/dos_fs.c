@@ -2415,7 +2415,7 @@ DWORD WINAPI QueryDosDeviceW(LPCWSTR devname,LPWSTR target,DWORD bufsize)
 	for(i=0; (i< (sizeof(devices)/sizeof(devices[0]))); i++) {
 	    DWORD len = strlenW(devices[i]);
 	    if(target && (bufsize >= ret + len + 2)) {
-		lstrcpyW(target+ret, devices[i]);
+		strcpyW(target+ret, devices[i]);
                 ret += len + 1;
 	    } else {
                 /* in this case WinXP returns 0 */
@@ -2474,9 +2474,9 @@ DWORD WINAPI QueryDosDeviceW(LPCWSTR devname,LPWSTR target,DWORD bufsize)
     ret = strlenW(pDev) + strlenW(pName) + numsiz + 2;
     if (ret > bufsize) ret = 0;
     if (target && ret) {
-        lstrcpyW(target,pDev);
-        lstrcatW(target,pName);
-        if (pNum) lstrcatW(target,pNum);
+        strcpyW(target,pDev);
+        strcatW(target,pName);
+        if (pNum) strcatW(target,pNum);
         target[ret-1] = 0;
     }
     return ret;
