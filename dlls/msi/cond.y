@@ -57,8 +57,6 @@ struct cond_str {
 
 static LPWSTR COND_GetString( struct cond_str *str );
 static int COND_lex( void *COND_lval, COND_input *info);
-UINT get_property(MSIHANDLE hPackage, const WCHAR* prop, WCHAR* value, 
-                  DWORD* size);
 
 typedef INT (*comp_int)(INT a, INT b);
 typedef INT (*comp_str)(LPWSTR a, LPWSTR b, BOOL caseless);

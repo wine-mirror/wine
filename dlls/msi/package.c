@@ -254,7 +254,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
 'D','e','s','k','t','o','p','\\',0};
 
 /*
- * Other things i notice set
+ * Other things I notice set
  *
 ScreenY
 ScreenX

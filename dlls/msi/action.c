@@ -3026,7 +3026,7 @@ static UINT ACTION_InstallInitialize(MSIPACKAGE *package)
     }
    
     /*
-     * components FeatureState defaults to FALSE. the idea is we want to 
+     * Components FeatureState defaults to FALSE. The idea is we want to 
      * enable the component is ANY feature that uses it is enabled to install
      */
     for(i = 0; i < package->loaded_features; i++)
@@ -3053,7 +3053,7 @@ static UINT ACTION_InstallInitialize(MSIPACKAGE *package)
     if (override != NULL)
         HeapFree(GetProcessHeap(),0,override);
     /* 
-     * so basically we ONLY want to install a component if its Enabled AND
+     * So basically we ONLY want to install a component if its Enabled AND
      * FeatureState are both TRUE 
      */
     return ERROR_SUCCESS;
@@ -3306,10 +3306,10 @@ end:
 static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
 {
     /* 
-     * ok this is a bit confusting.. I am given a _Component key and i believe
+     * OK this is a bit confusing.. I am given a _Component key and I believe
      * that the file that is being registered as a type library is the "key file
-     * of that component" which i interpert to mean "The file in the KeyPath of
-     * that component" 
+     * of that component" which I interpret to mean "The file in the KeyPath of
+     * that component".
      */
     UINT rc;
     MSIQUERY * view;
@@ -3391,8 +3391,8 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
                      debugstr_w(package->files[index].TargetPath));
             else
             {
-                /* yes the row has more fields than i need, but #1 is 
-                   correct and the only one i need. why make a new row */
+                /* Yes the row has more fields than I need, but #1 is 
+                   correct and the only one I need. Why make a new row? */
 
                 ui_actiondata(package,szRegisterTypeLibraries,row);
                 
@@ -3536,8 +3536,8 @@ static UINT register_appid(MSIPACKAGE *package, LPCWSTR clsid, LPCWSTR app )
 static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
 {
     /* 
-     * Again I am assuming the words, "Whose key file respesents" when refering
-     * to a Component as to mean the Components KeyPath file
+     * Again I am assuming the words, "Whose key file represents" when refering
+     * to a Component as to meaning that Components KeyPath file
      *
      * Also there is a very strong connection between ClassInfo and ProgID
      * that I am mostly glossing over.  
@@ -3814,12 +3814,12 @@ static UINT register_progid(MSIPACKAGE *package, MSIRECORD * row, LPWSTR clsid)
 static UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package)
 {
     /* 
-     * Sigh, here i am just brute force registering all progid
+     * Sigh, here I am just brute force registering all progids
      * this needs to be linked to the Classes that have been registerd
      * but the easiest way to do that is to load all these stuff into
      * memory for easy checking.
      *
-     * gives me something to continue to work toward
+     * Gives me something to continue to work toward.
      */
     UINT rc;
     MSIQUERY * view;

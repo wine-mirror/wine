@@ -1180,14 +1180,38 @@ UINT WINAPI MsiGetProductPropertyW( MSIHANDLE hProduct, LPCWSTR szProperty,
 
 UINT WINAPI MsiVerifyPackageA( LPCSTR szPackage )
 {
-    FIXME("%s\n", debugstr_a(szPackage) );
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    UINT r, len;
+    LPWSTR szPack = NULL;
+
+    TRACE("%s\n", debugstr_a(szPackage) );
+
+    if( szPackage )
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, szPackage, -1, NULL, 0 );
+        szPack = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+        if( !szPack )
+            return ERROR_OUTOFMEMORY;
+        MultiByteToWideChar( CP_ACP, 0, szPackage, -1, szPack, len );
+    }
+
+    r = MsiVerifyPackageW( szPack );
+
+    HeapFree( GetProcessHeap(), 0, szPack );
+
+    return r;
 }
 
 UINT WINAPI MsiVerifyPackageW( LPCWSTR szPackage )
 {
-    FIXME("%s\n", debugstr_w(szPackage) );
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    MSIHANDLE handle;
+    UINT r;
+
+    TRACE("%s\n", debugstr_w(szPackage) );
+
+    r = MsiOpenDatabaseW( szPackage, MSIDBOPEN_READONLY, &handle );
+    MsiCloseHandle( handle );
+
+    return r;
 }
 
 INSTALLSTATE WINAPI MsiGetComponentPathA(LPCSTR szProduct, LPCSTR szComponent,
