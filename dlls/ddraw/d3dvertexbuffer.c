@@ -426,7 +426,7 @@ GL_IDirect3DVertexBufferImpl_7_1T_ProcessVertices(LPDIRECT3DVERTEXBUFFER7 iface,
     if ((dwVertexOp & D3DVOP_TRANSFORM) == 0) return DDERR_INVALIDPARAMS;
 
     size = get_flexible_vertex_size(src_impl->desc.dwFVF);
-    convert_FVF_to_strided_data(src_impl->desc.dwFVF, ((char *) src_impl->vertices) + dwSrcIndex * size, &strided);
+    convert_FVF_to_strided_data(src_impl->desc.dwFVF, ((char *) src_impl->vertices) + dwSrcIndex * size, &strided, 0);
 
     return process_vertices_strided(This, dwVertexOp, dwDestIndex, dwCount, &strided, src_impl->desc.dwFVF, device_impl, dwFlags);
 }

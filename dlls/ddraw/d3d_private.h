@@ -274,7 +274,7 @@ extern void dump_D3DMATRIX(D3DMATRIX *mat);
 extern void dump_D3DVECTOR(D3DVECTOR *lpVec);
 extern void dump_flexible_vertex(DWORD d3dvtVertexType);
 extern DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
-extern void convert_FVF_to_strided_data(DWORD d3dvtVertexType, LPVOID lpvVertices, D3DDRAWPRIMITIVESTRIDEDDATA *strided);
+extern void convert_FVF_to_strided_data(DWORD d3dvtVertexType, LPVOID lpvVertices, D3DDRAWPRIMITIVESTRIDEDDATA *strided, DWORD dwStartVertex);
 extern void dump_D3DVOP(DWORD dwVertexOp);
 extern void dump_D3DPV(DWORD dwFlags);
 

@@ -65,7 +65,6 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 				   D3DPRIMITIVETYPE d3dptPrimitiveType,
 				   DWORD d3dvtVertexType,
 				   LPD3DDRAWPRIMITIVESTRIDEDDATA lpD3DDrawPrimStrideData,
-				   DWORD dwStartVertex,
 				   DWORD dwVertexCount,
 				   LPWORD dwIndices,
 				   DWORD dwIndexCount,
@@ -799,7 +798,7 @@ inline static void draw_primitive(IDirect3DDeviceImpl *This, DWORD maxvert, WORD
 	    strided.normal.dwStride = sizeof(D3DVERTEX);
 	    strided.textureCoords[0].lpvData = &((D3DVERTEX *) lpvertex)->u7.tu;
 	    strided.textureCoords[0].dwStride = sizeof(D3DVERTEX);
-	    draw_primitive_strided(This, d3dpt, D3DFVF_VERTEX, &strided, 0, 0 /* Unused */, index, maxvert, 0 /* Unused */);
+	    draw_primitive_strided(This, d3dpt, D3DFVF_VERTEX, &strided, 0 /* Unused */, index, maxvert, 0 /* Unused */);
 	} break;
 
         case D3DVT_LVERTEX: {
@@ -811,7 +810,7 @@ inline static void draw_primitive(IDirect3DDeviceImpl *This, DWORD maxvert, WORD
 	    strided.specular.dwStride = sizeof(D3DLVERTEX);
 	    strided.textureCoords[0].lpvData = &((D3DLVERTEX *) lpvertex)->u6.tu;
 	    strided.textureCoords[0].dwStride = sizeof(D3DLVERTEX);
-	    draw_primitive_strided(This, d3dpt, D3DFVF_LVERTEX, &strided, 0, 0 /* Unused */, index, maxvert, 0 /* Unused */);
+	    draw_primitive_strided(This, d3dpt, D3DFVF_LVERTEX, &strided, 0 /* Unused */, index, maxvert, 0 /* Unused */);
 	} break;
 
         case D3DVT_TLVERTEX: {
@@ -823,7 +822,7 @@ inline static void draw_primitive(IDirect3DDeviceImpl *This, DWORD maxvert, WORD
 	    strided.specular.dwStride = sizeof(D3DTLVERTEX);
 	    strided.textureCoords[0].lpvData = &((D3DTLVERTEX *) lpvertex)->u7.tu;
 	    strided.textureCoords[0].dwStride = sizeof(D3DTLVERTEX);
-	    draw_primitive_strided(This, d3dpt, D3DFVF_TLVERTEX, &strided, 0, 0 /* Unused */, index, maxvert, 0 /* Unused */);
+	    draw_primitive_strided(This, d3dpt, D3DFVF_TLVERTEX, &strided, 0 /* Unused */, index, maxvert, 0 /* Unused */);
 	} break;
 
         default:
@@ -1023,7 +1022,6 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 				   D3DPRIMITIVETYPE d3dptPrimitiveType,
 				   DWORD d3dvtVertexType,
 				   LPD3DDRAWPRIMITIVESTRIDEDDATA lpD3DDrawPrimStrideData,
-				   DWORD dwStartVertex,
 				   DWORD dwVertexCount,
 				   LPWORD dwIndices,
 				   DWORD dwIndexCount,
@@ -1109,7 +1107,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 	*/  
 	int index;
 	for (index = 0; index < dwIndexCount; index++) {
-	    int i = (dwIndices == NULL) ? index : dwIndices[index];	    
+	    int i = (dwIndices == NULL) ? index : dwIndices[index];
 
 	    if (d3dvtVertexType & D3DFVF_NORMAL) { 
 	        D3DVALUE *normal = 
@@ -1231,8 +1229,8 @@ GL_IDirect3DDeviceImpl_7_3T_DrawPrimitive(LPDIRECT3DDEVICE7 iface,
         TRACE(" - flags : "); dump_DPFLAGS(dwFlags);
     }
 
-    convert_FVF_to_strided_data(d3dvtVertexType, lpvVertices, &strided);
-    draw_primitive_strided(This, d3dptPrimitiveType, d3dvtVertexType, &strided, 0, dwVertexCount, NULL, dwVertexCount, dwFlags);
+    convert_FVF_to_strided_data(d3dvtVertexType, lpvVertices, &strided, 0);
+    draw_primitive_strided(This, d3dptPrimitiveType, d3dvtVertexType, &strided, dwVertexCount, NULL, dwVertexCount, dwFlags);
     
     return DD_OK;
 }
@@ -1255,8 +1253,8 @@ GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitive(LPDIRECT3DDEVICE7 iface,
         TRACE(" - flags : "); dump_DPFLAGS(dwFlags);
     }
 
-    convert_FVF_to_strided_data(d3dvtVertexType, lpvVertices, &strided);
-    draw_primitive_strided(This, d3dptPrimitiveType, d3dvtVertexType, &strided, 0, dwVertexCount, dwIndices, dwIndexCount, dwFlags);
+    convert_FVF_to_strided_data(d3dvtVertexType, lpvVertices, &strided, 0);
+    draw_primitive_strided(This, d3dptPrimitiveType, d3dvtVertexType, &strided, dwVertexCount, dwIndices, dwIndexCount, dwFlags);
     
     return DD_OK;
 }
@@ -1275,7 +1273,7 @@ GL_IDirect3DDeviceImpl_7_3T_DrawPrimitiveStrided(LPDIRECT3DDEVICE7 iface,
     if (TRACE_ON(ddraw)) {
         TRACE(" - flags : "); dump_DPFLAGS(dwFlags);
     }
-    draw_primitive_strided(This, d3dptPrimitiveType, dwVertexType, lpD3DDrawPrimStrideData, 0, dwVertexCount, NULL, dwVertexCount, dwFlags);
+    draw_primitive_strided(This, d3dptPrimitiveType, dwVertexType, lpD3DDrawPrimStrideData, dwVertexCount, NULL, dwVertexCount, dwFlags);
 
     return DD_OK;
 }
@@ -1297,7 +1295,7 @@ GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitiveStrided(LPDIRECT3DDEVICE7 iface,
         TRACE(" - flags : "); dump_DPFLAGS(dwFlags);
     }
 
-    draw_primitive_strided(This, d3dptPrimitiveType, dwVertexType, lpD3DDrawPrimStrideData, 0, dwVertexCount, lpIndex, dwIndexCount, dwFlags);
+    draw_primitive_strided(This, d3dptPrimitiveType, dwVertexType, lpD3DDrawPrimStrideData, dwVertexCount, lpIndex, dwIndexCount, dwFlags);
 
     return DD_OK;
 }
@@ -1327,12 +1325,12 @@ GL_IDirect3DDeviceImpl_7_3T_DrawPrimitiveVB(LPDIRECT3DDEVICE7 iface,
 	This->set_matrices(This, VIEWMAT_CHANGED|WORLDMAT_CHANGED|PROJMAT_CHANGED,
 			   &(vb_glimp->world_mat), &(vb_glimp->view_mat), &(vb_glimp->proj_mat));
 
-	convert_FVF_to_strided_data(vb_glimp->dwVertexTypeDesc, vb_glimp->vertices, &strided);
-	draw_primitive_strided(This, d3dptPrimitiveType, vb_glimp->dwVertexTypeDesc, &strided, dwStartVertex, dwNumVertices, NULL, dwNumVertices, dwFlags);
+	convert_FVF_to_strided_data(vb_glimp->dwVertexTypeDesc, vb_glimp->vertices, &strided, dwStartVertex);
+	draw_primitive_strided(This, d3dptPrimitiveType, vb_glimp->dwVertexTypeDesc, &strided, dwNumVertices, NULL, dwNumVertices, dwFlags);
 
     } else {
-        convert_FVF_to_strided_data(vb_impl->desc.dwFVF, vb_impl->vertices, &strided);
-	draw_primitive_strided(This, d3dptPrimitiveType, vb_impl->desc.dwFVF, &strided, dwStartVertex, dwNumVertices, NULL, dwNumVertices, dwFlags);
+        convert_FVF_to_strided_data(vb_impl->desc.dwFVF, vb_impl->vertices, &strided, dwStartVertex);
+	draw_primitive_strided(This, d3dptPrimitiveType, vb_impl->desc.dwFVF, &strided, dwNumVertices, NULL, dwNumVertices, dwFlags);
     }
 
     return DD_OK;
@@ -1365,12 +1363,12 @@ GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitiveVB(LPDIRECT3DDEVICE7 iface,
 	This->set_matrices(This, VIEWMAT_CHANGED|WORLDMAT_CHANGED|PROJMAT_CHANGED,
 			   &(vb_glimp->world_mat), &(vb_glimp->view_mat), &(vb_glimp->proj_mat));
 
-	convert_FVF_to_strided_data(vb_glimp->dwVertexTypeDesc, vb_glimp->vertices, &strided);
-	draw_primitive_strided(This, d3dptPrimitiveType, vb_glimp->dwVertexTypeDesc, &strided, dwStartVertex, dwNumVertices, lpwIndices, dwIndexCount, dwFlags);
+	convert_FVF_to_strided_data(vb_glimp->dwVertexTypeDesc, vb_glimp->vertices, &strided, dwStartVertex);
+	draw_primitive_strided(This, d3dptPrimitiveType, vb_glimp->dwVertexTypeDesc, &strided, dwNumVertices, lpwIndices, dwIndexCount, dwFlags);
 
     } else {
-        convert_FVF_to_strided_data(vb_impl->desc.dwFVF, vb_impl->vertices, &strided);
-	draw_primitive_strided(This, d3dptPrimitiveType, vb_impl->desc.dwFVF, &strided, dwStartVertex, dwNumVertices, lpwIndices, dwIndexCount, dwFlags);
+        convert_FVF_to_strided_data(vb_impl->desc.dwFVF, vb_impl->vertices, &strided, dwStartVertex);
+	draw_primitive_strided(This, d3dptPrimitiveType, vb_impl->desc.dwFVF, &strided, dwNumVertices, lpwIndices, dwIndexCount, dwFlags);
     }
 
     return DD_OK;
