@@ -16,6 +16,8 @@
  *
  */
 
+#include "config.h"
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

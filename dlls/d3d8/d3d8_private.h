@@ -21,8 +21,11 @@
 #ifndef __WINE_D3DX8_PRIVATE_H
 #define __WINE_D3DX8_PRIVATE_H
 
+#ifndef __WINE_CONFIG_H
+# error You must include config.h to use this header
+#endif
+
 /* THIS FILE MUST NOT CONTAIN X11 or MESA DEFINES */
-#include "config.h"
 #define XMD_H /* This is to prevent the Xmd.h inclusion bug :-/ */
 #include <GL/gl.h>
 #include <GL/glx.h>

@@ -20,7 +20,6 @@
 #ifndef __WINE_DMUSIC_PRIVATE_H
 #define __WINE_DMUSIC_PRIVATE_H
 
-#include "config.h"
 #include "windef.h"
 #include "wine/debug.h"
 #include "winbase.h"
