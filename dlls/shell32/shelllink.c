@@ -697,7 +697,7 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
 	}
 	buffer = HeapAlloc(GetProcessHeap(), 0, MAX_PATH * 3 + (This->sArgs ? strlen(This->sArgs) : 0) +
                            (This->sDescription ? strlen(This->sDescription) : 0) + 200);
-	sprintf(buffer, "link:%s\xff*%s\xff%d\xff%s\xff%s\xff%s", This->sPath, This->sIcoPath, This->iIcoNdx,
+	sprintf(buffer, "link:%s\xff*%s\xff%d\xff%s\xff%s\xff%s", This->sPath, This->sIcoPath ? This->sIcoPath : "", This->iIcoNdx,
 	    This->sArgs ? This->sArgs : "", This->sDescription ? This->sDescription : "",
 	    This->sWorkDir ? This->sWorkDir : "");
 	if (RegSetValueExA(hRunOnce, ascii_filename, 0, REG_SZ, buffer, strlen(buffer) + 1) != ERROR_SUCCESS)
