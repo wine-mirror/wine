@@ -774,7 +774,7 @@ static INT LISTBOX_FindString( WND *wnd, LB_DESCR *descr, INT start,
     item = descr->items + start + 1;
     if (HAS_STRINGS(descr))
     {
-        if (!str) return LB_ERR;
+        if (!str || ! str[0] ) return LB_ERR;
         if (exact)
         {
             for (i = start + 1; i < descr->nb_items; i++, item++)
