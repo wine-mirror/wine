@@ -1705,11 +1705,22 @@ UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
     return ERROR_INDEX_ABSENT;
 }
 
-UINT WINAPI MsiGetUserInfoW(LPCWSTR szProduct, LPWSTR lpUserNameBuf, 
+USERINFOSTATE WINAPI MsiGetUserInfoW(LPCWSTR szProduct, LPWSTR lpUserNameBuf, 
                 DWORD* pcchUserNameBuf, LPWSTR lpOrgNameBuf, 
                 DWORD* pcchOrgNameBuf, LPWSTR lpSerialBuf, DWORD* pcchSerialBuf)
 {
-    FIXME("%s, %p %p %p %p %p %p\n",debugstr_w(szProduct), lpUserNameBuf,
+    FIXME("%s %p %p %p %p %p %p\n",debugstr_w(szProduct), lpUserNameBuf,
+          pcchUserNameBuf, lpOrgNameBuf, pcchOrgNameBuf, lpSerialBuf,
+          pcchSerialBuf);
+  
+    return USERINFOSTATE_UNKNOWN; 
+}
+
+USERINFOSTATE WINAPI MsiGetUserInfoA(LPCSTR szProduct, LPSTR lpUserNameBuf, 
+                DWORD* pcchUserNameBuf, LPSTR lpOrgNameBuf, 
+                DWORD* pcchOrgNameBuf, LPSTR lpSerialBuf, DWORD* pcchSerialBuf)
+{
+    FIXME("%s %p %p %p %p %p %p\n",debugstr_a(szProduct), lpUserNameBuf,
           pcchUserNameBuf, lpOrgNameBuf, pcchOrgNameBuf, lpSerialBuf,
           pcchSerialBuf);
   

@@ -239,6 +239,10 @@ UINT WINAPI MsiConfigureProductA(LPCSTR, int, INSTALLSTATE);
 UINT WINAPI MsiConfigureProductW(LPCWSTR, int, INSTALLSTATE);
 #define     MsiConfigureProduct WINELIB_NAME_AW(MsiConfigureProduct);
 
+UINT WINAPI MsiConfigureProductExA(LPCSTR, int, INSTALLSTATE, LPCSTR);
+UINT WINAPI MsiConfigureProductExW(LPCWSTR, int, INSTALLSTATE, LPCWSTR);
+#define     MsiConfigureProductEx WINELIB_NAME_AW(MsiConfigureProductEx);
+
 UINT WINAPI MsiGetProductCodeA(LPCSTR, LPSTR);
 UINT WINAPI MsiGetProductCodeW(LPCWSTR, LPWSTR);
 #define     MsiGetProductCode WINELIB_NAME_AW(MsiGetProductCode)
@@ -286,6 +290,22 @@ UINT WINAPI MsiGetFileVersionW(LPCWSTR, LPWSTR, DWORD*, LPWSTR, DWORD*);
 UINT WINAPI MsiMessageBoxA(HWND, LPCSTR, LPCSTR, UINT, WORD, DWORD);
 UINT WINAPI MsiMessageBoxW(HWND, LPCWSTR, LPCWSTR, UINT, WORD, DWORD);
 #define MsiMessageBox WINELIB_NAME_AW(MsiMessageBox)
+
+UINT WINAPI MsiProvideQualifiedComponentExA(LPCSTR, LPCSTR, DWORD, LPSTR, DWORD, DWORD, LPSTR, DWORD*);
+UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR, LPCWSTR, DWORD, LPWSTR, DWORD, DWORD, LPWSTR, DWORD*);
+#define MsiProvideQualifiedComponentEx WINELIB_NAME_AW(MsiProvideQualifiedComponentEx)
+
+UINT WINAPI MsiProvideQualifiedComponentA(LPCSTR, LPCSTR, DWORD, LPSTR, DWORD*);
+UINT WINAPI MsiProvideQualifiedComponentW(LPCWSTR, LPCWSTR, DWORD, LPWSTR, DWORD*);
+#define MsiProvideQualifiedComponent WINELIB_NAME_AW(MsiProvideQualifiedComponent)
+
+USERINFOSTATE WINAPI MsiGetUserInfoA(LPCSTR, LPSTR, DWORD*, LPSTR, DWORD*, LPSTR, DWORD*);
+USERINFOSTATE WINAPI MsiGetUserInfoW(LPCWSTR, LPWSTR, DWORD*, LPWSTR, DWORD*, LPWSTR, DWORD*);
+#define MsiGetUserInfo WINELIB_NAME_AW(MsiGetUserInfo)
+
+UINT WINAPI MsiCollectUserInfoA( LPCSTR );
+UINT WINAPI MsiCollectUserInfoW( LPCWSTR );
+#define MsiCollectUserInfo WINELIB_NAME_AW(MsiCollectUserInfo)
 
 /* Non Unicode */
 UINT WINAPI MsiCloseHandle(MSIHANDLE);
