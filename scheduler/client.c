@@ -340,7 +340,7 @@ static int server_connect( const char *oldcwd, const char *serverdir )
 {
     struct sockaddr_un addr;
     struct stat st;
-    int s;
+    int s, slen;
 
     if (chdir( serverdir ) == -1)
     {
@@ -366,7 +366,11 @@ static int server_connect( const char *oldcwd, const char *serverdir )
     if ((s = socket( AF_UNIX, SOCK_STREAM, 0 )) == -1) fatal_perror( "socket" );
     addr.sun_family = AF_UNIX;
     strcpy( addr.sun_path, SOCKETNAME );
-    if (connect( s, &addr, sizeof(addr.sun_family) + strlen(addr.sun_path) ) == -1)
+    slen = sizeof(addr) - sizeof(addr.sun_path) + strlen(addr.sun_path) + 1;
+#ifdef HAVE_SOCKADDR_SUN_LEN
+    addr.sun_len = slen;
+#endif
+    if (connect( s, (struct sockaddr *)&addr, slen ) == -1)
     {
         close( s );
         return -2;

@@ -891,6 +891,18 @@ then
     AC_DEFINE(HAVE_MSGHDR_ACCRIGHTS)
 fi
 
+dnl *** Check for the sun_len member in struct sockaddr_un
+
+AC_CACHE_CHECK("for sun_len in struct sockaddr_un", ac_cv_c_sun_len,
+ AC_TRY_COMPILE([#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>], [static struct sockaddr_un addr; addr.sun_len = 1],
+                ac_cv_c_sun_len="yes", ac_cv_c_sun_len="no"))
+if test "$ac_cv_c_sun_len" = "yes"
+then
+    AC_DEFINE(HAVE_SOCKADDR_SUN_LEN)
+fi
+
 dnl *** check for the need to define __i386__
 
 AC_CACHE_CHECK("whether we need to define __i386__",ac_cv_cpp_def_i386,

@@ -345,13 +345,17 @@ static void create_server_dir(void)
 void open_master_socket(void)
 {
     struct sockaddr_un addr;
-    int fd;
+    int fd, slen;
 
     create_server_dir();
     if ((fd = socket( AF_UNIX, SOCK_STREAM, 0 )) == -1) fatal_perror( "socket" );
     addr.sun_family = AF_UNIX;
-    strcpy( addr.sun_path, "socket" );
-    if (bind( fd, &addr, sizeof(addr.sun_family) + strlen(addr.sun_path) ) == -1)
+    strcpy( addr.sun_path, SOCKETNAME );
+    slen = sizeof(addr) - sizeof(addr.sun_path) + strlen(addr.sun_path) + 1;
+#ifdef HAVE_SOCKADDR_SUN_LEN
+    addr.sun_len = slen;
+#endif
+    if (bind( fd, (struct sockaddr *)&addr, slen ) == -1)
     {
         if ((errno == EEXIST) || (errno == EADDRINUSE))
             fatal_error( "another server is already running\n" );
@@ -360,7 +364,7 @@ void open_master_socket(void)
     }
     atexit( socket_cleanup );
 
-    chmod( "socket", 0600 );  /* make sure no other user can connect */
+    chmod( SOCKETNAME, 0600 );  /* make sure no other user can connect */
     if (listen( fd, 5 ) == -1) fatal_perror( "listen" );
 
     if (!(master_socket = alloc_object( &master_socket_ops, fd )))
