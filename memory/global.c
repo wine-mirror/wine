@@ -417,6 +417,15 @@ SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
 }
 
 
+/**********************************************************************
+ *           K32WOWGlobalLock16         (WOW32.11) (KERNEL32.60)
+ */
+SEGPTR WINAPI K32WOWGlobalLock16( HGLOBAL16 hMem )
+{
+    return WIN16_GlobalLock16( hMem );
+}
+
+
 /***********************************************************************
  *           GlobalLock16   (KERNEL.18)
  *

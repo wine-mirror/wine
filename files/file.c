@@ -1444,7 +1444,7 @@ UINT16 WINAPI SetHandleCount16( UINT16 count )
         }
         else memcpy( newfiles, files, count );
         if (pdb->nbFiles > 20) GlobalFree16( pdb->hFileHandles );
-        pdb->fileHandlesPtr = WIN16_GlobalLock16( newhandle );
+        pdb->fileHandlesPtr = K32WOWGlobalLock16( newhandle );
         pdb->hFileHandles   = newhandle;
         pdb->nbFiles = count;
     }

@@ -696,7 +696,7 @@ static	UINT	MMIO_SetBuffer(WINE_MMIO* wm, void* pchBuffer, LONG cchBuffer,
     }
 
     if (wm->hMem) {
-	wm->buffer16 = WIN16_GlobalLock16(wm->hMem);
+	wm->buffer16 = K32WOWGlobalLock16(wm->hMem);
 	wm->info.pchBuffer = MapSL(wm->buffer16);
     }
 

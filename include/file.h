@@ -56,6 +56,8 @@ extern HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
 extern HFILE FILE_CreateDevice( int client_id, DWORD access,
                                   LPSECURITY_ATTRIBUTES sa );
 
+extern LONG WINAPI WIN16_hread(HFILE16,SEGPTR,LONG);
+
 /* files/directory.c */
 extern int DIR_Init(void);
 extern UINT DIR_GetWindowsUnixDir( LPSTR path, UINT count );

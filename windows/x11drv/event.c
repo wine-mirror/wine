@@ -1541,7 +1541,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
   BOOL16	        bAccept;
   HGLOBAL16		hDragInfo = GlobalAlloc16( GMEM_SHARE | GMEM_ZEROINIT, sizeof(DRAGINFO16));
   LPDRAGINFO16          lpDragInfo = (LPDRAGINFO16) GlobalLock16(hDragInfo);
-  SEGPTR		spDragInfo = (SEGPTR) WIN16_GlobalLock16(hDragInfo);
+  SEGPTR		spDragInfo = K32WOWGlobalLock16(hDragInfo);
   Window		w_aux_root, w_aux_child;
   WND*			pDropWnd;
   WND*                  pWnd;

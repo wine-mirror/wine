@@ -110,14 +110,6 @@ WORD WINAPI K32WOWGlobalFree16( WORD hMem )
 }
 
 /**********************************************************************
- *           K32WOWGlobalLock16         (WOW32.11) (KERNEL32.60)
- */
-DWORD WINAPI K32WOWGlobalLock16( WORD hMem )
-{
-    return (DWORD)WIN16_GlobalLock16( (HGLOBAL16)hMem );
-}
-
-/**********************************************************************
  *           K32WOWGlobalUnlock16       (WOW32.13) (KERNEL32.61)
  */
 BOOL WINAPI K32WOWGlobalUnlock16( WORD hMem )

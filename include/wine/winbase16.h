@@ -192,6 +192,7 @@ WORD        WINAPI GlobalPageUnlock16(HGLOBAL16);
 BOOL16      WINAPI IsSharedSelector16(HANDLE16);
 BOOL16      WINAPI IsTask16(HTASK16);
 HTASK16     WINAPI IsTaskLocked16(void);
+SEGPTR      WINAPI K32WOWGlobalLock16(HGLOBAL16);
 VOID        WINAPI LogError16(UINT16, LPVOID);
 VOID        WINAPI LogParamError16(UINT16,FARPROC16,LPVOID);
 WORD        WINAPI LocalCountFree16(void);
@@ -342,13 +343,6 @@ UINT16      WINAPI _lwrite16(HFILE16,LPCSTR,UINT16);
 BOOL16      WINAPI WritePrivateProfileSection16(LPCSTR,LPCSTR,LPCSTR);
 BOOL16      WINAPI WritePrivateProfileStruct16(LPCSTR,LPCSTR,LPVOID,UINT16,LPCSTR);
 BOOL16      WINAPI WriteProfileSection16(LPCSTR,LPCSTR);
-
-/* Extra functions that don't exist in the Windows API */
-
-SEGPTR      WINAPI WIN16_GlobalLock16(HGLOBAL16);
-SEGPTR      WINAPI WIN16_LockResource16(HGLOBAL16);
-LONG        WINAPI WIN16_hread(HFILE16,SEGPTR,LONG);
-UINT16      WINAPI WIN16_lread(HFILE16,SEGPTR,UINT16);
 
 /* Wine-specific functions */
 WORD        WINAPI wine_call_to_16_word( FARPROC16 target, INT nArgs );

@@ -383,7 +383,7 @@ SEGPTR WINAPI WIN16_LockResource16( HGLOBAL16 handle )
 {
     TRACE("(%04x)\n", handle );
     /* May need to reload the resource if discarded */
-    return WIN16_GlobalLock16( handle );
+    return K32WOWGlobalLock16( handle );
 }
 
 /**********************************************************************

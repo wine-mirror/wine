@@ -257,7 +257,7 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     nPDEVICEsize = dc->devCaps->pdeviceSize + sizeof(PDEVICE_HEADER);
 
     /* TTD Shouldn't really do pointer arithmetic on segment points */
-    physDev->segptrPDEVICE = WIN16_GlobalLock16(GlobalAlloc16(GHND, nPDEVICEsize))+sizeof(PDEVICE_HEADER);
+    physDev->segptrPDEVICE = K32WOWGlobalLock16(GlobalAlloc16(GHND, nPDEVICEsize))+sizeof(PDEVICE_HEADER);
     *((BYTE *)MapSL(physDev->segptrPDEVICE)+0) = 'N'; 
     *((BYTE *)MapSL(physDev->segptrPDEVICE)+1) = 'B'; 
 
@@ -273,13 +273,13 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     physDev->FontInfo = NULL;
     physDev->BrushInfo = NULL;
     physDev->PenInfo = NULL;
-    win16drv_SegPtr_TextXForm = WIN16_GlobalLock16(GlobalAlloc16(GHND, sizeof(TEXTXFORM16)));
+    win16drv_SegPtr_TextXForm = K32WOWGlobalLock16(GlobalAlloc16(GHND, sizeof(TEXTXFORM16)));
     win16drv_TextXFormP = MapSL(win16drv_SegPtr_TextXForm);
     
     InitTextXForm(win16drv_TextXFormP);
 
     /* TTD Lots more to do here */
-    win16drv_SegPtr_DrawMode = WIN16_GlobalLock16(GlobalAlloc16(GHND, sizeof(DRAWMODE)));
+    win16drv_SegPtr_DrawMode = K32WOWGlobalLock16(GlobalAlloc16(GHND, sizeof(DRAWMODE)));
     win16drv_DrawModeP = MapSL(win16drv_SegPtr_DrawMode);
     
     InitDrawMode(win16drv_DrawModeP);
