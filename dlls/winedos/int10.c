@@ -562,7 +562,9 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
     case 0x10: 
         switch AL_reg(context) {
         case 0x00: /* SET SINGLE PALETTE REGISTER */
-            FIXME("Set Single Palette Register - Not Supported\n");
+            FIXME("Set Single Palette Register - Not tested\n");
+		/* BH is the value  BL is the register */
+		VGA_SetColor16((int)BL_reg(context),(int)BH_reg(context));
             break;
         case 0x01: /* SET BORDER (OVERSCAN) */
             /* Text terminals have no overscan */
@@ -570,12 +572,16 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
             break;
         case 0x02: /* SET ALL PALETTE REGISTERS */
             FIXME("Set all palette registers - Not Supported\n");
+		/* DX:ES points to a 17 byte table of colors */
+		/* No return data listed */
+		/* I'll have to update my table and the default palette */
             break;
         case 0x03: /* TOGGLE INTENSITY/BLINKING BIT */
             FIXME("Toggle Intensity/Blinking Bit - Not Supported\n");
             break;
         case 0x07: /* GET INDIVIDUAL PALETTE REGISTER */
             FIXME("Get Individual Palette Register - Not Supported\n");
+		/* BL is register to read [ 0-15 ] BH is return value */
             break;
         case 0x08: /* READ OVERSCAN (BORDER COLOR) REGISTER */
             FIXME(

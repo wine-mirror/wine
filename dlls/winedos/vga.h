@@ -29,6 +29,7 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth);
 int VGA_GetMode(unsigned*Height,unsigned*Width,unsigned*Depth);
 void VGA_Exit(void);
 void VGA_SetPalette(PALETTEENTRY*pal,int start,int len);
+void VGA_SetColor16(int reg,int color);
 void VGA_SetQuadPalette(RGBQUAD*color,int start,int len);
 LPSTR VGA_Lock(unsigned*Pitch,unsigned*Height,unsigned*Width,unsigned*Depth);
 void VGA_Unlock(void);
