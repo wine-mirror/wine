@@ -8,12 +8,283 @@
 #define __WINE_WINNT_H
 
 #include "basetsd.h"
-#include "windef.h"
 
 #ifndef RC_INVOKED
 #include <ctype.h>
 #include <string.h>
 #endif
+
+
+/* On Windows winnt.h depends on a few windef.h types and macros and thus 
+ * is not self-contained. Furthermore windef.h includes winnt.h so that it 
+ * would be pointless to try to use winnt.h directly.
+ * But for Wine and Winelib I decided to make winnt.h self-contained by 
+ * moving these definitions to winnt.h. It makes no difference to Winelib 
+ * programs since they are not using winnt.h directly anyway, and it allows 
+ * us to use winnt.h and get a minimal set of definitions.
+ */
+
+/**** Some Wine specific definitions *****/
+
+/* Calling conventions definitions */
+
+#ifdef __i386__
+# ifndef _X86_
+#  define _X86_
+# endif
+# if defined(__GNUC__) && ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 7)))
+#  define __stdcall __attribute__((__stdcall__))
+#  define __cdecl   __attribute__((__cdecl__))
+# else
+#  error You need gcc >= 2.7 to build Wine on a 386
+# endif  /* __GNUC__ */
+#else  /* __i386__ */
+# define __stdcall
+# define __cdecl
+#endif  /* __i386__ */
+
+#ifndef __WINE__
+#define pascal      __stdcall
+#define _pascal     __stdcall
+#define _stdcall    __stdcall
+#define _fastcall   __stdcall
+#define __fastcall  __stdcall
+#define __export    __stdcall
+#define cdecl       __cdecl
+#define _cdecl      __cdecl
+
+#define near
+#define far
+#define _near
+#define _far
+#define NEAR
+#define FAR
+
+#ifndef _declspec
+#define _declspec(x)
+#endif
+#ifndef __declspec
+#define __declspec(x)
+#endif
+#endif /* __WINE__ */
+
+#define CALLBACK    __stdcall
+#define WINAPI      __stdcall
+#define APIPRIVATE  __stdcall
+#define PASCAL      __stdcall
+#define CDECL       __cdecl
+#define _CDECL      __cdecl
+#define WINAPIV     __cdecl
+#define APIENTRY    WINAPI
+#define CONST       const
+
+/* Macro for structure packing and more. */
+
+#ifdef __GNUC__
+#define WINE_PACKED   __attribute__((packed))
+#define WINE_UNUSED   __attribute__((unused))
+#define WINE_NORETURN __attribute__((noreturn))
+#else
+#define WINE_PACKED    /* nothing */
+#define WINE_UNUSED    /* nothing */
+#define WINE_NORETURN  /* nothing */
+#endif
+
+/* Anonymous union/struct handling */
+
+#ifdef __WINE__
+# define NONAMELESSSTRUCT
+# define NONAMELESSUNION
+#else
+/* Anonymous struct support starts with gcc/g++ 2.96 */
+# if !defined(NONAMELESSSTRUCT) && defined(__GNUC__) && ((__GNUC__ < 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ < 96)))
+#  define NONAMELESSSTRUCT
+# endif
+/* Anonymous unions support starts with gcc 2.96/g++ 2.95 */
+# if !defined(NONAMELESSUNION) && defined(__GNUC__) && ((__GNUC__ < 2) || ((__GNUC__ == 2) && ((__GNUC_MINOR__ < 95) || ((__GNUC_MINOR__ == 95) && !defined(__cplusplus)))))
+#  define NONAMELESSUNION
+# endif
+#endif
+
+#ifndef NONAMELESSSTRUCT
+#define DUMMYSTRUCTNAME
+#define DUMMYSTRUCTNAME1
+#define DUMMYSTRUCTNAME2
+#define DUMMYSTRUCTNAME3
+#define DUMMYSTRUCTNAME4
+#define DUMMYSTRUCTNAME5
+#else /* !defined(NONAMELESSSTRUCT) */
+#define DUMMYSTRUCTNAME   s
+#define DUMMYSTRUCTNAME1  s1
+#define DUMMYSTRUCTNAME2  s2
+#define DUMMYSTRUCTNAME3  s3
+#define DUMMYSTRUCTNAME4  s4
+#define DUMMYSTRUCTNAME5  s5
+#endif /* !defined(NONAMELESSSTRUCT) */
+
+#ifndef NONAMELESSUNION
+#define DUMMYUNIONNAME
+#define DUMMYUNIONNAME1
+#define DUMMYUNIONNAME2
+#define DUMMYUNIONNAME3
+#define DUMMYUNIONNAME4
+#define DUMMYUNIONNAME5
+#define DUMMYUNIONNAME6
+#define DUMMYUNIONNAME7
+#define DUMMYUNIONNAME8
+#else /* !defined(NONAMELESSUNION) */
+#define DUMMYUNIONNAME   u
+#define DUMMYUNIONNAME1  u1
+#define DUMMYUNIONNAME2  u2
+#define DUMMYUNIONNAME3  u3
+#define DUMMYUNIONNAME4  u4
+#define DUMMYUNIONNAME5  u5
+#define DUMMYUNIONNAME6  u6
+#define DUMMYUNIONNAME7  u7
+#define DUMMYUNIONNAME8  u8
+#endif /* !defined(NONAMELESSUNION) */
+
+
+/**** Parts of windef.h that are needed here *****/
+
+/* Misc. constants. */
+
+#undef NULL
+#ifdef __cplusplus
+#define NULL  0
+#else
+#define NULL  ((void*)0)
+#endif
+
+#ifdef FALSE
+#undef FALSE
+#endif
+#define FALSE 0
+
+#ifdef TRUE
+#undef TRUE
+#endif
+#define TRUE  1
+
+#ifndef IN
+#define IN
+#endif
+
+#ifndef OUT
+#define OUT
+#endif
+
+#ifndef OPTIONAL
+#define OPTIONAL
+#endif
+
+/* Standard data types */
+typedef const void                  *PCVOID,   *LPCVOID;
+typedef int             BOOL,       *PBOOL,    *LPBOOL;
+typedef unsigned char   BYTE,       *PBYTE,    *LPBYTE;
+typedef unsigned char   UCHAR,      *PUCHAR;
+typedef unsigned short  USHORT,     *PUSHORT,  *LPUSHORT;
+typedef unsigned short  WORD,       *PWORD,    *LPWORD;
+typedef int             INT,        *PINT,     *LPINT;
+typedef unsigned int    UINT,       *PUINT,    *LPUINT;
+typedef unsigned long   DWORD,      *PDWORD,   *LPDWORD;
+typedef unsigned long   ULONG,      *PULONG,   *LPULONG;
+typedef float           FLOAT,      *PFLOAT,   *LPFLOAT;
+typedef double          DOUBLE,     *PDOUBLE,  *LPDOUBLE;
+typedef double          DATE;
+
+
+/**** winnt.h proper *****/
+
+/* Define the basic types */
+#ifndef VOID
+#define VOID void
+#endif
+typedef VOID           *PVOID,      *LPVOID;
+typedef BYTE            BOOLEAN,    *PBOOLEAN;
+typedef char            CHAR,       *PCHAR;
+/* Some systems might have wchar_t, but we really need 16 bit characters */
+typedef unsigned short  WCHAR,      *PWCHAR;
+typedef short           SHORT,      *PSHORT;
+typedef long            LONG,       *PLONG,    *LPLONG;
+
+/* 'Extended/Wide' numerical types */
+#ifndef _ULONGLONG_
+#define _ULONGLONG_
+typedef __int64         LONGLONG,   *PLONGLONG;
+typedef __uint64        ULONGLONG,  *PULONGLONG;
+#endif
+
+#ifndef _DWORDLONG_
+#define _DWORDLONG_
+typedef ULONGLONG       DWORDLONG,  *PDWORDLONG;
+#endif
+
+/* ANSI string types */
+typedef CHAR           *PCH,        *LPCH;
+typedef const CHAR     *PCCH,       *LPCCH;
+typedef CHAR           *PSTR,       *LPSTR;
+typedef const CHAR     *PCSTR,      *LPCSTR;
+
+/* Unicode string types */
+typedef WCHAR          *PWCH,       *LPWCH;
+typedef const WCHAR    *PCWCH,      *LPCWCH;
+typedef WCHAR          *PWSTR,      *LPWSTR;
+typedef const WCHAR    *PCWSTR,     *LPCWSTR;
+
+/* Neutral character and string types */
+/* These are only defined for WineLib, i.e. _not_ defined for 
+ * the emulator. The reason is they depend on the UNICODE 
+ * macro which only exists in the user's code.
+ */
+#ifndef __WINE__
+# ifdef UNICODE
+typedef WCHAR           TCHAR,      *PTCHAR;
+typedef LPWSTR          PTSTR,       LPTSTR;
+typedef LPCWSTR         PCTSTR,      LPCTSTR;
+#  define __TEXT(string) L##string /*probably wrong */
+# else  /* UNICODE */
+typedef CHAR            TCHAR,      *PTCHAR;
+typedef LPSTR           PTSTR,       LPTSTR;
+typedef LPCSTR          PCTSTR,      LPCTSTR;
+#  define __TEXT(string) string
+# endif /* UNICODE */
+#endif   /* __WINE__ */
+#define TEXT(quote) __TEXT(quote)
+
+/* Misc common WIN32 types */
+typedef LONG            HRESULT;
+typedef DWORD           LCID,       *PLCID;
+typedef WORD            LANGID;
+
+/* Handle type */
+
+/* FIXME: Wine does not compile with strict on, therefore strict
+ * handles are presently only usable on machines where sizeof(UINT) ==
+ * sizeof(void*).  HANDLEs are supposed to be void* but a large amount
+ * of WINE code operates on HANDLES as if they are UINTs. So to WINE
+ * they exist as UINTs but to the Winelib user who turns on strict,
+ * they exist as void*. If there is a size difference between UINT and
+ * void* then things get ugly.  */
+#ifdef STRICT
+typedef VOID*           HANDLE;
+#else
+typedef UINT            HANDLE;
+#endif
+typedef HANDLE         *LPHANDLE;
+
+#ifdef STRICT
+#define DECLARE_HANDLE(a) \
+	typedef struct a##__ { int unused; } *a; \
+	typedef a *P##a; \
+	typedef a *LP##a
+#else /*STRICT*/
+#define DECLARE_HANDLE(a) \
+	typedef HANDLE a; \
+	typedef a *P##a; \
+	typedef a *LP##a
+#endif /*STRICT*/
+
 
 #include "pshpack1.h"
 /* Defines */
@@ -119,39 +390,6 @@ typedef struct _MEMORY_BASIC_INFORMATION
   ((type *)((PCHAR)(address) - (PCHAR)(&((type *)0)->field)))
 
 /* Types */
-
-/* TCHAR data types definitions for Winelib. */
-/* These types are _not_ defined for the emulator, because they */
-/* depend on the UNICODE macro that only exists in user's code. */
-
-#ifndef __WINE__
-# ifdef UNICODE
-typedef WCHAR TCHAR, *PTCHAR;
-typedef LPWSTR PTSTR, LPTSTR;
-typedef LPCWSTR PCTSTR, LPCTSTR;
-#define __TEXT(string) L##string /*probably wrong */
-# else  /* UNICODE */
-typedef char TCHAR, *PTCHAR;
-typedef LPSTR PTSTR, LPTSTR;
-typedef LPCSTR PCTSTR, LPCTSTR;
-#define __TEXT(string) string
-# endif /* UNICODE */
-#endif   /* __WINE__ */
-#define TEXT(quote) __TEXT(quote)
-
-typedef BYTE     BOOLEAN;
-typedef BOOLEAN *PBOOLEAN;
-
-#ifndef _DWORDLONG_
-#define _DWORDLONG_
-typedef __uint64 DWORDLONG, *PDWORDLONG;
-#endif
-
-#ifndef _ULONGLONG_
-#define _ULONGLONG_
-typedef __int64 LONGLONG, *PLONGLONG;
-typedef __uint64 ULONGLONG, *PULONGLONG;
-#endif
 
 typedef struct _LIST_ENTRY {
   struct _LIST_ENTRY *Flink;

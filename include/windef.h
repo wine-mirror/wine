@@ -15,26 +15,10 @@
 extern "C" {
 #endif
 
-/* Misc. constants. */
-
 #define WINVER 0x0500
 
-#ifdef FALSE
-#undef FALSE
-#endif
-#define FALSE 0
+#include "winnt.h"
 
-#ifdef TRUE
-#undef TRUE
-#endif
-#define TRUE  1
-
-#undef NULL
-#ifdef __cplusplus
-#define NULL  0
-#else
-#define NULL  ((void*)0)
-#endif
 
 /* Macros to map Winelib names to the correct implementation name */
 /* depending on __WINE__ and UNICODE macros.                      */
@@ -58,201 +42,18 @@ extern "C" {
 # define DECL_WINELIB_TYPE_AW(type)  typedef WINELIB_NAME_AW(type) type;
 #endif  /* __WINE__ */
 
-#ifdef __WINE__
-# define NONAMELESSSTRUCT
-# define NONAMELESSUNION
-#else
-/* Anonymous struct support starts with gcc/g++ 2.96 */
-# if !defined(NONAMELESSSTRUCT) && defined(__GNUC__) && ((__GNUC__ < 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ < 96)))
-#  define NONAMELESSSTRUCT
-# endif
-/* Anonymous unions support starts with gcc 2.96/g++ 2.95 */
-# if !defined(NONAMELESSUNION) && defined(__GNUC__) && ((__GNUC__ < 2) || ((__GNUC__ == 2) && ((__GNUC_MINOR__ < 95) || ((__GNUC_MINOR__ == 95) && !defined(__cplusplus)))))
-#  define NONAMELESSUNION
-# endif
-#endif
-
-#ifndef NONAMELESSSTRUCT
-#define DUMMYSTRUCTNAME
-#define DUMMYSTRUCTNAME1
-#define DUMMYSTRUCTNAME2
-#define DUMMYSTRUCTNAME3
-#define DUMMYSTRUCTNAME4
-#define DUMMYSTRUCTNAME5
-#else /* !defined(NONAMELESSSTRUCT) */
-#define DUMMYSTRUCTNAME   s
-#define DUMMYSTRUCTNAME1  s1
-#define DUMMYSTRUCTNAME2  s2
-#define DUMMYSTRUCTNAME3  s3
-#define DUMMYSTRUCTNAME4  s4
-#define DUMMYSTRUCTNAME5  s5
-#endif /* !defined(NONAMELESSSTRUCT) */
-
-#ifndef NONAMELESSUNION
-#define DUMMYUNIONNAME
-#define DUMMYUNIONNAME1
-#define DUMMYUNIONNAME2
-#define DUMMYUNIONNAME3
-#define DUMMYUNIONNAME4
-#define DUMMYUNIONNAME5
-#define DUMMYUNIONNAME6
-#define DUMMYUNIONNAME7
-#define DUMMYUNIONNAME8
-#else /* !defined(NONAMELESSUNION) */
-#define DUMMYUNIONNAME   u
-#define DUMMYUNIONNAME1  u1
-#define DUMMYUNIONNAME2  u2
-#define DUMMYUNIONNAME3  u3
-#define DUMMYUNIONNAME4  u4
-#define DUMMYUNIONNAME5  u5
-#define DUMMYUNIONNAME6  u6
-#define DUMMYUNIONNAME7  u7
-#define DUMMYUNIONNAME8  u8
-#endif /* !defined(NONAMELESSUNION) */
-
-/* Calling conventions definitions */
-
-#ifdef __i386__
-# ifndef _X86_
-#  define _X86_
-# endif
-# if defined(__GNUC__) && ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 7)))
-#  define __stdcall __attribute__((__stdcall__))
-#  define __cdecl   __attribute__((__cdecl__))
-# else
-#  error You need gcc >= 2.7 to build Wine on a 386
-# endif  /* __GNUC__ */
-#else  /* __i386__ */
-# define __stdcall
-# define __cdecl
-#endif  /* __i386__ */
-
-#define CALLBACK    __stdcall
-#define WINAPI      __stdcall
-#define APIPRIVATE  __stdcall
-#define PASCAL      __stdcall
-#define pascal      __stdcall
-#define _pascal     __stdcall
-#define _stdcall    __stdcall
-#define _fastcall   __stdcall
-#define __fastcall  __stdcall
-#define __export    __stdcall
-#define CDECL       __cdecl
-#define _CDECL      __cdecl
-#define cdecl       __cdecl
-#define _cdecl      __cdecl
-#define WINAPIV     __cdecl
-#define APIENTRY    WINAPI
-
-#ifndef _declspec
-#define _declspec(x)
-#endif
-#ifndef __declspec
-#define __declspec(x)
-#endif
-
-#define CONST       const
-
-/* Standard data types. These are the same for emulator and library. */
-
-typedef void            VOID;
-typedef int             INT;
-typedef unsigned int    UINT;
-typedef unsigned short  WORD;
-typedef unsigned long   DWORD;
-typedef unsigned long   ULONG;
-typedef unsigned char   BYTE;
-typedef long            LONG;
-typedef short           SHORT;
-typedef unsigned short  USHORT;
-typedef char            CHAR;
-typedef unsigned char   UCHAR;
-/* Some systems might have wchar_t, but we really need 16 bit characters */
-typedef unsigned short  WCHAR;
-typedef int             BOOL;
-typedef double          DATE;
-typedef double          DOUBLE;
-
-/* FIXME: Wine does not compile with strict on, therefore strict
- * handles are presently only usable on machines where sizeof(UINT) ==
- * sizeof(void*).  HANDLEs are supposed to be void* but a large amount
- * of WINE code operates on HANDLES as if they are UINTs. So to WINE
- * they exist as UINTs but to the Winelib user who turns on strict,
- * they exist as void*. If there is a size difference between UINT and
- * void* then things get ugly.  */
-#ifdef STRICT
-typedef VOID*           HANDLE;
-#else
-typedef UINT            HANDLE;
-#endif
-
-
-typedef HANDLE         *LPHANDLE;
 
 /* Integer types. These are the same for emulator and library. */
 typedef UINT            WPARAM;
 typedef LONG            LPARAM;
-typedef LONG            HRESULT;
 typedef LONG            LRESULT;
 typedef WORD            ATOM;
 typedef WORD            CATCHBUF[9];
 typedef WORD           *LPCATCHBUF;
 typedef HANDLE          HHOOK;
 typedef HANDLE          HMONITOR;
-typedef DWORD           LCID;
-typedef WORD            LANGID;
-typedef float           FLOAT;
-
-/* Pointers types. These are the same for emulator and library. */
-/* winnt types */
-typedef VOID           *PVOID;
-typedef const void     *PCVOID;
-typedef CHAR           *PCHAR;
-typedef UCHAR          *PUCHAR;
-typedef BYTE           *PBYTE;
-typedef WORD           *PWORD;
-typedef USHORT         *PUSHORT;
-typedef SHORT          *PSHORT;
-typedef ULONG          *PULONG;
-typedef LONG           *PLONG;
-typedef DWORD          *PDWORD;
-/* common win32 types */
-typedef CHAR           *LPSTR;
-typedef CHAR           *PSTR;
-typedef const CHAR     *LPCSTR;
-typedef const CHAR     *PCSTR;
-typedef WCHAR          *LPWSTR;
-typedef WCHAR          *PWSTR;
-typedef const WCHAR    *LPCWSTR;
-typedef const WCHAR    *PCWSTR;
-typedef BYTE           *LPBYTE;
-typedef WORD           *LPWORD;
-typedef DWORD          *LPDWORD;
-typedef LONG           *LPLONG;
-typedef VOID           *LPVOID;
-typedef const VOID     *LPCVOID;
-typedef INT            *PINT;
-typedef INT            *LPINT;
-typedef UINT           *PUINT;
-typedef UINT           *LPUINT;
-typedef FLOAT          *PFLOAT;
-typedef FLOAT          *LPFLOAT;
-typedef BOOL           *PBOOL;
-typedef BOOL           *LPBOOL;
 
 /* Handle types that exist both in Win16 and Win32. */
-
-#ifdef STRICT
-#define DECLARE_HANDLE(a) \
-	typedef struct a##__ { int unused; } *a; \
-	typedef a *P##a; \
-	typedef a *LP##a
-#else /*STRICT*/
-#define DECLARE_HANDLE(a) \
-	typedef HANDLE a; \
-	typedef a *P##a; \
-	typedef a *LP##a
-#endif /*STRICT*/
 
 DECLARE_HANDLE(HACMDRIVERID);
 DECLARE_HANDLE(HACMDRIVER);
@@ -335,33 +136,6 @@ typedef VOID    CALLBACK (*TIMERPROC)(HWND,UINT,UINT,DWORD);
 typedef BOOL CALLBACK (*WNDENUMPROC)(HWND,LPARAM);
 typedef LRESULT CALLBACK (*WNDPROC)(HWND,UINT,WPARAM,LPARAM);
 
-/* Define some empty macros for compatibility with Windows code. */
-
-#ifndef __WINE__
-#define NEAR
-#define FAR
-#define near
-#define far
-#define _near
-#define _far
-#define IN
-#define OUT
-#define OPTIONAL
-#endif  /* __WINE__ */
-
-#include "winnt.h"
-
-/* Macro for structure packing. */
-
-#ifdef __GNUC__
-#define WINE_PACKED   __attribute__((packed))
-#define WINE_UNUSED   __attribute__((unused))
-#define WINE_NORETURN __attribute__((noreturn))
-#else
-#define WINE_PACKED    /* nothing */
-#define WINE_UNUSED    /* nothing */
-#define WINE_NORETURN  /* nothing */
-#endif
 
 /* Macros to split words and longs. */
 
