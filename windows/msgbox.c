@@ -202,7 +202,7 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
 static LRESULT CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
                                         WPARAM wParam, LPARAM lParam )
 {  
-  static hFont;
+  static HFONT hFont;
   switch(message) {
    case WM_INITDIALOG:
     hFont = MSGBOX_OnInit(hwnd, (LPMSGBOXPARAMSA)lParam);
