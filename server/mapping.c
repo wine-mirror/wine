@@ -159,7 +159,7 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
 
     /* create a temp file for the mapping */
 
-    if (!(mapping->shared_file = create_temp_file( GENERIC_READ|GENERIC_WRITE ))) goto error;
+    if (!(mapping->shared_file = create_temp_file( GENERIC_READ|GENERIC_WRITE ))) return 0;
     if (!grow_file( mapping->shared_file, 0, total_size )) goto error;
     if ((shared_fd = get_mmap_fd( mapping->shared_file )) == -1) goto error;
 
@@ -189,6 +189,8 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
     return 1;
 
  error:
+    release_object( mapping->shared_file );
+    mapping->shared_file = NULL;
     if (buffer) free( buffer );
     return 0;
 }
