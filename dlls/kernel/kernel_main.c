@@ -85,15 +85,12 @@ static BOOL process_attach(void)
  */
 BOOL WINAPI MAIN_KernelInit( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
-    static int process_count;
-
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
-        if (!process_count++) return process_attach();
-        break;
+        return process_attach();
     case DLL_PROCESS_DETACH:
-        --process_count;
+        WriteOutProfiles16();
         break;
     }
     return TRUE;
