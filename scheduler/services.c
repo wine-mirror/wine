@@ -107,7 +107,9 @@ static DWORD CALLBACK SERVICE_Loop( SERVICETABLE *service )
                     }
 
             if ( s->flags & SERVICE_USE_TIMEOUT )
-                if ( timercmp( &s->expire, &curTime, < ) )
+                if ((s->expire.tv_sec < curTime.tv_sec) ||
+                    ((s->expire.tv_sec == curTime.tv_sec) &&
+                     (s->expire.tv_usec <= curTime.tv_usec)))
                 {
                     SERVICE_AddTimeval( &s->expire, s->rate );
                     callback = s->callback;
