@@ -103,7 +103,7 @@ static UINT INSERT_execute( struct tagMSIVIEW *view, MSIHANDLE record )
         }
         else
             val = MsiRecordGetInteger( record, n++ );
-        r = sv->ops->set_int( sv, row, 1, val );
+        r = sv->ops->set_int( sv, row, n, val );
         if( r )
             break;
     }
