@@ -54,15 +54,9 @@
 #include <float.h>
 #include <time.h>
 
-#if WINDOWS
-#include <wtypes.h>
-#else
 #include <windef.h>
-#endif
 
-
-#ifdef WINDOWS
-#else
+#ifdef __unix__
 #include <debugstr.h>
 extern LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str );
 #endif
@@ -71,7 +65,7 @@ extern LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str );
 static const int MAX_BUFFER = 1024;
 
 
-#ifdef WINDOWS
+#ifndef __unix__
 char* WtoA( OLECHAR* p )
 {
 	int i = 0;

@@ -170,7 +170,7 @@ void Idle(HDC idc)
   if(!idc) ReleaseDC(HWindow,dc);
 }
 
-LRESULT ProcessAppMsg(HWND wnd,UINT msg,WPARAM w,LPARAM l)
+LRESULT CALLBACK ProcessAppMsg(HWND wnd,UINT msg,WPARAM w,LPARAM l)
 {
   PAINTSTRUCT PaintInfo;
   HDC dc;

@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <windows.h>
+/* Win32 counterpart for CalcChildScroll16 is not implemented */
+/* even in MS Visual C++ */
+#include <wine/winuser16.h>
 
 void Write (HDC dc, int x, int y, char *s)
 {
@@ -7,7 +10,7 @@ void Write (HDC dc, int x, int y, char *s)
     TextOut (dc, x, y, s, strlen (s));
 }
 
-LRESULT WndProc (HWND wnd, UINT msg, WPARAM w, LPARAM l)
+LRESULT CALLBACK WndProc (HWND wnd, UINT msg, WPARAM w, LPARAM l)
 {
     static short xChar, yChar;
     static RECT  rectHola;
@@ -49,7 +52,7 @@ LRESULT WndProc (HWND wnd, UINT msg, WPARAM w, LPARAM l)
     return 0l;
 }
 
-LRESULT WndProc2 (HWND wnd, UINT msg, WPARAM w, LPARAM l)
+LRESULT CALLBACK WndProc2 (HWND wnd, UINT msg, WPARAM w, LPARAM l)
 {
     static short xChar, yChar;
     static RECT  rectInfo;
@@ -113,7 +116,7 @@ int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
 	class.hCursor    = LoadCursor (0, IDC_ARROW);
 	class.hbrBackground = GetStockObject (WHITE_BRUSH);
 	class.lpszMenuName = NULL;
-	class.lpszClassName = (SEGPTR)className;
+	class.lpszClassName = className;
         if (!RegisterClass (&class))
 	    return FALSE;
     }

@@ -3,8 +3,8 @@
 HANDLE ghInstance;
 
 
-long FAR PASCAL WndProc (HWND, WORD, WPARAM, LPARAM);
-long FAR PASCAL ChildProc(HWND, WORD, WPARAM, LPARAM);
+LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK ChildProc (HWND, UINT, WPARAM, LPARAM);
 
 int PASCAL WinMain (HANDLE hInstance, HANDLE hPrevInstance,
 		    LPSTR lpszCmdParam, int nCmdShow)
@@ -54,7 +54,7 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE hPrevInstance,
     return msg.wParam ;
     }
 
-long FAR PASCAL WndProc (HWND hwnd, WORD message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     HDC		hdc ;
     PAINTSTRUCT	ps ;
@@ -102,7 +102,7 @@ long FAR PASCAL WndProc (HWND hwnd, WORD message, WPARAM wParam, LPARAM lParam)
     return DefWindowProc (hwnd, message, wParam, lParam) ;
     }
 
-long FAR PASCAL ChildProc(HWND hwnd, WORD message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK ChildProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HDC			hDC;
     PAINTSTRUCT		ps;
@@ -142,7 +142,7 @@ long FAR PASCAL ChildProc(HWND hwnd, WORD message, WPARAM wParam, LPARAM lParam)
             break;
             hDC = BeginPaint(hwnd, &ps);
 */
-            MoveTo16(hDC, 0, 0);
+            MoveToEx(hDC, 0, 0, NULL);
             LineTo(hDC, 500, 500);
             EndPaint(hwnd, &ps);
             break;

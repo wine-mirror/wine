@@ -1,7 +1,5 @@
 #include <windows.h>
-#include <resource.h>
 #include <commdlg.h>
-#include "hello3res.h"
 
 typedef struct
 {
@@ -22,21 +20,24 @@ BOOL FileOpen(HWND hWnd)
   return GetOpenFileName(&ofn);
 }
 
-BOOL CALLBACK DlgProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
+LRESULT CALLBACK DlgProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
-	switch(msg)
-	{
-		case WM_INITDIALOG:
-			return 1;
-		case WM_COMMAND:
-		if(wParam==100)
-			DestroyWindow(hWnd);
-		return 0;
-	}
-	return 0;
+    switch(msg)
+    {
+	case WM_INITDIALOG:
+	    break;
+	case WM_COMMAND:
+	    switch (wParam)
+	    {
+		case 100:
+		    EndDialog(hWnd, 100);
+		    return TRUE;
+	    }
+    }
+    return FALSE;
 }
 
-LRESULT WndProc (HWND wnd, UINT msg, WPARAM w, LPARAM l)
+LRESULT CALLBACK WndProc (HWND wnd, UINT msg, WPARAM w, LPARAM l)
 {
     switch (msg){
 
@@ -99,7 +100,7 @@ int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
 	class.hCursor    = LoadCursor (0, IDC_ARROW);
 	class.hbrBackground = GetStockObject (WHITE_BRUSH);
 	class.lpszMenuName = 0;
-	class.lpszClassName = (SEGPTR)className;
+	class.lpszClassName = className;
     }
     if (!RegisterClass (&class))
 	return FALSE;

@@ -5,7 +5,8 @@
 #include <stdio.h>
 #include <string.h> /* for strcat() */
 
-int WinMain(int argc,char **argv[])
+int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                   LPSTR lpszCmdLine, int nCmdShow)
 {
     char  drive, root[]="C:\\", label[1002], fsname[1002];
     DWORD serial, flags, filenamelen, labellen = 1000, fsnamelen = 1000;
