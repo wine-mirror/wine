@@ -41,6 +41,7 @@
 #define NONAMELESSSTRUCT
 #include "wine/library.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "winerror.h"
 #include "winreg.h"
 #include "wingdi.h"
@@ -2872,15 +2873,122 @@ BOOL WINAPI EnumPrinterDriversA(LPSTR pName, LPSTR pEnvironment, DWORD Level,
     return ret;
 }
 
+static CHAR PortMonitor[] = "Wine Port Monitor";
+static CHAR PortDescription[] = "Wine Port";
 
 /******************************************************************************
  *		EnumPortsA   (WINSPOOL.@)
  */
-BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE ports,DWORD bufsize,
+BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
                        LPDWORD bufneeded,LPDWORD bufreturned)
 {
-    FIXME("(%s,%ld,%p,%ld,%p,%p), stub!\n",name,level,ports,bufsize,bufneeded,bufreturned);
-    return FALSE;
+    CHAR portname[10];
+    DWORD info_size, ofs, i, printer_count, serial_count, count, n, r;
+    const LPCSTR szSerialPortKey = "Software\\Wine\\Wine\\Config\\serialports";
+    const LPCSTR szPrinterPortKey = "Software\\Wine\\Wine\\Config\\spooler";
+    HKEY hkey_serial, hkey_printer;
+
+    TRACE("(%s,%ld,%p,%ld,%p,%p)\n",
+          name,level,buffer,bufsize,bufneeded,bufreturned);
+
+    switch( level )
+    {
+    case 1:
+        info_size = sizeof (PORT_INFO_1A);
+        break;
+    case 2:
+        info_size = sizeof (PORT_INFO_2A);
+        break;
+    default:
+        SetLastError(ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+    
+    /* see how many exist */
+
+    hkey_serial = 0;
+    hkey_printer = 0;
+    serial_count = 0;
+    printer_count = 0;
+    r = RegOpenKeyA( HKEY_LOCAL_MACHINE, szSerialPortKey, &hkey_serial);
+    if (r == ERROR_SUCCESS)
+    {
+        RegQueryInfoKeyA ( hkey_serial, NULL, NULL, NULL, NULL, NULL, NULL,
+	    &serial_count, NULL, NULL, NULL, NULL);
+    }
+
+    r = RegOpenKeyA( HKEY_LOCAL_MACHINE, szPrinterPortKey, &hkey_printer);
+    if ( r == ERROR_SUCCESS )
+    {
+        RegQueryInfoKeyA( hkey_printer, NULL, NULL, NULL, NULL, NULL, NULL,
+	    &printer_count, NULL, NULL, NULL, NULL);
+    }
+    count = serial_count + printer_count;
+
+    /* then fill in the structure info structure once
+       we know the offset to the first string */
+
+    memset( buffer, 0, bufsize );
+    n = 0;
+    ofs = info_size*count; 
+    for ( i=0; i<count; i++)
+    {
+        DWORD vallen = sizeof portname - 1;
+
+        /* get the serial port values, then the printer values */
+        if ( i < serial_count )
+            r = RegEnumValueA( hkey_serial, i, 
+                     portname, &vallen, NULL, NULL, NULL, 0 );
+        else
+            r = RegEnumValueA( hkey_printer, i-serial_count, 
+                     portname, &vallen, NULL, NULL, NULL, 0 );
+
+        if ( r )
+            continue;
+
+        /* add a colon if necessary, and make it upper case */
+        CharUpperBuffA(portname,vallen);
+        if (strcasecmp(portname,"nul")!=0)
+            if (vallen && (portname[vallen-1] != ':') )
+                lstrcatA(portname,":");
+
+        /* add the port info structure if we can fit it */
+        if ( info_size*(n+1) < bufsize )
+        {
+            if ( level == 1)
+            {
+                PORT_INFO_1A *info = (PORT_INFO_1A*) &buffer[info_size*n];
+                info->pName = (LPSTR) &buffer[ofs];
+            }
+            else if ( level == 2)
+            {
+                PORT_INFO_2A *info = (PORT_INFO_2A*) &buffer[info_size*n];
+                info->pPortName = (LPSTR) &buffer[ofs];
+                /* FIXME: fill in more stuff here */
+                info->pMonitorName = PortMonitor;
+                info->pDescription = PortDescription;
+                info->fPortType = PORT_TYPE_WRITE|PORT_TYPE_READ;
+            }
+
+            /* add the name of the port if we can fit it */
+            if ( ofs < bufsize )
+                lstrcpynA(&buffer[ofs],portname,bufsize - ofs);
+        }
+
+        ofs += lstrlenA(portname)+1;
+        n++;
+    }
+
+    RegCloseKey(hkey_serial);
+    RegCloseKey(hkey_printer);
+
+    if(bufneeded)
+        *bufneeded = ofs;
+
+    if(bufreturned)
+        *bufreturned = count;
+
+    return TRUE;
 }
 
 /******************************************************************************
