@@ -1319,6 +1319,8 @@ ICOM_DEFINE(IDirectDraw,IUnknown)
 #define DDLOCK_READONLY		0x00000010
 #define DDLOCK_WRITEONLY	0x00000020
 #define DDLOCK_NOSYSLOCK	0x00000800
+#define DDLOCK_NOOVERWRITE      0x00001000
+#define DDLOCK_DISCARDCONTENTS  0x00002000
 
 
 /*****************************************************************************

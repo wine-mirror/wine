@@ -91,7 +91,16 @@ Main_IDirect3DVertexBufferImpl_7_1T_Lock(LPDIRECT3DVERTEXBUFFER7 iface,
                                          LPDWORD lpdwSize)
 {
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
-    FIXME("(%p/%p)->(%08lx,%p,%p): stub!\n", This, iface, dwFlags, lplpData, lpdwSize);
+    TRACE("(%p/%p)->(%08lx,%p,%p)\n", This, iface, dwFlags, lplpData, lpdwSize);
+
+    if (TRACE_ON(ddraw)) {
+        TRACE(" lock flags : ");
+	DDRAW_dump_lockflag(dwFlags);
+    }
+    
+    if (lpdwSize != NULL) *lpdwSize = This->vertex_buffer_size;
+    *lplpData = This->vertices;
+    
     return DD_OK;
 }
 
@@ -279,22 +288,36 @@ ICOM_VTABLE(IDirect3DVertexBuffer) VTABLE_IDirect3DVertexBuffer =
 #undef XCAST
 #endif
 
-HRESULT d3dvertexbuffer_create(IDirect3DVertexBufferImpl **obj, IDirect3DImpl *d3d, LPD3DVERTEXBUFFERDESC lpD3DVertBufDesc)
+HRESULT d3dvertexbuffer_create(IDirect3DVertexBufferImpl **obj, IDirect3DImpl *d3d, LPD3DVERTEXBUFFERDESC lpD3DVertBufDesc, DWORD dwFlags)
 {
     IDirect3DVertexBufferImpl *object;
+    static const flag_info flags[] = {
+        FE(D3DVBCAPS_OPTIMIZED),
+	FE(D3DVBCAPS_SYSTEMMEMORY),
+	FE(D3DVBCAPS_WRITEONLY)
+    };
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVertexBufferImpl));
     if (object == NULL) return DDERR_OUTOFMEMORY;
 
     object->ref = 1;
     object->d3d = d3d;
+    object->desc = *lpD3DVertBufDesc;
+    object->vertex_buffer_size = get_flexible_vertex_size(lpD3DVertBufDesc->dwFVF) * lpD3DVertBufDesc->dwNumVertices;
+    object->vertices = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->vertex_buffer_size);
     
     ICOM_INIT_INTERFACE(object, IDirect3DVertexBuffer,  VTABLE_IDirect3DVertexBuffer);
     ICOM_INIT_INTERFACE(object, IDirect3DVertexBuffer7, VTABLE_IDirect3DVertexBuffer7);
 
     *obj = object;
 
-    TRACE(" creating implementation at %p.\n", *obj);
+    if (TRACE_ON(ddraw)) {
+        TRACE(" creating implementation at %p with description : \n", *obj);
+	TRACE("  - "); DDRAW_dump_flags_(lpD3DVertBufDesc->dwCaps, flags, sizeof(flags)/sizeof(flags[0]), TRUE);
+	TRACE("  - "); dump_flexible_vertex(lpD3DVertBufDesc->dwFVF);
+	TRACE("  - %ld\n", lpD3DVertBufDesc->dwNumVertices);
+    }
+    
     
     return D3D_OK;
 }

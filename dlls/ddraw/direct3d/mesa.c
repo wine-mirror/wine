@@ -320,6 +320,25 @@ GL_IDirect3DImpl_7_CreateDevice(LPDIRECT3D7 iface,
     return create_device_helper(This, rclsid, ddsurfaceimpl, (void **) lplpD3DDevice, 7);
 }
 
+HRESULT WINAPI
+GL_IDirect3DImpl_7_3T_CreateVertexBuffer(LPDIRECT3D7 iface,
+					 LPD3DVERTEXBUFFERDESC lpD3DVertBufDesc,
+					 LPDIRECT3DVERTEXBUFFER7* lplpD3DVertBuf,
+					 DWORD dwFlags)
+{
+    ICOM_THIS_FROM(IDirect3DImpl, IDirect3D7, iface);
+    IDirect3DVertexBufferImpl *vbimpl;
+    HRESULT res;
+    
+    TRACE("(%p/%p)->(%p,%p,%08lx)\n", This, iface, lpD3DVertBufDesc, lplpD3DVertBuf, dwFlags);
+
+    res = d3dvertexbuffer_create(&vbimpl, This, lpD3DVertBufDesc, dwFlags);
+
+    *lplpD3DVertBuf = ICOM_INTERFACE(vbimpl, IDirect3DVertexBuffer7);
+    
+    return res;
+}
+
 static void light_released(IDirect3DImpl *This, GLenum light_num)
 {
     IDirect3DGLImpl *glThis = (IDirect3DGLImpl *) This;
@@ -340,7 +359,7 @@ ICOM_VTABLE(IDirect3D7) VTABLE_IDirect3D7 =
     XCAST(Release) Main_IDirect3DImpl_7_3T_2T_1T_Release,
     XCAST(EnumDevices) GL_IDirect3DImpl_7_EnumDevices,
     XCAST(CreateDevice) GL_IDirect3DImpl_7_CreateDevice,
-    XCAST(CreateVertexBuffer) Main_IDirect3DImpl_7_3T_CreateVertexBuffer,
+    XCAST(CreateVertexBuffer) GL_IDirect3DImpl_7_3T_CreateVertexBuffer,
     XCAST(EnumZBufferFormats) GL_IDirect3DImpl_7_3T_EnumZBufferFormats,
     XCAST(EvictManagedTextures) Main_IDirect3DImpl_7_3T_EvictManagedTextures,
 };

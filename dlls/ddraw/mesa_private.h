@@ -119,13 +119,17 @@ extern HRESULT d3dlight_create(IDirect3DLightImpl **obj, IDirect3DImpl *d3d, GLe
 extern HRESULT d3dexecutebuffer_create(IDirect3DExecuteBufferImpl **obj, IDirect3DImpl *d3d, IDirect3DDeviceImpl *d3ddev, LPD3DEXECUTEBUFFERDESC lpDesc);
 extern HRESULT d3dmaterial_create(IDirect3DMaterialImpl **obj, IDirect3DImpl *d3d);
 extern HRESULT d3dviewport_create(IDirect3DViewportImpl **obj, IDirect3DImpl *d3d);
-extern HRESULT d3dvertexbuffer_create(IDirect3DVertexBufferImpl **obj, IDirect3DImpl *d3d, LPD3DVERTEXBUFFERDESC lpD3DVertBufDesc);
+extern HRESULT d3dvertexbuffer_create(IDirect3DVertexBufferImpl **obj, IDirect3DImpl *d3d, LPD3DVERTEXBUFFERDESC lpD3DVertBufDesc, DWORD dwFlags);
 extern HRESULT d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surface);
 
 /* Used for Direct3D to request the device to enumerate itself */
 extern HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context, DWORD interface_version) ;
 extern HRESULT d3ddevice_enumerate7(LPD3DENUMDEVICESCALLBACK7 cb, LPVOID context) ;
 extern HRESULT d3ddevice_find(IDirect3DImpl *d3d, LPD3DFINDDEVICESEARCH lpD3DDFS, LPD3DFINDDEVICERESULT lplpD3DDevice, DWORD interface_version);
+
+/* Some helper functions.. Would need to put them in a better place */
+extern void dump_flexible_vertex(DWORD d3dvtVertexType);
+extern DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
 
 /* Matrix copy WITH transposition */
 #define conv_mat2(mat,gl_mat)			\

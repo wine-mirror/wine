@@ -241,7 +241,7 @@ static void fill_opengl_caps_7(D3DDEVICEDESC7 *d)
     d->dvMaxVertexW = 100000000.0; /* No idea exactly what to put here... */
     d->deviceGUID = IID_IDirect3DTnLHalDevice;
     d->wMaxUserClipPlanes = 1;
-    d->wMaxVertexBlendMatrices = 1;
+    d->wMaxVertexBlendMatrices = 0;
     d->dwVertexProcessingCaps = D3DVTXPCAPS_TEXGEN | D3DVTXPCAPS_MATERIALSOURCE7 | D3DVTXPCAPS_VERTEXFOG | D3DVTXPCAPS_DIRECTIONALLIGHTS |
       D3DVTXPCAPS_POSITIONALLIGHTS | D3DVTXPCAPS_LOCALVIEWER;
     d->dwReserved1 = 0;
@@ -883,7 +883,24 @@ GL_IDirect3DDeviceImpl_1_CreateExecuteBuffer(LPDIRECT3DDEVICE iface,
     return ret_value;
 }
 
-static void dump_flexible_vertex(DWORD d3dvtVertexType)
+DWORD get_flexible_vertex_size(DWORD d3dvtVertexType)
+{
+    DWORD size = 0;
+    
+    if (d3dvtVertexType & D3DFVF_NORMAL) size += 3 * sizeof(D3DVALUE);
+    if (d3dvtVertexType & D3DFVF_DIFFUSE) size += sizeof(DWORD);
+    if (d3dvtVertexType & D3DFVF_SPECULAR) size += sizeof(DWORD);
+    switch (d3dvtVertexType & D3DFVF_POSITION_MASK) {
+        case D3DFVF_XYZ: size += 3 * sizeof(D3DVALUE); break;
+        case D3DFVF_XYZRHW: size += 4 * sizeof(D3DVALUE); break;
+	default: TRACE(" matrix weighting not handled yet...\n");
+    }
+    size += 2 * sizeof(D3DVALUE) * ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT);
+
+    return size;
+}
+
+void dump_flexible_vertex(DWORD d3dvtVertexType)
 {
     static const flag_info flags[] = {
         FE(D3DFVF_NORMAL),

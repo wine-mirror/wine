@@ -315,7 +315,9 @@ void DDRAW_dump_lockflag(DWORD lockflag)
 	    FE(DDLOCK_EVENT),
 	    FE(DDLOCK_READONLY),
 	    FE(DDLOCK_WRITEONLY),
-	    FE(DDLOCK_NOSYSLOCK)
+	    FE(DDLOCK_NOSYSLOCK),
+	    FE(DDLOCK_DISCARDCONTENTS),
+	    FE(DDLOCK_NOOVERWRITE)
 	};
 
     DDRAW_dump_flags(lockflag, flags, sizeof(flags)/sizeof(flags[0]));

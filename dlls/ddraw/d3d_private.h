@@ -194,6 +194,9 @@ struct IDirect3DVertexBufferImpl
     ICOM_VFIELD_MULTI(IDirect3DVertexBuffer);
     DWORD ref;
     IDirect3DImpl *d3d;
+    D3DVERTEXBUFFERDESC desc;
+    LPVOID *vertices;
+    DWORD vertex_buffer_size;
 };
 
 /* Various dump functions */
