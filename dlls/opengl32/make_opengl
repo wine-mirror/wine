@@ -281,7 +281,12 @@ $pseudo_to_opengl{"IglooParameterSGIX"} = "GLint";
 #
 %norm_functions = ();
 %ext_functions  = 
-    ( "glMultiTexCoord1dSGIS" => [ "glMultiTexCoord1dSGIS", "void", [ [ "GLenum", "target" ], 
+    ( "glMTexCoord2fSGIS" => [ "glMTexCoord2fSGIS", "void", [ [ "GLenum", "target" ],
+							      [ "GLfloat", "s" ],
+							      [ "GLfloat", "t" ] ], "glMTexCoord2fSGIS" ],
+      "glMTexCoord2fvSGIS" => [ "glMTexCoord2fvSGIS", "void", [ [ "GLenum", "target" ], 
+								[ "GLfloat *", "v" ] ], "glMTexCoord2fvSGIS" ],
+      "glMultiTexCoord1dSGIS" => [ "glMultiTexCoord1dSGIS", "void", [ [ "GLenum", "target" ], 
 								      [ "GLdouble", "s" ] ],  "glMultiTexCoord1dSGIS" ],
       "glMultiTexCoord1dvSGIS" => [ "glMultiTexCoord1dvSGIS", "void", [ [ "GLenum", "target" ], 
 									[ "GLdouble *", "v" ] ], "glMultiTexCoord1dvSGIS" ],
@@ -549,11 +554,11 @@ print NORM "
 
 #include \"config.h\"
 #include \"wine_gl.h\"
-#include \"debugtools.h\"
+#include \"wine/debug.h\"
 
 typedef const GLubyte * GLstring;
 
-DEFAULT_DEBUG_CHANNEL(opengl);
+WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
 ";
 foreach (sort keys %norm_functions) {
@@ -572,13 +577,13 @@ print EXT "
 
 #include \"config.h\"
 #include \"wine_gl.h\"
-#include \"debugtools.h\"
+#include \"wine/debug.h\"
 
 typedef const GLubyte * GLstring;
 
 #include \"opengl_ext.h\"
 
-DEFAULT_DEBUG_CHANNEL(opengl);
+WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
 ";
 
