@@ -339,8 +339,9 @@ BOOL WINAPI PathIsRootAW(LPCVOID lpszPath)
 static BOOL PathIsExeA (LPCSTR lpszPath)
 {
 	LPCSTR lpszExtension = PathGetExtensionA(lpszPath);
-	int i = 0;
-	static char * lpszExtensions[6] = {"exe", "com", "pid", "cmd", "bat", NULL };
+        int i;
+        static const char * const lpszExtensions[] =
+            {"exe", "com", "pif", "cmd", "bat", "scf", "scr", NULL };
 
 	TRACE("path=%s\n",lpszPath);
 
@@ -356,10 +357,11 @@ static BOOL PathIsExeA (LPCSTR lpszPath)
 static BOOL PathIsExeW (LPCWSTR lpszPath)
 {
 	LPCWSTR lpszExtension = PathGetExtensionW(lpszPath);
-	int i = 0;
-	static WCHAR lpszExtensions[6][4] =
-	  {{'e','x','e','\0'}, {'c','o','m','\0'}, {'p','i','d','\0'},
-	   {'c','m','d','\0'}, {'b','a','t','\0'}, {'\0'} };
+        int i;
+        static const WCHAR lpszExtensions[][4] =
+            {{'e','x','e','\0'}, {'c','o','m','\0'}, {'p','i','f','\0'},
+             {'c','m','d','\0'}, {'b','a','t','\0'}, {'s','c','f','\0'},
+             {'s','c','r','\0'}, {'\0'} };
 
 	TRACE("path=%s\n",debugstr_w(lpszPath));
 
