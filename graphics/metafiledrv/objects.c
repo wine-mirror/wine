@@ -11,7 +11,7 @@
 #include "font.h"
 #include "metafiledrv.h"
 #include "pen.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "heap.h"
 
 DECLARE_DEBUG_CHANNEL(gdi)
@@ -65,7 +65,7 @@ INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
 
 	    GetObjectA(brushObj->logbrush.lbHatch, sizeof(bm), &bm);
 	    if(bm.bmBitsPixel != 1 || bm.bmPlanes != 1) {
-	        FIXME(metafile, "Trying to store a colour pattern brush\n");
+	        FIXME_(metafile)("Trying to store a colour pattern brush\n");
 		return FALSE;
 	    }
 
@@ -121,7 +121,7 @@ INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
 	      break;
 	}
 	default:
-	    FIXME(metafile, "Unkonwn brush style %x\n", 
+	    FIXME_(metafile)("Unkonwn brush style %x\n", 
 		  brushObj->logbrush.lbStyle);
 	    return -1;
     }
@@ -239,7 +239,7 @@ HGDIOBJ MFDRV_SelectObject( DC *dc, HGDIOBJ handle )
     HGDIOBJ ret = 0;
 
     if (!ptr) return 0;
-    TRACE(gdi, "hdc=%04x %04x\n", dc->hSelf, handle );
+    TRACE_(gdi)("hdc=%04x %04x\n", dc->hSelf, handle );
     
     switch(ptr->wMagic)
     {

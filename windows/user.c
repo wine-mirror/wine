@@ -28,7 +28,7 @@
 #include "class.h"
 #include "desktop.h"
 #include "process.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(hook)
 DECLARE_DEBUG_CHANNEL(local)
@@ -206,7 +206,7 @@ void WINAPI USER_SignalProc( HANDLE16 hTaskOrModule, UINT16 uCode,
                              UINT16 uExitFn, HINSTANCE16 hInstance,
                              HQUEUE16 hQueue )
 {
-    FIXME( win, "Win 3.1 USER signal %04x\n", uCode );
+    FIXME_(win)("Win 3.1 USER signal %04x\n", uCode );
 }
 
 /***********************************************************************
@@ -260,7 +260,7 @@ WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
         break;
 
     default:
-        FIXME( win, "(%04x, %08lx, %04lx, %04x)\n",
+        FIXME_(win)("(%04x, %08lx, %04lx, %04x)\n",
                     uCode, dwThreadOrProcessID, dwFlags, hModule );
         break;
     }
@@ -286,7 +286,7 @@ BOOL16 WINAPI ExitWindows16( DWORD dwReturnCode, UINT16 wReserved )
  */
 BOOL16 WINAPI ExitWindowsExec16( LPCSTR lpszExe, LPCSTR lpszParams )
 {
-    TRACE(system, "Should run the following in DOS-mode: \"%s %s\"\n",
+    TRACE_(system)("Should run the following in DOS-mode: \"%s %s\"\n",
 	lpszExe, lpszParams);
     return ExitWindowsEx( EWX_LOGOFF, 0xffffffff );
 }
@@ -340,9 +340,9 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
  */
 LONG WINAPI ChangeDisplaySettingsA( LPDEVMODEA devmode, DWORD flags )
 {
-  FIXME(system, ": stub\n");
+  FIXME_(system)(": stub\n");
   if (devmode==NULL)
-    FIXME(system,"   devmode=NULL (return to default mode)\n");
+    FIXME_(system)("   devmode=NULL (return to default mode)\n");
   else if ( (devmode->dmBitsPerPel != DESKTOP_GetScreenDepth()) 
 	    || (devmode->dmPelsHeight != DESKTOP_GetScreenHeight())
 	    || (devmode->dmPelsWidth != DESKTOP_GetScreenWidth()) )
@@ -350,12 +350,12 @@ LONG WINAPI ChangeDisplaySettingsA( LPDEVMODEA devmode, DWORD flags )
   {
 
     if (devmode->dmFields & DM_BITSPERPEL)
-      FIXME(system,"   bpp=%ld\n",devmode->dmBitsPerPel);
+      FIXME_(system)("   bpp=%ld\n",devmode->dmBitsPerPel);
     if (devmode->dmFields & DM_PELSWIDTH)
-      FIXME(system,"   width=%ld\n",devmode->dmPelsWidth);
+      FIXME_(system)("   width=%ld\n",devmode->dmPelsWidth);
     if (devmode->dmFields & DM_PELSHEIGHT)
-      FIXME(system,"   height=%ld\n",devmode->dmPelsHeight);
-    FIXME(system," (Putting X in this mode beforehand might help)\n"); 
+      FIXME_(system)("   height=%ld\n",devmode->dmPelsHeight);
+    FIXME_(system)(" (Putting X in this mode beforehand might help)\n"); 
     /* we don't, but the program ... does not need to know */
     return DISP_CHANGE_SUCCESSFUL; 
   }
@@ -382,7 +382,7 @@ BOOL WINAPI EnumDisplaySettingsA(
 	} modes[NRMODES]={{512,384},{640,400},{640,480},{800,600},{1024,768}};
 	int depths[4] = {8,16,24,32};
 
-	TRACE(system,"(%s,%ld,%p)\n",name,n,devmode);
+	TRACE_(system)("(%s,%ld,%p)\n",name,n,devmode);
 	if (n==0) {
 		devmode->dmBitsPerPel = DESKTOP_GetScreenDepth();
 		devmode->dmPelsHeight = DESKTOP_GetScreenHeight();
@@ -423,7 +423,7 @@ BOOL WINAPI EnumDisplaySettingsW(LPCWSTR name,DWORD n,LPDEVMODEW devmode) {
  */
 FARPROC16 WINAPI SetEventHook16(FARPROC16 lpfnEventHook)
 {
-	FIXME(hook, "(lpfnEventHook=%08x): stub\n", (UINT)lpfnEventHook);
+	FIXME_(hook)("(lpfnEventHook=%08x): stub\n", (UINT)lpfnEventHook);
 	return NULL;
 }
 
@@ -443,10 +443,10 @@ DWORD WINAPI UserSeeUserDo16(WORD wReqType, WORD wParam1, WORD wParam2, WORD wPa
     case USUD_LOCALHEAP:
         return USER_HeapSel;
     case USUD_FIRSTCLASS:
-        FIXME(local, "return a pointer to the first window class.\n"); 
+        FIXME_(local)("return a pointer to the first window class.\n"); 
         return (DWORD)-1;
     default:
-        WARN(local, "wReqType %04x (unknown)", wReqType);
+        WARN_(local)("wReqType %04x (unknown)", wReqType);
         return (DWORD)-1;
     }
 }
@@ -455,7 +455,7 @@ DWORD WINAPI UserSeeUserDo16(WORD wReqType, WORD wParam1, WORD wParam2, WORD wPa
  *           RegisterLogonProcess   (USER32.434)
  */
 DWORD WINAPI RegisterLogonProcess(HANDLE hprocess,BOOL x) {
-	FIXME(win32,"(%d,%d),stub!\n",hprocess,x);
+	FIXME_(win32)("(%d,%d),stub!\n",hprocess,x);
 	return 1;
 }
 
@@ -466,7 +466,7 @@ HWINSTA WINAPI CreateWindowStationW(
 	LPWSTR winstation,DWORD res1,DWORD desiredaccess,
 	LPSECURITY_ATTRIBUTES lpsa
 ) {
-	FIXME(win32,"(%s,0x%08lx,0x%08lx,%p),stub!\n",debugstr_w(winstation),
+	FIXME_(win32)("(%s,0x%08lx,0x%08lx,%p),stub!\n",debugstr_w(winstation),
 		res1,desiredaccess,lpsa
 	);
 	return 0xdeadcafe;
@@ -476,7 +476,7 @@ HWINSTA WINAPI CreateWindowStationW(
  *           SetProcessWindowStation   (USER32.496)
  */
 BOOL WINAPI SetProcessWindowStation(HWINSTA hWinSta) {
-	FIXME(win32,"(%d),stub!\n",hWinSta);
+	FIXME_(win32)("(%d),stub!\n",hWinSta);
 	return TRUE;
 }
 
@@ -488,7 +488,7 @@ BOOL WINAPI SetUserObjectSecurity(
 	/*LPSECURITY_INFORMATION*/LPVOID pSIRequested,
 	PSECURITY_DESCRIPTOR pSID
 ) {
-	FIXME(win32,"(0x%08x,%p,%p),stub!\n",hObj,pSIRequested,pSID);
+	FIXME_(win32)("(0x%08x,%p,%p),stub!\n",hObj,pSIRequested,pSID);
 	return TRUE;
 }
 
@@ -499,7 +499,7 @@ HDESK WINAPI CreateDesktopW(
 	LPWSTR lpszDesktop,LPWSTR lpszDevice,LPDEVMODEW pDevmode,
 	DWORD dwFlags,DWORD dwDesiredAccess,LPSECURITY_ATTRIBUTES lpsa
 ) {
-	FIXME(win32,"(%s,%s,%p,0x%08lx,0x%08lx,%p),stub!\n",
+	FIXME_(win32)("(%s,%s,%p,0x%08lx,0x%08lx,%p),stub!\n",
 		debugstr_w(lpszDesktop),debugstr_w(lpszDevice),pDevmode,
 		dwFlags,dwDesiredAccess,lpsa
 	);
@@ -508,12 +508,12 @@ HDESK WINAPI CreateDesktopW(
 
 BOOL WINAPI CloseWindowStation(HWINSTA hWinSta)
 {
-    FIXME(win32, "(0x%08x)\n", hWinSta);
+    FIXME_(win32)("(0x%08x)\n", hWinSta);
     return TRUE;
 }
 BOOL WINAPI CloseDesktop(HDESK hDesk)
 {
-    FIXME(win32, "(0x%08x)\n", hDesk);
+    FIXME_(win32)("(0x%08x)\n", hDesk);
     return TRUE;
 }
 
@@ -521,7 +521,7 @@ BOOL WINAPI CloseDesktop(HDESK hDesk)
  *           SetWindowStationUser   (USER32.521)
  */
 DWORD WINAPI SetWindowStationUser(DWORD x1,DWORD x2) {
-	FIXME(win32,"(0x%08lx,0x%08lx),stub!\n",x1,x2);
+	FIXME_(win32)("(0x%08lx,0x%08lx),stub!\n",x1,x2);
 	return 1;
 }
 
@@ -529,7 +529,7 @@ DWORD WINAPI SetWindowStationUser(DWORD x1,DWORD x2) {
  *           SetLogonNotifyWindow   (USER32.486)
  */
 DWORD WINAPI SetLogonNotifyWindow(HWINSTA hwinsta,HWND hwnd) {
-	FIXME(win32,"(0x%x,%04x),stub!\n",hwinsta,hwnd);
+	FIXME_(win32)("(0x%x,%04x),stub!\n",hwinsta,hwnd);
 	return 1;
 }
 
@@ -544,14 +544,14 @@ VOID WINAPI LoadLocalFonts(VOID) {
  *           GetUserObjectInformation32A   (USER32.299)
  */
 BOOL WINAPI GetUserObjectInformationA( HANDLE hObj, int nIndex, LPVOID pvInfo, DWORD nLength, LPDWORD lpnLen )
-{	FIXME(win32,"(0x%x %i %p %ld %p),stub!\n", hObj, nIndex, pvInfo, nLength, lpnLen );
+{	FIXME_(win32)("(0x%x %i %p %ld %p),stub!\n", hObj, nIndex, pvInfo, nLength, lpnLen );
 	return TRUE;
 }
 /***********************************************************************
  *           GetUserObjectInformation32W   (USER32.300)
  */
 BOOL WINAPI GetUserObjectInformationW( HANDLE hObj, int nIndex, LPVOID pvInfo, DWORD nLength, LPDWORD lpnLen )
-{	FIXME(win32,"(0x%x %i %p %ld %p),stub!\n", hObj, nIndex, pvInfo, nLength, lpnLen );
+{	FIXME_(win32)("(0x%x %i %p %ld %p),stub!\n", hObj, nIndex, pvInfo, nLength, lpnLen );
 	return TRUE;
 }
 /***********************************************************************
@@ -559,7 +559,7 @@ BOOL WINAPI GetUserObjectInformationW( HANDLE hObj, int nIndex, LPVOID pvInfo, D
  */
 BOOL WINAPI GetUserObjectSecurity(HANDLE hObj, SECURITY_INFORMATION * pSIRequested,
 	PSECURITY_DESCRIPTOR pSID, DWORD nLength, LPDWORD lpnLengthNeeded)
-{	FIXME(win32,"(0x%x %p %p len=%ld %p),stub!\n",  hObj, pSIRequested, pSID, nLength, lpnLengthNeeded);
+{	FIXME_(win32)("(0x%x %p %p len=%ld %p),stub!\n",  hObj, pSIRequested, pSID, nLength, lpnLengthNeeded);
 	return TRUE;
 }
 
@@ -567,7 +567,7 @@ BOOL WINAPI GetUserObjectSecurity(HANDLE hObj, SECURITY_INFORMATION * pSIRequest
  *           SetSystemCursor   (USER32.507)
  */
 BOOL WINAPI SetSystemCursor(HCURSOR hcur, DWORD id)
-{	FIXME(win32,"(%08x,%08lx),stub!\n",  hcur, id);
+{	FIXME_(win32)("(%08x,%08lx),stub!\n",  hcur, id);
 	return TRUE;
 }
 
@@ -576,5 +576,5 @@ BOOL WINAPI SetSystemCursor(HCURSOR hcur, DWORD id)
  */
 void WINAPI RegisterSystemThread(DWORD flags, DWORD reserved)
 {
-	FIXME(win32, "(%08lx, %08lx)\n", flags, reserved);
+	FIXME_(win32)("(%08lx, %08lx)\n", flags, reserved);
 }

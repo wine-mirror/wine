@@ -25,7 +25,7 @@ typedef unsigned long Pixel;
 #include "callback.h"
 #include "color.h"
 #include "cursoricon.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "gdi.h"
 #include "heap.h"
 #include "local.h"
@@ -422,7 +422,7 @@ static BOOL OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
     }
     else return TRUE;
 #else /* defined(HAVE_LIBXXPM) */
-    FIXME(x11drv,
+    FIXME_(x11drv)(
         "Xpm support not in the binary, "
 	"please install Xpm and recompile\n"
     );
@@ -451,7 +451,7 @@ static HBITMAP16 OBM_LoadBitmap( WORD id )
     if (!CALL_LARGE_STACK( OBM_CreateBitmaps, &descr ))
     {
         LeaveCriticalSection( &X11DRV_CritSection );
-        WARN(bitmap, "Error creating OEM bitmap %d\n", OBM_FIRST+id );
+        WARN_(bitmap)("Error creating OEM bitmap %d\n", OBM_FIRST+id );
         return 0;
     }
     LeaveCriticalSection( &X11DRV_CritSection );
@@ -503,7 +503,7 @@ static HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL fCursor )
     if (!CALL_LARGE_STACK( OBM_CreateBitmaps, &descr ))
     {
         LeaveCriticalSection( &X11DRV_CritSection );
-        WARN(cursor, "Error creating OEM cursor/icon %d\n", id );
+        WARN_(cursor)("Error creating OEM cursor/icon %d\n", id );
         return 0;
     }
     LeaveCriticalSection( &X11DRV_CritSection );
@@ -585,7 +585,7 @@ HANDLE X11DRV_LoadOEMResource(WORD resid, WORD type)
         return OBM_LoadCursorIcon(resid, FALSE);
 
     default:
-        ERR(x11drv, "Unknown type\n");
+        ERR_(x11drv)("Unknown type\n");
     }
     return 0;
 }

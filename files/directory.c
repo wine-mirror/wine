@@ -23,7 +23,7 @@
 #include "heap.h"
 #include "msdos.h"
 #include "options.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(dosfs)
 DECLARE_DEBUG_CHANNEL(file)
@@ -48,7 +48,7 @@ static int DIR_GetPath( const char *keyname, const char *defval,
         !FILE_Stat( full_name->long_name, &info ) ||
         !(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
     {
-        MSG("Invalid path '%s' for %s directory\n", path, keyname);
+        MESSAGE("Invalid path '%s' for %s directory\n", path, keyname);
         return 0;
     }
     return 1;
@@ -73,7 +73,7 @@ int DIR_Init(void)
     cwd = path;
     if ((drive = DRIVE_FindDriveRoot( &cwd )) == -1)
     {
-        MSG("Warning: could not find wine.conf [Drive x] entry "
+        MESSAGE("Warning: could not find wine.conf [Drive x] entry "
             "for current working directory %s; "
 	    "starting in windows directory.\n", cwd );
     }
@@ -94,11 +94,11 @@ int DIR_Init(void)
     {
     	if (errno==EACCES)
 	{
-		MSG("Warning: The Temporary Directory (as specified in your configuration file) is NOT writeable.\n");
+		MESSAGE("Warning: The Temporary Directory (as specified in your configuration file) is NOT writeable.\n");
 		PROFILE_UsageWineIni();
 	}
 	else
-		MSG("Warning: Access to Temporary Directory failed (%s).\n",
+		MESSAGE("Warning: Access to Temporary Directory failed (%s).\n",
 		    strerror(errno));
     }
 
@@ -120,14 +120,14 @@ int DIR_Init(void)
     SetEnvironmentVariableA( "windir", DIR_Windows.short_name );
     SetEnvironmentVariableA( "winsysdir", DIR_System.short_name );
 
-    TRACE(dosfs, "WindowsDir = %s (%s)\n",
+    TRACE_(dosfs)("WindowsDir = %s (%s)\n",
           DIR_Windows.short_name, DIR_Windows.long_name );
-    TRACE(dosfs, "SystemDir  = %s (%s)\n",
+    TRACE_(dosfs)("SystemDir  = %s (%s)\n",
           DIR_System.short_name, DIR_System.long_name );
-    TRACE(dosfs, "TempDir    = %s (%s)\n",
+    TRACE_(dosfs)("TempDir    = %s (%s)\n",
           tmp_dir.short_name, tmp_dir.long_name );
-    TRACE(dosfs, "Path       = %s\n", path );
-    TRACE(dosfs, "Cwd        = %c:\\%s\n",
+    TRACE_(dosfs)("Path       = %s\n", path );
+    TRACE_(dosfs)("Cwd        = %c:\\%s\n",
           'A' + drive, DRIVE_GetDosCwd( drive ) );
 
     return 1;
@@ -291,7 +291,7 @@ UINT WINAPI GetSystemDirectoryW( LPWSTR path, UINT count )
  */
 BOOL16 WINAPI CreateDirectory16( LPCSTR path, LPVOID dummy )
 {
-    TRACE(file,"(%s,%p)\n", path, dummy );
+    TRACE_(file)("(%s,%p)\n", path, dummy );
     return (BOOL16)CreateDirectoryA( path, NULL );
 }
 
@@ -311,16 +311,16 @@ BOOL WINAPI CreateDirectoryA( LPCSTR path,
 {
     DOS_FULL_NAME full_name;
 
-    TRACE(file, "(%s,%p)\n", path, lpsecattribs );
+    TRACE_(file)("(%s,%p)\n", path, lpsecattribs );
     if (DOSFS_GetDevice( path ))
     {
-        TRACE(file, "cannot use device '%s'!\n",path);
+        TRACE_(file)("cannot use device '%s'!\n",path);
         SetLastError( ERROR_ACCESS_DENIED );
         return FALSE;
     }
     if (!DOSFS_GetFullName( path, FALSE, &full_name )) return 0;
     if (mkdir( full_name.long_name, 0777 ) == -1) {
-        WARN (file, "Errno %i trying to create directory %s.\n", errno, full_name.long_name);
+        WARN_(file)("Errno %i trying to create directory %s.\n", errno, full_name.long_name);
 	/* the FILE_SetDosError() generated error codes don't match the 
 	 * CreateDirectory ones for some errnos */
 	switch (errno) {
@@ -383,11 +383,11 @@ BOOL WINAPI RemoveDirectoryA( LPCSTR path )
 {
     DOS_FULL_NAME full_name;
 
-    TRACE(file, "'%s'\n", path );
+    TRACE_(file)("'%s'\n", path );
 
     if (DOSFS_GetDevice( path ))
     {
-        TRACE(file, "cannot remove device '%s'!\n", path);
+        TRACE_(file)("cannot remove device '%s'!\n", path);
         SetLastError( ERROR_FILE_NOT_FOUND );
         return FALSE;
     }
@@ -645,7 +645,7 @@ DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext, DWORD buflen,
         for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
         if (lastpart) *lastpart = strrchr( buffer, '\\' ) + 1;
     }
-    TRACE(dosfs, "Returning %d\n", strlen(res) + 3 );
+    TRACE_(dosfs)("Returning %d\n", strlen(res) + 3 );
     return strlen(res) + 3;
 }
 

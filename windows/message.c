@@ -28,7 +28,7 @@
 #include "thread.h"
 #include "options.h"
 #include "struct32.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(key)
 DECLARE_DEBUG_CHANNEL(msg)
@@ -689,7 +689,7 @@ static LRESULT MSG_SendMessageInterThread( HQUEUE16 hDestQueue,
         return 0;
     }
 
-    TRACE(sendmsg,"SM: %s [%04x] (%04x -> %04x)\n",
+    TRACE_(sendmsg)("SM: %s [%04x] (%04x -> %04x)\n",
 		    SPY_GetMsgName(msg), msg, queue->self, hDestQueue );
 
     /* fill up SMSG structure */
@@ -736,7 +736,7 @@ static LRESULT MSG_SendMessageInterThread( HQUEUE16 hDestQueue,
         {
 got:
              *pRes = smsg->lResult;
-             TRACE(sendmsg,"smResult = %08x\n", (unsigned)*pRes );
+             TRACE_(sendmsg)("smResult = %08x\n", (unsigned)*pRes );
              break;
         }
 
@@ -779,7 +779,7 @@ got:
     QUEUE_Unlock( queue );
     QUEUE_Unlock( destQ );
     
-    TRACE(sendmsg,"done!\n");
+    TRACE_(sendmsg)("done!\n");
     return retVal;
 }
 
@@ -805,7 +805,7 @@ BOOL WINAPI ReplyMessage( LRESULT result )
     if (!(queue = (MESSAGEQUEUE*)QUEUE_Lock( GetFastQueue16() )))
         return FALSE;
 
-    TRACE(sendmsg,"ReplyMessage, queue %04x\n", queue->self);
+    TRACE_(sendmsg)("ReplyMessage, queue %04x\n", queue->self);
 
 
     if (    !(smsg = queue->smWaiting)
@@ -816,7 +816,7 @@ BOOL WINAPI ReplyMessage( LRESULT result )
     {
         /* This is the first reply, so pass result to sender */
 
-        TRACE( sendmsg,"\trpm: smResult = %08lx\n", (long) result );
+        TRACE_(sendmsg)("\trpm: smResult = %08lx\n", (long) result );
 
         EnterCriticalSection(&senderQ->cSection);
         
@@ -858,7 +858,7 @@ BOOL WINAPI ReplyMessage( LRESULT result )
          an early reply or a timeout */
         if ( smsg->flags & SMSG_RECEIVER_CLEANS )
         {
-            TRACE( sendmsg,"Receiver cleans up!\n" );
+            TRACE_(sendmsg)("Receiver cleans up!\n" );
             HeapFree( SystemHeap, 0, smsg );
         }
         
@@ -1215,7 +1215,7 @@ BOOL WINAPI PeekMessageW(
 {
 	BOOL bRet = PeekMessageA(lpmsg,hwnd,min,max,wRemoveMsg);
 	if (bRet)
-	    FIXME(sendmsg, "(%s) unicode<->ascii\n", SPY_GetMsgName(lpmsg->message));
+	    FIXME_(sendmsg)("(%s) unicode<->ascii\n", SPY_GetMsgName(lpmsg->message));
 	return bRet;
 }
 
@@ -1232,7 +1232,7 @@ BOOL16 WINAPI GetMessage16( SEGPTR msg, HWND16 hwnd, UINT16 first, UINT16 last)
 
     STRUCT32_MSG32to16( &msg32, lpmsg );
 
-    TRACE(msg,"message %04x, hwnd %04x, filter(%04x - %04x)\n", lpmsg->message,
+    TRACE_(msg)("message %04x, hwnd %04x, filter(%04x - %04x)\n", lpmsg->message,
 		     				                 hwnd, first, last );
 
     return ret;
@@ -1278,7 +1278,7 @@ BOOL WINAPI GetMessageA(MSG* lpmsg,HWND hwnd,UINT min,UINT max)
 {
     MSG_PeekMessage( lpmsg, hwnd, min, max, PM_REMOVE, FALSE );
     
-    TRACE(msg,"message %04x, hwnd %04x, filter(%04x - %04x)\n", lpmsg->message,
+    TRACE_(msg)("message %04x, hwnd %04x, filter(%04x - %04x)\n", lpmsg->message,
           hwnd, min, max );
     
     HOOK_CallHooksA( WH_GETMESSAGE, HC_ACTION, 0, (LPARAM)lpmsg );
@@ -1322,7 +1322,7 @@ BOOL WINAPI GetMessageW(
 {
     BOOL bRet = GetMessageA(lpmsg, hwnd, min, max);
     if (bRet)
-        FIXME(sendmsg, "(%s) unicode<->ascii\n", SPY_GetMsgName(lpmsg->message));
+        FIXME_(sendmsg)("(%s) unicode<->ascii\n", SPY_GetMsgName(lpmsg->message));
     return bRet;
 
 }
@@ -1364,19 +1364,19 @@ BOOL WINAPI PostMessageA( HWND hwnd, UINT message, WPARAM wParam,
     if (hwnd == HWND_BROADCAST)
     {
         WND *pDesktop = WIN_GetDesktop();
-        TRACE(msg,"HWND_BROADCAST !\n");
+        TRACE_(msg)("HWND_BROADCAST !\n");
         
         for (wndPtr=WIN_LockWndPtr(pDesktop->child); wndPtr; WIN_UpdateWndPtr(&wndPtr,wndPtr->next))
         {
             if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
             {
-                TRACE(msg,"BROADCAST Message to hWnd=%04x m=%04X w=%04X l=%08lX !\n",
+                TRACE_(msg)("BROADCAST Message to hWnd=%04x m=%04X w=%04X l=%08lX !\n",
                             wndPtr->hwndSelf, message, wParam, lParam);
                 PostMessageA( wndPtr->hwndSelf, message, wParam, lParam );
             }
         }
         WIN_ReleaseDesktop();
-        TRACE(msg,"End of HWND_BROADCAST !\n");
+        TRACE_(msg)("End of HWND_BROADCAST !\n");
         return TRUE;
     }
 
@@ -1400,7 +1400,7 @@ END:
 BOOL WINAPI PostMessageW( HWND hwnd, UINT message, WPARAM wParam,
                               LPARAM lParam )
 {
-  FIXME(sendmsg, "(%s) unicode<->ascii\n", SPY_GetMsgName(message));
+  FIXME_(sendmsg)("(%s) unicode<->ascii\n", SPY_GetMsgName(message));
   return PostMessageA( hwnd, message, wParam, lParam );
 }
 
@@ -1474,14 +1474,14 @@ LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
         }
         WIN_ReleaseDesktop();
 
-        TRACE(msg,"HWND_BROADCAST !\n");
+        TRACE_(msg)("HWND_BROADCAST !\n");
         for (ppWnd = list; *ppWnd; ppWnd++)
         {
             WIN_UpdateWndPtr(&wndPtr,*ppWnd);
             if (!IsWindow(wndPtr->hwndSelf)) continue;
             if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
             {
-                TRACE(msg,"BROADCAST Message to hWnd=%04x m=%04X w=%04lX l=%08lX !\n",
+                TRACE_(msg)("BROADCAST Message to hWnd=%04x m=%04X w=%04lX l=%08lX !\n",
                             wndPtr->hwndSelf, msg, (DWORD)wParam, lParam);
                 MSG_SendMessage( wndPtr->hwndSelf, msg, wParam, lParam,
                                timeout, flags, pRes);
@@ -1489,7 +1489,7 @@ LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
         }
         WIN_ReleaseWndPtr(wndPtr);
         WIN_ReleaseWinArray(list);
-        TRACE(msg,"End of HWND_BROADCAST !\n");
+        TRACE_(msg)("End of HWND_BROADCAST !\n");
         return 1;
     }
 
@@ -1522,7 +1522,7 @@ LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd )))
     {
-        WARN(msg, "invalid hwnd %04x\n", hwnd );
+        WARN_(msg)("invalid hwnd %04x\n", hwnd );
         return 0;
     }
     if (QUEUE_IsExitingQueue(wndPtr->hmemTaskQ))
@@ -1621,7 +1621,7 @@ BOOL WINAPI PostThreadMessageA(DWORD idThread , UINT message,
 BOOL WINAPI PostThreadMessageW(DWORD idThread , UINT message,
                                    WPARAM wParam, LPARAM lParam )
 {
-   FIXME(sendmsg, "(%s) unicode<->ascii\n",SPY_GetMsgName(message));
+   FIXME_(sendmsg)("(%s) unicode<->ascii\n",SPY_GetMsgName(message));
    return PostThreadMessageA(idThread, message, wParam, lParam);
 }
 
@@ -1984,15 +1984,15 @@ static BOOL MSG_DoTranslateMessage( UINT message, HWND hwnd,
     BYTE wp[2];
     
     if (message != WM_MOUSEMOVE && message != WM_TIMER)
-        TRACE(msg, "(%s, %04X, %08lX)\n",
+        TRACE_(msg)("(%s, %04X, %08lX)\n",
 		     SPY_GetMsgName(message), wParam, lParam );
     if(message >= WM_KEYFIRST && message <= WM_KEYLAST)
-        TRACE(key, "(%s, %04X, %08lX)\n",
+        TRACE_(key)("(%s, %04X, %08lX)\n",
 		     SPY_GetMsgName(message), wParam, lParam );
 
     if ((message != WM_KEYDOWN) && (message != WM_SYSKEYDOWN))	return FALSE;
 
-    TRACE(key, "Translating key %04X, scancode %04X\n",
+    TRACE_(key)("Translating key %04X, scancode %04X\n",
                  wParam, HIWORD(lParam) );
 
     /* FIXME : should handle ToAscii yielding 2 */
@@ -2023,14 +2023,14 @@ static BOOL MSG_DoTranslateMessage( UINT message, HWND hwnd,
                 }
             dead_char = 0;
         }
-        TRACE(key, "1 -> PostMessage(%s)\n", SPY_GetMsgName(message));
+        TRACE_(key)("1 -> PostMessage(%s)\n", SPY_GetMsgName(message));
         PostMessage16( hwnd, message, wp[0], lParam );
         return TRUE;
 
     case -1 :
         message = (message == WM_KEYDOWN) ? WM_DEADCHAR : WM_SYSDEADCHAR;
         dead_char = wp[0];
-        TRACE(key, "-1 -> PostMessage(%s)\n",
+        TRACE_(key)("-1 -> PostMessage(%s)\n",
                      SPY_GetMsgName(message));
         PostMessage16( hwnd, message, wp[0], lParam );
         return TRUE;
@@ -2116,7 +2116,7 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
     if (painting && wndPtr &&
         (wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate)
     {
-	ERR(msg, "BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
+	ERR_(msg)("BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
 	    msg->hwnd);
 	wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
         /* Validate the update region to avoid infinite WM_PAINT loop */
@@ -2194,7 +2194,7 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
     if (painting && wndPtr &&
         (wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate)
     {
-	ERR(msg, "BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
+	ERR_(msg)("BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
 	    msg->hwnd);
 	wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
         /* Validate the update region to avoid infinite WM_PAINT loop */
@@ -2268,7 +2268,7 @@ LONG WINAPI DispatchMessageW( const MSG* msg )
     if (painting && wndPtr &&
         (wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate)
     {
-	ERR(msg, "BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
+	ERR_(msg)("BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
 	    msg->hwnd);
 	wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
         /* Validate the update region to avoid infinite WM_PAINT loop */
@@ -2285,7 +2285,7 @@ END:
  */
 WORD WINAPI RegisterWindowMessage16( SEGPTR str )
 {
-    TRACE(msg, "%08lx\n", (DWORD)str );
+    TRACE_(msg)("%08lx\n", (DWORD)str );
     return GlobalAddAtom16( str );
 }
 
@@ -2295,7 +2295,7 @@ WORD WINAPI RegisterWindowMessage16( SEGPTR str )
  */
 WORD WINAPI RegisterWindowMessageA( LPCSTR str )
 {
-    TRACE(msg, "%s\n", str );
+    TRACE_(msg)("%s\n", str );
     return GlobalAddAtomA( str );
 }
 
@@ -2305,7 +2305,7 @@ WORD WINAPI RegisterWindowMessageA( LPCSTR str )
  */
 WORD WINAPI RegisterWindowMessageW( LPCWSTR str )
 {
-    TRACE(msg, "%p\n", str );
+    TRACE_(msg)("%p\n", str );
     return GlobalAddAtomW( str );
 }
 
@@ -2371,7 +2371,7 @@ LONG WINAPI BroadcastSystemMessage(
 	DWORD dwFlags,LPDWORD recipients,UINT uMessage,WPARAM wParam,
 	LPARAM lParam
 ) {
-	FIXME(sendmsg,"(%08lx,%08lx,%08x,%08x,%08lx): stub!\n",
+	FIXME_(sendmsg)("(%08lx,%08lx,%08x,%08x,%08lx): stub!\n",
 	      dwFlags,*recipients,uMessage,wParam,lParam
 	);
 	return 0;
@@ -2386,7 +2386,7 @@ LONG WINAPI BroadcastSystemMessage(
  */
 BOOL WINAPI SendNotifyMessageA(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {	BOOL ret = TRUE;
-	FIXME(msg,"(%04x,%08x,%08x,%08lx) not complete\n",
+	FIXME_(msg)("(%04x,%08x,%08x,%08lx) not complete\n",
 	      hwnd, msg, wParam, lParam);
 	      
 	if ( GetCurrentThreadId() == GetWindowThreadProcessId ( hwnd, NULL))
@@ -2407,7 +2407,7 @@ BOOL WINAPI SendNotifyMessageA(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
  */
 BOOL WINAPI SendNotifyMessageW(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {       BOOL ret = TRUE;
-	FIXME(msg,"(%04x,%08x,%08x,%08lx) not complete\n",
+	FIXME_(msg)("(%04x,%08x,%08x,%08lx) not complete\n",
 	      hwnd, msg, wParam, lParam);
 
 	if ( GetCurrentThreadId() == GetWindowThreadProcessId ( hwnd, NULL))
@@ -2429,11 +2429,11 @@ BOOL WINAPI SendMessageCallbackA(
 	HWND hWnd,UINT Msg,WPARAM wParam,LPARAM lParam,
 	FARPROC lpResultCallBack,DWORD dwData)
 {	
-	FIXME(msg,"(0x%04x,0x%04x,0x%08x,0x%08lx,%p,0x%08lx),stub!\n",
+	FIXME_(msg)("(0x%04x,0x%04x,0x%08x,0x%08lx,%p,0x%08lx),stub!\n",
 		hWnd,Msg,wParam,lParam,lpResultCallBack,dwData);
 	if ( hWnd == HWND_BROADCAST)
 	{	PostMessageA( hWnd, Msg, wParam, lParam);
-		FIXME(msg,"Broadcast: Callback will not be called!\n");
+		FIXME_(msg)("Broadcast: Callback will not be called!\n");
 		return TRUE;
 	}
 	(lpResultCallBack)( hWnd, Msg, dwData, SendMessageA ( hWnd, Msg, wParam, lParam ));
@@ -2449,11 +2449,11 @@ BOOL WINAPI SendMessageCallbackW(
 	HWND hWnd,UINT Msg,WPARAM wParam,LPARAM lParam,
 	FARPROC lpResultCallBack,DWORD dwData)
 {	
-	FIXME(msg,"(0x%04x,0x%04x,0x%08x,0x%08lx,%p,0x%08lx),stub!\n",
+	FIXME_(msg)("(0x%04x,0x%04x,0x%08x,0x%08lx,%p,0x%08lx),stub!\n",
 		hWnd,Msg,wParam,lParam,lpResultCallBack,dwData);
 	if ( hWnd == HWND_BROADCAST)
 	{	PostMessageW( hWnd, Msg, wParam, lParam);
-		FIXME(msg,"Broadcast: Callback will not be called!\n");
+		FIXME_(msg)("Broadcast: Callback will not be called!\n");
 		return TRUE;
 	}
 	(lpResultCallBack)( hWnd, Msg, dwData, SendMessageA ( hWnd, Msg, wParam, lParam ));

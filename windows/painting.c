@@ -11,7 +11,7 @@
 #include "queue.h"
 #include "dce.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "wine/winuser16.h"
 
 DECLARE_DEBUG_CHANNEL(nonclient)
@@ -37,7 +37,7 @@ HRGN WIN_UpdateNCRgn(WND* wnd, BOOL bUpdate, BOOL bForceEntire )
 {
     HRGN hClip = 0;
 
-    TRACE(nonclient,"hwnd %04x, hrgnUpdate %04x, ncf %i\n", 
+    TRACE_(nonclient)("hwnd %04x, hrgnUpdate %04x, ncf %i\n", 
                       wnd->hwndSelf, wnd->hrgnUpdate, (wnd->flags & WIN_NEEDS_NCPAINT)!=0 );
 
     /* desktop window doesn't have nonclient area */
@@ -62,7 +62,7 @@ HRGN WIN_UpdateNCRgn(WND* wnd, BOOL bUpdate, BOOL bForceEntire )
 
 	GETCLIENTRECTW( wnd, r );
 
-	TRACE(nonclient, "\tclient box (%i,%i-%i,%i)\n", r.left, r.top, r.right, r.bottom );
+	TRACE_(nonclient)("\tclient box (%i,%i-%i,%i)\n", r.left, r.top, r.right, r.bottom );
 
 	if( wnd->hrgnUpdate > 1 )
 	{
@@ -137,7 +137,7 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
 
     HideCaret( hwnd );
 
-    TRACE(win,"hrgnUpdate = %04x, \n", hrgnUpdate);
+    TRACE_(win)("hrgnUpdate = %04x, \n", hrgnUpdate);
 
     if (wndPtr->class->style & CS_PARENTDC)
     {
@@ -157,18 +157,18 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
                              (bIcon ? DCX_WINDOW : 0) );
     }
 
-    TRACE(win,"hdc = %04x\n", lps->hdc);
+    TRACE_(win)("hdc = %04x\n", lps->hdc);
 
     if (!lps->hdc)
     {
-        WARN(win, "GetDCEx() failed in BeginPaint(), hwnd=%04x\n", hwnd);
+        WARN_(win)("GetDCEx() failed in BeginPaint(), hwnd=%04x\n", hwnd);
         WIN_ReleaseWndPtr(wndPtr);
         return 0;
     }
 
     GetClipBox16( lps->hdc, &lps->rcPaint );
 
-    TRACE(win,"box = (%i,%i - %i,%i)\n", lps->rcPaint.left, lps->rcPaint.top,
+    TRACE_(win)("box = (%i,%i - %i,%i)\n", lps->rcPaint.left, lps->rcPaint.top,
 		    lps->rcPaint.right, lps->rcPaint.bottom );
 
     if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
@@ -332,7 +332,7 @@ BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
     bIcon = (wndPtr->dwStyle & WS_MINIMIZE && wndPtr->class->hIcon);
     if (rectUpdate)
     {
-        TRACE(win, "%04x (%04x) %d,%d-%d,%d %04x flags=%04x, exflags=%04x\n",
+        TRACE_(win)("%04x (%04x) %d,%d-%d,%d %04x flags=%04x, exflags=%04x\n",
                     hwnd, wndPtr->hrgnUpdate, rectUpdate->left, rectUpdate->top,
                     rectUpdate->right, rectUpdate->bottom, hrgnUpdate, flags, ex );
     }
@@ -340,7 +340,7 @@ BOOL PAINT_RedrawWindow( HWND hwnd, const RECT *rectUpdate,
     {
 	if( hrgnUpdate ) GetRgnBox( hrgnUpdate, &r );
 	else SetRectEmpty( &r );
-        TRACE(win, "%04x (%04x) NULL %04x box (%i,%i-%i,%i) flags=%04x, exflags=%04x\n", 
+        TRACE_(win)("%04x (%04x) NULL %04x box (%i,%i-%i,%i) flags=%04x, exflags=%04x\n", 
 	      hwnd, wndPtr->hrgnUpdate, hrgnUpdate, r.left, r.top, r.right, r.bottom, flags, ex);
     }
 

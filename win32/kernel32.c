@@ -23,7 +23,7 @@
 #include "selectors.h"
 #include "task.h"
 #include "file.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "flatthunk.h"
 #include "syslevel.h"
 #include "winerror.h"
@@ -99,7 +99,7 @@ static LPVOID _loadthunk(LPCSTR module, LPCSTR func, LPCSTR module32,
 
     if ((hmod = LoadLibrary16(module)) <= 32) 
     {
-        ERR(thunk, "(%s, %s, %s): Unable to load '%s', error %d\n",
+        ERR_(thunk)("(%s, %s, %s): Unable to load '%s', error %d\n",
                    module, func, module32, module, hmod);
         return 0;
     }
@@ -107,14 +107,14 @@ static LPVOID _loadthunk(LPCSTR module, LPCSTR func, LPCSTR module32,
     if (   !(ordinal = NE_GetOrdinal(hmod, func))
         || !(TD16 = PTR_SEG_TO_LIN(NE_GetEntryPointEx(hmod, ordinal, FALSE))))
     {
-        ERR(thunk, "(%s, %s, %s): Unable to find '%s'\n",
+        ERR_(thunk)("(%s, %s, %s): Unable to find '%s'\n",
                    module, func, module32, func);
         return 0;
     }
 
     if (TD32 && memcmp(TD16->magic, TD32->magic, 4))
     {
-        ERR(thunk, "(%s, %s, %s): Bad magic %c%c%c%c (should be %c%c%c%c)\n",
+        ERR_(thunk)("(%s, %s, %s): Bad magic %c%c%c%c (should be %c%c%c%c)\n",
                    module, func, module32, 
                    TD16->magic[0], TD16->magic[1], TD16->magic[2], TD16->magic[3],
                    TD32->magic[0], TD32->magic[1], TD32->magic[2], TD32->magic[3]);
@@ -123,14 +123,14 @@ static LPVOID _loadthunk(LPCSTR module, LPCSTR func, LPCSTR module32,
 
     if (TD32 && TD16->checksum != TD32->checksum)
     {
-        ERR(thunk, "(%s, %s, %s): Wrong checksum %08lx (should be %08lx)\n",
+        ERR_(thunk)("(%s, %s, %s): Wrong checksum %08lx (should be %08lx)\n",
                    module, func, module32, TD16->checksum, TD32->checksum);
         return 0;
     }
 
     if (!TD32 && checksum && checksum != *(LPDWORD)TD16)
     {
-        ERR(thunk, "(%s, %s, %s): Wrong checksum %08lx (should be %08lx)\n",
+        ERR_(thunk)("(%s, %s, %s): Wrong checksum %08lx (should be %08lx)\n",
                    module, func, module32, *(LPDWORD)TD16, checksum);
         return 0;
     }
@@ -173,19 +173,19 @@ UINT WINAPI ThunkConnect32(
     {
         directionSL = TRUE;
 
-        TRACE(thunk, "SL01 thunk %s (%lx) <- %s (%s), Reason: %ld\n",
+        TRACE_(thunk)("SL01 thunk %s (%lx) <- %s (%s), Reason: %ld\n",
                      module32, (DWORD)TD, module16, thunkfun16, dwReason);
     }
     else if (!lstrncmpA(TD->magic, "LS01", 4))
     {
         directionSL = FALSE;
 
-        TRACE(thunk, "LS01 thunk %s (%lx) -> %s (%s), Reason: %ld\n",
+        TRACE_(thunk)("LS01 thunk %s (%lx) -> %s (%s), Reason: %ld\n",
                      module32, (DWORD)TD, module16, thunkfun16, dwReason);
     }
     else
     {
-        ERR(thunk, "Invalid magic %c%c%c%c\n", 
+        ERR_(thunk)("Invalid magic %c%c%c%c\n", 
                    TD->magic[0], TD->magic[1], TD->magic[2], TD->magic[3]);
         return 0;
     }
@@ -206,7 +206,7 @@ UINT WINAPI ThunkConnect32(
 
                 if (SL16->fpData == NULL)
                 {
-                    ERR(thunk, "ThunkConnect16 was not called!\n");
+                    ERR_(thunk)("ThunkConnect16 was not called!\n");
                     return 0;
                 }
 
@@ -219,7 +219,7 @@ UINT WINAPI ThunkConnect32(
                 tdb->next = SL32->data->targetDB;   /* FIXME: not thread-safe! */
                 SL32->data->targetDB = tdb;
 
-                TRACE(thunk, "Process %08lx allocated TargetDB entry for ThunkDataSL %08lx\n", 
+                TRACE_(thunk)("Process %08lx allocated TargetDB entry for ThunkDataSL %08lx\n", 
                              (DWORD)PROCESS_Current(), (DWORD)SL32->data);
             }
             else
@@ -467,9 +467,9 @@ DWORD WINAPI WOWCallback16(
 	DWORD arg		/* [in] single DWORD argument to function */
 ) {
 	DWORD	ret;
-	TRACE(thunk,"(%p,0x%08lx)...\n",fproc,arg);
+	TRACE_(thunk)("(%p,0x%08lx)...\n",fproc,arg);
 	ret =  Callbacks->CallWOWCallbackProc(fproc,arg);
-	TRACE(thunk,"... returns %ld\n",ret);
+	TRACE_(thunk)("... returns %ld\n",ret);
 	return ret;
 }
 
@@ -809,7 +809,7 @@ BOOL WINAPI SSInit16()
  */
 BOOL WINAPI SSOnBigStack()
 {
-    TRACE(thunk, "Yes, thunking is initialized\n");
+    TRACE_(thunk)("Yes, thunking is initialized\n");
     return TRUE;
 }
 
@@ -834,7 +834,7 @@ DWORD WINAPIV SSCall(
       dbg_decl_str(thunk, 256);
       for (i=0;i<nr/4;i++) 
 	dsprintf(thunk,"0x%08lx,",args[i]);
-      TRACE(thunk,"(%ld,0x%08lx,%p,[%s])\n",
+      TRACE_(thunk)("(%ld,0x%08lx,%p,[%s])\n",
 		    nr,flags,fun,dbg_str(thunk));
     }
     switch (nr) {
@@ -865,12 +865,12 @@ DWORD WINAPIV SSCall(
     case 48:	ret = fun(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11]);
 		break;
     default:
-	WARN(thunk,"Unsupported nr of arguments, %ld\n",nr);
+	WARN_(thunk)("Unsupported nr of arguments, %ld\n",nr);
 	ret = 0;
 	break;
 
     }
-    TRACE(thunk," returning %ld ...\n",ret);
+    TRACE_(thunk)(" returning %ld ...\n",ret);
     return ret;
 }
 
@@ -948,7 +948,7 @@ void WINAPI
 FreeSLCallback(
 	DWORD x	/* [in] 16 bit callback (segmented pointer?) */
 ) {
-	FIXME(win32,"(0x%08lx): stub\n",x);
+	FIXME_(win32)("(0x%08lx): stub\n",x);
 }
 
 
@@ -989,7 +989,7 @@ BOOL16 WINAPI IsPeFormat16(
 		return FALSE;
 	}
 	if (mzh.e_magic!=IMAGE_DOS_SIGNATURE) {
-		WARN(dosmem,"File has not got dos signature!\n");
+		WARN_(dosmem)("File has not got dos signature!\n");
 		_lclose(hf);
 		return FALSE;
 	}
@@ -1014,7 +1014,7 @@ HANDLE WINAPI WOWHandle32(
 	WORD handle,		/* [in] win16 handle */
 	WOW_HANDLE_TYPE type	/* [in] handle type */
 ) {
-	TRACE(win32,"(0x%04x,%d)\n",handle,type);
+	TRACE_(win32)("(0x%04x,%d)\n",handle,type);
 	return (HANDLE)handle;
 }
 
@@ -1058,7 +1058,7 @@ REGS_ENTRYPOINT(K32Thk1632Prolog)
       char *stack32 = (char *)thdb->cur_stack - argSize;
       STACK16FRAME *frame16 = (STACK16FRAME *)stack16 - 1;
 
-      TRACE(thunk, "before SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
+      TRACE_(thunk)("before SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
                    EBP_reg(context), ESP_reg(context), thdb->cur_stack);
 
       memset(frame16, '\0', sizeof(STACK16FRAME));
@@ -1071,7 +1071,7 @@ REGS_ENTRYPOINT(K32Thk1632Prolog)
       ESP_reg(context) = (DWORD)stack32;
       EBP_reg(context) = ESP_reg(context) + argSize;
 
-      TRACE(thunk, "after  SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
+      TRACE_(thunk)("after  SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
                    EBP_reg(context), ESP_reg(context), thdb->cur_stack);
    }
 
@@ -1100,7 +1100,7 @@ REGS_ENTRYPOINT(K32Thk1632Epilog)
 
       DWORD nArgsPopped = ESP_reg(context) - (DWORD)stack32;
 
-      TRACE(thunk, "before SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
+      TRACE_(thunk)("before SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
                    EBP_reg(context), ESP_reg(context), thdb->cur_stack);
 
       thdb->cur_stack = (DWORD)frame16->frame32;
@@ -1108,7 +1108,7 @@ REGS_ENTRYPOINT(K32Thk1632Epilog)
       ESP_reg(context) = (DWORD)stack16 + nArgsPopped;
       EBP_reg(context) = frame16->ebp;
 
-      TRACE(thunk, "after  SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
+      TRACE_(thunk)("after  SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
                    EBP_reg(context), ESP_reg(context), thdb->cur_stack);
    }
 }
@@ -1124,7 +1124,7 @@ BOOL WINAPI UpdateResourceA(
   LPVOID  lpData,
   DWORD   cbData) {
 
-  FIXME(win32, ": stub\n");
+  FIXME_(win32)(": stub\n");
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -1140,7 +1140,7 @@ BOOL WINAPI UpdateResourceW(
   LPVOID  lpData,
   DWORD   cbData) {
 
-  FIXME(win32, ": stub\n");
+  FIXME_(win32)(": stub\n");
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -1150,7 +1150,7 @@ BOOL WINAPI UpdateResourceW(
  *           WaitNamedPipe32A                 [KERNEL32.725]
  */
 BOOL WINAPI WaitNamedPipeA (LPCSTR lpNamedPipeName, DWORD nTimeOut)
-{	FIXME (win32,"%s 0x%08lx\n",lpNamedPipeName,nTimeOut);
+{	FIXME_(win32)("%s 0x%08lx\n",lpNamedPipeName,nTimeOut);
 	SetLastError(ERROR_PIPE_NOT_CONNECTED);
 	return FALSE;
 }
@@ -1158,7 +1158,7 @@ BOOL WINAPI WaitNamedPipeA (LPCSTR lpNamedPipeName, DWORD nTimeOut)
  *           WaitNamedPipe32W                 [KERNEL32.726]
  */
 BOOL WINAPI WaitNamedPipeW (LPCWSTR lpNamedPipeName, DWORD nTimeOut)
-{	FIXME (win32,"%s 0x%08lx\n",debugstr_w(lpNamedPipeName),nTimeOut);
+{	FIXME_(win32)("%s 0x%08lx\n",debugstr_w(lpNamedPipeName),nTimeOut);
 	SetLastError(ERROR_PIPE_NOT_CONNECTED);
 	return FALSE;
 }
@@ -1177,7 +1177,7 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR lpNamedPipeName, DWORD nTimeOut)
  */
 void WINAPI PK16FNF(LPSTR strPtr)
 {
-       FIXME(win32, "(%p): stub\n", strPtr);
+       FIXME_(win32)("(%p): stub\n", strPtr);
 
        /* fill in a fake filename that'll be easy to recognize */
        lstrcpyA(strPtr, "WINESTUB.FIX");

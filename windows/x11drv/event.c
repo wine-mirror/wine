@@ -22,7 +22,7 @@
 #include "clipboard.h"
 #include "dce.h"
 #include "dde_proc.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "drive.h"
 #include "heap.h"
 #include "keyboard.h"
@@ -361,7 +361,7 @@ static void EVENT_ProcessEvent( XEvent *event )
   switch (event->type)
   {
     case SelectionNotify: /* all of these should be caught by XCheckTypedWindowEvent() */
-	 FIXME(event,"Got SelectionNotify - must not happen!\n");
+	 FIXME_(event)("Got SelectionNotify - must not happen!\n");
 	 /* fall through */
 
       /* We get all these because of StructureNotifyMask.
@@ -401,10 +401,10 @@ static void EVENT_ProcessEvent( XEvent *event )
   
       
   if ( !pWnd && event->xany.window != X11DRV_GetXRootWindow() )
-      ERR( event, "Got event %s for unknown Window %08lx\n",
+      ERR_(event)("Got event %s for unknown Window %08lx\n",
            event_names[event->type], event->xany.window );
   else
-      TRACE( event, "Got event %s for hwnd %04x\n",
+      TRACE_(event)("Got event %s for hwnd %04x\n",
 	     event_names[event->type], hWnd );
 
   WIN_ReleaseWndPtr(pWnd);
@@ -497,7 +497,7 @@ static void EVENT_ProcessEvent( XEvent *event )
       break;
 
     default:    
-      WARN(event, "Unprocessed event %s for hwnd %04x\n",
+      WARN_(event)("Unprocessed event %s for hwnd %04x\n",
 	   event_names[event->type], hWnd );
       break;
     }
@@ -557,7 +557,7 @@ static Window __get_top_decoration( Window w, Window ancestor )
       TSXQueryTree( display, w, &root, &parent, &children, &total );
       if( children ) TSXFree( children );
     } while( parent && parent != ancestor );
-  TRACE(event, "\t%08x -> %08x\n", (unsigned)prev, (unsigned)w );
+  TRACE_(event)("\t%08x -> %08x\n", (unsigned)prev, (unsigned)w );
   return ( parent ) ? w : 0 ;
 }
 
@@ -983,7 +983,7 @@ static void EVENT_ConfigureNotify( HWND hWnd, XConfigureEvent *event )
    */
   EVENT_GetGeometry( event->window, &x, &y, &width, &height );
     
-TRACE(win, "%04x adjusted to (%i,%i)-(%i,%i)\n", pWnd->hwndSelf, 
+TRACE_(win)("%04x adjusted to (%i,%i)-(%i,%i)\n", pWnd->hwndSelf, 
 	    x, y, x + width, y + height );
 
   /* Fill WINDOWPOS struct */
@@ -1124,7 +1124,7 @@ static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event )
   }
   
   if( rprop == None) 
-      TRACE(event,"Request for %s ignored\n", TSXGetAtomName(display,event->target));
+      TRACE_(event)("Request for %s ignored\n", TSXGetAtomName(display,event->target));
 
   /* reply to sender */
   
@@ -1314,8 +1314,8 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 			AnyPropertyType, &u.atom_aux, &u.i,
 			&data_length, &aux_long, &p_data);
   if (aux_long)
-    WARN(event,"property too large, truncated!\n");
-  TRACE(event,"urls=%s\n", p_data);
+    WARN_(event)("property too large, truncated!\n");
+  TRACE_(event)("urls=%s\n", p_data);
 
   if( !aux_long && p_data) {	/* don't bother if > 64K */
     /* calculate length */
@@ -1388,13 +1388,13 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 	  if (strncmp(p,"file:",5) == 0 ) {
 	    INT len = GetShortPathNameA( p+5, p_drop, 65535 );
 	    if (len) {
-	      TRACE(event, "drop file %s as %s\n", p+5, p_drop);
+	      TRACE_(event)("drop file %s as %s\n", p+5, p_drop);
 	      p_drop += len+1;
 	    } else {
-	      WARN(event, "can't convert file %s to dos name \n", p+5);
+	      WARN_(event)("can't convert file %s to dos name \n", p+5);
 	    }
 	  } else {
-	    WARN(event, "unknown mime type %s\n", p);
+	    WARN_(event)("unknown mime type %s\n", p);
 	  }
 	  if (next) { 
 	    *next = '\n'; 
@@ -1463,12 +1463,12 @@ static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
 			    dndSelection, 0, 65535, FALSE,
 			    AnyPropertyType, &u.atom, &u.i,
 			    &u.l, &u.l, &p_data);
-      TRACE(event, "message_type=%ld, data=%ld,%ld,%ld,%ld,%ld, msg=%s\n",
+      TRACE_(event)("message_type=%ld, data=%ld,%ld,%ld,%ld,%ld, msg=%s\n",
 	    event->message_type, event->data.l[0], event->data.l[1], 
 	    event->data.l[2], event->data.l[3], event->data.l[4],
 	    p_data);
 #endif
-      TRACE(event, "unrecognized ClientMessage\n" );
+      TRACE_(event)("unrecognized ClientMessage\n" );
     }
   }
 }
@@ -1540,7 +1540,7 @@ void X11DRV_EVENT_WakeUp(void)
     /* wake-up EVENT_WaitNetEvent function, a 32 bit thread post an event
      for a 16 bit task */
     if (write (__wakeup_pipe[1], "A", 1) != 1)
-        ERR(event, "unable to write in wakeup_pipe\n");
+        ERR_(event)("unable to write in wakeup_pipe\n");
 }
 
 

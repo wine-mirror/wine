@@ -15,7 +15,7 @@
 #include "main.h"
 #include "snoop.h"
 #include "winerror.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(relay)
 DECLARE_DEBUG_CHANNEL(win32)
@@ -244,7 +244,7 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
 	rtab = HeapAlloc(GetProcessHeap(), 0, dll->rsc->restabsize);
 	if(!rtab)
 	{
-		ERR(module, "Failed to get memory for resource directory\n");
+		ERR_(module)("Failed to get memory for resource directory\n");
 		VirtualFree(addr, size, MEM_RELEASE);
 		return 0;
 	}
@@ -374,7 +374,7 @@ HMODULE BUILTIN32_LoadImage( LPCSTR name, OFSTRUCT *ofs)
 
     if(table->flags && BI32_INSTANTIATED)
     {
-	ERR(module, "Attemp to instantiate built-in dll '%s' twice in the same address-space. Expect trouble!\n",
+	ERR_(module)("Attemp to instantiate built-in dll '%s' twice in the same address-space. Expect trouble!\n",
 		table->descr->name);
     }
 
@@ -433,7 +433,7 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, DWORD *err)
 	/* Create 32-bit MODREF */
 	if ( !(wm = PE_CreateModule( hModule32, &ofs, flags, TRUE )) )
 	{
-		ERR(win32,"can't load %s\n",ofs.szPathName);
+		ERR_(win32)("can't load %s\n",ofs.szPathName);
 		FreeLibrary16( hModule16 );	/* FIXME: Should unload the builtin module */
 		*err = ERROR_OUTOFMEMORY;
 		return NULL;
@@ -564,12 +564,12 @@ void BUILTIN32_Unimplemented( const BUILTIN32_DESCRIPTOR *descr, int ordinal )
         if (descr->ordinals[i] + descr->base == ordinal) break;
     if (i < descr->nb_names) func_name = descr->names[i];
 
-    MSG( "No handler for Win32 routine %s.%d: %s",
+    MESSAGE( "No handler for Win32 routine %s.%d: %s",
              descr->name, ordinal, func_name );
 #ifdef __GNUC__
-    MSG( " (called from %p)", __builtin_return_address(1) );
+    MESSAGE( " (called from %p)", __builtin_return_address(1) );
 #endif
-    MSG( "\n" );
+    MESSAGE( "\n" );
     ExitProcess(1);
 }
 

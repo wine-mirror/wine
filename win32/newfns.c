@@ -13,7 +13,7 @@ at a later date. */
 #include "windef.h"
 #include "winerror.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "debugstr.h"
 
 DECLARE_DEBUG_CHANNEL(debug)
@@ -47,7 +47,7 @@ BOOL WINAPI QueryPerformanceFrequency(PLARGE_INTEGER frequency)
  *		FlushInstructionCache (KERNEL32.261)
  */
 BOOL WINAPI FlushInstructionCache(DWORD x,DWORD y,DWORD z) {
-	FIXME(debug,"(0x%08lx,0x%08lx,0x%08lx): stub\n",x,y,z);
+	FIXME_(debug)("(0x%08lx,0x%08lx,0x%08lx): stub\n",x,y,z);
 	return TRUE;
 }
 
@@ -60,7 +60,7 @@ HANDLE WINAPI CreateNamedPipeA (LPCSTR lpName, DWORD dwOpenMode,
 				  DWORD nDefaultTimeOut,
 				  LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-  FIXME (win32, "(Name=%s, OpenMode=%#08lx, dwPipeMode=%#08lx, MaxInst=%ld, OutBSize=%ld, InBuffSize=%ld, DefTimeOut=%ld, SecAttr=%p): stub\n",
+  FIXME_(win32)("(Name=%s, OpenMode=%#08lx, dwPipeMode=%#08lx, MaxInst=%ld, OutBSize=%ld, InBuffSize=%ld, DefTimeOut=%ld, SecAttr=%p): stub\n",
 	 debugstr_a(lpName), dwOpenMode, dwPipeMode, nMaxInstances,
 	 nOutBufferSize, nInBufferSize, nDefaultTimeOut, 
 	 lpSecurityAttributes);
@@ -82,7 +82,7 @@ HANDLE WINAPI CreateNamedPipeW (LPCWSTR lpName, DWORD dwOpenMode,
 				  DWORD nDefaultTimeOut,
 				  LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-  FIXME (win32, "(Name=%s, OpenMode=%#08lx, dwPipeMode=%#08lx, MaxInst=%ld, OutBSize=%ld, InBuffSize=%ld, DefTimeOut=%ld, SecAttr=%p): stub\n",
+  FIXME_(win32)("(Name=%s, OpenMode=%#08lx, dwPipeMode=%#08lx, MaxInst=%ld, OutBSize=%ld, InBuffSize=%ld, DefTimeOut=%ld, SecAttr=%p): stub\n",
 	 debugstr_w(lpName), dwOpenMode, dwPipeMode, nMaxInstances,
 	 nOutBufferSize, nInBufferSize, nDefaultTimeOut, 
 	 lpSecurityAttributes);
@@ -128,7 +128,7 @@ BOOL WINAPI SetSystemPowerState(BOOL suspend_or_hibernate,
 HANDLE WINAPI CreateMailslotA( LPCSTR lpName, DWORD nMaxMessageSize,
                                    DWORD lReadTimeout, LPSECURITY_ATTRIBUTES sa)
 {
-    FIXME(win32, "(%s,%ld,%ld,%p): stub\n", debugstr_a(lpName),
+    FIXME_(win32)("(%s,%ld,%ld,%p): stub\n", debugstr_a(lpName),
           nMaxMessageSize, lReadTimeout, sa);
     return 1;
 }
@@ -150,7 +150,7 @@ HANDLE WINAPI CreateMailslotA( LPCSTR lpName, DWORD nMaxMessageSize,
 HANDLE WINAPI CreateMailslotW( LPCWSTR lpName, DWORD nMaxMessageSize,
                                    DWORD lReadTimeout, LPSECURITY_ATTRIBUTES sa )
 {
-    FIXME(win32, "(%s,%ld,%ld,%p): stub\n", debugstr_w(lpName), 
+    FIXME_(win32)("(%s,%ld,%ld,%p): stub\n", debugstr_w(lpName), 
           nMaxMessageSize, lReadTimeout, sa);
     return 1;
 }
@@ -174,7 +174,7 @@ BOOL WINAPI GetMailslotInfo( HANDLE hMailslot, LPDWORD lpMaxMessageSize,
                                LPDWORD lpNextSize, LPDWORD lpMessageCount,
                                LPDWORD lpReadTimeout )
 {
-    FIXME(win32, "(%d): stub\n",hMailslot);
+    FIXME_(win32)("(%d): stub\n",hMailslot);
     *lpMaxMessageSize = (DWORD)NULL;
     *lpNextSize = (DWORD)NULL;
     *lpMessageCount = (DWORD)NULL;
@@ -193,7 +193,7 @@ DWORD WINAPI GetCompressedFileSizeA(
     LPCSTR lpFileName,
     LPDWORD lpFileSizeHigh)
 {
-    FIXME(win32, "(...): stub\n");
+    FIXME_(win32)("(...): stub\n");
     return 0xffffffff;
 }
 
@@ -209,7 +209,7 @@ DWORD WINAPI GetCompressedFileSizeW(
     LPCWSTR lpFileName,     /* [in]  Pointer to name of file */
     LPDWORD lpFileSizeHigh) /* [out] Receives high-order doubleword of size */
 {
-    FIXME(win32, "(%s,%p): stub\n",debugstr_w(lpFileName),lpFileSizeHigh);
+    FIXME_(win32)("(%s,%p): stub\n",debugstr_w(lpFileName),lpFileSizeHigh);
     return 0xffffffff;
 }
 
@@ -226,7 +226,7 @@ DWORD WINAPI GetCompressedFileSizeW(
  */
 DWORD WINAPI GetProcessWindowStation(void)
 {
-    FIXME(win32, "(void): stub\n");
+    FIXME_(win32)("(void): stub\n");
     return 1;
 }
 
@@ -246,7 +246,7 @@ DWORD WINAPI GetProcessWindowStation(void)
  */
 DWORD WINAPI GetThreadDesktop( DWORD dwThreadId )
 {
-    FIXME(win32, "(%lx): stub\n",dwThreadId);
+    FIXME_(win32)("(%lx): stub\n",dwThreadId);
     return 1;
 }
 
@@ -260,7 +260,7 @@ DWORD WINAPI GetThreadDesktop( DWORD dwThreadId )
  */
 VOID WINAPI SetDebugErrorLevel( DWORD dwLevel )
 {
-    FIXME(win32, "(%ld): stub\n", dwLevel);
+    FIXME_(win32)("(%ld): stub\n", dwLevel);
 }
 
 
@@ -277,7 +277,7 @@ VOID WINAPI SetDebugErrorLevel( DWORD dwLevel )
 BOOL WINAPI WaitForDebugEvent( LPDEBUG_EVENT lpDebugEvent, 
                                  DWORD dwMilliseconds )
 {
-    FIXME(win32, "(%p,%ld): stub\n", lpDebugEvent, dwMilliseconds);
+    FIXME_(win32)("(%p,%ld): stub\n", lpDebugEvent, dwMilliseconds);
     return FALSE;
 }
 
@@ -304,13 +304,13 @@ BOOL WINAPI SetComputerNameA( LPCSTR lpComputerName )
  */
 BOOL WINAPI SetComputerNameW( LPCWSTR lpComputerName )
 {
-    FIXME(win32, "(%s): stub\n", debugstr_w(lpComputerName));
+    FIXME_(win32)("(%s): stub\n", debugstr_w(lpComputerName));
     return TRUE;
 }
 
 
 BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE ports,DWORD bufsize,LPDWORD bufneeded,LPDWORD bufreturned) {
-	FIXME(win32,"(%s,%ld,%p,%ld,%p,%p), stub!\n",name,level,ports,bufsize,bufneeded,bufreturned);
+	FIXME_(win32)("(%s,%ld,%p,%ld,%p,%p), stub!\n",name,level,ports,bufsize,bufneeded,bufreturned);
 	return FALSE;
 }
 
@@ -319,7 +319,7 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE ports,DWORD bufsize,LPDWORD
  *
  */
 BOOL WINAPI IsDebuggerPresent() {
-	FIXME(win32," ... no debuggers yet, returning FALSE.\n");
+	FIXME_(win32)(" ... no debuggers yet, returning FALSE.\n");
 	return FALSE; 
 }
 
@@ -332,7 +332,7 @@ BOOL WINAPI IsDebuggerPresent() {
 HANDLE WINAPI OpenDesktopA( LPCSTR lpszDesktop, DWORD dwFlags, 
                                 BOOL fInherit, DWORD dwDesiredAccess )
 {
-    FIXME(win32,"(%s,%lx,%i,%lx): stub\n",debugstr_a(lpszDesktop),dwFlags,
+    FIXME_(win32)("(%s,%lx,%i,%lx): stub\n",debugstr_a(lpszDesktop),dwFlags,
           fInherit,dwDesiredAccess);
     return 1;
 }
@@ -341,14 +341,14 @@ HANDLE WINAPI OpenDesktopA( LPCSTR lpszDesktop, DWORD dwFlags,
 BOOL WINAPI SetUserObjectInformationA( HANDLE hObj, int nIndex, 
                                            LPVOID pvInfo, DWORD nLength )
 {
-    FIXME(win32,"(%x,%d,%p,%lx): stub\n",hObj,nIndex,pvInfo,nLength);
+    FIXME_(win32)("(%x,%d,%p,%lx): stub\n",hObj,nIndex,pvInfo,nLength);
     return TRUE;
 }
 
 
 BOOL WINAPI SetThreadDesktop( HANDLE hDesktop )
 {
-    FIXME(win32,"(%x): stub\n",hDesktop);
+    FIXME_(win32)("(%x): stub\n",hDesktop);
     return TRUE;
 }
 
@@ -356,6 +356,6 @@ HANDLE WINAPI CreateIoCompletionPort(HANDLE hFileHandle,
 HANDLE hExistingCompletionPort, DWORD dwCompletionKey,
 DWORD dwNumberOfConcurrentThreads)
 {
-    FIXME(win32, "(%04x, %04x, %08lx, %08lx): stub.\n", hFileHandle, hExistingCompletionPort, dwCompletionKey, dwNumberOfConcurrentThreads);
+    FIXME_(win32)("(%04x, %04x, %08lx, %08lx): stub.\n", hFileHandle, hExistingCompletionPort, dwCompletionKey, dwNumberOfConcurrentThreads);
     return (HANDLE)NULL;
 }

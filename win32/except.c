@@ -37,7 +37,7 @@
 #include "ldt.h"
 #include "process.h"
 #include "thread.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "except.h"
 #include "stackframe.h"
 
@@ -95,7 +95,7 @@ REGS_ENTRYPOINT(RtlUnwind)
           (TEB_EXCEPTION_FRAME(context) != ((void *)0xffffffff)) &&
           (TEB_EXCEPTION_FRAME(context) != pEndFrame))
    {
-       TRACE(win32, "calling exception handler at 0x%x\n",
+       TRACE_(win32)("calling exception handler at 0x%x\n",
                       (int)TEB_EXCEPTION_FRAME(context)->Handler );
 
        dispatch=0;       
@@ -103,7 +103,7 @@ REGS_ENTRYPOINT(RtlUnwind)
                                                 TEB_EXCEPTION_FRAME(context),
                                                 context, &dispatch);
                                          
-       TRACE(win32,"exception handler returns 0x%x, dispatch=0x%x\n",
+       TRACE_(win32)("exception handler returns 0x%x, dispatch=0x%x\n",
                               retval, (int) dispatch);
   
        if (	(retval == ExceptionCollidedUnwind) &&
@@ -165,15 +165,15 @@ REGS_ENTRYPOINT(RaiseException)
     while((pframe!=NULL)&&(pframe!=((void *)0xFFFFFFFF)))
     {
        PEXCEPTION_FRAME    prevframe; 
-       TRACE(win32,"calling exception handler at 0x%x\n",
+       TRACE_(win32)("calling exception handler at 0x%x\n",
                                                 (int) pframe->Handler);
        dispatch=0;  
-       TRACE(relay,"(except=%p,record=%p,frame=%p,context=%p,dispatch=%p)\n",
+       TRACE_(relay)("(except=%p,record=%p,frame=%p,context=%p,dispatch=%p)\n",
                      pframe->Handler, &record, pframe, context, &dispatch );
        prevframe = pframe->Prev;
        retval=pframe->Handler(&record,pframe,context,&dispatch);
  
-       TRACE(win32,"exception handler returns 0x%x, dispatch=0x%x\n",
+       TRACE_(win32)("exception handler returns 0x%x, dispatch=0x%x\n",
                               retval, (int) dispatch);
                               
        if(retval==ExceptionContinueExecution)
@@ -184,7 +184,7 @@ REGS_ENTRYPOINT(RaiseException)
    if (retval!=ExceptionContinueExecution)
    {    
        /* FIXME: what should we do here? */
-       TRACE(win32,"no handler wanted to handle the exception, exiting\n");
+       TRACE_(win32)("no handler wanted to handle the exception, exiting\n");
        ExitProcess(dwExceptionCode); /* what status should be used here ? */
    }
 }

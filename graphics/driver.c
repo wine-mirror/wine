@@ -7,7 +7,7 @@
 #include <string.h>
 #include "gdi.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(driver)
 DECLARE_DEBUG_CHANNEL(gdi)
@@ -40,7 +40,7 @@ BOOL DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs )
     /* No name -> it's the generic driver */
     if (genericDriver)
     {
-        WARN(driver, " already a generic driver\n" );
+        WARN_(driver)(" already a generic driver\n" );
         HeapFree( SystemHeap, 0, driver );
         return FALSE;
     }
@@ -107,7 +107,7 @@ BOOL DRIVER_UnregisterDriver( LPCSTR name )
 INT WINAPI GDI_CallDevInstall16( FARPROC16 lpfnDevInstallProc, HWND hWnd, 
                                  LPSTR lpModelName, LPSTR OldPort, LPSTR NewPort )
 {
-    FIXME( gdi, "(%p, %04x, %s, %s, %s)\n", 
+    FIXME_(gdi)("(%p, %04x, %s, %s, %s)\n", 
                 lpfnDevInstallProc, hWnd, lpModelName, OldPort, NewPort );
     return -1;
 }
@@ -132,7 +132,7 @@ INT WINAPI GDI_CallDevInstall16( FARPROC16 lpfnDevInstallProc, HWND hWnd,
 INT WINAPI GDI_CallExtDeviceModePropSheet16( HWND hWnd, LPCSTR lpszDevice, 
                                              LPCSTR lpszPort, LPVOID lpPropSheet )
 {
-    FIXME( gdi, "(%04x, %s, %s, %p)\n", 
+    FIXME_(gdi)("(%04x, %s, %s, %p)\n", 
                 hWnd, lpszDevice, lpszPort, lpPropSheet );
     return -1;
 }
@@ -148,7 +148,7 @@ INT WINAPI GDI_CallExtDeviceMode16( HWND hwnd,
                                     LPSTR lpszPort, LPDEVMODE16 lpdmInput, 
                                     LPSTR lpszProfile, DWORD fwMode )
 {
-    FIXME( gdi, "(%04x, %p, %s, %s, %p, %s, %ld)\n", 
+    FIXME_(gdi)("(%04x, %p, %s, %s, %p, %s, %ld)\n", 
                 hwnd, lpdmOutput, lpszDevice, lpszPort, 
                 lpdmInput, lpszProfile, fwMode );
     return -1;
@@ -163,7 +163,7 @@ INT WINAPI GDI_CallExtDeviceMode16( HWND hwnd,
 INT WINAPI GDI_CallAdvancedSetupDialog16( HWND hwnd, LPSTR lpszDevice,
                                           LPDEVMODE16 devin, LPDEVMODE16 devout )
 {
-    FIXME( gdi, "(%04x, %s, %p, %p)\n", 
+    FIXME_(gdi)("(%04x, %s, %p, %p)\n", 
                 hwnd, lpszDevice, devin, devout );
     return -1;
 }
@@ -178,7 +178,7 @@ DWORD WINAPI GDI_CallDeviceCapabilities16( LPSTR lpszDevice, LPSTR lpszPort,
                                            DWORD fwCapability, LPSTR lpszOutput, 
                                            LPDEVMODE16 lpdm )
 {
-    FIXME( gdi, "(%s, %s, %ld, %p, %p)\n", 
+    FIXME_(gdi)("(%s, %s, %ld, %p, %p)\n", 
                 lpszDevice, lpszPort, fwCapability, lpszOutput, lpdm );
     return -1L;
 }

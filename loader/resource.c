@@ -27,7 +27,7 @@
 #include "process.h"
 #include "module.h"
 #include "file.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "libres.h"
 #include "winerror.h"
 #include "debugstr.h"
@@ -67,7 +67,7 @@ static HRSRC16 MapHRsrc32To16( NE_MODULE *pModule, HANDLE hRsrc32, WORD type )
         if ( !(map = (HRSRC_MAP *)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
                                              sizeof(HRSRC_MAP) ) ) )
         {
-            ERR( resource, "Cannot allocate HRSRC map\n" );
+            ERR_(resource)("Cannot allocate HRSRC map\n" );
             return 0;
         }
         pModule->hRsrcMap = (LPVOID)map;
@@ -86,7 +86,7 @@ static HRSRC16 MapHRsrc32To16( NE_MODULE *pModule, HANDLE hRsrc32, WORD type )
                                                     (map->nAlloc + HRSRC_MAP_BLOCKSIZE) 
                                                     * sizeof(HRSRC_ELEM) ) ))
         {
-            ERR( resource, "Cannot grow HRSRC map\n" );
+            ERR_(resource)("Cannot grow HRSRC map\n" );
             return 0;
         }
         map->elem = newElem;
@@ -138,7 +138,7 @@ static HRSRC RES_FindResource( HMODULE hModule, LPCSTR type,
     WINE_MODREF *wm    = pModule && pModule->module32? 
                          MODULE32_LookupHMODULE( pModule->module32 ) : NULL;
 
-    TRACE( resource, "(%08x %s, %08x%s, %08x%s, %04x, %s, %s)\n",
+    TRACE_(resource)("(%08x %s, %08x%s, %08x%s, %04x, %s, %s)\n",
            hModule, NE_MODULE_NAME(pModule),
            (UINT)type, HIWORD(type)? (bUnicode? debugstr_w((LPWSTR)type) : debugstr_a(type)) : "",
            (UINT)name, HIWORD(name)? (bUnicode? debugstr_w((LPWSTR)name) : debugstr_a(name)) : "",
@@ -173,7 +173,7 @@ static HRSRC RES_FindResource( HMODULE hModule, LPCSTR type,
             break;
 	
         default:
-            ERR( resource, "unknown module type %d\n", wm->type );
+            ERR_(resource)("unknown module type %d\n", wm->type );
             break;
         }
 
@@ -229,7 +229,7 @@ static DWORD RES_SizeofResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
     WINE_MODREF *wm    = pModule && pModule->module32? 
                          MODULE32_LookupHMODULE( pModule->module32 ) : NULL;
 
-    TRACE( resource, "(%08x %s, %08x, %s)\n",
+    TRACE_(resource)("(%08x %s, %08x, %s)\n",
            hModule, NE_MODULE_NAME(pModule), hRsrc, bRet16? "NE" : "PE" );
 
     if ( !pModule || !hRsrc ) return 0;
@@ -252,7 +252,7 @@ static DWORD RES_SizeofResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
             break;
 
         default:
-            ERR( resource, "unknown module type %d\n", wm->type );
+            ERR_(resource)("unknown module type %d\n", wm->type );
             break;
         }
     }
@@ -280,7 +280,7 @@ static HFILE RES_AccessResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
     WINE_MODREF *wm    = pModule && pModule->module32? 
                          MODULE32_LookupHMODULE( pModule->module32 ) : NULL;
 
-    TRACE( resource, "(%08x %s, %08x, %s)\n",
+    TRACE_(resource)("(%08x %s, %08x, %s)\n",
            hModule, NE_MODULE_NAME(pModule), hRsrc, bRet16? "NE" : "PE" );
 
     if ( !pModule || !hRsrc ) return HFILE_ERROR;
@@ -293,7 +293,7 @@ static HFILE RES_AccessResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
         HRSRC hRsrc32 = HIWORD(hRsrc)? hRsrc : MapHRsrc16To32( pModule, hRsrc );
 #endif
 
-        FIXME( resource, "32-bit modules not yet supported.\n" );
+        FIXME_(resource)("32-bit modules not yet supported.\n" );
         hFile = HFILE_ERROR;
 
         /* If we need to return a 16-bit file handle, convert it */
@@ -328,7 +328,7 @@ static HGLOBAL RES_LoadResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
     WINE_MODREF *wm    = pModule && pModule->module32? 
                          MODULE32_LookupHMODULE( pModule->module32 ) : NULL;
 
-    TRACE( resource, "(%08x %s, %08x, %s)\n",
+    TRACE_(resource)("(%08x %s, %08x, %s)\n",
            hModule, NE_MODULE_NAME(pModule), hRsrc, bRet16? "NE" : "PE" );
 
     if ( !pModule || !hRsrc ) return 0;
@@ -351,7 +351,7 @@ static HGLOBAL RES_LoadResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
             break;
 
         default:
-            ERR( resource, "unknown module type %d\n", wm->type );
+            ERR_(resource)("unknown module type %d\n", wm->type );
             break;
         }
 
@@ -387,14 +387,14 @@ static LPVOID RES_LockResource( HGLOBAL handle, BOOL bRet16 )
 {
     LPVOID bits = NULL;
 
-    TRACE( resource, "(%08x, %s)\n", handle, bRet16? "NE" : "PE" );
+    TRACE_(resource)("(%08x, %s)\n", handle, bRet16? "NE" : "PE" );
 
     if ( HIWORD( handle ) )
     {
         /* 32-bit memory handle */
 
         if ( bRet16 )
-            FIXME( resource, "can't return SEGPTR to 32-bit resource %08x.\n", handle );
+            FIXME_(resource)("can't return SEGPTR to 32-bit resource %08x.\n", handle );
         else
             bits = (LPVOID)handle;
     }
@@ -421,7 +421,7 @@ static BOOL RES_FreeResource( HGLOBAL handle )
 {
     HGLOBAL retv = handle;
 
-    TRACE( resource, "(%08x)\n", handle );
+    TRACE_(resource)("(%08x)\n", handle );
 
     if ( HIWORD( handle ) )
     {
@@ -594,18 +594,18 @@ HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, SEGPTR lpTableName)
     HRSRC16	hRsrc;
 
     if (HIWORD(lpTableName))
-        TRACE(accel, "%04x '%s'\n",
+        TRACE_(accel)("%04x '%s'\n",
                       instance, (char *)PTR_SEG_TO_LIN( lpTableName ) );
     else
-        TRACE(accel, "%04x %04x\n",
+        TRACE_(accel)("%04x %04x\n",
                        instance, LOWORD(lpTableName) );
 
     if (!(hRsrc = FindResource16( instance, lpTableName, RT_ACCELERATOR16 ))) {
-      WARN(accel, "couldn't find accelerator table resource\n");
+      WARN_(accel)("couldn't find accelerator table resource\n");
       return 0;
     }
 
-    TRACE(accel, "returning HACCEL 0x%x\n", hRsrc);
+    TRACE_(accel)("returning HACCEL 0x%x\n", hRsrc);
     return LoadResource16(instance,hRsrc);
 }
 
@@ -625,15 +625,15 @@ HACCEL WINAPI LoadAcceleratorsW(HINSTANCE instance,LPCWSTR lpTableName)
     DWORD size;
 
     if (HIWORD(lpTableName))
-        TRACE(accel, "%p '%s'\n",
+        TRACE_(accel)("%p '%s'\n",
                       (LPVOID)instance, (char *)( lpTableName ) );
     else
-        TRACE(accel, "%p 0x%04x\n",
+        TRACE_(accel)("%p 0x%04x\n",
                        (LPVOID)instance, LOWORD(lpTableName) );
 
     if (!(hRsrc = FindResourceW( instance, lpTableName, RT_ACCELERATORW )))
     {
-      WARN(accel, "couldn't find accelerator table resource\n");
+      WARN_(accel)("couldn't find accelerator table resource\n");
     } else {
       hMem = LoadResource( instance, hRsrc );
       size = SizeofResource( instance, hRsrc );
@@ -653,7 +653,7 @@ HACCEL WINAPI LoadAcceleratorsW(HINSTANCE instance,LPCWSTR lpTableName)
 	accel16[i-1].fVirt |= 0x80;
       }
     }
-    TRACE(accel, "returning HACCEL 0x%x\n", hRsrc);
+    TRACE_(accel)("returning HACCEL 0x%x\n", hRsrc);
     return hRetval;
 }
 
@@ -693,7 +693,7 @@ INT WINAPI CopyAcceleratorTableW(HACCEL src, LPACCEL dst,
   /* Do parameter checking to avoid the explosions and the screaming
      as far as possible. */
   if((dst && (entries < 1)) || (src == (HACCEL)NULL) || !accel) {
-    WARN(accel, "Application sent invalid parameters (%p %p %d).\n",
+    WARN_(accel)("Application sent invalid parameters (%p %p %d).\n",
 	 (LPVOID)src, (LPVOID)dst, entries);
     return 0;
   }
@@ -703,7 +703,7 @@ INT WINAPI CopyAcceleratorTableW(HACCEL src, LPACCEL dst,
   i=0;
   while(!done) {
     /* Spit out some debugging information. */
-    TRACE(accel, "accel %d: type 0x%02x, event '%c', IDval 0x%04x.\n",
+    TRACE_(accel)("accel %d: type 0x%02x, event '%c', IDval 0x%04x.\n",
 	  i, accel[i].fVirt, accel[i].key, accel[i].cmd);
 
     /* Copy data to the destination structure array (if dst == NULL,
@@ -746,21 +746,21 @@ HACCEL WINAPI CreateAcceleratorTableA(LPACCEL lpaccel, INT cEntries)
   /* Do parameter checking just in case someone's trying to be
      funny. */
   if(cEntries < 1) {
-    WARN(accel, "Application sent invalid parameters (%p %d).\n",
+    WARN_(accel)("Application sent invalid parameters (%p %d).\n",
 	 lpaccel, cEntries);
     SetLastError(ERROR_INVALID_PARAMETER);
     return (HACCEL)NULL;
   }
-  FIXME(accel, "should check that the accelerator descriptions are valid,"
+  FIXME_(accel)("should check that the accelerator descriptions are valid,"
 	" return NULL and SetLastError() if not.\n");
 
 
   /* Allocate memory and copy the table. */
   hAccel = GlobalAlloc16(0,cEntries*sizeof(ACCEL16));
 
-  TRACE(accel, "handle %x\n", hAccel);
+  TRACE_(accel)("handle %x\n", hAccel);
   if(!hAccel) {
-    ERR(accel, "Out of memory.\n");
+    ERR_(accel)("Out of memory.\n");
     SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return (HACCEL)NULL;
   }
@@ -773,7 +773,7 @@ HACCEL WINAPI CreateAcceleratorTableA(LPACCEL lpaccel, INT cEntries)
   /* Set the end-of-table terminator. */
   accel[cEntries-1].fVirt |= 0x80;
 
-  TRACE(accel, "Allocated accelerator handle %x\n", hAccel);
+  TRACE_(accel)("Allocated accelerator handle %x\n", hAccel);
   return hAccel;
 }
 
@@ -792,7 +792,7 @@ HACCEL WINAPI CreateAcceleratorTableA(LPACCEL lpaccel, INT cEntries)
  */
 BOOL WINAPI DestroyAcceleratorTable( HACCEL handle )
 {
-    FIXME(accel, "(0x%x): stub\n", handle);
+    FIXME_(accel)("(0x%x): stub\n", handle);
     /* FIXME: GlobalFree16(handle); */
     return TRUE;
 }
@@ -809,7 +809,7 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
     int string_num;
     int i;
 
-    TRACE(resource,"inst=%04x id=%04x buff=%08x len=%d\n",
+    TRACE_(resource)("inst=%04x id=%04x buff=%08x len=%d\n",
                      instance, resource_id, (int) buffer, buflen);
 
     hrsrc = FindResource16( instance, (SEGPTR)((resource_id>>4)+1), RT_STRING16 );
@@ -822,7 +822,7 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
     for (i = 0; i < string_num; i++)
 	p += *p + 1;
     
-    TRACE(resource, "strlen = %d\n", (int)*p );
+    TRACE_(resource)("strlen = %d\n", (int)*p );
     
     i = MIN(buflen - 1, *p);
     if (buffer == NULL)
@@ -835,11 +835,11 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
 	    buffer[0] = '\0';
 	    return 0;
 	}
-	WARN(resource,"Dont know why caller give buflen=%d *p=%d trying to obtain string '%s'\n", buflen, *p, p + 1);
+	WARN_(resource)("Dont know why caller give buflen=%d *p=%d trying to obtain string '%s'\n", buflen, *p, p + 1);
     }
     FreeResource16( hmem );
 
-    TRACE(resource,"'%s' loaded !\n", buffer);
+    TRACE_(resource)("'%s' loaded !\n", buffer);
     return i;
 }
 
@@ -857,7 +857,7 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
 
     if (HIWORD(resource_id)==0xFFFF) /* netscape 3 passes this */
 	resource_id = (UINT)(-((INT)resource_id));
-    TRACE(resource, "instance = %04x, id = %04x, buffer = %08x, "
+    TRACE_(resource)("instance = %04x, id = %04x, buffer = %08x, "
 	   "length = %d\n", instance, (int)resource_id, (int) buffer, buflen);
 
     /* Use bits 4 - 19 (incremented by 1) as resourceid, mask out 
@@ -873,7 +873,7 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
     for (i = 0; i < string_num; i++)
 	p += *p + 1;
     
-    TRACE(resource, "strlen = %d\n", (int)*p );
+    TRACE_(resource)("strlen = %d\n", (int)*p );
     
     i = MIN(buflen - 1, *p);
     if (buffer == NULL)
@@ -887,11 +887,11 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
 	    return 0;
 	}
 #if 0
-	WARN(resource,"Dont know why caller give buflen=%d *p=%d trying to obtain string '%s'\n", buflen, *p, p + 1);
+	WARN_(resource)("Dont know why caller give buflen=%d *p=%d trying to obtain string '%s'\n", buflen, *p, p + 1);
 #endif
     }
 
-    TRACE(resource,"%s loaded !\n", debugstr_w(buffer));
+    TRACE_(resource)("%s loaded !\n", debugstr_w(buffer));
     return i;
 }
 
@@ -955,7 +955,7 @@ INT WINAPI LoadMessageA( HMODULE instance, UINT id, WORD lang,
     PMESSAGE_RESOURCE_ENTRY	mre;
     int		i,slen;
 
-    TRACE(resource, "instance = %08lx, id = %08lx, buffer = %p, length = %ld\n", (DWORD)instance, (DWORD)id, buffer, (DWORD)buflen);
+    TRACE_(resource)("instance = %08lx, id = %08lx, buffer = %p, length = %ld\n", (DWORD)instance, (DWORD)id, buffer, (DWORD)buflen);
 
     /*FIXME: I am not sure about the '1' ... But I've only seen those entries*/
     hrsrc = FindResourceExW(instance,RT_MESSAGELISTW,(LPWSTR)1,lang);
@@ -982,7 +982,7 @@ INT WINAPI LoadMessageA( HMODULE instance, UINT id, WORD lang,
     	mre = (PMESSAGE_RESOURCE_ENTRY)(((char*)mre)+(mre->Length));
     }
     slen=mre->Length;
-    TRACE(resource,"	- strlen=%d\n",slen);
+    TRACE_(resource)("	- strlen=%d\n",slen);
     i = MIN(buflen - 1, slen);
     if (buffer == NULL)
 	return slen; /* different to LoadString */
@@ -996,7 +996,7 @@ INT WINAPI LoadMessageA( HMODULE instance, UINT id, WORD lang,
 	}
     }
     if (buffer)
-	    TRACE(resource,"'%s' copied !\n", buffer);
+	    TRACE_(resource)("'%s' copied !\n", buffer);
     return i;
 }
 

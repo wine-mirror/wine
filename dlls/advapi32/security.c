@@ -9,7 +9,7 @@
 #include "winerror.h"
 #include "heap.h"
 #include "ntddk.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(advapi)
 DECLARE_DEBUG_CHANNEL(security)
@@ -488,7 +488,7 @@ BOOL WINAPI
 MakeSelfRelativeSD( PSECURITY_DESCRIPTOR lpabssecdesc,
                     PSECURITY_DESCRIPTOR lpselfsecdesc, LPDWORD lpbuflen )
 {
-	FIXME(advapi,"(%p,%p,%p),stub!\n",lpabssecdesc,lpselfsecdesc,lpbuflen);
+	FIXME_(advapi)("(%p,%p,%p),stub!\n",lpabssecdesc,lpselfsecdesc,lpbuflen);
 	return TRUE;
 }
 
@@ -498,7 +498,7 @@ MakeSelfRelativeSD( PSECURITY_DESCRIPTOR lpabssecdesc,
 
 BOOL GetSecurityDescriptorControl ( PSECURITY_DESCRIPTOR  pSecurityDescriptor,
 		 /* fixme: PSECURITY_DESCRIPTOR_CONTROL*/ LPVOID pControl, LPDWORD lpdwRevision)
-{	FIXME(advapi,"(%p,%p,%p),stub!\n",pSecurityDescriptor,pControl,lpdwRevision);
+{	FIXME_(advapi)("(%p,%p,%p),stub!\n",pSecurityDescriptor,pControl,lpdwRevision);
 	return 1;
 }		
 
@@ -524,7 +524,7 @@ BOOL GetSecurityDescriptorControl ( PSECURITY_DESCRIPTOR  pSecurityDescriptor,
 BOOL WINAPI
 LookupPrivilegeValueW( LPCWSTR lpSystemName, LPCWSTR lpName, LPVOID lpLuid )
 {
-    FIXME(advapi,"(%s,%s,%p): stub\n",debugstr_w(lpSystemName), 
+    FIXME_(advapi)("(%s,%s,%p): stub\n",debugstr_w(lpSystemName), 
                   debugstr_w(lpName), lpLuid);
     return TRUE;
 }
@@ -556,7 +556,7 @@ GetFileSecurityA( LPCSTR lpFileName,
                     PSECURITY_DESCRIPTOR pSecurityDescriptor,
                     DWORD nLength, LPDWORD lpnLengthNeeded )
 {
-  FIXME(advapi, "(%s) : stub\n", debugstr_a(lpFileName));
+  FIXME_(advapi)("(%s) : stub\n", debugstr_a(lpFileName));
   return TRUE;
 }
 
@@ -580,7 +580,7 @@ GetFileSecurityW( LPCWSTR lpFileName,
                     PSECURITY_DESCRIPTOR pSecurityDescriptor,
                     DWORD nLength, LPDWORD lpnLengthNeeded )
 {
-  FIXME(advapi, "(%s) : stub\n", debugstr_w(lpFileName) ); 
+  FIXME_(advapi)("(%s) : stub\n", debugstr_w(lpFileName) ); 
   return TRUE;
 }
 
@@ -593,7 +593,7 @@ LookupAccountSidA( LPCSTR system, PSID sid, LPCSTR account,
                      LPDWORD accountSize, LPCSTR domain, LPDWORD domainSize,
                      PSID_NAME_USE name_use )
 {
-	FIXME(security,"(%s,%p,%p,%p,%p,%p,%p): stub\n",
+	FIXME_(security)("(%s,%p,%p,%p,%p,%p,%p): stub\n",
 	      system,sid,account,accountSize,domain,domainSize,name_use);
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
@@ -616,7 +616,7 @@ LookupAccountSidW( LPCWSTR system, PSID sid, LPCWSTR account,
                      LPDWORD accountSize, LPCWSTR domain, LPDWORD domainSize,
                      PSID_NAME_USE name_use )
 {
-	FIXME(security,"(%p,%p,%p,%p,%p,%p,%p): stub\n",
+	FIXME_(security)("(%p,%p,%p,%p,%p,%p,%p): stub\n",
 	      system,sid,account,accountSize,domain,domainSize,name_use);
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
@@ -630,7 +630,7 @@ BOOL WINAPI SetFileSecurityA( LPCSTR lpFileName,
                                 SECURITY_INFORMATION RequestedInformation,
                                 PSECURITY_DESCRIPTOR pSecurityDescriptor)
 {
-  FIXME(advapi, "(%s) : stub\n", debugstr_a(lpFileName));
+  FIXME_(advapi)("(%s) : stub\n", debugstr_a(lpFileName));
   return TRUE;
 }
 
@@ -648,7 +648,7 @@ SetFileSecurityW( LPCWSTR lpFileName,
                     SECURITY_INFORMATION RequestedInformation,
                     PSECURITY_DESCRIPTOR pSecurityDescriptor )
 {
-  FIXME(advapi, "(%s) : stub\n", debugstr_w(lpFileName) ); 
+  FIXME_(advapi)("(%s) : stub\n", debugstr_w(lpFileName) ); 
   return TRUE;
 }
 
@@ -661,7 +661,7 @@ SetFileSecurityW( LPCWSTR lpFileName,
 BOOL WINAPI
 QueryWindows31FilesMigration( DWORD x1 )
 {
-	FIXME(advapi,"(%ld):stub\n",x1);
+	FIXME_(advapi)("(%ld):stub\n",x1);
 	return TRUE;
 }
 
@@ -678,7 +678,7 @@ BOOL WINAPI
 SynchronizeWindows31FilesAndWindowsNTRegistry( DWORD x1, DWORD x2, DWORD x3,
                                                DWORD x4 )
 {
-	FIXME(advapi,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx):stub\n",x1,x2,x3,x4);
+	FIXME_(advapi)("(0x%08lx,0x%08lx,0x%08lx,0x%08lx):stub\n",x1,x2,x3,x4);
 	return TRUE;
 }
 
@@ -694,7 +694,7 @@ SynchronizeWindows31FilesAndWindowsNTRegistry( DWORD x1, DWORD x2, DWORD x3,
 BOOL WINAPI
 LsaOpenPolicy( DWORD x1, DWORD x2, DWORD x3, DWORD x4 )
 {
-	FIXME(advapi,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx):stub\n",x1,x2,x3,x4);
+	FIXME_(advapi)("(0x%08lx,0x%08lx,0x%08lx,0x%08lx):stub\n",x1,x2,x3,x4);
 	return 0xc0000000; /* generic error */
 }
 
@@ -707,7 +707,7 @@ LsaOpenPolicy( DWORD x1, DWORD x2, DWORD x3, DWORD x4 )
 BOOL WINAPI
 NotifyBootConfigStatus( DWORD x1 )
 {
-	FIXME(advapi,"(0x%08lx):stub\n",x1);
+	FIXME_(advapi)("(0x%08lx):stub\n",x1);
 	return 1;
 }
 
@@ -720,7 +720,7 @@ NotifyBootConfigStatus( DWORD x1 )
 BOOL WINAPI
 RevertToSelf( void )
 {
-	FIXME(advapi,"(), stub\n");
+	FIXME_(advapi)("(), stub\n");
 	return TRUE;
 }
 
@@ -730,7 +730,7 @@ RevertToSelf( void )
 BOOL WINAPI
 ImpersonateSelf(DWORD/*SECURITY_IMPERSONATION_LEVEL*/ ImpersonationLevel)
 {
-    FIXME(advapi, "(%08lx), stub\n", ImpersonationLevel);
+    FIXME_(advapi)("(%08lx), stub\n", ImpersonationLevel);
     return TRUE;
 }
 
@@ -740,7 +740,7 @@ ImpersonateSelf(DWORD/*SECURITY_IMPERSONATION_LEVEL*/ ImpersonationLevel)
 BOOL WINAPI
 AccessCheck(PSECURITY_DESCRIPTOR pSecurityDescriptor, HANDLE ClientToken, DWORD DesiredAccess, LPVOID/*LPGENERIC_MAPPING*/ GenericMapping, LPVOID/*LPPRIVILEGE_SET*/ PrivilegeSet, LPDWORD PrivilegeSetLength, LPDWORD GrantedAccess, LPBOOL AccessStatus)
 {
-    FIXME(advapi, "(%p, %04x, %08lx, %p, %p, %p, %p, %p), stub\n", pSecurityDescriptor, ClientToken, DesiredAccess, GenericMapping, PrivilegeSet, PrivilegeSetLength, GrantedAccess, AccessStatus);
+    FIXME_(advapi)("(%p, %04x, %08lx, %p, %p, %p, %p, %p), stub\n", pSecurityDescriptor, ClientToken, DesiredAccess, GenericMapping, PrivilegeSet, PrivilegeSetLength, GrantedAccess, AccessStatus);
     *AccessStatus = TRUE;
     return TRUE;
 }

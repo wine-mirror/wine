@@ -15,7 +15,7 @@
 #include "task.h"
 #include "callback.h"
 #include "stackframe.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(dosmem)
 DECLARE_DEBUG_CHANNEL(thread)
@@ -36,7 +36,7 @@ BOOL WINAPI WOWGetDescriptor(SEGPTR segptr,LPLDT_ENTRY ldtent)
  */
 DWORD WINAPI GetWin16DOSEnv()
 {
-	FIXME(dosmem,"stub, returning 0\n");
+	FIXME_(dosmem)("stub, returning 0\n");
 	return 0;
 }
 
@@ -47,7 +47,7 @@ LPVOID WINAPI GetPK16SysVar(void)
 {
     static BYTE PK16SysVar[128];
 
-    FIXME(win32, "()\n");
+    FIXME_(win32)("()\n");
     return PK16SysVar;
 }
 
@@ -57,7 +57,7 @@ LPVOID WINAPI GetPK16SysVar(void)
 REGS_ENTRYPOINT(CommonUnimpStub)
 {
     if (EAX_reg(context))
-        MSG( "*** Unimplemented Win32 API: %s\n", (LPSTR)EAX_reg(context) );
+        MESSAGE( "*** Unimplemented Win32 API: %s\n", (LPSTR)EAX_reg(context) );
 
     switch ((ECX_reg(context) >> 4) & 0x0f)
     {
@@ -82,19 +82,19 @@ void WINAPI HouseCleanLogicallyDeadHandles(void)
 
 
 BOOL WINAPI _KERNEL32_100(HANDLE threadid,DWORD exitcode,DWORD x) {
-	FIXME(thread,"(%d,%ld,0x%08lx): stub\n",threadid,exitcode,x);
+	FIXME_(thread)("(%d,%ld,0x%08lx): stub\n",threadid,exitcode,x);
 	return TRUE;
 }
 
 DWORD WINAPI _KERNEL32_99(DWORD x) {
-	FIXME(win32,"(0x%08lx): stub\n",x);
+	FIXME_(win32)("(0x%08lx): stub\n",x);
 	return 1;
 }
 /***********************************************************************
  *           PrivateExtractIconExA			[USER32.442]
  */
 HRESULT WINAPI PrivateExtractIconExA ( DWORD u, DWORD v, DWORD w, DWORD x ,DWORD y )
-{	FIXME(win,"0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx stub\n",u,v,w,x,y);
+{	FIXME_(win)("0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx stub\n",u,v,w,x,y);
 	return 0;
 	
 }
@@ -102,7 +102,7 @@ HRESULT WINAPI PrivateExtractIconExA ( DWORD u, DWORD v, DWORD w, DWORD x ,DWORD
  *           PrivateExtractIconExW			[USER32.443]
  */
 HRESULT WINAPI PrivateExtractIconExW ( DWORD u, DWORD v, DWORD w, DWORD x ,DWORD y )
-{	FIXME(win,"0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx stub\n",u,v,w,x,y);
+{	FIXME_(win)("0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx stub\n",u,v,w,x,y);
 	return 0;
 	
 }
@@ -110,7 +110,7 @@ HRESULT WINAPI PrivateExtractIconExW ( DWORD u, DWORD v, DWORD w, DWORD x ,DWORD
  *           PrivateExtractIconsW			[USER32.445]
  */
 HRESULT WINAPI PrivateExtractIconsW ( DWORD r, DWORD s, DWORD t, DWORD u, DWORD v, DWORD w, DWORD x, DWORD y )
-{	FIXME(win,"0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx stub\n",r,s,t,u,v,w,x,y );
+{	FIXME_(win)("0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx 0x%08lx stub\n",r,s,t,u,v,w,x,y );
 	return 0;
 	
 }
@@ -118,7 +118,7 @@ HRESULT WINAPI PrivateExtractIconsW ( DWORD r, DWORD s, DWORD t, DWORD u, DWORD 
  *           RegisterShellHookWindow			[USER32.459]
  */
 HRESULT WINAPI RegisterShellHookWindow ( DWORD u )
-{	FIXME(win,"0x%08lx stub\n",u);
+{	FIXME_(win)("0x%08lx stub\n",u);
 	return 0;
 	
 }
@@ -126,7 +126,7 @@ HRESULT WINAPI RegisterShellHookWindow ( DWORD u )
  *           DeregisterShellHookWindow			[USER32.132]
  */
 HRESULT WINAPI DeregisterShellHookWindow ( DWORD u )
-{	FIXME(win,"0x%08lx stub\n",u);
+{	FIXME_(win)("0x%08lx stub\n",u);
 	return 0;
 	
 }
@@ -134,7 +134,7 @@ HRESULT WINAPI DeregisterShellHookWindow ( DWORD u )
  *           RegisterTaskList32   			[USER23.436]
  */
 DWORD WINAPI RegisterTaskList (DWORD x)
-{	FIXME(win,"0x%08lx\n",x);
+{	FIXME_(win)("0x%08lx\n",x);
 	return TRUE;
 }
 

@@ -25,7 +25,7 @@
 #include "file.h"
 #include "module.h"
 #include "stackframe.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "xmalloc.h"
 
 DECLARE_DEBUG_CHANNEL(dll)
@@ -85,7 +85,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     pModuleTable = NE_MODULE_TABLE( pModule );
 
     hf = NE_OpenFile( pModule );
-    TRACE(module, "Loading segment %d, hSeg=%04x, flags=%04x\n",
+    TRACE_(module)("Loading segment %d, hSeg=%04x, flags=%04x\n",
                     segnum, pSeg->hSeg, pSeg->flags );
     SetFilePointer( hf, pSeg->filepos << pModule->alignment, NULL, SEEK_SET );
     if (pSeg->size) size = pSeg->size;
@@ -117,7 +117,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         stack16Top->bp = 0;
         stack16Top->ip = 0;
         stack16Top->cs = 0;
-	TRACE(dll,"CallLoadAppSegProc(hmodule=0x%04x,hf=0x%04x,segnum=%d\n",
+	TRACE_(dll)("CallLoadAppSegProc(hmodule=0x%04x,hf=0x%04x,segnum=%d\n",
 		pModule->self,hf,segnum );
         DuplicateHandle( GetCurrentProcess(), hf, GetCurrentProcess(), &hFile32,
                          0, FALSE, DUPLICATE_SAME_ACCESS );
@@ -125,7 +125,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
  	new_hSeg = Callbacks->CallLoadAppSegProc(selfloadheader->LoadAppSeg,
                                                     pModule->self, hFile16,
                                                     segnum );
-	TRACE(dll,"Ret CallLoadAppSegProc: hSeg = 0x%04x\n",new_hSeg);
+	TRACE_(dll)("Ret CallLoadAppSegProc: hSeg = 0x%04x\n",new_hSeg);
         _lclose16( hFile16 );
  	if (SEL(new_hSeg) != SEL(old_hSeg)) {
  	  /* Self loaders like creating their own selectors; 
@@ -137,7 +137,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
  		   pSeg->minsize ? pSeg->minsize : 0x10000);
  	    FreeSelector16(SEL(new_hSeg));
  	    pSeg->hSeg = old_hSeg;
- 	    TRACE(module, "New hSeg allocated for dgroup segment:Old=%d,New=%d\n", 
+ 	    TRACE_(module)("New hSeg allocated for dgroup segment:Old=%d,New=%d\n", 
                 old_hSeg, new_hSeg);
  	  } else {
  	    FreeSelector16(SEL(pSeg->hSeg));
@@ -180,11 +180,11 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     ReadFile(hf, &count, sizeof(count), &res, NULL);
     if (!count) return TRUE;
 
-    TRACE(fixup, "Fixups for %.*s, segment %d, hSeg %04x\n",
+    TRACE_(fixup)("Fixups for %.*s, segment %d, hSeg %04x\n",
                    *((BYTE *)pModule + pModule->name_table),
                    (char *)pModule + pModule->name_table + 1,
                    segnum, pSeg->hSeg );
-    TRACE(segment, "Fixups for %.*s, segment %d, hSeg %04x\n",
+    TRACE_(segment)("Fixups for %.*s, segment %d, hSeg %04x\n",
                    *((BYTE *)pModule + pModule->name_table),
                    (char *)pModule + pModule->name_table + 1,
                    segnum, pSeg->hSeg );
@@ -193,7 +193,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     if (!ReadFile( hf, reloc_entries, count * sizeof(struct relocation_entry_s), &res, NULL) ||
         (res != count * sizeof(struct relocation_entry_s)))
     {
-        WARN(fixup, "Unable to read relocation information\n" );
+        WARN_(fixup)("Unable to read relocation information\n" );
         return FALSE;
     }
 
@@ -222,14 +222,14 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             {
                 NE_MODULE *pTarget = NE_GetPtr( module );
                 if (!pTarget)
-                    WARN(module, "Module not found: %04x, reference %d of module %*.*s\n",
+                    WARN_(module)("Module not found: %04x, reference %d of module %*.*s\n",
                              module, rep->target1, 
                              *((BYTE *)pModule + pModule->name_table),
                              *((BYTE *)pModule + pModule->name_table),
                              (char *)pModule + pModule->name_table + 1 );
                 else
                 {
-                    ERR(fixup, "No implementation for %.*s.%d, setting to 0xdeadbeef\n",
+                    ERR_(fixup)("No implementation for %.*s.%d, setting to 0xdeadbeef\n",
                             *((BYTE *)pTarget + pTarget->name_table),
                             (char *)pTarget + pTarget->name_table + 1,
                             ordinal );
@@ -239,7 +239,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             if (TRACE_ON(fixup))
             {
                 NE_MODULE *pTarget = NE_GetPtr( module );
-                TRACE( fixup, "%d: %.*s.%d=%04x:%04x %s\n", i + 1, 
+                TRACE_(fixup)("%d: %.*s.%d=%04x:%04x %s\n", i + 1, 
                        *((BYTE *)pTarget + pTarget->name_table),
                        (char *)pTarget + pTarget->name_table + 1,
                        ordinal, HIWORD(address), LOWORD(address),
@@ -259,7 +259,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             if (ERR_ON(fixup) && !address)
             {
                 NE_MODULE *pTarget = NE_GetPtr( module );
-                ERR(fixup, "No implementation for %.*s.%s, setting to 0xdeadbeef\n",
+                ERR_(fixup)("No implementation for %.*s.%s, setting to 0xdeadbeef\n",
                     *((BYTE *)pTarget + pTarget->name_table),
                     (char *)pTarget + pTarget->name_table + 1, func_name );
             }
@@ -267,7 +267,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             if (TRACE_ON(fixup))
             {
 	        NE_MODULE *pTarget = NE_GetPtr( module );
-                TRACE( fixup, "%d: %.*s.%s=%04x:%04x %s\n", i + 1, 
+                TRACE_(fixup)("%d: %.*s.%s=%04x:%04x %s\n", i + 1, 
                        *((BYTE *)pTarget + pTarget->name_table),
                        (char *)pTarget + pTarget->name_table + 1,
                        func_name, HIWORD(address), LOWORD(address),
@@ -285,7 +285,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                 address = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( SEL(pSegTable[rep->target1-1].hSeg), rep->target2 );
 	    }
 	    
-	    TRACE( fixup,"%d: %04x:%04x %s\n", 
+	    TRACE_(fixup)("%d: %04x:%04x %s\n", 
                    i + 1, HIWORD(address), LOWORD(address),
                    NE_GetRelocAddrName( rep->address_type, additive ) );
 	    break;
@@ -299,7 +299,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 	     * successfully emulate the coprocessor if it doesn't
 	     * exist.
 	     */
-	    TRACE( fixup, "%d: TYPE %d, OFFSET %04x, TARGET %04x %04x %s\n",
+	    TRACE_(fixup)("%d: TYPE %d, OFFSET %04x, TARGET %04x %04x %s\n",
                    i + 1, rep->relocation_type, rep->offset,
                    rep->target1, rep->target2,
                    NE_GetRelocAddrName( rep->address_type, additive ) );
@@ -314,14 +314,14 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         {
             char module[10];
             GetModuleName16( pModule->self, module, sizeof(module) );
-            ERR( fixup, "WARNING: module %s: unknown reloc addr type = 0x%02x. Please report.\n",
+            ERR_(fixup)("WARNING: module %s: unknown reloc addr type = 0x%02x. Please report.\n",
                  module, rep->address_type );
         }
 
         if (additive)
         {
             sp = PTR_SEG_OFF_TO_LIN( SEL(pSeg->hSeg), offset );
-            TRACE( fixup,"    %04x:%04x\n", offset, *sp );
+            TRACE_(fixup)("    %04x:%04x\n", offset, *sp );
             switch (rep->address_type & 0x7f)
             {
             case NE_RADDR_LOWBYTE:
@@ -337,7 +337,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             case NE_RADDR_SELECTOR:
 		/* Borland creates additive records with offset zero. Strange, but OK */
                 if (*sp)
-                    ERR(fixup,"Additive selector to %04x.Please report\n",*sp);
+                    ERR_(fixup)("Additive selector to %04x.Please report\n",*sp);
 		else
                     *sp = HIWORD(address);
                 break;
@@ -351,7 +351,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             {
                 sp = PTR_SEG_OFF_TO_LIN( SEL(pSeg->hSeg), offset );
                 next_offset = *sp;
-                TRACE( fixup,"    %04x:%04x\n", offset, *sp );
+                TRACE_(fixup)("    %04x:%04x\n", offset, *sp );
                 switch (rep->address_type & 0x7f)
                 {
                 case NE_RADDR_LOWBYTE:
@@ -380,7 +380,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     return TRUE;
 
 unknown:
-    WARN(fixup, "WARNING: %d: unknown ADDR TYPE %d,  "
+    WARN_(fixup)("WARNING: %d: unknown ADDR TYPE %d,  "
          "TYPE %d,  OFFSET %04x,  TARGET %04x %04x\n",
          i + 1, rep->address_type, rep->relocation_type, 
          rep->offset, rep->target1, rep->target2);
@@ -409,7 +409,7 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         DWORD oldstack;
         WORD saved_hSeg = pSegTable[pModule->dgroup - 1].hSeg;
 
-        TRACE(module, "%.*s is a self-loading module!\n",
+        TRACE_(module)("%.*s is a self-loading module!\n",
 		     *((BYTE*)pModule + pModule->name_table),
 		     (char *)pModule + pModule->name_table + 1);
         if (!NE_LoadSegment( pModule, 1 )) return FALSE;
@@ -436,10 +436,10 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         DuplicateHandle( GetCurrentProcess(), NE_OpenFile(pModule),
                          GetCurrentProcess(), &hf, 0, FALSE, DUPLICATE_SAME_ACCESS );
         hFile16 = FILE_AllocDosHandle( hf );
-        TRACE(dll,"CallBootAppProc(hModule=0x%04x,hf=0x%04x)\n",
+        TRACE_(dll)("CallBootAppProc(hModule=0x%04x,hf=0x%04x)\n",
               pModule->self,hFile16);
         Callbacks->CallBootAppProc(selfloadheader->BootApp, pModule->self,hFile16);
-	TRACE(dll,"Return from CallBootAppProc\n");
+	TRACE_(dll)("Return from CallBootAppProc\n");
         _lclose16(hf);
         /* some BootApp procs overwrite the segment handle of dgroup */
         pSegTable[pModule->dgroup - 1].hSeg = saved_hSeg;
@@ -470,7 +470,7 @@ void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
     WORD dgroup, num_entries, sel = SEL(pSegTable[segnum-1].hSeg);
     BYTE *pSeg, *pFunc;
 
-    TRACE(module, "(%d);\n", segnum);
+    TRACE_(module)("(%d);\n", segnum);
 
     if (pSegTable[segnum-1].flags & NE_SEGFLAGS_DATA)
 {
@@ -485,7 +485,7 @@ void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
     bundle = (ET_BUNDLE *)((BYTE *)pModule+pModule->entry_table);
 
     do {
-	TRACE(module, "num_entries: %d, bundle: %p, next: %04x, pSeg: %p\n", bundle->last - bundle->first, bundle, bundle->next, pSeg);
+	TRACE_(module)("num_entries: %d, bundle: %p, next: %04x, pSeg: %p\n", bundle->last - bundle->first, bundle, bundle->next, pSeg);
 	if (!(num_entries = bundle->last - bundle->first))
 	    return;
 	entry = (ET_ENTRY *)((BYTE *)bundle+6);
@@ -495,12 +495,12 @@ void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
 	    if (entry->segnum == segnum)
         {
 		pFunc = ((BYTE *)pSeg+entry->offs);
-		TRACE(module, "pFunc: %p, *(DWORD *)pFunc: %08lx, num_entries: %d\n", pFunc, *(DWORD *)pFunc, num_entries);
+		TRACE_(module)("pFunc: %p, *(DWORD *)pFunc: %08lx, num_entries: %d\n", pFunc, *(DWORD *)pFunc, num_entries);
 		if (*(pFunc+2) == 0x90)
         {
 		    if (*(WORD *)pFunc == 0x581e) /* push ds, pop ax */
 		    {
-			TRACE(module, "patch %04x:%04x -> mov ax, ds\n", sel, entry->offs);
+			TRACE_(module)("patch %04x:%04x -> mov ax, ds\n", sel, entry->offs);
 			*(WORD *)pFunc = 0xd88c; /* mov ax, ds */
         }
 
@@ -508,7 +508,7 @@ void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
                         {
 			if ((entry->flags & 2)) /* public data ? */
                         {
-			    TRACE(module, "patch %04x:%04x -> mov ax, dgroup [%04x]\n", sel, entry->offs, dgroup);
+			    TRACE_(module)("patch %04x:%04x -> mov ax, dgroup [%04x]\n", sel, entry->offs, dgroup);
 			    *pFunc = 0xb8; /* mov ax, */
 			    *(WORD *)(pFunc+1) = dgroup;
                     }
@@ -516,7 +516,7 @@ void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
 			if ((pModule->flags & NE_FFLAGS_MULTIPLEDATA)
 			&& (entry->flags & 1)) /* exported ? */
                     {
-			    TRACE(module, "patch %04x:%04x -> nop, nop\n", sel, entry->offs);
+			    TRACE_(module)("patch %04x:%04x -> nop, nop\n", sel, entry->offs);
 			    *(WORD *)pFunc = 0x9090; /* nop, nop */
 			}
                     }
@@ -541,7 +541,7 @@ DWORD WINAPI PatchCodeHandle16(HANDLE16 hSeg)
     NE_MODULE *pModule = NE_GetPtr(FarGetOwner16(sel));
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE(pModule);
 
-    TRACE(module, "(%04x);\n", hSeg);
+    TRACE_(module)("(%04x);\n", hSeg);
 
     /* find the segment number of the module that belongs to hSeg */
     for (segnum = 1; segnum <= pModule->seg_count; segnum++)
@@ -565,7 +565,7 @@ void NE_FixupPrologs( NE_MODULE *pModule )
 {
     WORD segnum;
 
-    TRACE(module, "(%04x)\n", pModule->self );
+    TRACE_(module)("(%04x)\n", pModule->self );
 
     if (pModule->flags & NE_FFLAGS_SELFLOAD)
 	NE_FixupSegmentPrologs(pModule, 1);
@@ -587,7 +587,7 @@ static VOID NE_GetDLLInitParams( NE_MODULE *pModule,
         if (pModule->flags & NE_FFLAGS_MULTIPLEDATA || pModule->dgroup)
         {
             /* Not SINGLEDATA */
-            ERR(dll, "Library is not marked SINGLEDATA\n");
+            ERR_(dll)("Library is not marked SINGLEDATA\n");
             exit(1);
         }
         else  /* DATA NONE DLL */
@@ -662,7 +662,7 @@ static BOOL NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
 
 
     pModule->cs = 0;  /* Don't initialize it twice */
-    TRACE(dll, "Calling LibMain, cs:ip=%04lx:%04x ds=%04lx di=%04x cx=%04x\n", 
+    TRACE_(dll)("Calling LibMain, cs:ip=%04lx:%04x ds=%04lx di=%04x cx=%04x\n", 
                  CS_reg(&context), IP_reg(&context), DS_reg(&context),
                  DI_reg(&context), CX_reg(&context) );
     Callbacks->CallRegisterShortProc( &context, 0 );
@@ -707,7 +707,7 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
     *(DWORD *)(stack - 14) = 0;             /* dwReserved1 */
     *(WORD *) (stack - 16) = 0;             /* wReserved2 */
 
-    TRACE(dll, "Calling DllEntryPoint, cs:ip=%04lx:%04x\n",
+    TRACE_(dll)("Calling DllEntryPoint, cs:ip=%04lx:%04x\n",
           CS_reg(&context), IP_reg(&context));
 
     Callbacks->CallRegisterShortProc( &context, 16 );

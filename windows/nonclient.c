@@ -22,7 +22,7 @@
 #include "queue.h"
 #include "selectors.h"
 #include "tweak.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "options.h"
 #include "shellapi.h"
 #include "cache.h"
@@ -81,7 +81,7 @@ static void NC_AdjustRect( LPRECT16 rect, DWORD style, BOOL menu,
                            DWORD exStyle )
 {
     if (TWEAK_WineLook > WIN31_LOOK)
-	ERR(nonclient, "Called in Win95 mode. Aiee! Please report this.\n" );
+	ERR_(nonclient)("Called in Win95 mode. Aiee! Please report this.\n" );
 
     if(style & WS_ICONIC) return;
     /* Decide if the window will be managed (see CreateWindowEx) */
@@ -311,7 +311,7 @@ DrawCaptionTempA (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
 {
     RECT   rc = *rect;
 
-    TRACE (nonclient, "(%08x,%08x,%p,%08x,%08x,\"%s\",%08x)\n",
+    TRACE_(nonclient)("(%08x,%08x,%p,%08x,%08x,\"%s\",%08x)\n",
 	   hwnd, hdc, rect, hFont, hIcon, str, uFlags);
 
     /* drawing background */
@@ -403,7 +403,7 @@ DrawCaptionTempA (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
 
     /* drawing focus ??? */
     if (uFlags & 0x2000)
-	FIXME (nonclient, "undocumented flag (0x2000)!\n");
+	FIXME_(nonclient)("undocumented flag (0x2000)!\n");
 
     return 0;
 }
@@ -463,7 +463,7 @@ BOOL16 WINAPI AdjustWindowRectEx16( LPRECT16 rect, DWORD style,
 		WS_EX_STATICEDGE | WS_EX_TOOLWINDOW);
     if (exStyle & WS_EX_DLGMODALFRAME) style &= ~WS_THICKFRAME;
 
-    TRACE(nonclient, "(%d,%d)-(%d,%d) %08lx %d %08lx\n",
+    TRACE_(nonclient)("(%d,%d)-(%d,%d) %08lx %d %08lx\n",
                       rect->left, rect->top, rect->right, rect->bottom,
                       style, menu, exStyle );
 
@@ -519,7 +519,7 @@ LONG NC_HandleNCCalcSize( WND *pWnd, RECT *winRect )
 	winRect->bottom -= tmpRect.bottom;
 
 	if (HAS_MENU(pWnd)) {
-	    TRACE(nonclient, "Calling "
+	    TRACE_(nonclient)("Calling "
 			       "GetMenuBarHeight with HWND 0x%x, width %d, "
 			       "at (%d, %d).\n", pWnd->hwndSelf,
 			       winRect->right - winRect->left,
@@ -636,7 +636,7 @@ LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
 {
     RECT16 rect;
 
-    TRACE(nonclient, "hwnd=%04x pt=%d,%d\n",
+    TRACE_(nonclient)("hwnd=%04x pt=%d,%d\n",
 		      wndPtr->hwndSelf, pt.x, pt.y );
 
     GetWindowRect16 (wndPtr->hwndSelf, &rect );
@@ -772,7 +772,7 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
 {
     RECT16 rect;
 
-    TRACE(nonclient, "hwnd=%04x pt=%d,%d\n",
+    TRACE_(nonclient)("hwnd=%04x pt=%d,%d\n",
 		      wndPtr->hwndSelf, pt.x, pt.y );
 
     GetWindowRect16 (wndPtr->hwndSelf, &rect );
@@ -1211,7 +1211,7 @@ static void NC_DrawFrame( HDC hdc, RECT *rect, BOOL dlgFrame,
     INT width, height;
 
     if (TWEAK_WineLook != WIN31_LOOK)
-	ERR (nonclient, "Called in Win95 mode. Aiee! Please report this.\n" );
+	ERR_(nonclient)("Called in Win95 mode. Aiee! Please report this.\n" );
 
     if (dlgFrame)
     {
@@ -1565,7 +1565,7 @@ void NC_DoNCPaint( WND* wndPtr, HRGN clip, BOOL suppress_menupaint )
 
     active  = wndPtr->flags & WIN_NCACTIVATED;
 
-    TRACE(nonclient, "%04x %d\n", hwnd, active );
+    TRACE_(nonclient)("%04x %d\n", hwnd, active );
 
     if (!(hdc = GetDCEx( hwnd, (clip > 1) ? clip : 0, DCX_USESTYLE | DCX_WINDOW |
 			      ((clip > 1) ? (DCX_INTERSECTRGN | DCX_KEEPCLIPRGN): 0) ))) return;
@@ -1679,7 +1679,7 @@ void  NC_DoNCPaint95(
 
     active  = wndPtr->flags & WIN_NCACTIVATED;
 
-    TRACE(nonclient, "%04x %d\n", hwnd, active );
+    TRACE_(nonclient)("%04x %d\n", hwnd, active );
 
     /* MSDN docs are pretty idiotic here, they say app CAN use clipRgn in the call to
      * GetDCEx implying that it is allowed not to use it either. However, the suggested
@@ -1748,14 +1748,14 @@ void  NC_DoNCPaint95(
 	RECT r = rect;
 	r.bottom = rect.top + sysMetrics[SM_CYMENU];
 	
-	TRACE(nonclient, "Calling DrawMenuBar with "
+	TRACE_(nonclient)("Calling DrawMenuBar with "
 			  "rect (%d, %d)-(%d, %d)\n", r.left, r.top,
 			  r.right, r.bottom);
 
 	rect.top += MENU_DrawMenuBar( hdc, &r, hwnd, suppress_menupaint ) + 1;
     }
 
-    TRACE(nonclient, "After MenuBar, rect is (%d, %d)-(%d, %d).\n",
+    TRACE_(nonclient)("After MenuBar, rect is (%d, %d)-(%d, %d).\n",
 		       rect.left, rect.top, rect.right, rect.bottom );
 
     if (wndPtr->dwExStyle & WS_EX_CLIENTEDGE)
@@ -2529,7 +2529,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM16 wParam, POINT16 pt )
     POINT pt32;
     UINT16 uCommand = wParam & 0xFFF0;
 
-    TRACE(nonclient, "Handling WM_SYSCOMMAND %x %d,%d\n", 
+    TRACE_(nonclient)("Handling WM_SYSCOMMAND %x %d,%d\n", 
 		      wParam, pt.x, pt.y );
 
     if (wndPtr->dwStyle & WS_CHILD && uCommand != SC_KEYMENU )
@@ -2582,14 +2582,14 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM16 wParam, POINT16 pt )
             ShellAboutA(hwnd,"Wine", WINE_RELEASE_INFO, 0);
 	else 
 	  if (wParam == SC_PUTMARK)
-            TRACE(shell,"Mark requested by user\n");
+            TRACE_(shell)("Mark requested by user\n");
 	break;
   
     case SC_HOTKEY:
     case SC_ARRANGE:
     case SC_NEXTWINDOW:
     case SC_PREVWINDOW:
- 	FIXME (nonclient, "unimplemented!\n");
+ 	FIXME_(nonclient)("unimplemented!\n");
         break;
     }
     WIN_ReleaseWndPtr(wndPtr);

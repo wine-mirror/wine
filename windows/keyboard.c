@@ -19,7 +19,7 @@
 #include "heap.h"
 #include "keyboard.h"
 #include "message.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "debugtools.h"
 #include "struct32.h"
 #include "winerror.h"
@@ -86,7 +86,7 @@ void KEYBOARD_SendEvent( BYTE bVk, BYTE bScan, DWORD dwFlags,
   
   if ( !DefKeybEventProc ) return;
   
-  TRACE( event, "(%d,%d,%04lX)\n", bVk, bScan, dwFlags );
+  TRACE_(event)("(%d,%d,%04lX)\n", bVk, bScan, dwFlags );
   
   wke.magic = WINE_KEYBDEVENT_MAGIC;
   wke.posX  = posX;
@@ -105,7 +105,7 @@ void KEYBOARD_SendEvent( BYTE bVk, BYTE bScan, DWORD dwFlags,
  */
 VOID WINAPI ScreenSwitchEnable16(WORD unused)
 {
-  FIXME(keyboard,"(%04x): stub\n",unused);
+  FIXME_(keyboard)("(%04x): stub\n",unused);
 }
 
 /**********************************************************************
@@ -113,7 +113,7 @@ VOID WINAPI ScreenSwitchEnable16(WORD unused)
  */
 DWORD WINAPI OemKeyScan(WORD wOemChar)
 {
-  TRACE(keyboard,"*OemKeyScan (%d)\n",wOemChar);
+  TRACE_(keyboard)("*OemKeyScan (%d)\n",wOemChar);
 
   return wOemChar;
 }
@@ -146,7 +146,7 @@ WORD WINAPI VkKeyScan16(CHAR cChar)
  */
 INT16 WINAPI GetKeyboardType16(INT16 nTypeFlag)
 {
-  TRACE(keyboard,"(%d)\n",nTypeFlag);
+  TRACE_(keyboard)("(%d)\n",nTypeFlag);
   switch(nTypeFlag)
     {
     case 0:      /* Keyboard type */
@@ -159,7 +159,7 @@ INT16 WINAPI GetKeyboardType16(INT16 nTypeFlag)
       return 12;   /* We're doing an 101 for now, so return 12 F-keys */
       break;
     default:     
-      WARN(keyboard, "Unknown type\n");
+      WARN_(keyboard)("Unknown type\n");
       return 0;    /* The book says 0 here, so 0 */
     }
 }
@@ -179,7 +179,7 @@ UINT16 WINAPI MapVirtualKey16(UINT16 wCode, UINT16 wMapType)
  */
 INT16 WINAPI GetKBCodePage16(void)
 {
-  TRACE(keyboard,"(void)\n");
+  TRACE_(keyboard)("(void)\n");
   return 850;
 }
 

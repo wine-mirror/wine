@@ -18,7 +18,7 @@
 #include "winbase.h"
 #include "commctrl.h"
 #include "flatsb.h" 
-#include "debug.h"
+#include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(commctrl)
 DECLARE_DEBUG_CHANNEL(datetime)
@@ -30,42 +30,42 @@ DECLARE_DEBUG_CHANNEL(datetime)
 BOOL WINAPI 
 FlatSB_EnableScrollBar(HWND hwnd, INT dummy, UINT dummy2)
 {
-    FIXME(commctrl,"stub\n");
+    FIXME_(commctrl)("stub\n");
     return 0;
 }
 
 BOOL WINAPI 
 FlatSB_ShowScrollBar(HWND hwnd, INT code, BOOL flag)
 {
-    FIXME(commctrl,"stub\n");
+    FIXME_(commctrl)("stub\n");
     return 0;
 }
 
 BOOL WINAPI 
 FlatSB_GetScrollRange(HWND hwnd, INT code, LPINT min, LPINT max)
 {
-    FIXME(commctrl,"stub\n");
+    FIXME_(commctrl)("stub\n");
     return 0;
 }
 
 BOOL WINAPI 
 FlatSB_GetScrollInfo(HWND hwnd, INT code, LPSCROLLINFO info)
 {
-    FIXME(commctrl,"stub\n");
+    FIXME_(commctrl)("stub\n");
     return 0;
 }
 
 INT WINAPI 
 FlatSB_GetScrollPos(HWND hwnd, INT code)
 {
-    FIXME(commctrl,"stub\n");
+    FIXME_(commctrl)("stub\n");
     return 0;
 }
 
 BOOL WINAPI 
 FlatSB_GetScrollProp(HWND hwnd, INT propIndex, LPINT prop)
 {
-    FIXME(commctrl,"stub\n");
+    FIXME_(commctrl)("stub\n");
     return 0;
 }
 
@@ -73,41 +73,41 @@ FlatSB_GetScrollProp(HWND hwnd, INT propIndex, LPINT prop)
 INT WINAPI 
 FlatSB_SetScrollPos(HWND hwnd, INT code, INT pos, BOOL fRedraw)
 {
-    FIXME(commctrl,"stub\n");
+    FIXME_(commctrl)("stub\n");
     return 0;
 }
 
 INT WINAPI 
 FlatSB_SetScrollInfo(HWND hwnd, INT code, LPSCROLLINFO info, BOOL fRedraw)
 {
-    FIXME(commctrl,"stub\n");
+    FIXME_(commctrl)("stub\n");
     return 0;
 }
 
 INT WINAPI 
 FlatSB_SetScrollRange(HWND hwnd, INT code, INT min, INT max, BOOL fRedraw)
 {
-    FIXME(commctrl,"stub\n");
+    FIXME_(commctrl)("stub\n");
     return 0;
 }
 
 BOOL WINAPI 
 FlatSB_SetScrollProp(HWND hwnd, UINT index, INT newValue, BOOL flag)
 {
-    FIXME(commctrl,"stub\n");
+    FIXME_(commctrl)("stub\n");
     return 0;
 }
 
 
 BOOL WINAPI InitializeFlatSB(HWND hwnd)
 {
-    FIXME(commctrl,"stub\n");
+    FIXME_(commctrl)("stub\n");
     return 0;
 }
 
 HRESULT WINAPI UninitializeFlatSB(HWND hwnd)
 {
-    FIXME(commctrl,"stub\n");
+    FIXME_(commctrl)("stub\n");
     return 0;
 }
 
@@ -143,7 +143,7 @@ FlatSB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	default:
 	    if (uMsg >= WM_USER)
-		ERR (datetime, "unknown msg %04x wp=%08x lp=%08lx\n",
+		ERR_(datetime)("unknown msg %04x wp=%08x lp=%08lx\n",
 		     uMsg, wParam, lParam);
 	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }

@@ -12,7 +12,7 @@
 #include "heap.h"
 #include "metafile.h"
 #include "options.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winerror.h"
 #include "dc.h"
 
@@ -271,7 +271,7 @@ HFONT16 WINAPI CreateFontIndirect16( const LOGFONT16 *font )
 	    fontPtr = (FONTOBJ *) GDI_HEAP_LOCK( hFont );
 	    memcpy( &fontPtr->logfont, font, sizeof(LOGFONT16) );
 
-	    TRACE(font,"(%i %i %i %i) '%s' %s %s => %04x\n",
+	    TRACE_(font)("(%i %i %i %i) '%s' %s %s => %04x\n",
 				 font->lfHeight, font->lfWidth, 
 		                 font->lfEscapement, font->lfOrientation,
 				 font->lfFaceName ? font->lfFaceName : "NULL",
@@ -282,14 +282,14 @@ HFONT16 WINAPI CreateFontIndirect16( const LOGFONT16 *font )
 	    if (font->lfEscapement != font->lfOrientation) {
 	      /* this should really depend on whether GM_ADVANCED is set */
 	      fontPtr->logfont.lfOrientation = fontPtr->logfont.lfEscapement;
-	      WARN(font, 
+	      WARN_(font)(
        "orientation angle %f set to escapement angle %f for new font %04x\n", 
 	   font->lfOrientation/10., font->lfEscapement/10., hFont);
 	    }
 	    GDI_HEAP_UNLOCK( hFont );
 	}
     }
-    else WARN(font,"(NULL) => NULL\n");
+    else WARN_(font)("(NULL) => NULL\n");
 
     return hFont;
 }
@@ -327,7 +327,7 @@ HFONT16 WINAPI CreateFont16(INT16 height, INT16 width, INT16 esc, INT16 orient,
 {
     LOGFONT16 logfont;
 
-    TRACE(font,"('%s',%d,%d)\n",
+    TRACE_(font)("('%s',%d,%d)\n",
 		 (name ? name : "(null)") , height, width);
 
     logfont.lfHeight = height;
@@ -825,7 +825,7 @@ BOOL WINAPI GetTextExtentPoint32A( HDC hdc, LPCSTR str, INT count,
         !dc->funcs->pGetTextExtentPoint( dc, str, count, size ))
         return FALSE;
 
-    TRACE(font,"(%08x %s %d %p): returning %d,%d\n",
+    TRACE_(font)("(%08x %s %d %p): returning %d,%d\n",
                  hdc, debugstr_an (str, count), count,
 		 size, size->cx, size->cy );
     return TRUE;
@@ -860,7 +860,7 @@ BOOL WINAPI GetTextExtentPoint32W(
 BOOL WINAPI GetTextExtentPointA( HDC hdc, LPCSTR str, INT count,
                                           LPSIZE size )
 {
-    TRACE(font, "not bug compatible.\n");
+    TRACE_(font)("not bug compatible.\n");
     return GetTextExtentPoint32A( hdc, str, count, size );
 }
 
@@ -870,7 +870,7 @@ BOOL WINAPI GetTextExtentPointA( HDC hdc, LPCSTR str, INT count,
 BOOL WINAPI GetTextExtentPointW( HDC hdc, LPCWSTR str, INT count,
                                           LPSIZE size )
 {
-    TRACE(font, "not bug compatible.\n");
+    TRACE_(font)("not bug compatible.\n");
     return GetTextExtentPoint32W( hdc, str, count, size );
 }
 
@@ -910,7 +910,7 @@ BOOL WINAPI GetTextExtentExPointA( HDC hdc, LPCSTR str, INT count,
     size->cx = extent;
    *lpnFit = nFit;
 
-    TRACE(font,"(%08x '%.*s' %d) returning %d %d %d\n",
+    TRACE_(font)("(%08x '%.*s' %d) returning %d %d %d\n",
                hdc,count,str,maxExt,nFit, size->cx,size->cy);
     return TRUE;
 }
@@ -979,7 +979,7 @@ BOOL WINAPI GetTextMetricsA( HDC hdc, TEXTMETRICA *metrics )
     metrics->tmMaxCharWidth     = WDPTOLP(metrics->tmMaxCharWidth);
     metrics->tmOverhang         = WDPTOLP(metrics->tmOverhang);
 
-    TRACE(font, "text metrics:\n"
+    TRACE_(font)("text metrics:\n"
     "    Weight = %03i\t FirstChar = %03i\t AveCharWidth = %i\n"
     "    Italic = % 3i\t LastChar = %03i\t\t MaxCharWidth = %i\n"
     "    UnderLined = %01i\t DefaultChar = %03i\t Overhang = %i\n"
@@ -1030,7 +1030,7 @@ UINT16 WINAPI GetOutlineTextMetrics16(
     UINT16 cbData, /* [in]  Size of metric data array */
     LPOUTLINETEXTMETRIC16 lpOTM)  /* [out] Address of metric data array */
 {
-    FIXME(font, "(%04x,%04x,%p): stub\n", hdc,cbData,lpOTM);
+    FIXME_(font)("(%04x,%04x,%p): stub\n", hdc,cbData,lpOTM);
     return 0;
 }
 
@@ -1113,7 +1113,7 @@ UINT WINAPI GetOutlineTextMetricsW(
     UINT cbData, /* [in]  Size of metric data array */
     LPOUTLINETEXTMETRICW lpOTM)  /* [out] Address of metric data array */
 {
-    FIXME(font, "(%d,%d,%p): stub\n", hdc, cbData, lpOTM);
+    FIXME_(font)("(%d,%d,%p): stub\n", hdc, cbData, lpOTM);
     return 0; 
 }
 
@@ -1214,7 +1214,7 @@ DWORD WINAPI SetMapperFlags( HDC hDC, DWORD dwFlag )
     if(dc->funcs->pSetMapperFlags)
         ret = dc->funcs->pSetMapperFlags( dc, dwFlag );
     else
-        FIXME(font, "(0x%04x, 0x%08lx): stub - harmless\n", hDC, dwFlag);
+        FIXME_(font)("(0x%04x, 0x%08lx): stub - harmless\n", hDC, dwFlag);
     GDI_HEAP_UNLOCK( hDC );
     return ret;
 }
@@ -1224,7 +1224,7 @@ DWORD WINAPI SetMapperFlags( HDC hDC, DWORD dwFlag )
  */
 BOOL16 WINAPI GetAspectRatioFilterEx16( HDC16 hdc, LPSIZE16 pAspectRatio )
 {
-  FIXME(font, "(%04x, %p): -- Empty Stub !\n",
+  FIXME_(font)("(%04x, %p): -- Empty Stub !\n",
 		hdc, pAspectRatio);
   return FALSE;
 }
@@ -1234,7 +1234,7 @@ BOOL16 WINAPI GetAspectRatioFilterEx16( HDC16 hdc, LPSIZE16 pAspectRatio )
  */
 BOOL WINAPI GetAspectRatioFilterEx( HDC hdc, LPSIZE pAspectRatio )
 {
-  FIXME(font, "(%04x, %p): -- Empty Stub !\n",
+  FIXME_(font)("(%04x, %p): -- Empty Stub !\n",
         hdc, pAspectRatio);
   return FALSE;
 }
@@ -1284,7 +1284,7 @@ BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
                                    LPABC abc )
 {
     /* No TrueType fonts in Wine so far */
-    FIXME(font, "(%04x,%04x,%04x,%p): stub\n", hdc, firstChar, lastChar, abc);
+    FIXME_(font)("(%04x,%04x,%04x,%p): stub\n", hdc, firstChar, lastChar, abc);
     return FALSE;
 }
 
@@ -1296,7 +1296,7 @@ DWORD WINAPI GetGlyphOutline16( HDC16 hdc, UINT16 uChar, UINT16 fuFormat,
                                 LPGLYPHMETRICS16 lpgm, DWORD cbBuffer,
                                 LPVOID lpBuffer, const MAT2 *lpmat2 )
 {
-    FIXME(font,"(%04x, '%c', %04x, %p, %ld, %p, %p): stub\n",
+    FIXME_(font)("(%04x, '%c', %04x, %p, %ld, %p, %p): stub\n",
 	  hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
     return (DWORD)-1; /* failure */
 }
@@ -1309,7 +1309,7 @@ DWORD WINAPI GetGlyphOutlineA( HDC hdc, UINT uChar, UINT fuFormat,
                                  LPGLYPHMETRICS lpgm, DWORD cbBuffer,
                                  LPVOID lpBuffer, const MAT2 *lpmat2 )
 {
-    FIXME(font,"(%04x, '%c', %04x, %p, %ld, %p, %p): stub\n",
+    FIXME_(font)("(%04x, '%c', %04x, %p, %ld, %p, %p): stub\n",
 	  hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
     return (DWORD)-1; /* failure */
 }
@@ -1321,7 +1321,7 @@ DWORD WINAPI GetGlyphOutlineW( HDC hdc, UINT uChar, UINT fuFormat,
                                  LPGLYPHMETRICS lpgm, DWORD cbBuffer,
                                  LPVOID lpBuffer, const MAT2 *lpmat2 )
 {
-    FIXME(font,"(%04x, '%c', %04x, %p, %ld, %p, %p): stub\n",
+    FIXME_(font)("(%04x, '%c', %04x, %p, %ld, %p, %p): stub\n",
 	  hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
     return (DWORD)-1; /* failure */
 }
@@ -1349,7 +1349,7 @@ BOOL WINAPI CreateScalableFontResourceA( DWORD fHidden,
      * enumbered with EnumFonts/EnumFontFamilies
      * lpszCurrentPath can be NULL
      */
-    FIXME(font,"(%ld,%s,%s,%s): stub\n",
+    FIXME_(font)("(%ld,%s,%s,%s): stub\n",
 	  fHidden, lpszResourceFile, lpszFontFile, lpszCurrentPath );
     return FALSE; /* create failed */
 }
@@ -1362,7 +1362,7 @@ BOOL WINAPI CreateScalableFontResourceW( DWORD fHidden,
                                              LPCWSTR lpszFontFile,
                                              LPCWSTR lpszCurrentPath )
 {
-    FIXME(font,"(%ld,%p,%p,%p): stub\n",
+    FIXME_(font)("(%ld,%p,%p,%p): stub\n",
 	  fHidden, lpszResourceFile, lpszFontFile, lpszCurrentPath );
     return FALSE; /* create failed */
 }
@@ -1397,7 +1397,7 @@ INT16 WINAPI GetKerningPairs16( HDC16 hDC, INT16 cPairs,
 {
     /* At this time kerning is ignored (set to 0) */
     int i;
-    FIXME(font,"(%x,%d,%p): almost empty stub!\n",
+    FIXME_(font)("(%x,%d,%p): almost empty stub!\n",
 	  hDC, cPairs, lpKerningPairs);
     for (i = 0; i < cPairs; i++) 
         lpKerningPairs[i].iKernAmount = 0;
@@ -1413,7 +1413,7 @@ DWORD WINAPI GetKerningPairsA( HDC hDC, DWORD cPairs,
                                  LPKERNINGPAIR lpKerningPairs )
 {
     int i;
-    FIXME(font,"(%x,%ld,%p): almost empty stub!\n",
+    FIXME_(font)("(%x,%ld,%p): almost empty stub!\n",
 	  hDC, cPairs, lpKerningPairs);
     for (i = 0; i < cPairs; i++) 
         lpKerningPairs[i].iKernAmount = 0;
@@ -1478,7 +1478,7 @@ BOOL WINAPI TranslateCharsetInfo(
  */
 DWORD WINAPI GetFontLanguageInfo(HDC hdc) {
 	/* return value 0 is correct for most cases anyway */
-        FIXME(font,"(%x):stub!\n", hdc);
+        FIXME_(font)("(%x):stub!\n", hdc);
 	return 0;
 }
 
@@ -1487,7 +1487,7 @@ DWORD WINAPI GetFontLanguageInfo(HDC hdc) {
  */
 DWORD WINAPI GetFontLanguageInfo16(HDC16 hdc) {
 	/* return value 0 is correct for most cases anyway */
-	FIXME(font,"(%x):stub!\n",hdc);
+	FIXME_(font)("(%x):stub!\n",hdc);
 	return 0;
 }
 
@@ -1510,7 +1510,7 @@ DWORD WINAPI GetFontLanguageInfo16(HDC16 hdc) {
 DWORD WINAPI GetFontData(HDC hdc, DWORD table, DWORD offset, 
     LPVOID buffer, DWORD length)
 {
-    FIXME(font, "(%x,%ld,%ld,%p,%ld): stub\n", 
+    FIXME_(font)("(%x,%ld,%ld,%p,%ld): stub\n", 
         hdc, table, offset, buffer, length);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return GDI_ERROR;
@@ -1525,7 +1525,7 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
 			 DWORD dwFlags)
 {
     /* return value 0 is correct for most cases anyway */
-    FIXME(font,":stub!\n");
+    FIXME_(font)(":stub!\n");
     return 0;
 }
 
@@ -1538,7 +1538,7 @@ GetCharacterPlacementW(HDC hdc, LPCWSTR lpString, INT uCount,
 			 DWORD dwFlags)
 {
     /* return value 0 is correct for most cases anyway */
-    FIXME(font,":stub!\n");
+    FIXME_(font)(":stub!\n");
     return 0;
 }
 
@@ -1548,7 +1548,7 @@ GetCharacterPlacementW(HDC hdc, LPCWSTR lpString, INT uCount,
 BOOL WINAPI GetCharABCWidthsFloatA(HDC hdc, UINT iFirstChar, UINT iLastChar,
 		                        LPABCFLOAT lpABCF)
 {
-       FIXME(gdi, "GetCharABCWidthsFloatA, stub\n");
+       FIXME_(gdi)("GetCharABCWidthsFloatA, stub\n");
        return 0;
 }
 
@@ -1558,7 +1558,7 @@ BOOL WINAPI GetCharABCWidthsFloatA(HDC hdc, UINT iFirstChar, UINT iLastChar,
 BOOL WINAPI GetCharABCWidthsFloatW(HDC hdc, UINT iFirstChar,
 		                        UINT iLastChar, LPABCFLOAT lpABCF)
 {
-       FIXME(gdi, "GetCharABCWidthsFloatW, stub\n");
+       FIXME_(gdi)("GetCharABCWidthsFloatW, stub\n");
        return 0;
 }
 
@@ -1568,7 +1568,7 @@ BOOL WINAPI GetCharABCWidthsFloatW(HDC hdc, UINT iFirstChar,
 BOOL WINAPI GetCharWidthFloatA(HDC hdc, UINT iFirstChar,
 		                    UINT iLastChar, PFLOAT pxBuffer)
 {
-       FIXME(gdi, "GetCharWidthFloatA, stub\n");
+       FIXME_(gdi)("GetCharWidthFloatA, stub\n");
        return 0;
 }
 
@@ -1578,7 +1578,7 @@ BOOL WINAPI GetCharWidthFloatA(HDC hdc, UINT iFirstChar,
 BOOL WINAPI GetCharWidthFloatW(HDC hdc, UINT iFirstChar,
 		                    UINT iLastChar, PFLOAT pxBuffer)
 {
-       FIXME(gdi, "GetCharWidthFloatW, stub\n");
+       FIXME_(gdi)("GetCharWidthFloatW, stub\n");
        return 0;
 }
  

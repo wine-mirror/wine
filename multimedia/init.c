@@ -14,7 +14,7 @@
 #include "multimedia.h"
 #include "xmalloc.h"
 #include "options.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(mci)
 DECLARE_DEBUG_CHANNEL(midi)
@@ -57,7 +57,7 @@ static	int unixToWindowsDeviceType(int type)
     case SYNTH_TYPE_SAMPLE: return MOD_SYNTH;
     case SYNTH_TYPE_MIDI:   return MOD_MIDIPORT;
     default:
-	ERR(midi, "Cannot determine the type of this midi device. "
+	ERR_(midi)("Cannot determine the type of this midi device. "
 	    "Assuming FM Synth\n");
 	return MOD_FMSYNTH;
     }
@@ -81,13 +81,13 @@ static	BOOL MULTIMEDIA_MidiInit(void)
     struct midi_info 	minfo;
     int 		fd;        /* file descriptor for MIDI_SEQ */
     
-    TRACE(midi, "Initializing the MIDI variables.\n");
+    TRACE_(midi)("Initializing the MIDI variables.\n");
     
     /* try to open device */
     /* FIXME: should use function midiOpenSeq() in midi.c */
     fd = open(MIDI_SEQ, O_WRONLY);
     if (fd == -1) {
-	TRACE(midi, "No sequencer found: unable to open `%s'.\n", MIDI_SEQ);
+	TRACE_(midi)("No sequencer found: unable to open `%s'.\n", MIDI_SEQ);
 	return TRUE;
     }
     
@@ -95,13 +95,13 @@ static	BOOL MULTIMEDIA_MidiInit(void)
     status = ioctl(fd, SNDCTL_SEQ_NRSYNTHS, &numsynthdevs);
     
     if (status == -1) {
-	ERR(midi, "ioctl for nr synth failed.\n");
+	ERR_(midi)("ioctl for nr synth failed.\n");
 	close(fd);
 	return TRUE;
     }
 
     if (numsynthdevs > MAX_MIDIOUTDRV) {
-	ERR(midi, "MAX_MIDIOUTDRV (%d) was enough for the number of devices (%d). "
+	ERR_(midi)("MAX_MIDIOUTDRV (%d) was enough for the number of devices (%d). "
 	    "Some FM devices will not be available.\n",MAX_MIDIOUTDRV,numsynthdevs);
 	numsynthdevs = MAX_MIDIOUTDRV;
     }
@@ -112,7 +112,7 @@ static	BOOL MULTIMEDIA_MidiInit(void)
 	sinfo.device = i;
 	status = ioctl(fd, SNDCTL_SYNTH_INFO, &sinfo);
 	if (status == -1) {
-	    ERR(midi, "ioctl for synth info failed.\n");
+	    ERR_(midi)("ioctl for synth info failed.\n");
 	    close(fd);
 	    return TRUE;
 	}
@@ -151,32 +151,32 @@ static	BOOL MULTIMEDIA_MidiInit(void)
 	midiOutDevices[i] = tmplpCaps;
 	
 	if (sinfo.capabilities & SYNTH_CAP_INPUT) {
-	    FIXME(midi, "Synthetizer support MIDI in. Not supported yet (please report)\n");
+	    FIXME_(midi)("Synthetizer support MIDI in. Not supported yet (please report)\n");
 	}
 	
-	TRACE(midi, "name='%s', techn=%d voices=%d notes=%d support=%ld\n", 
+	TRACE_(midi)("name='%s', techn=%d voices=%d notes=%d support=%ld\n", 
 	      tmplpCaps->szPname, tmplpCaps->wTechnology,
 	      tmplpCaps->wVoices, tmplpCaps->wNotes, tmplpCaps->dwSupport);
-	TRACE(midi,"OSS info: synth subtype=%d capa=%Xh\n", 
+	TRACE_(midi)("OSS info: synth subtype=%d capa=%Xh\n", 
 	      sinfo.synth_subtype, sinfo.capabilities);
     }
     
     /* find how many MIDI devices are there in the system */
     status = ioctl(fd, SNDCTL_SEQ_NRMIDIS, &nummididevs);
     if (status == -1) {
-	ERR(midi, "ioctl on nr midi failed.\n");
+	ERR_(midi)("ioctl on nr midi failed.\n");
 	return TRUE;
     }
     
     /* FIXME: the two restrictions below could be loosen in some cases */
     if (numsynthdevs + nummididevs > MAX_MIDIOUTDRV) {
-	ERR(midi, "MAX_MIDIOUTDRV was not enough for the number of devices. "
+	ERR_(midi)("MAX_MIDIOUTDRV was not enough for the number of devices. "
 	    "Some MIDI devices will not be available.\n");
 	nummididevs = MAX_MIDIOUTDRV - numsynthdevs;
     }
     
     if (nummididevs > MAX_MIDIINDRV) {
-	ERR(midi, "MAX_MIDIINDRV (%d) was not enough for the number of devices (%d). "
+	ERR_(midi)("MAX_MIDIINDRV (%d) was not enough for the number of devices (%d). "
 	    "Some MIDI devices will not be available.\n",MAX_MIDIINDRV,nummididevs);
 	nummididevs = MAX_MIDIINDRV;
     }
@@ -188,7 +188,7 @@ static	BOOL MULTIMEDIA_MidiInit(void)
 	minfo.device = i;
 	status = ioctl(fd, SNDCTL_MIDI_INFO, &minfo);
 	if (status == -1) {
-	    ERR(midi, "ioctl on midi info failed.\n");
+	    ERR_(midi)("ioctl on midi info failed.\n");
 	    close(fd);
 	    return TRUE;
 	}
@@ -236,10 +236,10 @@ static	BOOL MULTIMEDIA_MidiInit(void)
 	
 	midiInDevices[i] = tmplpInCaps;
 	
-	TRACE(midi,"name='%s' techn=%d voices=%d notes=%d support=%ld\n",
+	TRACE_(midi)("name='%s' techn=%d voices=%d notes=%d support=%ld\n",
 	      tmplpOutCaps->szPname, tmplpOutCaps->wTechnology, tmplpOutCaps->wVoices,
 	      tmplpOutCaps->wNotes, tmplpOutCaps->dwSupport);
-	TRACE(midi,"OSS info: midi dev-type=%d, capa=%d\n", 
+	TRACE_(midi)("OSS info: midi dev-type=%d, capa=%d\n", 
 	      minfo.dev_type, minfo.capabilities);
     }
     
@@ -271,20 +271,20 @@ static	BOOL MULTIMEDIA_MidiInit(void)
 
     /* FIXME: should do also some registry diving here */
     if (PROFILE_GetWineIniString("options", "mci", "", lpmciInstallNames, 2048) > 0) {
-	TRACE(mci, "Wine => '%s' \n", ptr1);
+	TRACE_(mci)("Wine => '%s' \n", ptr1);
 	while ((ptr2 = strchr(ptr1, ':')) != 0) {
 	    *ptr2++ = 0;
-	    TRACE(mci, "---> '%s' \n", ptr1);
+	    TRACE_(mci)("---> '%s' \n", ptr1);
 	    mciInstalledCount++;
 	    ptr1 = ptr2;
 	}
 	mciInstalledCount++;
-	TRACE(mci, "---> '%s' \n", ptr1);
+	TRACE_(mci)("---> '%s' \n", ptr1);
 	ptr1 += strlen(ptr1) + 1;
     } else {
 	GetPrivateProfileStringA("mci", NULL, "", lpmciInstallNames, 2048, "SYSTEM.INI");
 	while (strlen(ptr1) > 0) {
-	    TRACE(mci, "---> '%s' \n", ptr1);
+	    TRACE_(mci)("---> '%s' \n", ptr1);
 	    ptr1 += (strlen(ptr1) + 1);
 	    mciInstalledCount++;
 	}
@@ -306,7 +306,7 @@ static		bInitDone = FALSE;
  */
 BOOL WINAPI WINMM_LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-    TRACE(mmsys, "0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
+    TRACE_(mmsys)("0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
@@ -329,7 +329,7 @@ BOOL WINAPI WINMM_LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
 BOOL WINAPI MMSYSTEM_LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-    TRACE(mmsys, "0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
+    TRACE_(mmsys)("0x%x 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:

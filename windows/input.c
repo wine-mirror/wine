@@ -25,7 +25,7 @@
 #include "mouse.h"
 #include "message.h"
 #include "sysmetrics.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "debugtools.h"
 #include "struct32.h"
 #include "winerror.h"
@@ -138,8 +138,8 @@ void WINAPI keybd_event( BYTE bVk, BYTE bScan,
         keylp.lp1.context = (InputKeyStateTable[VK_MENU] & 0x80) != 0; /* 1 if alt */
 
 
-    TRACE(key, "            wParam=%04X, lParam=%08lX\n", bVk, keylp.lp2 );
-    TRACE(key, "            InputKeyState=%X\n", InputKeyStateTable[bVk] );
+    TRACE_(key)("            wParam=%04X, lParam=%08lX\n", bVk, keylp.lp2 );
+    TRACE_(key)("            InputKeyState=%X\n", InputKeyStateTable[bVk] );
 
     hardware_event( message, bVk, keylp.lp2, posX, posY, time, extra );
 }
@@ -246,7 +246,7 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
 BOOL16 WINAPI EnableHardwareInput16(BOOL16 bEnable)
 {
   BOOL16 bOldState = InputEnabled;
-  FIXME(event,"(%d) - stub\n", bEnable);
+  FIXME_(event)("(%d) - stub\n", bEnable);
   InputEnabled = bEnable;
   return bOldState;
 }
@@ -289,7 +289,7 @@ HWND EVENT_Capture(HWND hwnd, INT16 ht)
     /* Get the messageQ for the current thread */
     if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
     {
-        WARN( win, "\tCurrent message queue not found. Exiting!\n" );
+        WARN_(win)("\tCurrent message queue not found. Exiting!\n" );
         goto CLEANUP;
     }
     
@@ -306,7 +306,7 @@ HWND EVENT_Capture(HWND hwnd, INT16 ht)
         wndPtr = WIN_FindWndPtr( hwnd );
         if (wndPtr)
         {
-            TRACE(win, "(0x%04x)\n", hwnd );
+            TRACE_(win)("(0x%04x)\n", hwnd );
             captureWnd   = hwnd;
             captureHT    = ht;
         }
@@ -321,7 +321,7 @@ HWND EVENT_Capture(HWND hwnd, INT16 ht)
             pMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( wndPtr->hmemTaskQ );
             if ( !pMsgQ )
             {
-                WARN( win, "\tMessage queue not found. Exiting!\n" );
+                WARN_(win)("\tMessage queue not found. Exiting!\n" );
                 goto CLEANUP;
             }
     
@@ -402,7 +402,7 @@ HWND WINAPI GetCapture(void)
     /* Get the messageQ for the current thread */
     if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
 {
-        TRACE( win, "GetCapture32:  Current message queue not found. Exiting!\n" );
+        TRACE_(win)("GetCapture32:  Current message queue not found. Exiting!\n" );
         return 0;
     }
     
@@ -462,7 +462,7 @@ INT16 WINAPI GetKeyState(INT vkey)
  */
 VOID WINAPI GetKeyboardState(LPBYTE lpKeyState)
 {
-    TRACE(key, "(%p)\n", lpKeyState);
+    TRACE_(key)("(%p)\n", lpKeyState);
     if (lpKeyState != NULL) {
 	QueueKeyStateTable[VK_LBUTTON] = MouseButtonsStates[0] ? 0x80 : 0;
 	QueueKeyStateTable[VK_MBUTTON] = MouseButtonsStates[1] ? 0x80 : 0;
@@ -476,7 +476,7 @@ VOID WINAPI GetKeyboardState(LPBYTE lpKeyState)
  */
 VOID WINAPI SetKeyboardState(LPBYTE lpKeyState)
 {
-    TRACE(key, "(%p)\n", lpKeyState);
+    TRACE_(key)("(%p)\n", lpKeyState);
     if (lpKeyState != NULL) {
 	memcpy(QueueKeyStateTable, lpKeyState, 256);
 	MouseButtonsStates[0] = (QueueKeyStateTable[VK_LBUTTON] != 0);
@@ -525,7 +525,7 @@ WORD WINAPI GetAsyncKeyState(INT nKey)
     memset( AsyncMouseButtonsStates, 0, sizeof(AsyncMouseButtonsStates) );
     memset( AsyncKeyStateTable, 0, sizeof(AsyncKeyStateTable) );
 
-    TRACE(key, "(%x) -> %x\n", nKey, retval);
+    TRACE_(key)("(%x) -> %x\n", nKey, retval);
     return retval;
 }
 
@@ -552,14 +552,14 @@ static BOOL KBD_translate_accelerator(HWND hWnd,LPMSG msg,
     	if (msg->message == WM_CHAR) {
         if ( !(fVirt & FALT) && !(fVirt & FVIRTKEY) )
         {
-   	  TRACE(accel,"found accel for WM_CHAR: ('%c')\n",
+   	  TRACE_(accel)("found accel for WM_CHAR: ('%c')\n",
 			msg->wParam&0xff);
    	  sendmsg=TRUE;
    	}  
       } else {
        if(fVirt & FVIRTKEY) {
 	INT mask = 0;
-        TRACE(accel,"found accel for virt_key %04x (scan %04x)\n",
+        TRACE_(accel)("found accel for virt_key %04x (scan %04x)\n",
   	                       msg->wParam,0xff & HIWORD(msg->lParam));                
 	if(GetKeyState(VK_SHIFT) & 0x8000) mask |= FSHIFT;
 	if(GetKeyState(VK_CONTROL) & 0x8000) mask |= FCONTROL;
@@ -567,7 +567,7 @@ static BOOL KBD_translate_accelerator(HWND hWnd,LPMSG msg,
 	if(mask == (fVirt & (FSHIFT | FCONTROL | FALT)))
           sendmsg=TRUE;			    
         else
-          TRACE(accel,", but incorrect SHIFT/CTRL/ALT-state\n");
+          TRACE_(accel)(", but incorrect SHIFT/CTRL/ALT-state\n");
        }
        else
        {
@@ -575,7 +575,7 @@ static BOOL KBD_translate_accelerator(HWND hWnd,LPMSG msg,
          {
            if ((fVirt & FALT) && (msg->lParam & 0x20000000))
            {                                                   /* ^^ ALT pressed */
-	    TRACE(accel,"found accel for Alt-%c\n", msg->wParam&0xff);
+	    TRACE_(accel)("found accel for Alt-%c\n", msg->wParam&0xff);
 	    sendmsg=TRUE;	    
 	   } 
          } 
@@ -634,7 +634,7 @@ static BOOL KBD_translate_accelerator(HWND hWnd,LPMSG msg,
           }
           if ( mesg==WM_COMMAND || mesg==WM_SYSCOMMAND )
           {
-              TRACE(accel,", sending %s, wParam=%0x\n",
+              TRACE_(accel)(", sending %s, wParam=%0x\n",
                   mesg==WM_COMMAND ? "WM_COMMAND" : "WM_SYSCOMMAND",
                   cmd);
 	      SendMessageA(hWnd, mesg, cmd, 0x00010000L);
@@ -650,9 +650,9 @@ static BOOL KBD_translate_accelerator(HWND hWnd,LPMSG msg,
 	    *   #5: it's a menu option, but window is iconic
 	    *   #6: it's a menu option, but disabled
 	    */
-	    TRACE(accel,", but won't send WM_{SYS}COMMAND, reason is #%d\n",mesg);
+	    TRACE_(accel)(", but won't send WM_{SYS}COMMAND, reason is #%d\n",mesg);
 	    if(mesg==0)
-	      ERR(accel, " unknown reason - please report!");
+	      ERR_(accel)(" unknown reason - please report!");
 	  }          
           return TRUE;         
       }
@@ -669,7 +669,7 @@ INT WINAPI TranslateAccelerator(HWND hWnd, HACCEL hAccel, LPMSG msg)
     LPACCEL16	lpAccelTbl = (LPACCEL16)LockResource16(hAccel);
     int 	i;
 
-    TRACE(accel,"hwnd=0x%x hacc=0x%x msg=0x%x wp=0x%x lp=0x%lx\n", hWnd, hAccel, msg->message, msg->wParam, msg->lParam);
+    TRACE_(accel)("hwnd=0x%x hacc=0x%x msg=0x%x wp=0x%x lp=0x%lx\n", hWnd, hAccel, msg->message, msg->wParam, msg->lParam);
     
     if (hAccel == 0 || msg == NULL ||
 	(msg->message != WM_KEYDOWN &&
@@ -677,12 +677,12 @@ INT WINAPI TranslateAccelerator(HWND hWnd, HACCEL hAccel, LPMSG msg)
 	 msg->message != WM_SYSKEYDOWN &&
 	 msg->message != WM_SYSKEYUP &&
 	 msg->message != WM_CHAR)) {
-      WARN(accel, "erraneous input parameters\n");
+      WARN_(accel)("erraneous input parameters\n");
       SetLastError(ERROR_INVALID_PARAMETER);
       return 0;
     }
 
-    TRACE(accel, "TranslateAccelerators hAccel=%04x, hWnd=%04x,"
+    TRACE_(accel)("TranslateAccelerators hAccel=%04x, hWnd=%04x,"
 	  "msg->hwnd=%04x, msg->message=%04x\n",
 	  hAccel,hWnd,msg->hwnd,msg->message);
 
@@ -693,7 +693,7 @@ INT WINAPI TranslateAccelerator(HWND hWnd, HACCEL hAccel, LPMSG msg)
                                       lpAccelTbl[i].key,lpAccelTbl[i].cmd))
 		return 1;
     } while ((lpAccelTbl[i++].fVirt & 0x80) == 0);
-    WARN(accel, "couldn't translate accelerator key\n");
+    WARN_(accel)("couldn't translate accelerator key\n");
     return 0;
 }
 
@@ -712,12 +712,12 @@ INT16 WINAPI TranslateAccelerator16(HWND16 hWnd, HACCEL16 hAccel, LPMSG16 msg)
 	 msg->message != WM_SYSKEYDOWN &&
 	 msg->message != WM_SYSKEYUP &&
 	 msg->message != WM_CHAR)) {
-      WARN(accel, "erraneous input parameters\n");
+      WARN_(accel)("erraneous input parameters\n");
       SetLastError(ERROR_INVALID_PARAMETER);
       return 0;
     }
 
-    TRACE(accel, "TranslateAccelerators hAccel=%04x, hWnd=%04x,\
+    TRACE_(accel)("TranslateAccelerators hAccel=%04x, hWnd=%04x,\
 msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
     STRUCT32_MSG16to32(msg,&msg32);
 
@@ -729,7 +729,7 @@ msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
                                       lpAccelTbl[i].key,lpAccelTbl[i].cmd))
 		return 1;
     } while ((lpAccelTbl[i++].fVirt & 0x80) == 0);
-    WARN(accel, "couldn't translate accelerator key\n");
+    WARN_(accel)("couldn't translate accelerator key\n");
     return 0;
 }
 
@@ -798,7 +798,7 @@ UINT WINAPI MapVirtualKeyW(UINT code, UINT maptype)
 UINT WINAPI MapVirtualKeyEx32A(UINT code, UINT maptype, HKL hkl)
 {
     if (hkl)
-    	FIXME(keyboard,"(%d,%d,0x%08lx), hkl unhandled!\n",code,maptype,(DWORD)hkl);
+    	FIXME_(keyboard)("(%d,%d,0x%08lx), hkl unhandled!\n",code,maptype,(DWORD)hkl);
     return MapVirtualKey16(code,maptype);
 }
 
@@ -830,7 +830,7 @@ HKL WINAPI GetKeyboardLayout(DWORD dwLayout)
         HKL layout;
         layout = GetSystemDefaultLCID(); /* FIXME */
         layout |= (layout<<16);          /* FIXME */
-        TRACE(keyboard,"returning %08x\n",layout);
+        TRACE_(keyboard)("returning %08x\n",layout);
         return layout;
 }
 
@@ -902,8 +902,8 @@ INT WINAPI ToAsciiEx( UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
  */
 HKL WINAPI ActivateKeyboardLayout(HKL hLayout, UINT flags)
 {
-    TRACE(keyboard, "(%d, %d)\n", hLayout, flags);
-    ERR(keyboard,"Only default system keyboard layout supported. Call ignored.\n");
+    TRACE_(keyboard)("(%d, %d)\n", hLayout, flags);
+    ERR_(keyboard)("Only default system keyboard layout supported. Call ignored.\n");
     return 0;
 }
 
@@ -920,7 +920,7 @@ HKL WINAPI ActivateKeyboardLayout(HKL hLayout, UINT flags)
  */
 INT WINAPI GetKeyboardLayoutList(INT nBuff,HKL *layouts)
 {
-        TRACE(keyboard,"(%d,%p)\n",nBuff,layouts);
+        TRACE_(keyboard)("(%d,%p)\n",nBuff,layouts);
         if (!nBuff || !layouts)
             return 1;
 	if (layouts)
@@ -933,7 +933,7 @@ INT WINAPI GetKeyboardLayoutList(INT nBuff,HKL *layouts)
  *           RegisterHotKey			(USER32.433)
  */
 BOOL WINAPI RegisterHotKey(HWND hwnd,INT id,UINT modifiers,UINT vk) {
-	FIXME(keyboard,"(0x%08x,%d,0x%08x,%d): stub\n",hwnd,id,modifiers,vk);
+	FIXME_(keyboard)("(0x%08x,%d,0x%08x,%d): stub\n",hwnd,id,modifiers,vk);
 	return TRUE;
 }
 
@@ -941,7 +941,7 @@ BOOL WINAPI RegisterHotKey(HWND hwnd,INT id,UINT modifiers,UINT vk) {
  *           UnregisterHotKey			(USER32.565)
  */
 BOOL WINAPI UnregisterHotKey(HWND hwnd,INT id) {
-	FIXME(keyboard,"(0x%08x,%d): stub\n",hwnd,id);
+	FIXME_(keyboard)("(0x%08x,%d): stub\n",hwnd,id);
 	return TRUE;
 }
 
@@ -957,7 +957,7 @@ INT WINAPI ToUnicode(
   int    cchBuff,
   UINT wFlags) {
 
-       FIXME(keyboard,": stub\n");
+       FIXME_(keyboard)(": stub\n");
        return 0;
 }
 
@@ -967,8 +967,8 @@ INT WINAPI ToUnicode(
  */
 HKL WINAPI LoadKeyboardLayoutA(LPCSTR pwszKLID, UINT Flags)
 {
-    TRACE(keyboard, "(%s, %d)\n", pwszKLID, Flags);
-    ERR(keyboard,"Only default system keyboard layout supported. Call ignored.\n");
+    TRACE_(keyboard)("(%s, %d)\n", pwszKLID, Flags);
+    ERR_(keyboard)("Only default system keyboard layout supported. Call ignored.\n");
   return 0; 
 }
 

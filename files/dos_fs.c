@@ -31,7 +31,7 @@
 #include "server.h"
 #include "process.h"
 #include "options.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(dosfs)
 DECLARE_DEBUG_CHANNEL(file)
@@ -525,13 +525,13 @@ BOOL DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
     while (len > 1 && name[len-1] == '.') len--;
     if (long_len < len + 1) return FALSE;
 
-    TRACE(dosfs, "%s,%s\n", path, name );
+    TRACE_(dosfs)("%s,%s\n", path, name );
 
     if (!DOSFS_ToDosFCBFormat( name, dos_name )) dos_name[0] = '\0';
 
     if (!(dir = DOSFS_OpenDir( path )))
     {
-        WARN(dosfs, "(%s,%s): can't open dir: %s\n",
+        WARN_(dosfs)("(%s,%s): can't open dir: %s\n",
                        path, name, strerror(errno) );
         return FALSE;
     }
@@ -571,11 +571,11 @@ BOOL DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
             else
                 DOSFS_Hash( long_name, short_buf, FALSE, ignore_case );
         }
-        TRACE(dosfs, "(%s,%s) -> %s (%s)\n",
+        TRACE_(dosfs)("(%s,%s) -> %s (%s)\n",
 		     path, name, long_name, short_buf ? short_buf : "***");
     }
     else
-        WARN(dosfs, "'%s' not found in '%s'\n", name, path);
+        WARN_(dosfs)("'%s' not found in '%s'\n", name, path);
     DOSFS_CloseDir( dir );
     return ret;
 }
@@ -666,7 +666,7 @@ HFILE DOSFS_OpenDevice( const char *name, DWORD access )
 				to_dup = GetStdHandle( STD_OUTPUT_HANDLE );
 				break;
 			default:
-				FIXME(dosfs,"can't open CON read/write\n");
+				FIXME_(dosfs)("can't open CON read/write\n");
 				return HFILE_ERROR;
 				break;
 			}
@@ -687,17 +687,17 @@ HFILE DOSFS_OpenDevice( const char *name, DWORD access )
 
 		    if(devname[0])
 		    {
-			TRACE(file,"DOSFS_OpenDevice %s is %s\n",
+			TRACE_(file)("DOSFS_OpenDevice %s is %s\n",
 				DOSFS_Devices[i].name,devname);
 			r =  FILE_CreateFile( devname, access,
 				FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
 				OPEN_EXISTING, 0, -1 );
-			TRACE(file,"Create_File return %08X\n",r);
+			TRACE_(file)("Create_File return %08X\n",r);
 			return r;
 		    }
 		}
 
-		FIXME(dosfs,"device open %s not supported (yet)\n",DOSFS_Devices[i].name);
+		FIXME_(dosfs)("device open %s not supported (yet)\n",DOSFS_Devices[i].name);
     		return HFILE_ERROR;
 	    }
         }
@@ -725,7 +725,7 @@ static int DOSFS_GetPathDrive( const char **name )
     {
         if ((drive = DRIVE_FindDriveRoot( name )) == -1)
         {
-            MSG("Warning: %s not accessible from a DOS drive\n", *name );
+            MESSAGE("Warning: %s not accessible from a DOS drive\n", *name );
             /* Assume it really was a DOS name */
             drive = DRIVE_GetCurrentDrive();            
         }
@@ -757,7 +757,7 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
     UINT flags;
     char *p_l, *p_s, *root;
 
-    TRACE(dosfs, "%s (last=%d)\n",
+    TRACE_(dosfs)("%s (last=%d)\n",
                    name, check_last );
 
     if ((full->drive = DOSFS_GetPathDrive( &name )) == -1) return FALSE;
@@ -870,7 +870,7 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
     }
     if (!full->long_name[0]) strcpy( full->long_name, "/" );
     if (!full->short_name[2]) strcpy( full->short_name + 2, "\\" );
-    TRACE(dosfs, "returning %s = %s\n",
+    TRACE_(dosfs)("returning %s = %s\n",
                    full->long_name, full->short_name );
     return TRUE;
 }
@@ -1070,7 +1070,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     char *endchar = buffer + sizeof(buffer) - 2;
     *endchar = '\0';
     
-    TRACE(dosfs, "converting '%s'\n", name );
+    TRACE_(dosfs)("converting '%s'\n", name );
 
     if (!name || !result || ((drive = DOSFS_GetPathDrive( &name )) == -1) )
     {   SetLastError( ERROR_INVALID_PARAMETER );
@@ -1141,7 +1141,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     else
         lstrcpynA( result, buffer, len );
 
-    TRACE(dosfs, "returning '%s'\n", buffer );
+    TRACE_(dosfs)("returning '%s'\n", buffer );
 
     /* If the lpBuffer buffer is too small, the return value is the 
     size of the buffer, in characters, required to hold the path. */
@@ -1275,7 +1275,7 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAA *entry )
         lstrcpynA( p, long_name, sizeof(buffer) - (int)(p - buffer) );
         if (!FILE_Stat( buffer, &fileinfo ))
         {
-            WARN(dosfs, "can't stat %s\n", buffer);
+            WARN_(dosfs)("can't stat %s\n", buffer);
             continue;
         }
         if (fileinfo.dwFileAttributes & ~attr) continue;
@@ -1297,7 +1297,7 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAA *entry )
 
         lstrcpynA( entry->cFileName, long_name, sizeof(entry->cFileName) );
         if (!(flags & DRIVE_CASE_PRESERVING)) CharLowerA( entry->cFileName );
-        TRACE(dosfs, "returning %s (%s) %02lx %ld\n",
+        TRACE_(dosfs)("returning %s (%s) %02lx %ld\n",
                        entry->cFileName, entry->cAlternateFileName,
                        entry->dwFileAttributes, entry->nFileSizeLow );
         return 1;
@@ -1862,7 +1862,7 @@ DWORD WINAPI QueryDosDeviceA(LPCSTR devname,LPSTR target,DWORD bufsize)
     LPSTR s;
     char  buffer[200];
 
-    TRACE(dosfs,"(%s,...)\n",devname?devname:"<null>");
+    TRACE_(dosfs)("(%s,...)\n",devname?devname:"<null>");
     if (!devname) {
 	/* return known MSDOS devices */
 	lstrcpyA(buffer,"CON COM1 COM2 LPT1 NUL ");
@@ -1935,7 +1935,7 @@ BOOL WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
 }
 
 BOOL WINAPI DefineDosDeviceA(DWORD flags,LPCSTR devname,LPCSTR targetpath) {
-	FIXME(dosfs,"(0x%08lx,%s,%s),stub!\n",flags,devname,targetpath);
+	FIXME_(dosfs)("(0x%08lx,%s,%s),stub!\n",flags,devname,targetpath);
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
 }

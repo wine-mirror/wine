@@ -18,7 +18,7 @@
 #include "thread.h"
 #include "process.h"
 #include <assert.h>
-#include "debug.h"
+#include "debugtools.h"
 #include "spy.h"
 
 DECLARE_DEBUG_CHANNEL(msg)
@@ -57,7 +57,7 @@ PERQUEUEDATA * PERQDATA_CreateInstance( )
     
     BOOL16 bIsWin16 = 0;
     
-    TRACE(msg,"()\n");
+    TRACE_(msg)("()\n");
 
     /* Share a single instance of perQData for all 16 bit tasks */
     if ( ( bIsWin16 = THREAD_IsWin16( THREAD_Current() ) ) )
@@ -102,7 +102,7 @@ PERQUEUEDATA * PERQDATA_CreateInstance( )
 ULONG PERQDATA_Addref( PERQUEUEDATA *pQData )
 {
     assert(pQData != 0 );
-    TRACE(msg,"(): current refcount %lu ...\n", pQData->ulRefCount);
+    TRACE_(msg)("(): current refcount %lu ...\n", pQData->ulRefCount);
 
     EnterCriticalSection( &pQData->cSection );
     ++pQData->ulRefCount;
@@ -122,7 +122,7 @@ ULONG PERQDATA_Addref( PERQUEUEDATA *pQData )
 ULONG PERQDATA_Release( PERQUEUEDATA *pQData )
 {
     assert(pQData != 0 );
-    TRACE(msg,"(): current refcount %lu ...\n",
+    TRACE_(msg)("(): current refcount %lu ...\n",
           (LONG)pQData->ulRefCount );
 
     EnterCriticalSection( &pQData->cSection );
@@ -131,7 +131,7 @@ ULONG PERQDATA_Release( PERQUEUEDATA *pQData )
         LeaveCriticalSection( &pQData->cSection );
         DeleteCriticalSection( &pQData->cSection );
 
-        TRACE(msg,"(): deleting PERQUEUEDATA instance ...\n" );
+        TRACE_(msg)("(): deleting PERQUEUEDATA instance ...\n" );
 
         /* Deleting our global 16 bit perQData? */
         if ( pQData == pQDataWin16 )
@@ -356,11 +356,11 @@ void QUEUE_DumpQueue( HQUEUE16 hQueue )
 
     if (!(pq = (MESSAGEQUEUE*) QUEUE_Lock( hQueue )) )
     {
-        WARN(msg, "%04x is not a queue handle\n", hQueue );
+        WARN_(msg)("%04x is not a queue handle\n", hQueue );
         return;
     }
 
-    DUMP(    "next: %12.4x  Intertask SendMessage:\n"
+    DPRINTF( "next: %12.4x  Intertask SendMessage:\n"
              "thread: %10p  ----------------------\n"
              "firstMsg: %8p   smWaiting:     %10p\n"
              "lastMsg:  %8p   smPending:     %10p\n"
@@ -390,23 +390,23 @@ void QUEUE_WalkQueues(void)
     char module[10];
     HQUEUE16 hQueue = hFirstQueue;
 
-    DUMP( "Queue Msgs Thread   Task Module\n" );
+    DPRINTF( "Queue Msgs Thread   Task Module\n" );
     while (hQueue)
     {
         MESSAGEQUEUE *queue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue );
         if (!queue)
         {
-            WARN( msg, "Bad queue handle %04x\n", hQueue );
+            WARN_(msg)("Bad queue handle %04x\n", hQueue );
             return;
         }
         if (!GetModuleName16( queue->thdb->process->task, module, sizeof(module )))
             strcpy( module, "???" );
-        DUMP( "%04x %4d %p %04x %s\n", hQueue,queue->msgCount,
-              queue->thdb, queue->thdb->process->task, module );
+        DPRINTF( "%04x %4d %p %04x %s\n", hQueue,queue->msgCount,
+                 queue->thdb, queue->thdb->process->task, module );
         hQueue = queue->next;
         QUEUE_Unlock( queue );
     }
-    DUMP( "\n" );
+    DPRINTF( "\n" );
 }
 
 
@@ -439,7 +439,7 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
     MESSAGEQUEUE * msgQueue;
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
 
-    TRACE(msg,"(): Creating message queue...\n");
+    TRACE_(msg)("(): Creating message queue...\n");
 
     if (!(hQueue = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT,
                                   sizeof(MESSAGEQUEUE) )))
@@ -464,7 +464,7 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
 
         if (msgQueue->hEvent == 0)
         {
-            WARN(msg, "CreateEvent32A is not able to create an event object");
+            WARN_(msg)("CreateEvent32A is not able to create an event object");
             return 0;
         }
         msgQueue->hEvent = ConvertToGlobalHandle( msgQueue->hEvent );
@@ -533,11 +533,11 @@ BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
     MESSAGEQUEUE * msgQueue = (MESSAGEQUEUE*)QUEUE_Lock(hQueue);
     HQUEUE16 *pPrev;
 
-    TRACE(msg,"(): Deleting message queue %04x\n", hQueue);
+    TRACE_(msg)("(): Deleting message queue %04x\n", hQueue);
 
     if (!hQueue || !msgQueue)
     {
-	WARN(msg, "invalid argument.\n");
+	WARN_(msg)("invalid argument.\n");
 	return 0;
     }
 
@@ -568,7 +568,7 @@ BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
         if ( !msgQ || (msgQ->magic != QUEUE_MAGIC) )
         {
             /* HQUEUE link list is corrupted, try to exit gracefully */
-            WARN( msg, "HQUEUE link list corrupted!\n");
+            WARN_(msg)("HQUEUE link list corrupted!\n");
             pPrev = 0;
             break;
         }
@@ -620,7 +620,7 @@ MESSAGEQUEUE *QUEUE_GetSysQueue(void)
  */
 void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit )
 {
-    TRACE(msg,"queue = %04x (wm=%04x), bit = %04x\n", 
+    TRACE_(msg)("queue = %04x (wm=%04x), bit = %04x\n", 
 	                queue->self, queue->wakeMask, bit );
 
     if (bit & QS_MOUSE) pMouseQueue = queue;
@@ -666,7 +666,7 @@ int QUEUE_WaitBits( WORD bits, DWORD timeout )
     MESSAGEQUEUE *queue;
     DWORD curTime = 0;
 
-    TRACE(msg,"q %04x waiting for %04x\n", GetFastQueue16(), bits);
+    TRACE_(msg)("q %04x waiting for %04x\n", GetFastQueue16(), bits);
 
     if ( THREAD_IsWin16( THREAD_Current() ) && (timeout != INFINITE) )
         curTime = GetTickCount();
@@ -697,7 +697,7 @@ int QUEUE_WaitBits( WORD bits, DWORD timeout )
             continue;
         }
 	
-	TRACE(msg,"%04x) wakeMask is %04x, waiting\n", queue->self, queue->wakeMask);
+	TRACE_(msg)("%04x) wakeMask is %04x, waiting\n", queue->self, queue->wakeMask);
 
         if ( !THREAD_IsWin16( THREAD_Current() ) )
         {
@@ -732,7 +732,7 @@ int QUEUE_WaitBits( WORD bits, DWORD timeout )
  */
 BOOL QUEUE_AddSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
 {
-    TRACE(sendmsg,"queue=%x, list=%d, smsg=%p msg=%s\n", queue->self, list,
+    TRACE_(sendmsg)("queue=%x, list=%d, smsg=%p msg=%s\n", queue->self, list,
           smsg, SPY_GetMsgName(smsg->msg));
     
     switch (list)
@@ -770,7 +770,7 @@ BOOL QUEUE_AddSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
         }
 
         default:
-            WARN(sendmsg, "Invalid list: %d", list);
+            WARN_(sendmsg)("Invalid list: %d", list);
             break;
     }
 
@@ -798,13 +798,13 @@ SMSG *QUEUE_RemoveSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
             if (!smsg)
                 smsg = queue->smProcessing;
 
-            TRACE(sendmsg,"queue=%x, list=%d, smsg=%p msg=%s\n", queue->self, list,
+            TRACE_(sendmsg)("queue=%x, list=%d, smsg=%p msg=%s\n", queue->self, list,
                   smsg, SPY_GetMsgName(smsg->msg));
             /* In fact SM_PROCESSING_LIST is a stack, and smsg
              should be always at the top of the list */
             if ( (smsg != queue->smProcessing) || !queue->smProcessing )
         {
-                ERR( sendmsg, "smsg not at the top of Processing list, smsg=0x%p queue=0x%p", smsg, queue);
+                ERR_(sendmsg)("smsg not at the top of Processing list, smsg=0x%p queue=0x%p", smsg, queue);
                 return 0;
             }
             else
@@ -822,13 +822,13 @@ SMSG *QUEUE_RemoveSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
             if (!smsg)
                 smsg = queue->smWaiting;
             
-            TRACE(sendmsg,"queue=%x, list=%d, smsg=%p msg=%s\n", queue->self, list,
+            TRACE_(sendmsg)("queue=%x, list=%d, smsg=%p msg=%s\n", queue->self, list,
                   smsg, SPY_GetMsgName(smsg->msg));
             /* In fact SM_WAITING_LIST is a stack, and smsg
              should be always at the top of the list */
             if ( (smsg != queue->smWaiting) || !queue->smWaiting )
             {
-                ERR( sendmsg, "smsg not at the top of Waiting list, smsg=0x%p queue=0x%p", smsg, queue);
+                ERR_(sendmsg)("smsg not at the top of Waiting list, smsg=0x%p queue=0x%p", smsg, queue);
                 return 0;
             }
             else
@@ -847,12 +847,12 @@ SMSG *QUEUE_RemoveSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
                 smsg = queue->smPending;
             else
             {
-                ERR( sendmsg, "should always remove the top one in Pending list, smsg=0x%p queue=0x%p", smsg, queue);
+                ERR_(sendmsg)("should always remove the top one in Pending list, smsg=0x%p queue=0x%p", smsg, queue);
 				LeaveCriticalSection( &queue->cSection );
                 return 0;
             }
             
-            TRACE(sendmsg,"queue=%x, list=%d, smsg=%p msg=%s\n", queue->self, list,
+            TRACE_(sendmsg)("queue=%x, list=%d, smsg=%p msg=%s\n", queue->self, list,
                   smsg, SPY_GetMsgName(smsg->msg));
 
             queue->smPending = smsg->nextPending;
@@ -866,7 +866,7 @@ SMSG *QUEUE_RemoveSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
             return smsg;
 
         default:
-            WARN(sendmsg, "Invalid list: %d", list);
+            WARN_(sendmsg)("Invalid list: %d", list);
             break;
     }
 
@@ -885,11 +885,11 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
     SMSG          *smsg;
     MESSAGEQUEUE  *senderQ;
 
-    TRACE(sendmsg, "queue %04x\n", queue->self );
+    TRACE_(sendmsg)("queue %04x\n", queue->self );
 
     if ( !(queue->wakeBits & QS_SENDMESSAGE) && queue->smPending )
     {
-        TRACE(sendmsg,"\trcm: nothing to do\n");
+        TRACE_(sendmsg)("\trcm: nothing to do\n");
         return;
     }
 
@@ -897,7 +897,7 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
     smsg = QUEUE_RemoveSMSG(queue, SM_PENDING_LIST, 0);
     QUEUE_AddSMSG(queue, SM_WAITING_LIST, smsg);
 
-    TRACE(sendmsg,"RM: %s [%04x] (%04x -> %04x)\n",
+    TRACE_(sendmsg)("RM: %s [%04x] (%04x -> %04x)\n",
        	    SPY_GetMsgName(smsg->msg), smsg->msg, smsg->hSrcQueue, smsg->hDstQueue );
 
     if (IsWindow( smsg->hWnd ))
@@ -916,7 +916,7 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
         /* call the right version of CallWindowProcXX */
         if (smsg->flags & SMSG_WIN32)
         {
-            TRACE(sendmsg, "\trcm: msg is Win32\n" );
+            TRACE_(sendmsg)("\trcm: msg is Win32\n" );
             if (smsg->flags & SMSG_UNICODE)
                 result = CallWindowProcW( wndPtr->winproc,
                                             smsg->hWnd, smsg->msg,
@@ -935,9 +935,9 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
 
         queue->GetMessageExtraInfoVal = extraInfo;  /* Restore extra info */
         WIN_ReleaseWndPtr(wndPtr);
-	TRACE(sendmsg,"result =  %08x\n", (unsigned)result );
+	TRACE_(sendmsg)("result =  %08x\n", (unsigned)result );
     }
-    else WARN(sendmsg, "\trcm: bad hWnd\n");
+    else WARN_(sendmsg)("\trcm: bad hWnd\n");
 
     
         /* set SMSG_SENDING_REPLY flag to tell ReplyMessage16, it's not
@@ -945,7 +945,7 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
         smsg->flags |= SMSG_SENDING_REPLY;
         ReplyMessage( result );
 
-    TRACE( sendmsg,"done! \n" );
+    TRACE_(sendmsg)("done! \n" );
 }
 
 
@@ -1129,7 +1129,7 @@ static void QUEUE_WakeSomeone( UINT message )
       }
       if( !queue )
       { 
-        WARN(msg, "couldn't find queue\n"); 
+        WARN_(msg)("couldn't find queue\n"); 
         return; 
       }
     }
@@ -1404,7 +1404,7 @@ HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
         /* Create thread message queue */
         if( !(hQueue = QUEUE_CreateMsgQueue( TRUE )))
         {
-            WARN(msg, "failed!\n");
+            WARN_(msg)("failed!\n");
             return FALSE;
     }
         
@@ -1472,7 +1472,7 @@ BOOL16 WINAPI GetInputState16(void)
  */
 DWORD WINAPI WaitForInputIdle (HANDLE hProcess, DWORD dwTimeOut)
 {
-  FIXME (msg, "(hProcess=%d, dwTimeOut=%ld): stub\n", hProcess, dwTimeOut);
+  FIXME_(msg)("(hProcess=%d, dwTimeOut=%ld): stub\n", hProcess, dwTimeOut);
 
   return WAIT_TIMEOUT;
 }

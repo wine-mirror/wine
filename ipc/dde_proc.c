@@ -26,7 +26,7 @@
 #include "dde_proc.h"
 #include "dde_mem.h"
 #include "dde.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "xmalloc.h"
 
 DECLARE_DEBUG_CHANNEL(dde)
@@ -126,7 +126,7 @@ void dde_proc_add(dde_proc procs)
 {
   dde_proc proc;
   int proc_idx;
-  TRACE(dde,"(..)\n");
+  TRACE_(dde)("(..)\n");
   shm_write_wait(main_block->sem);
 
   /* find free proc_idx and allocate it */
@@ -142,7 +142,7 @@ void dde_proc_add(dde_proc procs)
   }
   else	{
      fflush(stdout);
-     WARN(dde,"Can't allocate process\n");
+     WARN_(dde)("Can't allocate process\n");
   }
   shm_write_signal(main_block->sem);
 }
@@ -167,7 +167,7 @@ static BOOL get_ack()
        size= msgrcv( main_block->proc[curr_proc_idx].msg , &ack_buff.dat,
 		     1, DDE_ACK, IPC_NOWAIT);
        if (size>=0) {
-	  TRACE(msg,"get_ack: received DDE_ACK message\n");
+	  TRACE_(msg)("get_ack: received DDE_ACK message\n");
 	  return TRUE;
        }
        if (DDE_GetRemoteMessage()) {
@@ -212,12 +212,12 @@ static BOOL DDE_DoOneMessage (int proc_idx, int size, struct msgbuf *msgbuf)
      if (title)
 	 print_dde_message(title, msg);
      else
-       WARN(dde, "Unknown message type=0x%lx\n", msgbuf->mtype);
+       WARN_(dde)("Unknown message type=0x%lx\n", msgbuf->mtype);
   }
-  TRACE(msg, "to proc_idx=%d (pid=%d), queue=%u\n",
+  TRACE_(msg)("to proc_idx=%d (pid=%d), queue=%u\n",
 	       proc_idx, proc->pid, (unsigned)proc->msg);
   if ( proc->msg != -1) {
-     TRACE(msg, "doing...(type=%s)\n", msg_type[msgbuf->mtype]);
+     TRACE_(msg)("doing...(type=%s)\n", msg_type[msgbuf->mtype]);
      size=msgsnd (proc->msg, msgbuf, size, 0);
 
      if (size<0) {
@@ -226,7 +226,7 @@ static BOOL DDE_DoOneMessage (int proc_idx, int size, struct msgbuf *msgbuf)
      }
      kill(proc->pid,SIGUSR2);	   /* tell the process there is a message */
 
-     TRACE(msg, "Trying to get acknowledgment from msg queue=%d\n",
+     TRACE_(msg)("Trying to get acknowledgment from msg queue=%d\n",
 		  proc->msg);
      Yield16();			/* force task switch, and */
 				/* acknowledgment sending */
@@ -234,12 +234,12 @@ static BOOL DDE_DoOneMessage (int proc_idx, int size, struct msgbuf *msgbuf)
 	return TRUE;
      } else {
 	fflush(stdout);
-	WARN(dde,"get_ack: DDE_DoOneMessage: timeout\n");
+	WARN_(dde)("get_ack: DDE_DoOneMessage: timeout\n");
 	return FALSE;
      }
   }
   else {
-     WARN(msg, "message not sent, target has no message queue\n");
+     WARN_(msg)("message not sent, target has no message queue\n");
      return FALSE;
   }
 }
@@ -281,7 +281,7 @@ static HWND16 HWND_Local2Remote(HWND16 orig)
     return IDX_TO_HWND(dde_wnd_idx);
   }
 
-  WARN(dde, "Can't map any more windows to DDE windows\n");
+  WARN_(dde)("Can't map any more windows to DDE windows\n");
   return 0;			
 }
 
@@ -310,11 +310,11 @@ static BOOL DDE_DoMessage( MSG16 *msg, int type )
   if ( ! DDE_IsRemoteWindow(msg->hwnd) && msg->hwnd!= (HWND16)-1)
      return FALSE;
 
-  TRACE(msg, "(hwnd=0x%x,msg=0x%x,..) - %s\n",
+  TRACE_(msg)("(hwnd=0x%x,msg=0x%x,..) - %s\n",
 	       (int)msg->hwnd,(int)msg->message,msg_type[type]);
   
 
-  TRACE(msg, "(hwnd=0x%x,msg=0x%x,..) -- HWND_BROADCAST !\n",
+  TRACE_(msg)("(hwnd=0x%x,msg=0x%x,..) -- HWND_BROADCAST !\n",
 	       (int)msg->hwnd,(int)msg->message);
   remote_message=(void*)&msg_dat.dat.mtext;
   
@@ -358,7 +358,7 @@ void dde_proc_send_ack(HWND16 wnd, BOOL val) {
 
    proc=DDE_WIN2PROC(wnd);
    msg=main_block->proc[proc].msg;
-   TRACE(msg,"sending ACK to wnd=%4x, proc=%d,msg=%d, pid=%d\n",
+   TRACE_(msg)("sending ACK to wnd=%4x, proc=%d,msg=%d, pid=%d\n",
 		wnd,proc,msg,main_block->proc[proc].pid);
 
    msg_ack.mtext[0]=val;
@@ -385,7 +385,7 @@ int DDE_GetRemoteMessage()
 
   if (nesting>10) {
      fflush(stdout);
-     ERR(msg, "suspecting infinite recursion, exiting");
+     ERR_(msg)("suspecting infinite recursion, exiting");
      return 0;
   }
 
@@ -397,7 +397,7 @@ int DDE_GetRemoteMessage()
 
   if (size==DDE_MSG_SIZE) {	   /* is this a correct message (if any) ?*/
      was_sent=TRUE;
-     TRACE(msg, "DDE:receive sent message. msg=%04x wPar=%04x"
+     TRACE_(msg)("DDE:receive sent message. msg=%04x wPar=%04x"
 		  " lPar=%08lx\n",
 		  remote_message->message, remote_message->wParam,
 		  remote_message->lParam);
@@ -407,7 +407,7 @@ int DDE_GetRemoteMessage()
 
      if (size==DDE_MSG_SIZE) {	   /* is this a correct message (if any) ?*/
 	was_sent=FALSE;
-	TRACE(msg, "DDE:receive posted message. "
+	TRACE_(msg)("DDE:receive posted message. "
 		    "msg=%04x wPar=%04x lPar=%08lx\n",
 		    remote_message->message, remote_message->wParam,
 		    remote_message->lParam);
@@ -435,7 +435,7 @@ int DDE_GetRemoteMessage()
     HWND16 dde_window= DDE_WIN_INFO(remote_message->hwnd).wnd;
      /* we should know exactly where to send the message (locally)*/
      if (was_sent) {
-	TRACE(dde, "SendMessage(wnd=0x%04x, msg=0x%04x, wPar=0x%04x,"
+	TRACE_(dde)("SendMessage(wnd=0x%04x, msg=0x%04x, wPar=0x%04x,"
 		    "lPar=0x%08x\n", dde_window, remote_message->message,
 		    remote_message->wParam, (int)remote_message->lParam);
 
@@ -515,7 +515,7 @@ void DDE_TestDDE(HWND16 hwnd)
      in_test--;
      return;
   }
-  TRACE(msg,"(0x%04x)\n", hwnd);
+  TRACE_(msg)("(0x%04x)\n", hwnd);
   if (hwnd==0)
       hwnd=-1;
   /* just send a message to see how things are going */
@@ -622,7 +622,7 @@ static void print_dde_message(char *desc, MSG16 *msg)
 	dsprintf(dde," atom=0x%04x",hWord);
 	break;
     }
-    TRACE(dde,"%s\n", dbg_str(dde));
+    TRACE_(dde)("%s\n", dbg_str(dde));
 }
 
 void dde_proc_done(dde_proc proc)

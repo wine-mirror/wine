@@ -21,7 +21,7 @@
 #include "ts_xutil.h"
 
 #include "wine/winuser16.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "keyboard.h"
 #include "message.h"
 #include "windef.h"
@@ -359,7 +359,7 @@ void KEYBOARD_GenerateMsg( WORD vkey, WORD scan, int Evtype, INT event_x, INT ev
        don't treat it. It's from the same key press. Then the state goes to ON.
        And from there, a 'release' event will switch off the toggle key. */
     *State=FALSE;
-    TRACE(keyboard,"INTERM : don\'t treat release of toggle key. InputKeyStateTable[%#x] = %#x\n",vkey,pKeyStateTable[vkey]);
+    TRACE_(keyboard)("INTERM : don\'t treat release of toggle key. InputKeyStateTable[%#x] = %#x\n",vkey,pKeyStateTable[vkey]);
   } else
     {
         down = (vkey==VK_NUMLOCK ? KEYEVENTF_EXTENDEDKEY : 0);
@@ -368,7 +368,7 @@ void KEYBOARD_GenerateMsg( WORD vkey, WORD scan, int Evtype, INT event_x, INT ev
 	  {
 	    if (Evtype!=KeyPress)
 	      {
-		TRACE(keyboard,"ON + KeyRelease => generating DOWN and UP messages.\n");
+		TRACE_(keyboard)("ON + KeyRelease => generating DOWN and UP messages.\n");
 	        KEYBOARD_SendEvent( vkey, scan, down,
                                     event_x, event_y, event_time );
 	        KEYBOARD_SendEvent( vkey, scan, up, 
@@ -380,7 +380,7 @@ void KEYBOARD_GenerateMsg( WORD vkey, WORD scan, int Evtype, INT event_x, INT ev
 	else /* it was OFF */
 	  if (Evtype==KeyPress)
 	    {
-	      TRACE(keyboard,"OFF + Keypress => generating DOWN and UP messages.\n");
+	      TRACE_(keyboard)("OFF + Keypress => generating DOWN and UP messages.\n");
 	      KEYBOARD_SendEvent( vkey, scan, down,
                                   event_x, event_y, event_time );
 	      KEYBOARD_SendEvent( vkey, scan, up, 
@@ -402,14 +402,14 @@ void KEYBOARD_UpdateOneState ( int vkey, int state )
     /* Do something if internal table state != X state for keycode */
     if (((pKeyStateTable[vkey] & 0x80)!=0) != state)
     {
-        TRACE(keyboard,"Adjusting state for vkey %#.2x. State before %#.2x \n",
+        TRACE_(keyboard)("Adjusting state for vkey %#.2x. State before %#.2x \n",
               vkey, pKeyStateTable[vkey]);
 
         /* Fake key being pressed inside wine */
 	KEYBOARD_SendEvent( vkey, 0, state? 0 : KEYEVENTF_KEYUP, 
                             0, 0, GetTickCount() );
 
-        TRACE(keyboard,"State after %#.2x \n",pKeyStateTable[vkey]);
+        TRACE_(keyboard)("State after %#.2x \n",pKeyStateTable[vkey]);
     }
 }
 
@@ -431,9 +431,9 @@ void X11DRV_KEYBOARD_UpdateState ( void )
 
     char keys_return[32];
 
-    TRACE(keyboard,"called\n");
+    TRACE_(keyboard)("called\n");
     if (!TSXQueryKeymap(display, keys_return)) {
-        ERR(keyboard,"Error getting keymap !");
+        ERR_(keyboard)("Error getting keymap !");
         return;
     }
 
@@ -470,10 +470,10 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 
     ascii_chars = TSXLookupString(event, Str, 1, &keysym, &cs);
 
-    TRACE(key, "EVENT_key : state = %X\n", event->state);
+    TRACE_(key)("EVENT_key : state = %X\n", event->state);
     if (keysym == XK_Mode_switch)
 	{
-	TRACE(key, "Alt Gr key event received\n");
+	TRACE_(key)("Alt Gr key event received\n");
 	event->keycode = kcControl; /* Simulate Control */
 	X11DRV_KEYBOARD_HandleEvent( pWnd, event );
 
@@ -491,7 +491,7 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 	ksname = TSXKeysymToString(keysym);
 	if (!ksname)
 	  ksname = "No Name";
-	TRACE(key, "%s : keysym=%lX (%s), ascii chars=%u / %X / '%s'\n", 
+	TRACE_(key)("%s : keysym=%lX (%s), ascii chars=%u / %X / '%s'\n", 
 		     (event->type == KeyPress) ? "KeyPress" : "KeyRelease",
 		     keysym, ksname, ascii_chars, Str[0] & 0xff, Str);
     }
@@ -499,7 +499,7 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
     vkey = EVENT_event_to_vkey(event);
     if (force_extended) vkey |= 0x100;
 
-    TRACE(key, "keycode 0x%x converted to vkey 0x%x\n",
+    TRACE_(key)("keycode 0x%x converted to vkey 0x%x\n",
 		    event->keycode, vkey);
 
    if (vkey)
@@ -511,16 +511,16 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
                             event_time );
       break;
     case VK_CAPITAL:
-      TRACE(keyboard,"Caps Lock event. (type %d). State before : %#.2x\n",event->type,pKeyStateTable[vkey]);
+      TRACE_(keyboard)("Caps Lock event. (type %d). State before : %#.2x\n",event->type,pKeyStateTable[vkey]);
       KEYBOARD_GenerateMsg( VK_CAPITAL, 0x3A, event->type, event_x, event_y,
                             event_time ); 
-      TRACE(keyboard,"State after : %#.2x\n",pKeyStateTable[vkey]);
+      TRACE_(keyboard)("State after : %#.2x\n",pKeyStateTable[vkey]);
       break;
     default:
         /* Adjust the NUMLOCK state if it has been changed outside wine */
 	if (!(pKeyStateTable[VK_NUMLOCK] & 0x01) != !(event->state & NumLockMask))
 	  { 
-	    TRACE(keyboard,"Adjusting NumLock state. \n");
+	    TRACE_(keyboard)("Adjusting NumLock state. \n");
 	    KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, KeyPress, event_x, event_y,
                                   event_time );
 	    KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, KeyRelease, event_x, event_y,
@@ -529,7 +529,7 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
         /* Adjust the CAPSLOCK state if it has been changed outside wine */
 	if (!(pKeyStateTable[VK_CAPITAL] & 0x01) != !(event->state & LockMask))
 	  {
-              TRACE(keyboard,"Adjusting Caps Lock state.\n");
+              TRACE_(keyboard)("Adjusting Caps Lock state.\n");
 	    KEYBOARD_GenerateMsg( VK_CAPITAL, 0x3A, KeyPress, event_x, event_y,
                                   event_time );
 	    KEYBOARD_GenerateMsg( VK_CAPITAL, 0x3A, KeyRelease, event_x, event_y,
@@ -540,7 +540,7 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 	CapsState = FALSE;
 
 	bScan = keyc2scan[event->keycode] & 0xFF;
-	TRACE(key, "bScan = 0x%02x.\n", bScan);
+	TRACE_(key)("bScan = 0x%02x.\n", bScan);
 
 	dwFlags = 0;
 	if ( event->type == KeyRelease ) dwFlags |= KEYEVENTF_KEYUP;
@@ -574,11 +574,11 @@ X11DRV_KEYBOARD_DetectLayout (void)
 
   syms = keysyms_per_keycode;
   if (syms > 4) {
-    WARN (keyboard, "%d keysyms per keycode not supported, set to 4", syms);
+    WARN_(keyboard)("%d keysyms per keycode not supported, set to 4", syms);
     syms = 4;
   }
   for (current = 0; main_key_tab[current].lang; current++) {
-    TRACE (keyboard, "Attempting to match against layout %04x\n",
+    TRACE_(keyboard)("Attempting to match against layout %04x\n",
 	   main_key_tab[current].lang);
     match = 0;
     mismatch = 0;
@@ -622,14 +622,14 @@ X11DRV_KEYBOARD_DetectLayout (void)
 	  if (key > pkey) seq++;
 	  pkey = key;
 	} else {
-	  TRACE (key, "mismatch for keycode %d, character %c\n", keyc,
+	  TRACE_(key)("mismatch for keycode %d, character %c\n", keyc,
 		 ckey[0]);
 	  mismatch++;
 	  score -= syms;
 	}
       }
     }
-    TRACE (keyboard, "matches=%d, mismatches=%d, score=%d\n",
+    TRACE_(keyboard)("matches=%d, mismatches=%d, score=%d\n",
 	   match, mismatch, score);
     if ((score > max_score) ||
 	((score == max_score) && (seq > max_seq))) {
@@ -642,7 +642,7 @@ X11DRV_KEYBOARD_DetectLayout (void)
   }
   /* we're done, report results if necessary */
   if (!ismatch) {
-    FIXME (keyboard,
+    FIXME_(keyboard)(
 	   "Your keyboard layout was not found!\n"
 	   "Instead using closest match (%04x) for scancode mapping.\n"
 	   "Please define your layout in windows/x11drv/keyboard.c and submit them\n"
@@ -650,7 +650,7 @@ X11DRV_KEYBOARD_DetectLayout (void)
 	   "See documentation/keyboard for more information.\n",
 	   main_key_tab[kbd_layout].lang);
   }
-  TRACE (keyboard, "detected layout is %04x\n", main_key_tab[kbd_layout].lang);
+  TRACE_(keyboard)("detected layout is %04x\n", main_key_tab[kbd_layout].lang);
 }
 
 /**********************************************************************
@@ -689,12 +689,12 @@ void X11DRV_KEYBOARD_Init(void)
                     if (TSXKeycodeToKeysym(display, *kcp, k) == XK_Mode_switch)
 		    {
                         AltGrMask = 1 << i;
-                        TRACE(key, "AltGrMask is %x\n", AltGrMask);
+                        TRACE_(key)("AltGrMask is %x\n", AltGrMask);
 		    }
                     else if (TSXKeycodeToKeysym(display, *kcp, k) == XK_Num_Lock)
 		    {
                         NumLockMask = 1 << i;
-                        TRACE(key, "NumLockMask is %x\n", NumLockMask);
+                        TRACE_(key)("NumLockMask is %x\n", NumLockMask);
 		    }
             }
     }
@@ -815,7 +815,7 @@ void X11DRV_KEYBOARD_Init(void)
                 {
                 case 0xc1 : OEMvkey=0xdb; break;
                 case 0xe5 : OEMvkey=0xe9; break;
-                case 0xf6 : OEMvkey=0xf5; WARN(keyboard,"No more OEM vkey available!\n");
+                case 0xf6 : OEMvkey=0xf5; WARN_(keyboard)("No more OEM vkey available!\n");
                 }
 
                 vkey = OEMvkey;
@@ -824,7 +824,7 @@ void X11DRV_KEYBOARD_Init(void)
                 {
 		    dbg_decl_str(keyboard, 1024);
 
-                    TRACE(keyboard, "OEM specific virtual key %X assigned "
+                    TRACE_(keyboard)("OEM specific virtual key %X assigned "
 				 "to keycode %X:\n", OEMvkey, e2.keycode);
                     for (i = 0; i < keysyms_per_keycode; i += 1)
                     {
@@ -836,7 +836,7 @@ void X11DRV_KEYBOARD_Init(void)
 			    ksname = "NoSymbol";
                         dsprintf(keyboard, "%lX (%s) ", keysym, ksname);
                     }
-                    TRACE(keyboard, "(%s)\n", dbg_str(keyboard));
+                    TRACE_(keyboard)("(%s)\n", dbg_str(keyboard));
                 }
             }
         }
@@ -854,7 +854,7 @@ void X11DRV_KEYBOARD_Init(void)
 
 	/* should make sure the scancode is unassigned here, but >=0x60 currently always is */
 
-	TRACE(key,"assigning scancode %02x to unidentified keycode %02x (%s)\n",scan,keyc,ksname);
+	TRACE_(key)("assigning scancode %02x to unidentified keycode %02x (%s)\n",scan,keyc,ksname);
 	keyc2scan[keyc]=scan++;
       }
 
@@ -887,7 +887,7 @@ WORD X11DRV_KEYBOARD_VkKeyScan(CHAR cChar)
 	  keycode = TSXKeysymToKeycode(display, keysym | 0xFE00);
 	}
 
-	TRACE(keyboard,"VkKeyScan '%c'(%#lx, %lu): got keycode %#.2x\n",
+	TRACE_(keyboard)("VkKeyScan '%c'(%#lx, %lu): got keycode %#.2x\n",
 			 cChar,keysym,keysym,keycode);
 	
 	if (keycode)
@@ -896,12 +896,12 @@ WORD X11DRV_KEYBOARD_VkKeyScan(CHAR cChar)
 	      if (TSXKeycodeToKeysym(display,keycode,i)==keysym) index=i;
 	    switch (index) {
 	    case -1 :
-	      WARN(keyboard,"Keysym %lx not found while parsing the keycode table\n",keysym); break;
+	      WARN_(keyboard)("Keysym %lx not found while parsing the keycode table\n",keysym); break;
 	    case 0 : break;
 	    case 1 : highbyte = 0x0100; break;
 	    case 2 : highbyte = 0x0600; break;
 	    case 3 : highbyte = 0x0700; break;
-	    default : ERR(keyboard,"index %d found by XKeycodeToKeysym. please report! \n",index);
+	    default : ERR_(keyboard)("index %d found by XKeycodeToKeysym. please report! \n",index);
 	    }
 	    /*
 	      index : 0     adds 0x0000
@@ -911,7 +911,7 @@ WORD X11DRV_KEYBOARD_VkKeyScan(CHAR cChar)
 	      index : 3     adds 0x0700 (ctrl+alt+shift)
 	     */
 	  }
-	TRACE(keyboard," ... returning %#.2x\n", keyc2vkey[keycode]+highbyte);
+	TRACE_(keyboard)(" ... returning %#.2x\n", keyc2vkey[keycode]+highbyte);
 	return keyc2vkey[keycode]+highbyte;   /* keycode -> (keyc2vkey) vkey */
 }
 
@@ -920,9 +920,9 @@ WORD X11DRV_KEYBOARD_VkKeyScan(CHAR cChar)
  */
 UINT16 X11DRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType)
 {
-#define returnMVK(value) { TRACE(keyboard,"returning 0x%x.\n",value); return value; }
+#define returnMVK(value) { TRACE_(keyboard)("returning 0x%x.\n",value); return value; }
 
-	TRACE(keyboard,"MapVirtualKey wCode=0x%x wMapType=%d ... \n",
+	TRACE_(keyboard)("MapVirtualKey wCode=0x%x wMapType=%d ... \n",
 			 wCode,wMapType);
 	switch(wMapType) {
 		case 0:	{ /* vkey-code to scan-code */
@@ -931,7 +931,7 @@ UINT16 X11DRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType)
 			for (keyc=min_keycode; keyc<=max_keycode; keyc++)
 				if ((keyc2vkey[keyc] & 0xFF) == wCode)
 					returnMVK (keyc2scan[keyc] & 0xFF);
-			TRACE(keyboard,"returning no scan-code.\n");
+			TRACE_(keyboard)("returning no scan-code.\n");
 		        return 0; }
 
 		case 1: { /* scan-code to vkey-code */
@@ -940,7 +940,7 @@ UINT16 X11DRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType)
 			for (keyc=min_keycode; keyc<=max_keycode; keyc++)
 				if ((keyc2scan[keyc] & 0xFF) == (wCode & 0xFF))
 					returnMVK (keyc2vkey[keyc] & 0xFF);
-			TRACE(keyboard,"returning no vkey-code.\n");
+			TRACE_(keyboard)("returning no vkey-code.\n");
 		        return 0; }
 
 		case 2: { /* vkey-code to unshifted ANSI code */
@@ -976,25 +976,25 @@ UINT16 X11DRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType)
 
 			if (!e.keycode)
 			{
-			  WARN(keyboard,"Unknown virtual key %X !!! \n", wCode);
+			  WARN_(keyboard)("Unknown virtual key %X !!! \n", wCode);
 			  return 0; /* whatever */
 			}
-			TRACE(keyboard,"Found keycode %d (0x%2X)\n",e.keycode,e.keycode);
+			TRACE_(keyboard)("Found keycode %d (0x%2X)\n",e.keycode,e.keycode);
 
 			if (TSXLookupString(&e, s, 2, &keysym, NULL))
 			  returnMVK (*s);
 			
-			TRACE(keyboard,"returning no ANSI.\n");
+			TRACE_(keyboard)("returning no ANSI.\n");
 			return 0;
 			}
 
 		case 3:   /* **NT only** scan-code to vkey-code but distinguish between  */
               		  /*             left and right  */
-		          FIXME(keyboard, " stub for NT\n");
+		          FIXME_(keyboard)(" stub for NT\n");
                           return 0;
 
 		default: /* reserved */
-			WARN(keyboard, "Unknown wMapType %d !\n",
+			WARN_(keyboard)("Unknown wMapType %d !\n",
 				wMapType);
 			return 0;	
 	}
@@ -1035,7 +1035,7 @@ INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize)
   }
 
   ansi = X11DRV_KEYBOARD_MapVirtualKey(vkey, 2);
-  TRACE(keyboard, "scan 0x%04x, vkey 0x%04x, ANSI 0x%04x\n",
+  TRACE_(keyboard)("scan 0x%04x, vkey 0x%04x, ANSI 0x%04x\n",
           scanCode, vkey, ansi);
 
   if ( ((vkey >= 0x30) && (vkey <= 0x39)) ||
@@ -1053,7 +1053,7 @@ INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 
   /* use vkey values to construct names */
 
-  FIXME(keyboard,"(%08lx,%p,%d): unsupported key\n",lParam,lpBuffer,nSize);
+  FIXME_(keyboard)("(%08lx,%p,%d): unsupported key\n",lParam,lpBuffer,nSize);
 
   if (lpBuffer && nSize)
     *lpBuffer = 0;
@@ -1134,7 +1134,7 @@ static char KEYBOARD_MapDeadKeysym(KeySym keysym)
 	        return 's';
 */
 	    }
-	TRACE(keyboard,"no character for dead keysym 0x%08lx\n",keysym);
+	TRACE_(keyboard)("no character for dead keysym 0x%08lx\n",keysym);
 	return 0;
 }
 
@@ -1169,12 +1169,12 @@ INT16 X11DRV_KEYBOARD_ToAscii(
     if (scanCode==0) {
         /* This happens when doing Alt+letter : a fake 'down arrow' key press
            event is generated by windows. Just ignore it. */
-        TRACE(keyboard,"scanCode=0, doing nothing\n");
+        TRACE_(keyboard)("scanCode=0, doing nothing\n");
         return 0;
     }
     if (scanCode & 0x8000)
     {
-        TRACE( keyboard, "Key UP, doing nothing\n" );
+        TRACE_(keyboard)("Key UP, doing nothing\n" );
         return 0;
     }
     e.display = display;
@@ -1193,7 +1193,7 @@ INT16 X11DRV_KEYBOARD_ToAscii(
     }
     if (lpKeyState[VK_NUMLOCK] & 0x01)
 	e.state |= NumLockMask;
-    TRACE(key, "(%04X, %04X) : faked state = %X\n",
+    TRACE_(key)("(%04X, %04X) : faked state = %X\n",
 		virtKey, scanCode, e.state);
     /* We exit on the first keycode found, to speed up the thing. */
     for (keyc=min_keycode; (keyc<=max_keycode) && (!e.keycode) ; keyc++)
@@ -1216,10 +1216,10 @@ INT16 X11DRV_KEYBOARD_ToAscii(
 
     if (!e.keycode)
       {
-	WARN(keyboard,"Unknown virtual key %X !!! \n",virtKey);
+	WARN_(keyboard)("Unknown virtual key %X !!! \n",virtKey);
 	return virtKey; /* whatever */
       }
-    else TRACE(keyboard,"Found keycode %d (0x%2X)\n",e.keycode,e.keycode);
+    else TRACE_(keyboard)("Found keycode %d (0x%2X)\n",e.keycode,e.keycode);
 
     ret = TSXLookupString(&e, (LPVOID)lpChar, 2, &keysym, &cs);
     if (ret == 0)
@@ -1242,9 +1242,9 @@ INT16 X11DRV_KEYBOARD_ToAscii(
 		ksname = "No Name";
 	    if ((keysym >> 8) != 0xff)
 		{
-		ERR(keyboard, "Please report: no char for keysym %04lX (%s) :\n",
+		ERR_(keyboard)("Please report: no char for keysym %04lX (%s) :\n",
 			keysym, ksname);
-		ERR(keyboard, "(virtKey=%X,scanCode=%X,keycode=%X,state=%X)\n",
+		ERR_(keyboard)("(virtKey=%X,scanCode=%X,keycode=%X,state=%X)\n",
 			virtKey, scanCode, e.keycode, e.state);
 		}
 	    }
@@ -1261,7 +1261,7 @@ INT16 X11DRV_KEYBOARD_ToAscii(
         }
     }
 
-    TRACE(key, "ToAscii about to return %d with char %x\n",
+    TRACE_(key)("ToAscii about to return %d with char %x\n",
 		ret, *(char*)lpChar);
     return ret;
 }

@@ -13,7 +13,7 @@
 #include "struct32.h"
 #include "win.h"
 #include "winproc.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "spy.h"
 #include "commctrl.h"
 #include "task.h"
@@ -107,7 +107,7 @@ BOOL WINPROC_Init(void)
     WinProcHeap = HeapCreate( HEAP_WINE_SEGPTR | HEAP_WINE_CODESEG, 0, 0 );
     if (!WinProcHeap)
     {
-        WARN(relay, "Unable to create winproc heap\n" );
+        WARN_(relay)("Unable to create winproc heap\n" );
         return FALSE;
     }
     return TRUE;
@@ -125,7 +125,7 @@ static LRESULT WINPROC_CallWndProc( WNDPROC proc, HWND hwnd, UINT msg,
     LRESULT retvalue;
     int iWndsLocks;
     
-    TRACE(relay, "(wndproc=%p,hwnd=%08x,msg=%s,wp=%08x,lp=%08lx)\n",
+    TRACE_(relay)("(wndproc=%p,hwnd=%08x,msg=%s,wp=%08x,lp=%08lx)\n",
                    proc, hwnd, SPY_GetMsgName(msg), wParam, lParam );
     /* To avoid any deadlocks, all the locks on the windows structures
        must be suspended before the control is passed to the application */
@@ -240,7 +240,7 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type,
         proc->user  = user;
     }
     proc->next  = NULL;
-    TRACE(win, "(%08x,%d): returning %08x\n",
+    TRACE_(win)("(%08x,%d): returning %08x\n",
                  (UINT)func, type, (UINT)proc );
     return proc;
 }
@@ -359,7 +359,7 @@ BOOL WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
 
     /* Add the win proc at the head of the list */
 
-    TRACE(win, "(%08x,%08x,%d): res=%08x\n",
+    TRACE_(win)("(%08x,%08x,%d): res=%08x\n",
                  (UINT)*pFirst, (UINT)func, type, (UINT)proc );
     proc->next  = *(WINDOWPROC **)pFirst;
     *(WINDOWPROC **)pFirst = proc;
@@ -378,7 +378,7 @@ void WINPROC_FreeProc( HWINDOWPROC proc, WINDOWPROCUSER user )
     {
         WINDOWPROC *next = ((WINDOWPROC *)proc)->next;
         if (((WINDOWPROC *)proc)->user != user) break;
-        TRACE(win, "freeing %08x\n", (UINT)proc);
+        TRACE_(win)("freeing %08x\n", (UINT)proc);
         HeapFree( WinProcHeap, 0, proc );
         proc = next;
     }
@@ -550,7 +550,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM *plparam 
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case EM_SETPASSWORDCHAR:
-        FIXME(msg, "message %s (0x%x) needs translation, please report\n", SPY_GetMsgName(msg), msg );
+        FIXME_(msg)("message %s (0x%x) needs translation, please report\n", SPY_GetMsgName(msg), msg );
         return -1;
     default:  /* No translation needed */
         return 0;
@@ -771,7 +771,7 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM *plparam 
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case EM_SETPASSWORDCHAR:
-        FIXME(msg, "message %s (%04x) needs translation, please report\n",SPY_GetMsgName(msg),msg );
+        FIXME_(msg)("message %s (%04x) needs translation, please report\n",SPY_GetMsgName(msg),msg );
         return -1;
     default:  /* No translation needed */
         return 0;
@@ -1123,7 +1123,7 @@ INT WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT *pmsg32,
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
-        FIXME( msg, "message %04x needs translation\n",msg16 );
+        FIXME_(msg)("message %04x needs translation\n",msg16 );
         return -1;
 
     default:  /* No translation needed */
@@ -1815,7 +1815,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
-        FIXME( msg, "message %04x needs translation\n", msg32 );
+        FIXME_(msg)("message %04x needs translation\n", msg32 );
         return -1;
     default:  /* No translation needed */
         return 0;
@@ -2252,7 +2252,7 @@ LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
         return WINPROC_CallProc16To32W( hwnd, msg, wParam, lParam,
                                         proc->thunk.t_from16.proc );
     default:
-        WARN( relay, "Invalid proc %p\n", proc );
+        WARN_(relay)("Invalid proc %p\n", proc );
         return 0;
     }
 }
@@ -2313,7 +2313,7 @@ LRESULT WINAPI CallWindowProcA(
         return WINPROC_CallProc32ATo32W( proc->thunk.t_from16.proc,
                                          hwnd, msg, wParam, lParam );
     default:
-        WARN( relay, "Invalid proc %p\n", proc );
+        WARN_(relay)("Invalid proc %p\n", proc );
         return 0;
     }
 }
@@ -2349,7 +2349,7 @@ LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg,
         return WINPROC_CallWndProc( proc->thunk.t_from16.proc,
                                       hwnd, msg, wParam, lParam );
     default:
-        WARN( relay, "Invalid proc %p\n", proc );
+        WARN_(relay)("Invalid proc %p\n", proc );
         return 0;
     }
 }

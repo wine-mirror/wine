@@ -30,7 +30,7 @@
 #include "ldt.h"
 #include "dosexe.h"
 #include "dosmod.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(int)
 DECLARE_DEBUG_CHANNEL(module)
@@ -140,19 +140,19 @@ static void DOSVM_SendQueuedEvent(PCONTEXT context, LPDOSTASK lpDosTask)
       /* it's an IRQ, move it to "current" list */
       event->next = lpDosTask->current;
       lpDosTask->current = event;
-      TRACE(int,"dispatching IRQ %d\n",event->irq);
+      TRACE_(int)("dispatching IRQ %d\n",event->irq);
       /* note that if DOSVM_SimulateInt calls an internal interrupt directly,
        * lpDosTask->current might be cleared (and event freed) in this very call! */
       DOSVM_SimulateInt((event->irq<8)?(event->irq+8):(event->irq-8+0x70),context,lpDosTask);
     } else {
       /* callback event */
-      TRACE(int,"dispatching callback event\n");
+      TRACE_(int)("dispatching callback event\n");
       (*event->relay)(lpDosTask,context,event->data);
       free(event);
     }
   }
   if (!SHOULD_PEND(lpDosTask->pending)) {
-    TRACE(int,"clearing Pending flag\n");
+    TRACE_(int)("clearing Pending flag\n");
     CLR_PEND(context);
   }
 }
@@ -175,7 +175,7 @@ void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,PCONTEXT,v
   if (pModule && pModule->lpDosTask) {
     event = malloc(sizeof(DOSEVENT));
     if (!event) {
-      ERR(int,"out of memory allocating event entry\n");
+      ERR_(int)("out of memory allocating event entry\n");
       return;
     }
     event->irq = irq; event->priority = priority;
@@ -194,11 +194,11 @@ void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,PCONTEXT,v
     
     /* get dosmod's attention to the new event, except for irq==0 where we already have it */
     if (irq && !pModule->lpDosTask->sig_sent) {
-      TRACE(int,"new event queued, signalling dosmod\n");
+      TRACE_(int)("new event queued, signalling dosmod\n");
       kill(pModule->lpDosTask->task,SIGUSR2);
       pModule->lpDosTask->sig_sent++;
     } else {
-      TRACE(int,"new event queued\n");
+      TRACE_(int)("new event queued\n");
     }
   }
 }
@@ -245,18 +245,18 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn, int sig,
 
  switch (VM86_TYPE(fn)) {
   case VM86_SIGNAL:
-   TRACE(int,"DOS module caught signal %d\n",sig);
+   TRACE_(int)("DOS module caught signal %d\n",sig);
    if ((sig==SIGALRM) || (sig==SIGUSR2)) {
      if (sig==SIGALRM) {
        DOSVM_QueueEvent(0,DOS_PRIORITY_REALTIME,NULL,NULL);
      }
      if (lpDosTask->pending) {
-       TRACE(int,"setting Pending flag, interrupts are currently %s\n",
+       TRACE_(int)("setting Pending flag, interrupts are currently %s\n",
                  IF_ENABLED(&context) ? "enabled" : "disabled");
        SET_PEND(&context);
        DOSVM_SendQueuedEvents(&context,lpDosTask);
      } else {
-       TRACE(int,"no events are pending, clearing Pending flag\n");
+       TRACE_(int)("no events are pending, clearing Pending flag\n");
        CLR_PEND(&context);
      }
      if (sig==SIGUSR2) lpDosTask->sig_sent--;
@@ -284,7 +284,7 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn, int sig,
    break;
   case VM86_STI:
   case VM86_PICRETURN:
-    TRACE(int,"DOS task enabled interrupts with events pending, sending events\n");
+    TRACE_(int)("DOS task enabled interrupts with events pending, sending events\n");
     DOSVM_SendQueuedEvents(&context,lpDosTask);
     break;
   case VM86_TRAP:
@@ -348,12 +348,12 @@ int DOSVM_Enter( PCONTEXT context )
 
  GlobalUnlock16( GetCurrentTask() );
  if (!pModule) {
-  ERR(module,"No task is currently active!\n");
+  ERR_(module)("No task is currently active!\n");
   return -1;
  }
  if (!(lpDosTask=pModule->lpDosTask)) {
   /* MZ_CreateProcess or MZ_AllocDPMITask should have been called first */
-  ERR(module,"dosmod has not been initialized!");
+  ERR_(module)("dosmod has not been initialized!");
   return -1;
  }
 
@@ -383,11 +383,11 @@ int DOSVM_Enter( PCONTEXT context )
   errno = 0;
   /* transmit VM86 structure to dosmod task */
   if (write(lpDosTask->write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
-   ERR(module,"dosmod sync lost, errno=%d, fd=%d, pid=%d\n",errno,lpDosTask->write_pipe,getpid());
+   ERR_(module)("dosmod sync lost, errno=%d, fd=%d, pid=%d\n",errno,lpDosTask->write_pipe,getpid());
    return -1;
   }
   if (write(lpDosTask->write_pipe,&VM86,sizeof(VM86))!=sizeof(VM86)) {
-   ERR(module,"dosmod sync lost, errno=%d\n",errno);
+   ERR_(module)("dosmod sync lost, errno=%d\n",errno);
    return -1;
   }
   do {
@@ -406,37 +406,37 @@ int DOSVM_Enter( PCONTEXT context )
     /* nothing yet, block while waiting for something to do */
     waitret=MsgWaitForMultipleObjects(1,&(lpDosTask->hReadPipe),FALSE,INFINITE,QS_ALLINPUT);
     if (waitret==(DWORD)-1) {
-      ERR(module,"dosvm wait error=%ld\n",GetLastError());
+      ERR_(module)("dosvm wait error=%ld\n",GetLastError());
     }
   } while (waitret!=WAIT_OBJECT_0);
   /* read response */
   while (1) {
     if ((len=read(lpDosTask->read_pipe,&stat,sizeof(stat)))==sizeof(stat)) break;
     if (((errno==EINTR)||(errno==EAGAIN))&&(len<=0)) {
-     WARN(module,"rereading dosmod return code due to errno=%d, result=%d\n",errno,len);
+     WARN_(module)("rereading dosmod return code due to errno=%d, result=%d\n",errno,len);
      continue;
     }
-    ERR(module,"dosmod sync lost reading return code, errno=%d, result=%d\n",errno,len);
+    ERR_(module)("dosmod sync lost reading return code, errno=%d, result=%d\n",errno,len);
     return -1;
   }
-  TRACE(module,"dosmod return code=%d\n",stat);
+  TRACE_(module)("dosmod return code=%d\n",stat);
   while (1) {
     if ((len=read(lpDosTask->read_pipe,&VM86,sizeof(VM86)))==sizeof(VM86)) break;
     if (((errno==EINTR)||(errno==EAGAIN))&&(len<=0)) {
-     WARN(module,"rereading dosmod VM86 structure due to errno=%d, result=%d\n",errno,len);
+     WARN_(module)("rereading dosmod VM86 structure due to errno=%d, result=%d\n",errno,len);
      continue;
     }
-    ERR(module,"dosmod sync lost reading VM86 structure, errno=%d, result=%d\n",errno,len);
+    ERR_(module)("dosmod sync lost reading VM86 structure, errno=%d, result=%d\n",errno,len);
     return -1;
   }
   if ((stat&0xff)==DOSMOD_SIGNAL) {
     while (1) {
       if ((len=read(lpDosTask->read_pipe,&sig,sizeof(sig)))==sizeof(sig)) break;
       if (((errno==EINTR)||(errno==EAGAIN))&&(len<=0)) {
-	WARN(module,"rereading dosmod signal due to errno=%d, result=%d\n",errno,len);
+	WARN_(module)("rereading dosmod signal due to errno=%d, result=%d\n",errno,len);
 	continue;
       }
-      ERR(module,"dosmod sync lost reading signal, errno=%d, result=%d\n",errno,len);
+      ERR_(module)("dosmod sync lost reading signal, errno=%d, result=%d\n",errno,len);
       return -1;
     } while (0);
   } else sig=0;
@@ -462,7 +462,7 @@ void DOSVM_PIC_ioport_out( WORD port, BYTE val)
     if ((port==0x20) && (val==0x20)) {
       if (pModule->lpDosTask->current) {
 	/* EOI (End Of Interrupt) */
-	TRACE(int,"received EOI for current IRQ, clearing\n");
+	TRACE_(int)("received EOI for current IRQ, clearing\n");
 	event = pModule->lpDosTask->current;
 	pModule->lpDosTask->current = event->next;
 	if (event->relay)
@@ -473,15 +473,15 @@ void DOSVM_PIC_ioport_out( WORD port, BYTE val)
 	    !pModule->lpDosTask->sig_sent) {
 	  /* another event is pending, which we should probably
 	   * be able to process now, so tell dosmod about it */
-	  TRACE(int,"another event pending, signalling dosmod\n");
+	  TRACE_(int)("another event pending, signalling dosmod\n");
 	  kill(pModule->lpDosTask->task,SIGUSR2);
 	  pModule->lpDosTask->sig_sent++;
 	}
       } else {
-	WARN(int,"EOI without active IRQ\n");
+	WARN_(int)("EOI without active IRQ\n");
       }
     } else {
-      FIXME(int,"unrecognized PIC command %02x\n",val);
+      FIXME_(int)("unrecognized PIC command %02x\n",val);
     }
   }
 }
@@ -502,11 +502,11 @@ void DOSVM_SetTimer( unsigned ticks )
   if (!tim.tv_usec) tim.tv_usec=1;
 
   if (write(pModule->lpDosTask->write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
-   ERR(module,"dosmod sync lost, errno=%d\n",errno);
+   ERR_(module)("dosmod sync lost, errno=%d\n",errno);
    return;
   }
   if (write(pModule->lpDosTask->write_pipe,&tim,sizeof(tim))!=sizeof(tim)) {
-   ERR(module,"dosmod sync lost, errno=%d\n",errno);
+   ERR_(module)("dosmod sync lost, errno=%d\n",errno);
    return;
   }
   /* there's no return */
@@ -523,14 +523,14 @@ unsigned DOSVM_GetTimer( void )
  GlobalUnlock16( GetCurrentTask() );
  if (pModule&&pModule->lpDosTask) {
   if (write(pModule->lpDosTask->write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
-   ERR(module,"dosmod sync lost, errno=%d\n",errno);
+   ERR_(module)("dosmod sync lost, errno=%d\n",errno);
    return 0;
   }
   /* read response */
   while (1) {
     if (read(pModule->lpDosTask->read_pipe,&tim,sizeof(tim))==sizeof(tim)) break;
     if ((errno==EINTR)||(errno==EAGAIN)) continue;
-    ERR(module,"dosmod sync lost, errno=%d\n",errno);
+    ERR_(module)("dosmod sync lost, errno=%d\n",errno);
     return 0;
   }
   return ((unsigned long long)tim.tv_usec*1193180)/1000000;
@@ -587,7 +587,7 @@ void* DOSVM_GetSystemData( int id )
 
 int DOSVM_Enter( PCONTEXT context )
 {
- ERR(module,"DOS realmode not supported on this architecture!\n");
+ ERR_(module)("DOS realmode not supported on this architecture!\n");
  return -1;
 }
 

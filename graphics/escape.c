@@ -10,10 +10,9 @@
 #include "heap.h"
 #include "ldt.h"
 #include "dc.h"
-#include <debug.h>
+#include "debugtools.h"
 
-DECLARE_DEBUG_CHANNEL(driver)
-DECLARE_DEBUG_CHANNEL(gdi)
+DEFAULT_DEBUG_CHANNEL(driver)
 
 
 INT16 WINAPI Escape16( HDC16 hdc, INT16 nEscape, INT16 cbInput,
@@ -99,7 +98,7 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
     switch(nEscape) {
     case QUERYESCSUPPORT:
     	if (ret)
-		TRACE(driver,"target DC implements Escape %d\n",nEscape);
+		TRACE("target DC implements Escape %d\n",nEscape);
     	SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
 	break;
     case GETSCALINGFACTOR:
@@ -159,7 +158,7 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
 INT WINAPI ExtEscape( HDC hdc, INT nEscape, INT cbInput, 
                         LPCSTR lpszInData, INT cbOutput, LPSTR lpszOutData )
 {
-    FIXME(driver,"(0x%04x,0x%x,%d,%s,%d,%p):stub\n",
+    FIXME("(0x%04x,0x%x,%d,%s,%d,%p):stub\n",
           hdc,nEscape,cbInput,debugstr_a(lpszInData),cbOutput,lpszOutData);
     return 0;
 }
@@ -171,6 +170,6 @@ INT WINAPI ExtEscape( HDC hdc, INT nEscape, INT cbInput,
  */
 INT WINAPI DrawEscape(HDC hdc, INT nEscape, INT cbInput, LPCSTR lpszInData)
 {
-    FIXME(gdi, "DrawEscape, stub\n");
+    FIXME("DrawEscape, stub\n");
     return 0;
 }
