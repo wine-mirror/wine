@@ -7,7 +7,11 @@
 extern int PASCAL WinMain(HINSTANCE32,HINSTANCE32,LPSTR,int);
 
 /* external declaration here because we don't want to depend on Wine headers */
+#ifdef __cplusplus
+extern "C" HINSTANCE32 MAIN_WinelibInit( int *argc, char *argv[] );
+#else
 extern HINSTANCE32 MAIN_WinelibInit( int *argc, char *argv[] );
+#endif
 
 /* Most Windows C/C++ compilers use something like this to */
 /* access argc and argv globally: */
