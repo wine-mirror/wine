@@ -30,11 +30,10 @@
 #include "debugtools.h"
 #include "libres.h"
 #include "winerror.h"
-#include "debugstr.h"
 #include "winnls.h"
 
-DEFAULT_DEBUG_CHANNEL(resource)
-DECLARE_DEBUG_CHANNEL(accel)
+DEFAULT_DEBUG_CHANNEL(resource);
+DECLARE_DEBUG_CHANNEL(accel);
 
 extern WORD WINE_LanguageId;
 

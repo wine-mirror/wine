@@ -17,10 +17,9 @@
 #include "peexe.h"
 #include "selectors.h"
 #include "stackframe.h"
-#include "debugstr.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(snoop)
+DEFAULT_DEBUG_CHANNEL(snoop);
 
 char **debug_snoop_excludelist = NULL, **debug_snoop_includelist = NULL;
 

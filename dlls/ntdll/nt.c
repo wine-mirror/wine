@@ -11,13 +11,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "debugstr.h"
 #include "debugtools.h"
 
 #include "ntddk.h"
 #include "ntdll_misc.h"
 
-DEFAULT_DEBUG_CHANNEL(ntdll)
+DEFAULT_DEBUG_CHANNEL(ntdll);
 
 /*
  *	Timer object

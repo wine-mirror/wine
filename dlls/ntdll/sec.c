@@ -16,7 +16,6 @@
 #include "file.h"
 #include "heap.h"
 #include "winnls.h"
-#include "debugstr.h"
 #include "debugtools.h"
 #include "winerror.h"
 #include "stackframe.h"
@@ -24,7 +23,7 @@
 #include "ntddk.h"
 #include "winreg.h"
 
-DEFAULT_DEBUG_CHANNEL(ntdll)
+DEFAULT_DEBUG_CHANNEL(ntdll);
 
 #define NT_SUCCESS(status) (status == STATUS_SUCCESS)
 

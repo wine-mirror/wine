@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "debugstr.h"
 #include "debugtools.h"
 
 #include "winerror.h"

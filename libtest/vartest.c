@@ -57,7 +57,7 @@
 #include <windef.h>
 
 #ifdef __unix__
-#include <debugstr.h>
+#include <debugtools.h>
 extern LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str );
 #endif
 

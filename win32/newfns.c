@@ -14,10 +14,9 @@ at a later date. */
 #include "winerror.h"
 #include "heap.h"
 #include "debugtools.h"
-#include "debugstr.h"
 
-DEFAULT_DEBUG_CHANNEL(win32)
-DECLARE_DEBUG_CHANNEL(debug)
+DEFAULT_DEBUG_CHANNEL(win32);
+DECLARE_DEBUG_CHANNEL(debug);
 
 
 /****************************************************************************

@@ -12,11 +12,10 @@
 #include "selectors.h"
 #include "stackframe.h"
 #include "syslevel.h"
-#include "debugstr.h"
 #include "main.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(relay)
+DEFAULT_DEBUG_CHANNEL(relay);
 
 char **debug_relay_excludelist = NULL, **debug_relay_includelist = NULL;
 

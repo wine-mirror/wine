@@ -16,9 +16,8 @@
 #include "heap.h"
 #include "debugtools.h"
 #include "cache.h"
-#include "debugstr.h"
 
-DEFAULT_DEBUG_CHANNEL(text)
+DEFAULT_DEBUG_CHANNEL(text);
 
 #define TAB     9
 #define LF     10

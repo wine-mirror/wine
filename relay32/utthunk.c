@@ -12,9 +12,8 @@
 #include "callback.h"
 #include "process.h"
 #include "debugtools.h"
-#include "debugstr.h"
 
-DEFAULT_DEBUG_CHANNEL(thunk)
+DEFAULT_DEBUG_CHANNEL(thunk);
 
 #include "pshpack1.h"
 

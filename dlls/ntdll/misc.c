@@ -5,11 +5,10 @@
 
 #include "config.h"
 
-#include "debugstr.h"
 #include "debugtools.h"
 #include "ntdll_misc.h"
 
-DEFAULT_DEBUG_CHANNEL(ntdll)
+DEFAULT_DEBUG_CHANNEL(ntdll);
 
 void dump_ObjectAttributes (POBJECT_ATTRIBUTES oa)
 {

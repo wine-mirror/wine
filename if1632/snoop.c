@@ -14,10 +14,9 @@
 #include "stackframe.h"
 #include "builtin16.h"
 #include "snoop.h"
-#include "debugstr.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(snoop)
+DEFAULT_DEBUG_CHANNEL(snoop);
 
 #ifdef __i386__
 
