@@ -1630,8 +1630,11 @@ static BOOL PROPSHEET_ShowPage(HWND hwndDlg, int index, PropSheetInfo * psInfo)
      PROPSHEET_CreatePage(hwndDlg, index, psInfo, ppshpage);
   }
 
-  PROPSHEET_SetTitleW(hwndDlg, psInfo->ppshheader.dwFlags,
-                      psInfo->proppage[index].pszText);
+  if ((psInfo->ppshheader.dwFlags & (PSH_WIZARD97_OLD | PSH_WIZARD97_NEW)) == 0)
+  {
+     PROPSHEET_SetTitleW(hwndDlg, psInfo->ppshheader.dwFlags,
+                         psInfo->proppage[index].pszText);
+  }
 
   if (psInfo->active_page != -1)
      ShowWindow(psInfo->proppage[psInfo->active_page].hwndPage, SW_HIDE);
@@ -3075,12 +3078,39 @@ static LRESULT PROPSHEET_Paint(HWND hwnd)
 	GetClientRect(hwndLineHeader, &r);
 	MapWindowPoints(hwndLineHeader, hwnd, (LPPOINT) &r, 2);
 	SetRect(&rzone, 0, 0, r.right, r.top - 1);
-	hbr = CreateSolidBrush(GetPixel(hdcSrc, 0, 0));
-	FillRect(hdc, &rzone, hbr);
-	DeleteObject(hbr);
 
 	GetObjectA(psInfo->ppshheader.u5.hbmHeader, sizeof(BITMAP), (LPVOID)&bm);		
 
+ 	if (psInfo->ppshheader.dwFlags & PSH_WIZARD97_OLD)
+ 	{
+ 	    /* Fill the unoccupied part of the header with color of the
+ 	     * left-top pixel, but do it only when needed.
+ 	     */
+ 	    if (bm.bmWidth < r.right || bm.bmHeight < r.bottom)
+ 	    {
+ 	        hbr = CreateSolidBrush(GetPixel(hdcSrc, 0, 0));
+ 	        CopyRect(&r, &rzone);
+ 	        if (bm.bmWidth < r.right)
+ 	        {
+ 	            r.left = bm.bmWidth;
+ 	            FillRect(hdc, &r, hbr);
+ 	        }
+ 	        if (bm.bmHeight < r.bottom)
+ 	        {
+ 	            r.left = 0;
+ 	            r.top = bm.bmHeight;
+ 	            FillRect(hdc, &r, hbr);
+ 	        }
+ 	        DeleteObject(hbr);
+ 	    }
+ 	}
+ 	else
+ 	{
+ 	    hbr = CreateSolidBrush(GetSysColor(COLOR_WINDOW));
+ 	    FillRect(hdc, &rzone, hbr);
+ 	    DeleteObject(hbr);
+ 	}
+ 
 	clrOld = SetTextColor (hdc, 0x00000000);
 	oldBkMode = SetBkMode (hdc, TRANSPARENT); 
 
@@ -3105,9 +3135,20 @@ static LRESULT PROPSHEET_Paint(HWND hwnd)
 		      -1, &r, DT_LEFT | DT_SINGLELINE);	
 	}
 
-	BitBlt(hdc, rzone.right - bm.bmWidth, (rzone.bottom - bm.bmHeight)/2,
-	       bm.bmWidth, bm.bmHeight, 
-	       hdcSrc, 0, 0, SRCCOPY);
+ 	if (psInfo->ppshheader.dwFlags & PSH_WIZARD97_OLD)
+ 	{
+ 	    BitBlt(hdc, 0, 0,
+ 	           bm.bmWidth, min(bm.bmHeight, rzone.bottom),
+ 	           hdcSrc, 0, 0, SRCCOPY);
+ 	}
+ 	else
+ 	{
+ 	    BitBlt(hdc, rzone.right - bm.bmWidth,
+ 	           (rzone.bottom - bm.bmHeight) / 2,
+ 	           bm.bmWidth, bm.bmHeight,
+ 	           hdcSrc, 0, 0, SRCCOPY);
+ 	}
+
 	offsety = rzone.bottom + 2;
 
 	SetTextColor(hdc, clrOld);
