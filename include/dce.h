@@ -36,21 +36,11 @@ typedef enum
     DCE_WINDOW_DC   /* This is a window DC (style CS_OWNDC) */
 } DCE_TYPE;
 
+struct tagDCE;
 
-typedef struct tagDCE
-{
-    struct tagDCE *next;
-    HDC          hDC;
-    HWND         hwndCurrent;
-    HWND         hwndDC;
-    HRGN         hClipRgn;
-    DCE_TYPE       type;
-    DWORD          DCXflags;
-} DCE;
-
-extern DCE*  DCE_AllocDCE( HWND hWnd, DCE_TYPE type );
-extern DCE*  DCE_FreeDCE( DCE *dce );
-extern void  DCE_FreeWindowDCE( HWND );
+extern struct tagDCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type );
+extern void DCE_FreeDCE( struct tagDCE *dce );
+extern void DCE_FreeWindowDCE( HWND );
 extern BOOL DCE_InvalidateDCE( HWND, const RECT* );
 
 #endif  /* __WINE_DCE_H */

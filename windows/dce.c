@@ -34,16 +34,27 @@
 #include "dce.h"
 #include "win.h"
 #include "user_private.h"
-#include "wine/debug.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "wownt32.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
+#include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dc);
 
-static DCE *firstDCE;
+typedef struct tagDCE
+{
+    struct list entry;
+    HDC         hDC;
+    HWND        hwndCurrent;
+    HRGN        hClipRgn;
+    DCE_TYPE    type;
+    DWORD       DCXflags;
+} DCE;
+
+static struct list dce_list = LIST_INIT(dce_list);
 
 static void DCE_DeleteClipRgn( DCE* );
 static INT DCE_ReleaseDC( DCE* );
@@ -58,7 +69,7 @@ static void DCE_DumpCache(void)
 
     USER_Lock();
 
-    for(dce = firstDCE; dce; dce = dce->next)
+    LIST_FOR_EACH_ENTRY( dce, &dce_list, DCE, entry )
     {
 	TRACE("\t[0x%08x] hWnd %p, dcx %08x, %s %s\n",
 	      (unsigned)dce, dce->hwndCurrent, (unsigned)dce->DCXflags,
@@ -95,6 +106,7 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
 
     dce->hwndCurrent = hWnd;
     dce->hClipRgn    = 0;
+    dce->type        = type;
 
     if( type != DCE_CACHE_DC ) /* owned or class DC */
     {
@@ -110,8 +122,7 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
     else dce->DCXflags = DCX_CACHE | DCX_DCEEMPTY;
 
     USER_Lock();
-    dce->next = firstDCE;
-    firstDCE = dce;
+    list_add_head( &dce_list, &dce->entry );
     USER_Unlock();
     return dce;
 }
@@ -120,19 +131,12 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
 /***********************************************************************
  *           DCE_FreeDCE
  */
-DCE* DCE_FreeDCE( DCE *dce )
+void DCE_FreeDCE( DCE *dce )
 {
-    DCE **ppDCE, *ret;
-
-    if (!dce) return NULL;
+    if (!dce) return;
 
     USER_Lock();
-
-    ppDCE = &firstDCE;
-
-    while (*ppDCE && (*ppDCE != dce)) ppDCE = &(*ppDCE)->next;
-    if (*ppDCE == dce) *ppDCE = dce->next;
-    ret = *ppDCE;
+    list_remove( &dce->entry );
     USER_Unlock();
 
     SetDCHook(dce->hDC, NULL, 0L);
@@ -140,8 +144,6 @@ DCE* DCE_FreeDCE( DCE *dce )
     DeleteDC( dce->hDC );
     if (dce->hClipRgn) DeleteObject(dce->hClipRgn);
     HeapFree( GetProcessHeap(), 0, dce );
-
-    return ret;
 }
 
 /***********************************************************************
@@ -151,53 +153,43 @@ DCE* DCE_FreeDCE( DCE *dce )
  */
 void DCE_FreeWindowDCE( HWND hwnd )
 {
-    DCE *pDCE;
+    struct list *ptr, *next;
     WND *pWnd = WIN_GetPtr( hwnd );
 
-    pDCE = firstDCE;
-    while( pDCE )
+    LIST_FOR_EACH_SAFE( ptr, next, &dce_list )
     {
-	if( pDCE->hwndCurrent == hwnd )
-	{
-	    if( pDCE == pWnd->dce ) /* owned or Class DCE*/
-	    {
-                if (pWnd->clsStyle & CS_OWNDC)	/* owned DCE*/
-		{
-                    pDCE = DCE_FreeDCE( pDCE );
-                    pWnd->dce = NULL;
-                    continue;
-                }
-		else if( pDCE->DCXflags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN) )	/* Class DCE*/
-		{
-                    if (USER_Driver.pReleaseDC)
-                        USER_Driver.pReleaseDC( pDCE->hwndCurrent, pDCE->hDC );
-                    DCE_DeleteClipRgn( pDCE );
-                    pDCE->hwndCurrent = 0;
-		}
-	    }
-	    else
-	    {
-		if( pDCE->DCXflags & DCX_DCEBUSY ) /* shared cache DCE */
-		{
-                    /* FIXME: AFAICS we are doing the right thing here so
-                     * this should be a WARN. But this is best left as an ERR
-                     * because the 'application error' is likely to come from
-                     * another part of Wine (i.e. it's our fault after all).
-                     * We should change this to WARN when Wine is more stable
-                     * (for 1.0?).
-                     */
-		    ERR("[%p] GetDC() without ReleaseDC()!\n",hwnd);
-		    DCE_ReleaseDC( pDCE );
-		}
+        DCE *pDCE = LIST_ENTRY( ptr, DCE, entry );
 
-                if (pDCE->hwndCurrent && USER_Driver.pReleaseDC)
+        if (pDCE->hwndCurrent != hwnd) continue;
+
+        switch( pDCE->type )
+        {
+        case DCE_WINDOW_DC:
+            DCE_FreeDCE( pDCE );
+            pWnd->dce = NULL;
+            break;
+        case DCE_CLASS_DC:
+            if( pDCE->DCXflags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN) )
+            {
+                if (USER_Driver.pReleaseDC)
                     USER_Driver.pReleaseDC( pDCE->hwndCurrent, pDCE->hDC );
-		pDCE->DCXflags &= DCX_CACHE;
-		pDCE->DCXflags |= DCX_DCEEMPTY;
-		pDCE->hwndCurrent = 0;
-	    }
-	}
-	pDCE = pDCE->next;
+                DCE_DeleteClipRgn( pDCE );
+                pDCE->hwndCurrent = 0;
+            }
+            break;
+        case DCE_CACHE_DC:
+            if( pDCE->DCXflags & DCX_DCEBUSY ) /* shared cache DCE */
+            {
+                WARN("[%p] GetDC() without ReleaseDC()!\n",hwnd);
+                DCE_ReleaseDC( pDCE );
+            }
+            if (pDCE->hwndCurrent && USER_Driver.pReleaseDC)
+                USER_Driver.pReleaseDC( pDCE->hwndCurrent, pDCE->hDC );
+            pDCE->DCXflags &= DCX_CACHE;
+            pDCE->DCXflags |= DCX_DCEEMPTY;
+            pDCE->hwndCurrent = 0;
+            break;
+        }
     }
     WIN_ReleasePtr( pWnd );
 }
@@ -280,7 +272,7 @@ BOOL DCE_InvalidateDCE(HWND hwnd, const RECT* pRectUpdate)
 
  	/* walk all DCEs and fixup non-empty entries */
 
-	for (dce = firstDCE; (dce); dce = dce->next)
+        LIST_FOR_EACH_ENTRY( dce, &dce_list, DCE, entry )
 	{
             if (dce->DCXflags & DCX_DCEEMPTY) continue;
             if ((dce->hwndCurrent == hwndScope) && !(dce->DCXflags & DCX_CLIPCHILDREN))
@@ -341,7 +333,8 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     DWORD 	dcxFlags = 0;
     BOOL	bUpdateVisRgn = TRUE;
     BOOL	bUpdateClipOrigin = FALSE;
-    HWND parent, full;
+    HWND parent;
+    LONG window_style;
 
     TRACE("hwnd %p, hrgnClip %p, flags %08lx\n", hwnd, hrgnClip, flags);
 
@@ -353,13 +346,16 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     }
 
     if (!hwnd) hwnd = GetDesktopWindow();
-    if (!(full = WIN_IsCurrentProcess( hwnd )))
-    {
-        FIXME( "not supported yet on other process window %p\n", hwnd );
-        return 0;
-    }
-    hwnd = full;
+    else hwnd = WIN_GetFullHandle( hwnd );
+
     if (!(wndPtr = WIN_GetPtr( hwnd ))) return 0;
+    if (wndPtr == WND_OTHER_PROCESS)
+    {
+        wndPtr = NULL;
+        USER_Lock();
+    }
+
+    window_style = GetWindowLongW( hwnd, GWL_STYLE );
 
     /* fixup flags */
 
@@ -369,16 +365,16 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     {
 	flags &= ~( DCX_CLIPCHILDREN | DCX_CLIPSIBLINGS | DCX_PARENTCLIP);
 
-        if( wndPtr->dwStyle & WS_CLIPSIBLINGS )
+        if( window_style & WS_CLIPSIBLINGS )
             flags |= DCX_CLIPSIBLINGS;
 
 	if ( !(flags & DCX_WINDOW) )
 	{
-            if (wndPtr->clsStyle & CS_PARENTDC) flags |= DCX_PARENTCLIP;
+            if (GetClassLongW( hwnd, GCL_STYLE ) & CS_PARENTDC) flags |= DCX_PARENTCLIP;
 
-	    if (wndPtr->dwStyle & WS_CLIPCHILDREN &&
-                     !(wndPtr->dwStyle & WS_MINIMIZE) ) flags |= DCX_CLIPCHILDREN;
-            if (!wndPtr->dce) flags |= DCX_CACHE;
+            if (window_style & WS_CLIPCHILDREN && !(window_style & WS_MINIMIZE))
+                flags |= DCX_CLIPCHILDREN;
+            if (!wndPtr || !wndPtr->dce) flags |= DCX_CACHE;
 	}
     }
 
@@ -394,7 +390,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     if( flags & DCX_PARENTCLIP )
     {
         LONG parent_style = GetWindowLongW( parent, GWL_STYLE );
-        if( (wndPtr->dwStyle & WS_VISIBLE) && (parent_style & WS_VISIBLE) )
+        if( (window_style & WS_VISIBLE) && (parent_style & WS_VISIBLE) )
         {
             flags &= ~DCX_CLIPCHILDREN;
             if (parent_style & WS_CLIPSIBLINGS) flags |= DCX_CLIPSIBLINGS;
@@ -408,17 +404,14 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     if (flags & DCX_CACHE)
     {
-	DCE*	dceEmpty;
-	DCE*	dceUnused;
-
-	dceEmpty = dceUnused = NULL;
+        DCE *dceEmpty = NULL, *dceUnused = NULL;
 
 	/* Strategy: First, we attempt to find a non-empty but unused DCE with
 	 * compatible flags. Next, we look for an empty entry. If the cache is
 	 * full we have to purge one of the unused entries.
 	 */
 
-	for (dce = firstDCE; (dce); dce = dce->next)
+        LIST_FOR_EACH_ENTRY( dce, &dce_list, DCE, entry )
 	{
 	    if ((dce->DCXflags & (DCX_CACHE | DCX_DCEBUSY)) == DCX_CACHE )
 	    {
@@ -440,7 +433,8 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	    }
 	}
 
-	if (!dce) dce = (dceEmpty) ? dceEmpty : dceUnused;
+        if (&dce->entry == &dce_list)  /* nothing found */
+            dce = dceEmpty ? dceEmpty : dceUnused;
 
         /* if there's no dce empty or unused, allocate a new one */
         if (!dce)
@@ -488,7 +482,8 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     TRACE("(%p,%p,0x%lx): returning %p\n", hwnd, hrgnClip, flags, hdc);
 END:
-    WIN_ReleasePtr(wndPtr);
+    if (wndPtr) WIN_ReleasePtr(wndPtr);
+    else USER_Unlock();
     return hdc;
 }
 
@@ -533,17 +528,19 @@ INT WINAPI ReleaseDC( HWND hwnd, HDC hdc )
     DCE * dce;
     INT nRet = 0;
 
-    USER_Lock();
-    dce = firstDCE;
-
     TRACE("%p %p\n", hwnd, hdc );
 
-    while (dce && (dce->hDC != hdc)) dce = dce->next;
+    USER_Lock();
+    LIST_FOR_EACH_ENTRY( dce, &dce_list, DCE, entry )
+    {
+        if (dce->hDC == hdc)
+        {
+            if ( dce->DCXflags & DCX_DCEBUSY )
+                nRet = DCE_ReleaseDC( dce );
+            break;
+        }
 
-    if ( dce )
-	if ( dce->DCXflags & DCX_DCEBUSY )
-            nRet = DCE_ReleaseDC( dce );
-
+    }
     USER_Unlock();
 
     return nRet;
@@ -615,14 +612,17 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 HWND WINAPI WindowFromDC( HDC hDC )
 {
     DCE *dce;
-    HWND hwnd;
+    HWND hwnd = 0;
 
     USER_Lock();
-    dce = firstDCE;
-
-    while (dce && (dce->hDC != hDC)) dce = dce->next;
-
-    hwnd = dce ? dce->hwndCurrent : 0;
+    LIST_FOR_EACH_ENTRY( dce, &dce_list, DCE, entry )
+    {
+        if (dce->hDC == hDC)
+        {
+            hwnd = dce->hwndCurrent;
+            break;
+        }
+    }
     USER_Unlock();
 
     return hwnd;
