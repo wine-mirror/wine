@@ -1468,20 +1468,23 @@ static void test_FoldStringA(void)
   /* MAP_EXPAND_LIGATURES */
   SetLastError(0);
   ret = pFoldStringA(MAP_EXPAND_LIGATURES, ligatures_src, -1, dst, 256);
-  EXPECT_LEN(sizeof(ligatures_dst)); EXPECT_VALID;
-  ok(strcmp(dst, ligatures_dst) == 0,
-     "MAP_EXPAND_LIGATURES: Expected '%s', got '%s'\n", ligatures_dst, dst);
-  for (i = 1; i < 256; i++)
-  {
-    if (!strchr(ligatures_src, i))
+  /* NT 4.0 doesnt support MAP_EXPAND_LIGATURES */
+  if (ret != ERROR_INVALID_FLAGS) {
+    EXPECT_LEN(sizeof(ligatures_dst)); EXPECT_VALID;
+    ok(strcmp(dst, ligatures_dst) == 0,
+       "MAP_EXPAND_LIGATURES: Expected '%s', got '%s'\n", ligatures_dst, dst);
+    for (i = 1; i < 256; i++)
     {
-      src[0] = i;
-      src[1] = '\0';
-      SetLastError(0);
-      ret = pFoldStringA(MAP_EXPAND_LIGATURES, src, -1, dst, 256);
-      EXPECT_LEN(2); EXPECT_VALID;
-      ok(dst[0] == src[0],
-         "MAP_EXPAND_LIGATURES: Expected '%s', got '%s'\n", src, dst);
+      if (!strchr(ligatures_src, i))
+      {
+        src[0] = i;
+        src[1] = '\0';
+        SetLastError(0);
+        ret = pFoldStringA(MAP_EXPAND_LIGATURES, src, -1, dst, 256);
+        EXPECT_LEN(2); EXPECT_VALID;
+        ok(dst[0] == src[0],
+           "MAP_EXPAND_LIGATURES: Expected '%s', got '%s'\n", src, dst);
+      }
     }
   }
 
@@ -1852,21 +1855,24 @@ static void test_FoldStringW(void)
   /* MAP_EXPAND_LIGATURES */
   SetLastError(0);
   ret = pFoldStringW(MAP_EXPAND_LIGATURES, ligatures_src, -1, dst, 256);
-  EXPECT_LEN(sizeof(ligatures_dst)/sizeof(ligatures_dst[0])); EXPECT_VALID;
-  ok(!memcmp(dst, ligatures_dst, sizeof(ligatures_dst)),
-     "MAP_EXPAND_LIGATURES: Expanded incorrectly\n");
-  for (i = 1; i <= 0xffff; i++)
-  {
-    if (!strchrW(ligatures_src, i))
+  /* NT 4.0 doesnt support MAP_EXPAND_LIGATURES */
+  if (ret != ERROR_INVALID_FLAGS) {
+    EXPECT_LEN(sizeof(ligatures_dst)/sizeof(ligatures_dst[0])); EXPECT_VALID;
+    ok(!memcmp(dst, ligatures_dst, sizeof(ligatures_dst)),
+       "MAP_EXPAND_LIGATURES: Expanded incorrectly\n");
+    for (i = 1; i <= 0xffff; i++)
     {
-      src[0] = i;
-      src[1] = '\0';
-      SetLastError(0);
-      ret = pFoldStringW(MAP_EXPAND_LIGATURES, src, -1, dst, 256);
-      EXPECT_LEN(2); EXPECT_VALID;
-      ok(dst[0] == src[0],
-         "MAP_EXPAND_LIGATURES: 0x%02x : Expected 0x%02x, got 0x%02x\n",
-         i, src[0], dst[0]);
+      if (!strchrW(ligatures_src, i))
+      {
+        src[0] = i;
+        src[1] = '\0';
+        SetLastError(0);
+        ret = pFoldStringW(MAP_EXPAND_LIGATURES, src, -1, dst, 256);
+        EXPECT_LEN(2); EXPECT_VALID;
+        ok(dst[0] == src[0],
+           "MAP_EXPAND_LIGATURES: 0x%02x : Expected 0x%02x, got 0x%02x\n",
+           i, src[0], dst[0]);
+      }
     }
   }
 
