@@ -73,6 +73,18 @@ BOOL DEBUG_checkmap_bad( const char *addr, size_t size, int rwflag)
   )
     return FALSE; 
 
+#ifdef __FreeBSD__
+  /*
+   * *FOO*  read(2) less than length of /proc/.../map fails with EFBIG
+   *
+   * $ dd bs=256 </proc/curproc/map 
+   * dd: stdin: File too large
+   * 0+0 records in
+   * 0+0 records out
+   * 0 bytes transferred in 0.001595 secs (0 bytes/sec)
+   */
+  setvbuf(fp, (char *)NULL, _IOFBF, 0x4000);
+#endif
   while (fgets( buf, sizeof(buf)-1, fp)) {
 #ifdef linux
     sscanf(buf, "%x-%x %3s", (int *) &start, (int *) &end, prot);
