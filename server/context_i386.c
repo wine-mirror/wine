@@ -25,13 +25,22 @@
 #include "thread.h"
 #include "request.h"
 
-
 #ifndef PTRACE_PEEKUSER
-#define PTRACE_PEEKUSER PT_READ_U
+#  ifdef PTRACE_PEEKUSR /* libc5 uses USR not USER */
+#    define PTRACE_PEEKUSER PTRACE_PEEKUSR
+#  else
+#    define PTRACE_PEEKUSER PT_READ_U
+#  endif
 #endif
+
 #ifndef PTRACE_POKEUSER
-#define PTRACE_POKEUSER PT_WRITE_U
+#  ifdef PTRACE_POKEUSR /* libc5 uses USR not USER */
+#    define PTRACE_POKEUSER PTRACE_POKEUSR
+#  else
+#    define PTRACE_POKEUSER PT_WRITE_U
+#  endif
 #endif
+
 #ifndef PTRACE_GETREGS
 #define PTRACE_GETREGS PT_GETREGS
 #endif
