@@ -1060,9 +1060,14 @@ BOOL X11DRV_GetClipboardData(UINT wFormat)
 
     if (!selectionAcquired)
     {
-	XEvent xe;
+        XEvent xe;
         Atom propRequest;
-	Window w = X11DRV_get_whole_window( GetAncestor( hWnd, GA_ROOT ));
+        Window w = X11DRV_get_whole_window( GetAncestor( hWnd, GA_ROOT ));
+        if(!w)
+        {
+            FIXME("No parent win found %x %x\n", hWnd, hWndClipWindow);
+            return FALSE;
+        }
 
         /* Map the format ID requested to an X selection property.
          * If the format is in the cache, use the atom associated
