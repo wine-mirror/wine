@@ -101,6 +101,7 @@ debug_channels (ole typelib)
 94 stdcall VarDateFromStr(wstr long long ptr) VarDateFromStr
 95 stub VarDateFromDisp
 96 stdcall VarDateFromBool(long ptr) VarDateFromBool
+#97 stub VarFormatDateTime # (ptr long long ptr)
 98 stdcall VarCyFromUI1(long ptr) VarCyFromUI1
 99 stdcall VarCyFromI2(long ptr) VarCyFromI2
 100 stdcall VarCyFromI4(long ptr) VarCyFromI4
@@ -308,7 +309,7 @@ debug_channels (ole typelib)
 426 stub GetRecordInfoFromGuids # stdcall (ptr long long long ptr ptr)
 427 stub GetRecordInfoFromTypeInfo # stdcall (ptr ptr)
 428 stub OleLoadPictureFileEx
-429 stub SafeArrayAllocDescriptorEx
+429 stdcall SafeArrayAllocDescriptorEx(long long ptr) SafeArrayAllocDescriptorEx
 430 stub SafeArrayCreateEx
 431 stub SafeArrayCreateVectorEx
 432 stub SafeArrayGetIID
@@ -320,7 +321,7 @@ debug_channels (ole typelib)
 438 stub VarAnd # stdcall (ptr ptr ptr)
 439 stdcall VarBstrCat(ptr ptr ptr) VarBstrCat
 440 stdcall VarBstrCmp(ptr ptr long long) VarBstrCmp
-441 stub VarCat # stdcall (ptr ptr ptr)
+441 stdcall VarCat(ptr ptr ptr) VarCat
 442 stub VarCmp # stdcall (ptr ptr long long)
 443 stub VarCyAbs
 444 stub VarCyAdd

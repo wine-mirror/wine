@@ -4650,3 +4650,26 @@ HRESULT WINAPI VarBstrCat(BSTR left, BSTR right, BSTR *out)
     return 1;
 }
 
+/**********************************************************************
+ *              VarCat [OLEAUT32.441]
+ */
+HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
+{
+    /* Should we VariantClear out? */
+    /* Can we handle array, vector, by ref etc. */
+    if ((V_VT(left)&VT_TYPEMASK) == VT_NULL &&
+        (V_VT(right)&VT_TYPEMASK) == VT_NULL)
+    {
+        V_VT(out) = VT_NULL;
+        return S_OK;
+    }
+    else if (V_VT(left) == VT_BSTR && V_VT(right) == VT_BSTR)
+    {
+        V_VT(out) = VT_BSTR;
+        VarBstrCat (V_BSTR(left), V_BSTR(right), &V_BSTR(out));
+        return S_OK;
+    }
+    else
+        FIXME ("types not supported\n");
+    return S_OK;
+}
