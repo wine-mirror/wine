@@ -58,7 +58,11 @@ int add_select_user( struct object *obj )
             if (!(newusers = realloc( poll_users, new_count * sizeof(*poll_users) ))) return -1;
             if (!(newpoll = realloc( pollfd, new_count * sizeof(*pollfd) )))
             {
-                free( newusers );
+                if (allocated_users)
+                    poll_users = newusers;
+                else
+                    free( newusers );
+                obj->select = -1;
                 return -1;
             }
             poll_users = newusers;
@@ -80,6 +84,7 @@ int add_select_user( struct object *obj )
 void remove_select_user( struct object *obj )
 {
     int user = obj->select;
+    assert( user >= 0 );
     assert( poll_users[user] == obj );
     pollfd[user].fd = -1;
     pollfd[user].events = 0;
