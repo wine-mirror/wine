@@ -1632,6 +1632,12 @@ static UINT32 XFONT_Match( fontMatch* pfm )
    }
    else if (plf->lfCharSet != pfi->df.dfCharSet) penalty += 0x200;
 
+   /* FIXME: Hack to demote symbols and nil fonts.  Should take into
+             account if a program ever actually asked for this type of
+             font */
+   if ( (strcmp(pfm->pfr->lfFaceName,"Symbol")==0) || (strcmp(pfm->pfr->lfFaceName,"Nil")==0) ) 
+     penalty += 0x200; /* very stiff penality */
+
    /* TMPF_FIXED_PITCH means exactly the opposite */
 
    if( plf->lfPitchAndFamily & FIXED_PITCH ) 
@@ -1841,6 +1847,7 @@ static BOOL32 XFONT_MatchDeviceFont( fontResource* start, fontMatch* pfm )
         for( start = fontList; start && score; start = start->next )
         {
             fm.pfr = start;
+
 	    TRACE(font, "%s\n", fm.pfr->lfFaceName );
 
             current_score = XFONT_MatchFIList( &fm );
