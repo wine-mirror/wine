@@ -66,7 +66,7 @@
 @ cdecl _CIsqrt() msvcrt._CIsqrt
 @ cdecl _CItan() msvcrt._CItan
 @ cdecl _CItanh() msvcrt._CItanh
-@ stub _CrtCheckMemory
+@ cdecl _CrtCheckMemory()
 @ stub _CrtDbgBreak
 @ varargs _CrtDbgReport(long ptr long ptr ptr)
 @ stub _CrtDoForAllClientObjects

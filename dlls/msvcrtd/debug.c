@@ -115,6 +115,16 @@ int _CrtDumpMemoryLeaks()
 }
 
 /*********************************************************************
+ *		_CrtCheckMemory (MSVCRTD.@)
+ */
+int _CrtCheckMemory()
+{
+    /* Note: maybe we could call here our heap validating functions ? */
+    return TRUE;
+}
+
+
+/*********************************************************************
  *		__p__crtAssertBusy (MSVCRTD.@)
  */
 int *__p__crtAssertBusy(void)
