@@ -23,6 +23,7 @@
 #include "winerror.h"
 #include "winnt.h"
 #include "wincon.h"
+#include "server/process.h"
 #include "server/thread.h"
 
 struct screen_buffer;

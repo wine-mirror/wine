@@ -19,6 +19,7 @@
 
 #include "winerror.h"
 #include "winbase.h"
+#include "server/process.h"
 #include "server/thread.h"
 
 struct file

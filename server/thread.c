@@ -20,6 +20,7 @@
 #include "winerror.h"
 #include "server.h"
 #include "server/thread.h"
+#include "server/process.h"
 
 
 /* thread queues */

@@ -11,6 +11,7 @@
 
 #include "winerror.h"
 #include "winnt.h"
+#include "server/process.h"
 #include "server/thread.h"
 
 struct mapping
