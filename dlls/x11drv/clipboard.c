@@ -117,7 +117,7 @@ static Window PrimarySelectionOwner = None;    /* The window which owns the prim
 static Window ClipboardSelectionOwner = None;  /* The window which owns the clipboard selection */
 
 INT X11DRV_RegisterClipboardFormat(LPCSTR FormatName);
-void X11DRV_EmptyClipboard(void);
+void X11DRV_EmptyClipboard(BOOL keepunowned);
 void X11DRV_EndClipboardUpdate(void);
 HANDLE X11DRV_CLIPBOARD_ImportClipboardData(LPBYTE lpdata, UINT cBytes);
 HANDLE X11DRV_CLIPBOARD_ImportEnhMetaFile(LPBYTE lpdata, UINT cBytes);
@@ -719,7 +719,7 @@ static BOOL X11DRV_CLIPBOARD_UpdateCache(LPCLIPBOARDINFO lpcbinfo)
         }
         else if (wSeqNo < lpcbinfo->seqno)
         {
-            X11DRV_EmptyClipboard();
+            X11DRV_EmptyClipboard(TRUE);
 
             if (X11DRV_CLIPBOARD_QueryAvailableData(lpcbinfo) < 0)
             {
@@ -1985,7 +1985,7 @@ void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd)
                 selectionWindow = None;
                 PrimarySelectionOwner = ClipboardSelectionOwner = 0;
 
-                X11DRV_EmptyClipboard();
+                X11DRV_EmptyClipboard(FALSE);
 
                 /* Reset the selection flags now that we are done */
                 selectionAcquired = S_NOSELECTION;
@@ -2135,29 +2135,41 @@ void X11DRV_AcquireClipboard(HWND hWndClipWindow)
 
 /**************************************************************************
  *	X11DRV_EmptyClipboard
+ *
+ * Empty cached clipboard data. 
  */
-void X11DRV_EmptyClipboard(void)
+void X11DRV_EmptyClipboard(BOOL keepunowned)
 {
     if (ClipData)
     {
-        LPWINE_CLIPDATA lpData;
+        LPWINE_CLIPDATA lpData, lpStart;
         LPWINE_CLIPDATA lpNext = ClipData;
+
+        TRACE(" called with %d entries in cache.\n", ClipDataCount);
 
         do
         {
+            lpStart = ClipData;
             lpData = lpNext;
             lpNext = lpData->NextData;
+
+            if (!keepunowned || !(lpData->wFlags & CF_FLAG_UNOWNED))
+            {
             lpData->PrevData->NextData = lpData->NextData;
             lpData->NextData->PrevData = lpData->PrevData;
+
+                if (lpData == ClipData)
+                    ClipData = lpNext != lpData ? lpNext : NULL;
+
             X11DRV_CLIPBOARD_FreeData(lpData);
             HeapFree(GetProcessHeap(), 0, lpData);
-        } while (lpNext != lpData);
+
+                ClipDataCount--;
+            }
+        } while (lpNext != lpStart);
     }
 
-    TRACE(" %d entries deleted from cache.\n", ClipDataCount);
-
-    ClipData = NULL;
-    ClipDataCount = 0;
+    TRACE(" %d entries remaining in cache.\n", ClipDataCount);
 }
 
 
@@ -2165,12 +2177,29 @@ void X11DRV_EmptyClipboard(void)
 /**************************************************************************
  *		X11DRV_SetClipboardData
  */
-BOOL X11DRV_SetClipboardData(UINT wFormat, HANDLE16 hData16, HANDLE hData32)
+BOOL X11DRV_SetClipboardData(UINT wFormat, HANDLE16 hData16, HANDLE hData32, BOOL owner)
 {
-    BOOL bResult = FALSE;
+    DWORD flags = 0;
+    BOOL bResult = TRUE;
 
-    if (X11DRV_CLIPBOARD_InsertClipboardData(wFormat, hData16, hData32, 0))
-        bResult = TRUE;
+    /* If it's not owned, data can only be set if the format data is not already owned
+       and its rendering is not delayed */
+    if (!owner)
+{
+        CLIPBOARDINFO cbinfo;
+        LPWINE_CLIPDATA lpRender;
+
+        X11DRV_CLIPBOARD_UpdateCache(&cbinfo);
+
+        if ((!hData16 && !hData32) ||
+            ((lpRender = X11DRV_CLIPBOARD_LookupData(wFormat)) &&
+            !(lpRender->wFlags & CF_FLAG_UNOWNED)))
+            bResult = FALSE;
+        else
+            flags = CF_FLAG_UNOWNED;
+    }
+
+    bResult &= X11DRV_CLIPBOARD_InsertClipboardData(wFormat, hData16, hData32, flags);
 
     return bResult;
 }

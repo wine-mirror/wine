@@ -474,6 +474,7 @@ typedef struct tagWINE_CLIPFORMAT {
 } WINE_CLIPFORMAT, *LPWINE_CLIPFORMAT;
 
 #define CF_FLAG_BUILTINFMT   1 /* Built-in windows format */
+#define CF_FLAG_UNOWNED      2 /* cached data is not owned */
 #define CF_FLAG_SYNTHESIZED  8 /* Implicitly converted data */
 
 extern void X11DRV_InitClipboard(void);

@@ -427,7 +427,7 @@ BOOL WINAPI EmptyClipboard(void)
 
     /* Empty the local cache */
     if (USER_Driver.pEmptyClipboard) 
-        USER_Driver.pEmptyClipboard();
+        USER_Driver.pEmptyClipboard(FALSE);
  
     bCBHasChanged = TRUE;
 
@@ -557,14 +557,22 @@ HANDLE16 WINAPI SetClipboardData16(UINT16 wFormat, HANDLE16 hData)
 
     TRACE("(%04X, %04x) !\n", wFormat, hData);
 
-    if (!CLIPBOARD_GetClipboardInfo(&cbinfo) ||
-        (~cbinfo.flags & CB_OPEN) ||
-        (~cbinfo.flags & CB_OWNER))
+    if (!CLIPBOARD_GetClipboardInfo(&cbinfo) || !(cbinfo.flags & CB_OPEN))
     {
-        WARN("Clipboard not opened by calling task!\n");
+        WARN("Clipboard not opened by calling task. Operation failed.\n");
+        return 0;
     }
-    else if (USER_Driver.pSetClipboardData &&
-        USER_Driver.pSetClipboardData(wFormat, hData, 0))
+
+    /* If it's not owned, data can only be set if the format doesn't exists
+       and its rendering is not delayed */
+    if (!(cbinfo.flags & CB_OWNER) && !hData)
+    {
+        WARN("Clipboard not owned by calling task. Operation failed.\n");
+        return 0;
+    }
+
+    if (USER_Driver.pSetClipboardData &&
+        USER_Driver.pSetClipboardData(wFormat, hData, 0, cbinfo.flags & CB_OWNER))
     {
         hResult = hData;
         bCBHasChanged = TRUE;
@@ -584,13 +592,22 @@ HANDLE WINAPI SetClipboardData(UINT wFormat, HANDLE hData)
 
     TRACE("(%04X, %p) !\n", wFormat, hData);
 
-    if (!CLIPBOARD_GetClipboardInfo(&cbinfo) ||
-        (~cbinfo.flags & CB_OWNER))
+    if (!CLIPBOARD_GetClipboardInfo(&cbinfo) || !(cbinfo.flags & CB_OPEN))
     {
-        WARN("Clipboard not owned by calling task!\n");
+        WARN("Clipboard not opened by calling task. Operation failed.\n");
+        return 0;
     }
-    else if (USER_Driver.pSetClipboardData &&
-        USER_Driver.pSetClipboardData(wFormat, 0, hData))
+
+    /* If it's not owned, data can only be set if the format isn't
+       available and its rendering is not delayed */
+    if (!(cbinfo.flags & CB_OWNER) && !hData)
+    {
+        WARN("Clipboard not owned by calling task. Operation failed.\n");
+        return 0;
+    }
+
+    if (USER_Driver.pSetClipboardData &&
+        USER_Driver.pSetClipboardData(wFormat, 0, hData, cbinfo.flags & CB_OWNER))
     {
         hResult = hData;
         bCBHasChanged = TRUE;
