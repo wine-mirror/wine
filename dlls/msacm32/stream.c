@@ -45,7 +45,8 @@ MMRESULT WINAPI acmStreamClose(HACMSTREAM has, DWORD fdwClose)
     }
     ret = SendDriverMessage(was->pDrv->hDrvr, ACMDM_STREAM_CLOSE, (DWORD)&was->drvInst, 0);
     if (ret == MMSYSERR_NOERROR) {
-	/* FIXME: shall the was->pDrv->hDrvr be also closed ? */
+	if (was->hAcmDriver)
+	    acmDriverClose(was->hAcmDriver, 0L);	
 	HeapFree(MSACM_hHeap, 0, was);
     }
     TRACE("=> (%d)\n", ret);
@@ -166,7 +167,8 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 	
 	was->obj.pACMDriverID = wad->obj.pACMDriverID;
 	was->pDrv = wad;
-	
+	was->hAcmDriver = 0; /* not to close it in acmStreamClose */
+
 	ret = SendDriverMessage(wad->hDrvr, ACMDM_STREAM_OPEN, (DWORD)&was->drvInst, 0L);
 	if (ret != MMSYSERR_NOERROR)
 	    goto errCleanUp;
@@ -180,6 +182,7 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 		if ((wad = MSACM_GetDriver(had)) != 0) {
 		    was->obj.pACMDriverID = wad->obj.pACMDriverID;
 		    was->pDrv = wad;
+		    was->hAcmDriver = had;
 		    
 		    ret = SendDriverMessage(wad->hDrvr, ACMDM_STREAM_OPEN, (DWORD)&was->drvInst, 0L);
 		    /* FIXME: when shall the acmDriver be Close():d ? */
