@@ -1918,6 +1918,7 @@ VOID        WINAPI RestoreThunkLock(DWORD);
 void        WINAPI SetProcessDword(DWORD,INT,DWORD);
 VOID        WINAPI UnMapLS(DWORD);
 HFILE       WINAPI Win32HandleToDosFileHandle(HANDLE);
+VOID        WINAPI _CheckNotSysLevel(SYSLEVEL *lock);
 DWORD       WINAPI _ConfirmWin16Lock(void);
 DWORD       WINAPI _ConfirmSysLevel(SYSLEVEL*);
 VOID        WINAPI _EnterSysLevel(SYSLEVEL*);

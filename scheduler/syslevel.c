@@ -145,7 +145,11 @@ DWORD WINAPI _ConfirmSysLevel(SYSLEVEL *lock)
  */
 VOID WINAPI _CheckNotSysLevel(SYSLEVEL *lock)
 {
-    FIXME("(%p)\n", lock);
+    if (lock && lock->crst.OwningThread == GetCurrentThreadId() && lock->crst.RecursionCount)
+    {
+        ERR( "Holding lock %p level %d\n", lock, lock->level );
+        DbgBreakPoint();
+    }
 }
 
 
