@@ -258,7 +258,7 @@ WINE COMPONENTS
             Wine stores registry entries in a series of files.
 
             For an excellent overview of this issue, read this
-            http://www.winehq.com/News/2000-25.html#FTR
+            http://www.winehq.org/News/2000-25.html#FTR
             Wine Weekly News feature.
 
             The bottom line is that, at Wine server startup,

@@ -25,19 +25,19 @@ formats: wine-doc-html.tar.gz, wine-doc-txt.tar.gz,
 wine-doc-pdf.tar.gz and wine-doc-ps.tar.gz.
 
 You can also get the current source directly from the CVS tree. Check
-http://www.winehq.com/cvs for details.
+http://www.winehq.org/cvs for details.
 
-Patches should be submitted to "wine-patches@winehq.com".  Please
+Patches should be submitted to "wine-patches@winehq.org".  Please
 don't forget to include a ChangeLog entry. If you submitted a patch,
 please check to make sure it has been included in the new release.
 
 If you want to receive by mail a patch against the previous release
 when a new one is released, you can subscribe to the mailing list at
-http://www.winehq.com/mailman/listinfo/wine-releases .
+http://www.winehq.org/mailman/listinfo/wine-releases .
 
 Wine is available thanks to the work of many people. See the file
 AUTHORS in the distribution for the complete list.
 
 --
 Alexandre Julliard
-julliard@winehq.com
+julliard@winehq.org

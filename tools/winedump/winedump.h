@@ -20,7 +20,7 @@
  *  References:
  *  DLL symbol extraction based on file format from alib (anthonyw.cjb.net).
  *
- *  Option processing shamelessly cadged from winebuild (www.winehq.com).
+ *  Option processing shamelessly cadged from winebuild.
  *
  *  All the cool functionality (prototyping, call tracing, forwarding)
  *  relies on Patrik Stridvall's 'function_grep.pl' script to work.

@@ -1661,7 +1661,7 @@ BOOL WINAPI PathRelativePathToA(
               <listitem>
                 <para>
                   Hyperlink in URL form, e.g., <ulink
-                  url="http://www.winehq.com">http://www.winehq.com</ulink>.
+                  url="http://www.winehq.org">http://www.winehq.org</ulink>.
                 </para>
               </listitem>
             </varlistentry>

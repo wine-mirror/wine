@@ -22,7 +22,7 @@ Corre os programas conforme as "wine [options] program". Para mais
 informações e resoçução de problemas. Lê o resto deste ficheiro, a Wine 
 man page, os ficheiros incluidos na directoria de documentação  do Wine 
 source (ver "DOCUMENTATION"), e especialmente a abundância de informação 
-encontrada em http://www.winehq.com.
+encontrada em http://www.winehq.org.
 
 3.REQUERIMENTOS
 
@@ -150,7 +150,7 @@ O ficheiro documentation/samples/config contém um exemplo de ficheiro de
 configuraçao o qual tem que ser adaptado e copiado para a localização 
 mencionada em cima.
 
-Ver http://www.winehq.com/support/ para mais informação sobre a 
+Ver http://www.winehq.org/support/ para mais informação sobre a 
 configuraçao.
 
 No caso da livraria carregar erros (e.g. "Error while loading shared 
@@ -218,11 +218,11 @@ SuSE:		docbktls-A.BB.C-DD
 8.ARRANJAR MAIS INFORMAÇÃO
 
 www:	Uma grande quantidade de informação acerca do Wine está disponivel 
-        pelo WineHQ em http://www.winehq.com/ : varios guias Wine, base de  
+        pelo WineHQ em http://www.winehq.org/ : varios guias Wine, base de  
         dados de aplicações, localizaçao de erros. Isto é provavelmente o 
         melhor ponto de começo.
 
-FAQ:	A Wine FAQ está localizada em http://www.winehq.com/FAQ
+FAQ:	A Wine FAQ está localizada em http://www.winehq.org/FAQ
 
 Usenet:	Tu podes discutor tópicos relacionados de Wine e obter ajuda em
 	comp.emulators.ms-windows.wine.
@@ -231,12 +231,12 @@ IRC:	Ajuda online está disponivel em #WineHQ on irc.freenode.net.
 
 
 CVS:	O currente desenvolvimento do Wine está disponivel por CVS.
-	Vai a http://www.winehq.com/cvs para mais informação.
+	Vai a http://www.winehq.org/cvs para mais informação.
 
 Mailing Lists:
 	Há algumas mailing list para responsaveis pelo desenvolvimento Wine; ver em
-	http://www.winehq.com/forums para mais informação.
+	http://www.winehq.org/forums para mais informação.
 
 Se tu acrescentaste algo,ou corrigiste um bug, por favor envia um patch 
-(em 'diff -u' format) para wine-patches_at_winehq.com lista para inclusão 
+(em 'diff -u' format) para wine-patches_at_winehq.org lista para inclusão 
 no próximo lançamento.

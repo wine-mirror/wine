@@ -22,7 +22,7 @@ Run programs as "wine [options] program".  For more information and
 problem resolution, read the rest of this file, the Wine man page,
 the files in the documentation directory of the Wine source
 (see "DOCUMENTATION"), and especially the wealth of information
-found at http://www.winehq.com.
+found at http://www.winehq.org.
 
 3. REQUIREMENTS
 
@@ -143,7 +143,7 @@ which has to be adapted and copied to the location mentioned above.
 Don't forget to add vital registry entries by applying winedefault.reg
 with programs/regedit/. See documentation/ directory for details.
 
-See the Support area at http://www.winehq.com/ for further
+See the Support area at http://www.winehq.org/ for further
 configuration hints.
 
 In case of library loading errors
@@ -208,15 +208,15 @@ SuSE:		docbktls-A.BB.C-DD
 8. GETTING MORE INFORMATION
 
 WWW:	A great deal of information about Wine is available from WineHQ at
-	http://www.winehq.com/ : various Wine Guides, application database,
+	http://www.winehq.org/ : various Wine Guides, application database,
 	bug tracking. This is probably the best starting point.
 
-FAQ:	The Wine FAQ is located at http://www.winehq.com/FAQ
+FAQ:	The Wine FAQ is located at http://www.winehq.org/FAQ
 
 Usenet:	You can discuss Wine-related issues and get help
 	on comp.emulators.ms-windows.wine.
 
-Bugs:	Report bugs to Wine Bugzilla at http://bugs.winehq.com
+Bugs:	Report bugs to Wine Bugzilla at http://bugs.winehq.org
 	Please search the bugzilla database to check whether your
 	problem is already found before posting a bug report.  You can
 	also post bug reports to comp.emulators.ms-windows.wine.
@@ -226,16 +226,16 @@ Bugs:	Report bugs to Wine Bugzilla at http://bugs.winehq.com
 IRC:	Online help is available at channel #WineHQ on irc.freenode.net.
 
 CVS:	The current Wine development tree is available through CVS.
-	Go to http://www.winehq.com/cvs for more information.
+	Go to http://www.winehq.org/cvs for more information.
 
 Mailing lists:
 	There are several mailing lists for Wine developers; see
-	http://www.winehq.com/forums for more information.
+	http://www.winehq.org/forums for more information.
 
 If you add something, or fix a bug, please send a patch (in 'diff -u'
-format) to wine-patches@winehq.com list for inclusion in the next
+format) to wine-patches@winehq.org list for inclusion in the next
 release.
 
 --
 Alexandre Julliard
-julliard@winehq.com
+julliard@winehq.org

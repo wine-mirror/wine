@@ -412,8 +412,8 @@ It is not yet possible to use a PE-format dll in an import
 specification; only Wine dlls can be imported.
 .PP
 If you find a bug, please submit a bug report at
-.UR http://bugs.winehq.com
-.B http://bugs.winehq.com.
+.UR http://bugs.winehq.org
+.B http://bugs.winehq.org.
 .UE
 .SH AVAILABILITY
 .B winebuild
@@ -421,8 +421,8 @@ is part of the wine distribution, which is available through WineHQ,
 the
 .B wine
 development headquarters, at
-.UR http://www.winehq.com/
-.B http://www.winehq.com/.
+.UR http://www.winehq.org/
+.B http://www.winehq.org/.
 .UE
 .SH "SEE ALSO"
 .BR wine (1),

@@ -272,7 +272,7 @@ thread.c: 86 tests executed, 5 marked as todo, 0 failures.
           <listitem><para>
             If you get an error when compiling <filename>winsock.h</> then
             you probably need to apply the following patch:
-            <ulink url="http://www.winehq.com/hypermail/wine-patches/2002/12/0157.html">http://www.winehq.com/hypermail/wine-patches/2002/12/0157.html</>
+            <ulink url="http://www.winehq.org/hypermail/wine-patches/2002/12/0157.html">http://www.winehq.org/hypermail/wine-patches/2002/12/0157.html</>
           </para></listitem>
         </itemizedlist>
       </sect2>

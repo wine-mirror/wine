@@ -97,7 +97,7 @@ is part of the wine distribution, which is available through
 WineHQ, the
 .B wine
 development headquarters, at
-.I http://www.winehq.com/.
+.I http://www.winehq.org/.
 .SH "SEE ALSO"
 .BR wine (1),
 .BR wrc (1)

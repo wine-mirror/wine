@@ -76,7 +76,7 @@ if ($debuglevel < 3) {
 	the second has *all* of the debug output, which can go to thousands of
 	lines.
 	To (hopefully) get the bug fixed, report it to the project
-	bug tracking system at http://bugs.winehq.com.
+	bug tracking system at http://bugs.winehq.org.
 	Attach the first file to the bug description.
 	Also include detailed description of the problem. The developers
 	might ask you for "the last X lines from the report". If so, just
@@ -563,7 +563,7 @@ Thank you!
 EOM
 }
 $var22 = qq{
-Great! We're finished making the debug report. Please go to http://bugs.winehq.com
+Great! We're finished making the debug report. Please go to http://bugs.winehq.org
 and enter it as a new bug. Check that nobody has already reported the same bug!
 };
 $var28 = qq{
@@ -577,7 +577,7 @@ Note that it is $dbgoutfile.gz, since I compressed it with gzip for you.
 };
 $var30 = qq{
 If you have any problems with this bug reporting tool,
-please submit a bug report to Wine bugtracking system at http://bugs.winehq.com
+please submit a bug report to Wine bugtracking system at http://bugs.winehq.org
 or tell the Wine newsgroup (comp.emulators.ms-windows.wine).
 };
 print do_var($var22);

@@ -9,7 +9,7 @@
       </question>
       <answer>
         <para>Dave Gardner maintained it from 1995-1998.</para>
-        <para>Douglas Ridgway (ridgway@winehq.com) took it over in 1999.</para>
+        <para>Douglas Ridgway (ridgway@winehq.org) took it over in 1999.</para>
         <para>Andreas Mohr (amohr@codeweavers.com) converted it to FAQ-O-Matic in 2000.</para>
         <para>Dimitrie O. Paun, Keith Matthews and Tom Wickline (in alphabetical order) reorganized it in 2002.</para>
         <para>For suggestions/additions/complaints regarding this FAQ, please send an email to
@@ -283,7 +283,7 @@
         <variablelist>
 
 	  <varlistentry>
-           <term><ulink url="http://www.winehq.com">Wine</ulink></term>
+           <term><ulink url="http://www.winehq.org">Wine</ulink></term>
            <listitem>
            <para>
               This is the "standard" source distribution of Wine. Its license is 
@@ -403,8 +403,8 @@
           applications became popular.
         </para>
         <para>
-          For more information, see <ulink url="http://www.winehq.com/site/about">
-          http://www.winehq.com/site/about</ulink>
+          For more information, see <ulink url="http://www.winehq.org/site/about">
+          http://www.winehq.org/site/about</ulink>
         </para>
       </answer>
       </qandaentry>
@@ -419,9 +419,9 @@
           able to keep up on all the latest releases by reading the newsgroup
           <ulink url="news:comp.emulators.ms-windows.wine">
           comp.emulators.ms-windows.wine</ulink>, or by visiting the
-          <ulink url="http://www.winehq.com">Wine HQ homepage</ulink>. When
+          <ulink url="http://www.winehq.org">Wine HQ homepage</ulink>. When
           downloading Wine from your FTP site of choice (see
-          <ulink url="http://www.winehq.com/download.shtml">the Download page</ulink>
+          <ulink url="http://www.winehq.org/download.shtml">the Download page</ulink>
           for some of these choices), you can make sure that you are getting 
           the latest version by watching the version numbers in the distribution
           file name. For instance, the distribution released on August 13, 2003
@@ -1127,7 +1127,7 @@
           To login to the CVS tree, do
         </para>
         <screen>
-export CVSROOT=:pserver:cvs@cvs.winehq.com/home/wine
+export CVSROOT=:pserver:cvs@cvs.winehq.org/home/wine
 cvs login
         </screen>
         <para>
@@ -1150,8 +1150,8 @@ cvs -z 3 checkout wine/ANNOUNCE
           Be aware, though, that getting the entire Wine source tree via CVS
           is pretty slow, especially compared to getting Wine from an FTP 
           mirror near you. For a CVS mirror list, see 
-          <ulink url="http://www.winehq.com/site/cvs#cvsservers">
-          http://www.winehq.com/site/cvs#cvsservers</ulink>
+          <ulink url="http://www.winehq.org/site/cvs#cvsservers">
+          http://www.winehq.org/site/cvs#cvsservers</ulink>
         </para>
         <para>
           Patch files are also available, so that you don't have to download,
@@ -1196,7 +1196,7 @@ gunzip -c patch-file | patch -p1
           does. Use a <filename>wine.sup</filename> file of:
         </para>
         <screen>
-*default host=cvs.winehq.com
+*default host=cvs.winehq.org
 *default base=/cvs
 *default prefix=/cvs/wine
 *default release=wine
@@ -1653,8 +1653,8 @@ export PATH=$PATH:/path/to/wine/binary
         <para>
           Updates and additions to the Wine documentation directory should be
           sent to the wine-patches mailing list at 
-          <ulink url="http://www.winehq.com/site/forums">
-          http://www.winehq.com/site/forums</ulink>. Website and FAQ 
+          <ulink url="http://www.winehq.org/site/forums">
+          http://www.winehq.org/site/forums</ulink>. Website and FAQ 
           additions should be added to the appropriate Wine Knowledge base directory.
         </para>
       </answer>
@@ -1706,7 +1706,7 @@ export PATH=$PATH:/path/to/wine/binary
       </question>
       <answer>
         <para>
-          Wine HQ (<ulink url="http://www.winehq.com">http://www.winehq.com</ulink>) is the official site.
+          Wine HQ (<ulink url="http://www.winehq.org">http://www.winehq.org</ulink>) is the official site.
         </para>
       </answer>
       </qandaentry>
@@ -1735,7 +1735,7 @@ export PATH=$PATH:/path/to/wine/binary
       <answer>
         <para>
           Bug reports should be submitted to our online Bugzilla system 
-          (<ulink url="http://bugs.winehq.com/">http://bugs.winehq.com/</ulink>).
+          (<ulink url="http://bugs.winehq.org/">http://bugs.winehq.org/</ulink>).
           You should include at least the following:
         </para>
         <itemizedlist>
@@ -1784,11 +1784,11 @@ export PATH=$PATH:/path/to/wine/binary
       <answer>
         <para>
           If you can program C, that's a good start. Download the sources via
-          (<ulink url="http://www.winehq.com/site/cvs">CVS,</ulink>)
+          (<ulink url="http://www.winehq.org/site/cvs">CVS,</ulink>)
           subscribe to the mailing lists, look around the source, and
           pay attention to the comp.emulators.ms-windows.wine newsgroup
           and the mailing lists (<ulink
-          url="http://www.winehq.com/site/forums">http://www.winehq.com/site/forums</ulink>).
+          url="http://www.winehq.org/site/forums">http://www.winehq.org/site/forums</ulink>).
           See if there's anything that you think you can fix or work
           on. You won't have much trouble finding areas that need work
           in Wine (grep for FIXMEs in the source).
@@ -1808,7 +1808,7 @@ export PATH=$PATH:/path/to/wine/binary
         </para>
         <para>
           For a list of ideas of how you can help, please consult the 
-          <ulink url="http://www.winehq.com/site/contributing">
+          <ulink url="http://www.winehq.org/site/contributing">
           Wine contrib page</ulink>.
         </para>
       </answer>
@@ -1842,7 +1842,7 @@ export PATH=$PATH:/path/to/wine/binary
           (<ulink url="http://www.winehq.org/mailman/listinfo/wine-patches">http://www.winehq.org/mailman/listinfo/wine-patches</>).
           Still there are a couple of recommendations about the patch format
           and all so it's best to read our page describing <ulink
-          url="http://www.winehq.com/site/sending_patches">how to submit
+          url="http://www.winehq.org/site/sending_patches">how to submit
           patches</>. This will also give you more details about the whole
           process and in particular to what will happen to your patch once
           submitted.

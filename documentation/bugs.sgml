@@ -180,7 +180,7 @@
 
       <para>
         Please report all bugs along any relevant information to
-	<ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>.
+	<ulink url="http://bugs.winehq.org/">Wine Bugzilla</ulink>.
         Please, search the Bugzilla database to check whether your problem
         is already reported. If it is already reported please add
         any relevant information to the original bug report.
@@ -330,7 +330,7 @@
              <listitem>
              <para>
                Post the bug to
-               <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>.
+               <ulink url="http://bugs.winehq.org/">Wine Bugzilla</ulink>.
                Please, search Bugzilla database to check whether your problem is
                already found before posting a bug report.
                Include your own detailed description of the problem with
@@ -411,7 +411,7 @@
           </para>
           <para>
             Post the bug to 
-            <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>.
+            <ulink url="http://bugs.winehq.org/">Wine Bugzilla</ulink>.
             You need to attach the output file <filename>report_file</filename>
             from part 2). Along with the the relevant information 
             used to create it. Do not cut and paste the report

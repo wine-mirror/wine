@@ -172,7 +172,7 @@
         <para>
           If you come across problems preparing and building this application
           this probably means that winemaker utility is broken by some changes
-          in Wine. Try asking for help on <email>wine-devel@winehq.com</email>
+          in Wine. Try asking for help on <email>wine-devel@winehq.org</email>
         </para>
       </sect2>
 

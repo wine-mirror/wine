@@ -36,7 +36,7 @@ BEGIN
     LTEXT           "Versão do DOS:",IDC_STATIC,17,173,57,8
     CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE | 
                     SS_REALSIZEIMAGE | WS_BORDER,15,17,157,111, WS_EX_TRANSPARENT
-    LTEXT           "http://www.winehq.com/",IDC_STATIC,119,31,106,8
+    LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
     GROUPBOX        "Comportamento padrão",IDC_STATIC,8,115,244,97
     LTEXT           "Wine providencia a aplicações Windows, a habilidade de se parecer a várias versões e estilos de Windows",
                     IDC_STATIC,15,128,227,20

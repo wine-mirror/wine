@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # genpatch - A utility that generates patches for submission to
-# wine-patches@winehq.com
+# wine-patches@winehq.org
 #
 # Copyright Steven Elliott <elliotsl@mindspring.com>
 #
@@ -23,7 +23,7 @@
 =head1 NAME
 
 genpatch - A utility that generates patches for submission to
-wine-patches@winehq.com
+wine-patches@winehq.org
 
 =head1 SYNOPSIS
 

@@ -194,6 +194,6 @@ resource in the source to match the FONT resources.
 .B wrc
 is part of the Wine distribution, which is available through
 WineHQ, the Wine development headquarters, at
-.I http://www.winehq.com/.
+.I http://www.winehq.org/.
 .SH "SEE ALSO"
 .BR wine (1)

@@ -913,7 +913,7 @@
         <para>
           There is always a chance that things will go wrong. If the
           unthinkable happens, report the problem to
-  	  <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>,
+  	  <ulink url="http://bugs.winehq.org/">Wine Bugzilla</ulink>,
   	  try the newsgroup
           <systemitem>comp.emulators.ms-windows.wine</systemitem>,
   	  or the IRC channel <systemitem>#WineHQ</systemitem> found on
@@ -2974,7 +2974,7 @@ cvs -z3 diff -u dlls/x11drv/keyboard.c > layout.diff
       <para>
         from your main Wine directory, then submit
         <filename>layout.diff</filename> to
-        <email>wine-patches@winehq.com</email> along with a brief note
+        <email>wine-patches@winehq.org</email> along with a brief note
         of what it is.
       </para>
       <para>

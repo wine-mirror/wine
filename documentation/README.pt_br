@@ -23,7 +23,7 @@ Execute programas conforme "wine [opções] programa". Para maiores
 informações e resolução de problemas, leia o restante deste arquivo, 
 a página "man" do Wine (man wine), os arquivos incluídos no diretório 
 de documentação do fonte do Wine (veja "DOCUMENTATION"), e especialmente 
-a abundância de informação encontrada em http://www.winehq.com.
+a abundância de informação encontrada em http://www.winehq.org.
 
 3.REQUERIMENTOS
 
@@ -147,7 +147,7 @@ Não se esqueça de adicionar entradas vitais no registro, aplicando
 winedefault.reg com programs/regedit/. Veja o diretório documentation/ 
 para detalhes.
 
-Veja a área de suporte em http://www.winehq.com/ para mais sugestões 
+Veja a área de suporte em http://www.winehq.org/ para mais sugestões 
 sobre a configuraçao.
 
 No caso de erros de carga da biblioteca
@@ -215,16 +215,16 @@ SuSE:		docbktls-A.BB.C-DD
 8. OBTENDO MAIS INFORMAÇÃO
 
 WWW:	Uma grande quantidade de informação sobre o Wine está disponivel 
-        pelo WineHQ em http://www.winehq.com/ : vários guias do Wine,
+        pelo WineHQ em http://www.winehq.org/ : vários guias do Wine,
 	base de dados de aplicações, rastreamento de erros. Este é 
 	provavelmente o melhor ponto para começar.
 
-FAQ:	A Wine FAQ está localizada em http://www.winehq.com/FAQ
+FAQ:	A Wine FAQ está localizada em http://www.winehq.org/FAQ
 
 Usenet:	Pode-se discutir tópicos relacionados ao Wine e obter ajuda em
 	comp.emulators.ms-windows.wine.
 
-Bugs:	Relate erros ao Wine Bugzilla em http://bugs.winehq.com
+Bugs:	Relate erros ao Wine Bugzilla em http://bugs.winehq.org
 	Por favor pesquise a base de dados do bugzilla para verificar se 
 	seu problema já tenha sido encontrado, antes de enviar um 
 	relatório do erro. Você pode também afixar relatórios do erro em
@@ -234,19 +234,19 @@ Bugs:	Relate erros ao Wine Bugzilla em http://bugs.winehq.com
 IRC:	A ajuda online está disponível em #WineHQ em irc.freenode.net.
 
 CVS:	O árvore de desenvolvimento atual do Wine está disponível por CVS.
-	Vá em http://www.winehq.com/cvs para mais informação.
+	Vá em http://www.winehq.org/cvs para mais informação.
 
 Mailing Lists:
 	Há diversas listas de mensagens para colaboradores no desenvolvimento 
-	do Wine; veja http://www.winehq.com/forums para mais informação.
+	do Wine; veja http://www.winehq.org/forums para mais informação.
 
 Se você adicionar algo, ou reparar um erro, envie por favor um remendo
-(no formato 'diff -u') à lista wine-patches@winehq.com para inclusão na 
+(no formato 'diff -u') à lista wine-patches@winehq.org para inclusão na 
 próxima distribuição.
 
 --
 Alexandre Julliard
-julliard@winehq.com
+julliard@winehq.org
 
 --
 Tradução para Português do Brasil: Marcelo Duarte

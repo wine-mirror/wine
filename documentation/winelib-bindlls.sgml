@@ -95,7 +95,7 @@ signed short MyLinuxFunc (unsigned short a, void *b, void *c,
 # linux library libMyLinux)
 #
 # For further details of wine spec files see the Winelib documentation at
-# www.winehq.com
+# www.winehq.org
 
 2 stdcall MyWinFunc (long ptr ptr ptr ptr long long ptr) MyProxyWinFunc
 

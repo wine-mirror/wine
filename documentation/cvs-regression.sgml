@@ -55,7 +55,7 @@ cvs -d $CVSROOT checkout wine
         </para>
         <note>
           <para>
-            If you use CVS directly from the winehq.com server, do not
+            If you use CVS directly from the winehq.org server, do not
             forget to add to your <filename>.cvsrc</filename> file:
           </para>
           <screen>
@@ -80,8 +80,8 @@ cvs -d $CVSROOT update -D "2002-06-01 CST"
           Using the CST date format ensure that you will be able to
           extract patches in a way that will be compatible with the
           wine-cvs archive
-          <ulink url="http://www.winehq.com/hypermail/wine-cvs">
-          http://www.winehq.com/hypermail/wine-cvs</ulink>
+          <ulink url="http://www.winehq.org/hypermail/wine-cvs">
+          http://www.winehq.org/hypermail/wine-cvs</ulink>
         </para>
         <para>
           Many messages will inform you that more recent files have
@@ -134,7 +134,7 @@ cvs -d $CVSROOT update -D "2002-06-01 15:17:25 CST"
         <para>
           If you find the patch that is the cause of the problem, you have
           almost won; report about it to
-          <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>
+          <ulink url="http://bugs.winehq.org/">Wine Bugzilla</ulink>
           or subscribe to wine-devel and post it there. There is a chance
           that the author
           will jump in to suggest a fix; or there is always the possibility

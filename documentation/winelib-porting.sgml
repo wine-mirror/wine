@@ -145,7 +145,7 @@
       <para>
         If you come across a difference between the Windows headers
         and Wine's that breaks compilation, try asking for help on
-        <email>wine-devel@winehq.com</email>.
+        <email>wine-devel@winehq.org</email>.
       </para>
     </sect1>
 

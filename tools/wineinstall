@@ -328,7 +328,7 @@ then {
              echo "run '$sucommand' correctly."
              echo "If you didn't enter an incorrect password then please"
              echo "report this error and any steps to possibly reproduce it to"
-             echo "http://bugs.winehq.com/"
+             echo "http://bugs.winehq.org/"
              echo
              echo "Installation failed, aborting."
              exit 1

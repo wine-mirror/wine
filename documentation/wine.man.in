@@ -286,11 +286,11 @@ in the top-level directory of the source distribution.
 .SH BUGS
 .PP
 A status report on many applications is available from
-.I http://www.winehq.com/Apps.
+.I http://www.winehq.org/Apps.
 Please add entries to this list for applications you currently run.
 .PP
 Bug reports may be posted to Wine Bugzilla
-.I http://bugs.winehq.com
+.I http://bugs.winehq.org
 If you want to post a bug report, please read the file
 .I documentation/bugs.sgml
 in the 
@@ -298,7 +298,7 @@ in the
 source to see what information is necessary
 .PP
 Problems and suggestions with this manpage please also report to
-.I http://bugs.winehq.com
+.I http://bugs.winehq.org
 .SH AVAILABILITY
 The most recent public version of 
 .B wine
@@ -312,12 +312,12 @@ pre-built contents of the documentation in various formats
 The latest snapshot of the code may be obtained via CVS.  For information
 on how to do this, please see
 .I
-http://www.winehq.com/development/
+http://www.winehq.org/development/
 .PP
 WineHQ, the
 .B wine
 development headquarters, is at
-.I http://www.winehq.com/.
+.I http://www.winehq.org/.
 This website contains a great deal of information about
 .B wine.
 .PP
@@ -333,7 +333,7 @@ For further information about
 development, you might want to subscribe to the 
 .B wine 
 mailing lists at
-.I http://www.winehq.com/development/#ml
+.I http://www.winehq.org/development/#ml
 .SH FILES
 .PD 0
 .TP

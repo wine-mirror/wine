@@ -327,7 +327,7 @@
         <para>
           The first place you should look if your system isn't
           specifically mentioned above is the <ulink
-          url="http://www.winehq.com/download/">WineHQ Download
+          url="http://www.winehq.org/download/">WineHQ Download
           Page</ulink>.  This page lists many assorted archives of
           binary (precompiled) Wine files.
         </para>
@@ -384,7 +384,7 @@
         a bug in Wine, reported it to the
         <ulink url="http://bugs.winehq.org">Wine Bugzilla</ulink>
         or the
-        <ulink url="mailto:wine-devel@winehq.com">Wine mailing list</ulink>,
+        <ulink url="mailto:wine-devel@winehq.org">Wine mailing list</ulink>,
         and received a patch from a developer to hopefully fix the
         bug.  We will show you how to
         <link linkend="getting-upgrading-patch">safely apply the
@@ -397,7 +397,7 @@
         <para>
           The safest way to grab the source is from one of the official
           FTP archives.  An up to date listing is in the <ulink
-          url="http://www.winehq.com/source/ANNOUNCE">ANNOUNCE</ulink>
+          url="http://www.winehq.org/source/ANNOUNCE">ANNOUNCE</ulink>
           file in the Wine distribution (which you would have if you
           already downloaded it).  Here is a list
           of FTP servers carrying Wine:
@@ -540,7 +540,7 @@ checkout -P
 	    First, let's do the server login:
 	  </para>
   <screen>
-  <prompt>$ </><userinput>cvs -d :pserver:cvs@cvs.winehq.com:/home/wine login</>
+  <prompt>$ </><userinput>cvs -d :pserver:cvs@cvs.winehq.org:/home/wine login</>
   </screen>
 	  <para>
 	    If <command>cvs</command> successfully connects to the CVS server,
@@ -560,7 +560,7 @@ checkout -P
 	    To download the Wine tree into the subdirectory <filename>wine/</filename>, run:
 	  </para>
   <screen>
-  <prompt>$ </><userinput>cvs -d :pserver:cvs@cvs.winehq.com:/home/wine checkout wine</>
+  <prompt>$ </><userinput>cvs -d :pserver:cvs@cvs.winehq.org:/home/wine checkout wine</>
   </screen>
 	  <para>
 	    Downloading the CVS tree might take a while (some minutes
@@ -614,7 +614,7 @@ checkout -P
 	</para>
   <screen>
   <prompt>$ </><userinput>make distclean</>
-  <prompt>$ </><userinput>cvs -d :pserver:cvs@cvs.winehq.com:/home/wine update</>
+  <prompt>$ </><userinput>cvs -d :pserver:cvs@cvs.winehq.org:/home/wine update</>
   </screen>
 	<para>
 	  The <command>make distclean</command> part is optional, but
@@ -632,7 +632,7 @@ checkout -P
 	  have the option of applying patches to the source tree to
 	  update to a newer Wine release or to fix bugs and add
 	  experimental features.  Perhaps you've found a bug, reported
-	  it to the <ulink url="mailto:wine-devel@winehq.com">Wine
+	  it to the <ulink url="mailto:wine-devel@winehq.org">Wine
 	  mailing list</>, and received a patch file to fix the bug.
 	  You can apply the patch with the <command>patch</> command,
 	  which takes a streamed patch from <filename>stdin</>:
