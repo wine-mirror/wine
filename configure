@@ -4806,7 +4806,7 @@ fi
 echo "$ac_t""$ac_cv_c_dll_unixware" 1>&6
     if test "$ac_cv_c_dll_unixware" = "yes"
     then
-      LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,h,\$(libdir)/%)"
+      LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,\$(libdir)/%)"
       LDDLLFLAGS="-Wl,-B,symbolic"
     else
       echo $ac_n "checking "whether we can build a NetBSD dll"""... $ac_c" 1>&6

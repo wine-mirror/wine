@@ -557,7 +557,7 @@ then
     ])
     if test "$ac_cv_c_dll_unixware" = "yes"
     then
-      LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,h,\$(libdir)/%)"
+      LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,\$(libdir)/%)"
       LDDLLFLAGS="-Wl,-B,symbolic"
     else
       AC_CACHE_CHECK("whether we can build a NetBSD dll",

@@ -44,7 +44,13 @@ static int name_cmp( const void *name, const void *entry )
 /* locate a symbol in a (sorted) list */
 inline static const char *find_symbol( const char *name, char **table, int size )
 {
-    char **res = bsearch( &name, table, size, sizeof(*table), name_cmp );
+    
+    char **res = NULL;
+
+    if (table) {
+        res = bsearch( &name, table, size, sizeof(*table), name_cmp );
+    }
+
     return res ? *res : NULL;
 }
 
