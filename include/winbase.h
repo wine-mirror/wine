@@ -1680,6 +1680,9 @@ BOOL      WINAPI SetFileAttributesW(LPCWSTR,DWORD);
 #define     SetFileAttributes WINELIB_NAME_AW(SetFileAttributes)
 UINT      WINAPI SetHandleCount(UINT);
 #define     SetSwapAreaSize(w) (w)
+BOOL        WINAPI SetVolumeLabelA(LPCSTR,LPCSTR);
+BOOL        WINAPI SetVolumeLabelW(LPCWSTR,LPCWSTR);
+#define     SetVolumeLabel WINELIB_NAME_AW(SetVolumeLabel)
 DWORD       WINAPI SizeofResource(HMODULE,HRSRC);
 #define     UnlockSegment(handle) GlobalUnfix((HANDLE)(handle))
 DWORD       WINAPI VerLanguageNameA(UINT,LPSTR,UINT);

@@ -1202,7 +1202,27 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label,
     return ret;
 }
 
-BOOL WINAPI SetVolumeLabelA(LPCSTR rootpath,LPCSTR volname) {
+/***********************************************************************
+ *           SetVolumeLabelA   (KERNEL32.675)
+ */
+BOOL WINAPI SetVolumeLabelA(LPCSTR rootpath,LPCSTR volname)
+{
 	FIXME_(dosfs)("(%s,%s),stub!\n",rootpath,volname);
 	return TRUE;
+}
+
+/***********************************************************************
+ *           SetVolumeLabelW   (KERNEL32.676)
+ */
+BOOL WINAPI SetVolumeLabelW(LPCWSTR rootpath,LPCWSTR volname)
+{
+    LPSTR xroot, xvol;
+    BOOL ret;
+
+    xroot = HEAP_strdupWtoA( GetProcessHeap(), 0, rootpath);
+    xvol = HEAP_strdupWtoA( GetProcessHeap(), 0, volname);
+    ret = SetVolumeLabelA( xroot, xvol );
+    HeapFree( GetProcessHeap(), 0, xroot );
+    HeapFree( GetProcessHeap(), 0, xvol );
+    return ret;
 }

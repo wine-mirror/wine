@@ -694,7 +694,7 @@ import  ntdll.dll
 673 stdcall SetTimeZoneInformation(ptr) SetTimeZoneInformation
 674 stdcall SetUnhandledExceptionFilter(ptr) SetUnhandledExceptionFilter
 675 stdcall SetVolumeLabelA(str str) SetVolumeLabelA
-676 stub SetVolumeLabelW
+676 stdcall SetVolumeLabelW(wstr wstr) SetVolumeLabelW
 677 stdcall SetupComm(long long long) SetupComm
 678 stdcall SizeofResource(long long) SizeofResource
 679 stdcall Sleep(long) Sleep
