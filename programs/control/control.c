@@ -12,13 +12,13 @@
 
 void launch(char what[255])
 { 
-  HINSTANCE hChild;
-  char szArgs[255];
+  HMODULE hMod;
+  FARPROC pControl_RunDLL;
 
-  lstrcpy(szArgs, szEXEC_ARGS);
-  strcat(szArgs, what);
-
-  hChild = ShellExecute((HWND)0, 0, szEXEC_PREFIX, szArgs, "", SW_SHOWNORMAL);
+  hMod = LoadLibrary("shell32.dll");
+  pControl_RunDLL = GetProcAddress(hMod, "Control_RunDLL");
+  pControl_RunDLL(GetDesktopWindow(), 0, what, SW_SHOW);
+  FreeLibrary(hMod);
   exit(0);
 }
 
@@ -35,18 +35,27 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, CHAR *szParam, INT argc)
              break;
 
     case 1:  /* check for optional parameter */
-             if (strcmp(szParams,szP_DESKTOP)      ==0) launch(szC_DESKTOP);
-             if (strcmp(szParams,szP_COLOR)        ==0) launch(szC_COLOR);
-             if (strcmp(szParams,szP_DATETIME)     ==0) launch(szC_DATETIME);
-             if (strcmp(szParams,szP_DESKTOP)      ==0) launch(szC_DESKTOP);
-             if (strcmp(szParams,szP_INTERNATIONAL)==0) launch(szC_INTERNATIONAL);
-             if (strcmp(szParams,szP_KEYBOARD)     ==0) launch(szC_KEYBOARD);
-             if (strcmp(szParams,szP_MOUSE)        ==0) launch(szC_MOUSE);
-             if (strcmp(szParams,szP_PORTS)        ==0) launch(szC_PORTS);
-             if (strcmp(szParams,szP_PRINTERS)     ==0) launch(szC_PRINTERS);
+             if (!strcmp(szParams,szP_DESKTOP))
+		 launch(szC_DESKTOP);
+             if (!strcmp(szParams,szP_COLOR))
+		 launch(szC_COLOR);
+             if (!strcmp(szParams,szP_DATETIME))
+		 launch(szC_DATETIME);
+             if (!strcmp(szParams,szP_DESKTOP))
+		 launch(szC_DESKTOP);
+             if (!strcmp(szParams,szP_INTERNATIONAL))
+		 launch(szC_INTERNATIONAL);
+             if (!strcmp(szParams,szP_KEYBOARD))
+		 launch(szC_KEYBOARD);
+             if (!strcmp(szParams,szP_MOUSE))
+		 launch(szC_MOUSE);
+             if (!strcmp(szParams,szP_PORTS))
+		 launch(szC_PORTS);
+             if (!strcmp(szParams,szP_PRINTERS))
+		 launch(szC_PRINTERS);
 
-             /* couldn't recognize desired panel, going default mode */
-             launch("");
+	     /* try to launch if a .cpl file is given directly */
+	     launch(szParams);
              break;
 
     default: printf("Syntax error.");
