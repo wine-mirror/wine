@@ -1413,7 +1413,7 @@ extern "C" {
 #define _nmsize     _msize
 #define _nrealloc   realloc
 #define _nstrdup    _strdup
-#define hmemcpy16     MoveMemory
+#define hmemcpy     MoveMemory
 
 #ifdef __cplusplus
 }
