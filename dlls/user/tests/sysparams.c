@@ -206,7 +206,7 @@ static void test_SPI_SETBEEP( void )                   /*      2 */
                   SPI_SETBEEP_VALNAME,
                   curr_val ? "Yes" : "No" );
     SystemParametersInfoA( SPI_GETBEEP, 0, &b, 0 );
-    eq( b, curr_val, "registry modification", "%d" );
+    eq( b, curr_val, "SPI_{GET,SET}BEEP", "%d" );
     if (has_unicode())
     {
         SystemParametersInfoW( SPI_GETBEEP, 0, &b, 0 );
@@ -419,7 +419,7 @@ static void test_SPI_SETKEYBOARDSPEED( void )          /*     10 */
     test_reg_key( SPI_SETKEYBOARDSPEED_REGKEY, SPI_SETKEYBOARDSPEED_VALNAME, buf );
 
     SystemParametersInfoA( SPI_GETKEYBOARDSPEED, 0, &speed, 0 );
-    eq( speed, curr_val, "registry modification", "%d");
+    eq( speed, curr_val, "SPI_{GET,SET}KEYBOARDSPEED", "%d");
 
     SystemParametersInfoA( SPI_SETKEYBOARDSPEED, old_speed, 0, SPIF_UPDATEINIFILE );
 }
