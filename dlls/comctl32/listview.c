@@ -6449,7 +6449,7 @@ static LRESULT LISTVIEW_SetIconSpacing(LISTVIEW_INFO *infoPtr, DWORD spacing)
     return oldspacing;
 }
 
-inline void update_icon_size(HIMAGELIST himl, SIZE *size)
+inline void update_icon_size(HIMAGELIST himl, BOOL small, SIZE *size)
 {
     INT cx, cy;
     
@@ -6459,7 +6459,10 @@ inline void update_icon_size(HIMAGELIST himl, SIZE *size)
 	size->cy = cy;
     }
     else
-	size->cx = size->cy = 0;
+    {
+	size->cx = GetSystemMetrics(small ? SM_CXSMICON : SM_CXICON);
+	size->cy = GetSystemMetrics(small ? SM_CYSMICON : SM_CYICON);
+    }
 }
 
 /***
@@ -6486,20 +6489,20 @@ static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *infoPtr, INT nType, HIMAG
     case LVSIL_NORMAL:
         himlOld = infoPtr->himlNormal;
         infoPtr->himlNormal = himl;
-        if (uView == LVS_ICON) update_icon_size(himl, &infoPtr->iconSize);
+        if (uView == LVS_ICON) update_icon_size(himl, FALSE, &infoPtr->iconSize);
         LISTVIEW_SetIconSpacing(infoPtr, 0);
     break;
 
     case LVSIL_SMALL:
         himlOld = infoPtr->himlSmall;
         infoPtr->himlSmall = himl;
-         if (uView != LVS_ICON) update_icon_size(himl, &infoPtr->iconSize);
+         if (uView != LVS_ICON) update_icon_size(himl, TRUE, &infoPtr->iconSize);
     break;
 
     case LVSIL_STATE:
         himlOld = infoPtr->himlState;
         infoPtr->himlState = himl;
-        update_icon_size(himl, &infoPtr->iconStateSize);
+        update_icon_size(himl, TRUE, &infoPtr->iconStateSize);
         ImageList_SetBkColor(infoPtr->himlState, CLR_NONE);
     break;
 
@@ -7726,8 +7729,8 @@ static LRESULT LISTVIEW_Notify(LISTVIEW_INFO *infoPtr, INT nCtrlId, LPNMHDR lpnm
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structureof the sender
- * [I] HWND : listview window handle
- * [I] INT : command specifying the nature of the WM_NOTIFYFORMAT
+ * [I] hwndFrom : listview window handle
+ * [I] nCommand : command specifying the nature of the WM_NOTIFYFORMAT
  *
  * RETURN:
  * Zero
@@ -7748,7 +7751,7 @@ static LRESULT LISTVIEW_NotifyFormat(LISTVIEW_INFO *infoPtr, HWND hwndFrom, INT 
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] HDC : device context handle
+ * [I] hdc : device context handle
  *
  * RETURN:
  * Zero
@@ -7929,7 +7932,7 @@ static BOOL LISTVIEW_SetCursor(LISTVIEW_INFO *infoPtr, HWND hwnd, UINT nHittest,
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] infoPtr : handle of previously focused window
+ * [I] hwndLoseFocus : handle of previously focused window
  *
  * RETURN:
  * Zero
@@ -7962,8 +7965,8 @@ static LRESULT LISTVIEW_SetFocus(LISTVIEW_INFO *infoPtr, HWND hwndLoseFocus)
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] HFONT : font handle
- * [I] WORD : redraw flag
+ * [I] fRedraw : font handle
+ * [I] fRedraw : redraw flag
  *
  * RETURN:
  * Zero
@@ -8015,8 +8018,8 @@ static LRESULT LISTVIEW_SetRedraw(LISTVIEW_INFO *infoPtr, BOOL bRedraw)
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] WORD : new width
- * [I] WORD : new height
+ * [I] Width : new width
+ * [I] Height : new height
  *
  * RETURN:
  * Zero
@@ -8115,8 +8118,8 @@ static BOOL LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] WPARAM : window style type (normal or extended)
- * [I] LPSTYLESTRUCT : window style information
+ * [I] wStyleType : window style type (normal or extended)
+ * [I] lpss : window style information
  *
  * RETURN:
  * Zero
@@ -8124,17 +8127,19 @@ static BOOL LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
 static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
                                  LPSTYLESTRUCT lpss)
 {
-  UINT uNewView = lpss->styleNew & LVS_TYPEMASK;
-  UINT uOldView = lpss->styleOld & LVS_TYPEMASK;
-  RECT rcList = infoPtr->rcList;
+    UINT uNewView = lpss->styleNew & LVS_TYPEMASK;
+    UINT uOldView = lpss->styleOld & LVS_TYPEMASK;
 
-  TRACE("(styletype=%x, styleOld=0x%08lx, styleNew=0x%08lx)\n",
-        wStyleType, lpss->styleOld, lpss->styleNew);
+    TRACE("(styletype=%x, styleOld=0x%08lx, styleNew=0x%08lx)\n",
+          wStyleType, lpss->styleOld, lpss->styleNew);
 
-  /* FIXME: if LVS_NOSORTHEADER changed, update header */
+    if (wStyleType != GWL_STYLE) return 0;
+  
+    /* FIXME: if LVS_NOSORTHEADER changed, update header */
+    /*        what if LVS_OWNERDATA changed? */
+    /*        or LVS_SINGLESEL */
+    /*        or LVS_SORT{AS,DES}CENDING */
 
-  if (wStyleType == GWL_STYLE)
-  {
     infoPtr->dwStyle = lpss->styleNew;
 
     if (((lpss->styleOld & WS_HSCROLL) != 0)&&
@@ -8145,84 +8150,50 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
         ((lpss->styleNew & WS_VSCROLL) == 0))
        ShowScrollBar(infoPtr->hwndSelf, SB_VERT, FALSE);
 
-    /* If switching modes, then start with no scroll bars and then
-     * decide.
-     */
     if (uNewView != uOldView)
     {
-        if (uOldView == LVS_REPORT)
-           ShowWindow(infoPtr->hwndHeader, SW_HIDE);
+    	SIZE oldIconSize = infoPtr->iconSize;
+    	HIMAGELIST himl;
+    
+        SendMessageW(infoPtr->hwndEdit, WM_KILLFOCUS, 0, 0);
+    	ShowWindow(infoPtr->hwndHeader, SW_HIDE);
 
-	ShowScrollBar(infoPtr->hwndSelf, SB_BOTH, FALSE);
-	SetRectEmpty(&infoPtr->rcFocus);
-    }
+        ShowScrollBar(infoPtr->hwndSelf, SB_BOTH, FALSE);
+        SetRectEmpty(&infoPtr->rcFocus);
 
-    if (uNewView == LVS_ICON)
-    {
-      INT oldcx, oldcy;
+        himl = (uNewView == LVS_ICON ? infoPtr->himlNormal : infoPtr->himlSmall);
+        update_icon_size(himl, uNewView != LVS_ICON, &infoPtr->iconSize);
+    
+        if (uNewView == LVS_ICON)
+        {
+            if ((infoPtr->iconSize.cx != oldIconSize.cx) || (infoPtr->iconSize.cy != oldIconSize.cy))
+            {
+	  	TRACE("icon old size=(%ld,%ld), new size=(%ld,%ld)\n",
+		      oldIconSize.cx, oldIconSize.cy, infoPtr->iconSize.cx, infoPtr->iconSize.cy);
+	        LISTVIEW_SetIconSpacing(infoPtr, 0);
+            }
+        }
+        else if (uNewView == LVS_REPORT)
+        {
+            HDLAYOUT hl;
+            WINDOWPOS wp;
 
-      /* First readjust the iconSize and if necessary the iconSpacing */
-      oldcx = infoPtr->iconSize.cx;
-      oldcy = infoPtr->iconSize.cy;
-      infoPtr->iconSize.cx = GetSystemMetrics(SM_CXICON);
-      infoPtr->iconSize.cy = GetSystemMetrics(SM_CYICON);
-      if (infoPtr->himlNormal != NULL)
-      {
-	  INT cx, cy;
-	  ImageList_GetIconSize(infoPtr->himlNormal, &cx, &cy);
-	  infoPtr->iconSize.cx = cx;
-	  infoPtr->iconSize.cy = cy;
-      }
-      if ((infoPtr->iconSize.cx != oldcx) || (infoPtr->iconSize.cy != oldcy))
-      {
-	  TRACE("icon old size=(%d,%d), new size=(%ld,%ld)\n",
-		oldcx, oldcy, infoPtr->iconSize.cx, infoPtr->iconSize.cy);
-	  LISTVIEW_SetIconSpacing(infoPtr,0);
-      }
+            hl.prc = &infoPtr->rcList;
+            hl.pwpos = &wp;
+            Header_Layout(infoPtr->hwndHeader, &hl);
+            SetWindowPos(infoPtr->hwndHeader, infoPtr->hwndSelf, wp.x, wp.y, wp.cx, wp.cy, wp.flags);
+            if (!(LVS_NOCOLUMNHEADER & lpss->styleNew))
+		ShowWindow(infoPtr->hwndHeader, SW_SHOWNORMAL);
+        }
 
-      /* Now update the full item width and height */
-      infoPtr->nItemWidth = LISTVIEW_CalculateMaxWidth(infoPtr);
-      infoPtr->nItemHeight = LISTVIEW_CalculateMaxHeight(infoPtr);
-      if (lpss->styleNew & LVS_ALIGNLEFT)
-        LISTVIEW_AlignLeft(infoPtr);
-      else
-        LISTVIEW_AlignTop(infoPtr);
-    }
-    else if (uNewView == LVS_REPORT)
-    {
-      HDLAYOUT hl;
-      WINDOWPOS wp;
-
-      hl.prc = &rcList;
-      hl.pwpos = &wp;
-      Header_Layout(infoPtr->hwndHeader, &hl);
-      SetWindowPos(infoPtr->hwndHeader, infoPtr->hwndSelf, wp.x, wp.y, wp.cx, wp.cy,
-                   wp.flags);
-      if (!(LVS_NOCOLUMNHEADER & lpss->styleNew))
-        ShowWindow(infoPtr->hwndHeader, SW_SHOWNORMAL);
-
-      infoPtr->iconSize.cx = GetSystemMetrics(SM_CXSMICON);
-      infoPtr->iconSize.cy = GetSystemMetrics(SM_CYSMICON);
-      infoPtr->nItemWidth = LISTVIEW_CalculateMaxWidth(infoPtr);
-      infoPtr->nItemHeight = LISTVIEW_CalculateMaxHeight(infoPtr);
-    }
-    else if (uNewView == LVS_LIST)
-    {
-      infoPtr->iconSize.cx = GetSystemMetrics(SM_CXSMICON);
-      infoPtr->iconSize.cy = GetSystemMetrics(SM_CYSMICON);
-      infoPtr->nItemWidth = LISTVIEW_CalculateMaxWidth(infoPtr);
-      infoPtr->nItemHeight = LISTVIEW_CalculateMaxHeight(infoPtr);
-    }
-    else
-    {
-      infoPtr->iconSize.cx = GetSystemMetrics(SM_CXSMICON);
-      infoPtr->iconSize.cy = GetSystemMetrics(SM_CYSMICON);
-      infoPtr->nItemWidth = LISTVIEW_CalculateMaxWidth(infoPtr);
-      infoPtr->nItemHeight = LISTVIEW_CalculateMaxHeight(infoPtr);
-      if (lpss->styleNew & LVS_ALIGNLEFT)
-        LISTVIEW_AlignLeft(infoPtr);
-      else
-        LISTVIEW_AlignTop(infoPtr);
+        infoPtr->nItemWidth = LISTVIEW_CalculateMaxWidth(infoPtr);
+        infoPtr->nItemHeight = LISTVIEW_CalculateMaxHeight(infoPtr);
+    
+        if (uNewView == LVS_ICON || uNewView == LVS_SMALLICON)
+        {
+	    if (lpss->styleNew & LVS_ALIGNLEFT) LISTVIEW_AlignLeft(infoPtr);
+	    else LISTVIEW_AlignTop(infoPtr);
+        }
     }
 
     /* update the size of the client area */
@@ -8232,24 +8203,12 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
     LISTVIEW_UpdateScroll(infoPtr);
 
     /* invalidate client area + erase background */
-    LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
+    LISTVIEW_InvalidateList(infoPtr);
 
     /* print the list of unsupported window styles */
     LISTVIEW_UnsupportedStyles(lpss->styleNew);
-  }
 
-  /* If they change the view and we have an active edit control
-     we will need to kill the control since the redraw will
-     misplace the edit control.
-   */
-  if (infoPtr->hwndEdit &&
-        ((uNewView & (LVS_ICON|LVS_LIST|LVS_SMALLICON)) !=
-        ((LVS_ICON|LVS_LIST|LVS_SMALLICON) & uOldView)))
-  {
-     SendMessageW(infoPtr->hwndEdit, WM_KILLFOCUS, 0, 0);
-  }
-
-  return 0;
+    return 0;
 }
 
 /***
