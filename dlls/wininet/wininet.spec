@@ -156,8 +156,8 @@
 @ stub SetUrlCacheConfigInfoA
 @ stub SetUrlCacheConfigInfoW
 @ stdcall SetUrlCacheEntryGroup(str long double ptr long ptr)
-@ stub SetUrlCacheEntryInfoA
-@ stub SetUrlCacheEntryInfoW
+@ stdcall SetUrlCacheEntryInfoA(str ptr long)
+@ stdcall SetUrlCacheEntryInfoW(wstr ptr long)
 @ stub SetUrlCacheHeaderData
 @ stub ShowClientAuthCerts
 @ stub ShowSecurityInfo
