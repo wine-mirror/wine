@@ -268,7 +268,7 @@ int CLIENT_NewThread( THDB *thdb, int *thandle, int *phandle )
         case 0:  /* child */
             close( tmpfd[0] );
             sprintf( buffer, "%d", tmpfd[1] );
-#define EXEC_SERVER
+/*#define EXEC_SERVER*/
 #ifdef EXEC_SERVER
             execlp( "wineserver", "wineserver", buffer, NULL );
             execl( "/usr/local/bin/wineserver", "wineserver", buffer, NULL );
