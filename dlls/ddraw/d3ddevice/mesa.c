@@ -312,9 +312,11 @@ GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
     
     TRACE("(%p/%p)->() decrementing from %lu.\n", This, iface, This->ref);
     if (!--(This->ref)) {
+        int i;
 	/* Release texture associated with the device */ 
-	if (This->current_texture[0] != NULL)
-	    IDirect3DTexture2_Release(ICOM_INTERFACE(This->current_texture[0], IDirect3DTexture2));
+	for (i = 0; i < MAX_TEXTURES; i++) 
+	    if (This->current_texture[i] != NULL)
+	        IDirectDrawSurface7_Release(ICOM_INTERFACE(This->current_texture[i], IDirectDrawSurface7));
 
 	/* And warn the D3D object that this device is no longer active... */
 	This->d3d->removed_device(This->d3d, This);
@@ -1402,12 +1404,13 @@ GL_IDirect3DDeviceImpl_7_3T_SetTexture(LPDIRECT3DDEVICE7 iface,
     TRACE("(%p/%p)->(%08lx,%p)\n", This, iface, dwStage, lpTexture2);
     
     if (This->current_texture[dwStage] != NULL) {
-        /* Seems that this is not right... Need to test in real Windows
-	   IDirect3DTexture2_Release(ICOM_INTERFACE(This->current_texture[dwStage], IDirect3DTexture2)); */
+	IDirectDrawSurface7_Release(ICOM_INTERFACE(This->current_texture[dwStage], IDirectDrawSurface7));
     }
     
     ENTER_GL();
     if (lpTexture2 == NULL) {
+	This->current_texture[dwStage] = NULL;
+
         TRACE(" disabling 2D texturing.\n");
 	glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_TEXTURE_2D);
@@ -2102,9 +2105,6 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
 	surf->d3ddevice = object;
     }
 
-    /* FIXME: Should handle other versions than just 7 */
-    InitDefaultStateBlock(&object->state_block,7);
-        
     /* FIXME: These 4 statements are kept for compatibility but should be removed as soon
        as they are correctly handled */
     gl_object->render_state.fog_on = FALSE;
@@ -2137,10 +2137,6 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     ENTER_GL();
     TRACE(" current context set\n");
 
-    /* Apply default render state values */
-    apply_render_state(gl_object, &object->state_block);
-    /* FIXME: do something similar for ligh_state and texture_stage_state */
-    
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glDrawBuffer(buffer);
@@ -2161,6 +2157,12 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
 
     /* And finally warn D3D that this device is now present */
     object->d3d->added_device(object->d3d, object);
-    
+
+    /* FIXME: Should handle other versions than just 7 */
+    InitDefaultStateBlock(&object->state_block,7);
+    /* Apply default render state values */
+    apply_render_state(gl_object, &object->state_block);
+    /* FIXME: do something similar for ligh_state and texture_stage_state */
+
     return DD_OK;
 }

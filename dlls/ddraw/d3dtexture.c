@@ -496,8 +496,19 @@ Main_IDirect3DTextureImpl_2_1T_GetHandle(LPDIRECT3DTEXTURE2 iface,
 					 LPD3DTEXTUREHANDLE lpHandle)
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirect3DTexture2, iface);
-    FIXME("(%p/%p)->(%p,%p): stub!\n", This, iface, lpDirect3DDevice2, lpHandle);
-    return DD_OK;
+    IDirect3DDeviceImpl *lpDeviceImpl = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice2, lpDirect3DDevice2);
+    
+    TRACE("(%p/%p)->(%p,%p)\n", This, iface, lpDirect3DDevice2, lpHandle);
+
+    /* The handle is simply the pointer to the implementation structure */
+    *lpHandle = (D3DTEXTUREHANDLE) This;
+
+    TRACE(" returning handle %08lx.\n", *lpHandle);
+    
+    /* Now set the device for this texture */
+    This->d3ddevice = lpDeviceImpl;
+
+    return D3D_OK;
 }
 
 HRESULT WINAPI
@@ -525,9 +536,10 @@ gltex_final_release(IDirectDrawSurfaceImpl *This)
 {
     IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This->tex_private;
     DWORD mem_used;
+    int i;
 
     TRACE(" deleting texture with GL id %d.\n", glThis->tex_name);
-      
+
     /* And delete texture handle */
     ENTER_GL();
     if (glThis->tex_name != 0)
@@ -536,8 +548,9 @@ gltex_final_release(IDirectDrawSurfaceImpl *This)
 
     /* And if this texture was the current one, remove it at the device level */
     if (This->d3ddevice != NULL)
-        if (This->d3ddevice->current_texture[0] == This)
-	    This->d3ddevice->current_texture[0] = NULL;
+        for (i = 0; i < MAX_TEXTURES; i++)
+	    if (This->d3ddevice->current_texture[i] == This)
+	        This->d3ddevice->current_texture[i] = NULL;
 
     /* All this should be part of main surface management not just a hack for texture.. */
     if (glThis->loaded) {
@@ -567,37 +580,6 @@ gltex_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
     /* Set the dirty flag according to the lock type */
     if ((This->lastlocktype & DDLOCK_READONLY) == 0)
         glThis->dirty_flag = TRUE;
-}
-
-HRESULT WINAPI
-GL_IDirect3DTextureImpl_2_1T_GetHandle(LPDIRECT3DTEXTURE2 iface,
-				       LPDIRECT3DDEVICE2 lpDirect3DDevice2,
-				       LPD3DTEXTUREHANDLE lpHandle)
-{
-    ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirect3DTexture2, iface);
-    IDirect3DTextureGLImpl *glThis = (IDirect3DTextureGLImpl *) This->tex_private;
-    IDirect3DDeviceImpl *lpDeviceImpl = ICOM_OBJECT(IDirect3DDeviceImpl, IDirect3DDevice2, lpDirect3DDevice2);
-    
-    TRACE("(%p/%p)->(%p,%p)\n", This, iface, lpDirect3DDevice2, lpHandle);
-
-    /* The handle is simply the pointer to the implementation structure */
-    *lpHandle = (D3DTEXTUREHANDLE) This;
-
-    TRACE(" returning handle %08lx.\n", *lpHandle);
-    
-    /* Now, bind a new texture */
-    This->d3ddevice = lpDeviceImpl;
-
-    /* Associate the texture with the device and perform the appropriate AddRef/Release */
-    /* FIXME: Is there only one or several textures associated with the device ? */
-    if (lpDeviceImpl->current_texture[0] != NULL)
-        IDirectDrawSurface7_Release(ICOM_INTERFACE(lpDeviceImpl->current_texture[0], IDirectDrawSurface7));
-    IDirectDrawSurface7_AddRef(ICOM_INTERFACE(This, IDirectDrawSurface7));
-    lpDeviceImpl->current_texture[0] = This;
-
-    TRACE("OpenGL texture handle is : %d\n", glThis->tex_name);
-
-    return D3D_OK;
 }
 
 HRESULT WINAPI
@@ -641,12 +623,11 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
     if (This->palette == NULL) {
         This->palette = lpD3DTextureImpl->palette;
 	if (lpD3DTextureImpl->palette != NULL) IDirectDrawPalette_AddRef(ICOM_INTERFACE(lpD3DTextureImpl->palette,
-										IDirectDrawPalette));
+											IDirectDrawPalette));
     } else {
         if (lpD3DTextureImpl->palette != NULL) {
 	    PALETTEENTRY palent[256];
 	    IDirectDrawPalette *pal_int = ICOM_INTERFACE(lpD3DTextureImpl->palette, IDirectDrawPalette);
-	    IDirectDrawPalette_AddRef(pal_int);
 	    IDirectDrawPalette_GetEntries(pal_int, 0, 0, 256, palent);
 	    IDirectDrawPalette_SetEntries(ICOM_INTERFACE(This->palette, IDirectDrawPalette),
 					  0, 0, 256, palent);
@@ -667,6 +648,7 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
 
         /* Copy also the ColorKeying stuff */
         if (src_d->dwFlags & DDSD_CKSRCBLT) {
+	    dst_d->dwFlags |= DDSD_CKSRCBLT;
 	    dst_d->ddckCKSrcBlt.dwColorSpaceLowValue = src_d->ddckCKSrcBlt.dwColorSpaceLowValue;
 	    dst_d->ddckCKSrcBlt.dwColorSpaceHighValue = src_d->ddckCKSrcBlt.dwColorSpaceHighValue;
 	}
@@ -780,7 +762,7 @@ ICOM_VTABLE(IDirect3DTexture2) VTABLE_IDirect3DTexture2 =
     XCAST(QueryInterface) Thunk_IDirect3DTextureImpl_2_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DTextureImpl_2_AddRef,
     XCAST(Release) Thunk_IDirect3DTextureImpl_2_Release,
-    XCAST(GetHandle) GL_IDirect3DTextureImpl_2_1T_GetHandle,
+    XCAST(GetHandle) Main_IDirect3DTextureImpl_2_1T_GetHandle,
     XCAST(PaletteChanged) Main_IDirect3DTextureImpl_2_1T_PaletteChanged,
     XCAST(Load) GL_IDirect3DTextureImpl_2_1T_Load,
 };

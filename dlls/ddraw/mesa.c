@@ -81,23 +81,12 @@ void set_render_state(IDirect3DDeviceGLImpl* This,
 	    case D3DRENDERSTATE_TEXTUREHANDLE: {    /*  1 */
 	        IDirectDrawSurfaceImpl *tex = (IDirectDrawSurfaceImpl*) dwRenderState;
 		
-		if (tex == NULL) {
-		    glBindTexture(GL_TEXTURE_2D, 0);
-		    glDisable(GL_TEXTURE_2D);
-		    TRACE("disabling texturing\n");
-		} else {
-		    glEnable(GL_TEXTURE_2D);
-		    
-		    /* Default parameters */
-		    gltex_upload_texture(tex);
-		    
-		    /* To prevent state change, we could test here what are the parameters
-		       stored in the texture */
-		    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, rs->mag);
-		    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, rs->min);
-		}
+		LEAVE_GL();
+		IDirect3DDevice7_SetTexture(ICOM_INTERFACE(&(This->parent), IDirect3DDevice7),
+					    0, 
+					    ICOM_INTERFACE(tex, IDirectDrawSurface7));
+		ENTER_GL();
 	    } break;
-
 	      
 	    case D3DRENDERSTATE_TEXTUREADDRESSU:  /* 44 */
 	    case D3DRENDERSTATE_TEXTUREADDRESSV:  /* 45 */
