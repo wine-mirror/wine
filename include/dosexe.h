@@ -37,8 +37,10 @@ extern BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVO
 extern void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval );
 extern LPDOSTASK WINAPI MZ_Current( void );
 extern LPDOSTASK WINAPI MZ_AllocDPMITask( void );
+extern void WINAPI MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg );
 extern INT WINAPI DOSVM_Enter( CONTEXT86 *context );
 extern void WINAPI DOSVM_Wait( INT read_pipe, HANDLE hObject );
+extern DWORD WINAPI DOSVM_Loop( LPVOID lpExtra );
 extern void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data );
 extern void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val );
 extern void WINAPI DOSVM_SetTimer( UINT ticks );

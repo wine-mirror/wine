@@ -12,6 +12,7 @@ debug_channels (int module relay)
 @ stdcall LoadDosExe(str long) MZ_LoadImage
 @ stdcall Exec(ptr str long ptr) MZ_Exec
 @ stdcall Exit(ptr long long) MZ_Exit
+@ stdcall RunInThread(ptr long) MZ_RunInThread
 
 @ stdcall Enter(ptr) DOSVM_Enter
 @ stdcall Wait(long long) DOSVM_Wait

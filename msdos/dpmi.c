@@ -80,17 +80,19 @@ BOOL DPMI_LoadDosSystem(void)
         ERR("could not load winedos.dll, DOS subsystem unavailable\n");
         return FALSE;
     }
-    Dosvm.Current    = (void *)GetProcAddress(DosModule, "GetCurrent");
-    Dosvm.LoadDPMI   = (void *)GetProcAddress(DosModule, "LoadDPMI");
-    Dosvm.LoadDosExe = (void *)GetProcAddress(DosModule, "LoadDosExe");
-    Dosvm.Exec       = (void *)GetProcAddress(DosModule, "Exec");
-    Dosvm.Exit       = (void *)GetProcAddress(DosModule, "Exit");
-    Dosvm.Enter      = (void *)GetProcAddress(DosModule, "Enter");
-    Dosvm.Wait       = (void *)GetProcAddress(DosModule, "Wait");
-    Dosvm.QueueEvent = (void *)GetProcAddress(DosModule, "QueueEvent");
-    Dosvm.OutPIC     = (void *)GetProcAddress(DosModule, "OutPIC");
-    Dosvm.SetTimer   = (void *)GetProcAddress(DosModule, "SetTimer");
-    Dosvm.GetTimer   = (void *)GetProcAddress(DosModule, "GetTimer");
+    Dosvm.Current     = (void *)GetProcAddress(DosModule, "GetCurrent");
+    Dosvm.LoadDPMI    = (void *)GetProcAddress(DosModule, "LoadDPMI");
+    Dosvm.LoadDosExe  = (void *)GetProcAddress(DosModule, "LoadDosExe");
+    Dosvm.Exec        = (void *)GetProcAddress(DosModule, "Exec");
+    Dosvm.Exit        = (void *)GetProcAddress(DosModule, "Exit");
+    Dosvm.Enter       = (void *)GetProcAddress(DosModule, "Enter");
+    Dosvm.RunInThread = (void *)GetProcAddress(DosModule, "RunInThread");
+    Dosvm.Wait        = (void *)GetProcAddress(DosModule, "Wait");
+    Dosvm.QueueEvent  = (void *)GetProcAddress(DosModule, "QueueEvent");
+    Dosvm.OutPIC      = (void *)GetProcAddress(DosModule, "OutPIC");
+    Dosvm.SetTimer    = (void *)GetProcAddress(DosModule, "SetTimer");
+    Dosvm.GetTimer    = (void *)GetProcAddress(DosModule, "GetTimer");
+    Dosvm.KbdReadScan = (void *)GetProcAddress(DosModule, "KbdReadScan");
     return TRUE;
 }
 

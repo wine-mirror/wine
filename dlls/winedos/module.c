@@ -421,6 +421,11 @@ LPDOSTASK WINAPI MZ_AllocDPMITask( void )
   return lpDosTask;
 }
 
+void WINAPI MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg )
+{
+  proc(arg);
+}
+
 static void MZ_InitTimer( int ver )
 {
  if (ver<1) {
