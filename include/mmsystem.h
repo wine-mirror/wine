@@ -1765,6 +1765,8 @@ YIELDPROC	WINAPI	mciGetYieldProc(UINT,DWORD*);
 #define MCIERR_FILE_READ                (MCIERR_BASE + 92)
 #define MCIERR_FILE_WRITE               (MCIERR_BASE + 93)
 
+#define MCIERR_NO_IDENTITY		(MCIERR_BASE + 94)
+
 #define MCIERR_CUSTOM_DRIVER_BASE       (MCIERR_BASE + 256)
 
 #define MCI_OPEN_DRIVER			0x0801
@@ -1902,6 +1904,10 @@ YIELDPROC	WINAPI	mciGetYieldProc(UINT,DWORD*);
 
 #define MCI_INFO_PRODUCT                0x00000100L
 #define MCI_INFO_FILE                   0x00000200L
+#define MCI_INFO_MEDIA_UPC              0x00000400L
+#define MCI_INFO_MEDIA_IDENTITY         0x00000800L
+#define MCI_INFO_NAME                   0x00001000L
+#define MCI_INFO_COPYRIGHT              0x00002000L
 
 #define MCI_GETDEVCAPS_ITEM             0x00000100L
 
