@@ -971,7 +971,7 @@ static int stabs_parse_typedef(struct module* module, const char* ptr,
 
     /* check for already existing definition */
 
-    TRACE("%s\n", ptr);
+    TRACE("%s\n", debugstr_a(ptr));
     ptd.module = module;
     ptd.idx = 0;
 #ifdef PTS_DEBUG
@@ -994,20 +994,20 @@ static int stabs_parse_typedef(struct module* module, const char* ptr,
     {
 #ifdef PTS_DEBUG
         int     i;
-	TRACE("Failure on %s\n", ptr);
+	TRACE("Failure on %s\n", debugstr_a(ptr));
         if (ret == -1)
         {
             for (i = 0; i < ptd.err_idx; i++)
             {
                 TRACE("[%d]: line %d => %s\n", 
-                      i, ptd.errors[i].line, ptd.errors[i].ptr);
+                      i, ptd.errors[i].line, debugstr_a(ptd.errors[i].ptr));
             }
         }
         else
-            TRACE("[0]: => %s\n", ptd.ptr);
+            TRACE("[0]: => %s\n", debugstr_a(ptd.ptr));
             
 #else
-	ERR("Failure on %s at %s\n", ptr, ptd.ptr);
+	ERR("Failure on %s at %s\n", debugstr_a(ptr), debugstr_a(ptd.ptr));
 #endif
 	return FALSE;
     }
@@ -1435,7 +1435,7 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
         }
         stabbuff[0] = '\0';
         TRACE("0x%02x %lx %s\n", 
-              stab_ptr->n_type, stab_ptr->n_value, strs + stab_ptr->n_un.n_strx);
+              stab_ptr->n_type, stab_ptr->n_value, debugstr_a(strs + stab_ptr->n_un.n_strx));
     }
 done:
     HeapFree(GetProcessHeap(), 0, stabbuff);
