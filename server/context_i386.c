@@ -561,7 +561,7 @@ int tkill( int pid, int sig )
              "popl %%ebx\n\t"
              : "=a" (ret)
              : "0" (238) /*SYS_tkill*/, "r" (pid), "c" (sig) );
-    if (ret > 0) return ret;
+    if (ret >= 0) return ret;
     errno = -ret;
     return -1;
 #else
