@@ -354,6 +354,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
 
             /* we need to show admin privileges ! */
             tgroups->GroupCount = 1;
+            tgroups->Groups->Attributes = SE_GROUP_ENABLED;
             RtlAllocateAndInitializeSid( &sid,
                                          2,
                                          SECURITY_BUILTIN_DOMAIN_RID,
