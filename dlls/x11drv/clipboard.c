@@ -1387,7 +1387,7 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
 
     if (!hWndClipWindow)
     {
-        WARN("No window available to retrieve selection!n");
+        WARN("No window available to retrieve selection!\n");
         return -1;
     }
 
