@@ -59,3 +59,5 @@ type	win16
 115 pascal   WSAStartup(word ptr) WSAStartup16
 116 pascal   WSACleanup() WSACleanup
 151 pascal16 __WSAFDIsSet(word ptr) __WSAFDIsSet16
+
+1999 pascal DllEntryPoint(long word word word long word) WINSOCK_LibMain

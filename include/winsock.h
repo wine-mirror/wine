@@ -279,10 +279,10 @@ typedef struct WSAData {
 #define WS_FD_CLOSE        0x0020
 
 #define WS_FD_LISTENING	   0x10000000	/* internal per-socket flags */
-#define WS_FD_INACTIVE	   0x20000000
+#define WS_FD_NONBLOCKING  0x20000000
 #define WS_FD_CONNECTED	   0x40000000
 #define WS_FD_RAW	   0x80000000
-#define WS_FD_NONBLOCKING  0x01000000
+#define WS_FD_SERVEVENT	   0x01000000
 #define WS_FD_INTERNAL	   0xFFFF0000
 
 /*
@@ -533,73 +533,6 @@ typedef struct timeval TIMEVAL, *PTIMEVAL, *LPTIMEVAL;
  * to a WSAAsyncSelect().
  */
 #define WSAGETSELECTERROR(lParam)           HIWORD(lParam)
-
-/* ----------------------------------- internal structures */
-
-/* ws_... struct conversion flags */
-
-#define WS_DUP_LINEAR		0x0001
-#define WS_DUP_NATIVE           0x0000		/* not used anymore */
-#define WS_DUP_OFFSET           0x0002		/* internal pointers are offsets */
-#define WS_DUP_SEGPTR           0x0004		/* internal pointers are SEGPTRs */
-						/* by default, internal pointers are linear */
-
-typedef struct __sop	/* WSAAsyncSelect() control struct */
-{
-  struct __sop *next, *prev;
-
-  struct __ws*  pws;
-  HWND        hWnd;
-  UINT        uMsg;
-} ws_select_op;
-
-typedef struct	__ws	/* socket */
-{
-  int		fd;
-  unsigned	flags;
-  ws_select_op*	psop;
-} ws_socket;
-
-#define WS_MAX_SOCKETS_PER_PROCESS      16
-#define WS_MAX_UDP_DATAGRAM             1024
-
-#define WSI_BLOCKINGCALL	0x00000001	/* per-thread info flags */
-#define WSI_BLOCKINGHOOK	0x00000002	/* 32-bit callback */
-
-typedef struct _WSINFO
-{
-  struct _WSINFO*       prev,*next;
-
-  unsigned		flags;
-  INT16			num_startup;		/* reference counter */
-  INT16			num_async_rq;
-  INT16			last_free;		/* entry in the socket table */
-  UINT16		buflen;
-  char*			buffer;			/* allocated from SEGPTR heap */
-  struct ws_hostent	*he;
-  int			helen;
-  struct ws_servent	*se;
-  int			selen;
-  struct ws_protoent	*pe;
-  int			pelen;
-  char*			dbuffer;		/* buffer for dummies (32 bytes) */
-
-  ws_socket		sock[WS_MAX_SOCKETS_PER_PROCESS];
-  DWORD			blocking_hook;
-  HTASK16               tid;    		/* owning task id - process might be better */
-} WSINFO, *LPWSINFO;
-
-/* function prototypes */
-int WS_dup_he(LPWSINFO pwsi, struct hostent* p_he, int flag);
-int WS_dup_pe(LPWSINFO pwsi, struct protoent* p_pe, int flag);
-int WS_dup_se(LPWSINFO pwsi, struct servent* p_se, int flag);
-
-BOOL WINSOCK_Init(void);
-void WINSOCK_Shutdown(void);
-UINT16 wsaErrno(void);
-UINT16 wsaHerrno(void);
-
-extern INT WINSOCK_DeleteTaskWSI( TDB* pTask, struct _WSINFO* );
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -84,7 +84,10 @@ static int sock_event( struct sock *sock )
 
 static void sock_reselect( struct sock *sock )
 {
-    set_select_events( &sock->select, sock_event( sock ) );
+    int ev = sock_event( sock );
+    if (debug_level)
+        fprintf(stderr,"sock_reselect(%d): new mask %x\n", sock->select.fd, ev);
+    set_select_events( &sock->select, ev );
 }
 
 inline static int sock_error(int s)
@@ -101,6 +104,8 @@ static void sock_select_event( int event, void *private )
     struct sock *sock = (struct sock *)private;
     unsigned int emask;
     assert( sock->obj.ops == &sock_ops );
+    if (debug_level)
+        fprintf(stderr, "socket %d select event: %x\n", sock->select.fd, event);
     if (sock->state & WS_FD_CONNECT)
     {
         /* connecting */
@@ -111,6 +116,8 @@ static void sock_select_event( int event, void *private )
             sock->state &= ~WS_FD_CONNECT;
             sock->pmask |= FD_CONNECT;
             sock->errors[FD_CONNECT_BIT] = 0;
+            if (debug_level)
+                fprintf(stderr, "socket %d connection success\n", sock->select.fd);
         }
         else if (event & EXCEPT_EVENT)
         {
@@ -118,6 +125,8 @@ static void sock_select_event( int event, void *private )
             sock->state &= ~WS_FD_CONNECT;
             sock->pmask |= FD_CONNECT;
             sock->errors[FD_CONNECT_BIT] = sock_error( sock->select.fd );
+            if (debug_level)
+                fprintf(stderr, "socket %d connection failure\n", sock->select.fd);
         }
     } else
     if (sock->state & WS_FD_LISTENING)
@@ -151,6 +160,8 @@ static void sock_select_event( int event, void *private )
                 sock->pmask |= FD_READ;
                 sock->hmask |= FD_READ;
                 sock->errors[FD_READ_BIT] = 0;
+                if (debug_level)
+                    fprintf(stderr, "socket %d has %d bytes\n", sock->select.fd, bytes);
             }
             else
             {
@@ -158,6 +169,8 @@ static void sock_select_event( int event, void *private )
                 sock->state &= ~(WS_FD_CONNECTED|WS_FD_READ|WS_FD_WRITE);
                 sock->pmask |= FD_CLOSE;
                 sock->errors[FD_CLOSE_BIT] = 0;
+                if (debug_level)
+                    fprintf(stderr, "socket %d is closing\n", sock->select.fd);
             }
         }
         if (event & WRITE_EVENT)
@@ -165,6 +178,8 @@ static void sock_select_event( int event, void *private )
             sock->pmask |= FD_WRITE;
             sock->hmask |= FD_WRITE;
             sock->errors[FD_WRITE_BIT] = 0;
+            if (debug_level)
+                fprintf(stderr, "socket %d is writable\n", sock->select.fd);
         }
         if (event & EXCEPT_EVENT)
         {
@@ -174,12 +189,16 @@ static void sock_select_event( int event, void *private )
                 /* we got an error, socket closing? */
                 sock->state &= ~(WS_FD_CONNECTED|WS_FD_READ|WS_FD_WRITE);
                 sock->pmask |= FD_CLOSE;
+                if (debug_level)
+                    fprintf(stderr, "socket %d aborted by error %d\n", sock->select.fd, sock->errors[FD_CLOSE_BIT]);
             }
             else
             {
                 /* no error, OOB data? */
                 sock->pmask |= FD_OOB;
                 sock->hmask |= FD_OOB;
+                if (debug_level)
+                    fprintf(stderr, "socket %d got OOB data\n", sock->select.fd);
             }
         }
     }
@@ -187,8 +206,12 @@ static void sock_select_event( int event, void *private )
     sock_reselect( sock );
     /* wake up anyone waiting for whatever just happened */
     emask = sock->pmask & sock->mask;
-    if (emask && sock->event)
+    if (debug_level && emask)
+        fprintf(stderr, "socket %d pending events: %x\n", sock->select.fd, emask);
+    if (emask && sock->event) {
+        if (debug_level) fprintf(stderr, "signalling event ptr %p\n", sock->event);
         set_event(sock->event);
+    }
 
     /* if anyone is stupid enough to wait on the socket object itself,
      * maybe we should wake them up too, just in case? */
@@ -199,7 +222,9 @@ static void sock_dump( struct object *obj, int verbose )
 {
     struct sock *sock = (struct sock *)obj;
     assert( obj->ops == &sock_ops );
-    printf( "Socket fd=%d\n", sock->select.fd );
+    printf( "Socket fd=%d, state=%x, mask=%x, pending=%x, held=%x\n",
+            sock->select.fd, sock->state,
+            sock->mask, sock->pmask, sock->hmask );
 }
 
 static int sock_add_queue( struct object *obj, struct wait_queue_entry *entry )
@@ -217,7 +242,7 @@ static void sock_remove_queue( struct object *obj, struct wait_queue_entry *entr
     assert( obj->ops == &sock_ops );
 
     remove_queue( obj, entry );
-    release_object( obj );
+/*    release_object( obj ); */
 }
 
 static int sock_signaled( struct object *obj, struct thread *thread )
@@ -252,11 +277,11 @@ static void sock_destroy( struct object *obj )
         /* if the service thread was waiting for the event object,
          * we should now signal it, to let the service thread
          * object detect that it is now orphaned... */
-        set_event( sock->event );
+        if (sock->mask & WS_FD_SERVEVENT)
+            set_event( sock->event );
         /* we're through with it */
         release_object( sock->event );
     }
-    free( sock );
 }
 
 /* create a new and unconnected socket */
@@ -274,9 +299,11 @@ static struct object *create_socket( int family, int type, int protocol )
     sock->hmask          = 0;
     sock->pmask          = 0;
     sock->event          = NULL;
-    fprintf(stderr,"socket(%d,%d,%d)=%d\n",family,type,protocol,sock->select.fd);
+    if (debug_level)
+        fprintf(stderr,"socket(%d,%d,%d)=%d\n",family,type,protocol,sock->select.fd);
     fcntl(sock->select.fd, F_SETFL, O_NONBLOCK); /* make socket nonblocking */
     register_select_user( &sock->select );
+    sock_reselect( sock );
     clear_error();
     return &sock->obj;
 }
@@ -313,13 +340,14 @@ static struct object *accept_socket( int handle )
 
     acceptsock->select.fd      = acceptfd;
     acceptsock->select.func    = sock_select_event;
-    acceptsock->select.private = sock;
+    acceptsock->select.private = acceptsock;
     acceptsock->state          = WS_FD_CONNECTED|WS_FD_READ|WS_FD_WRITE;
     acceptsock->mask           = sock->mask;
     acceptsock->hmask          = 0;
     acceptsock->pmask          = 0;
     acceptsock->event          = (struct event *)grab_object( sock->event );
     register_select_user( &acceptsock->select );
+    sock_reselect( acceptsock );
     clear_error();
     sock->pmask &= ~FD_ACCEPT;
     sock->hmask &= ~FD_ACCEPT;
@@ -424,19 +452,22 @@ DECL_HANDLER(set_socket_event)
 {
     struct sock *sock;
     struct event *oevent;
+    unsigned int omask;
 
     sock=(struct sock*)get_handle_obj(current->process,req->handle,GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,&sock_ops);
     if (!sock)
 	return;
     oevent = sock->event;
+    omask  = sock->mask;
     sock->mask    = req->mask;
-    sock->event   = get_event_obj( current->process, req->event, GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE );
+    sock->event   = get_event_obj( current->process, req->event, EVENT_MODIFY_STATE );
+    if (debug_level && sock->event) fprintf(stderr, "event ptr: %p\n", sock->event);
     sock_reselect( sock );
     if (sock->mask)
         sock->state |= WS_FD_NONBLOCKING;
     if (oevent)
     {
-    	if (oevent != sock->event)
+    	if ((oevent != sock->event) && (omask & WS_FD_SERVEVENT))
             /* if the service thread was waiting for the old event object,
              * we should now signal it, to let the service thread
              * object detect that it is now orphaned... */
@@ -470,7 +501,7 @@ DECL_HANDLER(get_socket_event)
     {
         if (req->s_event)
         {
-            struct event *sevent = get_event_obj(current->process, req->s_event, GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE);
+            struct event *sevent = get_event_obj(current->process, req->s_event, 0);
             if (sevent == sock->event)
                 req->s_event = 0;
             release_object( sevent );

@@ -55,12 +55,14 @@
 #endif
 
 #include "wine/winbase16.h"
-#include "winsock.h"
+#include "winsock2.h"
 #include "winnt.h"
 #include "heap.h"
 #include "task.h"
 #include "message.h"
 #include "miscemu.h"
+#include "services.h"
+#include "server.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(winsock)
@@ -74,23 +76,62 @@ DEFAULT_DEBUG_CHANNEL(winsock)
 
 /* ----------------------------------- internal data */
 
+/* ws_... struct conversion flags */
+
+#define WS_DUP_LINEAR           0x0001
+#define WS_DUP_NATIVE           0x0000          /* not used anymore */
+#define WS_DUP_OFFSET           0x0002          /* internal pointers are offsets */
+#define WS_DUP_SEGPTR           0x0004          /* internal pointers are SEGPTRs */
+                                                /* by default, internal pointers are linear */
+typedef struct          /* WSAAsyncSelect() control struct */
+{
+  HANDLE      service, event, sock;
+  HWND        hWnd;
+  UINT        uMsg;
+} ws_select_info;  
+
+#define WS_MAX_SOCKETS_PER_PROCESS      128     /* reasonable guess */
+#define WS_MAX_UDP_DATAGRAM             1024
+
+#define WSI_BLOCKINGCALL        0x00000001      /* per-thread info flags */
+#define WSI_BLOCKINGHOOK        0x00000002      /* 32-bit callback */
+
+typedef struct _WSINFO
+{
+  DWORD			dwThisProcess;
+  struct _WSINFO       *lpNextIData;
+
+  unsigned		flags;
+  INT16			num_startup;		/* reference counter */
+  INT16			num_async_rq;
+  INT16			last_free;		/* entry in the socket table */
+  UINT16		buflen;
+  char*			buffer;			/* allocated from SEGPTR heap */
+  struct ws_hostent	*he;
+  int			helen;
+  struct ws_servent	*se;
+  int			selen;
+  struct ws_protoent	*pe;
+  int			pelen;
+  char*			dbuffer;		/* buffer for dummies (32 bytes) */
+
+  DWORD			blocking_hook;
+} WSINFO, *LPWSINFO;
+
+/* function prototypes */
+int WS_dup_he(LPWSINFO pwsi, struct hostent* p_he, int flag);
+int WS_dup_pe(LPWSINFO pwsi, struct protoent* p_pe, int flag);
+int WS_dup_se(LPWSINFO pwsi, struct servent* p_se, int flag);
+
+UINT16 wsaErrno(void);
+UINT16 wsaHerrno(void);
+                                                      
 static HANDLE 	_WSHeap = 0;
-static unsigned char*	_ws_stub = NULL;
-static LPWSINFO         _wsi_list = NULL;
 
 #define WS_ALLOC(size) \
 	HeapAlloc(_WSHeap, HEAP_ZERO_MEMORY, (size) )
 #define WS_FREE(ptr) \
 	HeapFree(_WSHeap, 0, (ptr) )
-
-#define WS_PTR2HANDLE(ptr) \
-        ((short)((int)(ptr) - (int)_ws_stub))
-#define WS_HANDLE2PTR(handle) \
-        ((unsigned)((int)_ws_stub + (int)(handle)))
-
-#define WSI_CHECK_RANGE(pwsi, pws) \
-	( ((unsigned)(pws) > (unsigned)(pwsi)) && \
-	  ((unsigned)(pws) < ((unsigned)(pwsi) + sizeof(WSINFO))) )
 
 static INT         _ws_sock_ops[] =
        { WS_SO_DEBUG, WS_SO_REUSEADDR, WS_SO_KEEPALIVE, WS_SO_DONTROUTE,
@@ -122,21 +163,147 @@ static int _px_tcp_ops[] = {
 	0
 };
 
-static int   _check_ws(LPWSINFO pwsi, ws_socket* pws);
+static int   _check_ws(LPWSINFO pwsi, SOCKET s);
 static char* _check_buffer(LPWSINFO pwsi, int size);
 
-/* ----------------------------------- non-blocking I/O */
-
-static int WINSOCK_unblock_io(int fd, int noblock)
+static int _get_sock_fd(SOCKET s)
 {
-    int fd_flags;
-
-    fd_flags = fcntl(fd, F_GETFL, 0);
-    if (fcntl(fd, F_SETFL, (noblock)? fd_flags |  O_NONBLOCK
-                                    : fd_flags & ~O_NONBLOCK ) != -1) return 0;
-    return -1;
+    struct get_read_fd_request *req = get_req_buffer();
+    int fd;
+    
+    req->handle = s;
+    server_call_fd( REQ_GET_READ_FD, -1, &fd );
+    if (fd == -1)
+        FIXME("handle %d is not a socket (GLE %ld)\n",s,GetLastError());
+    return fd;    
 }
 
+static void _enable_event(SOCKET s, unsigned int event,
+			  unsigned int sstate, unsigned int cstate)
+{
+    struct enable_socket_event_request *req = get_req_buffer();
+    
+    req->handle = s;
+    req->mask   = event;
+    req->sstate = sstate;
+    req->cstate = cstate;
+    server_call( REQ_ENABLE_SOCKET_EVENT );
+}
+
+static int _is_blocking(SOCKET s)
+{
+    struct get_socket_event_request *req = get_req_buffer();
+    
+    req->handle  = s;
+    req->service = FALSE;
+    req->s_event = 0;
+    server_call( REQ_GET_SOCKET_EVENT );
+    return (req->state & WS_FD_NONBLOCKING) == 0;
+}
+
+static unsigned int _get_sock_mask(SOCKET s)
+{
+    struct get_socket_event_request *req = get_req_buffer();
+    
+    req->handle  = s;
+    req->service = FALSE;
+    req->s_event = 0;
+    server_call( REQ_GET_SOCKET_EVENT );
+    return req->mask;
+}
+
+static void _sync_sock_state(SOCKET s)
+{
+    /* do a dummy wineserver request in order to let
+       the wineserver run through its select loop once */
+    (void)_is_blocking(s);
+}
+
+static int _get_sock_error(SOCKET s, unsigned int bit)
+{
+    struct get_socket_event_request *req = get_req_buffer();
+    
+    req->handle  = s;
+    req->service = FALSE;
+    req->s_event = 0;
+    server_call( REQ_GET_SOCKET_EVENT );
+    return req->errors[bit];
+}
+
+static LPWSINFO lpFirstIData = NULL;
+
+static LPWSINFO WINSOCK_GetIData(void)
+{
+    DWORD pid = GetCurrentProcessId();
+    LPWSINFO iData;
+
+    for (iData = lpFirstIData; iData; iData = iData->lpNextIData) {
+	if (iData->dwThisProcess == pid)
+	    break;
+    }
+    return iData;
+}
+
+static BOOL WINSOCK_CreateIData(void)
+{
+    LPWSINFO iData;
+    
+    iData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WSINFO));
+    if (!iData)
+	return FALSE;
+    iData->dwThisProcess = GetCurrentProcessId();
+    iData->lpNextIData = lpFirstIData;
+    lpFirstIData = iData;
+    return TRUE;
+}
+
+static void WINSOCK_DeleteIData(void)
+{
+    LPWSINFO iData = WINSOCK_GetIData();
+    LPWSINFO* ppid;
+    if (iData) {
+	for (ppid = &lpFirstIData; *ppid; ppid = &(*ppid)->lpNextIData) {
+	    if (*ppid == iData) {
+	        *ppid = iData->lpNextIData;
+	        break;
+	    }
+	}
+
+	if( iData->flags & WSI_BLOCKINGCALL )
+	    TRACE("\tinside blocking call!\n");
+
+	/* delete scratch buffers */
+
+	if( iData->buffer ) SEGPTR_FREE(iData->buffer);
+	if( iData->dbuffer ) SEGPTR_FREE(iData->dbuffer);
+
+	HeapFree(GetProcessHeap(), 0, iData);
+    }
+}
+
+BOOL WINAPI WSOCK32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
+{
+    TRACE("0x%x 0x%lx %p\n", hInstDLL, fdwReason, fImpLoad);
+    switch (fdwReason) {
+    case DLL_PROCESS_DETACH:
+	WINSOCK_DeleteIData();
+	break;
+    }
+    return TRUE;
+}
+
+BOOL WINAPI WINSOCK_LibMain(DWORD fdwReason, HINSTANCE hInstDLL, WORD ds,
+                            WORD wHeapSize, DWORD dwReserved1, WORD wReserved2)
+{
+    TRACE("0x%x 0x%lx\n", hInstDLL, fdwReason);
+    switch (fdwReason) {
+    case DLL_PROCESS_DETACH:
+	WINSOCK_DeleteIData();
+	break;
+    }
+    return TRUE;
+}
+                                                                          
 /***********************************************************************
  *          convert_sockopt()
  *
@@ -166,41 +333,6 @@ static void convert_sockopt(INT *level, INT *optname)
 
 /* ----------------------------------- Per-thread info (or per-process?) */
 
-static LPWSINFO wsi_find(HTASK16 hTask)
-{ 
-    TDB*	   pTask = (TDB*)GlobalLock16(hTask);
-    if( pTask )
-    {
-	if( pTask->pwsi ) return pTask->pwsi;
-	else
-	{
-	    LPWSINFO pwsi = _wsi_list;
-	    while( pwsi && pwsi->tid != hTask ) pwsi = pwsi->next;
-	    if( pwsi )
-		WARN("(pwsi=0x%08x,task=0x%04x):Loose wsi struct! \n", 
-					(unsigned)pwsi, hTask );
-	    return pwsi; 
-	}
-    }
-    return NULL;
-}
-
-static ws_socket* wsi_alloc_socket(LPWSINFO pwsi, int fd)
-{
-    /* Initialize a new entry in the socket table */
-
-    if( pwsi->last_free >= 0 )
-    {
-	int i = pwsi->last_free;
-
-	pwsi->last_free = pwsi->sock[i].flags;	/* free list */
-	pwsi->sock[i].fd = fd;
-	pwsi->sock[i].flags = 0;
-	return &pwsi->sock[i];
-    }
-    return NULL;
-}
-
 static int wsi_strtolo(LPWSINFO pwsi, const char* name, const char* opt)
 {
     /* Stuff a lowercase copy of the string into the local buffer */
@@ -218,7 +350,7 @@ static int wsi_strtolo(LPWSINFO pwsi, const char* name, const char* opt)
     return 0;
 }
 
-static fd_set* fd_set_import( fd_set* fds, LPWSINFO pwsi, void* wsfds, int* highfd, BOOL b32 )
+static fd_set* fd_set_import( fd_set* fds, LPWSINFO pwsi, void* wsfds, int* highfd, int lfd[], BOOL b32 )
 {
     /* translate Winsock fd set into local fd set */
 
@@ -226,7 +358,6 @@ static fd_set* fd_set_import( fd_set* fds, LPWSINFO pwsi, void* wsfds, int* high
     { 
 #define wsfds16	((ws_fd_set16*)wsfds)
 #define wsfds32 ((ws_fd_set32*)wsfds)
-	ws_socket* pws;
 	int i, count;
 
 	FD_ZERO(fds);
@@ -234,13 +365,16 @@ static fd_set* fd_set_import( fd_set* fds, LPWSINFO pwsi, void* wsfds, int* high
 
 	for( i = 0; i < count; i++ )
 	{
-	     pws = (b32) ? (ws_socket*)WS_HANDLE2PTR(wsfds32->fd_array[i])
-			 : (ws_socket*)WS_HANDLE2PTR(wsfds16->fd_array[i]);
-	     if( _check_ws(pwsi, pws) )
+	     int s = (b32) ? wsfds32->fd_array[i]
+			   : wsfds16->fd_array[i];
+	     if( _check_ws(pwsi, s) )
              {
-		    if( pws->fd > *highfd ) *highfd = pws->fd;
-		    FD_SET(pws->fd, fds);
+                    int fd = _get_sock_fd(s);
+                    lfd[ i ] = fd;
+		    if( fd > *highfd ) *highfd = fd;
+		    FD_SET(fd, fds);
 	     }
+	     else lfd[ i ] = -1;
 	}
 #undef wsfds32
 #undef wsfds16
@@ -259,7 +393,7 @@ inline static int sock_error_p(int s)
     return optval != 0;
 }
 
-static int fd_set_export( LPWSINFO pwsi, fd_set* fds, fd_set* exceptfds, void* wsfds, BOOL b32 )
+static int fd_set_export( LPWSINFO pwsi, fd_set* fds, fd_set* exceptfds, void* wsfds, int lfd[], BOOL b32 )
 {
     int num_err = 0;
 
@@ -274,12 +408,9 @@ static int fd_set_export( LPWSINFO pwsi, fd_set* fds, fd_set* exceptfds, void* w
 
 	for( i = 0, j = 0; i < count; i++ )
 	{
-	    ws_socket *pws = (b32) ? (ws_socket*)WS_HANDLE2PTR(wsfds32->fd_array[i])
-				   : (ws_socket*)WS_HANDLE2PTR(wsfds16->fd_array[i]);
-	    if( _check_ws(pwsi, pws) )
+	    if( lfd[i] >= 0 )
 	    {
-		int fd = pws->fd;
-
+		int fd = lfd[i];
 		if( FD_ISSET(fd, fds) )
 		{
 		    if ( exceptfds && sock_error_p(fd) )
@@ -292,6 +423,8 @@ static int fd_set_export( LPWSINFO pwsi, fd_set* fds, fd_set* exceptfds, void* w
 			 else
 			     wsfds16->fd_array[j++] = wsfds16->fd_array[i];
 		}
+		close(fd);
+		lfd[i] = -1;
 	    }
 	}
 
@@ -305,9 +438,42 @@ static int fd_set_export( LPWSINFO pwsi, fd_set* fds, fd_set* exceptfds, void* w
     return num_err;
 }
 
-HANDLE16 __ws_gethandle( void* ptr )
+static void fd_set_unimport( void* wsfds, int lfd[], BOOL b32 )
 {
-    return (HANDLE16)WS_PTR2HANDLE(ptr);
+    if ( wsfds )
+    {
+#define wsfds16 ((ws_fd_set16*)wsfds)
+#define wsfds32 ((ws_fd_set32*)wsfds)
+	int i, count = (b32) ? wsfds32->fd_count : wsfds16->fd_count;
+
+	for( i = 0; i < count; i++ )
+	    if ( lfd[i] >= 0 )
+		close(lfd[i]);
+
+	TRACE("\n");
+#undef wsfds32
+#undef wsfds16
+    }
+}
+
+static int do_block( int fd, int mask )
+{
+    fd_set fds[3];
+    int i, r;
+
+    FD_ZERO(&fds[0]);
+    FD_ZERO(&fds[1]);
+    FD_ZERO(&fds[2]);
+    for (i=0; i<3; i++)
+	if (mask & (1<<i))
+	    FD_SET(fd, &fds[i]);
+    i = select( fd+1, &fds[0], &fds[1], &fds[2], NULL );
+    if (i <= 0) return -1;
+    r = 0;
+    for (i=0; i<3; i++)
+	if (FD_ISSET(fd, &fds[i]))
+	    r |= 1<<i;
+    return r;
 }
 
 void* __ws_memalloc( int size )
@@ -318,157 +484,6 @@ void* __ws_memalloc( int size )
 void __ws_memfree(void* ptr)
 {
     WS_FREE(ptr);
-}
-
-/*
- * Event handling helper routines
- *
- * FIXME:  This is all a hack; winsock event handling should be moved
- *         to the services thread ...
- */
-
-#define EVENT_IO_READ           0
-#define EVENT_IO_WRITE          1
-#define EVENT_IO_EXCEPT         2
-
-static fd_set __winsock_io_set[3];
-static int    __winsock_max_fd = 0;
-static int    __wakeup_pipe[2];
-
-static CRITICAL_SECTION __winsock_crst;
-static HANDLE __winsock_thread = INVALID_HANDLE_VALUE;
-
-BOOL WINSOCK_HandleIO( int* max_fd, int num_pending, 
-			 fd_set pending_set[3], fd_set event_set[3] );
-
-/***********************************************************************
- *              WINSOCK_Init
- *
- * Initialize network IO.
- */
-BOOL WINSOCK_Init(void)
-{
-    int i;
-    for( i = 0; i < 3; i++ )
-        FD_ZERO( __winsock_io_set + i );
-
-    /* pipe used to wake up the winsock thread */
-    pipe(__wakeup_pipe);
-
-    /* make the pipe non-blocking */
-    fcntl(__wakeup_pipe[0], F_SETFL, O_NONBLOCK);
-    fcntl(__wakeup_pipe[1], F_SETFL, O_NONBLOCK);
-
-    FD_SET( __wakeup_pipe[0], &__winsock_io_set[EVENT_IO_READ] );
-    __winsock_max_fd = __wakeup_pipe[0];
-    __winsock_max_fd++;
-
-    /* Inititalize critical section */
-    InitializeCriticalSection( &__winsock_crst );
-    MakeCriticalSectionGlobal( &__winsock_crst );
-
-    return TRUE;
-}
-
-/***********************************************************************
- *              WINSOCK_Shutdown
- */
-void WINSOCK_Shutdown()
-{
-    /* Called on exit(), has to remove all outstanding async DNS processes.  */
-
-    if ( __winsock_thread != INVALID_HANDLE_VALUE )
-    {
-        TerminateThread( __winsock_thread, 0 );
-        __winsock_thread = INVALID_HANDLE_VALUE;
-    }
-}
-
-/***********************************************************************
- *              WINSOCK_Thread
- */
-static DWORD CALLBACK WINSOCK_Thread( LPVOID arg )
-{
-    while ( TRUE )
-    {
-        int num_pending, max_fd;
-        fd_set io_set[3];
-
-        EnterCriticalSection( &__winsock_crst );
-        memcpy( io_set, __winsock_io_set, sizeof(io_set) );
-        max_fd = __winsock_max_fd;
-        LeaveCriticalSection( &__winsock_crst );
-
-        num_pending = select( max_fd, &io_set[EVENT_IO_READ],
-                              &io_set[EVENT_IO_WRITE],
-                              &io_set[EVENT_IO_EXCEPT], NULL );
-
-        if ( num_pending == -1 )
-        {
-            /* Error - signal, invalid arguments, out of memory */
-            continue;
-        }
-
-        /* Flush the wake-up pipe */
-        if ( FD_ISSET( __wakeup_pipe[0], &io_set[EVENT_IO_READ] ) )
-        {
-            char tmpBuf[10];
-            ssize_t ret;
-
-            while ( (ret = read(__wakeup_pipe[0], &tmpBuf, 10)) == 10 );
-            num_pending--;
-        }
-
-        /* Handle actual IO */
-        if ( num_pending > 0 )
-        {
-            EnterCriticalSection( &__winsock_crst );
-            WINSOCK_HandleIO( &__winsock_max_fd, num_pending, io_set, __winsock_io_set );
-            LeaveCriticalSection( &__winsock_crst );
-        }
-    }
-}
-
-/***********************************************************************
- *              WINSOCK_WakeUp
- *
- * Wake up the winsock thread.
- */
-static void WINSOCK_WakeUp(void)
-{
-    if ( __winsock_thread == INVALID_HANDLE_VALUE )
-    {
-        __winsock_thread = CreateThread( NULL, 0, WINSOCK_Thread, NULL, 0, NULL ); 
-        __winsock_thread = ConvertToGlobalHandle( __winsock_thread );
-    }
-
-    if (write (__wakeup_pipe[1], "A", 1) != 1)
-        ERR("unable to write in wakeup_pipe\n");
-}
-
-/***********************************************************************
- *              EVENT_AddIO
- */
-static void EVENT_AddIO(int fd, unsigned io_type)
-{
-    EnterCriticalSection( &__winsock_crst );
-    FD_SET( fd, &__winsock_io_set[io_type] );
-    if( __winsock_max_fd <= fd ) __winsock_max_fd = fd + 1;
-    LeaveCriticalSection( &__winsock_crst );
-
-    WINSOCK_WakeUp();
-}
-
-/***********************************************************************
- *              EVENT_DeleteIO
- */
-static void EVENT_DeleteIO(int fd, unsigned io_type)
-{
-    EnterCriticalSection( &__winsock_crst );
-    FD_CLR( fd, &__winsock_io_set[io_type] );
-    LeaveCriticalSection( &__winsock_crst );
-
-    WINSOCK_WakeUp();
 }
 
 
@@ -502,7 +517,6 @@ INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA lpWSAData)
                         #endif
 			   WS_MAX_SOCKETS_PER_PROCESS,
 			   WS_MAX_UDP_DATAGRAM, (SEGPTR)NULL };
-    HTASK16             tid = GetCurrentTask();
     LPWSINFO            pwsi;
 
     TRACE("verReq=%x\n", wVersionRequested);
@@ -514,10 +528,10 @@ INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA lpWSAData)
 
     /* initialize socket heap */
 
-    if( !_ws_stub )
+    if( !_WSHeap )
     {
 	_WSHeap = HeapCreate(HEAP_ZERO_MEMORY, 8120, 32768);
-	if( !(_ws_stub = WS_ALLOC(0x10)) )
+	if( !_WSHeap )
 	{
 	    ERR("Fatal: failed to create WinSock heap\n");
 	    return 0;
@@ -525,34 +539,12 @@ INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA lpWSAData)
     }
     if( _WSHeap == 0 ) return WSASYSNOTREADY;
 
-    /* create socket array for this task */
-  
-    pwsi = wsi_find(GetCurrentTask());
+    pwsi = WINSOCK_GetIData();
     if( pwsi == NULL )
     {
-	TDB* pTask = (TDB*)GlobalLock16( tid );
-
-	if( (pwsi = (LPWSINFO)WS_ALLOC( sizeof(WSINFO))) )
-	{
-	    int i = 0;
-	    pwsi->tid = tid;
-	    for( i = 0; i < WS_MAX_SOCKETS_PER_PROCESS; i++ )
-	    {
-		pwsi->sock[i].fd = -1; 
-		pwsi->sock[i].flags = i + 1; 
-	    }
-	    pwsi->sock[WS_MAX_SOCKETS_PER_PROCESS - 1].flags = -1;
-	}
-	else return WSASYSNOTREADY;
-
-        /* add this control struct to the global list */
-
-	pwsi->prev = NULL;
-	if( _wsi_list ) 
-	    _wsi_list->prev = pwsi;
-	pwsi->next = _wsi_list; 
-	_wsi_list = pwsi;
-	pTask->pwsi = pwsi;
+        WINSOCK_CreateIData();
+        pwsi = WINSOCK_GetIData();
+	if (!pwsi) return WSASYSNOTREADY;
     }
     pwsi->num_startup++;
 
@@ -574,82 +566,17 @@ INT WINAPI WSAStartup(UINT wVersionRequested, LPWSADATA lpWSAData)
 
 /***********************************************************************
  *      WSACleanup()			(WINSOCK.116)
- *
- * Cleanup functions of varying impact.
  */
-
-INT WINSOCK_DeleteTaskWSI( TDB* pTask, LPWSINFO pwsi )
-{
-    /* WSACleanup() backend, called on task termination as well.
-     * Real DLL would have registered its own signal handler with
-     * TaskSetSignalHandler() and waited until USIG_TERMINATION/USIG_GPF
-     * but this scheme is much more straightforward.
-     */
-
-    int	i, j, n;
-
-    if( --pwsi->num_startup > 0 ) return 0;
-
-    /* unlink socket control struct */
-
-    if( pwsi == _wsi_list ) 
-	_wsi_list = pwsi->next;
-    else
-	pwsi->prev->next = pwsi->next;
-    if( pwsi->next ) pwsi->next->prev = pwsi->prev; 
-
-    if( _wsi_list == NULL ) 
-	WINSOCK_Shutdown();	/* just in case */
-
-    if( pwsi->flags & WSI_BLOCKINGCALL )
-	TRACE("\tinside blocking call!\n");
-
-/* FIXME: aop_control() doesn't decrement pwsi->num_async_rq
- *
- *    if( pwsi->num_async_rq )
- *	  WARN(winsock,"\thave %i outstanding async ops!\n", pwsi->num_async_rq );
- */
-
-    for(i = 0, j = 0, n = 0; i < WS_MAX_SOCKETS_PER_PROCESS; i++)
-	if( pwsi->sock[i].fd != -1 )
-	{
-	    if( pwsi->sock[i].psop )
-	    {
-		n++;
-		WSAAsyncSelect( (SOCKET16)WS_PTR2HANDLE(pwsi->sock + i), 0, 0, 0 );
-	    }
-            close(pwsi->sock[i].fd); j++; 
-        }
-    if( j ) 
-	  TRACE("\tclosed %i sockets, killed %i async selects!\n", j, n);
-
-    /* delete scratch buffers */
-
-    if( pwsi->buffer ) SEGPTR_FREE(pwsi->buffer);
-    if( pwsi->dbuffer ) SEGPTR_FREE(pwsi->dbuffer);
-	
-    if( pTask )
-        pTask->pwsi = NULL;
-    memset( pwsi, 0, sizeof(WSINFO) );
-    WS_FREE(pwsi);
-    return 0;
-}
-
 INT WINAPI WSACleanup(void)
 {
-    HTASK16	hTask = GetCurrentTask();
+    LPWSINFO pwsi = WINSOCK_GetIData();
+    if( pwsi ) {
+	if( --pwsi->num_startup > 0 ) return 0;
 
-    TRACE("(%04x)\n", hTask );
-    if( hTask )
-    {
-	LPWSINFO pwsi = wsi_find(hTask);
-	if( pwsi )
-	    return WINSOCK_DeleteTaskWSI( (TDB*)GlobalLock16(hTask), pwsi );
-	return SOCKET_ERROR;
+	WINSOCK_DeleteIData();
+	return 0;
     }
-    else
-	WINSOCK_Shutdown(); /* remove all outstanding DNS requests */
-    return 0;
+    return SOCKET_ERROR;
 }
 
 
@@ -676,13 +603,19 @@ void WINAPI WSASetLastError16(INT16 iError)
     WSASetLastError(iError);
 }
 
-int _check_ws(LPWSINFO pwsi, ws_socket* pws)
+int _check_ws(LPWSINFO pwsi, SOCKET s)
 {
     if( pwsi )
     {
+	int fd;
 	if( pwsi->flags & WSI_BLOCKINGCALL ) SetLastError(WSAEINPROGRESS);
-	else if( WSI_CHECK_RANGE(pwsi, pws) ) return 1;
-		 else SetLastError(WSAENOTSOCK);
+	if ( (fd = _get_sock_fd(s)) < 0 ) {
+	    SetLastError(WSAENOTSOCK);
+	    return 0;
+	}
+	/* FIXME: maybe check whether fd is really a socket? */
+	close( fd );
+	return 1;
     }
     return 0;
 }
@@ -731,34 +664,36 @@ struct ws_protoent* _check_buffer_pe(LPWSINFO pwsi, int size)
 SOCKET WINAPI WINSOCK_accept(SOCKET s, struct sockaddr *addr,
                                  INT *addrlen32)
 {
-    ws_socket*               pws  = (ws_socket*)WS_HANDLE2PTR((SOCKET16)s);
-    LPWSINFO                 pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO                 pwsi = WINSOCK_GetIData();
 #ifdef HAVE_IPX
     struct ws_sockaddr_ipx*  addr2 = (struct ws_sockaddr_ipx *)addr;
 #endif
+    struct accept_socket_request *req = get_req_buffer();
 
     TRACE("(%08x): socket %04x\n", 
 				  (unsigned)pwsi, (UINT16)s ); 
-    if( _check_ws(pwsi, pws) )
+    if( _check_ws(pwsi, s) )
     {
-	int 	sock, fd_flags;
-
-	fd_flags = fcntl(pws->fd, F_GETFL, 0);
-
-	if( (sock = accept(pws->fd, addr, addrlen32)) >= 0 )
+	if (_is_blocking(s))
 	{
-	    ws_socket*	pnew = wsi_alloc_socket(pwsi, sock); 
-	    if( pnew )
+	    /* block here */
+	    int fd = _get_sock_fd(s);
+	    do_block(fd, 5);
+	    close(fd);
+	    _sync_sock_state(s); /* let wineserver notice connection */
+	    /* retrieve any error codes from it */
+	    SetLastError(_get_sock_error(s, FD_ACCEPT_BIT));
+	    /* FIXME: care about the error? */
+	}
+	req->lhandle = s;
+	req->access  = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
+	req->inherit = TRUE;
+	server_call( REQ_ACCEPT_SOCKET );
+	if( req->handle >= 0 )
+	{
+	    int fd = _get_sock_fd( s = req->handle );
+	    if( getpeername(fd, addr, addrlen32) != -1 )
 	    {
-		s = (SOCKET)WS_PTR2HANDLE(pnew);
-		if( pws->psop && pws->flags & WS_FD_ACCEPT )
-		{
-		    EVENT_AddIO( pws->fd, EVENT_IO_READ );	/* reenabler */
-
-		    /* async select the accept()'ed socket */
-		    WSAAsyncSelect( s, pws->psop->hWnd, pws->psop->uMsg,
-				      pws->flags & ~WS_FD_ACCEPT );
-		}
 #ifdef HAVE_IPX
 		if (addr && ((struct sockaddr_ipx *)addr)->sipx_family == AF_IPX) {
 		    addr = (struct sockaddr *)
@@ -773,24 +708,11 @@ SOCKET WINAPI WINSOCK_accept(SOCKET s, struct sockaddr *addr,
 		    free(addr);
 		}
 #endif
-		return s;
-            } 
-	    else SetLastError(WSAENOBUFS);
-	} else SetLastError(wsaErrno());
+	    } else SetLastError(wsaErrno());
+	    close(fd);
+	    return s;
+	}
     }
-#ifdef HAVE_IPX
-    if (addr && ((struct sockaddr_ipx *)addr)->sipx_family == AF_IPX) {
-	addr = (struct sockaddr *)
-			malloc(addrlen32 ? *addrlen32 : sizeof(*addr2));
-	memcpy(addr, addr2, addrlen32 ? *addrlen32 : sizeof(*addr2));
-	addr2->sipx_family = WS_AF_IPX;
-	addr2->sipx_network = ((struct sockaddr_ipx *)addr)->sipx_network;
-	addr2->sipx_port = ((struct sockaddr_ipx *)addr)->sipx_port;
-	memcpy(addr2->sipx_node,
-	    ((struct sockaddr_ipx *)addr)->sipx_node, IPX_NODE_LEN);
-	free(addr);
-    }
-#endif
     return INVALID_SOCKET;
 }
 
@@ -811,8 +733,7 @@ SOCKET16 WINAPI WINSOCK_accept16(SOCKET16 s, struct sockaddr* addr,
  */
 INT WINAPI WINSOCK_bind(SOCKET s, struct sockaddr *name, INT namelen)
 {
-    ws_socket*               pws  = (ws_socket*)WS_HANDLE2PTR(s);
-    LPWSINFO                 pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO                 pwsi = WINSOCK_GetIData();
 #ifdef HAVE_IPX
     struct ws_sockaddr_ipx*  name2 = (struct ws_sockaddr_ipx *)name;
 #endif
@@ -823,8 +744,9 @@ INT WINAPI WINSOCK_bind(SOCKET s, struct sockaddr *name, INT namelen)
     dump_sockaddr(name);
 #endif
 
-    if ( _check_ws(pwsi, pws) )
+    if ( _check_ws(pwsi, s) )
     {
+      int fd = _get_sock_fd(s);
       /* FIXME: what family does this really map to on the Unix side? */
       if (name && ((struct ws_sockaddr_ipx *)name)->sipx_family == WS_AF_PUP)
 	((struct ws_sockaddr_ipx *)name)->sipx_family = AF_UNSPEC;
@@ -850,7 +772,7 @@ INT WINAPI WINSOCK_bind(SOCKET s, struct sockaddr *name, INT namelen)
 #endif
            ))
         {
-	  if ( bind(pws->fd, name, namelen) < 0 ) 
+	  if ( bind(fd, name, namelen) < 0 ) 
 	  {
 	     int	loc_errno = errno;
 	     WARN("\tfailure - errno = %i\n", errno);
@@ -867,6 +789,7 @@ INT WINAPI WINSOCK_bind(SOCKET s, struct sockaddr *name, INT namelen)
 	    if (((struct sockaddr_ipx *)name)->sipx_family == AF_IPX)
 		free(name);
 #endif
+	    close(fd);
 	    return 0; /* success */
 	  }
         } else SetLastError(WSAEAFNOSUPPORT);
@@ -875,6 +798,7 @@ INT WINAPI WINSOCK_bind(SOCKET s, struct sockaddr *name, INT namelen)
       if (name && ((struct sockaddr_ipx *)name)->sipx_family == AF_IPX)
 	free(name);
 #endif
+      close(fd);
     }
     return SOCKET_ERROR;
 }
@@ -892,24 +816,14 @@ INT16 WINAPI WINSOCK_bind16(SOCKET16 s, struct sockaddr *name, INT16 namelen)
  */
 INT WINAPI WINSOCK_closesocket(SOCKET s)
 {
-    ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
-    LPWSINFO      pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO      pwsi = WINSOCK_GetIData();
 
     TRACE("(%08x): socket %08x\n", (unsigned)pwsi, s);
 
-    if( _check_ws(pwsi, pws) )
+    if( _check_ws(pwsi, s) )
     { 
-	int	fd = pws->fd;
-
-	if( pws->psop ) WSAAsyncSelect( s, 0, 0, 0 );
-
-	pws->fd = -1;
-	pws->flags = (unsigned)pwsi->last_free;
-	pwsi->last_free = pws - &pwsi->sock[0]; /* add to free list */
-
-	if( close(fd) == 0 ) 
+	if( CloseHandle(s) )
 	    return 0;
-	SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
     }
     return SOCKET_ERROR;
 }
@@ -927,8 +841,7 @@ INT16 WINAPI WINSOCK_closesocket16(SOCKET16 s)
  */
 INT WINAPI WINSOCK_connect(SOCKET s, struct sockaddr *name, INT namelen)
 {
-  ws_socket*               pws  = (ws_socket*)WS_HANDLE2PTR(s);
-  LPWSINFO                 pwsi = wsi_find(GetCurrentTask());
+  LPWSINFO                 pwsi = WINSOCK_GetIData();
 #ifdef HAVE_IPX
   struct ws_sockaddr_ipx*  name2 = (struct ws_sockaddr_ipx *)name;
 #endif
@@ -939,8 +852,9 @@ INT WINAPI WINSOCK_connect(SOCKET s, struct sockaddr *name, INT namelen)
   dump_sockaddr(name);
 #endif
 
-  if( _check_ws(pwsi, pws) )
+  if( _check_ws(pwsi, s) )
   {
+    int fd = _get_sock_fd(s);
     if (name && ((struct ws_sockaddr_ipx *)name)->sipx_family == WS_AF_PUP)
 	((struct ws_sockaddr_ipx *)name)->sipx_family = AF_UNSPEC;
 #ifdef HAVE_IPX
@@ -956,45 +870,54 @@ INT WINAPI WINSOCK_connect(SOCKET s, struct sockaddr *name, INT namelen)
 	namelen = sizeof(struct sockaddr_ipx);
     }
 #endif
-    if (connect(pws->fd, name, namelen) == 0) 
-    { 
-	if( pws->psop && (pws->flags & WS_FD_CONNECT) )
+    if (connect(fd, name, namelen) == 0) {
+	close(fd);
+	goto connect_success;
+    }
+    if (errno == EINPROGRESS)
+    {
+	/* tell wineserver that a connection is in progress */
+	_enable_event(s, FD_CONNECT|FD_READ|FD_WRITE,
+		      WS_FD_CONNECT|WS_FD_READ|WS_FD_WRITE,
+		      WS_FD_CONNECTED|WS_FD_LISTENING);
+	if (_is_blocking(s))
 	{
-	    /* application did AsyncSelect() but then went
-	     * ahead and called connect() without waiting for 
-	     * notification.
-	     *
-	     * FIXME: Do we have to post a notification message 
-	     *        in this case?
-	     */
-
-	    if( !(pws->flags & WS_FD_CONNECTED) )
-	    {
-		if( pws->flags & (WS_FD_READ | WS_FD_CLOSE) )
-		    EVENT_AddIO( pws->fd, EVENT_IO_READ );
-		else
-		    EVENT_DeleteIO( pws->fd, EVENT_IO_READ );
-		if( pws->flags & WS_FD_WRITE )
-		    EVENT_AddIO( pws->fd, EVENT_IO_WRITE );
-		else
-		    EVENT_DeleteIO( pws->fd, EVENT_IO_WRITE );
+	    int result;
+	    /* block here */
+	    do_block(fd, 6);
+	    _sync_sock_state(s); /* let wineserver notice connection */
+	    /* retrieve any error codes from it */
+	    result = _get_sock_error(s, FD_CONNECT_BIT);
+	    if (result)
+		SetLastError(result);
+	    else {
+		close(fd);
+		goto connect_success;
 	    }
 	}
-	pws->flags |= WS_FD_CONNECTED;
-	pws->flags &= ~(WS_FD_INACTIVE | WS_FD_CONNECT | WS_FD_LISTENING);
-#ifdef HAVE_IPX
-	if (((struct sockaddr_ipx *)name)->sipx_family == AF_IPX)
-	    free(name);
-#endif
-        return 0; 
+	else SetLastError(WSAEWOULDBLOCK);
+	close(fd);
     }
-    SetLastError((errno == EINPROGRESS) ? WSAEWOULDBLOCK : wsaErrno());
+    else
+    {
+	SetLastError(wsaErrno());
+	close(fd);
+    }
   }
 #ifdef HAVE_IPX
   if (name && ((struct sockaddr_ipx *)name)->sipx_family == AF_IPX)
     free(name);
 #endif
   return SOCKET_ERROR;
+connect_success:
+#ifdef HAVE_IPX
+    if (((struct sockaddr_ipx *)name)->sipx_family == AF_IPX)
+	free(name);
+#endif
+    _enable_event(s, FD_CONNECT|FD_READ|FD_WRITE,
+		  WS_FD_CONNECTED|WS_FD_READ|WS_FD_WRITE,
+		  WS_FD_CONNECT|WS_FD_LISTENING);
+    return 0; 
 }
 
 /***********************************************************************
@@ -1011,17 +934,17 @@ INT16 WINAPI WINSOCK_connect16(SOCKET16 s, struct sockaddr *name, INT16 namelen)
 INT WINAPI WINSOCK_getpeername(SOCKET s, struct sockaddr *name,
                                    INT *namelen)
 {
-    ws_socket*               pws  = (ws_socket*)WS_HANDLE2PTR(s);
-    LPWSINFO                 pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO                 pwsi = WINSOCK_GetIData();
 #ifdef HAVE_IPX
     struct ws_sockaddr_ipx*  name2 = (struct ws_sockaddr_ipx *)name;
 #endif
 
     TRACE("(%08x): socket: %04x, ptr %8x, ptr %8x\n", 
 			   (unsigned)pwsi, s, (int) name, *namelen);
-    if( _check_ws(pwsi, pws) )
+    if( _check_ws(pwsi, s) )
     {
-	if (getpeername(pws->fd, name, namelen) == 0) {
+	int fd = _get_sock_fd(s);
+	if (getpeername(fd, name, namelen) == 0) {
 #ifdef HAVE_IPX
 	    if (((struct ws_sockaddr_ipx *)name)->sipx_family == AF_IPX) {
 		name = (struct sockaddr *)
@@ -1035,22 +958,12 @@ INT WINAPI WINSOCK_getpeername(SOCKET s, struct sockaddr *name,
 		free(name);
 	    }
 #endif
+	    close(fd);
 	    return 0; 
 	}
 	SetLastError(wsaErrno());
+	close(fd);
     }
-#ifdef HAVE_IPX
-    if (name && ((struct ws_sockaddr_ipx *)name)->sipx_family == AF_IPX) {
-	name = (struct sockaddr *) malloc(namelen ? *namelen : sizeof(*name2));
-	memcpy(name, name2, namelen ? *namelen : sizeof(*name2));
-	name2->sipx_family = WS_AF_IPX;
-	name2->sipx_network = ((struct sockaddr_ipx *)name)->sipx_network;
-	name2->sipx_port = ((struct sockaddr_ipx *)name)->sipx_port;
-	memcpy(name2->sipx_node,
-		((struct sockaddr_ipx *)name)->sipx_node, IPX_NODE_LEN);
-	free(name);
-    }
-#endif
     return SOCKET_ERROR;
 }
 
@@ -1077,17 +990,17 @@ INT16 WINAPI WINSOCK_getpeername16(SOCKET16 s, struct sockaddr *name,
 INT WINAPI WINSOCK_getsockname(SOCKET s, struct sockaddr *name,
                                    INT *namelen)
 {
-    ws_socket*               pws  = (ws_socket*)WS_HANDLE2PTR(s);
-    LPWSINFO                 pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO                 pwsi = WINSOCK_GetIData();
 #ifdef HAVE_IPX
     struct ws_sockaddr_ipx*  name2 = (struct ws_sockaddr_ipx *)name;
 #endif
 
     TRACE("(%08x): socket: %04x, ptr %8x, ptr %8x\n", 
 			  (unsigned)pwsi, s, (int) name, (int) *namelen);
-    if( _check_ws(pwsi, pws) )
+    if( _check_ws(pwsi, s) )
     {
-	if (getsockname(pws->fd, name, namelen) == 0) {
+	int fd = _get_sock_fd(s);
+	if (getsockname(fd, name, namelen) == 0) {
 #ifdef HAVE_IPX
 	    if (((struct sockaddr_ipx *)name)->sipx_family == AF_IPX) {
 		name = (struct sockaddr *)
@@ -1101,22 +1014,12 @@ INT WINAPI WINSOCK_getsockname(SOCKET s, struct sockaddr *name,
 		free(name);
 	    }
 #endif
+	    close(fd);
 	    return 0; 
 	}
 	SetLastError(wsaErrno());
+	close(fd);
     }
-#ifdef HAVE_IPX
-    if (name && ((struct ws_sockaddr_ipx *)name)->sipx_family == AF_IPX) {
-	name = (struct sockaddr *) malloc(namelen ? *namelen : sizeof(*name2));
-	memcpy(name, name2, namelen ? *namelen : sizeof(*name2));
-	name2->sipx_family = WS_AF_IPX;
-	name2->sipx_network = ((struct sockaddr_ipx *)name)->sipx_network;
-	name2->sipx_port = ((struct sockaddr_ipx *)name)->sipx_port;
-	memcpy(name2->sipx_node,
-		((struct sockaddr_ipx *)name)->sipx_node, IPX_NODE_LEN);
-	free(name);
-    }
-#endif
     return SOCKET_ERROR;
 }
 
@@ -1150,17 +1053,21 @@ INT16 WINAPI WINSOCK_getsockname16(SOCKET16 s, struct sockaddr *name,
 INT WINAPI WINSOCK_getsockopt(SOCKET s, INT level, 
                                   INT optname, char *optval, INT *optlen)
 {
-    ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
-    LPWSINFO      pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO      pwsi = WINSOCK_GetIData();
 
     TRACE("(%08x): socket: %04x, opt %d, ptr %8x, ptr %8x\n", 
 			   (unsigned)pwsi, s, level, (int) optval, (int) *optlen);
-    if( _check_ws(pwsi, pws) )
+    if( _check_ws(pwsi, s) )
     {
+	int fd = _get_sock_fd(s);
 	convert_sockopt(&level, &optname);
-	if (getsockopt(pws->fd, (int) level, optname, optval, optlen) == 0 )
+	if (getsockopt(fd, (int) level, optname, optval, optlen) == 0 )
+	{
+	    close(fd);
 	    return 0;
+	}
 	SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+	close(fd);
     }
     return SOCKET_ERROR;
 }
@@ -1211,7 +1118,7 @@ char* WINAPI WINSOCK_inet_ntoa(struct in_addr in)
    * saving them first...
    */
 
-    LPWSINFO      pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO      pwsi = WINSOCK_GetIData();
 
     if( pwsi )
     {
@@ -1243,13 +1150,13 @@ SEGPTR WINAPI WINSOCK_inet_ntoa16(struct in_addr in)
  */
 INT WINAPI WINSOCK_ioctlsocket(SOCKET s, LONG cmd, ULONG *argp)
 {
-  ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
-  LPWSINFO      pwsi = wsi_find(GetCurrentTask());
+  LPWSINFO      pwsi = WINSOCK_GetIData();
 
   TRACE("(%08x): socket %04x, cmd %08lx, ptr %8x\n", 
 			  (unsigned)pwsi, s, cmd, (unsigned) argp);
-  if( _check_ws(pwsi, pws) )
+  if( _check_ws(pwsi, s) )
   {
+    int		fd = _get_sock_fd(s);
     long 	newcmd  = cmd;
 
     switch( cmd )
@@ -1260,13 +1167,19 @@ INT WINAPI WINSOCK_ioctlsocket(SOCKET s, LONG cmd, ULONG *argp)
 
 	case WS_FIONBIO:    
 		newcmd=FIONBIO;  
-		if( pws->psop && *argp == 0 ) 
+		if( _get_sock_mask(s) )
 		{
 		    /* AsyncSelect()'ed sockets are always nonblocking */
 		    SetLastError(WSAEINVAL); 
+		    close(fd);
 		    return SOCKET_ERROR; 
 		}
-		break;
+		close(fd);
+		if (*argp)
+		    _enable_event(s, 0, WS_FD_NONBLOCKING, 0);
+		else
+		    _enable_event(s, 0, 0, WS_FD_NONBLOCKING);
+		return 0;
 
 	case WS_SIOCATMARK: 
 		newcmd=SIOCATMARK; 
@@ -1281,8 +1194,13 @@ INT WINAPI WINSOCK_ioctlsocket(SOCKET s, LONG cmd, ULONG *argp)
 		/* Netscape tries hard to use bogus ioctl 0x667e */
 		WARN("\tunknown WS_IOCTL cmd (%08lx)\n", cmd);
     }
-    if( ioctl(pws->fd, newcmd, (char*)argp ) == 0 ) return 0;
+    if( ioctl(fd, newcmd, (char*)argp ) == 0 )
+    {
+	close(fd);
+	return 0;
+    }
     SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno()); 
+    close(fd);
   }
   return SOCKET_ERROR;
 }
@@ -1301,22 +1219,19 @@ INT16 WINAPI WINSOCK_ioctlsocket16(SOCKET16 s, LONG cmd, ULONG *argp)
  */
 INT WINAPI WINSOCK_listen(SOCKET s, INT backlog)
 {
-    ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
-    LPWSINFO      pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO      pwsi = WINSOCK_GetIData();
 
     TRACE("(%08x): socket %04x, backlog %d\n", 
 			    (unsigned)pwsi, s, backlog);
-    if( _check_ws(pwsi, pws) )
+    if( _check_ws(pwsi, s) )
     {
-	if (listen(pws->fd, backlog) == 0)
+	int fd = _get_sock_fd(s);
+	if (listen(fd, backlog) == 0)
 	{
-	    if( !pws->psop )
-	    {
-		int  fd_flags = fcntl(pws->fd, F_GETFL, 0);
-		if( !(fd_flags & O_NONBLOCK) ) pws->flags |= WS_FD_ACCEPT;
-	    }
-	    pws->flags |= WS_FD_LISTENING;
-	    pws->flags &= ~(WS_FD_INACTIVE | WS_FD_CONNECT | WS_FD_CONNECTED); /* just in case */
+	    close(fd);
+	    _enable_event(s, FD_ACCEPT,
+			  WS_FD_LISTENING,
+			  WS_FD_CONNECT|WS_FD_CONNECTED);
 	    return 0;
 	}
 	SetLastError(wsaErrno());
@@ -1339,25 +1254,32 @@ INT16 WINAPI WINSOCK_listen16(SOCKET16 s, INT16 backlog)
  */
 INT WINAPI WINSOCK_recv(SOCKET s, char *buf, INT len, INT flags)
 {
-    ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
-    LPWSINFO      pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO      pwsi = WINSOCK_GetIData();
 
     TRACE("(%08x): socket %04x, buf %8x, len %d, "
 		    "flags %d\n", (unsigned)pwsi, s, (unsigned)buf, 
 		    len, flags);
-    if( _check_ws(pwsi, pws) )
+    if( _check_ws(pwsi, s) )
     {
+	int fd = _get_sock_fd(s);
 	INT length;
-	if ((length = recv(pws->fd, buf, len, flags)) >= 0) 
+
+	if (_is_blocking(s))
+	{
+	    /* block here */
+	    /* FIXME: OOB and exceptfds? */
+	    do_block(fd, 1);
+	}
+	if ((length = recv(fd, buf, len, flags)) >= 0) 
 	{ 
 	    TRACE(" -> %i bytes\n", length);
 
-	    if( pws->psop && (pws->flags & (WS_FD_READ | WS_FD_CLOSE)) )
-		EVENT_AddIO( pws->fd, EVENT_IO_READ );	/* reenabler */
-
+	    close(fd);
+	    _enable_event(s, FD_READ, 0, 0);
 	    return length;
 	}
 	SetLastError(wsaErrno());
+	close(fd);
     }
     else SetLastError(WSAENOTSOCK);
     WARN(" -> ERROR\n");
@@ -1379,8 +1301,7 @@ INT16 WINAPI WINSOCK_recv16(SOCKET16 s, char *buf, INT16 len, INT16 flags)
 INT WINAPI WINSOCK_recvfrom(SOCKET s, char *buf, INT len, INT flags, 
                                 struct sockaddr *from, INT *fromlen32)
 {
-    ws_socket*               pws  = (ws_socket*)WS_HANDLE2PTR(s);
-    LPWSINFO                 pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO                 pwsi = WINSOCK_GetIData();
 #ifdef HAVE_IPX
     struct ws_sockaddr_ipx*  from2 = (struct ws_sockaddr_ipx *)from;
 #endif
@@ -1393,16 +1314,20 @@ INT WINAPI WINSOCK_recvfrom(SOCKET s, char *buf, INT len, INT flags,
     else DPRINTF("from = NULL\n");
 #endif
 
-    if( _check_ws(pwsi, pws) )
+    if( _check_ws(pwsi, s) )
     {
+	int fd = _get_sock_fd(s);
 	int length;
 
-	if ((length = recvfrom(pws->fd, buf, len, flags, from, fromlen32)) >= 0)
+	if (_is_blocking(s))
+	{
+	    /* block here */
+	    /* FIXME: OOB and exceptfds */
+	    do_block(fd, 1);
+	}
+	if ((length = recvfrom(fd, buf, len, flags, from, fromlen32)) >= 0)
 	{
 	    TRACE(" -> %i bytes\n", length);
-
-	    if( pws->psop && (pws->flags & (WS_FD_READ | WS_FD_CLOSE)) )
-		EVENT_AddIO( pws->fd, EVENT_IO_READ );  /* reenabler */
 
 #ifdef HAVE_IPX
 	if (from && ((struct sockaddr_ipx *)from)->sipx_family == AF_IPX) {
@@ -1417,9 +1342,12 @@ INT WINAPI WINSOCK_recvfrom(SOCKET s, char *buf, INT len, INT flags,
 	    free(from);
 	}
 #endif
+	    close(fd);
+	    _enable_event(s, FD_READ, 0, 0);
 	    return (INT16)length;
 	}
 	SetLastError(wsaErrno());
+	close(fd);
     }
     else SetLastError(WSAENOTSOCK);
     WARN(" -> ERROR\n");
@@ -1461,7 +1389,7 @@ INT16 WINAPI WINSOCK_recvfrom16(SOCKET16 s, char *buf, INT16 len, INT16 flags,
 static INT __ws_select( BOOL b32, void *ws_readfds, void *ws_writefds, void *ws_exceptfds,
 			  struct timeval *timeout )
 {
-    LPWSINFO      pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO      pwsi = WINSOCK_GetIData();
 	
     TRACE("(%08x): read %8x, write %8x, excp %8x\n", 
     (unsigned) pwsi, (unsigned) ws_readfds, (unsigned) ws_writefds, (unsigned) ws_exceptfds);
@@ -1471,15 +1399,16 @@ static INT __ws_select( BOOL b32, void *ws_readfds, void *ws_writefds, void *ws_
 	int         highfd = 0;
 	fd_set      readfds, writefds, exceptfds;
 	fd_set     *p_read, *p_write, *p_except;
+	int         readfd[FD_SETSIZE], writefd[FD_SETSIZE], exceptfd[FD_SETSIZE];
 
-	p_read = fd_set_import(&readfds, pwsi, ws_readfds, &highfd, b32);
-	p_write = fd_set_import(&writefds, pwsi, ws_writefds, &highfd, b32);
-	p_except = fd_set_import(&exceptfds, pwsi, ws_exceptfds, &highfd, b32);
+	p_read = fd_set_import(&readfds, pwsi, ws_readfds, &highfd, readfd, b32);
+	p_write = fd_set_import(&writefds, pwsi, ws_writefds, &highfd, writefd, b32);
+	p_except = fd_set_import(&exceptfds, pwsi, ws_exceptfds, &highfd, exceptfd, b32);
 
 	if( (highfd = select(highfd + 1, p_read, p_write, p_except, timeout)) > 0 )
 	{
-	    fd_set_export(pwsi, &readfds, p_except, ws_readfds, b32);
-	    fd_set_export(pwsi, &writefds, p_except, ws_writefds, b32);
+	    fd_set_export(pwsi, &readfds, p_except, ws_readfds, readfd, b32);
+	    fd_set_export(pwsi, &writefds, p_except, ws_writefds, writefd, b32);
 
 	    if (p_except && ws_exceptfds)
 	    {
@@ -1489,15 +1418,16 @@ static INT __ws_select( BOOL b32, void *ws_readfds, void *ws_writefds, void *ws_
 
 		for (i = j = 0; i < count; i++)
 		{
-		    ws_socket *pws = (b32) ? (ws_socket *)WS_HANDLE2PTR(wsfds32->fd_array[i])
-					   : (ws_socket *)WS_HANDLE2PTR(wsfds16->fd_array[i]);
-		    if( _check_ws(pwsi, pws) && FD_ISSET(pws->fd, &exceptfds) )
+		    int fd = exceptfd[i];
+		    if( fd >= 0 && FD_ISSET(fd, &exceptfds) )
 		    {
 			if( b32 )
 				wsfds32->fd_array[j++] = wsfds32->fd_array[i];
 			else
 				wsfds16->fd_array[j++] = wsfds16->fd_array[i];
 		    }
+		    if( fd >= 0 ) close(fd);
+		    exceptfd[i] = -1;
 		}
 		if( b32 )
 		    wsfds32->fd_count = j;
@@ -1508,6 +1438,9 @@ static INT __ws_select( BOOL b32, void *ws_readfds, void *ws_writefds, void *ws_
 	    }
 	    return highfd; 
 	}
+	fd_set_unimport(ws_readfds, readfd, b32);
+	fd_set_unimport(ws_writefds, writefd, b32);
+	fd_set_unimport(ws_exceptfds, exceptfd, b32);
 	if( ws_readfds ) ((ws_fd_set32*)ws_readfds)->fd_count = 0;
 	if( ws_writefds ) ((ws_fd_set32*)ws_writefds)->fd_count = 0;
 	if( ws_exceptfds ) ((ws_fd_set32*)ws_exceptfds)->fd_count = 0;
@@ -1539,23 +1472,33 @@ INT WINAPI WINSOCK_select(INT nfds, ws_fd_set32 *ws_readfds,
  */
 INT WINAPI WINSOCK_send(SOCKET s, char *buf, INT len, INT flags)
 {
-    ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
-    LPWSINFO      pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO      pwsi = WINSOCK_GetIData();
 
     TRACE("(%08x): socket %04x, ptr %08x, length %d, flags %d\n", 
 			   (unsigned)pwsi, s, (unsigned) buf, len, flags);
-    if( _check_ws(pwsi, pws) )
+    if( _check_ws(pwsi, s) )
     {
+	int	fd = _get_sock_fd(s);
 	int	length;
 
-	if ((length = send(pws->fd, buf, len, flags)) < 0 ) 
+	if (_is_blocking(s))
+	{
+	    /* block here */
+	    /* FIXME: exceptfds */
+	    do_block(fd, 2);
+	}
+	if ((length = send(fd, buf, len, flags)) < 0 ) 
 	{
 	    SetLastError(wsaErrno());
-	    if( GetLastError() == WSAEWOULDBLOCK && 
-		pws->psop && pws->flags & WS_FD_WRITE )
-		EVENT_AddIO( pws->fd, EVENT_IO_WRITE );	/* reenabler */
+	    if( GetLastError() == WSAEWOULDBLOCK )
+		_enable_event(s, FD_WRITE, 0, 0);
 	}
-	else return (INT16)length;
+	else
+	{
+	    close(fd);
+	    return (INT16)length;
+	}
+	close(fd);
     }
     else SetLastError(WSAENOTSOCK);
     return SOCKET_ERROR;
@@ -1575,16 +1518,16 @@ INT16 WINAPI WINSOCK_send16(SOCKET16 s, char *buf, INT16 len, INT16 flags)
 INT WINAPI WINSOCK_sendto(SOCKET s, char *buf, INT len, INT flags,
                               struct sockaddr *to, INT tolen)
 {
-    ws_socket*               pws  = (ws_socket*)WS_HANDLE2PTR(s);
-    LPWSINFO                 pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO                 pwsi = WINSOCK_GetIData();
 #ifdef HAVE_IPX
     struct ws_sockaddr_ipx*  to2 = (struct ws_sockaddr_ipx *)to;
 #endif
 
     TRACE("(%08x): socket %04x, ptr %08x, length %d, flags %d\n",
                           (unsigned)pwsi, s, (unsigned) buf, len, flags);
-    if( _check_ws(pwsi, pws) )
+    if( _check_ws(pwsi, s) )
     {
+	int	fd = _get_sock_fd(s);
 	INT	length;
 
 	if (to && ((struct ws_sockaddr_ipx *)to)->sipx_family == WS_AF_PUP)
@@ -1603,12 +1546,17 @@ INT WINAPI WINSOCK_sendto(SOCKET s, char *buf, INT len, INT flags,
 	    tolen = sizeof(struct sockaddr_ipx);
 	}
 #endif
-	if ((length = sendto(pws->fd, buf, len, flags, to, tolen)) < 0 )
+	if (_is_blocking(s))
+	{
+	    /* block here */
+	    /* FIXME: exceptfds */
+	    do_block(fd, 2);
+	}
+	if ((length = sendto(fd, buf, len, flags, to, tolen)) < 0 )
 	{
 	    SetLastError(wsaErrno());
-	    if( GetLastError() == WSAEWOULDBLOCK &&
-		pws->psop && pws->flags & WS_FD_WRITE )
-		EVENT_AddIO( pws->fd, EVENT_IO_WRITE ); /* reenabler */
+	    if( GetLastError() == WSAEWOULDBLOCK )
+		_enable_event(s, FD_WRITE, 0, 0);
 	} 
 	else {
 #ifdef HAVE_IPX
@@ -1616,8 +1564,10 @@ INT WINAPI WINSOCK_sendto(SOCKET s, char *buf, INT len, INT flags,
 		free(to);
 	    }
 #endif
-	  return length;
+	    close(fd);
+	    return length;
 	}
+	close(fd);
     }
     else SetLastError(WSAENOTSOCK);
 #ifdef HAVE_IPX
@@ -1643,14 +1593,14 @@ INT16 WINAPI WINSOCK_sendto16(SOCKET16 s, char *buf, INT16 len, INT16 flags,
 INT WINAPI WINSOCK_setsockopt(SOCKET16 s, INT level, INT optname, 
                                   char *optval, INT optlen)
 {
-    ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
-    LPWSINFO      pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO      pwsi = WINSOCK_GetIData();
 
     TRACE("(%08x): socket %04x, lev %d, opt %d, ptr %08x, len %d\n",
 			  (unsigned)pwsi, s, level, optname, (int) optval, optlen);
-    if( _check_ws(pwsi, pws) )
+    if( _check_ws(pwsi, s) )
     {
 	struct	linger linger;
+	int fd = _get_sock_fd(s);
 
 	convert_sockopt(&level, &optname);
 	if (optname == SO_LINGER && optval) {
@@ -1662,8 +1612,13 @@ INT WINAPI WINSOCK_setsockopt(SOCKET16 s, INT level, INT optname,
 		optval = (char*)&linger;
 		optlen = sizeof(struct linger);
 	}
-	if (setsockopt(pws->fd, level, optname, optval, optlen) == 0) return 0;
+	if (setsockopt(fd, level, optname, optval, optlen) == 0)
+	{
+	    close(fd);
+	    return 0;
+	}
 	SetLastError(wsaErrno());
+	close(fd);
     }
     else SetLastError(WSAENOTSOCK);
     return SOCKET_ERROR;
@@ -1685,29 +1640,24 @@ INT16 WINAPI WINSOCK_setsockopt16(SOCKET16 s, INT16 level, INT16 optname,
  */
 INT WINAPI WINSOCK_shutdown(SOCKET s, INT how)
 {
-    ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
-    LPWSINFO      pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO      pwsi = WINSOCK_GetIData();
 
     TRACE("(%08x): socket %04x, how %i\n",
 			    (unsigned)pwsi, s, how );
-    if( _check_ws(pwsi, pws) )
+    if( _check_ws(pwsi, s) )
     {
-	if( pws->psop )
+	int fd = _get_sock_fd(s);
 	    switch( how )
 	    {
 		case 0: /* drop receives */
-			if( pws->flags & (WS_FD_READ | WS_FD_CLOSE) )
-			    EVENT_DeleteIO( pws->fd, EVENT_IO_READ );
-			pws->flags &= ~(WS_FD_READ | WS_FD_CLOSE);
+			_enable_event(s, 0, 0, WS_FD_READ);
 #ifdef SHUT_RD
 			how = SHUT_RD;
 #endif
 			break;
 
 		case 1: /* drop sends */
-			if( pws->flags & WS_FD_WRITE )
-			    EVENT_DeleteIO( pws->fd, EVENT_IO_WRITE );
-			pws->flags &= ~WS_FD_WRITE;
+			_enable_event(s, 0, 0, WS_FD_WRITE);
 #ifdef SHUT_WR
 			how = SHUT_WR;
 #endif
@@ -1722,16 +1672,17 @@ INT WINAPI WINSOCK_shutdown(SOCKET s, INT how)
 			break;
 	    }
 
-	if (shutdown(pws->fd, how) == 0) 
+	if (shutdown(fd, how) == 0) 
 	{
 	    if( how > 1 ) 
 	    {
-		pws->flags &= ~(WS_FD_CONNECTED | WS_FD_LISTENING);
-		pws->flags |= WS_FD_INACTIVE;
+		_enable_event(s, 0, 0, WS_FD_CONNECTED|WS_FD_LISTENING);
 	    }
+	    close(fd);
 	    return 0;
 	}
 	SetLastError(wsaErrno());
+	close(fd);
     } 
     else SetLastError(WSAENOTSOCK);
     return SOCKET_ERROR;
@@ -1751,15 +1702,14 @@ INT16 WINAPI WINSOCK_shutdown16(SOCKET16 s, INT16 how)
  */
 SOCKET WINAPI WINSOCK_socket(INT af, INT type, INT protocol)
 {
-  LPWSINFO      pwsi = wsi_find(GetCurrentTask());
+  LPWSINFO      pwsi = WINSOCK_GetIData();
+  struct create_socket_request *req = get_req_buffer();
 
   TRACE("(%08x): af=%d type=%d protocol=%d\n", 
 			  (unsigned)pwsi, af, type, protocol);
 
   if( pwsi )
   {
-    int		sock;
-
     /* check the socket family */
     switch(af) 
     {
@@ -1796,31 +1746,27 @@ SOCKET WINAPI WINSOCK_socket(INT af, INT type, INT protocol)
           default: SetLastError(WSAEPROTOTYPE); return INVALID_SOCKET;
         }
 
-    if ((sock = socket(af, type, protocol)) >= 0)
+    req->family   = af;
+    req->type     = type;
+    req->protocol = protocol;
+    req->access   = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
+    req->inherit  = TRUE;
+    server_call( REQ_CREATE_SOCKET );
+    if ( req->handle >= 0)
     {
-        ws_socket*      pnew = wsi_alloc_socket(pwsi, sock);
+	TRACE("\tcreated %04x\n", req->handle);
 
-	TRACE("\tcreated %i (handle %04x)\n", sock, (UINT16)WS_PTR2HANDLE(pnew));
-
-        if( pnew ) 
-	{
-	    pnew->flags |= WS_FD_INACTIVE;
-	    return (SOCKET16)WS_PTR2HANDLE(pnew);
-	}
-	
-        close(sock);
-        SetLastError(WSAENOBUFS);
-        return INVALID_SOCKET;
+	return req->handle;
     }
 
-    if (errno == EPERM) /* raw socket denied */
+    if (GetLastError() == WSAEACCES) /* raw socket denied */
     {
 	if (type == SOCK_RAW)
 	    MESSAGE("WARNING: Trying to create a socket of type SOCK_RAW, will fail unless running as root\n");
         else
             MESSAGE("WS_SOCKET: not enough privileges to create socket, try running as root\n");
         SetLastError(WSAESOCKTNOSUPPORT);
-    } else SetLastError(wsaErrno());
+    }
   }
  
   WARN("\t\tfailed!\n");
@@ -1851,7 +1797,7 @@ static char*	NULL_STRING = "NULL";
  */
 static struct WIN_hostent* __ws_gethostbyaddr(const char *addr, int len, int type, int dup_flag)
 {
-    LPWSINFO      	pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO      	pwsi = WINSOCK_GetIData();
 
     if( pwsi )
     {
@@ -1889,7 +1835,7 @@ struct WIN_hostent* WINAPI WINSOCK_gethostbyaddr(const char *addr, INT len,
  */
 static struct WIN_hostent * __ws_gethostbyname(const char *name, int dup_flag)
 {
-    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO              pwsi = WINSOCK_GetIData();
 
     if( pwsi )
     {
@@ -1923,7 +1869,7 @@ struct WIN_hostent* WINAPI WINSOCK_gethostbyname(const char* name)
  */
 static struct WIN_protoent* __ws_getprotobyname(const char *name, int dup_flag)
 {
-    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO              pwsi = WINSOCK_GetIData();
 
     if( pwsi )
     {
@@ -1957,7 +1903,7 @@ struct WIN_protoent* WINAPI WINSOCK_getprotobyname(const char* name)
  */
 static struct WIN_protoent* __ws_getprotobynumber(int number, int dup_flag)
 {
-    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO              pwsi = WINSOCK_GetIData();
 
     if( pwsi )
     {
@@ -1991,7 +1937,7 @@ struct WIN_protoent* WINAPI WINSOCK_getprotobynumber(INT number)
  */
 struct WIN_servent* __ws_getservbyname(const char *name, const char *proto, int dup_flag)
 {
-    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO              pwsi = WINSOCK_GetIData();
 
     if( pwsi )
     {
@@ -2031,7 +1977,7 @@ struct WIN_servent* WINAPI WINSOCK_getservbyname(const char *name, const char *p
  */
 static struct WIN_servent* __ws_getservbyport(int port, const char* proto, int dup_flag)
 {
-    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO              pwsi = WINSOCK_GetIData();
 
     if( pwsi )
     {
@@ -2071,7 +2017,7 @@ struct WIN_servent* WINAPI WINSOCK_getservbyport(INT port, const char *proto)
  */
 INT WINAPI WINSOCK_gethostname(char *name, INT namelen)
 {
-    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO              pwsi = WINSOCK_GetIData();
 
     TRACE("(%08x): name %s, len %d\n",
                           (unsigned)pwsi, (name)?name:NULL_STRING, namelen);
@@ -2095,267 +2041,123 @@ INT16 WINAPI WINSOCK_gethostname16(char *name, INT16 namelen)
 /* ------------------------------------- Windows sockets extensions -- *
  *								       *
  * ------------------------------------------------------------------- */
+
+int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lpEvent)
+{
+    LPWSINFO      pwsi = WINSOCK_GetIData();
+    struct get_socket_event_request *req = get_req_buffer();
+
+    TRACE("(%08x): %08x, hEvent %08x, lpEvent %08x\n",
+			  (unsigned)pwsi, s, hEvent, (unsigned)lpEvent );
+    if( _check_ws(pwsi, s) )
+    {
+	req->handle  = s;
+	req->service = TRUE;
+	req->s_event = 0;
+	server_call( REQ_GET_SOCKET_EVENT );
+	lpEvent->lNetworkEvents = req->pmask;
+	memcpy(lpEvent->iErrorCode, req->errors, sizeof(lpEvent->iErrorCode));
+	if (hEvent)
+	    ResetEvent(hEvent);
+	return 0;
+    }
+    else SetLastError(WSAEINVAL);
+    return SOCKET_ERROR; 
+}
+
+int WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEvent, LONG lEvent)
+{
+    LPWSINFO      pwsi = WINSOCK_GetIData();
+    struct set_socket_event_request *req = get_req_buffer();
+
+    TRACE("(%08x): %08x, hEvent %08x, event %08x\n",
+			  (unsigned)pwsi, s, hEvent, (unsigned)lEvent );
+    if( _check_ws(pwsi, s) )
+    {
+	req->handle = s;
+	req->mask   = lEvent;
+	req->event  = hEvent;
+	server_call( REQ_SET_SOCKET_EVENT );
+	return 0;
+    }
+    else SetLastError(WSAEINVAL);
+    return SOCKET_ERROR; 
+}
+
 /***********************************************************************
  *      WSAAsyncSelect()		(WINSOCK.101)(WSOCK32.101)
  */
 
-static ws_select_op* __ws_select_list = NULL;
-
-BOOL WINSOCK_HandleIO( int* max_fd, int num_pending, 
-			 fd_set pending_set[3], fd_set event_set[3] )
+VOID CALLBACK WINSOCK_DoAsyncEvent( ULONG_PTR ptr )
 {
-    /* This function is called by the event dispatcher
-     * with the pending_set[] containing the result of select() and
-     * the event_set[] containing all fd that are being watched */
+    /* FIXME: accepted socket uses same event object as listening socket by default
+     * (at least before a new WSAAsyncSelect is issued), must handle it somehow */
+    ws_select_info *info = (ws_select_info*)ptr;
+    struct get_socket_event_request *req = get_req_buffer();
+    unsigned int i, pmask;
 
-    ws_select_op*	psop = __ws_select_list;
-    BOOL		bPost = FALSE;
-    DWORD		dwEvent, dwErrBytes;
-    int			num_posted;
-
-    TRACE("%i pending descriptors\n", num_pending );
-
-    for( num_posted = dwEvent = 0 ; psop; psop = psop->next )
+    TRACE("socket %08x, event %08x\n", info->sock, info->event);
+    SetLastError(0);
+    req->handle  = info->sock;
+    req->service = TRUE;
+    req->s_event = info->event; /* <== avoid race conditions */
+    server_call( REQ_GET_SOCKET_EVENT );
+    if ( GetLastError() == WSAEINVAL )
     {
-	unsigned	flags = psop->pws->flags;
-	int		fd = psop->pws->fd;
-	int		r, w, e;
-
-	w = 0;
-	if( (r = FD_ISSET( fd, &pending_set[EVENT_IO_READ] )) ||
-	    (w = FD_ISSET( fd, &pending_set[EVENT_IO_WRITE] )) ||
-	    (e = FD_ISSET( fd, &pending_set[EVENT_IO_EXCEPT] )) )
-	{
-	    /* This code removes WS_FD flags on one-shot events (WS_FD_CLOSE, 
-	     * WS_FD_CONNECT), otherwise it clears descriptors in the io_set.
-	     * Reenabling calls turn them back on.
-	     */
-
-	    TRACE("\tchecking psop = 0x%08x\n", (unsigned) psop );
-
-	    num_pending--;
-
-	    /* Now figure out what kind of event we've got. The worst problem
-	     * we have to contend with is that some out of control applications 
-	     * really want to use mutually exclusive AsyncSelect() flags all at
-	     * the same time.
-	     */
-
-	    if((flags & WS_FD_ACCEPT) && (flags & WS_FD_LISTENING))
-	    {
-		/* WS_FD_ACCEPT is valid only if the socket is in the
-		 * listening state */
-
-		FD_CLR( fd, &event_set[EVENT_IO_WRITE] );
-		if( r )
-		{
-		    FD_CLR( fd, &event_set[EVENT_IO_READ] ); /* reenabled by the next accept() */
-		    dwEvent = WSAMAKESELECTREPLY( WS_FD_ACCEPT, 0 );
-		    bPost = TRUE;
-		} 
-		else continue;
-	    }
-	    else if( flags & WS_FD_CONNECT )
-	    {
-		/* connecting socket */
-
-		if( w || (w = FD_ISSET( fd, &pending_set[EVENT_IO_WRITE] )) )
-		{
-		    /* ready to write means that socket is connected 
-		     *
-		     * FIXME: Netscape calls AsyncSelect( s, ... WS_FD_CONNECT .. )
-		     * right after s = socket() and somehow "s" becomes writeable 
-		     * before it goes through connect()!?!?
-		     */
-
-		    psop->pws->flags |= WS_FD_CONNECTED;
-		    psop->pws->flags &= ~(WS_FD_CONNECT | WS_FD_INACTIVE);
-		    dwEvent = WSAMAKESELECTREPLY( WS_FD_CONNECT, 0 );
-
-		    if( flags & (WS_FD_READ | WS_FD_CLOSE))
-			FD_SET( fd, &event_set[EVENT_IO_READ] );
-		    else 
-			FD_CLR( fd, &event_set[EVENT_IO_READ] );
-		    if( flags & WS_FD_WRITE ) 
-			FD_SET( fd, &event_set[EVENT_IO_WRITE] );
-		    else 
-			FD_CLR( fd, &event_set[EVENT_IO_WRITE] );
-		    bPost = TRUE;
-		}
-		else if( r )
-		{
-		    /* failure - do read() to get correct errno */
-
-		    if( read( fd, &dwErrBytes, sizeof(dwErrBytes) ) == -1 )
-		    {
-			dwEvent = WSAMAKESELECTREPLY( WS_FD_CONNECT, wsaErrno() );
-			bPost = TRUE;
-		    }
-		}
-		/* otherwise bPost stays FALSE, should probably clear event_set  */
-	    }
-	    else 
-	    {
-		/* connected socket, no WS_FD_OOB code for now. */
-
-		if( flags & WS_FD_WRITE &&
-		   (w || (w = FD_ISSET( fd, &pending_set[EVENT_IO_WRITE] ))) )
-		{
-		    /* this will be reenabled when send() or sendto() fail with
-		     * WSAEWOULDBLOCK */
-
-		    if( PostMessageA( psop->hWnd, psop->uMsg, (WPARAM)WS_PTR2HANDLE(psop->pws), 
-			              (LPARAM)WSAMAKESELECTREPLY( WS_FD_WRITE, 0 ) ) )
-		    {
-			TRACE("\t    hwnd %04x - %04x, %08x\n",
-                                psop->hWnd, psop->uMsg, (unsigned)MAKELONG(WS_FD_WRITE, 0) );
-			FD_CLR( fd, &event_set[EVENT_IO_WRITE] );
-			num_posted++;
-		    }
-		}
-
-		if( r && (flags & (WS_FD_READ | WS_FD_CLOSE)) )
-		{
-		    int val = (flags & WS_FD_RAW);
-
-		     /* WS_FD_RAW is set by the WSAAsyncSelect() init */
-
-		    bPost = TRUE;
-		    if( !val && ioctl( fd, FIONREAD, (char*)&dwErrBytes) == -1 )
-		    {
-			/* weirdness */
-
-			dwEvent = WSAMAKESELECTREPLY( WS_FD_READ, wsaErrno() );
-		    }
-		    else if( val || dwErrBytes )
-		    {
-			/* got pending data, will be reenabled by recv() or recvfrom() */
-
-			FD_CLR( fd, &event_set[EVENT_IO_READ] );
-			dwEvent = WSAMAKESELECTREPLY( WS_FD_READ, 0 );
-		    }
-		    else
-		    {
-			/* 0 bytes to read - connection reset by peer? */
-
-			do
-			    val = read( fd, (char*)&dwErrBytes, sizeof(dwErrBytes));
-			while( errno == EINTR );
-			if( errno != EWOULDBLOCK )
-			{
-			    switch( val )
-			    {
-				case  0: errno = ENETDOWN;	/* soft reset, fall through */
-				case -1: 			/* hard reset */
-					 dwEvent = WSAMAKESELECTREPLY( WS_FD_CLOSE, wsaErrno() );
-					 break;
-
-				default: bPost = FALSE;
-					 continue;		/* FIXME: this is real bad */
-			    }
-			}
-			else { bPost = FALSE; continue; }	/* more weirdness */
-
-			/* this is it, this socket is closed */
-
-			psop->pws->flags &= ~(WS_FD_READ | WS_FD_CLOSE | WS_FD_WRITE);
-			FD_CLR( fd, &event_set[EVENT_IO_READ] );
-			FD_CLR( fd, &event_set[EVENT_IO_WRITE] );
-
-			if( *max_fd == (fd + 1) ) (*max_fd)--;
-		    }
-		}
-	    }
-
-	    if( bPost )
-	    {
-		TRACE("\t    hwnd %04x - %04x, %08x\n", 
-				psop->hWnd, psop->uMsg, (unsigned)dwEvent );
-		PostMessageA( psop->hWnd, psop->uMsg, 
-			      (WPARAM)WS_PTR2HANDLE(psop->pws), (LPARAM)dwEvent );
-		bPost = FALSE;
-		num_posted++;
-	    }
-	}
-	if( num_pending <= 0 ) break;
+	/* orphaned event (socket closed or something) */
+	TRACE("orphaned event, self-destructing\n");
+	SERVICE_Delete( info->service );
+	WS_FREE(info);
+	return;
     }
-
-    TRACE("\tdone, %i posted events\n", num_posted );
-    return ( num_posted ) ? TRUE : FALSE;
+    /* dispatch network events */
+    pmask = req->pmask;
+    for (i=0; i<FD_MAX_EVENTS; i++)
+	if (pmask & (1<<i)) {
+	    TRACE("post: event bit %d, error %d\n", i, req->errors[i]);
+	    PostMessageA(info->hWnd, info->uMsg, info->sock,
+			 WSAMAKESELECTREPLY(1<<i, req->errors[i]));
+	}
 }
 
 INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent)
 {
-    ws_socket*    pws  = (ws_socket*)WS_HANDLE2PTR(s);
-    LPWSINFO      pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO      pwsi = WINSOCK_GetIData();
 
     TRACE("(%08x): %04x, hWnd %04x, uMsg %08x, event %08x\n",
 			  (unsigned)pwsi, (SOCKET16)s, (HWND16)hWnd, uMsg, (unsigned)lEvent );
-    if( _check_ws(pwsi, pws) )
+    if( _check_ws(pwsi, s) )
     {
-	ws_select_op* psop;
-
-	if( (psop = pws->psop) )
-	{
-	    /* delete previous control struct */
-
-	    if( psop == __ws_select_list )
-		__ws_select_list = psop->next;
-	    else
-		psop->prev->next = psop->next; 
-	    if( psop->next ) psop->next->prev = psop->prev;
-
-	    if( pws->flags & (WS_FD_ACCEPT | WS_FD_CONNECT | WS_FD_READ | WS_FD_CLOSE) )
-		EVENT_DeleteIO( pws->fd, EVENT_IO_READ );
-	    if( pws->flags & (WS_FD_CONNECT | WS_FD_WRITE) )
-		EVENT_DeleteIO( pws->fd, EVENT_IO_WRITE );
-
-	    TRACE("\tremoving psop = 0x%08x\n", (unsigned) psop );
-
-	    WS_FREE( pws->psop );
-	    pws->flags &= ~(WS_FD_RAW | WS_FD_ACCEPT | WS_FD_CONNECT | 
-			    WS_FD_READ | WS_FD_WRITE | WS_FD_CLOSE);
-	    pws->psop = NULL;
-	}
-
 	if( lEvent )
 	{
-	    psop = (ws_select_op*)WS_ALLOC(sizeof(ws_select_op));
-	    if( psop )
+	    ws_select_info *info = (ws_select_info*)WS_ALLOC(sizeof(ws_select_info));
+	    if( info )
 	    {
-		int sock_type, bytes = sizeof(int);
-
-		WINSOCK_unblock_io( pws->fd, TRUE );
-
-		psop->prev = NULL;
-		psop->next = __ws_select_list;
-		if( __ws_select_list )
-		    __ws_select_list->prev = psop;
-		__ws_select_list = psop;
+		HANDLE hObj = CreateEventA( NULL, FALSE, FALSE, NULL );
+		INT err;
 		
-		psop->pws = pws;
-		psop->hWnd = hWnd;
-		psop->uMsg = uMsg;
+		info->sock  = s;
+		info->event = hObj;
+		info->hWnd  = hWnd;
+		info->uMsg  = uMsg;
+		info->service = SERVICE_AddObject( hObj, WINSOCK_DoAsyncEvent, (ULONG_PTR)info );
 
-		pws->psop = psop;
-		pws->flags |= (0x0000FFFF & lEvent);
-		getsockopt(pws->fd, SOL_SOCKET, SO_TYPE, (void *) &sock_type, &bytes);
-		if( sock_type == SOCK_RAW ) pws->flags |= WS_FD_RAW;
-
-		if( lEvent & (WS_FD_ACCEPT | WS_FD_CONNECT | WS_FD_READ | WS_FD_CLOSE) )
-		    EVENT_AddIO( pws->fd, EVENT_IO_READ );
-		if( lEvent & (WS_FD_CONNECT | WS_FD_WRITE) )
-		    EVENT_AddIO( pws->fd, EVENT_IO_WRITE );
-
-		/* TODO: handle WS_FD_ACCEPT right away if the socket is readable */
-
-		TRACE("\tcreating psop = 0x%08x\n", (unsigned)psop );
+		err = WSAEventSelect( s, hObj, lEvent | WS_FD_SERVEVENT );
+		if (err) {
+		    SERVICE_Delete( info->service );
+		    WS_FREE(info);
+		    return err;
+		}
 
 		return 0; /* success */
 	    }
 	    else SetLastError(WSAENOBUFS);
 	} 
-	else return 0;
+	else
+	{
+	    WSAEventSelect(s, 0, 0);
+	    return 0;
+	}
     } 
     else SetLastError(WSAEINVAL);
     return SOCKET_ERROR; 
@@ -2417,7 +2219,7 @@ BOOL WINAPI WSAIsBlocking(void)
  */
 INT WINAPI WSACancelBlockingCall(void)
 {
-  LPWSINFO              pwsi = wsi_find(GetCurrentTask());
+  LPWSINFO              pwsi = WINSOCK_GetIData();
 
   TRACE("(%08x)\n", (unsigned)pwsi);
 
@@ -2432,7 +2234,7 @@ INT WINAPI WSACancelBlockingCall(void)
 FARPROC16 WINAPI WSASetBlockingHook16(FARPROC16 lpBlockFunc)
 {
   FARPROC16		prev;
-  LPWSINFO              pwsi = wsi_find(GetCurrentTask());
+  LPWSINFO              pwsi = WINSOCK_GetIData();
 
   TRACE("(%08x): hook %08x\n", 
 	       (unsigned)pwsi, (unsigned) lpBlockFunc);
@@ -2453,7 +2255,7 @@ FARPROC16 WINAPI WSASetBlockingHook16(FARPROC16 lpBlockFunc)
 FARPROC WINAPI WSASetBlockingHook(FARPROC lpBlockFunc)
 {
   FARPROC             prev;
-  LPWSINFO              pwsi = wsi_find(GetCurrentTask());
+  LPWSINFO              pwsi = WINSOCK_GetIData();
 
   TRACE("(%08x): hook %08x\n",
 	       (unsigned)pwsi, (unsigned) lpBlockFunc);
@@ -2472,7 +2274,7 @@ FARPROC WINAPI WSASetBlockingHook(FARPROC lpBlockFunc)
  */
 INT16 WINAPI WSAUnhookBlockingHook16(void)
 {
-    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO              pwsi = WINSOCK_GetIData();
 
     TRACE("(%08x)\n", (unsigned)pwsi);
     if( pwsi ) return (INT16)(pwsi->blocking_hook = 0);
@@ -2485,7 +2287,7 @@ INT16 WINAPI WSAUnhookBlockingHook16(void)
  */
 INT WINAPI WSAUnhookBlockingHook(void)
 {
-    LPWSINFO              pwsi = wsi_find(GetCurrentTask());
+    LPWSINFO              pwsi = WINSOCK_GetIData();
 
     TRACE("(%08x)\n", (unsigned)pwsi);
     if( pwsi )
@@ -2743,6 +2545,7 @@ UINT16 wsaErrno(void)
     {
 	case EINTR:		return WSAEINTR;
 	case EBADF:		return WSAEBADF;
+	case EPERM:
 	case EACCES:		return WSAEACCES;
 	case EFAULT:		return WSAEFAULT;
 	case EINVAL:		return WSAEINVAL;

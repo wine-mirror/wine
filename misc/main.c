@@ -770,7 +770,6 @@ static void called_at_exit(void)
     if (USER_Driver)
 	USER_Driver->pFinalize();
 
-    WINSOCK_Shutdown();
     CONSOLE_Close();
 }
 

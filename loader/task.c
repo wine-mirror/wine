@@ -451,11 +451,6 @@ void TASK_KillTask( HTASK16 hTask )
 
     TRACE_(task)("Killing task %04x\n", hTask );
 
-    /* Delete active sockets */
-
-    if( pTask->pwsi )
-	WINSOCK_DeleteTaskWSI( pTask, pTask->pwsi );
-
 #ifdef MZ_SUPPORTED
 {
     /* Kill DOS VM task */

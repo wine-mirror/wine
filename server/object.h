@@ -91,7 +91,7 @@ extern void dump_objects(void);
 
 #define READ_EVENT    1
 #define WRITE_EVENT   2
-#define EXCEPT_EVENT  3
+#define EXCEPT_EVENT  4
 
 struct select_user
 {

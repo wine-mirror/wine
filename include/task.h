@@ -93,8 +93,7 @@ typedef struct _TDB
     DWORD     compat_flags WINE_PACKED;   /* 4e Compatibility flags */
     BYTE      unused4[2];                 /* 52 */
     struct _TEB *teb;                     /* 54 Pointer to thread database */
-    struct _WSINFO *pwsi;		  /* 58 Socket control struct */
-    BYTE      unused5[4];                 /* 5B */
+    BYTE      unused5[8];                 /* 58 */
     HANDLE16  hPDB;                       /* 60 Selector of PDB (i.e. PSP) */
     SEGPTR    dta WINE_PACKED;            /* 62 Current DTA */
     BYTE      curdrive;                   /* 66 Current drive */

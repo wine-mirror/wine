@@ -89,9 +89,6 @@ BOOL MAIN_MainInit( int *argc, char *argv[] )
     /* Initialize event handling */
     if (!EVENT_Init()) return FALSE;
 
-    /* Initialise WINSOCK handling */
-    if (!WINSOCK_Init()) return FALSE;
-
     /* Initialize communications */
     COMM_Init();
 
