@@ -299,6 +299,10 @@ typedef struct
 /* either top or bottom                                            */
 #define REBAR_DIVIDER  2
 
+/* minimium vertical height of a normal bar                        */
+/*   or minimum width of a CCS_VERT bar - from experiment on Win2k */
+#define REBAR_MINSIZE  23
+
 /* This is the increment that is used over the band height         */
 #define REBARSPACE(a)     ((a->fStyle & RBBS_CHILDEDGE) ? 2*REBAR_DIVIDER : 0)
 
@@ -1917,6 +1921,8 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	y = clientcy;
     }
     if (infoPtr->dwStyle & CCS_VERT) {
+        if( x < REBAR_MINSIZE )
+            x = REBAR_MINSIZE;
 	infoPtr->calcSize.cx = x;
 	infoPtr->calcSize.cy = clientcy;
 	TRACE("vert, notify=%d, x=%d, origheight=%d\n",
@@ -1924,6 +1930,8 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	if (notify && (x != origheight)) infoPtr->fStatus |= NTF_HGHTCHG;
     }
     else {
+        if( y < REBAR_MINSIZE )
+            y = REBAR_MINSIZE;
 	infoPtr->calcSize.cx = clientcx;
 	infoPtr->calcSize.cy = y;
 	TRACE("horz, notify=%d, y=%d, origheight=%d\n",
