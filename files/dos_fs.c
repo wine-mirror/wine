@@ -111,6 +111,19 @@ static const DOS_DEVICE DOSFS_Devices[] =
     { {'E','M','M','X','X','X','X','0',0}, 0x0000 }
 };
 
+static const WCHAR devW[] = {'\\','D','e','v','i','c','e','\\',0};
+static const WCHAR dosW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\',0};
+
+static const WCHAR auxW[] = {'A','U','X',0};
+static const WCHAR comW[] = {'C','O','M',0};
+static const WCHAR lptW[] = {'L','P','T',0};
+static const WCHAR nulW[] = {'N','U','L',0};
+
+static const WCHAR nullW[] = {'N','u','l','l',0};
+static const WCHAR parW[] = {'P','a','r','a','l','l','e','l',0};
+static const WCHAR serW[] = {'S','e','r','i','a','l',0};
+static const WCHAR oneW[] = {'1',0};
+
 /*
  * Directory info for DOSFS_ReadDir
  * contains the names of *all* the files in the directory
@@ -2354,38 +2367,22 @@ BOOL WINAPI FileTimeToDosDateTime( const FILETIME *ft, LPWORD fatdate,
  */
 DWORD WINAPI QueryDosDeviceA(LPCSTR devname,LPSTR target,DWORD bufsize)
 {
-    LPSTR s;
-    char  buffer[200];
+    DWORD ret = 0, retW;
+    LPWSTR targetW = (LPWSTR)HeapAlloc(GetProcessHeap(),0,
+                                     bufsize * sizeof(WCHAR));
+    UNICODE_STRING devnameW;
 
-    TRACE("(%s,...)\n", devname ? devname : "<null>");
-    if (!devname) {
-	/* return known MSDOS devices */
-        static const char devices[24] = "CON\0COM1\0COM2\0LPT1\0NUL\0\0";
-        memcpy( target, devices, min(bufsize,sizeof(devices)) );
-        return min(bufsize,sizeof(devices));
-    }
-    /* In theory all that are possible and have been defined.
-     * Now just those below, since mirc uses it to check for special files.
-     *
-     * (It is more complex, and supports netmounted stuff, and \\.\ stuff,
-     *  but currently we just ignore that.)
-     */
-#define CHECK(x) (strstr(devname,#x)==devname)
-    if (CHECK(con) || CHECK(com) || CHECK(lpt) || CHECK(nul)) {
-	strcpy(buffer,"\\DEV\\");
-	strcat(buffer,devname);
-	if ((s=strchr(buffer,':'))) *s='\0';
-	lstrcpynA(target,buffer,bufsize);
-	return strlen(buffer)+1;
-    } else {
-	if (strchr(devname,':') || devname[0]=='\\') {
-	    /* This might be a DOS device we do not handle yet ... */
-	    FIXME("(%s) not detected as DOS device!\n",devname);
-	}
-	SetLastError(ERROR_DEV_NOT_EXIST);
-	return 0;
-    }
+    if(devname) RtlCreateUnicodeStringFromAsciiz(&devnameW, devname);
+    else devnameW.Buffer = NULL;
 
+    retW = QueryDosDeviceW(devnameW.Buffer, targetW, bufsize);
+
+    ret = WideCharToMultiByte(CP_ACP, 0, targetW, retW, target,
+                                        bufsize, NULL, NULL);
+
+    RtlFreeUnicodeString(&devnameW);
+    if (targetW) HeapFree(GetProcessHeap(),0,targetW);
+    return ret;
 }
 
 
@@ -2393,16 +2390,95 @@ DWORD WINAPI QueryDosDeviceA(LPCSTR devname,LPSTR target,DWORD bufsize)
  *           QueryDosDeviceW   (KERNEL32.@)
  *
  * returns array of strings terminated by \0, terminated by \0
+ *
+ * FIXME
+ *      - Win9x returns for all calls ERROR_INVALID_PARAMETER 
+ *	- the returned devices for devname == NULL is far from complete
+ *      - its not checked that the returned device exist
  */
 DWORD WINAPI QueryDosDeviceW(LPCWSTR devname,LPWSTR target,DWORD bufsize)
 {
-    LPSTR devnameA = devname?HEAP_strdupWtoA(GetProcessHeap(),0,devname):NULL;
-    LPSTR targetA = (LPSTR)HeapAlloc(GetProcessHeap(),0,bufsize);
-    DWORD ret = QueryDosDeviceA(devnameA,targetA,bufsize);
+    const WCHAR *pDev, *pName, *pNum = NULL;
+    int    numsiz=0;
+    DWORD  ret;
 
-    ret = MultiByteToWideChar( CP_ACP, 0, targetA, ret, target, bufsize );
-    if (devnameA) HeapFree(GetProcessHeap(),0,devnameA);
-    if (targetA) HeapFree(GetProcessHeap(),0,targetA);
+    TRACE("(%s,...)\n", debugstr_w(devname));
+    if (!devname) {
+	/* return known MSDOS devices */
+        DWORD ret = 0;
+	int i;
+        static const WCHAR devices[][5] = {{'A','U','X',0},
+                                           {'C','O','M','1',0},
+                                           {'C','O','M','2',0},
+                                           {'L','P','T','1',0},
+                                           {'N','U','L',0,}};
+	for(i=0; (i< (sizeof(devices)/sizeof(devices[0]))); i++) {
+	    DWORD len = strlenW(devices[i]);
+	    if(target && (bufsize >= ret + len + 2)) {
+		lstrcpyW(target+ret, devices[i]);
+                ret += len + 1;
+	    } else {
+                /* in this case WinXP returns 0 */
+                FIXME("function return is wrong for WinXP!\n");
+		SetLastError(ERROR_INSUFFICIENT_BUFFER);
+		break;
+	    }
+	}
+        /* append drives here */
+	if(target && bufsize > 0) target[ret++] = 0;
+	FIXME("Returned list is not complete\n");
+        return ret;
+    }
+    /* In theory all that are possible and have been defined.
+     * Now just those below, since mirc uses it to check for special files.
+     *
+     * (It is more complex, and supports netmounted stuff, and \\.\ stuff,
+     *  but currently we just ignore that.)
+     */
+    if (!strcmpiW(devname, auxW)) {
+        pDev   = dosW;
+        pName  = comW;
+        numsiz = 1;
+        pNum   = oneW;
+    } else if (!strcmpiW(devname, nulW)) {
+        pDev  = devW;
+        pName = nullW;
+    } else if (!strncmpiW(devname, comW, strlenW(comW))) {
+        pDev  = devW;
+        pName = serW;
+        pNum  = devname + strlenW(comW);
+        for(numsiz=0; isdigitW(*(pNum+numsiz)); numsiz++);
+        if(*(pNum + numsiz)) {
+	    SetLastError(ERROR_FILE_NOT_FOUND);
+	    return 0;
+	}
+    } else if (!strncmpiW(devname, lptW, strlenW(lptW))) {
+        pDev  = devW;
+        pName = parW;
+        pNum  = devname + strlenW(lptW);
+        for(numsiz=0; isdigitW(*(pNum+numsiz)); numsiz++);
+        if(*(pNum + numsiz)) {
+	    SetLastError(ERROR_FILE_NOT_FOUND);
+	return 0;
+    }
+    } else {
+	/* This might be a DOS device we do not handle yet ... */
+	FIXME("(%s) not detected as DOS device!\n",debugstr_w(devname));
+
+        /* Win9x set the error ERROR_INVALID_PARAMETER */
+	SetLastError(ERROR_FILE_NOT_FOUND);
+	return 0;
+}
+    FIXME("device %s may not exist on this computer\n", debugstr_w(devname));
+
+    ret = strlenW(pDev) + strlenW(pName) + numsiz + 2;
+    if (ret > bufsize) ret = 0;
+    if (target && ret) {
+        lstrcpyW(target,pDev);
+        lstrcatW(target,pName);
+        if (pNum) lstrcatW(target,pNum);
+        target[ret-1] = 0;
+    }
     return ret;
 }
 
