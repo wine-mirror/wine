@@ -5,7 +5,7 @@
  * Copyright 1997 Bertho A. Stultiens
  */
 
-#include "wine/winuser16.h"
+#include "winuser.h"
 #include "debug.h"
 
 DEFAULT_DEBUG_CHANNEL(graphics)

@@ -239,7 +239,7 @@ typedef struct
 } MINMAXINFO16;
 
   /* WM_WINDOWPOSCHANGING/CHANGED struct */
-typedef struct
+typedef struct tagWINDOWPOS16
 {
     HWND16  hwnd;
     HWND16  hwndInsertAfter;

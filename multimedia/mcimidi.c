@@ -21,8 +21,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include "callback.h"
-#include "wine/winuser16.h"
+#include "winuser.h"
 #include "ldt.h"
 #include "multimedia.h"
 #include "user.h"

@@ -10,7 +10,6 @@
 #include <string.h>
 #include "winbase.h"
 #include "wine/winbase16.h"
-#include "wine/winuser16.h"
 #include "win.h"
 #include "message.h"
 #include "commdlg.h"

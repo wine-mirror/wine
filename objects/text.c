@@ -6,9 +6,8 @@
  */
 
 #include <string.h>
-#include "wingdi.h"
+#include "winbase.h"
 #include "winuser.h"
-#include "wine/winuser16.h"
 #include "dc.h"
 #include "gdi.h"
 #include "heap.h"

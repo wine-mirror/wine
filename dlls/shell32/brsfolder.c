@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "wine/winuser16.h"
 #include "winerror.h"
 #include "heap.h"
 #include "resource.h"

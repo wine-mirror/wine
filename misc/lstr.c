@@ -23,10 +23,9 @@
 
 
 #include "winbase.h"
-#include "winnls.h"
-#include "wine/winbase16.h"
 #include "winuser.h"
-#include "wine/winuser16.h"
+#include "wine/winbase16.h"
+#include "winnls.h"
 #include "task.h"
 #include "heap.h"
 #include "ldt.h"

@@ -7,7 +7,6 @@
 
 #include <string.h>
 #include "wine/winbase16.h"
-#include "wine/winuser16.h"
 #include "hook.h"
 #include "callback.h"
 #include "task.h"

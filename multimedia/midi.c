@@ -22,7 +22,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include "wine/winuser16.h"
+#include "winuser.h"
 #include "multimedia.h"
 #include "driver.h"
 #include "xmalloc.h"

@@ -11,7 +11,7 @@
 
 #include "winreg.h"
 #include "winver.h"
-#include "wine/winuser16.h"
+#include "wine/winestring.h"
 #include "winerror.h"
 #include "heap.h"
 #include "ver.h"

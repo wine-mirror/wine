@@ -6,13 +6,12 @@
  * Copyright 1999 Eric POUECH
  */
 
-#include "wine/winuser16.h"
+#include "winuser.h"
 #include "multimedia.h"
 #include "user.h"
 #include "driver.h"
 #include "xmalloc.h"
 #include "debug.h"
-#include "callback.h"
 #include "digitalv.h"
 #include "options.h"
 

@@ -17,8 +17,6 @@
 #include <ctype.h>
 
 #include "winuser.h"
-#include "wine/winbase16.h"
-#include "wine/winuser16.h"
 #include "instance.h"
 #include "ldt.h"
 #include "stackframe.h"

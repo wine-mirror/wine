@@ -11,7 +11,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include "windef.h"
-#include "wine/winuser16.h"
+#include "winuser.h"
 #include "driver.h"
 #include "mmsystem.h"
 #include "multimedia.h"
