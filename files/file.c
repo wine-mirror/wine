@@ -735,14 +735,16 @@ static void FILE_FillInfo( struct stat *st, BY_HANDLE_FILE_INFORMATION *info )
 BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
 {
     struct stat st;
+    int is_symlink;
+    LPCSTR p;
 
     if (lstat( unixName, &st ) == -1)
     {
         FILE_SetDosError();
         return FALSE;
     }
-    if (!S_ISLNK(st.st_mode)) FILE_FillInfo( &st, info );
-    else
+    is_symlink = S_ISLNK(st.st_mode);
+    if (is_symlink)
     {
         /* do a "real" stat to find out
 	   about the type of the symlink destination */
@@ -751,9 +753,26 @@ BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
             FILE_SetDosError();
             return FALSE;
         }
-        FILE_FillInfo( &st, info );
-        info->dwFileAttributes |= FILE_ATTRIBUTE_SYMLINK;
     }
+    
+    /* fill in the information we gathered so far */
+    FILE_FillInfo( &st, info );
+    if (is_symlink) info->dwFileAttributes |= FILE_ATTRIBUTE_SYMLINK;
+    
+    /* and now see if this is a hidden file, based on the name */
+    p = strrchr( unixName, '/');
+    p = p ? p + 1 : unixName;
+    if (*p == '.' && *(p+1)  && (*(p+1) != '.' || *(p+2)))
+    {
+	static const WCHAR wineW[] = {'w','i','n','e',0};
+	static const WCHAR ShowDotFilesW[] = {'S','h','o','w','D','o','t','F','i','l','e','s',0};
+	static int show_dot_files = -1;
+	if (show_dot_files == -1)
+	    show_dot_files = PROFILE_GetWineIniBool(wineW, ShowDotFilesW, 0);
+	if (!show_dot_files)
+	    info->dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;
+    }
+    
     return TRUE;
 }
 

@@ -67,6 +67,7 @@ WINE REGISTRY Version 2
 ; Enabling this may crash some programs that do recursive lookups of a whole
 ; subdir tree in case of a symlink pointing back to itself.
 ;"ShowDirSymlinks" = "1"
+;"ShowDotFiles" = "1"
 "ShellLinker" = "wineshelllink"
 
 # <wineconf>

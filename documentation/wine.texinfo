@@ -800,8 +800,10 @@ are a logical @emph{or} of one or more of the following constants:
 The file is a read-only file. (Wine value: 0x0001).
 @end defvr
 @defvr_cw32 FILE_ATTRIBUTE_HIDDEN
-The file is a hidden file. Files in Wine do not have this attribute. (Wine value:
-0x0002).
+The file is a hidden file. Wine can set this attribute for files starting
+with a dot (normally considered hidden in a Unix environment). This behaviour
+is controlled by the @code{ShowDotFiles} configuration setting.  
+(Wine value: 0x0002).
 @end defvr
 @defvr_cw32 FILE_ATTRIBUTE_SYSTEM
 The file belongs to the operating system. Files in Wine do not have this

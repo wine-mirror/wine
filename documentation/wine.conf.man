@@ -153,6 +153,15 @@ Tells Wine which graphics driver to use. Normally you'd want to use
 x11drv (for X11). In case you want to run programs as text console/TTY only
 without having Wine rely on X11 support, then use ttydrv.
 .PP
+.I format: """ShowDotFiles""=""<0|1>"""
+.br
+default: "0"
+.br
+Under Unix, files starting with a dot, are considered hidden,
+and should not be shown in directory listing (unless explicitly asked for),
+just like DOS-style hidden files. If you want them treated as regular
+files, set this value to 1.
+.PP
 .B [Version]
 .br
 .I format: """Windows""=""<version string>"""
