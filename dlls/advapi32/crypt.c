@@ -1552,14 +1552,6 @@ BOOL WINAPI CryptImportKey (HCRYPTPROV hProv, BYTE *pbData, DWORD dwDataLen,
 }
 
 /******************************************************************************
- * CryptSignHashA
- *
- * Note: Since the sDesciption (string) is supposed to be NULL and
- *	is only retained for compatibility no string conversions are required
- *	and only one implementation is required for both ANSI and Unicode.
- *	We still need to export both:
- *
- * CryptSignHashA (ADVAPI32.@)
  * CryptSignHashW (ADVAPI32.@)
  *
  * Signs data.
@@ -1567,7 +1559,7 @@ BOOL WINAPI CryptImportKey (HCRYPTPROV hProv, BYTE *pbData, DWORD dwDataLen,
  * PARAMS
  *  hHash        [I] Handle of the hash object to be signed.
  *  dwKeySpec    [I] Private key to use.
- *  sDescription [I] Must be NULL.
+ *  sDescription [I] Should be NULL.
  *  dwFlags      [I] CRYPT_NOHASHOID/X931_FORMAT.
  *  pbSignature  [O] Buffer of the signature data.
  *  pdwSigLen    [I/O] Size of the pbSignature buffer.
@@ -1575,16 +1567,20 @@ BOOL WINAPI CryptImportKey (HCRYPTPROV hProv, BYTE *pbData, DWORD dwDataLen,
  * RETURNS
  *  Success: TRUE
  *  Failure: FALSE
+ *
+ * NOTES
+ *  Because of security flaws sDescription should not be used and should thus be
+ *  NULL. It is supported only for compatibility with Microsoft's Cryptographic
+ *  Providers.
  */
-BOOL WINAPI CryptSignHashA (HCRYPTHASH hHash, DWORD dwKeySpec, LPCSTR sDescription,
+BOOL WINAPI CryptSignHashW (HCRYPTHASH hHash, DWORD dwKeySpec, LPCWSTR sDescription,
 		DWORD dwFlags, BYTE *pbSignature, DWORD *pdwSigLen)
 {
 	PCRYPTHASH hash = (PCRYPTHASH)hHash;
 	PCRYPTPROV prov;
 
-	TRACE("(0x%lx, %ld, %08ld, %p, %p)\n", hHash, dwKeySpec, dwFlags, pbSignature, pdwSigLen);
-	if (sDescription)
-		WARN("The sDescription parameter is not supported (and no longer used).  Ignoring.\n");
+	TRACE("(0x%lx, %ld, %s, %08ld, %p, %p)\n", 
+		hHash, dwKeySpec, debugstr_w(sDescription), dwFlags, pbSignature, pdwSigLen);
 
 	if (!hash)
 		CRYPT_ReturnLastError(ERROR_INVALID_HANDLE);
@@ -1592,8 +1588,29 @@ BOOL WINAPI CryptSignHashA (HCRYPTHASH hHash, DWORD dwKeySpec, LPCSTR sDescripti
 		CRYPT_ReturnLastError(ERROR_INVALID_PARAMETER);
 
 	prov = hash->pProvider;
-	return prov->pFuncs->pCPSignHash(prov->hPrivate, hash->hPrivate, dwKeySpec, NULL,
+	return prov->pFuncs->pCPSignHash(prov->hPrivate, hash->hPrivate, dwKeySpec, sDescription,
 		dwFlags, pbSignature, pdwSigLen);
+}
+
+/******************************************************************************
+ * CryptSignHashA (ADVAPI32.@)
+ *
+ * ASCII version of CryptSignHashW
+ */
+BOOL WINAPI CryptSignHashA (HCRYPTHASH hHash, DWORD dwKeySpec, LPCSTR sDescription,
+		DWORD dwFlags, BYTE *pbSignature, DWORD *pdwSigLen)
+{
+	LPWSTR wsDescription;
+	BOOL result;
+
+	TRACE("(0x%lx, %ld, %s, %08ld, %p, %p)\n", 
+		hHash, dwKeySpec, debugstr_a(sDescription), dwFlags, pbSignature, pdwSigLen);
+
+	CRYPT_ANSIToUnicode(sDescription, &wsDescription, -1);
+	result = CryptSignHashW(hHash, dwKeySpec, wsDescription, dwFlags, pbSignature, pdwSigLen);
+	if (wsDescription) CRYPT_Free(wsDescription);
+
+	return result;
 }
 
 /******************************************************************************
@@ -1825,14 +1842,6 @@ BOOL WINAPI CryptSetProvParam (HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData, DW
 }
 
 /******************************************************************************
- * CryptVerifySignatureA
- *
- * Note: Since the sDesciption (string) is supposed to be NULL and
- *	is only retained for compatibility no string conversions are required
- *	and only one implementation is required for both ANSI and Unicode.
- *	We still need to export both:
- *
- * CryptVerifySignatureA (ADVAPI32.@)
  * CryptVerifySignatureW (ADVAPI32.@)
  *
  * Verifies the signature of a hash object.
@@ -1842,24 +1851,27 @@ BOOL WINAPI CryptSetProvParam (HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData, DW
  *  pbSignature  [I] Signature data to verify.
  *  dwSigLen     [I] Size of pbSignature.
  *  hPubKey      [I] Handle to the public key to authenticate signature.
- *  sDescription [I] Must be set to NULL.
+ *  sDescription [I] Should be NULL.
  *  dwFlags      [I] See MSDN doc.
  *
  * RETURNS
  *  Success: TRUE
  *  Failure: FALSE
+ * 
+ * NOTES
+ *  Because of security flaws sDescription should not be used and should thus be
+ *  NULL. It is supported only for compatibility with Microsoft's Cryptographic
+ *  Providers.
  */
-BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dwSigLen,
-		HCRYPTKEY hPubKey, LPCSTR sDescription, DWORD dwFlags)
+BOOL WINAPI CryptVerifySignatureW (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dwSigLen,
+		HCRYPTKEY hPubKey, LPCWSTR sDescription, DWORD dwFlags)
 {
 	PCRYPTHASH hash = (PCRYPTHASH)hHash;
 	PCRYPTKEY key = (PCRYPTKEY)hPubKey;
 	PCRYPTPROV prov;
 
-	TRACE("(0x%lx, %p, %ld, 0x%lx, %08ld)\n", hHash, pbSignature,
-			dwSigLen, hPubKey, dwFlags);
-	if (sDescription)
-		WARN("The sDescription parameter is not supported (and no longer used).  Ignoring.\n");
+	TRACE("(0x%lx, %p, %ld, 0x%lx, %s, %08ld)\n", hHash, pbSignature,
+			dwSigLen, hPubKey, debugstr_w(sDescription), dwFlags);
 
 	if (!hash || !key)
 		CRYPT_ReturnLastError(ERROR_INVALID_HANDLE);
@@ -1868,9 +1880,29 @@ BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dw
 
 	prov = hash->pProvider;
 	return prov->pFuncs->pCPVerifySignature(prov->hPrivate, hash->hPrivate, pbSignature, dwSigLen,
-		key->hPrivate, NULL, dwFlags);
+		key->hPrivate, sDescription, dwFlags);
 }
 
+/******************************************************************************
+ * CryptVerifySignatureA (ADVAPI32.@)
+ *
+ * ASCII version of CryptVerifySignatureW
+ */
+BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dwSigLen,
+		HCRYPTKEY hPubKey, LPCSTR sDescription, DWORD dwFlags)
+{
+	LPWSTR wsDescription;
+	BOOL result;
+
+	TRACE("(0x%lx, %p, %ld, 0x%lx, %s, %08ld)\n", hHash, pbSignature,
+			dwSigLen, hPubKey, debugstr_a(sDescription), dwFlags);
+
+	CRYPT_ANSIToUnicode(sDescription, &wsDescription, -1);
+	result = CryptVerifySignatureW(hHash, pbSignature, dwSigLen, hPubKey, wsDescription, dwFlags);
+	if (wsDescription) CRYPT_Free(wsDescription);
+
+	return result;
+}
 
 /*
    These functions have nearly identical prototypes to CryptProtectMemory and CryptUnprotectMemory,

@@ -81,7 +81,7 @@
 @ stdcall CryptImportKey(long ptr long long long ptr)
 @ stdcall CryptReleaseContext(long long)
 @ stdcall CryptSignHashA(long long ptr long ptr ptr)
-@ stdcall CryptSignHashW(long long ptr long ptr ptr) CryptSignHashA
+@ stdcall CryptSignHashW(long long ptr long ptr ptr)
 @ stdcall CryptSetHashParam(long long ptr long)
 @ stdcall CryptSetKeyParam(long long ptr long)
 @ stdcall CryptSetProviderA(str long)
@@ -90,7 +90,7 @@
 @ stdcall CryptSetProviderExW(wstr long ptr long)
 @ stdcall CryptSetProvParam(long long ptr long)
 @ stdcall CryptVerifySignatureA(long ptr long long ptr long)
-@ stdcall CryptVerifySignatureW(long ptr long long ptr long) CryptVerifySignatureA
+@ stdcall CryptVerifySignatureW(long ptr long long ptr long)
 @ stdcall DecryptFileA(str long)
 @ stdcall DecryptFileW(wstr long)
 @ stdcall DeleteAce(ptr long)
