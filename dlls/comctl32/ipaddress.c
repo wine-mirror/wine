@@ -565,12 +565,12 @@ void IPADDRESS_Register (void)
     WNDCLASSW wndClass;
 
     ZeroMemory (&wndClass, sizeof(WNDCLASSW));
-    wndClass.style         = CS_GLOBALCLASS;
-    wndClass.lpfnWndProc   = (WNDPROC)IPADDRESS_WindowProc;
+    wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;
+    wndClass.lpfnWndProc   = IPADDRESS_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(IPADDRESS_INFO *);
     wndClass.hCursor       = LoadCursorW (0, (LPWSTR)IDC_IBEAM);
-    wndClass.hbrBackground = GetStockObject(WHITE_BRUSH);
+    wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
     wndClass.lpszClassName = WC_IPADDRESSW;
 
     RegisterClassW (&wndClass);

@@ -1270,11 +1270,11 @@ STATUS_Register (void)
 
     ZeroMemory (&wndClass, sizeof(WNDCLASSW));
     wndClass.style         = CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW;
-    wndClass.lpfnWndProc   = (WNDPROC)StatusWindowProc;
+    wndClass.lpfnWndProc   = StatusWindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(STATUSWINDOWINFO *);
     wndClass.hCursor       = LoadCursorW (0, (LPWSTR)IDC_ARROW);
-    wndClass.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
+    wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
     wndClass.lpszClassName = STATUSCLASSNAMEW;
 
     RegisterClassW (&wndClass);

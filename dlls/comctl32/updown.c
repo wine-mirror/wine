@@ -958,11 +958,11 @@ void UPDOWN_Register(void)
 
     ZeroMemory( &wndClass, sizeof( WNDCLASSW ) );
     wndClass.style         = CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW;
-    wndClass.lpfnWndProc   = (WNDPROC)UpDownWindowProc;
+    wndClass.lpfnWndProc   = UpDownWindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(UPDOWN_INFO*);
     wndClass.hCursor       = LoadCursorW( 0, (LPWSTR)IDC_ARROW );
-    wndClass.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
+    wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
     wndClass.lpszClassName = UPDOWN_CLASSW;
 
     RegisterClassW( &wndClass );
