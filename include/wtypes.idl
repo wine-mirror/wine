@@ -59,6 +59,8 @@ typedef [string] const WCHAR *LPCWSTR;
 
 typedef boolean BOOLEAN;
 
+typedef DWORD COLORREF;
+
 typedef void *HANDLE;
 #define DECLARE_HANDLE(name) typedef void *name
 #define DECLARE_WIREM_HANDLE(name) typedef [wire_marshal(wire##name)] void*name

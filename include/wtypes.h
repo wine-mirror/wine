@@ -52,6 +52,8 @@ typedef const WCHAR *LPCWSTR;
 
 typedef boolean BOOLEAN;
 
+typedef DWORD COLORREF;
+
 typedef void *HANDLE;
 
 typedef void *HACCEL;
