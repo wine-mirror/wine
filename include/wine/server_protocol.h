@@ -2237,6 +2237,7 @@ struct get_message_reply
 struct reply_message_request
 {
     struct request_header __header;
+    int             type;
     unsigned int    result;
     int             remove;
     /* VARARG(data,bytes); */
@@ -3555,6 +3556,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 100
+#define SERVER_PROTOCOL_VERSION 101
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

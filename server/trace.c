@@ -1835,6 +1835,7 @@ static void dump_get_message_reply( const struct get_message_reply *req )
 
 static void dump_reply_message_request( const struct reply_message_request *req )
 {
+    fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " result=%08x,", req->result );
     fprintf( stderr, " remove=%d,", req->remove );
     fprintf( stderr, " data=" );

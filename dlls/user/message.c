@@ -1026,6 +1026,7 @@ static void reply_message( struct received_message_info *info, LRESULT result, B
 
     SERVER_START_REQ( reply_message )
     {
+        req->type   = info->type;
         req->result = result;
         req->remove = remove;
         for (i = 0; i < data.count; i++) wine_server_add_data( req, data.data[i], data.size[i] );
@@ -1407,6 +1408,7 @@ static BOOL process_hardware_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd,
      */
     SERVER_START_REQ( reply_message )
     {
+        req->type   = MSG_HARDWARE;
         req->result = 0;
         req->remove = remove || !ret;
         wine_server_call( req );

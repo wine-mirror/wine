@@ -1380,15 +1380,15 @@ DECL_HANDLER(reply_message)
         set_error( STATUS_ACCESS_DENIED );
         return;
     }
-    if (current->queue->recv_result)
-        reply_message( current->queue, req->result, 0, req->remove,
-                       get_req_data(), get_req_data_size() );
-    else
+    if (req->type == MSG_HARDWARE)
     {
         struct thread_input *input = current->queue->input;
         if (input->msg_thread == current) release_hardware_message( current, req->remove );
         else set_error( STATUS_ACCESS_DENIED );
     }
+    else if (current->queue->recv_result)
+        reply_message( current->queue, req->result, 0, req->remove,
+                       get_req_data(), get_req_data_size() );
 }
 
 
