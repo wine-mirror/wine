@@ -445,7 +445,7 @@ static void handle_wm_protocols_message( HWND hwnd, XClientMessageEvent *event )
          * and we are in managed mode. This is to disallow applications from
          * being closed by the window manager while in a modal state.
          */
-        if (IsWindowEnabled(hwnd)) SendMessageW( hwnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
+        if (IsWindowEnabled(hwnd)) PostMessageW( hwnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
     }
     else if (protocol == x11drv_atom(WM_TAKE_FOCUS))
     {
