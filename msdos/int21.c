@@ -1092,7 +1092,10 @@ void WINAPI DOS3Call( CONTEXT *context )
 	AH_reg(context) = AL_reg(context);
     }
 
-    DOS_ERROR( 0, 0, 0, 0 );
+    if (AH_reg(context)>=0x2f) {
+        /* extended error is used by (at least) functions 0x2f to 0x62 */
+        DOS_ERROR( 0, 0, 0, 0 );
+    }
     RESET_CFLAG(context);  /* Not sure if this is a good idea */
 
     switch(AH_reg(context)) 
