@@ -127,7 +127,7 @@ BOOL WINAPI QueryPerformanceCounter(PLARGE_INTEGER counter)
 
     /* generic routine */
     gettimeofday( &tv, NULL );
-    counter->QuadPart = (LONGLONG)tv.tv_usec + (LONGLONG)tv.tv_sec * 1000000LL;
+    counter->QuadPart = (LONGLONG)tv.tv_usec + (LONGLONG)tv.tv_sec * 1000000;
     return TRUE;
 }
 

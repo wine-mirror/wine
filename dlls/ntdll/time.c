@@ -52,9 +52,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 #define MONSPERYEAR        12
 
 /* 1601 to 1970 is 369 years plus 89 leap days */
-#define SECS_1601_TO_1970  ((369 * 365 + 89) * 86400ULL)
+#define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)86400)
 /* 1601 to 1980 is 379 years plus 91 leap days */
-#define SECS_1601_to_1980  ((379 * 365 + 91) * 86400ULL)
+#define SECS_1601_to_1980  ((379 * 365 + 91) * (ULONGLONG)86400)
 
 
 static const int YearLengths[2] = {DAYSPERNORMALYEAR, DAYSPERLEAPYEAR};
@@ -88,7 +88,7 @@ VOID WINAPI RtlTimeToTimeFields(
 	int LeapSecondCorrections, SecondsInDay, CurYear;
 	int LeapYear, CurMonth, GMTOffset;
 	long int Days;
-	long long int Time = *(long long int *)&liTime;
+	LONGLONG Time = *(LONGLONG *)&liTime;
 
 	/* Extract millisecond from time and convert time into seconds */
 	TimeFields->Milliseconds = (CSHORT) ((Time % TICKSPERSEC) / TICKSPERMSEC);
@@ -155,7 +155,7 @@ BOOLEAN WINAPI RtlTimeFieldsToTime(
 	PLARGE_INTEGER Time)
 {
 	int CurYear, CurMonth;
-	long long int rcTime;
+	LONGLONG rcTime;
 	TIME_FIELDS TimeFields = *tfTimeFields;
 
 	rcTime = 0;
@@ -213,7 +213,7 @@ VOID WINAPI RtlSystemTimeToLocalTime(
 BOOLEAN WINAPI RtlTimeToSecondsSince1970( const FILETIME *time, LPDWORD res )
 {
     ULONGLONG tmp = ((ULONGLONG)time->dwHighDateTime << 32) | time->dwLowDateTime;
-    tmp = RtlLargeIntegerDivide( tmp, 10000000LL, NULL );
+    tmp = RtlLargeIntegerDivide( tmp, 10000000, NULL );
     tmp -= SECS_1601_TO_1970;
     if (tmp > 0xffffffff) return FALSE;
     *res = (DWORD)tmp;
@@ -226,7 +226,7 @@ BOOLEAN WINAPI RtlTimeToSecondsSince1970( const FILETIME *time, LPDWORD res )
 BOOLEAN WINAPI RtlTimeToSecondsSince1980( const FILETIME *time, LPDWORD res )
 {
     ULONGLONG tmp = ((ULONGLONG)time->dwHighDateTime << 32) | time->dwLowDateTime;
-    tmp = RtlLargeIntegerDivide( tmp, 10000000LL, NULL );
+    tmp = RtlLargeIntegerDivide( tmp, 10000000, NULL );
     tmp -= SECS_1601_to_1980;
     if (tmp > 0xffffffff) return FALSE;
     *res = (DWORD)tmp;
