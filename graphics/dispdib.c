@@ -28,12 +28,19 @@ static WORD DISPDIB_Begin(WORD wFlags)
         default:
             return DISPLAYDIB_NOTSUPPORTED;
     }
-    if (VGA_SetMode(Xres,Yres,Depth)) return DISPLAYDIB_NOTSUPPORTED;
+    /* more or less dummy calls to Death/Resurrection, for completeness */
+    /* FIXME: what arguments should they get? */
+    Death(0);
+    if (VGA_SetMode(Xres,Yres,Depth)) {
+         Resurrection(0,0,0,0,0,0,0);
+         return DISPLAYDIB_NOTSUPPORTED;
+    }
     return DISPLAYDIB_NOERROR;
 }
 
 static void DISPDIB_End(void)
 {
+    Resurrection(0,0,0,0,0,0,0); /* FIXME: arguments */
     VGA_Exit();
 }
 
