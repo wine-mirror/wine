@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/uio.h>
+#include "winsock2.h"
 #include "request.h"
 
 
@@ -25,6 +26,14 @@ static void dump_varargs_get_apcs( struct get_apcs_request *req )
     int i;
     for (i = 0; i < 2 * req->count; i++)
         fprintf( stderr, "%c%p", i ? ',' : '{', req->apcs[i] );
+    fprintf( stderr, "}" );
+}
+
+static void dump_varargs_get_socket_event( struct get_socket_event_request *req )
+{
+    int i;
+    for (i = 0; i < FD_MAX_EVENTS; i++)
+        fprintf( stderr, "%c%d", i ? ',' : '{', req->errors[i] );
     fprintf( stderr, "}" );
 }
 
@@ -474,6 +483,63 @@ static void dump_create_pipe_reply( struct create_pipe_request *req )
     fprintf( stderr, " handle_write=%d", req->handle_write );
 }
 
+static void dump_create_socket_request( struct create_socket_request *req )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " family=%d,", req->family );
+    fprintf( stderr, " type=%d,", req->type );
+    fprintf( stderr, " protocol=%d", req->protocol );
+}
+
+static void dump_create_socket_reply( struct create_socket_request *req )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+}
+
+static void dump_accept_socket_request( struct accept_socket_request *req )
+{
+    fprintf( stderr, " lhandle=%d,", req->lhandle );
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d", req->inherit );
+}
+
+static void dump_accept_socket_reply( struct accept_socket_request *req )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+}
+
+static void dump_set_socket_event_request( struct set_socket_event_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " mask=%08x,", req->mask );
+    fprintf( stderr, " event=%d", req->event );
+}
+
+static void dump_get_socket_event_request( struct get_socket_event_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " service=%d,", req->service );
+    fprintf( stderr, " s_event=%d", req->s_event );
+}
+
+static void dump_get_socket_event_reply( struct get_socket_event_request *req )
+{
+    fprintf( stderr, " mask=%08x,", req->mask );
+    fprintf( stderr, " pmask=%08x,", req->pmask );
+    fprintf( stderr, " state=%08x,", req->state );
+    fprintf( stderr, " errors=" );
+    dump_varargs_get_socket_event( req );
+}
+
+static void dump_enable_socket_event_request( struct enable_socket_event_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " mask=%08x,", req->mask );
+    fprintf( stderr, " sstate=%08x,", req->sstate );
+    fprintf( stderr, " cstate=%08x", req->cstate );
+}
+
 static void dump_alloc_console_request( struct alloc_console_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
@@ -736,6 +802,11 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_lock_file_request,
     (dump_func)dump_unlock_file_request,
     (dump_func)dump_create_pipe_request,
+    (dump_func)dump_create_socket_request,
+    (dump_func)dump_accept_socket_request,
+    (dump_func)dump_set_socket_event_request,
+    (dump_func)dump_get_socket_event_request,
+    (dump_func)dump_enable_socket_event_request,
     (dump_func)dump_alloc_console_request,
     (dump_func)dump_free_console_request,
     (dump_func)dump_open_console_request,
@@ -804,6 +875,11 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_create_pipe_reply,
+    (dump_func)dump_create_socket_reply,
+    (dump_func)dump_accept_socket_reply,
+    (dump_func)0,
+    (dump_func)dump_get_socket_event_reply,
+    (dump_func)0,
     (dump_func)dump_alloc_console_reply,
     (dump_func)0,
     (dump_func)dump_open_console_reply,
@@ -872,6 +948,11 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "lock_file",
     "unlock_file",
     "create_pipe",
+    "create_socket",
+    "accept_socket",
+    "set_socket_event",
+    "get_socket_event",
+    "enable_socket_event",
     "alloc_console",
     "free_console",
     "open_console",

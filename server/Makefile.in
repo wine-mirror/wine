@@ -22,6 +22,7 @@ C_SRCS = \
 	snapshot.c \
 	select.c \
 	semaphore.c \
+	sock.c \
 	socket.c \
 	thread.c \
 	trace.c

@@ -463,6 +463,60 @@ struct create_pipe_request
 };
 
 
+/* Create a socket */
+struct create_socket_request
+{
+    IN  unsigned int access;        /* wanted access rights */
+    IN  int          inherit;       /* inherit flag */
+    IN  int          family;        /* family, see socket manpage */
+    IN  int          type;          /* type, see socket manpage */
+    IN  int          protocol;      /* protocol, see socket manpage */
+    OUT int          handle;        /* handle to the new socket */
+};
+
+
+/* Accept a socket */
+struct accept_socket_request
+{
+    IN  int          lhandle;       /* handle to the listening socket */
+    IN  unsigned int access;        /* wanted access rights */
+    IN  int          inherit;       /* inherit flag */
+    OUT int          handle;        /* handle to the new socket */
+};
+
+
+/* Set socket event parameters */
+struct set_socket_event_request
+{
+    IN  int          handle;        /* handle to the socket */
+    IN  unsigned int mask;          /* event mask */
+    IN  int          event;         /* event object */
+};
+
+
+/* Get socket event parameters */
+struct get_socket_event_request
+{
+    IN  int          handle;        /* handle to the socket */
+    IN  int          service;       /* clear pending? */
+    IN  int          s_event;       /* "expected" event object */
+    OUT unsigned int mask;          /* event mask */
+    OUT unsigned int pmask;         /* pending events */
+    OUT unsigned int state;         /* status bits */
+    OUT int          errors[1];     /* event errors */
+};
+
+
+/* Reenable pending socket events */
+struct enable_socket_event_request
+{
+    IN  int          handle;        /* handle to the socket */
+    IN  unsigned int mask;          /* events to re-enable */
+    IN  unsigned int sstate;        /* status bits to set */
+    IN  unsigned int cstate;        /* status bits to clear */
+};
+
+
 /* Allocate a console for the current process */
 struct alloc_console_request
 {
@@ -794,6 +848,11 @@ enum request
     REQ_LOCK_FILE,
     REQ_UNLOCK_FILE,
     REQ_CREATE_PIPE,
+    REQ_CREATE_SOCKET,
+    REQ_ACCEPT_SOCKET,
+    REQ_SET_SOCKET_EVENT,
+    REQ_GET_SOCKET_EVENT,
+    REQ_ENABLE_SOCKET_EVENT,
     REQ_ALLOC_CONSOLE,
     REQ_FREE_CONSOLE,
     REQ_OPEN_CONSOLE,

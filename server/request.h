@@ -105,6 +105,11 @@ DECL_HANDLER(get_file_info);
 DECL_HANDLER(lock_file);
 DECL_HANDLER(unlock_file);
 DECL_HANDLER(create_pipe);
+DECL_HANDLER(create_socket);
+DECL_HANDLER(accept_socket);
+DECL_HANDLER(set_socket_event);
+DECL_HANDLER(get_socket_event);
+DECL_HANDLER(enable_socket_event);
 DECL_HANDLER(alloc_console);
 DECL_HANDLER(free_console);
 DECL_HANDLER(open_console);
@@ -177,6 +182,11 @@ static const struct handler {
     { (void(*)())req_lock_file, sizeof(struct lock_file_request) },
     { (void(*)())req_unlock_file, sizeof(struct unlock_file_request) },
     { (void(*)())req_create_pipe, sizeof(struct create_pipe_request) },
+    { (void(*)())req_create_socket, sizeof(struct create_socket_request) },
+    { (void(*)())req_accept_socket, sizeof(struct accept_socket_request) },
+    { (void(*)())req_set_socket_event, sizeof(struct set_socket_event_request) },
+    { (void(*)())req_get_socket_event, sizeof(struct get_socket_event_request) },
+    { (void(*)())req_enable_socket_event, sizeof(struct enable_socket_event_request) },
     { (void(*)())req_alloc_console, sizeof(struct alloc_console_request) },
     { (void(*)())req_free_console, sizeof(struct free_console_request) },
     { (void(*)())req_open_console, sizeof(struct open_console_request) },

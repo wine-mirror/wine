@@ -282,6 +282,7 @@ typedef struct WSAData {
 #define WS_FD_INACTIVE	   0x20000000
 #define WS_FD_CONNECTED	   0x40000000
 #define WS_FD_RAW	   0x80000000
+#define WS_FD_NONBLOCKING  0x01000000
 #define WS_FD_INTERNAL	   0xFFFF0000
 
 /*
