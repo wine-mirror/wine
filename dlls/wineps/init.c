@@ -51,9 +51,9 @@ static PSDRV_DEVMODEA DefaultDevmode =
    { /* u1 */
      { /* s1 */
 /* dmOrientation */	DMORIENT_PORTRAIT,
-/* dmPaperSize */	DMPAPER_A4,
-/* dmPaperLength */	2969,
-/* dmPaperWidth */      2101
+/* dmPaperSize */	DMPAPER_LETTER,
+/* dmPaperLength */	2794,
+/* dmPaperWidth */      2159
      }
    },
 /* dmScale */		100, /* ?? */
