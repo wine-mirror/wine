@@ -83,7 +83,7 @@ static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
 
 /* return the string text of a given variant type */
 char *vtstr(int x)
-{	
+{
 	switch(x) {
 	case 0:
 		return "VT_EMPTY";
@@ -184,7 +184,7 @@ char *vtstr(int x)
 
 	default:
 		return "defineme";
-	}  
+	}
 }
 
 static void test_VariantInit(void)
@@ -1770,7 +1770,7 @@ static void test_VarSub(void)
     HRESULT hr;
 
     CHECKPTR(VarSub);
-    
+
     V_VT(&va) = VT_DATE;
     V_DATE(&va) = 200000.0;
     V_VT(&vb) = VT_DATE;
@@ -1915,7 +1915,7 @@ static void test_VarMod(void)
   VARMOD(BOOL,R8,100,10,I4,0,S_OK);
   VARMOD(BOOL,I8,100,10,I8,0,S_OK);
   VARMOD(BOOL,DATE,100,10,I4,0,S_OK);
-  
+
   VARMOD(DATE,BOOL,100,10,I4,0,S_OK);
   VARMOD(DATE,I1,100,10,I4,0,S_OK);
   VARMOD(DATE,UI1,100,10,I4,0,S_OK);
@@ -1948,7 +1948,7 @@ static void test_VarMod(void)
       if(l == VT_DISPATCH) continue;
       if(r == VT_BSTR) continue;
       if(r == VT_DISPATCH) continue;
-      
+
       lFound = TRUE;
       lValid = TRUE;
       switch(l)
@@ -2096,10 +2096,10 @@ static void test_VarMod(void)
       {
 	hexpected = DISP_E_BADVARTYPE;
       }
-      
+
       V_VT(&v1) = l;
       V_VT(&v2) = r;
-      
+
       if(l == VT_CY)
 	V_CY(&v1).int64 = 1000000;
       else if(l == VT_R4)
@@ -2195,7 +2195,7 @@ static void test_VarMod(void)
   hres = pVarMod(&v1,&v2,&vDst);
   ok(hres == DISP_E_TYPEMISMATCH && V_VT(&vDst) == VT_EMPTY && V_I4(&vDst) == 1231,
      "VarMod: expected 0x%lx,%d,%d, got 0x%lX,%d,%ld\n", DISP_E_TYPEMISMATCH, VT_EMPTY, 1231, hres, V_VT(&vDst), V_I4(&vDst));
-  
+
 
   /* test some invalid types */
   /*TODO: not testing VT_DISPATCH */
@@ -2710,6 +2710,283 @@ static void test_VarRound(void)
 
 }
 
+static HRESULT (WINAPI *pVarXor)(LPVARIANT,LPVARIANT,LPVARIANT);
+
+#define VARXOR(vt1,val1,vt2,val2,rvt,rval) \
+        V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1; \
+        V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
+        memset(&result,0,sizeof(result)); hres = pVarXor(&left,&right,&result); \
+        ok(hres == S_OK && V_VT(&result) == VT_##rvt && V_##rvt(&result) == (rval), \
+        "VarXor(%d,%d): expected 0x0,%d,%d, got 0x%lX,%d,%d\n", VT_##vt1, VT_##vt2, \
+        VT_##rvt, (int)(rval), hres, V_VT(&result), (int)V_##rvt(&result))
+
+static void test_VarXor(void)
+{
+    VARIANT left, right, result;
+    VARTYPE i;
+    HRESULT hres;
+
+    CHECKPTR(VarXor);
+
+    /* Test all possible flag/vt combinations & the resulting vt type */
+    for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+    {
+        VARTYPE leftvt, rightvt, resvt;
+
+        for (leftvt = 0; leftvt <= VT_BSTR_BLOB; leftvt++)
+        {
+            for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
+            {
+                BOOL bFail = FALSE;
+
+                if (leftvt == VT_BSTR || rightvt == VT_BSTR ||
+                    leftvt == VT_DISPATCH || rightvt == VT_DISPATCH ||
+                    leftvt == VT_UNKNOWN || rightvt == VT_UNKNOWN)
+                    continue;
+
+                memset(&left, 0, sizeof(left));
+                memset(&right, 0, sizeof(right));
+                V_VT(&left) = leftvt | ExtraFlags[i];
+                V_VT(&right) = rightvt | ExtraFlags[i];
+                V_VT(&result) = VT_EMPTY;
+                resvt = VT_I4;
+
+                if (ExtraFlags[i] & VT_ARRAY || ExtraFlags[i] & VT_BYREF ||
+                    !IsValidVariantClearVT(leftvt, ExtraFlags[i]) ||
+                    !IsValidVariantClearVT(rightvt, ExtraFlags[i]) ||
+                    leftvt == VT_CLSID || rightvt == VT_CLSID ||
+                    leftvt == VT_RECORD || rightvt == VT_RECORD ||
+                    leftvt == VT_VARIANT || rightvt == VT_VARIANT ||
+                    leftvt == VT_ERROR || rightvt == VT_ERROR)
+                {
+                    bFail = TRUE;
+                }
+                if (leftvt == VT_EMPTY || rightvt == VT_EMPTY)
+                {
+                    if (leftvt == rightvt ||
+                        leftvt == VT_I2 || rightvt == VT_I2 ||
+                        leftvt == VT_UI1 || rightvt == VT_UI1 ||
+                        leftvt == VT_BOOL || rightvt == VT_BOOL)
+                        resvt = VT_I2;
+                    else if (leftvt == VT_NULL || rightvt == VT_NULL)
+                        resvt = VT_NULL;
+                    else if (leftvt == VT_I8 || rightvt == VT_I8)
+                        resvt = VT_I8;
+                }
+                else if (leftvt == VT_NULL || rightvt == VT_NULL)
+                {
+                    resvt = VT_NULL;
+                }
+                else if (leftvt == VT_UI1 || rightvt == VT_UI1)
+                {
+                    if (leftvt == rightvt)
+                        resvt = VT_UI1;
+                    else if (leftvt == rightvt ||
+                        leftvt == VT_I2 || rightvt == VT_I2 ||
+                        leftvt == VT_BOOL || rightvt == VT_BOOL)
+                    {
+                        resvt = VT_I2;
+                    }
+                    else if (leftvt == VT_I8 || rightvt == VT_I8)
+                        resvt = VT_I8;
+                }
+                else if (leftvt == VT_I2 || rightvt == VT_I2)
+                {
+                    if (leftvt == rightvt ||
+                        leftvt == VT_BOOL || rightvt == VT_BOOL)
+                        resvt = VT_I2;
+                    else if (leftvt == VT_I8 || rightvt == VT_I8)
+                        resvt = VT_I8;
+                }
+                else if (leftvt == VT_BOOL && rightvt == VT_BOOL)
+                {
+                    resvt = VT_BOOL;
+                }
+                else if (leftvt == VT_I8 || rightvt == VT_I8)
+                {
+                    if (leftvt == VT_INT || rightvt == VT_INT)
+                        bFail = TRUE;
+                    else
+                        resvt = VT_I8;
+                }
+                hres = pVarXor(&left, &right, &result);
+                if (bFail)
+                    ok(hres == DISP_E_TYPEMISMATCH || hres == DISP_E_BADVARTYPE,
+                       "VarXor: %d|0x%X, %d|0x%X: Expected failure, got 0x%lX vt %d\n",
+                       leftvt, ExtraFlags[i], rightvt, ExtraFlags[i], hres,
+                       V_VT(&result));
+                else
+                    ok(hres == S_OK && V_VT(&result) == resvt,
+                       "VarXor: %d|0x%X, %d|0x%X: expected S_OK, vt %d, got 0x%lX vt %d\n",
+                       leftvt, ExtraFlags[i], rightvt, ExtraFlags[i], resvt, hres,
+                       V_VT(&result));
+            }
+        }
+    }
+
+    /* Test returned values */
+    VARXOR(BOOL,VARIANT_TRUE,BOOL,VARIANT_TRUE,BOOL,VARIANT_FALSE);
+    VARXOR(BOOL,VARIANT_FALSE,BOOL,VARIANT_TRUE,BOOL,VARIANT_TRUE);
+    VARXOR(BOOL,TRUE,BOOL,TRUE,BOOL,VARIANT_FALSE);
+    VARXOR(BOOL,FALSE,BOOL,FALSE,BOOL,VARIANT_FALSE);
+    VARXOR(BOOL,TRUE,BOOL,FALSE,BOOL,1);
+    VARXOR(BOOL,FALSE,BOOL,TRUE,BOOL,1);
+    VARXOR(BOOL,6,BOOL,7,BOOL,1);
+    VARXOR(BOOL,6,BOOL,6,BOOL,VARIANT_FALSE);
+    VARXOR(BOOL,VARIANT_TRUE,I2,VARIANT_TRUE,I2,VARIANT_FALSE);
+    VARXOR(BOOL,VARIANT_TRUE,I2,VARIANT_FALSE,I2,VARIANT_TRUE);
+    VARXOR(BOOL,6,I2,7,I2,1);
+    VARXOR(UI1,1,UI1,1,UI1,0);
+    VARXOR(UI1,1,UI1,0,UI1,1);
+    VARXOR(UI1,0,UI1,1,UI1,1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARXOR(UI4,VARIANT_FALSE,I8,VARIANT_FALSE,I8,VARIANT_FALSE);
+        VARXOR(UI4,5,I8,19,I8,22);
+        VARXOR(UI4,VARIANT_FALSE,UI8,VARIANT_FALSE,I4,VARIANT_FALSE);
+    }
+
+}
+
+
+
+static HRESULT (WINAPI *pVarEqv)(LPVARIANT,LPVARIANT,LPVARIANT);
+
+#define VAREQV(vt1,val1,vt2,val2,rvt,rval) \
+        V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1; \
+        V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
+        memset(&result,0,sizeof(result)); hres = pVarEqv(&left,&right,&result); \
+        ok(hres == S_OK && V_VT(&result) == VT_##rvt && V_##rvt(&result) == (rval), \
+        "VarEqv(%d,%d): expected 0x0,%d,%d, got 0x%lX,%d,%d\n", VT_##vt1, VT_##vt2, \
+        VT_##rvt, (int)(rval), hres, V_VT(&result), (int)V_##rvt(&result))
+
+static void test_VarEqv(void)
+{
+    VARIANT left, right, result;
+    VARTYPE i;
+    HRESULT hres;
+
+    CHECKPTR(VarEqv);
+
+    /* Test all possible flag/vt combinations & the resulting vt type */
+    for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+    {
+        VARTYPE leftvt, rightvt, resvt;
+
+        for (leftvt = 0; leftvt <= VT_BSTR_BLOB; leftvt++)
+        {
+            for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
+            {
+                BOOL bFail = FALSE;
+
+                if (leftvt == VT_BSTR || rightvt == VT_BSTR ||
+                    leftvt == VT_DISPATCH || rightvt == VT_DISPATCH ||
+                    leftvt == VT_UNKNOWN || rightvt == VT_UNKNOWN)
+                    continue;
+
+                memset(&left, 0, sizeof(left));
+                memset(&right, 0, sizeof(right));
+                V_VT(&left) = leftvt | ExtraFlags[i];
+                V_VT(&right) = rightvt | ExtraFlags[i];
+                V_VT(&result) = VT_EMPTY;
+                resvt = VT_I4;
+
+                if (ExtraFlags[i] & VT_ARRAY || ExtraFlags[i] & VT_BYREF ||
+                    !IsValidVariantClearVT(leftvt, ExtraFlags[i]) ||
+                    !IsValidVariantClearVT(rightvt, ExtraFlags[i]) ||
+                    leftvt == VT_CLSID || rightvt == VT_CLSID ||
+                    leftvt == VT_RECORD || rightvt == VT_RECORD ||
+                    leftvt == VT_VARIANT || rightvt == VT_VARIANT ||
+                    leftvt == VT_ERROR || rightvt == VT_ERROR)
+                {
+                    bFail = TRUE;
+                }
+                if (leftvt == VT_EMPTY || rightvt == VT_EMPTY)
+                {
+                    if (leftvt == rightvt ||
+                        leftvt == VT_I2 || rightvt == VT_I2 ||
+                        leftvt == VT_UI1 || rightvt == VT_UI1 ||
+                        leftvt == VT_BOOL || rightvt == VT_BOOL)
+                        resvt = VT_I2;
+                    else if (leftvt == VT_NULL || rightvt == VT_NULL)
+                        resvt = VT_NULL;
+                    else if (leftvt == VT_I8 || rightvt == VT_I8)
+                        resvt = VT_I8;
+                }
+                else if (leftvt == VT_NULL || rightvt == VT_NULL)
+                {
+                    resvt = VT_NULL;
+                }
+                else if (leftvt == VT_UI1 || rightvt == VT_UI1)
+                {
+                    if (leftvt == rightvt)
+                        resvt = VT_UI1;
+                    else if (leftvt == rightvt ||
+                        leftvt == VT_I2 || rightvt == VT_I2 ||
+                        leftvt == VT_BOOL || rightvt == VT_BOOL)
+                    {
+                        resvt = VT_I2;
+                    }
+                    else if (leftvt == VT_I8 || rightvt == VT_I8)
+                        resvt = VT_I8;
+                }
+                else if (leftvt == VT_I2 || rightvt == VT_I2)
+                {
+                    if (leftvt == rightvt ||
+                        leftvt == VT_BOOL || rightvt == VT_BOOL)
+                        resvt = VT_I2;
+                    else if (leftvt == VT_I8 || rightvt == VT_I8)
+                        resvt = VT_I8;
+                }
+                else if (leftvt == VT_BOOL && rightvt == VT_BOOL)
+                {
+                    resvt = VT_BOOL;
+                }
+                else if (leftvt == VT_I8 || rightvt == VT_I8)
+                {
+                    if (leftvt == VT_INT || rightvt == VT_INT)
+                        bFail = TRUE;
+                    else
+                        resvt = VT_I8;
+                }
+                hres = pVarEqv(&left, &right, &result);
+                if (bFail)
+                    ok(hres == DISP_E_TYPEMISMATCH || hres == DISP_E_BADVARTYPE,
+                       "VarEqv: %d|0x%X, %d|0x%X: Expected failure, got 0x%lX vt %d\n",
+                       leftvt, ExtraFlags[i], rightvt, ExtraFlags[i], hres,
+                       V_VT(&result));
+                else
+                    ok(hres == S_OK && V_VT(&result) == resvt,
+                       "VarEqv: %d|0x%X, %d|0x%X: expected S_OK, vt %d, got 0x%lX vt %d\n",
+                       leftvt, ExtraFlags[i], rightvt, ExtraFlags[i], resvt, hres,
+                       V_VT(&result));
+            }
+        }
+    }
+
+    /* Test returned values */
+    VAREQV(BOOL,VARIANT_TRUE,BOOL,VARIANT_TRUE,BOOL,VARIANT_TRUE);
+    VAREQV(BOOL,VARIANT_FALSE,BOOL,VARIANT_TRUE,BOOL,VARIANT_FALSE);
+    VAREQV(BOOL,TRUE,BOOL,TRUE,BOOL,VARIANT_TRUE);
+    VAREQV(BOOL,FALSE,BOOL,FALSE,BOOL,VARIANT_TRUE);
+    VAREQV(BOOL,TRUE,BOOL,FALSE,BOOL,-2);
+    VAREQV(BOOL,FALSE,BOOL,TRUE,BOOL,-2);
+    VAREQV(BOOL,6,BOOL,7,BOOL,-2);
+    VAREQV(BOOL,6,BOOL,6,BOOL,VARIANT_TRUE);
+    VAREQV(BOOL,VARIANT_TRUE,I2,VARIANT_TRUE,I2,VARIANT_TRUE);
+    VAREQV(BOOL,VARIANT_TRUE,I2,VARIANT_FALSE,I2,VARIANT_FALSE);
+    VAREQV(BOOL,6,I2,7,I2,-2);
+    VAREQV(UI1,1,UI1,1,UI1,255);
+    VAREQV(UI1,1,UI1,0,UI1,254);
+    VAREQV(UI1,0,UI1,1,UI1,254);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VAREQV(UI4,VARIANT_FALSE,I8,VARIANT_FALSE,I8,-1);
+        VAREQV(UI4,5,I8,19,I8,-23);
+        VAREQV(UI4,VARIANT_FALSE,UI8,VARIANT_FALSE,I4,-1);
+    }
+}
+
 START_TEST(vartest)
 {
   hOleaut32 = LoadLibraryA("oleaut32.dll");
@@ -2736,4 +3013,6 @@ START_TEST(vartest)
   test_VarInt();
   test_VarNeg();
   test_VarRound();
+  test_VarXor();
+  test_VarEqv();
 }
