@@ -340,17 +340,77 @@ void WINAPI MZ_LoadImage( LPCSTR filename, HANDLE hFile )
 
 /***********************************************************************
  *		MZ_Exec
+ *
+ * this may only be called from existing DOS processes
  */
 BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
 {
-  /* this may only be called from existing DOS processes
-   * (i.e. one DOS app spawning another) */
-  /* FIXME: do we want to check binary type first, to check
-   * whether it's a NE/PE executable? */
-  HANDLE hFile = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ,
-			     NULL, OPEN_EXISTING, 0, 0);
+  DWORD binType;
+  STARTUPINFOA st;
+  PROCESS_INFORMATION pe;
+  HANDLE hFile;
+
   BOOL ret = FALSE;
+
+  if(!GetBinaryTypeA(filename, &binType))   /* determine what kind of binary this is */
+  {
+    return FALSE; /* binary is not an executable */
+  }
+
+  /* handle non-dos executables */
+  if(binType != SCS_DOS_BINARY)
+  {
+    if(func == 0) /* load and execute */
+    {
+      LPBYTE fullCmdLine;
+      WORD fullCmdLength;
+      LPBYTE psp_start = (LPBYTE)((DWORD)DOSVM_psp << 4);
+      PDB16 *psp = (PDB16 *)psp_start;
+      ExecBlock *blk = (ExecBlock *)paramblk;
+      LPBYTE cmdline = PTR_REAL_TO_LIN(SELECTOROF(blk->cmdline),OFFSETOF(blk->cmdline));
+      LPBYTE envblock = PTR_REAL_TO_LIN(psp->environment, 0);
+      BYTE cmdLength = cmdline[0];
+
+      fullCmdLength = (strlen(filename) + 1) + cmdLength + 1; /* filename + space + cmdline + terminating null character */
+
+      fullCmdLine = HeapAlloc(GetProcessHeap(), 0, fullCmdLength);
+      if(!fullCmdLine) return FALSE; /* return false on memory alloc failure */
+
+      /* build the full command line from the executable file and the command line being passed in */
+      snprintf(fullCmdLine, fullCmdLength, "%s ", filename); /* start off with the executable filename and a space */
+      memcpy(fullCmdLine + strlen(fullCmdLine), cmdline + 1, cmdLength); /* append cmdline onto the end */
+      fullCmdLine[fullCmdLength - 1] = 0; /* null terminate string */
+
+      ZeroMemory (&st, sizeof(STARTUPINFOA));
+      st.cb = sizeof(STARTUPINFOA);
+      ret = CreateProcessA (NULL, fullCmdLine, NULL, NULL, TRUE, 0, envblock, NULL, &st, &pe);
+
+      /* wait for the app to finish and clean up PROCESS_INFORMATION handles */
+      if(ret)
+      {
+        WaitForSingleObject(pe.hProcess, INFINITE);  /* wait here until the child process is complete */
+        CloseHandle(pe.hProcess);
+        CloseHandle(pe.hThread);
+      }
+
+      HeapFree(GetProcessHeap(), 0, fullCmdLine);  /* free the memory we allocated */
+    }
+    else
+    {
+      FIXME("EXEC type of %d not implemented for non-dos executables\n", func);
+      ret = FALSE;
+    }
+
+    return ret;
+  } /* if(binType != SCS_DOS_BINARY) */
+
+
+  /* handle dos executables */
+
+  hFile = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ,
+			     NULL, OPEN_EXISTING, 0, 0);
   if (hFile == INVALID_HANDLE_VALUE) return FALSE;
+
   switch (func) {
   case 0: /* load and execute */
   case 1: /* load but don't execute */
