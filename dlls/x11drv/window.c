@@ -85,11 +85,24 @@ inline static BOOL is_window_top_level( WND *win )
 
 
 /***********************************************************************
+ *		is_client_window_mapped
+ *
+ * Check if the X client window should be mapped
+ */
+inline static BOOL is_client_window_mapped( WND *win )
+{
+    struct x11drv_win_data *data = win->pDriverData;
+    return !IsIconic( win->hwndSelf ) && !IsRectEmpty( &data->client_rect );
+}
+
+
+/***********************************************************************
  *              get_window_attributes
  *
- * Fill the window attributes structure for an X window
+ * Fill the window attributes structure for an X window.
+ * Returned cursor must be freed by caller.
  */
-static int get_window_attributes( WND *win, XSetWindowAttributes *attr )
+static int get_window_attributes( Display *display, WND *win, XSetWindowAttributes *attr )
 {
     BOOL is_top_level = is_window_top_level( win );
     BOOL managed = is_top_level && is_window_managed( win );
@@ -98,18 +111,35 @@ static int get_window_attributes( WND *win, XSetWindowAttributes *attr )
     else win->dwExStyle &= ~WS_EX_MANAGED;
 
     attr->override_redirect = !managed;
-    attr->bit_gravity       = ForgetGravity;
-    attr->win_gravity       = NorthWestGravity;
     attr->colormap          = X11DRV_PALETTE_PaletteXColormap;
-    attr->backing_store     = NotUseful/*WhenMapped*/;
     attr->save_under        = ((win->clsStyle & CS_SAVEBITS) != 0);
     attr->cursor            = None;
     attr->event_mask        = (ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask |
                                ButtonPressMask | ButtonReleaseMask);
-    if (is_window_top_level( win )) attr->event_mask |= StructureNotifyMask | FocusChangeMask;
+    if (is_window_top_level( win ))
+    {
+        attr->event_mask |= StructureNotifyMask | FocusChangeMask;
+        attr->cursor = X11DRV_GetCursor( display, GlobalLock16(GetCursor()) );
+    }
+    return (CWOverrideRedirect | CWSaveUnder | CWEventMask | CWColormap | CWCursor);
+}
 
-    return (CWBitGravity | CWWinGravity | CWBackingStore | CWOverrideRedirect |
-            CWSaveUnder | CWEventMask | CWColormap | CWCursor);
+
+/***********************************************************************
+ *              sync_window_style
+ *
+ * Change the X window attributes when the window style has changed.
+ */
+static void sync_window_style( Display *display, WND *win )
+{
+    XSetWindowAttributes attr;
+    int mask;
+
+    wine_tsx11_lock();
+    mask = get_window_attributes( display, win, &attr );
+    XChangeWindowAttributes( display, get_whole_window(win), mask, &attr );
+    if (attr.cursor) XFreeCursor( display, attr.cursor );
+    wine_tsx11_unlock();
 }
 
 
@@ -196,11 +226,16 @@ static void set_icon_hints( Display *display, WND *wndPtr, XWMHints *hints )
 
     if (data->hWMIconBitmap) DeleteObject( data->hWMIconBitmap );
     if (data->hWMIconMask) DeleteObject( data->hWMIconMask);
+    data->hWMIconBitmap = 0;
+    data->hWMIconMask = 0;
 
-    if (!hIcon)
+    if (!(wndPtr->dwExStyle & WS_EX_MANAGED))
     {
-        data->hWMIconBitmap = 0;
-        data->hWMIconMask = 0;
+        destroy_icon_window( display, data );
+        hints->flags &= ~(IconPixmapHint | IconMaskHint | IconWindowHint);
+    }
+    else if (!hIcon)
+    {
         if (!data->icon_window) create_icon_window( display, wndPtr );
         hints->icon_window = data->icon_window;
         hints->flags = (hints->flags & ~(IconPixmapHint | IconMaskHint)) | IconWindowHint;
@@ -277,7 +312,7 @@ static void set_size_hints( Display *display, WND *win )
  *
  * Set the window manager hints for a newly-created window
  */
-inline static void set_wm_hints( Display *display, WND *win )
+static void set_wm_hints( Display *display, WND *win )
 {
     struct x11drv_win_data *data = win->pDriverData;
     Window group_leader;
@@ -363,7 +398,7 @@ void X11DRV_set_iconic_state( WND *win )
     if (!(win->dwExStyle & WS_EX_MANAGED))
     {
         if (iconic) TSXUnmapWindow( display, data->client_window );
-        else TSXMapWindow( display, data->client_window );
+        else if (is_client_window_mapped( win )) TSXMapWindow( display, data->client_window );
     }
 
     wine_tsx11_lock();
@@ -533,12 +568,11 @@ int X11DRV_sync_client_window_position( Display *display, WND *win )
     RECT client_rect = win->rectClient;
 
     OffsetRect( &client_rect, -data->whole_rect.left, -data->whole_rect.top );
-    /* client rect cannot be empty */
-    if (client_rect.top >= client_rect.bottom) client_rect.bottom = client_rect.top + 1;
-    if (client_rect.left >= client_rect.right) client_rect.right = client_rect.left + 1;
 
     if ((mask = get_window_changes( &changes, &data->client_rect, &client_rect )))
     {
+        BOOL was_mapped = is_client_window_mapped( win );
+
         TRACE( "setting win %lx pos %d,%d,%dx%d (was %d,%d,%dx%d) after %lx changes=%x\n",
                data->client_window, client_rect.left, client_rect.top,
                client_rect.right - client_rect.left, client_rect.bottom - client_rect.top,
@@ -549,7 +583,11 @@ int X11DRV_sync_client_window_position( Display *display, WND *win )
         data->client_rect = client_rect;
         wine_tsx11_lock();
         XSync( gdi_display, False );  /* flush graphics operations before moving the window */
+        if (was_mapped && !is_client_window_mapped( win ))
+            XUnmapWindow( display, data->client_window );
         XConfigureWindow( display, data->client_window, mask, &changes );
+        if (!was_mapped && is_client_window_mapped( win ))
+            XMapWindow( display, data->client_window );
         wine_tsx11_unlock();
     }
     return mask;
@@ -609,8 +647,6 @@ static Window create_whole_window( Display *display, WND *win )
     RECT rect;
     BOOL is_top_level = is_window_top_level( win );
 
-    mask = get_window_attributes( win, &attr );
-
     rect = win->rectWindow;
     X11DRV_window_to_X_rect( win, &rect );
 
@@ -621,7 +657,14 @@ static Window create_whole_window( Display *display, WND *win )
 
     wine_tsx11_lock();
 
-    if (is_top_level) attr.cursor = X11DRV_GetCursor( display, GlobalLock16(GetCursor()) );
+    mask = get_window_attributes( display, win, &attr );
+
+    /* set the attributes that don't change over the lifetime of the window */
+    attr.bit_gravity       = ForgetGravity;
+    attr.win_gravity       = NorthWestGravity;
+    attr.backing_store     = NotUseful/*WhenMapped*/;
+    mask |= CWBitGravity | CWWinGravity | CWBackingStore;
+
     data->whole_rect = rect;
     data->whole_window = XCreateWindow( display, parent, rect.left, rect.top, cx, cy,
                                         0, screen_depth, InputOutput, visual,
@@ -638,7 +681,7 @@ static Window create_whole_window( Display *display, WND *win )
         XConfigureWindow( display, data->whole_window, CWStackMode, &changes );
     }
 
-    if (is_top_level && !attr.override_redirect) set_wm_hints( display, win );
+    if (is_top_level) set_wm_hints( display, win );
 
  done:
     wine_tsx11_unlock();
@@ -654,17 +697,9 @@ static Window create_whole_window( Display *display, WND *win )
 static Window create_client_window( Display *display, WND *win )
 {
     struct x11drv_win_data *data = win->pDriverData;
-    RECT rect;
+    RECT rect = data->whole_rect;
     XSetWindowAttributes attr;
 
-    rect = win->rectWindow;
-    SendMessageW( win->hwndSelf, WM_NCCALCSIZE, FALSE, (LPARAM)&rect );
-
-    if (rect.left > rect.right || rect.top > rect.bottom) rect = win->rectWindow;
-    if (rect.top >= rect.bottom) rect.bottom = rect.top + 1;
-    if (rect.left >= rect.right) rect.right = rect.left + 1;
-
-    win->rectClient = rect;
     OffsetRect( &rect, -data->whole_rect.left, -data->whole_rect.top );
     data->client_rect = rect;
 
@@ -674,14 +709,16 @@ static Window create_client_window( Display *display, WND *win )
                        ForgetGravity : NorthWestGravity;
     attr.backing_store = NotUseful/*WhenMapped*/;
 
-    data->client_window = TSXCreateWindow( display, data->whole_window,
-                                           rect.left, rect.top,
-                                           rect.right - rect.left,
-                                           rect.bottom - rect.top,
-                                           0, screen_depth,
-                                           InputOutput, visual,
-                                           CWEventMask | CWBitGravity | CWBackingStore, &attr );
-    if (data->client_window) TSXMapWindow( display, data->client_window );
+    wine_tsx11_lock();
+    data->client_window = XCreateWindow( display, data->whole_window, 0, 0,
+                                         max( rect.right - rect.left, 1 ),
+                                         max( rect.bottom - rect.top, 1 ),
+                                         0, screen_depth,
+                                         InputOutput, visual,
+                                         CWEventMask | CWBitGravity | CWBackingStore, &attr );
+    if (data->client_window && is_client_window_mapped( win ))
+        XMapWindow( display, data->client_window );
+    wine_tsx11_unlock();
     return data->client_window;
 }
 
@@ -770,6 +807,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     Display *display = thread_display();
     WND *wndPtr;
     struct x11drv_win_data *data;
+    RECT rect;
     BOOL ret = FALSE;
 
     if (!(data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data)))) return FALSE;
@@ -781,25 +819,10 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
     wndPtr = WIN_FindWndPtr( hwnd );
     wndPtr->pDriverData = data;
-    WIN_ReleaseWndPtr( wndPtr );
-
-    if (unicode)
-        ret = SendMessageW( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
-    else
-        ret = SendMessageA( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
-
-    if (!ret)
-    {
-        X11DRV_DestroyWindow( hwnd );
-        return FALSE;
-    }
-
-    TRACE( "hwnd %x cs %d,%d %dx%d\n", hwnd, cs->x, cs->y, cs->cx, cs->cy );
-
-    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return FALSE;
 
     if (!wndPtr->parent)
     {
+        SendMessageW( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
         create_desktop( display, wndPtr );
         WIN_ReleaseWndPtr( wndPtr );
         return TRUE;
@@ -808,6 +831,32 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     if (!create_whole_window( display, wndPtr )) goto failed;
     if (!create_client_window( display, wndPtr )) goto failed;
     TSXSync( display, False );
+
+    WIN_ReleaseWndPtr( wndPtr );
+
+    /* send WM_NCCREATE */
+    TRACE( "hwnd %x cs %d,%d %dx%d\n", hwnd, cs->x, cs->y, cs->cx, cs->cy );
+    if (unicode)
+        ret = SendMessageW( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
+    else
+        ret = SendMessageA( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
+    if (!ret)
+    {
+        X11DRV_DestroyWindow( hwnd );
+        return FALSE;
+    }
+
+    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return FALSE;
+
+    sync_window_style( display, wndPtr );
+
+    /* send WM_NCCALCSIZE */
+    rect = wndPtr->rectWindow;
+    SendMessageW( hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&rect );
+    if (rect.left > rect.right || rect.top > rect.bottom) rect = wndPtr->rectWindow;
+    wndPtr->rectClient = rect;
+    X11DRV_sync_client_window_position( display, wndPtr );
+    X11DRV_register_window( display, hwnd, data );
 
     TRACE( "win %x window %d,%d,%d,%d client %d,%d,%d,%d whole %d,%d,%d,%d X client %d,%d,%d,%d xwin %x/%x\n",
            hwnd, wndPtr->rectWindow.left, wndPtr->rectWindow.top,
@@ -825,8 +874,6 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     else
         WIN_LinkWindow( hwnd, HWND_TOP );
 
-    if (wndPtr->text) X11DRV_SetWindowText( hwnd, wndPtr->text );
-    X11DRV_register_window( display, hwnd, data );
     WIN_ReleaseWndPtr( wndPtr );
 
     if (unicode)
@@ -976,16 +1023,10 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
     if (pWndParent != wndPtr->parent)
     {
         struct x11drv_win_data *data = wndPtr->pDriverData;
-        int mask;
-        XSetWindowAttributes attr;
 
         WIN_UnlinkWindow(wndPtr->hwndSelf);
         wndPtr->parent = pWndParent;
         WIN_LinkWindow(wndPtr->hwndSelf, HWND_TOP);
-
-        mask = get_window_attributes( wndPtr, &attr );
-        if (is_window_top_level( wndPtr ) && !attr.override_redirect)
-            set_wm_hints( display, wndPtr );
 
         if (parent != GetDesktopWindow()) /* a child window */
         {
@@ -997,7 +1038,8 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
         }
 
         wine_tsx11_lock();
-        XChangeWindowAttributes( display, data->whole_window, mask, &attr );
+        sync_window_style( display, wndPtr );
+        if (is_window_top_level( wndPtr )) set_wm_hints( display, wndPtr );
         XReparentWindow( display, data->whole_window, get_client_window(pWndParent),
                          data->whole_rect.left, data->whole_rect.top );
         wine_tsx11_unlock();
