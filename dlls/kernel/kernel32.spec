@@ -675,7 +675,7 @@
 @ stdcall QueryPerformanceCounter(ptr)
 @ stdcall QueryPerformanceFrequency(ptr)
 @ stdcall QueueUserAPC(ptr long long)
-@ stub QueueUserWorkItem
+@ stdcall QueueUserWorkItem(ptr ptr long)
 @ stdcall RaiseException(long long long ptr)
 @ stdcall ReadConsoleA(long ptr long ptr ptr)
 @ stdcall ReadConsoleInputA(long ptr long ptr)

@@ -549,6 +549,14 @@ DWORD WINAPI QueueUserAPC( PAPCFUNC func, HANDLE hthread, ULONG_PTR data )
     return !status;
 }
 
+/***********************************************************************
+ *              QueueUserWorkItem  (KERNEL32.@)
+ */
+BOOL WINAPI QueueUserWorkItem( LPTHREAD_START_ROUTINE Function, PVOID Context, ULONG Flags )
+{
+    FIXME("(%p,%p,0x%08lx): stub\n", Function, Context, Flags);
+    return FALSE;
+}
 
 /**********************************************************************
  * GetThreadTimes [KERNEL32.@]  Obtains timing information.
