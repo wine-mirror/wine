@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = rpcrt4
+SOVERSION = 1.0
+
+C_SRCS = \
+	rpcrt4_main.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

@@ -1,5 +1,6 @@
 name	ole32
 type	win32
+import  rpcrt4
 
   1 stub BindMoniker                # stdcall (ptr long ptr ptr) return 0,ERR_NOTIMPLEMENTED
   2 stdcall CLSIDFromProgID(wstr ptr) CLSIDFromProgID
@@ -133,7 +134,7 @@ type	win32
 130 stdcall OleTranslateAccelerator(ptr ptr ptr) OleTranslateAccelerator
 131 stdcall OleUninitialize() OleUninitialize
 132 stub OpenOrCreateStream
-133 stdcall ProgIDFromCLSID(wstr ptr) ProgIDFromCLSID
+133 stdcall ProgIDFromCLSID(ptr ptr) ProgIDFromCLSID
 134 stdcall ReadClassStg(ptr ptr) ReadClassStg
 135 stdcall ReadClassStm(ptr ptr) ReadClassStm
 136 stdcall ReadFmtUserTypeStg(ptr ptr ptr) ReadFmtUserTypeStg

@@ -63,6 +63,7 @@ static struct tagDllOverride {
 	{"odbc32",			"builtin"},
 	{"opengl32",                    "builtin,native"},
 	{"shfolder",                    "builtin,native"},
+	{"rpcrt4",                      "native,builtin"},
 	{NULL,NULL},
 };
 

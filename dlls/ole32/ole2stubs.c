@@ -42,7 +42,7 @@ HRESULT WINAPI OleDuplicateData(HANDLE hSrc, CLIPFORMAT cfFormat,
 HRESULT WINAPI WriteFmtUserTypeStg(
 	  LPSTORAGE pstg, CLIPFORMAT cf, LPOLESTR lpszUserType)
 {
-    FIXME("(%p,%x,%p) stub!\n",pstg,cf,lpszUserType);
+    FIXME("(%p,%x,%s) stub!\n",pstg,cf,debugstr_w(lpszUserType));
     return S_OK;
 }
 

@@ -7,13 +7,7 @@
 
 
 #include "windef.h"
-
-/* FIXME: this line should be in rpcndr.h */
-typedef unsigned char byte;
-
-/* FIXME: and the following group should be in rpcdce.h */
-typedef void* RPC_AUTH_IDENTITY_HANDLE;
-typedef void* RPC_AUTHZ_HANDLE;
+#include "rpc.h"
 
 
 typedef WORD CLIPFORMAT, *LPCLIPFORMAT;
@@ -36,21 +30,6 @@ typedef BSTR		*LPBSTR;
 #define OLESTR16(x) x
 #define OLESTR(x) L##x
 
-#ifndef GUID_DEFINED
-#define GUID_DEFINED
-typedef struct _GUID
-{
-    DWORD Data1;
-    WORD  Data2;
-    WORD  Data3;
-    BYTE  Data4[8];
-} GUID;
-#endif
-
-typedef GUID  *LPGUID;
-typedef GUID  CLSID,*LPCLSID;
-typedef GUID	IID,*LPIID;
-typedef GUID	FMTID,*LPFMTID;
 #if defined(__cplusplus) && !defined(CINTERFACE)
 #define REFGUID             const GUID &
 #define REFCLSID            const CLSID &
