@@ -29,7 +29,7 @@ found at http://www.winehq.org.
 To compile and run Wine, you must have one of the following:
 
   Linux version 2.0.36 or above
-  FreeBSD 4.x or FreeBSD 5-CURRENT or later
+  FreeBSD 5.3 or later
   Solaris x86 2.5 or later
   NetBSD-current
 
@@ -44,9 +44,13 @@ Linux info:
   it's best to have a current kernel such as 2.4.x.
 
 FreeBSD info:
-  Make sure you have the USER_LDT, SYSVSHM, SYSVSEM, and SYSVMSG
-  options turned on in your kernel.  More information is in the ports
-  tree: ftp://ftp.freebsd.org/pub/FreeBSD/ports/ports/emulators/wine/
+  Wine should build on FreeBSD 4.x and FreeBSD 5.x before 5.3, but will
+  generally not work on these systems due to issues with threading and
+  mmap().  In fact, even on FreeBSD 5.3 you will need the kernel patch
+  posted at <http://www.freebsd.org/cgi/query-pr.cgi?pr=73092>.
+ 
+  More information can be found in the FreeBSD ports tree at
+  <ftp://ftp.freebsd.org/pub/FreeBSD/ports/ports/emulators/wine/>.
 
 Solaris info:
   You will most likely need to build Wine with the GNU toolchain
