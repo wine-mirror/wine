@@ -84,7 +84,7 @@ ps: $(ALLBOOKS:%=%.ps)
 # this is the all-in-one book, not built by default
 wine-doc: wine-doc/index.html wine-doc.pdf wine-doc.ps
 
-.PHONY: everything doc html pdf ps wine-doc
+.PHONY: everything doc html pdf ps wine-doc dist
 
 .SUFFIXES: .sgml /index.html .pdf .ps
 
@@ -106,6 +106,23 @@ wine-doc.pdf wine-doc.ps wine-doc/index.html: $(WINE_DOC_SRCS)
 wine.man: wine.man.in
 	sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $(SRCDIR)/wine.man.in >$@ || $(RM) $@
 
+# Rules for distribution tarballs of formatted docs
+
+dist: wine-doc-ps.tar.gz wine-doc-pdf.tar.gz wine-doc-html.tar.gz wine-doc-txt.tar.gz
+
+wine-doc-ps.tar.gz: $(ALLBOOKS:%=%.ps)
+	tar cf - $(ALLBOOKS:%=%.ps) | gzip -9 > $@ || $(RM) $@
+
+wine-doc-pdf.tar.gz: $(ALLBOOKS:%=%.pdf)
+	tar cf - $(ALLBOOKS:%=%.pdf) | gzip -9 > $@ || $(RM) $@
+
+wine-doc-html.tar.gz: $(ALLBOOKS:%=%/index.html)
+	tar cf - $(ALLBOOKS:%=%/*.html) | gzip -9 > $@ || $(RM) $@
+
+wine-doc-txt.tar.gz: $(ALLBOOKS:%=%/index.html)
+	for i in $(ALLBOOKS:%=%/*.html); do w3m -dump $$i > `dirname $$i`/`basename $$i .html`.txt || exit 1; done
+	tar cf - $(ALLBOOKS:%=%/*.txt) | gzip -9 > $@ || $(RM) $@
+
 install:: $(MAN_TARGETS)
 	$(MKINSTALLDIRS) $(mandir)/man$(prog_manext) $(mandir)/man$(conf_manext)
 	$(INSTALL_DATA) wine.man $(mandir)/man$(prog_manext)/wine.$(prog_manext)
@@ -116,7 +133,7 @@ uninstall::
 	$(RM) $(mandir)/man$(conf_manext)/wine.conf.$(conf_manext)
 
 clean::
-	$(RM) *.aux *.dvi *.out *.pdf *.ps *.tex *.log $(MAN_TARGETS)
+	$(RM) *.aux *.dvi *.out *.pdf *.ps *.tex *.log wine-doc-*.tar.gz $(MAN_TARGETS)
 	$(RM) -r wine-doc $(ALLBOOKS) html man3w *.junk DBTOHTML_OUTPUT_DIR*
 
 ### Dependencies:
