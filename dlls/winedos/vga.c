@@ -775,7 +775,7 @@ void VGA_GetCharacterAtCursor(BYTE *ascii, BYTE *attr)
  */
 static void VGA_CopyFrameToWindow(void)
 {
-  //FIXME: add implementation
+  /* FIXME: add implementation */
 }
 
 /*
@@ -783,7 +783,7 @@ static void VGA_CopyFrameToWindow(void)
  */
 static void VGA_CopyWindowToFrame(void)
 {
-  //FIXME: fix implementation
+  /* FIXME: fix implementation */
   char *dat = DOSMEM_MapDosToLinear(0xa0000);
   memmove(vga_fb_data, dat, 65536);
 }

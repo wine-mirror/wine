@@ -44,7 +44,9 @@
 #include <errno.h>
 #include <fcntl.h>
 
-//#define EMULATE_SB16
+#if 0
+#define EMULATE_SB16
+#endif
 #define FRAG_SIZE  1024
 #define FRAG_COUNT 10
 
@@ -180,7 +182,7 @@ static WINE_WAVEOUT	WOutDev   [MAX_WAVEOUTDRV];
 static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
 
 
-// NASFUNC
+/* NASFUNC */
 static AuBool event_handler(AuServer* aud, AuEvent* ev, AuEventHandlerRec* hnd);
 static int nas_init(void);
 static int nas_end(void);
@@ -753,13 +755,13 @@ static void wodPlayer_ProcessMessages(WINE_WAVEOUT* wwo)
 	    SetEvent(ev);
             break;
 	case WINE_WM_CLOSING:
-	    // sanity check: this should not happen since the device must have been reset before
+	    /* sanity check: this should not happen since the device must have been reset before */
 	    if (wwo->lpQueuePtr || wwo->lpPlayPtr) ERR("out of sync\n");
 	    wwo->hThread = 0;
 	    wwo->state = WINE_WS_CLOSED;
 	    SetEvent(ev);
 	    ExitThread(0);
-	    // shouldn't go here
+	    /* shouldn't go here */
 	default:
 	    FIXME("unknown message %d\n", msg);
 	    break;
@@ -1106,7 +1108,9 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
     if (lpTime == NULL)	return MMSYSERR_INVALPARAM;
 
     wwo = &WOutDev[wDevID];
-//    NAS_AddRingMessage(&wwo->msgRing, WINE_WM_UPDATE, 0, TRUE);
+#if 0
+    NAS_AddRingMessage(&wwo->msgRing, WINE_WM_UPDATE, 0, TRUE);
+#endif
     val = wwo->WrittenTotal;
 
     TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%lu nChannels=%u nAvgBytesPerSec=%lu\n",

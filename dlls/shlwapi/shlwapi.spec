@@ -700,7 +700,7 @@ init SHLWAPI_LibMain
 @ stdcall PathIsLFNFileSpecW(wstr) PathIsLFNFileSpecW
 @ stdcall PathFindSuffixArrayA(str ptr long) PathFindSuffixArrayA
 @ stdcall PathFindSuffixArrayW(wstr ptr long) PathFindSuffixArrayW
-@ stdcall _SHGetInstanceExplorer@4(ptr) _SHGetInstanceExplorer
+@ stdcall _SHGetInstanceExplorer(ptr) _SHGetInstanceExplorer
 @ stdcall PathUndecorateA(str) PathUndecorateA
 @ stdcall PathUndecorateW(wstr) PathUndecorateW
 @ stub    PathUnExpandEnvStringsA

@@ -241,7 +241,9 @@ static DWORD WINAPI SHLWAPI_ThreadWrapper(PVOID pTi)
 }
 
 /*************************************************************************
- * SHCreateThread   [SHLWAPI.16]
+ *      @	[SHLWAPI.16]
+ *
+ * SHCreateThread
  *
  * Create a new thread.
  *

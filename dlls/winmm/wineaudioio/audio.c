@@ -45,7 +45,9 @@
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
@@ -201,7 +203,7 @@ LONG LIBAUDIOIO_WaveInit(void)
         spec[RECORD].precision=spec[PLAYBACK].precision=16 ;
         spec[RECORD].endian=spec[PLAYBACK].endian=ENDIAN_INTEL;
         spec[RECORD].disable_threads=spec[PLAYBACK].disable_threads=1;
-	spec[RECORD].type=spec[PLAYBACK].type=TYPE_SIGNED;       // in 16 bit mode this is what typical PC hardware expects
+	spec[RECORD].type=spec[PLAYBACK].type=TYPE_SIGNED; /* in 16 bit mode this is what typical PC hardware expects */
 
 	mode = O_WRONLY|O_NDELAY;
 
@@ -1204,7 +1206,7 @@ static	DWORD	wodGetNumDevs(void)
 }
 
 /**************************************************************************
- * 				wodMessage (WINEOSS.7)
+ * 				wodMessage (WINEAUDIOIO.@)
  */
 DWORD WINAPI LIBAUDIOIO_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
@@ -1398,7 +1400,9 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
 						      LPDWORD lpdwPlay, LPDWORD lpdwWrite)
 {
     ICOM_THIS(IDsDriverBufferImpl,iface);
-//    count_info info;
+#if 0
+    count_info info;
+#endif
     DWORD ptr;
 
     TRACE("(%p)\n",iface);
@@ -1564,7 +1568,9 @@ static HRESULT WINAPI IDsDriverImpl_CreateSoundBuffer(PIDSDRIVER iface,
     ICOM_THIS(IDsDriverImpl,iface);
     IDsDriverBufferImpl** ippdsdb = (IDsDriverBufferImpl**)ppvObj;
     HRESULT err;
-//    audio_buf_info info;
+#if 0
+    audio_buf_info info;
+#endif
     int enable = 0;
 
     TRACE("(%p,%p,%lx,%lx)\n",iface,pwfx,dwFlags,dwCardAddress);
@@ -1592,7 +1598,7 @@ static HRESULT WINAPI IDsDriverImpl_CreateSoundBuffer(PIDSDRIVER iface,
 	return DSERR_GENERIC;
     }
 #endif
-    WOutDev[This->wDevID].maplen =64*1024; // Map 64 K at a time
+    WOutDev[This->wDevID].maplen =64*1024; /* Map 64 K at a time */
 
 #if 0
     (*ippdsdb)->buflen = info.fragstotal * info.fragsize;
@@ -2225,7 +2231,7 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 }
 
 /**************************************************************************
- * 				widMessage (WINEOSS.6)
+ * 				widMessage (WINEAUDIOIO.@)
  */
 DWORD WINAPI LIBAUDIOIO_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
@@ -2260,7 +2266,7 @@ DWORD WINAPI LIBAUDIOIO_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 #else /* HAVE_LIBAUDIOIO */
 
 /**************************************************************************
- * 				wodMessage (WINEOSS.7)
+ * 				wodMessage (WINEAUDIOIO.@)
  */
 DWORD WINAPI LIBAUDIOIO_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
@@ -2270,7 +2276,7 @@ DWORD WINAPI LIBAUDIOIO_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 }
 
 /**************************************************************************
- * 				widMessage (WINEOSS.6)
+ * 				widMessage (WINEAUDIOIO.@)
  */
 DWORD WINAPI LIBAUDIOIO_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)

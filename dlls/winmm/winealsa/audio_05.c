@@ -29,7 +29,9 @@
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif

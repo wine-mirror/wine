@@ -1791,7 +1791,7 @@ BOOL WINAPI InternetUnlockRequestFile( HANDLE hLockHandle)
  *
  */
 
-BOOL InternetAutoDial(DWORD dwFlags, HWND hwndParent)
+BOOL WINAPI InternetAutoDial(DWORD dwFlags, HWND hwndParent)
 {
     FIXME("STUB\n");
 

@@ -394,7 +394,7 @@ GetEffectiveClientRect (HWND hwnd, LPRECT lpRect, LPINT lpInfo)
 
 
 /***********************************************************************
- * DrawStatusTextW [COMCTL32.28]
+ * DrawStatusTextW [COMCTL32.@]
  *
  * Draws text with borders, like in a status bar.
  *
@@ -446,7 +446,7 @@ void WINAPI DrawStatusTextW (HDC hdc, LPRECT lprc, LPCWSTR text, UINT style)
 
 
 /***********************************************************************
- * DrawStatusText  [COMCTL32.27]
+ * DrawStatusText  [COMCTL32.@]
  * DrawStatusTextA [COMCTL32.5]
  *
  * Draws text with borders, like in a status bar.
@@ -478,7 +478,7 @@ void WINAPI DrawStatusTextA (HDC hdc, LPRECT lprc, LPCSTR text, UINT style)
 
 
 /***********************************************************************
- * CreateStatusWindow  [COMCTL32.21]
+ * CreateStatusWindow  [COMCTL32.@]
  * CreateStatusWindowA [COMCTL32.6]
  *
  * Creates a status bar
@@ -505,7 +505,7 @@ CreateStatusWindowA (INT style, LPCSTR text, HWND parent, UINT wid)
 
 
 /***********************************************************************
- * CreateStatusWindowW [COMCTL32.22] Creates a status bar control
+ * CreateStatusWindowW [COMCTL32.@] Creates a status bar control
  *
  * PARAMS
  *     style  [I] window style
@@ -592,7 +592,7 @@ InitCommonControls (void)
 
 
 /***********************************************************************
- * InitCommonControlsEx [COMCTL32.84]
+ * InitCommonControlsEx [COMCTL32.@]
  *
  * Registers the common controls.
  *
@@ -675,7 +675,7 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
 
 
 /***********************************************************************
- * CreateToolbarEx [COMCTL32.23] Creates a tool bar window
+ * CreateToolbarEx [COMCTL32.@] Creates a tool bar window
  *
  * PARAMS
  *     hwnd
@@ -896,7 +896,7 @@ CreateToolbar (HWND hwnd, DWORD style, UINT wID, INT nBitmaps,
 
 
 /***********************************************************************
- * DllGetVersion [COMCTL32.25]
+ * DllGetVersion [COMCTL32.@]
  *
  * Retrieves version information of the 'COMCTL32.DLL'
  *
@@ -932,7 +932,7 @@ COMCTL32_DllGetVersion (DLLVERSIONINFO *pdvi)
 }
 
 /***********************************************************************
- *		DllInstall (COMCTL32.26)
+ *		DllInstall (COMCTL32.@)
  */
 HRESULT WINAPI COMCTL32_DllInstall(BOOL bInstall, LPCWSTR cmdline)
 {
@@ -943,7 +943,7 @@ HRESULT WINAPI COMCTL32_DllInstall(BOOL bInstall, LPCWSTR cmdline)
 }
 
 /***********************************************************************
- * _TrackMouseEvent [COMCTL32.91]
+ * _TrackMouseEvent [COMCTL32.@]
  *
  * Requests notification of mouse events
  *
@@ -973,7 +973,7 @@ _TrackMouseEvent (TRACKMOUSEEVENT *ptme)
 }
 
 /*************************************************************************
- * GetMUILanguage [COMCTL32.39]
+ * GetMUILanguage [COMCTL32.@]
  *
  * FIXME: What's this supposed to do?  Apparently some i18n thing.
  *
@@ -985,7 +985,7 @@ LANGID WINAPI GetMUILanguage (VOID)
 
 
 /*************************************************************************
- * InitMUILanguage [COMCTL32.85]
+ * InitMUILanguage [COMCTL32.@]
  *
  * FIXME: What's this supposed to do?  Apparently some i18n thing.
  *

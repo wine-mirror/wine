@@ -416,7 +416,7 @@ typedef struct
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
-typedef int (*wine_signal_handler)(unsigned sig);
+typedef int (*wine_signal_handler)(unsigned int sig);
 
 static wine_signal_handler handlers[256];
 
@@ -426,7 +426,7 @@ static sigset_t all_sigs;
 /***********************************************************************
  *           dispatch_signal
  */
-inline static int dispatch_signal(unsigned sig)
+inline static int dispatch_signal(unsigned int sig)
 {
     if (handlers[sig] == NULL) return 0;
     return handlers[sig](sig);
@@ -1086,7 +1086,7 @@ static int set_handler( int sig, int have_sigaltstack, void (*func)() )
 /***********************************************************************
  *           __wine_set_signal_handler   (NTDLL.@)
  */
-int __wine_set_signal_handler(unsigned sig, wine_signal_handler wsh)
+int __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
 {
     if (sig > sizeof(handlers) / sizeof(handlers[0])) return -1;
     if (handlers[sig] != NULL) return -2;

@@ -2203,8 +2203,8 @@ static void PROPSHEET_CleanUp(HWND hwndDlg)
 }
 
 /******************************************************************************
- *            PropertySheet    (COMCTL32.87)
- *            PropertySheetA   (COMCTL32.88)
+ *            PropertySheet    (COMCTL32.@)
+ *            PropertySheetA   (COMCTL32.@)
  */
 INT WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
 {
@@ -2248,7 +2248,7 @@ INT WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
 }
 
 /******************************************************************************
- *            PropertySheetW   (COMCTL32.89)
+ *            PropertySheetW   (COMCTL32.@)
  */
 INT WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
 {
@@ -2292,8 +2292,8 @@ INT WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
 }
 
 /******************************************************************************
- *            CreatePropertySheetPage    (COMCTL32.18)
- *            CreatePropertySheetPageA   (COMCTL32.19)
+ *            CreatePropertySheetPage    (COMCTL32.@)
+ *            CreatePropertySheetPageA   (COMCTL32.@)
  */
 HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
                           LPCPROPSHEETPAGEA lpPropSheetPage)
@@ -2322,7 +2322,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
 }
 
 /******************************************************************************
- *            CreatePropertySheetPageW   (COMCTL32.20)
+ *            CreatePropertySheetPageW   (COMCTL32.@)
  */
 HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage)
 {
@@ -2357,7 +2357,7 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage
 }
 
 /******************************************************************************
- *            DestroyPropertySheetPage   (COMCTL32.24)
+ *            DestroyPropertySheetPage   (COMCTL32.@)
  */
 BOOL WINAPI DestroyPropertySheetPage(HPROPSHEETPAGE hPropPage)
 {
@@ -2799,4 +2799,3 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   return FALSE;
 }
-

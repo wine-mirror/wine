@@ -19,6 +19,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -27,7 +29,9 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <pwd.h>
+#ifdef HAVE_PWD_H
+# include <pwd.h>
+#endif
 #include <unistd.h>
 
 #include "windef.h"
