@@ -1514,9 +1514,15 @@ static int serializeBMP(HBITMAP hBitmap, void ** ppBuffer, unsigned int * pLengt
     GetDIBits(hDC, hBitmap, 0, pInfoBitmap->bmiHeader.biHeight, pPixelData, pInfoBitmap, DIB_RGB_COLORS);
 
     /* Calculate the total length required for the BMP data */
-    if (pInfoBitmap->bmiHeader.biClrUsed != 0) iNumPaletteEntries = pInfoBitmap->bmiHeader.biClrUsed;
-    else if (pInfoBitmap->bmiHeader.biBitCount <= 8) iNumPaletteEntries = 1 << pInfoBitmap->bmiHeader.biBitCount;
-    else iNumPaletteEntries = 0;
+    if (pInfoBitmap->bmiHeader.biClrUsed != 0) {
+	iNumPaletteEntries = pInfoBitmap->bmiHeader.biClrUsed;
+	if (iNumPaletteEntries > 256) iNumPaletteEntries = 256;
+    } else {
+	if (pInfoBitmap->bmiHeader.biBitCount <= 8)
+	    iNumPaletteEntries = 1 << pInfoBitmap->bmiHeader.biBitCount;
+	else
+    	    iNumPaletteEntries = 0;
+    }
     *pLength =
         sizeof(BITMAPFILEHEADER) +
         sizeof(BITMAPINFOHEADER) +
@@ -1624,6 +1630,7 @@ static int serializeIcon(HICON hIcon, void ** ppBuffer, unsigned int * pLength)
 				||	(pInfoBitmap->bmiHeader.biBitCount == 24)
 				||	(pInfoBitmap->bmiHeader.biBitCount == 32 && pInfoBitmap->bmiHeader.biCompression == BI_RGB)) {
 				iNumEntriesPalette = pInfoBitmap->bmiHeader.biClrUsed;
+				if (iNumEntriesPalette > 256) iNumEntriesPalette = 256; 
 			} else if ((pInfoBitmap->bmiHeader.biBitCount == 16 || pInfoBitmap->bmiHeader.biBitCount == 32)
 				&& pInfoBitmap->bmiHeader.biCompression == BI_BITFIELDS) {
 				iNumEntriesPalette = 3;

@@ -219,6 +219,8 @@ static int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
     else  /* assume BITMAPINFOHEADER */
     {
         colors = info->bmiHeader.biClrUsed;
+	if (colors > 256) /* buffer overflow otherwise */
+		colors = 256;
         if (!colors && (info->bmiHeader.biBitCount <= 8))
             colors = 1 << info->bmiHeader.biBitCount;
         return sizeof(BITMAPINFOHEADER) + colors *
@@ -2043,6 +2045,7 @@ static void DIB_FixColorsToLoadflags(BITMAPINFO * bmi, UINT loadflags, BYTE pix)
   {
       incr = 4;
       colors = bmi->bmiHeader.biClrUsed;
+      if (colors > 256) colors = 256;
       if (!colors && (bpp <= 8)) colors = 1 << bpp;
   }
   

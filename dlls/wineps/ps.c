@@ -854,6 +854,7 @@ BOOL PSDRV_WriteDIBPatternDict(PSDRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usa
 
     bits = (char*)bmi + bmi->bmiHeader.biSize;
     colours = bmi->bmiHeader.biClrUsed;
+    if (colours > 256) colours = 256;
     if(!colours && bmi->bmiHeader.biBitCount <= 8)
         colours = 1 << bmi->bmiHeader.biBitCount;
     bits += colours * ((usage == DIB_RGB_COLORS) ?

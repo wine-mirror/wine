@@ -133,6 +133,7 @@ int DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse )
     else  /* assume BITMAPINFOHEADER */
     {
         colors = info->bmiHeader.biClrUsed;
+        if (colors > 256) colors = 256;
         if (!colors && (info->bmiHeader.biBitCount <= 8))
             colors = 1 << info->bmiHeader.biBitCount;
         return sizeof(BITMAPINFOHEADER) + colors *
