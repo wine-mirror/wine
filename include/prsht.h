@@ -58,7 +58,7 @@ typedef struct _PROPSHEETPAGEA
     union 
     {
         LPCSTR           pszTemplate;
-        LPCDLGTEMPLATE   pResource;
+        LPCDLGTEMPLATEA  pResource;
     }DUMMYUNIONNAME1;
     union
     {
@@ -84,7 +84,7 @@ typedef struct _PROPSHEETPAGEW
     union 
     {
         LPCWSTR          pszTemplate;
-        LPCDLGTEMPLATE   pResource;
+        LPCDLGTEMPLATEW  pResource;
     }DUMMYUNIONNAME1;
     union
     {
