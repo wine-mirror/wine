@@ -183,5 +183,4 @@ STRINGTABLE
 {
 	IDS_FONT_SEL_DLG_NAME	"Applica le impostazioni dei font"
 	IDS_FONT_SEL_ERROR	"Si è verificato un errore durante la selezione del nuovo font."
-	IDS_FILE_MOVE_ERROR	"Si è verificato un errore durante lo spostamento del file o della directory."
 }

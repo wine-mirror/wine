@@ -2083,7 +2083,7 @@ static HWND create_header(HWND parent, Pane* pane, int id)
 	if (!hwnd)
 		return 0;
 
-	SendMessage(hwnd, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), FALSE);
+	SetWindowFont(hwnd, GetStockObject(DEFAULT_GUI_FONT), FALSE);
 
 	hdi.mask = HDI_TEXT|HDI_WIDTH|HDI_FORMAT;
 
@@ -2321,7 +2321,7 @@ static void create_tree_window(HWND parent, Pane* pane, int id, int id_header)
 	SetWindowLong(pane->hwnd, GWL_USERDATA, (LPARAM)pane);
 	g_orgTreeWndProc = SubclassWindow(pane->hwnd, TreeWndProc);
 
-	SendMessage(pane->hwnd, WM_SETFONT, (WPARAM)Globals.hfont, FALSE);
+	SetWindowFont(pane->hwnd, Globals.hfont, FALSE);
 
 	/* insert entries into listbox */
 	if (entry)
@@ -3363,8 +3363,6 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 			LPDRAWITEMSTRUCT dis = (LPDRAWITEMSTRUCT)lparam;
 			Entry* entry = (Entry*) dis->itemData;
 
-			/*dis->rcItem.top*=2;
-			dis->rcItem.bottom*=2;*/
 			if (dis->CtlID == IDW_TREE_LEFT)
 				draw_item(&child->left, dis, entry, -1);
 			else
@@ -3414,7 +3412,7 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 
 		case WM_LBUTTONDOWN: {
 			RECT rt;
-			int x = LOWORD(lparam);
+			int x = GET_X_LPARAM(lparam);
 
 			GetClientRect(hwnd, &rt);
 
@@ -3964,11 +3962,9 @@ int winefile_main(HINSTANCE hinstance, HWND hwndParent, int cmdshow)
 
 	InitInstance(hinstance);
 
-#ifndef _ROS_	/* don't maximize if being called from the ROS desktop */
 	if (cmdshow == SW_SHOWNORMAL)
 	        /*TODO: read window placement from registry */
 		cmdshow = SW_MAXIMIZE;
-#endif
 
 	show_frame(hwndParent, cmdshow);
 
@@ -3989,8 +3985,6 @@ int winefile_main(HINSTANCE hinstance, HWND hwndParent, int cmdshow)
 }
 
 
-#ifndef _ROS_
-
 int APIENTRY WinMain(HINSTANCE hinstance,
 					 HINSTANCE previnstance,
 					 LPSTR	   cmdline,
@@ -4005,5 +3999,3 @@ int APIENTRY WinMain(HINSTANCE hinstance,
 
 	return 0;
 }
-
-#endif

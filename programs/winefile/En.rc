@@ -182,5 +182,4 @@ STRINGTABLE
 {
 	IDS_FONT_SEL_DLG_NAME	"Applying font settings"
 	IDS_FONT_SEL_ERROR	"Error while selecting new font."
-	IDS_FILE_MOVE_ERROR	"Error while moving file or directory."
 }

@@ -73,7 +73,6 @@
 /* string table */
 #define IDS_FONT_SEL_DLG_NAME				1101
 #define IDS_FONT_SEL_ERROR				1103
-#define IDS_FILE_MOVE_ERROR				1104
 
 /* range for drive bar command ids: 0x9000..0x90FF */
 #ifdef __WINE__

@@ -183,5 +183,4 @@ STRINGTABLE
 {
 	IDS_FONT_SEL_DLG_NAME	"Wprowadzanie ustawieñ czcionki"
 	IDS_FONT_SEL_ERROR	"B³¹d przy wybieraniu czcionki"
-	IDS_FILE_MOVE_ERROR	"B³¹d przy przenoszeniu pliku."
 }
