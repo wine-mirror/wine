@@ -1679,7 +1679,7 @@ BOOL32 WINAPI DrawIconEx32( HDC32 hdc, INT32 x0, INT32 y0, HICON32 hIcon,
 				    (char *)(ptr + 1)
 				    + ptr->nHeight *
 				    BITMAP_WIDTH_BYTES(ptr->nWidth,1) );
-	hAndBits = CreateBitmap32 ( cxWidth, cyWidth,
+	hAndBits = CreateBitmap32 ( ptr->nWidth, ptr->nHeight,
 				    1, 1, (char *)(ptr+1) );
 	oldFg = SetTextColor32( hdc, RGB(0,0,0) );
 	oldBg = SetBkColor32( hdc, RGB(255,255,255) );
@@ -1693,7 +1693,7 @@ BOOL32 WINAPI DrawIconEx32( HDC32 hdc, INT32 x0, INT32 y0, HICON32 hIcon,
 	    SelectObject32( hMemDC, hXorBits );
 	    if (flags & DI_IMAGE)
 		StretchBlt32 (hdc, x0, y0, cxWidth, cyWidth,
-			  hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCPAINT);
+			      hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCPAINT);
 	    SelectObject32( hMemDC, hBitTemp );
 	    result = TRUE;
 	}
