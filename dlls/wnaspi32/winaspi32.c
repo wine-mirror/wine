@@ -180,9 +180,10 @@ ASPI_ExecScsiCmd(SRB_ExecSCSICmd *lpPRB)
 
   fd = ASPI_OpenDevice(lpPRB);
   if (fd == -1) {
-      ERR(aspi, "Failed: could not open device. Device permissions !?\n");
-      lpPRB->SRB_Status = SS_ERR;
-      return SS_ERR;
+      ERR(aspi, "Failed: could not open device c%01dt%01dd%01d. Device permissions !?\n",
+	  lpPRB->SRB_HaId,lpPRB->SRB_Target,lpPRB->SRB_Lun);
+      lpPRB->SRB_Status = SS_NO_DEVICE;
+      return SS_NO_DEVICE;
   }
 
   sg_hd = NULL;
