@@ -683,7 +683,7 @@ TREEVIEW_UpdateDispInfo(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
     NMTVDISPINFOA callback;
     HWND hwnd = infoPtr->hwnd;
 
-    mask &= ~wineItem->callbackMask;
+    mask &= wineItem->callbackMask;
 
     if (mask == 0) return;
 
@@ -1151,6 +1151,9 @@ TREEVIEW_DoSetItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 	      tvItem->stateMask);
 	wineItem->state &= ~tvItem->stateMask;
 	wineItem->state |= (tvItem->state & tvItem->stateMask);
+
+	if (tvItem->stateMask & TVIS_BOLD)
+	  callbackSet |= TVIF_TEXT;
     }
 
     wineItem->callbackMask |= callbackSet;
