@@ -6,16 +6,13 @@
  * Copyright 1994 	Martin Ayotte
  * Copyright 1998 	Luiz Otavio L. Zorzella (init procedures)
  * Copyright 1998/1999	Eric POUECH : 
- * 		98/7 changes for making this MIDI driver work on OSS
+ * 		98/7 	changes for making this MIDI driver work on OSS
  * 			current support is limited to MIDI ports of OSS systems
  * 		98/9	rewriting MCI code for MIDI
- * 		98/11 splitted in midi.c and mcimidi.c
+ * 		98/11 	splitted in midi.c and mcimidi.c
  */
 
-#include "config.h"
-#include <errno.h>
 #include <string.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -23,6 +20,7 @@
 #include "multimedia.h"
 #include "driver.h"
 #include "debugtools.h"
+#include "heap.h"
 #include "ldt.h"
 
 DEFAULT_DEBUG_CHANNEL(midi)
@@ -95,6 +93,9 @@ static	LPMIDIINCAPS16  midiInDevices [MAX_MIDIINDRV];
 
 #ifdef HAVE_OSS_MIDI
 
+static int midiOpenSeq(void);
+static int midiCloseSeq(void);
+
 /**************************************************************************
  * 			unixToWindowsDeviceType  		[internal]
  *
@@ -132,30 +133,27 @@ static	int 	MIDI_UnixToWindowsDeviceType(int type)
  * Initializes the MIDI devices information variables
  *
  */
+/* FIXME: this function shall be moved to the OSS drivers DLL entry point */
 BOOL MULTIMEDIA_MidiInit(void)
 {
 #ifdef HAVE_OSS_MIDI
     int 		i, status, numsynthdevs = 255, nummididevs = 255;
     struct synth_info 	sinfo;
     struct midi_info 	minfo;
-    int 		fd;        /* file descriptor for MIDI_SEQ */
     
     TRACE("Initializing the MIDI variables.\n");
     
     /* try to open device */
-    /* FIXME: should use function midiOpenSeq() in midi.c */
-    fd = open(MIDI_SEQ, O_WRONLY);
-    if (fd == -1) {
-	TRACE("No sequencer found: unable to open `%s'.\n", MIDI_SEQ);
+    if (midiOpenSeq() == -1) {
 	return TRUE;
     }
     
     /* find how many Synth devices are there in the system */
-    status = ioctl(fd, SNDCTL_SEQ_NRSYNTHS, &numsynthdevs);
+    status = ioctl(midiSeqFD, SNDCTL_SEQ_NRSYNTHS, &numsynthdevs);
     
     if (status == -1) {
 	ERR("ioctl for nr synth failed.\n");
-	close(fd);
+	midiCloseSeq();
 	return TRUE;
     }
 
@@ -169,14 +167,14 @@ BOOL MULTIMEDIA_MidiInit(void)
 	LPMIDIOUTCAPS16 tmplpCaps;
 	
 	sinfo.device = i;
-	status = ioctl(fd, SNDCTL_SYNTH_INFO, &sinfo);
+	status = ioctl(midiSeqFD, SNDCTL_SYNTH_INFO, &sinfo);
 	if (status == -1) {
 	    ERR("ioctl for synth info failed.\n");
-	    close(fd);
+	    midiCloseSeq();
 	    return TRUE;
 	}
 	
-	tmplpCaps = malloc(sizeof(MIDIOUTCAPS16));
+	tmplpCaps = HeapAlloc(SystemHeap, 0, sizeof(MIDIOUTCAPS16));
 	if (!tmplpCaps)
 	    break;
 	/* We also have the information sinfo.synth_subtype, not used here
@@ -223,9 +221,10 @@ BOOL MULTIMEDIA_MidiInit(void)
     }
     
     /* find how many MIDI devices are there in the system */
-    status = ioctl(fd, SNDCTL_SEQ_NRMIDIS, &nummididevs);
+    status = ioctl(midiSeqFD, SNDCTL_SEQ_NRMIDIS, &nummididevs);
     if (status == -1) {
 	ERR("ioctl on nr midi failed.\n");
+	midiCloseSeq();
 	return TRUE;
     }
     
@@ -247,14 +246,14 @@ BOOL MULTIMEDIA_MidiInit(void)
 	LPMIDIINCAPS16  tmplpInCaps;
 	
 	minfo.device = i;
-	status = ioctl(fd, SNDCTL_MIDI_INFO, &minfo);
+	status = ioctl(midiSeqFD, SNDCTL_MIDI_INFO, &minfo);
 	if (status == -1) {
 	    ERR("ioctl on midi info failed.\n");
-	    close(fd);
+	    midiCloseSeq();
 	    return TRUE;
 	}
 	
-	tmplpOutCaps = malloc(sizeof(MIDIOUTCAPS16));
+	tmplpOutCaps = HeapAlloc(SystemHeap, 0, sizeof(MIDIOUTCAPS16));
 	if (!tmplpOutCaps)
 	    break;
 	/* This whole part is somewhat obscure to me. I'll keep trying to dig
@@ -280,7 +279,7 @@ BOOL MULTIMEDIA_MidiInit(void)
 	
 	midiOutDevices[numsynthdevs + i] = tmplpOutCaps;
 	
-	tmplpInCaps = malloc(sizeof(MIDIOUTCAPS16));
+	tmplpInCaps = HeapAlloc(SystemHeap, 0, sizeof(MIDIOUTCAPS16));
 	if (!tmplpInCaps)
 	    break;
 	/* This whole part is somewhat obscure to me. I'll keep trying to dig
@@ -316,7 +315,7 @@ BOOL MULTIMEDIA_MidiInit(void)
     MIDM_NUMDEVS        = nummididevs;
     
     /* close file and exit */
-    close(fd);	
+    midiCloseSeq();
 #endif /* HAVE_OSS_MIDI */
     
     return TRUE;
@@ -411,7 +410,8 @@ static int midiCloseSeq(void)
 SEQ_DEFINEBUF(1024);
 
 /* FIXME: this is not reentrant, not static - because of global variable 
- * _seqbuf and al. */
+ * _seqbuf and al. 
+ */
 /**************************************************************************
  * 			seqbuf_dump				[internal]
  */
@@ -1016,8 +1016,9 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     switch (midiOutDevices[wDevID]->wTechnology) {
     case MOD_FMSYNTH:
 	{
-	    void*	extra = malloc(sizeof(struct sFMextra) + 
-				       sizeof(struct sVoice) * (midiOutDevices[wDevID]->wVoices - 1));
+	    void*	extra = HeapAlloc(GetProcessHeap(), 0, 
+					  sizeof(struct sFMextra) + 
+					  sizeof(struct sVoice) * (midiOutDevices[wDevID]->wVoices - 1));
 	    
 	    if (extra == 0) {
 		WARN("can't alloc extra data !\n");
@@ -1026,13 +1027,13 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	    MidiOutDev[wDevID].lpExtra = extra;
 	    if (midiOpenSeq() < 0) {
 		MidiOutDev[wDevID].lpExtra = 0;
-		free(extra);
+		HeapFree(GetProcessHeap(), 0, extra);
 		return MMSYSERR_ERROR;
 	    }
 	    if (modFMLoad(wDevID) < 0) {
 		midiCloseSeq();
 		MidiOutDev[wDevID].lpExtra = 0;
-		free(extra);
+		HeapFree(GetProcessHeap(), 0, extra);
 		return MMSYSERR_ERROR;
 	    }
 	    modFMReset(wDevID);
@@ -1098,7 +1099,7 @@ static DWORD modClose(WORD wDevID)
     }
     
     if (MidiOutDev[wDevID].lpExtra != 0) {
-	free(MidiOutDev[wDevID].lpExtra);
+        HeapFree(GetProcessHeap(), 0, MidiOutDev[wDevID].lpExtra);
 	MidiOutDev[wDevID].lpExtra = 0;
     }
     
@@ -1232,8 +1233,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		case CTL_NONREG_PARM_NUM_LSB:	channel[chn].nrgPmtLSB = d2;	break;
 		case CTL_NONREG_PARM_NUM_MSB:	channel[chn].nrgPmtMSB = d2;	break;
 		case CTL_REGIST_PARM_NUM_LSB:	channel[chn].regPmtLSB = d2;	break;
-		case CTL_REGIST_PARM_NUM_MSB:	channel[chn].regPmtMSB = d2;	break;
-		    
+		case CTL_REGIST_PARM_NUM_MSB:	channel[chn].regPmtMSB = d2;	break;		    
 		case CTL_DATA_ENTRY:
 		    switch ((channel[chn].regPmtMSB << 8) | channel[chn].regPmtLSB) {
 		    case 0x0000: 
@@ -1271,7 +1271,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		    for (i = 0; i < midiOutDevices[wDevID]->wVoices; i++) {
 			if (voice[i].status != sVS_UNUSED && voice[i].channel == chn) {
 			    voice[i].status = sVS_UNUSED;
-			    SEQ_STOP_NOTE(wDevID, i, voice[i].note, 0);
+			    SEQ_STOP_NOTE(wDevID, i, voice[i].note, 64);
 			}
 		    }
 		    break;
@@ -1282,7 +1282,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 		    for (i = 0; i < midiOutDevices[wDevID]->wVoices; i++) {
 			if (voice[i].status == sVS_PLAYING && voice[i].channel == chn) {
 			    voice[i].status = sVS_UNUSED;
-			    SEQ_STOP_NOTE(wDevID, i, voice[i].note, 0);
+			    SEQ_STOP_NOTE(wDevID, i, voice[i].note, 64);
 			}
 		    }
 		    break;	
