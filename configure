@@ -17098,8 +17098,6 @@ esac
 
           ac_config_commands="$ac_config_commands misc"
 
-          ac_config_commands="$ac_config_commands msdos"
-
           ac_config_commands="$ac_config_commands objects"
 
           ac_config_commands="$ac_config_commands programs/regapi/tests"
@@ -17871,7 +17869,6 @@ do
   "graphics/x11drv" ) CONFIG_COMMANDS="$CONFIG_COMMANDS graphics/x11drv" ;;
   "include/wine" ) CONFIG_COMMANDS="$CONFIG_COMMANDS include/wine" ;;
   "misc" ) CONFIG_COMMANDS="$CONFIG_COMMANDS misc" ;;
-  "msdos" ) CONFIG_COMMANDS="$CONFIG_COMMANDS msdos" ;;
   "objects" ) CONFIG_COMMANDS="$CONFIG_COMMANDS objects" ;;
   "programs/regapi/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/regapi/tests" ;;
   "programs/regedit/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/regedit/tests" ;;
@@ -18599,8 +18596,6 @@ echo "$as_me: creating graphics/x11drv" >&6;} && mkdir "graphics/x11drv") ;;
 echo "$as_me: creating include/wine" >&6;} && mkdir "include/wine") ;;
     misc ) test -d "misc" || ({ echo "$as_me:$LINENO: creating misc" >&5
 echo "$as_me: creating misc" >&6;} && mkdir "misc") ;;
-    msdos ) test -d "msdos" || ({ echo "$as_me:$LINENO: creating msdos" >&5
-echo "$as_me: creating msdos" >&6;} && mkdir "msdos") ;;
     objects ) test -d "objects" || ({ echo "$as_me:$LINENO: creating objects" >&5
 echo "$as_me: creating objects" >&6;} && mkdir "objects") ;;
     programs/regapi/tests ) test -d "programs/regapi/tests" || ({ echo "$as_me:$LINENO: creating programs/regapi/tests" >&5

@@ -182,7 +182,6 @@ respective dlls.
 
 	files/			- KERNEL file I/O
 	misc/			- KERNEL shell, registry, winsock, etc.
-	msdos/			- KERNEL DOS support
 
 	graphics/		- GDI graphics drivers
 	objects/		- GDI logical objects

@@ -199,13 +199,11 @@ dlls/iphlpapi
 dlls/kernel
 files
 misc
-msdos
 
 % dlls/kernel/kernel32.spec
 
 dlls/kernel
 files
-msdos
 misc
 
 % dlls/mapi32/mapi32.spec
@@ -661,7 +659,6 @@ dlls/wsock32
 % dlls/winedos/wprocs.spec
 
 dlls/winedos
-msdos
 
 % dlls/winspool/winspool.drv.spec
 
