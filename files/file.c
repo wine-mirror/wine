@@ -987,6 +987,65 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
 }
 
 
+/******************************************************************************
+ * GetCompressedFileSizeA [KERNEL32.@]
+ */
+DWORD WINAPI GetCompressedFileSizeA(
+    LPCSTR lpFileName,
+    LPDWORD lpFileSizeHigh)
+{
+    UNICODE_STRING filenameW;
+    DWORD ret;
+
+    if (RtlCreateUnicodeStringFromAsciiz(&filenameW, lpFileName))
+    {
+        ret = GetCompressedFileSizeW(filenameW.Buffer, lpFileSizeHigh);
+        RtlFreeUnicodeString(&filenameW);
+    }
+    else
+    {
+        ret = INVALID_FILE_SIZE;
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+    }
+    return ret;
+}
+
+
+/******************************************************************************
+ * GetCompressedFileSizeW [KERNEL32.@]
+ *
+ * RETURNS
+ *    Success: Low-order doubleword of number of bytes
+ *    Failure: INVALID_FILE_SIZE
+ */
+DWORD WINAPI GetCompressedFileSizeW(
+    LPCWSTR lpFileName,     /* [in]  Pointer to name of file */
+    LPDWORD lpFileSizeHigh) /* [out] Receives high-order doubleword of size */
+{
+    DOS_FULL_NAME full_name;
+    struct stat st;
+    DWORD low;
+
+    TRACE("(%s,%p)\n",debugstr_w(lpFileName),lpFileSizeHigh);
+
+    if (!DOSFS_GetFullName( lpFileName, TRUE, &full_name )) return INVALID_FILE_SIZE;
+    if (stat(full_name.long_name, &st) != 0)
+    {
+        FILE_SetDosError();
+        return INVALID_FILE_SIZE;
+    }
+#if HAVE_STRUCT_STAT_ST_BLOCKS
+    /* blocks are 512 bytes long */
+    if (lpFileSizeHigh) *lpFileSizeHigh = (st.st_blocks >> 23);
+    low = (DWORD)(st.st_blocks << 9);
+#else
+    if (lpFileSizeHigh) *lpFileSizeHigh = (st.st_size >> 32);
+    low = (DWORD)st.st_size;
+#endif
+    return low;
+}
+
+
 /***********************************************************************
  *           GetFileTime   (KERNEL32.@)
  */

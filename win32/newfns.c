@@ -46,37 +46,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(win32);
 
 
 /******************************************************************************
- * GetCompressedFileSizeA [KERNEL32.@]
- *
- * NOTES
- *    This should call the W function below
- */
-DWORD WINAPI GetCompressedFileSizeA(
-    LPCSTR lpFileName,
-    LPDWORD lpFileSizeHigh)
-{
-    FIXME("(...): stub\n");
-    return 0xffffffff;
-}
-
-
-/******************************************************************************
- * GetCompressedFileSizeW [KERNEL32.@]
- *
- * RETURNS
- *    Success: Low-order doubleword of number of bytes
- *    Failure: 0xffffffff
- */
-DWORD WINAPI GetCompressedFileSizeW(
-    LPCWSTR lpFileName,     /* [in]  Pointer to name of file */
-    LPDWORD lpFileSizeHigh) /* [out] Receives high-order doubleword of size */
-{
-    FIXME("(%s,%p): stub\n",debugstr_w(lpFileName),lpFileSizeHigh);
-    return 0xffffffff;
-}
-
-
-/******************************************************************************
  *		CreateIoCompletionPort (KERNEL32.@)
  */
 HANDLE WINAPI CreateIoCompletionPort(HANDLE hFileHandle,
