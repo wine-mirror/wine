@@ -385,6 +385,7 @@ VS_VERSION_INFO_STRUCT16 *VersionInfo16_FindChild( VS_VERSION_INFO_STRUCT16 *inf
         if ( !lstrncmpi32A( child->szKey, szKey, cbKey ) )
             return child;
 
+	if (!(child->wLength)) return NULL;
         child = VersionInfo16_Next( child );
     }
 
