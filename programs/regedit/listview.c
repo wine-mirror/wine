@@ -44,7 +44,6 @@ static WNDPROC g_orgListWndProc;
 static DWORD g_columnToSort = ~0UL;
 static BOOL  g_invertSort = FALSE;
 static LPTSTR g_valueName;
-static LPCTSTR g_currentValue;
 static LPTSTR g_currentPath;
 static HKEY g_currentRootKey;
 
@@ -52,28 +51,36 @@ static HKEY g_currentRootKey;
 static int default_column_widths[MAX_LIST_COLUMNS] = { 200, 175, 400 };
 static int column_alignment[MAX_LIST_COLUMNS] = { LVCFMT_LEFT, LVCFMT_LEFT, LVCFMT_LEFT };
 
+LPTSTR get_item_text(HWND hwndLV, int item)
+{
+    LPTSTR newStr, curStr;
+    int maxLen = 128;
+
+    curStr = HeapAlloc(GetProcessHeap(), 0, maxLen);
+    if (!curStr) return NULL;
+    do {
+        ListView_GetItemText(hwndLV, item, 0, curStr, maxLen);
+	if (_tcslen(curStr) < maxLen - 1) return curStr;
+	newStr = HeapReAlloc(GetProcessHeap(), 0, curStr, maxLen * 2);
+	if (!newStr) break;
+	curStr = newStr;
+	maxLen *= 2;
+    } while (TRUE);
+    HeapFree(GetProcessHeap(), 0, curStr);
+    return NULL;
+}
+
 LPCTSTR GetValueName(HWND hwndLV)
 {
-    int item, len, maxLen;
-    LPTSTR newStr;
+    INT item;
 
-    if (!g_valueName) g_valueName = HeapAlloc(GetProcessHeap(), 0, 1024);
-    if (!g_valueName) return NULL;
-    *g_valueName = 0;
-    maxLen = HeapSize(GetProcessHeap(), 0, g_valueName);
-    if (maxLen == (SIZE_T) - 1) return NULL;
+    if (g_valueName) HeapFree(GetProcessHeap(), 0,  g_valueName);
+    g_valueName = NULL;
 
     item = ListView_GetNextItem(hwndLV, -1, LVNI_FOCUSED);
     if (item == -1) return NULL;
-    do {
-        ListView_GetItemText(hwndLV, item, 0, g_valueName, maxLen);
-	len = _tcslen(g_valueName);
-	if (len < maxLen - 1) break;
-	newStr = HeapReAlloc(GetProcessHeap(), 0, g_valueName, maxLen * 2);
-	if (!newStr) return NULL;
-	g_valueName = newStr;
-	maxLen *= 2;
-    } while (TRUE);
+
+    g_valueName = get_item_text(hwndLV, item);
 
     return g_valueName;
 }
@@ -244,18 +251,12 @@ static void ListViewPopUpMenu(HWND hWnd, POINT pt)
 {
 }
 
-BOOL StartValueRename(HWND hwndLV, HKEY hRootKey, LPCTSTR path)
+BOOL StartValueRename(HWND hwndLV)
 {
     int item;
 
-    item = ListView_GetNextItem(hwndLV, -1, LVNI_FOCUSED);
-    if (item == -1) return FALSE;
-    if (!(g_currentValue = GetValueName(hwndLV))) return FALSE;
-    g_currentRootKey = hRootKey;
-    HeapFree(GetProcessHeap(), 0, g_currentPath);
-    g_currentPath = HeapAlloc(GetProcessHeap(), 0, (lstrlen(path) + 1) * sizeof(TCHAR));
-    if (!g_currentPath) return FALSE;
-    lstrcpy(g_currentPath, path);
+    item = ListView_GetNextItem(hwndLV, -1, LVNI_FOCUSED | LVNI_SELECTED);
+    if (item < 0) return FALSE;
     if (!ListView_EditLabel(hwndLV, item)) return FALSE;
     return TRUE;
 }
@@ -294,8 +295,14 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
                     
             ListView_SortItems(hWnd, CompareFunc, hWnd);
             break;
-	case LVN_ENDLABELEDIT:
-	    return RenameValue(hWnd, g_currentRootKey, g_currentPath, g_currentValue, ((LPNMLVDISPINFO)lParam)->item.pszText);
+	case LVN_ENDLABELEDIT: {
+	        LPNMLVDISPINFO dispInfo = (LPNMLVDISPINFO)lParam;
+		LPTSTR valueName = get_item_text(hWnd, dispInfo->item.iItem);
+	        BOOL res = RenameValue(hWnd, g_currentRootKey, g_currentPath, valueName, dispInfo->item.pszText);
+		if (res) RefreshListView(hWnd, g_currentRootKey, g_currentPath);
+		HeapFree(GetProcessHeap(), 0, valueName);
+		return res;
+	    }
         case NM_DBLCLK: {
                 NMITEMACTIVATE* nmitem = (LPNMITEMACTIVATE)lParam;
                 LVHITTESTINFO info;
@@ -394,13 +401,16 @@ fail:
     return NULL;
 }
 
-BOOL RefreshListView(HWND hwndLV, HKEY hKey, LPCTSTR keyPath)
+BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath)
 {
+    BOOL result = FALSE;
     DWORD max_sub_key_len;
-    DWORD max_val_name_len;
-    DWORD max_val_size;
-    DWORD val_count;
-    HKEY hNewKey;
+    DWORD max_val_name_len, valNameLen;
+    DWORD max_val_size, valSize;
+    DWORD val_count, index, valType;
+    TCHAR* valName = 0;
+    BYTE* valBuf = 0;
+    HKEY hKey = 0;
     LONG errCode;
     INT count, i;
     LVITEM item;
@@ -408,6 +418,10 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKey, LPCTSTR keyPath)
     if (!hwndLV) return FALSE;
 
     SendMessage(hwndLV, WM_SETREDRAW, FALSE, 0);
+
+    errCode = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_READ, &hKey);
+    if (errCode != ERROR_SUCCESS) goto done;
+
     count = ListView_GetItemCount(hwndLV);
     for (i = 0; i < count; i++) {
         item.mask = LVIF_PARAM;
@@ -419,40 +433,47 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKey, LPCTSTR keyPath)
     g_columnToSort = ~0UL;
     ListView_DeleteAllItems(hwndLV);
 
-    errCode = RegOpenKeyEx(hKey, keyPath, 0, KEY_READ, &hNewKey);
-    if (errCode != ERROR_SUCCESS) return FALSE;
-
     /* get size information and resize the buffers if necessary */
-    errCode = RegQueryInfoKey(hNewKey, NULL, NULL, NULL, NULL, &max_sub_key_len, NULL, 
+    errCode = RegQueryInfoKey(hKey, NULL, NULL, NULL, NULL, &max_sub_key_len, NULL, 
                               &val_count, &max_val_name_len, &max_val_size, NULL, NULL);
+    if (errCode != ERROR_SUCCESS) goto done;
 
-    #define BUF_HEAD_SPACE 2 /* FIXME: check why this is required with ROS ??? */
+    /* account for the terminator char */
+    max_val_name_len++;
+    max_val_size++;
 
-    if (errCode == ERROR_SUCCESS) {
-        TCHAR* ValName = HeapAlloc(GetProcessHeap(), 0, ++max_val_name_len * sizeof(TCHAR) + BUF_HEAD_SPACE);
-        DWORD dwValNameLen = max_val_name_len;
-        BYTE* ValBuf = HeapAlloc(GetProcessHeap(), 0, ++max_val_size/* + BUF_HEAD_SPACE*/);
-        DWORD dwValSize = max_val_size;
-        DWORD dwIndex = 0L;
-        DWORD dwValType;
-        /*                if (RegQueryValueEx(hNewKey, NULL, NULL, &dwValType, ValBuf, &dwValSize) == ERROR_SUCCESS) { */
-        /*                    AddEntryToList(hwndLV, _T("(Default)"), dwValType, ValBuf, dwValSize); */
-        /*                } */
-        /*                dwValSize = max_val_size; */
-        while (RegEnumValue(hNewKey, dwIndex, ValName, &dwValNameLen, NULL, &dwValType, ValBuf, &dwValSize) == ERROR_SUCCESS) {
-            ValBuf[dwValSize] = 0;
-            AddEntryToList(hwndLV, ValName, dwValType, ValBuf, dwValSize);
-            dwValNameLen = max_val_name_len;
-            dwValSize = max_val_size;
-            dwValType = 0L;
-            ++dwIndex;
-        }
-        HeapFree(GetProcessHeap(), 0, ValBuf);
-        HeapFree(GetProcessHeap(), 0, ValName);
+    valName = HeapAlloc(GetProcessHeap(), 0, max_val_name_len * sizeof(TCHAR));
+    valBuf = HeapAlloc(GetProcessHeap(), 0, max_val_size);
+    /*if (RegQueryValueEx(hKey, NULL, NULL, &dwValType, ValBuf, &dwValSize) == ERROR_SUCCESS) { */
+    /*    AddEntryToList(hwndLV, _T("(Default)"), dwValType, ValBuf, dwValSize); */
+    /*} */
+    /*dwValSize = max_val_size; */
+    for(index = 0; index < val_count; index++) {
+        valNameLen = max_val_name_len;
+        valSize = max_val_size;
+	valType = 0;
+        errCode = RegEnumValue(hKey, index, valName, &valNameLen, NULL, &valType, valBuf, &valSize);
+	if (errCode != ERROR_SUCCESS) goto done;
+        valBuf[valSize] = 0;
+        AddEntryToList(hwndLV, valName, valType, valBuf, valSize);
     }
     ListView_SortItems(hwndLV, CompareFunc, hwndLV);
-    RegCloseKey(hNewKey);
-    SendMessage(hwndLV, WM_SETREDRAW, TRUE, 0);
 
-    return TRUE;
+    g_currentRootKey = hKeyRoot;
+    if (keyPath != g_currentPath) {
+	HeapFree(GetProcessHeap(), 0, g_currentPath);
+	g_currentPath = HeapAlloc(GetProcessHeap(), 0, (lstrlen(keyPath) + 1) * sizeof(TCHAR));
+	if (!g_currentPath) goto done;
+	lstrcpy(g_currentPath, keyPath);
+    }
+
+    result = TRUE;
+
+done:
+    HeapFree(GetProcessHeap(), 0, valBuf);
+    HeapFree(GetProcessHeap(), 0, valName);
+    SendMessage(hwndLV, WM_SETREDRAW, TRUE, 0);
+    if (hKey) RegCloseKey(hKey);
+
+    return result;
 }

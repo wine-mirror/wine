@@ -88,8 +88,8 @@ extern void UpdateStatusBar(void);
 
 /* listview.c */
 extern HWND CreateListView(HWND hwndParent, int id);
-extern BOOL RefreshListView(HWND hwndLV, HKEY hKey, LPCTSTR keyPath);
-extern BOOL StartValueRename(HWND hwndLV, HKEY hKey, LPCTSTR keyPath);
+extern BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCTSTR keyPath);
+extern BOOL StartValueRename(HWND hwndLV);
 extern LPCTSTR GetValueName(HWND hwndLV);
 
 /* treeview.c */

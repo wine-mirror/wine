@@ -290,6 +290,8 @@ BOOL RenameValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR oldName, LPC
     BOOL result = FALSE;
     HKEY hKey;
 
+    if (!newName) return FALSE;
+
     lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);
     if (lRet != ERROR_SUCCESS) return FALSE;
     value = read_value(hwnd, hKey, oldName, &type, &len);
