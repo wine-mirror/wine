@@ -29,7 +29,7 @@ $(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(ALL_OBJS) $(WINEBUILD)
 # Rules for .so main module
 
 $(MODULE).so: $(MODULE).spec.o $(ALL_OBJS) Makefile.in
-	$(LDSHARED) $(LDDLLFLAGS) $(MODULE).spec.o $(ALL_OBJS) -o $@ $(ALL_LIBS)
+	$(LDSHARED) $(LDDLLFLAGS) $(MODULE).spec.o $(ALL_OBJS) -o $@ $(ALL_LIBS) -lc
 
 $(BASEMODULE): $(WINEWRAPPER)
 	$(RM) $@ && $(LN_S) $(WINEWRAPPER) $@

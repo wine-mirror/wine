@@ -28,7 +28,7 @@ $(MAINSPEC).c: $(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(WINEBUILD)
 	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --spec $(SRCDIR)/$(MAINSPEC) $(RC_SRCS:%.rc=-r %.res) $(SYMBOLFILE) $(DLLMAIN:%=-e %) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
 
 $(MODULE).so: $(MAINSPEC).o $(ALL_OBJS) Makefile.in
-	$(LDSHARED) $(LDDLLFLAGS) $(MAINSPEC).o $(ALL_OBJS) -o $@ -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(ALL_LIBS)
+	$(LDSHARED) $(LDDLLFLAGS) $(MAINSPEC).o $(ALL_OBJS) -o $@ -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(ALL_LIBS) -lc
 
 $(MODULE).tmp.o: $(ALL_OBJS) Makefile.in
 	$(LDCOMBINE) $(ALL_OBJS) -o $@

@@ -35,7 +35,7 @@ $(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(OBJS) $(WINEBUILD)
 # Rules for .so main module
 
 $(MODULE).so: $(MODULE).spec.o $(OBJS) Makefile.in
-	$(LDSHARED) $(LDDLLFLAGS) $(MODULE).spec.o $(OBJS) -o $@ $(ALL_LIBS)
+	$(LDSHARED) $(LDDLLFLAGS) $(MODULE).spec.o $(OBJS) -o $@ $(ALL_LIBS) -lc
 
 # Rules for .exe main module
 
