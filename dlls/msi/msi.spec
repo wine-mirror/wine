@@ -215,4 +215,22 @@
 215 stub MsiIsProductElevatedW
 216 stub MsiGetShortcutTargetA
 217 stub MsiGetShortcutTargetW
-
+218 stub MsiGetFileHashA
+219 stub MsiGetFileHashW
+220 stub MsiEnumComponentCostsA
+221 stub MsiEnumComponentCostsW
+222 stub MsiCreateAndVerifyInstallerDirectory
+223 stub MsiGetFileSignatureInformationA
+224 stub MsiGetFileSignatureInformationW
+225 stub MsiProvideAssemblyA
+226 stub MsiProvideAssemblyW
+227 stub MsiAdvertiseProductExA
+228 stub MsiAdvertiseProductExW
+229 stub MsiNotifySidChangeA
+230 stub MsiNotifySidChangeW
+231 stub MsiOpenPackageExA
+232 stub MsiOpenPackageExW
+233 stub MsiDeleteUserDataA
+234 stub MsiDeleteUserDataW
+235 stub Migrate10CachedPackagesA
+236 stub Migrate10CachedPackagesW
