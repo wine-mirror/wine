@@ -222,7 +222,7 @@ int main(int argc,char *argv[])
   atexit(rm_tempfile);
   if (!no_preprocess)
   {
-    chat("Starting preprocess");
+    chat("Starting preprocess\n");
 
     if (!preprocess_only)
     {

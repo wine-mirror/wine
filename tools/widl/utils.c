@@ -93,7 +93,6 @@ void internal_error(const char *file, int line, const char *s, ...)
 	va_start(ap, s);
 	fprintf(stderr, "Internal error (please report) %s %d: ", file, line);
 	vfprintf(stderr, s, ap);
-	fprintf(stderr, "\n");
 	va_end(ap);
 	exit(3);
 }
@@ -102,9 +101,8 @@ void error(const char *s, ...)
 {
 	va_list ap;
 	va_start(ap, s);
-	fprintf(stderr, "Error: ");
+	fprintf(stderr, "error: ");
 	vfprintf(stderr, s, ap);
-	fprintf(stderr, "\n");
 	va_end(ap);
 	exit(2);
 }
@@ -113,9 +111,8 @@ void warning(const char *s, ...)
 {
 	va_list ap;
 	va_start(ap, s);
-	fprintf(stderr, "Warning: ");
+	fprintf(stderr, "warning: ");
 	vfprintf(stderr, s, ap);
-	fprintf(stderr, "\n");
 	va_end(ap);
 }
 
@@ -125,9 +122,8 @@ void chat(const char *s, ...)
 	{
 		va_list ap;
 		va_start(ap, s);
-		fprintf(stderr, "FYI: ");
+		fprintf(stderr, "chat: ");
 		vfprintf(stderr, s, ap);
-		fprintf(stderr, "\n");
 		va_end(ap);
 	}
 }
