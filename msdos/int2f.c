@@ -370,7 +370,7 @@ void do_mscdex( CONTEXT *context )
             break;
 
         case 0x0D: /* get drive letters */
-	    p = CTX_SEG_OFF_TO_LIN(context, ES_reg(context), BX_reg(context));
+	    p = CTX_SEG_OFF_TO_LIN(context, ES_reg(context), EBX_reg(context));
             memset( p, 0, MAX_DOS_DRIVES );
             for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
             {

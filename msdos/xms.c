@@ -72,7 +72,7 @@ void WINAPI XMS_Handler( CONTEXT *context )
     case 0x0b:   /* Move Extended Memory Block */
     {
 	MOVESTRUCT*move=CTX_SEG_OFF_TO_LIN(context,
-	    DS_reg(context),SI_reg(context));
+	    DS_reg(context),ESI_reg(context));
         BYTE*src,*dst;
         TRACE(int31, "move extended memory block\n");
         src=XMS_Offset(&move->Source);

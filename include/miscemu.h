@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "winnt.h"
+#include "ldt.h"
 
   /* msdos/dosmem.c */
 extern HANDLE16 DOSMEM_BiosSeg;
@@ -71,11 +72,11 @@ extern void WINAPI INT_Int20Handler(CONTEXT*);
 /* msdos/int25.c */
 extern void WINAPI INT_Int25Handler(CONTEXT*);
 
+/* msdos/int26.c */
+extern void WINAPI INT_Int26Handler(CONTEXT*);
+
 /* msdos/int29.c */
 extern void WINAPI INT_Int29Handler(CONTEXT*);
-
-/* msdos/int25.c */
-extern void WINAPI INT_Int25Handler(CONTEXT*);
 
 /* msdos/int2f.c */
 extern void WINAPI INT_Int2fHandler(CONTEXT*);
@@ -97,9 +98,24 @@ extern BOOL32 SIGNAL_InitEmulator(void);
 /* misc/aspi.c */
 extern void ASPI_DOS_HandleInt(CONTEXT *context);
 
+/* NOTE: Interrupts might get called from three modes: real mode, 16-bit, and 
+ *        (via DeviceIoControl) 32-bit. For automatic conversion of pointer 
+ *       parameters, interrupt handlers should use CTX_SEG_OFF_TO_LIN with
+ *       the contents of a segement register as second and the contents of
+ *       a *32-bit* general register as third parameter, e.g.
+ *          CTX_SEG_OFF_TO_LIN( context, DS_reg(context), EDX_reg(context) )
+ *       This will generate a linear pointer in all three cases:
+ *         Real-Mode:   Seg*16 + LOWORD(Offset) + V86BASE
+ *         16-bit:      convert (Seg, LOWORD(Offset)) to linear
+ *         32-bit:      use Offset as linear address (DeviceIoControl!)
+ *
+ *       Real-mode is recognized by checking the V86 bit in the flags register,
+ *       32-bit mode is recognized by checking whether 'seg' is a system selector
+ *       (0 counts also as 32-bit segment).
+ */
 #define CTX_SEG_OFF_TO_LIN(context,seg,off) \
-    (ISV86(context) ? (void*)(V86BASE(context)+((seg)<<4)+off) \
-                    : PTR_SEG_OFF_TO_LIN(seg,off))
+    (ISV86(context) ? (void*)(V86BASE(context)+((seg)<<4)+(off&0xffff)) : \
+     (!seg || IS_SELECTOR_SYSTEM(seg))? (void *)off : PTR_SEG_OFF_TO_LIN(seg,off&0xffff))
 
 #define INT_BARF(context,num) \
     fprintf( stderr, "int%x: unknown/not implemented parameters:\n" \

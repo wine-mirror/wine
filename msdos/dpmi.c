@@ -222,7 +222,7 @@ int DPMI_CallRMProc( CONTEXT *context, LPWORD stack, int args, int iret )
             return 1;
         }
     } else {
-        stack16 = CTX_SEG_OFF_TO_LIN(context, SS_reg(context), SP_reg(context));
+        stack16 = CTX_SEG_OFF_TO_LIN(context, SS_reg(context), ESP_reg(context));
         addr = NULL; /* avoid gcc warning */
     }
     SP_reg(context) -= args*sizeof(WORD) + (iret?1:0);
@@ -253,7 +253,7 @@ int DPMI_CallRMProc( CONTEXT *context, LPWORD stack, int args, int iret )
     TRACE(int31,"returned from real-mode call\n");
     if (alloc) DOSMEM_FreeBlock( pModule->self, addr );
 #else
-    addr = CTX_SEG_OFF_TO_LIN(context, CS_reg(context), IP_reg(context));
+    addr = CTX_SEG_OFF_TO_LIN(context, CS_reg(context), EIP_reg(context));
     sel = SELECTOR_AllocBlock( addr, 0x10000, SEGMENT_CODE, FALSE, FALSE );
     seg_addr = PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
 

@@ -18,7 +18,7 @@
  */
 void WINAPI INT_Int26Handler( CONTEXT *context )
 {
-    BYTE *dataptr = PTR_SEG_OFF_TO_LIN( DS_reg(context), BX_reg(context) );
+    BYTE *dataptr = CTX_SEG_OFF_TO_LIN( context, DS_reg(context), EBX_reg(context) );
     DWORD begin, length;
     int fd;
 
@@ -33,7 +33,8 @@ void WINAPI INT_Int26Handler( CONTEXT *context )
     {
         begin   = *(DWORD *)dataptr;
         length  = *(WORD *)(dataptr + 4);
-        dataptr = (BYTE *)PTR_SEG_TO_LIN( *(SEGPTR *)(dataptr + 6) );
+        dataptr = (BYTE *)CTX_SEG_OFF_TO_LIN( context,
+                                        *(WORD *)(dataptr + 8), *(DWORD *)(dataptr + 6) );
     }
     else
     {
