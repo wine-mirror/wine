@@ -1536,39 +1536,42 @@ LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
 
 
 /******************************************************************************
- *           RegSaveKeyA   [ADVAPI32.@]
+ *           RegSaveKeyW   [ADVAPI32.@]
  *
  * PARAMS
  *    hkey   [I] Handle of key where save begins
  *    lpFile [I] Address of filename to save to
  *    sa     [I] Address of security structure
  */
-LONG WINAPI RegSaveKeyA( HKEY hkey, LPCSTR file, LPSECURITY_ATTRIBUTES sa )
+LONG WINAPI RegSaveKeyW( HKEY hkey, LPCWSTR file, LPSECURITY_ATTRIBUTES sa )
 {
-    char buffer[1024];
+    static const WCHAR format[] =
+        {'r','e','g','%','0','4','x','.','t','m','p',0};
+    WCHAR buffer[MAX_PATH];
     int count = 0;
-    LPSTR name;
+    LPWSTR nameW;
     DWORD ret, err;
     HANDLE handle;
 
-    TRACE( "(%p,%s,%p)\n", hkey, debugstr_a(file), sa );
+    TRACE( "(%p,%s,%p)\n", hkey, debugstr_w(file), sa );
 
     if (!file || !*file) return ERROR_INVALID_PARAMETER;
     if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
     err = GetLastError();
-    GetFullPathNameA( file, sizeof(buffer), buffer, &name );
+    GetFullPathNameW( file, sizeof(buffer)/sizeof(WCHAR), buffer, &nameW );
+
     for (;;)
     {
-        sprintf( name, "reg%04x.tmp", count++ );
-        handle = CreateFileA( buffer, GENERIC_WRITE, 0, NULL,
+        snprintfW( nameW, 16, format, count++ );
+        handle = CreateFileW( buffer, GENERIC_WRITE, 0, NULL,
                             CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
         if (handle != INVALID_HANDLE_VALUE) break;
         if ((ret = GetLastError()) != ERROR_ALREADY_EXISTS) goto done;
 
         /* Something gone haywire ? Please report if this happens abnormally */
         if (count >= 100)
-            MESSAGE("Wow, we are already fiddling with a temp file %s with an ordinal as high as %d !\nYou might want to delete all corresponding temp files in that directory.\n", buffer, count);
+            MESSAGE("Wow, we are already fiddling with a temp file %s with an ordinal as high as %d !\nYou might want to delete all corresponding temp files in that directory.\n", debugstr_w(buffer), count);
     }
 
     SERVER_START_REQ( save_registry )
@@ -1582,13 +1585,14 @@ LONG WINAPI RegSaveKeyA( HKEY hkey, LPCSTR file, LPSECURITY_ATTRIBUTES sa )
     CloseHandle( handle );
     if (!ret)
     {
-        if (!MoveFileExA( buffer, file, MOVEFILE_REPLACE_EXISTING ))
+        if (!MoveFileExW( buffer, file, MOVEFILE_REPLACE_EXISTING ))
         {
-            ERR( "Failed to move %s to %s\n", buffer, file );
+            ERR( "Failed to move %s to %s\n", debugstr_w(buffer),
+	        debugstr_w(file) );
             ret = GetLastError();
         }
     }
-    if (ret) DeleteFileA( buffer );
+    if (ret) DeleteFileW( buffer );
 
 done:
     SetLastError( err );  /* restore last error code */
@@ -1597,14 +1601,18 @@ done:
 
 
 /******************************************************************************
- *           RegSaveKeyW   [ADVAPI32.@]
+ *           RegSaveKeyA  [ADVAPI32.@]
  */
-LONG WINAPI RegSaveKeyW( HKEY hkey, LPCWSTR file, LPSECURITY_ATTRIBUTES sa )
+LONG WINAPI RegSaveKeyA( HKEY hkey, LPCSTR file, LPSECURITY_ATTRIBUTES sa )
 {
-    LPSTR fileA = HEAP_strdupWtoA( GetProcessHeap(), 0, file );
-    DWORD ret = RegSaveKeyA( hkey, fileA, sa );
-    if (fileA) HeapFree( GetProcessHeap(), 0, fileA );
-    return ret;
+    UNICODE_STRING *fileW = &NtCurrentTeb()->StaticUnicodeString;
+    NTSTATUS status;
+    STRING fileA;
+
+    RtlInitAnsiString(&fileA, file);
+    if ((status = RtlAnsiStringToUnicodeString(fileW, &fileA, FALSE)))
+        return RtlNtStatusToDosError( status );
+    return RegSaveKeyW(hkey, fileW->Buffer, sa);
 }
 
 
@@ -1819,7 +1827,7 @@ LONG WINAPI RegConnectRegistryW( LPCWSTR lpMachineName, HKEY hKey,
 
     if (!lpMachineName || !*lpMachineName) {
         /* Use the local machine name */
-        return RegOpenKeyA( hKey, "", phkResult );
+        return RegOpenKeyW( hKey, NULL, phkResult );
     }
 
     FIXME("Cannot connect to %s\n",debugstr_w(lpMachineName));
