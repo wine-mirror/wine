@@ -614,7 +614,9 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, DWORD size,
     pArena = pEntry->arena.next;
     while (pArena != &heap->freeList[0].arena)
     {
-        if (pArena->size > size)
+        DWORD arena_size = (pArena->size & ARENA_SIZE_MASK) +
+                            sizeof(ARENA_FREE) - sizeof(ARENA_INUSE);
+        if (arena_size >= size)
         {
             subheap = HEAP_FindSubHeap( heap, pArena );
             if (!HEAP_Commit( subheap, (char *)pArena + sizeof(ARENA_INUSE)
@@ -623,7 +625,6 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, DWORD size,
             *ppSubHeap = subheap;
             return pArena;
         }
-
         pArena = pArena->next;
     }
 
