@@ -294,10 +294,8 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
     pTask->hSelf         = hTask;
     pTask->flags         = 0;
 
-    if (pModule->flags & NE_FFLAGS_WIN32)
-    	pTask->flags 	|= TDBF_WIN32;
-    if (pModule->lpDosTask)
-    	pTask->flags 	|= TDBF_WINOLDAP;
+    if (teb->tibflags & TEBF_WIN32) pTask->flags |= TDBF_WIN32;
+    if (pModule->lpDosTask) pTask->flags |= TDBF_WINOLDAP;
 
     pTask->hInstance     = pModule->self;
     pTask->hPrevInstance = 0;
@@ -415,11 +413,6 @@ static void TASK_DeleteTask( HTASK16 hTask )
     hPDB = pTask->hPDB;
 
     pTask->magic = 0xdead; /* invalidate signature */
-
-    /* Delete the Win32 part of the task */
-
-/*    PROCESS_FreePDB( pTask->teb->process ); FIXME */
-/*    K32OBJ_DecCount( &pTask->teb->header ); FIXME */
 
     /* Free the selector aliases */
 
@@ -643,7 +636,7 @@ void TASK_Reschedule(void)
     }
 
     /* If we are still the task with highest priority, just return ... */
-    if ( mode == MODE_YIELD && hNewTask == hCurrentTask )
+    if ( mode == MODE_YIELD && hNewTask && hNewTask == hCurrentTask )
     {
         TRACE("returning to the current task (%04x)\n", hCurrentTask );
         SYSLEVEL_LeaveWin16Lock();
