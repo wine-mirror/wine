@@ -593,9 +593,28 @@ static int _wine_loadsubreg( FILE *F, HKEY hkey, const char *fn )
 		return 0;
 	}
 	if (ver!=REGISTRY_SAVE_VERSION) {
+            if (ver == 2)  /* new version */
+            {
+                HANDLE file;
+                if ((file = FILE_CreateFile( fn, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+                                             FILE_ATTRIBUTE_NORMAL, -1 )) != INVALID_HANDLE_VALUE)
+                {
+                    struct load_registry_request *req = get_req_buffer();
+                    req->hkey    = hkey;
+                    req->file    = file;
+                    req->name[0] = 0;
+                    server_call( REQ_LOAD_REGISTRY );
+                    CloseHandle( file );
+                }
+                free( buf );
+                return 1;
+            }
+            else
+            {
 		TRACE_(reg)("Old format (%d) registry found, ignoring it. (buf was %s).\n",ver,buf);
 		free(buf);
 		return 0;
+            }
 	}
 	if (!_wine_read_line(F,&buf,&buflen)) {
 		free(buf);

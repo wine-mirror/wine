@@ -89,6 +89,18 @@ static int saving_level;
 static int saving_version = 1;  /* file format version */
 
 
+/* information about a file being loaded */
+struct file_load_info
+{
+    FILE *file;    /* input file */
+    char *buffer;  /* line buffer */
+    int   len;     /* buffer length */
+    int   line;    /* current input line */
+    char *tmp;     /* temp buffer to use while parsing input */
+    int   tmplen;  /* length of temp buffer */
+};
+
+
 static void key_dump( struct object *obj, int verbose );
 static void key_destroy( struct object *obj );
 
@@ -292,7 +304,11 @@ static void key_destroy( struct object *obj )
         free( key->values[i].name );
         if (key->values[i].data) free( key->values[i].data );
     }
-    for (i = 0; i <= key->last_subkey; i++) release_object( key->subkeys[i] );
+    for (i = 0; i <= key->last_subkey; i++)
+    {
+        key->subkeys[i]->parent = NULL;
+        release_object( key->subkeys[i] );
+    }
 }
 
 /* duplicate a key path from the request buffer */
@@ -870,7 +886,7 @@ void close_registry(void)
     int i;
     for (i = 0; i < NB_ROOT_KEYS; i++)
     {
-        if (root_keys[i] && !root_keys[i]->parent) release_object( root_keys[i] );
+        if (root_keys[i]) release_object( root_keys[i] );
     }
 }
 
@@ -887,6 +903,360 @@ static struct key *get_hkey_obj( int hkey, unsigned int access )
     else
         key = (struct key *)get_handle_obj( current->process, hkey, access, &key_ops );
     return key;
+}
+
+/* read a line from the input file */
+static int read_next_line( struct file_load_info *info )
+{
+    char *newbuf;
+    int newlen, pos = 0;
+
+    info->line++;
+    for (;;)
+    {
+        if (!fgets( info->buffer + pos, info->len - pos, info->file ))
+            return (pos != 0);  /* EOF */
+        pos = strlen(info->buffer);
+        if (info->buffer[pos-1] == '\n')
+        {
+            /* got a full line */
+            info->buffer[--pos] = 0;
+            if (pos > 0 && info->buffer[pos-1] == '\r') info->buffer[pos-1] = 0;
+            return 1;
+        }
+        if (pos < info->len - 1) return 1;  /* EOF but something was read */
+
+        /* need to enlarge the buffer */
+        newlen = info->len + info->len / 2;
+        if (!(newbuf = realloc( info->buffer, newlen )))
+        {
+            set_error( ERROR_OUTOFMEMORY );
+            return -1;
+        }
+        info->buffer = newbuf;
+        info->len = newlen;
+    }
+}
+
+/* make sure the temp buffer holds enough space */
+static int get_file_tmp_space( struct file_load_info *info, int size )
+{
+    char *tmp;
+    if (info->tmplen >= size) return 1;
+    if (!(tmp = realloc( info->tmp, size )))
+    {
+        set_error( ERROR_OUTOFMEMORY );
+        return 0;
+    }
+    info->tmp = tmp;
+    info->tmplen = size;
+    return 1;
+}
+
+/* report an error while loading an input file */
+static void file_read_error( const char *err, struct file_load_info *info )
+{
+    fprintf( stderr, "Line %d: %s '%s'\n", info->line, err, info->buffer );
+}
+
+/* parse an escaped string back into Unicode */
+/* return the number of chars read from the input, or -1 on output overflow */
+static int parse_strW( WCHAR *dest, int *len, const char *src, char endchar )
+{
+    int count = sizeof(WCHAR);  /* for terminating null */
+    const char *p = src;
+    while (*p && *p != endchar)
+    {
+        if (*p != '\\') *dest = (WCHAR)*p++;
+        else
+        {
+            p++;
+            switch(*p)
+            {
+            case 'a': *dest = '\a'; p++; break;
+            case 'b': *dest = '\b'; p++; break;
+            case 'e': *dest = '\e'; p++; break;
+            case 'f': *dest = '\f'; p++; break;
+            case 'n': *dest = '\n'; p++; break;
+            case 'r': *dest = '\r'; p++; break;
+            case 't': *dest = '\t'; p++; break;
+            case 'v': *dest = '\v'; p++; break;
+            case 'x':  /* hex escape */
+                p++;
+                if (!isxdigit(*p)) *dest = 'x';
+                else
+                {
+                    *dest = to_hex(*p++);
+                    if (isxdigit(*p)) *dest = (*dest * 16) + to_hex(*p++);
+                    if (isxdigit(*p)) *dest = (*dest * 16) + to_hex(*p++);
+                    if (isxdigit(*p)) *dest = (*dest * 16) + to_hex(*p++);
+                }
+                break;
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':  /* octal escape */
+                *dest = *p++ - '0';
+                if (*p >= '0' && *p <= '7') *dest = (*dest * 8) + (*p++ - '0');
+                if (*p >= '0' && *p <= '7') *dest = (*dest * 8) + (*p++ - '0');
+                break;
+            default:
+                *dest = (WCHAR)*p++;
+                break;
+            }
+        }
+        if ((count += sizeof(WCHAR)) > *len) return -1;  /* dest buffer overflow */
+        dest++;
+    }
+    *dest = 0;
+    if (!*p) return -1;  /* delimiter not found */
+    *len = count;
+    return p + 1 - src;
+}
+
+/* convert a data type tag to a value type */
+static int get_data_type( const char *buffer, int *type, int *parse_type )
+{
+    struct data_type { const char *tag; int len; int type; int parse_type; };
+
+    static const struct data_type data_types[] = 
+    {                   /* actual type */  /* type to assume for parsing */
+        { "\"",        1,   REG_SZ,              REG_SZ },
+        { "str:\"",    5,   REG_SZ,              REG_SZ },
+        { "str(2):\"", 8,   REG_EXPAND_SZ,       REG_SZ },
+        { "str(7):\"", 8,   REG_MULTI_SZ,        REG_SZ },
+        { "hex:",      4,   REG_BINARY,          REG_BINARY },
+        { "dword:",    6,   REG_DWORD,           REG_DWORD },
+        { "hex(",      4,   -1,                  REG_BINARY },
+        { NULL, }
+    };
+
+    const struct data_type *ptr;
+    char *end;
+
+    for (ptr = data_types; ptr->tag; ptr++)
+    {
+        if (memcmp( ptr->tag, buffer, ptr->len )) continue;
+        *parse_type = ptr->parse_type;
+        if ((*type = ptr->type) != -1) return ptr->len;
+        /* "hex(xx):" is special */
+        *type = (int)strtoul( buffer + 4, &end, 16 );
+        if ((end <= buffer) || memcmp( end, "):", 2 )) return 0;
+        return end + 2 - buffer;
+    }
+    return 0;
+}
+
+/* load and create a key from the input file */
+static struct key *load_key( struct key *base, const char *buffer, struct file_load_info *info )
+{
+    WCHAR *p;
+    int res, len, modif;
+
+    len = strlen(buffer) * sizeof(WCHAR);
+    if (!get_file_tmp_space( info, len )) return NULL;
+
+    if ((res = parse_strW( (WCHAR *)info->tmp, &len, buffer, ']' )) == -1)
+    {
+        file_read_error( "Malformed key", info );
+        return NULL;
+    }
+    if (!sscanf( buffer + res, " %d", &modif )) modif = time(NULL);
+
+    for (p = (WCHAR *)info->tmp; *p; p++) if (*p == '\\') { p++; break; }
+    return create_key( base, p, len - ((char *)p - info->tmp), NULL, 0, modif, &res );
+}
+
+/* parse a comma-separated list of hex digits */
+static int parse_hex( unsigned char *dest, int *len, const char *buffer )
+{
+    const char *p = buffer;
+    int count = 0;
+    while (isxdigit(*p))
+    {
+        int val;
+        char buf[3];
+        memcpy( buf, p, 2 );
+        buf[2] = 0;
+        sscanf( buf, "%x", &val );
+        if (count++ >= *len) return -1;  /* dest buffer overflow */
+        *dest++ = (unsigned char )val;
+        p += 2;
+        if (*p == ',') p++;
+    }
+    *len = count;
+    return p - buffer;
+}
+
+/* parse a value name and create the corresponding value */
+static struct key_value *parse_value_name( struct key *key, const char *buffer, int *len,
+                                           struct file_load_info *info )
+{
+    int maxlen = strlen(buffer) * sizeof(WCHAR);
+    if (!get_file_tmp_space( info, maxlen )) return NULL;
+    if (buffer[0] == '@')
+    {
+        info->tmp[0] = info->tmp[1] = 0;
+        *len = 1;
+    }
+    else
+    {
+        if ((*len = parse_strW( (WCHAR *)info->tmp, &maxlen, buffer + 1, '\"' )) == -1) goto error;
+        (*len)++;  /* for initial quote */
+    }
+    if (buffer[*len] != '=') goto error;
+    (*len)++;
+    return insert_value( key, (WCHAR *)info->tmp );
+
+ error:
+    file_read_error( "Malformed value name", info );
+    return NULL;
+}
+
+/* load a value from the input file */
+static int load_value( struct key *key, const char *buffer, struct file_load_info *info )
+{
+    DWORD dw;
+    void *ptr, *newptr;
+    int maxlen, len, res;
+    int type, parse_type;
+    struct key_value *value;
+
+    if (!(value = parse_value_name( key, buffer, &len, info ))) return 0;
+    if (!(res = get_data_type( buffer + len, &type, &parse_type ))) goto error;
+    buffer += len + res;
+
+    switch(parse_type)
+    {
+    case REG_SZ:
+        len = strlen(buffer) * sizeof(WCHAR);
+        if (!get_file_tmp_space( info, len )) return 0;
+        if ((res = parse_strW( (WCHAR *)info->tmp, &len, buffer, '\"' )) == -1) goto error;
+        ptr = info->tmp;
+        break;
+    case REG_DWORD:
+        dw = strtoul( buffer, NULL, 16 );
+        ptr = &dw;
+        len = sizeof(dw);
+        break;
+    case REG_BINARY:  /* hex digits */
+        len = 0;
+        for (;;)
+        {
+            maxlen = 1 + strlen(buffer)/3;  /* 3 chars for one hex byte */
+            if (!get_file_tmp_space( info, len + maxlen )) return 0;
+            if ((res = parse_hex( info->tmp + len, &maxlen, buffer )) == -1) goto error;
+            len += maxlen;
+            buffer += res;
+            while (isspace(*buffer)) buffer++;
+            if (!*buffer) break;
+            if (*buffer != '\\') goto error;
+            if (read_next_line( info) != 1) goto error;
+            buffer = info->buffer;
+            while (isspace(*buffer)) buffer++;
+        }
+        ptr = info->tmp;
+        break;
+    default:
+        assert(0);
+        ptr = NULL;  /* keep compiler quiet */
+        break;
+    }
+
+    if (!len) newptr = NULL;
+    else if (!(newptr = memdup( ptr, len ))) return 0;
+
+    if (value->data) free( value->data );
+    value->data = newptr;
+    value->len  = len;
+    value->type = type;
+    /* update the key level but not the modification time */
+    key->level = MAX( key->level, current_level );
+    return 1;
+
+ error:
+    file_read_error( "Malformed value", info );
+    return 0;
+}
+
+/* load all the keys from the input file */
+static void load_keys( struct key *key, FILE *f )
+{
+    struct key *subkey = NULL;
+    struct file_load_info info;
+    char *p;
+
+    info.file   = f;
+    info.len    = 4;
+    info.tmplen = 4;
+    info.line   = 0;
+    if (!(info.buffer = mem_alloc( info.len ))) return;
+    if (!(info.tmp = mem_alloc( info.tmplen )))
+    {
+        free( info.buffer );
+        return;
+    }
+
+    if ((read_next_line( &info ) != 1) ||
+        strcmp( info.buffer, "WINE REGISTRY Version 2" ))
+    {
+        set_error( ERROR_NOT_REGISTRY_FILE );
+        goto done;
+    }
+
+    while (read_next_line( &info ) == 1)
+    {
+        for (p = info.buffer; *p && isspace(*p); p++);
+        switch(*p)
+        {
+        case '[':   /* new key */
+            if (subkey) release_object( subkey );
+            subkey = load_key( key, p + 1, &info );
+            break;
+        case '@':   /* default value */
+        case '\"':  /* value */
+            if (subkey) load_value( subkey, p, &info );
+            else file_read_error( "Value without key", &info );
+            break;
+        case '#':   /* comment */
+        case ';':   /* comment */
+        case 0:     /* empty line */
+            break;
+        default:
+            file_read_error( "Unrecognized input", &info );
+            break;
+        }
+    }
+
+ done:
+    if (subkey) release_object( subkey );
+    free( info.buffer );
+    free( info.tmp );
+}
+
+/* load a part of the registry from a file */
+static void load_registry( struct key *key, int handle )
+{
+    struct object *obj;
+    int fd;
+
+    if (!(obj = get_handle_obj( current->process, handle, GENERIC_READ, NULL ))) return;
+    fd = obj->ops->get_read_fd( obj );
+    release_object( obj );
+    if (fd != -1)
+    {
+        FILE *f = fdopen( fd, "r" );
+        if (f)
+        {
+            load_keys( key, f );
+            fclose( f );
+        }
+        else file_set_error();
+    }
 }
 
 /* update the level of the parents of a key (only needed for the old format) */
@@ -1139,7 +1509,8 @@ DECL_HANDLER(load_registry)
 
     if ((key = get_hkey_obj( req->hkey, KEY_SET_VALUE | KEY_CREATE_SUB_KEY )))
     {
-        set_error( ERROR_CALL_NOT_IMPLEMENTED );
+        /* FIXME: use subkey name */
+        load_registry( key, req->file );
         release_object( key );
     }
 }
