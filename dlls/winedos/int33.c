@@ -65,7 +65,8 @@ void WINAPI DOSVM_Int33Handler( CONTEXT86 *context )
     FIXME("Hide mouse cursor\n");
     break;
   case 0x03:
-    TRACE("Return mouse position and button status\n");
+    TRACE("Return mouse position and button status: (%ld,%ld) and %ld\n",
+         mouse_info.x, mouse_info.y, mouse_info.but);
     BX_reg(context) = mouse_info.but;
     CX_reg(context) = mouse_info.x;
     DX_reg(context) = mouse_info.y;
@@ -148,56 +149,45 @@ static void MouseRelay(CONTEXT86 *context,void *mdata)
   DPMI_CallRMProc(&ctx, NULL, 0, 0);
 }
 
-void WINAPI DOSVM_Int33Message(UINT message,WPARAM wParam,LPARAM lParam)
+static void QueueMouseRelay(DWORD mx, DWORD my, WORD mask)
 {
-  WORD mask = 0;
-  unsigned Height, Width, SX=1, SY=1;
+  mouse_info.x = mx;
+  mouse_info.y = my;
 
-  if (!VGA_GetMode(&Height,&Width,NULL)) {
-    /* may need to do some coordinate scaling */
-    if (Width) 
-      SX = 640/Width;
-    if (!SX) SX=1;
-  }
-  mouse_info.x = LOWORD(lParam) * SX;
-  mouse_info.y = HIWORD(lParam) * SY;
-  switch (message) {
-  case WM_MOUSEMOVE:
-    mask |= 0x01;
-    break;
-  case WM_LBUTTONDOWN:
-  case WM_LBUTTONDBLCLK:
+  /* Left button down */
+  if(mask & 0x02) {
     mouse_info.but |= 0x01;
-    mask |= 0x02;
-    mouse_info.llastx = mouse_info.x;
-    mouse_info.llasty = mouse_info.y;
+    mouse_info.llastx = mx;
+    mouse_info.llasty = my;
     mouse_info.lbcount++;
-    break;
-  case WM_LBUTTONUP:
+  }
+
+  /* Left button up */
+  if(mask & 0x04) {
     mouse_info.but &= ~0x01;
-    mask |= 0x04;
-    break;
-  case WM_RBUTTONDOWN:
-  case WM_RBUTTONDBLCLK:
+  }
+
+  /* Right button down */
+  if(mask & 0x08) {
     mouse_info.but |= 0x02;
-    mask |= 0x08;
-    mouse_info.rlastx = mouse_info.x;
-    mouse_info.rlasty = mouse_info.y;
+    mouse_info.rlastx = mx;
+    mouse_info.rlasty = my;
     mouse_info.rbcount++;
-    break;
-  case WM_RBUTTONUP:
+  }
+
+  /* Right button up */
+  if(mask & 0x10) {
     mouse_info.but &= ~0x02;
-    mask |= 0x10;
-    break;
-  case WM_MBUTTONDOWN:
-  case WM_MBUTTONDBLCLK:
+  }
+
+  /* Middle button down */
+  if(mask & 0x20) {
     mouse_info.but |= 0x04;
-    mask |= 0x20;
-    break;
-  case WM_MBUTTONUP:
+  }
+
+  /* Middle button up */
+  if(mask & 0x40) {
     mouse_info.but &= ~0x04;
-    mask |= 0x40;
-    break;
   }
 
   if ((mask & mouse_info.callmask) && mouse_info.callback) {
@@ -209,4 +199,81 @@ void WINAPI DOSVM_Int33Message(UINT message,WPARAM wParam,LPARAM lParam)
     data->y = mouse_info.y;
     DOSVM_QueueEvent(-1, DOS_PRIORITY_MOUSE, MouseRelay, data);
   }
+}
+
+void WINAPI DOSVM_Int33Message(UINT message,WPARAM wParam,LPARAM lParam)
+{
+  WORD mask = 0;
+  unsigned Height, Width, SX=1, SY=1;
+
+  if (!VGA_GetMode(&Height,&Width,NULL)) {
+    /* may need to do some coordinate scaling */
+    if (Width) 
+      SX = 640/Width;
+    if (!SX) SX=1;
+  }
+
+  switch (message) {
+  case WM_MOUSEMOVE:
+    mask |= 0x01;
+    break;
+  case WM_LBUTTONDOWN:
+  case WM_LBUTTONDBLCLK:
+    mask |= 0x02;
+    break;
+  case WM_LBUTTONUP:
+    mask |= 0x04;
+    break;
+  case WM_RBUTTONDOWN:
+  case WM_RBUTTONDBLCLK:
+    mask |= 0x08;
+    break;
+  case WM_RBUTTONUP:
+    mask |= 0x10;
+    break;
+  case WM_MBUTTONDOWN:
+  case WM_MBUTTONDBLCLK:
+    mask |= 0x20;
+    break;
+  case WM_MBUTTONUP:
+    mask |= 0x40;
+    break;
+  }
+
+  QueueMouseRelay(LOWORD(lParam) * SX,
+                 HIWORD(lParam) * SY,
+                 mask);
+}
+
+void WINAPI DOSVM_Int33Console(MOUSE_EVENT_RECORD *record)
+{
+  unsigned Height, Width;
+  WORD mask = 0;
+  BOOL newLeftButton = record->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED;
+  BOOL oldLeftButton = mouse_info.but & 0x01;
+  BOOL newRightButton = record->dwButtonState & RIGHTMOST_BUTTON_PRESSED;
+  BOOL oldRightButton = mouse_info.but & 0x02;
+  BOOL newMiddleButton = record->dwButtonState & FROM_LEFT_2ND_BUTTON_PRESSED;
+  BOOL oldMiddleButton = mouse_info.but & 0x04;
+
+  if(newLeftButton && !oldLeftButton)
+    mask |= 0x02;
+  else if(!newLeftButton && oldLeftButton)
+    mask |= 0x04;
+
+  if(newRightButton && !oldRightButton)
+    mask |= 0x08;
+  else if(!newRightButton && oldRightButton)
+    mask |= 0x10;
+
+  if(newMiddleButton && !oldMiddleButton)
+    mask |= 0x20;
+  else if(!newMiddleButton && oldMiddleButton)
+    mask |= 0x40;
+ 
+  VGA_GetAlphaMode(&Width, &Height);
+
+  QueueMouseRelay(640 / Width * record->dwMousePosition.X,
+                 200 / Height * record->dwMousePosition.Y,
+                 mask);
 }

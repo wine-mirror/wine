@@ -24,6 +24,7 @@
 #include "wine/windef16.h"
 #include "winbase.h"   /* for LPSTARTUPINFO32A */
 #include "winnt.h"     /* for PCONTEXT */
+#include "wincon.h"    /* for MOUSE_EVENT_RECORD */
 
 struct _DOSEVENT;
 
@@ -105,6 +106,7 @@ extern void WINAPI DOSVM_Int31Handler(CONTEXT86*);
 /* int33.c */
 extern void WINAPI DOSVM_Int33Handler(CONTEXT86*);
 extern void WINAPI DOSVM_Int33Message(UINT,WPARAM,LPARAM);
+extern void WINAPI DOSVM_Int33Console(MOUSE_EVENT_RECORD*);
 
 /* int67.c */
 extern void WINAPI DOSVM_Int67Handler(CONTEXT86*);

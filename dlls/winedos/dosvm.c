@@ -245,8 +245,20 @@ static void DOSVM_ProcessConsole(void)
       }
       DOSVM_Int09SendScan(scan,msg.Event.KeyEvent.uChar.AsciiChar);
       break;
+    case MOUSE_EVENT:
+      DOSVM_Int33Console(&msg.Event.MouseEvent);
+      break;
+    case WINDOW_BUFFER_SIZE_EVENT:
+      FIXME("unhandled WINDOW_BUFFER_SIZE_EVENT.\n");
+      break;
+    case MENU_EVENT:
+      FIXME("unhandled MENU_EVENT.\n");
+      break;
+    case FOCUS_EVENT:
+      FIXME("unhandled FOCUS_EVENT.\n");
+      break;
     default:
-      FIXME("unhandled console event: %d\n", msg.EventType);
+      FIXME("unknown console event: %d\n", msg.EventType);
     }
   }
 }
@@ -358,40 +370,44 @@ DWORD WINAPI DOSVM_Loop( LPVOID lpExtra )
   DWORD waitret;
 
   for(;;) {
-    TRACE_(int)("waiting for action\n");
-    waitret = MsgWaitForMultipleObjects(1, &obj, FALSE, INFINITE, QS_ALLINPUT);
-    if (waitret == WAIT_OBJECT_0) {
-      DOSVM_ProcessConsole();
-    }
-    else if (waitret == WAIT_OBJECT_0 + 1) {
-      GetMessageA(&msg, 0, 0, 0);
-      if (msg.hwnd) {
-	/* it's a window message */
-	DOSVM_ProcessMessage(&msg);
-	DispatchMessageA(&msg);
-      } else {
-	/* it's a thread message */
-	switch (msg.message) {
-	case WM_QUIT:
-	  /* stop this madness!! */
-	  return 0;
-	case WM_USER:
-	  /* run passed procedure in this thread */
-	  /* (sort of like APC, but we signal the completion) */
-	  {
-	    DOS_SPC *spc = (DOS_SPC *)msg.lParam;
-	    TRACE_(int)("calling %p with arg %08x\n", spc->proc, spc->arg);
-	    (spc->proc)(spc->arg);
-	    TRACE_(int)("done, signalling event %d\n", msg.wParam);
-	    SetEvent(msg.wParam);
-	  }
-	  break;
-	}
+      TRACE_(int)("waiting for action\n");
+      waitret = MsgWaitForMultipleObjects(1, &obj, FALSE, INFINITE, QS_ALLINPUT);
+      if (waitret == WAIT_OBJECT_0) {
+          DOSVM_ProcessConsole();
       }
-    }
-    else break;
+      else if (waitret == WAIT_OBJECT_0 + 1) {
+          while (PeekMessageA(&msg,0,0,0,PM_REMOVE)) {
+              if (msg.hwnd) {
+                  /* it's a window message */
+                  DOSVM_ProcessMessage(&msg);
+                  DispatchMessageA(&msg);
+              } else {
+                  /* it's a thread message */
+                  switch (msg.message) {
+                  case WM_QUIT:
+                      /* stop this madness!! */
+                      return 0;
+                  case WM_USER:
+                      /* run passed procedure in this thread */
+                      /* (sort of like APC, but we signal the completion) */
+                      {
+                          DOS_SPC *spc = (DOS_SPC *)msg.lParam;
+                          TRACE_(int)("calling %p with arg %08x\n", spc->proc, spc->arg);
+                          (spc->proc)(spc->arg);
+                          TRACE_(int)("done, signalling event %d\n", msg.wParam);
+                          SetEvent(msg.wParam);
+                      }
+                      break;
+                  }
+              }
+          }
+      }
+      else
+      {
+          ERR_(int)("MsgWaitForMultipleObjects returned unexpected value.\n");
+          return 0;
+      }
   }
-  return 0;
 }
 
 static WINE_EXCEPTION_FILTER(exception_handler)
