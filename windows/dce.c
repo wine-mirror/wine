@@ -410,11 +410,12 @@ static BOOL32 DCE_AddClipRects( WND *pWndStart, WND *pWndEnd,
  * clipped by the client area of all ancestors, and then optionally
  * by siblings and children.
  */
-HRGN32 DCE_GetVisRgn( HWND32 hwnd, WORD flags )
+HRGN32 DCE_GetVisRgn( HWND32 hwnd, WORD flags, HWND32 hwndChild, WORD cflags )
 {
     HRGN32 hrgnVis = 0;
     RECT32 rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
+    WND *childWnd = WIN_FindWndPtr( hwndChild );
 
     /* Get visible rectangle and create a region with it. */
 
@@ -446,6 +447,32 @@ HRGN32 DCE_GetVisRgn( HWND32 hwnd, WORD flags )
 			xoffset = yoffset = 0;
 
 		    DCE_AddClipRects( wndPtr->child, NULL, hrgnClip, 
+				      &rect, xoffset, yoffset );
+		}
+
+		/* We may need to clip children of child window, if a window with PARENTDC
+		 * class style and CLIPCHILDREN window style (like in Free Agent 16
+		 * preference dialogs) gets here, we take the region for the parent window
+		 * but apparently still need to clip the children of the child window... */
+
+		if( (cflags & DCX_CLIPCHILDREN) && childWnd && childWnd->child )
+		{
+		    if( flags & DCX_WINDOW )
+		    {
+			/* adjust offsets since child window rectangles are 
+			 * in client coordinates */
+
+			xoffset = wndPtr->rectClient.left - wndPtr->rectWindow.left;
+			yoffset = wndPtr->rectClient.top - wndPtr->rectWindow.top;
+		    }
+		    else 
+			xoffset = yoffset = 0;
+
+		    /* client coordinates of child window */
+		    xoffset += childWnd->rectClient.left;
+		    yoffset += childWnd->rectClient.top;
+
+		    DCE_AddClipRects( childWnd->child, NULL, hrgnClip, 
 				      &rect, xoffset, yoffset );
 		}
 
@@ -714,7 +741,8 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
 		else
 		    dcxFlags = flags & ~(DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | DCX_WINDOW);
 
-                hrgnVisible = DCE_GetVisRgn( parentPtr->hwndSelf, dcxFlags );
+                hrgnVisible = DCE_GetVisRgn( parentPtr->hwndSelf, dcxFlags,
+                                             wndPtr->hwndSelf, flags );
 		if( flags & DCX_WINDOW )
 		    OffsetRgn32( hrgnVisible, -wndPtr->rectWindow.left,
 					      -wndPtr->rectWindow.top );
@@ -733,7 +761,7 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
 						      SYSMETRICS_CYSCREEN );
 	    else 
             {
-                hrgnVisible = DCE_GetVisRgn( hwnd, flags );
+                hrgnVisible = DCE_GetVisRgn( hwnd, flags, 0, 0 );
                 DCE_OffsetVisRgn( hdc, hrgnVisible );
             }
 
@@ -874,7 +902,7 @@ BOOL16 WINAPI DCHook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
            if( dce->DCXflags & DCX_DCEBUSY )
  	   {
 	       SetHookFlags(hDC, DCHF_VALIDATEVISRGN);
-	       hVisRgn = DCE_GetVisRgn(dce->hwndCurrent, dce->DCXflags);
+	       hVisRgn = DCE_GetVisRgn(dce->hwndCurrent, dce->DCXflags, 0, 0);
 
 	       TRACE(dc,"\tapplying saved clipRgn\n");
   

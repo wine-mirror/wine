@@ -2045,7 +2045,7 @@ static UINT32 WINPOS_SizeMoveClean( WND* Wnd, HRGN32 oldVisRgn,
                                     LPRECT32 lpOldWndRect,
                                     LPRECT32 lpOldClientRect, UINT32 uFlags )
 {
- HRGN32 newVisRgn = DCE_GetVisRgn(Wnd->hwndSelf,DCX_WINDOW | DCX_CLIPSIBLINGS);
+ HRGN32 newVisRgn = DCE_GetVisRgn(Wnd->hwndSelf,DCX_WINDOW | DCX_CLIPSIBLINGS,0,0);
  HRGN32 dirtyRgn = CreateRectRgn32(0,0,0,0);
  int  other, my;
 
@@ -2333,7 +2333,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
     if ( !X11DRV_WND_GetXWindow(wndPtr) && !(winpos.flags & SWP_NOREDRAW) && 
 	((winpos.flags & (SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED)) 
 		      != (SWP_NOMOVE | SWP_NOSIZE)) )
-          visRgn = DCE_GetVisRgn(hwnd, DCX_WINDOW | DCX_CLIPSIBLINGS);
+          visRgn = DCE_GetVisRgn(hwnd, DCX_WINDOW | DCX_CLIPSIBLINGS, 0, 0);
 
       /* Send WM_NCCALCSIZE message to get new client area */
     if( (winpos.flags & (SWP_FRAMECHANGED | SWP_NOSIZE)) != SWP_NOSIZE )
