@@ -1620,8 +1620,6 @@ static void LISTBOX_ResetContent( WND *wnd, LB_DESCR *descr )
     descr->focus_item    = 0;
     descr->anchor_item   = -1;
     descr->items         = NULL;
-    LISTBOX_UpdateScroll( wnd, descr );
-    InvalidateRect( wnd->hwndSelf, NULL, TRUE );
 }
 
 
@@ -2458,6 +2456,8 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
     case LB_RESETCONTENT16:
     case LB_RESETCONTENT:
         LISTBOX_ResetContent( wnd, descr );
+        LISTBOX_UpdateScroll( wnd, descr );
+        InvalidateRect( wnd->hwndSelf, NULL, TRUE );
         return 0;
 
     case LB_ADDSTRING16:
