@@ -753,7 +753,9 @@ BOOL X11DRV_IsSolidColor( COLORREF color )
 
     if (!color || (color == 0xffffff)) return TRUE;  /* black or white */
 
-    for (i = 0; i < 256 ; i++, pEntry++)
+    if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL) return TRUE;  /* no palette */
+
+    for (i = 0; i < palette_size ; i++, pEntry++)
     {
         if( i < COLOR_gapStart || i > COLOR_gapEnd )
             if ((GetRValue(color) == pEntry->peRed) &&
