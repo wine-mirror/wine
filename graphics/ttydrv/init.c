@@ -17,21 +17,26 @@ DEFAULT_DEBUG_CHANNEL(ttydrv)
 
 static const DC_FUNCTIONS TTYDRV_DC_Driver =
 {
+  NULL,                /* pAbortDoc */
   NULL,                /* pArc */
   NULL,                /* pBitBlt */
   NULL,                /* pBitmapBits */
   NULL,                /* pChord */
   NULL,                /* pCreateBitmap */
   TTYDRV_DC_CreateDC,  /* pCreateDC */
-  TTYDRV_DC_DeleteDC,  /* pDeleteDC */
   NULL,                /* pCreateDIBSection */
   NULL,                /* pCreateDIBSection16 */
+  TTYDRV_DC_DeleteDC,  /* pDeleteDC */
   NULL,                /* pDeleteObject */
+  NULL,                /* pDeviceCapabilities */
   NULL,                /* pEllipse */
+  NULL,                /* pEndDoc */
+  NULL,                /* pEndPage */
   NULL,                /* pEnumDeviceFonts */
   TTYDRV_DC_Escape,    /* pEscape */
   NULL,                /* pExcludeClipRect */
   NULL,                /* pExcludeVisRect */
+  NULL,                /* pExtDeviceMode */
   NULL,                /* pExtFloodFill */
   NULL,                /* pExtTextOut */
   NULL,                /* pGetCharWidth */
@@ -83,6 +88,8 @@ static const DC_FUNCTIONS TTYDRV_DC_Driver =
   NULL,                /* pSetViewportOrg (optional) */
   NULL,                /* pSetWindowExt (optional) */
   NULL,                /* pSetWindowOrg (optional) */
+  NULL,                /* pStartDoc */
+  NULL,                /* pStartPage */
   NULL,                /* pStretchBlt */
   NULL                 /* pStretchDIBits */
 };
@@ -172,7 +179,7 @@ void TTYDRV_GDI_Finalize(void)
  *	     TTYDRV_DC_CreateDC
  */
 BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
-			    LPCSTR output, const DEVMODE16 *initData)
+			    LPCSTR output, const DEVMODEA *initData)
 {
   FIXME(ttydrv, "(%p, %s, %s, %s, %p): semistub\n",
     dc, debugstr_a(driver), debugstr_a(device), 

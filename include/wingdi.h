@@ -2625,10 +2625,15 @@ typedef struct
     WORD   dmSize;
     WORD   dmDriverExtra;
     DWORD  dmFields;
-    SHORT  dmOrientation;
-    SHORT  dmPaperSize;
-    SHORT  dmPaperLength;
-    SHORT  dmPaperWidth;
+    union {
+      struct {
+	SHORT  dmOrientation;
+	SHORT  dmPaperSize;
+	SHORT  dmPaperLength;
+	SHORT  dmPaperWidth;
+      } s1;
+      POINTL dmPosition;
+    } u1;
     SHORT  dmScale;
     SHORT  dmCopies;
     SHORT  dmDefaultSource;
@@ -2663,10 +2668,15 @@ typedef struct
     WORD   dmSize;
     WORD   dmDriverExtra;
     DWORD  dmFields;
-    SHORT  dmOrientation;
-    SHORT  dmPaperSize;
-    SHORT  dmPaperLength;
-    SHORT  dmPaperWidth;
+    union {
+      struct {
+	SHORT  dmOrientation;
+	SHORT  dmPaperSize;
+	SHORT  dmPaperLength;
+	SHORT  dmPaperWidth;
+      } s1;
+      POINTL dmPosition;
+    } u1;
     SHORT  dmScale;
     SHORT  dmCopies;
     SHORT  dmDefaultSource;
@@ -2713,6 +2723,7 @@ DECL_WINELIB_TYPE_AW(LPDEVMODE)
 #define DM_PAPERLENGTH		0x00000004L
 #define DM_PAPERWIDTH		0x00000008L
 #define DM_SCALE		0x00000010L
+#define DM_POSITION             0x00000020L
 #define DM_COPIES		0x00000100L
 #define DM_DEFAULTSOURCE	0x00000200L
 #define DM_PRINTQUALITY		0x00000400L
@@ -2720,17 +2731,20 @@ DECL_WINELIB_TYPE_AW(LPDEVMODE)
 #define DM_DUPLEX		0x00001000L
 #define DM_YRESOLUTION		0x00002000L
 #define DM_TTOPTION		0x00004000L
+#define DM_COLLATE              0x00008000L
+#define DM_FORMNAME             0x00010000L
+#define DM_LOGPIXELS            0x00020000L
 #define DM_BITSPERPEL           0x00040000L
 #define DM_PELSWIDTH            0x00080000L
 #define DM_PELSHEIGHT           0x00100000L
 #define DM_DISPLAYFLAGS         0x00200000L
 #define DM_DISPLAYFREQUENCY     0x00400000L
-#define DM_PANNINGHEIGHT        0x00800000L
-#define DM_PANNINGWIDTH         0x01000000L
-#define DM_ICMMETHOD            0x02000000L
-#define DM_ICMINTENT            0x04000000L
-#define DM_MEDIATYPE            0x08000000L
-#define DM_DITHERTYPE           0x10000000L
+#define DM_ICMMETHOD            0x00800000L
+#define DM_ICMINTENT            0x01000000L
+#define DM_MEDIATYPE            0x02000000L
+#define DM_DITHERTYPE           0x04000000L
+#define DM_PANNINGWIDTH         0x08000000L
+#define DM_PANNINGHEIGHT        0x10000000L
 
 #define DMORIENT_PORTRAIT	1
 #define DMORIENT_LANDSCAPE	2
@@ -3029,6 +3043,10 @@ BOOL      WINAPI FixBrushOrgEx(HDC,INT,INT,LPPOINT);
 BOOL      WINAPI FlattenPath(HDC);
 BOOL      WINAPI FloodFill(HDC,INT,INT,COLORREF);
 BOOL      WINAPI FrameRgn(HDC,HRGN,HBRUSH,INT,INT);
+DWORD     WINAPI GDI_CallDeviceCapabilities16(LPCSTR,LPCSTR,WORD,LPSTR,
+					      LPDEVMODEA);
+INT       WINAPI GDI_CallExtDeviceMode16(HWND,LPDEVMODEA,LPSTR,LPSTR,
+					 LPDEVMODEA,LPSTR,DWORD);
 BOOL      WINAPI GdiComment(HDC,UINT,const BYTE *);
 INT       WINAPI GetArcDirection(HDC);
 BOOL      WINAPI GetAspectRatioFilterEx(HDC,LPSIZE);

@@ -19,20 +19,25 @@ DEFAULT_DEBUG_CHANNEL(metafile)
 
 static const DC_FUNCTIONS MFDRV_Funcs =
 {
+    NULL,                            /* pAbortDoc */
     MFDRV_Arc,                       /* pArc */
     MFDRV_BitBlt,                    /* pBitBlt */
     NULL,                            /* pBitmapBits */	
     MFDRV_Chord,                     /* pChord */
     NULL,                            /* pCreateBitmap */
     NULL, /* no implementation */    /* pCreateDC */
-    NULL, /* no implementation */    /* pDeleteDC */
     NULL,                            /* pCreateDIBSection */
     NULL,                            /* pCreateDIBSection16 */
+    NULL, /* no implementation */    /* pDeleteDC */
     NULL,                            /* pDeleteObject */
+    NULL,                            /* pDeviceCapabilities */
     MFDRV_Ellipse,                   /* pEllipse */
+    NULL,                            /* pEndDoc */
+    NULL,                            /* pEndPage */
     NULL,                            /* pEnumDeviceFonts */
     NULL,                            /* pEscape */
     MFDRV_ExcludeClipRect,           /* pExcludeClipRect */
+    NULL,                            /* pExtDeviceMode */
     MFDRV_ExtFloodFill,              /* pExtFloodFill */
     MFDRV_ExtTextOut,                /* pExtTextOut */
     MFDRV_FillRgn,                   /* pFillRgn */
@@ -86,6 +91,8 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_SetViewportOrg,            /* pSetViewportOrg */
     MFDRV_SetWindowExt,              /* pSetWindowExt */
     MFDRV_SetWindowOrg,              /* pSetWindowOrg */
+    NULL,                            /* pStartDoc */
+    NULL,                            /* pStartPage */
     MFDRV_StretchBlt,                /* pStretchBlt */
     MFDRV_StretchDIBits              /* pStretchDIBits */
 };

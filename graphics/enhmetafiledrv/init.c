@@ -20,20 +20,25 @@ DEFAULT_DEBUG_CHANNEL(enhmetafile)
 
 static const DC_FUNCTIONS EMFDRV_Funcs =
 {
+    NULL,                            /* pAbortDoc */
     EMFDRV_Arc,                      /* pArc */
     NULL,                            /* pBitBlt */
     NULL,                            /* pBitmapBits */	
     EMFDRV_Chord,                    /* pChord */
     NULL,                            /* pCreateBitmap */
     NULL, /* no implementation */    /* pCreateDC */
-    NULL, /* no implementation */    /* pDeleteDC */
     NULL,                            /* pCreateDIBSection */
     NULL,                            /* pCreateDIBSection16 */
+    NULL, /* no implementation */    /* pDeleteDC */
     NULL,                            /* pDeleteObject */
+    NULL,                            /* pDeviceCapabilities */
     EMFDRV_Ellipse,                  /* pEllipse */
+    NULL,                            /* pEndDoc */
+    NULL,                            /* pEndPage */
     NULL,                            /* pEnumDeviceFonts */
     NULL,                            /* pEscape */
     EMFDRV_ExcludeClipRect,          /* pExcludeClipRect */
+    NULL,                            /* pExtDeviceMode */
     EMFDRV_ExtFloodFill,             /* pExtFloodFill */
     NULL,                            /* pExtTextOut */
     EMFDRV_FillRgn,                  /* pFillRgn */
@@ -87,6 +92,8 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_SetViewportOrg,           /* pSetViewportOrg */
     EMFDRV_SetWindowExt,             /* pSetWindowExt */
     EMFDRV_SetWindowOrg,             /* pSetWindowOrg */
+    NULL,                            /* pStartDoc */
+    NULL,                            /* pStartPage */
     NULL,                            /* pStretchBlt */
     NULL                             /* pStretchDIBits */
 };

@@ -286,7 +286,7 @@ INT PSDRV_WriteHeader( DC *dc, char *title, int len )
         return 0;
     }
 
-    if(physDev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) {
+    if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE) {
       /* BBox co-ords are in default user co-ord system so urx < ury even in
 	 landscape mode */
 	urx = (int) (dc->w.devCaps->vertSize * 72.0 / 25.4);
@@ -348,7 +348,7 @@ INT PSDRV_WriteHeader( DC *dc, char *title, int len )
     }
 
     for(page = physDev->pi->ppd->PageSizes; page; page = page->next) {
-        if(page->WinPage == physDev->Devmode->dmPublic.dmPaperSize) {
+        if(page->WinPage == physDev->Devmode->dmPublic.u1.s1.dmPaperSize) {
 	    if(page->InvocationString) {
 	        PSDRV_WriteFeature(physDev->job.hJob, "*PageSize", page->Name,
 			     page->InvocationString);
@@ -419,7 +419,7 @@ INT PSDRV_WriteNewPage( DC *dc )
         return 0;
     }
 
-    if(physDev->Devmode->dmPublic.dmOrientation == DMORIENT_LANDSCAPE) {
+    if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE) {
         if(physDev->pi->ppd->LandscapeOrientation == -90) {
 	    xtrans = dc->w.devCaps->vertRes;
 	    ytrans = dc->w.devCaps->horzRes;

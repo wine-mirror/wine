@@ -165,22 +165,28 @@ typedef INT (*DEVICEFONTENUMPROC)(LPENUMLOGFONT16,LPNEWTEXTMETRIC16,UINT16,LPARA
 
 typedef struct tagDC_FUNCS
 {
+    INT      (*pAbortDoc)(DC*);
     BOOL     (*pArc)(DC*,INT,INT,INT,INT,INT,INT,INT,INT);
     BOOL     (*pBitBlt)(DC*,INT,INT,INT,INT,DC*,INT,INT,DWORD);
     LONG     (*pBitmapBits)(HBITMAP,void*,LONG,WORD);
     BOOL     (*pChord)(DC*,INT,INT,INT,INT,INT,INT,INT,INT);
     BOOL     (*pCreateBitmap)(HBITMAP); 
-    BOOL     (*pCreateDC)(DC*,LPCSTR,LPCSTR,LPCSTR,const DEVMODE16*);
-    BOOL     (*pDeleteDC)(DC*);
+    BOOL     (*pCreateDC)(DC*,LPCSTR,LPCSTR,LPCSTR,const DEVMODEA*);
     HBITMAP  (*pCreateDIBSection)(DC *,BITMAPINFO *,UINT,LPVOID *,HANDLE,
 				  DWORD);
     HBITMAP16 (*pCreateDIBSection16)(DC *,BITMAPINFO *,UINT16,SEGPTR *,HANDLE,
 				     DWORD);
+    BOOL     (*pDeleteDC)(DC*);
     BOOL     (*pDeleteObject)(HGDIOBJ);
+    DWORD    (*pDeviceCapabilities)(LPCSTR,LPCSTR,WORD,LPSTR,LPDEVMODEA);
     BOOL     (*pEllipse)(DC*,INT,INT,INT,INT);
+    INT      (*pEndDoc)(DC*);
+    INT      (*pEndPage)(DC*);
     BOOL     (*pEnumDeviceFonts)(DC*,LPLOGFONT16,DEVICEFONTENUMPROC,LPARAM);
     INT      (*pEscape)(DC*,INT,INT,SEGPTR,SEGPTR);
     INT      (*pExcludeClipRect)(DC*,INT,INT,INT,INT);
+    INT      (*pExtDeviceMode)(HWND,LPDEVMODEA,LPSTR,LPSTR,LPDEVMODEA,LPSTR,
+			       DWORD); 
     BOOL     (*pExtFloodFill)(DC*,INT,INT,COLORREF,UINT);
     BOOL     (*pExtTextOut)(DC*,INT,INT,UINT,const RECT*,LPCSTR,UINT,
 			    const INT*);
@@ -236,6 +242,8 @@ typedef struct tagDC_FUNCS
     BOOL     (*pSetViewportOrg)(DC*,INT,INT);
     BOOL     (*pSetWindowExt)(DC*,INT,INT);
     BOOL     (*pSetWindowOrg)(DC*,INT,INT);
+    INT      (*pStartDoc)(DC*,const DOCINFOA*);
+    INT      (*pStartPage)(DC*);
     BOOL     (*pStretchBlt)(DC*,INT,INT,INT,INT,DC*,INT,INT,INT,INT,DWORD);
     INT      (*pStretchDIBits)(DC*,INT,INT,INT,INT,INT,INT,INT,INT,
 			       const void *,const BITMAPINFO *,UINT,DWORD);
@@ -439,5 +447,5 @@ extern GDIOBJHDR * GDI_GetObjPtr( HGDIOBJ16, WORD );
 extern BOOL DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs );
 extern const DC_FUNCTIONS *DRIVER_FindDriver( LPCSTR name );
 extern BOOL DRIVER_UnregisterDriver( LPCSTR name );
-
+extern BOOL DRIVER_GetDriverName( LPCSTR device, LPSTR driver, DWORD size );
 #endif  /* __WINE_GDI_H */

@@ -5214,6 +5214,7 @@ dlls/tapi32/Makefile
 dlls/ver/Makefile
 dlls/version/Makefile
 dlls/winaspi/Makefile
+dlls/winspool/Makefile
 dlls/wnaspi32/Makefile
 documentation/Makefile
 files/Makefile
@@ -5381,6 +5382,7 @@ dlls/tapi32/Makefile
 dlls/ver/Makefile
 dlls/version/Makefile
 dlls/winaspi/Makefile
+dlls/winspool/Makefile
 dlls/wnaspi32/Makefile
 documentation/Makefile
 files/Makefile

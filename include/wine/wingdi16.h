@@ -254,37 +254,6 @@ typedef struct
 
 typedef INT16 (CALLBACK *MFENUMPROC16)(HDC16,HANDLETABLE16*,METARECORD*,
                                        INT16,LPARAM);
-
-typedef struct
-{
-    BYTE   dmDeviceName[CCHDEVICENAME];
-    WORD   dmSpecVersion;
-    WORD   dmDriverVersion;
-    WORD   dmSize;
-    WORD   dmDriverExtra;
-    DWORD  dmFields;
-    INT16  dmOrientation;
-    INT16  dmPaperSize;
-    INT16  dmPaperLength;
-    INT16  dmPaperWidth;
-    INT16  dmScale;
-    INT16  dmCopies;
-    INT16  dmDefaultSource;
-    INT16  dmPrintQuality;
-    INT16  dmColor;
-    INT16  dmDuplex;
-    INT16  dmYResolution;
-    INT16  dmTTOption;
-    INT16  dmCollate;
-    BYTE   dmFormName[CCHFORMNAME];
-    WORD   dmUnusedPadding;
-    WORD   dmBitsPerPel;
-    DWORD  dmPelsWidth;
-    DWORD  dmPelsHeight;
-    DWORD  dmDisplayFlags;
-    DWORD  dmDisplayFrequency;
-} DEVMODE16, *LPDEVMODE16;
-
 typedef struct 
 {
     INT16    cbSize;
@@ -293,6 +262,9 @@ typedef struct
 } DOCINFO16, *LPDOCINFO16;
 
 typedef BOOL16 (CALLBACK* ABORTPROC16)(HDC16, INT16);
+
+#define INT_PD_DEFAULT_DEVMODE  1
+#define INT_PD_DEFAULT_MODEL    2
 
 #include "poppack.h"
 
@@ -314,7 +286,7 @@ HBITMAP16   WINAPI CreateBitmapIndirect16(const BITMAP16*);
 HBRUSH16    WINAPI CreateBrushIndirect16(const LOGBRUSH16*);
 HBITMAP16   WINAPI CreateCompatibleBitmap16(HDC16,INT16,INT16);
 HDC16       WINAPI CreateCompatibleDC16(HDC16);
-HDC16       WINAPI CreateDC16(LPCSTR,LPCSTR,LPCSTR,const DEVMODE16*);
+HDC16       WINAPI CreateDC16(LPCSTR,LPCSTR,LPCSTR,const DEVMODEA*);
 HBITMAP16   WINAPI CreateDIBitmap16(HDC16,const BITMAPINFOHEADER*,DWORD,
                                     LPCVOID,const BITMAPINFO*,UINT16);
 HBRUSH16    WINAPI CreateDIBPatternBrush16(HGLOBAL16,UINT16);
@@ -327,7 +299,7 @@ HFONT16     WINAPI CreateFont16(INT16,INT16,INT16,INT16,INT16,BYTE,BYTE,BYTE,
                                 BYTE,BYTE,BYTE,BYTE,BYTE,LPCSTR);
 HFONT16     WINAPI CreateFontIndirect16(const LOGFONT16*);
 HBRUSH16    WINAPI CreateHatchBrush16(INT16,COLORREF);
-HDC16       WINAPI CreateIC16(LPCSTR,LPCSTR,LPCSTR,const DEVMODE16*);
+HDC16       WINAPI CreateIC16(LPCSTR,LPCSTR,LPCSTR,const DEVMODEA*);
 HDC16       WINAPI CreateMetaFile16(LPCSTR);
 HPALETTE16  WINAPI CreatePalette16(const LOGPALETTE*);
 HBRUSH16    WINAPI CreatePatternBrush16(HBITMAP16);
@@ -392,7 +364,7 @@ HDC16       WINAPI GetDCState16(HDC16);
 INT16       WINAPI GetDeviceCaps16(HDC16,INT16);
 UINT16      WINAPI GetDIBColorTable16(HDC16,UINT16,UINT16,RGBQUAD*);
 INT16       WINAPI GetDIBits16(HDC16,HBITMAP16,UINT16,UINT16,LPVOID,LPBITMAPINFO,UINT16);
-INT16       WINAPI GetEnvironment16(LPCSTR,LPDEVMODE16,UINT16);
+INT16       WINAPI GetEnvironment16(LPCSTR,LPDEVMODEA,UINT16);
 DWORD       WINAPI GetFontLanguageInfo16(HDC16);
 DWORD       WINAPI GetGlyphOutline16(HDC16,UINT16,UINT16,LPGLYPHMETRICS16,DWORD,LPVOID,const MAT2*);
 INT16       WINAPI GetKerningPairs16(HDC16,INT16,LPKERNINGPAIR16);
@@ -472,7 +444,7 @@ BOOL16      WINAPI Rectangle16(HDC16,INT16,INT16,INT16,INT16);
 BOOL16      WINAPI RectInRegion16(HRGN16,const RECT16 *);
 BOOL16      WINAPI RectVisible16(HDC16,const RECT16*);
 BOOL16      WINAPI RemoveFontResource16(SEGPTR);
-HDC16       WINAPI ResetDC16(HDC16,const DEVMODE16 *);
+HDC16       WINAPI ResetDC16(HDC16,const DEVMODEA *);
 BOOL16      WINAPI ResizePalette16(HPALETTE16,UINT16);
 BOOL16      WINAPI RestoreDC16(HDC16,INT16);
 INT16       WINAPI RestoreVisRgn16(HDC16);
@@ -506,7 +478,7 @@ UINT16      WINAPI SetDIBColorTable16(HDC16,UINT16,UINT16,RGBQUAD*);
 INT16       WINAPI SetDIBits16(HDC16,HBITMAP16,UINT16,UINT16,LPCVOID,const BITMAPINFO*,UINT16);
 INT16       WINAPI SetDIBitsToDevice16(HDC16,INT16,INT16,INT16,INT16,INT16,
                          INT16,UINT16,UINT16,LPCVOID,const BITMAPINFO*,UINT16);
-INT16       WINAPI SetEnvironment16(LPCSTR,LPDEVMODE16,UINT16);
+INT16       WINAPI SetEnvironment16(LPCSTR,LPDEVMODEA,UINT16);
 WORD        WINAPI SetHookFlags16(HDC16,WORD);
 INT16       WINAPI SetMapMode16(HDC16,INT16);
 DWORD       WINAPI SetMapperFlags16(HDC16,DWORD);

@@ -162,13 +162,15 @@ int dbch_win16drv = 150;
 int dbch_win32 = 151;
 int dbch_wing = 152;
 int dbch_winsock = 153;
-int dbch_wnet = 154;
-int dbch_x11 = 155;
-int dbch_x11drv = 156;
+int dbch_winspool = 154;
+int dbch_wnet = 155;
+int dbch_x11 = 156;
+int dbch_x11drv = 157;
 
-#define DEBUG_CHANNEL_COUNT 157
+#define DEBUG_CHANNEL_COUNT 158
 
 char __debug_msg_enabled[DEBUG_CHANNEL_COUNT][DEBUG_CLASS_COUNT] = {
+{1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
@@ -483,6 +485,7 @@ const char * const debug_ch_name[DEBUG_CHANNEL_COUNT] = {
 "win32",
 "wing",
 "winsock",
+"winspool",
 "wnet",
 "x11",
 "x11drv"

@@ -9,8 +9,7 @@
 #include "heap.h"
 #include "debugtools.h"
 
-DECLARE_DEBUG_CHANNEL(driver)
-DECLARE_DEBUG_CHANNEL(gdi)
+DEFAULT_DEBUG_CHANNEL(driver)
 
 typedef struct tagGRAPHICS_DRIVER
 {
@@ -40,7 +39,7 @@ BOOL DRIVER_RegisterDriver( LPCSTR name, const DC_FUNCTIONS *funcs )
     /* No name -> it's the generic driver */
     if (genericDriver)
     {
-        WARN_(driver)(" already a generic driver\n" );
+        WARN(" already a generic driver\n" );
         HeapFree( SystemHeap, 0, driver );
         return FALSE;
     }
@@ -57,6 +56,7 @@ const DC_FUNCTIONS *DRIVER_FindDriver( LPCSTR name )
 {
     GRAPHICS_DRIVER *driver = firstDriver;
 
+    TRACE(": %s\n", name);
     while (driver && name)
     {
         if (!strcasecmp( driver->name, name )) return driver->funcs;
@@ -97,8 +97,23 @@ BOOL DRIVER_UnregisterDriver( LPCSTR name )
     }
 }
 
+/*****************************************************************************
+ *      DRIVER_GetDriverName
+ *
+ */
+BOOL DRIVER_GetDriverName( LPCSTR device, LPSTR driver, DWORD size )
+{
+    char *p;
+    size = GetProfileStringA("devices", device, "", driver, size);
+    if(!size) return FALSE;
 
-
+    p = strchr(driver, ',');
+    if(!p) return FALSE;
+    *p = '\0';
+    TRACE("Found '%s' for '%s'\n", driver, device);
+    return TRUE;
+}
+    
 /*****************************************************************************
  *      GDI_CallDevInstall16   [GDI32.100]
  *
@@ -107,8 +122,8 @@ BOOL DRIVER_UnregisterDriver( LPCSTR name )
 INT WINAPI GDI_CallDevInstall16( FARPROC16 lpfnDevInstallProc, HWND hWnd, 
                                  LPSTR lpModelName, LPSTR OldPort, LPSTR NewPort )
 {
-    FIXME_(gdi)("(%p, %04x, %s, %s, %s)\n", 
-                lpfnDevInstallProc, hWnd, lpModelName, OldPort, NewPort );
+    FIXME("(%p, %04x, %s, %s, %s)\n", 
+	  lpfnDevInstallProc, hWnd, lpModelName, OldPort, NewPort );
     return -1;
 }
 
@@ -132,8 +147,8 @@ INT WINAPI GDI_CallDevInstall16( FARPROC16 lpfnDevInstallProc, HWND hWnd,
 INT WINAPI GDI_CallExtDeviceModePropSheet16( HWND hWnd, LPCSTR lpszDevice, 
                                              LPCSTR lpszPort, LPVOID lpPropSheet )
 {
-    FIXME_(gdi)("(%04x, %s, %s, %p)\n", 
-                hWnd, lpszDevice, lpszPort, lpPropSheet );
+    FIXME("(%04x, %s, %s, %p)\n", 
+      hWnd, lpszDevice, lpszPort, lpPropSheet );
     return -1;
 }
 
@@ -144,14 +159,22 @@ INT WINAPI GDI_CallExtDeviceModePropSheet16( HWND hWnd, LPCSTR lpszDevice,
  * ExtDeviceMode proc.
  */
 INT WINAPI GDI_CallExtDeviceMode16( HWND hwnd, 
-                                    LPDEVMODE16 lpdmOutput, LPSTR lpszDevice, 
-                                    LPSTR lpszPort, LPDEVMODE16 lpdmInput, 
+                                    LPDEVMODEA lpdmOutput, LPSTR lpszDevice, 
+                                    LPSTR lpszPort, LPDEVMODEA lpdmInput, 
                                     LPSTR lpszProfile, DWORD fwMode )
 {
-    FIXME_(gdi)("(%04x, %p, %s, %s, %p, %s, %ld)\n", 
-                hwnd, lpdmOutput, lpszDevice, lpszPort, 
-                lpdmInput, lpszProfile, fwMode );
-    return -1;
+    char buf[300];
+    const DC_FUNCTIONS *funcs;
+
+    TRACE("(%04x, %p, %s, %s, %p, %s, %ld)\n", 
+	  hwnd, lpdmOutput, lpszDevice, lpszPort, 
+	  lpdmInput, lpszProfile, fwMode );
+
+    if(!DRIVER_GetDriverName( lpszDevice, buf, sizeof(buf) )) return -1;
+    funcs = DRIVER_FindDriver( buf );
+    if(!funcs || !funcs->pExtDeviceMode) return -1;
+    return funcs->pExtDeviceMode(hwnd, lpdmOutput, lpszDevice, lpszPort,
+				 lpdmInput, lpszProfile, fwMode);
 }
 
 /****************************************************************************
@@ -161,10 +184,10 @@ INT WINAPI GDI_CallExtDeviceMode16( HWND hwnd,
  * AdvancedSetupDialog proc.
  */
 INT WINAPI GDI_CallAdvancedSetupDialog16( HWND hwnd, LPSTR lpszDevice,
-                                          LPDEVMODE16 devin, LPDEVMODE16 devout )
+                                          LPDEVMODEA devin, LPDEVMODEA devout )
 {
-    FIXME_(gdi)("(%04x, %s, %p, %p)\n", 
-                hwnd, lpszDevice, devin, devout );
+    TRACE("(%04x, %s, %p, %p)\n", 
+	  hwnd, lpszDevice, devin, devout );
     return -1;
 }
 
@@ -174,12 +197,22 @@ INT WINAPI GDI_CallAdvancedSetupDialog16( HWND hwnd, LPSTR lpszDevice,
  * This should load the correct driver for lpszDevice and calls this driver's
  * DeviceCapabilities proc.
  */
-DWORD WINAPI GDI_CallDeviceCapabilities16( LPSTR lpszDevice, LPSTR lpszPort,
-                                           DWORD fwCapability, LPSTR lpszOutput, 
-                                           LPDEVMODE16 lpdm )
+DWORD WINAPI GDI_CallDeviceCapabilities16( LPCSTR lpszDevice, LPCSTR lpszPort,
+                                           WORD fwCapability, LPSTR lpszOutput,
+                                           LPDEVMODEA lpdm )
 {
-    FIXME_(gdi)("(%s, %s, %ld, %p, %p)\n", 
-                lpszDevice, lpszPort, fwCapability, lpszOutput, lpdm );
-    return -1L;
+    char buf[300];
+    const DC_FUNCTIONS *funcs;
+
+    TRACE("(%s, %s, %d, %p, %p)\n", 
+	  lpszDevice, lpszPort, fwCapability, lpszOutput, lpdm );
+
+
+    if(!DRIVER_GetDriverName( lpszDevice, buf, sizeof(buf) )) return -1;
+    funcs = DRIVER_FindDriver( buf );
+    if(!funcs || !funcs->pDeviceCapabilities) return -1;
+    return funcs->pDeviceCapabilities( lpszDevice, lpszPort, fwCapability,
+				       lpszOutput, lpdm);
 }
+
 

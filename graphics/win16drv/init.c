@@ -38,26 +38,31 @@ LPDRAWMODE 	win16drv_DrawModeP;
 
 
 static BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
-                                 LPCSTR output, const DEVMODE16* initData );
+                                 LPCSTR output, const DEVMODEA* initData );
 static INT WIN16DRV_Escape( DC *dc, INT nEscape, INT cbInput, 
                               SEGPTR lpInData, SEGPTR lpOutData );
 
 static const DC_FUNCTIONS WIN16DRV_Funcs =
 {
+    NULL,                            /* pAbortDoc */
     NULL,                            /* pArc */
     NULL,                            /* pBitBlt */
     NULL,                            /* pBitmapBits */
     NULL,                            /* pChord */
     NULL,                            /* pCreateBitmap */
     WIN16DRV_CreateDC,               /* pCreateDC */
-    NULL,                            /* pDeleteDC */
     NULL,                            /* pCreateDIBSection */
     NULL,                            /* pCreateDIBSection16 */
+    NULL,                            /* pDeleteDC */
     NULL,                            /* pDeleteObject */
+    NULL,                            /* pDeviceCapabilities */
     WIN16DRV_Ellipse,                /* pEllipse */
+    NULL,                            /* pEndDoc */
+    NULL,                            /* pEndPage */
     WIN16DRV_EnumDeviceFonts,        /* pEnumDeviceFonts */
     WIN16DRV_Escape,                 /* pEscape */
     NULL,                            /* pExcludeClipRect */
+    NULL,                            /* pExtDeviceMode */
     NULL,                            /* pExtFloodFill */
     WIN16DRV_ExtTextOut,             /* pExtTextOut */
     NULL,                            /* pFillRgn */
@@ -111,6 +116,8 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pSetViewportOrgEx */
     NULL,                            /* pSetWindowExtEx */
     NULL,                            /* pSetWindowOrgEx */
+    NULL,                            /* pStartDoc */
+    NULL,                            /* pStartPage */
     NULL,                            /* pStretchBlt */
     NULL                             /* pStretchDIBits */
 };
@@ -164,7 +171,7 @@ void InitDrawMode(LPDRAWMODE lpDrawMode)
 }
 
 BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
-                          const DEVMODE16* initData )
+                          const DEVMODEA* initData )
 {
     LOADED_PRINTER_DRIVER *pLPD;
     WORD wRet;

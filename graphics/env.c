@@ -75,7 +75,7 @@ static ATOM PortNameToAtom(LPCSTR lpPortName, BOOL16 add)
 /***********************************************************************
  *           GetEnvironment   (GDI.134)
  */
-INT16 WINAPI GetEnvironment16(LPCSTR lpPortName, LPDEVMODE16 lpdev, UINT16 nMaxSize)
+INT16 WINAPI GetEnvironment16(LPCSTR lpPortName, LPDEVMODEA lpdev, UINT16 nMaxSize)
 {
     ATOM atom;
     LPCSTR p;
@@ -104,7 +104,7 @@ INT16 WINAPI GetEnvironment16(LPCSTR lpPortName, LPDEVMODE16 lpdev, UINT16 nMaxS
 /***********************************************************************
  *          SetEnvironment   (GDI.132)
  */
-INT16 WINAPI SetEnvironment16(LPCSTR lpPortName, LPDEVMODE16 lpdev, UINT16 nCount)
+INT16 WINAPI SetEnvironment16(LPCSTR lpPortName, LPDEVMODEA lpdev, UINT16 nCount)
 {
     ATOM atom; 
     BOOL16 nullport = FALSE;

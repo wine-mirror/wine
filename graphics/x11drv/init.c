@@ -24,7 +24,7 @@
 DEFAULT_DEBUG_CHANNEL(x11drv)
 
 static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
-                               LPCSTR output, const DEVMODE16* initData );
+                               LPCSTR output, const DEVMODEA* initData );
 static BOOL X11DRV_DeleteDC( DC *dc );
 
 static INT X11DRV_Escape( DC *dc, INT nEscape, INT cbInput,
@@ -32,20 +32,25 @@ static INT X11DRV_Escape( DC *dc, INT nEscape, INT cbInput,
 
 static const DC_FUNCTIONS X11DRV_Funcs =
 {
+    NULL,                            /* pAbortDoc */
     X11DRV_Arc,                      /* pArc */
     X11DRV_BitBlt,                   /* pBitBlt */
     X11DRV_BitmapBits,               /* pBitmapBits */
     X11DRV_Chord,                    /* pChord */
     X11DRV_CreateBitmap,             /* pCreateBitmap */
     X11DRV_CreateDC,                 /* pCreateDC */
-    X11DRV_DeleteDC,                 /* pDeleteDC */
     X11DRV_DIB_CreateDIBSection,     /* pCreateDIBSection */
     X11DRV_DIB_CreateDIBSection16,   /* pCreateDIBSection16 */
+    X11DRV_DeleteDC,                 /* pDeleteDC */
     X11DRV_DeleteObject,             /* pDeleteObject */
+    NULL,                            /* pDeviceCapabilities */
     X11DRV_Ellipse,                  /* pEllipse */
+    NULL,                            /* pEndDoc */
+    NULL,                            /* pEndPage */
     X11DRV_EnumDeviceFonts,          /* pEnumDeviceFonts */
     X11DRV_Escape,                   /* pEscape */
     NULL,                            /* pExcludeClipRect */
+    NULL,                            /* pExtDeviceMode */
     X11DRV_ExtFloodFill,             /* pExtFloodFill */
     X11DRV_ExtTextOut,               /* pExtTextOut */
     NULL,                            /* pFillRgn */
@@ -99,6 +104,8 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL,                            /* pSetViewportOrg (optional) */
     NULL,                            /* pSetWindowExt (optional) */
     NULL,                            /* pSetWindowOrg (optional) */
+    NULL,                            /* pStartDoc */
+    NULL,                            /* pStartPage */
     X11DRV_StretchBlt,               /* pStretchBlt */
     NULL                             /* pStretchDIBits */
 };
@@ -208,7 +215,7 @@ void X11DRV_GDI_Finalize(void)
  *	     X11DRV_CreateDC
  */
 static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
-                               LPCSTR output, const DEVMODE16* initData )
+                               LPCSTR output, const DEVMODEA* initData )
 {
     X11DRV_PDEVICE *physDev;
 

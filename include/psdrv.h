@@ -10,6 +10,7 @@
 #include "font.h"
 #include "pen.h"
 #include "brush.h"
+#include "wine/wingdi16.h"
 
 typedef struct {
     float	llx, lly, urx, ury;
@@ -142,7 +143,7 @@ typedef struct {
 } PPD;
 
 typedef struct {
-    DEVMODE16			dmPublic;
+    DEVMODEA			dmPublic;
     struct _tagdocprivate {
       int dummy;
     }				dmDocPrivate;
@@ -157,12 +158,12 @@ numInstalledOptions of OPTIONs
 
 */
 
-} PSDRV_DEVMODE16;
+} PSDRV_DEVMODEA;
 
 typedef struct _tagPI {
     char		*FriendlyName;
     PPD			*ppd;
-    PSDRV_DEVMODE16	*Devmode;
+    PSDRV_DEVMODEA	*Devmode;
     FONTFAMILY		*Fonts;
     struct _tagPI	*next;
 } PRINTERINFO;
@@ -225,14 +226,19 @@ typedef struct {
     PSCOLOR		bkColor;
     PSCOLOR		inkColor;	/* Last colour set */
     JOB			job;
-    PSDRV_DEVMODE16	*Devmode;
+    PSDRV_DEVMODEA	*Devmode;
     PRINTERINFO		*pi;
 } PSDRV_PDEVICE;
+
+
+extern INT16 WINAPI PSDRV_ExtDeviceMode16(HWND16 hwnd, HANDLE16 hDriver,
+		    LPDEVMODEA lpdmOutput, LPSTR lpszDevice, LPSTR lpszPort,
+		    LPDEVMODEA lpdmInput, LPSTR lpszProfile, WORD fwMode);
 
 extern HANDLE PSDRV_Heap;
 extern char *PSDRV_ANSIVector[256];
 
-extern void PSDRV_MergeDevmodes(PSDRV_DEVMODE16 *dm1, PSDRV_DEVMODE16 *dm2,
+extern void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
 			 PRINTERINFO *pi);
 extern BOOL PSDRV_GetFontMetrics(void);
 extern PPD *PSDRV_ParsePPD(char *fname);
@@ -340,6 +346,13 @@ extern INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst,
 				  INT ySrc, INT widthSrc, INT heightSrc,
 				  const void *bits, const BITMAPINFO *info,
 				  UINT wUsage, DWORD dwRop );
+extern INT PSDRV_ExtDeviceMode(HWND hwnd, LPDEVMODEA lpdmOutput,
+			       LPSTR lpszDevice, LPSTR lpszPort,
+			       LPDEVMODEA lpdmInput, LPSTR lpszProfile,
+			       DWORD dwMode);
+extern DWORD PSDRV_DeviceCapabilities(LPCSTR lpszDevice, LPCSTR lpszPort,
+				      WORD fwCapability, LPSTR lpszOutput,
+				      LPDEVMODEA lpdm);
 
 #endif
 

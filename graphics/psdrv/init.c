@@ -17,25 +17,30 @@
 DEFAULT_DEBUG_CHANNEL(psdrv)
 
 static BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
-                               LPCSTR output, const DEVMODE16* initData );
+                               LPCSTR output, const DEVMODEA* initData );
 static BOOL PSDRV_DeleteDC( DC *dc );
 
 static const DC_FUNCTIONS PSDRV_Funcs =
 {
+    NULL,                            /* pAbortDoc */
     PSDRV_Arc,                       /* pArc */
     NULL,                            /* pBitBlt */
     NULL,                            /* pBitmapBits */
     PSDRV_Chord,                     /* pChord */
     NULL,                            /* pCreateBitmap */
     PSDRV_CreateDC,                  /* pCreateDC */
-    PSDRV_DeleteDC,                  /* pDeleteDC */
     NULL,                            /* pCreateDIBSection */
     NULL,                            /* pCreateDIBSection16 */
+    PSDRV_DeleteDC,                  /* pDeleteDC */
     NULL,                            /* pDeleteObject */
+    PSDRV_DeviceCapabilities,        /* pDeviceCapabilities */
     PSDRV_Ellipse,                   /* pEllipse */
+    NULL,                            /* pEndDoc */
+    NULL,                            /* pEndPage */
     PSDRV_EnumDeviceFonts,           /* pEnumDeviceFonts */
     PSDRV_Escape,                    /* pEscape */
     NULL,                            /* pExcludeClipRect */
+    PSDRV_ExtDeviceMode,             /* pExtDeviceMode */
     NULL,                            /* pExtFloodFill */
     PSDRV_ExtTextOut,                /* pExtTextOut */
     NULL,                            /* pFillRgn */
@@ -89,6 +94,8 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pSetViewportOrg (optional) */
     NULL,                            /* pSetWindowExt (optional) */
     NULL,                            /* pSetWindowOrg (optional) */
+    NULL,                            /* pStartDoc */
+    NULL,                            /* pStartPage */
     NULL,                            /* pStretchBlt */
     PSDRV_StretchDIBits              /* pStretchDIBits */
 };
@@ -121,10 +128,9 @@ static DeviceCaps PSDRV_DevCaps = {
 			PC_INTERIORS,
 /* textCaps */		TC_CR_ANY, /* psdrv 0x59f7 */
 /* clipCaps */		CP_RECTANGLE,
-/* rasterCaps */	RC_BITBLT | RC_BANDING | RC_SCALING | RC_BITMAP64 |
-			RC_DI_BITMAP | RC_DIBTODEV | RC_BIGFONT |
-			RC_STRETCHBLT | RC_STRETCHDIB | RC_DEVBITS, 
-			/* psdrv 0x6e99 */
+/* rasterCaps */	RC_BITBLT | RC_BITMAP64 | RC_GDI20_OUTPUT |
+			RC_DIBTODEV | RC_STRETCHBLT |
+			RC_STRETCHDIB, /* psdrv 0x6e99 */
 /* aspectX */		600,
 /* aspectY */		600,
 /* aspectXY */		848,
@@ -135,22 +141,26 @@ static DeviceCaps PSDRV_DevCaps = {
 /* palette size */	0,
 /* ..etc */		0, 0 };
 
-static PSDRV_DEVMODE16 DefaultDevmode = 
+static PSDRV_DEVMODEA DefaultDevmode = 
 {
   { /* dmPublic */
 /* dmDeviceName */	"Wine PostScript Driver",
 /* dmSpecVersion */	0x30a,
 /* dmDriverVersion */	0x001,
-/* dmSize */		sizeof(DEVMODE16),
+/* dmSize */		sizeof(DEVMODEA),
 /* dmDriverExtra */	0,
 /* dmFields */		DM_ORIENTATION | DM_PAPERSIZE | DM_PAPERLENGTH |
 			DM_PAPERWIDTH | DM_SCALE | DM_COPIES | 
 			DM_DEFAULTSOURCE | DM_COLOR | DM_DUPLEX | 
 			DM_YRESOLUTION | DM_TTOPTION,
+   { /* u1 */
+     { /* s1 */
 /* dmOrientation */	DMORIENT_PORTRAIT,
 /* dmPaperSize */	DMPAPER_A4,
 /* dmPaperLength */	2969,
-/* dmPaperWidth */      2101,
+/* dmPaperWidth */      2101
+     }
+   },
 /* dmScale */		100, /* ?? */
 /* dmCopies */		1,
 /* dmDefaultSource */	DMBIN_AUTO,
@@ -203,7 +213,7 @@ BOOL PSDRV_Init(void)
  *	     PSDRV_CreateDC
  */
 static BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
-                               LPCSTR output, const DEVMODE16* initData )
+                               LPCSTR output, const DEVMODEA* initData )
 {
     PSDRV_PDEVICE *physDev;
     PRINTERINFO *pi = PSDRV_FindPrinterInfo(device);
@@ -225,29 +235,29 @@ static BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 
     physDev->pi = pi;
 
-    physDev->Devmode = (PSDRV_DEVMODE16 *)HeapAlloc( PSDRV_Heap, 0,
-						     sizeof(PSDRV_DEVMODE16) );
+    physDev->Devmode = (PSDRV_DEVMODEA *)HeapAlloc( PSDRV_Heap, 0,
+						     sizeof(PSDRV_DEVMODEA) );
     if(!physDev->Devmode) {
         HeapFree( PSDRV_Heap, 0, physDev );
 	return FALSE;
     }
     
-    memcpy( physDev->Devmode, pi->Devmode, sizeof(PSDRV_DEVMODE16) );
+    memcpy( physDev->Devmode, pi->Devmode, sizeof(PSDRV_DEVMODEA) );
 
     if(initData) {
-        PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODE16 *)initData, pi);
+        PSDRV_MergeDevmodes(physDev->Devmode, (PSDRV_DEVMODEA *)initData, pi);
     }
 
     
     devCaps = HeapAlloc( PSDRV_Heap, 0, sizeof(PSDRV_DevCaps) );
     memcpy(devCaps, &PSDRV_DevCaps, sizeof(PSDRV_DevCaps));
 
-    if(physDev->Devmode->dmPublic.dmOrientation == DMORIENT_PORTRAIT) {
-        devCaps->horzSize = physDev->Devmode->dmPublic.dmPaperWidth / 10;
-	devCaps->vertSize = physDev->Devmode->dmPublic.dmPaperLength / 10;
+    if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_PORTRAIT) {
+        devCaps->horzSize = physDev->Devmode->dmPublic.u1.s1.dmPaperWidth / 10;
+	devCaps->vertSize = physDev->Devmode->dmPublic.u1.s1.dmPaperLength / 10;
     } else {
-        devCaps->horzSize = physDev->Devmode->dmPublic.dmPaperLength / 10;
-	devCaps->vertSize = physDev->Devmode->dmPublic.dmPaperWidth / 10;
+        devCaps->horzSize = physDev->Devmode->dmPublic.u1.s1.dmPaperLength / 10;
+	devCaps->vertSize = physDev->Devmode->dmPublic.u1.s1.dmPaperWidth / 10;
     }
 
     devCaps->horzRes = physDev->pi->ppd->DefaultResolution * 
@@ -278,7 +288,8 @@ static BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     			    dc->w.devCaps->vertRes);
     
     dc->w.hFont = PSDRV_DefaultFont;
-    physDev->job.output = HEAP_strdupA( PSDRV_Heap, 0, output );
+    physDev->job.output = output ? HEAP_strdupA( PSDRV_Heap, 0, output ) :
+      NULL;
     physDev->job.hJob = 0;
     return TRUE;
 }

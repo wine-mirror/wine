@@ -433,7 +433,8 @@ PPD *PSDRV_ParsePPD(char *fname)
 	    TRACE(psdrv, "ColorDevice = %d\n", (int)ppd->ColorDevice);
 	}
 
-	else if(!strcmp("*DefaultResolution", tuple.key)) {
+	else if((!strcmp("*DefaultResolution", tuple.key)) ||
+		(!strcmp("*DefaultJCLResolution", tuple.key))) {
 	    sscanf(tuple.value, "%d", &(ppd->DefaultResolution));
 	    TRACE(psdrv, "DefaultResolution = %d\n", ppd->DefaultResolution);
 	}
@@ -628,6 +629,8 @@ PPD *PSDRV_ParsePPD(char *fname)
 	PAGESIZE *page;
 	CONSTRAINT *con;
 	INPUTSLOT *slot;
+	OPTION *option;
+	OPTIONENTRY *optionEntry;
 
 	for(fn = ppd->InstalledFonts; fn; fn = fn->next)
 	    TRACE(psdrv, "'%s'\n", fn->Name);
@@ -645,11 +648,20 @@ PPD *PSDRV_ParsePPD(char *fname)
 	}
 
 	for(con = ppd->Constraints; con; con = con->next)
-	    TRACE(psdrv, "%s %s %s %s\n", con->Feature1, con->Value1,
-		  con->Feature2, con->Value2);
+	    TRACE(psdrv, "CONSTRAINTS@ %s %s %s %s\n", con->Feature1,
+		  con->Value1, con->Feature2, con->Value2);
+
+	for(option = ppd->InstalledOptions; option; option = option->next) {
+	    TRACE(psdrv, "OPTION: %s %s %s\n", option->OptionName,
+		  option->FullName, option->DefaultOption);
+	    for(optionEntry = option->Options; optionEntry;
+		optionEntry = optionEntry->next)
+	        TRACE(psdrv, "\tOPTIONENTRY: %s %s %s\n", optionEntry->Name,
+		      optionEntry->FullName, optionEntry->InvocationString);
+	}
 
 	for(slot = ppd->InputSlots; slot; slot = slot->next)
-	    TRACE(psdrv, "Slot '%s' Name '%s' (%d) Invocation '%s'\n",
+	    TRACE(psdrv, "INPUTSLOTS '%s' Name '%s' (%d) Invocation '%s'\n",
 		  slot->Name, slot->FullName, slot->WinBin, 
 		  slot->InvocationString);
     }

@@ -503,12 +503,18 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
  *           CreateDC16    (GDI.53)
  */
 HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
-                         const DEVMODE16 *initData )
+                         const DEVMODEA *initData )
 {
     DC * dc;
     const DC_FUNCTIONS *funcs;
+    char buf[300];
 
-    if (!(funcs = DRIVER_FindDriver( driver ))) return 0;
+    if (device) {
+	if(!DRIVER_GetDriverName( device, buf, sizeof(buf) )) return 0;
+    } else
+        strcpy(buf, driver);
+
+    if (!(funcs = DRIVER_FindDriver( buf ))) return 0;
     if (!(dc = DC_AllocDC( funcs ))) return 0;
     dc->w.flags = 0;
 
@@ -535,7 +541,7 @@ HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
 HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
                           const DEVMODEA *initData )
 {
-    return CreateDC16( driver, device, output, (const DEVMODE16 *)initData );
+    return CreateDC16( driver, device, output, (const DEVMODEA *)initData );
 }
 
 
@@ -549,7 +555,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
     LPSTR deviceA = HEAP_strdupWtoA( GetProcessHeap(), 0, device );
     LPSTR outputA = HEAP_strdupWtoA( GetProcessHeap(), 0, output );
     HDC res = CreateDC16( driverA, deviceA, outputA,
-                            (const DEVMODE16 *)initData /*FIXME*/ );
+                            (const DEVMODEA *)initData /*FIXME*/ );
     HeapFree( GetProcessHeap(), 0, driverA );
     HeapFree( GetProcessHeap(), 0, deviceA );
     HeapFree( GetProcessHeap(), 0, outputA );
@@ -561,7 +567,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
  *           CreateIC16    (GDI.153)
  */
 HDC16 WINAPI CreateIC16( LPCSTR driver, LPCSTR device, LPCSTR output,
-                         const DEVMODE16* initData )
+                         const DEVMODEA* initData )
 {
       /* Nothing special yet for ICs */
     return CreateDC16( driver, device, output, initData );
@@ -702,7 +708,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
 /***********************************************************************
  *           ResetDC16    (GDI.376)
  */
-HDC16 WINAPI ResetDC16( HDC16 hdc, const DEVMODE16 *devmode )
+HDC16 WINAPI ResetDC16( HDC16 hdc, const DEVMODEA *devmode )
 {
     FIXME(dc, "stub\n" );
     return hdc;
@@ -745,8 +751,32 @@ INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     INT ret;
+    POINT pt;
 
     if (!dc) return 0;
+
+    /* Device capabilities for the printer */
+    switch (cap)
+    {
+    case PHYSICALWIDTH:
+        if(Escape(hdc, GETPHYSPAGESIZE, 0, NULL, (LPVOID)&pt) > 0)
+	    return pt.x;
+    case PHYSICALHEIGHT:
+	if(Escape(hdc, GETPHYSPAGESIZE, 0, NULL, (LPVOID)&pt) > 0)
+	    return pt.y;
+    case PHYSICALOFFSETX:
+	if(Escape(hdc, GETPRINTINGOFFSET, 0, NULL, (LPVOID)&pt) > 0)
+	    return pt.x;
+    case PHYSICALOFFSETY:
+	if(Escape(hdc, GETPRINTINGOFFSET, 0, NULL, (LPVOID)&pt) > 0)
+	    return pt.y;
+    case SCALINGFACTORX:
+	if(Escape(hdc, GETSCALINGFACTOR, 0, NULL, (LPVOID)&pt) > 0)
+	    return pt.x;
+    case SCALINGFACTORY:
+	if(Escape(hdc, GETSCALINGFACTOR, 0, NULL, (LPVOID)&pt) > 0)
+	    return pt.y;
+    }
 
     if ((cap < 0) || (cap > sizeof(DeviceCaps)-sizeof(WORD)))
     {

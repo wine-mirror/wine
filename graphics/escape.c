@@ -34,13 +34,16 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
     segin	= (SEGPTR)lpszInData;
     segout	= (SEGPTR)lpvOutData;
     switch (nEscape) {
-    	/* Escape(hdc,QUERYESCSUPPORT,LPINT32,NULL) */
-    case QUERYESCSUPPORT: {
+    	/* Escape(hdc,QUERYESCSUPPORT,LPINT,NULL) */
+        /* Escape(hdc,EXT_DEVICE_CAPS,LPINT,NULL) */
+    case QUERYESCSUPPORT:
+    case EXT_DEVICE_CAPS:
+      {
     	LPINT16 x = (LPINT16)SEGPTR_NEW(INT16);
 	*x = *(INT*)lpszInData;
 	segin = SEGPTR_GET(x);
 	break;
-    }
+      }
 
     	/* Escape(hdc,GETSCALINGFACTOR,NULL,LPPOINT32) */
     	/* Escape(hdc,GETPHYSPAGESIZE,NULL,LPPOINT32) */
@@ -100,6 +103,9 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
     	if (ret)
 		TRACE("target DC implements Escape %d\n",nEscape);
     	SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
+	break;
+    case EXT_DEVICE_CAPS:
+        SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
 	break;
     case GETSCALINGFACTOR:
     case GETPRINTINGOFFSET:

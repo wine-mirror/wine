@@ -41,7 +41,7 @@ typedef struct {
   int dummy;
 } TTYDRV_PDEVICE;
 
-extern BOOL TTYDRV_DC_CreateDC(struct tagDC *dc, LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE16 *initData);
+extern BOOL TTYDRV_DC_CreateDC(struct tagDC *dc, LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODEA *initData);
 extern BOOL TTYDRV_DC_DeleteDC(struct tagDC *dc);
 extern INT TTYDRV_DC_Escape(struct tagDC *dc, INT nEscape, INT cbInput, SEGPTR lpInData, SEGPTR lpOutData);
 

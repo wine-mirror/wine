@@ -43,6 +43,7 @@ LIBSUBDIRS = \
 	dlls/ver \
 	dlls/version \
 	dlls/winaspi \
+	dlls/winspool \
 	dlls/wnaspi32 \
 	files \
 	graphics \
@@ -118,6 +119,7 @@ LIBOBJS = \
 	dlls/ver/ver.o \
 	dlls/version/version.o \
 	dlls/winaspi/winaspi.o \
+	dlls/winspool/winspool.o \
 	dlls/wnaspi32/wnaspi32.o \
 	files/files.o \
 	graphics/graphics.o \

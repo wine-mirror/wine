@@ -17,8 +17,6 @@ extern "C" {
 #endif
 
 /* DEFINES */
-#define INT_PD_DEFAULT_DEVMODE  1
-#define INT_PD_DEFAULT_MODEL    2
 
 #define PRINTER_ATTRIBUTE_QUEUED         0x00000001
 #define PRINTER_ATTRIBUTE_DIRECT         0x00000002
@@ -234,11 +232,11 @@ int WINAPI EndSpoolPage16(HANDLE16 hJob);
 DWORD WINAPI GetSpoolJob16(int nOption, LONG param);
 int WINAPI WriteDialog16(HANDLE16 hJob, LPSTR lpMsg, WORD cchMsg);
 
-INT WINAPI DeviceCapabilitiesA(LPCSTR printer,LPCSTR target,WORD z,
-                                   LPSTR a,LPDEVMODEA b);
+INT WINAPI DeviceCapabilitiesA(LPCSTR pDevice,LPCSTR pPort,WORD fwCapability,
+			       LPSTR pOutput, LPDEVMODEA pDevMode);
 INT WINAPI DeviceCapabilitiesW(LPCWSTR pDevice, LPCWSTR pPort,
-                                   WORD fwCapability, LPWSTR pOutput,
-                                   const DEVMODEW *pDevMode);
+			       WORD fwCapability, LPWSTR pOutput,
+			       const DEVMODEW *pDevMode);
 
 #define DeviceCapabilities WINELIB_NAME_AW(DeviceCapabilities)
 
