@@ -32,6 +32,17 @@
 
 CHAR CURR_DIR[MAX_PATH];
 
+static HMODULE hshell32;
+static int (WINAPI *pSHCreateDirectoryExA)(HWND, LPCSTR, LPSECURITY_ATTRIBUTES);
+
+static void InitFunctionPointers(void)
+{
+    hshell32 = GetModuleHandleA("shell32.dll");
+
+    if(hshell32)
+	pSHCreateDirectoryExA = (void*)GetProcAddress(hshell32, "SHCreateDirectoryExA");
+}
+
 /* creates a file with the specified name for tests */
 void createTestFile(CHAR *name)
 {
@@ -397,18 +408,26 @@ void test_sh_create_dir()
     CHAR path[MAX_PATH];
     int ret;
 
+    if(!pSHCreateDirectoryExA)
+    {
+	trace("skipping SHCreateDirectoryExA tests\n");
+	return;
+    }
+
     set_curr_dir_path(path, "testdir2\\test4.txt\0");
-    ret = SHCreateDirectoryExA(NULL, path, NULL);
+    ret = pSHCreateDirectoryExA(NULL, path, NULL);
     ok(ERROR_SUCCESS == ret, "SHCreateDirectoryEx failed to create directory recursively, ret = %d\n", ret);
     ok(file_exists(".\\testdir2"), "The first directory is not created\n");
     ok(file_exists(".\\testdir2\\test4.txt"), "The second directory is not created\n");
 
-    ret = SHCreateDirectoryExA(NULL, path, NULL);
+    ret = pSHCreateDirectoryExA(NULL, path, NULL);
     ok(ERROR_ALREADY_EXISTS == ret, "SHCreateDirectoryEx should fail to create existing directory, ret = %d\n", ret);
 }
 
 START_TEST(shlfileop)
 {
+    InitFunctionPointers();
+
     clean_after_shfo_tests();
 
     init_shfo_tests();
