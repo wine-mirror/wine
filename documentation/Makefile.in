@@ -52,9 +52,13 @@ WINELIB_USER_SRCS = \
 WINE_PKG_SRCS = \
 	packaging.sgml
 
+WINE_FAQ_SRCS = \
+	faq.sgml
+
 WINE_DOC_SRCS = \
 	$(WINELIB_USER_SRCS) \
 	$(WINE_DEVEL_SRCS) \
+	$(WINE_FAQ_SRCS) \
 	$(WINE_PKG_SRCS) \
 	$(WINE_USER_SRCS)
 
@@ -62,6 +66,7 @@ MAN_TARGETS = wine.man
 
 ALLBOOKS = \
 	wine-devel \
+	wine-faq \
 	wine-pkg \
 	wine-user \
 	winelib-user
@@ -98,6 +103,7 @@ wine-doc: wine-doc/index.html wine-doc.pdf wine-doc.ps
 	$(DB2PS) $< >/dev/null
 
 wine-devel.pdf wine-devel.ps wine-devel/index.html: $(WINE_DEVEL_SRCS)
+wine-faq.pdf wine-faq.ps wine-faq/index.html: $(WINE_FAQ_SRCS)
 wine-pkg.pdf wine-pkg.ps wine-pkg/index.html: $(WINE_PKG_SRCS)
 wine-user.pdf wine-user.ps wine-user/index.html: $(WINE_USER_SRCS)
 winelib-user.pdf winelib-user.ps winelib-user/index.html: $(WINELIB_USER_SRCS)
