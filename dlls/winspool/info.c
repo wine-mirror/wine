@@ -175,6 +175,7 @@ PRINTCAP_ParseEntry(char *pent,BOOL isfirst) {
     BOOL		isps = FALSE;
     char		*port,*devline;
 
+    while (isspace(*pent)) pent++;
     s = strchr(pent,':');
     if (!s) return FALSE;
     *s='\0';
