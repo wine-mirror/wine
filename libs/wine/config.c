@@ -279,6 +279,7 @@ static void preloader_exec( char **argv, char **envp, int use_preloader )
     {
         static const char preloader[] = "wine-preloader";
         char *p, *full_name;
+        char **last_arg = argv, **new_argv;
 
         if (!(p = strrchr( argv[0], '/' ))) p = argv[0];
         else p++;
@@ -286,8 +287,15 @@ static void preloader_exec( char **argv, char **envp, int use_preloader )
         full_name = xmalloc( p - argv[0] + sizeof(preloader) );
         memcpy( full_name, argv[0], p - argv[0] );
         memcpy( full_name + (p - argv[0]), preloader, sizeof(preloader) );
-        if (envp) execve( full_name, argv, envp );
-        else execv( full_name, argv );
+
+        /* make a copy of argv */
+        while (*last_arg) last_arg++;
+        new_argv = xmalloc( (last_arg - argv + 2) * sizeof(*argv) );
+        memcpy( new_argv + 1, argv, (last_arg - argv + 1) * sizeof(*argv) );
+        new_argv[0] = full_name;
+        if (envp) execve( full_name, new_argv, envp );
+        else execv( full_name, new_argv );
+        free( new_argv );
         free( full_name );
         return;
     }

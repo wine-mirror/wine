@@ -2,7 +2,7 @@
  * Preloader for ld.so
  *
  * Copyright (C) 1995,96,97,98,99,2000,2001,2002 Free Software Foundation, Inc.
- * Copyright (C) 2004 Mike McCormack for Codeweavers
+ * Copyright (C) 2004 Mike McCormack for CodeWeavers
  * Copyright (C) 2004 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
@@ -685,6 +685,7 @@ void* wld_start( void **stack )
 
     pargc = *stack;
     argv = (char **)pargc + 1;
+    if (*pargc < 2) fatal_error( "Usage: %s wine_binary [args]\n", argv[0] );
 
     /* skip over the parameters */
     p = argv + *pargc + 1;
@@ -717,7 +718,7 @@ void* wld_start( void **stack )
               PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON | MAP_NORESERVE, -1, 0 );
 
     /* load the main binary */
-    map_so_lib( argv[0], &main_binary_map );
+    map_so_lib( argv[1], &main_binary_map );
 
     /* load the ELF interpreter */
     interp = (char *)main_binary_map.l_addr + main_binary_map.l_interp;
@@ -742,6 +743,10 @@ void* wld_start( void **stack )
     SET_NEW_AV( 9, AT_GID, get_auxiliary( av, AT_GID, getgid() ) );
     SET_NEW_AV(10, AT_EGID, get_auxiliary( av, AT_EGID, getegid() ) );
 #undef SET_NEW_AV
+
+    /* get rid of first argument */
+    pargc[1] = pargc[0] - 1;
+    *stack = pargc + 1;
 
     set_auxiliary_values( av, new_av, stack );
 
