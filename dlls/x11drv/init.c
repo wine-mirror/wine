@@ -70,7 +70,7 @@ static DWORD get_dpi( void )
         DWORD type, count = sizeof(buffer);
         if(RegQueryValueExW(hkey, INIResolution, 0, &type, buffer, &count) == ERROR_SUCCESS)
             if(atoi(buffer) != 96)
-                MESSAGE("Please use the registry key HKEY_CURRENT_CONFIG\\Sotfware\\Fonts\\LogPixels\n"
+                MESSAGE("Please use the registry key HKEY_CURRENT_CONFIG\\Software\\Fonts\\LogPixels\n"
                         "to set the screen resolution and remove the \"Resolution\" entry in the config file\n");
         RegCloseKey(hkey);
     }
