@@ -791,7 +791,7 @@ static void get_process_info(struct gdb_context* gdbctx, char* buffer, size_t le
         strcpy(buffer, "Running");
     }
     else
-        sprintf(buffer, "Terminated (%lu)", status);
+        snprintf(buffer, len, "Terminated (%lu)", status);
 
     switch (GetPriorityClass(gdbctx->process->handle))
     {
@@ -833,12 +833,12 @@ static void get_thread_info(struct gdb_context* gdbctx, unsigned tid,
             {
             case -1: break;
             case 0:  strcpy(buffer, "Running"); break;
-            default: sprintf(buffer, "Suspended (%lu)", status - 1);
+            default: snprintf(buffer, len, "Suspended (%lu)", status - 1);
             }
             ResumeThread(thd->handle);
         }
         else
-            sprintf(buffer, "Terminated (exit code = %lu)", status);
+            snprintf(buffer, len, "Terminated (exit code = %lu)", status);
     }
     else
     {
@@ -854,7 +854,7 @@ static void get_thread_info(struct gdb_context* gdbctx, unsigned tid,
     case THREAD_PRIORITY_IDLE:          strcat(buffer, ", priority idle"); break;
     case THREAD_PRIORITY_NORMAL:        strcat(buffer, ", priority normal"); break;
     case THREAD_PRIORITY_TIME_CRITICAL: strcat(buffer, ", priority time-critical"); break;
-    default: sprintf(buffer + strlen(buffer), ", priority = %d", prio);
+    default: snprintf(buffer + strlen(buffer), len - strlen(buffer), ", priority = %d", prio);
     }
     assert(strlen(buffer) < len);
 }
@@ -881,6 +881,11 @@ static void packet_reply_hex_to(struct gdb_context* gdbctx, const void* src, int
     packet_reply_grow(gdbctx, len * 2);
     hex_to(&gdbctx->out_buf[gdbctx->out_len], src, len);
     gdbctx->out_len += len * 2;
+}
+
+static inline void packet_reply_hex_to_str(struct gdb_context* gdbctx, const char* src)
+{
+    packet_reply_hex_to(gdbctx, src, strlen(src));
 }
 
 static void packet_reply_val(struct gdb_context* gdbctx, unsigned long val, int len)
@@ -1281,11 +1286,12 @@ static void packet_query_monitor_wnd_helper(struct gdb_context* gdbctx, HWND hWn
 
        packet_reply_open(gdbctx);
        packet_reply_catc(gdbctx, 'O');
-       sprintf(buffer, "%*s%04x%*s%-17.17s %08lx %08lx %.14s\n",
-               indent, "", (UINT)hWnd, 13 - indent, "",
-               clsName, GetWindowLong(hWnd, GWL_STYLE),
-               GetWindowLong(hWnd, GWL_WNDPROC), wndName);
-       packet_reply_hex_to(gdbctx, buffer, strlen(buffer));
+       snprintf(buffer, sizeof(buffer), 
+                "%*s%04x%*s%-17.17s %08lx %08lx %.14s\n",
+                indent, "", (UINT)hWnd, 13 - indent, "",
+                clsName, GetWindowLong(hWnd, GWL_STYLE),
+                GetWindowLong(hWnd, GWL_WNDPROC), wndName);
+       packet_reply_hex_to_str(gdbctx, buffer);
        packet_reply_close(gdbctx);
 
        if ((child = GetWindow(hWnd, GW_CHILD)) != 0)
@@ -1301,9 +1307,10 @@ static void packet_query_monitor_wnd(struct gdb_context* gdbctx, int len, const 
      * marking the end of the output */
     packet_reply_open(gdbctx);
     packet_reply_catc(gdbctx, 'O');
-    sprintf(buffer, "%-16.16s %-17.17s %-8.8s %s\n",
-            "hwnd", "Class Name", " Style", " WndProc Text");
-    packet_reply_hex_to(gdbctx, buffer, strlen(buffer));
+    snprintf(buffer, sizeof(buffer),
+             "%-16.16s %-17.17s %-8.8s %s\n",
+             "hwnd", "Class Name", " Style", " WndProc Text");
+    packet_reply_hex_to_str(gdbctx, buffer);
     packet_reply_close(gdbctx);
 
     /* FIXME: could also add a pmt to this command in str... */
@@ -1330,9 +1337,10 @@ static void packet_query_monitor_process(struct gdb_context* gdbctx, int len, co
 
     packet_reply_open(gdbctx);
     packet_reply_catc(gdbctx, 'O');
-    sprintf(buffer, " %-8.8s %-8.8s %-8.8s %s\n",
-            "pid", "threads", "parent", "executable" );
-    packet_reply_hex_to(gdbctx, buffer, strlen(buffer));
+    snprintf(buffer, sizeof(buffer),
+             " %-8.8s %-8.8s %-8.8s %s\n",
+             "pid", "threads", "parent", "executable" );
+    packet_reply_hex_to_str(gdbctx, buffer);
     packet_reply_close(gdbctx);
 
     while (ok)
@@ -1341,10 +1349,11 @@ static void packet_query_monitor_process(struct gdb_context* gdbctx, int len, co
         if (entry.th32ProcessID == gdbctx->process->pid) deco = '>';
         packet_reply_open(gdbctx);
         packet_reply_catc(gdbctx, 'O');
-        sprintf(buffer, "%c%08lx %-8ld %08lx '%s'\n",
-                deco, entry.th32ProcessID, entry.cntThreads,
-                entry.th32ParentProcessID, entry.szExeFile);
-        packet_reply_hex_to(gdbctx, buffer, strlen(buffer));
+        snprintf(buffer, sizeof(buffer),
+                 "%c%08lx %-8ld %08lx '%s'\n",
+                 deco, entry.th32ProcessID, entry.cntThreads,
+                 entry.th32ParentProcessID, entry.szExeFile);
+        packet_reply_hex_to_str(gdbctx, buffer);
         packet_reply_close(gdbctx);
         ok = Process32Next(snap, &entry);
     }
@@ -1365,8 +1374,7 @@ static void packet_query_monitor_mem(struct gdb_context* gdbctx, int len, const 
      * marking the end of the output */
     packet_reply_open(gdbctx);
     packet_reply_catc(gdbctx, 'O');
-    sprintf(buffer, "Address  Size     State   Type    RWX\n");
-    packet_reply_hex_to(gdbctx, buffer, strlen(buffer));
+    packet_reply_hex_to_str(gdbctx, "Address  Size     State   Type    RWX\n");
     packet_reply_close(gdbctx);
 
     while (VirtualQueryEx(gdbctx->process->handle, addr, &mbi, sizeof(mbi)) >= sizeof(mbi))
@@ -1405,10 +1413,11 @@ static void packet_query_monitor_mem(struct gdb_context* gdbctx, int len, const 
             prot[0] = '\0';
         }
         packet_reply_open(gdbctx);
-        sprintf(buffer, "%08lx %08lx %s %s %s\n",
-                (DWORD)addr, mbi.RegionSize, state, type, prot);
+        snprintf(buffer, sizeof(buffer), 
+                 "%08lx %08lx %s %s %s\n",
+                 (DWORD)addr, mbi.RegionSize, state, type, prot);
         packet_reply_catc(gdbctx, 'O');
-        packet_reply_hex_to(gdbctx, buffer, strlen(buffer));
+        packet_reply_hex_to_str(gdbctx, buffer);
         packet_reply_close(gdbctx);
 
         if (addr + mbi.RegionSize < addr) /* wrap around ? */
@@ -1425,12 +1434,12 @@ static void packet_query_monitor_trace(struct gdb_context* gdbctx,
 
     if (len == 0)
     {
-        sprintf(buffer, "trace=%x\n", gdbctx->trace);
+        snprintf(buffer, sizeof(buffer), "trace=%x\n", gdbctx->trace);
     }
     else if (len >= 2 && str[0] == '=')
     {
         unsigned val = atoi(&str[1]);
-        sprintf(buffer, "trace: %x => %x\n", gdbctx->trace, val);
+        snprintf(buffer, sizeof(buffer), "trace: %x => %x\n", gdbctx->trace, val);
         gdbctx->trace = val;
     }
     else
@@ -1440,7 +1449,7 @@ static void packet_query_monitor_trace(struct gdb_context* gdbctx,
         return;
     }
     packet_reply_open(gdbctx);
-    packet_reply_hex_to(gdbctx, buffer, strlen(buffer));
+    packet_reply_hex_to_str(gdbctx, buffer);
     packet_reply_close(gdbctx);
 }
 
@@ -1474,9 +1483,9 @@ static void packet_query_monitor_linear(struct gdb_context* gdbctx,
             le.BaseLow + ofs;
     /* error */
     else linear = 0;
-    sprintf(buffer, "0x%x", linear);
+    snprintf(buffer, sizeof(buffer), "0x%x", linear);
     packet_reply_open(gdbctx);
-    packet_reply_hex_to(gdbctx, buffer, strlen(buffer));
+    packet_reply_hex_to_str(gdbctx, buffer);
     packet_reply_close(gdbctx);
 }
 #endif
@@ -1549,7 +1558,7 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             packet_reply_open(gdbctx);
             packet_reply_catc(gdbctx, 'O');
             get_process_info(gdbctx, result, sizeof(result));
-            packet_reply_hex_to(gdbctx, result, strlen(result));
+            packet_reply_hex_to_str(gdbctx, result);
             packet_reply_close(gdbctx);
             return packet_done;
         }
@@ -1589,9 +1598,10 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             if (gdbctx->wine_segs[0] == 0 && gdbctx->wine_segs[1] == 0 &&
                 gdbctx->wine_segs[2] == 0)
                 return packet_error;
-            sprintf(buf, "Text=%08lx;Data=%08lx;Bss=%08lx",
-                    gdbctx->wine_segs[0], gdbctx->wine_segs[1],
-                    gdbctx->wine_segs[2]);
+            snprintf(buf, sizeof(buf), 
+                     "Text=%08lx;Data=%08lx;Bss=%08lx",
+                     gdbctx->wine_segs[0], gdbctx->wine_segs[1],
+                     gdbctx->wine_segs[2]);
             return packet_reply(gdbctx, buf, -1);
         }
         break;
@@ -1619,7 +1629,7 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             if (end == NULL) break;
             get_thread_info(gdbctx, tid, result, sizeof(result));
             packet_reply_open(gdbctx);
-            packet_reply_hex_to(gdbctx, result, strlen(result));
+            packet_reply_hex_to_str(gdbctx, result);
             packet_reply_close(gdbctx);
             return packet_done;
         }
