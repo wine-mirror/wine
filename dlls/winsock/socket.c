@@ -2603,7 +2603,7 @@ int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lp
         req->c_event = hEvent;
         if (!(ret = SERVER_CALL()))
         {
-            lpEvent->lNetworkEvents = req->pmask;
+            lpEvent->lNetworkEvents = req->pmask & req->mask;
             memcpy(lpEvent->iErrorCode, server_data_ptr(req), server_data_size(req) );
         }
     }

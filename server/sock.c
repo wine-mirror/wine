@@ -84,7 +84,7 @@ static void sock_reselect( struct sock *sock )
 
     if (sock->obj.select == -1) {
         /* previously unconnected socket, is this reselect supposed to connect it? */
-        if (!sock->state) return;
+        if (!(sock->state & ~WS_FD_NONBLOCKING)) return;
         /* ok, it is, attach it to the wineserver's main poll loop */
         add_select_user( &sock->obj );
     }
@@ -161,12 +161,20 @@ static void sock_poll_event( struct object *obj, int event )
         /* normal data flow */
         if (event & POLLIN)
         {
-            /* incoming data */
-            sock->pmask |= FD_READ;
-            sock->hmask |= FD_READ;
-            sock->errors[FD_READ_BIT] = 0;
-            if (debug_level)
-                fprintf(stderr, "socket %d is readable\n", sock->obj.fd );
+            char dummy;
+
+            /* Linux 2.4 doesn't report POLLHUP if only one side of the socket
+             * has been closed, so we need to check for it explicitly here */
+            if (!recv( sock->obj.fd, &dummy, 1, MSG_PEEK )) event = POLLHUP;
+            else
+            {
+                /* incoming data */
+                sock->pmask |= FD_READ;
+                sock->hmask |= FD_READ;
+                sock->errors[FD_READ_BIT] = 0;
+                if (debug_level)
+                    fprintf(stderr, "socket %d is readable\n", sock->obj.fd );
+            }
         }
         if (event & POLLOUT)
         {
