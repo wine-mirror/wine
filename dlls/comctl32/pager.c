@@ -529,7 +529,7 @@ PAGER_SetFixedWidth(HWND hwnd, PAGER_INFO* infoPtr)
             infoPtr->nWidth +=  infoPtr->nButtonSize / 3;
     }
 
-    h = wndRect.bottom - wndRect.top;
+    h = wndRect.bottom - wndRect.top + infoPtr->nButtonSize;
 
     /* adjust non-scrollable dimension to fit the child */
     SetWindowPos(hwnd, 0, 0,0, infoPtr->nWidth, h, 
@@ -563,7 +563,7 @@ PAGER_SetFixedHeight(HWND hwnd, PAGER_INFO* infoPtr)
             infoPtr->nHeight +=  infoPtr->nButtonSize / 3;
     }
 
-    w = wndRect.right - wndRect.left;
+    w = wndRect.right - wndRect.left + infoPtr->nButtonSize;
 
     /* adjust non-scrollable dimension to fit the child */
     SetWindowPos(hwnd, 0, 0,0, w, infoPtr->nHeight, 
@@ -607,6 +607,7 @@ PAGER_SetBkColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TRACE("[%04x] %06lx\n", hwnd, infoPtr->clrBk);
 
     PAGER_RecalcSize(hwnd);
+    SendMessageA(hwnd, WM_NCPAINT, (WPARAM)0, (LPARAM)0);
 
     return (LRESULT)clrTemp;
 }
@@ -674,6 +675,7 @@ PAGER_Scroll(HWND hwnd, INT dir)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
     NMPGSCROLL nmpgScroll;
+    RECT rcWnd;
 
     if (infoPtr->hwndChild)
     {
@@ -682,22 +684,22 @@ PAGER_Scroll(HWND hwnd, INT dir)
         nmpgScroll.hdr.idFrom   = GetWindowLongA (hwnd, GWL_ID);
         nmpgScroll.hdr.code = PGN_SCROLL;
 
+        GetWindowRect(hwnd, &rcWnd);  
         GetClientRect(hwnd, &nmpgScroll.rcParent);  
         nmpgScroll.iXpos = nmpgScroll.iYpos = 0;
         nmpgScroll.iDir = dir;
 
         if (PAGER_IsHorizontal(hwnd))
         {
-            nmpgScroll.iScroll = nmpgScroll.rcParent.right -
-                                 nmpgScroll.rcParent.left;
+            nmpgScroll.iScroll = rcWnd.right - rcWnd.left;
             nmpgScroll.iXpos = infoPtr->nPos;
         }
         else
         {
-            nmpgScroll.iScroll = nmpgScroll.rcParent.bottom -
-                                 nmpgScroll.rcParent.top;
+            nmpgScroll.iScroll = rcWnd.bottom - rcWnd.top;
             nmpgScroll.iYpos = infoPtr->nPos;
         }
+        nmpgScroll.iScroll -= 2*infoPtr->nButtonSize;
   
         SendMessageA (hwnd, WM_NOTIFY,
                     (WPARAM)nmpgScroll.hdr.idFrom, (LPARAM)&nmpgScroll);
@@ -719,8 +721,6 @@ PAGER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr;
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
-
-    dwStyle |= WS_CLIPCHILDREN;
 
     /* allocate memory for info structure */
     infoPtr = (PAGER_INFO *)COMCTL32_Alloc (sizeof(PAGER_INFO));
@@ -749,9 +749,11 @@ PAGER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	 * the control is initialized, but just in case it isn't, set it here.
 	 */
     if (!(dwStyle & PGS_HORZ) && !(dwStyle & PGS_VERT))
+    {
         dwStyle |= PGS_VERT;
+        SetWindowLongA(hwnd, GWL_STYLE, dwStyle);
+    }
 
-    SetWindowLongA(hwnd, GWL_STYLE, dwStyle);
     return 0;
 }
 
@@ -970,14 +972,13 @@ PAGER_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
     ReleaseCapture();
 
     /* Notify parent of released mouse capture */
-    if (infoPtr->hwndChild)
     {
         NMHDR nmhdr;
         ZeroMemory (&nmhdr, sizeof (NMHDR));
         nmhdr.hwndFrom = hwnd;
         nmhdr.idFrom   = GetWindowLongA (hwnd, GWL_ID);
         nmhdr.code = NM_RELEASEDCAPTURE;
-        SendMessageA (GetParent (infoPtr->hwndChild), WM_NOTIFY,
+        SendMessageA (GetParent(hwnd), WM_NOTIFY,
                         (WPARAM)nmhdr.idFrom, (LPARAM)&nmhdr);
     }
 
@@ -1057,9 +1058,17 @@ PAGER_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
     HBRUSH hBrush = CreateSolidBrush(infoPtr->clrBk);
     RECT rect;
-    GetClientRect (hwnd, &rect);
 
+    GetClientRect (hwnd, &rect);
     FillRect ((HDC)wParam, &rect, hBrush);
+
+    /* background color of the child should be the same as the pager */
+    if (infoPtr->hwndChild)
+    {
+        GetClientRect (infoPtr->hwndChild, &rect);
+        FillRect ((HDC)wParam, &rect, hBrush);
+    }
+
     DeleteObject (hBrush);
     return TRUE;
 }
