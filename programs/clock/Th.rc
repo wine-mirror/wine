@@ -1,7 +1,7 @@
 /*
- * Clock resources
+ * Clock (Thai resources)
  *
- * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
+ * Copyright 2003 Jon Griffiths
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,24 +18,30 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <windows.h>
-#include "main.h"
+LANGUAGE LANG_THAI, SUBLANG_DEFAULT
 
-#include "clock_res.h"
-#include "Da.rc"
-#include "De.rc"
-#include "En.rc"
-#include "Es.rc"
-#include "Fi.rc"
-#include "Fr.rc"
-#include "Hu.rc"
-#include "It.rc"
-#include "Nl.rc"
-#include "Pt.rc"
-#include "Ru.rc"
-#include "Si.rc"
-#include "Sk.rc"
-#include "Sw.rc"
-#include "Th.rc"
-#include "Wa.rc"
-#include "Zh.rc"
+MAIN_MENU MENU
+{
+ POPUP "ปรับแด่งนาฬิกา" {
+  MENUITEM "ธรรมดา", 0x100
+  MENUITEM "Digi&tal", 0x101
+  MENUITEM SEPARATOR
+  MENUITEM "รูปแบบดวยอักษร...", 0x103
+  MENUITEM SEPARATOR
+  MENUITEM "แสดงแทบเมนู", 0x105
+  MENUITEM SEPARATOR
+  MENUITEM "วินาที", 0x107
+  MENUITEM "วันที่", 0x108
+ }
+ POPUP "รายละเอียด..." {
+  MENUITEM "ใบอนุญาต", 0x109
+  MENUITEM "ไม่มี WARRANTY", 0x10A
+  MENUITEM "เกี่ยวกับนาฬิกา... ", 0x10B
+ }
+}
+
+STRINGTABLE DISCARDABLE
+{
+  CLOCK,       "นาฬิกา"
+  MENU_ON_TOP, "ยู่สูกข่างเสมอ"
+}
