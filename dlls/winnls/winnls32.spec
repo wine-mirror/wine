@@ -1,4 +1,4 @@
-1  stub WINNLS32EnableIME
+1  stdcall WINNLS32EnableIME(long long)
 2  stub WINNLS32GetEnableStatus
 3  stub WINNLS32GetIMEHotKey
 21 stub IMP32GetIME

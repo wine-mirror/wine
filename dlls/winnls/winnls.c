@@ -38,3 +38,12 @@ BOOL WINAPI WINNLSGetEnableStatus16(HWND16 hWnd)
 {
     return FALSE;
 }
+
+/***********************************************************************
+ *		WINNLS32EnableIME (WINNLS32.1)
+ */
+BOOL WINAPI WINNLS32EnableIME(HWND hWnd, BOOL fEnable)
+{
+    /* fake return of previous status. is this what this function should do ? */
+    return !fEnable;
+}
