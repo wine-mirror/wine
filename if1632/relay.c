@@ -40,8 +40,9 @@ BOOL RELAY_Init(void)
     extern DWORD CALL32_CBClientEx_RetAddr;
 
     codesel = GLOBAL_CreateBlock( GMEM_FIXED, (void *)Call16_Ret_Start,
-                                   (int)Call16_Ret_End - (int)Call16_Ret_Start,
-                                   0, TRUE, TRUE, FALSE, NULL );
+                                  (int)Call16_Ret_End - (int)Call16_Ret_Start,
+                                  GetModuleHandle16( "KERNEL" ), 
+                                  TRUE, TRUE, FALSE, NULL );
     if (!codesel) return FALSE;
 
       /* Patch the return addresses for CallTo16 routines */

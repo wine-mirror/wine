@@ -101,9 +101,6 @@ BOOL MAIN_MainInit(void)
     /* Read DOS config.sys */
     if (!DOSCONF_ReadConfig()) return FALSE;
 
-    /* Initialize relay code */
-    if (!RELAY_Init()) return FALSE;
-
     return TRUE;
 }
 
@@ -155,6 +152,10 @@ BOOL WINAPI MAIN_KernelInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReser
         NE_SetEntryPoint( hModule, 194, DOSMEM_BiosSysSeg );  /* KERNEL.194: __F000H */
 #undef SET_ENTRY_POINT
     }
+
+    /* Initialize relay code */
+    if (!RELAY_Init()) return FALSE;
+
     return TRUE;
 }
 
