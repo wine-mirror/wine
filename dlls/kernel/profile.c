@@ -993,12 +993,13 @@ static BOOL PROFILE_SetString( LPCWSTR section_name, LPCWSTR key_name,
         TRACE("(%s,%s,%s):\n",
               debugstr_w(section_name), debugstr_w(key_name), debugstr_w(value) );
         if (!key) return FALSE;
+
+        /* strip the leading spaces. We can safely strip \n\r and
+         * friends too, they should not happen here anyway. */
+        while (PROFILE_isspaceW(*value)) value++;
+
         if (key->value)
         {
-	    /* strip the leading spaces. We can safely strip \n\r and
-	     * friends too, they should not happen here anyway. */
-	    while (PROFILE_isspaceW(*value)) value++;
-
             if (!strcmpW( key->value, value ))
             {
                 TRACE("  no change needed\n" );
