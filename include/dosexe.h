@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include "windows.h"
 #include "winnt.h"
+#include "sig_context.h"
 #include "wintypes.h"
 
 typedef struct _DOSTASK {
@@ -20,6 +21,7 @@ typedef struct _DOSTASK {
  WORD xms_seg;
  WORD dpmi_seg,dpmi_sel,dpmi_flag;
  DWORD wrap_ofs,call_ofs;
+ WORD system_timer;
  HMODULE16 hModule;
  char mm_name[128];
  int mm_fd;
@@ -40,7 +42,12 @@ extern LPDOSTASK MZ_AllocDPMITask( HMODULE16 hModule );
 
 #endif /* linux */
 
-extern void (*ctx_debug_call)( int sig, CONTEXT* );
+#define V86_FLAG 0x00020000
+
+extern void (*ctx_debug_call)( int, CONTEXT* );
+extern BOOL32 (*instr_emu_call)( SIGCONTEXT* );
+
+extern void MZ_Tick( WORD handle );
 
 extern HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env,
                                      LPSTARTUPINFO32A startup, LPPROCESS_INFORMATION info );

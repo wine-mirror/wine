@@ -181,7 +181,7 @@ int MZ_InitMemory( LPDOSTASK lpDosTask, NE_MODULE *pModule )
  DOSMEM_Init(lpDosTask->hModule);
  MZ_InitXMS(lpDosTask);
  MZ_InitDPMI(lpDosTask);
- return 32;
+ return lpDosTask->hModule;
 }
 
 static int MZ_LoadImage( HFILE16 hFile, LPCSTR name, LPCSTR cmdline,
@@ -263,7 +263,7 @@ static int MZ_LoadImage( HFILE16 hFile, LPCSTR name, LPCSTR cmdline,
 
  TRACE(module,"entry point: %04x:%04x\n",lpDosTask->init_cs,lpDosTask->init_ip);
 
- return 32;
+ return lpDosTask->hModule;
 }
 
 LPDOSTASK MZ_AllocDPMITask( HMODULE16 hModule )
@@ -355,7 +355,10 @@ int MZ_InitTask( LPDOSTASK lpDosTask )
   ERR(module,"Failed to spawn dosmod, error=%s\n",strerror(errno));
   exit(1);
  }
- return 32;
+ /* start simulated system 55Hz timer */
+ lpDosTask->system_timer = CreateSystemTimer( 55, (FARPROC16)MZ_Tick );
+ TRACE(module,"created 55Hz timer tick, handle=%d\n",lpDosTask->system_timer);
+ return lpDosTask->hModule;
 }
 
 HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env, 
@@ -421,6 +424,8 @@ HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env,
 
 void MZ_KillModule( LPDOSTASK lpDosTask )
 {
+ TRACE(module,"killing DOS task\n");
+ SYSTEM_KillSystemTimer(lpDosTask->system_timer);
  if (lpDosTask->mm_name[0]!=0) {
   munmap(lpDosTask->img,0x110000-START_OFFSET);
   close(lpDosTask->mm_fd);

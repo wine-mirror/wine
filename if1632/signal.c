@@ -20,6 +20,7 @@
 #include "options.h"
 #include "sig_context.h"
 #include "miscemu.h"
+#include "dosexe.h"
 #include "thread.h"
 #include "debug.h"
 
@@ -223,5 +224,6 @@ BOOL32 SIGNAL_InitEmulator(void)
 #ifdef SIGBUS
     SIGNAL_SetHandler( SIGBUS,  (void (*)())SIGNAL_fault, 1);
 #endif
+    instr_emu_call = INSTR_EmulateInstruction;
     return TRUE;
 }

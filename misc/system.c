@@ -15,6 +15,8 @@
 #include "callback.h"
 #include "windows.h"
 #include "miscemu.h"
+#include "dosexe.h"
+#include "vga.h"
 #include "selectors.h"
 #include "sig_context.h"
 #include "debug.h"
@@ -56,6 +58,12 @@ static HANDLER_DEF(SYSTEM_TimerTick)
 
 	    if (SYS_Timers[i].callback == (FARPROC16)DOSMEM_Tick) {
 	    	DOSMEM_Tick();
+	    } else
+	    if (SYS_Timers[i].callback == (FARPROC16)MZ_Tick) {
+	    	MZ_Tick(i+1);
+	    } else
+	    if (SYS_Timers[i].callback == (FARPROC16)VGA_Poll) {
+	    	VGA_Poll();
 	    } else
 		Callbacks->CallSystemTimerProc( SYS_Timers[i].callback );
         }
@@ -143,9 +151,11 @@ WORD WINAPI CreateSystemTimer( WORD rate, FARPROC16 callback )
     int i;
 
     /* FIXME: HACK: do not create system timers due to problems mentioned
-     * above, except DOSMEM_Tick().
+     * above, except DOSMEM_Tick(), MZ_Tick(), and VGA_Poll().
      */
-    if (callback!=(FARPROC16)DOSMEM_Tick) {
+    if ((callback!=(FARPROC16)DOSMEM_Tick)&&
+        (callback!=(FARPROC16)MZ_Tick)&&
+        (callback!=(FARPROC16)VGA_Poll)) {
     	FIXME(system,"are currently broken, returning 0.\n");
     	return 0;
     }

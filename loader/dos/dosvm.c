@@ -13,11 +13,13 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "windows.h"
 #include "winbase.h"
 #include "winnt.h"
+#include "sig_context.h"
 #include "msdos.h"
 #include "miscemu.h"
 #include "debugger.h"
@@ -28,6 +30,7 @@
 #include "dosexe.h"
 
 void (*ctx_debug_call)(int sig,CONTEXT*ctx)=NULL;
+BOOL32 (*instr_emu_call)(SIGCONTEXT*ctx)=NULL;
 
 #ifdef MZ_SUPPORTED
 
@@ -54,12 +57,14 @@ static void DOSVM_Dump( LPDOSTASK lpDosTask, int fn,
    printf("Trapped due to pending PIC request\n"); break;
   case VM86_TRAP:
    printf("Trapped debug request\n"); break;
+  default:
+   printf("Trapped unknown VM86 type %d arg %d\n",VM86_TYPE(fn),VM86_ARG(fn)); break;
  }
 #define REGS VM86->regs
- fprintf(stderr,"AX=%04lX CX=%04lX DX=%04lX BX=%04lX\n",REGS.eax,REGS.ebx,REGS.ecx,REGS.edx);
+ fprintf(stderr,"AX=%04lX CX=%04lX DX=%04lX BX=%04lX\n",REGS.eax,REGS.ecx,REGS.edx,REGS.ebx);
  fprintf(stderr,"SI=%04lX DI=%04lX SP=%04lX BP=%04lX\n",REGS.esi,REGS.edi,REGS.esp,REGS.ebp);
  fprintf(stderr,"CS=%04X DS=%04X ES=%04X SS=%04X\n",REGS.cs,REGS.ds,REGS.es,REGS.ss);
- fprintf(stderr,"EIP=%04lX EFLAGS=%08lX\n",REGS.eip,REGS.eflags);
+ fprintf(stderr,"IP=%04lX EFLAGS=%08lX\n",REGS.eip,REGS.eflags);
 
  iofs=((DWORD)REGS.cs<<4)+REGS.eip;
 #undef REGS
@@ -67,8 +72,6 @@ static void DOSVM_Dump( LPDOSTASK lpDosTask, int fn,
  printf("Opcodes:");
  for (x=0; x<8; x++) printf(" %02x",inst[x]);
  printf("\n");
-
- exit(0);
 }
 
 static int DOSVM_Int( int vect, PCONTEXT context, LPDOSTASK lpDosTask )
@@ -86,26 +89,39 @@ static int DOSVM_Int( int vect, PCONTEXT context, LPDOSTASK lpDosTask )
  return 0;
 }
 
-#define CV CP(eax,Eax); CP(ecx,Ecx); CP(edx,Edx); CP(ebx,Ebx); \
-           CP(esi,Esi); CP(edi,Edi); CP(esp,Esp); CP(ebp,Ebp); \
-           CP(cs,SegCs); CP(ds,SegDs); CP(es,SegEs); \
-           CP(ss,SegSs); CP(fs,SegFs); CP(gs,SegGs); \
-           CP(eip,Eip); CP(eflags,EFlags)
+#define CV CP(eax,EAX); CP(ecx,ECX); CP(edx,EDX); CP(ebx,EBX); \
+           CP(esi,ESI); CP(edi,EDI); CP(esp,ESP); CP(ebp,EBP); \
+           CP(cs,CS); CP(ds,DS); CP(es,ES); \
+           CP(ss,SS); CP(fs,FS); CP(gs,GS); \
+           CP(eip,EIP); CP(eflags,EFL)
 
 static int DOSVM_Process( LPDOSTASK lpDosTask, int fn,
                           struct vm86plus_struct*VM86 )
 {
+ SIGCONTEXT sigcontext;
  CONTEXT context;
  int ret=0;
 
-#define CP(x,y) context.y = VM86->regs.x
+ if (VM86_TYPE(fn)==VM86_UNKNOWN) {
+  /* INSTR_EmulateInstruction needs a SIGCONTEXT, not a CONTEXT... */
+#define CP(x,y) y##_sig(&sigcontext) = VM86->regs.x
+  CV;
+#undef CP
+  if (instr_emu_call) ret=instr_emu_call(&sigcontext);
+#define CP(x,y) VM86->regs.x = y##_sig(&sigcontext)
+  CV;
+#undef CP
+  if (ret) return 0;
+  ret=0;
+ }
+#define CP(x,y) y##_reg(&context) = VM86->regs.x
  CV;
 #undef CP
  (void*)V86BASE(&context)=lpDosTask->img;
 
  switch (VM86_TYPE(fn)) {
   case VM86_SIGNAL:
-   printf("Trapped signal\n");
+   DOSVM_Dump(lpDosTask,fn,VM86);
    ret=-1; break;
   case VM86_UNKNOWN: /* unhandled GPF */
    DOSVM_Dump(lpDosTask,fn,VM86);
@@ -123,9 +139,10 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn,
    break;
   default:
    DOSVM_Dump(lpDosTask,fn,VM86);
+   ret=-1;
  }
 
-#define CP(x,y) VM86->regs.x = context.y
+#define CP(x,y) VM86->regs.x = y##_reg(&context)
  CV;
 #undef CP
  return ret;
@@ -137,7 +154,8 @@ int DOSVM_Enter( PCONTEXT context )
  NE_MODULE *pModule = NE_GetPtr( pTask->hModule );
  LPDOSTASK lpDosTask;
  struct vm86plus_struct VM86;
- int stat;
+ int stat,len;
+ fd_set readfds,exceptfds;
 
  GlobalUnlock16( GetCurrentTask() );
  if (!pModule) {
@@ -163,7 +181,7 @@ int DOSVM_Enter( PCONTEXT context )
  } else lpDosTask=pModule->lpDosTask;
 
  if (context) {
-#define CP(x,y) VM86.regs.x = context->y
+#define CP(x,y) VM86.regs.x = y##_reg(context)
   CV;
 #undef CP
  } else {
@@ -179,23 +197,47 @@ int DOSVM_Enter( PCONTEXT context )
  }
 
  /* main exchange loop */
- stat = VM86_ENTER;
  do {
+  stat = VM86_ENTER;
   /* transmit VM86 structure to dosmod task */
-  if (write(lpDosTask->write_pipe,&stat,sizeof(stat))!=sizeof(stat))
+  if (write(lpDosTask->write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
+   ERR(module,"dosmod sync lost, errno=%d\n",errno);
    return -1;
-  if (write(lpDosTask->write_pipe,&VM86,sizeof(VM86))!=sizeof(VM86))
+  }
+  if (write(lpDosTask->write_pipe,&VM86,sizeof(VM86))!=sizeof(VM86)) {
+   ERR(module,"dosmod sync lost, errno=%d\n",errno);
    return -1;
-  /* wait for response */
+  }
+  /* wait for response, with async events enabled */
+  FD_ZERO(&readfds);
+  FD_ZERO(&exceptfds);
+  SIGNAL_MaskAsyncEvents(FALSE);
   do {
-   if (read(lpDosTask->read_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
-    if ((errno==EINTR)||(errno==EAGAIN)) continue;
+   FD_SET(lpDosTask->read_pipe,&readfds);
+   FD_SET(lpDosTask->read_pipe,&exceptfds);
+   select(lpDosTask->read_pipe+1,&readfds,NULL,&exceptfds,NULL);
+  } while (!(FD_ISSET(lpDosTask->read_pipe,&readfds)||
+             FD_ISSET(lpDosTask->read_pipe,&exceptfds)));
+  SIGNAL_MaskAsyncEvents(TRUE);
+  /* read response (with async events disabled to avoid some strange problems) */
+  do {
+   if ((len=read(lpDosTask->read_pipe,&stat,sizeof(stat)))!=sizeof(stat)) {
+    if (((errno==EINTR)||(errno==EAGAIN))&&(len<=0)) {
+     WARN(module,"rereading dosmod return code due to errno=%d, result=%d\n",errno,len);
+     continue;
+    }
+    ERR(module,"dosmod sync lost reading return code, errno=%d, result=%d\n",errno,len);
     return -1;
    }
   } while (0);
+  TRACE(module,"dosmod return code=%d\n",stat);
   do {
-   if (read(lpDosTask->read_pipe,&VM86,sizeof(VM86))!=sizeof(VM86)) {
-    if ((errno==EINTR)||(errno==EAGAIN)) continue;
+   if ((len=read(lpDosTask->read_pipe,&VM86,sizeof(VM86)))!=sizeof(VM86)) {
+    if (((errno==EINTR)||(errno==EAGAIN))&&(len<=0)) {
+     WARN(module,"rereading dosmod VM86 structure due to errno=%d, result=%d\n",errno,len);
+     continue;
+    }
+    ERR(module,"dosmod sync lost reading VM86 structure, errno=%d, result=%d\n",errno,len);
     return -1;
    }
   } while (0);
@@ -203,11 +245,26 @@ int DOSVM_Enter( PCONTEXT context )
  } while (DOSVM_Process(lpDosTask,stat,&VM86)>=0);
 
  if (context) {
-#define CP(x,y) context->y = VM86.regs.x
+#define CP(x,y) y##_reg(context) = VM86.regs.x
   CV;
 #undef CP
  }
  return 0;
+}
+
+void MZ_Tick( WORD handle )
+{
+ /* find the DOS task that has the right system_timer handle... */
+ /* should usually be the current, so let's just be lazy... */
+ TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
+ NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
+ LPDOSTASK lpDosTask = pModule ? pModule->lpDosTask : NULL;
+
+ GlobalUnlock16( GetCurrentTask() );
+ if (lpDosTask&&(lpDosTask->system_timer==handle)) {
+  /* BIOS timer tick */
+  (*((DWORD*)(((BYTE*)(lpDosTask->img))+0x46c)))++;
+ }
 }
 
 #else /* !MZ_SUPPORTED */
@@ -217,5 +274,7 @@ int DOSVM_Enter( PCONTEXT context )
  ERR(module,"DOS realmode not supported on this architecture!\n");
  return -1;
 }
+
+void MZ_Tick( WORD handle ) {}
 
 #endif

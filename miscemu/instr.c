@@ -8,20 +8,30 @@
 #include "ldt.h"
 #include "global.h"
 #include "module.h"
+#include "dosexe.h"
 #include "miscemu.h"
 #include "sig_context.h"
 #include "debug.h"
 
 
+#define IS_V86(context) (EFL_sig(context)&V86_FLAG)
+#define IS_SEL_32(context,seg) \
+   (IS_V86(context) ? FALSE : IS_SELECTOR_32BIT(seg))
+
 #define STACK_sig(context) \
-   (IS_SELECTOR_32BIT(SS_sig(context)) ? ESP_sig(context) : SP_sig(context))
+   (IS_SEL_32(context,SS_sig(context)) ? ESP_sig(context) : SP_sig(context))
 
 #define MAKE_PTR(seg,off) \
    (IS_SELECTOR_SYSTEM(seg) ? (void *)(off) : PTR_SEG_OFF_TO_LIN(seg,off))
 
+#define MK_PTR(context,seg,off) \
+   (IS_V86(context) ? DOSMEM_MapRealToLinear(MAKELONG(off,seg)) \
+                    : MAKE_PTR(seg,off))
+
 #define STACK_PTR(context) \
-   (IS_SELECTOR_SYSTEM(SS_sig(context)) ? (void *)ESP_sig(context) : \
-    (PTR_SEG_OFF_TO_LIN(SS_sig(context),STACK_sig(context))))
+   (IS_V86(context) ? DOSMEM_MapRealToLinear(MAKELONG(SP_sig(context),SS_sig(context))) : \
+    (IS_SELECTOR_SYSTEM(SS_sig(context)) ? (void *)ESP_sig(context) : \
+     (PTR_SEG_OFF_TO_LIN(SS_sig(context),STACK_sig(context)))))
 
 
 /***********************************************************************
@@ -306,8 +316,8 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
         && VIRTUAL_HandleFault( (LPVOID)CR2_sig(context) )) return TRUE;
 #endif
 
-    long_op = long_addr = IS_SELECTOR_32BIT(CS_sig(context));
-    instr = (BYTE *)MAKE_PTR(CS_sig(context),EIP_sig(context));
+    long_op = long_addr = IS_SEL_32(context,CS_sig(context));
+    instr = (BYTE *)MK_PTR(context,CS_sig(context),EIP_sig(context));
     if (!instr) return FALSE;
 
     /* First handle any possible prefix */
