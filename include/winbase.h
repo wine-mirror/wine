@@ -1589,6 +1589,9 @@ INT       WINAPI GetProfileSectionW(LPCWSTR,LPWSTR,DWORD);
 INT       WINAPI GetProfileStringA(LPCSTR,LPCSTR,LPCSTR,LPSTR,UINT);
 INT       WINAPI GetProfileStringW(LPCWSTR,LPCWSTR,LPCWSTR,LPWSTR,UINT);
 #define     GetProfileString WINELIB_NAME_AW(GetProfileString)
+VOID        WINAPI GetStartupInfoA(LPSTARTUPINFOA);
+VOID        WINAPI GetStartupInfoW(LPSTARTUPINFOW);
+#define     GetStartupInfo WINELIB_NAME_AW(GetStartupInfo)
 BOOL      WINAPI GetStringTypeA(LCID,DWORD,LPCSTR,INT,LPWORD);
 BOOL      WINAPI GetStringTypeW(DWORD,LPCWSTR,INT,LPWORD);
 #define     GetStringType WINELIB_NAME_AW(GetStringType)
