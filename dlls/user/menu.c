@@ -143,10 +143,7 @@ typedef struct
 #define IS_MAGIC_ITEM(text)   (LOWORD((int)text)<12)
 
 #define IS_SYSTEM_MENU(menu)  \
-	(!((menu)->wFlags & MF_POPUP) && (menu)->wFlags & MF_SYSMENU)
-
-#define IS_SYSTEM_POPUP(menu) \
-	((menu)->wFlags & MF_POPUP && (menu)->wFlags & MF_SYSMENU)
+	(!((menu)->wFlags & MF_POPUP) && ((menu)->wFlags & MF_SYSMENU))
 
 #define TYPE_MASK (MFT_STRING | MFT_BITMAP | MFT_OWNERDRAW | MFT_SEPARATOR | \
 		   MFT_MENUBARBREAK | MFT_MENUBREAK | MFT_RADIOCHECK | \
@@ -2808,7 +2805,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
         {
 	    MENU_HideSubPopups( mt.hOwnerWnd, mt.hTopMenu, FALSE );
 
-	    if (menu && menu->wFlags & MF_POPUP)
+	    if (menu && (menu->wFlags & MF_POPUP))
 	    {
                 DestroyWindow( menu->hWnd );
                 menu->hWnd = 0;
@@ -3556,7 +3553,8 @@ BOOL WINAPI DestroyMenu( HMENU hMenu )
 
         lppop->wMagic = 0;  /* Mark it as destroyed */
 
-        if ((lppop->wFlags & MF_POPUP) && lppop->hWnd)
+        /* DestroyMenu should not destroy system menu popup owner */
+        if ((lppop->wFlags & (MF_POPUP | MF_SYSMENU)) == MF_POPUP && lppop->hWnd)
         {
             DestroyWindow( lppop->hWnd );
             lppop->hWnd = 0;
