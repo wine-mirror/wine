@@ -44,7 +44,7 @@ void dump_ObjectAttributes (const OBJECT_ATTRIBUTES *oa)
 LPCSTR debugstr_us( const UNICODE_STRING *us )
 {
     if (!us) return "<null>";
-    return debugstr_wn(us->Buffer, us->Length);
+    return debugstr_wn(us->Buffer, us->Length / sizeof(WCHAR));
 }
 
 /*********************************************************************
@@ -136,5 +136,3 @@ double __cdecl NTDLL__CIpow(double x,double y)
 	return pow(x,y);
 }
 #endif /* !defined(__i386__) */
-
-
