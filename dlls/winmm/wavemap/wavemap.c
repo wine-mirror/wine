@@ -399,6 +399,9 @@ static	DWORD	wodGetDevCaps(UINT wDevID, WAVEMAPDATA* wom, LPWAVEOUTCAPSA lpWaveC
     /* if opened low driver, forward message */
     if (WAVEMAP_IsData(wom))
 	return waveOutGetDevCapsA((UINT)wom->u.out.hInnerWave, lpWaveCaps, dwParam2);
+    /* else if no drivers, nothing to map so return bad device */
+    if (waveOutGetNumDevs() == 0)
+        return MMSYSERR_BADDEVICEID;
     /* otherwise, return caps of mapper itself */
     if (wDevID == (UINT)-1 || wDevID == (UINT16)-1) {
 	lpWaveCaps->wMid = 0x00FF;
@@ -406,6 +409,8 @@ static	DWORD	wodGetDevCaps(UINT wDevID, WAVEMAPDATA* wom, LPWAVEOUTCAPSA lpWaveC
 	lpWaveCaps->vDriverVersion = 0x0100;
 	strcpy(lpWaveCaps->szPname, "Wine wave out mapper");
 	lpWaveCaps->dwFormats =
+            WAVE_FORMAT_96M08 | WAVE_FORMAT_96S08 | WAVE_FORMAT_96M16 | WAVE_FORMAT_96S16 |
+            WAVE_FORMAT_48M08 | WAVE_FORMAT_48S08 | WAVE_FORMAT_48M16 | WAVE_FORMAT_48S16 |
 	    WAVE_FORMAT_4M08 | WAVE_FORMAT_4S08 | WAVE_FORMAT_4M16 | WAVE_FORMAT_4S16 |
 	    WAVE_FORMAT_2M08 | WAVE_FORMAT_2S08 | WAVE_FORMAT_2M16 | WAVE_FORMAT_2S16 |
 	    WAVE_FORMAT_1M08 | WAVE_FORMAT_1S08 | WAVE_FORMAT_1M16 | WAVE_FORMAT_1S16;
@@ -837,6 +842,9 @@ static	DWORD	widGetDevCaps(UINT wDevID, WAVEMAPDATA* wim, LPWAVEINCAPSA lpWaveCa
     /* if opened low driver, forward message */
     if (WAVEMAP_IsData(wim))
 	return waveInGetDevCapsA((UINT)wim->u.in.hInnerWave, lpWaveCaps, dwParam2);
+    /* else if no drivers, nothing to map so return bad device */
+    if (waveInGetNumDevs() == 0)
+        return MMSYSERR_BADDEVICEID;
     /* otherwise, return caps of mapper itself */
     if (wDevID == (UINT)-1 || wDevID == (UINT16)-1) {
 	lpWaveCaps->wMid = 0x00FF;
@@ -844,6 +852,8 @@ static	DWORD	widGetDevCaps(UINT wDevID, WAVEMAPDATA* wim, LPWAVEINCAPSA lpWaveCa
 	lpWaveCaps->vDriverVersion = 0x0001;
 	strcpy(lpWaveCaps->szPname, "Wine wave in mapper");
 	lpWaveCaps->dwFormats =
+            WAVE_FORMAT_96M08 | WAVE_FORMAT_96S08 | WAVE_FORMAT_96M16 | WAVE_FORMAT_96S16 |
+            WAVE_FORMAT_48M08 | WAVE_FORMAT_48S08 | WAVE_FORMAT_48M16 | WAVE_FORMAT_48S16 |
 	    WAVE_FORMAT_4M08 | WAVE_FORMAT_4S08 | WAVE_FORMAT_4M16 | WAVE_FORMAT_4S16 |
 	    WAVE_FORMAT_2M08 | WAVE_FORMAT_2S08 | WAVE_FORMAT_2M16 | WAVE_FORMAT_2S16 |
 	    WAVE_FORMAT_1M08 | WAVE_FORMAT_1S08 | WAVE_FORMAT_1M16 | WAVE_FORMAT_1S16;
