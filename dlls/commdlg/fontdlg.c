@@ -72,6 +72,50 @@ static void CFn_CHOOSEFONT16to32A(LPCHOOSEFONT16 chf16, LPCHOOSEFONTA chf32a)
   FONT_LogFont16To32A(MapSL(chf16->lpLogFont), chf32a->lpLogFont);
 }
 
+struct {
+    int		mask;
+    char	*name;
+} cfflags[] = {
+#define XX(x) { x, #x },
+    XX(CF_SCREENFONTS)
+    XX(CF_PRINTERFONTS)
+    XX(CF_SHOWHELP)
+    XX(CF_ENABLEHOOK)
+    XX(CF_ENABLETEMPLATE)
+    XX(CF_ENABLETEMPLATEHANDLE)
+    XX(CF_INITTOLOGFONTSTRUCT)
+    XX(CF_USESTYLE)
+    XX(CF_EFFECTS)
+    XX(CF_APPLY)
+    XX(CF_ANSIONLY)
+    XX(CF_NOVECTORFONTS)
+    XX(CF_NOSIMULATIONS)
+    XX(CF_LIMITSIZE)
+    XX(CF_FIXEDPITCHONLY)
+    XX(CF_WYSIWYG)
+    XX(CF_FORCEFONTEXIST)
+    XX(CF_SCALABLEONLY)
+    XX(CF_TTONLY)
+    XX(CF_NOFACESEL)
+    XX(CF_NOSTYLESEL)
+    XX(CF_NOSIZESEL)
+    XX(CF_SELECTSCRIPT)
+    XX(CF_NOSCRIPTSEL)
+    XX(CF_NOVERTFONTS)
+#undef XX
+    {0,NULL},
+};
+
+static void
+_dump_cf_flags(DWORD cflags) {
+    int i;
+
+    for (i=0;cfflags[i].name;i++)
+	if (cfflags[i].mask & cflags)
+	    MESSAGE("%s|",cfflags[i].name);
+    MESSAGE("\n");
+}
+
 
 /***********************************************************************
  *                        ChooseFont16   (COMMDLG.15)     
@@ -94,6 +138,9 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
 
     TRACE("ChooseFont\n");
     if (!lpChFont) return FALSE;    
+
+    if (TRACE_ON(commdlg))
+	_dump_cf_flags(lpChFont->Flags);
 
     if (lpChFont->Flags & CF_ENABLETEMPLATEHANDLE)
     {
@@ -212,6 +259,8 @@ BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
     COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
     return FALSE;
   }
+  if (TRACE_ON(commdlg))
+	_dump_cf_flags(lpChFont->Flags);
 
   if (lpChFont->Flags & (CF_SELECTSCRIPT | CF_NOVERTFONTS | CF_ENABLETEMPLATE |
     CF_ENABLETEMPLATEHANDLE)) FIXME(": unimplemented flag (ignored)\n");
@@ -229,6 +278,9 @@ BOOL WINAPI ChooseFontW(LPCHOOSEFONTW lpChFont)
   LOGFONTA lf32a;
   LPCVOID template;
   HANDLE hResInfo, hDlgTmpl;
+
+  if (TRACE_ON(commdlg))
+	_dump_cf_flags(lpChFont->Flags);
 
   if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "CHOOSE_FONT", RT_DIALOGA)))
   {
@@ -802,6 +854,8 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
 			s.hWnd2=GetDlgItem(hDlg, cmb3);
 			s.lpcf32a=lpcf;
        		        EnumFontFamiliesA(hdc, str, FontStyleEnumProc, (LPARAM)&s);
+			SendDlgItemMessageA(hDlg,cmb2, CB_SETCURSEL, 0, 0);
+			SendDlgItemMessageA(hDlg,cmb3, CB_SETCURSEL, 0, 0);
 		        SetCursor(hcursor);
 		      }
 		      if (!(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC))
