@@ -189,7 +189,7 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
 }
 
 
-#ifdef __i386__
+#if defined(__i386__) && defined(HAVE_MMAP)
 
 /***********************************************************************
  *           reserve_area
