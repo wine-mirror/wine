@@ -90,9 +90,9 @@ struct {
 static void EMS_init(void)
 {
   /*
-   * FIXME: Should dynamically allocate upper memory block for EMS frame.
+   * Start of 64k EMS frame.
    */
-  ULONG base = 0xd0000;
+  ULONG base = 0xc0000;
 
   if(EMS_record)
     return;

@@ -60,7 +60,6 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 WORD DOSVM_psp = 0;
 WORD DOSVM_retval = 0;
-const struct DPMI_segments *DOSVM_dpmi_segments = NULL;
 
 #ifdef MZ_SUPPORTED
 
@@ -649,7 +648,7 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 
     if (fdwReason == DLL_PROCESS_ATTACH)
     {
-        DOSVM_dpmi_segments = DOSMEM_GetDPMISegments();
+        DOSVM_InitSegments();
 
 #ifdef MZ_SUPPORTED
         event_notifier = CreateEventA(NULL, FALSE, FALSE, NULL);

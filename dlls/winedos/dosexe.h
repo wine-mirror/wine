@@ -28,7 +28,16 @@
 #include "miscemu.h"
 
 struct _DOSEVENT;
-struct DPMI_segments;
+
+/* various real-mode code stubs */
+struct DPMI_segments
+{
+    WORD wrap_seg;
+    WORD xms_seg;
+    WORD dpmi_seg;
+    WORD dpmi_sel;
+    WORD int48_sel;
+};
 
 /* 48-bit segmented pointers for DOS DPMI32 */
 typedef struct {
@@ -49,7 +58,7 @@ typedef void (WINAPI *INTPROC)(CONTEXT86*);
 extern WORD DOSVM_psp;     /* psp of current DOS task */
 extern WORD DOSVM_retval;  /* return value of previous DOS task */
 extern DWORD DOS_LOLSeg;
-extern const struct DPMI_segments *DOSVM_dpmi_segments;
+extern struct DPMI_segments *DOSVM_dpmi_segments;
 
 #if defined(linux) && defined(__i386__) && defined(HAVE_SYS_VM86_H)
 # define MZ_SUPPORTED
@@ -106,6 +115,9 @@ extern void WINAPI DOSVM_Int3bHandler(CONTEXT86*);
 extern void WINAPI DOSVM_Int3cHandler(CONTEXT86*);
 extern void WINAPI DOSVM_Int3dHandler(CONTEXT86*);
 extern void WINAPI DOSVM_Int3eHandler(CONTEXT86*);
+
+/* himem.c */
+extern void DOSVM_InitSegments(void);
 
 /* int09.c */
 extern void WINAPI DOSVM_Int09Handler(CONTEXT86*);

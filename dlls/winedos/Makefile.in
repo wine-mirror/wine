@@ -16,6 +16,7 @@ C_SRCS = \
 	dosaspi.c \
 	dosvm.c \
 	fpu.c \
+	himem.c \
 	int09.c \
 	int10.c \
 	int11.c \

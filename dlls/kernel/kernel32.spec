@@ -1053,7 +1053,6 @@
 @ cdecl DOSMEM_Available() DOSMEM_Available
 @ cdecl DOSMEM_FreeBlock(ptr) DOSMEM_FreeBlock
 @ cdecl DOSMEM_GetBlock(long ptr) DOSMEM_GetBlock
-@ cdecl DOSMEM_GetDPMISegments() DOSMEM_GetDPMISegments
 @ cdecl DOSMEM_Init(long) DOSMEM_Init
 @ cdecl DRIVE_OpenDevice(long long) DRIVE_OpenDevice
 @ stdcall INT_Int21Handler(ptr) INT_Int21Handler

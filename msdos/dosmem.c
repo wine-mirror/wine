@@ -87,17 +87,6 @@ static char *DOSMEM_dosmem;
  * and only relocated to NULL when absolutely necessary */
 static char *DOSMEM_sysmem;
 
-/* various real-mode code stubs */
-struct DPMI_segments DOSMEM_dpmi_segments;
-
-/***********************************************************************
- *           DOSMEM_GetDPMISegments
- */
-const struct DPMI_segments *DOSMEM_GetDPMISegments(void)
-{
-    return &DOSMEM_dpmi_segments;
-}
-
 /***********************************************************************
  *           DOSMEM_MemoryTop
  *
@@ -156,82 +145,6 @@ static void DOSMEM_MakeIsrStubs(void)
     int x;
 
     for (x=0; x<256; x++) stub[x]=VM_STUB(x);
-}
-
-/***********************************************************************
- *           DOSMEM_InitDPMI
- *
- * Allocate the global DPMI RMCB wrapper.
- */
-static void DOSMEM_InitDPMI(void)
-{
-    LPSTR ptr;
-    int   i;
-
-    static const char wrap_code[]={
-     0xCD,0x31, /* int $0x31 */
-     0xCB       /* lret */
-    };
-
-    static const char enter_xms[]=
-    {
-        /* XMS hookable entry point */
-        0xEB,0x03,           /* jmp entry */
-        0x90,0x90,0x90,      /* nop;nop;nop */
-                             /* entry: */
-        /* real entry point */
-        /* for simplicity, we'll just use the same hook as DPMI below */
-        0xCD,0x31,           /* int $0x31 */
-        0xCB                 /* lret */
-    };
-
-    static const char enter_pm[]=
-    {
-        0x50,                /* pushw %ax */
-        0x52,                /* pushw %dx */
-        0x55,                /* pushw %bp */
-        0x89,0xE5,           /* movw %sp,%bp */
-        /* get return CS */
-        0x8B,0x56,0x08,      /* movw 8(%bp),%dx */
-        /* just call int 31 here to get into protected mode... */
-        /* it'll check whether it was called from dpmi_seg... */
-        0xCD,0x31,           /* int $0x31 */
-        /* we are now in the context of a 16-bit relay call */
-        /* need to fixup our stack;
-         * 16-bit relay return address will be lost, but we won't worry quite yet */
-        0x8E,0xD0,           /* movw %ax,%ss */
-        0x66,0x0F,0xB7,0xE5, /* movzwl %bp,%esp */
-        /* set return CS */
-        0x89,0x56,0x08,      /* movw %dx,8(%bp) */
-        0x5D,                /* popw %bp */
-        0x5A,                /* popw %dx */
-        0x58,                /* popw %ax */
-        0xCB                 /* lret */
-    };
-
-    ptr = DOSMEM_GetBlock( sizeof(wrap_code), &DOSMEM_dpmi_segments.wrap_seg );
-    memcpy( ptr, wrap_code, sizeof(wrap_code) );
-    ptr = DOSMEM_GetBlock( sizeof(enter_xms), &DOSMEM_dpmi_segments.xms_seg );
-    memcpy( ptr, enter_xms, sizeof(enter_xms) );
-    ptr = DOSMEM_GetBlock( sizeof(enter_pm), &DOSMEM_dpmi_segments.dpmi_seg );
-    memcpy( ptr, enter_pm, sizeof(enter_pm) );
-    DOSMEM_dpmi_segments.dpmi_sel = SELECTOR_AllocBlock( ptr, sizeof(enter_pm), WINE_LDT_FLAGS_CODE );
-
-    ptr = DOSMEM_GetBlock( 6 * 256, &DOSMEM_dpmi_segments.int48_seg );
-    for(i=0; i<256; i++) {
-        /*
-         * Each 32-bit interrupt handler is 6 bytes:
-         * 0xCD,<i>            = int <i> (nested 16-bit interrupt)
-         * 0x66,0xCA,0x04,0x00 = ret 4   (32-bit far return and pop 4 bytes)
-         */
-        ptr[i * 6 + 0] = 0xCD;
-        ptr[i * 6 + 1] = i;
-        ptr[i * 6 + 2] = 0x66;
-        ptr[i * 6 + 3] = 0xCA;
-        ptr[i * 6 + 4] = 0x04;
-        ptr[i * 6 + 5] = 0x00;
-    }
-    DOSMEM_dpmi_segments.int48_sel = SELECTOR_AllocBlock( ptr, 6 * 256, WINE_LDT_FLAGS_CODE );
 }
 
 static BIOSDATA * DOSMEM_BiosData(void)
@@ -569,7 +482,6 @@ BOOL DOSMEM_Init(BOOL dos_init)
         DOSMEM_InitMemory();
         DOSMEM_InitCollateTable();
         DOSMEM_InitErrorTable();
-        DOSMEM_InitDPMI();
         already_done = 1;
     }
     else if (dos_init && !already_mapped)

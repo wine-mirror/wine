@@ -164,21 +164,7 @@ extern WORD DOSMEM_BiosDataSeg;
 extern WORD DOSMEM_BiosSysSeg;
 extern DWORD DOSMEM_CollateTable;
 
-/* various real-mode code stubs */
-struct DPMI_segments
-{
-    WORD wrap_seg;
-    WORD xms_seg;
-    WORD dpmi_seg;
-    WORD dpmi_sel;
-    WORD int48_seg;
-    WORD int48_sel;
-};
-
 /* msdos/dosmem.c */
-extern struct DPMI_segments DOSMEM_dpmi_segments;
-extern const struct DPMI_segments *DOSMEM_GetDPMISegments(void);
-
 extern BOOL DOSMEM_Init(BOOL);
 extern void   DOSMEM_Tick(WORD timer);
 extern WORD   DOSMEM_AllocSelector(WORD);
