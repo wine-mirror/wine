@@ -2812,11 +2812,18 @@ static VOID LISTVIEW_DrawSubItem(HWND hwnd, HDC hdc, INT nItem, INT nSubItem,
   LISTVIEW_FillBackground(hwnd, hdc, &rcTemp);
 
   /* set item colors */
-  if (ListView_GetItemState(hwnd,nItem,LVIS_SELECTED)
-      &&(infoPtr->bFocus != FALSE) && Selected)
+  if (ListView_GetItemState(hwnd,nItem,LVIS_SELECTED) && Selected)
   {
-    SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
-    SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
+    if (infoPtr->bFocus)
+    {
+      SetBkColor(hdc, GetSysColor(COLOR_HIGHLIGHT));
+      SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
+    }
+    else
+    {
+      SetBkColor(hdc, GetSysColor(COLOR_3DFACE));
+      SetTextColor(hdc, GetSysColor(COLOR_BTNTEXT));
+    }
   }
   else
   {
