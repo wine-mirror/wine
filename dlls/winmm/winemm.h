@@ -162,7 +162,7 @@ typedef struct tagWINE_TIMERENTRY {
     DWORD			dwUser;
     UINT16			wFlags;
     UINT16			wTimerID;
-    UINT			uCurTime;
+    DWORD			dwTriggerTime;
     struct tagWINE_TIMERENTRY*	lpNext;
 } WINE_TIMERENTRY, *LPWINE_TIMERENTRY;
 
@@ -285,7 +285,6 @@ void		TIME_MMTimeStop(void);
 
 /* Global variables */
 extern LPWINE_MM_IDATA  WINMM_IData;
-extern DWORD		WINMM_SysTimeMS;
 
 /* pointers to 16 bit functions (if sibling MMSYSTEM.DLL is loaded
  * NULL otherwise

@@ -2524,12 +2524,9 @@ void MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16)
  */
 MMRESULT16 WINAPI timeGetSystemTime16(LPMMTIME16 lpTime, UINT16 wSize)
 {
-    TRACE("(%p, %u);\n", lpTime, wSize);
-
     if (wSize >= sizeof(*lpTime)) {
 	lpTime->wType = TIME_MS;
-	TIME_MMTimeStart();
-	lpTime->u.ms = WINMM_SysTimeMS;
+	lpTime->u.ms = GetTickCount();
 
 	TRACE("=> %lu\n", lpTime->u.ms);
     }
