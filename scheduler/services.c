@@ -204,14 +204,6 @@ BOOL SERVICE_Init( void )
 }
 
 /***********************************************************************
- *           SERVICE_Exit
- */
-void SERVICE_Exit( void )
-{
-    TerminateThread( Service->thread, 0 );
-}
-
-/***********************************************************************
  *           SERVICE_AddObject
  */
 HANDLE SERVICE_AddObject( HANDLE object, 

@@ -11,8 +11,6 @@
 
 BOOL SERVICE_Init( void );
 
-void SERVICE_Exit( void );
-
 HANDLE SERVICE_AddObject( HANDLE object,
                           PAPCFUNC callback, ULONG_PTR callback_arg );
 

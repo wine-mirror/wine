@@ -313,7 +313,6 @@ HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
     pModule->module32 = wm->module;
 
     if (!TASK_Create( THREAD_Current(), pModule, 0, 0, FALSE )) return 0;
-    TASK_StartTask( PROCESS_Current()->task );
 
     /* Initialize GDI and USER */
     if (!LoadLibraryA( "GDI32.DLL" )) return 0;
@@ -335,8 +334,6 @@ void WINAPI ExitKernel16( void )
     WriteOutProfiles16();
     SHELL_SaveRegistry();
 
-    SERVICE_Exit();
-
-    exit(0);
+    TerminateProcess( GetCurrentProcess(), 0 );
 }
 
