@@ -116,7 +116,8 @@ CLEAN_FILES     = *.o *.a *.so *.ln *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.o
 OBJS = $(C_SRCS:.c=.o) $(GEN_C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) \
        $(ASM_SRCS:.S=.o) $(GLUE:.c=.glue.o) $(EXTRA_OBJS)
 
-LINTS = $(C_SRCS:.c=.ln)
+RCOBJS = $(RC_SRCS:.rc=.res.o)
+LINTS  = $(C_SRCS:.c=.ln)
 
 # Implicit rules
 

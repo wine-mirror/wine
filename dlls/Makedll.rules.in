@@ -34,8 +34,8 @@ $(MODULE).so: $(ALL_OBJS) Makefile.in
 
 # Rules for .dll files
 
-$(MODULE): $(OBJS) $(MODULE).dbg.o $(SPEC_DEF) Makefile.in
-	$(DLLWRAP) $(DLLWRAPFLAGS) --def $(SPEC_DEF) --implib lib$(MODULE:.dll=.a) -o $@ $(OBJS) $(MODULE).dbg.o -L$(DLLDIR) $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
+$(MODULE): $(RCOBJS) $(OBJS) $(MODULE).dbg.o $(SPEC_DEF) Makefile.in
+	$(DLLWRAP) $(DLLWRAPFLAGS) --def $(SPEC_DEF) --implib lib$(MODULE:.dll=.a) -o $@ $(RCOBJS) $(OBJS) $(MODULE).dbg.o -L$(DLLDIR) $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
 
 $(SPEC_DEF): $(WINEBUILD)
 
