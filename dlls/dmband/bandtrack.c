@@ -30,6 +30,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmband);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
+
 /*****************************************************************************
  * IDirectMusicBandTrack implementation
  */
@@ -77,7 +78,7 @@ HRESULT WINAPI IDirectMusicBandTrack_Init (LPDIRECTMUSICTRACK8 iface, IDirectMus
 	ICOM_THIS(IDirectMusicBandTrack,iface);
 
 	FIXME("(%p, %p): stub\n", This, pSegment);
-
+	
 	return S_OK;
 }
 
@@ -86,7 +87,7 @@ HRESULT WINAPI IDirectMusicBandTrack_InitPlay (LPDIRECTMUSICTRACK8 iface, IDirec
 	ICOM_THIS(IDirectMusicBandTrack,iface);
 
 	FIXME("(%p, %p, %p, %p, %ld, %ld): stub\n", This, pSegmentState, pPerformance, ppStateData, dwVirtualTrack8ID, dwFlags);
-
+	
 	return S_OK;
 }
 
@@ -103,8 +104,75 @@ HRESULT WINAPI IDirectMusicBandTrack_Play (LPDIRECTMUSICTRACK8 iface, void* pSta
 {
 	ICOM_THIS(IDirectMusicBandTrack,iface);
 
-	FIXME("(%p, %p, %ld, %ld, %ld, %ld, %p, %p, %ld): stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
+	FIXME("(%p, %p, %ld, %ld, %ld, %ld, %p, %p, %ld): semi-stub\n", This, pStateData, mtStart, mtEnd, mtOffset, dwFlags, pPerf, pSegSt, dwVirtualID);
+	/* Sends following pMSG:
+		 - DMUS_PATCH_PMSG
+		 - DMUS_TRANSPOSE_PMSG
+		 - DMUS_CHANNEL_PRIORITY_PMSG
+		 - DMUS_MIDI_PMSG
+	*/
+	
+#if 0
+	/* get the graph and segment */
+	IDirectMusicSegment* pSegment; /* needed for getting track group */
+	IDirectMusicGraph* pGraph; /* needed for PMsg stamping */
+	DWORD dwGroup;
+	if (FAILED(IDirectMusicSegmentState_GetSegment (pSegSt, &pSegment))) {
+		ERR("failed to get segment\n");
+		return E_FAIL;
+	}
+	/* HINT: M$ lies when saying that we can query segment for graph; one can obtain graph only
+              by querying segment state or performance */
+	if (FAILED(IDirectMusicSegmentState_QueryInterface (pSegSt, &IID_IDirectMusicGraph, (LPVOID*)&pGraph))) {
+		ERR("failed to get graph on segment\n");
+		return E_FAIL;
+	}
+	IDirectMusicSegment_GetTrackGroup (pSegment, (LPDIRECTMUSICTRACK)iface, &dwGroup);
 
+	
+	/* iterate through band list to get appropriate band */
+	DMUS_PRIVATE_BAND *tmpBandEntry;
+	struct list *listEntry;
+	IDirectMusicBandImpl* pBand = NULL;
+	LIST_FOR_EACH (listEntry, &This->Bands) {
+		tmpBandEntry = LIST_ENTRY (listEntry, DMUS_PRIVATE_BAND, entry);
+		/* FIXME: time checking is far from perfect: i don't know if times are properly compared and
+		          in case of v.2 header i don't know which time to take; besides, first band with smaller
+		          time will be taken */
+		if (((tmpBandEntry->pBandHeader.dwVersion = 1) && (tmpBandEntry->pBandHeader.lBandTime < mtStart))
+			|| ((tmpBandEntry->pBandHeader.dwVersion = 2) && (tmpBandEntry->pBandHeader.lBandTimeLogical < mtStart))) {
+				pBand = tmpBandEntry->ppBand;
+				break;
+			}				
+			
+	}
+	
+	int r = 0; /* TEST */
+	/* now iterate through instruments list on selected band and fill and send all messages related to it */
+	DMUS_PRIVATE_INSTRUMENT *tmpInstrumentEntry;
+	LIST_FOR_EACH (listEntry, &pBand->Instruments) {
+		tmpInstrumentEntry = LIST_ENTRY (listEntry, DMUS_PRIVATE_INSTRUMENT, entry);
+		FIXME("parsing instrument [%i]\n", r);
+		r++;
+		
+		/* allocate the msg */
+		DMUS_CHANNEL_MIDI_PMSG* pMIDI = NULL;
+		if (FAILED(IDirectMusicPerformance_AllocPMsg (pPerf, sizeof(DMUS_MIDI_PMSG), (DMUS_PMSG**)&pMIDI))) {
+			ERR("could not allocate PMsg\n");
+		}
+		
+		/* HERE THE MESSAGE DATA SHOULD BE PUT IN */
+		
+		if (FAILED(IDirectMusicGraph_StampPMsg (pGraph, (DMUS_PMSG*)pMIDI))) {
+			ERR("could not stamp PMsg\n");
+		}
+
+		if (FAILED(IDirectMusicPerformance_SendPMsg (pPerf, (DMUS_PMSG*)pMIDI))) {
+			ERR("could not send PMsg\n");
+		}		
+
+	}
+#endif		
 	return S_OK;
 }
 
@@ -144,7 +212,7 @@ HRESULT WINAPI IDirectMusicBandTrack_IsParamSupported (LPDIRECTMUSICTRACK8 iface
 		|| IsEqualGUID (rguidType, &GUID_UnloadFromAudioPath)) {
 		TRACE("param supported\n");
 		return S_OK;
-		}
+	}
 
 	TRACE("param unsupported\n");
 	return DMUS_E_TYPE_UNSUPPORTED;
@@ -260,6 +328,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicBandTrack (LPCGUID lpcGUID, LPDIRECTMUSIC
 		}
 		track->lpVtbl = &DirectMusicBandTrack_Vtbl;
 		track->ref = 1;
+		list_init (&track->Bands);
 		track->pStream = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(IDirectMusicBandTrackStream));
 		track->pStream->lpVtbl = &DirectMusicBandTrackStream_Vtbl;
 		track->pStream->ref = 1;	
@@ -354,17 +423,17 @@ HRESULT WINAPI IDirectMusicBandTrackStream_Load (LPPERSISTSTREAM iface, IStream*
 						switch (chunkID) {
 							case DMUS_FOURCC_BANDTRACK_CHUNK: {
 								TRACE_(dmfile)(": band track header chunk\n");
-								IStream_Read (pStm, &pTrack->btkHeader, chunkSize, NULL);
+								IStream_Read (pStm, pTrack->btkHeader, chunkSize, NULL);
 								break;
 							}
 							case DMUS_FOURCC_GUID_CHUNK: {
 								TRACE_(dmfile)(": GUID chunk\n");
-								IStream_Read (pStm, &pTrack->vVersion, chunkSize, NULL);
+								IStream_Read (pStm, pTrack->guidID, chunkSize, NULL);
 								break;
 							}
 							case DMUS_FOURCC_VERSION_CHUNK: {
 								TRACE_(dmfile)(": version chunk\n");
-								IStream_Read (pStm, &pTrack->guidID, chunkSize, NULL);
+								IStream_Read (pStm, pTrack->vVersion, chunkSize, NULL);
 								break;
 							}
 							case FOURCC_LIST: {
@@ -381,34 +450,41 @@ HRESULT WINAPI IDirectMusicBandTrackStream_Load (LPPERSISTSTREAM iface, IStream*
 											ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + chunkSize;
 											TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (chunkID), chunkSize);
 											switch (chunkID) {
+												/* don't ask me why, but M$ puts INFO elements in UNFO list sometimes
+                                              (though strings seem to be valid unicode) */
+												case mmioFOURCC('I','N','A','M'):
 												case DMUS_FOURCC_UNAM_CHUNK: {
 													TRACE_(dmfile)(": name chunk\n");
-													pTrack->wszName = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
-													IStream_Read (pStm, pTrack->wszName, chunkSize, NULL);
+													pTrack->wzName = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
+													IStream_Read (pStm, pTrack->wzName, chunkSize, NULL);
 													break;
 												}
+												case mmioFOURCC('I','A','R','T'):
 												case DMUS_FOURCC_UART_CHUNK: {
 													TRACE_(dmfile)(": artist chunk\n");
-													pTrack->wszArtist = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
-													IStream_Read (pStm, pTrack->wszArtist, chunkSize, NULL);
+													pTrack->wzArtist = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
+													IStream_Read (pStm, pTrack->wzArtist, chunkSize, NULL);
 													break;
 												}
+												case mmioFOURCC('I','C','O','P'):
 												case DMUS_FOURCC_UCOP_CHUNK: {
 													TRACE_(dmfile)(": copyright chunk\n");
-													pTrack->wszCopyright = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
-													IStream_Read (pStm, pTrack->wszCopyright, chunkSize, NULL);
+													pTrack->wzCopyright = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
+													IStream_Read (pStm, pTrack->wzCopyright, chunkSize, NULL);
 													break;
 												}
+												case mmioFOURCC('I','S','B','J'):
 												case DMUS_FOURCC_USBJ_CHUNK: {
 													TRACE_(dmfile)(": subject chunk\n");
-													pTrack->wszSubject = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
-													IStream_Read (pStm, pTrack->wszSubject, chunkSize, NULL);
+													pTrack->wzSubject = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
+													IStream_Read (pStm, pTrack->wzSubject, chunkSize, NULL);
 													break;
 												}
+												case mmioFOURCC('I','C','M','T'):
 												case DMUS_FOURCC_UCMT_CHUNK: {
 													TRACE_(dmfile)(": comment chunk\n");
-													pTrack->wszComment = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
-													IStream_Read (pStm, pTrack->wszComment, chunkSize, NULL);
+													pTrack->wzComment = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
+													IStream_Read (pStm, pTrack->wzComment, chunkSize, NULL);
 													break;
 												}
 												default: {
@@ -437,6 +513,8 @@ HRESULT WINAPI IDirectMusicBandTrackStream_Load (LPPERSISTSTREAM iface, IStream*
 													ListCount[1] = 0;
 													switch (chunkID) {
 														case DMUS_FOURCC_BAND_LIST: {
+															/* init new band list entry */
+															LPDMUS_PRIVATE_BAND pNewBand = (LPDMUS_PRIVATE_BAND) HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_BAND));
 															TRACE_(dmfile)(": band list\n");
 															do {
 																IStream_Read (pStm, &chunkID, sizeof(FOURCC), NULL);
@@ -448,18 +526,17 @@ HRESULT WINAPI IDirectMusicBandTrackStream_Load (LPPERSISTSTREAM iface, IStream*
 																		TRACE_(dmfile)(": band item header (v.1) chunk\n");
 																		IStream_Read (pStm, &tempHeaderV1, chunkSize, NULL);
 																		/* now transfer data to universal header */
-																		pTrack->pBandHeaders[pTrack->dwBands].dwVersion = 1;
-																		pTrack->pBandHeaders[pTrack->dwBands].lBandTime = tempHeaderV1.lBandTime;
-																		TRACE_(dmfile)(": (READ): header: lBandTime = %li\n", tempHeaderV1.lBandTime);
+																		pNewBand->pBandHeader.dwVersion = 1;
+																		pNewBand->pBandHeader.lBandTime = tempHeaderV1.lBandTime;
 																		break;
 																	}
 																	case DMUS_FOURCC_BANDITEM_CHUNK2: {
 																		TRACE_(dmfile)(": band item header (v.2) chunk\n");
 																		IStream_Read (pStm, &tempHeaderV2, chunkSize, NULL);
 																		/* now transfer data to universal header */
-																		pTrack->pBandHeaders[pTrack->dwBands].dwVersion = 2;
-																		pTrack->pBandHeaders[pTrack->dwBands].lBandTimeLogical = tempHeaderV2.lBandTimeLogical;
-																		pTrack->pBandHeaders[pTrack->dwBands].lBandTimePhysical = tempHeaderV2.lBandTimePhysical;
+																		pNewBand->pBandHeader.dwVersion = 2;
+																		pNewBand->pBandHeader.lBandTimeLogical = tempHeaderV2.lBandTimeLogical;
+																		pNewBand->pBandHeader.lBandTimePhysical = tempHeaderV2.lBandTimePhysical;
 																		break;
 																	}
 																	case FOURCC_RIFF: {
@@ -479,7 +556,7 @@ HRESULT WINAPI IDirectMusicBandTrackStream_Load (LPPERSISTSTREAM iface, IStream*
 																				IDirectMusicObject* pObject;
 																				if (SUCCEEDED(IDirectMusicLoader_GetObject (pLoader, &ObjDesc, &IID_IDirectMusicObject, (LPVOID*)&pObject))) {
 																					/* acquire band from loaded object */
-																					IDirectMusicObject_QueryInterface (pObject, &IID_IDirectMusicBand, (LPVOID*)&pTrack->ppBands[pTrack->dwBands]);
+																					IDirectMusicObject_QueryInterface (pObject, &IID_IDirectMusicBand, (LPVOID*)&pNewBand->ppBand);
 																					/*IDirectMusicLoader_Release (pLoader);*/
 																				} else FIXME(": couldn't get band\n");
 																			}
@@ -503,6 +580,7 @@ HRESULT WINAPI IDirectMusicBandTrackStream_Load (LPPERSISTSTREAM iface, IStream*
 																}
 																TRACE_(dmfile)(": ListCount[1] = %ld < ListSize[1] = %ld\n", ListCount[1], ListSize[1]);
 															} while (ListCount[1] < ListSize[1]);
+															list_add_tail (&pTrack->Bands, &pNewBand->entry);
 															break;
 														}
 														default: {
@@ -523,7 +601,6 @@ HRESULT WINAPI IDirectMusicBandTrackStream_Load (LPPERSISTSTREAM iface, IStream*
 											}
 											TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
 										} while (ListCount[0] < ListSize[0]);
-										pTrack->dwBands++; /* add reference count */										
 										break;
 									}
 									default: {
@@ -563,7 +640,53 @@ HRESULT WINAPI IDirectMusicBandTrackStream_Load (LPPERSISTSTREAM iface, IStream*
 			return E_FAIL;
 		}
 	}
+	
+	/* DEBUG: dumps whole band track object tree: */
+	if (TRACE_ON(dmband)) {
+		int r = 0;
+		DMUS_PRIVATE_BAND *tmpEntry;
+		struct list *listEntry;
+
+		TRACE("*** IDirectMusicBandTrack (%p) ***\n", pTrack);
+		if (pTrack->btkHeader) {
+			TRACE(" - Band track header:\n");
+			TRACE("    - bAutoDownload: %i\n", pTrack->btkHeader->bAutoDownload);
+		}
+		if (pTrack->guidID)
+			TRACE(" - GUID = %s\n", debugstr_guid(pTrack->guidID));
+		if (pTrack->vVersion)
+			TRACE(" - Version = %i,%i,%i,%i\n", (pTrack->vVersion->dwVersionMS >> 8) && 0x0000FFFF, pTrack->vVersion->dwVersionMS && 0x0000FFFF, \
+				(pTrack->vVersion->dwVersionLS >> 8) && 0x0000FFFF, pTrack->vVersion->dwVersionLS && 0x0000FFFF);
+		if (pTrack->wzName)
+			TRACE(" - Name = %s\n", debugstr_w(pTrack->wzName));
+		if (pTrack->wzArtist)		
+			TRACE(" - Artist = %s\n", debugstr_w(pTrack->wzArtist));
+		if (pTrack->wzCopyright)
+			TRACE(" - Copyright = %s\n", debugstr_w(pTrack->wzCopyright));
+		if (pTrack->wzSubject)
+			TRACE(" - Subject = %s\n", debugstr_w(pTrack->wzSubject));
+		if (pTrack->wzComment)
+			TRACE(" - Comment = %s\n", debugstr_w(pTrack->wzComment));
 		
+		TRACE(" - Bands:\n");
+		
+		LIST_FOR_EACH (listEntry, &pTrack->Bands) {
+			tmpEntry = LIST_ENTRY( listEntry, DMUS_PRIVATE_BAND, entry );
+			TRACE("    - Band[%i]:\n", r);
+			TRACE("       - Band header:\n");
+			TRACE("          - version = %ld\n", tmpEntry->pBandHeader.dwVersion);
+			if (tmpEntry->pBandHeader.dwVersion == 1) {
+				TRACE("          - lBandTime = %li\n", tmpEntry->pBandHeader.lBandTime);
+			} else if (tmpEntry->pBandHeader.dwVersion == 2) {
+				TRACE("          - lBandTimeLogical = %li\n", tmpEntry->pBandHeader.lBandTimeLogical);
+				TRACE("          - lBandTimePhysical = %li\n", tmpEntry->pBandHeader.lBandTimePhysical);				
+			}
+			TRACE("       - Band: %p\n", tmpEntry->ppBand);
+			r++;
+		}
+	}
+
+	
 	return S_OK;
 }
 

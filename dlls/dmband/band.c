@@ -39,8 +39,7 @@ HRESULT WINAPI IDirectMusicBandImpl_QueryInterface (LPDIRECTMUSICBAND iface, REF
 	ICOM_THIS(IDirectMusicBandImpl,iface);
 
 	if (IsEqualGUID(riid, &IID_IUnknown) || 
-	    IsEqualGUID(riid, &IID_IDirectMusicBand))
-	{
+	    IsEqualGUID(riid, &IID_IDirectMusicBand)) {
 		IDirectMusicBandImpl_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
@@ -61,8 +60,7 @@ ULONG WINAPI IDirectMusicBandImpl_Release (LPDIRECTMUSICBAND iface)
 	ICOM_THIS(IDirectMusicBandImpl,iface);
 	ULONG ref = --This->ref;
 	TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
-	if (ref == 0)
-	{
+	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 	return ref;
@@ -112,8 +110,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicBand (LPCGUID lpcGUID, LPDIRECTMUSICBAND*
 {
 	IDirectMusicBandImpl* dmband;
 	
-	if (IsEqualGUID (lpcGUID, &IID_IDirectMusicBand))
-	{
+	if (IsEqualGUID (lpcGUID, &IID_IDirectMusicBand)) {
 		dmband = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicBandImpl));
 		if (NULL == dmband) {
 			*ppDMBand = (LPDIRECTMUSICBAND) NULL;
@@ -121,6 +118,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicBand (LPCGUID lpcGUID, LPDIRECTMUSICBAND*
 		}
 		dmband->lpVtbl = &DirectMusicBand_Vtbl;
 		dmband->ref = 1;
+		list_init (&dmband->Instruments);
 		*ppDMBand = (LPDIRECTMUSICBAND) dmband;
 		return S_OK;
 	}
@@ -325,12 +323,12 @@ HRESULT WINAPI IDirectMusicBandObjectStream_Load (LPPERSISTSTREAM iface, IStream
 						switch (chunkID) {
 							case DMUS_FOURCC_GUID_CHUNK: {
 								TRACE_(dmfile)(": GUID chunk\n");
-								IStream_Read (pStm, &pBand->vVersion, chunkSize, NULL);
+								IStream_Read (pStm, pBand->guidID, chunkSize, NULL);
 								break;
 							}
 							case DMUS_FOURCC_VERSION_CHUNK: {
 								TRACE_(dmfile)(": version chunk\n");
-								IStream_Read (pStm, &pBand->guidID, chunkSize, NULL);
+								IStream_Read (pStm, pBand->vVersion, chunkSize, NULL);
 								break;
 							}
 							case FOURCC_LIST: {
@@ -347,34 +345,41 @@ HRESULT WINAPI IDirectMusicBandObjectStream_Load (LPPERSISTSTREAM iface, IStream
 											ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + chunkSize;
 											TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (chunkID), chunkSize);
 											switch (chunkID) {
+												/* don't ask me why, but M$ puts INFO elements in UNFO list sometimes
+                                              (though strings seem to be valid unicode) */
+												case mmioFOURCC('I','N','A','M'):
 												case DMUS_FOURCC_UNAM_CHUNK: {
 													TRACE_(dmfile)(": name chunk\n");
-													pBand->wszName = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
-													IStream_Read (pStm, pBand->wszName, chunkSize, NULL);
+													pBand->wzName = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
+													IStream_Read (pStm, pBand->wzName, chunkSize, NULL);
 													break;
 												}
+												case mmioFOURCC('I','A','R','T'):
 												case DMUS_FOURCC_UART_CHUNK: {
 													TRACE_(dmfile)(": artist chunk\n");
-													pBand->wszArtist = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
-													IStream_Read (pStm, pBand->wszArtist, chunkSize, NULL);
+													pBand->wzArtist = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
+													IStream_Read (pStm, pBand->wzArtist, chunkSize, NULL);
 													break;
 												}
+												case mmioFOURCC('I','C','O','P'):
 												case DMUS_FOURCC_UCOP_CHUNK: {
 													TRACE_(dmfile)(": copyright chunk\n");
-													pBand->wszCopyright = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
-													IStream_Read (pStm, pBand->wszCopyright, chunkSize, NULL);
+													pBand->wzCopyright = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
+													IStream_Read (pStm, pBand->wzCopyright, chunkSize, NULL);
 													break;
 												}
+												case mmioFOURCC('I','S','B','J'):
 												case DMUS_FOURCC_USBJ_CHUNK: {
 													TRACE_(dmfile)(": subject chunk\n");
-													pBand->wszSubject = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
-													IStream_Read (pStm, pBand->wszSubject, chunkSize, NULL);
+													pBand->wzSubject = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
+													IStream_Read (pStm, pBand->wzSubject, chunkSize, NULL);
 													break;
 												}
+												case mmioFOURCC('I','C','M','T'):
 												case DMUS_FOURCC_UCMT_CHUNK: {
 													TRACE_(dmfile)(": comment chunk\n");
-													pBand->wszComment = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
-													IStream_Read (pStm, pBand->wszComment, chunkSize, NULL);
+													pBand->wzComment = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, chunkSize);
+													IStream_Read (pStm, pBand->wzComment, chunkSize, NULL);
 													break;
 												}
 												default: {
@@ -403,6 +408,8 @@ HRESULT WINAPI IDirectMusicBandObjectStream_Load (LPPERSISTSTREAM iface, IStream
 													ListCount[1] = 0;
 													switch (chunkID) {
 														case DMUS_FOURCC_INSTRUMENT_LIST: {
+															/* init new instrument list entry */
+															LPDMUS_PRIVATE_INSTRUMENT pNewInstrument = (LPDMUS_PRIVATE_INSTRUMENT) HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_INSTRUMENT));
 															TRACE_(dmfile)(": instrument list\n");
 															do {
 																IStream_Read (pStm, &chunkID, sizeof(FOURCC), NULL);
@@ -412,7 +419,7 @@ HRESULT WINAPI IDirectMusicBandObjectStream_Load (LPPERSISTSTREAM iface, IStream
 																switch (chunkID) {
 																	case DMUS_FOURCC_INSTRUMENT_CHUNK: {
 																		TRACE_(dmfile)(": band instrument header\n");
-																		IStream_Read (pStm, &pBand->pInstruments[pBand->dwInstruments], chunkSize, NULL);
+																		IStream_Read (pStm, &pNewInstrument->pInstrument, chunkSize, NULL);
 																		break;
 																	}
 																	case FOURCC_LIST: {
@@ -489,8 +496,8 @@ ObjDesc.vVersion.dwVersionMS, ObjDesc.vVersion.dwVersionLS, debugstr_w(ObjDesc.w
 																						IDirectMusicObject* pObject;
 																						if(FAILED(IDirectMusicLoader_GetObject (pLoader, &ObjDesc, &IID_IDirectMusicObject, (LPVOID*)&pObject)))
 																						/* acquire collection from loaded referenced object */
-																						if(FAILED(IDirectMusicObject_QueryInterface (pObject, &IID_IDirectMusicCollection, (LPVOID*)&pBand->ppReferenceCollection[pBand->dwInstruments])))
-																						IDirectMusicLoader_Release (pLoader);
+																						if(FAILED(IDirectMusicObject_QueryInterface (pObject, &IID_IDirectMusicCollection, (LPVOID*)&pNewInstrument->ppReferenceCollection)))
+																							IDirectMusicLoader_Release (pLoader);
 																					}
 																					IDirectMusicGetLoader_Release (pGetLoader);											
 																				} else {
@@ -506,45 +513,42 @@ ObjDesc.vVersion.dwVersionMS, ObjDesc.vVersion.dwVersionLS, debugstr_w(ObjDesc.w
 																	}
 																	break;
 																}
-																default: {
-																	TRACE_(dmfile)(": unknown chunk (skipping)\n");
-																	liMove.QuadPart = chunkSize;
-																	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL); /* skip this chunk */
-																	break;					
-																}	
-															}
-															TRACE_(dmfile)(": ListCount[1] = %ld < ListSize[1] = %ld\n", ListCount[1], ListSize[1]);
-														} while (ListCount[1] < ListSize[1]);
-/* causes crash :( */
-#if 0
-														/* hmm... in dxdiag segment's band there aren't any references, but loader still desperatly
-														   loads default collection... does that mean that if there is no reference, use default?
-														*/
-														if (!pBand->ppReferenceCollection[pBand->dwInstruments]) {
-															TRACE(": (READ): loading default collection (as no specific reference was made)\n");
-															ZeroMemory ((LPVOID)&ObjDesc, sizeof(DMUS_OBJECTDESC));
-															ObjDesc.dwSize = sizeof(DMUS_OBJECTDESC);
-        													ObjDesc.dwValidData = DMUS_OBJ_CLASS | DMUS_OBJ_OBJECT;
-															ObjDesc.guidObject = GUID_DefaultGMCollection;
-															ObjDesc.guidClass = CLSID_DirectMusicCollection;
-															if (SUCCEEDED(IStream_QueryInterface (pStm, &IID_IDirectMusicGetLoader, (LPVOID*)&pGetLoader))) {
-																if (SUCCEEDED(IDirectMusicGetLoader_GetLoader (pGetLoader, &pLoader))) {
-																	IDirectMusicObject* pObject;
-																	if (SUCCEEDED(IDirectMusicLoader_GetObject (pLoader, &ObjDesc, &IID_IDirectMusicObject, (LPVOID*)&pObject))) {
-																		IDirectMusicObject_QueryInterface (pObject, &IID_IDirectMusicCollection, (LPVOID*)&pBand->ppReferenceCollection[pBand->dwInstruments]);
-																		IDirectMusicLoader_Release (pLoader);
-																	}
+																	default: {
+																		TRACE_(dmfile)(": unknown chunk (skipping)\n");
+																		liMove.QuadPart = chunkSize;
+																		IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL); /* skip this chunk */
+																		break;					
+																	}	
 																}
-																IDirectMusicGetLoader_Release (pGetLoader);											
-															} else {
-																ERR("Could not get IDirectMusicGetLoader... reference will not be loaded :(\n");
-																/* E_FAIL */
+																TRACE_(dmfile)(": ListCount[1] = %ld < ListSize[1] = %ld\n", ListCount[1], ListSize[1]);
+															} while (ListCount[1] < ListSize[1]);
+															/* hmm... in dxdiag segment's band there aren't any references, but loader still desperatly
+														       loads default collection... does that mean that if there is no reference, use default?
+														    */
+															if (!pNewInstrument->ppReferenceCollection) {
+																TRACE_(dmfile)(": (READ): loading default collection (as no specific reference was made)\n");
+																ZeroMemory ((LPVOID)&ObjDesc, sizeof(DMUS_OBJECTDESC));
+																ObjDesc.dwSize = sizeof(DMUS_OBJECTDESC);
+        														ObjDesc.dwValidData = DMUS_OBJ_CLASS | DMUS_OBJ_OBJECT;
+																ObjDesc.guidObject = GUID_DefaultGMCollection;
+																ObjDesc.guidClass = CLSID_DirectMusicCollection;
+																if (SUCCEEDED(IStream_QueryInterface (pStm, &IID_IDirectMusicGetLoader, (LPVOID*)&pGetLoader))) {
+																	if (SUCCEEDED(IDirectMusicGetLoader_GetLoader (pGetLoader, &pLoader))) {
+																		IDirectMusicObject* pObject;
+																		if (SUCCEEDED(IDirectMusicLoader_GetObject (pLoader, &ObjDesc, &IID_IDirectMusicObject, (LPVOID*)&pObject))) {
+																			IDirectMusicObject_QueryInterface (pObject, &IID_IDirectMusicCollection, (LPVOID*)&pNewInstrument->ppReferenceCollection);
+																			IDirectMusicLoader_Release (pLoader);
+																		}
+																	}
+																	IDirectMusicGetLoader_Release (pGetLoader);											
+																} else {
+																	ERR("Could not get IDirectMusicGetLoader... reference will not be loaded :(\n");
+																	/* E_FAIL */
+																}
 															}
+															list_add_tail (&This->pParentObject->pBand->Instruments, &pNewInstrument->entry);
+															break;
 														}
-#endif
-														pBand->dwInstruments++; /* add count */
-														break;
-													}
 														default: {
 															TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
 															return E_FAIL;
@@ -601,6 +605,50 @@ ObjDesc.vVersion.dwVersionMS, ObjDesc.vVersion.dwVersionLS, debugstr_w(ObjDesc.w
 		}
 	}
 	
+	/* DEBUG: dumps whole band object tree: */
+	if (TRACE_ON(dmband)) {
+		int r = 0;
+		DMUS_PRIVATE_INSTRUMENT *tmpEntry;
+		struct list *listEntry;
+
+		TRACE("*** IDirectMusicBand (%p) ***\n", pBand);
+		if (pBand->guidID)
+			TRACE(" - GUID = %s\n", debugstr_guid(pBand->guidID));
+		if (pBand->vVersion)
+			TRACE(" - Version = %i,%i,%i,%i\n", (pBand->vVersion->dwVersionMS >> 8) && 0x0000FFFF, pBand->vVersion->dwVersionMS && 0x0000FFFF, \
+				(pBand->vVersion->dwVersionLS >> 8) && 0x0000FFFF, pBand->vVersion->dwVersionLS && 0x0000FFFF);
+		if (pBand->wzName)
+			TRACE(" - Name = %s\n", debugstr_w(pBand->wzName));
+		if (pBand->wzArtist)		
+			TRACE(" - Artist = %s\n", debugstr_w(pBand->wzArtist));
+		if (pBand->wzCopyright)
+			TRACE(" - Copyright = %s\n", debugstr_w(pBand->wzCopyright));
+		if (pBand->wzSubject)
+			TRACE(" - Subject = %s\n", debugstr_w(pBand->wzSubject));
+		if (pBand->wzComment)
+			TRACE(" - Comment = %s\n", debugstr_w(pBand->wzComment));
+		
+		TRACE(" - Instruments:\n");
+		
+		LIST_FOR_EACH (listEntry, &This->pParentObject->pBand->Instruments) {
+			tmpEntry = LIST_ENTRY( listEntry, DMUS_PRIVATE_INSTRUMENT, entry );
+			TRACE("    - Instrument[%i]:\n", r);
+			TRACE("       - Instrument header:\n");
+			TRACE("          - dwPatch = %ld\n", tmpEntry->pInstrument.dwPatch);
+			TRACE("          - dwAssignPatch = %ld\n", tmpEntry->pInstrument.dwAssignPatch);
+			TRACE("          - dwNoteRanges[4] = %ln\n", tmpEntry->pInstrument.dwNoteRanges);
+			TRACE("          - dwPChannel = %ld\n", tmpEntry->pInstrument.dwPChannel);
+			TRACE("          - dwFlags = %ld\n", tmpEntry->pInstrument.dwFlags);
+			TRACE("          - bPan = %i\n", tmpEntry->pInstrument.bPan);
+			TRACE("          - bVolume = %i\n", tmpEntry->pInstrument.bVolume);
+			TRACE("          - nTranspose = %i\n", tmpEntry->pInstrument.nTranspose);
+			TRACE("          - dwChannelPriority = %ld\n", tmpEntry->pInstrument.dwChannelPriority);
+			TRACE("          - nPitchBendRange = %i\n", tmpEntry->pInstrument.nPitchBendRange);
+			TRACE("       - Reference collection: %p\n", tmpEntry->ppReferenceCollection);
+			r++;
+		}
+	}
+
 	return S_OK;
 }
 

@@ -33,6 +33,8 @@
 #include "dmplugin.h"
 #include "dmusicf.h"
 #include "dsound.h"
+#include "wine/list.h"
+
 
 /*****************************************************************************
  * Interfaces
@@ -67,6 +69,33 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicBandObject (LPCGUID lpcGUID, LPDIR
 
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicBandTrack (LPCGUID lpcGUID, LPDIRECTMUSICTRACK8* ppTrack, LPUNKNOWN pUnkOuter);
 
+
+/*****************************************************************************
+ * Auxiliary definitions
+ */
+/* i don't like M$'s idea about two different band item headers, so behold: universal one */
+typedef struct _DMUS_PRIVATE_BAND_ITEM_HEADER {
+	DWORD dwVersion; /* 1 or 2 */
+	/* v.1 */
+	MUSIC_TIME lBandTime;
+	/* v.2 */
+	MUSIC_TIME lBandTimeLogical;
+	MUSIC_TIME lBandTimePhysical;
+} DMUS_PRIVATE_BAND_ITEM_HEADER;
+
+typedef struct _DMUS_PRIVATE_INSTRUMENT {
+	struct list entry; /* for listing elements */
+	DMUS_IO_INSTRUMENT pInstrument;
+	IDirectMusicCollection* ppReferenceCollection;
+} DMUS_PRIVATE_INSTRUMENT, *LPDMUS_PRIVATE_INSTRUMENT;
+
+typedef struct _DMUS_PRIVATE_BAND {
+	struct list entry; /* for listing elements */
+	DMUS_PRIVATE_BAND_ITEM_HEADER pBandHeader;
+	IDirectMusicBandImpl* ppBand;
+} DMUS_PRIVATE_BAND, *LPDMUS_PRIVATE_BAND;
+
+
 /*****************************************************************************
  * IDirectMusicBandImpl implementation structure
  */
@@ -78,18 +107,18 @@ struct IDirectMusicBandImpl
 
   /* IDirectMusicBandImpl fields */
   IDirectMusicBandObject* pObject;
-  GUID guidID; /* unique id */
-  DMUS_IO_VERSION vVersion; /* version */
+
+  GUID* guidID; /* unique id */
+  DMUS_IO_VERSION* vVersion; /* version */
   /* info from UNFO list */
-  WCHAR* wszName;
-  WCHAR* wszArtist;
-  WCHAR* wszCopyright;
-  WCHAR* wszSubject;
-  WCHAR* wszComment;
+  WCHAR* wzName;
+  WCHAR* wzArtist;
+  WCHAR* wzCopyright;
+  WCHAR* wzSubject;
+  WCHAR* wzComment;
+
   /* data */
-  DMUS_IO_INSTRUMENT pInstruments[255];
-  IDirectMusicCollection* ppReferenceCollection[255];
-  DWORD dwInstruments;
+  struct list Instruments;
 };
 
 /* IUnknown: */
@@ -151,15 +180,6 @@ extern HRESULT WINAPI IDirectMusicBandObjectStream_Load (LPPERSISTSTREAM iface, 
 extern HRESULT WINAPI IDirectMusicBandObjectStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty);
 extern HRESULT WINAPI IDirectMusicBandObjectStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize);
 
-/* i don't like M$'s idea about two different band item headers, so behold: universal one */
-typedef struct _DMUS_PRIVATE_BAND_ITEM_HEADER {
-	DWORD dwVersion; /* 1 or 2 */
-	/* v.1 */
-	MUSIC_TIME lBandTime;
-	/* v.2 */
-	MUSIC_TIME lBandTimeLogical;
-	MUSIC_TIME lBandTimePhysical;
-} DMUS_PRIVATE_BAND_ITEM_HEADER;
 
 /*****************************************************************************
  * IDirectMusicBandTrack implementation structure
@@ -172,19 +192,18 @@ struct IDirectMusicBandTrack
 
   /* IDirectMusicBandTrack fields */
   IDirectMusicBandTrackStream* pStream;
-  DMUS_IO_BAND_TRACK_HEADER btkHeader; /* header */
-  GUID guidID; /* unique id */
-  DMUS_IO_VERSION vVersion; /* version */
+  DMUS_IO_BAND_TRACK_HEADER* btkHeader; /* header */
+  GUID* guidID; /* unique id */
+  DMUS_IO_VERSION* vVersion; /* version */
   /* info from UNFO list */
-  WCHAR* wszName;
-  WCHAR* wszArtist;
-  WCHAR* wszCopyright;
-  WCHAR* wszSubject;
-  WCHAR* wszComment;
+  WCHAR* wzName;
+  WCHAR* wzArtist;
+  WCHAR* wzCopyright;
+  WCHAR* wzSubject;
+  WCHAR* wzComment;
+	
   /* data */
-  DMUS_PRIVATE_BAND_ITEM_HEADER pBandHeaders[255]; /* band item headers for bands */
-  IDirectMusicBandImpl* ppBands[255]; /* bands */
-  DWORD dwBands; /* nr. of IDirectMusicBandImpl* and DMUS_PRIVATE_BAND_ITEM_HEADER */
+  struct list Bands;
 };
 
 /* IUnknown: */
@@ -234,12 +253,11 @@ extern HRESULT WINAPI IDirectMusicBandTrackStream_Load (LPPERSISTSTREAM iface, I
 extern HRESULT WINAPI IDirectMusicBandTrackStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty);
 extern HRESULT WINAPI IDirectMusicBandTrackStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize);
 
-static inline const char *debugstr_fourcc( DWORD fourcc )
-{
+static inline const char *debugstr_fourcc (DWORD fourcc) {
     if (!fourcc) return "'null'";
-    return wine_dbg_sprintf( "\'%c%c%c%c\'",
-                             (char)(fourcc), (char)(fourcc >> 8),
-                             (char)(fourcc >> 16), (char)(fourcc >> 24) );
+    return wine_dbg_sprintf ("\'%c%c%c%c\'",
+		(char)(fourcc), (char)(fourcc >> 8),
+		(char)(fourcc >> 16), (char)(fourcc >> 24));
 }
 
 #endif	/* __WINE_DMBAND_PRIVATE_H */
