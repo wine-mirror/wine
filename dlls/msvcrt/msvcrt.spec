@@ -299,7 +299,7 @@ debug_channels (msvcrt)
 @ cdecl _ismbbtrail(long) _ismbbtrail
 @ stub _ismbcalnum #(long)
 @ stub _ismbcalpha #(long)
-@ stub _ismbcdigit #(long)
+@ cdecl _ismbcdigit(long) _ismbcdigit
 @ stub _ismbcgraph #(long)
 @ cdecl _ismbchira(long) _ismbchira
 @ cdecl _ismbckata(long) _ismbckata
@@ -310,7 +310,7 @@ debug_channels (msvcrt)
 @ stub _ismbclower #(long)
 @ stub _ismbcprint #(long)
 @ stub _ismbcpunct #(long)
-@ stub _ismbcspace #(long)
+@ cdecl _ismbcspace(long) _ismbcspace
 @ stub _ismbcsymbol #(long)
 @ stub _ismbcupper #(long)
 @ cdecl _ismbslead(ptr ptr) _ismbslead
@@ -364,12 +364,12 @@ debug_channels (msvcrt)
 @ stub _mbsicoll #(str str)
 @ cdecl _mbsinc(str) _mbsinc
 @ cdecl _mbslen(str) _mbslen
-@ stub _mbslwr #(str)
+@ cdecl _mbslwr(str) _mbslwr
 @ stub _mbsnbcat #(str str long)
-@ stub _mbsnbcmp #(str str long)
+@ cdecl _mbsnbcmp(str str long) _mbsnbcmp
 @ stub _mbsnbcnt #(ptr long)
 @ stub _mbsnbcoll #(str str long)
-@ stub _mbsnbcpy #(ptr str long)
+@ cdecl _mbsnbcpy(ptr str long) _mbsnbcpy
 @ stub _mbsnbicmp #(str str long)
 @ stub _mbsnbicoll #(str str long)
 @ stub _mbsnbset #(str long long)
@@ -387,7 +387,7 @@ debug_channels (msvcrt)
 @ cdecl _mbsrchr(str long) _mbsrchr
 @ stub _mbsrev #(str)
 @ cdecl _mbsset(str long) _mbsset
-@ stub _mbsspn #(str str)
+@ cdecl _mbsspn(str str) _mbsspn
 @ stub _mbsspnp #(str str)
 @ cdecl _mbsstr(str str) strstr
 @ stub _mbstok #(str str)

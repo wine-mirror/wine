@@ -495,3 +495,113 @@ unsigned char* _mbsncat(unsigned char* dst, const unsigned char* src, MSVCRT_siz
   return strncat(dst, src, len); /* ASCII CP */
 }
 
+
+/*********************************************************************
+ *              _ismbcdigit(MSVCRT.@)
+ */
+int _ismbcdigit( unsigned int ch)
+{
+  if (ch <0x100)
+    return isdigit(ch);
+  else
+    {
+      FIXME("Handle MBC chars\n");
+      return 0;
+    }
+}
+
+
+/*********************************************************************
+ *              _mbsnbcmp(MSVCRT.@)
+ */
+int _mbsnbcmp( const unsigned char *str,const unsigned char *cmp, MSVCRT_size_t len )
+{
+  if (!len)
+    return 0;
+  if(MSVCRT___mb_cur_max > 1)
+    {
+      FIXME("%s %s %d\n",str,cmp,len);
+      return 0;
+    }
+  return strncmp(str,cmp,len);
+}
+
+
+/*********************************************************************
+ *              _mbslwr(MSVCRT.@)
+ */
+unsigned char * _mbslwr(  unsigned char *string    )
+{
+  unsigned char *p;
+
+  if(MSVCRT___mb_cur_max > 1)
+    {
+      FIXME("%s\n",string);
+      return string;
+    }
+  p = string;
+  while (*p)
+    {
+      *p= tolower(*p);
+      p++;
+    }
+  return string;
+}
+
+
+/*********************************************************************
+ *              _mbsnbcpy(MSVCRT.@)
+ */
+unsigned char * _mbsnbcpy(unsigned char *dest,const unsigned char *src,MSVCRT_size_t n)
+{
+  if(MSVCRT___mb_cur_max > 1)
+    {
+      FIXME("%s %d\n",src,n);
+      return dest;
+    }
+  return strncpy(dest, src, n);
+}
+
+
+/*********************************************************************
+ *              _mbsspn (MSVCRT.@)
+ */
+MSVCRT_size_t _mbsspn(const unsigned char *string, const unsigned char *set)
+{
+  const unsigned char *p, *q;
+
+  for (p = string; *p; p++)
+    {
+      if (MSVCRT_isleadbyte(*p))
+	{
+	  for (q = set; *q; q++)
+	    {
+	      if (!q[1])
+		break;
+	      if ((*p == *q) &&  (p[1] == q[1]))
+		break;
+	      q++;
+	    }
+	  if (*++p == '\0')
+	    break;
+	}
+      else
+	for (q = set; *q; q++)
+	  if (*p == *q)
+	    break;
+    }
+  return p - string;
+}
+
+
+/*********************************************************************
+ *              _ismbcspace (MSVCRT.@)
+ */
+int _ismbcspace( unsigned int c)
+{
+
+  if (c <0x100)
+    return isspace(c);
+  FIXME("%c\n",c);
+  return 0;
+}
