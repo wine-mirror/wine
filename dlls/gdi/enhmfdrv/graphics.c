@@ -627,3 +627,62 @@ EMFDRV_SetTextColor( PHYSDEV dev, COLORREF color )
 
     return EMFDRV_WriteRecord( dev, &emr.emr ) ? color : CLR_INVALID;
 }
+
+/**********************************************************************
+ *          EMFDRV_ExtTextOut
+ */
+BOOL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
+			const RECT *lprect, LPCWSTR str, UINT count,
+			const INT *lpDx )
+{
+    EMREXTTEXTOUTW *pemr;
+    DWORD nSize;
+    BOOL ret;
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
+
+    nSize = sizeof(*pemr) + (count+1)/2 * 2 * sizeof(WCHAR) +
+      (lpDx ? count * sizeof(INT) : 0);
+
+    TRACE("%s count %d nSize = %ld\n", debugstr_wn(str, count), count, nSize);
+    pemr = HeapAlloc(GetProcessHeap(), 0, nSize);
+
+    pemr->emr.iType = EMR_EXTTEXTOUTW;
+    pemr->emr.nSize = nSize;
+
+    /* FIXME: Calculation of these requires honouring alignment mode, escapement etc. */
+    pemr->rclBounds.left = pemr->rclBounds.right = x;
+    pemr->rclBounds.top = pemr->rclBounds.bottom = y;
+
+    pemr->iGraphicsMode = GetGraphicsMode(physDev->hdc);
+    pemr->exScale = pemr->eyScale = 1.0; /* FIXME */
+
+    pemr->emrtext.ptlReference.x = x;
+    pemr->emrtext.ptlReference.y = y;
+    pemr->emrtext.nChars = count;
+    pemr->emrtext.offString = sizeof(*pemr);
+    memcpy((char*)pemr + pemr->emrtext.offString, str, count * sizeof(WCHAR));
+    pemr->emrtext.fOptions = flags;
+    if(!lprect) {
+        pemr->emrtext.rcl.left = pemr->emrtext.rcl.top = 0;
+        pemr->emrtext.rcl.right = pemr->emrtext.rcl.bottom = -1;
+    } else {
+        pemr->emrtext.rcl.left = lprect->left;
+        pemr->emrtext.rcl.top = lprect->top;
+        pemr->emrtext.rcl.right = lprect->right;
+        pemr->emrtext.rcl.bottom = lprect->bottom;
+    }
+
+    if(lpDx) {
+        pemr->emrtext.offDx = sizeof(*pemr) + (count+1)/2 * 2 * sizeof(WCHAR);
+	memcpy((char*)pemr + pemr->emrtext.offDx, lpDx, count * sizeof(INT));
+    } else
+        pemr->emrtext.offDx = 0; /* FIXME: actually Windows fills out the array
+				     using GetCharWidth in this case */
+
+
+    ret = EMFDRV_WriteRecord( dev, &pemr->emr );
+    if(ret)
+        EMFDRV_UpdateBBox( dev, &pemr->rclBounds );
+    HeapFree( GetProcessHeap(), 0, pemr );
+    return ret;
+}

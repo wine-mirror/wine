@@ -66,7 +66,7 @@ extern INT      EMFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT righ
 extern BOOL     EMFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType );
 extern INT      EMFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode );
 extern BOOL     EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y,
-                                   UINT flags, const RECT *lprect, LPCSTR str,
+                                   UINT flags, const RECT *lprect, LPCWSTR str,
                                    UINT count, const INT *lpDx );
 extern BOOL     EMFDRV_FillPath( PHYSDEV dev );
 extern BOOL     EMFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush );

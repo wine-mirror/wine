@@ -57,7 +57,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     NULL,                            /* pExtEscape */
     EMFDRV_ExtFloodFill,             /* pExtFloodFill */
     EMFDRV_ExtSelectClipRgn,         /* pExtSelectClipRgn */
-    NULL,                            /* pExtTextOut */
+    EMFDRV_ExtTextOut,               /* pExtTextOut */
     EMFDRV_FillPath,                 /* pFillPath */
     EMFDRV_FillRgn,                  /* pFillRgn */
     EMFDRV_FlattenPath,              /* pFlattenPath */
