@@ -32,10 +32,7 @@ extern void dump_ObjectAttributes (const OBJECT_ATTRIBUTES *ObjectAttributes);
 extern void NTDLL_get_server_timeout( abs_time_t *when, const LARGE_INTEGER *timeout );
 
 /* module handling */
-extern FARPROC MODULE_GetProcAddress( HMODULE hModule, LPCSTR function, int hint, BOOL snoop );
 extern WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename );
-extern NTSTATUS MODULE_LoadLibraryExA( LPCSTR libname, DWORD flags, WINE_MODREF** );
-extern FARPROC PE_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName, int hint, BOOL snoop );
 
 static inline HANDLE ntdll_get_process_heap(void)
 {

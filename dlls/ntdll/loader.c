@@ -1,7 +1,7 @@
 /*
  * Loader functions
  *
- * Copyright 1995 Alexandre Julliard
+ * Copyright 1995, 2003 Alexandre Julliard
  * Copyright 2002 Dmitry Timoshkov for Codeweavers
  *
  * This library is free software; you can redistribute it and/or
@@ -29,12 +29,14 @@
 #include "file.h"
 #include "wine/exception.h"
 #include "excpt.h"
+#include "snoop.h"
 #include "wine/debug.h"
 #include "wine/server.h"
 #include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
+WINE_DECLARE_DEBUG_CHANNEL(snoop);
 WINE_DECLARE_DEBUG_CHANNEL(loaddll);
 
 typedef DWORD (CALLBACK *DLLENTRYPROC)(HMODULE,DWORD,LPVOID);
@@ -54,34 +56,291 @@ static WINE_EXCEPTION_FILTER(page_fault)
 }
 
 static CRITICAL_SECTION loader_section = CRITICAL_SECTION_INIT( "loader_section" );
+static WINE_MODREF *cached_modref;
+
+static NTSTATUS load_dll( LPCSTR libname, DWORD flags, WINE_MODREF** pwm );
+static FARPROC find_named_export( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
+                                  DWORD exp_size, const char *name, int hint );
+
+/* convert PE image VirtualAddress to Real Address */
+inline static void *get_rva( HMODULE module, DWORD va )
+{
+    return (void *)((char *)module + va);
+}
 
 /*************************************************************************
- *		MODULE32_LookupHMODULE
- * looks for the referenced HMODULE in the current process
- * NOTE: Assumes that the process critical section is held!
+ *		get_modref
+ *
+ * Looks for the referenced HMODULE in the current process
+ * The loader_section must be locked while calling this function.
  */
-static WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hmod )
+static WINE_MODREF *get_modref( HMODULE hmod )
 {
-    WINE_MODREF	*wm;
+    WINE_MODREF *wm;
 
-    if (!hmod)
-    	return exe_modref;
+    if (cached_modref && cached_modref->ldr.BaseAddress == hmod) return cached_modref;
 
-    if (!HIWORD(hmod)) {
-    	ERR("tried to lookup %p in win32 module handler!\n",hmod);
-	return NULL;
-    }
     for ( wm = MODULE_modref_list; wm; wm=wm->next )
-	if (wm->ldr.BaseAddress == hmod)
-	    return wm;
-    return NULL;
+    {
+        if (wm->ldr.BaseAddress == hmod)
+        {
+            cached_modref = wm;
+            break;
+        }
+    }
+    return wm;
 }
+
+
+/*************************************************************************
+ *		find_forwarded_export
+ *
+ * Find the final function pointer for a forwarded function.
+ * The loader_section must be locked while calling this function.
+ */
+static FARPROC find_forwarded_export( HMODULE module, const char *forward )
+{
+    IMAGE_EXPORT_DIRECTORY *exports;
+    DWORD exp_size;
+    WINE_MODREF *wm;
+    char mod_name[256];
+    char *end = strchr(forward, '.');
+    FARPROC proc = NULL;
+
+    if (!end) return NULL;
+    if (end - forward >= sizeof(mod_name)) return NULL;
+    memcpy( mod_name, forward, end - forward );
+    mod_name[end-forward] = 0;
+
+    if (!(wm = MODULE_FindModule( mod_name )))
+    {
+        WINE_MODREF *user = get_modref( module );
+        ERR("module not found for forward '%s' used by '%s'\n", forward, user->filename );
+        return NULL;
+    }
+    if ((exports = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE,
+                                                 IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
+        proc = find_named_export( wm->ldr.BaseAddress, exports, exp_size, end + 1, -1 );
+
+    if (!proc)
+    {
+        WINE_MODREF *user = get_modref( module );
+        ERR("function not found for forward '%s' used by '%s'."
+            " If you are using builtin '%s', try using the native one instead.\n",
+            forward, user->filename, user->modname );
+    }
+    return proc;
+}
+
+
+/*************************************************************************
+ *		find_ordinal_export
+ *
+ * Find an exported function by ordinal.
+ * The exports base must have been subtracted from the ordinal already.
+ * The loader_section must be locked while calling this function.
+ */
+static FARPROC find_ordinal_export( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
+                                    DWORD exp_size, int ordinal )
+{
+    FARPROC proc;
+    WORD *ordinals = get_rva( module, exports->AddressOfNameOrdinals );
+    DWORD *functions = get_rva( module, exports->AddressOfFunctions );
+
+    if (ordinal >= exports->NumberOfFunctions)
+    {
+        TRACE("	ordinal %ld out of range!\n", ordinal + exports->Base );
+        return NULL;
+    }
+    if (!functions[ordinal]) return NULL;
+
+    proc = get_rva( module, functions[ordinal] );
+
+    /* if the address falls into the export dir, it's a forward */
+    if (((char *)proc >= (char *)exports) && ((char *)proc < (char *)exports + exp_size))
+        return find_forwarded_export( module, (char *)proc );
+
+    if (TRACE_ON(snoop))
+    {
+        /* try to find a name for it */
+        int i;
+        char *ename = "@";
+        DWORD *name = get_rva( module, exports->AddressOfNames );
+        if (name) for (i = 0; i < exports->NumberOfNames; i++)
+        {
+            if (ordinals[i] == ordinal)
+            {
+                ename = get_rva( module, name[i] );
+                break;
+            }
+        }
+        proc = SNOOP_GetProcAddress( module, ename, ordinal, proc );
+    }
+    return proc;
+}
+
+
+/*************************************************************************
+ *		find_named_export
+ *
+ * Find an exported function by name.
+ * The loader_section must be locked while calling this function.
+ */
+static FARPROC find_named_export( HMODULE module, IMAGE_EXPORT_DIRECTORY *exports,
+                                  DWORD exp_size, const char *name, int hint )
+{
+    WORD *ordinals = get_rva( module, exports->AddressOfNameOrdinals );
+    DWORD *names = get_rva( module, exports->AddressOfNames );
+    int min = 0, max = exports->NumberOfNames - 1;
+
+    /* first check the hint */
+    if (hint >= 0 && hint <= max)
+    {
+        char *ename = get_rva( module, names[hint] );
+        if (!strcmp( ename, name ))
+            return find_ordinal_export( module, exports, exp_size, ordinals[hint] );
+    }
+
+    /* then do a binary search */
+    while (min <= max)
+    {
+        int res, pos = (min + max) / 2;
+        char *ename = get_rva( module, names[pos] );
+        if (!(res = strcmp( ename, name )))
+            return find_ordinal_export( module, exports, exp_size, ordinals[pos] );
+        if (res > 0) max = pos - 1;
+        else min = pos + 1;
+    }
+    return NULL;
+
+}
+
+
+/*************************************************************************
+ *		import_dll
+ *
+ * Import the dll specified by the given import descriptor.
+ * The loader_section must be locked while calling this function.
+ */
+static WINE_MODREF *import_dll( HMODULE module, IMAGE_IMPORT_DESCRIPTOR *descr )
+{
+    NTSTATUS status;
+    WINE_MODREF *wmImp;
+    HMODULE imp_mod;
+    IMAGE_EXPORT_DIRECTORY *exports;
+    DWORD exp_size;
+    IMAGE_THUNK_DATA *import_list, *thunk_list;
+    char *name = get_rva( module, descr->Name );
+
+    status = load_dll( name, 0, &wmImp );
+    if (status)
+    {
+        WINE_MODREF *user = get_modref( module );
+        if (status == STATUS_NO_SUCH_FILE)
+            ERR("Module (file) %s (which is needed by %s) not found\n", name, user->filename);
+        else
+            ERR("Loading module (file) %s (which is needed by %s) failed (error %ld).\n",
+                name, user->filename, status);
+        return NULL;
+    }
+
+    imp_mod = wmImp->ldr.BaseAddress;
+    if (!(exports = RtlImageDirectoryEntryToData( imp_mod, TRUE,
+                                                  IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
+        return NULL;
+
+    thunk_list = get_rva( module, (DWORD)descr->FirstThunk );
+    if (descr->u.OriginalFirstThunk)
+        import_list = get_rva( module, (DWORD)descr->u.OriginalFirstThunk );
+    else
+        import_list = thunk_list;
+
+    while (import_list->u1.Ordinal)
+    {
+        if (IMAGE_SNAP_BY_ORDINAL(import_list->u1.Ordinal))
+        {
+            int ordinal = IMAGE_ORDINAL(import_list->u1.Ordinal);
+
+            TRACE("--- Ordinal %s,%d\n", name, ordinal);
+            thunk_list->u1.Function = (PDWORD)find_ordinal_export( imp_mod, exports, exp_size,
+                                                                   ordinal - exports->Base );
+            if (!thunk_list->u1.Function)
+            {
+                WINE_MODREF *user = get_modref( module );
+                ERR("No implementation for %s.%d imported from %s, setting to 0xdeadbeef\n",
+                    name, ordinal, user->filename );
+                thunk_list->u1.Function = (PDWORD)0xdeadbeef;
+            }
+        }
+        else  /* import by name */
+        {
+            IMAGE_IMPORT_BY_NAME *pe_name;
+            pe_name = get_rva( module, (DWORD)import_list->u1.AddressOfData );
+            TRACE("--- %s %s.%d\n", pe_name->Name, name, pe_name->Hint);
+            thunk_list->u1.Function = (PDWORD)find_named_export( imp_mod, exports, exp_size,
+                                                                 pe_name->Name, pe_name->Hint );
+            if (!thunk_list->u1.Function)
+            {
+                WINE_MODREF *user = get_modref( module );
+                ERR("No implementation for %s.%s imported from %s, setting to 0xdeadbeef\n",
+                    name, pe_name->Name, user->filename );
+                thunk_list->u1.Function = (PDWORD)0xdeadbeef;
+            }
+        }
+        import_list++;
+        thunk_list++;
+    }
+    return wmImp;
+}
+
+
+/****************************************************************
+ * 	PE_fixup_imports
+ *
+ * Fixup all imports of a given module.
+ * The loader_section must be locked while calling this function.
+ */
+DWORD PE_fixup_imports( WINE_MODREF *wm )
+{
+    int i, nb_imports;
+    IMAGE_IMPORT_DESCRIPTOR *imports;
+    DWORD size;
+
+    if (!(imports = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE,
+                                                  IMAGE_DIRECTORY_ENTRY_IMPORT, &size )))
+        return 0;
+
+    nb_imports = size / sizeof(*imports);
+    for (i = 0; i < nb_imports; i++)
+    {
+        if (!imports[i].Name)
+        {
+            nb_imports = i;
+            break;
+        }
+    }
+    if (!nb_imports) return 0;  /* no imports */
+
+    /* Allocate module dependency list */
+    wm->nDeps = nb_imports;
+    wm->deps  = RtlAllocateHeap( ntdll_get_process_heap(), 0, nb_imports*sizeof(WINE_MODREF *) );
+
+    /* load the imported modules. They are automatically
+     * added to the modref list of the process.
+     */
+    for (i = 0; i < nb_imports; i++)
+    {
+        if (!(wm->deps[i] = import_dll( wm->ldr.BaseAddress, &imports[i] ))) return 1;
+    }
+    return 0;
+}
+
 
 /*************************************************************************
  *		MODULE_AllocModRef
  *
  * Allocate a WINE_MODREF structure and add it to the process list
- * NOTE: Assumes that the process critical section is held!
+ * The loader_section must be locked while calling this function.
  */
 WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename )
 {
@@ -345,7 +604,7 @@ NTSTATUS WINAPI LdrDisableThreadCalloutsForDll(HMODULE hModule)
 
     RtlEnterCriticalSection( &loader_section );
 
-    wm = MODULE32_LookupHMODULE( hModule );
+    wm = get_modref( hModule );
     if ( !wm )
         ret = STATUS_DLL_NOT_FOUND;
     else
@@ -398,18 +657,22 @@ WINE_MODREF *MODULE_FindModule(LPCSTR path)
     if (!(p = strrchr( dllname, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
             strcat( dllname, ".DLL" );
 
-    for ( wm = MODULE_modref_list; wm; wm = wm->next )
+    if ((wm = cached_modref) != NULL)
     {
-        if ( !FILE_strcasecmp( dllname, wm->modname ) )
-            break;
-        if ( !FILE_strcasecmp( dllname, wm->filename ) )
-            break;
-        if ( !FILE_strcasecmp( dllname, wm->short_modname ) )
-            break;
-        if ( !FILE_strcasecmp( dllname, wm->short_filename ) )
-            break;
+        if ( !FILE_strcasecmp( dllname, wm->modname ) ) return wm;
+        if ( !FILE_strcasecmp( dllname, wm->filename ) ) return wm;
+        if ( !FILE_strcasecmp( dllname, wm->short_modname ) ) return wm;
+        if ( !FILE_strcasecmp( dllname, wm->short_filename ) ) return wm;
     }
 
+    for ( wm = MODULE_modref_list; wm; wm = wm->next )
+    {
+        if ( !FILE_strcasecmp( dllname, wm->modname ) ) break;
+        if ( !FILE_strcasecmp( dllname, wm->filename ) ) break;
+        if ( !FILE_strcasecmp( dllname, wm->short_modname ) ) break;
+        if ( !FILE_strcasecmp( dllname, wm->short_filename ) ) break;
+    }
+    cached_modref = wm;
     return wm;
 }
 
@@ -455,22 +718,15 @@ NTSTATUS WINAPI LdrUnlockLoaderLock( ULONG flags, ULONG magic )
 NTSTATUS WINAPI LdrGetDllHandle(ULONG x, ULONG y, PUNICODE_STRING name, HMODULE *base)
 {
     WINE_MODREF *wm;
+    STRING str;
 
     if (x != 0 || y != 0)
         FIXME("Unknown behavior, please report\n");
 
     /* FIXME: we should store module name information as unicode */
-    if (name)
-    {
-        STRING str;
-
-        RtlUnicodeStringToAnsiString( &str, name, TRUE );
-
-        wm = MODULE_FindModule( str.Buffer );
-        RtlFreeAnsiString( &str );
-    }
-    else
-        wm = exe_modref;
+    RtlUnicodeStringToAnsiString( &str, name, TRUE );
+    wm = MODULE_FindModule( str.Buffer );
+    RtlFreeAnsiString( &str );
 
     if (!wm)
     {
@@ -480,41 +736,42 @@ NTSTATUS WINAPI LdrGetDllHandle(ULONG x, ULONG y, PUNICODE_STRING name, HMODULE 
 
     *base = wm->ldr.BaseAddress;
 
-    TRACE("%lx %lx %s -> %p\n",
-          x, y, name ? debugstr_wn(name->Buffer, name->Length/sizeof(WCHAR)) : "(null)", *base);
+    TRACE("%lx %lx %s -> %p\n", x, y, debugstr_us(name), *base);
 
     return STATUS_SUCCESS;
 }
 
-/***********************************************************************
- *           MODULE_GetProcAddress   		(internal)
- */
-FARPROC MODULE_GetProcAddress(
-	HMODULE hModule, 	/* [in] current module handle */
-	LPCSTR function,	/* [in] function to be looked up */
-	int hint,
-	BOOL snoop )
-{
-    WINE_MODREF	*wm;
-    FARPROC	retproc = 0;
-
-    RtlEnterCriticalSection( &loader_section );
-    if ((wm = MODULE32_LookupHMODULE( hModule )))
-    {
-        retproc = PE_FindExportedFunction( wm, function, hint, snoop );
-    }
-    RtlLeaveCriticalSection( &loader_section );
-    return retproc;
-}
-
 
 /******************************************************************
- *		LdrGetProcedureAddress (NTDLL.@)
+ *		LdrGetProcedureAddress  (NTDLL.@)
  */
-NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE base, PANSI_STRING name, ULONG ord, PVOID *address)
+NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE module, PANSI_STRING name, ULONG ord, PVOID *address)
 {
-    *address = MODULE_GetProcAddress( base, name ? name->Buffer : (LPSTR)ord, -1, TRUE );
-    return (*address) ? STATUS_SUCCESS : STATUS_PROCEDURE_NOT_FOUND;
+    IMAGE_EXPORT_DIRECTORY *exports;
+    DWORD exp_size;
+    NTSTATUS ret = STATUS_PROCEDURE_NOT_FOUND;
+
+    RtlEnterCriticalSection( &loader_section );
+
+    if ((exports = RtlImageDirectoryEntryToData( module, TRUE,
+                                                 IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
+    {
+        void *proc = name ? find_named_export( module, exports, exp_size, name->Buffer, -1 )
+                          : find_ordinal_export( module, exports, exp_size, ord - exports->Base );
+        if (proc)
+        {
+            *address = proc;
+            ret = STATUS_SUCCESS;
+        }
+    }
+    else
+    {
+        /* check if the module itself is invalid to return the proper error */
+        if (!get_modref( module )) ret = STATUS_DLL_NOT_FOUND;
+    }
+
+    RtlLeaveCriticalSection( &loader_section );
+    return ret;
 }
 
 
@@ -550,7 +807,7 @@ static LPCSTR allocate_lib_dir(LPCSTR libname)
 }
 
 /***********************************************************************
- *	MODULE_LoadLibraryExA	(internal)
+ *	load_dll  (internal)
  *
  * Load a PE style module according to the load order.
  *
@@ -565,7 +822,7 @@ static LPCSTR allocate_lib_dir(LPCSTR libname)
  *        init function into load_library).
  * allocated_libdir is TRUE in the stack frame that allocated libdir
  */
-NTSTATUS MODULE_LoadLibraryExA( LPCSTR libname, DWORD flags, WINE_MODREF** pwm)
+static NTSTATUS load_dll( LPCSTR libname, DWORD flags, WINE_MODREF** pwm )
 {
     int i;
     enum loadorder_type loadorder[LOADORDER_NTYPES];
@@ -730,7 +987,7 @@ NTSTATUS WINAPI LdrLoadDll(LPCWSTR path_name, DWORD flags, PUNICODE_STRING libna
 
     RtlEnterCriticalSection( &loader_section );
 
-    switch (nts = MODULE_LoadLibraryExA( str.Buffer, flags, &wm ))
+    switch (nts = load_dll( str.Buffer, flags, &wm ))
     {
     case STATUS_SUCCESS:
         if ( !MODULE_DllProcessAttach( wm, NULL ) )
@@ -849,10 +1106,10 @@ NTSTATUS WINAPI LdrShutdownThread(void)
 /***********************************************************************
  *           MODULE_FlushModrefs
  *
- * NOTE: Assumes that the process critical section is held!
- *
  * Remove all unused modrefs and call the internal unloading routines
  * for the library type.
+ *
+ * The loader_section must be locked while calling this function.
  */
 static void MODULE_FlushModrefs(void)
 {
@@ -888,6 +1145,7 @@ static void MODULE_FlushModrefs(void)
         if (wm->dlhandle) wine_dll_unload( wm->dlhandle );
         else NtUnmapViewOfSection( GetCurrentProcess(), wm->ldr.BaseAddress );
         FreeLibrary16( wm->hDummyMod );
+        if (cached_modref == wm) cached_modref = NULL;
         RtlFreeHeap( ntdll_get_process_heap(), 0, wm->deps );
         RtlFreeHeap( ntdll_get_process_heap(), 0, wm );
     }
@@ -896,7 +1154,7 @@ static void MODULE_FlushModrefs(void)
 /***********************************************************************
  *           MODULE_DecRefCount
  *
- * NOTE: Assumes that the process critical section is held!
+ * The loader_section must be locked while calling this function.
  */
 static void MODULE_DecRefCount( WINE_MODREF *wm )
 {
@@ -944,7 +1202,7 @@ NTSTATUS WINAPI LdrUnloadDll( HMODULE hModule )
         WINE_MODREF *wm;
 
         free_lib_count++;
-        if ((wm = MODULE32_LookupHMODULE( hModule )) != NULL)
+        if ((wm = get_modref( hModule )) != NULL)
         {
             TRACE("(%s) - START\n", wm->modname);
 
