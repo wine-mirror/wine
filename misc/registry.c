@@ -2016,5 +2016,6 @@ DWORD WINAPI RegSetValueEx16( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type
                               CONST BYTE *data, DWORD count )
 {
     fix_win16_hkey( &hkey );
+    if (!count && (type==REG_SZ)) count = strlen(data);
     return RegSetValueExA( hkey, name, reserved, type, data, count );
 }
