@@ -413,10 +413,8 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 	}
 	pProv = CRYPT_LoadProvider(imagepath);
 	CRYPT_Free(temp);
-	CRYPT_Free(imagepath);
 	CRYPT_Free(signature);
 	if (!pProv) {
-		FIXME("Could not load crypto provider from DLL %s\n", debugstr_a(imagepath));
 		/* CRYPT_LoadProvider calls SetLastError */
 		goto error;
 	}
