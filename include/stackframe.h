@@ -74,7 +74,7 @@ typedef struct _STACK16FRAME
 /* Push bytes on the 16-bit stack of a thread;
  * return a segptr to the first pushed byte
  */
-static inline SEGPTR WINE_UNUSED stack16_push( int size )
+static inline SEGPTR stack16_push( int size )
 {
     STACK16FRAME *frame = CURRENT_STACK16;
     memmove( (char*)frame - size, frame, sizeof(*frame) );
@@ -83,7 +83,7 @@ static inline SEGPTR WINE_UNUSED stack16_push( int size )
 }
 
 /* Pop bytes from the 16-bit stack of a thread */
-static inline void WINE_UNUSED stack16_pop( int size )
+static inline void stack16_pop( int size )
 {
     STACK16FRAME *frame = CURRENT_STACK16;
     memmove( (char*)frame + size, frame, sizeof(*frame) );

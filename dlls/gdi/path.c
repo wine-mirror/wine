@@ -106,7 +106,7 @@ static BOOL PATH_CheckCorners(DC *dc, POINT corners[], INT x1, INT y1, INT x2, I
 /* Performs a world-to-viewport transformation on the specified point (which
  * is in floating point format).
  */
-static inline void WINE_UNUSED INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *point)
+static inline void INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *point)
 {
     FLOAT x, y;
 

@@ -28,7 +28,7 @@ DWORD msvcrt_tls_index;
 
 static inline BOOL msvcrt_init_tls(void);
 static inline BOOL msvcrt_free_tls(void);
-const char* msvcrt_get_reason(DWORD reason) WINE_UNUSED;
+const char* msvcrt_get_reason(DWORD reason);
 
 /*********************************************************************
  *                  Init
