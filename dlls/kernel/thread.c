@@ -164,7 +164,7 @@ HANDLE WINAPI CreateRemoteThread( HANDLE hProcess, SECURITY_ATTRIBUTES *sa, SIZE
     if (flags & STACK_SIZE_PARAM_IS_A_RESERVATION) stack_reserve = stack;
     else stack_commit = stack;
 
-    status = RtlCreateUserThread( hProcess, NULL, (flags & CREATE_SUSPENDED) != 0,
+    status = RtlCreateUserThread( hProcess, NULL, TRUE,
                                   NULL, stack_reserve, stack_commit,
                                   THREAD_Start, info, &handle, &client_id );
     if (status == STATUS_SUCCESS)
@@ -172,6 +172,17 @@ HANDLE WINAPI CreateRemoteThread( HANDLE hProcess, SECURITY_ATTRIBUTES *sa, SIZE
         if (id) *id = (DWORD)client_id.UniqueThread;
         if (sa && (sa->nLength >= sizeof(*sa)) && sa->bInheritHandle)
             SetHandleInformation( handle, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT );
+        if (!(flags & CREATE_SUSPENDED))
+        {
+            ULONG ret;
+            if (NtResumeThread( handle, &ret ))
+            {
+                NtClose( handle );
+                RtlFreeHeap( GetProcessHeap(), 0, info );
+                SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+                handle = 0;
+            }
+        }
     }
     else
     {
