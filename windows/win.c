@@ -662,6 +662,7 @@ BOOL WIN_CreateDesktopWindow(void)
 static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
                                   BOOL win32, BOOL unicode )
 {
+    INT sw = SW_SHOW; 
     CLASS *classPtr;
     WND *wndPtr;
     HWND retvalue;
@@ -714,9 +715,29 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     /* Fix the coordinates */
 
-    if (cs->x == CW_USEDEFAULT) 
+    if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16)
     {
         PDB *pdb = PROCESS_Current();
+
+       /* Never believe Microsoft's documentation... CreateWindowEx doc says 
+        * that if an overlapped window is created with WS_VISIBLE style bit 
+        * set and the x parameter is set to CW_USEDEFAULT, the system ignores
+        * the y parameter. However, disassembling NT implementation (WIN32K.SYS)
+        * reveals that
+        *
+        * 1) not only if checks for CW_USEDEFAULT but also for CW_USEDEFAULT16 
+        * 2) it does not ignore the y parameter as the docs claim; instead, it 
+        *    uses it as second parameter to ShowWindow() unless y is either
+        *    CW_USEDEFAULT or CW_USEDEFAULT16.
+        * 
+        * The fact that we didn't do 2) caused bogus windows pop up when wine
+        * was running apps that were using this obscure feature. Example - 
+        * calc.exe that comes with Win98 (only Win98, it's different from 
+        * the one that comes with Win95 and NT)
+        */
+        if (cs->y != CW_USEDEFAULT && cs->y != CW_USEDEFAULT16) sw = cs->y;
+
+        /* We have saved cs->y, now we can trash it */
         if (   !(cs->style & (WS_CHILD | WS_POPUP))
             &&  (pdb->env_db->startup_info->dwFlags & STARTF_USEPOSITION) )
         {
@@ -729,7 +750,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
             cs->y = 0;
         }
     }
-    if (cs->cx == CW_USEDEFAULT)
+    if (cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16)
     {
         PDB *pdb = PROCESS_Current();
         if (   !(cs->style & (WS_CHILD | WS_POPUP))
@@ -777,8 +798,9 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
             wndPtr->owner = WIN_GetTopParentPtr(tmpWnd);
             WIN_ReleaseWndPtr(wndPtr->owner);
             WIN_ReleaseWndPtr(tmpWnd);
+	}
     }
-    }
+    
 
     wndPtr->pDriver = wndPtr->parent->pDriver;
     wndPtr->pDriver->pInitialize(wndPtr);
@@ -982,7 +1004,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 	    }
 	    }
 
-            if (cs->style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
+            if (cs->style & WS_VISIBLE) ShowWindow( hwnd, sw );
 
             /* Call WH_SHELL hook */
 
