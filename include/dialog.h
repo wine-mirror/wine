@@ -9,6 +9,11 @@
 
 #include "windows.h"
 
+extern BOOL DIALOG_Init(void);
+extern HWND DIALOG_GetFirstTabItem( HWND hwndDlg );
+extern int DialogBoxIndirectPtr( HINSTANCE hInst, LPCSTR dlgTemplate,
+                          HWND owner, WNDPROC dlgProc);
+
 #pragma pack(1)
 
   /* Dialog info structure.

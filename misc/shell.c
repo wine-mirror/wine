@@ -7,18 +7,14 @@
 #include <unistd.h>
 #include "prototypes.h"
 #include "windows.h"
+#include "library.h"
 #include "shell.h"
+#include "../rc/sysres.h"
 #include "stddebug.h"
 /* #define DEBUG_REG */
-/* #undef  DEBUG_REG */
 #include "debug.h"
 
-
 LPKEYSTRUCT	lphRootKey = NULL;
-
-DECLARE_HANDLE(HDROP);
-
-extern HINSTANCE hSysRes;
 
 /*************************************************************************
  *				RegOpenKey		[SHELL.1]
@@ -344,7 +340,7 @@ INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon)
 	else
 		*AppMisc = 0;
 
-	return DialogBox(hSysRes, "SHELL_ABOUT_MSGBOX", hWnd, (WNDPROC)AboutDlgProc);
+	return DialogBoxIndirectPtr(hSysRes, sysres_DIALOG_SHELL_ABOUT_MSGBOX, hWnd, (WNDPROC)AboutDlgProc);
 }
 
 

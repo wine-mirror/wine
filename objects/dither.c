@@ -2,14 +2,14 @@
  * Dithering functions
  *
  * Copyright 1994 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
+*/
 
 #include <stdlib.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-
+#include "color.h"
 #include "gdi.h"
 #include "bitmap.h"
 
@@ -70,9 +70,6 @@ static const int EGAmapping[TOTAL_LEVELS] =
     15  /* ffffff -> ffffff */
 };
 
-   /* Map an EGA index (0..15) to a pixel value */
-extern int COLOR_mapEGAPixel[16];  /* in color.c */
-
 #define PIXEL_VALUE(r,g,b) \
     COLOR_mapEGAPixel[EGAmapping[((r)*PRIMARY_LEVELS+(g))*PRIMARY_LEVELS+(b)]]
 
@@ -86,7 +83,7 @@ static char *imageData = NULL;
  *
  * Create the X image used for dithering.
  */
-BOOL DITHER_Init()
+BOOL DITHER_Init(void)
 {
     int bytes_per_line = (screenDepth * MATRIX_SIZE + 7) / 8;
     if (!(imageData = (char *) malloc( bytes_per_line * MATRIX_SIZE )))
@@ -116,7 +113,7 @@ Pixmap DITHER_DitherColor( DC *dc, COLORREF color )
 	int b = GetBValue( color ) * DITHER_LEVELS;
 	const int *pmatrix = dither_matrix;
 
-	WORD *mapping = (WORD *) GDI_HEAP_ADDR( dc->u.x.pal.hMapping );
+/*	WORD *mapping = (WORD *) GDI_HEAP_ADDR( dc->u.x.pal.hMapping );*/
 
 	for (y = 0; y < MATRIX_SIZE; y++)
 	{

@@ -1,6 +1,8 @@
 #ifndef WINELIB
+/*
 static char RCSId[] = "$Id: wine.c,v 1.2 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,10 +13,8 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <setjmp.h>
 #include "dlls.h"
 #include "stddebug.h"
-/* #define DEBUG_CALLBACK */
-/* #undef  DEBUG_CALLBACK */
 #include "debug.h"
-
+#include "if1632.h"
 
 extern SEGDESC Segments[];
 extern unsigned short IF1632_Saved16_ss;
@@ -188,13 +188,15 @@ LONG CallWindowProc( WNDPROC func, HWND hwnd, WORD message,
 	/* default */
 	else
 	{
-	    fprintf(stderr, "wine: Unknown wine callback %08x\n", func);
+	    fprintf(stderr, "wine: Unknown wine callback %08x\n", 
+	    	(unsigned int) func);
 	    exit(1);
 	}
     }
     else if (IS_16_BIT_ADDRESS(func))
     {	
-	dprintf_callback(stddeb, "CallWindowProc // 16bit func=%p !\n", func);
+	dprintf_callback(stddeb, "CallWindowProc // 16bit func=%p !\n", 
+		(unsigned int) func);
 	PushOn16( CALLBACK_SIZE_WORD, hwnd );
 	PushOn16( CALLBACK_SIZE_WORD, message );
 	PushOn16( CALLBACK_SIZE_WORD, wParam );
@@ -204,7 +206,8 @@ LONG CallWindowProc( WNDPROC func, HWND hwnd, WORD message,
     }
     else
     {
-	dprintf_callback(stddeb, "CallWindowProc // 32bit func=%08X !\n", func);
+	dprintf_callback(stddeb, "CallWindowProc // 32bit func=%08X !\n",
+		(unsigned int) func);
 	return (*func)(hwnd, message, wParam, lParam);
     }
 }
@@ -319,11 +322,12 @@ int Catch (LPCATCHBUF cbuf)
 
 		memcpy (stack16, sb -> stack_part, STACK_DEPTH_16);
 		dprintf_catch (stddeb, "Been thrown here: %d, retval = %d\n", 
-			sb, retval);
+			(int) sb, (int) retval);
 		free ((void *) sb);
 		return (retval);
 	} else {
-		dprintf_catch (stddeb, "Will somtime get thrown here: %d\n", sb);
+		dprintf_catch (stddeb, "Will somtime get thrown here: %d\n", 
+			(int) sb);
 		return (retval);
 	}
 }
@@ -331,7 +335,7 @@ int Catch (LPCATCHBUF cbuf)
 void Throw (LPCATCHBUF cbuf, int val)
 {
 	sb = *((struct special_buffer **)cbuf);
-	dprintf_catch (stddeb, "Throwing to: %d\n", sb);
+	dprintf_catch (stddeb, "Throwing to: %d\n", (int) sb);
 	longjmp (sb -> buffer, val);
 }
 #endif /* !WINELIB */

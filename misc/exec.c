@@ -11,11 +11,12 @@
 #include "segmem.h"
 #include "prototypes.h"
 #include "dlls.h"
-#include "wine.h"
 #include "windows.h"
+#include "if1632.h"
+#include "callback.h"
+#include "library.h"
+#include "ne_image.h"
 #include "stddebug.h"
-/* #define DEBUG_EXEC /* */
-/* #undef  DEBUG_EXEC /* */
 #include "debug.h"
 
 #define HELP_CONTEXT      0x0001
@@ -33,8 +34,6 @@
 #define HELP_MULTIKEY     0x0201
 #define HELP_SETWINPOS    0x0203
 
-extern struct  w_files * wine_files;
-
 typedef struct {
 	WORD	wEnvSeg;
 	LPSTR	lpCmdLine;
@@ -44,9 +43,6 @@ typedef struct {
 
 typedef BOOL (CALLBACK * LPFNWINMAIN)(HANDLE, HANDLE, LPSTR, int);
 
-
-extern int CallToInit16(unsigned long csip, unsigned long sssp, 
-			unsigned short ds);
 HANDLE CreateNewTask(HINSTANCE hInst);
 
 #ifndef WINELIB
@@ -113,7 +109,7 @@ void StartNewTask(HINSTANCE hInst)
     	dprintf_exec(stddeb,"StartNewTask() // before FixupSegment !\n");
 	for(w = wpnt; w; w = w->next)	{
 		for (segment = 0; segment < w->ne->ne_header->n_segment_tab; segment++) {
-			if (FixupSegment(w, segment) < 0) {
+			if (NE_FixupSegment(w, segment) < 0) {
 				myerror("fixup failed.");
 				}
 			}
@@ -227,6 +223,8 @@ BOOL ExitWindows(DWORD dwReserved, WORD wRetCode)
 {
     dprintf_exec(stdnimp,"EMPTY STUB !!! ExitWindows(%08lX, %04X) !\n", 
 		dwReserved, wRetCode);
+
+   exit(wRetCode);
 }
 
 

@@ -72,6 +72,7 @@ Window WIN_GetXWindow( HWND hwnd );
 BOOL WIN_UnlinkWindow( HWND hwnd );
 BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter );
 HWND WIN_FindWinToRepaint( HWND hwnd );
+BOOL WIN_CreateDesktopWindow(void);
 BOOL WINPOS_IsAnActiveWindow( HWND hwnd );
 void WINPOS_ActivateChild( HWND hwnd );
 

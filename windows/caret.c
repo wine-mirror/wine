@@ -2,14 +2,13 @@
  * Caret functions
  *
  * Copyright 1993 David Metcalfe
- */
-
+ *
 static char Copyright[] = "Copyright  David Metcalfe, 1993";
+*/
 
 #include "windows.h"
 #include "stddebug.h"
 /* #define DEBUG_CARET */
-/* #undef  DEBUG_CARET */
 #include "debug.h"
 
 

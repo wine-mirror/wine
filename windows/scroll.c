@@ -10,9 +10,9 @@ static char Copyright[] = "Copyright  David W. Metcalfe, 1993";
 #include <stdlib.h>
 #include "windows.h"
 #include "gdi.h"
+#include "scroll.h"
 #include "stddebug.h"
-/* #define DEBUG_SCROLL /* */
-/* #undef  DEBUG_SCROLL /* */
+/* #define DEBUG_SCROLL */
 #include "debug.h"
 
 

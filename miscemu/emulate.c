@@ -4,7 +4,6 @@
 #include "regfunc.h"
 #include "stddebug.h"
 /* #define DEBUG_INT */
-/* #undef  DEBUG_INT */
 #include "debug.h"
 
 struct Win87EmInfoStruct {
@@ -19,7 +18,7 @@ struct Win87EmInfoStruct {
 int
 WIN87_fpmath()
 {
-  dprintf_int(stddeb, "_fpmath: (%x:%x %x %x)\n",_CONTEXT->sc_cs, 
+  dprintf_int(stddeb, "_fpmath: (%x:%lx %lx %x)\n",_CONTEXT->sc_cs, 
 	 _CONTEXT->sc_eip, _CONTEXT->sc_es, _BX & 0xffff);
 
   switch(_BX & 0xffff)

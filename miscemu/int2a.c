@@ -2,12 +2,10 @@
 #include <stdlib.h>
 #include "msdos.h"
 #include "wine.h"
+#include "miscemu.h"
 #include "stddebug.h"
 /* #define DEBUG_INT */
-/* #undef  DEBUG_INT */
 #include "debug.h"
-
-void IntBarf(int i, struct sigcontext_struct *context);
 
 int do_int2a(struct sigcontext_struct *context)
 {

@@ -3,7 +3,6 @@
  * Copyright  Martin von Loewis, 1994
  *
  */
-
 static char Copyright[] = "Copyright Martin von Loewis, 1994";
 
 #include <stdio.h>
@@ -11,6 +10,8 @@ static char Copyright[] = "Copyright Martin von Loewis, 1994";
 #include <sys/stat.h>
 #include <sys/fcntl.h>
 #include <sys/types.h>
+#include <unistd.h>
+#include <string.h>
 #include <windows.h>
 #include <neexe.h>
 #include "rc.h"
@@ -25,7 +26,7 @@ gen_res* g_start;
 FILE *header,*code;
 char hname[256],sname[256];
 
-main(int argc,char *argv[])
+int main(int argc,char *argv[])
 {  
 	extern int yydebug;
 	extern char* optarg;

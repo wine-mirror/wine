@@ -2,7 +2,6 @@
 /*
  *
  * Copyright  Martin von Loewis, 1994
- *
  */
 
 static char Copyright[] = "Copyright Martin von Loewis, 1994";
@@ -204,7 +203,7 @@ style:		NUMBER {$$=new_style();$$->or=$1;}
 		| '(' style ')' {$$=$2;}
 		| style '|' style {$$=$1;$$->or|=$3->or;$$->and&=$3->and;}
 %%
-yyerror(char *s)
+int yyerror(char *s)
 {
 	puts(s);
 }

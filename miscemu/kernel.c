@@ -1,5 +1,7 @@
+/*
 static char RCSId[] = "$Id: kernel.c,v 1.2 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,7 +22,7 @@ KERNEL_LockSegment(int segment)
     if (segment == -1)
 	segment = *(Stack16Frame + 6);
 
-    if (Options.relay_debug)
+    if (debugging_relay)
 	fprintf(stddeb,"LockSegment: segment %x\n", segment);
 
     return segment;
@@ -35,7 +37,7 @@ KERNEL_UnlockSegment(int segment)
     if (segment == -1)
 	segment = *(Stack16Frame + 6);
 
-    if (Options.relay_debug)
+    if (debugging_relay)
     	fprintf(stddeb,"UnlockSegment: segment %x\n", segment);
 
     return segment;
@@ -44,7 +46,7 @@ KERNEL_UnlockSegment(int segment)
 /**********************************************************************
  *					KERNEL_InitTask
  */
-KERNEL_InitTask()
+void KERNEL_InitTask(void)
 {
     _BX = 0x81;
     _AX = 1;
@@ -66,7 +68,7 @@ KERNEL_InitTask()
 int
 KERNEL_WaitEvent(int task)
 {
-    if (Options.relay_debug)
+    if (debugging_relay)
     	fprintf(stddeb,"WaitEvent: task %d\n", task);
     return 0;
 }

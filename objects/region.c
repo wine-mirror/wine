@@ -2,17 +2,15 @@
  * GDI region objects
  *
  * Copyright 1993, 1994 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
-
+*/
 #include <stdlib.h>
 #include <stdio.h>
 
 #include "gdi.h"
 #include "stddebug.h"
-/* #define DEBUG_REGION /* */
-/* #undef  DEBUG_REGION /* */
+/* #define DEBUG_REGION */
 #include "debug.h"
 
   /* GC used for region operations */
@@ -21,7 +19,7 @@ static GC regionGC = 0;
 /***********************************************************************
  *           REGION_Init
  */
-BOOL REGION_Init()
+BOOL REGION_Init(void)
 {
     Pixmap tmpPixmap;
 

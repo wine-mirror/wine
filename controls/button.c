@@ -3,23 +3,17 @@
  * Copyright (C) 1993 Johannes Ruscheinski
  * Copyright (C) 1993 David Metcalfe
  * Copyright (C) 1994 Alexandre Julliard
- */
 
 static char Copyright1[] = "Copyright Johannes Ruscheinski, 1993";
 static char Copyright2[] = "Copyright David Metcalfe, 1993";
 static char Copyright3[] = "Copyright Alexandre Julliard, 1994";
+*/
 
-#include "button.h"
 #include "win.h"
 #include "user.h"
 #include "syscolor.h"
-
-
-  /* windows/graphics.c */
-extern void GRAPH_DrawReliefRect( HDC hdc, RECT *rect, int highlight_size,
-                                  int shadow_size, BOOL pressed );
-extern BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
-                          int xsrc, int ysrc, int width, int height, int rop );
+#include "graphics.h"
+#include "button.h"
 
 extern void DEFWND_SetText( HWND hwnd, LPSTR text );  /* windows/defwnd.c */
 

@@ -1,4 +1,101 @@
 ----------------------------------------------------------------------
+Wed Dec  7 14:52:25 1994  Alexandre Julliard  (julliard@lamisun.epfl.ch)
+
+	* [controls/listbox.c]
+	Fixed problems due to new scroll-bar code.
+
+	* [loader/signal.c] [miscemu/ioports.c]
+	Handle I/O opcodes that use an absolute address.
+
+	* [objects/text.c]
+	Implemented TabbedTextOut().
+
+Sat Dec  3 18:53:08 1994  Kenneth MacDonald  <K.MacDonald@ed.ac.uk>
+
+	* [objects/metafile.c]
+	Implemented GetMetafile().
+	Fixed bug in PlayMetaFile() when reading disc based metafile records.
+	Added META_POLYPOLYGON, META_DELETEOBJECT and META_EOF to 
+	PlayMetaFileRecord().
+	
+Wed Nov 30 06:32:25 1994  Martin von Loewis  (martin@cs.csufresno.edu)
+
+	* [Imakefile]
+	wine.sym: Remove gcc2_compiled and friends
+
+	* [controls/listbox.c][if1632/relay.c][if1632/relay.c]
+	  [loader/resource.c][memory/heap.c][objects/dib.c][windows/dialog.c]
+	Replace #ifdef DEBUG_XXX with if(debugging_xxx){
+
+	* [if1632/call.S]
+	CallToLibMain: New function
+
+	* [if1632/relay.c][include/options.h][misc/main.c]
+	  [miscemu/int1a.c][miscemu/int21.c][miscemu/kernel.c]
+	removed Options.relay_debug
+
+	* [include/heap.h]
+	HEAP_OWNER: Use ds instead of cs:ip
+
+	* [loader/ne_image.c]
+	LoadNEImage: Remember current exe, handle nodata dlls
+	InitNEDLL: handle nodata dlls, call CallToLibMain
+
+	* [loader/selector.c]
+	CreateSelectors: Initialize auto_data_sel with 0
+
+	* [memory/heap.c]
+	HEAP_CheckHeap: Check prev
+	HEAP_CheckLocalHeaps: new function
+
+	* [misc/profile]
+	Remember and dump only changed profiles
+
+	* [tools/makedebug]
+	Introduce debugging_xxx flags
+
+Sun Nov 27 23:13:22 MET 1994	<erik@xs4all.nl>
+
+	* [clipboard.h color.h dc.h dos_fs.h event.h font.h graphics.h
+	if1632.h kernel.h library.h miscemu.h ne_image.h nonclient.h 
+	pe_image.h selectors.h wintypes.h]
+	Added.
+
+	* [*/*]
+	- Commented all 'static char copyright statements', see misc/main.c
+	- moved prototypes to headers files, fixed wrong prototypes.
+	- *please* add a header file for each .c if you need to export
+	  things.
+
+	* [misc/main.c]
+	Added one static string which list the names of the contributors.
+
+Fri Nov 25 16:24:27 MET 1994		  Dag Asheim (dash@ifi.uio.no)
+
+	* [Configure]
+	Made the support for multiple languages more automatic.  Added
+	a [fonts] section to the wine.conf file.  Made the defaults
+	better.  Generally cleaned it up.
+
+	* [rc/sysres_No.rc] [rc/sysres_De.rc] [rc/sysres.c]
+	Norwegian resources and small fixes to the german resources.
+
+Wed Nov 23 20:28:59 1994  Martin von Loewis  (martin@cs.csufresno.edu)
+
+	* [debugger/break.c]
+	bark(), toggle_next(), should_continue(): New functions
+	insert_break(): Fixed, adds write access to page before writing
+	wine_bp.next_addr: new structure field
+
+	* [debugger/dbg.y]
+	Changed symbol's value to be it's value instead of the value
+	pointed to by the symbol.
+	Changed SIGTRAP handling to allow continuation after break point
+
+	* [misc/shell.c]
+	ShellAbout(): Load resource from memory
+
+----------------------------------------------------------------------
 Sun Nov 20 18:30:06 1994  Alexandre Julliard  (julliard@lamisun.epfl.ch)
 
 	* [controls/scroll.c] [include/scroll.h]

@@ -129,7 +129,7 @@ length	490
 #121 pascal Death
 #122 pascal ReSurRection
 123 pascal16 PlayMetaFile(word word) PlayMetaFile(1 2)
-#124 pascal GetMetaFile
+124 pascal16 GetMetaFile(ptr) GetMetaFile(1)
 125 pascal16 CreateMetaFile(ptr) CreateMetaFile(1)
 126 pascal16 CloseMetaFile(word) CloseMetaFile(1)
 127 pascal16 DeleteMetaFile(word) DeleteMetaFile(1)

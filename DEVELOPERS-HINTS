@@ -107,6 +107,19 @@ a specific type of message in just one c-source-file, put the corresponding
 #define DEBUG_XXXX or #undefine DEBUG_XXXX between #include<stddebug.h> and
 #include <debug.h> in that specific file. In addition you can change the 
 types of displayed messages by supplying the "-debugmsg" option to Wine. 
+If your debugging code is more complex than just printf, you can use the
+symbols debugging_XXX as well. These are true when XXX is enabled, either
+permanent or in the command line. So instead of writing
+
+#ifdef DEBUG_WIN
+	DumpSomeStructure(&str);
+#endif
+
+write
+	if(debugging_win)DumpSomeStructure(&str);
+Don't worry about the inefficiency of the test. If it is permanently 
+disabled (thus debugging_win is 0 at compile time), the compiler will 
+eliminate the dead code.
 
 The file handle "stddeb" is intended for displaying standard informational
 messages, whereas "stdnimp" is intended for displaying messages concerning

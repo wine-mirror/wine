@@ -1,30 +1,31 @@
+/*
 static char RCSId[] = "$Id: user.c,v 1.2 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
-
+*/
 #include <stdio.h>
 #include <stdlib.h>
-#include "prototypes.h"
+#include "atom.h"
+#include "gdi.h"
+#include "dlls.h"
+#include "selectors.h"
+#include "sysmetrics.h"
+#include "menu.h"
+#include "dialog.h"
+#include "syscolor.h"
+#include "win.h"
 #include "windows.h"
+#include "prototypes.h"
 #include "user.h"
 #include "message.h"
 
 #define USER_HEAP_SIZE          0x10000
-
-
 MDESC *USER_Heap = NULL;
-
-
-extern BOOL ATOM_Init();
-extern BOOL GDI_Init();
-extern void SYSMETRICS_Init();
-extern BOOL MENU_Init();
-extern BOOL WIN_CreateDesktopWindow();
 
 #ifndef WINELIB
 /***********************************************************************
  *           USER_HeapInit
  */
-static BOOL USER_HeapInit()
+static BOOL USER_HeapInit(void)
 {
     struct segment_descriptor_s * s;
     s = GetNextSegment( 0, 0x10000 );

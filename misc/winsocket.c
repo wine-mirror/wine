@@ -10,6 +10,8 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
+#include <sys/ioctl.h>
+#include <sys/msg.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -20,10 +22,7 @@
 #include "heap.h"
 #include "winsock.h"
 #include "stddebug.h"
-/* #define DEBUG_WINSOCK */
-/* #undef  DEBUG_WINSOCK */
 #include "debug.h"
-
 
 static WORD wsa_errno;
 static int wsa_initted;
@@ -39,25 +38,48 @@ struct ipc_packet {
 	LONG	lParam;
 };
 #define IPC_PACKET_SIZE (sizeof(struct ipc_packet) - sizeof(long))
-
 #define MTYPE 0xb0b0eb05
+#define WINE_PACKED __attribute__ ((packed))
+
+struct WIN_hostent  {
+	char	*h_name WINE_PACKED;		/* official name of host */
+	char	**h_aliases WINE_PACKED;	/* alias list */
+	int	h_addrtype WINE_PACKED;		/* host address type */
+	int	h_length WINE_PACKED;		/* length of address */
+	char	**h_addr_list WINE_PACKED;	/* list of addresses from name server */
+	char	*names[2];
+	char    hostname[200];
+};
+
+struct	WIN_protoent {
+	char	*p_name WINE_PACKED;		/* official protocol name */
+	char	**p_aliases WINE_PACKED;	/* alias list */
+	int	p_proto WINE_PACKED;		/* protocol # */
+};
+
+struct	WIN_servent {
+	char	*s_name WINE_PACKED;		/* official service name */
+	char	**s_aliases WINE_PACKED;	/* alias list */
+	int	s_port WINE_PACKED;		/* port # */
+	char	*s_proto WINE_PACKED;		/* protocol to use */
+};
 
 struct WinSockHeap {
 	char	ntoa_buffer[32];
 
-	struct	hostent hostent_addr;
-	struct	hostent hostent_name;
-	struct	protoent protoent_name;
-	struct	protoent protoent_number;
-	struct	servent servent_name;
-	struct	servent servent_port;
+	struct	WIN_hostent hostent_addr;
+	struct	WIN_hostent hostent_name;
+	struct	WIN_protoent protoent_name;
+	struct	WIN_protoent protoent_number;
+	struct	WIN_servent servent_name;
+	struct	WIN_servent servent_port;
 
-	struct	hostent WSAhostent_addr;
-	struct	hostent WSAhostent_name;
-	struct	protoent WSAprotoent_name;
-	struct	protoent WSAprotoent_number;	
-	struct	servent WSAservent_name;
-	struct	servent WSAservent_port;
+	struct	WIN_hostent WSAhostent_addr;
+	struct	WIN_hostent WSAhostent_name;
+	struct	WIN_protoent WSAprotoent_name;
+	struct	WIN_protoent WSAprotoent_number;	
+	struct	WIN_servent WSAservent_name;
+	struct	WIN_servent WSAservent_port;
 };
 static struct WinSockHeap *heap;
 
@@ -123,7 +145,9 @@ static WORD wsaerrno(void)
 	case EHOSTDOWN:		return WSAEHOSTDOWN;
 	case EHOSTUNREACH:	return WSAEHOSTUNREACH;
 	case ENOTEMPTY:		return WSAENOTEMPTY;
-/*	case EPROCLIM:		return WSAEPROCLIM; */
+#ifdef EPROCLIM
+	case EPROCLIM:		return WSAEPROCLIM;
+#endif
 	case EUSERS:		return WSAEUSERS;
 	case EDQUOT:		return WSAEDQUOT;
 	case ESTALE:		return WSAESTALE;
@@ -135,7 +159,7 @@ static WORD wsaerrno(void)
 	}
 }
 
-static WORD errno_to_wsaerrno(void)
+static void errno_to_wsaerrno(void)
 {
 	wsa_errno = wsaerrno();
 }
@@ -170,8 +194,8 @@ static void convert_sockopt(INT *level, INT *optname)
 					break;
 			case 0x1008:	*optname = SO_TYPE;
 					break;
-				default: 
-					fprintf(stderr, "convert_sockopt() unknown optname %d\n", optname);
+			default: 
+					fprintf(stderr, "convert_sockopt() unknown optname %d\n", *optname);
 					break;
 			}
 			break;
@@ -179,11 +203,32 @@ static void convert_sockopt(INT *level, INT *optname)
 	}
 }
 
-SOCKET Winsock_accept(SOCKET s, struct sockaddr *addr, INT *addrlen)
+#ifndef WINELIB
+static void CONVERT_HOSTENT(struct WIN_hostent *heap, struct hostent *host)
+{
+
+}
+
+static void CONVERT_PROTOENT(struct WIN_protoent *heap, struct protoent *proto)
+{
+
+}
+
+static void CONVERT_SERVENT(struct WIN_servent *heap, struct servent *serv)
+{
+
+}
+#else
+#define CONVERT_HOSTENT(a,b)	memcpy(&a, &b, sizeof(a))
+#define CONVERT_PROTOENT(a,b)	memcpy(&a, &b, sizeof(a))
+#define CONVERT_SERVENT(a,b)	memcpy(&a, &b, sizeof(a))
+#endif
+
+SOCKET WINSOCK_accept(SOCKET s, struct sockaddr *addr, INT *addrlen)
 {
 	int sock;
 
-	dprintf_winsock(stddeb, "WSA_accept: socket %d, ptr %8x, length %d\n", s, (int) addr, addrlen);
+	dprintf_winsock(stddeb, "WSA_accept: socket %d, ptr %8x, length %d\n", s, (int) addr, *addrlen);
 
 	if ((sock = accept(s, addr, (int *) addrlen)) < 0) {
         	errno_to_wsaerrno();
@@ -192,7 +237,7 @@ SOCKET Winsock_accept(SOCKET s, struct sockaddr *addr, INT *addrlen)
 	return sock;
 }
 
-INT Winsock_bind(SOCKET s, struct sockaddr *name, INT namelen)
+INT WINSOCK_bind(SOCKET s, struct sockaddr *name, INT namelen)
 {
 	dprintf_winsock(stddeb, "WSA_bind: socket %d, ptr %8x, length %d\n", s, (int) name, namelen);
 	dump_sockaddr(name);
@@ -204,7 +249,7 @@ INT Winsock_bind(SOCKET s, struct sockaddr *name, INT namelen)
 	return 0;
 }
 
-INT Winsock_closesocket(SOCKET s)
+INT WINSOCK_closesocket(SOCKET s)
 {
 	dprintf_winsock(stddeb, "WSA_closesocket: socket %d\n", s);
 
@@ -217,7 +262,7 @@ INT Winsock_closesocket(SOCKET s)
 	return 0;
 }
 
-INT Winsock_connect(SOCKET s, struct sockaddr *name, INT namelen)
+INT WINSOCK_connect(SOCKET s, struct sockaddr *name, INT namelen)
 {
 	dprintf_winsock(stddeb, "WSA_connect: socket %d, ptr %8x, length %d\n", s, (int) name, namelen);
 	dump_sockaddr(name);
@@ -229,7 +274,7 @@ INT Winsock_connect(SOCKET s, struct sockaddr *name, INT namelen)
 	return 0;
 }
 
-INT Winsock_getpeername(SOCKET s, struct sockaddr *name, INT *namelen)
+INT WINSOCK_getpeername(SOCKET s, struct sockaddr *name, INT *namelen)
 {
 	dprintf_winsock(stddeb, "WSA_getpeername: socket: %d, ptr %8x, ptr %8x\n", s, (int) name, *namelen);
 	dump_sockaddr(name);
@@ -241,7 +286,7 @@ INT Winsock_getpeername(SOCKET s, struct sockaddr *name, INT *namelen)
 	return 0;
 }
 
-INT Winsock_getsockname(SOCKET s, struct sockaddr *name, INT *namelen)
+INT WINSOCK_getsockname(SOCKET s, struct sockaddr *name, INT *namelen)
 {
 	dprintf_winsock(stddeb, "WSA_getsockname: socket: %d, ptr %8x, ptr %8x\n", s, (int) name, (int) *namelen);
 	if (getsockname(s, name, (int *) namelen) < 0) {
@@ -252,7 +297,7 @@ INT Winsock_getsockname(SOCKET s, struct sockaddr *name, INT *namelen)
 }
 
 INT
-Winsock_getsockopt(SOCKET s, INT level, INT optname, char *optval, INT *optlen)
+WINSOCK_getsockopt(SOCKET s, INT level, INT optname, char *optval, INT *optlen)
 {
 	dprintf_winsock(stddeb, "WSA_getsockopt: socket: %d, opt %d, ptr %8x, ptr %8x\n", s, level, (int) optval, (int) *optlen);
 	convert_sockopt(&level, &optname);
@@ -264,26 +309,26 @@ Winsock_getsockopt(SOCKET s, INT level, INT optname, char *optval, INT *optlen)
 	return 0;
 }
 
-u_long Winsock_htonl(u_long hostlong)
+u_long WINSOCK_htonl(u_long hostlong)
 {
 	return( htonl(hostlong) );
 }         
 
-u_short Winsock_htons(u_short hostshort)
+u_short WINSOCK_htons(u_short hostshort)
 {
 	return( htons(hostshort) );
 }
 
-u_long Winsock_inet_addr(char *cp)
+u_long WINSOCK_inet_addr(char *cp)
 {
 	return( inet_addr(cp) );
 }
 
-char *Winsock_inet_ntoa(struct in_addr in)
+char *WINSOCK_inet_ntoa(struct in_addr in)
 {
 	char *s;
 
-	dprintf_winsock(stddeb, "WSA_inet_ntoa: %8x\n", in);
+/*	dprintf_winsock(stddeb, "WSA_inet_ntoa: %8lx\n", (int) in);*/
 
 	if ((s = inet_ntoa(in)) == NULL) {
         	errno_to_wsaerrno();
@@ -295,9 +340,9 @@ char *Winsock_inet_ntoa(struct in_addr in)
 	return (char *) &heap->ntoa_buffer;
 }
 
-INT Winsock_ioctlsocket(SOCKET s, long cmd, u_long *argp)
+INT WINSOCK_ioctlsocket(SOCKET s, long cmd, u_long *argp)
 {
-	dprintf_winsock(stddeb, "WSA_ioctl: socket %d, cmd %d, ptr %8x\n", s, cmd, (int) argp);
+	dprintf_winsock(stddeb, "WSA_ioctl: socket %d, cmd %ld, ptr %8x\n", s, cmd, (int) argp);
 
 	if (ioctl(s, cmd, argp) < 0) {
         	errno_to_wsaerrno();
@@ -306,7 +351,7 @@ INT Winsock_ioctlsocket(SOCKET s, long cmd, u_long *argp)
 	return 0;
 }
 
-INT Winsock_listen(SOCKET s, INT backlog)
+INT WINSOCK_listen(SOCKET s, INT backlog)
 {
 	dprintf_winsock(stddeb, "WSA_listen: socket %d, backlog %d\n", s, backlog);
 
@@ -317,17 +362,17 @@ INT Winsock_listen(SOCKET s, INT backlog)
 	return 0;
 }
 
-u_long Winsock_ntohl(u_long netlong)
+u_long WINSOCK_ntohl(u_long netlong)
 {
 	return( ntohl(netlong) );
 }
 
-u_short Winsock_ntohs(u_short netshort)
+u_short WINSOCK_ntohs(u_short netshort)
 {
 	return( ntohs(netshort) );
 }
 
-INT Winsock_recv(SOCKET s, char *buf, INT len, INT flags)
+INT WINSOCK_recv(SOCKET s, char *buf, INT len, INT flags)
 {
 	int length;
 
@@ -340,12 +385,12 @@ INT Winsock_recv(SOCKET s, char *buf, INT len, INT flags)
 	return length;
 }
 
-INT Winsock_recvfrom(SOCKET s, char *buf, INT len, INT flags, 
+INT WINSOCK_recvfrom(SOCKET s, char *buf, INT len, INT flags, 
 		struct sockaddr *from, int *fromlen)
 {
 	int length;
 
-	dprintf_winsock(stddeb, "WSA_recvfrom: socket %d, ptr %8x, length %d, flags %d\n", s, buf, len, flags);
+	dprintf_winsock(stddeb, "WSA_recvfrom: socket %d, ptr %8lx, length %d, flags %d\n", s, (unsigned long)buf, len, flags);
 
 	if ((length = recvfrom(s, buf, len, flags, from, fromlen)) < 0) {
         	errno_to_wsaerrno();
@@ -354,19 +399,19 @@ INT Winsock_recvfrom(SOCKET s, char *buf, INT len, INT flags,
 	return length;
 }
 
-INT Winsock_select(INT nfds, fd_set *readfds, fd_set *writefds,
+INT WINSOCK_select(INT nfds, fd_set *readfds, fd_set *writefds,
 	fd_set *exceptfds, struct timeval *timeout)
 {
-	dprintf_winsock(stddeb, "WSA_select: fd # %d, ptr %8x, ptr %8x, ptr %*X\n", nfds, readfds, writefds, exceptfds);
+	dprintf_winsock(stddeb, "WSA_select: fd # %d, ptr %8lx, ptr %8lx, ptr %8lX\n", nfds, (unsigned long) readfds, (unsigned long) writefds, (unsigned long) exceptfds);
 
 	return(select(nfds, readfds, writefds, exceptfds, timeout));
 }
 
-INT Winsock_send(SOCKET s, char *buf, INT len, INT flags)
+INT WINSOCK_send(SOCKET s, char *buf, INT len, INT flags)
 {
 	int length;
 
-	dprintf_winsock(stddeb, "WSA_send: socket %d, ptr %8x, length %d, flags %d\n", s, buf, len, flags);
+	dprintf_winsock(stddeb, "WSA_send: socket %d, ptr %8lx, length %d, flags %d\n", s, (unsigned long) buf, len, flags);
 
 	if ((length = send(s, buf, len, flags)) < 0) {
         	errno_to_wsaerrno();
@@ -375,12 +420,12 @@ INT Winsock_send(SOCKET s, char *buf, INT len, INT flags)
 	return length;
 }
 
-INT Winsock_sendto(SOCKET s, char *buf, INT len, INT flags,
+INT WINSOCK_sendto(SOCKET s, char *buf, INT len, INT flags,
 		struct sockaddr *to, INT tolen)
 {
 	int length;
 
-	dprintf_winsock(stddeb, "WSA_sendto: socket %d, ptr %8x, length %d, flags %d\n", s, buf, len, flags);
+	dprintf_winsock(stddeb, "WSA_sendto: socket %d, ptr %8lx, length %d, flags %d\n", s, (unsigned long) buf, len, flags);
 
 	if ((length = sendto(s, buf, len, flags, to, tolen)) < 0) {
         	errno_to_wsaerrno();
@@ -389,7 +434,7 @@ INT Winsock_sendto(SOCKET s, char *buf, INT len, INT flags,
 	return length;
 }
 
-INT Winsock_setsockopt(SOCKET s, INT level, INT optname, const char *optval, 
+INT WINSOCK_setsockopt(SOCKET s, INT level, INT optname, const char *optval, 
 			INT optlen)
 {
 	dprintf_winsock(stddeb, "WSA_setsockopt: socket %d, level %d, opt %d, ptr %8x, len %d\n", s, level, optname, (int) optval, optlen);
@@ -402,7 +447,7 @@ INT Winsock_setsockopt(SOCKET s, INT level, INT optname, const char *optval,
 	return 0;
 }                                         
 
-INT Winsock_shutdown(SOCKET s, INT how)
+INT WINSOCK_shutdown(SOCKET s, INT how)
 {
 	dprintf_winsock(stddeb, "WSA_shutdown: socket s %d, how %d\n", s, how);
 
@@ -413,7 +458,7 @@ INT Winsock_shutdown(SOCKET s, INT how)
 	return 0;
 }
 
-SOCKET Winsock_socket(INT af, INT type, INT protocol)
+SOCKET WINSOCK_socket(INT af, INT type, INT protocol)
 {
     int sock;
 
@@ -421,7 +466,7 @@ SOCKET Winsock_socket(INT af, INT type, INT protocol)
 
     if ((sock = socket(af, type, protocol)) < 0) {
             errno_to_wsaerrno();
-    dprintf_winsock(stddeb, "WSA_socket: failed !\n");
+            dprintf_winsock(stddeb, "WSA_socket: failed !\n");
             return INVALID_SOCKET;
     }
     
@@ -436,7 +481,7 @@ SOCKET Winsock_socket(INT af, INT type, INT protocol)
     return sock;
 }
 
-struct hostent *Winsock_gethostbyaddr(const char *addr, INT len, INT type)
+struct WIN_hostent *WINSOCK_gethostbyaddr(const char *addr, INT len, INT type)
 {
 	struct hostent *host;
 
@@ -446,30 +491,29 @@ struct hostent *Winsock_gethostbyaddr(const char *addr, INT len, INT type)
         	errno_to_wsaerrno();
         	return NULL;
 	}
-	memcpy(&heap->hostent_addr, host, sizeof(struct hostent));
+	CONVERT_HOSTENT(&heap->hostent_addr, host);
 
-	return (struct hostent *) &heap->hostent_addr;
+	return &heap->hostent_addr;
 }
 
-struct hostent *Winsock_gethostbyname(const char *name)
+struct WIN_hostent *WINSOCK_gethostbyname(const char *name)
 {
 	struct hostent *host;
 
-	dprintf_winsock(stddeb, "WSA_gethostbyname: name %s\n", name);
+	dprintf_winsock(stddeb, "WSA_gethostbyname: %s\n", name);
 
 	if ((host = gethostbyname(name)) == NULL) {
         	errno_to_wsaerrno();
         	return NULL;
 	}
-	memcpy(&heap->hostent_name, host, sizeof(struct hostent));
+	CONVERT_HOSTENT(&heap->hostent_name, host);
 
-	return (struct hostent *) &heap->hostent_name;
+	return &heap->hostent_name;
 }
 
-int Winsock_gethostname(char *name, INT namelen)
+INT WINSOCK_gethostname(char *name, INT namelen)
 {
-
-	dprintf_winsock(stddeb, "WSA_gethostname: name %d, len %d\n", name, namelen);
+	dprintf_winsock(stddeb, "WSA_gethostname: name %s, len %d\n", name, namelen);
 
 	if (gethostname(name, namelen) < 0) {
         	errno_to_wsaerrno();
@@ -478,7 +522,7 @@ int Winsock_gethostname(char *name, INT namelen)
 	return 0;
 }          
 
-struct protoent *Winsock_getprotobyname(char *name)
+struct WIN_protoent *WINSOCK_getprotobyname(char *name)
 {
 	struct protoent *proto;
 
@@ -488,12 +532,12 @@ struct protoent *Winsock_getprotobyname(char *name)
         	errno_to_wsaerrno();
         	return NULL;
 	}
-	memcpy(&heap->protoent_name, proto, sizeof(struct protoent));
+	CONVERT_PROTOENT(&heap->protoent_name, proto);
 
-	return (struct protoent *) &heap->protoent_name;
+	return &heap->protoent_name;
 }
 
-struct protoent *Winsock_getprotobynumber(INT number)
+struct WIN_protoent *WINSOCK_getprotobynumber(INT number)
 {
 	struct protoent *proto;
 
@@ -503,14 +547,17 @@ struct protoent *Winsock_getprotobynumber(INT number)
         	errno_to_wsaerrno();
         	return NULL;
 	}
-	memcpy(&heap->protoent_number, proto, sizeof(struct protoent));
+	CONVERT_PROTOENT(&heap->protoent_number, proto);
 
-	return (struct protoent *) &heap->protoent_number;
+	return &heap->protoent_number;
 }
 
-struct servent *Winsock_getservbyname(const char *name, const char *proto)
+struct WIN_servent *WINSOCK_getservbyname(const char *name, const char *proto)
 {
 	struct servent *service;
+
+	if (proto == NULL)
+		proto = "tcp";
 
 	dprintf_winsock(stddeb, "WSA_getservbyname: name %s, proto %s\n", name, proto);
 
@@ -518,12 +565,12 @@ struct servent *Winsock_getservbyname(const char *name, const char *proto)
         	errno_to_wsaerrno();
         	return NULL;
 	}
-	memcpy(&heap->servent_name, service, sizeof(struct servent));
+	CONVERT_SERVENT(&heap->servent_name, service);
 
-	return (struct servent *) &heap->servent_name;
+	return &heap->servent_name;
 }
 
-struct servent *Winsock_getservbyport(INT port, const char *proto)
+struct WIN_servent *WINSOCK_getservbyport(INT port, const char *proto)
 {
 	struct servent *service;
 
@@ -533,9 +580,9 @@ struct servent *Winsock_getservbyport(INT port, const char *proto)
         	errno_to_wsaerrno();
         	return NULL;
 	}
-	memcpy(&heap->servent_port, service, sizeof(struct servent));
+	CONVERT_SERVENT(&heap->servent_port, service);
 
-	return (struct servent *) &heap->servent_port;
+	return &heap->servent_port;
 }
 
 /******************** winsock specific functions ************************
@@ -543,7 +590,7 @@ struct servent *Winsock_getservbyport(INT port, const char *proto)
  */
 static HANDLE new_handle = 0;
 
-HANDLE AllocWSAHandle(void)
+static HANDLE AllocWSAHandle(void)
 {
 	return new_handle++;
 }
@@ -556,7 +603,7 @@ static void recv_message(int sig)
 		perror("wine: msgrcv");
 
 	fprintf(stderr, 
-		"WSA: PostMessage (hwnd %d, wMsg %d, wParam %d, lParam %d)\n",
+		"WSA: PostMessage (hwnd %d, wMsg %d, wParam %d, lParam %ld)\n",
 		message.hWnd,
 		message.wMsg,
 		message.handle,
@@ -579,7 +626,7 @@ static void send_message(HANDLE handle, HWND hWnd, u_int wMsg, long lParam)
 	message.lParam = lParam;
 
 	fprintf(stderr, 
-		"WSA: send (hwnd %d, wMsg %d, handle %d, lParam %d)\n",
+		"WSA: send (hwnd %d, wMsg %d, handle %d, lParam %ld)\n",
 		hWnd, wMsg, handle, lParam);
 	
 	if (msgsnd(wine_key, &message,  IPC_PACKET_SIZE, IPC_NOWAIT) == -1)
@@ -725,7 +772,7 @@ INT WSAAsyncSelect(SOCKET s, HWND hWnd, u_int wMsg, long lEvent)
 	long event;
 	fd_set read_fds, write_fds, except_fds;
 
-	dprintf_winsock(stddeb, "WSA_AsyncSelect: socket %d, HWND %d, wMsg %d, event %d\n", s, hWnd, wMsg, lEvent);
+	dprintf_winsock(stddeb, "WSA_AsyncSelect: socket %d, HWND %d, wMsg %d, event %ld\n", s, hWnd, wMsg, lEvent);
 
 	/* remove outstanding asyncselect() processes */
 	/* kill */
@@ -795,14 +842,16 @@ void WSASetLastError(INT iError)
 BOOL WSAIsBlocking(void)
 {
 	dprintf_winsock(stddeb, "WSA_IsBlocking\n");
+
+	return 0;
 }
 
 FARPROC WSASetBlockingHook(FARPROC lpBlockFunc)
 {
-	dprintf_winsock(stddeb, "WSA_SetBlockHook %8x, STUB!\n", lpBlockFunc);
+	dprintf_winsock(stddeb, "WSA_SetBlockHook %8lx, STUB!\n", (unsigned long) lpBlockFunc);
 	BlockFunction = lpBlockFunc;
 
-	return lpBlockFunc;
+	return (FARPROC) lpBlockFunc;
 }
 
 INT WSAUnhookBlockingHook(void)
@@ -813,7 +862,7 @@ INT WSAUnhookBlockingHook(void)
 	return 0;
 }
 
-WSADATA Winsock_data = {
+WSADATA WINSOCK_data = {
         0x0101,
         0x0101,
         "WINE Sockets",
@@ -855,7 +904,7 @@ INT WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
 #ifndef WINELIB
     HEAP_Init(&MyHeap, heap, sizeof(struct WinSockHeap));
 #endif
-    bcopy(&Winsock_data, lpWSAData, sizeof(Winsock_data));
+    bcopy(&WINSOCK_data, lpWSAData, sizeof(WINSOCK_data));
 
     /* ipc stuff */
 

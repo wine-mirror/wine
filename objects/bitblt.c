@@ -2,29 +2,25 @@
  * GDI bit-blit operations
  *
  * Copyright 1993 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
-
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <X11/Xlib.h>
 #include <X11/Intrinsic.h>
-
+#include "windows.h"
+#include "dc.h"
 #include "gdi.h"
+#include "color.h"
 #include "metafile.h"
 #include "options.h"
 #include "stddebug.h"
 /* #define DEBUG_GDI */
-/* #undef  DEBUG_GDI */
 #include "debug.h"
-
-extern const int DC_XROPfunction[];
-extern Colormap COLOR_WinColormap;
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
-
 
 /***********************************************************************
  *           BITBLT_GetImage

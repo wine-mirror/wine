@@ -2,16 +2,16 @@
  * Color functions
  *
  * Copyright 1993 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
-
+*/
 #include <stdlib.h>
 #include <X11/Xlib.h>
 #include <stdio.h>
 #include "windows.h"
 #include "options.h"
 #include "gdi.h"
+#include "color.h"
 
 
 Colormap COLOR_WinColormap = 0;
@@ -91,7 +91,7 @@ static BOOL COLOR_BuildMap( Colormap map, int depth, int size )
  *
  * Create the system palette.
  */
-static HPALETTE COLOR_InitPalette()
+static HPALETTE COLOR_InitPalette(void)
 {
     int i, size;
     XColor color;
@@ -162,7 +162,7 @@ static HPALETTE COLOR_InitPalette()
  *
  * Initialize color map and system palette.
  */
-HPALETTE COLOR_Init()
+HPALETTE COLOR_Init(void)
 {
     Visual * visual = DefaultVisual( display, DefaultScreen(display) );
     
@@ -227,7 +227,7 @@ BOOL COLOR_IsSolid( COLORREF color )
  *
  * Return the physical color closest to 'color'.
  */
-WORD COLOR_ToPhysical( DC *dc, COLORREF color )
+int COLOR_ToPhysical( DC *dc, COLORREF color )
 {
     WORD index = 0;
     WORD *mapping;
@@ -292,7 +292,8 @@ COLORREF GetNearestColor( HDC hdc, COLORREF color )
     WORD index;
     DC *dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
-    index = COLOR_ToPhysical( dc, color & 0xffffff );
+    if (screenDepth > 8) return color;
+    index = (WORD)(COLOR_ToPhysical( dc, color & 0xffffff ) & 0xffff);
     return PALETTEINDEX( index );
 }
 

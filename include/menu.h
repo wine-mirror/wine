@@ -8,6 +8,15 @@
 
 #define MENU_MAGIC   0x554d  /* 'MU' */
 
+extern BOOL MENU_Init(void);
+extern WORD MENU_GetMenuBarHeight( HWND hwnd, WORD menubarWidth,
+				   int orgX, int orgY );         /* menu.c */
+extern void MENU_TrackMouseMenuBar( HWND hwnd, POINT pt );       /* menu.c */
+extern void MENU_TrackKbdMenuBar( HWND hwnd, WORD wParam );      /* menu.c */
+extern WORD MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
+			      HWND hwnd, BOOL suppress_draw );   /* menu.c */
+extern HMENU CopySysMenu(); /* menu.c */
+
 
 typedef struct tagMENUITEM
 {

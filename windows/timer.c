@@ -9,8 +9,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "windows.h"
 #include "message.h"
 #include "stddebug.h"
-/* #define DEBUG_TIMER /* */
-/* #undef  DEBUG_TIMER /* */
+/* #define DEBUG_TIMER */
 #include "debug.h"
 
 

@@ -1,5 +1,7 @@
+/*
 static char RCSId[] = "$Id: relay.c,v 1.2 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,21 +10,29 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 #ifdef linux
 #include <linux/unistd.h>
 #include <linux/head.h>
 #include <linux/ldt.h>
 #include <linux/segment.h>
 #endif
-#include <errno.h>
 
 #include "neexe.h"
 #include "segmem.h"
 #include "prototypes.h"
 #include "dlls.h"
 #include "options.h"
+#include "stddebug.h"
+/* #define DEBUG_RELAY /* */
+/* #define DEBUG_STACK /* */
+#include "debug.h"
 
-#define DEBUG_RELAY /* */
+#if 0
+/* Make make_debug think these were really used */
+dprintf_relay
+dprintf_stack
+#endif
 
 #ifdef WINELIB
 #define WineLibSkip(x) 0
@@ -103,11 +113,9 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
     ordinal = func_num & 0xffff;
     dll_p   = &dll_builtin_table[dll_id].dll_table[ordinal];
 
-#ifdef DEBUG_RELAY
-    if (Options.relay_debug)
+    if (debugging_relay)
     {
 	unsigned int *ret_addr;
-	unsigned short *stack_p;
 	
 	ret_addr = (unsigned int *) ((char *) seg_off + 0x14);
 	printf("Call %s (%s.%d), stack=%04x:%04x, ",
@@ -119,18 +127,18 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
 	       IF1632_Saved16_esp, IF1632_Saved16_ebp,
 	       IF1632_Saved16_ss);
 
-#ifdef DEBUG_STACK
-	stack_p = (unsigned short *) seg_off;
-	for (i = 0; i < 24; i++, stack_p++)
-	{
-            printf("%04x ", *stack_p);
-	    if ((i & 7) == 7)
-		printf("\n");
+	if(debugging_stack)
+        {
+            unsigned short *stack_p = (unsigned short *) seg_off;
+            for (i = 0; i < 24; i++, stack_p++)
+            {
+                printf("%04x ", *stack_p);
+                if ((i & 7) == 7)
+                    printf("\n");
+            }
+            printf("\n");
 	}
-	printf("\n");
-#endif /* DEBUG_STACK */
-    }
-#endif /* DEBUG_RELAY */
+    } /* DEBUG_RELAY */
 
     /*
      * Make sure we have a handler defined for this call.
@@ -206,15 +214,13 @@ DLLRelay(unsigned int func_num, unsigned int seg_off)
 			  arg_table[12], arg_table[13], arg_table[14], 
 			  arg_table[15]);
 
-#ifdef DEBUG_RELAY
-    if (Options.relay_debug)
+    if (debugging_relay)
     {
 	printf("Returning %08x from %s (%s.%d)\n",
 	       ret_val,
 	       dll_p->export_name,
 	       dll_builtin_table[dll_id].dll_name, ordinal);
     }
-#endif
 
     Stack16Frame = saved_Stack16Frame;
     return ret_val;

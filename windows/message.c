@@ -17,12 +17,15 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 
 #include "message.h"
 #include "win.h"
+#include "gdi.h"
 #include "wineopts.h"
 #include "sysmetrics.h"
 #include "hook.h"
+#include "win.h"
+#include "event.h"
+#include "winpos.h"
 #include "stddebug.h"
 /* #define DEBUG_MSG */
-/* #undef  DEBUG_MSG */
 #include "debug.h"
 
 
@@ -33,12 +36,6 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 
 extern BOOL TIMER_CheckTimer( LONG *next, MSG *msg,
 			      HWND hwnd, BOOL remove );  /* timer.c */
-extern void EVENT_ProcessEvent( XEvent *event );  /* event.c */
-extern void WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg ); /*winpos.c*/
-extern void WIN_SendParentNotify( HWND hwnd, WORD event,
-				  LONG lParam );  /* win.c */
-
-extern Display * display;
 
   /* System message queue (for hardware events) */
 static HANDLE hmemSysMsgQueue = 0;

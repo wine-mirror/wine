@@ -2,9 +2,9 @@
  * Sample AUXILARY Wine Driver for Linux
  *
  * Copyright 1994 Martin Ayotte
- */
+ *
 static char Copyright[] = "Copyright  Martin Ayotte, 1994";
-
+*/
 #ifndef WINELIB
 #define BUILTIN_MMSYSTEM
 #endif 

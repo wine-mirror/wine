@@ -1,5 +1,7 @@
+/*
 static char RCSId[] = "$Id: keyboard.c,v 1.2 1993/09/13 18:52:02 scott Exp $";
 static char Copyright[] = "Copyright  Scott A. Laird, Erik Bos  1993, 1994";
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -8,8 +10,7 @@ static char Copyright[] = "Copyright  Scott A. Laird, Erik Bos  1993, 1994";
 #include "windows.h"
 #include "keyboard.h"
 #include "stddebug.h"
-/* #define DEBUG_KEYBOARD /* */
-/* #undef  DEBUG_KEYBOARD /* */
+/* #define DEBUG_KEYBOARD */
 #include "debug.h"
 
 int ToAscii(WORD wVirtKey, WORD wScanCode, LPSTR lpKeyState, 

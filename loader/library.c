@@ -1,7 +1,7 @@
 /*
  *        Module & Library functions
- */
 static char Copyright[] = "Copyright 1993, 1994 Martin Ayotte, Robert J. Amstadt, Erik Bos";
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,24 +13,21 @@ static char Copyright[] = "Copyright 1993, 1994 Martin Ayotte, Robert J. Amstadt
 #include "neexe.h"
 #include "segmem.h"
 #include "dlls.h"
-#include "wine.h"
+#include "if1632.h"
 #include "wineopts.h"
 #include "arch.h"
 #include "options.h"
-#include "prototypes.h"
+#include "dos_fs.h"
 #include "windows.h"
 #include "task.h"
 #include "toolhelp.h"
+#include "selectors.h"
 #include "stddebug.h"
-/* #define DEBUG_MODULE */
-/* #undef DEBUG_MODULE  */
 #include "debug.h"
-
-extern char WindowsPath[256];
-extern struct dll_name_table_entry_s dll_builtin_table[];
-extern char *GetDosFileName(char *);
-
-extern HANDLE hSysRes;
+#include "prototypes.h"
+#include "library.h"
+#include "ne_image.h"
+#include "pe_image.h"
 
 struct w_files *wine_files = NULL;
 static char *DLL_Extensions[] = { "dll", NULL };
@@ -58,8 +55,7 @@ void ExtractDLLName(char *libname, char *temp)
 	}
 }
 
-struct w_files *
-GetFileInfo(unsigned short instance)
+struct w_files *GetFileInfo(unsigned short instance)
 {
     register struct w_files *w = wine_files;
 
@@ -86,9 +82,9 @@ int IsDLLLoaded(char *name)
 void InitDLL(struct w_files *wpnt)
 {
 	if (wpnt->ne) 
-		InitNEDLL(wpnt);
+		NE_InitDLL(wpnt);
 	else
-		InitPEDLL(wpnt);
+		PE_InitDLL(wpnt);
 }
 
 void InitializeLoadedDLLs(struct w_files *wpnt)
@@ -154,7 +150,7 @@ HINSTANCE LoadImage(char *module, int filetype, int change_dir)
     /*
      * search file
      */
-    fullname = FindFile(buffer, sizeof(buffer), module, 
+    fullname = DOS_FindFile(buffer, sizeof(buffer), module, 
 			(filetype == EXE ? EXE_Extensions : DLL_Extensions), 
 			WindowsPath);
     if (fullname == NULL)
@@ -164,7 +160,7 @@ HINSTANCE LoadImage(char *module, int filetype, int change_dir)
 	return 2;
     }
 
-    fullname = GetDosFileName(fullname);
+    fullname = DOS_GetDosFileName(fullname);
     
     dprintf_module(stddeb,"LoadImage: loading %s (%s)\n           [%s]\n", 
 	    module, buffer, fullname);
@@ -225,7 +221,7 @@ HINSTANCE LoadImage(char *module, int filetype, int change_dir)
     /* 
      * Stick this file into the list of loaded files so we don't try to reload
      * it again if another module references this module.  Do this before
-     * calling loadNEImage because we might get back here before loadNEImage
+     * calling NE_LoadImage because we might get back here before NE_loadImage
      * returns.
      */
     if(wine_files == NULL)
@@ -239,9 +235,9 @@ HINSTANCE LoadImage(char *module, int filetype, int change_dir)
     wpnt->next = NULL;
 
     if (header[0] == 'N' && header[1] == 'E')
-    	handle = LoadNEImage(wpnt);
+    	handle = NE_LoadImage(wpnt);
     if (header[0] == 'P' && header[1] == 'E')
-        handle = LoadPEImage(wpnt);
+        handle = PE_LoadImage(wpnt);
     wpnt->hinstance = handle;
 
     if (handle > 32) {
@@ -365,7 +361,7 @@ int GetModuleFileName(HANDLE hModule, LPSTR lpFileName, short nSize)
     /* check loaded dlls */
     if ((w = GetFileInfo(hModule)) == NULL)
     	return 0;
-    str = GetDosFileName(w->filename);
+    str = DOS_GetDosFileName(w->filename);
     if (nSize > strlen(str)) nSize = strlen(str) + 1;
     strncpy(lpFileName, str, nSize);
     dprintf_module(stddeb,"GetModuleFileName copied '%s' return %d \n", lpFileName, nSize);
@@ -406,9 +402,9 @@ void FreeLibrary(HANDLE hLib)
 			if (lpMod->Count == 1) {
 				wpnt = GetFileInfo(hLib);
 				if (wpnt->ne)
-					NEunloadImage(wpnt);
+					NE_UnloadImage(wpnt);
 				else
-					PEunloadImage(wpnt);
+					PE_UnloadImage(wpnt);
 				if (hLib != (HANDLE)NULL) GlobalFree(hLib);
 				if (lpMod->ModuleName != NULL) free(lpMod->ModuleName);
 				if (lpMod->FileName != NULL) free(lpMod->FileName);

@@ -2,9 +2,9 @@
  * USER DCE functions
  *
  * Copyright 1993 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
+*/
 
 #include "dce.h"
 #include "class.h"
@@ -14,13 +14,9 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "sysmetrics.h"
 #include "stddebug.h"
 /* #define DEBUG_DC */
-/* #undef  DEBUG_DC */
 #include "debug.h"
 
-
 #define NB_DCE    5  /* Number of DCEs created at startup */
-
-extern Display * display;
 
 static HANDLE firstDCE = 0;
 static HDC defaultDCstate = 0;

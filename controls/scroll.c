@@ -2,12 +2,11 @@
  * Interface code to SCROLLBAR widget
  *
  * Copyright  Martin Ayotte, 1993
+ * Copyright  Alexandre Julliard, 1994
  *
  * Small fixes and implemented SB_THUMBPOSITION
  * by Peter Broadhurst, 940611
  */
-
-static char Copyright[] = "Copyright Martin Ayotte, 1993";
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -18,10 +17,10 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 #include "sysmetrics.h"
 #include "scroll.h"
 #include "user.h"
+#include "graphics.h"
 #include "win.h"
 #include "stddebug.h"
 /* #define DEBUG_SCROLL */
-/* #undef  DEBUG_SCROLL */
 #include "debug.h"
 
 
@@ -47,10 +46,6 @@ static HBITMAP hRgArrowI = 0;
 #define RIGHT_ARROW(flags,pressed) \
    (((flags)&ESB_DISABLE_RIGHT) ? hRgArrowI : ((pressed) ? hRgArrowD:hRgArrow))
 
-
-  /* windows/graphics.c */
-extern void GRAPH_DrawReliefRect( HDC hdc, RECT *rect, int highlight_size,
-                                  int shadow_size, BOOL pressed );
 
   /* Minimum size of the rectangle between the arrows */
 #define SCROLL_MIN_RECT  4  
@@ -805,7 +800,8 @@ void SetScrollRange(HWND hwnd, int nBar, int MinVal, int MaxVal, BOOL bRedraw)
 
     if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return;
 
-    dprintf_scroll( stddeb,"SetScrollRange min=%d max=%d\n", MinVal, MaxVal );
+    dprintf_scroll( stddeb,"SetScrollRange hwnd=%x bar=%d min=%d max=%d\n",
+                    hwnd, nBar, MinVal, MaxVal );
 
       /* Invalid range -> range is set to (0,0) */
     if ((MinVal > MaxVal) || ((long)MaxVal - MinVal > 32767L))
@@ -815,8 +811,8 @@ void SetScrollRange(HWND hwnd, int nBar, int MinVal, int MaxVal, BOOL bRedraw)
     infoPtr->MinVal = MinVal;
     infoPtr->MaxVal = MaxVal;
 
-      /* Non-client scroll-bar is hidden iff range is (0,0) */
-    if (nBar != SB_CTL) ShowScrollBar( hwnd, nBar, (MinVal || MaxVal) );
+      /* Non-client scroll-bar is hidden if min==max */
+    if (nBar != SB_CTL) ShowScrollBar( hwnd, nBar, (MinVal != MaxVal) );
     if (bRedraw) SCROLL_RefreshScrollBar( hwnd, nBar );
 }
 
@@ -842,7 +838,7 @@ void ShowScrollBar( HWND hwnd, WORD wBar, BOOL fShow )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
     if (!wndPtr) return;
-    dprintf_scroll( stddeb, "ShowScrollBar: %x %d %d\n", hwnd, wBar, fShow );
+    dprintf_scroll( stddeb, "ShowScrollBar: hwnd=%x bar=%d on=%d\n", hwnd, wBar, fShow );
 
     switch(wBar)
     {

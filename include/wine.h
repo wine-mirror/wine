@@ -32,21 +32,16 @@ struct sigcontext_struct {
 	unsigned long oldmask;
 	unsigned long cr2;
 };
-#endif
-
-#ifdef linux
 #define WINE_DATA_SELECTOR 0x2b
 #define WINE_CODE_SELECTOR 0x23
-#endif
-#if defined(__NetBSD__) || defined(__FreeBSD__)
-#define WINE_DATA_SELECTOR 0x27
-#define WINE_CODE_SELECTOR 0x1f
 #endif
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <signal.h>
 #define sigcontext_struct sigcontext
 #define HZ 100
+#define WINE_DATA_SELECTOR 0x27
+#define WINE_CODE_SELECTOR 0x1f
 #endif
 
 #endif /* WINE_H */

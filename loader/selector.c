@@ -1,7 +1,8 @@
 #ifndef WINELIB
+/*
 static char RCSId[] = "$Id: selector.c,v 1.3 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
-
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,7 +11,6 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
-
 #ifdef __linux__
 #include <sys/mman.h>
 #include <linux/unistd.h>
@@ -27,11 +27,11 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "neexe.h"
 #include "segmem.h"
 #include "wine.h"
+#include "if1632.h"
 #include "windows.h"
 #include "prototypes.h"
 #include "stddebug.h"
 /* #define DEBUG_SELECTORS */
-/* #undef DEBUG_SELECTORS */
 #include "debug.h"
 
 
@@ -854,6 +854,7 @@ CreateSelectors(struct  w_files * wpnt)
     int old_length, file_image_length;
     int saved_old_length;
 
+    auto_data_sel=0;
     /*
      * Allocate memory for the table to keep track of all selectors.
      */
@@ -966,6 +967,7 @@ CreateSelectors(struct  w_files * wpnt)
 	}
     }
 
+    if(!auto_data_sel)dprintf_selectors(stddeb,"Warning: No auto_data_sel\n");
     s = selectors;
     for (i = 0; i < ne_header->n_segment_tab; i++, s++)
     {

@@ -2,16 +2,16 @@
  * Sample MIDI Wine Driver for Linux
  *
  * Copyright 1994 Martin Ayotte
- */
+ *
 static char Copyright[] = "Copyright  Martin Ayotte, 1994";
-
+*/
 #ifndef WINELIB
 #define BUILTIN_MMSYSTEM
 #endif 
 
 #ifdef BUILTIN_MMSYSTEM
 
-#include "stdio.h"
+#include <stdio.h>
 #include "win.h"
 #include "user.h"
 #include "driver.h"
@@ -20,8 +20,7 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #include <sys/ioctl.h>
 
 #include "stddebug.h"
-/* #define DEBUG_MIDI /* */
-/* #undef  DEBUG_MIDI /* */
+/* #define DEBUG_MIDI */
 
 #define DEBUG_MIDI
 #include "debug.h"

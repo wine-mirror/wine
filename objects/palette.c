@@ -2,10 +2,9 @@
  * GDI palette objects
  *
  * Copyright 1993,1994 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993,1994";
-
+*/
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -17,15 +16,10 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993,1994";
 
 #include <X11/Xlib.h>
 #include "gdi.h"
+#include "color.h"
 #include "stddebug.h"
 /* #define DEBUG_PALETTE */
-/* #undef  DEBUG_PALETTE */
 #include "debug.h"
-
-extern void COLOR_SetMapping( DC *dc, HANDLE map, WORD size );  /* color.c */
-
-extern Colormap COLOR_WinColormap;
-
 
 /***********************************************************************
  *           CreatePalette    (GDI.360)

@@ -2,9 +2,9 @@
  * GDI font objects
  *
  * Copyright 1993 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,9 +12,10 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include <X11/Xatom.h>
 #include "user.h"
 #include "gdi.h"
+#include "metafile.h"
+#include "callback.h"
 #include "stddebug.h"
 /* #define DEBUG_FONT */
-/* #undef  DEBUG_FONT */
 #include "debug.h"
 
 #define MAX_FONTS	256
@@ -429,7 +430,7 @@ DWORD GetTextExtent( HDC hdc, LPSTR str, short count )
 {
     SIZE size;
     if (!GetTextExtentPoint( hdc, str, count, &size )) return 0;
-    return size.cx | (size.cy << 16);
+    return MAKELONG( size.cx, size.cy );
 }
 
 
@@ -582,7 +583,7 @@ int ParseFontParms(LPSTR lpFont, WORD wParmsNo, LPSTR lpRetStr, WORD wMaxSiz)
 /*************************************************************************
  *				InitFontsList		[internal]
  */
-void InitFontsList()
+void InitFontsList(void)
 {
     char 	str[32];
     char 	pattern[100];

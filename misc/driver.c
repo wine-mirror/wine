@@ -2,9 +2,8 @@
  * Wine Drivers functions
  *
  * Copyright 1994 Martin Ayotte
- */
-
 static char Copyright[] = "Copyright  Martin Ayotte, 1994";
+*/
 
 #include <stdio.h>
 #include "windows.h"
@@ -13,13 +12,11 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #include "dlls.h"
 #include "driver.h"
 #include "stddebug.h"
-/* #define DEBUG_DRIVER /* */
-/* #undef  DEBUG_DRIVER /* */
 #include "debug.h"
 
 LPDRIVERITEM lpDrvItemList = NULL;
 
-void LoadStartupDrivers()
+void LoadStartupDrivers(void)
 {
 	HDRVR	hDrv;
 	char	str[256];

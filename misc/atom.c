@@ -73,7 +73,7 @@ static BOOL ATOM_InitTable( ATOMTABLE ** table, WORD entries )
     }
     else
     {
-	handle = LocalAlign ( LMEM_MOVEABLE, sizeof(ATOMTABLE) +
+	handle = (HANDLE) LocalAlign ( LMEM_MOVEABLE, sizeof(ATOMTABLE) +
 			     (entries-1) * sizeof(HANDLE) );
 	if (!handle) 
 	    return FALSE;

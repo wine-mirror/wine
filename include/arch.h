@@ -19,6 +19,6 @@
 #define CONV_CHAR_TO_LONG(a) (a)
 #define CONV_SHORT_TO_LONG(a) (a)
 
-#define CONV_BITMAPINFO
-#define CONV_BITMAPCOREHEADER
+#define CONV_BITMAPINFO(a)		/* */
+#define CONV_BITMAPCOREHEADER(a)	/* */
 #endif

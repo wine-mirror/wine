@@ -2,33 +2,30 @@
  * GDI bitmap objects
  *
  * Copyright 1993 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
-
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include "gdi.h"
+#include "dc.h"
 #include "bitmap.h"
 #include "stddebug.h"
 /* #define DEBUG_GDI    */
-/* #undef  DEBUG_GDI    */
-/* #define DEBUG_BITMAP */
 /* #define DEBUG_BITMAP */
 #include "debug.h"
 
   /* GCs used for B&W and color bitmap operations */
 GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
 
-extern void DC_InitDC( HDC hdc );                /* objects/dc.c */
 extern void CLIPPING_UpdateGCRegion( DC * dc );  /* objects/clipping.c */
 
 /***********************************************************************
  *           BITMAP_Init
  */
-BOOL BITMAP_Init()
+BOOL BITMAP_Init(void)
 {
     Pixmap tmpPixmap;
     

@@ -15,16 +15,17 @@
 #include <unistd.h>
 #include <utime.h>
 #include <ctype.h>
-#include "prototypes.h"
+#include "dos_fs.h"
 #include "regfunc.h"
 #include "windows.h"
-#include "wine.h"
+#include "heap.h"
 #include "msdos.h"
 #include "registers.h"
 #include "options.h"
+#include "prototypes.h"
+#include "miscemu.h"
 #include "stddebug.h"
 /* #define DEBUG_INT */
-/* #undef  DEBUG_INT */
 #include "debug.h"
 
 WORD ExtendedError, CodePage = 437;
@@ -42,7 +43,6 @@ WORD sharing_retries = 3;      /* number of retries at sharing violation */
 WORD sharing_pause = 1;        /* pause between retries */
 
 extern char TempDirectory[];
-void IntBarf(int i, struct sigcontext_struct *context);
 
 static int Error(int e, int class, int el)
 {
@@ -180,7 +180,6 @@ static void GetFreeDiskSpace(struct sigcontext_struct *context)
 
 static void GetDriveAllocInfo(struct sigcontext_struct *context)
 {
-	int drive;
 	long size, available;
 	BYTE mediaID;
 	
@@ -436,7 +435,7 @@ static void CreateFile(struct sigcontext_struct *context)
 {
 	int handle;
 
-	if ((handle = open(GetUnixFileName( SAFEMAKEPTR(DS,DX)), 
+	if ((handle = open(DOS_GetUnixFileName( SAFEMAKEPTR(DS,DX)), 
            O_CREAT | O_TRUNC | O_RDWR )) == -1) {
 		errno_to_doserr();
 		AL = ExtendedError;
@@ -469,7 +468,7 @@ void OpenExistingFile(struct sigcontext_struct *context)
 	    break;
 	}
 
-	if ((handle = open(GetUnixFileName(SAFEMAKEPTR(DS,DX)), mode)) == -1) {
+	if ((handle = open(DOS_GetUnixFileName(SAFEMAKEPTR(DS,DX)), mode)) == -1) {
 		errno_to_doserr();
 		AL = ExtendedError;
 		SetCflag;
@@ -552,8 +551,8 @@ static void RenameFile(struct sigcontext_struct *context)
 	dprintf_int(stddeb,"int21: renaming %s to %s\n",
 			SAFEMAKEPTR(DS,DX), SAFEMAKEPTR(ES,DI) );
 	
-	oldname = GetUnixFileName( SAFEMAKEPTR(DS,DX) );
-	newname = GetUnixFileName( SAFEMAKEPTR(ES,DI) );
+	oldname = DOS_GetUnixFileName( SAFEMAKEPTR(DS,DX) );
+	newname = DOS_GetUnixFileName( SAFEMAKEPTR(ES,DI) );
 
 	rename( oldname, newname);
 	ResetCflag;
@@ -566,7 +565,7 @@ static void MakeDir(struct sigcontext_struct *context)
 
 	dprintf_int(stddeb,"int21: makedir %s\n", SAFEMAKEPTR(DS,DX) );
 	
-	if ((dirname = GetUnixFileName( SAFEMAKEPTR(DS,DX) ))== NULL) {
+	if ((dirname = DOS_GetUnixFileName( SAFEMAKEPTR(DS,DX) ))== NULL) {
 		AL = CanNotMakeDir;
 		SetCflag;
 		return;
@@ -603,7 +602,7 @@ static void RemoveDir(struct sigcontext_struct *context)
 
 	dprintf_int(stddeb,"int21: removedir %s\n", SAFEMAKEPTR(DS,DX) );
 
-	if ((dirname = GetUnixFileName( SAFEMAKEPTR(DS,DX) ))== NULL) {
+	if ((dirname = DOS_GetUnixFileName( SAFEMAKEPTR(DS,DX) ))== NULL) {
 		AL = CanNotMakeDir;
 		SetCflag;
 		return;
@@ -624,7 +623,7 @@ static void RemoveDir(struct sigcontext_struct *context)
 
 static void ExecProgram(struct sigcontext_struct *context)
 {
-	execl("wine", GetUnixFileName( SAFEMAKEPTR(DS,DX)) );
+	execl("wine", DOS_GetUnixFileName( SAFEMAKEPTR(DS,DX)) );
 }
 
 static void FindNext(struct sigcontext_struct *context)
@@ -704,7 +703,7 @@ static void GetFileDateTime(struct sigcontext_struct *context)
 	struct stat filestat;
 	struct tm *now;
 
-	if ((filename = GetUnixFileName( SAFEMAKEPTR(DS,DX) ))== NULL) {
+	if ((filename = DOS_GetUnixFileName( SAFEMAKEPTR(DS,DX) ))== NULL) {
 		AL = FileNotFound;
 		SetCflag;
 		return;
@@ -724,7 +723,7 @@ static void SetFileDateTime(struct sigcontext_struct *context)
 	char *filename;
 	struct utimbuf filetime;
 	
-	filename = GetUnixFileName( SAFEMAKEPTR(DS,DX) );
+	filename = DOS_GetUnixFileName( SAFEMAKEPTR(DS,DX) );
 
 	filetime.actime = 0L;
 	filetime.modtime = filetime.actime;
@@ -742,7 +741,7 @@ static void CreateTempFile(struct sigcontext_struct *context)
 
 	dprintf_int(stddeb,"CreateTempFile %s\n",temp);
 
-	handle = open(GetUnixFileName(temp), O_CREAT | O_TRUNC | O_RDWR);
+	handle = open(DOS_GetUnixFileName(temp), O_CREAT | O_TRUNC | O_RDWR);
 
 	if (handle == -1) {
 		AL = WriteProtected;
@@ -760,7 +759,7 @@ static void CreateNewFile(struct sigcontext_struct *context)
 {
 	int handle;
 	
-	if ((handle = open(GetUnixFileName( SAFEMAKEPTR(DS,DX) ), O_CREAT | O_EXCL | O_RDWR)) == -1) {
+	if ((handle = open(DOS_GetUnixFileName( SAFEMAKEPTR(DS,DX) ), O_CREAT | O_EXCL | O_RDWR)) == -1) {
 		AL = WriteProtected;
 		SetCflag;
 		return;
@@ -961,7 +960,7 @@ static void DeleteFileFCB(struct sigcontext_struct *context)
 	{
 		strcpy(ptr, dp->filename);
 		dprintf_int(stddeb, "int21: delete file %s\n", temp);
-		/* unlink(GetUnixFileName(temp)); */
+		/* unlink(DOS_GetUnixFileName(temp)); */
 	}
 	DOS_closedir(dp);
 	AL = 0;
@@ -1073,7 +1072,7 @@ static void GetFileAttribute (struct sigcontext_struct * context)
   struct stat s;
   int res,cx; 
 
-  res = stat(GetUnixFileName(filename), &s);
+  res = stat(DOS_GetUnixFileName(filename), &s);
   if (res==-1)
   {
     errno_to_doserr();
@@ -1099,7 +1098,7 @@ static void GetFileAttribute (struct sigcontext_struct * context)
 
 int do_int21(struct sigcontext_struct * context)
 {
-    if (Options.relay_debug)
+    if (debugging_relay)
     {
 	fprintf(stddeb,"int21: AX %04x, BX %04x, CX %04x, DX %04x, "
 	       "SI %04x, DI %04x, DS %04x, ES %04x\n",
@@ -1336,7 +1335,7 @@ int do_int21(struct sigcontext_struct * context)
 	    break;
 	
 	  case 0x41: /* "UNLINK" - DELETE FILE */
-		if (unlink( GetUnixFileName( SAFEMAKEPTR(DS,DX)) ) == -1) {
+		if (unlink( DOS_GetUnixFileName( SAFEMAKEPTR(DS,DX)) ) == -1) {
 			errno_to_doserr();
 			AL = ExtendedError;
 			SetCflag;
@@ -1590,7 +1589,7 @@ int do_int21(struct sigcontext_struct * context)
 /**********************************************************************
  *			DOS3Call
  */
-void DOS3Call()
+void DOS3Call(void)
 {
     do_int21((struct sigcontext_struct *) _CONTEXT);
     ReturnFromRegisterFunc();

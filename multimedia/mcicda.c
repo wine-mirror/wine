@@ -2,9 +2,9 @@
  * Sample MCI CDAUDIO Wine Driver for Linux
  *
  * Copyright 1994 Martin Ayotte
- */
+ *
 static char Copyright[] = "Copyright  Martin Ayotte, 1994";
-
+*/
 #ifndef WINELIB
 #define BUILTIN_MMSYSTEM
 #endif 
@@ -22,8 +22,7 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #include "driver.h"
 #include "mmsystem.h"
 #include "stddebug.h"
-/* #define DEBUG_CDAUDIO /* */
-/* #undef  DEBUG_CDAUDIO /* */
+/* #define DEBUG_CDAUDIO */
 #include "debug.h"
 
 #ifdef linux

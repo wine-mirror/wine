@@ -2,8 +2,8 @@
 **
 **  History and file completion functions for editline library.
 */
+#include <stdlib.h>
 #include "editline.h"
-
 
 #if	defined(NEED_STRDUP)
 /*

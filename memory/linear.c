@@ -1,6 +1,7 @@
+/*
 static char RCSId[] = "$Id$";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1994";
-
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

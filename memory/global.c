@@ -1,18 +1,21 @@
+/*
 static char RCSId[] = "$Id: global.c,v 1.2 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
+*/
 
 #define GLOBAL_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "windows.h"
 #include "prototypes.h"
 #include "toolhelp.h"
 #include "heap.h"
 #include "segmem.h"
+#include "selectors.h"
 #include "stddebug.h"
-/* #define DEBUG_HEAP /* */
-/* #undef  DEBUG_HEAP /* */
+/* #define DEBUG_HEAP */
 #include "debug.h"
 
 
@@ -182,7 +185,7 @@ GlobalAlloc(unsigned int flags, unsigned long size)
     GDESC *g_prev;
     void *m;
 
-    dprintf_heap(stddeb,"GlobalAlloc flags %4X, size %d\n", flags, size);
+    dprintf_heap(stddeb,"GlobalAlloc flags %4X, size %ld\n", flags, size);
 
     if (size == 0) size = 1;
 
@@ -259,7 +262,7 @@ GlobalAlloc(unsigned int flags, unsigned long size)
 	 * We have a new block.  Let's create a GDESC entry for it.
 	 */
 	g = malloc(sizeof(*g));
-	dprintf_heap(stddeb,"New GDESC %08x\n", g);
+	dprintf_heap(stddeb,"New GDESC %08x\n", (unsigned int) g);
 	if (g == NULL)
 	    return 0;
 
@@ -356,7 +359,7 @@ GlobalLock(unsigned int block)
 
     g->lock_count++;
 
-    dprintf_heap(stddeb,"GlobalLock: returning %08x\n", g->addr);
+    dprintf_heap(stddeb,"GlobalLock: returning %08x\n",(unsigned int)g->addr);
     return g->addr;
 }
 
@@ -621,7 +624,7 @@ GlobalReAlloc(unsigned int block, unsigned int new_size, unsigned int flags)
 	{
 	    GDESC *g_new;
 	    GDESC *g_start = g;
-	    int old_segments = g_start->length;
+/*	    int old_segments = g_start->length;*/
 	    unsigned short next_handle = g_start->handle;
 	    
 	    for (i = 1; i <= n_segments; i++, g = g->next)
@@ -815,7 +818,7 @@ DWORD GetFreeSpace(UINT wFlags)
 	if (free_map[i] == 1)
 	    total_free++;
 
-    dprintf_heap(stddeb,"GetFreeSpace // return %ld !\n", total_free << 16);
+    dprintf_heap(stddeb,"GetFreeSpace // return %ld !\n", (long) (total_free << 16));
     return total_free << 16;
 }
 

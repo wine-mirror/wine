@@ -2,18 +2,20 @@
  * GDI functions
  *
  * Copyright 1993 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
 #include "user.h"
 #include "gdi.h"
+#include "color.h"
 #include "prototypes.h"
 #include "stddebug.h"
+#include "bitmap.h"
+#include "font.h"
 /* #define DEBUG_GDI */
-/* #undef  DEBUG_GDI */
 #include "debug.h"
 
 MDESC *GDI_Heap = NULL;
@@ -24,8 +26,6 @@ MDESC *GDI_Heap = NULL;
 
 #define MAX_OBJ 			1024
 HANDLE *lpPenBrushList = NULL;
-
-extern HPALETTE COLOR_Init();  /* color.c */
 
 /***********************************************************************
  *          GDI stock objects 
@@ -155,7 +155,7 @@ static GDIOBJHDR * StockObjects[NB_STOCK_OBJECTS] =
  *
  * GDI initialisation.
  */
-BOOL GDI_Init()
+BOOL GDI_Init(void)
 {
     HPALETTE hpalette;
     struct segment_descriptor_s * s;
@@ -429,8 +429,8 @@ BOOL UnrealizeObject( HANDLE handle )
  */
 int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
 {
-    HANDLE 		handle;
-    DC 			*dc;
+/*    HANDLE 		handle;
+    DC 			*dc;*/
 	HANDLE		*lphObj;
 	GDIOBJHDR 	*header;
 	WORD  		wMagic;

@@ -2,10 +2,9 @@
  * Dialog functions
  *
  * Copyright 1993, 1994 Alexandre Julliard
- */
-
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -18,9 +17,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 #include "heap.h"
 #include "stddebug.h"
 /* #define DEBUG_DIALOG */
-/* #undef  DEBUG_DIALOG */
 #include "debug.h"
-
 
   /* Dialog base units */
 static WORD xBaseUnit = 0, yBaseUnit = 0;
@@ -151,7 +148,6 @@ static DLGCONTROLHEADER * DIALOG_ParseTemplate( LPCSTR template,
 /***********************************************************************
  *           DIALOG_DisplayTemplate
  */
-#ifdef DEBUG_DIALOG
 static void DIALOG_DisplayTemplate( DLGTEMPLATE * result )
 {
     dprintf_dialog(stddeb, "DIALOG %d, %d, %d, %d\n", result->header->x, result->header->y,
@@ -166,7 +162,6 @@ static void DIALOG_DisplayTemplate( DLGTEMPLATE * result )
     if (result->header->style & DS_SETFONT)
 	dprintf_dialog(stddeb, " FONT %d,'%s'\n", result->pointSize, result->faceName );
 }
-#endif  /* DEBUG_DIALOG */
 
 
 /***********************************************************************
@@ -236,9 +231,7 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 
     if (!dlgTemplate) return 0;
     header = DIALOG_ParseTemplate( dlgTemplate, &template );
-#ifdef DEBUG_DIALOG
-    DIALOG_DisplayTemplate( &template );
-#endif    
+    if(debugging_dialog)DIALOG_DisplayTemplate( &template );
 
       /* Load menu */
 

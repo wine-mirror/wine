@@ -1,5 +1,7 @@
+/*
 static char RCSId[] = "$Id: heap.c,v 1.3 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -68,7 +70,7 @@ int WaitSoundState(int x)
 	fprintf(stderr, "WaitSoundState(%d)\n", x);
 }
 
-SyncAllVoices(void)
+int SyncAllVoices(void)
 {
 	fprintf(stderr, "SyncAllVoices()\n");
 }
@@ -83,7 +85,7 @@ LPINT GetThresholdEvent(void)
 	fprintf(stderr, "GetThresholdEvent()\n");
 }
 
-GetThresholdStatus(void)
+int GetThresholdStatus(void)
 {
 	fprintf(stderr, "GetThresholdStatus()\n");
 }

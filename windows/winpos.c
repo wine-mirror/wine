@@ -687,32 +687,42 @@ static BOOL WINPOS_InternalSetWindowPos( WINDOWPOS *winpos )
 
     if (!(flags & SWP_NOSIZE))
     {
-	newWindowRect.right  = newWindowRect.left + winpos->cx;
-	newWindowRect.bottom = newWindowRect.top + winpos->cy;
-	winChanges.width     = winpos->cx;
-	winChanges.height    = winpos->cy;
-	changeMask |= CWWidth | CWHeight;
+        if ((newWindowRect.right != newWindowRect.left + winpos->cx) ||
+            (newWindowRect.bottom != newWindowRect.top + winpos->cy))
+        {
+            newWindowRect.right  = newWindowRect.left + winpos->cx;
+            newWindowRect.bottom = newWindowRect.top + winpos->cy;
+            winChanges.width     = winpos->cx;
+            winChanges.height    = winpos->cy;
+            changeMask |= CWWidth | CWHeight;
+        }
+        else flags = winpos->flags |= SWP_NOSIZE;
     }
     if (!(flags & SWP_NOMOVE))
     {
-	newWindowRect.left    = winpos->x;
-	newWindowRect.top     = winpos->y;
-	newWindowRect.right  += winpos->x - wndPtr->rectWindow.left;
-	newWindowRect.bottom += winpos->y - wndPtr->rectWindow.top;
-	if (wndPtr->dwStyle & WS_CHILD)
-	{
-	    WND *parentPtr = WIN_FindWndPtr(wndPtr->hwndParent);
-	    winChanges.x = winpos->x + parentPtr->rectClient.left 
-		           - parentPtr->rectWindow.left;
-	    winChanges.y = winpos->y + parentPtr->rectClient.top
-		           - parentPtr->rectWindow.top;
-	}
-	else
-	{
-	    winChanges.x = winpos->x;
-	    winChanges.y = winpos->y;
-	}
-	changeMask |= CWX | CWY;
+        if ((newWindowRect.left != winpos->x) ||
+            (newWindowRect.top != winpos->y))
+        {
+            newWindowRect.left    = winpos->x;
+            newWindowRect.top     = winpos->y;
+            newWindowRect.right  += winpos->x - wndPtr->rectWindow.left;
+            newWindowRect.bottom += winpos->y - wndPtr->rectWindow.top;
+            if (wndPtr->dwStyle & WS_CHILD)
+            {
+                WND *parentPtr = WIN_FindWndPtr(wndPtr->hwndParent);
+                winChanges.x = winpos->x + parentPtr->rectClient.left 
+                                - parentPtr->rectWindow.left;
+                winChanges.y = winpos->y + parentPtr->rectClient.top
+                                - parentPtr->rectWindow.top;
+            }
+            else
+            {
+                winChanges.x = winpos->x;
+                winChanges.y = winpos->y;
+            }
+            changeMask |= CWX | CWY;
+        }
+        else flags = winpos->flags |= SWP_NOMOVE;
     }
 
       /* Reposition window in Z order */

@@ -14,8 +14,7 @@
 #include <stdlib.h>
 #include "windows.h"
 #include "stddebug.h"
-/* #define DEBUG_UTILITY /* */
-/* #undef  DEBUG_UTILITY /* */
+/* #define DEBUG_UTILITY */
 #include "debug.h"
 
 

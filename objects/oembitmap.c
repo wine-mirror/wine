@@ -2,10 +2,9 @@
  * GDI OEM bitmap objects
  *
  * Copyright 1994 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
-
+*/
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #ifdef USE_XPM
@@ -14,7 +13,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include "gdi.h"
 #include "bitmap.h"
 #include "stddebug.h"
-/* #define DEBUG_BITMAP */
+#include "color.h"
 #include "debug.h"
 
 #define OBM_FIRST  OBM_LFARROWI    /* First OEM bitmap */
@@ -187,10 +186,6 @@ static const struct
 };
 
 #endif /* USE_XPM */
-
-extern WORD COLOR_ToPhysical( DC *dc, COLORREF color );  /* color.c */
-
-extern Colormap COLOR_WinColormap;
 
 
 /***********************************************************************

@@ -2,18 +2,14 @@
  * GDI pen objects
  *
  * Copyright 1993 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
-
+*/
 #include "gdi.h"
 #include "metafile.h"
 #include "stddebug.h"
-/* #define DEBUG_GDI */
-/* #undef  DEBUG_GDI */
+#include "color.h"
 #include "debug.h"
-
-extern WORD COLOR_ToPhysical( DC *dc, COLORREF color );
 
 /***********************************************************************
  *           CreatePen    (GDI.61)

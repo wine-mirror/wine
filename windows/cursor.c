@@ -1,7 +1,7 @@
 /*
  *    WINE
-*/
 static char Copyright[] = "Copyright  Martin Ayotte, 1993";
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,21 +16,18 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1993";
 #include "windows.h"
 #include "win.h"
 #include "gdi.h"
+#include "library.h"
 #include "wine.h"
 #include "cursor.h"
 #include "stddebug.h"
 /* #define DEBUG_CURSOR   */
-/* #undef  DEBUG_CURSOR   */
 /* #define DEBUG_RESOURCE */
-/* #undef  DEBUG_RESOURCE */
 #include "debug.h"
 
 static int ShowCursCount = 0;
 static HCURSOR hActiveCursor;
 static HCURSOR hEmptyCursor = 0;
 RECT	ClipCursorRect;
-extern HINSTANCE hSysRes;
-extern int desktopX, desktopY;   /* misc/main.c */
 
 static struct { LPSTR name; HCURSOR cursor; } system_cursor[] =
 {

@@ -5,7 +5,6 @@
 #include "wine.h"
 #include "stddebug.h"
 /* #define DEBUG_INT */
-/* #undef  DEBUG_INT */
 #include "debug.h"
 
 static BYTE cmosaddress;
@@ -42,6 +41,18 @@ void inport(struct sigcontext_struct *context)
 	AX = 0xffff;
 }
 
+void inportb_abs(struct sigcontext_struct *context)
+{
+	dprintf_int(stdnimp, "IO: in (%x)\n", *(BYTE *)(EIP+1));
+	AL = 0xff;
+}
+
+void inport_abs(struct sigcontext_struct *context)
+{
+	dprintf_int(stdnimp, "IO: in (%x)\n", *(BYTE *)(EIP+1));
+	AX = 0xffff;
+}
+
 void outportb(struct sigcontext_struct *context)
 {
 	dprintf_int(stdnimp, "IO: outb (%x), %x\n", DX, AX);
@@ -61,4 +72,14 @@ void outportb(struct sigcontext_struct *context)
 void outport(struct sigcontext_struct *context)
 {
 	dprintf_int(stdnimp, "IO: out (%x), %x\n", DX, AX);
+}
+
+void outportb_abs(struct sigcontext_struct *context)
+{
+    dprintf_int(stdnimp, "IO: out (%x), %x\n", *(BYTE *)(EIP+1), AL);
+}
+
+void outport_abs(struct sigcontext_struct *context)
+{
+    dprintf_int(stdnimp, "IO: out (%x), %x\n", *(BYTE *)(EIP+1), AX);
 }

@@ -48,8 +48,7 @@
 #define SYSMETRICS_CYDOUBLECLK         sysMetrics[SM_CYDOUBLECLK]
 #define SYSMETRICS_MENUDROPALIGNMENT   sysMetrics[SM_MENUDROPALIGNMENT]
 
-
+extern void SYSMETRICS_Init(void);
 extern short sysMetrics[SM_CMETRICS];
-
 
 #endif

@@ -163,9 +163,17 @@ A(CallToInit16:)
  *			10	target cs
  *			12	target ds
  *			14      target cx  (only CallTo16cx)
+ *                      16      target di
  */
 	.align	4
-	.globl A(CallTo16), A(CallTo16cx)
+	.globl A(CallTo16), A(CallTo16cx), A(CallToLibMain)
+A(CallToLibMain:)
+        pushl   %ebp
+        movl    %esp,%ebp
+        movw    16(%ebp),%di
+        movw    0,%si
+        movw    0,%es
+        jmp     L1
 A(CallTo16:)
 A(CallTo16cx:)
 	pushl	%ebp
@@ -174,7 +182,7 @@ A(CallTo16cx:)
 	/*
 	 * Get target address and new ds
 	 */
-	movl	8(%ebp),%eax
+L1:	movl	8(%ebp),%eax
 	movl	%eax,jump_target
 	lea	jump_target,%edx
 	movw	12(%ebp),%ax

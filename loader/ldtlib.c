@@ -1,13 +1,13 @@
 #ifndef WINELIB
+/*
 static char RCSId[] = "$Id: ldtlib.c,v 1.2 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include "stddebug.h"
-/* #define DEBUG_LDT */
-/* #undef DEBUG_LDT  */
 #include "debug.h"
 
 #ifdef linux

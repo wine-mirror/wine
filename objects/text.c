@@ -2,18 +2,18 @@
  * text functions
  *
  * Copyright 1993, 1994 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
-
+*/
 #include <stdlib.h>
 #include <X11/Xatom.h>
 #include "windows.h"
+#include "dc.h"
 #include "gdi.h"
+#include "callback.h"
 #include "metafile.h"
 #include "stddebug.h"
-/* #define DEBUG_TEXT /* */
-/* #undef  DEBUG_TEXT /* */
+/* #define DEBUG_TEXT */
 #include "debug.h"
 
 #define TAB     9
@@ -505,29 +505,81 @@ BOOL GrayString(HDC hdc, HBRUSH hbr, FARPROC gsprc, LPARAM lParam,
 
 
 /***********************************************************************
- *			TabbedTextOut		[USER.196]
+ *           TEXT_TabbedTextOut
+ *
+ * Helper function for TabbedTextOut() and GetTabbedTextExtent().
+ * Note: this doesn't work too well for text-alignment modes other
+ *       than TA_LEFT|TA_TOP. But we want bug-for-bug compatibility :-)
  */
-LONG TabbedTextOut(HDC hDC, short x, short y, LPSTR lpStr, short nCount, 
-		short nTabCount, LPINT lpTabPos, short nTabOrg)
+LONG TEXT_TabbedTextOut( HDC hdc, int x, int y, LPSTR lpstr, int count, 
+                         int cTabStops, LPINT lpTabPos, int nTabOrg,
+                         BOOL fDisplayText)
 {
-	WORD 	width, height;
-	dprintf_text(stdnimp,"EMPTY STUB !!! TabbedTextOut(); ! call TextOut() for now !\n");
-	height = HIWORD(GetTextExtent(hDC, lpStr, nCount));
-	width = LOWORD(GetTextExtent(hDC, lpStr, nCount));
-	TextOut(hDC, x, y, lpStr, nCount);
-	return MAKELONG(width, height);
+    WORD defWidth;
+    DWORD extent;
+    int i, tabPos = 0;
+
+    if (cTabStops == 1) defWidth = *lpTabPos;
+    else
+    {
+        TEXTMETRIC tm;
+        GetTextMetrics( hdc, &tm );
+        defWidth = 8 * tm.tmAveCharWidth;
+    }
+    
+    while (count > 0)
+    {
+        for (i = 0; i < count; i++)
+            if (lpstr[i] == '\t') break;
+        extent = GetTextExtent( hdc, lpstr, i );
+        while ((cTabStops > 0) && (nTabOrg + *lpTabPos < x + LOWORD(extent)))
+        {
+            lpTabPos++;
+            cTabStops--;
+        }
+        if (lpstr[i] != '\t')
+            tabPos = x + LOWORD(extent);
+        else if (cTabStops > 0)
+            tabPos = nTabOrg + *lpTabPos;
+        else
+            tabPos = (x + LOWORD(extent) + defWidth - 1) / defWidth * defWidth;
+        if (fDisplayText)
+        {
+            RECT r;
+            SetRect( &r, x, y, tabPos, y+HIWORD(extent) );
+            ExtTextOut( hdc, x, y,
+                        GetBkMode(hdc) == OPAQUE ? ETO_OPAQUE : 0,
+                        &r, lpstr, i, NULL );
+        }
+        x = tabPos;
+        count -= i+1;
+        lpstr += i+1;
+    }
+    return tabPos;
 }
 
 
 /***********************************************************************
- *			GetTabbedTextExtent		[USER.197]
+ *           TabbedTextOut    (USER.196)
  */
-DWORD GetTabbedTextExtent(HDC hDC, LPSTR lpString, int nCount, 
-	int nTabPositions, LPINT lpnTabStopPositions)
+LONG TabbedTextOut( HDC hdc, short x, short y, LPSTR lpstr, short count, 
+                    short cTabStops, LPINT lpTabPos, short nTabOrg )
 {
-	dprintf_text(stdnimp,"EMPTY STUB !!! GetTabbedTextExtent(); !\n");
-
-	return (18 << 16) | (nCount * 18);
+    dprintf_text( stddeb, "TabbedTextOut: %x %d,%d '%s' %d\n",
+                  hdc, x, y, lpstr, count );
+    return TEXT_TabbedTextOut( hdc, x, y, lpstr, count, cTabStops,
+                               lpTabPos, nTabOrg, TRUE );
 }
 
 
+/***********************************************************************
+ *           GetTabbedTextExtent    (USER.197)
+ */
+DWORD GetTabbedTextExtent( HDC hdc, LPSTR lpstr, int count, 
+                          int cTabStops, LPINT lpTabPos )
+{
+    dprintf_text( stddeb, "GetTabbedTextExtent: %x '%s' %d\n",
+                  hdc, lpstr, count );
+    return TEXT_TabbedTextOut( hdc, 0, 0, lpstr, count, cTabStops,
+                               lpTabPos, 0, FALSE );
+}

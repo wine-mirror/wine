@@ -9,6 +9,8 @@
 
 #include "windows.h"
 
+extern BOOL ATOM_Init(void);
+
 typedef struct
 {
     HANDLE      next;

@@ -1,12 +1,5 @@
-/*
- * Communications header
- *
- * 93 Erik Bos (erik@trashcan.hacktic.nl)
- */
-
 #ifndef COMM_H
 #define COMM_H
-
 
 #define MAX_PORTS   16
 
@@ -18,5 +11,8 @@ struct DosDeviceStruct {
     int unget_byte;
     int baudrate;
 };
+
+extern void Comm_Init(void);
+extern void Comm_DeInit(void);
 
 #endif  /* COMM_H */

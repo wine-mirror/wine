@@ -3,17 +3,15 @@
  *
  * Copyright 1993 David Metcalfe
  * Copyright 1994 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  David Metcalfe, 1993";
 static char Copyright2[] = "Copyright  Alexandre Julliard, 1994";
+*/
 
 #include "win.h"
-
-extern Colormap COLOR_WinColormap;
+#include "color.h"
 
 static HWND hWndFocus = 0;
-
 
 /*****************************************************************
  *               FOCUS_SetXFocus

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <string.h>
 #include <errno.h>
 #include <time.h>
 #include <setjmp.h>
@@ -20,20 +21,12 @@
 #endif
 
 #include "wine.h"
+#include "dos_fs.h"
 #include "segmem.h"
 #include "prototypes.h"
+#include "miscemu.h"
 #include "win.h"
 
-extern int do_int10(struct sigcontext_struct *);
-extern int do_int13(struct sigcontext_struct *);
-extern int do_int15(struct sigcontext_struct *);
-extern int do_int16(struct sigcontext_struct *);
-extern int do_int25(struct sigcontext_struct *);
-extern int do_int26(struct sigcontext_struct *);
-extern int do_int2a(struct sigcontext_struct *);
-extern int do_int2f(struct sigcontext_struct *);
-extern int do_int31(struct sigcontext_struct *);
- 
 #if !defined(BSD4_4) || defined(linux) || defined(__FreeBSD__)
 char * cstack[4096];
 #endif
@@ -75,7 +68,7 @@ int do_int(int intnum, struct sigcontext_struct *scp)
               case 0x13: return do_int13(scp);
 	      case 0x15: return do_int15(scp);
 	      case 0x16: return do_int16(scp);
-	      case 0x1A: return do_int1A(scp);
+	      case 0x1a: return do_int1a(scp);
 	      case 0x21: return do_int21(scp);
 
 	      case 0x22:
@@ -157,6 +150,26 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
 	    scp->sc_eip += 2;  /* Bypass the int instruction */
             break;
             
+      case 0xe4: /* inb al,XX */
+            inportb_abs(scp);
+	    scp->sc_eip += 2;
+            break;
+
+      case 0xe5: /* in ax,XX */
+            inport_abs(scp);
+	    scp->sc_eip += 2;
+            break;
+
+      case 0xe6: /* outb XX,al */
+            outportb_abs(scp);
+	    scp->sc_eip += 2;
+            break;
+
+      case 0xe7: /* out XX,ax */
+            outport_abs(scp);
+	    scp->sc_eip += 2;
+            break;
+
       case 0xec: /* inb al,dx */
             inportb(scp);
 	    scp->sc_eip++;

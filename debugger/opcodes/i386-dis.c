@@ -1565,7 +1565,7 @@ OP_E (bytemode)
     {
       if (mod == 0 && rm == 6)
 	{
-	  sprintf (scratchbuf, "0x%04.4x", get16 ());
+	  sprintf (scratchbuf, "0x%04x", get16 ());
 	  oappend (scratchbuf);
 	  return 0;
 	}

@@ -299,6 +299,7 @@ extern MDESC *GDI_Heap;
 
 #endif
 
+extern BOOL GDI_Init(void);
 extern HANDLE GDI_AllocObject( WORD, WORD );
 extern BOOL GDI_FreeObject( HANDLE );
 extern GDIOBJHDR * GDI_GetObjPtr( HANDLE, WORD );
@@ -307,5 +308,6 @@ extern Display * display;
 extern Screen * screen;
 extern Window rootWindow;
 extern int screenWidth, screenHeight, screenDepth;
+extern int desktopX, desktopY;   /* misc/main.c */
 
 #endif  /* GDI_H */

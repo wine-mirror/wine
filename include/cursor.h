@@ -4,6 +4,8 @@
  * Copyright  Martin Ayotte, 1993
  *
  */
+#ifndef __WINE_CURSOR_H
+#define __WINE_CURSOR_H
 
 typedef struct {
 	BYTE	Width;
@@ -25,3 +27,6 @@ typedef struct {
 	Cursor		xcursor;
 	} CURSORALLOC;
 
+extern void CURSOR_SetWinCursor( HWND hwnd, HCURSOR hcursor );   /* cursor.c */
+
+#endif /* __WINE_CURSOR_H */

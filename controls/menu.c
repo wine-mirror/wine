@@ -1,16 +1,15 @@
 /*
  *        Menus functions
- */
 static char RCSId[] = "$Id$";
 static char Copyright[] = "Copyright  Martin Ayotte, 1993";
 static char Copyright2[] = "Copyright  Alexandre Julliard, 1994";
+*/
 
 /*
  * Note: the style MF_MOUSESELECT is used to mark popup items that
  * have been selected, i.e. their popup menu is currently displayed.
  * This is probably not the meaning this style has in MS-Windows.
  */
-
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -23,14 +22,13 @@ static char Copyright2[] = "Copyright  Alexandre Julliard, 1994";
 #include "menu.h"
 #include "user.h"
 #include "win.h"
+#include "library.h"
 #include "message.h"
+#include "graphics.h"
 #include "stddebug.h"
 /* #define DEBUG_MENU */
-/* #undef DEBUG_MENU */
 /* #define DEBUG_MENUCALC */
-/* #undef DEBUG_MENUCALC */
 /* #define DEBUG_MENUSHORTCUT */
-/* #undef DEBUG_MENUSHORTCUT */
 #include "debug.h"
 
 
@@ -60,12 +58,6 @@ static BOOL fEndMenuCalled = FALSE;
 
 
 extern void NC_DrawSysButton(HWND hwnd, HDC hdc, BOOL down);  /* nonclient.c */
-extern void CURSOR_SetWinCursor( HWND hwnd, HCURSOR hcursor );   /* cursor.c */
-extern BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
-			      int xsrc, int ysrc, int width, int height,
-			      int rop );                     /* graphics.c */
-
-extern HINSTANCE hSysRes;
 
 static HBITMAP hStdCheck = 0;
 static HBITMAP hStdMnArrow = 0;

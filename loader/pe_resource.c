@@ -1,5 +1,5 @@
 /*
- *	(c) 1994	Erik Bos	<erik@hacktic.nl>
+ *	(c) 1994	Erik Bos	<erik@xs4all.nl>
  *
  *	based on Eric Youndale's pe-test and:
  *
@@ -17,10 +17,10 @@
 #include "neexe.h"
 #include "peexe.h"
 #include "dlls.h"
+#include "pe_image.h"
 #include "resource.h"
 #include "stddebug.h"
 /* #define DEBUG_RESOURCE */
-/* #undef  DEBUG_RESOURCE */
 #include "debug.h"
 
 

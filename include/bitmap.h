@@ -10,6 +10,8 @@
 #include <X11/Xlib.h>
 #include "windows.h"
 
+extern BOOL BITMAP_Init(void);
+
   /* GCs used for B&W and color bitmap operations */
 extern GC BITMAP_monoGC, BITMAP_colorGC;
 

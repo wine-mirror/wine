@@ -106,7 +106,7 @@ NormalLibraryTarget(wine,$(LIBOBJS) $(COMMONOBJS))
 #endif
 
 wine.sym: wine
-	nm wine|sort >wine.sym
+	nm wine|grep -v _compiled|sort >wine.sym
 
 clean::
 	$(RM) wine.sym

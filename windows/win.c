@@ -16,28 +16,17 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 #include "user.h"
 #include "dce.h"
 #include "sysmetrics.h"
+#include "menu.h"
 #include "icon.h"
 #include "cursor.h"
+#include "event.h"
+#include "winpos.h"
+#include "color.h"
 #include "stddebug.h"
 #include "callback.h"
-/* #define DEBUG_WIN  /* */ 
-/* #undef  DEBUG_WIN  /* */
-/* #define DEBUG_MENU /* */
-/* #undef  DEBUG_MENU /* */
+/* #define DEBUG_WIN  */ 
+/* #define DEBUG_MENU */
 #include "debug.h"
-
-extern Colormap COLOR_WinColormap;
-
-extern void EVENT_RegisterWindow( Window w, HWND hwnd );  /* event.c */
-extern void WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg ); /*winpos.c*/
-extern LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
-				   RECT *newWindowRect, RECT *oldWindowRect,
-				   RECT *oldClientRect, WINDOWPOS *winpos,
-				   RECT *newClientRect );  /* winpos.c */
-
-extern HMENU CopySysMenu(); /* menu.c */
-extern LONG MDIClientWndProc(HWND hwnd, WORD message, 
-			     WORD wParam, LONG lParam); /* mdi.c */
 
 static HWND hwndDesktop = 0;
 static HWND hWndSysModal = 0;
@@ -981,8 +970,6 @@ BOOL EnumWindows(FARPROC wndenumprc, LPARAM lParam)
     dprintf_enum(stddeb,"EnumWindows\n");
 
     while (hwnd) {
-      char *ptr;
-
         if ( !(wndPtr=WIN_FindWndPtr(hwnd)) ) {
               return 0;
       }
@@ -1015,11 +1002,8 @@ BOOL EnumWindows(FARPROC wndenumprc, LPARAM lParam)
 static BOOL WIN_EnumChildWin(HWND hwnd, FARPROC wndenumprc, LPARAM lParam)
 {
     WND *wndPtr;
-    int result;
-
 
     while (hwnd) {
-      char *ptr;
       if ( !(wndPtr=WIN_FindWndPtr(hwnd)) ) {
             return 0;
         }

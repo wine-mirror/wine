@@ -8,7 +8,7 @@
  * NOV 93 Erik Bos (erik@xs4all.nl)
  *		- removed ParseDosFileName, and DosDrive structures.
  *		- structures dynamically configured at runtime.
- *		- _lopen modified to use GetUnixFileName.
+ *		- _lopen modified to use DOS_GetUnixFileName.
  *		- Existing functions modified to use dosfs functions.
  *		- Added _llseek, _lcreat, GetDriveType, GetTempDrive, 
  *		  GetWindowsDirectory, GetSystemDirectory, GetTempFileName.
@@ -22,7 +22,7 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <string.h>
-#include "prototypes.h"
+#include "dos_fs.h"
 #include "regfunc.h"
 #include "windows.h"
 #include "wine.h"
@@ -30,20 +30,11 @@
 #include "registers.h"
 #include "options.h"
 #include "stddebug.h"
-/* #define DEBUG_FILE /* */
-/* #undef  DEBUG_FILE /* */
 #include "debug.h"
 
 #define MAX_PATH 255
 
 char WindowsDirectory[256], SystemDirectory[256], TempDirectory[256];
-extern char WindowsPath[256];
-
-extern char WindowsPath[];
-extern WORD ExtendedError;
-
-
-char *GetDosFileName(char *unixfilename);
 
 /***************************************************************************
  _lopen 
@@ -56,7 +47,7 @@ INT _lopen (LPSTR lpPathName, INT iReadWrite)
   char *UnixFileName;
 
   dprintf_file(stddeb, "_lopen: open('%s', %X);\n", lpPathName, iReadWrite);
-  if ((UnixFileName = GetUnixFileName(lpPathName)) == NULL)
+  if ((UnixFileName = DOS_GetUnixFileName(lpPathName)) == NULL)
   	return HFILE_ERROR;
   iReadWrite &= 0x000F;
   handle =  open (UnixFileName, iReadWrite);
@@ -122,7 +113,6 @@ INT _lclose (INT hFile)
  **************************************************************************/
 INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
 {
-    int		              handle;
 #ifndef PROCEMU
     struct sigcontext_struct  ccontext;
                               /* To make macros like EAX happy */
@@ -155,7 +145,7 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
       ofs->nErrCode = 0;
       *((int*)ofs->reserved) = 0;
 
-      if ((unixfilename = GetUnixFileName (ofs->szPathName)) == NULL)
+      if ((unixfilename = DOS_GetUnixFileName (ofs->szPathName)) == NULL)
       {
         errno_to_doserr();
 	ofs->nErrCode = ExtendedError;
@@ -181,23 +171,23 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
 	{
 	  char temp[MAX_PATH+1];
 	  strcpy (filename, lpFileName);
-	  if ( (!stat(GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
+	  if ( (!stat(DOS_GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
 	    break;
 	  GetWindowsDirectory (filename,MAX_PATH);
 	  if ((!filename[0])||(filename[strlen(filename)-1]!='\\'))
             strcat(filename, "\\");
 	  strcat (filename, lpFileName);
-	  if ( (!stat(GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
+	  if ( (!stat(DOS_GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
 	    break;
 	  GetSystemDirectory (filename,MAX_PATH);
 	  if ((!filename[0])||(filename[strlen(filename)-1]!='\\'))
  	    strcat(filename, "\\");
 	  strcat (filename, lpFileName);
-	  if ( (!stat(GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
+	  if ( (!stat(DOS_GetUnixFileName(filename), &s)) && (S_ISREG(s.st_mode)) )
 	    break;
-	  if (!FindFile(temp,MAX_PATH,lpFileName,NULL,WindowsPath))
+	  if (!DOS_FindFile(temp,MAX_PATH,lpFileName,NULL,WindowsPath))
 	    {
-	      strcpy(filename, GetDosFileName(temp));
+	      strcpy(filename, DOS_GetDosFileName(temp));
 	      break;
 	    }
 	  strcpy (filename, lpFileName);
@@ -224,7 +214,7 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
 
     /* Now on to getting some information about that file */
 
-    if (res = stat(GetUnixFileName(ofs->szPathName), &s))
+    if ((res = stat(DOS_GetUnixFileName(ofs->szPathName), &s)))
       {
       errno_to_doserr();
       ofs->nErrCode = ExtendedError;
@@ -232,21 +222,21 @@ INT OpenFile (LPSTR lpFileName, LPOFSTRUCT ofs, WORD wStyle)
     }
     
     now = localtime (&s.st_mtime);
-  
+
     if (action & OF_VERIFY)
       verify_time = *((int*)ofs->reserved);
-  
+    
     *((WORD*)(&ofs->reserved[2]))=
          ((now->tm_hour * 0x2000) + (now->tm_min * 0x20) + (now->tm_sec / 2));
     *((WORD*)(&ofs->reserved[0]))=
          ((now->tm_year * 0x200) + (now->tm_mon * 0x20) + now->tm_mday);
-    
-    if (action & OF_EXIST)
-      return 0;
+
 
     if (action & OF_VERIFY)
       return (verify_time != *((int*)ofs->reserved));
-    
+
+    if (action & OF_EXIST)
+      return 0;
     
    /* Now we are actually going to open the file. According to Microsoft's
        Knowledge Basis, this is done by calling int 21h, ax=3dh. */    
@@ -317,7 +307,7 @@ INT _lcreat (LPSTR lpszFilename, INT fnAttribute)
 
     	dprintf_file(stddeb, "_lcreat: filename %s, attributes %d\n",
 		lpszFilename, fnAttribute);
-	if ((UnixFileName = GetUnixFileName(lpszFilename)) == NULL)
+	if ((UnixFileName = DOS_GetUnixFileName(lpszFilename)) == NULL)
   		return HFILE_ERROR;
 	handle =  open (UnixFileName, O_CREAT | O_TRUNC | O_WRONLY, 426);
 
@@ -422,6 +412,8 @@ INT GetTempFileName(BYTE bDriveLetter, LPCSTR lpszPrefixString, UINT uUnique, LP
 WORD SetErrorMode(WORD x)
 {
     dprintf_file(stdnimp,"wine: SetErrorMode %4x (ignored)\n",x);
+
+    return 1;
 }
 
 /***************************************************************************

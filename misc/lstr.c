@@ -1,5 +1,6 @@
+/*
 static char Copyright[] = "Copyright  Yngvi Sigurjonsson (yngvi@hafro.is), 1993";
-
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -164,15 +165,14 @@ char FAR*  AnsiPrev(/*const*/ char FAR* start,char FAR* current)
   return (current==start)?start:current-1;
 }
 
-static char Oem2Ansi[256];
-static char Ansi2Oem[256];
+BYTE Oem2Ansi[256], Ansi2Oem[256];
 
 void InitOemAnsiTranslations(void)
 {
   static int inited=0; /* should called called in some init function*/
   int transfile,i;
   if(inited) return;
-  if(transfile=open("oem2ansi.trl",O_RDONLY)){
+  if((transfile=open("oem2ansi.trl",O_RDONLY))){
     read(transfile,Oem2Ansi,256);
     close(transfile);
   }
@@ -180,7 +180,7 @@ void InitOemAnsiTranslations(void)
     for(i=0;i<256;i++)  /* Needs some fixing */
       Oem2Ansi[i]=i;  
   }
-  if(transfile=open("ansi2oem.trl",O_RDONLY)){
+  if((transfile=open("ansi2oem.trl",O_RDONLY))){
     read(transfile,Ansi2Oem,256);
     close(transfile);
   }

@@ -1,6 +1,7 @@
+/*
 static char RCSId[] = "$Id: wine.c,v 1.2 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
-
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -11,26 +12,24 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <errno.h>
 #include "neexe.h"
 #include "segmem.h"
-#include "prototypes.h"
+#include "dos_fs.h"
 #include "dlls.h"
-#include "wine.h"
+#include "library.h"
 #include "windows.h"
 #include "wineopts.h"
-#include "arch.h"
+#include "dos_fs.h"
 #include "task.h"
+#include "prototypes.h"
 #include "options.h"
+#include "if1632.h"
+#include "ne_image.h"
+#include "pe_image.h"
 #include "stddebug.h"
-/* #define DEBUG_DLL */
-/* #undef  DEBUG_DLL */
 #include "debug.h"
-
-
-char *GetDosFileName(char *unixfilename);
-extern char WindowsPath[256];
 
 char **Argv;
 int Argc;
-HINSTANCE hSysRes;
+HINSTANCE hSysRes, hInstMain;
 unsigned short WIN_StackSize;
 unsigned short WIN_HeapSize;
 
@@ -55,8 +54,8 @@ myerror(const char *s)
 int _WinMain(int argc, char **argv)
 {
 	char *p, filename[256];
-	HANDLE		hTaskMain;
-	HINSTANCE	hInstMain;
+	HANDLE	hTaskMain;
+
 	struct w_files *wpnt;
 #ifdef WINESTAT
 	char * cp;
@@ -73,11 +72,11 @@ int _WinMain(int argc, char **argv)
 	    filename[p - Argv[0]] = '\0';
 	    strcat(WindowsPath, ";");
 	    if (strchr(filename, '/'))
-		    strcat(WindowsPath, GetDosFileName(filename));
+		    strcat(WindowsPath, DOS_GetDosFileName(filename));
 	    else
 	    	    strcat(WindowsPath, filename);
 	}
-	
+
 	if ((hInstMain = LoadImage(Argv[0], EXE, 1)) < 32) {
 		fprintf(stderr, "wine: can't load %s!.\n", Argv[0]);
 		exit(1);
@@ -97,6 +96,7 @@ int _WinMain(int argc, char **argv)
  	    dprintf_dll(stddeb,"System Resources Loaded // hSysRes='%04X'\n",
 			hSysRes);
 	
+
 #ifdef WINESTAT
     cp = strrchr(argv[0], '/');
     if(!cp) cp = argv[0];
@@ -117,9 +117,9 @@ int _WinMain(int argc, char **argv)
 	wine_debug(0, NULL);
 
     if (wpnt->ne)
-	StartNEprogram(wpnt);
+	return(NE_StartProgram(wpnt));
     else
-	StartPEprogram(wpnt);
+	return(PE_StartProgram(wpnt));
 }
 
 #endif /* #ifndef WINELIB */

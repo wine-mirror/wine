@@ -2,9 +2,9 @@
  * Non-client area window functions
  *
  * Copyright 1994 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
+*/
 
 #include "win.h"
 #include "class.h"
@@ -12,10 +12,16 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include "scroll.h"
 #include "sysmetrics.h"
 #include "user.h"
+#include "dialog.h"
 #include "syscolor.h"
+#include "library.h"
+#include "menu.h"
+#include "winpos.h"
+#include "scroll.h"
+#include "nonclient.h"
+#include "graphics.h"
 #include "stddebug.h"
 /* #define DEBUG_NONCLIENT */
-/* #undef  DEBUG_NONCLIENT */
 #include "debug.h"
 
 
@@ -28,23 +34,7 @@ static HBITMAP hbitmapRestore = 0;
 static HBITMAP hbitmapRestoreD = 0;
 
 #define SC_ABOUTWINE    	(SC_SCREENSAVE+1)
-extern HINSTANCE hSysRes;
 extern BOOL AboutWine_Proc( HWND hDlg, WORD msg, WORD wParam, LONG lParam );
-
-extern void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
-			    POINT *minTrack, POINT *maxTrack );  /* winpos.c */
-extern BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
-			      int xsrc, int ysrc, int width, int height,
-			      int rop );                     /* graphics.c */
-extern WORD MENU_GetMenuBarHeight( HWND hwnd, WORD menubarWidth,
-				   int orgX, int orgY );         /* menu.c */
-extern void MENU_TrackMouseMenuBar( HWND hwnd, POINT pt );       /* menu.c */
-extern void MENU_TrackKbdMenuBar( HWND hwnd, WORD wParam );      /* menu.c */
-extern WORD MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
-			      HWND hwnd, BOOL suppress_draw );   /* menu.c */
-extern void SCROLL_HandleScrollEvent( HWND hwnd, int nBar,
-                                      WORD msg, POINT pt);       /* scroll.c */
-
 
   /* Some useful macros */
 #define HAS_DLGFRAME(style,exStyle) \

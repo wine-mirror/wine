@@ -3,9 +3,8 @@
  *
  * Copyright  Martin Ayotte, 1993
  *
- */
-
 static char Copyright[] = "Copyright Martin Ayotte, 1993";
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,15 +19,8 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 #include "prototypes.h"
 #include "stddebug.h"
 /* #define DEBUG_COMBO */
-/* #undef  DEBUG_COMBO */
 #include "debug.h"
-
-  /* windows/graphics.c */
-extern void GRAPH_DrawReliefRect( HDC hdc, RECT *rect, int highlight_size,
-                                  int shadow_size, BOOL pressed );
-extern BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
-                          int xsrc, int ysrc, int width, int height, int rop );
-
+#include "graphics.h"
 
 HBITMAP hComboBit = 0;
 

@@ -1,5 +1,3 @@
-
-
 /* Lexical scanner for command line parsing in the Wine debugger
  *
  * Version 1.0
@@ -53,12 +51,12 @@ IDENTIFIER [_a-zA-Z\.~][_a-zA-Z0-9\.~]*
 "?"		{ return HELP; }
 
 "0x"+{HEXDIGIT}+   {
-		sscanf(yytext, "%lx", &yylval);
+		sscanf(yytext, "%x", &yylval);
 		return NUM;
 		}
 
 {DIGIT}+   {
-		sscanf(yytext, "%ld", &yylval);
+		sscanf(yytext, "%d", &yylval);
 		return NUM;
 		}
 
@@ -80,7 +78,7 @@ $cs		{ yylval = RN_CS;  return REG;}
 $ss		{ yylval = RN_SS;  return REG;}
 
 info|inf|in		{ return INFO; }
-
+segments|segm           { return SEGMENTS; }
 break|brea|bre          { return BREAK; }
 enable|enabl|enab|ena   { return ENABLE;}
 disable|disabl|disab|disa|dis { return DISABLE; }
@@ -183,8 +181,7 @@ dbg_read(char * buf, int size){
 }
 
 /* Strip whitespace from the start and end of STRING. */
-stripwhite (string)
-     char *string;
+void stripwhite (char *string)
 {
   register int i = 0;
 

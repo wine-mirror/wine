@@ -2,29 +2,23 @@
  * GDI Device Context functions
  *
  * Copyright 1993 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
-
+*/
 #include <stdlib.h>
 #include <string.h>
 #include "gdi.h"
 #include "bitmap.h"
 #include "metafile.h"
 #include "stddebug.h"
-/* #define DEBUG_DC /* */
-/* #undef  DEBUG_DC /* */
+#include "color.h"
 #include "debug.h"
-
+#include "font.h"
 
 static DeviceCaps * displayDevCaps = NULL;
 
 extern const WIN_DC_INFO DCVAL_defaultValues;
-
 extern void CLIPPING_UpdateGCRegion( DC * dc );     /* objects/clipping.c */
-extern WORD COLOR_ToPhysical( DC *dc, COLORREF color );/* objects/color.c */
-extern void COLOR_SetMapping( DC *dc, HANDLE, WORD );  /* objects/color.c */
-
 
   /* ROP code to GC function conversion */
 const int DC_XROPfunction[16] =

@@ -2,27 +2,37 @@
  * GDI device independent bitmaps
  *
  * Copyright 1993 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
-
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include "dc.h"
 #include "gdi.h"
 #include "bitmap.h"
 #include "icon.h"
 #include "stddebug.h"
-/* #define DEBUG_ICON /* */
-/* #undef  DEBUG_ICON /* */
-/* #define DEBUG_BITMAP /* */
-/* #undef  DEBUG_BIYMAP /* */
+#include "color.h"
 #include "debug.h"
 
-extern const int DC_XROPfunction[];
-
-extern WORD COLOR_ToPhysical( DC *dc, COLORREF color );  /* color.c */
+static int get_bpp(int depth)
+{
+	switch(depth) {
+		case 4:
+		case 8:	
+			return 1;
+		case 15:
+		case 16:
+			return 2;
+		case 24:
+			return 4;
+		default:
+			fprintf(stderr, "DIB: unsupported depth %d!\n", depth);
+			exit(1);
+	}		
+}
 
 /***********************************************************************
  *           DIB_BitmapInfoSize
@@ -51,9 +61,8 @@ static XImage *DIB_DIBmpToImage( BITMAPINFOHEADER * bmp, void * bmpData )
 {
     extern void _XInitImageFuncPtrs( XImage* );
     XImage * image;
-    int bytesPerLine = ((bmp->biBitCount == 24 ? 32 : bmp->biBitCount)
-                        * bmp->biWidth + 31) / 32 * 4;
-    
+    int bytesPerLine = bmp->biWidth * get_bpp(bmp->biBitCount);
+
     image = XCreateImage( display, DefaultVisualOfScreen( screen ),
 			  bmp->biBitCount, ZPixmap, 0, bmpData,
 			  bmp->biWidth, bmp->biHeight, 32, bytesPerLine );
@@ -72,7 +81,7 @@ static XImage *DIB_DIBmpToImage( BITMAPINFOHEADER * bmp, void * bmpData )
  * SetDIBits for a 1-bit deep DIB.
  */
 static void DIB_SetImageBits_1( WORD lines, BYTE *bits, WORD width,
-			        WORD *colors, XImage *bmpImage )
+                                int *colors, XImage *bmpImage )
 {
     WORD i, x;
     BYTE pad, pix;
@@ -116,7 +125,7 @@ static void DIB_SetImageBits_1( WORD lines, BYTE *bits, WORD width,
  * SetDIBits for a 4-bit deep DIB.
  */
 static void DIB_SetImageBits_4( WORD lines, BYTE *bits, WORD width,
-			        WORD *colors, XImage *bmpImage )
+                                int *colors, XImage *bmpImage )
 {
     WORD i, x;
     BYTE pad;
@@ -150,7 +159,7 @@ static void DIB_SetImageBits_4( WORD lines, BYTE *bits, WORD width,
  * SetDIBits for a 4-bit deep compressed DIB.
  */
 static void DIB_SetImageBits_RLE4( WORD lines, BYTE *bits, WORD width,
-			        WORD *colors, XImage *bmpImage )
+                                   int *colors, XImage *bmpImage )
 {
 	int x = 0, c, length;
 	BYTE *begin = bits;
@@ -209,7 +218,7 @@ static void DIB_SetImageBits_RLE4( WORD lines, BYTE *bits, WORD width,
  * SetDIBits for an 8-bit deep DIB.
  */
 static void DIB_SetImageBits_8( WORD lines, BYTE *bits, WORD width,
-			        WORD *colors, XImage *bmpImage )
+                                int *colors, XImage *bmpImage )
 {
     WORD x;
     BYTE pad = (4 - (width & 3)) & 3;
@@ -256,7 +265,7 @@ enum Rle8_EscapeCodes
 static void DIB_SetImageBits_RLE8(WORD lines, 
 				  BYTE *bits, 
 				  WORD width,
-				  WORD *colors, 
+				  int *colors, 
 				  XImage *bmpImage)
 {
     int x;			/* X-positon on each line.  Increases. */
@@ -437,7 +446,7 @@ static int DIB_SetImageBits( DC *dc, WORD lines, WORD depth, LPSTR bits,
 			     Drawable drawable, GC gc, int xSrc, int ySrc,
 			     int xDest, int yDest, int width, int height )
 {
-    WORD *colorMapping;
+    int *colorMapping;
     XImage *bmpImage;
     void *bmpData;
     int i, colors, widthBytes;
@@ -449,7 +458,7 @@ static int DIB_SetImageBits( DC *dc, WORD lines, WORD depth, LPSTR bits,
     {
 	colors = info->bmiHeader.biClrUsed;
 	if (!colors) colors = 1 << info->bmiHeader.biBitCount;
-	if (!(colorMapping = (WORD *)malloc( colors * sizeof(WORD) )))
+	if (!(colorMapping = (int *)malloc( colors * sizeof(int) )))
 	    return 0;
 	if (coloruse == DIB_RGB_COLORS)
 	{
@@ -468,9 +477,8 @@ static int DIB_SetImageBits( DC *dc, WORD lines, WORD depth, LPSTR bits,
     }
 
       /* Transfer the pixels */
+    widthBytes = info->bmiHeader.biWidth * get_bpp(depth);
 
-    widthBytes = ((depth == 24 ? 32 : depth) * info->bmiHeader.biWidth + 31)
-                  / 32 * 4;
     bmpData  = malloc( lines * widthBytes );
     bmpImage = XCreateImage( display, DefaultVisualOfScreen(screen),
 			     depth, ZPixmap, 0, bmpData,
@@ -655,7 +663,7 @@ BOOL DrawIcon(HDC hDC, short x, short y, HICON hIcon)
     BITMAP	bm;
     HBITMAP	hBitTemp;
     HDC		hMemDC;
-    HDC		hMemDC2;
+
     dprintf_icon(stddeb,"DrawIcon(%04X, %d, %d, %04X) \n", hDC, x, y, hIcon);
     if (hIcon == (HICON)NULL) return FALSE;
     lpico = (ICONALLOC *)GlobalLock(hIcon);
@@ -674,17 +682,17 @@ BOOL DrawIcon(HDC hDC, short x, short y, HICON hIcon)
     dprintf_icon(stddeb,"DrawIcon / bitmap bmWidth=%d bmHeight=%d\n", 
 		 bm.bmWidth, bm.bmHeight);
     hMemDC = CreateCompatibleDC(hDC);
-#ifdef DEBUG_ICON
+    if(debugging_icon){
     hBitTemp = SelectObject(hMemDC, lpico->hBitmap);
     BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
     SelectObject(hMemDC, lpico->hBitMask);
     BitBlt(hDC, x, y + bm.bmHeight, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-#else
+    }else{
     hBitTemp = SelectObject(hMemDC, lpico->hBitMask);
     BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCAND);
     SelectObject(hMemDC, lpico->hBitmap);
     BitBlt(hDC, x, y, bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCPAINT);
-#endif
+    }
     SelectObject( hMemDC, hBitTemp );
     DeleteDC(hMemDC);
     return TRUE;

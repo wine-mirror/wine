@@ -4,9 +4,9 @@
  * Copyright  David W. Metcalfe, 1994
  *
  * Release 3, July 1994
- */
 
 static char Copyright[] = "Copyright  David W. Metcalfe, 1994";
+*/
 
 #include <stdio.h>
 #include <stdlib.h>

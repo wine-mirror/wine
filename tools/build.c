@@ -313,9 +313,7 @@ ParseExportFunction(int ordinal, int type)
     char *token;
     ORDDEF *odp;
     ORDFUNCDEF *fdp;
-    int arg_types[16];
     int i;
-    int arg_num;
     int current_offset;
     int arg_size;
 	
@@ -469,7 +467,6 @@ ParseReturn(int ordinal)
     ORDRETDEF *rdp;
     char *token;
     char *endptr;
-    int value;
     
     if (ordinal >= MAX_ORDINALS)
     {
@@ -604,11 +601,11 @@ ParseTopLevel(void)
     return 0;
 }
 
-InitContext()
+void
+InitContext(void)
 {
     struct sigcontext_struct context;
     int i;
-    int j;
     
     n_context_strings = sizeof(context) / 4;
     context_strings   = (char **) malloc(n_context_strings * sizeof(char **));
@@ -707,10 +704,7 @@ main(int argc, char **argv)
     ORDRETDEF *rdp;
     FILE *fp;
     char filename[80];
-    char buffer[80];
-    char *p;
-    int i, ci;
-    int add_count;
+    int i, ci, add_count;
     
     if (argc < 2)
     {
@@ -971,5 +965,6 @@ main(int argc, char **argv)
     fprintf(fp, "};\n");
 
     fclose(fp);
+    return 0;
 }
 

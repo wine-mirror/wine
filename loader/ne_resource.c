@@ -1,6 +1,7 @@
+/*
 static char RCSId[] = "$Id: ne_resource.c,v 1.4 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
-
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,6 +14,8 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "peexe.h"
 #include "arch.h"
 #include "dlls.h"
+#include "library.h"
+#include "heap.h"
 #include "resource.h"
 #include "stddebug.h"
 #include "debug.h"

@@ -16,7 +16,6 @@ struct options
     int    synchronous;     /* X synchronous mode */
     int    backingstore;    /* Use backing store */
     short  cmdShow;
-    int    relay_debug;
     int    debug;
 };
 

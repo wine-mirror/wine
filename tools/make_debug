@@ -90,11 +90,14 @@ do
 	cat <<++EOF++ >>$DEBUG_H
 #ifdef DEBUG_RUNTIME
 #define dprintf_$x if(debug_msg_enabled[$i]) fprintf
+#define debugging_$x debug_msg_enabled[$i]
 #else
 #ifdef DEBUG_$y
 #define dprintf_$x fprintf
+#define debugging_$x 1
 #else
 #define dprintf_$x
+#define debugging_$x 0
 #endif
 #endif
 

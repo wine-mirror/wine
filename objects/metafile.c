@@ -2,9 +2,9 @@
  * Metafile functions
  *
  * Copyright  David W. Metcalfe, 1994
- */
-
+ *
 static char Copyright[] = "Copyright  David W. Metcalfe, 1994";
+*/
 
 #include <string.h>
 #include "windows.h"
@@ -12,14 +12,65 @@ static char Copyright[] = "Copyright  David W. Metcalfe, 1994";
 #include "metafile.h"
 #include "prototypes.h"
 #include "stddebug.h"
-/* #define DEBUG_METAFILE /* */
-/* #undef  DEBUG_METAFILE /* */
+/* #define DEBUG_METAFILE */
 #include "debug.h"
 
 #define HTINCR  10      /* handle table allocation size increment */
 
 static HANDLE hHT;      /* handle of the handle table */
 static int HTLen;       /* allocated length of handle table */
+
+/******************************************************************
+ *         GetMetafile         GDI.124 By Kenny MacDonald 30 Nov 94
+ */
+HMETAFILE GetMetaFile(LPSTR lpFilename)
+{
+
+  DC *dc;
+  HMETAFILE hmf;
+  METAFILE *mf;
+  METAHEADER *mh;
+
+  dprintf_metafile(stddeb,"GetMetaFile: %s\n", lpFilename);
+
+  if (!lpFilename)
+    return 0;
+
+  hmf = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAFILE));
+  mf = (METAFILE *)GlobalLock(hmf);
+  if (!mf) {
+    GlobalFree(hmf);
+    return 0;
+  }
+
+  mf->hMetaHdr = GlobalAlloc(GMEM_MOVEABLE, MFHEADERSIZE);
+  mh = (METAHEADER *)GlobalLock(mf->hMetaHdr);
+  if (!mh) {
+    GlobalFree(mf->hMetaHdr);
+    GlobalFree(hmf);
+    return 0;
+  }
+  strcpy(mf->Filename, lpFilename);
+  mf->wMagic = METAFILE_MAGIC;
+  if ((mf->hFile = _lopen(lpFilename, OF_READ)) == HFILE_ERROR) {
+    GlobalFree(hmf);
+    return 0;
+  }
+  if (_lread(mf->hFile, (char *)mh, MFHEADERSIZE) == HFILE_ERROR) {
+    GlobalFree(mf->hMetaHdr);
+    GlobalFree(hmf);
+    return 0;
+  }
+  _lclose(mf->hFile);
+
+
+  GlobalUnlock(mf->hMetaHdr);
+  GlobalUnlock(hmf);
+  if (mh->mtType != 1)
+    return 0;
+  else
+    return hmf;
+}
 
 /******************************************************************
  *         CreateMetafile         GDI.125
@@ -93,7 +144,7 @@ HMETAFILE CloseMetaFile(HDC hdc)
     METAHEADER *mh;
     HMETAFILE hmf;
     char buffer[15];
-    METARECORD *mr = (METARECORD *)&buffer;
+/*    METARECORD *mr = (METARECORD *)&buffer;*/
 
     dprintf_metafile(stddeb,"CloseMetaFile\n");
 
@@ -194,7 +245,7 @@ BOOL PlayMetaFile(HDC hdc, HMETAFILE hmf)
 	if (mh->mtType == 1)   /* disk based metafile */
 	{
 	    _lread(mf->hFile, buffer, sizeof(METARECORD));
-	    mr = (METARECORD *)&buffer;
+	    mr = (METARECORD *)buffer;
 	    _lread(mf->hFile, (char *)(mr->rdParam + 1), (mr->rdSize * 2) -
 		                                       sizeof(METARECORD));
 	    mf->MetaOffset += mr->rdSize * 2;
@@ -234,6 +285,13 @@ void PlayMetaFileRecord(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
 
     switch (mr->rdFunction)
     {
+    case META_EOF:
+      break;
+
+    case META_DELETEOBJECT:
+      DeleteObject(*(ht->objectHandle + *(mr->rdParam)));
+      break;
+
     case META_SETBKCOLOR:
 	SetBkColor(hdc, *(mr->rdParam));
 	break;
@@ -380,6 +438,11 @@ void PlayMetaFileRecord(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
     case META_POLYGON:
 	Polygon(hdc, (LPPOINT)(mr->rdParam + 1), *(mr->rdParam));
 	break;
+
+    case META_POLYPOLYGON:
+      PolyPolygon(hdc, (LPPOINT)(mr->rdParam + *(mr->rdParam) + 1),
+		  (mr->rdParam + 1), *(mr->rdParam)); 
+      break;
 
     case META_POLYLINE:
 	Polyline(hdc, (LPPOINT)(mr->rdParam + 1), *(mr->rdParam));

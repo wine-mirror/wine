@@ -11,15 +11,11 @@
 #include "win.h"
 #include "mdi.h"
 #include "user.h"
+#include "menu.h"
 #include "sysmetrics.h"
 #include "stddebug.h"
-/* #define DEBUG_MDI /* */
-/* #undef  DEBUG_MDI /* */
+/* #define DEBUG_MDI */
 #include "debug.h"
-
-
-extern WORD MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
-			      HWND hwnd, BOOL suppress_draw );  /* menu.c */
 
 /**********************************************************************
  *					MDIRecreateMenuList
@@ -31,14 +27,14 @@ MDIRecreateMenuList(MDICLIENTINFO *ci)
     char buffer[128];
     int id, n, index;
 
-    dprintf_mdi(stddeb, "MDIRecreateMenuList: hWindowMenu %04.4x\n", 
+    dprintf_mdi(stddeb, "MDIRecreateMenuList: hWindowMenu %0x\n", 
 	    ci->hWindowMenu);
     
     id = ci->idFirstChild; 
     while (DeleteMenu(ci->hWindowMenu, id, MF_BYCOMMAND))
 	id++;
 
-    dprintf_mdi(stddeb, "MDIRecreateMenuList: id %04.4x, idFirstChild %04.4x\n", 
+    dprintf_mdi(stddeb, "MDIRecreateMenuList: id %04x, idFirstChild %04x\n", 
 	    id, ci->idFirstChild);
 
     if (!ci->flagMenuAltered)
@@ -54,7 +50,7 @@ MDIRecreateMenuList(MDICLIENTINFO *ci)
 	n = sprintf(buffer, "%d ", index++);
 	GetWindowText(chi->hwnd, buffer + n, sizeof(buffer) - n - 1);
 
-	dprintf_mdi(stddeb, "MDIRecreateMenuList: id %04.4x, '%s'\n", 
+	dprintf_mdi(stddeb, "MDIRecreateMenuList: id %04x, '%s'\n", 
 		id, buffer);
 
 	AppendMenu(ci->hWindowMenu, MF_STRING, id++, buffer);
@@ -157,7 +153,7 @@ void MDIBringChildToTop(HWND parent, WORD id, WORD by_id, BOOL send_to_bottom)
     w  = WIN_FindWndPtr(parent);
     ci = (MDICLIENTINFO *) w->wExtra;
     
-    dprintf_mdi(stddeb, "MDIBringToTop: id %04.4x, by_id %d\n", id, by_id);
+    dprintf_mdi(stddeb, "MDIBringToTop: id %04x, by_id %d\n", id, by_id);
 
     if (by_id)
 	id -= ci->idFirstChild;
@@ -179,7 +175,7 @@ void MDIBringChildToTop(HWND parent, WORD id, WORD by_id, BOOL send_to_bottom)
 	if (!chi)
 	    return;
 
-	dprintf_mdi(stddeb, "MDIBringToTop: child %04.4x\n", chi->hwnd);
+	dprintf_mdi(stddeb, "MDIBringToTop: child %04x\n", chi->hwnd);
 	if (chi != ci->infoActiveChildren)
 	{
 	    if (ci->flagChildMaximized)
@@ -241,7 +237,7 @@ void MDIBringChildToTop(HWND parent, WORD id, WORD by_id, BOOL send_to_bottom)
 	    SendMessage(parent, WM_CHILDACTIVATE, 0, 0);
 	}
 	
-	dprintf_mdi(stddeb, "MDIBringToTop: pos %04.4x, hwnd %04.4x\n", 
+	dprintf_mdi(stddeb, "MDIBringToTop: pos %04x, hwnd %04x\n", 
 		id, chi->hwnd);
     }
 }
@@ -318,7 +314,7 @@ LONG MDIChildActivated(WND *w, MDICLIENTINFO *ci, HWND parent)
     HWND          act_hwnd;
     LONG          lParam;
 
-    dprintf_mdi(stddeb, "MDIChildActivate: top %04.4x\n", w->hwndChild);
+    dprintf_mdi(stddeb, "MDIChildActivate: top %04x\n", w->hwndChild);
 
     chi = ci->infoActiveChildren;
     if (chi)
@@ -327,7 +323,7 @@ LONG MDIChildActivated(WND *w, MDICLIENTINFO *ci, HWND parent)
 	act_hwnd   = chi->hwnd;
 	lParam     = ((LONG) deact_hwnd << 16) | act_hwnd;
 
-	dprintf_mdi(stddeb, "MDIChildActivate: deact %04.4x, act %04.4x\n",
+	dprintf_mdi(stddeb, "MDIChildActivate: deact %04x, act %04x\n",
 	       deact_hwnd, act_hwnd);
 
 	ci->hwndActiveChild = act_hwnd;
@@ -377,12 +373,12 @@ LONG MDICascade(HWND parent, MDICLIENTINFO *ci)
     for (chi = ci->infoActiveChildren; chi->next != NULL; chi = chi->next)
 	;
     
-    dprintf_mdi(stddeb, "MDICascade: last child is %04.4x\n", chi->hwnd);
+    dprintf_mdi(stddeb, "MDICascade: last child is %04x\n", chi->hwnd);
     x = 0;
     y = 0;
     for ( ; chi != NULL; chi = chi->prev)
     {
-	dprintf_mdi(stddeb, "MDICascade: move %04.4x to (%d,%d) size [%d,%d]\n", 
+	dprintf_mdi(stddeb, "MDICascade: move %04x to (%d,%d) size [%d,%d]\n", 
 		chi->hwnd, x, y, xsize, ysize);
 	SetWindowPos(chi->hwnd, 0, x, y, xsize, ysize, 
 		     SWP_DRAWFRAME | SWP_NOACTIVATE | SWP_NOZORDER);

@@ -2,26 +2,22 @@
  * System metrics functions
  *
  * Copyright 1994 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
+*/
 
 #include <X11/Xlib.h>
-
+#include "gdi.h"
 #include "sysmetrics.h"
 
-
 short sysMetrics[SM_CMETRICS];
-
-extern Display * display;
-extern int screenWidth, screenHeight;
 
 /***********************************************************************
  *           SYSMETRICS_Init
  *
  * Initialisation of the system metrics array.
  */
-void SYSMETRICS_Init()
+void SYSMETRICS_Init(void)
 {
     sysMetrics[SM_CXSCREEN] = screenWidth;
     sysMetrics[SM_CYSCREEN] = screenHeight;
@@ -77,6 +73,3 @@ int GetSystemMetrics( WORD index )
     if (index >= SM_CMETRICS) return 0;
     else return sysMetrics[index];    
 }
-
-
-

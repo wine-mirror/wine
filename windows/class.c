@@ -2,9 +2,9 @@
  * Window classes functions
  *
  * Copyright 1993 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -15,7 +15,6 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "dce.h"
 #include "stddebug.h"
 /* #define DEBUG_CLASS */
-/* #undef  DEBUG_CLASS */
 #include "debug.h"
 
 

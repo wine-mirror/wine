@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include "registers.h"
 #include "wine.h"
+#include "miscemu.h"
 #include "stddebug.h"
 /* #define DEBUG_INT */
-/* #undef  DEBUG_INT */
 #include "debug.h"
 
 typedef struct {
@@ -48,7 +48,8 @@ int do_int31(struct sigcontext_struct *context)
 		context->sc_eax = DPMI_FreeSelector(context->sc_ebx);
 		break;
 	case 0x000C:
-		lpDesc = MAKELONG(context->sc_edi, context->sc_es);
+		lpDesc = (LPDESCRIPTOR) MAKELONG(context->sc_edi,
+                                                 context->sc_es);
 		context->sc_eax = DPMI_SetDescriptor(context->sc_ebx, lpDesc);
 		break;
 	default:

@@ -2,10 +2,9 @@
  * DC clipping functions
  *
  * Copyright 1993 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
-
+*/
 #include <stdio.h>
 #include "gdi.h"
 #include "metafile.h"

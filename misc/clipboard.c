@@ -2,9 +2,8 @@
  * 'Wine' Clipboard function handling
  *
  * Copyright 1994 Martin Ayotte
- */
-
 static char Copyright[] = "Copyright Martin Ayotte, 1994";
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -18,9 +17,8 @@ static char Copyright[] = "Copyright Martin Ayotte, 1994";
 #include "prototypes.h"
 #include "heap.h"
 #include "win.h"
+#include "clipboard.h"
 #include "stddebug.h"
-/* #define DEBUG_CLIPBOARD /* */
-/* #undef  DEBUG_CLIPBOARD /* */
 #include "debug.h"
 
 typedef struct tagCLIPFORMAT {
@@ -304,6 +302,8 @@ BOOL ChangeClipboardChain(HWND hWnd, HWND hWndNext)
 {
     dprintf_clipboard(stdnimp,
 		"ChangeClipboardChain(%04X, %04X) !\n", hWnd, hWndNext);
+
+     return 0;
 }
 
 
@@ -343,6 +343,8 @@ int GetPriorityClipboardFormat(WORD FAR *lpPriorityList, short nCount)
 {
     dprintf_clipboard(stdnimp,
 	"GetPriorityClipboardFormat(%p, %d) !\n", lpPriorityList, nCount);
+
+    return 0;
 }
 
 

@@ -9,8 +9,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "gdi.h"
 #include "metafile.h"
 #include "stddebug.h"
-/* #define DEBUG_GDI /* */
-/* #undef  DEBUG_GDI /* */
+/* #define DEBUG_GDI */
 #include "debug.h"
 
 

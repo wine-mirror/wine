@@ -35,11 +35,24 @@ extern void *HEAP_Alloc(MDESC **free_list, int flags, int bytes);
 extern int  HEAP_Free(MDESC **free_list, void *block);
 extern void *HEAP_ReAlloc(MDESC **free_list, void *old_block, 
 			  int new_size, unsigned int flags);
+
 extern LHEAP *HEAP_LocalFindHeap(unsigned short owner);
 extern unsigned int HEAP_LocalSize(MDESC **free_list, unsigned int handle);
 extern void HEAP_LocalInit(unsigned short owner, void *start, int length);
 
+extern void *WIN16_LocalAlloc(int flags, int bytes);
+extern int WIN16_LocalCompact(int min_free);
+extern unsigned int WIN16_LocalFlags(unsigned int handle);
+extern unsigned int WIN16_LocalFree(unsigned int handle);
+extern void *WIN16_LocalLock(unsigned int handle);
+extern void *WIN16_LocalReAlloc(unsigned int handle, int flags, int bytes);
+extern unsigned int WIN16_LocalUnlock(unsigned int handle);
+
+#if 0
 #define HEAP_OWNER	(Segments[Stack16Frame[11] >> 3].owner)
+#endif
+/* Use ds instead of owner of cs */
+#define HEAP_OWNER	Stack16Frame[6]
 #define LOCALHEAP()	(&HEAP_LocalFindHeap(HEAP_OWNER)->free_list)
 #define LOCALATOMTABLE() (&HEAP_LocalFindHeap(HEAP_OWNER)->local_table)
 

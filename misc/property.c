@@ -1,8 +1,8 @@
 /*
  * 				Windows Properties Functions
- */
+ *
 static char Copyright[] = "Copyright Martin Ayotte, 1994";
-
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -158,7 +158,8 @@ BOOL SetProp(HWND hWnd, LPSTR lpStr, HANDLE hData)
 		GlobalUnlock(wndPtr->hProp);
     	return FALSE;
 		}
-    dprintf_prop(stddeb, "SetProp // entry allocated %08X\n", lpNewProp);
+	dprintf_prop(stddeb, "SetProp // entry allocated %08X\n", 
+    		(unsigned int) lpNewProp);
 	if (lpProp == NULL) {
 		wndPtr->hProp = hNewProp;
 		lpNewProp->lpPrevProp = NULL;
@@ -199,7 +200,7 @@ int EnumProps(HWND hWnd, FARPROC lpEnumFunc)
 	LPPROPENTRY lpProp;
 	LPSTR		str;
 	int			nRet;
-	printf("EnumProps(%04X, %08X)\n", hWnd, lpEnumFunc);
+	printf("EnumProps(%04X, %08X)\n", hWnd, (unsigned int) lpEnumFunc);
 	wndPtr = WIN_FindWndPtr(hWnd);
     if (wndPtr == NULL) {
     	printf("EnumProps // Bad Window handle !\n");

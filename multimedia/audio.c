@@ -2,9 +2,9 @@
  * Sample Wine Driver for Linux
  *
  * Copyright 1994 Martin Ayotte
- */
+ *
 static char Copyright[] = "Copyright  Martin Ayotte, 1994";
-
+*/
 #ifndef WINELIB
 #define BUILTIN_MMSYSTEM
 #endif 
@@ -28,8 +28,6 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #endif
 
 #include "stddebug.h"
-/* #define DEBUG_MCIWAVE /* */
-/* #undef  DEBUG_MCIWAVE /* */
 #include "debug.h"
 
 #ifdef linux
@@ -79,7 +77,7 @@ typedef struct {
 	} LINUX_MCIWAVE;
 
 static LINUX_WAVEOUT	WOutDev[MAX_WAVOUTDRV];
-static LINUX_WAVEIN		WInDev[MAX_WAVOUTDRV];
+static LINUX_WAVEIN	WInDev[MAX_WAVOUTDRV];
 static LINUX_MCIWAVE	MCIWavDev[MAX_MCIWAVDRV];
 #endif
 
@@ -190,14 +188,12 @@ LRESULT WAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 DWORD WAVE_mciOpen(DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lpParms)
 {
 #ifdef linux
-	int			hFile;
 	UINT 		wDevID;
-	OFSTRUCT	OFstruct;
 	LPPCMWAVEFORMAT	lpWaveFormat;
 	WAVEOPENDESC 	WaveDesc;
 	DWORD		dwRet;
 	char		str[128];
-	LPSTR		ptr;
+
 	dprintf_mciwave(stddeb,"WAVE_mciOpen(%08X, %08X)\n", dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	wDevID = lpParms->wDeviceID;
@@ -406,7 +402,8 @@ DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpParms)
 	int			count;
 	int			start, end;
 	LPWAVEHDR		lpWaveHdr;
-	DWORD		dwRet;
+	DWORD			dwRet;
+
 	dprintf_mciwave(stddeb,
 		"WAVE_mciRecord(%u, %08X, %08X);\n", wDevID, dwFlags, lpParms);
 	if (MCIWavDev[wDevID].hFile == 0) {

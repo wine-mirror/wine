@@ -17,6 +17,7 @@
 #include "dlls.h"
 #include "neexe.h"
 #include "peexe.h"
+#include "pe_image.h"
 
 #define MAP_ANONYMOUS	0x20
 
@@ -133,10 +134,10 @@ static void dump_table(struct w_files *wpnt)
 }
 
 /**********************************************************************
- *			LoadPEImage
+ *			PE_LoadImage
  * Load one PE format executable into memory
  */
-HINSTANCE LoadPEImage(struct w_files *wpnt)
+HINSTANCE PE_LoadImage(struct w_files *wpnt)
 {
 	int i, result;
 
@@ -159,8 +160,8 @@ HINSTANCE LoadPEImage(struct w_files *wpnt)
 	for(i=0; i < wpnt->pe->pe_header->coff.NumberOfSections; i++)
 	{
 	if(!load_addr) {
-		result = xmmap(0, wpnt->pe->pe_seg[i].Size_Of_Raw_Data, 7, MAP_PRIVATE, 
-		      wpnt->fd, wpnt->pe->pe_seg[i].PointerToRawData);
+		result = xmmap((char *)0, wpnt->pe->pe_seg[i].Size_Of_Raw_Data, 7,
+			MAP_PRIVATE, wpnt->fd, wpnt->pe->pe_seg[i].PointerToRawData);
 		load_addr = (unsigned int) result -  wpnt->pe->pe_seg[i].Virtual_Address;
 	} else {
 		result = xmmap((char *) load_addr + wpnt->pe->pe_seg[i].Virtual_Address, 
@@ -190,20 +191,20 @@ HINSTANCE LoadPEImage(struct w_files *wpnt)
 	return (wpnt->hinstance);
 }
 
-int PEunloadImage(struct w_files *wpnt)
+int PE_UnloadImage(struct w_files *wpnt)
 {
 	printf("PEunloadImage() called!\n");
 	/* free resources, image, unmap */
 	return 1;
 }
 
-int StartPEprogram(struct w_files *wpnt)
+int PE_StartProgram(struct w_files *wpnt)
 {
 	printf("StartPEprogram() called!\n");
 	return 0;
 }
 
-void InitPEDLL(struct w_files *wpnt)
+void PE_InitDLL(struct w_files *wpnt)
 {
 	/* Is this a library? */
 	if (wpnt->pe->pe_header->coff.Characteristics & IMAGE_FILE_DLL) {

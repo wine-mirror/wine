@@ -29,8 +29,8 @@
 #define ES context->sc_es
 #define SS context->sc_ss
 
-#define DI context->sc_edi
-#define SI context->sc_esi
+#define DI ((WORD)context->sc_edi)
+#define SI ((WORD)context->sc_esi)
 #define SP context->sc_esp
 #ifndef __FreeBSD__
 #define EFL context->sc_eflags

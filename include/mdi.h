@@ -11,6 +11,9 @@
 #include "windows.h"
 
 #define MDI_MAXLISTLENGTH	64
+extern LONG MDIClientWndProc(HWND hwnd, WORD message, 
+			     WORD wParam, LONG lParam); /* mdi.c */
+
 
 typedef struct mdi_child_info_s
 {

@@ -5,9 +5,14 @@
 : ${EDITOR:=vi}
 : ${PAGER:=more}
 
+WINELIB=''
+SHORTNAMES=''
+XPM=''
+LANG=not_matching
+NEWBUILD=''
 ALLDEFINES=''
 
-# Ask question 'str' and sets 'var' reply (defaulting to 'def' on CR)
+# Ask question 'str' and set 'var' to reply (defaulting to 'def' on CR)
 prompt ()
 {
 	str="$1"
@@ -30,29 +35,6 @@ if [ "$input" = 'l' -o "$input" = 'L' ]
 then
 	WINELIB='#define WINELIB -DWINELIB'
 	ALLDEFINES="$ALLDEFINES -DWINELIB"
-else
-	WINELIB=''
-
-#	Commented out until the processor emulator starts to work.
-#
-#	echo
-#	echo -n 'Use processor emulator (*DOES*NOT*WORK*YET*) (Y/N) [N]? '
-#	read input
-#	if [ "$input" = 'y' -o "$input" = 'Y' ]
-#	then
-#		PROCEMU='#define PROCEMU'
-#		ALLDEFINES="$ALLDEFINES -DPROCEMU"
-#		echo
-#		echo -n 'bochs directory [/usr/src/bochs]? '
-#		read input
-#		if [ "$input" = '' ]
-#		then
-#			ALLDEFINES="$ALLDEFINES -DPROC_EMU_DIR=/usr/src/bochs"
-#		else
-#			ALLDEFINES="$ALLDEFINES -DPROC_EMU_DIR="$input
-#		fi
-#	fi
-
 fi
 
 echo
@@ -62,8 +44,6 @@ if [ "$input" = 'y' -o "$input" = 'Y' ]
 then
 	SHORTNAMES='#define ShortNames -DSHORTNAMES'
 	ALLDEFINES="$ALLDEFINES -DSHORTNAMES"
-else
-	SHORTNAMES=''
 fi
 
 echo
@@ -73,13 +53,32 @@ if [ "$input" = 'y' -o "$input" = 'Y' ]
 then
 	XPM='#define USE_XPM'
 	ALLDEFINES="$ALLDEFINES -DUSE_XPM"
-else
-	XPM=''
+fi
+
+LANGS=`echo En rc/sysres_*.rc | sed -e 's/rc\/sysres_//g' -e 's/\.rc//g' -e 's/ /\//g;'`
+while	expr "$LANGS" : ".*$LANG" == 0 > /dev/null
+do
+	prompt "Language ($LANGS)" LANG En
+	if	expr "$LANGS" : ".*$LANG" == 0 > /dev/null
+	then
+		echo "\"$LANG\" is not a supported language."
+	fi
+done
+ALLDEFINES="$ALLDEFINES -ALANG\($LANG\)"
+
+if [ "`(domainname)`" = 'amscons.com' ]
+then
+	echo
+	echo -n 'New build program (Y/N) [N]? '
+	read input
+	if [ "$input" = 'y' -o "$input" = 'Y' ]
+	then
+		NEWBUILD='#define NewBuild -DNEWBUILD'
+		ALLDEFINES="$ALLDEFINES -DNEWBUILD"
+	fi
 fi
 
 prompt "Global configfile name" WINE_CONFIGFILE /usr/local/etc/wine.conf
-
-WINE_INI_GLOBAL='#define WINE_INI_GLOBAL "'$WINE_CONFIGFILE'"'
 
 if [ -r $WINE_CONFIGFILE ]
 then
@@ -108,18 +107,22 @@ then
 		fi
 	fi
 
-	case `awk 'BEGIN {s=0} {if ($3=="msdos") s++} END {print s}' /etc/fstab` in
-	0)	CF_C=/c;;
-	1)	CF_C=`awk '{if ($3=="msdos") print $2}' /etc/fstab`;;
-	*)	CF_C=`awk '{if ($3=="msdos") {print $2;exit}}' /etc/fstab`;;
-	esac
-
-	prompt "Which directory do you want to use as A:" CF_A /a
+	CF_A=`mount | awk '/^\/dev\/fd/ {print $3;exit} END {print "/a"}'`
+	prompt "Which directory do you want to use as A:" CF_A $CF_A
+	CF_C=`awk '{if ($3=="msdos") {print $2;exit}} END {print "/c"}' /etc/fstab`
 	prompt "Which directory do you want to use as C:" CF_C $CF_C
 	prompt "Where is the Windows directory" CF_Windows 'c:\windows'
 	prompt "Where is the System directory" CF_System 'c:\windows\system'
-	prompt "Where should Windows apps store temp files" CF_Temp 'c:\temp'
-	prompt "Which path should be used to find executables and DLL's" CF_Path 'c:\windows;c:\windows\system'
+	if [ -r "$CF_C/autoexec.bat" ]
+	then
+		CF_Temp=`tr A-Z a-z < "$CF_C/autoexec.batX" | sed -n 's/^ *set *temp= *\(c:.*[a-z]\).*/\1/p'`
+	fi
+	if [ -z "$CF_Temp" ]
+	then
+		CF_Temp='c:\temp'
+	fi
+	prompt "Where should Windows apps store temp files" CF_Temp $CF_Temp
+	prompt "Which path should be used to find progs/DLL's" CF_Path "$CF_Windows;$CF_System"
 	prompt "Where is sysres.dll" CF_SystemResources `pwd`/sysres.dll
 	prompt "Where is COM1" CF_Com1 '/dev/cua0'
 	prompt "Where is COM2" CF_Com2 '/dev/cua1'
@@ -135,9 +138,7 @@ Here is the list of messages:\
 
 	prompt "Exclude which messages from the log" CF_Exclude 'WM_SIZE;WM_TIMER'
 
-	echo
-	echo "The config file $WINE_CONFIGFILE now looks like this:"
-	tee $WINE_CONFIGFILE << EOF
+	cat >  $WINE_CONFIGFILE << EOF
 [drives]
 A=$CF_A
 C=$CF_C
@@ -148,6 +149,16 @@ System=$CF_System
 Temp=$CF_Temp
 Path=$CF_Path
 SystemResources=$CF_SystemResources
+
+[fonts]
+system=*-helvetica
+mssansserif=*-helvetica
+msserif=*-times
+fixedsys=*-fixed
+arial=*-helvetica
+helv=*-helvetica
+roman=*-times
+default=*-*
 
 [serialports]
 Com1=$CF_Com1
@@ -160,6 +171,12 @@ Lpt1=$CF_Lpt1
 File=$CF_File
 Exclude=$CF_Exclude
 EOF
+
+	echo
+	sed '1 i\
+The config file '"$WINE_CONFIGFILE"' now looks like this:\
+\
+' < $WINE_CONFIGFILE | $PAGER
 
 	echo
 	echo -n "Do you want to edit it using $EDITOR (Y/N) [N]? "
@@ -175,23 +192,6 @@ else
 	fi
 fi
 
-prompt "Language (En/De)" LANG En
-ALLDEFINES="$ALLDEFINES -ALANG\($LANG\)"
-
-NEWBUILD=''
-if [ "`(domainname)`" = 'amscons.com' ]
-then
-    echo
-    echo -n 'New build program (Y/N) [N]? '
-    read input
-    if [ "$input" = 'y' -o "$input" = 'Y' ]
-    then
-	NEWBUILD='#define NewBuild -DNEWBUILD'
-	ALLDEFINES="$ALLDEFINES -DNEWBUILD"
-    fi
-fi
-
-NEWLINUXLDT=''
 if grep -s seg_not_present /usr/include/linux/ldt.h 2> /dev/null
 then
 	ALLDEFINES="$ALLDEFINES -DNEW_LDT_STRUCT"
@@ -203,12 +203,12 @@ $WINELIB
 $SHORTNAMES
 $XPM
 $NEWBUILD
-$WINE_INI_GLOBAL
-$ENDIAN
-$PROCEMUDIR
+#define WINE_INI_GLOBAL "$WINE_CONFIGFILE"
 #define AutoDefines $ALLDEFINES
 EOF
 
+echo
+echo "Creating Makefiles.  This may take a while."
 xmkmf -a
 
 if [ 0 -lt `find . -name "*.rej" -print | wc -l` ]
@@ -223,5 +223,8 @@ List of "*.rej" files:
 
 EOF
 	find . -name "*.rej" -print
-	echo
+	exit 1
 fi
+
+echo
+echo "Configure finished.  Do 'make' to compile Wine."

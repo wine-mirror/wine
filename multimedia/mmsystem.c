@@ -2,9 +2,9 @@
  * MMSYTEM functions
  *
  * Copyright 1993 Martin Ayotte
- */
+ *
 static char Copyright[] = "Copyright  Martin Ayotte, 1993";
-
+*/
 #ifndef WINELIB
 
 #include <stdio.h>

@@ -25,9 +25,10 @@
 #include <sys/mount.h>
 #endif
 
+#include "wine.h"
 #include "windows.h"
 #include "msdos.h"
-#include "prototypes.h"
+/* #include "dos_fs.h" */
 #include "autoconf.h"
 #include "comm.h"
 #include "stddebug.h"
@@ -178,8 +179,6 @@ WORD DOS_GetEquipment(void)
 	int parallelports = 0;
 	int serialports = 0;
 	int x;
-	extern struct DosDeviceStruct COM[MAX_PORTS];
-	extern struct DosDeviceStruct LPT[MAX_PORTS];
 
 /* borrowed from Ralph Brown's interrupt lists 
 
@@ -255,7 +254,7 @@ int DOS_ValidDirectory(char *name)
 	char *dirname;
 	struct stat s;
 	dprintf_dosfs(stddeb, "DOS_ValidDirectory: '%s'\n", name);
-	if ((dirname = GetUnixFileName(name)) == NULL)
+	if ((dirname = DOS_GetUnixFileName(name)) == NULL)
 		return 0;
 	if (stat(dirname,&s))
 		return 0;
@@ -392,7 +391,7 @@ static void GetUnixDirName(char *rootdir, char *name)
 
 }
 
-char *GetUnixFileName(char *dosfilename)
+char *DOS_GetUnixFileName(char *dosfilename)
 { 
 	/*   a:\windows\system.ini  =>  /dos/windows/system.ini */
 	
@@ -418,7 +417,7 @@ char *GetUnixFileName(char *dosfilename)
 	return(temp);
 }
 
-char *GetDosFileName(char *unixfilename)
+char *DOS_GetDosFileName(char *unixfilename)
 { 
 	int i;
 	static char temp[256], rootdir[256];
@@ -555,7 +554,7 @@ int DOS_GetFreeSpace(int drive, long *size, long *available)
 	return 1;
 }
 
-char *FindFile(char *buffer, int buflen, char *filename, char **extensions, 
+char *DOS_FindFile(char *buffer, int buflen, char *filename, char **extensions, 
 		char *path)
 {
     char *workingpath, *dirname, *rootname, **e;
@@ -566,7 +565,7 @@ char *FindFile(char *buffer, int buflen, char *filename, char **extensions,
 
     if (strchr(filename, '\\') != NULL)
     {
-	strncpy(buffer, GetUnixFileName(filename), buflen);
+	strncpy(buffer, DOS_GetUnixFileName(filename), buflen);
 	stat( buffer, &filestat);
 	if (S_ISREG(filestat.st_mode))
 	    return buffer;
@@ -580,7 +579,7 @@ char *FindFile(char *buffer, int buflen, char *filename, char **extensions,
 	return buffer;
     }
 
-    dprintf_dosfs(stddeb,"FindFile: looking for %s\n", filename);
+    dprintf_dosfs(stddeb,"DOS_FindFile: looking for %s\n", filename);
     rootnamelen = strlen(filename);
     rootname = strdup(filename);
     ToUnix(rootname);
@@ -591,7 +590,7 @@ char *FindFile(char *buffer, int buflen, char *filename, char **extensions,
 	dirname = strtok(NULL, ";"))
     {
 	if (strchr(dirname, '\\') != NULL)
-		d = opendir( GetUnixFileName(dirname) );
+		d = opendir( DOS_GetUnixFileName(dirname) );
 	else
 		d = opendir( dirname );
 
@@ -618,7 +617,7 @@ char *FindFile(char *buffer, int buflen, char *filename, char **extensions,
 		    if (found)
 		    {
 			if (strchr(dirname, '\\') != NULL)
-				strncpy(buffer, GetUnixFileName(dirname), buflen);
+				strncpy(buffer, DOS_GetUnixFileName(dirname), buflen);
 			else
 				strncpy(buffer, dirname, buflen);
 
@@ -679,7 +678,7 @@ char *WinIniFileName(void)
 		
 	name = malloc(1024);
 
-	strcpy(name, GetUnixFileName(WindowsDirectory));
+	strcpy(name, DOS_GetUnixFileName(WindowsDirectory));
 	strcat(name, "/");
 	strcat(name, "win.ini");
 
@@ -732,7 +731,7 @@ struct dosdirent *DOS_opendir(char *dosdirname)
 	if (x == MAX_OPEN_DIRS)
 		return NULL;
 
-	if ((unixdirname = GetUnixFileName(dosdirname)) == NULL)
+	if ((unixdirname = DOS_GetUnixFileName(dosdirname)) == NULL)
 		return NULL;
 
 	strcpy(temp, unixdirname);

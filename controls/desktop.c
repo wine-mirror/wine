@@ -2,9 +2,9 @@
  * Desktop window class.
  *
  * Copyright 1994 Alexandre Julliard
- */
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
+*/
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -13,11 +13,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include <unistd.h>
 #include "win.h"
 #include "desktop.h"
-#include "prototypes.h"
-
-extern BOOL GRAPH_DrawBitmap( HDC hdc, HBITMAP hbitmap, int xdest, int ydest,
-			      int xsrc, int ysrc, int width, int height,
-			      int rop );                     /* graphics.c */
+#include "dos_fs.h"
+#include "graphics.h"
 
 /***********************************************************************
  *           DESKTOP_LoadBitmap
@@ -35,7 +32,7 @@ static HBITMAP DESKTOP_LoadBitmap( HDC hdc, char *filename )
 
       /* Read all the file into memory */
 
-    if (!(unixFileName = GetUnixFileName( filename ))) return 0;
+    if (!(unixFileName = DOS_GetUnixFileName( filename ))) return 0;
     if ((file = open( unixFileName, O_RDONLY )) == -1) return 0;
     size = lseek( file, 0, SEEK_END );
     if (!(buffer = (char *)malloc( size )))
@@ -151,7 +148,7 @@ LONG DesktopWndProc ( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 /***********************************************************************
  *           SetDeskPattern   (USER.279)
  */
-BOOL SetDeskPattern()
+BOOL SetDeskPattern(void)
 {
     char buffer[100];
     GetProfileString( "desktop", "Pattern", "(None)", buffer, 100 );

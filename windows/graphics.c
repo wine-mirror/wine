@@ -14,18 +14,13 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
 #ifndef PI
 #define PI M_PI
 #endif
-
+#include "dc.h"
 #include "gdi.h"
+#include "metafile.h"
 #include "syscolor.h"
 #include "stddebug.h"
-/* #define DEBUG_GRAPHICS /* */
-/* #undef  DEBUG_GRAPHICS /* */
+#include "color.h"
 #include "debug.h"
-
-
-extern const int DC_XROPfunction[];
-
-extern int COLOR_ToPhysical( DC *dc, COLORREF color );
 
 static __inline__ void swap_int(int *a, int *b)
 {
@@ -109,7 +104,7 @@ BOOL MoveToEx( HDC hdc, short x, short y, LPPOINT pt )
  * Helper functions for Arc(), Chord() and Pie().
  * 'lines' is the number of lines to draw: 0 for Arc, 1 for Chord, 2 for Pie.
  */
-BOOL GRAPH_DrawArc( HDC hdc, int left, int top, int right, int bottom,
+static BOOL GRAPH_DrawArc( HDC hdc, int left, int top, int right, int bottom,
 		    int xstart, int ystart, int xend, int yend, int lines )
 {
     int xcenter, ycenter, istart_angle, idiff_angle;
@@ -453,7 +448,7 @@ int FrameRect( HDC hdc, LPRECT rect, HBRUSH hbrush )
  */
 COLORREF SetPixel( HDC hdc, short x, short y, COLORREF color )
 {
-    int pixel;
+    Pixel pixel;
     PALETTEENTRY entry;
     
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -468,13 +463,17 @@ COLORREF SetPixel( HDC hdc, short x, short y, COLORREF color )
     x = dc->w.DCOrgX + XLPTODP( dc, x );
     y = dc->w.DCOrgY + YLPTODP( dc, y );
     pixel = COLOR_ToPhysical( dc, color );
-    GetPaletteEntries( dc->w.hPalette, pixel, 1, &entry );
     
     XSetForeground( display, dc->u.x.gc, pixel );
     XSetFunction( display, dc->u.x.gc, GXcopy );
     XDrawPoint( display, dc->u.x.drawable, dc->u.x.gc, x, y );
 
-    return RGB( entry.peRed, entry.peGreen, entry.peBlue );
+    if (screenDepth <= 8)
+    {
+        GetPaletteEntries( dc->w.hPalette, pixel, 1, &entry );
+        return RGB( entry.peRed, entry.peGreen, entry.peBlue );
+    }
+    else return (COLORREF)pixel;
 }
 
 

@@ -2,9 +2,9 @@
  * Windows widgets (built-in window classes)
  *
  * Copyright 1993 Alexandre Julliard
- */
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
+*/
 
 #include "win.h"
 #include "button.h"

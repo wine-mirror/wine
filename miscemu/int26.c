@@ -4,12 +4,10 @@
 #include "msdos.h"
 #include "segmem.h"
 #include "wine.h"
+#include "miscemu.h"
 #include "stddebug.h"
 /* #define DEBUG_INT */
-/* #undef  DEBUG_INT */
 #include "debug.h"
-
-void IntBarf(int i, struct sigcontext_struct *context);
 
 int do_int26(struct sigcontext_struct *context)
 {
@@ -26,8 +24,8 @@ int do_int26(struct sigcontext_struct *context)
 		length = CX;
 	}
 		
-	dprintf_int(stdnimp,"int26: abs diskwrite, drive %d, sector %d, count %d,"
-		" buffer %d\n", EAX & 0xff, begin, length, (int) dataptr);
+	dprintf_int(stdnimp,"int26: abs diskwrite, drive %d, sector %ld, "
+	"count %ld, buffer %d\n", EAX & 0xff, begin, length, (int) dataptr);
 
 	ResetCflag;
 

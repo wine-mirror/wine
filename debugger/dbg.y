@@ -30,6 +30,7 @@ void mode_command(int);
 %token BACKTRACE
 %token INFO
 %token STACK
+%token SEGMENTS
 %token REG
 %token REGS
 %token NUM
@@ -83,7 +84,7 @@ x_command:
 
 print:
 	  'p'
-	| print
+	| PRINT
 	
  print_command:
 	  print expr '\n' { examine_memory(((unsigned int) &$2 ), 1, 'x'); }
@@ -107,15 +108,16 @@ print:
 
  expr:  NUM			{ $$ = $1;	}
 	| REG			{ if(regval) $$ = regval[$1]; else application_not_running();}
-	| symbol   		{ $$ = *((unsigned int *) $1); }
+	| symbol   		{ $$ = $1; }
 	| expr '+' NUM		{ $$ = $1 + $3; }
 	| expr '-' NUM		{ $$ = $1 - $3; }
 	| '(' expr ')'		{ $$ = $2; }
 	| '*' expr		{ $$ = *((unsigned int *) $2); }
 	
- infocmd: INFO REGS { info_reg(); }
-	| INFO STACK  { info_stack(); }
-	| INFO BREAK  { info_break(); }
+ infocmd: INFO REGS     { info_reg(); }
+	| INFO STACK    { info_stack(); }
+	| INFO BREAK    { info_break(); }
+	| INFO SEGMENTS { print_ldt(); }
 
 
 %%
@@ -187,17 +189,21 @@ wine_debug(int signal, int * regs)
 	}
 
 	/* Remove the breakpoints from memory... */
-	fprintf(stderr,"Removing BPs\n");
 	insert_break(0);
 
 	/* If we stopped on a breakpoint, report this fact */
 	if(signal == SIGTRAP)
 	  {
 	    unsigned int addr;
+	    int bpnum;
 	    addr = SC_EIP(dbg_mask);
 	    if((addr & 0xffff0000) == 0 && dbg_mode == 16)
 	      addr |= SC_CS << 16;
-	    fprintf(stderr,"Stopped on breakpoint %d\n", get_bpnum(addr));
+	    if(should_continue(bpnum=get_bpnum(addr))){
+		insert_break(1);
+		return;
+	    }
+	    fprintf(stderr,"Stopped on breakpoint %d\n", bpnum);
 	  }
 
 	/* Show where we crashed */

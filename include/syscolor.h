@@ -34,6 +34,7 @@ struct SysColorObjects
     HBRUSH hbrushBtnHighlight;     /* COLOR_BTNHIGHLIGHT        */
 };
 
+extern void SYSCOLOR_Init(void);
 extern struct SysColorObjects sysColorObjects;
 
 #endif  /* SYSCOLOR_H */

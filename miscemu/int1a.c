@@ -4,9 +4,9 @@
 #include "registers.h"
 #include "wine.h"
 #include "options.h"
+#include "miscemu.h"
 #include "stddebug.h"
 /* #define DEBUG_INT */
-/* #undef  DEBUG_INT */
 #include "debug.h"
 
 #ifdef linux
@@ -18,14 +18,11 @@
 #define	BCD_TO_BIN(x) ((x&15) + (x>>4)*10)
 #define BIN_TO_BCD(x) ((x%10) + ((x/10)<<4))
 
-void IntBarf(int i, struct sigcontext_struct *context);
-
-int do_int1A(struct sigcontext_struct * context){
-	time_t ltime;
+int do_int1a(struct sigcontext_struct * context){
+	time_t ltime, ticks;
 	struct tm *bdtime;
-	int ticks;
 
-    if (Options.relay_debug) {
+    if (debugging_relay) {
 	fprintf(stddeb,"int1A: AX %04x, BX %04x, CX %04x, DX %04x, "
 	       "SI %04x, DI %04x, DS %04x, ES %04x\n",
 	       AX, BX, CX, DX, SI, DI, DS, ES);

@@ -1,22 +1,18 @@
 /*
  *        Tasks functions
- */
+ *
 static char Copyright[] = "Copyright  Martin Ayotte, 1994";
-
-
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include "windows.h"
-#include "wine.h"
+#include "if1632.h"
 #include "task.h"
 #include "stddebug.h"
-/* #define DEBUG_TASK */
-/* #undef DEBUG_TASK */
 #include "debug.h"
-
 
 static LPWINETASKENTRY lpTaskList = NULL;
 static int nTaskCount = 0;
@@ -24,7 +20,7 @@ static int nTaskCount = 0;
 /**********************************************************************
  *				GetCurrentTask	[KERNEL.36]
  */
-HTASK GetCurrentTask()
+HTASK GetCurrentTask(void)
 {
 	LPWINETASKENTRY lpTask = lpTaskList;
 	int pid = getpid();
@@ -43,7 +39,7 @@ HTASK GetCurrentTask()
 /**********************************************************************
  *				GetNumTasks	[KERNEL.152]
  */
-WORD GetNumTasks()
+WORD GetNumTasks(void)
 {
 	dprintf_task(stddeb,"GetNumTasks() returned %d !\n", nTaskCount);
 	return nTaskCount;
@@ -89,7 +85,8 @@ BOOL EnumTaskWindows(HANDLE hTask, FARPROC lpEnumFunc, LONG lParam)
 	BOOL	bRet;
 	int		count = 0;
 	LPWINETASKENTRY lpTask = lpTaskList;
-	dprintf_task(stddeb,"EnumTaskWindows(%04X, %08X, %08X) !\n", hTask, lpEnumFunc, lParam);
+	dprintf_task(stddeb,"EnumTaskWindows(%04X, %08X, %08X) !\n", hTask, 
+		(unsigned int) lpEnumFunc, (unsigned int) lParam);
 	while (TRUE) {
 		if (lpTask->te.hTask == hTask) break;
 		if (lpTask == NULL) {

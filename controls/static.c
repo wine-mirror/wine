@@ -3,9 +3,8 @@
  *
  * Copyright  David W. Metcalfe, 1993
  *
- */
-
 static char Copyright[] = "Copyright  David W. Metcalfe, 1993";
+*/
 
 #include <stdio.h>
 #include <windows.h>
@@ -98,10 +97,12 @@ LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
             return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 	case WM_CREATE:
-	    if (style < 0L || style > LAST_STATIC_TYPE) {
+	    if (style < 0L || style > LAST_STATIC_TYPE)
+            {
+                fprintf( stderr, "STATIC: Unknown style 0x%02lx\n", style );
 		lResult = -1L;
 		break;
-		}
+            }
 	    /* initialise colours */
 	    color_windowframe  = GetSysColor(COLOR_WINDOWFRAME);
 	    color_background   = GetSysColor(COLOR_BACKGROUND);
@@ -116,11 +117,11 @@ LONG StaticWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
             break;
 
 	case WM_PAINT:
-	    if (staticPaintFunc[style])
             {
                 PAINTSTRUCT ps;
                 BeginPaint( hWnd, &ps );
-		(staticPaintFunc[style])( hWnd, ps.hdc );
+                if (staticPaintFunc[style])
+                    (staticPaintFunc[style])( hWnd, ps.hdc );
                 EndPaint( hWnd, &ps );
             }
 	    break;

@@ -2,19 +2,22 @@
  * COMMDLG functions
  *
  * Copyright 1994 Martin Ayotte
- */
 static char Copyright[] = "Copyright  Martin Ayotte, 1994";
+*/
 
 /*
 #define DEBUG_OPENDLG
 #define DEBUG_OPENDLG_DRAW
 */
 
-#include "stdio.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "dialog.h"
 #include "win.h"
 #include "user.h"
 #include "message.h"
+#include "library.h"
 #include "heap.h"
 #include "commdlg.h"
 #include "dlgs.h"
@@ -22,8 +25,6 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #define OPENFILEDLG2			11
 #define SAVEFILEDLG2			12
 
-
-extern 	HINSTANCE 	hSysRes;
 static	DWORD 		CommDlgLastError = 0;
 
 static	HBITMAP		hFolder = 0;

@@ -2,17 +2,16 @@
  * GDI brush objects
  *
  * Copyright 1993 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
+*/
 
 #include "gdi.h"
 #include "bitmap.h"
 #include "prototypes.h"
 #include "metafile.h"
 #include "stddebug.h"
-/* #define DEBUG_GDI */
-/* #undef  DEBUG_GDI */
+#include "color.h"
 #include "debug.h"
 
 #define NB_HATCH_STYLES  6
@@ -26,8 +25,6 @@ static char HatchBrushes[NB_HATCH_STYLES][8] =
     { 0x08, 0x08, 0x08, 0xff, 0x08, 0x08, 0x08, 0x08 }, /* HS_CROSS      */
     { 0x81, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x81 }  /* HS_DIAGCROSS  */
 };
-
-extern WORD COLOR_ToPhysical( DC *dc, COLORREF color );
 
 
 /***********************************************************************
@@ -180,7 +177,7 @@ int BRUSH_GetObject( BRUSHOBJ * brush, int count, LPSTR buffer )
  */
 static void BRUSH_SelectSolidBrush( DC *dc, COLORREF color )
 {
-    if ((dc->w.bitsPerPixel > 1) && !COLOR_IsSolid( color ))
+    if ((dc->w.bitsPerPixel > 1) && (screenDepth <= 8) && !COLOR_IsSolid( color ))
     {
 	  /* Dithered brush */
 	dc->u.x.brush.pixmap = DITHER_DitherColor( dc, color );

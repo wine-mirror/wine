@@ -1,6 +1,7 @@
+/*
 static char RCSId[] = "$Id: resource.c,v 1.4 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
-
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,27 +10,22 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <fcntl.h>
 #include <unistd.h>
 #include "arch.h"
-#include "prototypes.h"
 #include "windows.h"
 #include "gdi.h"
-#include "wine.h"
+#include "neexe.h"
 #include "icon.h"
 #include "menu.h"
 #include "accel.h"
 #include "dlls.h"
 #include "resource.h"
+#include "library.h"
 #include "stddebug.h"
-/* #define DEBUG_RESOURCE */
-/* #undef  DEBUG_RESOURCE */
-/* #define DEBUG_ACCEL    */
-/* #undef  DEBUG_ACCEL    */
 #include "debug.h"
 #include "../rc/sysresbm.h"
 
 #define MIN(a,b)	((a) < (b) ? (a) : (b))
 
 RESOURCE *Top = NULL;
-extern HINSTANCE hSysRes;
 
 extern int NE_FindResource(HANDLE, LPSTR, LPSTR, RESOURCE *);
 extern int PE_FindResource(HANDLE, LPSTR, LPSTR, RESOURCE *);
@@ -50,13 +46,13 @@ HANDLE FindResource(HANDLE instance, LPSTR name, LPSTR type)
 	RESOURCE *r;
 	HANDLE rh;
 
-#ifdef DEBUG_RESOURCE 
+	if(debugging_resource){
 	printf("FindResource(%04X", instance);
 	PrintId(name);
 	PrintId(type);
 	printf(")\n");
-#endif
-
+	}
+	
 	if (instance == (HANDLE)NULL)
 		instance = hSysRes;
 
@@ -364,11 +360,11 @@ HICON LoadIcon(HANDLE instance, LPSTR icon_name)
     int 	image_size;
     HBITMAP     hbmpOld1, hbmpOld2;
 
-#ifdef DEBUG_RESOURCE
+    if(debugging_resource){
 	printf("LoadIcon(%04X", instance);
 	PrintId(icon_name);
 	printf(")\n");
-#endif
+    }
     
     if (!(hdc = GetDC(GetDesktopWindow()))) return 0;
     rsc_mem = RSC_LoadResource(instance, icon_name, (LPSTR) NE_RSCTYPE_GROUP_ICON, 
@@ -545,11 +541,11 @@ HANDLE LoadAccelerators(HANDLE instance, LPSTR lpTableName)
     ACCELHEADER	*lpAccelTbl;
     int 	i, image_size, n;
 
-#ifdef DEBUG_ACCEL
+    if(debugging_accel){
 	printf("LoadAccelerators(%04X", instance);
 	PrintId(lpTableName);
 	printf(")\n");
-#endif
+    }
 
     rsc_mem = RSC_LoadResource(instance, lpTableName, (LPSTR) NE_RSCTYPE_ACCELERATOR, 
 			       &image_size);
@@ -696,11 +692,11 @@ HMENU LoadMenu(HINSTANCE instance, char *menu_name)
 	HANDLE		hMenu_desc;
 	MENU_HEADER 	*menu_desc;
 
-#ifdef DEBUG_MENU
+	if(debugging_menu){
 	printf("LoadMenu(%04X", instance);
 	PrintId(menu_name);
 	printf(")\n");
-#endif
+	}
 	if (menu_name == NULL)
 		return 0;
 
@@ -725,11 +721,11 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
     int image_size;
     int size;
     
-#ifdef DEBUG_RESOURCE
+    if(debugging_resource){
 	printf("LoadBitmap(%04X", instance);
 	PrintId(bmp_name);
 	printf(")\n");
-#endif
+    }
 
     if (!instance) {
 	struct ResourceTable *it;
@@ -737,7 +733,7 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
 	if (hbitmap)
 		return hbitmap;
 	/* Load from sysresbm */
-	dprintf_resource(stddeb,"Searching for %d\n",bmp_name);
+	dprintf_resource(stddeb,"Searching for %d\n", (int) bmp_name);
 	for(it=sysresbmTable;it->value;it++){
 	    if(it->type==NE_RSCTYPE_BITMAP)
 	    if((((int)bmp_name & 0xFFFF0000) == 0))

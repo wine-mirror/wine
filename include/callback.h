@@ -16,5 +16,6 @@
 extern int CallTo16(unsigned int csip, unsigned short ds);
 extern int CallBack16(void *func, int n_args, ...);
 
+extern BOOL CallGrayStringProc(FARPROC func, HDC hdc, LPARAM lParam, INT cch);
 
 #endif /* CALLBACK_H */

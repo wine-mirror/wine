@@ -2,21 +2,16 @@
  * Default dialog procedure
  *
  * Copyright 1993 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
+*/
 
 #include "windows.h"
 #include "dialog.h"
 #include "win.h"
 #include "stddebug.h"
-/* #define DEBUG_DIALOG /* */
-/* #undef  DEBUG_DIALOG /* */
+/* #define DEBUG_DIALOG */
 #include "debug.h"
-
-
-extern HWND DIALOG_GetFirstTabItem( HWND hwndDlg );  /* windows/dialog.c */
-
 
 /***********************************************************************
  *           DEFDLG_SetFocus

@@ -14,8 +14,8 @@ typedef LISTSTRUCT FAR* LPLISTSTRUCT;
 
 
 typedef struct tagHEADLIST {
-	short	FirstVisible;
-	short	ItemsCount;
+	UINT	FirstVisible;
+	UINT	ItemsCount;
 	short	ItemsVisible;
 	short	ColumnsVisible;
 	short	ItemsPerColumn;

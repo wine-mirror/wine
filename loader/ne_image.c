@@ -1,6 +1,7 @@
+/*
 static char RCSId[] = "$Id: wine.c,v 1.2 1993/07/04 04:04:21 root Exp root $";
 static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
-
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -8,180 +9,63 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <fcntl.h>
 #include <unistd.h>
 #include <ctype.h>
-#ifdef linux
-#include <linux/head.h>
-#include <linux/ldt.h>
-#include <linux/segment.h>
-#endif
 #include <string.h>
 #include <errno.h>
 #include "neexe.h"
 #include "segmem.h"
-#include "prototypes.h"
 #include "dlls.h"
-#include "wine.h"
 #include "windows.h"
-#include "wineopts.h"
 #include "arch.h"
-#include "options.h"
+#include "library.h"
+#include "if1632.h"
+#include "selectors.h"
+#include "ne_image.h"
+#include "prototypes.h"
 #include "stddebug.h"
 #include "debug.h"
 
-extern HANDLE CreateNewTask(HINSTANCE hInst);
-extern void InitializeLoadedDLLs(struct w_files *wpnt);
-extern int CallToInit16(unsigned long csip, unsigned long sssp, 
-			unsigned short ds);
-extern int CallTo16cx(unsigned long csip, unsigned long dscx);
-extern void CallTo32();
-extern char WindowsPath[256];
 extern unsigned short WIN_StackSize;
 extern unsigned short WIN_HeapSize;
 
-int FixupSegment(struct w_files *, int);
 void FixupFunctionPrologs(struct w_files *);
-char *GetModuleName(struct w_files * wpnt, int index, char *buffer);
-
-#ifndef WINELIB
-
-/**********************************************************************/
-
-void load_ne_header (int fd, struct ne_header_s *ne_header)
-{
-    if (read(fd, ne_header, sizeof(struct ne_header_s)) 
-	!= sizeof(struct ne_header_s))
-    {
-	myerror("Unable to read NE header from file");
-    }
-}
-#endif
-
-/**********************************************************************
- *			LoadNEImage
- * Load one NE format executable into memory
- */
-HINSTANCE LoadNEImage(struct w_files *wpnt)
-{
-    unsigned int read_size, status, segment;
-    int i;
-
-    wpnt->ne = malloc(sizeof(struct ne_data));
-    wpnt->ne->resnamtab = NULL;
-    wpnt->ne->ne_header = malloc(sizeof(struct ne_header_s));
-    lseek(wpnt->fd, wpnt->mz_header->ne_offset, SEEK_SET);
-    load_ne_header(wpnt->fd, wpnt->ne->ne_header);
-
-#ifndef WINELIB
-    /*
-     * Create segment selectors.
-     */
-    status = lseek(wpnt->fd, wpnt->mz_header->ne_offset + 
-		   wpnt->ne->ne_header->segment_tab_offset,
-		   SEEK_SET);
-    read_size  = wpnt->ne->ne_header->n_segment_tab *
-	sizeof(struct ne_segment_table_entry_s);
-    wpnt->ne->seg_table = (struct ne_segment_table_entry_s *) malloc(read_size);
-    if (read(wpnt->fd, wpnt->ne->seg_table, read_size) != read_size)
-	myerror("Unable to read segment table header from file");
-    wpnt->ne->selector_table = CreateSelectors(wpnt);
-    wpnt->hinstance = (wpnt->ne->
-		       selector_table[wpnt->ne->ne_header->auto_data_seg-1].
-		       selector);
-#endif
-    /* Get the lookup  table.  This is used for looking up the addresses
-       of functions that are exported */
-
-    read_size  = wpnt->ne->ne_header->entry_tab_length;
-    wpnt->ne->lookup_table = (char *) malloc(read_size);
-    lseek(wpnt->fd, wpnt->mz_header->ne_offset + 
-	  wpnt->ne->ne_header->entry_tab_offset, SEEK_SET);
-    if (read(wpnt->fd, wpnt->ne->lookup_table, read_size) != read_size)
-	myerror("Unable to read lookup table header from file");
-
-    /* Get the iname table.  This is used for looking up the names
-       of functions that are exported */
-
-    status = lseek(wpnt->fd, wpnt->ne->ne_header->nrname_tab_offset,  SEEK_SET);
-    read_size  = wpnt->ne->ne_header->nrname_tab_length;
-    wpnt->ne->nrname_table = (char *) malloc(read_size);
-    if (read(wpnt->fd, wpnt->ne->nrname_table, read_size) != read_size)
-	myerror("Unable to read nrname table header from file");
-
-    status = lseek(wpnt->fd, wpnt->mz_header->ne_offset + 
-		   wpnt->ne->ne_header->rname_tab_offset,  SEEK_SET);
-    read_size  = wpnt->ne->ne_header->moduleref_tab_offset - 
-	    wpnt->ne->ne_header->rname_tab_offset;
-    wpnt->ne->rname_table = (char *) malloc(read_size);
-    if (read(wpnt->fd, wpnt->ne->rname_table, read_size) != read_size)
-	myerror("Unable to read rname table header from file");
-
-    /*
-     * Now load any DLLs that  this module refers to.
-     */
-    for(i=0; i<wpnt->ne->ne_header->n_mod_ref_tab; i++)
-    {
-      char buff[14];
-      GetModuleName(wpnt, i + 1, buff);
-
-      if (strcasecmp(buff, wpnt->name) != 0 )
-	LoadImage(buff, DLL, 0);
-    }
-#ifndef WINELIB
-    /* fixup references */
-
-    for (segment = 0; segment < wpnt->ne->ne_header->n_segment_tab; segment++)
-	if (FixupSegment(wpnt, segment) < 0)
-		myerror("fixup failed.");
-
-    FixupFunctionPrologs(wpnt);
-    InitializeLoadedDLLs(wpnt);
-#endif
-    return(wpnt->hinstance);
-}
 
 /**********************************************************************
  *					GetImportedName
  */
-char *
-GetImportedName(int fd, struct mz_header_s *mz_header, 
-		struct ne_header_s *ne_header, int name_offset, char *buffer)
+static
+char *NE_GetImportedName(struct w_files *wpnt, int name_offset, char *buffer)
 {
-    int length;
-    int status;
-    
-    status = lseek(fd, mz_header->ne_offset + ne_header->iname_tab_offset +
-		   name_offset, SEEK_SET);
-    length = 0;
-    read(fd, &length, 1);  /* Get the length byte */
-    length = CONV_CHAR_TO_LONG (length);
-    read(fd, buffer, length);
+    BYTE length;
+
+    lseek(wpnt->fd, wpnt->mz_header->ne_offset + 
+    	wpnt->ne->ne_header->iname_tab_offset + name_offset, SEEK_SET);
+    read(wpnt->fd, &length, 1);  /* Get the length byte */
+    read(wpnt->fd, buffer, length);
     buffer[length] = 0;
+
     return buffer;
 }
 
+struct w_files *current_exe;
+WORD current_nodata=0xfd00;
 /**********************************************************************
  *					GetModuleName
  */
-char *
-GetModuleName(struct w_files * wpnt, int index, char *buffer)
+static char *NE_GetModuleName(struct w_files *wpnt, int index, char *buffer)
 {
-    int fd = wpnt->fd;
-    struct mz_header_s *mz_header = wpnt->mz_header; 
-    struct ne_header_s *ne_header = wpnt->ne->ne_header;
-    int length;
-    WORD name_offset, status;
+    BYTE length;
+    WORD name_offset;
     int i;
     
-    status = lseek(fd, mz_header->ne_offset + ne_header->moduleref_tab_offset +
-		   2*(index - 1), SEEK_SET);
-    name_offset = 0;
-    read(fd, &name_offset, 2);
+    lseek(wpnt->fd, wpnt->mz_header->ne_offset +
+    	wpnt->ne->ne_header->moduleref_tab_offset + 2 * (index - 1), SEEK_SET);
+    read(wpnt->fd, &name_offset, 2);
     name_offset = CONV_SHORT (name_offset);
-    status = lseek(fd, mz_header->ne_offset + ne_header->iname_tab_offset +
-		   name_offset, SEEK_SET);
-    length = 0;
-    read(fd, &length, 1);  /* Get the length byte */
-    length = CONV_CHAR_TO_LONG (length);
-    read(fd, buffer, length);
+
+    lseek(wpnt->fd, wpnt->mz_header->ne_offset + 
+    	wpnt->ne->ne_header->iname_tab_offset + name_offset, SEEK_SET);
+    read(wpnt->fd, &length, 1);  /* Get the length byte */
+    read(wpnt->fd, buffer, length);
     buffer[length] = 0;
 
     /* Module names  are always upper case */
@@ -191,33 +75,23 @@ GetModuleName(struct w_files * wpnt, int index, char *buffer)
 
     return buffer;
 }
-
 
 #ifndef WINELIB
 /**********************************************************************
- *					FixupSegment
+ *				NE_FixupSegment
  */
-int
-FixupSegment(struct w_files * wpnt, int segment_num)
+int NE_FixupSegment(struct w_files *wpnt, int segment_num)
 {
-    struct mz_header_s *mz_header = wpnt->mz_header;
-    struct ne_header_s *ne_header =  wpnt->ne->ne_header;
-    struct ne_segment_table_entry_s *seg_table = wpnt->ne->seg_table;
     struct segment_descriptor_s *selector_table = wpnt->ne->selector_table;
     struct relocation_entry_s *rep, *rep1;
     struct ne_segment_table_entry_s *seg;
     struct segment_descriptor_s *sel;
-    int status;
+    int status, ordinal, i, n_entries, additive;
     unsigned short *sp;
-    unsigned int selector, address;
-    unsigned int next_addr;
-    int ordinal;
-    char dll_name[257];
-    char func_name[257];
-    int i, n_entries;
-    int additive;
+    unsigned int selector, address, next_addr;
+    unsigned char dll_name[257], func_name[257];
 
-    seg = &seg_table[segment_num];
+    seg = &wpnt->ne->seg_table[segment_num];
     sel = &selector_table[segment_num];
 
     dprintf_fixup(stddeb, "Segment fixups for %s, segment %d, selector %x\n", 
@@ -235,7 +109,7 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	i = 0x10000;
 
     status = lseek(wpnt->fd, seg->seg_data_offset * 
-		       (1 << ne_header->align_shift_count) + i, SEEK_SET);
+		(1 << wpnt->ne->ne_header->align_shift_count) + i, SEEK_SET);
     n_entries = 0;
     read(wpnt->fd, &n_entries, sizeof(short int));
     rep = (struct relocation_entry_s *)
@@ -262,7 +136,7 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	    additive = 1;
 	    
 	  case NE_RELTYPE_ORDINAL:
-	    if (GetModuleName(wpnt, rep->target1,
+	    if (NE_GetModuleName(wpnt, rep->target1,
 			      dll_name) == NULL)
 	    {
 	      fprintf(stderr, "NE_RELTYPE_ORDINAL failed");
@@ -290,17 +164,13 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 	    additive = 1;
 	    
 	  case NE_RELTYPE_NAME:
-	    if (GetModuleName(wpnt, rep->target1, dll_name)
-		== NULL)
-	    {
-	      fprintf(stderr,"NE_RELTYPE_NAME failed");
+	    if (NE_GetModuleName(wpnt, rep->target1, dll_name) == NULL) {
+	        fprintf(stderr,"NE_RELTYPE_NAME failed");
 		return -1;
 	    }
 
-	    if (GetImportedName(wpnt->fd, mz_header, ne_header, 
-				rep->target2, func_name) == NULL)
-	    {
-	      fprintf(stderr,"getimportedname failed");
+	    if (NE_GetImportedName(wpnt, rep->target2, func_name) == NULL) {
+	        fprintf(stderr,"NE_getimportedname failed");
 		return -1;
 	    }
 
@@ -314,9 +184,8 @@ FixupSegment(struct w_files * wpnt, int segment_num)
 		myerror(s);
 		return -1;
 	    }
-
-	    dprintf_fixup(stddeb,"%d: %s %s.%d: %04x:%04x\n", i + 1, 
-                   func_name, dll_name, ordinal, selector, address);
+/*	    dprintf_fixup(stddeb,"%d: %s %s.%d: %04x:%04x\n", i + 1, 
+                   func_name, dll_name, ordinal, selector, address);*/
 	    break;
 	    
 	  case NE_RELTYPE_INTERNAL:
@@ -443,14 +312,14 @@ FixupSegment(struct w_files * wpnt, int segment_num)
     return 0;
 }
 
-int NEunloadImage(struct w_files *wpnt)
+int NE_unloadImage(struct w_files *wpnt)
 {
 	dprintf_fixup(stdnimp, "NEunloadImage() called!\n");
 	/* free resources, image */
 	return 1;
 }
 
-int StartNEprogram(struct w_files *wpnt)
+int NE_StartProgram(struct w_files *wpnt)
 {
     int cs_reg, ds_reg, ss_reg, ip_reg, sp_reg;
     /*
@@ -468,28 +337,37 @@ int StartNEprogram(struct w_files *wpnt)
     return CallToInit16(cs_reg << 16 | ip_reg, ss_reg << 16 | sp_reg, ds_reg);
 }
 
-void InitNEDLL(struct w_files *wpnt)
+void NE_InitDLL(struct w_files *wpnt)
 {
-	int cs_reg, ds_reg, ip_reg, cx_reg, rv;
+	int cs_reg, ds_reg, ip_reg, cx_reg, di_reg, rv;
+	extern struct w_files *current_exe;
 	/* 
 	 * Is this a library? 
 	 */
 	if (wpnt->ne->ne_header->format_flags & 0x8000)
 	{
-	    if (!(wpnt->ne->ne_header->format_flags & 0x0001))
-	    {
-		/* Not SINGLEDATA */
-		fprintf(stderr, "Library is not marked SINGLEDATA\n");
-		exit(1);
-	    }
-
-	    ds_reg = wpnt->ne->selector_table[wpnt->ne->
+  	    if (!(wpnt->ne->ne_header->format_flags & 0x0001))
+	    if(wpnt->ne->ne_header->format_flags & NE_FFLAGS_MULTIPLEDATA
+		|| wpnt->ne->ne_header->auto_data_seg)
+  	    {
+  		/* Not SINGLEDATA */
+  		fprintf(stderr, "Library is not marked SINGLEDATA\n");
+  		exit(1);
+	    } else { /* DATA NONE DLL */
+		ds_reg = current_exe->ne->selector_table[
+		        current_exe->ne->ne_header->auto_data_seg-1].selector;
+		cx_reg = 0;
+	    } else { /* DATA SINGLE DLL */
+		    ds_reg = wpnt->ne->selector_table[wpnt->ne->
 					  ne_header->auto_data_seg-1].selector;
-	    cs_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->cs-1].selector;
-	    ip_reg = wpnt->ne->ne_header->ip;
-
-	    cx_reg = wpnt->ne->ne_header->local_heap_length;
-
+		    cx_reg = wpnt->ne->ne_header->local_heap_length;
+  	    }
+  
+  	    cs_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->cs-1].selector;
+  	    ip_reg = wpnt->ne->ne_header->ip;
+  
+            di_reg = wpnt->hinstance;
+  
 	    if (cs_reg) {
 		dprintf_dll(stddeb,"Initializing %s, cs:ip %04x:%04x, ds %04x, cx %04x\n", 
 		    wpnt->name, cs_reg, ip_reg, ds_reg, cx_reg);
@@ -499,6 +377,103 @@ void InitNEDLL(struct w_files *wpnt)
 	    } else
 		dprintf_exec(stddeb,"%s skipped\n", wpnt->name);
 	}
+}
+
+/**********************************************************************
+ *			NE_LoadImage
+ * Load one NE format executable into memory
+ */
+HINSTANCE NE_LoadImage(struct w_files *wpnt)
+{
+    unsigned int read_size, status, segment;
+    int i;
+
+    wpnt->ne = malloc(sizeof(struct ne_data));
+    wpnt->ne->resnamtab = NULL;
+    wpnt->ne->ne_header = malloc(sizeof(struct ne_header_s));
+
+    lseek(wpnt->fd, wpnt->mz_header->ne_offset, SEEK_SET);
+    if (read(wpnt->fd, wpnt->ne->ne_header, sizeof(struct ne_header_s)) 
+	!= sizeof(struct ne_header_s))
+	myerror("Unable to read NE header from file");
+    if(!(wpnt->ne->ne_header->format_flags & NE_FFLAGS_LIBMODULE)){
+	if(current_exe)printf("Warning: more than one EXE\n");
+        current_exe=wpnt;
+    }
+
+#ifndef WINELIB
+    /*
+     * Create segment selectors.
+     */
+    status = lseek(wpnt->fd, wpnt->mz_header->ne_offset + 
+		   wpnt->ne->ne_header->segment_tab_offset,
+		   SEEK_SET);
+    read_size  = wpnt->ne->ne_header->n_segment_tab *
+	sizeof(struct ne_segment_table_entry_s);
+    wpnt->ne->seg_table = (struct ne_segment_table_entry_s *) malloc(read_size);
+    if (read(wpnt->fd, wpnt->ne->seg_table, read_size) != read_size)
+	myerror("Unable to read segment table header from file");
+    wpnt->ne->selector_table = CreateSelectors(wpnt);
+    if(wpnt->ne->ne_header->auto_data_seg==0)
+    {
+        printf("DATA NONE DLL %s\n",wpnt->name);
+        wpnt->hinstance=current_nodata++;
+    } else
+    wpnt->hinstance = (wpnt->ne->
+		       selector_table[wpnt->ne->ne_header->auto_data_seg-1].
+		       selector);
+    if (wpnt->hinstance == 0)
+    	wpnt->hinstance = 0xf000;
+#endif
+    /* Get the lookup  table.  This is used for looking up the addresses
+       of functions that are exported */
+
+    read_size  = wpnt->ne->ne_header->entry_tab_length;
+    wpnt->ne->lookup_table = (char *) malloc(read_size);
+    lseek(wpnt->fd, wpnt->mz_header->ne_offset + 
+	  wpnt->ne->ne_header->entry_tab_offset, SEEK_SET);
+    if (read(wpnt->fd, wpnt->ne->lookup_table, read_size) != read_size)
+	myerror("Unable to read lookup table header from file");
+
+    /* Get the iname table.  This is used for looking up the names
+       of functions that are exported */
+
+    status = lseek(wpnt->fd, wpnt->ne->ne_header->nrname_tab_offset,  SEEK_SET);
+    read_size  = wpnt->ne->ne_header->nrname_tab_length;
+    wpnt->ne->nrname_table = (char *) malloc(read_size);
+    if (read(wpnt->fd, wpnt->ne->nrname_table, read_size) != read_size)
+	myerror("Unable to read nrname table header from file");
+
+    status = lseek(wpnt->fd, wpnt->mz_header->ne_offset + 
+		   wpnt->ne->ne_header->rname_tab_offset,  SEEK_SET);
+    read_size  = wpnt->ne->ne_header->moduleref_tab_offset - 
+	    wpnt->ne->ne_header->rname_tab_offset;
+    wpnt->ne->rname_table = (char *) malloc(read_size);
+    if (read(wpnt->fd, wpnt->ne->rname_table, read_size) != read_size)
+	myerror("Unable to read rname table header from file");
+
+    /*
+     * Now load any DLLs that  this module refers to.
+     */
+    for(i=0; i<wpnt->ne->ne_header->n_mod_ref_tab; i++)
+    {
+      char buff[14];
+      NE_GetModuleName(wpnt, i + 1, buff);
+
+      if (strcasecmp(buff, wpnt->name) != 0 )
+	LoadImage(buff, DLL, 0);
+    }
+#ifndef WINELIB
+    /* fixup references */
+
+    for (segment = 0; segment < wpnt->ne->ne_header->n_segment_tab; segment++)
+	if (NE_FixupSegment(wpnt, segment) < 0)
+		myerror("fixup failed.");
+
+    FixupFunctionPrologs(wpnt);
+    InitializeLoadedDLLs(wpnt);
+#endif
+    return(wpnt->hinstance);
 }
 
 #endif /* !WINELIB */

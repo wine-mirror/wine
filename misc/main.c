@@ -2,10 +2,9 @@
  * Main function.
  *
  * Copyright 1994 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
-
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,14 +14,29 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
+#include "wine.h"
 #include "msdos.h"
 #include "windows.h"
+#include "comm.h"
+#include "miscemu.h"
+#include "winsock.h"
 #include "options.h"
+#include "dos_fs.h"
+#include "desktop.h"
 #include "prototypes.h"
 #include "texts.h"
 #define DEBUG_DEFINE_VARIABLES
 #include "stddebug.h"
 #include "debug.h"
+
+extern ButtonTexts ButtonText;
+
+static char people[] = "People who have generously donated time to the Wine " \
+"project include Bob Amstadt, Martin Ayotte, Erik Bos, John Brezak, "\
+"Andrew Bulhak, John Burton, Peter Galbavy, Jeffery Hsu, Miguel de Icaza, " \
+"Alexandre Julliard, Scott A. Laird, Peter MacDonald, David Metcalfe, " \
+"John Richardson, Johannes Ruscheinski, Yngvi Sigurjonsson, Linus Torvalds, " \
+"Carl Williams, Karl Guenter Wuensch, and Eric Youngdale. ";
 
 #define WINE_CLASS    "Wine"    /* Class name for resources */
 
@@ -43,8 +57,6 @@ Window rootWindow;
 int screenWidth = 0, screenHeight = 0;  /* Desktop window dimensions */
 int screenDepth = 0;  /* Screen depth to use */
 int desktopX = 0, desktopY = 0;  /* Desktop window position (if any) */
-
-extern ButtonTexts ButtonText;
 
 struct options Options =
 {  /* default options */
@@ -71,7 +83,6 @@ static XrmOptionDescRec optionsTable[] =
     { "-synchronous",   ".synchronous",     XrmoptionNoArg,  (caddr_t)"on" },
     { "-spy",           ".spy",             XrmoptionSepArg, (caddr_t)NULL },
     { "-debug",         ".debug",           XrmoptionNoArg,  (caddr_t)"on" },
-    { "-relaydbg",      ".relaydbg",        XrmoptionNoArg,  (caddr_t)"on" },
     { "-debugmsg",      ".debugmsg",        XrmoptionSepArg, (caddr_t)NULL }
 };
 
@@ -91,7 +102,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -synchronous    Turn on synchronous display mode\n" \
   "    -backingstore   Turn on backing store\n" \
   "    -spy file       Turn on message spying to the specified file\n" \
-  "    -relaydbg       Display call relay information\n" \
+  "    -relaydbg       Obsolete. Use -debugmsg +relay instead\n" \
   "    -debugmsg name  Turn debugging-messages on or off\n"
 
 
@@ -165,7 +176,6 @@ static int MAIN_GetResource( XrmDatabase db, char *name, XrmValue *value )
 static void MAIN_GetButtonText( XrmDatabase db, char *name, ButtonDesc *Button)
 {
     XrmValue value;
-    char Hotkey;
     char *i;
 
     if (MAIN_GetResource( db, name, &value))
@@ -294,8 +304,6 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	Options.synchronous = TRUE;
     if (MAIN_GetResource( db, ".backingstore", &value ))
 	Options.backingstore = TRUE;	
-    if (MAIN_GetResource( db, ".relaydbg", &value ))
-	Options.relay_debug = TRUE;
     if (MAIN_GetResource( db, ".debug", &value ))
 	Options.debug = TRUE;
     if (MAIN_GetResource( db, ".spy", &value))
@@ -346,9 +354,9 @@ static void MAIN_CreateDesktop( int argc, char *argv[] )
     int flags;
     unsigned int width = 640, height = 480;  /* Default size = 640x480 */
     char *name = "Wine desktop";
-    XSizeHints size_hints;
-    XWMHints wm_hints;
-    XClassHint class_hints;
+    XSizeHints *size_hints;
+    XWMHints   *wm_hints;
+    XClassHint *class_hints;
     XSetWindowAttributes win_attr;
     XTextProperty window_name;
 
@@ -372,22 +380,33 @@ static void MAIN_CreateDesktop( int argc, char *argv[] )
 
       /* Set window manager properties */
 
-    size_hints.min_width = size_hints.max_width = width;
-    size_hints.min_height = size_hints.max_height = height;
-    size_hints.flags = PMinSize | PMaxSize;
-    if (flags & (XValue | YValue)) size_hints.flags |= USPosition;
-    if (flags & (WidthValue | HeightValue)) size_hints.flags |= USSize;
-    else size_hints.flags |= PSize;
+    size_hints  = XAllocSizeHints();
+    wm_hints    = XAllocWMHints();
+    class_hints = XAllocClassHint();
+    if (!size_hints || !wm_hints || !class_hints)
+    {
+        fprintf( stderr, "Not enough memory for window manager hints.\n" );
+        exit(1);
+    }
+    size_hints->min_width = size_hints->max_width = width;
+    size_hints->min_height = size_hints->max_height = height;
+    size_hints->flags = PMinSize | PMaxSize;
+    if (flags & (XValue | YValue)) size_hints->flags |= USPosition;
+    if (flags & (WidthValue | HeightValue)) size_hints->flags |= USSize;
+    else size_hints->flags |= PSize;
 
-    wm_hints.flags = InputHint | StateHint;
-    wm_hints.input = True;
-    wm_hints.initial_state = NormalState;
-    class_hints.res_name = argv[0];
-    class_hints.res_class = "Wine";
+    wm_hints->flags = InputHint | StateHint;
+    wm_hints->input = True;
+    wm_hints->initial_state = NormalState;
+    class_hints->res_name = argv[0];
+    class_hints->res_class = "Wine";
 
     XStringListToTextProperty( &name, 1, &window_name );
     XSetWMProperties( display, rootWindow, &window_name, &window_name,
-		      argv, argc, &size_hints, &wm_hints, &class_hints );
+                      argv, argc, size_hints, wm_hints, class_hints );
+    XFree( size_hints );
+    XFree( wm_hints );
+    XFree( class_hints );
 
       /* Map window */
 

@@ -2,9 +2,9 @@
  * Default window procedure
  *
  * Copyright 1993 Alexandre Julliard
- */
 
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -12,26 +12,15 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "win.h"
 #include "class.h"
 #include "user.h"
+#include "nonclient.h"
+#include "winpos.h"
 #include "syscolor.h"
 #include "stddebug.h"
 /* #define DEBUG_MESSAGE */
-/* #undef  DEBUG_MESSAGE */
 #include "debug.h"
-
 
   /* Last COLOR id */
 #define COLOR_MAX   COLOR_BTNHIGHLIGHT
-
-extern LONG NC_HandleNCPaint( HWND hwnd, HRGN hrgn );
-extern LONG NC_HandleNCActivate( HWND hwnd, WORD wParam );
-extern LONG NC_HandleNCCalcSize( HWND hwnd, NCCALCSIZE_PARAMS *params );
-extern LONG NC_HandleNCHitTest( HWND hwnd, POINT pt );
-extern LONG NC_HandleNCLButtonDown( HWND hwnd, WORD wParam, LONG lParam );
-extern LONG NC_HandleNCLButtonDblClk( HWND hwnd, WORD wParam, LONG lParam );
-extern LONG NC_HandleSysCommand( HWND hwnd, WORD wParam, POINT pt );
-extern LONG NC_HandleSetCursor( HWND hwnd, WORD wParam, LONG lParam );
-extern LONG WINPOS_HandleWindowPosChanging( WINDOWPOS *winpos ); /* winpos.c */
-
 
 /***********************************************************************
  *           DEFWND_SetText

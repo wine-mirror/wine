@@ -1,7 +1,9 @@
 #ifndef __MSDOS_H
 #define __MSDOS_H
+
 #include <dirent.h>
 #include <windows.h>
+#include "comm.h"
 
 struct dosdirent {
 	int  inuse;
@@ -29,6 +31,10 @@ struct fcb {
 
 #define DOSVERSION 0x0330;
 #define MAX_DOS_DRIVES	26
+
+extern WORD ExtendedError;
+extern struct DosDeviceStruct COM[MAX_PORTS];
+extern struct DosDeviceStruct LPT[MAX_PORTS];
 
 #define segment(a) 	((DWORD)(a) >> 16)
 #define offset(a)	((DWORD)(a) & 0xffff)

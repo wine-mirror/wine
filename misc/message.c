@@ -2,10 +2,9 @@
  * 'Wine' MessageBox function handling
  *
  * Copyright 1993 Martin Ayotte
- */
-
+ *
 static char Copyright[] = "Copyright Martin Ayotte, 1993";
-
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -18,11 +17,11 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 #include <unistd.h>
 #include "prototypes.h"
 #include "heap.h"
+#include "library.h"
 #include "win.h"
 #include "texts.h"
 #include "stddebug.h"
 /* #define DEBUG_MSGBOX */
-/* #undef  DEBUG_MSGBOX */ 
 #include "debug.h"
 
 
@@ -40,7 +39,6 @@ ButtonTexts ButtonText = {
   "&Ignore", 'I'
 };
 
-extern HINSTANCE hSysRes;
 extern HBITMAP hUpArrow;
 
 typedef struct tagMSGBOX {
@@ -80,13 +78,13 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 	wndPtr = WIN_FindWndPtr(hWnd);
 	if (wndPtr == NULL) {
 		hInst = hSysRes;
-		dprintf_msgbox(stddeb,"MessageBox(NULL, %08X='%s', %08X='%s', %04X)\n", 
-									str, str, title, title, type);
+		dprintf_msgbox(stddeb,"MessageBox(NULL, str='%s', title='%s', %04X)\n", 
+			str, title, type);
 		}
 	else {
 		hInst = wndPtr->hInstance;
-		dprintf_msgbox(stddeb,"MessageBox(%04X, %08X='%s', %08X='%s', %04X)\n", 
-							hWnd, str, str, title, title, type);
+		dprintf_msgbox(stddeb,"MessageBox(%04X, str='%s', title='%s', %04X)\n", 
+			hWnd, str, title, type);
 		}
     lpmb = (LPMSGBOX) malloc(sizeof(MSGBOX));
 	memset(lpmb, 0, sizeof(MSGBOX));

@@ -14,10 +14,8 @@ static char Copyright2[] = "Copyright  Alexandre Julliard, 1994";
 #include "windows.h"
 #include "syscolor.h"
 #include "stddebug.h"
-/* #define DEBUG_SYSCOLOR /* */
-/* #undef  DEBUG_SYSCOLOR /* */
+/* #define DEBUG_SYSCOLOR */
 #include "debug.h"
-
 
 struct SysColorObjects sysColorObjects = { 0, };
 
@@ -134,7 +132,7 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
 /*************************************************************************
  *             SYSCOLOR_Init
  */
-void SYSCOLOR_Init()
+void SYSCOLOR_Init(void)
 {
     int i, r, g, b;
     char **p;
@@ -155,7 +153,7 @@ void SYSCOLOR_Init()
 
 COLORREF GetSysColor(short nIndex)
 {
-    dprintf_syscolor(stddeb,"System Color %d = %6x\n", 
+    dprintf_syscolor(stddeb,"System Color %d = %8lx\n", 
 		    nIndex, SysColors[nIndex]);
     return SysColors[nIndex];
 }

@@ -3,87 +3,14 @@
 #ifndef WINDOWS_H
 #define WINDOWS_H
 
-#ifndef _WINARGS
+#include <wintypes.h>
 
-typedef short	INT;
-typedef unsigned short UINT;
-typedef unsigned short WORD;
-typedef unsigned long DWORD;
-typedef unsigned short BOOL;
-typedef unsigned char BYTE;
-typedef long LONG;
-typedef UINT WPARAM;
-typedef LONG LPARAM;
-typedef LONG LRESULT;
-typedef WORD HANDLE;
-typedef DWORD HHOOK;
-typedef char *LPSTR;
-typedef const char *LPCSTR;
-typedef char *NPSTR;
-typedef INT *LPINT;
-typedef UINT *LPUINT;
-typedef WORD *LPWORD;
-typedef DWORD *LPDWORD;
-typedef LONG *LPLONG;
-typedef void *LPVOID;
-typedef long (*FARPROC)();
-typedef FARPROC DLGPROC;
-typedef int CATCHBUF[9];
-typedef int *LPCATCHBUF;
-typedef FARPROC HOOKPROC;
-#define DECLARE_HANDLE(a) typedef HANDLE a;
+#pragma pack(1)
 
-DECLARE_HANDLE(HTASK);
-DECLARE_HANDLE(HDRVR);
-DECLARE_HANDLE(HWND);
-DECLARE_HANDLE(HDC);
-DECLARE_HANDLE(HCLASS);
-DECLARE_HANDLE(HCURSOR);
-DECLARE_HANDLE(HFONT);
-DECLARE_HANDLE(HPEN);
-DECLARE_HANDLE(HRGN);
-DECLARE_HANDLE(HPALETTE);
-DECLARE_HANDLE(HICON);
-DECLARE_HANDLE(HINSTANCE);
-DECLARE_HANDLE(HMENU);
-DECLARE_HANDLE(HBITMAP);
-DECLARE_HANDLE(HBRUSH);
-DECLARE_HANDLE(LOCALHANDLE);
-DECLARE_HANDLE(HMETAFILE);
-DECLARE_HANDLE(HDWP);
-
-#define TRUE 1
-#define FALSE 0
-#define CW_USEDEFAULT ((INT)0x8000)
-#define FAR
-#define NEAR
-#define PASCAL
-#define VOID                void
-#define WINAPI              PASCAL
-#define CALLBACK            PASCAL
-#ifndef NULL
-#define NULL (void *)0
-#endif
-
-#define LOBYTE(w)           ((BYTE)(w))
-#define HIBYTE(w)           ((BYTE)((UINT)(w) >> 8))
-
-#define LOWORD(l)           ((WORD)(l))
-#define HIWORD(l)           ((WORD)((DWORD)(l) >> 16))
-
-#define MAKELONG(low, high) ((LONG)(((WORD)(low)) | \
-				    (((DWORD)((WORD)(high))) << 16)))
-
-#ifndef max
-#define max(a,b) (((a) > (b)) ? (a) : (b))
-#endif
-
-#ifndef min
-#define min(a,b) (((a) < (b)) ? (a) : (b))
-#endif
-
-
-typedef struct { INT x, y; } POINT;
+typedef struct { 
+	INT x;
+	INT y; 
+} POINT;
 typedef POINT *PPOINT;
 typedef POINT *NPPOINT;
 typedef POINT *LPPOINT;
@@ -116,13 +43,6 @@ typedef PAINTSTRUCT *PPAINTSTRUCT;
 typedef PAINTSTRUCT *NPPAINTSTRUCT;
 typedef PAINTSTRUCT *LPPAINTSTRUCT;
 
-#ifdef WINELIB
-#define WINE_PACKED
-#else
-#define WINE_PACKED __attribute__ ((packed))
-#endif
-
-#pragma pack(1)
 
   /* Window classes */
 
@@ -2363,7 +2283,6 @@ typedef METAFILEPICT *LPMETAFILEPICT;
 #define Fn(ret,name,t1,a1,t2,a2,t3,a3,t4,a4,t5,a5,t6,a6,t7,a7,t8,a8,t9,a9,t10,a10,t11,a11,t12,a12,t13,a13,t14,a14) ret name(t1 a1,t2 a2,t3 a3,t4 a4,t5 a5,t6 a6,t7 a7,t8 a8,t9 a9,t10 a10,t11 a11,t12 a12,t13 a13,t14 a14);
 
 int wsprintf(LPSTR a,LPSTR b,...);
-#endif
 
 /* Implemented functions */
 

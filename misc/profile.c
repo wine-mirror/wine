@@ -14,22 +14,20 @@
  *         has a NULL KeyValue returning a list of KeyNames, and a NULL
  *         AppName undefined.  I changed GetSetProfile to match.  This makes
  *         PROGMAN.EXE do the right thing.
- */
-
+ *
 static char Copyright [] = "Copyright (C) 1993 Miguel de Icaza";
-
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "wine.h"
 #include "windows.h"
+#include "dos_fs.h"
 #include "prototypes.h"
 #include "stddebug.h"
 /* #define DEBUG_PROFILE */
-/* #undef  DEBUG_PROFILE */
 #include "debug.h"
-
 
 #define STRSIZE 255
 #define xmalloc(x) malloc(x)
@@ -53,6 +51,7 @@ typedef struct TProfile {
     char *FileName;
     TSecHeader *Section;
     struct TProfile *link;
+    int changed;
 } TProfile;
 
 TProfile *Current = 0;
@@ -80,13 +79,13 @@ static char *GetIniFileName(char *name)
 		return name;
 
 	if (strchr(name, '\\'))
-		return GetUnixFileName(name);
+		return DOS_GetUnixFileName(name);
 		
 	GetWindowsDirectory(temp, sizeof(temp) );
 	strcat(temp, "\\");
 	strcat(temp, name);
 	
-	return GetUnixFileName(temp);
+	return DOS_GetUnixFileName(temp);
 }
 
 static TSecHeader *load (char *filename)
@@ -223,6 +222,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 	New->link = Base;
 	New->FileName = strdup (FileName);
 	New->Section = load (FileName);
+	New->changed = FALSE;
 	Base = New;
 	section = New->Section;
 	Current = New;
@@ -253,9 +253,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 		p += slen;
 	    }
 		*p = '\0';
-#ifdef DEBUG_PROFILE
-		printf("GetSetProfile // normal end of enum !\n");
-#endif
+		dprintf_profile(stddeb,"GetSetProfile // normal end of enum !\n");
 	    return (Size - 2 - left);
 	}
 	for (key = section->Keys; key; key = key->link){
@@ -264,6 +262,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 	    if (set){
 		free (key->Value);
 		key->Value = strdup (Default ? Default : "");
+		Current->changed=TRUE;
 		return 1;
 	    }
 	    ReturnedString [Size-1] = 0;
@@ -289,6 +288,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 	new_key (section, KeyName, Default);
 	section->link = Current->Section;
 	Current->Section = section;
+	Current->changed = TRUE;
     } else {
 	ReturnedString [Size-1] = 0;
 	strncpy (ReturnedString, Default, Size-1);
@@ -375,6 +375,8 @@ static void dump_profile (TProfile *p)
     if (!p)
 	return;
     dump_profile (p->link);
+    if(!p->changed)
+	return;
     if ((profile = fopen (GetIniFileName(p->FileName), "w")) != NULL){
 	dump_sections (profile, p->Section);
 	fclose (profile);

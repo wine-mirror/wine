@@ -2,9 +2,9 @@
  * X events handling functions
  *
  * Copyright 1993 Alexandre Julliard
- */
-
+ *
 static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -12,16 +12,16 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
-
+#include "gdi.h"
 #include "windows.h"
 #include "win.h"
 #include "class.h"
 #include "message.h"
+#include "clipboard.h"
+#include "winpos.h"
 #include "stddebug.h"
-/* #define DEBUG_EVENT /* */
-/* #undef  DEBUG_EVENT /* */
-/* #define DEBUG_KEY   /* */
-/* #undef  DEBUG_KEY   /* */
+/* #define DEBUG_EVENT */
+/* #define DEBUG_KEY   */
 #include "debug.h"
 
 
@@ -37,10 +37,6 @@ typedef char *XPointer;
 #endif
 
 #define NB_BUTTONS      3     /* Windows can handle 3 buttons */
-
-extern int desktopX, desktopY;   /* misc/main.c */
-
-extern void WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg ); /*winpos.c*/
 
   /* X context to associate a hwnd to an X window */
 static XContext winContext = 0;
@@ -519,7 +515,7 @@ static void EVENT_SelectionNotify(HWND hwnd, XSelectionEvent *event)
 static void EVENT_SelectionClear(HWND hwnd, XSelectionClearEvent *event)
 {
     if(event->selection!=XA_PRIMARY)return;
-    CLIPBOARD_ReleaseSelection(); 
+    CLIPBOARD_ReleaseSelection(hwnd); 
 }
 
 /**********************************************************************
