@@ -35,6 +35,9 @@ extern HMODULE SHLWAPI_hwinmm;
 extern HMODULE SHLWAPI_hcomdlg32;
 extern HMODULE SHLWAPI_hmpr;
 extern HMODULE SHLWAPI_hmlang;
+extern HMODULE SHLWAPI_hversion;
+
+extern DWORD SHLWAPI_ThreadRef_index;
 
 typedef HANDLE HSHARED; /* Shared memory */
 
@@ -303,7 +306,7 @@ HSHARED WINAPI SHLWAPI_DupSharedHandle(HSHARED hShared, DWORD dwDstProcId,
  * SHLWAPI_8/SHLWAPI_9  - Get/Release a pointer to the shared data
  * SHLWAPI_11           - Helper function; Duplicate cross-process handles
    */
-HSHARED WINAPI SHLWAPI_7 (DWORD dwProcId, LPCVOID lpvData, DWORD dwSize)
+HSHARED WINAPI SHLWAPI_7 (DWORD dwProcId, DWORD dwSize, LPCVOID lpvData)
 {
   HANDLE hMap;
   LPVOID pMapped;
@@ -875,16 +878,6 @@ BOOL WINAPI SHLWAPI_36(HMENU h1, UINT ui2, UINT h3, LPCWSTR p4)
 }
 
 /*************************************************************************
- *      @	[SHLWAPI.40]
- *
- * Get pointer to next Unicode character.
- */
-LPCWSTR WINAPI SHLWAPI_40(LPCWSTR str)
-{
-  return *str ? str + 1 : str;
-}
-
-/*************************************************************************
  *      @	[SHLWAPI.74]
  *
  * Get the text from a given dialog item.
@@ -940,6 +933,16 @@ DWORD WINAPI SHLWAPI_153(LPSTR str1, LPSTR str2, DWORD len)
 DWORD WINAPI SHLWAPI_154(LPWSTR str1, LPWSTR str2, DWORD len)
 {
     return strncmpiW( str1, str2, len );
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.155]
+ *
+ *	Case sensitive string compare (ASCII). Does not SetLastError().
+ */
+DWORD WINAPI SHLWAPI_155 ( LPSTR str1, LPSTR str2)
+{
+    return strcmp(str1, str2);
 }
 
 /*************************************************************************
@@ -1215,6 +1218,19 @@ DWORD WINAPI SHLWAPI_208 (
 {
     FIXME("(0x%08lx 0x%08lx %p %p 0x%08lx) stub\n",
 	  a, b, c, d, e);
+    return 1;
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.209]
+ *
+ * Some sort of memory management process - associated with _208
+ */
+DWORD WINAPI SHLWAPI_209 (
+	LPVOID   a)
+{
+    FIXME("(%p) stub\n",
+	  a);
     return 1;
 }
 
@@ -1787,6 +1803,70 @@ DWORD WINAPI SHLWAPI_346 (
 }
 
 /*************************************************************************
+ *      @	[SHLWAPI.350]
+ *
+ * seems to be W interface to GetFileVersionInfoSizeA
+ */
+DWORD WINAPI SHLWAPI_350 (
+	LPWSTR x,
+	LPVOID y)
+{
+static DWORD   WINAPI (*pfnFunc)(LPCSTR,LPDWORD) = NULL;
+        CHAR mbpath[MAX_PATH];
+        DWORD ret;
+
+	GET_FUNC(version, "GetFileVersionInfoSizeA", 0);
+        WideCharToMultiByte(0, 0, x, -1, mbpath, MAX_PATH, 0, 0);
+	ret = pfnFunc(mbpath, y);
+	return 0x208 + ret;
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.351]
+ *
+ * seems to be W interface to GetFileVersionInfoA
+ */
+BOOL  WINAPI SHLWAPI_351 (
+	LPWSTR w,   /* [in] path to dll */
+	DWORD  x,   /* [in] parm 2 to GetFileVersionInfoA */
+	DWORD  y,   /* [in] return value from .350 - assume length */
+	LPVOID z)   /* [in/out] buffer (+0x208 sent to GetFileVersionInfoA) */
+{
+        static BOOL    WINAPI (*pfnFunc)(LPCSTR,DWORD,DWORD,LPVOID) = NULL;
+        CHAR mbpath[MAX_PATH];
+
+	GET_FUNC(version, "GetFileVersionInfoA", 0);
+	WideCharToMultiByte(0, 0, w, -1, mbpath, MAX_PATH, 0, 0);
+	return pfnFunc(mbpath  , x, y-0x208, z+0x208);
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.352]
+ *
+ * seems to be W interface to VerQueryValueA
+ */
+WORD WINAPI SHLWAPI_352 (
+	LPVOID w,   /* [in] buffer from _351 */
+	LPWSTR x,   /* [in]   value to retrieve - 
+                              converted and passed to VerQueryValueA as #2 */
+	LPVOID y,   /* [out]  ver buffer - passed to VerQueryValueA as #3 */
+	UINT*  z)   /* [in]   ver length - passed to VerQueryValueA as #4 */
+{
+        static WORD    WINAPI (*pfnFunc)(LPVOID,LPCSTR,LPVOID*,UINT*) = NULL;
+        CHAR buf1[MAX_PATH];
+	WORD ret;
+
+	GET_FUNC(version, "VerQueryValueA", 0);
+	WideCharToMultiByte(0, 0, x, lstrlenW(x)+1, buf1, MAX_PATH, 0, 0);
+	ret = pfnFunc(w+0x208, buf1, y, z);
+	if (CompareStringA(GetThreadLocale(), NORM_IGNORECASE, buf1, 1,
+			   "\\StringFileInfo", 15) == 2 /* CSTR_EQUAL */) {
+	    ERR("Need to translate back to wide - should fail now\n");
+	}
+	return ret;
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.356]
  */
 DWORD WINAPI SHLWAPI_356 (
@@ -2068,12 +2148,127 @@ DWORD WINAPI SHLWAPI_413 (DWORD x)
 }
 
 /*************************************************************************
+ *      @	[SHLWAPI.418]
+ *
+ * Function seems to do FreeLibrary plus other things.
+ *
+ * FIXME native shows the following calls:
+ *   RtlEnterCriticalSection
+ *   LocalFree
+ *   GetProcAddress(Comctl32??, 150L)
+ *   DPA_DeletePtr
+ *   RtlLeaveCriticalSection
+ *  followed by the FreeLibrary.
+ *  The above code may be related to .377 above.
+ */
+BOOL  WINAPI SHLWAPI_418 (HMODULE x)
+{
+	FIXME("(0x%08lx) partial stub\n", (LONG)x);
+	return FreeLibrary(x);
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.431]
  */
 DWORD WINAPI SHLWAPI_431 (DWORD x)
 {
 	FIXME("(0x%08lx)stub\n", x);
 	return 0xabba1247;
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.436]
+ *
+ *  This is really CLSIDFromString which is exported by ole32.dll,
+ *  however the native shlwapi.dll does *not* import ole32. Nor does
+ *  ole32.dll import this ordinal from shlwapi. Therefore we must conclude
+ *  that MS duplicated the code for CLSIDFromString.
+ *
+ *  This is a duplicate (with changes for UNICODE) of CLSIDFromString16
+ *  in dlls/ole32/compobj.c
+ */
+DWORD WINAPI SHLWAPI_436 (LPWSTR idstr, CLSID *id)
+{
+    LPWSTR s = idstr;
+    BYTE *p;
+    INT i;
+    WCHAR table[256];
+
+    if (!s) {
+	memset(s, 0, sizeof(CLSID));
+	return S_OK;
+    }
+    else {  /* validate the CLSID string */
+
+	if (strlenW(s) != 38)
+	    return CO_E_CLASSSTRING;
+
+	if ((s[0]!=L'{') || (s[9]!=L'-') || (s[14]!=L'-') || (s[19]!=L'-') || (s[24]!=L'-') || (s[37]!=L'}'))
+	    return CO_E_CLASSSTRING;
+
+	for (i=1; i<37; i++)
+	    {
+		if ((i == 9)||(i == 14)||(i == 19)||(i == 24)) continue;
+		if (!(((s[i] >= L'0') && (s[i] <= L'9'))  ||
+		      ((s[i] >= L'a') && (s[i] <= L'f'))  ||
+		      ((s[i] >= L'A') && (s[i] <= L'F')))
+		    )
+		    return CO_E_CLASSSTRING;
+	    }
+    }
+
+    TRACE("%s -> %p\n", debugstr_w(s), id);
+
+  /* quick lookup table */
+    memset(table, 0, 256*sizeof(WCHAR));
+
+    for (i = 0; i < 10; i++) {
+	table['0' + i] = i;
+    }
+    for (i = 0; i < 6; i++) {
+	table['A' + i] = i+10;
+	table['a' + i] = i+10;
+    }
+
+    /* in form {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX} */
+
+    p = (BYTE *) id;
+
+    s++;	/* skip leading brace  */
+    for (i = 0; i < 4; i++) {
+	p[3 - i] = table[*s]<<4 | table[*(s+1)];
+	s += 2;
+    }
+    p += 4;
+    s++;	/* skip - */
+
+    for (i = 0; i < 2; i++) {
+	p[1-i] = table[*s]<<4 | table[*(s+1)];
+	s += 2;
+    }
+    p += 2;
+    s++;	/* skip - */
+
+    for (i = 0; i < 2; i++) {
+	p[1-i] = table[*s]<<4 | table[*(s+1)];
+	s += 2;
+    }
+    p += 2;
+    s++;	/* skip - */
+
+    /* these are just sequential bytes */
+    for (i = 0; i < 2; i++) {
+	*p++ = table[*s]<<4 | table[*(s+1)];
+	s += 2;
+    }
+    s++;	/* skip - */
+
+    for (i = 0; i < 6; i++) {
+	*p++ = table[*s]<<4 | table[*(s+1)];
+	s += 2;
+    }
+
+    return S_OK;
 }
 
 /*************************************************************************
@@ -2121,10 +2316,15 @@ HPALETTE WINAPI SHCreateShellPalette(HDC hdc)
 /*************************************************************************
  *	SHGetInverseCMAP (SHLWAPI.@)
  */
-DWORD WINAPI SHGetInverseCMAP (LPVOID x, DWORD why)
+DWORD WINAPI SHGetInverseCMAP (LPDWORD* x, DWORD why)
 {
-	FIXME("(%p, %#lx)stub\n", x, why);
+    if (why == 4) {
+	FIXME(" - returning bogus address for SHGetInverseCMAP\n");
+	*x = (LPDWORD)0xabba1249;
 	return 0;
+    }
+    FIXME("(%p, %#lx)stub\n", x, why);
+    return 0;
 }
 
 /*************************************************************************
@@ -2165,4 +2365,33 @@ HRESULT WINAPI _SHGetInstanceExplorer (LPUNKNOWN *lpUnknown)
 
   GET_FUNC(shell32, "SHGetInstanceExplorer", E_FAIL);
   return pfnFunc(lpUnknown);
+}
+
+/*************************************************************************
+ *      SHGetThreadRef	[SHLWAPI.@]
+ *
+ * Retrieves the per-thread object reference set by SHSetThreadRef
+ * "punk" - Address of a pointer to the IUnknown interface. Returns S_OK if
+ *          successful or E_NOINTERFACE otherwise.
+ */
+HRESULT WINAPI SHGetThreadRef (IUnknown ** ppunk)
+{
+    if (SHLWAPI_ThreadRef_index < 0) return E_NOINTERFACE;
+    *ppunk = (IUnknown *)TlsGetValue(SHLWAPI_ThreadRef_index);
+    return S_OK;
+}
+
+/*************************************************************************
+ *      SHSetThreadRef	[SHLWAPI.@]
+ *
+ * Stores a per-thread reference to a COM object
+ * "punk" - Pointer to the IUnknown interface of the object to
+ *          which you want to store a reference. Returns S_OK if successful
+ *          or an OLE error value.
+ */
+HRESULT WINAPI SHSetThreadRef (IUnknown * punk)
+{
+    if (SHLWAPI_ThreadRef_index < 0) return E_NOINTERFACE;
+    TlsSetValue(SHLWAPI_ThreadRef_index, (LPVOID) punk);
+    return S_OK;
 }

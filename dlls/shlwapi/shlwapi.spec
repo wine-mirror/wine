@@ -16,7 +16,7 @@ debug_channels (shell)
 4   stub @
 5   stub @
 6   stub @
-7   stdcall @(long ptr long) SHLWAPI_7
+7   stdcall @(long long ptr) SHLWAPI_7
 8   stdcall @(long long) SHLWAPI_8
 9   stdcall @(ptr) SHLWAPI_9
 10  stdcall @(long long) SHLWAPI_10
@@ -49,8 +49,8 @@ debug_channels (shell)
 37  forward @ user32.CallWindowProcW
 38  forward @ user32.CharLowerW
 39  forward @ user32.CharLowerBuffW
-40  stdcall @(wstr) SHLWAPI_40
-41  stub @
+40  forward @ user32.CharNextW
+41  forward @ user32.CharPrevW
 42  stub @
 43  forward @ user32.CharUpperW
 44  forward @ user32.CharUpperBuffW
@@ -152,7 +152,7 @@ debug_channels (shell)
 140 forward @ user32.SetPropW
 141 forward @ user32.SetWindowLongW
 142 forward @ user32.SetWindowsHookExW
-143 stub @
+143 forward @ user32.SetWindowTextW
 144 forward @ gdi32.StartDocW
 145 forward @ user32.SystemParametersInfoW
 146 forward @ user32.TranslateAcceleratorW
@@ -164,7 +164,7 @@ debug_channels (shell)
 152 stdcall @(wstr wstr long) SHLWAPI_152
 153 stdcall @(long long long) SHLWAPI_153
 154 stdcall @(wstr wstr long) SHLWAPI_154
-155 stub @
+155 stdcall @(str str) SHLWAPI_155
 156 stdcall @(wstr wstr) SHLWAPI_156
 157 stub @
 158 stdcall @(wstr wstr) SHLWAPI_158
@@ -218,7 +218,7 @@ debug_channels (shell)
 206 stdcall @(long wstr wstr ptr ptr ptr) SHLWAPI_206
 207 stub @
 208 stdcall @(long long ptr ptr long) SHLWAPI_208
-209 stub @
+209 stdcall @(ptr) SHLWAPI_209
 210 stdcall @(ptr long ptr) SHLWAPI_210
 211 stdcall @(ptr long) SHLWAPI_211
 212 stub @
@@ -359,9 +359,9 @@ debug_channels (shell)
 347 forward @ advapi32.RegDeleteValueW
 348 stub @
 349 stub @
-350 stub @
-351 stub @
-352 stub @
+350 stdcall @(wstr ptr) SHLWAPI_350
+351 stdcall @(wstr ptr long ptr) SHLWAPI_351
+352 stdcall @(ptr wstr ptr ptr) SHLWAPI_352
 353 stub @
 354 stub @
 355 stub @
@@ -371,7 +371,7 @@ debug_channels (shell)
 359 forward @ kernel32.OpenEventW
 360 forward @ kernel32.RemoveDirectoryW
 361 forward @ kernel32.GetShortPathNameW
-362 stub @
+362 forward @ advapi32.GetUserNameW
 363 stub @
 364 stdcall @(str str long) SHLWAPI_364
 365 stub @
@@ -427,7 +427,7 @@ debug_channels (shell)
 415 stub @
 416 stub @
 417 stub @
-418 stub @
+418 stdcall @(long) SHLWAPI_418
 419 stub @
 420 stub @
 421 stub @
@@ -445,7 +445,7 @@ debug_channels (shell)
 433 stub @
 434 forward @ user32.SendMessageTimeoutW
 435 stub @
-436 stub @
+436 stdcall @(wstr ptr) SHLWAPI_436
 437 stdcall @(long) SHLWAPI_437
 438 stub @
 439 stub @
@@ -722,12 +722,12 @@ debug_channels (shell)
 @ stub    SHCreateStreamOnFileW
 @ stub    SHCreateStreamWrapper
 @ stub    SHCreateThread
-@ stub    SHGetThreadRef
+@ stdcall SHGetThreadRef (ptr) SHGetThreadRef
 @ stdcall SHRegDuplicateHKey (long) SHRegDuplicateHKey
 @ stdcall SHRegSetPathA(long str str str long) SHRegSetPathA
 @ stdcall SHRegSetPathW(long wstr wstr wstr long) SHRegSetPathW
 @ stub    SHRegisterValidateTemplate
-@ stub    SHSetThreadRef
+@ stdcall SHSetThreadRef (ptr) SHSetThreadRef
 @ stub    SHSkipJunction
 @ stub    SHStrDupA
 @ stub    SHStrDupW
