@@ -145,7 +145,7 @@ static void INT_GetRealModeContext( REALMODECALL *call, CONTEXT *context )
     ESI_reg(context) = call->esi;
     EDI_reg(context) = call->edi;
     EBP_reg(context) = call->ebp;
-    EFL_reg(context) = call->fl | 0x00020000; /* V86 */
+    EFL_reg(context) = call->fl | V86_FLAG;
     EIP_reg(context) = call->ip;
     ESP_reg(context) = call->sp;
     CS_reg(context)  = call->cs;
