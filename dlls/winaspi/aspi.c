@@ -43,8 +43,10 @@ DEFAULT_DEBUG_CHANNEL(aspi);
 static void
 SCSI_GetProcinfo();
 
+#ifdef linux
 static void
 SCSI_MapHCtoController();
+#endif
 
 /* Exported functions */
 void
@@ -52,7 +54,9 @@ SCSI_Init()
 {
 	/* For now we just call SCSI_GetProcinfo */
 	SCSI_GetProcinfo();
+#ifdef linux
 	SCSI_MapHCtoController();
+#endif
 }
 
 int
