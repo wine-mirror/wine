@@ -40,6 +40,7 @@ static const char * const SHELL_People[] =
     "Matthew Francis",
     "Peter Galbavy",
     "Ramon Garcia",
+    "Klaas van Gend",
     "Matthew Ghio",
     "Jody Goldberg",
     "Hans de Graaff",

@@ -20,6 +20,7 @@ RC_SRCS = \
 	sysres_Hu.rc \
 	sysres_It.rc \
 	sysres_Ko.rc \
+	sysres_Nl.rc \
 	sysres_No.rc \
 	sysres_Pl.rc \
 	sysres_Po.rc \

@@ -62,6 +62,7 @@ const WINE_LANGUAGE_DEF Languages[] =
     {"Pt",0x0416},	/* LANG_Pt */
     {"Sv",0x041d},	/* LANG_Sv */
     {"Ca",0x0403},	/* LANG_Ca */
+    {"Nl",0x0413},	/* LANG_Nl */
     {NULL,0}
 };
 
@@ -116,7 +117,7 @@ static char szUsage[] =
   "    -help           Show this help message\n"
   "    -iconic         Start as an icon\n"
   "    -language xx    Set the language (one of Ca,Cs,Da,De,En,Eo,Es,Fi,Fr,Hu,It,\n"
-  "                    Ko,No,Pl,Pt,Sv)\n"
+  "                    Ko,Nl,No,Pl,Pt,Sv)\n"
   "    -managed        Allow the window manager to manage created windows\n"
   "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n"
   "    -name name      Set the application name\n"

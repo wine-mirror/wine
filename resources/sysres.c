@@ -26,6 +26,7 @@ extern const wrc_resource32_t * const sysres_Pl_ResTable[];
 extern const wrc_resource32_t * const sysres_Po_ResTable[];
 extern const wrc_resource32_t * const sysres_Sw_ResTable[];
 extern const wrc_resource32_t * const sysres_Ca_ResTable[];
+extern const wrc_resource32_t * const sysres_Nl_ResTable[];
 
 static const wrc_resource32_t * const * SYSRES_Resources[] =
 {
@@ -44,7 +45,8 @@ static const wrc_resource32_t * const * SYSRES_Resources[] =
     sysres_Pl_ResTable,  /* LANG_Pl */
     sysres_Po_ResTable,  /* LANG_Po */
     sysres_Sw_ResTable,  /* LANG_Sw */
-    sysres_Ca_ResTable   /* LANG_Ca */
+    sysres_Ca_ResTable,  /* LANG_Ca */
+    sysres_Nl_ResTable   /* LANG_Nl */
 };
 
 

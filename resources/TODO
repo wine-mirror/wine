@@ -46,6 +46,7 @@ Today it works well for:
 * Korean
 * Finnish
 * Danish
+* Dutch
 ...to be continued......
 
 Thank you.
@@ -67,6 +68,7 @@ and translate it to your language. It's okay for:
 * Italian
 * French
 * Danish
+* Dutch
 .....
 
 Thank you.
@@ -86,6 +88,7 @@ This has now been done for:
 
 * English
 * Danish
+* Dutch
 .....
 
 Note: I picked the IDs of the menuitems "at random".  When someone wants to
@@ -109,6 +112,7 @@ translations to all supported languages. At present it is only done for
 
 * English
 * German
+* Dutch
 
 After you implemented it for your language, please add it to the list above.
 
