@@ -106,6 +106,10 @@ static char*    decodeA(const char* str)
     return ptr;
 }
 
+#if 0
+/* This will be needed to decode Unicode strings saved by the child process
+ * when we test Unicode functions.
+ */
 static WCHAR*   decodeW(const char* str)
 {
     size_t      len;
@@ -123,6 +127,7 @@ static WCHAR*   decodeW(const char* str)
     ptr[len] = '\0';
     return ptr;
 }
+#endif
 
 /******************************************************************
  *		init
@@ -351,7 +356,7 @@ static void test_Startup(void)
 {
     char                buffer[MAX_PATH];
     PROCESS_INFORMATION	info;
-    STARTUPINFOA	startup;
+    STARTUPINFOA	startup,si;
 
     /* let's start simplistic */
     memset(&startup, 0, sizeof(startup));
@@ -367,9 +372,10 @@ static void test_Startup(void)
     /* child process has changed result file, so let profile functions know about it */
     WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
 
+    GetStartupInfoA(&si);
     okChildInt("StartupInfoA", "cb", startup.cb);
-    okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
-    okChildString("StartupInfoA", "lpTitle", startup.lpTitle);
+    okChildString("StartupInfoA", "lpDesktop", si.lpDesktop);
+    okChildString("StartupInfoA", "lpTitle", si.lpTitle);
     okChildInt("StartupInfoA", "dwX", startup.dwX);
     okChildInt("StartupInfoA", "dwY", startup.dwY);
     okChildInt("StartupInfoA", "dwXSize", startup.dwXSize);
@@ -444,7 +450,7 @@ static void test_Startup(void)
     WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
 
     okChildInt("StartupInfoA", "cb", startup.cb);
-    okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
+    okChildString("StartupInfoA", "lpDesktop", si.lpDesktop);
     okChildString("StartupInfoA", "lpTitle", startup.lpTitle);
     okChildInt("StartupInfoA", "dwX", startup.dwX);
     okChildInt("StartupInfoA", "dwY", startup.dwY);
@@ -521,7 +527,7 @@ static void test_Startup(void)
 
     okChildInt("StartupInfoA", "cb", startup.cb);
     okChildString("StartupInfoA", "lpDesktop", startup.lpDesktop);
-    okChildString("StartupInfoA", "lpTitle", startup.lpTitle);
+    okChildString("StartupInfoA", "lpTitle", si.lpTitle);
     okChildInt("StartupInfoA", "dwX", startup.dwX);
     okChildInt("StartupInfoA", "dwY", startup.dwY);
     okChildInt("StartupInfoA", "dwXSize", startup.dwXSize);
