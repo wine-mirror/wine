@@ -7,9 +7,32 @@
 #ifndef __WINE_WINNT_H
 #define __WINE_WINNT_H
 
-#include "windows.h"
+#include "wintypes.h"
 
+#pragma pack(1)
 /* Defines */
+
+/* Argument 1 passed to the DllEntryProc. */
+#define	DLL_PROCESS_DETACH	0	/* detach process (unload library) */
+#define	DLL_PROCESS_ATTACH	1	/* attach process (load library) */
+#define	DLL_THREAD_ATTACH	2	/* attach new thread */
+#define	DLL_THREAD_DETACH	3	/* detach thread */
+
+
+/* u.x.wProcessorArchitecture (NT) */
+#define	PROCESSOR_ARCHITECTURE_INTEL	0
+#define	PROCESSOR_ARCHITECTURE_MIPS	1
+#define	PROCESSOR_ARCHITECTURE_ALPHA	2
+#define	PROCESSOR_ARCHITECTURE_PPC	3
+#define	PROCESSOR_ARCHITECTURE_UNKNOWN	0xFFFF
+
+/* dwProcessorType */
+#define	PROCESSOR_INTEL_386	386
+#define	PROCESSOR_INTEL_486	486
+#define	PROCESSOR_INTEL_PENTIUM	586
+#define	PROCESSOR_MIPS_R4000	4000
+#define	PROCESSOR_ALPHA_21064	21064
+
 
 #define ANYSIZE_ARRAY 1
 
@@ -292,6 +315,19 @@ typedef struct _EXCEPTION_POINTERS
   PCONTEXT           ContextRecord;
 } EXCEPTION_POINTERS, *PEXCEPTION_POINTERS;
 
+typedef struct {
+    BYTE Value[6];
+} SID_IDENTIFIER_AUTHORITY,*PSID_IDENTIFIER_AUTHORITY,*LPSID_IDENTIFIER_AUTHORITY;
+
+typedef struct _SID {
+    BYTE Revision;
+    BYTE SubAuthorityCount;
+    SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
+    DWORD SubAuthority[1];
+} SID,*PSID,*LPSID;
+
+
+#pragma pack(4)
 /*
  * function pointer to a exception filter
  */
@@ -360,6 +396,20 @@ typedef struct _TOKEN_GROUPS  {
  * LUID_AND_ATTRIBUTES
  */
 
+typedef struct _LARGE_INTEGER
+{
+    DWORD    LowPart;
+    LONG     HighPart;
+} LARGE_INTEGER,*LPLARGE_INTEGER;
+
+typedef struct _ULARGE_INTEGER
+{
+    DWORD    LowPart;
+    DWORD    HighPart;
+} ULARGE_INTEGER,*LPULARGE_INTEGER;
+
+typedef LARGE_INTEGER LUID,*LPLUID; /* locally unique ids */
+
 typedef struct _LUID_AND_ATTRIBUTES {
   LUID   Luid; 
   DWORD  Attributes; 
@@ -394,16 +444,14 @@ typedef struct _TOKEN_PRIMARY_GROUP {
 /*
  * ACL (and PACL LPACL?).
  */
-/*
 
-are defined in ntddl.h.
 typedef struct _ACL {
-  BYTE AclRevision;
-  BYTE Sbz1;
-  WORD AclSize;
-  WORD AceCount;
-  WORD Sbz2;
-} ACL, *PACL; PACL <=> LPACL? */
+    BYTE AclRevision;
+    BYTE Sbz1;
+    WORD AclSize;
+    WORD AceCount;
+    WORD Sbz2;
+} ACL, *LPACL;
 
 /*
  * TOKEN_DEFAULT_DACL
@@ -545,6 +593,36 @@ typedef struct _TOKEN_STATISTICS {
 #define FILE_GENERIC_EXECUTE      (STANDARD_RIGHTS_EXECUTE | FILE_EXECUTE | \
                                    FILE_READ_ATTRIBUTES | SYNCHRONIZE)
 
+
+/* File attribute flags
+ */
+#define FILE_SHARE_READ			0x00000001L
+#define FILE_SHARE_WRITE		0x00000002L
+#define FILE_SHARE_DELETE		0x00000004L
+#define FILE_ATTRIBUTE_READONLY         0x00000001L
+#define FILE_ATTRIBUTE_HIDDEN           0x00000002L
+#define FILE_ATTRIBUTE_SYSTEM           0x00000004L
+#define FILE_ATTRIBUTE_LABEL            0x00000008L  /* Not in Windows API */
+#define FILE_ATTRIBUTE_DIRECTORY        0x00000010L
+#define FILE_ATTRIBUTE_ARCHIVE          0x00000020L
+#define FILE_ATTRIBUTE_NORMAL           0x00000080L
+#define FILE_ATTRIBUTE_TEMPORARY        0x00000100L
+#define FILE_ATTRIBUTE_ATOMIC_WRITE     0x00000200L
+#define FILE_ATTRIBUTE_XACTION_WRITE    0x00000400L
+#define FILE_ATTRIBUTE_COMPRESSED       0x00000800L
+#define FILE_ATTRIBUTE_OFFLINE		0x00001000L
+
+/* File alignments (NT) */
+#define	FILE_BYTE_ALIGNMENT		0x00000000
+#define	FILE_WORD_ALIGNMENT		0x00000001
+#define	FILE_LONG_ALIGNMENT		0x00000003
+#define	FILE_QUAD_ALIGNMENT		0x00000007
+#define	FILE_OCTA_ALIGNMENT		0x0000000f
+#define	FILE_32_BYTE_ALIGNMENT		0x0000001f
+#define	FILE_64_BYTE_ALIGNMENT		0x0000003f
+#define	FILE_128_BYTE_ALIGNMENT		0x0000007f
+#define	FILE_256_BYTE_ALIGNMENT		0x000000ff
+#define	FILE_512_BYTE_ALIGNMENT		0x000001ff
 
 /* Registry security values */
 #define OWNER_SECURITY_INFORMATION  0x00000001

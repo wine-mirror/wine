@@ -1,6 +1,11 @@
 #ifndef __WINE_WINNLS_H
 #define __WINE_WINNLS_H
 
+#ifdef HAVE_WCTYPE_H
+#include <wctype.h> /* needed for towupper */
+#endif
+#include "wintypes.h"
+
 /* flags to GetLocaleInfo */
 #define	LOCALE_NOUSEROVERRIDE	    0x80000000
 #define	LOCALE_USE_CP_ACP	    0x40000000
@@ -381,9 +386,11 @@
 /* use this in a WineLib program if you really want all types */
 #define LOCALE_TIMEDATEBOTH    0x00000300  /* full set */
 
+#ifndef HAVE_WCTYPE_H /* fight native wctype.h */
 /* Prototypes for Unicode case conversion routines */
 WCHAR towupper(WCHAR);
 WCHAR towlower(WCHAR);
+#endif
 
 /* Definitions for IsTextUnicode() function */
 #define IS_TEXT_UNICODE_ASCII16		0x0001
@@ -397,5 +404,57 @@ WCHAR towlower(WCHAR);
 #define ITU_IMPLEMENTED_TESTS \
 	IS_TEXT_UNICODE_SIGNATURE| \
 	IS_TEXT_UNICODE_ODD_LENGTH
+
+        
+/* Character Type Flags */
+#define	CT_CTYPE1		0x00000001	/* usual ctype */
+#define	CT_CTYPE2		0x00000002	/* bidirectional layout info */
+#define	CT_CTYPE3		0x00000004	/* textprocessing info */
+
+/* CType 1 Flag Bits */
+#define C1_UPPER		0x0001
+#define C1_LOWER		0x0002
+#define C1_DIGIT		0x0004
+#define C1_SPACE		0x0008
+#define C1_PUNCT		0x0010
+#define C1_CNTRL		0x0020
+#define C1_BLANK		0x0040
+#define C1_XDIGIT		0x0080
+#define C1_ALPHA		0x0100
+
+/* CType 2 Flag Bits */
+#define	C2_LEFTTORIGHT		0x0001
+#define	C2_RIGHTTOLEFT		0x0002
+#define	C2_EUROPENUMBER		0x0003
+#define	C2_EUROPESEPARATOR	0x0004
+#define	C2_EUROPETERMINATOR	0x0005
+#define	C2_ARABICNUMBER		0x0006
+#define	C2_COMMONSEPARATOR	0x0007
+#define	C2_BLOCKSEPARATOR	0x0008
+#define	C2_SEGMENTSEPARATOR	0x0009
+#define	C2_WHITESPACE		0x000A
+#define	C2_OTHERNEUTRAL		0x000B
+#define	C2_NOTAPPLICABLE	0x0000
+
+/* CType 3 Flag Bits */
+#define	C3_NONSPACING		0x0001
+#define	C3_DIACRITIC		0x0002
+#define	C3_VOWELMARK		0x0004
+#define	C3_SYMBOL		0x0008
+#define	C3_KATAKANA		0x0010
+#define	C3_HIRAGANA		0x0020
+#define	C3_HALFWIDTH		0x0040
+#define	C3_FULLWIDTH		0x0080
+#define	C3_IDEOGRAPH		0x0100
+#define	C3_KASHIDA		0x0200
+#define	C3_LEXICAL		0x0400
+#define	C3_ALPHA		0x8000
+#define	C3_NOTAPPLICABLE	0x0000
+
+        /* FIXME: This does not belong to an interface file */
+UINT16      WINAPI CompareString16(DWORD,DWORD,LPCSTR,DWORD,LPCSTR,DWORD);
+INT16       WINAPI GetLocaleInfo16(LCID,LCTYPE,LPSTR,INT16);
+BOOL16      WINAPI GetStringType16(LCID,DWORD,LPCSTR,INT16,LPWORD);
+
 
 #endif  /* __WINE_WINNLS_H */

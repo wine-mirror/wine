@@ -190,9 +190,313 @@ typedef struct /* not sure if the 16bit version is correct */
     DWORD	dwLanguageId;
 } MSGBOXPARAMS16,*LPMSGBOXPARAMS16;
 
+  /* Windows */
+
+typedef struct
+{
+    LPVOID      lpCreateParams;
+    HINSTANCE16 hInstance;
+    HMENU16     hMenu;
+    HWND16      hwndParent;
+    INT16       cy;
+    INT16       cx;
+    INT16       y;
+    INT16       x;
+    LONG        style WINE_PACKED;
+    SEGPTR      lpszName WINE_PACKED;
+    SEGPTR      lpszClass WINE_PACKED;
+    DWORD       dwExStyle WINE_PACKED;
+} CREATESTRUCT16, *LPCREATESTRUCT16;
+
+typedef struct 
+{
+    HMENU16   hWindowMenu;
+    UINT16    idFirstChild;
+} CLIENTCREATESTRUCT16, *LPCLIENTCREATESTRUCT16;
+
+typedef struct
+{
+    SEGPTR       szClass;
+    SEGPTR       szTitle;
+    HINSTANCE16  hOwner;
+    INT16        x;
+    INT16        y;
+    INT16        cx;
+    INT16        cy;
+    DWORD        style WINE_PACKED;
+    LPARAM       lParam WINE_PACKED;
+} MDICREATESTRUCT16, *LPMDICREATESTRUCT16;
+
+  /* WM_GETMINMAXINFO struct */
+typedef struct
+{
+    POINT16   ptReserved;
+    POINT16   ptMaxSize;
+    POINT16   ptMaxPosition;
+    POINT16   ptMinTrackSize;
+    POINT16   ptMaxTrackSize;
+} MINMAXINFO16;
+
+  /* WM_WINDOWPOSCHANGING/CHANGED struct */
+typedef struct
+{
+    HWND16  hwnd;
+    HWND16  hwndInsertAfter;
+    INT16   x;
+    INT16   y;
+    INT16   cx;
+    INT16   cy;
+    UINT16  flags;
+} WINDOWPOS16, *LPWINDOWPOS16;
+
+  /* WM_NCCALCSIZE parameter structure */
+typedef struct
+{
+    RECT16  rgrc[3];
+    SEGPTR  lppos;
+} NCCALCSIZE_PARAMS16, *LPNCCALCSIZE_PARAMS16;
+
+  /* Journalling hook structure */
+
+typedef struct
+{
+    UINT16  message;
+    UINT16  paramL;
+    UINT16  paramH;
+    DWORD   time WINE_PACKED;
+} EVENTMSG16, *LPEVENTMSG16;
+
+  /* Mouse hook structure */
+
+typedef struct
+{
+    POINT16 pt;
+    HWND16  hwnd;
+    UINT16  wHitTestCode;
+    DWORD   dwExtraInfo;
+} MOUSEHOOKSTRUCT16, *LPMOUSEHOOKSTRUCT16;
+
+  /* Hardware hook structure */
+
+typedef struct
+{
+    HWND16    hWnd;
+    UINT16    wMessage;
+    WPARAM16  wParam;
+    LPARAM    lParam WINE_PACKED;
+} HARDWAREHOOKSTRUCT16, *LPHARDWAREHOOKSTRUCT16;
+
+/* Scrollbar messages */
+#define SBM_SETPOS16             (WM_USER+0)
+#define SBM_GETPOS16             (WM_USER+1)
+#define SBM_SETRANGE16           (WM_USER+2)
+#define SBM_GETRANGE16           (WM_USER+3)
+#define SBM_ENABLE_ARROWS16      (WM_USER+4)
+#define SBM_SETRANGEREDRAW16     WM_NULL  /* Not in Win16 */
+#define SBM_SETSCROLLINFO16      WM_NULL  /* Not in Win16 */
+#define SBM_GETSCROLLINFO16      WM_NULL  /* Not in Win16 */
+
+  /* CBT hook structures */
+
+typedef struct
+{
+    CREATESTRUCT16  *lpcs;
+    HWND16           hwndInsertAfter;
+} CBT_CREATEWND16, *LPCBT_CREATEWND16;
+
+typedef struct
+{
+    BOOL16    fMouse;
+    HWND16    hWndActive;
+} CBTACTIVATESTRUCT16, *LPCBTACTIVATESTRUCT16;
+
+  /* Debug hook structure */
+
+typedef struct
+{
+    HMODULE16   hModuleHook;
+    LPARAM	reserved WINE_PACKED;
+    LPARAM	lParam WINE_PACKED;
+    WPARAM16    wParam;
+    INT16       code;
+} DEBUGHOOKINFO16, *LPDEBUGHOOKINFO16;
+
+#define GETMAXLPT	8
+#define GETMAXCOM	9
+
+/* GetFreeSystemResources() parameters */
+
+#define GFSR_SYSTEMRESOURCES   0x0000
+#define GFSR_GDIRESOURCES      0x0001
+#define GFSR_USERRESOURCES     0x0002
+
+#define MAKEINTRESOURCE16(i)  (SEGPTR)((DWORD)((WORD)(i)))
+
+/* Predefined resource types */
+#define RT_CURSOR16          MAKEINTRESOURCE16(1)
+#define RT_BITMAP16          MAKEINTRESOURCE16(2)
+#define RT_ICON16            MAKEINTRESOURCE16(3)
+#define RT_MENU16            MAKEINTRESOURCE16(4)
+#define RT_DIALOG16          MAKEINTRESOURCE16(5)
+#define RT_STRING16          MAKEINTRESOURCE16(6)
+#define RT_FONTDIR16         MAKEINTRESOURCE16(7)
+#define RT_FONT16            MAKEINTRESOURCE16(8)
+#define RT_ACCELERATOR16     MAKEINTRESOURCE16(9)
+#define RT_RCDATA16          MAKEINTRESOURCE16(10)
+#define RT_MESSAGELIST16     MAKEINTRESOURCE16(11)
+#define RT_GROUP_CURSOR16    MAKEINTRESOURCE16(12)
+#define RT_GROUP_ICON16      MAKEINTRESOURCE16(14)
+/* Predefined resources */
+#define IDI_APPLICATION16  MAKEINTRESOURCE16(32512)
+#define IDI_HAND16         MAKEINTRESOURCE16(32513)
+#define IDI_QUESTION16     MAKEINTRESOURCE16(32514)
+#define IDI_EXCLAMATION16  MAKEINTRESOURCE16(32515)
+#define IDI_ASTERISK16     MAKEINTRESOURCE16(32516)
+
+#define IDC_BUMMER16       MAKEINTRESOURCE16(100)
+#define IDC_ARROW16        MAKEINTRESOURCE16(32512)
+#define IDC_IBEAM16        MAKEINTRESOURCE16(32513)
+#define IDC_WAIT16         MAKEINTRESOURCE16(32514)
+#define IDC_CROSS16        MAKEINTRESOURCE16(32515)
+#define IDC_UPARROW16      MAKEINTRESOURCE16(32516)
+#define IDC_SIZE16         MAKEINTRESOURCE16(32640)
+#define IDC_ICON16         MAKEINTRESOURCE16(32641)
+#define IDC_SIZENWSE16     MAKEINTRESOURCE16(32642)
+#define IDC_SIZENESW16     MAKEINTRESOURCE16(32643)
+#define IDC_SIZEWE16       MAKEINTRESOURCE16(32644)
+#define IDC_SIZENS16       MAKEINTRESOURCE16(32645)
+#define IDC_SIZEALL16      MAKEINTRESOURCE16(32646)
+#define IDC_NO16           MAKEINTRESOURCE16(32648)
+#define IDC_APPSTARTING16  MAKEINTRESOURCE16(32650)
+#define IDC_HELP16         MAKEINTRESOURCE16(32651)
+
+/* CreateWindow() coordinates */
+#define CW_USEDEFAULT16 ((INT16)0x8000)
+
+/* Win16 button control messages */
+#define BM_GETCHECK16          (WM_USER+0)
+#define BM_SETCHECK16          (WM_USER+1)
+#define BM_GETSTATE16          (WM_USER+2)
+#define BM_SETSTATE16          (WM_USER+3)
+#define BM_SETSTYLE16          (WM_USER+4)
+#define BM_CLICK16             WM_NULL  /* Does not exist in Win16 */
+#define BM_GETIMAGE16          WM_NULL  /* Does not exist in Win16 */
+#define BM_SETIMAGE16          WM_NULL  /* Does not exist in Win16 */
+
+/* Static Control Messages */
+#define STM_SETICON16       (WM_USER+0)
+#define STM_GETICON16       (WM_USER+1)
+
+/* Edit control messages */
+#define EM_GETSEL16                (WM_USER+0)
+#define EM_SETSEL16                (WM_USER+1)
+#define EM_GETRECT16               (WM_USER+2)
+#define EM_SETRECT16               (WM_USER+3)
+#define EM_SETRECTNP16             (WM_USER+4)
+#define EM_SCROLL16                (WM_USER+5)
+#define EM_LINESCROLL16            (WM_USER+6)
+#define EM_SCROLLCARET16           (WM_USER+7)
+#define EM_GETMODIFY16             (WM_USER+8)
+#define EM_SETMODIFY16             (WM_USER+9)
+#define EM_GETLINECOUNT16          (WM_USER+10)
+#define EM_LINEINDEX16             (WM_USER+11)
+#define EM_SETHANDLE16             (WM_USER+12)
+#define EM_GETHANDLE16             (WM_USER+13)
+#define EM_GETTHUMB16              (WM_USER+14)
+#define EM_LINELENGTH16            (WM_USER+17)
+#define EM_REPLACESEL16            (WM_USER+18)
+#define EM_GETLINE16               (WM_USER+20)
+#define EM_LIMITTEXT16             (WM_USER+21)
+#define EM_CANUNDO16               (WM_USER+22)
+#define EM_UNDO16                  (WM_USER+23)
+#define EM_FMTLINES16              (WM_USER+24)
+#define EM_LINEFROMCHAR16          (WM_USER+25)
+#define EM_SETTABSTOPS16           (WM_USER+27)
+#define EM_SETPASSWORDCHAR16       (WM_USER+28)
+#define EM_EMPTYUNDOBUFFER16       (WM_USER+29)
+#define EM_GETFIRSTVISIBLELINE16   (WM_USER+30)
+#define EM_SETREADONLY16           (WM_USER+31)
+#define EM_SETWORDBREAKPROC16      (WM_USER+32)
+#define EM_GETWORDBREAKPROC16      (WM_USER+33)
+#define EM_GETPASSWORDCHAR16       (WM_USER+34)
+/*
+  not in win16:
+    EM_SETMARGINS16            WM_NULL
+    EM_GETMARGINS16            WM_NULL
+    EM_GETLIMITTEXT16          WM_NULL
+    EM_POSFROMCHAR16           WM_NULL
+    EM_CHARFROMPOS16           WM_NULL
+    EM_SETLIMITTEXT16          WM_NULL - no name change in win16
+*/
+
+typedef struct
+{
+    UINT16      CtlType;
+    UINT16      CtlID;
+    UINT16      itemID;
+    UINT16      itemAction;
+    UINT16      itemState;
+    HWND16      hwndItem;
+    HDC16       hDC;
+    RECT16      rcItem WINE_PACKED;
+    DWORD       itemData WINE_PACKED;
+} DRAWITEMSTRUCT16, *PDRAWITEMSTRUCT16, *LPDRAWITEMSTRUCT16;
+
+typedef struct
+{
+    UINT16      CtlType;
+    UINT16      CtlID;
+    UINT16      itemID;
+    UINT16      itemWidth;
+    UINT16      itemHeight;
+    DWORD       itemData WINE_PACKED;
+} MEASUREITEMSTRUCT16, *PMEASUREITEMSTRUCT16, *LPMEASUREITEMSTRUCT16;
+
+typedef struct
+{
+    UINT16     CtlType;
+    UINT16     CtlID;
+    UINT16     itemID;
+    HWND16     hwndItem;
+    DWORD      itemData;
+} DELETEITEMSTRUCT16, *LPDELETEITEMSTRUCT16;
+
+typedef struct
+{
+    UINT16      CtlType;
+    UINT16      CtlID;
+    HWND16      hwndItem;
+    UINT16      itemID1;
+    DWORD       itemData1;
+    UINT16      itemID2;
+    DWORD       itemData2 WINE_PACKED;
+} COMPAREITEMSTRUCT16, *LPCOMPAREITEMSTRUCT16;
 
 #pragma pack(4)
 
+BOOL16      WINAPI CheckMenuRadioItem16(HMENU16,UINT16,UINT16,UINT16,UINT16);
+HICON16     WINAPI CopyImage16(HANDLE16,UINT16,INT16,INT16,UINT16);
+HICON16     WINAPI CreateIconFromResource16(LPBYTE,UINT16,BOOL16,DWORD);
+BOOL16      WINAPI EnumChildWindows16(HWND16,WNDENUMPROC16,LPARAM);
+INT16       WINAPI EnumProps16(HWND16,PROPENUMPROC16);
+BOOL16      WINAPI EnumWindows16(WNDENUMPROC16,LPARAM);
+DWORD       WINAPI GetAppCompatFlags16(HTASK16);
+INT16       WINAPI GetKBCodePage16(void);
+INT16       WINAPI GetKeyboardType16(INT16);
+INT16       WINAPI GetKeyNameText16(LONG,LPSTR,INT16);
+INT16       WINAPI GetWindowRgn16(HWND16,HRGN16);
+BOOL16      WINAPI IsWindow16(HWND16);
+INT16       WINAPI LookupIconIdFromDirectory16(LPBYTE,BOOL16);
+UINT16      WINAPI MapVirtualKey16(UINT16,UINT16);
+LRESULT     WINAPI SendMessageTimeout16(HWND16,UINT16,WPARAM16,LPARAM,UINT16,
+					UINT16,LPWORD);
+FARPROC16   WINAPI SetWindowsHook16(INT16,HOOKPROC16);
+HHOOK       WINAPI SetWindowsHookEx16(INT16,HOOKPROC16,HINSTANCE16,HTASK16);
+BOOL16      WINAPI UnhookWindowsHook16(INT16,HOOKPROC16);
+BOOL16      WINAPI UnhookWindowsHookEx16(HHOOK);
+INT16       WINAPIV wsnprintf16(LPSTR,UINT16,LPCSTR,...);
+INT16       WINAPIV wsprintf16(LPSTR,LPCSTR,...);
+INT16       WINAPI wvsnprintf16(LPSTR,UINT16,LPCSTR,LPCVOID);
 VOID        WINAPI CalcChildScroll(HWND16,WORD);
 VOID        WINAPI CascadeChildWindows(HWND16,WORD);
 INT16       WINAPI CloseComm(INT16);
@@ -297,8 +601,6 @@ LONG        WINAPI WIN16_DispatchMessage32(const MSG16_32*,BOOL16);
 INT16       WINAPI DlgDirList16(HWND16,LPSTR,INT16,INT16,UINT16);
 INT16       WINAPI DlgDirListComboBox16(HWND16,LPSTR,INT16,INT16,UINT16);
 BOOL16      WINAPI DlgDirSelectComboBoxEx16(HWND16,LPSTR,INT16,INT16);
-BOOL32      WINAPI DlgDirSelectComboBoxEx32A(HWND32,LPSTR,INT32,INT32);
-BOOL32      WINAPI DlgDirSelectComboBoxEx32W(HWND32,LPWSTR,INT32,INT32);
 BOOL16      WINAPI DlgDirSelectEx16(HWND16,LPSTR,INT16,INT16);
 BOOL16      WINAPI DragDetect16(HWND16,POINT16);
 DWORD       WINAPI DragObject16(HWND16,HWND16,UINT16,HANDLE16,WORD,HCURSOR16);
@@ -548,6 +850,23 @@ INT16       WINAPI GetCommError(INT16,LPCOMSTAT);
 BOOL16      WINAPI BuildCommDCB16(LPCSTR,LPDCB16);
 INT16       WINAPI GetCommState16(INT16,LPDCB16);
 INT16       WINAPI SetCommState16(LPDCB16);
+INT16       WINAPI lstrcmp16(LPCSTR,LPCSTR);
+INT16       WINAPI lstrcmpi16(LPCSTR,LPCSTR);
+
+#ifdef __WINE__
+typedef VOID (*SYSTEMTIMERPROC)(WORD);
+
+WORD        WINAPI CreateSystemTimer(WORD,SYSTEMTIMERPROC);
+VOID        WINAPI DisableSystemTimers(void);
+VOID        WINAPI EnableSystemTimers(void);
+DWORD       WINAPI GetFileResourceSize(LPCSTR,SEGPTR,SEGPTR,LPDWORD);
+DWORD       WINAPI GetFileResource(LPCSTR,SEGPTR,SEGPTR,DWORD,DWORD,LPVOID);
+BYTE        WINAPI GetTempDrive(BYTE);
+FARPROC16   WINAPI SetTaskSignalProc(HTASK16,FARPROC16);
+#endif  /* __WINE__ */
+BOOL16      WINAPI GrayString16(HDC16,HBRUSH16,GRAYSTRINGPROC16,LPARAM,
+                                INT16,INT16,INT16,INT16,INT16);
+BOOL16      WINAPI EnumTaskWindows16(HTASK16,WNDENUMPROC16,LPARAM);
 
 
 #endif /* __WINE_WINUSER16_H */

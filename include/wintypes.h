@@ -4,6 +4,23 @@
  * Copyright 1996 Alexandre Julliard
  */
 
+/* Misc. constants. */
+
+#ifdef FALSE
+#undef FALSE
+#endif
+#define FALSE 0
+
+#ifdef TRUE
+#undef TRUE
+#endif
+#define TRUE  1
+
+#ifdef NULL
+#undef NULL
+#endif
+#define NULL  0
+
 #ifndef __WINE_WINTYPES_H
 #define __WINE_WINTYPES_H
 
@@ -323,23 +340,6 @@ DECL_WINELIB_TYPE(HWAVE)
 DECL_WINELIB_TYPE(HWAVEIN)
 DECL_WINELIB_TYPE(HWAVEOUT)
 DECL_WINELIB_TYPE(HWND)
-
-/* Misc. constants. */
-
-#ifdef FALSE
-#undef FALSE
-#endif
-#define FALSE 0
-
-#ifdef TRUE
-#undef TRUE
-#endif
-#define TRUE  1
-
-#ifdef NULL
-#undef NULL
-#endif
-#define NULL  0
 
 /* Define some empty macros for compatibility with Windows code. */
 

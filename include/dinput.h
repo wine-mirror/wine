@@ -3,6 +3,7 @@
 
 #include "unknwn.h"
 #include "mouse.h"
+#include "windef.h" /* for MAX_PATH */
 
 #define STDMETHOD(xfn) HRESULT (CALLBACK *fn##xfn)
 #define STDMETHOD_(ret,xfn) ret (CALLBACK *fn##xfn)

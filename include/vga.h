@@ -8,7 +8,7 @@
 #ifndef __WINE_VGA_H
 #define __WINE_VGA_H
 
-#include "wintypes.h"
+#include "wingdi.h"
 
 int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth);
 int VGA_GetMode(unsigned*Height,unsigned*Width,unsigned*Depth);

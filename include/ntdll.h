@@ -7,6 +7,8 @@
  * Copyright 1997 Marcus Meissner
  */
 
+#include "winbase.h"
+
 /* assumes windows.h already included */
 
 #ifdef __cplusplus
@@ -206,6 +208,8 @@ BOOL32 WINAPI LookupAccountSid32A(LPCSTR,PSID,LPCSTR,LPDWORD,LPCSTR,LPDWORD,
 BOOL32 WINAPI LookupAccountSid32W(LPCWSTR,PSID,LPCWSTR,LPDWORD,LPCWSTR,LPDWORD,
                                   PSID_NAME_USE);
 LPSID_IDENTIFIER_AUTHORITY WINAPI GetSidIdentifierAuthority(LPSID);
+INT32       WINAPI AccessResource32(HMODULE32,HRSRC32);
+#define     AccessResource WINELIB_NAME(AccessResource)
 
 #ifdef __cplusplus
 }

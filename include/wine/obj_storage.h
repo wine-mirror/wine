@@ -8,7 +8,7 @@
 #define __WINE_WINE_OBJ_STORAGE_H
 
 
-#include "winnt.h"
+#include "winbase.h"
 
 
 /*****************************************************************************

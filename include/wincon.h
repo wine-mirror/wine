@@ -1,6 +1,8 @@
 #ifndef __WINE_WINCON_H
 #define __WINE_WINCON_H
 
+#include "winbase.h" /* for COORD */ 
+
 #define CTRL_C_EVENT 0
 #define CTRL_BREAK_EVENT 1
 #define CTRL_CLOSE_EVENT 2

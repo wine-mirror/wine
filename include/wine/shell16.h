@@ -1,0 +1,9 @@
+#ifndef _SHELL16_H
+#define _SHELL16_H
+
+BOOL16      WINAPI AboutDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
+BOOL32      WINAPI AboutDlgProc32(HWND32,UINT32,WPARAM32,LPARAM);
+#define     AboutDlgProc WINELIB_NAME(AboutDlgProc)
+
+
+#endif /* _SHELL16_H */
