@@ -1152,8 +1152,12 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
     TRACE("fragments=%d/%d, fragsize=%d, bytes=%d\n",
 	  dspspace.fragments, dspspace.fragstotal, dspspace.fragsize, dspspace.bytes);
 
-    /* input queue empty and output buffer with less than one fragment to play */
-    if (!wwo->lpPlayPtr && wwo->dwBufferSize < availInQ + wwo->dwFragmentSize) {
+    /* input queue empty and output buffer with less than one fragment to play 
+     * actually some cards do not play the fragment before the last if this one is partially feed
+     * so we need to test for full the availability of 2 fragments
+     */
+    if (!wwo->lpPlayPtr && wwo->dwBufferSize < availInQ + 2 * wwo->dwFragmentSize && 
+        !wwo->bNeedPost) {
 	TRACE("Run out of wavehdr:s...\n");
         return INFINITE;
     }
@@ -1221,8 +1225,8 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 		    TRACE("flushing\n");
 		    ioctl(wwo->ossdev->fd, SNDCTL_DSP_SYNC, 0);
 		    wwo->dwPlayedTotal = wwo->dwWrittenTotal;
-		}
-		else {
+                    dwNextNotifyTime = wodPlayer_NotifyCompletions(wwo, FALSE);
+		} else {
 		    TRACE("recovering\n");
 		    dwNextFeedTime = wodPlayer_FeedDSP(wwo);
 		}
