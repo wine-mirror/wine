@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <unistd.h>
 
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -574,6 +575,61 @@ int DRIVE_OpenDevice( int drive, int flags )
 {
     if (!DRIVE_IsValid( drive )) return -1;
     return open( DOSDrives[drive].device, flags );
+}
+
+
+/***********************************************************************
+ *           DRIVE_RawRead
+ *
+ * Read raw sectors from a device
+ */
+int DRIVE_RawRead(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL32 fake_success)
+{
+    int fd;
+
+    if ((fd = DRIVE_OpenDevice( drive, O_RDONLY )) != -1)
+    {
+        lseek( fd, begin * 512, SEEK_SET );
+        /* FIXME: check errors */
+        read( fd, dataptr, nr_sect * 512 );
+        close( fd );
+    }
+    else
+    {
+        memset(dataptr, 0, nr_sect * 512);
+		if (fake_success)
+        {
+			if (begin == 0 && nr_sect > 1) *(dataptr + 512) = 0xf8;
+			if (begin == 1) *dataptr = 0xf8;
+		}
+		else
+		return 0;
+    }
+	return 1;
+}
+
+
+/***********************************************************************
+ *           DRIVE_RawWrite
+ *
+ * Write raw sectors to a device
+ */
+int DRIVE_RawWrite(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL32 fake_success)
+{
+	int fd;
+
+    if ((fd = DRIVE_OpenDevice( drive, O_RDONLY )) != -1)
+    {
+        lseek( fd, begin * 512, SEEK_SET );
+        /* FIXME: check errors */
+        write( fd, dataptr, nr_sect * 512 );
+        close( fd );
+    }
+    else
+	if (!(fake_success))
+		return 0;
+
+	return 1;
 }
 
 

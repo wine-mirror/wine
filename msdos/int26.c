@@ -20,7 +20,6 @@ void WINAPI INT_Int26Handler( CONTEXT *context )
 {
     BYTE *dataptr = CTX_SEG_OFF_TO_LIN( context, DS_reg(context), EBX_reg(context) );
     DWORD begin, length;
-    int fd;
 
     if (!DRIVE_IsValid(AL_reg(context)))
     {
@@ -43,16 +42,9 @@ void WINAPI INT_Int26Handler( CONTEXT *context )
     }
 		
     TRACE(int,"int26: abs diskwrite, drive %d, sector %ld, "
-                 "count %ld, buffer %d\n",
-                 AL_reg(context), begin, length, (int) dataptr );
+                 "count %ld, buffer %p\n",
+                 AL_reg(context), begin, length, dataptr );
 
-    if ((fd = DRIVE_OpenDevice( AL_reg(context), O_WRONLY )) != -1)
-    {
-        lseek( fd, begin * 512, SEEK_SET );
-        /* FIXME: check errors */
-        write( fd, dataptr, length * 512 );
-        close( fd );
-    }
-
+	DRIVE_RawWrite(AL_reg(context), begin, length, dataptr, TRUE);
     RESET_CFLAG(context);
 }

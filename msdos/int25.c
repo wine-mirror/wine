@@ -12,6 +12,7 @@
 #include "drive.h"
 #include "debug.h"
 
+
 /**********************************************************************
  *	    INT_Int25Handler
  *
@@ -21,7 +22,6 @@ void WINAPI INT_Int25Handler( CONTEXT *context )
 {
     BYTE *dataptr = CTX_SEG_OFF_TO_LIN( context, DS_reg(context), EBX_reg(context) );
     DWORD begin, length;
-    int fd;
 
     if (!DRIVE_IsValid(AL_reg(context)))
     {
@@ -43,22 +43,10 @@ void WINAPI INT_Int25Handler( CONTEXT *context )
         length = CX_reg(context);
     }
     TRACE(int, "int25: abs diskread, drive %d, sector %ld, "
-                 "count %ld, buffer %d\n",
-                 AL_reg(context), begin, length, (int) dataptr);
+                 "count %ld, buffer %p\n",
+                 AL_reg(context), begin, length, dataptr);
 
-    if ((fd = DRIVE_OpenDevice( AL_reg(context), O_RDONLY )) != -1)
-    {
-        lseek( fd, begin * 512, SEEK_SET );
-        /* FIXME: check errors */
-        read( fd, dataptr, length * 512 );
-        close( fd );
-    }
-    else
-    {
-        memset(dataptr, 0, length * 512);
-        if (begin == 0 && length > 1) *(dataptr + 512) = 0xf8;
-        if (begin == 1) *dataptr = 0xf8;
-    }
+	DRIVE_RawRead(AL_reg(context), begin, length, dataptr, TRUE);
     RESET_CFLAG(context);
 }
 

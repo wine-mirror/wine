@@ -291,6 +291,30 @@ static BOOL32 ioctlGenericBlkDevReq( CONTEXT *context )
 			RESET_CFLAG(context);
 			break;
 
+		case 0x41: /* write logical device track */
+		case 0x61: /* read logical device track */
+			{
+				BYTE drive = BL_reg(context) ?
+						BL_reg(context) : DRIVE_GetCurrentDrive(); 
+				WORD head   = *(WORD *)dataptr+1;
+				WORD cyl    = *(WORD *)dataptr+3;
+				WORD sect   = *(WORD *)dataptr+5;
+				WORD nrsect = *(WORD *)dataptr+7;
+				BYTE *data  = (BYTE **)dataptr+9;
+				int (*raw_func)(BYTE, DWORD, DWORD, BYTE *, BOOL32);
+
+				raw_func = (CL_reg(context) == 0x41) ?
+								DRIVE_RawWrite : DRIVE_RawRead;
+
+				if (raw_func(drive, head*cyl*sect, nrsect, data, FALSE))
+					RESET_CFLAG(context);
+				else
+				{
+					AX_reg(context) = 0x1e; /* read fault */
+					SET_CFLAG(context);
+				}
+			}
+			break;
 		case 0x66:/*  get disk serial number */
 			{	
 				char	label[12],fsname[9],path[4];
@@ -327,16 +351,16 @@ static BOOL32 ioctlGenericBlkDevReq( CONTEXT *context )
 static void INT21_ParseFileNameIntoFCB( CONTEXT *context )
 {
     char *filename =
-        CTX_SEG_OFF_TO_LIN(context, DS_reg(context), SI_reg(context) );
+        CTX_SEG_OFF_TO_LIN(context, DS_reg(context), ESI_reg(context) );
     char *fcb =
-        CTX_SEG_OFF_TO_LIN(context, ES_reg(context), DI_reg(context) );
+        CTX_SEG_OFF_TO_LIN(context, ES_reg(context), EDI_reg(context) );
     char *buffer, *s, *d;
 
     AL_reg(context) = 0xff; /* failed */
 
     TRACE(int21, "filename: '%s'\n", filename);
 
-    buffer = HeapAlloc( GetProcessHeap(), 0, strlen(filename) );
+    buffer = HeapAlloc( GetProcessHeap(), 0, strlen(filename) + 1);
 
     s = filename;
     d = buffer;
@@ -1082,6 +1106,9 @@ void WINAPI DOS3Call( CONTEXT *context )
         break;
 
     case 0x01: /* READ CHARACTER FROM STANDARD INPUT, WITH ECHO */
+		_lread16(1, (BYTE *)&context->Eax, 1);
+		break;
+
     case 0x03: /* READ CHARACTER FROM STDAUX  */
     case 0x04: /* WRITE CHARACTER TO STDAUX */
     case 0x05: /* WRITE CHARACTER TO PRINTER */
