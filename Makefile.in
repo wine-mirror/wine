@@ -129,16 +129,9 @@ unicode/__install__: unicode
 checklink:: $(TESTSUBDIRS:%=%/__checklink__)
 	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c && $(RM) checklink
 
-test_environment: dummy
-	@cd programs/winetest && $(MAKE) test_environment
-
-$(TESTSUBDIRS:%=%/__test__): test_environment
-
 check test:: $(TESTSUBDIRS:%=%/__test__)
 
 crosstest:: $(TESTSUBDIRS:%=%/__crosstest__)
-
-.PHONY: test_environment
 
 # Misc rules
 

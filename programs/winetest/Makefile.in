@@ -13,8 +13,6 @@ XSUBPPDIR   = `perl -MConfig -e 'print $$Config::Config{privlibexp}'`/ExtUtils
 
 C_SRCS = winetest.c
 
-EXTRA_SRCS = wtmain.c
-
 EXTRA_OBJS = wine.o
 
 EXTRASUBDIRS = include tests
@@ -24,14 +22,10 @@ PLTESTPROGRAM = $(MODULE)$(DLLEXT)
 PLTESTS = \
 	tests/wine.pl
 
-CROSSTEST = wtmain.cross.o
-
 # override all: target so that we don't build the Perl stuff by default
-test_environment: wtmain.o @CROSSTEST@
+empty-target:
 
 @MAKE_PROG_RULES@
-
-all: test_environment
 
 wine.c: wine.xs
 	perl $(XSUBPPDIR)/xsubpp -typemap $(XSUBPPDIR)/typemap $(SRCDIR)/wine.xs >wine.c || $(RM) wine.c
@@ -39,6 +33,6 @@ wine.c: wine.xs
 clean::
 	$(RM) wine.c
 
-.PHONY: test_environment
+.PHONY: empty-target
 
 ### Dependencies:

@@ -21,7 +21,14 @@
 
 use strict;
 
-print "/* Automatically generated file; DO NOT EDIT!! */\n\n";
+print <<EOF;
+/* Automatically generated file; DO NOT EDIT!! */
+
+\#include <stdio.h>
+\#include <stdlib.h>
+\#include "winbase.h"
+
+EOF
 
 my @testlist = @ARGV;
 foreach (@testlist)
@@ -32,11 +39,13 @@ foreach (@testlist)
 
 print <<EOF;
 
-const struct
+struct test
 {
     const char *name;
     void (*func)(void);
-} winetest_testlist[] =
+};
+
+static const struct test winetest_testlist[] =
 {
 EOF
 
@@ -44,4 +53,10 @@ foreach (@testlist)
 {
     printf "    { \"%s\", func_%s },\n", $_, $_;
 }
-print "    { 0, 0 }\n};\n";
+print <<EOF;
+    { 0, 0 }
+};
+
+\#define WINETEST_WANT_MAIN
+\#include "wine/test.h"
+EOF

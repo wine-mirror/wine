@@ -14,18 +14,16 @@ LDDLLFLAGS   = @LDDLLFLAGS@
 
 MODULE       = $(TESTDLL:%.dll=%)_test.exe
 TESTLIST     = testlist.c
-TESTMAIN     = $(TOPOBJDIR)/programs/winetest/wtmain.o
 TESTRESULTS  = $(CTESTS:.c=.ok)
 TESTPROGRAM  = $(MODULE)$(DLLEXT)
 RUNTESTFLAGS = -q -P wine -M $(TESTDLL) -T $(TOPOBJDIR) -p $(TESTPROGRAM)
 
 C_SRCS       = $(CTESTS)
-EXTRA_OBJS   = $(TESTMAIN) $(TESTLIST:.c=.o)
+EXTRA_OBJS   = $(TESTLIST:.c=.o)
 ALL_LIBS     = $(LIBWINE) $(EXTRALIBS) $(LIBS)
 
 CROSSTEST    = $(TESTDLL:%.dll=%)_crosstest.exe
-CROSSTESTMAIN= $(TOPOBJDIR)/programs/winetest/wtmain.cross.o
-CROSSOBJS    = $(C_SRCS:.c=.cross.o) $(TESTLIST:.c=.cross.o) $(CROSSTESTMAIN)
+CROSSOBJS    = $(C_SRCS:.c=.cross.o) $(TESTLIST:.c=.cross.o)
 
 @MAKE_RULES@
 
@@ -62,18 +60,12 @@ check test:: $(TESTRESULTS) $(SUBDIRS:%=%/__test__)
 
 $(TESTRESULTS): $(MODULE)$(DLLEXT) $(TOPOBJDIR)/dlls/$(TESTDLL)$(DLLEXT)
 
-$(TESTMAIN):
-	cd $(TOPOBJDIR)/programs/winetest && $(MAKE) wtmain.o
-
 # Rules for cross-compiling tests
 
 crosstest:: @CROSSTEST@
 
 $(CROSSTEST): $(CROSSOBJS) Makefile.in
 	$(CROSSCC) $(CROSSOBJS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(LIBS)
-
-$(CROSSTESTMAIN):
-	cd $(TOPOBJDIR)/programs/winetest && $(MAKE) wtmain.cross.o
 
 # Rules for cleaning
 

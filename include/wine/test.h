@@ -62,4 +62,266 @@ extern void winetest_trace( const char *msg, ... );
                             winetest_end_todo(platform))
 #define todo_wine      todo("wine")
 
+
+/************************************************************************/
+/* Below is the implementation of the various functions, to be included
+ * directly into the generated testlist.c file.
+ * It is done that way so that the dlls can build the test routines with
+ * different includes or flags if needed.
+ */
+
+#ifdef WINETEST_WANT_MAIN
+
+/* debug level */
+int winetest_debug = 1;
+
+/* current platform */
+const char *winetest_platform = "windows";
+
+/* report successful tests (BOOL) */
+static int report_success = 0;
+
+/* passing arguments around */
+static int winetest_argc;
+static char** winetest_argv;
+
+static const struct test *current_test; /* test currently being run */
+
+static LONG successes;       /* number of successful tests */
+static LONG failures;        /* number of failures */
+static LONG todo_successes;  /* number of successful tests inside todo block */
+static LONG todo_failures;   /* number of failures inside todo block */
+
+/* The following data must be kept track of on a per-thread basis */
+typedef struct
+{
+    const char* current_file;        /* file of current check */
+    int current_line;                /* line of current check */
+    int todo_level;                  /* current todo nesting level */
+    int todo_do_loop;
+} tls_data;
+static DWORD tls_index;
+
+static tls_data* get_tls_data(void)
+{
+    tls_data* data;
+    DWORD last_error;
+
+    last_error=GetLastError();
+    data=TlsGetValue(tls_index);
+    if (!data)
+    {
+        data=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(tls_data));
+        TlsSetValue(tls_index,data);
+    }
+    SetLastError(last_error);
+    return data;
+}
+
+static void exit_process( int code )
+{
+    fflush( stderr );
+    ExitProcess( code );
+}
+
+
+/*
+ * Checks condition.
+ * Parameters:
+ *   - condition - condition to check;
+ *   - msg test description;
+ *   - file - test application source code file name of the check
+ *   - line - test application source code file line number of the check
+ * Return:
+ *   0 if condition does not have the expected value, 1 otherwise
+ */
+int winetest_ok( int condition, const char *msg, ... )
+{
+    va_list valist;
+    tls_data* data=get_tls_data();
+
+    if (data->todo_level)
+    {
+        if (condition)
+        {
+            fprintf( stderr, "%s:%d: Test succeeded inside todo block",
+                     data->current_file, data->current_line );
+            if (msg && msg[0])
+            {
+                va_start(valist, msg);
+                fprintf(stderr,": ");
+                vfprintf(stderr, msg, valist);
+                va_end(valist);
+            }
+            fputc( '\n', stderr );
+            InterlockedIncrement(&todo_failures);
+            return 0;
+        }
+        else InterlockedIncrement(&todo_successes);
+    }
+    else
+    {
+        if (!condition)
+        {
+            fprintf( stderr, "%s:%d: Test failed",
+                     data->current_file, data->current_line );
+            if (msg && msg[0])
+            {
+                va_start(valist, msg);
+                fprintf( stderr,": ");
+                vfprintf(stderr, msg, valist);
+                va_end(valist);
+            }
+            fputc( '\n', stderr );
+            InterlockedIncrement(&failures);
+            return 0;
+        }
+        else
+        {
+            if (report_success)
+                fprintf( stderr, "%s:%d: Test succeeded\n",
+                         data->current_file, data->current_line);
+            InterlockedIncrement(&successes);
+        }
+    }
+    return 1;
+}
+
+void winetest_set_ok_location( const char* file, int line )
+{
+    tls_data* data=get_tls_data();
+    data->current_file=file;
+    data->current_line=line;
+}
+
+void winetest_trace( const char *msg, ... )
+{
+    va_list valist;
+    tls_data* data=get_tls_data();
+
+    if (winetest_debug > 0)
+    {
+        fprintf( stderr, "%s:%d:", data->current_file, data->current_line );
+        va_start(valist, msg);
+        vfprintf(stderr, msg, valist);
+        va_end(valist);
+    }
+}
+
+void winetest_set_trace_location( const char* file, int line )
+{
+    tls_data* data=get_tls_data();
+    data->current_file=file;
+    data->current_line=line;
+}
+
+void winetest_start_todo( const char* platform )
+{
+    tls_data* data=get_tls_data();
+    if (strcmp(winetest_platform,platform)==0)
+        data->todo_level++;
+    data->todo_do_loop=1;
+}
+
+int winetest_loop_todo(void)
+{
+    tls_data* data=get_tls_data();
+    int do_loop=data->todo_do_loop;
+    data->todo_do_loop=0;
+    return do_loop;
+}
+
+void winetest_end_todo( const char* platform )
+{
+    if (strcmp(winetest_platform,platform)==0)
+    {
+        tls_data* data=get_tls_data();
+        data->todo_level--;
+    }
+}
+
+int winetest_get_mainargs( char*** pargv )
+{
+    *pargv = winetest_argv;
+    return winetest_argc;
+}
+
+/* Find a test by name */
+static const struct test *find_test( const char *name )
+{
+    const struct test *test;
+    const char *p;
+    int len;
+
+    if ((p = strrchr( name, '/' ))) name = p + 1;
+    if ((p = strrchr( name, '\\' ))) name = p + 1;
+    len = strlen(name);
+    if (len > 2 && !strcmp( name + len - 2, ".c" )) len -= 2;
+
+    for (test = winetest_testlist; test->name; test++)
+    {
+        if (!strncmp( test->name, name, len ) && !test->name[len]) break;
+    }
+    return test->name ? test : NULL;
+}
+
+
+/* Run a named test, and return exit status */
+static int run_test( const char *name )
+{
+    const struct test *test;
+    int status;
+
+    if (!(test = find_test( name )))
+    {
+        fprintf( stderr, "Fatal: test '%s' does not exist.\n", name );
+        exit_process(1);
+    }
+    successes = failures = todo_successes = todo_failures = 0;
+    tls_index=TlsAlloc();
+    current_test = test;
+    test->func();
+
+    if (winetest_debug)
+    {
+        fprintf( stderr, "%s: %ld tests executed, %ld marked as todo, %ld %s.\n",
+                 name, successes + failures + todo_successes + todo_failures,
+                 todo_successes, failures + todo_failures,
+                 (failures + todo_failures != 1) ? "failures" : "failure" );
+    }
+    status = (failures + todo_failures < 255) ? failures + todo_failures : 255;
+    return status;
+}
+
+
+/* Display usage and exit */
+static void usage( const char *argv0 )
+{
+    const struct test *test;
+
+    fprintf( stderr, "Usage: %s test_name\n", argv0 );
+    fprintf( stderr, "\nValid test names:\n" );
+    for (test = winetest_testlist; test->name; test++) fprintf( stderr, "    %s\n", test->name );
+    exit_process(1);
+}
+
+
+/* main function */
+int main( int argc, char **argv )
+{
+    char *p;
+
+    winetest_argc = argc;
+    winetest_argv = argv;
+
+    if ((p = getenv( "WINETEST_PLATFORM" ))) winetest_platform = p;
+    if ((p = getenv( "WINETEST_DEBUG" ))) winetest_debug = atoi(p);
+    if ((p = getenv( "WINETEST_REPORT_SUCCESS"))) report_success = atoi(p);
+    if (!argv[1]) usage( argv[0] );
+
+    return run_test(argv[1]);
+}
+
+#endif  /* WINETEST_WANT_MAIN */
+
 #endif  /* __WINE_TEST_H */
