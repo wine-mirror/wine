@@ -90,7 +90,7 @@
 @ stdcall NtCreateKey(ptr long ptr long ptr long long)
 @ stdcall NtCreateMailslotFile(long long long long long long long long)
 @ stub NtCreateMutant
-@ stub NtCreateNamedPipeFile
+@ stdcall NtCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr)
 @ stdcall NtCreatePagingFile(long long long long)
 @ stdcall NtCreatePort(ptr ptr long long long)
 @ stub NtCreateProcess

@@ -1499,3 +1499,23 @@ NTSTATUS WINAPI NtUnlockFile( HANDLE hFile, PIO_STATUS_BLOCK io_status,
     SERVER_END_REQ;
     return status;
 }
+
+/******************************************************************
+ *		NtCreateNamedPipeFile    (NTDLL.@)
+ *
+ *
+ */
+NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE FileHandle, ULONG DesiredAccess,
+     POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock,
+     ULONG ShareAccess, ULONG CreateDisposition, ULONG CreateOptions,
+     ULONG NamedPipeType, ULONG ReadMode, ULONG CompletionMode,
+     ULONG MaximumInstances, ULONG InboundQuota, ULONG OutboundQuota,
+     PLARGE_INTEGER DefaultTimeout)
+{
+    FIXME("(%p %lx %p %p %lx %ld %lx %ld %ld %ld %ld %ld %ld %p): stub\n",
+          FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock,
+          ShareAccess, CreateDisposition, CreateOptions, NamedPipeType,
+          ReadMode, CompletionMode, MaximumInstances, InboundQuota,
+          OutboundQuota, DefaultTimeout);
+    return STATUS_NOT_IMPLEMENTED;
+}
