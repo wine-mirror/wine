@@ -114,12 +114,21 @@ DWORD    WINAPI        IDirect3DCubeTexture8Impl_GetPriority(LPDIRECT3DCUBETEXTU
 }
 
 static const GLenum cube_targets[6] = {
+#if defined(GL_VERSION_1_3)
+  GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+  GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+  GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
+  GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
+  GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
+  GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
+#else
   GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,
   GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,
   GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,
   GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,
   GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,
   GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB
+#endif
 };
 
 void     WINAPI        IDirect3DCubeTexture8Impl_PreLoad(LPDIRECT3DCUBETEXTURE8 iface) {
@@ -129,7 +138,11 @@ void     WINAPI        IDirect3DCubeTexture8Impl_PreLoad(LPDIRECT3DCUBETEXTURE8 
     TRACE("(%p) : About to load texture\n", This);
     for (i = 0; i < This->levels; i++) {
       if (i == 0 && This->surfaces[0][i]->textureName != 0 && This->Dirty == FALSE) {
-	glBindTexture(GL_TEXTURE_CUBE_MAP, This->surfaces[0][i]->textureName);
+#if defined(GL_VERSION_1_3)
+	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, This->surfaces[0][i]->textureName);
+#else
+        glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, This->surfaces[0][i]->textureName);
+#endif
 	checkGLcall("glBindTexture");
 	TRACE("Texture %p (level %d) given name %d\n", This->surfaces[0][i], i, This->surfaces[0][i]->textureName);
 	/* No need to walk through all mip-map levels, since already all assigned */
@@ -141,13 +154,21 @@ void     WINAPI        IDirect3DCubeTexture8Impl_PreLoad(LPDIRECT3DCUBETEXTURE8 
 	    checkGLcall("glGenTextures");
 	    TRACE("Texture %p (level %d) given name %d\n", This->surfaces[0][i], i, This->surfaces[0][i]->textureName);
 	  }
-	  
+
+#if defined(GL_VERSION_1_3)
 	  glBindTexture(GL_TEXTURE_CUBE_MAP, This->surfaces[0][i]->textureName);
+#else
+	  glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, This->surfaces[0][i]->textureName);
+#endif
 	  checkGLcall("glBindTexture");
 	  
 	  TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->levels - 1);
+#if defined(GL_VERSION_1_3)
 	  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, This->levels - 1); 
-	  checkGLcall("glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, This->levels - 1)");
+#else
+	  glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MAX_LEVEL, This->levels - 1); 
+#endif
+	  checkGLcall("glTexParameteri(GL_TEXTURE_CUBE, GL_TEXTURE_MAX_LEVEL, This->levels - 1)");
 	}
 	
 	for (j = 0; j < 6; j++) {
