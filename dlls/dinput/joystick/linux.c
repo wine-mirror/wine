@@ -20,7 +20,9 @@
 #ifdef HAVE_SYS_ERRNO_H
 # include <sys/errno.h>
 #endif
-#include <linux/joystick.h>
+#ifdef HAVE_LINUX_JOYSTICK_H
+# include <linux/joystick.h>
+#endif
 #define JOYDEV	"/dev/js0"
 
 #include "debugtools.h"

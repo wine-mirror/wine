@@ -123,7 +123,7 @@ debug_channels (setupapi setupx)
 #156 stdcall SetupDuplicateDiskSpaceListW()                   SetupDuplicateDiskSpaceListW
 157 stdcall SetupFindFirstLineA(long str str ptr)             SetupFindFirstLineA
 #158 stdcall SetupFindFirstLineW()                            SetupFindFirstLineW
-159 stdcall SetupFindNextLine(long)                           SetupFindNextLine
+159 stdcall SetupFindNextLine(ptr ptr)                        SetupFindNextLine
 #160 stdcall SetupFindNextMatchLineA()                        SetupFindNextMatchLineA
 #161 stdcall SetupFindNextMatchLineW()                        SetupFindNextMatchLineW
 #162 stdcall SetupFreeSourceListA()                           SetupFreeSourceListA

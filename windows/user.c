@@ -680,7 +680,7 @@ void WINAPI RegisterSystemThread(DWORD flags, DWORD reserved)
 }
 
 /***********************************************************************
- *	RegisterDeviceNotification	(USER32.477)
+ *	RegisterDeviceNotificationA	(USER32.477)
  */
 HDEVNOTIFY WINAPI RegisterDeviceNotificationA(
 	HANDLE hnd, LPVOID notifyfilter, DWORD flags

@@ -1325,7 +1325,7 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
         lpwfs->hdr.lpwhparent = (LPWININETHANDLEHEADER)hInternet;
         lpwfs->sndSocket = nsocket;
 	sock_namelen = sizeof(lpwfs->socketAddress);
-	getsockname(nsocket, &lpwfs->socketAddress, &sock_namelen);
+	getsockname(nsocket, (struct sockaddr *) &lpwfs->socketAddress, &sock_namelen);
         lpwfs->phostent = phe;
 
         if (NULL == lpszUserName)

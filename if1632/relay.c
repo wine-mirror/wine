@@ -75,10 +75,37 @@ void CALLBACK CallTo16RegisterShort( CONTEXT86 *context, INT nArgs )
 void CALLBACK CallTo16RegisterLong ( CONTEXT86 *context, INT nArgs )
 { assert( FALSE ); }
 
-WORD __wine_call_from_16_word()  { assert( FALSE ); }
-LONG __wine_call_from_16_long()  { assert( FALSE ); }
-void __wine_call_from_16_regs()  { assert( FALSE ); }
-void __wine_call_from_16_thunk() { assert( FALSE ); }
+/***********************************************************************
+ *		__wine_call_from_16_word
+ */
+WORD __cdecl __wine_call_from_16_word(...)
+{
+    assert( FALSE );
+}
+
+/***********************************************************************
+ *		__wine_call_from_16_long
+ */
+LONG __cdecl __wine_call_from_16_long(...)
+{
+    assert( FALSE );
+}
+
+/***********************************************************************
+ *		__wine_call_from_16_regs
+ */
+void __cdecl __wine_call_from_16_regs(...)
+{
+    assert( FALSE );
+}
+
+/***********************************************************************
+ *		__wine_call_from_16_thunk
+ */
+void __cdecl __wine_call_from_16_thunk(...)
+{
+    assert( FALSE );
+}
 
 DWORD WINAPI CALL32_CBClient( FARPROC proc, LPWORD args, DWORD *esi )
 { assert( FALSE ); }

@@ -5,13 +5,16 @@
  *
  */
 
+#include "config.h"
+
 #include <string.h>
 #include <sys/stat.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
-#include <sys/wait.h>
-
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>
+#endif
 #include "debugtools.h"
 #include "winerror.h"
 #include "winbase.h"

@@ -62,8 +62,9 @@ static inline void release( void *ptr )
     info->str_pos = ptr;
 }
 
-/* ---------------------------------------------------------------------- */
-
+/***********************************************************************
+ *		wine_dbgstr_an
+ */
 const char *wine_dbgstr_an( const char *src, int n )
 {
     char *dst, *res;
@@ -112,8 +113,9 @@ const char *wine_dbgstr_an( const char *src, int n )
     return res;
 }
 
-/* ---------------------------------------------------------------------- */
-
+/***********************************************************************
+ *		wine_dbgstr_wn
+ */
 const char *wine_dbgstr_wn( const WCHAR *src, int n )
 {
     char *dst, *res;
@@ -162,8 +164,9 @@ const char *wine_dbgstr_wn( const WCHAR *src, int n )
     return res;
 }
 
-/* ---------------------------------------------------------------------- */
-
+/***********************************************************************
+ *		wine_dbgstr_guid
+ */
 const char *wine_dbgstr_guid( const GUID *id )
 {
     char *str;
@@ -185,8 +188,9 @@ const char *wine_dbgstr_guid( const GUID *id )
     return str;
 }
 
-/* ---------------------------------------------------------------------- */
-
+/***********************************************************************
+ *		wine_dbg_vprintf
+ */
 int wine_dbg_vprintf( const char *format, va_list args )
 {
     struct debug_info *info = get_info();
@@ -206,6 +210,9 @@ int wine_dbg_vprintf( const char *format, va_list args )
     return ret;
 }
 
+/***********************************************************************
+ *		wine_dbg_printf
+ */
 int wine_dbg_printf(const char *format, ...)
 {
     int ret;
@@ -217,6 +224,9 @@ int wine_dbg_printf(const char *format, ...)
     return ret;
 }
 
+/***********************************************************************
+ *		wine_dbg_log
+ */
 int wine_dbg_log(enum __DEBUG_CLASS cls, const char *channel,
                  const char *function, const char *format, ... )
 {

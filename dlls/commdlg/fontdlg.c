@@ -269,7 +269,7 @@ static BOOL CFn_HookCallChk32(LPCHOOSEFONTA lpcf)
 /*************************************************************************
  *              AddFontFamily                               [internal]
  */
-static INT AddFontFamily(LPLOGFONTA lplf, UINT nFontType, 
+static INT AddFontFamily(const LOGFONTA *lplf, UINT nFontType, 
                            LPCHOOSEFONTA lpcf, HWND hwnd)
 {
   int i;
@@ -308,12 +308,12 @@ typedef struct
 /*************************************************************************
  *              FontFamilyEnumProc32                           [internal]
  */
-static INT WINAPI FontFamilyEnumProc(LPENUMLOGFONTA lpEnumLogFont, 
-	  LPNEWTEXTMETRICA metrics, UINT nFontType, LPARAM lParam)
+static INT WINAPI FontFamilyEnumProc(const LOGFONTA *lpLogFont, 
+	  const TEXTMETRICA *metrics, DWORD dwFontType, LPARAM lParam)
 {
   LPCFn_ENUMSTRUCT e;
   e=(LPCFn_ENUMSTRUCT)lParam;
-  return AddFontFamily(&lpEnumLogFont->elfLogFont, nFontType, e->lpcf32a, e->hWnd1);
+  return AddFontFamily(lpLogFont, dwFontType, e->lpcf32a, e->hWnd1);
 }
 
 /***********************************************************************
@@ -337,7 +337,7 @@ INT16 WINAPI FontFamilyEnumProc16( SEGPTR logfont, SEGPTR metrics,
  *
  * Fill font style information into combobox  (without using font.c directly)
  */
-static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, LPLOGFONTA lplf)
+static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, const LOGFONTA *lplf)
 {
    #define FSTYLES 4
    struct FONTSTYLE
@@ -350,12 +350,15 @@ static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, LPLOGFONTA lplf)
    HFONT hf;
    TEXTMETRICA tm;
    int i,j;
+   LOGFONTA lf;
+
+   memcpy(&lf, lplf, sizeof(LOGFONTA));
 
    for (i=0;i<FSTYLES;i++)
    {
-     lplf->lfItalic=fontstyles[i].italic;
-     lplf->lfWeight=fontstyles[i].weight;
-     hf=CreateFontIndirectA(lplf);
+     lf.lfItalic=fontstyles[i].italic;
+     lf.lfWeight=fontstyles[i].weight;
+     hf=CreateFontIndirectA(&lf);
      hf=SelectObject(hdc,hf);
      GetTextMetricsA(hdc,&tm);
      hf=SelectObject(hdc,hf);
@@ -415,7 +418,7 @@ static int SetFontSizesToCombo3(HWND hwnd, LPCHOOSEFONTA lpcf)
 /***********************************************************************
  *                 AddFontStyle                          [internal]
  */
-static INT AddFontStyle(LPLOGFONTA lplf, UINT nFontType, 
+static INT AddFontStyle(const LOGFONTA *lplf, UINT nFontType, 
     LPCHOOSEFONTA lpcf, HWND hcmb2, HWND hcmb3, HWND hDlg)
 {
   int i;
@@ -466,14 +469,14 @@ INT16 WINAPI FontStyleEnumProc16( SEGPTR logfont, SEGPTR metrics,
 /***********************************************************************
  *                 FontStyleEnumProc32                     [internal]
  */
-static INT WINAPI FontStyleEnumProc( LPENUMLOGFONTA lpFont, 
-          LPNEWTEXTMETRICA metrics, UINT nFontType, LPARAM lParam )
+static INT WINAPI FontStyleEnumProc( const LOGFONTA *lpFont, 
+          const TEXTMETRICA *metrics, DWORD dwFontType, LPARAM lParam )
 {
   LPCFn_ENUMSTRUCT s=(LPCFn_ENUMSTRUCT)lParam;
   HWND hcmb2=s->hWnd1;
   HWND hcmb3=s->hWnd2;
   HWND hDlg=GetParent(hcmb3);
-  return AddFontStyle(&lpFont->elfLogFont, nFontType, s->lpcf32a, hcmb2,
+  return AddFontStyle(lpFont, dwFontType, s->lpcf32a, hcmb2,
                       hcmb3, hDlg);
 }
 
