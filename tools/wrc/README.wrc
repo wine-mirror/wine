@@ -1,14 +1,14 @@
-Release 1.0.2 of wrc (20-Jun-1998), the wine resource compiler.
+Release 1.1.0 of wrc (01-May-2000), the wine resource compiler.
 
 See the file CHANGES for differences between the version and what has been
 corrected in the current version.
 
 Wrc features:
 
-- source preprocessing
+- full source preprocessing
 - 16 and 32 bit support
 - LANGUAGE support (32 bit only)
-- almost all resource types are supported
+- most resource types are supported
 - enhanced expression capabilities and resource naming
 - indirect loadable resources
 - NE/PE resource directory generation
@@ -34,13 +34,15 @@ Usage: wrc [options...] [infile[.rc|.res]]
    -d n        Set debug level to 'n'
    -D id[=val] Define preprocessor identifier id=val
    -e          Disable recognition of win32 keywords in 16bit compile
+   -E          Preprocess only
    -g          Add symbols to the global c namespace
    -h          Also generate a .h file
    -H file     Same as -h but written to file
    -I path     Set include search dir to path (multiple -I allowed)
-   -l lan      Set default language to lan (default is neutral {0})
+   -l lan      Set default language to lan (default is neutral {0, 0})
    -L          Leave case of embedded filenames as is
    -n          Do not generate .s file
+   -N          Do not preprocess input
    -o file     Output to file (default is infile.[res|s|h]
    -p prefix   Give a prefix for the generated names
    -r          Create binary .res file (compile only)
@@ -57,6 +59,9 @@ Debug level 'n' is a bitmask with following meaning:
     * 0x01 Tell which resource is parsed (verbose mode)
     * 0x02 Dump internal structures
     * 0x04 Create a parser trace (yydebug=1)
+    * 0x08 Preprocessor messages
+    * 0x10 Preprocessor lex messages
+    * 0x20 Preprocessor yacc trace
 
 The -o option only applies to the final destination file, which is
 in case of normal compile a .s file. You must use the '-H header.h'
@@ -67,10 +72,12 @@ with -o and/or -H, then the output is written to "wrc.tab.[sh]"
 
 Preprocessing
 -------------
-The build-in preprocessor is not a full implementation of the C counterpart.
-Wrc does not understand function-type macros. These are discarded as they
-are scanned. This will be a future project. Wrc does understand these:
-#define
+The preprocessor is a fully operational C preprocessor. It handles all
+directives supported by ANSI-C. It also includes some additions from
+gcc/egcs.
+Wrc understands these directives:
+#define		(both simple and macro)
+#undef
 #if
 #ifdef
 #ifndef
@@ -78,13 +85,42 @@ are scanned. This will be a future project. Wrc does understand these:
 #else
 #endif
 #error
+#warning
+#line
+#
+#pragma		(ignored)
+#ident		(ignored)
 
-Also 'defined' is supported as operator (both with and without parenthesis).
-'#if' expressions can be anything valid that evaluates to an integer
-expression (where 0 is false and anything else is true). Others (#pragma,
-#line) are ignored. A special case '#' generates an error. This is due to
-the implementation to enable generation of errors on preprocessing and will
-be improved in the future.
+The extensions include '#'-line directives.
+Not handled at the moment are variable argument macros. They are parsed,
+but not expanded properly. This will be corrected in the future.
+
+The preprocessor handles the special defines and aditionally defines an
+extra set of defines:
+  Define   | Value             | Comment
+-----------+-------------------+---------------
+RC_INVOKED     | 1             | Always defined
+__FLAT__       | 1             | Only defined if win32 compile
+__WIN32__      | 1             | Only defined if win32 compile
+__FILE__       | "..."         | Current filename as string
+__LINE__       | nnn           | Current linenumber as integer
+__TIME__       | "23:59:59"    | Timestring of compilation
+__DATE__       | "May  1 2000" | Datestring of compilation
+__WRC__         1             | Wrc's major version
+__WRC_MINOR__  | 1             | Wrc's minor version
+__WRC_MICRO__  | 0             | Wrc's minor version
+__WRC_PATCH__  | 0             | Alias of __WRC_MICRO__
+
+Include-files are not read twice if they are protected with this scheme:
+#ifndef SOME_DEFINE
+#define SOME_DEFINE
+...
+#endif
+This strategy has been borrowed from gcc/egcs and results in significantly
+reduced preprocessing times (20..30%). There must not be any junk before
+the first #ifndef and not after the last #endif; comments and whitespace
+excepted. Wrc will check the existance of the define prior to inclusion to
+detect "#undef SOME_DEFINE" (notably poppack.h) and act accordingly.
 
 
 16 and 32 bit support
@@ -115,34 +151,14 @@ statement before (and evt. after) the code in the resource file.
 Resource types supported
 ------------------------
 All types are supported except for:
-- FONT
-- MESSAGETABLE
-- extensions like TOOLBAR and the like (is this a user-type?)
+- FONT (RT_FONT, RT_FONTDIR)
+- MESSAGETABLE (RT_MESSAGETABLE)
+- Animated cursors/icons (RT_ANIICON, RT_ANICURSOR)
+- RT_VXD
+- RT_PLUGPLAY
 
 These types will be implemented as soon as I get a proper specification of
 the layout.
-
-Note: Usertype resources with character strings as types have a different
-layout and do not accept expressions when a numerical type is specified. The
-must be enclosed in double quotes. These are examples of valid usertype
-resources:
-
-MyName "MyType"	mydata.bin
-MyName 12345	mydata.bin
-MyName "MyType"	"mydata.bin"
-MyName 12345	"mydata.bin"
-
-MyName "MyType"
-{
-  ..., data, ...
-}
-
-or
-
-MyName 12345
-{
- ..., data, ...
-}
 
 
 Expression capabilities and resource names
@@ -152,22 +168,19 @@ expects a number (except usertype type). Operators supported:
 ()	parenthesis
 *	multiply
 /	divide
-+	add
++	plus/add
 -	minus/substract
 |	binary or
 &	binary and
 ~	binary not (unary operator though)
 NOT	... (sigh)
 
-Minus (-) can both be unary and binary. The NOT operator is (primarily)
-used to disable window styles but I strongly suggest to refrain from using
-this operator.
-There is a shift/reduce conflict on the unary minus, but this is not
-problematic. I was too lazy to make a new expression parser (next version or
-so). Unary plus (+) would cause another confilct, so I let it out for now.
+Plus (+) and minus (-) can both be unary and binary. The NOT operator is
+(primarily) used to disable window styles but I strongly suggest to refrain
+from using this operator.
 
 Resource names can be both numerical (expressions) and character typed. Wrc
-does supports this insane (deep sigh) construct:
+does support this insane (deep sigh) construct:
 
 MENU MENU
 {
@@ -250,9 +263,8 @@ though):
 - No documentation ('wrc -?' gives command-line options though)
 - grep for FIXME in the source
 - Memory options are wrong under some conditions. There seems to be a
-  different action for win32 and win16.
-- User-type resources have slightly different layout.
-- Filename scanning is still hopeless.
+  different action for win32 and win16
+- Little/big-endian
 
 Reporting bugs and patches
 --------------------------

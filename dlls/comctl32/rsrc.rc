@@ -1,3 +1,4 @@
+#include "windef.h"
 #include "winuser.h"
 #include "comctl32.h"
 

@@ -3,6 +3,7 @@
  * Copyright  Martin von Loewis, 1994
  * Copyrignt 1998 Bertho A. Stultiens (BS)
  *
+ * 30-Apr-2000 BS	- Integrated a new preprocessor (-E and -N)
  * 20-Jun-1998 BS	- Added -L option to prevent case conversion
  *			  of embedded filenames.
  *
@@ -36,9 +37,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <assert.h>
 #include <ctype.h>
+#include <signal.h>
 
 #include "wrc.h"
 #include "utils.h"
@@ -59,13 +62,15 @@ char usage[] = "Usage: wrc [options...] [infile[.rc|.res]]\n"
 	"   -d n        Set debug level to 'n'\n"
 	"   -D id[=val] Define preprocessor identifier id=val\n"
 	"   -e          Disable recognition of win32 keywords in 16bit compile\n"
+	"   -E          Preprocess only\n"
 	"   -g          Add symbols to the global c namespace\n"
 	"   -h          Also generate a .h file\n"
 	"   -H file     Same as -h but written to file\n"
 	"   -I path     Set include search dir to path (multiple -I allowed)\n"
-	"   -l lan      Set default language to lan (default is neutral {0})\n"
+	"   -l lan      Set default language to lan (default is neutral {0, 0})\n"
 	"   -L          Leave case of embedded filenames as is\n"
 	"   -n          Do not generate .s file\n"
+	"   -N          Do not preprocess input\n"
 	"   -o file     Output to file (default is infile.[res|s|h]\n"
 	"   -p prefix   Give a prefix for the generated names\n"
 	"   -r          Create binary .res file (compile only)\n"
@@ -80,6 +85,9 @@ char usage[] = "Usage: wrc [options...] [infile[.rc|.res]]\n"
 	"    * 0x01 Tell which resource is parsed (verbose mode)\n"
 	"    * 0x02 Dump internal structures\n"
 	"    * 0x04 Create a parser trace (yydebug=1)\n"
+	"    * 0x08 Preprocessor messages\n"
+	"    * 0x10 Preprocessor lex messages\n"
+	"    * 0x20 Preprocessor yacc trace\n"
 	"The -o option only applies to the final destination file, which is\n"
 	"in case of normal compile a .s file. You must use the '-H header.h'\n"
 	"option to override the header-filename.\n"
@@ -88,7 +96,7 @@ char usage[] = "Usage: wrc [options...] [infile[.rc|.res]]\n"
 	;
 
 char version_string[] = "Wine Resource Compiler Version " WRC_FULLVERSION "\n"
-			"Copyright 1998,1999 Bertho A. Stultiens\n"
+			"Copyright 1998-2000 Bertho A. Stultiens\n"
 			"          1994 Martin von Loewis\n";
 
 /*
@@ -121,6 +129,9 @@ int create_res = 0;
  * debuglevel & DEBUGLEVEL_CHAT		Say whats done
  * debuglevel & DEBUGLEVEL_DUMP		Dump internal structures
  * debuglevel & DEBUGLEVEL_TRACE	Create parser trace
+ * debuglevel & DEBUGLEVEL_PPMSG	Preprocessor messages
+ * debuglevel & DEBUGLEVEL_PPLEX	Preprocessor lex trace
+ * debuglevel & DEBUGLEVEL_PPTRACE	Preprocessor yacc trace
  */
 int debuglevel = DEBUGLEVEL_NONE;
 
@@ -198,15 +209,32 @@ int auto_register = 0;
  */
 int leave_case = 0;
 
+/*
+ * Set when _only_ to run the preprocessor (-E option)
+ */
+int preprocess_only = 0;
+
+/*
+ * Set when _not_ to run the preprocessor (-N option)
+ */
+int no_preprocess = 0;
+
 char *output_name;		/* The name given by the -o option */
 char *input_name;		/* The name given on the command-line */
 char *header_name;		/* The name given by the -H option */
+char *temp_name;		/* Temporary file for preprocess pipe */
+
+int line_number = 1;		/* The current line */
+int char_number = 1;		/* The current char pos within the line */
 
 char *cmdline;			/* The entire commandline */
+time_t now;			/* The time of start of wrc */
 
 resource_t *resource_top;	/* The top of the parsed resources */
 
 int getopt (int argc, char *const *argv, const char *optstring);
+static void rm_tempfile(void);
+static void segvhandler(int sig);
 
 int main(int argc,char *argv[])
 {
@@ -218,6 +246,10 @@ int main(int argc,char *argv[])
 	int a;
 	int i;
 	int cmdlen;
+
+	signal(SIGSEGV, segvhandler);
+
+	now = time(NULL);
 
 	/* First rebuild the commandline to put in destination */
 	/* Could be done through env[], but not all OS-es support it */
@@ -233,7 +265,7 @@ int main(int argc,char *argv[])
 			strcat(cmdline, " ");
 	}
 
-	while((optc = getopt(argc, argv, "a:AbcC:d:D:eghH:I:l:Lno:p:rstTVw:W")) != EOF)
+	while((optc = getopt(argc, argv, "a:AbcC:d:D:eEghH:I:l:LnNo:p:rstTVw:W")) != EOF)
 	{
 		switch(optc)
 		{
@@ -261,6 +293,9 @@ int main(int argc,char *argv[])
 		case 'e':
 			extensions = 0;
 			break;
+		case 'E':
+			preprocess_only = 1;
+			break;
 		case 'g':
 			global = 1;
 			break;
@@ -285,6 +320,9 @@ int main(int argc,char *argv[])
 			break;
 		case 'n':
 			create_s = 0;
+			break;
+		case 'N':
+			no_preprocess = 1;
 			break;
 		case 'o':
 			output_name = strdup(optarg);
@@ -390,6 +428,62 @@ int main(int argc,char *argv[])
 		}
 	}
 
+	if(preprocess_only)
+	{
+		if(constant)
+		{
+			warning("Option -c ignored with preprocess only\n");
+			constant = 0;
+		}
+
+		if(create_header)
+		{
+			warning("Option -[h|H] ignored with preprocess only\n");
+			create_header = 0;
+		}
+
+		if(indirect)
+		{
+			warning("Option -l ignored with preprocess only\n");
+			indirect = 0;
+		}
+
+		if(indirect_only)
+		{
+			error("Option -E and -L cannot be used together\n");
+		}
+
+		if(global)
+		{
+			warning("Option -g ignored with preprocess only\n");
+			global = 0;
+		}
+
+		if(create_dir)
+		{
+			warning("Option -s ignored with preprocess only\n");
+			create_dir = 0;
+		}
+
+		if(binary)
+		{
+			error("Option -E and -b cannot be used together\n");
+		}
+
+		if(no_preprocess)
+		{
+			error("Option -E and -N cannot be used together\n");
+		}
+	}
+
+#if !defined(HAVE_WINE_CONSTRUCTOR)
+	if(auto_register)
+	{
+		warning("Autoregister code non-operable (HAVE_WINE_CONSTRUCTOR not defined)");
+		auto_register = 0;
+	}
+#endif
+
 	/* Set alignment power */
 	a = alignment;
 	for(alignment_pwr = 0; alignment_pwr < 10 && a > 1; alignment_pwr++)
@@ -413,15 +507,28 @@ int main(int argc,char *argv[])
 	}
 
 	yydebug = debuglevel & DEBUGLEVEL_TRACE ? 1 : 0;
+	yy_flex_debug = debuglevel & DEBUGLEVEL_TRACE ? 1 : 0;
+	ppdebug = debuglevel & DEBUGLEVEL_PPTRACE ? 1 : 0;
+	pp_flex_debug = debuglevel & DEBUGLEVEL_PPLEX ? 1 : 0;
 
 	/* Set the default defined stuff */
+	add_cmdline_define("__WRC__=" WRC_STRINGIZE(WRC_MAJOR_VERSION));
+	add_cmdline_define("__WRC_MINOR__=" WRC_STRINGIZE(WRC_MINOR_VERSION));
+	add_cmdline_define("__WRC_MICRO__=" WRC_STRINGIZE(WRC_MICRO_VERSION));
+	add_cmdline_define("__WRC_PATCH__=" WRC_STRINGIZE(WRC_MICRO_VERSION));
+
 	add_cmdline_define("RC_INVOKED=1");
-	add_cmdline_define("__WRC__=1");
+
 	if(win32)
 	{
 		add_cmdline_define("__WIN32__=1");
 		add_cmdline_define("__FLAT__=1");
 	}
+
+	add_special_define("__FILE__");
+	add_special_define("__LINE__");
+	add_special_define("__DATE__");
+	add_special_define("__TIME__");
 
 	/* Check if the user set a language, else set default */
 	if(!currentlanguage)
@@ -431,23 +538,15 @@ int main(int argc,char *argv[])
 	if(optind < argc)
 	{
 		input_name = argv[optind];
-		yyin = fopen(input_name, "rb");
-		if(!yyin)
-		{
-			error("Could not open %s\n", input_name);
-		}
-	}
-	else
-	{
-		yyin = stdin;
 	}
 
 	if(binary && !input_name)
 	{
-		error("Binary mode requires .res file as input");
+		error("Binary mode requires .res file as input\n");
 	}
 
-	if(!output_name)
+	/* Generate appropriate outfile names */
+	if(!output_name && !preprocess_only)
 	{
 		output_name = dup_basename(input_name, binary ? ".res" : ".rc");
 		strcat(output_name, create_res ? ".res" : ".s");
@@ -459,10 +558,75 @@ int main(int argc,char *argv[])
 		strcat(header_name, ".h");
 	}
 
+	/* Run the preprocessor on the input */
+	if(!no_preprocess && !binary)
+	{
+		char *real_name;
+		/*
+		 * Preprocess the input to a temp-file, or stdout if
+		 * no output was given.
+		 */
+
+		chat("Starting preprocess");
+
+		if(preprocess_only && !output_name)
+		{
+			ppout = stdout;
+		}
+		else if(preprocess_only && output_name)
+		{
+			if(!(ppout = fopen(output_name, "wb")))
+				error("Could not open %s for writing\n", output_name);
+		}
+		else
+		{
+			if(!(temp_name = tmpnam(NULL)))
+				error("Could nor generate a temp-name\n");
+			temp_name = xstrdup(temp_name);
+			if(!(ppout = fopen(temp_name, "wb")))
+				error("Could not create a temp-file\n");
+
+			atexit(rm_tempfile);
+		}
+
+		real_name = input_name;	/* Because it gets overwritten */
+
+		if(!input_name)
+			ppin = stdin;
+		else
+		{
+			if(!(ppin = fopen(input_name, "rb")))
+				error("Could not open %s\n", input_name);
+		}
+
+		fprintf(ppout, "# 1 \"%s\" 1\n", input_name ? input_name : "");
+
+		ret = ppparse();
+
+		input_name = real_name;
+
+		if(input_name)
+			fclose(ppin);
+
+		fclose(ppout);
+
+		input_name = temp_name;
+
+		if(ret)
+			exit(1);	/* Error during preprocess */
+
+		if(preprocess_only)
+			exit(0);
+	}
+
 	if(!binary)
 	{
 		/* Go from .rc to .res or .s */
 		chat("Starting parse");
+
+		if(!(yyin = fopen(input_name, "rb")))
+			error("Could not open %s for input\n", input_name);
+
 		ret = yyparse();
 
 		if(input_name)
@@ -521,5 +685,17 @@ int main(int argc,char *argv[])
 }
 
 
+static void rm_tempfile(void)
+{
+	if(temp_name)
+		unlink(temp_name);
+}
 
+static void segvhandler(int sig)
+{
+	fprintf(stderr, "\n%s:%d: Oops, segment violation\n", input_name, line_number);
+	fflush(stdout);
+	fflush(stderr);
+	abort();
+}
 

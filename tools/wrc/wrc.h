@@ -12,9 +12,17 @@
 #include "wrctypes.h"
 #endif
 
-#define WRC_VERSION	"1.0.18"
-#define WRC_RELEASEDATE	"(28-Dec-1999)"
-#define WRC_FULLVERSION WRC_VERSION " " WRC_RELEASEDATE
+#include <time.h>	/* For time_t */
+
+#define WRC_MAJOR_VERSION	1
+#define WRC_MINOR_VERSION	1
+#define WRC_MICRO_VERSION	0
+#define WRC_RELEASEDATE		"(01-May-2000)"
+
+#define WRC_STRINGIZE(a)	#a
+#define WRC_VERSIONIZE(a,b,c)	WRC_STRINGIZE(a) "." WRC_STRINGIZE(b) "." WRC_STRINGIZE(c)  
+#define WRC_VERSION		WRC_VERSIONIZE(WRC_MAJOR_VERSION, WRC_MINOR_VERSION, WRC_MICRO_VERSION)
+#define WRC_FULLVERSION 	WRC_VERSION " " WRC_RELEASEDATE
 
 /* Only used in heavy debugging sessions */
 #define HEAPCHECK()
@@ -25,6 +33,9 @@ extern int debuglevel;
 #define DEBUGLEVEL_CHAT		0x0001
 #define DEBUGLEVEL_DUMP		0x0002
 #define DEBUGLEVEL_TRACE	0x0004
+#define DEBUGLEVEL_PPMSG	0x0008
+#define DEBUGLEVEL_PPLEX	0x0010
+#define DEBUGLEVEL_PPTRACE	0x0020
 
 extern int win32;
 extern int constant;
@@ -43,12 +54,18 @@ extern DWORD codepage;
 extern int pedantic;
 extern int auto_register;
 extern int leave_case;
+extern int preprocess_only;
+extern int no_preprocess;
 
 extern char *prefix;
 extern char *output_name;
 extern char *input_name;
 extern char *header_name;
 extern char *cmdline;			
+extern time_t now;
+
+extern int line_number;
+extern int char_number;
 
 extern resource_t *resource_top;
 extern language_t *currentlanguage;

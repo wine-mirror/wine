@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <time.h>
 
 #include "wrc.h"
 #include "writeres.h"
@@ -90,8 +89,6 @@ int n_id_entries = 0;		/* win32 only: Nr of unique ids in the type-level array *
 int n_name_entries = 0;		/* win32 only: Nr of unique namess in the type-level array */
 
 static int direntries;		/* win32 only: Total number of unique resources */
-
-time_t now;
 
 /*
  *****************************************************************************
@@ -940,7 +937,6 @@ void write_s_file(char *outname, resource_t *top)
 
 	{
 		char *s, *p;
-		now = time(NULL);
 		s = ctime(&now);
 		p = strchr(s, '\n');
 		if(p) *p = '\0';
@@ -1127,7 +1123,6 @@ void write_h_file(char *outname, resource_t *top)
 		error("Could not open %s\n", outname);
 	}
 
-	time(&now);
 	fprintf(fo, h_file_head_str, input_name ? input_name : "stdin",
                 cmdline, ctime(&now), (long)now, (long)now);
 

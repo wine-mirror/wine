@@ -1,5 +1,8 @@
 Makefile
+lex.ppl.c
 lex.yy.c
+ppy.tab.c
+ppy.tab.h
 wrc
 y.tab.c
 y.tab.h

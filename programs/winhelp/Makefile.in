@@ -27,10 +27,6 @@ depend: y.tab.h
 
 @MAKE_RULES@
 
-# Override resource compiler rules
-.rc.s:
-	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -o $*.s
-
 winhelp: $(OBJS)
 	$(CC) -o winhelp $(OBJS) $(DLL_LINK) $(LIBS)
 

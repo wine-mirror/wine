@@ -3,6 +3,7 @@
  *
  */
 
+#include "windef.h"
 #include "winuser.h"
 #include "winnls.h"
 #include "cdlg.h"

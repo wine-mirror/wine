@@ -1,4 +1,19 @@
 ---------------------------------------------------------------------------
+Version 1.1.0 (01-May-2000)
+
+Bertho Stultiens <bertho@akhphd.au.dk>
+- Implemented a new preprocessor that is (nearly) ANSI-C compliant. The
+  old parser has been stripped from the old preprocessor-code which 
+  cleaned up both resource-scanner and -parser.
+- Standard defines have been introduced (see README.wrc)
+- Both preprocessor- and resource-scanner have been optimized slightly
+  so that no backing up is required (one char lookahead is enough).
+- Filename-scanning has been cleaned up, though not perfect yet.
+- User-type resources are compatible now.
+- Line-continuation in strings is corrected so that it does not
+  introduce a newline in the output.
+
+---------------------------------------------------------------------------
 Version 1.0.18 (28-Dec-1999)
 
 Bertho Stultiens <bertho@akhphd.au.dk>

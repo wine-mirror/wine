@@ -3,7 +3,7 @@
  *
  */
 
-1 "OEMBIN"
+1 OEMBIN
 { 
 	0x11,			/* vertical thumb height (in pixels)  */
 	0x11,			/* horizontal thumb width (in pixels) */

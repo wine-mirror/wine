@@ -19,7 +19,7 @@ EXTRASUBDIRS = \
 	winapi_check/win32 \
 	wineconf.libs
 
-all: $(PROGRAMS)
+all: $(PROGRAMS) wrc
 
 @MAKE_RULES@
 

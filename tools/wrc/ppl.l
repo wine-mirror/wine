@@ -1,0 +1,1407 @@
+/*
+ * Wrc preprocessor lexical analysis
+ *
+ * Copyright 1999-2000	Bertho A. Stultiens (BS)
+ *
+ * 24-Apr-2000 BS	- Started from scratch to restructure everything
+ *			  and reintegrate the source into the wine-tree.
+ * 04-Jan-2000 BS	- Added comments about the lexicographical
+ *			  grammar to give some insight in the complexity.
+ * 28-Dec-1999 BS	- Eliminated backing-up of the flexer by running
+ *			  `flex -b' on the source. This results in some
+ *			  weirdo extra rules, but a much faster scanner.
+ * 23-Dec-1999 BS	- Started this file
+ *
+ *-------------------------------------------------------------------------
+ * The preprocessor's lexographical grammar (approximately):
+ *
+ * pp		:= {ws} # {ws} if {ws} {expr} {ws} \n
+ *		|  {ws} # {ws} ifdef {ws} {id} {ws} \n
+ *		|  {ws} # {ws} ifndef {ws} {id} {ws} \n
+ *		|  {ws} # {ws} elif {ws} {expr} {ws} \n
+ *		|  {ws} # {ws} else {ws} \n
+ *		|  {ws} # {ws} endif {ws} \n
+ *		|  {ws} # {ws} include {ws} < {anytext} > \n
+ *		|  {ws} # {ws} include {ws} " {anytext} " \n
+ *		|  {ws} # {ws} define {ws} {anytext} \n
+ *		|  {ws} # {ws} define( {arglist} ) {ws} {expansion} \n
+ *		|  {ws} # {ws} pragma {ws} {anytext} \n
+ *		|  {ws} # {ws} ident {ws} {anytext} \n
+ *		|  {ws} # {ws} error {ws} {anytext} \n
+ *		|  {ws} # {ws} warning {ws} {anytext} \n
+ *		|  {ws} # {ws} line {ws} " {anytext} " {number} \n
+ *		|  {ws} # {ws} {number} " {anytext} " {number} [{number} [{number}]] \n
+ *		|  {ws} # {ws} \n
+ *
+ * ws		:= [ \t\r\f\v]*
+ *
+ * expr		:= {expr} [+-*%^/|&] {expr}
+ *		|  {expr} {logor|logand} {expr}
+ *		|  [!~+-] {expr}
+ *		|  {expr} ? {expr} : {expr}
+ *
+ * logor	:= ||
+ *
+ * logand	:= &&
+ *
+ * id		:= [a-zA-Z_][a-zA-Z0-9_]*
+ *
+ * anytext	:= [^\n]*	(see note)
+ *
+ * arglist	:=
+ *		|  {id}
+ *		|  {arglist} , {id}
+ *		|  {arglist} , {id} ...
+ *
+ * expansion	:= {id}
+ *		|  # {id}
+ *		|  {anytext}
+ *		|  {anytext} ## {anytext}
+ *
+ * number	:= [0-9]+
+ *
+ * Note: "anytext" is not always "[^\n]*". This is because the
+ *	 trailing context must be considered as well.
+ *
+ * The only certain assumption for the preprocessor to make is that
+ * directives start at the beginning of the line, followed by a '#'
+ * and end with a newline.
+ * Any directive may be suffixed with a line-continuation. Also
+ * classical comment / *...* / (note: no comments within comments,
+ * therefore spaces) is considered to be a line-continuation
+ * (according to gcc and egcs AFAIK, ANSI is a bit vague).
+ * Comments have not been added to the above grammer for simplicity
+ * reasons. However, it is allowed to enter comment anywhere within
+ * the directives as long as they do not interfere with the context.
+ * All comments are considered to be deletable whitespace (both
+ * classical form "/ *...* /" and C++ form "//...\n").
+ *
+ * All recursive scans, except for macro-expansion, are done by the
+ * parser, whereas the simple state transitions of non-recursive
+ * directives are done in the scanner. This results in the many
+ * exclusive start-conditions of the scanner.
+ *
+ * Macro expansions are slightly more difficult because they have to
+ * prescan the arguments. Parameter substitution is literal if the
+ * substitution is # or ## (either side). This enables new identifiers
+ * to be created (see 'info cpp' node Macro|Pitfalls|Prescan for more
+ * information).
+ *
+ * FIXME: Variable macro parameters is recognized, but not yet
+ * expanded. I have to reread the ANSI standard on the subject (yes,
+ * ANSI defines it).
+ *
+ * The following special defines are supported:
+ * __FILE__	-> "thissource.c"
+ * __LINE__	-> 123
+ * __DATE__	-> "May  1 2000"
+ * __TIME__	-> "23:59:59"
+ * These macros expand, as expected, into their ANSI defined values.
+ *
+ * The same include prevention is implemented as gcc and egcs does.
+ * This results in faster processing because we do not read the text
+ * at all. Some wine-sources attempt to include the same file 4 or 5
+ * times. This strategy also saves a lot blank output-lines, which in
+ * its turn improves the real resource scanner/parser.
+ *
+ */
+
+/*
+ * Special flex options and exclusive scanner start-conditions
+ */
+%option stack
+%option never-interactive
+
+%x pp_pp
+%x pp_eol
+%x pp_inc
+%x pp_dqs
+%x pp_sqs
+%x pp_iqs
+%x pp_comment
+%x pp_def
+%x pp_define
+%x pp_macro
+%x pp_mbody
+%x pp_macign
+%x pp_macscan
+%x pp_macexp
+%x pp_if
+%x pp_ifd
+%x pp_line
+%x pp_defined
+%x pp_ignore
+
+ws	[ \v\f\t\r]
+cident	[a-zA-Z_][0-9a-zA-Z_]*
+ul	[uUlL]|[uUlL][lL]|[lL][uU]|[lL][lL][uU]|[uU][lL][lL]|[lL][uU][lL]
+
+%{
+#include "config.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <assert.h>
+
+#include "utils.h"
+#include "wrc.h"
+#include "preproc.h"
+
+#include "ppy.tab.h"
+
+/*
+ * Make sure that we are running an appropriate version of flex.
+ */
+#if !defined(YY_FLEX_MAJOR_VERSION) || (1000 * YY_FLEX_MAJOR_VERSION + YY_FLEX_MINOR_VERSION < 2005)
+#error Must use flex version 2.5.1 or higher (yy_scan_* routines are required).
+#endif
+
+#define YY_USE_PROTOS
+#define YY_NO_UNPUT
+#define YY_READ_BUF_SIZE	65536		/* So we read most of a file at once */
+
+#define yy_current_state()	YY_START
+#define yy_pp_state(x)		yy_pop_state(); yy_push_state(x)
+
+/*
+ * Always update the current character position within a line
+ */
+#define YY_USER_ACTION	char_number+=ppleng;
+
+/*
+ * Buffer management for includes and expansions
+ */
+#define MAXBUFFERSTACK	128	/* Nesting more than 128 includes or macro expansion textss is insane */
+
+typedef struct bufferstackentry {
+	YY_BUFFER_STATE	bufferstate;	/* Buffer to switch back to */
+	pp_entry_t	*define;	/* Points to expanding define or NULL if handling includes */
+	int		line_number;	/* Line that we were handling */
+	int		char_number;	/* The current position on that line */
+	char		*filename;	/* Filename that we were handling */
+	int		if_depth;	/* How many #if:s deep to check matching #endif:s */
+	int		ncontinuations;	/* Remember the continuation state */
+	int		should_pop;	/* Set if we must pop the start-state on EOF */
+	/* Include management */
+	int		include_state;
+	char		*include_ppp;
+	char		*include_filename;
+	int		include_ifdepth;
+	int		seen_junk;
+} bufferstackentry_t;
+
+#define ALLOCBLOCKSIZE	(1 << 10)	/* Allocate these chunks at a time for string-buffers */
+
+/*
+ * Macro expansion nesting
+ * We need the stack to handle expansions while scanning
+ * a macro's arguments. The TOS must always be the macro
+ * that receives the current expansion from the scanner.
+ */
+#define MAXMACEXPSTACK	128	/* Nesting more than 128 macro expansions is insane */
+
+typedef struct macexpstackentry {
+	pp_entry_t	*ppp;		/* This macro we are scanning */
+	char		**args;		/* With these arguments */
+	char		**ppargs;	/* Resulting in these preprocessed arguments */
+	int		*nnls;		/* Number of newlines per argument */
+	int		nargs;		/* And this many arguments scanned */
+	int		parentheses;	/* Nesting level of () */
+	int		curargsize;	/* Current scanning argument's size */
+	int		curargalloc;	/* Current scanning argument's block allocated */
+	char		*curarg;	/* Current scanning argument's content */
+} macexpstackentry_t;
+
+#define MACROPARENTHESES()	(top_macro()->parentheses)
+
+/*
+ * Prototypes
+ */
+static void newline(int);
+static int make_number(int radix, YYSTYPE *val, char *str, int len);
+static void put_buffer(char *s, int len);
+/* Buffer management */
+static void push_buffer(pp_entry_t *ppp, char *filename, char *incname, int pop);
+static bufferstackentry_t *pop_buffer(void);
+/* String functions */
+static void new_string(void);
+static void add_string(char *str, int len);
+static char *get_string(void);
+static void put_string(void);
+static int string_start(void);
+/* Macro functions */
+static void push_macro(pp_entry_t *ppp);
+static macexpstackentry_t *top_macro(void);
+static macexpstackentry_t *pop_macro(void);
+static void free_macro(macexpstackentry_t *mep);
+static void add_text_to_macro(char *text, int len);
+static void macro_add_arg(int last);
+static void macro_add_expansion(void);
+/* Expansion */
+static void expand_special(pp_entry_t *ppp);
+static void expand_define(pp_entry_t *ppp);
+static void expand_macro(macexpstackentry_t *mep);
+
+/*
+ * Local variables
+ */
+static int ncontinuations;
+
+static int strbuf_idx = 0;
+static int strbuf_alloc = 0;
+static char *strbuffer = NULL;
+static int str_startline;
+
+static macexpstackentry_t *macexpstack[MAXMACEXPSTACK];
+static int macexpstackidx = 0;
+
+static bufferstackentry_t bufferstack[MAXBUFFERSTACK];
+static int bufferstackidx = 0;
+
+/*
+ * Global variables
+ */
+/*
+ * Trace the include files to prevent double reading.
+ * This save 20..30% of processing time for most stuff
+ * that uses complex includes.
+ * States:
+ * -1	Don't track or seen junk
+ *  0	New include, waiting for "#ifndef __xxx_h"
+ *  1	Seen #ifndef, waiting for "#define __xxx_h ..."
+ *  2	Seen #endif, waiting for EOF
+ */
+int include_state = -1;
+char *include_ppp = NULL;	/* The define to be set from the #ifndef */
+int include_ifdepth = 0;	/* The level of ifs at the #ifdef */
+int seen_junk = 0;		/* Set when junk is seen */
+includelogicentry_t *includelogiclist = NULL;
+
+%}
+
+/*
+ **************************************************************************
+ * The scanner starts here
+ **************************************************************************
+ */
+
+%%
+	/*
+	 * Catch line-continuations.
+	 * Note: Gcc keeps the line-continuations in, for example, strings
+	 * intact. However, I prefer to remove them all so that the next
+	 * scanner will not need to reduce the continuation state.
+	 */
+<*>\\\n		newline(0);
+
+	/*
+	 * Detect the leading # of a preprocessor directive.
+	 */
+<INITIAL,pp_ignore>^{ws}*#	seen_junk++; yy_push_state(pp_pp);
+
+	/*
+	 * Scan for the preprocessor directives
+	 */
+<pp_pp>{ws}*include{ws}*	if(yy_top_state() != pp_ignore) {yy_pp_state(pp_inc); return tINCLUDE;} else {yy_pp_state(pp_eol);}
+<pp_pp>{ws}*define{ws}*		yy_pp_state(yy_current_state() != pp_ignore ? pp_def : pp_eol);
+<pp_pp>{ws}*error{ws}*		yy_pp_state(pp_eol);	if(yy_top_state() != pp_ignore) return tERROR;
+<pp_pp>{ws}*warning{ws}*	yy_pp_state(pp_eol);	if(yy_top_state() != pp_ignore) return tWARNING;
+<pp_pp>{ws}*pragma{ws}*		yy_pp_state(pp_eol);	if(yy_top_state() != pp_ignore) return tPRAGMA;
+<pp_pp>{ws}*ident{ws}*		yy_pp_state(pp_eol);	if(yy_top_state() != pp_ignore) return tPPIDENT;
+<pp_pp>{ws}*undef{ws}*		if(yy_top_state() != pp_ignore) {yy_pp_state(pp_ifd); return tUNDEF;} else {yy_pp_state(pp_eol);}
+<pp_pp>{ws}*ifdef{ws}*		yy_pp_state(pp_ifd);	return tIFDEF;
+<pp_pp>{ws}*ifndef{ws}*		seen_junk--; yy_pp_state(pp_ifd);	return tIFNDEF;
+<pp_pp>{ws}*if{ws}*		yy_pp_state(pp_if);	return tIF;
+<pp_pp>{ws}*elif{ws}*		yy_pp_state(pp_if);	return tELIF;
+<pp_pp>{ws}*else{ws}*		return tELSE;
+<pp_pp>{ws}*endif{ws}*		return tENDIF;
+<pp_pp>{ws}*line{ws}*		if(yy_top_state() != pp_ignore) {yy_pp_state(pp_line); return tLINE;} else {yy_pp_state(pp_eol);}
+<pp_pp>{ws}+			if(yy_top_state() != pp_ignore) {yy_pp_state(pp_line); return tGCCLINE;} else {yy_pp_state(pp_eol);}
+<pp_pp>{ws}*[a-z]+		pperror("Invalid preprocessor token '%s'", pptext);
+<pp_pp>\n			newline(1); yy_pop_state(); return tNL;	/* This could be the null-token */
+<pp_pp>.			return *pptext;
+
+	/*
+	 * Handle #include and #line
+	 */
+<pp_line>[0-9]+			return make_number(10, &pplval, pptext, ppleng);
+<pp_inc>\<			new_string(); add_string(pptext, ppleng); yy_push_state(pp_iqs);
+<pp_inc,pp_line>\"		new_string(); add_string(pptext, ppleng); yy_push_state(pp_dqs);
+<pp_inc,pp_line>{ws}+		;
+<pp_inc,pp_line>\n		newline(1); yy_pop_state(); return tNL;
+<pp_inc,pp_line>.		pperror(yy_current_state() == pp_inc ? "Trailing junk in #include" : "Trailing junk in #line");
+
+	/*
+	 * Ignore all input when a false clause is parsed
+	 */
+<pp_ignore>[^#/\\\n]+		;
+<pp_ignore>\n			newline(1);
+<pp_ignore>.			;
+
+	/*
+	 * Handle #if and #elif.
+	 * These require conditionals to be evaluated, but we do not
+	 * want to jam the scanner normally when we see these tokens.
+	 * Note: tIDENT is handled below.
+	 */
+
+<pp_if>0[0-7]*{ul}?		return make_number(8, &pplval, pptext, ppleng);
+<pp_if>0[0-7]*[8-9]+{ul}?	pperror("Invalid octal digit");
+<pp_if>[1-9][0-9]*{ul}?		return make_number(10, &pplval, pptext, ppleng);
+<pp_if>0[xX][0-9a-fA-F]+{ul}?	return make_number(16, &pplval, pptext, ppleng);
+<pp_if>0[xX]			pperror("Invalid hex number");
+<pp_if>defined			yy_push_state(pp_defined); return tDEFINED;
+<pp_if>"<<"			return tLSHIFT;
+<pp_if>">>"			return tRSHIFT;
+<pp_if>"&&"			return tLOGAND;
+<pp_if>"||"			return tLOGOR;
+<pp_if>"=="			return tEQ;
+<pp_if>"!="			return tNE;
+<pp_if>"<="			return tLTE;
+<pp_if>">="			return tGTE;
+<pp_if>\n			newline(1); yy_pop_state(); return tNL;
+<pp_if>{ws}+			;
+<pp_if>\'			new_string(); add_string(pptext, ppleng); yy_push_state(pp_sqs);
+<pp_if>\"			pperror("String constants not allowed in conditionals");
+<pp_if>.			return *pptext;
+
+	/*
+	 * Handle #ifdef, #ifndef and #undef
+	 * to get only an untranslated/unexpanded identifier
+	 */
+<pp_ifd>{cident}	pplval.cptr = xstrdup(pptext); return tIDENT;
+<pp_ifd>{ws}+		;
+<pp_ifd>\n		newline(1); yy_pop_state(); return tNL;
+<pp_ifd>.		pperror("Identifier expected");
+
+	/*
+	 * Handle the special 'defined' keyword.
+	 * This is necessary to get the identifier prior to any
+	 * substitutions.
+	 */
+<pp_defined>{cident}		yy_pop_state(); pplval.cptr = xstrdup(pptext); return tIDENT;
+<pp_defined>{ws}+		;
+<pp_defined>(\()|(\))		return *pptext;
+<pp_defined>(\\.)|(\n)|(.)	pperror("Identifier expected");
+
+	/*
+	 * Handle #error, #warning, #pragma and #ident.
+	 * Pass everything literally to the parser, which
+	 * will act appropriately.
+	 * Comments are stripped from the literal text.
+	 */
+<pp_eol>[^/\\\n]+		if(yy_top_state() != pp_ignore) { pplval.cptr = xstrdup(pptext); return tLITERAL; }
+<pp_eol>\/[^/\\\n*]*		if(yy_top_state() != pp_ignore) { pplval.cptr = xstrdup(pptext); return tLITERAL; }
+<pp_eol>(\\)|(\/[^/*])		if(yy_top_state() != pp_ignore) { pplval.cptr = xstrdup(pptext); return tLITERAL; }
+<pp_eol>\n			newline(1); yy_pop_state(); if(yy_current_state() != pp_ignore) { return tNL; }
+
+	/*
+	 * Handle left side of #define
+	 */
+<pp_def>{cident}\(		pplval.cptr = xstrdup(pptext); pplval.cptr[ppleng-1] = '\0'; yy_pp_state(pp_macro);  return tMACRO;
+<pp_def>{cident}		pplval.cptr = xstrdup(pptext); yy_pp_state(pp_define); return tDEFINE;
+<pp_def>{ws}+			;
+<pp_def>(\n)|(.)		perror("Identifier expected");
+
+	/*
+	 * Scan the substitution of a define
+	 */
+<pp_define>[^'"/\\\n]+		pplval.cptr = xstrdup(pptext); return tLITERAL;
+<pp_define>(\\)|(\/[^/*])	pplval.cptr = xstrdup(pptext); return tLITERAL;
+<pp_define>\\\n{ws}+		newline(0); pplval.cptr = xstrdup(" "); return tLITERAL;
+<pp_define>\n			newline(1); yy_pop_state(); return tNL;
+<pp_define>\'			new_string(); add_string(pptext, ppleng); yy_push_state(pp_sqs);
+<pp_define>\"			new_string(); add_string(pptext, ppleng); yy_push_state(pp_dqs);
+
+	/*
+	 * Scan the definition macro arguments
+	 */
+<pp_macro>\){ws}*		yy_pp_state(pp_mbody); return tMACROEND;
+<pp_macro>{ws}+			;
+<pp_macro>{cident}		pplval.cptr = xstrdup(pptext); return tIDENT;
+<pp_macro>,			return ',';
+<pp_macro>"..."			return tELIPSIS;
+<pp_macro>(\n)|(.)|(\.\.?)	pperror("Argument identifier expected");
+
+	/*
+	 * Scan the substitution of a macro
+	 */
+<pp_mbody>[^a-zA-Z0-9'"#/\\\n]+	pplval.cptr = xstrdup(pptext); return tLITERAL;
+<pp_mbody>{cident}		pplval.cptr = xstrdup(pptext); return tIDENT;
+<pp_mbody>\#\#			return tCONCAT;
+<pp_mbody>\#			return tSTRINGIZE;
+<pp_mbody>[0-9][^'"#/\\\n]*	pplval.cptr = xstrdup(pptext); return tLITERAL;
+<pp_mbody>(\\)|(\/[^/*'"#\\\n]*)	pplval.cptr = xstrdup(pptext); return tLITERAL;
+<pp_mbody>\\\n{ws}+		newline(0); pplval.cptr = xstrdup(" "); return tLITERAL;
+<pp_mbody>\n			newline(1); yy_pop_state(); return tNL;
+<pp_mbody>\'			new_string(); add_string(pptext, ppleng); yy_push_state(pp_sqs);
+<pp_mbody>\"			new_string(); add_string(pptext, ppleng); yy_push_state(pp_dqs);
+
+	/*
+	 * Macro expansion text scanning.
+	 * This state is active just after the identifier is scanned
+	 * that triggers an expansion. We *must* delete the leading
+	 * whitespace before we can start scanning for arguments.
+	 *
+	 * If we do not see a '(' as next trailing token, then we have
+	 * a false alarm. We just continue with a nose-bleed...
+	 */
+<pp_macign>{ws}*/\(	yy_pp_state(pp_macscan);
+<pp_macign>{ws}*\n	{
+		if(yy_top_state() != pp_macscan)
+			newline(0);
+	}
+<pp_macign>{ws}*\\\n	newline(0);
+<pp_macign>{ws}+|{ws}*\\|.	{
+		macexpstackentry_t *mac = pop_macro();
+		yy_pop_state();
+		put_buffer(mac->ppp->ident, strlen(mac->ppp->ident));
+		put_buffer(pptext, ppleng);
+		free_macro(mac);
+	}
+
+	/*
+	 * Macro expansion argument text scanning.
+	 * This state is active when a macro's arguments are being read for expansion.
+	 */
+<pp_macscan>\(	{
+		if(++MACROPARENTHESES() > 1)
+			add_text_to_macro(pptext, ppleng);
+	}
+<pp_macscan>\)	{
+		if(--MACROPARENTHESES() == 0)
+		{
+			yy_pop_state();
+			macro_add_arg(1);
+		}
+		else
+			add_text_to_macro(pptext, ppleng);
+	}
+<pp_macscan>,		{
+		if(MACROPARENTHESES() > 1)
+			add_text_to_macro(pptext, ppleng);
+		else
+			macro_add_arg(0);
+	}
+<pp_macscan>\"		new_string(); add_string(pptext, ppleng); yy_push_state(pp_dqs);
+<pp_macscan>\'		new_string(); add_string(pptext, ppleng); yy_push_state(pp_sqs);
+<pp_macscan>"/*"	yy_push_state(pp_comment); add_text_to_macro(" ", 1);
+<pp_macscan>\n		line_number++; char_number = 1; add_text_to_macro(pptext, ppleng);
+<pp_macscan>([^/(),\\\n"']+)|(\/[^/*(),\\\n'"]*)|(.)	add_text_to_macro(pptext, ppleng);
+
+	/*
+	 * Comment handling (almost all start-conditions)
+	 */
+<INITIAL,pp_pp,pp_ignore,pp_eol,pp_inc,pp_if,pp_ifd,pp_defined,pp_def,pp_define,pp_macro,pp_mbody>"/*"	yy_push_state(pp_comment);
+<pp_comment>[^*\n]*|"*"+[^*/\n]*	;
+<pp_comment>\n				newline(0);
+<pp_comment>"*"+"/"			yy_pop_state();
+
+	/*
+	 * Remove C++ style comment (almost all start-conditions)
+	 */
+<INITIAL,pp_pp,pp_ignore,pp_eol,pp_inc,pp_if,pp_ifd,pp_defined,pp_def,pp_define,pp_macro,pp_mbody,pp_macscan>"//"[^\n]*	{
+		if(pptext[ppleng-1] == '\\')
+			ppwarning("C++ style comment ends with an escaped newline (escape ignored)");
+	}
+
+	/*
+	 * Single, double and <> quoted constants
+	 */
+<INITIAL,pp_macexp>\"		seen_junk++; new_string(); add_string(pptext, ppleng); yy_push_state(pp_dqs);
+<INITIAL,pp_macexp>\'		seen_junk++; new_string(); add_string(pptext, ppleng); yy_push_state(pp_sqs);
+<pp_dqs>[^"\\\n]+		add_string(pptext, ppleng);
+<pp_dqs>\"			{
+		add_string(pptext, ppleng);
+		yy_pop_state();
+		switch(yy_current_state())
+		{
+		case pp_pp:
+		case pp_define:
+		case pp_mbody:
+		case pp_inc:
+		case pp_line:
+			pplval.cptr = get_string();
+			return tDQSTRING;
+		default:
+			put_string();
+		}
+	}
+<pp_sqs>[^'\\\n]+		add_string(pptext, ppleng);
+<pp_sqs>\'			{
+		add_string(pptext, ppleng);
+		yy_pop_state();
+		switch(yy_current_state())
+		{
+		case pp_if:
+		case pp_define:
+		case pp_mbody:
+			pplval.cptr = get_string();
+			return tSQSTRING;
+		default:
+			put_string();
+		}
+	}
+<pp_iqs>[^\>\\\n]+		add_string(pptext, ppleng);
+<pp_iqs>\>			{
+		add_string(pptext, ppleng);
+		yy_pop_state();
+		pplval.cptr = get_string();
+		return tIQSTRING;
+	}
+<pp_iqs,pp_dqs,pp_sqs>\\.	add_string(pptext, ppleng);
+<pp_iqs,pp_dqs,pp_sqs>\n	{
+		newline(1);
+		add_string(pptext, ppleng);
+		ppwarning("Newline in string constant encounterd (started line %d)", string_start());
+	}
+
+	/*
+	 * Identifier scanning
+	 */
+<INITIAL,pp_if,pp_inc,pp_macexp>{cident}	{
+		pp_entry_t *ppp;
+		seen_junk++;
+		if(!(ppp = pplookup(pptext)))
+		{
+			if(yy_current_state() == pp_inc)
+				pperror("Expected include filename");
+
+			if(yy_current_state() == pp_if)
+			{
+				pplval.cptr = xstrdup(pptext);
+				return tIDENT;
+			}
+			else
+				put_buffer(pptext, ppleng);
+		}
+		else if(!ppp->expanding)
+		{
+			switch(ppp->type)
+			{
+			case def_special:
+				expand_special(ppp);
+				break;
+			case def_define:
+				expand_define(ppp);
+				break;
+			case def_macro:
+				yy_push_state(pp_macign);
+				push_macro(ppp);
+				break;
+			default:
+				internal_error(__FILE__, __LINE__, "Invalid define type %d\n", ppp->type);
+			}
+		}
+	}
+
+	/*
+	 * Everything else that needs to be passed and
+	 * newline and continuation handling
+	 */
+<INITIAL,pp_macexp>[^a-zA-Z_#'"/\\\n \r\t\f\v]+|(\/|\\)[^a-zA-Z_/*'"\\\n \r\t\v\f]*	seen_junk++; put_buffer(pptext, ppleng);
+<INITIAL,pp_macexp>{ws}+	put_buffer(pptext, ppleng);
+<INITIAL>\n			newline(1);
+
+	/*
+	 * Special catcher for macro argmument expansion to prevent
+	 * newlines to propagate to the output or admin.
+	 */
+<pp_macexp>(\n)|(.)		put_buffer(pptext, ppleng);
+
+	/*
+	 * This is a 'catch-all' rule to discover errors in the scanner
+	 * in an orderly manner.
+	 */
+<*>.		seen_junk++; ppwarning("Unmatched text '%c' (0x%02x); please report\n", isprint(*pptext) ? *pptext : ' ', *pptext);
+
+<<EOF>>	{
+		YY_BUFFER_STATE b = YY_CURRENT_BUFFER;
+		bufferstackentry_t *bep = pop_buffer();
+
+		if((!bep && get_if_depth()) || (bep && get_if_depth() != bep->if_depth))
+			ppwarning("Unmatched #if/#endif at end of file");
+
+		if(!bep)
+		{
+			if(YY_START != INITIAL)
+				pperror("Unexpected end of file during preprocessing");
+			yyterminate();
+		}
+		else if(bep->should_pop == 2)
+		{
+			macexpstackentry_t *mac;
+			mac = pop_macro();
+			expand_macro(mac);
+		}
+		pp_delete_buffer(b);
+	}
+
+%%
+/*
+ **************************************************************************
+ * Support functions
+ **************************************************************************
+ */
+
+#ifndef ppwrap
+int ppwrap(void)
+{
+	return 1;
+}
+#endif
+
+
+/*
+ *-------------------------------------------------------------------------
+ * Output newlines or set them as continuations
+ *-------------------------------------------------------------------------
+ */
+static void newline(int dowrite)
+{
+	line_number++;
+	char_number = 1;
+	ncontinuations++;
+	if(dowrite)
+	{
+		for(;ncontinuations; ncontinuations--)
+			put_buffer("\n", 1);
+	}
+}
+
+
+/*
+ *-------------------------------------------------------------------------
+ * Make a number out of an any-base and suffixed string
+ *
+ * Possible number extensions:
+ * - ""		int
+ * - "L"	long int
+ * - "LL"	long long int
+ * - "U"	unsigned int
+ * - "UL"	unsigned long int
+ * - "ULL"	unsigned long long int
+ * - "LU"	unsigned long int
+ * - "LLU"	unsigned long long int
+ * - "LUL"	invalid
+ *
+ * FIXME:
+ * The sizes of resulting 'int' and 'long' are compiler specific.
+ * I depend on sizeof(int) > 2 here (although a relatively safe
+ * assumption).
+ * Long longs are not yet implemented because this is very compiler
+ * specific and I don't want to think too much about the problems.
+ *
+ *-------------------------------------------------------------------------
+ */
+static int make_number(int radix, YYSTYPE *val, char *str, int len)
+{
+	int is_l  = 0;
+	int is_ll = 0;
+	int is_u  = 0;
+	char ext[4];
+
+	ext[3] = '\0';
+	ext[2] = toupper(str[len-1]);
+	ext[1] = len > 1 ? toupper(str[len-2]) : ' ';
+	ext[0] = len > 2 ? toupper(str[len-3]) : ' ';
+
+	if(!strcmp(ext, "LUL"))
+		pperror("Invalid constant suffix");
+	else if(!strcmp(ext, "LLU") || !strcmp(ext, "ULL"))
+	{
+		is_ll++;
+		is_u++;
+	}
+	else if(!strcmp(ext+1, "LU") || !strcmp(ext+1, "UL"))
+	{
+		is_l++;
+		is_u++;
+	}
+	else if(!strcmp(ext+1, "LL"))
+	{
+		is_ll++;
+	}
+	else if(!strcmp(ext+2, "L"))
+	{
+		is_l++;
+	}
+	else if(!strcmp(ext+2, "U"))
+	{
+		is_u++;
+	}
+
+	if(is_ll)
+		internal_error(__FILE__, __LINE__, "long long constants not implemented yet");
+
+	if(is_u && is_l)
+	{
+		val->ulong = strtoul(str, NULL, radix);
+		return tULONG;
+	}
+	else if(!is_u && is_l)
+	{
+		val->slong = strtol(str, NULL, radix);
+		return tSLONG;
+	}
+	else if(is_u && !is_l)
+	{
+		val->uint = (unsigned int)strtoul(str, NULL, radix);
+		if(!win32 && val->uint > 65535)
+		{
+			pperror("Constant overflow");
+		}
+		return tUINT;
+	}
+
+	/* Else it must be an int... */
+	val->sint = (int)strtol(str, NULL, radix);
+	if(!win32 && (val->sint < -32768 || val->sint > 32768))
+	{
+		/*
+		 * Note: test must be > 32768 because unary minus
+		 * is handled as an expression! This can result in
+		 * failure and must be checked in the parser.
+		 */
+		pperror("Constant overflow");
+	}
+	return tSINT;
+}
+
+
+/*
+ *-------------------------------------------------------------------------
+ * Macro and define expansion support
+ *
+ * FIXME: Variable macro arguments.
+ *-------------------------------------------------------------------------
+ */
+static void expand_special(pp_entry_t *ppp)
+{
+	char *dbgtext = "?";
+	static char *buf = NULL;
+
+	assert(ppp->type == def_special);
+
+	if(!strcmp(ppp->ident, "__LINE__"))
+	{
+		dbgtext = "def_special(__LINE__)";
+		buf = xrealloc(buf, 32);
+		sprintf(buf, "%d", line_number);
+	}
+	else if(!strcmp(ppp->ident, "__FILE__"))
+	{
+		dbgtext = "def_special(__FILE__)";
+		buf = xrealloc(buf, strlen(input_name) + 3);
+		sprintf(buf, "\"%s\"", input_name);
+	}
+	else if(!strcmp(ppp->ident, "__DATE__"))
+	{
+		dbgtext = "def_special(__DATE__)";
+		buf = xrealloc(buf, 32);
+		strftime(buf, 32, "\"%b %d %Y\"", localtime(&now));
+	}
+	else if(!strcmp(ppp->ident, "__TIME__"))
+	{
+		dbgtext = "def_special(__TIME__)";
+		buf = xrealloc(buf, 32);
+		strftime(buf, 32, "\"%H:%M:%S\"", localtime(&now));
+	}
+	else
+		internal_error(__FILE__, __LINE__, "Special macro '%s' not found...\n", ppp->ident);
+
+	if(debuglevel & DEBUGLEVEL_PPLEX)
+		fprintf(stderr, "expand_special(%d): %s:%d: '%s' -> '%s'\n",
+			macexpstackidx,
+			input_name,
+			line_number,
+			ppp->ident,
+			buf ? buf : "");
+
+	if(buf && buf[0])
+	{
+		push_buffer(ppp, NULL, NULL, 0);
+		yy_scan_string(buf);
+	}
+}
+
+static void expand_define(pp_entry_t *ppp)
+{
+	assert(ppp->type == def_define);
+
+	if(debuglevel & DEBUGLEVEL_PPLEX)
+		fprintf(stderr, "expand_define(%d): %s:%d: '%s' -> '%s'\n",
+			macexpstackidx,
+			input_name,
+			line_number,
+			ppp->ident,
+			ppp->subst.text);
+	if(ppp->subst.text && ppp->subst.text[0])
+	{
+		push_buffer(ppp, NULL, NULL, 0);
+		yy_scan_string(ppp->subst.text);
+	}
+}
+
+static int curdef_idx = 0;
+static int curdef_alloc = 0;
+static char *curdef_text = NULL;
+
+static void add_text(char *str, int len)
+{
+	if(len == 0)
+		return;
+	if(curdef_idx >= curdef_alloc || curdef_alloc - curdef_idx < len)
+	{
+		curdef_alloc += (len + ALLOCBLOCKSIZE-1) & ~(ALLOCBLOCKSIZE-1);
+		curdef_text = xrealloc(curdef_text, curdef_alloc * sizeof(curdef_text[0]));
+		if(curdef_alloc > 65536)
+			ppwarning("Reallocating macro-expansion buffer larger than 64kB");
+	}
+	memcpy(&curdef_text[curdef_idx], str, len);
+	curdef_idx += len;
+}
+
+static mtext_t *add_expand_text(mtext_t *mtp, macexpstackentry_t *mep, int *nnl)
+{
+	char *cptr;
+	char *exp;
+	int tag;
+	int n;
+
+	if(mtp == NULL)
+		return NULL;
+
+	switch(mtp->type)
+	{
+	case exp_text:
+		if(debuglevel & DEBUGLEVEL_PPLEX)
+			fprintf(stderr, "add_expand_text: exp_text: '%s'\n", mtp->subst.text);
+		add_text(mtp->subst.text, strlen(mtp->subst.text));
+		break;
+
+	case exp_stringize:
+		if(debuglevel & DEBUGLEVEL_PPLEX)
+			fprintf(stderr, "add_expand_text: exp_stringize(%d): '%s'\n",
+				mtp->subst.argidx,
+				mep->args[mtp->subst.argidx]);
+		cptr = mep->args[mtp->subst.argidx];
+		add_text("\"", 1);
+		while(*cptr)
+		{
+			if(*cptr == '"' || *cptr == '\\')
+				add_text("\\", 1);
+			add_text(cptr, 1);
+			cptr++;
+		}
+		add_text("\"", 1);
+		break;
+
+	case exp_concat:
+		if(debuglevel & DEBUGLEVEL_PPLEX)
+			fprintf(stderr, "add_expand_text: exp_concat\n");
+		/* Remove trailing whitespace from current expansion text */
+		while(curdef_idx)
+		{
+			if(isspace(curdef_text[curdef_idx-1]))
+				curdef_idx--;
+			else
+				break;
+		}
+		/* tag current position and recursively expand the next part */
+		tag = curdef_idx;
+		mtp = add_expand_text(mtp->next, mep, nnl);
+
+		/* Now get rid of the leading space of the expansion */
+		cptr = &curdef_text[tag];
+		n = curdef_idx - tag;
+		while(n)
+		{
+			if(isspace(*cptr))
+			{
+				cptr++;
+				n--;
+			}
+			else
+				break;
+		}
+		if(cptr != &curdef_text[tag])
+		{	
+			memmove(&curdef_text[tag], cptr, n);
+			curdef_idx -= (curdef_idx - tag) - n;
+		}
+		break;
+
+	case exp_subst:
+		if((mtp->next && mtp->next->type == exp_concat) || (mtp->prev && mtp->prev->type == exp_concat))
+			exp = mep->args[mtp->subst.argidx];
+		else
+			exp = mep->ppargs[mtp->subst.argidx];
+		if(exp)
+		{
+			add_text(exp, strlen(exp));
+			*nnl -= mep->nnls[mtp->subst.argidx];
+			cptr = strchr(exp, '\n');
+			while(cptr)
+			{
+				*cptr = ' ';
+				cptr = strchr(cptr+1, '\n');
+			}
+			mep->nnls[mtp->subst.argidx] = 0;
+		}
+		if(debuglevel & DEBUGLEVEL_PPLEX)
+			fprintf(stderr, "add_expand_text: exp_subst(%d): '%s'\n", mtp->subst.argidx, exp);
+		break;
+
+	default:
+		internal_error(__FILE__, __LINE__, "Invalid expansion type (%d) in macro expansion\n", mtp->type);
+	}
+	return mtp;
+}
+
+static void expand_macro(macexpstackentry_t *mep)
+{
+	mtext_t *mtp;
+	int n, k;
+	char *cptr;
+	int nnl = 0;
+	pp_entry_t *ppp = mep->ppp;
+	int nargs = mep->nargs;
+
+	assert(ppp->type == def_macro);
+	assert(ppp->expanding == 0);
+
+	if((ppp->nargs >= 0 && nargs != ppp->nargs) || (ppp->nargs < 0 && nargs < -ppp->nargs))
+		pperror("Too %s macro arguments (%d)", nargs < abs(ppp->nargs) ? "few" : "many", nargs);
+
+	for(n = 0; n < nargs; n++)
+		nnl += mep->nnls[n];
+
+	if(debuglevel & DEBUGLEVEL_PPLEX)
+		fprintf(stderr, "expand_macro(%d): %s:%d: '%s'(%d,%d) -> ...\n",
+			macexpstackidx,
+			input_name,
+			line_number,
+			ppp->ident,
+			mep->nargs,
+			nnl);
+
+	curdef_idx = 0;
+
+	for(mtp = ppp->subst.mtext; mtp; mtp = mtp->next)
+	{
+		if(!(mtp = add_expand_text(mtp, mep, &nnl)))
+			break;
+	}
+
+	for(n = 0; n < nnl; n++)
+		add_text("\n", 1);
+
+	/* To make sure there is room and termination (see below) */
+	add_text(" \0", 2);
+
+	/* Strip trailing whitespace from expansion */
+	for(k = curdef_idx, cptr = &curdef_text[curdef_idx-1]; k > 0; k--, cptr--)
+	{
+		if(!isspace(*cptr))
+			break;
+	}
+
+	/*
+	 * We must add *one* whitespace to make sure that there
+	 * is a token-seperation after the expansion.
+	 */
+	*(++cptr) = ' ';
+	*(++cptr) = '\0';
+	k++;
+
+	/* Strip leading whitespace from expansion */
+	for(n = 0, cptr = curdef_text; n < k; n++, cptr++)
+	{
+		if(!isspace(*cptr))
+			break;
+	}
+
+	if(k - n > 0)
+	{
+		if(debuglevel & DEBUGLEVEL_PPLEX)
+			fprintf(stderr, "expand_text: '%s'\n", curdef_text + n);
+		push_buffer(ppp, NULL, NULL, 0);
+		/*yy_scan_bytes(curdef_text + n, k - n);*/
+		yy_scan_string(curdef_text + n);
+	}
+}
+
+/*
+ *-------------------------------------------------------------------------
+ * String collection routines
+ *-------------------------------------------------------------------------
+ */
+static void new_string(void)
+{
+#ifdef DEBUG
+	if(strbuf_idx)
+		ppwarning("new_string: strbuf_idx != 0");
+#endif
+	strbuf_idx = 0;
+	str_startline = line_number;
+}
+
+static void add_string(char *str, int len)
+{
+	if(len == 0)
+		return;
+	if(strbuf_idx >= strbuf_alloc || strbuf_alloc - strbuf_idx < len)
+	{
+		strbuf_alloc += (len + ALLOCBLOCKSIZE-1) & ~(ALLOCBLOCKSIZE-1);
+		strbuffer = xrealloc(strbuffer, strbuf_alloc * sizeof(strbuffer[0]));
+		if(strbuf_alloc > 65536)
+			ppwarning("Reallocating string buffer larger than 64kB");
+	}
+	memcpy(&strbuffer[strbuf_idx], str, len);
+	strbuf_idx += len;
+}
+
+static char *get_string(void)
+{
+	char *str = (char *)xmalloc(strbuf_idx + 1);
+	memcpy(str, strbuffer, strbuf_idx);
+	str[strbuf_idx] = '\0';
+#ifdef DEBUG
+	strbuf_idx = 0;
+#endif
+	return str;
+}
+
+static void put_string(void)
+{
+	put_buffer(strbuffer, strbuf_idx);
+#ifdef DEBUG
+	strbuf_idx = 0;
+#endif
+}
+
+static int string_start(void)
+{
+	return str_startline;
+}
+
+
+/*
+ *-------------------------------------------------------------------------
+ * Buffer management
+ *-------------------------------------------------------------------------
+ */
+static void push_buffer(pp_entry_t *ppp, char *filename, char *incname, int pop)
+{
+	if(ppdebug)
+		printf("push_buffer(%d): %p %p %p %d\n", bufferstackidx, ppp, filename, incname, pop);
+	if(bufferstackidx >= MAXBUFFERSTACK)
+		internal_error(__FILE__, __LINE__, "Buffer stack overflow");
+
+	memset(&bufferstack[bufferstackidx], 0, sizeof(bufferstack[0]));
+	bufferstack[bufferstackidx].bufferstate	= YY_CURRENT_BUFFER;
+	bufferstack[bufferstackidx].define	= ppp;
+	bufferstack[bufferstackidx].line_number	= line_number;
+	bufferstack[bufferstackidx].char_number	= char_number;
+	bufferstack[bufferstackidx].if_depth	= get_if_depth();
+	bufferstack[bufferstackidx].should_pop	= pop;
+	bufferstack[bufferstackidx].filename	= input_name;
+	bufferstack[bufferstackidx].ncontinuations	= ncontinuations;
+	bufferstack[bufferstackidx].include_state	= include_state;
+	bufferstack[bufferstackidx].include_ppp		= include_ppp;
+	bufferstack[bufferstackidx].include_filename	= incname;
+	bufferstack[bufferstackidx].include_ifdepth	= include_ifdepth;
+	bufferstack[bufferstackidx].seen_junk		= seen_junk;
+
+	if(ppp)
+		ppp->expanding = 1;
+	else if(filename)
+	{
+		/* These will track the pperror to the correct file and line */
+		line_number = 1;
+		char_number = 1;
+		input_name  = filename;
+		ncontinuations = 0;
+	}
+	else if(!pop)
+		internal_error(__FILE__, __LINE__, "Pushing buffer without knowing where to go to");
+	bufferstackidx++;
+}
+
+static bufferstackentry_t *pop_buffer(void)
+{
+	if(bufferstackidx < 0)
+		internal_error(__FILE__, __LINE__, "Bufferstack underflow?");
+
+	if(bufferstackidx == 0)
+		return NULL;
+
+	bufferstackidx--;
+
+	if(bufferstack[bufferstackidx].define)
+		bufferstack[bufferstackidx].define->expanding = 0;
+	else
+	{
+		line_number = bufferstack[bufferstackidx].line_number;
+		char_number = bufferstack[bufferstackidx].char_number;
+		input_name  = bufferstack[bufferstackidx].filename;
+		ncontinuations = bufferstack[bufferstackidx].ncontinuations;
+		if(!bufferstack[bufferstackidx].should_pop)
+		{
+			fclose(ppin);
+			fprintf(ppout, "# %d \"%s\" 2\n", line_number, input_name);
+
+			/* We have EOF, check the include logic */
+			if(include_state == 2 && !seen_junk && include_ppp)
+			{
+				pp_entry_t *ppp = pplookup(include_ppp);
+				if(ppp)
+				{
+					includelogicentry_t *iep = xmalloc(sizeof(includelogicentry_t));
+					iep->ppp = ppp;
+					ppp->iep = iep;
+					iep->filename = bufferstack[bufferstackidx].include_filename;
+					iep->next = includelogiclist;
+					if(iep->next)
+						iep->next->prev = iep;
+					includelogiclist = iep;
+					if(debuglevel & DEBUGLEVEL_PPMSG)
+						fprintf(stderr, "pop_buffer: %s:%d: includelogic added, include_ppp='%s', file='%s'\n", input_name, line_number, include_ppp, iep->filename);
+				}
+				else if(bufferstack[bufferstackidx].include_filename)
+					free(bufferstack[bufferstackidx].include_filename);
+			}
+			if(include_ppp)
+				free(include_ppp);
+			include_state	= bufferstack[bufferstackidx].include_state;
+			include_ppp	= bufferstack[bufferstackidx].include_ppp;
+			include_ifdepth	= bufferstack[bufferstackidx].include_ifdepth;
+			seen_junk	= bufferstack[bufferstackidx].seen_junk;
+		}
+	}
+
+	if(ppdebug)
+		printf("pop_buffer(%d): %p %p (%d, %d, %d) %p %d\n",
+			bufferstackidx,
+			bufferstack[bufferstackidx].bufferstate,
+			bufferstack[bufferstackidx].define,
+			bufferstack[bufferstackidx].line_number,
+			bufferstack[bufferstackidx].char_number,
+			bufferstack[bufferstackidx].if_depth,
+			bufferstack[bufferstackidx].filename,
+			bufferstack[bufferstackidx].should_pop);
+
+	pp_switch_to_buffer(bufferstack[bufferstackidx].bufferstate);
+
+	if(bufferstack[bufferstackidx].should_pop)
+	{
+		if(yy_current_state() == pp_macexp)
+			macro_add_expansion();
+		else
+			internal_error(__FILE__, __LINE__, "Pop buffer and state without macro expansion state"); 
+		yy_pop_state();
+	}
+
+	return &bufferstack[bufferstackidx];
+}
+
+
+/*
+ *-------------------------------------------------------------------------
+ * Macro nestng support
+ *-------------------------------------------------------------------------
+ */
+static void push_macro(pp_entry_t *ppp)
+{
+	if(macexpstackidx >= MAXMACEXPSTACK)
+		pperror("Too many nested macros");
+
+	macexpstack[macexpstackidx] = xmalloc(sizeof(macexpstack[0][0]));
+
+	macexpstack[macexpstackidx]->ppp = ppp;
+	macexpstackidx++;
+}
+
+static macexpstackentry_t *top_macro(void)
+{
+	return macexpstackidx > 0 ? macexpstack[macexpstackidx-1] : NULL;
+}
+
+static macexpstackentry_t *pop_macro(void)
+{
+	if(macexpstackidx <= 0)
+		internal_error(__FILE__, __LINE__, "Macro expansion stack underflow\n");
+	return macexpstack[--macexpstackidx];
+}
+
+static void free_macro(macexpstackentry_t *mep)
+{
+	int i;
+
+	for(i = 0; i < mep->nargs; i++)
+		free(mep->args[i]);
+	if(mep->args)
+		free(mep->args);
+	if(mep->nnls)
+		free(mep->nnls);
+	if(mep->curarg)
+		free(mep->curarg);
+	free(mep);
+}
+
+static void add_text_to_macro(char *text, int len)
+{
+	macexpstackentry_t *mep = top_macro();
+
+	assert(mep->ppp->expanding == 0);
+
+	if(mep->curargalloc - mep->curargsize <= len)
+	{
+		mep->curargalloc += ALLOCBLOCKSIZE;
+		mep->curarg = xrealloc(mep->curarg, mep->curargalloc * sizeof(mep->curarg[0]));
+	}
+	memcpy(mep->curarg + mep->curargsize, text, len+1);	/* +1 for '\0' */
+	mep->curargsize += len;
+}
+
+static void macro_add_arg(int last)
+{
+	int nnl = 0;
+	char *cptr;
+	macexpstackentry_t *mep = top_macro();
+
+	assert(mep->ppp->expanding == 0);
+
+	mep->args = xrealloc(mep->args, (mep->nargs+1) * sizeof(mep->args[0]));
+	mep->ppargs = xrealloc(mep->ppargs, (mep->nargs+1) * sizeof(mep->ppargs[0]));
+	mep->nnls = xrealloc(mep->nnls, (mep->nargs+1) * sizeof(mep->nnls[0]));
+	mep->args[mep->nargs] = xstrdup(mep->curarg ? mep->curarg : "");
+	cptr = mep->args[mep->nargs]-1;
+	while((cptr = strchr(cptr+1, '\n')))
+	{
+		nnl++;
+	}
+	mep->nnls[mep->nargs] = nnl;
+	mep->nargs++;
+	free(mep->curarg);
+	mep->curargalloc = mep->curargsize = 0;
+	mep->curarg = NULL;
+
+	if(debuglevel & DEBUGLEVEL_PPLEX)
+		fprintf(stderr, "macro_add_arg: %s:%d: %d -> '%s'\n",
+			input_name,
+			line_number,
+			mep->nargs-1,
+			mep->args[mep->nargs-1]);
+
+	/* Each macro argument must be expanded to cope with stingize */
+	if(last || mep->args[mep->nargs-1][0])
+	{
+		yy_push_state(pp_macexp);
+		push_buffer(NULL, NULL, NULL, last ? 2 : 1);
+		yy_scan_string(mep->args[mep->nargs-1]);
+		/*mep->bufferstackidx = bufferstackidx;	 But not nested! */
+	}
+}
+
+static void macro_add_expansion(void)
+{
+	macexpstackentry_t *mep = top_macro();
+
+	assert(mep->ppp->expanding == 0);
+
+	mep->ppargs[mep->nargs-1] = xstrdup(mep->curarg ? mep->curarg : "");
+	free(mep->curarg);
+	mep->curargalloc = mep->curargsize = 0;
+	mep->curarg = NULL;
+
+	if(debuglevel & DEBUGLEVEL_PPLEX)
+		fprintf(stderr, "macro_add_expansion: %s:%d: %d -> '%s'\n",
+			input_name,
+			line_number,
+			mep->nargs-1,
+			mep->ppargs[mep->nargs-1]);
+}
+
+
+/*
+ *-------------------------------------------------------------------------
+ * Output management
+ *-------------------------------------------------------------------------
+ */
+static void put_buffer(char *s, int len)
+{
+	if(top_macro())
+		add_text_to_macro(s, len);
+	else
+		fwrite(s, 1, len, ppout);
+}
+
+
+/*
+ *-------------------------------------------------------------------------
+ * Include management
+ *-------------------------------------------------------------------------
+ */
+void do_include(char *fname, int type)
+{
+	char *newpath;
+	int n;
+	includelogicentry_t *iep;
+
+	for(iep = includelogiclist; iep; iep = iep->next)
+	{
+		if(!strcmp(iep->filename, fname))
+		{
+			/*
+			 * We are done. The file was included before.
+			 * If the define was deleted, then this entry would have
+			 * been deleted too.
+			 */
+			return;
+		}
+	}
+
+	n = strlen(fname);
+
+	if(n <= 2)
+		pperror("Empty include filename");
+
+	/* Undo the effect of the quotation */
+	fname[n-1] = '\0';
+
+	if((ppin = open_include(fname+1, type, &newpath)) == NULL)
+		pperror("Unable to open include file %s", fname+1);
+
+	fname[n-1] = *fname;	/* Redo the quotes */
+	push_buffer(NULL, newpath, fname, 0);
+	seen_junk = 0;
+	include_state = 0;
+	include_ppp = NULL;
+	if(debuglevel & DEBUGLEVEL_PPMSG)
+		fprintf(stderr, "do_include: %s:%d: include_state=%d, include_ppp='%s', include_ifdepth=%d\n", input_name, line_number, include_state, include_ppp, include_ifdepth);
+	pp_switch_to_buffer(pp_create_buffer(ppin, YY_BUF_SIZE));
+
+	fprintf(ppout, "# 1 \"%s\" 1%s\n", newpath, type ? "" : " 3"); 
+}
+
+/*
+ *-------------------------------------------------------------------------
+ * Push/pop preprocessor ignore state when processing conditionals
+ * which are false.
+ *-------------------------------------------------------------------------
+ */
+void push_ignore_state(void)
+{
+	yy_push_state(pp_ignore);
+}
+
+void pop_ignore_state(void)
+{
+	yy_pop_state();
+}
+
+

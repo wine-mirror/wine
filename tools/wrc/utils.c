@@ -17,8 +17,9 @@
 #include "wrc.h"
 #include "utils.h"
 #include "parser.h"
+#include "preproc.h"
 
-#define WANT_NEAR_INDICATION
+/* #define WANT_NEAR_INDICATION */
 
 
 #ifdef WANT_NEAR_INDICATION
@@ -33,22 +34,31 @@ void make_print(char *str)
 }
 #endif
 
+static void generic_msg(const char *s, const char *t, const char *n, va_list ap)
+{
+	fprintf(stderr, "%s %s: %d, %d: ", t, input_name ? input_name : "stdin", line_number, char_number);
+	vfprintf(stderr, s, ap);
+#ifdef WANT_NEAR_INDICATION
+	{
+		char *cpy;
+		if(n)
+		{
+			cpy = xstrdup(n);
+			make_print(cpy);
+			fprintf(stderr, " near '%s'", cpy);
+			free(cpy);
+		}
+	}
+#endif
+	fprintf(stderr, "\n");
+}
+
+
 int yyerror(const char *s, ...)
 {
 	va_list ap;
 	va_start(ap, s);
-	fprintf(stderr, "Error %s: %d, %d: ", input_name ? input_name : "stdin", line_number, char_number);
-	vfprintf(stderr, s, ap);
-#ifdef WANT_NEAR_INDICATION
-	{
-		char *cpy = xstrdup(yytext);
-		make_print(cpy);
-		fprintf(stderr, " near '%s'\n", cpy);
-		free(cpy);
-	}
-#else
-	fprintf(stderr, "\n");
-#endif
+	generic_msg(s, "Error", yytext, ap);
 	va_end(ap);
 	exit(1);
 	return 1;
@@ -58,21 +68,30 @@ int yywarning(const char *s, ...)
 {
 	va_list ap;
 	va_start(ap, s);
-	fprintf(stderr, "Warning %s: %d, %d: ", input_name ? input_name : "stdin", line_number, char_number);
-	vfprintf(stderr, s, ap);
-#ifdef WANT_NEAR_INDICATION
-	{
-		char *cpy = xstrdup(yytext);
-		make_print(cpy);
-		fprintf(stderr, " near '%s'\n", cpy);
-		free(cpy);
-	}
-#else
-	fprintf(stderr, "\n");
-#endif
+	generic_msg(s, "Warning", yytext, ap);
 	va_end(ap);
 	return 0;
 }
+
+int pperror(const char *s, ...)
+{
+	va_list ap;
+	va_start(ap, s);
+	generic_msg(s, "Error", pptext, ap);
+	va_end(ap);
+	exit(1);
+	return 1;
+}
+
+int ppwarning(const char *s, ...)
+{
+	va_list ap;
+	va_start(ap, s);
+	generic_msg(s, "Warning", pptext, ap);
+	va_end(ap);
+	return 0;
+}
+
 
 void internal_error(const char *file, int line, const char *s, ...)
 {
@@ -156,6 +175,11 @@ void *xmalloc(size_t size)
     {
 	error("Virtual memory exhausted.\n");
     }
+    /*
+     * We set it to 0.
+     * This is *paramount* because we depend on it
+     * just about everywhere in the rest of the code.
+     */
     memset(res, 0, size);
     return res;
 }
@@ -177,7 +201,10 @@ void *xrealloc(void *p, size_t size)
 
 char *xstrdup(const char *str)
 {
-	char *s = (char *)xmalloc(strlen(str)+1);
+	char *s;
+
+	assert(str != NULL);
+	s = (char *)xmalloc(strlen(str)+1);
 	return strcpy(s, str);
 }
 

@@ -3,6 +3,8 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
+LEXOPT    = -Cf #-w -b
+YACCOPT   = #-v
 
 PROGRAMS = wrc@PROGEXT@
 MODULE   = none
@@ -17,12 +19,12 @@ C_SRCS = \
 	wrc.c \
 	writeres.c
 
-EXTRA_SRCS = parser.y parser.l
-EXTRA_OBJS = y.tab.o lex.yy.o
+EXTRA_SRCS = parser.y parser.l ppl.l ppy.y  ppy.tab.c lex.ppl.c
+EXTRA_OBJS = y.tab.o lex.yy.o ppy.tab.o lex.ppl.o
 
 all: $(PROGRAMS)
 
-depend: y.tab.h
+depend: y.tab.h ppy.tab.h ppy.tab.c lex.ppl.c
 
 @MAKE_RULES@
 
@@ -30,12 +32,18 @@ wrc@PROGEXT@: $(OBJS)
 	$(CC) $(CFLAGS) -o wrc@PROGEXT@ $(OBJS) $(LEXLIB)
 
 y.tab.c y.tab.h: parser.y
-	$(YACC) -d -t $(SRCDIR)/parser.y
+	$(YACC) $(YACCOPT) -d -t $(SRCDIR)/parser.y
+
+ppy.tab.c ppy.tab.h: ppy.y
+	$(YACC) $(YACCOPT) -bppy -ppp -d -t $(SRCDIR)/ppy.y
 
 lex.yy.c: parser.l
-	$(LEX) -8 $(SRCDIR)/parser.l
+	$(LEX) $(LEXOPT) -d -8 $(SRCDIR)/parser.l
+
+lex.ppl.c: ppl.l
+	$(LEX) $(LEXOPT) -d -Ppp -8 -olex.ppl.c $(SRCDIR)/ppl.l
 
 clean::
-	$(RM) y.tab.c y.tab.h lex.yy.c
+	$(RM) y.tab.c y.tab.h lex.yy.c ppy.tab.c ppy.tab.h lex.ppl.c ppy.output lex.backup y.output
 
 ### Dependencies:

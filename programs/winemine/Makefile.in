@@ -22,10 +22,6 @@ all: check_wrc $(PROGRAMS)
 
 @MAKE_RULES@
 
-# Override resource compiler rules
-.rc.s:
-	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -o $*.s
-
 winemine: $(OBJS)
 	$(CC) -o winemine $(OBJS) $(DLL_LINK) $(LIBS)
 

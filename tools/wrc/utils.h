@@ -18,12 +18,14 @@ void *xmalloc(size_t);
 void *xrealloc(void *, size_t);
 char *xstrdup(const char *str);
 
-int yyerror(const char *s, ...);
-int yywarning(const char *s, ...);
-void internal_error(const char *file, int line, const char *s, ...);
-void error(const char *s, ...);
-void warning(const char *s, ...);
-void chat(const char *s, ...);
+int pperror(const char *s, ...) __attribute__((format (printf, 1, 2)));
+int ppwarning(const char *s, ...) __attribute__((format (printf, 1, 2)));
+int yyerror(const char *s, ...) __attribute__((format (printf, 1, 2)));
+int yywarning(const char *s, ...) __attribute__((format (printf, 1, 2)));
+void internal_error(const char *file, int line, const char *s, ...) __attribute__((format (printf, 3, 4)));
+void error(const char *s, ...) __attribute__((format (printf, 1, 2)));
+void warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
+void chat(const char *s, ...) __attribute__((format (printf, 1, 2)));
 
 char *dup_basename(const char *name, const char *ext);
 int string_compare(const string_t *s1, const string_t *s2);

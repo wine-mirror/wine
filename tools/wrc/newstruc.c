@@ -293,3 +293,4 @@ style_t *new_style(DWORD or_mask, DWORD and_mask)
 	st->and_mask = and_mask;
 	return st;
 }
+

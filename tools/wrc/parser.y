@@ -1,10 +1,16 @@
 %{
 /*
- * Copyright  Martin von Loewis, 1994
- * Copyright 1998 Bertho A. Stultiens (BS)
- *           1999 Juergen Schmied (JS)
+ * Copyright 1994	Martin von Loewis
+ * Copyright 1998-2000	Bertho A. Stultiens (BS)
+ *           1999	Juergen Schmied (JS)
  *
- * 6-Nov-1999 JS        - see CHANGES
+ * 30-Apr-2000 BS	- Reintegration into the wine-tree
+ * 14-Jan-2000 BS	- Redid the usertype resources so that they
+ *			  are compatible.
+ * 02-Jan-2000 BS	- Removed the preprocessor from the grammar
+ *			  expect for the # command (line numbers).
+ *
+ * 06-Nov-1999 JS	- see CHANGES
  * 
  * 29-Dec-1998 AdH	- Grammar and function extensions.
  *			     grammar: TOOLBAR resources, Named ICONs in 
@@ -110,12 +116,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 
-#ifdef __BORLANDC__
-#pragma warn -sig
-#endif
-
-int indialog = 0;	/* Signal flex that we're parsing a dialog */
-int want_rscname = 0;	/* Set when a resource's name is required */
+int want_nl = 0;	/* Signal flex that we need the next newline */
 stringtable_t *tagstt;	/* Stringtable tag.
 			 * It is set while parsing a stringtable to one of
 			 * the stringtables in the sttres list or a new one
@@ -130,60 +131,58 @@ static characts_t *tagstt_characts;
 static version_t *tagstt_version;
 
 /* Prototypes of here defined functions */
-void split_cursors(raw_data_t *rd, cursor_group_t *curg, int *ncur);
-void split_icons(raw_data_t *rd, icon_group_t *icog, int *nico);
-int alloc_cursor_id(language_t *);
-int alloc_icon_id(language_t *);
-void ins_stt_entry(stt_entry_t *ste);
-int check_stt_entry(stringtable_t *tabs, stt_entry_t *ste);
-event_t *get_event_head(event_t *p);
-control_t *get_control_head(control_t *p);
-ver_value_t *get_ver_value_head(ver_value_t *p);
-ver_block_t *get_ver_block_head(ver_block_t *p);
-resource_t *get_resource_head(resource_t *p);
-menuex_item_t *get_itemex_head(menuex_item_t *p);
-menu_item_t *get_item_head(menu_item_t *p);
-raw_data_t *merge_raw_data_str(raw_data_t *r1, string_t *str);
-raw_data_t *merge_raw_data_int(raw_data_t *r1, int i);
-raw_data_t *merge_raw_data_long(raw_data_t *r1, int i);
-raw_data_t *merge_raw_data(raw_data_t *r1, raw_data_t *r2);
-raw_data_t *str2raw_data(string_t *str);
-raw_data_t *int2raw_data(int i);
-raw_data_t *long2raw_data(int i);
-raw_data_t *load_file(string_t *name);
-itemex_opt_t *new_itemex_opt(int id, int type, int state, int helpid);
-event_t *add_string_event(string_t *key, int id, int flags, event_t *prev);
-event_t *add_event(int key, int id, int flags, event_t *prev);
-dialogex_t *dialogex_version(version_t *v, dialogex_t *dlg);
-dialogex_t *dialogex_characteristics(characts_t *c, dialogex_t *dlg);
-dialogex_t *dialogex_language(language_t *l, dialogex_t *dlg);
-dialogex_t *dialogex_menu(name_id_t *m, dialogex_t *dlg);
-dialogex_t *dialogex_class(name_id_t *n, dialogex_t *dlg);
-dialogex_t *dialogex_font(font_id_t *f, dialogex_t *dlg);
-dialogex_t *dialogex_caption(string_t *s, dialogex_t *dlg);
-dialogex_t *dialogex_exstyle(style_t *st, dialogex_t *dlg);
-dialogex_t *dialogex_style(style_t *st, dialogex_t *dlg);
-name_id_t *convert_ctlclass(name_id_t *cls);
-control_t *ins_ctrl(int type, int special_style, control_t *ctrl, control_t *prev);
-dialog_t *dialog_version(version_t *v, dialog_t *dlg);
-dialog_t *dialog_characteristics(characts_t *c, dialog_t *dlg);
-dialog_t *dialog_language(language_t *l, dialog_t *dlg);
-dialog_t *dialog_menu(name_id_t *m, dialog_t *dlg);
-dialog_t *dialog_class(name_id_t *n, dialog_t *dlg);
-dialog_t *dialog_font(font_id_t *f, dialog_t *dlg);
-dialog_t *dialog_caption(string_t *s, dialog_t *dlg);
-dialog_t *dialog_exstyle(style_t * st, dialog_t *dlg);
-dialog_t *dialog_style(style_t * st, dialog_t *dlg);
-resource_t *build_stt_resources(stringtable_t *stthead);
-stringtable_t *find_stringtable(lvc_t *lvc);
-toolbar_item_t *ins_tlbr_button(toolbar_item_t *prev, toolbar_item_t *idrec);
-toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems);
+static int alloc_cursor_id(language_t *);
+static int alloc_icon_id(language_t *);
+static event_t *get_event_head(event_t *p);
+static control_t *get_control_head(control_t *p);
+static ver_value_t *get_ver_value_head(ver_value_t *p);
+static ver_block_t *get_ver_block_head(ver_block_t *p);
+static resource_t *get_resource_head(resource_t *p);
+static menuex_item_t *get_itemex_head(menuex_item_t *p);
+static menu_item_t *get_item_head(menu_item_t *p);
+static raw_data_t *merge_raw_data_str(raw_data_t *r1, string_t *str);
+static raw_data_t *merge_raw_data_int(raw_data_t *r1, int i);
+static raw_data_t *merge_raw_data_long(raw_data_t *r1, int i);
+static raw_data_t *merge_raw_data(raw_data_t *r1, raw_data_t *r2);
+static raw_data_t *str2raw_data(string_t *str);
+static raw_data_t *int2raw_data(int i);
+static raw_data_t *long2raw_data(int i);
+static raw_data_t *load_file(string_t *name);
+static itemex_opt_t *new_itemex_opt(int id, int type, int state, int helpid);
+static event_t *add_string_event(string_t *key, int id, int flags, event_t *prev);
+static event_t *add_event(int key, int id, int flags, event_t *prev);
+static dialogex_t *dialogex_version(version_t *v, dialogex_t *dlg);
+static dialogex_t *dialogex_characteristics(characts_t *c, dialogex_t *dlg);
+static dialogex_t *dialogex_language(language_t *l, dialogex_t *dlg);
+static dialogex_t *dialogex_menu(name_id_t *m, dialogex_t *dlg);
+static dialogex_t *dialogex_class(name_id_t *n, dialogex_t *dlg);
+static dialogex_t *dialogex_font(font_id_t *f, dialogex_t *dlg);
+static dialogex_t *dialogex_caption(string_t *s, dialogex_t *dlg);
+static dialogex_t *dialogex_exstyle(style_t *st, dialogex_t *dlg);
+static dialogex_t *dialogex_style(style_t *st, dialogex_t *dlg);
+static name_id_t *convert_ctlclass(name_id_t *cls);
+static control_t *ins_ctrl(int type, int special_style, control_t *ctrl, control_t *prev);
+static dialog_t *dialog_version(version_t *v, dialog_t *dlg);
+static dialog_t *dialog_characteristics(characts_t *c, dialog_t *dlg);
+static dialog_t *dialog_language(language_t *l, dialog_t *dlg);
+static dialog_t *dialog_menu(name_id_t *m, dialog_t *dlg);
+static dialog_t *dialog_class(name_id_t *n, dialog_t *dlg);
+static dialog_t *dialog_font(font_id_t *f, dialog_t *dlg);
+static dialog_t *dialog_caption(string_t *s, dialog_t *dlg);
+static dialog_t *dialog_exstyle(style_t * st, dialog_t *dlg);
+static dialog_t *dialog_style(style_t * st, dialog_t *dlg);
+static resource_t *build_stt_resources(stringtable_t *stthead);
+static stringtable_t *find_stringtable(lvc_t *lvc);
+static toolbar_item_t *ins_tlbr_button(toolbar_item_t *prev, toolbar_item_t *idrec);
+static toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems);
+static string_t *make_filename(string_t *s);
 
 %}
 %union{
 	string_t	*str;
 	int		num;
 	int		*iptr;
+	char		*cptr;
 	resource_t	*res;
 	accelerator_t	*acc;
 	bitmap_t	*bmp;
@@ -224,39 +223,35 @@ toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems);
 	style_t		*style;
 }
 
-%token tIF tIFDEF tIFNDEF tELSE tELIF tENDIF tDEFINED tNL
-%token tTYPEDEF tEXTERN
-%token <num> NUMBER LNUMBER
-%token <str> tSTRING IDENT FILENAME
-%token <raw> RAWDATA
-%token ACCELERATORS tBITMAP CURSOR DIALOG DIALOGEX MENU MENUEX MESSAGETABLE
-%token RCDATA VERSIONINFO STRINGTABLE FONT ICON
-%token AUTO3STATE AUTOCHECKBOX AUTORADIOBUTTON CHECKBOX DEFPUSHBUTTON
-%token PUSHBUTTON RADIOBUTTON STATE3 /* PUSHBOX */
-%token GROUPBOX COMBOBOX LISTBOX SCROLLBAR
-%token CONTROL EDITTEXT
-%token RTEXT CTEXT LTEXT
-%token BLOCK VALUE
-%token SHIFT ALT ASCII VIRTKEY GRAYED CHECKED INACTIVE NOINVERT
-%token tPURE IMPURE DISCARDABLE LOADONCALL PRELOAD tFIXED MOVEABLE
-%token CLASS CAPTION CHARACTERISTICS EXSTYLE STYLE VERSION LANGUAGE
-%token FILEVERSION PRODUCTVERSION FILEFLAGSMASK FILEOS FILETYPE FILEFLAGS FILESUBTYPE
-%token MENUBARBREAK MENUBREAK MENUITEM POPUP SEPARATOR
-%token HELP
-%token tSTRING IDENT RAWDATA
-%token TOOLBAR BUTTON
+%token tTYPEDEF tEXTERN tSTRUCT tENUM tCPPCLASS tINLINE tSTATIC tNL
+%token <num> tNUMBER tLNUMBER
+%token <str> tSTRING tIDENT tFILENAME
+%token <raw> tRAWDATA
+%token tACCELERATORS tBITMAP tCURSOR tDIALOG tDIALOGEX tMENU tMENUEX tMESSAGETABLE
+%token tRCDATA tVERSIONINFO tSTRINGTABLE tFONT tICON
+%token tAUTO3STATE tAUTOCHECKBOX tAUTORADIOBUTTON tCHECKBOX tDEFPUSHBUTTON
+%token tPUSHBUTTON tRADIOBUTTON tSTATE3 /* PUSHBOX */
+%token tGROUPBOX tCOMBOBOX tLISTBOX tSCROLLBAR
+%token tCONTROL tEDITTEXT
+%token tRTEXT tCTEXT tLTEXT
+%token tBLOCK tVALUE
+%token tSHIFT tALT tASCII tVIRTKEY tGRAYED tCHECKED tINACTIVE tNOINVERT
+%token tPURE tIMPURE tDISCARDABLE tLOADONCALL tPRELOAD tFIXED tMOVEABLE
+%token tCLASS tCAPTION tCHARACTERISTICS tEXSTYLE tSTYLE tVERSION tLANGUAGE
+%token tFILEVERSION tPRODUCTVERSION tFILEFLAGSMASK tFILEOS tFILETYPE tFILEFLAGS tFILESUBTYPE
+%token tMENUBARBREAK tMENUBREAK tMENUITEM tPOPUP tSEPARATOR
+%token tHELP
+%token tSTRING tIDENT tRAWDATA
+%token tTOOLBAR tBUTTON
 %token tBEGIN tEND
-%token DLGINIT
-%left LOGOR
-%left LOGAND
+%token tDLGINIT
 %left '|'
 %left '^'
 %left '&'
-%left EQ NE
-%left '<' LTE '>' GTE
 %left '+' '-'
 %left '*' '/'
-%right '~' '!' NOT
+%right '~' tNOT
+%left pUPM
 
 %type <res> 	resource_file resource resources resource_definition
 %type <stt>	stringtable strings
@@ -286,7 +281,7 @@ toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems);
 %type <usr> 	userres
 %type <num> 	item_options
 %type <nid> 	nameid nameid_s ctlclass usertype
-%type <num> 	acc_opt
+%type <num> 	acc_opt acc accs
 %type <iptr>	loadmemopts lamo lama
 %type <fntid>	opt_font opt_exfont opt_expr
 %type <lvc>	opt_lvc
@@ -295,14 +290,14 @@ toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems);
 %type <ver>	opt_version
 %type <num>	expr xpr
 %type <iptr>	e_expr
-%type <iptr>	pp_expr pp_constant
 %type <tlbar>	toolbar
 %type <tlbarItems>	toolbar_items
 %type <dginit>  dlginit
 %type <styles>  optional_style_pair 
-%type <num>	any_num
+%type <num>	any_num any_nums
 %type <style>   optional_style
 %type <style>   style
+%type <str>	filename
 
 %%
 
@@ -327,7 +322,7 @@ resource_file
 
 /* Resources are put into a linked list */
 resources
-	: /* Empty */		{ $$ = NULL; want_rscname = 1; }
+	: /* Empty */		{ $$ = NULL; }
 	| resources resource	{
 		if($2)
 		{
@@ -351,54 +346,51 @@ resources
 		}
 		else
 			$$ = NULL;
-		want_rscname = 1;
 		}
-	| resources preprocessor		{ $$ = $1; want_rscname = 1; }
-	| resources cjunk			{ $$ = $1; want_rscname = 1; }
+	| resources preprocessor		{ $$ = $1; }
+	| resources cjunk			{ $$ = $1; }
 	;
 
-/* The buildin preprocessor */
+/*
+ * The preprocessor generates line directives a la gcc
+ * in the format:
+ * # <linenum> "filename" <codes>
+ *
+ * Codes can be a sequence of:
+ * - 1 start of new file
+ * - 2 returning to previous
+ * - 3 system header
+ * - 4 interpret as C-code
+ *
+ * 4 is not used and 1 mutually excludes 2
+ * Anyhow, we are not really interested in these at all
+ * because we only want to know the linenumber and
+ * filename.
+ */
 preprocessor
-	: tIF pp_expr tNL	{ pop_start(); push_if($2 ? *($2) : 0, 0, 0); if($2) free($2);}
-	| tIFDEF IDENT tNL	{ pop_start(); push_if(pp_lookup($2->str.cstr) != NULL, 0, 0); }
-	| tIFNDEF IDENT tNL	{ pop_start(); push_if(pp_lookup($2->str.cstr) == NULL, 0, 0); }
-	| tELIF pp_expr tNL	{ pop_start(); push_if($2 ? *($2) : 0, pop_if(), 0); if($2) free($2); }
-	| tELSE tNL		{ pop_start(); push_if(1, pop_if(), 0); }
-	| tENDIF tNL		{ pop_if(); }
+	: '#' { want_nl = 1; } tNUMBER tSTRING any_nums tNL	{
+		line_number = $3 - 1;
+		input_name = $4->str.cstr;
+		/* fprintf(stderr, "Now at %s:%d\n", input_name, line_number); */
+		}
 	;
 
-pp_expr	: pp_constant			{ $$ = $1; }
-	| pp_expr LOGOR pp_expr		{ $$ = new_int($1 && $3 ? (*$1 || *$3) : 0); if($1) free($1); if($3) free($3); }
-	| pp_expr LOGAND pp_expr	{ $$ = new_int($1 && $3 ? (*$1 && *$3) : 0); if($1) free($1); if($3) free($3); }
-	| pp_expr '+' pp_expr		{ $$ = new_int($1 && $3 ? (*$1  + *$3) : 0); if($1) free($1); if($3) free($3); }
-	| pp_expr '-' pp_expr		{ $$ = new_int($1 && $3 ? (*$1  - *$3) : 0); if($1) free($1); if($3) free($3); }
-	| pp_expr '^' pp_expr		{ $$ = new_int($1 && $3 ? (*$1  ^ *$3) : 0); if($1) free($1); if($3) free($3); }
-	| pp_expr EQ pp_expr		{ $$ = new_int($1 && $3 ? (*$1 == *$3) : 0); if($1) free($1); if($3) free($3); }
-	| pp_expr NE pp_expr		{ $$ = new_int($1 && $3 ? (*$1 != *$3) : 0); if($1) free($1); if($3) free($3); }
-	| pp_expr '<' pp_expr		{ $$ = new_int($1 && $3 ? (*$1  < *$3) : 0); if($1) free($1); if($3) free($3); }
-	| pp_expr '>' pp_expr		{ $$ = new_int($1 && $3 ? (*$1  > *$3) : 0); if($1) free($1); if($3) free($3); }
-	| pp_expr LTE pp_expr		{ $$ = new_int($1 && $3 ? (*$1 <= *$3) : 0); if($1) free($1); if($3) free($3); }
-	| pp_expr GTE pp_expr		{ $$ = new_int($1 && $3 ? (*$1 >= *$3) : 0); if($1) free($1); if($3) free($3); }
-	| '~' pp_expr			{ $$ = $2; if($2) *$2 = ~(*$2); }
-	| '+' pp_expr			{ $$ = $2; }
-	| '-' pp_expr			{ $$ = $2; if($2) *$2 = -(*$2); }
-	| '!' pp_expr			{ $$ = $2; if($2) *$2 = !(*$2); }
-	| '(' pp_expr ')'		{ $$ = $2; }
-	;
-
-pp_constant
-	: any_num			{ $$ = new_int($1); }
-	| IDENT				{ $$ = NULL; }
-	| tDEFINED IDENT		{ $$ = new_int(pp_lookup($2->str.cstr) != NULL); }
-	| tDEFINED '(' IDENT ')'	{ $$ = new_int(pp_lookup($3->str.cstr) != NULL); }
+any_nums: any_num
+	| any_nums any_num
 	;
 
 /* C ignore stuff */
 cjunk	: tTYPEDEF			{ strip_til_semicolon(); }
-	| tEXTERN			{ strip_extern(); }
-	| IDENT IDENT			{ strip_til_semicolon(); }
-	| IDENT '('			{ strip_til_parenthesis(); }
-	| IDENT '*'			{ strip_til_semicolon(); }
+	| tSTRUCT			{ strip_til_semicolon(); }
+	| tEXTERN			{ strip_til_semicolon(); }
+	| tENUM				{ strip_til_semicolon(); }
+	| tCPPCLASS			{ strip_til_semicolon(); }
+	| tSTATIC			{ strip_til_semicolon(); }
+	| tINLINE			{ internal_error(__FILE__, __LINE__, "Don't yet know how to strip inline functions\n"); }
+/*	| tIDENT tIDENT			{ strip_til_semicolon(); } */
+	| tIDENT tIDENT '('		{ strip_til_parenthesis(); }
+/*	| tIDENT '('			{ strip_til_parenthesis(); } */
+	| tIDENT '*'			{ strip_til_semicolon(); }
 	;
 
 /* Parse top level resource definitions etc. */
@@ -445,13 +437,11 @@ nameid	: expr	{
 		$$ = new_name_id();
 		$$->type = name_ord;
 		$$->name.i_name = $1;
-		want_rscname = 0;
 		}
-	| IDENT	{
+	| tIDENT {
 		$$ = new_name_id();
 		$$->type = name_str;
 		$$->name.s_name = $1;
-		want_rscname = 0;
 		}
 	;
 
@@ -463,7 +453,6 @@ nameid_s: nameid	{ $$ = $1; }
 		$$ = new_name_id();
 		$$->type = name_str;
 		$$->name.s_name = $1;
-		want_rscname = 0;
 		}
 	;
 
@@ -522,24 +511,30 @@ resource_definition
 	| versioninfo	{ $$ = new_resource(res_ver, $1, WRC_MO_MOVEABLE | WRC_MO_DISCARDABLE, dup_language(currentlanguage)); }
 	;
 
+
+filename: tFILENAME	{ $$ = make_filename($1); }
+	| tIDENT	{ $$ = make_filename($1); }
+	| tSTRING	{ $$ = make_filename($1); }
+	;
+
 /* ------------------------------ Bitmap ------------------------------ */
-bitmap	: tBITMAP loadmemopts FILENAME	{ $$ = new_bitmap(load_file($3), $2); }
+bitmap	: tBITMAP loadmemopts filename	{ $$ = new_bitmap(load_file($3), $2); }
 	| tBITMAP loadmemopts raw_data	{ $$ = new_bitmap($3, $2); }
 	;
 
 /* ------------------------------ Cursor ------------------------------ */
-cursor	: CURSOR loadmemopts FILENAME	{ $$ = new_cursor_group(load_file($3), $2); }
-	| CURSOR loadmemopts raw_data	{ $$ = new_cursor_group($3, $2); }
+cursor	: tCURSOR loadmemopts filename	{ $$ = new_cursor_group(load_file($3), $2); }
+	| tCURSOR loadmemopts raw_data	{ $$ = new_cursor_group($3, $2); }
 	;
 
 /* ------------------------------ Font ------------------------------ */
 /* FIXME: Should we allow raw_data here? */
-font	: FONT loadmemopts FILENAME	{ $$ = new_font(load_file($3), $2); }
+font	: tFONT loadmemopts filename	{ $$ = new_font(load_file($3), $2); }
 	;
 
 /* ------------------------------ Icon ------------------------------ */
-icon	: ICON loadmemopts FILENAME	{ $$ = new_icon_group(load_file($3), $2); }
-	| ICON loadmemopts raw_data	{ $$ = new_icon_group($3, $2); }
+icon	: tICON loadmemopts filename	{ $$ = new_icon_group(load_file($3), $2); }
+	| tICON loadmemopts raw_data	{ $$ = new_icon_group($3, $2); }
 	;
 
 /* ------------------------------ MessageTable ------------------------------ */
@@ -547,7 +542,7 @@ icon	: ICON loadmemopts FILENAME	{ $$ = new_icon_group(load_file($3), $2); }
  * to get everything in one source. Might be a future project.
  */
 messagetable
-	: MESSAGETABLE FILENAME	{
+	: tMESSAGETABLE filename	{
 		if(!win32)
 			yywarning("MESSAGETABLE not supported in 16-bit mode");
 		$$ = new_messagetable(load_file($2));
@@ -555,7 +550,7 @@ messagetable
 	;
 
 /* ------------------------------ RCData ------------------------------ */
-rcdata	: RCDATA loadmemopts opt_lvc raw_data {
+rcdata	: tRCDATA loadmemopts opt_lvc raw_data {
 		$$ = new_rcdata($4, $2);
 		if($3)
 		{
@@ -568,7 +563,7 @@ rcdata	: RCDATA loadmemopts opt_lvc raw_data {
 	;
 
 /* ------------------------------ DLGINIT ------------------------------ */
-dlginit	: DLGINIT loadmemopts opt_lvc raw_data {
+dlginit	: tDLGINIT loadmemopts opt_lvc raw_data {
 		$$ = new_dlginit($4, $2);
 		if($3)
 		{
@@ -581,49 +576,25 @@ dlginit	: DLGINIT loadmemopts opt_lvc raw_data {
 	;	  
 
 /* ------------------------------ UserType ------------------------------ */
-userres	: usertype loadmemopts FILENAME	{ $$ = new_user($1, load_file($3), $2); }
-	| usertype loadmemopts raw_data	{ $$ = new_user($1, $3, $2); }
+userres	: usertype loadmemopts filename		{ $$ = new_user($1, load_file($3), $2); }
+	| usertype loadmemopts raw_data		{ $$ = new_user($1, $3, $2); }
 	;
 
-/* NOTE: This here is an exception where I do not allow an expression.
- * Reason for this is that it is not possible to set the 'yywf' condition
- * for flex if loadmemopts is empty. Reading an expression requires a
- * lookahead to determine its end. In this case here, that would mean that
- * the filename has been read as IDENT or tSTRING, which is incorrect.
- * Note also that IDENT cannot be used as a file-name because it is lacking
- * the '.'.
- */
-
-/* I also allow string identifiers as classtypes. Not MS implemented, but
- * seems to be reasonable to implement.
- */
-/* Allowing anything else than NUMBER makes it very hard to get rid of
- * prototypes. So, I remove IDENT to be able to get prototypes out of the
- * world.
- */
-usertype: NUMBER {
+usertype: tNUMBER {
 		$$ = new_name_id();
 		$$->type = name_ord;
 		$$->name.i_name = $1;
-		set_yywf();
 		}
-/*	| IDENT {
+	| tIDENT {
 		$$ = new_name_id();
 		$$->type = name_str;
 		$$->name.s_name = $1;
-		set_yywf();
-		}
-*/	| tSTRING {
-		$$ = new_name_id();
-		$$->type = name_str;
-		$$->name.s_name = $1;
-		set_yywf();
 		}
 	;
 
 /* ------------------------------ Accelerator ------------------------------ */
 accelerators
-	: ACCELERATORS loadmemopts opt_lvc tBEGIN events tEND {
+	: tACCELERATORS loadmemopts opt_lvc tBEGIN events tEND {
 		$$ = new_accelerator();
 		if($2)
 		{
@@ -652,18 +623,31 @@ events	: /* Empty */ 				{ $$=NULL; }
 	| events expr ',' expr acc_opt		{ $$=add_event($2, $4, $5, $1); }
 	;
 
-acc_opt	: /* Empty */		{ $$=0; }
-	| acc_opt ',' NOINVERT 	{ $$=$1 | WRC_AF_NOINVERT; }
-	| acc_opt ',' SHIFT	{ $$=$1 | WRC_AF_SHIFT; }
-	| acc_opt ',' CONTROL	{ $$=$1 | WRC_AF_CONTROL; }
-	| acc_opt ',' ALT	{ $$=$1 | WRC_AF_ALT; }
-	| acc_opt ',' ASCII	{ $$=$1 | WRC_AF_ASCII; }
-	| acc_opt ',' VIRTKEY	{ $$=$1 | WRC_AF_VIRTKEY; }
+/*
+ * The empty rule generates a s/r conflict because of {bi,u}nary expr
+ * on - and +. It cannot be solved in any way because it is the same as
+ * the if/then/else problem (LALR(1) problem). The conflict is moved
+ * away by forcing it to be in the expression handling below.
+ */
+acc_opt	: /* Empty */	{ $$ = 0; }
+	| ',' accs	{ $$ = $2; }
+	;
+
+accs	: acc		{ $$ = $1; }
+	| accs ',' acc	{ $$ = $1 | $3; }
+	;
+
+acc	: tNOINVERT 	{ $$ = WRC_AF_NOINVERT; }
+	| tSHIFT	{ $$ = WRC_AF_SHIFT; }
+	| tCONTROL	{ $$ = WRC_AF_CONTROL; }
+	| tALT		{ $$ = WRC_AF_ALT; }
+	| tASCII	{ $$ = WRC_AF_ASCII; }
+	| tVIRTKEY	{ $$ = WRC_AF_VIRTKEY; }
 	;
 
 /* ------------------------------ Dialog ------------------------------ */
 /* FIXME: Support EXSTYLE in the dialog line itself */
-dialog	: DIALOG loadmemopts expr ',' expr ',' expr ',' expr dlg_attributes
+dialog	: tDIALOG loadmemopts expr ',' expr ',' expr ',' expr dlg_attributes
 	  tBEGIN  ctrls tEND {
 		if($2)
 		{
@@ -691,46 +675,46 @@ dialog	: DIALOG loadmemopts expr ',' expr ',' expr ',' expr dlg_attributes
 		$$->style->or_mask &= ~($$->style->and_mask);
 		$$->style->and_mask = 0;
 
-		indialog = FALSE;
 		if(!$$->lvc.language)
 			$$->lvc.language = dup_language(currentlanguage);
 		}
 	;
 
 dlg_attributes
-	: /* Empty */			{ $$=new_dialog(); }
-	| dlg_attributes STYLE style	{ $$=dialog_style($3,$1); }
-	| dlg_attributes EXSTYLE style	{ $$=dialog_exstyle($3,$1); }
-	| dlg_attributes CAPTION tSTRING { $$=dialog_caption($3,$1); }
-	| dlg_attributes opt_font	{ $$=dialog_font($2,$1); }
-	| dlg_attributes CLASS nameid_s	{ $$=dialog_class($3,$1); }
-	| dlg_attributes MENU nameid	{ $$=dialog_menu($3,$1); }
-	| dlg_attributes opt_language	{ $$=dialog_language($2,$1); }
-	| dlg_attributes opt_characts	{ $$=dialog_characteristics($2,$1); }
-	| dlg_attributes opt_version	{ $$=dialog_version($2,$1); }
+	: /* Empty */				{ $$=new_dialog(); }
+	| dlg_attributes tSTYLE style		{ $$=dialog_style($3,$1); }
+	| dlg_attributes tEXSTYLE style		{ $$=dialog_exstyle($3,$1); }
+	| dlg_attributes tCAPTION tSTRING	{ $$=dialog_caption($3,$1); }
+	| dlg_attributes opt_font		{ $$=dialog_font($2,$1); }
+	| dlg_attributes tCLASS nameid_s	{ $$=dialog_class($3,$1); }
+	| dlg_attributes tCPPCLASS nameid_s	{ $$=dialog_class($3,$1); }
+	| dlg_attributes tMENU nameid		{ $$=dialog_menu($3,$1); }
+	| dlg_attributes opt_language		{ $$=dialog_language($2,$1); }
+	| dlg_attributes opt_characts		{ $$=dialog_characteristics($2,$1); }
+	| dlg_attributes opt_version		{ $$=dialog_version($2,$1); }
 	;
 
 ctrls	: /* Empty */				{ $$ = NULL; }
-	| ctrls CONTROL		gen_ctrl	{ $$=ins_ctrl(-1, 0, $3, $1); }
-	| ctrls EDITTEXT	ctrl_desc	{ $$=ins_ctrl(CT_EDIT, 0, $3, $1); }
-	| ctrls LISTBOX		ctrl_desc	{ $$=ins_ctrl(CT_LISTBOX, 0, $3, $1); }
-	| ctrls COMBOBOX	ctrl_desc	{ $$=ins_ctrl(CT_COMBOBOX, 0, $3, $1); }
-	| ctrls SCROLLBAR	ctrl_desc	{ $$=ins_ctrl(CT_SCROLLBAR, 0, $3, $1); }
-	| ctrls CHECKBOX	lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_CHECKBOX, $3, $1); }
-	| ctrls DEFPUSHBUTTON	lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_DEFPUSHBUTTON, $3, $1); }
-	| ctrls GROUPBOX	lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_GROUPBOX, $3, $1);}
-	| ctrls PUSHBUTTON	lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_PUSHBUTTON, $3, $1); }
-/*	| ctrls PUSHBOX		lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_PUSHBOX, $3, $1); } */
-	| ctrls RADIOBUTTON	lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_RADIOBUTTON, $3, $1); }
-	| ctrls AUTO3STATE	lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_AUTO3STATE, $3, $1); }
-	| ctrls STATE3		lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_3STATE, $3, $1); }
-	| ctrls AUTOCHECKBOX	lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_AUTOCHECKBOX, $3, $1); }
-	| ctrls AUTORADIOBUTTON lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_AUTORADIOBUTTON, $3, $1); }
-	| ctrls LTEXT		lab_ctrl	{ $$=ins_ctrl(CT_STATIC, SS_LEFT, $3, $1); }
-	| ctrls CTEXT		lab_ctrl	{ $$=ins_ctrl(CT_STATIC, SS_CENTER, $3, $1); }
-	| ctrls RTEXT		lab_ctrl	{ $$=ins_ctrl(CT_STATIC, SS_RIGHT, $3, $1); }
+	| ctrls tCONTROL	gen_ctrl	{ $$=ins_ctrl(-1, 0, $3, $1); }
+	| ctrls tEDITTEXT	ctrl_desc	{ $$=ins_ctrl(CT_EDIT, 0, $3, $1); }
+	| ctrls tLISTBOX	ctrl_desc	{ $$=ins_ctrl(CT_LISTBOX, 0, $3, $1); }
+	| ctrls tCOMBOBOX	ctrl_desc	{ $$=ins_ctrl(CT_COMBOBOX, 0, $3, $1); }
+	| ctrls tSCROLLBAR	ctrl_desc	{ $$=ins_ctrl(CT_SCROLLBAR, 0, $3, $1); }
+	| ctrls tCHECKBOX	lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_CHECKBOX, $3, $1); }
+	| ctrls tDEFPUSHBUTTON	lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_DEFPUSHBUTTON, $3, $1); }
+	| ctrls tGROUPBOX	lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_GROUPBOX, $3, $1);}
+	| ctrls tPUSHBUTTON	lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_PUSHBUTTON, $3, $1); }
+/*	| ctrls tPUSHBOX	lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_PUSHBOX, $3, $1); } */
+	| ctrls tRADIOBUTTON	lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_RADIOBUTTON, $3, $1); }
+	| ctrls tAUTO3STATE	lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_AUTO3STATE, $3, $1); }
+	| ctrls tSTATE3		lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_3STATE, $3, $1); }
+	| ctrls tAUTOCHECKBOX	lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_AUTOCHECKBOX, $3, $1); }
+	| ctrls tAUTORADIOBUTTON lab_ctrl	{ $$=ins_ctrl(CT_BUTTON, BS_AUTORADIOBUTTON, $3, $1); }
+	| ctrls tLTEXT		lab_ctrl	{ $$=ins_ctrl(CT_STATIC, SS_LEFT, $3, $1); }
+	| ctrls tCTEXT		lab_ctrl	{ $$=ins_ctrl(CT_STATIC, SS_CENTER, $3, $1); }
+	| ctrls tRTEXT		lab_ctrl	{ $$=ins_ctrl(CT_STATIC, SS_RIGHT, $3, $1); }
 	/* special treatment for icons, as the extent is optional */
-	| ctrls ICON nameid_s opt_comma expr ',' expr ',' expr iconinfo {
+	| ctrls tICON nameid_s opt_comma expr ',' expr ',' expr iconinfo {
 		$10->title = $3;
 		$10->id = $5;
 		$10->x = $7;
@@ -829,7 +813,7 @@ gen_ctrl: nameid_s opt_comma expr ',' ctlclass ',' style ',' expr ',' expr ',' e
 	;
 
 opt_font
-	: FONT expr ',' tSTRING	{ $$ = new_font_id($2, $4, 0, 0); }
+	: tFONT expr ',' tSTRING	{ $$ = new_font_id($2, $4, 0, 0); }
 	;
 
 /* ------------------------------ style flags ------------------------------ */
@@ -848,7 +832,7 @@ style
 	: style '|' style	{ $$ = new_style($1->or_mask | $3->or_mask, $1->and_mask | $3->and_mask); free($1); free($3);}
 	| '(' style ')'		{ $$ = $2; }
         | any_num       	{ $$ = new_style($1, 0); }
-        | NOT any_num		{ $$ = new_style(0, $2); }
+        | tNOT any_num		{ $$ = new_style(0, $2); }
         ;   
 
 ctlclass
@@ -865,7 +849,7 @@ ctlclass
 	;
 
 /* ------------------------------ DialogEx ------------------------------ */
-dialogex: DIALOGEX loadmemopts expr ',' expr ',' expr ',' expr helpid dlgex_attribs
+dialogex: tDIALOGEX loadmemopts expr ',' expr ',' expr ',' expr helpid dlgex_attribs
 	  tBEGIN  exctrls tEND {
 		if(!win32)
 			yywarning("DIALOGEX not supported in 16-bit mode");
@@ -903,47 +887,47 @@ dialogex: DIALOGEX loadmemopts expr ',' expr ',' expr ',' expr helpid dlgex_attr
 		$$->style->or_mask &= ~($$->style->and_mask);
 		$$->style->and_mask = 0;
 
-		indialog = FALSE;
 		if(!$$->lvc.language)
 			$$->lvc.language = dup_language(currentlanguage);
 		}
 	;
 
 dlgex_attribs
-	: /* Empty */			{ $$=new_dialogex(); }
-	| dlgex_attribs STYLE style	{ $$=dialogex_style($3,$1); }
-	| dlgex_attribs EXSTYLE style	{ $$=dialogex_exstyle($3,$1); }
-	| dlgex_attribs CAPTION tSTRING { $$=dialogex_caption($3,$1); }
-	| dlgex_attribs opt_font	{ $$=dialogex_font($2,$1); }
-	| dlgex_attribs opt_exfont	{ $$=dialogex_font($2,$1); }
-	| dlgex_attribs CLASS nameid_s	{ $$=dialogex_class($3,$1); }
-	| dlgex_attribs MENU nameid	{ $$=dialogex_menu($3,$1); }
-	| dlgex_attribs opt_language	{ $$=dialogex_language($2,$1); }
-	| dlgex_attribs opt_characts	{ $$=dialogex_characteristics($2,$1); }
-	| dlgex_attribs opt_version	{ $$=dialogex_version($2,$1); }
+	: /* Empty */				{ $$=new_dialogex(); }
+	| dlgex_attribs tSTYLE style		{ $$=dialogex_style($3,$1); }
+	| dlgex_attribs tEXSTYLE style		{ $$=dialogex_exstyle($3,$1); }
+	| dlgex_attribs tCAPTION tSTRING	{ $$=dialogex_caption($3,$1); }
+	| dlgex_attribs opt_font		{ $$=dialogex_font($2,$1); }
+	| dlgex_attribs opt_exfont		{ $$=dialogex_font($2,$1); }
+	| dlgex_attribs tCLASS nameid_s		{ $$=dialogex_class($3,$1); }
+	| dlgex_attribs tCPPCLASS nameid_s	{ $$=dialogex_class($3,$1); }
+	| dlgex_attribs tMENU nameid		{ $$=dialogex_menu($3,$1); }
+	| dlgex_attribs opt_language		{ $$=dialogex_language($2,$1); }
+	| dlgex_attribs opt_characts		{ $$=dialogex_characteristics($2,$1); }
+	| dlgex_attribs opt_version		{ $$=dialogex_version($2,$1); }
 	;
 
 exctrls	: /* Empty */				{ $$ = NULL; }
-	| exctrls CONTROL	gen_exctrl	{ $$=ins_ctrl(-1, 0, $3, $1); }
-	| exctrls EDITTEXT	exctrl_desc	{ $$=ins_ctrl(CT_EDIT, 0, $3, $1); }
-	| exctrls LISTBOX	exctrl_desc	{ $$=ins_ctrl(CT_LISTBOX, 0, $3, $1); }
-	| exctrls COMBOBOX	exctrl_desc	{ $$=ins_ctrl(CT_COMBOBOX, 0, $3, $1); }
-	| exctrls SCROLLBAR	exctrl_desc	{ $$=ins_ctrl(CT_SCROLLBAR, 0, $3, $1); }
-	| exctrls CHECKBOX	lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_CHECKBOX, $3, $1); }
-	| exctrls DEFPUSHBUTTON	lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_DEFPUSHBUTTON, $3, $1); }
-	| exctrls GROUPBOX	lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_GROUPBOX, $3, $1);}
-	| exctrls PUSHBUTTON	lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_PUSHBUTTON, $3, $1); }
-/*	| exctrls PUSHBOX	lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_PUSHBOX, $3, $1); } */
-	| exctrls RADIOBUTTON	lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_RADIOBUTTON, $3, $1); }
-	| exctrls AUTO3STATE	lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_AUTO3STATE, $3, $1); }
-	| exctrls STATE3	lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_3STATE, $3, $1); }
-	| exctrls AUTOCHECKBOX	lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_AUTOCHECKBOX, $3, $1); }
-	| exctrls AUTORADIOBUTTON lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_AUTORADIOBUTTON, $3, $1); }
-	| exctrls LTEXT		lab_exctrl	{ $$=ins_ctrl(CT_STATIC, SS_LEFT, $3, $1); }
-	| exctrls CTEXT		lab_exctrl	{ $$=ins_ctrl(CT_STATIC, SS_CENTER, $3, $1); }
-	| exctrls RTEXT		lab_exctrl	{ $$=ins_ctrl(CT_STATIC, SS_RIGHT, $3, $1); }
+	| exctrls tCONTROL	gen_exctrl	{ $$=ins_ctrl(-1, 0, $3, $1); }
+	| exctrls tEDITTEXT	exctrl_desc	{ $$=ins_ctrl(CT_EDIT, 0, $3, $1); }
+	| exctrls tLISTBOX	exctrl_desc	{ $$=ins_ctrl(CT_LISTBOX, 0, $3, $1); }
+	| exctrls tCOMBOBOX	exctrl_desc	{ $$=ins_ctrl(CT_COMBOBOX, 0, $3, $1); }
+	| exctrls tSCROLLBAR	exctrl_desc	{ $$=ins_ctrl(CT_SCROLLBAR, 0, $3, $1); }
+	| exctrls tCHECKBOX	lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_CHECKBOX, $3, $1); }
+	| exctrls tDEFPUSHBUTTON lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_DEFPUSHBUTTON, $3, $1); }
+	| exctrls tGROUPBOX	lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_GROUPBOX, $3, $1);}
+	| exctrls tPUSHBUTTON	lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_PUSHBUTTON, $3, $1); }
+/*	| exctrls tPUSHBOX	lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_PUSHBOX, $3, $1); } */
+	| exctrls tRADIOBUTTON	lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_RADIOBUTTON, $3, $1); }
+	| exctrls tAUTO3STATE	lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_AUTO3STATE, $3, $1); }
+	| exctrls tSTATE3	lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_3STATE, $3, $1); }
+	| exctrls tAUTOCHECKBOX	lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_AUTOCHECKBOX, $3, $1); }
+	| exctrls tAUTORADIOBUTTON lab_exctrl	{ $$=ins_ctrl(CT_BUTTON, BS_AUTORADIOBUTTON, $3, $1); }
+	| exctrls tLTEXT	lab_exctrl	{ $$=ins_ctrl(CT_STATIC, SS_LEFT, $3, $1); }
+	| exctrls tCTEXT	lab_exctrl	{ $$=ins_ctrl(CT_STATIC, SS_CENTER, $3, $1); }
+	| exctrls tRTEXT	lab_exctrl	{ $$=ins_ctrl(CT_STATIC, SS_RIGHT, $3, $1); }
 	/* special treatment for icons, as the extent is optional */
-	| exctrls ICON nameid_s opt_comma expr ',' expr ',' expr iconinfo {
+	| exctrls tICON nameid_s opt_comma expr ',' expr ',' expr iconinfo {
 		$10->title = $3;
 		$10->id = $5;
 		$10->x = $7;
@@ -1054,7 +1038,7 @@ helpid	: /* Empty */	{ $$ = NULL; }
 	;
 
 opt_exfont
-	: FONT expr ',' tSTRING ',' expr ',' expr  opt_expr { $$ = new_font_id($2, $4, $6, $8); }
+	: tFONT expr ',' tSTRING ',' expr ',' expr  opt_expr { $$ = new_font_id($2, $4, $6, $8); }
 	;
 
 /*
@@ -1066,7 +1050,7 @@ opt_expr: /* Empty */	{ $$ = NULL; }
 	;
 
 /* ------------------------------ Menu ------------------------------ */
-menu	: MENU loadmemopts opt_lvc menu_body {
+menu	: tMENU loadmemopts opt_lvc menu_body {
 		if(!$4)
 			yyerror("Menu must contain items");
 		$$ = new_menu();
@@ -1094,7 +1078,7 @@ menu_body
 
 item_definitions
 	: /* Empty */	{$$ = NULL;}
-	| item_definitions MENUITEM tSTRING opt_comma expr item_options {
+	| item_definitions tMENUITEM tSTRING opt_comma expr item_options {
 		$$=new_menu_item();
 		$$->prev = $1;
 		if($1)
@@ -1103,13 +1087,13 @@ item_definitions
 		$$->state = $6;
 		$$->name = $3;
 		}
-	| item_definitions MENUITEM SEPARATOR {
+	| item_definitions tMENUITEM tSEPARATOR {
 		$$=new_menu_item();
 		$$->prev = $1;
 		if($1)
 			$1->next = $$;
 		}
-	| item_definitions POPUP tSTRING item_options menu_body {
+	| item_definitions tPOPUP tSTRING item_options menu_body {
 		$$ = new_menu_item();
 		$$->prev = $1;
 		if($1)
@@ -1128,17 +1112,17 @@ item_definitions
  * (who would want to specify a MF_x flag twice?).
  */
 item_options
-	: /* Empty */			{ $$ = 0; }
-	| ',' CHECKED	item_options	{ $$ = $3 | MF_CHECKED; }
-	| ',' GRAYED	item_options	{ $$ = $3 | MF_GRAYED; }
-	| ',' HELP	item_options	{ $$ = $3 | MF_HELP; }
-	| ',' INACTIVE	item_options	{ $$ = $3 | MF_DISABLED; }
-	| ',' MENUBARBREAK item_options	{ $$ = $3 | MF_MENUBARBREAK; }
-	| ',' MENUBREAK	item_options	{ $$ = $3 | MF_MENUBREAK; }
+	: /* Empty */				{ $$ = 0; }
+	| ',' tCHECKED		item_options	{ $$ = $3 | MF_CHECKED; }
+	| ',' tGRAYED		item_options	{ $$ = $3 | MF_GRAYED; }
+	| ',' tHELP		item_options	{ $$ = $3 | MF_HELP; }
+	| ',' tINACTIVE		item_options	{ $$ = $3 | MF_DISABLED; }
+	| ',' tMENUBARBREAK	item_options	{ $$ = $3 | MF_MENUBARBREAK; }
+	| ',' tMENUBREAK	item_options	{ $$ = $3 | MF_MENUBREAK; }
 	;
 
 /* ------------------------------ MenuEx ------------------------------ */
-menuex	: MENUEX loadmemopts opt_lvc menuex_body	{
+menuex	: tMENUEX loadmemopts opt_lvc menuex_body	{
 		if(!win32)
 			yywarning("MENUEX not supported in 16-bit mode");
 		if(!$4)
@@ -1168,7 +1152,7 @@ menuex_body
 
 itemex_definitions
 	: /* Empty */	{$$ = NULL; }
-	| itemex_definitions MENUITEM tSTRING itemex_options {
+	| itemex_definitions tMENUITEM tSTRING itemex_options {
 		$$ = new_menuex_item();
 		$$->prev = $1;
 		if($1)
@@ -1184,13 +1168,13 @@ itemex_definitions
 		$$->gothelpid = $4->gothelpid;
 		free($4);
 		}
-	| itemex_definitions MENUITEM SEPARATOR {
+	| itemex_definitions tMENUITEM tSEPARATOR {
 		$$ = new_menuex_item();
 		$$->prev = $1;
 		if($1)
 			$1->next = $$;
 		}
-	| itemex_definitions POPUP tSTRING itemex_p_options menuex_body {
+	| itemex_definitions tPOPUP tSTRING itemex_p_options menuex_body {
 		$$ = new_menuex_item();
 		$$->prev = $1;
 		if($1)
@@ -1314,7 +1298,7 @@ stringtable
 	;
 
 /* This is to get the language of the currently parsed stringtable */
-stt_head: STRINGTABLE loadmemopts opt_lvc {
+stt_head: tSTRINGTABLE loadmemopts opt_lvc {
 		if((tagstt = find_stringtable($3)) == NULL)
 			tagstt = new_stringtable($3);
 		tagstt_memopt = $2;
@@ -1364,7 +1348,7 @@ opt_comma	/* There seem to be two ways to specify a stringtable... */
 
 /* ------------------------------ VersionInfo ------------------------------ */
 versioninfo
-	: VERSIONINFO fix_version tBEGIN ver_blocks tEND {
+	: tVERSIONINFO fix_version tBEGIN ver_blocks tEND {
 		$$ = $2;
 		$2->blocks = get_ver_block_head($4);
 		}
@@ -1372,7 +1356,7 @@ versioninfo
 
 fix_version
 	: /* Empty */			{ $$ = new_versioninfo(); }
-	| fix_version FILEVERSION expr ',' expr ',' expr ',' expr {
+	| fix_version tFILEVERSION expr ',' expr ',' expr ',' expr {
 		if($1->gotit.fv)
 			yyerror("FILEVERSION already defined");
 		$$ = $1;
@@ -1382,7 +1366,7 @@ fix_version
 		$$->filever_min2 = $9;
 		$$->gotit.fv = 1;
 		}
-	| fix_version PRODUCTVERSION expr ',' expr ',' expr ',' expr {
+	| fix_version tPRODUCTVERSION expr ',' expr ',' expr ',' expr {
 		if($1->gotit.pv)
 			yyerror("PRODUCTVERSION already defined");
 		$$ = $1;
@@ -1392,35 +1376,35 @@ fix_version
 		$$->prodver_min2 = $9;
 		$$->gotit.pv = 1;
 		}
-	| fix_version FILEFLAGS expr {
+	| fix_version tFILEFLAGS expr {
 		if($1->gotit.ff)
 			yyerror("FILEFLAGS already defined");
 		$$ = $1;
 		$$->fileflags = $3;
 		$$->gotit.ff = 1;
 		}
-	| fix_version FILEFLAGSMASK expr {
+	| fix_version tFILEFLAGSMASK expr {
 		if($1->gotit.ffm)
 			yyerror("FILEFLAGSMASK already defined");
 		$$ = $1;
 		$$->fileflagsmask = $3;
 		$$->gotit.ffm = 1;
 		}
-	| fix_version FILEOS expr {
+	| fix_version tFILEOS expr {
 		if($1->gotit.fo)
 			yyerror("FILEOS already defined");
 		$$ = $1;
 		$$->fileos = $3;
 		$$->gotit.fo = 1;
 		}
-	| fix_version FILETYPE expr {
+	| fix_version tFILETYPE expr {
 		if($1->gotit.ft)
 			yyerror("FILETYPE already defined");
 		$$ = $1;
 		$$->filetype = $3;
 		$$->gotit.ft = 1;
 		}
-	| fix_version FILESUBTYPE expr {
+	| fix_version tFILESUBTYPE expr {
 		if($1->gotit.fst)
 			yyerror("FILESUBTYPE already defined");
 		$$ = $1;
@@ -1440,7 +1424,7 @@ ver_blocks
 	;
 
 ver_block
-	: BLOCK tSTRING tBEGIN ver_values tEND {
+	: tBLOCK tSTRING tBEGIN ver_values tEND {
 		$$ = new_ver_block();
 		$$->name = $2;
 		$$->values = get_ver_value_head($4);
@@ -1463,13 +1447,13 @@ ver_value
 		$$->type = val_block;
 		$$->value.block = $1;
 		}
-	| VALUE tSTRING ',' tSTRING {
+	| tVALUE tSTRING ',' tSTRING {
 		$$ = new_ver_value();
 		$$->type = val_str;
 		$$->key = $2;
 		$$->value.str = $4;
 		}
-	| VALUE tSTRING ',' ver_words {
+	| tVALUE tSTRING ',' ver_words {
 		$$ = new_ver_value();
 		$$->type = val_words;
 		$$->key = $2;
@@ -1483,7 +1467,7 @@ ver_words
 	;
 
 /* ------------------------------ Toolbar ------------------------------ */
-toolbar: TOOLBAR loadmemopts expr ',' expr opt_lvc tBEGIN toolbar_items tEND {
+toolbar: tTOOLBAR loadmemopts expr ',' expr opt_lvc tBEGIN toolbar_items tEND {
 		int nitems;
 		toolbar_item_t *items = get_tlbr_buttons_head($8, &nitems);
 		$$ = new_toolbar($3, $5, items, nitems);
@@ -1510,12 +1494,12 @@ toolbar: TOOLBAR loadmemopts expr ',' expr opt_lvc tBEGIN toolbar_items tEND {
 
 toolbar_items
 	:  /* Empty */			{ $$ = NULL; }
-	| toolbar_items BUTTON expr	{         
+	| toolbar_items tBUTTON expr	{         
 		toolbar_item_t *idrec = new_toolbar_item();
 		idrec->id = $3;
 		$$ = ins_tlbr_button($1, idrec); 
 		}
-	| toolbar_items SEPARATOR	{         
+	| toolbar_items tSEPARATOR	{         
 		toolbar_item_t *idrec = new_toolbar_item();
 		idrec->id = 0;
 		$$ = ins_tlbr_button($1, idrec); 
@@ -1550,15 +1534,15 @@ loadmemopts
 		}
 	;
 
-lamo	: PRELOAD	{ $$ = new_int(WRC_MO_PRELOAD); }
-	| MOVEABLE	{ $$ = new_int(WRC_MO_MOVEABLE); }
-	| DISCARDABLE	{ $$ = new_int(WRC_MO_DISCARDABLE); }
+lamo	: tPRELOAD	{ $$ = new_int(WRC_MO_PRELOAD); }
+	| tMOVEABLE	{ $$ = new_int(WRC_MO_MOVEABLE); }
+	| tDISCARDABLE	{ $$ = new_int(WRC_MO_DISCARDABLE); }
 	| tPURE		{ $$ = new_int(WRC_MO_PURE); }
 	;
 
-lama	: LOADONCALL	{ $$ = new_int(~WRC_MO_PRELOAD); }
+lama	: tLOADONCALL	{ $$ = new_int(~WRC_MO_PRELOAD); }
 	| tFIXED	{ $$ = new_int(~WRC_MO_MOVEABLE); }
-	| IMPURE	{ $$ = new_int(~WRC_MO_PURE); }
+	| tIMPURE	{ $$ = new_int(~WRC_MO_PURE); }
 	;
 
 /* ------------------------------ Win32 options ------------------------------ */
@@ -1589,16 +1573,23 @@ opt_lvc	: /* Empty */		{ $$ = new_lvc(); }
 		}
 	;
 
+	/*
+	 * This here is another s/r conflict on {bi,u}nary + and -.
+	 * It is due to the look-ahead which must determine when the
+	 * rule opt_language ends. It could be solved with adding a
+	 * tNL at the end, but that seems unreasonable to do.
+	 * The conflict is now moved to the expression handling below.
+	 */
 opt_language
-	: LANGUAGE expr ',' expr	{ $$ = new_language($2, $4); }
+	: tLANGUAGE expr ',' expr	{ $$ = new_language($2, $4); }
 	;
 
 opt_characts
-	: CHARACTERISTICS expr		{ $$ = new_characts($2); }
+	: tCHARACTERISTICS expr		{ $$ = new_characts($2); }
 	;
 
 opt_version
-	: VERSION expr			{ $$ = new_version($2); }
+	: tVERSION expr			{ $$ = new_version($2); }
 	;
 
 /* ------------------------------ Raw data handking ------------------------------ */
@@ -1606,14 +1597,14 @@ raw_data: tBEGIN raw_elements tEND	{ $$ = $2; }
 	;
 
 raw_elements
-	: RAWDATA			{ $$ = $1; }
-	| NUMBER			{ $$ = int2raw_data($1); }
-	| LNUMBER			{ $$ = long2raw_data($1); }
+	: tRAWDATA			{ $$ = $1; }
+	| tNUMBER			{ $$ = int2raw_data($1); }
+	| tLNUMBER			{ $$ = long2raw_data($1); }
 	| tSTRING			{ $$ = str2raw_data($1); }
-	| raw_elements opt_comma RAWDATA   { $$ = merge_raw_data($1, $3); free($3->data); free($3); }
-	| raw_elements opt_comma NUMBER    { $$ = merge_raw_data_int($1, $3); }
-	| raw_elements opt_comma LNUMBER   { $$ = merge_raw_data_long($1, $3); }
-	| raw_elements opt_comma tSTRING   { $$ = merge_raw_data_str($1, $3); }
+	| raw_elements opt_comma tRAWDATA { $$ = merge_raw_data($1, $3); free($3->data); free($3); }
+	| raw_elements opt_comma tNUMBER  { $$ = merge_raw_data_int($1, $3); }
+	| raw_elements opt_comma tLNUMBER { $$ = merge_raw_data_long($1, $3); }
+	| raw_elements opt_comma tSTRING  { $$ = merge_raw_data_str($1, $3); }
 	;
 
 /* ------------------------------ Win32 expressions ------------------------------ */
@@ -1623,6 +1614,8 @@ raw_elements
 e_expr	: /* Empty */	{ $$ = 0; }
 	| expr		{ $$ = new_int($1); }
 	;
+
+/* This rule moves ALL s/r conflicts on {bi,u}nary - and + to here */
 expr	: xpr	{ $$ = ($1); }
 	;
 
@@ -1632,21 +1625,22 @@ xpr	: xpr '+' xpr	{ $$ = ($1) + ($3); }
 	| xpr '&' xpr	{ $$ = ($1) & ($3); }
 	| xpr '*' xpr	{ $$ = ($1) * ($3); }
 	| xpr '/' xpr	{ $$ = ($1) / ($3); }
+	| xpr '^' xpr	{ $$ = ($1) ^ ($3); }
 	| '~' xpr	{ $$ = ~($2); }
-	| '-' xpr	{ $$ = -($2); }		/* FIXME: shift/reduce conflict */
-/*	| '+' xpr	{ $$ = $2; } */
+	| '-' xpr %prec pUPM	{ $$ = -($2); }
+	| '+' xpr %prec pUPM	{ $$ = $2; }
 	| '(' xpr ')'	{ $$ = $2; }
-	| any_num	{ $$ = $1; want_rscname = 0; }
-	| NOT any_num	{ $$ = ~($2); }
+	| any_num	{ $$ = $1; }
+	| tNOT any_num	{ $$ = ~($2); }
 	;
 
-any_num	: NUMBER	{ $$ = $1; }
-	| LNUMBER	{ $$ = $1; }
+any_num	: tNUMBER	{ $$ = $1; }
+	| tLNUMBER	{ $$ = $1; }
 	;
 
 %%
 /* Dialog specific functions */
-dialog_t *dialog_style(style_t * st, dialog_t *dlg)
+static dialog_t *dialog_style(style_t * st, dialog_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->style == NULL)
@@ -1670,7 +1664,7 @@ dialog_t *dialog_style(style_t * st, dialog_t *dlg)
 	return dlg;
 }
 
-dialog_t *dialog_exstyle(style_t *st, dialog_t *dlg)
+static dialog_t *dialog_exstyle(style_t *st, dialog_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->exstyle == NULL)
@@ -1694,7 +1688,7 @@ dialog_t *dialog_exstyle(style_t *st, dialog_t *dlg)
 	return dlg;
 }
 
-dialog_t *dialog_caption(string_t *s, dialog_t *dlg)
+static dialog_t *dialog_caption(string_t *s, dialog_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->title)
@@ -1703,7 +1697,7 @@ dialog_t *dialog_caption(string_t *s, dialog_t *dlg)
 	return dlg;
 }
 
-dialog_t *dialog_font(font_id_t *f, dialog_t *dlg)
+static dialog_t *dialog_font(font_id_t *f, dialog_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->font)
@@ -1712,7 +1706,7 @@ dialog_t *dialog_font(font_id_t *f, dialog_t *dlg)
 	return dlg;
 }
 
-dialog_t *dialog_class(name_id_t *n, dialog_t *dlg)
+static dialog_t *dialog_class(name_id_t *n, dialog_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->dlgclass)
@@ -1721,7 +1715,7 @@ dialog_t *dialog_class(name_id_t *n, dialog_t *dlg)
 	return dlg;
 }
 
-dialog_t *dialog_menu(name_id_t *m, dialog_t *dlg)
+static dialog_t *dialog_menu(name_id_t *m, dialog_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->menu)
@@ -1730,7 +1724,7 @@ dialog_t *dialog_menu(name_id_t *m, dialog_t *dlg)
 	return dlg;
 }
 
-dialog_t *dialog_language(language_t *l, dialog_t *dlg)
+static dialog_t *dialog_language(language_t *l, dialog_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->lvc.language)
@@ -1739,7 +1733,7 @@ dialog_t *dialog_language(language_t *l, dialog_t *dlg)
 	return dlg;
 }
 
-dialog_t *dialog_characteristics(characts_t *c, dialog_t *dlg)
+static dialog_t *dialog_characteristics(characts_t *c, dialog_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->lvc.characts)
@@ -1748,7 +1742,7 @@ dialog_t *dialog_characteristics(characts_t *c, dialog_t *dlg)
 	return dlg;
 }
 
-dialog_t *dialog_version(version_t *v, dialog_t *dlg)
+static dialog_t *dialog_version(version_t *v, dialog_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->lvc.version)
@@ -1758,7 +1752,7 @@ dialog_t *dialog_version(version_t *v, dialog_t *dlg)
 }
 
 /* Controls specific functions */
-control_t *ins_ctrl(int type, int special_style, control_t *ctrl, control_t *prev)
+static control_t *ins_ctrl(int type, int special_style, control_t *ctrl, control_t *prev)
 {
 	/* Hm... this seems to be jammed in at all time... */
 	int defaultstyle = WS_CHILD | WS_VISIBLE;
@@ -1882,7 +1876,7 @@ byebye:
 	return ctrl;
 }
 
-name_id_t *convert_ctlclass(name_id_t *cls)
+static name_id_t *convert_ctlclass(name_id_t *cls)
 {
 	char *cc;
 	int iclass;
@@ -1920,7 +1914,7 @@ name_id_t *convert_ctlclass(name_id_t *cls)
 }
 
 /* DialogEx specific functions */
-dialogex_t *dialogex_style(style_t * st, dialogex_t *dlg)
+static dialogex_t *dialogex_style(style_t * st, dialogex_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->style == NULL)
@@ -1944,7 +1938,7 @@ dialogex_t *dialogex_style(style_t * st, dialogex_t *dlg)
 	return dlg;
 }
 
-dialogex_t *dialogex_exstyle(style_t * st, dialogex_t *dlg)
+static dialogex_t *dialogex_exstyle(style_t * st, dialogex_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->exstyle == NULL)
@@ -1968,7 +1962,7 @@ dialogex_t *dialogex_exstyle(style_t * st, dialogex_t *dlg)
 	return dlg;
 }
 
-dialogex_t *dialogex_caption(string_t *s, dialogex_t *dlg)
+static dialogex_t *dialogex_caption(string_t *s, dialogex_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->title)
@@ -1977,7 +1971,7 @@ dialogex_t *dialogex_caption(string_t *s, dialogex_t *dlg)
 	return dlg;
 }
 
-dialogex_t *dialogex_font(font_id_t *f, dialogex_t *dlg)
+static dialogex_t *dialogex_font(font_id_t *f, dialogex_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->font)
@@ -1986,7 +1980,7 @@ dialogex_t *dialogex_font(font_id_t *f, dialogex_t *dlg)
 	return dlg;
 }
 
-dialogex_t *dialogex_class(name_id_t *n, dialogex_t *dlg)
+static dialogex_t *dialogex_class(name_id_t *n, dialogex_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->dlgclass)
@@ -1995,7 +1989,7 @@ dialogex_t *dialogex_class(name_id_t *n, dialogex_t *dlg)
 	return dlg;
 }
 
-dialogex_t *dialogex_menu(name_id_t *m, dialogex_t *dlg)
+static dialogex_t *dialogex_menu(name_id_t *m, dialogex_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->menu)
@@ -2004,7 +1998,7 @@ dialogex_t *dialogex_menu(name_id_t *m, dialogex_t *dlg)
 	return dlg;
 }
 
-dialogex_t *dialogex_language(language_t *l, dialogex_t *dlg)
+static dialogex_t *dialogex_language(language_t *l, dialogex_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->lvc.language)
@@ -2013,7 +2007,7 @@ dialogex_t *dialogex_language(language_t *l, dialogex_t *dlg)
 	return dlg;
 }
 
-dialogex_t *dialogex_characteristics(characts_t *c, dialogex_t *dlg)
+static dialogex_t *dialogex_characteristics(characts_t *c, dialogex_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->lvc.characts)
@@ -2022,7 +2016,7 @@ dialogex_t *dialogex_characteristics(characts_t *c, dialogex_t *dlg)
 	return dlg;
 }
 
-dialogex_t *dialogex_version(version_t *v, dialogex_t *dlg)
+static dialogex_t *dialogex_version(version_t *v, dialogex_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->lvc.version)
@@ -2032,7 +2026,7 @@ dialogex_t *dialogex_version(version_t *v, dialogex_t *dlg)
 }
 
 /* Accelerator specific functions */
-event_t *add_event(int key, int id, int flags, event_t *prev)
+static event_t *add_event(int key, int id, int flags, event_t *prev)
 {
 	event_t *ev = new_event();
 
@@ -2048,7 +2042,7 @@ event_t *add_event(int key, int id, int flags, event_t *prev)
 	return ev;
 }
 
-event_t *add_string_event(string_t *key, int id, int flags, event_t *prev)
+static event_t *add_string_event(string_t *key, int id, int flags, event_t *prev)
 {
 	int keycode = 0;
 	event_t *ev = new_event();
@@ -2081,7 +2075,7 @@ event_t *add_string_event(string_t *key, int id, int flags, event_t *prev)
 }
 
 /* MenuEx specific functions */
-itemex_opt_t *new_itemex_opt(int id, int type, int state, int helpid)
+static itemex_opt_t *new_itemex_opt(int id, int type, int state, int helpid)
 {
 	itemex_opt_t *opt = (itemex_opt_t *)xmalloc(sizeof(itemex_opt_t));
 	opt->id = id;
@@ -2092,14 +2086,14 @@ itemex_opt_t *new_itemex_opt(int id, int type, int state, int helpid)
 }
 
 /* Raw data functions */
-raw_data_t *load_file(string_t *name)
+static raw_data_t *load_file(string_t *name)
 {
 	FILE *fp;
 	raw_data_t *rd;
 	if(name->type != str_char)
 		yyerror("Filename must be ASCII string");
 		
-	fp = open_include(name->str.cstr, 1);
+	fp = open_include(name->str.cstr, 1, NULL);
 	if(!fp)
 		yyerror("Cannot open file %s", name->str.cstr);
 	rd = new_raw_data();
@@ -2113,7 +2107,7 @@ raw_data_t *load_file(string_t *name)
 	return rd;
 }
 
-raw_data_t *int2raw_data(int i)
+static raw_data_t *int2raw_data(int i)
 {
 	raw_data_t *rd;
 
@@ -2127,7 +2121,7 @@ raw_data_t *int2raw_data(int i)
 	return rd;
 }
 
-raw_data_t *long2raw_data(int i)
+static raw_data_t *long2raw_data(int i)
 {
 	raw_data_t *rd;
 	rd = new_raw_data();
@@ -2137,7 +2131,7 @@ raw_data_t *long2raw_data(int i)
 	return rd;
 }
 
-raw_data_t *str2raw_data(string_t *str)
+static raw_data_t *str2raw_data(string_t *str)
 {
 	raw_data_t *rd;
 	rd = new_raw_data();
@@ -2147,7 +2141,7 @@ raw_data_t *str2raw_data(string_t *str)
 	return rd;
 }
 
-raw_data_t *merge_raw_data(raw_data_t *r1, raw_data_t *r2)
+static raw_data_t *merge_raw_data(raw_data_t *r1, raw_data_t *r2)
 {
 	r1->data = xrealloc(r1->data, r1->size + r2->size);
 	memcpy(r1->data + r1->size, r2->data, r2->size);
@@ -2155,7 +2149,7 @@ raw_data_t *merge_raw_data(raw_data_t *r1, raw_data_t *r2)
 	return r1;
 }
 
-raw_data_t *merge_raw_data_int(raw_data_t *r1, int i)
+static raw_data_t *merge_raw_data_int(raw_data_t *r1, int i)
 {
 	raw_data_t *t = int2raw_data(i);
 	merge_raw_data(r1, t);
@@ -2164,7 +2158,7 @@ raw_data_t *merge_raw_data_int(raw_data_t *r1, int i)
 	return r1;
 }
 
-raw_data_t *merge_raw_data_long(raw_data_t *r1, int i)
+static raw_data_t *merge_raw_data_long(raw_data_t *r1, int i)
 {
 	raw_data_t *t = long2raw_data(i);
 	merge_raw_data(r1, t);
@@ -2173,7 +2167,7 @@ raw_data_t *merge_raw_data_long(raw_data_t *r1, int i)
 	return r1;
 }
 
-raw_data_t *merge_raw_data_str(raw_data_t *r1, string_t *str)
+static raw_data_t *merge_raw_data_str(raw_data_t *r1, string_t *str)
 {
 	raw_data_t *t = str2raw_data(str);
 	merge_raw_data(r1, t);
@@ -2183,7 +2177,7 @@ raw_data_t *merge_raw_data_str(raw_data_t *r1, string_t *str)
 }
 
 /* Function the go back in a list to get the head */
-menu_item_t *get_item_head(menu_item_t *p)
+static menu_item_t *get_item_head(menu_item_t *p)
 {
 	if(!p)
 		return NULL;
@@ -2192,7 +2186,7 @@ menu_item_t *get_item_head(menu_item_t *p)
 	return p;
 }
 
-menuex_item_t *get_itemex_head(menuex_item_t *p)
+static menuex_item_t *get_itemex_head(menuex_item_t *p)
 {
 	if(!p)
 		return NULL;
@@ -2201,7 +2195,7 @@ menuex_item_t *get_itemex_head(menuex_item_t *p)
 	return p;
 }
 
-resource_t *get_resource_head(resource_t *p)
+static resource_t *get_resource_head(resource_t *p)
 {
 	if(!p)
 		return NULL;
@@ -2210,7 +2204,7 @@ resource_t *get_resource_head(resource_t *p)
 	return p;
 }
 
-ver_block_t *get_ver_block_head(ver_block_t *p)
+static ver_block_t *get_ver_block_head(ver_block_t *p)
 {
 	if(!p)
 		return NULL;
@@ -2219,7 +2213,7 @@ ver_block_t *get_ver_block_head(ver_block_t *p)
 	return p;
 }
 
-ver_value_t *get_ver_value_head(ver_value_t *p)
+static ver_value_t *get_ver_value_head(ver_value_t *p)
 {
 	if(!p)
 		return NULL;
@@ -2228,7 +2222,7 @@ ver_value_t *get_ver_value_head(ver_value_t *p)
 	return p;
 }
 
-control_t *get_control_head(control_t *p)
+static control_t *get_control_head(control_t *p)
 {
 	if(!p)
 		return NULL;
@@ -2237,7 +2231,7 @@ control_t *get_control_head(control_t *p)
 	return p;
 }
 
-event_t *get_event_head(event_t *p)
+static event_t *get_event_head(event_t *p)
 {
 	if(!p)
 		return NULL;
@@ -2247,7 +2241,7 @@ event_t *get_event_head(event_t *p)
 }
 
 /* Find a stringtable with given language */
-stringtable_t *find_stringtable(lvc_t *lvc)
+static stringtable_t *find_stringtable(lvc_t *lvc)
 {
 	stringtable_t *stt;
 
@@ -2283,13 +2277,13 @@ stringtable_t *find_stringtable(lvc_t *lvc)
 
 /* qsort sorting function for string table entries */
 #define STE(p)	((stt_entry_t *)(p))
-int sort_stt_entry(const void *e1, const void *e2)
+static int sort_stt_entry(const void *e1, const void *e2)
 {
 	return STE(e1)->id - STE(e2)->id;
 }
 #undef STE
 
-resource_t *build_stt_resources(stringtable_t *stthead)
+static resource_t *build_stt_resources(stringtable_t *stthead)
 {
 	stringtable_t *stt;
 	stringtable_t *newstt;
@@ -2422,7 +2416,7 @@ static int get_new_id(id_alloc_t **list, int *n, language_t *lan)
 	return 1;
 }
 
-int alloc_icon_id(language_t *lan)
+static int alloc_icon_id(language_t *lan)
 {
 	static id_alloc_t *idlist = NULL;
 	static int nid = 0;
@@ -2430,7 +2424,7 @@ int alloc_icon_id(language_t *lan)
 	return get_new_id(&idlist, &nid, lan);
 }
 
-int alloc_cursor_id(language_t *lan)
+static int alloc_cursor_id(language_t *lan)
 {
 	static id_alloc_t *idlist = NULL;
 	static int nid = 0;
@@ -2547,7 +2541,7 @@ void split_cursors(raw_data_t *rd, cursor_group_t *curg, int *ncur)
 #undef	DPTR
 
 
-toolbar_item_t *ins_tlbr_button(toolbar_item_t *prev, toolbar_item_t *idrec)
+static toolbar_item_t *ins_tlbr_button(toolbar_item_t *prev, toolbar_item_t *idrec)
 {
 	idrec->prev = prev;
 	if(prev)
@@ -2556,7 +2550,7 @@ toolbar_item_t *ins_tlbr_button(toolbar_item_t *prev, toolbar_item_t *idrec)
 	return idrec;
 }
 
-toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems)
+static toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems)
 {
 	if(!p)
 	{
@@ -2573,5 +2567,32 @@ toolbar_item_t *get_tlbr_buttons_head(toolbar_item_t *p, int *nitems)
 	}
 
 	return p;
+}
+
+static string_t *make_filename(string_t *str)
+{
+	char *cptr;
+
+	if(str->type != str_char)
+		yyerror("Cannot handle UNICODE filenames");
+
+	/* Remove escaped backslash and convert to forward */
+	cptr = str->str.cstr;
+	for(cptr = str->str.cstr; (cptr = strchr(cptr, '\\')) != NULL; cptr++)
+	{
+		if(cptr[1] == '\\')
+		{
+			memmove(cptr, cptr+1, strlen(cptr));
+			str->size--;
+		}
+		*cptr = '/';
+	}
+
+	/* Convert to lower case. Seems to be reasonable to do */
+	for(cptr = str->str.cstr; !leave_case && *cptr; cptr++)
+	{
+		*cptr = tolower(*cptr);
+	}
+	return str;
 }
 
