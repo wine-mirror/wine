@@ -318,8 +318,8 @@ typedef struct tagUDACCEL
 #define UDN_LAST           (0U-740)
 #define UDN_DELTAPOS       (UDN_FIRST-1)
 
-#define UDM_SETRANGE16       (WM_USER+101)
-#define UDM_GETRANGE16       (WM_USER+102)
+#define UDM_SETRANGE       (WM_USER+101)
+#define UDM_GETRANGE       (WM_USER+102)
 #define UDM_SETPOS         (WM_USER+103)
 #define UDM_GETPOS         (WM_USER+104)
 #define UDM_SETBUDDY       (WM_USER+105)
@@ -328,8 +328,8 @@ typedef struct tagUDACCEL
 #define UDM_GETACCEL       (WM_USER+108)
 #define UDM_SETBASE        (WM_USER+109)
 #define UDM_GETBASE        (WM_USER+110)
-#define UDM_SETRANGE     (WM_USER+111)
-#define UDM_GETRANGE     (WM_USER+112)
+#define UDM_SETRANGE32     (WM_USER+111)
+#define UDM_GETRANGE32     (WM_USER+112)
 
 HWND WINAPI CreateUpDownControl (DWORD, INT, INT, INT, INT,
                                    HWND, INT, HINSTANCE, HWND,
@@ -342,12 +342,12 @@ HWND WINAPI CreateUpDownControl (DWORD, INT, INT, INT, INT,
 #define PROGRESS_CLASS16    "msctls_progress"
 #define PROGRESS_CLASS      WINELIB_NAME_AW(PROGRESS_CLASS)
 
-#define PBM_SETRANGE16        (WM_USER+1)
+#define PBM_SETRANGE        (WM_USER+1)
 #define PBM_SETPOS          (WM_USER+2)
 #define PBM_DELTAPOS        (WM_USER+3)
 #define PBM_SETSTEP         (WM_USER+4)
 #define PBM_STEPIT          (WM_USER+5)
-#define PBM_SETRANGE      (WM_USER+6)
+#define PBM_SETRANGE32      (WM_USER+6)
 #define PBM_GETRANGE        (WM_USER+7)
 #define PBM_GETPOS          (WM_USER+8)
 #define PBM_SETBARCOLOR     (WM_USER+9)

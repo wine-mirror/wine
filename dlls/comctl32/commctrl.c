@@ -476,7 +476,7 @@ CreateUpDownControl (DWORD style, INT x, INT y, INT cx, INT cy,
 			 parent, id, inst, 0);
     if (hUD) {
 	SendMessageA (hUD, UDM_SETBUDDY, buddy, 0);
-	SendMessageA (hUD, UDM_SETRANGE16, 0, MAKELONG(maxVal, minVal));
+	SendMessageA (hUD, UDM_SETRANGE, 0, MAKELONG(maxVal, minVal));
 	SendMessageA (hUD, UDM_SETPOS, 0, MAKELONG(curVal, 0));     
     }
 
