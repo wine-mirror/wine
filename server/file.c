@@ -403,6 +403,12 @@ static int set_file_time( handle_t handle, time_t access_time, time_t write_time
 
     if (!(file = get_file_obj( current->process, handle, GENERIC_WRITE )))
         return 0;
+    if (!file->name)
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        release_object( file );
+        return 0;
+    }
     if (!access_time || !write_time)
     {
         struct stat st;
@@ -453,19 +459,19 @@ DECL_HANDLER(create_file)
 DECL_HANDLER(alloc_file_handle)
 {
     struct file *file;
+    int fd;
 
     req->handle = 0;
-    if (current->pass_fd != -1)
+    if ((fd = thread_get_inflight_fd( current, req->fd )) == -1)
     {
-        if ((file = create_file_for_fd( current->pass_fd, req->access,
-                                        FILE_SHARE_READ | FILE_SHARE_WRITE, 0 )))
-        {
-            req->handle = alloc_handle( current->process, file, req->access, 0 );
-            release_object( file );
-        }
-        current->pass_fd = -1;
+        set_error( STATUS_INVALID_HANDLE );
+        return;
     }
-    else set_error( STATUS_INVALID_PARAMETER );
+    if ((file = create_file_for_fd( fd, req->access, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 )))
+    {
+        req->handle = alloc_handle( current->process, file, req->access, 0 );
+        release_object( file );
+    }
 }
 
 /* get a Unix fd to access a file */

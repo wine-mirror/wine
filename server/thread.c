@@ -61,7 +61,7 @@ struct thread_apc
 
 static void dump_thread( struct object *obj, int verbose );
 static int thread_signaled( struct object *obj, struct thread *thread );
-extern void thread_poll_event( struct object *obj, int event );
+static void thread_poll_event( struct object *obj, int event );
 static void destroy_thread( struct object *obj );
 static struct thread_apc *thread_dequeue_apc( struct thread *thread, int system_only );
 
@@ -139,6 +139,43 @@ static int alloc_client_buffer( struct thread *thread )
     return 0;
 }
 
+/* initialize the structure for a newly allocated thread */
+inline static void init_thread_structure( struct thread *thread )
+{
+    int i;
+
+    thread->unix_pid        = 0;  /* not known yet */
+    thread->context         = NULL;
+    thread->teb             = NULL;
+    thread->mutex           = NULL;
+    thread->debug_ctx       = NULL;
+    thread->debug_event     = NULL;
+    thread->queue           = NULL;
+    thread->info            = NULL;
+    thread->wait            = NULL;
+    thread->system_apc.head = NULL;
+    thread->system_apc.tail = NULL;
+    thread->user_apc.head   = NULL;
+    thread->user_apc.tail   = NULL;
+    thread->error           = 0;
+    thread->request_fd      = NULL;
+    thread->reply_fd        = -1;
+    thread->wait_fd         = -1;
+    thread->state           = RUNNING;
+    thread->attached        = 0;
+    thread->exit_code       = 0;
+    thread->next            = NULL;
+    thread->prev            = NULL;
+    thread->priority        = THREAD_PRIORITY_NORMAL;
+    thread->affinity        = 1;
+    thread->suspend         = 0;
+    thread->buffer          = (void *)-1;
+    thread->last_req        = REQ_get_thread_buffer;
+
+    for (i = 0; i < MAX_INFLIGHT_FDS; i++)
+        thread->inflight[i].server = thread->inflight[i].client = -1;
+}
+
 /* create a new thread */
 struct thread *create_thread( int fd, struct process *process )
 {
@@ -149,36 +186,9 @@ struct thread *create_thread( int fd, struct process *process )
 
     if (!(thread = alloc_object( &thread_ops, fd ))) return NULL;
 
-    thread->unix_pid    = 0;  /* not known yet */
-    thread->context     = NULL;
-    thread->teb         = NULL;
-    thread->mutex       = NULL;
-    thread->debug_ctx   = NULL;
-    thread->debug_event = NULL;
-    thread->queue       = NULL;
-    thread->info        = NULL;
-    thread->wait        = NULL;
-    thread->system_apc.head = NULL;
-    thread->system_apc.tail = NULL;
-    thread->user_apc.head   = NULL;
-    thread->user_apc.tail   = NULL;
-    thread->error       = 0;
-    thread->pass_fd     = -1;
-    thread->request_fd  = NULL;
-    thread->reply_fd    = -1;
-    thread->wait_fd     = -1;
-    thread->state       = RUNNING;
-    thread->attached    = 0;
-    thread->exit_code   = 0;
-    thread->next        = NULL;
-    thread->prev        = NULL;
-    thread->priority    = THREAD_PRIORITY_NORMAL;
-    thread->affinity    = 1;
-    thread->suspend     = 0;
-    thread->buffer      = (void *)-1;
-    thread->last_req    = REQ_get_thread_buffer;
-    thread->process     = (struct process *)grab_object( process );
+    init_thread_structure( thread );
 
+    thread->process = (struct process *)grab_object( process );
     if (!current) current = thread;
 
     if (!booting_thread)  /* first thread ever */
@@ -190,7 +200,9 @@ struct thread *create_thread( int fd, struct process *process )
     if ((thread->next = first_thread) != NULL) thread->next->prev = thread;
     first_thread = thread;
 
+#if 0
     set_select_events( &thread->obj, POLLIN );  /* start listening to events */
+#endif
     if (!alloc_client_buffer( thread )) goto error;
     return thread;
 
@@ -200,13 +212,41 @@ struct thread *create_thread( int fd, struct process *process )
 }
 
 /* handle a client event */
-void thread_poll_event( struct object *obj, int event )
+static void thread_poll_event( struct object *obj, int event )
 {
     struct thread *thread = (struct thread *)obj;
     assert( obj->ops == &thread_ops );
 
     if (event & (POLLERR | POLLHUP)) kill_thread( thread, 0 );
+#if 0
     else if (event & POLLIN) read_request( thread );
+#endif
+}
+
+/* cleanup everything that is no longer needed by a dead thread */
+/* used by destroy_thread and kill_thread */
+static void cleanup_thread( struct thread *thread )
+{
+    int i;
+    struct thread_apc *apc;
+
+    while ((apc = thread_dequeue_apc( thread, 0 ))) free( apc );
+    if (thread->buffer != (void *)-1) munmap( thread->buffer, MAX_REQUEST_LENGTH );
+    if (thread->reply_fd != -1) close( thread->reply_fd );
+    if (thread->wait_fd != -1) close( thread->wait_fd );
+    if (thread->request_fd) release_object( thread->request_fd );
+    for (i = 0; i < MAX_INFLIGHT_FDS; i++)
+    {
+        if (thread->inflight[i].client != -1)
+        {
+            close( thread->inflight[i].server );
+            thread->inflight[i].client = thread->inflight[i].server = -1;
+        }
+    }
+    thread->buffer = (void *)-1;
+    thread->reply_fd = -1;
+    thread->wait_fd = -1;
+    thread->request_fd = NULL;
 }
 
 /* destroy a thread when its refcount is 0 */
@@ -224,11 +264,7 @@ static void destroy_thread( struct object *obj )
     while ((apc = thread_dequeue_apc( thread, 0 ))) free( apc );
     if (thread->info) release_object( thread->info );
     if (thread->queue) release_object( thread->queue );
-    if (thread->buffer != (void *)-1) munmap( thread->buffer, MAX_REQUEST_LENGTH );
-    if (thread->reply_fd != -1) close( thread->reply_fd );
-    if (thread->wait_fd != -1) close( thread->wait_fd );
-    if (thread->pass_fd != -1) close( thread->pass_fd );
-    if (thread->request_fd) release_object( thread->request_fd );
+    cleanup_thread( thread );
 }
 
 /* dump a thread on stdout for debugging purposes */
@@ -599,6 +635,62 @@ static struct thread_apc *thread_dequeue_apc( struct thread *thread, int system_
     return apc;
 }
 
+/* add an fd to the inflight list */
+/* return list index, or -1 on error */
+int thread_add_inflight_fd( struct thread *thread, int client, int server )
+{
+    int i;
+
+    if (server == -1) return -1;
+    if (client == -1)
+    {
+        close( server );
+        return -1;
+    }
+
+    /* first check if we already have an entry for this fd */
+    for (i = 0; i < MAX_INFLIGHT_FDS; i++)
+        if (thread->inflight[i].client == client)
+        {
+            close( thread->inflight[i].server );
+            thread->inflight[i].server = server;
+            return i;
+        }
+
+    /* now find a free spot to store it */
+    for (i = 0; i < MAX_INFLIGHT_FDS; i++)
+        if (thread->inflight[i].client == -1)
+        {
+            thread->inflight[i].client = client;
+            thread->inflight[i].server = server;
+            return i;
+        }
+    return -1;
+}
+
+/* get an inflight fd and purge it from the list */
+/* the fd must be closed when no longer used */
+int thread_get_inflight_fd( struct thread *thread, int client )
+{
+    int i, ret;
+
+    if (client == -1) return -1;
+
+    do
+    {
+        for (i = 0; i < MAX_INFLIGHT_FDS; i++)
+        {
+            if (thread->inflight[i].client == client)
+            {
+                ret = thread->inflight[i].server;
+                thread->inflight[i].server = thread->inflight[i].client = -1;
+                return ret;
+            }
+        }
+    } while (!receive_fd( thread->process ));  /* in case it is still in the socket buffer */
+    return -1;
+}
+
 /* retrieve an LDT selector entry */
 static void get_selector_entry( struct thread *thread, int entry,
                                 unsigned int *base, unsigned int *limit,
@@ -649,14 +741,7 @@ void kill_thread( struct thread *thread, int violent_death )
     wake_up( &thread->obj, 0 );
     detach_thread( thread, violent_death ? SIGTERM : 0 );
     remove_select_user( &thread->obj );
-    release_object( thread->request_fd );
-    close( thread->reply_fd );
-    close( thread->wait_fd );
-    munmap( thread->buffer, MAX_REQUEST_LENGTH );
-    thread->request_fd = NULL;
-    thread->reply_fd = -1;
-    thread->wait_fd = -1;
-    thread->buffer = (void *)-1;
+    cleanup_thread( thread );
     release_object( thread );
 }
 

@@ -204,8 +204,6 @@ void send_reply( struct thread *thread, union generic_request *request )
 {
     int ret;
 
-    assert (thread->pass_fd == -1);
-
     if (debug_level) trace_reply( thread, request );
 
     request->header.error = thread->error;
@@ -221,43 +219,68 @@ void send_reply( struct thread *thread, union generic_request *request )
     }
 }
 
-/* read a message from a client that has something to say */
-void read_request( struct thread *thread )
+/* receive a file descriptor on the process socket */
+int receive_fd( struct process *process )
 {
-    union generic_request req;
-    int ret;
+    struct send_fd data;
+    int fd, ret;
 
 #ifdef HAVE_MSGHDR_ACCRIGHTS
     msghdr.msg_accrightslen = sizeof(int);
-    msghdr.msg_accrights = (void *)&thread->pass_fd;
+    msghdr.msg_accrights = (void *)&fd;
 #else  /* HAVE_MSGHDR_ACCRIGHTS */
     msghdr.msg_control    = &cmsg;
     msghdr.msg_controllen = sizeof(cmsg);
     cmsg.fd = -1;
 #endif  /* HAVE_MSGHDR_ACCRIGHTS */
 
-    assert( thread->pass_fd == -1 );
+    myiovec.iov_base = &data;
+    myiovec.iov_len  = sizeof(data);
 
-    myiovec.iov_base = &req;
-    myiovec.iov_len  = sizeof(req);
-
-    ret = recvmsg( thread->obj.fd, &msghdr, 0 );
+    ret = recvmsg( process->obj.fd, &msghdr, 0 );
 #ifndef HAVE_MSGHDR_ACCRIGHTS
-    thread->pass_fd = cmsg.fd;
+    fd = cmsg.fd;
 #endif
 
-    if (ret == sizeof(req))
+    if (ret == sizeof(data))
     {
-        call_req_handler( thread, &req );
-        thread->pass_fd = -1;
-        return;
+        struct thread *thread = get_thread_from_id( data.tid );
+        if (!thread || thread->process != process)
+        {
+            if (debug_level)
+                fprintf( stderr, "%08x: *fd* %d <- %d bad thread id\n",
+                         (unsigned int)data.tid, data.fd, fd );
+            close( fd );
+        }
+        else
+        {
+            if (debug_level)
+                fprintf( stderr, "%08x: *fd* %d <- %d\n",
+                         (unsigned int)thread, data.fd, fd );
+            thread_add_inflight_fd( thread, data.fd, fd );
+        }
+        return 0;
     }
-    if (!ret)  /* closed pipe */
-        kill_thread( thread, 0 );
+
+    if (!ret)
+    {
+        set_select_events( &process->obj, -1 );  /* stop waiting on it */
+    }
     else if (ret > 0)
-        fatal_protocol_error( thread, "partial recvmsg %d\n", ret );
-    else
-        fatal_protocol_perror( thread, "recvmsg" );
+    {
+        fprintf( stderr, "Protocol error: process %p: partial recvmsg %d for fd\n", process, ret );
+        kill_process( process, NULL, 1 );
+    }
+    else if (ret < 0)
+    {
+        if (errno != EWOULDBLOCK && errno != EAGAIN)
+        {
+            fprintf( stderr, "Protocol error: process %p: ", process );
+            perror( "recvmsg" );
+            kill_process( process, NULL, 1 );
+        }
+    }
+    return -1;
 }
 
 /* send the wakeup signal to a thread */
@@ -280,7 +303,7 @@ int send_client_fd( struct thread *thread, int fd, handle_t handle )
     int ret;
 
     if (debug_level)
-        fprintf( stderr, "%08x: *fd* %d = %d\n", (unsigned int)thread, handle, fd );
+        fprintf( stderr, "%08x: *fd* %d -> %d\n", (unsigned int)thread, handle, fd );
 
 #ifdef HAVE_MSGHDR_ACCRIGHTS
     msghdr.msg_accrightslen = sizeof(fd);

@@ -31,7 +31,7 @@ extern void fatal_protocol_error( struct thread *thread, const char *err, ... );
 extern void fatal_error( const char *err, ... ) WINE_NORETURN;
 extern void fatal_perror( const char *err, ... ) WINE_NORETURN;
 extern const char *get_config_dir(void);
-extern void read_request( struct thread *thread );
+extern int receive_fd( struct process *process );
 extern int send_thread_wakeup( struct thread *thread, int signaled );
 extern int send_client_fd( struct thread *thread, int fd, handle_t handle );
 extern void send_reply( struct thread *thread, union generic_request *request );

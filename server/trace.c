@@ -670,7 +670,8 @@ static void dump_create_file_reply( const struct create_file_request *req )
 
 static void dump_alloc_file_handle_request( const struct alloc_file_handle_request *req )
 {
-    fprintf( stderr, " access=%08x", req->access );
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " fd=%d", req->fd );
 }
 
 static void dump_alloc_file_handle_reply( const struct alloc_file_handle_request *req )
@@ -1889,11 +1890,9 @@ void trace_request( struct thread *thread, const union generic_request *request 
         fprintf( stderr, "%08x: %s(", (unsigned int)thread, req_names[req] );
         cur_pos = 0;
         req_dumpers[req]( request );
+        fprintf( stderr, " )\n" );
     }
-    else
-        fprintf( stderr, "%08x: %d(", (unsigned int)thread, req );
-    if (thread->pass_fd != -1) fprintf( stderr, " ) fd=%d\n", thread->pass_fd );
-    else fprintf( stderr, " )\n" );
+    else fprintf( stderr, "%08x: %d(???)\n", (unsigned int)thread, req );
 }
 
 void trace_reply( struct thread *thread, const union generic_request *request )

@@ -36,6 +36,7 @@ static int running_processes;
 
 static void process_dump( struct object *obj, int verbose );
 static int process_signaled( struct object *obj, struct thread *thread );
+static void process_poll_event( struct object *obj, int event );
 static void process_destroy( struct object *obj );
 
 static const struct object_ops process_ops =
@@ -47,7 +48,7 @@ static const struct object_ops process_ops =
     process_signaled,            /* signaled */
     no_satisfied,                /* satisfied */
     NULL,                        /* get_poll_events */
-    NULL,                        /* poll_event */
+    process_poll_event,          /* poll_event */
     no_get_fd,                   /* get_fd */
     no_flush,                    /* flush */
     no_get_file_info,            /* get_file_info */
@@ -147,11 +148,7 @@ struct thread *create_process( int fd )
     struct process *process;
     struct thread *thread = NULL;
 
-    if (!(process = alloc_object( &process_ops, -1 )))
-    {
-        close( fd );
-        return NULL;
-    }
+    if (!(process = alloc_object( &process_ops, fd ))) return NULL;
     process->next            = NULL;
     process->prev            = NULL;
     process->thread_list     = NULL;
@@ -183,8 +180,9 @@ struct thread *create_process( int fd )
     if (!(process->init_event = create_event( NULL, 0, 1, 0 ))) goto error;
 
     /* create the main thread */
-    if (!(thread = create_thread( fd, process ))) goto error;
+    if (!(thread = create_thread( dup(fd), process ))) goto error;
 
+    set_select_events( &process->obj, POLLIN );  /* start listening to events */
     release_object( process );
     return thread;
 
@@ -310,6 +308,15 @@ static int process_signaled( struct object *obj, struct thread *thread )
     return !process->running_threads;
 }
 
+
+static void process_poll_event( struct object *obj, int event )
+{
+    struct process *process = (struct process *)obj;
+    assert( obj->ops == &process_ops );
+
+    if (event & (POLLERR | POLLHUP)) set_select_events( obj, -1 );
+    else if (event & POLLIN) receive_fd( process );
+}
 
 static void startup_info_destroy( struct object *obj )
 {
@@ -491,7 +498,7 @@ void resume_process( struct process *process )
 }
 
 /* kill a process on the spot */
-static void kill_process( struct process *process, struct thread *skip, int exit_code )
+void kill_process( struct process *process, struct thread *skip, int exit_code )
 {
     struct thread *thread = process->thread_list;
     while (thread)

@@ -184,10 +184,14 @@ void FILE_SetDosError(void)
 HANDLE FILE_DupUnixHandle( int fd, DWORD access )
 {
     HANDLE ret;
+
+    wine_server_send_fd( fd );
+
     SERVER_START_REQ( alloc_file_handle )
     {
         req->access  = access;
-        SERVER_CALL_FD( fd );
+        req->fd      = fd;
+        SERVER_CALL();
         ret = req->handle;
     }
     SERVER_END_REQ;

@@ -36,6 +36,14 @@ struct apc_queue
     struct thread_apc *tail;
 };
 
+/* descriptor for fds currently in flight from client to server */
+struct inflight_fd
+{
+    int client;  /* fd on the client side (or -1 if entry is free) */
+    int server;  /* fd on the server side */
+};
+#define MAX_INFLIGHT_FDS 16  /* max number of fds in flight per thread */
+
 struct thread
 {
     struct object       obj;       /* object header */
@@ -52,9 +60,9 @@ struct thread
     struct thread_wait *wait;        /* current wait condition if sleeping */
     struct apc_queue    system_apc;  /* queue of system async procedure calls */
     struct apc_queue    user_apc;    /* queue of user async procedure calls */
+    struct inflight_fd  inflight[MAX_INFLIGHT_FDS];  /* fds currently in flight */
     unsigned int        error;       /* current error code */
     struct object      *request_fd;  /* fd for receiving client requests */
-    int                 pass_fd;     /* fd to pass to the client */
     int                 reply_fd;    /* fd to send a reply to a client */
     int                 wait_fd;     /* fd to use to wake a sleeping client */
     enum run_state      state;     /* running state */
@@ -96,6 +104,8 @@ extern void wake_up( struct object *obj, int max );
 extern int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
                              enum apc_type type, int system, int nb_args, ... );
 extern void thread_cancel_apc( struct thread *thread, struct object *owner, int system );
+extern int thread_add_inflight_fd( struct thread *thread, int client, int server );
+extern int thread_get_inflight_fd( struct thread *thread, int client );
 extern struct thread_snapshot *thread_snap( int *count );
 
 /* ptrace functions */

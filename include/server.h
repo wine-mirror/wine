@@ -118,6 +118,12 @@ typedef struct
     union debug_event_data   info;   /* event information */
 } debug_event_t;
 
+/* structure used in sending an fd from client to server */
+struct send_fd
+{
+    void  *tid;  /* thread id */
+    int    fd;   /* file descriptor on client-side */
+};
 
 /* Create a new process from the context of the parent */
 struct new_process_request
@@ -539,6 +545,7 @@ struct alloc_file_handle_request
 {
     REQUEST_HEADER;                 /* request header */
     IN  unsigned int access;        /* wanted access rights */
+    IN  int          fd;            /* file descriptor on the client side */
     OUT handle_t     handle;        /* handle to the file */
 };
 
@@ -1592,7 +1599,7 @@ union generic_request
     struct async_result_request async_result;
 };
 
-#define SERVER_PROTOCOL_VERSION 39
+#define SERVER_PROTOCOL_VERSION 40
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */
@@ -1611,10 +1618,10 @@ union generic_request
 /* client communication functions */
 
 extern unsigned int wine_server_call( union generic_request *req, size_t size );
-extern unsigned int wine_server_call_fd( union generic_request *req, size_t size, int fd );
 extern void server_protocol_error( const char *err, ... ) WINE_NORETURN;
 extern void server_protocol_perror( const char *err ) WINE_NORETURN;
 extern void wine_server_alloc_req( union generic_request *req, size_t size );
+extern void wine_server_send_fd( int fd );
 extern int wine_server_recv_fd( int handle, int cache );
 extern const char *get_config_dir(void);
 
@@ -1685,7 +1692,6 @@ struct __server_exception_frame
 
 #define SERVER_CALL()      (wine_server_call( &__req, sizeof(*req) ))
 #define SERVER_CALL_ERR()  (__server_call_err( &__req, sizeof(*req) ))
-#define SERVER_CALL_FD(fd) (wine_server_call_fd( &__req, sizeof(*req), (fd) ))
 
 
 extern int CLIENT_InitServer(void);

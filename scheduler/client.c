@@ -55,7 +55,8 @@ struct cmsg_fd
 };
 
 static void *boot_thread_id;
-
+static sigset_t block_set;  /* signals to block during server calls */
+static int fd_socket;  /* socket to exchange file descriptors with the server */
 
 /* die on a fatal error; use only during initialization */
 static void fatal_error( const char *err, ... ) WINE_NORETURN;
@@ -159,47 +160,6 @@ static void send_request( union generic_request *request )
 }
 
 /***********************************************************************
- *           send_request_fd
- *
- * Send a request to the server, passing a file descriptor.
- */
-static void send_request_fd( union generic_request *request, int fd )
-{
-#ifndef HAVE_MSGHDR_ACCRIGHTS
-    struct cmsg_fd cmsg;
-#endif
-    struct msghdr msghdr;
-    struct iovec vec;
-    int ret;
-
-    vec.iov_base = (void *)request;
-    vec.iov_len  = sizeof(*request);
-
-    msghdr.msg_name    = NULL;
-    msghdr.msg_namelen = 0;
-    msghdr.msg_iov     = &vec;
-    msghdr.msg_iovlen  = 1;
-
-#ifdef HAVE_MSGHDR_ACCRIGHTS
-    msghdr.msg_accrights    = (void *)&fd;
-    msghdr.msg_accrightslen = sizeof(fd);
-#else  /* HAVE_MSGHDR_ACCRIGHTS */
-    cmsg.len   = sizeof(cmsg);
-    cmsg.level = SOL_SOCKET;
-    cmsg.type  = SCM_RIGHTS;
-    cmsg.fd    = fd;
-    msghdr.msg_control    = &cmsg;
-    msghdr.msg_controllen = sizeof(cmsg);
-    msghdr.msg_flags      = 0;
-#endif  /* HAVE_MSGHDR_ACCRIGHTS */
-
-    if ((ret = sendmsg( NtCurrentTeb()->socket, &msghdr, 0 )) == sizeof(*request)) return;
-    if (ret >= 0) server_protocol_error( "partial write %d\n", ret );
-    if (errno == EPIPE) SYSDEPS_ExitThread(0);
-    server_protocol_perror( "sendmsg" );
-}
-
-/***********************************************************************
  *           wait_reply
  *
  * Wait for a reply from the server.
@@ -230,24 +190,64 @@ static void wait_reply( union generic_request *req )
  */
 unsigned int wine_server_call( union generic_request *req, size_t size )
 {
+    sigset_t old_set;
+
     memset( (char *)req + size, 0, sizeof(*req) - size );
+    sigprocmask( SIG_BLOCK, &block_set, &old_set );
     send_request( req );
     wait_reply( req );
+    sigprocmask( SIG_SETMASK, &old_set, NULL );
     return req->header.error;
 }
 
 
 /***********************************************************************
- *           wine_server_call_fd
+ *           wine_server_send_fd
  *
- * Perform a server call, passing a file descriptor.
+ * Send a file descriptor to the server.
  */
-unsigned int wine_server_call_fd( union generic_request *req, size_t size, int fd )
+void wine_server_send_fd( int fd )
 {
-    memset( (char *)req + size, 0, sizeof(*req) - size );
-    send_request_fd( req, fd );
-    wait_reply( req );
-    return req->header.error;
+#ifndef HAVE_MSGHDR_ACCRIGHTS
+    struct cmsg_fd cmsg;
+#endif
+    struct send_fd data;
+    struct msghdr msghdr;
+    struct iovec vec;
+    int ret;
+
+    vec.iov_base = (void *)&data;
+    vec.iov_len  = sizeof(data);
+
+    msghdr.msg_name    = NULL;
+    msghdr.msg_namelen = 0;
+    msghdr.msg_iov     = &vec;
+    msghdr.msg_iovlen  = 1;
+
+#ifdef HAVE_MSGHDR_ACCRIGHTS
+    msghdr.msg_accrights    = (void *)&fd;
+    msghdr.msg_accrightslen = sizeof(fd);
+#else  /* HAVE_MSGHDR_ACCRIGHTS */
+    cmsg.len   = sizeof(cmsg);
+    cmsg.level = SOL_SOCKET;
+    cmsg.type  = SCM_RIGHTS;
+    cmsg.fd    = fd;
+    msghdr.msg_control    = &cmsg;
+    msghdr.msg_controllen = sizeof(cmsg);
+    msghdr.msg_flags      = 0;
+#endif  /* HAVE_MSGHDR_ACCRIGHTS */
+
+    data.tid = (void *)GetCurrentThreadId();
+    data.fd  = fd;
+
+    for (;;)
+    {
+        if ((ret = sendmsg( fd_socket, &msghdr, 0 )) == sizeof(data)) return;
+        if (ret >= 0) server_protocol_error( "partial write %d\n", ret );
+        if (errno == EINTR) continue;
+        if (errno == EPIPE) SYSDEPS_ExitThread(0);
+        server_protocol_perror( "sendmsg" );
+    }
 }
 
 
@@ -563,6 +563,7 @@ int CLIENT_InitServer(void)
 
     /* connect to the server */
     fd = server_connect( oldcwd, serverdir );
+    fd_socket = dup(fd);
 
     /* switch back to the starting directory */
     if (oldcwd)
@@ -570,6 +571,14 @@ int CLIENT_InitServer(void)
         chdir( oldcwd );
         free( oldcwd );
     }
+
+    /* setup the signal mask */
+    sigemptyset( &block_set );
+    sigaddset( &block_set, SIGALRM );
+    sigaddset( &block_set, SIGIO );
+    sigaddset( &block_set, SIGINT );
+    sigaddset( &block_set, SIGHUP );
+
     return fd;
 }
 
