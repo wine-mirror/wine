@@ -6922,7 +6922,7 @@ static BOOL LISTVIEW_Update(LISTVIEW_INFO *infoPtr, INT nItem)
 {
     TRACE("(nItem=%d)\n", nItem);
 
-    if (nItem < 0 && nItem >= infoPtr->nItemCount) return FALSE;
+    if (nItem < 0 || nItem >= infoPtr->nItemCount) return FALSE;
 
     /* rearrange with default alignment style */
     if (is_autoarrange(infoPtr))
