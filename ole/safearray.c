@@ -15,7 +15,7 @@
 #include <strings.h>
 #include <stdio.h>
 #include <debug.h>
-#include <interfaces.h>
+#include "wine/obj_base.h"
 
 /* Localy used methods */
 static INT32  

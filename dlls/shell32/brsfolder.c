@@ -16,7 +16,7 @@
 #include "commctrl.h"
 #include "spy.h"
 
-#include "interfaces.h"
+#include "wine/obj_base.h"
 #include "shell.h"
 #include "pidl.h"
 #include "shlobj.h"

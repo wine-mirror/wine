@@ -7,7 +7,7 @@
 #include "config.h"
 #include "windows.h"
 #include "wintypes.h"
-#include "interfaces.h"
+#include "wine/obj_base.h"
 #include "ddraw.h"
 #include "d3d.h"
 #include "debug.h"

@@ -27,8 +27,8 @@
 #include "winerror.h"
 #include "ole.h"
 #include "ole2.h"
-#include "compobj.h"
-#include "interfaces.h"
+#include "wine/obj_base.h"
+#include "wine/obj_storage.h"
 
 #include "storage32.h"
 

@@ -7,7 +7,7 @@
 #include "windows.h"
 #include "wintypes.h"
 #include "winerror.h"
-#include "interfaces.h"
+#include "wine/obj_base.h"
 #include "heap.h"
 #include "ddraw.h"
 #include "d3d.h"
