@@ -961,7 +961,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     INT sw = SW_SHOW;
     struct tagCLASS *classPtr;
     WND *wndPtr;
-    HWND hwnd, hwndLinkAfter, parent, owner;
+    HWND hwnd, parent, owner;
     INT wndExtra;
     DWORD clsStyle;
     WNDPROC winproc;
@@ -1066,32 +1066,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->cbWndExtra     = wndExtra;
 
     if (wndExtra) memset( wndPtr->wExtra, 0, wndExtra);
-
-    /* Call the WH_CBT hook */
-
-    hwndLinkAfter = ((cs->style & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD)
- ? HWND_BOTTOM : HWND_TOP;
-
-    if (HOOK_IsHooked( WH_CBT ))
-    {
-	CBT_CREATEWNDA cbtc;
-        LRESULT ret;
-
-	cbtc.lpcs = cs;
-	cbtc.hwndInsertAfter = hwndLinkAfter;
-        ret = (type == WIN_PROC_32W) ? HOOK_CallHooksW(WH_CBT, HCBT_CREATEWND,
-                                                       (WPARAM)hwnd, (LPARAM)&cbtc)
-                                     : HOOK_CallHooksA(WH_CBT, HCBT_CREATEWND,
-                                                       (WPARAM)hwnd, (LPARAM)&cbtc);
-        if (ret)
-	{
-	    TRACE("CBT-hook returned 0\n");
-            free_window_handle( hwnd );
-            CLASS_RemoveWindow( classPtr );
-            WIN_ReleaseWndPtr(wndPtr);
-            return 0;
-	}
-    }
 
     /* Correct the window style - stage 2 */
 

@@ -25,6 +25,7 @@
 #include "winpos.h"
 #include "dce.h"
 #include "options.h"
+#include "hook.h"
 
 DEFAULT_DEBUG_CHANNEL(x11drv);
 
@@ -821,6 +822,7 @@ BOOL X11DRV_DestroyWindow( HWND hwnd )
  */
 BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 {
+    HWND hwndLinkAfter;
     Display *display = thread_display();
     WND *wndPtr;
     struct x11drv_win_data *data;
@@ -854,6 +856,31 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
     SetPropA( hwnd, whole_window_atom, (HANDLE)data->whole_window );
     SetPropA( hwnd, client_window_atom, (HANDLE)data->client_window );
+
+    /* Call the WH_CBT hook */
+
+    hwndLinkAfter = ((cs->style & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD)
+ ? HWND_BOTTOM : HWND_TOP;
+
+    if (HOOK_IsHooked( WH_CBT ))
+    {
+	CBT_CREATEWNDA cbtc;
+        LRESULT lret;
+
+	cbtc.lpcs = cs;
+	cbtc.hwndInsertAfter = hwndLinkAfter;
+        lret = (unicode) ? HOOK_CallHooksW(WH_CBT, HCBT_CREATEWND,
+                                                       (WPARAM)hwnd, (LPARAM)&cbtc)
+                        : HOOK_CallHooksA(WH_CBT, HCBT_CREATEWND,
+                                                       (WPARAM)hwnd, (LPARAM)&cbtc);
+        if (lret)
+	{
+	    TRACE("CBT-hook returned !0\n");
+            goto failed;
+	} 
+    }
+
+
 
     /* Send the WM_GETMINMAXINFO message and fix the size if needed */
     if ((cs->style & WS_THICKFRAME) || !(cs->style & (WS_POPUP | WS_CHILD)))
