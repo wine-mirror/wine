@@ -3479,6 +3479,33 @@ TREEVIEW_HScroll (HWND hwnd, WPARAM wParam, LPARAM lParam)
   return TRUE;
 }
 
+static LRESULT TREEVIEW_MouseWheel (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+
+    TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
+    short gcWheelDelta = 0;
+    UINT pulScrollLines = 3;
+
+    SystemParametersInfoW(SPI_GETWHEELSCROLLLINES,0, &pulScrollLines, 0);
+
+    gcWheelDelta -= (short) HIWORD(wParam);
+    pulScrollLines *= (gcWheelDelta / WHEEL_DELTA);
+
+    if (abs(gcWheelDelta) >= WHEEL_DELTA && pulScrollLines)
+    {
+        int wheelDy = pulScrollLines * infoPtr->uRealItemHeight;
+        int newDy = infoPtr->cy + wheelDy;
+        int maxDy = infoPtr->uTotalHeight - infoPtr->uVisibleHeight;
+
+        if (newDy > maxDy) newDy = maxDy;
+        if (newDy < 0) newDy = 0;
+
+        if (newDy == infoPtr->cy) return TRUE;
+
+        TREEVIEW_VScroll(hwnd, MAKEWPARAM(SB_THUMBTRACK,newDy),0);
+    }
+  return TRUE;
+}
 
 static LRESULT
 TREEVIEW_KeyDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
@@ -3908,6 +3935,11 @@ TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case WM_VSCROLL: 
 			return TREEVIEW_VScroll (hwnd, wParam, lParam);
   
+                case WM_MOUSEWHEEL:
+                    if (wParam & (MK_SHIFT | MK_CONTROL))
+                        return DefWindowProcA( hwnd, uMsg, wParam, lParam );
+                    return TREEVIEW_MouseWheel (hwnd, wParam, lParam);
+
 		case WM_DRAWITEM:
 			TRACE ("drawItem\n");
 			return DefWindowProcA (hwnd, uMsg, wParam, lParam);
