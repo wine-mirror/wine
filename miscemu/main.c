@@ -34,16 +34,6 @@ int WINAPI wine_initial_task( HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, INT
     HINSTANCE16 instance;
     HMODULE user32;
 
-    if (!(user32 = LoadLibraryA( "user32.dll" )))
-    {
-        MESSAGE( "Cannot load user32.dll\n" );
-        ExitProcess( GetLastError() );
-    }
-    pGetMessageA      = (void *)GetProcAddress( user32, "GetMessageA" );
-    pTranslateMessage = (void *)GetProcAddress( user32, "TranslateMessage" );
-    pDispatchMessageA = (void *)GetProcAddress( user32, "DispatchMessageA" );
-    THUNK_InitCallout();
-
     if ((instance = NE_StartMain( main_exe_name, main_exe_file )) < 32)
     {
         if (instance == 11)  /* try DOS format */
@@ -66,6 +56,15 @@ int WINAPI wine_initial_task( HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, INT
     CloseHandle( main_exe_file );  /* avoid file sharing problems */
 
     /* Start message loop for desktop window */
+
+    if (!(user32 = LoadLibraryA( "user32.dll" )))
+    {
+        MESSAGE( "Cannot load user32.dll\n" );
+        ExitProcess( GetLastError() );
+    }
+    pGetMessageA      = (void *)GetProcAddress( user32, "GetMessageA" );
+    pTranslateMessage = (void *)GetProcAddress( user32, "TranslateMessage" );
+    pDispatchMessageA = (void *)GetProcAddress( user32, "DispatchMessageA" );
 
     while ( GetNumTasks16() > 1  && pGetMessageA( &msg, 0, 0, 0 ) )
     {

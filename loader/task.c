@@ -1183,11 +1183,22 @@ HANDLE WINAPI GetFastQueue16( void )
     TEB *teb = NtCurrentTeb();
     if (!teb) return 0;
 
-    if (!teb->queue && Callout.InitThreadInput16)
+    if (!teb->queue)
+    {
+        if (!Callout.InitThreadInput16)
+        {
+            THUNK_InitCallout();
+            if (!Callout.InitThreadInput16)
+            {
+                FIXME("InitThreadInput16 callout not found, trouble ahead\n");
+                return 0;
+            }
+        }
         Callout.InitThreadInput16( 0, THREAD_IsWin16(teb)? 4 : 5 );
 
-    if (!teb->queue)
-        FIXME("(): should initialize thread-local queue, expect failure!\n" );
+        if (!teb->queue)
+            FIXME("(): should initialize thread-local queue, expect failure!\n" );
+    }
 
     return (HANDLE)teb->queue;
 }
