@@ -367,8 +367,8 @@ BOOL CURSORICON_SimulateLoadingFromResourceW( LPWSTR filename, BOOL fCursor,
 	  if ( !*(LPWORD) pos==0x2fe)		/* iconsize */
 	  { goto fail;
 	  }
-	  bits+=2;
-	  FIXME_(cursor)("icon size ok %p \n", bits);
+	  bits=(CURSORICONFILEDIR*)(pos+4);
+	  FIXME_(cursor)("icon size ok. offset=%p \n", bits);
 	  break;
 	}
         pos+=2;
