@@ -494,8 +494,10 @@ static BOOL PROFILE_Open( LPCSTR filename )
          }
       }
 
-    /* Rotate the oldest to the top to be replaced */
+    /* Flush the old current profile */
+    PROFILE_FlushFile();
 
+    /* Make the oldest profile the current one only in order to get rid of it */
     if(i==N_CACHED_PROFILES)
       {
        tempProfile=MRUProfile[N_CACHED_PROFILES-1];
@@ -503,11 +505,9 @@ static BOOL PROFILE_Open( LPCSTR filename )
           MRUProfile[i]=MRUProfile[i-1];
        CurProfile=tempProfile;
       }
-
-    /* Flush the profile */
-
     if(CurProfile->filename) PROFILE_ReleaseFile();
 
+    /* OK, now that CurProfile is definitely free we assign it our new file */
     newdos_name = HEAP_strdupA( SystemHeap, 0, full_name.short_name );
     CurProfile->dos_name  = newdos_name;
     CurProfile->filename  = HEAP_strdupA( SystemHeap, 0, filename );
