@@ -1166,11 +1166,13 @@ BOOLEAN WINAPI RtlFreeHeap( HANDLE heap, ULONG flags, PVOID ptr )
 {
     ARENA_INUSE *pInUse;
     SUBHEAP *subheap;
-    HEAP *heapPtr = HEAP_GetPtr( heap );
+    HEAP *heapPtr;
 
     /* Validate the parameters */
 
     if (!ptr) return TRUE;  /* freeing a NULL ptr isn't an error in Win2k */
+
+    heapPtr = HEAP_GetPtr( heap );
     if (!heapPtr)
     {
         RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_HANDLE );
