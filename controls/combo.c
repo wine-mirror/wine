@@ -1816,7 +1816,7 @@ static void COMBO_MouseMove( LPHEADCOMBO lphc, WPARAM wParam, LPARAM lParam )
 /***********************************************************************
  *           ComboWndProc_common
  *
- * http://www.microsoft.com/msdn/sdk/platforms/doc/sdk/win32/ctrl/src/combobox_15.htm
+ * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/commctls/comboboxes/comboboxes.asp
  */
 static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
                                     WPARAM wParam, LPARAM lParam, BOOL unicode )

@@ -56,7 +56,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
  *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/programmingguide/advancedtopics/VertexPipe/matrixstack/matrixstack.asp
  *
  * FVF
- *  http://msdn.microsoft.com/library/en-us/directx9_c/directx/graphics/programmingguide/GettingStarted/VertexFormats/vformats.asp
+ *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/programmingguide/GettingStarted/VertexFormats/vformats.asp
  *
  * NVIDIA: DX8 Vertex Shader to NV Vertex Program
  *  http://developer.nvidia.com/view.asp?IO=vstovp

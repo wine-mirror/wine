@@ -20,14 +20,17 @@
 
 /* Documentation on MSDN:
  *
+ * (Top level COM documentation)
+ * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnanchor/html/componentdevelopmentank.asp
+ *
  * (COM Proxy)
- * http://msdn.microsoft.com/library/en-us/com/comext_1q0p.asp
+ * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/com/htm/comext_1q0p.asp
  *
  * (COM Stub)
- * http://msdn.microsoft.com/library/en-us/com/comext_1lia.asp
+ * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/com/htm/comext_1lia.asp
  *
  * (Marshal)
- * http://msdn.microsoft.com/library/en-us/com/comext_1gfn.asp
+ * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/com/htm/comext_1gfn.asp
  *
  */
 
