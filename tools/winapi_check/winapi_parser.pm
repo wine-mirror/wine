@@ -165,7 +165,7 @@ sub parse_c_file($$) {
     print STDERR "Processing file '$file' ... " if $options->verbose;
     open(IN, "< $file") || die "<internal>: $file: $!\n";
     local $_ = "";
-    while($again || defined(my $line = <IN>)) {
+    readmore: while($again || defined(my $line = <IN>)) {
 	$_ = "" if !defined($_);
 	if(!$again) {
 	    chomp $line;
@@ -191,33 +191,45 @@ sub parse_c_file($$) {
 	    last;
 	}
 
-	# remove C comments
-	if(s/^([^\"\/]*?(?:\"[^\"]*?\"[^\"]*?)*?)(?=\/\*)//s) {
-	    my $prefix = $1;
-	    if(s/^(\/\*.*?\*\/)//s) {
-		my @lines = split(/\n/, $1);
-		push @comment_lines, $.;
-		push @comments, $1;
-		&$c_comment_found_callback($. - $#lines, $., $1);
-		if($#lines <= 0) {
-		    $_ = "$prefix $_";
-		} else {
-		    $_ = $prefix . ("\n" x $#lines) . $_;
-		}
-		$again = 1;
-	    } else {
-		$_ = "$prefix$_";
-		$lookahead = 1;
-	    }
-	    next;
-	}
-
-	# remove C++ comments
-	while(s/^([^\"\/]*?(?:\"[^\"]*?\"[^\"]*?)*?)(\/\/.*?)$/$1/s) {
-	    &$cplusplus_comment_found_callback($., $2);
-	    $again = 1;
-	}
-	if($again) { next; }
+        my $prefix="";
+        while ($_ ne "")
+        {
+            if (s/^([^\"\/]+|\"(?:[^\\\"]*|\\.)*\")//)
+            {
+                $prefix.=$1;
+            }
+            elsif (/^\/\*/)
+            {
+                # remove C comments
+                if(s/^(\/\*.*?\*\/)//s) {
+                    my @lines = split(/\n/, $1);
+                    push @comment_lines, $.;
+                    push @comments, $1;
+                    &$c_comment_found_callback($. - $#lines, $., $1);
+                    if($#lines <= 0) {
+                        $_ = "$prefix $_";
+                    } else {
+                        $_ = $prefix . ("\n" x $#lines) . $_;
+                    }
+                    $again = 1;
+                } else {
+                    $_ = "$prefix$_";
+                    $lookahead = 1;
+                }
+                next readmore;
+            }
+            elsif (s/^(\/\/.*)$//)
+            {
+                # remove C++ comments
+                &$cplusplus_comment_found_callback($., $1);
+                $again = 1;
+            }
+            elsif (s/^(.)//)
+            {
+                $prefix.=$1;
+            }
+        }
+        $_=$prefix;
 
 	# remove preprocessor directives
 	if(s/^\s*\#/\#/s) {
@@ -652,7 +664,7 @@ sub parse_c_file($$) {
 	    $output->write("$file: $.: can't parse: '$&'\n");
 	} elsif(/\'[^\']*\'/s) {
 	    $_ = $'; $again = 1;
-	} elsif(/\"[^\"]*\"/s) {
+	} elsif(/\"(?:[^\\\"]*|\\.)*\"/s) {
 	    $_ = $'; $again = 1;
 	} elsif(/;/s) {
 	    $_ = $'; $again = 1;
