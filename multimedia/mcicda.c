@@ -81,6 +81,7 @@ static WINE_CDAUDIO	CDADev[MAX_CDAUDIODRV];
 /**************************************************************************
  * 				CDAUDIO_mciGetOpenDrv		[internal]	
  */
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
 static WINE_CDAUDIO*  CDAUDIO_mciGetOpenDrv(UINT16 wDevID)
 {
     if (wDevID >= MAX_CDAUDIODRV || CDADev[wDevID].nUseCount == 0 || 
@@ -90,13 +91,14 @@ static WINE_CDAUDIO*  CDAUDIO_mciGetOpenDrv(UINT16 wDevID)
     }
     return &CDADev[wDevID];
 }
+#endif
 
 /**************************************************************************
  * 				CDAUDIO_GetNumberOfTracks		[internal]
  */
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
 static UINT16 CDAUDIO_GetNumberOfTracks(WINE_CDAUDIO* wcda)
 {
-#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
 #ifdef linux
     struct cdrom_tochdr	hdr;
 #else
@@ -119,17 +121,15 @@ static UINT16 CDAUDIO_GetNumberOfTracks(WINE_CDAUDIO* wcda)
 #endif
     }
     return wcda->nTracks;
-#else
-    return (WORD)-1;
-#endif
 }
+#endif
 
 /**************************************************************************
  * 				CDAUDIO_GetTracksInfo			[internal]
  */
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
 static BOOL32 CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
 {
-#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     int		i, length;
     int		start, last_start = 0;
     int		total_length = 0;
@@ -226,19 +226,17 @@ static BOOL32 CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
     wcda->dwTotalLen = total_length;
     TRACE(cdaudio,"total_len=%u\n", total_length);
     return TRUE;
-#else
-    return FALSE;
-#endif
 }
+#endif
 
 /**************************************************************************
 >>>>>>> 1.9
  * 				CDAUDIO_CalcFrame			[internal]
  */
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
 static DWORD CDAUDIO_CalcFrame(WINE_CDAUDIO* wcda, DWORD dwTime)
 {
     DWORD	dwFrame = 0;
-#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     UINT16	wTrack;
     
     TRACE(cdaudio,"(%p, %08lX, %lu);\n", wcda, wcda->dwTimeFormat, dwTime);
@@ -270,16 +268,16 @@ static DWORD CDAUDIO_CalcFrame(WINE_CDAUDIO* wcda, DWORD dwTime)
 	dwFrame += MCI_TMSF_FRAME(dwTime);
 	break;
     }
-#endif
     return dwFrame;
 }
+#endif
 
 /**************************************************************************
  * 				CDAUDIO_GetCDStatus				[internal]
  */
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
 static BOOL32 CDAUDIO_GetCDStatus(WINE_CDAUDIO*	wcda)
 {
-#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     int		oldmode = wcda->cdMode;
 #ifdef linux
     wcda->sc.cdsc_format = CDROM_MSF;
@@ -383,18 +381,16 @@ static BOOL32 CDAUDIO_GetCDStatus(WINE_CDAUDIO*	wcda)
 	}
     }
     return TRUE;
-#else
-    return FALSE;
-#endif
 }
+#endif
 
 /**************************************************************************
  * 				CDAUDIO_CalcTime			[internal]
  */
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
 static DWORD CDAUDIO_CalcTime(WINE_CDAUDIO* wcda, DWORD dwFrame)
 {
     DWORD	dwTime = 0;
-#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     UINT16	wTrack;
     UINT16	wMinutes;
     UINT16	wSeconds;
@@ -430,9 +426,9 @@ static DWORD CDAUDIO_CalcTime(WINE_CDAUDIO* wcda, DWORD dwFrame)
 	TRACE(cdaudio, "%02u-%02u:%02u:%02u\n", wTrack, wMinutes, wSeconds, wFrames);
 	break;
     }
-#endif
     return dwTime;
 }
+#endif
 
 static DWORD CDAUDIO_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms);
 static DWORD CDAUDIO_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms);
@@ -926,9 +922,9 @@ static DWORD CDAUDIO_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS
 /**************************************************************************
  * 				CDAUDIO_mciSeek			[internal]
  */
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
 static DWORD CDAUDIO_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 {
-#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
     DWORD	dwRet;
     MCI_PLAY_PARMS 	playParms;
 
@@ -966,14 +962,13 @@ static DWORD CDAUDIO_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpPa
 			  wcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     return dwRet;
-#else
-    return MCIERR_HARDWARE;
-#endif
 }
+#endif
 
 /**************************************************************************
  * 				CDAUDIO_mciSetDoor		[internal]
  */
+#if defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
 static DWORD	CDAUDIO_mciSetDoor(UINT16 wDevID, int open)
 {
     WINE_CDAUDIO*	wcda = CDAUDIO_mciGetOpenDrv(wDevID);
@@ -1004,6 +999,7 @@ static DWORD	CDAUDIO_mciSetDoor(UINT16 wDevID, int open)
     wcda->nTracks = 0;
     return 0;
 }
+#endif
 
 /**************************************************************************
  * 				CDAUDIO_mciSet			[internal]
