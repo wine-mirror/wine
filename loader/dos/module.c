@@ -6,6 +6,8 @@
  * This code hasn't been completely cleaned up yet.
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,7 +40,9 @@ DEFAULT_DEBUG_CHANNEL(module)
 
 #ifdef MZ_SUPPORTED
 
-#include <sys/mman.h>
+#ifdef HAVE_SYS_MMAN_H
+# include <sys/mman.h>
+#endif
 
 /* define this to try mapping through /proc/pid/mem instead of a temp file,
    but Linus doesn't like mmapping /proc/pid/mem, so it doesn't work for me */

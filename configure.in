@@ -532,37 +532,51 @@ AC_CHECK_FUNCS(\
 dnl **** Check for header files ****
 
 AC_CHECK_HEADERS(\
+	a.out.h \
+	a_out.h \
+	arpa/inet.h \
 	arpa/nameser.h \
 	curses.h \
 	elf.h \
 	float.h \
 	libio.h \
+	link.h \
 	linux/cdrom.h \
 	linux/joystick.h \
 	linux/ucdrom.h \
 	ncurses.h \
 	net/if.h \
 	netinet/in.h \
+	netinet/tcp.h \
 	resolv.h \
+	sched.h \
+	socket.h \
 	strings.h \
 	sys/cdio.h \
 	sys/errno.h \
 	sys/file.h \
 	sys/filio.h \
+	sys/ipc.h \
 	sys/lwp.h \
 	sys/mman.h \
 	sys/modem.h \
 	sys/mount.h \
+	sys/msg.h \
 	sys/param.h \
 	sys/signal.h \
+	sys/shm.h \
+	sys/socket.h \
 	sys/sockio.h \
 	sys/statfs.h \
 	sys/strtio.h \
 	sys/syscall.h \
+	sys/wait.h \
+	sys/v86.h \
+	sys/v86intr.h \
 	sys/vfs.h \
+	sys/vm86.h \
 	syscall.h \
 	ucontext.h \
-	unistd.h \
 	wctype.h \
 )
 AC_HEADER_STAT()

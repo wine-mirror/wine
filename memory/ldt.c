@@ -5,6 +5,8 @@
  * Copyright 1995 Alexandre Julliard
  */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -16,7 +18,10 @@ DEFAULT_DEBUG_CHANNEL(ldt)
 #ifdef __i386__
 
 #ifdef linux
-#include <sys/syscall.h>
+
+#ifdef HAVE_SYS_SYSCALL_H
+# include <sys/syscall.h>
+#endif
 
 struct modify_ldt_s 
 {

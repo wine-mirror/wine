@@ -4,6 +4,8 @@
  * Copyright (C) 1998 Alexandre Julliard
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <fcntl.h>
 #include <string.h>

@@ -1027,7 +1027,7 @@ INT WINAPI MulDiv(
 	     INT nMultiplier,
 	     INT nDivisor
 ) {
-#if (SIZEOF_LONG_LONG >= 8)
+#if SIZEOF_LONG_LONG >= 8
     long long ret;
 
     if (!nDivisor) return -1;

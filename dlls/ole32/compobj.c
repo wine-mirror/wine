@@ -8,9 +8,8 @@
  */
 
 #include "config.h"
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
+
+#include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -19,7 +18,9 @@
 # include <sys/file.h>
 #endif
 #include <sys/ioctl.h>
-#include <sys/socket.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
 #ifdef HAVE_SYS_SOCKIO_H
 # include <sys/sockio.h>
 #endif

@@ -6,6 +6,8 @@
  * This code hasn't been completely cleaned up yet.
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,8 +36,12 @@ DECLARE_DEBUG_CHANNEL(relay)
 
 #ifdef MZ_SUPPORTED
 
-#include <sys/vm86.h>
-#include <sys/mman.h>
+#ifdef HAVE_SYS_VM86_H
+# include <sys/vm86.h>
+#endif
+#ifdef HAVE_SYS_MMAN_H
+# include <sys/mman.h>
+#endif
 
 #define IF_CLR(ctx) EFL_reg(ctx) &= ~VIF_MASK
 #define IF_ENABLED(ctx) (EFL_reg(ctx) & VIF_MASK)

@@ -1599,7 +1599,7 @@ void DOSFS_UnixTimeToFileTime( time_t unix_time, FILETIME *filetime,
        Claus Fischer, fischer@iue.tuwien.ac.at
        */
 
-#if (SIZEOF_LONG_LONG >= 8)
+#if SIZEOF_LONG_LONG >= 8
 #  define USE_LONG_LONG 1
 #else
 #  define USE_LONG_LONG 0

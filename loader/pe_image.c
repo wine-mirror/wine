@@ -33,6 +33,8 @@
  *   difficult to support... (See mm/filemap.c).
  */
 
+#include "config.h"
+
 #include <errno.h>
 #include <assert.h>
 #include <stdlib.h>

@@ -6,6 +6,8 @@
 
 #if defined(linux) && defined(__i386__)
 
+#include "config.h"
+
 /* apparently ELF images are usually loaded high anyway */
 #ifndef __ELF__
 /* if not, force dosmod at high addresses */
@@ -20,12 +22,18 @@ asm(".org 0x110000");
 #include <fcntl.h>
 #include <signal.h>
 #include <sys/stat.h>
-#include <sys/mman.h>
-#include <sys/vm86.h>
+#ifdef HAVE_SYS_MMAN_H
+# include <sys/mman.h>
+#endif
+#ifdef HAVE_SYS_VM86_H
+# include <sys/vm86.h>
+#endif
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
-#include <sys/wait.h>
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>
+#endif
 #include "dosmod.h"
 
  /* FIXME: hack because libc vm86 may be the old syscall version */

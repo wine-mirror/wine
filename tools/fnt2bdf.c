@@ -7,7 +7,11 @@
  *
  */
 
-#include <sys/param.h>
+#include "config.h"
+
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>

@@ -26,6 +26,8 @@ AJ 990101:
  * since we need 2 byte wide characters. - Marcus Meissner, 981031
  */
 
+#include "config.h"
+
 #include <errno.h>
 #include <stdlib.h>
 #include <stdarg.h>

@@ -7,18 +7,27 @@
  * on the access of the current handle?
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <sys/errno.h>
+#ifdef HAVE_SYS_ERRNO_H
+# include <sys/errno.h>
+#endif
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <sys/socket.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
 #include <sys/ioctl.h>
+#ifdef HAVE_SYS_FILIO_H
+# include <sys/filio.h>
+#endif
 #include <time.h>
 #include <unistd.h>
 

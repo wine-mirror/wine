@@ -217,6 +217,15 @@
 /* Define if you have the <X11/xpm.h> header file.  */
 #undef HAVE_X11_XPM_H
 
+/* Define if you have the <a.out.h> header file.  */
+#undef HAVE_A_OUT_H
+
+/* Define if you have the <a_out.h> header file.  */
+#undef HAVE_A_OUT_H
+
+/* Define if you have the <arpa/inet.h> header file.  */
+#undef HAVE_ARPA_INET_H
+
 /* Define if you have the <arpa/nameser.h> header file.  */
 #undef HAVE_ARPA_NAMESER_H
 
@@ -234,6 +243,9 @@
 
 /* Define if you have the <libio.h> header file.  */
 #undef HAVE_LIBIO_H
+
+/* Define if you have the <link.h> header file.  */
+#undef HAVE_LINK_H
 
 /* Define if you have the <linux/cdrom.h> header file.  */
 #undef HAVE_LINUX_CDROM_H
@@ -256,8 +268,17 @@
 /* Define if you have the <netinet/in.h> header file.  */
 #undef HAVE_NETINET_IN_H
 
+/* Define if you have the <netinet/tcp.h> header file.  */
+#undef HAVE_NETINET_TCP_H
+
 /* Define if you have the <resolv.h> header file.  */
 #undef HAVE_RESOLV_H
+
+/* Define if you have the <sched.h> header file.  */
+#undef HAVE_SCHED_H
+
+/* Define if you have the <socket.h> header file.  */
+#undef HAVE_SOCKET_H
 
 /* Define if you have the <soundcard.h> header file.  */
 #undef HAVE_SOUNDCARD_H
@@ -277,6 +298,9 @@
 /* Define if you have the <sys/filio.h> header file.  */
 #undef HAVE_SYS_FILIO_H
 
+/* Define if you have the <sys/ipc.h> header file.  */
+#undef HAVE_SYS_IPC_H
+
 /* Define if you have the <sys/lwp.h> header file.  */
 #undef HAVE_SYS_LWP_H
 
@@ -289,11 +313,20 @@
 /* Define if you have the <sys/mount.h> header file.  */
 #undef HAVE_SYS_MOUNT_H
 
+/* Define if you have the <sys/msg.h> header file.  */
+#undef HAVE_SYS_MSG_H
+
 /* Define if you have the <sys/param.h> header file.  */
 #undef HAVE_SYS_PARAM_H
 
+/* Define if you have the <sys/shm.h> header file.  */
+#undef HAVE_SYS_SHM_H
+
 /* Define if you have the <sys/signal.h> header file.  */
 #undef HAVE_SYS_SIGNAL_H
+
+/* Define if you have the <sys/socket.h> header file.  */
+#undef HAVE_SYS_SOCKET_H
 
 /* Define if you have the <sys/sockio.h> header file.  */
 #undef HAVE_SYS_SOCKIO_H
@@ -310,17 +343,26 @@
 /* Define if you have the <sys/syscall.h> header file.  */
 #undef HAVE_SYS_SYSCALL_H
 
+/* Define if you have the <sys/v86.h> header file.  */
+#undef HAVE_SYS_V86_H
+
+/* Define if you have the <sys/v86intr.h> header file.  */
+#undef HAVE_SYS_V86INTR_H
+
 /* Define if you have the <sys/vfs.h> header file.  */
 #undef HAVE_SYS_VFS_H
+
+/* Define if you have the <sys/vm86.h> header file.  */
+#undef HAVE_SYS_VM86_H
+
+/* Define if you have the <sys/wait.h> header file.  */
+#undef HAVE_SYS_WAIT_H
 
 /* Define if you have the <syscall.h> header file.  */
 #undef HAVE_SYSCALL_H
 
 /* Define if you have the <ucontext.h> header file.  */
 #undef HAVE_UCONTEXT_H
-
-/* Define if you have the <unistd.h> header file.  */
-#undef HAVE_UNISTD_H
 
 /* Define if you have the <wctype.h> header file.  */
 #undef HAVE_WCTYPE_H

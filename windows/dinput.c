@@ -30,7 +30,9 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <errno.h>
-#include <sys/errno.h>
+#ifdef HAVE_SYS_ERRNO_H
+# include <sys/errno.h>
+#endif
 #ifdef HAVE_LINUX_JOYSTICK_H
 # include <linux/joystick.h>
 # define JOYDEV	"/dev/js0"

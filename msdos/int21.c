@@ -2,6 +2,8 @@
  * DOS interrupt 21h handler
  */
 
+#include "config.h"
+
 #include <time.h>
 #include <fcntl.h>
 #include <errno.h>

@@ -22,10 +22,14 @@
 #include "ts_xutil.h"
 
 #ifdef HAVE_LIBXXSHM
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include "ts_xshm.h"
+# include <sys/types.h>
+# ifdef HAVE_SYS_IPC_H
+#  include <sys/ipc.h>
+# endif
+# ifdef HAVE_SYS_SHM_H
+#  include <sys/shm.h>
+# endif
+# include "ts_xshm.h"
 #endif /* defined(HAVE_LIBXXSHM) */
 
 #ifdef HAVE_LIBXXF86DGA
@@ -40,7 +44,9 @@
 
 #include <unistd.h>
 #include <assert.h>
-#include <sys/signal.h>
+#ifdef HAVE_SYS_SIGNAL_H
+# include <sys/signal.h>
+#endif
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>

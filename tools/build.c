@@ -6,6 +6,8 @@
  * Copyright 1999 Ulrich Weigand
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>

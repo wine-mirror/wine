@@ -38,7 +38,7 @@ void Process_ClockTimeToFileTime( clock_t unix_time, LPFILETIME filetime )
 {
     double td = (unix_time*10000000.0)/CLK_TCK;
     /* Yes, double, because long int might overflow here. */
-#if (SIZEOF_LONG_LONG >= 8)
+#if SIZEOF_LONG_LONG >= 8
     unsigned long long t = td;
     filetime->dwLowDateTime  = (UINT) t;
     filetime->dwHighDateTime = (UINT) (t >> 32);

@@ -4,6 +4,8 @@
  * Copyright 1995 Martin von Loewis, Sven Verdoolaege, and Cameron Heide
  */
 
+#include "config.h"
+
 #include <errno.h>
 #ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>

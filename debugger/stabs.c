@@ -34,14 +34,20 @@
 #ifdef HAVE_ELF_H
 # include <elf.h>
 #endif
-#include <link.h>
+#ifdef HAVE_LINK_H
+# include <link.h>
+#endif
 #ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
+# include <sys/mman.h>
 #endif
 #elif defined(__EMX__)
-#include <a_out.h>
+#ifdef HAVE_A_OUT_H
+# include <a_out.h>
+#endif
 #else
-#include <a.out.h>
+#ifdef HAVE_A_OUT_H
+# include <a.out.h>
+#endif
 #endif
 
 #ifndef N_UNDF

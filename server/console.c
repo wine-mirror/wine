@@ -7,6 +7,8 @@
  *        the client-side console support.
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <fcntl.h>
 #include <signal.h>

@@ -11,6 +11,16 @@
 #include "ts_xlib.h"
 #include "ts_xutil.h"
 
+#ifdef HAVE_LIBXXSHM
+# include "ts_xshm.h"
+# ifdef HAVE_SYS_SHM_H
+#  include <sys/shm.h>
+# endif
+# ifdef HAVE_SYS_IPC_H
+#  include <sys/ipc.h>
+# endif
+#endif /* defined(HAVE_LIBXXSHM) */
+
 #include "windef.h"
 #include "bitmap.h"
 #include "x11drv.h"
@@ -21,10 +31,6 @@
 #include "selectors.h"
 #include "global.h"
 #include "xmalloc.h" /* for XCREATEIMAGE macro */
-
-#include "ts_xshm.h"
-#include <sys/shm.h>
-#include <sys/ipc.h>
 
 DECLARE_DEBUG_CHANNEL(bitmap)
 DECLARE_DEBUG_CHANNEL(x11drv)

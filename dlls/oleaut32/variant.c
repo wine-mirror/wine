@@ -19,6 +19,8 @@
  *   - The date manipulations do not support date prior to 1900.
  *   - The parsing does not accept has many formats has the Windows implementation.
  */
+
+#include "config.h"
  
 #include "windef.h"
 #include "oleauto.h"
