@@ -30,6 +30,7 @@ struct process
     int                  priority;        /* priority class */
     int                  affinity;        /* process affinity mask */
     int                  suspend;         /* global process suspend count */
+    int                  create_flags;    /* process creation flags */
     struct object       *console_in;      /* console input */
     struct object       *console_out;     /* console output */
     struct event        *init_event;      /* event for init done */

@@ -67,11 +67,20 @@ static struct process *create_process( struct process *parent, struct new_proces
     process->priority        = NORMAL_PRIORITY_CLASS;
     process->affinity        = 1;
     process->suspend         = 0;
+    process->create_flags    = 0;
     process->console_in      = NULL;
     process->console_out     = NULL;
     process->init_event      = NULL;
     process->info            = NULL;
     gettimeofday( &process->start_time, NULL );
+
+    /* copy the request structure */
+    if (!(process->info = mem_alloc( sizeof(*process->info) + len ))) goto error;
+    memcpy( process->info, req, sizeof(*req) );
+    memcpy( process->info->cmdline, cmd_line, len );
+    process->info->cmdline[len] = 0;
+    req = process->info;  /* use the copy now */
+    process->create_flags = req->create_flags;
 
     if (req->inherit_all)
         process->handles = copy_handle_table( process, parent );
@@ -82,11 +91,6 @@ static struct process *create_process( struct process *parent, struct new_proces
     /* alloc a handle for the process itself */
     alloc_handle( process, process, PROCESS_ALL_ACCESS, 0 );
 
-    if (!(process->info = mem_alloc( sizeof(*process->info) + len ))) goto error;
-    memcpy( process->info, req, sizeof(*req) );
-    memcpy( process->info->cmdline, cmd_line, len );
-    process->info->cmdline[len] = 0;
-
     /* get the init done event */
     if (req->event != -1)
     {
@@ -95,11 +99,11 @@ static struct process *create_process( struct process *parent, struct new_proces
     }
 
     /* set the process console */
-    if (req->create_flags & CREATE_NEW_CONSOLE)
+    if (process->create_flags & CREATE_NEW_CONSOLE)
     {
         if (!alloc_console( process )) goto error;
     }
-    else if (!(req->create_flags & DETACHED_PROCESS))
+    else if (!(process->create_flags & DETACHED_PROCESS))
     {
         if (parent->console_in) process->console_in = grab_object( parent->console_in );
         if (parent->console_out) process->console_out = grab_object( parent->console_out );
@@ -116,9 +120,9 @@ static struct process *create_process( struct process *parent, struct new_proces
     }
 
     /* attach to the debugger if requested */
-    if (req->create_flags & DEBUG_PROCESS)
+    if (process->create_flags & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS))
         debugger_attach( process, current );
-    else if (parent && parent->debugger && !(req->create_flags & DEBUG_ONLY_THIS_PROCESS))
+    else if (parent && parent->debugger && !(parent->create_flags & DEBUG_ONLY_THIS_PROCESS))
         debugger_attach( process, parent->debugger );
 
     if ((process->next = first_process) != NULL) process->next->prev = process;
