@@ -1476,7 +1476,8 @@ HANDLE WINAPI CreateMailslotW( LPCWSTR lpName, DWORD nMaxMessageSize,
 {
     FIXME("(%s,%ld,%ld,%p): stub\n", debugstr_w(lpName),
           nMaxMessageSize, lReadTimeout, sa);
-    return (HANDLE)1;
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return INVALID_HANDLE_VALUE;
 }
 
 
@@ -1501,11 +1502,8 @@ BOOL WINAPI GetMailslotInfo( HANDLE hMailslot, LPDWORD lpMaxMessageSize,
                                LPDWORD lpReadTimeout )
 {
     FIXME("(%p): stub\n",hMailslot);
-    if (lpMaxMessageSize) *lpMaxMessageSize = (DWORD)NULL;
-    if (lpNextSize) *lpNextSize = (DWORD)NULL;
-    if (lpMessageCount) *lpMessageCount = (DWORD)NULL;
-    if (lpReadTimeout) *lpReadTimeout = (DWORD)NULL;
-    return TRUE;
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
 }
 
 
@@ -1525,7 +1523,8 @@ BOOL WINAPI GetMailslotInfo( HANDLE hMailslot, LPDWORD lpMaxMessageSize,
 BOOL WINAPI SetMailslotInfo( HANDLE hMailslot, DWORD dwReadTimeout)
 {
     FIXME("%p %ld: stub\n", hMailslot, dwReadTimeout);
-    return TRUE;
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
 }
 
 
