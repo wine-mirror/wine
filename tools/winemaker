@@ -801,7 +801,7 @@ sub source_scan_directory($$$$)
     # which we don't have in Wine. Also I add ntdll which seems
     # necessary for Winelib.
     my @std_dlls=qw(advapi32.dll comdlg32.dll gdi32.dll kernel32.dll ntdll.dll odbc32.dll ole32.dll oleaut32.dll shell32.dll user32.dll winspool.drv);
-    if (@$target[$T_FLAGS] & $TF_NODLLS == 0) {
+    if ((@$target[$T_FLAGS] & $TF_NODLLS) == 0) {
       @$target[$T_DLLS]=\@std_dlls;
     } else {
       @$target[$T_DLLS]=[];
@@ -1670,8 +1670,9 @@ sub generate_wrapper_file($$)
 {
   my $path=$_[0];
   my $target=$_[1];
+  my $app_name=@$target[$T_NAME];
 
-  return generate_from_template("wrapper.c","$path${app_name}_wrapper.c",[
+  return generate_from_template("$path${app_name}_wrapper.c","wrapper.c",[
       ["APP_NAME",@$target[$T_NAME]],
       ["APP_TYPE",(@$target[$T_TYPE]==$TT_GUIEXE?"GUIEXE":"CUIEXE")],
       ["APP_INIT",(@$target[$T_TYPE]==$TT_GUIEXE?"\"WinMain\"":"\"main\"")],
@@ -1926,6 +1927,8 @@ sub generate_project_files($)
     foreach my $target (@{@$project[$P_TARGETS]}) {
       my $canon=canonize("@$target[$T_NAME]");
       my $mode;
+      my $all_dlls;
+      my $all_libs;
 
       $canon =~ s/_so$//;
       if (@$target[$T_TYPE] == $TT_GUIEXE) {
@@ -1936,8 +1939,16 @@ sub generate_project_files($)
 	  $mode = '';
       }
 
+      if (@$target[$T_FLAGS] & $TF_WRAPPER) {
+        $all_dlls="\$(${canon}_DLLS:%=-l%)";
+        $all_libs="\$(${canon}_LIBRARIES:%=-l%) \$(WINE_LIBRARIES)";
+      } else {
+        $all_dlls="\$(${canon}_DLLS:%=-l%) \$(GLOBAL_DLLS:%=-l%)";
+        $all_libs="\$(${canon}_LIBRARIES:%=-l%) \$(ALL_LIBRARIES)";
+      }
+
       print FILEO "\$(${canon}_SPEC_SRCS:.spec=.spec.c): \$(${canon}_SPEC_SRCS) \$(${canon}_OBJS) \$(${canon}_RC_SRCS:.rc=.res)\n";
-      print FILEO "\t\$(LD_PATH) \$(WINEBUILD) -fPIC \$(${canon}_DLL_PATH) \$(WINE_DLL_PATH) \$(${canon}_DLLS:%=-l%) \$(${canon}_RC_SRCS:%.rc=-res %.res) $mode \$(${canon}_OBJS) -o \$\@ -spec \$(SRCDIR)/\$(${canon}_SPEC_SRCS)\n";
+      print FILEO "\t\$(LD_PATH) \$(WINEBUILD) -fPIC \$(${canon}_DLL_PATH) \$(ALL_DLL_PATH) $all_dlls \$(${canon}_RC_SRCS:%.rc=-res %.res) $mode \$(${canon}_OBJS) -o \$\@ -spec \$(SRCDIR)/\$(${canon}_SPEC_SRCS)\n";
       print FILEO "\n";
       my $t_name=@$target[$T_NAME];
       if (@$target[$T_TYPE]!=$TT_DLL) {
@@ -1949,7 +1960,7 @@ sub generate_project_files($)
       } else {
         print FILEO "\t\$(LDSHARED)";
       }
-      print FILEO " \$(LDDLLFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_SPEC_SRCS:.spec=.spec.o) \$(${canon}_LIBRARY_PATH) \$(${canon}_LIBRARIES:%=-l%) \$(DLL_LINK) \$(LIBS)\n";
+      print FILEO " \$(LDDLLFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_SPEC_SRCS:.spec=.spec.o) \$(${canon}_LIBRARY_PATH) \$(ALL_LIBRARY_PATH) $all_libs \$(LIBS)\n";
       if (@$target[$T_TYPE] ne $TT_DLL) {
         print FILEO "\ttest -f @$target[$T_NAME] || \$(INSTALL_SCRIPT) wineapploader @$target[$T_NAME]\n";
       }
@@ -2069,7 +2080,7 @@ sub generate_global_files()
       ["PROJECTS",join("\n",map { "@$_[$P_PATH]Makefile" } @projects)],
       ["SOURCE","$a_source_file"],
       ["NEEDS_MFC","$needs_mfc"]]);
-  system("autoconf");
+  system("autoconf configure.ac > configure");
 
   # Add execute permission to configure for whoever has the right to read it
   my @st=stat("configure");
@@ -2169,10 +2180,10 @@ sub usage()
   print STDERR "Usage: winemaker [--nobanner] [--backup|--nobackup] [--nosource-fix]\n";
   print STDERR "                 [--lower-none|--lower-all|--lower-uppercase]\n";
   print STDERR "                 [--lower-include|--nolower-include]\n";
-  print STDERR "                 [--guiexe|--windows|--cuiexe|--console|--dll|--nodlls]\n";
+  print STDERR "                 [--guiexe|--windows|--cuiexe|--console|--dll]\n";
   print STDERR "                 [--wrap|--nowrap] [--mfc|--nomfc]\n";
   print STDERR "                 [-Dmacro[=defn]] [-Idir] [-Pdir] [-idll] [-Ldir] [-llibrary]\n";
-  print STDERR "                 [--interactive] [--single-target name]\n";
+  print STDERR "                 [--nodlls] [--interactive] [--single-target name]\n";
   print STDERR "                 [--generated-files|--nogenerated-files] [--nogenerated-specs]\n";
   print STDERR "                 work_directory\n";
   print STDERR "\nWinemaker is designed to recursively convert all the Windows sources found in\n";
@@ -2181,6 +2192,8 @@ sub usage()
   print STDERR "\tPlease read the manual page before use.\n";
   exit (2);
 }
+
+target_init(\@global_settings);
 
 while (@ARGV>0) {
   my $arg=shift @ARGV;
@@ -2284,7 +2297,6 @@ if ($opt_no_banner == 0) {
 }
 
 project_init(\@main_project,"");
-target_init(\@global_settings);
 
 # Fix the file and directory names
 fix_file_and_directory_names(".");
@@ -3057,13 +3069,16 @@ WRC       = @WRC@
 CFLAGS    = @CFLAGS@
 CXXFLAGS  = @CXXFLAGS@
 WRCFLAGS  = -r -L
-OPTIONS   = @OPTIONS@ -D_REENTRANT -DWINELIB $(GLOBAL_DEFINES)
+OPTIONS   = @OPTIONS@ -D_REENTRANT -DWINELIB $(GLOBAL_DEFINES) $(GLOBAL_INCLUDE_PATH)
 LIBS      = @LIBS@ $(LIBRARY_PATH)
 ALLFLAGS  = $(DEFINES) -I$(SRCDIR) $(INCLUDE_PATH) $(WINE_INCLUDE_PATH)
 ALLCFLAGS = $(CFLAGS) $(CEXTRA) $(OPTIONS) $(ALLFLAGS)
 ALLCXXFLAGS=$(CXXFLAGS) $(CXXEXTRA) $(OPTIONS) $(ALLFLAGS)
 ALLWRCFLAGS=$(WRCFLAGS) $(WRCEXTRA) $(OPTIONS) $(ALLFLAGS)
-DLL_LINK  = $(LIBRARY_PATH) $(LIBRARIES:%=-l%) $(WINE_LIBRARY_PATH) $(GLOBAL_LIBRARY_PATH) -lwine -lwine_unicode -lwine_uuid $(GLOBAL_LIBRARIES:%=-l%)
+ALL_DLL_PATH  = $(DLL_PATH) $(GLOBAL_DLL_PATH) $(WINE_DLL_PATH)
+ALL_LIBRARY_PATH = $(LIBRARY_PATH) $(GLOBAL_LIBRARY_PATH) $(WINE_LIBRARY_PATH)
+WINE_LIBRARIES = -lwine -lwine_unicode -lwine_uuid
+ALL_LIBRARIES = $(LIBRARIES:%=-l%) $(GLOBAL_LIBRARIES:%=-l%) $(WINE_LIBRARIES)
 LDCOMBINE = ld -r
 LDSHARED  = @LDSHARED@
 LDXXSHARED= @LDXXSHARED@
@@ -3225,7 +3240,7 @@ exec wine "$appname" "$@"
  * This is the application library's base name, i.e. 'hello' if the
  * library is called 'libhello.so'.
  */
-static char* appName     = ##WINEMAKER_APP_NAME##;
+static char* appName     = "##WINEMAKER_APP_NAME##";
 
 /**
  * This is the name of the application's Windows module. If left NULL
