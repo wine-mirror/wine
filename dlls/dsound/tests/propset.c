@@ -29,6 +29,15 @@
 #include "dsound.h"
 #include "dsconf.h"
 
+#include "initguid.h"
+
+DEFINE_GUID(DSPROPSETID_VoiceManager,0x62A69BAE,0xDF9D,0x11D1,0x99,0xA6,0x00,0xC0,0x4F,0xC9,0x9D,0x46);
+DEFINE_GUID(DSPROPSETID_EAX20_ListenerProperties,0x306a6a8,0xb224,0x11d2,0x99,0xe5,0x0,0x0,0xe8,0xd8,0xc7,0x22);
+DEFINE_GUID(DSPROPSETID_EAX20_BufferProperties,0x306a6a7,0xb224,0x11d2,0x99,0xe5,0x0,0x0,0xe8,0xd8,0xc7,0x22);
+DEFINE_GUID(DSPROPSETID_I3DL2_ListenerProperties,0xDA0F0520,0x300A,0x11D3,0x8A,0x2B,0x00,0x60,0x97,0x0D,0xB0,0x11);
+DEFINE_GUID(DSPROPSETID_I3DL2_BufferProperties,0xDA0F0521,0x300A,0x11D3,0x8A,0x2B,0x00,0x60,0x97,0x0D,0xB0,0x11);
+DEFINE_GUID(DSPROPSETID_ZOOMFX_BufferProperties,0xCD5368E0,0x3450,0x11D3,0x8B,0x6E,0x00,0x10,0x5A,0x9B,0x7B,0xBC);
+
 typedef HRESULT  (CALLBACK * MYPROC)(REFCLSID, REFIID, LPVOID FAR*);
 
 BOOL CALLBACK callback(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_DATA data, LPVOID context)
@@ -53,7 +62,7 @@ BOOL CALLBACK callback(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_DATA data, LPVO
 	return TRUE;
 }
 
-static void propset_tests()
+static void propset_private_tests()
 {
 	HMODULE	hDsound;
 	HRESULT hr;
@@ -183,7 +192,128 @@ error:
 	FreeLibrary(hDsound);
 }
 
+static HWND get_hwnd()
+{
+    HWND hwnd=GetForegroundWindow();
+    if (!hwnd)
+        hwnd=GetDesktopWindow();
+    return hwnd;
+}
+                                                                                
+static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
+                                   LPCSTR lpcstrModule, LPVOID lpContext)
+{
+    HRESULT rc;
+    LPDIRECTSOUND dso=NULL;
+    LPDIRECTSOUNDBUFFER primary=NULL,secondary=NULL;
+    DSBUFFERDESC bufdesc;
+    WAVEFORMATEX wfx;
+    int ref;
+                                                                                
+    rc=DirectSoundCreate(lpGuid,&dso,NULL);
+    ok(rc==DS_OK,"DirectSoundCreate failed: 0x%lx\n",rc);
+    if (rc!=DS_OK)
+        goto EXIT;
+
+    /* We must call SetCooperativeLevel before calling CreateSoundBuffer */
+    /* DSOUND: Setting DirectSound cooperative level to DSSCL_PRIORITY */
+    rc=IDirectSound_SetCooperativeLevel(dso,get_hwnd(),DSSCL_PRIORITY);
+    ok(rc==DS_OK,"SetCooperativeLevel failed: 0x%lx\n",rc);
+    if (rc!=DS_OK)
+        goto EXIT;
+                                                                                
+    /* Testing 3D buffers */
+    primary=NULL;
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize=sizeof(bufdesc);
+    bufdesc.dwFlags=DSBCAPS_PRIMARYBUFFER|DSBCAPS_LOCHARDWARE|DSBCAPS_CTRL3D;
+    rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&primary,NULL);
+    ok(rc==DS_OK&&primary!=NULL,"CreateSoundBuffer failed to create a hardware 3D primary buffer: 0x%lx\n",rc);
+    if (rc==DS_OK&&primary!=NULL) {
+	ZeroMemory(&wfx, sizeof(wfx));
+	wfx.wFormatTag=WAVE_FORMAT_PCM;
+	wfx.nChannels=1;
+	wfx.wBitsPerSample=16;
+	wfx.nSamplesPerSec=44100;
+	wfx.nBlockAlign=wfx.nChannels*wfx.wBitsPerSample/8;
+	wfx.nAvgBytesPerSec=wfx.nSamplesPerSec*wfx.nBlockAlign;
+        ZeroMemory(&bufdesc, sizeof(bufdesc));
+        bufdesc.dwSize=sizeof(bufdesc);
+        bufdesc.dwFlags=DSBCAPS_CTRLDEFAULT|DSBCAPS_GETCURRENTPOSITION2;
+        bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec;
+        bufdesc.lpwfxFormat=&wfx;
+        trace("  Testing a secondary buffer at %ldx%dx%d\n",
+            wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
+        rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
+        ok(rc==DS_OK&&secondary!=NULL,"CreateSoundBuffer failed to create a secondary buffer 0x%lx\n",rc);
+        if (rc==DS_OK&&secondary!=NULL) {
+	    IKsPropertySet * pPropertySet=NULL;
+	    rc=IDirectSoundBuffer_QueryInterface(secondary,&IID_IKsPropertySet,(void **)&pPropertySet);
+	    /* it's not an error for this to fail */
+	    if(rc==DS_OK) {
+		ULONG ulTypeSupport;
+		trace("  Supports property sets\n");
+		/* it's not an error for these to fail */
+		rc=IKsPropertySet_QuerySupport(pPropertySet,&DSPROPSETID_VoiceManager,0,&ulTypeSupport);
+		if((rc==DS_OK)&&(ulTypeSupport&(KSPROPERTY_SUPPORT_GET|KSPROPERTY_SUPPORT_SET)))
+		    trace("    DSPROPSETID_VoiceManager supported\n");
+		else
+		    trace("    DSPROPSETID_VoiceManager not supported\n");
+		rc=IKsPropertySet_QuerySupport(pPropertySet,&DSPROPSETID_EAX20_ListenerProperties,0,&ulTypeSupport);
+		if((rc==DS_OK)&&(ulTypeSupport&(KSPROPERTY_SUPPORT_GET|KSPROPERTY_SUPPORT_SET)))
+		    trace("    DSPROPSETID_EAX20_ListenerProperties supported\n");
+		else
+		    trace("    DSPROPSETID_EAX20_ListenerProperties not supported\n");
+		rc=IKsPropertySet_QuerySupport(pPropertySet,&DSPROPSETID_EAX20_BufferProperties,0,&ulTypeSupport);
+		if((rc==DS_OK)&&(ulTypeSupport&(KSPROPERTY_SUPPORT_GET|KSPROPERTY_SUPPORT_SET)))
+		    trace("    DSPROPSETID_EAX20_BufferProperties supported\n");
+		else
+		    trace("    DSPROPSETID_EAX20_BufferProperties not supported\n");
+		rc=IKsPropertySet_QuerySupport(pPropertySet,&DSPROPSETID_I3DL2_ListenerProperties,0,&ulTypeSupport);
+		if((rc==DS_OK)&&(ulTypeSupport&(KSPROPERTY_SUPPORT_GET|KSPROPERTY_SUPPORT_SET)))
+		    trace("    DSPROPSETID_I3DL2_ListenerProperties supported\n");
+		else
+		    trace("    DSPROPSETID_I3DL2_ListenerProperties not supported\n");
+		rc=IKsPropertySet_QuerySupport(pPropertySet,&DSPROPSETID_I3DL2_BufferProperties,0,&ulTypeSupport);
+		if((rc==DS_OK)&&(ulTypeSupport&(KSPROPERTY_SUPPORT_GET|KSPROPERTY_SUPPORT_SET)))
+		    trace("    DSPROPSETID_I3DL2_BufferProperties supported\n");
+		else
+		    trace("    DSPROPSETID_I3DL2_BufferProperties not supported\n");
+		rc=IKsPropertySet_QuerySupport(pPropertySet,&DSPROPSETID_ZOOMFX_BufferProperties,0,&ulTypeSupport);
+		if((rc==DS_OK)&&(ulTypeSupport&(KSPROPERTY_SUPPORT_GET|KSPROPERTY_SUPPORT_SET)))
+		    trace("    DSPROPSETID_ZOOMFX_BufferProperties supported\n");
+		else
+		    trace("    DSPROPSETID_ZOOMFX_BufferProperties not supported\n");
+		ref=IKsPropertySet_Release(pPropertySet);
+		/* try a few common ones */
+		ok(ref==0,"IKsPropertySet_Release secondary has %d references, should have 0\n",ref);
+	    } else
+		trace("  Doesn't support property sets\n");
+            ref=IDirectSoundBuffer_Release(secondary);
+            ok(ref==0,"IDirectSoundBuffer_Release secondary has %d references, should have 0\n",ref);
+        }
+ 
+        ref=IDirectSoundBuffer_Release(primary);
+        ok(ref==0,"IDirectSoundBuffer_Release primary has %d references, should have 0\n",ref);
+    }
+ 
+EXIT:
+    if (dso!=NULL) {
+        ref=IDirectSound_Release(dso);
+        ok(ref==0,"IDirectSound_Release has %d references, should have 0\n",ref);
+    }
+    return 1;
+}
+ 
+static void propset_buffer_tests()
+{
+    HRESULT rc;
+    rc=DirectSoundEnumerateA(&dsenum_callback,NULL);
+    ok(rc==DS_OK,"DirectSoundEnumerate failed: %ld\n",rc);
+}
+
 START_TEST(propset)
 {
-    propset_tests();
+    propset_private_tests();
+    propset_buffer_tests();
 }
