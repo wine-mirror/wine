@@ -1195,12 +1195,22 @@ static void CBDropDown( LPHEADCOMBO lphc )
    if (nItems > 0)
    {
       int nHeight;
+      int nIHeight;
 
-      nHeight = (int)SendMessageW(lphc->hWndLBox, LB_GETITEMHEIGHT, 0, 0);
-      nHeight *= nItems;
+      nIHeight = (int)SendMessageW(lphc->hWndLBox, LB_GETITEMHEIGHT, 0, 0);
+
+      nHeight = nIHeight*nItems;
 
       if (nHeight < nDroppedHeight - COMBO_YBORDERSIZE())
          nDroppedHeight = nHeight + COMBO_YBORDERSIZE();
+
+      if (nDroppedHeight < nIHeight)
+      {
+            if (nItems < 5)
+                nDroppedHeight = nHeight;
+            else
+                nDroppedHeight = 5*nIHeight;
+      }
    }
 
    /*If height of dropped rectangle gets beyond a screen size it should go up, otherwise down.*/
