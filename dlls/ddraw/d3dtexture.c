@@ -264,7 +264,7 @@ gltex_bltfast(IDirectDrawSurfaceImpl *surf_ptr, DWORD dstx,
 		return DDERR_INVALIDPARAMS;
 	    }
 	    
-	    for (y = src_ptr->surface_desc.dwHeight - rsrc->top;
+	    for (y = (src_ptr->surface_desc.dwHeight - rsrc->top - 1);
 		 y >= (src_ptr->surface_desc.dwHeight - (rsrc->top + height));
 		 y--) {
 		glCopyTexSubImage2D(GL_TEXTURE_2D, surf_ptr->mipmap_level,
