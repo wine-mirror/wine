@@ -245,6 +245,17 @@ static HANDLER_DEF(SIGNAL_fault)
         && VIRTUAL_HandleFault( (LPVOID)CR2_sig(HANDLER_CONTEXT) ))
 	return;
 #endif
+#if defined(TRAP_sig)
+   /* We don't do alignment checks */
+   /* FIXME: if we get SEHs, pass the fault through them first? */
+   if (TRAP_sig(HANDLER_CONTEXT) == 0x11) {
+   	if (EFL_sig(HANDLER_CONTEXT) & 0x00040000) {
+		/* Disable AC flag, return */
+		EFL_sig(HANDLER_CONTEXT) &= ~0x00040000;
+		return;
+	}
+   }
+#endif
 
     if (fnINSTR_EmulateInstruction && 
 	fnINSTR_EmulateInstruction( HANDLER_CONTEXT )
