@@ -17,20 +17,21 @@ typedef struct tagLISTVIEW_SUBITEM
 
 typedef struct tagLISTVIEW_ITEM
 {
-    UINT state;
-    LPSTR  pszText;
-    INT  iImage;
-    LPARAM lParam;
-    INT  iIndent;
+  UINT state;
+  LPSTR pszText;
+  INT iImage;
+  LPARAM lParam;
+  INT iIndent;
+  POINT ptPosition;
 
 } LISTVIEW_ITEM;
 
 
 typedef struct tagLISTVIEW_INFO
 {
-    COLORREF   clrBk;
-    COLORREF   clrText;
-    COLORREF   clrTextBk;
+    COLORREF clrBk;
+    COLORREF clrText;
+    COLORREF clrTextBk;
     HIMAGELIST himlNormal;
     HIMAGELIST himlSmall;
     HIMAGELIST himlState;
@@ -40,20 +41,20 @@ typedef struct tagLISTVIEW_INFO
     INT nCountPerRow;
     INT nFocusedItem;
     INT nItemHeight;
-    INT nColumnWidth;
+    INT nItemWidth;
     INT nSelectionMark;
     SHORT notifyFormat;
     RECT rcList;
+    RECT rcView;
     SIZE iconSize;
-    SIZE smallIconSpacing;
-    SIZE largeIconSpacing;
+    SIZE iconSpacing;
     UINT uCallbackMask;
-    HWND     hwndHeader;
-    HFONT    hDefaultFont;
-    HFONT    hFont;
-    BOOL     bFocus;
-    DWORD      dwExStyle;    /* extended listview style */
-    HDPA       hdpaItems;
+    HWND hwndHeader;
+    HFONT hDefaultFont;
+    HFONT hFont;
+    BOOL bFocus;
+    DWORD dwExStyle;    /* extended listview style */
+    HDPA hdpaItems;
 
 } LISTVIEW_INFO;
 
