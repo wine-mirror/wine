@@ -936,7 +936,7 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
                 }
             } else {
                 lines = -lines;
-                imageBits = (BYTE *)(bmpImage->data + (lines - 1)*bmpImage->bytes_per_line);
+                imageBits = (BYTE *)(bmpImage->data);
                 for (h = 0; h < lines; h++) {
                     for (x = left; x < dstwidth; x++, bits += 3) {
                         imageBits[(x << 2) + indA] = 0x00;
@@ -1094,7 +1094,7 @@ static void X11DRV_DIB_SetImageBits_32( int lines, const BYTE *srcbits,
                 }
             } else {
                 lines = -lines;
-                imageBits = (BYTE *)(bmpImage->data + (lines - 1)*bmpImage->bytes_per_line);
+                imageBits = (BYTE *)(bmpImage->data);
                 for (h = 0; h < lines; h++) {
                     for (x = left; x < dstwidth; x++, bits += 4) {
                         imageBits[(x << 2) + indA] = 0x00;
