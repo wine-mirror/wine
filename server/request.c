@@ -223,12 +223,12 @@ DECL_HANDLER(dup_handle)
     {
         if (req->options & DUP_HANDLE_MAKE_GLOBAL)
         {
-            reply.handle = duplicate_handle( src, req->src_handle, NULL, -1,
+            reply.handle = duplicate_handle( src, req->src_handle, NULL,
                                              req->access, req->inherit, req->options );
         }
         else if ((dst = get_process_from_handle( req->dst_process, PROCESS_DUP_HANDLE )))
         {
-            reply.handle = duplicate_handle( src, req->src_handle, dst, req->dst_handle,
+            reply.handle = duplicate_handle( src, req->src_handle, dst,
                                              req->access, req->inherit, req->options );
             release_object( dst );
         }
@@ -742,7 +742,7 @@ DECL_HANDLER(create_mapping)
     {
         int access = FILE_MAP_ALL_ACCESS;
         if (!(req->protect & VPROT_WRITE)) access &= ~FILE_MAP_WRITE;
-        reply.handle = alloc_handle( current->process, obj, access, 0 );
+        reply.handle = alloc_handle( current->process, obj, access, req->inherit );
         release_object( obj );
     }
     send_reply( current, -1, 1, &reply, sizeof(reply) );

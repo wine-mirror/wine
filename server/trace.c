@@ -159,7 +159,6 @@ static int dump_dup_handle_request( struct dup_handle_request *req, int len )
     fprintf( stderr, " src_process=%d,", req->src_process );
     fprintf( stderr, " src_handle=%d,", req->src_handle );
     fprintf( stderr, " dst_process=%d,", req->dst_process );
-    fprintf( stderr, " dst_handle=%d,", req->dst_handle );
     fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " options=%d", req->options );
@@ -522,6 +521,7 @@ static int dump_create_mapping_request( struct create_mapping_request *req, int 
     fprintf( stderr, " size_high=%d,", req->size_high );
     fprintf( stderr, " size_low=%d,", req->size_low );
     fprintf( stderr, " protect=%d,", req->protect );
+    fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " handle=%d,", req->handle );
     fprintf( stderr, " name=\"%.*s\"", len - (int)sizeof(*req), (char *)(req+1) );
     return len;

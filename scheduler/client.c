@@ -356,7 +356,6 @@ int CLIENT_DuplicateHandle( int src_process, int src_handle, int dst_process, in
     req.src_process = src_process;
     req.src_handle  = src_handle;
     req.dst_process = dst_process;
-    req.dst_handle  = dst_handle;
     req.access      = access;
     req.inherit     = inherit;
     req.options     = options;

@@ -201,7 +201,6 @@ struct dup_handle_request
     int          src_process;  /* src process handle */
     int          src_handle;   /* src handle to duplicate */
     int          dst_process;  /* dst process handle */
-    int          dst_handle;   /* handle to duplicate to (or -1 for any) */
     unsigned int access;       /* wanted access rights */
     int          inherit;      /* inherit flag */
     int          options;      /* duplicate options (see below) */
@@ -573,6 +572,7 @@ struct create_mapping_request
     int          size_high;     /* mapping size */
     int          size_low;      /* mapping size */
     int          protect;       /* protection flags (see below) */
+    int          inherit;       /* inherit flag */
     int          handle;        /* file handle */
     char         name[0];       /* object name */
 };

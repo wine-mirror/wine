@@ -288,33 +288,6 @@ int alloc_handle( struct process *process, void *obj, unsigned int access,
     return handle + 1;  /* avoid handle 0 */
 }
 
-/* allocate a specific handle for an object, incrementing its refcount */
-static int alloc_specific_handle( struct process *process, void *obj, int handle,
-                                  unsigned int access, int inherit )
-{
-    struct handle_entry *entry;
-    struct object *old;
-
-    if (handle == -1) return alloc_handle( process, obj, access, inherit );
-
-    assert( !(access & RESERVED_ALL) );
-    if (inherit) access |= RESERVED_INHERIT;
-
-    handle--;  /* handles start at 1 */
-    if ((handle < 0) || (handle > process->handle_last))
-    {
-        SET_ERROR( ERROR_INVALID_HANDLE );
-        return -1;
-    }
-    entry = process->entries + handle;
-
-    old = entry->ptr;
-    entry->ptr = grab_object( obj );
-    entry->access = access;
-    if (old) release_object( old );
-    return handle + 1;
-}
-
 /* return an handle entry, or NULL if the handle is invalid */
 static struct handle_entry *get_handle( struct process *process, int handle )
 {
@@ -469,7 +442,7 @@ int set_handle_info( struct process *process, int handle, int mask, int flags )
 
 /* duplicate a handle */
 int duplicate_handle( struct process *src, int src_handle, struct process *dst,
-                      int dst_handle, unsigned int access, int inherit, int options )
+                      unsigned int access, int inherit, int options )
 {
     int res;
     struct handle_entry *entry = get_handle( src, src_handle );
@@ -478,7 +451,7 @@ int duplicate_handle( struct process *src, int src_handle, struct process *dst,
     if (options & DUP_HANDLE_SAME_ACCESS) access = entry->access;
     if (options & DUP_HANDLE_MAKE_GLOBAL) dst = initial_process;
     access &= ~RESERVED_ALL;
-    res = alloc_specific_handle( dst, entry->ptr, dst_handle, access, inherit );
+    res = alloc_handle( dst, entry->ptr, access, inherit );
     if (options & DUP_HANDLE_MAKE_GLOBAL) res = HANDLE_LOCAL_TO_GLOBAL(res);
     return res;
 }

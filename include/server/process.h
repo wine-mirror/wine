@@ -56,7 +56,7 @@ extern int set_handle_info( struct process *process, int handle,
 extern struct object *get_handle_obj( struct process *process, int handle,
                                       unsigned int access, const struct object_ops *ops );
 extern int duplicate_handle( struct process *src, int src_handle, struct process *dst,
-                             int dst_handle, unsigned int access, int inherit, int options );
+                             unsigned int access, int inherit, int options );
 extern int open_object( const char *name, const struct object_ops *ops,
                         unsigned int access, int inherit );
 
