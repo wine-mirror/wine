@@ -35,8 +35,8 @@
 
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(menu)
-
+DEFAULT_DEBUG_CHANNEL(menu);
+DECLARE_DEBUG_CHANNEL(accel);
 
 /* internal popup menu window messages */
 
@@ -4934,5 +4934,234 @@ UINT WINAPI MenuItemFromPoint(HWND hWnd, HMENU hMenu, POINT ptScreen)
 {
     FIXME("(0x%04x,0x%04x,(%ld,%ld)):stub\n", 
 	  hWnd, hMenu, ptScreen.x, ptScreen.y);
+    return 0;
+}
+
+
+/**********************************************************************
+ *           translate_accelerator
+ */
+static BOOL translate_accelerator( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam,
+                                   BYTE fVirt, WORD key, WORD cmd )
+{
+    UINT mesg = 0;
+
+    if (wParam != key) return FALSE;
+
+    if (message == WM_CHAR)
+    {
+        if ( !(fVirt & FALT) && !(fVirt & FVIRTKEY) )
+        {
+            TRACE_(accel)("found accel for WM_CHAR: ('%c')\n", wParam & 0xff);
+            goto found;
+        }
+    }
+    else
+    {
+        if(fVirt & FVIRTKEY)
+        {
+            INT mask = 0;
+            TRACE_(accel)("found accel for virt_key %04x (scan %04x)\n",
+                          wParam, 0xff & HIWORD(lParam));
+            if(GetKeyState(VK_SHIFT) & 0x8000) mask |= FSHIFT;
+            if(GetKeyState(VK_CONTROL) & 0x8000) mask |= FCONTROL;
+            if(GetKeyState(VK_MENU) & 0x8000) mask |= FALT;
+            if(mask == (fVirt & (FSHIFT | FCONTROL | FALT))) goto found;
+            TRACE_(accel)(", but incorrect SHIFT/CTRL/ALT-state\n");
+        }
+        else
+        {
+            if (!(lParam & 0x01000000))  /* no special_key */
+            {
+                if ((fVirt & FALT) && (lParam & 0x20000000))
+                {                              /* ^^ ALT pressed */
+                    TRACE_(accel)("found accel for Alt-%c\n", wParam & 0xff);
+                    goto found;
+                }
+            }
+        }
+    }
+    return FALSE;
+
+ found:
+    if (message == WM_KEYUP || message == WM_SYSKEYUP)
+        mesg = 1;
+    else if (GetCapture())
+        mesg = 2;
+    else if (!IsWindowEnabled(hWnd))
+        mesg = 3;
+    else
+    {
+        HMENU hMenu, hSubMenu, hSysMenu;
+        UINT uSysStat = (UINT)-1, uStat = (UINT)-1, nPos;
+        WND* wndPtr = WIN_FindWndPtr(hWnd);
+
+        hMenu = (wndPtr->dwStyle & WS_CHILD) ? 0 : (HMENU)wndPtr->wIDmenu;
+        hSysMenu = wndPtr->hSysMenu;
+        WIN_ReleaseWndPtr(wndPtr);
+
+        /* find menu item and ask application to initialize it */
+        /* 1. in the system menu */
+        hSubMenu = hSysMenu;
+        nPos = cmd;
+        if(MENU_FindItem(&hSubMenu, &nPos, MF_BYCOMMAND))
+        {
+            SendMessageA(hWnd, WM_INITMENU, (WPARAM)hSysMenu, 0L);
+            if(hSubMenu != hSysMenu)
+            {
+                nPos = MENU_FindSubMenu(&hSysMenu, hSubMenu);
+                TRACE_(accel)("hSysMenu = %04x, hSubMenu = %04x, nPos = %d\n", hSysMenu, hSubMenu, nPos);
+                SendMessageA(hWnd, WM_INITMENUPOPUP, (WPARAM)hSubMenu, MAKELPARAM(nPos, TRUE));
+            }
+            uSysStat = GetMenuState(GetSubMenu(hSysMenu, 0), cmd, MF_BYCOMMAND);
+        }
+        else /* 2. in the window's menu */
+        {
+            hSubMenu = hMenu;
+            nPos = cmd;
+            if(MENU_FindItem(&hSubMenu, &nPos, MF_BYCOMMAND))
+            {
+                SendMessageA(hWnd, WM_INITMENU, (WPARAM)hMenu, 0L);
+                if(hSubMenu != hMenu)
+                {
+                    nPos = MENU_FindSubMenu(&hMenu, hSubMenu);
+                    TRACE_(accel)("hMenu = %04x, hSubMenu = %04x, nPos = %d\n", hMenu, hSubMenu, nPos);
+                    SendMessageA(hWnd, WM_INITMENUPOPUP, (WPARAM)hSubMenu, MAKELPARAM(nPos, FALSE));
+                }
+                uStat = GetMenuState(hMenu, cmd, MF_BYCOMMAND);
+            }
+        }
+
+        if (uSysStat != (UINT)-1)
+        {
+            if (uSysStat & (MF_DISABLED|MF_GRAYED))
+                mesg=4;
+            else
+                mesg=WM_SYSCOMMAND;
+        }
+        else
+        {
+            if (uStat != (UINT)-1)
+            {
+                if (IsIconic(hWnd))
+                    mesg=5;
+                else
+                {
+                    if (uStat & (MF_DISABLED|MF_GRAYED))
+                        mesg=6;
+                    else
+                        mesg=WM_COMMAND;
+                }
+            }
+            else
+                mesg=WM_COMMAND;
+        }
+    }
+
+    if( mesg==WM_COMMAND )
+    {
+        TRACE_(accel)(", sending WM_COMMAND, wParam=%0x\n", 0x10000 | cmd);
+        SendMessageA(hWnd, mesg, 0x10000 | cmd, 0L);
+    }
+    else if( mesg==WM_SYSCOMMAND )
+    {
+        TRACE_(accel)(", sending WM_SYSCOMMAND, wParam=%0x\n", cmd);
+        SendMessageA(hWnd, mesg, cmd, 0x00010000L);
+    }
+    else
+    {
+        /*  some reasons for NOT sending the WM_{SYS}COMMAND message: 
+         *   #0: unknown (please report!)
+         *   #1: for WM_KEYUP,WM_SYSKEYUP
+         *   #2: mouse is captured
+         *   #3: window is disabled 
+         *   #4: it's a disabled system menu option
+         *   #5: it's a menu option, but window is iconic
+         *   #6: it's a menu option, but disabled
+         */
+        TRACE_(accel)(", but won't send WM_{SYS}COMMAND, reason is #%d\n",mesg);
+        if(mesg==0)
+            ERR_(accel)(" unknown reason - please report!");
+    }
+    return TRUE;
+}
+
+/**********************************************************************
+ *      TranslateAccelerator      (USER32.551)(USER32.552)(USER32.553)
+ */
+INT WINAPI TranslateAccelerator( HWND hWnd, HACCEL hAccel, LPMSG msg )
+{
+    /* YES, Accel16! */
+    LPACCEL16 lpAccelTbl;
+    int i;
+
+    if (msg == NULL)
+    {
+        WARN_(accel)("msg null; should hang here to be win compatible\n");
+        return 0;
+    }
+    if (!hAccel || !(lpAccelTbl = (LPACCEL16) LockResource16(hAccel)))
+    {
+        WARN_(accel)("invalid accel handle=%x\n", hAccel);
+        return 0;
+    }
+    if ((msg->message != WM_KEYDOWN &&
+         msg->message != WM_KEYUP &&
+         msg->message != WM_SYSKEYDOWN &&
+         msg->message != WM_SYSKEYUP &&
+         msg->message != WM_CHAR)) return 0;
+
+    TRACE_(accel)("TranslateAccelerators hAccel=%04x, hWnd=%04x,"
+                  "msg->hwnd=%04x, msg->message=%04x, wParam=%08x, lParam=%lx\n",
+                  hAccel,hWnd,msg->hwnd,msg->message,msg->wParam,msg->lParam);
+
+    i = 0;
+    do
+    {
+        if (translate_accelerator( hWnd, msg->message, msg->wParam, msg->lParam,
+                                   lpAccelTbl[i].fVirt, lpAccelTbl[i].key, lpAccelTbl[i].cmd))
+            return 1;
+    } while ((lpAccelTbl[i++].fVirt & 0x80) == 0);
+    WARN_(accel)("couldn't translate accelerator key\n");
+    return 0;
+}
+
+
+/**********************************************************************
+ *           TranslateAccelerator16      (USER.178)
+ */
+INT16 WINAPI TranslateAccelerator16( HWND16 hWnd, HACCEL16 hAccel, LPMSG16 msg )
+{
+    LPACCEL16 lpAccelTbl;
+    int i;
+
+    if (msg == NULL)
+    {
+        WARN_(accel)("msg null; should hang here to be win compatible\n");
+        return 0;
+    }
+    if (!hAccel || !(lpAccelTbl = (LPACCEL16) LockResource16(hAccel)))
+    {
+        WARN_(accel)("invalid accel handle=%x\n", hAccel);
+        return 0;
+    }
+    if ((msg->message != WM_KEYDOWN &&
+         msg->message != WM_KEYUP &&
+         msg->message != WM_SYSKEYDOWN &&
+         msg->message != WM_SYSKEYUP &&
+         msg->message != WM_CHAR)) return 0;
+
+    TRACE_(accel)("TranslateAccelerators hAccel=%04x, hWnd=%04x,"
+                  "msg->hwnd=%04x, msg->message=%04x, wParam=%04x, lParam=%lx\n",
+                  hAccel,hWnd,msg->hwnd,msg->message,msg->wParam,msg->lParam);
+
+    i = 0;
+    do
+    {
+        if (translate_accelerator( hWnd, msg->message, msg->wParam, msg->lParam,
+                                   lpAccelTbl[i].fVirt, lpAccelTbl[i].key, lpAccelTbl[i].cmd ))
+            return 1;
+    } while ((lpAccelTbl[i++].fVirt & 0x80) == 0);
+    WARN_(accel)("couldn't translate accelerator key\n");
     return 0;
 }
