@@ -127,6 +127,8 @@ static inline int time_before( struct timeval *t1, struct timeval *t2 )
 
 struct event;
 
+extern struct event *create_event( const WCHAR *name, size_t len,
+                                   int manual_reset, int initial_state );
 extern struct event *get_event_obj( struct process *process, int handle, unsigned int access );
 extern void pulse_event( struct event *event );
 extern void set_event( struct event *event );

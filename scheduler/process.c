@@ -490,7 +490,7 @@ PDB *PROCESS_Create( NE_MODULE *pModule, HFILE hFile, LPCSTR cmd_line, LPCSTR en
                      BOOL inherit, DWORD flags, STARTUPINFOA *startup,
                      PROCESS_INFORMATION *info )
 {
-    HANDLE handles[2], load_done_evt = 0;
+    HANDLE handles[2], load_done_evt = -1;
     DWORD exitcode, size;
     BOOL alloc_stack16;
     int fd = -1;
@@ -501,7 +501,6 @@ PDB *PROCESS_Create( NE_MODULE *pModule, HFILE hFile, LPCSTR cmd_line, LPCSTR en
 
     if (!pdb) return NULL;
     info->hThread = info->hProcess = INVALID_HANDLE_VALUE;
-    if (!(load_done_evt = CreateEventA( NULL, TRUE, FALSE, NULL ))) goto error;
     
     /* Create the process on the server side */
 
@@ -511,7 +510,6 @@ PDB *PROCESS_Create( NE_MODULE *pModule, HFILE hFile, LPCSTR cmd_line, LPCSTR en
     req->create_flags = flags;
     req->start_flags  = startup->dwFlags;
     req->exe_file     = hFile;
-    req->event        = load_done_evt;
     if (startup->dwFlags & STARTF_USESTDHANDLES)
     {
         req->hstdin  = startup->hStdInput;
@@ -533,6 +531,7 @@ PDB *PROCESS_Create( NE_MODULE *pModule, HFILE hFile, LPCSTR cmd_line, LPCSTR en
     info->dwProcessId = (DWORD)req->pid;
     info->hThread     = req->thandle;
     info->dwThreadId  = (DWORD)req->tid;
+    load_done_evt     = req->event;
 
     if (pModule->module32)   /* Win32 process */
     {
@@ -596,12 +595,10 @@ PDB *PROCESS_Create( NE_MODULE *pModule, HFILE hFile, LPCSTR cmd_line, LPCSTR en
     } 
 
     CloseHandle( load_done_evt );
-    load_done_evt = 0;
-
     return pdb;
 
 error:
-    if (load_done_evt) CloseHandle( load_done_evt );
+    if (load_done_evt != -1) CloseHandle( load_done_evt );
     if (info->hThread != INVALID_HANDLE_VALUE) CloseHandle( info->hThread );
     if (info->hProcess != INVALID_HANDLE_VALUE) CloseHandle( info->hProcess );
     PROCESS_FreePDB( pdb );

@@ -77,7 +77,6 @@ static int set_creation_info( struct process *process, struct new_process_reques
         req->hstdin       = -1;
         req->hstdout      = -1;
         req->hstderr      = -1;
-        req->event        = -1;
         req->cmd_show     = 0;
         req->env_ptr      = NULL;
     }
@@ -185,19 +184,15 @@ struct thread *create_process( int fd, struct process *parent,
         process->info->exe_file = -1;
     }
 
-    /* get the init done event */
-    if (process->info->event != -1)
-    {
-        if (!(process->init_event = get_event_obj( parent, process->info->event,
-                                                   EVENT_MODIFY_STATE ))) goto error;
-    }
-
-    /* set the process console */
-    if (!set_process_console( process, parent )) goto error;
-
     /* create the main thread */
     if (!(thread = create_thread( fd, process, (process->create_flags & CREATE_SUSPENDED) != 0)))
         goto error;
+
+    /* create the init done event */
+    if (!(process->init_event = create_event( NULL, 0, 1, 0 ))) goto error;
+
+    /* set the process console */
+    if (!set_process_console( process, parent )) goto error;
 
     /* attach to the debugger if requested */
     if (process->create_flags & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS))
@@ -205,6 +200,7 @@ struct thread *create_process( int fd, struct process *parent,
     else if (parent && parent->debugger && !(parent->create_flags & DEBUG_ONLY_THIS_PROCESS))
         set_process_debugger( process, parent->debugger );
 
+    add_process_thread( process, thread );
     release_object( process );
     return thread;
 
@@ -212,6 +208,7 @@ struct thread *create_process( int fd, struct process *parent,
     close( fd );
     free_console( process );
     if (process->handles) release_object( process->handles );
+    if (thread) release_object( thread );
     release_object( process );
     return NULL;
 }
@@ -580,9 +577,11 @@ DECL_HANDLER(new_process)
     size_t len = get_req_strlen( req, req->cmdline );
     struct thread *thread;
     int sock[2];
+    int event = -1, phandle = -1;
 
     req->phandle = -1;
     req->thandle = -1;
+    req->event   = -1;
     req->pid     = NULL;
     req->tid     = NULL;
 
@@ -592,25 +591,33 @@ DECL_HANDLER(new_process)
         return;
     }
 
-    if ((thread = create_process( sock[0], current->process, req, req->cmdline, len )))
-    {
-        int phandle = alloc_handle( current->process, thread->process,
-                                    PROCESS_ALL_ACCESS, req->pinherit );
-        if ((req->phandle = phandle) != -1)
-        {
-            if ((req->thandle = alloc_handle( current->process, thread,
-                                              THREAD_ALL_ACCESS, req->tinherit )) != -1)
-            {
-                /* thread object will be released when the thread gets killed */
-                set_reply_fd( current, sock[1] );
-                req->pid = thread->process;
-                req->tid = thread;
-                return;
-            }
-            close_handle( current->process, phandle );
-        }
-        release_object( thread );
-    }
+    if (!(thread = create_process( sock[0], current->process, req, req->cmdline, len )))
+        goto error;
+
+    if ((event = alloc_handle( current->process, thread->process->init_event,
+                               EVENT_ALL_ACCESS, 0 )) == -1)
+        goto error;
+
+    if ((phandle = alloc_handle( current->process, thread->process,
+                                 PROCESS_ALL_ACCESS, req->pinherit )) == -1)
+        goto error;
+
+    if ((req->thandle = alloc_handle( current->process, thread,
+                                      THREAD_ALL_ACCESS, req->tinherit )) == -1)
+        goto error;
+
+    /* thread object will be released when the thread gets killed */
+    set_reply_fd( current, sock[1] );
+    req->pid = get_process_id( thread->process );
+    req->tid = get_thread_id( thread );
+    req->phandle = phandle;
+    req->event = event;
+    return;
+
+ error:
+    if (phandle != -1) close_handle( current->process, phandle );
+    if (event != -1) close_handle( current->process, event );
+    if (thread) release_object( thread );
     close( sock[1] );
 }
 

@@ -43,8 +43,8 @@ static const struct object_ops event_ops =
 };
 
 
-static struct event *create_event( const WCHAR *name, size_t len,
-                                   int manual_reset, int initial_state )
+struct event *create_event( const WCHAR *name, size_t len,
+                            int manual_reset, int initial_state )
 {
     struct event *event;
 

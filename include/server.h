@@ -113,13 +113,13 @@ struct new_process_request
     IN  int          hstdin;       /* handle for stdin */
     IN  int          hstdout;      /* handle for stdout */
     IN  int          hstderr;      /* handle for stderr */
-    IN  int          event;        /* event to signal startup */
     IN  int          cmd_show;     /* main window show mode */
     IN  void*        env_ptr;      /* pointer to environment (FIXME: hack) */
     OUT void*        pid;          /* process id */
     OUT int          phandle;      /* process handle (in the current process) */
     OUT void*        tid;          /* thread id */
     OUT int          thandle;      /* thread handle (in the current process) */
+    OUT int          event;        /* event handle to signal startup */
     IN  char         cmdline[1];   /* command line */
 };
 
@@ -1209,7 +1209,7 @@ enum request
     REQ_NB_REQUESTS
 };
 
-#define SERVER_PROTOCOL_VERSION 6
+#define SERVER_PROTOCOL_VERSION 7
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

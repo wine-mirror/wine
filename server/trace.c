@@ -224,7 +224,6 @@ static void dump_new_process_request( const struct new_process_request *req )
     fprintf( stderr, " hstdin=%d,", req->hstdin );
     fprintf( stderr, " hstdout=%d,", req->hstdout );
     fprintf( stderr, " hstderr=%d,", req->hstderr );
-    fprintf( stderr, " event=%d,", req->event );
     fprintf( stderr, " cmd_show=%d,", req->cmd_show );
     fprintf( stderr, " env_ptr=%p,", req->env_ptr );
     fprintf( stderr, " cmdline=" );
@@ -236,7 +235,8 @@ static void dump_new_process_reply( const struct new_process_request *req )
     fprintf( stderr, " pid=%p,", req->pid );
     fprintf( stderr, " phandle=%d,", req->phandle );
     fprintf( stderr, " tid=%p,", req->tid );
-    fprintf( stderr, " thandle=%d", req->thandle );
+    fprintf( stderr, " thandle=%d,", req->thandle );
+    fprintf( stderr, " event=%d", req->event );
 }
 
 static void dump_new_thread_request( const struct new_thread_request *req )

@@ -158,14 +158,12 @@ struct thread *create_thread( int fd, struct process *process, int suspend )
 
     if ((thread->next = first_thread) != NULL) thread->next->prev = thread;
     first_thread = thread;
-    add_process_thread( process, thread );
 
     set_select_events( &thread->obj, POLLIN );  /* start listening to events */
     if (!alloc_client_buffer( thread )) goto error;
     return thread;
 
  error:
-    remove_process_thread( process, thread );
     release_object( thread );
     return NULL;
 }
@@ -611,6 +609,7 @@ DECL_HANDLER(new_thread)
             {
                 set_reply_fd( current, sock[1] );
                 /* thread object will be released when the thread gets killed */
+                add_process_thread( current->process, thread );
                 return;
             }
             release_object( thread );
