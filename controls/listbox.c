@@ -880,7 +880,7 @@ static LRESULT LISTBOX_Paint( WND *wnd, LB_DESCR *descr, HDC32 hdc )
         /* Special case for empty listbox: paint focus rect */
         rect.bottom = rect.top + descr->item_height;
         LISTBOX_PaintItem( wnd, descr, hdc, &rect, descr->focus_item,
-                           ODA_DRAWENTIRE );
+                           ODA_FOCUS );
         rect.top = rect.bottom;
     }
 
