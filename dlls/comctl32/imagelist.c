@@ -80,6 +80,7 @@ typedef struct
 
 static INTERNALDRAG InternalDrag = { 0, 0, 0, 0, 0, 0, FALSE, 0, FALSE };
 
+static HBITMAP ImageList_CreateImage(HDC hdc, HIMAGELIST himl, UINT width, UINT height);
 
 static inline BOOL is_valid(HIMAGELIST himl)
 {
@@ -120,31 +121,36 @@ IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT nImageCount, INT cx, INT c
     TRACE("Create expanded bitmaps : himl=%p x=%d y=%d count=%d\n", himl, nNewWidth, cy, nNewCount);
     hdcBitmap = CreateCompatibleDC (0);
 
-    hbmNewBitmap =
-        CreateBitmap (nNewWidth, cy, 1, himl->uBitsPixel, NULL);
+    hbmNewBitmap = ImageList_CreateImage(hdcBitmap, himl, nNewWidth, cy);
+
     if (hbmNewBitmap == 0)
         ERR("creating new image bitmap (x=%d y=%d)!\n", nNewWidth, cy);
 
-    hbmNull = SelectObject (hdcBitmap, hbmNewBitmap);
-    BitBlt (hdcBitmap, 0, 0, himl->cCurImage * himl->cx, cy,
-              himl->hdcImage, 0, 0, SRCCOPY);
-
-    SelectObject (hdcBitmap, hbmNull);
+    if(himl->cCurImage)
+    {
+        hbmNull = SelectObject (hdcBitmap, hbmNewBitmap);
+        BitBlt (hdcBitmap, 0, 0, himl->cCurImage * himl->cx, cy,
+                himl->hdcImage, 0, 0, SRCCOPY);
+        SelectObject (hdcBitmap, hbmNull);
+    }
     SelectObject (himl->hdcImage, hbmNewBitmap);
     DeleteObject (himl->hbmImage);
     himl->hbmImage = hbmNewBitmap;
 
-    if (himl->hbmMask) {
-        hbmNewBitmap =
-            CreateBitmap (nNewWidth, cy, 1, 1, NULL);
+    if (himl->flags & ILC_MASK)
+    {
+        hbmNewBitmap = CreateBitmap (nNewWidth, cy, 1, 1, NULL);
 
         if (hbmNewBitmap == 0)
             ERR("creating new mask bitmap!\n");
 
-        SelectObject (hdcBitmap, hbmNewBitmap);
-        BitBlt (hdcBitmap, 0, 0, himl->cCurImage * himl->cx, cy,
-                  himl->hdcMask, 0, 0, SRCCOPY);
-        SelectObject (hdcBitmap, hbmNull);
+	if(himl->cCurImage)
+	{
+	    hbmNull = SelectObject (hdcBitmap, hbmNewBitmap);
+	    BitBlt (hdcBitmap, 0, 0, himl->cCurImage * himl->cx, cy,
+		    himl->hdcMask, 0, 0, SRCCOPY);
+	    SelectObject (hdcBitmap, hbmNull);
+	}
         SelectObject (himl->hdcMask, hbmNewBitmap);
         DeleteObject (himl->hbmMask);
         himl->hbmMask = hbmNewBitmap;
@@ -545,6 +551,7 @@ ImageList_Create (INT cx, INT cy, UINT flags,
     HIMAGELIST himl;
     INT      nCount;
     HBITMAP  hbmTemp;
+    UINT     ilc = (flags & 0xFE);
     static WORD aBitBlend25[] =
         {0xAA, 0x00, 0x55, 0x00, 0xAA, 0x00, 0x55, 0x00};
 
@@ -583,22 +590,21 @@ ImageList_Create (INT cx, INT cy, UINT flags,
             goto cleanup;
     }
 
-    himl->uBitsPixel = (UINT)GetDeviceCaps (himl->hdcImage, BITSPIXEL);
+    /* Default to ILC_COLOR4 if non of the ILC_COLOR* flags are specified */
+    if (ilc == ILC_COLOR)
+        ilc = ILC_COLOR4;
 
-    TRACE("Image: %d Bits per Pixel\n", himl->uBitsPixel);
+    if (ilc >= ILC_COLOR4 && ilc <= ILC_COLOR32)
+        himl->uBitsPixel = ilc;
+    else
+        himl->uBitsPixel = (UINT)GetDeviceCaps (himl->hdcImage, BITSPIXEL);
 
-    if (himl->cMaxImage > 0) {
-        himl->hbmImage =
-	  CreateBitmap (himl->cx * himl->cMaxImage, himl->cy,
-                        1, himl->uBitsPixel, NULL);
-	if (himl->hbmImage == 0) {
-	    ERR("Error creating image bitmap!\n");
-            goto cleanup;
-	}
-        SelectObject(himl->hdcImage, himl->hbmImage);
-    }
+    if (himl->cMaxImage > 0)
+        himl->hbmImage = ImageList_CreateImage(himl->hdcImage, himl, cx * himl->cMaxImage, cy);
+    else
+        himl->hbmImage = 0;
 
-    if (himl->flags & ILC_MASK) {
+    if ((himl->cMaxImage > 0) && (himl->flags & ILC_MASK)) {
         himl->hbmMask =
           CreateBitmap (himl->cx * himl->cMaxImage, himl->cy,
 			1, 1, NULL);
@@ -1071,8 +1077,8 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
     bIsTransparent = (fStyle & ILD_TRANSPARENT) || clrBk == CLR_NONE;
     bBlend = fStyle & (ILD_BLEND25 | ILD_BLEND50);
 
-    TRACE("hbmMask(%p) iImage(%d) x(%d) y(%d) cx(%d) cy(%d)\n",
-          himl->hbmMask, pimldp->i, pimldp->x, pimldp->y, cx, cy);
+    TRACE("himl(0x%lx) hbmMask(%p) iImage(%d) x(%d) y(%d) cx(%d) cy(%d)\n",
+          (DWORD)himl, himl->hbmMask, pimldp->i, pimldp->x, pimldp->y, cx, cy);
 
     /* we will use these DCs to access the images and masks in the ImageList */
     hImageListDC = himl->hdcImage;
@@ -2055,8 +2061,7 @@ ImageList_Remove (HIMAGELIST himl, INT i)
         for (nCount = 0; nCount < MAX_OVERLAYIMAGE; nCount++)
              himl->nOvlIdx[nCount] = -1;
 
-        hbmNewImage = CreateBitmap (himl->cMaxImage * himl->cx, himl->cy,
-                            1, himl->uBitsPixel, NULL);
+        hbmNewImage = ImageList_CreateImage(himl->hdcImage, himl, himl->cMaxImage * himl->cx, himl->cy);
         SelectObject (himl->hdcImage, hbmNewImage);
         DeleteObject (himl->hbmImage);
         himl->hbmImage = hbmNewImage;
@@ -2074,15 +2079,15 @@ ImageList_Remove (HIMAGELIST himl, INT i)
         TRACE("Remove single image! %d\n", i);
 
         /* create new bitmap(s) */
-        cxNew = (himl->cCurImage + himl->cGrow - 1) * himl->cx;
+        nCount = (himl->cCurImage + himl->cGrow - 1);
+	cxNew = nCount * himl->cx;
 
         TRACE(" - Number of images: %d / %d (Old/New)\n",
                  himl->cCurImage, himl->cCurImage - 1);
         TRACE(" - Max. number of images: %d / %d (Old/New)\n",
                  himl->cMaxImage, himl->cCurImage + himl->cGrow - 1);
 
-        hbmNewImage =
-            CreateBitmap (cxNew, himl->cy, 1, himl->uBitsPixel, NULL);
+        hbmNewImage = ImageList_CreateImage(himl->hdcImage, himl, cxNew, himl->cy);
 
         if (himl->hbmMask)
             hbmNewMask = CreateBitmap (cxNew, himl->cy, 1, 1, NULL);
@@ -2484,8 +2489,7 @@ ImageList_SetIconSize (HIMAGELIST himl, INT cx, INT cy)
     for (nCount = 0; nCount < MAX_OVERLAYIMAGE; nCount++)
         himl->nOvlIdx[nCount] = -1;
 
-    hbmNew = CreateBitmap (himl->cMaxImage * himl->cx, himl->cy,
-                        1, himl->uBitsPixel, NULL);
+    hbmNew = ImageList_CreateImage(himl->hdcImage, himl, himl->cMaxImage * himl->cx, himl->cy);
     SelectObject (himl->hdcImage, hbmNew);
     DeleteObject (himl->hbmImage);
     himl->hbmImage = hbmNew;
@@ -2540,8 +2544,8 @@ ImageList_SetImageCount (HIMAGELIST himl, UINT iImageCount)
 
     hdcBitmap = CreateCompatibleDC (0);
 
-    hbmNewBitmap = CreateBitmap (nNewCount * himl->cx, himl->cy,
-                                   1, himl->uBitsPixel, NULL);
+    hbmNewBitmap = ImageList_CreateImage(hdcBitmap, himl, nNewCount * himl->cx, himl->cy);
+
     if (hbmNewBitmap != 0)
     {
         SelectObject (hdcBitmap, hbmNewBitmap);
@@ -2781,4 +2785,41 @@ ImageList_Write (HIMAGELIST himl, LPSTREAM pstm)
     }
 
     return TRUE;
+}
+
+
+static HBITMAP ImageList_CreateImage(HDC hdc, HIMAGELIST himl, UINT width, UINT height)
+{
+    HBITMAP hbmNewBitmap;
+    UINT ilc = (himl->flags & 0xFE);
+
+    if ((ilc >= ILC_COLOR4 && ilc <= ILC_COLOR32) || ilc == ILC_COLOR)
+    {
+        VOID* bits;
+        BITMAPINFO bmi;
+
+        TRACE("Creating DIBSection: %d Bits per Pixel\n", himl->uBitsPixel);
+
+	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	bmi.bmiHeader.biWidth = width;
+	bmi.bmiHeader.biHeight = height;
+	bmi.bmiHeader.biPlanes = 1;
+	bmi.bmiHeader.biBitCount = himl->uBitsPixel;
+	bmi.bmiHeader.biCompression = BI_RGB;
+	bmi.bmiHeader.biSizeImage = 0;
+	bmi.bmiHeader.biXPelsPerMeter = 0;
+	bmi.bmiHeader.biYPelsPerMeter = 0;
+	bmi.bmiHeader.biClrUsed = 0;
+	bmi.bmiHeader.biClrImportant = 0;
+
+	hbmNewBitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &bits, 0, 0);
+    }
+    else /*if (ilc == ILC_COLORDDB)*/
+    {
+        TRACE("Creating Bitmap: %d Bits per Pixel\n", himl->uBitsPixel);
+
+        hbmNewBitmap = CreateBitmap (width, height, 1, himl->uBitsPixel, NULL);
+    }
+
+    return hbmNewBitmap;
 }
