@@ -115,9 +115,7 @@ void WINAPI INT_Int2fHandler( CONTEXT86 *context )
 	    break;
 	case 0x10:   /* XMS v2+ get driver address */
 	{
-            LPDOSTASK lpDosTask = MZ_Current();
-
-            ES_reg(context) = lpDosTask ? lpDosTask->xms_seg : 0;
+            ES_reg(context) = DOSMEM_xms_seg;
             BX_reg(context) = 0;
             break;
 	}
@@ -349,15 +347,13 @@ static void do_int2f_16( CONTEXT86 *context )
 #endif
         {
 	    SYSTEM_INFO si;
-	    LPDOSTASK lpDosTask = MZ_Current();
-
 	    GetSystemInfo(&si);
 	    AX_reg(context) = 0x0000; /* DPMI Installed */
             BX_reg(context) = 0x0001; /* 32bits available */
             CL_reg(context) = si.wProcessorLevel;
             DX_reg(context) = 0x005a; /* DPMI major/minor 0.90 */
             SI_reg(context) = 0;      /* # of para. of DOS extended private data */
-            ES_reg(context) = lpDosTask ? lpDosTask->dpmi_seg : 0;
+            ES_reg(context) = DOSMEM_dpmi_seg;
             DI_reg(context) = 0;      /* ES:DI is DPMI switch entry point */
             break;
         }
@@ -402,9 +398,8 @@ static	void	MSCDEX_Dump(char* pfx, BYTE* req, int dorealmode)
     case 3:
     case 12:
 	ptr += sprintf(ptr, "\n\t\t\t\tIO_struct => ");
-	ios = (dorealmode) ? 
-		DOSMEM_MapRealToLinear(MAKELONG(PTR_AT(req, 14, WORD), PTR_AT(req, 16, WORD))) :
-		    PTR_SEG_OFF_TO_LIN(PTR_AT(req, 16, WORD), PTR_AT(req, 14, WORD));
+	ios = (dorealmode) ? PTR_REAL_TO_LIN( PTR_AT(req, 16, WORD), PTR_AT(req, 14, WORD)) :
+                             PTR_SEG_OFF_TO_LIN(PTR_AT(req, 16, WORD), PTR_AT(req, 14, WORD));
 
 	for (i = 0; i < PTR_AT(req, 18, WORD); i++) {
 	    ptr += sprintf(ptr, "%02x ", ios[i]);
@@ -476,9 +471,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	    BYTE 	Error = 255; /* No Error */ 
 	    int		dorealmode = ISV86(context);
 	    
-	    driver_request = (dorealmode) ? 
-		DOSMEM_MapRealToLinear(MAKELONG(BX_reg(context), ES_reg(context))) : 
-		PTR_SEG_OFF_TO_LIN(ES_reg(context), BX_reg(context));
+	    driver_request = CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Ebx);
 	    
 	    if (!driver_request) {
 		/* FIXME - to be deleted ?? */
@@ -517,7 +510,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	    switch (driver_request[2]) {
 	    case 3:
 		io_stru = (dorealmode) ? 
-		    DOSMEM_MapRealToLinear(MAKELONG(PTR_AT(driver_request, 14, WORD), PTR_AT(driver_request, 16, WORD))) :
+                    PTR_REAL_TO_LIN( PTR_AT(driver_request, 16, WORD), PTR_AT(driver_request, 14, WORD) ) :
 			PTR_SEG_OFF_TO_LIN(PTR_AT(driver_request, 16, WORD), PTR_AT(driver_request, 14, WORD));
 		
 		TRACE(" --> IOCTL INPUT <%d>\n", io_stru[0]); 
@@ -682,7 +675,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		
 	    case 12:
 		io_stru = (dorealmode) ? 
-		    DOSMEM_MapRealToLinear(MAKELONG(PTR_AT(driver_request, 14, WORD), PTR_AT(driver_request, 16, WORD))) :
+		    PTR_REAL_TO_LIN( PTR_AT(driver_request, 16, WORD), PTR_AT(driver_request, 14, WORD)) :
 			PTR_SEG_OFF_TO_LIN(PTR_AT(driver_request, 16, WORD), PTR_AT(driver_request, 14, WORD));
 		
 		TRACE(" --> IOCTL OUTPUT <%d>\n", io_stru[0]); 

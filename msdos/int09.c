@@ -15,9 +15,11 @@ DEFAULT_DEBUG_CHANNEL(int);
 
 #define QUEUELEN 31
 
-typedef struct {
+static struct
+{
   BYTE queuelen,queue[QUEUELEN],ascii[QUEUELEN];
-} KBDSYSTEM;
+} kbdinfo;
+
 
 /**********************************************************************
  *	    INT_Int09Handler
@@ -58,48 +60,35 @@ void WINAPI INT_Int09Handler( CONTEXT86 *context )
   DOSVM_PIC_ioport_out(0x20, 0x20); /* send EOI */
 }
 
-static void KbdRelay( LPDOSTASK lpDosTask, CONTEXT86 *context, void *data )
+static void KbdRelay( CONTEXT86 *context, void *data )
 {
-  KBDSYSTEM *sys = (KBDSYSTEM *)DOSVM_GetSystemData(0x09);
-
-  if (sys && sys->queuelen) {
+  if (kbdinfo.queuelen) {
     /* cleanup operation, called from DOSVM_PIC_ioport_out:
      * we'll remove current scancode from keyboard buffer here,
      * rather than in ReadScan, because some DOS apps depend on
      * the scancode being available for reading multiple times... */
-    if (--sys->queuelen) {
-      memmove(sys->queue,sys->queue+1,sys->queuelen);
-      memmove(sys->ascii,sys->ascii+1,sys->queuelen);
+    if (--kbdinfo.queuelen) {
+      memmove(kbdinfo.queue,kbdinfo.queue+1,kbdinfo.queuelen);
+      memmove(kbdinfo.ascii,kbdinfo.ascii+1,kbdinfo.queuelen);
     }
   }
 }
 
 void WINAPI INT_Int09SendScan( BYTE scan, BYTE ascii )
 {
-  KBDSYSTEM *sys = (KBDSYSTEM *)DOSVM_GetSystemData(0x09);
-  if (!sys) {
-    sys = calloc(1,sizeof(KBDSYSTEM));
-    DOSVM_SetSystemData(0x09,sys);
-  }
-  if (sys->queuelen == QUEUELEN) {
+  if (kbdinfo.queuelen == QUEUELEN) {
     ERR("keyboard queue overflow\n");
     return;
   }
   /* add scancode to queue */
-  sys->queue[sys->queuelen] = scan;
-  sys->ascii[sys->queuelen++] = ascii;
+  kbdinfo.queue[kbdinfo.queuelen] = scan;
+  kbdinfo.ascii[kbdinfo.queuelen++] = ascii;
   /* tell app to read it by triggering IRQ 1 (int 09) */
   DOSVM_QueueEvent(1,DOS_PRIORITY_KEYBOARD,KbdRelay,NULL);
 }
 
 BYTE WINAPI INT_Int09ReadScan( BYTE*ascii )
 {
-  KBDSYSTEM *sys = (KBDSYSTEM *)DOSVM_GetSystemData(0x09);
-  if (sys) {
-    if (ascii) *ascii = sys->ascii[0];
-    return sys->queue[0];
-  } else {
-    if (ascii) *ascii = 0;
-    return 0;
-  }
+    if (ascii) *ascii = kbdinfo.ascii[0];
+    return kbdinfo.queue[0];
 }

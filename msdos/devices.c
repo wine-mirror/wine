@@ -47,8 +47,9 @@ typedef struct {
 
 #define CON_BUFFER 128
 
-#define SYSTEM_STRATEGY_NUL 0x0100
-#define SYSTEM_STRATEGY_CON 0x0101
+enum strategy { SYSTEM_STRATEGY_NUL, SYSTEM_STRATEGY_CON, NB_SYSTEM_STRATEGIES };
+
+static void *strategy_data[NB_SYSTEM_STRATEGIES];
 
 #define NONEXT ((DWORD)-1)
 
@@ -150,20 +151,19 @@ static void do_lret(CONTEXT86*ctx)
 static void do_strategy(CONTEXT86*ctx, int id, int extra)
 {
   REQUEST_HEADER *hdr = CTX_SEG_OFF_TO_LIN(ctx, ES_reg(ctx), EBX_reg(ctx));
-  void **hdr_ptr = DOSVM_GetSystemData(id);
+  void **hdr_ptr = strategy_data[id];
 
   if (!hdr_ptr) {
     hdr_ptr = calloc(1,sizeof(void *)+extra);
-    DOSVM_SetSystemData(id, hdr_ptr);
+    strategy_data[id] = hdr_ptr;
   }
-
   *hdr_ptr = hdr;
   do_lret(ctx);
 }
 
 static REQUEST_HEADER * get_hdr(int id, void**extra)
 {
-  void **hdr_ptr = DOSVM_GetSystemData(id);
+  void **hdr_ptr = strategy_data[id];
   if (extra)
     *extra = hdr_ptr ? (void*)(hdr_ptr+1) : (void *)NULL;
   return hdr_ptr ? *hdr_ptr : (void *)NULL;
@@ -209,7 +209,6 @@ static void WINAPI con_interrupt(CONTEXT86*ctx)
   BYTE *curbuffer = (lol->offs_unread_CON) ?
     (((BYTE*)dataseg) + lol->offs_unread_CON) : (BYTE*)NULL;
   DOS_DEVICE_HEADER *con = dataseg->dev;
-  LPDOSTASK lpDosTask = MZ_Current();
 
   switch (hdr->command) {
   case CMD_INPUT:
@@ -301,7 +300,7 @@ static void WINAPI con_interrupt(CONTEXT86*ctx)
 	    /* a character */
 	    if ((len+1)<CON_BUFFER) {
 	      linebuffer[len] = LOBYTE(data);
-	      WriteFile(lpDosTask->hConOutput, &linebuffer[len++], 1, NULL, NULL);
+	      WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), &linebuffer[len++], 1, NULL, NULL);
 	    }
 	    /* else beep, but I don't like noise */
 	  }
@@ -309,7 +308,7 @@ static void WINAPI con_interrupt(CONTEXT86*ctx)
 	  case '\b':
 	    if (len>0) {
 	      len--;
-	      WriteFile(lpDosTask->hConOutput, "\b \b", 3, NULL, NULL);
+	      WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), "\b \b", 3, NULL, NULL);
 	    }
 	    break;
 	  }
@@ -377,7 +376,7 @@ static void WINAPI con_interrupt(CONTEXT86*ctx)
 					SELECTOROF(io->buffer),
 					(DWORD)OFFSETOF(io->buffer));
       DWORD result = 0;
-      WriteFile(lpDosTask->hConOutput, buffer, io->count, &result, NULL);
+      WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), buffer, io->count, &result, NULL);
       io->count = result;
       hdr->status = STAT_DONE;
     }

@@ -29,13 +29,13 @@
 #include "winsock.h"
 #include "syslevel.h"
 #include "debugtools.h"
-#include "dosexe.h"
 #include "services.h"
 #include "server.h"
 
-DEFAULT_DEBUG_CHANNEL(task)
-DECLARE_DEBUG_CHANNEL(relay)
-DECLARE_DEBUG_CHANNEL(toolhelp)
+
+DEFAULT_DEBUG_CHANNEL(task);
+DECLARE_DEBUG_CHANNEL(relay);
+DECLARE_DEBUG_CHANNEL(toolhelp);
 
   /* Min. number of thunks allocated when creating a new segment */
 #define MIN_THUNKS  32
@@ -243,7 +243,6 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
         /* NOTE: for 16-bit tasks, the instance handles are updated later on
            in NE_InitProcess */
     }
-    if (MZ_Current() && MZ_Current()->load_seg) pTask->flags |= TDBF_WINOLDAP;
 
     pTask->version       = pModule->expected_version;
     pTask->hModule       = pModule->self;

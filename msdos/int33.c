@@ -13,11 +13,12 @@
 
 DEFAULT_DEBUG_CHANNEL(int)
 
-typedef struct {
+static struct
+{
   DWORD x, y, but;
   FARPROC16 callback;
   WORD callmask;
-} MOUSESYSTEM;
+} mouse_info;
 
 /**********************************************************************
  *	    INT_Int33Handler
@@ -26,15 +27,12 @@ typedef struct {
  */
 void WINAPI INT_Int33Handler( CONTEXT86 *context )
 {
-  MOUSESYSTEM *sys = (MOUSESYSTEM *)DOSVM_GetSystemData(0x33);
-
   switch (AX_reg(context)) {
   case 0x00:
     TRACE("Reset mouse driver and request status\n");
     AX_reg(context) = 0xFFFF; /* installed */
     BX_reg(context) = 3;      /* # of buttons */
-    sys = calloc(1,sizeof(MOUSESYSTEM));
-    DOSVM_SetSystemData(0x33, sys);
+    memset( &mouse_info, 0, sizeof(mouse_info) );
     break;
   case 0x01:
     FIXME("Show mouse cursor\n");
@@ -44,9 +42,9 @@ void WINAPI INT_Int33Handler( CONTEXT86 *context )
     break;
   case 0x03:
     TRACE("Return mouse position and button status\n");
-    BX_reg(context) = sys->but;
-    CX_reg(context) = sys->x;
-    DX_reg(context) = sys->y;
+    BX_reg(context) = mouse_info.but;
+    CX_reg(context) = mouse_info.x;
+    DX_reg(context) = mouse_info.y;
     break;
   case 0x04:
     FIXME("Position mouse cursor\n");
@@ -65,8 +63,8 @@ void WINAPI INT_Int33Handler( CONTEXT86 *context )
     break;
   case 0x0C:
     TRACE("Define mouse interrupt subroutine\n");
-    sys->callmask = CX_reg(context);
-    sys->callback = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR(ES_reg(context), DX_reg(context));
+    mouse_info.callmask = CX_reg(context);
+    mouse_info.callback = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR(ES_reg(context), DX_reg(context));
     break;
   case 0x10:
     FIXME("Define screen region for update\n");
@@ -81,7 +79,7 @@ typedef struct {
   WORD mask,but,x,y,mx,my;
 } MCALLDATA;
 
-static void MouseRelay(LPDOSTASK lpDosTask,CONTEXT86 *context,void *mdata)
+static void MouseRelay(CONTEXT86 *context,void *mdata)
 {
   MCALLDATA *data = (MCALLDATA *)mdata;
   CONTEXT86 ctx = *context;
@@ -100,58 +98,56 @@ static void MouseRelay(LPDOSTASK lpDosTask,CONTEXT86 *context,void *mdata)
 
 void WINAPI INT_Int33Message(UINT message,WPARAM wParam,LPARAM lParam)
 {
-  MOUSESYSTEM *sys = (MOUSESYSTEM *)DOSVM_GetSystemData(0x33);
   WORD mask = 0;
   unsigned Height, Width, SX=1, SY=1;
 
-  if (!sys) return;
   if (!VGA_GetMode(&Height,&Width,NULL)) {
     /* may need to do some coordinate scaling */
     SX = 640/Width;
     if (!SX) SX=1;
   }
-  sys->x = LOWORD(lParam) * SX;
-  sys->y = HIWORD(lParam) * SY;
+  mouse_info.x = LOWORD(lParam) * SX;
+  mouse_info.y = HIWORD(lParam) * SY;
   switch (message) {
   case WM_MOUSEMOVE:
     mask |= 0x01;
     break;
   case WM_LBUTTONDOWN:
   case WM_LBUTTONDBLCLK:
-    sys->but |= 0x01;
+    mouse_info.but |= 0x01;
     mask |= 0x02;
     break;
   case WM_LBUTTONUP:
-    sys->but &= ~0x01;
+    mouse_info.but &= ~0x01;
     mask |= 0x04;
     break;
   case WM_RBUTTONDOWN:
   case WM_RBUTTONDBLCLK:
-    sys->but |= 0x02;
+    mouse_info.but |= 0x02;
     mask |= 0x08;
     break;
   case WM_RBUTTONUP:
-    sys->but &= ~0x02;
+    mouse_info.but &= ~0x02;
     mask |= 0x10;
     break;
   case WM_MBUTTONDOWN:
   case WM_MBUTTONDBLCLK:
-    sys->but |= 0x04;
+    mouse_info.but |= 0x04;
     mask |= 0x20;
     break;
   case WM_MBUTTONUP:
-    sys->but &= ~0x04;
+    mouse_info.but &= ~0x04;
     mask |= 0x40;
     break;
   }
 
-  if ((mask & sys->callmask) && sys->callback) {
+  if ((mask & mouse_info.callmask) && mouse_info.callback) {
     MCALLDATA *data = calloc(1,sizeof(MCALLDATA));
-    data->proc = sys->callback;
-    data->mask = mask & sys->callmask;
-    data->but = sys->but;
-    data->x = sys->x;
-    data->y = sys->y;
+    data->proc = mouse_info.callback;
+    data->mask = mask & mouse_info.callmask;
+    data->but = mouse_info.but;
+    data->x = mouse_info.x;
+    data->y = mouse_info.y;
     DOSVM_QueueEvent(-1, DOS_PRIORITY_MOUSE, MouseRelay, data);
   }
 }

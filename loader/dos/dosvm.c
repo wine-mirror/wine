@@ -58,6 +58,21 @@ DECLARE_DEBUG_CHANNEL(relay)
 
 #undef TRY_PICRETURN
 
+typedef struct _DOSEVENT {
+  int irq,priority;
+  void (*relay)(CONTEXT86*,void*);
+  void *data;
+  struct _DOSEVENT *next;
+} DOSEVENT, *LPDOSEVENT;
+
+static struct _DOSEVENT *pending_event, *current_event;
+static int sig_sent, entered;
+
+/* from module.c */
+extern int read_pipe, write_pipe;
+extern HANDLE hReadPipe;
+extern pid_t dosmod_pid;
+
 static void do_exception( int signal, CONTEXT86 *context )
 {
     EXCEPTION_RECORD rec;
@@ -77,10 +92,8 @@ static void do_exception( int signal, CONTEXT86 *context )
     EXC_RtlRaiseException( &rec, context );
 }
 
-static void DOSVM_Dump( LPDOSTASK lpDosTask, int fn, int sig,
-                        struct vm86plus_struct*VM86 )
+static void DOSVM_Dump( int fn, int sig, struct vm86plus_struct*VM86 )
 {
- unsigned iofs;
  BYTE*inst;
  int x;
 
@@ -106,20 +119,17 @@ static void DOSVM_Dump( LPDOSTASK lpDosTask, int fn, int sig,
  fprintf(stderr,"CS=%04X DS=%04X ES=%04X SS=%04X\n",REGS.cs,REGS.ds,REGS.es,REGS.ss);
  fprintf(stderr,"IP=%04lX EFLAGS=%08lX\n",REGS.eip,REGS.eflags);
 
- iofs=((DWORD)REGS.cs<<4)+REGS.eip;
+ inst = PTR_REAL_TO_LIN( REGS.cs, REGS.eip );
 #undef REGS
- inst=(BYTE*)lpDosTask->img+iofs;
  printf("Opcodes:");
  for (x=0; x<8; x++) printf(" %02x",inst[x]);
  printf("\n");
 }
 
-static int DOSVM_Int( int vect, CONTEXT86 *context, LPDOSTASK lpDosTask )
+static int DOSVM_Int( int vect, CONTEXT86 *context )
 {
- extern UINT16 DPMI_wrap_seg;
-
  if (vect==0x31) {
-  if (CS_reg(context)==DPMI_wrap_seg) {
+  if (CS_reg(context)==DOSMEM_wrap_seg) {
    /* exit from real-mode wrapper */
    return -1;
   }
@@ -129,7 +139,7 @@ static int DOSVM_Int( int vect, CONTEXT86 *context, LPDOSTASK lpDosTask )
  return 0;
 }
 
-static void DOSVM_SimulateInt( int vect, CONTEXT86 *context, LPDOSTASK lpDosTask )
+static void DOSVM_SimulateInt( int vect, CONTEXT86 *context )
 {
   FARPROC16 handler=INT_GetRMHandler(vect);
 
@@ -137,7 +147,7 @@ static void DOSVM_SimulateInt( int vect, CONTEXT86 *context, LPDOSTASK lpDosTask
     /* if internal interrupt, call it directly */
     INT_RealModeInterrupt(vect,context);
   } else {
-    WORD*stack=(WORD*)(V86BASE(context)+(((DWORD)SS_reg(context))<<4)+LOWORD(ESP_reg(context)));
+    WORD*stack= PTR_REAL_TO_LIN( context->SegSs, context->Esp );
     WORD flag=LOWORD(EFL_reg(context));
 
     if (IF_ENABLED(context)) flag|=IF_MASK;
@@ -154,51 +164,50 @@ static void DOSVM_SimulateInt( int vect, CONTEXT86 *context, LPDOSTASK lpDosTask
 }
 
 #define SHOULD_PEND(x) \
-  (x && ((!lpDosTask->current) || (x->priority < lpDosTask->current->priority)))
+  (x && ((!current_event) || (x->priority < current_event->priority)))
 
-static void DOSVM_SendQueuedEvent(CONTEXT86 *context, LPDOSTASK lpDosTask)
+static void DOSVM_SendQueuedEvent(CONTEXT86 *context)
 {
-  LPDOSEVENT event = lpDosTask->pending;
+  LPDOSEVENT event = pending_event;
 
   if (SHOULD_PEND(event)) {
     /* remove from "pending" list */
-    lpDosTask->pending = event->next;
+    pending_event = event->next;
     /* process event */
     if (event->irq>=0) {
       /* it's an IRQ, move it to "current" list */
-      event->next = lpDosTask->current;
-      lpDosTask->current = event;
+      event->next = current_event;
+      current_event = event;
       TRACE_(int)("dispatching IRQ %d\n",event->irq);
       /* note that if DOSVM_SimulateInt calls an internal interrupt directly,
-       * lpDosTask->current might be cleared (and event freed) in this very call! */
-      DOSVM_SimulateInt((event->irq<8)?(event->irq+8):(event->irq-8+0x70),context,lpDosTask);
+       * current_event might be cleared (and event freed) in this very call! */
+      DOSVM_SimulateInt((event->irq<8)?(event->irq+8):(event->irq-8+0x70),context);
     } else {
       /* callback event */
       TRACE_(int)("dispatching callback event\n");
-      (*event->relay)(lpDosTask,context,event->data);
+      (*event->relay)(context,event->data);
       free(event);
     }
   }
-  if (!SHOULD_PEND(lpDosTask->pending)) {
+  if (!SHOULD_PEND(pending_event)) {
     TRACE_(int)("clearing Pending flag\n");
     CLR_PEND(context);
   }
 }
 
-static void DOSVM_SendQueuedEvents(CONTEXT86 *context, LPDOSTASK lpDosTask)
+static void DOSVM_SendQueuedEvents(CONTEXT86 *context)
 {
   /* we will send all queued events as long as interrupts are enabled,
    * but IRQ events will disable interrupts again */
   while (IS_PEND(context) && IF_ENABLED(context))
-    DOSVM_SendQueuedEvent(context,lpDosTask);
+    DOSVM_SendQueuedEvent(context);
 }
 
-void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,CONTEXT86*,void*), void *data)
+void DOSVM_QueueEvent( int irq, int priority, void (*relay)(CONTEXT86*,void*), void *data)
 {
-  LPDOSTASK lpDosTask = MZ_Current();
   LPDOSEVENT event, cur, prev;
 
-  if (lpDosTask && lpDosTask->entered) {
+  if (entered) {
     event = malloc(sizeof(DOSEVENT));
     if (!event) {
       ERR_(int)("out of memory allocating event entry\n");
@@ -209,20 +218,20 @@ void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,CONTEXT86*
 
     /* insert event into linked list, in order *after*
      * all earlier events of higher or equal priority */
-    cur = lpDosTask->pending; prev = NULL;
+    cur = pending_event; prev = NULL;
     while (cur && cur->priority<=priority) {
       prev = cur;
       cur = cur->next;
     }
     event->next = cur;
     if (prev) prev->next = event;
-    else lpDosTask->pending = event;
+    else pending_event = event;
     
     /* get dosmod's attention to the new event, if necessary */
-    if (!lpDosTask->sig_sent) {
+    if (!sig_sent) {
       TRACE_(int)("new event queued, signalling dosmod\n");
-      kill(lpDosTask->task,SIGUSR2);
-      lpDosTask->sig_sent++;
+      kill(dosmod_pid,SIGUSR2);
+      sig_sent++;
     } else {
       TRACE_(int)("new event queued\n");
     }
@@ -234,7 +243,7 @@ void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,CONTEXT86*
       /* callback event, perform it with dummy context */
       CONTEXT86 context;
       memset(&context,0,sizeof(context));
-      (*relay)(lpDosTask,&context,data);
+      (*relay)(&context,data);
     } else {
       ERR_(int)("IRQ without DOS task: should not happen");
     }
@@ -247,8 +256,7 @@ void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,CONTEXT86*
            CP(ss,SS); CP(fs,FS); CP(gs,GS); \
            CP(eip,EIP); CP(eflags,EFL)
 
-static int DOSVM_Process( LPDOSTASK lpDosTask, int fn, int sig,
-                          struct vm86plus_struct*VM86 )
+static int DOSVM_Process( int fn, int sig, struct vm86plus_struct*VM86 )
 {
  CONTEXT86 context;
  int ret=0;
@@ -270,7 +278,7 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn, int sig,
  }
 #else
  /* linux doesn't preserve pending flag on return */
- if (SHOULD_PEND(lpDosTask->pending)) {
+ if (SHOULD_PEND(pending_event)) {
    SET_PEND(&context);
  }
 #endif
@@ -280,48 +288,48 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn, int sig,
    TRACE_(int)("DOS module caught signal %d\n",sig);
    if ((sig==SIGALRM) || (sig==SIGUSR2)) {
      if (sig==SIGALRM) {
-       lpDosTask->sig_sent++;
+       sig_sent++;
        DOSVM_QueueEvent(0,DOS_PRIORITY_REALTIME,NULL,NULL);
      }
-     if (lpDosTask->pending) {
+     if (pending_event) {
        TRACE_(int)("setting Pending flag, interrupts are currently %s\n",
                  IF_ENABLED(&context) ? "enabled" : "disabled");
        SET_PEND(&context);
-       DOSVM_SendQueuedEvents(&context,lpDosTask);
+       DOSVM_SendQueuedEvents(&context);
      } else {
        TRACE_(int)("no events are pending, clearing Pending flag\n");
        CLR_PEND(&context);
      }
-     lpDosTask->sig_sent--;
+     sig_sent--;
    }
    else if ((sig==SIGHUP) || (sig==SIGILL) || (sig==SIGSEGV)) {
        do_exception( sig, &context );
    } else {
-    DOSVM_Dump(lpDosTask,fn,sig,VM86);
+    DOSVM_Dump(fn,sig,VM86);
     ret=-1;
    }
    break;
   case VM86_UNKNOWN: /* unhandled GPF */
-   DOSVM_Dump(lpDosTask,fn,sig,VM86);
+   DOSVM_Dump(fn,sig,VM86);
    do_exception( SIGSEGV, &context );
    break;
   case VM86_INTx:
    if (TRACE_ON(relay))
     DPRINTF("Call DOS int 0x%02x (EAX=%08lx) ret=%04lx:%04lx\n",VM86_ARG(fn),context.Eax,context.SegCs,context.Eip);
-   ret=DOSVM_Int(VM86_ARG(fn),&context,lpDosTask);
+   ret=DOSVM_Int(VM86_ARG(fn),&context);
    if (TRACE_ON(relay))
     DPRINTF("Ret  DOS int 0x%02x (EAX=%08lx) ret=%04lx:%04lx\n",VM86_ARG(fn),context.Eax,context.SegCs,context.Eip);
    break;
   case VM86_STI:
   case VM86_PICRETURN:
     TRACE_(int)("DOS task enabled interrupts with events pending, sending events\n");
-    DOSVM_SendQueuedEvents(&context,lpDosTask);
+    DOSVM_SendQueuedEvents(&context);
     break;
   case VM86_TRAP:
    do_exception( SIGTRAP, &context );
    break;
   default:
-   DOSVM_Dump(lpDosTask,fn,sig,VM86);
+   DOSVM_Dump(fn,sig,VM86);
    ret=-1;
  }
 
@@ -335,7 +343,7 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn, int sig,
  return ret;
 }
 
-static void DOSVM_ProcessConsole(LPDOSTASK lpDosTask)
+static void DOSVM_ProcessConsole(void)
 {
   INPUT_RECORD msg;
   DWORD res;
@@ -360,7 +368,7 @@ static void DOSVM_ProcessConsole(LPDOSTASK lpDosTask)
   }
 }
 
-static void DOSVM_ProcessMessage(LPDOSTASK lpDosTask,MSG *msg)
+static void DOSVM_ProcessMessage(MSG *msg)
 {
   BYTE scan = 0;
 
@@ -391,21 +399,20 @@ static void DOSVM_ProcessMessage(LPDOSTASK lpDosTask,MSG *msg)
 
 void DOSVM_Wait( int read_pipe, HANDLE hObject )
 {
-  LPDOSTASK lpDosTask = MZ_Current();
   MSG msg;
   DWORD waitret;
   HANDLE objs[2];
   int objc;
   BOOL got_msg = FALSE;
 
-  objs[0]=lpDosTask->hConInput;
+  objs[0]=GetStdHandle(STD_INPUT_HANDLE);
   objs[1]=hObject;
   objc=hObject?2:1;
   do {
     /* check for messages (waste time before the response check below) */
     while (Callout.PeekMessageA(&msg,0,0,0,PM_REMOVE|PM_NOYIELD)) {
       /* got a message */
-      DOSVM_ProcessMessage(lpDosTask,&msg);
+      DOSVM_ProcessMessage(&msg);
       /* we don't need a TranslateMessage here */
       Callout.DispatchMessageA(&msg);
       got_msg = TRUE;
@@ -415,7 +422,7 @@ void DOSVM_Wait( int read_pipe, HANDLE hObject )
       INPUT_RECORD msg;
       DWORD num;
       if (PeekConsoleInputA(objs[0],&msg,1,&num) && num) {
-        DOSVM_ProcessConsole(lpDosTask);
+        DOSVM_ProcessConsole();
         got_msg = TRUE;
       }
     }
@@ -439,63 +446,42 @@ void DOSVM_Wait( int read_pipe, HANDLE hObject )
       if (waitret==(WAIT_OBJECT_0+1)) break;
     }
     if (waitret==WAIT_OBJECT_0) {
-      DOSVM_ProcessConsole(lpDosTask);
+      DOSVM_ProcessConsole();
     }
   } while (TRUE);
 }
 
 int DOSVM_Enter( CONTEXT86 *context )
 {
- LPDOSTASK lpDosTask = MZ_Current();
  struct vm86plus_struct VM86;
  int stat,len,sig;
 
- if (!lpDosTask) {
-  /* MZ_CreateProcess or MZ_AllocDPMITask should have been called first */
-  ERR_(module)("dosmod has not been initialized!");
-  return -1;
- }
-
- if (context) {
 #define CP(x,y) VM86.regs.x = y##_reg(context)
   CV;
 #undef CP
   if (VM86.regs.eflags & IF_MASK)
     VM86.regs.eflags |= VIF_MASK;
- } else {
-/* initial setup */
-  /* registers */
-  memset(&VM86,0,sizeof(VM86));
-  VM86.regs.cs=lpDosTask->init_cs;
-  VM86.regs.eip=lpDosTask->init_ip;
-  VM86.regs.ss=lpDosTask->init_ss;
-  VM86.regs.esp=lpDosTask->init_sp;
-  VM86.regs.ds=lpDosTask->psp_seg;
-  VM86.regs.es=lpDosTask->psp_seg;
-  VM86.regs.eflags=VIF_MASK;
-  /* hmm, what else do we need? */
- }
 
  /* main exchange loop */
- lpDosTask->entered++;
+ entered++;
  do {
   TRACE_(module)("thread is: %lx\n",GetCurrentThreadId());
   stat = VM86_ENTER;
   errno = 0;
   /* transmit VM86 structure to dosmod task */
-  if (write(lpDosTask->write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
-   ERR_(module)("dosmod sync lost, errno=%d, fd=%d, pid=%d\n",errno,lpDosTask->write_pipe,getpid());
+  if (write(write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
+   ERR_(module)("dosmod sync lost, errno=%d, fd=%d, pid=%d\n",errno,write_pipe,getpid());
    return -1;
   }
-  if (write(lpDosTask->write_pipe,&VM86,sizeof(VM86))!=sizeof(VM86)) {
+  if (write(write_pipe,&VM86,sizeof(VM86))!=sizeof(VM86)) {
    ERR_(module)("dosmod sync lost, errno=%d\n",errno);
    return -1;
   }
   /* wait for response, doing other things in the meantime */
-  DOSVM_Wait(lpDosTask->read_pipe, lpDosTask->hReadPipe);
+  DOSVM_Wait(read_pipe, hReadPipe);
   /* read response */
   while (1) {
-    if ((len=read(lpDosTask->read_pipe,&stat,sizeof(stat)))==sizeof(stat)) break;
+    if ((len=read(read_pipe,&stat,sizeof(stat)))==sizeof(stat)) break;
     if (((errno==EINTR)||(errno==EAGAIN))&&(len<=0)) {
      WARN_(module)("rereading dosmod return code due to errno=%d, result=%d\n",errno,len);
      continue;
@@ -505,11 +491,10 @@ int DOSVM_Enter( CONTEXT86 *context )
   }
   TRACE_(module)("dosmod return code=%d\n",stat);
   if (stat==DOSMOD_LEFTIDLE) {
-    lpDosTask->idling--;
     continue;
   }
   while (1) {
-    if ((len=read(lpDosTask->read_pipe,&VM86,sizeof(VM86)))==sizeof(VM86)) break;
+    if ((len=read(read_pipe,&VM86,sizeof(VM86)))==sizeof(VM86)) break;
     if (((errno==EINTR)||(errno==EAGAIN))&&(len<=0)) {
      WARN_(module)("rereading dosmod VM86 structure due to errno=%d, result=%d\n",errno,len);
      continue;
@@ -519,7 +504,7 @@ int DOSVM_Enter( CONTEXT86 *context )
   }
   if ((stat&0xff)==DOSMOD_SIGNAL) {
     while (1) {
-      if ((len=read(lpDosTask->read_pipe,&sig,sizeof(sig)))==sizeof(sig)) break;
+      if ((len=read(read_pipe,&sig,sizeof(sig)))==sizeof(sig)) break;
       if (((errno==EINTR)||(errno==EAGAIN))&&(len<=0)) {
 	WARN_(module)("rereading dosmod signal due to errno=%d, result=%d\n",errno,len);
 	continue;
@@ -529,8 +514,8 @@ int DOSVM_Enter( CONTEXT86 *context )
     } while (0);
   } else sig=0;
   /* got response */
- } while (DOSVM_Process(lpDosTask,stat,sig,&VM86)>=0);
- lpDosTask->entered--;
+ } while (DOSVM_Process(stat,sig,&VM86)>=0);
+ entered--;
 
  if (context) {
 #define CP(x,y) y##_reg(context) = VM86.regs.x
@@ -542,27 +527,25 @@ int DOSVM_Enter( CONTEXT86 *context )
 
 void DOSVM_PIC_ioport_out( WORD port, BYTE val)
 {
-  LPDOSTASK lpDosTask = MZ_Current();
-  LPDOSEVENT event;
+    LPDOSEVENT event;
 
-  if (lpDosTask) {
     if ((port==0x20) && (val==0x20)) {
-      if (lpDosTask->current) {
+      if (current_event) {
 	/* EOI (End Of Interrupt) */
 	TRACE_(int)("received EOI for current IRQ, clearing\n");
-	event = lpDosTask->current;
-	lpDosTask->current = event->next;
+	event = current_event;
+	current_event = event->next;
 	if (event->relay)
-	(*event->relay)(lpDosTask,NULL,event->data);
+	(*event->relay)(NULL,event->data);
 	free(event);
 
-	if (lpDosTask->pending &&
-	    !lpDosTask->sig_sent) {
+	if (pending_event &&
+	    !sig_sent) {
 	  /* another event is pending, which we should probably
 	   * be able to process now, so tell dosmod about it */
 	  TRACE_(int)("another event pending, signalling dosmod\n");
-	  kill(lpDosTask->task,SIGUSR2);
-	  lpDosTask->sig_sent++;
+	  kill(dosmod_pid,SIGUSR2);
+	  sig_sent++;
 	}
       } else {
 	WARN_(int)("EOI without active IRQ\n");
@@ -570,27 +553,25 @@ void DOSVM_PIC_ioport_out( WORD port, BYTE val)
     } else {
       FIXME_(int)("unrecognized PIC command %02x\n",val);
     }
-  }
 }
 
 void DOSVM_SetTimer( unsigned ticks )
 {
-  LPDOSTASK lpDosTask = MZ_Current();
   int stat=DOSMOD_SET_TIMER;
   struct timeval tim;
 
-  if (lpDosTask) {
+  if (MZ_Current()) {
     /* the PC clocks ticks at 1193180 Hz */
     tim.tv_sec=0;
     tim.tv_usec=((unsigned long long)ticks*1000000)/1193180;
     /* sanity check */
     if (!tim.tv_usec) tim.tv_usec=1;
 
-    if (write(lpDosTask->write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
+    if (write(write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
       ERR_(module)("dosmod sync lost, errno=%d\n",errno);
       return;
     }
-    if (write(lpDosTask->write_pipe,&tim,sizeof(tim))!=sizeof(tim)) {
+    if (write(write_pipe,&tim,sizeof(tim))!=sizeof(tim)) {
       ERR_(module)("dosmod sync lost, errno=%d\n",errno);
       return;
     }
@@ -600,18 +581,17 @@ void DOSVM_SetTimer( unsigned ticks )
 
 unsigned DOSVM_GetTimer( void )
 {
-  LPDOSTASK lpDosTask = MZ_Current();
   int stat=DOSMOD_GET_TIMER;
   struct timeval tim;
 
-  if (lpDosTask) {
-    if (write(lpDosTask->write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
+  if (MZ_Current()) {
+    if (write(write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
       ERR_(module)("dosmod sync lost, errno=%d\n",errno);
       return 0;
     }
     /* read response */
     while (1) {
-      if (read(lpDosTask->read_pipe,&tim,sizeof(tim))==sizeof(tim)) break;
+      if (read(read_pipe,&tim,sizeof(tim))==sizeof(tim)) break;
       if ((errno==EINTR)||(errno==EAGAIN)) continue;
       ERR_(module)("dosmod sync lost, errno=%d\n",errno);
       return 0;
@@ -619,47 +599,6 @@ unsigned DOSVM_GetTimer( void )
     return ((unsigned long long)tim.tv_usec*1193180)/1000000;
   }
   return 0;
-}
-
-void DOSVM_SetSystemData( int id, void *data )
-{
-  LPDOSTASK lpDosTask = MZ_Current();
-  DOSSYSTEM *sys, *prev;
-
-  if (lpDosTask) {
-    sys = lpDosTask->sys;
-    prev = NULL;
-    while (sys && (sys->id != id)) {
-      prev = sys;
-      sys = sys->next;
-    }
-    if (sys) {
-      free(sys->data);
-      sys->data = data;
-    } else {
-      sys = malloc(sizeof(DOSSYSTEM));
-      sys->id = id;
-      sys->data = data;
-      sys->next = NULL;
-      if (prev) prev->next = sys;
-      else lpDosTask->sys = sys;
-    }
-  } else free(data);
-}
-
-void* DOSVM_GetSystemData( int id )
-{
-  LPDOSTASK lpDosTask = MZ_Current();
-  DOSSYSTEM *sys;
-
-  if (lpDosTask) {
-    sys = lpDosTask->sys;
-    while (sys && (sys->id != id))
-      sys = sys->next;
-    if (sys)
-      return sys->data;
-  }
-  return NULL;
 }
 
 #else /* !MZ_SUPPORTED */
@@ -674,15 +613,13 @@ void DOSVM_Wait( int read_pipe, HANDLE hObject) {}
 void DOSVM_PIC_ioport_out( WORD port, BYTE val) {}
 void DOSVM_SetTimer( unsigned ticks ) {}
 unsigned DOSVM_GetTimer( void ) { return 0; }
-void DOSVM_SetSystemData( int id, void *data ) { free(data); }
-void* DOSVM_GetSystemData( int id ) { return NULL; }
-void DOSVM_QueueEvent( int irq, int priority, void (*relay)(LPDOSTASK,CONTEXT86*,void*), void *data)
+void DOSVM_QueueEvent( int irq, int priority, void (*relay)(CONTEXT86*,void*), void *data)
 {
   if (irq<0) {
     /* callback event, perform it with dummy context */
     CONTEXT86 context;
     memset(&context,0,sizeof(context));
-    (*relay)(NULL,&context,data);
+    (*relay)(&context,data);
   } else {
     ERR_(int)("IRQ without DOS task: should not happen");
   }

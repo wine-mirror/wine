@@ -29,7 +29,7 @@ inline static void add_stack( CONTEXT86 *context, int offset )
 
 inline static void *make_ptr( CONTEXT86 *context, DWORD seg, DWORD off, int long_addr )
 {
-    if (ISV86(context)) return DOSMEM_MemoryBase() + (seg << 4) + LOWORD(off);
+    if (ISV86(context)) return PTR_REAL_TO_LIN( seg, off );
     if (IS_SELECTOR_SYSTEM(seg)) return (void *)off;
     if (!long_addr) off = LOWORD(off);
     return PTR_SEG_OFF_TO_LIN( seg, off );
@@ -38,7 +38,7 @@ inline static void *make_ptr( CONTEXT86 *context, DWORD seg, DWORD off, int long
 inline static void *get_stack( CONTEXT86 *context )
 {
     if (ISV86(context))
-        return DOSMEM_MemoryBase() + (context->SegSs << 4) + LOWORD(context->Esp);
+        return PTR_REAL_TO_LIN( context->SegSs, context->Esp );
     if (IS_SELECTOR_SYSTEM(context->SegSs))
         return (void *)context->Esp;
     if (IS_SELECTOR_32BIT(context->SegSs))

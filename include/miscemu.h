@@ -128,8 +128,11 @@ extern BYTE     * DOSMEM_BiosSys();
 
 extern DWORD DOSMEM_CollateTable;
 
-extern DWORD DOSMEM_ErrorCall;
-extern DWORD DOSMEM_ErrorBuffer;
+/* various real-mode code stubs */
+extern WORD DOSMEM_wrap_seg;
+extern WORD DOSMEM_xms_seg;
+extern WORD DOSMEM_dpmi_seg;
+extern WORD DOSMEM_dpmi_sel;
 
 extern DWORD DOS_LOLSeg;
 extern struct _DOS_LISTOFLISTS * DOSMEM_LOL();
@@ -249,7 +252,7 @@ extern void ASPI_DOS_HandleInt(CONTEXT86 *context);
  *       a *32-bit* general register as third parameter, e.g.
  *          CTX_SEG_OFF_TO_LIN( context, DS_reg(context), EDX_reg(context) )
  *       This will generate a linear pointer in all three cases:
- *         Real-Mode:   Seg*16 + LOWORD(Offset) + V86BASE
+ *         Real-Mode:   Seg*16 + LOWORD(Offset)
  *         16-bit:      convert (Seg, LOWORD(Offset)) to linear
  *         32-bit:      use Offset as linear address (DeviceIoControl!)
  *
@@ -258,8 +261,8 @@ extern void ASPI_DOS_HandleInt(CONTEXT86 *context);
  *       (0 counts also as 32-bit segment).
  */
 #define CTX_SEG_OFF_TO_LIN(context,seg,off) \
-    (ISV86(context) ? (void*)(V86BASE(context)+((seg)<<4)+(off&0xffff)) : \
-     (!seg || IS_SELECTOR_SYSTEM(seg))? (void *)off : PTR_SEG_OFF_TO_LIN(seg,off&0xffff))
+    (ISV86(context) ? PTR_REAL_TO_LIN((seg),(off)) : \
+     (!seg || IS_SELECTOR_SYSTEM(seg))? (void *)(off) : PTR_SEG_OFF_TO_LIN((seg),LOWORD(off)))
 
 #define INT_BARF(context,num) \
     ERR( "int%x: unknown/not implemented parameters:\n" \

@@ -60,6 +60,8 @@ extern ldt_copy_entry ldt_copy[LDT_SIZE];
 
 #define PTR_SEG_OFF_TO_LIN(seg,off) \
    ((void*)(GET_SEL_BASE(seg) + (unsigned int)(off)))
+#define PTR_REAL_TO_LIN(seg,off) \
+   ((void*)(((unsigned int)(seg) << 4) + LOWORD(off)))
 #define PTR_SEG_TO_LIN(ptr) \
    PTR_SEG_OFF_TO_LIN(SELECTOROF(ptr),OFFSETOF(ptr))
 #define PTR_SEG_OFF_TO_SEGPTR(seg,off) \

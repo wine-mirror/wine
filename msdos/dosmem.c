@@ -5,30 +5,33 @@
  * Copyright 1996 Marcus Meissner
  */
 
+#include "config.h"
+
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_SYS_MMAN_H
+# include <sys/mman.h>
+#endif
+
 #include "winbase.h"
 #include "wine/winbase16.h"
+
 #include "global.h"
 #include "ldt.h"
+#include "selectors.h"
 #include "miscemu.h"
 #include "vga.h"
 #include "dosexe.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(dosmem)
-DECLARE_DEBUG_CHANNEL(selector)
+DEFAULT_DEBUG_CHANNEL(dosmem);
+DECLARE_DEBUG_CHANNEL(selector);
 
 HANDLE16 DOSMEM_BiosDataSeg;  /* BIOS data segment at 0x40:0 */
 HANDLE16 DOSMEM_BiosSysSeg;   /* BIOS ROM segment at 0xf000:0 */
 
-static char	*DOSMEM_dosmem;
-
-       DWORD 	 DOSMEM_CollateTable;
-
-       DWORD	 DOSMEM_ErrorCall;
-       DWORD	 DOSMEM_ErrorBuffer;
+DWORD DOSMEM_CollateTable;
 
 /* use 2 low bits of 'size' for the housekeeping */
 
@@ -57,6 +60,17 @@ typedef struct {
 #define VM_STUB(x) (0x90CF00CD|(x<<8)) /* INT x; IRET; NOP */
 #define VM_STUB_SEGMENT 0xf000         /* BIOS segment */
 
+/* DOS memory base */
+static char *DOSMEM_dosmem;
+/* bios area; normally at offset 0x400, but can be moved to trap NULL pointers */
+static void *DOSMEM_biosdata;
+
+/* various real-mode code stubs */
+WORD DOSMEM_wrap_seg;
+WORD DOSMEM_xms_seg;
+WORD DOSMEM_dpmi_seg;
+WORD DOSMEM_dpmi_sel;
+
 /***********************************************************************
  *           DOSMEM_MemoryBase
  *
@@ -64,12 +78,7 @@ typedef struct {
  */
 char *DOSMEM_MemoryBase(void)
 {
-    LPDOSTASK lpDosTask = MZ_Current();
-
-    if (lpDosTask && lpDosTask->img)
-        return lpDosTask->img;
-    else
-        return DOSMEM_dosmem;
+    return DOSMEM_dosmem;
 }
 
 /***********************************************************************
@@ -79,7 +88,7 @@ char *DOSMEM_MemoryBase(void)
  */
 static char *DOSMEM_MemoryTop(void)
 {
-    return DOSMEM_MemoryBase()+0x9FFFC; /* 640K */
+    return DOSMEM_dosmem+0x9FFFC; /* 640K */
 }
 
 /***********************************************************************
@@ -89,7 +98,7 @@ static char *DOSMEM_MemoryTop(void)
  */
 static dosmem_info *DOSMEM_InfoBlock(void)
 {
-    return (dosmem_info*)(DOSMEM_MemoryBase()+0x10000); /* 64K */
+    return (dosmem_info*)(DOSMEM_dosmem+0x10000); /* 64K */
 }
 
 /***********************************************************************
@@ -118,7 +127,7 @@ static dosmem_entry *DOSMEM_RootBlock(void)
  */
 static void DOSMEM_FillIsrTable(void)
 {
-    SEGPTR *isr = (SEGPTR*)DOSMEM_MemoryBase();
+    SEGPTR *isr = (SEGPTR*)DOSMEM_dosmem;
     DWORD *stub = (DWORD*)((char*)isr + (VM_STUB_SEGMENT << 4));
     int x;
  
@@ -133,24 +142,66 @@ static void DOSMEM_FillIsrTable(void)
  */
 static void DOSMEM_InitDPMI(void)
 {
-    extern UINT16 DPMI_wrap_seg;
-    static char wrap_code[]={
+    LPSTR ptr;
+
+    static const char wrap_code[]={
      0xCD,0x31, /* int $0x31 */
      0xCB       /* lret */
     };
-    LPSTR wrapper = (LPSTR)DOSMEM_GetBlock(sizeof(wrap_code), &DPMI_wrap_seg);
 
-    memcpy(wrapper, wrap_code, sizeof(wrap_code));
+    static const char enter_xms[]=
+    {
+        /* XMS hookable entry point */
+        0xEB,0x03,           /* jmp entry */
+        0x90,0x90,0x90,      /* nop;nop;nop */
+                             /* entry: */
+        /* real entry point */
+        /* for simplicity, we'll just use the same hook as DPMI below */
+        0xCD,0x31,           /* int $0x31 */
+        0xCB                 /* lret */
+    };
+
+    static const char enter_pm[]=
+    {
+        0x50,                /* pushw %ax */
+        0x52,                /* pushw %dx */
+        0x55,                /* pushw %bp */
+        0x89,0xE5,           /* movw %sp,%bp */
+        /* get return CS */
+        0x8B,0x56,0x08,      /* movw 8(%bp),%dx */
+        /* just call int 31 here to get into protected mode... */
+        /* it'll check whether it was called from dpmi_seg... */
+        0xCD,0x31,           /* int $0x31 */
+        /* we are now in the context of a 16-bit relay call */
+        /* need to fixup our stack;
+         * 16-bit relay return address will be lost, but we won't worry quite yet */
+        0x8E,0xD0,           /* movw %ax,%ss */
+        0x66,0x0F,0xB7,0xE5, /* movzwl %bp,%esp */
+        /* set return CS */
+        0x89,0x56,0x08,      /* movw %dx,8(%bp) */
+        0x5D,                /* popw %bp */
+        0x5A,                /* popw %dx */
+        0x58,                /* popw %ax */
+        0xCB                 /* lret */
+    };
+
+    ptr = DOSMEM_GetBlock( sizeof(wrap_code), &DOSMEM_wrap_seg );
+    memcpy( ptr, wrap_code, sizeof(wrap_code) );
+    ptr = DOSMEM_GetBlock( sizeof(enter_xms), &DOSMEM_xms_seg );
+    memcpy( ptr, enter_xms, sizeof(enter_xms) );
+    ptr = DOSMEM_GetBlock( sizeof(enter_pm), &DOSMEM_dpmi_seg );
+    memcpy( ptr, enter_pm, sizeof(enter_pm) );
+    DOSMEM_dpmi_sel = SELECTOR_AllocBlock( ptr, sizeof(enter_pm), SEGMENT_CODE, FALSE, FALSE );
 }
 
 BIOSDATA * DOSMEM_BiosData()
 {
-    return (BIOSDATA *)(DOSMEM_MemoryBase()+0x400);
+    return (BIOSDATA *)DOSMEM_biosdata;
 }
 
 BYTE * DOSMEM_BiosSys()
 {
-    return DOSMEM_MemoryBase()+0xf0000;
+    return DOSMEM_dosmem+0xf0000;
 }
 
 struct _DOS_LISTOFLISTS * DOSMEM_LOL()
@@ -293,6 +344,7 @@ static void DOSMEM_InitCollateTable()
  */
 static void DOSMEM_InitErrorTable()
 {
+#if 0  /* no longer used */
 	DWORD		x;
 	char 		*call;
 
@@ -336,7 +388,7 @@ static void DOSMEM_InitErrorTable()
 	call = DOSMEM_MapRealToLinear(DOSMEM_ErrorCall);
 
         memset(call, 0, SIZE_TO_ALLOCATE);
-
+#endif
         /* Fixme - Copy assembly into buffer here */        
 }
 
@@ -368,27 +420,55 @@ static void DOSMEM_InitMemory(void)
 		     ;
 }
 
-/***********************************************************************
- *           DOSMEM_MovePointers
+/**********************************************************************
+ *		setup_dos_mem
  *
- * Relocates any pointers into DOS memory to a new address space.
+ * Setup the first megabyte for DOS memory access
  */
-static void DOSMEM_MovePointers(LPVOID dest, LPVOID src, DWORD size)
+static void setup_dos_mem( int dos_init )
 {
-  unsigned long delta = (char *) dest - (char *) src;
-  unsigned cnt;
-  ldt_entry ent;
+    int bios_offset = 0x400;
+    int page_size = VIRTUAL_GetPageSize();
+    void *addr = VIRTUAL_mmap( -1, (void *)page_size, 0x110000-page_size, 0,
+                               PROT_READ | PROT_WRITE | PROT_EXEC, 0 );
+    if (addr == (void *)page_size)  /* we got what we wanted */
+    {
+        /* now map from address 0 */
+        addr = VIRTUAL_mmap( -1, NULL, 0x110000, 0,
+                             PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED );
+        if (addr)
+        {
+            ERR("MAP_FIXED failed at address 0 for DOS address space\n" );
+            ExitProcess(1);
+        }
 
-  /* relocate base addresses of any selectors pointing into memory */
-  for (cnt=FIRST_LDT_ENTRY_TO_ALLOC; cnt<LDT_SIZE; cnt++) {
-    LDT_GetEntry(cnt, &ent);
-    if ((ent.base >= (unsigned long)src) && \
-	(ent.base < ((unsigned long)src + size))) {
-      ent.base += delta;
-      LDT_SetEntry(cnt, &ent);
+        /* inform the memory manager that there is a mapping here */
+        VirtualAlloc( addr, 0x110000, MEM_RESERVE | MEM_SYSTEM, PAGE_EXECUTE_READWRITE );
+
+        /* protect the first 64K to catch NULL pointers */
+        if (!dos_init)
+        {
+            VirtualProtect( addr, 0x10000, PAGE_NOACCESS, NULL );
+            /* move the BIOS data from 0x400 to 0xf0400 */
+            bios_offset += 0xf0000;
+        }
     }
-  }
+    else
+    {
+        ERR("Cannot use first megabyte for DOS address space, please report\n" );
+        if (dos_init) ExitProcess(1);
+        /* allocate the DOS area somewhere else */
+        addr = VirtualAlloc( NULL, 0x110000, MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+        if (!addr)
+        {
+            ERR( "Cannot allocate DOS memory\n" );
+            ExitProcess(1);
+        }
+    }
+    DOSMEM_dosmem = addr;
+    DOSMEM_biosdata = (char *)addr + bios_offset;
 }
+
 
 /***********************************************************************
  *           DOSMEM_Init
@@ -398,44 +478,41 @@ static void DOSMEM_MovePointers(LPVOID dest, LPVOID src, DWORD size)
  */
 BOOL DOSMEM_Init(BOOL dos_init)
 {
-    LPVOID base = DOSMEM_MemoryBase();
-    BOOL do_init = dos_init && !DOSMEM_dosmem;
+    static int already_done;
 
-    if (!base)
+    if (!already_done)
     {
-        /* Allocate 1 MB dosmemory 
-         */
-        DOSMEM_dosmem = VirtualAlloc( NULL, 0x100000, MEM_COMMIT,
-                                      PAGE_EXECUTE_READWRITE );
-        if (!DOSMEM_dosmem)
-        {
-            WARN("Could not allocate DOS memory.\n" );
-            return FALSE;
-        }
-        DOSMEM_BiosDataSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0x400,
-                                     0x100, 0, FALSE, FALSE, FALSE );
-        DOSMEM_BiosSysSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0xf0000,
-                                     0x10000, 0, FALSE, FALSE, FALSE );
-        base = DOSMEM_dosmem;
-        do_init = TRUE;
-    }
+        setup_dos_mem( dos_init );
 
-    if (do_init) {
-        DOSMEM_FillIsrTable();
+        DOSMEM_BiosDataSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_biosdata,
+                                                0x100, 0, FALSE, FALSE, FALSE );
+        DOSMEM_BiosSysSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0xf0000,
+                                               0x10000, 0, FALSE, FALSE, FALSE );
         DOSMEM_FillBiosSegments();
         DOSMEM_InitMemory();
         DOSMEM_InitCollateTable();
         DOSMEM_InitErrorTable();
         DOSMEM_InitDPMI();
-	DOSDEV_InstallDOSDevices();
+        DOSDEV_InstallDOSDevices();
+        already_done = 1;
     }
     else if (dos_init)
     {
-        /* bootstrap the new V86 task with a copy of the "system" memory */
-        memcpy(base, DOSMEM_dosmem, 0x100000);
-	/* then move existing selectors to it */
-	DOSMEM_MovePointers(base, DOSMEM_dosmem, 0x100000);
+        if (DOSMEM_dosmem)
+        {
+            ERR( "Needs access to the first megabyte for DOS mode\n" );
+            ExitProcess(1);
+        }
+        MESSAGE( "Warning: unprotecting the first 64KB of memory to allow real-mode calls.\n"
+                 "         NULL pointer accesses will no longer be caught.\n" );
+        VirtualProtect( NULL, 0x10000, PAGE_EXECUTE_READWRITE, NULL );
+        /* copy the BIOS area down to 0x400 */
+        memcpy( DOSMEM_dosmem + 0x400, DOSMEM_biosdata, 0x100 );
+        DOSMEM_biosdata = DOSMEM_dosmem + 0x400;
+        SetSelectorBase( DOSMEM_BiosDataSeg, 0x400 );
     }
+    /* interrupt table is at addr 0, so only do this when setting up DOS mode */
+    if (dos_init) DOSMEM_FillIsrTable();
     return TRUE;
 }
 
@@ -513,7 +590,7 @@ LPVOID DOSMEM_GetBlock(UINT size, UINT16* pseg)
 
 	       info_block->blocks++;
 	       info_block->free -= dm->size;
-	       if( pseg ) *pseg = (block - DOSMEM_MemoryBase()) >> 4;
+	       if( pseg ) *pseg = (block - DOSMEM_dosmem) >> 4;
 #ifdef __DOSMEM_DEBUG__
                dm->size |= DM_BLOCK_DEBUG;
 #endif
@@ -535,7 +612,7 @@ BOOL DOSMEM_FreeBlock(void* ptr)
 
    if( ptr >= (void*)(((char*)DOSMEM_RootBlock()) + sizeof(dosmem_entry)) &&
        ptr < (void*)DOSMEM_MemoryTop() && !((((char*)ptr)
-                  - DOSMEM_MemoryBase()) & 0xf) )
+                  - DOSMEM_dosmem) & 0xf) )
    {
        dosmem_entry  *dm = (dosmem_entry*)(((char*)ptr) - sizeof(dosmem_entry));
 
@@ -565,11 +642,11 @@ LPVOID DOSMEM_ResizeBlock(void* ptr, UINT size, UINT16* pseg)
 
    if( ptr >= (void*)(((char*)DOSMEM_RootBlock()) + sizeof(dosmem_entry)) &&
        ptr < (void*)DOSMEM_MemoryTop() && !((((char*)ptr)
-                  - DOSMEM_MemoryBase()) & 0xf) )
+                  - DOSMEM_dosmem) & 0xf) )
    {
        dosmem_entry  *dm = (dosmem_entry*)(((char*)ptr) - sizeof(dosmem_entry));
 
-       if( pseg ) *pseg = ((char*)ptr - DOSMEM_MemoryBase()) >> 4;
+       if( pseg ) *pseg = ((char*)ptr - DOSMEM_dosmem) >> 4;
 
        if( !(dm->size & (DM_BLOCK_FREE | DM_BLOCK_TERMINAL))
 	 )
@@ -689,9 +766,9 @@ UINT DOSMEM_Available(void)
  */
 UINT DOSMEM_MapLinearToDos(LPVOID ptr)
 {
-    if (((char*)ptr >= DOSMEM_MemoryBase()) &&
-        ((char*)ptr < DOSMEM_MemoryBase() + 0x100000))
-	  return (UINT)ptr - (UINT)DOSMEM_MemoryBase();
+    if (((char*)ptr >= DOSMEM_dosmem) &&
+        ((char*)ptr < DOSMEM_dosmem + 0x100000))
+	  return (UINT)ptr - (UINT)DOSMEM_dosmem;
     return (UINT)ptr;
 }
 
@@ -703,7 +780,7 @@ UINT DOSMEM_MapLinearToDos(LPVOID ptr)
  */
 LPVOID DOSMEM_MapDosToLinear(UINT ptr)
 {
-    if (ptr < 0x100000) return (LPVOID)(ptr + (UINT)DOSMEM_MemoryBase());
+    if (ptr < 0x100000) return (LPVOID)(ptr + (UINT)DOSMEM_dosmem);
     return (LPVOID)ptr;
 }
 
@@ -717,7 +794,7 @@ LPVOID DOSMEM_MapRealToLinear(DWORD x)
 {
    LPVOID       lin;
 
-   lin=DOSMEM_MemoryBase()+(x&0xffff)+(((x&0xffff0000)>>16)*16);
+   lin=DOSMEM_dosmem+(x&0xffff)+(((x&0xffff0000)>>16)*16);
    TRACE_(selector)("(0x%08lx) returns 0x%p.\n", x, lin );
    return lin;
 }

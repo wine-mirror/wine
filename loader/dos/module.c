@@ -37,6 +37,8 @@
 
 DEFAULT_DEBUG_CHANNEL(module);
 
+static LPDOSTASK dos_current;
+
 #ifdef MZ_SUPPORTED
 
 #ifdef HAVE_SYS_MMAN_H
@@ -48,15 +50,21 @@ DEFAULT_DEBUG_CHANNEL(module);
 #undef MZ_MAPSELF
 
 #define BIOS_DATA_SEGMENT 0x40
-#define START_OFFSET 0
 #define PSP_SIZE 0x10
 
 #define SEG16(ptr,seg) ((LPVOID)((BYTE*)ptr+((DWORD)(seg)<<4)))
 #define SEGPTR16(ptr,segptr) ((LPVOID)((BYTE*)ptr+((DWORD)SELECTOROF(segptr)<<4)+OFFSETOF(segptr)))
 
-static LPDOSTASK dos_current;
+static WORD init_cs,init_ip,init_ss,init_sp;
+static char mm_name[128];
+
+int read_pipe, write_pipe;
+HANDLE hReadPipe, hWritePipe;
+pid_t dosmod_pid;
 
 static void MZ_Launch(void);
+static BOOL MZ_InitTask(void);
+static void MZ_KillTask(void);
 
 static void MZ_CreatePSP( LPVOID lpPSP, WORD env )
 {
@@ -107,68 +115,18 @@ static char int08[]={
  0xCF                 /* iret */
 };
 
-static void MZ_InitHandlers( LPDOSTASK lpDosTask )
+static void MZ_InitHandlers(void)
 {
  WORD seg;
  LPBYTE start=DOSMEM_GetBlock(sizeof(int08),&seg);
  memcpy(start,int08,sizeof(int08));
 /* INT 08: point it at our tick-incrementing handler */
- ((SEGPTR*)(lpDosTask->img))[0x08]=PTR_SEG_OFF_TO_SEGPTR(seg,0);
+ ((SEGPTR*)0)[0x08]=PTR_SEG_OFF_TO_SEGPTR(seg,0);
 /* INT 1C: just point it to IRET, we don't want to handle it ourselves */
- ((SEGPTR*)(lpDosTask->img))[0x1C]=PTR_SEG_OFF_TO_SEGPTR(seg,sizeof(int08)-1);
+ ((SEGPTR*)0)[0x1C]=PTR_SEG_OFF_TO_SEGPTR(seg,sizeof(int08)-1);
 }
 
-static char enter_xms[]={
-/* XMS hookable entry point */
- 0xEB,0x03,           /* jmp entry */
- 0x90,0x90,0x90,      /* nop;nop;nop */
-                      /* entry: */
-/* real entry point */
-/* for simplicity, we'll just use the same hook as DPMI below */
- 0xCD,0x31,           /* int $0x31 */
- 0xCB                 /* lret */
-};
-
-static void MZ_InitXMS( LPDOSTASK lpDosTask )
-{
- LPBYTE start=DOSMEM_GetBlock(sizeof(enter_xms),&(lpDosTask->xms_seg));
- memcpy(start,enter_xms,sizeof(enter_xms));
-}
-
-static char enter_pm[]={
- 0x50,                /* pushw %ax */
- 0x52,                /* pushw %dx */
- 0x55,                /* pushw %bp */
- 0x89,0xE5,           /* movw %sp,%bp */
-/* get return CS */
- 0x8B,0x56,0x08,      /* movw 8(%bp),%dx */
-/* just call int 31 here to get into protected mode... */
-/* it'll check whether it was called from dpmi_seg... */
- 0xCD,0x31,           /* int $0x31 */
-/* we are now in the context of a 16-bit relay call */
-/* need to fixup our stack;
- * 16-bit relay return address will be lost, but we won't worry quite yet */
- 0x8E,0xD0,           /* movw %ax,%ss */
- 0x66,0x0F,0xB7,0xE5, /* movzwl %bp,%esp */
-/* set return CS */
- 0x89,0x56,0x08,      /* movw %dx,8(%bp) */
- 0x5D,                /* popw %bp */
- 0x5A,                /* popw %dx */
- 0x58,                /* popw %ax */
- 0xCB                 /* lret */
-};
-
-static void MZ_InitDPMI( LPDOSTASK lpDosTask )
-{
- unsigned size=sizeof(enter_pm);
- LPBYTE start=DOSMEM_GetBlock(size,&(lpDosTask->dpmi_seg));
- 
- lpDosTask->dpmi_sel = SELECTOR_AllocBlock( start, size, SEGMENT_CODE, FALSE, FALSE );
-
- memcpy(start,enter_pm,sizeof(enter_pm));
-}
-
-static WORD MZ_InitEnvironment( LPDOSTASK lpDosTask, LPCSTR env, LPCSTR name )
+static WORD MZ_InitEnvironment( LPCSTR env, LPCSTR name )
 {
  unsigned sz=0;
  WORD seg;
@@ -191,39 +149,33 @@ static WORD MZ_InitEnvironment( LPDOSTASK lpDosTask, LPCSTR env, LPCSTR name )
  return seg;
 }
 
-static BOOL MZ_InitMemory( LPDOSTASK lpDosTask )
+static BOOL MZ_InitMemory(void)
 {
- if (lpDosTask->img) return TRUE; /* already allocated */
+    int mm_fd;
+    void *img_base;
 
- /* allocate 1MB+64K shared memory */
- lpDosTask->img_ofs=START_OFFSET;
-#ifdef MZ_MAPSELF
- lpDosTask->img=VirtualAlloc(NULL,0x110000,MEM_COMMIT,PAGE_READWRITE);
- /* make sure mmap accepts it */
- ((char*)lpDosTask->img)[0x10FFFF]=0;
-#else
- tmpnam(lpDosTask->mm_name);
-/* strcpy(lpDosTask->mm_name,"/tmp/mydosimage"); */
- lpDosTask->mm_fd=open(lpDosTask->mm_name,O_RDWR|O_CREAT /* |O_TRUNC */,S_IRUSR|S_IWUSR);
- if (lpDosTask->mm_fd<0) ERR("file %s could not be opened\n",lpDosTask->mm_name);
- /* expand file to 1MB+64K */
- ftruncate(lpDosTask->mm_fd,0x110000);
- /* map it in */
- lpDosTask->img=mmap(NULL,0x110000-START_OFFSET,PROT_READ|PROT_WRITE,MAP_SHARED,lpDosTask->mm_fd,0);
-#endif
- if (lpDosTask->img==(LPVOID)-1) {
-  ERR("could not map shared memory, error=%s\n",strerror(errno));
-  return FALSE;
- }
- TRACE("DOS VM86 image mapped at %08lx\n",(DWORD)lpDosTask->img);
+    /* initialize the memory */
+    TRACE("Initializing DOS memory structures\n");
+    DOSMEM_Init(TRUE);
 
- /* initialize the memory */
- TRACE("Initializing DOS memory structures\n");
- DOSMEM_Init(TRUE);
- MZ_InitHandlers(lpDosTask);
- MZ_InitXMS(lpDosTask);
- MZ_InitDPMI(lpDosTask);
- return TRUE;
+    /* allocate 1MB+64K shared memory */
+    tmpnam(mm_name);
+    /* strcpy(mm_name,"/tmp/mydosimage"); */
+    mm_fd = open(mm_name,O_RDWR|O_CREAT /* |O_TRUNC */,S_IRUSR|S_IWUSR);
+    if (mm_fd < 0) ERR("file %s could not be opened\n",mm_name);
+    /* fill the file with the DOS memory */
+    if (write( mm_fd, NULL, 0x110000 ) != 0x110000) ERR("cannot write DOS mem\n");
+    /* map it in */
+    img_base = mmap(NULL,0x110000,PROT_READ|PROT_WRITE|PROT_EXEC,MAP_SHARED|MAP_FIXED,mm_fd,0);
+    close( mm_fd );
+
+    if (img_base)
+    {
+        ERR("could not map shared memory, error=%s\n",strerror(errno));
+        return FALSE;
+    }
+    MZ_InitHandlers();
+    return TRUE;
 }
 
 BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename )
@@ -235,7 +187,7 @@ BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename )
   BYTE*psp_start,*load_start;
   int x, old_com=0, alloc=0;
   SEGPTR reloc;
-  WORD env_seg;
+  WORD env_seg, load_seg;
   DWORD len;
 
   win_hdr->OptionalHeader.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
@@ -244,7 +196,6 @@ BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename )
   if (!lpDosTask) {
     alloc=1;
     lpDosTask = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DOSTASK));
-    lpDosTask->mm_fd = -1;
     dos_current = lpDosTask;
   }
 
@@ -269,10 +220,10 @@ BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename )
   max_size=image_size+((DWORD)mz_header.e_maxalloc<<4)+(PSP_SIZE<<4);
  }
 
- MZ_InitMemory(lpDosTask);
+ MZ_InitMemory();
 
  /* allocate environment block */
- env_seg=MZ_InitEnvironment(lpDosTask,GetEnvironmentStringsA(),filename);
+ env_seg=MZ_InitEnvironment(GetEnvironmentStringsA(),filename);
 
  /* allocate memory for the executable */
  TRACE("Allocating DOS memory (min=%ld, max=%ld)\n",min_size,max_size);
@@ -289,7 +240,7 @@ BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename )
   SetLastError(ERROR_NOT_ENOUGH_MEMORY);
   goto load_error;
  }
- lpDosTask->load_seg=lpDosTask->psp_seg+(old_com?0:PSP_SIZE);
+ load_seg=lpDosTask->psp_seg+(old_com?0:PSP_SIZE);
  load_start=psp_start+(PSP_SIZE<<4);
  MZ_CreatePSP(psp_start, env_seg);
 
@@ -311,19 +262,19 @@ BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename )
     SetLastError(ERROR_BAD_FORMAT);
     goto load_error;
    }
-   *(WORD*)SEGPTR16(load_start,reloc)+=lpDosTask->load_seg;
+   *(WORD*)SEGPTR16(load_start,reloc)+=load_seg;
   }
  }
 
- lpDosTask->init_cs=lpDosTask->load_seg+mz_header.e_cs;
- lpDosTask->init_ip=mz_header.e_ip;
- lpDosTask->init_ss=lpDosTask->load_seg+mz_header.e_ss;
- lpDosTask->init_sp=mz_header.e_sp;
+ init_cs = load_seg+mz_header.e_cs;
+ init_ip = mz_header.e_ip;
+ init_ss = load_seg+mz_header.e_ss;
+ init_sp = mz_header.e_sp;
 
-  TRACE("entry point: %04x:%04x\n",lpDosTask->init_cs,lpDosTask->init_ip);
+  TRACE("entry point: %04x:%04x\n",init_cs,init_ip);
 
-  if (!MZ_InitTask(lpDosTask)) {
-    MZ_KillTask(lpDosTask);
+  if (!MZ_InitTask()) {
+    MZ_KillTask();
     SetLastError(ERROR_GEN_FAILURE);
     return FALSE;
   }
@@ -333,12 +284,7 @@ BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename )
 load_error:
   if (alloc) {
     dos_current = NULL;
-    if (lpDosTask->mm_name[0]!=0) {
-      if (lpDosTask->img!=NULL) munmap(lpDosTask->img,0x110000-START_OFFSET);
-      if (lpDosTask->mm_fd>=0) close(lpDosTask->mm_fd);
-      unlink(lpDosTask->mm_name);
-    } else
-      if (lpDosTask->img!=NULL) VirtualFree(lpDosTask->img,0x110000,MEM_RELEASE);
+    if (mm_name[0]!=0) unlink(mm_name);
   }
 
   return FALSE;
@@ -349,14 +295,14 @@ LPDOSTASK MZ_AllocDPMITask( void )
   LPDOSTASK lpDosTask = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DOSTASK));
 
   if (lpDosTask) {
-    lpDosTask->mm_fd = -1;
     dos_current = lpDosTask;
-    MZ_InitMemory(lpDosTask);
+    MZ_InitMemory();
+    MZ_InitTask();
   }
   return lpDosTask;
 }
 
-static void MZ_InitTimer( LPDOSTASK lpDosTask, int ver )
+static void MZ_InitTimer( int ver )
 {
  if (ver<1) {
   /* can't make timer ticks */
@@ -367,55 +313,42 @@ static void MZ_InitTimer( LPDOSTASK lpDosTask, int ver )
   /* start dosmod timer at 55ms (18.2Hz) */
   func=DOSMOD_SET_TIMER;
   tim.tv_sec=0; tim.tv_usec=54925;
-  write(lpDosTask->write_pipe,&func,sizeof(func));
-  write(lpDosTask->write_pipe,&tim,sizeof(tim));
+  write(write_pipe,&func,sizeof(func));
+  write(write_pipe,&tim,sizeof(tim));
  }
 }
 
-BOOL MZ_InitTask( LPDOSTASK lpDosTask )
+static BOOL MZ_InitTask(void)
 {
   int write_fd[2],x_fd;
   pid_t child;
-  char *fname,*farg,arg[16],fproc[64],path[256],*fpath;
+  char path[256],*fpath;
 
-  if (!lpDosTask) return FALSE;
   /* create pipes */
-  if (!CreatePipe(&(lpDosTask->hReadPipe),&(lpDosTask->hXPipe),NULL,0)) return FALSE;
+  if (!CreatePipe(&hReadPipe,&hWritePipe,NULL,0)) return FALSE;
   if (pipe(write_fd)<0) {
-    CloseHandle(lpDosTask->hReadPipe);
-    CloseHandle(lpDosTask->hXPipe);
+    CloseHandle(hReadPipe);
+    CloseHandle(hWritePipe);
     return FALSE;
   }
 
-  lpDosTask->read_pipe = FILE_GetUnixHandle( lpDosTask->hReadPipe, GENERIC_READ );
-  x_fd = FILE_GetUnixHandle( lpDosTask->hXPipe, GENERIC_WRITE );
+  read_pipe = FILE_GetUnixHandle( hReadPipe, GENERIC_READ );
+  x_fd = FILE_GetUnixHandle( hWritePipe, GENERIC_WRITE );
 
   TRACE("win32 pipe: read=%d, write=%d, unix pipe: read=%d, write=%d\n",
-	       lpDosTask->hReadPipe,lpDosTask->hXPipe,lpDosTask->read_pipe,x_fd);
+        hReadPipe,hWritePipe,read_pipe,x_fd);
   TRACE("outbound unix pipe: read=%d, write=%d, pid=%d\n",write_fd[0],write_fd[1],getpid());
 
-  lpDosTask->write_pipe=write_fd[1];
-
-  lpDosTask->hConInput=GetStdHandle(STD_INPUT_HANDLE);
-  lpDosTask->hConOutput=GetStdHandle(STD_OUTPUT_HANDLE);
-
-  /* if we have a mapping file, use it */
-  fname=lpDosTask->mm_name; farg=NULL;
-  if (!fname[0]) {
-    /* otherwise, map our own memory image */
-    sprintf(fproc,"/proc/%d/mem",getpid());
-    sprintf(arg,"%ld",(unsigned long)lpDosTask->img);
-    fname=fproc; farg=arg;
-  }
+  write_pipe=write_fd[1];
 
   TRACE("Loading DOS VM support module\n");
   if ((child=fork())<0) {
     close(write_fd[0]);
-    close(lpDosTask->read_pipe);
-    close(lpDosTask->write_pipe);
+    close(read_pipe);
+    close(write_pipe);
     close(x_fd);
-    CloseHandle(lpDosTask->hReadPipe);
-    CloseHandle(lpDosTask->hXPipe);
+    CloseHandle(hReadPipe);
+    CloseHandle(hWritePipe);
     return FALSE;
   }
  if (child!=0) {
@@ -424,21 +357,21 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
 
   close(write_fd[0]);
   close(x_fd);
-  lpDosTask->task=child;
+  dosmod_pid = child;
   /* wait for child process to signal readiness */
   while (1) {
-    if (read(lpDosTask->read_pipe,&ret,sizeof(ret))==sizeof(ret)) break;
+    if (read(read_pipe,&ret,sizeof(ret))==sizeof(ret)) break;
     if ((errno==EINTR)||(errno==EAGAIN)) continue;
     /* failure */
     ERR("dosmod has failed to initialize\n");
-    if (lpDosTask->mm_name[0]!=0) unlink(lpDosTask->mm_name);
+    if (mm_name[0]!=0) unlink(mm_name);
     return FALSE;
   }
   /* the child has now mmaped the temp file, it's now safe to unlink.
    * do it here to avoid leaving a mess in /tmp if/when Wine crashes... */
-  if (lpDosTask->mm_name[0]!=0) unlink(lpDosTask->mm_name);
+  if (mm_name[0]!=0) unlink(mm_name);
   /* start simulated system timer */
-  MZ_InitTimer(lpDosTask,ret);
+  MZ_InitTimer(ret);
   if (ret<2) {
     ERR("dosmod version too old! Please install newer dosmod properly\n");
     ERR("If you don't, the new dosmod event handling system will not work\n");
@@ -446,8 +379,8 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
   /* all systems are now go */
  } else {
   /* child process */
-  close(lpDosTask->read_pipe);
-  close(lpDosTask->write_pipe);
+  close(read_pipe);
+  close(write_pipe);
   /* put our pipes somewhere dosmod can find them */
   dup2(write_fd[0],0); /* stdin */
   dup2(x_fd,1);        /* stdout */
@@ -457,16 +390,16 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
   fpath=strrchr(strcpy(path,full_argv0),'/');
   if (fpath) {
    strcpy(fpath,"/dosmod");
-   execl(path,fname,farg,NULL);
+   execl(path,mm_name,NULL);
    strcpy(fpath,"/loader/dos/dosmod");
-   execl(path,fname,farg,NULL);
+   execl(path,mm_name,NULL);
   }
   /* okay, it wasn't there, try in the path */
-  execlp("dosmod",fname,farg,NULL);
+  execlp("dosmod",mm_name,NULL);
   /* last desperate attempts: current directory */
-  execl("dosmod",fname,farg,NULL);
+  execl("dosmod",mm_name,NULL);
   /* and, just for completeness... */
-  execl("loader/dos/dosmod",fname,farg,NULL);
+  execl("loader/dos/dosmod",mm_name,NULL);
   /* if failure, exit */
   ERR("Failed to spawn dosmod, error=%s\n",strerror(errno));
   exit(1);
@@ -477,53 +410,29 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
 static void MZ_Launch(void)
 {
   LPDOSTASK lpDosTask = MZ_Current();
-  BYTE *psp_start = (BYTE*)lpDosTask->img + ((DWORD)lpDosTask->psp_seg << 4);
+  CONTEXT context;
+  TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+  BYTE *psp_start = PTR_REAL_TO_LIN( lpDosTask->psp_seg, 0 );
 
   MZ_FillPSP(psp_start, GetCommandLineA());
+  pTask->flags |= TDBF_WINOLDAP;
 
-  DOSVM_Enter(NULL);
+  memset( &context, 0, sizeof(context) );
+  context.SegCs  = init_cs;
+  context.Eip    = init_ip;
+  context.SegSs  = init_ss;
+  context.Esp    = init_sp;
+  context.SegDs  = lpDosTask->psp_seg;
+  context.SegEs  = lpDosTask->psp_seg;
+  context.EFlags = 0x00080000;  /* virtual interrupt flag */
+  DOSVM_Enter( &context );
 }
 
-void MZ_KillTask( LPDOSTASK lpDosTask )
+static void MZ_KillTask(void)
 {
-  DOSEVENT *event,*p_event;
-  DOSSYSTEM *sys,*p_sys;
-
   TRACE("killing DOS task\n");
   VGA_Clean();
-  if (lpDosTask->mm_name[0]!=0) {
-    munmap(lpDosTask->img,0x110000-START_OFFSET);
-    close(lpDosTask->mm_fd);
-  } else VirtualFree(lpDosTask->img,0x110000,MEM_RELEASE);
-  close(lpDosTask->read_pipe);
-  close(lpDosTask->write_pipe);
-  CloseHandle(lpDosTask->hReadPipe);
-  CloseHandle(lpDosTask->hXPipe);
-  kill(lpDosTask->task,SIGTERM);
-/* free memory allocated for events and systems */
-#define DFREE(var,pvar,svar) \
-  var = lpDosTask->svar; \
-  while (var) { \
-    if (var->data) free(var->data); \
-    pvar = var->next; free(var); var = pvar; \
-  }
-
-  DFREE(event,p_event,pending)
-  DFREE(event,p_event,current)
-  DFREE(sys,p_sys,sys)
-
-#undef DFREE
-
-#if 0
-  /* FIXME: this seems to crash */
-  if (lpDosTask->dpmi_sel)
-    SELECTOR_FreeBlock(lpDosTask->dpmi_sel, 1);
-#endif
-}
-
-LPDOSTASK MZ_Current( void )
-{
-  return dos_current;
+  kill(dosmod_pid,SIGTERM);
 }
 
 #else /* !MZ_SUPPORTED */
@@ -535,9 +444,15 @@ BOOL MZ_LoadImage( HMODULE module, HANDLE hFile, LPCSTR filename )
  return FALSE;
 }
 
-LPDOSTASK MZ_Current( void )
+LPDOSTASK MZ_AllocDPMITask( void )
 {
-  return NULL;
+    ERR("Actual real-mode calls not supported on this architecture!\n");
+    return NULL;
 }
 
-#endif
+#endif /* !MZ_SUPPORTED */
+
+LPDOSTASK MZ_Current( void )
+{
+  return dos_current;
+}

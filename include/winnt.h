@@ -730,7 +730,6 @@ typedef HANDLE *PHANDLE;
 #define RESET_ZFLAG(context) (EFL_reg(context) &= ~0x0040)
 
 #define ISV86(context)       (EFL_reg(context) & 0x00020000)
-#define V86BASE(context)     DOSMEM_MemoryBase()
 
 
 /* Macros to retrieve the current context */
