@@ -10,15 +10,11 @@
 #include <shellapi.h>
 #include "params.h"
 
-void launch(char what[255])
-{ 
-  HMODULE hMod;
-  FARPROC pControl_RunDLL;
+void launch(const char *what)
+{
+  extern void WINAPI Control_RunDLL(HWND hWnd, HINSTANCE hInst, LPCSTR cmd, DWORD nCmdShow);
 
-  hMod = LoadLibrary("shell32.dll");
-  pControl_RunDLL = GetProcAddress(hMod, "Control_RunDLL");
-  pControl_RunDLL(GetDesktopWindow(), 0, what, SW_SHOW);
-  FreeLibrary(hMod);
+  Control_RunDLL(GetDesktopWindow(), 0, what, SW_SHOW);
   exit(0);
 }
 
