@@ -29,6 +29,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
+/* Some #defines for additional diagnostics */
+
+/* Per-vertex trace: */
+#if 0
+   #define VTRACE(A) TRACE A
+#else 
+   #define VTRACE(A) 
+#endif
+
+
 static VERTEXSHADER8* VertexShaders[64];
 static PIXELSHADER8*  PixelShaders[64];
 
@@ -44,14 +54,14 @@ static PIXELSHADER8*  PixelShaders[64];
 /*
  * Utility functions or macros
  */
-#define conv_mat(mat,gl_mat)			\
-{                                               \
+#define conv_mat(mat,gl_mat)                                                                \
+do {                                                                                        \
     TRACE("%f %f %f %f\n", (mat)->u.s._11, (mat)->u.s._12, (mat)->u.s._13, (mat)->u.s._14); \
     TRACE("%f %f %f %f\n", (mat)->u.s._21, (mat)->u.s._22, (mat)->u.s._23, (mat)->u.s._24); \
     TRACE("%f %f %f %f\n", (mat)->u.s._31, (mat)->u.s._32, (mat)->u.s._33, (mat)->u.s._34); \
     TRACE("%f %f %f %f\n", (mat)->u.s._41, (mat)->u.s._42, (mat)->u.s._43, (mat)->u.s._44); \
-    memcpy(gl_mat, (mat), 16 * sizeof(float));      \
-};
+    memcpy(gl_mat, (mat), 16 * sizeof(float));                                              \
+} while (0)
 
 #define VERTEX_SHADER(Handle) \
   ((Handle <= VS_HIGHESTFIXEDFXF) ? ((Handle >= sizeof(VertexShaders) / sizeof(VERTEXSHADER8*)) ? NULL : VertexShaders[Handle]) : VertexShaders[Handle - VS_HIGHESTFIXEDFXF])
@@ -74,10 +84,7 @@ static const float idmatrix[16] = {
 };
 
 
-/* Routine common to the draw primitive and draw indexed primitive routines
-   Doesnt use gl pointer arrays as I dont believe we can support the blending
-   coordinates that way.                                                      */
-
+/* Routine common to the draw primitive and draw indexed primitive routines */
 void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                     int PrimitiveType,
                     long NumPrimitives,
@@ -91,9 +98,9 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                     long  StartVertexIndex,
                     long  StartIdx,
                     short idxBytes,
-                    const void *idxData) {
+                    const void *idxData,
+                    int   minIndex) {
 
-    int vx_index;
     int NumVertexes = NumPrimitives;
     VERTEXSHADER8* vertex_shader = NULL;
     VSHADERINPUTDATA8 vertex_shader_input;
@@ -107,13 +114,13 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
     if (This->StateBlock.VertexShader > VS_HIGHESTFIXEDFXF) {
       vertex_shader = VERTEX_SHADER(This->StateBlock.VertexShader);
       if (NULL == vertex_shader) {
-	ERR("trying to use unitialised vertex shader: %lu\n", This->StateBlock.VertexShader);
-	return ;
+          ERR("trying to use unitialised vertex shader: %lu\n", This->StateBlock.VertexShader);
+          return ;
       }
       if (NULL == vertex_shader->function) {
-	TRACE("vertex shader declared without program, using FVF pure mode\n");
+          TRACE("vertex shader declared without program, using FVF pure mode\n");
       } else {
-	useVertexShaderFunction = TRUE;
+          useVertexShaderFunction = TRUE;
       }
       fvf = (D3DFORMAT) vertex_shader->fvf;
       TRACE("vertex shader declared FVF: %lx\n", vertex_shader->fvf);
@@ -122,14 +129,14 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
 
     {
         int                         skip = This->StateBlock.stream_stride[0];
-
+        GLenum                      primType = GL_POINTS;
         BOOL                        normal;
         BOOL                        isRHW;
         BOOL                        isPtSize;
         BOOL                        isDiffuse;
         BOOL                        isSpecular;
-	int                         numBlends;
-	BOOL                        isLastUByte4;
+        int                         numBlends;
+        BOOL                        isLastUByte4;
         int                         numTextures;
         int                         textureNo;
         const void                 *curVtx = NULL;
@@ -137,6 +144,8 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
         const long                 *pIdxBufL = NULL;
         const void                 *curPos;
         BOOL                        isLightingOn = FALSE;
+        BOOL                        enableTexture = FALSE;
+        int                         vx_index;
 
         float x=0.0, y=0.0, z=0.0;             /* x,y,z coordinates          */
         float nx=0.0, ny=0.0, nz=0.0;          /* normal x,y,z coordinates   */
@@ -155,14 +164,12 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
         /* Check vertex formats expected ? */
         normal        = fvf & D3DFVF_NORMAL;
         isRHW         = fvf & D3DFVF_XYZRHW;
-        /*numBlends     = 5 - ((~fvf) & 0xe);*/  /* There must be a simpler way? */
-	numBlends     = ((fvf & D3DFVF_POSITION_MASK) >> 1) - 2; /* WARNING can be < 0 because -2 */
-	isLastUByte4  = fvf & D3DFVF_LASTBETA_UBYTE4;
+        numBlends     = ((fvf & D3DFVF_POSITION_MASK) >> 1) - 2; /* WARNING can be < 0 because -2 */
+        isLastUByte4  = fvf & D3DFVF_LASTBETA_UBYTE4;
         isPtSize      = fvf & D3DFVF_PSIZE;
         isDiffuse     = fvf & D3DFVF_DIFFUSE;
         isSpecular    = fvf & D3DFVF_SPECULAR;
         numTextures   = (fvf & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
-
 
         TRACE("Drawing with FVF = %x, (n?%d, rhw?%d, ptSize(%d), diffuse?%d, specular?%d, numTextures=%d, numBlends=%d)\n",
               fvf, normal, isRHW, isPtSize, isDiffuse, isSpecular, numTextures, numBlends);
@@ -175,14 +182,13 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
             TRACE("Enabled lighting as no normals supplied, old state = %d\n", isLightingOn);
         }
 
-
         if (isRHW) {
             double height, width, minZ, maxZ;
             /*
-	     * Already transformed vertex do not need transform
-	     * matrices. Reset all matrices to identity.
-	     * Leave the default matrix in world mode.
-	     */
+             * Already transformed vertex do not need transform
+             * matrices. Reset all matrices to identity.
+             * Leave the default matrix in world mode.
+             */
             glMatrixMode(GL_PROJECTION);
             checkGLcall("glMatrixMode");
             glLoadIdentity();
@@ -214,38 +220,38 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
         /* Set OpenGL to the appropriate Primitive Type */
         switch (PrimitiveType) {
         case D3DPT_POINTLIST:
-            TRACE("glBegin, Start POINTS\n");
-            glBegin(GL_POINTS);
+            TRACE("POINTS\n");
+            primType = GL_POINTS;
             NumVertexes = NumPrimitives;
             break;
 
         case D3DPT_LINELIST:
-            TRACE("glBegin, Start LINES\n");
-            glBegin(GL_LINES);
+            TRACE("LINES\n");
+            primType = GL_LINES;
             NumVertexes = NumPrimitives * 2;
             break;
 
         case D3DPT_LINESTRIP:
-            TRACE("glBegin, Start LINE_STRIP\n");
-            glBegin(GL_LINE_STRIP);
+            TRACE("LINE_STRIP\n");
+            primType = GL_LINE_STRIP;
             NumVertexes = NumPrimitives + 1;
             break;
 
         case D3DPT_TRIANGLELIST:
-            TRACE("glBegin, Start TRIANGLES\n");
-            glBegin(GL_TRIANGLES);
+            TRACE("TRIANGLES\n");
+            primType = GL_TRIANGLES;
             NumVertexes = NumPrimitives * 3;
             break;
 
         case D3DPT_TRIANGLESTRIP:
-            TRACE("glBegin, Start TRIANGLE_STRIP\n");
-            glBegin(GL_TRIANGLE_STRIP);
+            TRACE("TRIANGLE_STRIP\n");
+            primType = GL_TRIANGLE_STRIP;
             NumVertexes = NumPrimitives + 2;
             break;
 
         case D3DPT_TRIANGLEFAN:
-            TRACE("glBegin, Start TRIANGLE_FAN\n");
-            glBegin(GL_TRIANGLE_FAN);
+            TRACE("TRIANGLE_FAN\n");
+            primType = GL_TRIANGLE_FAN;
             NumVertexes = NumPrimitives + 2;
             break;
 
@@ -254,338 +260,505 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
             break;
         }
 
+        /* Fixme, Ideally, only use this per-vertex code for software HAL 
+           but until opengl supports all the functions returned to setup 
+           vertex arrays, we need to drop down to the slow mechanism for  
+           certain functions                                              */
 
-        /* Draw the primitives */
-        curVtx = vertexBufData + (StartVertexIndex * skip);
+        if (isPtSize || isDiffuse || useVertexShaderFunction==TRUE || (numBlends > 0)) {
+            FIXME("Using slow per-vertex code\n");
 
-        for (vx_index = 0; vx_index < NumVertexes; vx_index++) {
+            /* Enable this one to be able to debug what is going on, but it is slower
+               than the pointer/array version                                          */
+            VTRACE(("glBegin(%x)\n", primType));
+            glBegin(primType);
 
-            if (!isIndexed) {
-                curPos = curVtx;
-            } else {
-                if (idxBytes == 2) {
-                    TRACE("Idx for vertex %d = %d = %d\n", vx_index, pIdxBufS[StartIdx+vx_index], (pIdxBufS[StartIdx+vx_index]));
-                    curPos = curVtx + ((pIdxBufS[StartIdx+vx_index]) * skip);
+            /* Draw the primitives */
+            curVtx = vertexBufData + (StartVertexIndex * skip);
+
+            for (vx_index = 0; vx_index < NumVertexes; vx_index++) {
+
+                if (!isIndexed) {
+                    curPos = curVtx;
                 } else {
-                    TRACE("Idx for vertex %d = %ld = %d\n", vx_index, pIdxBufL[StartIdx+vx_index], (pIdxBufS[StartIdx+vx_index]));
-                    curPos = curVtx + ((pIdxBufL[StartIdx+vx_index]) * skip);
+                    if (idxBytes == 2) {
+                        VTRACE(("Idx for vertex %d = %d = %d\n", vx_index, pIdxBufS[StartIdx+vx_index], (pIdxBufS[StartIdx+vx_index])));
+                        curPos = curVtx + ((pIdxBufS[StartIdx+vx_index]) * skip);
+                    } else {
+                        VTRACE(("Idx for vertex %d = %ld = %d\n", vx_index, pIdxBufL[StartIdx+vx_index], (pIdxBufS[StartIdx+vx_index])));
+                        curPos = curVtx + ((pIdxBufL[StartIdx+vx_index]) * skip);
+                    }
+                }
+
+                /* Work through the vertex buffer */
+                x = *(float *)curPos;
+                curPos = curPos + sizeof(float);
+                y = *(float *)curPos;
+                curPos = curPos + sizeof(float);
+                z = *(float *)curPos;
+                curPos = curPos + sizeof(float);
+                VTRACE(("x,y,z=%f,%f,%f\n", x,y,z));
+
+                if (TRUE == useVertexShaderFunction) {
+                    vertex_shader_input.V[D3DVSDE_POSITION].x = x;
+                    vertex_shader_input.V[D3DVSDE_POSITION].y = y;
+                    vertex_shader_input.V[D3DVSDE_POSITION].z = z;
+                    vertex_shader_input.V[D3DVSDE_POSITION].w = 1.0f;
+                }
+
+                /* RHW follows, only if transformed */
+                if (isRHW) {
+                    rhw = *(float *)curPos;
+                    curPos = curPos + sizeof(float);
+                    VTRACE(("rhw=%f\n", rhw));
+
+                    if (TRUE == useVertexShaderFunction) {
+                        vertex_shader_input.V[D3DVSDE_POSITION].w = rhw;
+                    }
+                }
+
+                /* Blending data */
+                if (numBlends > 0) {
+                    UINT i;
+                    D3DSHADERVECTOR skippedBlend = { 0.0f, 0.0f, 0.0f, 0.0f};
+                    DWORD skippedBlendLastUByte4 = 0;
+
+                    for (i = 0; i < ((FALSE == isLastUByte4) ? numBlends : numBlends - 1); ++i) {
+                        ((float*)&skippedBlend)[i] =  *(float *)curPos; 
+                        curPos = curPos + sizeof(float);
+                    }
+
+                    if (isLastUByte4) {
+                        skippedBlendLastUByte4 =  *(DWORD*)curPos; 
+                        curPos = curPos + sizeof(DWORD);
+                    }
+
+                    if (TRUE == useVertexShaderFunction) {
+                        vertex_shader_input.V[D3DVSDE_BLENDWEIGHT].x = skippedBlend.x;
+                        vertex_shader_input.V[D3DVSDE_BLENDWEIGHT].y = skippedBlend.y;
+                        vertex_shader_input.V[D3DVSDE_BLENDWEIGHT].z = skippedBlend.z;
+                        vertex_shader_input.V[D3DVSDE_BLENDWEIGHT].w = skippedBlend.w;
+
+                        if (isLastUByte4) {
+                            vertex_shader_input.V[D3DVSDE_BLENDINDICES].x = (float) skippedBlendLastUByte4;
+                            vertex_shader_input.V[D3DVSDE_BLENDINDICES].y = (float) skippedBlendLastUByte4;
+                            vertex_shader_input.V[D3DVSDE_BLENDINDICES].z = (float) skippedBlendLastUByte4;
+                            vertex_shader_input.V[D3DVSDE_BLENDINDICES].w = (float) skippedBlendLastUByte4;
+                        }
+                    }
+                }
+
+                /* Vertex Normal Data (untransformed only) */
+                if (normal) {
+                    nx = *(float *)curPos;
+                    curPos = curPos + sizeof(float);
+                    ny = *(float *)curPos;
+                    curPos = curPos + sizeof(float);
+                    nz = *(float *)curPos;
+                    curPos = curPos + sizeof(float);
+                    VTRACE(("nx,ny,nz=%f,%f,%f\n", nx,ny,nz));
+
+                    if (TRUE == useVertexShaderFunction) {
+                        vertex_shader_input.V[D3DVSDE_NORMAL].x = nx;
+                        vertex_shader_input.V[D3DVSDE_NORMAL].y = ny;
+                        vertex_shader_input.V[D3DVSDE_NORMAL].z = nz;
+                        vertex_shader_input.V[D3DVSDE_NORMAL].w = 1.0f;
+                    }
+                }
+
+                if (isPtSize) {
+                    ptSize = *(float *)curPos;
+                    VTRACE(("ptSize=%f\n", ptSize));
+                    curPos = curPos + sizeof(float);
+
+                    if (TRUE == useVertexShaderFunction) {
+                        vertex_shader_input.V[D3DVSDE_PSIZE].x = ptSize;
+                        vertex_shader_input.V[D3DVSDE_PSIZE].y = 0.0f;
+                        vertex_shader_input.V[D3DVSDE_PSIZE].z = 0.0f;
+                        vertex_shader_input.V[D3DVSDE_PSIZE].w = 1.0f;
+                    }
+                }
+
+                if (isDiffuse) {
+                    diffuseColor = *(DWORD *)curPos;
+                    VTRACE(("diffuseColor=%lx\n", diffuseColor));
+                    curPos = curPos + sizeof(DWORD);
+
+                    if (TRUE == useVertexShaderFunction) {
+                        vertex_shader_input.V[D3DVSDE_DIFFUSE].x = (float) (((diffuseColor >> 16) & 0xFF) / 255.0f);
+                        vertex_shader_input.V[D3DVSDE_DIFFUSE].y = (float) (((diffuseColor >>  8) & 0xFF) / 255.0f);
+                        vertex_shader_input.V[D3DVSDE_DIFFUSE].z = (float) (((diffuseColor >>  0) & 0xFF) / 255.0f);
+                        vertex_shader_input.V[D3DVSDE_DIFFUSE].w = (float) (((diffuseColor >> 24) & 0xFF) / 255.0f);
+                    }
+                }
+
+                if (isSpecular) {
+                    specularColor = *(DWORD *)curPos;
+                    VTRACE(("specularColor=%lx\n", specularColor));
+                    curPos = curPos + sizeof(DWORD);
+
+                    if (TRUE == useVertexShaderFunction) {
+                        vertex_shader_input.V[D3DVSDE_SPECULAR].x = (float) (((specularColor >> 16) & 0xFF) / 255.0f);
+                        vertex_shader_input.V[D3DVSDE_SPECULAR].y = (float) (((specularColor >>  8) & 0xFF) / 255.0f);
+                        vertex_shader_input.V[D3DVSDE_SPECULAR].z = (float) (((specularColor >>  0) & 0xFF) / 255.0f);
+                        vertex_shader_input.V[D3DVSDE_SPECULAR].w = (float) (((specularColor >> 24) & 0xFF) / 255.0f);
+                    }
+                }
+
+                /* ToDo: Texture coords */
+                for (textureNo = 0; textureNo < numTextures; ++textureNo) {
+                    float s, t, r, q;
+
+                    if (!(This->isMultiTexture) && textureNo > 0) {
+                        FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+                        continue ;
+                    }
+                    if (textureNo > This->TextureUnits) {
+                        FIXME("Program using more concurrent textures than this opengl implementation support\n");
+                        break ;
+                    }
+
+                    /* Query tex coords */
+                    if (This->StateBlock.textures[textureNo] != NULL) {
+                        switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->StateBlock.textures[textureNo])) {
+                        case D3DRTYPE_TEXTURE:
+                            s = *(float *)curPos;
+                            curPos = curPos + sizeof(float);
+                            t = *(float *)curPos;
+                            curPos = curPos + sizeof(float);
+                            VTRACE(("tex:%d, s,t=%f,%f\n", textureNo, s,t));
+
+                            if (TRUE == useVertexShaderFunction) {
+                                vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].x = s;
+                                vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].y = t;
+                                vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].z = 0.0f;
+                                vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].w = 1.0f;
+                            } else { 
+                                if (This->isMultiTexture) {
+                                    glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
+                                } else {
+                                    glTexCoord2f(s, t);
+                                }
+                            }
+                            break;
+
+                        case D3DRTYPE_VOLUMETEXTURE:
+                            s = *(float *)curPos;
+                            curPos = curPos + sizeof(float);
+                            t = *(float *)curPos;
+                            curPos = curPos + sizeof(float);
+                            r = *(float *)curPos;
+                            curPos = curPos + sizeof(float);
+                            VTRACE(("tex:%d, s,t,r=%f,%f,%f\n", textureNo, s,t,r));
+
+                            if (TRUE == useVertexShaderFunction) {
+                                vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].x = s;
+                                vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].y = t;
+                                vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].z = r;
+                                vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].w = 1.0f;
+                            } else {
+                                if (This->isMultiTexture) {
+                                    glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r);
+                                } else {
+                                    glTexCoord3f(s, t, r);
+                                }
+                            }
+                            break;
+
+                        default:
+                            r = 0.0f; q = 0.0f; /* Avoid compiler warnings, need these vars later for other textures */
+                            FIXME("Unhandled texture type\n");
+                        }
+                    } else {
+                        /* Note I have seen a program actually do this, so just hide it and continue */
+                        VTRACE(("Very odd - texture requested in FVF but not bound!\n"));
+                    }
+
+                }
+
+                /** if vertex shader program specified ... using it */
+                if (TRUE == useVertexShaderFunction) {
+                    VSHADEROUTPUTDATA8 vs_o;
+                    memset(&vs_o, 0, sizeof(VSHADEROUTPUTDATA8));
+                    vshader_program_execute_SW(vertex_shader, &vertex_shader_input, &vs_o);
+                    /*
+                    TRACE_VECTOR(vs_o.oPos);
+                    TRACE_VECTOR(vs_o.oD[0]);
+                    TRACE_VECTOR(vs_o.oT[0]);
+                    TRACE_VECTOR(vs_o.oT[1]);
+                    */
+                    x = vs_o.oPos.x;
+                    y = vs_o.oPos.y;
+                    z = vs_o.oPos.z;
+
+                    if (1.0f != vs_o.oPos.w || isRHW) {
+                        rhw = vs_o.oPos.w;
+                    }
+                    /*TRACE_VECTOR(vs_o.oPos);*/
+                    if (isDiffuse) {
+                        /*diffuseColor = D3DCOLOR_COLORVALUE(vs_o.oD[0].x, vs_o.oD[0].y, vs_o.oD[0].z, vs_o.oD[0].w);*/
+                        /*TRACE_VECTOR(vs_o.oD[0]);*/
+                        /*glColor4f(vs_o.oD[0].x, vs_o.oD[0].y, vs_o.oD[0].z, vs_o.oD[0].w); */
+                        glMaterialfv(GL_FRONT, GL_DIFFUSE, (float*) &vs_o.oD[0]);
+                        checkGLcall("glMaterialfv");
+                    }
+                    if (isSpecular) {
+                        /*specularColor = D3DCOLOR_COLORVALUE(vs_o.oD[1].x, vs_o.oD[1].y, vs_o.oD[1].z, vs_o.oD[1].w);*/
+                        /*TRACE_VECTOR(vs_o.oD[1]);*/
+                        glMaterialfv(GL_FRONT, GL_SPECULAR, (float*) &vs_o.oD[1]);
+                        checkGLcall("glMaterialfv");
+                    }
+                    /** reupdate textures coords binding using vs_o.oT[0->3] */
+                    for (textureNo = 0; textureNo < 4/*min(numTextures, 4)*/; ++textureNo) {
+                        float s, t, r, q;
+
+                        if (!(This->isMultiTexture) && textureNo > 0) {
+                            FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+                            continue ;
+                        }
+                        /* Query tex coords */
+                        if (This->StateBlock.textures[textureNo] != NULL) {
+                            switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->StateBlock.textures[textureNo])) {
+                            case D3DRTYPE_TEXTURE:
+                                /*TRACE_VECTOR(vs_o.oT[textureNo]);*/
+                                s = vs_o.oT[textureNo].x;
+                                t = vs_o.oT[textureNo].y;
+                                VTRACE(("tex:%d, s,t=%f,%f\n", textureNo, s,t));
+                                if (This->isMultiTexture) {
+                                    glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
+                                    checkGLcall("glMultiTexCoord2fARB");
+                                } else {
+                                    glTexCoord2f(s, t);
+                                    checkGLcall("gTexCoord2f");
+                                }
+                                break;
+
+                            case D3DRTYPE_VOLUMETEXTURE:
+                                /*TRACE_VECTOR(vs_o.oT[textureNo]);*/
+                                s = vs_o.oT[textureNo].x;
+                                t = vs_o.oT[textureNo].y;
+                                r = vs_o.oT[textureNo].z;
+                                VTRACE(("tex:%d, s,t,r=%f,%f,%f\n", textureNo, s,t,r));
+                                if (This->isMultiTexture) {
+                                    glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r); 
+                                    checkGLcall("glMultiTexCoord2fARB");
+                                } else {
+                                    glTexCoord3f(s, t, r);
+                                    checkGLcall("gTexCoord3f");
+                                }
+                                break;
+
+                            default:
+                                /* Avoid compiler warnings, need these vars later for other textures */
+                                r = 0.0f; q = 0.0f; 
+                                FIXME("Unhandled texture type\n");
+                            }
+                        }
+                    }
+
+                    if (1.0f == rhw || rhw < 0.01f) {
+                        VTRACE(("Vertex: glVertex:x,y,z=%f,%f,%f\n", x,y,z));
+                        glVertex3f(x, y, z);
+                        checkGLcall("glVertex3f");
+                    } else {
+                        VTRACE(("Vertex: glVertex:x,y,z=%f,%f,%f / rhw=%f\n", x,y,z,rhw));
+                        glVertex4f(x / rhw, y / rhw, z / rhw, 1.0f / rhw);
+                        checkGLcall("glVertex4f");
+                    }
+                } else { 
+                    /** 
+                     * FALSE == useVertexShaderFunction 
+                     *  using std FVF code
+                     */
+
+                    /* Handle these vertexes */
+                    if (isDiffuse) {
+                        glColor4ub((diffuseColor >> 16) & 0xFF,
+                                   (diffuseColor >>  8) & 0xFF,
+                                   (diffuseColor >>  0) & 0xFF,
+                                   (diffuseColor >> 24) & 0xFF);
+                        VTRACE(("glColor4f: r,g,b,a=%f,%f,%f,%f\n", 
+                              ((diffuseColor >> 16) & 0xFF) / 255.0f, 
+                              ((diffuseColor >>  8) & 0xFF) / 255.0f,
+                              ((diffuseColor >>  0) & 0xFF) / 255.0f, 
+                              ((diffuseColor >> 24) & 0xFF) / 255.0f));
+                    }
+
+                    if (normal) {
+                        VTRACE(("Vertex: glVertex:x,y,z=%f,%f,%f  /  glNormal:nx,ny,nz=%f,%f,%f\n", x,y,z,nx,ny,nz));
+                        glNormal3f(nx, ny, nz);
+                        glVertex3f(x, y, z);
+                    } else {
+                        if (1.0f == rhw || rhw < 0.01f) {
+                            VTRACE(("Vertex: glVertex:x,y,z=%f,%f,%f\n", x,y,z));
+                            glVertex3f(x, y, z);
+                        } else {
+                            VTRACE(("Vertex: glVertex:x,y,z=%f,%f,%f / rhw=%f\n", x,y,z,rhw));
+                            glVertex4f(x / rhw, y / rhw, z / rhw, 1.0f / rhw);
+                        }
+                    }
+                }
+
+                if (!isIndexed) {
+                    curVtx = curVtx + skip;
                 }
             }
 
-            /* Work through the vertex buffer */
-            x = *(float *)curPos;
-            curPos = curPos + sizeof(float);
-            y = *(float *)curPos;
-            curPos = curPos + sizeof(float);
-            z = *(float *)curPos;
-            curPos = curPos + sizeof(float);
-            /*TRACE("x,y,z=%f,%f,%f\n", x,y,z);*/
+            glEnd();
+            checkGLcall("glEnd and previous calls");
 
-	    if (TRUE == useVertexShaderFunction) {
-	      vertex_shader_input.V[D3DVSDE_POSITION].x = x;
-	      vertex_shader_input.V[D3DVSDE_POSITION].y = y;
-	      vertex_shader_input.V[D3DVSDE_POSITION].z = z;
-	      vertex_shader_input.V[D3DVSDE_POSITION].w = 1.0f;
-	    }
-            /* RHW follows, only if transformed */
+        } else {
+            FIXME("Using fast vertex array code\n");
+
+            /* Faster version, harder to debug */
+            /* Shuffle to the beginning of the vertexes to render and index from there */
+            curVtx = vertexBufData + (StartVertexIndex * skip);
+            curPos = curVtx;
+
+            /* Set up the vertex pointers */
             if (isRHW) {
-	      rhw = *(float *)curPos;
-	      curPos = curPos + sizeof(float);
-	      /*TRACE("rhw=%f\n", rhw);*/
-	      
-	      if (TRUE == useVertexShaderFunction) {
-		vertex_shader_input.V[D3DVSDE_POSITION].w = rhw;
-	      }
+		       glVertexPointer(4, GL_FLOAT, skip, curPos);
+               checkGLcall("glVertexPointer(4, ...)");
+		       curPos += 4*sizeof(float);
+            } else {
+               glVertexPointer(3, GL_FLOAT, skip, curPos);
+               checkGLcall("glVertexPointer(3, ...)");
+               curPos += 3*sizeof(float);
             }
-            /* FIXME: Skip Blending data */
-	    if (numBlends > 0) {
-	      UINT i;
-	      D3DSHADERVECTOR skippedBlend = { 0.0f, 0.0f, 0.0f, 0.0f };
-	      DWORD skippedBlendLastUByte4 = 0;
-	      for (i = 0; i < ((FALSE == isLastUByte4) ? numBlends : numBlends - 1); ++i) {
-		((float*)&skippedBlend)[i] =  *(float *)curPos; 
-		curPos = curPos + sizeof(float);
-	      }
-	      if (isLastUByte4) {
-		skippedBlendLastUByte4 =  *(DWORD*)curPos; 
-		curPos = curPos + sizeof(DWORD);		
-	      }
-	      
-	      if (TRUE == useVertexShaderFunction) {
-		vertex_shader_input.V[D3DVSDE_BLENDWEIGHT].x = skippedBlend.x;
-		vertex_shader_input.V[D3DVSDE_BLENDWEIGHT].y = skippedBlend.y;
-		vertex_shader_input.V[D3DVSDE_BLENDWEIGHT].z = skippedBlend.z;
-		vertex_shader_input.V[D3DVSDE_BLENDWEIGHT].w = skippedBlend.w;
-		if (isLastUByte4) {
-		  vertex_shader_input.V[D3DVSDE_BLENDINDICES].x = (float) skippedBlendLastUByte4;
-		  vertex_shader_input.V[D3DVSDE_BLENDINDICES].y = (float) skippedBlendLastUByte4;
-		  vertex_shader_input.V[D3DVSDE_BLENDINDICES].z = (float) skippedBlendLastUByte4;
-		  vertex_shader_input.V[D3DVSDE_BLENDINDICES].w = (float) skippedBlendLastUByte4;
-		}
-	      }
-	    }
-            /* Vertex Normal Data (untransformed only) */
+            glEnableClientState(GL_VERTEX_ARRAY);
+            checkGLcall("glEnableClientState(GL_VERTEX_ARRAY)");
+ 
+            if (numBlends>0) {
+                /* no such functionality in the fixed function GL pipeline */
+                /* FIXME: Wont get here as will drop to slow method        */
+                FIXME("Cannot handle blending data here in openGl\n");
+            }
+
+ 
             if (normal) {
-                nx = *(float *)curPos;
-                curPos = curPos + sizeof(float);
-                ny = *(float *)curPos;
-                curPos = curPos + sizeof(float);
-                nz = *(float *)curPos;
-                curPos = curPos + sizeof(float);
-                /*TRACE("nx,ny,nz=%f,%f,%f\n", nx,ny,nz);*/
-            
-		if (TRUE == useVertexShaderFunction) {
-		  vertex_shader_input.V[D3DVSDE_NORMAL].x = nx;
-		  vertex_shader_input.V[D3DVSDE_NORMAL].y = ny;
-		  vertex_shader_input.V[D3DVSDE_NORMAL].z = nz;
-		  vertex_shader_input.V[D3DVSDE_NORMAL].w = 1.0f;
-		}		
-	    }
+                glNormalPointer(GL_FLOAT, skip, curPos);
+                checkGLcall("glNormalPointer");
+                glEnableClientState(GL_NORMAL_ARRAY);
+                checkGLcall("glEnableClientState(GL_NORMAL_ARRAY)");
+                curPos += 3*sizeof(float);
+            } else {
+                glDisableClientState(GL_NORMAL_ARRAY);
+                checkGLcall("glDisableClientState(GL_NORMAL_ARRAY)");
+                glNormal3f(0, 0, 1);
+                checkGLcall("glNormal3f(0, 0, 1)");
+            }
+ 
             if (isPtSize) {
-                ptSize = *(float *)curPos;
-                /*TRACE("ptSize=%f\n", ptSize);*/
+                /* no such functionality in the fixed function GL pipeline */
+                /* FIXME: Wont get here as will drop to slow method        */
+                FIXME("Cannot change ptSize here in openGl\n");
                 curPos = curPos + sizeof(float);
-
-		if (TRUE == useVertexShaderFunction) {
-		  vertex_shader_input.V[D3DVSDE_PSIZE].x = ptSize;
-		  vertex_shader_input.V[D3DVSDE_PSIZE].y = 0.0f;
-		  vertex_shader_input.V[D3DVSDE_PSIZE].z = 0.0f;
-		  vertex_shader_input.V[D3DVSDE_PSIZE].w = 1.0f;
-		}
             }
+
             if (isDiffuse) {
-                diffuseColor = *(DWORD *)curPos;
-                /*TRACE("diffuseColor=%lx\n", diffuseColor);*/
-                curPos = curPos + sizeof(DWORD);
-
-		if (TRUE == useVertexShaderFunction) {
-		  vertex_shader_input.V[D3DVSDE_DIFFUSE].x = (float) (((diffuseColor >> 16) & 0xFF) / 255.0f);
-		  vertex_shader_input.V[D3DVSDE_DIFFUSE].y = (float) (((diffuseColor >>  8) & 0xFF) / 255.0f);
-		  vertex_shader_input.V[D3DVSDE_DIFFUSE].z = (float) (((diffuseColor >>  0) & 0xFF) / 255.0f);
-		  vertex_shader_input.V[D3DVSDE_DIFFUSE].w = (float) (((diffuseColor >> 24) & 0xFF) / 255.0f);
-		}
+                glColorPointer(4, GL_UNSIGNED_BYTE, skip, curPos);
+                checkGLcall("glColorPointer(4, GL_UNSIGNED_BYTE, ...)");
+                glEnableClientState(GL_COLOR_ARRAY);
+                checkGLcall("glEnableClientState(GL_COLOR_ARRAY)");
+                curPos += sizeof(DWORD);
             }
+            else {
+                glDisableClientState(GL_COLOR_ARRAY);
+                checkGLcall("glDisableClientState(GL_COLOR_ARRAY)");
+                glColor4f(1, 1, 1, 1);
+                checkGLcall("glColor4f(1, 1, 1, 1)");
+            }
+
+/* Requires secondary color extensions to compile... */
+#if 0
             if (isSpecular) {
-                specularColor = *(DWORD *)curPos;
-                /*TRACE("specularColor=%lx\n", specularColor);*/
-                curPos = curPos + sizeof(DWORD);
-
-		if (TRUE == useVertexShaderFunction) {
-		  vertex_shader_input.V[D3DVSDE_SPECULAR].x = (float) (((specularColor >> 16) & 0xFF) / 255.0f);
-		  vertex_shader_input.V[D3DVSDE_SPECULAR].y = (float) (((specularColor >>  8) & 0xFF) / 255.0f);
-		  vertex_shader_input.V[D3DVSDE_SPECULAR].z = (float) (((specularColor >>  0) & 0xFF) / 255.0f);
-		  vertex_shader_input.V[D3DVSDE_SPECULAR].w = (float) (((specularColor >> 24) & 0xFF) / 255.0f);
-		}
+                /* FIXME: check for GL_EXT_secondary_color */
+                glSecondaryColorPointerEXT(4, GL_UNSIGNED_BYTE, skip, curPos);
+                checkGLcall("glSecondaryColorPointerEXT(4, GL_UNSIGNED_BYTE, skip, curPos)");
+                glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
+                checkGLcall("glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
+                curPos += sizeof(DWORD);
+            } else {
+                glDisableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
+                checkGLcall("glDisableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
+                glSecondaryColor3fEXT(0, 0, 0);
+                checkGLcall("glSecondaryColor3fEXT(0, 0, 0)");
             }
-
+#endif
+ 
             /* ToDo: Texture coords */
-            for (textureNo = 0; textureNo < numTextures; ++textureNo) {
-                float s, t, r, q;
-
-                if (!(This->isMultiTexture) && textureNo > 0) {
-		  FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
-		  continue ;
-                } 
-		if (textureNo > This->TextureUnits) {
-		  FIXME("Program using more concurrent textures than this opengl implementation support\n");
-		  break ;
-		}
+            for (textureNo = 0;textureNo<numTextures; textureNo++) {
+ 
                 /* Query tex coords */
+                glClientActiveTextureARB(GL_TEXTURE0_ARB + textureNo);
                 if (This->StateBlock.textures[textureNo] != NULL) {
-		  switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->StateBlock.textures[textureNo])) {
-		  case D3DRTYPE_TEXTURE:
-		    s = *(float *)curPos;
-		    curPos = curPos + sizeof(float);
-		    t = *(float *)curPos;
-		    curPos = curPos + sizeof(float);
-		    TRACE("tex:%d, s,t=%f,%f\n", textureNo, s,t);
+                    enableTexture = TRUE;
+                    switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->StateBlock.textures[textureNo])) {
+                    case D3DRTYPE_TEXTURE:
+                        glTexCoordPointer(2, GL_FLOAT, skip, curPos);
+                        checkGLcall("glTexCoordPointer(2, ...)");
+                        curPos += 2*sizeof(float);
+                        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+                        checkGLcall("glEnableClientState(GL_TEXTURE_COORD_ARRAY);");
+                        break;
 
-		    if (TRUE == useVertexShaderFunction) {
-		      vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].x = s;
-		      vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].y = t;
-		      vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].z = 0.0f;
-		      vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].w = 1.0f;
-		    } else { 
-		      if (This->isMultiTexture) {
-			glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
-		      } else {
-			glTexCoord2f(s, t);
-		      }
-		    }
-		    break;
-		    
-		  case D3DRTYPE_VOLUMETEXTURE:
-		    s = *(float *)curPos;
-		    curPos = curPos + sizeof(float);
-		    t = *(float *)curPos;
-		    curPos = curPos + sizeof(float);
-		    r = *(float *)curPos;
-		    curPos = curPos + sizeof(float);
-		    TRACE("tex:%d, s,t,r=%f,%f,%f\n", textureNo, s,t,r);
-		    
-		    if (TRUE == useVertexShaderFunction) {
-		      vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].x = s;
-		      vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].y = t;
-		      vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].z = r;
-		      vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].w = 1.0f;
-		    } else {
-		       if (This->isMultiTexture) {
-			 glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r);
-		       } else {
-			 glTexCoord3f(s, t, r);
-		       }
-		    }
-		    break;
-		    
-		  default:
-		    r = 0.0f; q = 0.0f; /* Avoid compiler warnings, need these vars later for other textures */
-		    FIXME("Unhandled texture type\n");
-		  }
+                    case D3DRTYPE_VOLUMETEXTURE:
+                        glTexCoordPointer(3, GL_FLOAT, skip, curPos);
+                        checkGLcall("glTexCoordPointer(3, ...)");
+                        curPos += 3*sizeof(float);
+                        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+                        checkGLcall("glEnableClientState(GL_TEXTURE_COORD_ARRAY);");
+                        break;
+
+                    default:
+                       FIXME("Unhandled texture type\n");
+                       glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                       checkGLcall("glDisableClientState(GL_TEXTURE_COORD_ARRAY);");
+                    }
+
                 } else {
-		  /* Note I have seen a program actually do this, so just hide it and continue */
-		  TRACE("Very odd - texture requested in FVF but not bound!\n");
-                }
 
+                    /* Note I have seen a program actually do this, so just hide it and continue */
+                    TRACE("Very odd - texture requested in FVF but not bound!\n");
+                    glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1);
+                    checkGLcall("glMultiTexCoord4f(... , 0, 0, 0, 1)");
+                    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                    checkGLcall("glDisableClientState(GL_TEXTURE_COORD_ARRAY);");
+ 
+                }
+ 
             }
-
-	    /** if vertex shader program specified ... using it */
-	    if (TRUE == useVertexShaderFunction) {
-	      VSHADEROUTPUTDATA8 vs_o;
-	      memset(&vs_o, 0, sizeof(VSHADEROUTPUTDATA8));
-	      vshader_program_execute_SW(vertex_shader, &vertex_shader_input, &vs_o);
-	      /*
-	      TRACE_VECTOR(vs_o.oPos);
-	      TRACE_VECTOR(vs_o.oD[0]);
-	      TRACE_VECTOR(vs_o.oT[0]);
-	      TRACE_VECTOR(vs_o.oT[1]);
-	      */
-	      x = vs_o.oPos.x;
-	      y = vs_o.oPos.y;
-	      z = vs_o.oPos.z;
-	      
-	      if (1.0f != vs_o.oPos.w || isRHW) {
-		rhw = vs_o.oPos.w;
-	      }
-	      /*TRACE_VECTOR(vs_o.oPos);*/
-	      if (isDiffuse) {
-		/*diffuseColor = D3DCOLOR_COLORVALUE(vs_o.oD[0].x, vs_o.oD[0].y, vs_o.oD[0].z, vs_o.oD[0].w);*/
-		/*TRACE_VECTOR(vs_o.oD[0]);*/
-		/*glColor4f(vs_o.oD[0].x, vs_o.oD[0].y, vs_o.oD[0].z, vs_o.oD[0].w); */
-		glMaterialfv(GL_FRONT, GL_DIFFUSE, (float*) &vs_o.oD[0]);
-		checkGLcall("glMaterialfv");
-	      }
-	      if (isSpecular) {
-		/*specularColor = D3DCOLOR_COLORVALUE(vs_o.oD[1].x, vs_o.oD[1].y, vs_o.oD[1].z, vs_o.oD[1].w);*/
-		/*TRACE_VECTOR(vs_o.oD[1]);*/
-		glMaterialfv(GL_FRONT, GL_SPECULAR, (float*) &vs_o.oD[1]);
-		checkGLcall("glMaterialfv");
-	      }
-	      /** reupdate textures coords binding using vs_o.oT[0->3] */  
-	      for (textureNo = 0; textureNo < 4/*min(numTextures, 4)*/; ++textureNo) {
-		float s, t, r, q;
-
-		if (!(This->isMultiTexture) && textureNo > 0) {
-		  FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
-		  continue ;
-                }
-		/* Query tex coords */
-                if (This->StateBlock.textures[textureNo] != NULL) {
-		  switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->StateBlock.textures[textureNo])) {
-		  case D3DRTYPE_TEXTURE:
-		    /*TRACE_VECTOR(vs_o.oT[textureNo]);*/
-		    s = vs_o.oT[textureNo].x;
-		    t = vs_o.oT[textureNo].y;
-		    TRACE("tex:%d, s,t=%f,%f\n", textureNo, s,t);
-		    if (This->isMultiTexture) {
-		      glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
-		      checkGLcall("glMultiTexCoord2fARB");
-		    } else {
-		      glTexCoord2f(s, t);
-		      checkGLcall("gTexCoord2f");
-		    }
-		    break;
-		    
-		  case D3DRTYPE_VOLUMETEXTURE:
-		    /*TRACE_VECTOR(vs_o.oT[textureNo]);*/
-		    s = vs_o.oT[textureNo].x;
-		    t = vs_o.oT[textureNo].y;
-		    r = vs_o.oT[textureNo].z;
-		    TRACE("tex:%d, s,t,r=%f,%f,%f\n", textureNo, s,t,r);
-		    if (This->isMultiTexture) {
-		      glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r); 
-		      checkGLcall("glMultiTexCoord2fARB");
-		    } else {
-		      glTexCoord3f(s, t, r);
-		      checkGLcall("gTexCoord3f");
-		    }
-		    break;
-		    
-		  default:
-		    /* Avoid compiler warnings, need these vars later for other textures */
-		    r = 0.0f; q = 0.0f; 
-		    FIXME("Unhandled texture type\n");
-		  }
-		}
-	      }
-
-	      if (1.0f == rhw || rhw < 0.01f) {
-		/*TRACE("Vertex: glVertex:x,y,z=%f,%f,%f\n", x,y,z);*/
-		glVertex3f(x, y, z);
-		checkGLcall("glVertex3f");
-	      } else {
-		/*TRACE("Vertex: glVertex:x,y,z=%f,%f,%f / rhw=%f\n", x,y,z,rhw);*/
-		glVertex4f(x / rhw, y / rhw, z / rhw, 1.0f / rhw);
-		checkGLcall("glVertex4f");
-	      }
-	    } else { 
-	      /** 
-	       * FALSE == useVertexShaderFunction 
-	       *  using std FVF code
-	       */
-
-	      /* Handle these vertexes */
-	      if (isDiffuse) {
-                /*
-		glColor4f(((diffuseColor >> 16) & 0xFF) / 255.0f,
-                          ((diffuseColor >>  8) & 0xFF) / 255.0f,
-                          ((diffuseColor >>  0) & 0xFF) / 255.0f,
-                          ((diffuseColor >> 24) & 0xFF) / 255.0f);
-		*/
-		glColor4ub((diffuseColor >> 16) & 0xFF,
-			   (diffuseColor >>  8) & 0xFF,
-			   (diffuseColor >>  0) & 0xFF,
-			   (diffuseColor >> 24) & 0xFF);
-		/*
-		TRACE("glColor4f: r,g,b,a=%f,%f,%f,%f\n", 
-		      ((diffuseColor >> 16) & 0xFF) / 255.0f, 
-		      ((diffuseColor >>  8) & 0xFF) / 255.0f,
-		      ((diffuseColor >>  0) & 0xFF) / 255.0f, 
-		      ((diffuseColor >> 24) & 0xFF) / 255.0f);
-		*/
-	      }
-	    
-	      if (normal) {
-                /*TRACE("Vertex: glVertex:x,y,z=%f,%f,%f  /  glNormal:nx,ny,nz=%f,%f,%f\n", x,y,z,nx,ny,nz);*/
-                glNormal3f(nx, ny, nz);
-                glVertex3f(x, y, z);
-	      } else {
-                if (1.0f == rhw || rhw < 0.01f) {
-		  /*TRACE("Vertex: glVertex:x,y,z=%f,%f,%f\n", x,y,z);*/
-		  glVertex3f(x, y, z);
+ 
+            /* Finally do the drawing */
+            if (isIndexed) {
+ 
+                TRACE("glElements(%x, %d, %d, ...)\n", primType, NumVertexes, minIndex);
+                if (idxBytes==2) {
+#if 1  /* FIXME: Want to use DrawRangeElements, but wrong calculation! */
+                    glDrawElements(primType, NumVertexes, GL_UNSIGNED_SHORT, idxData+(2 * StartIdx)); 
+#else
+                    glDrawRangeElements(primType, minIndex, minIndex+NumVertexes-1, NumVertexes, 
+                                        GL_UNSIGNED_SHORT, idxData+(2 * StartIdx));      
+#endif
                 } else {
-		  /*TRACE("Vertex: glVertex:x,y,z=%f,%f,%f / rhw=%f\n", x,y,z,rhw);*/
-		  glVertex4f(x / rhw, y / rhw, z / rhw, 1.0f / rhw);
+#if 1  /* FIXME: Want to use DrawRangeElements, but wrong calculation! */
+                    glDrawElements(primType, NumVertexes, GL_UNSIGNED_INT, idxData+(4 * StartIdx)); 
+#else
+                    glDrawRangeElements(primType, minIndex, minIndex+NumVertexes-1, NumVertexes, 
+                                        GL_UNSIGNED_INT, idxData+(2 * StartIdx));
+#endif
                 }
-	      }
-	    }
+                checkGLcall("glDrawRangeElements");
 
-            if (!isIndexed) {
-                curVtx = curVtx + skip;
+            } else {
+ 
+                /* Note first is now zero as we shuffled along earlier */
+                TRACE("glDrawArrays(%x, %ld, %d)\n", primType, StartIdx, NumVertexes);
+                glDrawArrays(primType, 0, NumVertexes);
+                checkGLcall("glDrawArrays");
+ 
             }
         }
-
-        glEnd();
-        checkGLcall("glEnd and previous calls");
 
         /* If no normals, restore previous lighting state */
         if (!normal) {
@@ -1432,19 +1605,20 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
        will able to do it quickly, only by changing the macro conv_mat. */
 
     switch (d3dts) {
-    case D3DTS_WORLDMATRIX(0): {
-            conv_mat(lpmatrix, &This->StateBlock.transforms[D3DTS_WORLDMATRIX(0)]);
-        } break;
+    case D3DTS_WORLDMATRIX(0):
+        conv_mat(lpmatrix, &This->StateBlock.transforms[D3DTS_WORLDMATRIX(0)]);
+        break;
 
-    case D3DTS_VIEW: {
-            conv_mat(lpmatrix, &This->StateBlock.transforms[D3DTS_VIEW]);
-        } break;
+    case D3DTS_VIEW:
+        conv_mat(lpmatrix, &This->StateBlock.transforms[D3DTS_VIEW]);
+        break;
 
-    case D3DTS_PROJECTION: {
-            conv_mat(lpmatrix, &This->StateBlock.transforms[D3DTS_PROJECTION]);
-        } break;
+    case D3DTS_PROJECTION:
+        conv_mat(lpmatrix, &This->StateBlock.transforms[D3DTS_PROJECTION]);
+        break;
 
     default:
+        FIXME("Unhandled transform state!!\n");
         break;
     }
 
@@ -1623,8 +1797,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD In
     checkGLcall("glLightfv");
 
     /* Light settings are affected by the model view in OpenGL, the View transform in direct3d*/
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
     glLoadMatrixf((float *) &This->StateBlock.transforms[D3DTS_VIEW].u.m[0][0]);
 
     /* Attenuation - Are these right? guessing... */
@@ -3277,7 +3451,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DrawPrimitive(LPDIRECT3DDEVICE8 iface, D3D
     TRACE("(%p) : Type=%d, Start=%d, Count=%d\n", This, PrimitiveType, StartVertex, PrimitiveCount);
 
     DrawPrimitiveI(iface, PrimitiveType, PrimitiveCount, FALSE,
-                   This->StateBlock.VertexShader, ((IDirect3DVertexBuffer8Impl *)pVB)->allocatedMemory, StartVertex, -1, 0, NULL);
+                   This->StateBlock.VertexShader, ((IDirect3DVertexBuffer8Impl *)pVB)->allocatedMemory, StartVertex, -1, 0, NULL, 0);
 
     return D3D_OK;
 }
@@ -3303,7 +3477,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DrawIndexedPrimitive(LPDIRECT3DDEVICE8 ifa
     }
 
     DrawPrimitiveI(iface, PrimitiveType, primCount, TRUE, This->StateBlock.VertexShader, ((IDirect3DVertexBuffer8Impl *)pVB)->allocatedMemory,
-                   This->StateBlock.baseVertexIndex, startIndex, idxStride, ((IDirect3DIndexBuffer8Impl *) pIB)->allocatedMemory);
+                   This->StateBlock.baseVertexIndex, startIndex, idxStride, ((IDirect3DIndexBuffer8Impl *) pIB)->allocatedMemory,
+                   minIndex);
 
     return D3D_OK;
 }
@@ -3317,7 +3492,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DrawPrimitiveUP(LPDIRECT3DDEVICE8 iface, D
     This->StateBlock.stream_source[0] = NULL;
     This->StateBlock.stream_stride[0] = VertexStreamZeroStride;
     DrawPrimitiveI(iface, PrimitiveType, PrimitiveCount, FALSE, This->StateBlock.VertexShader, pVertexStreamZeroData,
-                   0, 0, 0, NULL);
+                   0, 0, 0, NULL, 0);
     This->StateBlock.stream_stride[0] = 0;
 
     /*stream zero settings set to null at end */
@@ -3342,7 +3517,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DrawIndexedPrimitiveUP(LPDIRECT3DDEVICE8 i
     This->StateBlock.stream_source[0] = NULL;
     This->StateBlock.stream_stride[0] = VertexStreamZeroStride;
     DrawPrimitiveI(iface, PrimitiveType, PrimitiveCount, TRUE, This->StateBlock.VertexShader, pVertexStreamZeroData,
-                   This->StateBlock.baseVertexIndex, 0, idxStride, pIndexData);
+                   This->StateBlock.baseVertexIndex, 0, idxStride, pIndexData, MinVertexIndex);
 
     /*stream zero settings set to null at end */
     This->StateBlock.stream_stride[0] = 0;
@@ -3915,6 +4090,7 @@ void CreateStateBlock(LPDIRECT3DDEVICE8 iface) {
 
     /* Texture Stage States - Put directly into state block, we will call function below */
     for (i=0; i<This->TextureUnits;i++) {
+        memcpy(&This->StateBlock.transforms[D3DTS_TEXTURE0+i], &idmatrix, sizeof(idmatrix));
         This->StateBlock.texture_state[i][D3DTSS_COLOROP               ] = (i==0)? D3DTOP_MODULATE :  D3DTOP_DISABLE;
         This->StateBlock.texture_state[i][D3DTSS_COLORARG1             ] = D3DTA_TEXTURE;
         This->StateBlock.texture_state[i][D3DTSS_COLORARG2             ] = D3DTA_CURRENT;
