@@ -37,21 +37,14 @@ DOREG=auto                    # whether to install default registry
 DOAPP=auto                    # whether to install applications, distributed with Wine
 SYSREG=yes                    # whether to make root's registry global (system-default)
 
-# "make install" still installs the dlls into $libdir, but this may change in the future
-# (DLLPATH should point to them if/when they are not in standard ld.so paths)
-DLLPATH=$libdir/wine          # default path of the dll .so files (except libwine.so)
-
 # this is only for existing-windows installs
 WINECONF=tools/wineconf       # path to the wineconf perl script
 
 # this is only for no-windows installs
 WINEINI=$exdir/config         # path to the default wine config file (also used by wineconf)
-WININI=/dev/null              # path to the default win.ini
-SYSTEMINI=$exdir/system.ini   # path to the default system.ini
-REGEDIT=programs/regedit/regedit       # path to the regedit winelib application
-DEFREG=winedefault.reg        # path of the registry file to be fed to regedit
+RUNDLL32=programs/rundll32/rundll32       # path to the rundll32 winelib application
+INFSCRIPT=tools/wine.inf      # path to the default .inf script
 # CROOT=/var/wine             # path of the fake Drive C (asks user if not set)
-DEFCAT=cat                    # program to cat $DEFREG with (some packages need zcat)
 #--- end of defaults
 
 # temporary files used by the installer
@@ -108,8 +101,7 @@ function create_windows_directories {
               "$CROOT/windows/Fonts" "$CROOT/windows/Start Menu/Programs/Startup"
   do [ -d "$tdir" ] || mkdir "$tdir"
   done
-  [ -f "$CROOT/windows/win.ini" ]    || cp "$WININI"    "$CROOT/windows/win.ini"
-  [ -f "$CROOT/windows/system.ini" ] || cp "$SYSTEMINI" "$CROOT/windows/system.ini"
+  cp $INFSCRIPT "$CROOT/windows/system/wine.inf"
 }
 
 #creates symbolic link in windows directory to installed winelib application
@@ -354,22 +346,6 @@ then {
       WINEINSTALLED=yes
     }
     else {
-      # user didn't want to install wine so tell them about running from the
-      # current directory and set some stuff up for them
-
-      # setup to run from current directory
-      DLLPATH="$PWD/dlls"
-      if [ -z "$LD_LIBRARY_PATH" ]
-      then LD_LIBRARY_PATH="$PWD:$DLLPATH"
-      else LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$PWD:$DLLPATH"
-      fi
-      export LD_LIBRARY_PATH
-      echo
-      echo "NOTE! To run Wine without installing, you must set the environment variable"
-      echo "LD_LIBRARY_PATH to $PWD:$DLLPATH"
-      echo "in your logon scripts."
-      echo
-
       WINEINSTALLED=no
     }
     fi # [ "$ROOTINSTALL" = "yes" ]
@@ -615,8 +591,8 @@ if [ "$DOREG" = 'yes' ]
 then {
   if [ "$BINDIST" = 'no' ]
   then {
-    echo "Compiling regedit..."
-    (cd programs/regedit; make)
+    echo "Compiling rundll32..."
+    (cd programs/rundll32; make)
     echo
   }
   fi
@@ -628,7 +604,7 @@ then {
 
   echo "Installing default Wine registry entries..."
   echo
-  if ! $REGEDIT $DEFREG > /dev/null
+  if ! $RUNDLL32 setupapi.dll,InstallHinfSection DefaultInstall 128 $INFSCRIPT > /dev/null
   then {
     echo "Registry install failed."
     mv $LCONF.orig $LCONF
