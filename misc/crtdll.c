@@ -145,13 +145,22 @@ DWORD __cdecl CRTDLL__GetMainArgs(LPDWORD argc,LPSTR **argv,
 
 typedef void (*_INITTERMFUN)();
 
+/* fixme: move to header */
+struct find_t 
+{   unsigned	attrib;
+    time_t	time_create;	/* -1 when not avaiable */
+    time_t	time_access;	/* -1 when not avaiable */
+    time_t	time_write;
+    unsigned long	size;	/* fixme: 64 bit ??*/
+    char	name[260];
+};
  /*********************************************************************
  *                  _findfirst    (CRTDLL.099)
  * 
  * BUGS
  *   Unimplemented
  */
-DWORD __cdecl CRTDLL__findfirst(LPCSTR fname,struct find_t* x2)
+DWORD __cdecl CRTDLL__findfirst(LPCSTR fname,  struct find_t * x2)
 {
   FIXME(crtdll, ":(%s,%p): stub\n",fname,x2);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -164,7 +173,7 @@ DWORD __cdecl CRTDLL__findfirst(LPCSTR fname,struct find_t* x2)
  * BUGS
  *   Unimplemented
  */
-INT32 __cdecl CRTDLL__findnext(DWORD hand,struct find_t* x2)
+INT32 __cdecl CRTDLL__findnext(DWORD hand, struct find_t * x2)
 {
   FIXME(crtdll, ":(%ld,%p): stub\n",hand,x2);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -1658,7 +1667,7 @@ VOID __cdecl CRTDLL__splitpath(LPCSTR path, LPSTR drive, LPSTR directory, LPSTR 
   
   if (drive) 
     {
-      *drive = NULL;
+      *drive = 0x00;
       if (drivechar) 
 	{
 	  strncat(drive,path,drivechar-path+1);
@@ -1667,7 +1676,7 @@ VOID __cdecl CRTDLL__splitpath(LPCSTR path, LPSTR drive, LPSTR directory, LPSTR 
     }
   if (directory) 
     {
-      *directory = NULL;
+      *directory = 0x00;
       if (dirchar)
 	{
 	  strncat(directory,path,dirchar-path+1);
@@ -1676,13 +1685,13 @@ VOID __cdecl CRTDLL__splitpath(LPCSTR path, LPSTR drive, LPSTR directory, LPSTR 
     }
   if (filename)
     {
-      *filename = NULL;
+      *filename = 0x00;
       if (namechar)
 	{
 	  strncat(filename,path,namechar-path);
 	  if (extension) 
 	    {
-	      *extension = NULL;
+	      *extension = 0x00;
 	      strcat(extension,namechar);
 	    }
 	}
