@@ -1369,16 +1369,17 @@ TOOLBAR_AddStringA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
+#define MAX_RESOURCE_STRING_LENGTH 512
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     INT nIndex;
 
     if ((wParam) && (HIWORD(lParam) == 0)) {
-	WCHAR szString[256];
+	WCHAR szString[MAX_RESOURCE_STRING_LENGTH];
 	INT len;
 	TRACE("adding string from resource!\n");
 
 	len = LoadStringW ((HINSTANCE)wParam, (UINT)lParam,
-			     szString, 256);
+			     szString, MAX_RESOURCE_STRING_LENGTH);
 
 	TRACE("len=%d \"%s\"\n", len, debugstr_w(szString));
 	TRACE("First char: 0x%x\n", *szString);
@@ -1406,7 +1407,7 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    TRACE("len=%d \"%s\"\n", len, debugstr_w(p));
 	    infoPtr->strings[infoPtr->nNumStrings] =
 		COMCTL32_Alloc (sizeof(WCHAR)*(len+1));
-	    lstrcpyW (infoPtr->strings[infoPtr->nNumStrings], p);
+	    lstrcpynW (infoPtr->strings[infoPtr->nNumStrings], p, len);
 	    infoPtr->nNumStrings++;
 
 		p += (len+1);
