@@ -853,8 +853,6 @@ HRESULT WINAPI IsUserAdmin(void)
  * converts a STRRET to a normal string
  *
  * NOTES
- *  FIXME the string handling is to simple (different STRRET choices)
- *  at the moment only CSTR
  *  the pidl is for STRRET OFFSET
  */
 HRESULT WINAPI StrRetToStrN (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)

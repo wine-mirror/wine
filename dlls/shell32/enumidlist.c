@@ -105,7 +105,7 @@ static HRESULT WINAPI IEnumIDList_QueryInterface(
  * IEnumIDList_AddRef
  */
 static ULONG WINAPI IEnumIDList_AddRef(LPENUMIDLIST this)
-{	TRACE(shell,"(%p)->(%u)\n",this,this->ref);
+{	TRACE(shell,"(%p)->(%lu)\n",this,this->ref);
 
 	shell32_ObjCount++;
 	return ++(this->ref);
@@ -114,7 +114,7 @@ static ULONG WINAPI IEnumIDList_AddRef(LPENUMIDLIST this)
  * IEnumIDList_Release
  */
 static ULONG WINAPI IEnumIDList_Release(LPENUMIDLIST this)
-{	TRACE(shell,"(%p)->(%u)\n",this,this->ref);
+{	TRACE(shell,"(%p)->(%lu)\n",this,this->ref);
 
 	shell32_ObjCount--;
 

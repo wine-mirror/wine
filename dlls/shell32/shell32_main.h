@@ -36,12 +36,16 @@ extern INT32	(WINAPI* pDPA_Search) (const HDPA, LPVOID, INT32, PFNDPACOMPARE, LP
 extern HICON32* (WINAPI *pLookupIconIdFromDirectoryEx32)(LPBYTE dir, BOOL32 bIcon, INT32 width, INT32 height, UINT32 cFlag);
 extern HICON32* (WINAPI *pCreateIconFromResourceEx32)(LPBYTE bits,UINT32 cbSize, BOOL32 bIcon, DWORD dwVersion, INT32 width, INT32 height,UINT32 cFlag);
 
+/* undocumented WINAPI functions not globaly exported */
 LPITEMIDLIST WINAPI ILClone (LPCITEMIDLIST pidl);
 LPITEMIDLIST WINAPI ILGetNext(LPITEMIDLIST pidl);
 LPITEMIDLIST WINAPI ILCombine(LPCITEMIDLIST iil1,LPCITEMIDLIST iil2);
 LPITEMIDLIST WINAPI ILFindLastID(LPITEMIDLIST pidl);
 DWORD WINAPI ILGetSize(LPITEMIDLIST pidl);
 LPITEMIDLIST WINAPI ILCreateFromPath(LPVOID path);
+
+DWORD WINAPI Shell_GetImageList(HIMAGELIST * lpBigList, HIMAGELIST * lpSmallList);
+HRESULT WINAPI StrRetToStrN (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl);
 
 /* Iconcache */
 #define INVALID_INDEX -1

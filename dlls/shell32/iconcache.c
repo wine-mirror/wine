@@ -191,7 +191,7 @@ static HGLOBAL16 ICO_GetIconDirectory(HINSTANCE32 hInst, HFILE32 hFile, LPicoICO
 #define ICO_INVALID_FILE	1
 #define ICO_NO_ICONS		0
 
-HGLOBAL32 WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON32* RetPtr, UINT32 nIconIndex, UINT32 n, UINT32 cxDesired, UINT32 cyDesired )
+HGLOBAL32 WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON32 * RetPtr, UINT32 nIconIndex, UINT32 n, UINT32 cxDesired, UINT32 cyDesired )
 {	HGLOBAL32	hRet = ICO_NO_ICONS;
 	LPBYTE		pData;
 	OFSTRUCT	ofs;
@@ -375,7 +375,7 @@ HGLOBAL32 WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON32* RetPtr, UINT
 	    { WARN(shell,"no matching real address for icongroup!\n");
 	      goto end_4;	/* failure */
 	    }
-	    RetPtr[i] = pLookupIconIdFromDirectoryEx32(igdata, TRUE, cxDesired, cyDesired, LR_DEFAULTCOLOR);
+	    RetPtr[i] = (HICON32)pLookupIconIdFromDirectoryEx32(igdata, TRUE, cxDesired, cyDesired, LR_DEFAULTCOLOR);
 	  }
 
 	  if (!(iconresdir=GetResDirEntryW(rootresdir,RT_ICON32W,(DWORD)rootresdir,FALSE))) 
@@ -403,7 +403,7 @@ HGLOBAL32 WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON32* RetPtr, UINT
 	      RetPtr[i]=0;
 	      continue;
 	    }
-	    RetPtr[i] = pCreateIconFromResourceEx32(idata,idataent->Size,TRUE,0x00030000, cxDesired, cyDesired, LR_DEFAULTCOLOR);
+	    RetPtr[i] = (HICON32) pCreateIconFromResourceEx32(idata,idataent->Size,TRUE,0x00030000, cxDesired, cyDesired, LR_DEFAULTCOLOR);
 	  }
 	  hRet = RetPtr[0];	/* return first icon */
 	  goto end_3;		/* sucess */
@@ -506,7 +506,7 @@ static INT32 SIC_LoadIcon (LPCSTR sSourceFile, INT32 dwSourceIndex)
 *  look in the cache for a proper icon. if not available the icon is taken
 *  from the file and cached
 */
-static INT32 SIC_GetIconIndex (LPCSTR sSourceFile, INT32 dwSourceIndex )
+INT32 SIC_GetIconIndex (LPCSTR sSourceFile, INT32 dwSourceIndex )
 {	SIC_ENTRY sice;
 	INT32 index = INVALID_INDEX;
 		
@@ -612,13 +612,13 @@ BOOL32 SIC_Initialize(void)
  *  imglist[1|2] [OUT] pointer which recive imagelist handles
  *
  */
-DWORD WINAPI Shell_GetImageList(HIMAGELIST * imglist1,HIMAGELIST * imglist2)
-{	TRACE(shell,"(%p,%p)\n",imglist1,imglist2);
-	if (imglist1)
-	{ *imglist1=ShellBigIconList;
+DWORD WINAPI Shell_GetImageList(HIMAGELIST * lpBigList, HIMAGELIST * lpSmallList)
+{	TRACE(shell,"(%p,%p)\n",lpBigList,lpSmallList);
+	if (lpBigList)
+	{ *lpBigList = ShellBigIconList;
 	}
-	if (imglist2)
-	{ *imglist2=ShellSmallIconList;
+	if (lpSmallList)
+	{ *lpSmallList = ShellSmallIconList;
 	}
 
 	return TRUE;

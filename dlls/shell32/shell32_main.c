@@ -346,14 +346,6 @@ UINT32 WINAPI SHAppBarMessage32(DWORD msg, PAPPBARDATA data)
     return 0;
 }
 
-/*************************************************************************
- * SHBrowseForFolderA [SHELL32.209]
- *
- */
-LPITEMIDLIST WINAPI SHBrowseForFolder32A (LPBROWSEINFO32A lpbi)
-{ FIXME (shell, "(%lx,%s) empty stub!\n", (DWORD)lpbi, lpbi->lpszTitle);
-  return NULL;
-}
 
 /*************************************************************************
  *  SHGetDesktopFolder		[SHELL32.216]
@@ -677,11 +669,6 @@ ShellExecute32W(
        FIXME(shell,": stub\n");
        return 0;
 }
-
-
-
-
-
 
 /*************************************************************************
  *             AboutDlgProc32  (not an exported API function)

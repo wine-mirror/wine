@@ -622,7 +622,8 @@ static HRESULT WINAPI IShellFolder_GetDisplayNameOf( LPSHELLFOLDER this, LPCITEM
 	szSpecial[0]=0x00; 
 	szDrive[0]=0x00;
 	szText[0]=0x00;
-
+	szTemp[0]=0x00;
+	
 	/* test if simple(relative) or complex(absolute) pidl */
 	pidlTemp = ILGetNext(pidl);
 	if (pidlTemp && pidlTemp->mkid.cb==0x00)
