@@ -12,6 +12,7 @@ use vars qw(@ISA @EXPORT @EXPORT_OK);
 @EXPORT_OK = qw();
 
 my $module_declarations = {
+    "CoInternetGetSession" => ["long",  ["long", "ptr", "long"]],
     "CreateAsyncBindCtxEx" => ["long",  ["ptr", "long", "ptr", "ptr", "ptr", "long"]],
     "CreateURLMoniker" => ["long",  ["ptr", "wstr", "ptr"]],
     "DllCanUnloadNow" => ["long",  []],
@@ -20,6 +21,8 @@ my $module_declarations = {
     "DllRegisterServer" => ["long",  []],
     "DllRegisterServerEx" => ["long",  []],
     "DllUnregisterServer" => ["long",  []],
+    "Extract" => ["long",  ["long", "long"]],
+    "ObtainUserAgentString" => ["long",  ["long", "str", "ptr"]],
     "RegisterBindStatusCallback" => ["long",  ["ptr", "ptr", "ptr", "long"]],
     "RevokeBindStatusCallback" => ["long",  ["ptr", "ptr"]],
     "UrlMkSetSessionOption" => ["long",  ["long", "ptr", "long", "long"]]

@@ -317,6 +317,7 @@ require Exporter;
     DFCS_CAPTIONRESTORE
     DFCS_CHECKED
     DFCS_FLAT
+    DFCS_HOT
     DFCS_INACTIVE
     DFCS_MENUARROW
     DFCS_MENUARROWRIGHT
@@ -331,6 +332,7 @@ require Exporter;
     DFCS_SCROLLSIZEGRIP
     DFCS_SCROLLSIZEGRIPRIGHT
     DFCS_SCROLLUP
+    DFCS_TRANSPARENT
     DFC_BUTTON
     DFC_CAPTION
     DFC_MENU
@@ -1495,6 +1497,7 @@ require Exporter;
     SWP_NOZORDER
     SWP_SHOWWINDOW
     SW_ERASE
+    SW_FORCEMINIMIZE
     SW_HIDE
     SW_INVALIDATE
     SW_MAX
@@ -2316,6 +2319,7 @@ use constant DFCS_CAPTIONMIN => 1;
 use constant DFCS_CAPTIONRESTORE => 3;
 use constant DFCS_CHECKED => 1024;
 use constant DFCS_FLAT => 16384;
+use constant DFCS_HOT => 4096;
 use constant DFCS_INACTIVE => 256;
 use constant DFCS_MENUARROW => 0;
 use constant DFCS_MENUARROWRIGHT => 4;
@@ -2330,6 +2334,7 @@ use constant DFCS_SCROLLRIGHT => 3;
 use constant DFCS_SCROLLSIZEGRIP => 8;
 use constant DFCS_SCROLLSIZEGRIPRIGHT => 16;
 use constant DFCS_SCROLLUP => 0;
+use constant DFCS_TRANSPARENT => 2048;
 use constant DFC_BUTTON => 4;
 use constant DFC_CAPTION => 1;
 use constant DFC_MENU => 2;
@@ -3494,9 +3499,10 @@ use constant SWP_NOSIZE => 1;
 use constant SWP_NOZORDER => 4;
 use constant SWP_SHOWWINDOW => 64;
 use constant SW_ERASE => 4;
+use constant SW_FORCEMINIMIZE => 11;
 use constant SW_HIDE => 0;
 use constant SW_INVALIDATE => 2;
-use constant SW_MAX => 10;
+use constant SW_MAX => 11;
 use constant SW_MAXIMIZE => 3;
 use constant SW_MINIMIZE => 6;
 use constant SW_NORMAL => 1;

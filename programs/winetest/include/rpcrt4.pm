@@ -12,7 +12,10 @@ use vars qw(@ISA @EXPORT @EXPORT_OK);
 @EXPORT_OK = qw();
 
 my $module_declarations = {
+    "NdrDllCanUnloadNow" => ["long",  ["ptr"]],
+    "NdrDllGetClassObject" => ["long",  ["ptr", "ptr", "ptr", "ptr", "ptr", "ptr"]],
     "NdrDllRegisterProxy" => ["long",  ["long", "ptr", "ptr"]],
+    "RpcBindingFree" => ["long",  ["ptr"]],
     "RpcBindingFromStringBindingA" => ["long",  ["str", "ptr"]],
     "RpcBindingFromStringBindingW" => ["long",  ["wstr", "ptr"]],
     "RpcServerListen" => ["long",  ["long", "long", "long"]],

@@ -217,8 +217,10 @@ my $module_declarations = {
     "OleCreateFontIndirect" => ["long",  ["ptr", "ptr", "ptr"]],
     "OleTranslateColor" => ["long",  ["long", "long", "ptr"]],
     "OleLoadPictureEx" => ["long",  ["ptr", "long", "long", "ptr", "long", "long", "long", "ptr"]],
+    "SafeArrayAllocDescriptorEx" => ["long",  ["long", "long", "ptr"]],
     "VarBstrCat" => ["long",  ["wstr", "wstr", "ptr"]],
-    "VarBstrCmp" => ["long",  ["wstr", "wstr", "long", "long"]]
+    "VarBstrCmp" => ["long",  ["wstr", "wstr", "long", "long"]],
+    "VarCat" => ["long",  ["ptr", "ptr", "ptr"]]
 };
 
 &wine::declare("oleaut32",%$module_declarations);

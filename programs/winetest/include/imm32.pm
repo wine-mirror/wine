@@ -21,6 +21,7 @@ my $module_declarations = {
     "ImmDestroyContext" => ["long",  ["long"]],
     "ImmDestroyIMCC" => ["long",  ["long"]],
     "ImmDestroySoftKeyboard" => ["long",  ["long"]],
+    "ImmDisableIME" => ["long",  ["long"]],
     "ImmEnumRegisterWordA" => ["long",  ["long", "ptr", "str", "long", "str", "ptr"]],
     "ImmEnumRegisterWordW" => ["long",  ["long", "ptr", "wstr", "long", "wstr", "ptr"]],
     "ImmEscapeA" => ["long",  ["long", "long", "long", "ptr"]],

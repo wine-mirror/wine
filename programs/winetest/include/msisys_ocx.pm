@@ -1,4 +1,4 @@
-package shdocvw;
+package msisys_ocx;
 
 use strict;
 
@@ -14,12 +14,10 @@ use vars qw(@ISA @EXPORT @EXPORT_OK);
 my $module_declarations = {
     "DllCanUnloadNow" => ["long",  []],
     "DllGetClassObject" => ["long",  ["ptr", "ptr", "ptr"]],
-    "DllGetVersion" => ["long",  ["ptr"]],
-    "DllInstall" => ["long",  ["long", "wstr"]],
     "DllRegisterServer" => ["long",  []],
     "DllUnregisterServer" => ["long",  []]
 };
 
-&wine::declare("shdocvw",%$module_declarations);
+&wine::declare("msisys.ocx",%$module_declarations);
 push @EXPORT, map { "&" . $_; } sort(keys(%$module_declarations));
 1;

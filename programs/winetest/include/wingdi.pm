@@ -632,6 +632,7 @@ require Exporter;
     GETTRACKKERNTABLE
     GETVECTORBRUSHSIZE
     GETVECTORPENSIZE
+    GGI_MARK_NONEXISTING_GLYPHS
     GGO_BITMAP
     GGO_GLYPH_INDEX
     GGO_GRAY2_BITMAP
@@ -642,6 +643,10 @@ require Exporter;
     GM_ADVANCED
     GM_COMPATIBLE
     GM_LAST
+    GRADIENT_FILL_OP_FLAG
+    GRADIENT_FILL_RECT_H
+    GRADIENT_FILL_RECT_V
+    GRADIENT_FILL_TRIANGLE
     GRAY_BRUSH
     GREEK_CHARSET
     HALFTONE
@@ -845,7 +850,6 @@ require Exporter;
     OUT_TT_ONLY_PRECIS
     OUT_TT_PRECIS
     PANOSE_COUNT
-    PANOSE_FAMILYTYPE_INDEX
     PAN_ANY
     PAN_ARMSTYLE_INDEX
     PAN_BENT_ARMS_DOUBLE_SERIF
@@ -863,6 +867,7 @@ require Exporter;
     PAN_CONTRAST_VERY_HIGH
     PAN_CONTRAST_VERY_LOW
     PAN_CULTURE_LATIN
+    PAN_FAMILYTYPE_INDEX
     PAN_FAMILY_DECORATIVE
     PAN_FAMILY_PICTORIAL
     PAN_FAMILY_SCRIPT
@@ -1830,6 +1835,7 @@ use constant GETTECHNOLOGY => 20;
 use constant GETTRACKKERNTABLE => 259;
 use constant GETVECTORBRUSHSIZE => 27;
 use constant GETVECTORPENSIZE => 26;
+use constant GGI_MARK_NONEXISTING_GLYPHS => 1;
 use constant GGO_BITMAP => 1;
 use constant GGO_GLYPH_INDEX => 128;
 use constant GGO_GRAY2_BITMAP => 4;
@@ -1840,6 +1846,10 @@ use constant GGO_NATIVE => 2;
 use constant GM_ADVANCED => 2;
 use constant GM_COMPATIBLE => 1;
 use constant GM_LAST => 2;
+use constant GRADIENT_FILL_OP_FLAG => 255;
+use constant GRADIENT_FILL_RECT_H => 0;
+use constant GRADIENT_FILL_RECT_V => 1;
+use constant GRADIENT_FILL_TRIANGLE => 2;
 use constant GRAY_BRUSH => 2;
 use constant GREEK_CHARSET => 161;
 use constant HALFTONE => 4;
@@ -2043,7 +2053,6 @@ use constant OUT_STROKE_PRECIS => 3;
 use constant OUT_TT_ONLY_PRECIS => 7;
 use constant OUT_TT_PRECIS => 4;
 use constant PANOSE_COUNT => 10;
-use constant PANOSE_FAMILYTYPE_INDEX => 0;
 use constant PAN_ANY => 0;
 use constant PAN_ARMSTYLE_INDEX => 6;
 use constant PAN_BENT_ARMS_DOUBLE_SERIF => 11;
@@ -2061,6 +2070,7 @@ use constant PAN_CONTRAST_NONE => 2;
 use constant PAN_CONTRAST_VERY_HIGH => 9;
 use constant PAN_CONTRAST_VERY_LOW => 3;
 use constant PAN_CULTURE_LATIN => 0;
+use constant PAN_FAMILYTYPE_INDEX => 0;
 use constant PAN_FAMILY_DECORATIVE => 4;
 use constant PAN_FAMILY_PICTORIAL => 5;
 use constant PAN_FAMILY_SCRIPT => 3;

@@ -44,6 +44,8 @@ my $module_declarations = {
     "InternetQueryOptionA" => ["long",  ["long", "long", "ptr", "ptr"]],
     "InternetReadFile" => ["long",  ["long", "ptr", "long", "ptr"]],
     "InternetSetCookieA" => ["long",  ["str", "str", "str"]],
+    "InternetSetOptionA" => ["long",  ["long", "long", "ptr", "long"]],
+    "InternetSetOptionW" => ["long",  ["long", "long", "ptr", "long"]],
     "InternetSetStatusCallback" => ["ptr",  ["long", "ptr"]],
     "InternetWriteFile" => ["long",  ["long", "ptr", "long", "ptr"]]
 };
