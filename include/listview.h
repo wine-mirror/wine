@@ -73,7 +73,7 @@ typedef struct tagLISTVIEW_INFO
     HWND hwndEdit;
     BOOL bDoEditLabel;
     EDITLABEL_ITEM *pedititem;
-    
+    DWORD dwHoverTime;
 } LISTVIEW_INFO;
 
 

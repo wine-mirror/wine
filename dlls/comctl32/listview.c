@@ -28,7 +28,6 @@
  * Advanced functionality:
  *   LISTVIEW_GetNumberOfWorkAreas : not implemented
  *   LISTVIEW_GetHotCursor : not implemented
- *   LISTVIEW_GetHoverTime : not implemented
  *   LISTVIEW_GetISearchString : not implemented 
  *   LISTVIEW_GetBkImage : not implemented
  *   LISTVIEW_GetColumnOrderArray : simple hack only
@@ -1058,7 +1057,81 @@ static BOOL LISTVIEW_KeySelection(HWND hwnd, INT nItem)
 
   return bResult;
 }
+
+/***
+ * DESCRIPTION:
+ * Called when the mouse is being actively tracked and has hovered for a specified
+ * amount of time
+ *
+ * PARAMETER(S):
+ * [I] HWND : window handle
+ * [I] wParam : key indicator
+ * [I] lParam : mouse position
+ *
+ * RETURN:
+ *   0 if the message was processed, non-zero if there was an error
+ *
+ * INFO:
+ * LVS_EX_TRACKSELECT: An item is automatically selected when the cursor remains
+ * over the item for a certain period of time.
+ * 
+ */
+static LRESULT LISTVIEW_MouseHover(hwnd, wParam, lParam)
+{
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  POINT pt;
+
+  pt.x = (INT)LOWORD(lParam);
+  pt.y = (INT)HIWORD(lParam);
+
+  if(infoPtr->dwExStyle & LVS_EX_TRACKSELECT) {
+    /* select the item under the cursor */
+    LISTVIEW_MouseSelection(hwnd, pt);
+  }
+
+  return 0;
+}
+
+/***
+ * DESCRIPTION:
+ * Called whenever WM_MOUSEMOVE is recieved.
+ *
+ * PARAMETER(S):
+ * [I] HWND : window handle
+ * [I] wParam : key indicators
+ * [I] lParam : cursor position
+ *
+ * RETURN:
+ *   0 if the message is processed, non-zero if there was an error
+ */
+static LRESULT LISTVIEW_MouseMove(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  TRACKMOUSEEVENT trackinfo;
+  POINT pt;
+ 
+  /* see if we are supposed to be tracking mouse hovering */
+  if(infoPtr->dwExStyle & LVS_EX_TRACKSELECT) {
+     /* fill in the trackinfo struct */
+     trackinfo.cbSize = sizeof(TRACKMOUSEEVENT);
+     trackinfo.dwFlags = TME_QUERY;
+     trackinfo.hwndTrack = hwnd;
+     trackinfo.dwHoverTime = infoPtr->dwHoverTime;
+
+     /* see if we are already tracking this hwnd */
+     _TrackMouseEvent(&trackinfo);
+
+     if(!(trackinfo.dwFlags & TME_HOVER)) {
+       trackinfo.dwFlags = TME_HOVER;
+
+       /* call TRACKMOUSEEVENT so we recieve WM_MOUSEHOVER messages */
+       _TrackMouseEvent(&trackinfo);
+    }
+  }
   
+  return 0;
+}
+
 /***
  * DESCRIPTION:
  * Selects an item based on coordinates.
@@ -3503,8 +3576,25 @@ static LRESULT LISTVIEW_GetHeader(HWND hwnd)
 }
 
 /* LISTVIEW_GetHotCursor */
-/* LISTVIEW_GetHotItem */
-/* LISTVIEW_GetHoverTime */
+
+/***
+ * DESCRIPTION:
+ * Returns the time that the mouse cursor must hover over an item
+ * before it is selected.
+ *
+ * PARAMETER(S):
+ * [I] HWND : window handle
+ *
+ * RETURN:
+ *   Returns the previously set hover time or (DWORD)-1 to indicate that the
+ *   hover time is set to the default hover time.
+ */
+static LRESULT LISTVIEW_GetHoverTime(HWND hwnd)
+{
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+
+  return infoPtr->dwHoverTime;
+}
 
 /***
  * DESCRIPTION:
@@ -5346,6 +5436,27 @@ static LRESULT LISTVIEW_SetHotItem(HWND hwnd, INT iIndex)
     return (iOldIndex);
 }
 
+/***
+ * DESCRIPTION:
+ * Sets the amount of time the cursor must hover over an item before it is selected.
+ *
+ * PARAMETER(S):
+ * [I] HWND : window handle
+ * [I] DWORD : dwHoverTime, if -1 the hover time is set to the default
+ *
+ * RETURN:
+ * Returns the previous hover time
+ */
+static LRESULT LISTVIEW_SetHoverTime(HWND hwnd, DWORD dwHoverTime)
+{
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
+  DWORD oldHoverTime = infoPtr->dwHoverTime;
+
+  infoPtr->dwHoverTime = dwHoverTime;
+
+  return oldHoverTime;
+}
+
 /* LISTVIEW_SetIconSpacing */
 
 /***
@@ -5443,8 +5554,9 @@ static LRESULT LISTVIEW_SetItemA(HWND hwnd, LPLVITEMA lpLVItem)
 static BOOL LISTVIEW_SetItemCount(HWND hwnd, INT nItems, DWORD dwFlags)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongA(hwnd, 0);
+  LISTVIEW_ITEM *lpItem = NULL;
 
-  FIXME("(%d %08lx)empty stub!\n", nItems, dwFlags);
+  FIXME("(%d %08lx)stub!\n", nItems, dwFlags);
 
   if (nItems == 0)
     return LISTVIEW_DeleteAllItems (hwnd);
@@ -5455,18 +5567,19 @@ static BOOL LISTVIEW_SetItemCount(HWND hwnd, INT nItems, DWORD dwFlags)
   }
   else
   {
-  if (nItems > GETITEMCOUNT(infoPtr))
-{
-    /* append items */
-    FIXME("append items\n");
+    if (nItems > GETITEMCOUNT(infoPtr))
+    {
+      /* append items */
+      FIXME("append items\n");
 
-  }
-  else if (nItems < GETITEMCOUNT(infoPtr))
-  {
-    /* remove items */
-    FIXME("remove items\n");
-
-  }
+    }
+    else if (nItems < GETITEMCOUNT(infoPtr))
+    {
+      /* remove items */
+      while(nItems < GETITEMCOUNT(infoPtr)) {
+        LISTVIEW_DeleteItem(hwnd, GETITEMCOUNT(infoPtr) - 1);
+      }
+    }
   }
 
   return TRUE;
@@ -5895,6 +6008,9 @@ static LRESULT LISTVIEW_Create(HWND hwnd, WPARAM wParam, LPARAM lParam)
   /* initialize size of items */
   infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd);
   infoPtr->nItemHeight = LISTVIEW_GetItemHeight(hwnd);
+
+  /* initialize the hover time to -1(indicating the default system hover time) */
+  infoPtr->dwHoverTime = -1;  
 
   return 0;
 }
@@ -7249,7 +7365,8 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
   case LVM_GETHOTITEM:
     return LISTVIEW_GetHotItem(hwnd);
 
-/*	case LVM_GETHOVERTIME: */
+  case LVM_GETHOVERTIME:
+    return LISTVIEW_GetHoverTime(hwnd);
 
   case LVM_GETIMAGELIST:
     return LISTVIEW_GetImageList(hwnd, (INT)wParam);
@@ -7370,7 +7487,9 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
   case LVM_SETHOTITEM:
     return LISTVIEW_SetHotItem(hwnd, (INT)wParam);
 
-/*	case LVM_SETHOVERTIME: */
+  case LVM_SETHOVERTIME:
+    return LISTVIEW_SetHoverTime(hwnd, (DWORD)wParam);
+
 /*	case LVM_SETICONSPACING: */
 	
   case LVM_SETIMAGELIST:
@@ -7455,9 +7574,11 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
   case WM_LBUTTONUP:
     return LISTVIEW_LButtonUp(hwnd, (WORD)wParam, LOWORD(lParam), 
                               HIWORD(lParam));
-    
-/*	case WM_MOUSEMOVE: */
-/*	    return LISTVIEW_MouseMove (hwnd, wParam, lParam); */
+  case WM_MOUSEMOVE:
+    return LISTVIEW_MouseMove (hwnd, wParam, lParam);
+
+  case WM_MOUSEHOVER:
+    return LISTVIEW_MouseHover(hwnd, wParam, lParam);
 
   case WM_NCCREATE:
     return LISTVIEW_NCCreate(hwnd, wParam, lParam);
