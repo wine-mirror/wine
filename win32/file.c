@@ -84,6 +84,11 @@ BOOL32 WINAPI SetFileAttributes32A(LPCSTR lpFileName, DWORD attributes)
         buf.st_mode &= ~0222; /* octal!, clear write permission bits */
         attributes &= ~FILE_ATTRIBUTE_READONLY;
     }
+    else
+    {
+        /* add write permission */
+        buf.st_mode |= 0600 | ((buf.st_mode & 044) >> 1);
+    }
     attributes &= ~(FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM);
     if (attributes)
         FIXME(file,"(%s):%lx attribute(s) not implemented.\n",
