@@ -289,7 +289,7 @@ noconv:
 }
 
 
-int vsnprintfW(WCHAR *str, unsigned int len, const WCHAR *format, va_list valist)
+int vsnprintfW(WCHAR *str, size_t len, const WCHAR *format, va_list valist)
 {
     unsigned int written = 0;
     const WCHAR *iter = format;
@@ -407,13 +407,27 @@ int vsnprintfW(WCHAR *str, unsigned int len, const WCHAR *format, va_list valist
     return (int)written;
 }
 
+int vsprintfW( WCHAR *str, const WCHAR *format, va_list valist )
+{
+    return vsnprintfW( str, INT_MAX, format, valist );
+}
 
-int snprintfW(WCHAR *str, unsigned int len, const WCHAR *format, ...)
+int snprintfW( WCHAR *str, size_t len, const WCHAR *format, ...)
 {
     int retval;
     va_list valist;
     va_start(valist, format);
     retval = vsnprintfW(str, len, format, valist);
+    va_end(valist);
+    return retval;
+}
+
+int sprintfW( WCHAR *str, const WCHAR *format, ...)
+{
+    int retval;
+    va_list valist;
+    va_start(valist, format);
+    retval = vsnprintfW(str, INT_MAX, format, valist);
     va_end(valist);
     return retval;
 }

@@ -6,6 +6,7 @@ EXPORTS
 	cp_mbstowcs
 	cp_wcstombs
 	snprintfW
+	sprintfW
 	strcmpiW
 	strncmpiW
 	strstrW
@@ -14,4 +15,5 @@ EXPORTS
 	utf8_mbstowcs
 	utf8_wcstombs
 	vsnprintfW
+	vsprintfW
 	wctype_table
