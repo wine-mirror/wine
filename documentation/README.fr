@@ -150,10 +150,6 @@ Le fichier documentation/samples/config contient un exemple de fichier de
 configuration qui doit être adapté et copié vers la localisation mentionnée
 ci-dessus.
 
-N'oubliez pas d'ajouter des entrées de registre virtuelle en applicant
-winedefault.reg avec programs/regedit/. Voyez le répertoire documentation/ pour
-les détails.
-
 Naviguez dans la section Support à http://www.winehq.org/ pour plus d'astuces
 de configuration.
 

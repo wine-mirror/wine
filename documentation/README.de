@@ -149,10 +149,6 @@ Die Datei documentation/samples/config enthält eine beispielhafte
 Konfigurations-Datei, die angepasst und an die oben erwähnte Stelle
 kopiert werden muss.
 
-Vergessen Sie nicht, lebenswichtige Registry-Einträge anzulegen, indem
-Sie winedefault.reg mittels programms/regedit anwenden. Details entnehmen
-Sie bitte dem Verzeichnis documentation.
-
 Weitere Konfigurations-Hinweise finden Sie im Support-Bereich
 von http://www.winehq.org.
 

@@ -142,10 +142,6 @@ O arquivo documentation/samples/config contém um exemplo de arquivo de
 configuração para ser adaptado e copiado para a localização anteriormente
 mencionada.
 
-Não se esqueça de adicionar entradas vitais no registro, aplicando 
-winedefault.reg com programs/regedit/. Veja o diretório documentation/ 
-para detalhes.
-
 Veja a área de suporte em http://www.winehq.org/ para mais sugestões 
 sobre a configuraçao.
 

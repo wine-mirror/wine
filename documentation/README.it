@@ -146,9 +146,6 @@ Il file documentation/samples/config contiene un esempio di file di
 configurazione che deve essere adattato e copiato nella locazione menzionata in
 precedenza.
 
-Non dimenticarti di aggiungere chiavi di registro vitali applicando winedefault.reg
-con programs/regedit/. Controlla la directory documentation/ per i dettagli.
-
 Controlla l'area Support su http://www.winehq.org/ per altri suggerimenti sulla
 configurazione.
 
