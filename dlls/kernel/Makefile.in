@@ -30,6 +30,7 @@ C_SRCS = \
 	file.c \
 	file16.c \
 	format_msg.c \
+	heap.c \
 	kernel_main.c \
 	lcformat.c \
 	local16.c \

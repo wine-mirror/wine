@@ -324,7 +324,7 @@ static BOOL process_init( char *argv[] )
     if (!ret) return FALSE;
 
     /* Create the process heap */
-    current_process.heap = HeapCreate( HEAP_GROWABLE, 0, 0 );
+    current_process.heap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL );
 
     if (info_size == 0)
     {
