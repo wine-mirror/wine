@@ -48,7 +48,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pCreateDIBSection */
     NULL,                            /* pDeleteBitmap */
     NULL,                            /* pDeleteDC */
-    NULL,                            /* pDeleteObject */
+    MFDRV_DeleteObject,              /* pDeleteObject */
     NULL,                            /* pDescribePixelFormat */
     NULL,                            /* pDeviceCapabilities */
     MFDRV_Ellipse,                   /* pEllipse */
@@ -182,7 +182,10 @@ static DC *MFDRV_AllocMetaFile(void)
         return NULL;
     }
 
-    physDev->nextHandle = 0;
+    physDev->handles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, HANDLE_LIST_INC * sizeof(physDev->handles[0]));
+    physDev->handles_size = HANDLE_LIST_INC;
+    physDev->cur_handles = 0;
+
     physDev->hFile = 0;
 
     physDev->mh->mtHeaderSize   = sizeof(METAHEADER) / sizeof(WORD);
@@ -203,8 +206,13 @@ static BOOL MFDRV_DeleteDC( PHYSDEV dev )
 {
     METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
     DC *dc = physDev->dc;
+    DWORD index;
 
     if (physDev->mh) HeapFree( GetProcessHeap(), 0, physDev->mh );
+    for(index = 0; index < physDev->handles_size; index++)
+        if(physDev->handles[index])
+            GDI_hdc_not_using_object(physDev->handles[index], physDev->hdc);
+    HeapFree( GetProcessHeap(), 0, physDev->handles );
     HeapFree( GetProcessHeap(), 0, physDev );
     dc->physDev = NULL;
     GDI_FreeObject( dc->hSelf, dc );
@@ -532,20 +540,6 @@ BOOL MFDRV_MetaParam8(PHYSDEV dev, short func, short param1, short param2,
     return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
 }
 
-
-/******************************************************************
- *         MFDRV_AddHandleDC
- *
- * Note: this function assumes that we never delete objects.
- * If we do someday, we'll need to maintain a table to re-use deleted
- * handles.
- */
-int MFDRV_AddHandleDC( PHYSDEV dev )
-{
-    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
-    physDev->mh->mtNoObjects++;
-    return physDev->nextHandle++;
-}
 
 /**********************************************************************
  *           MFDRV_ExtEscape

@@ -335,7 +335,7 @@ static INT16 MFDRV_CreateRegion(PHYSDEV dev, HRGN hrgn)
         WARN("MFDRV_WriteRecord failed\n");
 	return -1;
     }
-    return MFDRV_AddHandleDC( dev );
+    return MFDRV_AddHandle( dev, hrgn );
 }
 
 
@@ -378,7 +378,7 @@ MFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
     if(iRgn == -1)
         return FALSE;
     iBrush = MFDRV_CreateBrushIndirect( dev, hbrush );
-    if(iBrush == -1)
+    if(!iBrush)
         return FALSE;
     return MFDRV_MetaParam2( dev, META_FILLREGION, iRgn, iBrush );
 }
@@ -394,7 +394,7 @@ MFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT x, INT y )
     if(iRgn == -1)
         return FALSE;
     iBrush = MFDRV_CreateBrushIndirect( dev, hbrush );
-    if(iBrush == -1)
+    if(!iBrush)
         return FALSE;
     return MFDRV_MetaParam4( dev, META_FRAMEREGION, iRgn, iBrush, x, y );
 }

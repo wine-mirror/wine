@@ -35,9 +35,12 @@ typedef struct
     HDC          hdc;
     DC          *dc;
     METAHEADER  *mh;           /* Pointer to metafile header */
-    UINT       nextHandle;     /* Next handle number */
+    UINT       handles_size, cur_handles;
+    HGDIOBJ   *handles;
     HANDLE     hFile;          /* Handle for disk based MetaFile */
 } METAFILEDRV_PDEVICE;
+
+#define HANDLE_LIST_INC 20
 
 
 extern BOOL MFDRV_MetaParam0(PHYSDEV dev, short func);
@@ -52,7 +55,7 @@ extern BOOL MFDRV_MetaParam8(PHYSDEV dev, short func, short param1, short param2
                              short param3, short param4, short param5,
                              short param6, short param7, short param8);
 extern BOOL MFDRV_WriteRecord(PHYSDEV dev, METARECORD *mr, DWORD rlen);
-extern int MFDRV_AddHandleDC( PHYSDEV dev );
+extern UINT MFDRV_AddHandle( PHYSDEV dev, HGDIOBJ obj );
 extern INT16 MFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush );
 
 /* Metafile driver functions */
@@ -68,6 +71,7 @@ extern BOOL MFDRV_Chord( PHYSDEV dev, INT left, INT top, INT right,
                          INT bottom, INT xstart, INT ystart, INT xend,
                          INT yend );
 extern BOOL MFDRV_CloseFigure( PHYSDEV dev );
+extern BOOL MFDRV_DeleteObject( PHYSDEV dev, HGDIOBJ obj );
 extern BOOL MFDRV_Ellipse( PHYSDEV dev, INT left, INT top,
                            INT right, INT bottom );
 extern BOOL MFDRV_EndPath( PHYSDEV dev );
