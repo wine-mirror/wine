@@ -20,46 +20,6 @@
 #include "monitor.h"
 #include "wine/winuser16.h"
 
-/***********************************************************************
- *           BITMAP_GetPadding
- *
- * Return number of bytes to pad a scanline of 16-bit aligned Windows DDB data.
- */
-INT BITMAP_GetPadding( int bmWidth, int bpp )
-{
-    INT pad;
-
-    switch (bpp) 
-    {
-    case 1:
-        pad = ((bmWidth-1) & 8) ? 0 : 1;
-	break;
-
-    case 8:
-	pad = (2 - (bmWidth & 1)) & 1;
-	break;
-
-    case 24:
-	pad = (bmWidth*3) & 1;
-	break;
-
-    case 32:
-    case 16:
-    case 15:
-	pad = 0; /* we have 16bit alignment already */
-	break;
-
-    case 4:
-	if (!(bmWidth & 3)) pad = 0;
-	else pad = ((4 - (bmWidth & 3)) + 1) / 2;
-	break;
-
-    default:
-	WARN(bitmap,"Unknown depth %d, please report.\n", bpp );
-        return -1;
-    }
-    return pad;
-}
 
 /***********************************************************************
  *           BITMAP_GetWidthBytes

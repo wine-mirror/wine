@@ -254,15 +254,10 @@ static LONG X11DRV_GetBitmapBits(BITMAPOBJ *bmp, void *buffer, LONG count)
 {
     LONG old_height, height;
     XImage *image;
-    LPBYTE tbuf;
-    int	h, w, pad;
+    LPBYTE tbuf, startline;
+    int	h, w;
 
     TRACE(x11drv, "(bmp=%p, buffer=%p, count=0x%lx)\n", bmp, buffer, count);
-
-    pad = BITMAP_GetPadding(bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel);
-
-    if (pad == -1)
-        return 0;
 
     EnterCriticalSection( &X11DRV_CritSection );
 
@@ -278,12 +273,13 @@ static LONG X11DRV_GetBitmapBits(BITMAPOBJ *bmp, void *buffer, LONG count)
 
     /* copy XImage to 16 bit padded image buffer with real bitsperpixel */
 
-    tbuf = buffer;
+    startline = buffer;
     switch (bmp->bitmap.bmBitsPixel)
     {
     case 1:
         for (h=0;h<height;h++)
         {
+	    tbuf = startline;
             *tbuf = 0;
             for (w=0;w<bmp->bitmap.bmWidth;w++)
             {
@@ -292,32 +288,35 @@ static LONG X11DRV_GetBitmapBits(BITMAPOBJ *bmp, void *buffer, LONG count)
                 *tbuf |= XGetPixel(image,w,h)<<(7-(w&7));
                 if ((w&7) == 7) ++tbuf;
             }
-            tbuf += pad;
+	    startline += bmp->bitmap.bmWidthBytes;
         }
         break;
     case 4:
         for (h=0;h<height;h++)
         {
+	    tbuf = startline;
             for (w=0;w<bmp->bitmap.bmWidth;w++)
             {
                 if (!(w & 1)) *tbuf = XGetPixel( image, w, h) << 4;
 	    	else *tbuf++ |= XGetPixel( image, w, h) & 0x0f;
             }
-            tbuf += pad;
+	    startline += bmp->bitmap.bmWidthBytes;
         }
         break;
     case 8:
         for (h=0;h<height;h++)
         {
+	    tbuf = startline;
             for (w=0;w<bmp->bitmap.bmWidth;w++)
                 *tbuf++ = XGetPixel(image,w,h);
-            tbuf += pad;
+	    startline += bmp->bitmap.bmWidthBytes;
         }
         break;
     case 15:
     case 16:
         for (h=0;h<height;h++)
         {
+	    tbuf = startline;
             for (w=0;w<bmp->bitmap.bmWidth;w++)
             {
 	    	long pixel = XGetPixel(image,w,h);
@@ -325,11 +324,13 @@ static LONG X11DRV_GetBitmapBits(BITMAPOBJ *bmp, void *buffer, LONG count)
 		*tbuf++ = pixel & 0xff;
 		*tbuf++ = (pixel>>8) & 0xff;
             }
+	    startline += bmp->bitmap.bmWidthBytes;
         }
         break;
     case 24:
         for (h=0;h<height;h++)
         {
+	    tbuf = startline;
             for (w=0;w<bmp->bitmap.bmWidth;w++)
             {
 	    	long pixel = XGetPixel(image,w,h);
@@ -338,13 +339,14 @@ static LONG X11DRV_GetBitmapBits(BITMAPOBJ *bmp, void *buffer, LONG count)
 		*tbuf++ = (pixel>> 8) & 0xff;
 		*tbuf++ = (pixel>>16) & 0xff;
 	    }
-            tbuf += pad;
+	    startline += bmp->bitmap.bmWidthBytes;
 	}
         break;
 
     case 32:
         for (h=0;h<height;h++)
         {
+	    tbuf = startline;
             for (w=0;w<bmp->bitmap.bmWidth;w++)
             {
 	    	long pixel = XGetPixel(image,w,h);
@@ -354,7 +356,7 @@ static LONG X11DRV_GetBitmapBits(BITMAPOBJ *bmp, void *buffer, LONG count)
 		*tbuf++ = (pixel>>16) & 0xff;
 		*tbuf++ = (pixel>>24) & 0xff;
 	    }
-            tbuf += pad;
+	    startline += bmp->bitmap.bmWidthBytes;
 	}
         break;
     default:
@@ -380,18 +382,11 @@ static LONG X11DRV_SetBitmapBits(BITMAPOBJ *bmp, void *bits, LONG count)
     struct XPutImage_descr descr;
     LONG height;
     XImage *image;
-    LPBYTE sbuf;
-    int	w, h, pad;
+    LPBYTE sbuf, startline;
+    int	w, h;
 
     TRACE(x11drv, "(bmp=%p, bits=%p, count=0x%lx)\n", bmp, bits, count);
     
-    pad = BITMAP_GetPadding(bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel);
-
-    if (pad == -1) 
-        return 0;
-	
-    sbuf = (LPBYTE)bits;
-
     height = count / bmp->bitmap.bmWidthBytes;
 
     EnterCriticalSection( &X11DRV_CritSection );
@@ -401,71 +396,80 @@ static LONG X11DRV_SetBitmapBits(BITMAPOBJ *bmp, void *bits, LONG count)
     image->data = (LPBYTE)xmalloc(image->bytes_per_line * height);
     
     /* copy 16 bit padded image buffer with real bitsperpixel to XImage */
-    sbuf = (LPBYTE)bits;
+    
+    startline = bits;
+
     switch (bmp->bitmap.bmBitsPixel)
     {
     case 1:
         for (h=0;h<height;h++)
         {
+	    sbuf = startline;
             for (w=0;w<bmp->bitmap.bmWidth;w++)
             {
                 XPutPixel(image,w,h,(sbuf[0]>>(7-(w&7))) & 1);
                 if ((w&7) == 7)
                     sbuf++;
             }
-            sbuf += pad;
+            startline += bmp->bitmap.bmWidthBytes;
         }
         break;
     case 4:
         for (h=0;h<height;h++)
         {
+	    sbuf = startline;
             for (w=0;w<bmp->bitmap.bmWidth;w++)
             {
                 if (!(w & 1)) XPutPixel( image, w, h, *sbuf >> 4 );
                 else XPutPixel( image, w, h, *sbuf++ & 0xf );
             }
-            sbuf += pad;
+            startline += bmp->bitmap.bmWidthBytes;
         }
         break;
     case 8:
         for (h=0;h<height;h++)
         {
+	    sbuf = startline;
             for (w=0;w<bmp->bitmap.bmWidth;w++)
                 XPutPixel(image,w,h,*sbuf++);
-            sbuf += pad;
+            startline += bmp->bitmap.bmWidthBytes;
         }
         break;
     case 15:
     case 16:
         for (h=0;h<height;h++)
         {
+	    sbuf = startline;
             for (w=0;w<bmp->bitmap.bmWidth;w++)
             {
                 XPutPixel(image,w,h,sbuf[1]*256+sbuf[0]);
                 sbuf+=2;
             }
+	    startline += bmp->bitmap.bmWidthBytes;
         }
         break;
-    case 24: 
+    case 24:
         for (h=0;h<height;h++)
         {
+	    sbuf = startline;
             for (w=0;w<bmp->bitmap.bmWidth;w++)
             {
                 XPutPixel(image,w,h,(sbuf[2]<<16)+(sbuf[1]<<8)+sbuf[0]);
                 sbuf += 3;
             }
-            sbuf += pad;
+            startline += bmp->bitmap.bmWidthBytes;
         }
         break;
     case 32: 
         for (h=0;h<height;h++)
         {
+	    sbuf = startline;
             for (w=0;w<bmp->bitmap.bmWidth;w++)
             {
                 XPutPixel(image,w,h,(sbuf[3]<<24)+(sbuf[2]<<16)+(sbuf[1]<<8)+sbuf[0]);
                 sbuf += 4;
             }
-            sbuf += pad;
+	    startline += bmp->bitmap.bmWidthBytes;
         }
         break;
     default:
