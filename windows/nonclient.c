@@ -549,6 +549,8 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT pt )
             rect.top += GetSystemMetrics(SM_CYCAPTION) - 1;
         if (!PtInRect( &rect, pt ))
         {
+            BOOL min_or_max_box = (wndPtr->dwStyle & WS_MAXIMIZEBOX) ||
+                                  (wndPtr->dwStyle & WS_MINIMIZEBOX);
             /* Check system menu */
             if ((wndPtr->dwStyle & WS_SYSMENU) && !(wndPtr->dwExStyle & WS_EX_TOOLWINDOW))
             {
@@ -564,13 +566,13 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT pt )
 
             /* Check maximize box */
             /* In win95 there is automatically a Maximize button when there is a minimize one*/
-            if ((wndPtr->dwStyle & WS_MAXIMIZEBOX)|| (wndPtr->dwStyle & WS_MINIMIZEBOX))
+            if (min_or_max_box && !(wndPtr->dwExStyle & WS_EX_TOOLWINDOW))
                 rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
             if (pt.x > rect.right) return HTMAXBUTTON;
 
             /* Check minimize box */
             /* In win95 there is automatically a Maximize button when there is a Maximize one*/
-            if ((wndPtr->dwStyle & WS_MINIMIZEBOX)||(wndPtr->dwStyle & WS_MAXIMIZEBOX))
+            if (min_or_max_box && !(wndPtr->dwExStyle & WS_EX_TOOLWINDOW))
                 rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
 
             if (pt.x > rect.right) return HTMINBUTTON;
@@ -711,7 +713,13 @@ static void NC_DrawCloseButton (HWND hwnd, HDC hdc, BOOL down, BOOL bGrayed)
 static void NC_DrawMaxButton(HWND hwnd,HDC hdc,BOOL down, BOOL bGrayed)
 {
     RECT rect;
-    UINT flags = IsZoomed(hwnd) ? DFCS_CAPTIONRESTORE : DFCS_CAPTIONMAX;
+    UINT flags;
+
+    /* never draw maximize box when window has WS_EX_TOOLWINDOW style */
+    if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_TOOLWINDOW)
+        return;
+
+    flags = IsZoomed(hwnd) ? DFCS_CAPTIONRESTORE : DFCS_CAPTIONMAX;
 
     NC_GetInsideRect( hwnd, &rect );
     if (GetWindowLongA( hwnd, GWL_STYLE) & WS_SYSMENU)
@@ -736,6 +744,10 @@ static void  NC_DrawMinButton(HWND hwnd,HDC hdc,BOOL down, BOOL bGrayed)
     RECT rect;
     UINT flags = DFCS_CAPTIONMIN;
     DWORD style = GetWindowLongA( hwnd, GWL_STYLE );
+
+    /* never draw minimize box when window has WS_EX_TOOLWINDOW style */
+    if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_TOOLWINDOW)
+        return;
 
     NC_GetInsideRect( hwnd, &rect );
     if (style & WS_SYSMENU)
