@@ -41,16 +41,10 @@ BEGIN
     POPUP "&Реестр"
     BEGIN
         MENUITEM "&Импортировать файл реестра...",    ID_REGISTRY_IMPORTREGISTRYFILE
-
         MENUITEM "&Экспортировать файл реестра...",    ID_REGISTRY_EXPORTREGISTRYFILE
-
         MENUITEM SEPARATOR
-        MENUITEM "&Подключить сетевой реестр...",
-                                                ID_REGISTRY_CONNECTNETWORKREGISTRY
-        , GRAYED
-        MENUITEM "&Отключить сетевой реестр...",
-                                                ID_REGISTRY_DISCONNECTNETWORKREGISTRY
-        , GRAYED
+        MENUITEM "&Подключить сетевой реестр...", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "&Отключить сетевой реестр...",  ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "&Печатаь\tCtrl+P",              ID_REGISTRY_PRINT, GRAYED
         MENUITEM SEPARATOR
