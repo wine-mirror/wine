@@ -43,41 +43,8 @@ BOOL MFDRV_PatBlt( PHYSDEV dev, INT left, INT top, INT width, INT height, DWORD 
 BOOL MFDRV_BitBlt( PHYSDEV devDst, INT xDst, INT yDst, INT width, INT height,
 		   PHYSDEV devSrc, INT xSrc, INT ySrc, DWORD rop )
 {
-    BOOL ret;
-    DWORD len;
-    METARECORD *mr;
-    BITMAP BM;
-    METAFILEDRV_PDEVICE *physDevSrc = (METAFILEDRV_PDEVICE *)devSrc;
-    DC *dcSrc = physDevSrc->dc;
-
-    GetObjectA(dcSrc->hBitmap, sizeof(BITMAP), &BM);
-    len = sizeof(METARECORD) + 12 * sizeof(INT16) + BM.bmWidthBytes * BM.bmHeight;
-    if (!(mr = HeapAlloc(GetProcessHeap(), 0, len)))
-	return FALSE;
-    mr->rdFunction = META_BITBLT;
-    *(mr->rdParm + 7) = BM.bmWidth;
-    *(mr->rdParm + 8) = BM.bmHeight;
-    *(mr->rdParm + 9) = BM.bmWidthBytes;
-    *(mr->rdParm +10) = BM.bmPlanes;
-    *(mr->rdParm +11) = BM.bmBitsPixel;
-    TRACE("len = %ld  rop=%lx  \n",len,rop);
-    if (GetBitmapBits(dcSrc->hBitmap,BM.bmWidthBytes * BM.bmHeight,
-                        mr->rdParm +12))
-    {
-      mr->rdSize = len / sizeof(INT16);
-      *(mr->rdParm) = HIWORD(rop);
-      *(mr->rdParm + 1) = ySrc;
-      *(mr->rdParm + 2) = xSrc;
-      *(mr->rdParm + 3) = height;
-      *(mr->rdParm + 4) = width;
-      *(mr->rdParm + 5) = yDst;
-      *(mr->rdParm + 6) = xDst;
-      ret = MFDRV_WriteRecord( devDst, mr, mr->rdSize * 2);
-    }
-    else
-        ret = FALSE;
-    HeapFree( GetProcessHeap(), 0, mr);
-    return ret;
+    return MFDRV_StretchBlt(devDst, xDst, yDst, width, height, devSrc,
+                            xSrc, ySrc, width, height, rop);
 }
 
 
@@ -89,7 +56,6 @@ BOOL MFDRV_BitBlt( PHYSDEV devDst, INT xDst, INT yDst, INT width, INT height,
  * via #define STRETCH_VIA_DIB
  */
 #define STRETCH_VIA_DIB
-#undef  STRETCH_VIA_DIB
 
 BOOL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
 		       INT heightDst, PHYSDEV devSrc, INT xSrc, INT ySrc,
@@ -108,9 +74,10 @@ BOOL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
     GetObjectA(dcSrc->hBitmap, sizeof(BITMAP), &BM);
 #ifdef STRETCH_VIA_DIB
     nBPP = BM.bmPlanes * BM.bmBitsPixel;
+    if(nBPP > 8) nBPP = 24; /* FIXME Can't get 16bpp to work for some reason */
     len = sizeof(METARECORD) + 10 * sizeof(INT16)
-            + sizeof(BITMAPINFOHEADER) + (nBPP != 24 ? 1 << nBPP: 0) * sizeof(RGBQUAD)
-              + ((BM.bmWidth * nBPP + 31) / 32) * 4 * BM.bmHeight;
+            + sizeof(BITMAPINFOHEADER) + (nBPP <= 8 ? 1 << nBPP: 0) * sizeof(RGBQUAD)
+              + DIB_GetDIBWidthBytes(BM.bmWidth, nBPP) * BM.bmHeight;
     if (!(mr = HeapAlloc( GetProcessHeap(), 0, len)))
 	return FALSE;
     mr->rdFunction = META_DIBSTRETCHBLT;
@@ -119,17 +86,18 @@ BOOL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
     lpBMI->biWidth     = BM.bmWidth;
     lpBMI->biHeight    = BM.bmHeight;
     lpBMI->biPlanes    = 1;
-    lpBMI->biBitCount  = nBPP;                              /* 1,4,8 or 24 */
-    lpBMI->biClrUsed   = nBPP != 24 ? 1 << nBPP : 0;
-    lpBMI->biSizeImage = ((lpBMI->biWidth * nBPP + 31) / 32) * 4 * lpBMI->biHeight;
+    lpBMI->biBitCount  = nBPP;
+    lpBMI->biSizeImage = DIB_GetDIBWidthBytes(BM.bmWidth, nBPP) * lpBMI->biHeight;
+    lpBMI->biClrUsed   = nBPP <= 8 ? 1 << nBPP : 0;
     lpBMI->biCompression = BI_RGB;
     lpBMI->biXPelsPerMeter = MulDiv(GetDeviceCaps(dcSrc->hSelf,LOGPIXELSX),3937,100);
     lpBMI->biYPelsPerMeter = MulDiv(GetDeviceCaps(dcSrc->hSelf,LOGPIXELSY),3937,100);
     lpBMI->biClrImportant  = 0;                          /* 1 meter  = 39.37 inch */
 
     TRACE("MF_StretchBltViaDIB->len = %ld  rop=%lx  PixYPM=%ld Caps=%d\n",
-               len,rop,lpBMI->biYPelsPerMeter,GetDeviceCaps(hdcSrc,LOGPIXELSY));
-    if (GetDIBits(hdcSrc,dcSrc->w.hBitmap,0,(UINT)lpBMI->biHeight,
+	  len,rop,lpBMI->biYPelsPerMeter,GetDeviceCaps(dcSrc->hSelf,
+						       LOGPIXELSY));
+    if (GetDIBits(dcSrc->hSelf,dcSrc->hBitmap,0,(UINT)lpBMI->biHeight,
                   (LPSTR)lpBMI + DIB_BitmapInfoSize( (BITMAPINFO *)lpBMI,
                                                      DIB_RGB_COLORS ),
                   (LPBITMAPINFO)lpBMI, DIB_RGB_COLORS))
