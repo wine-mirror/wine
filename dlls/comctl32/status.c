@@ -884,7 +884,7 @@ STATUSBAR_WMCreate (HWND hwnd, LPCREATESTRUCTA lpCreate)
         if (GetWindowLongW (lpCreate->hwndParent, GWL_EXSTYLE) & WS_EX_MANAGED)
             SetWindowLongW (hwnd, GWL_STYLE, dwStyle & ~SBARS_SIZEGRIP);
 
-    if ((hdc = GetDC (0))) {
+    if ((hdc = GetDC (hwnd))) {
 	TEXTMETRICW tm;
 	HFONT hOldFont;
 
@@ -892,7 +892,7 @@ STATUSBAR_WMCreate (HWND hwnd, LPCREATESTRUCTA lpCreate)
 	GetTextMetricsW (hdc, &tm);
 	textHeight = tm.tmHeight;
 	SelectObject (hdc, hOldFont);
-	ReleaseDC (0, hdc);
+	ReleaseDC (hwnd, hdc);
     }
     TRACE("    textHeight=%d\n", textHeight);
 
@@ -1059,10 +1059,12 @@ STATUSBAR_WMSize (STATUSWINDOWINFO *infoPtr, WORD flags)
     /* Need to resize width to match parent */
     TRACE("flags %04x\n", flags);
 
-    if (flags != SIZE_RESTORED) {
-	WARN("flags MUST be SIZE_RESTORED\n");
+    if (flags != SIZE_RESTORED && flags != SIZE_MAXIMIZED)
+    {
+	WARN("flags MUST be SIZE_RESTORED or SIZE_MAXIMIZED\n");
 	return FALSE;
     }
+
     if (GetWindowLongW(infoPtr->Self, GWL_STYLE) & CCS_NORESIZE) return FALSE;
 
     /* width and height don't apply */
