@@ -310,6 +310,7 @@ void WIN_WalkWindows( HWND hwnd, int indent )
 BOOL WIN_UnlinkWindow( HWND hwnd )
 {    
     WND *wndPtr, **ppWnd;
+    BOOL ret = FALSE;
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
     else if(!wndPtr->parent)
@@ -317,11 +318,16 @@ BOOL WIN_UnlinkWindow( HWND hwnd )
         WIN_ReleaseWndPtr(wndPtr);
         return FALSE;
     }
+
     ppWnd = &wndPtr->parent->child;
-    while (*ppWnd != wndPtr) ppWnd = &(*ppWnd)->next;
-    *ppWnd = wndPtr->next;
+    while (*ppWnd && *ppWnd != wndPtr) ppWnd = &(*ppWnd)->next;
+    if (*ppWnd)
+    {
+        *ppWnd = wndPtr->next;
+        ret = TRUE;
+    }
     WIN_ReleaseWndPtr(wndPtr);
-    return TRUE;
+    return ret;
 }
 
 

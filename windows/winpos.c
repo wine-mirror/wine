@@ -2525,8 +2525,13 @@ Pos:  /* -----------------------------------------------------------------------
 
     if(!(winpos.flags & SWP_NOZORDER))
     {
-        WIN_UnlinkWindow( winpos.hwnd );
-        WIN_LinkWindow( winpos.hwnd, hwndInsertAfter );
+       /* upon window creation (while processing WM_NCCREATE), wndPtr->parent is set correctly
+	* 	but wndPtr is not yet in wndPtr->parent->child list
+	* in those cases (SetWindowPos called while processing WM_NCCREATE),
+	*	do not unlink/link winPtr in parent->child
+	*/
+       if ( WIN_UnlinkWindow( winpos.hwnd ) )
+	  WIN_LinkWindow( winpos.hwnd, hwndInsertAfter );
     }
 
     /* Reset active DCEs */

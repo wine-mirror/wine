@@ -54,7 +54,7 @@ Messages sent:
 
 CreateWindow (for child window, not initially visible)
 Messages sent:
- WM_NCCREATE
+ WM_NCCREATE (Note that win->parent->child will not contain win. link is done after sucessfull WM_NCCREATE)
  WM_NCCALCSIZE (wParam=0)
  WM_CREATE
  WM_SIZE
