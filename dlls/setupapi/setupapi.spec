@@ -219,10 +219,10 @@
 @ stub MemoryInitialize
 @ stub MultiByteToUnicode
 @ stub MultiSzFromSearchControl
-@ stub MyFree
+@ stdcall MyFree(ptr)
 @ stub MyGetFileTitle
-@ stub MyMalloc
-@ stub MyRealloc
+@ stdcall MyMalloc(long)
+@ stdcall MyRealloc(ptr long)
 @ stub OpenAndMapFileForRead
 @ stub OutOfMemory
 @ stub QueryMultiSzValueToArray
