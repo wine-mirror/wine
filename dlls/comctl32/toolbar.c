@@ -6625,7 +6625,7 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     TRACE("hwnd=%p msg=%x wparam=%x lparam=%lx\n",
 	  hwnd, uMsg, /* SPY_GetMsgName(uMsg), */ wParam, lParam);
 
-    if (!TOOLBAR_GetInfoPtr(hwnd) && (uMsg != WM_NCCREATE))
+    if (!infoPtr && (uMsg != WM_NCCREATE))
 	return DefWindowProcW( hwnd, uMsg, wParam, lParam );
 
     switch (uMsg)
