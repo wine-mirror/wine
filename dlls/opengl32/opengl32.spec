@@ -5,8 +5,6 @@
 @  stdcall wglDescribeLayerPlane(long long long long ptr)
 @  stdcall wglGetCurrentContext()
 @  stdcall wglGetCurrentDC()
-@  stdcall wglGetExtensionsStringEXT()
-@  stdcall wglGetExtensionsStringARB(long)
 @  stdcall wglGetLayerPaletteEntries(long long long long ptr)
 @  stdcall wglGetProcAddress(str)
 @  stdcall wglMakeCurrent(long long)

@@ -8,9 +8,10 @@ EXTRAINCL = @X_CFLAGS@
 EXTRALIBS = @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@ @OPENGL_LIBS@
 
 C_SRCS = \
-	wgl.c \
+	opengl_ext.c \
 	opengl_norm.c \
-	opengl_ext.c
+	wgl.c \
+	wgl_ext.c
 
 @MAKE_DLL_RULES@
 

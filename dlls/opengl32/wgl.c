@@ -30,6 +30,7 @@
 #include "winerror.h"
 
 #include "wgl.h"
+#include "wgl_ext.h"
 #include "opengl_ext.h"
 #include "wine/library.h"
 #include "wine/debug.h"
@@ -302,6 +303,11 @@ static int compar(const void *elt_a, const void *elt_b) {
 		((OpenGL_extension *) elt_b)->name);
 }
 
+static int wgl_compar(const void *elt_a, const void *elt_b) {
+  return strcmp(((WGL_extension *) elt_a)->func_name,
+		((WGL_extension *) elt_b)->func_name);
+}
+
 void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
   void *local_func;
   static HMODULE hm = 0;
@@ -331,17 +337,45 @@ void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
 					 extension_registry_size, sizeof(OpenGL_extension), compar);
 
   if (ext_ret == NULL) {
-    /* Some sanity checks :-) */
-    ENTER_GL();
-    local_func = p_glXGetProcAddressARB(lpszProc);
-    LEAVE_GL();
-    if (local_func != NULL) {
-      ERR("Extension %s defined in the OpenGL library but NOT in opengl_ext.c... Please report (lionel.ulmer@free.fr) !\n", lpszProc);
-      return NULL;
-    }
+    WGL_extension wgl_ext, *wgl_ext_ret;
 
-    WARN("Did not find extension %s in either Wine or your OpenGL library.\n", lpszProc);
-    return NULL;
+    /* Try to find the function in the WGL extensions ... */
+    wgl_ext.func_name = (char *) lpszProc;
+    wgl_ext_ret = (WGL_extension *) bsearch(&wgl_ext, wgl_extension_registry,
+					    wgl_extension_registry_size, sizeof(WGL_extension), wgl_compar);
+
+    if (wgl_ext_ret == NULL) {
+      /* Some sanity checks :-) */
+      ENTER_GL();
+      local_func = p_glXGetProcAddressARB(lpszProc);
+      LEAVE_GL();
+      if (local_func != NULL) {
+	ERR("Extension %s defined in the OpenGL library but NOT in opengl_ext.c... Please report (lionel.ulmer@free.fr) !\n", lpszProc);
+	return NULL;
+      }
+      
+      WARN("Did not find extension %s in either Wine or your OpenGL library.\n", lpszProc);
+      return NULL;
+    } else {
+	void *ret = NULL;
+
+	if (wgl_ext_ret->func_init != NULL) {
+	    const char *err_msg;
+	    if ((err_msg = wgl_ext_ret->func_init(p_glXGetProcAddressARB,
+						  wgl_ext_ret->context)) == NULL) {
+		ret = wgl_ext_ret->func_address;
+	    } else {
+		WARN("Error when getting WGL extension '%s' : %s.\n", debugstr_a(lpszProc), err_msg);
+		return NULL;
+	    }
+	} else {
+	  ret = wgl_ext_ret->func_address;
+	}
+
+	if (ret)
+	    TRACE(" returning WGL function  (%p)\n", ret);
+	return ret;
+    }
   } else {
     ENTER_GL();
     local_func = p_glXGetProcAddressARB(ext_ret->glx_name);
@@ -712,6 +746,9 @@ static BOOL process_attach(void)
    if (p_glXGetProcAddressARB == NULL)
 	   TRACE("could not find glXGetProcAddressARB in libGL.\n");
   }
+
+  /* Initialize also the list of supported WGL extensions. */
+  wgl_ext_initialize_extensions(default_display, DefaultScreen(default_display));
   
   if (default_cx == NULL) {
     ERR("Could not create default context.\n");
@@ -719,34 +756,16 @@ static BOOL process_attach(void)
   return TRUE;
 }
 
-/**********************************************************************/
-
-/* Some WGL extensions... */
-static const char *WGL_extensions = "WGL_ARB_extensions_string WGL_EXT_extensions_string";
-
-/**********************************************************************/
-
-const char * WINAPI wglGetExtensionsStringEXT(void) {
-    TRACE("() returning \"%s\"\n", WGL_extensions);
-
-    return WGL_extensions;
-}
 
 /**********************************************************************/
 
 static void process_detach(void)
 {
   glXDestroyContext(default_display, default_cx);
+
+  /* Do not leak memory... */
+  wgl_ext_finalize_extensions();
 }
-
-/***********************************************************************
- *              wglGetExtensionsStringARB(OPENGL32.@)
- */
-const char * WINAPI wglGetExtensionsStringARB(HDC hdc) {
-
-  return wglGetExtensionsStringEXT();
-}
-
 
 /***********************************************************************
  *           OpenGL initialisation routine
