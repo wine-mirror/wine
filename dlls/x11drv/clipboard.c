@@ -1423,14 +1423,15 @@ HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(Window requestor, Atom aTarget, Atom r
 /**************************************************************************
  *		X11DRV_CLIPBOARD_QueryTargets
  */
-static BOOL X11DRV_CLIPBOARD_QueryTargets(Display *display, Window w, Atom selection, XEvent *xe)
+static BOOL X11DRV_CLIPBOARD_QueryTargets(Display *display, Window w, Atom selection,
+    Atom target, XEvent *xe)
 {
     INT i;
     Bool res;
 
     wine_tsx11_lock();
-    XConvertSelection(display, selection, x11drv_atom(TARGETS),
-                      x11drv_atom(SELECTION_DATA), w, CurrentTime);
+    XConvertSelection(display, selection, target,
+        x11drv_atom(SELECTION_DATA), w, CurrentTime);
     wine_tsx11_unlock();
 
     /*
@@ -1447,7 +1448,7 @@ static BOOL X11DRV_CLIPBOARD_QueryTargets(Display *display, Window w, Atom selec
     }
 
     /* Verify that the selection returned a valid TARGETS property */
-    if ((xe->xselection.target != x11drv_atom(TARGETS)) || (xe->xselection.property == None))
+    if ((xe->xselection.target != target) || (xe->xselection.property == None))
     {
         /* Selection owner failed to respond or we missed the SelectionNotify */
         WARN("Failed to retrieve TARGETS for selection %ld.\n", selection);
@@ -1455,6 +1456,70 @@ static BOOL X11DRV_CLIPBOARD_QueryTargets(Display *display, Window w, Atom selec
     }
 
     return TRUE;
+}
+
+
+/**************************************************************************
+ *		X11DRV_CLIPBOARD_InsertSelectionProperties
+ *
+ * Mark property available for future retrieval.
+ */
+static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* properties, UINT count)
+{
+     INT i, nb_atoms = 0;
+     Atom *atoms = NULL;
+
+     /* Cache these formats in the clipboard cache */
+     for (i = 0; i < count; i++)
+     {
+         LPWINE_CLIPFORMAT lpFormat = X11DRV_CLIPBOARD_LookupProperty(properties[i]);
+
+         if (!lpFormat)
+             lpFormat = X11DRV_CLIPBOARD_LookupAliasProperty(properties[i]);
+
+         if (!lpFormat)
+         {
+             /* add it to the list of atoms that we don't know about yet */
+             if (!atoms) atoms = HeapAlloc( GetProcessHeap(), 0,
+                                            (count - i) * sizeof(*atoms) );
+             if (atoms) atoms[nb_atoms++] = properties[i];
+         }
+         else
+         {
+             TRACE("Atom#%d Property(%d): --> FormatID(%d) %s\n",
+                   i, lpFormat->drvData, lpFormat->wFormatID, lpFormat->Name);
+             X11DRV_CLIPBOARD_InsertClipboardData(lpFormat->wFormatID, 0, 0, 0);
+         }
+     }
+
+     /* query all unknown atoms in one go */
+     if (atoms)
+     {
+         char **names = HeapAlloc( GetProcessHeap(), 0, nb_atoms * sizeof(*names) );
+         if (names)
+         {
+             wine_tsx11_lock();
+             XGetAtomNames( display, atoms, nb_atoms, names );
+             wine_tsx11_unlock();
+             for (i = 0; i < nb_atoms; i++)
+             {
+                 WINE_CLIPFORMAT *lpFormat = register_format( names[i], atoms[i] );
+                 if (!lpFormat)
+                 {
+                     ERR("Failed to register %s property. Type will not be cached.\n", names[i]);
+                     continue;
+                 }
+                 TRACE("Atom#%d Property(%d): --> FormatID(%d) %s\n",
+                       i, lpFormat->drvData, lpFormat->wFormatID, lpFormat->Name);
+                 X11DRV_CLIPBOARD_InsertClipboardData(lpFormat->wFormatID, 0, 0, 0);
+             }
+             wine_tsx11_lock();
+             for (i = 0; i < nb_atoms; i++) XFree( names[i] );
+             wine_tsx11_unlock();
+             HeapFree( GetProcessHeap(), 0, names );
+         }
+         HeapFree( GetProcessHeap(), 0, atoms );
+     }
 }
 
 
@@ -1526,12 +1591,33 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
         XGetSelectionOwner(display,x11drv_atom(CLIPBOARD)))
     {
         wine_tsx11_unlock();
-        if (usePrimary && (X11DRV_CLIPBOARD_QueryTargets(display, w, XA_PRIMARY, &xe)))
+        if (usePrimary && (X11DRV_CLIPBOARD_QueryTargets(display, w, XA_PRIMARY, x11drv_atom(TARGETS), &xe)))
             selectionCacheSrc = XA_PRIMARY;
-        else if (X11DRV_CLIPBOARD_QueryTargets(display, w, x11drv_atom(CLIPBOARD), &xe))
+        else if (X11DRV_CLIPBOARD_QueryTargets(display, w, x11drv_atom(CLIPBOARD), x11drv_atom(TARGETS), &xe))
             selectionCacheSrc = x11drv_atom(CLIPBOARD);
         else
-            return -1;
+        {
+            Atom xstr = XA_PRIMARY;
+
+            /* Selection Owner doesn't understand TARGETS, try retrieving XA_STRING */
+            if (X11DRV_CLIPBOARD_QueryTargets(display, w, XA_PRIMARY, XA_STRING, &xe))
+            {
+                X11DRV_CLIPBOARD_InsertSelectionProperties(display, &xstr, 1);
+                selectionCacheSrc = XA_PRIMARY;
+                return 1;
+            }
+            else if (X11DRV_CLIPBOARD_QueryTargets(display, w, x11drv_atom(CLIPBOARD), XA_STRING, &xe))
+            {
+                X11DRV_CLIPBOARD_InsertSelectionProperties(display, &xstr, 1);
+                selectionCacheSrc = x11drv_atom(CLIPBOARD);
+                return 1;
+            }
+            else
+            {
+                WARN("Failed to query selection owner for available data.\n");
+                return -1;
+            }
+        }
     }
     else /* No selection owner so report 0 targets available */
     {
@@ -1558,61 +1644,7 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(LPCLIPBOARDINFO lpcbinfo)
         * corresponding to each selection target format supported.
         */
        if ((atype == XA_ATOM || atype == x11drv_atom(TARGETS)) && aformat == 32)
-       {
-          INT i, nb_atoms = 0;
-          Atom *atoms = NULL;
-
-          /* Cache these formats in the clipboard cache */
-          for (i = 0; i < cSelectionTargets; i++)
-          {
-              LPWINE_CLIPFORMAT lpFormat = X11DRV_CLIPBOARD_LookupProperty(targetList[i]);
-
-              if (!lpFormat)
-                  lpFormat = X11DRV_CLIPBOARD_LookupAliasProperty(targetList[i]);
-
-              if (!lpFormat)
-              {
-                  /* add it to the list of atoms that we don't know about yet */
-                  if (!atoms) atoms = HeapAlloc( GetProcessHeap(), 0,
-                                                 (cSelectionTargets - i) * sizeof(*atoms) );
-                  if (atoms) atoms[nb_atoms++] = targetList[i];
-              }
-              else
-              {
-                  TRACE("Atom#%d Property(%d): --> FormatID(%d) %s\n",
-                        i, lpFormat->drvData, lpFormat->wFormatID, lpFormat->Name);
-                  X11DRV_CLIPBOARD_InsertClipboardData(lpFormat->wFormatID, 0, 0, 0);
-              }
-          }
-
-          /* query all unknown atoms in one go */
-          if (atoms)
-          {
-              char **names = HeapAlloc( GetProcessHeap(), 0, nb_atoms * sizeof(*names) );
-              if (names)
-              {
-                  wine_tsx11_lock();
-                  XGetAtomNames( display, atoms, nb_atoms, names );
-                  wine_tsx11_unlock();
-                  for (i = 0; i < nb_atoms; i++)
-                  {
-                      WINE_CLIPFORMAT *lpFormat = register_format( names[i], atoms[i] );
-                      if (!lpFormat)
-                      {
-                          ERR("Failed to cache %s property\n", names[i]);
-                          continue;
-                      }
-                      TRACE("Atom#%d Property(%d): --> FormatID(%d) %s\n",
-                            i, lpFormat->drvData, lpFormat->wFormatID, lpFormat->Name);
-                      X11DRV_CLIPBOARD_InsertClipboardData(lpFormat->wFormatID, 0, 0, 0);
-                  }
-                  wine_tsx11_lock();
-                  for (i = 0; i < nb_atoms; i++) XFree( names[i] );
-                  wine_tsx11_unlock();
-                  HeapFree( GetProcessHeap(), 0, names );
-              }
-          }
-       }
+           X11DRV_CLIPBOARD_InsertSelectionProperties(display, targetList, cSelectionTargets);
 
        /* Free the list of targets */
        wine_tsx11_lock();
