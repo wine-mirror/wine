@@ -33,6 +33,7 @@
 #include "d3d.h"
 #include "ddraw.h"
 #include "dsound.h"
+#include "dmusicc.h"
 #include "dplay.h"
 #include "dplobby.h"
 #include "dinput.h"

@@ -1,0 +1,709 @@
+/* DirectMusic Core API Stuff
+ *
+ * Copyright (C) 2003 Rok Mandeljc
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+#ifndef __WINE_DMUSIC_CORE_H
+#define __WINE_DMUSIC_CORE_H
+
+#include "objbase.h"
+
+#include "mmsystem.h"
+#include "dsound.h"
+
+#include "dls1.h"
+#include "dmerror.h"
+#include "dmdls.h"
+#include "dmusbuff.h"
+
+/*#include "pshpack8.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
+/*****************************************************************************
+ * Predeclare the interfaces
+ */
+DEFINE_GUID(CLSID_DirectMusic,						0x636b9f10, 0x0c7d, 0x11d1, 0x95, 0xb2, 0x00, 0x20, 0xaf, 0xdc, 0x74, 0x21);
+DEFINE_GUID(CLSID_DirectMusicCollection,			0x480ff4b0, 0x28b2, 0x11d1, 0xbe, 0xf7, 0x0,  0xc0, 0x4f, 0xbf, 0x8f, 0xef);
+DEFINE_GUID(CLSID_DirectMusicSynth,					0x58C2B4D0, 0x46E7, 0x11D1, 0x89, 0xAC, 0x00, 0xA0, 0xC9, 0x05, 0x41, 0x29);
+
+DEFINE_GUID(IID_IReferenceClock,					0x56a86897,0x0ad4,0x11ce,0xb0,0x3a,0x00,0x20,0xaf,0x0b,0xa7,0x70);
+typedef struct IReferenceClock IReferenceClock, *LPREFERENCECLOCK;
+DEFINE_GUID(IID_IDirectMusic,						0x6536115a,0x7b2d,0x11d2,0xba,0x18,0x00,0x00,0xf8,0x75,0xac,0x12);
+typedef struct IDirectMusic IDirectMusic, *LPDIRECTMUSIC;
+DEFINE_GUID(IID_IDirectMusicBuffer,					0xd2ac2878,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
+typedef struct IDirectMusicBuffer IDirectMusicBuffer, *LPDIRECTMUSICBUFFER, IDirectMusicBuffer8, *LPDIRECTMUSICBUFFER8;
+DEFINE_GUID(IID_IDirectMusicPort, 					0x08f2d8c9,0x37c2,0x11d2,0xb9,0xf9,0x00,0x00,0xf8,0x75,0xac,0x12);
+#define IID_IDirectMusicPort8 IID_IDirectMusicPort
+typedef struct IDirectMusicPort IDirectMusicPort, *LPDIRECTMUSICPORT, IDirectMusicPort8, *LPDIRECTMUSICPORT8;
+DEFINE_GUID(IID_IDirectMusicThru, 					0xced153e7,0x3606,0x11d2,0xb9,0xf9,0x00,0x00,0xf8,0x75,0xac,0x12);
+#define IID_IDirectMusicThru8 IID_IDirectMusicThru
+typedef struct IDirectMusicThru IDirectMusicThru, *LPDIRECTMUSICTHRU, IDirectMusicThru8, *LPDIRECTMUSICTHRU8;
+DEFINE_GUID(IID_IDirectMusicPortDownload,			0xd2ac287a,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
+typedef struct IDirectMusicPortDownload IDirectMusicPortDownload, *LPDIRECTMUSICPORTDOWNLOAD, IDirectMusicPortDownload8, *LPDIRECTMUSICPORTDOWNLOAD8;
+#define IID_IDirectMusicPortDownload8 IID_IDirectMusicPortDownload
+DEFINE_GUID(IID_IDirectMusicDownload,				0xd2ac287b,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
+#define IID_IDirectMusicDownload8 IID_IDirectMusicDownload
+typedef struct IDirectMusicDownload IDirectMusicDownload, *LPDIRECTMUSICDOWNLOAD, IDirectMusicDownload8, *LPDIRECTMUSICDOWNLOAD8;
+DEFINE_GUID(IID_IDirectMusicCollection,				0xd2ac287c,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
+#define IID_IDirectMusicCollection8 IID_IDirectMusicCollection
+typedef struct IDirectMusicCollection IDirectMusicCollection, *LPDIRECTMUSICCOLLECTION, IDirectMusicCollection8, *LPDIRECTMUSICCOLLECTION8;
+DEFINE_GUID(IID_IDirectMusicInstrument,				0xd2ac287d,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
+#define IID_IDirectMusicInstrument8 IID_IDirectMusicInstrument
+typedef struct IDirectMusicInstrument IDirectMusicInstrument, *LPDIRECTMUSICINSTRUMENT, IDirectMusicInstrument8, *LPDIRECTMUSICINSTRUMENT8;
+DEFINE_GUID(IID_IDirectMusicDownloadedInstrument,	0xd2ac287e,0xb39b,0x11d1,0x87,0x4,0x0,0x60,0x8,0x93,0xb1,0xbd);
+#define IID_IDirectMusicDownloadedInstrument8 IID_IDirectMusicDownloadedInstrument
+typedef struct IDirectMusicDownloadedInstrument IDirectMusicDownloadedInstrument, *LPDIRECTMUSICDOWNLOADEDINSTRUMENT, IDirectMusicDownloadedInstrument8, *LPDIRECTMUSICDOWNLOADEDINSTRUMENT8;
+DEFINE_GUID(IID_IDirectMusic2,						0x6fc2cae1,0xbc78,0x11d2,0xaf,0xa6,0x0,0xaa,0x0,0x24,0xd8,0xb6);
+DEFINE_GUID(IID_IDirectMusic8,						0x2d3629f7,0x813d,0x4939,0x85,0x08,0xf0,0x5c,0x6b,0x75,0xfd,0x97);
+typedef struct IDirectMusic8 IDirectMusic8, *LPDIRECTMUSIC8;
+
+DEFINE_GUID(GUID_DMUS_PROP_GM_Hardware, 			0x178f2f24,0xc364,0x11d1,0xa7,0x60,0x00,0x00,0xf8,0x75,0xac,0x12);
+DEFINE_GUID(GUID_DMUS_PROP_GS_Hardware, 			0x178f2f25,0xc364,0x11d1,0xa7,0x60,0x00,0x00,0xf8,0x75,0xac,0x12);
+DEFINE_GUID(GUID_DMUS_PROP_XG_Hardware, 			0x178f2f26,0xc364,0x11d1,0xa7,0x60,0x00,0x00,0xf8,0x75,0xac,0x12);
+DEFINE_GUID(GUID_DMUS_PROP_XG_Capable,  			0x6496aba1,0x61b0,0x11d2,0xaf,0xa6,0x0,0xaa,0x0,0x24,0xd8,0xb6);
+DEFINE_GUID(GUID_DMUS_PROP_GS_Capable,  			0x6496aba2,0x61b0,0x11d2,0xaf,0xa6,0x0,0xaa,0x0,0x24,0xd8,0xb6);
+DEFINE_GUID(GUID_DMUS_PROP_DLS1,        			0x178f2f27,0xc364,0x11d1,0xa7,0x60,0x00,0x00,0xf8,0x75,0xac,0x12);
+DEFINE_GUID(GUID_DMUS_PROP_DLS2,        			0xf14599e5,0x4689,0x11d2,0xaf,0xa6,0x0,0xaa,0x0,0x24,0xd8,0xb6);
+DEFINE_GUID(GUID_DMUS_PROP_INSTRUMENT2, 			0x865fd372,0x9f67,0x11d2,0x87,0x2a,0x0,0x60,0x8,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_DMUS_PROP_SynthSink_DSOUND,		0xaa97844,0xc877,0x11d1,0x87,0xc,0x0,0x60,0x8,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_DMUS_PROP_SynthSink_WAVE,			0xaa97845,0xc877,0x11d1,0x87,0xc,0x0,0x60,0x8,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_DMUS_PROP_SampleMemorySize, 		0x178f2f28,0xc364,0x11d1,0xa7,0x60,0x00,0x00,0xf8,0x75,0xac, 0x12);
+DEFINE_GUID(GUID_DMUS_PROP_SamplePlaybackRate, 		0x2a91f713,0xa4bf,0x11d2,0xbb,0xdf,0x0,0x60,0x8,0x33,0xdb,0xd8);
+DEFINE_GUID(GUID_DMUS_PROP_WriteLatency,			0x268a0fa0,0x60f2,0x11d2,0xaf,0xa6,0x0,0xaa,0x0,0x24,0xd8,0xb6);
+DEFINE_GUID(GUID_DMUS_PROP_WritePeriod,				0x268a0fa1,0x60f2,0x11d2,0xaf,0xa6,0x0,0xaa,0x0,0x24,0xd8,0xb6);
+DEFINE_GUID(GUID_DMUS_PROP_MemorySize,  			0x178f2f28,0xc364,0x11d1,0xa7,0x60,0x00,0x00,0xf8, 0x75, 0xac, 0x12);
+DEFINE_GUID(GUID_DMUS_PROP_WavesReverb,				0x4cb5622,0x32e5,0x11d2,0xaf,0xa6,0x0,0xaa,0x0,0x24,0xd8,0xb6);
+DEFINE_GUID(GUID_DMUS_PROP_Effects, 				0xcda8d611,0x684a,0x11d2,0x87,0x1e,0x0,0x60,0x8,0x93,0xb1,0xbd);
+DEFINE_GUID(GUID_DMUS_PROP_LegacyCaps,				0xcfa7cdc2,0x00a1,0x11d2,0xaa,0xd5,0x00,0x00,0xf8,0x75,0xac,0x12);
+DEFINE_GUID(GUID_DMUS_PROP_Volume, 					0xfedfae25L,0xe46e,0x11d1,0xaa,0xce,0x00,0x00,0xf8,0x75,0xac,0x12);
+
+typedef ULONGLONG    SAMPLE_TIME, *LPSAMPLE_TIME;
+typedef ULONGLONG    SAMPLE_POSITION;
+
+#define DMUS_MAX_DESCRIPTION 128
+#define DMUS_MAX_DRIVER 128
+
+typedef struct _DMUS_BUFFERDESC
+{
+    DWORD dwSize;
+    DWORD dwFlags;
+    GUID guidBufferFormat;
+    DWORD cbBuffer;
+} DMUS_BUFFERDESC, *LPDMUS_BUFFERDESC;
+
+#define DMUS_EFFECT_NONE             0x00000000
+#define DMUS_EFFECT_REVERB           0x00000001
+#define DMUS_EFFECT_CHORUS           0x00000002
+#define DMUS_EFFECT_DELAY            0x00000004
+ 
+#define DMUS_PC_INPUTCLASS       (0)
+#define DMUS_PC_OUTPUTCLASS      (1)
+
+#define DMUS_PC_DLS              (0x00000001)
+#define DMUS_PC_EXTERNAL         (0x00000002)
+#define DMUS_PC_SOFTWARESYNTH    (0x00000004)
+#define DMUS_PC_MEMORYSIZEFIXED  (0x00000008)
+#define DMUS_PC_GMINHARDWARE     (0x00000010)
+#define DMUS_PC_GSINHARDWARE     (0x00000020)
+#define DMUS_PC_XGINHARDWARE     (0x00000040)
+#define DMUS_PC_DIRECTSOUND      (0x00000080)
+#define DMUS_PC_SHAREABLE        (0x00000100)
+#define DMUS_PC_DLS2             (0x00000200)
+#define DMUS_PC_AUDIOPATH        (0x00000400)
+#define DMUS_PC_WAVE             (0x00000800)
+
+#define DMUS_PC_SYSTEMMEMORY     (0x7FFFFFFF)
+
+typedef struct _DMUS_PORTCAPS
+{
+    DWORD   dwSize;
+    DWORD   dwFlags;
+    GUID    guidPort;
+    DWORD   dwClass;
+    DWORD   dwType;
+    DWORD   dwMemorySize;
+    DWORD   dwMaxChannelGroups;
+    DWORD   dwMaxVoices;    
+    DWORD   dwMaxAudioChannels;
+    DWORD   dwEffectFlags;
+    WCHAR   wszDescription[DMUS_MAX_DESCRIPTION];
+} DMUS_PORTCAPS, *LPDMUS_PORTCAPS;
+
+#define DMUS_PORT_WINMM_DRIVER      (0)
+#define DMUS_PORT_USER_MODE_SYNTH   (1)
+#define DMUS_PORT_KERNEL_MODE       (2)
+
+#define DMUS_PORTPARAMS_VOICES           0x00000001
+#define DMUS_PORTPARAMS_CHANNELGROUPS    0x00000002
+#define DMUS_PORTPARAMS_AUDIOCHANNELS    0x00000004
+#define DMUS_PORTPARAMS_SAMPLERATE       0x00000008
+#define DMUS_PORTPARAMS_EFFECTS          0x00000020
+#define DMUS_PORTPARAMS_SHARE            0x00000040
+#define DMUS_PORTPARAMS_FEATURES         0x00000080
+
+typedef struct _DMUS_PORTPARAMS
+{
+    DWORD   dwSize;
+    DWORD   dwValidParams;
+    DWORD   dwVoices;
+    DWORD   dwChannelGroups;
+    DWORD   dwAudioChannels;
+    DWORD   dwSampleRate;
+    DWORD   dwEffectFlags;
+    BOOL    fShare;
+} DMUS_PORTPARAMS7;
+
+typedef struct _DMUS_PORTPARAMS8
+{
+    DWORD   dwSize;
+    DWORD   dwValidParams;
+    DWORD   dwVoices;
+    DWORD   dwChannelGroups;
+    DWORD   dwAudioChannels;
+    DWORD   dwSampleRate;
+    DWORD   dwEffectFlags;
+    BOOL    fShare;
+    DWORD   dwFeatures;
+} DMUS_PORTPARAMS8, DMUS_PORTPARAMS, *LPDMUS_PORTPARAMS;
+
+#define DMUS_PORT_FEATURE_AUDIOPATH     0x00000001
+#define DMUS_PORT_FEATURE_STREAMING     0x00000002
+
+typedef struct _DMUS_SYNTHSTATS
+{
+    DWORD   dwSize;
+    DWORD   dwValidStats;
+    DWORD   dwVoices;
+    DWORD   dwTotalCPU;
+    DWORD   dwCPUPerVoice;
+    DWORD   dwLostNotes;
+    DWORD   dwFreeMemory;
+    long    lPeakVolume;
+} DMUS_SYNTHSTATS, *LPDMUS_SYNTHSTATS;
+
+typedef struct _DMUS_SYNTHSTATS8
+{
+    DWORD   dwSize;
+    DWORD   dwValidStats;
+    DWORD   dwVoices;
+    DWORD   dwTotalCPU;
+    DWORD   dwCPUPerVoice;
+    DWORD   dwLostNotes;
+    DWORD   dwFreeMemory;
+    long    lPeakVolume;
+	DWORD   dwSynthMemUse;
+} DMUS_SYNTHSTATS8, *LPDMUS_SYNTHSTATS8;
+
+#define DMUS_SYNTHSTATS_VOICES          1
+#define DMUS_SYNTHSTATS_TOTAL_CPU       2
+#define DMUS_SYNTHSTATS_CPU_PER_VOICE   4
+#define DMUS_SYNTHSTATS_LOST_NOTES      8
+#define DMUS_SYNTHSTATS_PEAK_VOLUME     16
+#define DMUS_SYNTHSTATS_FREE_MEMORY     32
+
+#define DMUS_SYNTHSTATS_SYSTEMMEMORY    DMUS_PC_SYSTEMMEMORY
+
+typedef struct _DMUS_WAVES_REVERB_PARAMS
+{
+    float   fInGain;
+    float   fReverbMix;
+    float   fReverbTime;
+    float   fHighFreqRTRatio;
+} DMUS_WAVES_REVERB_PARAMS;
+
+typedef enum
+{
+    DMUS_CLOCK_SYSTEM = 0,
+    DMUS_CLOCK_WAVE = 1
+} DMUS_CLOCKTYPE;
+
+#define DMUS_CLOCKF_GLOBAL              0x00000001
+
+typedef struct _DMUS_CLOCKINFO7
+{
+    DWORD           dwSize;
+    DMUS_CLOCKTYPE  ctType;
+    GUID            guidClock;
+    WCHAR           wszDescription[DMUS_MAX_DESCRIPTION];
+} DMUS_CLOCKINFO7, *LPDMUS_CLOCKINFO7;
+
+typedef struct _DMUS_CLOCKINFO8
+{
+    DWORD           dwSize;
+    DMUS_CLOCKTYPE  ctType;
+    GUID            guidClock;
+    WCHAR           wszDescription[DMUS_MAX_DESCRIPTION];
+    DWORD           dwFlags;           
+} DMUS_CLOCKINFO8, *LPDMUS_CLOCKINFO8, DMUS_CLOCKINFO, *LPDMUS_CLOCKINFO;
+
+#define DSBUSID_FIRST_SPKR_LOC              0
+#define DSBUSID_FRONT_LEFT                  0
+#define DSBUSID_LEFT                        0
+#define DSBUSID_FRONT_RIGHT                 1
+#define DSBUSID_RIGHT                       1
+#define DSBUSID_FRONT_CENTER                2
+#define DSBUSID_LOW_FREQUENCY               3
+#define DSBUSID_BACK_LEFT                   4
+#define DSBUSID_BACK_RIGHT                  5
+#define DSBUSID_FRONT_LEFT_OF_CENTER        6 
+#define DSBUSID_FRONT_RIGHT_OF_CENTER       7
+#define DSBUSID_BACK_CENTER                 8
+#define DSBUSID_SIDE_LEFT                   9
+#define DSBUSID_SIDE_RIGHT                 10
+#define DSBUSID_TOP_CENTER                 11
+#define DSBUSID_TOP_FRONT_LEFT             12
+#define DSBUSID_TOP_FRONT_CENTER           13
+#define DSBUSID_TOP_FRONT_RIGHT            14
+#define DSBUSID_TOP_BACK_LEFT              15
+#define DSBUSID_TOP_BACK_CENTER            16
+#define DSBUSID_TOP_BACK_RIGHT             17
+#define DSBUSID_LAST_SPKR_LOC              17
+#define DSBUSID_IS_SPKR_LOC(id) ( ((id) >= DSBUSID_FIRST_SPKR_LOC) && ((id) <= DSBUSID_LAST_SPKR_LOC) )
+#define DSBUSID_REVERB_SEND                64
+#define DSBUSID_CHORUS_SEND                65
+#define DSBUSID_DYNAMIC_0                 512 
+#define DSBUSID_NULL			   0xFFFFFFFF
+
+
+/*****************************************************************************
+ * IDirectMusic interface
+ */
+#undef ICOM_INTERFACE
+#define ICOM_INTERFACE IDirectMusic
+#define IDirectMusic_METHODS \
+    /*** IDirectMusic methods ***/ \
+    ICOM_METHOD2(HRESULT, EnumPort, DWORD,dwIndex, LPDMUS_PORTCAPS,pPortCaps) \
+    ICOM_METHOD3(HRESULT, CreateMusicBuffer, LPDMUS_BUFFERDESC,pBufferDesc, LPDIRECTMUSICBUFFER**,ppBuffer, LPUNKNOWN,pUnkOuter) \
+    ICOM_METHOD4(HRESULT, CreatePort, REFCLSID,rclsidPort, LPDMUS_PORTPARAMS,pPortParams, LPDIRECTMUSICPORT*,ppPort, LPUNKNOWN,pUnkOuter) \
+    ICOM_METHOD2(HRESULT, EnumMasterClock, DWORD,dwIndex, LPDMUS_CLOCKINFO,lpClockInfo) \
+    ICOM_METHOD2(HRESULT, GetMasterClock, LPGUID,pguidClock, IReferenceClock**,ppReferenceClock) \
+    ICOM_METHOD1(HRESULT, SetMasterClock,  REFGUID,rguidClock) \
+    ICOM_METHOD1(HRESULT, Activate, BOOL,fEnable) \
+    ICOM_METHOD1(HRESULT, GetDefaultPort, LPGUID,pguidPort) \
+    ICOM_METHOD2(HRESULT, SetDirectSound, LPDIRECTSOUND,pDirectSound, HWND,hWnd)
+
+    /*** IDirectMusic methods ***/
+#define IDirectMusic_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectMusic_METHODS
+ICOM_DEFINE(IDirectMusic,IUnknown)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IDirectMusic_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectMusic_AddRef(p)						ICOM_CALL (AddRef,p)
+#define IDirectMusic_Release(p)						ICOM_CALL (Release,p)
+/*** IDirectMusic methods ***/
+#define IDirectMusic_EnumPort(p,a,b)				ICOM_CALL2(EnumPort,p,a,b)
+#define IDirectMusic_CreateMusicBuffer(p,a,b,c)		ICOM_CALL3(CreateMusicBuffer,p,a,b,c)
+#define IDirectMusic_CreatePort(p,a,b,c,d)			ICOM_CALL4(CreatePort,p,a,b,c,d)
+#define IDirectMusic_EnumMasterClock(p,a,b)			ICOM_CALL2(EnumMasterClock,p,a,b)
+#define IDirectMusic_GetMasterClock(p,a,b)			ICOM_CALL2(GetMasterClock,p,a,b)
+#define IDirectMusic_SetMasterClock(p,a)			ICOM_CALL1(SetMasterClock,p,a)
+#define IDirectMusic_Activate(p,a)					ICOM_CALL1(Activate,p,a)
+#define IDirectMusic_GetDefaultPort(p,a)			ICOM_CALL1(GetDefaultPort,p,a)
+#define IDirectMusic_SetDirectSound(p,a,b)			ICOM_CALL2(SetDirectSound,p,a,b)
+
+
+/*****************************************************************************
+ * IDirectMusic8 interface
+ */
+#undef ICOM_INTERFACE
+#define ICOM_INTERFACE IDirectMusic8
+#define IDirectMusic8_METHODS \
+    /*** IDirectMusic8 methods ***/ \
+    ICOM_METHOD1(HRESULT, SetExternalMasterClock,  IReferenceClock*,pClock)
+
+    /*** IDirectMusic8 methods ***/
+#define IDirectMusic8_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectMusic_METHODS \
+	IDirectMusic8_METHODS
+ICOM_DEFINE(IDirectMusic8,IDirectMusic)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IDirectMusic8_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectMusic8_AddRef(p)						ICOM_CALL (AddRef,p)
+#define IDirectMusic8_Release(p)					ICOM_CALL (Release,p)
+/*** IDirectMusic methods ***/
+#define IDirectMusic8_EnumPort(p,a,b)				ICOM_CALL2(EnumPort,p,a,b)
+#define IDirectMusic8_CreateMusicBuffer(p,a,b,c)	ICOM_CALL3(CreateMusicBuffer,p,a,b,c)
+#define IDirectMusic8_CreatePort(p,a,b,c,d)			ICOM_CALL4(CreatePort,p,a,b,c,d)
+#define IDirectMusic8_EnumMasterClock(p,a,b)		ICOM_CALL2(EnumMasterClock,p,a,b)
+#define IDirectMusic8_GetMasterClock(p,a,b)			ICOM_CALL2(GetMasterClock,p,a,b)
+#define IDirectMusic8_SetMasterClock(p,a)			ICOM_CALL1(SetMasterClock,p,a)
+#define IDirectMusic8_Activate(p,a)					ICOM_CALL1(Activate,p,a)
+#define IDirectMusic8_GetDefaultPort(p,a)			ICOM_CALL1(GetDefaultPort,p,a)
+#define IDirectMusic8_SetDirectSound(p,a,b)			ICOM_CALL2(SetDirectSound,p,a,b)
+/*** IDirectMusic8 methods ***/
+#define IDirectMusic8_SetExternalMasterClock(p,a)	ICOM_CALL1(SetExternalMasterClock,p,a)
+
+
+/*****************************************************************************
+ * IDirectMusicBuffer interface
+ */
+#undef ICOM_INTERFACE
+#define ICOM_INTERFACE IDirectMusicBuffer
+#define IDirectMusicBuffer_METHODS \
+    /*** IDirectMusicBuffer methods ***/ \
+    ICOM_METHOD (HRESULT, Flush) \
+	ICOM_METHOD1(HRESULT, TotalTime, LPREFERENCE_TIME,prtTime) \
+	ICOM_METHOD3(HRESULT, PackStructured, REFERENCE_TIME,rt, DWORD,dwChannelGroup, DWORD,dwChannelMessage) \
+	ICOM_METHOD4(HRESULT, PackUnstructured, REFERENCE_TIME,rt, DWORD,dwChannelGroup, DWORD,cb, LPBYTE,lpb) \
+    ICOM_METHOD (HRESULT, ResetReadPtr) \
+    ICOM_METHOD4(HRESULT, GetNextEvent, LPREFERENCE_TIME,prt, LPDWORD,pdwChannelGroup, LPDWORD,pdwLength, LPBYTE*,ppData) \
+	ICOM_METHOD1(HRESULT, GetRawBufferPtr, LPBYTE*,ppData) \
+	ICOM_METHOD1(HRESULT, GetStartTime, LPREFERENCE_TIME,prt) \
+	ICOM_METHOD1(HRESULT, GetUsedBytes, LPDWORD,pcb) \
+	ICOM_METHOD1(HRESULT, GetMaxBytes, LPDWORD,pcb) \
+	ICOM_METHOD1(HRESULT, GetBufferFormat, LPGUID,pGuidFormat) \
+	ICOM_METHOD1(HRESULT, SetStartTime, REFERENCE_TIME,rt) \
+	ICOM_METHOD1(HRESULT, SetUsedBytes, DWORD,cb)
+	
+	/*** IDirectMusicBuffer methods ***/
+#define IDirectMusicBuffer_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectMusicBuffer_METHODS
+ICOM_DEFINE(IDirectMusicBuffer,IUnknown)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IDirectMusicBuffer_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectMusicBuffer_AddRef(p)						ICOM_CALL (AddRef,p)
+#define IDirectMusicBuffer_Release(p)						ICOM_CALL (Release,p)
+/*** IDirectMusicBuffer methods ***/
+#define IDirectMusicBuffer_Flush(p)							ICOM_CALL (Flush,p)
+#define IDirectMusicBuffer_TotalTime(p,a)					ICOM_CALL1(TotalTime,p,a)
+#define IDirectMusicBuffer_PackStructured(p,a,b,c)			ICOM_CALL3(PackStructured,p,a,b,c)
+#define IDirectMusicBuffer_PackUnstructured(p,a,b,c,d)		ICOM_CALL4(PackUnstructured,p,a,b,c,d)
+#define IDirectMusicBuffer_ResetReadPtr(p)					ICOM_CALL (ResetReadPtr,p)
+#define IDirectMusicBuffer_GetNextEvent(p,a,b,c,d)			ICOM_CALL4(GetNextEvent,p,a,b,c,d)
+#define IDirectMusicBuffer_GetRawBufferPtr(p,a)				ICOM_CALL1(GetRawBufferPtr,p,a)
+#define IDirectMusicBuffer_GetStartTime(p,a)				ICOM_CALL1(GetStartTime,p,a)
+#define IDirectMusicBuffer_GetUsedBytes(p,a)				ICOM_CALL1(GetUsedBytes,p,a)
+#define IDirectMusicBuffer_GetMaxBytes(p,a)					ICOM_CALL1(GetMaxBytes,p,a)
+#define IDirectMusicBuffer_GetBufferFormat(p,a)				ICOM_CALL1(GetBufferFormat,p,a)
+#define IDirectMusicBuffer_SetStartTime(p,a)				ICOM_CALL1(SetStartTime,p,a)
+#define IDirectMusicBuffer_SetUsedBytes(p,a)				ICOM_CALL1(SetUsedBytes,p,a)
+    
+/*****************************************************************************
+ * IDirectMusicInstrument interface
+ */
+#undef  ICOM_INTERFACE
+#define ICOM_INTERFACE IDirectMusicInstrument
+#define IDirectMusicInstrument_METHODS \
+    /*** IDirectMusicInstrument methods ***/ \
+    ICOM_METHOD1(HRESULT, GetPatch, DWORD*,pdwPatch) \
+	ICOM_METHOD1(HRESULT, SetPatch, DWORD,dwPatch)
+	
+	/*** IDirectMusicInstrument methods ***/
+#define IDirectMusicInstrument_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectMusicInstrument_METHODS
+ICOM_DEFINE(IDirectMusicInstrument,IUnknown)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IDirectMusicInstrument_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectMusicInstrument_AddRef(p)						ICOM_CALL (AddRef,p)
+#define IDirectMusicInstrument_Release(p)						ICOM_CALL (Release,p)
+/*** IDirectMusicInstrument methods ***/
+#define IDirectMusicInstrument_GetPatch(p,a)					ICOM_CALL1(GetPatch,p,a)
+#define IDirectMusicInstrument_SetPatch(p,a)					ICOM_CALL1(SetPatch,p,a)
+
+
+/*****************************************************************************
+ * IDirectMusicDownloadedInstrument interface
+ */
+#undef  ICOM_INTERFACE
+#define ICOM_INTERFACE IDirectMusicDownloadedInstrument
+#define IDirectMusicDownloadedInstrument_METHODS \
+    /*** IDirectMusicDownloadedInstrument methods ***/ \
+    /* none at this time */
+	
+	/*** IDirectMusicDownloadedInstrument methods ***/
+#define IDirectMusicDownloadedInstrument_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectMusicDownloadedInstrument_METHODS
+ICOM_DEFINE(IDirectMusicDownloadedInstrument,IUnknown)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IDirectMusicDownloadedInstrument_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectMusicDownloadedInstrument_AddRef(p)						ICOM_CALL (AddRef,p)
+#define IDirectMusicDownloadedInstrument_Release(p)						ICOM_CALL (Release,p)
+/*** IDirectMusicDownloadedInstrument methods ***/
+/* none at this time */
+
+
+/*****************************************************************************
+ * IDirectMusicCollection interface
+ */
+#undef  ICOM_INTERFACE
+#define ICOM_INTERFACE IDirectMusicCollection
+#define IDirectMusicCollection_METHODS \
+    /*** IDirectMusicCollection methods ***/ \
+    ICOM_METHOD2(HRESULT, GetInstrument, DWORD,dwPatch, IDirectMusicInstrument**,ppInstrument) \
+    ICOM_METHOD4(HRESULT, EnumInstrument, DWORD,dwIndex, DWORD*,pdwPatch, LPWSTR,pwszName, DWORD,dwNameLen)
+	
+	/*** IDirectMusicCollection methods ***/
+#define IDirectMusicCollection_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectMusicCollection_METHODS
+ICOM_DEFINE(IDirectMusicCollection,IUnknown)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IDirectMusicCollection_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectMusicCollection_AddRef(p)						ICOM_CALL (AddRef,p)
+#define IDirectMusicCollection_Release(p)						ICOM_CALL (Release,p)
+/*** IDirectMusicCollection methods ***/
+#define IDirectMusicCollection_GetInstrument(p,a,b)				ICOM_CALL2(GetInstrument,p,a,b)
+#define IDirectMusicCollection_EnumInstrument(p,a,b,c)			ICOM_CALL3(EnumInstrument,p,a,b,c)
+
+
+/*****************************************************************************
+ * IDirectMusicDownload interface
+ */
+#undef  ICOM_INTERFACE
+#define ICOM_INTERFACE IDirectMusicDownload
+#define IDirectMusicDownload_METHODS \
+    /*** IDirectMusicDownload methods ***/ \
+    ICOM_METHOD2(HRESULT, GetBuffer, void**,ppvBuffer, DWORD*,pdwSize)
+
+	/*** IDirectMusicDownload methods ***/
+#define IDirectMusicDownload_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectMusicDownload_METHODS
+ICOM_DEFINE(IDirectMusicDownload,IUnknown)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IDirectMusicDownload_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectMusicDownload_AddRef(p)						ICOM_CALL (AddRef,p)
+#define IDirectMusicDownload_Release(p)						ICOM_CALL (Release,p)
+/*** IDirectMusicDownload methods ***/
+#define IDirectMusicDownload_GetBuffer(p,a,b)				ICOM_CALL2(GetBuffer,p,a,b)
+
+
+/*****************************************************************************
+ * IDirectMusicPortDownload interface
+ */
+#undef  ICOM_INTERFACE
+#define ICOM_INTERFACE IDirectMusicPortDownload
+#define IDirectMusicPortDownload_METHODS \
+    /*** IDirectMusicPortDownload methods ***/ \
+    ICOM_METHOD2(HRESULT, GetBuffer, DWORD,dwDLId, IDirectMusicDownload**,ppIDMDownload) \
+    ICOM_METHOD2(HRESULT, AllocateBuffer, DWORD,dwSize, IDirectMusicDownload**,ppIDMDownload) \
+    ICOM_METHOD2(HRESULT, GetDLId, DWORD*,pdwStartDLId, DWORD,dwCount) \
+    ICOM_METHOD1(HRESULT, GetAppend, DWORD*,pdwAppend) \
+    ICOM_METHOD1(HRESULT, Download, IDirectMusicDownload*,pIDMDownload) \
+    ICOM_METHOD1(HRESULT, Unload, IDirectMusicDownload*,pIDMDownload)
+
+	/*** IDirectMusicPortDownload methods ***/
+#define IDirectMusicPortDownload_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectMusicPortDownload_METHODS
+ICOM_DEFINE(IDirectMusicPortDownload,IUnknown)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IDirectMusicPortDownload_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectMusicPortDownload_AddRef(p)						ICOM_CALL (AddRef,p)
+#define IDirectMusicPortDownload_Release(p)						ICOM_CALL (Release,p)
+/*** IDirectMusicPortDownload methods ***/
+#define IDirectMusicPortDownload_GetBuffer(p,a,b)				ICOM_CALL2(GetBuffer,p,a,b)
+#define IDirectMusicPortDownload_AllocateBuffer(p,a,b)			ICOM_CALL2(AllocateBuffer,p,a,b)
+#define IDirectMusicPortDownload_GetDLId(p,a,b)					ICOM_CALL2(GetDLId,p,a,b)
+#define IDirectMusicPortDownload_GetAppend(p,a)					ICOM_CALL1(GetAppend,p,a)
+#define IDirectMusicPortDownload_Download(p,a)					ICOM_CALL1(Download,p,a)
+#define IDirectMusicPortDownload_Unload(p,a)					ICOM_CALL1(GetBuffer,p,a)
+
+
+#ifndef __WINE_DIRECTAUDIO_PRIORITIES_DEFINED
+#define __WINE_DIRECTAUDIO_PRIORITIES_DEFINED
+
+#define DAUD_CRITICAL_VOICE_PRIORITY    (0xF0000000)
+#define DAUD_HIGH_VOICE_PRIORITY        (0xC0000000)
+#define DAUD_STANDARD_VOICE_PRIORITY    (0x80000000)
+#define DAUD_LOW_VOICE_PRIORITY         (0x40000000)
+#define DAUD_PERSIST_VOICE_PRIORITY     (0x10000000) 
+
+#define DAUD_CHAN1_VOICE_PRIORITY_OFFSET    (0x0000000E)
+#define DAUD_CHAN2_VOICE_PRIORITY_OFFSET    (0x0000000D)
+#define DAUD_CHAN3_VOICE_PRIORITY_OFFSET    (0x0000000C)
+#define DAUD_CHAN4_VOICE_PRIORITY_OFFSET    (0x0000000B)
+#define DAUD_CHAN5_VOICE_PRIORITY_OFFSET    (0x0000000A)
+#define DAUD_CHAN6_VOICE_PRIORITY_OFFSET    (0x00000009)
+#define DAUD_CHAN7_VOICE_PRIORITY_OFFSET    (0x00000008)
+#define DAUD_CHAN8_VOICE_PRIORITY_OFFSET    (0x00000007)
+#define DAUD_CHAN9_VOICE_PRIORITY_OFFSET    (0x00000006)
+#define DAUD_CHAN10_VOICE_PRIORITY_OFFSET   (0x0000000F)
+#define DAUD_CHAN11_VOICE_PRIORITY_OFFSET   (0x00000005)
+#define DAUD_CHAN12_VOICE_PRIORITY_OFFSET   (0x00000004)
+#define DAUD_CHAN13_VOICE_PRIORITY_OFFSET   (0x00000003)
+#define DAUD_CHAN14_VOICE_PRIORITY_OFFSET   (0x00000002)
+#define DAUD_CHAN15_VOICE_PRIORITY_OFFSET   (0x00000001)
+#define DAUD_CHAN16_VOICE_PRIORITY_OFFSET   (0x00000000)
+ 
+#define DAUD_CHAN1_DEF_VOICE_PRIORITY   (DAUD_STANDARD_VOICE_PRIORITY | DAUD_CHAN1_VOICE_PRIORITY_OFFSET)
+#define DAUD_CHAN2_DEF_VOICE_PRIORITY   (DAUD_STANDARD_VOICE_PRIORITY | DAUD_CHAN2_VOICE_PRIORITY_OFFSET)
+#define DAUD_CHAN3_DEF_VOICE_PRIORITY   (DAUD_STANDARD_VOICE_PRIORITY | DAUD_CHAN3_VOICE_PRIORITY_OFFSET)
+#define DAUD_CHAN4_DEF_VOICE_PRIORITY   (DAUD_STANDARD_VOICE_PRIORITY | DAUD_CHAN4_VOICE_PRIORITY_OFFSET)
+#define DAUD_CHAN5_DEF_VOICE_PRIORITY   (DAUD_STANDARD_VOICE_PRIORITY | DAUD_CHAN5_VOICE_PRIORITY_OFFSET)
+#define DAUD_CHAN6_DEF_VOICE_PRIORITY   (DAUD_STANDARD_VOICE_PRIORITY | DAUD_CHAN6_VOICE_PRIORITY_OFFSET)
+#define DAUD_CHAN7_DEF_VOICE_PRIORITY   (DAUD_STANDARD_VOICE_PRIORITY | DAUD_CHAN7_VOICE_PRIORITY_OFFSET)
+#define DAUD_CHAN8_DEF_VOICE_PRIORITY   (DAUD_STANDARD_VOICE_PRIORITY | DAUD_CHAN8_VOICE_PRIORITY_OFFSET)
+#define DAUD_CHAN9_DEF_VOICE_PRIORITY   (DAUD_STANDARD_VOICE_PRIORITY | DAUD_CHAN9_VOICE_PRIORITY_OFFSET)
+#define DAUD_CHAN10_DEF_VOICE_PRIORITY  (DAUD_STANDARD_VOICE_PRIORITY | DAUD_CHAN10_VOICE_PRIORITY_OFFSET)
+#define DAUD_CHAN11_DEF_VOICE_PRIORITY  (DAUD_STANDARD_VOICE_PRIORITY | DAUD_CHAN11_VOICE_PRIORITY_OFFSET)
+#define DAUD_CHAN12_DEF_VOICE_PRIORITY  (DAUD_STANDARD_VOICE_PRIORITY | DAUD_CHAN12_VOICE_PRIORITY_OFFSET)
+#define DAUD_CHAN13_DEF_VOICE_PRIORITY  (DAUD_STANDARD_VOICE_PRIORITY | DAUD_CHAN13_VOICE_PRIORITY_OFFSET)
+#define DAUD_CHAN14_DEF_VOICE_PRIORITY  (DAUD_STANDARD_VOICE_PRIORITY | DAUD_CHAN14_VOICE_PRIORITY_OFFSET)
+#define DAUD_CHAN15_DEF_VOICE_PRIORITY  (DAUD_STANDARD_VOICE_PRIORITY | DAUD_CHAN15_VOICE_PRIORITY_OFFSET)
+#define DAUD_CHAN16_DEF_VOICE_PRIORITY  (DAUD_STANDARD_VOICE_PRIORITY | DAUD_CHAN16_VOICE_PRIORITY_OFFSET)
+
+#endif  /* __WINE_DIRECTAUDIO_PRIORITIES_DEFINED */
+
+
+/*****************************************************************************
+ * IDirectMusicPort interface
+ */
+#undef  ICOM_INTERFACE
+#define ICOM_INTERFACE IDirectMusicPort
+#define IDirectMusicPort_METHODS \
+    /*** IDirectMusicPort methods ***/ \
+    ICOM_METHOD1(HRESULT, PlayBuffer, LPDIRECTMUSICBUFFER,pBuffer) \
+    ICOM_METHOD1(HRESULT, SetReadNotificationHandle, HANDLE,hEvent) \
+    ICOM_METHOD1(HRESULT, Read, LPDIRECTMUSICBUFFER,pBuffer) \
+    ICOM_METHOD4(HRESULT, DownloadInstrument, IDirectMusicInstrument*,pInstrument, IDirectMusicDownloadedInstrument**,ppDownloadedInstrument, DMUS_NOTERANGE*,pNoteRanges, DWORD,dwNumNoteRanges) \
+    ICOM_METHOD1(HRESULT, UnloadInstrument, IDirectMusicDownloadedInstrument*,pDownloadedInstrument) \
+    ICOM_METHOD1(HRESULT, GetLatencyClock, IReferenceClock**,ppClock) \
+    ICOM_METHOD1(HRESULT, GetRunningStats, LPDMUS_SYNTHSTATS,pStats) \
+    ICOM_METHOD1(HRESULT, GetCaps, LPDMUS_PORTCAPS,pPortCaps) \
+    ICOM_METHOD7(HRESULT, DeviceIoControl, DWORD,dwIoControlCode, LPVOID,lpInBuffer, DWORD,nInBufferSize, LPVOID,lpOutBuffer, DWORD,nOutBufferSize, LPDWORD,lpBytesReturned, LPOVERLAPPED,lpOverlapped) \
+    ICOM_METHOD1(HRESULT, SetNumChannelGroups, DWORD,dwChannelGroups) \
+    ICOM_METHOD1(HRESULT, GetNumChannelGroups, LPDWORD,pdwChannelGroups) \
+    ICOM_METHOD1(HRESULT, Activate, BOOL,fActive) \
+    ICOM_METHOD3(HRESULT, SetChannelPriority, DWORD,dwChannelGroup, DWORD,dwChannel, DWORD,dwPriority) \
+    ICOM_METHOD3(HRESULT, GetChannelPriority, DWORD,dwChannelGroup, DWORD,dwChannel, LPDWORD,pdwPriority) \
+    ICOM_METHOD2(HRESULT, SetDirectSound, LPDIRECTSOUND,pDirectSound, LPDIRECTSOUNDBUFFER,pDirectSoundBuffer) \
+    ICOM_METHOD3(HRESULT, GetFormat, LPWAVEFORMATEX,pWaveFormatEx, LPDWORD,pdwWaveFormatExSize, LPDWORD,pdwBufferSize)
+
+/*** IDirectMusicPort methods ***/
+#define IDirectMusicPort_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectMusicPort_METHODS
+ICOM_DEFINE(IDirectMusicPort,IUnknown)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IDirectMusicPort_QueryInterface(p,a,b)					ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectMusicPort_AddRef(p)								ICOM_CALL (AddRef,p)
+#define IDirectMusicPort_Release(p)								ICOM_CALL (Release,p)
+/*** IDirectMusicPort methods ***/
+#define IDirectMusicPort_PlayBuffer(p,a)						ICOM_CALL1(PlayBuffer,p,a)
+#define IDirectMusicPort_SetReadNotificationHandle(p,a)			ICOM_CALL1(SetReadNotificationHandle,p,a)
+#define IDirectMusicPort_Read(p,a)								ICOM_CALL1(Read,p,a)
+#define IDirectMusicPort_DownloadInstrument(p,a,b,c,d)			ICOM_CALL4(DownloadInstrument,p,a,b,c,d)
+#define IDirectMusicPort_UnloadInstrument(p,a)					ICOM_CALL1(UnloadInstrument,p,a)
+#define IDirectMusicPort_GetLatencyClock(p,a)					ICOM_CALL1(GetLatencyClock,p,a)
+#define IDirectMusicPort_GetRunningStats(p,a)					ICOM_CALL1(GetRunningStats,p,a)
+#define IDirectMusicPort_GetCaps(p,a)							ICOM_CALL1(GetCaps,p,a)
+#define IDirectMusicPort_DeviceIoControl(p,a,b,c,d,e,f,g)		ICOM_CALL7(DeviceIoControl,p,a,b,c,d,e,f,g)
+#define IDirectMusicPort_SetNumChannelGroups(p,a)				ICOM_CALL1(SetNumChannelGroups,p,a)
+#define IDirectMusicPort_GetNumChannelGroups(p,a)				ICOM_CALL1(GetNumChannelGroups,p,a)
+#define IDirectMusicPort_Activate(p,a)							ICOM_CALL1(Activate,p,a)
+#define IDirectMusicPort_SetChannelPriority(p,a,b,c)			ICOM_CALL3(SetChannelPriority,p,a,b,c)
+#define IDirectMusicPort_GetChannelPriority(p,a,b,c)			ICOM_CALL3(GetChannelPriority,p,a,b,c)
+#define IDirectMusicPort_SetDirectSound(p,a,b)					ICOM_CALL2(SetDirectSound,p,a,b)
+#define IDirectMusicPort_GetFormat(p,a,b,c)						ICOM_CALL3(GetFormat,p,a,b,c)
+
+
+/*****************************************************************************
+ * IDirectMusicThru interface
+ */
+#undef  ICOM_INTERFACE
+#define ICOM_INTERFACE IDirectMusicThru
+#define IDirectMusicThru_METHODS \
+    /*** IDirectMusicThru methods ***/ \
+    ICOM_METHOD5(HRESULT, ThruChannel, DWORD,dwSourceChannelGroup, DWORD,dwSourceChannel, DWORD,dwDestinationChannelGroup, DWORD,dwDestinationChannel, LPDIRECTMUSICPORT,pDestinationPort)
+
+/*** IDirectMusicThru methods ***/
+#define IDirectMusicThru_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectMusicThru_METHODS
+ICOM_DEFINE(IDirectMusicThru,IUnknown)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IDirectMusicThru_QueryInterface(p,a,b)					ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectMusicThru_AddRef(p)								ICOM_CALL (AddRef,p)
+#define IDirectMusicThru_Release(p)								ICOM_CALL (Release,p)
+/*** IDirectMusicThru methods ***/
+#define IDirectMusicThru_ThruChannel(p,a,b,c,d,e)				ICOM_CALL5(ThruChannel,p,a,b,c,d,e)
+
+
+/* this one should be defined in dsound.h too, but it's ok if it's here */
+#ifndef __IReferenceClock_INTERFACE_DEFINED__
+#define __IReferenceClock_INTERFACE_DEFINED__
+
+/*****************************************************************************
+ * IReferenceClock interface
+ */
+#undef  ICOM_INTERFACE
+#define ICOM_INTERFACE IReferenceClock
+#define IReferenceClock_METHODS \
+    /*** IReferenceClock methods ***/ \
+    ICOM_METHOD1(HRESULT, GetTime, REFERENCE_TIME*,pTime) \
+    ICOM_METHOD4(HRESULT, AdviseTime, REFERENCE_TIME,baseTime, REFERENCE_TIME,streamTime, HANDLE,hEvent, DWORD*,pdwAdviseCookie) \
+    ICOM_METHOD4(HRESULT, AdvisePeriodic, REFERENCE_TIME,startTime, REFERENCE_TIME,periodTime, HANDLE,hSemaphore, DWORD*,pdwAdviseCookie) \
+    ICOM_METHOD1(HRESULT, Unadvise, DWORD,dwAdviseCookie)
+
+	/*** IReferenceClock methods ***/
+#define IReferenceClock_IMETHODS \
+    IUnknown_IMETHODS \
+    IReferenceClock_METHODS
+ICOM_DEFINE(IReferenceClock,IUnknown)
+#undef ICOM_INTERFACE
+
+/*** IUnknown methods ***/
+#define IReferenceClock_QueryInterface(p,a,b)					ICOM_CALL2(QueryInterface,p,a,b)
+#define IReferenceClock_AddRef(p)								ICOM_CALL (AddRef,p)
+#define IReferenceClock_Release(p)								ICOM_CALL (Release,p)
+/*** IReferenceClock methods ***/
+#define IReferenceClock_GetTime(p,a)							ICOM_CALL1(GetTime,p,a)
+#define IReferenceClock_AdviseTime(p,a,b,c,d)					ICOM_CALL4(AdviseTime,p,a,b,c,d)
+#define IReferenceClock_AdvisePeriodic(p,a,b,c,d)				ICOM_CALL4(AdvisePeriodic,p,a,b,c,d)
+#define IReferenceClock_Unadvise(p,a)							ICOM_CALL1(Unadvise,p,a)
+
+#endif /* __IReferenceClock_INTERFACE_DEFINED__ */
+
+#define DMUS_VOLUME_MAX     2000
+#define DMUS_VOLUME_MIN   -20000
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* __cplusplus */
+
+/*#include "poppack.h" */
+
+#endif /* __WINE_DMUSIC_CORE_H */

@@ -1410,6 +1410,7 @@ dlls/ddraw/Makefile
 dlls/devenum/Makefile
 dlls/dinput/Makefile
 dlls/dinput8/Makefile
+dlls/dmusic/Makefile
 dlls/dplay/Makefile
 dlls/dplayx/Makefile
 dlls/dsound/Makefile

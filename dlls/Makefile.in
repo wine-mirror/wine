@@ -30,6 +30,7 @@ BASEDIRS = \
 	devenum \
 	dinput \
 	dinput8 \
+	dmusic \
 	dplay \
 	dplayx \
 	dsound \
@@ -197,6 +198,7 @@ all: \
 	devenum.dll$(DLLEXT) \
 	dinput.dll$(DLLEXT) \
 	dinput8.dll$(DLLEXT) \
+	dmusic.dll$(DLLEXT) \
 	dplay.dll$(DLLEXT) \
 	dplayx.dll$(DLLEXT) \
 	dsound.dll$(DLLEXT) \
@@ -334,6 +336,9 @@ dinput.dll$(DLLEXT): dinput/dinput.dll$(DLLEXT)
 
 dinput8.dll$(DLLEXT): dinput8/dinput8.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) dinput8/dinput8.dll$(DLLEXT) $@
+
+dmusic.dll$(DLLEXT): dmusic/dmusic.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) dmusic/dmusic.dll$(DLLEXT) $@
 
 dplay.dll$(DLLEXT): dplay/dplay.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) dplay/dplay.dll$(DLLEXT) $@
@@ -615,6 +620,7 @@ IMPORT_LIBS = \
 	libdevenum \
 	libdinput \
 	libdinput8 \
+	libdmusic \
 	libdplay \
 	libdplayx \
 	libdsound \
@@ -770,6 +776,11 @@ libdinput8.def: dinput8/dinput8.spec.def
 	$(RM) $@ && $(LN_S) dinput8/dinput8.spec.def $@
 libdinput8.a: dinput8/dinput8.spec.def
 	$(DLLTOOL) -k -l $@ -d dinput8/dinput8.spec.def
+
+libdmusic.def: dmusic/dmusic.spec.def
+	$(RM) $@ && $(LN_S) dmusic/dmusic.spec.def $@
+libdmusic.a: dmusic/dmusic.spec.def
+	$(DLLTOOL) -k -l $@ -d dmusic/dmusic.spec.def
 
 libdplay.def: dplay/dplay.spec.def
 	$(RM) $@ && $(LN_S) dplay/dplay.spec.def $@
@@ -1114,6 +1125,7 @@ ddraw/ddraw.spec.def: $(WINEBUILD)
 devenum/devenum.spec.def: $(WINEBUILD)
 dinput/dinput.spec.def: $(WINEBUILD)
 dinput8/dinput8.spec.def: $(WINEBUILD)
+dmusic/dmusic.spec.def: $(WINEBUILD)
 dplay/dplay.spec.def: $(WINEBUILD)
 dplayx/dplayx.spec.def: $(WINEBUILD)
 dsound/dsound.spec.def: $(WINEBUILD)
@@ -1203,6 +1215,7 @@ ddraw/ddraw.dll$(DLLEXT): ddraw
 devenum/devenum.dll$(DLLEXT): devenum
 dinput/dinput.dll$(DLLEXT): dinput
 dinput8/dinput8.dll$(DLLEXT): dinput8
+dmusic/dmusic.dll$(DLLEXT): dmusic
 dplay/dplay.dll$(DLLEXT): dplay
 dplayx/dplayx.dll$(DLLEXT): dplayx
 dsound/dsound.dll$(DLLEXT): dsound
@@ -1308,6 +1321,7 @@ ddraw/__install__: ddraw.dll$(DLLEXT)
 devenum/__install__: devenum.dll$(DLLEXT)
 dinput/__install__: dinput.dll$(DLLEXT)
 dinput8/__install__: dinput8.dll$(DLLEXT)
+dmusic/__install__: dmusic.dll$(DLLEXT)
 dplay/__install__: dplay.dll$(DLLEXT)
 dplayx/__install__: dplayx.dll$(DLLEXT)
 dsound/__install__: dsound.dll$(DLLEXT)
