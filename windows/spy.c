@@ -474,22 +474,65 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0280 */
-    NULL, "WM_IME_SETCONTEXT", "WM_IME_NOTIFY", "WM_IME_CONTROL", "WM_IME_COMPOSITIONFULL", "WM_IME_SELECT", "WM_IME_CHAR", NULL,
-    "WM_IME_REQUEST", NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    "WM_IME_KEYDOWN", "WM_IME_KEYUP", NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL,
+    "WM_IME_SETCONTEXT",        /* 0x0281 */
+    "WM_IME_NOTIFY",            /* 0x0282 */
+    "WM_IME_CONTROL",           /* 0x0283 */
+    "WM_IME_COMPOSITIONFULL",   /* 0x0284 */
+    "WM_IME_SELECT",            /* 0x0285 */
+    "WM_IME_CHAR",              /* 0x0286 */
+    NULL,
+    "WM_IME_REQUEST",           /* 0x0288 */
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_IME_KEYDOWN",           /* 0x0290 */
+    "WM_IME_KEYUP",             /* 0x0291 */
+    NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x02a0 */
-    NULL, "WM_MOUSEHOVER", NULL, "WM_MOUSELEAVE", NULL, NULL, NULL, NULL,
+    "WM_NCMOUSEHOVER",          /* 0x02A0 */
+    "WM_MOUSEHOVER",            /* 0x02A1 */
+    "WM_NCMOUSELEAVE",          /* 0x02A2 */
+    "WM_MOUSELEAVE",            /* 0x02A3 */
+    NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_WTSSESSION_CHANGE",     /* 0x02B1 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x02c0 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_TABLET_FIRST",          /* 0x02c0 */
+    "WM_TABLET_FIRST+1",        /* 0x02c1 */
+    "WM_TABLET_FIRST+2",        /* 0x02c2 */
+    "WM_TABLET_FIRST+3",        /* 0x02c3 */
+    "WM_TABLET_FIRST+4",        /* 0x02c4 */
+    "WM_TABLET_FIRST+5",        /* 0x02c5 */
+    "WM_TABLET_FIRST+7",        /* 0x02c6 */
+    "WM_TABLET_FIRST+8",        /* 0x02c7 */
+    "WM_TABLET_FIRST+9",        /* 0x02c8 */
+    "WM_TABLET_FIRST+10",       /* 0x02c9 */
+    "WM_TABLET_FIRST+11",       /* 0x02ca */
+    "WM_TABLET_FIRST+12",       /* 0x02cb */
+    "WM_TABLET_FIRST+13",       /* 0x02cc */
+    "WM_TABLET_FIRST+14",       /* 0x02cd */
+    "WM_TABLET_FIRST+15",       /* 0x02ce */
+    "WM_TABLET_FIRST+16",       /* 0x02cf */
+    "WM_TABLET_FIRST+17",       /* 0x02d0 */
+    "WM_TABLET_FIRST+18",       /* 0x02d1 */
+    "WM_TABLET_FIRST+19",       /* 0x02d2 */
+    "WM_TABLET_FIRST+20",       /* 0x02d3 */
+    "WM_TABLET_FIRST+21",       /* 0x02d4 */
+    "WM_TABLET_FIRST+22",       /* 0x02d5 */
+    "WM_TABLET_FIRST+23",       /* 0x02d6 */
+    "WM_TABLET_FIRST+24",       /* 0x02d7 */
+    "WM_TABLET_FIRST+25",       /* 0x02d8 */
+    "WM_TABLET_FIRST+26",       /* 0x02d9 */
+    "WM_TABLET_FIRST+27",       /* 0x02da */
+    "WM_TABLET_FIRST+28",       /* 0x02db */
+    "WM_TABLET_FIRST+29",       /* 0x02dc */
+    "WM_TABLET_FIRST+30",       /* 0x02dd */
+    "WM_TABLET_FIRST+31",       /* 0x02de */
+    "WM_TABLET_LAST",           /* 0x02df */
 
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
