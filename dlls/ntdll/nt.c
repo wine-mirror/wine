@@ -261,14 +261,29 @@ NTSTATUS WINAPI NtQueryInformationToken(
 	switch (tokeninfoclass)
 	{ case TokenGroups:	/* 2 */
 		*retlen = sizeof (TOKEN_GROUPS);
-#if 0	
+		break;
 	  case TokenUser:	/* 1 */
+		*retlen = sizeof (TOKEN_USER);
+		break;
 	  case TokenPrivileges:
+		*retlen = sizeof (TOKEN_PRIVILEGES);
+		break;
 	  case TokenOwner:
+		*retlen = sizeof (TOKEN_OWNER);
+		break;
 	  case TokenPrimaryGroup:
+		*retlen = sizeof (TOKEN_PRIMARY_GROUP);
+		break;
 	  case TokenDefaultDacl:
+		*retlen = sizeof (TOKEN_DEFAULT_DACL);
+		break;
 	  case TokenSource:
+		*retlen = sizeof (TOKEN_SOURCE);
+		break;
 	  case TokenType:
+		*retlen = sizeof (TOKEN_TYPE);
+		break;
+#if 0
 	  case TokenImpersonationLevel:
 	  case TokenStatistics:
 #endif /* 0 */

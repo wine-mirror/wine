@@ -714,6 +714,37 @@ LsaOpenPolicy(PLSA_UNICODE_STRING SystemName,
 }
 
 /******************************************************************************
+ * LsaQueryInformationPolicy [ADVAPI32.242]
+ */
+NTSTATUS WINAPI
+LsaQueryInformationPolicy( IN LSA_HANDLE PolicyHandle,
+                           IN POLICY_INFORMATION_CLASS InformationClass,
+                           OUT PVOID *Buffer)
+{
+	FIXME("(%p,0x%08x,%p):stub\n",
+              PolicyHandle, InformationClass, Buffer);
+	return 0xc0000000; /* generic error */
+}			  
+
+/******************************************************************************
+ * LsaFreeMemory [ADVAPI32.241]
+ */
+NTSTATUS WINAPI
+LsaFreeMemory(IN PVOID Buffer)
+{
+	FIXME("(%p):stub\n",Buffer);
+	return 0xc0000000;
+}
+/******************************************************************************
+ * LsaClose [ADVAPI32.243]
+ */
+NTSTATUS WINAPI
+LsaClose(IN LSA_HANDLE ObjectHandle)
+{
+	FIXME("(%p):stub\n",ObjectHandle);
+	return 0xc0000000;
+}
+/******************************************************************************
  * NotifyBootConfigStatus [ADVAPI32.97]
  *
  * PARAMS

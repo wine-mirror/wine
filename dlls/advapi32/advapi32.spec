@@ -242,9 +242,9 @@ type	win32
 0238 stub UnlockServiceDatabase
 0239 stdcall LsaOpenPolicy(long long long long) LsaOpenPolicy
 0240 stub LsaLookupSids
-0241 stub LsaFreeMemory
-0242 stub LsaQueryInformationPolicy
-0243 stub LsaClose
+0241 stdcall LsaFreeMemory(ptr)LsaFreeMemory
+0242 stdcall LsaQueryInformationPolicy(ptr long ptr)LsaQueryInformationPolicy
+0243 stdcall LsaClose(ptr)LsaClose
 0244 stub LsaSetInformationPolicy
 0245 stub LsaLookupNames
 0246 stub SystemFunction001
