@@ -699,7 +699,7 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
   SetDlgItemTextA( hWnd, edt1, tmpstr );
   /* get drive list */
   *tmpstr = 0;
-  DlgDirListComboBoxA(hWnd, tmpstr, cmb2, 0, 0xC000);
+  DlgDirListComboBoxA(hWnd, tmpstr, cmb2, 0, DDL_DRIVES | DDL_EXCLUSIVE);
   /* read initial directory */
   if (PTR_SEG_TO_LIN(lpofn->lpstrInitialDir) != NULL) 
     {
