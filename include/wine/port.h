@@ -181,6 +181,18 @@ struct statfs;
 #endif
 
 
+/* Register functions */
+
+#ifdef __i386__
+#define DEFINE_REGS_ENTRYPOINT( name, fn, args, pop_args ) \
+    __ASM_GLOBAL_FUNC( name, \
+                       "call " __ASM_NAME("__wine_call_from_32_regs") "\n\t" \
+                       ".long " __ASM_NAME(#fn) "\n\t" \
+                       ".byte " #args "," #pop_args )
+/* FIXME: add support for other CPUs */
+#endif  /* __i386__ */
+
+
 /****************************************************************
  * Function definitions (only when using libwine_port)
  */
