@@ -25,13 +25,13 @@ typedef struct _STACK32FRAME
     DWORD   ecx;            /* 18 */
     DWORD   ebx;            /* 1c */
     DWORD   ebp;            /* 20 saved 32-bit frame pointer */
-    DWORD   relay;          /* 24 return address to relay stub */
-    DWORD   retaddr;        /* 28 actual return address */
-    DWORD   args[1];        /* 2c arguments to 16-bit function */
+    DWORD   retaddr;        /* 24 return address */
+    DWORD   target;         /* 28 target address / CONTEXT86 pointer */
+    DWORD   nb_args;        /* 2c number of 16-bit argument bytes */
 } STACK32FRAME;
 
   /* 16-bit stack layout after CallFrom16() */
-typedef struct
+typedef struct _STACK16FRAME
 {
     STACK32FRAME *frame32;        /* 00 32-bit frame from last CallTo16() */
     DWORD         edx;            /* 04 saved registers */
@@ -41,13 +41,14 @@ typedef struct
     WORD          es;             /* 12 */
     WORD          fs;             /* 14 */
     WORD          gs;             /* 16 */
-    DWORD         relay;          /* 18 address of argument relay stub */
-    DWORD         entry_ip;       /* 1c ip of entry point */
-    DWORD         entry_cs;       /* 20 cs of entry point */
-    DWORD         entry_point;    /* 24 API entry point to call, reused as mutex count */
-    WORD          bp;             /* 28 16-bit stack frame chain */
-    WORD          ip;             /* 2a return address */
-    WORD          cs;             /* 2c */
+    DWORD         callfrom_ip;    /* 18 callfrom tail IP */
+    DWORD         module_cs;      /* 1c module code segment */
+    DWORD         relay;          /* 20 relay function address */
+    WORD          entry_ip;       /* 22 entry point IP */
+    DWORD         entry_point;    /* 26 API entry point to call, reused as mutex count */
+    WORD          bp;             /* 2a 16-bit stack frame chain */
+    WORD          ip;             /* 2c return address */
+    WORD          cs;             /* 2e */
 } STACK16FRAME;
 
 #include "poppack.h"

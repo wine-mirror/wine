@@ -189,6 +189,7 @@ static int debugging = 1;
   /* Offset of the stack pointer relative to %fs:(0) */
 #define STACKOFFSET (STRUCTOFFSET(TEB,cur_stack))
 
+static void BuildCallFrom16Func( FILE *outfile, char *profile, char *prefix, int local );
 
 static void *xmalloc (size_t size)
 {
@@ -1301,8 +1302,8 @@ static int Spec16TypeCompare( const void *e1, const void *e2 )
  */
 static int BuildSpec16File( char * specfile, FILE *outfile )
 {
-    ORDDEF *odp, **typelist;
-    int i, j, k;
+    ORDDEF *odp, **type, **typelist;
+    int i, nFuncs, nTypes;
     int code_offset, data_offset, module_size;
     unsigned char *data;
 
@@ -1323,7 +1324,7 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
     typelist = (ORDDEF **)calloc( Limit+1, sizeof(ORDDEF *) );
 
     odp = OrdinalDefinitions;
-    for (i = j = 0; i <= Limit; i++, odp++)
+    for (i = nFuncs = 0; i <= Limit; i++, odp++)
     {
         switch (odp->type)
         {
@@ -1333,37 +1334,38 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
           case TYPE_PASCAL:
           case TYPE_PASCAL_16:
           case TYPE_STUB:
-            typelist[j++] = odp;
+            typelist[nFuncs++] = odp;
 
           default:
             break;
         }
     }
 
-    qsort( typelist, j, sizeof(ORDDEF *), Spec16TypeCompare );
+    qsort( typelist, nFuncs, sizeof(ORDDEF *), Spec16TypeCompare );
 
-    i = k = 0;
-    while ( i < j )
+    i = nTypes = 0;
+    while ( i < nFuncs )
     {
-        typelist[k++] = typelist[i++];
-        while ( i < j && Spec16TypeCompare( typelist + i, typelist + k-1 ) == 0 )
+        typelist[nTypes++] = typelist[i++];
+        while ( i < nFuncs && Spec16TypeCompare( typelist + i, typelist + nTypes-1 ) == 0 )
             i++;
     }
 
-    /* Output CallFrom16 profiles needed by this .spec file */
+    /* Output CallFrom16 routines needed by this .spec file */
 
-    fprintf( outfile, "\n/* ### start build ### */\n" );
+    for ( i = 0; i < nTypes; i++ )
+    {
+        char profile[101];
 
-    for ( i = 0; i < k; i++ )
-        fprintf( outfile, "extern void %s_CallFrom16_%s_%s_%s();\n",
-                 DLLName,
+        sprintf( profile, "%s_%s_%s",
                  (typelist[i]->type == TYPE_CDECL) ? "c" : "p",
                  (typelist[i]->type == TYPE_REGISTER) ? "regs" :
                  (typelist[i]->type == TYPE_INTERRUPT) ? "intr" :
                  (typelist[i]->type == TYPE_PASCAL_16) ? "word" : "long",
                  typelist[i]->u.func.arg_types );
 
-    fprintf( outfile, "/* ### stop build ### */\n\n" );
+        BuildCallFrom16Func( outfile, profile, DLLName, TRUE );
+    }
 
     /* Output the DLL functions prototypes */
 
@@ -1386,8 +1388,52 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
 
     /* Output code segment */
 
-    fprintf( outfile, "\nstatic ENTRYPOINT16 Code_Segment[] = \n{\n" );
+    fprintf( outfile, "\nstatic struct\n{\n    CALLFROM16   call[%d];\n"
+                      "    ENTRYPOINT16 entry[%d];\n} Code_Segment = \n{\n    {\n",
+                      nTypes, nFuncs );
     code_offset = 0;
+
+    for ( i = 0; i < nTypes; i++ )
+    {
+        char profile[101], *arg;
+        int argsize = 0;
+
+        sprintf( profile, "%s_%s_%s", 
+                          (typelist[i]->type == TYPE_CDECL) ? "c" : "p",
+                          (typelist[i]->type == TYPE_REGISTER) ? "regs" :
+                          (typelist[i]->type == TYPE_INTERRUPT) ? "intr" :
+                          (typelist[i]->type == TYPE_PASCAL_16) ? "word" : "long",
+                          typelist[i]->u.func.arg_types );
+
+        if ( typelist[i]->type != TYPE_CDECL )
+            for ( arg = typelist[i]->u.func.arg_types; *arg; arg++ )
+                switch ( *arg )
+                {
+                case 'w':  /* word */
+                case 's':  /* s_word */
+                    argsize += 2;
+                    break;
+        
+                case 'l':  /* long or segmented pointer */
+                case 'T':  /* segmented pointer to null-terminated string */
+                case 'p':  /* linear pointer */
+                case 't':  /* linear pointer to null-terminated string */
+                    argsize += 4;
+                    break;
+                }
+
+        if ( typelist[i]->type == TYPE_INTERRUPT )
+            argsize += 2;
+
+        fprintf( outfile, "        CF16_%s( %s_CallFrom16_%s, %d, \"%s\" ),\n",
+                 (   typelist[i]->type == TYPE_REGISTER 
+                  || typelist[i]->type == TYPE_INTERRUPT)? "REGS":
+                 typelist[i]->type == TYPE_PASCAL_16? "WORD" : "LONG",
+                 DLLName, profile, argsize, profile );
+
+        code_offset += sizeof(CALLFROM16);
+    }
+    fprintf( outfile, "    },\n    {\n" );
 
     odp = OrdinalDefinitions;
     for (i = 0; i <= Limit; i++, odp++)
@@ -1423,10 +1469,14 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
           case TYPE_PASCAL:
           case TYPE_PASCAL_16:
           case TYPE_STUB:
-            fprintf( outfile, "    /* %s.%d */ ", DLLName, i );
-            fprintf( outfile, "EP( %s, %s_CallFrom16_%s_%s_%s ),\n",
+            type = bsearch( &odp, typelist, nTypes, sizeof(ORDDEF *), Spec16TypeCompare );
+            assert( type );
+
+            fprintf( outfile, "        /* %s.%d */ ", DLLName, i );
+            fprintf( outfile, "EP( %s, %d /* %s_%s_%s */ ),\n",
                               odp->u.func.link_name,
-                              DLLName,
+                              (type-typelist)*sizeof(CALLFROM16) - 
+                              (code_offset + sizeof(ENTRYPOINT16)),
                               (odp->type == TYPE_CDECL) ? "c" : "p",
                               (odp->type == TYPE_REGISTER) ? "regs" :
                               (odp->type == TYPE_INTERRUPT) ? "intr" :
@@ -1444,13 +1494,7 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
 	}
     }
 
-    if (!code_offset)  /* Make sure the code segment is not empty */
-    {
-        fprintf( outfile, "    { },\n" );
-        code_offset += sizeof(ENTRYPOINT16);
-    }
-
-    fprintf( outfile, "};\n" );
+    fprintf( outfile, "    }\n};\n" );
 
     /* Output data segment */
 
@@ -1466,7 +1510,7 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
     fprintf( outfile, "    \"%s\",\n", DLLName );
     fprintf( outfile, "    Module,\n" );
     fprintf( outfile, "    sizeof(Module),\n" );
-    fprintf( outfile, "    (BYTE *)Code_Segment,\n" );
+    fprintf( outfile, "    (BYTE *)&Code_Segment,\n" );
     fprintf( outfile, "    (BYTE *)Data_Segment\n" );
     fprintf( outfile, "};\n" );
     
@@ -1507,65 +1551,45 @@ static int BuildSpecFile( FILE *outfile, char *specname )
 /*******************************************************************
  *         BuildCallFrom16Func
  *
- * Build a 16-bit-to-Wine callback glue function. The syntax of the function
- * profile is: call_type_xxxxx, where 'call' is the letter 'c' or 'p' for C or
- * Pascal calling convention, 'type' is one of 'regs', 'intr', 'word' or
- * 'long' and each 'x' is an argument ('w'=word, 's'=signed word,
- * 'l'=long, 'p'=linear pointer, 't'=linear pointer to null-terminated string,
+ * Build a 16-bit-to-Wine callback glue function. 
+ *
+ * The generated routines are intended to be used as argument conversion 
+ * routines to be called by the CallFrom16... core. Thus, the prototypes of
+ * the generated routines are (see also CallFrom16):
+ *
+ *  extern WORD WINAPI PREFIX_CallFrom16_C_word_xxx( FARPROC func, LPBYTE args );
+ *  extern LONG WINAPI PREFIX_CallFrom16_C_long_xxx( FARPROC func, LPBYTE args );
+ *  extern void WINAPI PREFIX_CallFrom16_C_regs_xxx( FARPROC func, LPBYTE args, 
+ *                                                   CONTEXT86 *context );
+ *  extern void WINAPI PREFIX_CallFrom16_C_intr_xxx( FARPROC func, LPBYTE args, 
+ *                                                   CONTEXT86 *context );
+ *
+ * where 'C' is the calling convention ('p' for pascal or 'c' for cdecl), 
+ * and each 'x' is an argument  ('w'=word, 's'=signed word, 'l'=long, 
+ * 'p'=linear pointer, 't'=linear pointer to null-terminated string,
  * 'T'=segmented pointer to null-terminated string).
+ *
+ * The generated routines fetch the arguments from the 16-bit stack (pointed
+ * to by 'args'); the offsets of the single argument values are computed 
+ * according to the calling convention and the argument types.  Then, the
+ * 32-bit entry point is called with these arguments.
+ * 
  * For register functions, the arguments (if present) are converted just
- * the same as for normal functions, but in addition a CONTEXT pointer 
+ * the same as for normal functions, but in addition the CONTEXT86 pointer 
  * filled with the current register values is passed to the 32-bit routine.
- * A 'intr' interrupt handler routine is treated like a register routine
- * without arguments, except that upon return, the flags word pushed onto
- * the stack by the interrupt is removed.
+ * (An 'intr' interrupt handler routine is treated exactly like a register 
+ * routine, except that upon return, the flags word pushed onto the stack 
+ * by the interrupt is removed by the 16-bit call stub.)
  *
- * This glue function contains only that part of the 16->32 thunk that is
- * variable (depending on the type and number of arguments); the glue routine
- * is part of a particular DLL and uses a routine provided by the core to
- * perform those actions that do not depend on the argument type.
- *
- * The 16->32 glue routine consists of a main entry point (which must be part
- * of the ELF .data section) and two auxillary routines (in the .text section).
- * The main entry point pushes address of the 'Thunk' auxillary routine onto
- * the stack and then jumps to the appropriate core CallFrom16... routine.
- * Furthermore, at a fixed position relative to the main entry point, the 
- * function profile string is stored if relay debugging is active; this string
- * will be consulted by the debugging routines in the core to correctly 
- * display the arguments.
- *
- * The core will perform the switch to 32-bit, and then call back to the 
- * 'Thunk' auxillary routine.  This routine is expected to perform the
- * following tasks:
- *   - modify the auxillary routine address in the STACK16FRAME to now
- *     point to the 'ThunkRet' routine
- *   - convert arguemnts and push them onto the 32-bit stack
- *   - call the 32-bit target routine
- *
- * After the target routine (and then the 'Thunk' routine) have returned,
- * the core part will switch back to 16-bit, and finally jump to the 
- * 'ThunkRet' auxillary routine.  This routine is expected to convert the
- * return value if necessary (%eax -> %dx:%ax), and perform the appropriate
- * return to the 16-bit caller (lret or lret $argsize).
- *
- * In the case of a 'register' routine, there is no 'ThunkRet' auxillary
- * routine, as the reloading of all registers and return to 16-bit code
- * is done by the core routine.  The number of arguments to be popped off
- * the caller's stack must be returned (in %eax) by the 'Thunk' routine.
- *
- * NOTE: The generated routines contain only proper position-independent 
- *       code and may thus be used within shared objects (e.g. libwine.so 
- *       or elfdlls).  The exception is the main entry point, which must
- *       contain absolute relocations but cannot yet use the GOT; thus 
- *       this entry point is made part of the ELF .data section.
  */
-static void BuildCallFrom16Func( FILE *outfile, char *profile, char *prefix )
+static void BuildCallFrom16Func( FILE *outfile, char *profile, char *prefix, int local )
 {
     int i, pos, argsize = 0;
     int short_ret = 0;
     int reg_func = 0;
     int usecdecl = 0;
     char *args = profile + 7;
+    char *ret_type;
 
     /* Parse function type */
 
@@ -1601,167 +1625,96 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile, char *prefix )
             break;
         }
 
-    /* 
-     * Build main entry point (in .data section) 
-     *
-     * NOTE: If you change this, you must also change the retrieval of
-     *       the profile string relative to the main entry point address
-     *       (see BUILTIN_GetEntryPoint16 in if1632/builtin.c).
-     */
-    fprintf( outfile, "\t.data\n" );
-    fprintf( outfile, "\t.globl " PREFIX "%s_CallFrom16_%s\n", prefix, profile );
-    fprintf( outfile, PREFIX "%s_CallFrom16_%s:\n", prefix, profile );
-    fprintf( outfile, "\tpushl $.L%s_Thunk_%s\n", prefix, profile );
-    fprintf( outfile, "\tjmp " PREFIX "%s\n", 
-             !reg_func? "CallFrom16" : "CallFrom16Register" );
-    if ( debugging )
-        fprintf( outfile, "\t" STRING " \"%s\\0\"\n", profile );
+    ret_type = reg_func? "void" : short_ret? "WORD" : "LONG";
 
-    /* 
-     * Build *Thunk* routine 
-     *
-     *    This routine gets called by the main CallFrom16 routine with 
-     *    registers set up as follows:
-     *
-     *        STACK16FRAME is completely set up on the 16-bit stack
-     *        DS, ES, SS: flat data segment
-     *        FS: current TEB
-     *        ESP: points to 32-bit stack
-     *        EBP: points to ebp member of last STACK32FRAME
-     *        EDX: points to current STACK16FRAME
-     *        ECX: points to ldt_copy
-     */
+    fprintf( outfile, "%s%s WINAPI %s_CallFrom16_%s( FARPROC proc, LPBYTE args%s )\n{\n",
+             local? "static " : "", ret_type, prefix, profile,
+             reg_func? ", struct _CONTEXT86 *context" : "" );
 
-    fprintf( outfile, "\t.text\n" );
-    fprintf( outfile, ".L%s_Thunk_%s:\n", prefix, profile );
-
-    if ( reg_func )
-        fprintf( outfile, "\tleal 4(%%esp), %%eax\n"
-                          "\tpushl %%eax\n" );
-    else
-        fprintf( outfile, "\taddl $[.L%s_ThunkRet_%s - .L%s_Thunk_%s], %d(%%edx)\n",
-                          prefix, profile, prefix, profile, 
-                          STACK16OFFSET(relay));
-
-    /* Copy the arguments */
-    pos = (usecdecl? argsize : 0) + sizeof( STACK16FRAME );
+    fprintf( outfile, "    %s((%s WINAPI (*)( ", 
+             reg_func? "" : "return ", ret_type );
     args = profile + 7;
-    for ( i = strlen(args)-1; i >= 0; i-- )
+    for ( i = 0; args[i]; i++ )
+    {
+        if ( i ) fprintf( outfile, ", " );
+        switch (args[i])
+        {
+        case 'w':           fprintf( outfile, "WORD" ); break;
+        case 's':           fprintf( outfile, "INT16" ); break;
+        case 'l': case 'T': fprintf( outfile, "LONG" ); break;
+        case 'p': case 't': fprintf( outfile, "LPVOID" ); break;
+        }
+    }
+    if ( reg_func )
+        fprintf( outfile, "%sstruct _CONTEXT86 *", i? ", " : "" );
+    else if ( !i )
+        fprintf( outfile, "void" );
+    fprintf( outfile, " )) proc) (\n" );
+    args = profile + 7;
+    pos = !usecdecl? argsize : 0;
+    for ( i = 0; args[i]; i++ )
+    {
+        if ( i ) fprintf( outfile, ",\n" );
+        fprintf( outfile, "        " );
         switch (args[i])
         {
         case 'w':  /* word */
-            if (  usecdecl ) pos -= 2;
-            fprintf( outfile, "\tmovzwl %d(%%edx),%%eax\n", pos );
-            fprintf( outfile, "\tpushl %%eax\n" );
-            if ( !usecdecl ) pos += 2;
+            if ( !usecdecl ) pos -= 2;
+            fprintf( outfile, "*(WORD *)(args+%d)", pos );
+            if (  usecdecl ) pos += 2;
             break;
 
         case 's':  /* s_word */
-            if (  usecdecl ) pos -= 2;
-            fprintf( outfile, "\tmovswl %d(%%edx),%%eax\n", pos );
-            fprintf( outfile, "\tpushl %%eax\n" );
-            if ( !usecdecl ) pos += 2;
+            if ( !usecdecl ) pos -= 2;
+            fprintf( outfile, "*(INT16 *)(args+%d)", pos );
+            if (  usecdecl ) pos += 2;
             break;
 
         case 'l':  /* long or segmented pointer */
         case 'T':  /* segmented pointer to null-terminated string */
-            if (  usecdecl ) pos -= 4;
-            fprintf( outfile, "\tpushl %d(%%edx)\n", pos );
-            if ( !usecdecl ) pos += 4;
+            if ( !usecdecl ) pos -= 4;
+            fprintf( outfile, "*(LONG *)(args+%d)", pos );
+            if (  usecdecl ) pos += 4;
             break;
 
         case 'p':  /* linear pointer */
         case 't':  /* linear pointer to null-terminated string */
-            if (  usecdecl ) pos -= 4;
-            /* Get the selector */
-            fprintf( outfile, "\tmovzwl %d(%%edx),%%eax\n", pos + 2 );
-            /* Get the selector base */
-            fprintf( outfile, "\tandl $0xfff8,%%eax\n" );
-            fprintf( outfile, "\tpushl (%%ecx,%%eax)\n" );
-            /* Add the offset */
-            fprintf( outfile, "\tmovzwl %d(%%edx),%%eax\n", pos );
-            fprintf( outfile, "\taddl %%eax,(%%esp)\n" );
-            if ( !usecdecl ) pos += 4;
+            if ( !usecdecl ) pos -= 4;
+            fprintf( outfile, "PTR_SEG_TO_LIN( *(SEGPTR *)(args+%d) )", pos );
+            if (  usecdecl ) pos += 4;
             break;
 
         default:
             fprintf( stderr, "Unknown arg type '%c'\n", args[i] );
         }
-
-    /* Call entry point */
-    fprintf( outfile, "\tcall *%d(%%edx)\n", STACK16OFFSET(entry_point) );
-
-    if ( reg_func )
-        fprintf( outfile, "\tmovl $%d, %%eax\n", reg_func == 2 ? 2 : argsize );
-
-    fprintf( outfile, "\tret\n" );
-
-
-    /* 
-     * Build *ThunkRet* routine 
-     * 
-     *    At this point, all registers are set up for return to 16-bit code.
-     *    EAX contains the function return value.
-     *    SS:SP point to the return address to the caller (on 16-bit stack).
-     */
-    if ( !reg_func )
-    {
-        fprintf( outfile,  ".L%s_ThunkRet_%s:\n", prefix, profile );
-
-        if ( !short_ret )
-            fprintf( outfile, "\tshldl $16, %%eax, %%edx\n" );
-
-        if ( !usecdecl && argsize )
-        {
-            fprintf( outfile, "\t.byte 0x66\n" );
-            fprintf( outfile, "\tlret $%d\n", argsize );
-        }
-        else
-        {
-            fprintf( outfile, "\t.byte 0x66\n" );
-            fprintf( outfile, "\tlret\n" );
-        }
     }
-    fprintf( outfile, "\n" );
+    if ( reg_func )
+        fprintf( outfile, "%s        context", i? ",\n" : "" );
+    fprintf( outfile, " );\n}\n\n" );
 }
 
 /*******************************************************************
  *         BuildCallTo16Func
  *
- * Build a Wine-to-16-bit callback glue function.  As above, this glue
- * routine will only contain the argument-type dependent part of the
- * thunk; the rest will be done by a routine provided by the core.
+ * Build a Wine-to-16-bit callback glue function. 
  *
  * Prototypes for the CallTo16 functions:
- *   extern WORD PREFIX_CallTo16_word_xxx( FARPROC16 func, args... );
- *   extern LONG PREFIX_CallTo16_long_xxx( FARPROC16 func, args... );
+ *   extern WORD CALLBACK PREFIX_CallTo16_word_xxx( FARPROC16 func, args... );
+ *   extern LONG CALLBACK PREFIX_CallTo16_long_xxx( FARPROC16 func, args... );
  * 
- * The main entry point of the glue routine simply performs a call to
- * the proper core routine depending on the return type (WORD/LONG).
- * Note that the core will never perform a return from this call; however,
- * it will use the return address on the stack to access the other 
- * argument-type dependent parts of the thunk.  (If relay debugging is
- * active, the core routine will access the number of arguments stored
- * in the code section immediately precending the main entry point).
- * 
- * After the core routine has performed the switch to 16-bit code, it
- * will call the argument-transfer routine provided by the glue code
- * immediately after the main entry point.  This routine is expected
- * to transfer the arguments to the 16-bit stack, finish loading the
- * register for 16-bit code (%ds and %es must be loaded from %ss),
- * and call the 16-bit target.  
+ * These routines are provided solely for convenience; they simply
+ * write the arguments onto the 16-bit stack, and call the appropriate
+ * CallTo16... core routine.
  *
- * The target will return to a 16:16 return address provided by the core.
- * The core will finalize the switch back to 32-bit and the return to
- * the caller without additional support by the glue code.  Note that
- * the 32-bit arguments will not be popped off the stack (hence the 
- * CallTo... routine must *not* be declared WINAPI/CALLBACK).
+ * If you have more sophisticated argument conversion requirements than
+ * are provided by these routines, you might as well call the core 
+ * routines by yourself.
  *
  */
 static void BuildCallTo16Func( FILE *outfile, char *profile, char *prefix )
 {
     char *args = profile + 5;
-    int pos, short_ret = 0;
+    int i, argsize = 0, short_ret = 0;
 
     if (!strncmp( "word_", profile, 5 )) short_ret = 1;
     else if (strncmp( "long_", profile, 5 ))
@@ -1770,88 +1723,40 @@ static void BuildCallTo16Func( FILE *outfile, char *profile, char *prefix )
         exit(1);
     }
 
-    if ( debugging )
+    fprintf( outfile, "%s %s_CallTo16_%s( FARPROC16 proc",
+             short_ret? "WORD" : "LONG", prefix, profile );
+    args = profile + 5;
+    for ( i = 0; args[i]; i++ )
     {
-        /* Number of arguments (for relay debugging) */
-        fprintf( outfile, "\n\t.align 4\n" );
-        fprintf( outfile, "\t.long %d\n", strlen(args) );
-    }
-
-    /* Main entry point */
-
-#ifdef USE_STABS
-    fprintf( outfile, ".stabs \"%s_CallTo16_%s:F1\",36,0,0," PREFIX "%s_CallTo16_%s\n", 
-	     prefix, profile, prefix, profile);
-#endif
-    fprintf( outfile, "\t.globl " PREFIX "%s_CallTo16_%s\n", prefix, profile );
-    fprintf( outfile, PREFIX "%s_CallTo16_%s:\n", prefix, profile );
-
-    if ( short_ret )
-        fprintf( outfile, "\tcall " PREFIX "CallTo16Word\n" );
-    else
-        fprintf( outfile, "\tcall " PREFIX "CallTo16Long\n" );
-
-    /* Return to caller (using STDCALL calling convention) */
-    if ( strlen( args ) > 0 )
-        fprintf( outfile, "\tret $%d\n", strlen( args ) * 4 );
-    else
-    {
-        fprintf( outfile, "\tret\n" );
-
-        /* Note: the arg transfer routine must start exactly three bytes
-                 after the return stub, hence the nop's */
-        fprintf( outfile, "\tnop\n" );
-        fprintf( outfile, "\tnop\n" );
-    }
-
-    /* 
-     * The core routine will call here with registers set up as follows:
-     *
-     *     SS:SP points to the 16-bit stack
-     *     SS:BP points to the bp member of last STACK16FRAME
-     *     EDX   points to the current STACK32FRAME
-     *     ECX   contains the 16:16 return address
-     *     FS    contains the last 16-bit %fs value
-     */
-
-    /* Transfer the arguments */
-
-    pos = STACK32OFFSET(args) + 4;  /* first arg is target address */
-    while (*args)
-    {
-        switch (*args++)
+        fprintf( outfile, ", " );
+        switch (args[i])
         {
-        case 'w': /* word */
-            fprintf( outfile, "\tpushw %d(%%edx)\n", pos );
-            break;
-        case 'l': /* long */
-            fprintf( outfile, "\tpushl %d(%%edx)\n", pos );
-            break;
-        default:
-            fprintf( stderr, "Unexpected case '%c' in BuildCallTo16Func\n",
-                             args[-1] );
+        case 'w': fprintf( outfile, "WORD" ); argsize += 2; break;
+        case 'l': fprintf( outfile, "LONG" ); argsize += 4; break;
         }
-        pos += 4;
+        fprintf( outfile, " arg%d", i+1 );
+    }
+    fprintf( outfile, " )\n{\n" );
+
+    if ( argsize > 0 )
+        fprintf( outfile, "    LPBYTE args = (LPBYTE)CURRENT_STACK16;\n" );
+
+    args = profile + 5;
+    for ( i = 0; args[i]; i++ )
+    {
+        fprintf( outfile, "    *--(" );
+        switch (args[i])
+        {
+        case 'w': fprintf( outfile, "WORD" ); break;
+        case 'l': fprintf( outfile, "LONG" ); break;
+        default:  fprintf( stderr, "Unexpected case '%c' in BuildCallTo16Func\n",
+                                   args[i] );
+        }
+        fprintf( outfile, " *)args = arg%d;\n", i+1 );
     }
 
-    /* Push the return address */
-
-    fprintf( outfile, "\tpushl %%ecx\n" );
-
-    /* Push the called routine address */
-
-    fprintf( outfile, "\tpushl %d(%%edx)\n", STACK32OFFSET(args) );
-
-    /* Set %ds and %es (and %ax just in case) equal to %ss */
-
-    fprintf( outfile, "\tmovw %%ss,%%ax\n" );
-    fprintf( outfile, "\tmovw %%ax,%%ds\n" );
-    fprintf( outfile, "\tmovw %%ax,%%es\n" );
-
-    /* Jump to the called routine */
-
-    fprintf( outfile, "\t.byte 0x66\n" );
-    fprintf( outfile, "\tlret\n" );
+    fprintf( outfile, "    return CallTo16%s( proc, %d );\n}\n\n",
+             short_ret? "Word" : "Long", argsize );
 }
 
 
@@ -1860,12 +1765,40 @@ static void BuildCallTo16Func( FILE *outfile, char *profile, char *prefix )
  *         BuildCallFrom16Core
  *
  * This routine builds the core routines used in 16->32 thunks:
- * CallFrom16, CallFrom16Register, and CallFrom16Thunk.
+ * CallFrom16Word, CallFrom16Long, CallFrom16Register, and CallFrom16Thunk.
  *
- * CallFrom16 and CallFrom16Register are used by the 16->32 glue code
- * as described above.  CallFrom16Thunk is a special variant used by
- * the implementation of the Win95 16->32 thunk functions C16ThkSL and 
- * C16ThkSL01 and is implemented as follows:
+ * These routines are intended to be called via a far call (with 32-bit
+ * operand size) from 16-bit code.  The 16-bit code stub must push %bp,
+ * the 32-bit entry point to be called, and the argument conversion 
+ * routine to be used (see stack layout below).  
+ *
+ * The core routine completes the STACK16FRAME on the 16-bit stack and
+ * switches to the 32-bit stack.  Then, the argument conversion routine 
+ * is called; it gets passed the 32-bit entry point and a pointer to the 
+ * 16-bit arguments (on the 16-bit stack) as parameters. (You can either 
+ * use conversion routines automatically generated by BuildCallFrom16, 
+ * or write your own for special purposes.)
+ * 
+ * The conversion routine must call the 32-bit entry point, passing it
+ * the converted arguments, and return its return value to the core.  
+ * After the conversion routine has returned, the core switches back
+ * to the 16-bit stack, converts the return value to the DX:AX format
+ * (CallFrom16Long), and returns to the 16-bit call stub.  All parameters,
+ * including %bp, are popped off the stack.
+ *
+ * The 16-bit call stub now returns to the caller, popping the 16-bit
+ * arguments if necessary (pascal calling convention).
+ *
+ * In the case of a 'register' function, CallFrom16Register fills a
+ * CONTEXT86 structure with the values all registers had at the point
+ * the first instruction of the 16-bit call stub was about to be 
+ * executed.  A pointer to this CONTEXT86 is passed as third parameter 
+ * to the argument conversion routine, which typically passes it on
+ * to the called 32-bit entry point.
+ *
+ * CallFrom16Thunk is a special variant used by the implementation of 
+ * the Win95 16->32 thunk functions C16ThkSL and C16ThkSL01 and is 
+ * implemented as follows:
  * On entry, the EBX register is set up to contain a flat pointer to the
  * 16-bit stack such that EBX+22 points to the first argument.
  * Then, the entry point is called, while EBP is set up to point
@@ -1875,14 +1808,15 @@ static void BuildCallTo16Func( FILE *outfile, char *profile, char *prefix )
  *
  * Stack layout upon entry to the core routine (STACK16FRAME):
  *  ...           ...
- * (sp+22) word   first 16-bit arg
- * (sp+20) word   cs
- * (sp+18) word   ip
- * (sp+16) word   bp
- * (sp+12) long   32-bit entry point (reused for Win16 mutex recursion count)
- * (sp+8)  long   cs of 16-bit entry point
- * (sp+4)  long   ip of 16-bit entry point
- * (sp)    long   auxillary relay function address
+ * (sp+24) word   first 16-bit arg
+ * (sp+22) word   cs
+ * (sp+20) word   ip
+ * (sp+18) word   bp
+ * (sp+14) long   32-bit entry point (reused for Win16 mutex recursion count)
+ * (sp+12) word   ip of actual entry point (necessary for relay debugging)
+ * (sp+8)  long   relay (argument conversion) function entry point
+ * (sp+4)  long   cs of 16-bit entry point
+ * (sp)    long   ip of 16-bit entry point
  *
  * Added on the stack:
  * (sp-2)  word   saved gs
@@ -1894,9 +1828,9 @@ static void BuildCallTo16Func( FILE *outfile, char *profile, char *prefix )
  * (sp-20) long   saved edx
  * (sp-24) long   saved previous stack
  */
-static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
+static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int short_ret )
 {
-    char *name = thunk? "Thunk" : reg_func? "Register" : "";
+    char *name = thunk? "Thunk" : reg_func? "Register" : short_ret? "Word" : "Long";
 
     /* Function header */
     fprintf( outfile, "\n\t.align 4\n" );
@@ -1906,10 +1840,6 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
 #endif
     fprintf( outfile, "\t.globl " PREFIX "CallFrom16%s\n", name );
     fprintf( outfile, PREFIX "CallFrom16%s:\n", name );
-
-    /* No relay function for 'thunk' */
-    if ( thunk )
-        fprintf( outfile, "\tpushl $0\n" );
 
     /* Create STACK16FRAME (except STACK32FRAME link) */
     fprintf( outfile, "\tpushw %%gs\n" );
@@ -2009,7 +1939,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
         fprintf( outfile, "\tpopw %%es\n" );
         fprintf( outfile, "\tpopw %%fs\n" );
         fprintf( outfile, "\tpopw %%gs\n" );
-        fprintf( outfile, "\taddl $18, %%esp\n" );
+        fprintf( outfile, "\taddl $20, %%esp\n" );
 
         fprintf( outfile, "\txorb %%ch, %%ch\n" );
         fprintf( outfile, "\tpopl %%ebx\n" );
@@ -2065,6 +1995,9 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
 #if 0
         fprintf( outfile, "\tfsave %d(%%esp)\n", CONTEXTOFFSET(FloatSave) );
 #endif
+
+        /* Push address of CONTEXT86 structure -- popped by the relay routine */
+        fprintf( outfile, "\tpushl %%esp\n" );
     }
 
 
@@ -2082,7 +2015,6 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
             fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.LCallFrom16%s.getgot2], %%ebx\n", name );
         }
 
-        fprintf( outfile, "\tpushl %%ecx\n" );
         fprintf( outfile, "\tpushl %%edx\n" );
         if ( reg_func )
             fprintf( outfile, "\tleal -%d(%%ebp), %%eax\n\tpushl %%eax\n",
@@ -2097,14 +2029,16 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
 
         fprintf( outfile, "\tpopl %%edx\n" );
         fprintf( outfile, "\tpopl %%edx\n" );
-        fprintf( outfile, "\tpopl %%ecx\n" );
 
         if ( UsePIC )
             fprintf( outfile, "\tpopl %%ebx\n" );
     }
 
-    /* Call *Thunk* relay routine (which will call the API entry point) */
-    fprintf( outfile, "\tcall *%d(%%edx)\n",  STACK16OFFSET(relay) );
+    /* Call relay routine (which will call the API entry point) */
+    fprintf( outfile, "\tleal %d(%%edx), %%eax\n", sizeof(STACK16FRAME) );
+    fprintf( outfile, "\tpushl %%eax\n" );
+    fprintf( outfile, "\tpushl %d(%%edx)\n", STACK16OFFSET(entry_point) );
+    fprintf( outfile, "\tcall *%d(%%edx)\n", STACK16OFFSET(relay) );
 
     /* Print debug info after call */
     if ( debugging )
@@ -2149,13 +2083,20 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
         fprintf( outfile, "\t.byte 0x64,0x66,0x0f,0xb2,0x25\n\t.long %d\n", STACKOFFSET );
         fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
 
+        /* Get return address to CallFrom16 stub */
+        fprintf( outfile, "\taddw $%d, %%sp\n", STACK16OFFSET(callfrom_ip)-4 );
+        fprintf( outfile, "\tpopl %%eax\n" );
+        fprintf( outfile, "\tpopl %%edx\n" );
+
         /* Restore all registers from CONTEXT */
         fprintf( outfile, "\tmovw %d(%%ebx), %%ss\n", CONTEXTOFFSET(SegSs) );
         fprintf( outfile, "\tmovl %d(%%ebx), %%esp\n", CONTEXTOFFSET(Esp) );
-        fprintf( outfile, "\tleal 4(%%esp, %%eax), %%esp\n" );
+        fprintf( outfile, "\taddl $4, %%esp\n" );  /* room for final return address */
 
         fprintf( outfile, "\tpushw %d(%%ebx)\n", CONTEXTOFFSET(SegCs) );
         fprintf( outfile, "\tpushw %d(%%ebx)\n", CONTEXTOFFSET(Eip) );
+        fprintf( outfile, "\tpushl %%edx\n" );
+        fprintf( outfile, "\tpushl %%eax\n" );
         fprintf( outfile, "\tpushl %d(%%ebx)\n", CONTEXTOFFSET(EFlags) );
         fprintf( outfile, "\tpushl %d(%%ebx)\n", CONTEXTOFFSET(SegDs) );
 
@@ -2173,7 +2114,6 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
   
         fprintf( outfile, "\tpopl %%ds\n" );
         fprintf( outfile, "\tpopfl\n" );
-        fprintf( outfile, "\t.byte 0x66\n" );
         fprintf( outfile, "\tlret\n" );
     }
     else
@@ -2183,10 +2123,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
         fprintf( outfile, "\t.byte 0x64,0x66,0x0f,0xb2,0x25\n\t.long %d\n", STACKOFFSET );
         fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
 
-        /* Set flags according to return value */
-        fprintf( outfile, "\torl %%eax, %%eax\n" );
-
-        /* Restore registers and return to *ThunkRet* routine */
+        /* Restore registers */
         fprintf( outfile, "\tpopl %%edx\n" );
         fprintf( outfile, "\tpopl %%ecx\n" );
         fprintf( outfile, "\tpopl %%ebp\n" );
@@ -2194,7 +2131,14 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
         fprintf( outfile, "\tpopw %%es\n" );
         fprintf( outfile, "\tpopw %%fs\n" );
         fprintf( outfile, "\tpopw %%gs\n" );
-        fprintf( outfile, "\tret $14\n" );
+
+        /* Prepare return value and set flags accordingly */
+        if ( !short_ret )
+            fprintf( outfile, "\tshldl $16, %%eax, %%edx\n" );
+        fprintf( outfile, "\torl %%eax, %%eax\n" );
+
+        /* Return to return stub which will return to caller */
+        fprintf( outfile, "\tlret $12\n" );
     }
 }
   
@@ -2203,18 +2147,28 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
  *         BuildCallTo16Core
  *
  * This routine builds the core routines used in 32->16 thunks:
- * CallTo16Word, CallTo16Long, CallTo16RegisterShort, and 
- * CallTo16RegisterLong.
  *
- * CallTo16Word and CallTo16Long are used by the 32->16 glue code
- * as described above.  The register functions can be called directly:
- *
+ *   extern void CALLBACK CallTo16Word( SEGPTR target, int nb_args );
+ *   extern void CALLBACK CallTo16Long( SEGPTR target, int nb_args );
  *   extern void CALLBACK CallTo16RegisterShort( const CONTEXT86 *context, int nb_args );
  *   extern void CALLBACK CallTo16RegisterLong ( const CONTEXT86 *context, int nb_args );
  *
- * They call to 16-bit code with all registers except SS:SP set up as specified 
- * by the 'context' structure, and SS:SP set to point to the current 16-bit
- * stack, decremented by the value specified in the 'nb_args' argument.
+ * These routines can be called directly from 32-bit code. 
+ *
+ * All routines expect that the 16-bit stack contents (arguments) were 
+ * already set up by the caller; nb_args must contain the number of bytes 
+ * to be conserved.  The 16-bit SS:SP will be set accordinly.
+ *
+ * All other registers are either taken from the CONTEXT86 structure 
+ * or else set to default values.  The target routine address is either
+ * given directly or taken from the CONTEXT86.
+ *
+ * If you want to call a 16-bit routine taking only standard argument types 
+ * (WORD and LONG), you can also have an appropriate argument conversion 
+ * stub automatically generated (see BuildCallTo16); you'd then call this
+ * stub, which in turn would prepare the 16-bit stack and call the appropiate
+ * core routine.
+ *
  */
 
 static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
@@ -2231,10 +2185,6 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
 #endif
     fprintf( outfile, "\t.globl " PREFIX "CallTo16%s\n", name );
     fprintf( outfile, PREFIX "CallTo16%s:\n", name );
-
-    /* No relay stub for 'register' functions */
-    if ( reg_func )
-        fprintf( outfile, "\tpushl $0\n" );
 
     /* Function entry sequence */
     fprintf( outfile, "\tpushl %%ebp\n" );
@@ -2256,13 +2206,6 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
         fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.LCallTo16%s.getgot1], %%ebx\n", name );
     }
 
-    /* Move relay target address to %edi */
-    if ( !reg_func )
-    {
-        fprintf( outfile, "\tmovl 4(%%ebp), %%edi\n" );
-        fprintf( outfile, "\taddl $3, %%edi\n" );
-    }
-
     /* Enter Win16 Mutex */
     if ( UsePIC )
         fprintf( outfile, "\tcall " PREFIX "SYSLEVEL_EnterWin16Lock@PLT\n" );
@@ -2272,23 +2215,17 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
     /* Print debugging info */
     if (debugging)
     {
-        /* Push number of arguments (from relay stub) */
-        if ( reg_func )
-            fprintf( outfile, "\tpushl $-1\n" );
-        else
-            fprintf( outfile, "\tpushl -12(%%edi)\n" );
-
-        /* Push the address of the first argument */
-        fprintf( outfile, "\tleal 12(%%ebp),%%eax\n" );
-        fprintf( outfile, "\tpushl %%eax\n" );
+        /* Push flags, number of arguments, and target */
+        fprintf( outfile, "\tpushl $%d\n", reg_func );
+        fprintf( outfile, "\tpushl 12(%%ebp)\n" );
+        fprintf( outfile, "\tpushl  8(%%ebp)\n" );
 
         if ( UsePIC )
             fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallTo16@PLT\n" );
         else
             fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallTo16\n" );
 
-        fprintf( outfile, "\tpopl %%eax\n" );
-        fprintf( outfile, "\tpopl %%eax\n" );
+        fprintf( outfile, "\taddl $12, %%esp\n" );
     }
 
     /* Get return address */
@@ -2352,14 +2289,7 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
 
     /* Function exit sequence */
     fprintf( outfile, "\tpopl %%ebp\n" );
-
-    if ( !reg_func )
-        fprintf( outfile, "\tret\n" );   /* return to relay return stub */
-    else
-    {
-        fprintf( outfile, "\taddl $4, %%esp\n" );
-        fprintf( outfile, "\tret $8\n" );
-    }
+    fprintf( outfile, "\tret $8\n" );
 
 
     /* Start of the actual CallTo16 routine */
@@ -2378,28 +2308,32 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
     fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%sp\n", STACKOFFSET );
     fprintf( outfile, "\t.byte 0x64\n\tmovl %%edx,(%d)\n", STACKOFFSET );
 
+    /* Make %bp point to the previous stackframe (built by CallFrom16) */
+    fprintf( outfile, "\tmovzwl %%sp,%%ebp\n" );
+    fprintf( outfile, "\tleal %d(%%ebp),%%ebp\n", STACK16OFFSET(bp) );
+
+    /* Add the specified offset to the new sp */
+    fprintf( outfile, "\tsubw %d(%%edx), %%sp\n", STACK32OFFSET(nb_args) );
+
+    /* Push the return address 
+     * With sreg suffix, we push 16:16 address (normal lret)
+     * With lreg suffix, we push 16:32 address (0x66 lret, for KERNEL32_45)
+     */
+    if (reg_func != 2)
+        fprintf( outfile, "\tpushl %%ecx\n" );
+    else 
+    {
+        fprintf( outfile, "\tshldl $16, %%ecx, %%eax\n" );
+        fprintf( outfile, "\tpushw $0\n" );
+        fprintf( outfile, "\tpushw %%ax\n" );
+        fprintf( outfile, "\tpushw $0\n" );
+        fprintf( outfile, "\tpushw %%cx\n" );
+    }
+
     if (reg_func)
     {
-        /* Add the specified offset to the new sp */
-        fprintf( outfile, "\tsubw %d(%%edx), %%sp\n", STACK32OFFSET(args)+4 );
-
-        /* Push the return address 
-	 * With sreg suffix, we push 16:16 address (normal lret)
-	 * With lreg suffix, we push 16:32 address (0x66 lret, for KERNEL32_45)
-	 */
-	if (reg_func == 1)
-	    fprintf( outfile, "\tpushl %%ecx\n" );
-	else 
-	{
-            fprintf( outfile, "\tshldl $16, %%ecx, %%eax\n" );
-	    fprintf( outfile, "\tpushw $0\n" );
-	    fprintf( outfile, "\tpushw %%ax\n" );
-	    fprintf( outfile, "\tpushw $0\n" );
-	    fprintf( outfile, "\tpushw %%cx\n" );
-	}
-
         /* Push the called routine address */
-        fprintf( outfile, "\tmovl %d(%%edx),%%edx\n", STACK32OFFSET(args) );
+        fprintf( outfile, "\tmovl %d(%%edx),%%edx\n", STACK32OFFSET(target) );
         fprintf( outfile, "\tpushw %d(%%edx)\n", CONTEXTOFFSET(SegCs) );
         fprintf( outfile, "\tpushw %d(%%edx)\n", CONTEXTOFFSET(Eip) );
 
@@ -2419,24 +2353,25 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
 
         /* Get the 16-bit ds */
         fprintf( outfile, "\tpopw %%ds\n" );
-
-        /* Jump to the called routine */
-        fprintf( outfile, "\t.byte 0x66\n" );
-        fprintf( outfile, "\tlret\n" );
     }
     else  /* not a register function */
     {
-        /* Make %bp point to the previous stackframe (built by CallFrom16) */
-        fprintf( outfile, "\tmovzwl %%sp,%%ebp\n" );
-        fprintf( outfile, "\tleal %d(%%ebp),%%ebp\n", STACK16OFFSET(bp) );
+        /* Push the called routine address */
+        fprintf( outfile, "\tpushl %d(%%edx)\n", STACK32OFFSET(target) );
 
         /* Set %fs to the value saved by the last CallFrom16 */
         fprintf( outfile, "\tmovw %d(%%ebp),%%ax\n", STACK16OFFSET(fs)-STACK16OFFSET(bp) );
         fprintf( outfile, "\tmovw %%ax,%%fs\n" );
 
-        /* Jump to the relay code */
-        fprintf( outfile, "\tjmp *%%edi\n" );
+        /* Set %ds and %es (and %ax just in case) equal to %ss */
+        fprintf( outfile, "\tmovw %%ss,%%ax\n" );
+        fprintf( outfile, "\tmovw %%ax,%%ds\n" );
+        fprintf( outfile, "\tmovw %%ax,%%es\n" );
     }
+
+    /* Jump to the called routine */
+    fprintf( outfile, "\t.byte 0x66\n" );
+    fprintf( outfile, "\tlret\n" );
 }
 
 /*******************************************************************
@@ -3011,25 +2946,10 @@ static int BuildGlue( FILE *outfile, char * outname, int argc, char *argv[] )
 
     /* File header */
 
-    fprintf( outfile, "/* File generated automatically. Do not edit! */\n\n" );
-    fprintf( outfile, "\t.text\n" );
-
-#ifdef __i386__
-
-#ifdef USE_STABS
-    fprintf( outfile, "\t.file\t\"%s\"\n", outname );
-    getcwd(buffer, sizeof(buffer));
-
-    /*
-     * The stabs help the internal debugger as they are an indication that it
-     * is sensible to step into a thunk/trampoline.
-     */
-    fprintf( outfile, ".stabs \"%s/\",100,0,0,Code_Start\n", buffer);
-    fprintf( outfile, ".stabs \"%s\",100,0,0,Code_Start\n", outname);
-    fprintf( outfile, "\t.text\n" );
-    fprintf( outfile, "\t.align 4\n" );
-    fprintf( outfile, "Code_Start:\n\n" );
-#endif
+    fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n\n",
+             argc > 2? argv[2] : "<stdin>" );
+    fprintf( outfile, "#include \"builtin16.h\"\n" );
+    fprintf( outfile, "#include \"stackframe.h\"\n\n" );
 
     /* Build the callback glue functions */
 
@@ -3049,7 +2969,7 @@ static int BuildGlue( FILE *outfile, char * outname, int argc, char *argv[] )
             for (q = p-1; q > buffer && ((*q == '_') || isalnum(*q)); q-- )
                 ;
             if ( ++q < p ) p[-1] = '\0'; else q = "";
-            BuildCallFrom16Func( outfile, profile, q );
+            BuildCallFrom16Func( outfile, profile, q, FALSE );
         }
         if ( (p = strstr( buffer, "CallTo16_" )) != NULL )
         {
@@ -3064,20 +2984,6 @@ static int BuildGlue( FILE *outfile, char * outname, int argc, char *argv[] )
         }
         if (strstr( buffer, "### stop build ###" )) break;
     }
-
-
-#ifdef USE_STABS
-    fprintf( outfile, "\t.text\n");
-    fprintf( outfile, "\t.stabs \"\",100,0,0,.Letext\n");
-    fprintf( outfile, ".Letext:\n");
-#endif
-
-#else  /* __i386__ */
-
-    /* Just to avoid an empty file */
-    fprintf( outfile, "\t.long 0\n" );
-
-#endif  /* __i386__ */
 
     fclose( infile );
     return 0;
@@ -3120,14 +3026,17 @@ static int BuildCall16( FILE *outfile, char * outname )
     fprintf( outfile, "\t.byte 0\n\n" );
 
 
-    /* Standard CallFrom16 routine */
-    BuildCallFrom16Core( outfile, FALSE, FALSE );
+    /* Standard CallFrom16 routine (WORD return) */
+    BuildCallFrom16Core( outfile, FALSE, FALSE, TRUE );
+
+    /* Standard CallFrom16 routine (DWORD return) */
+    BuildCallFrom16Core( outfile, FALSE, FALSE, FALSE );
 
     /* Register CallFrom16 routine */
-    BuildCallFrom16Core( outfile, TRUE, FALSE );
+    BuildCallFrom16Core( outfile, TRUE, FALSE, FALSE );
 
     /* C16ThkSL CallFrom16 routine */
-    BuildCallFrom16Core( outfile, FALSE, TRUE );
+    BuildCallFrom16Core( outfile, FALSE, TRUE, FALSE );
 
     /* Standard CallTo16 routine (WORD return) */
     BuildCallTo16Core( outfile, TRUE, FALSE );
