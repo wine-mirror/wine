@@ -233,6 +233,17 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
     if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
         FIXME( "call to unimplemented function %s.%s\n",
                (char*)rec->ExceptionInformation[0], (char*)rec->ExceptionInformation[1] );
+#ifdef __i386__
+    else
+    {
+        TRACE(" eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n",
+              context->Eax, context->Ebx, context->Ecx,
+              context->Edx, context->Esi, context->Edi );
+        TRACE(" ebp=%08lx esp=%08lx cs=%04lx ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
+              context->Ebp, context->Esp, context->SegCs, context->SegDs,
+              context->SegEs, context->SegFs, context->SegGs, context->EFlags );
+    }
+#endif
 
     if (send_debug_event( rec, TRUE, context ) == DBG_CONTINUE) return;  /* continue execution */
 
