@@ -293,12 +293,6 @@ BSTR WINAPI SysAllocStringLen(const OLECHAR *str, unsigned int len)
  */
 int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* str, unsigned int len)
 {
-    /*
-     * Sanity check
-     */
-    if (old==NULL)
-      return 0;
-
     if (*old!=NULL) {
       DWORD newbytelen = len*sizeof(WCHAR);
       DWORD *ptr = HeapReAlloc(GetProcessHeap(),0,((DWORD*)*old)-1,newbytelen+sizeof(WCHAR)+sizeof(DWORD));
