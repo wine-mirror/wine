@@ -5154,6 +5154,90 @@ HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 }
 
 /**********************************************************************
+ *              VarAdd [OLEAUT32.141]
+ * FIXME: From MSDN: If ... Then 
+ * Both expressions are of the string type Concatenated. 
+ * One expression is a string type and the other a character Addition. 
+ * One expression is numeric and the other is a string Addition. 
+ * Both expressions are numeric Addition. 
+ * Either expression is NULL NULL is returned. 
+ * Both expressions are empty  Integer subtype is returned. 
+ *
+ */
+HRESULT WINAPI VarAdd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
+{
+    HRESULT rc = E_FAIL;
+
+    TRACE("Left Var:\n");
+    dump_Variant(left);
+    TRACE("Right Var:\n");
+    dump_Variant(right);
+
+    /* Handle strings as concat */
+    if ((V_VT(left)&VT_TYPEMASK) == VT_BSTR &&
+        (V_VT(right)&VT_TYPEMASK) == VT_BSTR) {
+        V_VT(result) = VT_BSTR;
+        VarBstrCat(V_BSTR(left), V_BSTR(right), &V_BSTR(result));
+    } else {
+
+        /* Integers */
+        BOOL         lOk        = TRUE;
+        BOOL         rOk        = TRUE;
+        LONGLONG     lVal = -1;
+        LONGLONG     rVal = -1;
+        LONGLONG     res  = -1;
+        int          resT = 0; /* Testing has shown I2 + I2 == I2, all else 
+                                  becomes I4                                */
+
+        lOk = TRUE;
+        switch (V_VT(left)&VT_TYPEMASK) {
+        case VT_I1   : lVal = V_UNION(left,cVal);  resT=VT_I4; break;
+        case VT_I2   : lVal = V_UNION(left,iVal);  resT=VT_I2; break;
+        case VT_I4   : lVal = V_UNION(left,lVal);  resT=VT_I4; break;
+        case VT_INT  : lVal = V_UNION(left,lVal);  resT=VT_I4; break;
+        case VT_UI1  : lVal = V_UNION(left,bVal);  resT=VT_I4; break;
+        case VT_UI2  : lVal = V_UNION(left,uiVal); resT=VT_I4; break;
+        case VT_UI4  : lVal = V_UNION(left,ulVal); resT=VT_I4; break;
+        case VT_UINT : lVal = V_UNION(left,ulVal); resT=VT_I4; break;
+        default: lOk = FALSE;
+        }
+
+        rOk = TRUE;
+        switch (V_VT(right)&VT_TYPEMASK) {
+        case VT_I1   : rVal = V_UNION(right,cVal);  resT=VT_I4; break;
+        case VT_I2   : rVal = V_UNION(right,iVal);  resT=max(VT_I2, resT); break;
+        case VT_I4   : rVal = V_UNION(right,lVal);  resT=VT_I4; break;
+        case VT_INT  : rVal = V_UNION(right,lVal);  resT=VT_I4; break;
+        case VT_UI1  : rVal = V_UNION(right,bVal);  resT=VT_I4; break;
+        case VT_UI2  : rVal = V_UNION(right,uiVal); resT=VT_I4; break;
+        case VT_UI4  : rVal = V_UNION(right,ulVal); resT=VT_I4; break;
+        case VT_UINT : rVal = V_UNION(right,ulVal); resT=VT_I4; break;
+        default: rOk = FALSE;
+        }
+
+        if (lOk && rOk) {
+            res = (lVal + rVal);
+            V_VT(result) = resT;
+            switch (resT) {
+            case VT_I2   : V_UNION(result,iVal)  = res; break;
+            case VT_I4   : V_UNION(result,lVal)  = res; break;
+            default:
+                FIXME("Unexpected result variant type %x\n", resT);
+                V_UNION(result,lVal)  = res;
+            }
+            rc = S_OK;
+
+        } else {
+            FIXME("VarAdd stub\n");
+        }
+    }
+
+    TRACE("rc=%d, Result:\n", (int) rc);
+    dump_Variant(result);
+    return rc;
+}
+
+/**********************************************************************
  *              VarNot [OLEAUT32.174]
  *
  */

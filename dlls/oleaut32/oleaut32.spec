@@ -138,7 +138,7 @@
 138 stdcall VarUI1FromBool(long ptr) VarUI1FromBool
 139 stdcall VarFormatFromTokens (ptr ptr ptr long ptr long) VarFormatFromTokens
 140 stdcall VarTokenizeFormatString (ptr ptr long long long long ptr) VarTokenizeFormatString
-141 stub VarAdd # stdcall (ptr ptr ptr)
+141 stdcall VarAdd(ptr ptr ptr) VarAdd
 142 stdcall VarAnd(ptr ptr ptr) VarAnd
 143 stub VarDiv # stdcall (ptr ptr ptr)
 144 stub OACreateTypeLib2
