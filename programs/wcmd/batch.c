@@ -47,15 +47,22 @@ extern DWORD errorlevel;
 
 void WCMD_batch (char *file, char *command, int called) {
 
-HANDLE h;
+#define WCMD_BATCH_EXT_SIZE 5
+
+HANDLE h = INVALID_HANDLE_VALUE;
 char string[MAXSTRING];
+char extension[][WCMD_BATCH_EXT_SIZE] = {".bat",".cmd"};
+int  i;
 BATCH_CONTEXT *prev_context;
 
+  for(i=0; (i<(sizeof(extension)/WCMD_BATCH_EXT_SIZE)) && 
+           (h == INVALID_HANDLE_VALUE); i++) {
   strcpy (string, file);
   CharLower (string);
-  if (strstr (string, ".bat") == NULL) strcat (string, ".bat");
+    if (strstr (string, extension[i]) == NULL) strcat (string, extension[i]);
   h = CreateFile (string, GENERIC_READ, FILE_SHARE_READ,
                   NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  }
   if (h == INVALID_HANDLE_VALUE) {
     SetLastError (ERROR_FILE_NOT_FOUND);
     WCMD_print_error ();

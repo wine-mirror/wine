@@ -366,9 +366,16 @@ char filetorun[MAX_PATH];
         return;
       }
     }
+    if ((strchr (param1, '.') == NULL) || (strstr (param1, ".cmd") != NULL)) {
+      if (SearchPath (NULL, param1, ".cmd", sizeof(filetorun), filetorun, NULL)) {
+        WCMD_batch (filetorun, command, 0);
+        return;
+      }
+    }
   }
   else {                                        /* Explicit path given */
-    if (strstr (param1, ".bat") != NULL) {
+    if ((strstr (param1, ".bat") != NULL) || 
+        (strstr (param1, ".cmd") != NULL)) {
       WCMD_batch (param1, command, 0);
       return;
     }

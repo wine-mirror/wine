@@ -264,7 +264,7 @@ static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpOperatio
     /* See if it's a program - if GetProfileString fails, we skip this
      * section. Actually, if GetProfileString fails, we've probably
      * got a lot more to worry about than running a program... */
-    if (GetProfileStringA("windows", "programs", "exe pif bat com",
+    if (GetProfileStringA("windows", "programs", "exe pif bat cmd com",
                           buffer, sizeof(buffer)) > 0)
     {
         UINT i;
