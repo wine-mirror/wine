@@ -114,6 +114,8 @@ typedef struct {
 #define MM_MOM_DONE         0x3C9
 #define MM_MOM_POSITIONCB   0x3CA
 
+#define MM_MIM_MOREDATA     0x3CC
+
 #define MMSYSERR_BASE          0
 #define WAVERR_BASE            32
 #define MIDIERR_BASE           64
@@ -470,6 +472,9 @@ typedef WORD *LPKEYARRAY;
 
 #define MIDIMAPPER     (-1)
 #define MIDI_MAPPER    (-1)
+
+/* Only on Win95 and up */
+#define MIDI_IO_STATUS	0x00000020L
 
 /* flags for wFlags parm of 
 	midiOutCachePatches(), 

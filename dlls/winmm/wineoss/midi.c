@@ -553,6 +553,7 @@ static VOID WINAPI midTimeCallback(HWND hwnd, UINT msg, UINT id, DWORD dwTime)
     
     len = read(midiSeqFD, buffer, sizeof(buffer));
     
+    if (len < 0) return;
     if ((len % 4) != 0) {
 	WARN("bad length %d (%d)\n", len, errno);
 	return;
@@ -627,6 +628,7 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	WARN("Invalid Parameter !\n");
 	return MMSYSERR_INVALPARAM;
     }
+
     /* FIXME :
      *	how to check that content of lpDesc is correct ?
      */
@@ -638,8 +640,12 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	WARN("device already open !\n");
 	return MMSYSERR_ALLOCATED;
     }
+    if ((dwFlags & MIDI_IO_STATUS) != 0) { 
+	WARN("No support for MIDI_IO_STATUS in dwFlags yet, ignoring it\n");
+	dwFlags &= ~MIDI_IO_STATUS;
+    }
     if ((dwFlags & ~CALLBACK_TYPEMASK) != 0) { 
-	FIXME("No support for MIDI_IO_STATUS in dwFlags\n");
+	FIXME("Bad dwFlags\n");
 	return MMSYSERR_INVALFLAG;
     }
     
