@@ -207,7 +207,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 
     ENTER_GL();
     
-    if (((IDirect3DDeviceGLImpl *) lpDevice)->state == SURFACE_MEMORY) {
+    if (((IDirect3DDeviceGLImpl *) lpDevice)->state == SURFACE_MEMORY_DIRTY) {
         lpDevice->flush_to_framebuffer(lpDevice, NULL);
     }
     ((IDirect3DDeviceGLImpl *) lpDevice)->state = SURFACE_GL;

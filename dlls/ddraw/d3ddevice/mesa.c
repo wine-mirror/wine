@@ -112,7 +112,7 @@ static BOOL opengl_flip( LPVOID dev, LPVOID drawable)
 
     TRACE("(%p, %ld)\n", gl_d3d_dev->display,(Drawable)drawable);
     ENTER_GL();
-    if (gl_d3d_dev->state == SURFACE_MEMORY) {
+    if (gl_d3d_dev->state == SURFACE_MEMORY_DIRTY) {
         d3d_dev->flush_to_framebuffer(d3d_dev, NULL);
     }
     gl_d3d_dev->state = SURFACE_GL;
@@ -1127,7 +1127,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
     int num_active_stages = 0;
 
     ENTER_GL();
-    if (glThis->state == SURFACE_MEMORY) {
+    if (glThis->state == SURFACE_MEMORY_DIRTY) {
         This->flush_to_framebuffer(This, NULL);
     }
     LEAVE_GL();
@@ -2431,6 +2431,7 @@ static HRESULT d3ddevice_clear(IDirect3DDeviceImpl *This,
 			       D3DVALUE dvZ,
 			       DWORD dwStencil)
 {
+    IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
     GLboolean ztest;
     GLfloat old_z_clear_value;
     GLbitfield bitfield = 0;
@@ -2462,6 +2463,13 @@ static HRESULT d3ddevice_clear(IDirect3DDeviceImpl *This,
     
     /* Clears the screen */
     ENTER_GL();
+
+    if (glThis->state == SURFACE_MEMORY_DIRTY) {
+        /* TODO: optimize here the case where Clear changes all the screen... */
+        This->flush_to_framebuffer(This, NULL);
+    }
+    glThis->state = SURFACE_GL;
+
     if (dwFlags & D3DCLEAR_ZBUFFER) {
 	bitfield |= GL_DEPTH_BUFFER_BIT;
         glGetBooleanv(GL_DEPTH_WRITEMASK, &ztest);
@@ -2740,8 +2748,8 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
     /* Try to acquire the device critical section */
     EnterCriticalSection(&(d3d_dev->crit));
     
-    if (((is_front == TRUE)  && (gl_d3d_dev->front_state != SURFACE_MEMORY)) ||
-	((is_front == FALSE) && (gl_d3d_dev->state       != SURFACE_MEMORY))) {
+    if (((is_front == TRUE)  && (gl_d3d_dev->front_state == SURFACE_GL)) ||
+	((is_front == FALSE) && (gl_d3d_dev->state       == SURFACE_GL))) {
         /* If the surface is already in memory, no need to do anything here... */
         GLenum buffer_type;
 	GLenum buffer_color;
@@ -2991,6 +2999,7 @@ static void d3ddevice_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
 {
     BOOLEAN is_front;
     IDirect3DDeviceImpl *d3d_dev = This->d3ddevice;
+    IDirect3DDeviceGLImpl* gl_d3d_dev = (IDirect3DDeviceGLImpl*) d3d_dev;
   
     if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER|DDSCAPS_PRIMARYSURFACE)) != 0) {
         is_front = TRUE;
@@ -3001,15 +3010,18 @@ static void d3ddevice_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
 	return;
     }
     /* First, check if we need to do anything. For the backbuffer, flushing is done at the next 3D activity. */
-    if (((This->lastlocktype & DDLOCK_READONLY) == 0) &&
-	(is_front == TRUE)) {
-        GLenum prev_draw;
-	ENTER_GL();
-	glGetIntegerv(GL_DRAW_BUFFER, &prev_draw);
-	glDrawBuffer(GL_FRONT);
-        d3d_dev->flush_to_framebuffer(d3d_dev, pRect);
-	glDrawBuffer(prev_draw);
-	LEAVE_GL();
+    if ((This->lastlocktype & DDLOCK_READONLY) == 0) {
+        if (is_front == TRUE) {
+	    GLenum prev_draw;
+	    ENTER_GL();
+	    glGetIntegerv(GL_DRAW_BUFFER, &prev_draw);
+	    glDrawBuffer(GL_FRONT);
+	    d3d_dev->flush_to_framebuffer(d3d_dev, pRect);
+	    glDrawBuffer(prev_draw);
+	    LEAVE_GL();
+	} else {
+	    gl_d3d_dev->state = SURFACE_MEMORY_DIRTY;
+	}
     }
 
     /* And 'frees' the device critical section */

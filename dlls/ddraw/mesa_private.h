@@ -100,7 +100,8 @@ typedef enum {
 
 typedef enum {
     SURFACE_GL,
-    SURFACE_MEMORY
+    SURFACE_MEMORY,
+    SURFACE_MEMORY_DIRTY
 } SURFACE_STATE;
 
 typedef struct IDirect3DDeviceGLImpl
