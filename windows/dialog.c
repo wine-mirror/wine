@@ -1883,6 +1883,95 @@ HWND16 WINAPI GetNextDlgTabItem16( HWND16 hwndDlg, HWND16 hwndCtrl,
     return (HWND16)GetNextDlgTabItem( hwndDlg, hwndCtrl, fPrevious );
 }
 
+/***********************************************************************
+ *           DIALOG_GetNextTabItem
+ *
+ * Helper for GetNextDlgTabItem
+ */
+static HWND DIALOG_GetNextTabItem( HWND hwndMain, HWND hwndDlg, HWND hwndCtrl, BOOL fPrevious )
+{
+    LONG dsStyle;
+    LONG exStyle;
+    UINT wndSearch = fPrevious ? GW_HWNDPREV : GW_HWNDNEXT;
+    HWND retWnd = 0;
+    HWND hChildFirst = 0;
+
+    if(!hwndCtrl) 
+    {
+        hChildFirst = GetWindow(hwndDlg,GW_CHILD);
+        if(fPrevious) hChildFirst = GetWindow(hChildFirst,GW_HWNDLAST);
+    }
+    else
+    {
+        HWND hParent = GetParent(hwndCtrl);
+        BOOL bValid = FALSE;
+        while( hParent)
+        {
+            if(hParent == hwndMain)
+            {
+                bValid = TRUE;
+                break;
+            }
+            hParent = GetParent(hParent);
+        }
+        if(bValid)
+        {
+            hChildFirst = GetWindow(hwndCtrl,wndSearch);
+            if(!hChildFirst)
+            {
+                if(GetParent(hwndCtrl) != hwndMain)
+                    hChildFirst = GetWindow(GetParent(hwndCtrl),wndSearch);
+                else
+                {
+                    if(fPrevious)
+                        hChildFirst = GetWindow(hwndCtrl,GW_HWNDLAST);
+                    else
+                        hChildFirst = GetWindow(hwndCtrl,GW_HWNDFIRST);
+                }
+            }
+        }	
+    }
+    while(hChildFirst)
+    {
+        BOOL bCtrl = FALSE;
+        while(hChildFirst)
+        {
+            dsStyle = GetWindowLongA(hChildFirst,GWL_STYLE);
+            exStyle = GetWindowLongA(hChildFirst,GWL_EXSTYLE);
+            if(dsStyle & DS_CONTROL || exStyle & WS_EX_CONTROLPARENT)
+            {
+                bCtrl=TRUE;
+                break;
+            }
+            else if( (dsStyle & WS_TABSTOP) && (dsStyle & WS_VISIBLE) && !(dsStyle & WS_DISABLED))
+                break;
+            hChildFirst = GetWindow(hChildFirst,wndSearch);
+        }
+        if(hChildFirst)
+        {
+            if(bCtrl)
+                retWnd = DIALOG_GetNextTabItem(hwndMain,hChildFirst,(HWND)NULL,fPrevious );
+            else
+                retWnd = hChildFirst;
+        }
+        if(retWnd) break;
+        hChildFirst = GetWindow(hChildFirst,wndSearch);
+    }
+    if(!retWnd && hwndCtrl)
+    {
+        HWND hParent = GetParent(hwndCtrl);
+        while(hParent)
+	{
+            if(hParent == hwndMain) break;
+            retWnd = DIALOG_GetNextTabItem(hwndMain,GetParent(hParent),hParent,fPrevious );
+            if(retWnd) break;
+            hParent = GetParent(hParent);
+	}
+        if(!retWnd)
+            retWnd = DIALOG_GetNextTabItem(hwndMain,hwndMain,(HWND)NULL,fPrevious );
+    }
+    return retWnd;
+}
 
 /***********************************************************************
  *           GetNextDlgTabItem32   (USER32.276)
@@ -1890,68 +1979,8 @@ HWND16 WINAPI GetNextDlgTabItem16( HWND16 hwndDlg, HWND16 hwndCtrl,
 HWND WINAPI GetNextDlgTabItem( HWND hwndDlg, HWND hwndCtrl,
                                    BOOL fPrevious )
 {
-    WND *pWnd = NULL,
-        *pWndLast = NULL,
-        *pWndCtrl = NULL,
-        *pWndDlg = NULL;
-    HWND retvalue;
-
-    if (!(pWndDlg = WIN_FindWndPtr( hwndDlg ))) return 0;
-    if (hwndCtrl)
-    {
-        if (!(pWndCtrl = WIN_FindWndPtr( hwndCtrl )))
-    {
-            retvalue = 0;
-            goto END;
-        }
-        /* Make sure hwndCtrl is a top-level child */
-        while ((pWndCtrl->dwStyle & WS_CHILD) && (pWndCtrl->parent != pWndDlg))
-            WIN_UpdateWndPtr(&pWndCtrl,pWndCtrl->parent);
-        if (pWndCtrl->parent != pWndDlg)
-        {
-            retvalue = 0;
-            goto END;
-    }
-    }
-    else
-    {
-        /* No ctrl specified -> start from the beginning */
-        if (!(pWndCtrl = WIN_LockWndPtr(pWndDlg->child)))
-        {
-            retvalue = 0;
-            goto END;
-        }
-        
-        if (!fPrevious)
-            while (pWndCtrl->next) WIN_UpdateWndPtr(&pWndCtrl,pWndCtrl->next);
-    }
-
-    pWndLast = WIN_LockWndPtr(pWndCtrl);
-    pWnd = WIN_LockWndPtr(pWndCtrl->next);
-    while (1)
-    {
-        if (!pWnd) pWnd = WIN_LockWndPtr(pWndDlg->child);
-        if (pWnd == pWndCtrl) break;
-	if ((pWnd->dwStyle & WS_TABSTOP) && (pWnd->dwStyle & WS_VISIBLE) &&
-            !(pWnd->dwStyle & WS_DISABLED))
-	{
-            WIN_UpdateWndPtr(&pWndLast,pWnd);
-	    if (!fPrevious) break;
-	}
-        WIN_UpdateWndPtr(&pWnd,pWnd->next);
-    }
-    retvalue = pWndLast->hwndSelf;
-    
-    WIN_ReleaseWndPtr(pWndLast);
-    WIN_ReleaseWndPtr(pWnd);
-END:
-    WIN_ReleaseWndPtr(pWndCtrl);
-    WIN_ReleaseWndPtr(pWndDlg);
-
-    return retvalue;
-
+    return DIALOG_GetNextTabItem(hwndDlg,hwndDlg,hwndCtrl,fPrevious); 
 }
-
 
 /**********************************************************************
  *           DIALOG_DlgDirSelect
