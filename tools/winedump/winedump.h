@@ -126,7 +126,7 @@ typedef struct __globals
   int   start_ordinal;     /* -s */
   int   end_ordinal;       /* -e */
   search_symbol *search_symbol; /* -S */
-  const char *directory;   /* -I */
+  char *directory;         /* -I */
   const char *forward_dll; /* -f */
   const char *dll_name;    /* -o */
   char *uc_dll_name;       /* -o */

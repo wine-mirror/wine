@@ -27,16 +27,24 @@ _globals globals; /* All global variables */
 
 static void do_include (const char *arg)
 {
-  globals.directory = arg;
+  char *newIncludes;
+
+  if (!globals.directory)
+    globals.directory = strdup(arg);
+  else {
+    newIncludes = str_create (3,globals.directory," ",arg);
+    free(globals.directory);
+    globals.directory = newIncludes;
+  }
   globals.do_code = 1;
 }
 
 
 static inline const char* strip_ext (const char *str)
 {
-  char *ext = strstr(str, ".dll");
-  if (ext)
-    return str_substring (str, ext);
+  int len = strlen(str);
+  if (len>4 && strcmp(str+len-4,".dll") == 0)
+    return str_substring (str, str+len-4);
   else
     return strdup (str);
 }
@@ -193,7 +201,7 @@ static const struct option option_table[] = {
   {"-t",    SPEC, 0, do_trace,    "-t           TRACE arguments (implies -c)"},
   {"-f",    SPEC, 1, do_forward,  "-f dll       Forward calls to 'dll' (implies -t)"},
   {"-D",    SPEC, 0, do_document, "-D           Generate documentation"},
-  {"-o",    SPEC, 1, do_name,     "-o name      Set the output dll name (default: dll)"},
+  {"-o",    SPEC, 1, do_name,     "-o name      Set the output dll name (default: dll). note: strips .dll extensions"},
   {"-C",    SPEC, 0, do_cdecl,    "-C           Assume __cdecl calls (default: __stdcall)"},
   {"-s",    SPEC, 1, do_start,    "-s num       Start prototype search after symbol 'num'"},
   {"-e",    SPEC, 1, do_end,      "-e num       End prototype search after symbol 'num'"},

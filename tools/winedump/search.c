@@ -81,9 +81,19 @@ int symbol_search (parsed_symbol *sym)
     while (fgets (grep_buff, MAX_RESULT_LEN, grep))
     {
       int i;
-      for (i = 0; grep_buff[i] && grep_buff[i] != '\n' ; i++)
-        ;
+      const char *extension = grep_buff;
+      for (i = 0; grep_buff[i] && grep_buff[i] != '\n' ; i++) {
+	if (grep_buff[i] == '.')
+	  extension = &grep_buff[i];
+      }
       grep_buff[i] = '\0';
+
+      /* Definitly not in these: */
+      if (strcmp(extension,".dll") == 0 ||
+	  strcmp(extension,".lib") == 0 ||
+	  strcmp(extension,".so")  == 0 ||
+	  strcmp(extension,".o")   == 0)
+	continue;
 
       if (VERBOSE)
         puts (grep_buff);
@@ -344,4 +354,3 @@ void search_cleanup (void)
     free (fgrep_buff);
 }
 #endif
-
