@@ -4,8 +4,6 @@
  * Copyright 1997 Dimitrie O. Paun
  *
  * TODO:
- *   - subclass the buddy window (in UPDOWN_SetBuddy) to process the
- *     arrow keys
  *   - I am not sure about the default values for the Min, Max, Pos
  *     (in the UPDOWN_INFO the fields: MinVal, MaxVal, CurVal)
  *   - I think I do not handle correctly the WS_BORDER style.
@@ -61,6 +59,8 @@ DEFAULT_DEBUG_CHANNEL(updown)
 
 #define TIMERID1         1
 #define TIMERID2         2
+#define BUDDY_UPDOWN_HWND        "buddyUpDownHWND"
+#define BUDDY_SUPERCLASS_WNDPROC "buddySupperClassWndProc"
 
 static int accelIndex = -1;
 
@@ -70,6 +70,8 @@ static int accelIndex = -1;
 
 #define UPDOWN_GetInfoPtr(hwnd) ((UPDOWN_INFO *)GetWindowLongA (hwnd,0))
 
+static LRESULT CALLBACK
+UPDOWN_Buddy_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 /***********************************************************************
  *           UPDOWN_InBounds
@@ -353,30 +355,50 @@ static BOOL UPDOWN_SetBuddy (HWND hwnd, HWND hwndBud)
 {
   UPDOWN_INFO *infoPtr = UPDOWN_GetInfoPtr (hwnd); 
   DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
-  RECT budRect; /* new coord for the buddy */
+  RECT budRect;   /* new coord for the buddy */
   int x;          /* new x position and width for the up-down */
  	  
-  *infoPtr->szBuddyClass = '\0';
-
-  /* Is is a valid bud? */
+  /* Is it a valid bud? */
   if(!IsWindow(hwndBud))
     return FALSE;
 
+  /* there is already a body assigned */
+  if ( infoPtr->Buddy )  
+    RemovePropA(infoPtr->Buddy, BUDDY_UPDOWN_HWND);
+
   /* Store buddy window handle */
-  infoPtr->Buddy = hwndBud;
+  infoPtr->Buddy = hwndBud;   
+
+  /* keep upDown ctrl hwnd in a buddy property */            
+  SetPropA( hwndBud, BUDDY_UPDOWN_HWND, hwnd); 
 
   /* Store buddy window clas name */
-  GetClassNameA (hwndBud, infoPtr->szBuddyClass, 40);
+  memset(infoPtr->szBuddyClass, 0, UPDOWN_BUDDYCLASSNAMELEN);
+  GetClassNameA (hwndBud, infoPtr->szBuddyClass, UPDOWN_BUDDYCLASSNAMELEN-1);
 
   if(dwStyle & UDS_ARROWKEYS){
-    FIXME("we need to subclass the buddy to process the arrow keys.\n");
+    /* Note that I don't clear the BUDDY_SUPERCLASS_WNDPROC property 
+       when we reset the upDown ctrl buddy to another buddy because it is not 
+       good to break the window proc chain. */
+
+    /* keep buddy supperclass wndproc in prop instead of in ptr struct
+       to prevent accessing freed memory */
+    SetPropA(
+      hwndBud, 
+      BUDDY_SUPERCLASS_WNDPROC,
+      (LONG)GetWindowLongA(hwndBud, GWL_WNDPROC) );  
+
+    /* Assign the buddy wndproc to local wndproc in order to override 
+       keyboard's up and down arrow */
+    SetWindowLongA(
+      hwndBud, 
+      GWL_WNDPROC, 
+      (LONG)UPDOWN_Buddy_SubclassProc);
   }
 
   /* do we need to do any adjustments? */
   if(!(dwStyle & (UDS_ALIGNLEFT | UDS_ALIGNRIGHT)))
     return TRUE;
-
-  infoPtr->Buddy = hwndBud;
 
   /* Get the rect of the buddy relative to its parent */
   GetWindowRect(infoPtr->Buddy, &budRect);
@@ -639,6 +661,9 @@ LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
       if(infoPtr->AccelVect)
 	COMCTL32_Free (infoPtr->AccelVect);
 
+      if ( IsWindow(infoPtr->Buddy) ) /* Cleanup */
+        RemovePropA(infoPtr->Buddy, BUDDY_UPDOWN_HWND);
+
       COMCTL32_Free (infoPtr);
 
       TRACE("UpDown Ctrl destruction, hwnd=%04x\n", hwnd);
@@ -771,7 +796,6 @@ LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
       if (lParam)
 	UNKNOWN_PARAM(UDM_SETBUDDY, wParam, lParam);
       temp = infoPtr->Buddy;
-      infoPtr->Buddy = wParam;
       UPDOWN_SetBuddy (hwnd, wParam);
       TRACE("UpDown Ctrl new buddy(%04x), hwnd=%04x\n", 
 		     infoPtr->Buddy, hwnd);
@@ -842,6 +866,53 @@ LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
     return 0;
 }
 
+/***********************************************************************
+ * UPDOWN_Buddy_SubclassProc used to handle messages sent to the buddy 
+ *                           control.
+ */
+LRESULT CALLBACK
+UPDOWN_Buddy_SubclassProc (
+  HWND   hwnd, 
+  UINT   uMsg, 
+  WPARAM wParam, 
+  LPARAM lParam)
+{
+  LONG superClassWndProc = GetPropA(hwnd, BUDDY_SUPERCLASS_WNDPROC);
+  TRACE("hwnd=%04x, wndProc=%d, uMsg=%04x, wParam=%d, lParam=%d\n", 
+        hwnd, (INT)superClassWndProc, uMsg, wParam, (UINT)lParam);
+
+  switch (uMsg) 
+  {
+    case WM_KEYDOWN:
+    {
+      if ( ((int)wParam == VK_UP ) || ((int)wParam == VK_DOWN ) )
+      {
+        HWND upDownHwnd      = GetPropA(hwnd, BUDDY_UPDOWN_HWND);
+        UPDOWN_INFO *infoPtr = UPDOWN_GetInfoPtr(upDownHwnd);
+      
+        if (!lstrcmpA (infoPtr->szBuddyClass, "ListBox"))
+        {
+          /* if the buddy is a list window, we must update curr index */
+          INT oldVal = SendMessageA(hwnd, LB_GETCURSEL, 0, 0);
+          SendMessageA(hwnd, LB_SETCURSEL, oldVal+1, 0);
+        }
+        else
+        {
+	  UPDOWN_GetBuddyInt(upDownHwnd);
+          UPDOWN_DoAction(upDownHwnd, 1, wParam==VK_UP);
+        }
+
+        break;
+      }
+      /* else Fall Through */
+    }
+
+    default:
+      return CallWindowProcA( (WNDPROC)superClassWndProc, hwnd, uMsg, wParam, lParam);
+  }
+
+  return 0;
+}
 
 /***********************************************************************
  *		UPDOWN_Register	[Internal]
