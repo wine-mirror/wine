@@ -70,7 +70,7 @@ static HQUEUE16 QUEUE_CreateMsgQueue(void)
     SERVER_END_REQ;
     if (!handle)
     {
-        ERR_(msg)("Cannot get thread queue");
+        ERR_(msg)("Cannot get thread queue\n");
         GlobalFree16( hQueue );
         return 0;
     }
