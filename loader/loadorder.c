@@ -427,7 +427,7 @@ BOOL MODULE_InitLoadOrder(void)
 
 			TRACE(module, "Key '%s' uses override '%s'\n", key, value);
 
-			if(!AddLoadOrderSet(key, value, FALSE))
+                        if(!AddLoadOrderSet(key, value, TRUE))
 				return FALSE;
 		}
 	}
