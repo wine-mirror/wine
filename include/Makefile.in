@@ -18,6 +18,7 @@ IDL_SRCS = \
 	mediaobj.idl \
 	mlang.idl \
 	mmstream.idl \
+	mshtml.idl \
 	oaidl.idl \
 	objidl.idl \
 	ocidl.idl \
@@ -156,6 +157,7 @@ WINDOWS_INCLUDES = \
 	msacmdlg.h \
 	msacmdrv.h \
 	mscat.h \
+	mshtmdid.h \
 	msi.h \
 	msiquery.h \
 	mssip.h \

@@ -31,7 +31,7 @@
 #include "winreg.h"
 #include "ole2.h"
 
-#include "uuids.h"
+#include "mshtml.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"

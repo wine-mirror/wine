@@ -19,6 +19,8 @@
 #ifndef __WINE_OLECTL_H
 #define __WINE_OLECTL_H
 
+#if !defined(__midl) && !defined(__WIDL__)
+
 #include <ocidl.h>
 
 #ifdef __cplusplus
@@ -170,89 +172,6 @@ HRESULT WINAPI OleCreateFontIndirect(LPFONTDESC lpFontDesc, REFIID riid,
 HRESULT WINAPI OleTranslateColor( OLE_COLOR clr, HPALETTE hpal,
 		COLORREF* lpcolorref);
 
-/* standard dispatch ID's */
-#define DISPID_AUTOSIZE                 (-500)
-#define DISPID_BACKCOLOR                (-501)
-#define DISPID_BACKSTYLE                (-502)
-#define DISPID_BORDERCOLOR              (-503)
-#define DISPID_BORDERSTYLE              (-504)
-#define DISPID_BORDERWIDTH              (-505)
-#define DISPID_DRAWMODE                 (-507)
-#define DISPID_DRAWSTYLE                (-508)
-#define DISPID_DRAWWIDTH                (-509)
-#define DISPID_FILLCOLOR                (-510)
-#define DISPID_FILLSTYLE                (-511)
-#define DISPID_FONT                     (-512)
-#define DISPID_FORECOLOR                (-513)
-#define DISPID_ENABLED                  (-514)
-#define DISPID_HWND                     (-515)
-#define DISPID_TABSTOP                  (-516)
-#define DISPID_TEXT                     (-517)
-#define DISPID_CAPTION                  (-518)
-#define DISPID_BORDERVISIBLE            (-519)
-#define DISPID_APPEARANCE               (-520)
-#define DISPID_MOUSEPOINTER             (-521)
-#define DISPID_MOUSEICON                (-522)
-#define DISPID_PICTURE                  (-523)
-#define DISPID_VALID                    (-524)
-#define DISPID_READYSTATE               (-525)
-
-#define DISPID_REFRESH                  (-550)
-#define DISPID_DOCLICK                  (-551)
-#define DISPID_ABOUTBOX                 (-552)
-
-#define DISPID_CLICK                    (-600)
-#define DISPID_DBLCLICK                 (-601)
-#define DISPID_KEYDOWN                  (-602)
-#define DISPID_KEYPRESS                 (-603)
-#define DISPID_KEYUP                    (-604)
-#define DISPID_MOUSEDOWN                (-605)
-#define DISPID_MOUSEMOVE                (-606)
-#define DISPID_MOUSEUP                  (-607)
-#define DISPID_ERROREVENT               (-608)
-#define DISPID_READYSTATECHANGE         (-609)
-
-#define DISPID_AMBIENT_BACKCOLOR        (-701)
-#define DISPID_AMBIENT_DISPLAYNAME      (-702)
-#define DISPID_AMBIENT_FONT             (-703)
-#define DISPID_AMBIENT_FORECOLOR        (-704)
-#define DISPID_AMBIENT_LOCALEID         (-705)
-#define DISPID_AMBIENT_MESSAGEREFLECT   (-706)
-#define DISPID_AMBIENT_SCALEUNITS       (-707)
-#define DISPID_AMBIENT_TEXTALIGN        (-708)
-#define DISPID_AMBIENT_USERMODE         (-709)
-#define DISPID_AMBIENT_UIDEAD           (-710)
-#define DISPID_AMBIENT_SHOWGRABHANDLES  (-711)
-#define DISPID_AMBIENT_SHOWHATCHING     (-712)
-#define DISPID_AMBIENT_DISPLAYASDEFAULT (-713)
-#define DISPID_AMBIENT_SUPPORTSMNEMONICS (-714)
-#define DISPID_AMBIENT_AUTOCLIP         (-715)
-#define DISPID_AMBIENT_APPEARANCE       (-716)
-#define DISPID_AMBIENT_PALETTE          (-726)
-#define DISPID_AMBIENT_TRANSFERPRIORITY (-728)
-
-#define DISPID_Name                     (-800)
-#define DISPID_Delete                   (-801)
-#define DISPID_Object                   (-802)
-#define DISPID_Parent                   (-803)
-
-#define DISPID_FONT_NAME 0
-#define DISPID_FONT_SIZE 2
-#define DISPID_FONT_BOLD 3
-#define DISPID_FONT_ITALIC 4
-#define DISPID_FONT_UNDER 5
-#define DISPID_FONT_STRIKE 6
-#define DISPID_FONT_WEIGHT 7
-#define DISPID_FONT_CHARSET 8
-
-/* IPicture */
-#define	DISPID_PICT_HANDLE	0
-#define	DISPID_PICT_HPAL	2
-#define	DISPID_PICT_TYPE	3
-#define	DISPID_PICT_WIDTH	4
-#define	DISPID_PICT_HEIGHT	5
-#define	DISPID_PICT_RENDER	6
-
 /* Reflected Window Message IDs */
 #define OCM__BASE           (WM_USER+0x1c00)
 #define OCM_COMMAND         (OCM__BASE + WM_COMMAND)
@@ -356,5 +275,90 @@ HRESULT WINAPI OleTranslateColor( OLE_COLOR clr, HPALETTE hpal,
 #ifdef __cplusplus
 }
 #endif
+
+#endif  /* !__midl && !__WIDL__ */
+
+/* standard dispatch ID's */
+#define DISPID_AUTOSIZE                 (-500)
+#define DISPID_BACKCOLOR                (-501)
+#define DISPID_BACKSTYLE                (-502)
+#define DISPID_BORDERCOLOR              (-503)
+#define DISPID_BORDERSTYLE              (-504)
+#define DISPID_BORDERWIDTH              (-505)
+#define DISPID_DRAWMODE                 (-507)
+#define DISPID_DRAWSTYLE                (-508)
+#define DISPID_DRAWWIDTH                (-509)
+#define DISPID_FILLCOLOR                (-510)
+#define DISPID_FILLSTYLE                (-511)
+#define DISPID_FONT                     (-512)
+#define DISPID_FORECOLOR                (-513)
+#define DISPID_ENABLED                  (-514)
+#define DISPID_HWND                     (-515)
+#define DISPID_TABSTOP                  (-516)
+#define DISPID_TEXT                     (-517)
+#define DISPID_CAPTION                  (-518)
+#define DISPID_BORDERVISIBLE            (-519)
+#define DISPID_APPEARANCE               (-520)
+#define DISPID_MOUSEPOINTER             (-521)
+#define DISPID_MOUSEICON                (-522)
+#define DISPID_PICTURE                  (-523)
+#define DISPID_VALID                    (-524)
+#define DISPID_READYSTATE               (-525)
+
+#define DISPID_REFRESH                  (-550)
+#define DISPID_DOCLICK                  (-551)
+#define DISPID_ABOUTBOX                 (-552)
+
+#define DISPID_CLICK                    (-600)
+#define DISPID_DBLCLICK                 (-601)
+#define DISPID_KEYDOWN                  (-602)
+#define DISPID_KEYPRESS                 (-603)
+#define DISPID_KEYUP                    (-604)
+#define DISPID_MOUSEDOWN                (-605)
+#define DISPID_MOUSEMOVE                (-606)
+#define DISPID_MOUSEUP                  (-607)
+#define DISPID_ERROREVENT               (-608)
+#define DISPID_READYSTATECHANGE         (-609)
+
+#define DISPID_AMBIENT_BACKCOLOR        (-701)
+#define DISPID_AMBIENT_DISPLAYNAME      (-702)
+#define DISPID_AMBIENT_FONT             (-703)
+#define DISPID_AMBIENT_FORECOLOR        (-704)
+#define DISPID_AMBIENT_LOCALEID         (-705)
+#define DISPID_AMBIENT_MESSAGEREFLECT   (-706)
+#define DISPID_AMBIENT_SCALEUNITS       (-707)
+#define DISPID_AMBIENT_TEXTALIGN        (-708)
+#define DISPID_AMBIENT_USERMODE         (-709)
+#define DISPID_AMBIENT_UIDEAD           (-710)
+#define DISPID_AMBIENT_SHOWGRABHANDLES  (-711)
+#define DISPID_AMBIENT_SHOWHATCHING     (-712)
+#define DISPID_AMBIENT_DISPLAYASDEFAULT (-713)
+#define DISPID_AMBIENT_SUPPORTSMNEMONICS (-714)
+#define DISPID_AMBIENT_AUTOCLIP         (-715)
+#define DISPID_AMBIENT_APPEARANCE       (-716)
+#define DISPID_AMBIENT_PALETTE          (-726)
+#define DISPID_AMBIENT_TRANSFERPRIORITY (-728)
+
+#define DISPID_Name                     (-800)
+#define DISPID_Delete                   (-801)
+#define DISPID_Object                   (-802)
+#define DISPID_Parent                   (-803)
+
+#define DISPID_FONT_NAME 0
+#define DISPID_FONT_SIZE 2
+#define DISPID_FONT_BOLD 3
+#define DISPID_FONT_ITALIC 4
+#define DISPID_FONT_UNDER 5
+#define DISPID_FONT_STRIKE 6
+#define DISPID_FONT_WEIGHT 7
+#define DISPID_FONT_CHARSET 8
+
+/* IPicture */
+#define DISPID_PICT_HANDLE	0
+#define DISPID_PICT_HPAL	2
+#define DISPID_PICT_TYPE	3
+#define DISPID_PICT_WIDTH	4
+#define DISPID_PICT_HEIGHT	5
+#define DISPID_PICT_RENDER	6
 
 #endif /*  __WINE_OLECTL_H */

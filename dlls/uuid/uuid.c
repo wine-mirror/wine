@@ -55,6 +55,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "activscp.h"
 #include "dispex.h"
 #include "mlang.h"
+#include "mshtml.h"
 
 /* FIXME: cguids declares GUIDs but does not define their values */
 
