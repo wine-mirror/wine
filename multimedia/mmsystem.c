@@ -715,7 +715,7 @@ UINT32 WINAPI mixerGetID32(HMIXEROBJ32 hmix,LPUINT32 lpid,DWORD fdwID)
     UINT16	xid;    
     UINT32	ret = mixerGetID16(hmix,&xid,fdwID);
 
-    if (*lpid) *lpid = xid;
+    if (lpid) *lpid = xid;
     return ret;
 }
 
@@ -725,7 +725,9 @@ UINT32 WINAPI mixerGetID32(HMIXEROBJ32 hmix,LPUINT32 lpid,DWORD fdwID)
 UINT16 WINAPI mixerGetID16(HMIXEROBJ16 hmix,LPUINT16 lpid,DWORD fdwID) 
 {
     FIXME(mmsys,"(%04x): semi-stub\n",hmix);
-    return _get_mixerID_from_handle(hmix,fdwID);
+    if (lpid)
+      *lpid = _get_mixerID_from_handle(hmix,fdwID);
+    return MMSYSERR_NOERROR; /* FIXME: many error possibilities */
 }
 
 /**************************************************************************
