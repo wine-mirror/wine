@@ -124,6 +124,12 @@ static HHOOK set_windows_hook( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid,
     WCHAR module[MAX_PATH];
     DWORD len;
 
+    if (!proc)
+    {
+        SetLastError( ERROR_INVALID_FILTER_PROC );
+        return 0;
+    }
+
     if (tid)  /* thread-local hook */
     {
         if (id == WH_JOURNALRECORD ||
@@ -143,7 +149,7 @@ static HHOOK set_windows_hook( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid,
         if (id == WH_KEYBOARD_LL || id == WH_MOUSE_LL) inst = 0;
         else if (!inst || !(len = GetModuleFileNameW( inst, module, MAX_PATH )) || len >= MAX_PATH)
         {
-            SetLastError( ERROR_INVALID_PARAMETER );
+            SetLastError( ERROR_HOOK_NEEDS_HMOD );
             return 0;
         }
     }

@@ -4510,6 +4510,7 @@ static BOOL RegisterWindowClasses(void)
 }
 
 static HHOOK hCBT_hook;
+static DWORD cbt_hook_thread_id;
 
 static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam) 
 { 
@@ -4517,12 +4518,14 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
     trace("CBT: %d, %08x, %08lx\n", nCode, wParam, lParam);
 
+    ok(cbt_hook_thread_id == GetCurrentThreadId(), "we didn't ask for events from other threads\n");
+
     if (nCode == HCBT_SYSCOMMAND)
     {
 	struct message msg;
 
 	msg.message = nCode;
-	msg.flags = hook;
+	msg.flags = hook|wparam|lparam;
 	msg.wParam = wParam;
 	msg.lParam = lParam;
 	add_message(&msg);
@@ -4535,16 +4538,17 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
     if (GetClassNameA((HWND)wParam, buf, sizeof(buf)))
     {
-	if (!strcmp(buf, "TestWindowClass") ||
-	    !strcmp(buf, "TestParentClass") ||
-	    !strcmp(buf, "TestPopupClass") ||
-	    !strcmp(buf, "SimpleWindowClass") ||
-	    !strcmp(buf, "TestDialogClass") ||
-	    !strcmp(buf, "MDI_frame_class") ||
-	    !strcmp(buf, "MDI_client_class") ||
-	    !strcmp(buf, "MDI_child_class") ||
-	    !strcmp(buf, "my_button_class") ||
-	    !strcmp(buf, "#32770"))
+	if (!lstrcmpiA(buf, "TestWindowClass") ||
+	    !lstrcmpiA(buf, "TestParentClass") ||
+	    !lstrcmpiA(buf, "TestPopupClass") ||
+	    !lstrcmpiA(buf, "SimpleWindowClass") ||
+	    !lstrcmpiA(buf, "TestDialogClass") ||
+	    !lstrcmpiA(buf, "MDI_frame_class") ||
+	    !lstrcmpiA(buf, "MDI_client_class") ||
+	    !lstrcmpiA(buf, "MDI_child_class") ||
+	    !lstrcmpiA(buf, "my_button_class") ||
+	    !lstrcmpiA(buf, "static") ||
+	    !lstrcmpiA(buf, "#32770"))
 	{
 	    struct message msg;
 
@@ -4571,22 +4575,25 @@ static void CALLBACK win_event_proc(HWINEVENTHOOK hevent,
     trace("WEH:%p,event %08lx,hwnd %p,obj %08lx,id %08lx,thread %08lx,time %08lx\n",
 	   hevent, event, hwnd, object_id, child_id, thread_id, event_time);
 
+    ok(thread_id == GetCurrentThreadId(), "we didn't ask for events from other threads\n");
+
     /* ignore mouse cursor events */
     if (object_id == OBJID_CURSOR) return;
 
     if (!hwnd || GetClassNameA(hwnd, buf, sizeof(buf)))
     {
 	if (!hwnd ||
-	    !strcmp(buf, "TestWindowClass") ||
-	    !strcmp(buf, "TestParentClass") ||
-	    !strcmp(buf, "TestPopupClass") ||
-	    !strcmp(buf, "SimpleWindowClass") ||
-	    !strcmp(buf, "TestDialogClass") ||
-	    !strcmp(buf, "MDI_frame_class") ||
-	    !strcmp(buf, "MDI_client_class") ||
-	    !strcmp(buf, "MDI_child_class") ||
-	    !strcmp(buf, "my_button_class") ||
-	    !strcmp(buf, "#32770"))
+	    !lstrcmpiA(buf, "TestWindowClass") ||
+	    !lstrcmpiA(buf, "TestParentClass") ||
+	    !lstrcmpiA(buf, "TestPopupClass") ||
+	    !lstrcmpiA(buf, "SimpleWindowClass") ||
+	    !lstrcmpiA(buf, "TestDialogClass") ||
+	    !lstrcmpiA(buf, "MDI_frame_class") ||
+	    !lstrcmpiA(buf, "MDI_client_class") ||
+	    !lstrcmpiA(buf, "MDI_child_class") ||
+	    !lstrcmpiA(buf, "my_button_class") ||
+	    !lstrcmpiA(buf, "static") ||
+	    !lstrcmpiA(buf, "#32770"))
 	{
 	    struct message msg;
 
@@ -4751,6 +4758,9 @@ static void test_timers(void)
 
     WaitForSingleObject(info.handles[1], INFINITE);
 
+    CloseHandle(info.handles[0]);
+    CloseHandle(info.handles[1]);
+
     ok( KillTimer(info.hWnd, TIMER_ID), "KillTimer failed\n");
 
     ok(DestroyWindow(info.hWnd), "failed to destroy window\n");
@@ -4784,38 +4794,432 @@ static const struct message WmWinEventsSeq[] = {
     { EVENT_SYSTEM_MINIMIZEEND, winevent_hook|wparam|lparam, OBJID_CARET, 8 },
     { 0 }
 };
+static const struct message WmWinEventCaretSeq[] = {
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CARET, 0 }, /* hook 1 */
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, OBJID_CARET, 0 }, /* hook 1 */
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, OBJID_CARET, 0 }, /* hook 2 */
+    { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam, OBJID_CARET, 0 }, /* hook 1 */
+    { 0 }
+};
+static const struct message WmWinEventCaretSeq_2[] = {
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CARET, 0 }, /* hook 1/2 */
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, OBJID_CARET, 0 }, /* hook 1/2 */
+    { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam, OBJID_CARET, 0 }, /* hook 1/2 */
+    { 0 }
+};
+static const struct message WmWinEventAlertSeq[] = {
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, OBJID_ALERT, 0 },
+    { 0 }
+};
+static const struct message WmWinEventAlertSeq_2[] = {
+    /* create window in the thread proc */
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_WINDOW, 2 },
+    /* our test event */
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, OBJID_ALERT, 2 },
+    { 0 }
+};
+static const struct message WmGlobalHookSeq_1[] = {
+    /* create window in the thread proc */
+    { HCBT_CREATEWND, hook|lparam, 0, 2 },
+    /* our test events */
+    { HCBT_SETFOCUS, hook|lparam, 0, 2 }, /* SetFocus(0) */
+    { HCBT_ACTIVATE, hook|lparam, 0, 2 },
+    { HCBT_SETFOCUS, hook|lparam, 0, 2 }, /* SetFocus(hwnd) */
+    { 0 }
+};
+static const struct message WmGlobalHookSeq_2[] = {
+    { HCBT_SYSCOMMAND, hook|wparam|lparam, SC_NEXTWINDOW, 0 }, /* old local hook */
+    { HCBT_SYSCOMMAND, hook|wparam|lparam, SC_NEXTWINDOW, 2 }, /* new global hook */
+    { HCBT_SYSCOMMAND, hook|wparam|lparam, SC_PREVWINDOW, 0 }, /* old local hook */
+    { HCBT_SYSCOMMAND, hook|wparam|lparam, SC_PREVWINDOW, 2 }, /* new global hook */
+    { 0 }
+};
 
-static void test_winevents(void)
+static void CALLBACK win_event_global_hook_proc(HWINEVENTHOOK hevent,
+					 DWORD event,
+					 HWND hwnd,
+					 LONG object_id,
+					 LONG child_id,
+					 DWORD thread_id,
+					 DWORD event_time)
+{
+    char buf[256];
+
+    trace("WEH_2:%p,event %08lx,hwnd %p,obj %08lx,id %08lx,thread %08lx,time %08lx\n",
+	   hevent, event, hwnd, object_id, child_id, thread_id, event_time);
+
+    if (GetClassNameA(hwnd, buf, sizeof(buf)))
+    {
+	if (!lstrcmpiA(buf, "TestWindowClass") ||
+	    !lstrcmpiA(buf, "static"))
+	{
+	    struct message msg;
+
+	    msg.message = event;
+	    msg.flags = winevent_hook|wparam|lparam;
+	    msg.wParam = object_id;
+	    msg.lParam = (thread_id == GetCurrentThreadId()) ? child_id : (child_id + 2);
+	    add_message(&msg);
+	}
+    }
+}
+
+static HHOOK hCBT_global_hook;
+static DWORD cbt_global_hook_thread_id;
+
+static LRESULT CALLBACK cbt_global_hook_proc(int nCode, WPARAM wParam, LPARAM lParam) 
+{ 
+    char buf[256];
+
+    trace("CBT_2: %d, %08x, %08lx\n", nCode, wParam, lParam);
+
+    if (nCode == HCBT_SYSCOMMAND)
+    {
+	struct message msg;
+
+	msg.message = nCode;
+	msg.flags = hook|wparam|lparam;
+	msg.wParam = wParam;
+	msg.lParam = (cbt_global_hook_thread_id == GetCurrentThreadId()) ? 1 : 2;
+	add_message(&msg);
+
+	return CallNextHookEx(hCBT_global_hook, nCode, wParam, lParam);
+    }
+
+    /* Log also SetFocus(0) calls */
+    if (!wParam) wParam = lParam;
+
+    if (GetClassNameA((HWND)wParam, buf, sizeof(buf)))
+    {
+	if (!lstrcmpiA(buf, "TestWindowClass") ||
+	    !lstrcmpiA(buf, "static"))
+	{
+	    struct message msg;
+
+	    msg.message = nCode;
+	    msg.flags = hook|wparam|lparam;
+	    msg.wParam = wParam;
+	    msg.lParam = (cbt_global_hook_thread_id == GetCurrentThreadId()) ? 1 : 2;
+	    add_message(&msg);
+	}
+    }
+    return CallNextHookEx(hCBT_global_hook, nCode, wParam, lParam);
+}
+
+static DWORD WINAPI win_event_global_thread_proc(void *param)
 {
     HWND hwnd;
-    UINT i;
-    const struct message *events = WmWinEventsSeq;
+    MSG msg;
+    HANDLE hevent = *(HANDLE *)param;
     HMODULE user32 = GetModuleHandleA("user32.dll");
     FARPROC pNotifyWinEvent = GetProcAddress(user32, "NotifyWinEvent");
 
-    if (!pNotifyWinEvent) return;
+    assert(pNotifyWinEvent);
 
-    hwnd = CreateWindow ("TestWindowClass", NULL,
-			WS_OVERLAPPEDWINDOW,
-			CW_USEDEFAULT, CW_USEDEFAULT, 300, 300, 0,
-			NULL, NULL, 0);
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP, 0,0,0,0,0,0,0, NULL);
     assert(hwnd);
+    trace("created thread window %p\n", hwnd);
+
+    *(HWND *)param = hwnd;
+
+    flush_sequence();
+    /* this event should be received only by our new hook proc,
+     * an old one does not expect an event from another thread.
+     */
+    pNotifyWinEvent(EVENT_OBJECT_LOCATIONCHANGE, hwnd, OBJID_ALERT, 0);
+    SetEvent(hevent);
+
+    while (GetMessage(&msg, 0, 0, 0))
+    {
+	TranslateMessage(&msg);
+	DispatchMessage(&msg);
+    }
+    return 0;
+}
+
+static DWORD WINAPI cbt_global_hook_thread_proc(void *param)
+{
+    HWND hwnd;
+    MSG msg;
+    HANDLE hevent = *(HANDLE *)param;
+
+    flush_sequence();
+    /* these events should be received only by our new hook proc,
+     * an old one does not expect an event from another thread.
+     */
+
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP, 0,0,0,0,0,0,0, NULL);
+    assert(hwnd);
+    trace("created thread window %p\n", hwnd);
+
+    *(HWND *)param = hwnd;
+
+    /* generate focus related CBT events */
+    SetFocus(0);
+    SetFocus(hwnd);
+
+    SetEvent(hevent);
+
+    while (GetMessage(&msg, 0, 0, 0))
+    {
+	TranslateMessage(&msg);
+	DispatchMessage(&msg);
+    }
+    return 0;
+}
+
+static void test_winevents(void)
+{
+    MSG msg;
+    HWND hwnd, hwnd2;
+    UINT i;
+    HANDLE hthread, hevent;
+    DWORD tid;
+    HWINEVENTHOOK hhook;
+    const struct message *events = WmWinEventsSeq;
+    HMODULE user32 = GetModuleHandleA("user32.dll");
+    FARPROC pSetWinEventHook = 0;/*GetProcAddress(user32, "SetWinEventHook");*/
+    FARPROC pUnhookWinEvent = 0;/*GetProcAddress(user32, "UnhookWinEvent");*/
+    FARPROC pNotifyWinEvent = GetProcAddress(user32, "NotifyWinEvent");
+
+    hwnd = CreateWindowExA(0, "TestWindowClass", NULL,
+			   WS_OVERLAPPEDWINDOW,
+			   CW_USEDEFAULT, CW_USEDEFAULT, 300, 300, 0,
+			   NULL, NULL, 0);
+    assert(hwnd);
+
+    /****** start of global hook test *************/
+    hCBT_global_hook = SetWindowsHookExA(WH_CBT, cbt_global_hook_proc, GetModuleHandleA(0), 0);
+    assert(hCBT_global_hook);
+
+    hevent = CreateEventA(NULL, 0, 0, NULL);
+    assert(hevent);
+    hwnd2 = (HWND)hevent;
+
+    hthread = CreateThread(NULL, 0, cbt_global_hook_thread_proc, &hwnd2, 0, &tid);
+    ok(hthread != NULL, "CreateThread failed, error %ld\n", GetLastError());
+
+    ok(WaitForSingleObject(hevent, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+
+    ok_sequence(WmGlobalHookSeq_1, "global hook 1", FALSE);
+
+    flush_sequence();
+    /* this one should be received only by old hook proc */
+    DefWindowProcA(hwnd, WM_SYSCOMMAND, SC_NEXTWINDOW, 0);
+    /* this one should be received only by old hook proc */
+    DefWindowProcA(hwnd, WM_SYSCOMMAND, SC_PREVWINDOW, 0);
+
+    ok_sequence(WmGlobalHookSeq_2, "global hook 2", FALSE);
+
+    ok(UnhookWindowsHookEx(hCBT_global_hook), "UnhookWindowsHookEx error %ld", GetLastError());
+
+    PostThreadMessageA(tid, WM_QUIT, 0, 0);
+    ok(WaitForSingleObject(hthread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(hthread);
+    CloseHandle(hevent);
+    ok(!IsWindow(hwnd2), "window should be destroyed on thread exit\n");
+    /****** end of global hook test *************/
+
+    if (!pSetWinEventHook || !pNotifyWinEvent || !pUnhookWinEvent)
+    {
+	ok(DestroyWindow(hwnd), "failed to destroy window\n");
+	return;
+    }
 
     flush_sequence();
 
-    /* Windows ignores events with hwnd == 0 */
+#if 0 /* this test doesn't pass under Win9x */
+    /* win2k ignores events with hwnd == 0 */
     SetLastError(0xdeadbeef);
     pNotifyWinEvent(events[0].message, 0, events[0].wParam, events[0].lParam);
     ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE || /* Win2k */
        GetLastError() == 0xdeadbeef, /* Win9x */
        "unexpected error %ld\n", GetLastError());
     ok_sequence(WmEmptySeq, "empty notify winevents", FALSE);
+#endif
 
     for (i = 0; i < sizeof(WmWinEventsSeq)/sizeof(WmWinEventsSeq[0]); i++)
 	pNotifyWinEvent(events[i].message, hwnd, events[i].wParam, events[i].lParam);
 
     ok_sequence(WmWinEventsSeq, "notify winevents", FALSE);
+
+    /****** start of event filtering test *************/
+    hhook = (HWINEVENTHOOK)pSetWinEventHook(
+	EVENT_OBJECT_SHOW, /* 0x8002 */
+	EVENT_OBJECT_LOCATIONCHANGE, /* 0x800B */
+	GetModuleHandleA(0), win_event_global_hook_proc,
+	GetCurrentProcessId(), 0,
+	WINEVENT_INCONTEXT);
+    ok(hhook != 0, "SetWinEventHook error %ld\n", GetLastError());
+
+    hevent = CreateEventA(NULL, 0, 0, NULL);
+    assert(hevent);
+    hwnd2 = (HWND)hevent;
+
+    hthread = CreateThread(NULL, 0, win_event_global_thread_proc, &hwnd2, 0, &tid);
+    ok(hthread != NULL, "CreateThread failed, error %ld\n", GetLastError());
+
+    ok(WaitForSingleObject(hevent, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+
+    ok_sequence(WmWinEventAlertSeq, "alert winevent", FALSE);
+
+    flush_sequence();
+    /* this one should be received only by old hook proc */
+    pNotifyWinEvent(EVENT_OBJECT_CREATE, hwnd, OBJID_CARET, 0); /* 0x8000 */
+    pNotifyWinEvent(EVENT_OBJECT_SHOW, hwnd, OBJID_CARET, 0); /* 0x8002 */
+    /* this one should be received only by old hook proc */
+    pNotifyWinEvent(EVENT_OBJECT_NAMECHANGE, hwnd, OBJID_CARET, 0); /* 0x800C */
+
+    ok_sequence(WmWinEventCaretSeq, "caret winevent", FALSE);
+
+    ok(pUnhookWinEvent(hhook), "UnhookWinEvent error %ld\n", GetLastError());
+
+    PostThreadMessageA(tid, WM_QUIT, 0, 0);
+    ok(WaitForSingleObject(hthread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(hthread);
+    CloseHandle(hevent);
+    ok(!IsWindow(hwnd2), "window should be destroyed on thread exit\n");
+    /****** end of event filtering test *************/
+
+    /****** start of out of context event test *************/
+    hhook = (HWINEVENTHOOK)pSetWinEventHook(
+	EVENT_MIN, EVENT_MAX,
+	0, win_event_global_hook_proc,
+	GetCurrentProcessId(), 0,
+	WINEVENT_OUTOFCONTEXT);
+    ok(hhook != 0, "SetWinEventHook error %ld\n", GetLastError());
+
+    hevent = CreateEventA(NULL, 0, 0, NULL);
+    assert(hevent);
+    hwnd2 = (HWND)hevent;
+
+    flush_sequence();
+
+    hthread = CreateThread(NULL, 0, win_event_global_thread_proc, &hwnd2, 0, &tid);
+    ok(hthread != NULL, "CreateThread failed, error %ld\n", GetLastError());
+
+    ok(WaitForSingleObject(hevent, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+
+    ok_sequence(WmEmptySeq, "empty notify winevents", FALSE);
+    /* process pending winevent messages */
+    ok(!PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE), "msg queue should be empty\n");
+    ok_sequence(WmWinEventAlertSeq_2, "alert winevent for out of context proc", FALSE);
+
+    flush_sequence();
+    /* this one should be received only by old hook proc */
+    pNotifyWinEvent(EVENT_OBJECT_CREATE, hwnd, OBJID_CARET, 0); /* 0x8000 */
+    pNotifyWinEvent(EVENT_OBJECT_SHOW, hwnd, OBJID_CARET, 0); /* 0x8002 */
+    /* this one should be received only by old hook proc */
+    pNotifyWinEvent(EVENT_OBJECT_NAMECHANGE, hwnd, OBJID_CARET, 0); /* 0x800C */
+
+    ok_sequence(WmWinEventCaretSeq_2, "caret winevent for incontext proc", FALSE);
+    /* process pending winevent messages */
+    ok(!PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE), "msg queue should be empty\n");
+    ok_sequence(WmWinEventCaretSeq_2, "caret winevent for out of context proc", FALSE);
+
+    ok(pUnhookWinEvent(hhook), "UnhookWinEvent error %ld\n", GetLastError());
+
+    PostThreadMessageA(tid, WM_QUIT, 0, 0);
+    ok(WaitForSingleObject(hthread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(hthread);
+    CloseHandle(hevent);
+    ok(!IsWindow(hwnd2), "window should be destroyed on thread exit\n");
+    /****** end of out of context event test *************/
+
     ok(DestroyWindow(hwnd), "failed to destroy window\n");
+}
+
+static void test_set_hook(void)
+{
+    HHOOK hhook;
+    HWINEVENTHOOK hwinevent_hook;
+    HMODULE user32 = GetModuleHandleA("user32.dll");
+    FARPROC pSetWinEventHook = 0;/*GetProcAddress(user32, "SetWinEventHook");*/
+    FARPROC pUnhookWinEvent = GetProcAddress(user32, "UnhookWinEvent");
+
+    hhook = SetWindowsHookExA(WH_CBT, cbt_hook_proc, GetModuleHandleA(0), GetCurrentThreadId());
+    ok(hhook != 0, "local hook does not require hModule set to 0\n");
+    UnhookWindowsHookEx(hhook);
+
+#if 0 /* this test doesn't pass under Win9x: BUG! */
+    SetLastError(0xdeadbeef);
+    hhook = SetWindowsHookExA(WH_CBT, cbt_hook_proc, 0, 0);
+    ok(!hhook, "global hook requires hModule != 0\n");
+    ok(GetLastError() == ERROR_HOOK_NEEDS_HMOD, "unexpected error %ld\n", GetLastError());
+#endif
+
+    SetLastError(0xdeadbeef);
+    hhook = SetWindowsHookExA(WH_CBT, 0, GetModuleHandleA(0), GetCurrentThreadId());
+    ok(!hhook, "SetWinEventHook with invalid proc should fail\n");
+    ok(GetLastError() == ERROR_INVALID_FILTER_PROC || /* Win2k */
+       GetLastError() == 0xdeadbeef, /* Win9x */
+       "unexpected error %ld\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ok(!UnhookWindowsHookEx((HHOOK)0xdeadbeef), "UnhookWindowsHookEx succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_HOOK_HANDLE || /* Win2k */
+       GetLastError() == 0xdeadbeef, /* Win9x */
+       "unexpected error %ld\n", GetLastError());
+
+    if (!pSetWinEventHook || !pUnhookWinEvent) return;
+
+    /* even process local incontext hooks require hmodule */
+    SetLastError(0xdeadbeef);
+    hwinevent_hook = (HWINEVENTHOOK)pSetWinEventHook(EVENT_MIN, EVENT_MAX,
+	0, win_event_proc, GetCurrentProcessId(), 0, WINEVENT_INCONTEXT);
+    ok(!hwinevent_hook, "WINEVENT_INCONTEXT requires hModule != 0\n");
+    ok(GetLastError() == ERROR_HOOK_NEEDS_HMOD || /* Win2k */
+       GetLastError() == 0xdeadbeef, /* Win9x */
+       "unexpected error %ld\n", GetLastError());
+
+    /* even thread local incontext hooks require hmodule */
+    SetLastError(0xdeadbeef);
+    hwinevent_hook = (HWINEVENTHOOK)pSetWinEventHook(EVENT_MIN, EVENT_MAX,
+	0, win_event_proc, GetCurrentProcessId(), GetCurrentThreadId(), WINEVENT_INCONTEXT);
+    ok(!hwinevent_hook, "WINEVENT_INCONTEXT requires hModule != 0\n");
+    ok(GetLastError() == ERROR_HOOK_NEEDS_HMOD || /* Win2k */
+       GetLastError() == 0xdeadbeef, /* Win9x */
+       "unexpected error %ld\n", GetLastError());
+
+#if 0 /* these 3 tests don't pass under Win9x */
+    SetLastError(0xdeadbeef);
+    hwinevent_hook = (HWINEVENTHOOK)pSetWinEventHook(1, 0,
+	0, win_event_proc, GetCurrentProcessId(), 0, WINEVENT_OUTOFCONTEXT);
+    ok(!hwinevent_hook, "SetWinEventHook with invalid event range should fail\n");
+    ok(GetLastError() == ERROR_INVALID_HOOK_FILTER, "unexpected error %ld\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hwinevent_hook = (HWINEVENTHOOK)pSetWinEventHook(-1, 1,
+	0, win_event_proc, GetCurrentProcessId(), 0, WINEVENT_OUTOFCONTEXT);
+    ok(!hwinevent_hook, "SetWinEventHook with invalid event range should fail\n");
+    ok(GetLastError() == ERROR_INVALID_HOOK_FILTER, "unexpected error %ld\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hwinevent_hook = (HWINEVENTHOOK)pSetWinEventHook(EVENT_MIN, EVENT_MAX,
+	0, win_event_proc, 0, 0xdeadbeef, WINEVENT_OUTOFCONTEXT);
+    ok(!hwinevent_hook, "SetWinEventHook with invalid tid should fail\n");
+    ok(GetLastError() == ERROR_INVALID_THREAD_ID, "unexpected error %ld\n", GetLastError());
+#endif
+
+    SetLastError(0xdeadbeef);
+    hwinevent_hook = (HWINEVENTHOOK)pSetWinEventHook(0, 0,
+	0, win_event_proc, GetCurrentProcessId(), 0, WINEVENT_OUTOFCONTEXT);
+    ok(hwinevent_hook != 0, "SetWinEventHook error %ld\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "unexpected error %ld\n", GetLastError());
+    ok(pUnhookWinEvent(hwinevent_hook), "UnhookWinEvent error %ld\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    hwinevent_hook = (HWINEVENTHOOK)pSetWinEventHook(EVENT_MIN, EVENT_MAX,
+	0, win_event_proc, 0xdeadbeef, 0, WINEVENT_OUTOFCONTEXT);
+    ok(hwinevent_hook != 0, "SetWinEventHook error %ld\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "unexpected error %ld\n", GetLastError());
+    ok(pUnhookWinEvent(hwinevent_hook), "UnhookWinEvent error %ld\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ok(!pUnhookWinEvent((HWINEVENTHOOK)0xdeadbeef), "UnhookWinEvent succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE || /* Win2k */
+	GetLastError() == 0xdeadbeef, /* Win9x */
+	"unexpected error %ld\n", GetLastError());
 }
 
 START_TEST(msg)
@@ -4829,22 +5233,28 @@ START_TEST(msg)
 
     if (pSetWinEventHook)
     {
-	UINT event;
 	hEvent_hook = (HWINEVENTHOOK)pSetWinEventHook(EVENT_MIN, EVENT_MAX,
 						      GetModuleHandleA(0),
 						      win_event_proc,
-						      GetCurrentProcessId(),
 						      0,
+						      GetCurrentThreadId(),
 						      WINEVENT_INCONTEXT);
 	assert(hEvent_hook);
 
 	if (pIsWinEventHookInstalled)
 	{
+	    UINT event;
 	    for (event = EVENT_MIN; event <= EVENT_MAX; event++)
 		ok(pIsWinEventHookInstalled(event), "IsWinEventHookInstalled(%u) failed\n", event);
 	}
+
+        /* Fix message sequences before removing 3 lines below */
+        ok(pUnhookWinEvent(hEvent_hook), "UnhookWinEvent error %ld\n", GetLastError());
+        pUnhookWinEvent = 0;
+        hEvent_hook = 0;
     }
 
+    cbt_hook_thread_id = GetCurrentThreadId();
     hCBT_hook = SetWindowsHookExA(WH_CBT, cbt_hook_proc, 0, GetCurrentThreadId());
     assert(hCBT_hook);
 
@@ -4856,6 +5266,7 @@ START_TEST(msg)
     test_message_conversion();
     test_accelerators();
     test_timers();
+    test_set_hook();
     test_winevents();
 
     UnhookWindowsHookEx(hCBT_hook);

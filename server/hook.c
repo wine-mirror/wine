@@ -320,7 +320,14 @@ DECL_HANDLER(remove_hook)
 {
     struct hook *hook;
 
-    if (req->handle) hook = get_user_object( req->handle, USER_HOOK );
+    if (req->handle)
+    {
+        if (!(hook = get_user_object( req->handle, USER_HOOK )))
+        {
+            set_win32_error( ERROR_INVALID_HOOK_HANDLE );
+            return;
+        }
+    }
     else
     {
         if (!req->proc || req->id < WH_MINHOOK || req->id > WH_MAXHOOK)
@@ -329,9 +336,12 @@ DECL_HANDLER(remove_hook)
             return;
         }
         if (!(hook = find_hook( current, req->id - WH_MINHOOK, req->proc )))
+        {
             set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
     }
-    if (hook) remove_hook( hook );
+    remove_hook( hook );
 }
 
 
