@@ -1315,22 +1315,17 @@ LRESULT WINAPI ColorDlgProc16( HWND16 hDlg, UINT16 message,
 BOOL16 WINAPI ChooseColor16( LPCHOOSECOLOR16 lpChCol )
 {
     HINSTANCE16 hInst;
-    HANDLE16 hDlgTmpl = 0;
-    BOOL16 bRet = FALSE, win32Format = FALSE;
+    HANDLE16 hDlgTmpl16 = 0, hResource16 = 0;
+    HGLOBAL16 hGlobal16 = 0;
+    BOOL16 bRet = FALSE;
     LPCVOID template;
-    HWND hwndDialog;
-
+    FARPROC16 ptr;
+ 
     TRACE("ChooseColor\n");
     if (!lpChCol) return FALSE;    
 
     if (lpChCol->Flags & CC_ENABLETEMPLATEHANDLE)
-    {
-        if (!(template = LockResource16( lpChCol->hInstance)))
-        {
-            COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
-            return FALSE;
-        }
-    }
+        hDlgTmpl16 = lpChCol->hInstance;
     else if (lpChCol->Flags & CC_ENABLETEMPLATE)
     {
         HANDLE16 hResInfo;
@@ -1341,38 +1336,59 @@ BOOL16 WINAPI ChooseColor16( LPCHOOSECOLOR16 lpChCol )
             COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
             return FALSE;
         }
-        if (!(hDlgTmpl = LoadResource16(lpChCol->hInstance, hResInfo)) ||
-            !(template = LockResource16(hDlgTmpl)))
+        if (!(hDlgTmpl16 = LoadResource16(lpChCol->hInstance, hResInfo)))
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
             return FALSE;
         }
+        hResource16 = hDlgTmpl16;
     }
     else
     {
-	HANDLE hResInfo, hDlgTmpl;
+	HANDLE hResInfo, hDlgTmpl32;
+        LPCVOID template32;
+        DWORD size;
 	if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "CHOOSE_COLOR", RT_DIALOGA)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 	    return FALSE;
 	}
-	if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo)) ||
-	    !(template = LockResource(hDlgTmpl)))
+	if (!(hDlgTmpl32 = LoadResource(COMMDLG_hInstance32, hResInfo)) ||
+	    !(template32 = LockResource(hDlgTmpl32)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
 	    return FALSE;
 	}
-        win32Format = TRUE;
+        size = SizeofResource(GetModuleHandleA("COMDLG32"), hResInfo);
+        hGlobal16 = GlobalAlloc16(0, size);
+        if (!hGlobal16)
+        {
+            COMDLG32_SetCommDlgExtendedError(CDERR_MEMALLOCFAILURE);
+            ERR("alloc failure for %ld bytes\n", size);
+            return FALSE;
+        }
+        template = GlobalLock16(hGlobal16);
+        if (!template) 
+        {
+            COMDLG32_SetCommDlgExtendedError(CDERR_MEMLOCKFAILURE);
+            ERR("global lock failure for %x handle\n", hDlgTmpl16);
+            GlobalFree16(hGlobal16);
+            return FALSE;
+        }
+        ConvertDialog32To16((LPVOID)template32, size, (LPVOID)template);
+        hDlgTmpl16 = hGlobal16;
     }
 
+    ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (SEGPTR) 8);
     hInst = GetWindowLongA(lpChCol->hwndOwner, GWL_HINSTANCE);
-    hwndDialog = DIALOG_CreateIndirect(hInst, template, win32Format,
-                                        lpChCol->hwndOwner,
-                                        (DLGPROC16)ColorDlgProc16,
-                                        (DWORD)lpChCol, WIN_PROC_32A);
-    if (hwndDialog) bRet = DIALOG_DoDialogBox(hwndDialog, lpChCol->hwndOwner);
-    if (hDlgTmpl) FreeResource16(hDlgTmpl);
-
+    bRet = DialogBoxIndirectParam16(hInst, hDlgTmpl16, lpChCol->hwndOwner,
+                     (DLGPROC16) ptr, (DWORD)lpChCol);
+    if (hResource16) FreeResource16(hDlgTmpl16);
+    if (hGlobal16)
+    {
+        GlobalUnlock16(hGlobal16);
+        GlobalFree16(hGlobal16);
+    }
     return bRet;
 }
 
@@ -1386,7 +1402,6 @@ BOOL WINAPI ChooseColorW( LPCHOOSECOLORW lpChCol )
     HANDLE hDlgTmpl = 0;
     BOOL bRet = FALSE;
     LPCVOID template;
-    HWND hwndDialog;
 
     TRACE("ChooseColor\n");
     if (!lpChCol) return FALSE;    
@@ -1432,13 +1447,8 @@ BOOL WINAPI ChooseColorW( LPCHOOSECOLORW lpChCol )
 	}
     }
 
-    hwndDialog = DIALOG_CreateIndirect(COMMDLG_hInstance32, template, TRUE,
-                                        lpChCol->hwndOwner,
-                                        (DLGPROC16)ColorDlgProc,
-                                        (DWORD)lpChCol, WIN_PROC_32W);
-    if (hwndDialog) bRet = DIALOG_DoDialogBox(hwndDialog, lpChCol->hwndOwner);
-    if (hDlgTmpl) FreeResource(hDlgTmpl);
-
+    bRet = DialogBoxIndirectParamW(COMMDLG_hInstance32, template, lpChCol->hwndOwner,
+                     (DLGPROC)ColorDlgProc, (DWORD)lpChCol);
     return bRet;
 }
 
