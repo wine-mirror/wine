@@ -1,15 +1,12 @@
   <chapter id="porting">
     <title>Porting Wine to new Platforms</title>
-    <para>Porting Wine to different (UNIX-based) operating systems...</para>
+    <para>
+	This document provides a few tips on porting Wine to your
+	favorite (UNIX-based) operating system. 
+    </para>
 
     <sect1 id="wine-porting">
-      <title>Porting</title>
-
-      <para>
-	This document provides a few tips on porting Wine to your
-	favorite operating system. 
-      </para>
-
+      <title>Porting Wine to new Platforms</title>
       <sect2>
         <title>Why <symbol>#ifdef MyOS</symbol> is probably a mistake.</title>
 
