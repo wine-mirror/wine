@@ -399,7 +399,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
         if (This->buffer == NULL)
           return DIERR_NOTBUFFERED;
 
-        if (dodsize < sizeof(*dod))
+        if (dodsize < sizeof(DIDEVICEOBJECTDATA_DX3))
           return DIERR_INVALIDPARAM;
 
         MsgWaitForMultipleObjectsEx(0, NULL, 0, 0, 0);
