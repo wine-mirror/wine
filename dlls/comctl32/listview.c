@@ -53,7 +53,6 @@
  *   -- LISTVIEW_StyleChanged doesn't handle some changes too well
  *
  * Speedups
- *   -- LISTVIEW_SetItemCount is too invalidation happy
  *   -- LISTVIEW_Size invalidates too much
  *   -- in sorted mode, LISTVIEW_InsertItemT sorts the array,
  *      instead of inserting in the right spot
@@ -6521,46 +6520,79 @@ static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *infoPtr, INT nType, HIMAG
  */
 static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFlags)
 {
-  TRACE("(nItems=%d, dwFlags=%lx)\n", nItems, dwFlags);
+    TRACE("(nItems=%d, dwFlags=%lx)\n", nItems, dwFlags);
 
-  if (infoPtr->dwStyle & LVS_OWNERDATA)
-  {
-      int precount,topvisible;
+    if (infoPtr->dwStyle & LVS_OWNERDATA)
+    {
+	UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
+	INT nOldCount = infoPtr->nItemCount;
 
-      TRACE("LVS_OWNERDATA is set!\n");
-      if (dwFlags & (LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL))
-        FIXME("flags %s %s not implemented\n",
-              (dwFlags & LVSICF_NOINVALIDATEALL) ? "LVSICF_NOINVALIDATEALL"
-              : "",
-              (dwFlags & LVSICF_NOSCROLL) ? "LVSICF_NOSCROLL" : "");
+	LISTVIEW_DeselectAll(infoPtr);
+	infoPtr->nItemCount = nItems;
+	LISTVIEW_UpdateScroll(infoPtr);
 
-      LISTVIEW_DeselectAll(infoPtr);
+	/* the flags are valid only in ownerdata report and list modes */
+	if (uView == LVS_ICON || uView == LVS_SMALLICON) dwFlags = 0;
 
-      precount = infoPtr->nItemCount;
-      topvisible = LISTVIEW_GetTopIndex(infoPtr) +
-                   LISTVIEW_GetCountPerColumn(infoPtr) + 1;
+	if (!(dwFlags & LVSICF_NOSCROLL))
+	    LISTVIEW_EnsureVisible(infoPtr, nItems - 1, FALSE);
 
-      infoPtr->nItemCount = nItems;
-      LISTVIEW_UpdateItemSize(infoPtr);
+	if (!(dwFlags & LVSICF_NOINVALIDATEALL))
+	    LISTVIEW_InvalidateList(infoPtr);
+	else
+	{
+	    INT nFrom, nTo;
+	    POINT Origin;
+	    RECT rcErase;
+	    
+	    LISTVIEW_GetOrigin(infoPtr, &Origin);
+    	    nFrom = min(nOldCount, nItems);
+	    nTo = max(nOldCount, nItems);
+    
+	    if (uView == LVS_REPORT)
+	    {
+		rcErase.left = 0;
+		rcErase.top = nFrom * infoPtr->nItemHeight;
+		rcErase.right = infoPtr->nItemWidth;
+		rcErase.bottom = nTo * infoPtr->nItemHeight;
+		OffsetRect(&rcErase, Origin.x, Origin.y);
+		if (IntersectRect(&rcErase, &rcErase, &infoPtr->rcList))
+		    LISTVIEW_InvalidateRect(infoPtr, &rcErase);
+	    }
+	    else /* LVS_LIST */
+	    {
+		INT nPerCol = LISTVIEW_GetCountPerColumn(infoPtr);
 
-      LISTVIEW_UpdateSize(infoPtr);
-      LISTVIEW_UpdateScroll(infoPtr);
+		rcErase.left = (nFrom / nPerCol) * infoPtr->nItemWidth;
+		rcErase.top = (nFrom % nPerCol) * infoPtr->nItemHeight;
+		rcErase.right = rcErase.left + infoPtr->nItemWidth;
+		rcErase.bottom = nPerCol * infoPtr->nItemHeight;
+		OffsetRect(&rcErase, Origin.x, Origin.y);
+		if (IntersectRect(&rcErase, &rcErase, &infoPtr->rcList))
+		    LISTVIEW_InvalidateRect(infoPtr, &rcErase);
 
-      if (min(precount,infoPtr->nItemCount) < topvisible)
-        LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
-  }
-  else
-  {
-    /* According to MSDN for non-LVS_OWNERDATA this is just
-     * a performance issue. The control allocates its internal
-     * data structures for the number of items specified. It
-     * cuts down on the number of memory allocations. Therefore
-     * we will just issue a WARN here
-     */
-     WARN("for non-ownerdata performance option not implemented.\n");
-  }
+		rcErase.left = (nFrom / nPerCol + 1) * infoPtr->nItemWidth;
+		rcErase.top = 0;
+		rcErase.right = (nTo / nPerCol + 1) * infoPtr->nItemWidth;
+		rcErase.bottom = nPerCol * infoPtr->nItemHeight;
+		OffsetRect(&rcErase, Origin.x, Origin.y);
+		if (IntersectRect(&rcErase, &rcErase, &infoPtr->rcList))
+		    LISTVIEW_InvalidateRect(infoPtr, &rcErase);
+	    }
+	}
+    }
+    else
+    {
+	/* According to MSDN for non-LVS_OWNERDATA this is just
+	 * a performance issue. The control allocates its internal
+	 * data structures for the number of items specified. It
+	 * cuts down on the number of memory allocations. Therefore
+	 * we will just issue a WARN here
+	 */
+	WARN("for non-ownerdata performance option not implemented.\n");
+    }
 
-  return TRUE;
+    return TRUE;
 }
 
 /***
