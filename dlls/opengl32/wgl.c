@@ -84,7 +84,7 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
 
   /* First, get the visual in use by the X11DRV */
   template.visualid = XVisualIDFromVisual(X11DRV_GetVisual());
-  vis = XGetVisualInfo(display, VisualIDMask, &template, &num);
+  vis = XGetVisualInfo(gdi_display, VisualIDMask, &template, &num);
 
   if (vis == NULL) {
     ERR("NULL visual !!!\n");
@@ -137,13 +137,13 @@ BOOL WINAPI wglDeleteContext(HGLRC hglrc) {
   ENTER_GL();
   /* A game (Half Life not to name it) deletes twice the same context. To prevent
      crashes, run with our own error function enabled */
-  XSync(display, False);
+  XSync(gdi_display, False);
   XGLErrorFlag = 0;
   WineXHandler = XSetErrorHandler(XGLErrorHandler);
   __TRY {
-    glXDestroyContext(display, ctx->ctx);
-    XSync(display, False);
-    XFlush(display);
+    glXDestroyContext(gdi_display, ctx->ctx);
+    XSync(gdi_display, False);
+    XFlush(gdi_display);
 
     if (XGLErrorHandler == 0) free_context(ctx);
   }
@@ -308,7 +308,7 @@ BOOL WINAPI wglMakeCurrent(HDC hdc,
   
   if (hglrc == NULL) {
     ENTER_GL();
-    ret = glXMakeCurrent(display,
+    ret = glXMakeCurrent(gdi_display,
 			 None,
 			 NULL);
     LEAVE_GL();
@@ -326,13 +326,13 @@ BOOL WINAPI wglMakeCurrent(HDC hdc,
 
       if (ctx->ctx == NULL) {
 	ENTER_GL();
-	ctx->ctx = glXCreateContext(display, ctx->vis, NULL, True);
+	ctx->ctx = glXCreateContext(gdi_display, ctx->vis, NULL, True);
 	LEAVE_GL();
 	TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
       }
       
       ENTER_GL();
-      ret = glXMakeCurrent(display,
+      ret = glXMakeCurrent(gdi_display,
 			   physDev->drawable,
 			   ctx->ctx);
       LEAVE_GL();
@@ -383,14 +383,14 @@ BOOL WINAPI wglShareLists(HGLRC hglrc1,
   } else {
     if (org->ctx == NULL) {
       ENTER_GL();
-      org->ctx = glXCreateContext(display, org->vis, NULL, True);
+      org->ctx = glXCreateContext(gdi_display, org->vis, NULL, True);
       LEAVE_GL();
       TRACE(" created a delayed OpenGL context (%p) for Wine context %p\n", org->ctx, org);
     }
 
     ENTER_GL();
     /* Create the destination context with display lists shared */
-    dest->ctx = glXCreateContext(display, dest->vis, org->ctx, True);
+    dest->ctx = glXCreateContext(gdi_display, dest->vis, org->ctx, True);
     LEAVE_GL();
     TRACE(" created a delayed OpenGL context (%p) for Wine context %p sharing lists with OpenGL ctx %p\n", dest->ctx, dest, org->ctx);
   }
@@ -468,7 +468,7 @@ static void process_attach(void) {
      Window was created using the standard X11DRV visual, and glXMakeCurrent can't deal 
      with mismatched visuals.  Note that the Root Window visual may not be double 
      buffered, so apps actually attempting to render this way may flicker */
-  if (TSXGetWindowAttributes( display, X11DRV_GetXRootWindow(), &win_attr ))
+  if (TSXGetWindowAttributes( gdi_display, X11DRV_GetXRootWindow(), &win_attr ))
   {
     rootVisual = win_attr.visual; 
   }
@@ -476,13 +476,13 @@ static void process_attach(void) {
   {
     /* Get the default visual, since we can't seem to get the attributes from the 
        Root Window.  Let's hope that the Root Window Visual matches the DefaultVisual */
-    rootVisual = DefaultVisual( display, DefaultScreen(display) );
+    rootVisual = DefaultVisual( gdi_display, DefaultScreen(gdi_display) );
   }
 
   template.visualid = XVisualIDFromVisual(rootVisual);
-  vis = XGetVisualInfo(display, VisualIDMask, &template, &num);
-  if (vis != NULL)        default_cx = glXCreateContext(display, vis, 0, GL_TRUE);
-  if (default_cx != NULL) glXMakeCurrent(display, X11DRV_GetXRootWindow(), default_cx);
+  vis = XGetVisualInfo(gdi_display, VisualIDMask, &template, &num);
+  if (vis != NULL)        default_cx = glXCreateContext(gdi_display, vis, 0, GL_TRUE);
+  if (default_cx != NULL) glXMakeCurrent(gdi_display, X11DRV_GetXRootWindow(), default_cx);
   XFree(vis);
   LEAVE_GL();
 
@@ -494,7 +494,7 @@ static void process_attach(void) {
 }
 
 static void process_detach(void) {
-  glXDestroyContext(display, default_cx);
+  glXDestroyContext(gdi_display, default_cx);
 }
 
 /***********************************************************************

@@ -260,12 +260,11 @@ static BOOL OBM_CreateBitmaps( char **data, BOOL color,
     if (attrs == NULL) return FALSE;
     attrs->valuemask    = XpmColormap | XpmDepth | XpmColorSymbols | XpmHotspot;
     attrs->colormap     = X11DRV_PALETTE_PaletteXColormap;
-    attrs->depth        = color ? X11DRV_GetDepth() : 1;
+    attrs->depth        = color ? screen_depth : 1;
     attrs->colorsymbols = (attrs->depth > 1) ? OBM_Colors : OBM_BlackAndWhite;
     attrs->numsymbols   = (attrs->depth > 1) ? NB_COLOR_SYMBOLS : 2;
 
-    err = TSXpmCreatePixmapFromData( display, X11DRV_GetXRootWindow(), data,
-                                     &pixmap, &pixmask, attrs );
+    err = TSXpmCreatePixmapFromData( gdi_display, root_window, data, &pixmap, &pixmask, attrs );
     if (err != XpmSuccess)
     {
         HeapFree( GetProcessHeap(), 0, attrs );
@@ -288,8 +287,8 @@ static BOOL OBM_CreateBitmaps( char **data, BOOL color,
 
     HeapFree( GetProcessHeap(), 0, attrs );
 
-    if (pixmap && (!bitmap || !*bitmap)) TSXFreePixmap( display, pixmap );
-    if (pixmask && (!mask || !*mask)) TSXFreePixmap( display, pixmask );
+    if (pixmap && (!bitmap || !*bitmap)) TSXFreePixmap( gdi_display, pixmap );
+    if (pixmask && (!mask || !*mask)) TSXFreePixmap( gdi_display, pixmask );
 
     if (bitmap && !*bitmap)
     {

@@ -329,17 +329,17 @@ void X11DRV_WND_SurfaceCopy(WND* wndPtr, HDC hdc, INT dx, INT dy,
     physDev = (X11DRV_PDEVICE *)dcPtr->physDev;
     dst.x = (src.x = dcPtr->DCOrgX + rect->left) + dx;
     dst.y = (src.y = dcPtr->DCOrgY + rect->top) + dy;
-  
+
+    wine_tsx11_lock();
     if (bUpdate) /* handles non-Wine windows hanging over the copied area */
-	TSXSetGraphicsExposures( display, physDev->gc, True );
-    TSXSetFunction( display, physDev->gc, GXcopy );
-    TSXCopyArea( display, physDev->drawable, physDev->drawable,
-                 physDev->gc, src.x, src.y,
-                 rect->right - rect->left,
-                 rect->bottom - rect->top,
-                 dst.x, dst.y );
+        XSetGraphicsExposures( gdi_display, physDev->gc, True );
+    XSetFunction( gdi_display, physDev->gc, GXcopy );
+    XCopyArea( gdi_display, physDev->drawable, physDev->drawable, physDev->gc,
+               src.x, src.y, rect->right - rect->left, rect->bottom - rect->top,
+               dst.x, dst.y );
     if (bUpdate)
-	TSXSetGraphicsExposures( display, physDev->gc, False );
+        XSetGraphicsExposures( gdi_display, physDev->gc, False );
+    wine_tsx11_unlock();
     GDI_ReleaseObj( hdc );
 
     if (bUpdate) /* Make sure exposure events have been processed */

@@ -837,7 +837,7 @@ void X11DRV_ReleaseClipboard(void)
     {
         PROPERTY *prop = prop_head;
         prop_head = prop->next;
-        XFreePixmap( display, prop->pixmap );
+        XFreePixmap( gdi_display, prop->pixmap );
         HeapFree( GetProcessHeap(), 0, prop );
     }
 }
@@ -1234,7 +1234,7 @@ void X11DRV_CLIPBOARD_FreeResources( Atom property )
         if ((*prop)->atom == property)
         {
             PROPERTY *next = (*prop)->next;
-            XFreePixmap( display, (*prop)->pixmap );
+            XFreePixmap( gdi_display, (*prop)->pixmap );
             HeapFree( GetProcessHeap(), 0, *prop );
             *prop = next;
         }

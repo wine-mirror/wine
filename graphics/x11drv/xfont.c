@@ -1007,7 +1007,7 @@ static void XFONT_GetLeading( const LPIFONTINFO16 pFI, const XFontStruct* x_fs,
     if( pEL ) *pEL = 0;
 
     if(XFT) {
-        Atom RAW_CAP_HEIGHT = TSXInternAtom(display, "RAW_CAP_HEIGHT", TRUE);
+        Atom RAW_CAP_HEIGHT = TSXInternAtom(gdi_display, "RAW_CAP_HEIGHT", TRUE);
 	if(TSXGetFontProperty((XFontStruct*)x_fs, RAW_CAP_HEIGHT, &height))
 	    *pIL = XFT->ascent - 
                             (INT)(XFT->pixelsize / 1000.0 * height);
@@ -1981,10 +1981,10 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 	}
 	else lpstr = x_pattern[i];
 
-	if( (x_fs = TSXLoadQueryFont(display, lpstr)) )
+	if( (x_fs = TSXLoadQueryFont(gdi_display, lpstr)) )
 	{	      
 	    XFONT_SetFontMetric( fi, fr, x_fs );
-	    TSXFreeFont( display, x_fs );
+	    TSXFreeFont( gdi_display, x_fs );
 
 	    XFONT_FixupPointSize(fi);
 
@@ -2648,7 +2648,7 @@ static fontObject* XFONT_GetCacheEntry(void)
 	    if(fontCache[j].lpX11Trans)
 	        HeapFree( GetProcessHeap(), 0, fontCache[j].lpX11Trans );
 
-	    TSXFreeFont( display, fontCache[j].fs );
+	    TSXFreeFont( gdi_display, fontCache[j].fs );
 
 	    memset( fontCache + j, 0, sizeof(fontObject) );
 	    return (fontCache + j);
@@ -2719,7 +2719,7 @@ BOOL X11DRV_FONT_Init( DeviceCaps* pDevCaps )
 
   res = XFONT_GetPointResolution( pDevCaps );
       
-  x_pattern = TSXListFonts(display, "*", MAX_FONTS, &x_count );
+  x_pattern = TSXListFonts(gdi_display, "*", MAX_FONTS, &x_count );
 
   TRACE("Font Mapper: initializing %i fonts [logical dpi=%i, default dpi=%i]\n", 
 				    x_count, res, DefResolution);
@@ -2778,10 +2778,10 @@ BOOL X11DRV_FONT_Init( DeviceCaps* pDevCaps )
   {
       XFontStruct*  x_fs;
       strcpy(buffer, "-*-*-*-*-normal-*-[12 0 0 12]-*-72-*-*-*-iso8859-1");
-      if( (x_fs = TSXLoadQueryFont(display, buffer)) )
+      if( (x_fs = TSXLoadQueryFont(gdi_display, buffer)) )
       {
 	  XTextCaps |= TC_SF_X_YINDEP;
-	  TSXFreeFont(display, x_fs);
+	  TSXFreeFont(gdi_display, x_fs);
       }
   }
   HeapFree(GetProcessHeap(), 0, buffer);
@@ -2802,8 +2802,8 @@ BOOL X11DRV_FONT_Init( DeviceCaps* pDevCaps )
 
   pDevCaps->textCaps = XTextCaps;
 
-  RAW_ASCENT  = TSXInternAtom(display, "RAW_ASCENT", TRUE);
-  RAW_DESCENT = TSXInternAtom(display, "RAW_DESCENT", TRUE);
+  RAW_ASCENT  = TSXInternAtom(gdi_display, "RAW_ASCENT", TRUE);
+  RAW_DESCENT = TSXInternAtom(gdi_display, "RAW_DESCENT", TRUE);
   
   return TRUE;
 }
@@ -2818,7 +2818,7 @@ static BOOL XFONT_SetX11Trans( fontObject *pfo )
   LFD* lfd;
 
   TSXGetFontProperty( pfo->fs, XA_FONT, &nameAtom );
-  fontName = TSXGetAtomName( display, nameAtom );
+  fontName = TSXGetAtomName( gdi_display, nameAtom );
   lfd = LFD_Parse(fontName);
   if (!lfd)
   {
@@ -2910,7 +2910,7 @@ static X_PHYSFONT XFONT_RealizeFont( const LPLOGFONT16 plf,
 	    do
 	    {
 		LFD_ComposeLFD( pfo, fm.height, lpLFD, uRelaxLevel++ );
-		if( (pfo->fs = TSXLoadQueryFont( display, lpLFD )) ) break;
+		if( (pfo->fs = TSXLoadQueryFont( gdi_display, lpLFD )) ) break;
 	    } while( uRelaxLevel );
 
 		

@@ -63,7 +63,7 @@ void X11DRV_SetDeviceClipping( DC * dc )
     else
         pXrect = NULL;
 
-    TSXSetClipRectangles( display, physDev->gc, 0, 0,
+    TSXSetClipRectangles( gdi_display, physDev->gc, 0, 0,
                           pXrect, obj->rgn->numRects, YXBanded );
 
     if(pXrect)

@@ -55,7 +55,7 @@ static void set_context(IDirect3DDevice2Impl* This) {
 		    This->surface->s.surface_desc.dwWidth,
 		    This->surface->s.surface_desc.dwHeight);
 #else
-    if (glXMakeCurrent(display,ddpriv->drawable, odev->ctx) == False) {
+    if (glXMakeCurrent(gdi_display,ddpriv->drawable, odev->ctx) == False) {
 	ERR("Error in setting current context (context %p drawable %ld)!\n",
 	    odev->ctx, ddpriv->drawable);
     }
@@ -192,9 +192,9 @@ is_OpenGL(
       XVisualInfo template;
 
       template.visualid = XVisualIDFromVisual(visual);
-      vis = XGetVisualInfo(display, VisualIDMask, &template, &num);
+      vis = XGetVisualInfo(gdi_display, VisualIDMask, &template, &num);
 
-      odev->ctx = glXCreateContext(display, vis,
+      odev->ctx = glXCreateContext(gdi_display, vis,
 				   NULL, GL_TRUE);
     }
     
@@ -263,7 +263,7 @@ static ULONG WINAPI MESA_IDirect3DDevice2Impl_Release(LPDIRECT3DDEVICE2 iface)
     OSMesaDestroyContext(odev->ctx);
 #else
     ENTER_GL();
-    glXDestroyContext(display, odev->ctx);
+    glXDestroyContext(gdi_display, odev->ctx);
     LEAVE_GL();
 #endif
     This->private = NULL;
@@ -900,15 +900,15 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
     /* if (surface->s.backbuffer == NULL)
        attributeList[3] = None; */
     ENTER_GL();
-    xvis = glXChooseVisual(display,
-			   DefaultScreen(display),
+    xvis = glXChooseVisual(gdi_display,
+			   DefaultScreen(gdi_display),
 			   attributeList);
     if (xvis == NULL)
       ERR("No visual found !\n");
     else
       TRACE("Visual found\n");
     /* Create the context */
-    odev->ctx = glXCreateContext(display,
+    odev->ctx = glXCreateContext(gdi_display,
 				 xvis,
 				 NULL,
 				 GL_TRUE);
@@ -960,7 +960,7 @@ static ULONG WINAPI MESA_IDirect3DDeviceImpl_Release(LPDIRECT3DDEVICE iface)
     OSMesaDestroyContext(odev->ctx);
 #else
     ENTER_GL();
-    glXDestroyContext(display, odev->ctx);
+    glXDestroyContext(gdi_display, odev->ctx);
     LEAVE_GL();
 #endif    
     This->private = NULL;

@@ -168,29 +168,28 @@ DeviceCaps X11DRV_DevCaps = {
 /* palette size */	0,
 /* ..etc */		0, 0 };
 
+
+Display *gdi_display;  /* display to use for all GDI functions */
+
+
 /**********************************************************************
  *	     X11DRV_GDI_Initialize
  */
-BOOL X11DRV_GDI_Initialize(void)
+BOOL X11DRV_GDI_Initialize( Display *display )
 {
+    Screen *screen = DefaultScreenOfDisplay(display);
+
+    gdi_display = display;
     BITMAP_Driver = &X11DRV_BITMAP_Driver;
     PALETTE_Driver = &X11DRV_PALETTE_Driver;
 
     /* FIXME: colormap management should be merged with the X11DRV */
-
-    if( !X11DRV_DIB_Init() ) return FALSE;
 
     if( !X11DRV_PALETTE_Init() ) return FALSE;
 
     if( !X11DRV_OBM_Init() ) return FALSE;
 
     /* Finish up device caps */
-
-#if 0
-    TRACE("Height = %-4i pxl, %-4i mm, Width  = %-4i pxl, %-4i mm\n",
-	  HeightOfScreen(X11DRV_GetXScreen()), HeightMMOfScreen(X11DRV_GetXScreen()),
-	  WidthOfScreen(X11DRV_GetXScreen()), WidthMMOfScreen(X11DRV_GetXScreen()) );
-#endif
 
     X11DRV_DevCaps.version   = 0x300;
     X11DRV_DevCaps.horzSize  = WidthMMOfScreen(screen) * screen_width / WidthOfScreen(screen);
@@ -214,10 +213,6 @@ BOOL X11DRV_GDI_Initialize(void)
 
     if (!X11DRV_BITMAP_Init()) return FALSE;
 
-    /* Initialize brush dithering */
-
-    if (!X11DRV_BRUSH_Init()) return FALSE;
-
     /* Initialize fonts and text caps */
 
     if (!X11DRV_FONT_Init( &X11DRV_DevCaps )) return FALSE;
@@ -230,7 +225,9 @@ BOOL X11DRV_GDI_Initialize(void)
  */
 void X11DRV_GDI_Finalize(void)
 {
-  X11DRV_PALETTE_Cleanup();
+    X11DRV_PALETTE_Cleanup();
+    XCloseDisplay( gdi_display );
+    gdi_display = NULL;
 }
 
 /**********************************************************************
@@ -259,43 +256,40 @@ static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
         }
         if (!bmp->physBitmap) X11DRV_CreateBitmap( dc->hBitmap );
         physDev->drawable  = (Pixmap)bmp->physBitmap;
-        physDev->gc        = TSXCreateGC(display, physDev->drawable, 0, NULL);
-        dc->bitsPerPixel = bmp->bitmap.bmBitsPixel;
-
+        physDev->gc        = TSXCreateGC( gdi_display, physDev->drawable, 0, NULL );
+        dc->bitsPerPixel       = bmp->bitmap.bmBitsPixel;
         dc->totalExtent.left   = 0;
         dc->totalExtent.top    = 0;
         dc->totalExtent.right  = bmp->bitmap.bmWidth;
         dc->totalExtent.bottom = bmp->bitmap.bmHeight;
-        dc->hVisRgn            = CreateRectRgnIndirect( &dc->totalExtent );
-
         GDI_ReleaseObj( dc->hBitmap );
     }
     else
     {
-        physDev->drawable  = X11DRV_GetXRootWindow();
-        physDev->gc        = TSXCreateGC( display, physDev->drawable, 0, NULL );
-        dc->bitsPerPixel = screen_depth;
-
+        physDev->drawable  = root_window;
+        physDev->gc        = TSXCreateGC( gdi_display, physDev->drawable, 0, NULL );
+        dc->bitsPerPixel       = screen_depth;
         dc->totalExtent.left   = 0;
         dc->totalExtent.top    = 0;
         dc->totalExtent.right  = screen_width;
         dc->totalExtent.bottom = screen_height;
-        dc->hVisRgn            = CreateRectRgnIndirect( &dc->totalExtent );
     }
 
     physDev->current_pf   = 0;
     physDev->used_visuals = 0;
-    
-    if (!dc->hVisRgn)
+
+    if (!(dc->hVisRgn = CreateRectRgnIndirect( &dc->totalExtent )))
     {
-        TSXFreeGC( display, physDev->gc );
+        TSXFreeGC( gdi_display, physDev->gc );
 	HeapFree( GetProcessHeap(), 0, physDev );
         return FALSE;
     }
 
-    TSXSetGraphicsExposures( display, physDev->gc, False );
-    TSXSetSubwindowMode( display, physDev->gc, IncludeInferiors );
-
+    wine_tsx11_lock();
+    XSetGraphicsExposures( gdi_display, physDev->gc, False );
+    XSetSubwindowMode( gdi_display, physDev->gc, IncludeInferiors );
+    XFlush( gdi_display );
+    wine_tsx11_unlock();
     return TRUE;
 }
 
@@ -306,9 +300,11 @@ static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 static BOOL X11DRV_DeleteDC( DC *dc )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-    TSXFreeGC( display, physDev->gc );
+    wine_tsx11_lock();
+    XFreeGC( gdi_display, physDev->gc );
     while (physDev->used_visuals-- > 0)
-      TSXFree(physDev->visuals[physDev->used_visuals]);
+        XFree(physDev->visuals[physDev->used_visuals]);
+    wine_tsx11_unlock();
     HeapFree( GetProcessHeap(), 0, physDev );
     dc->physDev = NULL;
     return TRUE;

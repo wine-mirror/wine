@@ -413,7 +413,7 @@ static void process_attach(void)
     }
 
     /* initialize GDI */
-    if(!X11DRV_GDI_Initialize())
+    if(!X11DRV_GDI_Initialize( display ))
     {
         ERR( "Couldn't Initialize GDI.\n" );
         ExitProcess(1);
@@ -463,9 +463,6 @@ static void process_detach(void)
 
     /* cleanup GDI */
     X11DRV_GDI_Finalize();
-
-    /* close the display */
-    XCloseDisplay( display );
     display = NULL;
 
     /* restore TSX11 locking */
@@ -504,7 +501,7 @@ BOOL WINAPI X11DRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 BOOL X11DRV_GetScreenSaveActive(void)
 {
     int timeout, temp;
-    TSXGetScreenSaver(display, &timeout, &temp, &temp, &temp);
+    TSXGetScreenSaver(gdi_display, &timeout, &temp, &temp, &temp);
     return timeout != 0;
 }
 
@@ -516,9 +513,9 @@ BOOL X11DRV_GetScreenSaveActive(void)
 void X11DRV_SetScreenSaveActive(BOOL bActivate)
 {
     if(bActivate)
-        TSXActivateScreenSaver(display);
+        TSXActivateScreenSaver(gdi_display);
     else
-        TSXResetScreenSaver(display);
+        TSXResetScreenSaver(gdi_display);
 }
 
 /***********************************************************************
@@ -529,7 +526,7 @@ void X11DRV_SetScreenSaveActive(BOOL bActivate)
 int X11DRV_GetScreenSaveTimeout(void)
 {
     int timeout, temp;
-    TSXGetScreenSaver(display, &timeout, &temp, &temp, &temp);
+    TSXGetScreenSaver(gdi_display, &timeout, &temp, &temp, &temp);
     return timeout;
 }
 
@@ -543,7 +540,7 @@ void X11DRV_SetScreenSaveTimeout(int nTimeout)
     /* timeout is a 16bit entity (CARD16) in the protocol, so it should
      * not get over 32767 or it will get negative. */
     if (nTimeout>32767) nTimeout = 32767;
-    TSXSetScreenSaver(display, nTimeout, 60, DefaultBlanking, DefaultExposures);
+    TSXSetScreenSaver(gdi_display, nTimeout, 60, DefaultBlanking, DefaultExposures);
 }
 
 /***********************************************************************
@@ -551,5 +548,5 @@ void X11DRV_SetScreenSaveTimeout(int nTimeout)
  */
 BOOL X11DRV_IsSingleWindow(void)
 {
-    return (root_window != DefaultRootWindow(display));
+    return (root_window != DefaultRootWindow(gdi_display));
 }

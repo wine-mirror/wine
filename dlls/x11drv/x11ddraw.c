@@ -162,7 +162,7 @@ static DDHAL_DDSURFACECALLBACKS hal_ddsurfcallbacks = {
 static DWORD PASCAL X11DRV_DDHAL_DestroyPalette(LPDDHAL_DESTROYPALETTEDATA data)
 {
   Colormap pal = data->lpDDPalette->u1.dwReserved1;
-  if (pal) TSXFreeColormap(display, pal);
+  if (pal) TSXFreeColormap(gdi_display, pal);
   data->ddRVal = DD_OK;
   return DDHAL_DRIVER_HANDLED;
 }
@@ -386,8 +386,8 @@ void X11DRV_DDHAL_SetPalEntries(Colormap pal, DWORD dwBase, DWORD dwNumEntries,
       c.red   = lpEntries[n].peRed   << 8;
       c.green = lpEntries[n].peGreen << 8;
       c.blue  = lpEntries[n].peBlue  << 8;
-      TSXStoreColor(display, pal, &c);
+      TSXStoreColor(gdi_display, pal, &c);
     }
-    TSXFlush(display); /* update display immediate */
+    TSXFlush(gdi_display); /* update display immediately */
   }
 }

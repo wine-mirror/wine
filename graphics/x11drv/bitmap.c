@@ -33,29 +33,27 @@ GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
 BOOL X11DRV_BITMAP_Init(void)
 {
     Pixmap tmpPixmap;
-    
+
       /* Create the necessary GCs */
-    
-    if ((tmpPixmap = TSXCreatePixmap(display, 
-				     X11DRV_GetXRootWindow(), 
-				     1, 1, 
-				     1)))
+
+    wine_tsx11_lock();
+    if ((tmpPixmap = XCreatePixmap( gdi_display, root_window, 1, 1, 1 )))
     {
-	BITMAP_monoGC = TSXCreateGC( display, tmpPixmap, 0, NULL );
-	TSXSetGraphicsExposures( display, BITMAP_monoGC, False );
-	TSXFreePixmap( display, tmpPixmap );
+        BITMAP_monoGC = XCreateGC( gdi_display, tmpPixmap, 0, NULL );
+        XSetGraphicsExposures( gdi_display, BITMAP_monoGC, False );
+        XFreePixmap( gdi_display, tmpPixmap );
     }
 
-    if (X11DRV_GetDepth() != 1)
+    if (screen_depth != 1)
     {
-	if ((tmpPixmap = TSXCreatePixmap(display, X11DRV_GetXRootWindow(),
-					 1, 1, X11DRV_GetDepth())))
-	{
-	    BITMAP_colorGC = TSXCreateGC( display, tmpPixmap, 0, NULL );
-	    TSXSetGraphicsExposures( display, BITMAP_colorGC, False );
-	    TSXFreePixmap( display, tmpPixmap );
-	}
+        if ((tmpPixmap = XCreatePixmap( gdi_display, root_window, 1, 1, screen_depth )))
+        {
+            BITMAP_colorGC = XCreateGC( gdi_display, tmpPixmap, 0, NULL );
+            XSetGraphicsExposures( gdi_display, BITMAP_colorGC, False );
+            XFreePixmap( gdi_display, tmpPixmap );
+        }
     }
+    wine_tsx11_unlock();
     return TRUE;
 }
 
@@ -99,9 +97,11 @@ HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
 
     if (dc->bitsPerPixel != bmp->bitmap.bmBitsPixel)
     {
-	TSXFreeGC( display, physDev->gc );
-	physDev->gc = TSXCreateGC( display, physDev->drawable, 0, NULL );
-	TSXSetGraphicsExposures( display, physDev->gc, False );
+        wine_tsx11_lock();
+        XFreeGC( gdi_display, physDev->gc );
+        physDev->gc = XCreateGC( gdi_display, physDev->drawable, 0, NULL );
+        XSetGraphicsExposures( gdi_display, physDev->gc, False );
+        wine_tsx11_unlock();
 	dc->bitsPerPixel = bmp->bitmap.bmBitsPixel;
         DC_InitDC( dc );
     }
@@ -134,8 +134,7 @@ BOOL X11DRV_CreateBitmap( HBITMAP hbitmap )
         GDI_ReleaseObj( hbitmap );
         return 0;
     }
-    if ((bmp->bitmap.bmBitsPixel != 1) && 
-	(bmp->bitmap.bmBitsPixel != X11DRV_GetDepth()))
+    if ((bmp->bitmap.bmBitsPixel != 1) && (bmp->bitmap.bmBitsPixel != screen_depth))
     {
         ERR("Trying to make bitmap with planes=%d, bpp=%d\n",
 	    bmp->bitmap.bmPlanes, bmp->bitmap.bmBitsPixel);
@@ -147,7 +146,7 @@ BOOL X11DRV_CreateBitmap( HBITMAP hbitmap )
 	  bmp->bitmap.bmHeight, bmp->bitmap.bmBitsPixel);
 
       /* Create the pixmap */
-    if (!(bmp->physBitmap = (void *)TSXCreatePixmap(display, X11DRV_GetXRootWindow(),
+    if (!(bmp->physBitmap = (void *)TSXCreatePixmap(gdi_display, root_window,
                                                     bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
                                                     bmp->bitmap.bmBitsPixel)))
     {
@@ -191,7 +190,7 @@ static LONG X11DRV_GetBitmapBits(BITMAPOBJ *bmp, void *buffer, LONG count)
     old_height = bmp->bitmap.bmHeight;
     height = bmp->bitmap.bmHeight = count / bmp->bitmap.bmWidthBytes;
 
-    image = XGetImage( display, (Pixmap)bmp->physBitmap,
+    image = XGetImage( gdi_display, (Pixmap)bmp->physBitmap,
                        0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
                        AllPlanes, ZPixmap );
     bmp->bitmap.bmHeight = old_height;
@@ -313,7 +312,7 @@ static LONG X11DRV_SetBitmapBits(BITMAPOBJ *bmp, void *bits, LONG count)
     height = count / bmp->bitmap.bmWidthBytes;
 
     wine_tsx11_lock();
-    image = XCreateImage( display, X11DRV_GetVisual(), bmp->bitmap.bmBitsPixel, ZPixmap, 0, NULL,
+    image = XCreateImage( gdi_display, visual, bmp->bitmap.bmBitsPixel, ZPixmap, 0, NULL,
                           bmp->bitmap.bmWidth, height, 32, 0 );
     if (!(image->data = (LPBYTE)malloc(image->bytes_per_line * height)))
     {
@@ -404,7 +403,7 @@ static LONG X11DRV_SetBitmapBits(BITMAPOBJ *bmp, void *bits, LONG count)
       FIXME("Unhandled bits:%d\n", bmp->bitmap.bmBitsPixel);
 
     }
-    XPutImage( display, (Pixmap)bmp->physBitmap, BITMAP_GC(bmp),
+    XPutImage( gdi_display, (Pixmap)bmp->physBitmap, BITMAP_GC(bmp),
                image, 0, 0, 0, 0, bmp->bitmap.bmWidth, height );
     XDestroyImage( image ); /* frees image->data too */
     wine_tsx11_unlock();
@@ -440,7 +439,7 @@ LONG X11DRV_BitmapBits(HBITMAP hbitmap, void *bits, LONG count, WORD flags)
  */
 BOOL X11DRV_BITMAP_DeleteObject( HBITMAP hbitmap, BITMAPOBJ * bmp )
 {
-    TSXFreePixmap( display, (Pixmap)bmp->physBitmap );
+    TSXFreePixmap( gdi_display, (Pixmap)bmp->physBitmap );
     bmp->physBitmap = NULL;
     bmp->funcs = NULL;
     return TRUE;
@@ -463,7 +462,7 @@ HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(Pixmap pixmap)
     unsigned int depth, width, height;
 
     /* Get the Pixmap dimensions and bit depth */
-    if ( 0 == TSXGetGeometry(display, pixmap, &root, &x, &y, &width, &height,
+    if ( 0 == TSXGetGeometry(gdi_display, pixmap, &root, &x, &y, &width, &height,
                              &border_width, &depth) )
         goto END;
 

@@ -170,14 +170,12 @@ extern BOOL X11DRV_SwapBuffers(DC *dc) ;
 /* X11 driver internal functions */
 
 extern BOOL X11DRV_BITMAP_Init(void);
-extern BOOL X11DRV_BRUSH_Init(void);
-extern BOOL X11DRV_DIB_Init(void);
 extern BOOL X11DRV_FONT_Init( struct tagDeviceCaps* );
 extern BOOL X11DRV_OBM_Init(void);
 
 struct tagBITMAPOBJ;
 extern XImage *X11DRV_BITMAP_GetXImage( const struct tagBITMAPOBJ *bmp );
-extern int X11DRV_DIB_GetXImageWidthBytes( int width, int depth );
+extern XImage *X11DRV_DIB_CreateXImage( int width, int height, int depth );
 extern HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(Pixmap pixmap);
 extern HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc, BOOL bDeletePixmap);
 extern HBITMAP X11DRV_BITMAP_CreateBitmapFromPixmap(Pixmap pixmap, BOOL bDeletePixmap);
@@ -193,14 +191,6 @@ extern BOOL X11DRV_SetupGCForText( struct tagDC *dc );
 extern const int X11DRV_XROPfunction[];
 
 extern void _XInitImageFuncPtrs(XImage *);
-
-#define XCREATEIMAGE(image,width,height,bpp) \
-{ \
-    int width_bytes = X11DRV_DIB_GetXImageWidthBytes( (width), (bpp) ); \
-    (image) = TSXCreateImage(display, X11DRV_GetVisual(), \
-                           (bpp), ZPixmap, 0, calloc( (height), width_bytes ),\
-                           (width), (height), 32, width_bytes ); \
-}
 
 /* exported dib functions for now */
 
@@ -277,8 +267,10 @@ extern INT X11DRV_DCICommand(INT cbInput, LPVOID lpInData, LPVOID lpOutData);
  * X11 GDI driver
  */
 
-BOOL X11DRV_GDI_Initialize(void);
+BOOL X11DRV_GDI_Initialize( Display *display );
 void X11DRV_GDI_Finalize(void);
+
+extern Display *gdi_display;  /* display to use for all GDI functions */
 
 /* X11 GDI palette driver */
 
@@ -394,11 +386,6 @@ extern void X11DRV_WND_SetText(struct tagWND *wndPtr, LPCWSTR text);
 extern void X11DRV_WND_SurfaceCopy(struct tagWND *wndPtr, HDC hdc, INT dx, INT dy, const RECT *clipRect, BOOL bUpdate);
 extern void X11DRV_WND_SetGravity(struct tagWND* wndPtr, int value );
 extern BOOL X11DRV_WND_SetHostAttr(struct tagWND *wndPtr, INT haKey, INT value);
-
-extern int X11DRV_EVENT_PrepareShmCompletion( Drawable dw );
-extern void X11DRV_EVENT_WaitShmCompletion( int compl );
-extern void X11DRV_EVENT_WaitShmCompletions( Drawable dw );
-extern void X11DRV_EVENT_WaitReplaceShmCompletion( int *compl, Drawable dw );
 
 extern void X11DRV_SetFocus( HWND hwnd );
 

@@ -98,12 +98,10 @@ BOOL X11DRV_PALETTE_Init(void)
     int	mask, white, black;
     int monoPlane;
 
-    Visual *visual = X11DRV_GetVisual();
-
     TRACE("initializing palette manager...\n");
 
-    white = WhitePixelOfScreen( X11DRV_GetXScreen() );
-    black = BlackPixelOfScreen( X11DRV_GetXScreen() );
+    white = WhitePixel( gdi_display, DefaultScreen(gdi_display) );
+    black = BlackPixel( gdi_display, DefaultScreen(gdi_display) );
     monoPlane = 1;
     for( mask = 1; !((white & mask)^(black & mask)); mask <<= 1 )
 	 monoPlane++;
@@ -120,7 +118,7 @@ BOOL X11DRV_PALETTE_Init(void)
 	{
 	    XSetWindowAttributes win_attr;
 
-	    X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap( display, X11DRV_GetXRootWindow(),
+	    X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap( gdi_display, root_window,
 						 visual, AllocAll );
 	    if (X11DRV_PALETTE_PaletteXColormap)
 	    {
@@ -130,22 +128,23 @@ BOOL X11DRV_PALETTE_Init(void)
 		for( white = X11DRV_DevCaps.sizePalette - 1; !(white & 1); white >>= 1 )
 		     monoPlane++;
 
-	        if( X11DRV_GetXRootWindow() != DefaultRootWindow(display) )
+	        if( root_window != DefaultRootWindow(gdi_display) )
 	        {
 		    win_attr.colormap = X11DRV_PALETTE_PaletteXColormap;
-		    TSXChangeWindowAttributes( display, X11DRV_GetXRootWindow(),
-					 CWColormap, &win_attr );
+		    TSXChangeWindowAttributes( gdi_display, root_window, CWColormap, &win_attr );
 		}
 		break;
 	    }
 	}
-        X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(display, X11DRV_GetXRootWindow(), visual, AllocNone);  
+        X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(gdi_display, root_window,
+                                                            visual, AllocNone);
         break;
 
     case StaticGray:
-        X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(display, X11DRV_GetXRootWindow(), visual, AllocNone);  
+        X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(gdi_display, root_window,
+                                                            visual, AllocNone);
 	X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_FIXED;
-        X11DRV_PALETTE_Graymax = (1 << X11DRV_GetDepth())-1;
+        X11DRV_PALETTE_Graymax = (1 << screen_depth)-1;
         break;
 
     case TrueColor:
@@ -155,18 +154,20 @@ BOOL X11DRV_PALETTE_Init(void)
 	/* FIXME: hack to detect XFree32 XF_VGA16 ... We just have
 	 * depths 1 and 4
 	 */
-	depths=TSXListDepths(display,DefaultScreen(display),&nrofdepths);
+	depths=TSXListDepths(gdi_display,DefaultScreen(gdi_display),&nrofdepths);
 	if ((nrofdepths==2) && ((depths[0]==4) || depths[1]==4)) {
 	    monoPlane = 1;
 	    for( white = X11DRV_DevCaps.sizePalette - 1; !(white & 1); white >>= 1 )
 	        monoPlane++;
     	    X11DRV_PALETTE_PaletteFlags = (white & mask) ? X11DRV_PALETTE_WHITESET : 0;
-            X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(display, X11DRV_GetXRootWindow(), visual, AllocNone);  
+            X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(gdi_display, root_window,
+                                                                visual, AllocNone);
 	    TSXFree(depths);
 	    break;
 	}
 	TSXFree(depths);
-        X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(display, X11DRV_GetXRootWindow(), visual, AllocNone);
+        X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(gdi_display, root_window,
+                                                            visual, AllocNone);
         X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_FIXED;
         X11DRV_PALETTE_ComputeShifts(visual->red_mask, &X11DRV_PALETTE_Redshift, &X11DRV_PALETTE_Redmax);
 	X11DRV_PALETTE_ComputeShifts(visual->green_mask, &X11DRV_PALETTE_Greenshift, &X11DRV_PALETTE_Greenmax);
@@ -210,7 +211,7 @@ BOOL X11DRV_PALETTE_Init(void)
 void X11DRV_PALETTE_Cleanup(void)
 {
   if( COLOR_gapFilled )
-    TSXFreeColors(display, X11DRV_PALETTE_PaletteXColormap, 
+    TSXFreeColors(gdi_display, X11DRV_PALETTE_PaletteXColormap, 
 		  (unsigned long*)(X11DRV_PALETTE_PaletteToXPixel + COLOR_gapStart), 
 		  COLOR_gapFilled, 0);
 }
@@ -279,7 +280,7 @@ static BOOL X11DRV_PALETTE_BuildPrivateMap(void)
 
        color.flags = DoRed | DoGreen | DoBlue;
        color.pixel = i;
-       TSXStoreColor(display, X11DRV_PALETTE_PaletteXColormap, &color);
+       TSXStoreColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &color);
 
        /* Set EGA mapping if color is from the first or last eight */
 
@@ -319,13 +320,13 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
    /* Copy the first bunch of colors out of the default colormap to prevent 
     * colormap flashing as much as possible.  We're likely to get the most
     * important Window Manager colors, etc in the first 128 colors */
-   defaultCM = DefaultColormapOfScreen( X11DRV_GetXScreen() );
+   defaultCM = DefaultColormap( gdi_display, DefaultScreen(gdi_display) );
    defaultCM_max_copy = PROFILE_GetWineIniInt( "x11drv", "CopyDefaultColors", 128);
    for (i = 0; i < defaultCM_max_copy; i++)
        defaultColors[i].pixel = (long) i;
-   TSXQueryColors(display, defaultCM, &defaultColors[0], defaultCM_max_copy);
+   TSXQueryColors(gdi_display, defaultCM, &defaultColors[0], defaultCM_max_copy);
    for (i = 0; i < defaultCM_max_copy; i++)
-       TSXAllocColor( display, X11DRV_PALETTE_PaletteXColormap, &defaultColors[i] );
+       TSXAllocColor( gdi_display, X11DRV_PALETTE_PaletteXColormap, &defaultColors[i] );
               
    /* read "AllocSystemColors" from wine.conf */
 
@@ -345,7 +346,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
         color.blue  = COLOR_sysPalTemplate[i].peBlue * 65535 / 255;
         color.flags = DoRed | DoGreen | DoBlue;
 
-        if (!TSXAllocColor( display, X11DRV_PALETTE_PaletteXColormap, &color ))
+        if (!TSXAllocColor( gdi_display, X11DRV_PALETTE_PaletteXColormap, &color ))
         { 
 	     XColor	best, c;
 	     
@@ -353,10 +354,10 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 	     {
 		  WARN("Not enough colors for the full system palette.\n");
 
-	          bp = BlackPixel(display, DefaultScreen(display));
-	          wp = WhitePixel(display, DefaultScreen(display));
+	          bp = BlackPixel(gdi_display, DefaultScreen(gdi_display));
+	          wp = WhitePixel(gdi_display, DefaultScreen(gdi_display));
 
-	          max = (0xffffffff)>>(32 - X11DRV_GetDepth());
+	          max = (0xffffffff)>>(32 - screen_depth);
 	          if( max > 256 ) 
 	          {
 	  	      step = max/256;
@@ -374,7 +375,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 	     best.pixel = best.red = best.green = best.blue = 0;
 	     for( c.pixel = 0, diff = 0x7fffffff; c.pixel < max; c.pixel += step )
 	     {
-		TSXQueryColor(display, X11DRV_PALETTE_PaletteXColormap, &c);
+		TSXQueryColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &c);
 		r = (c.red - color.red)>>8; 
 		g = (c.green - color.green)>>8; 
 		b = (c.blue - color.blue)>>8;
@@ -382,7 +383,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 		if( r < diff ) { best = c; diff = r; }
 	     }
 
-	     if( TSXAllocColor(display, X11DRV_PALETTE_PaletteXColormap, &best) )
+	     if( TSXAllocColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &best) )
 		 color.pixel = best.pixel;
 	     else color.pixel = (i < NB_RESERVED_COLORS/2)? bp : wp;
         }
@@ -418,18 +419,18 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
         }
 
 	/* comment this out if you want to debug palette init */
-	TSXGrabServer(display);
+	TSXGrabServer(gdi_display);
 
         while( c_max - c_min > 0 )
           {
              c_val = (c_max + c_min)/2 + (c_max + c_min)%2;
 
-             if( !TSXAllocColorCells(display, X11DRV_PALETTE_PaletteXColormap, False,
+             if( !TSXAllocColorCells(gdi_display, X11DRV_PALETTE_PaletteXColormap, False,
                                    plane_masks, 0, pixDynMapping, c_val) )
                  c_max = c_val - 1;
              else
                {
-                 TSXFreeColors(display, X11DRV_PALETTE_PaletteXColormap, pixDynMapping, c_val, 0);
+                 TSXFreeColors(gdi_display, X11DRV_PALETTE_PaletteXColormap, pixDynMapping, c_val, 0);
                  c_min = c_val;
                }
           }
@@ -440,7 +441,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 	c_min = (c_min/2) + (c_min/2);		/* need even set for split palette */
 
 	if( c_min > 0 )
-	  if( !TSXAllocColorCells(display, X11DRV_PALETTE_PaletteXColormap, False,
+	  if( !TSXAllocColorCells(gdi_display, X11DRV_PALETTE_PaletteXColormap, False,
                                 plane_masks, 0, pixDynMapping, c_min) )
 	    {
 	      WARN("Inexplicable failure during colorcell allocation.\n");
@@ -449,7 +450,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 
         X11DRV_DevCaps.sizePalette = c_min + NB_RESERVED_COLORS;
 
-	TSXUngrabServer(display);
+	TSXUngrabServer(gdi_display);
 
 	TRACE("adjusted size %i colorcells\n", X11DRV_DevCaps.sizePalette);
      }
@@ -460,7 +461,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 	   * to maintain compatibility
 	   */
 	  X11DRV_DevCaps.sizePalette = 256;
-	  TRACE("Virtual colorspace - screendepth %i\n", X11DRV_GetDepth());
+	  TRACE("Virtual colorspace - screendepth %i\n", screen_depth);
 	}
    else X11DRV_DevCaps.sizePalette = NB_RESERVED_COLORS;	/* system palette only - however we can alloc a bunch
 			                 * of colors and map to them */
@@ -487,7 +488,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 
    /* setup system palette entry <-> pixel mappings and fill in 20 fixed entries */
 
-   if (X11DRV_GetDepth() <= 8)
+   if (screen_depth <= 8)
    {
        X11DRV_PALETTE_XPixelToPalette = (int*)calloc(256, sizeof(int));
        if(X11DRV_PALETTE_XPixelToPalette == NULL) {
@@ -554,7 +555,7 @@ static void X11DRV_PALETTE_FillDefaultColors(void)
   int red, no_r, inc_r;
   int green, no_g, inc_g; 
   int blue, no_b, inc_b;
-  
+
   if (X11DRV_DevCaps.sizePalette <= NB_RESERVED_COLORS)
   	return;
   while (i*i*i < (X11DRV_DevCaps.sizePalette - NB_RESERVED_COLORS)) i++;
@@ -598,7 +599,7 @@ static void X11DRV_PALETTE_FillDefaultColors(void)
 	   color.green = COLOR_sysPal[idx].peGreen << 8;
 	   color.blue =  COLOR_sysPal[idx].peBlue << 8;
 	   color.flags = DoRed | DoGreen | DoBlue;
-	   TSXStoreColor(display, X11DRV_PALETTE_PaletteXColormap, &color);
+	   TSXStoreColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &color);
 	 }
 	 idx = X11DRV_PALETTE_freeList[idx];
       }
@@ -618,11 +619,11 @@ static void X11DRV_PALETTE_FillDefaultColors(void)
 	{
 	  xc.pixel = i;
 
-	  TSXQueryColor(display, X11DRV_PALETTE_PaletteXColormap, &xc);
+	  TSXQueryColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &xc);
 	  r = xc.red>>8; g = xc.green>>8; b = xc.blue>>8;
 
 	  if( xc.pixel < 256 && X11DRV_PALETTE_CheckSysColor(RGB(r, g, b)) &&
-	      TSXAllocColor(display, X11DRV_PALETTE_PaletteXColormap, &xc) )
+	      TSXAllocColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &xc) )
 	  {
 	     X11DRV_PALETTE_XPixelToPalette[xc.pixel] = idx;
 	     X11DRV_PALETTE_PaletteToXPixel[idx] = xc.pixel;
@@ -648,7 +649,7 @@ COLORREF X11DRV_PALETTE_ToLogical(int pixel)
 #if 0
     /* truecolor visual */
 
-    if (X11DRV_GetDepth() >= 24) return pixel;
+    if (screen_depth >= 24) return pixel;
 #endif
 
     /* check for hicolor visuals first */
@@ -665,13 +666,13 @@ COLORREF X11DRV_PALETTE_ToLogical(int pixel)
 
     /* check if we can bypass X */
 
-    if ((X11DRV_GetDepth() <= 8) && (pixel < 256) && 
+    if ((screen_depth <= 8) && (pixel < 256) &&
        !(X11DRV_PALETTE_PaletteFlags & (X11DRV_PALETTE_VIRTUAL | X11DRV_PALETTE_FIXED)) )
          return  ( *(COLORREF*)(COLOR_sysPal + 
 		   ((X11DRV_PALETTE_XPixelToPalette)?X11DRV_PALETTE_XPixelToPalette[pixel]:pixel)) ) & 0x00ffffff;
 
     color.pixel = pixel;
-    TSXQueryColor(display, X11DRV_PALETTE_PaletteXColormap, &color);
+    TSXQueryColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &color);
     return RGB(color.red >> 8, color.green >> 8, color.blue >> 8);
 }
 
@@ -934,7 +935,7 @@ int X11DRV_PALETTE_SetMapping( PALETTEOBJ* palPtr, UINT uStart, UINT uNum, BOOL 
                     color.green = palPtr->logpalette.palPalEntry[uStart].peGreen << 8;
                     color.blue = palPtr->logpalette.palPalEntry[uStart].peBlue << 8;
                     color.flags = DoRed | DoGreen | DoBlue;
-                    TSXStoreColor(display, X11DRV_PALETTE_PaletteXColormap, &color);
+                    TSXStoreColor(gdi_display, X11DRV_PALETTE_PaletteXColormap, &color);
 
                     COLOR_sysPal[index] = palPtr->logpalette.palPalEntry[uStart];
                     COLOR_sysPal[index].peFlags = flag;

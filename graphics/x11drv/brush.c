@@ -92,18 +92,6 @@ static XImage *ditherImage = NULL;
 
 
 /***********************************************************************
- *           BRUSH_Init
- *
- * Create the X image used for dithering.
- */
-BOOL X11DRV_BRUSH_Init(void)
-{
-    XCREATEIMAGE( ditherImage, MATRIX_SIZE, MATRIX_SIZE, X11DRV_GetDepth() );
-    return (ditherImage != NULL);
-}
-
-
-/***********************************************************************
  *           BRUSH_DitherColor
  */
 static Pixmap BRUSH_DitherColor( DC *dc, COLORREF color )
@@ -111,6 +99,12 @@ static Pixmap BRUSH_DitherColor( DC *dc, COLORREF color )
     static COLORREF prevColor = 0xffffffff;
     unsigned int x, y;
     Pixmap pixmap;
+
+    if (!ditherImage)
+    {
+        ditherImage = X11DRV_DIB_CreateXImage( MATRIX_SIZE, MATRIX_SIZE, screen_depth );
+        if (!ditherImage) return 0;
+    }
 
     wine_tsx11_lock();
     if (color != prevColor)
@@ -134,9 +128,8 @@ static Pixmap BRUSH_DitherColor( DC *dc, COLORREF color )
 	prevColor = color;
     }
     
-    pixmap = XCreatePixmap( display, X11DRV_GetXRootWindow(),
-                            MATRIX_SIZE, MATRIX_SIZE, X11DRV_GetDepth() );
-    XPutImage( display, pixmap, BITMAP_colorGC, ditherImage, 0, 0,
+    pixmap = XCreatePixmap( gdi_display, root_window, MATRIX_SIZE, MATRIX_SIZE, screen_depth );
+    XPutImage( gdi_display, pixmap, BITMAP_colorGC, ditherImage, 0, 0,
 	       0, 0, MATRIX_SIZE, MATRIX_SIZE );
     wine_tsx11_unlock();
     return pixmap;
@@ -150,7 +143,7 @@ static void BRUSH_SelectSolidBrush( DC *dc, COLORREF color )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    if ((dc->bitsPerPixel > 1) && (X11DRV_GetDepth() <= 8) && !COLOR_IsSolid( color ))
+    if ((dc->bitsPerPixel > 1) && (screen_depth <= 8) && !COLOR_IsSolid( color ))
     {
 	  /* Dithered brush */
 	physDev->brush.pixmap = BRUSH_DitherColor( dc, color );
@@ -188,17 +181,17 @@ static BOOL BRUSH_SelectPatternBrush( DC * dc, HBITMAP hbitmap )
     if ((dc->bitsPerPixel == 1) && (bmp->bitmap.bmBitsPixel != 1))
     {
         /* Special case: a color pattern on a monochrome DC */
-        physDev->brush.pixmap = TSXCreatePixmap( display, X11DRV_GetXRootWindow(), 8, 8, 1);
+        physDev->brush.pixmap = TSXCreatePixmap( gdi_display, root_window, 8, 8, 1);
         /* FIXME: should probably convert to monochrome instead */
-        TSXCopyPlane( display, (Pixmap)bmp->physBitmap, physDev->brush.pixmap,
-                    BITMAP_monoGC, 0, 0, 8, 8, 0, 0, 1 );
+        TSXCopyPlane( gdi_display, (Pixmap)bmp->physBitmap, physDev->brush.pixmap,
+                      BITMAP_monoGC, 0, 0, 8, 8, 0, 0, 1 );
     }
     else
     {
-        physDev->brush.pixmap = TSXCreatePixmap( display, X11DRV_GetXRootWindow(),
-					       8, 8, bmp->bitmap.bmBitsPixel );
-        TSXCopyArea( display, (Pixmap)bmp->physBitmap, physDev->brush.pixmap,
-                   BITMAP_GC(bmp), 0, 0, 8, 8, 0, 0 );
+        physDev->brush.pixmap = TSXCreatePixmap( gdi_display, root_window,
+                                                 8, 8, bmp->bitmap.bmBitsPixel );
+        TSXCopyArea( gdi_display, (Pixmap)bmp->physBitmap, physDev->brush.pixmap,
+                     BITMAP_GC(bmp), 0, 0, 8, 8, 0, 0 );
     }
     
     if (bmp->bitmap.bmBitsPixel > 1)
@@ -237,7 +230,7 @@ HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 
     if (physDev->brush.pixmap)
     {
-	TSXFreePixmap( display, physDev->brush.pixmap );
+	TSXFreePixmap( gdi_display, physDev->brush.pixmap );
 	physDev->brush.pixmap = 0;
     }
     physDev->brush.style = brush->logbrush.lbStyle;
@@ -256,7 +249,7 @@ HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
       case BS_HATCHED:
 	TRACE("BS_HATCHED\n" );
 	physDev->brush.pixel = X11DRV_PALETTE_ToPhysical( dc, brush->logbrush.lbColor );
-	physDev->brush.pixmap = TSXCreateBitmapFromData( display, X11DRV_GetXRootWindow(),
+	physDev->brush.pixmap = TSXCreateBitmapFromData( gdi_display, root_window,
 				 HatchBrushes[brush->logbrush.lbHatch], 8, 8 );
 	physDev->brush.fillStyle = FillStippled;
 	break;

@@ -123,13 +123,13 @@ int X11DRV_ChoosePixelFormat(DC *dc,
        This command cannot be used as we need to use the default visual...
        Let's hope it at least contains some OpenGL functionnalities
        
-       vis = glXChooseVisual(display, DefaultScreen(display), att_list);
+       vis = glXChooseVisual(gdi_display, DefaultScreen(gdi_display), att_list);
     */
     int num;
     XVisualInfo template;
 
     template.visualid = XVisualIDFromVisual(visual);
-    vis = XGetVisualInfo(display, VisualIDMask, &template, &num);
+    vis = XGetVisualInfo(gdi_display, VisualIDMask, &template, &num);
 
     TRACE("Found visual : %p - returns %d\n", vis, physDev->used_visuals + 1);
   }
@@ -178,9 +178,7 @@ int X11DRV_DescribePixelFormat(DC *dc,
 
     /* Create a 'standard' X Visual */
     ENTER_GL();
-    vis = glXChooseVisual(display,
-			  DefaultScreen(display),
-			  dblBuf);
+    vis = glXChooseVisual(gdi_display, DefaultScreen(gdi_display), dblBuf);
     LEAVE_GL();
     
     WARN("Uninitialized Visual. Creating standard (%p) !\n", vis);
@@ -203,27 +201,27 @@ int X11DRV_DescribePixelFormat(DC *dc,
   ppfd->dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_GENERIC_ACCELERATED;
   /* Now the flags extraced from the Visual */
   ENTER_GL();
-  glXGetConfig(display, vis, GLX_DOUBLEBUFFER, &value); if (value) ppfd->dwFlags |= PFD_DOUBLEBUFFER;
-  glXGetConfig(display, vis, GLX_STEREO, &value); if (value) ppfd->dwFlags |= PFD_STEREO;
+  glXGetConfig(gdi_display, vis, GLX_DOUBLEBUFFER, &value); if (value) ppfd->dwFlags |= PFD_DOUBLEBUFFER;
+  glXGetConfig(gdi_display, vis, GLX_STEREO, &value); if (value) ppfd->dwFlags |= PFD_STEREO;
 
   /* Pixel type */
-  glXGetConfig(display, vis, GLX_RGBA, &value);
+  glXGetConfig(gdi_display, vis, GLX_RGBA, &value);
   if (value)
     ppfd->iPixelType = PFD_TYPE_RGBA;
   else
     ppfd->iPixelType = PFD_TYPE_COLORINDEX;
 
   /* Color bits */
-  glXGetConfig(display, vis, GLX_BUFFER_SIZE, &value);
+  glXGetConfig(gdi_display, vis, GLX_BUFFER_SIZE, &value);
   ppfd->cColorBits = value;
 
   /* Red, green, blue and alpha bits / shifts */
   if (ppfd->iPixelType == PFD_TYPE_RGBA) {
-    glXGetConfig(display, vis, GLX_RED_SIZE, &rb);
-    glXGetConfig(display, vis, GLX_GREEN_SIZE, &gb);
-    glXGetConfig(display, vis, GLX_BLUE_SIZE, &bb);
-    glXGetConfig(display, vis, GLX_ALPHA_SIZE, &ab);
-    
+    glXGetConfig(gdi_display, vis, GLX_RED_SIZE, &rb);
+    glXGetConfig(gdi_display, vis, GLX_GREEN_SIZE, &gb);
+    glXGetConfig(gdi_display, vis, GLX_BLUE_SIZE, &bb);
+    glXGetConfig(gdi_display, vis, GLX_ALPHA_SIZE, &ab);
+
     ppfd->cRedBits = rb;
     ppfd->cRedShift = gb + bb + ab;
     ppfd->cBlueBits = bb;
@@ -245,7 +243,7 @@ int X11DRV_DescribePixelFormat(DC *dc,
   /* Accums : to do ... */
   
   /* Depth bits */
-  glXGetConfig(display, vis, GLX_DEPTH_SIZE, &value);
+  glXGetConfig(gdi_display, vis, GLX_DEPTH_SIZE, &value);
   ppfd->cDepthBits = value;
   LEAVE_GL();
 
@@ -298,7 +296,7 @@ BOOL X11DRV_SwapBuffers(DC *dc) {
   TRACE("(%p)\n", dc);
 
   ENTER_GL();
-  glXSwapBuffers(display, physDev->drawable);
+  glXSwapBuffers(gdi_display, physDev->drawable);
   LEAVE_GL();
   
   return TRUE;

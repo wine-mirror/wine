@@ -32,8 +32,7 @@
 DEFAULT_DEBUG_CHANNEL(bitmap);
 DECLARE_DEBUG_CHANNEL(x11drv);
 
-static int bitmapDepthTable[] = { 8, 1, 32, 16, 24, 15, 4, 0 };
-static int ximageDepthTable[] = { 0, 0, 0,  0,  0,  0,  0 };
+static int ximageDepthTable[32];
 
 static int XShmErrorFlag = 0;
 
@@ -66,45 +65,55 @@ typedef struct
     int             dibpitch;
 } X11DRV_DIB_IMAGEBITS_DESCR;
 
-/***********************************************************************
- *           X11DRV_DIB_Init
- */
-BOOL X11DRV_DIB_Init(void)
-{
-    int		i;
-    XImage*	testimage;
-
-    for( i = 0; bitmapDepthTable[i]; i++ )
-    {
-	 testimage = TSXCreateImage(display, X11DRV_GetVisual(),
-			 bitmapDepthTable[i], ZPixmap, 0, NULL, 1, 1, 32, 20 );
-	 if( testimage ) ximageDepthTable[i] = testimage->bits_per_pixel;
-	 else return FALSE;
-	 TSXDestroyImage(testimage);
-    }
-    return TRUE;
-}
-
 
 /***********************************************************************
  *           X11DRV_DIB_GetXImageWidthBytes
  *
  * Return the width of an X image in bytes
  */
-int X11DRV_DIB_GetXImageWidthBytes( int width, int depth )
+inline static int X11DRV_DIB_GetXImageWidthBytes( int width, int depth )
 {
-    int		i;
+    if (!depth || depth > 32) goto error;
 
-    if (!ximageDepthTable[0]) {
-	    X11DRV_DIB_Init();
+    if (!ximageDepthTable[depth-1])
+    {
+        XImage *testimage = XCreateImage( gdi_display, visual, depth,
+                                          ZPixmap, 0, NULL, 1, 1, 32, 20 );
+        if (testimage)
+        {
+            ximageDepthTable[depth-1] = testimage->bits_per_pixel;
+            XDestroyImage( testimage );
+        }
+        else ximageDepthTable[depth-1] = -1;
     }
-    for( i = 0; bitmapDepthTable[i] ; i++ )
-	 if( bitmapDepthTable[i] == depth )
-	     return (4 * ((width * ximageDepthTable[i] + 31)/32));
-    
-    WARN("(%d): Unsupported depth\n", depth );
-    return (4 * width);
+    if (ximageDepthTable[depth-1] != -1)
+        return (4 * ((width * ximageDepthTable[depth-1] + 31) / 32));
+
+ error:
+    WARN( "(%d): Unsupported depth\n", depth );
+    return 4 * width;
 }
+
+
+/***********************************************************************
+ *           X11DRV_DIB_CreateXImage
+ *
+ * Create an X image.
+ */
+XImage *X11DRV_DIB_CreateXImage( int width, int height, int depth )
+{
+    int width_bytes;
+    XImage *image;
+
+    wine_tsx11_lock();
+    width_bytes = X11DRV_DIB_GetXImageWidthBytes( width, depth );
+    image = XCreateImage( gdi_display, visual, depth, ZPixmap, 0,
+                          calloc( height, width_bytes ),
+                          width, height, 32, width_bytes );
+    wine_tsx11_unlock();
+    return image;
+}
+
 
 /***********************************************************************
  *           X11DRV_DIB_GenColorMap
@@ -2688,7 +2697,7 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
     if (descr->image)
         bmpImage = descr->image;
     else {
-        bmpImage = XCreateImage( display, X11DRV_GetVisual(), descr->depth, ZPixmap, 0, NULL,
+        bmpImage = XCreateImage( gdi_display, visual, descr->depth, ZPixmap, 0, NULL,
 				 descr->infoWidth, lines, 32, 0 );
 	bmpImage->data = calloc( lines, bmpImage->bytes_per_line );
         if(bmpImage->data == NULL) {
@@ -2709,7 +2718,7 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 	break;
     case 4:
         if (descr->compression) {
-	    XGetSubImage( display, descr->drawable, descr->xDest, descr->yDest,
+	    XGetSubImage( gdi_display, descr->drawable, descr->xDest, descr->yDest,
 			  descr->width, descr->height, AllPlanes, ZPixmap, 
 			  bmpImage, descr->xSrc, descr->ySrc );
 
@@ -2725,7 +2734,7 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 	break;
     case 8:
         if (descr->compression) {
-	    XGetSubImage( display, descr->drawable, descr->xDest, descr->yDest,
+	    XGetSubImage( gdi_display, descr->drawable, descr->xDest, descr->yDest,
 			  descr->width, descr->height, AllPlanes, ZPixmap, 
 			  bmpImage, descr->xSrc, descr->ySrc );
 	    X11DRV_DIB_SetImageBits_RLE8( descr->lines, descr->bits,
@@ -2763,19 +2772,19 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
         break;
     }
 
-    TRACE("XPutImage(%p,%ld,%p,%p,%d,%d,%d,%d,%d,%d)\n",
-     display, descr->drawable, descr->gc, bmpImage,
+    TRACE("XPutImage(%ld,%p,%p,%d,%d,%d,%d,%d,%d)\n",
+     descr->drawable, descr->gc, bmpImage,
      descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
      descr->width, descr->height);
     if (descr->useShm)
     {
-        XShmPutImage( display, descr->drawable, descr->gc, bmpImage,
+        XShmPutImage( gdi_display, descr->drawable, descr->gc, bmpImage,
                       descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
                       descr->width, descr->height, FALSE );
-        XSync( display, 0 );
+        XSync( gdi_display, 0 );
     }
     else
-        XPutImage( display, descr->drawable, descr->gc, bmpImage,
+        XPutImage( gdi_display, descr->drawable, descr->gc, bmpImage,
 		   descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
 		   descr->width, descr->height );
 
@@ -2798,7 +2807,7 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
    if (descr->image)
         bmpImage = descr->image;
     else {
-        bmpImage = XCreateImage( display, X11DRV_GetVisual(), descr->depth, ZPixmap, 0, NULL,
+        bmpImage = XCreateImage( gdi_display, visual, descr->depth, ZPixmap, 0, NULL,
 				 descr->infoWidth, lines, 32, 0 );
 	bmpImage->data = calloc( lines, bmpImage->bytes_per_line );
         if(bmpImage->data == NULL) {
@@ -2809,10 +2818,10 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
         }
     }
 
-    TRACE("XGetSubImage(%p,%ld,%d,%d,%d,%d,%ld,%d,%p,%d,%d)\n",
-     display, descr->drawable, descr->xSrc, descr->ySrc, descr->width,
+    TRACE("XGetSubImage(%ld,%d,%d,%d,%d,%ld,%d,%p,%d,%d)\n",
+     descr->drawable, descr->xSrc, descr->ySrc, descr->width,
      lines, AllPlanes, ZPixmap, bmpImage, descr->xDest, descr->yDest);
-    XGetSubImage( display, descr->drawable, descr->xSrc, descr->ySrc,
+    XGetSubImage( gdi_display, descr->drawable, descr->xSrc, descr->ySrc,
                   descr->width, lines, AllPlanes, ZPixmap,
                   bmpImage, descr->xDest, descr->yDest );
 
@@ -2907,7 +2916,7 @@ INT X11DRV_SetDIBitsToDevice( DC *dc, INT xDest, INT yDest, DWORD cx,
     if (!cx || !cy) return 0;
 
     X11DRV_SetupGCForText( dc );  /* To have the correct colors */
-    TSXSetFunction(display, physDev->gc, X11DRV_XROPfunction[dc->ROPmode-1]);
+    TSXSetFunction(gdi_display, physDev->gc, X11DRV_XROPfunction[dc->ROPmode-1]);
 
     switch (descr.infoBpp)
     {
@@ -3776,29 +3785,30 @@ static int XShmErrorHandler(Display *dpy, XErrorEvent *event)
  */
 
 #ifdef HAVE_LIBXXSHM
-extern BOOL X11DRV_XShmCreateImage(XImage** image, int width, int height, int bpp,
-		                                   XShmSegmentInfo* shminfo)
+static XImage *X11DRV_XShmCreateImage( int width, int height, int bpp,
+                                       XShmSegmentInfo* shminfo)
 {
     int (*WineXHandler)(Display *, XErrorEvent *);
-     
-    *image = TSXShmCreateImage(display, X11DRV_GetVisual(), bpp, ZPixmap, NULL, shminfo, width, height);
-    if( *image != NULL ) 
+    XImage *image;
+
+    wine_tsx11_lock();
+    image = XShmCreateImage(gdi_display, visual, bpp, ZPixmap, NULL, shminfo, width, height);
+    if (image)
     {
-        wine_tsx11_lock();
-        shminfo->shmid = shmget(IPC_PRIVATE, (*image)->bytes_per_line * height,
+        shminfo->shmid = shmget(IPC_PRIVATE, image->bytes_per_line * height,
                                   IPC_CREAT|0700);
         if( shminfo->shmid != -1 )
         {
-            shminfo->shmaddr = (*image)->data = shmat(shminfo->shmid, 0, 0);
+            shminfo->shmaddr = image->data = shmat(shminfo->shmid, 0, 0);
             if( shminfo->shmaddr != (char*)-1 )
             {
                 shminfo->readOnly = FALSE;
-                if( TSXShmAttach( display, shminfo ) != 0)
+                if( XShmAttach( gdi_display, shminfo ) != 0)
                 {
-		  /* Reset the error flag */
+                    /* Reset the error flag */
                     XShmErrorFlag = 0;
                     WineXHandler = XSetErrorHandler(XShmErrorHandler);
-                    XSync( display, 0 );
+                    XSync( gdi_display, 0 );
 
                     if (!XShmErrorFlag)
                     {
@@ -3806,8 +3816,8 @@ extern BOOL X11DRV_XShmCreateImage(XImage** image, int width, int height, int bp
 
                         XSetErrorHandler(WineXHandler);
                         wine_tsx11_unlock();
-                        return TRUE; /* Success! */
-                    }    
+                        return image; /* Success! */
+                    }
                     /* An error occured */
                     XShmErrorFlag = 0;
                     XSetErrorHandler(WineXHandler);
@@ -3815,16 +3825,16 @@ extern BOOL X11DRV_XShmCreateImage(XImage** image, int width, int height, int bp
                 shmdt(shminfo->shmaddr);
             }
             shmctl(shminfo->shmid, IPC_RMID, 0);
-        }        
-        XFlush(display);
-        XDestroyImage(*image);
-        wine_tsx11_unlock();
+        }
+        XFlush(gdi_display);
+        XDestroyImage(image);
+        image = NULL;
     }
-    return FALSE;
+    wine_tsx11_unlock();
+    return image;
 }
 #endif /* HAVE_LIBXXSHM */
 
- 
 
 /***********************************************************************
  *           X11DRV_DIB_CreateDIBSection
@@ -3959,17 +3969,17 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   if (dib && bmp)
   {
 #ifdef HAVE_LIBXXSHM
-      if (TSXShmQueryExtension(display) &&
-          X11DRV_XShmCreateImage( &dib->image, bm.bmWidth, effHeight,
-                                  bmp->bitmap.bmBitsPixel, &dib->shminfo ) )
+      if (TSXShmQueryExtension(gdi_display) &&
+          (dib->image = X11DRV_XShmCreateImage( bm.bmWidth, effHeight,
+                                                bmp->bitmap.bmBitsPixel, &dib->shminfo )) )
       {
 	; /* Created Image */
       } else {
-          XCREATEIMAGE( dib->image, bm.bmWidth, effHeight, bmp->bitmap.bmBitsPixel );
+          dib->image = X11DRV_DIB_CreateXImage( bm.bmWidth, effHeight, bmp->bitmap.bmBitsPixel );
           dib->shminfo.shmid = -1;
       }
 #else
-      XCREATEIMAGE( dib->image, bm.bmWidth, effHeight, bmp->bitmap.bmBitsPixel );
+      dib->image = X11DRV_DIB_CreateXImage( bm.bmWidth, effHeight, bmp->bitmap.bmBitsPixel );
 #endif
   }
   
@@ -4029,7 +4039,7 @@ void X11DRV_DIB_DeleteDIBSection(BITMAPOBJ *bmp)
 #ifdef HAVE_LIBXXSHM
       if (dib->shminfo.shmid != -1)
       {
-          TSXShmDetach (display, &(dib->shminfo));
+          TSXShmDetach (gdi_display, &(dib->shminfo));
           XDestroyImage (dib->image);
           shmdt (dib->shminfo.shmaddr);
           dib->shminfo.shmid = -1;

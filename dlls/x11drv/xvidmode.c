@@ -63,14 +63,14 @@ void X11DRV_XF86VM_Init(void)
   if (xf86vm_major) return; /* already initialized? */
 
   /* see if XVidMode is available */
-  if (!TSXF86VidModeQueryExtension(display, &xf86vm_event, &xf86vm_error)) return;
-  if (!TSXF86VidModeQueryVersion(display, &xf86vm_major, &xf86vm_minor)) return;
+  if (!TSXF86VidModeQueryExtension(gdi_display, &xf86vm_event, &xf86vm_error)) return;
+  if (!TSXF86VidModeQueryVersion(gdi_display, &xf86vm_major, &xf86vm_minor)) return;
 
   /* if in desktop mode, don't use XVidMode */
-  if (X11DRV_GetXRootWindow() != DefaultRootWindow(display)) return;
+  if (root_window != DefaultRootWindow(gdi_display)) return;
 
   /* retrieve modes */
-  if (!TSXF86VidModeGetAllModeLines(display, DefaultScreen(display), &nmodes,
+  if (!TSXF86VidModeGetAllModeLines(gdi_display, DefaultScreen(gdi_display), &nmodes,
 				    &modes))
     return;
 
@@ -100,7 +100,7 @@ int X11DRV_XF86VM_GetCurrentMode(void)
   if (!xf86vm_modes) return 0; /* no XVidMode */
 
   TRACE("Querying XVidMode current mode\n");
-  TSXF86VidModeGetModeLine(display, DefaultScreen(display), &dotclock, &line);
+  TSXF86VidModeGetModeLine(gdi_display, DefaultScreen(gdi_display), &dotclock, &line);
   convert_modeline(dotclock, &line, &cmode);
   for (i=0; i<xf86vm_mode_count; i++)
     if (memcmp(&xf86vm_modes[i], &cmode, sizeof(cmode)) == 0) {
@@ -115,20 +115,20 @@ void X11DRV_XF86VM_SetCurrentMode(int mode)
 {
   if (!xf86vm_modes) return; /* no XVidMode */
 
-  TSXF86VidModeSwitchToMode(display, DefaultScreen(display), modes[mode]);
+  TSXF86VidModeSwitchToMode(gdi_display, DefaultScreen(gdi_display), modes[mode]);
 #if 0 /* it is said that SetViewPort causes problems with some X servers */
-  TSXF86VidModeSetViewPort(display, DefaultScreen(display), 0, 0);
+  TSXF86VidModeSetViewPort(gdi_display, DefaultScreen(gdi_display), 0, 0);
 #else
-  TSXWarpPointer(display, None, DefaultRootWindow(display), 0, 0, 0, 0, 0, 0);
+  TSXWarpPointer(gdi_display, None, DefaultRootWindow(gdi_display), 0, 0, 0, 0, 0, 0);
 #endif
-  TSXSync(display, False);
+  TSXSync(gdi_display, False);
 }
 
 void X11DRV_XF86VM_SetExclusiveMode(int lock)
 {
   if (!xf86vm_modes) return; /* no XVidMode */
 
-  TSXF86VidModeLockModeSwitch(display, DefaultScreen(display), lock);
+  TSXF86VidModeLockModeSwitch(gdi_display, DefaultScreen(gdi_display), lock);
 }
 
 /* actual DirectDraw HAL stuff */
@@ -245,7 +245,7 @@ BOOL X11DRV_XF86VM_GetGammaRamp(LPDDGAMMARAMP ramp)
 
   if (xf86vm_major < 2) return FALSE; /* no gamma control */
   wine_tsx11_lock();
-  ret = XF86VidModeGetGamma(display, DefaultScreen(display), &gamma);
+  ret = XF86VidModeGetGamma(gdi_display, DefaultScreen(gdi_display), &gamma);
   wine_tsx11_unlock();
   if (ret) {
     GenerateRampFromGamma(ramp->red,   gamma.red);
@@ -268,7 +268,7 @@ BOOL X11DRV_XF86VM_SetGammaRamp(LPDDGAMMARAMP ramp)
       ComputeGammaFromRamp(ramp->blue,  &gamma.blue)) {
     Bool ret;
     wine_tsx11_lock();
-    ret = XF86VidModeSetGamma(display, DefaultScreen(display), &gamma);
+    ret = XF86VidModeSetGamma(gdi_display, DefaultScreen(gdi_display), &gamma);
     wine_tsx11_unlock();
     return ret;
   }
