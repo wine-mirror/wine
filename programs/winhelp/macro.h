@@ -4,7 +4,12 @@
  * Copyright 1996 Ulrich Schmid
  */
 
-#include "windows.h"
+#include "winnt.h"
+#include "windef.h"
+#include "winbase.h"
+#include "winuser.h"
+#include "wingdi.h"
+#include "shellapi.h"
 
 VOID MACRO_ExecuteMacro(LPCSTR);
 
