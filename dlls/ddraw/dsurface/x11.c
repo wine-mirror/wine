@@ -86,8 +86,8 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Lock(
     DSPRIVATE(This);
     DDPRIVATE(This->s.ddraw);
     
-    IDirectDrawSurface4_AddRef(iface);
-
+    /* DO NOT AddRef the surface! Lock/Unlock are NOT guaranteed to come in 
+     * matched pairs! - Marcus Meissner 20000509 */
     TRACE("(%p)->Lock(%p,%p,%08lx,%08lx)\n",This,lprect,lpddsd,flags,(DWORD)hnd);
     if (flags & ~(DDLOCK_WAIT|DDLOCK_READONLY|DDLOCK_WRITEONLY))
 	WARN("(%p)->Lock(%p,%p,%08lx,%08lx)\n",
@@ -193,7 +193,8 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Unlock(
 		TSXSetWindowColormap(display,ddpriv->drawable,dppriv->cm);
 	}
     }
-    IDirectDrawSurface4_Release(iface);
+    /* DO NOT Release the surface! Lock/Unlock are NOT guaranteed to come in 
+     * matched pairs! - Marcus Meissner 20000509 */
     return DD_OK;
 }
 

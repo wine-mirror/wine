@@ -31,8 +31,13 @@ HRESULT WINAPI IDirectDrawSurface4Impl_Lock(
     LPDIRECTDRAWSURFACE4 iface,LPRECT lprect,LPDDSURFACEDESC lpddsd,DWORD flags, HANDLE hnd
 ) {
     ICOM_THIS(IDirectDrawSurface4Impl,iface);
+
     TRACE("(%p)->Lock(%p,%p,%08lx,%08lx)\n",
 	This,lprect,lpddsd,flags,(DWORD)hnd);
+
+    /* DO NOT AddRef the surface! Lock/Unlock must not come in matched pairs
+     * -Marcus Meissner 20000509
+     */
     if (flags & ~(DDLOCK_WAIT|DDLOCK_READONLY|DDLOCK_WRITEONLY))
 	WARN("(%p)->Lock(%p,%p,%08lx,%08lx)\n",
 		 This,lprect,lpddsd,flags,(DWORD)hnd);
@@ -68,6 +73,10 @@ HRESULT WINAPI IDirectDrawSurface4Impl_Unlock(
     LPDIRECTDRAWSURFACE4 iface,LPVOID surface
 ) {
     ICOM_THIS(IDirectDrawSurface4Impl,iface);
+
+    /* DO NOT Release the surface! Lock/Unlock MUST NOT come in matched pairs
+     * Marcus Meissner 20000509
+     */
     TRACE("(%p)->Unlock(%p)\n",This,surface);
     return DD_OK;
 }
@@ -169,11 +178,6 @@ HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
 
     if (src) IDirectDrawSurface4_Lock(src, NULL, &sdesc, 0, 0);
     IDirectDrawSurface4_Lock(iface,NULL,&ddesc,0,0);
-
-    if (src && sdesc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-	ERR("blitting FROM a primary surface? Hello?\n");
-    if (!(ddesc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE))
-	ERR("NOT blitting into a primary surface? Hello?\n");
 
     if (TRACE_ON(ddraw)) {
 	if (rdst) TRACE("\tdestrect :%dx%d-%dx%d\n",rdst->left,rdst->top,rdst->right,rdst->bottom);
