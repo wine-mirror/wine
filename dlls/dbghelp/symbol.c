@@ -532,7 +532,7 @@ static void symt_fill_sym_info(const struct module* module,
     if (sym_info->MaxNameLen)
     {
         if (sym->tag != SymTagPublicSymbol || !(dbghelp_options & SYMOPT_UNDNAME) ||
-            (sym_info->NameLen = UnDecorateSymbolName(sym_info->Name, sym_info->Name, 
+            (sym_info->NameLen = UnDecorateSymbolName(name, sym_info->Name, 
                                                       sym_info->MaxNameLen, UNDNAME_COMPLETE) == 0))
         {
             sym_info->NameLen = min(strlen(name), sym_info->MaxNameLen - 1);

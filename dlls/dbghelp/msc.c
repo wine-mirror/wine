@@ -4,7 +4,7 @@
  *
  * Copyright (C) 1996,      Eric Youngdale.
  * Copyright (C) 1999-2000, Ulrich Weigand.
- * Copyright (C) 2004,      Eric Pouech.
+ * Copyright (C) 2004-2005, Eric Pouech.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -496,11 +496,10 @@ static int codeview_add_type_struct_field_list(struct module* module,
 {
     struct symt_udt*            symt;
     const unsigned char*        ptr = list;
-    int                         value, leaf_len, vpoff, vplen;
+    int                         value, leaf_len;
     const struct p_string*      p_name;
     const char*                 c_name;
     struct symt*                subtype;
-    const unsigned short int* p_vboff;
 
     symt = symt_new_udt(module, NULL, 0, UdtStruct /* don't care */);
     while (ptr - list < len)
@@ -534,6 +533,8 @@ static int codeview_add_type_struct_field_list(struct module* module,
         case LF_VBCLASS_V1:
         case LF_IVBCLASS_V1:
             {
+                const unsigned short int* p_vboff;
+                int vpoff, vplen;
                 leaf_len = numeric_leaf(&value, &type->vbclass_v1.vbpoff);
                 p_vboff = (const unsigned short int*)((const char*)&type->vbclass_v1.vbpoff + leaf_len);
                 vplen = numeric_leaf(&vpoff, p_vboff);
@@ -547,6 +548,8 @@ static int codeview_add_type_struct_field_list(struct module* module,
         case LF_VBCLASS_V2:
         case LF_IVBCLASS_V2:
             {
+                const unsigned short int* p_vboff;
+                int vpoff, vplen;
                 leaf_len = numeric_leaf(&value, &type->vbclass_v2.vbpoff);
                 p_vboff = (const unsigned short int*)((const char*)&type->vbclass_v2.vbpoff + leaf_len);
                 vplen = numeric_leaf(&vpoff, p_vboff);
@@ -1156,7 +1159,8 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
     {
         const union codeview_symbol* sym = (const union codeview_symbol*)(root + i);
         length = sym->generic.len + 2;
-        if (length & 3) FIXME("unpadded len %u\n", length + 2);
+        if (i + length > size) break;
+        if (length & 3) FIXME("unpadded len %u\n", length);
 
         switch (sym->generic.id)
         {
