@@ -78,11 +78,15 @@ sub check_documentation {
 		my $found_ordinal = 0;
 
 		$module =~ s/\.(acm|dll|drv|exe|ocx)$//; # FIXME: Kludge
+		$module = "kernel" if $module eq "krnl386"; # FIXME: Kludge
+
 		foreach (split(/\n/, $documentation)) {
 		    if(/^(\s*)\*(\s*)(\@|\S+)(\s*)([\(\[])(\w+)\.(\@|\d+)([\)\]])/) {
 			my $external_name2 = $3;
 			my $module2 = $6;
 			my $ordinal2 = $7;
+
+
 
 			if(length($1) != 1 || length($2) < 1 ||
 			   length($4) < 1 || $5 ne "(" || $8 ne ")")
@@ -132,6 +136,7 @@ sub check_documentation {
 
 		    my $_module2 = $module2;
 		    $_module2 =~ s/\.(acm|dll|drv|exe|ocx)$//; # FIXME: Kludge
+		    $_module2 = "kernel" if $_module2 eq "krnl386"; # FIXME: Kludge
 
 		    if($external_name eq $external_name2 &&
 		       lc($module) eq $_module2 &&

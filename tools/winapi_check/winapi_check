@@ -138,6 +138,17 @@ if($options->global) {
     }
 }
 
+if(1) {
+    foreach my $winapi (@winapis) {
+	foreach my $broken_forward ($winapi->all_broken_forwards) {
+	    (my $module, my $external_name, my $forward_module, my $forward_external_name) = @$broken_forward;
+	    if($complete_module{$forward_module}) {
+		$output->write("$module.spec: forward is broken: $external_name => $forward_module.$forward_external_name\n");
+	    }
+	}
+    }
+}
+
 my $progress_current = 0;
 my $progress_max = scalar(@c_files);
 

@@ -47,6 +47,9 @@ sub get_spec_file_type {
     my $module;
     my $type;
 
+    $module = $file;
+    $module =~ s%^.*?([^/]+)\.spec$%$1%;
+
     open(IN, "< $file") || die "$file: $!\n";
     local $/ = "\n";
     my $header = 1;
@@ -58,7 +61,6 @@ sub get_spec_file_type {
 	/^$/ && next;
 
 	if($header)  {
-	    if(/^name\s*(\S*)/) { $module = $1; }
 	    if(/^\d+|@/) { $header = 0; $lookahead = 1; }
 	    next;
 	}
@@ -69,11 +71,6 @@ sub get_spec_file_type {
 	}
     }
     close(IN);
-
-    if(!defined($module)) {
-	$module = $file;
-	$module =~ s%^.*?([^/]+)\.spec|%$1%;
-    }
 
     if(!defined($type)) {
 	$type = "win32";
