@@ -50,7 +50,7 @@ static    char	buf[4*1024];
     len = vsnprintf(buf, sizeof(buf), format, valist);
     va_end(valist);
 
-    if (len <= -1) {
+    if (len <= -1 || len >= sizeof(buf)) {
 	len = sizeof(buf) - 1;
 	buf[len] = 0;
 	buf[len - 1] = buf[len - 2] = buf[len - 3] = '.';
