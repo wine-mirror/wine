@@ -774,7 +774,7 @@ int GetDIBits( HDC hdc, HBITMAP hbitmap, WORD startscan, WORD lines,
  *           CreateDIBitmap    (GDI.442)
  */
 HBITMAP CreateDIBitmap( HDC hdc, BITMAPINFOHEADER * header, DWORD init,
-		        LPSTR bits, BITMAPINFO * data, WORD coloruse )
+		        LPVOID bits, BITMAPINFO * data, UINT coloruse )
 {
     HBITMAP handle;
     BOOL fColor;

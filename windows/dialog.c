@@ -201,7 +201,7 @@ static void DIALOG_DisplayTemplate( DLGTEMPLATE * result )
  *           CreateDialog   (USER.89)
  */
 HWND CreateDialog( HINSTANCE hInst, SEGPTR dlgTemplate,
-		   HWND owner, WNDPROC dlgProc )
+		   HWND owner, DLGPROC dlgProc )
 {
     return CreateDialogParam( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
@@ -211,7 +211,7 @@ HWND CreateDialog( HINSTANCE hInst, SEGPTR dlgTemplate,
  *           CreateDialogParam   (USER.241)
  */
 HWND CreateDialogParam( HINSTANCE hInst, SEGPTR dlgTemplate,
-		        HWND owner, WNDPROC dlgProc, LPARAM param )
+		        HWND owner, DLGPROC dlgProc, LPARAM param )
 {
     HWND hwnd = 0;
     HRSRC hRsrc;
@@ -234,7 +234,7 @@ HWND CreateDialogParam( HINSTANCE hInst, SEGPTR dlgTemplate,
  *           CreateDialogIndirect   (USER.219)
  */
 HWND CreateDialogIndirect( HINSTANCE hInst, SEGPTR dlgTemplate,
-			   HWND owner, WNDPROC dlgProc )
+			   HWND owner, DLGPROC dlgProc )
 {
     return CreateDialogIndirectParam( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
@@ -244,7 +244,7 @@ HWND CreateDialogIndirect( HINSTANCE hInst, SEGPTR dlgTemplate,
  *           CreateDialogIndirectParam   (USER.242)
  */
 HWND CreateDialogIndirectParam( HINSTANCE hInst, SEGPTR dlgTemplate,
-			        HWND owner, WNDPROC dlgProc, LPARAM param )
+			        HWND owner, DLGPROC dlgProc, LPARAM param )
 {
     HMENU hMenu = 0;
     HFONT hFont = 0;
@@ -789,9 +789,10 @@ WORD GetDlgItemInt( HWND hwnd, WORD id, BOOL * translated, BOOL fSigned )
 /***********************************************************************
  *           CheckDlgButton   (USER.97)
  */
-void CheckDlgButton( HWND hwnd, WORD id, WORD check )
+BOOL CheckDlgButton( HWND hwnd, INT id, UINT check )
 {
     SendDlgItemMessage( hwnd, id, BM_SETCHECK, check, 0 );
+    return TRUE;
 }
 
 
@@ -807,28 +808,29 @@ WORD IsDlgButtonChecked( HWND hwnd, WORD id )
 /***********************************************************************
  *           CheckRadioButton   (USER.96)
  */
-void CheckRadioButton( HWND hwndDlg, WORD firstID, WORD lastID, WORD checkID )
+BOOL CheckRadioButton( HWND hwndDlg, UINT firstID, UINT lastID, UINT checkID )
 {
     HWND button = GetWindow( hwndDlg, GW_CHILD );
     WND *wndPtr;
 
     while (button)
     {
-	if (!(wndPtr = WIN_FindWndPtr( button ))) return;
+	if (!(wndPtr = WIN_FindWndPtr( button ))) return FALSE;
         if ((wndPtr->wIDmenu == firstID) || (wndPtr->wIDmenu == lastID)) break;
 	button = wndPtr->hwndNext;
     }
-    if (!button) return;
+    if (!button) return FALSE;
 
     if (wndPtr->wIDmenu == lastID)
         lastID = firstID;  /* Buttons are in reverse order */
     while (button)
     {
-	if (!(wndPtr = WIN_FindWndPtr( button ))) return;
+	if (!(wndPtr = WIN_FindWndPtr( button ))) return FALSE;
 	SendMessage( button, BM_SETCHECK, (wndPtr->wIDmenu == checkID), 0 );
         if (wndPtr->wIDmenu == lastID) break;
 	button = wndPtr->hwndNext;
     }
+    return TRUE;
 }
 
 

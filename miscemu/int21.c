@@ -83,12 +83,6 @@ WORD sharing_pause = 1;        /* pause between retries */
 
 extern char TempDirectory[];
 
-static int Error(int e, int class, int el)
-{
-    return DOS_ERROR( e, class, SA_Abort, el );
-}
-
-
 BYTE *GetCurrentDTA(void)
 {
     TDB *pTask = (TDB *)GlobalLock( GetCurrentTask() );
@@ -140,61 +134,30 @@ static void CreateBPB(int drive, BYTE *data)
 	}	
 }
 
-static void GetFreeDiskSpace(struct sigcontext_struct *context)
+static int INT21_GetFreeDiskSpace(struct sigcontext_struct *context)
 {
-    long size,available;
+    DWORD size, available;
     int drive = DOS_GET_DRIVE( DL_reg(context) );
 
-    if (!DRIVE_IsValid(drive))
-    {
-        DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
-        AX_reg(context) = 0xffff;
-        return;
-    }
-	
-    if (!DOS_GetFreeSpace(drive, &size, &available)) {
-        DOS_ERROR( ER_GeneralFailure, EC_MediaError, SA_Abort, EL_Disk );
-        AX_reg(context) = 0xffff;
-        return;
-    }
+    if (!DRIVE_GetFreeSpace(drive, &size, &available)) return 0;
 
-    AX_reg(context) = (drive < 2) ? 1 : 64;  /* 64 for hard-disks, 1 for diskettes */
-    CX_reg(context) = 512;
-    BX_reg(context) = (available / (CX_reg(context) * AX_reg(context)));
-    DX_reg(context) = (size / (CX_reg(context) * AX_reg(context)));
-    Error (0,0,0);
+    CX_reg(context) = 512;  /* bytes per sector */
+    size /= 512;
+    available /= 512;
+    AX_reg(context) = 1;  /* sectors per cluster */
+    while (AX_reg(context) * 65530 < size) AX_reg(context) *= 2;
+    BX_reg(context) = available / AX_reg(context);  /* free clusters */
+    DX_reg(context) = size / AX_reg(context);  /* total clusters */
+    return 1;
 }
 
-static void GetDriveAllocInfo(struct sigcontext_struct *context)
+static int INT21_GetDriveAllocInfo(struct sigcontext_struct *context)
 {
-    long size, available;
-    int drive = DOS_GET_DRIVE( DL_reg(context) );
-	
-    if (!DRIVE_IsValid(drive))
-    {
-        AX_reg(context) = 4;
-        CX_reg(context) = 512;
-        DX_reg(context) = 0;
-        DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
-        return;
-    }
-
-	if (!DOS_GetFreeSpace(drive, &size, &available))
-        {
-            DOS_ERROR( ER_GeneralFailure, EC_MediaError, SA_Abort, EL_Disk );
-            AX_reg(context) = 0xffff;
-            return;
-	}
-	
-	AX_reg(context) = (drive < 2) ? 1 : 64;  /* 64 for hard-disks, 1 for diskettes */
-	CX_reg(context) = 512;
-	DX_reg(context) = (size / (CX_reg(context) * AX_reg(context)));
-
-	heap->mediaID = 0xf0;
-
-	DS_reg(context) = DosHeapHandle;
-	BX_reg(context) = (int)&heap->mediaID - (int)heap;
-	Error (0,0,0);
+    if (!INT21_GetFreeDiskSpace( context )) return 0;
+    heap->mediaID = 0xf0;
+    DS_reg(context) = DosHeapHandle;
+    BX_reg(context) = (int)&heap->mediaID - (int)heap;
+    return 1;
 }
 
 static void GetDrivePB(struct sigcontext_struct *context, int drive)
@@ -242,40 +205,15 @@ static void GetDrivePB(struct sigcontext_struct *context, int drive)
 
 static void ioctlGetDeviceInfo(struct sigcontext_struct *context)
 {
-
-	dprintf_int (stddeb, "int21: ioctl (%d, GetDeviceInfo)\n", BX_reg(context));
-
-	switch (BX_reg(context))
-        {
-		case 0:
-		case 1:
-                    DX_reg(context) = 2;  /* FIXME */
-                    break;
-		case 2:
-			DX_reg(context) = 0x80d0 | (1 << (BX_reg(context) != 0));
-                        RESET_CFLAG(context);
-			break;
-
-		default:
-		{
-		    struct stat sbuf;
-	    
-		    if (fstat(BX_reg(context), &sbuf) < 0)
-		    {
-                        INT_BARF( context, 0x21 );
-			SET_CFLAG(context);
-			return;
-		    }
-	    
-		    DX_reg(context) = 0x0943;
-		    /* bits 0-5 are current drive
-		     * bit 6 - file has NOT been written..FIXME: correct?
-		     * bit 8 - generate int24 if no diskspace on write/ read past end of file
-		     * bit 11 - media not removable
-		     */
-		}
-	}
-	RESET_CFLAG(context);
+    dprintf_int (stddeb, "int21: ioctl (%d, GetDeviceInfo)\n", BX_reg(context));
+    
+    DX_reg(context) = 0x0942;
+    /* bits 0-5 are current drive
+     * bit 6 - file has NOT been written..FIXME: correct?
+     * bit 8 - generate int24 if no diskspace on write/ read past end of file
+     * bit 11 - media not removable
+     */
+    RESET_CFLAG(context);
 }
 
 static void ioctlGenericBlkDevReq(struct sigcontext_struct *context)
@@ -454,6 +392,7 @@ static void CloseFile(struct sigcontext_struct *context)
 
 void ExtendedOpenCreateFile(struct sigcontext_struct *context)
 {
+  BYTE action=DL_reg(context);
   dprintf_int(stddeb, "int21: extended open/create: file= %s \n",
 	      DOSFS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),SI_reg(context)),FALSE));
   /* Shuffle arguments to call OpenExistingFile */
@@ -466,7 +405,7 @@ void ExtendedOpenCreateFile(struct sigcontext_struct *context)
       dprintf_int(stddeb, "int21: extended open/create %s exists \n",
 		  DOSFS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),SI_reg(context)),TRUE));
       /* Now decide what do do */
-      if ((DL_reg(context) & 0x0007)== 0)
+      if ((action & 0x07)== 0)
 	{
 	  BX_reg(context) = AX_reg(context);
 	  CloseFile(context);
@@ -476,7 +415,7 @@ void ExtendedOpenCreateFile(struct sigcontext_struct *context)
 	  dprintf_int(stddeb, "int21: extended open/create: failed because file exixts \n");
 	  return;
 	}
-      if ((DL_reg(context) & 0x0007)== 2) {
+      if ((action & 0x07)== 2) {
 	/* Truncate it, but first check if opend for write */
 	if ((BL_reg(context) & 0x0007)== 0) {
 	  BX_reg(context) = AX_reg(context);
@@ -516,9 +455,10 @@ void ExtendedOpenCreateFile(struct sigcontext_struct *context)
     }
   else /* file does not exist */
     {
+      RESET_CFLAG(context); /* was set by OpenExistingFile(context) */
      dprintf_int(stddeb, "int21: extended open/create %s dosen't exists \n",
 		  DOSFS_GetUnixFileName(PTR_SEG_OFF_TO_LIN(DS_reg(context),SI_reg(context)),FALSE));
-      if ((DL_reg(context) & 0x00F0)== 0) {
+      if ((action & 0xF0)== 0) {
 	CX_reg(context) = 0;
 	SET_CFLAG(context);
 	dprintf_int(stddeb, "int21: extended open/create: failed, file dosen't exist\n");
@@ -1102,11 +1042,11 @@ void DOS3Call( struct sigcontext_struct context )
 
     case 0x1b: /* GET ALLOCATION INFORMATION FOR DEFAULT DRIVE */
         DL_reg(&context) = 0;
-        GetDriveAllocInfo(&context);
+        if (!INT21_GetDriveAllocInfo(&context)) AX_reg(&context) = 0xffff;
         break;
 	
     case 0x1c: /* GET ALLOCATION INFORMATION FOR SPECIFIC DRIVE */
-        GetDriveAllocInfo(&context);
+        if (!INT21_GetDriveAllocInfo(&context)) AX_reg(&context) = 0xffff;
         break;
 
     case 0x1f: /* GET DRIVE PARAMETER BLOCK FOR DEFAULT DRIVE */
@@ -1205,7 +1145,7 @@ void DOS3Call( struct sigcontext_struct context )
         break;
 
     case 0x36: /* GET FREE DISK SPACE */
-        GetFreeDiskSpace(&context);
+        if (!INT21_GetFreeDiskSpace(&context)) AX_reg(&context) = 0xffff;
         break;
 
     case 0x38: /* GET COUNTRY-SPECIFIC INFORMATION */
@@ -1258,22 +1198,32 @@ void DOS3Call( struct sigcontext_struct context )
         break;
 
     case 0x3f: /* "READ" - READ FROM FILE OR DEVICE */
-        if ((AX_reg(&context) = _lread( BX_reg(&context),
-                       PTR_SEG_OFF_TO_LIN( DS_reg(&context),DX_reg(&context) ),
-                       CX_reg(&context))) == (WORD)HFILE_ERROR)
         {
-            AX_reg(&context) = DOS_ExtendedError;
-            SET_CFLAG(&context);
+            LONG result = _hread( BX_reg(&context),
+                                  PTR_SEG_OFF_TO_LIN( DS_reg(&context),
+                                                      DX_reg(&context) ),
+                                  CX_reg(&context) );
+            if (result == -1)
+            {
+                AX_reg(&context) = DOS_ExtendedError;
+                SET_CFLAG(&context);
+            }
+            else AX_reg(&context) = (WORD)result;
         }
         break;
 
     case 0x40: /* "WRITE" - WRITE TO FILE OR DEVICE */
-        if ((AX_reg(&context) = _lwrite( BX_reg(&context),
-                       PTR_SEG_OFF_TO_LIN( DS_reg(&context),DX_reg(&context) ),
-                       CX_reg(&context))) == (WORD)HFILE_ERROR)
         {
-            AX_reg(&context) = DOS_ExtendedError;
-            SET_CFLAG(&context);
+            LONG result = _hwrite( BX_reg(&context),
+                                   PTR_SEG_OFF_TO_LIN( DS_reg(&context),
+                                                       DX_reg(&context) ),
+                                   CX_reg(&context) );
+            if (result == -1)
+            {
+                AX_reg(&context) = DOS_ExtendedError;
+                SET_CFLAG(&context);
+            }
+            else AX_reg(&context) = (WORD)result;
         }
         break;
 
@@ -1680,12 +1630,12 @@ void DOS3Call( struct sigcontext_struct context )
 }
 
 
-void INT21_Init(void)
+BOOL INT21_Init(void)
 {
     if ((DosHeapHandle = GlobalAlloc(GMEM_FIXED,sizeof(struct DosHeap))) == 0)
     {
         fprintf( stderr, "INT21_Init: Out of memory\n");
-        exit(1);
+        return FALSE;
     }
     heap = (struct DosHeap *) GlobalLock(DosHeapHandle);
 
@@ -1693,4 +1643,5 @@ void INT21_Init(void)
     dpbsegptr = MAKELONG( (int)&heap->dpb - (int)heap, DosHeapHandle );
     heap->InDosFlag = 0;
     strcpy(heap->biosdate, "01/01/80");
+    return TRUE;
 }

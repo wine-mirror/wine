@@ -450,7 +450,7 @@ BOOL RestoreDC( HDC hdc, short level )
 /***********************************************************************
  *           CreateDC    (GDI.53)
  */
-HDC CreateDC( LPSTR driver, LPSTR device, LPSTR output, LPSTR initData )
+HDC CreateDC( LPCSTR driver, LPCSTR device, LPCSTR output, LPCSTR initData )
 {
     DC * dc;
     HANDLE handle;

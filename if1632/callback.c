@@ -46,7 +46,7 @@ LONG CallWindowProc( WNDPROC func, HWND hwnd, WORD message,
 /**********************************************************************
  *	     Catch    (KERNEL.55)
  */
-int Catch( LPCATCHBUF lpbuf )
+INT Catch( LPCATCHBUF lpbuf )
 {
     STACK16FRAME *pFrame = CURRENT_STACK16;
 

@@ -12,6 +12,11 @@
 #include "windows.h"
 
 #define MDI_MAXLISTLENGTH	0x40
+#define MDI_MAXTITLELENGTH	0xA1
+
+#define MDI_NOFRAMEREPAINT	0
+#define MDI_REPAINTFRAMENOW	1
+#define MDI_REPAINTFRAME	2
 
 #define WM_MDICALCCHILDSCROLL   0x10AC /* this is exactly what Windows uses */
 
@@ -31,12 +36,13 @@ typedef struct
     HWND   hwndActiveChild;
     HMENU  hWindowMenu;
     WORD   idFirstChild;       /* order is 3.1-like up to this point */
+    HANDLE hFrameTitle;
     WORD   sbStop;
     WORD   sbRecalc;
+    HBITMAP obmClose;
+    HBITMAP obmRestore;
     HWND   hwndHitTest;
-    RECT   rectMaximize;
-    RECT   rectRestore;
+    HWND   self;
 } MDICLIENTINFO;
-
 
 #endif /* MDI_H */

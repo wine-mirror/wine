@@ -77,7 +77,7 @@ int SyncAllVoices(void)
         return 0;
 }
 
-int CountVoiceNotes(int x)
+INT CountVoiceNotes(INT x)
 {
 	fprintf(stderr, "CountVoiceNotes(%d)\n", x);
         return 0;

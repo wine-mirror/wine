@@ -8,6 +8,9 @@
 
 #include <stdio.h>
 #include "windows.h"
+
+#ifndef WINELIB32
+
 #include "winerror.h"
 #include "kernel32.h"
 #include "wincon.h"
@@ -31,6 +34,25 @@ BOOL UsesLParamPtr(DWORD message)
 	    return FALSE;
     }
 }
+
+extern LRESULT AboutDlgProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT ButtonWndProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT ColorDlgProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT ComboBoxWndProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT DesktopWndProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT EditWndProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT FileOpenDlgProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT FileSaveDlgProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT FindTextDlgProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT ListBoxWndProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT MDIClientWndProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT PopupMenuWndProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT PrintDlgProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT PrintSetupDlgProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT ReplaceTextDlgProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT ScrollBarWndProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT StaticWndProc(HWND,UINT,WPARAM,LPARAM);
+extern LRESULT SystemMessageBoxProc(HWND,UINT,WPARAM,LPARAM);
 
 LRESULT USER32_DefWindowProcA(DWORD hwnd, DWORD msg, DWORD wParam, DWORD lParam)
 
@@ -238,4 +260,4 @@ LRESULT ComboLBoxWndProc32(DWORD hwnd, DWORD msg, DWORD wParam, DWORD lParam)
     else
 	return ComboLBoxWndProc((HWND)hwnd, msg, wParam, lParam);
 }
-
+#endif

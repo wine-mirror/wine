@@ -114,13 +114,11 @@
 #undef DEBUG_LDT
 #undef DEBUG_LISTBOX
 #undef DEBUG_LOCAL
-#undef DEBUG_MALLOC
 #undef DEBUG_MCI
 #undef DEBUG_MCIANIM
 #undef DEBUG_MCIWAVE
 #undef DEBUG_MDI
 #undef DEBUG_MENU
-#undef DEBUG_MENUCALC
 #undef DEBUG_MESSAGE
 #undef DEBUG_METAFILE
 #undef DEBUG_MIDI
@@ -194,13 +192,11 @@
 #define DEBUG_LDT
 #define DEBUG_LISTBOX
 #define DEBUG_LOCAL
-#define DEBUG_MALLOC
 #define DEBUG_MCI
 #define DEBUG_MCIANIM
 #define DEBUG_MCIWAVE
 #define DEBUG_MDI
 #define DEBUG_MENU
-#define DEBUG_MENUCALC
 #define DEBUG_MESSAGE
 #define DEBUG_METAFILE
 #define DEBUG_MIDI

@@ -277,7 +277,7 @@ DWORD DefHookProc( short code, WORD wParam, DWORD lParam, HHOOK *hhook )
 /***********************************************************************
  *           CallMsgFilter   (USER.123)
  */
-BOOL CallMsgFilter( SEGPTR msg, short code )
+BOOL CallMsgFilter( SEGPTR msg, INT code )
 {
     if (GetSysModalWindow()) return FALSE;
     if (HOOK_CallHooks( WH_SYSMSGFILTER, code, 0, (LPARAM)msg )) return TRUE;
@@ -316,7 +316,7 @@ BOOL UnhookWindowsHookEx( HHOOK hhook )
 /***********************************************************************
  *           CallNextHookEx   (USER.293)
  */
-DWORD CallNextHookEx( HHOOK hhook, short code, WPARAM wParam, LPARAM lParam )
+LRESULT CallNextHookEx( HHOOK hhook, INT code, WPARAM wParam, LPARAM lParam )
 {
     HANDLE next;
 #ifdef WINELIB32

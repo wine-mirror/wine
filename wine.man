@@ -44,12 +44,16 @@ must be installed.  (It is probably available from the same site
 was, or the sources may be FTP'd from ftp.x.org).
 .SH INSTALLATION
 To install 
-.B wine,
+.B Wine,
 run "./configure", which will detect your specific setup and create
 the Makefiles. You can run "./configure --help" to see the available
 configuration options. Then do "make depend; make" to build the
 .B wine
-executable.
+executable, and then "make install" to install it. By default,
+.B wine
+is installed in /usr/local/bin; you can specify a different path with
+the --prefix option when running
+.B configure.
 .SH OPTIONS
 .TP
 .I -depth n
@@ -115,7 +119,7 @@ OLECLI, OLESVR, COMPOBJ, STORAGE, WINPROCS, DDEML
 Read only files may be opened in write mode
 .TP
 .I -enhanced
-Starts wine in Enhanced mode (not guaranteed to work yet)
+Starts wine in Enhanced mode
 .PD 1
 .SH PROGRAM/ARGUMENTS
 The program name may be specified in DOS format (C:\\WINDOWS\\SOL.EXE) or in 
@@ -130,31 +134,70 @@ them together in quotation marks.  Multiple applications may be started
 by placing all of them on the command line (such as: wine notepad clock).
 .SH CONFIGURATION FILE
 .B wine
-expects a configuration file (/usr/local/etc/wine.conf), 
-which should conform to the following rules.  The actual file name may
-be specified during the execution of the
+expects a configuration file (/usr/local/etc/wine.conf), which should
+conform to the following rules (the format is just like a Windows .ini
+file).  The actual file name may be specified during the execution of
+the
 .B configure
 script.  Alternatively, you may have a 
 .I .winerc
 file of this format in your home directory.
 .SH CONFIGURATION FILE FORMAT
-.B [drives]
+All entries are grouped in sections; a section begins with the line
 .br
-.I format: <driveletter> = <rootdirectory>
+.I [section name]
 .br
-default: none
+and continues until the next section starts. Individual entries
+consist of lines of the form
 .br
-This section is used to specify the root directory of each 
+.I entry=value
+.br
+The value can be any text string, optionally included in single or
+double quotes; it can also contain references to environment variables
+surrounded by
+.I ${}.
+Supported section names and entries are listed below.
+.PP
+.B [Drive X]
+.br
+This section is used to specify the root directory and type of each
 .B DOS
 drive, since most Windows applications require a DOS/MS-Windows based 
-disk drive & directory scheme.
+disk drive & directory scheme. There is one such section for every
+drive you want to configure.
+.PP
+.I format: Path = <rootdirectory>
+.br
+default: none
 .br
 If you mounted your dos partition as 
 .I /dos
 and installed Microsoft Windows in 
 C:\\WINDOWS then you should specify 
-.I c=/dos
-in the drives section.
+.I Path=/dos
+in the
+.I [Drive C]
+section.
+.PP
+.I format: Type = <type>
+.br
+default: hd
+.br
+Used to specify the drive type; supported types are floppy, hd, cdrom
+and network.
+.PP
+.I format: Label = <label>
+.br
+default: 'Drive X'
+.br
+Used to specify the drive label; limited to 11 characters.
+.PP
+.I format: Serial = <serial>
+.br
+default: 12345678
+.br
+Used to specify the drive serial number, as an 8-character hexadecimal
+number.
 .PP
 .B [wine]
 .br
@@ -225,14 +268,24 @@ Used to specify which messages will be excluded from the logfile.
 .br
 default: none
 .br Used to specify which messages will be included in the logfile.
-.SH SAMPLE wine.conf
-[drives]
+.SH SAMPLE CONFIGURATION FILE
+[Drive A]
 .br
-a=/mnt/fd0
+Path=/mnt/fd0
 .br
-c=/dos
+Type=floppy
+.PP
+[Drive C]
 .br
-d=~/Wine
+Path=/dos
+.br
+Type=hd
+.br
+Label=DOS disk
+.PP
+[Drive D]
+.br
+Path=${HOME}/Wine
 .PP
 [wine]
 .br
@@ -290,10 +343,6 @@ are that programs requiring VBRUNxxx.DLL are unreliable (with reports of
 some working), OLE is not in place, the internal COMMDLG support is not yet
 at 100% (although rapidly improving).  Color support for other than 8bpp
 (256 colors) is currently flaky.
-.PP
-Currently, no directories in the path can have upper-case letters in them
-(ex. /msdos/driveC), as the conversions necessary to handle the msdos 
-filename conventions currently cause them to be lost.
 .PP
 A partial list of applications known to work with 
 .B wine

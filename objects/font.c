@@ -3,8 +3,7 @@
  *
  * Copyright 1993 Alexandre Julliard
  *
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
-*/
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,8 +11,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include <X11/Xatom.h>
 #include "font.h"
 #include "metafile.h"
-#include "wine.h"
 #include "callback.h"
+#include "options.h"
 #include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -65,17 +64,20 @@ BOOL FONT_Init( void )
   LPSTR ptr;
   int i;
 
-  if( GetPrivateProfileString("fonts", NULL, "*", temp, sizeof(temp), WINE_INI) > 2 ) {
+  if (PROFILE_GetWineIniString( "fonts", NULL, "*", temp, sizeof(temp) ) > 2 )
+  {
     for( ptr = temp, i = 1; strlen(ptr) != 0; ptr += strlen(ptr) + 1 )
       if( strcmp( ptr, "default" ) )
 	FontNames[i++].window = xstrdup( ptr );
     FontSize = i;
 
-    for( i = 1; i < FontSize; i++ ) {
-      GetPrivateProfileString("fonts", FontNames[i].window, "*", temp, sizeof(temp), WINE_INI);
-      FontNames[i].x11 = xstrdup( temp );
+    for( i = 1; i < FontSize; i++ )
+    {
+        PROFILE_GetWineIniString( "fonts", FontNames[i].window, "*",
+                                  temp, sizeof(temp) );
+        FontNames[i].x11 = xstrdup( temp );
     }
-    GetPrivateProfileString("fonts", "default", "*", temp, sizeof(temp), WINE_INI);
+    PROFILE_GetWineIniString( "fonts", "default", "*", temp, sizeof(temp) );
     FontNames[0].x11 = xstrdup( temp );
 
   } else {
@@ -291,7 +293,7 @@ BOOL CreateScalableFontResource( UINT fHidden,LPSTR lpszResourceFile,
 /***********************************************************************
  *           CreateFontIndirect    (GDI.57)
  */
-HFONT CreateFontIndirect( LOGFONT * font )
+HFONT CreateFontIndirect( const LOGFONT * font )
 {
     FONTOBJ * fontPtr;
     HFONT hfont = GDI_AllocObject( sizeof(FONTOBJ), FONT_MAGIC );
@@ -307,10 +309,10 @@ HFONT CreateFontIndirect( LOGFONT * font )
 /***********************************************************************
  *           CreateFont    (GDI.56)
  */
-HFONT CreateFont( int height, int width, int esc, int orient, int weight,
+HFONT CreateFont( INT height, INT width, INT esc, INT orient, INT weight,
 		  BYTE italic, BYTE underline, BYTE strikeout, BYTE charset,
 		  BYTE outpres, BYTE clippres, BYTE quality, BYTE pitch,
-		  LPSTR name )
+		  LPCSTR name )
 {
     LOGFONT logfont = { height, width, esc, orient, weight, italic, underline,
 		    strikeout, charset, outpres, clippres, quality, pitch, };
@@ -493,7 +495,7 @@ INT GetTextFace( HDC hdc, INT count, LPSTR name )
 /***********************************************************************
  *           GetTextExtent    (GDI.91)
  */
-DWORD GetTextExtent( HDC hdc, LPSTR str, short count )
+DWORD GetTextExtent( HDC hdc, LPCSTR str, short count )
 {
     SIZE size;
     if (!GetTextExtentPoint( hdc, str, count, &size )) return 0;
@@ -504,7 +506,7 @@ DWORD GetTextExtent( HDC hdc, LPSTR str, short count )
 /***********************************************************************
  *           GetTextExtentPoint    (GDI.471)
  */
-BOOL GetTextExtentPoint( HDC hdc, LPSTR str, short count, LPSIZE size )
+BOOL GetTextExtentPoint( HDC hdc, LPCSTR str, short count, LPSIZE size )
 {
     int dir, ascent, descent;
     XCharStruct info;
@@ -802,7 +804,7 @@ int EnumFonts(HDC hDC, LPSTR lpFaceName, FARPROC lpEnumFunc, LPSTR lpData)
 /*************************************************************************
  *				EnumFontFamilies	[GDI.330]
  */
-int EnumFontFamilies(HDC hDC, LPSTR lpszFamily, FARPROC lpEnumFunc, LPSTR lpData)
+int EnumFontFamilies(HDC hDC, LPSTR lpszFamily, FONTENUMPROC lpEnumFunc, LPARAM lpData)
 {
   HANDLE       	hLog;
   HANDLE       	hMet;
@@ -815,7 +817,7 @@ int EnumFontFamilies(HDC hDC, LPSTR lpszFamily, FARPROC lpEnumFunc, LPSTR lpData
   int	       	nRet = 0;
   int	       	i;
   
-  dprintf_font(stddeb,"EnumFontFamilies("NPFMT", %p, %08lx, %p)\n",
+  dprintf_font(stddeb,"EnumFontFamilies("NPFMT", %p, %08lx, %08lx)\n",
 	       hDC, lpszFamily, (DWORD)lpEnumFunc, lpData);
   if (lpEnumFunc == 0) return 0;
   hLog = GDI_HEAP_ALLOC( sizeof(ENUMLOGFONT) );
@@ -859,7 +861,7 @@ int EnumFontFamilies(HDC hDC, LPSTR lpszFamily, FARPROC lpEnumFunc, LPSTR lpData
     nRet = CallEnumFontFamProc( lpEnumFunc,
 			       GDI_HEAP_SEG_ADDR(hLog),
 			       GDI_HEAP_SEG_ADDR(hMet),
-			       0, (LONG)lpData );
+			       0, lpData );
     if (nRet == 0) {
       dprintf_font(stddeb,"EnumFontFamilies // EnumEnd requested by application !\n");
       break;
@@ -874,7 +876,7 @@ int EnumFontFamilies(HDC hDC, LPSTR lpszFamily, FARPROC lpEnumFunc, LPSTR lpData
  *				GetRasterizerCaps	[GDI.313]
  */
 
-BOOL GetRasterizerCaps(LPRASTERIZER_STATUS lprs, WORD cbNumBytes)
+BOOL GetRasterizerCaps(LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
 {
   /* This is not much more than a dummy */
   RASTERIZER_STATUS rs;
@@ -887,9 +889,8 @@ BOOL GetRasterizerCaps(LPRASTERIZER_STATUS lprs, WORD cbNumBytes)
 
 /*************************************************************************
  *             GetKerningPairs      [GDI.332]
- *  FIXME: The last parameter is actually LPKERNINGPAIR
  */
-int GetKerningPairs(WORD hDC,int cBufLen,LPVOID lpKerningPairs)
+int GetKerningPairs(HDC hDC,int cBufLen,LPKERNINGPAIR lpKerningPairs)
 {
 	/* Wine fonts are ugly and don't support kerning :) */
 	return 0;

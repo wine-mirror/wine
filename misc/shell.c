@@ -215,7 +215,7 @@ SHELL_LoadRegistry(void)
 /*************************************************************************
  *				RegOpenKey		[SHELL.1]
  */
-LONG RegOpenKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
+LONG RegOpenKey(HKEY hKey, LPCSTR lpSubKey, LPHKEY lphKey)
 {
 	LPKEYSTRUCT	lpKey,lpNextKey;
 	LPCSTR		ptr;
@@ -264,7 +264,7 @@ LONG RegOpenKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
 /*************************************************************************
  *				RegCreateKey		[SHELL.2]
  */
-LONG RegCreateKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
+LONG RegCreateKey(HKEY hKey, LPCSTR lpSubKey, LPHKEY lphKey)
 {
 	HKEY		hNewKey;
 	LPKEYSTRUCT	lpNewKey;
@@ -391,7 +391,7 @@ LONG RegSetValue(HKEY hKey, LPCSTR lpSubKey, DWORD dwType,
 /*************************************************************************
  *				RegQueryValue		[SHELL.6]
  */
-LONG RegQueryValue(HKEY hKey, LPCSTR lpSubKey, LPSTR lpVal, LONG FAR *lpcb)
+LONG RegQueryValue(HKEY hKey, LPCSTR lpSubKey, LPSTR lpVal, LPLONG lpcb)
 {
 	HKEY		hRetKey;
 	LPKEYSTRUCT	lpKey;
@@ -552,7 +552,7 @@ BOOL DragQueryPoint(HDROP hDrop, POINT FAR *p)
 /*************************************************************************
  *				ShellExecute		[SHELL.20]
  */
-HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpParameters, LPCSTR lpDirectory, int iShowCmd)
+HINSTANCE ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, LPSTR lpParameters, LPCSTR lpDirectory, INT iShowCmd)
 {
     char cmd[400];
     char *p,*x;

@@ -48,17 +48,17 @@ void ALIAS_RegisterAlias(DWORD Wine,DWORD Win16, DWORD Win32)
     if (Wine)
     {
         whash=ALIAS_LocateHash(Wine);
-	recno=AliasTable[whash].used?AliasTable[whash].used:0;
+	recno=AliasTable[whash].used?AliasTable[whash].recno:0;
     }
     if (Win16)
     {
         w16hash=ALIAS_LocateHash(Win16);
-	recno=AliasTable[w16hash].used?AliasTable[w16hash].used:0;
+	recno=AliasTable[w16hash].used?AliasTable[w16hash].recno:0;
     }
     if (Win32)
     {
         w32hash=ALIAS_LocateHash(Win32);
-        recno=AliasTable[w32hash].used?AliasTable[w32hash].used:0;
+        recno=AliasTable[w32hash].used?AliasTable[w32hash].recno:0;
     }
     if (!recno)
     {

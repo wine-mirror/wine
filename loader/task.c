@@ -77,7 +77,7 @@ static HANDLE TASK_CreateDOSEnvironment(void)
 {
     static const char program_name[] = "KRNL386.EXE";
     char **e, *p;
-    int initial_size, size, i, winpathlen, windirlen, sysdirlen;
+    int initial_size, size, i, winpathlen, sysdirlen;
     HANDLE handle;
 
     extern char **environ;
@@ -88,7 +88,6 @@ static HANDLE TASK_CreateDOSEnvironment(void)
      * ...
      * ASCIIZ   string n
      * ASCIIZ   PATH=xxx
-     * ASCIIZ   windir=xxx
      * BYTE     0
      * WORD     1
      * ASCIIZ   program name (e.g. C:\WINDOWS\SYSTEM\KRNL386.EXE)
@@ -103,10 +102,8 @@ static HANDLE TASK_CreateDOSEnvironment(void)
         winpathlen += len + 1;
     }
     if (!winpathlen) winpathlen = 1;
-    windirlen  = GetWindowsDirectory( NULL, 0 ) + 1;
     sysdirlen  = GetSystemDirectory( NULL, 0 ) + 1;
     initial_size = 5 + winpathlen +           /* PATH=xxxx */
-                   7 + windirlen +            /* windir=xxxx */
                    1 +                        /* BYTE 0 at end */
                    sizeof(WORD) +             /* WORD 1 */
                    sysdirlen +                /* program directory */
@@ -148,7 +145,7 @@ static HANDLE TASK_CreateDOSEnvironment(void)
 	}
     }
 
-    /* Now add the path and Windows directory */
+    /* Now add the path */
 
     strcpy( p, "PATH=" );
     for (i = 0, p += 5; ; i++)
@@ -159,10 +156,6 @@ static HANDLE TASK_CreateDOSEnvironment(void)
     }
     if (p[-1] == ';') p[-1] = '\0';
     else p++;
-
-    strcpy( p, "windir=" );
-    GetWindowsDirectory( p + 7, windirlen );
-    p += 7 + windirlen;
 
     /* Now add the program name */
 
@@ -575,34 +568,36 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
 static void TASK_DeleteTask( HTASK hTask )
 {
     TDB *pTask;
+    HANDLE hPDB;
 
     if (!(pTask = (TDB *)GlobalLock( hTask ))) return;
+    hPDB = pTask->hPDB;
+
+    /* Free the task module */
+
+    FreeModule( pTask->hModule );
 
     /* Close all open files of this task */
 
     FILE_CloseAllFiles( pTask->hPDB );
 
-      /* Free the task module */
-
-    FreeModule( pTask->hModule );
-
-      /* Free all memory used by this task (including the 32-bit stack, */
-      /* the environment block and the thunk segments). */
-
-    GlobalFreeAll( pTask->hPDB );
-
-      /* Free message queue */
+    /* Free the message queue */
 
     MSG_DeleteMsgQueue( pTask->hQueue );
 
-      /* Free the selector aliases */
+    /* Free the selector aliases */
 
     GLOBAL_FreeBlock( pTask->hCSAlias );
     GLOBAL_FreeBlock( pTask->hPDB );
 
-      /* Free the task structure itself */
+    /* Free the task structure itself */
 
     GlobalFree( hTask );
+
+    /* Free all memory used by this task (including the 32-bit stack, */
+    /* the environment block and the thunk segments). */
+
+    GlobalFreeAll( hPDB );
 }
 
 
@@ -626,7 +621,7 @@ void TASK_KillCurrentTask( int exitCode )
     if (nTaskCount <= 1)
     {
         dprintf_task( stddeb, "Killing the last task, exiting\n" );
-        exit(0);
+        ExitWindows( 0, 0 );
     }
 
     /* Remove the task from the list to be sure we never switch back to it */
@@ -792,13 +787,13 @@ void InitTask( struct sigcontext_struct context )
     ESI_reg(&context) = (DWORD)pTask->hPrevInstance;
     EDI_reg(&context) = (DWORD)pTask->hInstance;
     ES_reg (&context) = (WORD)pTask->hPDB;
-#endif
 
     /* Initialize the local heap */
     if ( pModule->heap_size )
     {
         LocalInit( pTask->hInstance, 0, pModule->heap_size );
     }    
+#endif
 
 
     /* Initialize the INSTANCEDATA structure */

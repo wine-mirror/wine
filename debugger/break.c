@@ -12,7 +12,6 @@
 #include "debugger.h"
 
 #define INT3          0xcc   /* int 3 opcode */
-#define STEP_FLAG     0x100  /* single-step flag */
 
 #define MAX_BREAKPOINTS 25
 

@@ -11,13 +11,11 @@ extern int PASCAL WinMain(HINSTANCE,HINSTANCE,LPSTR,int);
 extern void TASK_Reschedule(void);
 extern int USER_InitApp(HINSTANCE);
 
-char* progname=NULL;
 
 int _WinMain (int argc, char *argv [])
 {
   HINSTANCE hInstance;
 
-  progname=*argv;
   if(!MAIN_Init()) return 0; /* JBP: Needed for DosDrives[] structure, etc. */
   hInstance = WinExec( *argv, SW_SHOWNORMAL );
   TASK_Reschedule();
@@ -26,8 +24,12 @@ int _WinMain (int argc, char *argv [])
   if (!WIDGETS_Init()) return -1;
   if (!WIN_CreateDesktopWindow()) return -1;
 
+#ifdef WINELIBDLL
+  return (int)hInstance;
+#else
   return WinMain (hInstance,    /* hInstance */
 		  0,	        /* hPrevInstance */
 		  "",	        /* lpszCmdParam */
 		  SW_NORMAL);   /* nCmdShow */
+#endif
 }

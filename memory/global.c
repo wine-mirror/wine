@@ -22,7 +22,7 @@
   /* Global arena block */
 typedef struct
 {
-    DWORD    base;           /* Base address  */
+    DWORD    base;           /* Base address (0 if discarded) */
     DWORD    size;           /* Size in bytes (0 indicates a free block) */
     HGLOBAL  handle;         /* Handle for this block */
     HGLOBAL  hOwner;         /* Owner of this block */
@@ -30,7 +30,9 @@ typedef struct
     BYTE     pageLockCount;  /* Count of GlobalPageLock() calls */
     BYTE     flags;          /* Allocation flags */
     BYTE     selCount;       /* Number of selectors allocated for this block */
+#ifdef CONFIG_IPC
     int      shmid;
+#endif
 } GLOBALARENA;
 
   /* Flags definitions */
@@ -116,6 +118,8 @@ HGLOBAL GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
 
     pArena->base = (DWORD)ptr;
     pArena->size = GET_SEL_LIMIT(sel) + 1;
+
+#ifdef CONFIG_IPC
     if ((flags & GMEM_DDESHARE) && Options.ipc)
     {
 	pArena->handle = shmdata->handle;
@@ -127,6 +131,9 @@ HGLOBAL GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
 	pArena->handle = (flags & GMEM_MOVEABLE) ? sel - 1 : sel;
 	pArena->shmid  = 0;
     }
+#else
+    pArena->handle = (flags & GMEM_MOVEABLE) ? sel - 1 : sel;
+#endif
     pArena->hOwner = hOwner;
     pArena->lockCount = 0;
     pArena->pageLockCount = 0;
@@ -174,11 +181,15 @@ HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
 
     dprintf_global( stddeb, "GlobalAlloc: %ld flags=%04x\n", size, flags );
 
-      /* Fixup the size */
+    /* If size is 0, create a discarded block */
+
+    if (size == 0) return GLOBAL_CreateBlock( flags, NULL, 1, hOwner, isCode,
+                                              is32Bit, isReadOnly, NULL );
+
+    /* Fixup the size */
 
     if (size >= GLOBAL_MAX_ALLOC_SIZE - 0x1f) return 0;
-    if (size == 0) size = 0x20;
-    else size = (size + 0x1f) & ~0x1f;
+    size = (size + 0x1f) & ~0x1f;
 
       /* Allocate the linear memory */
 
@@ -770,7 +781,7 @@ BOOL MemManInfo( MEMMANINFO *pInfo )
 
     if ((meminfo = fopen("/proc/meminfo", "r")) < 0) {
         perror("wine: open");
-        exit(1);
+        return FALSE;
     }
 
     fgets(buf, 80, meminfo); /* read first line */
@@ -782,18 +793,20 @@ BOOL MemManInfo( MEMMANINFO *pInfo )
     }
 
     fprintf(stderr,"MemManInfo called with dwSize = %ld\n",pInfo->dwSize);
-    pInfo->wPageSize = getpagesize();
-    pInfo->dwLargestFreeBlock = availmem;
-    pInfo->dwTotalLinearSpace = totalmem / pInfo->wPageSize;
-    pInfo->dwMaxPagesAvailable = pInfo->dwLargestFreeBlock / pInfo->wPageSize;
-    pInfo->dwMaxPagesLockable = pInfo->dwMaxPagesLockable;
-    /* FIXME: the next three are not quite correct */
-    pInfo->dwTotalUnlockedPages = pInfo->dwMaxPagesAvailable;
-    pInfo->dwFreePages = pInfo->dwMaxPagesAvailable;
-    pInfo->dwTotalPages = pInfo->dwMaxPagesAvailable;
-    /* FIXME: the three above are not quite correct */
-    pInfo->dwFreeLinearSpace = pInfo->dwMaxPagesAvailable;
-    pInfo->dwSwapFilePages = 0L;
+    if (pInfo->dwSize) {
+        pInfo->wPageSize = getpagesize();
+        pInfo->dwLargestFreeBlock = availmem;
+        pInfo->dwTotalLinearSpace = totalmem / pInfo->wPageSize;
+        pInfo->dwMaxPagesAvailable = pInfo->dwLargestFreeBlock / pInfo->wPageSize;
+        pInfo->dwMaxPagesLockable = pInfo->dwMaxPagesLockable;
+        /* FIXME: the next three are not quite correct */
+        pInfo->dwTotalUnlockedPages = pInfo->dwMaxPagesAvailable;
+        pInfo->dwFreePages = pInfo->dwMaxPagesAvailable;
+        pInfo->dwTotalPages = pInfo->dwMaxPagesAvailable;
+        /* FIXME: the three above are not quite correct */
+        pInfo->dwFreeLinearSpace = pInfo->dwMaxPagesAvailable;
+        pInfo->dwSwapFilePages = 0L;
+    }
     return TRUE;
 #else
     return TRUE;

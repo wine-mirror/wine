@@ -27,7 +27,7 @@ extern void INT_SetHandler( BYTE intnum, SEGPTR handler );
 extern DWORD INT1A_GetTicksSinceMidnight(void);
 
   /* miscemu/int21.c */
-extern void INT21_Init(void);
+extern BOOL INT21_Init(void);
 
   /* miscemu/ioports.c */
 extern DWORD inport( int port, int count );

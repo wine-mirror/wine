@@ -165,15 +165,15 @@ base	1
 0160 stdcall DrawMenuBar(long) DrawMenuBar
 0161 stub DrawStateA
 0162 stub DrawStateW
-0163 stdcall DrawTextA(long ptr long ptr long) DrawText
+0163 stdcall DrawTextA(long ptr long ptr long) USER32_DrawTextA
 0164 stub DrawTextExA
 0165 stub DrawTextExW
 0166 stub DrawTextW
 0167 stub EditWndProc
-0168 stub EmptyClipboard
-0169 stub EnableMenuItem
-0170 stub EnableScrollBar
-0171 stub EnableWindow
+0168 stdcall EmptyClipboard()				EmptyClipboard
+0169 stdcall EnableMenuItem(long long long) EnableMenuItem
+0170 stdcall EnableScrollBar(long long long)	EnableScrollBar
+0171 stdcall EnableWindow(long long)		EnableWindow
 0172 stub EndDeferWindowPos
 0173 stub EndDialog
 0174 stub EndMenu
@@ -221,7 +221,7 @@ base	1
 0216 stub GetClassNameA
 0217 stub GetClassNameW
 0218 stub GetClassWord
-0219 stdcall GetClientRect(long long) GetClientRect
+0219 stdcall GetClientRect(long long) USER32_GetClientRect
 0220 stub GetClipCursor
 0221 stub GetClipboardData
 0222 stub GetClipboardFormatNameA
@@ -329,7 +329,7 @@ base	1
 0324 stub InsertMenuW
 0325 stub InternalGetWindowText
 0326 stub IntersectRect
-0327 stub InvalidateRect
+0327 stdcall InvalidateRect(long ptr long)	USER32_InvalidateRect
 0328 stub InvalidateRgn
 0329 stub InvertRect
 0330 stub IsCharAlphaA
@@ -356,10 +356,10 @@ base	1
 0351 stub IsZoomed
 0352 stub KillSystemTimer
 0353 stub KillTimer
-0354 	stdcall LoadAcceleratorsA(long ptr) LoadAccelerators32
-0355 stub LoadAcceleratorsW
-0356 	stdcall LoadBitmapA(long ptr) LoadBitmapA32
-0357 	stdcall LoadBitmapW(long ptr) LoadBitmapW32
+0354 	stdcall LoadAcceleratorsA(long ptr) WIN32_LoadAcceleratorsA
+0355 stdcall LoadAcceleratorsW(long ptr)	WIN32_LoadAcceleratorsW
+0356 	stdcall LoadBitmapA(long ptr) WIN32_LoadBitmapA
+0357 	stdcall LoadBitmapW(long ptr) WIN32_LoadBitmapW
 0357 stub LoadBitmapW
 0358 	stdcall LoadCursorA(long ptr) LoadCursor
 0359 stub LoadCursorFromFileA
@@ -372,13 +372,13 @@ base	1
 0366 stub LoadKeyboardLayoutA
 0367 stub LoadKeyboardLayoutW
 0368 stub LoadLocalFonts
-0369 stub LoadMenuA
-0370 stub LoadMenuIndirectA
-0371 stub LoadMenuIndirectW
-0372 stub LoadMenuW
+0369 stdcall LoadMenuA(long ptr) WIN32_LoadMenuA
+0370 stdcall LoadMenuIndirectA(long ptr) WIN32_LoadMenuIndirectA
+0371 stdcall LoadMenuIndirectW(long ptr) WIN32_LoadMenuIndirectW
+0372 stdcall LoadMenuW(long ptr) WIN32_LoadMenuW
 0373 stub LoadRemoteFonts
-0374 	stdcall LoadStringA(long long ptr long) LoadStringA32
-0375 	stdcall LoadStringW(long long ptr long) LoadString32
+0374 	stdcall LoadStringA(long long ptr long) WIN32_LoadStringA
+0375 	stdcall LoadStringW(long long ptr long) WIN32_LoadStringW
 0376 stub LockWindowStation
 0377 stub LockWindowUpdate
 0378 stub LookupIconIdFromDirectory
@@ -524,7 +524,7 @@ base	1
 0518 stub SetWindowPlacement
 0519 stub SetWindowPos
 0520 stub SetWindowStationUser
-0521 stub SetWindowTextA
+0521 stdcall SetWindowTextA(long ptr)	SetWindowText
 0522 stub SetWindowTextW
 0523 stub SetWindowWord
 0524 stub SetWindowsHookA
@@ -581,7 +581,7 @@ base	1
 0575 stub VkKeyScanW
 0576 stub WaitForInputIdle
 0577 stub WaitMessage
-0578 stub WinHelpA
+0578 stdcall WinHelpA(long ptr long long)	WIN32_WinHelpA
 0579 stub WinHelpW
 0580 stub WindowFromDC
 0581 stub WindowFromPoint

@@ -36,8 +36,6 @@ DWORD MSG_WineStartTicks;  /* Ticks at Wine startup */
 
 static HANDLE hmemSysMsgQueue = 0;
 static MESSAGEQUEUE *sysMsgQueue = NULL;
-
-HANDLE hActiveQ_G      = 0;
 static HANDLE hFirstQueue = 0;
 
 /* ------- Miscellaneous ------ */
@@ -47,7 +45,7 @@ static int doubleClickSpeed = 452;
 /***********************************************************************
  *           MSG_CreateMsgQueue
  *
- * Create a message queue.
+ * Creates a message queue. Doesn't link it into queue list!
  */
 static HANDLE MSG_CreateMsgQueue( int size )
 {
@@ -66,43 +64,34 @@ static HANDLE MSG_CreateMsgQueue( int size )
     return hQueue;
 }
 
+
 /***********************************************************************
  *	     MSG_DeleteMsgQueue
+ *
+ * Unlinks and deletes a message queue.
  */
 BOOL MSG_DeleteMsgQueue( HANDLE hQueue )
 {
- MESSAGEQUEUE * msgQueue = (MESSAGEQUEUE*)GlobalLock(hQueue);
+    MESSAGEQUEUE * msgQueue = (MESSAGEQUEUE*)GlobalLock(hQueue);
+    HANDLE *pPrev;
 
- if( !hQueue )
-   {
+    if (!hQueue || !msgQueue)
+    {
 	dprintf_msg(stddeb,"DeleteMsgQueue: invalid argument.\n");
 	return 0;
-   }
+    }
 
- if( !msgQueue ) return 0;
-
- if( hQueue == hFirstQueue )
-	hFirstQueue = msgQueue->next;
- else if( hFirstQueue )
-	{
-	  MESSAGEQUEUE *msgQ = (MESSAGEQUEUE*)GlobalLock(hFirstQueue);
-
-	  /* walk up queue list and relink if needed */
-	  while( msgQ->next )
-	    {
-		if( msgQ->next == hQueue )
-		    msgQ->next = msgQueue->next;
-
-		/* should check for intertask sendmessages here */
-
-
-	        msgQ = (MESSAGEQUEUE*)GlobalLock(msgQ->next);
-	    }
-	}
-
- GlobalFree( hQueue );
- return 1;
+    pPrev = &hFirstQueue;
+    while (*pPrev && (*pPrev != hQueue))
+    {
+        MESSAGEQUEUE *msgQ = (MESSAGEQUEUE*)GlobalLock(*pPrev);
+        pPrev = &msgQ->next;
+    }
+    if (*pPrev) *pPrev = msgQueue->next;
+    GlobalFree( hQueue );
+    return 1;
 }
+
 
 /***********************************************************************
  *           MSG_CreateSysMsgQueue
@@ -674,58 +663,27 @@ BOOL MSG_GetHardwareMessage( LPMSG msg )
  */
 BOOL SetMessageQueue( int size )
 {
-    HGLOBAL  	  hQueue    = 0;
-    HGLOBAL  	  hNextQueue= hFirstQueue;
-    MESSAGEQUEUE *queuePrev = NULL;
+    HANDLE hQueue, hNewQueue;
     MESSAGEQUEUE *queuePtr;
 
     if ((size > MAX_QUEUE_SIZE) || (size <= 0)) return TRUE;
 
-      /* Free the old message queue */
-    if ((hQueue = GetTaskQueue(0)) != 0)
+    if( !(hNewQueue = MSG_CreateMsgQueue( size ))) 
     {
-	MESSAGEQUEUE *queuePtr = (MESSAGEQUEUE *)GlobalLock( hQueue );
-	
-	if( queuePtr )
-	{
-	    MESSAGEQUEUE *msgQ = (MESSAGEQUEUE*)GlobalLock(hFirstQueue);
-
-	    hNextQueue = queuePtr->next;
-
-            if( msgQ )
-		if( hQueue != hFirstQueue )
-		    while( msgQ->next )
-		    { 
-			if( msgQ->next == hQueue )
-			{ 
-			    queuePrev = msgQ;
-			    break;
-			} 
-			msgQ = (MESSAGEQUEUE*)GlobalLock(msgQ->next);
-		    }
-	    GlobalUnlock( hQueue );
-	    MSG_DeleteMsgQueue( hQueue );
-	}
-    }
-  
-    if( !(hQueue = MSG_CreateMsgQueue( size ))) 
-    {
-	if(queuePrev) 
-	    /* it did have a queue */
-	    queuePrev->next = hNextQueue;
+	dprintf_msg(stddeb,"SetMessageQueue: failed!\n");
 	return FALSE;
     }
-  
-    queuePtr = (MESSAGEQUEUE *)GlobalLock( hQueue );
+
+    /* Free the old message queue */
+    if ((hQueue = GetTaskQueue(0)) != 0) MSG_DeleteMsgQueue( hQueue );
+
+    /* Link new queue into list */
+    queuePtr = (MESSAGEQUEUE *)GlobalLock( hNewQueue );
     queuePtr->hTask = GetCurrentTask();
-    queuePtr->next  = hNextQueue;
+    queuePtr->next  = hFirstQueue;
+    hFirstQueue = hNewQueue;
 
-    if( !queuePrev )  
-         hFirstQueue = hQueue;
-    else
-	 queuePrev->next = hQueue;
-
-    SetTaskQueue( 0, hQueue );
+    SetTaskQueue( 0, hNewQueue );
     return TRUE;
 }
 
@@ -761,7 +719,7 @@ void PostQuitMessage( int exitCode )
 /***********************************************************************
  *           GetQueueStatus   (USER.334)
  */
-DWORD GetQueueStatus( int flags )
+DWORD GetQueueStatus( UINT flags )
 {
     MESSAGEQUEUE *queue;
     DWORD ret;

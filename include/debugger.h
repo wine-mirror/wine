@@ -11,6 +11,8 @@
 #include "registers.h"
 #include "wine.h"
 
+#define STEP_FLAG 0x100 /* single step flag */
+
 typedef struct
 {
     DWORD seg;  /* 0xffffffff means current default segment (cs or ds) */

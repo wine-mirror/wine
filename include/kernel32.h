@@ -11,11 +11,6 @@ int KERN32_Init(void);
 void SetLastError(DWORD error);
 DWORD ErrnoToLastError(int errno_num);
 
-/* Linux's wchar_t is unsigned long but Win32 wants unsigned short
- */
-typedef unsigned short WCHAR;
-typedef WCHAR *LPTSTR;
-
 /* Code page information.
  */
 typedef struct {
@@ -56,8 +51,6 @@ typedef struct {
         HANDLE hStdOutput;
         HANDLE hStdError;
 } STARTUPINFO, *LPSTARTUPINFO;
-
-/* SYSTEMTIME, and LPSYSTEMTIME moved to include/windows.h (JBP) */
 
 typedef struct {
         LONG Bias;

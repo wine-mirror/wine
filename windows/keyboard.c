@@ -91,8 +91,8 @@ int GetAsyncKeyState(int nKey)
 	break;
     }
 
-    bzero(AsyncMouseButtonsStates, 3);	/* all states to false */
-    bzero(AsyncKeyStateTable, 256);
+    memset( AsyncMouseButtonsStates, 0, 3 );  /* all states to false */
+    memset( AsyncKeyStateTable, 0, 256 );
 
     return retval;
 }

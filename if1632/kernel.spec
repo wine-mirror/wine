@@ -53,7 +53,7 @@ id	1
 54  pascal16 GetInstanceData(word word word) GetInstanceData
 55  pascal16 Catch(ptr) Catch 
 56  pascal16 Throw(ptr word) Throw
-57  pascal16 GetProfileInt(ptr ptr word) GetProfileInt
+57  pascal16 GetProfileInt(ptr ptr s_word) GetProfileInt
 58  pascal16 GetProfileString(ptr ptr ptr ptr word) GetProfileString
 59  pascal16 WriteProfileString(ptr ptr ptr) WriteProfileString
 60  pascal16 FindResource(word segptr segptr) FindResource
@@ -124,7 +124,7 @@ id	1
 125 return DisableKernel 0 0
 126 stub MemoryFreed
 127 pascal16 GetPrivateProfileInt(ptr ptr s_word ptr) GetPrivateProfileInt
-128 pascal16 GetPrivateProfileString(ptr ptr ptr ptr s_word ptr)
+128 pascal16 GetPrivateProfileString(ptr ptr ptr ptr word ptr)
              GetPrivateProfileString
 129 pascal16 WritePrivateProfileString(ptr ptr ptr ptr)
              WritePrivateProfileString
@@ -228,7 +228,7 @@ id	1
 310 pascal16 LocalHandleDelta(word) LocalHandleDelta
 311 stub GetSetKernelDosProc
 314 stub DebugDefineSegment
-315 pascal WriteOutProfiles() sync_profiles
+315 pascal16 WriteOutProfiles() WriteOutProfiles
 316 stub GetFreeMemInfo
 318 stub FatalExitHook
 319 stub FlushCachedFileHandle

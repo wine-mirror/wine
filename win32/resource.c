@@ -2,6 +2,7 @@
  * Win32 Resources
  *
  * Copyright 1995 Thomas Sandford
+ * Copyright 1996 Martin von Loewis
  *
  * Based on the Win16 resource handling code in loader/resource.c
  * Copyright 1993 Robert J. Amstadt
@@ -16,10 +17,13 @@
 #include "kernel32.h"
 #include "pe_image.h"
 #include "handle32.h"
+#include "libres.h"
 #include "resource32.h"
+#include "stackframe.h"
 #include "neexe.h"
 #include "accel.h"
 #include "xmalloc.h"
+#include "string32.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -38,19 +42,31 @@ int language = 0x0409;
  *
  */
 PIMAGE_RESOURCE_DIRECTORY GetResDirEntry(PIMAGE_RESOURCE_DIRECTORY resdirptr,
-					 LPCSTR name,
+					 LPCWSTR name,
 					 DWORD root)
 {
     int entrynum;
     PIMAGE_RESOURCE_DIRECTORY_ENTRY entryTable;
+	int namelen;
 
     if (HIWORD(name)) {
     /* FIXME: what about #xxx names? */
 	entryTable = (PIMAGE_RESOURCE_DIRECTORY_ENTRY) (
 			(BYTE *) resdirptr + 
                         sizeof(IMAGE_RESOURCE_DIRECTORY));
+	namelen = STRING32_lstrlenW(name);
 	for (entrynum = 0; entrynum < resdirptr->NumberOfNamedEntries; entrynum++)
-	    /* do what??? */ ;
+	{
+		PIMAGE_RESOURCE_DIR_STRING_U str =
+		(PIMAGE_RESOURCE_DIR_STRING_U) (root + 
+			(entryTable[entrynum].Name & 0x7fffffff));
+		if(namelen != str->Length)
+			continue;
+		if(STRING32_lstrcmpniW(name,str->NameString,str->Length)==0)
+			return (PIMAGE_RESOURCE_DIRECTORY) (
+				root +
+				(entryTable[entrynum].OffsetToData & 0x7fffffff));
+	}
 	return NULL;
     } else {
 	entryTable = (PIMAGE_RESOURCE_DIRECTORY_ENTRY) (
@@ -200,11 +216,11 @@ DWORD SizeofResource32( HINSTANCE hModule, HRSRC hRsrc )
 /**********************************************************************
  *			LoadAccelerators	[USER.177]
 */
-HANDLE LoadAccelerators32(HINSTANCE instance, LPCTSTR lpTableName)
+HANDLE32 WIN32_LoadAcceleratorsW(HINSTANCE instance, LPCWSTR lpTableName)
 {
-    HANDLE 	hAccel;
-    HANDLE 	rsc_mem;
-    HRSRC hRsrc;
+    HANDLE32 	hAccel;
+    HANDLE32 	rsc_mem;
+    HANDLE32 hRsrc;
     BYTE 	*lp;
     ACCELHEADER	*lpAccelTbl;
     int 	i, n;
@@ -216,11 +232,11 @@ HANDLE LoadAccelerators32(HINSTANCE instance, LPCTSTR lpTableName)
         dprintf_accel( stddeb, "LoadAccelerators: "NPFMT" %04x\n",
                        instance, LOWORD(lpTableName) );
 
-    if (!(hRsrc = FindResource( instance, lpTableName, RT_ACCELERATOR )))
+    if (!(hRsrc = FindResource32( instance, lpTableName, RT_ACCELERATOR )))
       return 0;
-    if (!(rsc_mem = LoadResource( instance, hRsrc ))) return 0;
+    if (!(rsc_mem = LoadResource32( instance, hRsrc ))) return 0;
 
-    lp = (BYTE *)LockResource(rsc_mem);
+    lp = (BYTE *)LockResource32(rsc_mem);
     n = SizeofResource( instance, hRsrc ) / sizeof(ACCELENTRY);
     hAccel = GlobalAlloc(GMEM_MOVEABLE, 
     	sizeof(ACCELHEADER) + (n + 1)*sizeof(ACCELENTRY));
@@ -243,12 +259,20 @@ HANDLE LoadAccelerators32(HINSTANCE instance, LPCTSTR lpTableName)
     FreeResource( rsc_mem );
     return hAccel;
 }
+
+HANDLE32 WIN32_LoadAcceleratorsA(HINSTANCE instance, LPCSTR lpTableName)
+{
+	LPWSTR uni=STRING32_DupAnsiToUni(lpTableName);
+	HANDLE32 result=WIN32_LoadAcceleratorsW(instance,uni);
+	free(uni);
+	return result;
+}
 
 /**********************************************************************
  *					LoadString
  */
 int
-LoadString32(HINSTANCE instance, DWORD resource_id, LPTSTR buffer, int buflen)
+WIN32_LoadStringW(HINSTANCE instance, DWORD resource_id, LPWSTR buffer, int buflen)
 {
     HANDLE32 hmem, hrsrc;
     WCHAR *p;
@@ -292,10 +316,10 @@ LoadString32(HINSTANCE instance, DWORD resource_id, LPTSTR buffer, int buflen)
  *					LoadStringA
  */
 int
-LoadStringA32(HINSTANCE instance, DWORD resource_id, LPSTR buffer, int buflen)
+WIN32_LoadStringA(HINSTANCE instance, DWORD resource_id, LPSTR buffer, int buflen)
 {
     WCHAR *buffer2 = xmalloc(buflen*2);
-    int retval = LoadString32(instance, resource_id, buffer2, buflen);
+    int retval = WIN32_LoadStringW(instance, resource_id, buffer2, buflen);
 
     while (*buffer2) 
 	*buffer++ = (char) *buffer2++;
@@ -317,7 +341,7 @@ HICON LoadIconA32(HINSTANCE hinst, LPCTSTR lpszIcon)
 /**********************************************************************
  *	    LoadBitmapW
  */
-HBITMAP LoadBitmapW32( HANDLE instance, LPCTSTR name )
+HBITMAP WIN32_LoadBitmapW( HANDLE instance, LPCTSTR name )
 {
     HBITMAP hbitmap = 0;
     HDC hdc;
@@ -347,7 +371,105 @@ HBITMAP LoadBitmapW32( HANDLE instance, LPCTSTR name )
 /**********************************************************************
  *	    LoadBitmapA
  */
-HBITMAP LoadBitmapA32( HANDLE instance, LPCTSTR name )
+HBITMAP WIN32_LoadBitmapA( HANDLE instance, LPCTSTR name )
 {
-    return LoadBitmapW32(instance, name);
+    HBITMAP res;
+    if(!HIWORD(name))
+        res = WIN32_LoadBitmapW(instance,name);
+    else{
+        LPWSTR uni=STRING32_DupAnsiToUni(name);
+        res=WIN32_LoadBitmapW(instance,uni);
+        free(uni);
+    }
+    return res;
+}
+
+/**********************************************************************
+ *      WIN32_ParseMenu
+ *      LoadMenu helper function
+ */
+BYTE* WIN32_ParseMenu(HMENU hMenu,BYTE *it)
+{
+    char entry[200]; /* buffer for ANSI names */
+	int bufsize=100;
+	int len;
+	WORD flags;
+	WORD wMenuID;
+	WCHAR *utext;
+	do{
+		flags=*(WORD*)it;
+		it+=sizeof(WORD);
+		/* POPUP entries have no ID, but a sub menu */
+		if(flags & MF_POPUP)
+		{
+			wMenuID = CreatePopupMenu();
+			len = STRING32_lstrlenW(it);
+			utext = it;
+			it += sizeof(WCHAR)*(len+1);
+			it = WIN32_ParseMenu(wMenuID,it);
+		} else {
+			wMenuID=*(WORD*)it;
+			it+=sizeof(WORD);
+			utext = it;
+			len = STRING32_lstrlenW(it);
+			it += sizeof(WCHAR)*(len+1);
+			if(!wMenuID && !*utext)
+				flags |= MF_SEPARATOR;
+		}
+		if(len>=bufsize) continue;  /* hack hack */
+		STRING32_UniToAnsi(entry,utext);
+		AppendMenu(hMenu,flags,wMenuID,MAKE_SEGPTR(entry));
+	}while(!(flags & MF_END));
+	return it;
+}
+
+/*****************************************************************
+ *        LoadMenuIndirectW         (USER32.371)
+ */
+HMENU WIN32_LoadMenuIndirectW(void *menu)
+{
+	BYTE *it=menu;
+	HMENU hMenu = CreateMenu();
+	/*skip menu header*/
+	if(*(DWORD*)it)
+		fprintf(stderr,"Unknown menu header\n");
+	it+=2*sizeof(WORD);
+	WIN32_ParseMenu(hMenu,it);
+	return hMenu;
+}
+
+/*****************************************************************
+ *        LoadMenuW                 (USER32.372)
+ */
+HMENU WIN32_LoadMenuW(HANDLE instance, LPCWSTR name)
+{
+	HANDLE32 hrsrc;
+	hrsrc=FindResource32(instance,name,RT_MENU);
+	if(!hrsrc)return 0;
+	return WIN32_LoadMenuIndirectW(LoadResource32(instance, hrsrc));
+}
+
+/*****************************************************************
+ *        LoadMenuIndirectA         (USER32.370)
+ */
+HMENU WIN32_LoadMenuIndirectA(void *menu)
+{
+	fprintf(stderr,"WIN32_LoadMenuIndirectA not implemented\n");
+	return 0;
+}
+
+/*****************************************************************
+ *        LoadMenuA                 (USER32.370)
+ */
+HMENU WIN32_LoadMenuA(HANDLE instance,LPCSTR name)
+{
+	HMENU res;
+	if(!HIWORD(name))
+		res = WIN32_LoadMenuW(instance,name);
+	else{
+		LPWSTR uni=STRING32_DupAnsiToUni(name);
+		res=WIN32_LoadMenuW(instance,uni);
+		free(uni);
+	}
+	return res;
 }

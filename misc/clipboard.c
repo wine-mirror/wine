@@ -165,7 +165,7 @@ HANDLE GetClipboardData(WORD wFormat)
 /**************************************************************************
  *			CountClipboardFormats	[USER.143]
  */
-int CountClipboardFormats()
+INT CountClipboardFormats()
 {
     int FormatCount = 0;
     LPCLIPFORMAT lpFormat = ClipFormats; 

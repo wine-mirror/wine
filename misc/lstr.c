@@ -106,7 +106,7 @@ SEGPTR lstrcpy( SEGPTR target, SEGPTR source )
 }
 
 /* KERNEL.353 32-bit version*/
-char *lstrcpyn( char *dst, const char *src, int n )
+LPSTR lstrcpyn( LPSTR dst, LPCSTR src, int n )
 {
     char *tmp = dst;
     while(n-- > 1 && *src)
@@ -293,7 +293,7 @@ BOOL OemToAnsi(LPSTR lpOemStr, LPSTR lpAnsiStr)
 }
 
 /* AnsiToOemBuff Keyboard.134 */
-void AnsiToOemBuff(LPSTR lpAnsiStr, LPSTR lpOemStr, INT nLength)
+void AnsiToOemBuff(LPCSTR lpAnsiStr, LPSTR lpOemStr, UINT nLength)
 {
   int i;
   for(i=0;i<nLength;i++)

@@ -54,7 +54,7 @@ WORD CARET_Callback(HWND hwnd, WORD msg, WORD timerid, LONG ctime)
 	else
 	    hBrush = CreatePatternBrush(Caret.bitmap);
 	SelectObject(hdc, (HANDLE)hBrush);
-	SetROP2(hdc, R2_XORPEN);
+	SetROP2(hdc, R2_NOTXORPEN);
 	rgn = CreateRectRgn(Caret.x, Caret.y, 
 			    Caret.x + Caret.width,
 			    Caret.y + Caret.height);
@@ -116,9 +116,9 @@ static void CARET_Initialize()
  *               CreateCaret          (USER.163)
  */
 
-void CreateCaret(HWND hwnd, HBITMAP bitmap, short width, short height)
+BOOL CreateCaret(HWND hwnd, HBITMAP bitmap, INT width, INT height)
 {
-    if (!hwnd) return;
+    if (!hwnd) return FALSE;
 
 
     /* if cursor already exists, destroy it */
@@ -157,6 +157,7 @@ void CreateCaret(HWND hwnd, HBITMAP bitmap, short width, short height)
 
     dprintf_caret(stddeb,"CreateCaret: hwnd="NPFMT", timerid=%d\n", 
 		  hwnd, Caret.timerid);
+    return TRUE;
 }
    
 

@@ -13,6 +13,7 @@
 #include "drive.h"
 #include "file.h"
 #include "msdos.h"
+#include "options.h"
 #include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -42,8 +43,7 @@ static int DIR_GetPath( const char *keyname, const char *defval,
     const char *dos_name ,*unix_name;
     BYTE attr;
 
-    GetPrivateProfileString( "wine", keyname, defval,
-                             path, sizeof(path), WineIniFileName() );
+    PROFILE_GetWineIniString( "wine", keyname, defval, path, sizeof(path) );
     if (!(unix_name = DOSFS_GetUnixFileName( path, TRUE )) ||
         !FILE_Stat( unix_name, &attr, NULL, NULL, NULL ) ||
         !(attr & FA_DIRECTORY))
@@ -117,7 +117,7 @@ void DIR_ParseWindowsPath( char *path )
  */
 int DIR_Init(void)
 {
-    char path[MAX_PATHNAME_LEN];
+    char path[MAX_PATHNAME_LEN], *env_p;
     int drive;
     const char *cwd;
 
@@ -153,14 +153,26 @@ int DIR_Init(void)
         DRIVE_Chdir( drive, DIR_WindowsDosDir + 2 );
     }
 
-    GetPrivateProfileString( "wine", "path", "c:\\windows;c:\\windows\\system",
-                             path, sizeof(path), WineIniFileName() );
+    PROFILE_GetWineIniString("wine", "path", "c:\\windows;c:\\windows\\system",
+                             path, sizeof(path) );
     DIR_ParseWindowsPath( path );
 
     dprintf_dosfs( stddeb, "WindowsDir = %s\nSystemDir  = %s\n",
                    DIR_WindowsDosDir, DIR_SystemDosDir );
     dprintf_dosfs( stddeb, "TempDir    = %s\nCwd        = %c:\\%s\n",
                    DIR_TempDosDir, 'A' + drive, DRIVE_GetDosCwd( drive ) );
+
+    /* Put the temp and Windows directories into the environment */
+
+    env_p = (char *)xmalloc( strlen(DIR_TempDosDir) + 5 );
+    strcpy( env_p, "TEMP=" );
+    strcpy( env_p + 5, DIR_TempDosDir );
+    putenv( env_p );
+    env_p = (char *)xmalloc( strlen(DIR_WindowsDosDir) + 7 );
+    strcpy( env_p, "windir=" );
+    strcpy( env_p + 7, DIR_WindowsDosDir );
+    putenv( env_p );
+
     return 1;
 }
 

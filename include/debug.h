@@ -54,13 +54,11 @@
 #undef DEBUG_LDT
 #undef DEBUG_LISTBOX
 #undef DEBUG_LOCAL
-#undef DEBUG_MALLOC
 #undef DEBUG_MCI
 #undef DEBUG_MCIANIM
 #undef DEBUG_MCIWAVE
 #undef DEBUG_MDI
 #undef DEBUG_MENU
-#undef DEBUG_MENUCALC
 #undef DEBUG_MESSAGE
 #undef DEBUG_METAFILE
 #undef DEBUG_MIDI
@@ -134,13 +132,11 @@
 #define DEBUG_LDT
 #define DEBUG_LISTBOX
 #define DEBUG_LOCAL
-#define DEBUG_MALLOC
 #define DEBUG_MCI
 #define DEBUG_MCIANIM
 #define DEBUG_MCIWAVE
 #define DEBUG_MDI
 #define DEBUG_MENU
-#define DEBUG_MENUCALC
 #define DEBUG_MESSAGE
 #define DEBUG_METAFILE
 #define DEBUG_MIDI
@@ -368,11 +364,6 @@ short debug_msg_enabled[]={
 #else
     0,
 #endif
-#ifdef DEBUG_MALLOC
-    1,
-#else
-    0,
-#endif
 #ifdef DEBUG_MCI
     1,
 #else
@@ -394,11 +385,6 @@ short debug_msg_enabled[]={
     0,
 #endif
 #ifdef DEBUG_MENU
-    1,
-#else
-    0,
-#endif
-#ifdef DEBUG_MENUCALC
     1,
 #else
     0,
@@ -1065,21 +1051,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_malloc if(!debug_msg_enabled[38]) ; else fprintf
-#define debugging_malloc debug_msg_enabled[38]
-#else
-#ifdef DEBUG_MALLOC
-#define dprintf_malloc fprintf
-#define debugging_malloc 1
-#else
-#define dprintf_malloc while(0) fprintf
-#define debugging_malloc 0
-#endif
-#endif
-
-#ifdef DEBUG_RUNTIME
-#define dprintf_mci if(!debug_msg_enabled[39]) ; else fprintf
-#define debugging_mci debug_msg_enabled[39]
+#define dprintf_mci if(!debug_msg_enabled[38]) ; else fprintf
+#define debugging_mci debug_msg_enabled[38]
 #else
 #ifdef DEBUG_MCI
 #define dprintf_mci fprintf
@@ -1091,8 +1064,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_mcianim if(!debug_msg_enabled[40]) ; else fprintf
-#define debugging_mcianim debug_msg_enabled[40]
+#define dprintf_mcianim if(!debug_msg_enabled[39]) ; else fprintf
+#define debugging_mcianim debug_msg_enabled[39]
 #else
 #ifdef DEBUG_MCIANIM
 #define dprintf_mcianim fprintf
@@ -1104,8 +1077,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_mciwave if(!debug_msg_enabled[41]) ; else fprintf
-#define debugging_mciwave debug_msg_enabled[41]
+#define dprintf_mciwave if(!debug_msg_enabled[40]) ; else fprintf
+#define debugging_mciwave debug_msg_enabled[40]
 #else
 #ifdef DEBUG_MCIWAVE
 #define dprintf_mciwave fprintf
@@ -1117,8 +1090,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_mdi if(!debug_msg_enabled[42]) ; else fprintf
-#define debugging_mdi debug_msg_enabled[42]
+#define dprintf_mdi if(!debug_msg_enabled[41]) ; else fprintf
+#define debugging_mdi debug_msg_enabled[41]
 #else
 #ifdef DEBUG_MDI
 #define dprintf_mdi fprintf
@@ -1130,8 +1103,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_menu if(!debug_msg_enabled[43]) ; else fprintf
-#define debugging_menu debug_msg_enabled[43]
+#define dprintf_menu if(!debug_msg_enabled[42]) ; else fprintf
+#define debugging_menu debug_msg_enabled[42]
 #else
 #ifdef DEBUG_MENU
 #define dprintf_menu fprintf
@@ -1143,21 +1116,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_menucalc if(!debug_msg_enabled[44]) ; else fprintf
-#define debugging_menucalc debug_msg_enabled[44]
-#else
-#ifdef DEBUG_MENUCALC
-#define dprintf_menucalc fprintf
-#define debugging_menucalc 1
-#else
-#define dprintf_menucalc while(0) fprintf
-#define debugging_menucalc 0
-#endif
-#endif
-
-#ifdef DEBUG_RUNTIME
-#define dprintf_message if(!debug_msg_enabled[45]) ; else fprintf
-#define debugging_message debug_msg_enabled[45]
+#define dprintf_message if(!debug_msg_enabled[43]) ; else fprintf
+#define debugging_message debug_msg_enabled[43]
 #else
 #ifdef DEBUG_MESSAGE
 #define dprintf_message fprintf
@@ -1169,8 +1129,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_metafile if(!debug_msg_enabled[46]) ; else fprintf
-#define debugging_metafile debug_msg_enabled[46]
+#define dprintf_metafile if(!debug_msg_enabled[44]) ; else fprintf
+#define debugging_metafile debug_msg_enabled[44]
 #else
 #ifdef DEBUG_METAFILE
 #define dprintf_metafile fprintf
@@ -1182,8 +1142,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_midi if(!debug_msg_enabled[47]) ; else fprintf
-#define debugging_midi debug_msg_enabled[47]
+#define dprintf_midi if(!debug_msg_enabled[45]) ; else fprintf
+#define debugging_midi debug_msg_enabled[45]
 #else
 #ifdef DEBUG_MIDI
 #define dprintf_midi fprintf
@@ -1195,8 +1155,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_mmio if(!debug_msg_enabled[48]) ; else fprintf
-#define debugging_mmio debug_msg_enabled[48]
+#define dprintf_mmio if(!debug_msg_enabled[46]) ; else fprintf
+#define debugging_mmio debug_msg_enabled[46]
 #else
 #ifdef DEBUG_MMIO
 #define dprintf_mmio fprintf
@@ -1208,8 +1168,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_mmsys if(!debug_msg_enabled[49]) ; else fprintf
-#define debugging_mmsys debug_msg_enabled[49]
+#define dprintf_mmsys if(!debug_msg_enabled[47]) ; else fprintf
+#define debugging_mmsys debug_msg_enabled[47]
 #else
 #ifdef DEBUG_MMSYS
 #define dprintf_mmsys fprintf
@@ -1221,8 +1181,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_mmtime if(!debug_msg_enabled[50]) ; else fprintf
-#define debugging_mmtime debug_msg_enabled[50]
+#define dprintf_mmtime if(!debug_msg_enabled[48]) ; else fprintf
+#define debugging_mmtime debug_msg_enabled[48]
 #else
 #ifdef DEBUG_MMTIME
 #define dprintf_mmtime fprintf
@@ -1234,8 +1194,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_module if(!debug_msg_enabled[51]) ; else fprintf
-#define debugging_module debug_msg_enabled[51]
+#define dprintf_module if(!debug_msg_enabled[49]) ; else fprintf
+#define debugging_module debug_msg_enabled[49]
 #else
 #ifdef DEBUG_MODULE
 #define dprintf_module fprintf
@@ -1247,8 +1207,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_msg if(!debug_msg_enabled[52]) ; else fprintf
-#define debugging_msg debug_msg_enabled[52]
+#define dprintf_msg if(!debug_msg_enabled[50]) ; else fprintf
+#define debugging_msg debug_msg_enabled[50]
 #else
 #ifdef DEBUG_MSG
 #define dprintf_msg fprintf
@@ -1260,8 +1220,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_nonclient if(!debug_msg_enabled[53]) ; else fprintf
-#define debugging_nonclient debug_msg_enabled[53]
+#define dprintf_nonclient if(!debug_msg_enabled[51]) ; else fprintf
+#define debugging_nonclient debug_msg_enabled[51]
 #else
 #ifdef DEBUG_NONCLIENT
 #define dprintf_nonclient fprintf
@@ -1273,8 +1233,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_ole if(!debug_msg_enabled[54]) ; else fprintf
-#define debugging_ole debug_msg_enabled[54]
+#define dprintf_ole if(!debug_msg_enabled[52]) ; else fprintf
+#define debugging_ole debug_msg_enabled[52]
 #else
 #ifdef DEBUG_OLE
 #define dprintf_ole fprintf
@@ -1286,8 +1246,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_palette if(!debug_msg_enabled[55]) ; else fprintf
-#define debugging_palette debug_msg_enabled[55]
+#define dprintf_palette if(!debug_msg_enabled[53]) ; else fprintf
+#define debugging_palette debug_msg_enabled[53]
 #else
 #ifdef DEBUG_PALETTE
 #define dprintf_palette fprintf
@@ -1299,8 +1259,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_profile if(!debug_msg_enabled[56]) ; else fprintf
-#define debugging_profile debug_msg_enabled[56]
+#define dprintf_profile if(!debug_msg_enabled[54]) ; else fprintf
+#define debugging_profile debug_msg_enabled[54]
 #else
 #ifdef DEBUG_PROFILE
 #define dprintf_profile fprintf
@@ -1312,8 +1272,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_prop if(!debug_msg_enabled[57]) ; else fprintf
-#define debugging_prop debug_msg_enabled[57]
+#define dprintf_prop if(!debug_msg_enabled[55]) ; else fprintf
+#define debugging_prop debug_msg_enabled[55]
 #else
 #ifdef DEBUG_PROP
 #define dprintf_prop fprintf
@@ -1325,8 +1285,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_reg if(!debug_msg_enabled[58]) ; else fprintf
-#define debugging_reg debug_msg_enabled[58]
+#define dprintf_reg if(!debug_msg_enabled[56]) ; else fprintf
+#define debugging_reg debug_msg_enabled[56]
 #else
 #ifdef DEBUG_REG
 #define dprintf_reg fprintf
@@ -1338,8 +1298,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_region if(!debug_msg_enabled[59]) ; else fprintf
-#define debugging_region debug_msg_enabled[59]
+#define dprintf_region if(!debug_msg_enabled[57]) ; else fprintf
+#define debugging_region debug_msg_enabled[57]
 #else
 #ifdef DEBUG_REGION
 #define dprintf_region fprintf
@@ -1351,8 +1311,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_relay if(!debug_msg_enabled[60]) ; else fprintf
-#define debugging_relay debug_msg_enabled[60]
+#define dprintf_relay if(!debug_msg_enabled[58]) ; else fprintf
+#define debugging_relay debug_msg_enabled[58]
 #else
 #ifdef DEBUG_RELAY
 #define dprintf_relay fprintf
@@ -1364,8 +1324,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_resource if(!debug_msg_enabled[61]) ; else fprintf
-#define debugging_resource debug_msg_enabled[61]
+#define dprintf_resource if(!debug_msg_enabled[59]) ; else fprintf
+#define debugging_resource debug_msg_enabled[59]
 #else
 #ifdef DEBUG_RESOURCE
 #define dprintf_resource fprintf
@@ -1377,8 +1337,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_scroll if(!debug_msg_enabled[62]) ; else fprintf
-#define debugging_scroll debug_msg_enabled[62]
+#define dprintf_scroll if(!debug_msg_enabled[60]) ; else fprintf
+#define debugging_scroll debug_msg_enabled[60]
 #else
 #ifdef DEBUG_SCROLL
 #define dprintf_scroll fprintf
@@ -1390,8 +1350,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_selector if(!debug_msg_enabled[63]) ; else fprintf
-#define debugging_selector debug_msg_enabled[63]
+#define dprintf_selector if(!debug_msg_enabled[61]) ; else fprintf
+#define debugging_selector debug_msg_enabled[61]
 #else
 #ifdef DEBUG_SELECTOR
 #define dprintf_selector fprintf
@@ -1403,8 +1363,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_sem if(!debug_msg_enabled[64]) ; else fprintf
-#define debugging_sem debug_msg_enabled[64]
+#define dprintf_sem if(!debug_msg_enabled[62]) ; else fprintf
+#define debugging_sem debug_msg_enabled[62]
 #else
 #ifdef DEBUG_SEM
 #define dprintf_sem fprintf
@@ -1416,8 +1376,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_shm if(!debug_msg_enabled[65]) ; else fprintf
-#define debugging_shm debug_msg_enabled[65]
+#define dprintf_shm if(!debug_msg_enabled[63]) ; else fprintf
+#define debugging_shm debug_msg_enabled[63]
 #else
 #ifdef DEBUG_SHM
 #define dprintf_shm fprintf
@@ -1429,8 +1389,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_stress if(!debug_msg_enabled[66]) ; else fprintf
-#define debugging_stress debug_msg_enabled[66]
+#define dprintf_stress if(!debug_msg_enabled[64]) ; else fprintf
+#define debugging_stress debug_msg_enabled[64]
 #else
 #ifdef DEBUG_STRESS
 #define dprintf_stress fprintf
@@ -1442,8 +1402,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_syscolor if(!debug_msg_enabled[67]) ; else fprintf
-#define debugging_syscolor debug_msg_enabled[67]
+#define dprintf_syscolor if(!debug_msg_enabled[65]) ; else fprintf
+#define debugging_syscolor debug_msg_enabled[65]
 #else
 #ifdef DEBUG_SYSCOLOR
 #define dprintf_syscolor fprintf
@@ -1455,8 +1415,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_task if(!debug_msg_enabled[68]) ; else fprintf
-#define debugging_task debug_msg_enabled[68]
+#define dprintf_task if(!debug_msg_enabled[66]) ; else fprintf
+#define debugging_task debug_msg_enabled[66]
 #else
 #ifdef DEBUG_TASK
 #define dprintf_task fprintf
@@ -1468,8 +1428,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_text if(!debug_msg_enabled[69]) ; else fprintf
-#define debugging_text debug_msg_enabled[69]
+#define dprintf_text if(!debug_msg_enabled[67]) ; else fprintf
+#define debugging_text debug_msg_enabled[67]
 #else
 #ifdef DEBUG_TEXT
 #define dprintf_text fprintf
@@ -1481,8 +1441,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_timer if(!debug_msg_enabled[70]) ; else fprintf
-#define debugging_timer debug_msg_enabled[70]
+#define dprintf_timer if(!debug_msg_enabled[68]) ; else fprintf
+#define debugging_timer debug_msg_enabled[68]
 #else
 #ifdef DEBUG_TIMER
 #define dprintf_timer fprintf
@@ -1494,8 +1454,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_toolhelp if(!debug_msg_enabled[71]) ; else fprintf
-#define debugging_toolhelp debug_msg_enabled[71]
+#define dprintf_toolhelp if(!debug_msg_enabled[69]) ; else fprintf
+#define debugging_toolhelp debug_msg_enabled[69]
 #else
 #ifdef DEBUG_TOOLHELP
 #define dprintf_toolhelp fprintf
@@ -1507,8 +1467,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_utility if(!debug_msg_enabled[72]) ; else fprintf
-#define debugging_utility debug_msg_enabled[72]
+#define dprintf_utility if(!debug_msg_enabled[70]) ; else fprintf
+#define debugging_utility debug_msg_enabled[70]
 #else
 #ifdef DEBUG_UTILITY
 #define dprintf_utility fprintf
@@ -1520,8 +1480,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_vxd if(!debug_msg_enabled[73]) ; else fprintf
-#define debugging_vxd debug_msg_enabled[73]
+#define dprintf_vxd if(!debug_msg_enabled[71]) ; else fprintf
+#define debugging_vxd debug_msg_enabled[71]
 #else
 #ifdef DEBUG_VXD
 #define dprintf_vxd fprintf
@@ -1533,8 +1493,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_win if(!debug_msg_enabled[74]) ; else fprintf
-#define debugging_win debug_msg_enabled[74]
+#define dprintf_win if(!debug_msg_enabled[72]) ; else fprintf
+#define debugging_win debug_msg_enabled[72]
 #else
 #ifdef DEBUG_WIN
 #define dprintf_win fprintf
@@ -1546,8 +1506,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_win32 if(!debug_msg_enabled[75]) ; else fprintf
-#define debugging_win32 debug_msg_enabled[75]
+#define dprintf_win32 if(!debug_msg_enabled[73]) ; else fprintf
+#define debugging_win32 debug_msg_enabled[73]
 #else
 #ifdef DEBUG_WIN32
 #define dprintf_win32 fprintf
@@ -1559,8 +1519,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_winsock if(!debug_msg_enabled[76]) ; else fprintf
-#define debugging_winsock debug_msg_enabled[76]
+#define dprintf_winsock if(!debug_msg_enabled[74]) ; else fprintf
+#define debugging_winsock debug_msg_enabled[74]
 #else
 #ifdef DEBUG_WINSOCK
 #define dprintf_winsock fprintf
@@ -1613,13 +1573,11 @@ static char *debug_msg_name[] = {
     "ldt",
     "listbox",
     "local",
-    "malloc",
     "mci",
     "mcianim",
     "mciwave",
     "mdi",
     "menu",
-    "menucalc",
     "message",
     "metafile",
     "midi",

@@ -113,6 +113,12 @@ libwine.a: $(COMMONSUBDIRS) $(LIBSUBDIRS) dummy
 install_libwine.a: dummy
 	$(INSTALL_DATA) libwine.a $(libdir)
 
+libwine.so.1.0: $(COMMONSUBDIRS) $(LIBSUBDIRS) dummy
+	$(CC) -shared -Wl,-soname,libwine.so.1 -o$@ $(COMMONOBJS) $(LIBOBJS) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
+
+install_libwine.so.1.0: dummy
+	$(INSTALL_DATA) libwine.so.1.0 $(libdir)
+
 $(ALLSUBDIRS): dummy
 	@cd $@; $(SUBMAKE)
 
@@ -124,13 +130,12 @@ etags:
 
 clean:
 	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) clean); done
-	$(RM) *.o \#*\# *~ *.bak *.flc wine wine.sym libwine.a TAGS
-	$(RM) include/\#*\# include/*~ include/*.bak include/*.flc
+	$(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc
+	$(RM) wine wine.sym libwine.a libwine.so.1.0 TAGS
+	(cd include; $(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc)
 
-distclean:
-	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) distclean); done
-	$(RM) *.o \#*\# *~ *.bak wine wine.sym libwine.a TAGS
-	$(RM) include/\#*\# include/*~ include/*.bak include/*.flc
-	$(RM) config.* include/config.h Make.rules Makefile
+distclean: clean
+	$(RM) config.* Make.rules
+	$(RM) `find . \( -name Makefile -o -size 0 \) -print`
 
 dummy:

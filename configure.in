@@ -15,6 +15,11 @@ dnl **** Command-line arguments ****
 AC_ARG_WITH(library,
 [  --with-library          build Wine as a library instead of an emulator],
 [AC_DEFINE(WINELIB) MAIN_TARGET="libwine.a"],[MAIN_TARGET="wine"])
+
+AC_ARG_WITH(dll,
+[  --with-dll              build Wine as a DLL instead of an emulator],
+[AC_DEFINE(WINELIB) AC_DEFINE(WINELIBDLL)
+ MAIN_TARGET="libwine.so.1.0" CFLAGS="$CFLAGS -fPIC"])
 AC_SUBST(MAIN_TARGET)
 
 AC_ARG_WITH(ipc,

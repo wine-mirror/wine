@@ -71,7 +71,7 @@ base	1
 0067 stdcall DeleteDC(long) DeleteDC
 0068 stub DeleteEnhMetaFile
 0069 stub DeleteMetaFile
-0070 stub DeleteObject
+0070 stdcall DeleteObject(long)	DeleteObject
 0071 stub DescribePixelFormat
 0072 stub DeviceCapabilitiesExA
 0073 stub DeviceCapabilitiesExW
@@ -212,7 +212,7 @@ base	1
 0208 stub GetOutlineTextMetricsW
 0209 stub GetPaletteEntries
 0210 stub GetPath
-0211 stub GetPixel
+0211 stdcall GetPixel(long long long)	GetPixel
 0212 stub GetPixelFormat
 0213 stub GetPolyFillMode
 0214 stub GetROP2
@@ -255,7 +255,7 @@ base	1
 0251 stub LoadImageColorMatcherW
 0252 stub MaskBlt
 0253 stub ModifyWorldTransform
-0254 stdcall MoveToEx(long long long ptr) MoveToEx
+0254 stdcall MoveToEx(long long long ptr) WIN32_MoveToEx
 0255 stub OffsetClipRgn
 0256 stub OffsetRgn
 0257 stub OffsetViewportOrgEx
@@ -328,7 +328,7 @@ base	1
 0324 stub SetMetaRgn
 0325 stub SetMiterLimit
 0326 stub SetPaletteEntries
-0327 stub SetPixel
+0327 stdcall SetPixel(long long long long)	SetPixel
 0328 stub SetPixelFormat
 0329 stub SetPixelV
 0330 stub SetPolyFillMode

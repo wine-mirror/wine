@@ -85,8 +85,10 @@ void *RELAY32_GetEntryPoint(char *dll_name, char *item, int hint)
 	dprintf_module(stddeb, "Looking for %s in %s, hint %x\n",
 		item ? item: "(no name)", dll_name, hint);
 	dll=RELAY32_GetBuiltinDLL(dll_name);
-	/* This should deal with built-in DLLs only. See pe_module on loading
-	   PE DLLs */
+	/* FIXME: This should deal with built-in DLLs only. See pe_module on
+	loading PE DLLs */
+	if(!dll)
+		return 0;
 #if 0
 	if(!dll) {
 		if(!wine_files || !wine_files->name ||

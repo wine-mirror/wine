@@ -68,6 +68,17 @@ static void win_fault(int signal, int code, struct sigcontext *context)
         fprintf( stderr,"In win_fault %x:%lx\n",
                  CS_reg(context), EIP_reg(context) );
     }
+
+      /* If SIGTRAP not caused by breakpoint or single step 
+         don't jump into the debugger */
+    if ((signal == SIGTRAP) && !(EFL_reg(context) & STEP_FLAG))
+    {
+        DBG_ADDR addr;
+        addr.seg = CS_reg(context);
+        addr.off = EIP_reg(context) - 1;
+        if (DEBUG_FindBreakpoint(&addr) == -1) return;
+    }
+
     XUngrabPointer(display, CurrentTime);
     XUngrabServer(display);
     XFlush(display);

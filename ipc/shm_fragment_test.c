@@ -81,7 +81,7 @@ int main()
 	   fprintf(stddeb, "NULL\n");
 	else {
 	   fprintf(stddeb, "0x%06x\n", (int)ret-(int)block);
-	   bzero (ret,size);	   /* test boundaries */
+	   memset( ret,0, size );  /* test boundaries */
 	}
      } else {			   /* free */
 	/* free shm fragment */

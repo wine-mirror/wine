@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include "windows.h"
 
 int runtime_cpu (void)
 {

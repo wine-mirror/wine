@@ -10,6 +10,7 @@
 #include <string.h>
 #include "windows.h"
 #include "ldt.h"
+#include "module.h"
 #include "registers.h"
 #include "wine.h"
 #include "miscemu.h"
@@ -40,6 +41,8 @@ typedef struct
     WORD  ss;
 } REALMODECALL;
 
+extern void do_mscdex(struct sigcontext_struct *context);
+
 /**********************************************************************
  *	    INT_Int31Handler
  *
@@ -66,6 +69,34 @@ void INT_Int31Handler( struct sigcontext_struct context )
         {
             AX_reg(&context) = 0x8022;  /* invalid selector */
             SET_CFLAG(&context);
+        }
+        break;
+
+    case 0x0002:  /* Real mode segment to descriptor */
+        {
+            WORD entryPoint = 0;  /* KERNEL entry point for descriptor */
+            switch(BX_reg(&context))
+            {
+            case 0x0000: entryPoint = 183; break;  /* __0000H */
+            case 0x0040: entryPoint = 193; break;  /* __0040H */
+            case 0xa000: entryPoint = 174; break;  /* __A000H */
+            case 0xb000: entryPoint = 181; break;  /* __B000H */
+            case 0xb800: entryPoint = 182; break;  /* __B800H */
+            case 0xc000: entryPoint = 195; break;  /* __C000H */
+            case 0xd000: entryPoint = 179; break;  /* __D000H */
+            case 0xe000: entryPoint = 190; break;  /* __E000H */
+            case 0xf000: entryPoint = 194; break;  /* __F000H */
+            default:
+                fprintf( stderr, "DPMI: real-mode seg to descriptor %04x not possible\n",
+                         BX_reg(&context) );
+                AX_reg(&context) = 0x8011;
+                SET_CFLAG(&context);
+                break;
+            }
+            if (entryPoint) 
+                AX_reg(&context) = LOWORD(MODULE_GetEntryPoint( 
+                                                   GetModuleHandle( "KERNEL" ),
+                                                   entryPoint ));
         }
         break;
 
@@ -162,7 +193,25 @@ void INT_Int31Handler( struct sigcontext_struct context )
                     "                ESI=%08lx EDI=%08lx ES=%04x DS=%04x\n",
                     BL_reg(&context), p->eax, p->ebx, p->ecx, p->edx,
                     p->esi, p->edi, p->es, p->ds );
-            SET_CFLAG(&context);
+
+            /* Compton's 1995 encyclopedia does its MSCDEX calls through
+             * this interrupt.  Why?  Who knows...
+             */
+            if ((BL_reg(&context) == 0x2f) && ((p->eax & 0xFF00) == 0x1500))
+            {
+                struct sigcontext_struct context2;
+                EAX_reg(&context2) = p->eax;
+                EBX_reg(&context2) = p->ebx;
+                ECX_reg(&context2) = p->ecx;
+                EDX_reg(&context2) = p->edx;
+                ES_reg(&context2) = p->es;
+                do_mscdex(&context2);
+                p->eax = EAX_reg(&context2);
+                p->ebx = EBX_reg(&context2);
+                p->ecx = ECX_reg(&context2);
+                p->edx = EDX_reg(&context2);
+            }
+            else SET_CFLAG(&context);
         }
         break;
 

@@ -652,7 +652,16 @@ SOCKET WINSOCK_socket(INT af, INT type, INT protocol)
     dprintf_winsock(stddeb, "WSA_socket: af=%d type=%d protocol=%d\n", af, type, protocol);
 
     if ((sock = socket(af, type, protocol)) < 0) {
+        if (errno != EPERM) {
             errno_to_wsaerrno();
+        } else {
+             /* NOTE: EPERM does not always map to WSAESOCKTNOSUPPORT
+              * so this is done as a special case
+              */
+             /* non super-user wants a raw socket */
+             dprintf_winsock(stderr, "WSA_socket: not enough privileges\n");
+             WSASetLastError(WSAESOCKTNOSUPPORT);
+        }
             dprintf_winsock(stddeb, "WSA_socket: failed !\n");
             return INVALID_SOCKET;
     }
@@ -1177,7 +1186,7 @@ INT WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
 	return WSASYSNOTREADY;
 
     Heap = (struct WinSockHeap *) GlobalLock(HeapHandle);
-    bcopy(&WINSOCK_data, lpWSAData, sizeof(WINSOCK_data));
+    memcpy(lpWSAData, &WINSOCK_data, sizeof(WINSOCK_data));
 
     /* ipc stuff */
 

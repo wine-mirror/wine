@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include "neexe.h"
 #include "dlls.h"
+#include "shell.h"
 #include "windows.h"
 #include "callback.h"
 #include "stddebug.h"
@@ -40,6 +41,11 @@ BOOL ExitWindows(DWORD dwReturnCode, WORD wReserved)
 
     dprintf_exec( stdnimp,"PARTIAL STUB ExitWindows(%08lX, %04X)\n", 
                   dwReturnCode, wReserved);
+
+    /* Do the clean-up stuff */
+
+    WriteOutProfiles();
+    SHELL_SaveRegistry();
 
     exit( LOWORD(dwReturnCode) );
 }

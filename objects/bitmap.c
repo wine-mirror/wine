@@ -75,8 +75,7 @@ static XImage *BITMAP_BmpToImage( BITMAP * bmp, void * bmpData )
 /***********************************************************************
  *           CreateBitmap    (GDI.48)
  */
-HBITMAP CreateBitmap( short width, short height, 
-		      BYTE planes, BYTE bpp, LPSTR bits )
+HBITMAP CreateBitmap( INT width, INT height, UINT planes, UINT bpp, LPVOID bits )
 {
     BITMAPOBJ * bmpObjPtr;
     HBITMAP hbitmap;
@@ -121,7 +120,7 @@ HBITMAP CreateBitmap( short width, short height,
 /***********************************************************************
  *           CreateCompatibleBitmap    (GDI.51)
  */
-HBITMAP CreateCompatibleBitmap( HDC hdc, short width, short height )
+HBITMAP CreateCompatibleBitmap( HDC hdc, INT width, INT height )
 {
     DC * dc;
     dprintf_gdi(stddeb, "CreateCompatibleBitmap: "NPFMT" %dx%d\n", 
@@ -134,7 +133,7 @@ HBITMAP CreateCompatibleBitmap( HDC hdc, short width, short height )
 /***********************************************************************
  *           CreateBitmapIndirect    (GDI.49)
  */
-HBITMAP CreateBitmapIndirect( BITMAP * bmp )
+HBITMAP CreateBitmapIndirect( const BITMAP * bmp )
 {
     return CreateBitmap( bmp->bmWidth, bmp->bmHeight, bmp->bmPlanes,
                          bmp->bmBitsPixel, PTR_SEG_TO_LIN( bmp->bmBits ) );
@@ -310,7 +309,7 @@ HBITMAP BITMAP_SelectObject( HDC hdc, DC * dc, HBITMAP hbitmap,
 /***********************************************************************
  *           CreateDiscardableBitmap    (GDI.156)
  */
-HBITMAP CreateDiscardableBitmap(HDC hdc, short width, short height)
+HBITMAP CreateDiscardableBitmap(HDC hdc, INT width, INT height)
 {
     dprintf_bitmap(stddeb,"CreateDiscardableBitmap("NPFMT", %d, %d); "
 	   "// call CreateCompatibleBitmap() for now!\n",

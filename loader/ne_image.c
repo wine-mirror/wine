@@ -320,7 +320,8 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
 		if(additive && offset)
         	fprintf(stderr,"Additive selector to %4.4x.Please report\n",offset);
 	    } 
-	    while (offset != 0xffff && !additive);
+            /* FIXME: Quicken 5 has a zero offset fixup.  This seems to work */
+	    while (offset && offset != 0xffff && !additive);
 	    break;
 	    
 	  default:

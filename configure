@@ -15,6 +15,8 @@ ac_default_prefix=/usr/local
 ac_help="$ac_help
   --with-library          build Wine as a library instead of an emulator"
 ac_help="$ac_help
+  --with-dll              build Wine as a DLL instead of an emulator"
+ac_help="$ac_help
   --with-ipc              use inter-process communication for DDE"
 ac_help="$ac_help
   --with-malloc-debug     enable malloc() debugging"
@@ -562,6 +564,20 @@ else
 fi
 
 
+# Check whether --with-dll or --without-dll was given.
+if test "${with_dll+set}" = set; then
+  withval="$with_dll"
+  cat >> confdefs.h <<\EOF
+#define WINELIB 1
+EOF
+ cat >> confdefs.h <<\EOF
+#define WINELIBDLL 1
+EOF
+
+ MAIN_TARGET="libwine.so.1.0" CFLAGS="$CFLAGS -fPIC"
+fi
+
+
 
 # Check whether --with-ipc or --without-ipc was given.
 if test "${with_ipc+set}" = set; then
@@ -700,7 +716,7 @@ else
   # On the NeXT, cc -E runs the code through the compiler's parser,
   # not just through cpp.
   cat > conftest.$ac_ext <<EOF
-#line 704 "configure"
+#line 720 "configure"
 #include "confdefs.h"
 #include <assert.h>
 Syntax Error
@@ -714,7 +730,7 @@ else
   rm -rf conftest*
   CPP="${CC-cc} -E -traditional-cpp"
   cat > conftest.$ac_ext <<EOF
-#line 718 "configure"
+#line 734 "configure"
 #include "confdefs.h"
 #include <assert.h>
 Syntax Error
@@ -820,7 +836,7 @@ test -z "$x_direct_test_library" && x_direct_test_library=Xt
 test -z "$x_direct_test_function" && x_direct_test_function=XtMalloc
 test -z "$x_direct_test_include" && x_direct_test_include=X11/Intrinsic.h
 cat > conftest.$ac_ext <<EOF
-#line 824 "configure"
+#line 840 "configure"
 #include "confdefs.h"
 #include <$x_direct_test_include>
 EOF
@@ -883,7 +899,7 @@ rm -f conftest*
 ac_save_LIBS="$LIBS"
 LIBS="-l$x_direct_test_library $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 887 "configure"
+#line 903 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -1002,7 +1018,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lICE  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 1006 "configure"
+#line 1022 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -1046,7 +1062,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-ldnet  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 1050 "configure"
+#line 1066 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -1081,7 +1097,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-ldnet_stub  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 1085 "configure"
+#line 1101 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -1121,7 +1137,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lnsl  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 1125 "configure"
+#line 1141 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -1160,7 +1176,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lsocket  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 1164 "configure"
+#line 1180 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -1265,7 +1281,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-l$ac_lib  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 1269 "configure"
+#line 1285 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -1388,7 +1404,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-li386  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 1392 "configure"
+#line 1408 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -1428,7 +1444,7 @@ else
   ac_cv_c_cross=yes
 else
 cat > conftest.$ac_ext <<EOF
-#line 1432 "configure"
+#line 1448 "configure"
 #include "confdefs.h"
 main(){return(0);}
 EOF
@@ -1453,7 +1469,7 @@ else
   ac_cv_c_gcc_strength_bug="yes"
 else
 cat > conftest.$ac_ext <<EOF
-#line 1457 "configure"
+#line 1473 "configure"
 #include "confdefs.h"
 
 int main(void) {
@@ -1489,7 +1505,7 @@ if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1493 "configure"
+#line 1509 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char $ac_func(); below.  */
@@ -1541,7 +1557,7 @@ if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1545 "configure"
+#line 1561 "configure"
 #include "confdefs.h"
 #include <$ac_hdr>
 EOF
@@ -1574,7 +1590,7 @@ if eval "test \"`echo '$''{'ac_cv_header_stat_broken'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1578 "configure"
+#line 1594 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1629,7 +1645,7 @@ if eval "test \"`echo '$''{'ac_cv_c_const'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1633 "configure"
+#line 1649 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -1703,7 +1719,7 @@ if eval "test \"`echo '$''{'ac_cv_header_stdc'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1707 "configure"
+#line 1723 "configure"
 #include "confdefs.h"
 #include <stdlib.h>
 #include <stdarg.h>
@@ -1725,7 +1741,7 @@ rm -f conftest*
 if test $ac_cv_header_stdc = yes; then
   # SunOS 4.x string.h does not declare mem*, contrary to ANSI.
 cat > conftest.$ac_ext <<EOF
-#line 1729 "configure"
+#line 1745 "configure"
 #include "confdefs.h"
 #include <string.h>
 EOF
@@ -1743,7 +1759,7 @@ fi
 if test $ac_cv_header_stdc = yes; then
   # ISC 2.0.2 stdlib.h does not declare free, contrary to ANSI.
 cat > conftest.$ac_ext <<EOF
-#line 1747 "configure"
+#line 1763 "configure"
 #include "confdefs.h"
 #include <stdlib.h>
 EOF
@@ -1764,7 +1780,7 @@ if test "$cross_compiling" = yes; then
   :
 else
 cat > conftest.$ac_ext <<EOF
-#line 1768 "configure"
+#line 1784 "configure"
 #include "confdefs.h"
 #include <ctype.h>
 #define ISLOWER(c) ('a' <= (c) && (c) <= 'z')
@@ -1799,7 +1815,7 @@ if eval "test \"`echo '$''{'ac_cv_type_size_t'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1803 "configure"
+#line 1819 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 #if STDC_HEADERS

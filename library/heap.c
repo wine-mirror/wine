@@ -82,8 +82,7 @@ HANDLE LocalAlloc (WORD flags, WORD bytes)
     if ((m = malloc (bytes)))
     {
 	*slot = m;
-	if (flags & LMEM_ZEROINIT)
-	    bzero (m, bytes);
+	if (flags & LMEM_ZEROINIT) memset( m, 0, bytes );
 
 #ifdef DEBUG_HEAP
 	printf ("Handle %d [%d] = %p\n", hMem+1, bytes, m);
@@ -220,8 +219,7 @@ HANDLE HEAP_Alloc (WORD flags, DWORD bytes)
     bytes+=sizeof(HeapData);
     if ((m = malloc (bytes)))
     {
-	if (flags & LMEM_ZEROINIT)
-	    bzero (m, bytes);
+	if (flags & LMEM_ZEROINIT) memset( m, 0, bytes );
     }
     m->Size=bytes-sizeof(HeapData);
     return m+1;
@@ -253,7 +251,7 @@ HANDLE HEAP_ReAlloc(HANDLE hMem,DWORD bytes,UINT flags)
   }
   m=realloc (m-1, bytes+sizeof(HeapData));
   if(flags & LMEM_ZEROINIT && bytes > m->Size)
-    bzero ((char*)m+sizeof(HeapData)+m->Size, bytes-m->Size);
+    memset( (char*)m+sizeof(HeapData)+m->Size, 0, bytes-m->Size );
   m->Size=bytes;
   return m+1;
 }

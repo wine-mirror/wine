@@ -141,7 +141,7 @@ Pixmap BRUSH_DitherColor( DC *dc, COLORREF color )
 /***********************************************************************
  *           CreateBrushIndirect    (GDI.50)
  */
-HBRUSH CreateBrushIndirect( LOGBRUSH * brush )
+HBRUSH CreateBrushIndirect( const LOGBRUSH * brush )
 {
     BRUSHOBJ * brushPtr;
     HBRUSH hbrush = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC );
@@ -155,7 +155,7 @@ HBRUSH CreateBrushIndirect( LOGBRUSH * brush )
 /***********************************************************************
  *           CreateHatchBrush    (GDI.58)
  */
-HBRUSH CreateHatchBrush( short style, COLORREF color )
+HBRUSH CreateHatchBrush( INT style, COLORREF color )
 {
     LOGBRUSH logbrush = { BS_HATCHED, color, style };
     dprintf_gdi(stddeb, "CreateHatchBrush: %d %06lx\n", style, color );
@@ -194,7 +194,7 @@ HBRUSH CreatePatternBrush( HBITMAP hbitmap )
 /***********************************************************************
  *           CreateDIBPatternBrush    (GDI.445)
  */
-HBRUSH CreateDIBPatternBrush( HANDLE hbitmap, WORD coloruse )
+HBRUSH CreateDIBPatternBrush( HGLOBAL hbitmap, UINT coloruse )
 {
     LOGBRUSH logbrush = { BS_DIBPATTERN, coloruse, 0 };
     BITMAPINFO *info, *newInfo;

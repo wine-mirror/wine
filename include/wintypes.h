@@ -24,6 +24,10 @@ typedef unsigned long DWORD;
 typedef unsigned short BOOL;
 typedef unsigned char BYTE;
 typedef long LONG;
+typedef unsigned char CHAR;
+/* Some systems might have wchar_t, but we really need 16 bit characters */
+typedef unsigned short WCHAR;
+
 #ifdef WINELIB32
 typedef int INT;
 typedef unsigned int UINT;
@@ -53,6 +57,8 @@ typedef DWORD HHOOK;
 typedef char *LPSTR;
 typedef const char *LPCSTR;
 typedef LPCSTR LPCTSTR;
+typedef WCHAR *LPWSTR;
+typedef const WCHAR *LPCWSTR;
 typedef char *NPSTR;
 typedef INT *LPINT;
 typedef UINT *LPUINT;
@@ -90,7 +96,12 @@ DECLARE_HANDLE(HRSRC);
 DECLARE_HANDLE(HTASK);
 DECLARE_HANDLE(HWND);
 DECLARE_HANDLE(LOCALHANDLE);
-
+#ifdef WINELIB32
+DECLARE_HANDLE(HKEY);
+#else
+typedef DWORD HKEY;
+#endif
+typedef HKEY* LPHKEY;
 typedef HGLOBAL GLOBALHANDLE;
 
 #ifdef WINELIB
@@ -101,6 +112,7 @@ typedef SEGPTR FARPROC;
 typedef SEGPTR WNDPROC;
 #endif
 typedef FARPROC DLGPROC;
+typedef FARPROC FONTENUMPROC;
 typedef FARPROC HOOKPROC;
 
 #define TRUE 1
@@ -108,6 +120,7 @@ typedef FARPROC HOOKPROC;
 #define CW_USEDEFAULT ((INT)0x8000)
 #define FAR
 #define NEAR
+#define _near
 #define PASCAL
 #define VOID                void
 #define WINAPI              PASCAL

@@ -51,6 +51,9 @@ int MAIN_Init(void)
 
     int queueSize;
 
+    /* Load the configuration file */
+    if (!PROFILE_LoadWineIni()) return 0;
+
     SpyInit();
 
 #ifndef WINELIB
@@ -89,7 +92,7 @@ int MAIN_Init(void)
 
 #ifndef WINELIB    
       /* Initialize the DOS memory */
-    INT21_Init();
+    if (!INT21_Init()) return 0;
 
       /* Create USER heap */
     if (!USER_HeapInit()) return 0;

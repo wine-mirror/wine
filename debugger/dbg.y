@@ -215,8 +215,8 @@ void wine_debug( int signal, struct sigcontext_struct *regs )
     if (!loaded_symbols)
     {
         loaded_symbols++;
-        GetPrivateProfileString("wine", "SymbolTableFile", "wine.sym",
-                          SymbolTableFile, sizeof(SymbolTableFile), WINE_INI);
+        PROFILE_GetWineIniString( "wine", "SymbolTableFile", "wine.sym",
+                                  SymbolTableFile, sizeof(SymbolTableFile) );
         DEBUG_ReadSymbolTable( SymbolTableFile );
         DEBUG_LoadEntryPoints();
     }

@@ -33,9 +33,10 @@ void SetRectEmpty( LPRECT rect )
 /***********************************************************************
  *           CopyRect    (USER.74)
  */
-void CopyRect( LPRECT dest, LPRECT src )
+BOOL CopyRect( LPRECT dest, LPRECT src )
 {
     *dest = *src;
+    return TRUE;
 }
 
 

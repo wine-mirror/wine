@@ -38,7 +38,9 @@ struct w_files *wine_files = NULL;
 void my_wcstombs(char * result, u_short * source, int len)
 {
   while(len--) {
-    if(isascii(*source)) *result++ = *source++;
+    /* this used to be isascii, but see isascii implementation in Linux'
+	   ctype.h */
+    if(*source<255) *result++ = *source++;
     else {
       printf("Unable to handle unicode right now\n");
       exit(0);
@@ -206,7 +208,7 @@ void fixup_imports(struct w_files* wpnt)
 	  }
 	  dprintf_win32(stddeb, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
 #ifndef WINELIB /* FIXME: JBP: Should this happen in libwine.a? */
-	/* Both calls should be unified into GetProcAddress */
+	/* FIXME: Both calls should be unified into GetProcAddress */
 	  *thunk_list=(unsigned int)RELAY32_GetEntryPoint(Module,pe_name->Name,pe_name->Hint);
 	  if(*thunk_list == 0)
 	  	*thunk_list = WIN32_GetProcAddress(MODULE_FindModule(Module),
@@ -236,7 +238,11 @@ void fixup_imports(struct w_files* wpnt)
         }
         dprintf_win32(stddeb, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
 #ifndef WINELIB /* FIXME: JBP: Should this happen in libwine.a? */
+	/* FIXME: Both calls should be unified into GetProcAddress */
         *thunk_list=(unsigned int)RELAY32_GetEntryPoint(Module,pe_name->Name,pe_name->Hint);
+	if(*thunk_list == 0)
+	  	*thunk_list = WIN32_GetProcAddress(MODULE_FindModule(Module),
+				pe_name->Name);
 #else
         fprintf(stderr,"JBP: Call to RELAY32_GetEntryPoint being ignored.\n");
 #endif
@@ -346,6 +352,7 @@ static HINSTANCE PE_LoadImage( int fd, struct w_files *wpnt )
 {
 	int i, result;
     unsigned int load_addr;
+	struct Directory dir;
 
 	wpnt->pe = xmalloc(sizeof(struct pe_data));
 	memset(wpnt->pe,0,sizeof(struct pe_data));
@@ -426,16 +433,88 @@ static HINSTANCE PE_LoadImage( int fd, struct w_files *wpnt )
 
 	if(strcmp(wpnt->pe->pe_seg[i].Name, ".rsrc") == 0) {
 	    wpnt->pe->pe_resource = (struct PE_Resource_Directory *) result;
-
+#if 0
+/* FIXME pe->resource_offset should be deleted from structure if this
+ ifdef doesn't break anything */
 	    /* save offset for PE_FindResource */
 	    wpnt->pe->resource_offset = wpnt->pe->pe_seg[i].Virtual_Address - 
 					wpnt->pe->pe_seg[i].PointerToRawData;
+#endif	
 	    }
-	
 	if(strcmp(wpnt->pe->pe_seg[i].Name, ".reloc") == 0)
 		wpnt->pe->pe_reloc = (struct PE_Reloc_Block *) result;
 
 	}
+
+	/* There is word that the actual loader does not care about the
+	   section names, and only goes for the DataDirectory */
+	dir=wpnt->pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
+	if(dir.Size)
+	{
+		if(wpnt->pe->pe_export && 
+			wpnt->pe->pe_export!=load_addr+dir.Virtual_address)
+			fprintf(stderr,"wrong export directory??\n");
+		else
+			wpnt->pe->pe_export = load_addr+dir.Virtual_address;
+	}
+
+	dir=wpnt->pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY];
+	if(dir.Size)
+	{
+		if(wpnt->pe->pe_import && 
+			wpnt->pe->pe_import!=load_addr+dir.Virtual_address)
+			fprintf(stderr,"wrong export directory??\n");
+		else
+			wpnt->pe->pe_import = load_addr+dir.Virtual_address;
+	}
+
+	dir=wpnt->pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
+	if(dir.Size)
+	{
+		if(wpnt->pe->pe_resource && 
+			wpnt->pe->pe_resource!=load_addr+dir.Virtual_address)
+			fprintf(stderr,"wrong resource directory??\n");
+		else
+			wpnt->pe->pe_resource = load_addr+dir.Virtual_address;
+	}
+
+	dir=wpnt->pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_BASE_RELOCATION_TABLE];
+	if(dir.Size)
+	{
+		if(wpnt->pe->pe_reloc && 
+			wpnt->pe->pe_reloc!=load_addr+dir.Virtual_address)
+			fprintf(stderr,"wrong export directory??\n");
+		else
+			wpnt->pe->pe_reloc = load_addr+dir.Virtual_address;
+	}
+
+	if(wpnt->pe->pe_header->opt_coff.DataDirectory
+		[IMAGE_FILE_EXCEPTION_DIRECTORY].Size)
+		dprintf_win32(stdnimp,"Exception directory ignored\n");
+
+	if(wpnt->pe->pe_header->opt_coff.DataDirectory
+		[IMAGE_FILE_SECURITY_DIRECTORY].Size)
+		dprintf_win32(stdnimp,"Security directory ignored\n");
+
+	if(wpnt->pe->pe_header->opt_coff.DataDirectory
+		[IMAGE_FILE_DEBUG_DIRECTORY].Size)
+		dprintf_win32(stdnimp,"Debug directory ignored\n");
+
+	if(wpnt->pe->pe_header->opt_coff.DataDirectory
+		[IMAGE_FILE_DESCRIPTION_STRING].Size)
+		dprintf_win32(stdnimp,"Description string ignored\n");
+
+	if(wpnt->pe->pe_header->opt_coff.DataDirectory
+		[IMAGE_FILE_MACHINE_VALUE].Size)
+		dprintf_win32(stdnimp,"Machine Value ignored\n");
+
+	if(wpnt->pe->pe_header->opt_coff.DataDirectory
+		[IMAGE_FILE_THREAD_LOCAL_STORAGE].Size)
+		 dprintf_win32(stdnimp,"Thread local storage ignored\n");
+
+	if(wpnt->pe->pe_header->opt_coff.DataDirectory
+		[IMAGE_FILE_CALLBACK_DIRECTORY].Size)
+		dprintf_win32(stdnimp,"Callback directory ignored\n");
 
 
 	if(wpnt->pe->pe_import) fixup_imports(wpnt);

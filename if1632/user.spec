@@ -98,7 +98,7 @@ id	2
 97  pascal16 CheckDlgButton(word word word) CheckDlgButton
 98  pascal16 IsDlgButtonChecked(word word) IsDlgButtonChecked
 99  pascal16 DlgDirSelect(word ptr word) DlgDirSelect
-100 pascal16 DlgDirList(word ptr word word word) DlgDirList
+100 pascal16 DlgDirList(word segptr word word word) DlgDirList
 101 pascal   SendDlgItemMessage(word word word word long) SendDlgItemMessage
 102 pascal16 AdjustWindowRect(ptr long word) AdjustWindowRect
 103 pascal16 MapDialogRect(word ptr) MapDialogRect
@@ -151,7 +151,7 @@ id	2
 150 pascal16 LoadMenu(word segptr) LoadMenu
 151 pascal16 CreateMenu() CreateMenu
 152 pascal16 DestroyMenu(word) DestroyMenu
-153 pascal16 ChangeMenu(word word ptr word word) ChangeMenu
+153 pascal16 ChangeMenu(word word segptr word word) ChangeMenu
 154 pascal16 CheckMenuItem(word word word) CheckMenuItem
 155 pascal16 EnableMenuItem(word word word) EnableMenuItem
 156 pascal16 GetSystemMenu(word word) GetSystemMenu
@@ -219,7 +219,7 @@ id	2
 217 pascal16 LookupMenuHandle(word s_word) LookupMenuHandle
 218 pascal16 DialogBoxIndirect(word word word segptr) DialogBoxIndirect
 219 pascal16 CreateDialogIndirect(word segptr word segptr) CreateDialogIndirect
-220 pascal16 LoadMenuIndirect(ptr) LoadMenuIndirect
+220 pascal16 LoadMenuIndirect(segptr) LoadMenuIndirect
 221 pascal16 ScrollDC(word s_word s_word ptr ptr word ptr) ScrollDC
 222 pascal16 GetKeyboardState(ptr) GetKeyboardState
 223 pascal16 SetKeyboardState(ptr) SetKeyboardState
@@ -362,11 +362,11 @@ id	2
 408 pascal16 CreateCursorIconIndirect(word ptr ptr ptr)
 	     CreateCursorIconIndirect
 409 stub InitThreadInput
-410 pascal16 InsertMenu(word word word word ptr) InsertMenu
-411 pascal16 AppendMenu(word word word ptr) AppendMenu
+410 pascal16 InsertMenu(word word word word segptr) InsertMenu
+411 pascal16 AppendMenu(word word word segptr) AppendMenu
 412 pascal16 RemoveMenu(word word word) RemoveMenu
 413 pascal16 DeleteMenu(word word word) DeleteMenu
-414 pascal16 ModifyMenu(word word word word ptr) ModifyMenu
+414 pascal16 ModifyMenu(word word word word segptr) ModifyMenu
 415 pascal16 CreatePopupMenu() CreatePopupMenu
 416 pascal16 TrackPopupMenu(word word word word word word ptr) TrackPopupMenu
 417 pascal   GetMenuCheckMarkDimensions() GetMenuCheckMarkDimensions

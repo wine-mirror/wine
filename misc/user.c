@@ -4,20 +4,10 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 */
 #include <stdio.h>
 #include <stdlib.h>
-#include "atom.h"
-#include "comm.h"
-#include "gdi.h"
-#include "desktop.h"
-#include "dlls.h"
-#include "dos_fs.h"
-#include "sysmetrics.h"
-#include "menu.h"
-#include "dce.h"
-#include "dialog.h"
-#include "syscolor.h"
-#include "win.h"
 #include "windows.h"
+#include "gdi.h"
 #include "user.h"
+#include "win.h"
 #include "message.h"
 #include "toolhelp.h"
 

@@ -261,5 +261,87 @@ BOOL ClassNext( CLASSENTRY *pClassEntry );
 DWORD MemoryRead( WORD sel, DWORD offset, void *buffer, DWORD count );
 DWORD MemoryWrite( WORD sel, DWORD offset, void *buffer, DWORD count );
 
+/* flags to NotifyRegister() */
+#define NF_NORMAL	0	/* everything except taskswitches, debugerrors,
+				 * debugstrings
+				 */
+#define NF_TASKSWITCH	1	/* get taskswitch information */
+#define NF_RIP		2	/* get debugerrors of system */
 
+BOOL NotifyRegister(HTASK htask,FARPROC lpfnCallback,WORD wFlags);
+
+#define NFY_UNKNOWN	0
+#define NFY_LOADSEG	1
+/* DATA is a pointer to following struct: */
+struct {
+	DWORD	dwSize;
+	WORD	wSelector;
+	WORD	wSegNum;
+	WORD	wType;		/* bit 0 set if this is a code segment */
+	WORD	wcInstance;	/* only valid for data segment */
+} NFYLOADSEG;
+/* called when freeing a segment. LOWORD(dwData) is the freed selector */
+#define NFY_FREESEG	2
+
+/* called when loading/starting a DLL */
+#define NFY_STARTDLL	3
+struct {
+	DWORD	dwSize;
+	HMODULE	hModule;
+	WORD	wCS;
+	WORD	wIP;
+} NFYSTARTDLL;
+
+/* called when starting a task. dwData is CS:IP */
+#define NFY_STARTTASK	4
+
+/* called when a task terminates. dwData is the return code */
+#define NFY_EXITTASK	5
+
+/* called when module is removed. LOWORD(dwData) is the handle */
+#define NFY_DELMODULE	6
+
+/* RIP? debugevent */
+#define NFY_RIP		7
+struct {
+	DWORD	dwSize;
+	WORD	wIP;
+	WORD	wCS;
+	WORD	wSS;
+	WORD	wBP;
+	WORD	wExitCode;
+} NFYRIP;
+
+/* called before (after?) switching to a task
+ * no data, callback should call GetCurrentTask
+ */
+#define	NFY_TASKIN	8
+
+/* called before(after?) switching from a task
+ * no data, callback should call GetCurrentTask
+*/
+#define NFY_TASKOUT	9
+
+/* returns ASCII input value, dwData not set */
+#define NFY_INCHAR	10
+
+/* output debugstring (pointed to by dwData) */
+#define NFY_OUTSTRING	11
+
+/* log errors */
+#define NFY_LOGERROR	12
+struct {
+	DWORD	dwSize;
+	UINT	wErrCode;
+	VOID	FAR*	lpInfo;	/* depends on wErrCode */
+} NFYLOGERROR;
+
+/* called for parameter errors? */
+#define NFY_LOGPARAMERROR	13
+struct {
+	DWORD	dwSize;
+	UINT	wErrCode;
+	FARPROC	lpfnErrorAddr;
+	void FAR* FAR* lpBadParam;
+} NFYLOGPARAMERROR;
 #endif /* __TOOLHELP_H */

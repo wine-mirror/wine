@@ -4,6 +4,7 @@
  *
  */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -53,6 +54,7 @@ int main(int argc,char *argv[])
 {  
 	extern int yydebug;
 	extern char* optarg;
+	char* tmpc;
 	int optc,lose,ret,binary;
 	lose=binary=0;
 	while((optc=getopt(argc,argv,"bcdp:vo:"))!=EOF)
@@ -65,7 +67,12 @@ int main(int argc,char *argv[])
 					 setbuf(stdout,0);
 					 setbuf(stderr,0);
 					break;
-			case 'p':prefix=optarg;break;
+			case 'p':prefix=strdup(optarg);
+					 if(!isalpha(*prefix))*prefix='_';
+					 for(tmpc=prefix;*tmpc;tmpc++)
+					  if( !isalnum(*tmpc) && *tmpc!='_')
+					   *tmpc='_';
+					break;
 			case 'c':constant=1;break;
 			case 'v':verbose=1;
 					 setbuf(stderr,0);
@@ -105,7 +112,7 @@ int transform_binary_file()
 		if(i%16==0)fputc('\n',code);
 		fprintf(code,"%3d,",c);
 	}
-	fprintf(code,"\n0}\nint _Aplication_resources_size=%d;\n",i);
+	fprintf(code,"\n  0};\nint _Application_resources_size=%d;\n",i);
 	return 0;
 }
 

@@ -39,4 +39,10 @@ struct options
 
 extern struct options Options;
 
+/* Profile functions */
+
+extern int PROFILE_LoadWineIni(void);
+extern int PROFILE_GetWineIniString( const char *section, const char *key_name,
+                                     const char *def, char *buffer, int len );
+
 #endif

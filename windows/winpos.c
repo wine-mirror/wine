@@ -2,7 +2,7 @@
  * Window position related functions.
  *
  * Copyright 1993, 1994, 1995 Alexandre Julliard
- *                       1995 Alex Korobka
+ *                       1995,1996 Alex Korobka
  */
 
 #include "sysmetrics.h"
@@ -27,8 +27,6 @@ void 	FOCUS_SwitchFocus( HWND , HWND );
 
 static HWND hwndActive      = 0;  /* Currently active window */
 static HWND hwndPrevActive  = 0;  /* Previously active window */
-
-extern HANDLE hActiveQ_G;		/* from message.c */
 
 
 /***********************************************************************
@@ -89,11 +87,11 @@ void WINPOS_FindIconPos( HWND hwnd )
 /***********************************************************************
  *           ArrangeIconicWindows   (USER.170)
  */
-WORD ArrangeIconicWindows( HWND parent )
+UINT ArrangeIconicWindows( HWND parent )
 {
     RECT rectParent;
     HWND hwndChild;
-    short x, y, xspacing, yspacing;
+    INT x, y, xspacing, yspacing;
 
     GetClientRect( parent, &rectParent );
     x = rectParent.left;
@@ -153,9 +151,10 @@ void GetClientRect( HWND hwnd, LPRECT rect )
 /*******************************************************************
  *         ClientToScreen   (USER.28)
  */
-void ClientToScreen( HWND hwnd, LPPOINT lppnt )
+BOOL ClientToScreen( HWND hwnd, LPPOINT lppnt )
 {
     MapWindowPoints( hwnd, 0, lppnt, 1 );
+    return TRUE;
 }
 
 
@@ -169,38 +168,81 @@ void ScreenToClient( HWND hwnd, LPPOINT lppnt )
 
 
 /*******************************************************************
+ *         WINPOS_WindowFromPoint 
+ *
+ * The Right Thing
+ */
+HWND WINPOS_WindowFromPoint( HWND hScope, POINT pt, WORD* lpht )
+{
+ WORD   wRet;
+ WND*	wndPtr = WIN_FindWndPtr( hScope );
+
+ if( !wndPtr || !(wndPtr->dwStyle & WS_VISIBLE) ) return 0;
+
+ if ((pt.x <  wndPtr->rectWindow.left)  ||
+     (pt.x >= wndPtr->rectWindow.right) ||
+     (pt.y <  wndPtr->rectWindow.top)   ||
+     (pt.y >= wndPtr->rectWindow.bottom)) return 0; 
+
+ /* pt is inside hScope window */
+
+ if( wndPtr->dwStyle & WS_DISABLED )
+   if( wndPtr->dwStyle & (WS_POPUP | WS_CHILD) == WS_CHILD )
+       return 0;
+   else
+     {
+       if( lpht ) *lpht = HTERROR;
+       return hScope;
+     }  
+
+ if( wndPtr->dwStyle & WS_MINIMIZE )
+   {
+     if( lpht ) *lpht = HTCAPTION;
+     return hScope; 
+   }  
+
+ if( PtInRect(&wndPtr->rectClient, pt))
+   {
+     /* look among children */
+     HWND   hwnd     = wndPtr->hwndChild;
+     WND*   wndChild = WIN_FindWndPtr(hwnd);
+     POINT  ptChild  = { pt.x - wndPtr->rectClient.left,
+		         pt.y - wndPtr->rectClient.top };
+
+     while( wndChild )
+      {      
+            if( (hwnd = WINPOS_WindowFromPoint(hwnd, ptChild, lpht)) ) 
+                return hwnd;
+
+	    hwnd = wndChild->hwndNext;
+	    wndChild = WIN_FindWndPtr( hwnd );
+      }
+   }
+
+ /* don't do intertask sendmessage */ 
+ if( wndPtr->hmemTaskQ == GetTaskQueue(0) ) 
+   {
+      if( wndPtr->dwStyle & WS_CHILD )
+          MapWindowPoints( hScope, GetDesktopWindow(), &pt, 1);
+
+      wRet = SendMessage( hScope, WM_NCHITTEST, 0, MAKELONG( pt.x, pt.y ));
+      if( wRet == (WORD)HTTRANSPARENT )
+          return 0;
+   }
+ else
+      wRet = HTCLIENT;
+
+ if( lpht ) *lpht = wRet;
+ return hScope;
+}
+
+
+/*******************************************************************
  *         WindowFromPoint   (USER.30)
  */
 HWND WindowFromPoint( POINT pt )
 {
-    HWND hwndRet = 0;
-    HWND hwnd = GetDesktopWindow();
-
-    while(hwnd)
-    {
-	  /* If point is in window, and window is visible,   */
-	  /* not disabled and not transparent, then explore  */
-	  /* its children. Otherwise, go to the next window. */
-
-	WND *wndPtr = WIN_FindWndPtr( hwnd );
-	if ((pt.x >= wndPtr->rectWindow.left) &&
-	    (pt.x < wndPtr->rectWindow.right) &&
-	    (pt.y >= wndPtr->rectWindow.top) &&
-	    (pt.y < wndPtr->rectWindow.bottom) &&
-	    !(wndPtr->dwStyle & WS_DISABLED) &&
-	    (wndPtr->dwStyle & WS_VISIBLE) &&
-	    !(wndPtr->dwExStyle & WS_EX_TRANSPARENT))
-	{
-	    hwndRet = hwnd;
-              /* If window is minimized, ignore its children */
-            if (wndPtr->dwStyle & WS_MINIMIZE) break;
-	    pt.x -= wndPtr->rectClient.left;
-	    pt.y -= wndPtr->rectClient.top;
-	    hwnd = wndPtr->hwndChild;
-	}
-	else hwnd = wndPtr->hwndNext;
-    }
-    return hwndRet;
+   return WINPOS_WindowFromPoint( GetDesktopWindow(), pt , NULL );
 }
 
 
@@ -234,6 +276,8 @@ void MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, WORD count )
     POINT * curpt;
     POINT origin = { 0, 0 };
     WORD i;
+
+    if( hwndFrom == hwndTo ) return;
 
       /* Translate source window origin to screen coords */
     while(hwndFrom)
@@ -602,6 +646,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     FARPROC                enumCallback    = (FARPROC)GetWndProcEntry16("ActivateAppProc");
     ACTIVATESTRUCT         actStruct;
     WORD                   wIconized=0,wRet= 0;
+    HANDLE                 hActiveQ = 0;
 
     /* paranoid checks */
     if( !hWnd || hWnd == GetDesktopWindow() || hWnd == hwndActive )
@@ -676,10 +721,16 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
 
     if( !IsWindow(hWnd) ) return 0;
 
-    /* send WM_ACTIVATEAPP if necessary */
-    if( hActiveQ_G != wndPtr->hmemTaskQ )
+    if (hwndPrevActive)
     {
-	HTASK hT = MSG_GetQueueTask( hActiveQ_G );
+        wndTemp = WIN_FindWndPtr( hwndPrevActive );
+        if (wndTemp) hActiveQ = wndTemp->hmemTaskQ;
+    }
+
+    /* send WM_ACTIVATEAPP if necessary */
+    if (hActiveQ != wndPtr->hmemTaskQ)
+    {
+	HTASK hT = MSG_GetQueueTask( hActiveQ );
 
 	actStruct.wFlag = 0;                  /* deactivate */
 	actStruct.hWindowTask = MSG_GetQueueTask(wndPtr->hmemTaskQ);
@@ -690,12 +741,9 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
 	 */
 	EnumWindows( enumCallback , (LPARAM)&actStruct );
 
-	/* change active queue */
-	hActiveQ_G = wndPtr->hmemTaskQ;
-
 	actStruct.wFlag = 1;                  /* activate */
 	actStruct.hWindowTask = hT;
-	actStruct.hTaskSendTo = MSG_GetQueueTask( hActiveQ_G );
+	actStruct.hTaskSendTo = MSG_GetQueueTask( wndPtr->hmemTaskQ );
 
 	EnumWindows( enumCallback , (LPARAM)&actStruct );
 
@@ -963,6 +1011,11 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 
     if (hwnd == GetDesktopWindow()) return FALSE;
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
+
+    /* Check for windows that may not be resized 
+       FIXME: this should be done only for Windows 3.0 programs */
+    if (flags ==(SWP_SHOWWINDOW) || flags ==(SWP_HIDEWINDOW ) )
+       flags |= SWP_NOSIZE | SWP_NOMOVE;
 
       /* Check dimensions */
 

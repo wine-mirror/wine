@@ -584,12 +584,12 @@ base	1
 0579 stub WriteFileEx
 0580 stub WritePrivateProfileSectionA
 0581 stub WritePrivateProfileSectionW
-0582 stub WritePrivateProfileStringA
+0582 stdcall WritePrivateProfileStringA(ptr ptr ptr ptr)	WritePrivateProfileString
 0583 stub WritePrivateProfileStringW
 0584 stub WriteProcessMemory
 0585 stub WriteProfileSectionA
 0586 stub WriteProfileSectionW
-0587 stub WriteProfileStringA
+0587 stdcall WriteProfileStringA(ptr ptr ptr)	WriteProfileString
 0588 stub WriteProfileStringW
 0589 stub WriteTapemark
 0590 stub _hread

@@ -227,46 +227,21 @@ static BOOL CURSORICON_LoadDirEntry(HANDLE hInstance, SEGPTR name,
 
 
 /**********************************************************************
- *	    CURSORICON_Load
+ *	    CURSORICON_LoadHandler 
  *
- * Load a cursor or icon.
+ * Create a cursor or icon from a resource.
  */
-static HANDLE CURSORICON_Load( HANDLE hInstance, SEGPTR name, int width,
-                               int height, int colors, BOOL fCursor )
+static HANDLE CURSORICON_LoadHandler( HANDLE handle, HINSTANCE hInstance,
+                                      BOOL fCursor )
 {
-    HANDLE handle, hAndBits, hXorBits;
-    HRSRC hRsrc;
+    HANDLE hAndBits, hXorBits;
     HDC hdc;
     int size, sizeAnd, sizeXor;
     POINT hotspot = { 0 ,0 };
     BITMAPOBJ *bmpXor, *bmpAnd;
     BITMAPINFO *bmi, *pInfo;
     CURSORICONINFO *info;
-    CURSORICONDIRENTRY dirEntry;
     char *bits;
-
-    if (!hInstance)  /* OEM cursor/icon */
-    {
-        if (HIWORD(name))  /* Check for '#xxx' name */
-        {
-            char *ptr = PTR_SEG_TO_LIN( name );
-            if (ptr[0] != '#') return 0;
-            if (!(name = (SEGPTR)atoi( ptr + 1 ))) return 0;
-        }
-        return OBM_LoadCursorIcon( LOWORD(name), fCursor );
-    }
-
-    /* Find the best entry in the directory */
-
-    if (!CURSORICON_LoadDirEntry( hInstance, name, width, height,
-                                  colors, fCursor, &dirEntry )) return 0;
-
-    /* Load the resource */
-
-    if (!(hRsrc = FindResource( hInstance,
-                                MAKEINTRESOURCE( dirEntry.icon.wResId ),
-                                fCursor ? RT_CURSOR : RT_ICON ))) return 0;
-    if (!(handle = LoadResource( hInstance, hRsrc ))) return 0;
 
     if (fCursor)  /* If cursor, get the hotspot */
     {
@@ -289,7 +264,6 @@ static HANDLE CURSORICON_Load( HANDLE hInstance, SEGPTR name, int width,
         if (pInfo->bmiHeader.biCompression != BI_RGB)
         {
             fprintf(stderr,"Unknown size for compressed icon bitmap.\n");
-            FreeResource( handle );
             free( pInfo );
             return 0;
         }
@@ -304,7 +278,6 @@ static HANDLE CURSORICON_Load( HANDLE hInstance, SEGPTR name, int width,
     {
         fprintf( stderr, "CURSORICON_Load: Unknown bitmap length %ld!\n",
                  pInfo->bmiHeader.biSize );
-        FreeResource( handle );
         free( pInfo );
         return 0;
     }
@@ -313,7 +286,6 @@ static HANDLE CURSORICON_Load( HANDLE hInstance, SEGPTR name, int width,
 
     if (!(hdc = GetDC( 0 )))
     {
-        FreeResource( handle );
         free( pInfo );
         return 0;
     }
@@ -351,7 +323,6 @@ static HANDLE CURSORICON_Load( HANDLE hInstance, SEGPTR name, int width,
     hAndBits = CreateDIBitmap( hdc, &pInfo->bmiHeader, CBM_INIT,
                                bits, pInfo, DIB_RGB_COLORS );
     ReleaseDC( 0, hdc );
-    FreeResource( handle );
 
     /* Now create the CURSORICONINFO structure */
 
@@ -367,8 +338,10 @@ static HANDLE CURSORICON_Load( HANDLE hInstance, SEGPTR name, int width,
         DeleteObject( hAndBits );
         return 0;
     }
+
     /* Make it owned by the module */
-    FarSetOwner( handle, (WORD)(DWORD)GetExePtr( hInstance ) );
+    if (hInstance) FarSetOwner( handle, (WORD)(DWORD)GetExePtr(hInstance) );
+
     info = (CURSORICONINFO *)GlobalLock( handle );
     info->ptHotSpot.x   = hotspot.x;
     info->ptHotSpot.y   = hotspot.y;
@@ -386,6 +359,46 @@ static HANDLE CURSORICON_Load( HANDLE hInstance, SEGPTR name, int width,
     DeleteObject( hAndBits );
     GlobalUnlock( handle );
     return handle;
+}
+
+/**********************************************************************
+ *	    CURSORICON_Load
+ *
+ * Load a cursor or icon.
+ */
+static HANDLE CURSORICON_Load( HANDLE hInstance, SEGPTR name, int width,
+                               int height, int colors, BOOL fCursor )
+{
+    HANDLE handle,hRet;
+    HRSRC  hRsrc;
+    CURSORICONDIRENTRY dirEntry;
+
+    if (!hInstance)  /* OEM cursor/icon */
+    {
+        if (HIWORD(name))  /* Check for '#xxx' name */
+        {
+            char *ptr = PTR_SEG_TO_LIN( name );
+            if (ptr[0] != '#') return 0;
+            if (!(name = (SEGPTR)atoi( ptr + 1 ))) return 0;
+        }
+        return OBM_LoadCursorIcon( LOWORD(name), fCursor );
+    }
+
+    /* Find the best entry in the directory */
+
+    if (!CURSORICON_LoadDirEntry( hInstance, name, width, height,
+                                  colors, fCursor, &dirEntry )) return 0;
+
+    /* Load the resource */
+
+    if (!(hRsrc = FindResource( hInstance,
+                                MAKEINTRESOURCE( dirEntry.icon.wResId ),
+                                fCursor ? RT_CURSOR : RT_ICON ))) return 0;
+    if (!(handle = LoadResource( hInstance, hRsrc ))) return 0;
+
+    hRet = CURSORICON_LoadHandler( handle, hInstance, fCursor );
+    FreeResource(handle);
+    return hRet;
 }
 
 
@@ -485,8 +498,8 @@ HICON LoadIcon( HANDLE hInstance, SEGPTR name )
 /***********************************************************************
  *           CreateCursor    (USER.406)
  */
-HICON CreateCursor( HANDLE hInstance, INT xHotSpot, INT yHotSpot,
-                    INT nWidth, INT nHeight, LPSTR lpANDbits, LPSTR lpXORbits)
+HCURSOR CreateCursor( HINSTANCE hInstance, INT xHotSpot, INT yHotSpot,
+                      INT nWidth, INT nHeight, LPVOID lpANDbits, LPVOID lpXORbits)
 {
     CURSORICONINFO info = { { xHotSpot, yHotSpot }, nWidth, nHeight, 0, 1, 1 };
 
@@ -540,21 +553,37 @@ HANDLE CreateCursorIconIndirect( HANDLE hInstance, CURSORICONINFO *info,
 /***********************************************************************
  *           CopyIcon    (USER.368)
  */
+#ifdef WINELIB32
+HICON CopyIcon( HICON hIcon )
+{
+    dprintf_icon( stddeb, "CopyIcon: "NPFMT"\n", hIcon );
+    return CURSORICON_Copy( 0, hIcon );
+}
+#else
 HICON CopyIcon( HANDLE hInstance, HICON hIcon )
 {
     dprintf_icon( stddeb, "CopyIcon: "NPFMT" "NPFMT"\n", hInstance, hIcon );
     return CURSORICON_Copy( hInstance, hIcon );
 }
+#endif
 
 
 /***********************************************************************
  *           CopyCursor    (USER.369)
  */
+#ifdef WINELIB32
+HCURSOR CopyCursor( HCURSOR hCursor )
+{
+    dprintf_cursor( stddeb, "CopyCursor: "NPFMT"\n", hCursor );
+    return CURSORICON_Copy( 0, hCursor );
+}
+#else
 HCURSOR CopyCursor( HANDLE hInstance, HCURSOR hCursor )
 {
     dprintf_cursor( stddeb, "CopyCursor: "NPFMT" "NPFMT"\n", hInstance, hCursor );
     return CURSORICON_Copy( hInstance, hCursor );
 }
+#endif
 
 
 /***********************************************************************
@@ -836,10 +865,11 @@ HCURSOR GetCursor(void)
 /***********************************************************************
  *           ClipCursor    (USER.16)
  */
-void ClipCursor( RECT *rect )
+BOOL ClipCursor( RECT *rect )
 {
     if (!rect) SetRectEmpty( &CURSOR_ClipRect );
     else CopyRect( &CURSOR_ClipRect, rect );
+    return TRUE;
 }
 
 
@@ -880,8 +910,35 @@ void GetClipCursor( RECT *rect )
  */
 WORD GetIconID( HANDLE hResource, DWORD resType )
 {
-    fprintf( stderr, "GetIconId("NPFMT",%ld): empty stub!\n",
-             hResource, resType );
+    CURSORICONDIR *lpDir = LockResource(hResource);
+
+    if (!lpDir || lpDir->idReserved ||
+        ((lpDir->idType != 1) && (lpDir->idType != 2)))
+    {
+        dprintf_cursor(stddeb,"GetIconID: invalid resource directory\n");
+        return 0;
+    }
+
+    dprintf_cursor( stddeb, "GetIconID: hRes="NPFMT", entries=%i\n",
+                    hResource, lpDir->idCount );
+
+    switch(resType)
+    {
+    case 1:  /* cursor */
+        {
+            CURSORDIRENTRY *entry = CURSORICON_FindBestCursor( lpDir,
+                                    SYSMETRICS_CXCURSOR, SYSMETRICS_CYCURSOR );
+            return entry ? entry->wResId : 0;
+        }
+    case 3:  /* icon */
+        {
+            ICONDIRENTRY *entry = CURSORICON_FindBestIcon( lpDir,
+                                          SYSMETRICS_CXICON, SYSMETRICS_CYICON,
+                                          MIN( 16, 1 << screenDepth ) );
+            return entry ? entry->wResId : 0;
+        }
+    }
+    fprintf( stderr, "GetIconID: invalid res type %ld\n", resType );
     return 0;
 }
 
@@ -891,7 +948,12 @@ WORD GetIconID( HANDLE hResource, DWORD resType )
  */
 HICON LoadIconHandler( HANDLE hResource, BOOL bNew )
 {
-    fprintf( stderr, "LoadIconHandle("NPFMT",%d): empty stub!\n",
-             hResource, bNew );
-    return 0;
+    dprintf_cursor(stddeb,"LoadIconHandler: hRes="NPFMT"\n",hResource);
+
+    if( !bNew )
+      {
+	fprintf(stdnimp,"LoadIconHandler: 2.xx resources are not supported\n");
+        return 0;
+      }
+    return CURSORICON_LoadHandler( hResource, 0, FALSE);
 }

@@ -1,4 +1,280 @@
 ----------------------------------------------------------------------
+Wed Jan 31 10:58:00 1996  Alexandre Julliard  <julliar@sunsite.unc.edu>
+
+	* [configure.in]
+	Added --with-dll option to build libwine.so.
+
+	* [controls/listbox.c]
+	Fixed ListBoxDirectory(), DlgDirSelect() and
+	DlgDirList(). Hopefully their behavior is correct now.
+
+	* [controls/menu.c]
+	Use SEGPTRs in ChangeMenu(), InsertMenu(), AppendMenu() and
+ 	ModifyMenu() for the item data, to avoid corrupting the pointer
+ 	for owner-drawn items.
+
+	* [controls/static.c]
+	Attempt to load OEM icons for SS_ICON controls. Probably not
+	entirely correct.
+	Don't clip the text output.
+
+	* [files/directory.c]
+	Add temp dir and Windows dir to environment.
+
+	* [files/dos_fs.c]
+	Fixed a few path handling bugs in DOSFS_GetUnixFileName().
+	Cache last used directory in DOSFS_FindNext() to avoid quadratic
+	search time.
+
+	* [files/drive.c]
+	New format for drives configuration in wine.conf; allows
+	specifying the type, label and serial number of a drive.
+
+	* [files/file.c]
+	New function FILE_OpenUnixFile to make sure we don't open a
+	directory instead of a file.
+	Fixed DOSFS_GetUnixFileName() check_last flag in FILE_MakeDir().
+
+	* [files/profile.c]
+	Rewrote profile handling. Should be closer to Windows behavior now.
+	New function PROFILE_GetWineIniString() to get a string from wine.conf.
+	Support environment variables in wine.conf.
+
+	* [loader/task.c]
+	Fixed the order of deletion in TASK_DeleteTask() to avoid memory
+	corruption.
+
+	* [memory/global.c]
+	Create a discarded block on GlobalAlloc() if the size is 0; thanks
+	to John Harvey for noticing this.
+
+	* [memory/local.c]
+	LOCAL_GetHeap: make sure the pointer is valid before checking
+	magic number.
+
+	* [misc/main.c]
+	Moved profile and registry saving to ExitWindows(), so we don't
+	try to save them in case of a crash.
+
+	* [miscemu/int21.c]
+	INT21_GetFreeDiskSpace: try to compute the cluster size from the
+	filesystem size instead of hard-coding it to 64.
+	Fixed functions 0x3f and 0x40 to use _hread and _hwrite to allow
+	reading or writing 65535 bytes (thanks to Bruce Milner for this	one).
+
+	* [windows/message.c]
+	Fixed bug in linked-list handling in MSG_DeleteQueue().
+	Simplified SetMessageQueue().
+
+	* [wine.ini] [wine.man]
+	Updated for new drives configuration format.
+
+Tue Jan 30 11:24:46 1996  William Magro  <wmagro@tc.cornell.edu>
+
+	* [controls/edit.c]
+	Implemented ES_PASSWORD style, EM_SETPASSWORDCHAR and
+ 	EM_GETPASSWORDCHAR messages.
+
+	* [controls/widgets.c]
+	Adjusted class creation flags to better match values Windows uses.
+
+	* [include/windows.h]
+	Fixed ES_NOHIDESEL typo.
+
+	* [loader/ne_image.c]
+	Added detection for zero offset in RADDR fixups. Quicken
+	was in an infinite loop here.
+
+Mon Jan 29 20:12:22 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [files/dos_fs.c]
+	Bugfix: range error in month value (0..11 set to 1..12).
+
+	* [windows/caret.c]
+	Changed ROP2-mode to R2_NOTXORPEN in CARET_Callback for pulsed
+ 	appearance of the caret.
+
+	* [windows/mdi.c] [include/mdi.h]
+	Changed MDITile(): added a new parameter WORD wParam for
+ 	WM_MDITILE second tiling method (MDITILE_HORIZONTAL in wParam) as
+ 	used in Win3.1
+
+Sun Jan 28 14:20:00 1996  Cameron Heide  <heide@ee.ualberta.ca>
+
+	* [miscemu/int2f.c]
+	Added a small bit of MSCDEX emulation.
+
+	* [windows/alias.c]
+	ALIAS_RegisterAlias was returning the hash value when it should
+ 	have been returning the record number.
+	
+Sat Jan 27 10:53:51 1996  Jim Peterson <jspeter@birch.ee.vt.edu>
+
+	* [include/shell.h] [include/wintypes.h]
+	Moved definition of HKEY and LPHKEY types to include/wintypes.h.
+	Declared FONTENUMPROC in wintypes.h.
+
+	* [include/windows.h]
+	Added definition of KERNINGPAIR and LPKERNINGPAIR types.  Added
+	declarations for CopyCursor(), CopyIcon(), EnumFontFamilies(),
+	ExtractIcon(), FatalAppExit(), FindExecutable(), GetClipCursor(),
+	GetKerningPairs(), GetQueueStatus(), GetRasterizerCaps(),
+	IsGDIObject(), IsMenu(), IsTask(), RegCloseKey(), RegCreateKey(),
+	RegDeleteKey(), RegEnumKey(), RegOpenKey(), RegQueryValue(),
+	RegSetValue(), ResetDC(), ShellExecute(), SystemParametersInfo(),
+	and wsprintf().
+
+	* [tools/makehtml.pl] [documentation/apiw.index]
+	New files that scan windows.h, commdlg.h, and toolhelp.h and output
+	an HTML sorted list with optional links to www.willows.com and a
+	tally of unimplemented APIW functions.
+
+	* [objects/cursoricon.c]
+	Added Win32 versions of CopyIcon() and CopyCursor() for use in
+	libwine.
+
+	* [win32/resource.c] [win32/winprocs.c]
+	Added '#include "libres.h"' and explicit declarations of windows
+	procs in order to avoid warnings.
+
+	* [windows/utility.c]
+	Added Win32 version of MulDiv() for libwine.
+
+	* [*/*] [include/windows.h]
+	Changed several function declarations to comply more strictly to
+	the windows API (without, hopefully, altering their functionality).
+
+	* [controls/menu.c]
+	Made the return value of CheckMenuItem be the previous state of
+ 	the menu item if it was found, otherwise -1 as specified in the
+ 	SDK. This conflicts with the APIW specification, which says it
+ 	should return TRUE if successful, otherwise FALSE.
+
+	* [include/windows.h]
+	Added obsolete WM_SIZE message wParam names for compatibility.
+  	Added WinHelp() command constants, even though they are not yet
+ 	supported.
+
+	* [rc/winerc.c]
+	Tidied up transform_binary_file().  In argument checking, flattened
+	any invalid characters specified with the prefix argument.
+
+	* [library/libres.c]
+	Made FindResource() case-insensitive when parameter 'name' is a string.
+
+Sat Jan 27 02:30 1996  Uwe Bonnes <bon@elektron.ikp.physik.th-darmstadt.de
+
+	* [files/drive.c]
+	If root "/" is given in wine.conf, use it as last resort.
+
+	* [files/file.c]
+	Report ER_AccessDenied it disk ist not writable
+	More Debug Output
+
+	* [miscemu/int21.c]
+	Squeezed some bugs in ExtendedOpenCreateFile
+	
+	* [windows/winpos.c]
+	Some windows may not be moved or resized. We are missing some
+	structures to be exact, but the approach should help in some cases
+	and make things worse in much fewer.
+
+Fri Jan 26 10:24:00 1996  Thomas Sandford <t.d.g.sandford@prds-grn.demon.co.uk>
+
+	* [loader/pe_image.c]
+	fixup_imports: Find builtins for Borland style entries, too
+
+Fri Jan 26 10:24:00 1996  Martin von Loewis <loewis@informatik.hu-berlin.de>
+
+	* [controls/menu.c]
+	LoadMenu: branch to Win32 for PE modules
+
+	* [if1632/gdi.spec][if1632/kernel32.spec][if1632/user32.spec]
+	DeleteObject, GetPixel, SetPixel,WritePrivateProfileStringA,
+	WriteProfileStringA, EmptyClipboard, EnableMenuItem, EnableScrollBar,
+	EnableWindow, InvalidateRect, SetWindowTextA, WinHelpA: new relays
+	DrawTextA, MoveToEx, GetClientRect, InvalidateRect, LoadBitmapA/W,
+	LoadAcceleratorsA/W, LoadMenu[Indirect]A/W, LoadStringA/W: changed
+	to convert parameters or naming convention
+
+	* [include/kernel32.h][include/wintypes.h]
+	moved WCHAR, defined LPWSTR
+
+	* [include/string32.h][win32/string32.c][include/struct32.h]
+	New files
+
+	* [loader/module.h]
+	LoadModule: exit after returning from PE_LoadModule
+
+	* [loader/pe_image.c]
+	my_wcstombs: isascii does not work on Linux for Unicode
+	PE_LoadImage: Handle directories
+
+	* [misc/user32.c]
+	USER32_RECT32to16, USER32_RECT16to32: new functions
+	implemented new user32 relays
+
+	* [misc/newfns.c]
+	WIN32_WinHelpA: new function
+
+	* [win32/param32.c]
+	New file
+
+	* [win32/resource.c]
+	GetResDirEntry: added support for named entries
+	WIN32_LoadAcceleratorsW: invoke *32 resource functions
+	WIN32_LoadBitmapA: convert name to unicode if appropriate
+	WIN32_ParseMenu: new function
+	implemented new resource functions from user32.spec
+
+Wed Jan 24 18:09:00 1996 Alex Korobka <alex@phm30.pharm.sunysb.edu>
+
+	* [objects/cursoricon.c]
+	GetIconId() and LoadIconHandler() functions.
+
+	* [windows/mdi.c]
+	Better maximization support, TranslateMDISysAccel() function, 
+	misc improvements.
+
+	* [windows/defwnd.c]
+	Fix for WM_WINDOWPOSCHANGED message handler.
+
+	* [windows/winpos.c]
+	Rewrote WindowFromPoint() function.
+
+Sun Jan 21 1996 17:05:09  Marcus Meissner <msmeissn@faui01.informatik.uni-erlangen.de>
+
+	* [include/toolhelp.h] [misc/toolhelp.c]
+	Added Notify(Un)Register, but no callbacks yet.
+
+Fri Jan 19 01:43:37 1996 Victor Schneider <root@tailor.roman.org>
+
+	* [Makefile.in]
+	Added target for libwine.so.1.0.
+
+	* [library/winmain.c]
+	For WINELIBDLL, _WinMain just returns hInstance instead of calling
+	WinMain().
+
+	* [misc/main.c]
+	For WINELIBDLL, renamed main() to _wine_main() for calling from the
+	stub main function.
+
+	* [library/winestub.c] (new file)
+	Provides a stub main() function for using libwine.so.
+
+Tue Jan 16 11:04:34 1996  Anand Kumria <akumria@ozemail.com.au>
+
+	* [winsocket.c]
+	Fix EPERM problem.
+
+	* [global.c]
+	Attempt to do some sanity checking in MemManInfo().
+
+	* [Changelog]
+	Fix changelog oversight for previous entry.
+
+---------------------------------------------------------------------
 Sun Jan 14 13:45:22 1996  Alexandre Julliard  <julliard@sunsite.unc.edu>
 
 	* [configure.in]
@@ -112,6 +388,9 @@ Tue Jan 02 14:00:00 1996  Anand Kumria <akumria@ozemail.com.au>
 	* [if1632/toolhelp.spec] [include/toolhelp.h]
 	  [misc/user.c] [windows/message.c]
 	Implement TOOLHELP.80 TimerCount. Fix GetTickCount.
+
+	* [winsocket.c]
+	Fixed ENOENT error.
 
 	* [miscemu/dpmi.c]
 	Implement DPMI Get Page Size (AX=0604, INT 31)

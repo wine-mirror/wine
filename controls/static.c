@@ -88,8 +88,13 @@ LONG StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             {
 		CREATESTRUCT * createStruct = (CREATESTRUCT *)PTR_SEG_TO_LIN(lParam);
 		if (createStruct->lpszName)
-                    STATIC_SetIcon( hWnd, LoadIcon( createStruct->hInstance,
-                                             (SEGPTR)createStruct->lpszName ));
+                {
+                    HICON hicon = LoadIcon( createStruct->hInstance,
+                                            (SEGPTR)createStruct->lpszName );
+                    if (!hicon)  /* Try OEM icon (FIXME: is this right?) */
+                        hicon = LoadIcon( 0, (SEGPTR)createStruct->lpszName );
+                    STATIC_SetIcon( hWnd, hicon );
+                }
                 return 1;
             }
             return DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -195,23 +200,23 @@ static void PaintTextfn( HWND hwnd, HDC hdc )
     switch (style & 0x0000000F)
     {
     case SS_LEFT:
-	wFormat = DT_LEFT | DT_EXPANDTABS | DT_WORDBREAK;
+	wFormat = DT_LEFT | DT_EXPANDTABS | DT_WORDBREAK | DT_NOCLIP;
 	break;
 
     case SS_CENTER:
-	wFormat = DT_CENTER | DT_EXPANDTABS | DT_WORDBREAK;
+	wFormat = DT_CENTER | DT_EXPANDTABS | DT_WORDBREAK | DT_NOCLIP;
 	break;
 
     case SS_RIGHT:
-	wFormat = DT_RIGHT | DT_EXPANDTABS | DT_WORDBREAK;
+	wFormat = DT_RIGHT | DT_EXPANDTABS | DT_WORDBREAK | DT_NOCLIP;
 	break;
 
     case SS_SIMPLE:
-	wFormat = DT_LEFT | DT_SINGLELINE | DT_VCENTER;
+	wFormat = DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_NOCLIP;
 	break;
 
     case SS_LEFTNOWORDWRAP:
-	wFormat = DT_LEFT | DT_SINGLELINE | DT_EXPANDTABS | DT_VCENTER;
+	wFormat = DT_LEFT | DT_SINGLELINE | DT_EXPANDTABS | DT_VCENTER | DT_NOCLIP;
 	break;
 
     default:

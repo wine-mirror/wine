@@ -142,10 +142,11 @@ BOOL ResizePalette(HPALETTE hPal, UINT cEntries)
 /***********************************************************************
  *           AnimatePalette          (GDI.367)
  */
-void AnimatePalette(HPALETTE hPal, UINT StartIndex, UINT NumEntries,
+BOOL AnimatePalette(HPALETTE hPal, UINT StartIndex, UINT NumEntries,
 		    LPPALETTEENTRY PaletteColors)
 {
     fprintf(stdnimp,"AnimatePalette: empty stub! \n");
+    return TRUE;
 }
 
 /***********************************************************************

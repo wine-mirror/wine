@@ -25,6 +25,7 @@
 #include "listbox.h"
 #include "dos_fs.h"
 #include "drive.h"
+#include "file.h"
 #include "stackframe.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -338,7 +339,7 @@ LPLISTSTRUCT ListBoxCreateItem(LPHEADLIST lphl, int id)
 }
 
 
-int ListBoxInsertString(LPHEADLIST lphl, UINT uIndex, LPSTR newstr)
+int ListBoxInsertString(LPHEADLIST lphl, UINT uIndex, LPCSTR newstr)
 {
   LPLISTSTRUCT *lppls, lplsnew, lpls;
   HANDLE       hStr;
@@ -401,7 +402,7 @@ int ListBoxInsertString(LPHEADLIST lphl, UINT uIndex, LPSTR newstr)
 }
 
 
-int ListBoxAddString(LPHEADLIST lphl, LPSTR newstr)
+int ListBoxAddString(LPHEADLIST lphl, LPCSTR newstr)
 {
     LONG dwStyle = GetWindowLong(lphl->hSelf,GWL_STYLE);
     UINT pos = (UINT) -1;
@@ -424,7 +425,7 @@ int ListBoxGetText(LPHEADLIST lphl, UINT uIndex, LPSTR OutStr)
     dprintf_listbox(stddeb, "ListBoxGetText // OutStr==NULL\n");
     return 0;
   }
-
+  *OutStr = '\0';
   lpls = ListBoxGetItem (lphl, uIndex);
   if (lpls == NULL) return LB_ERR;
 
@@ -633,55 +634,42 @@ int ListBoxGetSel(LPHEADLIST lphl, WORD wIndex)
 
 /* ------------------------- dir listing ------------------------ */
 
-int ListBoxDirectory(LPHEADLIST lphl, UINT attrib, LPSTR filespec)
+LONG ListBoxDirectory(LPHEADLIST lphl, UINT attrib, LPCSTR filespec)
 {
-    const char *pathPtr, *maskPtr;
-    char mask[12], path[MAX_PATHNAME_LEN];
+    char temp[16], mask[13];
+    char *path, *p;
+    const char *ptr;
     int skip, count;
+    LONG ret;
     DOS_DIRENT entry;
 
-    char temp[256];
-    int   drive;
-    LPSTR tstr;
-
-  dprintf_listbox(stddeb,"ListBoxDirectory: %s, %4x\n",filespec,attrib);
-
-  if (strchr(filespec, '\\') || strchr(filespec, ':')) {
-    if (filespec[1] == ':') {
-      drive = toupper(filespec[0]) - 'A';
-      filespec += 2;
+    dprintf_listbox(stddeb, "ListBoxDirectory: '%s' %04x\n", filespec, attrib);
+    if (!filespec) return LB_ERR;
+    if (!(ptr = DOSFS_GetUnixFileName( filespec, FALSE ))) return LB_ERR;
+    path = xstrdup(ptr);
+    p = strrchr( path, '/' );
+    *p++ = '\0';
+    if (!(ptr = DOSFS_ToDosFCBFormat( p )))
+    {
+        free( path );
+        return LB_ERR;
     }
-    else drive = DRIVE_GetCurrentDrive();
-    strcpy(temp,filespec);
-    tstr = strrchr(temp, '\\');
-    if (tstr != NULL) {
-      *(tstr+1) = 0;
-      filespec += tstr - temp + 1;
-      if (!DRIVE_Chdir( drive, temp )) return 0;
-    }
-    DRIVE_SetCurrentDrive( drive );
-    dprintf_listbox(stddeb,"Changing directory to %c:%s, filemask is %s\n",
-		    drive+'A', temp, filespec);
-  }
+    strcpy( mask, ptr );
 
+    dprintf_listbox(stddeb, "ListBoxDirectory: path=%s mask=%s\n", path, mask);
 
-    if (!(maskPtr = DOSFS_ToDosFCBFormat( filespec ))) return 0;
-    strcpy( mask, maskPtr );
-    if (!(pathPtr = DOSFS_GetUnixFileName( ".", TRUE ))) return 0;
-    lstrcpyn( path, pathPtr, sizeof(path) );
-    skip  = 0;
-    drive = DRIVE_GetCurrentDrive();
-    
-    while ((count = DOSFS_FindNext( path, mask, drive,
-                                    attrib, skip, &entry )) > 0)
+    skip = ret = 0;
+    attrib &= ~FA_LABEL;
+    while ((count = DOSFS_FindNext( path, mask, 0, attrib, skip, &entry )) > 0)
     {
         skip += count;
         if (entry.attr & FA_DIRECTORY)
         {
-            if ((attrib & DDL_DIRECTORY) && strcmp(entry.name, "."))
+            if ((attrib & DDL_DIRECTORY) && strcmp(entry.name, ".          "))
             {
-                sprintf(temp, "[%s]", entry.name);
-                if (ListBoxAddString(lphl, temp) == LB_ERR) break;
+                sprintf(temp, "[%s]", DOSFS_ToDosDTAFormat( entry.name ) );
+                AnsiLower( temp );
+                if ((ret = ListBoxAddString(lphl, temp)) == LB_ERR) break;
             }
         }
         else  /* not a directory */
@@ -690,24 +678,23 @@ int ListBoxDirectory(LPHEADLIST lphl, UINT attrib, LPSTR filespec)
                 ((attrib & (FA_RDONLY|FA_HIDDEN|FA_SYSTEM|FA_ARCHIVE)) ==
                  (entry.attr & (FA_RDONLY|FA_HIDDEN|FA_SYSTEM|FA_ARCHIVE))))
             {
-                if (ListBoxAddString(lphl, entry.name) == LB_ERR) break;
+                strcpy( temp, DOSFS_ToDosDTAFormat( entry.name ) );
+                AnsiLower( temp );
+                if ((ret = ListBoxAddString(lphl, temp)) == LB_ERR) break;
             }
         }
     }
-
     if (attrib & DDL_DRIVES)
     {
         int x;
-        for (x = 0; x < MAX_DOS_DRIVES; x++)
+        strcpy( temp, "[-a-]" );
+        for (x = 0; x < MAX_DOS_DRIVES; x++, temp[2]++)
         {
             if (DRIVE_IsValid(x))
-            {
-                sprintf(temp, "[-%c-]", 'a'+x);
-                if (ListBoxInsertString(lphl, (UINT)-1, temp) == LB_ERR) break;
-            }
+                if ((ret = ListBoxAddString(lphl, temp)) == LB_ERR) break;
         }
     }
-    return 1;
+    return ret;
 }
 
 /* ------------------------- dimensions ------------------------- */
@@ -1372,13 +1359,13 @@ static LONG LBResetContent(HWND hwnd, WORD wParam, LONG lParam)
  */
 static LONG LBDir(HWND hwnd, WORD wParam, LONG lParam)
 {
-  WORD   wRet;
-  LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
-  dprintf_listbox(stddeb,"ListBox LB_DIR !\n");
+    LONG ret;
+    LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
+    dprintf_listbox(stddeb,"ListBox LB_DIR !\n");
 
-  wRet = ListBoxDirectory(lphl, wParam, (LPSTR)PTR_SEG_TO_LIN(lParam));
-  ListBoxUpdateWindow(hwnd, lphl, TRUE);
-  return wRet;
+    ret = ListBoxDirectory(lphl, wParam, (LPSTR)PTR_SEG_TO_LIN(lParam));
+    ListBoxUpdateWindow(hwnd, lphl, TRUE);
+    return ret;
 }
 
 /***********************************************************************
@@ -1390,9 +1377,9 @@ static LONG LBAddString(HWND hwnd, WORD wParam, LONG lParam)
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
 
   if (lphl->HasStrings)
-    wRet = ListBoxAddString(lphl, (LPSTR)PTR_SEG_TO_LIN(lParam));
+    wRet = ListBoxAddString(lphl, (LPCSTR)PTR_SEG_TO_LIN(lParam));
   else
-    wRet = ListBoxAddString(lphl, (LPSTR)lParam);
+    wRet = ListBoxAddString(lphl, (LPCSTR)lParam);
 
   ListBoxUpdateWindow(hwnd,lphl,TRUE);
   return wRet;
@@ -1421,9 +1408,9 @@ static LONG LBInsertString(HWND hwnd, WORD wParam, LONG lParam)
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
 
   if (lphl->HasStrings)
-    wRet = ListBoxInsertString(lphl, wParam, (LPSTR)PTR_SEG_TO_LIN(lParam));
+    wRet = ListBoxInsertString(lphl, wParam, (LPCSTR)PTR_SEG_TO_LIN(lParam));
   else
-    wRet = ListBoxInsertString(lphl, wParam, (LPSTR)lParam);
+    wRet = ListBoxInsertString(lphl, wParam, (LPCSTR)lParam);
 
   ListBoxUpdateWindow(hwnd,lphl,TRUE);
   return wRet;
@@ -1895,70 +1882,126 @@ LRESULT ListBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
-/************************************************************************
- * 		      	DlgDirSelect			[USER.99]
+
+/**********************************************************************
+ *	    DlgDirSelect    (USER.99)
  */
-BOOL DlgDirSelect(HWND hDlg, LPSTR lpStr, int nIDLBox)
+BOOL DlgDirSelect( HWND hDlg, LPSTR lpStr, int id )
 {
-  HWND hwnd;
-  LPHEADLIST lphl;
-  char s[130];
+    char buffer[20];
+    INT i;
 
-  dprintf_listbox( stddeb, "DlgDirSelect("NPFMT", '%s', %d) \n", hDlg, lpStr, 
-		  nIDLBox );
-
-  hwnd = GetDlgItem(hDlg, nIDLBox);
-  lphl = ListBoxGetStorageHeader(hwnd);
-  if(lphl->ItemFocused == -1) {
-    dprintf_listbox(stddeb, "Nothing selected!\n");
-    return FALSE;
-  }
-  ListBoxGetText(lphl, lphl->ItemFocused, s);
-  dprintf_listbox(stddeb, "Selection is %s\n", s);
-  if( s[0] == '[' ) {
-    if( s[1] == '-' ) {
-      strncpy( lpStr, s+2, strlen(s)-4 );    /* device name */
-      lpStr[ strlen(s)-4 ] = 0;
-      strcat( lpStr, ":" );
+    dprintf_listbox( stddeb, "DlgDirSelect: "NPFMT" '%s' %d\n",
+                     hDlg, lpStr, id );
+    if ((i = SendDlgItemMessage( hDlg, id, LB_GETCURSEL, 0, 0 )) == LB_ERR)
+        return FALSE;
+    SendDlgItemMessage( hDlg, id, LB_GETTEXT, i, MAKE_SEGPTR(buffer) );
+    if (buffer[0] == '[')  /* drive or directory */
+    {
+        if (buffer[1] == '-')  /* drive */
+        {
+            lpStr[0] = buffer[2];
+            lpStr[1] = ':';
+            lpStr[2] = '\0';
+            dprintf_listbox( stddeb, "Returning drive '%s'\n", lpStr );
+            return TRUE;
+        }
+        strcpy( lpStr, buffer + 1 );
+        lpStr[strlen(lpStr)-1] = '\\';
+        dprintf_listbox( stddeb, "Returning directory '%s'\n", lpStr );
+        return TRUE;
     }
-    else {
-      strncpy( lpStr, s+1, strlen(s)-2 );    /* directory name */
-      lpStr[ strlen(s)-2 ] = 0;
-      strcat( lpStr, "\\" );
-    }
-    dprintf_listbox( stddeb, "Returning %s\n", lpStr );
-    return TRUE;
-  } else {
-    strcpy( lpStr, s );                     /* file name */
-    dprintf_listbox( stddeb, "Returning %s\n", lpStr );
+    strcpy( lpStr, buffer );
+    dprintf_listbox( stddeb, "Returning file '%s'\n", lpStr );
     return FALSE;
-  }
 }
 
 
-/************************************************************************
- * 			   DlgDirList		       	[USER.100]
+/**********************************************************************
+ *	    DlgDirList    (USER.100)
  */
-INT DlgDirList( HWND hDlg, SEGPTR path, INT idLBox, INT idStatic, WORD wType ) 
+INT DlgDirList( HWND hDlg, SEGPTR spec, INT idLBox, INT idStatic, WORD attrib )
 {
-    INT ret = 0;
-  
-    dprintf_listbox( stddeb, "DlgDirList("NPFMT", %08lx, %d, %d, %04X) \n",
-                     hDlg, (DWORD)path, idLBox, idStatic, wType );
-    if (idLBox)
+    char *filespec = (char *)PTR_SEG_TO_LIN( spec );
+    int drive;
+    HWND hwnd;
+
+#define SENDMSG(msg,wparam,lparam) \
+    ((attrib & DDL_POSTMSGS) ? PostMessage( hwnd, msg, wparam, lparam ) \
+                             : SendMessage( hwnd, msg, wparam, lparam ))
+
+    dprintf_listbox( stddeb, "DlgDirList: "NPFMT" '%s' %d %d %04x\n",
+                     hDlg, filespec ? filespec : "NULL",
+                     idLBox, idStatic, attrib );
+
+    if (filespec && (filespec[1] == ':'))
     {
-        SendDlgItemMessage( hDlg, idLBox, LB_RESETCONTENT, 0, 0 );
-        ret = (SendDlgItemMessage( hDlg, idLBox, LB_DIR, wType, path ) >= 0);
+        drive = toupper( filespec[0] ) - 'A';
+        filespec += 2;
+        if (!DRIVE_SetCurrentDrive( drive )) return FALSE;
     }
-    if (idStatic)
+    else drive = DRIVE_GetCurrentDrive();
+
+    if (idLBox && ((hwnd = GetDlgItem( hDlg, idLBox )) != 0))
+    {
+        char mask[20];
+        char temp[] = "*.*";
+        
+        if (!filespec[0]) strcpy( mask, "*.*" );
+        else
+        {
+            const char *ptr;
+            BYTE attr;
+            if (((ptr = DOSFS_GetUnixFileName( filespec, TRUE )) != NULL) &&
+                FILE_Stat( ptr, &attr, NULL, NULL, NULL ) &&
+                (attr & FA_DIRECTORY))
+            {
+                /* If the path exists and is a directory, chdir to it */
+                if (!DRIVE_Chdir( drive, filespec )) return FALSE;
+                strcpy( mask, "*.*" );
+            }
+            else
+            {
+                char *p, *p2;
+                p = filespec;
+                if ((p2 = strrchr( p, '\\' ))) p = p2 + 1;
+                if ((p2 = strrchr( p, '/' ))) p = p2 + 1;
+                lstrcpyn( mask, p, sizeof(mask) );
+                if (p != filespec)
+                {
+                    p[-1] = '\0';
+                    if (!DRIVE_Chdir( drive, filespec )) return FALSE;
+                }
+            }
+        }
+        
+        strcpy( (char *)PTR_SEG_TO_LIN(spec), mask );
+
+        dprintf_listbox(stddeb, "ListBoxDirectory: path=%c:\\%s mask=%s\n",
+                        'A' + drive, DRIVE_GetDosCwd(drive), mask);
+        
+        SENDMSG( LB_RESETCONTENT, 0, 0 );
+        if ((attrib & DDL_DIRECTORY) && !(attrib & DDL_EXCLUSIVE))
+        {
+            if (SENDMSG( LB_DIR, attrib & ~(DDL_DIRECTORY | DDL_DRIVES),
+                         (LPARAM)spec ) == LB_ERR) return FALSE;
+            if (SENDMSG( LB_DIR, (attrib & (DDL_DIRECTORY | DDL_DRIVES)) | DDL_EXCLUSIVE,
+                         (LPARAM)MAKE_SEGPTR(temp) ) == LB_ERR) return FALSE;
+        }
+        else
+        {
+            if (SENDMSG( LB_DIR, attrib, (LPARAM)spec) == LB_ERR) return FALSE;
+        }
+    }
+
+    if (idStatic && ((hwnd = GetDlgItem( hDlg, idStatic )) != 0))
     {
         char temp[256];
-        int drive = DRIVE_GetCurrentDrive();
         strcpy( temp, "A:\\" );
         temp[0] += drive;
         lstrcpyn( temp+3, DRIVE_GetDosCwd(drive), 253 );
-        SendDlgItemMessage( hDlg, idStatic, WM_SETTEXT,
-                            0, (LPARAM)MAKE_SEGPTR(temp) );
-    } 
-    return ret;
+        AnsiLower( temp );
+        SENDMSG( WM_SETTEXT, 0, (LPARAM)MAKE_SEGPTR(temp) );
+    }
+    return TRUE;
 }

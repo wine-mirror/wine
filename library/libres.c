@@ -68,7 +68,7 @@ HRSRC LIBRES_FindResource( HINSTANCE hModule, LPCSTR name, LPCSTR type )
     for(Res=ResBlock->Resources; *Res; Res++)
       if(name)
       {
-	if((*Res)->type==typeid && !strcmp((*Res)->name,name))
+	if((*Res)->type==typeid && !lstrcmpi((*Res)->name,name))
 	  return (HRSRC)*Res;
       }
       else

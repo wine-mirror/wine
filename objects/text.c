@@ -3,8 +3,8 @@
  *
  * Copyright 1993, 1994 Alexandre Julliard
  *
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993, 1994";
-*/
+ */
+
 #include <stdlib.h>
 #include <X11/Xatom.h>
 #include "windows.h"
@@ -31,8 +31,8 @@ static int spacewidth;
 static int prefix_offset;
 
 
-static char *TEXT_NextLine(HDC hdc, char *str, int *count, char *dest, 
-			   int *len, int width, WORD format)
+static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
+                                  char *dest, int *len, int width, WORD format)
 {
     /* Return next line of text from a string.
      * 
@@ -184,10 +184,10 @@ static char *TEXT_NextLine(HDC hdc, char *str, int *count, char *dest,
 /***********************************************************************
  *           DrawText    (USER.85)
  */
-int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
+int DrawText( HDC hdc, LPCSTR str, int count, LPRECT rect, WORD flags )
 {
     SIZE size;
-    char *strPtr;
+    const char *strPtr;
     static char line[1024];
     int len, lh;
     int prefix_x = 0;

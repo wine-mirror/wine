@@ -601,11 +601,12 @@ BOOL DestroyWindow( HWND hwnd )
 /***********************************************************************
  *           CloseWindow   (USER.43)
  */
-void CloseWindow(HWND hWnd)
+BOOL CloseWindow(HWND hWnd)
 {
     WND * wndPtr = WIN_FindWndPtr(hWnd);
-    if (wndPtr->dwStyle & WS_CHILD) return;
+    if (wndPtr->dwStyle & WS_CHILD) return TRUE;
     ShowWindow(hWnd, SW_MINIMIZE);
+    return TRUE;
 }
 
  
@@ -850,7 +851,7 @@ void WIN16_SetWindowText( HWND hwnd, SEGPTR lpString )
     SendMessage( hwnd, WM_SETTEXT, 0, (DWORD)lpString );
 }
 
-void SetWindowText( HWND hwnd, LPSTR lpString )
+void SetWindowText( HWND hwnd, LPCSTR lpString )
 {
     HANDLE handle;
 
@@ -1394,8 +1395,6 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE hOfStruct,
  HCURSOR	hCurrentCursor = 0;
  HWND		hCurrentWnd = 0;
  WORD	        btemp;
-
- fprintf(stdnimp,"DragObject: experimental\n"); 
 
  lpDragInfo = (LPDRAGINFO) GlobalLock(hDragInfo);
  spDragInfo = (SEGPTR) WIN16_GlobalLock(hDragInfo);

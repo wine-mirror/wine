@@ -34,6 +34,7 @@
  */
 void FILE_SetDosError(void)
 {
+    dprintf_file(stddeb, "FILE_SetDosError: errno = %d\n", errno );
     switch (errno)
     {
     case EAGAIN:
@@ -44,18 +45,18 @@ void FILE_SetDosError(void)
         break;
     case ENOSPC:
         DOS_ERROR( ER_DiskFull, EC_MediaError, SA_Abort, EL_Disk );
-        break;				
+        break;
     case EACCES:
     case EPERM:
     case EROFS:
-        DOS_ERROR( ER_WriteProtected, EC_AccessDenied, SA_Abort, EL_Disk );
+        DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
         break;
     case EBUSY:
         DOS_ERROR( ER_LockViolation, EC_AccessDenied, SA_Abort, EL_Disk );
-        break;		
+        break;
     case ENOENT:
         DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
-        break;				
+        break;
     case EISDIR:
         DOS_ERROR( ER_CanNotMakeDir, EC_AccessDenied, SA_Abort, EL_Unknown );
         break;
@@ -65,7 +66,7 @@ void FILE_SetDosError(void)
         break;
     case EEXIST:
         DOS_ERROR( ER_FileExists, EC_Exists, SA_Abort, EL_Disk );
-        break;				
+        break;
     default:
         perror( "int21: unknown errno" );
         DOS_ERROR( ER_GeneralFailure, EC_SystemFailure, SA_Abort, EL_Unknown );
@@ -98,6 +99,9 @@ static HFILE FILE_AllocTaskHandle( int handle )
         return -1;
     }
     *fp = (BYTE)handle;
+    dprintf_file(stddeb, 
+       "FILE_AllocTaskHandle: returning %d for handle %d file %d of %d \n", 
+                 (fp - files),handle,pdb->nbFiles - i, pdb->nbFiles  );
     return (HFILE)(fp - files);
 }
 
@@ -118,6 +122,8 @@ static void FILE_FreeTaskHandle( HFILE handle )
         exit(1);
     }
     files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
+    dprintf_file( stddeb,"FILE_FreeTaskHandle: dos=%d unix=%d\n",
+                  handle, files[handle]);
     if ((handle<0) || (handle >= (INT)pdb->nbFiles) || (files[handle] == 0xff))
     {
         fprintf( stderr, "FILE_FreeTaskHandle: invalid file handle %d\n",
@@ -166,6 +172,7 @@ void FILE_CloseAllFiles( HANDLE hPDB )
 
     if (!pdb) return;
     files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
+    fprintf(stderr,"FILE_CloseAllFiles: closing %d files\n",pdb->nbFiles);
     for (count = pdb->nbFiles; count > 0; count--, files++)
     {
         if (*files != 0xff)
@@ -178,12 +185,46 @@ void FILE_CloseAllFiles( HANDLE hPDB )
 
 
 /***********************************************************************
+ *           FILE_OpenUnixFile
+ */
+static int FILE_OpenUnixFile( const char *name, int mode )
+{
+    int handle;
+    struct stat st;
+
+    if ((handle = open( name, mode )) == -1)
+    {
+        if (Options.allowReadOnly && (mode == O_RDWR))
+        {
+            if ((handle = open( name, O_RDONLY )) != -1)
+                fprintf( stderr, "Warning: could not open %s for writing, opening read-only.\n", name );
+        }
+    }
+    if (handle != -1)  /* Make sure it's not a directory */
+    {
+        if ((fstat( handle, &st ) == -1))
+        {
+            FILE_SetDosError();
+            close( handle );
+            handle = -1;
+        }
+        else if (S_ISDIR(st.st_mode))
+        {
+            DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
+            close( handle );
+            handle = -1;
+        }
+    }
+    return handle;
+}
+
+
+/***********************************************************************
  *           FILE_Open
  */
 int FILE_Open( LPCSTR path, int mode )
 {
     const char *unixName;
-    int handle;
 
     dprintf_file(stddeb, "FILE_Open: '%s' %04x\n", path, mode );
     if ((unixName = DOSFS_IsDevice( path )) != NULL)
@@ -191,26 +232,13 @@ int FILE_Open( LPCSTR path, int mode )
         dprintf_file( stddeb, "FILE_Open: opening device '%s'\n", unixName );
         if (!unixName[0])  /* Non-existing device */
         {
+            dprintf_file(stddeb, "FILE_Open: Non-existing device\n");
             DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
             return -1;
         }
-        handle = open( unixName, mode );
     }
-    else
-    {
-        if (!(unixName = DOSFS_GetUnixFileName( path, TRUE ))) return -1;
-
-        if ((handle = open( unixName, mode )) == -1)
-        {
-            if (Options.allowReadOnly && (mode == O_RDWR))
-            {
-                if ((handle = open( unixName, O_RDONLY )) != -1)
-                    fprintf( stderr, "Warning: could not open %s for writing, opening read-only.\n", unixName );
-            }
-        }
-    }
-    if (handle == -1) FILE_SetDosError();
-    return handle;
+    else if (!(unixName = DOSFS_GetUnixFileName( path, TRUE ))) return -1;
+    return FILE_OpenUnixFile( unixName, mode );
 }
 
 
@@ -327,7 +355,7 @@ int FILE_MakeDir( LPCSTR path )
         DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
         return 0;
     }
-    if (!(unixName = DOSFS_GetUnixFileName( path, TRUE ))) return 0;
+    if (!(unixName = DOSFS_GetUnixFileName( path, FALSE ))) return 0;
     if ((mkdir( unixName, 0777 ) == -1) && (errno != EEXIST))
     {
         FILE_SetDosError();
@@ -373,6 +401,7 @@ HFILE FILE_Dup( HFILE hFile )
     HFILE dosHandle;
 
     if ((handle = FILE_GetUnixHandle( hFile )) == -1) return HFILE_ERROR;
+    dprintf_file( stddeb, "FILE_Dup for handle %d\n",handle);
     if ((newhandle = dup(handle)) == -1)
     {
         FILE_SetDosError();
@@ -380,6 +409,7 @@ HFILE FILE_Dup( HFILE hFile )
     }
     if ((dosHandle = FILE_AllocTaskHandle( newhandle )) == HFILE_ERROR)
         close( newhandle );
+    dprintf_file( stddeb, "FILE_Dup return handle %d\n",dosHandle);
     return dosHandle;
 }
 
@@ -396,6 +426,7 @@ HFILE FILE_Dup2( HFILE hFile1, HFILE hFile2 )
     int handle, newhandle;
 
     if ((handle = FILE_GetUnixHandle( hFile1 )) == -1) return HFILE_ERROR;
+    dprintf_file( stddeb, "FILE_Dup2 for handle %d\n",handle);
     if ((hFile2 < 0) || (hFile2 >= (INT)pdb->nbFiles))
     {
         DOS_ERROR( ER_InvalidHandle, EC_ProgramError, SA_Abort, EL_Disk );
@@ -414,8 +445,14 @@ HFILE FILE_Dup2( HFILE hFile1, HFILE hFile2 )
         return HFILE_ERROR;
     }
     files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
-    if (files[hFile2] != 0xff) close( files[hFile2] );
+    if (files[hFile2] != 0xff) 
+    {
+        dprintf_file( stddeb, "FILE_Dup2 closing old  handle2 %d\n",
+                      files[hFile2]);
+        close( files[hFile2] );
+    }
     files[hFile2] = (BYTE)newhandle;
+    dprintf_file( stddeb, "FILE_Dup2 return handle2 %d\n",newhandle);
     return hFile2;
 }
 
@@ -435,7 +472,7 @@ int FILE_OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
     ofs->cBytes = sizeof(OFSTRUCT);
     ofs->nErrCode = 0;
     if (mode & OF_REOPEN) name = ofs->szPathName;
-    dprintf_file( stddeb, "Openfile: %s %04x\n", name, mode );
+    dprintf_file( stddeb, "FILE_Openfile: %s %04x\n", name, mode );
 
     /* OF_PARSE simply fills the structure */
 
@@ -444,10 +481,12 @@ int FILE_OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
         if (!(dosName = DOSFS_GetDosTrueName( name, FALSE )))
         {
             ofs->nErrCode = DOS_ExtendedError;
+            dprintf_file( stddeb, "FILE_Openfile: %s  return = -1\n", name);
             return -1;
         }
         lstrcpyn( ofs->szPathName, dosName, sizeof(ofs->szPathName) );
         ofs->fFixedDisk = (GetDriveType( dosName[0]-'A' ) != DRIVE_REMOVABLE);
+        dprintf_file( stddeb, "FILE_Openfile: %s  return = 0\n", name);
         return 0;
     }
 
@@ -459,18 +498,21 @@ int FILE_OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
         if ((unixName = DOSFS_GetUnixFileName( name, FALSE )) == NULL)
         {
             ofs->nErrCode = DOS_ExtendedError;
+            dprintf_file( stddeb, "FILE_Openfile: %s  return = -1\n", name);
             return -1;
         }
-        dprintf_file( stddeb, "OpenFile: creating '%s'\n", unixName );
+        dprintf_file( stddeb, "FILE_OpenFile: creating '%s'\n", unixName );
         handle = open( unixName, O_TRUNC | O_RDWR | O_CREAT, 0666 );
         if (handle == -1)
         {
             FILE_SetDosError();
             ofs->nErrCode = DOS_ExtendedError;
+            dprintf_file( stddeb, "FILE_Openfile: %s  return = -1\n", name);
             return -1;
         }   
         lstrcpyn( ofs->szPathName, DOSFS_GetDosTrueName( name, FALSE ),
                   sizeof(ofs->szPathName) );
+        dprintf_file( stddeb, "FILE_Openfile: %s  return = %d \n", name, handle);
         return handle;
     }
 
@@ -540,21 +582,26 @@ int FILE_OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
     }
 
 not_found:
-    dprintf_file( stddeb, "OpenFile: '%s' not found\n", name );
+    dprintf_file( stddeb, "FILE_OpenFile: '%s' not found\n", name );
     DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
     ofs->nErrCode = ER_FileNotFound;
+    dprintf_file( stddeb, "FILE_Openfile: %s  return =-1\n", name);
     return -1;
 
 found:
-    dprintf_file( stddeb, "OpenFile: found '%s'\n", unixName );
+    dprintf_file( stddeb, "FILE_OpenFile: found '%s'\n", unixName );
     lstrcpyn( ofs->szPathName, DOSFS_GetDosTrueName( ofs->szPathName, FALSE ),
               sizeof(ofs->szPathName) );
 
-    if (mode & OF_PARSE) return 0;
-
+    if (mode & OF_PARSE) 
+    {
+          dprintf_file( stddeb, "FILE_Openfile: %s  return = 0\n", name);
+          return 0;
+    }
     if (mode & OF_DELETE)
     {
         if (unlink( unixName ) == -1) goto not_found;
+        dprintf_file( stddeb, "FILE_Openfile: %s  return = 0\n", name);
         return 0;
     }
 
@@ -569,27 +616,24 @@ found:
         unixMode = O_RDONLY; break;
     }
 
-    if ((handle = open( unixName, unixMode )) == -1)
-    {
-        if (Options.allowReadOnly && (unixMode == O_RDWR))
-        {
-            if ((handle = open( unixName, O_RDONLY )) != -1)
-                fprintf( stderr, "Warning: could not open %s for writing, opening read-only.\n", unixName );
-        }
-    }
-    if (handle == -1) goto not_found;
+    if ((handle = FILE_OpenUnixFile( unixName, unixMode )) == -1)
+        goto not_found;
 
     if (fstat( handle, &st ) != -1)
     {
         if ((mode & OF_VERIFY) && (mode & OF_REOPEN))
         {
             if (memcmp( ofs->reserved, &st.st_mtime, sizeof(ofs->reserved) ))
+            {
+                dprintf_file( stddeb, "FILE_Openfile: %s  return = -1\n", name);
                 return -1;
+            }
         }
         memcpy( ofs->reserved, &st.st_mtime, sizeof(ofs->reserved) );
     }
 
     if (mode & OF_EXIST) close( handle );
+    dprintf_file( stddeb, "FILE_Openfile: %s  return = %d\n", name,handle);
 
     return handle;
 }
@@ -654,6 +698,7 @@ HFILE OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
     int unixHandle;
     HFILE handle;
 
+    dprintf_file( stddeb, "OpenFile %s \n",name);
     if ((unixHandle = FILE_OpenFile( name, ofs, mode )) == -1)
         return HFILE_ERROR;
     if ((handle = FILE_AllocTaskHandle( unixHandle )) == HFILE_ERROR)
@@ -673,9 +718,9 @@ HFILE _lclose( HFILE hFile )
 {
     int handle;
 
-    dprintf_file( stddeb, "_lclose: handle %d\n", hFile );
     
     if ((handle = FILE_GetUnixHandle( hFile )) == -1) return HFILE_ERROR;
+    dprintf_file( stddeb, "_lclose: doshandle %d unixhandle %d\n", hFile,handle );
     if (handle <= 2)
     {
         fprintf( stderr, "_lclose: internal error: closing handle %d\n", handle );
@@ -738,7 +783,7 @@ INT _lcreat_uniq( LPCSTR path, INT attr )
 LONG _llseek( HFILE hFile, LONG lOffset, INT nOrigin )
 {
     int handle, origin, result;
-	
+
     dprintf_file( stddeb, "_llseek: handle %d, offset %ld, origin %d\n", 
                   hFile, lOffset, nOrigin);
 
@@ -805,10 +850,10 @@ LONG _hread( HFILE hFile, LPSTR buffer, LONG count )
 
     dprintf_file( stddeb, "_hread: %d %p %ld\n", hFile, buffer, count );
   
-    if ((handle = FILE_GetUnixHandle( hFile )) == -1) return HFILE_ERROR;
+    if ((handle = FILE_GetUnixHandle( hFile )) == -1) return -1;
     if (!count) return 0;
     if ((result = read( handle, buffer, count )) == -1) FILE_SetDosError();
-    return (result == -1) ? HFILE_ERROR : result;
+    return result;
 }
 
 

@@ -24,8 +24,8 @@ id	12
 70 pascal16 ClassNext(ptr) ClassNext
 71 pascal16 SystemHeapInfo(ptr) SystemHeapInfo
 72 pascal16 MemManInfo(ptr) MemManInfo
-73 stub NOTIFYREGISTER
-74 stub NOTIFYUNREGISTER
+73 pascal16 NotifyRegister(word segptr word) NotifyRegister
+74 pascal16 NotifyUnregister(word) NotifyUnregister
 75 return INTERRUPTREGISTER 6 0
 76 return INTERRUPTUNREGISTER 2 0
 77 stub TERMINATEAPP

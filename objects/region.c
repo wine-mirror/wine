@@ -220,7 +220,7 @@ HRGN CreateRoundRectRgn( short left, short top, short right, short bottom,
 /***********************************************************************
  *           CreateEllipticRgn    (GDI.54)
  */
-HRGN CreateEllipticRgn( short left, short top, short right, short bottom )
+HRGN CreateEllipticRgn( INT left, INT top, INT right, INT bottom )
 {
     return CreateRoundRectRgn( left, top, right, bottom,
                                right-left, bottom-top );
@@ -402,7 +402,7 @@ BOOL REGION_FrameRgn( HRGN hDest, HRGN hSrc, int x, int y )
 /***********************************************************************
  *           CombineRgn    (GDI.451)
  */
-int CombineRgn( HRGN hDest, HRGN hSrc1, HRGN hSrc2, short mode )
+INT CombineRgn( HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode )
 {
     RGNOBJ *destObj, *src1Obj, *src2Obj;
     

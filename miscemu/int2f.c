@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include "registers.h"
+#include "ldt.h"
 #include "wine.h"
+#include "drive.h"
 #include "msdos.h"
 #include "miscemu.h"
 #include "module.h"
@@ -15,6 +18,7 @@
 #define VXD_BASE 400
 
 static void do_int2f_16(struct sigcontext_struct *context);
+void do_mscdex(struct sigcontext_struct *context);
 
 /**********************************************************************
  *	    INT_Int2fHandler
@@ -30,7 +34,7 @@ void INT_Int2fHandler( struct sigcontext_struct context )
         break;
 
     case 0x15: /* mscdex */
-        /* ignore requests */
+        do_mscdex(&context);
         break;
 
     case 0x16:
@@ -126,5 +130,52 @@ static void do_int2f_16(struct sigcontext_struct *context)
 
     default:
         INT_BARF( context, 0x2f );
+    }
+}
+
+void do_mscdex(struct sigcontext_struct *context)
+{
+    int drive, count;
+    char *p;
+
+    switch(AL_reg(context))
+    {
+        case 0x00: /* Installation check */
+            /* Count the number of contiguous CDROM drives
+             */
+            for (drive = count = 0; drive < MAX_DOS_DRIVES; drive++)
+            {
+                if (DRIVE_GetType(drive) == TYPE_CDROM)
+                {
+                    while (DRIVE_GetType(drive + count) == TYPE_CDROM) count++;
+                    break;
+                }
+            }
+
+            BX_reg(context) = count;
+            CX_reg(context) = (drive < MAX_DOS_DRIVES) ? drive : 0;
+            break;
+
+        case 0x0B: /* drive check */
+            AX_reg(context) = (DRIVE_GetType(CX_reg(context)) == TYPE_CDROM);
+            BX_reg(context) = 0xADAD;
+            break;
+
+        case 0x0C: /* get version */
+            BX_reg(context) = 0x020a;
+            break;
+
+        case 0x0D: /* get drive letters */
+            p = PTR_SEG_OFF_TO_LIN(ES_reg(context), BX_reg(context));
+            memset( p, 0, MAX_DOS_DRIVES );
+            for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
+            {
+                if (DRIVE_GetType(drive) == TYPE_CDROM) *p++ = drive;
+            }
+            break;
+
+        default:
+            fprintf(stderr, "Unimplemented MSCDEX function 0x%02.2X.\n", AL_reg(context));
+            break;
     }
 }

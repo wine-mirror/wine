@@ -16,9 +16,9 @@
 #endif
 #include <unistd.h>
 
-#include "wine.h"
 #include "windows.h"
 #include "comm.h"
+#include "options.h"
 #include "stddebug.h"
 /* #define DEBUG_COMM */
 /* #undef  DEBUG_COMM */
@@ -40,11 +40,12 @@ void COMM_Init(void)
 		option[3] = '1' + x;
 		option[4] = '\0';
 
-		GetPrivateProfileString("serialports", option, "*", temp, sizeof(temp), WINE_INI);
+		PROFILE_GetWineIniString( "serialports", option, "*",
+                                          temp, sizeof(temp) );
 		if (!strcmp(temp, "*") || *temp == '\0') 
 			COM[x].devicename = NULL;
 		else {
-		  	btemp = index(temp,',');
+		  	btemp = strchr(temp,',');
 			if (btemp != NULL) {
 			  	*btemp++ = '\0';
 				COM[x].baudrate = atoi(btemp);
@@ -69,7 +70,8 @@ void COMM_Init(void)
 		option[3] = '1' + x;
 		option[4] = '\0';
 
-		GetPrivateProfileString("parallelports", option, "*", temp, sizeof(temp), WINE_INI);
+		PROFILE_GetWineIniString( "parallelports", option, "*",
+                                          temp, sizeof(temp) );
 		if (!strcmp(temp, "*") || *temp == '\0')
 			LPT[x].devicename = NULL;
 		else {
@@ -124,7 +126,7 @@ int WinError(void)
 		}
 }
 
-int BuildCommDCB(LPSTR device, DCB FAR *lpdcb)
+BOOL BuildCommDCB(LPCSTR device, LPDCB lpdcb)
 {
 	/* "COM1:9600,n,8,1"	*/
 	/*  012345		*/
@@ -219,7 +221,7 @@ int BuildCommDCB(LPSTR device, DCB FAR *lpdcb)
 	return 0;
 }
 
-int OpenComm(LPSTR device, UINT cbInQueue, UINT cbOutQueue)
+int OpenComm(LPCSTR device, UINT cbInQueue, UINT cbOutQueue)
 {
 	int port, fd;
 

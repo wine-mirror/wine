@@ -73,10 +73,7 @@ depend:: $(C_SRCS)
 	mv tmp_make Makefile
 
 clean::
-	$(RM) *.o \#*\# *~ *.bak *.flc tmp_make winerctmp.c
-
-distclean:: clean
-	$(RM) Makefile
+	$(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc tmp_make winerctmp.c
 
 dummy:
 

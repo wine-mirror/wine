@@ -14,6 +14,7 @@
 #include "alias.h"
 #include "stackframe.h"
 #include "xmalloc.h"
+#include "struct32.h"
 
 /* Structure copy functions */
 static void MSG16to32(MSG *msg16,struct WIN32_MSG *msg32)
@@ -36,6 +37,22 @@ static void MSG32to16(struct WIN32_MSG *msg32,MSG *msg16)
 	msg16->time=msg32->time;
 	msg16->pt.x=msg32->pt.x;
 	msg16->pt.y=msg32->pt.y;
+}
+
+void USER32_RECT32to16(const RECT32* r32,RECT *r16)
+{
+	r16->left = r32->left;
+	r16->right = r32->right;
+	r16->top = r32->top;
+	r16->bottom = r32->bottom;
+}
+
+void USER32_RECT16to32(const RECT* r16,RECT32 *r32)
+{
+	r32->left = r16->left;
+	r32->right = r16->right;
+	r32->top = r16->top;
+	r32->bottom = r16->bottom;
 }
 
 /***********************************************************************
@@ -195,3 +212,38 @@ DWORD USER32_CreateWindowExA(long flags,char* class,char *title,
     GlobalFree(titleh);
     return retval;
 }
+
+/***********************************************************************
+ *         InvalidateRect           (USER32.327)
+ */
+BOOL USER32_InvalidateRect(HWND hWnd,const RECT32 *lpRect,BOOL bErase)
+{
+	RECT r;
+	USER32_RECT32to16(lpRect,&r);
+	InvalidateRect(hWnd,&r,bErase);
+	/* FIXME: Return value */
+	return 0;
+}
+
+/***********************************************************************
+ *          DrawTextA                (USER32.163)
+ */
+int USER32_DrawTextA(HDC hdc,LPCSTR lpStr,int count,RECT32* r32,UINT uFormat)
+{
+	RECT r;
+	USER32_RECT32to16(r32,&r);
+	return DrawText(hdc,lpStr,count,&r,uFormat);
+}
+
+/***********************************************************************
+ *          GetClientRect            (USER32.219)
+ */
+BOOL USER32_GetClientRect(HWND hwnd,RECT32 *r32)
+{
+	RECT r;
+	GetClientRect(hwnd,&r);
+	USER32_RECT16to32(&r,r32);
+	/* FIXME: return value */
+	return 0;
+}
+

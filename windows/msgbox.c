@@ -15,8 +15,8 @@
 #include "task.h"
 
 typedef struct {
-  LPSTR	title;
-  LPSTR text;
+  LPCSTR title;
+  LPCSTR text;
   WORD  type;
 } MSGBOX, *LPMSGBOX;
 
@@ -179,7 +179,7 @@ LRESULT SystemMessageBoxProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
  *			MessageBox  [USER.1]
  */
 
-int MessageBox(HWND hWnd, LPSTR text, LPSTR title, WORD type)
+int MessageBox(HWND hWnd, LPCSTR text, LPCSTR title, WORD type)
 {
     HANDLE handle;
     MSGBOX mbox;
@@ -214,7 +214,7 @@ int MessageBox(HWND hWnd, LPSTR text, LPSTR title, WORD type)
  *			FatalAppExit  [USER.137]
  */
 
-void FatalAppExit(WORD wAction, LPSTR str)
+void FatalAppExit(UINT fuAction, LPCSTR str)
 {
   MessageBox(0, str, NULL, MB_SYSTEMMODAL | MB_OK);
   TASK_KillCurrentTask(0);

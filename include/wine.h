@@ -1,10 +1,6 @@
 #ifndef  __WINE_WINE_H
 #define  __WINE_WINE_H
 
-extern char *WineIniFileName(void);
-
-#define WINE_INI WineIniFileName()
-
 #ifdef i386
 extern int runtime_cpu (void);
 #else

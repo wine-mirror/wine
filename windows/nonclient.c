@@ -93,16 +93,16 @@ static void NC_AdjustRect( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
 /***********************************************************************
  *           AdjustWindowRect    (USER.102)
  */
-void AdjustWindowRect( LPRECT rect, DWORD style, BOOL menu )
+BOOL AdjustWindowRect( LPRECT rect, DWORD style, BOOL menu )
 {
-    AdjustWindowRectEx( rect, style, menu, 0 );
+    return AdjustWindowRectEx( rect, style, menu, 0 );
 }
 
 
 /***********************************************************************
  *           AdjustWindowRectEx    (USER.454)
  */
-void AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
+BOOL AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
 {
       /* Correct the window style */
 
@@ -115,6 +115,7 @@ void AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
       style, menu, exStyle );
 
     NC_AdjustRect( rect, style, menu, exStyle );
+    return TRUE;
 }
 
 

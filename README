@@ -38,81 +38,15 @@ run "make depend; make".
 
 3. SETUP
 
+Once Wine has been built correctly, you can do "make install"; this
+will install the wine executable and the man page.
+
 Wine requires you to have a file /usr/local/etc/wine.conf (you can
 supply a different name when configuring wine) or a file called .winerc
 in your home directory.
 
-The format of this config file is just like a Windows .ini file.
-The file wine.ini contains a config file example.
-
-Here's an explanation of each section:
-
-* [drives]
-
-format: <driveletter> = <rootdirectory>
-default: none
-
-This section is used to specify the root directory of each `dos'drive 
-as Windows' applications require a dos/mswindows based diskdrive & 
-directory scheme. 
-
-If you mounted your dos-partition as /dos and installed Microsoft Windows 
-in c:\windows than you should specify c=/dos in the drives section.
-
-* [wine]
-
-format: windows = <directory>
-default: c:\windows
-
-Used to specify an different windows directory.
-
-format: system = <directory>
-default: c:\windows\system
-
-Used to specify an different system directory.
-
-format: temp = <directory>
-default: c:\temp
-
-Used to specify a directory where Windows applications can store temporary
-files.
-
-format: path = <directories separated by semi-colons>
-default: c:\windows;c:\windows\system
-
-Used to specify the path which will be used to find executables and DLL's.
-
-format: symboltablefile = <filename>
-default: wine.sym
-
-Used to specify the path and file name of the symbol table used by the
-built-in debugger.
-
-* [serialports]
-
-format: com[12345678] = <devicename>
-default: none
-
-Used to specify the devices which are used as com1 - com8.
-
-* [parallelports]
-
-format: lpt[12345678] = <devicename>
-default: none
-
-Used to specify the devices which are used as lpt1 - lpt8.
-
-* [spy]
-
-format: exclude = <message names and/or EXCLUDEALL separated by commas >
-default: none
-
-Used to specify which messages will be excluded from the message logging.
-
-format: include = <message names and/or INCLUDEALL separated by commas >
-default: none
-
-Used to specify which messages will be included in the message logging.
+The format of this file is explained in the man page. The file
+wine.ini contains a config file example.
 
 
 4. RUNNING PROGRAMS

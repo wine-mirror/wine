@@ -485,7 +485,9 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 		dprintf_midi(stddeb, "MIDI_mciPlay // MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 		mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
 			MCIMidiDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+#if 0
 		exit(1);
+#endif
 		}
 	return 0;
 #else

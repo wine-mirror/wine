@@ -1,5 +1,5 @@
 /*
- * DOS drive handling functions
+ * DOS drives handling functions
  *
  * Copyright 1993 Erik Bos
  * Copyright 1996 Alexandre Julliard
@@ -7,12 +7,26 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+
+#if defined(__linux__) || defined(sun)
+#include <sys/vfs.h>
+#endif
+#if defined(__NetBSD__) || defined(__FreeBSD__)
+#include <sys/param.h>
+#include <sys/mount.h>
+#include <sys/errno.h>
+#endif
+#ifdef __svr4__
+#include <sys/statfs.h>
+#endif
 
 #include "windows.h"
 #include "dos_fs.h"
 #include "drive.h"
 #include "file.h"
 #include "msdos.h"
+#include "options.h"
 #include "task.h"
 #include "xmalloc.h"
 #include "stddebug.h"
@@ -20,74 +34,128 @@
 
 typedef struct
 {
-    char *root;      /* root dir in Unix format without trailing '/' */
-    char *dos_cwd;   /* cwd in DOS format without leading or trailing '\' */
-    char *unix_cwd;  /* cwd in Unix format without leading or trailing '/' */
-    char  label[12]; /* drive label */
-    DWORD serial;    /* drive serial number */
-    WORD  type;      /* drive type */
-    BYTE  disabled;  /* disabled flag */
+    char     *root;      /* root dir in Unix format without trailing / */
+    char     *dos_cwd;   /* cwd in DOS format without leading or trailing \ */
+    char     *unix_cwd;  /* cwd in Unix format without leading or trailing / */
+    char      label[12]; /* drive label */
+    DWORD     serial;    /* drive serial number */
+    DRIVETYPE type;      /* drive type */
+    BYTE  disabled;      /* disabled flag */
 } DOSDRIVE;
 
+
+static const char *DRIVE_Types[] =
+{
+    "floppy",   /* TYPE_FLOPPY */
+    "hd",       /* TYPE_HD */
+    "cdrom",    /* TYPE_CDROM */
+    "network"   /* TYPE_NETWORK */
+};
+
+
 static DOSDRIVE DOSDrives[MAX_DOS_DRIVES];
-static int DRIVE_CurDrive = 0;
+static int DRIVE_CurDrive = -1;
 
 static HTASK DRIVE_LastTask = 0;
+
+
+/***********************************************************************
+ *           DRIVE_GetDriveType
+ */
+static DRIVETYPE DRIVE_GetDriveType( const char *name )
+{
+    char buffer[20];
+    int i;
+
+    PROFILE_GetWineIniString( name, "Type", "hd", buffer, sizeof(buffer) );
+    for (i = 0; i < sizeof(DRIVE_Types)/sizeof(DRIVE_Types[0]); i++)
+    {
+        if (!lstrcmpi( buffer, DRIVE_Types[i] )) return (DRIVETYPE)i;
+    }
+    fprintf( stderr, "%s: unknown type '%s', defaulting to 'hd'.\n",
+             name, buffer );
+    return TYPE_HD;
+}
+
 
 /***********************************************************************
  *           DRIVE_Init
  */
 int DRIVE_Init(void)
 {
-    int i, count = 0;
-    char drive[2] = "A";
+    int i, len, count = 0;
+    char name[] = "Drive A";
     char path[MAX_PATHNAME_LEN];
+    char buffer[20];
     char *p;
+    DOSDRIVE *drive;
 
-    for (i = 0; i < MAX_DOS_DRIVES; i++, drive[0]++)
+    for (i = 0, drive = DOSDrives; i < MAX_DOS_DRIVES; i++, name[6]++, drive++)
     {
-        GetPrivateProfileString( "drives", drive, "",
-                                 path, sizeof(path)-1, WineIniFileName() );
+        PROFILE_GetWineIniString( name, "Path", "", path, sizeof(path)-1 );
         if (path[0])
         {
             p = path + strlen(path) - 1;
             while ((p > path) && ((*p == '/') || (*p == '\\'))) *p-- = '\0';
-            DOSDrives[i].root     = xstrdup( path );
-            DOSDrives[i].dos_cwd  = xstrdup( "" );
-            DOSDrives[i].unix_cwd = xstrdup( "" );
-            sprintf( DOSDrives[i].label, "DRIVE-%c    ", drive[0] );
-            DOSDrives[i].serial   = 0x12345678;
-            DOSDrives[i].type     = (i < 2) ? DRIVE_REMOVABLE : DRIVE_FIXED;
-            DOSDrives[i].disabled = 0;
+            drive->root     = xstrdup( path );
+            drive->dos_cwd  = xstrdup( "" );
+            drive->unix_cwd = xstrdup( "" );
+            drive->type     = DRIVE_GetDriveType( name );
+            drive->disabled = 0;
+
+            /* Get the drive label */
+            PROFILE_GetWineIniString( name, "Label", name, drive->label, 12 );
+            if ((len = strlen(drive->label)) < 11)
+            {
+                /* Pad label with spaces */
+                memset( drive->label + len, ' ', 11 - len );
+                drive->label[12] = '\0';
+            }
+
+            /* Get the serial number */
+            PROFILE_GetWineIniString( name, "Serial", "12345678",
+                                      buffer, sizeof(buffer) );
+            drive->serial = strtoul( buffer, NULL, 16 );
+
+            /* Make the first hard disk the current drive */
+            if ((DRIVE_CurDrive == -1) && (drive->type == TYPE_HD))
+                DRIVE_CurDrive = i;
+
             count++;
+            dprintf_dosfs( stddeb, "%s: path=%s type=%s label='%s' serial=%08lx\n",
+                           name, path, DRIVE_Types[drive->type],
+                           drive->label, drive->serial );
         }
-        dprintf_dosfs( stddeb, "Drive %c -> %s\n", 'A' + i,
-                       path[0] ? path : "** None **" );
+        else dprintf_dosfs( stddeb, "%s: not defined\n", name );
     }
 
     if (!count) 
     {
         fprintf( stderr, "Warning: no valid DOS drive found\n" );
         /* Create a C drive pointing to Unix root dir */
-        DOSDrives[i].root     = xstrdup( "/" );
-        DOSDrives[i].dos_cwd  = xstrdup( "" );
-        DOSDrives[i].unix_cwd = xstrdup( "" );
-        sprintf( DOSDrives[i].label, "DRIVE-%c    ", drive[0] );
-        DOSDrives[i].serial   = 0x12345678;
-        DOSDrives[i].type     = DRIVE_FIXED;
-        DOSDrives[i].disabled = 0;
+        DOSDrives[2].root     = xstrdup( "/" );
+        DOSDrives[2].dos_cwd  = xstrdup( "" );
+        DOSDrives[2].unix_cwd = xstrdup( "" );
+        strcpy( DOSDrives[2].label, "Drive C    " );
+        DOSDrives[2].serial   = 0x12345678;
+        DOSDrives[2].type     = TYPE_HD;
+        DOSDrives[2].disabled = 0;
+        DRIVE_CurDrive = 2;
     }
 
-    /* Make the first hard disk the current drive */
-    for (i = 0; i < MAX_DOS_DRIVES; i++, drive[0]++)
+    /* Make sure the current drive is valid */
+    if (DRIVE_CurDrive == -1)
     {
-        if (DOSDrives[i].root && !DOSDrives[i].disabled &&
-            DOSDrives[i].type != DRIVE_REMOVABLE)
+        for (i = 0, drive = DOSDrives; i < MAX_DOS_DRIVES; i++, drive++)
         {
-            DRIVE_CurDrive = i;
-            break;
+            if (drive->root && !drive->disabled)
+            {
+                DRIVE_CurDrive = i;
+                break;
+            }
         }
     }
+
     return 1;
 }
 
@@ -143,7 +211,7 @@ int DRIVE_SetCurrentDrive( int drive )
  */
 int DRIVE_FindDriveRoot( const char **path )
 {
-    int drive;
+    int drive, rootdrive = -1;
     const char *p1, *p2;
 
     dprintf_dosfs( stddeb, "DRIVE_FindDriveRoot: searching '%s'\n", *path );
@@ -154,6 +222,13 @@ int DRIVE_FindDriveRoot( const char **path )
         p2 = DOSDrives[drive].root;
         dprintf_dosfs( stddeb, "DRIVE_FindDriveRoot: checking %c: '%s'\n",
                        'A' + drive, p2 );
+        
+        while (*p2 == '/') p2++;
+        if (!*p2)
+        {
+            rootdrive = drive;
+            continue;  /* Look if there's a better match */
+        }
         for (;;)
         {
             while ((*p1 == '\\') || (*p1 == '/')) p1++;
@@ -175,7 +250,7 @@ int DRIVE_FindDriveRoot( const char **path )
             break;  /* No match, go to next drive */
         }
     }
-    return -1;
+    return rootdrive;
 }
 
 
@@ -263,6 +338,16 @@ int DRIVE_SetSerialNumber( int drive, DWORD serial )
 
 
 /***********************************************************************
+ *           DRIVE_GetType
+ */
+DRIVETYPE DRIVE_GetType( int drive )
+{
+    if (!DRIVE_IsValid( drive )) return TYPE_INVALID;
+    return DOSDrives[drive].type;
+}
+
+
+/***********************************************************************
  *           DRIVE_Chdir
  */
 int DRIVE_Chdir( int drive, const char *path )
@@ -339,11 +424,52 @@ int DRIVE_Enable( int drive  )
 
 
 /***********************************************************************
+ *           DRIVE_GetFreeSpace
+ */
+int DRIVE_GetFreeSpace( int drive, DWORD *size, DWORD *available )
+{
+    struct statfs info;
+
+    if (!DRIVE_IsValid(drive))
+    {
+        DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
+        return 0;
+    }
+
+#ifdef __svr4__
+    if (statfs( DOSDrives[drive].root, &info, 0, 0) < 0)
+#else
+    if (statfs( DOSDrives[drive].root, &info) < 0)
+#endif
+    {
+        FILE_SetDosError();
+        fprintf(stderr,"dosfs: cannot do statfs(%s)\n", DOSDrives[drive].root);
+        return 0;
+    }
+
+    *size = info.f_bsize * info.f_blocks;
+#ifdef __svr4__
+    *available = info.f_bfree * info.f_bsize;
+#else
+    *available = info.f_bavail * info.f_bsize;
+#endif
+    return 1;
+}
+
+
+/***********************************************************************
  *           GetDriveType   (KERNEL.136)
  */
 WORD GetDriveType( INT drive )
 {
     dprintf_dosfs( stddeb, "GetDriveType(%c:)\n", 'A' + drive );
-    if (!DRIVE_IsValid(drive)) return 0;
-    return DOSDrives[drive].type;
+    switch(DRIVE_GetType(drive))
+    {
+    case TYPE_FLOPPY:  return DRIVE_REMOVABLE;
+    case TYPE_HD:      return DRIVE_FIXED;
+    case TYPE_CDROM:   return DRIVE_REMOVABLE;
+    case TYPE_NETWORK: return DRIVE_REMOTE;
+    case TYPE_INVALID:
+    default:           return DRIVE_CANNOTDETERMINE;
+    }
 }

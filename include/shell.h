@@ -1,6 +1,12 @@
 /*
  * 				Shell Library definitions
  */
+#include "wintypes.h"
+
+#ifndef __WINE_SHELL_H
+#define __WINE_SHELL_H
+
+#include "windows.h"
 
 extern INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon);
 extern void SHELL_LoadRegistry();
@@ -20,13 +26,6 @@ extern BOOL SHELL_Init();
 #define REG_SZ                  1           /* string type */
 
 #define HKEY_CLASSES_ROOT       1
-
-#ifdef WINELIB32
-typedef void* HKEY;
-#else
-typedef DWORD HKEY;
-#endif
-typedef HKEY FAR* LPHKEY;
 
 typedef struct tagKEYSTRUCT {
 	HKEY		hKey;
@@ -54,3 +53,4 @@ typedef struct { 	   /* structure for dropped files */
 
 LRESULT AboutDlgProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
 
+#endif  /* __WINE_SHELL_H */

@@ -16,7 +16,8 @@ LPVOID LockResource32( HANDLE32 handle );
 BOOL FreeResource32( HANDLE32 handle );
 INT AccessResource32( HINSTANCE hModule, HRSRC hRsrc );
 DWORD SizeofResource32( HINSTANCE hModule, HRSRC hRsrc );
-int LoadString32(HINSTANCE instance, DWORD resource_id, LPTSTR buffer, int buflen);
+int WIN32_LoadStringW(HINSTANCE instance, DWORD resource_id, LPWSTR buffer, int buflen);
+int WIN32_LoadStringA(HINSTANCE instance, DWORD resource_id, LPSTR buffer, int buflen);
 
 typedef struct _IMAGE_RESOURCE_DIRECTORY {
 	DWORD Characteristics;

@@ -10,7 +10,6 @@
 #include <X11/Xresource.h>
 #include <string.h>
 #include "windows.h"
-#include "wine.h"
 #include "options.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -529,7 +528,8 @@ void SpyInit(void)
 
     for(i=0; i <= SPY_MAX_MSGNUM; i++) SpyFilters[i] = SpyIncludes[i] = FALSE;
 
-    GetPrivateProfileString("spy", "Exclude", "",lpstrBuffer ,511 , WINE_INI);
+    PROFILE_GetWineIniString( "spy", "Exclude", "",
+                              lpstrBuffer, sizeof(lpstrBuffer) );
     dprintf_message(stddeb,"SpyInit: Exclude=%s\n",lpstrBuffer);
     if( *lpstrBuffer != 0 )
       if(strstr(lpstrBuffer,"EXCLUDEALL"))
@@ -539,7 +539,8 @@ void SpyInit(void)
 	    if(MessageTypeNames[i])
 	       if(strstr(lpstrBuffer,MessageTypeNames[i])) SpyFilters[i] = TRUE; 
 
-    GetPrivateProfileString("spy", "Include", "INCLUDEALL",lpstrBuffer ,511 , WINE_INI);
+    PROFILE_GetWineIniString( "spy", "Include", "INCLUDEALL",
+                              lpstrBuffer, sizeof(lpstrBuffer) );
     dprintf_message(stddeb,"SpyInit: Include=%s\n",lpstrBuffer);
     if( *lpstrBuffer != 0 )
       if(strstr(lpstrBuffer,"INCLUDEALL"))

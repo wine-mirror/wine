@@ -122,9 +122,6 @@ LRESULT DefDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     if (!wndPtr) return 0;
     dlgInfo = (DIALOGINFO *)&wndPtr->wExtra;
 
-    dprintf_dialog(stddeb, "DefDlgProc: "NPFMT" %04x %ld %08lx\n", 
-		   hwnd, msg, (DWORD)wParam, lParam );
-
     dlgInfo->msgResult = 0;
     if (dlgInfo->dlgProc)
     {

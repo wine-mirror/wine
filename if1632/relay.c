@@ -246,6 +246,6 @@ void RELAY_DebugCall16( int* stack, int nbargs )
     printf( "CallTo16(func=%04x:%04x,ds=%04x",
             HIWORD(stack[0]), LOWORD(stack[0]), LOWORD(stack[1]) );
     stack += 2;
-    while (nbargs--) printf( ",0x%x", *stack++ );
+    while (nbargs--) printf( ",0x%04x", *stack++ );
     printf( ")\n" );
 }

@@ -71,7 +71,8 @@ typedef struct
     unsigned short *TabStops;/* tab stops buffer */
     BOOL HaveFocus;          /* TRUE if this edit has the focus */
     int ClientWidth;         /* computed from the window's ClientRect */
-    int ClientHeight;        /* dito */
+    int ClientHeight;        /* ditto */
+    char PasswordChar;       /* The password character */
 } EDITSTATE;
 
 #define EditBufStartLen(hwnd) (GetWindowLong(hwnd,GWL_STYLE) & ES_MULTILINE \
@@ -509,11 +510,11 @@ static void EDIT_WriteText(HWND hwnd, char *lp, int off, int len, int row,
 	es->BlankLine[(es->ClientWidth / es->CharWidths[32]) + 1] = 0;
     }
 
-    if ((GetWindowLong( hwnd, GWL_STYLE ) & ES_PASSWORD))
+    if ((es->PasswordChar && GetWindowLong( hwnd, GWL_STYLE ) & ES_PASSWORD))
     {
         int len = strlen(str);
         char *buff = xmalloc( len+1 );
-        memset( buff, '*', len );
+        memset( buff, es->PasswordChar, len );
         buff[len] = '\0';
 	TextOut( hdc, col - diff, row * es->txtht, buff, len );
     }
@@ -2269,6 +2270,7 @@ static long EDIT_WM_NCCreate(HWND hwnd, LONG lParam)
     es->ClientWidth = es->ClientHeight = 1;
     /* --- text buffer */
     es->MaxTextLen = MAXTEXTLEN + 1;
+    es->PasswordChar = '*';
     /*
      * Hack - If there is no local heap then hwnd should be a globalHeap block
      * and the local heap needs to be initilised to the same size(minus something)
@@ -2758,7 +2760,8 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	break;
 
     case EM_GETPASSWORDCHAR:
-	fprintf(stdnimp,"edit: cannot process EM_GETPASSWORDCHAR message\n");
+        /* FIXME: is this the right place to return the character? */
+        lResult = es->PasswordChar;
 	break;
 
     case EM_GETRECT:
@@ -2820,7 +2823,7 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	break;
 
     case EM_SETPASSWORDCHAR:
-	fprintf(stdnimp,"edit: cannot process EM_SETPASSWORDCHAR message\n");
+        es->PasswordChar = (char) wParam;
 	break;
 
     case EM_SETREADONLY:

@@ -13,7 +13,7 @@
 /***********************************************************************
  *           CreatePen    (GDI.61)
  */
-HPEN CreatePen( short style, short width, COLORREF color )
+HPEN CreatePen( INT style, INT width, COLORREF color )
 {
     LOGPEN logpen = { style, { width, 0 }, color };
     dprintf_gdi(stddeb, "CreatePen: %d %d %06lx\n", style, width, color );

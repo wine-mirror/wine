@@ -524,29 +524,20 @@ static void MAIN_RestoreSetup(void)
 }
 
 
-#ifdef MALLOC_DEBUGGING
-static void malloc_error()
-{
-       fprintf(stderr,"malloc is not feeling well. Good bye\n");
-       exit(1);
-}
-#endif  /* MALLOC_DEBUGGING */
-
-
 static void called_at_exit(void)
 {
-    extern void sync_profiles(void);
-
-    sync_profiles();
     MAIN_RestoreSetup();
     WSACleanup();
-    SHELL_SaveRegistry();
 }
 
 /***********************************************************************
  *           main
  */
+#if defined(WINELIB) && defined(WINELIBDLL)
+int _wine_main (int argc, char *argv[])
+#else
 int main( int argc, char *argv[] )
+#endif
 {    
     int ret_val;
     int depth_count, i;
@@ -554,6 +545,21 @@ int main( int argc, char *argv[] )
     struct timeval tv;
 
     extern int _WinMain(int argc, char **argv);
+
+#ifdef MALLOC_DEBUGGING
+    char *trace;
+
+    mcheck(NULL);
+    if (!(trace = getenv("MALLOC_TRACE")))
+    {       
+        fprintf( stderr, "MALLOC_TRACE not set. No trace generated\n" );
+    }
+    else
+    {
+        fprintf( stderr, "malloc trace goes to %s\n", trace );
+        mtrace();
+    }
+#endif
 
     setbuf(stdout,NULL);
     setbuf(stderr,NULL);
@@ -565,22 +571,6 @@ int main( int argc, char *argv[] )
     XrmInitialize();
     
     MAIN_ParseOptions( &argc, argv );
-
-#ifdef MALLOC_DEBUGGING
-    if(debugging_malloc)
-    {
-       char *trace=getenv("MALLOC_TRACE");
-       if(!trace)
-       {       
-       	dprintf_malloc(stddeb,"MALLOC_TRACE not set. No trace generated\n");
-       }else
-       {
-               dprintf_malloc(stddeb,"malloc trace goes to %s\n",trace);
-               mtrace();
-       }
-      mcheck(malloc_error);
-    }
-#endif
 
     SHELL_Init();
     SHELL_LoadRegistry();
@@ -816,7 +806,7 @@ LONG GetTimerResolution(void)
 /***********************************************************************
  *	SystemParametersInfo (USER.483)
  */
-BOOL SystemParametersInfo (UINT uAction, UINT uParam, void FAR *lpvParam, UINT fuWinIni)
+BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWinIni)
 {
 	int timeout, temp;
 	char buffer[256];
@@ -957,7 +947,7 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, void FAR *lpvParam, UINT f
 /***********************************************************************
 *	HMEMCPY (KERNEL.348)
 */
-void hmemcpy(void FAR *hpvDest, const void FAR *hpvSource, long cbCopy)
+void hmemcpy(LPVOID hpvDest, LPCVOID hpvSource, LONG cbCopy)
 {
 	memcpy(hpvDest,	hpvSource, cbCopy);
 }

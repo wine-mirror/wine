@@ -954,14 +954,16 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
           /* Create the module structure */
 
         hModule = MODULE_LoadExeHeader( fd, &ofs );
-        if (hModule == 21) hModule = PE_LoadModule( fd, &ofs, paramBlock );
-        close( fd );
         if (hModule < 32)
         {
-            fprintf( stderr, "LoadModule: can't load '%s', error=%d\n",
-                     name, hModule );
+            if (hModule == 21) hModule = PE_LoadModule( fd, &ofs, paramBlock );
+            close(fd);
+            if (hModule < 32)
+                fprintf( stderr, "LoadModule: can't load '%s', error=%d\n",
+                         name, hModule );
             return hModule;
         }
+        close( fd );
         pModule = (NE_MODULE *)GlobalLock( hModule );
 
           /* Allocate the segments for this module */

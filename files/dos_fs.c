@@ -25,7 +25,7 @@
 #include "debug.h"
 
 /* Chars we don't want to see in DOS file names */
-#define INVALID_DOS_CHARS  "*?<>|\"+=,; "
+#define INVALID_DOS_CHARS  "*?<>|\"+=,;[] \345"
 
 static const char *DOSFS_Devices[][2] =
 {
@@ -264,7 +264,8 @@ void DOSFS_ToDosDateTime( time_t *unixtime, WORD *pDate, WORD *pTime )
     if (pTime)
         *pTime = (tm->tm_hour << 11) + (tm->tm_min << 5) + (tm->tm_sec / 2);
     if (pDate)
-        *pDate = ((tm->tm_year - 80) << 9) + (tm->tm_mon << 5) + tm->tm_mday;
+        *pDate = ((tm->tm_year - 80) << 9) + ((tm->tm_mon + 1) << 5)
+                 + tm->tm_mday;
 }
 
 
@@ -506,7 +507,7 @@ const char * DOSFS_GetUnixFileName( const char * name, int check_last )
             p += strlen(p);
             while (!IS_END_OF_NAME(*name)) name++;
         }
-        else
+        else if (!check_last)
         {
             *p++ = '/';
             for (len--; !IS_END_OF_NAME(*name) && (len > 1); name++, len--)
@@ -517,14 +518,14 @@ const char * DOSFS_GetUnixFileName( const char * name, int check_last )
     }
     if (!found)
     {
-        if (*name)  /* Not last */
-        {
-            DOS_ERROR( ER_PathNotFound, EC_NotFound, SA_Abort, EL_Disk );
-            return NULL;
-        }
         if (check_last)
         {
             DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
+            return NULL;
+        }
+        if (*name)  /* Not last */
+        {
+            DOS_ERROR( ER_PathNotFound, EC_NotFound, SA_Abort, EL_Disk );
             return NULL;
         }
     }
@@ -571,19 +572,20 @@ const char * DOSFS_GetDosTrueName( const char *name, int unix_format )
         return NULL;
     }
 
-    strcpy( buffer, "A:\\" );
-    buffer[0] += drive;
-    if ((name[0] == '\\') || (name[0] == '/'))
+    p = buffer;
+    *p++ = 'A' + drive;
+    *p++ = ':';
+    if (IS_END_OF_NAME(*name))
     {
         while ((*name == '\\') || (*name == '/')) name++;
-        p = buffer + 2;
     }
     else
     {
-        lstrcpyn( buffer + 3, DRIVE_GetDosCwd(drive), len - 3 );
-        if (buffer[3]) p = buffer + strlen(buffer);
-        else p = buffer + 2;
+        *p++ = '\\';
+        lstrcpyn( p, DRIVE_GetDosCwd(drive), sizeof(buffer) - 3 );
+        if (*p) p += strlen(p); else p--;
     }
+    *p = '\0';
     len = MAX_PATHNAME_LEN - (int)(p - buffer);
 
     while (*name)
@@ -616,10 +618,10 @@ const char * DOSFS_GetDosTrueName( const char *name, int unix_format )
                 name++;
                 len--;
             }
+            *p = '\0';
         }
         while ((*name == '\\') || (*name == '/')) name++;
     }
-    *p = '\0';
     if (!buffer[2])
     {
         buffer[2] = '\\';
@@ -639,10 +641,12 @@ const char * DOSFS_GetDosTrueName( const char *name, int unix_format )
 int DOSFS_FindNext( const char *path, const char *mask, int drive,
                     BYTE attr, int skip, DOS_DIRENT *entry )
 {
-    DIR *dir;
+    static DIR *dir = NULL;
     struct dirent *dirent;
     int count = 0;
-    char buffer[MAX_PATHNAME_LEN], *p;
+    static char buffer[MAX_PATHNAME_LEN];
+    static int cur_pos = 0;
+    char *p;
     const char *hash_name;
     
     if ((attr & ~(FA_UNUSED | FA_ARCHIVE | FA_RDONLY)) == FA_LABEL)
@@ -656,8 +660,17 @@ int DOSFS_FindNext( const char *path, const char *mask, int drive,
         return 1;
     }
 
-    if (!(dir = opendir( path ))) return 0;
-    strcpy( buffer, path );
+    /* Check the cached directory */
+    if (dir && !strcmp( buffer, path ) && (cur_pos <= skip)) skip -= cur_pos;
+    else  /* Not in the cache, open it anew */
+    {
+        dprintf_dosfs( stddeb, "DOSFS_FindNext: cache miss, path=%s skip=%d buf=%s cur=%d\n",
+                       path, skip, buffer, cur_pos );
+        cur_pos = skip;
+        if (dir) closedir(dir);
+        if (!(dir = opendir( path ))) return 0;
+        lstrcpyn( buffer, path, sizeof(buffer) - 1 );
+    }
     strcat( buffer, "/" );
     p = buffer + strlen(buffer);
     attr |= FA_UNUSED | FA_ARCHIVE | FA_RDONLY;
@@ -668,7 +681,7 @@ int DOSFS_FindNext( const char *path, const char *mask, int drive,
         count++;
         hash_name = DOSFS_Hash( dirent->d_name, TRUE );
         if (!DOSFS_Match( mask, hash_name )) continue;
-        strcpy( p, dirent->d_name );
+        lstrcpyn( p, dirent->d_name, sizeof(buffer) - (int)(p - buffer) );
 
         if (!FILE_Stat( buffer, &entry->attr, &entry->size,
                         &entry->date, &entry->time ))
@@ -681,9 +694,11 @@ int DOSFS_FindNext( const char *path, const char *mask, int drive,
         lstrcpyn( entry->unixname, dirent->d_name, sizeof(entry->unixname) );
         dprintf_dosfs( stddeb, "DOSFS_FindNext: returning %s %02x %ld\n",
                        entry->name, entry->attr, entry->size );
-        closedir( dir );
+        cur_pos += count;
+        p[-1] = '\0';  /* Remove trailing slash in buffer */
         return count;
     }
     closedir( dir );
+    dir = NULL;
     return 0;  /* End of directory */
 }

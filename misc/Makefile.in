@@ -6,7 +6,6 @@ C_SRCS = \
 	comm.c \
 	commdlg.c \
 	compobj.c \
-	dos_fs.c \
 	driver.c \
 	exec.c \
 	escape.c \
@@ -20,14 +19,13 @@ C_SRCS = \
 	olecli.c \
 	olesvr.c \
 	port.c \
-	profile.c \
 	rect.c \
 	shell.c \
 	sound.c \
 	spy.c \
 	stress.c \
+	toolhelp.c \
 	user.c \
-	user32.c \
 	winsocket.c \
 	xmalloc.c
 

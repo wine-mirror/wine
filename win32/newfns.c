@@ -8,6 +8,7 @@
 at a later date. */
 
 #include <stdio.h>
+#include "module.h"
 #include "windows.h"
 #include "winerror.h"
 #include "kernel32.h"
@@ -31,6 +32,7 @@ WINAPI VOID RaiseException(DWORD dwExceptionCode,
  *           GetProcAddress		(KERNEL32.257)
  *
  */
+ /* FIXME: This is currently not used, see WIN32_GetProcAddress */
 WINAPI FARPROC W32_GetProcAddress(HMODULE hModule,
 			      LPCSTR lpszProc)
 {
@@ -45,3 +47,12 @@ WINAPI FARPROC W32_GetProcAddress(HMODULE hModule,
 	return RELAY32_GetEntryPoint(modulename, (char *) NULL, (int) lpszProc);
 }
 
+/***********************************************************************
+ *          WinHelpA           (USER32.578)
+ */
+BOOL WIN32_WinHelpA(HWND hWnd,LPCSTR lpszHelp,UINT uCommand, DWORD dwData)
+{
+	/* Should do parameter conversion here, but WinHelp is not working,
+	   anyways */
+	return WinHelp(hWnd,lpszHelp,uCommand,dwData);
+}
