@@ -429,6 +429,14 @@ TRACE("(%d, %p, ...)\n", par1, par2, ...);
           </listitem>
           <listitem>
             <para>
+              if you want to name a parameter, use <literal>=</literal> :
+              <programlisting>
+TRACE("(fd=%d, file=%s): stub\n", fd, name);
+              </programlisting>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
               for stubs, you should output a <literal>FIXME</literal>
               message. I suggest this style:
               <programlisting>
@@ -440,16 +448,37 @@ FIXME("(%x, %d, ...): stub\n", par1, par2, ...);
             <para>
               try to output one line per message. That is, the format
               string should contain only one <literal>\n</literal> and it
-              should always appear at the end of the string. (there are
-              many reasons  for this requirement, one of them is that
-              each debug macro adds things to the beginning of the line)
+              should always appear at the end of the string. 
             </para>
           </listitem>
           <listitem>
             <para>
-              if you want to name a parameter, use <literal>=</literal> :
+	      if the output string needs to be dynamically constructed,
+              render it in memory before outputting it:
               <programlisting>
-FIXME("(fd=%d, file=%s): stub\n", fd, name);
+char buffer[128] = "";
+
+if (flags & FLAG_A) strcat(buffer, "FLAG_A ");
+if (flags & FLAG_B) strcat(buffer, "FLAG_B ");
+if (flags & FLAG_C) strcat(buffer, "FLAG_C ");
+TRACE("flags = %s\n", buffer);
+              </programlisting>
+              Most of the time however, it is better to create a helper
+              function that renders to a temporary buffer:
+              <programlisting>
+static const char *dbgstr_flags(int flags)
+{
+    char buffer[128] = "";
+
+    if (flags & FLAG_A) strcat(buffer, "FLAG_A ");
+    if (flags & FLAG_B) strcat(buffer, "FLAG_B ");
+    if (flags & FLAG_C) strcat(buffer, "FLAG_C ");
+    return wine_dbg_sprintf("flags = %s\n\n", buffer);
+}
+
+...
+
+TRACE("flags = %s\n", dbgstr_flags(flags));
               </programlisting>
             </para>
           </listitem>
