@@ -583,11 +583,6 @@ BOOL WINAPI PathRemoveFileSpec(LPSTR lpszPath);
 
 LPSTR WINAPI PathGetShortPath(LPSTR lpszPath);
 
-LPSTR WINAPI PathRemoveBlanksA(LPSTR lpszPath);
-LPWSTR WINAPI PathRemoveBlanksW(LPWSTR lpszPath);
-#define  PathRemoveBlanks WINELIB_NAME_AW(PathRemoveBlanks)
-LPVOID WINAPI PathRemoveBlanksAW(LPVOID lpszPath);
-
 LPSTR  WINAPI PathQuoteSpacesA(LPSTR path);	
 LPWSTR WINAPI PathQuoteSpacesW(LPWSTR path);	
 #define  PathQuoteSpaces WINELIB_NAME_AW(PathQuoteSpaces)

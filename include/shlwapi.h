@@ -41,6 +41,11 @@ LPSTR WINAPI StrChrA(LPCSTR lpStart, WORD wMatch);
 LPWSTR WINAPI StrChrW(LPCWSTR lpStart, WCHAR wMatch); 
 #define StrChr WINELIB_NAME_AW(StrChr)
 
+void WINAPI PathRemoveBlanksA(LPSTR lpszPath);
+void WINAPI PathRemoveBlanksW(LPWSTR lpszPath);
+#define  PathRemoveBlanks WINELIB_NAME_AW(PathRemoveBlanks)
+void WINAPI PathRemoveBlanksAW(LPVOID lpszPath);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */

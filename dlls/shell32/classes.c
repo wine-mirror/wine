@@ -48,27 +48,31 @@ BOOL HCR_MapTypeToValue ( LPCSTR szExtension, LPSTR szFileType, DWORD len, BOOL 
 	return TRUE;
 }
 BOOL HCR_GetExecuteCommand ( LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD len )
-{	HKEY	hkey;
-	char	sTemp[256];
+{
+	HKEY	hkey;
+	char	sTemp[MAX_PATH];
+	DWORD	dwType;
+	BOOL	ret = FALSE;
 	
 	TRACE("%s %s\n",szClass, szVerb );
 
 	sprintf(sTemp, "%s\\shell\\%s\\command",szClass, szVerb);
 
-	if (RegOpenKeyExA(HKEY_CLASSES_ROOT,sTemp,0,0x02000000,&hkey))
-	{ return FALSE;
+	if (!RegOpenKeyExA(HKEY_CLASSES_ROOT,sTemp,0,0x02000000,&hkey))
+	{
+	  if (!RegQueryValueExA(hkey, NULL, 0, &dwType, szDest, &len))
+	  {
+	    if (dwType == REG_EXPAND_SZ)
+	    {
+	      ExpandEnvironmentStringsA(szDest, sTemp, MAX_PATH);
+	      strcpy(szDest, sTemp);
+	    }
+	    ret = TRUE;
+	  }
+	  RegCloseKey(hkey);
 	}
-
-	if (RegQueryValueA(hkey,NULL,szDest,&len))
-	{ RegCloseKey(hkey);
-	  return FALSE;
-	}	
-	RegCloseKey(hkey);
-
 	TRACE("-- %s\n", szDest );
-
-	return TRUE;
-
+	return ret;
 }
 /***************************************************************************************
 *	HCR_GetDefaultIcon	[internal]
@@ -76,34 +80,34 @@ BOOL HCR_GetExecuteCommand ( LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD 
 * Gets the icon for a filetype
 */
 BOOL HCR_GetDefaultIcon (LPCSTR szClass, LPSTR szDest, DWORD len, LPDWORD dwNr)
-{	HKEY	hkey;
-	char	sTemp[256];
+{
+	HKEY	hkey;
+	char	sTemp[MAX_PATH];
 	char	sNum[5];
+	DWORD	dwType;
+	BOOL	ret = FALSE;
 
 	TRACE("%s\n",szClass );
 
 	sprintf(sTemp, "%s\\DefaultIcon",szClass);
 
-	if (RegOpenKeyExA(HKEY_CLASSES_ROOT,sTemp,0,0x02000000,&hkey))
-	{ return FALSE;
+	if (!RegOpenKeyExA(HKEY_CLASSES_ROOT,sTemp,0,0x02000000,&hkey))
+	{
+	  if (!RegQueryValueExA(hkey, NULL, 0, &dwType, szDest, &len))
+	  {
+	    if (dwType == REG_EXPAND_SZ)
+	    {
+	      ExpandEnvironmentStringsA(szDest, sTemp, MAX_PATH);
+	      strcpy(szDest, sTemp);
+	    }
+	    if (ParseFieldA (szDest, 2, sNum, 5)) *dwNr=atoi(sNum);
+	    ParseFieldA (szDest, 1, szDest, len);
+	    ret = TRUE;
+	  }	
+	  RegCloseKey(hkey);
 	}
-
-	if (RegQueryValueA(hkey,NULL,szDest,&len))
-	{ RegCloseKey(hkey);
-	  return FALSE;
-	}	
-
-	RegCloseKey(hkey);
-
-	if (ParseFieldA (szDest, 2, sNum, 5))
-	{ *dwNr=atoi(sNum);
-	}
-	
-	ParseFieldA (szDest, 1, szDest, len);
-	
 	TRACE("-- %s %li\n", szDest, *dwNr );
-
-	return TRUE;
+	return ret;
 }
 
 /***************************************************************************************

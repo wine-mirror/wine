@@ -55,8 +55,8 @@ init ShlwapiLibMain
 51  stub @
 52  stub @
 53  stub @
-54  stub @
-55  stub @
+54  forward SHLWAPI_54 user32.CreateICW
+55  forward SHLWAPI_55 user32.CreateWindowExW
 56  forward SHLWAPI_56 user32.DefWindowProcW
 57  stub @
 58  stub @
@@ -468,12 +468,12 @@ init ShlwapiLibMain
 @ stdcall PathCombineW (ptr ptr ptr) PathCombineW
 @ stdcall PathCommonPrefixA(str str ptr)PathCommonPrefixA
 @ stdcall PathCommonPrefixW(wstr wstr ptr)PathCommonPrefixW
-@ stub    PathCompactPathA
-@ stub    PathCompactPathExA
-@ stub    PathCompactPathExW
-@ stub    PathCompactPathW
-@ stub    PathCreateFromUrlA
-@ stub    PathCreateFromUrlW
+@ stdcall PathCompactPathA(long str long)PathCompactPathA
+@ stdcall PathCompactPathExA(ptr str long long)PathCompactPathExA
+@ stdcall PathCompactPathExW(ptr wstr long long)PathCompactPathExW
+@ stdcall PathCompactPathW(long wstr long)PathCompactPathW
+@ stdcall PathCreateFromUrlA(str ptr ptr long)PathCreateFromUrlA
+@ stdcall PathCreateFromUrlW(wstr ptr ptr long)PathCreateFromUrlW
 @ stdcall PathFileExistsA (str) PathFileExistsA
 @ stdcall PathFileExistsW (wstr) PathFileExistsW
 @ stdcall PathFindExtensionA (str) PathFindExtensionA
@@ -486,26 +486,26 @@ init ShlwapiLibMain
 @ stdcall PathFindOnPathW (wstr ptr) PathFindOnPathW
 @ stdcall PathGetArgsA (str) PathGetArgsA
 @ stdcall PathGetArgsW (wstr) PathGetArgsW
-@ stub    PathGetCharTypeA
-@ stub    PathGetCharTypeW
+@ stdcall PathGetCharTypeA(long)PathGetCharTypeA
+@ stdcall PathGetCharTypeW(long)PathGetCharTypeW
 @ stdcall PathGetDriveNumberA (str) PathGetDriveNumberA
 @ stdcall PathGetDriveNumberW (wstr) PathGetDriveNumberW
-@ stub    PathIsContentTypeA
-@ stub    PathIsContentTypeW
+@ stdcall PathIsContentTypeA(str str)PathIsContentTypeA
+@ stdcall PathIsContentTypeW(wstr wstr)PathIsContentTypeW
 @ stdcall PathIsDirectoryA(str) PathIsDirectoryA
 @ stdcall PathIsDirectoryW(wstr) PathIsDirectoryW
-@ stub    PathIsFileSpecA
-@ stub    PathIsFileSpecW
-@ stub    PathIsPrefixA
-@ stub    PathIsPrefixW
+@ stdcall PathIsFileSpecA(str)PathIsFileSpecA
+@ stdcall PathIsFileSpecW(wstr)PathIsFileSpecW
+@ stdcall PathIsPrefixA(str str)PathIsPrefixA
+@ stdcall PathIsPrefixW(wstr wstr)PathIsPrefixW
 @ stdcall PathIsRelativeA (str) PathIsRelativeA
 @ stdcall PathIsRelativeW (wstr) PathIsRelativeW
 @ stdcall PathIsRootA(str) PathIsRootA
 @ stdcall PathIsRootW(wstr) PathIsRootW
 @ stdcall PathIsSameRootA(str str) PathIsSameRootA
 @ stdcall PathIsSameRootW(wstr wstr) PathIsSameRootW
-@ stub    PathIsSystemFolderA
-@ stub    PathIsSystemFolderW
+@ stdcall PathIsSystemFolderA(str long)PathIsSystemFolderA
+@ stdcall PathIsSystemFolderW(wstr long)PathIsSystemFolderW
 @ stdcall PathIsUNCA (str) PathIsUNCA
 @ stdcall PathIsUNCServerA(str)PathIsUNCServerA
 @ stdcall PathIsUNCServerShareA(str)PathIsUNCServerShareA
@@ -516,16 +516,16 @@ init ShlwapiLibMain
 @ stdcall PathIsURLW(wstr) PathIsURLW
 @ stdcall PathMakePrettyA(str)PathMakePrettyA
 @ stdcall PathMakePrettyW(wstr)PathMakePrettyW
-@ stub    PathMakeSystemFolderA
-@ stub    PathMakeSystemFolderW
+@ stdcall PathMakeSystemFolderA(str)PathMakeSystemFolderA
+@ stdcall PathMakeSystemFolderW(wstr)PathMakeSystemFolderW
 @ stdcall PathMatchSpecA  (str str) PathMatchSpecA
 @ stdcall PathMatchSpecW  (wstr wstr) PathMatchSpecW
 @ stdcall PathParseIconLocationA (str) PathParseIconLocationA
 @ stdcall PathParseIconLocationW (wstr) PathParseIconLocationW
 @ stdcall PathQuoteSpacesA (str) PathQuoteSpacesA
 @ stdcall PathQuoteSpacesW (wstr) PathQuoteSpacesW
-@ stub    PathRelativePathToA
-@ stub    PathRelativePathToW
+@ stdcall PathRelativePathToA(ptr str long str long)PathRelativePathToA
+@ stdcall PathRelativePathToW(ptr str long str long)PathRelativePathToW
 @ stdcall PathRemoveArgsA(str)PathRemoveArgsA
 @ stdcall PathRemoveArgsW(wstr)PathRemoveArgsW
 @ stdcall PathRemoveBackslashA (str) PathRemoveBackslashA
@@ -536,20 +536,20 @@ init ShlwapiLibMain
 @ stdcall PathRemoveExtensionW(wstr)PathRemoveExtensionW
 @ stdcall PathRemoveFileSpecA (str) PathRemoveFileSpecA
 @ stdcall PathRemoveFileSpecW (wstr) PathRemoveFileSpecW
-@ stub    PathRenameExtensionA
-@ stub    PathRenameExtensionW
-@ stub    PathSearchAndQualifyA
-@ stub    PathSearchAndQualifyW
+@ stdcall PathRenameExtensionA(str str)PathRenameExtensionA
+@ stdcall PathRenameExtensionW(wstr wstr)PathRenameExtensionW
+@ stdcall PathSearchAndQualifyA(str ptr long)PathSearchAndQualifyA
+@ stdcall PathSearchAndQualifyW(wstr ptr long)PathSearchAndQualifyW
 @ stdcall PathSetDlgItemPathA (long long ptr) PathSetDlgItemPathA
 @ stdcall PathSetDlgItemPathW (long long ptr) PathSetDlgItemPathW
-@ stub    PathSkipRootA
-@ stub    PathSkipRootW
+@ stdcall PathSkipRootA(str)PathSkipRootA
+@ stdcall PathSkipRootW(wstr)PathSkipRootW
 @ stdcall PathStripPathA(str)PathStripPathA
 @ stdcall PathStripPathW(wstr)PathStripPathW
 @ stdcall PathStripToRootA(str)PathStripToRootA
 @ stdcall PathStripToRootW(wstr)PathStripToRootW
-@ stub    PathUnmakeSystemFolderA
-@ stub    PathUnmakeSystemFolderW
+@ stdcall PathUnmakeSystemFolderA(str)PathUnmakeSystemFolderA
+@ stdcall PathUnmakeSystemFolderW(wstr)PathUnmakeSystemFolderW
 @ stdcall PathUnquoteSpacesA (str) PathUnquoteSpacesA
 @ stdcall PathUnquoteSpacesW (wstr) PathUnquoteSpacesW
 @ stdcall SHCreateShellPalette(long)SHCreateShellPalette
