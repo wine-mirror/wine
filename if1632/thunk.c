@@ -901,6 +901,7 @@ void THUNK_InitCallout(void)
         GETADDR( RedrawWindow16, "RedrawWindow", word_wlww );
         GETADDR( InitThreadInput16, "InitThreadInput", word_ww );
         GETADDR( UserYield16, "UserYield", word_ );
+        GETADDR( DestroyIcon32, "DestroyIcon32", word_ww );
 
 #undef GETADDR
     }

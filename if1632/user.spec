@@ -488,7 +488,7 @@ file	user.exe
 606 pascal FormatMessage(long ptr word word ptr word ptr) FormatMessage16
 608 pascal16 GetForegroundWindow() GetForegroundWindow16
 609 pascal16 SetForegroundWindow(word) SetForegroundWindow16
-610 stub DestroyIcon32
+610 pascal16 DestroyIcon32(word word) CURSORICON_Destroy
 620 stub ChangeDisplaySettings
 621 stub EnumDisplaySettings
 640 stub MsgWaitForMultipleObjects

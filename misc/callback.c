@@ -9,6 +9,7 @@
 #include "callback.h"
 #include "task.h"
 #include "syslevel.h"
+#include "cursoricon.h"
 #include "queue.h"
 #include "debug.h"
 
@@ -308,6 +309,7 @@ CALLOUT_TABLE Callout =
     DispatchMessage16, DispatchMessageA, DispatchMessageW,
     RedrawWindow16, RedrawWindow,
     InitThreadInput16,
-    UserYield16
+    UserYield16,
+    CURSORICON_Destroy
 };
 
