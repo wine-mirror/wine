@@ -247,7 +247,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
     if (NULL != lpszReferrer && strlen(lpszReferrer))
         HTTP_ProcessHeader(lpwhr, HTTP_REFERER, lpszReferrer, HTTP_ADDHDR_FLAG_COALESCE);
 
-    //! FIXME
+    /* FIXME */
     if (NULL != lpszAcceptTypes && strlen(*lpszAcceptTypes))
         HTTP_ProcessHeader(lpwhr, HTTP_ACCEPT, *lpszAcceptTypes, HTTP_ADDHDR_FLAG_COALESCE);
 
@@ -459,7 +459,7 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 		}
 	    else
 	    {
-	    //! Copy strncpy(lpBuffer, lphttpHdr[*lpdwIndex], len);
+	    /* Copy strncpy(lpBuffer, lphttpHdr[*lpdwIndex], len); */
             (*lpdwIndex)++;
 	    }
     }
@@ -1167,7 +1167,7 @@ BOOL HTTP_ProcessHeader(LPWININETHTTPREQA lpwhr, LPCSTR field, LPCSTR value, DWO
 
             if (len <= 0)
             {
-		//! if custom header delete from array
+	        /* if custom header delete from array */
                 HeapFree(GetProcessHeap(), 0, lphttpHdr->lpszValue);
                 lphttpHdr->lpszValue = NULL;
                 bSuccess = TRUE;

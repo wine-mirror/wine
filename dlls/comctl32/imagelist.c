@@ -2965,7 +2965,7 @@ _write_bitmap(HBITMAP hBitmap, LPSTREAM pstm, int cx, int cy)
     bmih->biHeight = nheight;
 
     if(bitCount == 1) {
-	//Hack.
+        /* Hack. */
 	LPBITMAPINFO inf = (LPBITMAPINFO)bmih;
 	inf->bmiColors[0].rgbRed = inf->bmiColors[0].rgbGreen = inf->bmiColors[0].rgbBlue = 0;
 	inf->bmiColors[1].rgbRed = inf->bmiColors[1].rgbGreen = inf->bmiColors[1].rgbBlue = 0xff;

@@ -1341,8 +1341,10 @@ int _write(int fd, const void* buf, unsigned int count)
   HANDLE hand = msvcrt_fdtoh(fd);
 
   /* Dont trace small writes, it gets *very* annoying */
-//  if (count > 32)
-//    TRACE(":fd (%d) handle (%d) buf (%p) len (%d)\n",fd,hand,buf,count);
+#if 0
+  if (count > 32)
+    TRACE(":fd (%d) handle (%d) buf (%p) len (%d)\n",fd,hand,buf,count);
+#endif
   if (hand == INVALID_HANDLE_VALUE)
     return -1;
 

@@ -55,7 +55,9 @@ typedef struct tagPOLICYDAT
   DWORD cache;           /* cached value or 0xffffffff for invalid */
 } POLICYDATA, *LPPOLICYDATA;
 
-//extern POLICYDATA sh32_policy_table[SHELL_MAX_POLICIES];
+#if 0
+extern POLICYDATA sh32_policy_table[SHELL_MAX_POLICIES];
+#endif
 
 /* application strings */
 

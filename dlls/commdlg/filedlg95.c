@@ -953,7 +953,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   TBADDBITMAP tba[] =
   {
    { HINST_COMMCTRL, IDB_VIEW_SMALL_COLOR },
-   { COMDLG32_hInstance, 800 } 			// desktop icon
+   { COMDLG32_hInstance, 800 } 			/* desktop icon */
   };
   
   RECT rectTB;

@@ -168,7 +168,7 @@ debug_channels ()
 @ stub CryptVerifyMessageSignatureWithKey
 @ stub CryptVerifySignatureU
 @ stub I_CryptAllocTls
-@ stdcall I_CryptCreateLruCache(long) I_CryptCreateLruCache
+@ stdcall I_CryptCreateLruCache(long long) I_CryptCreateLruCache
 @ stub I_CryptCreateLruEntry
 @ stub I_CryptDetachTls
 @ stdcall I_CryptFindLruEntryData(long) I_CryptFindLruEntryData

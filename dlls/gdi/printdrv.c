@@ -569,6 +569,7 @@ static int FreePrintJob(HANDLE16 hJob)
 
 /**********************************************************************
  *           OpenJob   (GDI.240)
+ *           OpenJob16 (GDI32.@)
  *
  */
 HPJOB16 WINAPI OpenJob16(LPCSTR lpOutput, LPCSTR lpTitle, HDC16 hDC)
@@ -615,6 +616,7 @@ HPJOB16 WINAPI OpenJob16(LPCSTR lpOutput, LPCSTR lpTitle, HDC16 hDC)
 
 /**********************************************************************
  *           CloseJob   (GDI.243)
+ *           CloseJob16 (GDI32.@)
  *
  */
 INT16 WINAPI CloseJob16(HPJOB16 hJob)
@@ -637,6 +639,7 @@ INT16 WINAPI CloseJob16(HPJOB16 hJob)
 
 /**********************************************************************
  *           WriteSpool   (GDI.241)
+ *           WriteSpool16 (GDI32.@)
  *
  */
 INT16 WINAPI WriteSpool16(HPJOB16 hJob, LPSTR lpData, INT16 cch)
@@ -784,7 +787,8 @@ LPBYTE lpPrinterData, int cbData, int what)
 }
 
 /******************************************************************
- *                DrvGetPrinterData     [GDI.282]
+ *                DrvGetPrinterData     (GDI.282)
+ *                DrvGetPrinterData16   (GDI32.@)
  *
  */
 DWORD WINAPI DrvGetPrinterData16(LPSTR lpPrinter, LPSTR lpProfile,
@@ -878,7 +882,8 @@ failed:
 
 
 /******************************************************************
- *                 DrvSetPrinterData     [GDI.281]
+ *                 DrvSetPrinterData     (GDI.281)
+ *                 DrvSetPrinterData16   (GDI32.@)
  *
  */
 DWORD WINAPI DrvSetPrinterData16(LPSTR lpPrinter, LPSTR lpProfile,

@@ -17,12 +17,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-///////////////////////
-//
-//  TODO:
-//  - Reference counting
-//  - Thread-safing
-//  - Signature checking
+/***********************************************************************
+ *
+ *  TODO:
+ *  - Reference counting
+ *  - Thread-safing
+ *  - Signature checking
+ */
 
 #include <time.h>
 #include <stdlib.h>
@@ -140,7 +141,7 @@ static inline BOOL CRYPT_ANSIToUnicode(LPCSTR str, LPWSTR* wstr, int wstrsize)
 	return FALSE;
 }
 
-//These next 2 functions are used by the VTableProvStruc structure
+/* These next 2 functions are used by the VTableProvStruc structure */
 BOOL CRYPT_VerifyImage(LPCSTR lpszImage, BYTE* pData)
 {
 	if (!lpszImage || !pData)
@@ -148,7 +149,7 @@ BOOL CRYPT_VerifyImage(LPCSTR lpszImage, BYTE* pData)
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
-	//FIXME: Actually verify the image!
+	/* FIXME: Actually verify the image! */
 	return TRUE;
 }
 
@@ -205,8 +206,9 @@ PCRYPTPROV CRYPT_LoadProvider(PSTR pImage)
 	CRYPT_GetProvFunc(CPSignHash);
 	CRYPT_GetProvFunc(CPVerifySignature);
 
-	//FIXME: Not sure what the pbContextInfo field is for
-	//  Does it need memory allocation?
+	/* FIXME: Not sure what the pbContextInfo field is for.
+	 *        Does it need memory allocation?
+         */
 	provider->pVTable->Version = 3;
 	provider->pVTable->pFuncVerifyImage = CRYPT_VerifyImage;
 	provider->pVTable->pFuncReturnhWnd = CRYPT_ReturnhWnd;
@@ -251,8 +253,10 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 	PCRYPTPROV pProv = NULL;
 	HKEY key;
 	PSTR imagepath = NULL, keyname = NULL, provname = NULL, temp = NULL;
-//	BYTE* signature;
-	DWORD keytype, type, len;//, siglen;
+#if 0
+	BYTE* signature;
+#endif
+	DWORD keytype, type, len;
 
 	TRACE("(%p, %s, %s, %ld, %08lx)\n", phProv, pszContainer,
 		pszProvider, dwProvType, dwFlags);
@@ -270,8 +274,9 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 
 	if (!pszProvider)
 	{
-		//No CSP name specified so try the user default CSP first
-		//	then try the machine default CSP
+		/* No CSP name specified so try the user default CSP first
+		 * then try the machine default CSP
+		 */
 		if ( !(keyname = CRYPT_GetTypeKeyName(dwProvType, TRUE)) )
 			CRYPT_ReturnLastError(ERROR_NOT_ENOUGH_MEMORY);
 		if (RegOpenKeyA(HKEY_CURRENT_USER, keyname, &key))
@@ -316,7 +321,9 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 	}
 	if (!ExpandEnvironmentStringsA(temp, imagepath, len)) goto error;
 
-//	if (!CRYPT_VerifyImage(imagepath, signature)) goto error;
+#if 0
+	if (!CRYPT_VerifyImage(imagepath, signature)) goto error;
+#endif
 	pProv = CRYPT_LoadProvider(imagepath);
 	CRYPT_Free(temp);
 	CRYPT_Free(imagepath);
@@ -324,9 +331,10 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 
 	if (pProv->pFuncs->pCPAcquireContext(&pProv->hPrivate, (CHAR*)pszContainer, dwFlags, pProv->pVTable))
 	{
-		//MSDN:  When this flag is set, the value returned in phProv is undefined,
-		//    and thus, the CryptReleaseContext function need not be called afterwards.
-		//Therefore, we must clean up everything now.
+		/* MSDN: When this flag is set, the value returned in phProv is undefined,
+		 *       and thus, the CryptReleaseContext function need not be called afterwards.
+		 *       Therefore, we must clean up everything now.
+                 */
 		if (dwFlags & CRYPT_DELETEKEYSET)
 		{
 			FreeLibrary(pProv->hModule);
@@ -340,7 +348,7 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 		}
 		return TRUE;
 	}
-	//FALLTHROUGH TO ERROR IF FALSE - CSP internal error!
+	/* FALLTHROUGH TO ERROR IF FALSE - CSP internal error! */
 error:
 	if (pProv)
 	{
@@ -393,7 +401,7 @@ BOOL WINAPI CryptContextAddRef (HCRYPTPROV hProv, DWORD *pdwReserved, DWORD dwFl
 {
 	FIXME("(0x%lx, %p, %08lx): stub!\n", hProv, pdwReserved, dwFlags);
 	return FALSE;
-	//InterlockIncrement??
+	/* InterlockIncrement?? */
 }
 
 /******************************************************************************
@@ -411,10 +419,12 @@ BOOL WINAPI CryptReleaseContext (HCRYPTPROV hProv, DWORD dwFlags)
 		SetLastError(NTE_BAD_UID);
 		return FALSE;
 	}
-	//FIXME: Decrement the counter here first if possible
+	/* FIXME: Decrement the counter here first if possible */
 	ret = pProv->pFuncs->pCPReleaseContext(pProv->hPrivate, dwFlags);
 	FreeLibrary(pProv->hModule);
-//	CRYPT_Free(pProv->pVTable->pContextInfo);
+#if 0
+	CRYPT_Free(pProv->pVTable->pContextInfo);
+#endif
 	CRYPT_Free(pProv->pVTable->pszProvName);
 	CRYPT_Free(pProv->pVTable);
 	CRYPT_Free(pProv->pFuncs);
@@ -465,7 +475,7 @@ BOOL WINAPI CryptCreateHash (HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey,
 			key ? key->hPrivate : 0, 0, &hash->hPrivate))
 		return TRUE;
 
-	//CSP error!
+	/* CSP error! */
 	CRYPT_Free(hash);
 	return FALSE;
 }
@@ -513,7 +523,7 @@ BOOL WINAPI CryptDeriveKey (HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseData
 	if (prov->pFuncs->pCPDeriveKey(prov->hPrivate, Algid, hash->hPrivate, dwFlags, &key->hPrivate))
 		return TRUE;
 
-	//CSP error!
+	/* CSP error! */
 	CRYPT_Free(key);
 	return FALSE;
 }
@@ -688,7 +698,7 @@ BOOL WINAPI CryptEnumProvidersW (DWORD dwIndex, DWORD *pdwReserved,
 {
 	PSTR str = NULL;
 	DWORD strlen;
-	BOOL ret;// = FALSE;
+	BOOL ret; /* = FALSE; */
 
 	TRACE("(%ld, %p, %08ld, %p, %p, %p)\n", dwIndex, pdwReserved, dwFlags,
 			pdwProvType, pszProvName, pcbProvName);
@@ -736,7 +746,7 @@ BOOL WINAPI CryptEnumProviderTypesA (DWORD dwIndex, DWORD *pdwReserved,
 		return FALSE;
 	RegOpenKeyA(hKey, keyname, &hSubkey);
 	ch = keyname + strlen(keyname);
-	//Convert "Type 000" to 0, etc/
+	/* Convert "Type 000" to 0, etc/ */
 	*pdwProvType = *(--ch) - '0';
 	*pdwProvType += (*(--ch) - '0') * 10;
 	*pdwProvType += (*(--ch) - '0') * 100;
@@ -814,7 +824,7 @@ BOOL WINAPI CryptGenKey (HCRYPTPROV hProv, ALG_ID Algid, DWORD dwFlags, HCRYPTKE
 	if (prov->pFuncs->pCPGenKey(prov->hPrivate, Algid, dwFlags, &key->hPrivate))
 		return TRUE;
 
-	//CSP error!
+	/* CSP error! */
 	CRYPT_Free(key);
 	return FALSE;
 }
@@ -951,7 +961,7 @@ BOOL WINAPI CryptGetUserKey (HCRYPTPROV hProv, DWORD dwKeySpec, HCRYPTKEY *phUse
 	if (prov->pFuncs->pCPGetUserKey(prov->hPrivate, dwKeySpec, &key->hPrivate))
 		return TRUE;
 
-	//CSP Error
+	/* CSP Error */
 	CRYPT_Free(key);
 	return FALSE;
 }
@@ -1188,8 +1198,8 @@ BOOL WINAPI CryptSetProvParam (HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData, DW
 	}
 	if (dwFlags & PP_CLIENT_HWND)
 	{
-		//FIXME: Should verify the parameter
-		if (pbData /*&& IsWindow((HWND)pbData)*/)
+		/* FIXME: Should verify the parameter */
+		if (pbData /* && IsWindow((HWND)pbData) */)
 		{
 			crypt_hWindow = (HWND)(pbData);
 			return TRUE;
@@ -1198,7 +1208,7 @@ BOOL WINAPI CryptSetProvParam (HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData, DW
 			return FALSE;
 		}
 	}
-	//All other flags go to the CSP
+	/* All other flags go to the CSP */
 	return prov->pFuncs->pCPSetProvParam(prov->hPrivate, dwParam, pbData, dwFlags);
 }
 
