@@ -30,7 +30,24 @@ SUBDIRS = \
 	winver
 
 # Sub-directories to run make install into
-INSTALLSUBDIRS = $(SUBDIRS)
+INSTALLSUBDIRS = \
+	avitools \
+	clock \
+	control \
+	expand \
+	notepad \
+	progman \
+	regedit \
+	regsvr32 \
+	uninstaller \
+	wcmd \
+	wineconsole \
+	winedbg \
+	winefile \
+	winemine \
+	winepath \
+	winhelp \
+	winver
 
 # Programs to install in bin directory
 # We don't install everything to avoid polluting /usr/bin too much
