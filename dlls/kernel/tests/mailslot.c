@@ -81,13 +81,13 @@ static int mailslot_test()
     dwMax = dwNext = dwMsgCount = dwTimeout = 0;
     ok( GetMailslotInfo( hSlot, &dwMax, &dwNext, &dwMsgCount, &dwTimeout ),
            "getmailslotinfo failed\n");
-    ok( dwMax == -1, "dwMax incorrect\n");
+    ok( dwMax == ~0UL, "dwMax incorrect\n");
     ok( dwNext == MAILSLOT_NO_MESSAGE, "dwNext incorrect\n");
     }
     ok( dwMsgCount == 0, "dwMsgCount incorrect\n");
     todo_wine
     {
-    ok( dwTimeout == -1, "dwTimeout incorrect\n");
+    ok( dwTimeout == ~0UL, "dwTimeout incorrect\n");
     ok( GetMailslotInfo( hSlot, NULL, NULL, NULL, NULL ),
             "getmailslotinfo failed\n");
     ok( CloseHandle(hSlot), "failed to close mailslot\n");

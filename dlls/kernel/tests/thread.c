@@ -246,8 +246,8 @@ VOID test_CreateThread_suspended()
 VOID test_SuspendThread()
 {
   HANDLE thread,access_thread;
-  DWORD threadId,exitCode;
-  int i,error;
+  DWORD threadId,exitCode,error;
+  int i;
 
   thread = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)threadFunc3,NULL,
                         0,&threadId);
@@ -273,9 +273,9 @@ VOID test_SuspendThread()
                            0,threadId);
     ok(access_thread!=NULL,"OpenThread returned an invalid handle\n");
     if (access_thread!=NULL) {
-      ok(SuspendThread(access_thread)==-1,
+      ok(SuspendThread(access_thread)==~0UL,
          "SuspendThread did not obey access restrictions\n");
-      ok(ResumeThread(access_thread)==-1,
+      ok(ResumeThread(access_thread)==~0UL,
          "ResumeThread did not obey access restrictions\n");
       ok(CloseHandle(access_thread)!=0,"CloseHandle Failed\n");
     }
@@ -292,7 +292,7 @@ VOID test_SuspendThread()
   }
   /* Trying to suspend a terminated thread should fail */
   error=SuspendThread(thread);
-  ok(error==0xffffffff, "wrong return code: %d\n", error);
+  ok(error==~0UL, "wrong return code: %ld\n", error);
   ok(GetLastError()==ERROR_ACCESS_DENIED || GetLastError()==ERROR_NO_MORE_ITEMS, "unexpected error code: %ld\n", GetLastError());
 
   ok(CloseHandle(thread)!=0,"CloseHandle Failed\n");

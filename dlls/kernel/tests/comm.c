@@ -588,7 +588,7 @@ static void test_BuildCommDCB(void)
 {
 	char port_name[] = "COMx";
 	char port = 0;
-	int i;
+	unsigned int i;
 	char *ptr;
 
 	/* Some of these tests require a valid COM port.  This loop will try to find
