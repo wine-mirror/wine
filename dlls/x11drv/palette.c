@@ -1107,28 +1107,32 @@ static UINT X11DRV_PALETTE_SetMapping( PALETTEOBJ* palPtr, UINT uStart, UINT uNu
         index = -1;
         flag = PC_SYS_USED;
 
-        switch( palPtr->logpalette.palPalEntry[uStart].peFlags & 0x07 )
-        {
-	case PC_EXPLICIT:   /* palette entries are indices into system palette */
+        /* Even though the docs say that only one flag is to be set,
+         * they are a bitmask. At least one app sets more than one at
+         * the same time. */
+	if ( palPtr->logpalette.palPalEntry[uStart].peFlags & PC_EXPLICIT ) {
+	    /* palette entries are indices into system palette */
             index = *(WORD*)(palPtr->logpalette.palPalEntry + uStart);
             if( index > 255 || (index >= COLOR_gapStart && index <= COLOR_gapEnd) )
             {
                 WARN("PC_EXPLICIT: idx %d out of system palette, assuming black.\n", index);
                 index = 0;
             }
-            break;
+            if( X11DRV_PALETTE_PaletteToXPixel ) index = X11DRV_PALETTE_PaletteToXPixel[index];
+        } else {
+	    if ( palPtr->logpalette.palPalEntry[uStart].peFlags & PC_RESERVED ) {
+	        /* forbid future mappings to this entry */
+                flag |= PC_SYS_RESERVED;
+            }
+            
+	    if (! (palPtr->logpalette.palPalEntry[uStart].peFlags & PC_NOCOLLAPSE) ) {
+	        /* try to collapse identical colors */
+                index = X11DRV_LookupSysPaletteExact(*(COLORREF*)(palPtr->logpalette.palPalEntry + uStart));
+            }
 
-	case PC_RESERVED:   /* forbid future mappings to this entry */
-            flag |= PC_SYS_RESERVED;
-
-            /* fall through */
-	default:	    /* try to collapse identical colors */
-            index = X11DRV_LookupSysPaletteExact(*(COLORREF*)(palPtr->logpalette.palPalEntry + uStart));
-            /* fall through */
-	case PC_NOCOLLAPSE:
             if( index < 0 )
             {
-                if( X11DRV_PALETTE_firstFree > 0 && !(X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_FIXED) )
+                if( X11DRV_PALETTE_firstFree > 0 )
                 {
                     XColor color;
                     index = X11DRV_PALETTE_firstFree;  /* ought to be available */
@@ -1164,7 +1168,6 @@ static UINT X11DRV_PALETTE_SetMapping( PALETTEOBJ* palPtr, UINT uStart, UINT uNu
 	    palPtr->logpalette.palPalEntry[uStart].peFlags |= PC_SYS_USED;
 
             if( X11DRV_PALETTE_PaletteToXPixel ) index = X11DRV_PALETTE_PaletteToXPixel[index];
-            break;
         }
 
         if( !prevMapping || palPtr->mapping[uStart] != index ) iRemapped++;
