@@ -5,6 +5,7 @@
  * <presently under construction - contact hunnise@nortelnetworks.com>
  *
  */
+#include <string.h>
 #include "winerror.h"
 #include "winnt.h"
 #include "winreg.h"

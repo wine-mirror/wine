@@ -5,6 +5,7 @@
  */
 
 
+#include <string.h>
 #include "ole.h"
 #include "ole2.h"
 #include "winerror.h"

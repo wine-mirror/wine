@@ -4,6 +4,7 @@
    This files contains all the D3D devices that Wine supports. For the moment
    only the 'OpenGL' target is supported. */
 
+#include <string.h>
 #include "config.h"
 #include "wintypes.h"
 #include "winerror.h"

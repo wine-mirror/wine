@@ -5,7 +5,7 @@
  *
  */
 
-#include <stdlib.h>
+#include <string.h>
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/winuser16.h"

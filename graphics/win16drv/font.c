@@ -5,7 +5,7 @@
  *           1998 Huw Davies
  */
 
-#include <stdio.h>
+#include <string.h>
 #include "wine/winbase16.h"
 #include "win16drv.h"
 #include "module.h"

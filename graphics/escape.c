@@ -4,7 +4,7 @@
  * Copyright 1994  Bob Amstadt
  */
 
-#include <stdio.h>
+#include <string.h>
 #include "wingdi.h"
 #include "gdi.h"
 #include "heap.h"

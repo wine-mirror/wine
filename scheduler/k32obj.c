@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <string.h>
 #include "winerror.h"
 #include "k32obj.h"
 #include "heap.h"

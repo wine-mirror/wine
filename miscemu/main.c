@@ -3,6 +3,7 @@
  *
  */
 
+#include <stdlib.h>
 #include <assert.h>
 #include "wine/winbase16.h"
 #include "callback.h"

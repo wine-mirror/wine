@@ -4,7 +4,7 @@
  * Copyright 1993, 1994  Alexandre Julliard
  */
 
-#include <stdlib.h>
+#include <string.h>
 #include "winbase.h"
 #include "brush.h"
 #include "bitmap.h"

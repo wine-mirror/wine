@@ -9,6 +9,7 @@
 
 #ifndef X_DISPLAY_MISSING
 
+#include <stdlib.h>
 #include <X11/cursorfont.h>
 #include "ts_xlib.h"
 #include "ts_xutil.h"

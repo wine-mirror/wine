@@ -5,6 +5,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include "selectors.h"
 #include "debugger.h"
 

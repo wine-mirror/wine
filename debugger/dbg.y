@@ -10,6 +10,8 @@
 #include "x11drv.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <sys/stat.h>
 #include <unistd.h>

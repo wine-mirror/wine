@@ -7,7 +7,7 @@
  * Copyright 1999 Francis Beaudet
  */
 #include <assert.h>
-
+#include <string.h>
 #include "windows.h"
 #include "winerror.h"
 #include "oleauto.h"

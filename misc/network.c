@@ -7,6 +7,7 @@
  */
 
 #include <ctype.h>
+#include <string.h>
 #include <sys/types.h>
 #include <pwd.h>
 #include <unistd.h>

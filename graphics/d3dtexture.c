@@ -4,6 +4,7 @@
    This files contains the implementation of interface Direct3DTexture2. */
 
 
+#include <string.h>
 #include "config.h"
 #include "wintypes.h"
 #include "winerror.h"

@@ -4,6 +4,7 @@
  * Copyright 1993 Alexandre Julliard
  */
 
+#include <string.h>
 #include "pen.h"
 #include "debug.h"
 

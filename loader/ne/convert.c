@@ -4,6 +4,7 @@
  * Copyright 1998 Ulrich Weigand
  */
 
+#include <string.h>
 #include "wine/winuser16.h"
 #include "module.h"
 #include "debug.h"

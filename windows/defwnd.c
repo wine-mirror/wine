@@ -5,7 +5,7 @@
  *	     1995 Alex Korobka
  */
 
-#include <stdlib.h>
+#include <string.h>
 #include "win.h"
 #include "user.h"
 #include "heap.h"
