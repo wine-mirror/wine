@@ -1233,7 +1233,12 @@ const USER_MSG   *classmsg;   /* pointer to first USER_MSG for class  */
       USER_MSG   *lastmsg;    /* pointer to last USER_MSG for class   */
 } CONTROL_CLASS;
 
-#define USM(a,b) { #a ,a,sizeof(b)}
+#define USM(a,b) { #a ,a,b}
+#define SZOF(a)  sizeof(a)
+
+/* To dump memory at the lParam for any of these messages,  */
+/* replace the "0" with a "SZOF(structure)", or with a      */
+/* number. (First method prefered.)                         */
 
 static const USER_MSG rebar_array[] = {
           USM(RB_INSERTBANDA,          0), 
@@ -1377,7 +1382,7 @@ static const USER_MSG comboex_array[] = {
           USM(CBEM_SETEXTENDEDSTYLE   ,0),
           {0,0,0} };
 
-
+#undef SZOF
 #undef USM
 
 static CONTROL_CLASS  cc_array[] = {
@@ -1513,11 +1518,11 @@ static const SPY_NOTIFY spnfy_array[] = {
     SPNFY(TBN_CUSTHELP,          NMHDR),
     SPNFY(TBN_DROPDOWN,          NMTOOLBARA),
     SPNFY(TBN_GETOBJECT,         NMOBJECTNOTIFY),
-    SPNFY(TBN_HOTITEMCHANGE,     NMHDR),    /* NMTBHOTITEM), */
+    SPNFY(TBN_HOTITEMCHANGE,     NMTBHOTITEM),
     SPNFY(TBN_DRAGOUT,           NMTOOLBARA),
     SPNFY(TBN_DELETINGBUTTON,    NMTOOLBARA),
-    SPNFY(TBN_GETDISPINFOA,      NMHDR),    /* NMTBDISPINFO), */
-    SPNFY(TBN_GETDISPINFOW,      NMHDR),    /* NMTBDISPINFO), */
+    SPNFY(TBN_GETDISPINFOA,      NMTBDISPINFOA),
+    SPNFY(TBN_GETDISPINFOW,      NMTBDISPINFOW),
     SPNFY(TBN_GETINFOTIPA,       NMTBGETINFOTIPA),
     SPNFY(TBN_GETINFOTIPW,       NMTBGETINFOTIPW),
     SPNFY(TBN_GETBUTTONINFOW,    NMTOOLBARW),
@@ -1547,6 +1552,8 @@ static const SPY_NOTIFY spnfy_array[] = {
     /* IP Adderss     0U-860U  to  0U-879U  */
     /* Status bar     0U-880U  to  0U-899U  */
     /* Pager          0U-900U  to  0U-950U  */
+    SPNFY(PGN_SCROLL,            NMPGSCROLL),
+    SPNFY(PGN_CALCSIZE,          NMPGCALCSIZE),
     {0,0,0}};
 static const SPY_NOTIFY *end_spnfy_array;     /* ptr to last good entry in array */
 #undef SPNFY
@@ -1669,6 +1676,7 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
     strncpy (sp_e->msg_name, SPY_GetMsgInternal( sp_e->msgnum, TRUE ),
 	     sizeof(sp_e->msg_name)-1);
 
+    sp_e->data_len = 0;
     if (strncmp(sp_e->msg_name, "WM_USER+", 8) == 0) {
 	INT i = 0;
 
@@ -1803,16 +1811,46 @@ const SPY_NOTIFY *SPY_Bsearch_Notify( const SPY_NOTIFY *first, const SPY_NOTIFY 
 }
 
 /***********************************************************************
+ *           SPY_DumpMem
+ */
+void SPY_DumpMem (LPSTR header, UINT *q, INT len)
+{
+    int i;
+
+    for(i=0; i<len-12; i+=16) {
+	TRACE("%s [%04x] %08x %08x %08x %08x\n",
+	      header, i, *q, *(q+1), *(q+2), *(q+3));
+	q += 4;
+    }
+    switch (len - i) {
+    case 12:
+	TRACE("%s [%04x] %08x %08x %08x\n",
+	      header, i, *q, *(q+1), *(q+2));
+	break;
+    case 8:
+	TRACE("%s [%04x] %08x %08x\n",
+	      header, i, *q, *(q+1));
+	break;
+    case 4:
+	TRACE("%s [%04x] %08x\n",
+	      header, i, *q);
+	break;
+    default:
+	break;
+    }
+}
+
+/***********************************************************************
  *           SPY_DumpStructure
  */
-void SPY_DumpStructure (UINT msg, BOOL enter, LPARAM structure)
+void SPY_DumpStructure (SPY_INSTANCE *sp_e, BOOL enter)
 {
-    switch (msg)
+    switch (sp_e->msgnum)
 	{
 	case WM_DRAWITEM:
 	    if (!enter) break;
 	    {   
-		DRAWITEMSTRUCT *lpdis = (DRAWITEMSTRUCT*) structure;
+		DRAWITEMSTRUCT *lpdis = (DRAWITEMSTRUCT*) sp_e->lParam;
 		TRACE("DRAWITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n", 
 		      lpdis->CtlType, lpdis->CtlID);
 		TRACE("itemID=0x%08x itemAction=0x%08x itemState=0x%08x\n", 
@@ -1825,7 +1863,7 @@ void SPY_DumpStructure (UINT msg, BOOL enter, LPARAM structure)
 	    break;
 	case WM_MEASUREITEM:
 	    {   
-		MEASUREITEMSTRUCT *lpmis = (MEASUREITEMSTRUCT*) structure;
+		MEASUREITEMSTRUCT *lpmis = (MEASUREITEMSTRUCT*) sp_e->lParam;
 		TRACE("MEASUREITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n", 
 		      lpmis->CtlType, lpmis->CtlID);
 		TRACE("itemID=0x%08x itemWidth=0x%08x itemHeight=0x%08x\n", 
@@ -1837,7 +1875,7 @@ void SPY_DumpStructure (UINT msg, BOOL enter, LPARAM structure)
 	    if (!enter) break;
 	case WM_WINDOWPOSCHANGING:
 	    {   
-		WINDOWPOS *lpwp = (WINDOWPOS *)structure;
+		WINDOWPOS *lpwp = (WINDOWPOS *)sp_e->lParam;
 		TRACE("WINDOWPOS hwnd=0x%04x, after=0x%04x, at (%d,%d) w=%d h=%d, flags=0x%08x\n",
 		      lpwp->hwnd, lpwp->hwndInsertAfter, lpwp->x, lpwp->y,
 		      lpwp->cx, lpwp->cy, lpwp->flags);
@@ -1847,14 +1885,14 @@ void SPY_DumpStructure (UINT msg, BOOL enter, LPARAM structure)
 	    if (!enter) break;
 	case WM_STYLECHANGING:
 	    {   
-		LPSTYLESTRUCT ss = (LPSTYLESTRUCT) structure;
+		LPSTYLESTRUCT ss = (LPSTYLESTRUCT) sp_e->lParam;
 		TRACE("STYLESTRUCT: StyleOld=0x%08lx, StyleNew=0x%08lx\n",
 		      ss->styleOld, ss->styleNew); 
 	    }
 	    break;
 	case WM_NCCALCSIZE:
 	    {
-		RECT *rc = (RECT *)structure;
+		RECT *rc = (RECT *)sp_e->lParam;
 		TRACE("Rect (%d,%d)-(%d,%d)\n",
 		      rc->left, rc->top, rc->right, rc->bottom);
 	    }
@@ -1862,7 +1900,7 @@ void SPY_DumpStructure (UINT msg, BOOL enter, LPARAM structure)
 	case WM_NOTIFY:
 	    if (!enter) break;
 	    {   
-		NMHDR * pnmh = (NMHDR*) structure;
+		NMHDR * pnmh = (NMHDR*) sp_e->lParam;
 		UINT *q;
 		const SPY_NOTIFY *p;
 
@@ -1872,29 +1910,8 @@ void SPY_DumpStructure (UINT msg, BOOL enter, LPARAM structure)
 		    TRACE("NMHDR hwndFrom=0x%08x idFrom=0x%08x code=%s<0x%08x>, extra=0x%x\n",
 			  pnmh->hwndFrom, pnmh->idFrom, p->name, pnmh->code, p->len);
 		    if (p->len > 0) {
-			int i;
 			q = (UINT *)(pnmh + 1);
-			for(i=0; i<((INT)p->len)-12; i+=16) {
-			    TRACE("NM extra [%04x] %08x %08x %08x %08x\n",
-				  i, *q, *(q+1), *(q+2), *(q+3));
-			    q += 4;
-			}
-			switch (p->len - i) {
-			case 12:
-			    TRACE("NM extra [%04x] %08x %08x %08x\n",
-				  i, *q, *(q+1), *(q+2));
-			    break;
-			case 8:
-			    TRACE("NM extra [%04x] %08x %08x\n",
-				  i, *q, *(q+1));
-			    break;
-			case 4:
-			    TRACE("NM extra [%04x] %08x\n",
-				  i, *q);
-			    break;
-			default:
-			    break;
-			}
+			SPY_DumpMem ("NM extra", q, (INT)p->len);
 		    }
 		}
 		else
@@ -1902,6 +1919,8 @@ void SPY_DumpStructure (UINT msg, BOOL enter, LPARAM structure)
 			  pnmh->hwndFrom, pnmh->idFrom, pnmh->code);
 	    }
 	default:
+	    if (sp_e->data_len > 0)
+		SPY_DumpMem ("MSG lParam", (UINT *)sp_e->lParam, sp_e->data_len);
 	    break;
 	}
 	
@@ -1960,7 +1979,7 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
             {   TRACE("%*s(%08x) %-16s message [%04x] %s sent from %s wp=%08x lp=%08lx\n",
 			     SPY_IndentLevel, "", hWnd, sp_e.wnd_name, msg,
 			     sp_e.msg_name, taskName, wParam, lParam );
-		SPY_DumpStructure(msg, TRUE, lParam);
+		SPY_DumpStructure(&sp_e, TRUE);
 	    }
         }
         break;   
@@ -2026,7 +2045,7 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
         TRACE(" %*s(%08x) %-16s message [%04x] %s returned %08lx\n",
                         SPY_IndentLevel, "", hWnd, sp_e.wnd_name, msg,
                         sp_e.msg_name, lReturn );
-	SPY_DumpStructure(msg, FALSE, lParam);
+	SPY_DumpStructure(&sp_e, FALSE);
         break; 
 
     case SPY_RESULT_INVALIDHWND16:
