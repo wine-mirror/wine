@@ -22,9 +22,21 @@ never complain.
 #define WINE_FILENAME_STR ""
 #endif
 
+#ifndef WINE_PRODUCTVERSION
+#define WINE_PRODUCTVERSION 1,0,0,0
+#endif
+
+#ifndef WINE_PRODUCTVERSION_STR
+#define WINE_PRODUCTVERSION_STR "1.0"
+#endif
+
+#ifndef WINE_PRODUCTNAME_STR
+#define WINE_PRODUCTNAME_STR "Wine"
+#endif
+
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION    WINE_FILEVERSION
-PRODUCTVERSION 1,0,0,0
+PRODUCTVERSION WINE_PRODUCTVERSION
 FILEFLAGSMASK  0
 FILEFLAGS      0
 FILEOS         VOS_UNKNOWN
@@ -42,8 +54,8 @@ FILESUBTYPE    VFT2_UNKNOWN
 	    VALUE "LegalCopyright", "Copyright (c) 1993-2001 the Wine project authors " \
 				    "(see the file AUTHORS for a complete list)"
 	    VALUE "OriginalFilename", WINE_FILENAME_STR
-	    VALUE "ProductName", "Wine"
-	    VALUE "ProductVersion", "1.0"
+	    VALUE "ProductName", WINE_PRODUCTNAME_STR
+	    VALUE "ProductVersion", WINE_PRODUCTVERSION_STR
 	}
     }
     BLOCK "VarFileInfo"
