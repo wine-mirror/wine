@@ -193,16 +193,16 @@ typedef struct IPrint IPrint, *LPPRINT;
 /*****************************************************************************
  * IOleDocument interface
  */
-#define ICOM_INTERFACE IOleDocument
+#define INTERFACE IOleDocument
 #define IOleDocument_METHODS \
-	ICOM_METHOD4(HRESULT,CreateView, IOleInPlaceSite*,pIPSite, IStream*,pstm, DWORD,dwReserved, IOleDocumentView**,ppView) \
-	ICOM_METHOD1(HRESULT,GetDocMiscStatus, DWORD*,pdwStatus) \
-	ICOM_METHOD2(HRESULT,EnumViews, IEnumOleDocumentViews**,ppEnum, IOleDocumentView**,ppView)
+	STDMETHOD(CreateView)(THIS_ IOleInPlaceSite *pIPSite, IStream *pstm, DWORD dwReserved, IOleDocumentView **ppView) PURE; \
+	STDMETHOD(GetDocMiscStatus)(THIS_ DWORD *pdwStatus) PURE; \
+	STDMETHOD(EnumViews)(THIS_ IEnumOleDocumentViews **ppEnum, IOleDocumentView **ppView) PURE;
 #define IOleDocument_IMETHODS \
 	IUnknown_IMETHODS \
 	IOleDocument_METHODS
 ICOM_DEFINE(IOleDocument,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IOleDocument_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -217,14 +217,14 @@ ICOM_DEFINE(IOleDocument,IUnknown)
 /*****************************************************************************
  * IOleDocumentSite interface
  */
-#define ICOM_INTERFACE IOleDocumentSite
+#define INTERFACE IOleDocumentSite
 #define IOleDocumentSite_METHODS \
-	ICOM_METHOD1(HRESULT,ActivateMe, IOleDocumentView*,pViewToActivate)
+	STDMETHOD(ActivateMe)(THIS_ IOleDocumentView *pViewToActivate) PURE;
 #define IOleDocumentSite_IMETHODS \
 	IUnknown_IMETHODS \
 	IOleDocumentSite_METHODS
 ICOM_DEFINE(IOleDocumentSite,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IOleDocumentSite_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -237,26 +237,26 @@ ICOM_DEFINE(IOleDocumentSite,IUnknown)
 /*****************************************************************************
  * IOleDocumentSite interface
  */
-#define ICOM_INTERFACE IOleDocumentView
+#define INTERFACE IOleDocumentView
 #define IOleDocumentView_METHODS \
-	ICOM_METHOD1(HRESULT,SetInPlaceSite, IOleInPlaceSite*,pIPSite) \
-	ICOM_METHOD1(HRESULT,GetInPlaceSite, IOleInPlaceSite**,ppIPSite) \
-	ICOM_METHOD1(HRESULT,GetDocument, IUnknown**,ppunk) \
-	ICOM_METHOD1(HRESULT,SetRect, LPRECT,prcView) \
-	ICOM_METHOD1(HRESULT,GetRect, LPRECT,prcView) \
-	ICOM_METHOD4(HRESULT,SetRectComplex, LPRECT,prcView, LPRECT,prcHScroll, LPRECT,prcVScroll, LPRECT,prcSizeBox) \
-	ICOM_METHOD1(HRESULT,Show, BOOL,fShow) \
-	ICOM_METHOD1(HRESULT,UIActivate, BOOL,fUIActivate) \
-	ICOM_METHOD (HRESULT,Open) \
-	ICOM_METHOD1(HRESULT,CloseView, DWORD,dwReserved) \
-	ICOM_METHOD1(HRESULT,SaveViewState, LPSTREAM,pstm) \
-	ICOM_METHOD1(HRESULT,ApplyViewState,LPSTREAM,pstm) \
-	ICOM_METHOD2(HRESULT,Clone, IOleInPlaceSite*,pIPSiteNew, IOleDocumentView**,ppViewNew)
+	STDMETHOD(SetInPlaceSite)(THIS_ IOleInPlaceSite *pIPSite) PURE; \
+	STDMETHOD(GetInPlaceSite)(THIS_ IOleInPlaceSite **ppIPSite) PURE; \
+	STDMETHOD(GetDocument)(THIS_ IUnknown **ppunk) PURE; \
+	STDMETHOD(SetRect)(THIS_ LPRECT prcView) PURE; \
+	STDMETHOD(GetRect)(THIS_ LPRECT prcView) PURE; \
+	STDMETHOD(SetRectComplex)(THIS_ LPRECT prcView, LPRECT prcHScroll, LPRECT prcVScroll, LPRECT prcSizeBox) PURE; \
+	STDMETHOD(Show)(THIS_ BOOL fShow) PURE; \
+	STDMETHOD(UIActivate)(THIS_ BOOL fUIActivate) PURE; \
+	STDMETHOD(Open)(THIS) PURE; \
+	STDMETHOD(CloseView)(THIS_ DWORD dwReserved) PURE; \
+	STDMETHOD(SaveViewState)(THIS_ LPSTREAM pstm) PURE; \
+	STDMETHOD(ApplyViewState)(THIS_ LPSTREAM pstm) PURE; \
+	STDMETHOD(Clone)(THIS_ IOleInPlaceSite *pIPSiteNew, IOleDocumentView **ppViewNew) PURE;
 #define IOleDocumentView_IMETHODS \
 	IUnknown_IMETHODS \
 	IOleDocumentView_METHODS
 ICOM_DEFINE(IOleDocumentView,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IOleDocumentView_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -281,17 +281,17 @@ ICOM_DEFINE(IOleDocumentView,IUnknown)
 /*****************************************************************************
  * IOleDocumentSite interface
  */
-#define ICOM_INTERFACE IEnumOleDocumentViews
+#define INTERFACE IEnumOleDocumentViews
 #define IEnumOleDocumentViews_METHODS \
-	ICOM_METHOD3(HRESULT,Next, ULONG,cViews, IOleDocumentView**,rgpView, ULONG*,pcFetched) \
-	ICOM_METHOD1(HRESULT,Skip, ULONG,cViews) \
-	ICOM_METHOD (HRESULT,Reset) \
-	ICOM_METHOD1(HRESULT,Clone, IEnumOleDocumentViews**,ppEnum)
+	STDMETHOD(Next)(THIS_ ULONG cViews, IOleDocumentView **rgpView, ULONG *pcFetched) PURE; \
+	STDMETHOD(Skip)(THIS_ ULONG cViews) PURE; \
+	STDMETHOD(Reset)(THIS) PURE; \
+	STDMETHOD(Clone)(THIS_ IEnumOleDocumentViews **ppEnum) PURE;
 #define IEnumOleDocumentViews_IMETHODS \
 	IUnknown_IMETHODS \
 	IEnumOleDocumentViews_METHODS
 ICOM_DEFINE(IEnumOleDocumentViews,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IEnumOleDocumentViews_QueryInterface(p,a,b)   ICOM_CALL2(QueryInterface,p,a,b)
@@ -307,15 +307,15 @@ ICOM_DEFINE(IEnumOleDocumentViews,IUnknown)
 /*****************************************************************************
  * IOleCommandTarget interface
  */
-#define ICOM_INTERFACE IOleCommandTarget
+#define INTERFACE IOleCommandTarget
 #define IOleCommandTarget_METHODS \
-	ICOM_METHOD4(HRESULT,QueryStatus, const GUID*,pguidCmdGroup, ULONG,cCmds, OLECMD*,prgCmds, OLECMDTEXT*,pCmdText) \
-	ICOM_METHOD5(HRESULT,Exec, const GUID*,pguidCmdGroup, DWORD,nCmdID, DWORD,nCmdexecopt, VARIANT*,pvaIn, VARIANT*,pvaOut)
+	STDMETHOD(QueryStatus)(THIS_ const GUID *pguidCmdGroup, ULONG cCmds, OLECMD *prgCmds, OLECMDTEXT *pCmdText) PURE; \
+	STDMETHOD(Exec)(THIS_ const GUID *pguidCmdGroup, DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut) PURE;
 #define IOleCommandTarget_IMETHODS \
 	IUnknown_IMETHODS \
 	IOleCommandTarget_METHODS
 ICOM_DEFINE(IOleCommandTarget,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IOleCommandTarget_QueryInterface(p,a,b)   ICOM_CALL2(QueryInterface,p,a,b)
@@ -329,15 +329,15 @@ ICOM_DEFINE(IOleCommandTarget,IUnknown)
 /*****************************************************************************
  * IContinueCallback interface
  */
-#define ICOM_INTERFACE IContinueCallback
+#define INTERFACE IContinueCallback
 #define IContinueCallback_METHODS \
-	ICOM_METHOD (HRESULT,FContinue) \
-	ICOM_METHOD3(HRESULT,FContinuePrinting, LONG,nCntPrinted, LONG,nCurPage, WCHAR*,pwszPrintStatus)
+	STDMETHOD(FContinue)(THIS) PURE; \
+	STDMETHOD(FContinuePrinting)(THIS_ LONG nCntPrinted, LONG nCurPage, WCHAR *pwszPrintStatus) PURE;
 #define IContinueCallback_IMETHODS \
 	IUnknown_IMETHODS \
 	IContinueCallback_METHODS
 ICOM_DEFINE(IContinueCallback,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IContinueCallback_QueryInterface(p,a,b)   ICOM_CALL2(QueryInterface,p,a,b)
@@ -351,16 +351,16 @@ ICOM_DEFINE(IContinueCallback,IUnknown)
 /*****************************************************************************
  * IPrint interface
  */
-#define ICOM_INTERFACE IPrint
+#define INTERFACE IPrint
 #define IPrint_METHODS \
-	ICOM_METHOD1(HRESULT,SetInitialPageNum, LONG,nFirstPage) \
-	ICOM_METHOD2(HRESULT,GetPageInfo, LONG*,pnFirstPage, LONG*,pcPages) \
-	ICOM_METHOD8(HRESULT,Print, DWORD,grfFlags, DVTARGETDEVICE**,pptd, PAGESET**,ppPageSet, STGMEDIUM*,pstgmOptions, IContinueCallback*,pcallback, LONG,nFirstPage, LONG*,pcPagesPrinted, LONG*,pnLastPage)
+	STDMETHOD(SetInitialPageNum)(THIS_ LONG nFirstPage) PURE; \
+	STDMETHOD(GetPageInfo)(THIS_ LONG *pnFirstPage, LONG *pcPages) PURE; \
+	STDMETHOD(Print)(THIS_ DWORD grfFlags, DVTARGETDEVICE **pptd, PAGESET **ppPageSet, STGMEDIUM *pstgmOptions, IContinueCallback *pcallback, LONG nFirstPage, LONG *pcPagesPrinted, LONG *pnLastPage) PURE;
 #define IPrint_IMETHODS \
 	IUnknown_IMETHODS \
 	IPrint_METHODS
 ICOM_DEFINE(IPrint,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IPrint_QueryInterface(p,a,b)   ICOM_CALL2(QueryInterface,p,a,b)

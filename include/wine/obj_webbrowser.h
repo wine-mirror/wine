@@ -63,39 +63,39 @@ typedef enum RefreshConstants
 /*****************************************************************************
  * IWebBrowser interface
  */
-#define ICOM_INTERFACE IWebBrowser
+#define INTERFACE IWebBrowser
 #define IWebBrowser_METHODS \
-	ICOM_METHOD(HRESULT,GoBack) \
-	ICOM_METHOD(HRESULT,GoForward) \
-	ICOM_METHOD(HRESULT,GoHome) \
-	ICOM_METHOD(HRESULT,GoSearch) \
-	ICOM_METHOD5(HRESULT,Navigate, BSTR,URL, VARIANT*,Flags, VARIANT*,TargetFrameName, \
-                                       VARIANT*,PostData, VARIANT*,Headers) \
-	ICOM_METHOD(HRESULT,Refresh) \
-	ICOM_METHOD1(HRESULT,Refresh2, VARIANT*,Level) \
-	ICOM_METHOD(HRESULT,Stop) \
-	ICOM_METHOD1(HRESULT,get_Application, void**,ppDisp) \
-	ICOM_METHOD1(HRESULT,get_Parent, void**,ppDisp) \
-	ICOM_METHOD1(HRESULT,get_Container, void**,ppDisp) \
-	ICOM_METHOD1(HRESULT,get_Document, void**,ppDisp) \
-	ICOM_METHOD1(HRESULT,get_TopLevelContainer, VARIANT*,pBool) \
-	ICOM_METHOD1(HRESULT,get_Type, BSTR*,Type) \
-	ICOM_METHOD1(HRESULT,get_Left, long*,pl) \
-	ICOM_METHOD1(HRESULT,put_Left, long,Left) \
-	ICOM_METHOD1(HRESULT,get_Top, long*,pl) \
-	ICOM_METHOD1(HRESULT,put_Top, long,Top) \
-	ICOM_METHOD1(HRESULT,get_Width, long*,pl) \
-	ICOM_METHOD1(HRESULT,put_Width, long,Width) \
-	ICOM_METHOD1(HRESULT,get_Height, long*,pl) \
-	ICOM_METHOD1(HRESULT,put_Height, long,Height) \
-	ICOM_METHOD1(HRESULT,get_LocationName, BSTR*,LocationName) \
-	ICOM_METHOD1(HRESULT,get_LocationURL, BSTR*,LocationURL) \
-	ICOM_METHOD1(HRESULT,get_Busy, VARIANT*,pBool)
+	STDMETHOD(GoBack)(THIS) PURE; \
+	STDMETHOD(GoForward)(THIS) PURE; \
+	STDMETHOD(GoHome)(THIS) PURE; \
+	STDMETHOD(GoSearch)(THIS) PURE; \
+	STDMETHOD(Navigate)(THIS_ BSTR URL, VARIANT *Flags, VARIANT *TargetFrameName, \
+                            VARIANT *PostData, VARIANT *Headers) PURE; \
+	STDMETHOD(Refresh)(THIS) PURE; \
+	STDMETHOD(Refresh2)(THIS_ VARIANT *Level) PURE; \
+	STDMETHOD(Stop)(THIS) PURE; \
+	STDMETHOD(get_Application)(THIS_ void **ppDisp) PURE; \
+	STDMETHOD(get_Parent)(THIS_ void **ppDisp) PURE; \
+	STDMETHOD(get_Container)(THIS_ void **ppDisp) PURE; \
+	STDMETHOD(get_Document)(THIS_ void **ppDisp) PURE; \
+	STDMETHOD(get_TopLevelContainer)(THIS_ VARIANT *pBool) PURE; \
+	STDMETHOD(get_Type)(THIS_ BSTR *Type) PURE; \
+	STDMETHOD(get_Left)(THIS_ long *pl) PURE; \
+	STDMETHOD(put_Left)(THIS_ long Left) PURE; \
+	STDMETHOD(get_Top)(THIS_ long *pl) PURE; \
+	STDMETHOD(put_Top)(THIS_ long Top) PURE; \
+	STDMETHOD(get_Width)(THIS_ long *pl) PURE; \
+	STDMETHOD(put_Width)(THIS_ long Width) PURE; \
+	STDMETHOD(get_Height)(THIS_ long *pl) PURE; \
+	STDMETHOD(put_Height)(THIS_ long Height) PURE; \
+	STDMETHOD(get_LocationName)(THIS_ BSTR *LocationName) PURE; \
+	STDMETHOD(get_LocationURL)(THIS_ BSTR *LocationURL) PURE; \
+	STDMETHOD(get_Busy)(THIS_ VARIANT *pBool) PURE;
 #define IWebBrowser_IMETHODS \
 	IDispatch_IMETHODS \
 	IWebBrowser_METHODS
 ICOM_DEFINE(IWebBrowser,IDispatch)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IWebBrowser_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -133,34 +133,34 @@ ICOM_DEFINE(IWebBrowser,IDispatch)
 #define IWebBrowser_get_LocationURL(p,a)      ICOM_CALL1(get_LocationURL,p,a)
 #define IWebBrowser_get_Busy(p,a)      ICOM_CALL1(get_Busy,p,a)
 
-#define ICOM_INTERFACE IWebBrowserApp
+#define INTERFACE IWebBrowserApp
 #define IWebBrowserApp_METHODS \
-    ICOM_METHOD(HRESULT,Quit) \
-    ICOM_METHOD2(HRESULT,ClientToWindow,int*,pcx,int*,pcy) \
-    ICOM_METHOD2(HRESULT,PutProperty,BSTR,szProperty,VARIANT,vtValue) \
-    ICOM_METHOD2(HRESULT,GetProperty,BSTR,szProperty,VARIANT*,pvtValue) \
-    ICOM_METHOD1(HRESULT,get_Name,BSTR*,Name) \
-    ICOM_METHOD1(HRESULT,get_HWND,long*,pHWND) \
-    ICOM_METHOD1(HRESULT,get_FullName,BSTR*,FullName) \
-    ICOM_METHOD1(HRESULT,get_Path,BSTR*,Path) \
-    ICOM_METHOD1(HRESULT,get_Visible,VARIANT_BOOL*,pBool) \
-    ICOM_METHOD1(HRESULT,put_Visible,VARIANT_BOOL,Value) \
-    ICOM_METHOD1(HRESULT,get_StatusBar,VARIANT_BOOL*,pBool) \
-    ICOM_METHOD1(HRESULT,put_StatusBar,VARIANT_BOOL,Value) \
-    ICOM_METHOD1(HRESULT,get_StatusText,BSTR*,StatusText) \
-    ICOM_METHOD1(HRESULT,put_StatusText,BSTR,StatusText) \
-    ICOM_METHOD1(HRESULT,get_ToolBar,int*,Value) \
-    ICOM_METHOD1(HRESULT,put_ToolBar,int,Value) \
-    ICOM_METHOD1(HRESULT,get_MenuBar,VARIANT_BOOL*,Value) \
-    ICOM_METHOD1(HRESULT,put_MenuBar,VARIANT_BOOL,Value) \
-    ICOM_METHOD1(HRESULT,get_FullScreen,VARIANT_BOOL*,pbFullScreen) \
-    ICOM_METHOD1(HRESULT,put_FullScreen,VARIANT_BOOL,bFullScreen)
+    STDMETHOD(Quit)(THIS) PURE; \
+    STDMETHOD(ClientToWindow)(THIS_ int *pcx,int *pcy) PURE; \
+    STDMETHOD(PutProperty)(THIS_ BSTR szProperty,VARIANT vtValue) PURE; \
+    STDMETHOD(GetProperty)(THIS_ BSTR szProperty,VARIANT *pvtValue) PURE; \
+    STDMETHOD(get_Name)(THIS_ BSTR *Name) PURE; \
+    STDMETHOD(get_HWND)(THIS_ long *pHWND) PURE; \
+    STDMETHOD(get_FullName)(THIS_ BSTR *FullName) PURE; \
+    STDMETHOD(get_Path)(THIS_ BSTR *Path) PURE; \
+    STDMETHOD(get_Visible)(THIS_ VARIANT_BOOL *pBool) PURE; \
+    STDMETHOD(put_Visible)(THIS_ VARIANT_BOOL Value) PURE; \
+    STDMETHOD(get_StatusBar)(THIS_ VARIANT_BOOL *pBool) PURE; \
+    STDMETHOD(put_StatusBar)(THIS_ VARIANT_BOOL Value) PURE; \
+    STDMETHOD(get_StatusText)(THIS_ BSTR *StatusText) PURE; \
+    STDMETHOD(put_StatusText)(THIS_ BSTR StatusText) PURE; \
+    STDMETHOD(get_ToolBar)(THIS_ int *Value) PURE; \
+    STDMETHOD(put_ToolBar)(THIS_ int Value) PURE; \
+    STDMETHOD(get_MenuBar)(THIS_ VARIANT_BOOL *Value) PURE; \
+    STDMETHOD(put_MenuBar)(THIS_ VARIANT_BOOL Value) PURE; \
+    STDMETHOD(get_FullScreen)(THIS_ VARIANT_BOOL *pbFullScreen) PURE; \
+    STDMETHOD(put_FullScreen)(THIS_ VARIANT_BOOL bFullScreen) PURE;
 #define IWebBrowserApp_IMETHODS \
     IDispatch_IMETHODS \
     IWebBrowser_METHODS \
     IWebBrowserApp_METHODS
 ICOM_DEFINE(IWebBrowserApp,IWebBrowser)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IWebBrowserApp_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)

@@ -102,29 +102,29 @@ typedef struct IDirect3DVolumeTexture8   IDirect3DVolumeTexture8, *LPDIRECT3DVOL
 /*****************************************************************************
  * IDirect3D8 interface
  */
-#define ICOM_INTERFACE IDirect3D8
+#define INTERFACE IDirect3D8
 #define IDirect3D8_METHODS \
     /*** IDirect3D8 methods ***/                         \
-    ICOM_METHOD1(HRESULT,  RegisterSoftwareDevice,     void*, pInitializeFunction) \
-    ICOM_METHOD (UINT,     GetAdapterCount             ) \
-    ICOM_METHOD3(HRESULT,  GetAdapterIdentifier,       UINT, Adapter, DWORD, Flags, D3DADAPTER_IDENTIFIER8*, pIdentifier) \
-    ICOM_METHOD1(UINT,     GetAdapterModeCount,        UINT, Adapter) \
-    ICOM_METHOD3(HRESULT,  EnumAdapterModes,           UINT, Adapter, UINT, Mode, D3DDISPLAYMODE*, pMode) \
-    ICOM_METHOD2(HRESULT,  GetAdapterDisplayMode,      UINT, Adapter, D3DDISPLAYMODE*, pMode) \
-    ICOM_METHOD5(HRESULT,  CheckDeviceType,            UINT, Adapter, D3DDEVTYPE, CheckType, D3DFORMAT, DisplayFormat, D3DFORMAT, BackBufferFormat, BOOL, Windowed) \
-    ICOM_METHOD6(HRESULT,  CheckDeviceFormat,          UINT, Adapter, D3DDEVTYPE, DeviceType, D3DFORMAT, AdapterFormat, DWORD, Usage, D3DRESOURCETYPE, RType, D3DFORMAT, CheckFormat) \
-    ICOM_METHOD5(HRESULT,  CheckDeviceMultiSampleType, UINT, Adapter, D3DDEVTYPE, DeviceType, D3DFORMAT, SurfaceFormat, BOOL, Windowed, D3DMULTISAMPLE_TYPE, MultiSampleType) \
-    ICOM_METHOD5(HRESULT,  CheckDepthStencilMatch,     UINT, Adapter, D3DDEVTYPE, DeviceType, D3DFORMAT, AdapterFormat, D3DFORMAT, RenderTargetFormat, D3DFORMAT, DepthStencilFormat) \
-    ICOM_METHOD3(HRESULT,  GetDeviceCaps,              UINT, Adapter, D3DDEVTYPE, DeviceType, D3DCAPS8*, pCaps) \
-    ICOM_METHOD1(HMONITOR, GetAdapterMonitor,          UINT, Adapter) \
-    ICOM_METHOD6(HRESULT,  CreateDevice,               UINT, Adapter, D3DDEVTYPE, DeviceType,HWND, hFocusWindow, DWORD, BehaviorFlags, D3DPRESENT_PARAMETERS*, pPresentationParameters, IDirect3DDevice8**, ppReturnedDeviceInterface)
+    STDMETHOD(RegisterSoftwareDevice)(THIS_ void * pInitializeFunction) PURE; \
+    STDMETHOD_(UINT,GetAdapterCount             )(THIS) PURE; \
+    STDMETHOD(GetAdapterIdentifier)(THIS_ UINT  Adapter, DWORD  Flags, D3DADAPTER_IDENTIFIER8 * pIdentifier) PURE; \
+    STDMETHOD_(UINT,GetAdapterModeCount)(THIS_ UINT  Adapter) PURE; \
+    STDMETHOD(EnumAdapterModes)(THIS_ UINT  Adapter, UINT  Mode, D3DDISPLAYMODE * pMode) PURE; \
+    STDMETHOD(GetAdapterDisplayMode)(THIS_ UINT  Adapter, D3DDISPLAYMODE * pMode) PURE; \
+    STDMETHOD(CheckDeviceType)(THIS_ UINT  Adapter, D3DDEVTYPE  CheckType, D3DFORMAT  DisplayFormat, D3DFORMAT  BackBufferFormat, BOOL  Windowed) PURE; \
+    STDMETHOD(CheckDeviceFormat)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, D3DFORMAT  AdapterFormat, DWORD  Usage, D3DRESOURCETYPE  RType, D3DFORMAT  CheckFormat) PURE; \
+    STDMETHOD(CheckDeviceMultiSampleType)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, D3DFORMAT  SurfaceFormat, BOOL  Windowed, D3DMULTISAMPLE_TYPE  MultiSampleType) PURE; \
+    STDMETHOD(CheckDepthStencilMatch)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, D3DFORMAT  AdapterFormat, D3DFORMAT  RenderTargetFormat, D3DFORMAT  DepthStencilFormat) PURE; \
+    STDMETHOD(GetDeviceCaps)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, D3DCAPS8 * pCaps) PURE; \
+    STDMETHOD_(HMONITOR,GetAdapterMonitor)(THIS_ UINT  Adapter) PURE; \
+    STDMETHOD(CreateDevice)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType,HWND  hFocusWindow, DWORD  BehaviorFlags, D3DPRESENT_PARAMETERS * pPresentationParameters, IDirect3DDevice8 ** ppReturnedDeviceInterface) PURE;
 
     /*** IDirect3D8 methods ***/
 #define IDirect3D8_IMETHODS \
     IUnknown_IMETHODS \
     IDirect3D8_METHODS
 ICOM_DEFINE(IDirect3D8,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirect3D8_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
@@ -148,110 +148,110 @@ ICOM_DEFINE(IDirect3D8,IUnknown)
 /*****************************************************************************
  * IDirect3DDevice8 interface
  */
-#define ICOM_INTERFACE IDirect3DDevice8
+#define INTERFACE IDirect3DDevice8
 #define IDirect3DDevice8_METHODS \
     /*** IDirect3DDevice8 methods ***/ \
-    ICOM_METHOD (HRESULT,  TestCooperativeLevel) \
-    ICOM_METHOD (UINT,     GetAvailableTextureMem) \
-    ICOM_METHOD1(HRESULT,  ResourceManagerDiscardBytes, DWORD, Bytes) \
-    ICOM_METHOD1(HRESULT,  GetDirect3D, IDirect3D8**, ppD3D8) \
-    ICOM_METHOD1(HRESULT,  GetDeviceCaps, D3DCAPS8*, pCaps) \
-    ICOM_METHOD1(HRESULT,  GetDisplayMode, D3DDISPLAYMODE*, pMode) \
-    ICOM_METHOD1(HRESULT,  GetCreationParameters, D3DDEVICE_CREATION_PARAMETERS *, pParameters) \
-    ICOM_METHOD3(HRESULT,  SetCursorProperties, UINT, XHotSpot, UINT, YHotSpot, IDirect3DSurface8*, pCursorBitmap) \
-    ICOM_METHOD3(void,     SetCursorPosition, UINT, XScreenSpace, UINT, YScreenSpace,DWORD, Flags) \
-    ICOM_METHOD1(BOOL,     ShowCursor, BOOL, bShow) \
-    ICOM_METHOD2(HRESULT,  CreateAdditionalSwapChain, D3DPRESENT_PARAMETERS*, pPresentationParameters, IDirect3DSwapChain8**, pSwapChain) \
-    ICOM_METHOD1(HRESULT,  Reset, D3DPRESENT_PARAMETERS*, pPresentationParameters) \
-    ICOM_METHOD4(HRESULT,  Present, CONST RECT*, pSourceRect,CONST RECT*, pDestRect,HWND, hDestWindowOverride,CONST RGNDATA*, pDirtyRegion) \
-    ICOM_METHOD3(HRESULT,  GetBackBuffer, UINT, BackBuffer,D3DBACKBUFFER_TYPE, Type,IDirect3DSurface8**, ppBackBuffer) \
-    ICOM_METHOD1(HRESULT,  GetRasterStatus, D3DRASTER_STATUS*, pRasterStatus) \
-    ICOM_METHOD2(void,     SetGammaRamp, DWORD, Flags,CONST D3DGAMMARAMP*, pRamp) \
-    ICOM_METHOD1(void,     GetGammaRamp, D3DGAMMARAMP*, pRamp) \
-    ICOM_METHOD7(HRESULT,  CreateTexture, UINT, Width,UINT, Height,UINT, Levels,DWORD, Usage,D3DFORMAT, Format,D3DPOOL, Pool,IDirect3DTexture8**, ppTexture) \
-    ICOM_METHOD8(HRESULT,  CreateVolumeTexture, UINT, Width,UINT, Height,UINT, Depth,UINT, Levels,DWORD, Usage,D3DFORMAT, Format,D3DPOOL, Pool,IDirect3DVolumeTexture8**, ppVolumeTexture) \
-    ICOM_METHOD6(HRESULT,  CreateCubeTexture, UINT, EdgeLength,UINT, Levels,DWORD, Usage,D3DFORMAT, Format,D3DPOOL, Pool,IDirect3DCubeTexture8**, ppCubeTexture) \
-    ICOM_METHOD5(HRESULT,  CreateVertexBuffer, UINT, Length,DWORD, Usage,DWORD, FVF,D3DPOOL, Pool,IDirect3DVertexBuffer8**, ppVertexBuffer) \
-    ICOM_METHOD5(HRESULT,  CreateIndexBuffer, UINT, Length,DWORD, Usage,D3DFORMAT, Format,D3DPOOL, Pool,IDirect3DIndexBuffer8**, ppIndexBuffer) \
-    ICOM_METHOD6(HRESULT,  CreateRenderTarget, UINT, Width,UINT, Height,D3DFORMAT, Format,D3DMULTISAMPLE_TYPE, MultiSample,BOOL, Lockable,IDirect3DSurface8**, ppSurface) \
-    ICOM_METHOD5(HRESULT,  CreateDepthStencilSurface, UINT, Width,UINT, Height,D3DFORMAT, Format,D3DMULTISAMPLE_TYPE, MultiSample,IDirect3DSurface8**, ppSurface) \
-    ICOM_METHOD4(HRESULT,  CreateImageSurface, UINT, Width,UINT, Height,D3DFORMAT, Format,IDirect3DSurface8**, ppSurface) \
-    ICOM_METHOD5(HRESULT,  CopyRects, IDirect3DSurface8*, pSourceSurface,CONST RECT*, pSourceRectsArray,UINT, cRects,IDirect3DSurface8*, pDestinationSurface,CONST POINT*, pDestPointsArray) \
-    ICOM_METHOD2(HRESULT,  UpdateTexture, IDirect3DBaseTexture8*, pSourceTexture,IDirect3DBaseTexture8*, pDestinationTexture) \
-    ICOM_METHOD1(HRESULT,  GetFrontBuffer, IDirect3DSurface8*, pDestSurface) \
-    ICOM_METHOD2(HRESULT,  SetRenderTarget, IDirect3DSurface8*, pRenderTarget,IDirect3DSurface8*, pNewZStencil) \
-    ICOM_METHOD1(HRESULT,  GetRenderTarget, IDirect3DSurface8**, ppRenderTarget) \
-    ICOM_METHOD1(HRESULT,  GetDepthStencilSurface, IDirect3DSurface8**, ppZStencilSurface) \
-    ICOM_METHOD (HRESULT,  BeginScene) \
-    ICOM_METHOD (HRESULT,  EndScene) \
-    ICOM_METHOD6(HRESULT,  Clear, DWORD, Count,CONST D3DRECT*, pRects,DWORD, Flags,D3DCOLOR, Color,float, Z,DWORD, Stencil) \
-    ICOM_METHOD2(HRESULT,  SetTransform, D3DTRANSFORMSTATETYPE, State,CONST D3DMATRIX*, pMatrix) \
-    ICOM_METHOD2(HRESULT,  GetTransform, D3DTRANSFORMSTATETYPE, State,D3DMATRIX*, pMatrix) \
-    ICOM_METHOD2(HRESULT,  MultiplyTransform, D3DTRANSFORMSTATETYPE, State, CONST D3DMATRIX*, pMatrix) \
-    ICOM_METHOD1(HRESULT,  SetViewport, CONST D3DVIEWPORT8*, pViewport) \
-    ICOM_METHOD1(HRESULT,  GetViewport, D3DVIEWPORT8*, pViewport) \
-    ICOM_METHOD1(HRESULT,  SetMaterial, CONST D3DMATERIAL8*, pMaterial) \
-    ICOM_METHOD1(HRESULT,  GetMaterial, D3DMATERIAL8* ,pMaterial) \
-    ICOM_METHOD2(HRESULT,  SetLight, DWORD, Index,CONST D3DLIGHT8*, pLight) \
-    ICOM_METHOD2(HRESULT,  GetLight, DWORD, Index,D3DLIGHT8*, pLight) \
-    ICOM_METHOD2(HRESULT,  LightEnable, DWORD, Index,BOOL, Enable) \
-    ICOM_METHOD2(HRESULT,  GetLightEnable, DWORD, Index,BOOL*, pEnable) \
-    ICOM_METHOD2(HRESULT,  SetClipPlane, DWORD, Index,CONST float*, pPlane) \
-    ICOM_METHOD2(HRESULT,  GetClipPlane, DWORD, Index,float*, pPlane) \
-    ICOM_METHOD2(HRESULT,  SetRenderState, D3DRENDERSTATETYPE, State,DWORD, Value) \
-    ICOM_METHOD2(HRESULT,  GetRenderState, D3DRENDERSTATETYPE, State,DWORD*, pValue) \
-    ICOM_METHOD (HRESULT,  BeginStateBlock) \
-    ICOM_METHOD1(HRESULT,  EndStateBlock, DWORD*, pToken) \
-    ICOM_METHOD1(HRESULT,  ApplyStateBlock, DWORD, Token) \
-    ICOM_METHOD1(HRESULT,  CaptureStateBlock, DWORD, Token) \
-    ICOM_METHOD1(HRESULT,  DeleteStateBlock, DWORD, Token) \
-    ICOM_METHOD2(HRESULT,  CreateStateBlock, D3DSTATEBLOCKTYPE, Type,DWORD*, pToken) \
-    ICOM_METHOD1(HRESULT,  SetClipStatus, CONST D3DCLIPSTATUS8*, pClipStatus) \
-    ICOM_METHOD1(HRESULT,  GetClipStatus, D3DCLIPSTATUS8*, pClipStatus) \
-    ICOM_METHOD2(HRESULT,  GetTexture, DWORD, Stage,IDirect3DBaseTexture8**, ppTexture) \
-    ICOM_METHOD2(HRESULT,  SetTexture, DWORD, Stage,IDirect3DBaseTexture8*, pTexture) \
-    ICOM_METHOD3(HRESULT,  GetTextureStageState, DWORD, Stage,D3DTEXTURESTAGESTATETYPE, Type,DWORD*, pValue) \
-    ICOM_METHOD3(HRESULT,  SetTextureStageState, DWORD, Stage,D3DTEXTURESTAGESTATETYPE, Type,DWORD, Value) \
-    ICOM_METHOD1(HRESULT,  ValidateDevice, DWORD*, pNumPasses) \
-    ICOM_METHOD3(HRESULT,  GetInfo, DWORD, DevInfoID,void*, pDevInfoStruct,DWORD, DevInfoStructSize) \
-    ICOM_METHOD2(HRESULT,  SetPaletteEntries, UINT, PaletteNumber,CONST PALETTEENTRY*, pEntries) \
-    ICOM_METHOD2(HRESULT,  GetPaletteEntries, UINT, PaletteNumber,PALETTEENTRY*, pEntries) \
-    ICOM_METHOD1(HRESULT,  SetCurrentTexturePalette, UINT, PaletteNumber) \
-    ICOM_METHOD1(HRESULT,  GetCurrentTexturePalette, UINT *, PaletteNumber) \
-    ICOM_METHOD3(HRESULT,  DrawPrimitive, D3DPRIMITIVETYPE, PrimitiveType,UINT, StartVertex,UINT, PrimitiveCount) \
-    ICOM_METHOD5(HRESULT,  DrawIndexedPrimitive, D3DPRIMITIVETYPE, PrimitiveType,UINT, minIndex,UINT, NumVertices,UINT, startIndex,UINT, primCount) \
-    ICOM_METHOD4(HRESULT,  DrawPrimitiveUP, D3DPRIMITIVETYPE, PrimitiveType,UINT, PrimitiveCount,CONST void*, pVertexStreamZeroData,UINT, VertexStreamZeroStride) \
-    ICOM_METHOD8(HRESULT,  DrawIndexedPrimitiveUP, D3DPRIMITIVETYPE, PrimitiveType,UINT, MinVertexIndex,UINT, NumVertexIndices,UINT, PrimitiveCount,CONST void*, pIndexData,D3DFORMAT, IndexDataFormat,CONST void*, pVertexStreamZeroData,UINT, VertexStreamZeroStride) \
-    ICOM_METHOD5(HRESULT,  ProcessVertices, UINT, SrcStartIndex,UINT, DestIndex,UINT, VertexCount,IDirect3DVertexBuffer8*, pDestBuffer,DWORD, Flags) \
-    ICOM_METHOD4(HRESULT,  CreateVertexShader, CONST DWORD*, pDeclaration,CONST DWORD*, pFunction,DWORD*, pHandle,DWORD, Usage) \
-    ICOM_METHOD1(HRESULT,  SetVertexShader, DWORD, Handle) \
-    ICOM_METHOD1(HRESULT,  GetVertexShader, DWORD*, pHandle) \
-    ICOM_METHOD1(HRESULT,  DeleteVertexShader, DWORD, Handle) \
-    ICOM_METHOD3(HRESULT,  SetVertexShaderConstant, DWORD, Register,CONST void*, pConstantData,DWORD, ConstantCount) \
-    ICOM_METHOD3(HRESULT,  GetVertexShaderConstant, DWORD, Register,void*, pConstantData,DWORD, ConstantCount) \
-    ICOM_METHOD3(HRESULT,  GetVertexShaderDeclaration, DWORD, Handle,void*, pData,DWORD*, pSizeOfData) \
-    ICOM_METHOD3(HRESULT,  GetVertexShaderFunction, DWORD, Handle,void*, pData,DWORD*, pSizeOfData) \
-    ICOM_METHOD3(HRESULT,  SetStreamSource, UINT, StreamNumber,IDirect3DVertexBuffer8*, pStreamData,UINT, Stride) \
-    ICOM_METHOD3(HRESULT,  GetStreamSource, UINT, StreamNumber,IDirect3DVertexBuffer8**, ppStreamData,UINT*, pStride) \
-    ICOM_METHOD2(HRESULT,  SetIndices, IDirect3DIndexBuffer8*, pIndexData,UINT, BaseVertexIndex) \
-    ICOM_METHOD2(HRESULT,  GetIndices, IDirect3DIndexBuffer8**, ppIndexData,UINT*, pBaseVertexIndex) \
-    ICOM_METHOD2(HRESULT,  CreatePixelShader, CONST DWORD*, pFunction,DWORD*, pHandle) \
-    ICOM_METHOD1(HRESULT,  SetPixelShader, DWORD, Handle) \
-    ICOM_METHOD1(HRESULT,  GetPixelShader, DWORD*, pHandle) \
-    ICOM_METHOD1(HRESULT,  DeletePixelShader, DWORD, Handle) \
-    ICOM_METHOD3(HRESULT,  SetPixelShaderConstant, DWORD, Register,CONST void*, pConstantData,DWORD, ConstantCount) \
-    ICOM_METHOD3(HRESULT,  GetPixelShaderConstant, DWORD, Register,void*, pConstantData,DWORD, ConstantCount) \
-    ICOM_METHOD3(HRESULT,  GetPixelShaderFunction, DWORD, Handle,void*, pData,DWORD*, pSizeOfData) \
-    ICOM_METHOD3(HRESULT,  DrawRectPatch, UINT, Handle,CONST float*, pNumSegs,CONST D3DRECTPATCH_INFO*, pRectPatchInfo) \
-    ICOM_METHOD3(HRESULT,  DrawTriPatch, UINT, Handle,CONST float*, pNumSegs,CONST D3DTRIPATCH_INFO*, pTriPatchInfo) \
-    ICOM_METHOD1(HRESULT,  DeletePatch, UINT, Handle) \
+    STDMETHOD(TestCooperativeLevel)(THIS) PURE; \
+    STDMETHOD_(UINT,GetAvailableTextureMem)(THIS) PURE; \
+    STDMETHOD(ResourceManagerDiscardBytes)(THIS_ DWORD  Bytes) PURE; \
+    STDMETHOD(GetDirect3D)(THIS_ IDirect3D8 ** ppD3D8) PURE; \
+    STDMETHOD(GetDeviceCaps)(THIS_ D3DCAPS8 * pCaps) PURE; \
+    STDMETHOD(GetDisplayMode)(THIS_ D3DDISPLAYMODE * pMode) PURE; \
+    STDMETHOD(GetCreationParameters)(THIS_ D3DDEVICE_CREATION_PARAMETERS  * pParameters) PURE; \
+    STDMETHOD(SetCursorProperties)(THIS_ UINT  XHotSpot, UINT  YHotSpot, IDirect3DSurface8 * pCursorBitmap) PURE; \
+    STDMETHOD_(void,SetCursorPosition)(THIS_ UINT  XScreenSpace, UINT  YScreenSpace,DWORD  Flags) PURE; \
+    STDMETHOD_(BOOL,ShowCursor)(THIS_ BOOL  bShow) PURE; \
+    STDMETHOD(CreateAdditionalSwapChain)(THIS_ D3DPRESENT_PARAMETERS * pPresentationParameters, IDirect3DSwapChain8 ** pSwapChain) PURE; \
+    STDMETHOD(Reset)(THIS_ D3DPRESENT_PARAMETERS * pPresentationParameters) PURE; \
+    STDMETHOD(Present)(THIS_ CONST RECT * pSourceRect,CONST RECT * pDestRect,HWND  hDestWindowOverride,CONST RGNDATA * pDirtyRegion) PURE; \
+    STDMETHOD(GetBackBuffer)(THIS_ UINT  BackBuffer,D3DBACKBUFFER_TYPE  Type,IDirect3DSurface8 ** ppBackBuffer) PURE; \
+    STDMETHOD(GetRasterStatus)(THIS_ D3DRASTER_STATUS * pRasterStatus) PURE; \
+    STDMETHOD_(void,SetGammaRamp)(THIS_ DWORD  Flags,CONST D3DGAMMARAMP * pRamp) PURE; \
+    STDMETHOD_(void,GetGammaRamp)(THIS_ D3DGAMMARAMP * pRamp) PURE; \
+    STDMETHOD(CreateTexture)(THIS_ UINT  Width,UINT  Height,UINT  Levels,DWORD  Usage,D3DFORMAT  Format,D3DPOOL  Pool,IDirect3DTexture8 ** ppTexture) PURE; \
+    STDMETHOD(CreateVolumeTexture)(THIS_ UINT  Width,UINT  Height,UINT  Depth,UINT  Levels,DWORD  Usage,D3DFORMAT  Format,D3DPOOL  Pool,IDirect3DVolumeTexture8 ** ppVolumeTexture) PURE; \
+    STDMETHOD(CreateCubeTexture)(THIS_ UINT  EdgeLength,UINT  Levels,DWORD  Usage,D3DFORMAT  Format,D3DPOOL  Pool,IDirect3DCubeTexture8 ** ppCubeTexture) PURE; \
+    STDMETHOD(CreateVertexBuffer)(THIS_ UINT  Length,DWORD  Usage,DWORD  FVF,D3DPOOL  Pool,IDirect3DVertexBuffer8 ** ppVertexBuffer) PURE; \
+    STDMETHOD(CreateIndexBuffer)(THIS_ UINT  Length,DWORD  Usage,D3DFORMAT  Format,D3DPOOL  Pool,IDirect3DIndexBuffer8 ** ppIndexBuffer) PURE; \
+    STDMETHOD(CreateRenderTarget)(THIS_ UINT  Width,UINT  Height,D3DFORMAT  Format,D3DMULTISAMPLE_TYPE  MultiSample,BOOL  Lockable,IDirect3DSurface8 ** ppSurface) PURE; \
+    STDMETHOD(CreateDepthStencilSurface)(THIS_ UINT  Width,UINT  Height,D3DFORMAT  Format,D3DMULTISAMPLE_TYPE  MultiSample,IDirect3DSurface8 ** ppSurface) PURE; \
+    STDMETHOD(CreateImageSurface)(THIS_ UINT  Width,UINT  Height,D3DFORMAT  Format,IDirect3DSurface8 ** ppSurface) PURE; \
+    STDMETHOD(CopyRects)(THIS_ IDirect3DSurface8 * pSourceSurface,CONST RECT * pSourceRectsArray,UINT  cRects,IDirect3DSurface8 * pDestinationSurface,CONST POINT * pDestPointsArray) PURE; \
+    STDMETHOD(UpdateTexture)(THIS_ IDirect3DBaseTexture8 * pSourceTexture,IDirect3DBaseTexture8 * pDestinationTexture) PURE; \
+    STDMETHOD(GetFrontBuffer)(THIS_ IDirect3DSurface8 * pDestSurface) PURE; \
+    STDMETHOD(SetRenderTarget)(THIS_ IDirect3DSurface8 * pRenderTarget,IDirect3DSurface8 * pNewZStencil) PURE; \
+    STDMETHOD(GetRenderTarget)(THIS_ IDirect3DSurface8 ** ppRenderTarget) PURE; \
+    STDMETHOD(GetDepthStencilSurface)(THIS_ IDirect3DSurface8 ** ppZStencilSurface) PURE; \
+    STDMETHOD(BeginScene)(THIS) PURE; \
+    STDMETHOD(EndScene)(THIS) PURE; \
+    STDMETHOD(Clear)(THIS_ DWORD  Count,CONST D3DRECT * pRects,DWORD  Flags,D3DCOLOR  Color,float  Z,DWORD  Stencil) PURE; \
+    STDMETHOD(SetTransform)(THIS_ D3DTRANSFORMSTATETYPE  State,CONST D3DMATRIX * pMatrix) PURE; \
+    STDMETHOD(GetTransform)(THIS_ D3DTRANSFORMSTATETYPE  State,D3DMATRIX * pMatrix) PURE; \
+    STDMETHOD(MultiplyTransform)(THIS_ D3DTRANSFORMSTATETYPE  State, CONST D3DMATRIX * pMatrix) PURE; \
+    STDMETHOD(SetViewport)(THIS_ CONST D3DVIEWPORT8 * pViewport) PURE; \
+    STDMETHOD(GetViewport)(THIS_ D3DVIEWPORT8 * pViewport) PURE; \
+    STDMETHOD(SetMaterial)(THIS_ CONST D3DMATERIAL8 * pMaterial) PURE; \
+    STDMETHOD(GetMaterial)(THIS_ D3DMATERIAL8 *pMaterial) PURE; \
+    STDMETHOD(SetLight)(THIS_ DWORD  Index,CONST D3DLIGHT8 * pLight) PURE; \
+    STDMETHOD(GetLight)(THIS_ DWORD  Index,D3DLIGHT8 * pLight) PURE; \
+    STDMETHOD(LightEnable)(THIS_ DWORD  Index,BOOL  Enable) PURE; \
+    STDMETHOD(GetLightEnable)(THIS_ DWORD  Index,BOOL * pEnable) PURE; \
+    STDMETHOD(SetClipPlane)(THIS_ DWORD  Index,CONST float * pPlane) PURE; \
+    STDMETHOD(GetClipPlane)(THIS_ DWORD  Index,float * pPlane) PURE; \
+    STDMETHOD(SetRenderState)(THIS_ D3DRENDERSTATETYPE  State,DWORD  Value) PURE; \
+    STDMETHOD(GetRenderState)(THIS_ D3DRENDERSTATETYPE  State,DWORD * pValue) PURE; \
+    STDMETHOD(BeginStateBlock)(THIS) PURE; \
+    STDMETHOD(EndStateBlock)(THIS_ DWORD * pToken) PURE; \
+    STDMETHOD(ApplyStateBlock)(THIS_ DWORD  Token) PURE; \
+    STDMETHOD(CaptureStateBlock)(THIS_ DWORD  Token) PURE; \
+    STDMETHOD(DeleteStateBlock)(THIS_ DWORD  Token) PURE; \
+    STDMETHOD(CreateStateBlock)(THIS_ D3DSTATEBLOCKTYPE  Type,DWORD * pToken) PURE; \
+    STDMETHOD(SetClipStatus)(THIS_ CONST D3DCLIPSTATUS8 * pClipStatus) PURE; \
+    STDMETHOD(GetClipStatus)(THIS_ D3DCLIPSTATUS8 * pClipStatus) PURE; \
+    STDMETHOD(GetTexture)(THIS_ DWORD  Stage,IDirect3DBaseTexture8 ** ppTexture) PURE; \
+    STDMETHOD(SetTexture)(THIS_ DWORD  Stage,IDirect3DBaseTexture8 * pTexture) PURE; \
+    STDMETHOD(GetTextureStageState)(THIS_ DWORD  Stage,D3DTEXTURESTAGESTATETYPE  Type,DWORD * pValue) PURE; \
+    STDMETHOD(SetTextureStageState)(THIS_ DWORD  Stage,D3DTEXTURESTAGESTATETYPE  Type,DWORD  Value) PURE; \
+    STDMETHOD(ValidateDevice)(THIS_ DWORD * pNumPasses) PURE; \
+    STDMETHOD(GetInfo)(THIS_ DWORD  DevInfoID,void * pDevInfoStruct,DWORD  DevInfoStructSize) PURE; \
+    STDMETHOD(SetPaletteEntries)(THIS_ UINT  PaletteNumber,CONST PALETTEENTRY * pEntries) PURE; \
+    STDMETHOD(GetPaletteEntries)(THIS_ UINT  PaletteNumber,PALETTEENTRY * pEntries) PURE; \
+    STDMETHOD(SetCurrentTexturePalette)(THIS_ UINT  PaletteNumber) PURE; \
+    STDMETHOD(GetCurrentTexturePalette)(THIS_ UINT  * PaletteNumber) PURE; \
+    STDMETHOD(DrawPrimitive)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,UINT  StartVertex,UINT  PrimitiveCount) PURE; \
+    STDMETHOD(DrawIndexedPrimitive)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,UINT  minIndex,UINT  NumVertices,UINT  startIndex,UINT  primCount) PURE; \
+    STDMETHOD(DrawPrimitiveUP)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,UINT  PrimitiveCount,CONST void * pVertexStreamZeroData,UINT  VertexStreamZeroStride) PURE; \
+    STDMETHOD(DrawIndexedPrimitiveUP)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,UINT  MinVertexIndex,UINT  NumVertexIndices,UINT  PrimitiveCount,CONST void * pIndexData,D3DFORMAT  IndexDataFormat,CONST void * pVertexStreamZeroData,UINT  VertexStreamZeroStride) PURE; \
+    STDMETHOD(ProcessVertices)(THIS_ UINT  SrcStartIndex,UINT  DestIndex,UINT  VertexCount,IDirect3DVertexBuffer8 * pDestBuffer,DWORD  Flags) PURE; \
+    STDMETHOD(CreateVertexShader)(THIS_ CONST DWORD * pDeclaration,CONST DWORD * pFunction,DWORD * pHandle,DWORD  Usage) PURE; \
+    STDMETHOD(SetVertexShader)(THIS_ DWORD  Handle) PURE; \
+    STDMETHOD(GetVertexShader)(THIS_ DWORD * pHandle) PURE; \
+    STDMETHOD(DeleteVertexShader)(THIS_ DWORD  Handle) PURE; \
+    STDMETHOD(SetVertexShaderConstant)(THIS_ DWORD  Register,CONST void * pConstantData,DWORD  ConstantCount) PURE; \
+    STDMETHOD(GetVertexShaderConstant)(THIS_ DWORD  Register,void * pConstantData,DWORD  ConstantCount) PURE; \
+    STDMETHOD(GetVertexShaderDeclaration)(THIS_ DWORD  Handle,void * pData,DWORD * pSizeOfData) PURE; \
+    STDMETHOD(GetVertexShaderFunction)(THIS_ DWORD  Handle,void * pData,DWORD * pSizeOfData) PURE; \
+    STDMETHOD(SetStreamSource)(THIS_ UINT  StreamNumber,IDirect3DVertexBuffer8 * pStreamData,UINT  Stride) PURE; \
+    STDMETHOD(GetStreamSource)(THIS_ UINT  StreamNumber,IDirect3DVertexBuffer8 ** ppStreamData,UINT * pStride) PURE; \
+    STDMETHOD(SetIndices)(THIS_ IDirect3DIndexBuffer8 * pIndexData,UINT  BaseVertexIndex) PURE; \
+    STDMETHOD(GetIndices)(THIS_ IDirect3DIndexBuffer8 ** ppIndexData,UINT * pBaseVertexIndex) PURE; \
+    STDMETHOD(CreatePixelShader)(THIS_ CONST DWORD * pFunction,DWORD * pHandle) PURE; \
+    STDMETHOD(SetPixelShader)(THIS_ DWORD  Handle) PURE; \
+    STDMETHOD(GetPixelShader)(THIS_ DWORD * pHandle) PURE; \
+    STDMETHOD(DeletePixelShader)(THIS_ DWORD  Handle) PURE; \
+    STDMETHOD(SetPixelShaderConstant)(THIS_ DWORD  Register,CONST void * pConstantData,DWORD  ConstantCount) PURE; \
+    STDMETHOD(GetPixelShaderConstant)(THIS_ DWORD  Register,void * pConstantData,DWORD  ConstantCount) PURE; \
+    STDMETHOD(GetPixelShaderFunction)(THIS_ DWORD  Handle,void * pData,DWORD * pSizeOfData) PURE; \
+    STDMETHOD(DrawRectPatch)(THIS_ UINT  Handle,CONST float * pNumSegs,CONST D3DRECTPATCH_INFO * pRectPatchInfo) PURE; \
+    STDMETHOD(DrawTriPatch)(THIS_ UINT  Handle,CONST float * pNumSegs,CONST D3DTRIPATCH_INFO * pTriPatchInfo) PURE; \
+    STDMETHOD(DeletePatch)(THIS_ UINT  Handle) PURE; \
 
     /*** IDirect3DDevice8 methods ***/
 #define IDirect3DDevice8_IMETHODS \
     IUnknown_IMETHODS \
     IDirect3DDevice8_METHODS
 ICOM_DEFINE(IDirect3DDevice8,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirect3DDevice8_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
@@ -356,24 +356,24 @@ ICOM_DEFINE(IDirect3DDevice8,IUnknown)
 /*****************************************************************************
  * IDirect3DVolume8 interface
  */
-#define ICOM_INTERFACE IDirect3DVolume8
+#define INTERFACE IDirect3DVolume8
 #define IDirect3DVolume8_METHODS \
     /*** IDirect3DVolume8 methods ***/ \
-    ICOM_METHOD1(HRESULT,GetDevice, IDirect3DDevice8**, ppDevice) \
-    ICOM_METHOD4(HRESULT,SetPrivateData, REFGUID, refguid,CONST void*, pData, DWORD, SizeOfData, DWORD, Flags) \
-    ICOM_METHOD3(HRESULT,GetPrivateData, REFGUID,  refguid,void*, pData, DWORD*, pSizeOfData) \
-    ICOM_METHOD1(HRESULT,FreePrivateData, REFGUID, refguid) \
-    ICOM_METHOD2(HRESULT,GetContainer, REFIID, riid, void**, ppContainer) \
-    ICOM_METHOD1(HRESULT,GetDesc, D3DVOLUME_DESC*, pDesc) \
-    ICOM_METHOD3(HRESULT,LockBox, D3DLOCKED_BOX*, pLockedVolume,CONST D3DBOX*, pBox, DWORD, Flags) \
-    ICOM_METHOD (HRESULT,UnlockBox) \
+    STDMETHOD(GetDevice)(THIS_ IDirect3DDevice8 ** ppDevice) PURE; \
+    STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid,CONST void * pData, DWORD  SizeOfData, DWORD  Flags) PURE; \
+    STDMETHOD(GetPrivateData)(THIS_ REFGUID   refguid,void * pData, DWORD * pSizeOfData) PURE; \
+    STDMETHOD(FreePrivateData)(THIS_ REFGUID  refguid) PURE; \
+    STDMETHOD(GetContainer)(THIS_ REFIID  riid, void ** ppContainer) PURE; \
+    STDMETHOD(GetDesc)(THIS_ D3DVOLUME_DESC * pDesc) PURE; \
+    STDMETHOD(LockBox)(THIS_ D3DLOCKED_BOX * pLockedVolume,CONST D3DBOX * pBox, DWORD  Flags) PURE; \
+    STDMETHOD(UnlockBox)(THIS) PURE; \
 
     /*** IDirect3DVolume8 methods ***/
 #define IDirect3DVolume8_IMETHODS \
     IUnknown_IMETHODS \
     IDirect3DVolume8_METHODS
 ICOM_DEFINE(IDirect3DVolume8,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirect3DVolume8_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
@@ -392,18 +392,18 @@ ICOM_DEFINE(IDirect3DVolume8,IUnknown)
 /*****************************************************************************
  * IDirect3DSwapChain8 interface
  */
-#define ICOM_INTERFACE IDirect3DSwapChain8
+#define INTERFACE IDirect3DSwapChain8
 #define IDirect3DSwapChain8_METHODS \
     /*** IDirect3DSwapChain8 methods ***/ \
-    ICOM_METHOD4(HRESULT, Present, CONST RECT*, pSourceRect, CONST RECT*, pDestRect, HWND, hDestWindowOverride,CONST RGNDATA*, pDirtyRegion) \
-    ICOM_METHOD3(HRESULT, GetBackBuffer, UINT, BackBuffer, D3DBACKBUFFER_TYPE, Type,IDirect3DSurface8**, ppBackBuffer) \
+    STDMETHOD(Present)(THIS_ CONST RECT * pSourceRect, CONST RECT * pDestRect, HWND  hDestWindowOverride,CONST RGNDATA * pDirtyRegion) PURE; \
+    STDMETHOD(GetBackBuffer)(THIS_ UINT  BackBuffer, D3DBACKBUFFER_TYPE  Type,IDirect3DSurface8 ** ppBackBuffer) PURE; \
 
     /*** IDirect3DSwapChain8 methods ***/
 #define IDirect3DSwapChain8_IMETHODS \
     IUnknown_IMETHODS \
     IDirect3DSwapChain8_METHODS
 ICOM_DEFINE(IDirect3DSwapChain8,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirect3DSwapChain8_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
@@ -416,24 +416,24 @@ ICOM_DEFINE(IDirect3DSwapChain8,IUnknown)
 /*****************************************************************************
  * IDirect3DSurface8 interface
  */
-#define ICOM_INTERFACE IDirect3DSurface8
+#define INTERFACE IDirect3DSurface8
 #define IDirect3DSurface8_METHODS \
     /*** IDirect3DSurface8 methods ***/ \
-    ICOM_METHOD1(HRESULT, GetDevice, IDirect3DDevice8**, ppDevice) \
-    ICOM_METHOD4(HRESULT, SetPrivateData, REFGUID, refguid,CONST void*, pData,DWORD, SizeOfData,DWORD, Flags) \
-    ICOM_METHOD3(HRESULT, GetPrivateData, REFGUID, refguid,void*, pData,DWORD*, pSizeOfData) \
-    ICOM_METHOD1(HRESULT, FreePrivateData, REFGUID, refguid) \
-    ICOM_METHOD2(HRESULT, GetContainer, REFIID, riid, void**, ppContainer) \
-    ICOM_METHOD1(HRESULT, GetDesc, D3DSURFACE_DESC*, pDesc) \
-    ICOM_METHOD3(HRESULT, LockRect, D3DLOCKED_RECT*, pLockedRect, CONST RECT*, pRect,DWORD, Flags) \
-    ICOM_METHOD (HRESULT, UnlockRect) \
+    STDMETHOD(GetDevice)(THIS_ IDirect3DDevice8 ** ppDevice) PURE; \
+    STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid,CONST void * pData,DWORD  SizeOfData,DWORD  Flags) PURE; \
+    STDMETHOD(GetPrivateData)(THIS_ REFGUID  refguid,void * pData,DWORD * pSizeOfData) PURE; \
+    STDMETHOD(FreePrivateData)(THIS_ REFGUID  refguid) PURE; \
+    STDMETHOD(GetContainer)(THIS_ REFIID  riid, void ** ppContainer) PURE; \
+    STDMETHOD(GetDesc)(THIS_ D3DSURFACE_DESC * pDesc) PURE; \
+    STDMETHOD(LockRect)(THIS_ D3DLOCKED_RECT * pLockedRect, CONST RECT * pRect,DWORD  Flags) PURE; \
+    STDMETHOD(UnlockRect)(THIS) PURE; \
 
     /*** IDirect3DSurface8 methods ***/
 #define IDirect3DSurface8_IMETHODS \
     IUnknown_IMETHODS \
     IDirect3DSurface8_METHODS
 ICOM_DEFINE(IDirect3DSurface8,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirect3DSurface8_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
@@ -452,24 +452,24 @@ ICOM_DEFINE(IDirect3DSurface8,IUnknown)
 /*****************************************************************************
  * IDirect3DResource8 interface
  */
-#define ICOM_INTERFACE IDirect3DResource8
+#define INTERFACE IDirect3DResource8
 #define IDirect3DResource8_METHODS \
     /*** IDirect3DResource8 methods ***/ \
-    ICOM_METHOD1(HRESULT,         GetDevice, IDirect3DDevice8**, ppDevice) \
-    ICOM_METHOD4(HRESULT,         SetPrivateData, REFGUID, refguid, CONST void*, pData, DWORD, SizeOfData, DWORD, Flags) \
-    ICOM_METHOD3(HRESULT,         GetPrivateData, REFGUID, refguid, void*, pData, DWORD*, pSizeOfData) \
-    ICOM_METHOD1(HRESULT,         FreePrivateData, REFGUID, refguid) \
-    ICOM_METHOD1(DWORD,           SetPriority, DWORD, PriorityNew) \
-    ICOM_METHOD (DWORD,           GetPriority) \
-    ICOM_METHOD (void,            PreLoad) \
-    ICOM_METHOD (D3DRESOURCETYPE, GetType)
+    STDMETHOD(GetDevice)(THIS_ IDirect3DDevice8 ** ppDevice) PURE; \
+    STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags) PURE; \
+    STDMETHOD(GetPrivateData)(THIS_ REFGUID  refguid, void * pData, DWORD * pSizeOfData) PURE; \
+    STDMETHOD(FreePrivateData)(THIS_ REFGUID  refguid) PURE; \
+    STDMETHOD_(DWORD,SetPriority)(THIS_ DWORD  PriorityNew) PURE; \
+    STDMETHOD_(DWORD,GetPriority)(THIS) PURE; \
+    STDMETHOD_(void,PreLoad)(THIS) PURE; \
+    STDMETHOD_(D3DRESOURCETYPE,GetType)(THIS) PURE;
 
     /*** IDirect3DResource8 methods ***/
 #define IDirect3DResource8_IMETHODS \
     IUnknown_IMETHODS \
     IDirect3DResource8_METHODS
 ICOM_DEFINE(IDirect3DResource8,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirect3DResource8_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
@@ -488,12 +488,12 @@ ICOM_DEFINE(IDirect3DResource8,IUnknown)
 /*****************************************************************************
  * IDirect3DVertexBuffer8 interface
  */
-#define ICOM_INTERFACE IDirect3DVertexBuffer8
+#define INTERFACE IDirect3DVertexBuffer8
 #define IDirect3DVertexBuffer8_METHODS \
     /*** IDirect3DVertexBuffer8 methods ***/ \
-    ICOM_METHOD4(HRESULT,Lock, UINT, OffsetToLock, UINT, SizeToLock, BYTE**, ppbData, DWORD, Flags) \
-    ICOM_METHOD (HRESULT,Unlock) \
-    ICOM_METHOD1(HRESULT,GetDesc, D3DVERTEXBUFFER_DESC *, pDesc)
+    STDMETHOD(Lock)(THIS_ UINT  OffsetToLock, UINT  SizeToLock, BYTE ** ppbData, DWORD  Flags) PURE; \
+    STDMETHOD(Unlock)(THIS) PURE; \
+    STDMETHOD(GetDesc)(THIS_ D3DVERTEXBUFFER_DESC  * pDesc) PURE;
 
     /*** IDirect3DVertexBuffer8 methods ***/
 #define IDirect3DVertexBuffer8_IMETHODS \
@@ -501,7 +501,7 @@ ICOM_DEFINE(IDirect3DResource8,IUnknown)
     IDirect3DResource8_METHODS \
     IDirect3DVertexBuffer8_METHODS
 ICOM_DEFINE(IDirect3DVertexBuffer8,IDirect3DResource8)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirect3DVertexBuffer8_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
@@ -524,12 +524,12 @@ ICOM_DEFINE(IDirect3DVertexBuffer8,IDirect3DResource8)
 /*****************************************************************************
  * IDirect3DIndexBuffer8 interface
  */
-#define ICOM_INTERFACE IDirect3DIndexBuffer8
+#define INTERFACE IDirect3DIndexBuffer8
 #define IDirect3DIndexBuffer8_METHODS \
     /*** IDirect3DIndexBuffer8 methods ***/ \
-    ICOM_METHOD4(HRESULT,Lock, UINT, OffsetToLock, UINT, SizeToLock, BYTE**, ppbData, DWORD, Flags) \
-    ICOM_METHOD (HRESULT,Unlock) \
-    ICOM_METHOD1(HRESULT,GetDesc, D3DINDEXBUFFER_DESC*, pDesc) \
+    STDMETHOD(Lock)(THIS_ UINT  OffsetToLock, UINT  SizeToLock, BYTE ** ppbData, DWORD  Flags) PURE; \
+    STDMETHOD(Unlock)(THIS) PURE; \
+    STDMETHOD(GetDesc)(THIS_ D3DINDEXBUFFER_DESC * pDesc) PURE; \
 
     /*** IDirect3DIndexBuffer8 methods ***/
 #define IDirect3DIndexBuffer8_IMETHODS \
@@ -537,7 +537,7 @@ ICOM_DEFINE(IDirect3DVertexBuffer8,IDirect3DResource8)
     IDirect3DResource8_METHODS \
     IDirect3DIndexBuffer8_METHODS
 ICOM_DEFINE(IDirect3DIndexBuffer8,IDirect3DResource8)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirect3DIndexBuffer8_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
@@ -560,12 +560,12 @@ ICOM_DEFINE(IDirect3DIndexBuffer8,IDirect3DResource8)
 /*****************************************************************************
  * IDirect3DBaseTexture8 interface
  */
-#define ICOM_INTERFACE IDirect3DBaseTexture8
+#define INTERFACE IDirect3DBaseTexture8
 #define IDirect3DBaseTexture8_METHODS \
     /*** IDirect3DBaseTexture8 methods ***/ \
-    ICOM_METHOD1(DWORD,SetLOD, DWORD, LODNew) \
-    ICOM_METHOD (DWORD,GetLOD) \
-    ICOM_METHOD (DWORD,GetLevelCount)
+    STDMETHOD_(DWORD,SetLOD)(THIS_ DWORD  LODNew) PURE; \
+    STDMETHOD_(DWORD,GetLOD)(THIS) PURE; \
+    STDMETHOD_(DWORD,GetLevelCount)(THIS) PURE;
 
     /*** IDirect3DBaseTexture8 methods ***/
 #define IDirect3DBaseTexture8_IMETHODS \
@@ -573,7 +573,7 @@ ICOM_DEFINE(IDirect3DIndexBuffer8,IDirect3DResource8)
     IDirect3DResource8_METHODS \
     IDirect3DBaseTexture8_METHODS
 ICOM_DEFINE(IDirect3DBaseTexture8,IDirect3DResource8)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirect3DBaseTexture8_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
@@ -596,14 +596,14 @@ ICOM_DEFINE(IDirect3DBaseTexture8,IDirect3DResource8)
 /*****************************************************************************
  * IDirect3DCubeTexture8 interface
  */
-#define ICOM_INTERFACE IDirect3DCubeTexture8
+#define INTERFACE IDirect3DCubeTexture8
 #define IDirect3DCubeTexture8_METHODS \
     /*** IDirect3DCubeTexture8 methods ***/ \
-    ICOM_METHOD2(HRESULT,GetLevelDesc,UINT, Level,D3DSURFACE_DESC*, pDesc) \
-    ICOM_METHOD3(HRESULT,GetCubeMapSurface,D3DCUBEMAP_FACES, FaceType,UINT, Level,IDirect3DSurface8**, ppCubeMapSurface) \
-    ICOM_METHOD5(HRESULT,LockRect,D3DCUBEMAP_FACES, FaceType,UINT, Level,D3DLOCKED_RECT*, pLockedRect,CONST RECT*, pRect,DWORD, Flags) \
-    ICOM_METHOD2(HRESULT,UnlockRect,D3DCUBEMAP_FACES, FaceType,UINT, Level) \
-    ICOM_METHOD2(HRESULT,AddDirtyRect,D3DCUBEMAP_FACES, FaceType,CONST RECT*, pDirtyRect) \
+    STDMETHOD(GetLevelDesc)(THIS_ UINT  Level,D3DSURFACE_DESC * pDesc) PURE; \
+    STDMETHOD(GetCubeMapSurface)(THIS_ D3DCUBEMAP_FACES  FaceType,UINT  Level,IDirect3DSurface8 ** ppCubeMapSurface) PURE; \
+    STDMETHOD(LockRect)(THIS_ D3DCUBEMAP_FACES  FaceType,UINT  Level,D3DLOCKED_RECT * pLockedRect,CONST RECT * pRect,DWORD  Flags) PURE; \
+    STDMETHOD(UnlockRect)(THIS_ D3DCUBEMAP_FACES  FaceType,UINT  Level) PURE; \
+    STDMETHOD(AddDirtyRect)(THIS_ D3DCUBEMAP_FACES  FaceType,CONST RECT * pDirtyRect) PURE; \
 
     /*** IDirect3DCubeTexture8 methods ***/
 #define IDirect3DCubeTexture8_IMETHODS \
@@ -612,7 +612,7 @@ ICOM_DEFINE(IDirect3DBaseTexture8,IDirect3DResource8)
     IDirect3DBaseTexture8_METHODS \
     IDirect3DCubeTexture8_METHODS
 ICOM_DEFINE(IDirect3DCubeTexture8,IDirect3DBaseTexture8)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirect3DCubeTexture8_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
@@ -641,14 +641,14 @@ ICOM_DEFINE(IDirect3DCubeTexture8,IDirect3DBaseTexture8)
 /*****************************************************************************
  * IDirect3DTexture8 interface
  */
-#define ICOM_INTERFACE IDirect3DTexture8
+#define INTERFACE IDirect3DTexture8
 #define IDirect3DTexture8_METHODS \
     /*** IDirect3DTexture8 methods ***/ \
-    ICOM_METHOD2(HRESULT,GetLevelDesc,UINT, Level,D3DSURFACE_DESC*, pDesc) \
-    ICOM_METHOD2(HRESULT,GetSurfaceLevel,UINT, Level,IDirect3DSurface8**, ppSurfaceLevel) \
-    ICOM_METHOD4(HRESULT,LockRect,UINT, Level,D3DLOCKED_RECT*, pLockedRect,CONST RECT*, pRect,DWORD, Flags) \
-    ICOM_METHOD1(HRESULT,UnlockRect,UINT, Level) \
-    ICOM_METHOD1(HRESULT,AddDirtyRect,CONST RECT*, pDirtyRect) \
+    STDMETHOD(GetLevelDesc)(THIS_ UINT  Level,D3DSURFACE_DESC * pDesc) PURE; \
+    STDMETHOD(GetSurfaceLevel)(THIS_ UINT  Level,IDirect3DSurface8 ** ppSurfaceLevel) PURE; \
+    STDMETHOD(LockRect)(THIS_ UINT  Level,D3DLOCKED_RECT * pLockedRect,CONST RECT * pRect,DWORD  Flags) PURE; \
+    STDMETHOD(UnlockRect)(THIS_ UINT  Level) PURE; \
+    STDMETHOD(AddDirtyRect)(THIS_ CONST RECT * pDirtyRect) PURE; \
 
     /*** IDirect3DTexture8 methods ***/
 #define IDirect3DTexture8_IMETHODS \
@@ -657,7 +657,7 @@ ICOM_DEFINE(IDirect3DCubeTexture8,IDirect3DBaseTexture8)
     IDirect3DBaseTexture8_METHODS \
     IDirect3DTexture8_METHODS
 ICOM_DEFINE(IDirect3DTexture8,IDirect3DBaseTexture8)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirect3DTexture8_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
@@ -686,14 +686,14 @@ ICOM_DEFINE(IDirect3DTexture8,IDirect3DBaseTexture8)
 /*****************************************************************************
  * IDirect3DVolumeTexture8 interface
  */
-#define ICOM_INTERFACE IDirect3DVolumeTexture8
+#define INTERFACE IDirect3DVolumeTexture8
 #define IDirect3DVolumeTexture8_METHODS \
     /*** IDirect3DVolumeTexture8 methods ***/ \
-    ICOM_METHOD2(HRESULT,GetLevelDesc, UINT, Level,D3DVOLUME_DESC*, pDesc) \
-    ICOM_METHOD2(HRESULT,GetVolumeLevel, UINT, Level,IDirect3DVolume8**, ppVolumeLevel) \
-    ICOM_METHOD4(HRESULT,LockBox, UINT, Level,D3DLOCKED_BOX*, pLockedVolume,CONST D3DBOX*, pBox,DWORD, Flags) \
-    ICOM_METHOD1(HRESULT,UnlockBox, UINT, Level) \
-    ICOM_METHOD1(HRESULT,AddDirtyBox, CONST D3DBOX*, pDirtyBox)
+    STDMETHOD(GetLevelDesc)(THIS_ UINT  Level,D3DVOLUME_DESC * pDesc) PURE; \
+    STDMETHOD(GetVolumeLevel)(THIS_ UINT  Level,IDirect3DVolume8 ** ppVolumeLevel) PURE; \
+    STDMETHOD(LockBox)(THIS_ UINT  Level,D3DLOCKED_BOX * pLockedVolume,CONST D3DBOX * pBox,DWORD  Flags) PURE; \
+    STDMETHOD(UnlockBox)(THIS_ UINT  Level) PURE; \
+    STDMETHOD(AddDirtyBox)(THIS_ CONST D3DBOX * pDirtyBox) PURE;
 
     /*** IDirect3DVolumeTexture8 methods ***/
 #define IDirect3DVolumeTexture8_IMETHODS \
@@ -702,7 +702,7 @@ ICOM_DEFINE(IDirect3DTexture8,IDirect3DBaseTexture8)
     IDirect3DBaseTexture8_METHODS \
     IDirect3DVolumeTexture8_METHODS
 ICOM_DEFINE(IDirect3DVolumeTexture8,IDirect3DBaseTexture8)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirect3DVolumeTexture8_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)

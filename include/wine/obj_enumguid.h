@@ -36,17 +36,17 @@ typedef struct IEnumGUID IEnumGUID, *LPENUMGUID;
 /*****************************************************************************
  * IEnumGUID
  */
-#define ICOM_INTERFACE IEnumGUID
+#define INTERFACE IEnumGUID
 #define IEnumGUID_METHODS \
-    ICOM_METHOD3(HRESULT, Next, ULONG, celt, GUID*, rgelt, ULONG*, pceltFetched) \
-    ICOM_METHOD1(HRESULT, Skip, ULONG, celt) \
-    ICOM_METHOD (HRESULT, Reset) \
-    ICOM_METHOD1(HRESULT, Clone, IEnumGUID**, ppenum)
+    STDMETHOD(Next)(THIS_ ULONG  celt, GUID * rgelt, ULONG * pceltFetched) PURE; \
+    STDMETHOD(Skip)(THIS_ ULONG  celt) PURE; \
+    STDMETHOD(Reset)(THIS) PURE; \
+    STDMETHOD(Clone)(THIS_ IEnumGUID ** ppenum) PURE;
 #define IEnumGUID_IMETHODS \
     IUnknown_IMETHODS \
     IEnumGUID_METHODS
 ICOM_DEFINE(IEnumGUID,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 #ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/

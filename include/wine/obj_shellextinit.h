@@ -27,14 +27,14 @@ extern "C" {
 
 typedef struct 	IShellExtInit IShellExtInit, *LPSHELLEXTINIT;
 
-#define ICOM_INTERFACE IShellExtInit
+#define INTERFACE IShellExtInit
 #define IShellExtInit_METHODS \
-	ICOM_METHOD3(HRESULT, Initialize, LPCITEMIDLIST, pidlFolder, LPDATAOBJECT, lpdobj, HKEY, hkeyProgID)
+	STDMETHOD(Initialize)(THIS_ LPCITEMIDLIST  pidlFolder, LPDATAOBJECT  lpdobj, HKEY  hkeyProgID) PURE;
 #define IShellExtInit_IMETHODS \
 	IUnknown_IMETHODS \
 	IShellExtInit_METHODS
 ICOM_DEFINE(IShellExtInit,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IShellExtInit_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)

@@ -25,7 +25,7 @@ DEFINE_GUID(IID_IMarshal, 0x00000003, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IMarshal: IUnknown {
 
-    virtual HRESULT CALLBACK GetUnmarshalClass(
+    virtual HRESULT STDMETHODCALLTYPE GetUnmarshalClass(
         REFIID riid,
         void* pv,
         DWORD dwDestContext,
@@ -33,7 +33,7 @@ struct IMarshal: IUnknown {
         DWORD mshlflags,
         CLSID* pCid) = 0;
 
-    virtual HRESULT CALLBACK GetMarshalSizeMax(
+    virtual HRESULT STDMETHODCALLTYPE GetMarshalSizeMax(
         REFIID riid,
         void* pv,
         DWORD dwDestContext,
@@ -41,7 +41,7 @@ struct IMarshal: IUnknown {
         DWORD mshlflags,
         DWORD* pSize) = 0;
 
-    virtual HRESULT CALLBACK MarshalInterface(
+    virtual HRESULT STDMETHODCALLTYPE MarshalInterface(
         IStream* pStm,
         REFIID riid,
         void* pv,
@@ -49,15 +49,15 @@ struct IMarshal: IUnknown {
         void* pvDestContext,
         DWORD mshlflags) = 0;
 
-    virtual HRESULT CALLBACK UnmarshalInterface(
+    virtual HRESULT STDMETHODCALLTYPE UnmarshalInterface(
         IStream* pStm,
         REFIID riid,
         void** ppv) = 0;
 
-    virtual HRESULT CALLBACK ReleaseMarshalData(
+    virtual HRESULT STDMETHODCALLTYPE ReleaseMarshalData(
         IStream* pStm) = 0;
 
-    virtual HRESULT CALLBACK DisconnectObject(
+    virtual HRESULT STDMETHODCALLTYPE DisconnectObject(
         DWORD dwReserved) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -70,19 +70,19 @@ struct IMarshalVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IMarshal* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IMarshal* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IMarshal* This);
 
     /*** IMarshal methods ***/
-    HRESULT (CALLBACK *GetUnmarshalClass)(
+    HRESULT (STDMETHODCALLTYPE *GetUnmarshalClass)(
         IMarshal* This,
         REFIID riid,
         void* pv,
@@ -91,7 +91,7 @@ struct IMarshalVtbl {
         DWORD mshlflags,
         CLSID* pCid);
 
-    HRESULT (CALLBACK *GetMarshalSizeMax)(
+    HRESULT (STDMETHODCALLTYPE *GetMarshalSizeMax)(
         IMarshal* This,
         REFIID riid,
         void* pv,
@@ -100,7 +100,7 @@ struct IMarshalVtbl {
         DWORD mshlflags,
         DWORD* pSize);
 
-    HRESULT (CALLBACK *MarshalInterface)(
+    HRESULT (STDMETHODCALLTYPE *MarshalInterface)(
         IMarshal* This,
         IStream* pStm,
         REFIID riid,
@@ -109,30 +109,34 @@ struct IMarshalVtbl {
         void* pvDestContext,
         DWORD mshlflags);
 
-    HRESULT (CALLBACK *UnmarshalInterface)(
+    HRESULT (STDMETHODCALLTYPE *UnmarshalInterface)(
         IMarshal* This,
         IStream* pStm,
         REFIID riid,
         void** ppv);
 
-    HRESULT (CALLBACK *ReleaseMarshalData)(
+    HRESULT (STDMETHODCALLTYPE *ReleaseMarshalData)(
         IMarshal* This,
         IStream* pStm);
 
-    HRESULT (CALLBACK *DisconnectObject)(
+    HRESULT (STDMETHODCALLTYPE *DisconnectObject)(
         IMarshal* This,
         DWORD dwReserved);
 
 };
 
 #define IMarshal_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD6 (HRESULT,GetUnmarshalClass,REFIID,riid,void*,pv,DWORD,dwDestContext,void*,pvDestContext,DWORD,mshlflags,CLSID*,pCid) \
-    ICOM_METHOD6 (HRESULT,GetMarshalSizeMax,REFIID,riid,void*,pv,DWORD,dwDestContext,void*,pvDestContext,DWORD,mshlflags,DWORD*,pSize) \
-    ICOM_METHOD6 (HRESULT,MarshalInterface,IStream*,pStm,REFIID,riid,void*,pv,DWORD,dwDestContext,void*,pvDestContext,DWORD,mshlflags) \
-    ICOM_METHOD3 (HRESULT,UnmarshalInterface,IStream*,pStm,REFIID,riid,void**,ppv) \
-    ICOM_METHOD1 (HRESULT,ReleaseMarshalData,IStream*,pStm) \
-    ICOM_METHOD1 (HRESULT,DisconnectObject,DWORD,dwReserved)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IMarshal methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetUnmarshalClass)(INTERFACE *This, REFIID riid, void* pv, DWORD dwDestContext, void* pvDestContext, DWORD mshlflags, CLSID* pCid); \
+    HRESULT (STDMETHODCALLTYPE *GetMarshalSizeMax)(INTERFACE *This, REFIID riid, void* pv, DWORD dwDestContext, void* pvDestContext, DWORD mshlflags, DWORD* pSize); \
+    HRESULT (STDMETHODCALLTYPE *MarshalInterface)(INTERFACE *This, IStream* pStm, REFIID riid, void* pv, DWORD dwDestContext, void* pvDestContext, DWORD mshlflags); \
+    HRESULT (STDMETHODCALLTYPE *UnmarshalInterface)(INTERFACE *This, IStream* pStm, REFIID riid, void** ppv); \
+    HRESULT (STDMETHODCALLTYPE *ReleaseMarshalData)(INTERFACE *This, IStream* pStm); \
+    HRESULT (STDMETHODCALLTYPE *DisconnectObject)(INTERFACE *This, DWORD dwReserved);
 
 /*** IUnknown methods ***/
 #define IMarshal_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -224,7 +228,7 @@ DEFINE_GUID(IID_IStdMarshalInfo, 0x00000018, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IStdMarshalInfo: IUnknown {
 
-    virtual HRESULT CALLBACK GetClassForHandler(
+    virtual HRESULT STDMETHODCALLTYPE GetClassForHandler(
         DWORD dwDestContext,
         void* pvDestContext,
         CLSID* pClsid) = 0;
@@ -239,19 +243,19 @@ struct IStdMarshalInfoVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IStdMarshalInfo* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IStdMarshalInfo* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IStdMarshalInfo* This);
 
     /*** IStdMarshalInfo methods ***/
-    HRESULT (CALLBACK *GetClassForHandler)(
+    HRESULT (STDMETHODCALLTYPE *GetClassForHandler)(
         IStdMarshalInfo* This,
         DWORD dwDestContext,
         void* pvDestContext,
@@ -260,8 +264,12 @@ struct IStdMarshalInfoVtbl {
 };
 
 #define IStdMarshalInfo_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD3 (HRESULT,GetClassForHandler,DWORD,dwDestContext,void*,pvDestContext,CLSID*,pClsid)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IStdMarshalInfo methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetClassForHandler)(INTERFACE *This, DWORD dwDestContext, void* pvDestContext, CLSID* pClsid);
 
 /*** IUnknown methods ***/
 #define IStdMarshalInfo_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -299,11 +307,11 @@ DEFINE_GUID(IID_IExternalConnection, 0x00000019, 0x0000, 0x0000, 0xc0,0x00, 0x00
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IExternalConnection: IUnknown {
 
-    virtual DWORD CALLBACK AddConnection(
+    virtual DWORD STDMETHODCALLTYPE AddConnection(
         DWORD extconn,
         DWORD reserved) = 0;
 
-    virtual DWORD CALLBACK ReleaseConnection(
+    virtual DWORD STDMETHODCALLTYPE ReleaseConnection(
         DWORD extconn,
         DWORD reserved,
         BOOL fLastReleaseCloses) = 0;
@@ -318,24 +326,24 @@ struct IExternalConnectionVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IExternalConnection* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IExternalConnection* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IExternalConnection* This);
 
     /*** IExternalConnection methods ***/
-    DWORD (CALLBACK *AddConnection)(
+    DWORD (STDMETHODCALLTYPE *AddConnection)(
         IExternalConnection* This,
         DWORD extconn,
         DWORD reserved);
 
-    DWORD (CALLBACK *ReleaseConnection)(
+    DWORD (STDMETHODCALLTYPE *ReleaseConnection)(
         IExternalConnection* This,
         DWORD extconn,
         DWORD reserved,
@@ -344,9 +352,13 @@ struct IExternalConnectionVtbl {
 };
 
 #define IExternalConnection_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD2 (DWORD,AddConnection,DWORD,extconn,DWORD,reserved) \
-    ICOM_METHOD3 (DWORD,ReleaseConnection,DWORD,extconn,DWORD,reserved,BOOL,fLastReleaseCloses)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IExternalConnection methods ***/ \
+    DWORD (STDMETHODCALLTYPE *AddConnection)(INTERFACE *This, DWORD extconn, DWORD reserved); \
+    DWORD (STDMETHODCALLTYPE *ReleaseConnection)(INTERFACE *This, DWORD extconn, DWORD reserved, BOOL fLastReleaseCloses);
 
 /*** IUnknown methods ***/
 #define IExternalConnection_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -394,7 +406,7 @@ DEFINE_GUID(IID_IMultiQI, 0x00000020, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IMultiQI: IUnknown {
 
-    virtual HRESULT CALLBACK QueryMultipleInterfaces(
+    virtual HRESULT STDMETHODCALLTYPE QueryMultipleInterfaces(
         ULONG cMQIs,
         MULTI_QI* pMQIs) = 0;
 
@@ -408,19 +420,19 @@ struct IMultiQIVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IMultiQI* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IMultiQI* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IMultiQI* This);
 
     /*** IMultiQI methods ***/
-    HRESULT (CALLBACK *QueryMultipleInterfaces)(
+    HRESULT (STDMETHODCALLTYPE *QueryMultipleInterfaces)(
         IMultiQI* This,
         ULONG cMQIs,
         MULTI_QI* pMQIs);
@@ -428,8 +440,12 @@ struct IMultiQIVtbl {
 };
 
 #define IMultiQI_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD2 (HRESULT,QueryMultipleInterfaces,ULONG,cMQIs,MULTI_QI*,pMQIs)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IMultiQI methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryMultipleInterfaces)(INTERFACE *This, ULONG cMQIs, MULTI_QI* pMQIs);
 
 /*** IUnknown methods ***/
 #define IMultiQI_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -460,23 +476,23 @@ DEFINE_GUID(IID_IMalloc, 0x00000002, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IMalloc: IUnknown {
 
-    virtual LPVOID CALLBACK Alloc(
+    virtual LPVOID STDMETHODCALLTYPE Alloc(
         ULONG cb) = 0;
 
-    virtual LPVOID CALLBACK Realloc(
+    virtual LPVOID STDMETHODCALLTYPE Realloc(
         LPVOID pv,
         ULONG cb) = 0;
 
-    virtual void CALLBACK Free(
+    virtual void STDMETHODCALLTYPE Free(
         LPVOID pv) = 0;
 
-    virtual ULONG CALLBACK GetSize(
+    virtual ULONG STDMETHODCALLTYPE GetSize(
         LPVOID pv) = 0;
 
-    virtual int CALLBACK DidAlloc(
+    virtual int STDMETHODCALLTYPE DidAlloc(
         LPVOID pv) = 0;
 
-    virtual void CALLBACK HeapMinimize(
+    virtual void STDMETHODCALLTYPE HeapMinimize(
         ) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -489,52 +505,56 @@ struct IMallocVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IMalloc* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IMalloc* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IMalloc* This);
 
     /*** IMalloc methods ***/
-    LPVOID (CALLBACK *Alloc)(
+    LPVOID (STDMETHODCALLTYPE *Alloc)(
         IMalloc* This,
         ULONG cb);
 
-    LPVOID (CALLBACK *Realloc)(
+    LPVOID (STDMETHODCALLTYPE *Realloc)(
         IMalloc* This,
         LPVOID pv,
         ULONG cb);
 
-    void (CALLBACK *Free)(
+    void (STDMETHODCALLTYPE *Free)(
         IMalloc* This,
         LPVOID pv);
 
-    ULONG (CALLBACK *GetSize)(
+    ULONG (STDMETHODCALLTYPE *GetSize)(
         IMalloc* This,
         LPVOID pv);
 
-    int (CALLBACK *DidAlloc)(
+    int (STDMETHODCALLTYPE *DidAlloc)(
         IMalloc* This,
         LPVOID pv);
 
-    void (CALLBACK *HeapMinimize)(
+    void (STDMETHODCALLTYPE *HeapMinimize)(
         IMalloc* This);
 
 };
 
 #define IMalloc_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD1 (LPVOID,Alloc,ULONG,cb) \
-    ICOM_METHOD2 (LPVOID,Realloc,LPVOID,pv,ULONG,cb) \
-    ICOM_VMETHOD1(Free,LPVOID,pv) \
-    ICOM_METHOD1 (ULONG,GetSize,LPVOID,pv) \
-    ICOM_METHOD1 (int,DidAlloc,LPVOID,pv) \
-    ICOM_VMETHOD (HeapMinimize)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IMalloc methods ***/ \
+    LPVOID (STDMETHODCALLTYPE *Alloc)(INTERFACE *This, ULONG cb); \
+    LPVOID (STDMETHODCALLTYPE *Realloc)(INTERFACE *This, LPVOID pv, ULONG cb); \
+    void (STDMETHODCALLTYPE *Free)(INTERFACE *This, LPVOID pv); \
+    ULONG (STDMETHODCALLTYPE *GetSize)(INTERFACE *This, LPVOID pv); \
+    int (STDMETHODCALLTYPE *DidAlloc)(INTERFACE *This, LPVOID pv); \
+    void (STDMETHODCALLTYPE *HeapMinimize)(INTERFACE *This);
 
 /*** IUnknown methods ***/
 #define IMalloc_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -609,50 +629,50 @@ DEFINE_GUID(IID_IMallocSpy, 0x0000001d, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IMallocSpy: IUnknown {
 
-    virtual ULONG CALLBACK PreAlloc(
+    virtual ULONG STDMETHODCALLTYPE PreAlloc(
         ULONG cbRequest) = 0;
 
-    virtual LPVOID CALLBACK PostAlloc(
+    virtual LPVOID STDMETHODCALLTYPE PostAlloc(
         LPVOID pActual) = 0;
 
-    virtual LPVOID CALLBACK PreFree(
+    virtual LPVOID STDMETHODCALLTYPE PreFree(
         LPVOID pRequest,
         BOOL fSpyed) = 0;
 
-    virtual void CALLBACK PostFree(
+    virtual void STDMETHODCALLTYPE PostFree(
         BOOL fSpyed) = 0;
 
-    virtual ULONG CALLBACK PreRealloc(
+    virtual ULONG STDMETHODCALLTYPE PreRealloc(
         LPVOID pRequest,
         ULONG cbRequest,
         LPVOID* ppNewRequest,
         BOOL fSpyed) = 0;
 
-    virtual LPVOID CALLBACK PostRealloc(
+    virtual LPVOID STDMETHODCALLTYPE PostRealloc(
         LPVOID pActual,
         BOOL fSpyed) = 0;
 
-    virtual LPVOID CALLBACK PreGetSize(
+    virtual LPVOID STDMETHODCALLTYPE PreGetSize(
         LPVOID pRequest,
         BOOL fSpyed) = 0;
 
-    virtual ULONG CALLBACK PostGetSize(
+    virtual ULONG STDMETHODCALLTYPE PostGetSize(
         ULONG cbActual,
         BOOL fSpyed) = 0;
 
-    virtual LPVOID CALLBACK PreDidAlloc(
+    virtual LPVOID STDMETHODCALLTYPE PreDidAlloc(
         LPVOID pRequest,
         BOOL fSpyed) = 0;
 
-    virtual int CALLBACK PostDidAlloc(
+    virtual int STDMETHODCALLTYPE PostDidAlloc(
         LPVOID pRequest,
         BOOL fSpyed,
         int fActual) = 0;
 
-    virtual void CALLBACK PreHeapMinimize(
+    virtual void STDMETHODCALLTYPE PreHeapMinimize(
         ) = 0;
 
-    virtual void CALLBACK PostHeapMinimize(
+    virtual void STDMETHODCALLTYPE PostHeapMinimize(
         ) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -665,90 +685,94 @@ struct IMallocSpyVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IMallocSpy* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IMallocSpy* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IMallocSpy* This);
 
     /*** IMallocSpy methods ***/
-    ULONG (CALLBACK *PreAlloc)(
+    ULONG (STDMETHODCALLTYPE *PreAlloc)(
         IMallocSpy* This,
         ULONG cbRequest);
 
-    LPVOID (CALLBACK *PostAlloc)(
+    LPVOID (STDMETHODCALLTYPE *PostAlloc)(
         IMallocSpy* This,
         LPVOID pActual);
 
-    LPVOID (CALLBACK *PreFree)(
+    LPVOID (STDMETHODCALLTYPE *PreFree)(
         IMallocSpy* This,
         LPVOID pRequest,
         BOOL fSpyed);
 
-    void (CALLBACK *PostFree)(
+    void (STDMETHODCALLTYPE *PostFree)(
         IMallocSpy* This,
         BOOL fSpyed);
 
-    ULONG (CALLBACK *PreRealloc)(
+    ULONG (STDMETHODCALLTYPE *PreRealloc)(
         IMallocSpy* This,
         LPVOID pRequest,
         ULONG cbRequest,
         LPVOID* ppNewRequest,
         BOOL fSpyed);
 
-    LPVOID (CALLBACK *PostRealloc)(
+    LPVOID (STDMETHODCALLTYPE *PostRealloc)(
         IMallocSpy* This,
         LPVOID pActual,
         BOOL fSpyed);
 
-    LPVOID (CALLBACK *PreGetSize)(
+    LPVOID (STDMETHODCALLTYPE *PreGetSize)(
         IMallocSpy* This,
         LPVOID pRequest,
         BOOL fSpyed);
 
-    ULONG (CALLBACK *PostGetSize)(
+    ULONG (STDMETHODCALLTYPE *PostGetSize)(
         IMallocSpy* This,
         ULONG cbActual,
         BOOL fSpyed);
 
-    LPVOID (CALLBACK *PreDidAlloc)(
+    LPVOID (STDMETHODCALLTYPE *PreDidAlloc)(
         IMallocSpy* This,
         LPVOID pRequest,
         BOOL fSpyed);
 
-    int (CALLBACK *PostDidAlloc)(
+    int (STDMETHODCALLTYPE *PostDidAlloc)(
         IMallocSpy* This,
         LPVOID pRequest,
         BOOL fSpyed,
         int fActual);
 
-    void (CALLBACK *PreHeapMinimize)(
+    void (STDMETHODCALLTYPE *PreHeapMinimize)(
         IMallocSpy* This);
 
-    void (CALLBACK *PostHeapMinimize)(
+    void (STDMETHODCALLTYPE *PostHeapMinimize)(
         IMallocSpy* This);
 
 };
 
 #define IMallocSpy_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD1 (ULONG,PreAlloc,ULONG,cbRequest) \
-    ICOM_METHOD1 (LPVOID,PostAlloc,LPVOID,pActual) \
-    ICOM_METHOD2 (LPVOID,PreFree,LPVOID,pRequest,BOOL,fSpyed) \
-    ICOM_VMETHOD1(PostFree,BOOL,fSpyed) \
-    ICOM_METHOD4 (ULONG,PreRealloc,LPVOID,pRequest,ULONG,cbRequest,LPVOID*,ppNewRequest,BOOL,fSpyed) \
-    ICOM_METHOD2 (LPVOID,PostRealloc,LPVOID,pActual,BOOL,fSpyed) \
-    ICOM_METHOD2 (LPVOID,PreGetSize,LPVOID,pRequest,BOOL,fSpyed) \
-    ICOM_METHOD2 (ULONG,PostGetSize,ULONG,cbActual,BOOL,fSpyed) \
-    ICOM_METHOD2 (LPVOID,PreDidAlloc,LPVOID,pRequest,BOOL,fSpyed) \
-    ICOM_METHOD3 (int,PostDidAlloc,LPVOID,pRequest,BOOL,fSpyed,int,fActual) \
-    ICOM_VMETHOD (PreHeapMinimize) \
-    ICOM_VMETHOD (PostHeapMinimize)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IMallocSpy methods ***/ \
+    ULONG (STDMETHODCALLTYPE *PreAlloc)(INTERFACE *This, ULONG cbRequest); \
+    LPVOID (STDMETHODCALLTYPE *PostAlloc)(INTERFACE *This, LPVOID pActual); \
+    LPVOID (STDMETHODCALLTYPE *PreFree)(INTERFACE *This, LPVOID pRequest, BOOL fSpyed); \
+    void (STDMETHODCALLTYPE *PostFree)(INTERFACE *This, BOOL fSpyed); \
+    ULONG (STDMETHODCALLTYPE *PreRealloc)(INTERFACE *This, LPVOID pRequest, ULONG cbRequest, LPVOID* ppNewRequest, BOOL fSpyed); \
+    LPVOID (STDMETHODCALLTYPE *PostRealloc)(INTERFACE *This, LPVOID pActual, BOOL fSpyed); \
+    LPVOID (STDMETHODCALLTYPE *PreGetSize)(INTERFACE *This, LPVOID pRequest, BOOL fSpyed); \
+    ULONG (STDMETHODCALLTYPE *PostGetSize)(INTERFACE *This, ULONG cbActual, BOOL fSpyed); \
+    LPVOID (STDMETHODCALLTYPE *PreDidAlloc)(INTERFACE *This, LPVOID pRequest, BOOL fSpyed); \
+    int (STDMETHODCALLTYPE *PostDidAlloc)(INTERFACE *This, LPVOID pRequest, BOOL fSpyed, int fActual); \
+    void (STDMETHODCALLTYPE *PreHeapMinimize)(INTERFACE *This); \
+    void (STDMETHODCALLTYPE *PostHeapMinimize)(INTERFACE *This);
 
 /*** IUnknown methods ***/
 #define IMallocSpy_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -885,18 +909,18 @@ DEFINE_GUID(IID_IEnumUnknown, 0x00000100, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IEnumUnknown: IUnknown {
 
-    virtual HRESULT CALLBACK Next(
+    virtual HRESULT STDMETHODCALLTYPE Next(
         ULONG celt,
         IUnknown** rgelt,
         ULONG* pceltFetched) = 0;
 
-    virtual HRESULT CALLBACK Skip(
+    virtual HRESULT STDMETHODCALLTYPE Skip(
         ULONG celt) = 0;
 
-    virtual HRESULT CALLBACK Reset(
+    virtual HRESULT STDMETHODCALLTYPE Reset(
         ) = 0;
 
-    virtual HRESULT CALLBACK Clone(
+    virtual HRESULT STDMETHODCALLTYPE Clone(
         IEnumUnknown** ppenum) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -909,43 +933,47 @@ struct IEnumUnknownVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IEnumUnknown* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IEnumUnknown* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IEnumUnknown* This);
 
     /*** IEnumUnknown methods ***/
-    HRESULT (CALLBACK *Next)(
+    HRESULT (STDMETHODCALLTYPE *Next)(
         IEnumUnknown* This,
         ULONG celt,
         IUnknown** rgelt,
         ULONG* pceltFetched);
 
-    HRESULT (CALLBACK *Skip)(
+    HRESULT (STDMETHODCALLTYPE *Skip)(
         IEnumUnknown* This,
         ULONG celt);
 
-    HRESULT (CALLBACK *Reset)(
+    HRESULT (STDMETHODCALLTYPE *Reset)(
         IEnumUnknown* This);
 
-    HRESULT (CALLBACK *Clone)(
+    HRESULT (STDMETHODCALLTYPE *Clone)(
         IEnumUnknown* This,
         IEnumUnknown** ppenum);
 
 };
 
 #define IEnumUnknown_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD3 (HRESULT,Next,ULONG,celt,IUnknown**,rgelt,ULONG*,pceltFetched) \
-    ICOM_METHOD1 (HRESULT,Skip,ULONG,celt) \
-    ICOM_METHOD  (HRESULT,Reset) \
-    ICOM_METHOD1 (HRESULT,Clone,IEnumUnknown**,ppenum)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IEnumUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Next)(INTERFACE *This, ULONG celt, IUnknown** rgelt, ULONG* pceltFetched); \
+    HRESULT (STDMETHODCALLTYPE *Skip)(INTERFACE *This, ULONG celt); \
+    HRESULT (STDMETHODCALLTYPE *Reset)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *Clone)(INTERFACE *This, IEnumUnknown** ppenum);
 
 /*** IUnknown methods ***/
 #define IEnumUnknown_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -1013,10 +1041,10 @@ DEFINE_GUID(IID_ISurrogate, 0x00000022, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ISurrogate: IUnknown {
 
-    virtual HRESULT CALLBACK LoadDllServer(
+    virtual HRESULT STDMETHODCALLTYPE LoadDllServer(
         REFCLSID Clsid) = 0;
 
-    virtual HRESULT CALLBACK FreeSurrogate(
+    virtual HRESULT STDMETHODCALLTYPE FreeSurrogate(
         ) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -1029,31 +1057,35 @@ struct ISurrogateVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         ISurrogate* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         ISurrogate* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         ISurrogate* This);
 
     /*** ISurrogate methods ***/
-    HRESULT (CALLBACK *LoadDllServer)(
+    HRESULT (STDMETHODCALLTYPE *LoadDllServer)(
         ISurrogate* This,
         REFCLSID Clsid);
 
-    HRESULT (CALLBACK *FreeSurrogate)(
+    HRESULT (STDMETHODCALLTYPE *FreeSurrogate)(
         ISurrogate* This);
 
 };
 
 #define ISurrogate_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD1 (HRESULT,LoadDllServer,REFCLSID,Clsid) \
-    ICOM_METHOD  (HRESULT,FreeSurrogate)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ISurrogate methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *LoadDllServer)(INTERFACE *This, REFCLSID Clsid); \
+    HRESULT (STDMETHODCALLTYPE *FreeSurrogate)(INTERFACE *This);
 
 /*** IUnknown methods ***/
 #define ISurrogate_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -1091,15 +1123,15 @@ DEFINE_GUID(IID_IGlobalInterfaceTable, 0x00000146, 0x0000, 0x0000, 0xc0,0x00, 0x
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IGlobalInterfaceTable: IUnknown {
 
-    virtual HRESULT CALLBACK RegisterInterfaceInGlobal(
+    virtual HRESULT STDMETHODCALLTYPE RegisterInterfaceInGlobal(
         IUnknown* pUnk,
         REFIID riid,
         DWORD* pdwCookie) = 0;
 
-    virtual HRESULT CALLBACK RevokeInterfaceFromGlobal(
+    virtual HRESULT STDMETHODCALLTYPE RevokeInterfaceFromGlobal(
         DWORD dwCookie) = 0;
 
-    virtual HRESULT CALLBACK GetInterfaceFromGlobal(
+    virtual HRESULT STDMETHODCALLTYPE GetInterfaceFromGlobal(
         DWORD dwCookie,
         REFIID riid,
         void** ppv) = 0;
@@ -1114,29 +1146,29 @@ struct IGlobalInterfaceTableVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IGlobalInterfaceTable* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IGlobalInterfaceTable* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IGlobalInterfaceTable* This);
 
     /*** IGlobalInterfaceTable methods ***/
-    HRESULT (CALLBACK *RegisterInterfaceInGlobal)(
+    HRESULT (STDMETHODCALLTYPE *RegisterInterfaceInGlobal)(
         IGlobalInterfaceTable* This,
         IUnknown* pUnk,
         REFIID riid,
         DWORD* pdwCookie);
 
-    HRESULT (CALLBACK *RevokeInterfaceFromGlobal)(
+    HRESULT (STDMETHODCALLTYPE *RevokeInterfaceFromGlobal)(
         IGlobalInterfaceTable* This,
         DWORD dwCookie);
 
-    HRESULT (CALLBACK *GetInterfaceFromGlobal)(
+    HRESULT (STDMETHODCALLTYPE *GetInterfaceFromGlobal)(
         IGlobalInterfaceTable* This,
         DWORD dwCookie,
         REFIID riid,
@@ -1145,10 +1177,14 @@ struct IGlobalInterfaceTableVtbl {
 };
 
 #define IGlobalInterfaceTable_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD3 (HRESULT,RegisterInterfaceInGlobal,IUnknown*,pUnk,REFIID,riid,DWORD*,pdwCookie) \
-    ICOM_METHOD1 (HRESULT,RevokeInterfaceFromGlobal,DWORD,dwCookie) \
-    ICOM_METHOD3 (HRESULT,GetInterfaceFromGlobal,DWORD,dwCookie,REFIID,riid,void**,ppv)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IGlobalInterfaceTable methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *RegisterInterfaceInGlobal)(INTERFACE *This, IUnknown* pUnk, REFIID riid, DWORD* pdwCookie); \
+    HRESULT (STDMETHODCALLTYPE *RevokeInterfaceFromGlobal)(INTERFACE *This, DWORD dwCookie); \
+    HRESULT (STDMETHODCALLTYPE *GetInterfaceFromGlobal)(INTERFACE *This, DWORD dwCookie, REFIID riid, void** ppv);
 
 /*** IUnknown methods ***/
 #define IGlobalInterfaceTable_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -1225,36 +1261,36 @@ DEFINE_GUID(IID_IBindCtx, 0x0000000e, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IBindCtx: IUnknown {
 
-    virtual HRESULT CALLBACK RegisterObjectBound(
+    virtual HRESULT STDMETHODCALLTYPE RegisterObjectBound(
         IUnknown* punk) = 0;
 
-    virtual HRESULT CALLBACK RevokeObjectBound(
+    virtual HRESULT STDMETHODCALLTYPE RevokeObjectBound(
         IUnknown* punk) = 0;
 
-    virtual HRESULT CALLBACK ReleaseBoundObjects(
+    virtual HRESULT STDMETHODCALLTYPE ReleaseBoundObjects(
         ) = 0;
 
-    virtual HRESULT CALLBACK SetBindOptions(
+    virtual HRESULT STDMETHODCALLTYPE SetBindOptions(
         BIND_OPTS* pbindopts) = 0;
 
-    virtual HRESULT CALLBACK GetBindOptions(
+    virtual HRESULT STDMETHODCALLTYPE GetBindOptions(
         BIND_OPTS* pbindopts) = 0;
 
-    virtual HRESULT CALLBACK GetRunningObjectTable(
+    virtual HRESULT STDMETHODCALLTYPE GetRunningObjectTable(
         IRunningObjectTable** pprot) = 0;
 
-    virtual HRESULT CALLBACK RegisterObjectParam(
+    virtual HRESULT STDMETHODCALLTYPE RegisterObjectParam(
         LPOLESTR pszKey,
         IUnknown* punk) = 0;
 
-    virtual HRESULT CALLBACK GetObjectParam(
+    virtual HRESULT STDMETHODCALLTYPE GetObjectParam(
         LPOLESTR pszKey,
         IUnknown** ppunk) = 0;
 
-    virtual HRESULT CALLBACK EnumObjectParam(
+    virtual HRESULT STDMETHODCALLTYPE EnumObjectParam(
         IEnumString** ppenum) = 0;
 
-    virtual HRESULT CALLBACK RevokeObjectParam(
+    virtual HRESULT STDMETHODCALLTYPE RevokeObjectParam(
         LPOLESTR pszKey) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -1267,73 +1303,77 @@ struct IBindCtxVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IBindCtx* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IBindCtx* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IBindCtx* This);
 
     /*** IBindCtx methods ***/
-    HRESULT (CALLBACK *RegisterObjectBound)(
+    HRESULT (STDMETHODCALLTYPE *RegisterObjectBound)(
         IBindCtx* This,
         IUnknown* punk);
 
-    HRESULT (CALLBACK *RevokeObjectBound)(
+    HRESULT (STDMETHODCALLTYPE *RevokeObjectBound)(
         IBindCtx* This,
         IUnknown* punk);
 
-    HRESULT (CALLBACK *ReleaseBoundObjects)(
+    HRESULT (STDMETHODCALLTYPE *ReleaseBoundObjects)(
         IBindCtx* This);
 
-    HRESULT (CALLBACK *SetBindOptions)(
+    HRESULT (STDMETHODCALLTYPE *SetBindOptions)(
         IBindCtx* This,
         BIND_OPTS* pbindopts);
 
-    HRESULT (CALLBACK *GetBindOptions)(
+    HRESULT (STDMETHODCALLTYPE *GetBindOptions)(
         IBindCtx* This,
         BIND_OPTS* pbindopts);
 
-    HRESULT (CALLBACK *GetRunningObjectTable)(
+    HRESULT (STDMETHODCALLTYPE *GetRunningObjectTable)(
         IBindCtx* This,
         IRunningObjectTable** pprot);
 
-    HRESULT (CALLBACK *RegisterObjectParam)(
+    HRESULT (STDMETHODCALLTYPE *RegisterObjectParam)(
         IBindCtx* This,
         LPOLESTR pszKey,
         IUnknown* punk);
 
-    HRESULT (CALLBACK *GetObjectParam)(
+    HRESULT (STDMETHODCALLTYPE *GetObjectParam)(
         IBindCtx* This,
         LPOLESTR pszKey,
         IUnknown** ppunk);
 
-    HRESULT (CALLBACK *EnumObjectParam)(
+    HRESULT (STDMETHODCALLTYPE *EnumObjectParam)(
         IBindCtx* This,
         IEnumString** ppenum);
 
-    HRESULT (CALLBACK *RevokeObjectParam)(
+    HRESULT (STDMETHODCALLTYPE *RevokeObjectParam)(
         IBindCtx* This,
         LPOLESTR pszKey);
 
 };
 
 #define IBindCtx_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD1 (HRESULT,RegisterObjectBound,IUnknown*,punk) \
-    ICOM_METHOD1 (HRESULT,RevokeObjectBound,IUnknown*,punk) \
-    ICOM_METHOD  (HRESULT,ReleaseBoundObjects) \
-    ICOM_METHOD1 (HRESULT,SetBindOptions,BIND_OPTS*,pbindopts) \
-    ICOM_METHOD1 (HRESULT,GetBindOptions,BIND_OPTS*,pbindopts) \
-    ICOM_METHOD1 (HRESULT,GetRunningObjectTable,IRunningObjectTable**,pprot) \
-    ICOM_METHOD2 (HRESULT,RegisterObjectParam,LPOLESTR,pszKey,IUnknown*,punk) \
-    ICOM_METHOD2 (HRESULT,GetObjectParam,LPOLESTR,pszKey,IUnknown**,ppunk) \
-    ICOM_METHOD1 (HRESULT,EnumObjectParam,IEnumString**,ppenum) \
-    ICOM_METHOD1 (HRESULT,RevokeObjectParam,LPOLESTR,pszKey)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IBindCtx methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *RegisterObjectBound)(INTERFACE *This, IUnknown* punk); \
+    HRESULT (STDMETHODCALLTYPE *RevokeObjectBound)(INTERFACE *This, IUnknown* punk); \
+    HRESULT (STDMETHODCALLTYPE *ReleaseBoundObjects)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *SetBindOptions)(INTERFACE *This, BIND_OPTS* pbindopts); \
+    HRESULT (STDMETHODCALLTYPE *GetBindOptions)(INTERFACE *This, BIND_OPTS* pbindopts); \
+    HRESULT (STDMETHODCALLTYPE *GetRunningObjectTable)(INTERFACE *This, IRunningObjectTable** pprot); \
+    HRESULT (STDMETHODCALLTYPE *RegisterObjectParam)(INTERFACE *This, LPOLESTR pszKey, IUnknown* punk); \
+    HRESULT (STDMETHODCALLTYPE *GetObjectParam)(INTERFACE *This, LPOLESTR pszKey, IUnknown** ppunk); \
+    HRESULT (STDMETHODCALLTYPE *EnumObjectParam)(INTERFACE *This, IEnumString** ppenum); \
+    HRESULT (STDMETHODCALLTYPE *RevokeObjectParam)(INTERFACE *This, LPOLESTR pszKey);
 
 /*** IUnknown methods ***/
 #define IBindCtx_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -1457,18 +1497,18 @@ DEFINE_GUID(IID_IEnumMoniker, 0x00000102, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IEnumMoniker: IUnknown {
 
-    virtual HRESULT CALLBACK Next(
+    virtual HRESULT STDMETHODCALLTYPE Next(
         ULONG celt,
         IMoniker** rgelt,
         ULONG* pceltFetched) = 0;
 
-    virtual HRESULT CALLBACK Skip(
+    virtual HRESULT STDMETHODCALLTYPE Skip(
         ULONG celt) = 0;
 
-    virtual HRESULT CALLBACK Reset(
+    virtual HRESULT STDMETHODCALLTYPE Reset(
         ) = 0;
 
-    virtual HRESULT CALLBACK Clone(
+    virtual HRESULT STDMETHODCALLTYPE Clone(
         IEnumMoniker** ppenum) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -1481,43 +1521,47 @@ struct IEnumMonikerVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IEnumMoniker* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IEnumMoniker* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IEnumMoniker* This);
 
     /*** IEnumMoniker methods ***/
-    HRESULT (CALLBACK *Next)(
+    HRESULT (STDMETHODCALLTYPE *Next)(
         IEnumMoniker* This,
         ULONG celt,
         IMoniker** rgelt,
         ULONG* pceltFetched);
 
-    HRESULT (CALLBACK *Skip)(
+    HRESULT (STDMETHODCALLTYPE *Skip)(
         IEnumMoniker* This,
         ULONG celt);
 
-    HRESULT (CALLBACK *Reset)(
+    HRESULT (STDMETHODCALLTYPE *Reset)(
         IEnumMoniker* This);
 
-    HRESULT (CALLBACK *Clone)(
+    HRESULT (STDMETHODCALLTYPE *Clone)(
         IEnumMoniker* This,
         IEnumMoniker** ppenum);
 
 };
 
 #define IEnumMoniker_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD3 (HRESULT,Next,ULONG,celt,IMoniker**,rgelt,ULONG*,pceltFetched) \
-    ICOM_METHOD1 (HRESULT,Skip,ULONG,celt) \
-    ICOM_METHOD  (HRESULT,Reset) \
-    ICOM_METHOD1 (HRESULT,Clone,IEnumMoniker**,ppenum)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IEnumMoniker methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Next)(INTERFACE *This, ULONG celt, IMoniker** rgelt, ULONG* pceltFetched); \
+    HRESULT (STDMETHODCALLTYPE *Skip)(INTERFACE *This, ULONG celt); \
+    HRESULT (STDMETHODCALLTYPE *Reset)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *Clone)(INTERFACE *This, IEnumMoniker** ppenum);
 
 /*** IUnknown methods ***/
 #define IEnumMoniker_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -1585,20 +1629,20 @@ DEFINE_GUID(IID_IRunnableObject, 0x00000126, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IRunnableObject: IUnknown {
 
-    virtual HRESULT CALLBACK GetRunningClass(
+    virtual HRESULT STDMETHODCALLTYPE GetRunningClass(
         LPCLSID lpClsid) = 0;
 
-    virtual HRESULT CALLBACK Run(
+    virtual HRESULT STDMETHODCALLTYPE Run(
         LPBINDCTX pbc) = 0;
 
-    virtual BOOL CALLBACK IsRunning(
+    virtual BOOL STDMETHODCALLTYPE IsRunning(
         ) = 0;
 
-    virtual HRESULT CALLBACK LockRunning(
+    virtual HRESULT STDMETHODCALLTYPE LockRunning(
         BOOL fLock,
         BOOL fLastUnlockCloses) = 0;
 
-    virtual HRESULT CALLBACK SetContainedObject(
+    virtual HRESULT STDMETHODCALLTYPE SetContainedObject(
         BOOL fContained) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -1611,47 +1655,51 @@ struct IRunnableObjectVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IRunnableObject* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IRunnableObject* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IRunnableObject* This);
 
     /*** IRunnableObject methods ***/
-    HRESULT (CALLBACK *GetRunningClass)(
+    HRESULT (STDMETHODCALLTYPE *GetRunningClass)(
         IRunnableObject* This,
         LPCLSID lpClsid);
 
-    HRESULT (CALLBACK *Run)(
+    HRESULT (STDMETHODCALLTYPE *Run)(
         IRunnableObject* This,
         LPBINDCTX pbc);
 
-    BOOL (CALLBACK *IsRunning)(
+    BOOL (STDMETHODCALLTYPE *IsRunning)(
         IRunnableObject* This);
 
-    HRESULT (CALLBACK *LockRunning)(
+    HRESULT (STDMETHODCALLTYPE *LockRunning)(
         IRunnableObject* This,
         BOOL fLock,
         BOOL fLastUnlockCloses);
 
-    HRESULT (CALLBACK *SetContainedObject)(
+    HRESULT (STDMETHODCALLTYPE *SetContainedObject)(
         IRunnableObject* This,
         BOOL fContained);
 
 };
 
 #define IRunnableObject_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD1 (HRESULT,GetRunningClass,LPCLSID,lpClsid) \
-    ICOM_METHOD1 (HRESULT,Run,LPBINDCTX,pbc) \
-    ICOM_METHOD  (BOOL,IsRunning) \
-    ICOM_METHOD2 (HRESULT,LockRunning,BOOL,fLock,BOOL,fLastUnlockCloses) \
-    ICOM_METHOD1 (HRESULT,SetContainedObject,BOOL,fContained)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IRunnableObject methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetRunningClass)(INTERFACE *This, LPCLSID lpClsid); \
+    HRESULT (STDMETHODCALLTYPE *Run)(INTERFACE *This, LPBINDCTX pbc); \
+    BOOL (STDMETHODCALLTYPE *IsRunning)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *LockRunning)(INTERFACE *This, BOOL fLock, BOOL fLastUnlockCloses); \
+    HRESULT (STDMETHODCALLTYPE *SetContainedObject)(INTERFACE *This, BOOL fContained);
 
 /*** IUnknown methods ***/
 #define IRunnableObject_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -1723,31 +1771,31 @@ DEFINE_GUID(IID_IRunningObjectTable, 0x00000010, 0x0000, 0x0000, 0xc0,0x00, 0x00
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IRunningObjectTable: IUnknown {
 
-    virtual HRESULT CALLBACK Register(
+    virtual HRESULT STDMETHODCALLTYPE Register(
         DWORD grfFlags,
         IUnknown* punkObject,
         IMoniker* pmkObjectName,
         DWORD* pdwRegister) = 0;
 
-    virtual HRESULT CALLBACK Revoke(
+    virtual HRESULT STDMETHODCALLTYPE Revoke(
         DWORD dwRegister) = 0;
 
-    virtual HRESULT CALLBACK IsRunning(
+    virtual HRESULT STDMETHODCALLTYPE IsRunning(
         IMoniker* pmkObjectName) = 0;
 
-    virtual HRESULT CALLBACK GetObject(
+    virtual HRESULT STDMETHODCALLTYPE GetObject(
         IMoniker* pmkObjectName,
         IUnknown** ppunkObject) = 0;
 
-    virtual HRESULT CALLBACK NoteChangeTime(
+    virtual HRESULT STDMETHODCALLTYPE NoteChangeTime(
         DWORD dwRegister,
         FILETIME* pfiletime) = 0;
 
-    virtual HRESULT CALLBACK GetTimeOfLastChange(
+    virtual HRESULT STDMETHODCALLTYPE GetTimeOfLastChange(
         IMoniker* pmkObjectName,
         FILETIME* pfiletime) = 0;
 
-    virtual HRESULT CALLBACK EnumRunning(
+    virtual HRESULT STDMETHODCALLTYPE EnumRunning(
         IEnumMoniker** ppenumMoniker) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -1760,63 +1808,67 @@ struct IRunningObjectTableVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IRunningObjectTable* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IRunningObjectTable* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IRunningObjectTable* This);
 
     /*** IRunningObjectTable methods ***/
-    HRESULT (CALLBACK *Register)(
+    HRESULT (STDMETHODCALLTYPE *Register)(
         IRunningObjectTable* This,
         DWORD grfFlags,
         IUnknown* punkObject,
         IMoniker* pmkObjectName,
         DWORD* pdwRegister);
 
-    HRESULT (CALLBACK *Revoke)(
+    HRESULT (STDMETHODCALLTYPE *Revoke)(
         IRunningObjectTable* This,
         DWORD dwRegister);
 
-    HRESULT (CALLBACK *IsRunning)(
+    HRESULT (STDMETHODCALLTYPE *IsRunning)(
         IRunningObjectTable* This,
         IMoniker* pmkObjectName);
 
-    HRESULT (CALLBACK *GetObject)(
+    HRESULT (STDMETHODCALLTYPE *GetObject)(
         IRunningObjectTable* This,
         IMoniker* pmkObjectName,
         IUnknown** ppunkObject);
 
-    HRESULT (CALLBACK *NoteChangeTime)(
+    HRESULT (STDMETHODCALLTYPE *NoteChangeTime)(
         IRunningObjectTable* This,
         DWORD dwRegister,
         FILETIME* pfiletime);
 
-    HRESULT (CALLBACK *GetTimeOfLastChange)(
+    HRESULT (STDMETHODCALLTYPE *GetTimeOfLastChange)(
         IRunningObjectTable* This,
         IMoniker* pmkObjectName,
         FILETIME* pfiletime);
 
-    HRESULT (CALLBACK *EnumRunning)(
+    HRESULT (STDMETHODCALLTYPE *EnumRunning)(
         IRunningObjectTable* This,
         IEnumMoniker** ppenumMoniker);
 
 };
 
 #define IRunningObjectTable_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD4 (HRESULT,Register,DWORD,grfFlags,IUnknown*,punkObject,IMoniker*,pmkObjectName,DWORD*,pdwRegister) \
-    ICOM_METHOD1 (HRESULT,Revoke,DWORD,dwRegister) \
-    ICOM_METHOD1 (HRESULT,IsRunning,IMoniker*,pmkObjectName) \
-    ICOM_METHOD2 (HRESULT,GetObject,IMoniker*,pmkObjectName,IUnknown**,ppunkObject) \
-    ICOM_METHOD2 (HRESULT,NoteChangeTime,DWORD,dwRegister,FILETIME*,pfiletime) \
-    ICOM_METHOD2 (HRESULT,GetTimeOfLastChange,IMoniker*,pmkObjectName,FILETIME*,pfiletime) \
-    ICOM_METHOD1 (HRESULT,EnumRunning,IEnumMoniker**,ppenumMoniker)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IRunningObjectTable methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Register)(INTERFACE *This, DWORD grfFlags, IUnknown* punkObject, IMoniker* pmkObjectName, DWORD* pdwRegister); \
+    HRESULT (STDMETHODCALLTYPE *Revoke)(INTERFACE *This, DWORD dwRegister); \
+    HRESULT (STDMETHODCALLTYPE *IsRunning)(INTERFACE *This, IMoniker* pmkObjectName); \
+    HRESULT (STDMETHODCALLTYPE *GetObject)(INTERFACE *This, IMoniker* pmkObjectName, IUnknown** ppunkObject); \
+    HRESULT (STDMETHODCALLTYPE *NoteChangeTime)(INTERFACE *This, DWORD dwRegister, FILETIME* pfiletime); \
+    HRESULT (STDMETHODCALLTYPE *GetTimeOfLastChange)(INTERFACE *This, IMoniker* pmkObjectName, FILETIME* pfiletime); \
+    HRESULT (STDMETHODCALLTYPE *EnumRunning)(INTERFACE *This, IEnumMoniker** ppenumMoniker);
 
 /*** IUnknown methods ***/
 #define IRunningObjectTable_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -1906,7 +1958,7 @@ DEFINE_GUID(IID_IPersist, 0x0000010c, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IPersist: IUnknown {
 
-    virtual HRESULT CALLBACK GetClassID(
+    virtual HRESULT STDMETHODCALLTYPE GetClassID(
         CLSID* pClassID) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -1919,27 +1971,31 @@ struct IPersistVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IPersist* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IPersist* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IPersist* This);
 
     /*** IPersist methods ***/
-    HRESULT (CALLBACK *GetClassID)(
+    HRESULT (STDMETHODCALLTYPE *GetClassID)(
         IPersist* This,
         CLSID* pClassID);
 
 };
 
 #define IPersist_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD1 (HRESULT,GetClassID,CLSID*,pClassID)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IPersist methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetClassID)(INTERFACE *This, CLSID* pClassID);
 
 /*** IUnknown methods ***/
 #define IPersist_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -1969,17 +2025,17 @@ DEFINE_GUID(IID_IPersistStream, 0x00000109, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IPersistStream: IPersist {
 
-    virtual HRESULT CALLBACK IsDirty(
+    virtual HRESULT STDMETHODCALLTYPE IsDirty(
         ) = 0;
 
-    virtual HRESULT CALLBACK Load(
+    virtual HRESULT STDMETHODCALLTYPE Load(
         IStream* pStm) = 0;
 
-    virtual HRESULT CALLBACK Save(
+    virtual HRESULT STDMETHODCALLTYPE Save(
         IStream* pStm,
         BOOL fClearDirty) = 0;
 
-    virtual HRESULT CALLBACK GetSizeMax(
+    virtual HRESULT STDMETHODCALLTYPE GetSizeMax(
         ULARGE_INTEGER* pcbSize) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -1992,47 +2048,53 @@ struct IPersistStreamVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IPersistStream* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IPersistStream* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IPersistStream* This);
 
     /*** IPersist methods ***/
-    HRESULT (CALLBACK *GetClassID)(
+    HRESULT (STDMETHODCALLTYPE *GetClassID)(
         IPersistStream* This,
         CLSID* pClassID);
 
     /*** IPersistStream methods ***/
-    HRESULT (CALLBACK *IsDirty)(
+    HRESULT (STDMETHODCALLTYPE *IsDirty)(
         IPersistStream* This);
 
-    HRESULT (CALLBACK *Load)(
+    HRESULT (STDMETHODCALLTYPE *Load)(
         IPersistStream* This,
         IStream* pStm);
 
-    HRESULT (CALLBACK *Save)(
+    HRESULT (STDMETHODCALLTYPE *Save)(
         IPersistStream* This,
         IStream* pStm,
         BOOL fClearDirty);
 
-    HRESULT (CALLBACK *GetSizeMax)(
+    HRESULT (STDMETHODCALLTYPE *GetSizeMax)(
         IPersistStream* This,
         ULARGE_INTEGER* pcbSize);
 
 };
 
 #define IPersistStream_IMETHODS \
-    IPersist_IMETHODS \
-    ICOM_METHOD  (HRESULT,IsDirty) \
-    ICOM_METHOD1 (HRESULT,Load,IStream*,pStm) \
-    ICOM_METHOD2 (HRESULT,Save,IStream*,pStm,BOOL,fClearDirty) \
-    ICOM_METHOD1 (HRESULT,GetSizeMax,ULARGE_INTEGER*,pcbSize)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IPersist methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetClassID)(INTERFACE *This, CLSID* pClassID); \
+    /*** IPersistStream methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *IsDirty)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *Load)(INTERFACE *This, IStream* pStm); \
+    HRESULT (STDMETHODCALLTYPE *Save)(INTERFACE *This, IStream* pStm, BOOL fClearDirty); \
+    HRESULT (STDMETHODCALLTYPE *GetSizeMax)(INTERFACE *This, ULARGE_INTEGER* pcbSize);
 
 /*** IUnknown methods ***/
 #define IPersistStream_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -2107,73 +2169,73 @@ DEFINE_GUID(IID_IMoniker, 0x0000000f, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IMoniker: IPersistStream {
 
-    virtual HRESULT CALLBACK BindToObject(
+    virtual HRESULT STDMETHODCALLTYPE BindToObject(
         IBindCtx* pbc,
         IMoniker* pmkToLeft,
         REFIID riidResult,
         void** ppvResult) = 0;
 
-    virtual HRESULT CALLBACK BindToStorage(
+    virtual HRESULT STDMETHODCALLTYPE BindToStorage(
         IBindCtx* pbc,
         IMoniker* pmkToLeft,
         REFIID riid,
         void** ppvObj) = 0;
 
-    virtual HRESULT CALLBACK Reduce(
+    virtual HRESULT STDMETHODCALLTYPE Reduce(
         IBindCtx* pbc,
         DWORD dwReduceHowFar,
         IMoniker** ppmkToLeft,
         IMoniker** ppmkReduced) = 0;
 
-    virtual HRESULT CALLBACK ComposeWith(
+    virtual HRESULT STDMETHODCALLTYPE ComposeWith(
         IMoniker* pmkRight,
         BOOL fOnlyIfNotGeneric,
         IMoniker** ppmkComposite) = 0;
 
-    virtual HRESULT CALLBACK Enum(
+    virtual HRESULT STDMETHODCALLTYPE Enum(
         BOOL fForward,
         IEnumMoniker** ppenumMoniker) = 0;
 
-    virtual HRESULT CALLBACK IsEqual(
+    virtual HRESULT STDMETHODCALLTYPE IsEqual(
         IMoniker* pmkOtherMoniker) = 0;
 
-    virtual HRESULT CALLBACK Hash(
+    virtual HRESULT STDMETHODCALLTYPE Hash(
         DWORD* pdwHash) = 0;
 
-    virtual HRESULT CALLBACK IsRunning(
+    virtual HRESULT STDMETHODCALLTYPE IsRunning(
         IBindCtx* pbc,
         IMoniker* pmkToLeft,
         IMoniker* pmkNewlyRunning) = 0;
 
-    virtual HRESULT CALLBACK GetTimeOfLastChange(
+    virtual HRESULT STDMETHODCALLTYPE GetTimeOfLastChange(
         IBindCtx* pbc,
         IMoniker* pmkToLeft,
         FILETIME* pFileTime) = 0;
 
-    virtual HRESULT CALLBACK Inverse(
+    virtual HRESULT STDMETHODCALLTYPE Inverse(
         IMoniker** ppmk) = 0;
 
-    virtual HRESULT CALLBACK CommonPrefixWith(
+    virtual HRESULT STDMETHODCALLTYPE CommonPrefixWith(
         IMoniker* pmkOther,
         IMoniker** ppmkPrefix) = 0;
 
-    virtual HRESULT CALLBACK RelativePathTo(
+    virtual HRESULT STDMETHODCALLTYPE RelativePathTo(
         IMoniker* pmkOther,
         IMoniker** ppmkRelPath) = 0;
 
-    virtual HRESULT CALLBACK GetDisplayName(
+    virtual HRESULT STDMETHODCALLTYPE GetDisplayName(
         IBindCtx* pbc,
         IMoniker* pmkToLeft,
         LPOLESTR* ppszDisplayName) = 0;
 
-    virtual HRESULT CALLBACK ParseDisplayName(
+    virtual HRESULT STDMETHODCALLTYPE ParseDisplayName(
         IBindCtx* pbc,
         IMoniker* pmkToLeft,
         LPOLESTR pszDisplayName,
         ULONG* pchEaten,
         IMoniker** ppmkOut) = 0;
 
-    virtual HRESULT CALLBACK IsSystemMoniker(
+    virtual HRESULT STDMETHODCALLTYPE IsSystemMoniker(
         DWORD* pdwMksys) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -2186,113 +2248,113 @@ struct IMonikerVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IMoniker* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IMoniker* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IMoniker* This);
 
     /*** IPersist methods ***/
-    HRESULT (CALLBACK *GetClassID)(
+    HRESULT (STDMETHODCALLTYPE *GetClassID)(
         IMoniker* This,
         CLSID* pClassID);
 
     /*** IPersistStream methods ***/
-    HRESULT (CALLBACK *IsDirty)(
+    HRESULT (STDMETHODCALLTYPE *IsDirty)(
         IMoniker* This);
 
-    HRESULT (CALLBACK *Load)(
+    HRESULT (STDMETHODCALLTYPE *Load)(
         IMoniker* This,
         IStream* pStm);
 
-    HRESULT (CALLBACK *Save)(
+    HRESULT (STDMETHODCALLTYPE *Save)(
         IMoniker* This,
         IStream* pStm,
         BOOL fClearDirty);
 
-    HRESULT (CALLBACK *GetSizeMax)(
+    HRESULT (STDMETHODCALLTYPE *GetSizeMax)(
         IMoniker* This,
         ULARGE_INTEGER* pcbSize);
 
     /*** IMoniker methods ***/
-    HRESULT (CALLBACK *BindToObject)(
+    HRESULT (STDMETHODCALLTYPE *BindToObject)(
         IMoniker* This,
         IBindCtx* pbc,
         IMoniker* pmkToLeft,
         REFIID riidResult,
         void** ppvResult);
 
-    HRESULT (CALLBACK *BindToStorage)(
+    HRESULT (STDMETHODCALLTYPE *BindToStorage)(
         IMoniker* This,
         IBindCtx* pbc,
         IMoniker* pmkToLeft,
         REFIID riid,
         void** ppvObj);
 
-    HRESULT (CALLBACK *Reduce)(
+    HRESULT (STDMETHODCALLTYPE *Reduce)(
         IMoniker* This,
         IBindCtx* pbc,
         DWORD dwReduceHowFar,
         IMoniker** ppmkToLeft,
         IMoniker** ppmkReduced);
 
-    HRESULT (CALLBACK *ComposeWith)(
+    HRESULT (STDMETHODCALLTYPE *ComposeWith)(
         IMoniker* This,
         IMoniker* pmkRight,
         BOOL fOnlyIfNotGeneric,
         IMoniker** ppmkComposite);
 
-    HRESULT (CALLBACK *Enum)(
+    HRESULT (STDMETHODCALLTYPE *Enum)(
         IMoniker* This,
         BOOL fForward,
         IEnumMoniker** ppenumMoniker);
 
-    HRESULT (CALLBACK *IsEqual)(
+    HRESULT (STDMETHODCALLTYPE *IsEqual)(
         IMoniker* This,
         IMoniker* pmkOtherMoniker);
 
-    HRESULT (CALLBACK *Hash)(
+    HRESULT (STDMETHODCALLTYPE *Hash)(
         IMoniker* This,
         DWORD* pdwHash);
 
-    HRESULT (CALLBACK *IsRunning)(
+    HRESULT (STDMETHODCALLTYPE *IsRunning)(
         IMoniker* This,
         IBindCtx* pbc,
         IMoniker* pmkToLeft,
         IMoniker* pmkNewlyRunning);
 
-    HRESULT (CALLBACK *GetTimeOfLastChange)(
+    HRESULT (STDMETHODCALLTYPE *GetTimeOfLastChange)(
         IMoniker* This,
         IBindCtx* pbc,
         IMoniker* pmkToLeft,
         FILETIME* pFileTime);
 
-    HRESULT (CALLBACK *Inverse)(
+    HRESULT (STDMETHODCALLTYPE *Inverse)(
         IMoniker* This,
         IMoniker** ppmk);
 
-    HRESULT (CALLBACK *CommonPrefixWith)(
+    HRESULT (STDMETHODCALLTYPE *CommonPrefixWith)(
         IMoniker* This,
         IMoniker* pmkOther,
         IMoniker** ppmkPrefix);
 
-    HRESULT (CALLBACK *RelativePathTo)(
+    HRESULT (STDMETHODCALLTYPE *RelativePathTo)(
         IMoniker* This,
         IMoniker* pmkOther,
         IMoniker** ppmkRelPath);
 
-    HRESULT (CALLBACK *GetDisplayName)(
+    HRESULT (STDMETHODCALLTYPE *GetDisplayName)(
         IMoniker* This,
         IBindCtx* pbc,
         IMoniker* pmkToLeft,
         LPOLESTR* ppszDisplayName);
 
-    HRESULT (CALLBACK *ParseDisplayName)(
+    HRESULT (STDMETHODCALLTYPE *ParseDisplayName)(
         IMoniker* This,
         IBindCtx* pbc,
         IMoniker* pmkToLeft,
@@ -2300,29 +2362,40 @@ struct IMonikerVtbl {
         ULONG* pchEaten,
         IMoniker** ppmkOut);
 
-    HRESULT (CALLBACK *IsSystemMoniker)(
+    HRESULT (STDMETHODCALLTYPE *IsSystemMoniker)(
         IMoniker* This,
         DWORD* pdwMksys);
 
 };
 
 #define IMoniker_IMETHODS \
-    IPersistStream_IMETHODS \
-    ICOM_METHOD4 (HRESULT,BindToObject,IBindCtx*,pbc,IMoniker*,pmkToLeft,REFIID,riidResult,void**,ppvResult) \
-    ICOM_METHOD4 (HRESULT,BindToStorage,IBindCtx*,pbc,IMoniker*,pmkToLeft,REFIID,riid,void**,ppvObj) \
-    ICOM_METHOD4 (HRESULT,Reduce,IBindCtx*,pbc,DWORD,dwReduceHowFar,IMoniker**,ppmkToLeft,IMoniker**,ppmkReduced) \
-    ICOM_METHOD3 (HRESULT,ComposeWith,IMoniker*,pmkRight,BOOL,fOnlyIfNotGeneric,IMoniker**,ppmkComposite) \
-    ICOM_METHOD2 (HRESULT,Enum,BOOL,fForward,IEnumMoniker**,ppenumMoniker) \
-    ICOM_METHOD1 (HRESULT,IsEqual,IMoniker*,pmkOtherMoniker) \
-    ICOM_METHOD1 (HRESULT,Hash,DWORD*,pdwHash) \
-    ICOM_METHOD3 (HRESULT,IsRunning,IBindCtx*,pbc,IMoniker*,pmkToLeft,IMoniker*,pmkNewlyRunning) \
-    ICOM_METHOD3 (HRESULT,GetTimeOfLastChange,IBindCtx*,pbc,IMoniker*,pmkToLeft,FILETIME*,pFileTime) \
-    ICOM_METHOD1 (HRESULT,Inverse,IMoniker**,ppmk) \
-    ICOM_METHOD2 (HRESULT,CommonPrefixWith,IMoniker*,pmkOther,IMoniker**,ppmkPrefix) \
-    ICOM_METHOD2 (HRESULT,RelativePathTo,IMoniker*,pmkOther,IMoniker**,ppmkRelPath) \
-    ICOM_METHOD3 (HRESULT,GetDisplayName,IBindCtx*,pbc,IMoniker*,pmkToLeft,LPOLESTR*,ppszDisplayName) \
-    ICOM_METHOD5 (HRESULT,ParseDisplayName,IBindCtx*,pbc,IMoniker*,pmkToLeft,LPOLESTR,pszDisplayName,ULONG*,pchEaten,IMoniker**,ppmkOut) \
-    ICOM_METHOD1 (HRESULT,IsSystemMoniker,DWORD*,pdwMksys)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IPersist methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetClassID)(INTERFACE *This, CLSID* pClassID); \
+    /*** IPersistStream methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *IsDirty)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *Load)(INTERFACE *This, IStream* pStm); \
+    HRESULT (STDMETHODCALLTYPE *Save)(INTERFACE *This, IStream* pStm, BOOL fClearDirty); \
+    HRESULT (STDMETHODCALLTYPE *GetSizeMax)(INTERFACE *This, ULARGE_INTEGER* pcbSize); \
+    /*** IMoniker methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *BindToObject)(INTERFACE *This, IBindCtx* pbc, IMoniker* pmkToLeft, REFIID riidResult, void** ppvResult); \
+    HRESULT (STDMETHODCALLTYPE *BindToStorage)(INTERFACE *This, IBindCtx* pbc, IMoniker* pmkToLeft, REFIID riid, void** ppvObj); \
+    HRESULT (STDMETHODCALLTYPE *Reduce)(INTERFACE *This, IBindCtx* pbc, DWORD dwReduceHowFar, IMoniker** ppmkToLeft, IMoniker** ppmkReduced); \
+    HRESULT (STDMETHODCALLTYPE *ComposeWith)(INTERFACE *This, IMoniker* pmkRight, BOOL fOnlyIfNotGeneric, IMoniker** ppmkComposite); \
+    HRESULT (STDMETHODCALLTYPE *Enum)(INTERFACE *This, BOOL fForward, IEnumMoniker** ppenumMoniker); \
+    HRESULT (STDMETHODCALLTYPE *IsEqual)(INTERFACE *This, IMoniker* pmkOtherMoniker); \
+    HRESULT (STDMETHODCALLTYPE *Hash)(INTERFACE *This, DWORD* pdwHash); \
+    HRESULT (STDMETHODCALLTYPE *IsRunning)(INTERFACE *This, IBindCtx* pbc, IMoniker* pmkToLeft, IMoniker* pmkNewlyRunning); \
+    HRESULT (STDMETHODCALLTYPE *GetTimeOfLastChange)(INTERFACE *This, IBindCtx* pbc, IMoniker* pmkToLeft, FILETIME* pFileTime); \
+    HRESULT (STDMETHODCALLTYPE *Inverse)(INTERFACE *This, IMoniker** ppmk); \
+    HRESULT (STDMETHODCALLTYPE *CommonPrefixWith)(INTERFACE *This, IMoniker* pmkOther, IMoniker** ppmkPrefix); \
+    HRESULT (STDMETHODCALLTYPE *RelativePathTo)(INTERFACE *This, IMoniker* pmkOther, IMoniker** ppmkRelPath); \
+    HRESULT (STDMETHODCALLTYPE *GetDisplayName)(INTERFACE *This, IBindCtx* pbc, IMoniker* pmkToLeft, LPOLESTR* ppszDisplayName); \
+    HRESULT (STDMETHODCALLTYPE *ParseDisplayName)(INTERFACE *This, IBindCtx* pbc, IMoniker* pmkToLeft, LPOLESTR pszDisplayName, ULONG* pchEaten, IMoniker** ppmkOut); \
+    HRESULT (STDMETHODCALLTYPE *IsSystemMoniker)(INTERFACE *This, DWORD* pdwMksys);
 
 /*** IUnknown methods ***/
 #define IMoniker_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -2531,7 +2604,7 @@ DEFINE_GUID(IID_IROTData, 0xf29f6bc0, 0x5021, 0x11ce, 0xaa,0x15, 0x00,0x00,0x69,
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IROTData: IUnknown {
 
-    virtual HRESULT CALLBACK GetComparisonData(
+    virtual HRESULT STDMETHODCALLTYPE GetComparisonData(
         byte* pbData,
         ULONG cbMax,
         ULONG* pcbData) = 0;
@@ -2546,19 +2619,19 @@ struct IROTDataVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IROTData* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IROTData* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IROTData* This);
 
     /*** IROTData methods ***/
-    HRESULT (CALLBACK *GetComparisonData)(
+    HRESULT (STDMETHODCALLTYPE *GetComparisonData)(
         IROTData* This,
         byte* pbData,
         ULONG cbMax,
@@ -2567,8 +2640,12 @@ struct IROTDataVtbl {
 };
 
 #define IROTData_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD3 (HRESULT,GetComparisonData,byte*,pbData,ULONG,cbMax,ULONG*,pcbData)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IROTData methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetComparisonData)(INTERFACE *This, byte* pbData, ULONG cbMax, ULONG* pcbData);
 
 /*** IUnknown methods ***/
 #define IROTData_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -2599,18 +2676,18 @@ DEFINE_GUID(IID_IEnumString, 0x00000101, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IEnumString: IUnknown {
 
-    virtual HRESULT CALLBACK Next(
+    virtual HRESULT STDMETHODCALLTYPE Next(
         ULONG celt,
         LPOLESTR* rgelt,
         ULONG* pceltFetched) = 0;
 
-    virtual HRESULT CALLBACK Skip(
+    virtual HRESULT STDMETHODCALLTYPE Skip(
         ULONG celt) = 0;
 
-    virtual HRESULT CALLBACK Reset(
+    virtual HRESULT STDMETHODCALLTYPE Reset(
         ) = 0;
 
-    virtual HRESULT CALLBACK Clone(
+    virtual HRESULT STDMETHODCALLTYPE Clone(
         IEnumString** ppenum) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -2623,43 +2700,47 @@ struct IEnumStringVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IEnumString* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IEnumString* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IEnumString* This);
 
     /*** IEnumString methods ***/
-    HRESULT (CALLBACK *Next)(
+    HRESULT (STDMETHODCALLTYPE *Next)(
         IEnumString* This,
         ULONG celt,
         LPOLESTR* rgelt,
         ULONG* pceltFetched);
 
-    HRESULT (CALLBACK *Skip)(
+    HRESULT (STDMETHODCALLTYPE *Skip)(
         IEnumString* This,
         ULONG celt);
 
-    HRESULT (CALLBACK *Reset)(
+    HRESULT (STDMETHODCALLTYPE *Reset)(
         IEnumString* This);
 
-    HRESULT (CALLBACK *Clone)(
+    HRESULT (STDMETHODCALLTYPE *Clone)(
         IEnumString* This,
         IEnumString** ppenum);
 
 };
 
 #define IEnumString_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD3 (HRESULT,Next,ULONG,celt,LPOLESTR*,rgelt,ULONG*,pceltFetched) \
-    ICOM_METHOD1 (HRESULT,Skip,ULONG,celt) \
-    ICOM_METHOD  (HRESULT,Reset) \
-    ICOM_METHOD1 (HRESULT,Clone,IEnumString**,ppenum)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IEnumString methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Next)(INTERFACE *This, ULONG celt, LPOLESTR* rgelt, ULONG* pceltFetched); \
+    HRESULT (STDMETHODCALLTYPE *Skip)(INTERFACE *This, ULONG celt); \
+    HRESULT (STDMETHODCALLTYPE *Reset)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *Clone)(INTERFACE *This, IEnumString** ppenum);
 
 /*** IUnknown methods ***/
 #define IEnumString_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -2725,7 +2806,7 @@ DEFINE_GUID(IID_IClassActivator, 0x00000140, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IClassActivator: IUnknown {
 
-    virtual HRESULT CALLBACK GetClassObject(
+    virtual HRESULT STDMETHODCALLTYPE GetClassObject(
         REFCLSID rclsid,
         DWORD dwClassContext,
         LCID locale,
@@ -2742,19 +2823,19 @@ struct IClassActivatorVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IClassActivator* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IClassActivator* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IClassActivator* This);
 
     /*** IClassActivator methods ***/
-    HRESULT (CALLBACK *GetClassObject)(
+    HRESULT (STDMETHODCALLTYPE *GetClassObject)(
         IClassActivator* This,
         REFCLSID rclsid,
         DWORD dwClassContext,
@@ -2765,8 +2846,12 @@ struct IClassActivatorVtbl {
 };
 
 #define IClassActivator_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD5 (HRESULT,GetClassObject,REFCLSID,rclsid,DWORD,dwClassContext,LCID,locale,REFIID,riid,void**,ppv)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IClassActivator methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetClassObject)(INTERFACE *This, REFCLSID rclsid, DWORD dwClassContext, LCID locale, REFIID riid, void** ppv);
 
 /*** IUnknown methods ***/
 #define IClassActivator_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -2798,12 +2883,12 @@ DEFINE_GUID(IID_ISequentialStream, 0x0c733a30, 0x2a1c, 0x11ce, 0xad,0xe5, 0x00,0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ISequentialStream: IUnknown {
 
-    virtual HRESULT CALLBACK Read(
+    virtual HRESULT STDMETHODCALLTYPE Read(
         void* pv,
         ULONG cb,
         ULONG* pcbRead) = 0;
 
-    virtual HRESULT CALLBACK Write(
+    virtual HRESULT STDMETHODCALLTYPE Write(
         const void* pv,
         ULONG cb,
         ULONG* pcbWritten) = 0;
@@ -2818,25 +2903,25 @@ struct ISequentialStreamVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         ISequentialStream* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         ISequentialStream* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         ISequentialStream* This);
 
     /*** ISequentialStream methods ***/
-    HRESULT (CALLBACK *Read)(
+    HRESULT (STDMETHODCALLTYPE *Read)(
         ISequentialStream* This,
         void* pv,
         ULONG cb,
         ULONG* pcbRead);
 
-    HRESULT (CALLBACK *Write)(
+    HRESULT (STDMETHODCALLTYPE *Write)(
         ISequentialStream* This,
         const void* pv,
         ULONG cb,
@@ -2845,9 +2930,13 @@ struct ISequentialStreamVtbl {
 };
 
 #define ISequentialStream_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD3 (HRESULT,Read,void*,pv,ULONG,cb,ULONG*,pcbRead) \
-    ICOM_METHOD3 (HRESULT,Write,const void*,pv,ULONG,cb,ULONG*,pcbWritten)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ISequentialStream methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Read)(INTERFACE *This, void* pv, ULONG cb, ULONG* pcbRead); \
+    HRESULT (STDMETHODCALLTYPE *Write)(INTERFACE *This, const void* pv, ULONG cb, ULONG* pcbWritten);
 
 /*** IUnknown methods ***/
 #define ISequentialStream_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -2946,41 +3035,41 @@ DEFINE_GUID(IID_IStream, 0x0000000c, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IStream: ISequentialStream {
 
-    virtual HRESULT CALLBACK Seek(
+    virtual HRESULT STDMETHODCALLTYPE Seek(
         LARGE_INTEGER dlibMove,
         DWORD dwOrigin,
         ULARGE_INTEGER* plibNewPosition) = 0;
 
-    virtual HRESULT CALLBACK SetSize(
+    virtual HRESULT STDMETHODCALLTYPE SetSize(
         ULARGE_INTEGER libNewSize) = 0;
 
-    virtual HRESULT CALLBACK CopyTo(
+    virtual HRESULT STDMETHODCALLTYPE CopyTo(
         IStream* pstm,
         ULARGE_INTEGER cb,
         ULARGE_INTEGER* pcbRead,
         ULARGE_INTEGER* pcbWritten) = 0;
 
-    virtual HRESULT CALLBACK Commit(
+    virtual HRESULT STDMETHODCALLTYPE Commit(
         DWORD grfCommitFlags) = 0;
 
-    virtual HRESULT CALLBACK Revert(
+    virtual HRESULT STDMETHODCALLTYPE Revert(
         ) = 0;
 
-    virtual HRESULT CALLBACK LockRegion(
+    virtual HRESULT STDMETHODCALLTYPE LockRegion(
         ULARGE_INTEGER libOffset,
         ULARGE_INTEGER cb,
         DWORD dwLockType) = 0;
 
-    virtual HRESULT CALLBACK UnlockRegion(
+    virtual HRESULT STDMETHODCALLTYPE UnlockRegion(
         ULARGE_INTEGER libOffset,
         ULARGE_INTEGER cb,
         DWORD dwLockType) = 0;
 
-    virtual HRESULT CALLBACK Stat(
+    virtual HRESULT STDMETHODCALLTYPE Stat(
         STATSTG* pstatstg,
         DWORD grfStatFlag) = 0;
 
-    virtual HRESULT CALLBACK Clone(
+    virtual HRESULT STDMETHODCALLTYPE Clone(
         IStream** ppstm) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -2993,89 +3082,96 @@ struct IStreamVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IStream* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IStream* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IStream* This);
 
     /*** ISequentialStream methods ***/
-    HRESULT (CALLBACK *Read)(
+    HRESULT (STDMETHODCALLTYPE *Read)(
         IStream* This,
         void* pv,
         ULONG cb,
         ULONG* pcbRead);
 
-    HRESULT (CALLBACK *Write)(
+    HRESULT (STDMETHODCALLTYPE *Write)(
         IStream* This,
         const void* pv,
         ULONG cb,
         ULONG* pcbWritten);
 
     /*** IStream methods ***/
-    HRESULT (CALLBACK *Seek)(
+    HRESULT (STDMETHODCALLTYPE *Seek)(
         IStream* This,
         LARGE_INTEGER dlibMove,
         DWORD dwOrigin,
         ULARGE_INTEGER* plibNewPosition);
 
-    HRESULT (CALLBACK *SetSize)(
+    HRESULT (STDMETHODCALLTYPE *SetSize)(
         IStream* This,
         ULARGE_INTEGER libNewSize);
 
-    HRESULT (CALLBACK *CopyTo)(
+    HRESULT (STDMETHODCALLTYPE *CopyTo)(
         IStream* This,
         IStream* pstm,
         ULARGE_INTEGER cb,
         ULARGE_INTEGER* pcbRead,
         ULARGE_INTEGER* pcbWritten);
 
-    HRESULT (CALLBACK *Commit)(
+    HRESULT (STDMETHODCALLTYPE *Commit)(
         IStream* This,
         DWORD grfCommitFlags);
 
-    HRESULT (CALLBACK *Revert)(
+    HRESULT (STDMETHODCALLTYPE *Revert)(
         IStream* This);
 
-    HRESULT (CALLBACK *LockRegion)(
+    HRESULT (STDMETHODCALLTYPE *LockRegion)(
         IStream* This,
         ULARGE_INTEGER libOffset,
         ULARGE_INTEGER cb,
         DWORD dwLockType);
 
-    HRESULT (CALLBACK *UnlockRegion)(
+    HRESULT (STDMETHODCALLTYPE *UnlockRegion)(
         IStream* This,
         ULARGE_INTEGER libOffset,
         ULARGE_INTEGER cb,
         DWORD dwLockType);
 
-    HRESULT (CALLBACK *Stat)(
+    HRESULT (STDMETHODCALLTYPE *Stat)(
         IStream* This,
         STATSTG* pstatstg,
         DWORD grfStatFlag);
 
-    HRESULT (CALLBACK *Clone)(
+    HRESULT (STDMETHODCALLTYPE *Clone)(
         IStream* This,
         IStream** ppstm);
 
 };
 
 #define IStream_IMETHODS \
-    ISequentialStream_IMETHODS \
-    ICOM_METHOD3 (HRESULT,Seek,LARGE_INTEGER,dlibMove,DWORD,dwOrigin,ULARGE_INTEGER*,plibNewPosition) \
-    ICOM_METHOD1 (HRESULT,SetSize,ULARGE_INTEGER,libNewSize) \
-    ICOM_METHOD4 (HRESULT,CopyTo,IStream*,pstm,ULARGE_INTEGER,cb,ULARGE_INTEGER*,pcbRead,ULARGE_INTEGER*,pcbWritten) \
-    ICOM_METHOD1 (HRESULT,Commit,DWORD,grfCommitFlags) \
-    ICOM_METHOD  (HRESULT,Revert) \
-    ICOM_METHOD3 (HRESULT,LockRegion,ULARGE_INTEGER,libOffset,ULARGE_INTEGER,cb,DWORD,dwLockType) \
-    ICOM_METHOD3 (HRESULT,UnlockRegion,ULARGE_INTEGER,libOffset,ULARGE_INTEGER,cb,DWORD,dwLockType) \
-    ICOM_METHOD2 (HRESULT,Stat,STATSTG*,pstatstg,DWORD,grfStatFlag) \
-    ICOM_METHOD1 (HRESULT,Clone,IStream**,ppstm)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ISequentialStream methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Read)(INTERFACE *This, void* pv, ULONG cb, ULONG* pcbRead); \
+    HRESULT (STDMETHODCALLTYPE *Write)(INTERFACE *This, const void* pv, ULONG cb, ULONG* pcbWritten); \
+    /*** IStream methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Seek)(INTERFACE *This, LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER* plibNewPosition); \
+    HRESULT (STDMETHODCALLTYPE *SetSize)(INTERFACE *This, ULARGE_INTEGER libNewSize); \
+    HRESULT (STDMETHODCALLTYPE *CopyTo)(INTERFACE *This, IStream* pstm, ULARGE_INTEGER cb, ULARGE_INTEGER* pcbRead, ULARGE_INTEGER* pcbWritten); \
+    HRESULT (STDMETHODCALLTYPE *Commit)(INTERFACE *This, DWORD grfCommitFlags); \
+    HRESULT (STDMETHODCALLTYPE *Revert)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *LockRegion)(INTERFACE *This, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType); \
+    HRESULT (STDMETHODCALLTYPE *UnlockRegion)(INTERFACE *This, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType); \
+    HRESULT (STDMETHODCALLTYPE *Stat)(INTERFACE *This, STATSTG* pstatstg, DWORD grfStatFlag); \
+    HRESULT (STDMETHODCALLTYPE *Clone)(INTERFACE *This, IStream** ppstm);
 
 /*** IUnknown methods ***/
 #define IStream_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -3223,41 +3319,41 @@ typedef struct tagSTATSTG16 {
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IStream16: ISequentialStream {
 
-    virtual HRESULT CALLBACK Seek(
+    virtual HRESULT STDMETHODCALLTYPE Seek(
         LARGE_INTEGER dlibMove,
         DWORD dwOrigin,
         ULARGE_INTEGER* plibNewPosition) = 0;
 
-    virtual HRESULT CALLBACK SetSize(
+    virtual HRESULT STDMETHODCALLTYPE SetSize(
         ULARGE_INTEGER libNewSize) = 0;
 
-    virtual HRESULT CALLBACK CopyTo(
+    virtual HRESULT STDMETHODCALLTYPE CopyTo(
         IStream16* pstm,
         ULARGE_INTEGER cb,
         ULARGE_INTEGER* pcbRead,
         ULARGE_INTEGER* pcbWritten) = 0;
 
-    virtual HRESULT CALLBACK Commit(
+    virtual HRESULT STDMETHODCALLTYPE Commit(
         DWORD grfCommitFlags) = 0;
 
-    virtual HRESULT CALLBACK Revert(
+    virtual HRESULT STDMETHODCALLTYPE Revert(
         ) = 0;
 
-    virtual HRESULT CALLBACK LockRegion(
+    virtual HRESULT STDMETHODCALLTYPE LockRegion(
         ULARGE_INTEGER libOffset,
         ULARGE_INTEGER cb,
         DWORD dwLockType) = 0;
 
-    virtual HRESULT CALLBACK UnlockRegion(
+    virtual HRESULT STDMETHODCALLTYPE UnlockRegion(
         ULARGE_INTEGER libOffset,
         ULARGE_INTEGER cb,
         DWORD dwLockType) = 0;
 
-    virtual HRESULT CALLBACK Stat(
+    virtual HRESULT STDMETHODCALLTYPE Stat(
         STATSTG* pstatstg,
         DWORD grfStatFlag) = 0;
 
-    virtual HRESULT CALLBACK Clone(
+    virtual HRESULT STDMETHODCALLTYPE Clone(
         IStream16** ppstm) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -3270,89 +3366,96 @@ struct IStream16Vtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IStream16* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IStream16* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IStream16* This);
 
     /*** ISequentialStream methods ***/
-    HRESULT (CALLBACK *Read)(
+    HRESULT (STDMETHODCALLTYPE *Read)(
         IStream16* This,
         void* pv,
         ULONG cb,
         ULONG* pcbRead);
 
-    HRESULT (CALLBACK *Write)(
+    HRESULT (STDMETHODCALLTYPE *Write)(
         IStream16* This,
         const void* pv,
         ULONG cb,
         ULONG* pcbWritten);
 
     /*** IStream16 methods ***/
-    HRESULT (CALLBACK *Seek)(
+    HRESULT (STDMETHODCALLTYPE *Seek)(
         IStream16* This,
         LARGE_INTEGER dlibMove,
         DWORD dwOrigin,
         ULARGE_INTEGER* plibNewPosition);
 
-    HRESULT (CALLBACK *SetSize)(
+    HRESULT (STDMETHODCALLTYPE *SetSize)(
         IStream16* This,
         ULARGE_INTEGER libNewSize);
 
-    HRESULT (CALLBACK *CopyTo)(
+    HRESULT (STDMETHODCALLTYPE *CopyTo)(
         IStream16* This,
         IStream16* pstm,
         ULARGE_INTEGER cb,
         ULARGE_INTEGER* pcbRead,
         ULARGE_INTEGER* pcbWritten);
 
-    HRESULT (CALLBACK *Commit)(
+    HRESULT (STDMETHODCALLTYPE *Commit)(
         IStream16* This,
         DWORD grfCommitFlags);
 
-    HRESULT (CALLBACK *Revert)(
+    HRESULT (STDMETHODCALLTYPE *Revert)(
         IStream16* This);
 
-    HRESULT (CALLBACK *LockRegion)(
+    HRESULT (STDMETHODCALLTYPE *LockRegion)(
         IStream16* This,
         ULARGE_INTEGER libOffset,
         ULARGE_INTEGER cb,
         DWORD dwLockType);
 
-    HRESULT (CALLBACK *UnlockRegion)(
+    HRESULT (STDMETHODCALLTYPE *UnlockRegion)(
         IStream16* This,
         ULARGE_INTEGER libOffset,
         ULARGE_INTEGER cb,
         DWORD dwLockType);
 
-    HRESULT (CALLBACK *Stat)(
+    HRESULT (STDMETHODCALLTYPE *Stat)(
         IStream16* This,
         STATSTG* pstatstg,
         DWORD grfStatFlag);
 
-    HRESULT (CALLBACK *Clone)(
+    HRESULT (STDMETHODCALLTYPE *Clone)(
         IStream16* This,
         IStream16** ppstm);
 
 };
 
 #define IStream16_IMETHODS \
-    ISequentialStream_IMETHODS \
-    ICOM_METHOD3 (HRESULT,Seek,LARGE_INTEGER,dlibMove,DWORD,dwOrigin,ULARGE_INTEGER*,plibNewPosition) \
-    ICOM_METHOD1 (HRESULT,SetSize,ULARGE_INTEGER,libNewSize) \
-    ICOM_METHOD4 (HRESULT,CopyTo,IStream16*,pstm,ULARGE_INTEGER,cb,ULARGE_INTEGER*,pcbRead,ULARGE_INTEGER*,pcbWritten) \
-    ICOM_METHOD1 (HRESULT,Commit,DWORD,grfCommitFlags) \
-    ICOM_METHOD  (HRESULT,Revert) \
-    ICOM_METHOD3 (HRESULT,LockRegion,ULARGE_INTEGER,libOffset,ULARGE_INTEGER,cb,DWORD,dwLockType) \
-    ICOM_METHOD3 (HRESULT,UnlockRegion,ULARGE_INTEGER,libOffset,ULARGE_INTEGER,cb,DWORD,dwLockType) \
-    ICOM_METHOD2 (HRESULT,Stat,STATSTG*,pstatstg,DWORD,grfStatFlag) \
-    ICOM_METHOD1 (HRESULT,Clone,IStream16**,ppstm)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ISequentialStream methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Read)(INTERFACE *This, void* pv, ULONG cb, ULONG* pcbRead); \
+    HRESULT (STDMETHODCALLTYPE *Write)(INTERFACE *This, const void* pv, ULONG cb, ULONG* pcbWritten); \
+    /*** IStream16 methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Seek)(INTERFACE *This, LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER* plibNewPosition); \
+    HRESULT (STDMETHODCALLTYPE *SetSize)(INTERFACE *This, ULARGE_INTEGER libNewSize); \
+    HRESULT (STDMETHODCALLTYPE *CopyTo)(INTERFACE *This, IStream16* pstm, ULARGE_INTEGER cb, ULARGE_INTEGER* pcbRead, ULARGE_INTEGER* pcbWritten); \
+    HRESULT (STDMETHODCALLTYPE *Commit)(INTERFACE *This, DWORD grfCommitFlags); \
+    HRESULT (STDMETHODCALLTYPE *Revert)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *LockRegion)(INTERFACE *This, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType); \
+    HRESULT (STDMETHODCALLTYPE *UnlockRegion)(INTERFACE *This, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType); \
+    HRESULT (STDMETHODCALLTYPE *Stat)(INTERFACE *This, STATSTG* pstatstg, DWORD grfStatFlag); \
+    HRESULT (STDMETHODCALLTYPE *Clone)(INTERFACE *This, IStream16** ppstm);
 
 /*** IUnknown methods ***/
 #define IStream16_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -3488,18 +3591,18 @@ DEFINE_GUID(IID_IEnumSTATSTG, 0x0000000d, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IEnumSTATSTG: IUnknown {
 
-    virtual HRESULT CALLBACK Next(
+    virtual HRESULT STDMETHODCALLTYPE Next(
         ULONG celt,
         STATSTG* rgelt,
         ULONG* pceltFetched) = 0;
 
-    virtual HRESULT CALLBACK Skip(
+    virtual HRESULT STDMETHODCALLTYPE Skip(
         ULONG celt) = 0;
 
-    virtual HRESULT CALLBACK Reset(
+    virtual HRESULT STDMETHODCALLTYPE Reset(
         ) = 0;
 
-    virtual HRESULT CALLBACK Clone(
+    virtual HRESULT STDMETHODCALLTYPE Clone(
         IEnumSTATSTG** ppenum) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -3512,43 +3615,47 @@ struct IEnumSTATSTGVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IEnumSTATSTG* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IEnumSTATSTG* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IEnumSTATSTG* This);
 
     /*** IEnumSTATSTG methods ***/
-    HRESULT (CALLBACK *Next)(
+    HRESULT (STDMETHODCALLTYPE *Next)(
         IEnumSTATSTG* This,
         ULONG celt,
         STATSTG* rgelt,
         ULONG* pceltFetched);
 
-    HRESULT (CALLBACK *Skip)(
+    HRESULT (STDMETHODCALLTYPE *Skip)(
         IEnumSTATSTG* This,
         ULONG celt);
 
-    HRESULT (CALLBACK *Reset)(
+    HRESULT (STDMETHODCALLTYPE *Reset)(
         IEnumSTATSTG* This);
 
-    HRESULT (CALLBACK *Clone)(
+    HRESULT (STDMETHODCALLTYPE *Clone)(
         IEnumSTATSTG* This,
         IEnumSTATSTG** ppenum);
 
 };
 
 #define IEnumSTATSTG_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD3 (HRESULT,Next,ULONG,celt,STATSTG*,rgelt,ULONG*,pceltFetched) \
-    ICOM_METHOD1 (HRESULT,Skip,ULONG,celt) \
-    ICOM_METHOD  (HRESULT,Reset) \
-    ICOM_METHOD1 (HRESULT,Clone,IEnumSTATSTG**,ppenum)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IEnumSTATSTG methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Next)(INTERFACE *This, ULONG celt, STATSTG* rgelt, ULONG* pceltFetched); \
+    HRESULT (STDMETHODCALLTYPE *Skip)(INTERFACE *This, ULONG celt); \
+    HRESULT (STDMETHODCALLTYPE *Reset)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *Clone)(INTERFACE *This, IEnumSTATSTG** ppenum);
 
 /*** IUnknown methods ***/
 #define IEnumSTATSTG_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -3630,28 +3737,28 @@ DEFINE_GUID(IID_IStorage, 0x0000000b, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IStorage: IUnknown {
 
-    virtual HRESULT CALLBACK CreateStream(
+    virtual HRESULT STDMETHODCALLTYPE CreateStream(
         LPCOLESTR pwcsName,
         DWORD grfMode,
         DWORD reserved1,
         DWORD reserved2,
         IStream** ppstm) = 0;
 
-    virtual HRESULT CALLBACK OpenStream(
+    virtual HRESULT STDMETHODCALLTYPE OpenStream(
         LPCOLESTR pwcsName,
         void* reserved1,
         DWORD grfMode,
         DWORD reserved2,
         IStream** ppstm) = 0;
 
-    virtual HRESULT CALLBACK CreateStorage(
+    virtual HRESULT STDMETHODCALLTYPE CreateStorage(
         LPCOLESTR pwcsName,
         DWORD grfMode,
         DWORD dwStgFmt,
         DWORD reserved2,
         IStorage** ppstg) = 0;
 
-    virtual HRESULT CALLBACK OpenStorage(
+    virtual HRESULT STDMETHODCALLTYPE OpenStorage(
         LPCOLESTR pwcsName,
         IStorage* pstgPriority,
         DWORD grfMode,
@@ -3659,51 +3766,51 @@ struct IStorage: IUnknown {
         DWORD reserved,
         IStorage** ppstg) = 0;
 
-    virtual HRESULT CALLBACK CopyTo(
+    virtual HRESULT STDMETHODCALLTYPE CopyTo(
         DWORD ciidExclude,
         const IID* rgiidExclude,
         SNB snbExclude,
         IStorage* pstgDest) = 0;
 
-    virtual HRESULT CALLBACK MoveElementTo(
+    virtual HRESULT STDMETHODCALLTYPE MoveElementTo(
         LPCOLESTR pwcsName,
         IStorage* pstgDest,
         LPCOLESTR pwcsNewName,
         DWORD grfFlags) = 0;
 
-    virtual HRESULT CALLBACK Commit(
+    virtual HRESULT STDMETHODCALLTYPE Commit(
         DWORD grfCommitFlags) = 0;
 
-    virtual HRESULT CALLBACK Revert(
+    virtual HRESULT STDMETHODCALLTYPE Revert(
         ) = 0;
 
-    virtual HRESULT CALLBACK EnumElements(
+    virtual HRESULT STDMETHODCALLTYPE EnumElements(
         DWORD reserved1,
         void* reserved2,
         DWORD reserved3,
         IEnumSTATSTG** ppenum) = 0;
 
-    virtual HRESULT CALLBACK DestroyElement(
+    virtual HRESULT STDMETHODCALLTYPE DestroyElement(
         LPCOLESTR pwcsName) = 0;
 
-    virtual HRESULT CALLBACK RenameElement(
+    virtual HRESULT STDMETHODCALLTYPE RenameElement(
         LPCOLESTR pwcsOldName,
         LPCOLESTR pwcsNewName) = 0;
 
-    virtual HRESULT CALLBACK SetElementTimes(
+    virtual HRESULT STDMETHODCALLTYPE SetElementTimes(
         LPCOLESTR pwcsName,
         const FILETIME* pctime,
         const FILETIME* patime,
         const FILETIME* pmtime) = 0;
 
-    virtual HRESULT CALLBACK SetClass(
+    virtual HRESULT STDMETHODCALLTYPE SetClass(
         REFCLSID clsid) = 0;
 
-    virtual HRESULT CALLBACK SetStateBits(
+    virtual HRESULT STDMETHODCALLTYPE SetStateBits(
         DWORD grfStateBits,
         DWORD grfMask) = 0;
 
-    virtual HRESULT CALLBACK Stat(
+    virtual HRESULT STDMETHODCALLTYPE Stat(
         STATSTG* pstatstg,
         DWORD grfStatFlag) = 0;
 
@@ -3717,19 +3824,19 @@ struct IStorageVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IStorage* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IStorage* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IStorage* This);
 
     /*** IStorage methods ***/
-    HRESULT (CALLBACK *CreateStream)(
+    HRESULT (STDMETHODCALLTYPE *CreateStream)(
         IStorage* This,
         LPCOLESTR pwcsName,
         DWORD grfMode,
@@ -3737,7 +3844,7 @@ struct IStorageVtbl {
         DWORD reserved2,
         IStream** ppstm);
 
-    HRESULT (CALLBACK *OpenStream)(
+    HRESULT (STDMETHODCALLTYPE *OpenStream)(
         IStorage* This,
         LPCOLESTR pwcsName,
         void* reserved1,
@@ -3745,7 +3852,7 @@ struct IStorageVtbl {
         DWORD reserved2,
         IStream** ppstm);
 
-    HRESULT (CALLBACK *CreateStorage)(
+    HRESULT (STDMETHODCALLTYPE *CreateStorage)(
         IStorage* This,
         LPCOLESTR pwcsName,
         DWORD grfMode,
@@ -3753,7 +3860,7 @@ struct IStorageVtbl {
         DWORD reserved2,
         IStorage** ppstg);
 
-    HRESULT (CALLBACK *OpenStorage)(
+    HRESULT (STDMETHODCALLTYPE *OpenStorage)(
         IStorage* This,
         LPCOLESTR pwcsName,
         IStorage* pstgPriority,
@@ -3762,60 +3869,60 @@ struct IStorageVtbl {
         DWORD reserved,
         IStorage** ppstg);
 
-    HRESULT (CALLBACK *CopyTo)(
+    HRESULT (STDMETHODCALLTYPE *CopyTo)(
         IStorage* This,
         DWORD ciidExclude,
         const IID* rgiidExclude,
         SNB snbExclude,
         IStorage* pstgDest);
 
-    HRESULT (CALLBACK *MoveElementTo)(
+    HRESULT (STDMETHODCALLTYPE *MoveElementTo)(
         IStorage* This,
         LPCOLESTR pwcsName,
         IStorage* pstgDest,
         LPCOLESTR pwcsNewName,
         DWORD grfFlags);
 
-    HRESULT (CALLBACK *Commit)(
+    HRESULT (STDMETHODCALLTYPE *Commit)(
         IStorage* This,
         DWORD grfCommitFlags);
 
-    HRESULT (CALLBACK *Revert)(
+    HRESULT (STDMETHODCALLTYPE *Revert)(
         IStorage* This);
 
-    HRESULT (CALLBACK *EnumElements)(
+    HRESULT (STDMETHODCALLTYPE *EnumElements)(
         IStorage* This,
         DWORD reserved1,
         void* reserved2,
         DWORD reserved3,
         IEnumSTATSTG** ppenum);
 
-    HRESULT (CALLBACK *DestroyElement)(
+    HRESULT (STDMETHODCALLTYPE *DestroyElement)(
         IStorage* This,
         LPCOLESTR pwcsName);
 
-    HRESULT (CALLBACK *RenameElement)(
+    HRESULT (STDMETHODCALLTYPE *RenameElement)(
         IStorage* This,
         LPCOLESTR pwcsOldName,
         LPCOLESTR pwcsNewName);
 
-    HRESULT (CALLBACK *SetElementTimes)(
+    HRESULT (STDMETHODCALLTYPE *SetElementTimes)(
         IStorage* This,
         LPCOLESTR pwcsName,
         const FILETIME* pctime,
         const FILETIME* patime,
         const FILETIME* pmtime);
 
-    HRESULT (CALLBACK *SetClass)(
+    HRESULT (STDMETHODCALLTYPE *SetClass)(
         IStorage* This,
         REFCLSID clsid);
 
-    HRESULT (CALLBACK *SetStateBits)(
+    HRESULT (STDMETHODCALLTYPE *SetStateBits)(
         IStorage* This,
         DWORD grfStateBits,
         DWORD grfMask);
 
-    HRESULT (CALLBACK *Stat)(
+    HRESULT (STDMETHODCALLTYPE *Stat)(
         IStorage* This,
         STATSTG* pstatstg,
         DWORD grfStatFlag);
@@ -3823,22 +3930,26 @@ struct IStorageVtbl {
 };
 
 #define IStorage_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD5 (HRESULT,CreateStream,LPCOLESTR,pwcsName,DWORD,grfMode,DWORD,reserved1,DWORD,reserved2,IStream**,ppstm) \
-    ICOM_METHOD5 (HRESULT,OpenStream,LPCOLESTR,pwcsName,void*,reserved1,DWORD,grfMode,DWORD,reserved2,IStream**,ppstm) \
-    ICOM_METHOD5 (HRESULT,CreateStorage,LPCOLESTR,pwcsName,DWORD,grfMode,DWORD,dwStgFmt,DWORD,reserved2,IStorage**,ppstg) \
-    ICOM_METHOD6 (HRESULT,OpenStorage,LPCOLESTR,pwcsName,IStorage*,pstgPriority,DWORD,grfMode,SNB,snbExclude,DWORD,reserved,IStorage**,ppstg) \
-    ICOM_METHOD4 (HRESULT,CopyTo,DWORD,ciidExclude,const IID*,rgiidExclude,SNB,snbExclude,IStorage*,pstgDest) \
-    ICOM_METHOD4 (HRESULT,MoveElementTo,LPCOLESTR,pwcsName,IStorage*,pstgDest,LPCOLESTR,pwcsNewName,DWORD,grfFlags) \
-    ICOM_METHOD1 (HRESULT,Commit,DWORD,grfCommitFlags) \
-    ICOM_METHOD  (HRESULT,Revert) \
-    ICOM_METHOD4 (HRESULT,EnumElements,DWORD,reserved1,void*,reserved2,DWORD,reserved3,IEnumSTATSTG**,ppenum) \
-    ICOM_METHOD1 (HRESULT,DestroyElement,LPCOLESTR,pwcsName) \
-    ICOM_METHOD2 (HRESULT,RenameElement,LPCOLESTR,pwcsOldName,LPCOLESTR,pwcsNewName) \
-    ICOM_METHOD4 (HRESULT,SetElementTimes,LPCOLESTR,pwcsName,const FILETIME*,pctime,const FILETIME*,patime,const FILETIME*,pmtime) \
-    ICOM_METHOD1 (HRESULT,SetClass,REFCLSID,clsid) \
-    ICOM_METHOD2 (HRESULT,SetStateBits,DWORD,grfStateBits,DWORD,grfMask) \
-    ICOM_METHOD2 (HRESULT,Stat,STATSTG*,pstatstg,DWORD,grfStatFlag)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IStorage methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *CreateStream)(INTERFACE *This, LPCOLESTR pwcsName, DWORD grfMode, DWORD reserved1, DWORD reserved2, IStream** ppstm); \
+    HRESULT (STDMETHODCALLTYPE *OpenStream)(INTERFACE *This, LPCOLESTR pwcsName, void* reserved1, DWORD grfMode, DWORD reserved2, IStream** ppstm); \
+    HRESULT (STDMETHODCALLTYPE *CreateStorage)(INTERFACE *This, LPCOLESTR pwcsName, DWORD grfMode, DWORD dwStgFmt, DWORD reserved2, IStorage** ppstg); \
+    HRESULT (STDMETHODCALLTYPE *OpenStorage)(INTERFACE *This, LPCOLESTR pwcsName, IStorage* pstgPriority, DWORD grfMode, SNB snbExclude, DWORD reserved, IStorage** ppstg); \
+    HRESULT (STDMETHODCALLTYPE *CopyTo)(INTERFACE *This, DWORD ciidExclude, const IID* rgiidExclude, SNB snbExclude, IStorage* pstgDest); \
+    HRESULT (STDMETHODCALLTYPE *MoveElementTo)(INTERFACE *This, LPCOLESTR pwcsName, IStorage* pstgDest, LPCOLESTR pwcsNewName, DWORD grfFlags); \
+    HRESULT (STDMETHODCALLTYPE *Commit)(INTERFACE *This, DWORD grfCommitFlags); \
+    HRESULT (STDMETHODCALLTYPE *Revert)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *EnumElements)(INTERFACE *This, DWORD reserved1, void* reserved2, DWORD reserved3, IEnumSTATSTG** ppenum); \
+    HRESULT (STDMETHODCALLTYPE *DestroyElement)(INTERFACE *This, LPCOLESTR pwcsName); \
+    HRESULT (STDMETHODCALLTYPE *RenameElement)(INTERFACE *This, LPCOLESTR pwcsOldName, LPCOLESTR pwcsNewName); \
+    HRESULT (STDMETHODCALLTYPE *SetElementTimes)(INTERFACE *This, LPCOLESTR pwcsName, const FILETIME* pctime, const FILETIME* patime, const FILETIME* pmtime); \
+    HRESULT (STDMETHODCALLTYPE *SetClass)(INTERFACE *This, REFCLSID clsid); \
+    HRESULT (STDMETHODCALLTYPE *SetStateBits)(INTERFACE *This, DWORD grfStateBits, DWORD grfMask); \
+    HRESULT (STDMETHODCALLTYPE *Stat)(INTERFACE *This, STATSTG* pstatstg, DWORD grfStatFlag);
 
 /*** IUnknown methods ***/
 #define IStorage_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -4068,28 +4179,28 @@ void            __RPC_USER SNB16_UserFree     (unsigned long *, SNB16 *);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IStorage16: IUnknown {
 
-    virtual HRESULT CALLBACK CreateStream(
+    virtual HRESULT STDMETHODCALLTYPE CreateStream(
         LPCOLESTR16 pwcsName,
         DWORD grfMode,
         DWORD reserved1,
         DWORD reserved2,
         IStream16** ppstm) = 0;
 
-    virtual HRESULT CALLBACK OpenStream(
+    virtual HRESULT STDMETHODCALLTYPE OpenStream(
         LPCOLESTR16 pwcsName,
         void* reserved1,
         DWORD grfMode,
         DWORD reserved2,
         IStream16** ppstm) = 0;
 
-    virtual HRESULT CALLBACK CreateStorage(
+    virtual HRESULT STDMETHODCALLTYPE CreateStorage(
         LPCOLESTR16 pwcsName,
         DWORD grfMode,
         DWORD dwStgFmt,
         DWORD reserved2,
         IStorage16** ppstg) = 0;
 
-    virtual HRESULT CALLBACK OpenStorage(
+    virtual HRESULT STDMETHODCALLTYPE OpenStorage(
         LPCOLESTR16 pwcsName,
         IStorage16* pstgPriority,
         DWORD grfMode,
@@ -4097,51 +4208,51 @@ struct IStorage16: IUnknown {
         DWORD reserved,
         IStorage16** ppstg) = 0;
 
-    virtual HRESULT CALLBACK CopyTo(
+    virtual HRESULT STDMETHODCALLTYPE CopyTo(
         DWORD ciidExclude,
         const IID* rgiidExclude,
         SNB16 snbExclude,
         IStorage16* pstgDest) = 0;
 
-    virtual HRESULT CALLBACK MoveElementTo(
+    virtual HRESULT STDMETHODCALLTYPE MoveElementTo(
         LPCOLESTR16 pwcsName,
         IStorage16* pstgDest,
         LPCOLESTR16 pwcsNewName,
         DWORD grfFlags) = 0;
 
-    virtual HRESULT CALLBACK Commit(
+    virtual HRESULT STDMETHODCALLTYPE Commit(
         DWORD grfCommitFlags) = 0;
 
-    virtual HRESULT CALLBACK Revert(
+    virtual HRESULT STDMETHODCALLTYPE Revert(
         ) = 0;
 
-    virtual HRESULT CALLBACK EnumElements(
+    virtual HRESULT STDMETHODCALLTYPE EnumElements(
         DWORD reserved1,
         void* reserved2,
         DWORD reserved3,
         IEnumSTATSTG** ppenum) = 0;
 
-    virtual HRESULT CALLBACK DestroyElement(
+    virtual HRESULT STDMETHODCALLTYPE DestroyElement(
         LPCOLESTR16 pwcsName) = 0;
 
-    virtual HRESULT CALLBACK RenameElement(
+    virtual HRESULT STDMETHODCALLTYPE RenameElement(
         LPCOLESTR16 pwcsOldName,
         LPCOLESTR16 pwcsNewName) = 0;
 
-    virtual HRESULT CALLBACK SetElementTimes(
+    virtual HRESULT STDMETHODCALLTYPE SetElementTimes(
         LPCOLESTR16 pwcsName,
         const FILETIME* pctime,
         const FILETIME* patime,
         const FILETIME* pmtime) = 0;
 
-    virtual HRESULT CALLBACK SetClass(
+    virtual HRESULT STDMETHODCALLTYPE SetClass(
         REFCLSID clsid) = 0;
 
-    virtual HRESULT CALLBACK SetStateBits(
+    virtual HRESULT STDMETHODCALLTYPE SetStateBits(
         DWORD grfStateBits,
         DWORD grfMask) = 0;
 
-    virtual HRESULT CALLBACK Stat(
+    virtual HRESULT STDMETHODCALLTYPE Stat(
         STATSTG* pstatstg,
         DWORD grfStatFlag) = 0;
 
@@ -4155,19 +4266,19 @@ struct IStorage16Vtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IStorage16* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IStorage16* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IStorage16* This);
 
     /*** IStorage16 methods ***/
-    HRESULT (CALLBACK *CreateStream)(
+    HRESULT (STDMETHODCALLTYPE *CreateStream)(
         IStorage16* This,
         LPCOLESTR16 pwcsName,
         DWORD grfMode,
@@ -4175,7 +4286,7 @@ struct IStorage16Vtbl {
         DWORD reserved2,
         IStream16** ppstm);
 
-    HRESULT (CALLBACK *OpenStream)(
+    HRESULT (STDMETHODCALLTYPE *OpenStream)(
         IStorage16* This,
         LPCOLESTR16 pwcsName,
         void* reserved1,
@@ -4183,7 +4294,7 @@ struct IStorage16Vtbl {
         DWORD reserved2,
         IStream16** ppstm);
 
-    HRESULT (CALLBACK *CreateStorage)(
+    HRESULT (STDMETHODCALLTYPE *CreateStorage)(
         IStorage16* This,
         LPCOLESTR16 pwcsName,
         DWORD grfMode,
@@ -4191,7 +4302,7 @@ struct IStorage16Vtbl {
         DWORD reserved2,
         IStorage16** ppstg);
 
-    HRESULT (CALLBACK *OpenStorage)(
+    HRESULT (STDMETHODCALLTYPE *OpenStorage)(
         IStorage16* This,
         LPCOLESTR16 pwcsName,
         IStorage16* pstgPriority,
@@ -4200,60 +4311,60 @@ struct IStorage16Vtbl {
         DWORD reserved,
         IStorage16** ppstg);
 
-    HRESULT (CALLBACK *CopyTo)(
+    HRESULT (STDMETHODCALLTYPE *CopyTo)(
         IStorage16* This,
         DWORD ciidExclude,
         const IID* rgiidExclude,
         SNB16 snbExclude,
         IStorage16* pstgDest);
 
-    HRESULT (CALLBACK *MoveElementTo)(
+    HRESULT (STDMETHODCALLTYPE *MoveElementTo)(
         IStorage16* This,
         LPCOLESTR16 pwcsName,
         IStorage16* pstgDest,
         LPCOLESTR16 pwcsNewName,
         DWORD grfFlags);
 
-    HRESULT (CALLBACK *Commit)(
+    HRESULT (STDMETHODCALLTYPE *Commit)(
         IStorage16* This,
         DWORD grfCommitFlags);
 
-    HRESULT (CALLBACK *Revert)(
+    HRESULT (STDMETHODCALLTYPE *Revert)(
         IStorage16* This);
 
-    HRESULT (CALLBACK *EnumElements)(
+    HRESULT (STDMETHODCALLTYPE *EnumElements)(
         IStorage16* This,
         DWORD reserved1,
         void* reserved2,
         DWORD reserved3,
         IEnumSTATSTG** ppenum);
 
-    HRESULT (CALLBACK *DestroyElement)(
+    HRESULT (STDMETHODCALLTYPE *DestroyElement)(
         IStorage16* This,
         LPCOLESTR16 pwcsName);
 
-    HRESULT (CALLBACK *RenameElement)(
+    HRESULT (STDMETHODCALLTYPE *RenameElement)(
         IStorage16* This,
         LPCOLESTR16 pwcsOldName,
         LPCOLESTR16 pwcsNewName);
 
-    HRESULT (CALLBACK *SetElementTimes)(
+    HRESULT (STDMETHODCALLTYPE *SetElementTimes)(
         IStorage16* This,
         LPCOLESTR16 pwcsName,
         const FILETIME* pctime,
         const FILETIME* patime,
         const FILETIME* pmtime);
 
-    HRESULT (CALLBACK *SetClass)(
+    HRESULT (STDMETHODCALLTYPE *SetClass)(
         IStorage16* This,
         REFCLSID clsid);
 
-    HRESULT (CALLBACK *SetStateBits)(
+    HRESULT (STDMETHODCALLTYPE *SetStateBits)(
         IStorage16* This,
         DWORD grfStateBits,
         DWORD grfMask);
 
-    HRESULT (CALLBACK *Stat)(
+    HRESULT (STDMETHODCALLTYPE *Stat)(
         IStorage16* This,
         STATSTG* pstatstg,
         DWORD grfStatFlag);
@@ -4261,22 +4372,26 @@ struct IStorage16Vtbl {
 };
 
 #define IStorage16_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD5 (HRESULT,CreateStream,LPCOLESTR16,pwcsName,DWORD,grfMode,DWORD,reserved1,DWORD,reserved2,IStream16**,ppstm) \
-    ICOM_METHOD5 (HRESULT,OpenStream,LPCOLESTR16,pwcsName,void*,reserved1,DWORD,grfMode,DWORD,reserved2,IStream16**,ppstm) \
-    ICOM_METHOD5 (HRESULT,CreateStorage,LPCOLESTR16,pwcsName,DWORD,grfMode,DWORD,dwStgFmt,DWORD,reserved2,IStorage16**,ppstg) \
-    ICOM_METHOD6 (HRESULT,OpenStorage,LPCOLESTR16,pwcsName,IStorage16*,pstgPriority,DWORD,grfMode,SNB16,snbExclude,DWORD,reserved,IStorage16**,ppstg) \
-    ICOM_METHOD4 (HRESULT,CopyTo,DWORD,ciidExclude,const IID*,rgiidExclude,SNB16,snbExclude,IStorage16*,pstgDest) \
-    ICOM_METHOD4 (HRESULT,MoveElementTo,LPCOLESTR16,pwcsName,IStorage16*,pstgDest,LPCOLESTR16,pwcsNewName,DWORD,grfFlags) \
-    ICOM_METHOD1 (HRESULT,Commit,DWORD,grfCommitFlags) \
-    ICOM_METHOD  (HRESULT,Revert) \
-    ICOM_METHOD4 (HRESULT,EnumElements,DWORD,reserved1,void*,reserved2,DWORD,reserved3,IEnumSTATSTG**,ppenum) \
-    ICOM_METHOD1 (HRESULT,DestroyElement,LPCOLESTR16,pwcsName) \
-    ICOM_METHOD2 (HRESULT,RenameElement,LPCOLESTR16,pwcsOldName,LPCOLESTR16,pwcsNewName) \
-    ICOM_METHOD4 (HRESULT,SetElementTimes,LPCOLESTR16,pwcsName,const FILETIME*,pctime,const FILETIME*,patime,const FILETIME*,pmtime) \
-    ICOM_METHOD1 (HRESULT,SetClass,REFCLSID,clsid) \
-    ICOM_METHOD2 (HRESULT,SetStateBits,DWORD,grfStateBits,DWORD,grfMask) \
-    ICOM_METHOD2 (HRESULT,Stat,STATSTG*,pstatstg,DWORD,grfStatFlag)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IStorage16 methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *CreateStream)(INTERFACE *This, LPCOLESTR16 pwcsName, DWORD grfMode, DWORD reserved1, DWORD reserved2, IStream16** ppstm); \
+    HRESULT (STDMETHODCALLTYPE *OpenStream)(INTERFACE *This, LPCOLESTR16 pwcsName, void* reserved1, DWORD grfMode, DWORD reserved2, IStream16** ppstm); \
+    HRESULT (STDMETHODCALLTYPE *CreateStorage)(INTERFACE *This, LPCOLESTR16 pwcsName, DWORD grfMode, DWORD dwStgFmt, DWORD reserved2, IStorage16** ppstg); \
+    HRESULT (STDMETHODCALLTYPE *OpenStorage)(INTERFACE *This, LPCOLESTR16 pwcsName, IStorage16* pstgPriority, DWORD grfMode, SNB16 snbExclude, DWORD reserved, IStorage16** ppstg); \
+    HRESULT (STDMETHODCALLTYPE *CopyTo)(INTERFACE *This, DWORD ciidExclude, const IID* rgiidExclude, SNB16 snbExclude, IStorage16* pstgDest); \
+    HRESULT (STDMETHODCALLTYPE *MoveElementTo)(INTERFACE *This, LPCOLESTR16 pwcsName, IStorage16* pstgDest, LPCOLESTR16 pwcsNewName, DWORD grfFlags); \
+    HRESULT (STDMETHODCALLTYPE *Commit)(INTERFACE *This, DWORD grfCommitFlags); \
+    HRESULT (STDMETHODCALLTYPE *Revert)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *EnumElements)(INTERFACE *This, DWORD reserved1, void* reserved2, DWORD reserved3, IEnumSTATSTG** ppenum); \
+    HRESULT (STDMETHODCALLTYPE *DestroyElement)(INTERFACE *This, LPCOLESTR16 pwcsName); \
+    HRESULT (STDMETHODCALLTYPE *RenameElement)(INTERFACE *This, LPCOLESTR16 pwcsOldName, LPCOLESTR16 pwcsNewName); \
+    HRESULT (STDMETHODCALLTYPE *SetElementTimes)(INTERFACE *This, LPCOLESTR16 pwcsName, const FILETIME* pctime, const FILETIME* patime, const FILETIME* pmtime); \
+    HRESULT (STDMETHODCALLTYPE *SetClass)(INTERFACE *This, REFCLSID clsid); \
+    HRESULT (STDMETHODCALLTYPE *SetStateBits)(INTERFACE *This, DWORD grfStateBits, DWORD grfMask); \
+    HRESULT (STDMETHODCALLTYPE *Stat)(INTERFACE *This, STATSTG* pstatstg, DWORD grfStatFlag);
 
 /*** IUnknown methods ***/
 #define IStorage16_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -4493,21 +4608,21 @@ DEFINE_GUID(IID_IPersistFile, 0x0000010b, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IPersistFile: IPersist {
 
-    virtual HRESULT CALLBACK IsDirty(
+    virtual HRESULT STDMETHODCALLTYPE IsDirty(
         ) = 0;
 
-    virtual HRESULT CALLBACK Load(
+    virtual HRESULT STDMETHODCALLTYPE Load(
         LPCOLESTR pszFileName,
         DWORD dwMode) = 0;
 
-    virtual HRESULT CALLBACK Save(
+    virtual HRESULT STDMETHODCALLTYPE Save(
         LPCOLESTR pszFileName,
         BOOL fRemember) = 0;
 
-    virtual HRESULT CALLBACK SaveCompleted(
+    virtual HRESULT STDMETHODCALLTYPE SaveCompleted(
         LPCOLESTR pszFileName) = 0;
 
-    virtual HRESULT CALLBACK GetCurFile(
+    virtual HRESULT STDMETHODCALLTYPE GetCurFile(
         LPOLESTR* ppszFileName) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -4520,53 +4635,59 @@ struct IPersistFileVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IPersistFile* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IPersistFile* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IPersistFile* This);
 
     /*** IPersist methods ***/
-    HRESULT (CALLBACK *GetClassID)(
+    HRESULT (STDMETHODCALLTYPE *GetClassID)(
         IPersistFile* This,
         CLSID* pClassID);
 
     /*** IPersistFile methods ***/
-    HRESULT (CALLBACK *IsDirty)(
+    HRESULT (STDMETHODCALLTYPE *IsDirty)(
         IPersistFile* This);
 
-    HRESULT (CALLBACK *Load)(
+    HRESULT (STDMETHODCALLTYPE *Load)(
         IPersistFile* This,
         LPCOLESTR pszFileName,
         DWORD dwMode);
 
-    HRESULT (CALLBACK *Save)(
+    HRESULT (STDMETHODCALLTYPE *Save)(
         IPersistFile* This,
         LPCOLESTR pszFileName,
         BOOL fRemember);
 
-    HRESULT (CALLBACK *SaveCompleted)(
+    HRESULT (STDMETHODCALLTYPE *SaveCompleted)(
         IPersistFile* This,
         LPCOLESTR pszFileName);
 
-    HRESULT (CALLBACK *GetCurFile)(
+    HRESULT (STDMETHODCALLTYPE *GetCurFile)(
         IPersistFile* This,
         LPOLESTR* ppszFileName);
 
 };
 
 #define IPersistFile_IMETHODS \
-    IPersist_IMETHODS \
-    ICOM_METHOD  (HRESULT,IsDirty) \
-    ICOM_METHOD2 (HRESULT,Load,LPCOLESTR,pszFileName,DWORD,dwMode) \
-    ICOM_METHOD2 (HRESULT,Save,LPCOLESTR,pszFileName,BOOL,fRemember) \
-    ICOM_METHOD1 (HRESULT,SaveCompleted,LPCOLESTR,pszFileName) \
-    ICOM_METHOD1 (HRESULT,GetCurFile,LPOLESTR*,ppszFileName)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IPersist methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetClassID)(INTERFACE *This, CLSID* pClassID); \
+    /*** IPersistFile methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *IsDirty)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *Load)(INTERFACE *This, LPCOLESTR pszFileName, DWORD dwMode); \
+    HRESULT (STDMETHODCALLTYPE *Save)(INTERFACE *This, LPCOLESTR pszFileName, BOOL fRemember); \
+    HRESULT (STDMETHODCALLTYPE *SaveCompleted)(INTERFACE *This, LPCOLESTR pszFileName); \
+    HRESULT (STDMETHODCALLTYPE *GetCurFile)(INTERFACE *This, LPOLESTR* ppszFileName);
 
 /*** IUnknown methods ***/
 #define IPersistFile_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -4635,23 +4756,23 @@ DEFINE_GUID(IID_IPersistStorage, 0x0000010a, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IPersistStorage: IPersist {
 
-    virtual HRESULT CALLBACK IsDirty(
+    virtual HRESULT STDMETHODCALLTYPE IsDirty(
         ) = 0;
 
-    virtual HRESULT CALLBACK InitNew(
+    virtual HRESULT STDMETHODCALLTYPE InitNew(
         IStorage* pStg) = 0;
 
-    virtual HRESULT CALLBACK Load(
+    virtual HRESULT STDMETHODCALLTYPE Load(
         IStorage* pStg) = 0;
 
-    virtual HRESULT CALLBACK Save(
+    virtual HRESULT STDMETHODCALLTYPE Save(
         IStorage* pStgSave,
         BOOL fSameAsLoad) = 0;
 
-    virtual HRESULT CALLBACK SaveCompleted(
+    virtual HRESULT STDMETHODCALLTYPE SaveCompleted(
         IStorage* pStgNew) = 0;
 
-    virtual HRESULT CALLBACK HandsOffStorage(
+    virtual HRESULT STDMETHODCALLTYPE HandsOffStorage(
         ) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -4664,56 +4785,62 @@ struct IPersistStorageVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IPersistStorage* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IPersistStorage* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IPersistStorage* This);
 
     /*** IPersist methods ***/
-    HRESULT (CALLBACK *GetClassID)(
+    HRESULT (STDMETHODCALLTYPE *GetClassID)(
         IPersistStorage* This,
         CLSID* pClassID);
 
     /*** IPersistStorage methods ***/
-    HRESULT (CALLBACK *IsDirty)(
+    HRESULT (STDMETHODCALLTYPE *IsDirty)(
         IPersistStorage* This);
 
-    HRESULT (CALLBACK *InitNew)(
+    HRESULT (STDMETHODCALLTYPE *InitNew)(
         IPersistStorage* This,
         IStorage* pStg);
 
-    HRESULT (CALLBACK *Load)(
+    HRESULT (STDMETHODCALLTYPE *Load)(
         IPersistStorage* This,
         IStorage* pStg);
 
-    HRESULT (CALLBACK *Save)(
+    HRESULT (STDMETHODCALLTYPE *Save)(
         IPersistStorage* This,
         IStorage* pStgSave,
         BOOL fSameAsLoad);
 
-    HRESULT (CALLBACK *SaveCompleted)(
+    HRESULT (STDMETHODCALLTYPE *SaveCompleted)(
         IPersistStorage* This,
         IStorage* pStgNew);
 
-    HRESULT (CALLBACK *HandsOffStorage)(
+    HRESULT (STDMETHODCALLTYPE *HandsOffStorage)(
         IPersistStorage* This);
 
 };
 
 #define IPersistStorage_IMETHODS \
-    IPersist_IMETHODS \
-    ICOM_METHOD  (HRESULT,IsDirty) \
-    ICOM_METHOD1 (HRESULT,InitNew,IStorage*,pStg) \
-    ICOM_METHOD1 (HRESULT,Load,IStorage*,pStg) \
-    ICOM_METHOD2 (HRESULT,Save,IStorage*,pStgSave,BOOL,fSameAsLoad) \
-    ICOM_METHOD1 (HRESULT,SaveCompleted,IStorage*,pStgNew) \
-    ICOM_METHOD  (HRESULT,HandsOffStorage)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IPersist methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetClassID)(INTERFACE *This, CLSID* pClassID); \
+    /*** IPersistStorage methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *IsDirty)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *InitNew)(INTERFACE *This, IStorage* pStg); \
+    HRESULT (STDMETHODCALLTYPE *Load)(INTERFACE *This, IStorage* pStg); \
+    HRESULT (STDMETHODCALLTYPE *Save)(INTERFACE *This, IStorage* pStgSave, BOOL fSameAsLoad); \
+    HRESULT (STDMETHODCALLTYPE *SaveCompleted)(INTERFACE *This, IStorage* pStgNew); \
+    HRESULT (STDMETHODCALLTYPE *HandsOffStorage)(INTERFACE *This);
 
 /*** IUnknown methods ***/
 #define IPersistStorage_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -4789,7 +4916,7 @@ DEFINE_GUID(IID_IRootStorage, 0x00000012, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IRootStorage: IUnknown {
 
-    virtual HRESULT CALLBACK SwitchToFile(
+    virtual HRESULT STDMETHODCALLTYPE SwitchToFile(
         LPOLESTR pszFile) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -4802,27 +4929,31 @@ struct IRootStorageVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IRootStorage* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IRootStorage* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IRootStorage* This);
 
     /*** IRootStorage methods ***/
-    HRESULT (CALLBACK *SwitchToFile)(
+    HRESULT (STDMETHODCALLTYPE *SwitchToFile)(
         IRootStorage* This,
         LPOLESTR pszFile);
 
 };
 
 #define IRootStorage_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD1 (HRESULT,SwitchToFile,LPOLESTR,pszFile)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IRootStorage methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *SwitchToFile)(INTERFACE *This, LPOLESTR pszFile);
 
 /*** IUnknown methods ***/
 #define IRootStorage_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -4852,35 +4983,35 @@ DEFINE_GUID(IID_ILockBytes, 0x0000000a, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ILockBytes: IUnknown {
 
-    virtual HRESULT CALLBACK ReadAt(
+    virtual HRESULT STDMETHODCALLTYPE ReadAt(
         ULARGE_INTEGER ulOffset,
         void* pv,
         ULONG cb,
         ULONG* pcbRead) = 0;
 
-    virtual HRESULT CALLBACK WriteAt(
+    virtual HRESULT STDMETHODCALLTYPE WriteAt(
         ULARGE_INTEGER ulOffset,
         const void* pv,
         ULONG cb,
         ULONG* pcbWritten) = 0;
 
-    virtual HRESULT CALLBACK Flush(
+    virtual HRESULT STDMETHODCALLTYPE Flush(
         ) = 0;
 
-    virtual HRESULT CALLBACK SetSize(
+    virtual HRESULT STDMETHODCALLTYPE SetSize(
         ULARGE_INTEGER cb) = 0;
 
-    virtual HRESULT CALLBACK LockRegion(
+    virtual HRESULT STDMETHODCALLTYPE LockRegion(
         ULARGE_INTEGER libOffset,
         ULARGE_INTEGER cb,
         DWORD dwLockType) = 0;
 
-    virtual HRESULT CALLBACK UnlockRegion(
+    virtual HRESULT STDMETHODCALLTYPE UnlockRegion(
         ULARGE_INTEGER libOffset,
         ULARGE_INTEGER cb,
         DWORD dwLockType) = 0;
 
-    virtual HRESULT CALLBACK Stat(
+    virtual HRESULT STDMETHODCALLTYPE Stat(
         STATSTG* pstatstg,
         DWORD grfStatFlag) = 0;
 
@@ -4894,52 +5025,52 @@ struct ILockBytesVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         ILockBytes* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         ILockBytes* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         ILockBytes* This);
 
     /*** ILockBytes methods ***/
-    HRESULT (CALLBACK *ReadAt)(
+    HRESULT (STDMETHODCALLTYPE *ReadAt)(
         ILockBytes* This,
         ULARGE_INTEGER ulOffset,
         void* pv,
         ULONG cb,
         ULONG* pcbRead);
 
-    HRESULT (CALLBACK *WriteAt)(
+    HRESULT (STDMETHODCALLTYPE *WriteAt)(
         ILockBytes* This,
         ULARGE_INTEGER ulOffset,
         const void* pv,
         ULONG cb,
         ULONG* pcbWritten);
 
-    HRESULT (CALLBACK *Flush)(
+    HRESULT (STDMETHODCALLTYPE *Flush)(
         ILockBytes* This);
 
-    HRESULT (CALLBACK *SetSize)(
+    HRESULT (STDMETHODCALLTYPE *SetSize)(
         ILockBytes* This,
         ULARGE_INTEGER cb);
 
-    HRESULT (CALLBACK *LockRegion)(
+    HRESULT (STDMETHODCALLTYPE *LockRegion)(
         ILockBytes* This,
         ULARGE_INTEGER libOffset,
         ULARGE_INTEGER cb,
         DWORD dwLockType);
 
-    HRESULT (CALLBACK *UnlockRegion)(
+    HRESULT (STDMETHODCALLTYPE *UnlockRegion)(
         ILockBytes* This,
         ULARGE_INTEGER libOffset,
         ULARGE_INTEGER cb,
         DWORD dwLockType);
 
-    HRESULT (CALLBACK *Stat)(
+    HRESULT (STDMETHODCALLTYPE *Stat)(
         ILockBytes* This,
         STATSTG* pstatstg,
         DWORD grfStatFlag);
@@ -4947,14 +5078,18 @@ struct ILockBytesVtbl {
 };
 
 #define ILockBytes_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD4 (HRESULT,ReadAt,ULARGE_INTEGER,ulOffset,void*,pv,ULONG,cb,ULONG*,pcbRead) \
-    ICOM_METHOD4 (HRESULT,WriteAt,ULARGE_INTEGER,ulOffset,const void*,pv,ULONG,cb,ULONG*,pcbWritten) \
-    ICOM_METHOD  (HRESULT,Flush) \
-    ICOM_METHOD1 (HRESULT,SetSize,ULARGE_INTEGER,cb) \
-    ICOM_METHOD3 (HRESULT,LockRegion,ULARGE_INTEGER,libOffset,ULARGE_INTEGER,cb,DWORD,dwLockType) \
-    ICOM_METHOD3 (HRESULT,UnlockRegion,ULARGE_INTEGER,libOffset,ULARGE_INTEGER,cb,DWORD,dwLockType) \
-    ICOM_METHOD2 (HRESULT,Stat,STATSTG*,pstatstg,DWORD,grfStatFlag)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ILockBytes methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *ReadAt)(INTERFACE *This, ULARGE_INTEGER ulOffset, void* pv, ULONG cb, ULONG* pcbRead); \
+    HRESULT (STDMETHODCALLTYPE *WriteAt)(INTERFACE *This, ULARGE_INTEGER ulOffset, const void* pv, ULONG cb, ULONG* pcbWritten); \
+    HRESULT (STDMETHODCALLTYPE *Flush)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *SetSize)(INTERFACE *This, ULARGE_INTEGER cb); \
+    HRESULT (STDMETHODCALLTYPE *LockRegion)(INTERFACE *This, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType); \
+    HRESULT (STDMETHODCALLTYPE *UnlockRegion)(INTERFACE *This, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType); \
+    HRESULT (STDMETHODCALLTYPE *Stat)(INTERFACE *This, STATSTG* pstatstg, DWORD grfStatFlag);
 
 /*** IUnknown methods ***/
 #define ILockBytes_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -5070,21 +5205,21 @@ DEFINE_GUID(IID_IFillLockBytes, 0x99caf010, 0x415e, 0x11cf, 0x88,0x14, 0x00,0xaa
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IFillLockBytes: IUnknown {
 
-    virtual HRESULT CALLBACK FillAppend(
+    virtual HRESULT STDMETHODCALLTYPE FillAppend(
         const void* pv,
         ULONG cb,
         ULONG* pcbWritten) = 0;
 
-    virtual HRESULT CALLBACK FillAt(
+    virtual HRESULT STDMETHODCALLTYPE FillAt(
         ULARGE_INTEGER ulOffset,
         const void* pv,
         ULONG cb,
         ULONG* pcbWritten) = 0;
 
-    virtual HRESULT CALLBACK SetFillSize(
+    virtual HRESULT STDMETHODCALLTYPE SetFillSize(
         ULARGE_INTEGER ulSize) = 0;
 
-    virtual HRESULT CALLBACK Terminate(
+    virtual HRESULT STDMETHODCALLTYPE Terminate(
         BOOL bCanceled) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -5097,47 +5232,51 @@ struct IFillLockBytesVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IFillLockBytes* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IFillLockBytes* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IFillLockBytes* This);
 
     /*** IFillLockBytes methods ***/
-    HRESULT (CALLBACK *FillAppend)(
+    HRESULT (STDMETHODCALLTYPE *FillAppend)(
         IFillLockBytes* This,
         const void* pv,
         ULONG cb,
         ULONG* pcbWritten);
 
-    HRESULT (CALLBACK *FillAt)(
+    HRESULT (STDMETHODCALLTYPE *FillAt)(
         IFillLockBytes* This,
         ULARGE_INTEGER ulOffset,
         const void* pv,
         ULONG cb,
         ULONG* pcbWritten);
 
-    HRESULT (CALLBACK *SetFillSize)(
+    HRESULT (STDMETHODCALLTYPE *SetFillSize)(
         IFillLockBytes* This,
         ULARGE_INTEGER ulSize);
 
-    HRESULT (CALLBACK *Terminate)(
+    HRESULT (STDMETHODCALLTYPE *Terminate)(
         IFillLockBytes* This,
         BOOL bCanceled);
 
 };
 
 #define IFillLockBytes_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD3 (HRESULT,FillAppend,const void*,pv,ULONG,cb,ULONG*,pcbWritten) \
-    ICOM_METHOD4 (HRESULT,FillAt,ULARGE_INTEGER,ulOffset,const void*,pv,ULONG,cb,ULONG*,pcbWritten) \
-    ICOM_METHOD1 (HRESULT,SetFillSize,ULARGE_INTEGER,ulSize) \
-    ICOM_METHOD1 (HRESULT,Terminate,BOOL,bCanceled)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IFillLockBytes methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *FillAppend)(INTERFACE *This, const void* pv, ULONG cb, ULONG* pcbWritten); \
+    HRESULT (STDMETHODCALLTYPE *FillAt)(INTERFACE *This, ULARGE_INTEGER ulOffset, const void* pv, ULONG cb, ULONG* pcbWritten); \
+    HRESULT (STDMETHODCALLTYPE *SetFillSize)(INTERFACE *This, ULARGE_INTEGER ulSize); \
+    HRESULT (STDMETHODCALLTYPE *Terminate)(INTERFACE *This, BOOL bCanceled);
 
 /*** IUnknown methods ***/
 #define IFillLockBytes_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -5219,7 +5358,7 @@ DEFINE_GUID(IID_IProgressNotify, 0xa9d758a0, 0x4617, 0x11cf, 0x95,0xfc, 0x00,0xa
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IProgressNotify: IUnknown {
 
-    virtual HRESULT CALLBACK OnProgress(
+    virtual HRESULT STDMETHODCALLTYPE OnProgress(
         DWORD dwProgressCurrent,
         DWORD dwProgressMaximum,
         BOOL fAccurate,
@@ -5235,19 +5374,19 @@ struct IProgressNotifyVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IProgressNotify* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IProgressNotify* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IProgressNotify* This);
 
     /*** IProgressNotify methods ***/
-    HRESULT (CALLBACK *OnProgress)(
+    HRESULT (STDMETHODCALLTYPE *OnProgress)(
         IProgressNotify* This,
         DWORD dwProgressCurrent,
         DWORD dwProgressMaximum,
@@ -5257,8 +5396,12 @@ struct IProgressNotifyVtbl {
 };
 
 #define IProgressNotify_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD4 (HRESULT,OnProgress,DWORD,dwProgressCurrent,DWORD,dwProgressMaximum,BOOL,fAccurate,BOOL,fOwner)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IProgressNotify methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *OnProgress)(INTERFACE *This, DWORD dwProgressCurrent, DWORD dwProgressMaximum, BOOL fAccurate, BOOL fOwner);
 
 /*** IUnknown methods ***/
 #define IProgressNotify_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -5296,21 +5439,21 @@ DEFINE_GUID(IID_ILayoutStorage, 0x0e6d4d90, 0x6738, 0x11cf, 0x96,0x08, 0x00,0xaa
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ILayoutStorage: IUnknown {
 
-    virtual HRESULT CALLBACK LayoutScript(
+    virtual HRESULT STDMETHODCALLTYPE LayoutScript(
         StorageLayout* pStorageLayout,
         DWORD nEntries,
         DWORD glfInterleavedFlag) = 0;
 
-    virtual HRESULT CALLBACK BeginMonitor(
+    virtual HRESULT STDMETHODCALLTYPE BeginMonitor(
         ) = 0;
 
-    virtual HRESULT CALLBACK EndMonitor(
+    virtual HRESULT STDMETHODCALLTYPE EndMonitor(
         ) = 0;
 
-    virtual HRESULT CALLBACK ReLayoutDocfile(
+    virtual HRESULT STDMETHODCALLTYPE ReLayoutDocfile(
         OLECHAR* pwcsNewDfName) = 0;
 
-    virtual HRESULT CALLBACK ReLayoutDocfileOnILockBytes(
+    virtual HRESULT STDMETHODCALLTYPE ReLayoutDocfileOnILockBytes(
         ILockBytes* pILockBytes) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -5323,47 +5466,51 @@ struct ILayoutStorageVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         ILayoutStorage* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         ILayoutStorage* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         ILayoutStorage* This);
 
     /*** ILayoutStorage methods ***/
-    HRESULT (CALLBACK *LayoutScript)(
+    HRESULT (STDMETHODCALLTYPE *LayoutScript)(
         ILayoutStorage* This,
         StorageLayout* pStorageLayout,
         DWORD nEntries,
         DWORD glfInterleavedFlag);
 
-    HRESULT (CALLBACK *BeginMonitor)(
+    HRESULT (STDMETHODCALLTYPE *BeginMonitor)(
         ILayoutStorage* This);
 
-    HRESULT (CALLBACK *EndMonitor)(
+    HRESULT (STDMETHODCALLTYPE *EndMonitor)(
         ILayoutStorage* This);
 
-    HRESULT (CALLBACK *ReLayoutDocfile)(
+    HRESULT (STDMETHODCALLTYPE *ReLayoutDocfile)(
         ILayoutStorage* This,
         OLECHAR* pwcsNewDfName);
 
-    HRESULT (CALLBACK *ReLayoutDocfileOnILockBytes)(
+    HRESULT (STDMETHODCALLTYPE *ReLayoutDocfileOnILockBytes)(
         ILayoutStorage* This,
         ILockBytes* pILockBytes);
 
 };
 
 #define ILayoutStorage_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD3 (HRESULT,LayoutScript,StorageLayout*,pStorageLayout,DWORD,nEntries,DWORD,glfInterleavedFlag) \
-    ICOM_METHOD  (HRESULT,BeginMonitor) \
-    ICOM_METHOD  (HRESULT,EndMonitor) \
-    ICOM_METHOD1 (HRESULT,ReLayoutDocfile,OLECHAR*,pwcsNewDfName) \
-    ICOM_METHOD1 (HRESULT,ReLayoutDocfileOnILockBytes,ILockBytes*,pILockBytes)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ILayoutStorage methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *LayoutScript)(INTERFACE *This, StorageLayout* pStorageLayout, DWORD nEntries, DWORD glfInterleavedFlag); \
+    HRESULT (STDMETHODCALLTYPE *BeginMonitor)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *EndMonitor)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *ReLayoutDocfile)(INTERFACE *This, OLECHAR* pwcsNewDfName); \
+    HRESULT (STDMETHODCALLTYPE *ReLayoutDocfileOnILockBytes)(INTERFACE *This, ILockBytes* pILockBytes);
 
 /*** IUnknown methods ***/
 #define ILayoutStorage_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -5448,18 +5595,18 @@ DEFINE_GUID(IID_IEnumFORMATETC, 0x00000103, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IEnumFORMATETC: IUnknown {
 
-    virtual HRESULT CALLBACK Next(
+    virtual HRESULT STDMETHODCALLTYPE Next(
         ULONG celt,
         FORMATETC* rgelt,
         ULONG* pceltFetched) = 0;
 
-    virtual HRESULT CALLBACK Skip(
+    virtual HRESULT STDMETHODCALLTYPE Skip(
         ULONG celt) = 0;
 
-    virtual HRESULT CALLBACK Reset(
+    virtual HRESULT STDMETHODCALLTYPE Reset(
         ) = 0;
 
-    virtual HRESULT CALLBACK Clone(
+    virtual HRESULT STDMETHODCALLTYPE Clone(
         IEnumFORMATETC** ppenum) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -5472,43 +5619,47 @@ struct IEnumFORMATETCVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IEnumFORMATETC* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IEnumFORMATETC* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IEnumFORMATETC* This);
 
     /*** IEnumFORMATETC methods ***/
-    HRESULT (CALLBACK *Next)(
+    HRESULT (STDMETHODCALLTYPE *Next)(
         IEnumFORMATETC* This,
         ULONG celt,
         FORMATETC* rgelt,
         ULONG* pceltFetched);
 
-    HRESULT (CALLBACK *Skip)(
+    HRESULT (STDMETHODCALLTYPE *Skip)(
         IEnumFORMATETC* This,
         ULONG celt);
 
-    HRESULT (CALLBACK *Reset)(
+    HRESULT (STDMETHODCALLTYPE *Reset)(
         IEnumFORMATETC* This);
 
-    HRESULT (CALLBACK *Clone)(
+    HRESULT (STDMETHODCALLTYPE *Clone)(
         IEnumFORMATETC* This,
         IEnumFORMATETC** ppenum);
 
 };
 
 #define IEnumFORMATETC_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD3 (HRESULT,Next,ULONG,celt,FORMATETC*,rgelt,ULONG*,pceltFetched) \
-    ICOM_METHOD1 (HRESULT,Skip,ULONG,celt) \
-    ICOM_METHOD  (HRESULT,Reset) \
-    ICOM_METHOD1 (HRESULT,Clone,IEnumFORMATETC**,ppenum)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IEnumFORMATETC methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Next)(INTERFACE *This, ULONG celt, FORMATETC* rgelt, ULONG* pceltFetched); \
+    HRESULT (STDMETHODCALLTYPE *Skip)(INTERFACE *This, ULONG celt); \
+    HRESULT (STDMETHODCALLTYPE *Reset)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *Clone)(INTERFACE *This, IEnumFORMATETC** ppenum);
 
 /*** IUnknown methods ***/
 #define IEnumFORMATETC_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -5593,18 +5744,18 @@ DEFINE_GUID(IID_IEnumSTATDATA, 0x00000105, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IEnumSTATDATA: IUnknown {
 
-    virtual HRESULT CALLBACK Next(
+    virtual HRESULT STDMETHODCALLTYPE Next(
         ULONG celt,
         STATDATA* rgelt,
         ULONG* pceltFetched) = 0;
 
-    virtual HRESULT CALLBACK Skip(
+    virtual HRESULT STDMETHODCALLTYPE Skip(
         ULONG celt) = 0;
 
-    virtual HRESULT CALLBACK Reset(
+    virtual HRESULT STDMETHODCALLTYPE Reset(
         ) = 0;
 
-    virtual HRESULT CALLBACK Clone(
+    virtual HRESULT STDMETHODCALLTYPE Clone(
         IEnumSTATDATA** ppenum) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -5617,43 +5768,47 @@ struct IEnumSTATDATAVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IEnumSTATDATA* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IEnumSTATDATA* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IEnumSTATDATA* This);
 
     /*** IEnumSTATDATA methods ***/
-    HRESULT (CALLBACK *Next)(
+    HRESULT (STDMETHODCALLTYPE *Next)(
         IEnumSTATDATA* This,
         ULONG celt,
         STATDATA* rgelt,
         ULONG* pceltFetched);
 
-    HRESULT (CALLBACK *Skip)(
+    HRESULT (STDMETHODCALLTYPE *Skip)(
         IEnumSTATDATA* This,
         ULONG celt);
 
-    HRESULT (CALLBACK *Reset)(
+    HRESULT (STDMETHODCALLTYPE *Reset)(
         IEnumSTATDATA* This);
 
-    HRESULT (CALLBACK *Clone)(
+    HRESULT (STDMETHODCALLTYPE *Clone)(
         IEnumSTATDATA* This,
         IEnumSTATDATA** ppenum);
 
 };
 
 #define IEnumSTATDATA_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD3 (HRESULT,Next,ULONG,celt,STATDATA*,rgelt,ULONG*,pceltFetched) \
-    ICOM_METHOD1 (HRESULT,Skip,ULONG,celt) \
-    ICOM_METHOD  (HRESULT,Reset) \
-    ICOM_METHOD1 (HRESULT,Clone,IEnumSTATDATA**,ppenum)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IEnumSTATDATA methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Next)(INTERFACE *This, ULONG celt, STATDATA* rgelt, ULONG* pceltFetched); \
+    HRESULT (STDMETHODCALLTYPE *Skip)(INTERFACE *This, ULONG celt); \
+    HRESULT (STDMETHODCALLTYPE *Reset)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *Clone)(INTERFACE *This, IEnumSTATDATA** ppenum);
 
 /*** IUnknown methods ***/
 #define IEnumSTATDATA_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -5815,21 +5970,21 @@ DEFINE_GUID(IID_IAdviseSink, 0x0000010f, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IAdviseSink: IUnknown {
 
-    virtual void CALLBACK OnDataChange(
+    virtual void STDMETHODCALLTYPE OnDataChange(
         FORMATETC* pFormatetc,
         STGMEDIUM* pStgmed) = 0;
 
-    virtual void CALLBACK OnViewChange(
+    virtual void STDMETHODCALLTYPE OnViewChange(
         DWORD dwAspect,
         LONG lindex) = 0;
 
-    virtual void CALLBACK OnRename(
+    virtual void STDMETHODCALLTYPE OnRename(
         IMoniker* pmk) = 0;
 
-    virtual void CALLBACK OnSave(
+    virtual void STDMETHODCALLTYPE OnSave(
         ) = 0;
 
-    virtual void CALLBACK OnClose(
+    virtual void STDMETHODCALLTYPE OnClose(
         ) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -5842,47 +5997,51 @@ struct IAdviseSinkVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IAdviseSink* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IAdviseSink* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IAdviseSink* This);
 
     /*** IAdviseSink methods ***/
-    void (CALLBACK *OnDataChange)(
+    void (STDMETHODCALLTYPE *OnDataChange)(
         IAdviseSink* This,
         FORMATETC* pFormatetc,
         STGMEDIUM* pStgmed);
 
-    void (CALLBACK *OnViewChange)(
+    void (STDMETHODCALLTYPE *OnViewChange)(
         IAdviseSink* This,
         DWORD dwAspect,
         LONG lindex);
 
-    void (CALLBACK *OnRename)(
+    void (STDMETHODCALLTYPE *OnRename)(
         IAdviseSink* This,
         IMoniker* pmk);
 
-    void (CALLBACK *OnSave)(
+    void (STDMETHODCALLTYPE *OnSave)(
         IAdviseSink* This);
 
-    void (CALLBACK *OnClose)(
+    void (STDMETHODCALLTYPE *OnClose)(
         IAdviseSink* This);
 
 };
 
 #define IAdviseSink_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_VMETHOD2(OnDataChange,FORMATETC*,pFormatetc,STGMEDIUM*,pStgmed) \
-    ICOM_VMETHOD2(OnViewChange,DWORD,dwAspect,LONG,lindex) \
-    ICOM_VMETHOD1(OnRename,IMoniker*,pmk) \
-    ICOM_VMETHOD (OnSave) \
-    ICOM_VMETHOD (OnClose)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IAdviseSink methods ***/ \
+    void (STDMETHODCALLTYPE *OnDataChange)(INTERFACE *This, FORMATETC* pFormatetc, STGMEDIUM* pStgmed); \
+    void (STDMETHODCALLTYPE *OnViewChange)(INTERFACE *This, DWORD dwAspect, LONG lindex); \
+    void (STDMETHODCALLTYPE *OnRename)(INTERFACE *This, IMoniker* pmk); \
+    void (STDMETHODCALLTYPE *OnSave)(INTERFACE *This); \
+    void (STDMETHODCALLTYPE *OnClose)(INTERFACE *This);
 
 /*** IUnknown methods ***/
 #define IAdviseSink_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -5986,7 +6145,7 @@ DEFINE_GUID(IID_IAdviseSink2, 0x00000125, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IAdviseSink2: IAdviseSink {
 
-    virtual void CALLBACK OnLinkSrcChange(
+    virtual void STDMETHODCALLTYPE OnLinkSrcChange(
         IMoniker* pmk) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -5999,48 +6158,58 @@ struct IAdviseSink2Vtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IAdviseSink2* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IAdviseSink2* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IAdviseSink2* This);
 
     /*** IAdviseSink methods ***/
-    void (CALLBACK *OnDataChange)(
+    void (STDMETHODCALLTYPE *OnDataChange)(
         IAdviseSink2* This,
         FORMATETC* pFormatetc,
         STGMEDIUM* pStgmed);
 
-    void (CALLBACK *OnViewChange)(
+    void (STDMETHODCALLTYPE *OnViewChange)(
         IAdviseSink2* This,
         DWORD dwAspect,
         LONG lindex);
 
-    void (CALLBACK *OnRename)(
+    void (STDMETHODCALLTYPE *OnRename)(
         IAdviseSink2* This,
         IMoniker* pmk);
 
-    void (CALLBACK *OnSave)(
+    void (STDMETHODCALLTYPE *OnSave)(
         IAdviseSink2* This);
 
-    void (CALLBACK *OnClose)(
+    void (STDMETHODCALLTYPE *OnClose)(
         IAdviseSink2* This);
 
     /*** IAdviseSink2 methods ***/
-    void (CALLBACK *OnLinkSrcChange)(
+    void (STDMETHODCALLTYPE *OnLinkSrcChange)(
         IAdviseSink2* This,
         IMoniker* pmk);
 
 };
 
 #define IAdviseSink2_IMETHODS \
-    IAdviseSink_IMETHODS \
-    ICOM_VMETHOD1(OnLinkSrcChange,IMoniker*,pmk)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IAdviseSink methods ***/ \
+    void (STDMETHODCALLTYPE *OnDataChange)(INTERFACE *This, FORMATETC* pFormatetc, STGMEDIUM* pStgmed); \
+    void (STDMETHODCALLTYPE *OnViewChange)(INTERFACE *This, DWORD dwAspect, LONG lindex); \
+    void (STDMETHODCALLTYPE *OnRename)(INTERFACE *This, IMoniker* pmk); \
+    void (STDMETHODCALLTYPE *OnSave)(INTERFACE *This); \
+    void (STDMETHODCALLTYPE *OnClose)(INTERFACE *This); \
+    /*** IAdviseSink2 methods ***/ \
+    void (STDMETHODCALLTYPE *OnLinkSrcChange)(INTERFACE *This, IMoniker* pmk);
 
 /*** IUnknown methods ***/
 #define IAdviseSink2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -6089,40 +6258,40 @@ DEFINE_GUID(IID_IDataObject, 0x0000010e, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IDataObject: IUnknown {
 
-    virtual HRESULT CALLBACK GetData(
+    virtual HRESULT STDMETHODCALLTYPE GetData(
         FORMATETC* pformatetcIn,
         STGMEDIUM* pmedium) = 0;
 
-    virtual HRESULT CALLBACK GetDataHere(
+    virtual HRESULT STDMETHODCALLTYPE GetDataHere(
         FORMATETC* pformatetc,
         STGMEDIUM* pmedium) = 0;
 
-    virtual HRESULT CALLBACK QueryGetData(
+    virtual HRESULT STDMETHODCALLTYPE QueryGetData(
         FORMATETC* pformatetc) = 0;
 
-    virtual HRESULT CALLBACK GetCanonicalFormatEtc(
+    virtual HRESULT STDMETHODCALLTYPE GetCanonicalFormatEtc(
         FORMATETC* pformatectIn,
         FORMATETC* pformatetcOut) = 0;
 
-    virtual HRESULT CALLBACK SetData(
+    virtual HRESULT STDMETHODCALLTYPE SetData(
         FORMATETC* pformatetc,
         STGMEDIUM* pmedium,
         BOOL fRelease) = 0;
 
-    virtual HRESULT CALLBACK EnumFormatEtc(
+    virtual HRESULT STDMETHODCALLTYPE EnumFormatEtc(
         DWORD dwDirection,
         IEnumFORMATETC** ppenumFormatEtc) = 0;
 
-    virtual HRESULT CALLBACK DAdvise(
+    virtual HRESULT STDMETHODCALLTYPE DAdvise(
         FORMATETC* pformatetc,
         DWORD advf,
         IAdviseSink* pAdvSink,
         DWORD* pdwConnection) = 0;
 
-    virtual HRESULT CALLBACK DUnadvise(
+    virtual HRESULT STDMETHODCALLTYPE DUnadvise(
         DWORD dwConnection) = 0;
 
-    virtual HRESULT CALLBACK EnumDAdvise(
+    virtual HRESULT STDMETHODCALLTYPE EnumDAdvise(
         IEnumSTATDATA** ppenumAdvise) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -6135,76 +6304,80 @@ struct IDataObjectVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IDataObject* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IDataObject* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IDataObject* This);
 
     /*** IDataObject methods ***/
-    HRESULT (CALLBACK *GetData)(
+    HRESULT (STDMETHODCALLTYPE *GetData)(
         IDataObject* This,
         FORMATETC* pformatetcIn,
         STGMEDIUM* pmedium);
 
-    HRESULT (CALLBACK *GetDataHere)(
+    HRESULT (STDMETHODCALLTYPE *GetDataHere)(
         IDataObject* This,
         FORMATETC* pformatetc,
         STGMEDIUM* pmedium);
 
-    HRESULT (CALLBACK *QueryGetData)(
+    HRESULT (STDMETHODCALLTYPE *QueryGetData)(
         IDataObject* This,
         FORMATETC* pformatetc);
 
-    HRESULT (CALLBACK *GetCanonicalFormatEtc)(
+    HRESULT (STDMETHODCALLTYPE *GetCanonicalFormatEtc)(
         IDataObject* This,
         FORMATETC* pformatectIn,
         FORMATETC* pformatetcOut);
 
-    HRESULT (CALLBACK *SetData)(
+    HRESULT (STDMETHODCALLTYPE *SetData)(
         IDataObject* This,
         FORMATETC* pformatetc,
         STGMEDIUM* pmedium,
         BOOL fRelease);
 
-    HRESULT (CALLBACK *EnumFormatEtc)(
+    HRESULT (STDMETHODCALLTYPE *EnumFormatEtc)(
         IDataObject* This,
         DWORD dwDirection,
         IEnumFORMATETC** ppenumFormatEtc);
 
-    HRESULT (CALLBACK *DAdvise)(
+    HRESULT (STDMETHODCALLTYPE *DAdvise)(
         IDataObject* This,
         FORMATETC* pformatetc,
         DWORD advf,
         IAdviseSink* pAdvSink,
         DWORD* pdwConnection);
 
-    HRESULT (CALLBACK *DUnadvise)(
+    HRESULT (STDMETHODCALLTYPE *DUnadvise)(
         IDataObject* This,
         DWORD dwConnection);
 
-    HRESULT (CALLBACK *EnumDAdvise)(
+    HRESULT (STDMETHODCALLTYPE *EnumDAdvise)(
         IDataObject* This,
         IEnumSTATDATA** ppenumAdvise);
 
 };
 
 #define IDataObject_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD2 (HRESULT,GetData,FORMATETC*,pformatetcIn,STGMEDIUM*,pmedium) \
-    ICOM_METHOD2 (HRESULT,GetDataHere,FORMATETC*,pformatetc,STGMEDIUM*,pmedium) \
-    ICOM_METHOD1 (HRESULT,QueryGetData,FORMATETC*,pformatetc) \
-    ICOM_METHOD2 (HRESULT,GetCanonicalFormatEtc,FORMATETC*,pformatectIn,FORMATETC*,pformatetcOut) \
-    ICOM_METHOD3 (HRESULT,SetData,FORMATETC*,pformatetc,STGMEDIUM*,pmedium,BOOL,fRelease) \
-    ICOM_METHOD2 (HRESULT,EnumFormatEtc,DWORD,dwDirection,IEnumFORMATETC**,ppenumFormatEtc) \
-    ICOM_METHOD4 (HRESULT,DAdvise,FORMATETC*,pformatetc,DWORD,advf,IAdviseSink*,pAdvSink,DWORD*,pdwConnection) \
-    ICOM_METHOD1 (HRESULT,DUnadvise,DWORD,dwConnection) \
-    ICOM_METHOD1 (HRESULT,EnumDAdvise,IEnumSTATDATA**,ppenumAdvise)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IDataObject methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetData)(INTERFACE *This, FORMATETC* pformatetcIn, STGMEDIUM* pmedium); \
+    HRESULT (STDMETHODCALLTYPE *GetDataHere)(INTERFACE *This, FORMATETC* pformatetc, STGMEDIUM* pmedium); \
+    HRESULT (STDMETHODCALLTYPE *QueryGetData)(INTERFACE *This, FORMATETC* pformatetc); \
+    HRESULT (STDMETHODCALLTYPE *GetCanonicalFormatEtc)(INTERFACE *This, FORMATETC* pformatectIn, FORMATETC* pformatetcOut); \
+    HRESULT (STDMETHODCALLTYPE *SetData)(INTERFACE *This, FORMATETC* pformatetc, STGMEDIUM* pmedium, BOOL fRelease); \
+    HRESULT (STDMETHODCALLTYPE *EnumFormatEtc)(INTERFACE *This, DWORD dwDirection, IEnumFORMATETC** ppenumFormatEtc); \
+    HRESULT (STDMETHODCALLTYPE *DAdvise)(INTERFACE *This, FORMATETC* pformatetc, DWORD advf, IAdviseSink* pAdvSink, DWORD* pdwConnection); \
+    HRESULT (STDMETHODCALLTYPE *DUnadvise)(INTERFACE *This, DWORD dwConnection); \
+    HRESULT (STDMETHODCALLTYPE *EnumDAdvise)(INTERFACE *This, IEnumSTATDATA** ppenumAdvise);
 
 /*** IUnknown methods ***/
 #define IDataObject_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -6341,20 +6514,20 @@ DEFINE_GUID(IID_IDataAdviseHolder, 0x00000110, 0x0000, 0x0000, 0xc0,0x00, 0x00,0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IDataAdviseHolder: IUnknown {
 
-    virtual HRESULT CALLBACK Advise(
+    virtual HRESULT STDMETHODCALLTYPE Advise(
         IDataObject* pDataObject,
         FORMATETC* pFetc,
         DWORD advf,
         IAdviseSink* pAdvise,
         DWORD* pdwConnection) = 0;
 
-    virtual HRESULT CALLBACK Unadvise(
+    virtual HRESULT STDMETHODCALLTYPE Unadvise(
         DWORD dwConnection) = 0;
 
-    virtual HRESULT CALLBACK EnumAdvise(
+    virtual HRESULT STDMETHODCALLTYPE EnumAdvise(
         IEnumSTATDATA** ppenumAdvise) = 0;
 
-    virtual HRESULT CALLBACK SendOnDataChange(
+    virtual HRESULT STDMETHODCALLTYPE SendOnDataChange(
         IDataObject* pDataObject,
         DWORD dwReserved,
         DWORD advf) = 0;
@@ -6369,19 +6542,19 @@ struct IDataAdviseHolderVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IDataAdviseHolder* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IDataAdviseHolder* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IDataAdviseHolder* This);
 
     /*** IDataAdviseHolder methods ***/
-    HRESULT (CALLBACK *Advise)(
+    HRESULT (STDMETHODCALLTYPE *Advise)(
         IDataAdviseHolder* This,
         IDataObject* pDataObject,
         FORMATETC* pFetc,
@@ -6389,15 +6562,15 @@ struct IDataAdviseHolderVtbl {
         IAdviseSink* pAdvise,
         DWORD* pdwConnection);
 
-    HRESULT (CALLBACK *Unadvise)(
+    HRESULT (STDMETHODCALLTYPE *Unadvise)(
         IDataAdviseHolder* This,
         DWORD dwConnection);
 
-    HRESULT (CALLBACK *EnumAdvise)(
+    HRESULT (STDMETHODCALLTYPE *EnumAdvise)(
         IDataAdviseHolder* This,
         IEnumSTATDATA** ppenumAdvise);
 
-    HRESULT (CALLBACK *SendOnDataChange)(
+    HRESULT (STDMETHODCALLTYPE *SendOnDataChange)(
         IDataAdviseHolder* This,
         IDataObject* pDataObject,
         DWORD dwReserved,
@@ -6406,11 +6579,15 @@ struct IDataAdviseHolderVtbl {
 };
 
 #define IDataAdviseHolder_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD5 (HRESULT,Advise,IDataObject*,pDataObject,FORMATETC*,pFetc,DWORD,advf,IAdviseSink*,pAdvise,DWORD*,pdwConnection) \
-    ICOM_METHOD1 (HRESULT,Unadvise,DWORD,dwConnection) \
-    ICOM_METHOD1 (HRESULT,EnumAdvise,IEnumSTATDATA**,ppenumAdvise) \
-    ICOM_METHOD3 (HRESULT,SendOnDataChange,IDataObject*,pDataObject,DWORD,dwReserved,DWORD,advf)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IDataAdviseHolder methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Advise)(INTERFACE *This, IDataObject* pDataObject, FORMATETC* pFetc, DWORD advf, IAdviseSink* pAdvise, DWORD* pdwConnection); \
+    HRESULT (STDMETHODCALLTYPE *Unadvise)(INTERFACE *This, DWORD dwConnection); \
+    HRESULT (STDMETHODCALLTYPE *EnumAdvise)(INTERFACE *This, IEnumSTATDATA** ppenumAdvise); \
+    HRESULT (STDMETHODCALLTYPE *SendOnDataChange)(INTERFACE *This, IDataObject* pDataObject, DWORD dwReserved, DWORD advf);
 
 /*** IUnknown methods ***/
 #define IDataAdviseHolder_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -6504,18 +6681,18 @@ DEFINE_GUID(IID_IMessageFilter, 0x00000016, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IMessageFilter: IUnknown {
 
-    virtual DWORD CALLBACK HandleInComingCall(
+    virtual DWORD STDMETHODCALLTYPE HandleInComingCall(
         DWORD dwCallType,
         HTASK htaskCaller,
         DWORD dwTickCount,
         LPINTERFACEINFO lpInterfaceInfo) = 0;
 
-    virtual DWORD CALLBACK RetryRejectedCall(
+    virtual DWORD STDMETHODCALLTYPE RetryRejectedCall(
         HTASK htaskCallee,
         DWORD dwTickCount,
         DWORD dwRejectType) = 0;
 
-    virtual DWORD CALLBACK MessagePending(
+    virtual DWORD STDMETHODCALLTYPE MessagePending(
         HTASK htaskCallee,
         DWORD dwTickCount,
         DWORD dwPendingType) = 0;
@@ -6530,32 +6707,32 @@ struct IMessageFilterVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IMessageFilter* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IMessageFilter* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IMessageFilter* This);
 
     /*** IMessageFilter methods ***/
-    DWORD (CALLBACK *HandleInComingCall)(
+    DWORD (STDMETHODCALLTYPE *HandleInComingCall)(
         IMessageFilter* This,
         DWORD dwCallType,
         HTASK htaskCaller,
         DWORD dwTickCount,
         LPINTERFACEINFO lpInterfaceInfo);
 
-    DWORD (CALLBACK *RetryRejectedCall)(
+    DWORD (STDMETHODCALLTYPE *RetryRejectedCall)(
         IMessageFilter* This,
         HTASK htaskCallee,
         DWORD dwTickCount,
         DWORD dwRejectType);
 
-    DWORD (CALLBACK *MessagePending)(
+    DWORD (STDMETHODCALLTYPE *MessagePending)(
         IMessageFilter* This,
         HTASK htaskCallee,
         DWORD dwTickCount,
@@ -6564,10 +6741,14 @@ struct IMessageFilterVtbl {
 };
 
 #define IMessageFilter_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD4 (DWORD,HandleInComingCall,DWORD,dwCallType,HTASK,htaskCaller,DWORD,dwTickCount,LPINTERFACEINFO,lpInterfaceInfo) \
-    ICOM_METHOD3 (DWORD,RetryRejectedCall,HTASK,htaskCallee,DWORD,dwTickCount,DWORD,dwRejectType) \
-    ICOM_METHOD3 (DWORD,MessagePending,HTASK,htaskCallee,DWORD,dwTickCount,DWORD,dwPendingType)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IMessageFilter methods ***/ \
+    DWORD (STDMETHODCALLTYPE *HandleInComingCall)(INTERFACE *This, DWORD dwCallType, HTASK htaskCaller, DWORD dwTickCount, LPINTERFACEINFO lpInterfaceInfo); \
+    DWORD (STDMETHODCALLTYPE *RetryRejectedCall)(INTERFACE *This, HTASK htaskCallee, DWORD dwTickCount, DWORD dwRejectType); \
+    DWORD (STDMETHODCALLTYPE *MessagePending)(INTERFACE *This, HTASK htaskCallee, DWORD dwTickCount, DWORD dwPendingType);
 
 /*** IUnknown methods ***/
 #define IMessageFilter_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -6636,22 +6817,22 @@ DEFINE_GUID(IID_IRpcChannelBuffer, 0xd5f56b60, 0x593b, 0x101a, 0xb5,0x69, 0x08,0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IRpcChannelBuffer: IUnknown {
 
-    virtual HRESULT CALLBACK GetBuffer(
+    virtual HRESULT STDMETHODCALLTYPE GetBuffer(
         RPCOLEMESSAGE* pMessage,
         REFIID riid) = 0;
 
-    virtual HRESULT CALLBACK SendReceive(
+    virtual HRESULT STDMETHODCALLTYPE SendReceive(
         RPCOLEMESSAGE* pMessage,
         ULONG* pStatus) = 0;
 
-    virtual HRESULT CALLBACK FreeBuffer(
+    virtual HRESULT STDMETHODCALLTYPE FreeBuffer(
         RPCOLEMESSAGE* pMessage) = 0;
 
-    virtual HRESULT CALLBACK GetDestCtx(
+    virtual HRESULT STDMETHODCALLTYPE GetDestCtx(
         DWORD* pdwDestContext,
         void** ppvDestContext) = 0;
 
-    virtual HRESULT CALLBACK IsConnected(
+    virtual HRESULT STDMETHODCALLTYPE IsConnected(
         ) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -6664,49 +6845,53 @@ struct IRpcChannelBufferVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IRpcChannelBuffer* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IRpcChannelBuffer* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IRpcChannelBuffer* This);
 
     /*** IRpcChannelBuffer methods ***/
-    HRESULT (CALLBACK *GetBuffer)(
+    HRESULT (STDMETHODCALLTYPE *GetBuffer)(
         IRpcChannelBuffer* This,
         RPCOLEMESSAGE* pMessage,
         REFIID riid);
 
-    HRESULT (CALLBACK *SendReceive)(
+    HRESULT (STDMETHODCALLTYPE *SendReceive)(
         IRpcChannelBuffer* This,
         RPCOLEMESSAGE* pMessage,
         ULONG* pStatus);
 
-    HRESULT (CALLBACK *FreeBuffer)(
+    HRESULT (STDMETHODCALLTYPE *FreeBuffer)(
         IRpcChannelBuffer* This,
         RPCOLEMESSAGE* pMessage);
 
-    HRESULT (CALLBACK *GetDestCtx)(
+    HRESULT (STDMETHODCALLTYPE *GetDestCtx)(
         IRpcChannelBuffer* This,
         DWORD* pdwDestContext,
         void** ppvDestContext);
 
-    HRESULT (CALLBACK *IsConnected)(
+    HRESULT (STDMETHODCALLTYPE *IsConnected)(
         IRpcChannelBuffer* This);
 
 };
 
 #define IRpcChannelBuffer_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD2 (HRESULT,GetBuffer,RPCOLEMESSAGE*,pMessage,REFIID,riid) \
-    ICOM_METHOD2 (HRESULT,SendReceive,RPCOLEMESSAGE*,pMessage,ULONG*,pStatus) \
-    ICOM_METHOD1 (HRESULT,FreeBuffer,RPCOLEMESSAGE*,pMessage) \
-    ICOM_METHOD2 (HRESULT,GetDestCtx,DWORD*,pdwDestContext,void**,ppvDestContext) \
-    ICOM_METHOD  (HRESULT,IsConnected)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IRpcChannelBuffer methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetBuffer)(INTERFACE *This, RPCOLEMESSAGE* pMessage, REFIID riid); \
+    HRESULT (STDMETHODCALLTYPE *SendReceive)(INTERFACE *This, RPCOLEMESSAGE* pMessage, ULONG* pStatus); \
+    HRESULT (STDMETHODCALLTYPE *FreeBuffer)(INTERFACE *This, RPCOLEMESSAGE* pMessage); \
+    HRESULT (STDMETHODCALLTYPE *GetDestCtx)(INTERFACE *This, DWORD* pdwDestContext, void** ppvDestContext); \
+    HRESULT (STDMETHODCALLTYPE *IsConnected)(INTERFACE *This);
 
 /*** IUnknown methods ***/
 #define IRpcChannelBuffer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -6774,7 +6959,7 @@ DEFINE_GUID(IID_IRpcChannelBuffer2, 0x594f31d0, 0x7f19, 0x11d0, 0xb1,0x94, 0x00,
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IRpcChannelBuffer2: IRpcChannelBuffer {
 
-    virtual HRESULT CALLBACK GetProtocolVersion(
+    virtual HRESULT STDMETHODCALLTYPE GetProtocolVersion(
         DWORD* pdwVersion) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -6787,50 +6972,60 @@ struct IRpcChannelBuffer2Vtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IRpcChannelBuffer2* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IRpcChannelBuffer2* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IRpcChannelBuffer2* This);
 
     /*** IRpcChannelBuffer methods ***/
-    HRESULT (CALLBACK *GetBuffer)(
+    HRESULT (STDMETHODCALLTYPE *GetBuffer)(
         IRpcChannelBuffer2* This,
         RPCOLEMESSAGE* pMessage,
         REFIID riid);
 
-    HRESULT (CALLBACK *SendReceive)(
+    HRESULT (STDMETHODCALLTYPE *SendReceive)(
         IRpcChannelBuffer2* This,
         RPCOLEMESSAGE* pMessage,
         ULONG* pStatus);
 
-    HRESULT (CALLBACK *FreeBuffer)(
+    HRESULT (STDMETHODCALLTYPE *FreeBuffer)(
         IRpcChannelBuffer2* This,
         RPCOLEMESSAGE* pMessage);
 
-    HRESULT (CALLBACK *GetDestCtx)(
+    HRESULT (STDMETHODCALLTYPE *GetDestCtx)(
         IRpcChannelBuffer2* This,
         DWORD* pdwDestContext,
         void** ppvDestContext);
 
-    HRESULT (CALLBACK *IsConnected)(
+    HRESULT (STDMETHODCALLTYPE *IsConnected)(
         IRpcChannelBuffer2* This);
 
     /*** IRpcChannelBuffer2 methods ***/
-    HRESULT (CALLBACK *GetProtocolVersion)(
+    HRESULT (STDMETHODCALLTYPE *GetProtocolVersion)(
         IRpcChannelBuffer2* This,
         DWORD* pdwVersion);
 
 };
 
 #define IRpcChannelBuffer2_IMETHODS \
-    IRpcChannelBuffer_IMETHODS \
-    ICOM_METHOD1 (HRESULT,GetProtocolVersion,DWORD*,pdwVersion)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IRpcChannelBuffer methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetBuffer)(INTERFACE *This, RPCOLEMESSAGE* pMessage, REFIID riid); \
+    HRESULT (STDMETHODCALLTYPE *SendReceive)(INTERFACE *This, RPCOLEMESSAGE* pMessage, ULONG* pStatus); \
+    HRESULT (STDMETHODCALLTYPE *FreeBuffer)(INTERFACE *This, RPCOLEMESSAGE* pMessage); \
+    HRESULT (STDMETHODCALLTYPE *GetDestCtx)(INTERFACE *This, DWORD* pdwDestContext, void** ppvDestContext); \
+    HRESULT (STDMETHODCALLTYPE *IsConnected)(INTERFACE *This); \
+    /*** IRpcChannelBuffer2 methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetProtocolVersion)(INTERFACE *This, DWORD* pdwVersion);
 
 /*** IUnknown methods ***/
 #define IRpcChannelBuffer2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -6866,33 +7061,33 @@ DEFINE_GUID(IID_IRpcChannelBuffer3, 0x25b15600, 0x0115, 0x11d0, 0xbf,0x0d, 0x00,
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IRpcChannelBuffer3: IRpcChannelBuffer2 {
 
-    virtual HRESULT CALLBACK Send(
+    virtual HRESULT STDMETHODCALLTYPE Send(
         RPCOLEMESSAGE* pMsg,
         ULONG* pulStatus) = 0;
 
-    virtual HRESULT CALLBACK Receive(
+    virtual HRESULT STDMETHODCALLTYPE Receive(
         RPCOLEMESSAGE* pMsg,
         ULONG ulSize,
         ULONG* pulStatus) = 0;
 
-    virtual HRESULT CALLBACK Cancel(
+    virtual HRESULT STDMETHODCALLTYPE Cancel(
         RPCOLEMESSAGE* pMsg) = 0;
 
-    virtual HRESULT CALLBACK GetCallContext(
+    virtual HRESULT STDMETHODCALLTYPE GetCallContext(
         RPCOLEMESSAGE* pMsg,
         REFIID riid,
         void** pInterface) = 0;
 
-    virtual HRESULT CALLBACK GetDestCtxEx(
+    virtual HRESULT STDMETHODCALLTYPE GetDestCtxEx(
         RPCOLEMESSAGE* pMsg,
         DWORD* pdwDestContext,
         void** ppvDestContext) = 0;
 
-    virtual HRESULT CALLBACK GetState(
+    virtual HRESULT STDMETHODCALLTYPE GetState(
         RPCOLEMESSAGE* pMsg,
         DWORD* pState) = 0;
 
-    virtual HRESULT CALLBACK RegisterAsync(
+    virtual HRESULT STDMETHODCALLTYPE RegisterAsync(
         RPCOLEMESSAGE* pMsg,
         IAsyncManager* pAsyncMgr) = 0;
 
@@ -6906,79 +7101,79 @@ struct IRpcChannelBuffer3Vtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IRpcChannelBuffer3* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IRpcChannelBuffer3* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IRpcChannelBuffer3* This);
 
     /*** IRpcChannelBuffer methods ***/
-    HRESULT (CALLBACK *GetBuffer)(
+    HRESULT (STDMETHODCALLTYPE *GetBuffer)(
         IRpcChannelBuffer3* This,
         RPCOLEMESSAGE* pMessage,
         REFIID riid);
 
-    HRESULT (CALLBACK *SendReceive)(
+    HRESULT (STDMETHODCALLTYPE *SendReceive)(
         IRpcChannelBuffer3* This,
         RPCOLEMESSAGE* pMessage,
         ULONG* pStatus);
 
-    HRESULT (CALLBACK *FreeBuffer)(
+    HRESULT (STDMETHODCALLTYPE *FreeBuffer)(
         IRpcChannelBuffer3* This,
         RPCOLEMESSAGE* pMessage);
 
-    HRESULT (CALLBACK *GetDestCtx)(
+    HRESULT (STDMETHODCALLTYPE *GetDestCtx)(
         IRpcChannelBuffer3* This,
         DWORD* pdwDestContext,
         void** ppvDestContext);
 
-    HRESULT (CALLBACK *IsConnected)(
+    HRESULT (STDMETHODCALLTYPE *IsConnected)(
         IRpcChannelBuffer3* This);
 
     /*** IRpcChannelBuffer2 methods ***/
-    HRESULT (CALLBACK *GetProtocolVersion)(
+    HRESULT (STDMETHODCALLTYPE *GetProtocolVersion)(
         IRpcChannelBuffer3* This,
         DWORD* pdwVersion);
 
     /*** IRpcChannelBuffer3 methods ***/
-    HRESULT (CALLBACK *Send)(
+    HRESULT (STDMETHODCALLTYPE *Send)(
         IRpcChannelBuffer3* This,
         RPCOLEMESSAGE* pMsg,
         ULONG* pulStatus);
 
-    HRESULT (CALLBACK *Receive)(
+    HRESULT (STDMETHODCALLTYPE *Receive)(
         IRpcChannelBuffer3* This,
         RPCOLEMESSAGE* pMsg,
         ULONG ulSize,
         ULONG* pulStatus);
 
-    HRESULT (CALLBACK *Cancel)(
+    HRESULT (STDMETHODCALLTYPE *Cancel)(
         IRpcChannelBuffer3* This,
         RPCOLEMESSAGE* pMsg);
 
-    HRESULT (CALLBACK *GetCallContext)(
+    HRESULT (STDMETHODCALLTYPE *GetCallContext)(
         IRpcChannelBuffer3* This,
         RPCOLEMESSAGE* pMsg,
         REFIID riid,
         void** pInterface);
 
-    HRESULT (CALLBACK *GetDestCtxEx)(
+    HRESULT (STDMETHODCALLTYPE *GetDestCtxEx)(
         IRpcChannelBuffer3* This,
         RPCOLEMESSAGE* pMsg,
         DWORD* pdwDestContext,
         void** ppvDestContext);
 
-    HRESULT (CALLBACK *GetState)(
+    HRESULT (STDMETHODCALLTYPE *GetState)(
         IRpcChannelBuffer3* This,
         RPCOLEMESSAGE* pMsg,
         DWORD* pState);
 
-    HRESULT (CALLBACK *RegisterAsync)(
+    HRESULT (STDMETHODCALLTYPE *RegisterAsync)(
         IRpcChannelBuffer3* This,
         RPCOLEMESSAGE* pMsg,
         IAsyncManager* pAsyncMgr);
@@ -6986,14 +7181,26 @@ struct IRpcChannelBuffer3Vtbl {
 };
 
 #define IRpcChannelBuffer3_IMETHODS \
-    IRpcChannelBuffer2_IMETHODS \
-    ICOM_METHOD2 (HRESULT,Send,RPCOLEMESSAGE*,pMsg,ULONG*,pulStatus) \
-    ICOM_METHOD3 (HRESULT,Receive,RPCOLEMESSAGE*,pMsg,ULONG,ulSize,ULONG*,pulStatus) \
-    ICOM_METHOD1 (HRESULT,Cancel,RPCOLEMESSAGE*,pMsg) \
-    ICOM_METHOD3 (HRESULT,GetCallContext,RPCOLEMESSAGE*,pMsg,REFIID,riid,void**,pInterface) \
-    ICOM_METHOD3 (HRESULT,GetDestCtxEx,RPCOLEMESSAGE*,pMsg,DWORD*,pdwDestContext,void**,ppvDestContext) \
-    ICOM_METHOD2 (HRESULT,GetState,RPCOLEMESSAGE*,pMsg,DWORD*,pState) \
-    ICOM_METHOD2 (HRESULT,RegisterAsync,RPCOLEMESSAGE*,pMsg,IAsyncManager*,pAsyncMgr)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IRpcChannelBuffer methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetBuffer)(INTERFACE *This, RPCOLEMESSAGE* pMessage, REFIID riid); \
+    HRESULT (STDMETHODCALLTYPE *SendReceive)(INTERFACE *This, RPCOLEMESSAGE* pMessage, ULONG* pStatus); \
+    HRESULT (STDMETHODCALLTYPE *FreeBuffer)(INTERFACE *This, RPCOLEMESSAGE* pMessage); \
+    HRESULT (STDMETHODCALLTYPE *GetDestCtx)(INTERFACE *This, DWORD* pdwDestContext, void** ppvDestContext); \
+    HRESULT (STDMETHODCALLTYPE *IsConnected)(INTERFACE *This); \
+    /*** IRpcChannelBuffer2 methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetProtocolVersion)(INTERFACE *This, DWORD* pdwVersion); \
+    /*** IRpcChannelBuffer3 methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Send)(INTERFACE *This, RPCOLEMESSAGE* pMsg, ULONG* pulStatus); \
+    HRESULT (STDMETHODCALLTYPE *Receive)(INTERFACE *This, RPCOLEMESSAGE* pMsg, ULONG ulSize, ULONG* pulStatus); \
+    HRESULT (STDMETHODCALLTYPE *Cancel)(INTERFACE *This, RPCOLEMESSAGE* pMsg); \
+    HRESULT (STDMETHODCALLTYPE *GetCallContext)(INTERFACE *This, RPCOLEMESSAGE* pMsg, REFIID riid, void** pInterface); \
+    HRESULT (STDMETHODCALLTYPE *GetDestCtxEx)(INTERFACE *This, RPCOLEMESSAGE* pMsg, DWORD* pdwDestContext, void** ppvDestContext); \
+    HRESULT (STDMETHODCALLTYPE *GetState)(INTERFACE *This, RPCOLEMESSAGE* pMsg, DWORD* pState); \
+    HRESULT (STDMETHODCALLTYPE *RegisterAsync)(INTERFACE *This, RPCOLEMESSAGE* pMsg, IAsyncManager* pAsyncMgr);
 
 /*** IUnknown methods ***/
 #define IRpcChannelBuffer3_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -7094,10 +7301,10 @@ DEFINE_GUID(IID_IRpcProxyBuffer, 0xd5f56a34, 0x593b, 0x101a, 0xb5,0x69, 0x08,0x0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IRpcProxyBuffer: IUnknown {
 
-    virtual HRESULT CALLBACK Connect(
+    virtual HRESULT STDMETHODCALLTYPE Connect(
         IRpcChannelBuffer* pRpcChannelBuffer) = 0;
 
-    virtual void CALLBACK Disconnect(
+    virtual void STDMETHODCALLTYPE Disconnect(
         ) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -7110,31 +7317,35 @@ struct IRpcProxyBufferVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IRpcProxyBuffer* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IRpcProxyBuffer* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IRpcProxyBuffer* This);
 
     /*** IRpcProxyBuffer methods ***/
-    HRESULT (CALLBACK *Connect)(
+    HRESULT (STDMETHODCALLTYPE *Connect)(
         IRpcProxyBuffer* This,
         IRpcChannelBuffer* pRpcChannelBuffer);
 
-    void (CALLBACK *Disconnect)(
+    void (STDMETHODCALLTYPE *Disconnect)(
         IRpcProxyBuffer* This);
 
 };
 
 #define IRpcProxyBuffer_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD1 (HRESULT,Connect,IRpcChannelBuffer*,pRpcChannelBuffer) \
-    ICOM_VMETHOD (Disconnect)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IRpcProxyBuffer methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Connect)(INTERFACE *This, IRpcChannelBuffer* pRpcChannelBuffer); \
+    void (STDMETHODCALLTYPE *Disconnect)(INTERFACE *This);
 
 /*** IUnknown methods ***/
 #define IRpcProxyBuffer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -7172,26 +7383,26 @@ DEFINE_GUID(IID_IRpcStubBuffer, 0xd5f56afc, 0x593b, 0x101a, 0xb5,0x69, 0x08,0x00
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IRpcStubBuffer: IUnknown {
 
-    virtual HRESULT CALLBACK Connect(
+    virtual HRESULT STDMETHODCALLTYPE Connect(
         IUnknown* pUnkServer) = 0;
 
-    virtual void CALLBACK Disconnect(
+    virtual void STDMETHODCALLTYPE Disconnect(
         ) = 0;
 
-    virtual HRESULT CALLBACK Invoke(
+    virtual HRESULT STDMETHODCALLTYPE Invoke(
         RPCOLEMESSAGE* _prpcmsg,
         IRpcChannelBuffer* _pRpcChannelBuffer) = 0;
 
-    virtual IRpcStubBuffer* CALLBACK IsIIDSupported(
+    virtual IRpcStubBuffer* STDMETHODCALLTYPE IsIIDSupported(
         REFIID riid) = 0;
 
-    virtual ULONG CALLBACK CountRefs(
+    virtual ULONG STDMETHODCALLTYPE CountRefs(
         ) = 0;
 
-    virtual HRESULT CALLBACK DebugServerQueryInterface(
+    virtual HRESULT STDMETHODCALLTYPE DebugServerQueryInterface(
         void** ppv) = 0;
 
-    virtual void CALLBACK DebugServerRelease(
+    virtual void STDMETHODCALLTYPE DebugServerRelease(
         void* pv) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -7204,56 +7415,60 @@ struct IRpcStubBufferVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IRpcStubBuffer* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IRpcStubBuffer* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IRpcStubBuffer* This);
 
     /*** IRpcStubBuffer methods ***/
-    HRESULT (CALLBACK *Connect)(
+    HRESULT (STDMETHODCALLTYPE *Connect)(
         IRpcStubBuffer* This,
         IUnknown* pUnkServer);
 
-    void (CALLBACK *Disconnect)(
+    void (STDMETHODCALLTYPE *Disconnect)(
         IRpcStubBuffer* This);
 
-    HRESULT (CALLBACK *Invoke)(
+    HRESULT (STDMETHODCALLTYPE *Invoke)(
         IRpcStubBuffer* This,
         RPCOLEMESSAGE* _prpcmsg,
         IRpcChannelBuffer* _pRpcChannelBuffer);
 
-    IRpcStubBuffer* (CALLBACK *IsIIDSupported)(
+    IRpcStubBuffer* (STDMETHODCALLTYPE *IsIIDSupported)(
         IRpcStubBuffer* This,
         REFIID riid);
 
-    ULONG (CALLBACK *CountRefs)(
+    ULONG (STDMETHODCALLTYPE *CountRefs)(
         IRpcStubBuffer* This);
 
-    HRESULT (CALLBACK *DebugServerQueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *DebugServerQueryInterface)(
         IRpcStubBuffer* This,
         void** ppv);
 
-    void (CALLBACK *DebugServerRelease)(
+    void (STDMETHODCALLTYPE *DebugServerRelease)(
         IRpcStubBuffer* This,
         void* pv);
 
 };
 
 #define IRpcStubBuffer_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD1 (HRESULT,Connect,IUnknown*,pUnkServer) \
-    ICOM_VMETHOD (Disconnect) \
-    ICOM_METHOD2 (HRESULT,Invoke,RPCOLEMESSAGE*,_prpcmsg,IRpcChannelBuffer*,_pRpcChannelBuffer) \
-    ICOM_METHOD1 (IRpcStubBuffer*,IsIIDSupported,REFIID,riid) \
-    ICOM_METHOD  (ULONG,CountRefs) \
-    ICOM_METHOD1 (HRESULT,DebugServerQueryInterface,void**,ppv) \
-    ICOM_VMETHOD1(DebugServerRelease,void*,pv)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IRpcStubBuffer methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Connect)(INTERFACE *This, IUnknown* pUnkServer); \
+    void (STDMETHODCALLTYPE *Disconnect)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *Invoke)(INTERFACE *This, RPCOLEMESSAGE* _prpcmsg, IRpcChannelBuffer* _pRpcChannelBuffer); \
+    IRpcStubBuffer* (STDMETHODCALLTYPE *IsIIDSupported)(INTERFACE *This, REFIID riid); \
+    ULONG (STDMETHODCALLTYPE *CountRefs)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *DebugServerQueryInterface)(INTERFACE *This, void** ppv); \
+    void (STDMETHODCALLTYPE *DebugServerRelease)(INTERFACE *This, void* pv);
 
 /*** IUnknown methods ***/
 #define IRpcStubBuffer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -7336,13 +7551,13 @@ DEFINE_GUID(IID_IPSFactoryBuffer, 0xd5f569d0, 0x593b, 0x101a, 0xb5,0x69, 0x08,0x
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IPSFactoryBuffer: IUnknown {
 
-    virtual HRESULT CALLBACK CreateProxy(
+    virtual HRESULT STDMETHODCALLTYPE CreateProxy(
         IUnknown* pUnkOuter,
         REFIID riid,
         IRpcProxyBuffer** ppProxy,
         void** ppv) = 0;
 
-    virtual HRESULT CALLBACK CreateStub(
+    virtual HRESULT STDMETHODCALLTYPE CreateStub(
         REFIID riid,
         IUnknown* pUnkServer,
         IRpcStubBuffer** ppStub) = 0;
@@ -7357,26 +7572,26 @@ struct IPSFactoryBufferVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IPSFactoryBuffer* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IPSFactoryBuffer* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IPSFactoryBuffer* This);
 
     /*** IPSFactoryBuffer methods ***/
-    HRESULT (CALLBACK *CreateProxy)(
+    HRESULT (STDMETHODCALLTYPE *CreateProxy)(
         IPSFactoryBuffer* This,
         IUnknown* pUnkOuter,
         REFIID riid,
         IRpcProxyBuffer** ppProxy,
         void** ppv);
 
-    HRESULT (CALLBACK *CreateStub)(
+    HRESULT (STDMETHODCALLTYPE *CreateStub)(
         IPSFactoryBuffer* This,
         REFIID riid,
         IUnknown* pUnkServer,
@@ -7385,9 +7600,13 @@ struct IPSFactoryBufferVtbl {
 };
 
 #define IPSFactoryBuffer_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD4 (HRESULT,CreateProxy,IUnknown*,pUnkOuter,REFIID,riid,IRpcProxyBuffer**,ppProxy,void**,ppv) \
-    ICOM_METHOD3 (HRESULT,CreateStub,REFIID,riid,IUnknown*,pUnkServer,IRpcStubBuffer**,ppStub)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IPSFactoryBuffer methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *CreateProxy)(INTERFACE *This, IUnknown* pUnkOuter, REFIID riid, IRpcProxyBuffer** ppProxy, void** ppv); \
+    HRESULT (STDMETHODCALLTYPE *CreateStub)(INTERFACE *This, REFIID riid, IUnknown* pUnkServer, IRpcStubBuffer** ppStub);
 
 /*** IUnknown methods ***/
 #define IPSFactoryBuffer_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -7440,18 +7659,18 @@ DEFINE_GUID(IID_IChannelHook, 0x1008c4a0, 0x7613, 0x11cf, 0x9a,0xf1, 0x00,0x20,0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IChannelHook: IUnknown {
 
-    virtual void CALLBACK ClientGetSize(
+    virtual void STDMETHODCALLTYPE ClientGetSize(
         REFGUID uExtent,
         REFIID riid,
         ULONG* pDataSize) = 0;
 
-    virtual void CALLBACK ClientFillBuffer(
+    virtual void STDMETHODCALLTYPE ClientFillBuffer(
         REFGUID uExtent,
         REFIID riid,
         ULONG* pDataSize,
         void* pDataBuffer) = 0;
 
-    virtual void CALLBACK ClientNotify(
+    virtual void STDMETHODCALLTYPE ClientNotify(
         REFGUID uExtent,
         REFIID riid,
         ULONG cbDataSize,
@@ -7459,20 +7678,20 @@ struct IChannelHook: IUnknown {
         DWORD lDataRep,
         HRESULT hrFault) = 0;
 
-    virtual void CALLBACK ServerNotify(
+    virtual void STDMETHODCALLTYPE ServerNotify(
         REFGUID uExtent,
         REFIID riid,
         ULONG cbDataSize,
         void* pDataBuffer,
         DWORD lDataRep) = 0;
 
-    virtual void CALLBACK ServerGetSize(
+    virtual void STDMETHODCALLTYPE ServerGetSize(
         REFGUID uExtent,
         REFIID riid,
         HRESULT hrFault,
         ULONG* pDataSize) = 0;
 
-    virtual void CALLBACK ServerFillBuffer(
+    virtual void STDMETHODCALLTYPE ServerFillBuffer(
         REFGUID uExtent,
         REFIID riid,
         ULONG* pDataSize,
@@ -7489,32 +7708,32 @@ struct IChannelHookVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IChannelHook* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IChannelHook* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IChannelHook* This);
 
     /*** IChannelHook methods ***/
-    void (CALLBACK *ClientGetSize)(
+    void (STDMETHODCALLTYPE *ClientGetSize)(
         IChannelHook* This,
         REFGUID uExtent,
         REFIID riid,
         ULONG* pDataSize);
 
-    void (CALLBACK *ClientFillBuffer)(
+    void (STDMETHODCALLTYPE *ClientFillBuffer)(
         IChannelHook* This,
         REFGUID uExtent,
         REFIID riid,
         ULONG* pDataSize,
         void* pDataBuffer);
 
-    void (CALLBACK *ClientNotify)(
+    void (STDMETHODCALLTYPE *ClientNotify)(
         IChannelHook* This,
         REFGUID uExtent,
         REFIID riid,
@@ -7523,7 +7742,7 @@ struct IChannelHookVtbl {
         DWORD lDataRep,
         HRESULT hrFault);
 
-    void (CALLBACK *ServerNotify)(
+    void (STDMETHODCALLTYPE *ServerNotify)(
         IChannelHook* This,
         REFGUID uExtent,
         REFIID riid,
@@ -7531,14 +7750,14 @@ struct IChannelHookVtbl {
         void* pDataBuffer,
         DWORD lDataRep);
 
-    void (CALLBACK *ServerGetSize)(
+    void (STDMETHODCALLTYPE *ServerGetSize)(
         IChannelHook* This,
         REFGUID uExtent,
         REFIID riid,
         HRESULT hrFault,
         ULONG* pDataSize);
 
-    void (CALLBACK *ServerFillBuffer)(
+    void (STDMETHODCALLTYPE *ServerFillBuffer)(
         IChannelHook* This,
         REFGUID uExtent,
         REFIID riid,
@@ -7549,13 +7768,17 @@ struct IChannelHookVtbl {
 };
 
 #define IChannelHook_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_VMETHOD3(ClientGetSize,REFGUID,uExtent,REFIID,riid,ULONG*,pDataSize) \
-    ICOM_VMETHOD4(ClientFillBuffer,REFGUID,uExtent,REFIID,riid,ULONG*,pDataSize,void*,pDataBuffer) \
-    ICOM_VMETHOD6(ClientNotify,REFGUID,uExtent,REFIID,riid,ULONG,cbDataSize,void*,pDataBuffer,DWORD,lDataRep,HRESULT,hrFault) \
-    ICOM_VMETHOD5(ServerNotify,REFGUID,uExtent,REFIID,riid,ULONG,cbDataSize,void*,pDataBuffer,DWORD,lDataRep) \
-    ICOM_VMETHOD4(ServerGetSize,REFGUID,uExtent,REFIID,riid,HRESULT,hrFault,ULONG*,pDataSize) \
-    ICOM_VMETHOD5(ServerFillBuffer,REFGUID,uExtent,REFIID,riid,ULONG*,pDataSize,void*,pDataBuffer,HRESULT,hrFault)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IChannelHook methods ***/ \
+    void (STDMETHODCALLTYPE *ClientGetSize)(INTERFACE *This, REFGUID uExtent, REFIID riid, ULONG* pDataSize); \
+    void (STDMETHODCALLTYPE *ClientFillBuffer)(INTERFACE *This, REFGUID uExtent, REFIID riid, ULONG* pDataSize, void* pDataBuffer); \
+    void (STDMETHODCALLTYPE *ClientNotify)(INTERFACE *This, REFGUID uExtent, REFIID riid, ULONG cbDataSize, void* pDataBuffer, DWORD lDataRep, HRESULT hrFault); \
+    void (STDMETHODCALLTYPE *ServerNotify)(INTERFACE *This, REFGUID uExtent, REFIID riid, ULONG cbDataSize, void* pDataBuffer, DWORD lDataRep); \
+    void (STDMETHODCALLTYPE *ServerGetSize)(INTERFACE *This, REFGUID uExtent, REFIID riid, HRESULT hrFault, ULONG* pDataSize); \
+    void (STDMETHODCALLTYPE *ServerFillBuffer)(INTERFACE *This, REFGUID uExtent, REFIID riid, ULONG* pDataSize, void* pDataBuffer, HRESULT hrFault);
 
 /*** IUnknown methods ***/
 #define IChannelHook_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -7859,53 +8082,53 @@ DEFINE_GUID(IID_IPropertyStorage, 0x00000138, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IPropertyStorage: IUnknown {
 
-    virtual HRESULT CALLBACK ReadMultiple(
+    virtual HRESULT STDMETHODCALLTYPE ReadMultiple(
         ULONG cpspec,
         const PROPSPEC rgpspec[],
         PROPVARIANT rgpropvar[]) = 0;
 
-    virtual HRESULT CALLBACK WriteMultiple(
+    virtual HRESULT STDMETHODCALLTYPE WriteMultiple(
         ULONG cpspec,
         const PROPSPEC rgpspec[],
         const PROPVARIANT rgpropvar[],
         PROPID propidNameFirst) = 0;
 
-    virtual HRESULT CALLBACK DeleteMultiple(
+    virtual HRESULT STDMETHODCALLTYPE DeleteMultiple(
         ULONG cpspec,
         const PROPSPEC rgpspec[]) = 0;
 
-    virtual HRESULT CALLBACK ReadPropertyNames(
+    virtual HRESULT STDMETHODCALLTYPE ReadPropertyNames(
         ULONG cpropid,
         const PROPID rgpropid[],
         LPOLESTR rglpwstrName[]) = 0;
 
-    virtual HRESULT CALLBACK WritePropertyNames(
+    virtual HRESULT STDMETHODCALLTYPE WritePropertyNames(
         ULONG cpropid,
         const PROPID rgpropid[],
         const LPOLESTR rglpwstrName[]) = 0;
 
-    virtual HRESULT CALLBACK DeletePropertyNames(
+    virtual HRESULT STDMETHODCALLTYPE DeletePropertyNames(
         ULONG cpropid,
         const PROPID rgpropid[]) = 0;
 
-    virtual HRESULT CALLBACK Commit(
+    virtual HRESULT STDMETHODCALLTYPE Commit(
         DWORD grfCommitFlags) = 0;
 
-    virtual HRESULT CALLBACK Revert(
+    virtual HRESULT STDMETHODCALLTYPE Revert(
         ) = 0;
 
-    virtual HRESULT CALLBACK Enum(
+    virtual HRESULT STDMETHODCALLTYPE Enum(
         IEnumSTATPROPSTG** ppenum) = 0;
 
-    virtual HRESULT CALLBACK SetTimes(
+    virtual HRESULT STDMETHODCALLTYPE SetTimes(
         const FILETIME* pctime,
         const FILETIME* patime,
         const FILETIME* pmtime) = 0;
 
-    virtual HRESULT CALLBACK SetClass(
+    virtual HRESULT STDMETHODCALLTYPE SetClass(
         REFCLSID clsid) = 0;
 
-    virtual HRESULT CALLBACK Stat(
+    virtual HRESULT STDMETHODCALLTYPE Stat(
         STATPROPSETSTG* statpsstg) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -7918,94 +8141,98 @@ struct IPropertyStorageVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IPropertyStorage* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IPropertyStorage* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IPropertyStorage* This);
 
     /*** IPropertyStorage methods ***/
-    HRESULT (CALLBACK *ReadMultiple)(
+    HRESULT (STDMETHODCALLTYPE *ReadMultiple)(
         IPropertyStorage* This,
         ULONG cpspec,
         const PROPSPEC rgpspec[],
         PROPVARIANT rgpropvar[]);
 
-    HRESULT (CALLBACK *WriteMultiple)(
+    HRESULT (STDMETHODCALLTYPE *WriteMultiple)(
         IPropertyStorage* This,
         ULONG cpspec,
         const PROPSPEC rgpspec[],
         const PROPVARIANT rgpropvar[],
         PROPID propidNameFirst);
 
-    HRESULT (CALLBACK *DeleteMultiple)(
+    HRESULT (STDMETHODCALLTYPE *DeleteMultiple)(
         IPropertyStorage* This,
         ULONG cpspec,
         const PROPSPEC rgpspec[]);
 
-    HRESULT (CALLBACK *ReadPropertyNames)(
+    HRESULT (STDMETHODCALLTYPE *ReadPropertyNames)(
         IPropertyStorage* This,
         ULONG cpropid,
         const PROPID rgpropid[],
         LPOLESTR rglpwstrName[]);
 
-    HRESULT (CALLBACK *WritePropertyNames)(
+    HRESULT (STDMETHODCALLTYPE *WritePropertyNames)(
         IPropertyStorage* This,
         ULONG cpropid,
         const PROPID rgpropid[],
         const LPOLESTR rglpwstrName[]);
 
-    HRESULT (CALLBACK *DeletePropertyNames)(
+    HRESULT (STDMETHODCALLTYPE *DeletePropertyNames)(
         IPropertyStorage* This,
         ULONG cpropid,
         const PROPID rgpropid[]);
 
-    HRESULT (CALLBACK *Commit)(
+    HRESULT (STDMETHODCALLTYPE *Commit)(
         IPropertyStorage* This,
         DWORD grfCommitFlags);
 
-    HRESULT (CALLBACK *Revert)(
+    HRESULT (STDMETHODCALLTYPE *Revert)(
         IPropertyStorage* This);
 
-    HRESULT (CALLBACK *Enum)(
+    HRESULT (STDMETHODCALLTYPE *Enum)(
         IPropertyStorage* This,
         IEnumSTATPROPSTG** ppenum);
 
-    HRESULT (CALLBACK *SetTimes)(
+    HRESULT (STDMETHODCALLTYPE *SetTimes)(
         IPropertyStorage* This,
         const FILETIME* pctime,
         const FILETIME* patime,
         const FILETIME* pmtime);
 
-    HRESULT (CALLBACK *SetClass)(
+    HRESULT (STDMETHODCALLTYPE *SetClass)(
         IPropertyStorage* This,
         REFCLSID clsid);
 
-    HRESULT (CALLBACK *Stat)(
+    HRESULT (STDMETHODCALLTYPE *Stat)(
         IPropertyStorage* This,
         STATPROPSETSTG* statpsstg);
 
 };
 
 #define IPropertyStorage_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD3 (HRESULT,ReadMultiple,ULONG,cpspec,const PROPSPEC*,rgpspec,PROPVARIANT*,rgpropvar) \
-    ICOM_METHOD4 (HRESULT,WriteMultiple,ULONG,cpspec,const PROPSPEC*,rgpspec,const PROPVARIANT*,rgpropvar,PROPID,propidNameFirst) \
-    ICOM_METHOD2 (HRESULT,DeleteMultiple,ULONG,cpspec,const PROPSPEC*,rgpspec) \
-    ICOM_METHOD3 (HRESULT,ReadPropertyNames,ULONG,cpropid,const PROPID*,rgpropid,LPOLESTR*,rglpwstrName) \
-    ICOM_METHOD3 (HRESULT,WritePropertyNames,ULONG,cpropid,const PROPID*,rgpropid,const LPOLESTR*,rglpwstrName) \
-    ICOM_METHOD2 (HRESULT,DeletePropertyNames,ULONG,cpropid,const PROPID*,rgpropid) \
-    ICOM_METHOD1 (HRESULT,Commit,DWORD,grfCommitFlags) \
-    ICOM_METHOD  (HRESULT,Revert) \
-    ICOM_METHOD1 (HRESULT,Enum,IEnumSTATPROPSTG**,ppenum) \
-    ICOM_METHOD3 (HRESULT,SetTimes,const FILETIME*,pctime,const FILETIME*,patime,const FILETIME*,pmtime) \
-    ICOM_METHOD1 (HRESULT,SetClass,REFCLSID,clsid) \
-    ICOM_METHOD1 (HRESULT,Stat,STATPROPSETSTG*,statpsstg)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IPropertyStorage methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *ReadMultiple)(INTERFACE *This, ULONG cpspec, const PROPSPEC rgpspec[], PROPVARIANT rgpropvar[]); \
+    HRESULT (STDMETHODCALLTYPE *WriteMultiple)(INTERFACE *This, ULONG cpspec, const PROPSPEC rgpspec[], const PROPVARIANT rgpropvar[], PROPID propidNameFirst); \
+    HRESULT (STDMETHODCALLTYPE *DeleteMultiple)(INTERFACE *This, ULONG cpspec, const PROPSPEC rgpspec[]); \
+    HRESULT (STDMETHODCALLTYPE *ReadPropertyNames)(INTERFACE *This, ULONG cpropid, const PROPID rgpropid[], LPOLESTR rglpwstrName[]); \
+    HRESULT (STDMETHODCALLTYPE *WritePropertyNames)(INTERFACE *This, ULONG cpropid, const PROPID rgpropid[], const LPOLESTR rglpwstrName[]); \
+    HRESULT (STDMETHODCALLTYPE *DeletePropertyNames)(INTERFACE *This, ULONG cpropid, const PROPID rgpropid[]); \
+    HRESULT (STDMETHODCALLTYPE *Commit)(INTERFACE *This, DWORD grfCommitFlags); \
+    HRESULT (STDMETHODCALLTYPE *Revert)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *Enum)(INTERFACE *This, IEnumSTATPROPSTG** ppenum); \
+    HRESULT (STDMETHODCALLTYPE *SetTimes)(INTERFACE *This, const FILETIME* pctime, const FILETIME* patime, const FILETIME* pmtime); \
+    HRESULT (STDMETHODCALLTYPE *SetClass)(INTERFACE *This, REFCLSID clsid); \
+    HRESULT (STDMETHODCALLTYPE *Stat)(INTERFACE *This, STATPROPSETSTG* statpsstg);
 
 /*** IUnknown methods ***/
 #define IPropertyStorage_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -8146,22 +8373,22 @@ DEFINE_GUID(IID_IPropertySetStorage, 0x0000013a, 0x0000, 0x0000, 0xc0,0x00, 0x00
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IPropertySetStorage: IUnknown {
 
-    virtual HRESULT CALLBACK Create(
+    virtual HRESULT STDMETHODCALLTYPE Create(
         REFFMTID rfmtid,
         const CLSID* pclsid,
         DWORD grfFlags,
         DWORD grfMode,
         IPropertyStorage** ppprstg) = 0;
 
-    virtual HRESULT CALLBACK Open(
+    virtual HRESULT STDMETHODCALLTYPE Open(
         REFFMTID rfmtid,
         DWORD grfMode,
         IPropertyStorage** ppprstg) = 0;
 
-    virtual HRESULT CALLBACK Delete(
+    virtual HRESULT STDMETHODCALLTYPE Delete(
         REFFMTID rfmtid) = 0;
 
-    virtual HRESULT CALLBACK Enum(
+    virtual HRESULT STDMETHODCALLTYPE Enum(
         IEnumSTATPROPSETSTG** ppenum) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -8174,19 +8401,19 @@ struct IPropertySetStorageVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IPropertySetStorage* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IPropertySetStorage* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IPropertySetStorage* This);
 
     /*** IPropertySetStorage methods ***/
-    HRESULT (CALLBACK *Create)(
+    HRESULT (STDMETHODCALLTYPE *Create)(
         IPropertySetStorage* This,
         REFFMTID rfmtid,
         const CLSID* pclsid,
@@ -8194,28 +8421,32 @@ struct IPropertySetStorageVtbl {
         DWORD grfMode,
         IPropertyStorage** ppprstg);
 
-    HRESULT (CALLBACK *Open)(
+    HRESULT (STDMETHODCALLTYPE *Open)(
         IPropertySetStorage* This,
         REFFMTID rfmtid,
         DWORD grfMode,
         IPropertyStorage** ppprstg);
 
-    HRESULT (CALLBACK *Delete)(
+    HRESULT (STDMETHODCALLTYPE *Delete)(
         IPropertySetStorage* This,
         REFFMTID rfmtid);
 
-    HRESULT (CALLBACK *Enum)(
+    HRESULT (STDMETHODCALLTYPE *Enum)(
         IPropertySetStorage* This,
         IEnumSTATPROPSETSTG** ppenum);
 
 };
 
 #define IPropertySetStorage_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD5 (HRESULT,Create,REFFMTID,rfmtid,const CLSID*,pclsid,DWORD,grfFlags,DWORD,grfMode,IPropertyStorage**,ppprstg) \
-    ICOM_METHOD3 (HRESULT,Open,REFFMTID,rfmtid,DWORD,grfMode,IPropertyStorage**,ppprstg) \
-    ICOM_METHOD1 (HRESULT,Delete,REFFMTID,rfmtid) \
-    ICOM_METHOD1 (HRESULT,Enum,IEnumSTATPROPSETSTG**,ppenum)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IPropertySetStorage methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Create)(INTERFACE *This, REFFMTID rfmtid, const CLSID* pclsid, DWORD grfFlags, DWORD grfMode, IPropertyStorage** ppprstg); \
+    HRESULT (STDMETHODCALLTYPE *Open)(INTERFACE *This, REFFMTID rfmtid, DWORD grfMode, IPropertyStorage** ppprstg); \
+    HRESULT (STDMETHODCALLTYPE *Delete)(INTERFACE *This, REFFMTID rfmtid); \
+    HRESULT (STDMETHODCALLTYPE *Enum)(INTERFACE *This, IEnumSTATPROPSETSTG** ppenum);
 
 /*** IUnknown methods ***/
 #define IPropertySetStorage_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -8277,18 +8508,18 @@ DEFINE_GUID(IID_IEnumSTATPROPSTG, 0x00000139, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IEnumSTATPROPSTG: IUnknown {
 
-    virtual HRESULT CALLBACK Next(
+    virtual HRESULT STDMETHODCALLTYPE Next(
         ULONG celt,
         STATPROPSTG* rgelt,
         ULONG* pceltFetched) = 0;
 
-    virtual HRESULT CALLBACK Skip(
+    virtual HRESULT STDMETHODCALLTYPE Skip(
         ULONG celt) = 0;
 
-    virtual HRESULT CALLBACK Reset(
+    virtual HRESULT STDMETHODCALLTYPE Reset(
         ) = 0;
 
-    virtual HRESULT CALLBACK Clone(
+    virtual HRESULT STDMETHODCALLTYPE Clone(
         IEnumSTATPROPSTG** ppenum) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -8301,43 +8532,47 @@ struct IEnumSTATPROPSTGVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IEnumSTATPROPSTG* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IEnumSTATPROPSTG* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IEnumSTATPROPSTG* This);
 
     /*** IEnumSTATPROPSTG methods ***/
-    HRESULT (CALLBACK *Next)(
+    HRESULT (STDMETHODCALLTYPE *Next)(
         IEnumSTATPROPSTG* This,
         ULONG celt,
         STATPROPSTG* rgelt,
         ULONG* pceltFetched);
 
-    HRESULT (CALLBACK *Skip)(
+    HRESULT (STDMETHODCALLTYPE *Skip)(
         IEnumSTATPROPSTG* This,
         ULONG celt);
 
-    HRESULT (CALLBACK *Reset)(
+    HRESULT (STDMETHODCALLTYPE *Reset)(
         IEnumSTATPROPSTG* This);
 
-    HRESULT (CALLBACK *Clone)(
+    HRESULT (STDMETHODCALLTYPE *Clone)(
         IEnumSTATPROPSTG* This,
         IEnumSTATPROPSTG** ppenum);
 
 };
 
 #define IEnumSTATPROPSTG_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD3 (HRESULT,Next,ULONG,celt,STATPROPSTG*,rgelt,ULONG*,pceltFetched) \
-    ICOM_METHOD1 (HRESULT,Skip,ULONG,celt) \
-    ICOM_METHOD  (HRESULT,Reset) \
-    ICOM_METHOD1 (HRESULT,Clone,IEnumSTATPROPSTG**,ppenum)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IEnumSTATPROPSTG methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Next)(INTERFACE *This, ULONG celt, STATPROPSTG* rgelt, ULONG* pceltFetched); \
+    HRESULT (STDMETHODCALLTYPE *Skip)(INTERFACE *This, ULONG celt); \
+    HRESULT (STDMETHODCALLTYPE *Reset)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *Clone)(INTERFACE *This, IEnumSTATPROPSTG** ppenum);
 
 /*** IUnknown methods ***/
 #define IEnumSTATPROPSTG_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -8404,18 +8639,18 @@ DEFINE_GUID(IID_IEnumSTATPROPSETSTG, 0x0000013b, 0x0000, 0x0000, 0xc0,0x00, 0x00
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IEnumSTATPROPSETSTG: IUnknown {
 
-    virtual HRESULT CALLBACK Next(
+    virtual HRESULT STDMETHODCALLTYPE Next(
         ULONG celt,
         STATPROPSETSTG* rgelt,
         ULONG* pceltFetched) = 0;
 
-    virtual HRESULT CALLBACK Skip(
+    virtual HRESULT STDMETHODCALLTYPE Skip(
         ULONG celt) = 0;
 
-    virtual HRESULT CALLBACK Reset(
+    virtual HRESULT STDMETHODCALLTYPE Reset(
         ) = 0;
 
-    virtual HRESULT CALLBACK Clone(
+    virtual HRESULT STDMETHODCALLTYPE Clone(
         IEnumSTATPROPSETSTG** ppenum) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -8428,43 +8663,47 @@ struct IEnumSTATPROPSETSTGVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IEnumSTATPROPSETSTG* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IEnumSTATPROPSETSTG* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IEnumSTATPROPSETSTG* This);
 
     /*** IEnumSTATPROPSETSTG methods ***/
-    HRESULT (CALLBACK *Next)(
+    HRESULT (STDMETHODCALLTYPE *Next)(
         IEnumSTATPROPSETSTG* This,
         ULONG celt,
         STATPROPSETSTG* rgelt,
         ULONG* pceltFetched);
 
-    HRESULT (CALLBACK *Skip)(
+    HRESULT (STDMETHODCALLTYPE *Skip)(
         IEnumSTATPROPSETSTG* This,
         ULONG celt);
 
-    HRESULT (CALLBACK *Reset)(
+    HRESULT (STDMETHODCALLTYPE *Reset)(
         IEnumSTATPROPSETSTG* This);
 
-    HRESULT (CALLBACK *Clone)(
+    HRESULT (STDMETHODCALLTYPE *Clone)(
         IEnumSTATPROPSETSTG* This,
         IEnumSTATPROPSETSTG** ppenum);
 
 };
 
 #define IEnumSTATPROPSETSTG_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD3 (HRESULT,Next,ULONG,celt,STATPROPSETSTG*,rgelt,ULONG*,pceltFetched) \
-    ICOM_METHOD1 (HRESULT,Skip,ULONG,celt) \
-    ICOM_METHOD  (HRESULT,Reset) \
-    ICOM_METHOD1 (HRESULT,Clone,IEnumSTATPROPSETSTG**,ppenum)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IEnumSTATPROPSETSTG methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Next)(INTERFACE *This, ULONG celt, STATPROPSETSTG* rgelt, ULONG* pceltFetched); \
+    HRESULT (STDMETHODCALLTYPE *Skip)(INTERFACE *This, ULONG celt); \
+    HRESULT (STDMETHODCALLTYPE *Reset)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *Clone)(INTERFACE *This, IEnumSTATPROPSETSTG** ppenum);
 
 /*** IUnknown methods ***/
 #define IEnumSTATPROPSETSTG_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -8548,7 +8787,7 @@ DEFINE_GUID(IID_IClientSecurity, 0x0000013d, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IClientSecurity: IUnknown {
 
-    virtual HRESULT CALLBACK QueryBlanket(
+    virtual HRESULT STDMETHODCALLTYPE QueryBlanket(
         IUnknown* pProxy,
         DWORD* pAuthnSvc,
         DWORD* pAuthzSvc,
@@ -8558,7 +8797,7 @@ struct IClientSecurity: IUnknown {
         void** pAuthInfo,
         DWORD* pCapabilites) = 0;
 
-    virtual HRESULT CALLBACK SetBlanket(
+    virtual HRESULT STDMETHODCALLTYPE SetBlanket(
         IUnknown* pProxy,
         DWORD AuthnSvc,
         DWORD AuthzSvc,
@@ -8568,7 +8807,7 @@ struct IClientSecurity: IUnknown {
         void* pAuthInfo,
         DWORD Capabilities) = 0;
 
-    virtual HRESULT CALLBACK CopyProxy(
+    virtual HRESULT STDMETHODCALLTYPE CopyProxy(
         IUnknown* pProxy,
         IUnknown** ppCopy) = 0;
 
@@ -8582,19 +8821,19 @@ struct IClientSecurityVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IClientSecurity* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IClientSecurity* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IClientSecurity* This);
 
     /*** IClientSecurity methods ***/
-    HRESULT (CALLBACK *QueryBlanket)(
+    HRESULT (STDMETHODCALLTYPE *QueryBlanket)(
         IClientSecurity* This,
         IUnknown* pProxy,
         DWORD* pAuthnSvc,
@@ -8605,7 +8844,7 @@ struct IClientSecurityVtbl {
         void** pAuthInfo,
         DWORD* pCapabilites);
 
-    HRESULT (CALLBACK *SetBlanket)(
+    HRESULT (STDMETHODCALLTYPE *SetBlanket)(
         IClientSecurity* This,
         IUnknown* pProxy,
         DWORD AuthnSvc,
@@ -8616,7 +8855,7 @@ struct IClientSecurityVtbl {
         void* pAuthInfo,
         DWORD Capabilities);
 
-    HRESULT (CALLBACK *CopyProxy)(
+    HRESULT (STDMETHODCALLTYPE *CopyProxy)(
         IClientSecurity* This,
         IUnknown* pProxy,
         IUnknown** ppCopy);
@@ -8624,10 +8863,14 @@ struct IClientSecurityVtbl {
 };
 
 #define IClientSecurity_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD8 (HRESULT,QueryBlanket,IUnknown*,pProxy,DWORD*,pAuthnSvc,DWORD*,pAuthzSvc,OLECHAR**,pServerPrincName,DWORD*,pAuthnLevel,DWORD*,pImpLevel,void**,pAuthInfo,DWORD*,pCapabilites) \
-    ICOM_METHOD8 (HRESULT,SetBlanket,IUnknown*,pProxy,DWORD,AuthnSvc,DWORD,AuthzSvc,OLECHAR*,pServerPrincName,DWORD,AuthnLevel,DWORD,ImpLevel,void*,pAuthInfo,DWORD,Capabilities) \
-    ICOM_METHOD2 (HRESULT,CopyProxy,IUnknown*,pProxy,IUnknown**,ppCopy)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IClientSecurity methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryBlanket)(INTERFACE *This, IUnknown* pProxy, DWORD* pAuthnSvc, DWORD* pAuthzSvc, OLECHAR** pServerPrincName, DWORD* pAuthnLevel, DWORD* pImpLevel, void** pAuthInfo, DWORD* pCapabilites); \
+    HRESULT (STDMETHODCALLTYPE *SetBlanket)(INTERFACE *This, IUnknown* pProxy, DWORD AuthnSvc, DWORD AuthzSvc, OLECHAR* pServerPrincName, DWORD AuthnLevel, DWORD ImpLevel, void* pAuthInfo, DWORD Capabilities); \
+    HRESULT (STDMETHODCALLTYPE *CopyProxy)(INTERFACE *This, IUnknown* pProxy, IUnknown** ppCopy);
 
 /*** IUnknown methods ***/
 #define IClientSecurity_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -8688,7 +8931,7 @@ DEFINE_GUID(IID_IServerSecurity, 0x0000013e, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IServerSecurity: IUnknown {
 
-    virtual HRESULT CALLBACK QueryBlanket(
+    virtual HRESULT STDMETHODCALLTYPE QueryBlanket(
         DWORD* pAuthnSvc,
         DWORD* pAuthzSvc,
         OLECHAR** pServerPrincName,
@@ -8697,13 +8940,13 @@ struct IServerSecurity: IUnknown {
         void** pPrivs,
         DWORD* pCapabilities) = 0;
 
-    virtual HRESULT CALLBACK ImpersonateClient(
+    virtual HRESULT STDMETHODCALLTYPE ImpersonateClient(
         ) = 0;
 
-    virtual HRESULT CALLBACK RevertToSelf(
+    virtual HRESULT STDMETHODCALLTYPE RevertToSelf(
         ) = 0;
 
-    virtual BOOL CALLBACK IsImpersonating(
+    virtual BOOL STDMETHODCALLTYPE IsImpersonating(
         ) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -8716,19 +8959,19 @@ struct IServerSecurityVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IServerSecurity* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IServerSecurity* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IServerSecurity* This);
 
     /*** IServerSecurity methods ***/
-    HRESULT (CALLBACK *QueryBlanket)(
+    HRESULT (STDMETHODCALLTYPE *QueryBlanket)(
         IServerSecurity* This,
         DWORD* pAuthnSvc,
         DWORD* pAuthzSvc,
@@ -8738,23 +8981,27 @@ struct IServerSecurityVtbl {
         void** pPrivs,
         DWORD* pCapabilities);
 
-    HRESULT (CALLBACK *ImpersonateClient)(
+    HRESULT (STDMETHODCALLTYPE *ImpersonateClient)(
         IServerSecurity* This);
 
-    HRESULT (CALLBACK *RevertToSelf)(
+    HRESULT (STDMETHODCALLTYPE *RevertToSelf)(
         IServerSecurity* This);
 
-    BOOL (CALLBACK *IsImpersonating)(
+    BOOL (STDMETHODCALLTYPE *IsImpersonating)(
         IServerSecurity* This);
 
 };
 
 #define IServerSecurity_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD7 (HRESULT,QueryBlanket,DWORD*,pAuthnSvc,DWORD*,pAuthzSvc,OLECHAR**,pServerPrincName,DWORD*,pAuthnLevel,DWORD*,pImpLevel,void**,pPrivs,DWORD*,pCapabilities) \
-    ICOM_METHOD  (HRESULT,ImpersonateClient) \
-    ICOM_METHOD  (HRESULT,RevertToSelf) \
-    ICOM_METHOD  (BOOL,IsImpersonating)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IServerSecurity methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryBlanket)(INTERFACE *This, DWORD* pAuthnSvc, DWORD* pAuthzSvc, OLECHAR** pServerPrincName, DWORD* pAuthnLevel, DWORD* pImpLevel, void** pPrivs, DWORD* pCapabilities); \
+    HRESULT (STDMETHODCALLTYPE *ImpersonateClient)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *RevertToSelf)(INTERFACE *This); \
+    BOOL (STDMETHODCALLTYPE *IsImpersonating)(INTERFACE *This);
 
 /*** IUnknown methods ***/
 #define IServerSecurity_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -8812,7 +9059,7 @@ DEFINE_GUID(IID_IAsyncSetup, 0x00000024, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IAsyncSetup: IUnknown {
 
-    virtual HRESULT CALLBACK GetAsyncManager(
+    virtual HRESULT STDMETHODCALLTYPE GetAsyncManager(
         REFIID riid,
         IUnknown* pOuter,
         DWORD dwFlags,
@@ -8829,19 +9076,19 @@ struct IAsyncSetupVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IAsyncSetup* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IAsyncSetup* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IAsyncSetup* This);
 
     /*** IAsyncSetup methods ***/
-    HRESULT (CALLBACK *GetAsyncManager)(
+    HRESULT (STDMETHODCALLTYPE *GetAsyncManager)(
         IAsyncSetup* This,
         REFIID riid,
         IUnknown* pOuter,
@@ -8852,8 +9099,12 @@ struct IAsyncSetupVtbl {
 };
 
 #define IAsyncSetup_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD5 (HRESULT,GetAsyncManager,REFIID,riid,IUnknown*,pOuter,DWORD,dwFlags,IUnknown**,ppInner,IAsyncManager**,ppAsyncMgr)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IAsyncSetup methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetAsyncManager)(INTERFACE *This, REFIID riid, IUnknown* pOuter, DWORD dwFlags, IUnknown** ppInner, IAsyncManager** ppAsyncMgr);
 
 /*** IUnknown methods ***/
 #define IAsyncSetup_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -8890,14 +9141,14 @@ DEFINE_GUID(IID_IAsyncManager, 0x0000002a, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IAsyncManager: IUnknown {
 
-    virtual HRESULT CALLBACK CompleteCall(
+    virtual HRESULT STDMETHODCALLTYPE CompleteCall(
         HRESULT Result) = 0;
 
-    virtual HRESULT CALLBACK GetCallContext(
+    virtual HRESULT STDMETHODCALLTYPE GetCallContext(
         REFIID riid,
         void** pInterface) = 0;
 
-    virtual HRESULT CALLBACK GetState(
+    virtual HRESULT STDMETHODCALLTYPE GetState(
         ULONG* pulStateFlags) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -8910,38 +9161,42 @@ struct IAsyncManagerVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IAsyncManager* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IAsyncManager* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IAsyncManager* This);
 
     /*** IAsyncManager methods ***/
-    HRESULT (CALLBACK *CompleteCall)(
+    HRESULT (STDMETHODCALLTYPE *CompleteCall)(
         IAsyncManager* This,
         HRESULT Result);
 
-    HRESULT (CALLBACK *GetCallContext)(
+    HRESULT (STDMETHODCALLTYPE *GetCallContext)(
         IAsyncManager* This,
         REFIID riid,
         void** pInterface);
 
-    HRESULT (CALLBACK *GetState)(
+    HRESULT (STDMETHODCALLTYPE *GetState)(
         IAsyncManager* This,
         ULONG* pulStateFlags);
 
 };
 
 #define IAsyncManager_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD1 (HRESULT,CompleteCall,HRESULT,Result) \
-    ICOM_METHOD2 (HRESULT,GetCallContext,REFIID,riid,void**,pInterface) \
-    ICOM_METHOD1 (HRESULT,GetState,ULONG*,pulStateFlags)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IAsyncManager methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *CompleteCall)(INTERFACE *This, HRESULT Result); \
+    HRESULT (STDMETHODCALLTYPE *GetCallContext)(INTERFACE *This, REFIID riid, void** pInterface); \
+    HRESULT (STDMETHODCALLTYPE *GetState)(INTERFACE *This, ULONG* pulStateFlags);
 
 /*** IUnknown methods ***/
 #define IAsyncManager_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)

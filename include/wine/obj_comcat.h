@@ -91,19 +91,19 @@ DEFINE_OLEGUID(CLSID_StdComponentCategoriesMgr, 0x0002E005L, 0, 0);
 /*****************************************************************************
  * ICatInformation
  */
-#define ICOM_INTERFACE ICatInformation
+#define INTERFACE ICatInformation
 #define ICatInformation_METHODS \
-    ICOM_METHOD2(HRESULT, EnumCategories, LCID, lcid, IEnumCATEGORYINFO**, ppenumCatInfo) \
-    ICOM_METHOD3(HRESULT, GetCategoryDesc, REFCATID, rcatid, LCID, lcid, PWCHAR*, ppszDesc) \
-    ICOM_METHOD5(HRESULT, EnumClassesOfCategories, ULONG, cImplemented, CATID*, rgcatidImpl, ULONG, cRequired, CATID*, rgcatidReq, IEnumCLSID**, ppenumCLSID) \
-    ICOM_METHOD5(HRESULT, IsClassOfCategories, REFCLSID, rclsid, ULONG, cImplemented, CATID*, rgcatidImpl, ULONG, cRequired, CATID*, rgcatidReq) \
-    ICOM_METHOD2(HRESULT, EnumImplCategoriesOfClass, REFCLSID, rclsid, IEnumCATID**, ppenumCATID) \
-    ICOM_METHOD2(HRESULT, EnumReqCategoriesOfClass, REFCLSID, rclsid, IEnumCATID**, ppenumCATID)
+    STDMETHOD(EnumCategories)(THIS_ LCID  lcid, IEnumCATEGORYINFO ** ppenumCatInfo) PURE; \
+    STDMETHOD(GetCategoryDesc)(THIS_ REFCATID  rcatid, LCID  lcid, PWCHAR * ppszDesc) PURE; \
+    STDMETHOD(EnumClassesOfCategories)(THIS_ ULONG  cImplemented, CATID * rgcatidImpl, ULONG  cRequired, CATID * rgcatidReq, IEnumCLSID ** ppenumCLSID) PURE; \
+    STDMETHOD(IsClassOfCategories)(THIS_ REFCLSID  rclsid, ULONG  cImplemented, CATID * rgcatidImpl, ULONG  cRequired, CATID * rgcatidReq) PURE; \
+    STDMETHOD(EnumImplCategoriesOfClass)(THIS_ REFCLSID  rclsid, IEnumCATID ** ppenumCATID) PURE; \
+    STDMETHOD(EnumReqCategoriesOfClass)(THIS_ REFCLSID  rclsid, IEnumCATID ** ppenumCATID) PURE;
 #define ICatInformation_IMETHODS \
     IUnknown_IMETHODS \
     ICatInformation_METHODS
 ICOM_DEFINE(ICatInformation,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 #ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
@@ -122,19 +122,19 @@ ICOM_DEFINE(ICatInformation,IUnknown)
 /*****************************************************************************
  * ICatRegister
  */
-#define ICOM_INTERFACE ICatRegister
+#define INTERFACE ICatRegister
 #define ICatRegister_METHODS \
-    ICOM_METHOD2(HRESULT, RegisterCategories, ULONG, cCategories, CATEGORYINFO*, rgCategoryInfo) \
-    ICOM_METHOD2(HRESULT, UnRegisterCategories, ULONG, cCategories, CATID*, rgcatid) \
-    ICOM_METHOD3(HRESULT, RegisterClassImplCategories, REFCLSID, rclsid, ULONG, cCategories, CATID*, rgcatid) \
-    ICOM_METHOD3(HRESULT, UnRegisterClassImplCategories, REFCLSID, rclsid, ULONG, cCategories, CATID*, rgcatid) \
-    ICOM_METHOD3(HRESULT, RegisterClassReqCategories, REFCLSID, rclsid, ULONG, cCategories, CATID*, rgcatid) \
-    ICOM_METHOD3(HRESULT, UnRegisterClassReqCategories, REFCLSID, rclsid, ULONG, cCategories, CATID*, rgcatid)
+    STDMETHOD(RegisterCategories)(THIS_ ULONG  cCategories, CATEGORYINFO * rgCategoryInfo) PURE; \
+    STDMETHOD(UnRegisterCategories)(THIS_ ULONG  cCategories, CATID * rgcatid) PURE; \
+    STDMETHOD(RegisterClassImplCategories)(THIS_ REFCLSID  rclsid, ULONG  cCategories, CATID * rgcatid) PURE; \
+    STDMETHOD(UnRegisterClassImplCategories)(THIS_ REFCLSID  rclsid, ULONG  cCategories, CATID * rgcatid) PURE; \
+    STDMETHOD(RegisterClassReqCategories)(THIS_ REFCLSID  rclsid, ULONG  cCategories, CATID * rgcatid) PURE; \
+    STDMETHOD(UnRegisterClassReqCategories)(THIS_ REFCLSID  rclsid, ULONG  cCategories, CATID * rgcatid) PURE;
 #define ICatRegister_IMETHODS \
     IUnknown_IMETHODS \
     ICatRegister_METHODS
 ICOM_DEFINE(ICatRegister,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 #ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
@@ -153,17 +153,17 @@ ICOM_DEFINE(ICatRegister,IUnknown)
 /*****************************************************************************
  * IEnumCATEGORYINFO
  */
-#define ICOM_INTERFACE IEnumCATEGORYINFO
+#define INTERFACE IEnumCATEGORYINFO
 #define IEnumCATEGORYINFO_METHODS \
-    ICOM_METHOD3(HRESULT, Next, ULONG, celt, CATEGORYINFO*, rgelt, ULONG*, pceltFetched) \
-    ICOM_METHOD1(HRESULT, Skip, ULONG, celt) \
-    ICOM_METHOD (HRESULT, Reset) \
-    ICOM_METHOD1(HRESULT, Clone, IEnumCATEGORYINFO**, ppenum)
+    STDMETHOD(Next)(THIS_ ULONG  celt, CATEGORYINFO * rgelt, ULONG * pceltFetched) PURE; \
+    STDMETHOD(Skip)(THIS_ ULONG  celt) PURE; \
+    STDMETHOD(Reset)(THIS) PURE; \
+    STDMETHOD(Clone)(THIS_ IEnumCATEGORYINFO ** ppenum) PURE;
 #define IEnumCATEGORYINFO_IMETHODS \
     IUnknown_IMETHODS \
     IEnumCATEGORYINFO_METHODS
 ICOM_DEFINE(IEnumCATEGORYINFO,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 #ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/

@@ -243,18 +243,18 @@ typedef enum
 
 typedef struct IQueryAssociations IQueryAssociations,*LPQUERYASSOCIATIONS;
 
-#define ICOM_INTERFACE IQueryAssociations
+#define INTERFACE IQueryAssociations
 #define IQueryAssociations_METHODS \
-    ICOM_METHOD4 (HRESULT, Init, ASSOCF, flags, LPCWSTR, pszAssoc, HKEY, hkProgid, HWND, hwnd) \
-    ICOM_METHOD5 (HRESULT, GetString, ASSOCF, flags, ASSOCSTR, str, LPCWSTR, pszExtra, LPWSTR, pszOut, DWORD*, pcchOut) \
-    ICOM_METHOD4 (HRESULT, GetKey, ASSOCF, flags, ASSOCKEY, key, LPCWSTR, pszExtra, HKEY*, phkeyOut) \
-    ICOM_METHOD5 (HRESULT, GetData, ASSOCF, flags, ASSOCDATA, data, LPCWSTR, pszExtra, LPVOID, pvOut, DWORD*, pcbOut) \
-    ICOM_METHOD5 (HRESULT, GetEnum, ASSOCF, flags, ASSOCENUM, assocenum, LPCWSTR, pszExtra, REFIID, riid, LPVOID*, ppvOut)
+    STDMETHOD(Init)(THIS_ ASSOCF  flags, LPCWSTR  pszAssoc, HKEY  hkProgid, HWND  hwnd) PURE; \
+    STDMETHOD(GetString)(THIS_ ASSOCF  flags, ASSOCSTR  str, LPCWSTR  pszExtra, LPWSTR  pszOut, DWORD * pcchOut) PURE; \
+    STDMETHOD(GetKey)(THIS_ ASSOCF  flags, ASSOCKEY  key, LPCWSTR  pszExtra, HKEY * phkeyOut) PURE; \
+    STDMETHOD(GetData)(THIS_ ASSOCF  flags, ASSOCDATA  data, LPCWSTR  pszExtra, LPVOID  pvOut, DWORD * pcbOut) PURE; \
+    STDMETHOD(GetEnum)(THIS_ ASSOCF  flags, ASSOCENUM  assocenum, LPCWSTR  pszExtra, REFIID  riid, LPVOID * ppvOut) PURE;
 #define IQueryAssociations_IMETHODS \
         IUnknown_IMETHODS \
         IQueryAssociations_METHODS
 ICOM_DEFINE(IQueryAssociations,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 #define IQueryAssociations_QueryInterface(p,a,b)   ICOM_CALL2(QueryInterface,p,a,b)
 #define IQueryAssociations_AddRef(p)               ICOM_CALL(AddRef,p)

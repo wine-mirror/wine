@@ -987,24 +987,24 @@ DEFINE_AVIGUID(CLSID_AVIFile,           0x00020000, 0, 0);
 /*****************************************************************************
  * IAVIStream interface
  */
-#define ICOM_INTERFACE IAVIStream
+#define INTERFACE IAVIStream
 #define IAVIStream_METHODS						\
-    ICOM_METHOD2(HRESULT,Create,     LPARAM,lParam1, LPARAM,lParam2) \
-    ICOM_METHOD2(HRESULT,Info,       AVISTREAMINFOW*,psi, LONG,lSize) \
-    ICOM_METHOD2(LONG,   FindSample, LONG,lPos, LONG,lFlags) \
-    ICOM_METHOD3(HRESULT,ReadFormat, LONG,lPos, LPVOID,lpFormat, LONG*,lpcbFormat) \
-    ICOM_METHOD3(HRESULT,SetFormat,  LONG,lPos, LPVOID,lpFormat, LONG,cbFormat) \
-    ICOM_METHOD6(HRESULT,Read,       LONG,lStart, LONG,lSamples, LPVOID,lpBuffer, LONG,cbBuffer, LONG*,plBytes, LONG*,plSamples) \
-    ICOM_METHOD7(HRESULT,Write,      LONG,lStart, LONG,lSamples, LPVOID,lpBuffer, LONG,cbBuffer, DWORD,dwFlags, LONG*,plSampWritten, LONG*,plBytesWritten) \
-    ICOM_METHOD2(HRESULT,Delete,     LONG,lStart, LONG,lSamples) \
-    ICOM_METHOD3(HRESULT,ReadData,   DWORD,fcc, LPVOID,lpBuffer, LONG*,lpcbBuffer) \
-    ICOM_METHOD3(HRESULT,WriteData,  DWORD,fcc, LPVOID,lpBuffer, LONG,cbBuffer) \
-    ICOM_METHOD2(HRESULT,SetInfo,    AVISTREAMINFOW*,plInfo, LONG,cbInfo)
+    STDMETHOD(Create)(THIS_ LPARAM lParam1, LPARAM lParam2) PURE; \
+    STDMETHOD(Info)(THIS_ AVISTREAMINFOW *psi, LONG lSize) PURE; \
+    STDMETHOD_(LONG,FindSample)(THIS_ LONG lPos, LONG lFlags) PURE; \
+    STDMETHOD(ReadFormat)(THIS_ LONG lPos, LPVOID lpFormat, LONG *lpcbFormat) PURE; \
+    STDMETHOD(SetFormat)(THIS_ LONG lPos, LPVOID lpFormat, LONG cbFormat) PURE; \
+    STDMETHOD(Read)(THIS_ LONG lStart, LONG lSamples, LPVOID lpBuffer, LONG cbBuffer, LONG *plBytes, LONG *plSamples) PURE; \
+    STDMETHOD(Write)(THIS_ LONG lStart, LONG lSamples, LPVOID lpBuffer, LONG cbBuffer, DWORD dwFlags, LONG *plSampWritten, LONG *plBytesWritten) PURE; \
+    STDMETHOD(Delete)(THIS_ LONG lStart, LONG lSamples) PURE; \
+    STDMETHOD(ReadData)(THIS_ DWORD fcc, LPVOID lpBuffer, LONG *lpcbBuffer) PURE; \
+    STDMETHOD(WriteData)(THIS_ DWORD fcc, LPVOID lpBuffer, LONG cbBuffer) PURE; \
+    STDMETHOD(SetInfo)(THIS_ AVISTREAMINFOW *plInfo, LONG cbInfo) PURE;
 #define IAVIStream_IMETHODS	\
 	IUnknown_IMETHODS	\
 	IAVIStream_METHODS
 ICOM_DEFINE(IAVIStream, IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IAVIStream_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
@@ -1087,20 +1087,20 @@ LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime);
  * IAVIFile interface
  */
 /* In Win32 this interface uses UNICODE only */
-#define ICOM_INTERFACE IAVIFile
+#define INTERFACE IAVIFile
 #define IAVIFile_METHODS 						\
-    ICOM_METHOD2(HRESULT,Info,         AVIFILEINFOW*,pfi, LONG,lSize) \
-    ICOM_METHOD3(HRESULT,GetStream,    PAVISTREAM*,ppStream, DWORD,fccType, LONG,lParam) \
-    ICOM_METHOD2(HRESULT,CreateStream, PAVISTREAM*,ppStream, AVISTREAMINFOW*,psi) \
-    ICOM_METHOD3(HRESULT,WriteData,    DWORD,fcc, LPVOID,lpBuffer, LONG,cbBuffer) \
-    ICOM_METHOD3(HRESULT,ReadData,     DWORD,fcc, LPVOID,lpBuffer, LONG*,lpcbBuffer) \
-	ICOM_METHOD (HRESULT,EndRecord)					\
-    ICOM_METHOD2(HRESULT,DeleteStream, DWORD,fccType, LONG,lParam)
+    STDMETHOD(Info)(THIS_ AVIFILEINFOW *pfi, LONG lSize) PURE; \
+    STDMETHOD(GetStream)(THIS_ PAVISTREAM *ppStream, DWORD fccType, LONG lParam) PURE; \
+    STDMETHOD(CreateStream)(THIS_ PAVISTREAM *ppStream, AVISTREAMINFOW *psi) PURE; \
+    STDMETHOD(WriteData)(THIS_ DWORD fcc, LPVOID lpBuffer, LONG cbBuffer) PURE; \
+    STDMETHOD(ReadData)(THIS_ DWORD fcc, LPVOID lpBuffer, LONG *lpcbBuffer) PURE; \
+    STDMETHOD(EndRecord)(THIS) PURE; \
+    STDMETHOD(DeleteStream)(THIS_ DWORD fccType, LONG lParam) PURE;
 #define IAVIFile_IMETHODS 	\
 	IUnknown_IMETHODS	\
 	IAVIFile_METHODS
 ICOM_DEFINE(IAVIFile,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IAVIFile_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
@@ -1138,17 +1138,17 @@ HRESULT WINAPI AVIFileEndRecord(PAVIFILE pfile);
 /*****************************************************************************
  * IGetFrame interface
  */
-#define ICOM_INTERFACE IGetFrame
+#define INTERFACE IGetFrame
 #define IGetFrame_METHODS					\
-    ICOM_METHOD1(LPVOID, GetFrame,  LONG,lPos) \
-    ICOM_METHOD3(HRESULT,Begin,     LONG,lStart, LONG,lEnd, LONG,lRate) \
-	ICOM_METHOD (HRESULT,End)				\
-    ICOM_METHOD6(HRESULT,SetFormat, LPBITMAPINFOHEADER,lpbi, LPVOID,lpBits, INT,x, INT,y, INT,dx, INT,dy)
+    STDMETHOD_(LPVOID,GetFrame)(THIS_ LONG lPos) PURE; \
+    STDMETHOD(Begin)(THIS_ LONG lStart, LONG lEnd, LONG lRate) PURE; \
+    STDMETHOD(End)(THIS) PURE; \
+    STDMETHOD(SetFormat)(THIS_ LPBITMAPINFOHEADER lpbi, LPVOID lpBits, INT x, INT y, INT dx, INT dy) PURE;
 #define IGetFrame_IMETHODS	\
 	IUnknown_IMETHODS	\
 	IGetFrame_METHODS
 ICOM_DEFINE(IGetFrame,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IGetFrame_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)

@@ -44,15 +44,15 @@ typedef struct IExtractIconW IExtractIconW,*LPEXTRACTICONW;
 #define GIL_DONTCACHE    0x0010      /* this icon should not be cached */
 
 
-#define ICOM_INTERFACE IExtractIconA
+#define INTERFACE IExtractIconA
 #define IExtractIconA_METHODS \
-	ICOM_METHOD5(HRESULT, GetIconLocation, UINT, uFlags, LPSTR, szIconFile, UINT, cchMax, INT*, piIndex, UINT *, pwFlags) \
-	ICOM_METHOD5(HRESULT, Extract, LPCSTR, pszFile, UINT, nIconIndex, HICON*, phiconLarge, HICON*, phiconSmall, UINT, nIconSize)
+	STDMETHOD(GetIconLocation)(THIS_ UINT  uFlags, LPSTR  szIconFile, UINT  cchMax, INT * piIndex, UINT  * pwFlags) PURE; \
+	STDMETHOD(Extract)(THIS_ LPCSTR  pszFile, UINT  nIconIndex, HICON * phiconLarge, HICON * phiconSmall, UINT  nIconSize) PURE;
 #define IExtractIconA_IMETHODS \
 	IUnknown_IMETHODS \
 	IExtractIconA_METHODS
 ICOM_DEFINE(IExtractIconA,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 #define IExtractIconA_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
 #define IExtractIconA_AddRef(p)			ICOM_CALL(AddRef,p)
@@ -61,15 +61,15 @@ ICOM_DEFINE(IExtractIconA,IUnknown)
 #define IExtractIconA_Extract(p,a,b,c,d,e)	ICOM_CALL5(Extract,p,a,b,c,d,e)
 
 
-#define ICOM_INTERFACE IExtractIconW
+#define INTERFACE IExtractIconW
 #define IExtractIconW_METHODS \
-	ICOM_METHOD5(HRESULT, GetIconLocation, UINT, uFlags, LPWSTR, szIconFile, UINT, cchMax, INT*, piIndex, UINT *, pwFlags) \
-	ICOM_METHOD5(HRESULT, Extract, LPCWSTR, pszFile, UINT, nIconIndex, HICON*, phiconLarge, HICON*, phiconSmall, UINT, nIconSize)
+	STDMETHOD(GetIconLocation)(THIS_ UINT  uFlags, LPWSTR  szIconFile, UINT  cchMax, INT * piIndex, UINT  * pwFlags) PURE; \
+	STDMETHOD(Extract)(THIS_ LPCWSTR  pszFile, UINT  nIconIndex, HICON * phiconLarge, HICON * phiconSmall, UINT  nIconSize) PURE;
 #define IExtractIconW_IMETHODS \
 	IUnknown_IMETHODS \
 	IExtractIconW_METHODS
 ICOM_DEFINE(IExtractIconW,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 #define IExtractIconW_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
 #define IExtractIconW_AddRef(p)			ICOM_CALL(AddRef,p)

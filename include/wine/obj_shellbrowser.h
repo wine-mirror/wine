@@ -66,26 +66,26 @@ DEFINE_GUID(SID_STopLevelBrowser, 0x4C96BE40L, 0x915C, 0x11CF, 0x99, 0xD3, 0x00,
 #define FCT_CONFIGABLE  0x0002
 #define FCT_ADDTOEND    0x0004
 
-#define ICOM_INTERFACE IShellBrowser
+#define INTERFACE IShellBrowser
 #define IShellBrowser_METHODS \
-	ICOM_METHOD2(HRESULT, InsertMenusSB, HMENU, hmenuShared, LPOLEMENUGROUPWIDTHS, lpMenuWidths) \
-	ICOM_METHOD3(HRESULT, SetMenuSB, HMENU, hmenuShared, HOLEMENU, holemenuReserved, HWND, hwndActiveObject) \
-	ICOM_METHOD1(HRESULT, RemoveMenusSB, HMENU, hmenuShared) \
-	ICOM_METHOD1(HRESULT, SetStatusTextSB, LPCOLESTR, lpszStatusText) \
-	ICOM_METHOD1(HRESULT, EnableModelessSB, BOOL, fEnable) \
-	ICOM_METHOD2(HRESULT, TranslateAcceleratorSB, LPMSG, lpmsg, WORD, wID) \
-	ICOM_METHOD2(HRESULT, BrowseObject, LPCITEMIDLIST, pidl, UINT, wFlags) \
-	ICOM_METHOD2(HRESULT, GetViewStateStream, DWORD, grfMode, LPSTREAM*, ppStrm) \
-	ICOM_METHOD2(HRESULT, GetControlWindow, UINT, id, HWND*, lphwnd) \
-	ICOM_METHOD5(HRESULT, SendControlMsg, UINT, id, UINT, uMsg, WPARAM, wParam, LPARAM, lParam, LRESULT*, pret) \
-	ICOM_METHOD1(HRESULT, QueryActiveShellView, IShellView**, IShellView) \
-	ICOM_METHOD1(HRESULT, OnViewWindowActive, IShellView*, IShellView) \
-	ICOM_METHOD3(HRESULT, SetToolbarItems, LPTBBUTTON, lpButtons, UINT, nButtons, UINT, uFlags)
+	STDMETHOD(InsertMenusSB)(THIS_ HMENU  hmenuShared, LPOLEMENUGROUPWIDTHS  lpMenuWidths) PURE; \
+	STDMETHOD(SetMenuSB)(THIS_ HMENU  hmenuShared, HOLEMENU  holemenuReserved, HWND  hwndActiveObject) PURE; \
+	STDMETHOD(RemoveMenusSB)(THIS_ HMENU  hmenuShared) PURE; \
+	STDMETHOD(SetStatusTextSB)(THIS_ LPCOLESTR  lpszStatusText) PURE; \
+	STDMETHOD(EnableModelessSB)(THIS_ BOOL  fEnable) PURE; \
+	STDMETHOD(TranslateAcceleratorSB)(THIS_ LPMSG  lpmsg, WORD  wID) PURE; \
+	STDMETHOD(BrowseObject)(THIS_ LPCITEMIDLIST  pidl, UINT  wFlags) PURE; \
+	STDMETHOD(GetViewStateStream)(THIS_ DWORD  grfMode, LPSTREAM * ppStrm) PURE; \
+	STDMETHOD(GetControlWindow)(THIS_ UINT  id, HWND * lphwnd) PURE; \
+	STDMETHOD(SendControlMsg)(THIS_ UINT  id, UINT  uMsg, WPARAM  wParam, LPARAM  lParam, LRESULT * pret) PURE; \
+	STDMETHOD(QueryActiveShellView)(THIS_ IShellView ** IShellView) PURE; \
+	STDMETHOD(OnViewWindowActive)(THIS_ IShellView * IShellView) PURE; \
+	STDMETHOD(SetToolbarItems)(THIS_ LPTBBUTTON  lpButtons, UINT  nButtons, UINT  uFlags) PURE;
 #define IShellBrowser_IMETHODS \
 	IOleWindow_IMETHODS \
 	IShellBrowser_METHODS
 ICOM_DEFINE(IShellBrowser,IOleWindow)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IShellBrowser_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)

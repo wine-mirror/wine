@@ -368,52 +368,52 @@ typedef BOOL (CALLBACK *LPDPLENUMLOCALAPPLICATIONSCALLBACK)(
 /*****************************************************************************
  * IDirectPlayLobby and IDirectPlayLobbyA interface
  */
-#define ICOM_INTERFACE IDirectPlayLobby
+#define INTERFACE IDirectPlayLobby
 #define IDirectPlayLobby_METHODS \
-    ICOM_METHOD3(HRESULT,Connect,               DWORD,, LPDIRECTPLAY2*,, IUnknown*,) \
-    ICOM_METHOD6(HRESULT,CreateAddress,         REFGUID,, REFGUID,, LPCVOID,, DWORD,, LPVOID,, LPDWORD,) \
-    ICOM_METHOD4(HRESULT,EnumAddress,           LPDPENUMADDRESSCALLBACK,, LPCVOID,, DWORD,, LPVOID,) \
-    ICOM_METHOD4(HRESULT,EnumAddressTypes,      LPDPLENUMADDRESSTYPESCALLBACK,, REFGUID,, LPVOID,, DWORD,) \
-    ICOM_METHOD3(HRESULT,EnumLocalApplications, LPDPLENUMLOCALAPPLICATIONSCALLBACK,, LPVOID,, DWORD,) \
-    ICOM_METHOD3(HRESULT,GetConnectionSettings, DWORD,, LPVOID,, LPDWORD,) \
-    ICOM_METHOD5(HRESULT,ReceiveLobbyMessage,   DWORD,, DWORD,, LPDWORD,, LPVOID,, LPDWORD,) \
-    ICOM_METHOD4(HRESULT,RunApplication,        DWORD,, LPDWORD,, LPDPLCONNECTION,, HANDLE,) \
-    ICOM_METHOD4(HRESULT,SendLobbyMessage,      DWORD,, DWORD,, LPVOID,, DWORD,) \
-    ICOM_METHOD3(HRESULT,SetConnectionSettings, DWORD,, DWORD,, LPDPLCONNECTION,) \
-    ICOM_METHOD3(HRESULT,SetLobbyMessageEvent,  DWORD,, DWORD,, HANDLE,)
+    STDMETHOD(Connect)(THIS_ DWORD, LPDIRECTPLAY2*, IUnknown*) PURE; \
+    STDMETHOD(CreateAddress)(THIS_ REFGUID, REFGUID, LPCVOID, DWORD, LPVOID, LPDWORD) PURE; \
+    STDMETHOD(EnumAddress)(THIS_ LPDPENUMADDRESSCALLBACK, LPCVOID, DWORD, LPVOID) PURE; \
+    STDMETHOD(EnumAddressTypes)(THIS_ LPDPLENUMADDRESSTYPESCALLBACK, REFGUID, LPVOID, DWORD) PURE; \
+    STDMETHOD(EnumLocalApplications)(THIS_ LPDPLENUMLOCALAPPLICATIONSCALLBACK, LPVOID, DWORD) PURE; \
+    STDMETHOD(GetConnectionSettings)(THIS_ DWORD, LPVOID, LPDWORD) PURE; \
+    STDMETHOD(ReceiveLobbyMessage)(THIS_ DWORD, DWORD, LPDWORD, LPVOID, LPDWORD) PURE; \
+    STDMETHOD(RunApplication)(THIS_ DWORD, LPDWORD, LPDPLCONNECTION, HANDLE) PURE; \
+    STDMETHOD(SendLobbyMessage)(THIS_ DWORD, DWORD, LPVOID, DWORD) PURE; \
+    STDMETHOD(SetConnectionSettings)(THIS_ DWORD, DWORD, LPDPLCONNECTION) PURE; \
+    STDMETHOD(SetLobbyMessageEvent)(THIS_ DWORD, DWORD, HANDLE) PURE;
 #define IDirectPlayLobby_IMETHODS \
     IUnknown_IMETHODS \
     IDirectPlayLobby_METHODS
 ICOM_DEFINE(IDirectPlayLobby,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*****************************************************************************
  * IDirectPlayLobby2 and IDirectPlayLobby2A interface
  */
-#define ICOM_INTERFACE IDirectPlayLobby2
+#define INTERFACE IDirectPlayLobby2
 #define IDirectPlayLobby2_METHODS \
-    ICOM_METHOD4(HRESULT,CreateCompoundAddress, LPCDPCOMPOUNDADDRESSELEMENT,, DWORD,, LPVOID,, LPDWORD,)
+    STDMETHOD(CreateCompoundAddress)(THIS_ LPCDPCOMPOUNDADDRESSELEMENT, DWORD, LPVOID, LPDWORD) PURE;
 #define IDirectPlayLobby2_IMETHODS \
     IDirectPlayLobby_IMETHODS \
     IDirectPlayLobby2_METHODS
 ICOM_DEFINE(IDirectPlayLobby2,IDirectPlayLobby)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*****************************************************************************
  * IDirectPlayLobby3 and IDirectPlayLobby3A interface
  */
-#define ICOM_INTERFACE IDirectPlayLobby3
+#define INTERFACE IDirectPlayLobby3
 #define IDirectPlayLobby3_METHODS \
-    ICOM_METHOD4( HRESULT, ConnectEx,                 DWORD,, REFIID,, LPVOID *,, IUnknown *,) \
-    ICOM_METHOD2( HRESULT, RegisterApplication,       DWORD,, LPDPAPPLICATIONDESC, ) \
-    ICOM_METHOD2( HRESULT, UnregisterApplication,     DWORD,, REFGUID, ) \
-    ICOM_METHOD1( HRESULT, WaitForConnectionSettings, DWORD, )
+    STDMETHOD(ConnectEx)(THIS_ DWORD, REFIID, LPVOID *, IUnknown *) PURE; \
+    STDMETHOD(RegisterApplication)(THIS_ DWORD, LPDPAPPLICATIONDESC) PURE; \
+    STDMETHOD(UnregisterApplication)(THIS_ DWORD, REFGUID) PURE; \
+    STDMETHOD(WaitForConnectionSettings)(THIS_ DWORD) PURE;
 
 #define IDirectPlayLobby3_IMETHODS \
     IDirectPlayLobby2_IMETHODS \
     IDirectPlayLobby3_METHODS
 ICOM_DEFINE(IDirectPlayLobby3,IDirectPlayLobby2)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 #define IDirectPlayLobby_QueryInterface(p,a,b)              ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirectPlayLobby_AddRef(p)                          ICOM_CALL (AddRef,p)

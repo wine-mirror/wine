@@ -40,14 +40,14 @@ typedef struct IServiceProvider IServiceProvider,*LPSERVICEPROVIDER;
 /*****************************************************************************
  * IServiceProvider interface
  */
-#define ICOM_INTERFACE IServiceProvider
+#define INTERFACE IServiceProvider
 #define IServiceProvider_METHODS \
-    ICOM_METHOD3(HRESULT,QueryService, REFGUID,guidService, REFIID,riid, void**,ppvObject)
+    STDMETHOD(QueryService)(THIS_ REFGUID guidService, REFIID riid, void **ppvObject) PURE;
 #define IServiceProvider_IMETHODS \
     IUnknown_IMETHODS \
     IServiceProvider_METHODS
 ICOM_DEFINE(IServiceProvider,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IServiceProvider_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)

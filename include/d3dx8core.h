@@ -55,19 +55,19 @@ typedef struct ID3DXFont                ID3DXFont, *LPD3DXFONT;
 /*****************************************************************************
  * ID3DXBuffer interface
  */
-#undef ICOM_INTERFACE
-#define ICOM_INTERFACE ID3DXBuffer
+#undef INTERFACE
+#define INTERFACE ID3DXBuffer
 #define ID3DXBuffer_METHODS \
     /*** ID3DXBuffer methods ***/ \
-    ICOM_METHOD (LPVOID,  GetBufferPointer) \
-    ICOM_METHOD (DWORD,   GetBufferSize)
+    STDMETHOD_(LPVOID,GetBufferPointer)(THIS) PURE; \
+    STDMETHOD_(DWORD,GetBufferSize)(THIS) PURE;
 
     /*** ID3DXBuffer methods ***/
 #define ID3DXBuffer_IMETHODS \
     IUnknown_IMETHODS \
     ID3DXBuffer_METHODS
 ICOM_DEFINE(ID3DXBuffer,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define ID3DXBuffer_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
@@ -80,20 +80,20 @@ ICOM_DEFINE(ID3DXBuffer,IUnknown)
 /*****************************************************************************
  * ID3DXFont interface
  */
-#undef ICOM_INTERFACE
-#define ICOM_INTERFACE ID3DXFont
+#undef INTERFACE
+#define INTERFACE ID3DXFont
 #define ID3DXFont_METHODS \
     /*** ID3DXFont methods ***/ \
-    ICOM_METHOD (HRESULT,  Begin) \
-    ICOM_METHOD (HRESULT,  DrawTextA) \
-    ICOM_METHOD (HRESULT,  End)
+    STDMETHOD(Begin)(THIS) PURE; \
+    STDMETHOD(DrawTextA)(THIS) PURE; \
+    STDMETHOD(End)(THIS) PURE;
 
     /*** ID3DXFont methods ***/
 #define ID3DXFont_IMETHODS \
     IUnknown_IMETHODS \
     ID3DXFont_METHODS
 ICOM_DEFINE(ID3DXFont,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define ID3DXFont_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)

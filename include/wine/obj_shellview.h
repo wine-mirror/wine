@@ -127,25 +127,25 @@ typedef enum
   SVUIA_INPLACEACTIVATE  = 3          /* new flag for IShellView2 */
 } SVUIA_STATUS;
 
-#define ICOM_INTERFACE IShellView
+#define INTERFACE IShellView
 #define IShellView_METHODS \
-	ICOM_METHOD1(HRESULT, TranslateAccelerator, LPMSG, lpmsg) \
-	ICOM_METHOD1(HRESULT, EnableModeless, BOOL, fEnable) \
-	ICOM_METHOD1(HRESULT, UIActivate, UINT, uState) \
-	ICOM_METHOD(HRESULT, Refresh) \
-	ICOM_METHOD5(HRESULT, CreateViewWindow, IShellView*, lpPrevView, LPCFOLDERSETTINGS, lpfs, IShellBrowser*, psb, RECT*, prcView, HWND*, phWnd) \
-	ICOM_METHOD(HRESULT, DestroyViewWindow) \
-	ICOM_METHOD1(HRESULT, GetCurrentInfo, LPFOLDERSETTINGS, lpfs) \
-	ICOM_METHOD3(HRESULT, AddPropertySheetPages, DWORD, dwReserved, LPFNADDPROPSHEETPAGE, lpfn, LPARAM, lparam) \
-	ICOM_METHOD (HRESULT, SaveViewState) \
-	ICOM_METHOD2(HRESULT, SelectItem, LPCITEMIDLIST, pidlItem, UINT, uFlags) \
-	ICOM_METHOD3(HRESULT, GetItemObject, UINT, uItem, REFIID, riid, LPVOID*, ppv) \
-	ICOM_METHOD1(HRESULT, EditItem, LPCITEMIDLIST, pidlItem)
+	STDMETHOD(TranslateAccelerator)(THIS_ LPMSG  lpmsg) PURE; \
+	STDMETHOD(EnableModeless)(THIS_ BOOL  fEnable) PURE; \
+	STDMETHOD(UIActivate)(THIS_ UINT  uState) PURE; \
+	STDMETHOD(Refresh)(THIS) PURE; \
+	STDMETHOD(CreateViewWindow)(THIS_ IShellView * lpPrevView, LPCFOLDERSETTINGS  lpfs, IShellBrowser * psb, RECT * prcView, HWND * phWnd) PURE; \
+	STDMETHOD(DestroyViewWindow)(THIS) PURE; \
+	STDMETHOD(GetCurrentInfo)(THIS_ LPFOLDERSETTINGS  lpfs) PURE; \
+	STDMETHOD(AddPropertySheetPages)(THIS_ DWORD  dwReserved, LPFNADDPROPSHEETPAGE  lpfn, LPARAM  lparam) PURE; \
+	STDMETHOD(SaveViewState)(THIS) PURE; \
+	STDMETHOD(SelectItem)(THIS_ LPCITEMIDLIST  pidlItem, UINT  uFlags) PURE; \
+	STDMETHOD(GetItemObject)(THIS_ UINT  uItem, REFIID  riid, LPVOID * ppv) PURE; \
+	STDMETHOD(EditItem)(THIS_ LPCITEMIDLIST  pidlItem) PURE;
 #define IShellView_IMETHODS \
 	IOleWindow_IMETHODS \
 	IShellView_METHODS
 ICOM_DEFINE(IShellView,IOleWindow)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IShellView_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)

@@ -34,16 +34,16 @@ typedef struct 	ICommDlgBrowser ICommDlgBrowser, *LPCOMMDLGBROWSER;
 #define CDBOSC_RENAME       0x00000003
 
 
-#define ICOM_INTERFACE ICommDlgBrowser
+#define INTERFACE ICommDlgBrowser
 #define ICommDlgBrowser_METHODS \
-	ICOM_METHOD1(HRESULT, OnDefaultCommand, IShellView*, IShellView) \
-	ICOM_METHOD2(HRESULT, OnStateChange, IShellView*, IShellView, ULONG, uChange) \
-	ICOM_METHOD2(HRESULT, IncludeObject, IShellView*, IShellView, LPCITEMIDLIST, pidl)
+	STDMETHOD(OnDefaultCommand)(THIS_ IShellView * IShellView) PURE; \
+	STDMETHOD(OnStateChange)(THIS_ IShellView * IShellView, ULONG  uChange) PURE; \
+	STDMETHOD(IncludeObject)(THIS_ IShellView * IShellView, LPCITEMIDLIST  pidl) PURE;
 #define ICommDlgBrowser_IMETHODS \
 	IUnknown_IMETHODS \
 	ICommDlgBrowser_METHODS
 ICOM_DEFINE(ICommDlgBrowser,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 #define ICommDlgBrowser_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
 #define ICommDlgBrowser_AddRef(p)		ICOM_CALL(AddRef,p)

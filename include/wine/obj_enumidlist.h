@@ -32,17 +32,17 @@ extern "C" {
  */
 typedef struct IEnumIDList IEnumIDList, *LPENUMIDLIST;
 
-#define ICOM_INTERFACE IEnumIDList
+#define INTERFACE IEnumIDList
 #define IEnumIDList_METHODS \
-    ICOM_METHOD3(HRESULT, Next, ULONG, celt, LPITEMIDLIST*, rgelt, ULONG*, pceltFetched) \
-    ICOM_METHOD1(HRESULT, Skip, ULONG, celt) \
-    ICOM_METHOD (HRESULT, Reset) \
-    ICOM_METHOD1(HRESULT, Clone, IEnumIDList**, ppenum)
+    STDMETHOD(Next)(THIS_ ULONG  celt, LPITEMIDLIST * rgelt, ULONG * pceltFetched) PURE; \
+    STDMETHOD(Skip)(THIS_ ULONG  celt) PURE; \
+    STDMETHOD(Reset)(THIS) PURE; \
+    STDMETHOD(Clone)(THIS_ IEnumIDList ** ppenum) PURE;
 #define IEnumIDList_IMETHODS \
     IUnknown_IMETHODS \
     IEnumIDList_METHODS
 ICOM_DEFINE(IEnumIDList,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IEnumIDList_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)

@@ -52,31 +52,31 @@ typedef enum
 /*****************************************************************************
  * IShellLink interface
  */
-#define ICOM_INTERFACE IShellLinkA
+#define INTERFACE IShellLinkA
 #define IShellLinkA_METHODS \
-    ICOM_METHOD4( HRESULT, GetPath, LPSTR, pszFile, INT, cchMaxPath, WIN32_FIND_DATAA *, pfd, DWORD, fFlags) \
-    ICOM_METHOD1( HRESULT, GetIDList, LPITEMIDLIST *, ppidl) \
-    ICOM_METHOD1( HRESULT, SetIDList, LPCITEMIDLIST, pidl) \
-    ICOM_METHOD2( HRESULT, GetDescription, LPSTR, pszName, INT, cchMaxName) \
-    ICOM_METHOD1( HRESULT, SetDescription, LPCSTR, pszName) \
-    ICOM_METHOD2( HRESULT, GetWorkingDirectory, LPSTR, pszDir,INT, cchMaxPath) \
-    ICOM_METHOD1( HRESULT, SetWorkingDirectory, LPCSTR, pszDir) \
-    ICOM_METHOD2( HRESULT, GetArguments, LPSTR, pszArgs, INT, cchMaxPath) \
-    ICOM_METHOD1( HRESULT, SetArguments, LPCSTR, pszArgs) \
-    ICOM_METHOD1( HRESULT, GetHotkey, WORD*, pwHotkey) \
-    ICOM_METHOD1( HRESULT, SetHotkey, WORD, wHotkey) \
-    ICOM_METHOD1( HRESULT, GetShowCmd, INT*, piShowCmd) \
-    ICOM_METHOD1( HRESULT, SetShowCmd, INT, iShowCmd) \
-    ICOM_METHOD3( HRESULT, GetIconLocation, LPSTR, pszIconPath, INT, cchIconPath,INT *, piIcon) \
-    ICOM_METHOD2( HRESULT, SetIconLocation, LPCSTR, pszIconPath,INT, iIcon) \
-    ICOM_METHOD2( HRESULT, SetRelativePath, LPCSTR, pszPathRel, DWORD, dwReserved) \
-    ICOM_METHOD2( HRESULT, Resolve, HWND, hwnd, DWORD, fFlags) \
-    ICOM_METHOD1( HRESULT, SetPath, LPCSTR, pszFile)
+    STDMETHOD(GetPath)(THIS_ LPSTR  pszFile, INT  cchMaxPath, WIN32_FIND_DATAA  * pfd, DWORD  fFlags) PURE; \
+    STDMETHOD(GetIDList)(THIS_ LPITEMIDLIST  * ppidl) PURE; \
+    STDMETHOD(SetIDList)(THIS_ LPCITEMIDLIST  pidl) PURE; \
+    STDMETHOD(GetDescription)(THIS_ LPSTR  pszName, INT  cchMaxName) PURE; \
+    STDMETHOD(SetDescription)(THIS_ LPCSTR  pszName) PURE; \
+    STDMETHOD(GetWorkingDirectory)(THIS_ LPSTR  pszDir,INT  cchMaxPath) PURE; \
+    STDMETHOD(SetWorkingDirectory)(THIS_ LPCSTR  pszDir) PURE; \
+    STDMETHOD(GetArguments)(THIS_ LPSTR  pszArgs, INT  cchMaxPath) PURE; \
+    STDMETHOD(SetArguments)(THIS_ LPCSTR  pszArgs) PURE; \
+    STDMETHOD(GetHotkey)(THIS_ WORD * pwHotkey) PURE; \
+    STDMETHOD(SetHotkey)(THIS_ WORD  wHotkey) PURE; \
+    STDMETHOD(GetShowCmd)(THIS_ INT * piShowCmd) PURE; \
+    STDMETHOD(SetShowCmd)(THIS_ INT  iShowCmd) PURE; \
+    STDMETHOD(GetIconLocation)(THIS_ LPSTR  pszIconPath, INT  cchIconPath,INT  * piIcon) PURE; \
+    STDMETHOD(SetIconLocation)(THIS_ LPCSTR  pszIconPath,INT  iIcon) PURE; \
+    STDMETHOD(SetRelativePath)(THIS_ LPCSTR  pszPathRel, DWORD  dwReserved) PURE; \
+    STDMETHOD(Resolve)(THIS_ HWND  hwnd, DWORD  fFlags) PURE; \
+    STDMETHOD(SetPath)(THIS_ LPCSTR  pszFile) PURE;
 #define IShellLinkA_IMETHODS \
     IUnknown_IMETHODS \
     IShellLinkA_METHODS
 ICOM_DEFINE(IShellLinkA,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IShellLinkA_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
@@ -105,31 +105,31 @@ ICOM_DEFINE(IShellLinkA,IUnknown)
 /*****************************************************************************
  * IShellLinkW interface
  */
-#define ICOM_INTERFACE IShellLinkW
+#define INTERFACE IShellLinkW
 #define IShellLinkW_METHODS \
-    ICOM_METHOD4( HRESULT, GetPath, LPWSTR, pszFile, INT, cchMaxPath, WIN32_FIND_DATAA *, pfd, DWORD, fFlags) \
-    ICOM_METHOD1( HRESULT, GetIDList, LPITEMIDLIST *, ppidl) \
-    ICOM_METHOD1( HRESULT, SetIDList, LPCITEMIDLIST, pidl) \
-    ICOM_METHOD2( HRESULT, GetDescription, LPWSTR, pszName, INT, cchMaxName) \
-    ICOM_METHOD1( HRESULT, SetDescription, LPCWSTR, pszName) \
-    ICOM_METHOD2( HRESULT, GetWorkingDirectory, LPWSTR, pszDir,INT, cchMaxPath) \
-    ICOM_METHOD1( HRESULT, SetWorkingDirectory, LPCWSTR, pszDir) \
-    ICOM_METHOD2( HRESULT, GetArguments, LPWSTR, pszArgs, INT, cchMaxPath) \
-    ICOM_METHOD1( HRESULT, SetArguments, LPCWSTR, pszArgs) \
-    ICOM_METHOD1( HRESULT, GetHotkey, WORD*, pwHotkey) \
-    ICOM_METHOD1( HRESULT, SetHotkey, WORD, wHotkey) \
-    ICOM_METHOD1( HRESULT, GetShowCmd, INT*, piShowCmd) \
-    ICOM_METHOD1( HRESULT, SetShowCmd, INT, iShowCmd) \
-    ICOM_METHOD3( HRESULT, GetIconLocation, LPWSTR, pszIconPath, INT, cchIconPath,INT *, piIcon) \
-    ICOM_METHOD2( HRESULT, SetIconLocation, LPCWSTR, pszIconPath,INT, iIcon) \
-    ICOM_METHOD2( HRESULT, SetRelativePath, LPCWSTR, pszPathRel, DWORD, dwReserved) \
-    ICOM_METHOD2( HRESULT, Resolve, HWND, hwnd, DWORD, fFlags) \
-    ICOM_METHOD1( HRESULT, SetPath, LPCWSTR, pszFile)
+    STDMETHOD(GetPath)(THIS_ LPWSTR  pszFile, INT  cchMaxPath, WIN32_FIND_DATAA  * pfd, DWORD  fFlags) PURE; \
+    STDMETHOD(GetIDList)(THIS_ LPITEMIDLIST  * ppidl) PURE; \
+    STDMETHOD(SetIDList)(THIS_ LPCITEMIDLIST  pidl) PURE; \
+    STDMETHOD(GetDescription)(THIS_ LPWSTR  pszName, INT  cchMaxName) PURE; \
+    STDMETHOD(SetDescription)(THIS_ LPCWSTR  pszName) PURE; \
+    STDMETHOD(GetWorkingDirectory)(THIS_ LPWSTR  pszDir,INT  cchMaxPath) PURE; \
+    STDMETHOD(SetWorkingDirectory)(THIS_ LPCWSTR  pszDir) PURE; \
+    STDMETHOD(GetArguments)(THIS_ LPWSTR  pszArgs, INT  cchMaxPath) PURE; \
+    STDMETHOD(SetArguments)(THIS_ LPCWSTR  pszArgs) PURE; \
+    STDMETHOD(GetHotkey)(THIS_ WORD * pwHotkey) PURE; \
+    STDMETHOD(SetHotkey)(THIS_ WORD  wHotkey) PURE; \
+    STDMETHOD(GetShowCmd)(THIS_ INT * piShowCmd) PURE; \
+    STDMETHOD(SetShowCmd)(THIS_ INT  iShowCmd) PURE; \
+    STDMETHOD(GetIconLocation)(THIS_ LPWSTR  pszIconPath, INT  cchIconPath,INT  * piIcon) PURE; \
+    STDMETHOD(SetIconLocation)(THIS_ LPCWSTR  pszIconPath,INT  iIcon) PURE; \
+    STDMETHOD(SetRelativePath)(THIS_ LPCWSTR  pszPathRel, DWORD  dwReserved) PURE; \
+    STDMETHOD(Resolve)(THIS_ HWND  hwnd, DWORD  fFlags) PURE; \
+    STDMETHOD(SetPath)(THIS_ LPCWSTR  pszFile) PURE;
 #define IShellLinkW_IMETHODS \
     IUnknown_IMETHODS \
     IShellLinkW_METHODS
 ICOM_DEFINE(IShellLinkW,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IShellLinkW_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)

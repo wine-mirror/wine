@@ -35,14 +35,14 @@ DEFINE_GUID(IID_IUnknown, 0x00000000, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IUnknown {
 
-    virtual HRESULT CALLBACK QueryInterface(
+    virtual HRESULT STDMETHODCALLTYPE QueryInterface(
         REFIID riid,
         void** ppvObject) = 0;
 
-    virtual ULONG CALLBACK AddRef(
+    virtual ULONG STDMETHODCALLTYPE AddRef(
         ) = 0;
 
-    virtual ULONG CALLBACK Release(
+    virtual ULONG STDMETHODCALLTYPE Release(
         ) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -55,23 +55,24 @@ struct IUnknownVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IUnknown* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IUnknown* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IUnknown* This);
 
 };
 
 #define IUnknown_IMETHODS \
-    ICOM_METHOD2 (HRESULT,QueryInterface,REFIID,riid,void**,ppvObject) \
-    ICOM_METHOD  (ULONG,AddRef) \
-    ICOM_METHOD  (ULONG,Release)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This);
 
 /*** IUnknown methods ***/
 #define IUnknown_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -114,12 +115,12 @@ DEFINE_GUID(IID_IClassFactory, 0x00000001, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IClassFactory: IUnknown {
 
-    virtual HRESULT CALLBACK CreateInstance(
+    virtual HRESULT STDMETHODCALLTYPE CreateInstance(
         IUnknown* pUnkOuter,
         REFIID riid,
         void** ppvObject) = 0;
 
-    virtual HRESULT CALLBACK LockServer(
+    virtual HRESULT STDMETHODCALLTYPE LockServer(
         BOOL fLock) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -132,34 +133,38 @@ struct IClassFactoryVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IClassFactory* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IClassFactory* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IClassFactory* This);
 
     /*** IClassFactory methods ***/
-    HRESULT (CALLBACK *CreateInstance)(
+    HRESULT (STDMETHODCALLTYPE *CreateInstance)(
         IClassFactory* This,
         IUnknown* pUnkOuter,
         REFIID riid,
         void** ppvObject);
 
-    HRESULT (CALLBACK *LockServer)(
+    HRESULT (STDMETHODCALLTYPE *LockServer)(
         IClassFactory* This,
         BOOL fLock);
 
 };
 
 #define IClassFactory_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD3 (HRESULT,CreateInstance,IUnknown*,pUnkOuter,REFIID,riid,void**,ppvObject) \
-    ICOM_METHOD1 (HRESULT,LockServer,BOOL,fLock)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IClassFactory methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *CreateInstance)(INTERFACE *This, IUnknown* pUnkOuter, REFIID riid, void** ppvObject); \
+    HRESULT (STDMETHODCALLTYPE *LockServer)(INTERFACE *This, BOOL fLock);
 
 /*** IUnknown methods ***/
 #define IClassFactory_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)

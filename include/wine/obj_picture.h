@@ -53,27 +53,27 @@ typedef struct IPictureDisp IPictureDisp, *LPPICTUREDISP;
 /*****************************************************************************
  * IPicture interface
  */
-#define ICOM_INTERFACE IPicture
+#define INTERFACE IPicture
 #define IPicture_METHODS \
-  ICOM_METHOD1(HRESULT,get_Handle, OLE_HANDLE*,pHandle) \
-  ICOM_METHOD1(HRESULT,get_hPal, OLE_HANDLE*,phPal) \
-  ICOM_METHOD1(HRESULT,get_Type, SHORT*,pType) \
-  ICOM_METHOD1(HRESULT,get_Width, OLE_XSIZE_HIMETRIC*,pWidth) \
-  ICOM_METHOD1(HRESULT,get_Height, OLE_YSIZE_HIMETRIC*,pHeight) \
-  ICOM_METHOD10(HRESULT,Render, HDC,hdc, LONG,x, LONG,y, LONG,cx, LONG,cy, OLE_XPOS_HIMETRIC,xSrc, OLE_YPOS_HIMETRIC,ySrc, OLE_XSIZE_HIMETRIC,cxSrc, OLE_YSIZE_HIMETRIC,cySrc, LPCRECT,pRcWBounds) \
-  ICOM_METHOD1(HRESULT,set_hPal, OLE_HANDLE,hPal) \
-  ICOM_METHOD1(HRESULT,get_CurDC, HDC*,phDC) \
-  ICOM_METHOD3(HRESULT,SelectPicture, HDC,hDCIn, HDC*,phDCOut, OLE_HANDLE*,phBmpOut) \
-  ICOM_METHOD1(HRESULT,get_KeepOriginalFormat, BOOL*,pKeep) \
-  ICOM_METHOD1(HRESULT,put_KeepOriginalFormat, BOOL,Keep) \
-  ICOM_METHOD (HRESULT,PictureChanged) \
-  ICOM_METHOD3(HRESULT,SaveAsFile, LPSTREAM,pStream, BOOL,fSaveMemCopy, LONG*,pCbSize) \
-  ICOM_METHOD1(HRESULT,get_Attributes, DWORD*,pDwAttr)
+  STDMETHOD(get_Handle)(THIS_ OLE_HANDLE *pHandle) PURE; \
+  STDMETHOD(get_hPal)(THIS_ OLE_HANDLE *phPal) PURE; \
+  STDMETHOD(get_Type)(THIS_ SHORT *pType) PURE; \
+  STDMETHOD(get_Width)(THIS_ OLE_XSIZE_HIMETRIC *pWidth) PURE; \
+  STDMETHOD(get_Height)(THIS_ OLE_YSIZE_HIMETRIC *pHeight) PURE; \
+  STDMETHOD(Render)(THIS_ HDC hdc, LONG x, LONG y, LONG cx, LONG cy, OLE_XPOS_HIMETRIC xSrc, OLE_YPOS_HIMETRIC ySrc, OLE_XSIZE_HIMETRIC cxSrc, OLE_YSIZE_HIMETRIC cySrc, LPCRECT pRcWBounds) PURE; \
+  STDMETHOD(set_hPal)(THIS_ OLE_HANDLE hPal) PURE; \
+  STDMETHOD(get_CurDC)(THIS_ HDC *phDC) PURE; \
+  STDMETHOD(SelectPicture)(THIS_ HDC hDCIn, HDC *phDCOut, OLE_HANDLE *phBmpOut) PURE; \
+  STDMETHOD(get_KeepOriginalFormat)(THIS_ BOOL *pKeep) PURE; \
+  STDMETHOD(put_KeepOriginalFormat)(THIS_ BOOL Keep) PURE; \
+  STDMETHOD(PictureChanged)(THIS) PURE; \
+  STDMETHOD(SaveAsFile)(THIS_ LPSTREAM pStream, BOOL fSaveMemCopy, LONG *pCbSize) PURE; \
+  STDMETHOD(get_Attributes)(THIS_ DWORD *pDwAttr) PURE;
 #define IPicture_IMETHODS \
 	IUnknown_IMETHODS \
 	IPicture_METHODS
 ICOM_DEFINE(IPicture,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IPicture_QueryInterface(p,a,b)         ICOM_CALL2(QueryInterface,p,a,b)
@@ -99,13 +99,13 @@ ICOM_DEFINE(IPicture,IUnknown)
 /*****************************************************************************
  * IPictureDisp interface
  */
-#define ICOM_INTERFACE IPictureDisp
+#define INTERFACE IPictureDisp
 #define IPictureDisp_METHODS
 #define IPictureDisp_IMETHODS \
 				IDispatch_IMETHODS \
 				IPictureDisp_METHODS
 ICOM_DEFINE(IPictureDisp,IDispatch)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IPictureDisp_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -123,5 +123,3 @@ ICOM_DEFINE(IPictureDisp,IDispatch)
 #endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_PICTURE_H */
-
-

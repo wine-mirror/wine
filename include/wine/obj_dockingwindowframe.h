@@ -32,16 +32,16 @@ DEFINE_GUID (IID_IDockingWindowFrame,	0x47D2657AL, 0x7B27, 0x11D0, 0x8C, 0xA9, 0
 #define DWFRF_DELETECONFIGDATA	0x0001
 #define DWFAF_HIDDEN		0x0001   /* add tolbar*/
 
-#define ICOM_INTERFACE IDockingWindowFrame
+#define INTERFACE IDockingWindowFrame
 #define IDockingWindowFrame_METHODS \
-	ICOM_METHOD3(HRESULT, AddToolbar, IUnknown*, punkSrc, LPCWSTR, pwszItem, DWORD, dwAddFlags) \
-	ICOM_METHOD2(HRESULT, RemoveToolbar, IUnknown*, punkSrc, DWORD, dwRemoveFlags) \
-	ICOM_METHOD3(HRESULT, FindToolbar, LPCWSTR, pwszItem, REFIID, riid, LPVOID*, ppvObj)
+	STDMETHOD(AddToolbar)(THIS_ IUnknown * punkSrc, LPCWSTR  pwszItem, DWORD  dwAddFlags) PURE; \
+	STDMETHOD(RemoveToolbar)(THIS_ IUnknown * punkSrc, DWORD  dwRemoveFlags) PURE; \
+	STDMETHOD(FindToolbar)(THIS_ LPCWSTR  pwszItem, REFIID  riid, LPVOID * ppvObj) PURE;
 #define IDockingWindowFrame_IMETHODS \
 	IOleWindow_IMETHODS \
 	IDockingWindowFrame_METHODS
 ICOM_DEFINE(IDockingWindowFrame,IOleWindow)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDockingWindowFrame_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)

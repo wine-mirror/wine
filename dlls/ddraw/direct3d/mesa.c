@@ -123,7 +123,7 @@ create_device_helper(IDirect3DImpl *This,
 		     REFCLSID iid,
 		     IDirectDrawSurfaceImpl *lpDDS,
 		     void **obj,
-		     int interface) {
+		     int version) {
     IDirect3DDeviceImpl *lpd3ddev;
     HRESULT ret_value;
 
@@ -135,7 +135,7 @@ create_device_helper(IDirect3DImpl *This,
 	(IsEqualGUID(&IID_IDirect3DHALDevice, iid)) ||
 	(IsEqualGUID(&IID_IDirect3DTnLHalDevice, iid)) ||
 	(IsEqualGUID(&IID_IDirect3DRefDevice, iid))) {
-        switch (interface) {
+        switch (version) {
 	    case 1:
 		*obj = ICOM_INTERFACE(lpd3ddev, IDirect3DDevice);
 	        TRACE(" returning OpenGL D3DDevice %p.\n", *obj);

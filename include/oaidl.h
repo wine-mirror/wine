@@ -585,22 +585,22 @@ DEFINE_GUID(IID_IDispatch, 0x00020400, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IDispatch: IUnknown {
 
-    virtual HRESULT CALLBACK GetTypeInfoCount(
+    virtual HRESULT STDMETHODCALLTYPE GetTypeInfoCount(
         UINT* pctinfo) = 0;
 
-    virtual HRESULT CALLBACK GetTypeInfo(
+    virtual HRESULT STDMETHODCALLTYPE GetTypeInfo(
         UINT iTInfo,
         LCID lcid,
         ITypeInfo** ppTInfo) = 0;
 
-    virtual HRESULT CALLBACK GetIDsOfNames(
+    virtual HRESULT STDMETHODCALLTYPE GetIDsOfNames(
         REFIID riid,
         LPOLESTR* rgszNames,
         UINT cNames,
         LCID lcid,
         DISPID* rgDispId) = 0;
 
-    virtual HRESULT CALLBACK Invoke(
+    virtual HRESULT STDMETHODCALLTYPE Invoke(
         DISPID dispIdMember,
         REFIID riid,
         LCID lcid,
@@ -620,29 +620,29 @@ struct IDispatchVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IDispatch* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IDispatch* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IDispatch* This);
 
     /*** IDispatch methods ***/
-    HRESULT (CALLBACK *GetTypeInfoCount)(
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfoCount)(
         IDispatch* This,
         UINT* pctinfo);
 
-    HRESULT (CALLBACK *GetTypeInfo)(
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfo)(
         IDispatch* This,
         UINT iTInfo,
         LCID lcid,
         ITypeInfo** ppTInfo);
 
-    HRESULT (CALLBACK *GetIDsOfNames)(
+    HRESULT (STDMETHODCALLTYPE *GetIDsOfNames)(
         IDispatch* This,
         REFIID riid,
         LPOLESTR* rgszNames,
@@ -650,7 +650,7 @@ struct IDispatchVtbl {
         LCID lcid,
         DISPID* rgDispId);
 
-    HRESULT (CALLBACK *Invoke)(
+    HRESULT (STDMETHODCALLTYPE *Invoke)(
         IDispatch* This,
         DISPID dispIdMember,
         REFIID riid,
@@ -664,11 +664,15 @@ struct IDispatchVtbl {
 };
 
 #define IDispatch_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD1 (HRESULT,GetTypeInfoCount,UINT*,pctinfo) \
-    ICOM_METHOD3 (HRESULT,GetTypeInfo,UINT,iTInfo,LCID,lcid,ITypeInfo**,ppTInfo) \
-    ICOM_METHOD5 (HRESULT,GetIDsOfNames,REFIID,riid,LPOLESTR*,rgszNames,UINT,cNames,LCID,lcid,DISPID*,rgDispId) \
-    ICOM_METHOD8 (HRESULT,Invoke,DISPID,dispIdMember,REFIID,riid,LCID,lcid,WORD,wFlags,DISPPARAMS*,pDispParams,VARIANT*,pVarResult,EXCEPINFO*,pExcepInfo,UINT*,puArgErr)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IDispatch methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfoCount)(INTERFACE *This, UINT* pctinfo); \
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfo)(INTERFACE *This, UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo); \
+    HRESULT (STDMETHODCALLTYPE *GetIDsOfNames)(INTERFACE *This, REFIID riid, LPOLESTR* rgszNames, UINT cNames, LCID lcid, DISPID* rgDispId); \
+    HRESULT (STDMETHODCALLTYPE *Invoke)(INTERFACE *This, DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarResult, EXCEPINFO* pExcepInfo, UINT* puArgErr);
 
 /*** IUnknown methods ***/
 #define IDispatch_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -764,18 +768,18 @@ DEFINE_GUID(IID_IEnumVARIANT, 0x00020404, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IEnumVARIANT: IUnknown {
 
-    virtual HRESULT CALLBACK Next(
+    virtual HRESULT STDMETHODCALLTYPE Next(
         ULONG celt,
         VARIANT* rgVar,
         ULONG* pCeltFetched) = 0;
 
-    virtual HRESULT CALLBACK Skip(
+    virtual HRESULT STDMETHODCALLTYPE Skip(
         ULONG celt) = 0;
 
-    virtual HRESULT CALLBACK Reset(
+    virtual HRESULT STDMETHODCALLTYPE Reset(
         ) = 0;
 
-    virtual HRESULT CALLBACK Clone(
+    virtual HRESULT STDMETHODCALLTYPE Clone(
         IEnumVARIANT** ppEnum) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -788,43 +792,47 @@ struct IEnumVARIANTVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IEnumVARIANT* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IEnumVARIANT* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IEnumVARIANT* This);
 
     /*** IEnumVARIANT methods ***/
-    HRESULT (CALLBACK *Next)(
+    HRESULT (STDMETHODCALLTYPE *Next)(
         IEnumVARIANT* This,
         ULONG celt,
         VARIANT* rgVar,
         ULONG* pCeltFetched);
 
-    HRESULT (CALLBACK *Skip)(
+    HRESULT (STDMETHODCALLTYPE *Skip)(
         IEnumVARIANT* This,
         ULONG celt);
 
-    HRESULT (CALLBACK *Reset)(
+    HRESULT (STDMETHODCALLTYPE *Reset)(
         IEnumVARIANT* This);
 
-    HRESULT (CALLBACK *Clone)(
+    HRESULT (STDMETHODCALLTYPE *Clone)(
         IEnumVARIANT* This,
         IEnumVARIANT** ppEnum);
 
 };
 
 #define IEnumVARIANT_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD3 (HRESULT,Next,ULONG,celt,VARIANT*,rgVar,ULONG*,pCeltFetched) \
-    ICOM_METHOD1 (HRESULT,Skip,ULONG,celt) \
-    ICOM_METHOD  (HRESULT,Reset) \
-    ICOM_METHOD1 (HRESULT,Clone,IEnumVARIANT**,ppEnum)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IEnumVARIANT methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Next)(INTERFACE *This, ULONG celt, VARIANT* rgVar, ULONG* pCeltFetched); \
+    HRESULT (STDMETHODCALLTYPE *Skip)(INTERFACE *This, ULONG celt); \
+    HRESULT (STDMETHODCALLTYPE *Reset)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *Clone)(INTERFACE *This, IEnumVARIANT** ppEnum);
 
 /*** IUnknown methods ***/
 #define IEnumVARIANT_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -907,7 +915,7 @@ DEFINE_GUID(IID_ITypeComp, 0x00020403, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ITypeComp: IUnknown {
 
-    virtual HRESULT CALLBACK Bind(
+    virtual HRESULT STDMETHODCALLTYPE Bind(
         LPOLESTR szName,
         ULONG lHashVal,
         WORD wFlags,
@@ -915,7 +923,7 @@ struct ITypeComp: IUnknown {
         DESCKIND* pDescKind,
         BINDPTR* pBindPtr) = 0;
 
-    virtual HRESULT CALLBACK BindType(
+    virtual HRESULT STDMETHODCALLTYPE BindType(
         LPOLESTR szName,
         ULONG lHashVal,
         ITypeInfo** ppTInfo,
@@ -931,19 +939,19 @@ struct ITypeCompVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         ITypeComp* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         ITypeComp* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         ITypeComp* This);
 
     /*** ITypeComp methods ***/
-    HRESULT (CALLBACK *Bind)(
+    HRESULT (STDMETHODCALLTYPE *Bind)(
         ITypeComp* This,
         LPOLESTR szName,
         ULONG lHashVal,
@@ -952,7 +960,7 @@ struct ITypeCompVtbl {
         DESCKIND* pDescKind,
         BINDPTR* pBindPtr);
 
-    HRESULT (CALLBACK *BindType)(
+    HRESULT (STDMETHODCALLTYPE *BindType)(
         ITypeComp* This,
         LPOLESTR szName,
         ULONG lHashVal,
@@ -962,9 +970,13 @@ struct ITypeCompVtbl {
 };
 
 #define ITypeComp_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD6 (HRESULT,Bind,LPOLESTR,szName,ULONG,lHashVal,WORD,wFlags,ITypeInfo**,ppTInfo,DESCKIND*,pDescKind,BINDPTR*,pBindPtr) \
-    ICOM_METHOD4 (HRESULT,BindType,LPOLESTR,szName,ULONG,lHashVal,ITypeInfo**,ppTInfo,ITypeComp**,ppTComp)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ITypeComp methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Bind)(INTERFACE *This, LPOLESTR szName, ULONG lHashVal, WORD wFlags, ITypeInfo** ppTInfo, DESCKIND* pDescKind, BINDPTR* pBindPtr); \
+    HRESULT (STDMETHODCALLTYPE *BindType)(INTERFACE *This, LPOLESTR szName, ULONG lHashVal, ITypeInfo** ppTInfo, ITypeComp** ppTComp);
 
 /*** IUnknown methods ***/
 #define ITypeComp_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -1042,40 +1054,40 @@ DEFINE_GUID(IID_ITypeInfo, 0x00020401, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ITypeInfo: IUnknown {
 
-    virtual HRESULT CALLBACK GetTypeAttr(
+    virtual HRESULT STDMETHODCALLTYPE GetTypeAttr(
         TYPEATTR** ppTypeAttr) = 0;
 
-    virtual HRESULT CALLBACK GetTypeComp(
+    virtual HRESULT STDMETHODCALLTYPE GetTypeComp(
         ITypeComp** ppTComp) = 0;
 
-    virtual HRESULT CALLBACK GetFuncDesc(
+    virtual HRESULT STDMETHODCALLTYPE GetFuncDesc(
         UINT index,
         FUNCDESC** ppFuncDesc) = 0;
 
-    virtual HRESULT CALLBACK GetVarDesc(
+    virtual HRESULT STDMETHODCALLTYPE GetVarDesc(
         UINT index,
         VARDESC** ppVarDesc) = 0;
 
-    virtual HRESULT CALLBACK GetNames(
+    virtual HRESULT STDMETHODCALLTYPE GetNames(
         MEMBERID memid,
         BSTR* rgBstrNames,
         UINT cMaxNames,
         UINT* pcNames) = 0;
 
-    virtual HRESULT CALLBACK GetRefTypeOfImplType(
+    virtual HRESULT STDMETHODCALLTYPE GetRefTypeOfImplType(
         UINT index,
         HREFTYPE* pRefType) = 0;
 
-    virtual HRESULT CALLBACK GetImplTypeFlags(
+    virtual HRESULT STDMETHODCALLTYPE GetImplTypeFlags(
         UINT index,
         INT* pImplTypeFlags) = 0;
 
-    virtual HRESULT CALLBACK GetIDsOfNames(
+    virtual HRESULT STDMETHODCALLTYPE GetIDsOfNames(
         LPOLESTR* rgszNames,
         UINT cNames,
         MEMBERID* pMemId) = 0;
 
-    virtual HRESULT CALLBACK Invoke(
+    virtual HRESULT STDMETHODCALLTYPE Invoke(
         PVOID pvInstance,
         MEMBERID memid,
         WORD wFlags,
@@ -1084,49 +1096,49 @@ struct ITypeInfo: IUnknown {
         EXCEPINFO* pExcepInfo,
         UINT* puArgErr) = 0;
 
-    virtual HRESULT CALLBACK GetDocumentation(
+    virtual HRESULT STDMETHODCALLTYPE GetDocumentation(
         MEMBERID memid,
         BSTR* pBstrName,
         BSTR* pBstrDocString,
         DWORD* pdwHelpContext,
         BSTR* pBstrHelpFile) = 0;
 
-    virtual HRESULT CALLBACK GetDllEntry(
+    virtual HRESULT STDMETHODCALLTYPE GetDllEntry(
         MEMBERID memid,
         INVOKEKIND invKind,
         BSTR* pBstrDllName,
         BSTR* pBstrName,
         WORD* pwOrdinal) = 0;
 
-    virtual HRESULT CALLBACK GetRefTypeInfo(
+    virtual HRESULT STDMETHODCALLTYPE GetRefTypeInfo(
         HREFTYPE hRefType,
         ITypeInfo** ppTInfo) = 0;
 
-    virtual HRESULT CALLBACK AddressOfMember(
+    virtual HRESULT STDMETHODCALLTYPE AddressOfMember(
         MEMBERID memid,
         INVOKEKIND invKind,
         PVOID* ppv) = 0;
 
-    virtual HRESULT CALLBACK CreateInstance(
+    virtual HRESULT STDMETHODCALLTYPE CreateInstance(
         IUnknown* pUnkOuter,
         REFIID riid,
         PVOID* ppvObj) = 0;
 
-    virtual HRESULT CALLBACK GetMops(
+    virtual HRESULT STDMETHODCALLTYPE GetMops(
         MEMBERID memid,
         BSTR* pBstrMops) = 0;
 
-    virtual HRESULT CALLBACK GetContainingTypeLib(
+    virtual HRESULT STDMETHODCALLTYPE GetContainingTypeLib(
         ITypeLib** ppTLib,
         UINT* pIndex) = 0;
 
-    virtual void CALLBACK ReleaseTypeAttr(
+    virtual void STDMETHODCALLTYPE ReleaseTypeAttr(
         TYPEATTR* pTypeAttr) = 0;
 
-    virtual void CALLBACK ReleaseFuncDesc(
+    virtual void STDMETHODCALLTYPE ReleaseFuncDesc(
         FUNCDESC* pFuncDesc) = 0;
 
-    virtual void CALLBACK ReleaseVarDesc(
+    virtual void STDMETHODCALLTYPE ReleaseVarDesc(
         VARDESC* pVarDesc) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -1139,60 +1151,60 @@ struct ITypeInfoVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         ITypeInfo* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         ITypeInfo* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         ITypeInfo* This);
 
     /*** ITypeInfo methods ***/
-    HRESULT (CALLBACK *GetTypeAttr)(
+    HRESULT (STDMETHODCALLTYPE *GetTypeAttr)(
         ITypeInfo* This,
         TYPEATTR** ppTypeAttr);
 
-    HRESULT (CALLBACK *GetTypeComp)(
+    HRESULT (STDMETHODCALLTYPE *GetTypeComp)(
         ITypeInfo* This,
         ITypeComp** ppTComp);
 
-    HRESULT (CALLBACK *GetFuncDesc)(
+    HRESULT (STDMETHODCALLTYPE *GetFuncDesc)(
         ITypeInfo* This,
         UINT index,
         FUNCDESC** ppFuncDesc);
 
-    HRESULT (CALLBACK *GetVarDesc)(
+    HRESULT (STDMETHODCALLTYPE *GetVarDesc)(
         ITypeInfo* This,
         UINT index,
         VARDESC** ppVarDesc);
 
-    HRESULT (CALLBACK *GetNames)(
+    HRESULT (STDMETHODCALLTYPE *GetNames)(
         ITypeInfo* This,
         MEMBERID memid,
         BSTR* rgBstrNames,
         UINT cMaxNames,
         UINT* pcNames);
 
-    HRESULT (CALLBACK *GetRefTypeOfImplType)(
+    HRESULT (STDMETHODCALLTYPE *GetRefTypeOfImplType)(
         ITypeInfo* This,
         UINT index,
         HREFTYPE* pRefType);
 
-    HRESULT (CALLBACK *GetImplTypeFlags)(
+    HRESULT (STDMETHODCALLTYPE *GetImplTypeFlags)(
         ITypeInfo* This,
         UINT index,
         INT* pImplTypeFlags);
 
-    HRESULT (CALLBACK *GetIDsOfNames)(
+    HRESULT (STDMETHODCALLTYPE *GetIDsOfNames)(
         ITypeInfo* This,
         LPOLESTR* rgszNames,
         UINT cNames,
         MEMBERID* pMemId);
 
-    HRESULT (CALLBACK *Invoke)(
+    HRESULT (STDMETHODCALLTYPE *Invoke)(
         ITypeInfo* This,
         PVOID pvInstance,
         MEMBERID memid,
@@ -1202,7 +1214,7 @@ struct ITypeInfoVtbl {
         EXCEPINFO* pExcepInfo,
         UINT* puArgErr);
 
-    HRESULT (CALLBACK *GetDocumentation)(
+    HRESULT (STDMETHODCALLTYPE *GetDocumentation)(
         ITypeInfo* This,
         MEMBERID memid,
         BSTR* pBstrName,
@@ -1210,7 +1222,7 @@ struct ITypeInfoVtbl {
         DWORD* pdwHelpContext,
         BSTR* pBstrHelpFile);
 
-    HRESULT (CALLBACK *GetDllEntry)(
+    HRESULT (STDMETHODCALLTYPE *GetDllEntry)(
         ITypeInfo* This,
         MEMBERID memid,
         INVOKEKIND invKind,
@@ -1218,68 +1230,72 @@ struct ITypeInfoVtbl {
         BSTR* pBstrName,
         WORD* pwOrdinal);
 
-    HRESULT (CALLBACK *GetRefTypeInfo)(
+    HRESULT (STDMETHODCALLTYPE *GetRefTypeInfo)(
         ITypeInfo* This,
         HREFTYPE hRefType,
         ITypeInfo** ppTInfo);
 
-    HRESULT (CALLBACK *AddressOfMember)(
+    HRESULT (STDMETHODCALLTYPE *AddressOfMember)(
         ITypeInfo* This,
         MEMBERID memid,
         INVOKEKIND invKind,
         PVOID* ppv);
 
-    HRESULT (CALLBACK *CreateInstance)(
+    HRESULT (STDMETHODCALLTYPE *CreateInstance)(
         ITypeInfo* This,
         IUnknown* pUnkOuter,
         REFIID riid,
         PVOID* ppvObj);
 
-    HRESULT (CALLBACK *GetMops)(
+    HRESULT (STDMETHODCALLTYPE *GetMops)(
         ITypeInfo* This,
         MEMBERID memid,
         BSTR* pBstrMops);
 
-    HRESULT (CALLBACK *GetContainingTypeLib)(
+    HRESULT (STDMETHODCALLTYPE *GetContainingTypeLib)(
         ITypeInfo* This,
         ITypeLib** ppTLib,
         UINT* pIndex);
 
-    void (CALLBACK *ReleaseTypeAttr)(
+    void (STDMETHODCALLTYPE *ReleaseTypeAttr)(
         ITypeInfo* This,
         TYPEATTR* pTypeAttr);
 
-    void (CALLBACK *ReleaseFuncDesc)(
+    void (STDMETHODCALLTYPE *ReleaseFuncDesc)(
         ITypeInfo* This,
         FUNCDESC* pFuncDesc);
 
-    void (CALLBACK *ReleaseVarDesc)(
+    void (STDMETHODCALLTYPE *ReleaseVarDesc)(
         ITypeInfo* This,
         VARDESC* pVarDesc);
 
 };
 
 #define ITypeInfo_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD1 (HRESULT,GetTypeAttr,TYPEATTR**,ppTypeAttr) \
-    ICOM_METHOD1 (HRESULT,GetTypeComp,ITypeComp**,ppTComp) \
-    ICOM_METHOD2 (HRESULT,GetFuncDesc,UINT,index,FUNCDESC**,ppFuncDesc) \
-    ICOM_METHOD2 (HRESULT,GetVarDesc,UINT,index,VARDESC**,ppVarDesc) \
-    ICOM_METHOD4 (HRESULT,GetNames,MEMBERID,memid,BSTR*,rgBstrNames,UINT,cMaxNames,UINT*,pcNames) \
-    ICOM_METHOD2 (HRESULT,GetRefTypeOfImplType,UINT,index,HREFTYPE*,pRefType) \
-    ICOM_METHOD2 (HRESULT,GetImplTypeFlags,UINT,index,INT*,pImplTypeFlags) \
-    ICOM_METHOD3 (HRESULT,GetIDsOfNames,LPOLESTR*,rgszNames,UINT,cNames,MEMBERID*,pMemId) \
-    ICOM_METHOD7 (HRESULT,Invoke,PVOID,pvInstance,MEMBERID,memid,WORD,wFlags,DISPPARAMS*,pDispParams,VARIANT*,pVarResult,EXCEPINFO*,pExcepInfo,UINT*,puArgErr) \
-    ICOM_METHOD5 (HRESULT,GetDocumentation,MEMBERID,memid,BSTR*,pBstrName,BSTR*,pBstrDocString,DWORD*,pdwHelpContext,BSTR*,pBstrHelpFile) \
-    ICOM_METHOD5 (HRESULT,GetDllEntry,MEMBERID,memid,INVOKEKIND,invKind,BSTR*,pBstrDllName,BSTR*,pBstrName,WORD*,pwOrdinal) \
-    ICOM_METHOD2 (HRESULT,GetRefTypeInfo,HREFTYPE,hRefType,ITypeInfo**,ppTInfo) \
-    ICOM_METHOD3 (HRESULT,AddressOfMember,MEMBERID,memid,INVOKEKIND,invKind,PVOID*,ppv) \
-    ICOM_METHOD3 (HRESULT,CreateInstance,IUnknown*,pUnkOuter,REFIID,riid,PVOID*,ppvObj) \
-    ICOM_METHOD2 (HRESULT,GetMops,MEMBERID,memid,BSTR*,pBstrMops) \
-    ICOM_METHOD2 (HRESULT,GetContainingTypeLib,ITypeLib**,ppTLib,UINT*,pIndex) \
-    ICOM_VMETHOD1(ReleaseTypeAttr,TYPEATTR*,pTypeAttr) \
-    ICOM_VMETHOD1(ReleaseFuncDesc,FUNCDESC*,pFuncDesc) \
-    ICOM_VMETHOD1(ReleaseVarDesc,VARDESC*,pVarDesc)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ITypeInfo methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetTypeAttr)(INTERFACE *This, TYPEATTR** ppTypeAttr); \
+    HRESULT (STDMETHODCALLTYPE *GetTypeComp)(INTERFACE *This, ITypeComp** ppTComp); \
+    HRESULT (STDMETHODCALLTYPE *GetFuncDesc)(INTERFACE *This, UINT index, FUNCDESC** ppFuncDesc); \
+    HRESULT (STDMETHODCALLTYPE *GetVarDesc)(INTERFACE *This, UINT index, VARDESC** ppVarDesc); \
+    HRESULT (STDMETHODCALLTYPE *GetNames)(INTERFACE *This, MEMBERID memid, BSTR* rgBstrNames, UINT cMaxNames, UINT* pcNames); \
+    HRESULT (STDMETHODCALLTYPE *GetRefTypeOfImplType)(INTERFACE *This, UINT index, HREFTYPE* pRefType); \
+    HRESULT (STDMETHODCALLTYPE *GetImplTypeFlags)(INTERFACE *This, UINT index, INT* pImplTypeFlags); \
+    HRESULT (STDMETHODCALLTYPE *GetIDsOfNames)(INTERFACE *This, LPOLESTR* rgszNames, UINT cNames, MEMBERID* pMemId); \
+    HRESULT (STDMETHODCALLTYPE *Invoke)(INTERFACE *This, PVOID pvInstance, MEMBERID memid, WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarResult, EXCEPINFO* pExcepInfo, UINT* puArgErr); \
+    HRESULT (STDMETHODCALLTYPE *GetDocumentation)(INTERFACE *This, MEMBERID memid, BSTR* pBstrName, BSTR* pBstrDocString, DWORD* pdwHelpContext, BSTR* pBstrHelpFile); \
+    HRESULT (STDMETHODCALLTYPE *GetDllEntry)(INTERFACE *This, MEMBERID memid, INVOKEKIND invKind, BSTR* pBstrDllName, BSTR* pBstrName, WORD* pwOrdinal); \
+    HRESULT (STDMETHODCALLTYPE *GetRefTypeInfo)(INTERFACE *This, HREFTYPE hRefType, ITypeInfo** ppTInfo); \
+    HRESULT (STDMETHODCALLTYPE *AddressOfMember)(INTERFACE *This, MEMBERID memid, INVOKEKIND invKind, PVOID* ppv); \
+    HRESULT (STDMETHODCALLTYPE *CreateInstance)(INTERFACE *This, IUnknown* pUnkOuter, REFIID riid, PVOID* ppvObj); \
+    HRESULT (STDMETHODCALLTYPE *GetMops)(INTERFACE *This, MEMBERID memid, BSTR* pBstrMops); \
+    HRESULT (STDMETHODCALLTYPE *GetContainingTypeLib)(INTERFACE *This, ITypeLib** ppTLib, UINT* pIndex); \
+    void (STDMETHODCALLTYPE *ReleaseTypeAttr)(INTERFACE *This, TYPEATTR* pTypeAttr); \
+    void (STDMETHODCALLTYPE *ReleaseFuncDesc)(INTERFACE *This, FUNCDESC* pFuncDesc); \
+    void (STDMETHODCALLTYPE *ReleaseVarDesc)(INTERFACE *This, VARDESC* pVarDesc);
 
 /*** IUnknown methods ***/
 #define ITypeInfo_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -1613,70 +1629,70 @@ DEFINE_GUID(IID_ITypeInfo2, 0x00020412, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ITypeInfo2: ITypeInfo {
 
-    virtual HRESULT CALLBACK GetTypeKind(
+    virtual HRESULT STDMETHODCALLTYPE GetTypeKind(
         TYPEKIND* pTypeKind) = 0;
 
-    virtual HRESULT CALLBACK GetTypeFlags(
+    virtual HRESULT STDMETHODCALLTYPE GetTypeFlags(
         ULONG* pTypeFlags) = 0;
 
-    virtual HRESULT CALLBACK GetFuncIndexOfMemId(
+    virtual HRESULT STDMETHODCALLTYPE GetFuncIndexOfMemId(
         MEMBERID memid,
         INVOKEKIND invKind,
         UINT* pFuncIndex) = 0;
 
-    virtual HRESULT CALLBACK GetVarIndexOfMemId(
+    virtual HRESULT STDMETHODCALLTYPE GetVarIndexOfMemId(
         MEMBERID memid,
         UINT* pVarIndex) = 0;
 
-    virtual HRESULT CALLBACK GetCustData(
+    virtual HRESULT STDMETHODCALLTYPE GetCustData(
         REFGUID guid,
         VARIANT* pVarVal) = 0;
 
-    virtual HRESULT CALLBACK GetFuncCustData(
+    virtual HRESULT STDMETHODCALLTYPE GetFuncCustData(
         UINT index,
         REFGUID guid,
         VARIANT* pVarVal) = 0;
 
-    virtual HRESULT CALLBACK GetParamCustData(
+    virtual HRESULT STDMETHODCALLTYPE GetParamCustData(
         UINT indexFunc,
         UINT indexParam,
         REFGUID guid,
         VARIANT* pVarVal) = 0;
 
-    virtual HRESULT CALLBACK GetVarCustData(
+    virtual HRESULT STDMETHODCALLTYPE GetVarCustData(
         UINT index,
         REFGUID guid,
         VARIANT* pVarVal) = 0;
 
-    virtual HRESULT CALLBACK GetImplTypeCustData(
+    virtual HRESULT STDMETHODCALLTYPE GetImplTypeCustData(
         UINT index,
         REFGUID guid,
         VARIANT* pVarVal) = 0;
 
-    virtual HRESULT CALLBACK GetDocumentation2(
+    virtual HRESULT STDMETHODCALLTYPE GetDocumentation2(
         MEMBERID memid,
         LCID lcid,
         BSTR* pbstrHelpString,
         DWORD* pdwHelpStringContext,
         BSTR* pbstrHelpStringDll) = 0;
 
-    virtual HRESULT CALLBACK GetAllCustData(
+    virtual HRESULT STDMETHODCALLTYPE GetAllCustData(
         CUSTDATA* pCustData) = 0;
 
-    virtual HRESULT CALLBACK GetAllFuncCustData(
+    virtual HRESULT STDMETHODCALLTYPE GetAllFuncCustData(
         UINT index,
         CUSTDATA* pCustData) = 0;
 
-    virtual HRESULT CALLBACK GetAllParamCustData(
+    virtual HRESULT STDMETHODCALLTYPE GetAllParamCustData(
         UINT indexFunc,
         UINT indexParam,
         CUSTDATA* pCustData) = 0;
 
-    virtual HRESULT CALLBACK GetAllVarCustData(
+    virtual HRESULT STDMETHODCALLTYPE GetAllVarCustData(
         UINT index,
         CUSTDATA* pCustData) = 0;
 
-    virtual HRESULT CALLBACK GetAllImplTypeCustData(
+    virtual HRESULT STDMETHODCALLTYPE GetAllImplTypeCustData(
         UINT index,
         CUSTDATA* pCustData) = 0;
 
@@ -1690,60 +1706,60 @@ struct ITypeInfo2Vtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         ITypeInfo2* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         ITypeInfo2* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         ITypeInfo2* This);
 
     /*** ITypeInfo methods ***/
-    HRESULT (CALLBACK *GetTypeAttr)(
+    HRESULT (STDMETHODCALLTYPE *GetTypeAttr)(
         ITypeInfo2* This,
         TYPEATTR** ppTypeAttr);
 
-    HRESULT (CALLBACK *GetTypeComp)(
+    HRESULT (STDMETHODCALLTYPE *GetTypeComp)(
         ITypeInfo2* This,
         ITypeComp** ppTComp);
 
-    HRESULT (CALLBACK *GetFuncDesc)(
+    HRESULT (STDMETHODCALLTYPE *GetFuncDesc)(
         ITypeInfo2* This,
         UINT index,
         FUNCDESC** ppFuncDesc);
 
-    HRESULT (CALLBACK *GetVarDesc)(
+    HRESULT (STDMETHODCALLTYPE *GetVarDesc)(
         ITypeInfo2* This,
         UINT index,
         VARDESC** ppVarDesc);
 
-    HRESULT (CALLBACK *GetNames)(
+    HRESULT (STDMETHODCALLTYPE *GetNames)(
         ITypeInfo2* This,
         MEMBERID memid,
         BSTR* rgBstrNames,
         UINT cMaxNames,
         UINT* pcNames);
 
-    HRESULT (CALLBACK *GetRefTypeOfImplType)(
+    HRESULT (STDMETHODCALLTYPE *GetRefTypeOfImplType)(
         ITypeInfo2* This,
         UINT index,
         HREFTYPE* pRefType);
 
-    HRESULT (CALLBACK *GetImplTypeFlags)(
+    HRESULT (STDMETHODCALLTYPE *GetImplTypeFlags)(
         ITypeInfo2* This,
         UINT index,
         INT* pImplTypeFlags);
 
-    HRESULT (CALLBACK *GetIDsOfNames)(
+    HRESULT (STDMETHODCALLTYPE *GetIDsOfNames)(
         ITypeInfo2* This,
         LPOLESTR* rgszNames,
         UINT cNames,
         MEMBERID* pMemId);
 
-    HRESULT (CALLBACK *Invoke)(
+    HRESULT (STDMETHODCALLTYPE *Invoke)(
         ITypeInfo2* This,
         PVOID pvInstance,
         MEMBERID memid,
@@ -1753,7 +1769,7 @@ struct ITypeInfo2Vtbl {
         EXCEPINFO* pExcepInfo,
         UINT* puArgErr);
 
-    HRESULT (CALLBACK *GetDocumentation)(
+    HRESULT (STDMETHODCALLTYPE *GetDocumentation)(
         ITypeInfo2* This,
         MEMBERID memid,
         BSTR* pBstrName,
@@ -1761,7 +1777,7 @@ struct ITypeInfo2Vtbl {
         DWORD* pdwHelpContext,
         BSTR* pBstrHelpFile);
 
-    HRESULT (CALLBACK *GetDllEntry)(
+    HRESULT (STDMETHODCALLTYPE *GetDllEntry)(
         ITypeInfo2* This,
         MEMBERID memid,
         INVOKEKIND invKind,
@@ -1769,96 +1785,96 @@ struct ITypeInfo2Vtbl {
         BSTR* pBstrName,
         WORD* pwOrdinal);
 
-    HRESULT (CALLBACK *GetRefTypeInfo)(
+    HRESULT (STDMETHODCALLTYPE *GetRefTypeInfo)(
         ITypeInfo2* This,
         HREFTYPE hRefType,
         ITypeInfo** ppTInfo);
 
-    HRESULT (CALLBACK *AddressOfMember)(
+    HRESULT (STDMETHODCALLTYPE *AddressOfMember)(
         ITypeInfo2* This,
         MEMBERID memid,
         INVOKEKIND invKind,
         PVOID* ppv);
 
-    HRESULT (CALLBACK *CreateInstance)(
+    HRESULT (STDMETHODCALLTYPE *CreateInstance)(
         ITypeInfo2* This,
         IUnknown* pUnkOuter,
         REFIID riid,
         PVOID* ppvObj);
 
-    HRESULT (CALLBACK *GetMops)(
+    HRESULT (STDMETHODCALLTYPE *GetMops)(
         ITypeInfo2* This,
         MEMBERID memid,
         BSTR* pBstrMops);
 
-    HRESULT (CALLBACK *GetContainingTypeLib)(
+    HRESULT (STDMETHODCALLTYPE *GetContainingTypeLib)(
         ITypeInfo2* This,
         ITypeLib** ppTLib,
         UINT* pIndex);
 
-    void (CALLBACK *ReleaseTypeAttr)(
+    void (STDMETHODCALLTYPE *ReleaseTypeAttr)(
         ITypeInfo2* This,
         TYPEATTR* pTypeAttr);
 
-    void (CALLBACK *ReleaseFuncDesc)(
+    void (STDMETHODCALLTYPE *ReleaseFuncDesc)(
         ITypeInfo2* This,
         FUNCDESC* pFuncDesc);
 
-    void (CALLBACK *ReleaseVarDesc)(
+    void (STDMETHODCALLTYPE *ReleaseVarDesc)(
         ITypeInfo2* This,
         VARDESC* pVarDesc);
 
     /*** ITypeInfo2 methods ***/
-    HRESULT (CALLBACK *GetTypeKind)(
+    HRESULT (STDMETHODCALLTYPE *GetTypeKind)(
         ITypeInfo2* This,
         TYPEKIND* pTypeKind);
 
-    HRESULT (CALLBACK *GetTypeFlags)(
+    HRESULT (STDMETHODCALLTYPE *GetTypeFlags)(
         ITypeInfo2* This,
         ULONG* pTypeFlags);
 
-    HRESULT (CALLBACK *GetFuncIndexOfMemId)(
+    HRESULT (STDMETHODCALLTYPE *GetFuncIndexOfMemId)(
         ITypeInfo2* This,
         MEMBERID memid,
         INVOKEKIND invKind,
         UINT* pFuncIndex);
 
-    HRESULT (CALLBACK *GetVarIndexOfMemId)(
+    HRESULT (STDMETHODCALLTYPE *GetVarIndexOfMemId)(
         ITypeInfo2* This,
         MEMBERID memid,
         UINT* pVarIndex);
 
-    HRESULT (CALLBACK *GetCustData)(
+    HRESULT (STDMETHODCALLTYPE *GetCustData)(
         ITypeInfo2* This,
         REFGUID guid,
         VARIANT* pVarVal);
 
-    HRESULT (CALLBACK *GetFuncCustData)(
+    HRESULT (STDMETHODCALLTYPE *GetFuncCustData)(
         ITypeInfo2* This,
         UINT index,
         REFGUID guid,
         VARIANT* pVarVal);
 
-    HRESULT (CALLBACK *GetParamCustData)(
+    HRESULT (STDMETHODCALLTYPE *GetParamCustData)(
         ITypeInfo2* This,
         UINT indexFunc,
         UINT indexParam,
         REFGUID guid,
         VARIANT* pVarVal);
 
-    HRESULT (CALLBACK *GetVarCustData)(
+    HRESULT (STDMETHODCALLTYPE *GetVarCustData)(
         ITypeInfo2* This,
         UINT index,
         REFGUID guid,
         VARIANT* pVarVal);
 
-    HRESULT (CALLBACK *GetImplTypeCustData)(
+    HRESULT (STDMETHODCALLTYPE *GetImplTypeCustData)(
         ITypeInfo2* This,
         UINT index,
         REFGUID guid,
         VARIANT* pVarVal);
 
-    HRESULT (CALLBACK *GetDocumentation2)(
+    HRESULT (STDMETHODCALLTYPE *GetDocumentation2)(
         ITypeInfo2* This,
         MEMBERID memid,
         LCID lcid,
@@ -1866,27 +1882,27 @@ struct ITypeInfo2Vtbl {
         DWORD* pdwHelpStringContext,
         BSTR* pbstrHelpStringDll);
 
-    HRESULT (CALLBACK *GetAllCustData)(
+    HRESULT (STDMETHODCALLTYPE *GetAllCustData)(
         ITypeInfo2* This,
         CUSTDATA* pCustData);
 
-    HRESULT (CALLBACK *GetAllFuncCustData)(
+    HRESULT (STDMETHODCALLTYPE *GetAllFuncCustData)(
         ITypeInfo2* This,
         UINT index,
         CUSTDATA* pCustData);
 
-    HRESULT (CALLBACK *GetAllParamCustData)(
+    HRESULT (STDMETHODCALLTYPE *GetAllParamCustData)(
         ITypeInfo2* This,
         UINT indexFunc,
         UINT indexParam,
         CUSTDATA* pCustData);
 
-    HRESULT (CALLBACK *GetAllVarCustData)(
+    HRESULT (STDMETHODCALLTYPE *GetAllVarCustData)(
         ITypeInfo2* This,
         UINT index,
         CUSTDATA* pCustData);
 
-    HRESULT (CALLBACK *GetAllImplTypeCustData)(
+    HRESULT (STDMETHODCALLTYPE *GetAllImplTypeCustData)(
         ITypeInfo2* This,
         UINT index,
         CUSTDATA* pCustData);
@@ -1894,22 +1910,46 @@ struct ITypeInfo2Vtbl {
 };
 
 #define ITypeInfo2_IMETHODS \
-    ITypeInfo_IMETHODS \
-    ICOM_METHOD1 (HRESULT,GetTypeKind,TYPEKIND*,pTypeKind) \
-    ICOM_METHOD1 (HRESULT,GetTypeFlags,ULONG*,pTypeFlags) \
-    ICOM_METHOD3 (HRESULT,GetFuncIndexOfMemId,MEMBERID,memid,INVOKEKIND,invKind,UINT*,pFuncIndex) \
-    ICOM_METHOD2 (HRESULT,GetVarIndexOfMemId,MEMBERID,memid,UINT*,pVarIndex) \
-    ICOM_METHOD2 (HRESULT,GetCustData,REFGUID,guid,VARIANT*,pVarVal) \
-    ICOM_METHOD3 (HRESULT,GetFuncCustData,UINT,index,REFGUID,guid,VARIANT*,pVarVal) \
-    ICOM_METHOD4 (HRESULT,GetParamCustData,UINT,indexFunc,UINT,indexParam,REFGUID,guid,VARIANT*,pVarVal) \
-    ICOM_METHOD3 (HRESULT,GetVarCustData,UINT,index,REFGUID,guid,VARIANT*,pVarVal) \
-    ICOM_METHOD3 (HRESULT,GetImplTypeCustData,UINT,index,REFGUID,guid,VARIANT*,pVarVal) \
-    ICOM_METHOD5 (HRESULT,GetDocumentation2,MEMBERID,memid,LCID,lcid,BSTR*,pbstrHelpString,DWORD*,pdwHelpStringContext,BSTR*,pbstrHelpStringDll) \
-    ICOM_METHOD1 (HRESULT,GetAllCustData,CUSTDATA*,pCustData) \
-    ICOM_METHOD2 (HRESULT,GetAllFuncCustData,UINT,index,CUSTDATA*,pCustData) \
-    ICOM_METHOD3 (HRESULT,GetAllParamCustData,UINT,indexFunc,UINT,indexParam,CUSTDATA*,pCustData) \
-    ICOM_METHOD2 (HRESULT,GetAllVarCustData,UINT,index,CUSTDATA*,pCustData) \
-    ICOM_METHOD2 (HRESULT,GetAllImplTypeCustData,UINT,index,CUSTDATA*,pCustData)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ITypeInfo methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetTypeAttr)(INTERFACE *This, TYPEATTR** ppTypeAttr); \
+    HRESULT (STDMETHODCALLTYPE *GetTypeComp)(INTERFACE *This, ITypeComp** ppTComp); \
+    HRESULT (STDMETHODCALLTYPE *GetFuncDesc)(INTERFACE *This, UINT index, FUNCDESC** ppFuncDesc); \
+    HRESULT (STDMETHODCALLTYPE *GetVarDesc)(INTERFACE *This, UINT index, VARDESC** ppVarDesc); \
+    HRESULT (STDMETHODCALLTYPE *GetNames)(INTERFACE *This, MEMBERID memid, BSTR* rgBstrNames, UINT cMaxNames, UINT* pcNames); \
+    HRESULT (STDMETHODCALLTYPE *GetRefTypeOfImplType)(INTERFACE *This, UINT index, HREFTYPE* pRefType); \
+    HRESULT (STDMETHODCALLTYPE *GetImplTypeFlags)(INTERFACE *This, UINT index, INT* pImplTypeFlags); \
+    HRESULT (STDMETHODCALLTYPE *GetIDsOfNames)(INTERFACE *This, LPOLESTR* rgszNames, UINT cNames, MEMBERID* pMemId); \
+    HRESULT (STDMETHODCALLTYPE *Invoke)(INTERFACE *This, PVOID pvInstance, MEMBERID memid, WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarResult, EXCEPINFO* pExcepInfo, UINT* puArgErr); \
+    HRESULT (STDMETHODCALLTYPE *GetDocumentation)(INTERFACE *This, MEMBERID memid, BSTR* pBstrName, BSTR* pBstrDocString, DWORD* pdwHelpContext, BSTR* pBstrHelpFile); \
+    HRESULT (STDMETHODCALLTYPE *GetDllEntry)(INTERFACE *This, MEMBERID memid, INVOKEKIND invKind, BSTR* pBstrDllName, BSTR* pBstrName, WORD* pwOrdinal); \
+    HRESULT (STDMETHODCALLTYPE *GetRefTypeInfo)(INTERFACE *This, HREFTYPE hRefType, ITypeInfo** ppTInfo); \
+    HRESULT (STDMETHODCALLTYPE *AddressOfMember)(INTERFACE *This, MEMBERID memid, INVOKEKIND invKind, PVOID* ppv); \
+    HRESULT (STDMETHODCALLTYPE *CreateInstance)(INTERFACE *This, IUnknown* pUnkOuter, REFIID riid, PVOID* ppvObj); \
+    HRESULT (STDMETHODCALLTYPE *GetMops)(INTERFACE *This, MEMBERID memid, BSTR* pBstrMops); \
+    HRESULT (STDMETHODCALLTYPE *GetContainingTypeLib)(INTERFACE *This, ITypeLib** ppTLib, UINT* pIndex); \
+    void (STDMETHODCALLTYPE *ReleaseTypeAttr)(INTERFACE *This, TYPEATTR* pTypeAttr); \
+    void (STDMETHODCALLTYPE *ReleaseFuncDesc)(INTERFACE *This, FUNCDESC* pFuncDesc); \
+    void (STDMETHODCALLTYPE *ReleaseVarDesc)(INTERFACE *This, VARDESC* pVarDesc); \
+    /*** ITypeInfo2 methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetTypeKind)(INTERFACE *This, TYPEKIND* pTypeKind); \
+    HRESULT (STDMETHODCALLTYPE *GetTypeFlags)(INTERFACE *This, ULONG* pTypeFlags); \
+    HRESULT (STDMETHODCALLTYPE *GetFuncIndexOfMemId)(INTERFACE *This, MEMBERID memid, INVOKEKIND invKind, UINT* pFuncIndex); \
+    HRESULT (STDMETHODCALLTYPE *GetVarIndexOfMemId)(INTERFACE *This, MEMBERID memid, UINT* pVarIndex); \
+    HRESULT (STDMETHODCALLTYPE *GetCustData)(INTERFACE *This, REFGUID guid, VARIANT* pVarVal); \
+    HRESULT (STDMETHODCALLTYPE *GetFuncCustData)(INTERFACE *This, UINT index, REFGUID guid, VARIANT* pVarVal); \
+    HRESULT (STDMETHODCALLTYPE *GetParamCustData)(INTERFACE *This, UINT indexFunc, UINT indexParam, REFGUID guid, VARIANT* pVarVal); \
+    HRESULT (STDMETHODCALLTYPE *GetVarCustData)(INTERFACE *This, UINT index, REFGUID guid, VARIANT* pVarVal); \
+    HRESULT (STDMETHODCALLTYPE *GetImplTypeCustData)(INTERFACE *This, UINT index, REFGUID guid, VARIANT* pVarVal); \
+    HRESULT (STDMETHODCALLTYPE *GetDocumentation2)(INTERFACE *This, MEMBERID memid, LCID lcid, BSTR* pbstrHelpString, DWORD* pdwHelpStringContext, BSTR* pbstrHelpStringDll); \
+    HRESULT (STDMETHODCALLTYPE *GetAllCustData)(INTERFACE *This, CUSTDATA* pCustData); \
+    HRESULT (STDMETHODCALLTYPE *GetAllFuncCustData)(INTERFACE *This, UINT index, CUSTDATA* pCustData); \
+    HRESULT (STDMETHODCALLTYPE *GetAllParamCustData)(INTERFACE *This, UINT indexFunc, UINT indexParam, CUSTDATA* pCustData); \
+    HRESULT (STDMETHODCALLTYPE *GetAllVarCustData)(INTERFACE *This, UINT index, CUSTDATA* pCustData); \
+    HRESULT (STDMETHODCALLTYPE *GetAllImplTypeCustData)(INTERFACE *This, UINT index, CUSTDATA* pCustData);
 
 /*** IUnknown methods ***/
 #define ITypeInfo2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -2144,47 +2184,47 @@ DEFINE_GUID(IID_ITypeLib, 0x00020402, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ITypeLib: IUnknown {
 
-    virtual UINT CALLBACK GetTypeInfoCount(
+    virtual UINT STDMETHODCALLTYPE GetTypeInfoCount(
         ) = 0;
 
-    virtual HRESULT CALLBACK GetTypeInfo(
+    virtual HRESULT STDMETHODCALLTYPE GetTypeInfo(
         UINT index,
         ITypeInfo** ppTInfo) = 0;
 
-    virtual HRESULT CALLBACK GetTypeInfoType(
+    virtual HRESULT STDMETHODCALLTYPE GetTypeInfoType(
         UINT index,
         TYPEKIND* pTKind) = 0;
 
-    virtual HRESULT CALLBACK GetTypeInfoOfGuid(
+    virtual HRESULT STDMETHODCALLTYPE GetTypeInfoOfGuid(
         REFGUID guid,
         ITypeInfo** ppTinfo) = 0;
 
-    virtual HRESULT CALLBACK GetLibAttr(
+    virtual HRESULT STDMETHODCALLTYPE GetLibAttr(
         TLIBATTR** ppTLibAttr) = 0;
 
-    virtual HRESULT CALLBACK GetTypeComp(
+    virtual HRESULT STDMETHODCALLTYPE GetTypeComp(
         ITypeComp** ppTComp) = 0;
 
-    virtual HRESULT CALLBACK GetDocumentation(
+    virtual HRESULT STDMETHODCALLTYPE GetDocumentation(
         INT index,
         BSTR* pBstrName,
         BSTR* pBstrDocString,
         DWORD* pdwHelpContext,
         BSTR* pBstrHelpFile) = 0;
 
-    virtual HRESULT CALLBACK IsName(
+    virtual HRESULT STDMETHODCALLTYPE IsName(
         LPOLESTR szNameBuf,
         ULONG lHashVal,
         BOOL* pfName) = 0;
 
-    virtual HRESULT CALLBACK FindName(
+    virtual HRESULT STDMETHODCALLTYPE FindName(
         LPOLESTR szNameBuf,
         ULONG lHashVal,
         ITypeInfo** ppTInfo,
         MEMBERID* rgMemId,
         USHORT* pcFound) = 0;
 
-    virtual void CALLBACK ReleaseTLibAttr(
+    virtual void STDMETHODCALLTYPE ReleaseTLibAttr(
         TLIBATTR* pTLibAttr) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -2197,45 +2237,45 @@ struct ITypeLibVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         ITypeLib* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         ITypeLib* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         ITypeLib* This);
 
     /*** ITypeLib methods ***/
-    UINT (CALLBACK *GetTypeInfoCount)(
+    UINT (STDMETHODCALLTYPE *GetTypeInfoCount)(
         ITypeLib* This);
 
-    HRESULT (CALLBACK *GetTypeInfo)(
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfo)(
         ITypeLib* This,
         UINT index,
         ITypeInfo** ppTInfo);
 
-    HRESULT (CALLBACK *GetTypeInfoType)(
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfoType)(
         ITypeLib* This,
         UINT index,
         TYPEKIND* pTKind);
 
-    HRESULT (CALLBACK *GetTypeInfoOfGuid)(
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfoOfGuid)(
         ITypeLib* This,
         REFGUID guid,
         ITypeInfo** ppTinfo);
 
-    HRESULT (CALLBACK *GetLibAttr)(
+    HRESULT (STDMETHODCALLTYPE *GetLibAttr)(
         ITypeLib* This,
         TLIBATTR** ppTLibAttr);
 
-    HRESULT (CALLBACK *GetTypeComp)(
+    HRESULT (STDMETHODCALLTYPE *GetTypeComp)(
         ITypeLib* This,
         ITypeComp** ppTComp);
 
-    HRESULT (CALLBACK *GetDocumentation)(
+    HRESULT (STDMETHODCALLTYPE *GetDocumentation)(
         ITypeLib* This,
         INT index,
         BSTR* pBstrName,
@@ -2243,13 +2283,13 @@ struct ITypeLibVtbl {
         DWORD* pdwHelpContext,
         BSTR* pBstrHelpFile);
 
-    HRESULT (CALLBACK *IsName)(
+    HRESULT (STDMETHODCALLTYPE *IsName)(
         ITypeLib* This,
         LPOLESTR szNameBuf,
         ULONG lHashVal,
         BOOL* pfName);
 
-    HRESULT (CALLBACK *FindName)(
+    HRESULT (STDMETHODCALLTYPE *FindName)(
         ITypeLib* This,
         LPOLESTR szNameBuf,
         ULONG lHashVal,
@@ -2257,24 +2297,28 @@ struct ITypeLibVtbl {
         MEMBERID* rgMemId,
         USHORT* pcFound);
 
-    void (CALLBACK *ReleaseTLibAttr)(
+    void (STDMETHODCALLTYPE *ReleaseTLibAttr)(
         ITypeLib* This,
         TLIBATTR* pTLibAttr);
 
 };
 
 #define ITypeLib_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD  (UINT,GetTypeInfoCount) \
-    ICOM_METHOD2 (HRESULT,GetTypeInfo,UINT,index,ITypeInfo**,ppTInfo) \
-    ICOM_METHOD2 (HRESULT,GetTypeInfoType,UINT,index,TYPEKIND*,pTKind) \
-    ICOM_METHOD2 (HRESULT,GetTypeInfoOfGuid,REFGUID,guid,ITypeInfo**,ppTinfo) \
-    ICOM_METHOD1 (HRESULT,GetLibAttr,TLIBATTR**,ppTLibAttr) \
-    ICOM_METHOD1 (HRESULT,GetTypeComp,ITypeComp**,ppTComp) \
-    ICOM_METHOD5 (HRESULT,GetDocumentation,INT,index,BSTR*,pBstrName,BSTR*,pBstrDocString,DWORD*,pdwHelpContext,BSTR*,pBstrHelpFile) \
-    ICOM_METHOD3 (HRESULT,IsName,LPOLESTR,szNameBuf,ULONG,lHashVal,BOOL*,pfName) \
-    ICOM_METHOD5 (HRESULT,FindName,LPOLESTR,szNameBuf,ULONG,lHashVal,ITypeInfo**,ppTInfo,MEMBERID*,rgMemId,USHORT*,pcFound) \
-    ICOM_VMETHOD1(ReleaseTLibAttr,TLIBATTR*,pTLibAttr)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ITypeLib methods ***/ \
+    UINT (STDMETHODCALLTYPE *GetTypeInfoCount)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfo)(INTERFACE *This, UINT index, ITypeInfo** ppTInfo); \
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfoType)(INTERFACE *This, UINT index, TYPEKIND* pTKind); \
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfoOfGuid)(INTERFACE *This, REFGUID guid, ITypeInfo** ppTinfo); \
+    HRESULT (STDMETHODCALLTYPE *GetLibAttr)(INTERFACE *This, TLIBATTR** ppTLibAttr); \
+    HRESULT (STDMETHODCALLTYPE *GetTypeComp)(INTERFACE *This, ITypeComp** ppTComp); \
+    HRESULT (STDMETHODCALLTYPE *GetDocumentation)(INTERFACE *This, INT index, BSTR* pBstrName, BSTR* pBstrDocString, DWORD* pdwHelpContext, BSTR* pBstrHelpFile); \
+    HRESULT (STDMETHODCALLTYPE *IsName)(INTERFACE *This, LPOLESTR szNameBuf, ULONG lHashVal, BOOL* pfName); \
+    HRESULT (STDMETHODCALLTYPE *FindName)(INTERFACE *This, LPOLESTR szNameBuf, ULONG lHashVal, ITypeInfo** ppTInfo, MEMBERID* rgMemId, USHORT* pcFound); \
+    void (STDMETHODCALLTYPE *ReleaseTLibAttr)(INTERFACE *This, TLIBATTR* pTLibAttr);
 
 /*** IUnknown methods ***/
 #define ITypeLib_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -2459,22 +2503,22 @@ DEFINE_GUID(IID_ITypeLib2, 0x00020411, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ITypeLib2: ITypeLib {
 
-    virtual HRESULT CALLBACK GetCustData(
+    virtual HRESULT STDMETHODCALLTYPE GetCustData(
         REFGUID guid,
         VARIANT* pVarVal) = 0;
 
-    virtual HRESULT CALLBACK GetLibStatistics(
+    virtual HRESULT STDMETHODCALLTYPE GetLibStatistics(
         ULONG* pcUniqueNames,
         ULONG* pcchUniqueNames) = 0;
 
-    virtual HRESULT CALLBACK GetDocumentation2(
+    virtual HRESULT STDMETHODCALLTYPE GetDocumentation2(
         INT index,
         LCID lcid,
         BSTR* pbstrHelpString,
         DWORD* pdwHelpStringContext,
         BSTR* pbstrHelpStringDll) = 0;
 
-    virtual HRESULT CALLBACK GetAllCustData(
+    virtual HRESULT STDMETHODCALLTYPE GetAllCustData(
         CUSTDATA* pCustData) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -2487,45 +2531,45 @@ struct ITypeLib2Vtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         ITypeLib2* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         ITypeLib2* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         ITypeLib2* This);
 
     /*** ITypeLib methods ***/
-    UINT (CALLBACK *GetTypeInfoCount)(
+    UINT (STDMETHODCALLTYPE *GetTypeInfoCount)(
         ITypeLib2* This);
 
-    HRESULT (CALLBACK *GetTypeInfo)(
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfo)(
         ITypeLib2* This,
         UINT index,
         ITypeInfo** ppTInfo);
 
-    HRESULT (CALLBACK *GetTypeInfoType)(
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfoType)(
         ITypeLib2* This,
         UINT index,
         TYPEKIND* pTKind);
 
-    HRESULT (CALLBACK *GetTypeInfoOfGuid)(
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfoOfGuid)(
         ITypeLib2* This,
         REFGUID guid,
         ITypeInfo** ppTinfo);
 
-    HRESULT (CALLBACK *GetLibAttr)(
+    HRESULT (STDMETHODCALLTYPE *GetLibAttr)(
         ITypeLib2* This,
         TLIBATTR** ppTLibAttr);
 
-    HRESULT (CALLBACK *GetTypeComp)(
+    HRESULT (STDMETHODCALLTYPE *GetTypeComp)(
         ITypeLib2* This,
         ITypeComp** ppTComp);
 
-    HRESULT (CALLBACK *GetDocumentation)(
+    HRESULT (STDMETHODCALLTYPE *GetDocumentation)(
         ITypeLib2* This,
         INT index,
         BSTR* pBstrName,
@@ -2533,13 +2577,13 @@ struct ITypeLib2Vtbl {
         DWORD* pdwHelpContext,
         BSTR* pBstrHelpFile);
 
-    HRESULT (CALLBACK *IsName)(
+    HRESULT (STDMETHODCALLTYPE *IsName)(
         ITypeLib2* This,
         LPOLESTR szNameBuf,
         ULONG lHashVal,
         BOOL* pfName);
 
-    HRESULT (CALLBACK *FindName)(
+    HRESULT (STDMETHODCALLTYPE *FindName)(
         ITypeLib2* This,
         LPOLESTR szNameBuf,
         ULONG lHashVal,
@@ -2547,22 +2591,22 @@ struct ITypeLib2Vtbl {
         MEMBERID* rgMemId,
         USHORT* pcFound);
 
-    void (CALLBACK *ReleaseTLibAttr)(
+    void (STDMETHODCALLTYPE *ReleaseTLibAttr)(
         ITypeLib2* This,
         TLIBATTR* pTLibAttr);
 
     /*** ITypeLib2 methods ***/
-    HRESULT (CALLBACK *GetCustData)(
+    HRESULT (STDMETHODCALLTYPE *GetCustData)(
         ITypeLib2* This,
         REFGUID guid,
         VARIANT* pVarVal);
 
-    HRESULT (CALLBACK *GetLibStatistics)(
+    HRESULT (STDMETHODCALLTYPE *GetLibStatistics)(
         ITypeLib2* This,
         ULONG* pcUniqueNames,
         ULONG* pcchUniqueNames);
 
-    HRESULT (CALLBACK *GetDocumentation2)(
+    HRESULT (STDMETHODCALLTYPE *GetDocumentation2)(
         ITypeLib2* This,
         INT index,
         LCID lcid,
@@ -2570,18 +2614,33 @@ struct ITypeLib2Vtbl {
         DWORD* pdwHelpStringContext,
         BSTR* pbstrHelpStringDll);
 
-    HRESULT (CALLBACK *GetAllCustData)(
+    HRESULT (STDMETHODCALLTYPE *GetAllCustData)(
         ITypeLib2* This,
         CUSTDATA* pCustData);
 
 };
 
 #define ITypeLib2_IMETHODS \
-    ITypeLib_IMETHODS \
-    ICOM_METHOD2 (HRESULT,GetCustData,REFGUID,guid,VARIANT*,pVarVal) \
-    ICOM_METHOD2 (HRESULT,GetLibStatistics,ULONG*,pcUniqueNames,ULONG*,pcchUniqueNames) \
-    ICOM_METHOD5 (HRESULT,GetDocumentation2,INT,index,LCID,lcid,BSTR*,pbstrHelpString,DWORD*,pdwHelpStringContext,BSTR*,pbstrHelpStringDll) \
-    ICOM_METHOD1 (HRESULT,GetAllCustData,CUSTDATA*,pCustData)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ITypeLib methods ***/ \
+    UINT (STDMETHODCALLTYPE *GetTypeInfoCount)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfo)(INTERFACE *This, UINT index, ITypeInfo** ppTInfo); \
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfoType)(INTERFACE *This, UINT index, TYPEKIND* pTKind); \
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfoOfGuid)(INTERFACE *This, REFGUID guid, ITypeInfo** ppTinfo); \
+    HRESULT (STDMETHODCALLTYPE *GetLibAttr)(INTERFACE *This, TLIBATTR** ppTLibAttr); \
+    HRESULT (STDMETHODCALLTYPE *GetTypeComp)(INTERFACE *This, ITypeComp** ppTComp); \
+    HRESULT (STDMETHODCALLTYPE *GetDocumentation)(INTERFACE *This, INT index, BSTR* pBstrName, BSTR* pBstrDocString, DWORD* pdwHelpContext, BSTR* pBstrHelpFile); \
+    HRESULT (STDMETHODCALLTYPE *IsName)(INTERFACE *This, LPOLESTR szNameBuf, ULONG lHashVal, BOOL* pfName); \
+    HRESULT (STDMETHODCALLTYPE *FindName)(INTERFACE *This, LPOLESTR szNameBuf, ULONG lHashVal, ITypeInfo** ppTInfo, MEMBERID* rgMemId, USHORT* pcFound); \
+    void (STDMETHODCALLTYPE *ReleaseTLibAttr)(INTERFACE *This, TLIBATTR* pTLibAttr); \
+    /*** ITypeLib2 methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetCustData)(INTERFACE *This, REFGUID guid, VARIANT* pVarVal); \
+    HRESULT (STDMETHODCALLTYPE *GetLibStatistics)(INTERFACE *This, ULONG* pcUniqueNames, ULONG* pcchUniqueNames); \
+    HRESULT (STDMETHODCALLTYPE *GetDocumentation2)(INTERFACE *This, INT index, LCID lcid, BSTR* pbstrHelpString, DWORD* pdwHelpStringContext, BSTR* pbstrHelpStringDll); \
+    HRESULT (STDMETHODCALLTYPE *GetAllCustData)(INTERFACE *This, CUSTDATA* pCustData);
 
 /*** IUnknown methods ***/
 #define ITypeLib2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -2690,13 +2749,13 @@ DEFINE_GUID(IID_ITypeChangeEvents, 0x00020410, 0x0000, 0x0000, 0xc0,0x00, 0x00,0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ITypeChangeEvents: IUnknown {
 
-    virtual HRESULT CALLBACK RequestTypeChange(
+    virtual HRESULT STDMETHODCALLTYPE RequestTypeChange(
         CHANGEKIND changeKind,
         ITypeInfo* pTInfoBefore,
         LPOLESTR pStrName,
         INT* pfCancel) = 0;
 
-    virtual HRESULT CALLBACK AfterTypeChange(
+    virtual HRESULT STDMETHODCALLTYPE AfterTypeChange(
         CHANGEKIND changeKind,
         ITypeInfo* pTInfoAfter,
         LPOLESTR pStrName) = 0;
@@ -2711,26 +2770,26 @@ struct ITypeChangeEventsVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         ITypeChangeEvents* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         ITypeChangeEvents* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         ITypeChangeEvents* This);
 
     /*** ITypeChangeEvents methods ***/
-    HRESULT (CALLBACK *RequestTypeChange)(
+    HRESULT (STDMETHODCALLTYPE *RequestTypeChange)(
         ITypeChangeEvents* This,
         CHANGEKIND changeKind,
         ITypeInfo* pTInfoBefore,
         LPOLESTR pStrName,
         INT* pfCancel);
 
-    HRESULT (CALLBACK *AfterTypeChange)(
+    HRESULT (STDMETHODCALLTYPE *AfterTypeChange)(
         ITypeChangeEvents* This,
         CHANGEKIND changeKind,
         ITypeInfo* pTInfoAfter,
@@ -2739,9 +2798,13 @@ struct ITypeChangeEventsVtbl {
 };
 
 #define ITypeChangeEvents_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD4 (HRESULT,RequestTypeChange,CHANGEKIND,changeKind,ITypeInfo*,pTInfoBefore,LPOLESTR,pStrName,INT*,pfCancel) \
-    ICOM_METHOD3 (HRESULT,AfterTypeChange,CHANGEKIND,changeKind,ITypeInfo*,pTInfoAfter,LPOLESTR,pStrName)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ITypeChangeEvents methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *RequestTypeChange)(INTERFACE *This, CHANGEKIND changeKind, ITypeInfo* pTInfoBefore, LPOLESTR pStrName, INT* pfCancel); \
+    HRESULT (STDMETHODCALLTYPE *AfterTypeChange)(INTERFACE *This, CHANGEKIND changeKind, ITypeInfo* pTInfoAfter, LPOLESTR pStrName);
 
 /*** IUnknown methods ***/
 #define ITypeChangeEvents_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -2785,19 +2848,19 @@ DEFINE_GUID(IID_IErrorInfo, 0x1cf2b120, 0x547d, 0x101b, 0x8e,0x65, 0x08,0x00,0x2
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IErrorInfo: IUnknown {
 
-    virtual HRESULT CALLBACK GetGUID(
+    virtual HRESULT STDMETHODCALLTYPE GetGUID(
         GUID* pGUID) = 0;
 
-    virtual HRESULT CALLBACK GetSource(
+    virtual HRESULT STDMETHODCALLTYPE GetSource(
         BSTR* pBstrSource) = 0;
 
-    virtual HRESULT CALLBACK GetDescription(
+    virtual HRESULT STDMETHODCALLTYPE GetDescription(
         BSTR* pBstrDescription) = 0;
 
-    virtual HRESULT CALLBACK GetHelpFile(
+    virtual HRESULT STDMETHODCALLTYPE GetHelpFile(
         BSTR* pBstrHelpFile) = 0;
 
-    virtual HRESULT CALLBACK GetHelpContext(
+    virtual HRESULT STDMETHODCALLTYPE GetHelpContext(
         DWORD* pdwHelpContext) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -2810,47 +2873,51 @@ struct IErrorInfoVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IErrorInfo* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IErrorInfo* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IErrorInfo* This);
 
     /*** IErrorInfo methods ***/
-    HRESULT (CALLBACK *GetGUID)(
+    HRESULT (STDMETHODCALLTYPE *GetGUID)(
         IErrorInfo* This,
         GUID* pGUID);
 
-    HRESULT (CALLBACK *GetSource)(
+    HRESULT (STDMETHODCALLTYPE *GetSource)(
         IErrorInfo* This,
         BSTR* pBstrSource);
 
-    HRESULT (CALLBACK *GetDescription)(
+    HRESULT (STDMETHODCALLTYPE *GetDescription)(
         IErrorInfo* This,
         BSTR* pBstrDescription);
 
-    HRESULT (CALLBACK *GetHelpFile)(
+    HRESULT (STDMETHODCALLTYPE *GetHelpFile)(
         IErrorInfo* This,
         BSTR* pBstrHelpFile);
 
-    HRESULT (CALLBACK *GetHelpContext)(
+    HRESULT (STDMETHODCALLTYPE *GetHelpContext)(
         IErrorInfo* This,
         DWORD* pdwHelpContext);
 
 };
 
 #define IErrorInfo_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD1 (HRESULT,GetGUID,GUID*,pGUID) \
-    ICOM_METHOD1 (HRESULT,GetSource,BSTR*,pBstrSource) \
-    ICOM_METHOD1 (HRESULT,GetDescription,BSTR*,pBstrDescription) \
-    ICOM_METHOD1 (HRESULT,GetHelpFile,BSTR*,pBstrHelpFile) \
-    ICOM_METHOD1 (HRESULT,GetHelpContext,DWORD*,pdwHelpContext)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IErrorInfo methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *GetGUID)(INTERFACE *This, GUID* pGUID); \
+    HRESULT (STDMETHODCALLTYPE *GetSource)(INTERFACE *This, BSTR* pBstrSource); \
+    HRESULT (STDMETHODCALLTYPE *GetDescription)(INTERFACE *This, BSTR* pBstrDescription); \
+    HRESULT (STDMETHODCALLTYPE *GetHelpFile)(INTERFACE *This, BSTR* pBstrHelpFile); \
+    HRESULT (STDMETHODCALLTYPE *GetHelpContext)(INTERFACE *This, DWORD* pdwHelpContext);
 
 /*** IUnknown methods ***/
 #define IErrorInfo_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -2916,19 +2983,19 @@ DEFINE_GUID(IID_ICreateErrorInfo, 0x22f03340, 0x547d, 0x101b, 0x8e,0x65, 0x08,0x
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ICreateErrorInfo: IUnknown {
 
-    virtual HRESULT CALLBACK SetGUID(
+    virtual HRESULT STDMETHODCALLTYPE SetGUID(
         REFGUID rguid) = 0;
 
-    virtual HRESULT CALLBACK SetSource(
+    virtual HRESULT STDMETHODCALLTYPE SetSource(
         LPOLESTR szSource) = 0;
 
-    virtual HRESULT CALLBACK SetDescription(
+    virtual HRESULT STDMETHODCALLTYPE SetDescription(
         LPOLESTR szDescription) = 0;
 
-    virtual HRESULT CALLBACK SetHelpFile(
+    virtual HRESULT STDMETHODCALLTYPE SetHelpFile(
         LPOLESTR szHelpFile) = 0;
 
-    virtual HRESULT CALLBACK SetHelpContext(
+    virtual HRESULT STDMETHODCALLTYPE SetHelpContext(
         DWORD dwHelpContext) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -2941,47 +3008,51 @@ struct ICreateErrorInfoVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         ICreateErrorInfo* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         ICreateErrorInfo* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         ICreateErrorInfo* This);
 
     /*** ICreateErrorInfo methods ***/
-    HRESULT (CALLBACK *SetGUID)(
+    HRESULT (STDMETHODCALLTYPE *SetGUID)(
         ICreateErrorInfo* This,
         REFGUID rguid);
 
-    HRESULT (CALLBACK *SetSource)(
+    HRESULT (STDMETHODCALLTYPE *SetSource)(
         ICreateErrorInfo* This,
         LPOLESTR szSource);
 
-    HRESULT (CALLBACK *SetDescription)(
+    HRESULT (STDMETHODCALLTYPE *SetDescription)(
         ICreateErrorInfo* This,
         LPOLESTR szDescription);
 
-    HRESULT (CALLBACK *SetHelpFile)(
+    HRESULT (STDMETHODCALLTYPE *SetHelpFile)(
         ICreateErrorInfo* This,
         LPOLESTR szHelpFile);
 
-    HRESULT (CALLBACK *SetHelpContext)(
+    HRESULT (STDMETHODCALLTYPE *SetHelpContext)(
         ICreateErrorInfo* This,
         DWORD dwHelpContext);
 
 };
 
 #define ICreateErrorInfo_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD1 (HRESULT,SetGUID,REFGUID,rguid) \
-    ICOM_METHOD1 (HRESULT,SetSource,LPOLESTR,szSource) \
-    ICOM_METHOD1 (HRESULT,SetDescription,LPOLESTR,szDescription) \
-    ICOM_METHOD1 (HRESULT,SetHelpFile,LPOLESTR,szHelpFile) \
-    ICOM_METHOD1 (HRESULT,SetHelpContext,DWORD,dwHelpContext)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ICreateErrorInfo methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *SetGUID)(INTERFACE *This, REFGUID rguid); \
+    HRESULT (STDMETHODCALLTYPE *SetSource)(INTERFACE *This, LPOLESTR szSource); \
+    HRESULT (STDMETHODCALLTYPE *SetDescription)(INTERFACE *This, LPOLESTR szDescription); \
+    HRESULT (STDMETHODCALLTYPE *SetHelpFile)(INTERFACE *This, LPOLESTR szHelpFile); \
+    HRESULT (STDMETHODCALLTYPE *SetHelpContext)(INTERFACE *This, DWORD dwHelpContext);
 
 /*** IUnknown methods ***/
 #define ICreateErrorInfo_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -3047,7 +3118,7 @@ DEFINE_GUID(IID_ISupportErrorInfo, 0xdf0b3d60, 0x548f, 0x101b, 0x8e,0x65, 0x08,0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ISupportErrorInfo: IUnknown {
 
-    virtual HRESULT CALLBACK InterfaceSupportsErrorInfo(
+    virtual HRESULT STDMETHODCALLTYPE InterfaceSupportsErrorInfo(
         REFIID riid) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -3060,27 +3131,31 @@ struct ISupportErrorInfoVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         ISupportErrorInfo* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         ISupportErrorInfo* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         ISupportErrorInfo* This);
 
     /*** ISupportErrorInfo methods ***/
-    HRESULT (CALLBACK *InterfaceSupportsErrorInfo)(
+    HRESULT (STDMETHODCALLTYPE *InterfaceSupportsErrorInfo)(
         ISupportErrorInfo* This,
         REFIID riid);
 
 };
 
 #define ISupportErrorInfo_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD1 (HRESULT,InterfaceSupportsErrorInfo,REFIID,riid)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ISupportErrorInfo methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *InterfaceSupportsErrorInfo)(INTERFACE *This, REFIID riid);
 
 /*** IUnknown methods ***/
 #define ISupportErrorInfo_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -3108,7 +3183,7 @@ DEFINE_GUID(IID_ITypeFactory, 0x0000002e, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ITypeFactory: IUnknown {
 
-    virtual HRESULT CALLBACK CreateFromTypeInfo(
+    virtual HRESULT STDMETHODCALLTYPE CreateFromTypeInfo(
         ITypeInfo* pTypeInfo,
         REFIID riid,
         IUnknown** ppv) = 0;
@@ -3123,19 +3198,19 @@ struct ITypeFactoryVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         ITypeFactory* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         ITypeFactory* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         ITypeFactory* This);
 
     /*** ITypeFactory methods ***/
-    HRESULT (CALLBACK *CreateFromTypeInfo)(
+    HRESULT (STDMETHODCALLTYPE *CreateFromTypeInfo)(
         ITypeFactory* This,
         ITypeInfo* pTypeInfo,
         REFIID riid,
@@ -3144,8 +3219,12 @@ struct ITypeFactoryVtbl {
 };
 
 #define ITypeFactory_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD3 (HRESULT,CreateFromTypeInfo,ITypeInfo*,pTypeInfo,REFIID,riid,IUnknown**,ppv)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ITypeFactory methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *CreateFromTypeInfo)(INTERFACE *This, ITypeInfo* pTypeInfo, REFIID riid, IUnknown** ppv);
 
 /*** IUnknown methods ***/
 #define ITypeFactory_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -3175,13 +3254,13 @@ DEFINE_GUID(IID_ITypeMarshal, 0x0000002d, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ITypeMarshal: IUnknown {
 
-    virtual HRESULT CALLBACK Size(
+    virtual HRESULT STDMETHODCALLTYPE Size(
         PVOID pvType,
         DWORD dwDestContext,
         PVOID pvDestContext,
         ULONG* pSize) = 0;
 
-    virtual HRESULT CALLBACK Marshal(
+    virtual HRESULT STDMETHODCALLTYPE Marshal(
         PVOID pvType,
         DWORD dwDestContext,
         PVOID pvDestContext,
@@ -3189,14 +3268,14 @@ struct ITypeMarshal: IUnknown {
         BYTE* pBuffer,
         ULONG* pcbWritten) = 0;
 
-    virtual HRESULT CALLBACK Unmarshal(
+    virtual HRESULT STDMETHODCALLTYPE Unmarshal(
         PVOID pvType,
         DWORD dwFlags,
         ULONG cbBufferLength,
         BYTE* pBuffer,
         ULONG* pcbRead) = 0;
 
-    virtual HRESULT CALLBACK Free(
+    virtual HRESULT STDMETHODCALLTYPE Free(
         PVOID pvType) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -3209,26 +3288,26 @@ struct ITypeMarshalVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         ITypeMarshal* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         ITypeMarshal* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         ITypeMarshal* This);
 
     /*** ITypeMarshal methods ***/
-    HRESULT (CALLBACK *Size)(
+    HRESULT (STDMETHODCALLTYPE *Size)(
         ITypeMarshal* This,
         PVOID pvType,
         DWORD dwDestContext,
         PVOID pvDestContext,
         ULONG* pSize);
 
-    HRESULT (CALLBACK *Marshal)(
+    HRESULT (STDMETHODCALLTYPE *Marshal)(
         ITypeMarshal* This,
         PVOID pvType,
         DWORD dwDestContext,
@@ -3237,7 +3316,7 @@ struct ITypeMarshalVtbl {
         BYTE* pBuffer,
         ULONG* pcbWritten);
 
-    HRESULT (CALLBACK *Unmarshal)(
+    HRESULT (STDMETHODCALLTYPE *Unmarshal)(
         ITypeMarshal* This,
         PVOID pvType,
         DWORD dwFlags,
@@ -3245,18 +3324,22 @@ struct ITypeMarshalVtbl {
         BYTE* pBuffer,
         ULONG* pcbRead);
 
-    HRESULT (CALLBACK *Free)(
+    HRESULT (STDMETHODCALLTYPE *Free)(
         ITypeMarshal* This,
         PVOID pvType);
 
 };
 
 #define ITypeMarshal_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD4 (HRESULT,Size,PVOID,pvType,DWORD,dwDestContext,PVOID,pvDestContext,ULONG*,pSize) \
-    ICOM_METHOD6 (HRESULT,Marshal,PVOID,pvType,DWORD,dwDestContext,PVOID,pvDestContext,ULONG,cbBufferLength,BYTE*,pBuffer,ULONG*,pcbWritten) \
-    ICOM_METHOD5 (HRESULT,Unmarshal,PVOID,pvType,DWORD,dwFlags,ULONG,cbBufferLength,BYTE*,pBuffer,ULONG*,pcbRead) \
-    ICOM_METHOD1 (HRESULT,Free,PVOID,pvType)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ITypeMarshal methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *Size)(INTERFACE *This, PVOID pvType, DWORD dwDestContext, PVOID pvDestContext, ULONG* pSize); \
+    HRESULT (STDMETHODCALLTYPE *Marshal)(INTERFACE *This, PVOID pvType, DWORD dwDestContext, PVOID pvDestContext, ULONG cbBufferLength, BYTE* pBuffer, ULONG* pcbWritten); \
+    HRESULT (STDMETHODCALLTYPE *Unmarshal)(INTERFACE *This, PVOID pvType, DWORD dwFlags, ULONG cbBufferLength, BYTE* pBuffer, ULONG* pcbRead); \
+    HRESULT (STDMETHODCALLTYPE *Free)(INTERFACE *This, PVOID pvType);
 
 /*** IUnknown methods ***/
 #define ITypeMarshal_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -3324,66 +3407,66 @@ DEFINE_GUID(IID_IRecordInfo, 0x0000002f, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IRecordInfo: IUnknown {
 
-    virtual HRESULT CALLBACK RecordInit(
+    virtual HRESULT STDMETHODCALLTYPE RecordInit(
         PVOID pvNew) = 0;
 
-    virtual HRESULT CALLBACK RecordClear(
+    virtual HRESULT STDMETHODCALLTYPE RecordClear(
         PVOID pvExisting) = 0;
 
-    virtual HRESULT CALLBACK RecordCopy(
+    virtual HRESULT STDMETHODCALLTYPE RecordCopy(
         PVOID pvExisting,
         PVOID pvNew) = 0;
 
-    virtual HRESULT CALLBACK GetGuid(
+    virtual HRESULT STDMETHODCALLTYPE GetGuid(
         GUID* pguid) = 0;
 
-    virtual HRESULT CALLBACK GetName(
+    virtual HRESULT STDMETHODCALLTYPE GetName(
         BSTR* pbstrName) = 0;
 
-    virtual HRESULT CALLBACK GetSize(
+    virtual HRESULT STDMETHODCALLTYPE GetSize(
         ULONG* pcbSize) = 0;
 
-    virtual HRESULT CALLBACK GetTypeInfo(
+    virtual HRESULT STDMETHODCALLTYPE GetTypeInfo(
         ITypeInfo** ppTypeInfo) = 0;
 
-    virtual HRESULT CALLBACK GetField(
+    virtual HRESULT STDMETHODCALLTYPE GetField(
         PVOID pvData,
         LPCOLESTR szFieldName,
         VARIANT* pvarField) = 0;
 
-    virtual HRESULT CALLBACK GetFieldNoCopy(
+    virtual HRESULT STDMETHODCALLTYPE GetFieldNoCopy(
         PVOID pvData,
         LPCOLESTR szFieldName,
         VARIANT* pvarField,
         PVOID* ppvDataCArray) = 0;
 
-    virtual HRESULT CALLBACK PutField(
+    virtual HRESULT STDMETHODCALLTYPE PutField(
         ULONG wFlags,
         PVOID pvData,
         LPCOLESTR szFieldName,
         VARIANT* pvarField) = 0;
 
-    virtual HRESULT CALLBACK PutFieldNoCopy(
+    virtual HRESULT STDMETHODCALLTYPE PutFieldNoCopy(
         ULONG wFlags,
         PVOID pvData,
         LPCOLESTR szFieldName,
         VARIANT* pvarField) = 0;
 
-    virtual HRESULT CALLBACK GetFieldNames(
+    virtual HRESULT STDMETHODCALLTYPE GetFieldNames(
         ULONG* pcNames,
         BSTR* rgBstrNames) = 0;
 
-    virtual BOOL CALLBACK IsMatchingType(
+    virtual BOOL STDMETHODCALLTYPE IsMatchingType(
         IRecordInfo* pRecordInfo) = 0;
 
-    virtual PVOID CALLBACK RecordCreate(
+    virtual PVOID STDMETHODCALLTYPE RecordCreate(
         ) = 0;
 
-    virtual HRESULT CALLBACK RecordCreateCopy(
+    virtual HRESULT STDMETHODCALLTYPE RecordCreateCopy(
         PVOID pvSource,
         PVOID* ppvDest) = 0;
 
-    virtual HRESULT CALLBACK RecordDestroy(
+    virtual HRESULT STDMETHODCALLTYPE RecordDestroy(
         PVOID pvRecord) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -3396,115 +3479,119 @@ struct IRecordInfoVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         IRecordInfo* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         IRecordInfo* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         IRecordInfo* This);
 
     /*** IRecordInfo methods ***/
-    HRESULT (CALLBACK *RecordInit)(
+    HRESULT (STDMETHODCALLTYPE *RecordInit)(
         IRecordInfo* This,
         PVOID pvNew);
 
-    HRESULT (CALLBACK *RecordClear)(
+    HRESULT (STDMETHODCALLTYPE *RecordClear)(
         IRecordInfo* This,
         PVOID pvExisting);
 
-    HRESULT (CALLBACK *RecordCopy)(
+    HRESULT (STDMETHODCALLTYPE *RecordCopy)(
         IRecordInfo* This,
         PVOID pvExisting,
         PVOID pvNew);
 
-    HRESULT (CALLBACK *GetGuid)(
+    HRESULT (STDMETHODCALLTYPE *GetGuid)(
         IRecordInfo* This,
         GUID* pguid);
 
-    HRESULT (CALLBACK *GetName)(
+    HRESULT (STDMETHODCALLTYPE *GetName)(
         IRecordInfo* This,
         BSTR* pbstrName);
 
-    HRESULT (CALLBACK *GetSize)(
+    HRESULT (STDMETHODCALLTYPE *GetSize)(
         IRecordInfo* This,
         ULONG* pcbSize);
 
-    HRESULT (CALLBACK *GetTypeInfo)(
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfo)(
         IRecordInfo* This,
         ITypeInfo** ppTypeInfo);
 
-    HRESULT (CALLBACK *GetField)(
+    HRESULT (STDMETHODCALLTYPE *GetField)(
         IRecordInfo* This,
         PVOID pvData,
         LPCOLESTR szFieldName,
         VARIANT* pvarField);
 
-    HRESULT (CALLBACK *GetFieldNoCopy)(
+    HRESULT (STDMETHODCALLTYPE *GetFieldNoCopy)(
         IRecordInfo* This,
         PVOID pvData,
         LPCOLESTR szFieldName,
         VARIANT* pvarField,
         PVOID* ppvDataCArray);
 
-    HRESULT (CALLBACK *PutField)(
+    HRESULT (STDMETHODCALLTYPE *PutField)(
         IRecordInfo* This,
         ULONG wFlags,
         PVOID pvData,
         LPCOLESTR szFieldName,
         VARIANT* pvarField);
 
-    HRESULT (CALLBACK *PutFieldNoCopy)(
+    HRESULT (STDMETHODCALLTYPE *PutFieldNoCopy)(
         IRecordInfo* This,
         ULONG wFlags,
         PVOID pvData,
         LPCOLESTR szFieldName,
         VARIANT* pvarField);
 
-    HRESULT (CALLBACK *GetFieldNames)(
+    HRESULT (STDMETHODCALLTYPE *GetFieldNames)(
         IRecordInfo* This,
         ULONG* pcNames,
         BSTR* rgBstrNames);
 
-    BOOL (CALLBACK *IsMatchingType)(
+    BOOL (STDMETHODCALLTYPE *IsMatchingType)(
         IRecordInfo* This,
         IRecordInfo* pRecordInfo);
 
-    PVOID (CALLBACK *RecordCreate)(
+    PVOID (STDMETHODCALLTYPE *RecordCreate)(
         IRecordInfo* This);
 
-    HRESULT (CALLBACK *RecordCreateCopy)(
+    HRESULT (STDMETHODCALLTYPE *RecordCreateCopy)(
         IRecordInfo* This,
         PVOID pvSource,
         PVOID* ppvDest);
 
-    HRESULT (CALLBACK *RecordDestroy)(
+    HRESULT (STDMETHODCALLTYPE *RecordDestroy)(
         IRecordInfo* This,
         PVOID pvRecord);
 
 };
 
 #define IRecordInfo_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD1 (HRESULT,RecordInit,PVOID,pvNew) \
-    ICOM_METHOD1 (HRESULT,RecordClear,PVOID,pvExisting) \
-    ICOM_METHOD2 (HRESULT,RecordCopy,PVOID,pvExisting,PVOID,pvNew) \
-    ICOM_METHOD1 (HRESULT,GetGuid,GUID*,pguid) \
-    ICOM_METHOD1 (HRESULT,GetName,BSTR*,pbstrName) \
-    ICOM_METHOD1 (HRESULT,GetSize,ULONG*,pcbSize) \
-    ICOM_METHOD1 (HRESULT,GetTypeInfo,ITypeInfo**,ppTypeInfo) \
-    ICOM_METHOD3 (HRESULT,GetField,PVOID,pvData,LPCOLESTR,szFieldName,VARIANT*,pvarField) \
-    ICOM_METHOD4 (HRESULT,GetFieldNoCopy,PVOID,pvData,LPCOLESTR,szFieldName,VARIANT*,pvarField,PVOID*,ppvDataCArray) \
-    ICOM_METHOD4 (HRESULT,PutField,ULONG,wFlags,PVOID,pvData,LPCOLESTR,szFieldName,VARIANT*,pvarField) \
-    ICOM_METHOD4 (HRESULT,PutFieldNoCopy,ULONG,wFlags,PVOID,pvData,LPCOLESTR,szFieldName,VARIANT*,pvarField) \
-    ICOM_METHOD2 (HRESULT,GetFieldNames,ULONG*,pcNames,BSTR*,rgBstrNames) \
-    ICOM_METHOD1 (BOOL,IsMatchingType,IRecordInfo*,pRecordInfo) \
-    ICOM_METHOD  (PVOID,RecordCreate) \
-    ICOM_METHOD2 (HRESULT,RecordCreateCopy,PVOID,pvSource,PVOID*,ppvDest) \
-    ICOM_METHOD1 (HRESULT,RecordDestroy,PVOID,pvRecord)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** IRecordInfo methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *RecordInit)(INTERFACE *This, PVOID pvNew); \
+    HRESULT (STDMETHODCALLTYPE *RecordClear)(INTERFACE *This, PVOID pvExisting); \
+    HRESULT (STDMETHODCALLTYPE *RecordCopy)(INTERFACE *This, PVOID pvExisting, PVOID pvNew); \
+    HRESULT (STDMETHODCALLTYPE *GetGuid)(INTERFACE *This, GUID* pguid); \
+    HRESULT (STDMETHODCALLTYPE *GetName)(INTERFACE *This, BSTR* pbstrName); \
+    HRESULT (STDMETHODCALLTYPE *GetSize)(INTERFACE *This, ULONG* pcbSize); \
+    HRESULT (STDMETHODCALLTYPE *GetTypeInfo)(INTERFACE *This, ITypeInfo** ppTypeInfo); \
+    HRESULT (STDMETHODCALLTYPE *GetField)(INTERFACE *This, PVOID pvData, LPCOLESTR szFieldName, VARIANT* pvarField); \
+    HRESULT (STDMETHODCALLTYPE *GetFieldNoCopy)(INTERFACE *This, PVOID pvData, LPCOLESTR szFieldName, VARIANT* pvarField, PVOID* ppvDataCArray); \
+    HRESULT (STDMETHODCALLTYPE *PutField)(INTERFACE *This, ULONG wFlags, PVOID pvData, LPCOLESTR szFieldName, VARIANT* pvarField); \
+    HRESULT (STDMETHODCALLTYPE *PutFieldNoCopy)(INTERFACE *This, ULONG wFlags, PVOID pvData, LPCOLESTR szFieldName, VARIANT* pvarField); \
+    HRESULT (STDMETHODCALLTYPE *GetFieldNames)(INTERFACE *This, ULONG* pcNames, BSTR* rgBstrNames); \
+    BOOL (STDMETHODCALLTYPE *IsMatchingType)(INTERFACE *This, IRecordInfo* pRecordInfo); \
+    PVOID (STDMETHODCALLTYPE *RecordCreate)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *RecordCreateCopy)(INTERFACE *This, PVOID pvSource, PVOID* ppvDest); \
+    HRESULT (STDMETHODCALLTYPE *RecordDestroy)(INTERFACE *This, PVOID pvRecord);
 
 /*** IUnknown methods ***/
 #define IRecordInfo_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -3682,89 +3769,89 @@ DEFINE_GUID(IID_ICreateTypeInfo, 0x00020405, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ICreateTypeInfo: IUnknown {
 
-    virtual HRESULT CALLBACK SetGuid(
+    virtual HRESULT STDMETHODCALLTYPE SetGuid(
         REFGUID guid) = 0;
 
-    virtual HRESULT CALLBACK SetTypeFlags(
+    virtual HRESULT STDMETHODCALLTYPE SetTypeFlags(
         UINT uTypeFlags) = 0;
 
-    virtual HRESULT CALLBACK SetDocString(
+    virtual HRESULT STDMETHODCALLTYPE SetDocString(
         LPOLESTR pStrDoc) = 0;
 
-    virtual HRESULT CALLBACK SetHelpContext(
+    virtual HRESULT STDMETHODCALLTYPE SetHelpContext(
         DWORD dwHelpContext) = 0;
 
-    virtual HRESULT CALLBACK SetVersion(
+    virtual HRESULT STDMETHODCALLTYPE SetVersion(
         WORD wMajorVerNum,
         WORD wMinorVerNum) = 0;
 
-    virtual HRESULT CALLBACK AddRefTypeInfo(
+    virtual HRESULT STDMETHODCALLTYPE AddRefTypeInfo(
         ITypeInfo* pTInfo,
         HREFTYPE* phRefType) = 0;
 
-    virtual HRESULT CALLBACK AddFuncDesc(
+    virtual HRESULT STDMETHODCALLTYPE AddFuncDesc(
         UINT index,
         FUNCDESC* pFuncDesc) = 0;
 
-    virtual HRESULT CALLBACK AddImplType(
+    virtual HRESULT STDMETHODCALLTYPE AddImplType(
         UINT index,
         HREFTYPE hRefType) = 0;
 
-    virtual HRESULT CALLBACK SetImplTypeFlags(
+    virtual HRESULT STDMETHODCALLTYPE SetImplTypeFlags(
         UINT index,
         INT implTypeFlags) = 0;
 
-    virtual HRESULT CALLBACK SetAlignment(
+    virtual HRESULT STDMETHODCALLTYPE SetAlignment(
         WORD cbAlignment) = 0;
 
-    virtual HRESULT CALLBACK SetSchema(
+    virtual HRESULT STDMETHODCALLTYPE SetSchema(
         LPOLESTR pStrSchema) = 0;
 
-    virtual HRESULT CALLBACK AddVarDesc(
+    virtual HRESULT STDMETHODCALLTYPE AddVarDesc(
         UINT index,
         VARDESC* pVarDesc) = 0;
 
-    virtual HRESULT CALLBACK SetFuncAndParamNames(
+    virtual HRESULT STDMETHODCALLTYPE SetFuncAndParamNames(
         UINT index,
         LPOLESTR* rgszNames,
         UINT cNames) = 0;
 
-    virtual HRESULT CALLBACK SetVarName(
+    virtual HRESULT STDMETHODCALLTYPE SetVarName(
         UINT index,
         LPOLESTR szName) = 0;
 
-    virtual HRESULT CALLBACK SetTypeDescAlias(
+    virtual HRESULT STDMETHODCALLTYPE SetTypeDescAlias(
         TYPEDESC* pTDescAlias) = 0;
 
-    virtual HRESULT CALLBACK DefineFuncAsDllEntry(
+    virtual HRESULT STDMETHODCALLTYPE DefineFuncAsDllEntry(
         UINT index,
         LPOLESTR szDllName,
         LPOLESTR szProcName) = 0;
 
-    virtual HRESULT CALLBACK SetFuncDocString(
+    virtual HRESULT STDMETHODCALLTYPE SetFuncDocString(
         UINT index,
         LPOLESTR szDocString) = 0;
 
-    virtual HRESULT CALLBACK SetVarDocString(
+    virtual HRESULT STDMETHODCALLTYPE SetVarDocString(
         UINT index,
         LPOLESTR szDocString) = 0;
 
-    virtual HRESULT CALLBACK SetFuncHelpContext(
+    virtual HRESULT STDMETHODCALLTYPE SetFuncHelpContext(
         UINT index,
         DWORD dwHelpContext) = 0;
 
-    virtual HRESULT CALLBACK SetVarHelpContext(
+    virtual HRESULT STDMETHODCALLTYPE SetVarHelpContext(
         UINT index,
         DWORD dwHelpContext) = 0;
 
-    virtual HRESULT CALLBACK SetMops(
+    virtual HRESULT STDMETHODCALLTYPE SetMops(
         UINT index,
         BSTR bstrMops) = 0;
 
-    virtual HRESULT CALLBACK SetTypeIdldesc(
+    virtual HRESULT STDMETHODCALLTYPE SetTypeIdldesc(
         IDLDESC* pIdlDesc) = 0;
 
-    virtual HRESULT CALLBACK LayOut(
+    virtual HRESULT STDMETHODCALLTYPE LayOut(
         ) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -3777,152 +3864,156 @@ struct ICreateTypeInfoVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         ICreateTypeInfo* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         ICreateTypeInfo* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         ICreateTypeInfo* This);
 
     /*** ICreateTypeInfo methods ***/
-    HRESULT (CALLBACK *SetGuid)(
+    HRESULT (STDMETHODCALLTYPE *SetGuid)(
         ICreateTypeInfo* This,
         REFGUID guid);
 
-    HRESULT (CALLBACK *SetTypeFlags)(
+    HRESULT (STDMETHODCALLTYPE *SetTypeFlags)(
         ICreateTypeInfo* This,
         UINT uTypeFlags);
 
-    HRESULT (CALLBACK *SetDocString)(
+    HRESULT (STDMETHODCALLTYPE *SetDocString)(
         ICreateTypeInfo* This,
         LPOLESTR pStrDoc);
 
-    HRESULT (CALLBACK *SetHelpContext)(
+    HRESULT (STDMETHODCALLTYPE *SetHelpContext)(
         ICreateTypeInfo* This,
         DWORD dwHelpContext);
 
-    HRESULT (CALLBACK *SetVersion)(
+    HRESULT (STDMETHODCALLTYPE *SetVersion)(
         ICreateTypeInfo* This,
         WORD wMajorVerNum,
         WORD wMinorVerNum);
 
-    HRESULT (CALLBACK *AddRefTypeInfo)(
+    HRESULT (STDMETHODCALLTYPE *AddRefTypeInfo)(
         ICreateTypeInfo* This,
         ITypeInfo* pTInfo,
         HREFTYPE* phRefType);
 
-    HRESULT (CALLBACK *AddFuncDesc)(
+    HRESULT (STDMETHODCALLTYPE *AddFuncDesc)(
         ICreateTypeInfo* This,
         UINT index,
         FUNCDESC* pFuncDesc);
 
-    HRESULT (CALLBACK *AddImplType)(
+    HRESULT (STDMETHODCALLTYPE *AddImplType)(
         ICreateTypeInfo* This,
         UINT index,
         HREFTYPE hRefType);
 
-    HRESULT (CALLBACK *SetImplTypeFlags)(
+    HRESULT (STDMETHODCALLTYPE *SetImplTypeFlags)(
         ICreateTypeInfo* This,
         UINT index,
         INT implTypeFlags);
 
-    HRESULT (CALLBACK *SetAlignment)(
+    HRESULT (STDMETHODCALLTYPE *SetAlignment)(
         ICreateTypeInfo* This,
         WORD cbAlignment);
 
-    HRESULT (CALLBACK *SetSchema)(
+    HRESULT (STDMETHODCALLTYPE *SetSchema)(
         ICreateTypeInfo* This,
         LPOLESTR pStrSchema);
 
-    HRESULT (CALLBACK *AddVarDesc)(
+    HRESULT (STDMETHODCALLTYPE *AddVarDesc)(
         ICreateTypeInfo* This,
         UINT index,
         VARDESC* pVarDesc);
 
-    HRESULT (CALLBACK *SetFuncAndParamNames)(
+    HRESULT (STDMETHODCALLTYPE *SetFuncAndParamNames)(
         ICreateTypeInfo* This,
         UINT index,
         LPOLESTR* rgszNames,
         UINT cNames);
 
-    HRESULT (CALLBACK *SetVarName)(
+    HRESULT (STDMETHODCALLTYPE *SetVarName)(
         ICreateTypeInfo* This,
         UINT index,
         LPOLESTR szName);
 
-    HRESULT (CALLBACK *SetTypeDescAlias)(
+    HRESULT (STDMETHODCALLTYPE *SetTypeDescAlias)(
         ICreateTypeInfo* This,
         TYPEDESC* pTDescAlias);
 
-    HRESULT (CALLBACK *DefineFuncAsDllEntry)(
+    HRESULT (STDMETHODCALLTYPE *DefineFuncAsDllEntry)(
         ICreateTypeInfo* This,
         UINT index,
         LPOLESTR szDllName,
         LPOLESTR szProcName);
 
-    HRESULT (CALLBACK *SetFuncDocString)(
+    HRESULT (STDMETHODCALLTYPE *SetFuncDocString)(
         ICreateTypeInfo* This,
         UINT index,
         LPOLESTR szDocString);
 
-    HRESULT (CALLBACK *SetVarDocString)(
+    HRESULT (STDMETHODCALLTYPE *SetVarDocString)(
         ICreateTypeInfo* This,
         UINT index,
         LPOLESTR szDocString);
 
-    HRESULT (CALLBACK *SetFuncHelpContext)(
+    HRESULT (STDMETHODCALLTYPE *SetFuncHelpContext)(
         ICreateTypeInfo* This,
         UINT index,
         DWORD dwHelpContext);
 
-    HRESULT (CALLBACK *SetVarHelpContext)(
+    HRESULT (STDMETHODCALLTYPE *SetVarHelpContext)(
         ICreateTypeInfo* This,
         UINT index,
         DWORD dwHelpContext);
 
-    HRESULT (CALLBACK *SetMops)(
+    HRESULT (STDMETHODCALLTYPE *SetMops)(
         ICreateTypeInfo* This,
         UINT index,
         BSTR bstrMops);
 
-    HRESULT (CALLBACK *SetTypeIdldesc)(
+    HRESULT (STDMETHODCALLTYPE *SetTypeIdldesc)(
         ICreateTypeInfo* This,
         IDLDESC* pIdlDesc);
 
-    HRESULT (CALLBACK *LayOut)(
+    HRESULT (STDMETHODCALLTYPE *LayOut)(
         ICreateTypeInfo* This);
 
 };
 
 #define ICreateTypeInfo_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD1 (HRESULT,SetGuid,REFGUID,guid) \
-    ICOM_METHOD1 (HRESULT,SetTypeFlags,UINT,uTypeFlags) \
-    ICOM_METHOD1 (HRESULT,SetDocString,LPOLESTR,pStrDoc) \
-    ICOM_METHOD1 (HRESULT,SetHelpContext,DWORD,dwHelpContext) \
-    ICOM_METHOD2 (HRESULT,SetVersion,WORD,wMajorVerNum,WORD,wMinorVerNum) \
-    ICOM_METHOD2 (HRESULT,AddRefTypeInfo,ITypeInfo*,pTInfo,HREFTYPE*,phRefType) \
-    ICOM_METHOD2 (HRESULT,AddFuncDesc,UINT,index,FUNCDESC*,pFuncDesc) \
-    ICOM_METHOD2 (HRESULT,AddImplType,UINT,index,HREFTYPE,hRefType) \
-    ICOM_METHOD2 (HRESULT,SetImplTypeFlags,UINT,index,INT,implTypeFlags) \
-    ICOM_METHOD1 (HRESULT,SetAlignment,WORD,cbAlignment) \
-    ICOM_METHOD1 (HRESULT,SetSchema,LPOLESTR,pStrSchema) \
-    ICOM_METHOD2 (HRESULT,AddVarDesc,UINT,index,VARDESC*,pVarDesc) \
-    ICOM_METHOD3 (HRESULT,SetFuncAndParamNames,UINT,index,LPOLESTR*,rgszNames,UINT,cNames) \
-    ICOM_METHOD2 (HRESULT,SetVarName,UINT,index,LPOLESTR,szName) \
-    ICOM_METHOD1 (HRESULT,SetTypeDescAlias,TYPEDESC*,pTDescAlias) \
-    ICOM_METHOD3 (HRESULT,DefineFuncAsDllEntry,UINT,index,LPOLESTR,szDllName,LPOLESTR,szProcName) \
-    ICOM_METHOD2 (HRESULT,SetFuncDocString,UINT,index,LPOLESTR,szDocString) \
-    ICOM_METHOD2 (HRESULT,SetVarDocString,UINT,index,LPOLESTR,szDocString) \
-    ICOM_METHOD2 (HRESULT,SetFuncHelpContext,UINT,index,DWORD,dwHelpContext) \
-    ICOM_METHOD2 (HRESULT,SetVarHelpContext,UINT,index,DWORD,dwHelpContext) \
-    ICOM_METHOD2 (HRESULT,SetMops,UINT,index,BSTR,bstrMops) \
-    ICOM_METHOD1 (HRESULT,SetTypeIdldesc,IDLDESC*,pIdlDesc) \
-    ICOM_METHOD  (HRESULT,LayOut)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ICreateTypeInfo methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *SetGuid)(INTERFACE *This, REFGUID guid); \
+    HRESULT (STDMETHODCALLTYPE *SetTypeFlags)(INTERFACE *This, UINT uTypeFlags); \
+    HRESULT (STDMETHODCALLTYPE *SetDocString)(INTERFACE *This, LPOLESTR pStrDoc); \
+    HRESULT (STDMETHODCALLTYPE *SetHelpContext)(INTERFACE *This, DWORD dwHelpContext); \
+    HRESULT (STDMETHODCALLTYPE *SetVersion)(INTERFACE *This, WORD wMajorVerNum, WORD wMinorVerNum); \
+    HRESULT (STDMETHODCALLTYPE *AddRefTypeInfo)(INTERFACE *This, ITypeInfo* pTInfo, HREFTYPE* phRefType); \
+    HRESULT (STDMETHODCALLTYPE *AddFuncDesc)(INTERFACE *This, UINT index, FUNCDESC* pFuncDesc); \
+    HRESULT (STDMETHODCALLTYPE *AddImplType)(INTERFACE *This, UINT index, HREFTYPE hRefType); \
+    HRESULT (STDMETHODCALLTYPE *SetImplTypeFlags)(INTERFACE *This, UINT index, INT implTypeFlags); \
+    HRESULT (STDMETHODCALLTYPE *SetAlignment)(INTERFACE *This, WORD cbAlignment); \
+    HRESULT (STDMETHODCALLTYPE *SetSchema)(INTERFACE *This, LPOLESTR pStrSchema); \
+    HRESULT (STDMETHODCALLTYPE *AddVarDesc)(INTERFACE *This, UINT index, VARDESC* pVarDesc); \
+    HRESULT (STDMETHODCALLTYPE *SetFuncAndParamNames)(INTERFACE *This, UINT index, LPOLESTR* rgszNames, UINT cNames); \
+    HRESULT (STDMETHODCALLTYPE *SetVarName)(INTERFACE *This, UINT index, LPOLESTR szName); \
+    HRESULT (STDMETHODCALLTYPE *SetTypeDescAlias)(INTERFACE *This, TYPEDESC* pTDescAlias); \
+    HRESULT (STDMETHODCALLTYPE *DefineFuncAsDllEntry)(INTERFACE *This, UINT index, LPOLESTR szDllName, LPOLESTR szProcName); \
+    HRESULT (STDMETHODCALLTYPE *SetFuncDocString)(INTERFACE *This, UINT index, LPOLESTR szDocString); \
+    HRESULT (STDMETHODCALLTYPE *SetVarDocString)(INTERFACE *This, UINT index, LPOLESTR szDocString); \
+    HRESULT (STDMETHODCALLTYPE *SetFuncHelpContext)(INTERFACE *This, UINT index, DWORD dwHelpContext); \
+    HRESULT (STDMETHODCALLTYPE *SetVarHelpContext)(INTERFACE *This, UINT index, DWORD dwHelpContext); \
+    HRESULT (STDMETHODCALLTYPE *SetMops)(INTERFACE *This, UINT index, BSTR bstrMops); \
+    HRESULT (STDMETHODCALLTYPE *SetTypeIdldesc)(INTERFACE *This, IDLDESC* pIdlDesc); \
+    HRESULT (STDMETHODCALLTYPE *LayOut)(INTERFACE *This);
 
 /*** IUnknown methods ***/
 #define ICreateTypeInfo_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -4165,62 +4256,62 @@ DEFINE_GUID(IID_ICreateTypeInfo2, 0x0002040e, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ICreateTypeInfo2: ICreateTypeInfo {
 
-    virtual HRESULT CALLBACK DeleteFuncDesc(
+    virtual HRESULT STDMETHODCALLTYPE DeleteFuncDesc(
         UINT index) = 0;
 
-    virtual HRESULT CALLBACK DeleteFuncDescByMemId(
+    virtual HRESULT STDMETHODCALLTYPE DeleteFuncDescByMemId(
         MEMBERID memid,
         INVOKEKIND invKind) = 0;
 
-    virtual HRESULT CALLBACK DeleteVarDesc(
+    virtual HRESULT STDMETHODCALLTYPE DeleteVarDesc(
         UINT index) = 0;
 
-    virtual HRESULT CALLBACK DeleteVarDescByMemId(
+    virtual HRESULT STDMETHODCALLTYPE DeleteVarDescByMemId(
         MEMBERID memid) = 0;
 
-    virtual HRESULT CALLBACK DeleteImplType(
+    virtual HRESULT STDMETHODCALLTYPE DeleteImplType(
         UINT index) = 0;
 
-    virtual HRESULT CALLBACK SetCustData(
+    virtual HRESULT STDMETHODCALLTYPE SetCustData(
         REFGUID guid,
         VARIANT* pVarVal) = 0;
 
-    virtual HRESULT CALLBACK SetFuncCustData(
+    virtual HRESULT STDMETHODCALLTYPE SetFuncCustData(
         UINT index,
         REFGUID guid,
         VARIANT* pVarVal) = 0;
 
-    virtual HRESULT CALLBACK SetParamCustData(
+    virtual HRESULT STDMETHODCALLTYPE SetParamCustData(
         UINT indexFunc,
         UINT indexParam,
         REFGUID guid,
         VARIANT* pVarVal) = 0;
 
-    virtual HRESULT CALLBACK SetVarCustData(
+    virtual HRESULT STDMETHODCALLTYPE SetVarCustData(
         UINT index,
         REFGUID guid,
         VARIANT* pVarVal) = 0;
 
-    virtual HRESULT CALLBACK SetImplTypeCustData(
+    virtual HRESULT STDMETHODCALLTYPE SetImplTypeCustData(
         UINT index,
         REFGUID guid,
         VARIANT* pVarVal) = 0;
 
-    virtual HRESULT CALLBACK SetHelpStringContext(
+    virtual HRESULT STDMETHODCALLTYPE SetHelpStringContext(
         ULONG dwHelpStringContext) = 0;
 
-    virtual HRESULT CALLBACK SetFuncHelpStringContext(
+    virtual HRESULT STDMETHODCALLTYPE SetFuncHelpStringContext(
         UINT index,
         ULONG dwHelpStringContext) = 0;
 
-    virtual HRESULT CALLBACK SetVarHelpStringContext(
+    virtual HRESULT STDMETHODCALLTYPE SetVarHelpStringContext(
         UINT index,
         ULONG dwHelpStringContext) = 0;
 
-    virtual HRESULT CALLBACK Invalidate(
+    virtual HRESULT STDMETHODCALLTYPE Invalidate(
         ) = 0;
 
-    virtual HRESULT CALLBACK SetName(
+    virtual HRESULT STDMETHODCALLTYPE SetName(
         LPOLESTR szName) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -4233,217 +4324,245 @@ struct ICreateTypeInfo2Vtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         ICreateTypeInfo2* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         ICreateTypeInfo2* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         ICreateTypeInfo2* This);
 
     /*** ICreateTypeInfo methods ***/
-    HRESULT (CALLBACK *SetGuid)(
+    HRESULT (STDMETHODCALLTYPE *SetGuid)(
         ICreateTypeInfo2* This,
         REFGUID guid);
 
-    HRESULT (CALLBACK *SetTypeFlags)(
+    HRESULT (STDMETHODCALLTYPE *SetTypeFlags)(
         ICreateTypeInfo2* This,
         UINT uTypeFlags);
 
-    HRESULT (CALLBACK *SetDocString)(
+    HRESULT (STDMETHODCALLTYPE *SetDocString)(
         ICreateTypeInfo2* This,
         LPOLESTR pStrDoc);
 
-    HRESULT (CALLBACK *SetHelpContext)(
+    HRESULT (STDMETHODCALLTYPE *SetHelpContext)(
         ICreateTypeInfo2* This,
         DWORD dwHelpContext);
 
-    HRESULT (CALLBACK *SetVersion)(
+    HRESULT (STDMETHODCALLTYPE *SetVersion)(
         ICreateTypeInfo2* This,
         WORD wMajorVerNum,
         WORD wMinorVerNum);
 
-    HRESULT (CALLBACK *AddRefTypeInfo)(
+    HRESULT (STDMETHODCALLTYPE *AddRefTypeInfo)(
         ICreateTypeInfo2* This,
         ITypeInfo* pTInfo,
         HREFTYPE* phRefType);
 
-    HRESULT (CALLBACK *AddFuncDesc)(
+    HRESULT (STDMETHODCALLTYPE *AddFuncDesc)(
         ICreateTypeInfo2* This,
         UINT index,
         FUNCDESC* pFuncDesc);
 
-    HRESULT (CALLBACK *AddImplType)(
+    HRESULT (STDMETHODCALLTYPE *AddImplType)(
         ICreateTypeInfo2* This,
         UINT index,
         HREFTYPE hRefType);
 
-    HRESULT (CALLBACK *SetImplTypeFlags)(
+    HRESULT (STDMETHODCALLTYPE *SetImplTypeFlags)(
         ICreateTypeInfo2* This,
         UINT index,
         INT implTypeFlags);
 
-    HRESULT (CALLBACK *SetAlignment)(
+    HRESULT (STDMETHODCALLTYPE *SetAlignment)(
         ICreateTypeInfo2* This,
         WORD cbAlignment);
 
-    HRESULT (CALLBACK *SetSchema)(
+    HRESULT (STDMETHODCALLTYPE *SetSchema)(
         ICreateTypeInfo2* This,
         LPOLESTR pStrSchema);
 
-    HRESULT (CALLBACK *AddVarDesc)(
+    HRESULT (STDMETHODCALLTYPE *AddVarDesc)(
         ICreateTypeInfo2* This,
         UINT index,
         VARDESC* pVarDesc);
 
-    HRESULT (CALLBACK *SetFuncAndParamNames)(
+    HRESULT (STDMETHODCALLTYPE *SetFuncAndParamNames)(
         ICreateTypeInfo2* This,
         UINT index,
         LPOLESTR* rgszNames,
         UINT cNames);
 
-    HRESULT (CALLBACK *SetVarName)(
+    HRESULT (STDMETHODCALLTYPE *SetVarName)(
         ICreateTypeInfo2* This,
         UINT index,
         LPOLESTR szName);
 
-    HRESULT (CALLBACK *SetTypeDescAlias)(
+    HRESULT (STDMETHODCALLTYPE *SetTypeDescAlias)(
         ICreateTypeInfo2* This,
         TYPEDESC* pTDescAlias);
 
-    HRESULT (CALLBACK *DefineFuncAsDllEntry)(
+    HRESULT (STDMETHODCALLTYPE *DefineFuncAsDllEntry)(
         ICreateTypeInfo2* This,
         UINT index,
         LPOLESTR szDllName,
         LPOLESTR szProcName);
 
-    HRESULT (CALLBACK *SetFuncDocString)(
+    HRESULT (STDMETHODCALLTYPE *SetFuncDocString)(
         ICreateTypeInfo2* This,
         UINT index,
         LPOLESTR szDocString);
 
-    HRESULT (CALLBACK *SetVarDocString)(
+    HRESULT (STDMETHODCALLTYPE *SetVarDocString)(
         ICreateTypeInfo2* This,
         UINT index,
         LPOLESTR szDocString);
 
-    HRESULT (CALLBACK *SetFuncHelpContext)(
+    HRESULT (STDMETHODCALLTYPE *SetFuncHelpContext)(
         ICreateTypeInfo2* This,
         UINT index,
         DWORD dwHelpContext);
 
-    HRESULT (CALLBACK *SetVarHelpContext)(
+    HRESULT (STDMETHODCALLTYPE *SetVarHelpContext)(
         ICreateTypeInfo2* This,
         UINT index,
         DWORD dwHelpContext);
 
-    HRESULT (CALLBACK *SetMops)(
+    HRESULT (STDMETHODCALLTYPE *SetMops)(
         ICreateTypeInfo2* This,
         UINT index,
         BSTR bstrMops);
 
-    HRESULT (CALLBACK *SetTypeIdldesc)(
+    HRESULT (STDMETHODCALLTYPE *SetTypeIdldesc)(
         ICreateTypeInfo2* This,
         IDLDESC* pIdlDesc);
 
-    HRESULT (CALLBACK *LayOut)(
+    HRESULT (STDMETHODCALLTYPE *LayOut)(
         ICreateTypeInfo2* This);
 
     /*** ICreateTypeInfo2 methods ***/
-    HRESULT (CALLBACK *DeleteFuncDesc)(
+    HRESULT (STDMETHODCALLTYPE *DeleteFuncDesc)(
         ICreateTypeInfo2* This,
         UINT index);
 
-    HRESULT (CALLBACK *DeleteFuncDescByMemId)(
+    HRESULT (STDMETHODCALLTYPE *DeleteFuncDescByMemId)(
         ICreateTypeInfo2* This,
         MEMBERID memid,
         INVOKEKIND invKind);
 
-    HRESULT (CALLBACK *DeleteVarDesc)(
+    HRESULT (STDMETHODCALLTYPE *DeleteVarDesc)(
         ICreateTypeInfo2* This,
         UINT index);
 
-    HRESULT (CALLBACK *DeleteVarDescByMemId)(
+    HRESULT (STDMETHODCALLTYPE *DeleteVarDescByMemId)(
         ICreateTypeInfo2* This,
         MEMBERID memid);
 
-    HRESULT (CALLBACK *DeleteImplType)(
+    HRESULT (STDMETHODCALLTYPE *DeleteImplType)(
         ICreateTypeInfo2* This,
         UINT index);
 
-    HRESULT (CALLBACK *SetCustData)(
+    HRESULT (STDMETHODCALLTYPE *SetCustData)(
         ICreateTypeInfo2* This,
         REFGUID guid,
         VARIANT* pVarVal);
 
-    HRESULT (CALLBACK *SetFuncCustData)(
+    HRESULT (STDMETHODCALLTYPE *SetFuncCustData)(
         ICreateTypeInfo2* This,
         UINT index,
         REFGUID guid,
         VARIANT* pVarVal);
 
-    HRESULT (CALLBACK *SetParamCustData)(
+    HRESULT (STDMETHODCALLTYPE *SetParamCustData)(
         ICreateTypeInfo2* This,
         UINT indexFunc,
         UINT indexParam,
         REFGUID guid,
         VARIANT* pVarVal);
 
-    HRESULT (CALLBACK *SetVarCustData)(
+    HRESULT (STDMETHODCALLTYPE *SetVarCustData)(
         ICreateTypeInfo2* This,
         UINT index,
         REFGUID guid,
         VARIANT* pVarVal);
 
-    HRESULT (CALLBACK *SetImplTypeCustData)(
+    HRESULT (STDMETHODCALLTYPE *SetImplTypeCustData)(
         ICreateTypeInfo2* This,
         UINT index,
         REFGUID guid,
         VARIANT* pVarVal);
 
-    HRESULT (CALLBACK *SetHelpStringContext)(
+    HRESULT (STDMETHODCALLTYPE *SetHelpStringContext)(
         ICreateTypeInfo2* This,
         ULONG dwHelpStringContext);
 
-    HRESULT (CALLBACK *SetFuncHelpStringContext)(
-        ICreateTypeInfo2* This,
-        UINT index,
-        ULONG dwHelpStringContext);
-
-    HRESULT (CALLBACK *SetVarHelpStringContext)(
+    HRESULT (STDMETHODCALLTYPE *SetFuncHelpStringContext)(
         ICreateTypeInfo2* This,
         UINT index,
         ULONG dwHelpStringContext);
 
-    HRESULT (CALLBACK *Invalidate)(
+    HRESULT (STDMETHODCALLTYPE *SetVarHelpStringContext)(
+        ICreateTypeInfo2* This,
+        UINT index,
+        ULONG dwHelpStringContext);
+
+    HRESULT (STDMETHODCALLTYPE *Invalidate)(
         ICreateTypeInfo2* This);
 
-    HRESULT (CALLBACK *SetName)(
+    HRESULT (STDMETHODCALLTYPE *SetName)(
         ICreateTypeInfo2* This,
         LPOLESTR szName);
 
 };
 
 #define ICreateTypeInfo2_IMETHODS \
-    ICreateTypeInfo_IMETHODS \
-    ICOM_METHOD1 (HRESULT,DeleteFuncDesc,UINT,index) \
-    ICOM_METHOD2 (HRESULT,DeleteFuncDescByMemId,MEMBERID,memid,INVOKEKIND,invKind) \
-    ICOM_METHOD1 (HRESULT,DeleteVarDesc,UINT,index) \
-    ICOM_METHOD1 (HRESULT,DeleteVarDescByMemId,MEMBERID,memid) \
-    ICOM_METHOD1 (HRESULT,DeleteImplType,UINT,index) \
-    ICOM_METHOD2 (HRESULT,SetCustData,REFGUID,guid,VARIANT*,pVarVal) \
-    ICOM_METHOD3 (HRESULT,SetFuncCustData,UINT,index,REFGUID,guid,VARIANT*,pVarVal) \
-    ICOM_METHOD4 (HRESULT,SetParamCustData,UINT,indexFunc,UINT,indexParam,REFGUID,guid,VARIANT*,pVarVal) \
-    ICOM_METHOD3 (HRESULT,SetVarCustData,UINT,index,REFGUID,guid,VARIANT*,pVarVal) \
-    ICOM_METHOD3 (HRESULT,SetImplTypeCustData,UINT,index,REFGUID,guid,VARIANT*,pVarVal) \
-    ICOM_METHOD1 (HRESULT,SetHelpStringContext,ULONG,dwHelpStringContext) \
-    ICOM_METHOD2 (HRESULT,SetFuncHelpStringContext,UINT,index,ULONG,dwHelpStringContext) \
-    ICOM_METHOD2 (HRESULT,SetVarHelpStringContext,UINT,index,ULONG,dwHelpStringContext) \
-    ICOM_METHOD  (HRESULT,Invalidate) \
-    ICOM_METHOD1 (HRESULT,SetName,LPOLESTR,szName)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ICreateTypeInfo methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *SetGuid)(INTERFACE *This, REFGUID guid); \
+    HRESULT (STDMETHODCALLTYPE *SetTypeFlags)(INTERFACE *This, UINT uTypeFlags); \
+    HRESULT (STDMETHODCALLTYPE *SetDocString)(INTERFACE *This, LPOLESTR pStrDoc); \
+    HRESULT (STDMETHODCALLTYPE *SetHelpContext)(INTERFACE *This, DWORD dwHelpContext); \
+    HRESULT (STDMETHODCALLTYPE *SetVersion)(INTERFACE *This, WORD wMajorVerNum, WORD wMinorVerNum); \
+    HRESULT (STDMETHODCALLTYPE *AddRefTypeInfo)(INTERFACE *This, ITypeInfo* pTInfo, HREFTYPE* phRefType); \
+    HRESULT (STDMETHODCALLTYPE *AddFuncDesc)(INTERFACE *This, UINT index, FUNCDESC* pFuncDesc); \
+    HRESULT (STDMETHODCALLTYPE *AddImplType)(INTERFACE *This, UINT index, HREFTYPE hRefType); \
+    HRESULT (STDMETHODCALLTYPE *SetImplTypeFlags)(INTERFACE *This, UINT index, INT implTypeFlags); \
+    HRESULT (STDMETHODCALLTYPE *SetAlignment)(INTERFACE *This, WORD cbAlignment); \
+    HRESULT (STDMETHODCALLTYPE *SetSchema)(INTERFACE *This, LPOLESTR pStrSchema); \
+    HRESULT (STDMETHODCALLTYPE *AddVarDesc)(INTERFACE *This, UINT index, VARDESC* pVarDesc); \
+    HRESULT (STDMETHODCALLTYPE *SetFuncAndParamNames)(INTERFACE *This, UINT index, LPOLESTR* rgszNames, UINT cNames); \
+    HRESULT (STDMETHODCALLTYPE *SetVarName)(INTERFACE *This, UINT index, LPOLESTR szName); \
+    HRESULT (STDMETHODCALLTYPE *SetTypeDescAlias)(INTERFACE *This, TYPEDESC* pTDescAlias); \
+    HRESULT (STDMETHODCALLTYPE *DefineFuncAsDllEntry)(INTERFACE *This, UINT index, LPOLESTR szDllName, LPOLESTR szProcName); \
+    HRESULT (STDMETHODCALLTYPE *SetFuncDocString)(INTERFACE *This, UINT index, LPOLESTR szDocString); \
+    HRESULT (STDMETHODCALLTYPE *SetVarDocString)(INTERFACE *This, UINT index, LPOLESTR szDocString); \
+    HRESULT (STDMETHODCALLTYPE *SetFuncHelpContext)(INTERFACE *This, UINT index, DWORD dwHelpContext); \
+    HRESULT (STDMETHODCALLTYPE *SetVarHelpContext)(INTERFACE *This, UINT index, DWORD dwHelpContext); \
+    HRESULT (STDMETHODCALLTYPE *SetMops)(INTERFACE *This, UINT index, BSTR bstrMops); \
+    HRESULT (STDMETHODCALLTYPE *SetTypeIdldesc)(INTERFACE *This, IDLDESC* pIdlDesc); \
+    HRESULT (STDMETHODCALLTYPE *LayOut)(INTERFACE *This); \
+    /*** ICreateTypeInfo2 methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *DeleteFuncDesc)(INTERFACE *This, UINT index); \
+    HRESULT (STDMETHODCALLTYPE *DeleteFuncDescByMemId)(INTERFACE *This, MEMBERID memid, INVOKEKIND invKind); \
+    HRESULT (STDMETHODCALLTYPE *DeleteVarDesc)(INTERFACE *This, UINT index); \
+    HRESULT (STDMETHODCALLTYPE *DeleteVarDescByMemId)(INTERFACE *This, MEMBERID memid); \
+    HRESULT (STDMETHODCALLTYPE *DeleteImplType)(INTERFACE *This, UINT index); \
+    HRESULT (STDMETHODCALLTYPE *SetCustData)(INTERFACE *This, REFGUID guid, VARIANT* pVarVal); \
+    HRESULT (STDMETHODCALLTYPE *SetFuncCustData)(INTERFACE *This, UINT index, REFGUID guid, VARIANT* pVarVal); \
+    HRESULT (STDMETHODCALLTYPE *SetParamCustData)(INTERFACE *This, UINT indexFunc, UINT indexParam, REFGUID guid, VARIANT* pVarVal); \
+    HRESULT (STDMETHODCALLTYPE *SetVarCustData)(INTERFACE *This, UINT index, REFGUID guid, VARIANT* pVarVal); \
+    HRESULT (STDMETHODCALLTYPE *SetImplTypeCustData)(INTERFACE *This, UINT index, REFGUID guid, VARIANT* pVarVal); \
+    HRESULT (STDMETHODCALLTYPE *SetHelpStringContext)(INTERFACE *This, ULONG dwHelpStringContext); \
+    HRESULT (STDMETHODCALLTYPE *SetFuncHelpStringContext)(INTERFACE *This, UINT index, ULONG dwHelpStringContext); \
+    HRESULT (STDMETHODCALLTYPE *SetVarHelpStringContext)(INTERFACE *This, UINT index, ULONG dwHelpStringContext); \
+    HRESULT (STDMETHODCALLTYPE *Invalidate)(INTERFACE *This); \
+    HRESULT (STDMETHODCALLTYPE *SetName)(INTERFACE *This, LPOLESTR szName);
 
 /*** IUnknown methods ***/
 #define ICreateTypeInfo2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -4635,37 +4754,37 @@ DEFINE_GUID(IID_ICreateTypeLib, 0x00020406, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ICreateTypeLib: IUnknown {
 
-    virtual HRESULT CALLBACK CreateTypeInfo(
+    virtual HRESULT STDMETHODCALLTYPE CreateTypeInfo(
         LPOLESTR szName,
         TYPEKIND tkind,
         ICreateTypeInfo** ppCTInfo) = 0;
 
-    virtual HRESULT CALLBACK SetName(
+    virtual HRESULT STDMETHODCALLTYPE SetName(
         LPOLESTR szName) = 0;
 
-    virtual HRESULT CALLBACK SetVersion(
+    virtual HRESULT STDMETHODCALLTYPE SetVersion(
         WORD wMajorVerNum,
         WORD wMinorVerNum) = 0;
 
-    virtual HRESULT CALLBACK SetGuid(
+    virtual HRESULT STDMETHODCALLTYPE SetGuid(
         REFGUID guid) = 0;
 
-    virtual HRESULT CALLBACK SetDocString(
+    virtual HRESULT STDMETHODCALLTYPE SetDocString(
         LPOLESTR szDoc) = 0;
 
-    virtual HRESULT CALLBACK SetHelpFileName(
+    virtual HRESULT STDMETHODCALLTYPE SetHelpFileName(
         LPOLESTR szHelpFileName) = 0;
 
-    virtual HRESULT CALLBACK SetHelpContext(
+    virtual HRESULT STDMETHODCALLTYPE SetHelpContext(
         DWORD dwHelpContext) = 0;
 
-    virtual HRESULT CALLBACK SetLcid(
+    virtual HRESULT STDMETHODCALLTYPE SetLcid(
         LCID lcid) = 0;
 
-    virtual HRESULT CALLBACK SetLibFlags(
+    virtual HRESULT STDMETHODCALLTYPE SetLibFlags(
         UINT uLibFlags) = 0;
 
-    virtual HRESULT CALLBACK SaveAllChanges(
+    virtual HRESULT STDMETHODCALLTYPE SaveAllChanges(
         ) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -4678,74 +4797,78 @@ struct ICreateTypeLibVtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         ICreateTypeLib* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         ICreateTypeLib* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         ICreateTypeLib* This);
 
     /*** ICreateTypeLib methods ***/
-    HRESULT (CALLBACK *CreateTypeInfo)(
+    HRESULT (STDMETHODCALLTYPE *CreateTypeInfo)(
         ICreateTypeLib* This,
         LPOLESTR szName,
         TYPEKIND tkind,
         ICreateTypeInfo** ppCTInfo);
 
-    HRESULT (CALLBACK *SetName)(
+    HRESULT (STDMETHODCALLTYPE *SetName)(
         ICreateTypeLib* This,
         LPOLESTR szName);
 
-    HRESULT (CALLBACK *SetVersion)(
+    HRESULT (STDMETHODCALLTYPE *SetVersion)(
         ICreateTypeLib* This,
         WORD wMajorVerNum,
         WORD wMinorVerNum);
 
-    HRESULT (CALLBACK *SetGuid)(
+    HRESULT (STDMETHODCALLTYPE *SetGuid)(
         ICreateTypeLib* This,
         REFGUID guid);
 
-    HRESULT (CALLBACK *SetDocString)(
+    HRESULT (STDMETHODCALLTYPE *SetDocString)(
         ICreateTypeLib* This,
         LPOLESTR szDoc);
 
-    HRESULT (CALLBACK *SetHelpFileName)(
+    HRESULT (STDMETHODCALLTYPE *SetHelpFileName)(
         ICreateTypeLib* This,
         LPOLESTR szHelpFileName);
 
-    HRESULT (CALLBACK *SetHelpContext)(
+    HRESULT (STDMETHODCALLTYPE *SetHelpContext)(
         ICreateTypeLib* This,
         DWORD dwHelpContext);
 
-    HRESULT (CALLBACK *SetLcid)(
+    HRESULT (STDMETHODCALLTYPE *SetLcid)(
         ICreateTypeLib* This,
         LCID lcid);
 
-    HRESULT (CALLBACK *SetLibFlags)(
+    HRESULT (STDMETHODCALLTYPE *SetLibFlags)(
         ICreateTypeLib* This,
         UINT uLibFlags);
 
-    HRESULT (CALLBACK *SaveAllChanges)(
+    HRESULT (STDMETHODCALLTYPE *SaveAllChanges)(
         ICreateTypeLib* This);
 
 };
 
 #define ICreateTypeLib_IMETHODS \
-    IUnknown_IMETHODS \
-    ICOM_METHOD3 (HRESULT,CreateTypeInfo,LPOLESTR,szName,TYPEKIND,tkind,ICreateTypeInfo**,ppCTInfo) \
-    ICOM_METHOD1 (HRESULT,SetName,LPOLESTR,szName) \
-    ICOM_METHOD2 (HRESULT,SetVersion,WORD,wMajorVerNum,WORD,wMinorVerNum) \
-    ICOM_METHOD1 (HRESULT,SetGuid,REFGUID,guid) \
-    ICOM_METHOD1 (HRESULT,SetDocString,LPOLESTR,szDoc) \
-    ICOM_METHOD1 (HRESULT,SetHelpFileName,LPOLESTR,szHelpFileName) \
-    ICOM_METHOD1 (HRESULT,SetHelpContext,DWORD,dwHelpContext) \
-    ICOM_METHOD1 (HRESULT,SetLcid,LCID,lcid) \
-    ICOM_METHOD1 (HRESULT,SetLibFlags,UINT,uLibFlags) \
-    ICOM_METHOD  (HRESULT,SaveAllChanges)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ICreateTypeLib methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *CreateTypeInfo)(INTERFACE *This, LPOLESTR szName, TYPEKIND tkind, ICreateTypeInfo** ppCTInfo); \
+    HRESULT (STDMETHODCALLTYPE *SetName)(INTERFACE *This, LPOLESTR szName); \
+    HRESULT (STDMETHODCALLTYPE *SetVersion)(INTERFACE *This, WORD wMajorVerNum, WORD wMinorVerNum); \
+    HRESULT (STDMETHODCALLTYPE *SetGuid)(INTERFACE *This, REFGUID guid); \
+    HRESULT (STDMETHODCALLTYPE *SetDocString)(INTERFACE *This, LPOLESTR szDoc); \
+    HRESULT (STDMETHODCALLTYPE *SetHelpFileName)(INTERFACE *This, LPOLESTR szHelpFileName); \
+    HRESULT (STDMETHODCALLTYPE *SetHelpContext)(INTERFACE *This, DWORD dwHelpContext); \
+    HRESULT (STDMETHODCALLTYPE *SetLcid)(INTERFACE *This, LCID lcid); \
+    HRESULT (STDMETHODCALLTYPE *SetLibFlags)(INTERFACE *This, UINT uLibFlags); \
+    HRESULT (STDMETHODCALLTYPE *SaveAllChanges)(INTERFACE *This);
 
 /*** IUnknown methods ***/
 #define ICreateTypeLib_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -4858,17 +4981,17 @@ DEFINE_GUID(IID_ICreateTypeLib2, 0x0002040f, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x0
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ICreateTypeLib2: ICreateTypeLib {
 
-    virtual HRESULT CALLBACK DeleteTypeInfo(
+    virtual HRESULT STDMETHODCALLTYPE DeleteTypeInfo(
         LPOLESTR szName) = 0;
 
-    virtual HRESULT CALLBACK SetCustData(
+    virtual HRESULT STDMETHODCALLTYPE SetCustData(
         REFGUID guid,
         VARIANT* pVarVal) = 0;
 
-    virtual HRESULT CALLBACK SetHelpStringContext(
+    virtual HRESULT STDMETHODCALLTYPE SetHelpStringContext(
         ULONG dwHelpStringContext) = 0;
 
-    virtual HRESULT CALLBACK SetHelpStringDll(
+    virtual HRESULT STDMETHODCALLTYPE SetHelpStringDll(
         LPOLESTR szFileName) = 0;
 
 } ICOM_COM_INTERFACE_ATTRIBUTE;
@@ -4881,86 +5004,101 @@ struct ICreateTypeLib2Vtbl {
     ICOM_MSVTABLE_COMPAT_FIELDS
 
     /*** IUnknown methods ***/
-    HRESULT (CALLBACK *QueryInterface)(
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
         ICreateTypeLib2* This,
         REFIID riid,
         void** ppvObject);
 
-    ULONG (CALLBACK *AddRef)(
+    ULONG (STDMETHODCALLTYPE *AddRef)(
         ICreateTypeLib2* This);
 
-    ULONG (CALLBACK *Release)(
+    ULONG (STDMETHODCALLTYPE *Release)(
         ICreateTypeLib2* This);
 
     /*** ICreateTypeLib methods ***/
-    HRESULT (CALLBACK *CreateTypeInfo)(
+    HRESULT (STDMETHODCALLTYPE *CreateTypeInfo)(
         ICreateTypeLib2* This,
         LPOLESTR szName,
         TYPEKIND tkind,
         ICreateTypeInfo** ppCTInfo);
 
-    HRESULT (CALLBACK *SetName)(
+    HRESULT (STDMETHODCALLTYPE *SetName)(
         ICreateTypeLib2* This,
         LPOLESTR szName);
 
-    HRESULT (CALLBACK *SetVersion)(
+    HRESULT (STDMETHODCALLTYPE *SetVersion)(
         ICreateTypeLib2* This,
         WORD wMajorVerNum,
         WORD wMinorVerNum);
 
-    HRESULT (CALLBACK *SetGuid)(
+    HRESULT (STDMETHODCALLTYPE *SetGuid)(
         ICreateTypeLib2* This,
         REFGUID guid);
 
-    HRESULT (CALLBACK *SetDocString)(
+    HRESULT (STDMETHODCALLTYPE *SetDocString)(
         ICreateTypeLib2* This,
         LPOLESTR szDoc);
 
-    HRESULT (CALLBACK *SetHelpFileName)(
+    HRESULT (STDMETHODCALLTYPE *SetHelpFileName)(
         ICreateTypeLib2* This,
         LPOLESTR szHelpFileName);
 
-    HRESULT (CALLBACK *SetHelpContext)(
+    HRESULT (STDMETHODCALLTYPE *SetHelpContext)(
         ICreateTypeLib2* This,
         DWORD dwHelpContext);
 
-    HRESULT (CALLBACK *SetLcid)(
+    HRESULT (STDMETHODCALLTYPE *SetLcid)(
         ICreateTypeLib2* This,
         LCID lcid);
 
-    HRESULT (CALLBACK *SetLibFlags)(
+    HRESULT (STDMETHODCALLTYPE *SetLibFlags)(
         ICreateTypeLib2* This,
         UINT uLibFlags);
 
-    HRESULT (CALLBACK *SaveAllChanges)(
+    HRESULT (STDMETHODCALLTYPE *SaveAllChanges)(
         ICreateTypeLib2* This);
 
     /*** ICreateTypeLib2 methods ***/
-    HRESULT (CALLBACK *DeleteTypeInfo)(
+    HRESULT (STDMETHODCALLTYPE *DeleteTypeInfo)(
         ICreateTypeLib2* This,
         LPOLESTR szName);
 
-    HRESULT (CALLBACK *SetCustData)(
+    HRESULT (STDMETHODCALLTYPE *SetCustData)(
         ICreateTypeLib2* This,
         REFGUID guid,
         VARIANT* pVarVal);
 
-    HRESULT (CALLBACK *SetHelpStringContext)(
+    HRESULT (STDMETHODCALLTYPE *SetHelpStringContext)(
         ICreateTypeLib2* This,
         ULONG dwHelpStringContext);
 
-    HRESULT (CALLBACK *SetHelpStringDll)(
+    HRESULT (STDMETHODCALLTYPE *SetHelpStringDll)(
         ICreateTypeLib2* This,
         LPOLESTR szFileName);
 
 };
 
 #define ICreateTypeLib2_IMETHODS \
-    ICreateTypeLib_IMETHODS \
-    ICOM_METHOD1 (HRESULT,DeleteTypeInfo,LPOLESTR,szName) \
-    ICOM_METHOD2 (HRESULT,SetCustData,REFGUID,guid,VARIANT*,pVarVal) \
-    ICOM_METHOD1 (HRESULT,SetHelpStringContext,ULONG,dwHelpStringContext) \
-    ICOM_METHOD1 (HRESULT,SetHelpStringDll,LPOLESTR,szFileName)
+    /*** IUnknown methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
+    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
+    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
+    /*** ICreateTypeLib methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *CreateTypeInfo)(INTERFACE *This, LPOLESTR szName, TYPEKIND tkind, ICreateTypeInfo** ppCTInfo); \
+    HRESULT (STDMETHODCALLTYPE *SetName)(INTERFACE *This, LPOLESTR szName); \
+    HRESULT (STDMETHODCALLTYPE *SetVersion)(INTERFACE *This, WORD wMajorVerNum, WORD wMinorVerNum); \
+    HRESULT (STDMETHODCALLTYPE *SetGuid)(INTERFACE *This, REFGUID guid); \
+    HRESULT (STDMETHODCALLTYPE *SetDocString)(INTERFACE *This, LPOLESTR szDoc); \
+    HRESULT (STDMETHODCALLTYPE *SetHelpFileName)(INTERFACE *This, LPOLESTR szHelpFileName); \
+    HRESULT (STDMETHODCALLTYPE *SetHelpContext)(INTERFACE *This, DWORD dwHelpContext); \
+    HRESULT (STDMETHODCALLTYPE *SetLcid)(INTERFACE *This, LCID lcid); \
+    HRESULT (STDMETHODCALLTYPE *SetLibFlags)(INTERFACE *This, UINT uLibFlags); \
+    HRESULT (STDMETHODCALLTYPE *SaveAllChanges)(INTERFACE *This); \
+    /*** ICreateTypeLib2 methods ***/ \
+    HRESULT (STDMETHODCALLTYPE *DeleteTypeInfo)(INTERFACE *This, LPOLESTR szName); \
+    HRESULT (STDMETHODCALLTYPE *SetCustData)(INTERFACE *This, REFGUID guid, VARIANT* pVarVal); \
+    HRESULT (STDMETHODCALLTYPE *SetHelpStringContext)(INTERFACE *This, ULONG dwHelpStringContext); \
+    HRESULT (STDMETHODCALLTYPE *SetHelpStringDll)(INTERFACE *This, LPOLESTR szFileName);
 
 /*** IUnknown methods ***/
 #define ICreateTypeLib2_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)

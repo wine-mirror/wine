@@ -274,7 +274,6 @@
 # define EXTERN_C    extern
 #endif
 
-#ifndef __WINESRC__
 #define STDMETHODCALLTYPE       __stdcall
 #define STDMETHODVCALLTYPE      __cdecl
 #define STDAPICALLTYPE          __stdcall
@@ -288,7 +287,6 @@
 #define STDAPIV_(type)          EXTERN_C type STDAPIVCALLTYPE
 #define STDMETHODIMPV           HRESULT STDMETHODVCALLTYPE
 #define STDMETHODIMPV_(type)    type STDMETHODVCALLTYPE
-#endif
 
 /* Define the basic types */
 #ifndef VOID

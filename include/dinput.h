@@ -1048,23 +1048,23 @@ DECL_WINELIB_TYPE_AW(LPCDIDEVICEIMAGEINFOHEADER)
 /*****************************************************************************
  * IDirectInputEffect interface
  */
-#define ICOM_INTERFACE IDirectInputEffect
+#define INTERFACE IDirectInputEffect
 #define IDirectInputEffect_METHODS \
-    ICOM_METHOD3(HRESULT,Initialize,      HINSTANCE,, DWORD,, REFGUID,) \
-    ICOM_METHOD1(HRESULT,GetEffectGuid,   LPGUID,) \
-    ICOM_METHOD2(HRESULT,GetParameters,   LPDIEFFECT,, DWORD,) \
-    ICOM_METHOD2(HRESULT,SetParameters,   LPCDIEFFECT,, DWORD,) \
-    ICOM_METHOD2(HRESULT,Start,           DWORD,, DWORD,) \
-    ICOM_METHOD (HRESULT,Stop) \
-    ICOM_METHOD1(HRESULT,GetEffectStatus, LPDWORD,) \
-    ICOM_METHOD (HRESULT,Download) \
-    ICOM_METHOD (HRESULT,Unload) \
-    ICOM_METHOD1(HRESULT,Escape,          LPDIEFFESCAPE,)
+    STDMETHOD(Initialize)(THIS_ HINSTANCE, DWORD, REFGUID) PURE; \
+    STDMETHOD(GetEffectGuid)(THIS_ LPGUID) PURE; \
+    STDMETHOD(GetParameters)(THIS_ LPDIEFFECT, DWORD) PURE; \
+    STDMETHOD(SetParameters)(THIS_ LPCDIEFFECT, DWORD) PURE; \
+    STDMETHOD(Start)(THIS_ DWORD, DWORD) PURE; \
+    STDMETHOD(Stop)(THIS) PURE; \
+    STDMETHOD(GetEffectStatus)(THIS_ LPDWORD) PURE; \
+    STDMETHOD(Download)(THIS) PURE; \
+    STDMETHOD(Unload)(THIS) PURE; \
+    STDMETHOD(Escape)(THIS_ LPDIEFFESCAPE) PURE;
 #define IDirectInputEffect_IMETHODS \
     IUnknown_IMETHODS \
     IDirectInputEffect_METHODS
 ICOM_DEFINE(IDirectInputEffect,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
     /*** IUnknown methods ***/
 #define IDirectInputEffect_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
@@ -1086,28 +1086,28 @@ ICOM_DEFINE(IDirectInputEffect,IUnknown)
 /*****************************************************************************
  * IDirectInputDeviceA interface
  */
-#define ICOM_INTERFACE IDirectInputDeviceA
+#define INTERFACE IDirectInputDeviceA
 #define IDirectInputDeviceA_METHODS \
-    ICOM_METHOD1(HRESULT,GetCapabilities, LPDIDEVCAPS,lpDIDevCaps) \
-    ICOM_METHOD3(HRESULT,EnumObjects, LPDIENUMDEVICEOBJECTSCALLBACKA,lpCallback, LPVOID,pvRef, DWORD,dwFlags) \
-    ICOM_METHOD2(HRESULT,GetProperty, REFGUID,rguidProp, LPDIPROPHEADER,pdiph) \
-    ICOM_METHOD2(HRESULT,SetProperty, REFGUID,rguidProp, LPCDIPROPHEADER,pdiph) \
-    ICOM_METHOD (HRESULT,Acquire) \
-    ICOM_METHOD (HRESULT,Unacquire) \
-    ICOM_METHOD2(HRESULT,GetDeviceState, DWORD,cbData, LPVOID,lpvData) \
-    ICOM_METHOD4(HRESULT,GetDeviceData, DWORD,cbObjectData, LPDIDEVICEOBJECTDATA,rgdod, LPDWORD,pdwInOut, DWORD,dwFlags) \
-    ICOM_METHOD1(HRESULT,SetDataFormat, LPCDIDATAFORMAT,lpdf) \
-    ICOM_METHOD1(HRESULT,SetEventNotification, HANDLE,hEvent) \
-    ICOM_METHOD2(HRESULT,SetCooperativeLevel, HWND,hwnd, DWORD,dwFlags) \
-    ICOM_METHOD3(HRESULT,GetObjectInfo, LPDIDEVICEOBJECTINSTANCEA,pdidoi, DWORD,dwObj, DWORD,dwHow) \
-    ICOM_METHOD1(HRESULT,GetDeviceInfo, LPDIDEVICEINSTANCEA,pdidi) \
-    ICOM_METHOD2(HRESULT,RunControlPanel, HWND,hwndOwner, DWORD,dwFlags) \
-    ICOM_METHOD3(HRESULT,Initialize, HINSTANCE,hinst, DWORD,dwVersion, REFGUID,rguid)
+    STDMETHOD(GetCapabilities)(THIS_ LPDIDEVCAPS lpDIDevCaps) PURE; \
+    STDMETHOD(EnumObjects)(THIS_ LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags) PURE; \
+    STDMETHOD(GetProperty)(THIS_ REFGUID rguidProp, LPDIPROPHEADER pdiph) PURE; \
+    STDMETHOD(SetProperty)(THIS_ REFGUID rguidProp, LPCDIPROPHEADER pdiph) PURE; \
+    STDMETHOD(Acquire)(THIS) PURE; \
+    STDMETHOD(Unacquire)(THIS) PURE; \
+    STDMETHOD(GetDeviceState)(THIS_ DWORD cbData, LPVOID lpvData) PURE; \
+    STDMETHOD(GetDeviceData)(THIS_ DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags) PURE; \
+    STDMETHOD(SetDataFormat)(THIS_ LPCDIDATAFORMAT lpdf) PURE; \
+    STDMETHOD(SetEventNotification)(THIS_ HANDLE hEvent) PURE; \
+    STDMETHOD(SetCooperativeLevel)(THIS_ HWND hwnd, DWORD dwFlags) PURE; \
+    STDMETHOD(GetObjectInfo)(THIS_ LPDIDEVICEOBJECTINSTANCEA pdidoi, DWORD dwObj, DWORD dwHow) PURE; \
+    STDMETHOD(GetDeviceInfo)(THIS_ LPDIDEVICEINSTANCEA pdidi) PURE; \
+    STDMETHOD(RunControlPanel)(THIS_ HWND hwndOwner, DWORD dwFlags) PURE; \
+    STDMETHOD(Initialize)(THIS_ HINSTANCE hinst, DWORD dwVersion, REFGUID rguid) PURE;
 #define IDirectInputDeviceA_IMETHODS \
     IUnknown_IMETHODS \
     IDirectInputDeviceA_METHODS
 ICOM_DEFINE(IDirectInputDeviceA,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
     /*** IUnknown methods ***/
 #define IDirectInputDevice_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
@@ -1134,22 +1134,22 @@ ICOM_DEFINE(IDirectInputDeviceA,IUnknown)
 /*****************************************************************************
  * IDirectInputDevice2A interface
  */
-#define ICOM_INTERFACE IDirectInputDevice2A
+#define INTERFACE IDirectInputDevice2A
 #define IDirectInputDevice2A_METHODS \
-    ICOM_METHOD4(HRESULT,CreateEffect, REFGUID,rguid, LPCDIEFFECT,lpeff, LPDIRECTINPUTEFFECT*,ppdeff, LPUNKNOWN,punkOuter) \
-    ICOM_METHOD3(HRESULT,EnumEffects, LPDIENUMEFFECTSCALLBACKA,lpCallback, LPVOID,pvRef, DWORD,dwEffType) \
-    ICOM_METHOD2(HRESULT,GetEffectInfo, LPDIEFFECTINFOA,pdei, REFGUID,rguid) \
-    ICOM_METHOD1(HRESULT,GetForceFeedbackState, LPDWORD,pdwOut) \
-    ICOM_METHOD1(HRESULT,SendForceFeedbackCommand, DWORD,dwFlags) \
-    ICOM_METHOD3(HRESULT,EnumCreatedEffectObjects, LPDIENUMCREATEDEFFECTOBJECTSCALLBACK,lpCallback, LPVOID,pvRef, DWORD,fl) \
-    ICOM_METHOD1(HRESULT,Escape, LPDIEFFESCAPE,pesc) \
-    ICOM_METHOD (HRESULT,Poll) \
-    ICOM_METHOD4(HRESULT,SendDeviceData, DWORD,cbObjectData, LPCDIDEVICEOBJECTDATA,rgdod, LPDWORD,pdwInOut, DWORD,fl)
+    STDMETHOD(CreateEffect)(THIS_ REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter) PURE; \
+    STDMETHOD(EnumEffects)(THIS_ LPDIENUMEFFECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwEffType) PURE; \
+    STDMETHOD(GetEffectInfo)(THIS_ LPDIEFFECTINFOA pdei, REFGUID rguid) PURE; \
+    STDMETHOD(GetForceFeedbackState)(THIS_ LPDWORD pdwOut) PURE; \
+    STDMETHOD(SendForceFeedbackCommand)(THIS_ DWORD dwFlags) PURE; \
+    STDMETHOD(EnumCreatedEffectObjects)(THIS_ LPDIENUMCREATEDEFFECTOBJECTSCALLBACK lpCallback, LPVOID pvRef, DWORD fl) PURE; \
+    STDMETHOD(Escape)(THIS_ LPDIEFFESCAPE pesc) PURE; \
+    STDMETHOD(Poll)(THIS) PURE; \
+    STDMETHOD(SendDeviceData)(THIS_ DWORD cbObjectData, LPCDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD fl) PURE;
 #define IDirectInputDevice2A_IMETHODS \
     IDirectInputDeviceA_IMETHODS \
     IDirectInputDevice2A_METHODS
 ICOM_DEFINE(IDirectInputDevice2A,IDirectInputDeviceA)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectInputDevice2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
@@ -1186,15 +1186,15 @@ ICOM_DEFINE(IDirectInputDevice2A,IDirectInputDeviceA)
 /*****************************************************************************
  * IDirectInputDevice7A interface
  */
-#define ICOM_INTERFACE IDirectInputDevice7A
+#define INTERFACE IDirectInputDevice7A
 #define IDirectInputDevice7A_METHODS \
-    ICOM_METHOD4(HRESULT,EnumEffectsInFile,LPCSTR,lpszFileName,LPDIENUMEFFECTSINFILECALLBACK,pec,LPVOID,pvRef,DWORD,dwFlags) \
-    ICOM_METHOD4(HRESULT,WriteEffectToFile,LPCSTR,lpszFileName,DWORD,dwEntries,LPDIFILEEFFECT,rgDiFileEft,DWORD,dwFlags)
+    STDMETHOD(EnumEffectsInFile)(THIS_ LPCSTR lpszFileName,LPDIENUMEFFECTSINFILECALLBACK pec,LPVOID pvRef,DWORD dwFlags) PURE; \
+    STDMETHOD(WriteEffectToFile)(THIS_ LPCSTR lpszFileName,DWORD dwEntries,LPDIFILEEFFECT rgDiFileEft,DWORD dwFlags) PURE;
 #define IDirectInputDevice7A_IMETHODS \
     IDirectInputDevice2A_IMETHODS \
     IDirectInputDevice7A_METHODS
 ICOM_DEFINE(IDirectInputDevice7A,IDirectInputDevice2A)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectInputDevice7_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
@@ -1235,16 +1235,16 @@ ICOM_DEFINE(IDirectInputDevice7A,IDirectInputDevice2A)
 /*****************************************************************************
  * IDirectInputDevice8A interface
  */
-#define ICOM_INTERFACE IDirectInputDevice8A
+#define INTERFACE IDirectInputDevice8A
 #define IDirectInputDevice8A_METHODS \
-    ICOM_METHOD3(HRESULT,BuildActionMap, LPDIACTIONFORMATA,lpdiaf, LPCSTR,lpszUserName, DWORD,dwFlags) \
-    ICOM_METHOD3(HRESULT,SetActionMap, LPDIACTIONFORMATA,lpdiaf, LPCSTR,lpszUserName, DWORD,dwFlags) \
-    ICOM_METHOD1(HRESULT,GetImageInfo, LPDIDEVICEIMAGEINFOHEADERA,lpdiDevImageInfoHeader)
+    STDMETHOD(BuildActionMap)(THIS_ LPDIACTIONFORMATA lpdiaf, LPCSTR lpszUserName, DWORD dwFlags) PURE; \
+    STDMETHOD(SetActionMap)(THIS_ LPDIACTIONFORMATA lpdiaf, LPCSTR lpszUserName, DWORD dwFlags) PURE; \
+    STDMETHOD(GetImageInfo)(THIS_ LPDIDEVICEIMAGEINFOHEADERA lpdiDevImageInfoHeader) PURE;
 #define IDirectInputDevice8A_IMETHODS \
     IDirectInputDevice7A_IMETHODS \
     IDirectInputDevice8A_METHODS
 ICOM_DEFINE(IDirectInputDevice8A,IDirectInputDevice7A)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectInputDevice8_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
@@ -1324,18 +1324,18 @@ extern const DIDATAFORMAT c_dfDIJoystick2;
 /*****************************************************************************
  * IDirectInputA interface
  */
-#define ICOM_INTERFACE IDirectInputA
+#define INTERFACE IDirectInputA
 #define IDirectInputA_METHODS \
-    ICOM_METHOD3(HRESULT,CreateDevice,    REFGUID,rguid, LPDIRECTINPUTDEVICEA*,lplpDirectInputDevice, LPUNKNOWN,pUnkOuter) \
-    ICOM_METHOD4(HRESULT,EnumDevices,     DWORD,dwDevType, LPDIENUMDEVICESCALLBACKA,lpCallback, LPVOID,pvRef, DWORD,dwFlags) \
-    ICOM_METHOD1(HRESULT,GetDeviceStatus, REFGUID,rguidInstance) \
-    ICOM_METHOD2(HRESULT,RunControlPanel, HWND,hwndOwner, DWORD,dwFlags) \
-    ICOM_METHOD2(HRESULT,Initialize,      HINSTANCE,hinst, DWORD,dwVersion)
+    STDMETHOD(CreateDevice)(THIS_ REFGUID rguid, LPDIRECTINPUTDEVICEA *lplpDirectInputDevice, LPUNKNOWN pUnkOuter) PURE; \
+    STDMETHOD(EnumDevices)(THIS_ DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags) PURE; \
+    STDMETHOD(GetDeviceStatus)(THIS_ REFGUID rguidInstance) PURE; \
+    STDMETHOD(RunControlPanel)(THIS_ HWND hwndOwner, DWORD dwFlags) PURE; \
+    STDMETHOD(Initialize)(THIS_ HINSTANCE hinst, DWORD dwVersion) PURE;
 #define IDirectInputA_IMETHODS \
     IUnknown_IMETHODS \
     IDirectInputA_METHODS
 ICOM_DEFINE(IDirectInputA,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectInputA_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
@@ -1351,14 +1351,14 @@ ICOM_DEFINE(IDirectInputA,IUnknown)
 /*****************************************************************************
  * IDirectInput2A interface
  */
-#define ICOM_INTERFACE IDirectInput2A
+#define INTERFACE IDirectInput2A
 #define IDirectInput2A_METHODS \
-    ICOM_METHOD3(HRESULT,FindDevice,      REFGUID,rguid, LPCSTR,pszName, LPGUID,pguidInstance)
+    STDMETHOD(FindDevice)(THIS_ REFGUID rguid, LPCSTR pszName, LPGUID pguidInstance) PURE;
 #define IDirectInput2A_IMETHODS \
     IDirectInputA_IMETHODS \
     IDirectInput2A_METHODS
 ICOM_DEFINE(IDirectInput2A,IDirectInputA)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectInput2A_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
@@ -1377,14 +1377,14 @@ ICOM_DEFINE(IDirectInput2A,IDirectInputA)
 /*****************************************************************************
  * IDirectInput7A interface
  */
-#define ICOM_INTERFACE IDirectInput7A
+#define INTERFACE IDirectInput7A
 #define IDirectInput7A_METHODS \
-    ICOM_METHOD4(HRESULT,CreateDeviceEx,  REFGUID,rguid, REFIID,riid, LPVOID*,pvOut, LPUNKNOWN,lpUnknownOuter)
+    STDMETHOD(CreateDeviceEx)(THIS_ REFGUID rguid, REFIID riid, LPVOID *pvOut, LPUNKNOWN lpUnknownOuter) PURE;
 #define IDirectInput7A_IMETHODS \
     IDirectInput2A_IMETHODS \
     IDirectInput7A_METHODS
 ICOM_DEFINE(IDirectInput7A,IDirectInput2A)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectInput7A_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
@@ -1406,21 +1406,21 @@ ICOM_DEFINE(IDirectInput7A,IDirectInput2A)
 /*****************************************************************************
  * IDirectInput8A interface
  */
-#define ICOM_INTERFACE IDirectInput8A
+#define INTERFACE IDirectInput8A
 #define IDirectInput8A_METHODS \
-    ICOM_METHOD3(HRESULT,CreateDevice,    REFGUID,rguid, LPDIRECTINPUTDEVICE8A*,lplpDirectInputDevice, LPUNKNOWN,pUnkOuter) \
-    ICOM_METHOD4(HRESULT,EnumDevices,     DWORD,dwDevType, LPDIENUMDEVICESCALLBACKA,lpCallback, LPVOID,pvRef, DWORD,dwFlags) \
-    ICOM_METHOD1(HRESULT,GetDeviceStatus, REFGUID,rguidInstance) \
-    ICOM_METHOD2(HRESULT,RunControlPanel, HWND,hwndOwner, DWORD,dwFlags) \
-    ICOM_METHOD2(HRESULT,Initialize,      HINSTANCE,hinst, DWORD,dwVersion) \
-    ICOM_METHOD3(HRESULT,FindDevice,      REFGUID,rguid, LPCSTR,pszName, LPGUID,pguidInstance) \
-    ICOM_METHOD5(HRESULT,EnumDevicesBySemantics, LPCSTR,ptszUserName, LPDIACTIONFORMATA,lpdiActionFormat, LPDIENUMDEVICESBYSEMANTICSCBA,lpCallback, LPVOID,pvRef, DWORD,dwFlags) \
-    ICOM_METHOD4(HRESULT,ConfigureDevices,LPDICONFIGUREDEVICESCALLBACK,lpdiCallback, LPDICONFIGUREDEVICESPARAMSA,lpdiCDParams, DWORD,dwFlags, LPVOID,pvRefData)
+    STDMETHOD(CreateDevice)(THIS_ REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter) PURE; \
+    STDMETHOD(EnumDevices)(THIS_ DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags) PURE; \
+    STDMETHOD(GetDeviceStatus)(THIS_ REFGUID rguidInstance) PURE; \
+    STDMETHOD(RunControlPanel)(THIS_ HWND hwndOwner, DWORD dwFlags) PURE; \
+    STDMETHOD(Initialize)(THIS_ HINSTANCE hinst, DWORD dwVersion) PURE; \
+    STDMETHOD(FindDevice)(THIS_ REFGUID rguid, LPCSTR pszName, LPGUID pguidInstance) PURE; \
+    STDMETHOD(EnumDevicesBySemantics)(THIS_ LPCSTR ptszUserName, LPDIACTIONFORMATA lpdiActionFormat, LPDIENUMDEVICESBYSEMANTICSCBA lpCallback, LPVOID pvRef, DWORD dwFlags) PURE; \
+    STDMETHOD(ConfigureDevices)(THIS_ LPDICONFIGUREDEVICESCALLBACK lpdiCallback, LPDICONFIGUREDEVICESPARAMSA lpdiCDParams, DWORD dwFlags, LPVOID pvRefData) PURE;
 #define IDirectInput8A_IMETHODS \
     IUnknown_IMETHODS \
     IDirectInput8A_METHODS
 ICOM_DEFINE(IDirectInput8A,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectInput8A_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)

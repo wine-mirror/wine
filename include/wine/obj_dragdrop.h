@@ -52,15 +52,15 @@ typedef struct IDropTarget IDropTarget,*LPDROPTARGET;
 /*****************************************************************************
  * IDropSource interface
  */
-#define ICOM_INTERFACE IDropSource
+#define INTERFACE IDropSource
 #define IDropSource_METHODS \
-    ICOM_METHOD2(HRESULT, QueryContinueDrag, BOOL, fEscapePressed, DWORD, grfKeyState) \
-    ICOM_METHOD1(HRESULT, GiveFeedback, DWORD, dwEffect)
+    STDMETHOD(QueryContinueDrag)(THIS_ BOOL  fEscapePressed, DWORD  grfKeyState) PURE; \
+    STDMETHOD(GiveFeedback)(THIS_ DWORD  dwEffect) PURE;
 #define IDropSource_IMETHODS \
 	IUnknown_IMETHODS \
 	IDropSource_METHODS
 ICOM_DEFINE(IDropSource,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDropSource_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
@@ -73,17 +73,17 @@ ICOM_DEFINE(IDropSource,IUnknown)
 /*****************************************************************************
  * IDropTarget interface
  */
-#define ICOM_INTERFACE IDropTarget
+#define INTERFACE IDropTarget
 #define IDropTarget_METHODS \
-    ICOM_METHOD4(HRESULT, DragEnter, IDataObject*, pDataObject, DWORD, grfKeyState, POINTL, pt, DWORD*, pdwEffect) \
-    ICOM_METHOD3(HRESULT, DragOver, DWORD, grfKeyState, POINTL, pt, DWORD*, pdwEffect) \
-    ICOM_METHOD(HRESULT, DragLeave) \
-    ICOM_METHOD4(HRESULT, Drop, IDataObject*, pDataObject, DWORD, grfKeyState, POINTL, pt, DWORD*, pdwEffect)
+    STDMETHOD(DragEnter)(THIS_ IDataObject * pDataObject, DWORD  grfKeyState, POINTL  pt, DWORD * pdwEffect) PURE; \
+    STDMETHOD(DragOver)(THIS_ DWORD  grfKeyState, POINTL  pt, DWORD * pdwEffect) PURE; \
+    STDMETHOD(DragLeave)(THIS) PURE; \
+    STDMETHOD(Drop)(THIS_ IDataObject * pDataObject, DWORD  grfKeyState, POINTL  pt, DWORD * pdwEffect) PURE;
 #define IDropTarget_IMETHODS \
 	IUnknown_IMETHODS \
 	IDropTarget_METHODS
 ICOM_DEFINE(IDropTarget,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDropTarget_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
@@ -100,8 +100,3 @@ ICOM_DEFINE(IDropTarget,IUnknown)
 #endif /* defined(__cplusplus) */
 
 #endif /*  __WINE_WINE_OBJ_DRAGDROP_H */
-
-
-
-
-

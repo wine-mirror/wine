@@ -63,34 +63,34 @@ typedef struct _DMUS_VOICE_STATE
 /*****************************************************************************
  * IDirectMusicSynth interface
  */
-#undef  ICOM_INTERFACE
-#define ICOM_INTERFACE IDirectMusicSynth
+#undef  INTERFACE
+#define INTERFACE IDirectMusicSynth
 #define IDirectMusicSynth_METHODS \
     /*** IDirectMusicSynth methods ***/ \
-    ICOM_METHOD1(HRESULT, Open, LPDMUS_PORTPARAMS,pPortParams) \
-    ICOM_METHOD (HRESULT, Close) \
-    ICOM_METHOD1(HRESULT, SetNumChannelGroups, DWORD,dwGroups) \
-    ICOM_METHOD3(HRESULT, Download, LPHANDLE,phDownload, LPVOID,pvData, LPBOOL,pbFree) \
-    ICOM_METHOD3(HRESULT, Unload, HANDLE,hDownload, HRESULT,(CALLBACK* lpFreeHandle)(HANDLE,HANDLE), HANDLE,hUserData) \
-    ICOM_METHOD3(HRESULT, PlayBuffer, REFERENCE_TIME,rt, LPBYTE,pbBuffer, DWORD,cbBuffer) \
-    ICOM_METHOD1(HRESULT, GetRunningStats, LPDMUS_SYNTHSTATS,pStats) \
-    ICOM_METHOD1(HRESULT, GetPortCaps, LPDMUS_PORTCAPS,pCaps) \
-    ICOM_METHOD1(HRESULT, SetMasterClock, IReferenceClock*,pClock) \
-	ICOM_METHOD1(HRESULT, GetLatencyClock, IReferenceClock**,ppClock) \
-	ICOM_METHOD1(HRESULT, Activate, BOOL,fEnable) \
-	ICOM_METHOD1(HRESULT, SetSynthSink, IDirectMusicSynthSink*,pSynthSink) \
-	ICOM_METHOD3(HRESULT, Render, short*,pBuffer, DWORD,dwLength, LONGLONG,llPosition) \
-	ICOM_METHOD3(HRESULT, SetChannelPriority, DWORD,dwChannelGroup, DWORD,dwChannel, DWORD,dwPriority) \
-	ICOM_METHOD3(HRESULT, GetChannelPriority, DWORD,dwChannelGroup, DWORD,dwChannel, LPDWORD,pdwPriority) \
-	ICOM_METHOD2(HRESULT, GetFormat, LPWAVEFORMATEX,pWaveFormatEx, LPDWORD,pdwWaveFormatExSiz) \
-	ICOM_METHOD1(HRESULT, GetAppend, DWORD*,pdwAppend)
+    STDMETHOD(Open)(THIS_ LPDMUS_PORTPARAMS pPortParams) PURE; \
+    STDMETHOD(Close)(THIS) PURE; \
+    STDMETHOD(SetNumChannelGroups)(THIS_ DWORD dwGroups) PURE; \
+    STDMETHOD(Download)(THIS_ LPHANDLE phDownload, LPVOID pvData, LPBOOL pbFree) PURE; \
+    STDMETHOD(Unload)(THIS_ HANDLE hDownload, HRESULT (CALLBACK* lpFreeHandle)(HANDLE,HANDLE), HANDLE hUserData) PURE; \
+    STDMETHOD(PlayBuffer)(THIS_ REFERENCE_TIME rt, LPBYTE pbBuffer, DWORD cbBuffer) PURE; \
+    STDMETHOD(GetRunningStats)(THIS_ LPDMUS_SYNTHSTATS pStats) PURE; \
+    STDMETHOD(GetPortCaps)(THIS_ LPDMUS_PORTCAPS pCaps) PURE; \
+    STDMETHOD(SetMasterClock)(THIS_ IReferenceClock *pClock) PURE; \
+    STDMETHOD(GetLatencyClock)(THIS_ IReferenceClock **ppClock) PURE; \
+    STDMETHOD(Activate)(THIS_ BOOL fEnable) PURE; \
+    STDMETHOD(SetSynthSink)(THIS_ IDirectMusicSynthSink *pSynthSink) PURE; \
+    STDMETHOD(Render)(THIS_ short *pBuffer, DWORD dwLength, LONGLONG llPosition) PURE; \
+    STDMETHOD(SetChannelPriority)(THIS_ DWORD dwChannelGroup, DWORD dwChannel, DWORD dwPriority) PURE; \
+    STDMETHOD(GetChannelPriority)(THIS_ DWORD dwChannelGroup, DWORD dwChannel, LPDWORD pdwPriority) PURE; \
+    STDMETHOD(GetFormat)(THIS_ LPWAVEFORMATEX pWaveFormatEx, LPDWORD pdwWaveFormatExSiz) PURE; \
+    STDMETHOD(GetAppend)(THIS_ DWORD *pdwAppend) PURE;
 
 /*** IDirectMusicSynth methods ***/
 #define IDirectMusicSynth_IMETHODS \
     IUnknown_IMETHODS \
     IDirectMusicSynth_METHODS
 ICOM_DEFINE(IDirectMusicSynth,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectMusicSynth_QueryInterface(p,a,b)					ICOM_CALL2(QueryInterface,p,a,b)
@@ -119,23 +119,23 @@ ICOM_DEFINE(IDirectMusicSynth,IUnknown)
 /*****************************************************************************
  * IDirectMusicSynth8 interface
  */
-#undef  ICOM_INTERFACE
-#define ICOM_INTERFACE IDirectMusicSynth8
+#undef  INTERFACE
+#define INTERFACE IDirectMusicSynth8
 #define IDirectMusicSynth8_METHODS \
     /*** IDirectMusicSynth8 methods ***/ \
-    ICOM_METHOD10(HRESULT, PlayVoice, REFERENCE_TIME,rt, DWORD,dwVoiceId, DWORD,dwChannelGroup, DWORD,dwChannel, DWORD,dwDLId, long,prPitch, long,vrVolume, SAMPLE_TIME,stVoiceStart, SAMPLE_TIME,stLoopStart, SAMPLE_TIME,stLoopEnd) \
-    ICOM_METHOD2(HRESULT, StopVoice, REFERENCE_TIME,rt, DWORD,dwVoiceId) \
-    ICOM_METHOD3(HRESULT, GetVoiceState, DWORD,dwVoice[], DWORD,cbVoice, DMUS_VOICE_STATE,dwVoiceState[]) \
-    ICOM_METHOD2(HRESULT, Refresh, DWORD,dwDownloadID, DWORD,dwFlags) \
-    ICOM_METHOD4(HRESULT, AssignChannelToBuses, DWORD,dwChannelGroup, DWORD,dwChannel, LPDWORD,pdwBuses, DWORD,cBuses)
+    STDMETHOD(PlayVoice)(THIS_ REFERENCE_TIME rt, DWORD dwVoiceId, DWORD dwChannelGroup, DWORD dwChannel, DWORD dwDLId, long prPitch, long vrVolume, SAMPLE_TIME stVoiceStart, SAMPLE_TIME stLoopStart, SAMPLE_TIME stLoopEnd) PURE; \
+    STDMETHOD(StopVoice)(THIS_ REFERENCE_TIME rt, DWORD dwVoiceId) PURE; \
+    STDMETHOD(GetVoiceState)(THIS_ DWORD dwVoice[], DWORD cbVoice, DMUS_VOICE_STATE dwVoiceState[]) PURE; \
+    STDMETHOD(Refresh)(THIS_ DWORD dwDownloadID, DWORD dwFlags) PURE; \
+    STDMETHOD(AssignChannelToBuses)(THIS_ DWORD dwChannelGroup, DWORD dwChannel, LPDWORD pdwBuses, DWORD cBuses) PURE;
 
 /*** IDirectMusicSynth methods ***/
 #define IDirectMusicSynth8_IMETHODS \
     IUnknown_IMETHODS \
-	IDirectMusicSynth_METHODS \
+    IDirectMusicSynth_METHODS \
     IDirectMusicSynth8_METHODS
 ICOM_DEFINE(IDirectMusicSynth8,IDirectMusicSynth)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectMusicSynth8_QueryInterface(p,a,b)					ICOM_CALL2(QueryInterface,p,a,b)
@@ -170,25 +170,25 @@ ICOM_DEFINE(IDirectMusicSynth8,IDirectMusicSynth)
 /*****************************************************************************
  * IDirectMusicSynthSink interface
  */
-#undef  ICOM_INTERFACE
-#define ICOM_INTERFACE IDirectMusicSynthSink
+#undef  INTERFACE
+#define INTERFACE IDirectMusicSynthSink
 #define IDirectMusicSynthSink_METHODS \
     /*** IDirectMusicSynthSink methods ***/ \
-    ICOM_METHOD1(HRESULT, Init, IDirectMusicSynth*,pSynth) \
-    ICOM_METHOD1(HRESULT, SetMasterClock, IReferenceClock*,pClock) \
-    ICOM_METHOD1(HRESULT, GetLatencyClock, IReferenceClock**,ppClock) \
-    ICOM_METHOD1(HRESULT, Activate, BOOL,fEnable) \
-    ICOM_METHOD2(HRESULT, SampleToRefTime, LONGLONG,llSampleTime, REFERENCE_TIME*,prfTime) \
-    ICOM_METHOD2(HRESULT, RefTimeToSample, REFERENCE_TIME,rfTime, LONGLONG*,pllSampleTime) \
-    ICOM_METHOD2(HRESULT, SetDirectSound, LPDIRECTSOUND,pDirectSound, LPDIRECTSOUNDBUFFER,pDirectSoundBuffer) \
-    ICOM_METHOD1(HRESULT, GetDesiredBufferSize, LPDWORD,pdwBufferSizeInSamples)
+    STDMETHOD(Init)(THIS_ IDirectMusicSynth *pSynth) PURE; \
+    STDMETHOD(SetMasterClock)(THIS_ IReferenceClock *pClock) PURE; \
+    STDMETHOD(GetLatencyClock)(THIS_ IReferenceClock **ppClock) PURE; \
+    STDMETHOD(Activate)(THIS_ BOOL fEnable) PURE; \
+    STDMETHOD(SampleToRefTime)(THIS_ LONGLONG llSampleTime, REFERENCE_TIME *prfTime) PURE; \
+    STDMETHOD(RefTimeToSample)(THIS_ REFERENCE_TIME rfTime, LONGLONG *pllSampleTime) PURE; \
+    STDMETHOD(SetDirectSound)(THIS_ LPDIRECTSOUND pDirectSound, LPDIRECTSOUNDBUFFER pDirectSoundBuffer) PURE; \
+    STDMETHOD(GetDesiredBufferSize)(THIS_ LPDWORD pdwBufferSizeInSamples) PURE;
 
 /*** IDirectMusicSynthSink methods ***/
 #define IDirectMusicSynthSink_IMETHODS \
     IUnknown_IMETHODS \
     IDirectMusicSynthSink_METHODS
 ICOM_DEFINE(IDirectMusicSynthSink,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectMusicSynthSink_QueryInterface(p,a,b)					ICOM_CALL2(QueryInterface,p,a,b)

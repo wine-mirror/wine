@@ -292,19 +292,19 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(ILockBytes *plkbyt, IStorage *pstgPrio
  *
  * Let's take Direct3D as an example:
  *
- *    #define ICOM_INTERFACE IDirect3D
+ *    #define INTERFACE IDirect3D
  *    #define IDirect3D_METHODS \
- *        ICOM_METHOD1(HRESULT,Initialize,    REFIID,) \
- *        ICOM_METHOD2(HRESULT,EnumDevices,   LPD3DENUMDEVICESCALLBACK,, LPVOID,) \
- *        ICOM_METHOD2(HRESULT,CreateLight,   LPDIRECT3DLIGHT*,, IUnknown*,) \
- *        ICOM_METHOD2(HRESULT,CreateMaterial,LPDIRECT3DMATERIAL*,, IUnknown*,) \
- *        ICOM_METHOD2(HRESULT,CreateViewport,LPDIRECT3DVIEWPORT*,, IUnknown*,) \
- *        ICOM_METHOD2(HRESULT,FindDevice,    LPD3DFINDDEVICESEARCH,, LPD3DFINDDEVICERESULT,)
+ *        STDMETHOD(Initialize)(THIS_ REFIID) PURE; \
+ *        STDMETHOD(EnumDevices)(THIS_ LPD3DENUMDEVICESCALLBACK, LPVOID) PURE; \
+ *        STDMETHOD(CreateLight)(THIS_ LPDIRECT3DLIGHT*, IUnknown*) PURE; \
+ *        STDMETHOD(CreateMaterial)(THIS_ LPDIRECT3DMATERIAL*, IUnknown*) PURE; \
+ *        STDMETHOD(CreateViewport)(THIS_ LPDIRECT3DVIEWPORT*, IUnknown*) PURE; \
+ *        STDMETHOD(FindDevice)(THIS_ LPD3DFINDDEVICESEARCH, LPD3DFINDDEVICERESULT) PURE;
  *    #define IDirect3D_IMETHODS \
  *        IUnknown_IMETHODS \
  *        IDirect3D_METHODS
  *    ICOM_DEFINE(IDirect3D,IUnknown)
- *    #undef ICOM_INTERFACE
+ *    #undef INTERFACE
  *
  *    #ifdef ICOM_CINTERFACE
  *    // *** IUnknown methods *** //
@@ -321,10 +321,10 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(ILockBytes *plkbyt, IStorage *pstgPrio
  *    #endif
  *
  * Comments:
- *  - The ICOM_INTERFACE macro is used in the ICOM_METHOD macros to define the type of the 'this'
+ *  - The INTERFACE macro is used in the STDMETHOD macros to define the type of the 'this'
  *    pointer. Defining this macro here saves us the trouble of having to repeat the interface
- *    name everywhere. Note however that because of the way macros work, a macro like ICOM_METHOD1
- *    cannot use 'ICOM_INTERFACE##_VTABLE' because this would give 'ICOM_INTERFACE_VTABLE' and not
+ *    name everywhere. Note however that because of the way macros work, a macro like STDMETHOD
+ *    cannot use 'INTERFACE##_VTABLE' because this would give 'INTERFACE_VTABLE' and not
  *    'IDirect3D_VTABLE'.
  *  - ICOM_METHODS defines the methods specific to this interface. It is then aggregated with the
  *    inherited methods to form ICOM_IMETHODS.
@@ -336,18 +336,9 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(ILockBytes *plkbyt, IStorage *pstgPrio
  *    Inherited methods are inherited in C by using the IDirect3D_METHODS macro and the parent's
  *    Xxx_IMETHODS macro. In C++ we need only use the IDirect3D_METHODS since method inheritance
  *    is taken care of by the language.
- *  - In C++ the ICOM_METHOD macros generate a function prototype and a call to a function pointer
- *    method. This means using once 't1 p1, t2 p2, ...' and once 'p1, p2' without the types. The
- *    only way I found to handle this is to have one ICOM_METHOD macro per number of parameters and
- *    to have it take only the type information (with const if necessary) as parameters.
- *    The 'undef ICOM_INTERFACE' is here to remind you that using ICOM_INTERFACE in the following
- *    macros will not work. This time it's because the ICOM_CALL macro expansion is done only once
- *    the 'IDirect3D_Xxx' macro is expanded. And by that time ICOM_INTERFACE will be long gone
- *    anyway.
- *  - You may have noticed the double commas after each parameter type. This allows you to put the
- *    name of that parameter which I think is good for documentation. It is not required and since
- *    I did not know what to put there for this example (I could only find doc about IDirect3D2),
- *    I left them blank.
+ *  - The 'undef INTERFACE' is here to remind you that using INTERFACE in the following macros
+ *    will not work. This time it's because the ICOM_CALL macro expansion is done only once the
+ *    'IDirect3D_Xxx' macro is expanded. And by that time INTERFACE will be long gone anyway.
  *  - Finally the set of 'IDirect3D_Xxx' macros is a standard set of macros defined to ease access
  *    to the interface methods in C. Unfortunately I don't see any way to avoid having to duplicate
  *    the inherited method definitions there. This time I could have used a trick to use only one
@@ -411,49 +402,18 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(ILockBytes *plkbyt, IStorage *pstgPrio
  * And in C++ (with gcc's g++):
  *
  *    typedef struct IDirect3D: public IUnknown {
- *        private: HRESULT (*Initialize)(IDirect3D* me, REFIID a);
- *        public: inline HRESULT Initialize(REFIID a) { return ((IDirect3D*)t.lpVtbl)->Initialize(this,a); };
- *        private: HRESULT (*EnumDevices)(IDirect3D* me, LPD3DENUMDEVICESCALLBACK a, LPVOID b);
- *        public: inline HRESULT EnumDevices(LPD3DENUMDEVICESCALLBACK a, LPVOID b)
- *            { return ((IDirect3D*)t.lpVtbl)->EnumDevices(this,a,b); };
- *        private: HRESULT (*freateLight)(IDirect3D* me, LPDIRECT3DLIGHT* a, IUnknown* b);
- *        public: inline HRESULT CreateLight(LPDIRECT3DLIGHT* a, IUnknown* b)
- *            { return ((IDirect3D*)t.lpVtbl)->CreateLight(this,a,b); };
- *        private: HRESULT (*CreateMaterial)(IDirect3D* me, LPDIRECT3DMATERIAL* a, IUnknown* b);
- *        public: inline HRESULT CreateMaterial(LPDIRECT3DMATERIAL* a, IUnknown* b)
- *            { return ((IDirect3D*)t.lpVtbl)->CreateMaterial(this,a,b); };
- *        private: HRESULT (*CreateViewport)(IDirect3D* me, LPDIRECT3DVIEWPORT* a, IUnknown* b);
- *        public: inline HRESULT CreateViewport(LPDIRECT3DVIEWPORT* a, IUnknown* b)
- *            { return ((IDirect3D*)t.lpVtbl)->CreateViewport(this,a,b); };
- *        private:  HRESULT (*FindDevice)(IDirect3D* me, LPD3DFINDDEVICESEARCH a, LPD3DFINDDEVICERESULT b);
- *        public: inline HRESULT FindDevice(LPD3DFINDDEVICESEARCH a, LPD3DFINDDEVICERESULT b)
- *            { return ((IDirect3D*)t.lpVtbl)->FindDevice(this,a,b); };
+ *        virtual HRESULT Initialize(REFIID a) = 0;
+ *        virtual HRESULT EnumDevices(LPD3DENUMDEVICESCALLBACK a, LPVOID b) = 0;
+ *        virtual HRESULT CreateLight(LPDIRECT3DLIGHT* a, IUnknown* b) = 0;
+ *        virtual HRESULT CreateMaterial(LPDIRECT3DMATERIAL* a, IUnknown* b) = 0;
+ *        virtual HRESULT CreateViewport(LPDIRECT3DVIEWPORT* a, IUnknown* b) = 0;
+ *        virtual HRESULT FindDevice(LPD3DFINDDEVICESEARCH a, LPD3DFINDDEVICERESULT b) = 0;
  *    };
  *
  * Comments:
- *  - In C++ IDirect3D does double duty as both the virtual/jump table and as the interface
- *    definition. The reason for this is to avoid having to duplicate the mehod definitions: once
- *    to have the function pointers in the jump table and once to have the methods in the interface
- *    class. Here one macro can generate both. This means though that the first pointer, t.lpVtbl
- *    defined in IUnknown,  must be interpreted as the jump table pointer if we interpret the
- *    structure as the the interface class, and as the function pointer to the QueryInterface
- *    method, t.QueryInterface, if we interpret the structure as the jump table. Fortunately this
- *    gymnastic is entirely taken care of in the header of IUnknown.
  *  - Of course in C++ we use inheritance so that we don't have to duplicate the method definitions.
- *  - Since IDirect3D does double duty, each ICOM_METHOD macro defines both a function pointer and
- *    a non-vritual inline method which dereferences it and calls it. This way this method behaves
- *    just like a virtual method but does not create a true C++ virtual table which would break the
- *    structure layout. If you look at the implementation of these methods you'll notice that they
- *    would not work for void functions. We have to return something and fortunately this seems to
- *    be what all the COM methods do (otherwise we would need another set of macros).
- *  - Note how the ICOM_METHOD generates both function prototypes mixing types and formal parameter
- *    names and the method invocation using only the formal parameter name. This is the reason why
- *    we need different macros to handle different numbers of parameters.
  *  - Finally there is no IDirect3D_Xxx macro. These are not needed in C++ unless the CINTERFACE
  *    macro is defined in which case we would not be here.
- *  - This C++ code works well for code that just uses COM interfaces. But it will not work with
- *    C++ code implement a COM interface. That's because such code assumes the interface methods
- *    are declared as virtual C++ methods which is not the case here.
  *
  *
  * Implementing a COM interface.
@@ -505,268 +465,81 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(ILockBytes *plkbyt, IStorage *pstgPrio
 #endif
 
 #ifndef ICOM_CINTERFACE
+
 /* C++ interface */
 
-#define ICOM_METHOD(ret,xfn) \
-     public: virtual ret CALLBACK (xfn)(void) = 0;
-#define ICOM_METHOD1(ret,xfn,ta,na) \
-     public: virtual ret CALLBACK (xfn)(ta a) = 0;
-#define ICOM_METHOD2(ret,xfn,ta,na,tb,nb) \
-     public: virtual ret CALLBACK (xfn)(ta a,tb b) = 0;
-#define ICOM_METHOD3(ret,xfn,ta,na,tb,nb,tc,nc) \
-     public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c) = 0;
-#define ICOM_METHOD4(ret,xfn,ta,na,tb,nb,tc,nc,td,nd) \
-     public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d) = 0;
-#define ICOM_METHOD5(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne) \
-     public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e) = 0;
-#define ICOM_METHOD6(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf) \
-     public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f) = 0;
-#define ICOM_METHOD7(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng) \
-     public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g) = 0;
-#define ICOM_METHOD8(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh) \
-     public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h) = 0;
-#define ICOM_METHOD9(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni) \
-     public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i) = 0;
-#define ICOM_METHOD10(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj) \
-     public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j) = 0;
-#define ICOM_METHOD11(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk) \
-     public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k) = 0;
-#define ICOM_METHOD12(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl) \
-    public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l) = 0;
-#define ICOM_METHOD13(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm) \
-    public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m) = 0;
-#define ICOM_METHOD14(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn) \
-    public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n) = 0;
-#define ICOM_METHOD15(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no) \
-    public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o) = 0;
-#define ICOM_METHOD16(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np) \
-    public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p) = 0;
-#define ICOM_METHOD17(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq) \
-    public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q) = 0;
-#define ICOM_METHOD18(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr) \
-    public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r) = 0;
-#define ICOM_METHOD19(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns) \
-    public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s) = 0;
-#define ICOM_METHOD20(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt) \
-    public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t) = 0;
-#define ICOM_METHOD21(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu) \
-    public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u) = 0;
-#define ICOM_METHOD22(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv) \
-    public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v) = 0;
-#define ICOM_METHOD23(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv,tw,nw) \
-    public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v,tw w) = 0;
-#define ICOM_METHOD24(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv,tw,nw,tx,nx) \
-    public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v,tw w,tx x) = 0;
-#define ICOM_METHOD25(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv,tw,nw,tx,nx,ty,ny) \
-    public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v,tw w,tx x,ty y) = 0;
-#define ICOM_METHOD26(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv,tw,nw,tx,nx,ty,ny,tz,nz) \
-    public: virtual ret CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v,tw w,tx x,ty y,tz z) = 0;
+#define STDMETHOD(method)        virtual HRESULT STDMETHODCALLTYPE method
+#define STDMETHOD_(type,method)  virtual type STDMETHODCALLTYPE method
+#define STDMETHODV(method)       virtual HRESULT STDMETHODVCALLTYPE method
+#define STDMETHODV_(type,method) virtual type STDMETHODVCALLTYPE method
 
+#define PURE   = 0
+#define THIS_
+#define THIS   void
 
-#define ICOM_VMETHOD(xfn) \
-     public: virtual void CALLBACK (xfn)(void) = 0;
-#define ICOM_VMETHOD1(xfn,ta,na) \
-     public: virtual void CALLBACK (xfn)(ta a) = 0;
-#define ICOM_VMETHOD2(xfn,ta,na,tb,nb) \
-     public: virtual void CALLBACK (xfn)(ta a,tb b) = 0;
-#define ICOM_VMETHOD3(xfn,ta,na,tb,nb,tc,nc) \
-     public: virtual void CALLBACK (xfn)(ta a,tb b,tc c) = 0;
-#define ICOM_VMETHOD4(xfn,ta,na,tb,nb,tc,nc,td,nd) \
-     public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d) = 0;
-#define ICOM_VMETHOD5(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne) \
-     public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e) = 0;
-#define ICOM_VMETHOD6(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf) \
-     public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f) = 0;
-#define ICOM_VMETHOD7(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng) \
-     public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g) = 0;
-#define ICOM_VMETHOD8(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh) \
-     public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h) = 0;
-#define ICOM_VMETHOD9(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni) \
-     public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i) = 0;
-#define ICOM_VMETHOD10(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj) \
-     public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i, tj j) = 0;
-#define ICOM_VMETHOD11(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk) \
-     public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i, tj j, tk k) = 0;
-#define ICOM_VMETHOD12(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl) \
-    public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l) = 0;
-#define ICOM_VMETHOD13(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm) \
-    public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m) = 0;
-#define ICOM_VMETHOD14(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn) \
-    public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n) = 0;
-#define ICOM_VMETHOD15(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no) \
-    public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o) = 0;
-#define ICOM_VMETHOD16(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np) \
-    public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p) = 0;
-#define ICOM_VMETHOD17(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq) \
-    public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q) = 0;
-#define ICOM_VMETHOD18(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr) \
-    public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r) = 0;
-#define ICOM_VMETHOD19(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns) \
-    public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s) = 0;
-#define ICOM_VMETHOD20(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt) \
-    public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t) = 0;
-#define ICOM_VMETHOD21(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu) \
-    public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u) = 0;
-#define ICOM_VMETHOD22(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv) \
-    public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v) = 0;
-#define ICOM_VMETHOD23(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv,tw,nw) \
-    public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v,tw w) = 0;
-#define ICOM_VMETHOD24(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv,tw,nw,tx,nx) \
-    public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v,tw w,tx x) = 0;
-#define ICOM_VMETHOD25(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv,tw,nw,tx,nx,ty,ny) \
-    public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v,tw w,tx x,ty y) = 0;
-#define ICOM_VMETHOD26(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv,tw,nw,tx,nx,ty,ny,tz,nz) \
-    public: virtual void CALLBACK (xfn)(ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v,tw w,tx x,ty y,tz z) = 0;
+#define interface struct
+#define DECLARE_INTERFACE(iface)        interface iface
+#define DECLARE_INTERFACE_(iface,ibase) interface iface : public ibase
 
+#define BEGIN_INTERFACE
+#define END_INTERFACE
+
+/* Wine-specific macros */
 
 #define ICOM_DEFINE(iface,ibase) \
-    struct iface: public ibase { \
-        iface##_METHODS \
-    } ICOM_COM_INTERFACE_ATTRIBUTE;
-#define ICOM_DEFINE1(iface) \
-    struct iface { \
+    DECLARE_INTERFACE_(iface,ibase) { \
         iface##_METHODS \
     } ICOM_COM_INTERFACE_ATTRIBUTE;
 
 #define ICOM_VTBL(iface)         (iface)
 
-#else
+#else  /* ICOM_CINTERFACE */
+
 /* C interface */
 
-#define ICOM_METHOD(ret,xfn) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me);
-#define ICOM_METHOD1(ret,xfn,ta,na) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a);
-#define ICOM_METHOD2(ret,xfn,ta,na,tb,nb) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b);
-#define ICOM_METHOD3(ret,xfn,ta,na,tb,nb,tc,nc) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c);
-#define ICOM_METHOD4(ret,xfn,ta,na,tb,nb,tc,nc,td,nd) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d);
-#define ICOM_METHOD5(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e);
-#define ICOM_METHOD6(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f);
-#define ICOM_METHOD7(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g);
-#define ICOM_METHOD8(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h);
-#define ICOM_METHOD9(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i);
-#define ICOM_METHOD10(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j);
-#define ICOM_METHOD11(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k);
-#define ICOM_METHOD12(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l);
-#define ICOM_METHOD13(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m);
-#define ICOM_METHOD14(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n);
-#define ICOM_METHOD15(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o);
-#define ICOM_METHOD16(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p);
-#define ICOM_METHOD17(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q);
-#define ICOM_METHOD18(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r);
-#define ICOM_METHOD19(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s);
-#define ICOM_METHOD20(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t);
-#define ICOM_METHOD21(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u);
-#define ICOM_METHOD22(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v);
-#define ICOM_METHOD23(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv,tw,nw) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v,tw w);
-#define ICOM_METHOD24(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv,tw,nw,tx,nx) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v,tw w,tx x);
-#define ICOM_METHOD25(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv,tw,nw,tx,nx,ty,ny) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v,tw w,tx x,ty y);
-#define ICOM_METHOD26(ret,xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv,tw,nw,tx,nx,ty,ny,tz,nz) \
-    ret (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v,tw w,tx x,ty y,tz z);
+#define STDMETHOD(method)        HRESULT (STDMETHODCALLTYPE *method)
+#define STDMETHOD_(type,method)  type (STDMETHODCALLTYPE *method)
+#define STDMETHODV(method)       HRESULT (STDMETHODVCALLTYPE *method)
+#define STDMETHODV_(type,method) type (STDMETHODVCALLTYPE *method)
 
-#define ICOM_VMETHOD(xfn) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me);
-#define ICOM_VMETHOD1(xfn,ta,na) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a);
-#define ICOM_VMETHOD2(xfn,ta,na,tb,nb) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b);
-#define ICOM_VMETHOD3(xfn,ta,na,tb,nb,tc,nc) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c);
-#define ICOM_VMETHOD4(xfn,ta,na,tb,nb,tc,nc,td,nd) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d);
-#define ICOM_VMETHOD5(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e);
-#define ICOM_VMETHOD6(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f);
-#define ICOM_VMETHOD7(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g);
-#define ICOM_VMETHOD8(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,nh) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h);
-#define ICOM_VMETHOD9(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ni) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i);
-#define ICOM_VMETHOD10(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,nj) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j);
-#define ICOM_VMETHOD11(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,nk) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k);
-#define ICOM_VMETHOD12(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l);
-#define ICOM_VMETHOD13(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m);
-#define ICOM_VMETHOD14(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n);
-#define ICOM_VMETHOD15(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o);
-#define ICOM_VMETHOD16(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p);
-#define ICOM_VMETHOD17(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q);
-#define ICOM_VMETHOD18(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r);
-#define ICOM_VMETHOD19(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s);
-#define ICOM_VMETHOD20(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t);
-#define ICOM_VMETHOD21(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u);
-#define ICOM_VMETHOD22(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v);
-#define ICOM_VMETHOD23(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv,tw,nw) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v,tw w);
-#define ICOM_VMETHOD24(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv,tw,nw,tx,nx) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v,tw w,tx x);
-#define ICOM_VMETHOD25(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv,tw,nw,tx,nx,ty,ny) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v,tw w,tx x,ty y);
-#define ICOM_VMETHOD26(xfn,ta,na,tb,nb,tc,nc,td,nd,te,ne,tf,nf,tg,ng,th,nh,ti,ni,tj,nj,tk,nk,tl,nl,tm,nm,tn,nn,to,no,tp,np,tq,nq,tr,nr,ts,ns,tt,nt,tu,nu,tv,nv,tw,nw,tx,nx,ty,ny,tz,nz) \
-    void (CALLBACK *xfn)(ICOM_INTERFACE* me,ta a,tb b,tc c,td d,te e,tf f,tg g,th h,ti i,tj j,tk k,tl l,tm m,tn n,to o,tp p,tq q,tr r,ts s,tt t,tu u,tv v,tw w,tx x,ty y,tz z);
+#define PURE
+#define THIS_ INTERFACE *This,
+#define THIS  INTERFACE *This
 
+#define interface struct
 
-#define ICOM_VTABLE(iface)       iface##Vtbl
-#define ICOM_VFIELD(iface)       ICOM_VTABLE(iface)* lpVtbl
-#define ICOM_VTBL(iface)         (iface)->lpVtbl
+#ifdef CONST_VTABLE
+#undef CONST_VTBL
+#define CONST_VTBL const
+#define DECLARE_INTERFACE(iface) \
+         /*typedef*/ interface iface { const struct iface##Vtbl *lpVtbl; } /*iface*/; \
+         typedef const struct iface##Vtbl iface##Vtbl; \
+         const struct iface##Vtbl
+#else
+#undef CONST_VTBL
+#define CONST_VTBL
+#define DECLARE_INTERFACE(iface) \
+         /*typedef*/ interface iface { struct iface##Vtbl *lpVtbl; } /*iface*/; \
+         typedef struct iface##Vtbl iface##Vtbl; \
+         struct iface##Vtbl
+#endif
+#define DECLARE_INTERFACE_(iface,ibase) DECLARE_INTERFACE(iface)
+
+#define BEGIN_INTERFACE
+#define END_INTERFACE
+
+/* Wine-specific macros */
 
 #define ICOM_DEFINE(iface,ibase) \
-    typedef struct ICOM_VTABLE(iface) ICOM_VTABLE(iface); \
-    struct iface { \
-        const ICOM_VFIELD(iface); \
-    }; \
-    struct ICOM_VTABLE(iface) { \
+    DECLARE_INTERFACE_(iface,ibase) { \
         ICOM_MSVTABLE_COMPAT_FIELDS \
         ibase##_IMETHODS \
         iface##_METHODS \
     };
-#define ICOM_DEFINE1(iface) \
-    typedef struct ICOM_VTABLE(iface) ICOM_VTABLE(iface); \
-    struct iface { \
-        const ICOM_VFIELD(iface); \
-    }; \
-    struct ICOM_VTABLE(iface) { \
-        ICOM_MSVTABLE_COMPAT_FIELDS \
-        iface##_METHODS \
-    };
+
+#define ICOM_VTABLE(iface)       iface##Vtbl
+#define ICOM_VFIELD(iface)       ICOM_VTABLE(iface)* lpVtbl
+#define ICOM_VTBL(iface)         (iface)->lpVtbl
 
 #define ICOM_THIS(impl,iface)          impl* const This=(impl*)(iface)
 #define ICOM_CTHIS(impl,iface)         const impl* const This=(const impl*)(iface)
@@ -774,7 +547,7 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(ILockBytes *plkbyt, IStorage *pstgPrio
 #define ICOM_THIS_MULTI(impl,field,iface)  impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 #define ICOM_CTHIS_MULTI(impl,field,iface) const impl* const This=(const impl*)((char*)(iface) - offsetof(impl,field))
 
-#endif /*ICOM_CINTERFACE  */
+#endif  /* ICOM_CINTERFACE */
 
 #define ICOM_CALL(xfn, ptr)                         ICOM_VTBL(ptr)->xfn(ptr)
 #define ICOM_CALL1(xfn, ptr,a)                      ICOM_VTBL(ptr)->xfn(ptr,a)
@@ -806,58 +579,12 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(ILockBytes *plkbyt, IStorage *pstgPrio
 
 
 #ifndef __WINESRC__
-/* These macros are msdev's way of defining COM objects.
- * They are provided here for use by Winelib developpers.
- */
+
 #define FARSTRUCT
 #define HUGEP
 
 #define WINOLEAPI        STDAPI
 #define WINOLEAPI_(type) STDAPI_(type)
-
-#if defined(__cplusplus) && !defined(CINTERFACE)
-#define interface struct
-#define STDMETHOD(method)       virtual HRESULT STDMETHODCALLTYPE method
-#define STDMETHOD_(type,method) virtual type STDMETHODCALLTYPE method
-#define PURE                    = 0
-#define THIS_
-#define THIS                    void
-#define DECLARE_INTERFACE(iface)    interface iface
-#define DECLARE_INTERFACE_(iface, baseiface)    interface iface : public baseiface
-
-#define BEGIN_INTERFACE
-#define END_INTERFACE
-
-#else
-
-#define interface               struct
-#define STDMETHOD(method)       HRESULT STDMETHODCALLTYPE (*method)
-#define STDMETHOD_(type,method) type STDMETHODCALLTYPE (*method)
-#define PURE
-#define THIS_                   INTERFACE FAR* This,
-#define THIS                    INTERFACE FAR* This
-
-#ifdef CONST_VTABLE
-#undef CONST_VTBL
-#define CONST_VTBL const
-#define DECLARE_INTERFACE(iface) \
-         typedef interface iface { const struct iface##Vtbl FAR* lpVtbl; } iface; \
-         typedef const struct iface##Vtbl iface##Vtbl; \
-         const struct iface##Vtbl
-#else
-#undef CONST_VTBL
-#define CONST_VTBL
-#define DECLARE_INTERFACE(iface) \
-         typedef interface iface { struct iface##Vtbl FAR* lpVtbl; } iface; \
-         typedef struct iface##Vtbl iface##Vtbl; \
-         struct iface##Vtbl
-#endif
-#define DECLARE_INTERFACE_(iface, baseiface)    DECLARE_INTERFACE(iface)
-
-#define BEGIN_INTERFACE
-#define END_INTERFACE
-
-#endif /* __cplusplus && !CINTERFACE */
 
 #endif /* __WINESRC__ */
 

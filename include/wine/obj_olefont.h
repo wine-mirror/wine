@@ -41,37 +41,37 @@ typedef TEXTMETRICW TEXTMETRICOLE;
 /*****************************************************************************
  * IFont interface
  */
-#define ICOM_INTERFACE IFont
+#define INTERFACE IFont
 #define IFont_METHODS \
-  ICOM_METHOD1(HRESULT, get_Name, BSTR*, pname) \
-  ICOM_METHOD1(HRESULT, put_Name, BSTR, name) \
-  ICOM_METHOD1(HRESULT, get_Size, CY*, psize) \
-  ICOM_METHOD1(HRESULT, put_Size, CY, size) \
-  ICOM_METHOD1(HRESULT, get_Bold, BOOL*, pbold) \
-  ICOM_METHOD1(HRESULT, put_Bold, BOOL, bold) \
-  ICOM_METHOD1(HRESULT, get_Italic, BOOL*, pitalic) \
-  ICOM_METHOD1(HRESULT, put_Italic, BOOL, italic) \
-  ICOM_METHOD1(HRESULT, get_Underline, BOOL*, punderline) \
-  ICOM_METHOD1(HRESULT, put_Underline, BOOL, underline) \
-  ICOM_METHOD1(HRESULT, get_Strikethrough, BOOL*, pstrikethrough) \
-  ICOM_METHOD1(HRESULT, put_Strikethrough, BOOL, strikethrough) \
-  ICOM_METHOD1(HRESULT, get_Weight, short*, pweight) \
-  ICOM_METHOD1(HRESULT, put_Weight, short, weight) \
-  ICOM_METHOD1(HRESULT, get_Charset, short*, pcharset) \
-  ICOM_METHOD1(HRESULT, put_Charset, short, charset) \
-  ICOM_METHOD1(HRESULT, get_hFont, HFONT*, phfont) \
-  ICOM_METHOD1(HRESULT, Clone, IFont**, ppfont) \
-  ICOM_METHOD1(HRESULT, IsEqual, IFont*, pFontOther) \
-  ICOM_METHOD2(HRESULT, SetRatio, long, cyLogical, long, cyHimetric) \
-  ICOM_METHOD1(HRESULT, QueryTextMetrics, TEXTMETRICOLE*, ptm) \
-  ICOM_METHOD1(HRESULT, AddRefHfont, HFONT, hfont) \
-  ICOM_METHOD1(HRESULT, ReleaseHfont, HFONT, hfont) \
-  ICOM_METHOD1(HRESULT, SetHdc, HDC, hdc)
+  STDMETHOD(get_Name)(THIS_ BSTR * pname) PURE; \
+  STDMETHOD(put_Name)(THIS_ BSTR  name) PURE; \
+  STDMETHOD(get_Size)(THIS_ CY * psize) PURE; \
+  STDMETHOD(put_Size)(THIS_ CY  size) PURE; \
+  STDMETHOD(get_Bold)(THIS_ BOOL * pbold) PURE; \
+  STDMETHOD(put_Bold)(THIS_ BOOL  bold) PURE; \
+  STDMETHOD(get_Italic)(THIS_ BOOL * pitalic) PURE; \
+  STDMETHOD(put_Italic)(THIS_ BOOL  italic) PURE; \
+  STDMETHOD(get_Underline)(THIS_ BOOL * punderline) PURE; \
+  STDMETHOD(put_Underline)(THIS_ BOOL  underline) PURE; \
+  STDMETHOD(get_Strikethrough)(THIS_ BOOL * pstrikethrough) PURE; \
+  STDMETHOD(put_Strikethrough)(THIS_ BOOL  strikethrough) PURE; \
+  STDMETHOD(get_Weight)(THIS_ short * pweight) PURE; \
+  STDMETHOD(put_Weight)(THIS_ short  weight) PURE; \
+  STDMETHOD(get_Charset)(THIS_ short * pcharset) PURE; \
+  STDMETHOD(put_Charset)(THIS_ short  charset) PURE; \
+  STDMETHOD(get_hFont)(THIS_ HFONT * phfont) PURE; \
+  STDMETHOD(Clone)(THIS_ IFont ** ppfont) PURE; \
+  STDMETHOD(IsEqual)(THIS_ IFont * pFontOther) PURE; \
+  STDMETHOD(SetRatio)(THIS_ long  cyLogical, long  cyHimetric) PURE; \
+  STDMETHOD(QueryTextMetrics)(THIS_ TEXTMETRICOLE * ptm) PURE; \
+  STDMETHOD(AddRefHfont)(THIS_ HFONT  hfont) PURE; \
+  STDMETHOD(ReleaseHfont)(THIS_ HFONT  hfont) PURE; \
+  STDMETHOD(SetHdc)(THIS_ HDC  hdc) PURE;
 #define IFont_IMETHODS \
 	IUnknown_IMEHTODS \
 	IFont_METHODS
 ICOM_DEFINE(IFont,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IFont_QueryInterface(p,a,b)  ICOM_CALL2(QueryInterface,p,a,b)
@@ -107,13 +107,13 @@ ICOM_DEFINE(IFont,IUnknown)
 /*****************************************************************************
  * IFont interface
  */
-#define ICOM_INTERFACE IFontDisp
+#define INTERFACE IFontDisp
 #define IFontDisp_METHODS
 #define IFontDisp_IMETHODS \
   IUnknown_IMETHODS \
 	IFontDisp_METHODS
 ICOM_DEFINE(IFontDisp,IDispatch)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IFontDisp_QueryInterface(p,a,b)  ICOM_CALL2(QueryInterface,p,a,b)

@@ -285,26 +285,26 @@ typedef struct _DMUS_CLOCKINFO8
 /*****************************************************************************
  * IDirectMusic interface
  */
-#undef ICOM_INTERFACE
-#define ICOM_INTERFACE IDirectMusic
+#undef INTERFACE
+#define INTERFACE IDirectMusic
 #define IDirectMusic_METHODS \
     /*** IDirectMusic methods ***/ \
-    ICOM_METHOD2(HRESULT, EnumPort, DWORD,dwIndex, LPDMUS_PORTCAPS,pPortCaps) \
-    ICOM_METHOD3(HRESULT, CreateMusicBuffer, LPDMUS_BUFFERDESC,pBufferDesc, LPDIRECTMUSICBUFFER**,ppBuffer, LPUNKNOWN,pUnkOuter) \
-    ICOM_METHOD4(HRESULT, CreatePort, REFCLSID,rclsidPort, LPDMUS_PORTPARAMS,pPortParams, LPDIRECTMUSICPORT*,ppPort, LPUNKNOWN,pUnkOuter) \
-    ICOM_METHOD2(HRESULT, EnumMasterClock, DWORD,dwIndex, LPDMUS_CLOCKINFO,lpClockInfo) \
-    ICOM_METHOD2(HRESULT, GetMasterClock, LPGUID,pguidClock, IReferenceClock**,ppReferenceClock) \
-    ICOM_METHOD1(HRESULT, SetMasterClock,  REFGUID,rguidClock) \
-    ICOM_METHOD1(HRESULT, Activate, BOOL,fEnable) \
-    ICOM_METHOD1(HRESULT, GetDefaultPort, LPGUID,pguidPort) \
-    ICOM_METHOD2(HRESULT, SetDirectSound, LPDIRECTSOUND,pDirectSound, HWND,hWnd)
+    STDMETHOD(EnumPort)(THIS_ DWORD dwIndex, LPDMUS_PORTCAPS pPortCaps) PURE; \
+    STDMETHOD(CreateMusicBuffer)(THIS_ LPDMUS_BUFFERDESC pBufferDesc, LPDIRECTMUSICBUFFER **ppBuffer, LPUNKNOWN pUnkOuter) PURE; \
+    STDMETHOD(CreatePort)(THIS_ REFCLSID rclsidPort, LPDMUS_PORTPARAMS pPortParams, LPDIRECTMUSICPORT *ppPort, LPUNKNOWN pUnkOuter) PURE; \
+    STDMETHOD(EnumMasterClock)(THIS_ DWORD dwIndex, LPDMUS_CLOCKINFO lpClockInfo) PURE; \
+    STDMETHOD(GetMasterClock)(THIS_ LPGUID pguidClock, IReferenceClock **ppReferenceClock) PURE; \
+    STDMETHOD(SetMasterClock)(THIS_ REFGUID rguidClock) PURE; \
+    STDMETHOD(Activate)(THIS_ BOOL fEnable) PURE; \
+    STDMETHOD(GetDefaultPort)(THIS_ LPGUID pguidPort) PURE; \
+    STDMETHOD(SetDirectSound)(THIS_ LPDIRECTSOUND pDirectSound, HWND hWnd) PURE;
 
     /*** IDirectMusic methods ***/
 #define IDirectMusic_IMETHODS \
     IUnknown_IMETHODS \
     IDirectMusic_METHODS
 ICOM_DEFINE(IDirectMusic,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectMusic_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
@@ -325,11 +325,11 @@ ICOM_DEFINE(IDirectMusic,IUnknown)
 /*****************************************************************************
  * IDirectMusic8 interface
  */
-#undef ICOM_INTERFACE
-#define ICOM_INTERFACE IDirectMusic8
+#undef INTERFACE
+#define INTERFACE IDirectMusic8
 #define IDirectMusic8_METHODS \
     /*** IDirectMusic8 methods ***/ \
-    ICOM_METHOD1(HRESULT, SetExternalMasterClock,  IReferenceClock*,pClock)
+    STDMETHOD(SetExternalMasterClock)(THIS_ IReferenceClock *pClock) PURE;
 
     /*** IDirectMusic8 methods ***/
 #define IDirectMusic8_IMETHODS \
@@ -337,7 +337,7 @@ ICOM_DEFINE(IDirectMusic,IUnknown)
     IDirectMusic_METHODS \
 	IDirectMusic8_METHODS
 ICOM_DEFINE(IDirectMusic8,IDirectMusic)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectMusic8_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
@@ -360,30 +360,30 @@ ICOM_DEFINE(IDirectMusic8,IDirectMusic)
 /*****************************************************************************
  * IDirectMusicBuffer interface
  */
-#undef ICOM_INTERFACE
-#define ICOM_INTERFACE IDirectMusicBuffer
+#undef INTERFACE
+#define INTERFACE IDirectMusicBuffer
 #define IDirectMusicBuffer_METHODS \
     /*** IDirectMusicBuffer methods ***/ \
-    ICOM_METHOD (HRESULT, Flush) \
-	ICOM_METHOD1(HRESULT, TotalTime, LPREFERENCE_TIME,prtTime) \
-	ICOM_METHOD3(HRESULT, PackStructured, REFERENCE_TIME,rt, DWORD,dwChannelGroup, DWORD,dwChannelMessage) \
-	ICOM_METHOD4(HRESULT, PackUnstructured, REFERENCE_TIME,rt, DWORD,dwChannelGroup, DWORD,cb, LPBYTE,lpb) \
-    ICOM_METHOD (HRESULT, ResetReadPtr) \
-    ICOM_METHOD4(HRESULT, GetNextEvent, LPREFERENCE_TIME,prt, LPDWORD,pdwChannelGroup, LPDWORD,pdwLength, LPBYTE*,ppData) \
-	ICOM_METHOD1(HRESULT, GetRawBufferPtr, LPBYTE*,ppData) \
-	ICOM_METHOD1(HRESULT, GetStartTime, LPREFERENCE_TIME,prt) \
-	ICOM_METHOD1(HRESULT, GetUsedBytes, LPDWORD,pcb) \
-	ICOM_METHOD1(HRESULT, GetMaxBytes, LPDWORD,pcb) \
-	ICOM_METHOD1(HRESULT, GetBufferFormat, LPGUID,pGuidFormat) \
-	ICOM_METHOD1(HRESULT, SetStartTime, REFERENCE_TIME,rt) \
-	ICOM_METHOD1(HRESULT, SetUsedBytes, DWORD,cb)
-	
-	/*** IDirectMusicBuffer methods ***/
+    STDMETHOD(Flush)(THIS) PURE; \
+    STDMETHOD(TotalTime)(THIS_ LPREFERENCE_TIME prtTime) PURE; \
+    STDMETHOD(PackStructured)(THIS_ REFERENCE_TIME rt, DWORD dwChannelGroup, DWORD dwChannelMessage) PURE; \
+    STDMETHOD(PackUnstructured)(THIS_ REFERENCE_TIME rt, DWORD dwChannelGroup, DWORD cb, LPBYTE lpb) PURE; \
+    STDMETHOD(ResetReadPtr)(THIS) PURE; \
+    STDMETHOD(GetNextEvent)(THIS_ LPREFERENCE_TIME prt, LPDWORD pdwChannelGroup, LPDWORD pdwLength, LPBYTE *ppData) PURE; \
+    STDMETHOD(GetRawBufferPtr)(THIS_ LPBYTE *ppData) PURE; \
+    STDMETHOD(GetStartTime)(THIS_ LPREFERENCE_TIME prt) PURE; \
+    STDMETHOD(GetUsedBytes)(THIS_ LPDWORD pcb) PURE; \
+    STDMETHOD(GetMaxBytes)(THIS_ LPDWORD pcb) PURE; \
+    STDMETHOD(GetBufferFormat)(THIS_ LPGUID pGuidFormat) PURE; \
+    STDMETHOD(SetStartTime)(THIS_ REFERENCE_TIME rt) PURE; \
+    STDMETHOD(SetUsedBytes)(THIS_ DWORD cb) PURE;
+
+    /*** IDirectMusicBuffer methods ***/
 #define IDirectMusicBuffer_IMETHODS \
     IUnknown_IMETHODS \
     IDirectMusicBuffer_METHODS
 ICOM_DEFINE(IDirectMusicBuffer,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectMusicBuffer_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
@@ -407,19 +407,19 @@ ICOM_DEFINE(IDirectMusicBuffer,IUnknown)
 /*****************************************************************************
  * IDirectMusicInstrument interface
  */
-#undef  ICOM_INTERFACE
-#define ICOM_INTERFACE IDirectMusicInstrument
+#undef  INTERFACE
+#define INTERFACE IDirectMusicInstrument
 #define IDirectMusicInstrument_METHODS \
     /*** IDirectMusicInstrument methods ***/ \
-    ICOM_METHOD1(HRESULT, GetPatch, DWORD*,pdwPatch) \
-	ICOM_METHOD1(HRESULT, SetPatch, DWORD,dwPatch)
-	
-	/*** IDirectMusicInstrument methods ***/
+    STDMETHOD(GetPatch)(THIS_ DWORD *pdwPatch) PURE; \
+    STDMETHOD(SetPatch)(THIS_ DWORD dwPatch) PURE;
+
+    /*** IDirectMusicInstrument methods ***/
 #define IDirectMusicInstrument_IMETHODS \
     IUnknown_IMETHODS \
     IDirectMusicInstrument_METHODS
 ICOM_DEFINE(IDirectMusicInstrument,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectMusicInstrument_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
@@ -433,8 +433,8 @@ ICOM_DEFINE(IDirectMusicInstrument,IUnknown)
 /*****************************************************************************
  * IDirectMusicDownloadedInstrument interface
  */
-#undef  ICOM_INTERFACE
-#define ICOM_INTERFACE IDirectMusicDownloadedInstrument
+#undef  INTERFACE
+#define INTERFACE IDirectMusicDownloadedInstrument
 #define IDirectMusicDownloadedInstrument_METHODS \
     /*** IDirectMusicDownloadedInstrument methods ***/ \
     /* none at this time */
@@ -444,7 +444,7 @@ ICOM_DEFINE(IDirectMusicInstrument,IUnknown)
     IUnknown_IMETHODS \
     IDirectMusicDownloadedInstrument_METHODS
 ICOM_DEFINE(IDirectMusicDownloadedInstrument,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectMusicDownloadedInstrument_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
@@ -457,19 +457,19 @@ ICOM_DEFINE(IDirectMusicDownloadedInstrument,IUnknown)
 /*****************************************************************************
  * IDirectMusicCollection interface
  */
-#undef  ICOM_INTERFACE
-#define ICOM_INTERFACE IDirectMusicCollection
+#undef  INTERFACE
+#define INTERFACE IDirectMusicCollection
 #define IDirectMusicCollection_METHODS \
     /*** IDirectMusicCollection methods ***/ \
-    ICOM_METHOD2(HRESULT, GetInstrument, DWORD,dwPatch, IDirectMusicInstrument**,ppInstrument) \
-    ICOM_METHOD4(HRESULT, EnumInstrument, DWORD,dwIndex, DWORD*,pdwPatch, LPWSTR,pwszName, DWORD,dwNameLen)
-	
-	/*** IDirectMusicCollection methods ***/
+    STDMETHOD(GetInstrument)(THIS_ DWORD dwPatch, IDirectMusicInstrument **ppInstrument) PURE; \
+    STDMETHOD(EnumInstrument)(THIS_ DWORD dwIndex, DWORD *pdwPatch, LPWSTR pwszName, DWORD dwNameLen) PURE;
+
+    /*** IDirectMusicCollection methods ***/
 #define IDirectMusicCollection_IMETHODS \
     IUnknown_IMETHODS \
     IDirectMusicCollection_METHODS
 ICOM_DEFINE(IDirectMusicCollection,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectMusicCollection_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
@@ -483,18 +483,18 @@ ICOM_DEFINE(IDirectMusicCollection,IUnknown)
 /*****************************************************************************
  * IDirectMusicDownload interface
  */
-#undef  ICOM_INTERFACE
-#define ICOM_INTERFACE IDirectMusicDownload
+#undef  INTERFACE
+#define INTERFACE IDirectMusicDownload
 #define IDirectMusicDownload_METHODS \
     /*** IDirectMusicDownload methods ***/ \
-    ICOM_METHOD2(HRESULT, GetBuffer, void**,ppvBuffer, DWORD*,pdwSize)
+    STDMETHOD(GetBuffer)(THIS_ void **ppvBuffer, DWORD *pdwSize) PURE;
 
-	/*** IDirectMusicDownload methods ***/
+    /*** IDirectMusicDownload methods ***/
 #define IDirectMusicDownload_IMETHODS \
     IUnknown_IMETHODS \
     IDirectMusicDownload_METHODS
 ICOM_DEFINE(IDirectMusicDownload,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectMusicDownload_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
@@ -507,23 +507,23 @@ ICOM_DEFINE(IDirectMusicDownload,IUnknown)
 /*****************************************************************************
  * IDirectMusicPortDownload interface
  */
-#undef  ICOM_INTERFACE
-#define ICOM_INTERFACE IDirectMusicPortDownload
+#undef  INTERFACE
+#define INTERFACE IDirectMusicPortDownload
 #define IDirectMusicPortDownload_METHODS \
     /*** IDirectMusicPortDownload methods ***/ \
-    ICOM_METHOD2(HRESULT, GetBuffer, DWORD,dwDLId, IDirectMusicDownload**,ppIDMDownload) \
-    ICOM_METHOD2(HRESULT, AllocateBuffer, DWORD,dwSize, IDirectMusicDownload**,ppIDMDownload) \
-    ICOM_METHOD2(HRESULT, GetDLId, DWORD*,pdwStartDLId, DWORD,dwCount) \
-    ICOM_METHOD1(HRESULT, GetAppend, DWORD*,pdwAppend) \
-    ICOM_METHOD1(HRESULT, Download, IDirectMusicDownload*,pIDMDownload) \
-    ICOM_METHOD1(HRESULT, Unload, IDirectMusicDownload*,pIDMDownload)
+    STDMETHOD(GetBuffer)(THIS_ DWORD dwDLId, IDirectMusicDownload **ppIDMDownload) PURE; \
+    STDMETHOD(AllocateBuffer)(THIS_ DWORD dwSize, IDirectMusicDownload **ppIDMDownload) PURE; \
+    STDMETHOD(GetDLId)(THIS_ DWORD *pdwStartDLId, DWORD dwCount) PURE; \
+    STDMETHOD(GetAppend)(THIS_ DWORD *pdwAppend) PURE; \
+    STDMETHOD(Download)(THIS_ IDirectMusicDownload *pIDMDownload) PURE; \
+    STDMETHOD(Unload)(THIS_ IDirectMusicDownload *pIDMDownload) PURE;
 
 	/*** IDirectMusicPortDownload methods ***/
 #define IDirectMusicPortDownload_IMETHODS \
     IUnknown_IMETHODS \
     IDirectMusicPortDownload_METHODS
 ICOM_DEFINE(IDirectMusicPortDownload,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectMusicPortDownload_QueryInterface(p,a,b)			ICOM_CALL2(QueryInterface,p,a,b)
@@ -587,33 +587,33 @@ ICOM_DEFINE(IDirectMusicPortDownload,IUnknown)
 /*****************************************************************************
  * IDirectMusicPort interface
  */
-#undef  ICOM_INTERFACE
-#define ICOM_INTERFACE IDirectMusicPort
+#undef  INTERFACE
+#define INTERFACE IDirectMusicPort
 #define IDirectMusicPort_METHODS \
     /*** IDirectMusicPort methods ***/ \
-    ICOM_METHOD1(HRESULT, PlayBuffer, LPDIRECTMUSICBUFFER,pBuffer) \
-    ICOM_METHOD1(HRESULT, SetReadNotificationHandle, HANDLE,hEvent) \
-    ICOM_METHOD1(HRESULT, Read, LPDIRECTMUSICBUFFER,pBuffer) \
-    ICOM_METHOD4(HRESULT, DownloadInstrument, IDirectMusicInstrument*,pInstrument, IDirectMusicDownloadedInstrument**,ppDownloadedInstrument, DMUS_NOTERANGE*,pNoteRanges, DWORD,dwNumNoteRanges) \
-    ICOM_METHOD1(HRESULT, UnloadInstrument, IDirectMusicDownloadedInstrument*,pDownloadedInstrument) \
-    ICOM_METHOD1(HRESULT, GetLatencyClock, IReferenceClock**,ppClock) \
-    ICOM_METHOD1(HRESULT, GetRunningStats, LPDMUS_SYNTHSTATS,pStats) \
-    ICOM_METHOD1(HRESULT, GetCaps, LPDMUS_PORTCAPS,pPortCaps) \
-    ICOM_METHOD7(HRESULT, DeviceIoControl, DWORD,dwIoControlCode, LPVOID,lpInBuffer, DWORD,nInBufferSize, LPVOID,lpOutBuffer, DWORD,nOutBufferSize, LPDWORD,lpBytesReturned, LPOVERLAPPED,lpOverlapped) \
-    ICOM_METHOD1(HRESULT, SetNumChannelGroups, DWORD,dwChannelGroups) \
-    ICOM_METHOD1(HRESULT, GetNumChannelGroups, LPDWORD,pdwChannelGroups) \
-    ICOM_METHOD1(HRESULT, Activate, BOOL,fActive) \
-    ICOM_METHOD3(HRESULT, SetChannelPriority, DWORD,dwChannelGroup, DWORD,dwChannel, DWORD,dwPriority) \
-    ICOM_METHOD3(HRESULT, GetChannelPriority, DWORD,dwChannelGroup, DWORD,dwChannel, LPDWORD,pdwPriority) \
-    ICOM_METHOD2(HRESULT, SetDirectSound, LPDIRECTSOUND,pDirectSound, LPDIRECTSOUNDBUFFER,pDirectSoundBuffer) \
-    ICOM_METHOD3(HRESULT, GetFormat, LPWAVEFORMATEX,pWaveFormatEx, LPDWORD,pdwWaveFormatExSize, LPDWORD,pdwBufferSize)
+    STDMETHOD(PlayBuffer)(THIS_ LPDIRECTMUSICBUFFER pBuffer) PURE; \
+    STDMETHOD(SetReadNotificationHandle)(THIS_ HANDLE hEvent) PURE; \
+    STDMETHOD(Read)(THIS_ LPDIRECTMUSICBUFFER pBuffer) PURE; \
+    STDMETHOD(DownloadInstrument)(THIS_ IDirectMusicInstrument *pInstrument, IDirectMusicDownloadedInstrument **ppDownloadedInstrument, DMUS_NOTERANGE *pNoteRanges, DWORD dwNumNoteRanges) PURE; \
+    STDMETHOD(UnloadInstrument)(THIS_ IDirectMusicDownloadedInstrument *pDownloadedInstrument) PURE; \
+    STDMETHOD(GetLatencyClock)(THIS_ IReferenceClock **ppClock) PURE; \
+    STDMETHOD(GetRunningStats)(THIS_ LPDMUS_SYNTHSTATS pStats) PURE; \
+    STDMETHOD(GetCaps)(THIS_ LPDMUS_PORTCAPS pPortCaps) PURE; \
+    STDMETHOD(DeviceIoControl)(THIS_ DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) PURE; \
+    STDMETHOD(SetNumChannelGroups)(THIS_ DWORD dwChannelGroups) PURE; \
+    STDMETHOD(GetNumChannelGroups)(THIS_ LPDWORD pdwChannelGroups) PURE; \
+    STDMETHOD(Activate)(THIS_ BOOL fActive) PURE; \
+    STDMETHOD(SetChannelPriority)(THIS_ DWORD dwChannelGroup, DWORD dwChannel, DWORD dwPriority) PURE; \
+    STDMETHOD(GetChannelPriority)(THIS_ DWORD dwChannelGroup, DWORD dwChannel, LPDWORD pdwPriority) PURE; \
+    STDMETHOD(SetDirectSound)(THIS_ LPDIRECTSOUND pDirectSound, LPDIRECTSOUNDBUFFER pDirectSoundBuffer) PURE; \
+    STDMETHOD(GetFormat)(THIS_ LPWAVEFORMATEX pWaveFormatEx, LPDWORD pdwWaveFormatExSize, LPDWORD pdwBufferSize) PURE;
 
 /*** IDirectMusicPort methods ***/
 #define IDirectMusicPort_IMETHODS \
     IUnknown_IMETHODS \
     IDirectMusicPort_METHODS
 ICOM_DEFINE(IDirectMusicPort,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectMusicPort_QueryInterface(p,a,b)					ICOM_CALL2(QueryInterface,p,a,b)
@@ -641,18 +641,18 @@ ICOM_DEFINE(IDirectMusicPort,IUnknown)
 /*****************************************************************************
  * IDirectMusicThru interface
  */
-#undef  ICOM_INTERFACE
-#define ICOM_INTERFACE IDirectMusicThru
+#undef  INTERFACE
+#define INTERFACE IDirectMusicThru
 #define IDirectMusicThru_METHODS \
     /*** IDirectMusicThru methods ***/ \
-    ICOM_METHOD5(HRESULT, ThruChannel, DWORD,dwSourceChannelGroup, DWORD,dwSourceChannel, DWORD,dwDestinationChannelGroup, DWORD,dwDestinationChannel, LPDIRECTMUSICPORT,pDestinationPort)
+    STDMETHOD(ThruChannel)(THIS_ DWORD dwSourceChannelGroup, DWORD dwSourceChannel, DWORD dwDestinationChannelGroup, DWORD dwDestinationChannel, LPDIRECTMUSICPORT pDestinationPort) PURE;
 
 /*** IDirectMusicThru methods ***/
 #define IDirectMusicThru_IMETHODS \
     IUnknown_IMETHODS \
     IDirectMusicThru_METHODS
 ICOM_DEFINE(IDirectMusicThru,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDirectMusicThru_QueryInterface(p,a,b)					ICOM_CALL2(QueryInterface,p,a,b)
@@ -669,21 +669,21 @@ ICOM_DEFINE(IDirectMusicThru,IUnknown)
 /*****************************************************************************
  * IReferenceClock interface
  */
-#undef  ICOM_INTERFACE
-#define ICOM_INTERFACE IReferenceClock
+#undef  INTERFACE
+#define INTERFACE IReferenceClock
 #define IReferenceClock_METHODS \
     /*** IReferenceClock methods ***/ \
-    ICOM_METHOD1(HRESULT, GetTime, REFERENCE_TIME*,pTime) \
-    ICOM_METHOD4(HRESULT, AdviseTime, REFERENCE_TIME,baseTime, REFERENCE_TIME,streamTime, HANDLE,hEvent, DWORD*,pdwAdviseCookie) \
-    ICOM_METHOD4(HRESULT, AdvisePeriodic, REFERENCE_TIME,startTime, REFERENCE_TIME,periodTime, HANDLE,hSemaphore, DWORD*,pdwAdviseCookie) \
-    ICOM_METHOD1(HRESULT, Unadvise, DWORD,dwAdviseCookie)
+    STDMETHOD(GetTime)(THIS_ REFERENCE_TIME *pTime) PURE; \
+    STDMETHOD(AdviseTime)(THIS_ REFERENCE_TIME baseTime, REFERENCE_TIME streamTime, HANDLE hEvent, DWORD *pdwAdviseCookie) PURE; \
+    STDMETHOD(AdvisePeriodic)(THIS_ REFERENCE_TIME startTime, REFERENCE_TIME periodTime, HANDLE hSemaphore, DWORD *pdwAdviseCookie) PURE; \
+    STDMETHOD(Unadvise)(THIS_ DWORD dwAdviseCookie) PURE;
 
 	/*** IReferenceClock methods ***/
 #define IReferenceClock_IMETHODS \
     IUnknown_IMETHODS \
     IReferenceClock_METHODS
 ICOM_DEFINE(IReferenceClock,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IReferenceClock_QueryInterface(p,a,b)					ICOM_CALL2(QueryInterface,p,a,b)

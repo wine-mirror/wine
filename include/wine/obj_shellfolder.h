@@ -78,17 +78,17 @@ typedef struct
   WCHAR wszClrIcon[MAX_PATH+10];
 } EXTRASEARCH,* LPEXTRASEARCH;
 
-#define ICOM_INTERFACE IEnumExtraSearch
+#define INTERFACE IEnumExtraSearch
 #define IEnumExtraSearch_METHODS \
-    ICOM_METHOD3(HRESULT, Next, ULONG, celt, LPEXTRASEARCH*, rgelt, ULONG*, pceltFetched) \
-    ICOM_METHOD1(HRESULT, Skip, ULONG, celt) \
-    ICOM_METHOD (HRESULT, Reset) \
-    ICOM_METHOD1(HRESULT, Clone, IEnumExtraSearch**, ppenum)
+    STDMETHOD(Next)(THIS_ ULONG  celt, LPEXTRASEARCH * rgelt, ULONG * pceltFetched) PURE; \
+    STDMETHOD(Skip)(THIS_ ULONG  celt) PURE; \
+    STDMETHOD(Reset)(THIS) PURE; \
+    STDMETHOD(Clone)(THIS_ IEnumExtraSearch ** ppenum) PURE;
 #define IEnumExtraSearch_IMETHODS \
     IUnknown_IMETHODS \
     IEnumExtraSearch_METHODS
 ICOM_DEFINE(IEnumExtraSearch,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IEnumIDList_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
@@ -196,23 +196,23 @@ DWORD WINAPI SHGetDesktopFolder(IShellFolder * *);
 /*****************************************************************************
  * IShellFolder interface
  */
-#define ICOM_INTERFACE IShellFolder
+#define INTERFACE IShellFolder
 #define IShellFolder_METHODS \
-    ICOM_METHOD6( HRESULT, ParseDisplayName, HWND, hwndOwner,LPBC, pbcReserved, LPOLESTR, lpszDisplayName, ULONG *, pchEaten, LPITEMIDLIST *, ppidl, ULONG *, pdwAttributes) \
-    ICOM_METHOD3( HRESULT, EnumObjects, HWND, hwndOwner, DWORD, grfFlags, LPENUMIDLIST *, ppenumIDList)\
-    ICOM_METHOD4( HRESULT, BindToObject, LPCITEMIDLIST, pidl, LPBC, pbcReserved, REFIID, riid, LPVOID *, ppvOut)\
-    ICOM_METHOD4( HRESULT, BindToStorage, LPCITEMIDLIST, pidl, LPBC, pbcReserved, REFIID, riid, LPVOID *, ppvObj)\
-    ICOM_METHOD3( HRESULT, CompareIDs, LPARAM, lParam, LPCITEMIDLIST, pidl1, LPCITEMIDLIST, pidl2)\
-    ICOM_METHOD3( HRESULT, CreateViewObject, HWND, hwndOwner, REFIID, riid, LPVOID *, ppvOut)\
-    ICOM_METHOD3( HRESULT, GetAttributesOf, UINT, cidl, LPCITEMIDLIST *, apidl, ULONG *, rgfInOut)\
-    ICOM_METHOD6( HRESULT, GetUIObjectOf, HWND, hwndOwner, UINT, cidl, LPCITEMIDLIST *, apidl, REFIID, riid, UINT *, prgfInOut, LPVOID *, ppvOut)\
-    ICOM_METHOD3( HRESULT, GetDisplayNameOf, LPCITEMIDLIST, pidl, DWORD, uFlags, LPSTRRET, lpName)\
-    ICOM_METHOD5( HRESULT, SetNameOf, HWND, hwndOwner, LPCITEMIDLIST, pidl,LPCOLESTR, lpszName, DWORD, uFlags,LPITEMIDLIST *, ppidlOut)
+    STDMETHOD(ParseDisplayName)(THIS_ HWND  hwndOwner,LPBC  pbcReserved, LPOLESTR  lpszDisplayName, ULONG  * pchEaten, LPITEMIDLIST  * ppidl, ULONG  * pdwAttributes) PURE; \
+    STDMETHOD(EnumObjects)(THIS_ HWND  hwndOwner, DWORD  grfFlags, LPENUMIDLIST  * ppenumIDList) PURE;\
+    STDMETHOD(BindToObject)(THIS_ LPCITEMIDLIST  pidl, LPBC  pbcReserved, REFIID  riid, LPVOID  * ppvOut) PURE;\
+    STDMETHOD(BindToStorage)(THIS_ LPCITEMIDLIST  pidl, LPBC  pbcReserved, REFIID  riid, LPVOID  * ppvObj) PURE;\
+    STDMETHOD(CompareIDs)(THIS_ LPARAM  lParam, LPCITEMIDLIST  pidl1, LPCITEMIDLIST  pidl2) PURE;\
+    STDMETHOD(CreateViewObject)(THIS_ HWND  hwndOwner, REFIID  riid, LPVOID  * ppvOut) PURE;\
+    STDMETHOD(GetAttributesOf)(THIS_ UINT  cidl, LPCITEMIDLIST  * apidl, ULONG  * rgfInOut) PURE;\
+    STDMETHOD(GetUIObjectOf)(THIS_ HWND  hwndOwner, UINT  cidl, LPCITEMIDLIST  * apidl, REFIID  riid, UINT  * prgfInOut, LPVOID  * ppvOut) PURE;\
+    STDMETHOD(GetDisplayNameOf)(THIS_ LPCITEMIDLIST  pidl, DWORD  uFlags, LPSTRRET  lpName) PURE;\
+    STDMETHOD(SetNameOf)(THIS_ HWND  hwndOwner, LPCITEMIDLIST  pidl,LPCOLESTR  lpszName, DWORD  uFlags,LPITEMIDLIST  * ppidlOut) PURE;
 #define IShellFolder_IMETHODS \
     IUnknown_IMETHODS \
     IShellFolder_METHODS
 ICOM_DEFINE(IShellFolder,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IShellFolder_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)
@@ -268,20 +268,20 @@ typedef struct
 	STRRET	str;
 } SHELLDETAILS, *LPSHELLDETAILS;
 
-#define ICOM_INTERFACE IShellFolder2
+#define INTERFACE IShellFolder2
 #define IShellFolder2_METHODS \
-    ICOM_METHOD1( HRESULT, GetDefaultSearchGUID, LPGUID, lpguid)\
-    ICOM_METHOD1( HRESULT, EnumSearches, LPENUMEXTRASEARCH *, ppEnum) \
-    ICOM_METHOD3( HRESULT, GetDefaultColumn, DWORD, dwReserved, ULONG *, pSort, ULONG *, pDisplay)\
-    ICOM_METHOD2( HRESULT, GetDefaultColumnState, UINT, iColumn, DWORD *, pcsFlags)\
-    ICOM_METHOD3( HRESULT, GetDetailsEx, LPCITEMIDLIST, pidl, const SHCOLUMNID *, pscid, VARIANT *, pv)\
-    ICOM_METHOD3( HRESULT, GetDetailsOf, LPCITEMIDLIST, pidl, UINT, iColumn, LPSHELLDETAILS, pDetails)\
-    ICOM_METHOD2( HRESULT, MapNameToSCID, LPCWSTR, pwszName, SHCOLUMNID *, pscid)
+    STDMETHOD(GetDefaultSearchGUID)(THIS_ LPGUID  lpguid) PURE;\
+    STDMETHOD(EnumSearches)(THIS_ LPENUMEXTRASEARCH  * ppEnum) PURE; \
+    STDMETHOD(GetDefaultColumn)(THIS_ DWORD  dwReserved, ULONG  * pSort, ULONG  * pDisplay) PURE;\
+    STDMETHOD(GetDefaultColumnState)(THIS_ UINT  iColumn, DWORD  * pcsFlags) PURE;\
+    STDMETHOD(GetDetailsEx)(THIS_ LPCITEMIDLIST  pidl, const SHCOLUMNID  * pscid, VARIANT  * pv) PURE;\
+    STDMETHOD(GetDetailsOf)(THIS_ LPCITEMIDLIST  pidl, UINT  iColumn, LPSHELLDETAILS  pDetails) PURE;\
+    STDMETHOD(MapNameToSCID)(THIS_ LPCWSTR  pwszName, SHCOLUMNID  * pscid) PURE;
 #define IShellFolder2_IMETHODS \
     IShellFolder_METHODS \
     IShellFolder2_METHODS
 ICOM_DEFINE(IShellFolder2, IShellFolder)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IShellFolder2_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)
@@ -311,14 +311,14 @@ ICOM_DEFINE(IShellFolder2, IShellFolder)
  * IPersistFolder interface
  */
 
-#define ICOM_INTERFACE IPersistFolder
+#define INTERFACE IPersistFolder
 #define IPersistFolder_METHODS \
-    ICOM_METHOD1( HRESULT, Initialize, LPCITEMIDLIST, pidl)
+    STDMETHOD(Initialize)(THIS_ LPCITEMIDLIST  pidl) PURE;
 #define IPersistFolder_IMETHODS \
     IPersist_IMETHODS \
     IPersistFolder_METHODS
 ICOM_DEFINE(IPersistFolder, IPersist)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IPersistFolder_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
@@ -333,15 +333,15 @@ ICOM_DEFINE(IPersistFolder, IPersist)
  * IPersistFolder2 interface
  */
 
-#define ICOM_INTERFACE IPersistFolder2
+#define INTERFACE IPersistFolder2
 #define IPersistFolder2_METHODS \
-    ICOM_METHOD1( HRESULT, GetCurFolder, LPITEMIDLIST*, pidl)
+    STDMETHOD(GetCurFolder)(THIS_ LPITEMIDLIST * pidl) PURE;
 #define IPersistFolder2_IMETHODS \
     IPersist_IMETHODS \
     IPersistFolder_METHODS \
     IPersistFolder2_METHODS
 ICOM_DEFINE(IPersistFolder2, IPersistFolder)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IPersistFolder2_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
@@ -367,17 +367,17 @@ typedef struct {
 	int		csidl;
 } PERSIST_FOLDER_TARGET_INFO;
 
-#define ICOM_INTERFACE IPersistFolder3
+#define INTERFACE IPersistFolder3
 #define IPersistFolder3_METHODS \
-    ICOM_METHOD3( HRESULT, InitializeEx, IBindCtx*, pbc, LPCITEMIDLIST, pidlRoot, const PERSIST_FOLDER_TARGET_INFO*, ppfti)\
-    ICOM_METHOD1( HRESULT, GetFolderTargetInfo, PERSIST_FOLDER_TARGET_INFO*, ppfti)
+    STDMETHOD(InitializeEx)(THIS_ IBindCtx * pbc, LPCITEMIDLIST  pidlRoot, const PERSIST_FOLDER_TARGET_INFO * ppfti) PURE;\
+    STDMETHOD(GetFolderTargetInfo)(THIS_ PERSIST_FOLDER_TARGET_INFO * ppfti) PURE;
 #define IPersistFolder3_IMETHODS \
     IPersist_IMETHODS \
     IPersistFolder_METHODS \
     IPersistFolder2_METHODS \
     IPersistFolder3_METHODS
 ICOM_DEFINE(IPersistFolder3, IPersistFolder2)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IPersistFolder3_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)

@@ -35,17 +35,17 @@ typedef struct ISFHelper ISFHelper, *LPISFHELPER;
  * ISFHelper interface
  */
 
-#define ICOM_INTERFACE ISFHelper
+#define INTERFACE ISFHelper
 #define ISFHelper_METHODS \
-	ICOM_METHOD2 (HRESULT, GetUniqueName, LPSTR, lpName, UINT, uLen) \
-	ICOM_METHOD3 (HRESULT, AddFolder, HWND, hwnd, LPCSTR, lpName, LPITEMIDLIST*, ppidlOut) \
-	ICOM_METHOD2 (HRESULT, DeleteItems, UINT, cidl, LPCITEMIDLIST*, apidl) \
-	ICOM_METHOD3 (HRESULT, CopyItems, IShellFolder*, pSFFrom, UINT, cidl, LPCITEMIDLIST*, apidl)
+	STDMETHOD(GetUniqueName)(THIS_ LPSTR  lpName, UINT  uLen) PURE; \
+	STDMETHOD(AddFolder)(THIS_ HWND  hwnd, LPCSTR  lpName, LPITEMIDLIST * ppidlOut) PURE; \
+	STDMETHOD(DeleteItems)(THIS_ UINT  cidl, LPCITEMIDLIST * apidl) PURE; \
+	STDMETHOD(CopyItems)(THIS_ IShellFolder * pSFFrom, UINT  cidl, LPCITEMIDLIST * apidl) PURE;
 #define ISFHelper_IMETHODS \
     IUnknown_IMETHODS \
     ISFHelper_METHODS
 ICOM_DEFINE(ISFHelper, IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define ISFHelper_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)

@@ -170,19 +170,19 @@ typedef enum BINDSTATUS {
 /*****************************************************************************
  * IBinding interface
  */
-#define ICOM_INTERFACE IBinding
+#define INTERFACE IBinding
 #define IBinding_METHODS \
-    ICOM_METHOD  (HRESULT,Abort) \
-    ICOM_METHOD  (HRESULT,Suspend) \
-    ICOM_METHOD  (HRESULT,Resume) \
-    ICOM_METHOD1 (HRESULT,SetPriority,       LONG,nPriority) \
-    ICOM_METHOD1 (HRESULT,GetPriority,       LONG*,pnPriority) \
-    ICOM_METHOD4 (HRESULT,GetBindResult,     CLSID*,pclsidProtocol, DWORD*,pdwResult, LPOLESTR*,pszResult, DWORD*,pdwReserved)
+    STDMETHOD(Abort)(THIS) PURE; \
+    STDMETHOD(Suspend)(THIS) PURE; \
+    STDMETHOD(Resume)(THIS) PURE; \
+    STDMETHOD(SetPriority)(THIS_ LONG nPriority) PURE; \
+    STDMETHOD(GetPriority)(THIS_ LONG *pnPriority) PURE; \
+    STDMETHOD(GetBindResult)(THIS_ CLSID *pclsidProtocol, DWORD *pdwResult, LPOLESTR *pszResult, DWORD *pdwReserved) PURE;
 #define IBinding_IMETHODS \
     IUnknown_IMETHODS \
     IBinding_METHODS
 ICOM_DEFINE(IBinding,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IBinding_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -199,21 +199,21 @@ ICOM_DEFINE(IBinding,IUnknown)
 /*****************************************************************************
  * IBindStatusCallback interface
  */
-#define ICOM_INTERFACE IBindStatusCallback
+#define INTERFACE IBindStatusCallback
 #define IBindStatusCallback_METHODS \
-    ICOM_METHOD2 (HRESULT,OnStartBinding,    DWORD,dwReserved, IBinding*,pib) \
-    ICOM_METHOD1 (HRESULT,GetPriority,       LONG*,pnPriority) \
-    ICOM_METHOD  (HRESULT,OnLowResource) \
-    ICOM_METHOD4 (HRESULT,OnProgress,        ULONG,ulProgress, ULONG,ulProgressMax, ULONG,ulStatusCode, LPCWSTR,szStatusText) \
-    ICOM_METHOD2 (HRESULT,OnStopBinding,     HRESULT,hresult, LPCWSTR,szError) \
-    ICOM_METHOD2 (HRESULT,GetBindInfo,       DWORD*,grfBINDF, BINDINFO*,pbindinfo) \
-    ICOM_METHOD4 (HRESULT,OnDataAvailable,   DWORD,grfBSCF, DWORD,dwSize, FORMATETC*,pformatetc, STGMEDIUM*,pstgmed) \
-    ICOM_METHOD2 (HRESULT,OnObjectAvailable, REFIID,iid, IUnknown*,punk)
+    STDMETHOD(OnStartBinding)(THIS_ DWORD dwReserved, IBinding *pib) PURE; \
+    STDMETHOD(GetPriority)(THIS_ LONG *pnPriority) PURE; \
+    STDMETHOD(OnLowResource)(THIS) PURE; \
+    STDMETHOD(OnProgress)(THIS_ ULONG ulProgress, ULONG ulProgressMax, ULONG ulStatusCode, LPCWSTR szStatusText) PURE; \
+    STDMETHOD(OnStopBinding)(THIS_ HRESULT hresult, LPCWSTR szError) PURE; \
+    STDMETHOD(GetBindInfo)(THIS_ DWORD *grfBINDF, BINDINFO *pbindinfo) PURE; \
+    STDMETHOD(OnDataAvailable)(THIS_ DWORD grfBSCF, DWORD dwSize, FORMATETC *pformatetc, STGMEDIUM *pstgmed) PURE; \
+    STDMETHOD(OnObjectAvailable)(THIS_ REFIID iid, IUnknown *punk) PURE;
 #define IBindStatusCallback_IMETHODS \
     IUnknown_IMETHODS \
     IBindStatusCallback_METHODS
 ICOM_DEFINE(IBindStatusCallback,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IBindStatusCallback_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -232,16 +232,16 @@ ICOM_DEFINE(IBindStatusCallback,IUnknown)
 /*****************************************************************************
  * IBindHost interface
  */
-#define ICOM_INTERFACE IBindHost
+#define INTERFACE IBindHost
 #define IBindHost_METHODS \
-    ICOM_METHOD4 (HRESULT,CreateMoniker,              LPOLESTR,szName, IBindCtx*,pBC, IMoniker**,ppmk, DWORD,dwReserved) \
-    ICOM_METHOD5 (HRESULT,MonikerBindToStorage,       IMoniker*,pMk, IBindCtx*,pBC, IBindStatusCallback*,pBSC, REFIID,riid, LPVOID*,ppvObj) \
-    ICOM_METHOD5 (HRESULT,MonikerBindToObject,        IMoniker*,pMk, IBindCtx*,pBC, IBindStatusCallback*,pBSC, REFIID,riid, LPVOID*,ppvObj)
+    STDMETHOD(CreateMoniker)(THIS_ LPOLESTR szName, IBindCtx *pBC, IMoniker **ppmk, DWORD dwReserved) PURE; \
+    STDMETHOD(MonikerBindToStorage)(THIS_ IMoniker *pMk, IBindCtx *pBC, IBindStatusCallback *pBSC, REFIID riid, LPVOID *ppvObj) PURE; \
+    STDMETHOD(MonikerBindToObject)(THIS_ IMoniker *pMk, IBindCtx *pBC, IBindStatusCallback *pBSC, REFIID riid, LPVOID *ppvObj) PURE;
 #define IBindHost_IMETHODS \
     IUnknown_IMETHODS \
     IBindHost_METHODS
 ICOM_DEFINE(IBindHost,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IBindHost_QueryInterface(p,a,b)                   ICOM_CALL2(QueryInterface,p,a,b)
@@ -273,14 +273,14 @@ typedef enum _tagQUERYOPTION {
 /*****************************************************************************
  * IWinInetInfo interface
  */
-#define ICOM_INTERFACE IWinInetInfo
+#define INTERFACE IWinInetInfo
 #define IWinInetInfo_METHODS \
-    ICOM_METHOD3 (HRESULT,QueryOption,       DWORD,dwOption, LPVOID,pBuffer, DWORD*,pcbBuf)
+    STDMETHOD(QueryOption)(THIS_ DWORD dwOption, LPVOID pBuffer, DWORD *pcbBuf) PURE;
 #define IWinInetInfo_IMETHODS \
     IUnknown_IMETHODS \
     IWinInetInfo_METHODS
 ICOM_DEFINE(IWinInetInfo,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IWinInetInfo_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -292,14 +292,14 @@ ICOM_DEFINE(IWinInetInfo,IUnknown)
 /*****************************************************************************
  * IWinInetHttpInfo interface
  */
-#define ICOM_INTERFACE IWinInetHttpInfo
+#define INTERFACE IWinInetHttpInfo
 #define IWinInetHttpInfo_METHODS \
-    ICOM_METHOD5 (HRESULT,QueryInfo, DWORD,dwOption, LPVOID,pBuffer, DWORD*,pcbBuf, DWORD*,pdwFlags, DWORD*,pdwReserved)
+    STDMETHOD(QueryInfo)(THIS_ DWORD dwOption, LPVOID pBuffer, DWORD *pcbBuf, DWORD *pdwFlags, DWORD *pdwReserved) PURE;
 #define IWinInetHttpInfo_IMETHODS \
     IWinInetInfo_IMETHODS \
     IWinInetHttpInfo_METHODS
 ICOM_DEFINE(IWinInetHttpInfo,IWinInetInfo)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IWinInetHttpInfo_QueryInterface(p,a,b)  ICOM_CALL2(QueryInterface,p,a,b)

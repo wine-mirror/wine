@@ -47,19 +47,19 @@ typedef struct IViewObject2 IViewObject2, *LPVIEWOBJECT2;
  */
 typedef BOOL    (CALLBACK *IVO_ContCallback)(DWORD);
 
-#define ICOM_INTERFACE IViewObject
+#define INTERFACE IViewObject
 #define IViewObject_METHODS \
-	ICOM_METHOD10(HRESULT,Draw, DWORD,dwDrawAspect, LONG,lindex, void*,pvAspect, DVTARGETDEVICE*,ptd, HDC,hdcTargetDev, HDC,hdcDraw, LPCRECTL,lprcBounds, LPCRECTL,lprcWBounds, IVO_ContCallback, pfnContinue, DWORD,dwContinue) \
-	ICOM_METHOD6(HRESULT,GetColorSet, DWORD,dwDrawAspect, LONG,lindex, void*,pvAspect, DVTARGETDEVICE*,ptd, HDC,hicTargetDevice, struct tagLOGPALETTE**,ppColorSet) \
-	ICOM_METHOD4(HRESULT,Freeze, DWORD,dwDrawAspect, LONG,lindex, void*,pvAspect, DWORD*,pdwFreeze) \
-	ICOM_METHOD1(HRESULT,Unfreeze, DWORD,dwFreeze) \
-	ICOM_METHOD3(HRESULT,SetAdvise, DWORD,aspects, DWORD,advf, IAdviseSink*,pAdvSink) \
-	ICOM_METHOD3(HRESULT,GetAdvise, DWORD*,pAspects, DWORD*,pAdvf, IAdviseSink**,ppAdvSink)
+	STDMETHOD(Draw)(THIS_ DWORD dwDrawAspect, LONG lindex, void *pvAspect, DVTARGETDEVICE *ptd, HDC hdcTargetDev, HDC hdcDraw, LPCRECTL lprcBounds, LPCRECTL lprcWBounds, IVO_ContCallback  pfnContinue, DWORD dwContinue) PURE; \
+	STDMETHOD(GetColorSet)(THIS_ DWORD dwDrawAspect, LONG lindex, void *pvAspect, DVTARGETDEVICE *ptd, HDC hicTargetDevice, struct tagLOGPALETTE **ppColorSet) PURE; \
+	STDMETHOD(Freeze)(THIS_ DWORD dwDrawAspect, LONG lindex, void *pvAspect, DWORD *pdwFreeze) PURE; \
+	STDMETHOD(Unfreeze)(THIS_ DWORD dwFreeze) PURE; \
+	STDMETHOD(SetAdvise)(THIS_ DWORD aspects, DWORD advf, IAdviseSink *pAdvSink) PURE; \
+	STDMETHOD(GetAdvise)(THIS_ DWORD *pAspects, DWORD *pAdvf, IAdviseSink **ppAdvSink) PURE;
 #define IViewObject_IMETHODS \
 	IUnknown_IMETHODS \
 	IViewObject_METHODS
 ICOM_DEFINE(IViewObject,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IViewObject_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
@@ -78,14 +78,14 @@ ICOM_DEFINE(IViewObject,IUnknown)
 /*****************************************************************************
  * IViewObject2 interface
  */
-#define ICOM_INTERFACE IViewObject2
+#define INTERFACE IViewObject2
 #define IViewObject2_METHODS \
-	ICOM_METHOD4(HRESULT,GetExtent, DWORD,dwDrawAspect, LONG,lindex, DVTARGETDEVICE*,ptd, LPSIZEL,lpsizel)
+	STDMETHOD(GetExtent)(THIS_ DWORD dwDrawAspect, LONG lindex, DVTARGETDEVICE *ptd, LPSIZEL lpsizel) PURE;
 #define IViewObject2_IMETHODS \
 	IViewObject_IMETHODS \
 	IViewObject2_METHODS
 ICOM_DEFINE(IViewObject2,IViewObject)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IViewObject2_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
@@ -106,4 +106,3 @@ ICOM_DEFINE(IViewObject2,IViewObject)
 #endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_OLEVIEW_H */
-

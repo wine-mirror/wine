@@ -51,27 +51,27 @@ typedef BOOL (CALLBACK *LPENUMMRUCALLBACK)( LPCVOID lpData,
 #define DPLAYI_GROUP_HIDDEN          0x00000400
 
 /* Define the COM interface */
-#define ICOM_INTERFACE IDirectPlaySP
+#define INTERFACE IDirectPlaySP
 #define IDirectPlaySP_METHODS \
-   ICOM_METHOD5(HRESULT,AddMRUEntry, LPCWSTR,lpSection, LPCWSTR,lpKey, LPCVOID,lpData, DWORD,dwDataSize, DWORD,dwMaxEntries ) \
-   ICOM_METHOD6(HRESULT,CreateAddress, REFGUID,guidSP, REFGUID,guidDataType, LPCVOID,lpData, DWORD,dwDataSize, LPVOID,lpAddress,LPDWORD,lpdwAddressSize) \
-   ICOM_METHOD4(HRESULT,EnumAddress, LPDPENUMADDRESSCALLBACK,lpEnumAddressCallback, LPCVOID,lpAddress, DWORD,dwAddressSize, LPVOID,lpContext ) \
-   ICOM_METHOD4(HRESULT,EnumMRUEntries, LPCWSTR,lpSection, LPCWSTR,lpKey, LPENUMMRUCALLBACK,lpEnumMRUCallback, LPVOID,lpContext ) \
-   ICOM_METHOD2(HRESULT,GetPlayerFlags,       DPID,idPlayer, LPDWORD,lpdwPlayerFlags ) \
-   ICOM_METHOD4(HRESULT,GetSPPlayerData,      DPID,idPlayer, LPVOID*,lplpData, LPDWORD,lpdwDataSize, DWORD,dwFlags ) \
-   ICOM_METHOD3(HRESULT,HandleMessage,        LPVOID,lpMessageBody, DWORD,dwMessageBodySize, LPVOID,lpMessageHeader ) \
-   ICOM_METHOD4(HRESULT,SetSPPlayerData,      DPID,idPlayer, LPVOID,lpData, DWORD,dwDataSize, DWORD,dwFlags ) \
-   ICOM_METHOD4(HRESULT,CreateCompoundAddress, LPCDPCOMPOUNDADDRESSELEMENT,lpElements, DWORD,dwElementCount, LPVOID,lpAddress, LPDWORD,lpdwAddressSize ) \
-   ICOM_METHOD3(HRESULT,GetSPData,                LPVOID*,lplpData, LPDWORD,dwDataSize, DWORD,dwFlags ) \
-   ICOM_METHOD3(HRESULT,SetSPData,                LPVOID,lpData, DWORD,dwDataSize, DWORD,dwFlags ) \
-   ICOM_METHOD2(VOID,SendComplete,              LPVOID,, DWORD, )
+   STDMETHOD(AddMRUEntry)(THIS_ LPCWSTR lpSection, LPCWSTR lpKey, LPCVOID lpData, DWORD dwDataSize, DWORD dwMaxEntries ) PURE; \
+   STDMETHOD(CreateAddress)(THIS_ REFGUID guidSP, REFGUID guidDataType, LPCVOID lpData, DWORD dwDataSize, LPVOID lpAddress,LPDWORD lpdwAddressSize) PURE; \
+   STDMETHOD(EnumAddress)(THIS_ LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, LPCVOID lpAddress, DWORD dwAddressSize, LPVOID lpContext ) PURE; \
+   STDMETHOD(EnumMRUEntries)(THIS_ LPCWSTR lpSection, LPCWSTR lpKey, LPENUMMRUCALLBACK lpEnumMRUCallback, LPVOID lpContext ) PURE; \
+   STDMETHOD(GetPlayerFlags)(THIS_ DPID idPlayer, LPDWORD lpdwPlayerFlags ) PURE; \
+   STDMETHOD(GetSPPlayerData)(THIS_ DPID idPlayer, LPVOID *lplpData, LPDWORD lpdwDataSize, DWORD dwFlags ) PURE; \
+   STDMETHOD(HandleMessage)(THIS_ LPVOID lpMessageBody, DWORD dwMessageBodySize, LPVOID lpMessageHeader ) PURE; \
+   STDMETHOD(SetSPPlayerData)(THIS_ DPID idPlayer, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags ) PURE; \
+   STDMETHOD(CreateCompoundAddress)(THIS_ LPCDPCOMPOUNDADDRESSELEMENT lpElements, DWORD dwElementCount, LPVOID lpAddress, LPDWORD lpdwAddressSize ) PURE; \
+   STDMETHOD(GetSPData)(THIS_ LPVOID *lplpData, LPDWORD dwDataSize, DWORD dwFlags ) PURE; \
+   STDMETHOD(SetSPData)(THIS_ LPVOID lpData, DWORD dwDataSize, DWORD dwFlags ) PURE; \
+   STDMETHOD_(VOID,SendComplete)(THIS_ LPVOID , DWORD  ) PURE;
 
 #define IDirectPlaySP_IMETHODS \
    IUnknown_IMETHODS \
    IDirectPlaySP_METHODS
 
 ICOM_DEFINE(IDirectPlaySP,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 
 /* NOTE: The microsoft provided header file doesn't have these access
@@ -356,4 +356,3 @@ typedef HRESULT (WINAPI *LPDPSP_SPINIT)(LPSPINITDATA);
 extern DWORD gdwDPlaySPRefCount;
 
 #endif
-

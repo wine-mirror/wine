@@ -123,18 +123,18 @@ typedef struct tagCMInvokeCommandInfoEx
 
 } CMINVOKECOMMANDINFOEX,  *LPCMINVOKECOMMANDINFOEX;
 
-#define ICOM_INTERFACE IContextMenu
+#define INTERFACE IContextMenu
 #define IContextMenu_METHODS \
-	ICOM_METHOD5(HRESULT, QueryContextMenu, HMENU, hmenu, UINT, indexMenu, UINT, idCmdFirst, UINT, idCmdLast, UINT, uFlags) \
-	ICOM_METHOD1(HRESULT, InvokeCommand, LPCMINVOKECOMMANDINFO, lpici) \
-	ICOM_METHOD5(HRESULT, GetCommandString, UINT, idCmd, UINT, uType, UINT*, pwReserved, LPSTR, pszName, UINT, cchMax) \
-	ICOM_METHOD3(HRESULT, HandleMenuMsg, UINT, uMsg, WPARAM, wParam, LPARAM, lParam) \
+	STDMETHOD(QueryContextMenu)(THIS_ HMENU  hmenu, UINT  indexMenu, UINT  idCmdFirst, UINT  idCmdLast, UINT  uFlags) PURE; \
+	STDMETHOD(InvokeCommand)(THIS_ LPCMINVOKECOMMANDINFO  lpici) PURE; \
+	STDMETHOD(GetCommandString)(THIS_ UINT  idCmd, UINT  uType, UINT * pwReserved, LPSTR  pszName, UINT  cchMax) PURE; \
+	STDMETHOD(HandleMenuMsg)(THIS_ UINT  uMsg, WPARAM  wParam, LPARAM  lParam) PURE; \
 	void * guard;   /*possibly another nasty entry from ContextMenu3 ?*/
 #define IContextMenu_IMETHODS \
 	IUnknown_IMETHODS \
 	IContextMenu_METHODS
 ICOM_DEFINE(IContextMenu,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 #define IContextMenu_QueryInterface(p,a,b)		ICOM_CALL2(QueryInterface,p,a,b)
 #define IContextMenu_AddRef(p)				ICOM_CALL(AddRef,p)

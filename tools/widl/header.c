@@ -425,48 +425,36 @@ var_t *is_callas(attr_t *a)
 static void write_icom_method_def(type_t *iface)
 {
   func_t *cur = iface->funcs;
+  if (iface->ref) write_icom_method_def( iface->ref );
   while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
+  if (cur) fprintf( header, " \\\n    /*** %s methods ***/", iface->name );
   while (cur) {
     var_t *def = cur->def;
     if (!is_callas(def->attrs)) {
       var_t *arg = cur->args;
-      int argc = 0;
+
       if (arg) {
-	argc++;
 	while (NEXT_LINK(arg)) {
 	  arg = NEXT_LINK(arg);
-	  argc++;
 	}
       }
-      fprintf(header, " \\\n");
-      if (!is_void(def->type, def)) {
-	if (argc)
-	  fprintf(header, "    ICOM_METHOD%d (", argc);
-	else
-	  fprintf(header, "    ICOM_METHOD  (");
-	write_type(header, def->type, def, def->tname);
-	fprintf(header, ",");
-      } else
-	if (argc)
-	  fprintf(header, "    ICOM_VMETHOD%d(", argc);
-	else
-	  fprintf(header, "    ICOM_VMETHOD (");
+      fprintf(header, " \\\n    ");
+      write_type(header, def->type, def, def->tname);
+      fprintf(header, " (STDMETHODCALLTYPE *");
       write_name(header, def);
+      fprintf(header, ")(INTERFACE *This");
       while (arg) {
-	fprintf(header, ",");
+	fprintf(header, ", ");
 	write_type(header, arg->type, arg, arg->tname);
-	/* since the ICOM macros can't express arrays,
-	 * we have to pretend they're pointers instead */
-	if (arg->array) fprintf(header, "*");
-	fprintf(header, ",");
+	fprintf(header, " ");
 	write_name(header,arg);
+	write_array(header, arg->array, 0);
 	arg = PREV_LINK(arg);
       }
-      fprintf(header, ")");
+      fprintf(header, ");");
     }
     cur = PREV_LINK(cur);
   }
-  fprintf(header, "\n");
 }
 
 static int write_method_macro(type_t *iface, char *name)
@@ -543,10 +531,9 @@ void write_args(FILE *h, var_t *arg, char *name, int method)
       else fprintf(h, "    ");
     }
     write_type(h, arg->type, arg, arg->tname);
-    if (method && use_icom && arg->array) fprintf(h, "*"); /* as write_icom_method_def */
     fprintf(h, " ");
     write_name(h, arg);
-    if (!(method && use_icom)) write_array(h, arg->array, 0);
+    write_array(h, arg->array, 0);
     arg = PREV_LINK(arg);
     count++;
   }
@@ -563,7 +550,7 @@ static void write_cpp_method_def(type_t *iface)
       indent(0);
       fprintf(header, "virtual ");
       write_type(header, def->type, def, def->tname);
-      fprintf(header, " CALLBACK ");
+      fprintf(header, " STDMETHODCALLTYPE ");
       write_name(header, def);
       fprintf(header, "(\n");
       write_args(header, cur->args, iface->name, 2);
@@ -587,7 +574,7 @@ static void do_write_c_method_def(type_t *iface, char *name)
     if (!is_callas(def->attrs)) {
       indent(0);
       write_type(header, def->type, def, def->tname);
-      fprintf(header, " (CALLBACK *");
+      fprintf(header, " (STDMETHODCALLTYPE *");
       write_name(header, def);
       fprintf(header, ")(\n");
       write_args(header, cur->args, name, 1);
@@ -709,59 +696,39 @@ void write_com_interface(type_t *iface)
   fprintf(header, " */\n");
   write_guid(iface);
   write_forward(iface);
-  if (use_icom) {
-    fprintf(header, "#define ICOM_INTERFACE %s\n", iface->name);
-    fprintf(header, "#define %s_METHODS", iface->name);
-    write_icom_method_def(iface);
-    fprintf(header, "#define %s_IMETHODS \\\n", iface->name);
-    if (iface->ref)
-      fprintf(header, "    %s_IMETHODS \\\n", iface->ref->name);
-    fprintf(header, "    %s_METHODS\n", iface->name);
-    if (iface->ref)
-      fprintf(header, "ICOM_DEFINE(%s,%s)\n", iface->name, iface->ref->name);
-    else
-      fprintf(header, "ICOM_DEFINE1(%s)\n", iface->name);
-    fprintf(header, "#undef ICOM_INTERFACE\n");
-    fprintf(header, "\n");
-    write_method_macro(iface, iface->name);
-  }
-  else {
-    /* C++ interface */
-    fprintf(header, "#if defined(__cplusplus) && !defined(CINTERFACE)\n");
-    fprintf(header, "struct %s", iface->name);
-    if (iface->ref)
+  /* C++ interface */
+  fprintf(header, "#if defined(__cplusplus) && !defined(CINTERFACE)\n");
+  fprintf(header, "struct %s", iface->name);
+  if (iface->ref)
       fprintf(header, ": %s", iface->ref->name);
-    fprintf(header, " {\n");
-    indentation++;
-    fprintf(header, "\n");
-    write_cpp_method_def(iface);
-    indentation--;
-    fprintf(header, "} ICOM_COM_INTERFACE_ATTRIBUTE;\n");
-    fprintf(header, "#else\n");
-    /* C interface */
-    fprintf(header, "typedef struct %sVtbl %sVtbl;\n", iface->name, iface->name);
-    fprintf(header, "struct %s {\n", iface->name);
-    fprintf(header, "    const %sVtbl* lpVtbl;\n", iface->name);
-    fprintf(header, "};\n");
-    fprintf(header, "struct %sVtbl {\n", iface->name);
-    indentation++;
-    fprintf(header, "    ICOM_MSVTABLE_COMPAT_FIELDS\n");
-    fprintf(header, "\n");
-    write_c_method_def(iface);
-    indentation--;
-    fprintf(header, "};\n");
-    fprintf(header, "\n");
-    if (compat_icom) {
+  fprintf(header, " {\n");
+  indentation++;
+  fprintf(header, "\n");
+  write_cpp_method_def(iface);
+  indentation--;
+  fprintf(header, "} ICOM_COM_INTERFACE_ATTRIBUTE;\n");
+  fprintf(header, "#else\n");
+  /* C interface */
+  fprintf(header, "typedef struct %sVtbl %sVtbl;\n", iface->name, iface->name);
+  fprintf(header, "struct %s {\n", iface->name);
+  fprintf(header, "    const %sVtbl* lpVtbl;\n", iface->name);
+  fprintf(header, "};\n");
+  fprintf(header, "struct %sVtbl {\n", iface->name);
+  indentation++;
+  fprintf(header, "    ICOM_MSVTABLE_COMPAT_FIELDS\n");
+  fprintf(header, "\n");
+  write_c_method_def(iface);
+  indentation--;
+  fprintf(header, "};\n");
+  fprintf(header, "\n");
+  if (compat_icom) {
       fprintf(header, "#define %s_IMETHODS", iface->name);
-      if (iface->ref)
-	fprintf(header, " \\\n    %s_IMETHODS", iface->ref->name);
       write_icom_method_def(iface);
-      fprintf(header, "\n");
-    }
-    write_method_macro(iface, iface->name);
-    fprintf(header, "\n");
-    fprintf(header, "#endif\n");
+      fprintf(header, "\n\n");
   }
+  write_method_macro(iface, iface->name);
+  fprintf(header, "\n");
+  fprintf(header, "#endif\n");
   fprintf(header, "\n");
   write_method_proto(iface);
   fprintf(header, "\n");

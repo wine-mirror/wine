@@ -163,15 +163,15 @@ typedef struct IOleLink IOleLink, *LPOLELINK;
 /*****************************************************************************
  * IOleWindow interface
  */
-#define ICOM_INTERFACE IOleWindow
+#define INTERFACE IOleWindow
 #define IOleWindow_METHODS \
-	ICOM_METHOD1(HRESULT,GetWindow, HWND*,phwnd) \
-	ICOM_METHOD1(HRESULT,ContextSensitiveHelp, BOOL,fEnterMode)
+	STDMETHOD(GetWindow)(THIS_ HWND *phwnd) PURE; \
+	STDMETHOD(ContextSensitiveHelp)(THIS_ BOOL fEnterMode) PURE;
 #define IOleWindow_IMETHODS \
 	IUnknown_IMETHODS \
 	IOleWindow_METHODS
 ICOM_DEFINE(IOleWindow,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IOleWindow_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -185,17 +185,17 @@ ICOM_DEFINE(IOleWindow,IUnknown)
 /*****************************************************************************
  * IOleInPlaceObject interface
  */
-#define ICOM_INTERFACE IOleInPlaceObject
+#define INTERFACE IOleInPlaceObject
 #define IOleInPlaceObject_METHODS \
-	ICOM_METHOD (HRESULT,InPlaceDeactivate) \
-	ICOM_METHOD (HRESULT,UIDeactivate) \
-	ICOM_METHOD2(HRESULT,SetObjectRects, LPCRECT,lprcPosRect, LPCRECT,lprcClipRect) \
-	ICOM_METHOD (HRESULT,ReactivateAndUndo)
+	STDMETHOD(InPlaceDeactivate)(THIS) PURE; \
+	STDMETHOD(UIDeactivate)(THIS) PURE; \
+	STDMETHOD(SetObjectRects)(THIS_ LPCRECT lprcPosRect, LPCRECT lprcClipRect) PURE; \
+	STDMETHOD(ReactivateAndUndo)(THIS) PURE;
 #define IOleInPlaceObject_IMETHODS \
 	IOleWindow_IMETHODS \
 	IOleInPlaceObject_METHODS
 ICOM_DEFINE(IOleInPlaceObject,IOleWindow)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IOleInPlaceObject_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -213,18 +213,18 @@ ICOM_DEFINE(IOleInPlaceObject,IOleWindow)
 /*****************************************************************************
  * IOleInPlaceActiveObject interface
  */
-#define ICOM_INTERFACE IOleInPlaceActiveObject
+#define INTERFACE IOleInPlaceActiveObject
 #define IOleInPlaceActiveObject_METHODS \
-	ICOM_METHOD1(HRESULT,TranslateAccelerator, struct tagMSG*,lpmsg) \
-	ICOM_METHOD1(HRESULT,OnFrameWindowActivate, BOOL,fActivate) \
-	ICOM_METHOD1(HRESULT,OnDocWindowActivate, BOOL,fActivate) \
-	ICOM_METHOD3(HRESULT,ResizeBorder, LPCRECT,prcBorder, IOleInPlaceUIWindow*,pUIWindow, BOOL,fWindowFrame) \
-	ICOM_METHOD1(HRESULT,EnableModeless, BOOL,fEnable)
+	STDMETHOD(TranslateAccelerator)(THIS_ struct tagMSG *lpmsg) PURE; \
+	STDMETHOD(OnFrameWindowActivate)(THIS_ BOOL fActivate) PURE; \
+	STDMETHOD(OnDocWindowActivate)(THIS_ BOOL fActivate) PURE; \
+	STDMETHOD(ResizeBorder)(THIS_ LPCRECT prcBorder, IOleInPlaceUIWindow *pUIWindow, BOOL fWindowFrame) PURE; \
+	STDMETHOD(EnableModeless)(THIS_ BOOL fEnable) PURE;
 #define IOleInPlaceActiveObject_IMETHODS \
 	IOleWindow_IMETHODS \
 	IOleInPlaceActiveObject_METHODS
 ICOM_DEFINE(IOleInPlaceActiveObject,IOleWindow)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IOleInPlaceActiveObject_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -243,17 +243,17 @@ ICOM_DEFINE(IOleInPlaceActiveObject,IOleWindow)
 /*****************************************************************************
  * IOleInPlaceUIWindow interface
  */
-#define ICOM_INTERFACE IOleInPlaceUIWindow
+#define INTERFACE IOleInPlaceUIWindow
 #define IOleInPlaceUIWindow_METHODS \
-	ICOM_METHOD1(HRESULT,GetBorder, LPRECT,lprectBorder) \
-	ICOM_METHOD1(HRESULT,RequestBorderSpace, LPCBORDERWIDTHS,pborderwidths) \
-	ICOM_METHOD1(HRESULT,SetBorderSpace, LPCBORDERWIDTHS,pborderwidths) \
-	ICOM_METHOD2(HRESULT,SetActiveObject, IOleInPlaceActiveObject*,pActiveObject, LPCOLESTR,pszObjName)
+	STDMETHOD(GetBorder)(THIS_ LPRECT lprectBorder) PURE; \
+	STDMETHOD(RequestBorderSpace)(THIS_ LPCBORDERWIDTHS pborderwidths) PURE; \
+	STDMETHOD(SetBorderSpace)(THIS_ LPCBORDERWIDTHS pborderwidths) PURE; \
+	STDMETHOD(SetActiveObject)(THIS_ IOleInPlaceActiveObject *pActiveObject, LPCOLESTR pszObjName) PURE;
 #define IOleInPlaceUIWindow_IMETHODS \
 	IOleWindow_IMETHODS \
 	IOleInPlaceUIWindow_METHODS
 ICOM_DEFINE(IOleInPlaceUIWindow,IOleWindow)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IOleInPlaceUIWindow_QueryInterface(p,a,b)     ICOM_CALL2(QueryInterface,p,a,b)
@@ -272,19 +272,19 @@ ICOM_DEFINE(IOleInPlaceUIWindow,IOleWindow)
 /*****************************************************************************
  * IOleInPlaceFrame interface
  */
-#define ICOM_INTERFACE IOleInPlaceFrame
+#define INTERFACE IOleInPlaceFrame
 #define IOleInPlaceFrame_METHODS \
-	ICOM_METHOD2 (HRESULT,InsertMenus, HMENU,hemnuShared, LPOLEMENUGROUPWIDTHS,lpMenuWidths) \
-	ICOM_METHOD3 (HRESULT,SetMenu, HMENU,hemnuShared, HOLEMENU,holemenu, HWND,hwndActiveObject) \
-	ICOM_METHOD1 (HRESULT,RemoveMenus, HMENU,hemnuShared) \
-	ICOM_METHOD1 (HRESULT,SetStatusText, LPCOLESTR,pszStatusText) \
-	ICOM_METHOD1 (HRESULT,EnableModeless, BOOL,fEnable) \
-	ICOM_METHOD2 (HRESULT,TranslateAccelerator, struct tagMSG*,lpmsg, WORD,wID)
+	STDMETHOD(InsertMenus)(THIS_ HMENU hemnuShared, LPOLEMENUGROUPWIDTHS lpMenuWidths) PURE; \
+	STDMETHOD(SetMenu)(THIS_ HMENU hemnuShared, HOLEMENU holemenu, HWND hwndActiveObject) PURE; \
+	STDMETHOD(RemoveMenus)(THIS_ HMENU hemnuShared) PURE; \
+	STDMETHOD(SetStatusText)(THIS_ LPCOLESTR pszStatusText) PURE; \
+	STDMETHOD(EnableModeless)(THIS_ BOOL fEnable) PURE; \
+	STDMETHOD(TranslateAccelerator)(THIS_ struct tagMSG *lpmsg, WORD wID) PURE;
 #define IOleInPlaceFrame_IMETHODS \
 	IOleInPlaceUIWindow_IMETHODS \
 	IOleInPlaceFrame_METHODS
 ICOM_DEFINE(IOleInPlaceFrame,IOleInPlaceUIWindow)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IOleInPlaceFrame_QueryInterface(p,a,b)    ICOM_CALL2(QueryInterface,p,a,b)
@@ -310,23 +310,23 @@ ICOM_DEFINE(IOleInPlaceFrame,IOleInPlaceUIWindow)
 /*****************************************************************************
  * IOleInPlaceSite interface
  */
-#define ICOM_INTERFACE IOleInPlaceSite
+#define INTERFACE IOleInPlaceSite
 #define IOleInPlaceSite_METHODS \
-	ICOM_METHOD (HRESULT,CanInPlaceActivate) \
-	ICOM_METHOD (HRESULT,OnInPlaceActivate) \
-	ICOM_METHOD (HRESULT,OnUIActivate) \
-	ICOM_METHOD5(HRESULT,GetWindowContext, IOleInPlaceFrame**,ppFrame, IOleInPlaceUIWindow**,ppDoc, LPRECT,lprcPosRect, LPRECT,lprcClipRect, LPOLEINPLACEFRAMEINFO,lpFrameInfo) \
-	ICOM_METHOD1(HRESULT,Scroll, SIZE,scrollExtant) \
-	ICOM_METHOD1(HRESULT,OnUIDeactivate, BOOL,fUndoable) \
-	ICOM_METHOD (HRESULT,OnInPlaceDeactivate) \
-	ICOM_METHOD (HRESULT,DiscardUndoState) \
-	ICOM_METHOD (HRESULT,DeactivateAndUndo) \
-	ICOM_METHOD1(HRESULT,OnPosRectChange, LPCRECT,lprcPosRect)
+	STDMETHOD(CanInPlaceActivate)(THIS) PURE; \
+	STDMETHOD(OnInPlaceActivate)(THIS) PURE; \
+	STDMETHOD(OnUIActivate)(THIS) PURE; \
+	STDMETHOD(GetWindowContext)(THIS_ IOleInPlaceFrame **ppFrame, IOleInPlaceUIWindow **ppDoc, LPRECT lprcPosRect, LPRECT lprcClipRect, LPOLEINPLACEFRAMEINFO lpFrameInfo) PURE; \
+	STDMETHOD(Scroll)(THIS_ SIZE scrollExtant) PURE; \
+	STDMETHOD(OnUIDeactivate)(THIS_ BOOL fUndoable) PURE; \
+	STDMETHOD(OnInPlaceDeactivate)(THIS) PURE; \
+	STDMETHOD(DiscardUndoState)(THIS) PURE; \
+	STDMETHOD(DeactivateAndUndo)(THIS) PURE; \
+	STDMETHOD(OnPosRectChange)(THIS_ LPCRECT lprcPosRect) PURE;
 #define IOleInPlaceSite_IMETHODS \
 	IOleWindow_IMETHODS \
 	IOleInPlaceSite_METHODS
 ICOM_DEFINE(IOleInPlaceSite,IOleWindow)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IOleInPlaceSite_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -351,19 +351,19 @@ ICOM_DEFINE(IOleInPlaceSite,IOleWindow)
 /*****************************************************************************
  * IOleClientSite interface
  */
-#define ICOM_INTERFACE IOleClientSite
+#define INTERFACE IOleClientSite
 #define IOleClientSite_METHODS \
-	ICOM_METHOD (HRESULT,SaveObject) \
-	ICOM_METHOD3(HRESULT,GetMoniker, DWORD,dwAssign, DWORD,dwWhichMoniker, IMoniker**,ppmk) \
-	ICOM_METHOD1(HRESULT,GetContainer, IOleContainer**,ppContainer) \
-	ICOM_METHOD (HRESULT,ShowObject) \
-	ICOM_METHOD1(HRESULT,OnShowWindow, BOOL,fShow) \
-	ICOM_METHOD (HRESULT,RequestNewObjectLayout)
+	STDMETHOD(SaveObject)(THIS) PURE; \
+	STDMETHOD(GetMoniker)(THIS_ DWORD dwAssign, DWORD dwWhichMoniker, IMoniker **ppmk) PURE; \
+	STDMETHOD(GetContainer)(THIS_ IOleContainer **ppContainer) PURE; \
+	STDMETHOD(ShowObject)(THIS) PURE; \
+	STDMETHOD(OnShowWindow)(THIS_ BOOL fShow) PURE; \
+	STDMETHOD(RequestNewObjectLayout)(THIS) PURE;
 #define IOleClientSite_IMETHODS \
 	IUnknown_IMETHODS \
 	IOleClientSite_METHODS
 ICOM_DEFINE(IOleClientSite,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IOleClientSite_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -381,14 +381,14 @@ ICOM_DEFINE(IOleClientSite,IUnknown)
 /*****************************************************************************
  * IParseDisplayName interface
  */
-#define ICOM_INTERFACE IParseDisplayName
+#define INTERFACE IParseDisplayName
 #define IParseDisplayName_METHODS \
-	ICOM_METHOD4(HRESULT,ParseDisplayName, IBindCtx*,pbc, LPOLESTR,pszDisplayName, ULONG*,pchEaten, IMoniker**,ppmkOut)
+	STDMETHOD(ParseDisplayName)(THIS_ IBindCtx *pbc, LPOLESTR pszDisplayName, ULONG *pchEaten, IMoniker **ppmkOut) PURE;
 #define IParseDisplayName_IMETHODS \
 	IUnknown_IMETHODS \
 	IParseDisplayName_METHODS
 ICOM_DEFINE(IParseDisplayName,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IParseDisplayName_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -401,15 +401,15 @@ ICOM_DEFINE(IParseDisplayName,IUnknown)
 /*****************************************************************************
  * IOleContainer interface
  */
-#define ICOM_INTERFACE IOleContainer
+#define INTERFACE IOleContainer
 #define IOleContainer_METHODS \
-	ICOM_METHOD2(HRESULT,EnumObjects, DWORD,grfFlags, IEnumUnknown**,ppenum) \
-	ICOM_METHOD1(HRESULT,LockContainer, BOOL,fLock)
+	STDMETHOD(EnumObjects)(THIS_ DWORD grfFlags, IEnumUnknown **ppenum) PURE; \
+	STDMETHOD(LockContainer)(THIS_ BOOL fLock) PURE;
 #define IOleContainer_IMETHODS \
 	IParseDisplayName_IMETHODS \
 	IOleContainer_METHODS
 ICOM_DEFINE(IOleContainer,IParseDisplayName)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IOleContainer_QueryInterface(p,a,b)       ICOM_CALL2(QueryInterface,p,a,b)
@@ -429,16 +429,16 @@ ICOM_DEFINE(IOleContainer,IParseDisplayName)
 #undef GetObject
 #endif
 
-#define ICOM_INTERFACE IOleItemContainer
+#define INTERFACE IOleItemContainer
 #define IOleItemContainer_METHODS \
-	ICOM_METHOD5(HRESULT,GetObject, LPOLESTR,pszItem, DWORD,dwSpeedNeeded, IBindCtx*,pbc, REFIID,riid, void**,ppvObject) \
-	ICOM_METHOD4(HRESULT,GetObjectStorage, LPOLESTR,pszItem, IBindCtx*,pbc, REFIID,riid, void**,ppvStorage) \
-	ICOM_METHOD1(HRESULT,IsRunning, LPOLESTR,pszItem)
+	STDMETHOD(GetObject)(THIS_ LPOLESTR pszItem, DWORD dwSpeedNeeded, IBindCtx *pbc, REFIID riid, void **ppvObject) PURE; \
+	STDMETHOD(GetObjectStorage)(THIS_ LPOLESTR pszItem, IBindCtx *pbc, REFIID riid, void **ppvStorage) PURE; \
+	STDMETHOD(IsRunning)(THIS_ LPOLESTR pszItem) PURE;
 #define IOleItemContainer_IMETHODS \
 	IOleContainer_IMETHODS \
 	IOleItemContainer_METHODS
 ICOM_DEFINE(IOleItemContainer,IOleContainer)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IOleItemContainer_QueryInterface(p,a,b)       ICOM_CALL2(QueryInterface,p,a,b)
@@ -453,24 +453,24 @@ ICOM_DEFINE(IOleItemContainer,IOleContainer)
 /*****************************************************************************
  * IOleItemContainer interface
  */
-#define ICOM_INTERFACE IOleLink
+#define INTERFACE IOleLink
 #define IOleLink_METHODS \
-	ICOM_METHOD1(HRESULT,SetUpdateOptions, DWORD,dwUpdateOpt) \
-	ICOM_METHOD1(HRESULT,GetUpdateOptions, DWORD*,pdwUpdateOpt) \
-	ICOM_METHOD2(HRESULT,SetSourceMoniker, IMoniker*,pmk, REFCLSID,rclsid) \
-	ICOM_METHOD1(HRESULT,GetSourceMoniker, IMoniker**,ppmk) \
-	ICOM_METHOD1(HRESULT,SetSourceDisplayName, LPCOLESTR,pszStatusText) \
-	ICOM_METHOD1(HRESULT,GetSourceDisplayName, LPOLESTR*,ppszDisplayName) \
-	ICOM_METHOD2(HRESULT,BindToSource, DWORD,bindflags, IBindCtx*,pbc) \
-	ICOM_METHOD (HRESULT,BindIfRunning) \
-	ICOM_METHOD1(HRESULT,GetBoundSource, IUnknown**,ppunk) \
-	ICOM_METHOD (HRESULT,UnBindSource) \
-	ICOM_METHOD1(HRESULT,Update, IBindCtx*,pbc)
+	STDMETHOD(SetUpdateOptions)(THIS_ DWORD dwUpdateOpt) PURE; \
+	STDMETHOD(GetUpdateOptions)(THIS_ DWORD *pdwUpdateOpt) PURE; \
+	STDMETHOD(SetSourceMoniker)(THIS_ IMoniker *pmk, REFCLSID rclsid) PURE; \
+	STDMETHOD(GetSourceMoniker)(THIS_ IMoniker **ppmk) PURE; \
+	STDMETHOD(SetSourceDisplayName)(THIS_ LPCOLESTR pszStatusText) PURE; \
+	STDMETHOD(GetSourceDisplayName)(THIS_ LPOLESTR *ppszDisplayName) PURE; \
+	STDMETHOD(BindToSource)(THIS_ DWORD bindflags, IBindCtx *pbc) PURE; \
+	STDMETHOD(BindIfRunning)(THIS) PURE; \
+	STDMETHOD(GetBoundSource)(THIS_ IUnknown **ppunk) PURE; \
+	STDMETHOD(UnBindSource)(THIS) PURE; \
+	STDMETHOD(Update)(THIS_ IBindCtx *pbc) PURE;
 #define IOleLink_IMETHODS \
 	IUnknown_IMETHODS \
 	IOleLink_METHODS
 ICOM_DEFINE(IOleLink,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IOleLink_QueryInterface(p,a,b)       ICOM_CALL2(QueryInterface,p,a,b)
@@ -494,5 +494,3 @@ ICOM_DEFINE(IOleLink,IUnknown)
 #endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_INPLACE_H */
-
-

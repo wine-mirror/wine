@@ -55,18 +55,18 @@ typedef struct IEnumConnectionPoints IEnumConnectionPoints, *LPENUMCONNECTIONPOI
 /*****************************************************************************
  * IConnectionPoint interface
  */
-#define ICOM_INTERFACE IConnectionPoint
+#define INTERFACE IConnectionPoint
 #define IConnectionPoint_METHODS \
-	ICOM_METHOD1(HRESULT,GetConnectionInterface, IID*,pIID) \
-	ICOM_METHOD1(HRESULT,GetConnectionPointContainer, IConnectionPointContainer**,ppCPC) \
-	ICOM_METHOD2(HRESULT,Advise, IUnknown*,pUnkSink, DWORD*,pdwCookie) \
-	ICOM_METHOD1(HRESULT,Unadvise, DWORD,dwCookie) \
-	ICOM_METHOD1(HRESULT,EnumConnections, IEnumConnections**,ppEnum)
+	STDMETHOD(GetConnectionInterface)(THIS_ IID *pIID) PURE; \
+	STDMETHOD(GetConnectionPointContainer)(THIS_ IConnectionPointContainer **ppCPC) PURE; \
+	STDMETHOD(Advise)(THIS_ IUnknown *pUnkSink, DWORD *pdwCookie) PURE; \
+	STDMETHOD(Unadvise)(THIS_ DWORD dwCookie) PURE; \
+	STDMETHOD(EnumConnections)(THIS_ IEnumConnections **ppEnum) PURE;
 #define IConnectionPoint_IMETHODS \
 	IUnknown_IMETHODS \
 	IConnectionPoint_METHODS
 ICOM_DEFINE(IConnectionPoint,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IConnectionPoint_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -83,15 +83,15 @@ ICOM_DEFINE(IConnectionPoint,IUnknown)
 /*****************************************************************************
  * IConnectionPointContainer interface
  */
-#define ICOM_INTERFACE IConnectionPointContainer
+#define INTERFACE IConnectionPointContainer
 #define IConnectionPointContainer_METHODS \
-	ICOM_METHOD1(HRESULT,EnumConnectionPoints, IEnumConnectionPoints**,ppEnum) \
-	ICOM_METHOD2(HRESULT,FindConnectionPoint, REFIID,riid, IConnectionPoint**,ppCP)
+	STDMETHOD(EnumConnectionPoints)(THIS_ IEnumConnectionPoints **ppEnum) PURE; \
+	STDMETHOD(FindConnectionPoint)(THIS_ REFIID riid, IConnectionPoint **ppCP) PURE;
 #define IConnectionPointContainer_IMETHODS \
 	IUnknown_IMETHODS \
 	IConnectionPointContainer_METHODS
 ICOM_DEFINE(IConnectionPointContainer,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IConnectionPointContainer_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -105,17 +105,17 @@ ICOM_DEFINE(IConnectionPointContainer,IUnknown)
 /*****************************************************************************
  * IEnumConnections interface
  */
-#define ICOM_INTERFACE IEnumConnections
+#define INTERFACE IEnumConnections
 #define IEnumConnections_METHODS \
-	ICOM_METHOD3(HRESULT,Next, ULONG,cConnections, LPCONNECTDATA,rgcd, ULONG*,pcFectched) \
-	ICOM_METHOD1(HRESULT,Skip, ULONG,cConnections) \
-	ICOM_METHOD (HRESULT,Reset) \
-	ICOM_METHOD1(HRESULT,Clone, IEnumConnections**,ppEnum)
+	STDMETHOD(Next)(THIS_ ULONG cConnections, LPCONNECTDATA rgcd, ULONG *pcFectched) PURE; \
+	STDMETHOD(Skip)(THIS_ ULONG cConnections) PURE; \
+	STDMETHOD(Reset)(THIS) PURE; \
+	STDMETHOD(Clone)(THIS_ IEnumConnections **ppEnum) PURE;
 #define IEnumConnections_IMETHODS \
 	IUnknown_IMETHODS \
 	IEnumConnections_METHODS
 ICOM_DEFINE(IEnumConnections,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IEnumConnections_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -130,17 +130,17 @@ ICOM_DEFINE(IEnumConnections,IUnknown)
 /*****************************************************************************
  * IEnumConnectionPoints interface
  */
-#define ICOM_INTERFACE IEnumConnectionPoints
+#define INTERFACE IEnumConnectionPoints
 #define IEnumConnectionPoints_METHODS \
-	ICOM_METHOD3(HRESULT,Next, ULONG,cConnections, LPCONNECTIONPOINT*,ppCP, ULONG*,pcFectched) \
-	ICOM_METHOD1(HRESULT,Skip, ULONG,cConnections) \
-	ICOM_METHOD (HRESULT,Reset) \
-	ICOM_METHOD1(HRESULT,Clone, IEnumConnections**,ppEnum)
+	STDMETHOD(Next)(THIS_ ULONG cConnections, LPCONNECTIONPOINT *ppCP, ULONG *pcFectched) PURE; \
+	STDMETHOD(Skip)(THIS_ ULONG cConnections) PURE; \
+	STDMETHOD(Reset)(THIS) PURE; \
+	STDMETHOD(Clone)(THIS_ IEnumConnections **ppEnum) PURE;
 #define IEnumConnectionPoints_IMETHODS \
 	IUnknown_IMETHODS \
 	IEnumConnectionPoints_METHODS
 ICOM_DEFINE(IEnumConnectionPoints,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IEnumConnectionPoints_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -157,5 +157,3 @@ ICOM_DEFINE(IEnumConnectionPoints,IUnknown)
 #endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_CONTROL_H */
-
-

@@ -46,15 +46,15 @@ typedef struct {
 } SHDRAGIMAGE, *LPSHDRAGIMAGE;
 
 
-#define ICOM_INTERFACE IDragSourceHelper
+#define INTERFACE IDragSourceHelper
 #define IDragSourceHelper_METHODS \
-    ICOM_METHOD2(HRESULT, InitializeFromBitmap, LPSHDRAGIMAGE, pshdi, IDataObject*, pDataObject) \
-    ICOM_METHOD3(HRESULT, InitializeFromWindow, HWND, hwnd, POINT*, ppt, IDataObject*, pDataObject)
+    STDMETHOD(InitializeFromBitmap)(THIS_ LPSHDRAGIMAGE  pshdi, IDataObject * pDataObject) PURE; \
+    STDMETHOD(InitializeFromWindow)(THIS_ HWND  hwnd, POINT * ppt, IDataObject * pDataObject) PURE;
 #define IDragSourceHelper_IMETHODS \
 	IUnknown_IMETHODS \
 	IDragSourceHelper_METHODS
 ICOM_DEFINE(IDragSourceHelper,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDragSourceHelper_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
@@ -68,18 +68,18 @@ ICOM_DEFINE(IDragSourceHelper,IUnknown)
 /*****************************************************************************
  * IDropTargetHelper interface
  */
-#define ICOM_INTERFACE IDropTargetHelper
+#define INTERFACE IDropTargetHelper
 #define IDropTargetHelper_METHODS \
-    ICOM_METHOD4(HRESULT,DragEnter, HWND, hwndTarget, IDataObject*, pDataObject, POINT*, ppt, DWORD, dwEffect) \
-    ICOM_METHOD (HRESULT,DragLeave) \
-    ICOM_METHOD2(HRESULT,DragOver, POINT*, ppt, DWORD, dwEffect) \
-    ICOM_METHOD3(HRESULT,Drop, IDataObject*, pDataObject, POINT*, ppt,DWORD, dwEffect) \
-    ICOM_METHOD1(HRESULT,Show, BOOL, fShow)
+    STDMETHOD(DragEnter)(THIS_ HWND  hwndTarget, IDataObject * pDataObject, POINT * ppt, DWORD  dwEffect) PURE; \
+    STDMETHOD(DragLeave)(THIS) PURE; \
+    STDMETHOD(DragOver)(THIS_ POINT * ppt, DWORD  dwEffect) PURE; \
+    STDMETHOD(Drop)(THIS_ IDataObject * pDataObject, POINT * ppt,DWORD  dwEffect) PURE; \
+    STDMETHOD(Show)(THIS_ BOOL  fShow) PURE;
 #define IDropTargetHelper_IMETHODS \
 	IUnknown_IMETHODS \
 	IDropTargetHelper_METHODS
 ICOM_DEFINE(IDropTargetHelper,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IDropTargetHelper_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)

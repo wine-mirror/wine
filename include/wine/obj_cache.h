@@ -48,18 +48,18 @@ typedef struct IOleCacheControl IOleCacheControl, *LPOLECACHECONTROL;
 /*****************************************************************************
  * IOleCache interface
  */
-#define ICOM_INTERFACE IOleCache
+#define INTERFACE IOleCache
 #define IOleCache_METHODS \
-	ICOM_METHOD3(HRESULT,Cache, FORMATETC*,pformatetc, DWORD,advf, DWORD*, pdwConnection) \
-	ICOM_METHOD1(HRESULT,Uncache, DWORD,dwConnection) \
-	ICOM_METHOD1(HRESULT,EnumCache, IEnumSTATDATA**,ppenumSTATDATA) \
-	ICOM_METHOD1(HRESULT,InitCache, IDataObject*,pDataObject) \
-	ICOM_METHOD3(HRESULT,SetData, FORMATETC*,pformatetc, STGMEDIUM*,pmedium, BOOL,fRelease)
+	STDMETHOD(Cache)(THIS_ FORMATETC *pformatetc, DWORD advf, DWORD * pdwConnection) PURE; \
+	STDMETHOD(Uncache)(THIS_ DWORD dwConnection) PURE; \
+	STDMETHOD(EnumCache)(THIS_ IEnumSTATDATA **ppenumSTATDATA) PURE; \
+	STDMETHOD(InitCache)(THIS_ IDataObject *pDataObject) PURE; \
+	STDMETHOD(SetData)(THIS_ FORMATETC *pformatetc, STGMEDIUM *pmedium, BOOL fRelease) PURE;
 #define IOleCache_IMETHODS \
 	IUnknown_IMETHODS \
 	IOleCache_METHODS
 ICOM_DEFINE(IOleCache,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IOleCache_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -76,15 +76,15 @@ ICOM_DEFINE(IOleCache,IUnknown)
 /*****************************************************************************
  * IOleCache2 interface
  */
-#define ICOM_INTERFACE IOleCache2
+#define INTERFACE IOleCache2
 #define IOleCache2_METHODS \
-	ICOM_METHOD3(HRESULT,UpdateCache, LPDATAOBJECT,pDataObject, DWORD,grfUpdf, LPVOID,pReserved) \
-	ICOM_METHOD1(HRESULT,DiscardCache, DWORD,dwDiscardOptions)
+	STDMETHOD(UpdateCache)(THIS_ LPDATAOBJECT pDataObject, DWORD grfUpdf, LPVOID pReserved) PURE; \
+	STDMETHOD(DiscardCache)(THIS_ DWORD dwDiscardOptions) PURE;
 #define IOleCache2_IMETHODS \
 	IOleCache_IMETHODS \
 	IOleCache2_METHODS
 ICOM_DEFINE(IOleCache2,IOleCache)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IOleCache2_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -104,15 +104,15 @@ ICOM_DEFINE(IOleCache2,IOleCache)
 /*****************************************************************************
  * IOleCacheControl interface
  */
-#define ICOM_INTERFACE IOleCacheControl
+#define INTERFACE IOleCacheControl
 #define IOleCacheControl_METHODS \
-	ICOM_METHOD1(HRESULT,OnRun, LPDATAOBJECT,pDataObject) \
-	ICOM_METHOD (HRESULT,OnStop)
+	STDMETHOD(OnRun)(THIS_ LPDATAOBJECT pDataObject) PURE; \
+	STDMETHOD(OnStop)(THIS) PURE;
 #define IOleCacheControl_IMETHODS \
 	IUnknown_IMETHODS \
 	IOleCacheControl_METHODS
 ICOM_DEFINE(IOleCacheControl,IUnknown)
-#undef ICOM_INTERFACE
+#undef INTERFACE
 
 /*** IUnknown methods ***/
 #define IOleCacheControl_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
@@ -128,5 +128,3 @@ ICOM_DEFINE(IOleCacheControl,IUnknown)
 #endif /* defined(__cplusplus) */
 
 #endif /* __WINE_WINE_OBJ_CONTROL_H */
-
-
