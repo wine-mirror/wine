@@ -47,7 +47,7 @@ BOOL CALLBACK CustomDlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam 
             return TRUE;
 
         case IDCANCEL:
-            EndDialog( hDlg, 0 );
+            EndDialog( hDlg, 1 );
             return TRUE;
         }
         break;
@@ -105,6 +105,7 @@ BOOL CALLBACK TimesDlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
     case WM_COMMAND:
         switch( LOWORD( wParam ) ) {
         case IDOK:
+        case IDCANCEL:
             EndDialog( hDlg, 0 );
             return TRUE;
         }
@@ -122,6 +123,7 @@ BOOL CALLBACK AboutDlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
     case WM_COMMAND:
         switch( LOWORD( wParam ) ) {
         case IDOK:
+        case IDCANCEL:
             EndDialog( hDlg, 0 );
             return TRUE;
         }
@@ -129,4 +131,3 @@ BOOL CALLBACK AboutDlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
     }
     return FALSE;
 }
-

@@ -441,8 +441,14 @@ void DestroyBoard( BOARD *p_board )
 
 void SetDifficulty( BOARD *p_board, DIFFICULTY difficulty )
 {
-    HMENU hMenu = GetMenu( p_board->hWnd );
+    HMENU hMenu;
 
+    if ( difficulty == CUSTOM )
+        if (DialogBoxParam( p_board->hInst, "DLG_CUSTOM", p_board->hWnd,
+                    CustomDlgProc, (LPARAM) p_board) != 0)
+           return;
+
+    hMenu = GetMenu( p_board->hWnd );
     CheckMenuItem( hMenu, IDM_BEGINNER + p_board->difficulty, MF_UNCHECKED );
     p_board->difficulty = difficulty;
     CheckMenuItem( hMenu, IDM_BEGINNER + difficulty, MF_CHECKED );
@@ -467,8 +473,6 @@ void SetDifficulty( BOARD *p_board, DIFFICULTY difficulty )
         break;
 
     case CUSTOM:
-        DialogBoxParam( p_board->hInst, "DLG_CUSTOM", p_board->hWnd,
-                CustomDlgProc, (LPARAM) p_board);
         break;
     }
 }
