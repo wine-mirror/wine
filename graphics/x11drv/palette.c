@@ -394,10 +394,6 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 
 	TRACE("Dynamic colormap... \n");
 
-	/* comment this out if you want to debug palette init */
-
-	TSXGrabServer(display);
-
 	/* let's become the first client that actually follows 
 	 * X guidelines and does binary search...
 	 */
@@ -406,6 +402,10 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 	    WARN("Out of memory while building system palette.\n");
 	    return FALSE;
         }
+
+	/* comment this out if you want to debug palette init */
+	TSXGrabServer(display);
+
         while( c_max - c_min > 0 )
           {
              c_val = (c_max + c_min)/2 + (c_max + c_min)%2;

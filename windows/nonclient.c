@@ -88,7 +88,7 @@ static const BYTE lpGrayMask[] = { 0xAA, 0xA0,
  *           WIN_WindowNeedsWMBorder
  *
  * This method defines the rules for a window to have a WM border,
- * caption...  It is used for consitency purposes.
+ * caption...  It is used for consistency purposes.
  */
 BOOL WIN_WindowNeedsWMBorder( DWORD style, DWORD exStyle )
 {
@@ -2107,11 +2107,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
         hdc = GetDCEx( wndPtr->parent->hwndSelf, 0, DCX_CACHE );
     }
     else
-    {  /* Grab the server only when moving top-level windows without desktop */
 	hdc = GetDC( 0 );
-    }
-
-    wndPtr->pDriver->pPreSizeMove(wndPtr);
 
     if( iconic ) /* create a cursor for dragging */
     {
@@ -2120,6 +2116,8 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 	if( hIcon ) hDragCursor =  CURSORICON_IconToCursor( hIcon, TRUE );
 	if( !hDragCursor ) iconic = FALSE;
     }
+
+    wndPtr->pDriver->pPreSizeMove(wndPtr);
 
     /* invert frame if WIN31_LOOK to indicate mouse click on caption */
     if( !iconic && TWEAK_WineLook == WIN31_LOOK )
@@ -2695,7 +2693,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
 
     TRACE("Handling WM_SYSCOMMAND %x %ld,%ld\n", wParam, pt.x, pt.y );
 
-    if (wndPtr->dwStyle & WS_CHILD && uCommand != SC_KEYMENU )
+    if ((wndPtr->dwStyle & WS_CHILD) && (uCommand != SC_KEYMENU))
         ScreenToClient( wndPtr->parent->hwndSelf, &pt );
 
     switch (uCommand)
