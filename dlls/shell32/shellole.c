@@ -473,7 +473,7 @@ void WINAPI SHFree(LPVOID pv)
 /*************************************************************************
  * SHGetDesktopFolder			[SHELL32.@]
  */
-DWORD WINAPI SHGetDesktopFolder(IShellFolder **psf)
+HRESULT WINAPI SHGetDesktopFolder(IShellFolder **psf)
 {
 	HRESULT	hres = S_OK;
 	TRACE("\n");

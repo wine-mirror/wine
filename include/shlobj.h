@@ -200,7 +200,7 @@ ICOM_DEFINE(IShellIcon, IUnknown)
 #define SHARD_PATHW     0x00000003L
 #define SHARD_PATH WINELIB_NAME_AW(SHARD_PATH)
 
-DWORD WINAPI SHAddToRecentDocs(UINT uFlags, LPCVOID pv);
+void WINAPI SHAddToRecentDocs(UINT uFlags, LPCVOID pv);
 
 /****************************************************************************
  * SHBrowseForFolder API
@@ -701,8 +701,8 @@ HRESULT WINAPI SHGetRealIDL(IShellFolder *psf, LPCITEMIDLIST pidlSimple, LPITEMI
 * SHCreateDirectory API
 */
 DWORD WINAPI SHCreateDirectory(HWND, LPCVOID);
-DWORD WINAPI SHCreateDirectoryExA(HWND, LPCSTR, LPSECURITY_ATTRIBUTES);
-DWORD WINAPI SHCreateDirectoryExW(HWND, LPCWSTR, LPSECURITY_ATTRIBUTES);
+int WINAPI SHCreateDirectoryExA(HWND, LPCSTR, LPSECURITY_ATTRIBUTES);
+int WINAPI SHCreateDirectoryExW(HWND, LPCWSTR, LPSECURITY_ATTRIBUTES);
 
 /****************************************************************************
 * SHGetSpecialFolderLocation API
@@ -791,7 +791,7 @@ HRESULT WINAPI SHGetFolderPathW(HWND hwnd, int nFolder, HANDLE hToken, DWORD dwF
 /****************************************************************************
  * SHGetDesktopFolder API
  */
-DWORD WINAPI SHGetDesktopFolder(IShellFolder * *);
+HRESULT WINAPI SHGetDesktopFolder(IShellFolder * *);
 
 /****************************************************************************
  * SHBindToParent API
@@ -1014,7 +1014,7 @@ LPITEMIDLIST WINAPI ILGetNext(LPCITEMIDLIST);
 UINT         WINAPI ILGetSize(LPCITEMIDLIST);
 BOOL         WINAPI ILIsEqual(LPCITEMIDLIST,LPCITEMIDLIST);
 BOOL         WINAPI ILIsParent(LPCITEMIDLIST,LPCITEMIDLIST,BOOL);
-BOOL         WINAPI ILRemoveLastID(LPCITEMIDLIST);
+BOOL         WINAPI ILRemoveLastID(LPITEMIDLIST);
 
 #ifdef __cplusplus
 } /* extern "C" */
