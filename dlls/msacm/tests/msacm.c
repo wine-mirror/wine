@@ -36,7 +36,8 @@ static BOOL CALLBACK FormatTagEnumProc(HACMDRIVERID hadid,
                                        DWORD dwInstance,
                                        DWORD fdwSupport)
 {
-    trace("   Format 0x%04lx: %s\n", paftd->dwFormatTag, paftd->szFormatTag);
+    if (winetest_interactive)
+        trace("   Format 0x%04lx: %s\n", paftd->dwFormatTag, paftd->szFormatTag);
 
     return TRUE;
 }
@@ -46,7 +47,8 @@ static BOOL CALLBACK FormatEnumProc(HACMDRIVERID hadid,
                                     DWORD dwInstance,
                                     DWORD fd)
 {
-    trace("   0x%04lx, %s\n", pafd->dwFormatTag, pafd->szFormat);
+    if (winetest_interactive)
+        trace("   0x%04lx, %s\n", pafd->dwFormatTag, pafd->szFormat);
 
     return TRUE;
 }
@@ -59,16 +61,18 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
     ACMDRIVERDETAILS dd;
     HACMDRIVER had;
 
-    trace("id: %p\n", hadid);
-    trace("  Supports:\n");
-    if (fdwSupport & ACMDRIVERDETAILS_SUPPORTF_ASYNC)
-        trace("    async conversions\n");
-    if (fdwSupport & ACMDRIVERDETAILS_SUPPORTF_CODEC)
-        trace("    different format conversions\n");
-    if (fdwSupport & ACMDRIVERDETAILS_SUPPORTF_CONVERTER)
-        trace("    same format conversions\n");
-    if (fdwSupport & ACMDRIVERDETAILS_SUPPORTF_FILTER)
-        trace("    filtering\n");
+    if (winetest_interactive) {
+        trace("id: %p\n", hadid);
+        trace("  Supports:\n");
+        if (fdwSupport & ACMDRIVERDETAILS_SUPPORTF_ASYNC)
+            trace("    async conversions\n");
+        if (fdwSupport & ACMDRIVERDETAILS_SUPPORTF_CODEC)
+            trace("    different format conversions\n");
+        if (fdwSupport & ACMDRIVERDETAILS_SUPPORTF_CONVERTER)
+            trace("    same format conversions\n");
+        if (fdwSupport & ACMDRIVERDETAILS_SUPPORTF_FILTER)
+            trace("    filtering\n");
+    }
 
     /* try an invalid pointer */
     rc = acmDriverDetails(hadid, 0, 0);
@@ -115,7 +119,7 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
        "acmDriverDetails(): rc = %08x, should be %08x\n",
        rc, MMSYSERR_NOERROR);
 
-    if (rc == MMSYSERR_NOERROR) {
+    if (rc == MMSYSERR_NOERROR && winetest_interactive) {
         trace("  Short name: %s\n", dd.szShortName);
         trace("  Long name: %s\n", dd.szLongName);
         trace("  Copyright: %s\n", dd.szCopyright);
@@ -387,7 +391,7 @@ static DWORD check_count(UINT uMetric)
     rc = acmMetrics(NULL, uMetric, &dwMetric);
     ok(rc == MMSYSERR_NOERROR, "acmMetrics() failed: rc = 0x%08x\n", rc);
 
-    if (rc == MMSYSERR_NOERROR)
+    if (rc == MMSYSERR_NOERROR && winetest_interactive)
         trace("%s: %lu\n", get_metric(uMetric), dwMetric);
 
     return dwMetric;
@@ -399,11 +403,13 @@ static void msacm_tests()
     DWORD dwCount;
     DWORD dwACMVersion = acmGetVersion();
 
-    trace("ACM version = %u.%02u build %u%s\n",
-        HIWORD(dwACMVersion) >> 8,
-        HIWORD(dwACMVersion) & 0xff,
-        LOWORD(dwACMVersion),
-        LOWORD(dwACMVersion)  ==  0 ? " (Retail)" : "");
+    if (winetest_interactive) {
+        trace("ACM version = %u.%02u build %u%s\n",
+            HIWORD(dwACMVersion) >> 8,
+            HIWORD(dwACMVersion) & 0xff,
+            LOWORD(dwACMVersion),
+            LOWORD(dwACMVersion)  ==  0 ? " (Retail)" : "");
+    }
 
     dwCount = check_count(ACM_METRIC_COUNT_CODECS);
     dwCount = check_count(ACM_METRIC_COUNT_CONVERTERS);
@@ -417,7 +423,9 @@ static void msacm_tests()
     dwCount = check_count(ACM_METRIC_COUNT_LOCAL_DRIVERS);
     dwCount = check_count(ACM_METRIC_COUNT_LOCAL_FILTERS);
 
-    trace("enabled drivers:\n");
+    if (winetest_interactive)
+        trace("enabled drivers:\n");
+
     rc = acmDriverEnum(DriverEnumProc, 0, 0);
     ok(rc == MMSYSERR_NOERROR,
       "acmDriverEnum() failed, rc=%08x, should be 0x%08x\n",
