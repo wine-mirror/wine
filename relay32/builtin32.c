@@ -123,7 +123,7 @@ static void load_library( void *base, const char *filename )
  */
 NTSTATUS BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags, WINE_MODREF** pwm)
 {
-    char error[256], dllname[20], *p;
+    char error[256], dllname[MAX_PATH], *p;
     int file_exists;
     LPCSTR name;
     void *handle;
