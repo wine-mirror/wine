@@ -133,6 +133,7 @@ DECL_HANDLER(send_debug_event);
 DECL_HANDLER(continue_debug_event);
 DECL_HANDLER(debug_process);
 DECL_HANDLER(read_process_memory);
+DECL_HANDLER(write_process_memory);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -212,6 +213,7 @@ static const struct handler {
     { (void(*)())req_continue_debug_event, sizeof(struct continue_debug_event_request) },
     { (void(*)())req_debug_process, sizeof(struct debug_process_request) },
     { (void(*)())req_read_process_memory, sizeof(struct read_process_memory_request) },
+    { (void(*)())req_write_process_memory, sizeof(struct write_process_memory_request) },
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 

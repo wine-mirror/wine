@@ -1116,17 +1116,76 @@ BOOL WINAPI ReadProcessMemory( HANDLE process, LPCVOID addr, LPVOID buffer, DWOR
 
 /***********************************************************************
  *           WriteProcessMemory    		(KERNEL32)
- * FIXME: check this, if we ever run win32 binaries in different addressspaces
- *	  ... and add a sizecheck
  */
-BOOL WINAPI WriteProcessMemory(HANDLE hProcess, LPVOID lpBaseAddress,
-                                 LPVOID lpBuffer, DWORD nSize,
-                                 LPDWORD lpNumberOfBytesWritten )
+BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPVOID buffer, DWORD size,
+                                LPDWORD bytes_written )
 {
-	memcpy(lpBaseAddress,lpBuffer,nSize);
-	if (lpNumberOfBytesWritten) *lpNumberOfBytesWritten = nSize;
-	return TRUE;
+    unsigned int first_offset, last_offset;
+    struct write_process_memory_request *req = get_req_buffer();
+    unsigned int max = server_remaining( req->data );  /* max length in one request */
+    unsigned int pos, last_mask;
+
+    if (!size)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (bytes_written) *bytes_written = size;
+
+    /* compute the mask for the first int */
+    req->first_mask = ~0;
+    first_offset = (unsigned int)addr % sizeof(int);
+    memset( &req->first_mask, 0, first_offset );
+
+    /* compute the mask for the last int */
+    last_offset = (size + first_offset) % sizeof(int);
+    last_mask = 0;
+    memset( &last_mask, 0xff, last_offset ? last_offset : sizeof(int) );
+
+    req->handle = process;
+    req->addr = (char *)addr - first_offset;
+    /* for the first request, use the total length */
+    req->len = (size + first_offset + sizeof(int) - 1) / sizeof(int);
+
+    if (size + first_offset < max)  /* we can do it in one round */
+    {
+        memcpy( (char *)req->data + first_offset, buffer, size );
+        req->last_mask = last_mask;
+        if (server_call( REQ_WRITE_PROCESS_MEMORY )) goto error;
+        return TRUE;
+    }
+
+    /* needs multiple server calls */
+
+    memcpy( (char *)req->data + first_offset, buffer, max - first_offset );
+    req->last_mask = ~0;
+    if (server_call( REQ_WRITE_PROCESS_MEMORY )) goto error;
+    pos = max - first_offset;
+    size -= pos;
+    while (size)
+    {
+        if (size <= max)  /* last one */
+        {
+            req->last_mask = last_mask;
+            max = size;
+        }
+        req->handle = process;
+        req->addr = (char *)addr + pos;
+        req->len = (max + sizeof(int) - 1) / sizeof(int);
+        req->first_mask = ~0;
+        memcpy( req->data, buffer + pos, max );
+        if (server_call( REQ_WRITE_PROCESS_MEMORY )) goto error;
+        pos += max;
+        size -= max;
+    }
+    return TRUE;
+
+ error:
+    if (bytes_written) *bytes_written = 0;
+    return FALSE;
+
 }
+
 
 /***********************************************************************
  *           RegisterServiceProcess             (KERNEL, KERNEL32)

@@ -817,6 +817,18 @@ struct read_process_memory_request
 };
 
 
+/* Write data to a process address space */
+struct write_process_memory_request
+{
+    IN  int          handle;       /* process handle */
+    IN  void*        addr;         /* addr to write to (must be int-aligned) */
+    IN  int          len;          /* number of ints to write */
+    IN  unsigned int first_mask;   /* mask for first word */
+    IN  unsigned int last_mask;    /* mask for last word */
+    IN  unsigned int data[1];      /* data to write */
+};
+
+
 /* Everything below this line is generated automatically by tools/make_requests */
 /* ### make_requests begin ### */
 
@@ -894,6 +906,7 @@ enum request
     REQ_CONTINUE_DEBUG_EVENT,
     REQ_DEBUG_PROCESS,
     REQ_READ_PROCESS_MEMORY,
+    REQ_WRITE_PROCESS_MEMORY,
     REQ_NB_REQUESTS
 };
 

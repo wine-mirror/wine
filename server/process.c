@@ -316,35 +316,125 @@ static void set_process_info( struct process *process,
     }
 }
 
+/* wrapper for reading an int with ptrace */
+static inline int read_word( int pid, const int *addr, int *data )
+{
+    if (((*data = ptrace( PT_READ_D, pid, addr )) == -1) && errno)
+    {
+        file_set_error();
+        return -1;
+    }
+    return 0;
+}
+
+/* wrapper for writing an int with ptrace */
+static inline int write_word( int pid, int *addr, int data, unsigned int mask )
+{
+    int res;
+    if (mask != ~0)
+    {
+        if (read_word( pid, addr, &res ) == -1) return -1;
+        data = (data & mask) | (res & ~mask);
+    }
+    if ((res = ptrace( PT_WRITE_D, pid, addr, data )) == -1) file_set_error();
+    return res;
+}
+
 /* read data from a process memory space */
-/* len is the total size (in ints), max is the size we can actually store in the input buffer */
+/* len is the total size (in ints), max is the size we can actually store in the output buffer */
 /* we read the total size in all cases to check for permissions */
-static void read_process_memory( struct process *process, const int *addr, int len,
-                                 int max, int *dest )
+static void read_process_memory( struct process *process, const int *addr,
+                                 size_t len, size_t max, int *dest )
 {
     struct thread *thread = process->thread_list;
     int pid = thread->unix_pid;
 
+    if ((unsigned int)addr % sizeof(int))  /* address must be aligned */
+    {
+        set_error( ERROR_INVALID_PARAMETER );
+        return;
+    }
     suspend_thread( thread, 0 );
     if (thread->attached)
     {
-        while (len-- > 0)
+        while (len > 0 && max)
         {
-            int data = ptrace( PT_READ_D, pid, addr );
-            if ((data == -1) && errno)
+            if (read_word( pid, addr++, dest++ ) == -1) goto done;
+            max--;
+            len--;
+        }
+        /* check the rest for read permission */
+        if (len > 0)
+        {
+            int dummy, page = get_page_size() / sizeof(int);
+            while (len >= page)
             {
-                file_set_error();
-                break;
+                addr += page;
+                len -= page;
+                if (read_word( pid, addr - 1, &dummy ) == -1) goto done;
             }
-            if (max)
-            {
-                *dest++ = data;
-                max--;
-            }
-            addr++;
+            if (len && (read_word( pid, addr + len - 1, &dummy ) == -1)) goto done;
         }
     }
     else set_error( ERROR_ACCESS_DENIED );
+ done:
+    resume_thread( thread );
+}
+
+/* write data to a process memory space */
+/* len is the total size (in ints), max is the size we can actually read from the input buffer */
+/* we check the total size for write permissions */
+static void write_process_memory( struct process *process, int *addr, size_t len,
+                                  size_t max, unsigned int first_mask,
+                                  unsigned int last_mask, const int *src )
+{
+    struct thread *thread = process->thread_list;
+    int pid = thread->unix_pid;
+
+    if (!len || ((unsigned int)addr % sizeof(int)))  /* address must be aligned */
+    {
+        set_error( ERROR_INVALID_PARAMETER );
+        return;
+    }
+    suspend_thread( thread, 0 );
+    if (thread->attached)
+    {
+        /* first word is special */
+        if (len > 1)
+        {
+            if (write_word( pid, addr++, *src++, first_mask ) == -1) goto done;
+            len--;
+            max--;
+        }
+        else last_mask &= first_mask;
+
+        while (len > 1 && max)
+        {
+            if (write_word( pid, addr++, *src++, ~0 ) == -1) goto done;
+            max--;
+            len--;
+        }
+
+        if (max)
+        {
+            /* last word is special too */
+            if (write_word( pid, addr, *src, last_mask ) == -1) goto done;
+        }
+        else
+        {
+            /* check the rest for write permission */
+            int page = get_page_size() / sizeof(int);
+            while (len >= page)
+            {
+                addr += page;
+                len -= page;
+                if (write_word( pid, addr - 1, 0, 0 ) == -1) goto done;
+            }
+            if (len && (write_word( pid, addr + len - 1, 0, 0 ) == -1)) goto done;
+        }
+    }
+    else set_error( ERROR_ACCESS_DENIED );
+ done:
     resume_thread( thread );
 }
 
@@ -484,6 +574,19 @@ DECL_HANDLER(read_process_memory)
     {
         read_process_memory( process, req->addr, req->len,
                              get_req_size( req->data, sizeof(int) ), req->data );
+        release_object( process );
+    }
+}
+
+/* write data to a process address space */
+DECL_HANDLER(write_process_memory)
+{
+    struct process *process;
+
+    if ((process = get_process_from_handle( req->handle, PROCESS_VM_WRITE )))
+    {
+        write_process_memory( process, req->addr, req->len, get_req_size( req->data, sizeof(int) ),
+                              req->first_mask, req->last_mask, req->data );
         release_object( process );
     }
 }

@@ -61,6 +61,12 @@ static void dump_varargs_read_process_memory( struct read_process_memory_request
     dump_bytes( (unsigned char *)req->data, count * sizeof(int) );
 }
 
+static void dump_varargs_write_process_memory( struct write_process_memory_request *req )
+{
+    int count = MIN( req->len, get_req_size( req->data, sizeof(int) ) );
+    dump_bytes( (unsigned char *)req->data, count * sizeof(int) );
+}
+
 
 typedef void (*dump_func)( const void *req );
 
@@ -800,6 +806,17 @@ static void dump_read_process_memory_reply( struct read_process_memory_request *
     dump_varargs_read_process_memory( req );
 }
 
+static void dump_write_process_memory_request( struct write_process_memory_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " addr=%p,", req->addr );
+    fprintf( stderr, " len=%d,", req->len );
+    fprintf( stderr, " first_mask=%08x,", req->first_mask );
+    fprintf( stderr, " last_mask=%08x,", req->last_mask );
+    fprintf( stderr, " data=" );
+    dump_varargs_write_process_memory( req );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_new_thread_request,
@@ -873,6 +890,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_continue_debug_event_request,
     (dump_func)dump_debug_process_request,
     (dump_func)dump_read_process_memory_request,
+    (dump_func)dump_write_process_memory_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -948,6 +966,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_read_process_memory_reply,
+    (dump_func)0,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -1023,6 +1042,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "continue_debug_event",
     "debug_process",
     "read_process_memory",
+    "write_process_memory",
 };
 
 /* ### make_requests end ### */
