@@ -1,5 +1,6 @@
 /*
  * RPC format chars, as found by studying MIDL output.
+ * Some, but not all, usage of these are explained on MSDN.
  */
 
 #ifndef __WINE_RPCFC_H
@@ -35,20 +36,24 @@
  #define RPC_FC_P_SIMPLEPOINTER		0x08 /* [simple_pointer] */
  #define RPC_FC_P_DEREF			0x10
 
-#define RPC_FC_STRUCT			0x15
-/* FC_STRUCT: fieldcount-1, NdrFcShort(size), fields */
+#define RPC_FC_STRUCT			0x15 /* simple structure */
+/* FC_STRUCT: align-1, NdrFcShort(size), fields */
 
-#define RPC_FC_PSTRUCT			0x16
-#define RPC_FC_CSTRUCT			0x17
+#define RPC_FC_PSTRUCT			0x16 /* simple structure w/ pointers */
+/* FC_PTRUCT: align-1, NdrFcShort(size), ptrs, fields */
 
-#define RPC_FC_BOGUS_STRUCT		0x1a
+#define RPC_FC_CSTRUCT			0x17 /* conformant structure */
 
-#define RPC_FC_CARRAY			0x1b /* conformant array? */
-#define RPC_FC_CVARRAY			0x1c /* conformant varying array? */
-#define RPC_FC_SMFARRAY			0x1d /* simple fixed array? */
-/* FC_SMFARRAY: fieldcount-1, NdrFcShort(count), type */
+#define RPC_FC_BOGUS_STRUCT		0x1a /* complex structure */
 
-#define RPC_FC_BOGUS_ARRAY		0x21
+#define RPC_FC_CARRAY			0x1b /* conformant array */
+/* FC_CARRAY: align-1, NdrFcShort(size), conformance, ptrs, fields */
+#define RPC_FC_CVARRAY			0x1c /* conformant varying array */
+/* FC_CARRAY: align-1, NdrFcShort(size), conformance, variance, ptrs, fields */
+#define RPC_FC_SMFARRAY			0x1d /* small (<64K) fixed array */
+/* FC_SMFARRAY: align-1, NdrFcShort(size), ptrs, fields */
+
+#define RPC_FC_BOGUS_ARRAY		0x21 /* complex array */
 
 #define RPC_FC_C_CSTRING		0x22
 #define RPC_FC_C_WSTRING		0x25
@@ -58,7 +63,7 @@
 
 #define RPC_FC_IP			0x2f /* interface pointer */
 /* FC_IP: FC_CONSTANT_IID iid */
-/* FC_IP: FC_PAD correlation_descriptor? */
+/* FC_IP: FC_PAD correlation */
 
 #define RPC_FC_BIND_CONTEXT		0x30
 
@@ -104,14 +109,18 @@
 #define RPC_FC_STRUCTPAD2		0x3e
 
 #define RPC_FC_NO_REPEAT		0x46
-
+#define RPC_FC_FIXED_REPEAT		0x47
 #define RPC_FC_VARIABLE_REPEAT		0x48
 #define RPC_FC_FIXED_OFFSET		0x49
+#define RPC_FC_VARIABLE_OFFSET		0x4a
 
-#define RPC_FC_PP			0x4b
+#define RPC_FC_PP			0x4b /* pointer layout */
+/* FC_PP: FC_PAD layouts */
+/* layouts: FC_NO_REPEAT FC_PAD instance */
+/* instance: NdrFcShort(memofs), NdrFcShort(bufofs), desc */
 
 #define RPC_FC_EMBEDDED_COMPLEX		0x4c
-/* FC_EMBEDDED_COMPLEX: fieldcount-1, NdrFcShort(typeofs) */
+/* FC_EMBEDDED_COMPLEX: padding, NdrFcShort(typeofs) */
 
 #define RPC_FC_IN_PARAM			0x4d
 /* FC_IN_PARAM: stacksiz, NdrFcShort(typeofs) */
@@ -129,6 +138,8 @@
 
 #define RPC_FC_DEREFERENCE		0x54
 
+#define RPC_FC_CALLBACK			0x59
+
 #define RPC_FC_CONSTANT_IID		0x5a
 /* FC_CONSTANT_IID: NdrFcLong(), NdrFcShort(), NdrFcShort(), 8x () */
 
@@ -139,5 +150,18 @@
 
 #define RPC_FC_INT3264			0xb8
 #define RPC_FC_UINT3264			0xb9
+
+/* correlation types */
+#define RPC_FC_NORMAL_CONFORMANCE		0x00
+#define RPC_FC_POINTER_CONFORMANCE		0x10
+#define RPC_FC_TOP_LEVEL_CONFORMANCE		0x20
+#define RPC_FC_CONSTANT_CONFORMANCE		0x40
+#define RPC_FC_TOP_LEVEL_MULTID_CONFORMANCE	0x80
+
+/* user marshal flags */
+#define USER_MARSHAL_UNIQUE	0x80
+#define USER_MARSHAL_REF	0x40
+#define USER_MARSHAL_POINTER	0xc0
+#define USER_MARSHAL_IID	0x20
 
 #endif /* __WINE_RPCFC_H */

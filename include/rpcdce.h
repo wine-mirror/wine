@@ -116,6 +116,9 @@ typedef struct _RPC_POLICY
 #define RPC_IF_ALLOW_UNKNOWN_AUTHORITY  0x4
 #define RPC_IF_ALLOW_SECURE_ONLY        0x8
 
+RPCRTAPI void RPC_ENTRY
+  RpcRaiseException( RPC_STATUS exception );
+        
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcBindingCopy( RPC_BINDING_HANDLE SourceBinding, RPC_BINDING_HANDLE* DestinationBinding );
 

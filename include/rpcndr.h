@@ -95,6 +95,14 @@ typedef unsigned char _wine_boolean;
 #define __RPC_CALLEE WINAPI
 #define RPC_VAR_ENTRY WINAPIV
 
+#define MIDL_ascii_strlen(s) strlen(s)
+#define MIDL_ascii_strcpy(d,s) strcpy(d,s)
+#define MIDL_memset(d,v,n) memset(d,v,n)
+
+#define NdrFcShort(s) (unsigned char)(s & 0xff), (unsigned char)(s >> 8)
+#define NdrFcLong(s)  (unsigned char)(s & 0xff), (unsigned char)((s & 0x0000ff00) >> 8), \
+  (unsigned char)((s & 0x00ff0000) >> 16), (unsigned char)(s >> 24)
+
 typedef struct
 {
   void *pad[2];
@@ -198,7 +206,18 @@ typedef struct __GENERIC_BINDING_INFO GENERIC_BINDING_INFO, *PGENERIC_BINDING_IN
 
 typedef struct _XMIT_ROUTINE_QUINTUPLE XMIT_ROUTINE_QUINTUPLE, *PXMIT_ROUTINE_QUINTUPLE;
 
-typedef struct _USER_MARSHAL_ROUTINE_QUADRUPLE USER_MARSHAL_ROUTINE_QUADRUPLE;
+typedef unsigned long (__RPC_USER *USER_MARSHAL_SIZING_ROUTINE)(unsigned long *, unsigned long, void *);
+typedef unsigned char * (__RPC_USER *USER_MARSHAL_MARSHALLING_ROUTINE)(unsigned long *, unsigned char *, void *);
+typedef unsigned char * (__RPC_USER *USER_MARSHAL_UNMARSHALLING_ROUTINE)(unsigned long *, unsigned char *, void *);
+typedef void (__RPC_USER *USER_MARSHAL_FREEING_ROUTINE)(unsigned long *, void *);
+
+typedef struct _USER_MARSHAL_ROUTINE_QUADRUPLE
+{
+  USER_MARSHAL_SIZING_ROUTINE pfnBufferSize;
+  USER_MARSHAL_MARSHALLING_ROUTINE pfnMarshall;
+  USER_MARSHAL_UNMARSHALLING_ROUTINE pfnUnmarshall;
+  USER_MARSHAL_FREEING_ROUTINE pfnFree;
+} USER_MARSHAL_ROUTINE_QUADRUPLE;
 
 typedef struct _MALLOC_FREE_STRUCT MALLOC_FREE_STRUCT;
 
@@ -356,6 +375,12 @@ RPCRTAPI long RPC_ENTRY
 RPCRTAPI long RPC_ENTRY
   NdrStubCall( struct IRpcStubBuffer* pThis, struct IRpcChannelBuffer* pChannel, PRPC_MESSAGE pRpcMsg, LPDWORD pdwStubPhase );
 
+RPCRTAPI void* RPC_ENTRY
+  NdrAllocate( PMIDL_STUB_MESSAGE pStubMsg, size_t Len );
+
+RPCRTAPI void RPC_ENTRY
+  NdrClearOutParameters( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, void *ArgAddr );
+                            
 RPCRTAPI void* RPC_ENTRY
   NdrOleAllocate( size_t Size );
 RPCRTAPI void RPC_ENTRY
