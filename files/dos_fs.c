@@ -1217,7 +1217,15 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
 	    FIXME("internal: error getting DOS Drive Root\n");
 	    return 0;
 	  }
-	p= full_name.long_name +strlen(root);
+	if (!strcmp(root,"/"))
+	  {
+	    /* we have just the last / and we need it. */
+	    p= full_name.long_name;
+	  }
+	else
+	  {
+	    p= full_name.long_name +strlen(root);
+	  }
 	/* append long name (= unix name) to drive */
 	lstrcpynA(full_name.short_name+2,p,MAX_PATHNAME_LEN-3);
 	/* append name to treat */
