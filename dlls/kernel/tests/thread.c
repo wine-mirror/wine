@@ -370,7 +370,8 @@ VOID test_thread_priority()
    HANDLE curthread,access_thread;
    DWORD curthreadId,exitCode;
    int min_priority=-2,max_priority=2;
-   int i,error;
+   BOOL disabled;
+   int i;
 
    curthread=GetCurrentThread();
    curthreadId=GetCurrentThreadId();
@@ -398,7 +399,7 @@ VOID test_thread_priority()
          ok(pSetThreadPriorityBoost(access_thread,1)==0,
             "SetThreadPriorityBoost did not obey access restrictions");
        if (pGetThreadPriorityBoost)
-         ok(pGetThreadPriorityBoost(access_thread,&error)==0,
+         ok(pGetThreadPriorityBoost(access_thread,&disabled)==0,
             "GetThreadPriorityBoost did not obey access restrictions");
        ok(GetExitCodeThread(access_thread,&exitCode)==0,
           "GetExitCodeThread did not obey access restrictions");
@@ -426,15 +427,25 @@ VOID test_thread_priority()
 
 /* Check thread priority boost */
    if (pGetThreadPriorityBoost && pSetThreadPriorityBoost) {
+     BOOL rc;
      todo_wine {
-       ok(pSetThreadPriorityBoost(curthread,1)!=0,
-          "SetThreadPriorityBoost Failed");
-       ok(pGetThreadPriorityBoost(curthread,&error)!=0 && error==1,
-          "GetThreadPriorityBoost Failed");
-       ok(pSetThreadPriorityBoost(curthread,0)!=0,
-          "SetThreadPriorityBoost Failed");
-       ok(pGetThreadPriorityBoost(curthread,&error)!=0 && error==0,
-          "GetThreadPriorityBoost Failed");
+         SetLastError(0);
+         rc=pGetThreadPriorityBoost(curthread,&disabled);
+         if (rc!=0 || GetLastError()!=ERROR_CALL_NOT_IMPLEMENTED) {
+             ok(rc!=0,"error=%ld",GetLastError());
+
+             ok(pSetThreadPriorityBoost(curthread,1)!=0,
+                "error=%ld",GetLastError());
+             rc=pGetThreadPriorityBoost(curthread,&disabled);
+             ok(rc!=0 && disabled==1,
+                "rc=%d error=%ld disabled=%d",rc,GetLastError(),disabled);
+
+             ok(pSetThreadPriorityBoost(curthread,0)!=0,
+                "error=%ld",GetLastError());
+             rc=pGetThreadPriorityBoost(curthread,&disabled);
+             ok(rc!=0 && disabled==0,
+                "rc=%d error=%ld disabled=%d",rc,GetLastError(),disabled);
+         }
      }
    }
 }
