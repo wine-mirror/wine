@@ -826,7 +826,7 @@ BOOL WINAPI MoveFileExW( LPCWSTR source, LPCWSTR dest, DWORD flag )
     IO_STATUS_BLOCK io;
     NTSTATUS status;
     HANDLE source_handle = 0, dest_handle;
-    char *source_unix = NULL, *dest_unix = NULL;
+    ANSI_STRING source_unix, dest_unix;
 
     TRACE("(%s,%s,%04lx)\n", debugstr_w(source), debugstr_w(dest), flag);
 
@@ -843,6 +843,8 @@ BOOL WINAPI MoveFileExW( LPCWSTR source, LPCWSTR dest, DWORD flag )
         SetLastError( ERROR_PATH_NOT_FOUND );
         return FALSE;
     }
+    source_unix.Buffer = NULL;
+    dest_unix.Buffer = NULL;
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
     attr.Attributes = OBJ_CASE_INSENSITIVE;
@@ -851,6 +853,8 @@ BOOL WINAPI MoveFileExW( LPCWSTR source, LPCWSTR dest, DWORD flag )
     attr.SecurityQualityOfService = NULL;
 
     status = NtOpenFile( &source_handle, 0, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT );
+    if (status == STATUS_SUCCESS)
+        status = wine_nt_to_unix_file_name( &nt_name, &source_unix, FILE_OPEN, FALSE );
     RtlFreeUnicodeString( &nt_name );
     if (status != STATUS_SUCCESS)
     {
@@ -861,12 +865,6 @@ BOOL WINAPI MoveFileExW( LPCWSTR source, LPCWSTR dest, DWORD flag )
     if (status != STATUS_SUCCESS)
     {
         SetLastError( RtlNtStatusToDosError(status) );
-        goto error;
-    }
-
-    if (!(source_unix = wine_get_unix_file_name( source )))  /* should not happen */
-    {
-        SetLastError( ERROR_FILE_NOT_FOUND );
         goto error;
     }
 
@@ -889,41 +887,45 @@ BOOL WINAPI MoveFileExW( LPCWSTR source, LPCWSTR dest, DWORD flag )
     }
     status = NtOpenFile( &dest_handle, GENERIC_READ | GENERIC_WRITE, &attr, &io, 0,
                          FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
-    RtlFreeUnicodeString( &nt_name );
     if (status == STATUS_SUCCESS)
     {
         NtClose( dest_handle );
         if (!(flag & MOVEFILE_REPLACE_EXISTING))
         {
             SetLastError( ERROR_ALREADY_EXISTS );
+            RtlFreeUnicodeString( &nt_name );
             goto error;
         }
     }
     else if (status != STATUS_OBJECT_NAME_NOT_FOUND)
     {
         SetLastError( RtlNtStatusToDosError(status) );
+        RtlFreeUnicodeString( &nt_name );
         goto error;
     }
-    if (!(dest_unix = wine_get_unix_file_name( dest )))  /* should not happen */
+
+    status = wine_nt_to_unix_file_name( &nt_name, &dest_unix, FILE_OPEN_IF, FALSE );
+    RtlFreeUnicodeString( &nt_name );
+    if (status != STATUS_SUCCESS && status != STATUS_NO_SUCH_FILE)
     {
-        SetLastError( ERROR_FILE_NOT_FOUND );
+        SetLastError( RtlNtStatusToDosError(status) );
         goto error;
     }
 
     /* now perform the rename */
 
-    if (rename( source_unix, dest_unix ) == -1)
+    if (rename( source_unix.Buffer, dest_unix.Buffer ) == -1)
     {
         if (errno == EXDEV && (flag & MOVEFILE_COPY_ALLOWED))
         {
             NtClose( source_handle );
-            HeapFree( GetProcessHeap(), 0, source_unix );
-            HeapFree( GetProcessHeap(), 0, dest_unix );
+            RtlFreeAnsiString( &source_unix );
+            RtlFreeAnsiString( &dest_unix );
             return (CopyFileW( source, dest, TRUE ) && DeleteFileW( source ));
         }
         FILE_SetDosError();
         /* if we created the destination, remove it */
-        if (io.Information == FILE_CREATED) unlink( dest_unix );
+        if (io.Information == FILE_CREATED) unlink( dest_unix.Buffer );
         goto error;
     }
 
@@ -932,26 +934,26 @@ BOOL WINAPI MoveFileExW( LPCWSTR source, LPCWSTR dest, DWORD flag )
     if (is_executable( source ) != is_executable( dest ))
     {
         struct stat fstat;
-        if (stat( dest_unix, &fstat ) != -1)
+        if (stat( dest_unix.Buffer, &fstat ) != -1)
         {
             if (is_executable( dest ))
                 /* set executable bit where read bit is set */
                 fstat.st_mode |= (fstat.st_mode & 0444) >> 2;
             else
                 fstat.st_mode &= ~0111;
-            chmod( dest_unix, fstat.st_mode );
+            chmod( dest_unix.Buffer, fstat.st_mode );
         }
     }
 
     NtClose( source_handle );
-    HeapFree( GetProcessHeap(), 0, source_unix );
-    HeapFree( GetProcessHeap(), 0, dest_unix );
+    RtlFreeAnsiString( &source_unix );
+    RtlFreeAnsiString( &dest_unix );
     return TRUE;
 
 error:
     if (source_handle) NtClose( source_handle );
-    if (source_unix) HeapFree( GetProcessHeap(), 0, source_unix );
-    if (dest_unix) HeapFree( GetProcessHeap(), 0, dest_unix );
+    RtlFreeAnsiString( &source_unix );
+    RtlFreeAnsiString( &dest_unix );
     return FALSE;
 }
 
@@ -1014,7 +1016,7 @@ char *wine_get_unix_file_name( LPCWSTR dosW )
     NTSTATUS status;
 
     if (!RtlDosPathNameToNtPathName_U( dosW, &nt_name, NULL, NULL )) return NULL;
-    status = wine_nt_to_unix_file_name( &nt_name, &unix_name, FALSE, FALSE );
+    status = wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN_IF, FALSE );
     RtlFreeUnicodeString( &nt_name );
     if (status && status != STATUS_NO_SUCH_FILE) return NULL;
     return unix_name.Buffer;

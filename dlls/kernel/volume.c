@@ -165,7 +165,7 @@ static BOOL open_device_root( LPCWSTR root, HANDLE *handle )
 
 
 /* fetch the type of a drive from the registry */
-static UINT get_registry_drive_type( int drive )
+static UINT get_registry_drive_type( const WCHAR *root )
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
@@ -173,11 +173,18 @@ static UINT get_registry_drive_type( int drive )
     DWORD dummy;
     UINT ret = DRIVE_UNKNOWN;
     char tmp[32 + sizeof(KEY_VALUE_PARTIAL_INFORMATION)];
+    WCHAR path[MAX_PATH];
     WCHAR driveW[] = {'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\',
                       'W','i','n','e','\\','W','i','n','e','\\',
                       'C','o','n','f','i','g','\\','D','r','i','v','e',' ','A',0};
     static const WCHAR TypeW[] = {'T','y','p','e',0};
 
+
+    if (!root)
+    {
+        GetCurrentDirectoryW( MAX_PATH, path );
+        root = path;
+    }
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
     attr.ObjectName = &nameW;
@@ -185,7 +192,7 @@ static UINT get_registry_drive_type( int drive )
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &nameW, driveW );
-    nameW.Buffer[(nameW.Length / sizeof(WCHAR)) - 1] = 'A' + drive;
+    nameW.Buffer[(nameW.Length / sizeof(WCHAR)) - 1] = root[0];
     if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) return DRIVE_UNKNOWN;
 
     RtlInitUnicodeString( &nameW, TypeW );
@@ -1091,7 +1098,7 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
             nt_buffer[3] = '\\';
             strcpyW( nt_buffer + 4, name );
             RtlInitUnicodeString( &nt_name, nt_buffer );
-            status = wine_nt_to_unix_file_name( &nt_name, &unix_name, TRUE, TRUE );
+            status = wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN, TRUE );
             if (status) SetLastError( RtlNtStatusToDosError(status) );
             else
             {
@@ -1132,7 +1139,7 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
         for (i = 1; i <= 9; i++)
         {
             nt_buffer[7] = '0' + i;
-            if (!wine_nt_to_unix_file_name( &nt_name, &unix_name, TRUE, TRUE ))
+            if (!wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN, TRUE ))
             {
                 RtlFreeAnsiString( &unix_name );
                 if (p + 5 >= target + bufsize)
@@ -1150,7 +1157,7 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
         for (i = 1; i <= 9; i++)
         {
             nt_buffer[7] = '0' + i;
-            if (!wine_nt_to_unix_file_name( &nt_name, &unix_name, TRUE, TRUE ))
+            if (!wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN, TRUE ))
             {
                 RtlFreeAnsiString( &unix_name );
                 if (p + 5 >= target + bufsize)
@@ -1171,7 +1178,7 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
         for (i = 0; i < 26; i++)
         {
             nt_buffer[4] = 'a' + i;
-            if (!wine_nt_to_unix_file_name( &nt_name, &unix_name, TRUE, TRUE ))
+            if (!wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN, TRUE ))
             {
                 RtlFreeAnsiString( &unix_name );
                 if (p + 3 >= target + bufsize)
@@ -1337,7 +1344,7 @@ UINT WINAPI GetDriveTypeW(LPCWSTR root) /* [in] String describing drive */
         SetLastError( RtlNtStatusToDosError(status) );
         ret = DRIVE_UNKNOWN;
     }
-    else if ((ret = get_registry_drive_type( toupperW(root[0]) - 'A' )) == DRIVE_UNKNOWN)
+    else if ((ret = get_registry_drive_type( root )) == DRIVE_UNKNOWN)
     {
         switch (info.DeviceType)
         {

@@ -938,12 +938,12 @@ static inline int get_dos_prefix_len( const UNICODE_STRING *name )
  *
  * Convert a file name from NT namespace to Unix namespace.
  *
- * If check_last is 0, the last path element doesn't have to exist;
- * in that case STATUS_NO_SUCH_FILE is returned, but the
- * unix name is still filled in properly.
+ * If disposition is not FILE_OPEN or FILE_OVERWRITTE, the last path
+ * element doesn't have to exist; in that case STATUS_NO_SUCH_FILE is
+ * returned, but the unix name is still filled in properly.
  */
 NTSTATUS wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
-                                    BOOLEAN check_last, BOOLEAN check_case )
+                                    UINT disposition, BOOLEAN check_case )
 {
     static const WCHAR uncW[] = {'U','N','C','\\'};
     static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, 0 };
@@ -1010,25 +1010,33 @@ NTSTATUS wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *un
 
     ret = ntdll_wcstoumbs( 0, name, name_len, unix_name + pos, unix_len - pos - 1,
                            NULL, &used_default );
-    if (ret > 0 && !used_default)  /* if we used the default char the name didn't convert properly */
-    {
-        char *p;
-        unix_name[pos + ret] = 0;
-        for (p = unix_name + pos ; *p; p++) if (*p == '\\') *p = '/';
-        if (!stat( unix_name, &st )) goto done;
-    }
 
     while (name_len && IS_SEPARATOR(*name))
     {
         name++;
         name_len--;
     }
+
+    if (ret > 0 && !used_default)  /* if we used the default char the name didn't convert properly */
+    {
+        char *p;
+        unix_name[pos + ret] = 0;
+        for (p = unix_name + pos ; *p; p++) if (*p == '\\') *p = '/';
+        if (!stat( unix_name, &st ))
+        {
+            /* creation fails with STATUS_ACCESS_DENIED for the root of the drive */
+            if (disposition == FILE_CREATE)
+                return name_len ? STATUS_OBJECT_NAME_COLLISION : STATUS_ACCESS_DENIED;
+            goto done;
+        }
+    }
+
     if (!name_len)  /* empty name -> drive root doesn't exist */
     {
         RtlFreeHeap( GetProcessHeap(), 0, unix_name );
         return STATUS_OBJECT_PATH_NOT_FOUND;
     }
-    if (check_case && check_last)
+    if (check_case && (disposition == FILE_OPEN || disposition == FILE_OVERWRITE))
     {
         RtlFreeHeap( GetProcessHeap(), 0, unix_name );
         return STATUS_OBJECT_NAME_NOT_FOUND;
@@ -1063,20 +1071,27 @@ NTSTATUS wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *un
         status = find_file_in_dir( unix_name, pos, name, end - name, check_case );
 
         /* if this is the last element, not finding it is not necessarily fatal */
-        if (!name_len && status == STATUS_OBJECT_PATH_NOT_FOUND)
+        if (!name_len)
         {
-            status = STATUS_OBJECT_NAME_NOT_FOUND;
-            if (!check_last)
+            if (status == STATUS_OBJECT_PATH_NOT_FOUND)
             {
-                ret = ntdll_wcstoumbs( 0, name, end - name, unix_name + pos + 1,
-                                       MAX_DIR_ENTRY_LEN, NULL, &used_default );
-                if (ret > 0 && !used_default)
+                status = STATUS_OBJECT_NAME_NOT_FOUND;
+                if (disposition != FILE_OPEN && disposition != FILE_OVERWRITE)
                 {
-                    unix_name[pos] = '/';
-                    unix_name[pos + 1 + ret] = 0;
-                    status = STATUS_NO_SUCH_FILE;
-                    break;
+                    ret = ntdll_wcstoumbs( 0, name, end - name, unix_name + pos + 1,
+                                           MAX_DIR_ENTRY_LEN, NULL, &used_default );
+                    if (ret > 0 && !used_default)
+                    {
+                        unix_name[pos] = '/';
+                        unix_name[pos + 1 + ret] = 0;
+                        status = STATUS_NO_SUCH_FILE;
+                        break;
+                    }
                 }
+            }
+            else if (status == STATUS_SUCCESS && disposition == FILE_CREATE)
+            {
+                status = STATUS_OBJECT_NAME_COLLISION;
             }
         }
 
@@ -1114,7 +1129,7 @@ BOOLEAN WINAPI RtlDoesFileExists_U(LPCWSTR file_name)
     BOOLEAN ret;
 
     if (!RtlDosPathNameToNtPathName_U( file_name, &nt_name, NULL, NULL )) return FALSE;
-    ret = (wine_nt_to_unix_file_name( &nt_name, &unix_name, TRUE, FALSE ) == STATUS_SUCCESS);
+    ret = (wine_nt_to_unix_file_name( &nt_name, &unix_name, FILE_OPEN, FALSE ) == STATUS_SUCCESS);
     if (ret) RtlFreeAnsiString( &unix_name );
     RtlFreeUnicodeString( &nt_name );
     return ret;

@@ -131,7 +131,7 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
                               ULONG options, PVOID ea_buffer, ULONG ea_length )
 {
     ANSI_STRING unix_name;
-    int check_last, created = FALSE;
+    int created = FALSE;
 
     TRACE("handle=%p access=%08lx name=%s objattr=%08lx root=%p sec=%p io=%p alloc_size=%p\n"
           "attr=%08lx sharing=%08lx disp=%ld options=%08lx ea=%p.0x%08lx\n",
@@ -146,12 +146,11 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
     }
     if (alloc_size) FIXME( "alloc_size not supported\n" );
 
-    check_last = (disposition == FILE_OPEN || disposition == FILE_OVERWRITE);
-
-    io->u.Status = wine_nt_to_unix_file_name( attr->ObjectName, &unix_name, check_last,
+    io->u.Status = wine_nt_to_unix_file_name( attr->ObjectName, &unix_name, disposition,
                                               !(attr->Attributes & OBJ_CASE_INSENSITIVE) );
 
-    if (!check_last && io->u.Status == STATUS_NO_SUCH_FILE)
+    if (io->u.Status == STATUS_NO_SUCH_FILE &&
+        disposition != FILE_OPEN && disposition != FILE_OVERWRITE)
     {
         created = TRUE;
         io->u.Status = STATUS_SUCCESS;
@@ -1025,8 +1024,8 @@ NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
     ANSI_STRING unix_name;
     NTSTATUS status;
 
-    if (!(status = wine_nt_to_unix_file_name( attr->ObjectName, &unix_name,
-                                              TRUE, !(attr->Attributes & OBJ_CASE_INSENSITIVE) )))
+    if (!(status = wine_nt_to_unix_file_name( attr->ObjectName, &unix_name, FILE_OPEN,
+                                              !(attr->Attributes & OBJ_CASE_INSENSITIVE) )))
     {
         struct stat st;
 
