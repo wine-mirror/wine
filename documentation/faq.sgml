@@ -1366,6 +1366,39 @@ rm -fR \[/path/\]Wine*
         </para>
       </answer>
       </qandaentry>
+      <qandaentry>
+      <question id="Error-with-installshield-6">
+        <para>
+          I get <quote>Error installing iKernel.exe: (0x1400)</quote>
+          when running an Installshield 6 installer
+        </para>
+      </question>
+      <answer>
+        <para>
+          If you get the error "Error installing iKernel.exe: (0x1400)" at any
+          point, it's probably because there are leftover processes from a
+          previous try. You can verify this with the command
+        </para>
+        <para><command>$ ps augxw | grep wine</command></para>
+        <para>
+          If that command shows old copies of wine running your setup,
+          you need to kill them before you can run the setup program.
+          If there are no other Wine programs running, you can kill them
+          all with the command
+        </para>
+        <para><command>$ killall wine</command></para>
+        <para>
+          If you're also running Wine programs you care about, you'll
+          have to kill off the old Setup instances one by one using
+          kill and the individual PIDs (or perhaps Wine's spiffy Task Manager,
+          which doesn't exist yet).
+        </para>
+        <para>
+          You should repeat the <command>ps</command> to make sure the old 
+          wines are gone. 
+        </para>
+       </answer>
+      </qandaentry>
     </qandadiv>
      
     <qandadiv id="Getting-help">
