@@ -320,9 +320,9 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
     hOldPen = (HPEN)SelectObject(hDC, GetSysColorPen(COLOR_WINDOWFRAME));
     hOldBrush =(HBRUSH)SelectObject(hDC,GetSysColorBrush(COLOR_BTNFACE));
     SetBkMode(hDC, TRANSPARENT);
-    Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);
     if (TWEAK_WineLook == WIN31_LOOK)
     {
+        Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);
         SetPixel( hDC, rc.left, rc.top, GetSysColor(COLOR_WINDOW) );
         SetPixel( hDC, rc.left, rc.bottom-1, GetSysColor(COLOR_WINDOW) );
         SetPixel( hDC, rc.right-1, rc.top, GetSysColor(COLOR_WINDOW) );
