@@ -521,7 +521,7 @@ static int ctl2_alloc_guid(
     }
 
     hash_key = (hash & 0xf) | ((hash & 0x10) & (0 - !!(hash & 0xe0)));
-    guid_space->unk14 = This->typelib_guidhash_segment[hash_key];
+    guid_space->next_hash = This->typelib_guidhash_segment[hash_key];
     This->typelib_guidhash_segment[hash_key] = offset;
 
     TRACE("Updating GUID hash table (%s,0x%x).\n", debugstr_guid(&guid->guid), hash);
@@ -558,12 +558,12 @@ static int ctl2_alloc_name(
     if (offset == -1) return -1;
 
     name_space = (void *)(This->typelib_segment_data[MSFT_SEG_NAME] + offset);
-    name_space->unk00 = -1;
-    name_space->unk10 = -1;
+    name_space->hreftype = -1;
+    name_space->next_hash = -1;
     memcpy(&name_space->namelen, encoded_name, length);
 
     if (This->typelib_namehash_segment[encoded_name[2] & 0x7f] != -1)
-	name_space->unk10 = This->typelib_namehash_segment[encoded_name[2] & 0x7f];
+	name_space->next_hash = This->typelib_namehash_segment[encoded_name[2] & 0x7f];
 
     This->typelib_namehash_segment[encoded_name[2] & 0x7f] = offset;
 
@@ -751,8 +751,8 @@ static HRESULT ctl2_set_custdata(
 
     guidentry.guid = *guid;
 
-    guidentry.unk10 = -1;
-    guidentry.unk14 = -1;
+    guidentry.hreftype = -1;
+    guidentry.next_hash = -1;
 
     guidoffset = ctl2_alloc_guid(This, &guidentry);
     if (guidoffset == -1) return E_OUTOFMEMORY;
@@ -1114,8 +1114,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetGuid(ICreateTypeInfo2 *iface, REFGUI
     TRACE("(%p,%s)\n", iface, debugstr_guid(guid));
 
     guidentry.guid = *guid;
-    guidentry.unk10 = 0;
-    guidentry.unk14 = 0x18;
+    guidentry.hreftype = 0;
+    guidentry.next_hash = 0x18;
 
     offset = ctl2_alloc_guid(This->typelib, &guidentry);
     
@@ -1147,8 +1147,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeFlags(ICreateTypeInfo2 *iface, U
 	WCHAR stdole2tlb[] = { 's','t','d','o','l','e','2','.','t','l','b',0 };
 
 	foo.guid = IID_StdOle;
-	foo.unk10 = 2;
-	foo.unk14 = -1;
+	foo.hreftype = 2;
+	foo.next_hash = -1;
 	guidoffset = ctl2_alloc_guid(This->typelib, &foo);
 	if (guidoffset == -1) return E_OUTOFMEMORY;
 
@@ -1156,8 +1156,8 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeFlags(ICreateTypeInfo2 *iface, U
 	if (fileoffset == -1) return E_OUTOFMEMORY;
 
 	foo.guid = IID_IDispatch;
-	foo.unk10 = 1;
-	foo.unk14 = -1;
+	foo.hreftype = 1;
+	foo.next_hash = -1;
 	guidoffset = ctl2_alloc_guid(This->typelib, &foo);
 	if (guidoffset == -1) return E_OUTOFMEMORY;
 
@@ -3028,8 +3028,8 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetGuid(ICreateTypeLib2 * iface, REFGUID
     TRACE("(%p,%s)\n", iface, debugstr_guid(guid));
 
     guidentry.guid = *guid;
-    guidentry.unk10 = -2;
-    guidentry.unk14 = -1;
+    guidentry.hreftype = -2;
+    guidentry.next_hash = -1;
 
     offset = ctl2_alloc_guid(This, &guidentry);
     
