@@ -50,6 +50,7 @@ static HRESULT HAL_DirectDrawSurface_create_surface(IDirectDrawSurfaceImpl* This
 	    ddpriv->hal.next_vofs += This->surface_desc.dwHeight;
 
 	    This->global.fpVidMem = (FLATPTR)priv->hal.fb_addr;
+	    This->global.u4.lPitch = priv->hal.fb_pitch;
 	}
 	This->surface_desc.lpSurface = (LPVOID)This->global.fpVidMem;
 	This->surface_desc.dwFlags |= DDSD_LPSURFACE;
@@ -286,6 +287,7 @@ BOOL HAL_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
 	ret = DIB_DirectDrawSurface_flip_data(front, back, dwFlags);
     }
 
+    TRACE("(%p,%p)\n",front,back);
     data.lpDD = dd_gbl;
     data.lpSurfCurr = &front->local;
     data.lpSurfTarg = &back->local;
