@@ -1086,7 +1086,7 @@ static struct key *load_key( struct key *base, const char *buffer, unsigned int 
         file_read_error( "Malformed key", info );
         return NULL;
     }
-    if (!sscanf( buffer + res, " %d", &modif )) modif = time(NULL);
+    if (sscanf( buffer + res, " %d", &modif ) != 1) modif = time(NULL);
 
     p = (WCHAR *)info->tmp;
     while (prefix_len && *p) { if (*p++ == '\\') prefix_len--; }
