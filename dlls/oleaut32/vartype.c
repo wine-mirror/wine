@@ -5672,7 +5672,7 @@ HRESULT WINAPI VarBstrCat(BSTR pbstrLeft, BSTR pbstrRight, BSTR *pbstrOut)
   if (!*pbstrOut)
     return E_OUTOFMEMORY;
 
-  *pbstrOut = '\0';
+  (*pbstrOut)[0] = '\0';
 
   if (pbstrLeft)
     strcpyW(*pbstrOut, pbstrLeft);
