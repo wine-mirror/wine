@@ -1,13 +1,14 @@
-This is release 20041201 of Wine, a free implementation of Windows on
+This is release 20050111 of Wine, a free implementation of Windows on
 Unix.  This is still a developers only release.  There are many bugs
 and unimplemented features.  Most applications still do not work
 correctly.
 
-WHAT'S NEW with Wine-20041201: (see ChangeLog for details)
-        - Implementation of the RSAENH dll.
-        - More work on the Direct3D 9 architecture.
-        - Builtin debugger improvements.
-        - Reorganisation of the Developer's Guide.
+WHAT'S NEW with Wine-20050111: (see ChangeLog for details)
+        - Many OLE bug fixes and improvements.
+        - A lot more work on the MSI dll.
+        - Update regions now handled in the Wine server.
+        - Beginnings of typelib generation in the IDL compiler.
+        - Many janitorial cleanups.
         - Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -16,8 +17,8 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20041201.tar.gz
-  http://prdownloads.sourceforge.net/wine/Wine-20041201.tar.gz
+  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20050111.tar.gz
+  http://prdownloads.sourceforge.net/wine/Wine-20050111.tar.gz
 
 It should also be available from any other site that mirrors ibiblio.org.
 These locations also hold pre-built documentation packages in various
