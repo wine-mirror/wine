@@ -1410,11 +1410,12 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
         case N_BINCL:
             stabs_add_include(stabs_new_include(ptr, stab_ptr->n_value));
             assert(incl_stk < (int)(sizeof(incl) / sizeof(incl[0])) - 1);
-            source_idx = incl[++incl_stk] = source_new(module, ptr);
+            incl[++incl_stk] = source_idx;
+            source_idx = source_new(module, ptr);
             break;
         case N_EINCL:
-            assert(incl_stk > 0);
-            source_idx = incl[--incl_stk];
+            assert(incl_stk >= 0);
+            source_idx = incl[incl_stk--];
             break;
 	case N_EXCL:
             if (stabs_add_include(stabs_find_include(ptr, stab_ptr->n_value)) < 0)
