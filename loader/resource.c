@@ -17,7 +17,6 @@
 #include "wine/winbase16.h"
 #include "wine/exception.h"
 #include "heap.h"
-#include "callback.h"
 #include "cursoricon.h"
 #include "module.h"
 #include "file.h"
@@ -409,6 +408,9 @@ LPVOID WINAPI LockResource( HGLOBAL handle )
     return LockResource16( handle );
 }
 
+typedef WORD WINAPI (*pDestroyIcon32Proc)( HGLOBAL16 handle, UINT16 flags );
+
+
 /**********************************************************************
  *          FreeResource     (KERNEL.63)
  *          FreeResource16   (KERNEL32.@)
@@ -428,8 +430,11 @@ BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
        GlobalFree16() */
     if ( retv )
     {
-        if ( Callout.DestroyIcon32 )
-            retv = Callout.DestroyIcon32( handle, CID_RESOURCE );
+        pDestroyIcon32Proc proc;
+        HMODULE user = GetModuleHandleA( "user32.dll" );
+
+        if (user && (proc = (pDestroyIcon32Proc)GetProcAddress( user, "DestroyIcon32" )))
+            retv = proc( handle, CID_RESOURCE );
         else
             retv = GlobalFree16( handle );
     }

@@ -672,6 +672,7 @@ debug_channels (accel caret class clipboard combo cursor dc dde ddeml dialog dri
 @ stdcall CallWindowProc16(long long long long long) CallWindowProc16
 @ stdcall CloseDriver16(long long long) CloseDriver16
 @ stdcall CreateDialogIndirectParam16(long ptr long long long) CreateDialogIndirectParam16
+@ stdcall DestroyIcon32(long long) DestroyIcon32
 @ stdcall DefDriverProc16(long long long long long) DefDriverProc16
 @ stdcall DialogBoxIndirectParam16(long long long long long) DialogBoxIndirectParam16
 @ stdcall GetDriverModuleHandle16(long) GetDriverModuleHandle16

@@ -80,9 +80,6 @@ extern HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
 extern HGLOBAL CURSORICON_ExtCopy(HGLOBAL handle, UINT type, 
 				  INT desiredx, INT desiredy, 
 				  UINT flags);
-
-extern WORD WINAPI CURSORICON_Destroy( HGLOBAL16 handle, UINT16 flags );
-
 extern void CURSORICON_FreeModuleIcons( HMODULE hModule );
-				    
+
 #endif /* __WINE_CURSORICON_H */

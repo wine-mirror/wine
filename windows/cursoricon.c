@@ -1293,7 +1293,7 @@ HCURSOR16 WINAPI CopyCursor16( HINSTANCE16 hInstance, HCURSOR16 hCursor )
  * the Win95 one exactly, especially the return values, which 
  * depend on the setting of various flags.
  */
-WORD WINAPI CURSORICON_Destroy( HGLOBAL16 handle, UINT16 flags )
+WORD WINAPI DestroyIcon32( HGLOBAL16 handle, UINT16 flags )
 {
     WORD retv;
 
@@ -1330,7 +1330,7 @@ WORD WINAPI CURSORICON_Destroy( HGLOBAL16 handle, UINT16 flags )
  */
 BOOL16 WINAPI DestroyIcon16( HICON16 hIcon )
 {
-    return CURSORICON_Destroy( hIcon, 0 );
+    return DestroyIcon32( hIcon, 0 );
 }
 
 /***********************************************************************
@@ -1338,7 +1338,7 @@ BOOL16 WINAPI DestroyIcon16( HICON16 hIcon )
  */
 BOOL WINAPI DestroyIcon( HICON hIcon )
 {
-    return CURSORICON_Destroy( hIcon, CID_WIN32 );
+    return DestroyIcon32( hIcon, CID_WIN32 );
 }
 
 /***********************************************************************
@@ -1346,7 +1346,7 @@ BOOL WINAPI DestroyIcon( HICON hIcon )
  */
 BOOL16 WINAPI DestroyCursor16( HCURSOR16 hCursor )
 {
-    return CURSORICON_Destroy( hCursor, 0 );
+    return DestroyIcon32( hCursor, 0 );
 }
 
 /***********************************************************************
@@ -1354,7 +1354,7 @@ BOOL16 WINAPI DestroyCursor16( HCURSOR16 hCursor )
  */
 BOOL WINAPI DestroyCursor( HCURSOR hCursor )
 {
-    return CURSORICON_Destroy( hCursor, CID_WIN32 );
+    return DestroyIcon32( hCursor, CID_WIN32 );
 }
 
 
