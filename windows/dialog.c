@@ -1099,12 +1099,18 @@ BOOL16 WINAPI EndDialog16( HWND16 hwnd, INT16 retval )
 BOOL WINAPI EndDialog( HWND hwnd, INT retval )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
-    DIALOGINFO * dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
+    DIALOGINFO * dlgInfo;
     HWND hOwner = 0;
 
     TRACE("%04x %d\n", hwnd, retval );
 
-    if( dlgInfo )
+    if (!wndPtr)
+    {
+	ERR("got invalid window handle (%04x); buggy app !?\n", hwnd);
+	return TRUE; /* the sun is shining even for buggy apps */
+    }
+
+    if ((dlgInfo = (DIALOGINFO *)wndPtr->wExtra))
     {
         dlgInfo->idResult = retval;
         dlgInfo->flags |= DF_END;
