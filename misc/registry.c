@@ -2707,14 +2707,14 @@ DWORD WINAPI RegEnumKeyEx32A( HKEY hkey, DWORD iSubkey, LPSTR lpszName,
 	);
 	if (lpszName) {
 		lpszNameW	= (LPWSTR)xmalloc(*lpcchName*2);
-		lpcchNameW	= *lpcchName*2;
+		lpcchNameW	= *lpcchName;
 	} else {
 		lpszNameW	= NULL;
 		lpcchNameW 	= 0;
 	}
 	if (lpszClass) {
 		lpszClassW		= (LPWSTR)xmalloc(*lpcchClass*2);
-		lpcchClassW	= *lpcchClass*2;
+		lpcchClassW	= *lpcchClass;
 	} else {
 		lpszClassW	=0;
 		lpcchClassW=0;
@@ -2860,7 +2860,7 @@ DWORD WINAPI RegEnumValue32A( HKEY hkey, DWORD iValue, LPSTR lpszValue,
 	lpszValueW = (LPWSTR)xmalloc(*lpcchValue*2);
 	if (lpbData) {
 		lpbDataW = (LPBYTE)xmalloc(*lpcbData*2);
-		lpcbDataW = *lpcbData*2;
+		lpcbDataW = *lpcbData;
 	} else
 		lpbDataW = NULL;
 
@@ -3311,14 +3311,6 @@ DWORD WINAPI RegQueryInfoKey32A( HKEY hkey, LPSTR lpszClass, LPDWORD lpcchClass,
 	);
 	if (ret==ERROR_SUCCESS && lpszClass)
 		lstrcpyWtoA(lpszClass,lpszClassW);
-	if (lpcchClass)
-		*lpcchClass/=2;
-	if (lpcchMaxSubkey)
-		*lpcchMaxSubkey/=2;
-	if (lpcchMaxClass)
-		*lpcchMaxClass/=2;
-	if (lpcchMaxValueName)
-		*lpcchMaxValueName/=2;
 	if (lpszClassW)
 		free(lpszClassW);
 	return ret;
