@@ -10,6 +10,8 @@ MODULE    = winetest
 
 C_SRCS = winetest.c
 
+EXTRA_SRCS = wtmain.c
+
 EXTRA_OBJS = wine.o
 
 EXTRASUBDIRS = include tests
@@ -18,6 +20,8 @@ PLTESTS = \
 	tests/wine.pl
 
 @MAKE_PROG_RULES@
+
+all: wtmain.o
 
 wine.c: wine.xs
 	perl $(XSUBPPDIR)/xsubpp -typemap $(XSUBPPDIR)/typemap $(SRCDIR)/wine.xs >wine.c || $(RM) wine.c

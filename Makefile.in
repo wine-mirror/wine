@@ -71,6 +71,11 @@ INSTALLSUBDIRS = \
 	tsx11 \
 	unicode
 
+# Sub-directories to run make test into
+TESTSUBDIRS = \
+	programs/winetest \
+	dlls
+
 EMUOBJS = \
 	miscemu/miscemu.o
 
@@ -157,9 +162,12 @@ checklink::
 	@cd dlls && $(MAKE) checklink
 	@cd debugger && $(MAKE) checklink
 
-check test::
-	@cd programs/winetest && $(MAKE) test
-	@cd dlls && $(MAKE) test
+test_environment: dummy
+	@cd programs/winetest && $(MAKE) all
+
+$(TESTSUBDIRS:%=%/__test__): test_environment
+
+check test:: $(TESTSUBDIRS:%=%/__test__)
 
 TAGS etags:
 	etags `find $(TOPSRCDIR) -name '*.[chS]' -print | grep -v dbgmain`

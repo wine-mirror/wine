@@ -32,6 +32,8 @@ RC_SRCS = \
 
 CTESTS = tests/vartest.c
 
+EXTRASUBDIRS = tests
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:

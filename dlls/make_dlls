@@ -246,9 +246,6 @@ foreach $mod (keys %linkable_dlls)
 print NEWMAKE <<EOF;
 # Misc rules
 
-\$(SUBDIRS:%=%/__test__): dummy
-	\@cd `dirname \$\@` && \$(MAKE) test
-
 \$(SUBDIRS:%=%/__checklink__): dummy
 	\@cd `dirname \$\@` && \$(MAKE) checklink
 

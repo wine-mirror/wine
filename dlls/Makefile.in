@@ -840,9 +840,6 @@ libkernel32.dll.$(LIBEXT): kernel/kernel32.dll$(DLLEXT)
 
 # Misc rules
 
-$(SUBDIRS:%=%/__test__): dummy
-	@cd `dirname $@` && $(MAKE) test
-
 $(SUBDIRS:%=%/__checklink__): dummy
 	@cd `dirname $@` && $(MAKE) checklink
 

@@ -259,6 +259,9 @@ $(SUBDIRS:%=%/__uninstall__): dummy
 
 check test:: $(TESTRESULTS)
 
+$(SUBDIRS:%=%/__test__): dummy
+	@cd `dirname $@` && $(MAKE) test
+
 $(PLTESTS:.c=.ok): $(WINETEST)
 $(CTESTS:.c=.ok): $(TESTPROGRAM).so
 
