@@ -140,9 +140,13 @@ LIB_TARGET  = @LIB_TARGET@
 
 ALT_LINK    = @ALT_LINK@
 
-all: $(MAIN_TARGET)
+all: Makefile Make.rules $(MAIN_TARGET)
 
 @MAKE_RULES@
+
+Make.rules: Make.rules.in configure
+	@echo $? is newer than 'Make.rules', please rerun ./configure!
+	@exit 1
 
 install:: install_$(MAIN_TARGET)
 

@@ -136,8 +136,12 @@ $(BUILD) checkbuild:
 
 # Rule for main module
 
-$(MODULE).o: $(OBJS)
+$(MODULE).o: Makefile $(OBJS)
 	$(LDCOMBINE) $(OBJS) -o $(MODULE).o
+
+Makefile: Makefile.in $(TOPSRCDIR)/configure
+	@echo Makefile is older than $?, please rerun $(TOPSRCDIR)/configure
+	@exit 1
 
 # Rules for auto documentation
 
