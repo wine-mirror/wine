@@ -1,4 +1,3 @@
-heap	65520
 rsrc	version16.res
 
 1   pascal   SetBkColor(word long) SetBkColor16

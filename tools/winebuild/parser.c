@@ -504,13 +504,7 @@ SPEC_TYPE ParseTopLevel( FILE *file, int def_only )
 
     while ((token = GetToken(1)) != NULL)
     {
-	if (strcmp(token, "heap") == 0)
-	{
-            token = GetToken(0);
-            if (!IsNumberString(token)) fatal_error( "Expected number after heap\n" );
-            DLLHeapSize = atoi(token);
-	}
-        else if (strcmp(token, "init") == 0)
+        if (strcmp(token, "init") == 0)
         {
             if (SpecType == SPEC_WIN16)
                 fatal_error( "init cannot be used for Win16 spec files\n" );
@@ -542,7 +536,7 @@ SPEC_TYPE ParseTopLevel( FILE *file, int def_only )
 	    ParseOrdinal( atoi(token) );
 	}
 	else
-            fatal_error( "Expected name, id, length or ordinal\n" );
+            fatal_error( "Expected ordinal declaration\n" );
     }
 
     if (SpecType == SPEC_WIN16 && !owner_name[0])

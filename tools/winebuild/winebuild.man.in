@@ -83,6 +83,10 @@ Ignored for compatibility with the C compiler.
 .B \-h
 Display a usage message and exit.
 .TP
+.BI \-H\  size
+Specify the size of the module local heap in bytes (only valid for
+Win16 modules); default is no local heap.
+.TP
 .BI \-I\  directory
 Ignored for compatibility with the C compiler.
 .TP
@@ -130,9 +134,14 @@ passed to the entry point.
 .br
 This option is only meaningful in \fB-exe\fR mode.
 .TP
+.BI \-N\  dllname
+Set the internal name of the module. It is only used in Win16
+modules. The default is to use the base name of the spec file (without
+any extension). This is used for KERNEL, since it lives in
+KRNL386.EXE. It shouldn't be needed otherwise.
+.TP
 .BI \-o\  file
 Set the name of the output file (default is standard output).
-.TP
 .TP
 .BI \-res\  rsrc.res
 Load resources from the specified binary resource file. The
@@ -147,14 +156,6 @@ Turn on warnings.
 A spec file should contain a number of optional directives, and then a
 list of ordinal declarations. The general syntax is the following:
 .PP
-.RB [ name\  \fIname\fR]
-.br
-.RB [ file\  \fIwinfilename\fR]
-.br
-.RB [ mode\ dll | cuiexe | guiexe | cuiexe_unicode | guiexe_unicode ]
-.br
-.RB [ heap\  \fIsize\fR]
-.br
 .RB [ init\  \fIfunction\fR]
 .br
 .RB [ rsrc\  \fIresfile\fR]
@@ -181,25 +182,6 @@ list of ordinal declarations. The general syntax is the following:
 .IB ordinal\  forward
 .RI [ flags ]\  exportname\ forwardname
 .SS "Optional directives"
-.B name
-is the internal name of the module. It is only used in Win16
-modules. The default is to use the base name of the spec file (without
-any extension). This is used for KERNEL, since it lives in
-KRNL386.EXE. It shouldn't be needed otherwise.
-.PP
-.B file
-is used to give the name of the file containing the dll. If not
-specified it is determined from the name of the source spec
-file. Normally you shouldn't ever need to specify it explicitly.
-.PP
-.B mode
-is used to specify whether this is the spec file for a dll or the main
-exe.  This is only valid for Win32 spec files.
-.PP
-.B heap
-specifies the size of the module local heap (only valid for Win16
-modules); default is no local heap.
-.PP
 .B init
 specifies a function which will be called when this dll is
 loaded. This is only valid for Win32 modules.

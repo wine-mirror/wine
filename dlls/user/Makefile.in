@@ -98,7 +98,10 @@ EXTRASUBDIRS = \
 
 @MAKE_DLL_RULES@
 
-# Special rules for 16-bit resource files
+# Special rules for 16-bit resource and spec files
+
+user.exe.spec.c: user.exe.spec resources/version16.res
+	$(LDPATH) $(WINEBUILD) $(DEFS) -H 65520 -o $@ -M $(MODULE) -spec $(SRCDIR)/user.exe.spec
 
 resources/display.res: resources/display.rc
 	$(LDPATH) $(WRC) $(DIVINCL) -o $@ -w16 -m -r $(SRCDIR)/resources/display.rc
@@ -112,7 +115,5 @@ resources/version16.res: resources/version16.rc
 display.spec.c: resources/display.res
 
 mouse.spec.c: resources/mouse.res
-
-user.exe.spec.c: resources/version16.res
 
 ### Dependencies:
