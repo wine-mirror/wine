@@ -34,7 +34,7 @@
 
 #include "ole.h"
 #include "ifs.h"
-#include "compobj.h"
+#include "compobj_private.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
 

@@ -15,6 +15,8 @@
 #include "wine/obj_moniker.h"
 #include "wine/obj_base.h"
 
+#include "compobj_private.h"
+
 DEFAULT_DEBUG_CHANNEL(ole);
 
 /* filemoniker data structure */
