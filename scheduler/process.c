@@ -439,6 +439,10 @@ void PROCESS_Start(void)
      *       16-bit stack must be set up, which it is only after TASK_Create
      *       in the case of a 16-bit process. Thus, we send the signal here.
      */
+
+    /* Load USER32.DLL before calling UserSignalProc (relay debugging!) */
+    LoadLibraryA( "USER32.DLL" );
+
     PROCESS_CallUserSignalProc( USIG_PROCESS_CREATE, 0 );
 
     PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );  /* for initial thread */
