@@ -200,8 +200,10 @@ static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
 	D3DVALUE flAngle;
 	D3DVECTOR vLeft;
 	/* doppler shift related stuff */
+#if 0
 	D3DVALUE flFreq, flBufferVel, flListenerVel;
-	
+#endif
+
 	if (ds3db->dsb->dsound->listener == NULL)
 		return;	
 	dsl = ds3db->dsb->dsound->listener;

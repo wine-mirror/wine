@@ -50,11 +50,13 @@ static VERSION_DESC sWineLook[] = {
     {"", ""}
 };
 
+#if 0
 static VERSION_DESC sWineDrivers[] = {
     {"x11drv", "X11 Interface"},
     {"ttydrv", "TTY Interface"},
     {"", ""}
 };
+#endif
 
 static DLL_DESC sDLLType[] = {
     {"oleaut32", DLL_BUILTIN},
