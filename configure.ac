@@ -91,7 +91,6 @@ AC_CHECK_TOOL(STRIP,strip,strip)
 AC_CHECK_TOOL(WINDRES,windres,false)
 AC_PROG_LN_S
 WINE_PROG_LN
-AC_CHECK_PROG(C2MAN,c2man,c2man,\$(TOPSRCDIR)/tools/c2man.pl)
 AC_PATH_PROG(LDCONFIG, ldconfig, true, [/sbin /usr/sbin $PATH])
 AC_PROG_INSTALL
 dnl Prepend src dir to install path dir if it's a relative path
