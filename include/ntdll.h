@@ -168,6 +168,24 @@ typedef struct _UNICODE_STRING {
 	LPWSTR	Buffer;
 } UNICODE_STRING,*LPUNICODE_STRING;
 
+typedef struct _RTL_RWLOCK {
+	CRITICAL_SECTION	rtlCS;
+	HANDLE32		hSharedReleaseSemaphore;
+	UINT32			uSharedWaiters;
+	HANDLE32		hExclusiveReleaseSemaphore;
+	UINT32			uExclusiveWaiters;
+	INT32			iNumberActive;
+	HANDLE32		hOwningThreadId;
+	DWORD			dwTimeoutBoost;
+	PVOID			pDebugInfo;
+} RTL_RWLOCK, *LPRTL_RWLOCK;
+
+VOID   WINAPI RtlInitializeResource(LPRTL_RWLOCK);
+VOID   WINAPI RtlDeleteResource(LPRTL_RWLOCK);
+BYTE   WINAPI RtlAcquireResourceExclusive(LPRTL_RWLOCK, BYTE fWait);
+BYTE   WINAPI RtlAcquireResourceShared(LPRTL_RWLOCK, BYTE fWait);
+VOID   WINAPI RtlReleaseResource(LPRTL_RWLOCK);
+VOID   WINAPI RtlDumpResource(LPRTL_RWLOCK);
 
 BOOL32 WINAPI IsValidSid(LPSID);
 BOOL32 WINAPI EqualSid(LPSID,LPSID);

@@ -261,8 +261,8 @@ type	win32
 253 stub RtlAbortRXact
 254 stub RtlAbsoluteToSelfRelativeSD
 255 stdcall RtlAcquirePebLock() RtlAcquirePebLock
-256 stub RtlAcquireResourceExclusive
-257 stub RtlAcquireResourceShared
+256 stdcall RtlAcquireResourceExclusive(ptr long) RtlAcquireResourceExclusive
+257 stdcall RtlAcquireResourceShared(ptr long) RtlAcquireResourceShared
 258 stdcall RtlAddAccessAllowedAce(long long long long) RtlAddAccessAllowedAce
 259 stub RtlAddAccessDeniedAce
 260 stdcall RtlAddAce(ptr long long ptr long) RtlAddAce
@@ -335,7 +335,7 @@ type	win32
 327 stdcall RtlDeleteCriticalSection(ptr) DeleteCriticalSection
 328 stub RtlDeleteElementGenericTable
 329 stub RtlDeleteRegistryValue
-330 stub RtlDeleteResource
+330 stdcall RtlDeleteResource(ptr) RtlDeleteResource
 331 stdcall RtlDeleteSecurityObject(long) RtlDeleteSecurityObject
 332 stdcall RtlDestroyEnvironment(long) RtlDestroyEnvironment
 333 stdcall RtlDestroyHeap(long) HeapDestroy
@@ -345,7 +345,7 @@ type	win32
 337 stub RtlDoesFileExists_U
 338 stdcall RtlDosPathNameToNtPathName_U(ptr ptr long long) RtlDosPathNameToNtPathName_U
 339 stub RtlDosSearchPath_U
-340 stub RtlDumpResource
+340 stdcall RtlDumpResource(ptr) RtlDumpResource
 341 stub RtlEnlargedIntegerMultiply
 342 stub RtlEnlargedUnsignedDivide
 343 stub RtlEnlargedUnsignedMultiply
@@ -414,7 +414,7 @@ type	win32
 406 stdcall RtlInitializeCriticalSection(ptr) InitializeCriticalSection
 407 stub RtlInitializeGenericTable
 408 stub RtlInitializeRXact
-409 stdcall RtlInitializeResource(long) RtlInitializeResource
+409 stdcall RtlInitializeResource(ptr) RtlInitializeResource
 410 stdcall RtlInitializeSid(ptr ptr long) RtlInitializeSid
 411 stub RtlInsertElementGenericTable
 412 stdcall RtlIntegerToChar(long long long long) RtlIntegerToChar
@@ -476,7 +476,7 @@ type	win32
 468 stub RtlRealPredecessor
 469 stub RtlRealSuccessor
 470 stdcall RtlReleasePebLock() RtlReleasePebLock
-471 stub RtlReleaseResource
+471 stdcall RtlReleaseResource(ptr) RtlReleaseResource
 472 stub RtlRemoteCall
 473 stub RtlResetRtlTranslations
 474 stub RtlRunDecodeUnicodeString

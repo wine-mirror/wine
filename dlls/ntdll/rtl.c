@@ -4,6 +4,7 @@
  * This file contains the Rtl* API functions. These should be implementable.
  * 
  * Copyright 1996-1998 Marcus Meissner
+ *		  1999 Alex Korobka
  */
 
 #include <stdlib.h>
@@ -834,13 +835,6 @@ DWORD WINAPI RtlTimeToTimeFields(DWORD x1,DWORD x2) {
 	return 0;
 }
 /******************************************************************************
- *  RtlInitializeResource	[NTDLL] 
- */
-NTSTATUS WINAPI RtlInitializeResource(DWORD x1) {
-	FIXME(ntdll,"(0x%08lx),stub!\n",x1);
-	return 0;
-}
-/******************************************************************************
  *	RtlCompareUnicodeString	[NTDLL] 
  */
 NTSTATUS WINAPI RtlCompareUnicodeString(LPUNICODE_STRING x1,LPUNICODE_STRING x2,DWORD x3) {
@@ -858,3 +852,189 @@ void __cdecl DbgPrint(LPCSTR fmt,LPVOID args) {
 	MSG("DbgPrint says: %s",buf);
 	/* hmm, raise exception? */
 }
+
+/***********************************************************************
+ *           RtlInitializeResource	(NTDLL.409)
+ *
+ * xxxResource() functions implement multiple-reader-single-writer lock.
+ * The code is based on information published in WDJ January 1999 issue.
+ */
+void WINAPI RtlInitializeResource(LPRTL_RWLOCK rwl)
+{
+    if( rwl )
+    {
+	rwl->iNumberActive = 0;
+	rwl->uExclusiveWaiters = 0;
+	rwl->uSharedWaiters = 0;
+	rwl->hOwningThreadId = 0;
+	rwl->dwTimeoutBoost = 0; /* no info on this one, default value is 0 */
+	InitializeCriticalSection( &rwl->rtlCS );
+	rwl->hExclusiveReleaseSemaphore = CreateSemaphore32A( NULL, 0, 65535, NULL );
+	rwl->hSharedReleaseSemaphore = CreateSemaphore32A( NULL, 0, 65535, NULL );
+    }
+}
+
+
+/***********************************************************************
+ *           RtlDeleteResource		(NTDLL.330)
+ */
+void WINAPI RtlDeleteResource(LPRTL_RWLOCK rwl)
+{
+    if( rwl )
+    {
+	EnterCriticalSection( &rwl->rtlCS );
+	if( rwl->iNumberActive || rwl->uExclusiveWaiters || rwl->uSharedWaiters )
+	    MSG("Deleting active MRSW lock (%p), expect failure\n", rwl );
+	rwl->hOwningThreadId = 0;
+	rwl->uExclusiveWaiters = rwl->uSharedWaiters = 0;
+	rwl->iNumberActive = 0;
+	CloseHandle( rwl->hExclusiveReleaseSemaphore );
+	CloseHandle( rwl->hSharedReleaseSemaphore );
+	LeaveCriticalSection( &rwl->rtlCS );
+	DeleteCriticalSection( &rwl->rtlCS );
+    }
+}
+
+
+/***********************************************************************
+ *          RtlAcquireResourceExclusive	(NTDLL.256)
+ */
+BYTE WINAPI RtlAcquireResourceExclusive(LPRTL_RWLOCK rwl, BYTE fWait)
+{
+    BYTE retVal = 0;
+    if( !rwl ) return 0;
+
+start:
+    EnterCriticalSection( &rwl->rtlCS );
+    if( rwl->iNumberActive == 0 ) /* lock is free */
+    {
+	rwl->iNumberActive = -1;
+	retVal = 1;
+    }
+    else if( rwl->iNumberActive < 0 ) /* exclusive lock in progress */
+    {
+	 if( rwl->hOwningThreadId == GetCurrentThreadId() )
+	 {
+	     retVal = 1;
+	     rwl->iNumberActive--;
+	     goto done;
+	 }
+wait:
+	 if( fWait )
+	 {
+	     rwl->uExclusiveWaiters++;
+
+	     LeaveCriticalSection( &rwl->rtlCS );
+	     if( WaitForSingleObject( rwl->hExclusiveReleaseSemaphore, INFINITE32 ) == WAIT_FAILED )
+		 goto done;
+	     goto start; /* restart the acquisition to avoid deadlocks */
+	 }
+    }
+    else  /* one or more shared locks are in progress */
+	 if( fWait )
+	     goto wait;
+	 
+    if( retVal == 1 )
+	rwl->hOwningThreadId = GetCurrentThreadId();
+done:
+    LeaveCriticalSection( &rwl->rtlCS );
+    return retVal;
+}
+
+/***********************************************************************
+ *          RtlAcquireResourceShared	(NTDLL.257)
+ */
+BYTE WINAPI RtlAcquireResourceShared(LPRTL_RWLOCK rwl, BYTE fWait)
+{
+    DWORD dwWait = WAIT_FAILED;
+    BYTE retVal = 0;
+    if( !rwl ) return 0;
+
+start:
+    EnterCriticalSection( &rwl->rtlCS );
+    if( rwl->iNumberActive < 0 )
+    {
+	if( rwl->hOwningThreadId == GetCurrentThreadId() )
+	{
+	    rwl->iNumberActive--;
+	    retVal = 1;
+	    goto done;
+	}
+	
+	if( fWait )
+	{
+	    rwl->uSharedWaiters++;
+	    LeaveCriticalSection( &rwl->rtlCS );
+	    if( (dwWait = WaitForSingleObject( rwl->hSharedReleaseSemaphore, INFINITE32 )) == WAIT_FAILED )
+		goto done;
+	    goto start;
+	}
+    }
+    else 
+    {
+	if( dwWait != WAIT_OBJECT_0 ) /* otherwise RtlReleaseResource() has already done it */
+	    rwl->iNumberActive++;
+	retVal = 1;
+    }
+done:
+    LeaveCriticalSection( &rwl->rtlCS );
+    return retVal;
+}
+
+
+/***********************************************************************
+ *           RtlReleaseResource		(NTDLL.471)
+ */
+void WINAPI RtlReleaseResource(LPRTL_RWLOCK rwl)
+{
+    EnterCriticalSection( &rwl->rtlCS );
+
+    if( rwl->iNumberActive > 0 ) /* have one or more readers */
+    {
+	if( --rwl->iNumberActive == 0 )
+	{
+	    if( rwl->uExclusiveWaiters )
+	    {
+wake_exclusive:
+		rwl->uExclusiveWaiters--;
+		ReleaseSemaphore( rwl->hExclusiveReleaseSemaphore, 1, NULL );
+	    }
+	}
+    }
+    else 
+    if( rwl->iNumberActive < 0 ) /* have a writer, possibly recursive */
+    {
+	if( ++rwl->iNumberActive == 0 )
+	{
+	    rwl->hOwningThreadId = 0;
+	    if( rwl->uExclusiveWaiters )
+		goto wake_exclusive;
+	    else
+		if( rwl->uSharedWaiters )
+		{
+		    UINT32 n = rwl->uSharedWaiters;
+		    rwl->iNumberActive = rwl->uSharedWaiters; /* prevent new writers from joining until
+							       * all queued readers have done their thing */
+		    rwl->uSharedWaiters = 0;
+		    ReleaseSemaphore( rwl->hSharedReleaseSemaphore, n, NULL );
+		}
+	}
+    }
+    LeaveCriticalSection( &rwl->rtlCS );
+}
+
+
+/***********************************************************************
+ *           RtlDumpResource		(NTDLL.340)
+ */
+void WINAPI RtlDumpResource(LPRTL_RWLOCK rwl)
+{
+    if( rwl )
+    {
+	MSG("RtlDumpResource(%p):\n\tactive count = %i\n\twaiting readers = %i\n\twaiting writers = %i\n",  
+		rwl, rwl->iNumberActive, rwl->uSharedWaiters, rwl->uExclusiveWaiters );
+	if( rwl->iNumberActive )
+	    MSG("\towner thread = %08x\n", rwl->hOwningThreadId );
+    }
+}
+
