@@ -221,6 +221,11 @@ LANG_END
 LANG_BEGIN (LANG_THAI, SUBLANG_DEFAULT)	/*0x41e*/
 #include "nls/tha.nls"
 LANG_END
+
+LANG_BEGIN (LANG_TURKISH, SUBLANG_DEFAULT) /*0x41f*/
+#include "nls/trk.nls"
+LANG_END
+
 LANG_BEGIN (LANG_GAELIC, SUBLANG_DEFAULT) /* 0x043c */
 #include "nls/gae.nls"
 LANG_END
