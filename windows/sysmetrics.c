@@ -109,9 +109,6 @@ static int SYSMETRICS_GetRegistryMetric (
  * SM_CYFULLSCREEN     x-1      x
  * SM_CXFRAME                           Fixed July 6, 2001 - Bill Medland
  *
- * (collides with TWEAK_WineLook sometimes,
- * so changing anything might be difficult)
- *
  * Starting at Win95 there are now a large number or Registry entries in the
  * [WindowMetrics] section that are probably relevant here.
  */
@@ -126,36 +123,22 @@ void SYSMETRICS_Init(void)
     if (RegOpenKeyExA (HKEY_CURRENT_USER, "Control Panel\\desktop\\WindowMetrics",
                        0, KEY_QUERY_VALUE, &hkey) != ERROR_SUCCESS) hkey = 0;
 
-    if (TWEAK_WineLook > WIN31_LOOK)
-    {
-        sysMetrics[SM_CXVSCROLL] = SYSMETRICS_GetRegistryMetric( hkey, "ScrollWidth", 16 );
-        sysMetrics[SM_CYHSCROLL] = sysMetrics[SM_CXVSCROLL];
+    sysMetrics[SM_CXVSCROLL] = SYSMETRICS_GetRegistryMetric( hkey, "ScrollWidth", 16 );
+    sysMetrics[SM_CYHSCROLL] = sysMetrics[SM_CXVSCROLL];
 
-        /* The Win 2000 resource kit SAYS that this is governed by the ScrollHeight
-         * but on my computer that controls the CYV/CXH values. */
-        sysMetrics[SM_CYCAPTION] = SYSMETRICS_GetRegistryMetric(hkey, "CaptionHeight", 18)
-                                     + 1; /* for the separator? */
+    /* The Win 2000 resource kit SAYS that this is governed by the ScrollHeight
+     * but on my computer that controls the CYV/CXH values. */
+    sysMetrics[SM_CYCAPTION] = SYSMETRICS_GetRegistryMetric(hkey, "CaptionHeight", 18)
+                                 + 1; /* for the separator? */
 
-        sysMetrics[SM_CYMENU] = SYSMETRICS_GetRegistryMetric (hkey, "MenuHeight", 18) + 1;
+    sysMetrics[SM_CYMENU] = SYSMETRICS_GetRegistryMetric (hkey, "MenuHeight", 18) + 1;
 
 
-        sysMetrics[SM_CXDLGFRAME] = 3;
-        sysMetrics[SM_CYDLGFRAME] = sysMetrics[SM_CXDLGFRAME];
+    sysMetrics[SM_CXDLGFRAME] = 3;
+    sysMetrics[SM_CYDLGFRAME] = sysMetrics[SM_CXDLGFRAME];
 
-        /* force setting of SM_CXFRAME/SM_CYFRAME */
-        SystemParametersInfoA( SPI_GETBORDER, 0, &dummy, 0 );
-    }
-    else
-    {
-        sysMetrics[SM_CXVSCROLL]  = 17;
-        sysMetrics[SM_CYHSCROLL]  = sysMetrics[SM_CXVSCROLL];
-        sysMetrics[SM_CYCAPTION]  = 20;
-        sysMetrics[SM_CYMENU]     = 18;
-        sysMetrics[SM_CXDLGFRAME] = 4;
-        sysMetrics[SM_CYDLGFRAME] = sysMetrics[SM_CXDLGFRAME];
-        sysMetrics[SM_CXFRAME]    = GetProfileIntA("Windows", "BorderWidth", 4) + 1;
-        sysMetrics[SM_CYFRAME]    = sysMetrics[SM_CXFRAME];
-    }
+    /* force setting of SM_CXFRAME/SM_CYFRAME */
+    SystemParametersInfoA( SPI_GETBORDER, 0, &dummy, 0 );
 
     sysMetrics[SM_CXCURSOR] = 32;
     sysMetrics[SM_CYCURSOR] = 32;
@@ -180,8 +163,8 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_RESERVED4] = 0;
 
     /* FIXME: The following two are calculated, but how? */
-    sysMetrics[SM_CXMIN] = (TWEAK_WineLook > WIN31_LOOK) ? 112 : 100;
-    sysMetrics[SM_CYMIN] = (TWEAK_WineLook > WIN31_LOOK) ? 27 : 28;
+    sysMetrics[SM_CXMIN] = 112;
+    sysMetrics[SM_CYMIN] = 27;
 
     sysMetrics[SM_CXSIZE] = sysMetrics[SM_CYCAPTION] - 1;
     sysMetrics[SM_CYSIZE] = sysMetrics[SM_CXSIZE];

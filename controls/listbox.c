@@ -3102,8 +3102,7 @@ static LRESULT WINAPI ComboLBWndProc_common( HWND hwnd, UINT msg,
         switch( msg )
         {
         case WM_MOUSEMOVE:
-            if ( (TWEAK_WineLook > WIN31_LOOK) &&
-                 (CB_GETTYPE(lphc) != CBS_SIMPLE) )
+            if ( (CB_GETTYPE(lphc) != CBS_SIMPLE) )
             {
                 POINT   mousePos;
                 BOOL    captured;
@@ -3138,11 +3137,9 @@ static LRESULT WINAPI ComboLBWndProc_common( HWND hwnd, UINT msg,
                 return 0;
 
             }
-            /* else we are in Win3.1 look, go with the default behavior. */
             break;
 
         case WM_LBUTTONUP:
-            if (TWEAK_WineLook > WIN31_LOOK)
             {
                 POINT mousePos;
                 RECT  clientRect;

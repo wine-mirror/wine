@@ -69,10 +69,10 @@ static UINT	CBitHeight, CBitWidth;
  */
 
 #define COMBO_YBORDERGAP         5
-#define COMBO_XBORDERSIZE()      ( (TWEAK_WineLook == WIN31_LOOK) ? 0 : 2 )
-#define COMBO_YBORDERSIZE()      ( (TWEAK_WineLook == WIN31_LOOK) ? 0 : 2 )
-#define COMBO_EDITBUTTONSPACE()  ( (TWEAK_WineLook == WIN31_LOOK) ? 8 : 0 )
-#define EDIT_CONTROL_PADDING()   ( (TWEAK_WineLook == WIN31_LOOK) ? 0 : 1 )
+#define COMBO_XBORDERSIZE()      2
+#define COMBO_YBORDERSIZE()      2
+#define COMBO_EDITBUTTONSPACE()  0
+#define EDIT_CONTROL_PADDING()   1
 
 static LRESULT WINAPI ComboWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 static LRESULT WINAPI ComboWndProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
@@ -571,11 +571,8 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
 	 * In win 95 look n feel, the listbox in the simple combobox has
 	 * the WS_EXCLIENTEDGE style instead of the WS_BORDER style.
 	 */
-	if (TWEAK_WineLook > WIN31_LOOK)
-	{
-	  lbeStyle   &= ~WS_BORDER;
-	  lbeExStyle |= WS_EX_CLIENTEDGE;
-	}
+	lbeStyle   &= ~WS_BORDER;
+	lbeExStyle |= WS_EX_CLIENTEDGE;
       }
 
       if (unicode)
@@ -599,13 +596,6 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
       {
 	  BOOL	bEdit = TRUE;
 	  lbeStyle = WS_CHILD | WS_VISIBLE | ES_NOHIDESEL | ES_LEFT | ES_COMBO;
-
-	  /*
-	   * In Win95 look, the border fo the edit control is
-	   * provided by the combobox
-	   */
-	  if (TWEAK_WineLook == WIN31_LOOK)
-	    lbeStyle |= WS_BORDER;
 
 	  if( lphc->wState & CBF_EDIT )
 	  {
@@ -671,84 +661,21 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
  *
  * Paint combo button (normal, pressed, and disabled states).
  */
-static void CBPaintButton(
-  LPHEADCOMBO lphc,
-  HDC         hdc,
-  RECT        rectButton)
+static void CBPaintButton( LPHEADCOMBO lphc, HDC hdc, RECT rectButton)
 {
+    UINT buttonState = DFCS_SCROLLCOMBOBOX;
+
     if( lphc->wState & CBF_NOREDRAW )
       return;
 
-    if (TWEAK_WineLook == WIN31_LOOK)
-    {
-        UINT 	  x, y;
-	BOOL 	  bBool;
-	HDC       hMemDC;
-	HBRUSH    hPrevBrush;
-	COLORREF  oldTextColor, oldBkColor;
 
+    if (lphc->wState & CBF_BUTTONDOWN)
+	buttonState |= DFCS_PUSHED;
 
-	hPrevBrush = SelectObject(hdc, GetSysColorBrush(COLOR_BTNFACE));
+    if (CB_DISABLED(lphc))
+	buttonState |= DFCS_INACTIVE;
 
-	/*
-	 * Draw the button background
-	 */
-	PatBlt( hdc,
-		rectButton.left,
-		rectButton.top,
-		rectButton.right-rectButton.left,
-		rectButton.bottom-rectButton.top,
-		PATCOPY );
-
-	if( (bBool = lphc->wState & CBF_BUTTONDOWN) )
-	{
-	    DrawEdge( hdc, &rectButton, EDGE_SUNKEN, BF_RECT );
-	}
-	else
-	{
-	    DrawEdge( hdc, &rectButton, EDGE_RAISED, BF_RECT );
-	}
-
-	/*
-	 * Remove the edge of the button from the rectangle
-	 * and calculate the position of the bitmap.
-	 */
-	InflateRect( &rectButton, -2, -2);
-
-	x = (rectButton.left + rectButton.right - CBitWidth) >> 1;
-	y = (rectButton.top + rectButton.bottom - CBitHeight) >> 1;
-
-
-	hMemDC = CreateCompatibleDC( hdc );
-	SelectObject( hMemDC, hComboBmp );
-	oldTextColor = SetTextColor( hdc, GetSysColor(COLOR_BTNFACE) );
-	oldBkColor = SetBkColor( hdc, CB_DISABLED(lphc) ? RGB(128,128,128) :
-				 RGB(0,0,0) );
-	BitBlt( hdc, x, y, CBitWidth, CBitHeight, hMemDC, 0, 0, SRCCOPY );
-	SetBkColor( hdc, oldBkColor );
-	SetTextColor( hdc, oldTextColor );
-	DeleteDC( hMemDC );
-	SelectObject( hdc, hPrevBrush );
-    }
-    else
-    {
-        UINT buttonState = DFCS_SCROLLCOMBOBOX;
-
-	if (lphc->wState & CBF_BUTTONDOWN)
-	{
-	    buttonState |= DFCS_PUSHED;
-	}
-
-	if (CB_DISABLED(lphc))
-	{
-	  buttonState |= DFCS_INACTIVE;
-	}
-
-	DrawFrameControl(hdc,
-			 &rectButton,
-			 DFC_SCROLL,
-			 buttonState);
-    }
+    DrawFrameControl(hdc, &rectButton, DFC_SCROLL, buttonState);
 }
 
 /***********************************************************************
@@ -1020,10 +947,7 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC hParamDC)
       /*
        * In non 3.1 look, there is a sunken border on the combobox
        */
-      if (TWEAK_WineLook != WIN31_LOOK)
-      {
-	CBPaintBorder(lphc->self, lphc, hDC);
-      }
+      CBPaintBorder(lphc->self, lphc, hDC);
 
       if( !IsRectEmpty(&lphc->buttonRect) )
       {
@@ -1041,23 +965,7 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC hParamDC)
       }
 
       if( !(lphc->wState & CBF_EDIT) )
-      {
-	/*
-	 * The text area has a border only in Win 3.1 look.
-	 */
-	if (TWEAK_WineLook == WIN31_LOOK)
-	{
-	  HPEN hPrevPen = SelectObject( hDC, SYSCOLOR_GetPen(COLOR_WINDOWFRAME) );
-
-	  Rectangle( hDC,
-		     lphc->textRect.left, lphc->textRect.top,
-		     lphc->textRect.right - 1, lphc->textRect.bottom - 1);
-
-	  SelectObject( hDC, hPrevPen );
-	}
-
 	CBPaintText( lphc, hDC, lphc->textRect);
-      }
 
       if( hPrevBrush )
 	SelectObject( hDC, hPrevBrush );

@@ -720,11 +720,8 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                 border = SYSPARAMS_Twips2Pixels( atoiW(buf) );
 
             spi_loaded[spi_idx] = TRUE;
-            if (TWEAK_WineLook > WIN31_LOOK)
-            {
-                SYSMETRICS_Set( SM_CXFRAME, border + GetSystemMetrics( SM_CXDLGFRAME ) );
-                SYSMETRICS_Set( SM_CYFRAME, border + GetSystemMetrics( SM_CXDLGFRAME ) );
-            }
+            SYSMETRICS_Set( SM_CXFRAME, border + GetSystemMetrics( SM_CXDLGFRAME ) );
+            SYSMETRICS_Set( SM_CYFRAME, border + GetSystemMetrics( SM_CXDLGFRAME ) );
         }
 	*(INT *)pvParam = border;
 	break;
@@ -743,11 +740,8 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             {
                 border = uiParam;
                 spi_loaded[spi_idx] = TRUE;
-                if (TWEAK_WineLook > WIN31_LOOK)
-                {
-                    SYSMETRICS_Set( SM_CXFRAME, uiParam + GetSystemMetrics( SM_CXDLGFRAME ) );
-                    SYSMETRICS_Set( SM_CYFRAME, uiParam + GetSystemMetrics( SM_CXDLGFRAME ) );
-                }
+                SYSMETRICS_Set( SM_CXFRAME, uiParam + GetSystemMetrics( SM_CXDLGFRAME ) );
+                SYSMETRICS_Set( SM_CYFRAME, uiParam + GetSystemMetrics( SM_CXDLGFRAME ) );
             }
         }
         else
@@ -1309,11 +1303,10 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
 	    /* menu font metrics */
 	    SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfMenuFont), 0 );
-	    GetProfileStringW( Desktop, MenuFont,
-			       (TWEAK_WineLook > WIN31_LOOK) ? lpnm->lfCaptionFont.lfFaceName : System,
+	    GetProfileStringW( Desktop, MenuFont, lpnm->lfCaptionFont.lfFaceName,
 			       lpnm->lfMenuFont.lfFaceName, LF_FACESIZE );
 	    lpnm->lfMenuFont.lfHeight = -GetProfileIntW( Desktop, MenuFontSize, 11 );
-	    lpnm->lfMenuFont.lfWeight = (TWEAK_WineLook > WIN31_LOOK) ? FW_NORMAL : FW_BOLD;
+	    lpnm->lfMenuFont.lfWeight = FW_NORMAL;
 
 	    /* status bar font metrics */
 	    SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0,

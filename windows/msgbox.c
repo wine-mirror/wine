@@ -47,20 +47,19 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     int i, buttons;
     int bspace, bw, bh, theight, tleft, wwidth, wheight, bpos;
     int borheight, borwidth, iheight, ileft, iwidth, twidth, tiheight;
+    NONCLIENTMETRICSW nclm;
     LPCWSTR lpszText;
     WCHAR buf[256];
 
-    if (TWEAK_WineLook >= WIN95_LOOK) {
-	NONCLIENTMETRICSW nclm;
-	nclm.cbSize = sizeof(nclm);
-	SystemParametersInfoW (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
-	hFont = CreateFontIndirectW (&nclm.lfMessageFont);
-	/* set button font */
-	for (i=1; i < 8; i++)
-	    SendDlgItemMessageW (hwnd, i, WM_SETFONT, (WPARAM)hFont, 0);
-	/* set text font */
-	SendDlgItemMessageW (hwnd, MSGBOX_IDTEXT, WM_SETFONT, (WPARAM)hFont, 0);
-    }
+    nclm.cbSize = sizeof(nclm);
+    SystemParametersInfoW (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
+    hFont = CreateFontIndirectW (&nclm.lfMessageFont);
+    /* set button font */
+    for (i=1; i < 8; i++)
+	SendDlgItemMessageW (hwnd, i, WM_SETFONT, (WPARAM)hFont, 0);
+    /* set text font */
+    SendDlgItemMessageW (hwnd, MSGBOX_IDTEXT, WM_SETFONT, (WPARAM)hFont, 0);
+
     if (HIWORD(lpmb->lpszCaption)) {
        SetWindowTextW(hwnd, lpmb->lpszCaption);
     } else {

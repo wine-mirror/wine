@@ -888,11 +888,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 
              /* under at least win95 you seem to be given a standard
                 height for the menu and the height value is ignored */
-
-	     if (TWEAK_WineLook == WIN31_LOOK)
-	    	lpitem->rect.bottom += GetSystemMetrics(SM_CYMENU);
-	     else
-	    	lpitem->rect.bottom += GetSystemMetrics(SM_CYMENU)-1;
+	     lpitem->rect.bottom += GetSystemMetrics(SM_CYMENU)-1;
         }
         else
             lpitem->rect.bottom += mis.itemHeight;
@@ -941,10 +937,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 	GetTextExtentPoint32W(hdc, lpitem->text,  strlenW(lpitem->text), &size);
 
 	lpitem->rect.right  += size.cx;
-	if (TWEAK_WineLook == WIN31_LOOK)
-	    lpitem->rect.bottom += max( size.cy, GetSystemMetrics(SM_CYMENU) );
-	else
-	    lpitem->rect.bottom += max(size.cy, GetSystemMetrics(SM_CYMENU)-1);
+	lpitem->rect.bottom += max(size.cy, GetSystemMetrics(SM_CYMENU)-1);
 	lpitem->xTab = 0;
 
 	if (menuBar)
@@ -989,13 +982,13 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND hwndOwner )
     SelectObject( hdc, hMenuFont);
 
     start = 0;
-    maxX = (TWEAK_WineLook == WIN31_LOOK) ? GetSystemMetrics(SM_CXBORDER) : 2+1 ;
+    maxX = 2 + 1;
 
     while (start < lppop->nItems)
     {
 	lpitem = &lppop->items[start];
 	orgX = maxX;
-	orgY = (TWEAK_WineLook == WIN31_LOOK) ? GetSystemMetrics(SM_CYBORDER) : 2;
+	orgY = 2;
 
 	maxTab = maxTabWidth = 0;
 
@@ -1032,11 +1025,8 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND hwndOwner )
     lppop->Width  = maxX;
 
     /* space for 3d border */
-    if(TWEAK_WineLook > WIN31_LOOK)
-    {
-	lppop->Height += 2;
-	lppop->Width += 2;
-    }
+    lppop->Height += 2;
+    lppop->Width += 2;
 
     ReleaseDC( 0, hdc );
 }
@@ -1130,17 +1120,8 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 
     if (lpitem->fType & MF_SYSMENU)
     {
-	if( !IsIconic(hwnd) ) {
-	    if (TWEAK_WineLook > WIN31_LOOK)
-		NC_DrawSysButton95( hwnd, hdc,
-				    lpitem->fState &
-				    (MF_HILITE | MF_MOUSESELECT) );
-	    else
-		NC_DrawSysButton( hwnd, hdc,
-				  lpitem->fState &
-				  (MF_HILITE | MF_MOUSESELECT) );
-	}
-
+	if( !IsIconic(hwnd) )
+	    NC_DrawSysButton( hwnd, hdc, lpitem->fState & (MF_HILITE | MF_MOUSESELECT) );
 	return;
     }
 
@@ -1213,38 +1194,20 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
         /* vertical separator */
         if (!menuBar && (lpitem->fType & MF_MENUBARBREAK))
         {
-	    if (TWEAK_WineLook > WIN31_LOOK)
-	    {
-	        RECT rc = rect;
-	        rc.top = 3;
-	        rc.bottom = height - 3;
-	        DrawEdge (hdc, &rc, EDGE_ETCHED, BF_LEFT);
-	    }
-	    else
-	    {
-	        SelectObject( hdc, SYSCOLOR_GetPen(COLOR_WINDOWFRAME) );
-	        MoveToEx( hdc, rect.left, 0, NULL );
-	        LineTo( hdc, rect.left, height );
-	    }
+	    RECT rc = rect;
+	    rc.top = 3;
+	    rc.bottom = height - 3;
+	    DrawEdge (hdc, &rc, EDGE_ETCHED, BF_LEFT);
         }
 
         /* horizontal separator */
         if (lpitem->fType & MF_SEPARATOR)
         {
-	    if (TWEAK_WineLook > WIN31_LOOK)
-	    {
-	        RECT rc = rect;
-	        rc.left++;
-	        rc.right--;
-	        rc.top += SEPARATOR_HEIGHT / 2;
-	        DrawEdge (hdc, &rc, EDGE_ETCHED, BF_TOP);
-	    }
-	    else
-	    {
-	        SelectObject( hdc, SYSCOLOR_GetPen(COLOR_WINDOWFRAME) );
-	        MoveToEx( hdc, rect.left, rect.top + SEPARATOR_HEIGHT/2, NULL );
-	        LineTo( hdc, rect.right, rect.top + SEPARATOR_HEIGHT/2 );
-	    }
+	    RECT rc = rect;
+	    rc.left++;
+	    rc.right--;
+	    rc.top += SEPARATOR_HEIGHT / 2;
+	    DrawEdge (hdc, &rc, EDGE_ETCHED, BF_TOP);
 	    return;
         }
     }
@@ -1384,7 +1347,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	    if ((lpitem->text[i] == '\t') || (lpitem->text[i] == '\b'))
 	        break;
 
-	if( (TWEAK_WineLook != WIN31_LOOK) && (lpitem->fState & MF_GRAYED))
+	if(lpitem->fState & MF_GRAYED)
 	{
 	    if (!(lpitem->fState & MF_HILITE) )
 	    {
@@ -1411,7 +1374,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 		uFormat = DT_RIGHT | DT_VCENTER | DT_SINGLELINE;
 	    }
 
-	    if( (TWEAK_WineLook != WIN31_LOOK) && (lpitem->fState & MF_GRAYED))
+	    if(lpitem->fState & MF_GRAYED)
 	    {
 		if (!(lpitem->fState & MF_HILITE) )
 		{
@@ -1445,12 +1408,6 @@ static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
 
     GetClientRect( hwnd, &rect );
 
-    if(TWEAK_WineLook == WIN31_LOOK)
-    {
-	rect.bottom -= POPUP_YSHADE * GetSystemMetrics(SM_CYBORDER);
-	rect.right -= POPUP_XSHADE * GetSystemMetrics(SM_CXBORDER);
-    }
-
     if((hPrevBrush = SelectObject( hdc, GetSysColorBrush(COLOR_MENU) ))
         && (SelectObject( hdc, hMenuFont)))
     {
@@ -1461,30 +1418,9 @@ static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
 	hPrevPen = SelectObject( hdc, GetStockObject( NULL_PEN ) );
 	if( hPrevPen )
 	{
-	    INT ropPrev, i;
 	    POPUPMENU *menu;
 
-	    /* draw 3-d shade */
-	    if(TWEAK_WineLook == WIN31_LOOK) {
-		SelectObject( hdc, hShadeBrush );
-		SetBkMode( hdc, TRANSPARENT );
-		ropPrev = SetROP2( hdc, R2_MASKPEN );
-
-		i = rect.right;		/* why SetBrushOrg() doesn't? */
-		PatBlt( hdc, i & 0xfffffffe,
-			  rect.top + POPUP_YSHADE*GetSystemMetrics(SM_CYBORDER),
-			  i%2 + POPUP_XSHADE*GetSystemMetrics(SM_CXBORDER),
-			  rect.bottom - rect.top, 0x00a000c9 );
-		i = rect.bottom;
-		PatBlt( hdc, rect.left + POPUP_XSHADE*GetSystemMetrics(SM_CXBORDER),
-			  i & 0xfffffffe,rect.right - rect.left,
-			  i%2 + POPUP_YSHADE*GetSystemMetrics(SM_CYBORDER), 0x00a000c9 );
-		SelectObject( hdc, hPrevPen );
-		SelectObject( hdc, hPrevBrush );
-		SetROP2( hdc, ropPrev );
-	    }
-	    else
-		DrawEdge (hdc, &rect, EDGE_RAISED, BF_RECT);
+	    DrawEdge (hdc, &rect, EDGE_RAISED, BF_RECT);
 
 	    /* draw menu items */
 
@@ -1591,12 +1527,6 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id,
             y = GetSystemMetrics(SM_CYSCREEN) - height;
     }
     if( y < 0 ) y = 0;
-
-    if( TWEAK_WineLook == WIN31_LOOK )
-    {
-        width += POPUP_XSHADE * GetSystemMetrics(SM_CXBORDER);  /* add space for shading */
-        height += POPUP_YSHADE * GetSystemMetrics(SM_CYBORDER);
-    }
 
     /* NOTE: In Windows, top menu popup is not owned. */
     menu->hWnd = CreateWindowExW( 0, POPUPMENU_CLASS_ATOMW, NULL,
@@ -2244,10 +2174,6 @@ static BOOL MENU_ButtonDown( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags )
 	    if(!(item->fState & MF_MOUSESELECT ))
 	    {
 		pmt->hCurrentMenu = MENU_ShowSubPopup( pmt->hOwnerWnd, hPtMenu, FALSE, wFlags );
-
-		/* In win31, a newly popped menu always remains opened for the next buttonup */
-		if(TWEAK_WineLook == WIN31_LOOK)
-		    ptmenu->bTimeToHide = FALSE;
 	    }
 
 	    return TRUE;
@@ -2778,9 +2704,9 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
                     /* In win95 winelook, the selected menu item must be changed every time the
                        mouse moves. In Win31 winelook, the mouse button has to be held down */
 
-                    if ( hmenu && ((TWEAK_WineLook > WIN31_LOOK) ||
+                    if ( hmenu && 
                          ( (msg.wParam & MK_LBUTTON) ||
-                           ((wFlags & TPM_RIGHTBUTTON) && (msg.wParam & MK_RBUTTON)))) )
+                           ((wFlags & TPM_RIGHTBUTTON) && (msg.wParam & MK_RBUTTON))) )
 
 			fEndMenu |= !MENU_MouseMove( &mt, hmenu, wFlags );
 
@@ -3875,18 +3801,9 @@ DWORD WINAPI DrawMenuBarTemp(HWND hwnd, HDC hDC, LPRECT lprect, HMENU hMenu, HFO
 
     FillRect(hDC, lprect, GetSysColorBrush(COLOR_MENU) );
 
-    if (TWEAK_WineLook == WIN31_LOOK)
-    {
-	SelectObject( hDC, SYSCOLOR_GetPen(COLOR_WINDOWFRAME) );
-	MoveToEx( hDC, lprect->left, lprect->bottom, NULL );
-	LineTo( hDC, lprect->right, lprect->bottom );
-    }
-    else
-    {
-	SelectObject( hDC, SYSCOLOR_GetPen(COLOR_3DFACE));
-	MoveToEx( hDC, lprect->left, lprect->bottom, NULL );
-	LineTo( hDC, lprect->right, lprect->bottom );
-    }
+    SelectObject( hDC, SYSCOLOR_GetPen(COLOR_3DFACE));
+    MoveToEx( hDC, lprect->left, lprect->bottom, NULL );
+    LineTo( hDC, lprect->right, lprect->bottom );
 
     if (lppop->nItems == 0)
     {

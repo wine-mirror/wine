@@ -274,7 +274,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
         break;
 
     case WM_NCCREATE:
-	if ((TWEAK_WineLook > WIN31_LOOK) && (full_style & SS_SUNKEN))
+	if (full_style & SS_SUNKEN)
             SetWindowLongA( hwnd, GWL_EXSTYLE,
                             GetWindowLongA( hwnd, GWL_EXSTYLE ) | WS_EX_STATICEDGE );
 
@@ -584,9 +584,6 @@ static void STATIC_PaintBitmapfn(HWND hwnd, HDC hdc, DWORD style )
 static void STATIC_PaintEtchedfn( HWND hwnd, HDC hdc, DWORD style )
 {
     RECT rc;
-
-    if (TWEAK_WineLook == WIN31_LOOK)
-	return;
 
     GetClientRect( hwnd, &rc );
     switch (style & SS_TYPEMASK)

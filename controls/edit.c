@@ -2148,8 +2148,6 @@ static void EDIT_SetRectNP(EDITSTATE *es, LPRECT rc)
 	CopyRect(&es->format_rect, rc);
 	if (es->style & WS_BORDER) {
 		INT bw = GetSystemMetrics(SM_CXBORDER) + 1;
-		if(TWEAK_WineLook == WIN31_LOOK)
-			bw += 2;
 		es->format_rect.left += bw;
 		es->format_rect.top += bw;
 		es->format_rect.right -= bw;
@@ -4376,8 +4374,7 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs, BOOL unicode)
 		es->style |= ES_AUTOVSCROLL;
 	} else {
 		es->buffer_limit = BUFLIMIT_SINGLE;
-                if (WIN31_LOOK == TWEAK_WineLook ||
-                    WIN95_LOOK == TWEAK_WineLook) {
+                if ( WIN95_LOOK == TWEAK_WineLook) {
 		        es->style &= ~ES_CENTER;
 		        es->style &= ~ES_RIGHT;
                 } else {
@@ -4418,16 +4415,7 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs, BOOL unicode)
          * controls created directly with style 0x50800000, exStyle 0 (
          * which should have a single pixel border)
 	 */
-	if (TWEAK_WineLook != WIN31_LOOK)
-	{
-	  es->style      &= ~WS_BORDER;
-	}
-	else
-	{
-	  if ((es->style & WS_BORDER) && !(es->style & WS_DLGFRAME))
-              SetWindowLongW( hwnd, GWL_STYLE,
-                              GetWindowLongW( hwnd, GWL_STYLE ) & ~WS_BORDER );
-	}
+	es->style      &= ~WS_BORDER;
 
 	return TRUE;
 }
@@ -4564,9 +4552,8 @@ static void EDIT_WM_SetFont(EDITSTATE *es, HFONT font, BOOL redraw)
 	if (font)
 		SelectObject(dc, old_font);
 	ReleaseDC(es->hwndSelf, dc);
-	if (font && (TWEAK_WineLook > WIN31_LOOK))
-		EDIT_EM_SetMargins(es, EC_LEFTMARGIN | EC_RIGHTMARGIN,
-				   EC_USEFONTINFO, EC_USEFONTINFO);
+	EDIT_EM_SetMargins(es, EC_LEFTMARGIN | EC_RIGHTMARGIN,
+			   EC_USEFONTINFO, EC_USEFONTINFO);
 
 	/* Force the recalculation of the format rect for each font change */
 	GetClientRect(es->hwndSelf, &r);

@@ -73,7 +73,7 @@ static HBITMAP hRgArrowI;
 #define SCROLL_MIN_THUMB 6
 
   /* Overlap between arrows and thumb */
-#define SCROLL_ARROW_THUMB_OVERLAP ((TWEAK_WineLook == WIN31_LOOK) ? 1 : 0)
+#define SCROLL_ARROW_THUMB_OVERLAP 0
 
   /* Delay (in ms) before first repetition when holding the button down */
 #define SCROLL_FIRST_DELAY   200
@@ -433,9 +433,9 @@ static enum SCROLL_HITTEST SCROLL_HitTest( HWND hwnd, INT nBar,
  *
  * Draw the scroll bar arrows.
  */
-static void SCROLL_DrawArrows_9x( HDC hdc, SCROLLBAR_INFO *infoPtr,
-                                  RECT *rect, INT arrowSize, BOOL vertical,
-                                  BOOL top_pressed, BOOL bottom_pressed )
+static void SCROLL_DrawArrows( HDC hdc, SCROLLBAR_INFO *infoPtr,
+                               RECT *rect, INT arrowSize, BOOL vertical,
+                               BOOL top_pressed, BOOL bottom_pressed )
 {
   RECT r;
 
@@ -462,93 +462,8 @@ static void SCROLL_DrawArrows_9x( HDC hdc, SCROLLBAR_INFO *infoPtr,
 		    | (infoPtr->flags&ESB_DISABLE_RTDN ? DFCS_INACTIVE : 0) );
 }
 
-static void SCROLL_DrawArrows_31( HDC hdc, SCROLLBAR_INFO *infoPtr,
-				  RECT *rect, INT arrowSize, BOOL vertical,
-				  BOOL top_pressed, BOOL bottom_pressed )
-{
-    HDC hdcMem = CreateCompatibleDC( hdc );
-    HBITMAP hbmpPrev = SelectObject( hdcMem, vertical ?
-                                    TOP_ARROW(infoPtr->flags, top_pressed)
-                                    : LEFT_ARROW(infoPtr->flags, top_pressed));
-
-    SetStretchBltMode( hdc, STRETCH_DELETESCANS );
-    StretchBlt( hdc, rect->left, rect->top,
-                  vertical ? rect->right-rect->left : arrowSize,
-                  vertical ? arrowSize : rect->bottom-rect->top,
-                  hdcMem, 0, 0,
-                  GetSystemMetrics(SM_CXVSCROLL),GetSystemMetrics(SM_CYHSCROLL),
-                  SRCCOPY );
-
-    SelectObject( hdcMem, vertical ?
-                    BOTTOM_ARROW( infoPtr->flags, bottom_pressed )
-                    : RIGHT_ARROW( infoPtr->flags, bottom_pressed ) );
-    if (vertical)
-        StretchBlt( hdc, rect->left, rect->bottom - arrowSize,
-                      rect->right - rect->left, arrowSize,
-                      hdcMem, 0, 0,
-                      GetSystemMetrics(SM_CXVSCROLL),GetSystemMetrics(SM_CYHSCROLL),
-                      SRCCOPY );
-    else
-        StretchBlt( hdc, rect->right - arrowSize, rect->top,
-                      arrowSize, rect->bottom - rect->top,
-                      hdcMem, 0, 0,
-                      GetSystemMetrics(SM_CXVSCROLL), GetSystemMetrics(SM_CYHSCROLL),
-                      SRCCOPY );
-    SelectObject( hdcMem, hbmpPrev );
-    DeleteDC( hdcMem );
-}
-
-static void SCROLL_DrawArrows( HDC hdc, SCROLLBAR_INFO *infoPtr,
-			       RECT *rect, INT arrowSize, BOOL vertical,
-			       BOOL top_pressed, BOOL bottom_pressed )
-{
-  if( TWEAK_WineLook == WIN31_LOOK )
-    SCROLL_DrawArrows_31( hdc, infoPtr, rect, arrowSize,
-			  vertical, top_pressed,bottom_pressed );
-  else
-    SCROLL_DrawArrows_9x( hdc, infoPtr, rect, arrowSize,
-			  vertical, top_pressed,bottom_pressed );
-}
-
-
-/***********************************************************************
- *           SCROLL_DrawMovingThumb
- *
- * Draw the moving thumb rectangle.
- */
-static void SCROLL_DrawMovingThumb_31( HDC hdc, RECT *rect, BOOL vertical,
-				       INT arrowSize, INT thumbSize )
-{
-    RECT r = *rect;
-    if (vertical)
-    {
-        r.top += SCROLL_TrackingPos;
-        if (r.top < rect->top + arrowSize - SCROLL_ARROW_THUMB_OVERLAP)
-	    r.top = rect->top + arrowSize - SCROLL_ARROW_THUMB_OVERLAP;
-        if (r.top + thumbSize >
-	               rect->bottom - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP))
-            r.top = rect->bottom - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP)
-	                                                          - thumbSize;
-        r.bottom = r.top + thumbSize;
-    }
-    else
-    {
-        r.left += SCROLL_TrackingPos;
-        if (r.left < rect->left + arrowSize - SCROLL_ARROW_THUMB_OVERLAP)
-	    r.left = rect->left + arrowSize - SCROLL_ARROW_THUMB_OVERLAP;
-        if (r.left + thumbSize >
-	               rect->right - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP))
-            r.left = rect->right - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP)
-	                                                          - thumbSize;
-        r.right = r.left + thumbSize;
-    }
-
-    DrawFocusRect( hdc, &r );
-    SCROLL_MovingThumb = !SCROLL_MovingThumb;
-}
-
-static void SCROLL_DrawMovingThumb_9x( HDC hdc, RECT *rect, BOOL vertical,
-				       INT arrowSize, INT thumbSize )
+static void SCROLL_DrawMovingThumb( HDC hdc, RECT *rect, BOOL vertical,
+				    INT arrowSize, INT thumbSize )
 {
   INT pos = SCROLL_TrackingPos;
   INT max_size;
@@ -570,15 +485,6 @@ static void SCROLL_DrawMovingThumb_9x( HDC hdc, RECT *rect, BOOL vertical,
 			  0, vertical, FALSE, FALSE );
 
   SCROLL_MovingThumb = !SCROLL_MovingThumb;
-}
-
-static void SCROLL_DrawMovingThumb( HDC hdc, RECT *rect, BOOL vertical,
-				    INT arrowSize, INT thumbSize )
-{
-  if( TWEAK_WineLook == WIN31_LOOK )
-    SCROLL_DrawMovingThumb_31( hdc, rect, vertical, arrowSize, thumbSize );
-  else
-    SCROLL_DrawMovingThumb_9x( hdc, rect, vertical, arrowSize, thumbSize );
 }
 
 /***********************************************************************
@@ -693,23 +599,15 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
 
       /* Select the correct brush and pen */
 
-    if (TWEAK_WineLook == WIN31_LOOK && (flags & ESB_DISABLE_BOTH) == ESB_DISABLE_BOTH)
-    {
-        /* This ought to be the color of the parent window */
-        hBrush = GetSysColorBrush(COLOR_WINDOW);
-    }
-    else
-    {
-        /* Only scrollbar controls send WM_CTLCOLORSCROLLBAR.
-         * The window-owned scrollbars need to call DEFWND_ControlColor
-         * to correctly setup default scrollbar colors
-         */
-        if (nBar == SB_CTL) {
-            hBrush = (HBRUSH)SendMessageA( GetParent(hwnd), WM_CTLCOLORSCROLLBAR,
-                                           (WPARAM)hdc,(LPARAM)hwnd);
-        } else {
-            hBrush = DEFWND_ControlColor( hdc, CTLCOLOR_SCROLLBAR );
-        }
+    /* Only scrollbar controls send WM_CTLCOLORSCROLLBAR.
+     * The window-owned scrollbars need to call DEFWND_ControlColor
+     * to correctly setup default scrollbar colors
+     */
+    if (nBar == SB_CTL) {
+        hBrush = (HBRUSH)SendMessageA( GetParent(hwnd), WM_CTLCOLORSCROLLBAR,
+                                       (WPARAM)hdc,(LPARAM)hwnd);
+    } else {
+        hBrush = DEFWND_ControlColor( hdc, CTLCOLOR_SCROLLBAR );
     }
     hSavePen = SelectObject( hdc, SYSCOLOR_GetPen(COLOR_WINDOWFRAME) );
     hSaveBrush = SelectObject( hdc, hBrush );
@@ -730,19 +628,11 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
 
       /* Draw the scroll bar frame */
 
-	/* Only draw outline if Win 3.1.  Mar 24, 1999 - Ronald B. Cemer */
-    if (TWEAK_WineLook == WIN31_LOOK)
-	Rectangle( hdc, r.left, r.top, r.right, r.bottom );
-
       /* Draw the scroll rectangles and thumb */
 
     if (!thumbPos)  /* No thumb to draw */
     {
-        INT offset = (TWEAK_WineLook > WIN31_LOOK) ? 0 : 1;
-
-        PatBlt( hdc, r.left+offset, r.top+offset,
-                     r.right - r.left - 2*offset, r.bottom - r.top - 2*offset,
-                     PATCOPY );
+        PatBlt( hdc, r.left, r.top, r.right - r.left, r.bottom - r.top, PATCOPY );
 
         /* cleanup and return */
         SelectObject( hdc, hSavePen );
@@ -752,47 +642,30 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
 
     if (vertical)
     {
-        INT offset = (TWEAK_WineLook == WIN31_LOOK) ? 1 : 0;
-
-        PatBlt( hdc, r.left + offset, r.top + offset,
-                  r.right - r.left - offset*2,
-                  thumbPos - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP) - offset,
-                  top_selected ? 0x0f0000 : PATCOPY );
+        PatBlt( hdc, r.left, r.top, r.right - r.left,
+                thumbPos - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP),
+                top_selected ? 0x0f0000 : PATCOPY );
         r.top += thumbPos - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP);
-        PatBlt( hdc, r.left + offset, r.top + thumbSize,
-                  r.right - r.left - offset*2,
-                  r.bottom - r.top - thumbSize - offset,
-                  bottom_selected ? 0x0f0000 : PATCOPY );
+        PatBlt( hdc, r.left, r.top + thumbSize, r.right - r.left,
+                r.bottom - r.top - thumbSize,
+                bottom_selected ? 0x0f0000 : PATCOPY );
         r.bottom = r.top + thumbSize;
     }
     else  /* horizontal */
     {
-        INT offset = (TWEAK_WineLook == WIN31_LOOK) ? 1 : 0;
-
-        PatBlt( hdc, r.left + offset, r.top + offset,
-                  thumbPos - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP),
-                  r.bottom - r.top - offset*2,
-                  top_selected ? 0x0f0000 : PATCOPY );
+        PatBlt( hdc, r.left, r.top,
+                thumbPos - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP),
+                r.bottom - r.top, top_selected ? 0x0f0000 : PATCOPY );
         r.left += thumbPos - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP);
-        PatBlt( hdc, r.left + thumbSize, r.top + offset,
-                  r.right - r.left - thumbSize - offset,
-                  r.bottom - r.top - offset*2,
-                  bottom_selected ? 0x0f0000 : PATCOPY );
+        PatBlt( hdc, r.left + thumbSize, r.top, r.right - r.left - thumbSize,
+                r.bottom - r.top, bottom_selected ? 0x0f0000 : PATCOPY );
         r.right = r.left + thumbSize;
     }
 
       /* Draw the thumb */
 
     SelectObject( hdc, GetSysColorBrush(COLOR_BTNFACE) );
-    if (TWEAK_WineLook == WIN31_LOOK)
-    {
-	Rectangle( hdc, r.left, r.top, r.right, r.bottom );
-	r.top++, r.left++;
-    }
-    else
-    {
-	Rectangle( hdc, r.left+1, r.top+1, r.right-1, r.bottom-1 );
-    }
+    Rectangle( hdc, r.left+1, r.top+1, r.right-1, r.bottom-1 );
     DrawEdge( hdc, &r, EDGE_RAISED, BF_RECT );
 
     if (Save_SCROLL_MovingThumb &&

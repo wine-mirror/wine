@@ -41,39 +41,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(syscolor);
 
 static const char * const DefSysColors[] =
 {
-    "Scrollbar", "224 224 224",      /* COLOR_SCROLLBAR           */
-    "Background", "192 192 192",     /* COLOR_BACKGROUND          */
-    "ActiveTitle", "0 64 128",       /* COLOR_ACTIVECAPTION       */
-    "InactiveTitle", "255 255 255",  /* COLOR_INACTIVECAPTION     */
-    "Menu", "255 255 255",           /* COLOR_MENU                */
-    "Window", "255 255 255",         /* COLOR_WINDOW              */
-    "WindowFrame", "0 0 0",          /* COLOR_WINDOWFRAME         */
-    "MenuText", "0 0 0",             /* COLOR_MENUTEXT            */
-    "WindowText", "0 0 0",           /* COLOR_WINDOWTEXT          */
-    "TitleText", "255 255 255",      /* COLOR_CAPTIONTEXT         */
-    "ActiveBorder", "128 128 128",   /* COLOR_ACTIVEBORDER        */
-    "InactiveBorder", "255 255 255", /* COLOR_INACTIVEBORDER      */
-    "AppWorkspace", "255 255 232",   /* COLOR_APPWORKSPACE        */
-    "Hilight", "224 224 224",        /* COLOR_HIGHLIGHT           */
-    "HilightText", "0 0 0",          /* COLOR_HIGHLIGHTTEXT       */
-    "ButtonFace", "192 192 192",     /* COLOR_BTNFACE             */
-    "ButtonShadow", "128 128 128",   /* COLOR_BTNSHADOW           */
-    "GrayText", "192 192 192",       /* COLOR_GRAYTEXT            */
-    "ButtonText", "0 0 0",           /* COLOR_BTNTEXT             */
-    "InactiveTitleText", "0 0 0",    /* COLOR_INACTIVECAPTIONTEXT */
-    "ButtonHilight", "255 255 255",  /* COLOR_BTNHIGHLIGHT        */
-    "3DDarkShadow", "32 32 32",      /* COLOR_3DDKSHADOW          */
-    "3DLight", "192 192 192",        /* COLOR_3DLIGHT             */
-    "InfoText", "0 0 0",             /* COLOR_INFOTEXT            */
-    "InfoBackground", "255 255 192", /* COLOR_INFOBK              */
-    "AlternateButtonFace", "184 180 184",  /* COLOR_ALTERNATEBTNFACE */
-    "HotTrackingColor", "0 0 255",         /* COLOR_HOTLIGHT */
-    "GradientActiveTitle", "16 132 208",   /* COLOR_GRADIENTACTIVECAPTION */
-    "GradientInactiveTitle", "181 181 181" /* COLOR_GRADIENTINACTIVECAPTION */
-};
-
-static const char * const DefSysColors95[] =
-{
     "Scrollbar", "192 192 192",      /* COLOR_SCROLLBAR           */
     "Background", "0 128 128",       /* COLOR_BACKGROUND          */
     "ActiveTitle", "0 0 128",        /* COLOR_ACTIVECAPTION       */
@@ -174,12 +141,9 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
 void SYSCOLOR_Init(void)
 {
     int i, r, g, b;
-    const char * const *p;
     char buffer[100];
     BOOL bOk = FALSE, bNoReg = FALSE;
     HKEY  hKey;
-
-    p = (TWEAK_WineLook == WIN31_LOOK) ? DefSysColors : DefSysColors95;
 
     /* first, try to read the values from the registry */
     if (RegCreateKeyExA(HKEY_CURRENT_USER, "Control Panel\\Colors", 0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0))
@@ -191,21 +155,21 @@ void SYSCOLOR_Init(void)
       if (!bNoReg)
       {
 	DWORD dwDataSize = sizeof(buffer);
-	if (!(RegQueryValueExA(hKey,(LPSTR)p[i*2], 0, 0, buffer, &dwDataSize)))
+	if (!(RegQueryValueExA(hKey,(LPSTR)DefSysColors[i*2], 0, 0, buffer, &dwDataSize)))
 	  if (sscanf( buffer, "%d %d %d", &r, &g, &b ) == 3)
 	    bOk = TRUE;
       }
 
       /* second try, win.ini */
       if (!bOk)
-      { GetProfileStringA( "colors", p[i*2], p[i*2+1], buffer, 100 );
+      { GetProfileStringA( "colors", DefSysColors[i*2], DefSysColors[i*2+1], buffer, 100 );
 	if (sscanf( buffer, " %d %d %d", &r, &g, &b ) == 3)
 	  bOk = TRUE;
       }
 
       /* last chance, take the default */
       if (!bOk)
-      { int iNumColors = sscanf( p[i*2+1], " %d %d %d", &r, &g, &b );
+      { int iNumColors = sscanf( DefSysColors[i*2+1], " %d %d %d", &r, &g, &b );
 	assert (iNumColors==3);
       }
 

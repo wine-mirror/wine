@@ -31,8 +31,7 @@ extern LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam );
 extern LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam);
 extern LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam );
 extern LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam );
-extern void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down );
-extern BOOL NC_DrawSysButton95( HWND hwnd, HDC hdc, BOOL down );
+extern BOOL NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down );
 extern void NC_GetSysPopupPos( HWND hwnd, RECT* rect );
 extern void NC_GetInsideRect( HWND hwnd, RECT *rect );
 

@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(graphics);
 
 USER_DRIVER USER_Driver;
 
-WINE_LOOK TWEAK_WineLook = WIN31_LOOK;
+WINE_LOOK TWEAK_WineLook = WIN95_LOOK;
 
 WORD USER_HeapSel = 0;  /* USER heap selector */
 HMODULE user32_module = 0;
@@ -155,7 +155,7 @@ static void palette_init(void)
  */
 static void tweak_init(void)
 {
-    static const char *OS = "Win3.1";
+    static const char *OS = "Win95";
     char buffer[80];
     HKEY hkey;
     DWORD type, count = sizeof(buffer);
@@ -163,7 +163,7 @@ static void tweak_init(void)
     if (RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Tweak.Layout", &hkey ))
         return;
     if (RegQueryValueExA( hkey, "WineLook", 0, &type, buffer, &count ))
-        strcpy( buffer, "Win31" );  /* default value */
+        strcpy( buffer, "Win95" );  /* default value */
     RegCloseKey( hkey );
 
     /* WIN31_LOOK is default */

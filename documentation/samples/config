@@ -197,7 +197,7 @@ WINE REGISTRY Version 2
 "SaveOnlyUpdatedKeys" = "Y"
 
 [Tweak.Layout]
-;; supported styles are 'Win31'(default), 'Win95', 'Win98'
+;; supported styles are 'Win95'(default), 'Win98'
 ;; this has *nothing* to do with the windows version Wine returns:
 ;; set the "Windows" value in the [Version] section if you want that.
 "WineLook" = "Win95"

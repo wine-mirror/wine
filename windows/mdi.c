@@ -808,6 +808,7 @@ static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
     HBITMAP hSysMenuBitmap = 0;
     INT nItems;
     UINT iId;
+    HICON hIcon;
 
     TRACE("frame %p,child %p\n",frame,hChild);
 
@@ -828,18 +829,11 @@ static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
     AppendMenuA(menu,MF_HELP | MF_BITMAP,
                    SC_RESTORE, (LPSTR)(DWORD)HBMMENU_MBAR_RESTORE );
 
-    /* The close button is only present in Win 95 look */
-    if(TWEAK_WineLook > WIN31_LOOK)
-    {
-        AppendMenuA(menu,MF_HELP | MF_BITMAP,
-                       SC_CLOSE, (LPSTR)(DWORD)HBMMENU_MBAR_CLOSE );
-    }
+    AppendMenuA(menu,MF_HELP | MF_BITMAP,
+                   SC_CLOSE, (LPSTR)(DWORD)HBMMENU_MBAR_CLOSE );
 
-  /* In Win 95 look, the system menu is replaced by the child icon */
-
-  if(TWEAK_WineLook > WIN31_LOOK)
-  {
-    HICON hIcon = (HICON)GetClassLongW(hChild, GCL_HICONSM);
+    /* The system menu is replaced by the child icon */
+    hIcon = (HICON)GetClassLongW(hChild, GCL_HICONSM);
     if (!hIcon)
         hIcon = (HICON)GetClassLongW(hChild, GCL_HICON);
     if (!hIcon)
@@ -869,9 +863,6 @@ static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
         hSysMenuBitmap = hBitmap;
       }
     }
-  }
-  else
-    hSysMenuBitmap = hBmpClose;
 
     if( !InsertMenuA(menu,0,MF_BYPOSITION | MF_BITMAP | MF_POPUP,
                      (UINT_PTR)hSysPopup, (LPSTR)hSysMenuBitmap))
@@ -930,11 +921,8 @@ static BOOL MDI_RestoreFrameMenu( HWND frame, HWND hChild )
         DeleteObject(HBITMAP_32(LOWORD(menuInfo.dwTypeData)));
     }
 
-    if(TWEAK_WineLook > WIN31_LOOK)
-    {
-        /* close */
-        DeleteMenu(menu,GetMenuItemCount(menu) - 1,MF_BYPOSITION);
-    }
+    /* close */
+    DeleteMenu(menu,GetMenuItemCount(menu) - 1,MF_BYPOSITION);
     /* restore */
     DeleteMenu(menu,GetMenuItemCount(menu) - 1,MF_BYPOSITION);
     /* minimize */

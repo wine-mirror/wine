@@ -140,7 +140,6 @@ extern BOOL USER_IsExitingThread( DWORD tid );
 
 typedef enum
 {
-    WIN31_LOOK,
     WIN95_LOOK,
     WIN98_LOOK
 } WINE_LOOK;
