@@ -15,6 +15,7 @@ C_SRCS = \
 	hglobalstream.c \
 	ifs.c \
 	itemmoniker.c \
+	memlockbytes.c \
 	moniker.c \
 	ole2.c \
 	ole2disp.c \

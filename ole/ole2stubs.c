@@ -169,24 +169,6 @@ HRESULT WINAPI CreateDataAdviseHolder(LPDATAADVISEHOLDER* ppDAHolder)
 }
 
 /******************************************************************************
- *              CreateILockBytesOnHGlobal        [OLE32.67]
- */
-HRESULT WINAPI CreateILockBytesOnHGlobal(HGLOBAL hGlobal, BOOL fDeleteOnRelease, LPLOCKBYTES* pplkbyt)
-{
-  FIXME(ole,"(%x,%x,%p), stub!\n", hGlobal, fDeleteOnRelease, pplkbyt);
-  return S_OK;
-}
-
-/******************************************************************************
- *              GetHGlobalFromILockBytes        [OLE32.70]
- */
-HRESULT WINAPI GetHGlobalFromILockBytes (LPLOCKBYTES plkbyt, HGLOBAL* phglobal)
-{
-  FIXME(ole,"(%p,%p), stub!\n", plkbyt, phglobal);
-  return S_OK;
-}
-
-/******************************************************************************
  *              OleLoad        [OLE32.112]
  */
 HRESULT WINAPI OleLoad(LPSTORAGE pStg, REFIID riid, LPOLECLIENTSITE pClientSite, LPVOID* ppvObj)
