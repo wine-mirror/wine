@@ -33,23 +33,7 @@
 #include "debug.h"
 #include <asm/bitops.h>      /* FIXME: linux specific */
 
-static int TREEVIEW_Timer;
-
-
-
 #define TREEVIEW_GetInfoPtr(wndPtr) ((TREEVIEW_INFO *)wndPtr->wExtra[0])
-
-
-
-#include <asm/bitops.h>      /* FIXME: linux specific */
-
-static int TREEVIEW_Timer;
-
-  
-  #define TREEVIEW_GetInfoPtr(wndPtr) ((TREEVIEW_INFO *)wndPtr->wExtra[0])
-  
-  
-  
 
 static BOOL32
 TREEVIEW_SendSimpleNotify (WND *wndPtr, UINT32 code);
@@ -198,22 +182,21 @@ static void TREEVIEW_RemoveAllChildren (TREEVIEW_INFO *infoPtr,
 }
 
 
+/* Note:TREEVIEW_RemoveTree doesn't remove infoPtr itself */
 
 static void TREEVIEW_RemoveTree (TREEVIEW_INFO *infoPtr)
 					   
 
 {
- TREEVIEW_ITEM *killItem;
- int i;
+ 	TREEVIEW_ITEM *killItem;
+ 	int i;
 
-	/* bummer: if we didn't delete anything, test_bit is overhead */
- 
     for (i=1; i<=infoPtr->uMaxHandle; i++) 
-	if (!test_bit (i, infoPtr->freeList)) {
-		killItem=& infoPtr->items [i];	
-		if (killItem->pszText!=LPSTR_TEXTCALLBACK32A)
-			HeapFree (GetProcessHeap (), 0, killItem->pszText);
-	} 
+		if (!test_bit (i, infoPtr->freeList)) {
+			killItem=& infoPtr->items [i];	
+			if (killItem->pszText!=LPSTR_TEXTCALLBACK32A)
+				HeapFree (GetProcessHeap (), 0, killItem->pszText);
+		} 
 
     if (infoPtr->uNumPtrsAlloced) {
         HeapFree (GetProcessHeap (), 0, infoPtr->items);
@@ -222,8 +205,6 @@ static void TREEVIEW_RemoveTree (TREEVIEW_INFO *infoPtr)
         infoPtr->uNumPtrsAlloced=0;
         infoPtr->uMaxHandle=0;
     }   
-
-	/* this function doesn't remove infoPtr itself */
 }
 
 
@@ -561,9 +542,9 @@ TREEVIEW_Refresh (WND *wndPtr, HDC32 hdc)
 
     TRACE (treeview,"\n");
 
-    if (TREEVIEW_Timer & TV_REFRESH_TIMER_SET) {
+    if (infoPtr->Timer & TV_REFRESH_TIMER_SET) {
 		KillTimer32 (wndPtr->hwndSelf, TV_REFRESH_TIMER);
-		TREEVIEW_Timer &= ~TV_REFRESH_TIMER_SET;
+		infoPtr->Timer &= ~TV_REFRESH_TIMER_SET;
     }
 
     
@@ -669,14 +650,14 @@ TREEVIEW_HandleTimer ( WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
   switch (wParam) {
 	case TV_REFRESH_TIMER:
 		KillTimer32 (wndPtr->hwndSelf, TV_REFRESH_TIMER);
-		TREEVIEW_Timer &= ~TV_REFRESH_TIMER_SET;
+		infoPtr->Timer &= ~TV_REFRESH_TIMER_SET;
 		hdc=GetDC32 (wndPtr->hwndSelf);
 		TREEVIEW_Refresh (wndPtr, hdc);
 		ReleaseDC32 (wndPtr->hwndSelf, hdc);
 		return 0;
 	case TV_EDIT_TIMER:
 		KillTimer32 (wndPtr->hwndSelf, TV_EDIT_TIMER);
-		TREEVIEW_Timer &= ~TV_EDIT_TIMER_SET;
+		infoPtr->Timer &= ~TV_EDIT_TIMER_SET;
 		return 0;
  }
 		
@@ -688,14 +669,15 @@ static void
 TREEVIEW_QueueRefresh (WND *wndPtr)
 
 {
- 
+ TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(wndPtr);
+
  TRACE (treeview,"queued\n");
- if (TREEVIEW_Timer & TV_REFRESH_TIMER_SET) {
+ if (infoPtr->Timer & TV_REFRESH_TIMER_SET) {
 	KillTimer32 (wndPtr->hwndSelf, TV_REFRESH_TIMER);
  }
 
  SetTimer32 (wndPtr->hwndSelf, TV_REFRESH_TIMER, TV_REFRESH_DELAY, 0);
- TREEVIEW_Timer|=TV_REFRESH_TIMER_SET;
+ infoPtr->Timer|=TV_REFRESH_TIMER_SET;
 }
 
 
@@ -1113,6 +1095,8 @@ TREEVIEW_Destroy (WND *wndPtr)
    TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(wndPtr);
      
    TREEVIEW_RemoveTree (infoPtr);
+   if (infoPtr->Timer & TV_REFRESH_TIMER_SET) 
+        KillTimer32 (wndPtr->hwndSelf, TV_REFRESH_TIMER);
 
    HeapFree (GetProcessHeap (), 0, infoPtr);
 

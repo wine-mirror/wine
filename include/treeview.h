@@ -51,6 +51,7 @@ typedef struct {
 typedef struct tagTREEVIEW_INFO
 {
     UINT32	uInternalStatus;		
+    INT32	Timer;
     UINT32  uNumItems;	/* number of valid TREEVIEW_ITEMs */
     UINT32	uNumPtrsAlloced; 
     UINT32	uMaxHandle;	/* needed for delete_item */

@@ -30,8 +30,14 @@ typedef struct tagTRACKBAR_INFO
     RECT32 rcChannel;
     RECT32 rcSelection;
     RECT32 rcThumb;
+    INT32  dragPos;
     LPLONG tics;
 } TRACKBAR_INFO;
+
+
+#define TB_DRAG_TIMER       1
+#define TB_DRAG_DELAY       10
+
 
 
 extern void TRACKBAR_Register (void);
