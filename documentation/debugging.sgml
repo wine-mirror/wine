@@ -229,6 +229,44 @@ HANDLE32 WINAPI YourFunc(LPCSTR s)
           WineDbg Command Reference section for how to do this.
         </para>
 
+	<para>
+	  Another way to conditionally log debug output (e.g. in case of
+	  very large installers which may create gigabytes of log
+	  output) is to create a pipe:
+	</para>
+	<screen>
+	<prompt>$</prompt> <userinput>mknod /tmp/debug_pipe p</userinput>
+	</screen>
+		    
+	<para>
+	  and then to run wine like that:
+	</para>
+	<screen>
+	<prompt>$</prompt> <userinput>wine --debugmsg +relay,+snoop setup.exe &>/tmp/debug_pipe</userinput>
+	</screen>
+
+	<para>
+	  Since the pipe is initially blocking (and thus wine as a whole),
+	  you have to activate it by doing:
+	</para>
+	<screen>
+	<prompt>$</prompt> <userinput>cat /tmp/debug_pipe</userinput>
+	</screen>
+	<para>
+	  (press Ctrl-C to stop pasting the pipe content)
+	</para>
+	<para>
+	  Once you are about to approach the problematic part of the program,
+	  you just do:
+	</para>
+	<screen>
+	<prompt>$</prompt> <userinput>cat /tmp/debug_pipe >/tmp/wine.log</userinput>
+	</screen>
+	<para>
+	  to capture specifically the part that interests you from the
+	  pipe without wasting excessive amounts of HDD space and
+	  slowing down installation considerably.
+	</para>
         <para>
           The <parameter>WINEDEBUG</parameter> environment variable
           controls the output of the debug messages.
