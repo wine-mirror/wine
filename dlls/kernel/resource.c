@@ -34,6 +34,8 @@
 #include "wownt32.h"
 #include "wine/winbase16.h"
 #include "wine/debug.h"
+#include "excpt.h"
+#include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(resource);
 
@@ -44,6 +46,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(resource);
 #define HGLOBAL_16(h32) (LOWORD(h32))
 #define HMODULE_16(h32) (LOWORD(h32))
 
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ||
+        GetExceptionCode() == EXCEPTION_PRIV_INSTRUCTION)
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
 
 /* retrieve the resource name to pass to the ntdll functions */
 static NTSTATUS get_res_nameA( LPCSTR name, UNICODE_STRING *str )
@@ -88,16 +97,108 @@ static NTSTATUS get_res_nameW( LPCWSTR name, UNICODE_STRING *str )
     return STATUS_SUCCESS;
 }
 
-/**********************************************************************
- *	    FindResourceExA  (KERNEL32.@)
- */
-HRSRC WINAPI FindResourceExA( HMODULE hModule, LPCSTR type, LPCSTR name, WORD lang )
+/* retrieve the resource names for the 16-bit FindResource function */
+static BOOL get_res_name_type_WtoA( LPCWSTR name, LPCWSTR type, LPSTR *nameA, LPSTR *typeA )
+{
+    *nameA = *typeA = NULL;
+
+    __TRY
+    {
+        if (HIWORD(name))
+        {
+            DWORD len = WideCharToMultiByte( CP_ACP, 0, name, -1, NULL, 0, NULL, NULL );
+            *nameA = HeapAlloc( GetProcessHeap(), 0, len );
+            if (*nameA) WideCharToMultiByte( CP_ACP, 0, name, -1, *nameA, len, NULL, NULL );
+        }
+        else *nameA = (LPSTR)name;
+
+        if (HIWORD(type))
+        {
+            DWORD len = WideCharToMultiByte( CP_ACP, 0, type, -1, NULL, 0, NULL, NULL );
+            *typeA = HeapAlloc( GetProcessHeap(), 0, len );
+            if (*typeA) WideCharToMultiByte( CP_ACP, 0, type, -1, *typeA, len, NULL, NULL );
+        }
+        else *typeA = (LPSTR)type;
+    }
+    __EXCEPT(page_fault)
+    {
+        if (HIWORD(*nameA)) HeapFree( GetProcessHeap(), 0, *nameA );
+        if (HIWORD(*typeA)) HeapFree( GetProcessHeap(), 0, *typeA );
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    __ENDTRY
+    return TRUE;
+}
+
+/* implementation of FindResourceExA */
+static HRSRC find_resourceA( HMODULE hModule, LPCSTR type, LPCSTR name, WORD lang )
 {
     NTSTATUS status;
     UNICODE_STRING nameW, typeW;
     LDR_RESOURCE_INFO info;
     const IMAGE_RESOURCE_DATA_ENTRY *entry = NULL;
 
+    __TRY
+    {
+        if ((status = get_res_nameA( name, &nameW )) != STATUS_SUCCESS) goto done;
+        if ((status = get_res_nameA( type, &typeW )) != STATUS_SUCCESS) goto done;
+        info.Type = (ULONG)typeW.Buffer;
+        info.Name = (ULONG)nameW.Buffer;
+        info.Language = lang;
+        status = LdrFindResource_U( hModule, &info, 3, &entry );
+    done:
+        if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
+    }
+    __EXCEPT(page_fault)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+    }
+    __ENDTRY
+
+    if (HIWORD(nameW.Buffer)) HeapFree( GetProcessHeap(), 0, nameW.Buffer );
+    if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
+    return (HRSRC)entry;
+}
+
+
+/* implementation of FindResourceExW */
+static HRSRC find_resourceW( HMODULE hModule, LPCWSTR type, LPCWSTR name, WORD lang )
+{
+    NTSTATUS status;
+    UNICODE_STRING nameW, typeW;
+    LDR_RESOURCE_INFO info;
+    const IMAGE_RESOURCE_DATA_ENTRY *entry = NULL;
+
+    nameW.Buffer = typeW.Buffer = NULL;
+
+    __TRY
+    {
+        if ((status = get_res_nameW( name, &nameW )) != STATUS_SUCCESS) goto done;
+        if ((status = get_res_nameW( type, &typeW )) != STATUS_SUCCESS) goto done;
+        info.Type = (ULONG)typeW.Buffer;
+        info.Name = (ULONG)nameW.Buffer;
+        info.Language = lang;
+        status = LdrFindResource_U( hModule, &info, 3, &entry );
+    done:
+        if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
+    }
+    __EXCEPT(page_fault)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+    }
+    __ENDTRY
+
+    if (HIWORD(nameW.Buffer)) HeapFree( GetProcessHeap(), 0, nameW.Buffer );
+    if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
+    return (HRSRC)entry;
+}
+
+/**********************************************************************
+ *	    FindResourceExA  (KERNEL32.@)
+ */
+HRSRC WINAPI FindResourceExA( HMODULE hModule, LPCSTR type, LPCSTR name, WORD lang )
+{
     TRACE( "%p %s %s %04x\n", hModule, debugstr_a(type), debugstr_a(name), lang );
 
     if (!hModule) hModule = GetModuleHandleW(0);
@@ -105,19 +206,7 @@ HRSRC WINAPI FindResourceExA( HMODULE hModule, LPCSTR type, LPCSTR name, WORD la
     {
         return HRSRC_32( FindResource16( HMODULE_16(hModule), name, type ) );
     }
-
-    nameW.Buffer = typeW.Buffer = NULL;
-    if ((status = get_res_nameA( name, &nameW )) != STATUS_SUCCESS) goto done;
-    if ((status = get_res_nameA( type, &typeW )) != STATUS_SUCCESS) goto done;
-    info.Type = (ULONG)typeW.Buffer;
-    info.Name = (ULONG)nameW.Buffer;
-    info.Language = lang;
-    status = LdrFindResource_U( hModule, &info, 3, &entry );
-done:
-    if (HIWORD(nameW.Buffer)) HeapFree( GetProcessHeap(), 0, nameW.Buffer );
-    if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
-    if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
-    return (HRSRC)entry;
+    return find_resourceA( hModule, type, name, lang );
 }
 
 
@@ -135,11 +224,6 @@ HRSRC WINAPI FindResourceA( HMODULE hModule, LPCSTR name, LPCSTR type )
  */
 HRSRC WINAPI FindResourceExW( HMODULE hModule, LPCWSTR type, LPCWSTR name, WORD lang )
 {
-    NTSTATUS status;
-    UNICODE_STRING nameW, typeW;
-    LDR_RESOURCE_INFO info;
-    const IMAGE_RESOURCE_DATA_ENTRY *entry = NULL;
-
     TRACE( "%p %s %s %04x\n", hModule, debugstr_w(type), debugstr_w(name), lang );
 
     if (!hModule) hModule = GetModuleHandleW(0);
@@ -148,21 +232,7 @@ HRSRC WINAPI FindResourceExW( HMODULE hModule, LPCWSTR type, LPCWSTR name, WORD 
         LPSTR nameA, typeA;
         HRSRC16 ret;
 
-        if (HIWORD(name))
-        {
-            DWORD len = WideCharToMultiByte( CP_ACP, 0, name, -1, NULL, 0, NULL, NULL );
-            nameA = HeapAlloc( GetProcessHeap(), 0, len );
-            if (nameA) WideCharToMultiByte( CP_ACP, 0, name, -1, nameA, len, NULL, NULL );
-        }
-        else nameA = (LPSTR)name;
-
-        if (HIWORD(type))
-        {
-            DWORD len = WideCharToMultiByte( CP_ACP, 0, type, -1, NULL, 0, NULL, NULL );
-            typeA = HeapAlloc( GetProcessHeap(), 0, len );
-            if (typeA) WideCharToMultiByte( CP_ACP, 0, type, -1, typeA, len, NULL, NULL );
-        }
-        else typeA = (LPSTR)type;
+        if (!get_res_name_type_WtoA( name, type, &nameA, &typeA )) return NULL;
 
         ret = FindResource16( HMODULE_16(hModule), nameA, typeA );
         if (HIWORD(nameA)) HeapFree( GetProcessHeap(), 0, nameA );
@@ -170,18 +240,7 @@ HRSRC WINAPI FindResourceExW( HMODULE hModule, LPCWSTR type, LPCWSTR name, WORD 
         return HRSRC_32(ret);
     }
 
-    nameW.Buffer = typeW.Buffer = NULL;
-    if ((status = get_res_nameW( name, &nameW )) != STATUS_SUCCESS) goto done;
-    if ((status = get_res_nameW( type, &typeW )) != STATUS_SUCCESS) goto done;
-    info.Type = (ULONG)typeW.Buffer;
-    info.Name = (ULONG)nameW.Buffer;
-    info.Language = lang;
-    status = LdrFindResource_U( hModule, &info, 3, &entry );
-done:
-    if (HIWORD(nameW.Buffer)) HeapFree( GetProcessHeap(), 0, nameW.Buffer );
-    if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
-    if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
-    return (HRSRC)entry;
+    return find_resourceW( hModule, type, name, lang );
 }
 
 
