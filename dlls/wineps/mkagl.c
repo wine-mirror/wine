@@ -155,10 +155,18 @@ static void read_agl()
  *  Read glyph names from all AFM files in current directory
  */
  
-static void read_afms()
+static void read_afms(FILE *f_c, FILE *f_h)
 {
     DIR     	    *d = opendir(".");
     struct dirent   *de;
+    
+    fputs(  "/*\n"
+    	    " *  Built-in font metrics\n"
+	    " */\n"
+	    "\n"
+	    "AFM *const PSDRV_BuiltinAFMs[] =\n"
+	    "{\n", f_c);
+		
     
     if (d == NULL)
     {
@@ -182,6 +190,27 @@ static void read_afms()
 	    fprintf(stderr, "Error opening %s\n", de->d_name);
 	    exit(__LINE__);
 	}
+	
+	while (1)
+	{
+	    if (fgets(linebuf, sizeof(linebuf), f) == NULL)
+	    {
+	    	fprintf(stderr, "FontName not found in %s\n", de->d_name);
+		exit(__LINE__);
+	    }
+	    
+	    if (strncmp(linebuf, "FontName ", 9) == 0)
+	    	break;
+	}
+	
+	sscanf(linebuf, "FontName %[^\r\n]", font_family);
+	
+	for (i = 0; font_family[i] != '\0'; ++i)
+	    if (font_family[i] == '-')
+	    	font_family[i] = '_';
+		
+	fprintf(f_h, "extern AFM PSDRV_%s;\n", font_family);
+	fprintf(f_c, "    &PSDRV_%s,\n", font_family);
 	
 	while (1)
 	{
@@ -257,6 +286,8 @@ static void read_afms()
     }
     
     closedir(d);
+    
+    fputs("    NULL\n};\n", f_c);
 }
 
 
@@ -273,7 +304,7 @@ static void write_header(FILE *f)
     	fputc('*', f);
     fputs("\n"
     	    " *\n"
-	    " *\tAdobe Glyph List data for the Wine PostScript driver\n"
+	    " *\tFont and glyph data for the Wine PostScript driver\n"
     	    " *\n"
 	    " *\tCopyright 2001 Ian Pilcher\n"
 	    " *\n"
@@ -292,29 +323,30 @@ static void write_header(FILE *f)
 	    " *\n"
 	    " */\n"
 	    "\n"
-	    "#include \"psdrv.h\"\n", f);
+	    "#include \"psdrv.h\"\n"
+	    "#include \"data/agl.h\"\n", f);
 }
 
 /*
- *  Write the array of GLYPHNAME structures (also populates indexes)
+ *  Write the array of glyph names (also populates indexes)
  */
  
-static void write_glyph_names(FILE *f)
+static void write_glyph_names(FILE *f_c, FILE *f_h)
 {
-    int i, num_names = 0, index = 0;
+    int i, num_names = 0, index = 0, list_index = 0x00010000;
     
     for (i = 0; i < num_glyphs; ++i)
     	if (i == 0 || strcmp(glyphs[i - 1].name, glyphs[i].name) != 0)
 	    ++num_names;
     
     fputs(  "/*\n"
-    	    " *  Every glyph name in the AGL and the 39 core PostScript fonts\n"
+    	    " *  Every glyph name in the AGL and the 35 core PostScript fonts\n"
 	    " */\n"
-	    "\n", f);
+	    "\n", f_c);
 	    
-    fprintf(f, "const INT PSDRV_AGLGlyphNamesSize = %i;\n\n", num_names);
+    fprintf(f_c, "const INT PSDRV_AGLGlyphNamesSize = %i;\n\n", num_names);
     
-    fprintf(f, "GLYPHNAME PSDRV_AGLGlyphNames[%i] =\n{\n", num_names);
+    fprintf(f_c, "GLYPHNAME PSDRV_AGLGlyphNames[%i] =\n{\n", num_names);
     
     for (i = 0; i < num_glyphs - 1; ++i)
     {
@@ -322,33 +354,84 @@ static void write_glyph_names(FILE *f)
 	
 	if (i == 0 || strcmp(glyphs[i - 1].name, glyphs[i].name) != 0)
 	{
-	    cp = fprintf(f, "    { -1, \"%s\" },", glyphs[i].name);
+	    fcpto(f_h, 32, fprintf(f_h, "#define GN_%s", glyphs[i].name));
+	    fprintf(f_h, "(PSDRV_AGLGlyphNames + %i)\n", index);
+	
+	    cp = fprintf(f_c, "    { -1, \"%s\" },", glyphs[i].name);
 	    glyphs[i].index = index;
 	    ++index;
+	    list_index += 0x00010000;
 	}
 	else
 	{
-	    glyphs[i].index = index - 1;
+	    glyphs[i].index = glyphs[i - 1].index;
 	}
 	
-	fcpto(f, 36, cp);
+	fcpto(f_c, 36, cp);
 	
-	fprintf(f, "/* %s */\n", glyphs[i].comment);
+	fprintf(f_c, "/* %s */\n", glyphs[i].comment);
     }
     
+    fcpto(f_h, 32, fprintf(f_h, "#define GN_%s", glyphs[i].name));
+    fprintf(f_h, "(PSDRV_AGLGlyphNames + %i)\n", index);
+    
     glyphs[i].index = index;
-    fcpto(f, 36, fprintf(f, "    { -1, \"%s\" }", glyphs[i].name));
-    fprintf(f, "/* %s */\n};\n", glyphs[i].comment);
+    fcpto(f_c, 36, fprintf(f_c, "    { -1, \"%s\" }", glyphs[i].name));
+    fprintf(f_c, "/* %s */\n};\n", glyphs[i].comment);
 }
 
 
 /*
- *  Write the AGL encoding vector
+ *  Write the AGL encoding vector, sorted by glyph name
+ */
+
+static void write_encoding_by_name(FILE *f)
+{
+    int i, size = 0, even = 1;
+    
+    for (i = 0; i < num_glyphs; ++i)
+    	if (glyphs[i].UV != -1 &&
+	    	(i == 0 || strcmp(glyphs[i - 1].name, glyphs[i].name) != 0))
+	    ++size; 	    	    /* should be 1039 */
+    
+    fputs(  "/*\n"
+    	    " *  The AGL encoding vector, sorted by glyph name - "
+	    	    "duplicates omitted\n"
+	    " */\n"
+	    "\n", f);
+	    
+    fprintf(f, "const INT PSDRV_AGLbyNameSize = %i;\n\n", size);
+    fprintf(f, "const UNICODEGLYPH PSDRV_AGLbyName[%i] = \n{\n", size);
+    
+    for (i = 0; i < num_glyphs - 1; ++i)
+    {
+    	int cp;
+    
+    	if (glyphs[i].UV == -1)
+	    continue;
+	    
+	if (i != 0 && strcmp(glyphs[i - 1].name, glyphs[i].name) == 0)
+	    continue;
+    
+    	cp = fprintf(f, "    { 0x%.4x, GN_%s },", glyphs[i].UV, glyphs[i].name);
+	
+	even = !even;
+	if (even)
+	    fputc('\n', f);
+	else
+	    fcpto(f, 40, cp);
+    }
+    
+    fprintf(f, "    { 0x%.4x, GN_%s }\n};\n", glyphs[i].UV, glyphs[i].name);
+}
+
+/*
+ *  Write the AGL encoding vector, sorted by Unicode value
  */
  
-static void write_encoding(FILE *f)
+static void write_encoding_by_UV(FILE *f)
 {
-    int i, size = 0;
+    int i, size = 0, even = 1;
     
     for (i = 0; i < num_glyphs; ++i)
     	if (glyphs[i].UV != -1)
@@ -357,26 +440,31 @@ static void write_encoding(FILE *f)
     sort_by_UV();
 	    
     fputs(  "/*\n"
-    	    " *  The AGL encoding vector, sorted by Unicode value\n"
+    	    " *  The AGL encoding vector, sorted by Unicode value - "
+	    	    "duplicates included\n"
 	    " */\n"
 	    "\n", f);
-	    
-    fprintf(f, "static const UNICODEGLYPH encoding[%i] = \n{\n", size);
+
+    fprintf(f, "const INT PSDRV_AGLbyUVSize = %i;\n\n", size);
+    fprintf(f, "const UNICODEGLYPH PSDRV_AGLbyUV[%i] = \n{\n", size);
     
     for (i = 0; i < num_glyphs - 1; ++i)
     {
+    	int cp;
+    
     	if (glyphs[i].UV == -1)
 	    continue;
 	    
-	fprintf(f, "    { 0x%.4x, PSDRV_AGLGlyphNames + %4i },\t/* %s */\n",
-	    	glyphs[i].UV, glyphs[i].index, glyphs[i].name);
+	cp = fprintf(f, "    { 0x%.4x, GN_%s },", glyphs[i].UV, glyphs[i].name);
+	
+	even = !even;
+	if (even)
+	    fputc('\n', f);
+	else
+	    fcpto(f, 40, cp);
     }
     
-    fprintf(f, "    { 0x%.4x, PSDRV_AGLGlyphNames + %4i }\t/* %s */\n};\n\n",
-    	    glyphs[i].UV, glyphs[i].index, glyphs[i].name);
-	    
-    fprintf(f, "UNICODEVECTOR PSDRV_AdobeGlyphList = { %i, encoding };\n",
-    	    size);
+    fprintf(f, "    { 0x%.4x, GN_%s }\n};\n", glyphs[i].UV, glyphs[i].name);
 }
     
 
@@ -386,30 +474,38 @@ static void write_encoding(FILE *f)
  
 int main(int argc, char *argv[])
 {
-    FILE    *f;
+    FILE    *f_c, *f_h;
+    
+    if (argc < 3)
+    {
+    	fprintf(stderr, "Usage: %s <C file> <header file>\n", argv[0]);
+	exit(__LINE__);
+    }
 
+    f_c = fopen(argv[1], "w");
+    if (f_c == NULL)
+    {
+	fprintf(stderr, "Error opening %s for writing\n", argv[1]);
+	exit(__LINE__);
+    }
+    
+    f_h = fopen(argv[2], "w");
+    if (f_h == NULL)
+    {
+    	fprintf(stderr, "Error opening %s for writing\n", argv[2]);
+	exit(__LINE__);
+    }
+    
+    write_header(f_c);
+    triple_space(f_c);
     read_agl();
-    read_afms();
-    
-    if (argc < 2)
-    {
-    	f = stdout;
-    }
-    else
-    {
-    	f = fopen(argv[1], "w");
-	if (f == NULL)
-	{
-	    fprintf(stderr, "Error opening %s for writing\n", argv[1]);
-	    exit(__LINE__);
-	}
-    }
-    
-    write_header(f);
-    triple_space(f);
-    write_glyph_names(f);
-    triple_space(f);
-    write_encoding(f);
+    read_afms(f_c, f_h);    	    /* also writes font list */
+    triple_space(f_c);
+    write_glyph_names(f_c, f_h);
+    triple_space(f_c);
+    write_encoding_by_name(f_c);
+    triple_space(f_c);
+    write_encoding_by_UV(f_c);
     
     return 0;
 }

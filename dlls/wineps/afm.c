@@ -651,7 +651,6 @@ static int AFMMetricsByUV(const AFMMETRICS *a, const AFMMETRICS *b)
  
 static BOOL SortFontMetrics()
 {
-    UNICODEGLYPH    *aglCopy = NULL;
     FONTFAMILY	    *family = PSDRV_AFMFontList;
     
     while (family != NULL)
@@ -665,21 +664,6 @@ static BOOL SortFontMetrics()
 	    
 	    if (strcmp(afm->EncodingScheme, "FontSpecific") != 0)
 	    {
-	    	if (aglCopy == NULL)	/* do this once, if necessary */
-		{
-		    aglCopy = HeapAlloc(PSDRV_Heap, 0,
-		    	    PSDRV_AdobeGlyphList.size * sizeof(UNICODEGLYPH));
-		    if (aglCopy == NULL)
-		    	return FALSE;
-			
-		    memcpy(aglCopy, PSDRV_AdobeGlyphList.glyphs,
-		    	    PSDRV_AdobeGlyphList.size * sizeof(UNICODEGLYPH));
-			    
-		    qsort(aglCopy, PSDRV_AdobeGlyphList.size,
-		    	    sizeof(UNICODEGLYPH),
-			    (compar_callback_fn)UnicodeGlyphByNameIndex);
-		}
-		
 		for (i = 0; i < afm->NumofMetrics; ++i)
 		{
 		    UNICODEGLYPH    ug, *pug;
@@ -687,7 +671,7 @@ static BOOL SortFontMetrics()
 		    ug.name = afm->Metrics[i].N;
 		    ug.UV = -1;
 		    
-		    pug = bsearch(&ug, aglCopy, PSDRV_AdobeGlyphList.size,
+		    pug = bsearch(&ug, PSDRV_AGLbyName, PSDRV_AGLbyNameSize,
 		    	    sizeof(UNICODEGLYPH),
 			    (compar_callback_fn)UnicodeGlyphByNameIndex);
 		    if (pug == NULL)
@@ -724,9 +708,6 @@ static BOOL SortFontMetrics()
 	family = family->next;
     }
     
-    if (aglCopy != NULL)
-    	HeapFree(PSDRV_Heap, 0, aglCopy);
-	
     return TRUE;
 }
 

@@ -23,15 +23,6 @@ typedef struct {
 } UNICODEGLYPH;
 
 typedef struct {
-    INT		    	size;
-    const UNICODEGLYPH  *glyphs;
-} UNICODEVECTOR;
-
-extern const INT	PSDRV_AGLGlyphNamesSize;
-extern GLYPHNAME    	PSDRV_AGLGlyphNames[];
-extern UNICODEVECTOR  	PSDRV_AdobeGlyphList;
-
-typedef struct {
     float	llx, lly, urx, ury;
 } AFMBBOX;
 
@@ -273,6 +264,26 @@ typedef struct {
     PRINTERINFO *pi;
     PSDRV_DEVMODEA *dlgdm;
 } PSDRV_DLGINFO;
+
+
+/*
+ *  Every glyph name in the Adobe Glyph List and the 35 core PostScript fonts
+ */
+ 
+extern const INT    PSDRV_AGLGlyphNamesSize;
+extern GLYPHNAME    PSDRV_AGLGlyphNames[];
+
+
+/*
+ *  The AGL encoding vector
+ */
+ 
+extern const INT    	    PSDRV_AGLbyNameSize;    /* sorted by name -     */
+extern const UNICODEGLYPH   PSDRV_AGLbyName[];	    /*  duplicates omitted  */
+
+extern const INT    	    PSDRV_AGLbyUVSize;	    /* sorted by UV -	    */
+extern const UNICODEGLYPH   PSDRV_AGLbyUV[];	    /*  duplicates included */
+
 
 extern INT16 WINAPI PSDRV_ExtDeviceMode16(HWND16 hwnd, HANDLE16 hDriver,
 		    LPDEVMODEA lpdmOutput, LPSTR lpszDevice, LPSTR lpszPort,
