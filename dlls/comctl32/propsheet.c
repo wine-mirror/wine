@@ -281,15 +281,26 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEA lppsp,
 
   if (dwFlags & PSP_USETITLE)
   {
-    psInfo->proppage[index].pszText = HEAP_strdupAtoW(GetProcessHeap(),
-                                                      0,
-                                                      lppsp->pszTitle);
+    if ( !HIWORD( lppsp->pszTitle ) )
+    {
+      char szTitle[256];
+      
+      if ( !LoadStringA( lppsp->hInstance, (UINT) lppsp->pszTitle, szTitle, 256 ) )
+	return FALSE;
+      
+      psInfo->proppage[index].pszText = HEAP_strdupAtoW( GetProcessHeap(),
+							 0, szTitle );
+    }
+    else
+      psInfo->proppage[index].pszText = HEAP_strdupAtoW(GetProcessHeap(),
+							0,
+							lppsp->pszTitle);
   }
 
   /*
    * Build the image list for icons
    */
-  if ((dwFlags & PSP_USEHICON) || (dwFlags & PSP_USEICONID))
+  if ((dwFlags & PSP_USEHICON) || (dwFlags & PSP_USEICONID)) 
   {
     HICON hIcon;
     int icon_cx = GetSystemMetrics(SM_CXSMICON);
@@ -1220,6 +1231,7 @@ static void PROPSHEET_UnChanged(HWND hwndDlg, HWND hwndCleanPage)
   PropSheetInfo* psInfo = (PropSheetInfo*) GetPropA(hwndDlg,
                                                     PropSheetInfoStr);
 
+  if ( !psInfo ) return;
   for (i = 0; i < psInfo->nPages; i++)
   {
     /* set the specified page as clean */
