@@ -474,41 +474,19 @@ static void STATIC_PaintBitmapfn(WND *wndPtr, HDC hdc )
 static void STATIC_PaintEtchedfn( WND *wndPtr, HDC hdc )
 {
     RECT rc;
-    HBRUSH hbrush;
-    HPEN hpen;
 
     if (TWEAK_WineLook == WIN31_LOOK)
 	return;
 
     GetClientRect( wndPtr->hwndSelf, &rc );
-    hbrush = SendMessageA( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
-                             hdc, wndPtr->hwndSelf );
-    FillRect( hdc, &rc, hbrush );
-
     switch (wndPtr->dwStyle & SS_TYPEMASK)
     {
 	case SS_ETCHEDHORZ:
-	    hpen = SelectObject (hdc, GetSysColorPen (COLOR_3DSHADOW));
-	    MoveToEx (hdc, rc.left, rc.bottom / 2 - 1, NULL);
-	    LineTo (hdc, rc.right - 1, rc.bottom / 2 - 1);
-	    SelectObject (hdc, GetSysColorPen (COLOR_3DHIGHLIGHT));
-	    MoveToEx (hdc, rc.left, rc.bottom / 2, NULL);
-	    LineTo (hdc, rc.right, rc.bottom / 2);
-	    LineTo (hdc, rc.right, rc.bottom / 2 - 1);
-	    SelectObject (hdc, hpen);
+	    DrawEdge(hdc,&rc,EDGE_ETCHED,BF_TOP|BF_BOTTOM);
 	    break;
-
 	case SS_ETCHEDVERT:
-	    hpen = SelectObject (hdc, GetSysColorPen (COLOR_3DSHADOW));
-	    MoveToEx (hdc, rc.right / 2 - 1, rc.top, NULL);
-	    LineTo (hdc, rc.right / 2 - 1, rc.bottom - 1);
-	    SelectObject (hdc, GetSysColorPen (COLOR_3DHIGHLIGHT));
-	    MoveToEx (hdc, rc.right / 2, rc.top, NULL);
-	    LineTo (hdc, rc.right / 2, rc.bottom);
-	    LineTo (hdc, rc.right / 2 -1 , rc.bottom);
-	    SelectObject (hdc, hpen); 
+	    DrawEdge(hdc,&rc,EDGE_ETCHED,BF_LEFT|BF_RIGHT);
 	    break;
-
 	case SS_ETCHEDFRAME:
 	    DrawEdge (hdc, &rc, EDGE_ETCHED, BF_RECT);
 	    break;
