@@ -212,6 +212,9 @@ static void DOSVM_SendQueuedEvents(CONTEXT86 *context)
     DOSVM_SendQueuedEvent(context);
 }
 
+/***********************************************************************
+ *		QueueEvent (WINEDOS.@)
+ */
 void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data)
 {
   LPDOSEVENT event, cur, prev;
@@ -412,6 +415,9 @@ static void DOSVM_ProcessMessage(MSG *msg)
   }
 }
 
+/***********************************************************************
+ *		Wait (WINEDOS.@)
+ */
 void WINAPI DOSVM_Wait( INT read_pipe, HANDLE hObject )
 {
   MSG msg;
@@ -480,6 +486,9 @@ chk_console_input:
   } while (TRUE);
 }
 
+/***********************************************************************
+ *		Enter (WINEDOS.@)
+ */
 INT WINAPI DOSVM_Enter( CONTEXT86 *context )
 {
  struct vm86plus_struct VM86;
@@ -553,6 +562,9 @@ INT WINAPI DOSVM_Enter( CONTEXT86 *context )
  return 0;
 }
 
+/***********************************************************************
+ *		OutPIC (WINEDOS.@)
+ */
 void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val)
 {
     LPDOSEVENT event;
@@ -583,6 +595,9 @@ void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val)
     }
 }
 
+/***********************************************************************
+ *		SetTimer (WINEDOS.@)
+ */
 void WINAPI DOSVM_SetTimer( UINT ticks )
 {
   int stat=DOSMOD_SET_TIMER;
@@ -607,6 +622,9 @@ void WINAPI DOSVM_SetTimer( UINT ticks )
   }
 }
 
+/***********************************************************************
+ *		GetTimer (WINEDOS.@)
+ */
 UINT WINAPI DOSVM_GetTimer( void )
 {
   int stat=DOSMOD_GET_TIMER;

@@ -333,11 +333,17 @@ load_error:
   return FALSE;
 }
 
+/***********************************************************************
+ *		LoadDosExe (WINEDOS.@)
+ */
 void WINAPI MZ_LoadImage( LPCSTR filename, HANDLE hFile )
 {
     if (MZ_DoLoadImage( hFile, filename, NULL )) MZ_Launch();
 }
 
+/***********************************************************************
+ *		Exec (WINEDOS.@)
+ */
 BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
 {
   /* this may only be called from existing DOS processes
@@ -400,6 +406,9 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
   return ret;
 }
 
+/***********************************************************************
+ *		LoadDPMI (WINEDOS.@)
+ */
 LPDOSTASK WINAPI MZ_AllocDPMITask( void )
 {
   LPDOSTASK lpDosTask = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DOSTASK));
@@ -546,6 +555,9 @@ static void MZ_KillTask(void)
   kill(dosmod_pid,SIGTERM);
 }
 
+/***********************************************************************
+ *		Exit (WINEDOS.@)
+ */
 void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
 {
   LPDOSTASK lpDosTask = MZ_Current();
@@ -611,6 +623,9 @@ void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
 
 #endif /* !MZ_SUPPORTED */
 
+/***********************************************************************
+ *		GetCurrent (WINEDOS.@)
+ */
 LPDOSTASK WINAPI MZ_Current( void )
 {
   return dos_current;
