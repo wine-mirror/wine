@@ -606,8 +606,6 @@ GL_IDirect3DTextureImpl_2_1T_GetHandle(LPDIRECT3DTEXTURE2 iface,
     return D3D_OK;
 }
 
-/* NOTE : if you experience crashes in this function, you must have a buggy
-          version of Mesa. See the file d3dtexture.c for a cure */
 HRESULT WINAPI
 GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
 				  LPDIRECT3DTEXTURE2 lpD3DTexture2)
@@ -637,10 +635,8 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
     if ( This->surface_desc.ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD )
         /* If the surface is not allocated and its location is not yet specified,
 	   force it to video memory */ 
-        if ( !(This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_SYSTEMMEMORY|DDSCAPS_VIDEOMEMORY)) ) {
+        if ( !(This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_SYSTEMMEMORY|DDSCAPS_VIDEOMEMORY)) )
 	    This->surface_desc.ddsCaps.dwCaps |= DDSCAPS_VIDEOMEMORY;
-	    WARN("This case is not properly handled yet.. Expect errors !\n");
-	}
 
     /* Suppress the ALLOCONLOAD flag */
     This->surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_ALLOCONLOAD;
@@ -783,6 +779,17 @@ ICOM_VTABLE(IDirect3DTexture2) VTABLE_IDirect3DTexture2 =
     XCAST(Load) GL_IDirect3DTextureImpl_2_1T_Load,
 };
 
+ICOM_VTABLE(IDirect3DTexture2) STUB_VTABLE_IDirect3DTexture2 =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    XCAST(QueryInterface) Thunk_IDirect3DTextureImpl_2_QueryInterface,
+    XCAST(AddRef) Thunk_IDirect3DTextureImpl_2_AddRef,
+    XCAST(Release) Thunk_IDirect3DTextureImpl_2_Release,
+    XCAST(GetHandle) Main_IDirect3DTextureImpl_2_1T_GetHandle,
+    XCAST(PaletteChanged) Main_IDirect3DTextureImpl_2_1T_PaletteChanged,
+    XCAST(Load) Main_IDirect3DTextureImpl_2_1T_Load,
+};
+
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
 #undef XCAST
 #endif
@@ -816,6 +823,14 @@ HRESULT d3dtexture_create(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOL
 {
     IDirect3DTextureGLImpl *private;
 
+    if ((surf->surface_desc.ddsCaps.dwCaps & (DDSCAPS_OFFSCREENPLAIN|DDSCAPS_SYSTEMMEMORY)) != 0) {
+        /* If it is an offscreen texture, only create stub implementations.
+	   Only the IUnknown interfaces should be used anyway. */
+        ICOM_INIT_INTERFACE(surf, IDirect3DTexture,  VTABLE_IDirect3DTexture); /* No special STUB one here as all functions are stubs */
+	ICOM_INIT_INTERFACE(surf, IDirect3DTexture2, STUB_VTABLE_IDirect3DTexture2);
+        return DD_OK;
+    }
+    
     private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DTextureGLImpl));
     if (private == NULL) return DDERR_OUTOFMEMORY;
 

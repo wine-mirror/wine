@@ -45,12 +45,6 @@ const GUID IID_D3DDEVICE_OpenGL = {
   { 0x82,0x2d,0xa8,0xd5,0x31,0x87,0xca,0xfa }
 };
 
-/* Define this variable if you have an unpatched Mesa 3.0 (patches are available
-   on Mesa's home page) or version 3.1b.
-
-   Version 3.1b2 should correct this bug */
-#undef HAVE_BUGGY_MESAGL
-
 #ifndef HAVE_GLEXT_PROTOTYPES
 /* This is for non-OpenGL ABI compliant glext.h headers :-) */
 typedef void (* PFNGLCOLORTABLEEXTPROC) (GLenum target, GLenum internalFormat,
@@ -358,9 +352,6 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
     if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
     if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
 
-#ifndef HAVE_BUGGY_MESAGL
-    /* The packed texture format are buggy in Mesa. The bug was reported and corrected,
-       so that future version will work great. */
     TRACE("Enumerating GL_RGB packed GL_UNSIGNED_SHORT_5_6_5 (16)\n");
     pformat->dwFlags = DDPF_RGB;
     pformat->u1.dwRGBBitCount = 16;
@@ -400,7 +391,6 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
     pformat->u5.dwRGBAlphaBitMask = 0x00000000;
     if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
     if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
-#endif
 
     TRACE("Enumerating GL_ARGB (no direct OpenGL equivalent - conversion needed)\n");
     pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;

@@ -81,6 +81,7 @@ Main_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl *This,
 			DDRAW_IDDS3_Thunk_VTable);
     ICOM_INIT_INTERFACE(This, IDirectDrawGammaControl,
 			DDRAW_IDDGC_VTable);
+
     /* There is no generic implementation of IDDS7 or texture */
 
     Main_DirectDraw_AddSurface(pDD, This);
@@ -195,8 +196,7 @@ Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
 	/* In case the texture surface was created before the D3D creation */
 	if ((This->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE) == 0) return E_NOINTERFACE;
 	/* Create a 'delayed' private field only if it is not an offscreen texture... */
-	if ((This->tex_private == NULL) && 
-	    ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_OFFSCREENPLAIN|DDSCAPS_SYSTEMMEMORY)) == 0)) {
+	if (This->tex_private == NULL) {
    	    if (This->ddraw_owner->d3d == NULL) {
 	        ERR("Texture created with no D3D object yet.. Not supported !\n");
 		return E_NOINTERFACE;

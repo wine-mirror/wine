@@ -41,10 +41,9 @@ GLenum convert_D3D_compare_to_GL(D3DCMPFUNC dwRenderState)
 	case D3DCMP_NOTEQUAL: return GL_NOTEQUAL;
 	case D3DCMP_GREATEREQUAL: return GL_GEQUAL;
 	case D3DCMP_ALWAYS: return GL_ALWAYS;
-	default:
-            ERR("Unexpected compare type !!!\n");
-            return GL_NEVER;
+	default: ERR("Unexpected compare type %d !\n", dwRenderState);
     }
+    return GL_ALWAYS;
 }
 
 
@@ -92,7 +91,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 		    case D3DTADDRESS_WRAP:   arg = GL_REPEAT; break;
 		    case D3DTADDRESS_CLAMP:  arg = GL_CLAMP; break;
 		    case D3DTADDRESS_BORDER: arg = GL_CLAMP_TO_EDGE; break;
-		    default: ERR("Unhandled TEXTUREADDRESS mode !\n");
+		    default: ERR("Unhandled TEXTUREADDRESS mode %ld !\n", dwRenderState);
 		}
 		if ((dwRenderStateType == D3DRENDERSTATE_TEXTUREADDRESSU) ||
 		    (dwRenderStateType == D3DRENDERSTATE_TEXTUREADDRESS))
