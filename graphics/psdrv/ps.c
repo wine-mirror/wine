@@ -35,15 +35,24 @@ static char psvectorend[] =
 
 static char psprolog[] = /* output ANSIEncoding vector first */
 "/reencodefont {\n"
-"findfont\n"
-"dup length dict begin\n"
-"{1 index /FID ne {def} {pop pop} ifelse} forall\n"
-"/Encoding ANSIEncoding def\n"
-"currentdict\n"
-"end\n"
-"definefont pop\n"
+"  findfont\n"
+"  dup length dict begin\n"
+"  {1 index /FID ne {def} {pop pop} ifelse} forall\n"
+"  /Encoding ANSIEncoding def\n"
+"  currentdict\n"
+"  end\n"
+"  definefont pop\n"
 "} bind def\n"
-"/tmpmtrx matrix def\n";
+"/tmpmtrx matrix def\n"
+"/hatch {\n"
+"  pathbbox\n"
+"  /b exch def /r exch def /t exch def /l exch def /gap 32 def\n"
+"  l cvi gap idiv gap mul\n"
+"  gap\n"
+"  r cvi gap idiv gap mul\n"
+"  {t moveto 0 b t sub rlineto}\n"
+"  for\n"
+"} bind def\n";
 
 static char psbeginsetup[] =
 "%%BeginSetup\n";
@@ -116,11 +125,11 @@ static char pssetgray[] = /* gray */
 static char pssetrgbcolor[] = /* r, g, b */
 "%.2f %.2f %.2f setrgbcolor\n";
 
-static char psellipse[] = /* x, y, a, b */
+static char psarc[] = /* x, y, w, h, ang1, ang2 */
 "tmpmtrx currentmatrix pop\n"
 "%d %d translate\n"
 "%d %d scale\n"
-"0 0 1 0 360 arc\n"
+"0 0 0.5 %.1f %.1f arc\n"
 "tmpmtrx setmatrix\n";
 
 static char psgsave[] =
@@ -131,6 +140,24 @@ static char psgrestore[] =
 
 static char psfill[] =
 "fill\n";
+
+static char pseofill[] =
+"eofill\n";
+
+static char psclosepath[] =
+"closepath\n";
+
+static char psclip[] =
+"clip\n";
+
+static char pseoclip[] =
+"eoclip\n";
+
+static char pshatch[] =
+"hatch\n";
+
+static char psrotate[] = /* ang */
+"%.1f rotate\n";
 
 char *PSDRV_ANSIVector[256] = {
 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -454,11 +481,14 @@ BOOL32 PSDRV_WriteRectangle(DC *dc, INT32 x, INT32 y, INT32 width,
     return PSDRV_WriteSpool(dc, buf, strlen(buf));
 }
 
-BOOL32 PSDRV_WriteEllispe(DC *dc, INT32 x, INT32 y, INT32 a, INT32 b)
+BOOL32 PSDRV_WriteArc(DC *dc, INT32 x, INT32 y, INT32 w, INT32 h, double ang1,
+		      double ang2)
 {
     char buf[256];
 
-    sprintf(buf, psellipse, x, y, a, b);
+    /* Make angles -ve and swap order because we're working with an upside
+       down y-axis */
+    sprintf(buf, psarc, x, y, w, h, -ang2, -ang1);
     return PSDRV_WriteSpool(dc, buf, strlen(buf));
 }
 
@@ -618,17 +648,47 @@ BOOL32 PSDRV_WriteFill(DC *dc)
     return PSDRV_WriteSpool(dc, psfill, sizeof(psfill)-1);
 }
 
-BOOL32 PSDRV_Writegsave(DC *dc)
+BOOL32 PSDRV_WriteEOFill(DC *dc)
+{
+    return PSDRV_WriteSpool(dc, pseofill, sizeof(pseofill)-1);
+}
+
+BOOL32 PSDRV_WriteGSave(DC *dc)
 {
     return PSDRV_WriteSpool(dc, psgsave, sizeof(psgsave)-1);
 }
 
-BOOL32 PSDRV_Writegrestore(DC *dc)
+BOOL32 PSDRV_WriteGRestore(DC *dc)
 {
     return PSDRV_WriteSpool(dc, psgrestore, sizeof(psgrestore)-1);
 }
 
+BOOL32 PSDRV_WriteClosePath(DC *dc)
+{
+    return PSDRV_WriteSpool(dc, psclosepath, sizeof(psclosepath)-1);
+}
 
+BOOL32 PSDRV_WriteClip(DC *dc)
+{
+    return PSDRV_WriteSpool(dc, psclip, sizeof(psclip)-1);
+}
 
+BOOL32 PSDRV_WriteEOClip(DC *dc)
+{
+    return PSDRV_WriteSpool(dc, pseoclip, sizeof(pseoclip)-1);
+}
+
+BOOL32 PSDRV_WriteHatch(DC *dc)
+{
+    return PSDRV_WriteSpool(dc, pshatch, sizeof(pshatch)-1);
+}
+
+BOOL32 PSDRV_WriteRotate(DC *dc, float ang)
+{
+    char buf[256];
+
+    sprintf(buf, psrotate, ang);
+    return PSDRV_WriteSpool(dc, buf, strlen(buf));
+}
 
 

@@ -1178,19 +1178,29 @@ INT32 WINAPI StretchDIBits32(HDC32 hdc, INT32 xDst, INT32 yDst, INT32 widthDst,
                        INT32 heightSrc, const void *bits,
                        const BITMAPINFO *info, UINT32 wUsage, DWORD dwRop )
 {
-    HBITMAP32 hBitmap, hOldBitmap;
-    HDC32 hdcMem;
+    DC *dc = DC_GetDCPtr( hdc );
+    if(!dc) return FALSE;
 
-    hBitmap = CreateDIBitmap32( hdc, &info->bmiHeader, CBM_INIT,
-                                bits, info, wUsage );
-    hdcMem = CreateCompatibleDC32( hdc );
-    hOldBitmap = SelectObject32( hdcMem, hBitmap );
-    StretchBlt32( hdc, xDst, yDst, widthDst, heightDst,
-                  hdcMem, xSrc, ySrc, widthSrc, heightSrc, dwRop );
-    SelectObject32( hdcMem, hOldBitmap );
-    DeleteDC32( hdcMem );
-    DeleteObject32( hBitmap );
-    return heightSrc;
+    if(dc->funcs->pStretchDIBits)
+    	   return dc->funcs->pStretchDIBits(dc, xDst, yDst, widthDst, 
+					    heightDst, xSrc, ySrc, widthSrc,
+					    heightSrc, bits, info, wUsage,
+					    dwRop);
+    else { /* use StretchBlt32 */
+        HBITMAP32 hBitmap, hOldBitmap;
+	HDC32 hdcMem;
+    
+	hBitmap = CreateDIBitmap32( hdc, &info->bmiHeader, CBM_INIT,
+				    bits, info, wUsage );
+	hdcMem = CreateCompatibleDC32( hdc );
+	hOldBitmap = SelectObject32( hdcMem, hBitmap );
+	StretchBlt32( hdc, xDst, yDst, widthDst, heightDst,
+		      hdcMem, xSrc, ySrc, widthSrc, heightSrc, dwRop );
+	SelectObject32( hdcMem, hOldBitmap );
+	DeleteDC32( hdcMem );
+	DeleteObject32( hBitmap );
+	return heightSrc;
+    }
 }
 
 

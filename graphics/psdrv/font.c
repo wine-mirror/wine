@@ -179,6 +179,24 @@ BOOL32 PSDRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
 
 
 /***********************************************************************
+ *           PSDRV_GetCharWidth
+ */
+BOOL32 PSDRV_GetCharWidth( DC *dc, UINT32 firstChar, UINT32 lastChar,
+			   LPINT32 buffer )
+{
+    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
+    UINT32 i;
+
+    TRACE(psdrv, "first = %d last = %d\n", firstChar, lastChar);
+
+    for( i = firstChar; i <= lastChar; i++ )
+        *buffer++ = physDev->font.afm->CharWidths[i] * physDev->font.scale;
+
+    return TRUE;
+}
+
+    
+/***********************************************************************
  *           PSDRV_SetFont
  */
 BOOL32 PSDRV_SetFont( DC *dc )

@@ -197,7 +197,6 @@ typedef struct {
 
 typedef struct {
     PSCOLOR		color;
-    UINT32		style;
     BOOL32		set;
 } PSBRUSH;
 
@@ -245,7 +244,7 @@ extern HPEN32 PSDRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen );
 extern HBRUSH32 PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush,
 					  BRUSHOBJ * brush );
 
-extern BOOL32 PSDRV_SetBrush(DC *dc);
+extern BOOL32 PSDRV_Brush(DC *dc, BOOL32 EO);
 extern BOOL32 PSDRV_SetFont( DC *dc );
 extern BOOL32 PSDRV_SetPen( DC *dc );
 
@@ -268,39 +267,69 @@ extern BOOL32 PSDRV_WriteSetFont(DC *dc, BOOL32 UseANSI);
 extern BOOL32 PSDRV_WriteShow(DC *dc, char *str, INT32 count);
 extern BOOL32 PSDRV_WriteReencodeFont(DC *dc);
 extern BOOL32 PSDRV_WriteSetPen(DC *dc);
-extern BOOL32 PSDRV_WriteEllispe(DC *dc, INT32 x, INT32 y, INT32 a, INT32 b);
+extern BOOL32 PSDRV_WriteArc(DC *dc, INT32 x, INT32 y, INT32 w, INT32 h,
+			     double ang1, double ang2);
 extern BOOL32 PSDRV_WriteSetColor(DC *dc, PSCOLOR *color);
 extern BOOL32 PSDRV_WriteSetBrush(DC *dc);
 extern BOOL32 PSDRV_WriteFill(DC *dc);
-extern BOOL32 PSDRV_Writegsave(DC *dc);
-extern BOOL32 PSDRV_Writegrestore(DC *dc);
+extern BOOL32 PSDRV_WriteEOFill(DC *dc);
+extern BOOL32 PSDRV_WriteGSave(DC *dc);
+extern BOOL32 PSDRV_WriteGRestore(DC *dc);
+extern BOOL32 PSDRV_WriteClosePath(DC *dc);
+extern BOOL32 PSDRV_WriteClip(DC *dc);
+extern BOOL32 PSDRV_WriteEOClip(DC *dc);
+extern BOOL32 PSDRV_WriteHatch(DC *dc);
+extern BOOL32 PSDRV_WriteRotate(DC *dc, float ang);
 
 
 
 
 
-
-extern BOOL32 PSDRV_Ellipse(DC *dc, INT32 left, INT32 top, INT32 right,
-		       INT32 bottom);
+extern BOOL32 PSDRV_Arc( DC *dc, INT32 left, INT32 top, INT32 right,
+			 INT32 bottom, INT32 xstart, INT32 ystart,
+			 INT32 xend, INT32 yend );
+extern BOOL32 PSDRV_Chord( DC *dc, INT32 left, INT32 top, INT32 right,
+			   INT32 bottom, INT32 xstart, INT32 ystart,
+			   INT32 xend, INT32 yend );
+extern BOOL32 PSDRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right,
+			     INT32 bottom );
 extern BOOL32 PSDRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
-				        DEVICEFONTENUMPROC proc, LPARAM lp );
+				     DEVICEFONTENUMPROC proc, LPARAM lp );
 extern INT32 PSDRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput, 
-                              SEGPTR lpInData, SEGPTR lpOutData );
+			   SEGPTR lpInData, SEGPTR lpOutData );
 extern BOOL32 PSDRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
-                   const RECT32 *lprect, LPCSTR str, UINT32 count,
-                   const INT32 *lpDx );
+				const RECT32 *lprect, LPCSTR str, UINT32 count,
+				const INT32 *lpDx );
+extern BOOL32 PSDRV_GetCharWidth( DC *dc, UINT32 firstChar, UINT32 lastChar,
+				  LPINT32 buffer );
 extern BOOL32 PSDRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
-                                  LPSIZE32 size );
+					LPSIZE32 size );
 extern BOOL32 PSDRV_GetTextMetrics( DC *dc, TEXTMETRIC32A *metrics );
 extern BOOL32 PSDRV_LineTo( DC *dc, INT32 x, INT32 y );
 extern BOOL32 PSDRV_MoveToEx( DC *dc, INT32 x, INT32 y, LPPOINT32 pt );
+extern BOOL32 PSDRV_Pie( DC *dc, INT32 left, INT32 top, INT32 right,
+			 INT32 bottom, INT32 xstart, INT32 ystart,
+			 INT32 xend, INT32 yend );
 extern BOOL32 PSDRV_Polygon( DC *dc, LPPOINT32 pt, INT32 count );
 extern BOOL32 PSDRV_Polyline( DC *dc, const LPPOINT32 pt, INT32 count );
-extern BOOL32 PSDRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right,
-		       INT32 bottom);
+extern BOOL32 PSDRV_PolyPolygon( DC *dc, LPPOINT32 pts, LPINT32 counts,
+				 UINT32 polygons );
+extern BOOL32 PSDRV_PolyPolyline( DC *dc, LPPOINT32 pts, LPDWORD counts,
+				  DWORD polylines );
+extern BOOL32 PSDRV_Rectangle( DC *dc, INT32 left, INT32 top, INT32 right,
+			      INT32 bottom );
+extern BOOL32 PSDRV_RoundRect(DC *dc, INT32 left, INT32 top, INT32 right,
+			      INT32 bottom, INT32 ell_width, INT32 ell_height);
 extern HGDIOBJ32 PSDRV_SelectObject( DC *dc, HGDIOBJ32 handle );
 extern COLORREF PSDRV_SetBkColor( DC *dc, COLORREF color );
+extern COLORREF PSDRV_SetPixel( DC *dc, INT32 x, INT32 y, COLORREF color );
 extern COLORREF PSDRV_SetTextColor( DC *dc, COLORREF color );
+extern INT32 PSDRV_StretchDIBits( DC *dc, INT32 xDst, INT32 yDst,
+				  INT32 widthDst, INT32 heightDst, INT32 xSrc,
+				  INT32 ySrc, INT32 widthSrc, INT32 heightSrc,
+				  const void *bits, const BITMAPINFO *info,
+				  UINT32 wUsage, DWORD dwRop );
+
 
 
 

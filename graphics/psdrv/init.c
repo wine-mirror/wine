@@ -20,9 +20,9 @@ static BOOL32 PSDRV_DeleteDC( DC *dc );
 
 static const DC_FUNCTIONS PSDRV_Funcs =
 {
-    NULL,                            /* pArc */
+    PSDRV_Arc,                       /* pArc */
     NULL,                            /* pBitBlt */
-    NULL,                            /* pChord */
+    PSDRV_Chord,                     /* pChord */
     PSDRV_CreateDC,                  /* pCreateDC */
     PSDRV_DeleteDC,                  /* pDeleteDC */
     NULL,                            /* pDeleteObject */
@@ -33,7 +33,7 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pExcludeVisRect */
     NULL,                            /* pExtFloodFill */
     PSDRV_ExtTextOut,                /* pExtTextOut */
-    NULL,                            /* pGetCharWidth */
+    PSDRV_GetCharWidth,              /* pGetCharWidth */
     NULL,                            /* pGetPixel */
     PSDRV_GetTextExtentPoint,        /* pGetTextExtentPoint */
     PSDRV_GetTextMetrics,            /* pGetTextMetrics */
@@ -46,16 +46,16 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pOffsetWindowOrg (optional) */
     NULL,                            /* pPaintRgn */
     NULL,                            /* pPatBlt */
-    NULL,                            /* pPie */
-    NULL,                            /* pPolyPolygon */
-    NULL,                            /* pPolyPolyline */
+    PSDRV_Pie,                       /* pPie */
+    PSDRV_PolyPolygon,               /* pPolyPolygon */
+    PSDRV_PolyPolyline,              /* pPolyPolyline */
     PSDRV_Polygon,                   /* pPolygon */
     PSDRV_Polyline,                  /* pPolyline */
     NULL,                            /* pPolyBezier */		     
     NULL,                            /* pRealizePalette */
     PSDRV_Rectangle,                 /* pRectangle */
     NULL,                            /* pRestoreDC */
-    NULL,                            /* pRoundRect */
+    PSDRV_RoundRect,                 /* pRoundRect */
     NULL,                            /* pSaveDC */
     NULL,                            /* pScaleViewportExt (optional) */
     NULL,                            /* pScaleWindowExt (optional) */
@@ -68,7 +68,7 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pSetDIBitsToDevice */
     NULL,                            /* pSetMapMode (optional) */
     NULL,                            /* pSetMapperFlags */
-    NULL,                            /* pSetPixel */
+    PSDRV_SetPixel,                  /* pSetPixel */
     NULL,                            /* pSetPolyFillMode */
     NULL,                            /* pSetROP2 */
     NULL,                            /* pSetRelAbs */
@@ -82,7 +82,7 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pSetWindowExt (optional) */
     NULL,                            /* pSetWindowOrg (optional) */
     NULL,                            /* pStretchBlt */
-    NULL                             /* pStretchDIBits */
+    PSDRV_StretchDIBits              /* pStretchDIBits */
 };
 
 
