@@ -1802,6 +1802,7 @@ BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
 {
     FIND_FIRST_INFO *info;
     BOOL ret = FALSE;
+    DWORD gle = ERROR_NO_MORE_FILES;
 
     if ((handle == INVALID_HANDLE_VALUE) ||
        !(info = (FIND_FIRST_INFO *)GlobalLock( handle )))
@@ -1816,25 +1817,24 @@ BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
         {
             SMB_CloseDir( info->u.smb_dir );
             HeapFree( GetProcessHeap(), 0, info->path );
-            SetLastError( ERROR_NO_MORE_FILES );
         }
         goto done;
     }
     else if (!info->path || !info->u.dos_dir)
     {
-        SetLastError( ERROR_NO_MORE_FILES );
+        goto done;
     }
     else if (!DOSFS_FindNextEx( info, data ))
     {
         DOSFS_CloseDir( info->u.dos_dir ); info->u.dos_dir = NULL;
         HeapFree( GetProcessHeap(), 0, info->path );
         info->path = info->long_mask = NULL;
-        SetLastError( ERROR_NO_MORE_FILES );
     }
     else
         ret = TRUE;
 done:
     GlobalUnlock( handle );
+    if( !ret ) SetLastError( gle );
     return ret;
 }
 
