@@ -129,14 +129,59 @@ DDRAW_DGA_Available(void)
 
 HRESULT WINAPI
 DirectDrawEnumerateA(LPDDENUMCALLBACKA ddenumproc,LPVOID data) {
+	TRACE(ddraw, "(%p,%p)\n", ddenumproc, data);
+  
 	if (DDRAW_DGA_Available()) {
 	  TRACE(ddraw, "Enumerating DGA interface\n");
-		ddenumproc(&DGA_DirectDraw_GUID,"WINE with XFree86 DGA","display",data);
+	  if (!ddenumproc(&DGA_DirectDraw_GUID,"WINE with XFree86 DGA","display",data))
+	    return DD_OK;
 	}
+	
 	TRACE(ddraw, "Enumerating Xlib interface\n");
-	ddenumproc(&XLIB_DirectDraw_GUID,"WINE with Xlib","display",data);
+	if (!ddenumproc(&XLIB_DirectDraw_GUID,"WINE with Xlib","display",data))
+	  return DD_OK;
+	
 	TRACE(ddraw, "Enumerating Default interface\n");
-	ddenumproc(NULL,"WINE (default)","display",data);
+	if (!ddenumproc(NULL,"WINE (default)","display",data))
+	  return DD_OK;
+	
+	return DD_OK;
+}
+
+HRESULT WINAPI
+DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA ddenumproc,LPVOID data, DWORD dwFlags) {
+	TRACE(ddraw, "(%p,%p, %08lx)\n", ddenumproc, data, dwFlags);
+
+	if (TRACE_ON(ddraw)) {
+	  DUMP("  Flags : ");
+	  if (dwFlags & DDENUM_ATTACHEDSECONDARYDEVICES)
+	    DUMP("DDENUM_ATTACHEDSECONDARYDEVICES ");
+	  if (dwFlags & DDENUM_DETACHEDSECONDARYDEVICES)
+	    DUMP("DDENUM_DETACHEDSECONDARYDEVICES ");
+	  if (dwFlags & DDENUM_NONDISPLAYDEVICES)
+	    DUMP("DDENUM_NONDISPLAYDEVICES ");
+	  DUMP("\n");
+	}
+
+	if (dwFlags & DDENUM_NONDISPLAYDEVICES) {
+	  /* For the moment, Wine does not support any 3D only accelerators */
+	  return DD_OK;
+	}
+	
+	if (DDRAW_DGA_Available()) {
+	  TRACE(ddraw, "Enumerating DGA interface\n");
+	  if (!ddenumproc(&DGA_DirectDraw_GUID,"WINE with XFree86 DGA","display",data, NULL))
+	    return DD_OK;
+	}
+
+	TRACE(ddraw, "Enumerating Xlib interface\n");
+	if (!ddenumproc(&XLIB_DirectDraw_GUID,"WINE with Xlib","display",data, NULL))
+	  return DD_OK;
+
+	TRACE(ddraw, "Enumerating Default interface\n");
+	if (!ddenumproc(NULL,"WINE (default)","display",data, NULL))
+	  return DD_OK;
+	
 	return DD_OK;
 }
 
@@ -1983,7 +2028,7 @@ static HRESULT WINAPI IDirect3D_EnumDevices(LPDIRECT3D this,
   FIXME(ddraw,"(%p)->(%p,%p),stub!\n",this,cb,context);
 
   /* Call functions defined in d3ddevices.c */
-  if (d3d_OpenGL_dx3(cb, context))
+  if (!d3d_OpenGL_dx3(cb, context))
     return DD_OK;
 
   return DD_OK;
@@ -2080,7 +2125,7 @@ static HRESULT WINAPI IDirect3D2_EnumDevices(
 	FIXME(ddraw,"(%p)->(%p,%p),stub!\n",this,cb,context);
 
 	/* Call functions defined in d3ddevices.c */
-	if (d3d_OpenGL(cb, context))
+	if (!d3d_OpenGL(cb, context))
 	  return DD_OK;
 
 	return DD_OK;

@@ -10,19 +10,21 @@ type win32
    7  stdcall DirectDrawCreateClipper(long ptr ptr) DirectDrawCreateClipper
    8  stdcall DirectDrawEnumerateA(ptr ptr) DirectDrawEnumerateA
    9  stub DirectDrawEnumerateW
-  10  stub DllCanUnloadNow
-  11  stub DllGetClassObject
-  12  stub GetNextMipMap
-  13  stub GetSurfaceFromDC
-  14  stub HeapVidMemAllocAligned
-  15  stub InternalLock
-  16  stub InternalUnlock
-  17  stub LateAllocateSurfaceMem
-  18  stub VidMemAlloc
-  19  stub VidMemAmountFree
-  20  stub VidMemFini
-  21  stub VidMemFree
-  22  stub VidMemInit
-  23  stub VidMemLargestFree
-  24  stub thk1632_ThunkData32
-  25  stub thk3216_ThunkData32
+  10  stdcall DirectDrawEnumerateExA(ptr ptr long) DirectDrawEnumerateExA
+  11  stub DirectDrawEnumerateExW
+  12  stub DllCanUnloadNow
+  13  stub DllGetClassObject
+  14  stub GetNextMipMap
+  15  stub GetSurfaceFromDC
+  16  stub HeapVidMemAllocAligned
+  17  stub InternalLock
+  18  stub InternalUnlock
+  19  stub LateAllocateSurfaceMem
+  20  stub VidMemAlloc
+  21  stub VidMemAmountFree
+  22  stub VidMemFini
+  23  stub VidMemFree
+  24  stub VidMemInit
+  25  stub VidMemLargestFree
+  26  stub thk1632_ThunkData32
+  27  stub thk3216_ThunkData32
