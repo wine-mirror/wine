@@ -1164,7 +1164,12 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			break;
 		case( VT_I2 ):
 			res = VarI4FromI2( V_UNION(ps,iVal), &V_UNION(pd,lVal) );
-            break;
+
+            		break;
+		case( VT_ERROR ):
+			V_UNION(pd,lVal) = V_UNION(pd,scode);
+			res = S_OK;
+			break;
         case( VT_INT ):
         case( VT_I4 ):
             res = VariantCopy( pd, ps );
@@ -1391,9 +1396,9 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		case( VT_UI4 ):
 			res = VarR4FromUI4( V_UNION(ps,ulVal), &V_UNION(pd,fltVal) );
 			break;
-        case( VT_R4 ):
-            res = VariantCopy( pd, ps );
-            break;
+		case( VT_R4 ):
+		    res = VariantCopy( pd, ps );
+		    break;
 		case( VT_R8 ):
 			res = VarR4FromR8( V_UNION(ps,dblVal), &V_UNION(pd,fltVal) );
 			break;
@@ -1408,6 +1413,10 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			break;
 		case( VT_CY ):
 			res = VarR4FromCy( V_UNION(ps,cyVal), &V_UNION(pd,fltVal) );
+			break;
+		case( VT_ERROR ):
+			V_UNION(pd,fltVal) = V_UNION(ps,scode);
+			res = S_OK;
 			break;
 		case( VT_DISPATCH ):
 			/*res = VarR4FromDisp( V_UNION(ps,pdispVal), lcid, &V_UNION(pd,fltVal) );*/
@@ -1919,64 +1928,61 @@ HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
    */
   if( pvargDest != pvargSrc && res == S_OK )
   {
-    res = VariantClear( pvargDest );
+    VariantClear( pvargDest ); /* result is not checked */
 
-    if( res == S_OK )
+    if( V_VT(pvargSrc) & VT_BYREF )
     {
-      if( V_VT(pvargSrc) & VT_BYREF )
+      /* In the case of byreference we only need
+       * to copy the pointer.
+       */
+      pvargDest->n1.n2.n3 = pvargSrc->n1.n2.n3;
+      V_VT(pvargDest) = V_VT(pvargSrc);
+    }
+    else
+    {
+      /*
+       * The VT_ARRAY flag is another way to designate a safe array.
+       */
+      if (V_VT(pvargSrc) & VT_ARRAY)
       {
-	/* In the case of byreference we only need
-	 * to copy the pointer.
-	 */
-	pvargDest->n1.n2.n3 = pvargSrc->n1.n2.n3;
-	V_VT(pvargDest) = V_VT(pvargSrc);
+	SafeArrayCopy(V_UNION(pvargSrc,parray), &V_UNION(pvargDest,parray));
       }
       else
       {
-	/*
-	 * The VT_ARRAY flag is another way to designate a safe array.
+	/* In the case of by value we need to
+	 * copy the actual value. In the case of
+	 * VT_BSTR a copy of the string is made,
+	 * if VT_DISPATCH or VT_IUNKNOWN AddRef is
+	 * called to increment the object's reference count.
 	 */
-	if (V_VT(pvargSrc) & VT_ARRAY)
+	switch( V_VT(pvargSrc) & VT_TYPEMASK )
 	{
-	  SafeArrayCopy(V_UNION(pvargSrc,parray), &V_UNION(pvargDest,parray));
+	  case( VT_BSTR ):
+	    V_UNION(pvargDest,bstrVal) = SYSDUPSTRING( V_UNION(pvargSrc,bstrVal) );
+	    break;
+	  case( VT_DISPATCH ):
+	    V_UNION(pvargDest,pdispVal) = V_UNION(pvargSrc,pdispVal);
+	    if (V_UNION(pvargDest,pdispVal)!=NULL)
+	      ICOM_CALL(AddRef,V_UNION(pvargDest,pdispVal));
+	    break;
+	  case( VT_VARIANT ):
+	    VariantCopy(V_UNION(pvargDest,pvarVal),V_UNION(pvargSrc,pvarVal));
+	    break;
+	  case( VT_UNKNOWN ):
+	    V_UNION(pvargDest,punkVal) = V_UNION(pvargSrc,punkVal);
+	    if (V_UNION(pvargDest,pdispVal)!=NULL)
+	      ICOM_CALL(AddRef,V_UNION(pvargDest,punkVal));
+	    break;
+	  case( VT_SAFEARRAY ):
+	    SafeArrayCopy(V_UNION(pvargSrc,parray), &V_UNION(pvargDest,parray));
+	    break;
+	  default:
+	    pvargDest->n1.n2.n3 = pvargSrc->n1.n2.n3;
+	    break;
 	}
-	else
-	{
-	  /* In the case of by value we need to
-	   * copy the actual value. In the case of
-	   * VT_BSTR a copy of the string is made,
-	   * if VT_DISPATCH or VT_IUNKNOWN AddRef is
-	   * called to increment the object's reference count.
-	   */
-	  switch( V_VT(pvargSrc) & VT_TYPEMASK )
-	  {
-	    case( VT_BSTR ):
-	      V_UNION(pvargDest,bstrVal) = SYSDUPSTRING( V_UNION(pvargSrc,bstrVal) );
-	      break;
-	    case( VT_DISPATCH ):
-	      V_UNION(pvargDest,pdispVal) = V_UNION(pvargSrc,pdispVal);
-	      if (V_UNION(pvargDest,pdispVal)!=NULL)
-		ICOM_CALL(AddRef,V_UNION(pvargDest,pdispVal));
-	      break;
-	    case( VT_VARIANT ):
-	      VariantCopy(V_UNION(pvargDest,pvarVal),V_UNION(pvargSrc,pvarVal));
-	      break;
-	    case( VT_UNKNOWN ):
-	      V_UNION(pvargDest,punkVal) = V_UNION(pvargSrc,punkVal);
-	      if (V_UNION(pvargDest,pdispVal)!=NULL)
-		ICOM_CALL(AddRef,V_UNION(pvargDest,punkVal));
-	      break;
-	    case( VT_SAFEARRAY ):
-	      SafeArrayCopy(V_UNION(pvargSrc,parray), &V_UNION(pvargDest,parray));
-	      break;
-	    default:
-	      pvargDest->n1.n2.n3 = pvargSrc->n1.n2.n3;
-	      break;
-	  }
-	}
-
-	V_VT(pvargDest) = V_VT(pvargSrc);
       }
+      V_VT(pvargDest) = V_VT(pvargSrc);
+      dump_Variant(pvargDest);
     }
   }
 
@@ -2043,6 +2049,9 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 	      V_UNION(pvargDest,bstrVal) = SYSDUPSTRING( *(V_UNION(pvargSrc,pbstrVal)) );
 	      break;
 	    case( VT_DISPATCH ):
+	      V_UNION(pvargDest,pdispVal) = *V_UNION(pvargSrc,ppdispVal);
+	      if (V_UNION(pvargDest,pdispVal)!=NULL)
+		ICOM_CALL(AddRef,V_UNION(pvargDest,pdispVal));
 	      break;
 	    case( VT_VARIANT ):
 	      {
@@ -2079,6 +2088,9 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 	      }
 	      break;
 	    case( VT_UNKNOWN ):
+	      V_UNION(pvargDest,punkVal) = *V_UNION(pvargSrc,ppunkVal);
+	      if (V_UNION(pvargDest,pdispVal)!=NULL)
+		ICOM_CALL(AddRef,V_UNION(pvargDest,punkVal));
 	      break;
 	    case( VT_SAFEARRAY ):
 	      SafeArrayCopy(*V_UNION(pvargSrc,pparray), &V_UNION(pvargDest,parray));
@@ -2118,53 +2130,42 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
  */
 static HRESULT
 coerce_array(
-	VARIANTARG* src, SAFEARRAY **narr, LCID lcid, USHORT wFlags, VARTYPE vt
+	VARIANTARG* src, VARIANTARG *dst, LCID lcid, USHORT wFlags, VARTYPE vt
 ) {
-	int		elems,i,j;
-	SAFEARRAY	*darr, *sarr = V_ARRAY(src);
-	long		*addr;
+	SAFEARRAY	*sarr = V_ARRAY(src);
 	HRESULT		hres;
+	LPVOID		data;
+	VARTYPE		vartype;
 
-	hres = SafeArrayAllocDescriptor( sarr->cDims, &darr);
-	if (FAILED(hres)) return hres;
-	memcpy(
-		darr->rgsabound,
-		sarr->rgsabound,
-		sizeof(sarr->rgsabound[0])*sarr->cDims
-	);
-	hres = SafeArrayAllocData(darr);
-	if (FAILED(hres)) {
-		SafeArrayDestroyDescriptor(darr);
-		return hres;
-	}
-	elems = 1;
-	for (i=0;i<sarr->cDims;i++)
-		elems *= sarr->rgsabound[i].cElements;
-	addr = HeapAlloc(GetProcessHeap(),0,sizeof(long)*sarr->cDims);
-	for (i=0;i<elems;i++) {
-		VARIANT 	tmpvar,newvar;
-		int 		tmpi = i;
-		/* convert absolute value in array address */
-		for (j=0;j<sarr->cDims;j++) {
-			addr[j] = (tmpi % sarr->rgsabound[j].cElements) + sarr->rgsabound[j].lLbound;
-			tmpi /= sarr->rgsabound[j].cElements;
-		}
-		V_VT(&tmpvar) = V_VT(src) & VT_TYPEMASK;
-		hres = SafeArrayGetElement(sarr, addr, &V_UNION(&tmpvar,lVal));
-		if (FAILED(hres)) {
-			FIXME("Did not get element %d\n",i);
+	SafeArrayGetVartype(sarr,&vartype);
+	switch (vt) {
+	case VT_BSTR:
+		if (sarr->cDims != 1) {
+			FIXME("Can not coerce array with dim %d into BSTR\n", sarr->cDims);
 			return E_FAIL;
 		}
-		hres = Coerce( &newvar, lcid, wFlags, &tmpvar, vt );
-		if (FAILED(hres)) return E_FAIL;
-		hres = SafeArrayPutElement( darr, addr, &V_UNION(&newvar,lVal));
-		if (FAILED(hres)) {
-			FIXME("SAPE failed for element %d, %lx\n",i,hres);
+		switch (V_VT(src) & VT_TYPEMASK) {
+		case VT_UI1:
+			hres = SafeArrayAccessData(sarr, &data);
+			if (FAILED(hres)) return hres;
+
+			/* Yes, just memcpied apparently. */
+			V_BSTR(dst) = SysAllocStringByteLen(data, sarr->rgsabound[0].cElements);
+			hres = SafeArrayUnaccessData(sarr);
+			if (FAILED(hres)) return hres;
+			break;
+		default:
+			FIXME("Cannot coerce array of %d into BSTR yet. Please report!\n", V_VT(src) & VT_TYPEMASK);
 			return E_FAIL;
 		}
+		break;
+	case VT_SAFEARRAY:
+		V_VT(dst) = VT_SAFEARRAY;
+		return SafeArrayCopy(sarr, &V_ARRAY(dst));
+	default:
+		FIXME("Cannot coerce array of vt 0x%x/0x%x into vt 0x%x yet. Please report/implement!\n", vartype, V_VT(src), vt);
+		return E_FAIL;
 	}
-	HeapFree(GetProcessHeap(),0,addr);
-	*narr = darr;
 	return S_OK;
 }
 
@@ -2239,7 +2240,6 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 				 */
 				VariantClear( &Variant );
 			}
-
 		} else {
 			if (V_VT(pvargSrc) & VT_ARRAY) {
 				if ((V_VT(pvargSrc) & 0xf000) != VT_ARRAY) {
@@ -2247,7 +2247,7 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 					return E_FAIL;
 				}
 				V_VT(pvargDest) = VT_ARRAY | vt;
-				res = coerce_array(pvargSrc, &V_ARRAY(pvargDest), lcid, wFlags, vt);
+				res = coerce_array(pvargSrc, pvargDest, lcid, wFlags, vt);
 			} else {
 				if ((V_VT(pvargSrc) & 0xf000)) {
 					FIXME("VT_TYPEMASK %x is unhandled in normal case.\n",V_VT(pvargSrc) & VT_TYPEMASK);
@@ -5022,14 +5022,40 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
         V_VT(out) = VT_NULL;
         return S_OK;
     }
-    else if (V_VT(left) == VT_BSTR && V_VT(right) == VT_BSTR)
+
+    if (V_VT(left) == VT_BSTR && V_VT(right) == VT_BSTR)
     {
         V_VT(out) = VT_BSTR;
         VarBstrCat (V_BSTR(left), V_BSTR(right), &V_BSTR(out));
         return S_OK;
     }
-    else
-        FIXME ("types not supported\n");
+    if (V_VT(left) == VT_BSTR) {
+        VARIANT bstrvar;
+	HRESULT hres;
+
+        V_VT(out) = VT_BSTR;
+        hres = VariantChangeTypeEx(&bstrvar,right,0,0,VT_BSTR);
+	if (hres) {
+	    FIXME("Failed to convert right side from vt %d to VT_BSTR?\n",V_VT(right));
+	    return hres;
+        }
+        VarBstrCat (V_BSTR(left), V_BSTR(&bstrvar), &V_BSTR(out));
+        return S_OK;
+    }
+    if (V_VT(right) == VT_BSTR) {
+        VARIANT bstrvar;
+	HRESULT hres;
+
+        V_VT(out) = VT_BSTR;
+        hres = VariantChangeTypeEx(&bstrvar,left,0,0,VT_BSTR);
+	if (hres) {
+	    FIXME("Failed to convert right side from vt %d to VT_BSTR?\n",V_VT(right));
+	    return hres;
+        }
+        VarBstrCat (V_BSTR(&bstrvar), V_BSTR(right), &V_BSTR(out));
+        return S_OK;
+    }
+    FIXME ("types %d / %d not supported\n",V_VT(left)&VT_TYPEMASK, V_VT(right)&VT_TYPEMASK);
     return S_OK;
 }
 
@@ -5078,6 +5104,7 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
     case VT_UI2  : lVal = V_UNION(left,uiVal); break;
     case VT_UI4  : lVal = V_UNION(left,ulVal); break;
     case VT_UINT : lVal = V_UNION(left,ulVal); break;
+    case VT_BOOL : lVal = V_UNION(left,boolVal); break;
     default: lOk = FALSE;
     }
 
@@ -5091,6 +5118,7 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
     case VT_UI2  : rVal = V_UNION(right,uiVal); break;
     case VT_UI4  : rVal = V_UNION(right,ulVal); break;
     case VT_UINT : rVal = V_UNION(right,ulVal); break;
+    case VT_BOOL : rVal = V_UNION(right,boolVal); break;
     default: rOk = FALSE;
     }
 
@@ -5139,7 +5167,7 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
     }
 
 
-    FIXME("VarCmp partial implementation, doesnt support these pair of variant types");
+    FIXME("VarCmp partial implementation, doesnt support vt 0x%x / 0x%x\n",V_VT(left), V_VT(right));
     return E_FAIL;
 }
 
@@ -5824,13 +5852,18 @@ HRESULT WINAPI VarFormat(LPVARIANT varIn, LPOLESTR format,
 
     } else if ((V_VT(varIn)&VT_TYPEMASK) == VT_R8) {
         if (V_VT(varIn)&VT_BYREF) {
-            sprintf(pBuffer, "%f", *(double *)V_UNION(varIn,byref));
+            sprintf(pBuffer, "%f", *V_UNION(varIn,pdblVal));
         } else {
             sprintf(pBuffer, "%f", V_UNION(varIn,dblVal));
         }
 
         *pbstrOut = StringDupAtoBstr( pBuffer );
 
+    } else if ((V_VT(varIn)&VT_TYPEMASK) == VT_BSTR) {
+        if (V_VT(varIn)&VT_BYREF)
+            *pbstrOut = SysAllocString( *V_UNION(varIn,pbstrVal) );
+        else
+            *pbstrOut = SysAllocString( V_UNION(varIn,bstrVal) );
     } else {
         FIXME("VarFormat: Unsupported format %d!\n", V_VT(varIn)&VT_TYPEMASK);
         *pbstrOut = StringDupAtoBstr( "??" );
