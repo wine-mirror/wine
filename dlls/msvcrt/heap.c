@@ -22,7 +22,7 @@
  */
 
 #include "msvcrt.h"
-#include "ms_errno.h"
+#include "msvcrt/errno.h"
 
 #include "msvcrt/malloc.h"
 #include "msvcrt/stdlib.h"

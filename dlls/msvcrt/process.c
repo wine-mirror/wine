@@ -30,7 +30,7 @@
 #include <stdarg.h>
 
 #include "msvcrt.h"
-#include "ms_errno.h"
+#include "msvcrt/errno.h"
 
 #include "msvcrt/process.h"
 #include "msvcrt/stdlib.h"

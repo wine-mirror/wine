@@ -19,7 +19,7 @@
  */
 #include "config.h"
 #include "msvcrt.h"
-#include "ms_errno.h"
+#include "msvcrt/errno.h"
 
 #define __USE_ISOC9X 1
 #define __USE_ISOC99 1

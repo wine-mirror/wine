@@ -32,7 +32,7 @@
 
 #include "winternl.h"
 #include "msvcrt.h"
-#include "ms_errno.h"
+#include "msvcrt/errno.h"
 
 #include "wine/unicode.h"
 #include "msvcrt/direct.h"
