@@ -68,6 +68,16 @@ NET_API_STATUS  WINAPI NetServerEnum(
 
 
 /************************************************************
+ *                NetServerGetInfo  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetServerGetInfo(LPCWSTR servername, DWORD level, LPBYTE* bufptr)
+{
+    FIXME("stub (%p, %ld, %p)\n", servername, level, bufptr);
+    return ERROR_ACCESS_DENIED;
+}
+
+
+/************************************************************
  *                NetStatisticsGet  (NETAPI32.@)
  */
 NET_API_STATUS WINAPI NetStatisticsGet(LPWSTR server, LPWSTR service,
