@@ -195,6 +195,7 @@ static void test__lcreat( void )
     char buffer[10000];
     WIN32_FIND_DATAA search_results;
     char slashname[] = "testfi/";
+    int err;
     HANDLE find;
 
     filehandle = _lcreat( filename, 0 );
@@ -262,12 +263,11 @@ static void test__lcreat( void )
     ok( DeleteFileA( filename ) != 0, "DeleteFile failed (%ld)", GetLastError(  ) );
 
     filehandle=_lcreat (slashname, 0); /* illegal name */
-    if (HFILE_ERROR != filehandle || (GetLastError() != ERROR_INVALID_NAME && GetLastError() != ERROR_PATH_NOT_FOUND))
-    {
-      todo_wine {
-        ok (0, "creating file \"%s\" should fail with error 123 or 3, (err=%ld)", slashname, GetLastError ());
-      }
-
+    if (HFILE_ERROR==filehandle) {
+      err=GetLastError ();
+      ok (err==ERROR_INVALID_NAME || err==ERROR_PATH_NOT_FOUND,
+          "creating file \"%s\" failed with error %d", slashname, err);
+    } else { /* only NT succeeds */
       _lclose(filehandle);
       find=FindFirstFileA (slashname, &search_results);
       if (INVALID_HANDLE_VALUE==find)
@@ -906,7 +906,7 @@ void test_FindFirstFileA()
     err = GetLastError();
     ok ( handle == INVALID_HANDLE_VALUE , "FindFirstFile on Root directory should Fail");
     if (handle == INVALID_HANDLE_VALUE)
-      ok ( err == ERROR_FILE_NOT_FOUND, "Bad Error number\n");
+      ok ( err == ERROR_FILE_NOT_FOUND, "Bad Error number %d\n", err);
     handle = FindFirstFileA("C:\\*",&search_results);
     ok ( handle != INVALID_HANDLE_VALUE, "FindFirstFile on C:\\* should succeed" );
     ok ( FindClose(handle) == TRUE, "Failed to close handle");
