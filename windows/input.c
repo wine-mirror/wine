@@ -123,9 +123,8 @@ static void queue_kbd_event( const KEYBDINPUT *ki )
 
     if (ki->dwFlags & KEYEVENTF_KEYUP )
     {
-        BOOL sysKey = ((InputKeyStateTable[VK_MENU] & 0x80) &&
-                       !(InputKeyStateTable[VK_CONTROL] & 0x80) &&
-                       !(ki->dwFlags & KEYEVENTF_WINE_FORCEEXTENDED)); /* for Alt from AltGr */
+        BOOL sysKey = (InputKeyStateTable[VK_MENU] & 0x80) &&
+                      !(InputKeyStateTable[VK_CONTROL] & 0x80);
         InputKeyStateTable[ki->wVk] &= ~0x80;
         keylp.lp1.previous = 1;
         keylp.lp1.transition = 1;

@@ -618,7 +618,7 @@ static WORD EVENT_event_to_vkey( XKeyEvent *e)
     return keyc2vkey[e->keycode];
 }
 
-static BOOL NumState=FALSE, CapsState=FALSE, AltGrState=FALSE;
+static BOOL NumState=FALSE, CapsState=FALSE;
 
 /**********************************************************************
  *		KEYBOARD_GenerateMsg
@@ -735,7 +735,6 @@ void X11DRV_KEYBOARD_HandleEvent( XKeyEvent *event, int x, int y )
     KeySym keysym;
     WORD vkey = 0, bScan;
     DWORD dwFlags;
-    static BOOL force_extended = FALSE; /* hack for AltGr translation */
     int ascii_chars;
 
     DWORD event_time = event->time - X11DRV_server_startticks;
@@ -745,6 +744,13 @@ void X11DRV_KEYBOARD_HandleEvent( XKeyEvent *event, int x, int y )
 	event->keycode=(event->keycode & 0xff);
 
     ascii_chars = TSXLookupString(event, Str, sizeof(Str), &keysym, NULL);
+
+    /* Ignore some unwanted events */
+    if (keysym == XK_ISO_Prev_Group || keysym == XK_ISO_Next_Group)
+    {
+	TRACE("Ignoring %s keyboard event\n", TSXKeysymToString(keysym));
+	return;
+    }
 
     TRACE_(key)("state = %X\n", event->state);
 
@@ -757,27 +763,7 @@ void X11DRV_KEYBOARD_HandleEvent( XKeyEvent *event, int x, int y )
        predefined group index and find it dynamically
 
        Ref: X Keyboard Extension: Library specification (section 14.1.1 and 17.1.1) */
-    if ( AltGrState && (event->state & 0x6000) )
-        AltGrMask = event->state & 0x6000;
-
-    if (keysym == XK_Mode_switch)
-	{
-	TRACE_(key)("Alt Gr key event received\n");
-	event->keycode = kcControl; /* Simulate Control */
-	X11DRV_KEYBOARD_HandleEvent( event, x, y );
-
-	event->keycode = kcAlt; /* Simulate Alt */
-	force_extended = TRUE;
-	X11DRV_KEYBOARD_HandleEvent( event, x, y );
-	force_extended = FALSE;
-    
-    /* Here we save the pressed/released state of the AltGr key, to be able to 
-       identify the group index associated with AltGr on the next key pressed *
-       see comment above. */
-    AltGrState = (event->type == KeyPress) ? TRUE : FALSE;
-    
-	return;
-	}
+    AltGrMask = event->state & 0x6000;
 
     Str[ascii_chars] = '\0';
     if (TRACE_ON(key)){
@@ -792,7 +778,6 @@ void X11DRV_KEYBOARD_HandleEvent( XKeyEvent *event, int x, int y )
     }
 
     vkey = EVENT_event_to_vkey(event);
-    if (force_extended) vkey |= 0x100;
 
     TRACE_(key)("keycode 0x%x converted to vkey 0x%x\n",
                 event->keycode, vkey);
@@ -834,7 +819,6 @@ void X11DRV_KEYBOARD_HandleEvent( XKeyEvent *event, int x, int y )
 	dwFlags = 0;
 	if ( event->type == KeyRelease ) dwFlags |= KEYEVENTF_KEYUP;
 	if ( vkey & 0x100 )              dwFlags |= KEYEVENTF_EXTENDEDKEY;
-	if ( force_extended )            dwFlags |= KEYEVENTF_WINE_FORCEEXTENDED;
 
         KEYBOARD_SendEvent( vkey & 0xff, bScan, dwFlags, x, y, event_time );
     }
@@ -1527,14 +1511,13 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
     if (lpKeyState[VK_CAPITAL] & 0x01)
 	e.state |= LockMask;
     if (lpKeyState[VK_CONTROL] & 0x80)
-    {
-	if (lpKeyState[VK_MENU] & 0x80)
-	    e.state |= AltGrMask;
-	else
-	    e.state |= ControlMask;
-    }
+	e.state |= ControlMask;
     if (lpKeyState[VK_NUMLOCK] & 0x01)
 	e.state |= NumLockMask;
+
+    /* Restore saved AltGr state */
+    e.state |= AltGrMask;
+
     TRACE_(key)("(%04X, %04X) : faked state = %X\n",
 		virtKey, scanCode, e.state);
     /* We exit on the first keycode found, to speed up the thing. */

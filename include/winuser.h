@@ -2109,7 +2109,6 @@ typedef struct
   /* keybd_event flags */
 #define KEYEVENTF_EXTENDEDKEY        0x0001
 #define KEYEVENTF_KEYUP              0x0002
-#define KEYEVENTF_WINE_FORCEEXTENDED 0x8000
 
   /* mouse_event flags */
 #define MOUSEEVENTF_MOVE        0x0001
