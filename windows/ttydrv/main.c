@@ -5,6 +5,8 @@
  *
  */
 
+#include "config.h"
+
 #include "clipboard.h"
 #include "desktop.h"
 #include "message.h"
@@ -35,6 +37,9 @@ BOOL TTYDRV_USER_Initialize(void)
  */
 void TTYDRV_USER_Finalize(void)
 {
+#ifdef HAVE_LIBCURSES
+  endwin();
+#endif /* defined(HAVE_LIBCURSES) */
 }
 
 /**************************************************************************

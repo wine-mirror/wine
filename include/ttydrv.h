@@ -5,6 +5,15 @@
 #ifndef __WINE_TTYDRV_H
 #define __WINE_TTYDRV_H
 
+#include "config.h"
+
+#undef ERR
+#ifdef HAVE_NCURSES_H
+# include <ncurses.h>
+#elif defined(HAVE_CURSES_H)
+# include <curses.h>
+#endif
+
 #include "windef.h"
 #include "wingdi.h"
 #include "dinput.h"
@@ -40,12 +49,48 @@ extern INT TTYDRV_BITMAP_GetDIBits(struct tagBITMAPOBJ *bmp, struct tagDC *dc, U
 extern void TTYDRV_BITMAP_DeleteDIBSection(struct tagBITMAPOBJ *bmp);
 
 typedef struct {
-  int dummy;
+#ifdef HAVE_LIBCURSES
+  WINDOW *window;
+#endif /* defined(HAVE_LIBCURSES) */
+  int cellWidth;
+  int cellHeight;
 } TTYDRV_PDEVICE;
 
+extern BOOL TTYDRV_DC_Arc(struct tagDC *dc, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend);
+extern BOOL TTYDRV_DC_CreateBitmap(HBITMAP hbitmap);
 extern BOOL TTYDRV_DC_CreateDC(struct tagDC *dc, LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODEA *initData);
 extern BOOL TTYDRV_DC_DeleteDC(struct tagDC *dc);
+extern BOOL TTYDRV_DC_DeleteObject(HGDIOBJ handle);
+extern BOOL TTYDRV_DC_BitBlt(struct tagDC *dcDst, INT xDst, INT yDst, INT width, INT height, struct tagDC *dcSrc, INT xSrc, INT ySrc, DWORD rop);
+extern BOOL TTYDRV_DC_Chord(struct tagDC *dc, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend);
+extern BOOL TTYDRV_DC_Ellipse(struct tagDC *dc, INT left, INT top, INT right, INT bottom);
 extern INT TTYDRV_DC_Escape(struct tagDC *dc, INT nEscape, INT cbInput, SEGPTR lpInData, SEGPTR lpOutData);
+extern BOOL TTYDRV_DC_ExtFloodFill(struct tagDC *dc, INT x, INT y, COLORREF color, UINT fillType);
+extern BOOL TTYDRV_DC_ExtTextOut(struct tagDC *dc, INT x, INT y, UINT flags, const RECT *lpRect, LPCSTR str, UINT count, const INT *lpDx);
+extern BOOL TTYDRV_DC_GetCharWidth(struct tagDC *dc, UINT firstChar, UINT lastChar, LPINT buffer);
+extern COLORREF TTYDRV_DC_GetPixel(struct tagDC *dc, INT x, INT y);
+
+extern BOOL TTYDRV_DC_GetTextExtentPoint(struct tagDC *dc, LPCSTR str, INT count, LPSIZE size);
+extern BOOL TTYDRV_DC_GetTextMetrics(struct tagDC *dc, TEXTMETRICA *metrics);
+extern BOOL TTYDRV_DC_LineTo(struct tagDC *dc, INT x, INT y);
+extern HANDLE TTYDRV_DC_LoadOEMResource(WORD resid, WORD type);
+extern BOOL TTYDRV_DC_MoveToEx(struct tagDC *dc, INT x, INT y, LPPOINT pt);
+extern BOOL TTYDRV_DC_PaintRgn(struct tagDC *dc, HRGN hrgn);
+extern BOOL TTYDRV_DC_PatBlt(struct tagDC *dc, INT left, INT top, INT width, INT height, DWORD rop);
+extern BOOL TTYDRV_DC_Pie(struct tagDC *dc, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend);
+extern BOOL TTYDRV_DC_PolyBezier(struct tagDC *dc, POINT start, const POINT* BezierPoints, DWORD count);
+extern BOOL TTYDRV_DC_Polygon(struct tagDC *dc, const POINT* pt, INT count);
+extern BOOL TTYDRV_DC_Polyline(struct tagDC *dc, const POINT* pt, INT count);
+extern BOOL TTYDRV_DC_PolyPolygon(struct tagDC *dc, const POINT* pt, const INT* counts, UINT polygons);
+extern BOOL TTYDRV_DC_PolyPolyline(struct tagDC *dc, const POINT* pt, const DWORD* counts, DWORD polylines);
+extern BOOL TTYDRV_DC_Rectangle(struct tagDC *dc, INT left, INT top, INT right, INT bottom);
+extern BOOL TTYDRV_DC_RoundRect(struct tagDC *dc, INT left, INT top, INT right, INT bottom, INT ell_width, INT ell_height);
+extern void TTYDRV_DC_SetDeviceClipping(struct tagDC *dc);
+extern HGDIOBJ TTYDRV_DC_SelectObject(struct tagDC *dc, HGDIOBJ handle);
+extern COLORREF TTYDRV_DC_SetBkColor(struct tagDC *dc, COLORREF color);
+extern COLORREF TTYDRV_DC_SetPixel(struct tagDC *dc, INT x, INT y, COLORREF color);
+extern COLORREF TTYDRV_DC_SetTextColor(struct tagDC *dc, COLORREF color);
+extern BOOL TTYDRV_DC_StretchBlt(struct tagDC *dcDst, INT xDst, INT yDst, INT widthDst, INT heightDst, struct tagDC *dcSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, DWORD rop);
 
 /* TTY GDI palette driver */
 
@@ -86,6 +131,10 @@ extern void TTYDRV_CLIPBOARD_ResetOwner(struct tagWND *pWnd, BOOL bFooBar);
 
 extern struct tagDESKTOP_DRIVER TTYDRV_DESKTOP_Driver;
 
+#ifdef HAVE_LIBCURSES
+extern WINDOW *TTYDRV_DESKTOP_GetCursesRootWindow(struct tagDESKTOP *pDesktop);
+#endif /* defined(HAVE_LIBCURSES) */
+
 extern void TTYDRV_DESKTOP_Initialize(struct tagDESKTOP *pDesktop);
 extern void TTYDRV_DESKTOP_Finalize(struct tagDESKTOP *pDesktop);
 extern int TTYDRV_DESKTOP_GetScreenWidth(struct tagDESKTOP *pDesktop);
@@ -120,13 +169,25 @@ extern BOOL TTYDRV_KEYBOARD_GetDIData(BYTE *keystate, DWORD dodsize, LPDIDEVICEO
 
 extern struct tagMONITOR_DRIVER TTYDRV_MONITOR_Driver;
 
-typedef struct _TTYDRV_MONITOR_DATA {
+typedef struct tagTTYDRV_MONITOR_DATA {
+#ifdef HAVE_LIBCURSES
+  WINDOW  *rootWindow;
+#endif /* defined(HAVE_LIBCURSES) */
+  int      cellWidth;
+  int      cellHeight;
   int      width;
   int      height;
   int      depth;
 } TTYDRV_MONITOR_DATA;
 
 struct tagMONITOR;
+
+#ifdef HAVE_LIBCURSES
+extern WINDOW *TTYDRV_MONITOR_GetCursesRootWindow(struct tagMONITOR *pMonitor);
+#endif /* defined(HAVE_LIBCURSES) */
+
+extern INT TTYDRV_MONITOR_GetCellWidth(struct tagMONITOR *pMonitor);
+extern INT TTYDRV_MONITOR_GetCellHeight(struct tagMONITOR *pMonitor);
 
 extern void TTYDRV_MONITOR_Initialize(struct tagMONITOR *pMonitor);
 extern void  TTYDRV_MONITOR_Finalize(struct tagMONITOR *pMonitor);
@@ -151,6 +212,19 @@ extern BOOL TTYDRV_MOUSE_EnableWarpPointer(BOOL bEnable);
 /* TTY windows driver */
 
 extern struct tagWND_DRIVER TTYDRV_WND_Driver;
+
+typedef struct tagTTYDRV_WND_DATA {
+#ifdef HAVE_LIBCURSES
+  WINDOW *window;
+#else /* defined(HAVE_LIBCURSES) */
+  int dummy; /* FIXME: Remove later */
+#endif /* defined(HAVE_LIBCURSES) */
+} TTYDRV_WND_DATA;
+
+#ifdef HAVE_LIBCURSES
+WINDOW *TTYDRV_WND_GetCursesWindow(struct tagWND *wndPtr);
+WINDOW *TTYDRV_WND_GetCursesRootWindow(struct tagWND *wndPtr);
+#endif /* defined(HAVE_LIBCURSES) */
 
 extern void TTYDRV_WND_Initialize(struct tagWND *wndPtr);
 extern void TTYDRV_WND_Finalize(struct tagWND *wndPtr);

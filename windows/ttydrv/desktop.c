@@ -5,15 +5,35 @@
  *
  */
 
+#include "config.h"
+
+#include "debugtools.h"
 #include "desktop.h"
 #include "monitor.h"
 #include "ttydrv.h"
+
+DEFAULT_DEBUG_CHANNEL(ttydrv)
+
+/***********************************************************************
+ *              TTYDRV_DESKTOP_GetCursesRootWindow
+ *
+ * Return the Curses root window associated to the desktop.
+ */
+#ifdef HAVE_LIBCURSES
+WINDOW *TTYDRV_DESKTOP_GetCursesRootWindow(DESKTOP *pDesktop)
+{
+  return TTYDRV_MONITOR_GetCursesRootWindow(pDesktop->pPrimaryMonitor);
+}
+#endif /* defined(HAVE_LIBCURSES) */
 
 /***********************************************************************
  *              TTYDRV_DESKTOP_Initialize
  */
 void TTYDRV_DESKTOP_Initialize(DESKTOP *pDesktop)
 {
+  TRACE("(%p): stub\n", pDesktop);
+
+  pDesktop->pPrimaryMonitor = &MONITOR_PrimaryMonitor;
 }
 
 /***********************************************************************
@@ -21,6 +41,7 @@ void TTYDRV_DESKTOP_Initialize(DESKTOP *pDesktop)
  */
 void TTYDRV_DESKTOP_Finalize(DESKTOP *pDesktop)
 {
+  TRACE("(%p): stub\n", pDesktop);
 }
 
 /***********************************************************************

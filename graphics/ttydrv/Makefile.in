@@ -6,9 +6,18 @@ VPATH     = @srcdir@
 MODULE    = ttydrv
 
 C_SRCS = \
+	bitblt.c \
 	bitmap.c \
+	brush.c \
+	clipping.c \
+	font.c \
+	graphics.c \
 	init.c \
-	palette.c
+	objects.c \
+	oembitmap.c \
+	palette.c \
+	pen.c \
+	text.c
 
 all: $(MODULE).o
 
