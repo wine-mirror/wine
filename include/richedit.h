@@ -603,6 +603,7 @@ typedef struct _gettextex {
 #define PFA_LEFT              0x00000001
 #define PFA_RIGHT             0x00000002
 #define PFA_CENTER            0x00000003
+#define PFA_JUSTIFY           0x00000004
 
 /* streaming flags */
 #define SFF_PWD               0x00000800
