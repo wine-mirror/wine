@@ -1,3 +1,21 @@
+101 stub -noname DoConnectoidsExist
+102 stub -noname GetDiskInfoA
+103 stub -noname PerformOperationOverUrlCacheA
+104 stub -noname HttpCheckDavComplianceA
+105 stub -noname HttpCheckDavComplianceW
+108 stub -noname ImportCookieFileA
+109 stub -noname ExportCookieFileA
+110 stub -noname ImportCookieFileW
+111 stub -noname ExportCookieFileW
+112 stub -noname IsProfilesEnabled
+116 stub -noname IsDomainlegalCookieDomainA
+117 stub -noname IsDomainLegalCookieDomainW
+118 stub -noname FindP3PPolicySymbol
+120 stub -noname MapResourceToPolicy
+121 stub -noname GetP3PPolicy
+122 stub -noname FreeP3PObject
+123 stub -noname GetP3PRequestStatus
+
 @ stdcall InternetInitializeAutoProxyDll(long)
 @ stub ShowCertificate
 @ stdcall CommitUrlCacheEntryA(str str double double long str long str str)

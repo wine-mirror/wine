@@ -102,6 +102,9 @@ CRITICAL_SECTION csQueue;
 LPWORKREQUEST lpHeadWorkQueue;
 LPWORKREQUEST lpWorkQueueTail;
 
+extern void URLCacheContainers_CreateDefaults();
+extern void URLCacheContainers_DeleteAll();
+
 /***********************************************************************
  * DllMain [Internal] Initializes the internal 'WININET.DLL'.
  *
@@ -131,6 +134,8 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	    hWorkEvent = CreateEventA(0, FALSE, FALSE, NULL);
 	    InitializeCriticalSection(&csQueue);
 
+            URLCacheContainers_CreateDefaults();
+
             dwNumThreads = 0;
             dwNumIdleThreads = 0;
 	    dwNumJobs = 0;
@@ -155,6 +160,8 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	    break;
 
         case DLL_PROCESS_DETACH:
+
+	    URLCacheContainers_DeleteAll();
 
 	    if (g_dwTlsErrIndex != TLS_OUT_OF_INDEXES)
 	    {
@@ -360,6 +367,8 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
     CHAR *szProxy = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenProxy*sizeof(CHAR));
     CHAR *szBypass = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenBypass*sizeof(CHAR));
 
+    TRACE("(%s, 0x%08lx, %s, %s, 0x%08lx)\n", debugstr_w(lpszAgent), dwAccessType, debugstr_w(lpszProxy), debugstr_w(lpszProxyBypass), dwFlags);
+
     if (!szAgent || !szProxy || !szBypass)
     {
         if (szAgent)
@@ -430,6 +439,8 @@ BOOL WINAPI InternetGetLastResponseInfoA(LPDWORD lpdwError,
  */
 BOOL WINAPI InternetGetConnectedState(LPDWORD lpdwStatus, DWORD dwReserved)
 {
+    TRACE("(%p, 0x%08lx)\n", lpdwStatus, dwReserved);
+
     if (lpdwStatus) {
 	FIXME("always returning LAN connection.\n");
 	*lpdwStatus = INTERNET_CONNECTION_LAN;
@@ -451,6 +462,8 @@ BOOL WINAPI InternetGetConnectedState(LPDWORD lpdwStatus, DWORD dwReserved)
 BOOL WINAPI InternetGetConnectedStateExW(LPDWORD lpdwStatus, LPWSTR lpszConnectionName,
                                          DWORD dwNameLen, DWORD dwReserved)
 {
+    TRACE("(%p, %s, %ld, 0x%08lx)\n", lpdwStatus, debugstr_w(lpszConnectionName), dwNameLen, dwReserved);
+
     /* Must be zero */
     if(dwReserved)
 	return FALSE;
@@ -1458,12 +1471,6 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
 
     TRACE("(%p, 0x%08lx, %p, %p)\n", hInternet, dwOption, lpBuffer, lpdwBufferLength);
 
-    if (NULL == hInternet)
-    {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	return FALSE;
-    }
-
     lpwhh = (LPWININETHANDLEHEADER) hInternet;
 
     switch (dwOption)
@@ -1538,6 +1545,9 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             bSuccess = TRUE;
         break;
        }
+       case INTERNET_OPTION_SECURITY_FLAGS:
+         FIXME("INTERNET_OPTION_SECURITY_FLAGS: Stub\n");
+         break;
 
        default:
          FIXME("Stub! %ld \n",dwOption);
@@ -1597,12 +1607,6 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
 
     TRACE("0x%08lx\n", dwOption);
 
-    if (NULL == hInternet)
-    {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-        return FALSE;
-    }
-
     lpwhh = (LPWININETHANDLEHEADER) hInternet;
 
     switch (dwOption)
@@ -1631,6 +1635,15 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
         FIXME("Option INTERNET_OPTION_REQUEST_PRIORITY (%ld): STUB\n",priority);
       }
       break;
+    case INTERNET_OPTION_RESET_URLCACHE_SESSION:
+        FIXME("Option INTERNET_OPTION_RESET_URLCACHE_SESSION: STUB\n");
+        break;
+    case INTERNET_OPTION_END_BROWSER_SESSION:
+        FIXME("Option INTERNET_OPTION_END_BROWSER_SESSION: STUB\n");
+        break;
+    case INTERNET_OPTION_CONNECTED_STATE:
+        FIXME("Option INTERNET_OPTION_CONNECTED_STATE: STUB\n");
+        break;
     default:
         FIXME("Option %ld STUB\n",dwOption);
         INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
@@ -1931,6 +1944,8 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
     INT lenHeaders = WideCharToMultiByte(CP_ACP, 0, lpszHeaders, -1, NULL, 0, NULL, NULL);
     CHAR *szUrl = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenUrl*sizeof(CHAR));
     CHAR *szHeaders = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenHeaders*sizeof(CHAR));
+
+    TRACE("\n");
 
     if (!szUrl || !szHeaders)
     {
@@ -2508,6 +2523,9 @@ BOOL WINAPI InternetCombineUrlA(LPCSTR lpszBaseUrl, LPCSTR lpszRelativeUrl,
                                 DWORD dwFlags)
 {
     HRESULT hr=S_OK;
+
+    TRACE("(%s, %s, %p, %p, 0x%08lx)\n", debugstr_a(lpszBaseUrl), debugstr_a(lpszRelativeUrl), lpszBuffer, lpdwBufferLength, dwFlags);
+
     /* Flip this bit to correspond to URL_ESCAPE_UNSAFE */
     dwFlags ^= ICU_NO_ENCODE;
     hr=UrlCombineA(lpszBaseUrl,lpszRelativeUrl,lpszBuffer,lpdwBufferLength,dwFlags);
@@ -2532,6 +2550,9 @@ BOOL WINAPI InternetCombineUrlW(LPCWSTR lpszBaseUrl, LPCWSTR lpszRelativeUrl,
                                 DWORD dwFlags)
 {
     HRESULT hr=S_OK;
+
+    TRACE("(%s, %s, %p, %p, 0x%08lx)\n", debugstr_w(lpszBaseUrl), debugstr_w(lpszRelativeUrl), lpszBuffer, lpdwBufferLength, dwFlags);
+
     /* Flip this bit to correspond to URL_ESCAPE_UNSAFE */
     dwFlags ^= ICU_NO_ENCODE;
     hr=UrlCombineW(lpszBaseUrl,lpszRelativeUrl,lpszBuffer,lpdwBufferLength,dwFlags);
