@@ -25,6 +25,7 @@
 #include "dde_proc.h"
 #include "clipboard.h"
 #include "winproc.h"
+#include "task.h"
 #include "thread.h"
 #include "process.h"
 #include "debug.h"
@@ -408,7 +409,7 @@ BOOL32 WIN_CreateDesktopWindow(void)
     pWndDesktop->rectWindow.bottom = SYSMETRICS_CYSCREEN;
     pWndDesktop->rectClient        = pWndDesktop->rectWindow;
     pWndDesktop->text              = NULL;
-    pWndDesktop->hmemTaskQ         = 0; /* Desktop does not belong to a task */
+    pWndDesktop->hmemTaskQ         = GetFastQueue();
     pWndDesktop->hrgnUpdate        = 0;
     pWndDesktop->hwndLastActive    = hwndDesktop;
     pWndDesktop->dwStyle           = WS_VISIBLE | WS_CLIPCHILDREN |
@@ -550,7 +551,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     wndPtr->hwndSelf       = hwnd;
     wndPtr->hInstance      = cs->hInstance;
     wndPtr->text           = NULL;
-    wndPtr->hmemTaskQ      = GetTaskQueue(0);
+    wndPtr->hmemTaskQ      = GetFastQueue();
     wndPtr->hrgnUpdate     = 0;
     wndPtr->hwndLastActive = hwnd;
     wndPtr->dwStyle        = cs->style & ~WS_VISIBLE;

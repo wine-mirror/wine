@@ -221,9 +221,6 @@ BOOL32 WINAPI MAIN_UserInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRes
     /* Initialize multimedia */
     if (!MULTIMEDIA_Init()) return FALSE;
 
-    /* Create desktop window */
-    if (!WIN_CreateDesktopWindow()) return FALSE;
-
     /* Initialize message spying */
     if (!SPY_Init()) return FALSE;
 
@@ -240,6 +237,9 @@ BOOL32 WINAPI MAIN_UserInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRes
     /* Create task message queue for the initial task */
     queueSize = GetProfileInt32A( "windows", "DefaultQueueSize", 8 );
     if (!SetMessageQueue32( queueSize )) return FALSE;
+
+    /* Create desktop window */
+    if (!WIN_CreateDesktopWindow()) return FALSE;
 
     /* Install default USER Signal Handler */
     SetTaskSignalProc( 0, (FARPROC16)USER_SignalProc );
