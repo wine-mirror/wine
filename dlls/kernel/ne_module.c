@@ -1167,41 +1167,38 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 
     if (strlen(basename) < sizeof(dllname)-4)
     {
+        int file_exists;
+
         strcpy( dllname, basename );
         p = strrchr( dllname, '.' );
         if (!p) strcat( dllname, ".dll" );
         for (p = dllname; *p; p++) if (*p >= 'A' && *p <= 'Z') *p += 32;
 
-        if (!(descr = find_dll_descr( dllname )))
+        if (wine_dll_get_owner( dllname, owner, sizeof(owner), &file_exists ) == -1)
         {
-            int file_exists;
-
-            if (wine_dll_get_owner( dllname, owner, sizeof(owner), &file_exists ) == -1)
+            if (file_exists) return 21;  /* it may be a Win32 module then */
+        }
+        else  /* found 32-bit owner, try to load it */
+        {
+            HMODULE mod32 = LoadLibraryA( owner );
+            if (mod32)
             {
-                if (file_exists) return 21;  /* it may be a Win32 module then */
+                if (!(descr = find_dll_descr( dllname ))) FreeLibrary( mod32 );
+                /* loading the 32-bit library can have the side effect of loading the module */
+                /* if so, simply incr the ref count and return the module */
+                if ((hModule = GetModuleHandle16( libname )))
+                {
+                    TRACE( "module %s already loaded by owner\n", libname );
+                    pModule = NE_GetPtr( hModule );
+                    if (pModule) pModule->count++;
+                    return hModule;
+                }
             }
-            else  /* found 32-bit owner, try to load it */
+            else
             {
-                HMODULE mod32 = LoadLibraryA( owner );
-                if (mod32)
-                {
-                    if (!(descr = find_dll_descr( dllname ))) FreeLibrary( mod32 );
-                    /* loading the 32-bit library can have the side effect of loading the module */
-                    /* if so, simply incr the ref count and return the module */
-                    if ((hModule = GetModuleHandle16( libname )))
-                    {
-                        TRACE( "module %s already loaded by owner\n", libname );
-                        pModule = NE_GetPtr( hModule );
-                        if (pModule) pModule->count++;
-                        return hModule;
-                    }
-                }
-                else
-                {
-                    /* it's probably disabled by the load order config */
-                    WARN( "couldn't load owner %s for 16-bit dll %s\n", owner, dllname );
-                    return ERROR_FILE_NOT_FOUND;
-                }
+                /* it's probably disabled by the load order config */
+                WARN( "couldn't load owner %s for 16-bit dll %s\n", owner, dllname );
+                return ERROR_FILE_NOT_FOUND;
             }
         }
     }
