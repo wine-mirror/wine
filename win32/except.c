@@ -27,7 +27,7 @@
 #include "winerror.h"
 #include "ntddk.h"
 #include "wine/exception.h"
-#include "ldt.h"
+#include "selectors.h"
 #include "callback.h"
 #include "process.h"
 #include "thread.h"
@@ -60,6 +60,81 @@ void WINAPI RaiseException( DWORD code, DWORD flags, DWORD nbargs, const LPDWORD
     else record.NumberParameters = 0;
 
     RtlRaiseException( &record );
+}
+
+
+/*******************************************************************
+ *         format_exception_msg
+ */
+static void format_exception_msg( const EXCEPTION_POINTERS *ptr, char *buffer )
+{
+    const EXCEPTION_RECORD *rec = ptr->ExceptionRecord;
+
+    switch(rec->ExceptionCode)
+    {
+    case EXCEPTION_INT_DIVIDE_BY_ZERO:
+        sprintf( buffer, "Unhandled division by zero" );
+        break;
+    case EXCEPTION_INT_OVERFLOW:
+        sprintf( buffer, "Unhandled overflow" );
+        break;
+    case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+        sprintf( buffer, "Unhandled array bounds" );
+        break;
+    case EXCEPTION_ILLEGAL_INSTRUCTION:
+        sprintf( buffer, "Unhandled illegal instruction" );
+        break;
+    case EXCEPTION_STACK_OVERFLOW:
+        sprintf( buffer, "Unhandled stack overflow" );
+        break;
+    case EXCEPTION_PRIV_INSTRUCTION:
+        sprintf( buffer, "Unhandled priviledged instruction" );
+        break;
+    case EXCEPTION_ACCESS_VIOLATION:
+        if (rec->NumberParameters == 2)
+            sprintf( buffer, "Unhandled page fault on %s access to 0x%08lx",
+                     rec->ExceptionInformation[0] ? "write" : "read",
+                     rec->ExceptionInformation[1]);
+        else
+            sprintf( buffer, "Unhandled page fault");
+        break;
+    case EXCEPTION_DATATYPE_MISALIGNMENT:
+        sprintf( buffer, "Unhandled alignment" );
+        break;
+    case CONTROL_C_EXIT:
+        sprintf( buffer, "Unhandled ^C");
+        break;
+    case EXCEPTION_CRITICAL_SECTION_WAIT:
+        sprintf( buffer, "Critical section %08lx wait failed",
+                 rec->ExceptionInformation[0]);
+        break;
+    case EXCEPTION_WINE_STUB:
+        sprintf( buffer, "Unimplemented function %s.%s called",
+                 (char *)rec->ExceptionInformation[0], (char *)rec->ExceptionInformation[1] );
+        break;
+    case EXCEPTION_VM86_INTx:
+        sprintf( buffer, "Unhandled interrupt %02lx in vm86 mode",
+                 rec->ExceptionInformation[0]);
+        break;
+    case EXCEPTION_VM86_STI:
+        sprintf( buffer, "Unhandled sti in vm86 mode");
+        break;
+    case EXCEPTION_VM86_PICRETURN:
+        sprintf( buffer, "Unhandled PIC return in vm86 mode");
+        break;
+    default:
+        sprintf( buffer, "Unhandled exception 0x%08lx", rec->ExceptionCode);
+        break;
+    }
+#ifdef __i386__
+    if (ptr->ContextRecord->SegCs != __get_cs())
+        sprintf( buffer+strlen(buffer), " at address 0x%04lx:0x%08lx.\n",
+                 ptr->ContextRecord->SegCs, (DWORD)ptr->ExceptionRecord->ExceptionAddress );
+    else
+#endif
+    sprintf( buffer+strlen(buffer), " at address 0x%08lx.\n",
+             (DWORD)ptr->ExceptionRecord->ExceptionAddress );
+    strcat( buffer, "Do you wish to debug it ?" );
 }
 
 
@@ -133,11 +208,7 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
     }
 
     if (!bAuto && Callout.MessageBoxA) {
-       sprintf( buffer, "Unhandled exception 0x%08lx at address 0x%04lx:0x%08lx.\n"
-	                "Do you wish to debug it ?",
-		epointers->ExceptionRecord->ExceptionCode,
-		epointers->ContextRecord->SegCs,
-		(DWORD)epointers->ExceptionRecord->ExceptionAddress );
+        format_exception_msg( epointers, buffer );
        if (Callout.MessageBoxA( 0, buffer, "Error", MB_YESNO | MB_ICONHAND ) == IDNO) {
 	  TRACE("Killing process\n");
 	  return EXCEPTION_EXECUTE_HANDLER;

@@ -356,21 +356,3 @@ void BUILTIN32_RegisterDLL( const IMAGE_NT_HEADERS *header, const char *filename
     builtin_dlls[nb_dlls].filename = filename;
     nb_dlls++;
 }
-
-/***********************************************************************
- *           BUILTIN32_Unimplemented
- *
- * This function is called for unimplemented 32-bit entry points (declared
- * as 'stub' in the spec file).
- */
-void BUILTIN32_Unimplemented( const char *dllname, const char *funcname )
-{
-    __RESTORE_ES;  /* Just in case */
-
-    MESSAGE( "FATAL: No handler for Win32 routine %s.%s", dllname, funcname );
-#ifdef __GNUC__
-    MESSAGE( " (called from %p)", __builtin_return_address(1) );
-#endif
-    MESSAGE( "\n" );
-    ExitProcess(1);
-}

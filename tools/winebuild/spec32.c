@@ -12,6 +12,7 @@
 #include <unistd.h>
 
 #include "winbase.h"
+#include "wine/exception.h"
 #include "build.h"
 
 
@@ -155,7 +156,8 @@ static void output_exports( FILE *outfile, int nr_exports, int nr_names, int fwd
             fprintf( outfile, "%s", odp->u.func.link_name);
             break;
         case TYPE_STUB:
-            fprintf( outfile, "__stub_%d", i );
+            if (odp->name[0]) fprintf( outfile, "__stub_%s", odp->name );
+            else fprintf( outfile, "__stub_%d", i );
             break;
         case TYPE_REGISTER:
             fprintf( outfile, "__regs_%d", i );
@@ -294,7 +296,6 @@ void BuildSpec32File( FILE *outfile )
 
     fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n\n",
              input_file_name );
-    fprintf( outfile, "extern void BUILTIN32_Unimplemented( const char *dllname, const char *funcname );\n\n" );
 
     /* Reserve some space for the PE header */
 
@@ -303,7 +304,38 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "    \".align %ld\\n\"\n", page_size );
     fprintf( outfile, "    \"pe_header:\\t.fill %ld,1,0\\n\\t\");\n", page_size );
 
-    fprintf( outfile, "static const char dllname[] = \"%s\";\n", DLLName );
+    fprintf( outfile, "static const char dllname[] = \"%s\";\n\n", DLLName );
+
+    /* Output the stub function if necessary */
+
+    for (i = 0, odp = EntryPoints; i < nb_entry_points; i++, odp++)
+    {
+        if (odp->type != TYPE_STUB) continue;
+        fprintf( outfile, "#ifdef __GNUC__\n" );
+        fprintf( outfile, "static void __wine_unimplemented( const char *func ) __attribute__((noreturn));\n" );
+        fprintf( outfile, "#endif\n" );
+        fprintf( outfile, "static void __wine_unimplemented( const char *func )\n{\n" );
+        fprintf( outfile, "  struct exc_record {\n" );
+        fprintf( outfile, "    unsigned int code, flags;\n" );
+        fprintf( outfile, "    void *rec, *addr;\n" );
+        fprintf( outfile, "    unsigned int params;\n" );
+        fprintf( outfile, "    const void *info[15];\n" );
+        fprintf( outfile, "  } rec;\n" );
+        fprintf( outfile, "  extern void RtlRaiseException( struct exc_record * );\n\n" );
+        fprintf( outfile, "  rec.code    = 0x%08x;\n", EXCEPTION_WINE_STUB );
+        fprintf( outfile, "  rec.flags   = %d;\n", EH_NONCONTINUABLE );
+        fprintf( outfile, "  rec.rec     = 0;\n" );
+        fprintf( outfile, "  rec.params  = 2;\n" );
+        fprintf( outfile, "  rec.info[0] = dllname;\n" );
+        fprintf( outfile, "  rec.info[1] = func;\n" );
+        fprintf( outfile, "#ifdef __GNUC__\n" );
+        fprintf( outfile, "  rec.addr = __builtin_return_address(1);\n" );
+        fprintf( outfile, "#else\n" );
+        fprintf( outfile, "  rec.addr = 0;\n" );
+        fprintf( outfile, "#endif\n" );
+        fprintf( outfile, "  for (;;) RtlRaiseException( &rec );\n}\n\n" );
+        break;
+    }
 
     /* Output the DLL functions prototypes */
 
@@ -330,13 +362,12 @@ void BuildSpec32File( FILE *outfile )
         case TYPE_STUB:
             if (odp->name[0])
                 fprintf( outfile,
-                         "static void __stub_%d() { BUILTIN32_Unimplemented(dllname,\"%s\"); }\n",
-                         odp->ordinal, odp->name );
+                         "static void __stub_%s() { __wine_unimplemented(\"%s\"); }\n",
+                         odp->name, odp->name );
             else
                 fprintf( outfile,
-                         "static void __stub_%d() { BUILTIN32_Unimplemented(dllname,\"%d\"); }\n",
+                         "static void __stub_%d() { __wine_unimplemented(\"%d\"); }\n",
                          odp->ordinal, odp->ordinal );
-            
             break;
         default:
             fprintf(stderr,"build: function type %d not available for Win32\n",

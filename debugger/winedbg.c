@@ -444,6 +444,16 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
 		return TRUE;
 	    }
             break;
+        case EXCEPTION_WINE_STUB:
+            {
+                char dll[32], name[64];
+                DEBUG_ProcessGetString( dll, sizeof(dll), DEBUG_CurrThread->process->handle,
+                                        (char *)rec->ExceptionInformation[0] );
+                DEBUG_ProcessGetString( name, sizeof(name), DEBUG_CurrThread->process->handle,
+                                        (char *)rec->ExceptionInformation[1] );
+                DEBUG_Printf(DBG_CHN_MESG, "unimplemented function %s.%s called", dll, name );
+            }
+            break;
         case EXCEPTION_VM86_INTx:
             DEBUG_Printf(DBG_CHN_MESG, "interrupt %02lx in vm86 mode",
                          rec->ExceptionInformation[0]);

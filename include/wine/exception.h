@@ -168,6 +168,8 @@ static inline EXCEPTION_FRAME * WINE_UNUSED __wine_pop_frame( EXCEPTION_FRAME *f
 
 /* Wine-specific exceptions codes */
 
+#define EXCEPTION_WINE_STUB       0x80000100  /* stub entry point called */
+
 /* unhandled return status from vm86 mode */
 #define EXCEPTION_VM86_INTx       0x80000101
 #define EXCEPTION_VM86_STI        0x80000102
