@@ -96,6 +96,10 @@
 # define HAVE_IPX
 #endif
 
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#endif
+
 #include "wine/winbase16.h"
 #include "wingdi.h"
 #include "winuser.h"
