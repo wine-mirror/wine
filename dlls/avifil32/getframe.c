@@ -224,7 +224,7 @@ static LPVOID  WINAPI IGetFrame_fnGetFrame(IGetFrame *iface, LONG lPos)
     LONG lNext = AVIStreamFindSample(This->pStream, lPos, FIND_KEY|FIND_PREV);
 
     if (lNext == -1)
-      lNext = 0; /* first frame is always a keyframe */
+      return NULL;
     if (lNext <= This->lCurrentFrame && This->lCurrentFrame < lPos)
       lNext++;
 
@@ -338,6 +338,8 @@ static HRESULT WINAPI IGetFrame_fnSetFormat(IGetFrame *iface,
 
   /* get input format from stream */
   if (This->lpInFormat == NULL) {
+    HRESULT hr;
+
     This->cbInBuffer = sInfo.dwSuggestedBufferSize;
     if (This->cbInBuffer == 0)
       This->cbInBuffer = 1024;
@@ -351,7 +353,11 @@ static HRESULT WINAPI IGetFrame_fnSetFormat(IGetFrame *iface,
       return AVIERR_MEMORY;
     }
 
-    AVIStreamReadFormat(This->pStream, sInfo.dwStart, This->lpInFormat, &This->cbInFormat);
+    hr = AVIStreamReadFormat(This->pStream, sInfo.dwStart, This->lpInFormat, &This->cbInFormat);
+    if (FAILED(hr)) {
+      AVIFILE_CloseCompressor(This);
+      return hr;
+    }
 
     This->lpInBuffer = ((LPBYTE)This->lpInFormat) + This->cbInFormat;
   }
