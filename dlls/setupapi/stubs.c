@@ -24,28 +24,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
-
-/***********************************************************************
- *		SetupIterateCabinetA (SETUPAPI.@)
- */
-BOOL WINAPI SetupIterateCabinetA(PCSTR CabinetFile, DWORD Reserved,
-                                 PSP_FILE_CALLBACK_A MsgHandler, PVOID Context)
-{
-	FIXME("not implemented (setupapi.dll) \n");
-	return 0;
-}
-
-/***********************************************************************
- *		SetupIterateCabinetW (SETUPAPI.@)
- */
-BOOL WINAPI SetupIterateCabinetW(PWSTR CabinetFile, DWORD Reserved,
-                                 PSP_FILE_CALLBACK_W MsgHandler, PVOID Context)
-{
-	FIXME("not implemented (setupapi.dll) \n");
-	return 0;
-}
-
-
 /***********************************************************************
  *		TPWriteProfileString (SETUPX.62)
  */

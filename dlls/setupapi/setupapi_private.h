@@ -64,4 +64,8 @@ struct callback_WtoA_context
 
 UINT CALLBACK QUEUE_callback_WtoA( void *context, UINT notification, UINT_PTR, UINT_PTR );
 
+/* from msvcrt/sys/stat.h */
+#define _S_IWRITE 0x0080
+#define _S_IREAD  0x0100
+
 #endif /* __SETUPAPI_PRIVATE_H */

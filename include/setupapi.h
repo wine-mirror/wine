@@ -153,6 +153,48 @@ typedef struct _SP_DEVICE_INTERFACE_DETAIL_DATAW
 DECL_WINELIB_TYPE_AW(SP_DEVICE_INTERFACE_DETAIL_DATA)
 DECL_WINELIB_TYPE_AW(PSP_DEVICE_INTERFACE_DETAIL_DATA)
 
+typedef struct _FILE_IN_CABINET_INFOA {
+  LPCSTR NameInCabinet;
+  DWORD FileSize;
+  DWORD Win32Error;
+  WORD DosDate;
+  WORD DosTime;
+  WORD DosAttribs;
+  CHAR FullTargetName[MAX_PATH];
+} FILE_IN_CABINET_INFOA, *PFILE_IN_CABINET_INFOA;
+
+typedef struct _FILE_IN_CABINET_INFOW {
+  LPCWSTR NameInCabinet;
+  DWORD FileSize;
+  DWORD Win32Error;
+  WORD DosDate;
+  WORD DosTime;
+  WORD DosAttribs;
+  WCHAR FullTargetName[MAX_PATH];
+} FILE_IN_CABINET_INFOW, *PFILE_IN_CABINET_INFOW;
+
+DECL_WINELIB_TYPE_AW(FILE_IN_CABINET_INFO)
+DECL_WINELIB_TYPE_AW(PFILE_IN_CABINET_INFO)
+
+typedef struct _CABINET_INFOA {
+  PCSTR CabinetPath;
+  PCSTR CabinetFile;
+  PCSTR DiskName;
+  USHORT SetId;
+  USHORT CabinetNumber;
+} CABINET_INFOA, *PCABINET_INFOA;
+
+typedef struct _CABINET_INFOW {
+  PCWSTR CabinetPath;
+  PCWSTR CabinetFile;
+  PCWSTR DiskName;
+  USHORT SetId;
+  USHORT CabinetNumber;
+} CABINET_INFOW, *PCABINET_INFOW;
+
+DECL_WINELIB_TYPE_AW(CABINET_INFO);
+DECL_WINELIB_TYPE_AW(PCABINET_INFO);
+
 #define INF_STYLE_NONE           0x00
 #define INF_STYLE_OLDNT          0x01
 #define INF_STYLE_WIN4           0x02
@@ -542,6 +584,8 @@ BOOL     WINAPI SetupInstallFromInfSectionA(HWND,HINF,PCSTR,UINT,HKEY,PCSTR,UINT
 BOOL     WINAPI SetupInstallFromInfSectionW(HWND,HINF,PCWSTR,UINT,HKEY,PCWSTR,UINT,
                                             PSP_FILE_CALLBACK_W,PVOID,HDEVINFO,PSP_DEVINFO_DATA);
 #define         SetupInstallFromInfSection WINELIB_NAME_AW(SetupInstallFromInfSection)
-
+BOOL     WINAPI SetupIterateCabinetA(PCSTR, DWORD, PSP_FILE_CALLBACK_A, PVOID);
+BOOL     WINAPI SetupIterateCabinetW(PCWSTR, DWORD, PSP_FILE_CALLBACK_W, PVOID);
+#define         SetupIterateCabinet WINELIB_NAME_AW(SetupIterateCabinet)
 
 #endif /* _INC_SETUPAPI */

@@ -70,7 +70,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
-
 /***********************************************************************
  *		SURegOpenKey (SETUPX.47)
  */
