@@ -2305,20 +2305,6 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 			sizingRect.bottom - sizingRect.top,
 		      ( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
         }
-        else
-        {
-            /* if the moving/resizing is canceled and the window is not active
-             * call SetWindowPos to activate and to show this window
-             */
-            if (GetActiveWindow() != hwnd)
-                SetWindowPos( hwnd, 0, 0, 0,0,0,SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW);
-        }
-    }
-    else
-    {
-        /* show the window if it is not moved/resized and it is not active */
-        if (GetActiveWindow() != hwnd)
-            SetWindowPos( hwnd, 0, 0, 0,0,0,SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW);
     }
 
     if( IsWindow(hwnd) )
@@ -2582,6 +2568,9 @@ END:
 LONG NC_HandleNCLButtonDown( WND* pWnd, WPARAM16 wParam, LPARAM lParam )
 {
     HWND hwnd = pWnd->hwndSelf;
+
+    if(GetForegroundWindow() != hwnd)
+        SetWindowPos( hwnd, 0, 0, 0,0,0,SWP_NOSIZE | SWP_NOMOVE | SWP_DRAWFRAME);
 
     switch(wParam)  /* Hit test */
     {
