@@ -248,8 +248,8 @@ init	Shell32LibMain
  240 stub SHEmptyRecycleBinA@12   # exported by name
  241 stub SHEmptyRecycleBinW@12   # exported by name
  242 stdcall SHFileOperation (ptr) SHFileOperation32   # exported by name
- 243 stdcall SHFileOperationA (long) SHFileOperationA  # exported by name
- 244 stub SHFileOperationW@4   # exported by name
+ 243 stdcall SHFileOperationA (ptr) SHFileOperation32A  # exported by name
+ 244 stdcall SHFileOperationW (ptr) SHFileOperation32W   # exported by name
  245 stub SHFormatDrive@16   # exported by name
  246 stub SHFreeNameMappings@4   # exported by name
  247 stdcall SHGetDataFromIDListA (long long long long long) SHGetDataFromIDListA  # exported by name
@@ -260,7 +260,7 @@ init	Shell32LibMain
  252 stdcall SHGetDesktopFolder(ptr) SHGetDesktopFolder   # exported by name
  253 stdcall SHGetFileInfo(ptr long ptr long long) SHGetFileInfo32A   # exported by name
  254 stdcall SHGetFileInfoA(ptr long ptr long long) SHGetFileInfo32A   # exported by name
- 255 stub SHGetFileInfoW@20 # exported by name
+ 255 stdcall SHGetFileInfoW(ptr long ptr long long) SHGetFileInfo32W # exported by name
  256 stdcall SHGetInstanceExplorer (long) SHGetInstanceExplorer
  257 stdcall SHGetMalloc(ptr) SHGetMalloc   # exported by name
  258 stub SHGetNewLinkInfo@20   # exported by name
@@ -343,7 +343,7 @@ init	Shell32LibMain
  508 stub SHRegQueryValueA@16
  509 stub SHRegQueryValueExA@24
  510 stub SHRegQueryValueW@16
- 511 stub SHRegQueryValueExW@24
+ 511 stdcall SHRegQueryValueExW (long wstr ptr ptr ptr ptr) SHRegQueryValueEx32W
  512 stub SHRegDeleteKeyW@8
 
  520 stub SHAllocShared@12
@@ -364,13 +364,13 @@ init	Shell32LibMain
  648 stub SHWaitOp_Operate@8
 
  650 stub PathIsSameRoot
- 651 stub ReadCabinetState
- 652 stub WriteCabinetState@4
+ 651 stdcall ReadCabinetState (long long) ReadCabinetState 
+ 652 stdcall WriteCabinetState (long) WriteCabinetState
  653 stub PathProcessCommand
 
  660 stub FileIconInit
 
- 680 stub IsUserAdmin
+ 680 stdcall IsUserAdmin () IsUserAdmin
 
 1217 stub FOOBAR1217   # no joke! This is the real name!!
 

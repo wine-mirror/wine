@@ -118,14 +118,15 @@ BOOL32 WINAPI Shell_GetImageList(HIMAGELIST * imglist1,HIMAGELIST * imglist2)
 	return TRUE;
 }
 
+HIMAGELIST ShellSmallIconList = 0;
+HIMAGELIST ShellBigIconList = 0;
+
 /*************************************************************************
- *  SHGetFileInfoA		[SHELL32.218]
+ *  SHGetFileInfoA		[SHELL32.254]
  *
  * FIXME
  *   
  */
-HIMAGELIST ShellSmallIconList = 0;
-HIMAGELIST ShellBigIconList = 0;
 
 DWORD WINAPI SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,
                               SHFILEINFO32A *psfi, UINT32 sizeofpsfi,
@@ -229,6 +230,21 @@ DWORD WINAPI SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,
 
  
   return ret;
+}
+
+/*************************************************************************
+ *  SHGetFileInfo32W		[SHELL32.255]
+ *
+ * FIXME
+ *   
+ */
+
+DWORD WINAPI SHGetFileInfo32W(LPCWSTR path,DWORD dwFileAttributes,
+                              SHFILEINFO32W *psfi, UINT32 sizeofpsfi,
+                              UINT32 flags )
+{	FIXME(shell,"(%s,0x%lx,%p,0x%x,0x%x)\n",
+	      debugstr_w(path),dwFileAttributes,psfi,sizeofpsfi,flags);
+	return 0;
 }
 
 /*************************************************************************
@@ -352,7 +368,7 @@ UINT32 WINAPI SHAppBarMessage32(DWORD msg, PAPPBARDATA data)
  *
  */
 LPITEMIDLIST WINAPI SHBrowseForFolder32A (LPBROWSEINFO32A lpbi)
-{ FIXME (shell, "(0x%lx,%s): stub\n", (DWORD)lpbi, debugstr_a(lpbi->lpszTitle));
+{ FIXME (shell, "(%lx,%s) empty stub!\n", (DWORD)lpbi, lpbi->lpszTitle);
   return NULL;
 }
 
@@ -891,8 +907,14 @@ DWORD WINAPI SHGetPathFromIDList32A (LPCITEMIDLIST pidl,LPSTR pszPath)
  * SHGetPathFromIDList32W [SHELL32.262]
  */
 DWORD WINAPI SHGetPathFromIDList32W (LPCITEMIDLIST pidl,LPWSTR pszPath)
-{ FIXME (shell,"(pidl=%p %s):stub.\n", pidl, debugstr_w(pszPath));
-  return 0;
+{	char sTemp[MAX_PATH];
+
+	FIXME (shell,"(pidl=%p)\n", pidl);
+
+	SHGetPathFromIDList32A (pidl, sTemp);
+	lstrcpyAtoW(pszPath, sTemp);
+	TRACE(shell,"-- (%s)\n",debugstr_w(pszPath));
+	return NOERROR;
 }
 
 
