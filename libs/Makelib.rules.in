@@ -19,7 +19,7 @@ all: $(MODULE) $(MODULE:.dll=.a)
 
 @MAKE_RULES@
 
-$(LIBNAME).so.$(SOVERSION): $(OBJS) Makefile.in
+$(LIBNAME).so.$(SOVERSION): $(OBJS) $(VERSCRIPT) Makefile.in
 	$(LDSHARED) $(OBJS) $(EXTRALIBS) $(LDFLAGS) $(LIBS) -o $@
 
 $(LIBNAME).so: $(LIBNAME).so.$(SOVERSION)

@@ -869,6 +869,16 @@ case $host_os in
           LDDLL="$LDDLL,-init,__wine_spec_init,-fini,__wine_spec_fini"
         fi
 
+        AC_CACHE_CHECK([whether the linker accepts version scripts], ac_cv_c_ld_version_scripts,
+          [echo '{ global: *; };' >conftest.map
+           WINE_TRY_CFLAGS([-fPIC -shared -Wl,--version-script=conftest.map],
+                           ac_cv_c_ld_version_scripts="yes",ac_cv_c_ld_version_scripts="no")
+           rm -f conftest.map])
+        if test "$ac_cv_c_ld_version_scripts" = "yes"
+        then
+          LDSHARED="$LDSHARED \$(VERSCRIPT:%=-Wl,--version-script=%)"
+        fi
+
         AC_CACHE_CHECK([whether the linker accepts --export-dynamic], ac_cv_c_export_dynamic,
           [WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
                            ac_cv_c_export_dynamic="yes",ac_cv_c_export_dynamic="no")])
