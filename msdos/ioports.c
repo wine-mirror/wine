@@ -20,6 +20,7 @@
 #include "vga.h"
 #include "dosexe.h"
 #include "options.h"
+#include "miscemu.h"
 #include "debug.h"
 #include "miscemu.h"
 

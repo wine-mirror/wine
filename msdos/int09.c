@@ -3,6 +3,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include "winuser.h"
 #include "miscemu.h"
 #include "input.h"
