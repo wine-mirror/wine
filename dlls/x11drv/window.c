@@ -391,8 +391,8 @@ static void set_wm_hints( Display *display, WND *win )
         mwm_hints.functions = 0;
         if ((win->dwStyle & WS_CAPTION) == WS_CAPTION) mwm_hints.functions |= MWM_FUNC_MOVE;
         if (win->dwStyle & WS_THICKFRAME) mwm_hints.functions |= MWM_FUNC_MOVE | MWM_FUNC_RESIZE;
-        if (win->dwStyle & WS_MINIMIZE)   mwm_hints.functions |= MWM_FUNC_MINIMIZE;
-        if (win->dwStyle & WS_MAXIMIZE)   mwm_hints.functions |= MWM_FUNC_MAXIMIZE;
+        if (win->dwStyle & WS_MINIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MINIMIZE;
+        if (win->dwStyle & WS_MAXIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MAXIMIZE;
         if (win->dwStyle & WS_SYSMENU)    mwm_hints.functions |= MWM_FUNC_CLOSE;
         mwm_hints.decorations = 0;
         if ((win->dwStyle & WS_CAPTION) == WS_CAPTION) mwm_hints.decorations |= MWM_DECOR_TITLE;
@@ -402,8 +402,8 @@ static void set_wm_hints( Display *display, WND *win )
         else if (win->dwStyle & WS_BORDER) mwm_hints.decorations |= MWM_DECOR_BORDER;
         else if (!(win->dwStyle & (WS_CHILD|WS_POPUP))) mwm_hints.decorations |= MWM_DECOR_BORDER;
         if (win->dwStyle & WS_SYSMENU)  mwm_hints.decorations |= MWM_DECOR_MENU;
-        if (win->dwStyle & WS_MINIMIZE) mwm_hints.decorations |= MWM_DECOR_MINIMIZE;
-        if (win->dwStyle & WS_MAXIMIZE) mwm_hints.decorations |= MWM_DECOR_MAXIMIZE;
+        if (win->dwStyle & WS_MINIMIZEBOX) mwm_hints.decorations |= MWM_DECOR_MINIMIZE;
+        if (win->dwStyle & WS_MAXIMIZEBOX) mwm_hints.decorations |= MWM_DECOR_MAXIMIZE;
 
         XChangeProperty( display, data->whole_window, mwmHints, mwmHints, 32,
                          PropModeReplace, (char*)&mwm_hints, sizeof(mwm_hints)/sizeof(long) );
