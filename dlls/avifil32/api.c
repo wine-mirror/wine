@@ -840,9 +840,22 @@ HRESULT WINAPI AVIStreamOpenFromFileW(PAVISTREAM *ppavi, LPCWSTR szFile,
  */
 LONG WINAPI AVIStreamBeginStreaming(PAVISTREAM pavi, LONG lStart, LONG lEnd, LONG lRate)
 {
-  FIXME("(%p)->(%ld,%ld,%ld)\n", pavi, lStart, lEnd, lRate);
+  IAVIStreaming* pstream = NULL;
+  HRESULT hr;
 
-  return AVIERR_OK;
+  TRACE("(%p,%ld,%ld,%ld)\n", pavi, lStart, lEnd, lRate);
+
+  if (pavi == NULL)
+    return AVIERR_BADHANDLE;
+
+  hr = IAVIStream_QueryInterface(pavi, &IID_IAVIStreaming, (LPVOID*)&pstream);
+  if (SUCCEEDED(hr) && pstream != NULL) {
+    hr = IAVIStreaming_Begin(pstream, lStart, lEnd, lRate);
+    IAVIStreaming_Release(pstream);
+  } else
+    hr = AVIERR_OK;
+
+  return hr;
 }
 
 /***********************************************************************
@@ -850,9 +863,18 @@ LONG WINAPI AVIStreamBeginStreaming(PAVISTREAM pavi, LONG lStart, LONG lEnd, LON
  */
 LONG WINAPI AVIStreamEndStreaming(PAVISTREAM pavi)
 {
-  FIXME("(%p)\n", pavi);
+  IAVIStreaming* pstream = NULL;
+  HRESULT hr;
 
-  return AVIERR_OK;
+  TRACE("(%p)\n", pavi);
+
+  hr = IAVIStream_QueryInterface(pavi, &IID_IAVIStreaming, (LPVOID*)&pstream);
+  if (SUCCEEDED(hr) && pstream != NULL) {
+    IAVIStreaming_End(pstream);
+    IAVIStreaming_Release(pstream);
+  }
+
+ return AVIERR_OK;
 }
 
 /***********************************************************************

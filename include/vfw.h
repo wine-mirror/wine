@@ -1118,6 +1118,7 @@ LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime);
     IUnknown_METHODS \
     STDMETHOD(Begin)(IAVIStreaming*iface,LONG lStart,LONG lEnd,LONG lRate) PURE; \
     STDMETHOD(End)(IAVIStreaming*iface) PURE;
+ICOM_DEFINE(IAVIStreaming, IUnknown)
 #undef INTERFACE
 
 #ifdef COBJMACROS

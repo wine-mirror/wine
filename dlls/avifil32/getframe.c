@@ -1,5 +1,5 @@
 /*
- * Copyright 2002 Michael Günnewig
+ * Copyright 2002-2003 Michael Günnewig
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -227,9 +227,9 @@ static LPVOID  WINAPI IGetFrame_fnGetFrame(IGetFrame *iface, LONG lPos)
     if (lNext == -1)
       return NULL;
     if (lNext <= This->lCurrentFrame && This->lCurrentFrame < lPos)
-      lNext++;
+      lNext = This->lCurrentFrame + 1;
 
-    for (; lNext < lPos; lNext++) {
+    for (; lNext <= lPos; lNext++) {
       /* new format for this frame? */
       if (This->bFormatChanges) {
 	AVIStreamReadFormat(This->pStream, lNext, This->lpInFormat, &This->cbInFormat);

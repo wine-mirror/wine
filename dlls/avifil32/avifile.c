@@ -1678,6 +1678,9 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
 	case ckidSTREAMFORMAT:
 	  if (pStream->lpFormat != NULL)
 	    return AVIERR_BADFORMAT;
+          if (ck.cksize == 0)
+            break;
+
 	  pStream->lpFormat = GlobalAllocPtr(GMEM_DDESHARE|GMEM_MOVEABLE,
 					     ck.cksize);
 	  if (pStream->lpFormat == NULL)
@@ -2387,9 +2390,6 @@ static HRESULT AVIFILE_SaveIndex(IAVIFileImpl *This)
     /* not interleaved -- write index for each stream at once */
     for (nStream = 0; nStream < This->fInfo.dwStreams; nStream++) {
       pStream = This->ppStreams[nStream];
-
-      if (pStream->lLastFrame == -1)
-	pStream->lLastFrame = 0;
 
       for (n = 0; n <= pStream->lLastFrame; n++) {
 	if ((pStream->sInfo.dwFlags & AVISTREAMINFO_FORMATCHANGES) &&
