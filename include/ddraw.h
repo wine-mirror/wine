@@ -22,28 +22,35 @@ extern "C" {
  * Predeclare the interfaces
  */
 DEFINE_GUID( CLSID_DirectDraw,		0xD7B70EE0,0x4340,0x11CF,0xB0,0x63,0x00,0x20,0xAF,0xC2,0xCD,0x35 );
+DEFINE_GUID( CLSID_DirectDraw7,         0x3C305196,0x50DB,0x11D3,0x9C,0xFE,0x00,0xC0,0x4F,0xD9,0x30,0xC5 );
 DEFINE_GUID( CLSID_DirectDrawClipper,	0x593817A0,0x7DB3,0x11CF,0xA2,0xDE,0x00,0xAA,0x00,0xb9,0x33,0x56 );
 DEFINE_GUID( IID_IDirectDraw,		0x6C14DB80,0xA733,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60 );
 DEFINE_GUID( IID_IDirectDraw2,		0xB3A6F3E0,0x2B43,0x11CF,0xA2,0xDE,0x00,0xAA,0x00,0xB9,0x33,0x56 );
 DEFINE_GUID( IID_IDirectDraw4,          0x9c59509a,0x39bd,0x11d1,0x8c,0x4a,0x00,0xc0,0x4f,0xd9,0x30,0xc5 );
+DEFINE_GUID( IID_IDirectDraw7,          0x15e65ec0,0x3b9c,0x11d2,0xb9,0x2f,0x00,0x60,0x97,0x97,0xea,0x5b );
 DEFINE_GUID( IID_IDirectDrawSurface,	0x6C14DB81,0xA733,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60 );
 DEFINE_GUID( IID_IDirectDrawSurface2,	0x57805885,0x6eec,0x11cf,0x94,0x41,0xa8,0x23,0x03,0xc1,0x0e,0x27 );
 DEFINE_GUID( IID_IDirectDrawSurface3,	0xDA044E00,0x69B2,0x11D0,0xA1,0xD5,0x00,0xAA,0x00,0xB8,0xDF,0xBB );
 DEFINE_GUID( IID_IDirectDrawSurface4,   0x0B2B8630,0xAD35,0x11D0,0x8E,0xA6,0x00,0x60,0x97,0x97,0xEA,0x5B );
+DEFINE_GUID( IID_IDirectDrawSurface7,   0x06675a80,0x3b9b,0x11d2,0xb9,0x2f,0x00,0x60,0x97,0x97,0xea,0x5b );
 DEFINE_GUID( IID_IDirectDrawPalette,	0x6C14DB84,0xA733,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60 );
 DEFINE_GUID( IID_IDirectDrawClipper,	0x6C14DB85,0xA733,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60 );
 DEFINE_GUID( IID_IDirectDrawColorControl,0x4B9F0EE0,0x0D7E,0x11D0,0x9B,0x06,0x00,0xA0,0xC9,0x03,0xA3,0xB8 );
+DEFINE_GUID( IID_IDirectDrawGammaControl,0x69C11C3E,0xB46B,0x11D1,0xAD,0x7A,0x00,0xC0,0x4F,0xC2,0x9B,0x4E );
 
 typedef struct IDirectDraw IDirectDraw,*LPDIRECTDRAW;
 typedef struct IDirectDraw2 IDirectDraw2,*LPDIRECTDRAW2;
 typedef struct IDirectDraw4 IDirectDraw4,*LPDIRECTDRAW4;
+typedef struct IDirectDraw4 IDirectDraw7,*LPDIRECTDRAW7;
 typedef struct IDirectDrawClipper IDirectDrawClipper,*LPDIRECTDRAWCLIPPER;
 typedef struct IDirectDrawPalette IDirectDrawPalette,*LPDIRECTDRAWPALETTE;
 typedef struct IDirectDrawSurface IDirectDrawSurface,*LPDIRECTDRAWSURFACE;
 typedef struct IDirectDrawSurface2 IDirectDrawSurface2,*LPDIRECTDRAWSURFACE2;
 typedef struct IDirectDrawSurface3 IDirectDrawSurface3,*LPDIRECTDRAWSURFACE3;
 typedef struct IDirectDrawSurface4 IDirectDrawSurface4,*LPDIRECTDRAWSURFACE4;
+typedef struct IDirectDrawSurface7 IDirectDrawSurface7,*LPDIRECTDRAWSURFACE7;
 typedef struct IDirectDrawColorControl IDirectDrawColorControl,*LPDIRECTDRAWCOLORCONTROL;
+typedef struct IDirectDrawGammaControl IDirectDrawGammaControl,*LPDIRECTDRAWGAMMACONTROL;
 
 
 #define DDENUMRET_CANCEL	0
@@ -73,6 +80,8 @@ typedef struct IDirectDrawColorControl IDirectDrawColorControl,*LPDIRECTDRAWCOLO
 #define DDERR_LOCKEDSURFACES			MAKE_DDHRESULT( 160 )
 #define DDERR_NO3D				MAKE_DDHRESULT( 170 )
 #define DDERR_NOALPHAHW				MAKE_DDHRESULT( 180 )
+#define DDERR_NOSTEREOHARDWARE          	MAKE_DDHRESULT( 181 )
+#define DDERR_NOSURFACELEFT                     MAKE_DDHRESULT( 182 )
 #define DDERR_NOCLIPLIST			MAKE_DDHRESULT( 205 )
 #define DDERR_NOCOLORCONVHW			MAKE_DDHRESULT( 210 )
 #define DDERR_NOCOOPERATIVELEVELSET		MAKE_DDHRESULT( 212 )
@@ -85,6 +94,7 @@ typedef struct IDirectDrawColorControl IDirectDrawColorControl,*LPDIRECTDRAWCOLO
 #define DDERR_NOMIRRORHW			MAKE_DDHRESULT( 250 )
 #define DDERR_NOTFOUND				MAKE_DDHRESULT( 255 )
 #define DDERR_NOOVERLAYHW			MAKE_DDHRESULT( 260 )
+#define DDERR_OVERLAPPINGRECTS                  MAKE_DDHRESULT( 270 )
 #define DDERR_NORASTEROPHW			MAKE_DDHRESULT( 280 )
 #define DDERR_NOROTATIONHW			MAKE_DDHRESULT( 290 )
 #define DDERR_NOSTRETCHHW			MAKE_DDHRESULT( 310 )
@@ -115,8 +125,10 @@ typedef struct IDirectDrawColorControl IDirectDrawColorControl,*LPDIRECTDRAWCOLO
 #define DDERR_UNSUPPORTED			E_NOTIMPL
 #define DDERR_UNSUPPORTEDFORMAT			MAKE_DDHRESULT( 510 )
 #define DDERR_UNSUPPORTEDMASK			MAKE_DDHRESULT( 520 )
+#define DDERR_INVALIDSTREAM                     MAKE_DDHRESULT( 521 )
 #define DDERR_VERTICALBLANKINPROGRESS		MAKE_DDHRESULT( 537 )
 #define DDERR_WASSTILLDRAWING			MAKE_DDHRESULT( 540 )
+#define DDERR_DDSCAPSCOMPLEXREQUIRED            MAKE_DDHRESULT( 542 )
 #define DDERR_XALIGN				MAKE_DDHRESULT( 560 )
 #define DDERR_INVALIDDIRECTDRAWGUID		MAKE_DDHRESULT( 561 )
 #define DDERR_DIRECTDRAWALREADYCREATED		MAKE_DDHRESULT( 562 )
@@ -153,13 +165,20 @@ typedef struct IDirectDrawColorControl IDirectDrawColorControl,*LPDIRECTDRAWCOLO
 #define DDERR_NOOPTIMIZEHW			MAKE_DDHRESULT( 600 )
 #define DDERR_NOTLOADED				MAKE_DDHRESULT( 601 )
 #define DDERR_NOFOCUSWINDOW			MAKE_DDHRESULT( 602 )
+#define DDERR_NOTONMIPMAPSUBLEVEL               MAKE_DDHRESULT( 603 )
 #define DDERR_DCALREADYCREATED			MAKE_DDHRESULT( 620 )
 #define DDERR_NONONLOCALVIDMEM			MAKE_DDHRESULT( 630 )
 #define DDERR_CANTPAGELOCK			MAKE_DDHRESULT( 640 )
 #define DDERR_CANTPAGEUNLOCK			MAKE_DDHRESULT( 660 )
 #define DDERR_NOTPAGELOCKED			MAKE_DDHRESULT( 680 )
 #define DDERR_MOREDATA				MAKE_DDHRESULT( 690 )
+#define DDERR_EXPIRED                           MAKE_DDHRESULT( 691 )
+#define DDERR_TESTFINISHED                      MAKE_DDHRESULT( 692 )
+#define DDERR_NEWMODE                           MAKE_DDHRESULT( 693 )
+#define DDERR_D3DNOTINITIALIZED                 MAKE_DDHRESULT( 694 )
 #define DDERR_VIDEONOTACTIVE			MAKE_DDHRESULT( 695 )
+#define DDERR_NOMONITORINFORMATION              MAKE_DDHRESULT( 696 )
+#define DDERR_NODRIVERSUPPORT                   MAKE_DDHRESULT( 697 )
 #define DDERR_DEVICEDOESNTOWNSURFACE		MAKE_DDHRESULT( 699 )
 #define DDERR_NOTINITIALIZED			CO_E_NOTINITIALIZED
 
@@ -190,17 +209,20 @@ typedef struct IDirectDrawColorControl IDirectDrawColorControl,*LPDIRECTDRAWCOLO
 #define DDBLT_ZBUFFERSRCOVERRIDE		0x00800000
 #define DDBLT_WAIT				0x01000000
 #define DDBLT_DEPTHFILL				0x02000000
+#define DDBLT_DONOTWAIT                         0x08000000
 
 /* dwTrans for BltFast */
 #define DDBLTFAST_NOCOLORKEY			0x00000000
 #define DDBLTFAST_SRCCOLORKEY			0x00000001
 #define DDBLTFAST_DESTCOLORKEY			0x00000002
 #define DDBLTFAST_WAIT				0x00000010
+#define DDBLTFAST_DONOTWAIT                     0x00000020
 
 /* dwFlags for Flip */
 #define DDFLIP_WAIT	0x00000001
 #define DDFLIP_EVEN	0x00000002 /* only valid for overlay */
 #define DDFLIP_ODD	0x00000004 /* only valid for overlay */
+#define DDFLIP_NOVSYNC  0x00000008
 
 /* dwFlags for GetBltStatus */
 #define DDGBS_CANBLT				0x00000001
@@ -271,9 +293,242 @@ typedef struct _DDSCAPS {
 	DWORD	dwCaps;	/* capabilities of surface wanted */
 } DDSCAPS,*LPDDSCAPS;
 
+/* DDSCAPS2.dwCaps2 */
+/* indicates the surface will receive data from a video port using
+   deinterlacing hardware. */
+#define DDSCAPS2_HARDWAREDEINTERLACE	0x00000002
+/* indicates the surface will be locked very frequently. */
+#define DDSCAPS2_HINTDYNAMIC		0x00000004
+/* indicates surface can be re-ordered or retiled on load() */
+#define DDSCAPS2_HINTSTATIC             0x00000008
+/* indicates surface to be managed by directdraw/direct3D */
+#define DDSCAPS2_TEXTUREMANAGE          0x00000010
+/* reserved bits */
+#define DDSCAPS2_RESERVED1              0x00000020
+#define DDSCAPS2_RESERVED2              0x00000040
+/* indicates surface will never be locked again */
+#define DDSCAPS2_OPAQUE                 0x00000080
+/* set at CreateSurface() time to indicate antialising will be used */
+#define DDSCAPS2_HINTANTIALIASING       0x00000100
+/* set at CreateSurface() time to indicate cubic environment map */
+#define DDSCAPS2_CUBEMAP                0x00000200
+/* face flags for cube maps */
+#define DDSCAPS2_CUBEMAP_POSITIVEX      0x00000400
+#define DDSCAPS2_CUBEMAP_NEGATIVEX      0x00000800
+#define DDSCAPS2_CUBEMAP_POSITIVEY      0x00001000
+#define DDSCAPS2_CUBEMAP_NEGATIVEY      0x00002000
+#define DDSCAPS2_CUBEMAP_POSITIVEZ      0x00004000
+#define DDSCAPS2_CUBEMAP_NEGATIVEZ      0x00008000
+/* specifies all faces of a cube for CreateSurface() */
+#define DDSCAPS2_CUBEMAP_ALLFACES ( DDSCAPS2_CUBEMAP_POSITIVEX |\
+                                    DDSCAPS2_CUBEMAP_NEGATIVEX |\
+                                    DDSCAPS2_CUBEMAP_POSITIVEY |\
+                                    DDSCAPS2_CUBEMAP_NEGATIVEY |\
+                                    DDSCAPS2_CUBEMAP_POSITIVEZ |\
+                                    DDSCAPS2_CUBEMAP_NEGATIVEZ )
+/* set for mipmap sublevels on DirectX7 and later.  ignored by CreateSurface() */
+#define DDSCAPS2_MIPMAPSUBLEVEL         0x00010000
+/* indicates texture surface to be managed by Direct3D *only* */
+#define DDSCAPS2_D3DTEXTUREMANAGE       0x00020000
+/* indicates managed surface that can safely be lost */
+#define DDSCAPS2_DONOTPERSIST           0x00040000
+/* indicates surface is part of a stereo flipping chain */
+#define DDSCAPS2_STEREOSURFACELEFT      0x00080000
+
+typedef struct _DDSCAPS2 {
+	DWORD	dwCaps;	/* capabilities of surface wanted */
+	DWORD   dwCaps2; /* additional capabilities */
+	DWORD   dwCaps3; /* reserved capabilities */
+	DWORD   dwCaps4; /* more reserved capabilities */
+} DDSCAPS2,*LPDDSCAPS2;
+
 #define	DD_ROP_SPACE	(256/32)	/* space required to store ROP array */
 
-typedef struct _DDCAPS_DX3
+typedef struct _DDCAPS_DX7		/* DirectX 7 version of caps struct */
+{
+    DWORD	dwSize;                 /* size of the DDDRIVERCAPS structure */
+    DWORD	dwCaps;                 /* driver specific capabilities */
+    DWORD	dwCaps2;                /* more driver specific capabilites */
+    DWORD	dwCKeyCaps;             /* color key capabilities of the surface */
+    DWORD	dwFXCaps;               /* driver specific stretching and effects capabilites */
+    DWORD	dwFXAlphaCaps;          /* alpha driver specific capabilities */
+    DWORD	dwPalCaps;              /* palette capabilities */
+    DWORD	dwSVCaps;               /* stereo vision capabilities */
+    DWORD	dwAlphaBltConstBitDepths;       /* DDBD_2,4,8 */
+    DWORD	dwAlphaBltPixelBitDepths;       /* DDBD_1,2,4,8 */
+    DWORD	dwAlphaBltSurfaceBitDepths;     /* DDBD_1,2,4,8 */
+    DWORD	dwAlphaOverlayConstBitDepths;   /* DDBD_2,4,8 */
+    DWORD	dwAlphaOverlayPixelBitDepths;   /* DDBD_1,2,4,8 */
+    DWORD	dwAlphaOverlaySurfaceBitDepths; /* DDBD_1,2,4,8 */
+    DWORD	dwZBufferBitDepths;             /* DDBD_8,16,24,32 */
+    DWORD	dwVidMemTotal;          /* total amount of video memory */
+    DWORD	dwVidMemFree;           /* amount of free video memory */
+    DWORD	dwMaxVisibleOverlays;   /* maximum number of visible overlays */
+    DWORD	dwCurrVisibleOverlays;  /* current number of visible overlays */
+    DWORD	dwNumFourCCCodes;       /* number of four cc codes */
+    DWORD	dwAlignBoundarySrc;     /* source rectangle alignment */
+    DWORD	dwAlignSizeSrc;         /* source rectangle byte size */
+    DWORD	dwAlignBoundaryDest;    /* dest rectangle alignment */
+    DWORD	dwAlignSizeDest;        /* dest rectangle byte size */
+    DWORD	dwAlignStrideAlign;     /* stride alignment */
+    DWORD	dwRops[DD_ROP_SPACE];   /* ROPS supported */
+    DDSCAPS	ddsOldCaps;             /* old DDSCAPS - superceded for DirectX6+ */
+    DWORD	dwMinOverlayStretch;    /* minimum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMaxOverlayStretch;    /* maximum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMinLiveVideoStretch;  /* minimum live video stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMaxLiveVideoStretch;  /* maximum live video stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMinHwCodecStretch;    /* minimum hardware codec stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMaxHwCodecStretch;    /* maximum hardware codec stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwReserved1;
+    DWORD	dwReserved2;
+    DWORD	dwReserved3;
+    DWORD	dwSVBCaps;              /* driver specific capabilities for System->Vmem blts */
+    DWORD	dwSVBCKeyCaps;          /* driver color key capabilities for System->Vmem blts */
+    DWORD	dwSVBFXCaps;            /* driver FX capabilities for System->Vmem blts */
+    DWORD	dwSVBRops[DD_ROP_SPACE];/* ROPS supported for System->Vmem blts */
+    DWORD	dwVSBCaps;              /* driver specific capabilities for Vmem->System blts */
+    DWORD	dwVSBCKeyCaps;          /* driver color key capabilities for Vmem->System blts */
+    DWORD	dwVSBFXCaps;            /* driver FX capabilities for Vmem->System blts */
+    DWORD	dwVSBRops[DD_ROP_SPACE];/* ROPS supported for Vmem->System blts */
+    DWORD	dwSSBCaps;              /* driver specific capabilities for System->System blts */
+    DWORD	dwSSBCKeyCaps;          /* driver color key capabilities for System->System blts */
+    DWORD	dwSSBFXCaps;            /* driver FX capabilities for System->System blts */
+    DWORD	dwSSBRops[DD_ROP_SPACE];/* ROPS supported for System->System blts */
+    DWORD       dwMaxVideoPorts;        /* maximum number of usable video ports */
+    DWORD   	dwCurrVideoPorts;       /* current number of video ports used */
+    DWORD   	dwSVBCaps2;             /* more driver specific capabilities for System->Vmem blts */
+    DWORD   	dwNLVBCaps;             /* driver specific capabilities for non-local->local vidmem blts */
+    DWORD   	dwNLVBCaps2;            /* more driver specific capabilities non-local->local vidmem blts */
+    DWORD   	dwNLVBCKeyCaps;         /* driver color key capabilities for non-local->local vidmem blts */
+    DWORD   	dwNLVBFXCaps;           /* driver FX capabilities for non-local->local blts */
+    DWORD   	dwNLVBRops[DD_ROP_SPACE]; /* ROPS supported for non-local->local blts */
+    DDSCAPS2    ddsCaps;		/* surface capabilities */
+} DDCAPS_DX7,*LPDDCAPS_DX7;
+
+typedef struct _DDCAPS_DX6		/* DirectX 6 version of caps struct */
+{
+    DWORD	dwSize;                 /* size of the DDDRIVERCAPS structure */
+    DWORD	dwCaps;                 /* driver specific capabilities */
+    DWORD	dwCaps2;                /* more driver specific capabilites */
+    DWORD	dwCKeyCaps;             /* color key capabilities of the surface */
+    DWORD	dwFXCaps;               /* driver specific stretching and effects capabilites */
+    DWORD	dwFXAlphaCaps;          /* alpha driver specific capabilities */
+    DWORD	dwPalCaps;              /* palette capabilities */
+    DWORD	dwSVCaps;               /* stereo vision capabilities */
+    DWORD	dwAlphaBltConstBitDepths;       /* DDBD_2,4,8 */
+    DWORD	dwAlphaBltPixelBitDepths;       /* DDBD_1,2,4,8 */
+    DWORD	dwAlphaBltSurfaceBitDepths;     /* DDBD_1,2,4,8 */
+    DWORD	dwAlphaOverlayConstBitDepths;   /* DDBD_2,4,8 */
+    DWORD	dwAlphaOverlayPixelBitDepths;   /* DDBD_1,2,4,8 */
+    DWORD	dwAlphaOverlaySurfaceBitDepths; /* DDBD_1,2,4,8 */
+    DWORD	dwZBufferBitDepths;             /* DDBD_8,16,24,32 */
+    DWORD	dwVidMemTotal;          /* total amount of video memory */
+    DWORD	dwVidMemFree;           /* amount of free video memory */
+    DWORD	dwMaxVisibleOverlays;   /* maximum number of visible overlays */
+    DWORD	dwCurrVisibleOverlays;  /* current number of visible overlays */
+    DWORD	dwNumFourCCCodes;       /* number of four cc codes */
+    DWORD	dwAlignBoundarySrc;     /* source rectangle alignment */
+    DWORD	dwAlignSizeSrc;         /* source rectangle byte size */
+    DWORD	dwAlignBoundaryDest;    /* dest rectangle alignment */
+    DWORD	dwAlignSizeDest;        /* dest rectangle byte size */
+    DWORD	dwAlignStrideAlign;     /* stride alignment */
+    DWORD	dwRops[DD_ROP_SPACE];   /* ROPS supported */
+    DDSCAPS	ddsOldCaps;             /* old DDSCAPS - superceded for DirectX6+ */
+    DWORD	dwMinOverlayStretch;    /* minimum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMaxOverlayStretch;    /* maximum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMinLiveVideoStretch;  /* minimum live video stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMaxLiveVideoStretch;  /* maximum live video stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMinHwCodecStretch;    /* minimum hardware codec stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMaxHwCodecStretch;    /* maximum hardware codec stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwReserved1;
+    DWORD	dwReserved2;
+    DWORD	dwReserved3;
+    DWORD	dwSVBCaps;              /* driver specific capabilities for System->Vmem blts */
+    DWORD	dwSVBCKeyCaps;          /* driver color key capabilities for System->Vmem blts */
+    DWORD	dwSVBFXCaps;            /* driver FX capabilities for System->Vmem blts */
+    DWORD	dwSVBRops[DD_ROP_SPACE];/* ROPS supported for System->Vmem blts */
+    DWORD	dwVSBCaps;              /* driver specific capabilities for Vmem->System blts */
+    DWORD	dwVSBCKeyCaps;          /* driver color key capabilities for Vmem->System blts */
+    DWORD	dwVSBFXCaps;            /* driver FX capabilities for Vmem->System blts */
+    DWORD	dwVSBRops[DD_ROP_SPACE];/* ROPS supported for Vmem->System blts */
+    DWORD	dwSSBCaps;              /* driver specific capabilities for System->System blts */
+    DWORD	dwSSBCKeyCaps;          /* driver color key capabilities for System->System blts */
+    DWORD	dwSSBFXCaps;            /* driver FX capabilities for System->System blts */
+    DWORD	dwSSBRops[DD_ROP_SPACE];/* ROPS supported for System->System blts */
+    DWORD       dwMaxVideoPorts;        /* maximum number of usable video ports */
+    DWORD   	dwCurrVideoPorts;       /* current number of video ports used */
+    DWORD   	dwSVBCaps2;             /* more driver specific capabilities for System->Vmem blts */
+    DWORD   	dwNLVBCaps;             /* driver specific capabilities for non-local->local vidmem blts */
+    DWORD   	dwNLVBCaps2;            /* more driver specific capabilities non-local->local vidmem blts */
+    DWORD   	dwNLVBCKeyCaps;         /* driver color key capabilities for non-local->local vidmem blts */
+    DWORD   	dwNLVBFXCaps;           /* driver FX capabilities for non-local->local blts */
+    DWORD   	dwNLVBRops[DD_ROP_SPACE]; /* ROPS supported for non-local->local blts */
+    /* and one new member for DirectX 6 */
+    DDSCAPS2    ddsCaps;		/* surface capabilities */
+} DDCAPS_DX6,*LPDDCAPS_DX6;
+
+typedef struct _DDCAPS_DX5		/* DirectX5 version of caps struct */
+{
+    DWORD	dwSize;                 /* size of the DDDRIVERCAPS structure */
+    DWORD	dwCaps;                 /* driver specific capabilities */
+    DWORD	dwCaps2;                /* more driver specific capabilites */
+    DWORD	dwCKeyCaps;             /* color key capabilities of the surface */
+    DWORD	dwFXCaps;               /* driver specific stretching and effects capabilites */
+    DWORD	dwFXAlphaCaps;          /* alpha driver specific capabilities */
+    DWORD	dwPalCaps;              /* palette capabilities */
+    DWORD	dwSVCaps;               /* stereo vision capabilities */
+    DWORD	dwAlphaBltConstBitDepths;       /* DDBD_2,4,8 */
+    DWORD	dwAlphaBltPixelBitDepths;       /* DDBD_1,2,4,8 */
+    DWORD	dwAlphaBltSurfaceBitDepths;     /* DDBD_1,2,4,8 */
+    DWORD	dwAlphaOverlayConstBitDepths;   /* DDBD_2,4,8 */
+    DWORD	dwAlphaOverlayPixelBitDepths;   /* DDBD_1,2,4,8 */
+    DWORD	dwAlphaOverlaySurfaceBitDepths; /* DDBD_1,2,4,8 */
+    DWORD	dwZBufferBitDepths;             /* DDBD_8,16,24,32 */
+    DWORD	dwVidMemTotal;          /* total amount of video memory */
+    DWORD	dwVidMemFree;           /* amount of free video memory */
+    DWORD	dwMaxVisibleOverlays;   /* maximum number of visible overlays */
+    DWORD	dwCurrVisibleOverlays;  /* current number of visible overlays */
+    DWORD	dwNumFourCCCodes;       /* number of four cc codes */
+    DWORD	dwAlignBoundarySrc;     /* source rectangle alignment */
+    DWORD	dwAlignSizeSrc;         /* source rectangle byte size */
+    DWORD	dwAlignBoundaryDest;    /* dest rectangle alignment */
+    DWORD	dwAlignSizeDest;        /* dest rectangle byte size */
+    DWORD	dwAlignStrideAlign;     /* stride alignment */
+    DWORD	dwRops[DD_ROP_SPACE];   /* ROPS supported */
+    DDSCAPS	ddsCaps;                /* DDSCAPS structure has all the general capabilities */
+    DWORD	dwMinOverlayStretch;    /* minimum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMaxOverlayStretch;    /* maximum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMinLiveVideoStretch;  /* minimum live video stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMaxLiveVideoStretch;  /* maximum live video stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMinHwCodecStretch;    /* minimum hardware codec stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwMaxHwCodecStretch;    /* maximum hardware codec stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
+    DWORD	dwReserved1;
+    DWORD	dwReserved2;
+    DWORD	dwReserved3;
+    DWORD	dwSVBCaps;              /* driver specific capabilities for System->Vmem blts */
+    DWORD	dwSVBCKeyCaps;          /* driver color key capabilities for System->Vmem blts */
+    DWORD	dwSVBFXCaps;            /* driver FX capabilities for System->Vmem blts */
+    DWORD	dwSVBRops[DD_ROP_SPACE];/* ROPS supported for System->Vmem blts */
+    DWORD	dwVSBCaps;              /* driver specific capabilities for Vmem->System blts */
+    DWORD	dwVSBCKeyCaps;          /* driver color key capabilities for Vmem->System blts */
+    DWORD	dwVSBFXCaps;            /* driver FX capabilities for Vmem->System blts */
+    DWORD	dwVSBRops[DD_ROP_SPACE];/* ROPS supported for Vmem->System blts */
+    DWORD	dwSSBCaps;              /* driver specific capabilities for System->System blts */
+    DWORD	dwSSBCKeyCaps;          /* driver color key capabilities for System->System blts */
+    DWORD	dwSSBFXCaps;            /* driver FX capabilities for System->System blts */
+    DWORD	dwSSBRops[DD_ROP_SPACE];/* ROPS supported for System->System blts */
+    /* the following are the new DirectX 5 members */
+    DWORD       dwMaxVideoPorts;        /* maximum number of usable video ports */
+    DWORD   	dwCurrVideoPorts;       /* current number of video ports used */
+    DWORD   	dwSVBCaps2;             /* more driver specific capabilities for System->Vmem blts */
+    DWORD   	dwNLVBCaps;             /* driver specific capabilities for non-local->local vidmem blts */
+    DWORD   	dwNLVBCaps2;            /* more driver specific capabilities non-local->local vidmem blts */
+    DWORD   	dwNLVBCKeyCaps;         /* driver color key capabilities for non-local->local vidmem blts */
+    DWORD   	dwNLVBFXCaps;           /* driver FX capabilities for non-local->local blts */
+    DWORD   	dwNLVBRops[DD_ROP_SPACE]; /* ROPS supported for non-local->local blts */
+} DDCAPS_DX5,*LPDDCAPS_DX5;
+
+typedef struct _DDCAPS_DX3		/* DirectX3 version of caps struct */
 {
     DWORD	dwSize;                 /* size of the DDDRIVERCAPS structure */
     DWORD	dwCaps;                 /* driver specific capabilities */
@@ -328,72 +583,19 @@ typedef struct _DDCAPS_DX3
     DWORD	dwReserved6;
 } DDCAPS_DX3,*LPDDCAPS_DX3;
 
-typedef struct _DDCAPS
-{
-/*  0*/ DWORD  dwSize;			/* size of the DDDRIVERCAPS structure */
-/*  4*/ DWORD  dwCaps;			/* driver specific capabilities */
-/*  8*/ DWORD  dwCaps2;			/* more driver specific capabilites */
-/*  c*/ DWORD  dwCKeyCaps;		/* color key capabilities of the surface */
-/* 10*/ DWORD  dwFXCaps;		/* driver specific stretching and effects capabilites */
-/* 14*/ DWORD  dwFXAlphaCaps;		/* alpha driver specific capabilities */
-/* 18*/ DWORD  dwPalCaps;		/* palette capabilities */
-/* 1c*/ DWORD  dwSVCaps;		/* stereo vision capabilities */
-/* 20*/ DWORD  dwAlphaBltConstBitDepths;	/* DDBD_2,4,8 */
-/* 24*/ DWORD  dwAlphaBltPixelBitDepths;	/* DDBD_1,2,4,8 */
-/* 28*/ DWORD  dwAlphaBltSurfaceBitDepths;	/* DDBD_1,2,4,8 */
-/* 2c*/ DWORD  dwAlphaOverlayConstBitDepths;	/* DDBD_2,4,8 */
-/* 30*/ DWORD  dwAlphaOverlayPixelBitDepths;	/* DDBD_1,2,4,8 */
-/* 34*/ DWORD  dwAlphaOverlaySurfaceBitDepths;	/* DDBD_1,2,4,8 */
-/* 38*/ DWORD  dwZBufferBitDepths;		/* DDBD_8,16,24,32 */
-/* 3c*/ DWORD  dwVidMemTotal;		/* total amount of video memory */
-/* 40*/ DWORD  dwVidMemFree;		/* amount of free video memory */
-/* 44*/ DWORD  dwMaxVisibleOverlays;	/* maximum number of visible overlays */
-/* 48*/ DWORD  dwCurrVisibleOverlays;	/* current number of visible overlays */
-/* 4c*/ DWORD  dwNumFourCCCodes;	/* number of four cc codes */
-/* 50*/ DWORD  dwAlignBoundarySrc;	/* source rectangle alignment */
-/* 54*/ DWORD  dwAlignSizeSrc;		/* source rectangle byte size */
-/* 58*/ DWORD  dwAlignBoundaryDest;	/* dest rectangle alignment */
-/* 5c*/ DWORD  dwAlignSizeDest;		/* dest rectangle byte size */
-/* 60*/ DWORD  dwAlignStrideAlign;	/* stride alignment */
-/* 64*/ DWORD  dwRops[DD_ROP_SPACE];	/* ROPS supported */
-/* 84*/ DDSCAPS ddsCaps;		/* DDSCAPS structure has all the general capabilities */
-/* 88*/ DWORD  dwMinOverlayStretch;	/* minimum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
-/* 8c*/ DWORD  dwMaxOverlayStretch;	/* maximum overlay stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
-/* 90*/ DWORD  dwMinLiveVideoStretch;	/* minimum live video stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
-/* 94*/ DWORD  dwMaxLiveVideoStretch;	/* maximum live video stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
-/* 98*/ DWORD  dwMinHwCodecStretch;	/* minimum hardware codec stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
-/* 9c*/ DWORD  dwMaxHwCodecStretch;	/* maximum hardware codec stretch factor multiplied by 1000, eg 1000 == 1.0, 1300 == 1.3 */
-/* a0*/ DWORD  dwReserved1;
-/* a4*/ DWORD  dwReserved2;
-/* a8*/ DWORD  dwReserved3;
-/* ac*/ DWORD  dwSVBCaps;	/* driver specific capabilities for System->Vmem blts */
-/* b0*/ DWORD  dwSVBCKeyCaps;	/* driver color key capabilities for System->Vmem blts */
-/* b4*/ DWORD  dwSVBFXCaps;	/* driver FX capabilities for System->Vmem blts */
-/* b8*/ DWORD  dwSVBRops[DD_ROP_SPACE];/* ROPS supported for System->Vmem blts */
-/* d8*/ DWORD  dwVSBCaps;	/* driver specific capabilities for Vmem->System blts */
-/* dc*/ DWORD  dwVSBCKeyCaps;	/* driver color key capabilities for Vmem->System blts */
-/* e0*/ DWORD  dwVSBFXCaps;	/* driver FX capabilities for Vmem->System blts */
-/* e4*/ DWORD  dwVSBRops[DD_ROP_SPACE];/* ROPS supported for Vmem->System blts */
-/*104*/ DWORD  dwSSBCaps;	/* driver specific capabilities for System->System blts */
-/*108*/ DWORD  dwSSBCKeyCaps;	/* driver color key capabilities for System->System blts */
-/*10c*/ DWORD  dwSSBFXCaps;	/* driver FX capabilities for System->System blts */
-/*110*/ DWORD  dwSSBRops[DD_ROP_SPACE];/* ROPS supported for System->System blts */
-#if       DIRECTDRAW_VERSION >= 0x0500
-/*130*/ DWORD  dwMaxVideoPorts;	/* maximum number of usable video ports */
-/*134*/ DWORD  dwCurrVideoPorts;/* current number of video ports used */
-/*138*/ DWORD  dwSVBCaps2;	/* more driver specific capabilities for System->Vmem blts */
-/*13c*/ DWORD  dwNLVBCaps;	/* driver specific capabilities for non-local->local vidmem blts */
-/*140*/ DWORD  dwNLVBCaps2;	/* more driver specific capabilities non-local->local vidmem blts */
-/*144*/ DWORD  dwNLVBCKeyCaps;	/* driver color key capabilities for non-local->local vidmem blts */
-/*148*/ DWORD  dwNLVBFXCaps;	/* driver FX capabilities for non-local->local blts */
-/*14c*/ DWORD  dwNLVBRops[DD_ROP_SPACE];/* ROPS supported for non-local->local blts */
-#else  /* DIRECTDRAW_VERSION >= 0x0500 */
-/*130*/ DWORD  dwReserved4;
-/*134*/ DWORD  dwReserved5;
-/*138*/ DWORD  dwReserved6;
-#endif /* DIRECTDRAW_VERSION >= 0x0500 */
-} DDCAPS,*LPDDCAPS;
+/* set caps struct according to DIRECTDRAW_VERSION */
 
+#if DIRECTDRAW_VERSION <= 0x300
+typedef DDCAPS_DX3 DDCAPS;
+#elif DIRECTDRAW_VERSION <= 0x500
+typedef DDCAPS_DX5 DDCAPS;
+#elif DIRECTDRAW_VERSION <= 0x600
+typedef DDCAPS_DX6 DDCAPS;
+#else
+typedef DDCAPS_DX7 DDCAPS;
+#endif
+
+typedef DDCAPS *LPDDCAPS;
 
 /* DDCAPS.dwCaps */
 #define DDCAPS_3D			0x00000001
@@ -445,6 +647,16 @@ typedef struct _DDCAPS
 #define DDCAPS2_WIDESURFACES		0x00001000
 #define DDCAPS2_CANFLIPODDEVEN		0x00002000
 #define DDCAPS2_CANBOBHARDWARE		0x00004000
+#define DDCAPS2_COPYFOURCC              0x00008000
+#define DDCAPS2_PRIMARYGAMMA            0x00020000
+#define DDCAPS2_CANRENDERWINDOWED       0x00080000
+#define DDCAPS2_CANCALIBRATEGAMMA       0x00100000
+#define DDCAPS2_FLIPINTERVAL            0x00200000
+#define DDCAPS2_FLIPNOVSYNC             0x00400000
+#define DDCAPS2_CANMANAGETEXTURE        0x00800000
+#define DDCAPS2_TEXMANINNONLOCALVIDMEM  0x01000000
+#define DDCAPS2_STEREO                  0x02000000
+#define DDCAPS2_SYSTONONLOCAL_AS_SYSTOLOCAL   0x04000000
 
 
 /* Set/Get Colour Key Flags */
@@ -517,8 +729,10 @@ typedef struct _DDPIXELFORMAT {
 } DDPIXELFORMAT,*LPDDPIXELFORMAT;
 
 /* DDCAPS.dwFXCaps */
-#define DDFXCAPS_BLTARITHSTRETCHY	0x00000020
+#define DDFXCAPS_BLTALPHA               0x00000001
+#define DDFXCAPS_OVERLAYALPHA           0x00000004
 #define DDFXCAPS_BLTARITHSTRETCHYN	0x00000010
+#define DDFXCAPS_BLTARITHSTRETCHY	0x00000020
 #define DDFXCAPS_BLTMIRRORLEFTRIGHT	0x00000040
 #define DDFXCAPS_BLTMIRRORUPDOWN	0x00000080
 #define DDFXCAPS_BLTROTATION		0x00000100
@@ -543,6 +757,8 @@ typedef struct _DDPIXELFORMAT {
 #define DDFXCAPS_OVERLAYSTRETCHYN	0x04000000
 #define DDFXCAPS_OVERLAYMIRRORLEFTRIGHT	0x08000000
 #define DDFXCAPS_OVERLAYMIRRORUPDOWN	0x10000000
+
+#define DDFXCAPS_OVERLAYFILTER          DDFXCAPS_OVERLAYARITHSTRETCHY
 
 /* DDCAPS.dwFXAlphaCaps */
 #define DDFXALPHACAPS_BLTALPHAEDGEBLEND		0x00000001
@@ -570,10 +786,19 @@ typedef struct _DDPIXELFORMAT {
 #define DDPCAPS_ALPHA                   0x00000400
 
 /* DDCAPS.dwSVCaps */
-#define DDSVCAPS_ENIGMA			0x00000001l
-#define DDSVCAPS_FLICKER		0x00000002l
-#define DDSVCAPS_REDBLUE		0x00000004l
-#define DDSVCAPS_SPLIT			0x00000008l
+/* the first 4 of these are now obsolete */
+#if DIRECTDRAW_VERSION >= 0x700	/* FIXME: I'm not sure when this switch occured */
+#define DDSVCAPS_RESERVED1		0x00000001
+#define DDSVCAPS_RESERVED2		0x00000002
+#define DDSVCAPS_RESERVED3		0x00000004
+#define DDSVCAPS_RESERVED4		0x00000008
+#else
+#define DDSVCAPS_ENIGMA			0x00000001
+#define DDSVCAPS_FLICKER		0x00000002
+#define DDSVCAPS_REDBLUE		0x00000004
+#define DDSVCAPS_SPLIT			0x00000008
+#endif
+#define DDSVCAPS_STEREOSEQUENTIAL       0x00000010
 
 /* BitDepths */
 #define DDBD_1				0x00004000
@@ -604,6 +829,11 @@ typedef struct _DDPIXELFORMAT {
 #define DDPF_PALETTEINDEXED1		0x00000800
 #define DDPF_PALETTEINDEXED2		0x00001000
 #define DDPF_ZPIXELS			0x00002000
+#define DDPF_STENCILBUFFER              0x00004000
+#define DDPF_ALPHAPREMULT               0x00008000
+#define DDPF_LUMINANCE                  0x00020000
+#define DDPF_BUMPLUMINANCE              0x00040000
+#define DDPF_BUMPDUDV                   0x00080000
 
 /* SetCooperativeLevel dwFlags */
 #define DDSCL_FULLSCREEN		0x00000001
@@ -615,6 +845,9 @@ typedef struct _DDPIXELFORMAT {
 #define DDSCL_SETFOCUSWINDOW		0x00000080
 #define DDSCL_SETDEVICEWINDOW		0x00000100
 #define DDSCL_CREATEDEVICEWINDOW	0x00000200
+#define DDSCL_MULTITHREADED             0x00000400
+#define DDSCL_FPUSETUP                  0x00000800
+#define DDSCL_FPUPRESERVE               0x00001000
 
 
 /* DDSURFACEDESC.dwFlags */
@@ -634,7 +867,10 @@ typedef struct _DDPIXELFORMAT {
 #define	DDSD_MIPMAPCOUNT	0x00020000
 #define	DDSD_REFRESHRATE	0x00040000
 #define	DDSD_LINEARSIZE		0x00080000
-#define	DDSD_ALL		0x000ff9ee
+#define DDSD_TEXTURESTAGE       0x00100000
+#define DDSD_FVF                0x00200000
+#define DDSD_SRCVBHANDLE        0x00400000
+#define	DDSD_ALL		0x007ff9ee
 
 /* EnumSurfaces flags */
 #define DDENUMSURFACES_ALL          0x00000001
@@ -682,6 +918,41 @@ typedef struct _DDSURFACEDESC
 	DDPIXELFORMAT	ddpfPixelFormat;/* 48: pixel format description of the surface*/
 	DDSCAPS		ddsCaps;	/* 68: direct draw surface caps */
 } DDSURFACEDESC,*LPDDSURFACEDESC;
+
+typedef struct _DDSURFACEDESC2
+{
+	DWORD	dwSize;		/* 0: size of the DDSURFACEDESC structure*/
+	DWORD	dwFlags;	/* 4: determines what fields are valid*/
+	DWORD	dwHeight;	/* 8: height of surface to be created*/
+	DWORD	dwWidth;	/* C: width of input surface*/
+	union {
+		LONG	lPitch;	      /*10: distance to start of next line (return value only)*/
+		DWORD   dwLinearSize; /*10: formless late-allocated optimized surface size */
+	} DUMMYUNIONNAME;
+	DWORD	dwBackBufferCount;/* 14: number of back buffers requested*/
+	union {
+		DWORD	dwMipMapCount;/* 18:number of mip-map levels requested*/
+		DWORD	dwRefreshRate;/* 18:refresh rate (used when display mode is described)*/
+		DWORD   dwSrcVBHandle;/* 18:source used in VB::Optimize */
+	} DUMMYUNIONNAME2;		
+	DWORD	dwAlphaBitDepth;/* 1C:depth of alpha buffer requested*/
+	DWORD	dwReserved;	/* 20:reserved*/
+	LPVOID	lpSurface;	/* 24:pointer to the associated surface memory*/
+	union {
+		DDCOLORKEY	ddckCKDestOverlay; /* 28: CK for dest overlay use*/
+		DWORD 		dwEmptyFaceColor;  /* 28: color for empty cubemap faces */
+	} DUMMYUNIONNAME3;
+	DDCOLORKEY	ddckCKDestBlt;	/* 2C: CK for destination blt use*/
+	DDCOLORKEY	ddckCKSrcOverlay;/* 30: CK for source overlay use*/
+	DDCOLORKEY	ddckCKSrcBlt;	/* 34: CK for source blt use*/
+
+	union {
+		DDPIXELFORMAT	ddpfPixelFormat;/* 38: pixel format description of the surface*/
+		DWORD 		dwFVF;	/* 38: vertex format description of vertex buffers */	
+	} DUMMYUNIONNAME4;
+	DDSCAPS2	ddsCaps;  /* 3C: DDraw surface caps */
+	DWORD		dwTextureStage; /* 40: stage in multitexture cascade */
+} DDSURFACEDESC2,*LPDDSURFACEDESC2;
 
 /* DDCOLORCONTROL.dwFlags */
 #define DDCOLOR_BRIGHTNESS	0x00000001
@@ -839,6 +1110,17 @@ typedef struct tagDDDEVICEIDENTIFIER {
   GUID    guidDeviceIdentifier;
 } DDDEVICEIDENTIFIER, * LPDDDEVICEIDENTIFIER;
 
+typedef struct tagDDDEVICEIDENTIFIER2 {
+  char    szDriver[MAX_DDDEVICEID_STRING];	/* user readable driver name */
+  char    szDescription[MAX_DDDEVICEID_STRING]; /* user readable description */
+  LARGE_INTEGER  liDriverVersion;		/* driver version */
+  DWORD   dwVendorId;				/* vendor ID, zero if unknown */
+  DWORD   dwDeviceId;				/* chipset ID, zero if unknown */
+  DWORD   dwSubSysId;				/* board ID, zero if unknown */
+  DWORD   dwRevision;				/* chipset version, zero if unknown */
+  GUID    guidDeviceIdentifier;			/* unique ID for this driver/chipset combination */
+  DWORD   dwWHQLLevel;				/* Windows Hardware Quality Lab certification level */
+} DDDEVICEIDENTIFIER2, * LPDDDEVICEIDENTIFIER2;
 
 /*****************************************************************************
  * IDirectDrawPalette interface
@@ -1075,6 +1357,56 @@ ICOM_DEFINE(IDirectDraw4,IDirectDraw2)
 #define IDirectDraw4_RestoreAllSurfaces(pc)     ICOM_CALL (RestoreAllSurfaces,p)
 #define IDirectDraw4_TestCooperativeLevel(p)    ICOM_CALL (TestCooperativeLevel,p)
 #define IDirectDraw4_GetDeviceIdentifier(p,a,b) ICOM_CALL2(GetDeviceIdentifier,p,a,b)
+
+
+/*****************************************************************************
+ * IDirectDraw7 interface
+ */
+#define ICOM_INTERFACE IDirectDraw7
+#define IDirectDraw7_METHODS \
+    ICOM_METHOD3(HRESULT,StartModeTest,    LPSIZE,, DWORD,, DWORD,) \
+    ICOM_METHOD2(HRESULT,EvaluateMode,     DWORD,, DWORD *,)
+#define IDirectDraw7_IMETHODS \
+    IDirectDraw4_IMETHODS \
+    IDirectDraw7_METHODS
+ICOM_DEFINE(IDirectDraw7,IDirectDraw4)
+#undef ICOM_INTERFACE
+
+    /*** IUnknown methods ***/
+#define IDirectDraw7_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectDraw7_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDirectDraw7_Release(p)            ICOM_CALL (Release,p)
+    /*** IDirectDraw methods ***/
+#define IDirectDraw7_Compact(p)                  ICOM_CALL (Compact,p)
+#define IDirectDraw7_CreateClipper(p,a,b,c)      ICOM_CALL3(CreateClipper,p,a,b,c)
+#define IDirectDraw7_CreatePalette(p,a,b,c,d)    ICOM_CALL4(CreatePalette,p,a,b,c,d)
+#define IDirectDraw7_CreateSurface(p,a,b,c)      ICOM_CALL3(CreateSurface,p,a,b,c)
+#define IDirectDraw7_DuplicateSurface(p,a,b)     ICOM_CALL2(DuplicateSurface,p,a,b)
+#define IDirectDraw7_EnumDisplayModes(p,a,b,c,d) ICOM_CALL4(EnumDisplayModes,p,a,b,c,d)
+#define IDirectDraw7_EnumSurfaces(p,a,b,c,d)     ICOM_CALL4(EnumSurfaces,p,a,b,c,d)
+#define IDirectDraw7_FlipToGDISurface(p)         ICOM_CALL (FlipToGDISurface,p)
+#define IDirectDraw7_GetCaps(p,a,b)              ICOM_CALL2(GetCaps,p,a,b)
+#define IDirectDraw7_GetDisplayMode(p,a)         ICOM_CALL1(GetDisplayMode,p,a)
+#define IDirectDraw7_GetFourCCCodes(p,a,b)       ICOM_CALL2(GetFourCCCodes,p,a,b)
+#define IDirectDraw7_GetGDISurface(p,a)          ICOM_CALL1(GetGDISurface,p,a)
+#define IDirectDraw7_GetMonitorFrequency(p,a)    ICOM_CALL1(GetMonitorFrequency,p,a)
+#define IDirectDraw7_GetScanLine(p,a)            ICOM_CALL1(GetScanLine,p,a)
+#define IDirectDraw7_GetVerticalBlankStatus(p,a) ICOM_CALL1(GetVerticalBlankStatus,p,a)
+#define IDirectDraw7_Initialize(p,a)             ICOM_CALL1(Initialize,p,a)
+#define IDirectDraw7_RestoreDisplayMode(p)       ICOM_CALL (RestoreDisplayMode,p)
+#define IDirectDraw7_SetCooperativeLevel(p,a,b)  ICOM_CALL2(SetCooperativeLevel,p,a,b)
+#define IDirectDraw7_SetDisplayMode(p,a,b,c)     ICOM_CALL3(SetDisplayMode,p,a,b,c)
+#define IDirectDraw7_WaitForVerticalBlank(p,a,b) ICOM_CALL2(WaitForVerticalBlank,p,a,b)
+/*** added in IDirectDraw2 ***/
+#define IDirectDraw7_GetAvailableVidMem(p,a,b,c) ICOM_CALL3(GetAvailableVidMem,p,a,b,c)
+/*** added in IDirectDraw4 ***/
+#define IDirectDraw7_GetSurfaceFromDC(p,a,b)    ICOM_CALL2(GetSurfaceFromDC,p,a,b,c)
+#define IDirectDraw7_RestoreAllSurfaces(pc)     ICOM_CALL (RestoreAllSurfaces,p)
+#define IDirectDraw7_TestCooperativeLevel(p)    ICOM_CALL (TestCooperativeLevel,p)
+#define IDirectDraw7_GetDeviceIdentifier(p,a,b) ICOM_CALL2(GetDeviceIdentifier,p,a,b)
+/*** added in IDirectDraw 7 ***/
+#define IDirectDraw7_StartModeTest(p,a,b,c)     ICOM_CALL3(StartModeTest,p,a,b,c)
+#define IDirectDraw7_EvaluateMode(p,a,b)        ICOM_CALL2(EvaluateMode,p,a,b)
 
 
 /*****************************************************************************
