@@ -144,6 +144,15 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicTimeSigTrack (LPCGUID lpcGUID, LPV
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicWaveTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
 
 
+/*****************************************************************************
+ * Auxiliary definitions
+ */
+typedef struct _DMUS_PRIVATE_SEGMENT_TRACK {
+  struct list entry; /* for listing elements */
+  DWORD dwGroupBits;
+  IDirectMusicTrack* pTrack;
+} DMUS_PRIVATE_SEGMENT_TRACK, *LPDMUS_PRIVATE_SEGMENT_TRACK;
+
 /* some sort of aux. performance channel: as far as i can understand, these are 
    used to represent a particular midi channel in particular group at particular
    group; so all we need to do is to fill it with parent port, group and midi 
@@ -266,7 +275,8 @@ struct IDirectMusicSegment8Impl {
   /* IDirectMusicSegment8Impl fields */
   LPDMUS_OBJECTDESC      pDesc;
   DMUS_IO_SEGMENT_HEADER header;
-  IDirectMusicGraph*     pGraph;
+  IDirectMusicGraph*     pGraph; 
+  struct list Tracks;
 };
 
 /* IUnknown: */

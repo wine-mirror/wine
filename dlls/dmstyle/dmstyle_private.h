@@ -93,6 +93,22 @@ extern ICOM_VTABLE(IPersistStream)     DirectMusicStyleTrack_PersistStream_Vtbl;
  */
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicStyleImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
 
+/*****************************************************************************
+ * Auxiliary definitions
+ */
+typedef struct _DMUS_PRIVATE_STYLE_BAND {
+  struct list entry; /* for listing elements */
+  IDirectMusicBand* pBand;
+} DMUS_PRIVATE_STYLE_BAND, *LPDMUS_PRIVATE_STYLE_BAND;
+
+typedef struct _DMUS_PRIVATE_STYLE_MOTIF {
+  struct list entry; /* for listing elements */
+  DMUS_OBJECTDESC desc;
+  DMUS_IO_PATTERN pattern;
+  DMUS_IO_MOTIFSETTINGS settings;
+  IDirectMusicBand* pBand;
+} DMUS_PRIVATE_STYLE_MOTIF, *LPDMUS_PRIVATE_STYLE_MOTIF;
+
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicAuditionTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicChordTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicCommandTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
@@ -115,6 +131,10 @@ struct IDirectMusicStyle8Impl {
   /* IDirectMusicStyle8Impl fields */
   LPDMUS_OBJECTDESC pDesc;
   DMUS_IO_STYLE style;
+
+  /* data */
+  struct list Motifs;
+  struct list Bands;
 };
 
 /* IUnknown: */

@@ -158,15 +158,64 @@ HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetTrackGroup (LPDI
 }
 
 HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_InsertTrack (LPDIRECTMUSICSEGMENT8 iface, IDirectMusicTrack* pTrack, DWORD dwGroupBits) {
+  LPDMUS_PRIVATE_SEGMENT_TRACK pNewSegTrack;
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
-  FIXME("(%p, %p, %ld): stub\n", This, pTrack, dwGroupBits);
+
+  struct list *pEntry;
+  DWORD i = 0;
+  LPDMUS_PRIVATE_SEGMENT_TRACK pIt = NULL;
+
+  TRACE("(%p, %p, %ld)\n", This, pTrack, dwGroupBits);
+
+  LIST_FOR_EACH (pEntry, &This->Tracks) {
+    i++;
+    pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_SEGMENT_TRACK, entry);
+    TRACE(" - #%lu: %p -> %ld,%p\n", i, pIt, pIt->dwGroupBits, pIt->pTrack);
+    if (NULL != pIt && pIt->pTrack == pTrack) {
+      ERR("(%p, %p): track is already in list\n", This, pTrack);
+      return E_FAIL;
+    }
+  }
+
+  pNewSegTrack = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_SEGMENT_TRACK));
+  if (NULL == pNewSegTrack) {
+    ERR(": no more memory\n");
+    return  E_OUTOFMEMORY;
+  }
+  pNewSegTrack->dwGroupBits = dwGroupBits;
+  pNewSegTrack->pTrack = pTrack;
+  IDirectMusicTrack_Init(pTrack, iface);
+  IDirectMusicTrack_AddRef(pTrack);
+  list_add_tail (&This->Tracks, &pNewSegTrack->entry);
+
   return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_RemoveTrack (LPDIRECTMUSICSEGMENT8 iface, IDirectMusicTrack* pTrack) {
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
+
+  struct list *pEntry;
+  DWORD i = 0;
+  LPDMUS_PRIVATE_SEGMENT_TRACK pIt = NULL;
+
   FIXME("(%p, %p): stub\n", This, pTrack);
-  return S_OK;
+
+  LIST_FOR_EACH (pEntry, &This->Tracks) {
+    i++;
+    pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_SEGMENT_TRACK, entry);
+    if (pIt->pTrack == pTrack) {
+      TRACE("(%p, %p): track in list\n", This, pTrack);
+      
+      list_remove(&pIt->entry);
+      IDirectMusicTrack_Init(pIt->pTrack, NULL);
+      IDirectMusicTrack_Release(pIt->pTrack);
+      HeapFree(GetProcessHeap(), 0, pIt);   
+
+      return S_OK;
+    }
+  }
+  
+  return S_FALSE;
 }
 
 HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_InitPlay (LPDIRECTMUSICSEGMENT8 iface, IDirectMusicSegmentState** ppSegState, IDirectMusicPerformance* pPerformance, DWORD dwFlags) {
@@ -655,7 +704,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_LoadTrack (LPPERSISTSTREA
   /* release all loading-related stuff */
   IPersistStream_Release (pPersistStream);
 
-  hr = IDirectMusicSegment8Impl_IDirectMusicSegment8_InsertTrack ((LPDIRECTMUSICSEGMENT8)This->SegmentVtbl, *ppTrack, pTrack_hdr->dwGroup); /* at dsPosition */
+  hr = IDirectMusicSegment8Impl_IDirectMusicSegment8_InsertTrack ((LPDIRECTMUSICSEGMENT8)&This->SegmentVtbl, *ppTrack, pTrack_hdr->dwGroup); /* at dsPosition */
   if (FAILED(hr)) {
     ERR(": could not insert track\n");
     return hr;
@@ -1099,6 +1148,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicSegmentImpl (LPCGUID lpcGUID, LPVOID* ppo
   obj->pDesc->dwValidData |= DMUS_OBJ_CLASS;
   memcpy (&obj->pDesc->guidClass, &CLSID_DirectMusicSegment, sizeof (CLSID));
   obj->ref = 0; /* will be inited by QueryInterface */
+  list_init (&obj->Tracks);
   
   return IDirectMusicSegment8Impl_IUnknown_QueryInterface ((LPUNKNOWN)&obj->UnknownVtbl, lpcGUID, ppobj);
 }
