@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 Mike McCormack for Codeweavers
+ * Copyright (C) 2005 Mike McCormack for CodeWeavers
  *
  * A test program for MSI database files.
  *

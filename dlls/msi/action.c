@@ -716,7 +716,7 @@ static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start,
  *  The arguments following count are a list of path segments.
  *  A path segment may be NULL.
  *
- *  Path segments will be added with a \ seperating them.
+ *  Path segments will be added with a \ separating them.
  *  A \ will not be added after the last segment, however if the
  *    last segment is NULL, then the last character will be a \
  * 

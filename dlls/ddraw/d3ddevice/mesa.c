@@ -3153,7 +3153,7 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
 		x_stretch = (double) (rect.u3.x2 - rect.u1.x1) / (double) width;
 		y_stretch = (double) (rect.u4.y2 - rect.u2.y1) / (double) height;
 
-		TRACE(" using memory to buffer Blt overide.\n");
+		TRACE(" using memory to buffer Blt override.\n");
 
 		ENTER_GL();
 
@@ -3161,7 +3161,7 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
 		
 		if (upload_surface_to_tex_memory_init(src_impl, 0, &gl_d3d_dev->current_internal_format,
 						      initial, ((dwFlags & DDBLT_KEYSRC) != 0), UNLOCK_TEX_SIZE, UNLOCK_TEX_SIZE) != DD_OK) {
-		    ERR(" unsupported pixel format at memory to buffer Blt overide.\n");
+		    ERR(" unsupported pixel format at memory to buffer Blt override.\n");
 		    LEAVE_GL();
 		    return DDERR_INVALIDPARAMS;
 		}
@@ -3172,7 +3172,7 @@ d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
 		else
 		    glDrawBuffer(GL_BACK);
 
-		/* Now the serious stuff happens. This is basically the same code that for the memory
+		/* Now the serious stuff happens. This is basically the same code as for the memory
 		   flush to frame buffer ... with stretching and different rectangles added :-) */
 		for (y = 0; y < height; y += UNLOCK_TEX_SIZE) {
 		    RECT flush_rect;
@@ -3274,7 +3274,7 @@ d3ddevice_bltfast(IDirectDrawSurfaceImpl *This, DWORD dstx,
     
     if (setup_rect_and_surface_for_blt(This, &buffer_type, (D3DRECT *) &rdst) != DD_OK) return DDERR_INVALIDPARAMS;
 
-    TRACE(" using BltFast memory to frame buffer overide.\n");
+    TRACE(" using BltFast memory to frame buffer override.\n");
     
     ENTER_GL();
     
@@ -3283,7 +3283,7 @@ d3ddevice_bltfast(IDirectDrawSurfaceImpl *This, DWORD dstx,
     if (upload_surface_to_tex_memory_init(src_impl, 0, &gl_d3d_dev->current_internal_format,
 					  initial, (trans & DDBLTFAST_SRCCOLORKEY) != 0,
 					  UNLOCK_TEX_SIZE, UNLOCK_TEX_SIZE) != DD_OK) {
-	ERR(" unsupported pixel format at memory to buffer Blt overide.\n");
+	ERR(" unsupported pixel format at memory to buffer Blt override.\n");
 	LEAVE_GL();
 	return DDERR_INVALIDPARAMS;
     }
@@ -3978,9 +3978,9 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSur
 		surf2->aux_blt = d3ddevice_blt;
 		surf2->aux_bltfast = d3ddevice_bltfast;
 		
-		TRACE(" overiding direct surface access.\n");
+		TRACE(" overriding direct surface access.\n");
 	    } else {
-	        TRACE(" no overide.\n");
+	        TRACE(" no override.\n");
 	    }
 	    surf2->d3ddevice = object;
 	}
@@ -4172,7 +4172,7 @@ static void fill_caps(void)
     opengl_device_caps.dwReserved3 = 0;
     opengl_device_caps.dwReserved4 = 0;
 
-    /* And now some GL overides :-) */
+    /* And now some GL overrides :-) */
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *) &opengl_device_caps.dwMaxTextureWidth);
     opengl_device_caps.dwMaxTextureHeight = opengl_device_caps.dwMaxTextureWidth;
     opengl_device_caps.dwMaxTextureAspectRatio = opengl_device_caps.dwMaxTextureWidth;

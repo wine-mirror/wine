@@ -198,7 +198,7 @@ Main_IDirect3DViewportImpl_3_2_1_SetViewport(LPDIRECT3DVIEWPORT3 iface,
     memset(&(This->viewports.vp1), 0, sizeof(This->viewports.vp1));
     memcpy(&(This->viewports.vp1), lpData, lpData->dwSize);
 
-    /* Tests on two games shows that these values are never used properly so overide
+    /* Tests on two games show that these values are never used properly so override
        them with proper ones :-)
     */
     This->viewports.vp1.dvMinZ = 0.0;

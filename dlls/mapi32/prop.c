@@ -1636,7 +1636,7 @@ IMAPIProp_fnSaveChanges(LPMAPIPROP iface, ULONG ulFlags)
  *           successfully.
  * NOTES
  *  - If MAPI_W_ERRORS_RETURNED is returned, any properties that could not be
- *    retrieved from iface are present in lppProps with thier type
+ *    retrieved from iface are present in lppProps with their type
  *    changed to PT_ERROR and Id unchanged.
  */
 static inline HRESULT WINAPI
@@ -1985,7 +1985,7 @@ IMAPIProp_fnCopyProps(LPMAPIPROP iface, LPSPropTagArray lpInclProps,
 /**************************************************************************
  *  IMAPIProp_GetNamesFromIDs {MAPI32}
  *
- * Get the names of properties from thier identifiers.
+ * Get the names of properties from their identifiers.
  *
  * PARAMS
  *  iface       [I]   IMAPIProp object to operate on

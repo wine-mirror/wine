@@ -889,7 +889,7 @@ HRESULT d3dtexture_create(IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *surf, BO
 	surf->aux_setcolorkey_cb = gltex_setcolorkey_cb;
 	surf->set_palette = gltex_set_palette;
 
-	/* We are the only one to use the aux_blt and aux_bltfast overides, so no need
+	/* We are the only one to use the aux_blt and aux_bltfast overrides, so no need
 	   to save those... */
 	surf->aux_blt = gltex_blt;
 	surf->aux_bltfast = gltex_bltfast;

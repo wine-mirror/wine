@@ -636,7 +636,7 @@ static void test_PpropFindProp(void)
            ptTypes[i]);
 
         pRet = pPpropFindProp(&pvProp, 1u, i ? ptTypes[i-1] : ptTypes[i+1]);
-        ok(pRet == NULL, "PpropFindProp[%ld]: Found non-existing propery\n",
+        ok(pRet == NULL, "PpropFindProp[%ld]: Found non-existent propery\n",
            ptTypes[i]);
     }
 
@@ -868,11 +868,11 @@ static void test_LpValFindProp(void)
            ptTypes[i]);
 
         pRet = pLpValFindProp(PROP_TAG(ptTypes[i], 0u), 1u, &pvProp);
-        ok(pRet == NULL, "LpValFindProp[%ld]: Found non-existing propery id\n",
+        ok(pRet == NULL, "LpValFindProp[%ld]: Found non-existent propery id\n",
            ptTypes[i]);
 
         pRet = pLpValFindProp(PROP_TAG(PT_NULL, 0u), 1u, &pvProp);
-        ok(pRet == NULL, "LpValFindProp[%ld]: Found non-existing propery id/type\n",
+        ok(pRet == NULL, "LpValFindProp[%ld]: Found non-existent propery id/type\n",
            ptTypes[i]);
 
         pRet = pLpValFindProp(PROP_TAG(PT_NULL, 1u), 1u, &pvProp);
@@ -1257,22 +1257,22 @@ static void test_IProp(void)
     tags.aulPropTag[0] = PR_RESPONSE_REQUESTED;
     sc = IPropData_DeleteProps(lpIProp, (LPSPropTagArray)&tags, &lpProbs);
     ok(sc == E_ACCESSDENIED && !lpProbs,
-       "DeleteProps(non-existant): Expected E_ACCESSDENIED null got 0x%08lX %p\n",
+       "DeleteProps(non-existent): Expected E_ACCESSDENIED null got 0x%08lX %p\n",
        sc, lpProbs);
 
     /* Set access to read and write */
     sc = IPropData_HrSetObjAccess(lpIProp, IPROP_READWRITE);
     ok(sc == S_OK, "SetObjAcess(WRITE): Expected S_OK got 0x%08lX\n", sc);
 
-    /* Delete non existant item - No error */
+    /* Delete non-existent item - No error */
     lpProbs = NULL;
     tags.aulPropTag[0] = PR_RESPONSE_REQUESTED;
     sc = IPropData_DeleteProps(lpIProp, (LPSPropTagArray)&tags, &lpProbs);
     ok(sc == S_OK && !lpProbs,
-       "DeleteProps(non-existant): Expected S_OK null got 0x%08lX %p\n",
+       "DeleteProps(non-existent): Expected S_OK null got 0x%08lX %p\n",
        sc, lpProbs);
 
-    /* Delete existant item (r/o) - No error, but lpProbs populated */
+    /* Delete existing item (r/o) - No error, but lpProbs populated */
     lpProbs = NULL;
     tags.aulPropTag[0] = PR_IMPORTANCE;
     sc = IPropData_DeleteProps(lpIProp, (LPSPropTagArray)&tags, &lpProbs);
@@ -1318,7 +1318,7 @@ static void test_IProp(void)
     sc = IPropData_HrSetPropAccess(lpIProp, (LPSPropTagArray)&tags, access);
     ok(sc == S_OK, "SetPropAcess(WRITE): Expected S_OK got 0x%08lX\n", sc);
 
-    /* Delete existant item (r/w) - No error, no problems */
+    /* Delete existing item (r/w) - No error, no problems */
     lpProbs = NULL;
     sc = IPropData_DeleteProps(lpIProp, (LPSPropTagArray)&tags, &lpProbs);
     ok(sc == S_OK && !lpProbs,

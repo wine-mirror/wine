@@ -207,7 +207,7 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANT*,VARIANT*,LCID,USHORT,VARTYPE);
 #define VAR_TIMEVALUEONLY       0x001 /* Ignore date portion of VT_DATE */
 #define VAR_DATEVALUEONLY       0x002 /* Ignore time portion of VT_DATE */
 #define VAR_VALIDDATE           0x004
-#define VAR_CALENDAR_HIJRI      0x008 /* Use the Hijri calender */
+#define VAR_CALENDAR_HIJRI      0x008 /* Use the Hijri calendar */
 #define VAR_LOCALBOOL           0x010 /* VT_BOOL<->VT_BSTR: Use localised boolean text */
 #define VAR_FORMAT_NOSUBSTITUTE 0x020 /* Don't change format strings for un-coercable types */
 #define VAR_FOURDIGITYEARS      0x040 /* Always print years with 4 digits */
