@@ -1,3 +1,4 @@
+EXTRADEFS = -D_RPCRT4_
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

@@ -1,3 +1,4 @@
+EXTRADEFS = -D_SETUPAPI_
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

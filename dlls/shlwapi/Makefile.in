@@ -1,3 +1,4 @@
+EXTRADEFS = -D_SHLWAPI_
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

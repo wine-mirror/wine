@@ -1,3 +1,4 @@
+EXTRADEFS = -D_COMCTL32_
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

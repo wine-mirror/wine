@@ -1,3 +1,4 @@
+EXTRADEFS = -D_USER32_ -D_WINABLE_
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
