@@ -449,32 +449,23 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
  *
  * This routine builds the core routines used in 32->16 thunks:
  *
- *   extern LONG WINAPI wine_call_to_16( SEGPTR target, int nb_args );
- *   extern void WINAPI wine_call_to_16_regs_short( const CONTEXT86 *context, int nb_args );
- *   extern void WINAPI wine_call_to_16_regs_long ( const CONTEXT86 *context, int nb_args );
+ * extern DWORD WINAPI wine_call_to_16( FARPROC16 target, DWORD cbArgs, PEXCEPTION_HANDLER handler );
+ * extern void WINAPI wine_call_to_16_regs( CONTEXT86 *context, DWORD cbArgs, PEXCEPTION_HANDLER handler );
  *
  * These routines can be called directly from 32-bit code.
  *
- * All routines expect that the 16-bit stack contents (arguments) were
- * already set up by the caller; nb_args must contain the number of bytes
- * to be conserved.  The 16-bit SS:SP will be set accordinly.
+ * All routines expect that the 16-bit stack contents (arguments) and the
+ * return address (segptr to CallTo16_Ret) were already set up by the
+ * caller; nb_args must contain the number of bytes to be conserved.  The
+ * 16-bit SS:SP will be set accordinly.
  *
  * All other registers are either taken from the CONTEXT86 structure
  * or else set to default values.  The target routine address is either
  * given directly or taken from the CONTEXT86.
- *
- * If you want to call a 16-bit routine taking only standard argument types
- * (WORD and LONG), you can also have an appropriate argument conversion
- * stub automatically generated (see BuildCallTo16); you'd then call this
- * stub, which in turn would prepare the 16-bit stack and call the appropiate
- * core routine.
- *
  */
 static void BuildCallTo16Core( FILE *outfile, int reg_func )
 {
-    const char *name = reg_func == 2 ? "wine_call_to_16_regs_long" :
-                       reg_func == 1 ? "wine_call_to_16_regs_short" :
-                       "wine_call_to_16";
+    const char *name = reg_func ? "wine_call_to_16_regs" : "wine_call_to_16";
 
     /* Function header */
     function_header( outfile, name );
@@ -489,32 +480,11 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
     fprintf( outfile, "\tpushl %%edi\n" );
     fprintf( outfile, "\t.byte 0x64\n\tmovl %%gs,(%d)\n", STRUCTOFFSET(TEB,gs_sel) );
 
-    if ( UsePIC )
-    {
-        /* Get Global Offset Table into %ebx */
-        fprintf( outfile, "\tcall .L%s.getgot1\n", name );
-        fprintf( outfile, ".L%s.getgot1:\n", name );
-        fprintf( outfile, "\tpopl %%ebx\n" );
-        fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.L%s.getgot1], %%ebx\n", name );
-    }
-
     /* Setup exception frame */
     fprintf( outfile, "\t.byte 0x64\n\tpushl (%d)\n", STACKOFFSET );
-    if (UsePIC)
-        fprintf( outfile, "\tpushl " __ASM_NAME("__wine_callto16_handler@GOT") "(%%ebx)\n" );
-    else
-        fprintf( outfile, "\tpushl $" __ASM_NAME("__wine_callto16_handler") "\n" );
+    fprintf( outfile, "\tpushl 16(%%ebp)\n" ); /* handler */
     fprintf( outfile, "\t.byte 0x64\n\tpushl (%d)\n", STRUCTOFFSET(TEB,except) );
     fprintf( outfile, "\t.byte 0x64\n\tmovl %%esp,(%d)\n", STRUCTOFFSET(TEB,except) );
-
-    /* Get return address */
-    if ( UsePIC )
-    {
-        fprintf( outfile, "\tmovl " __ASM_NAME("CallTo16_RetAddr@GOT") "(%%ebx), %%ecx\n" );
-        fprintf( outfile, "\tmovl (%%ecx), %%ecx\n" );
-    }
-    else
-        fprintf( outfile, "\tmovl " __ASM_NAME("CallTo16_RetAddr") ", %%ecx\n" );
 
     /* Call the actual CallTo16 routine (simulate a lcall) */
     fprintf( outfile, "\tpushl %%cs\n" );
@@ -528,9 +498,9 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
     if ( !reg_func )
     {
         /* Convert return value */
+        fprintf( outfile, "\tandl $0xffff,%%eax\n" );
         fprintf( outfile, "\tshll $16,%%edx\n" );
-        fprintf( outfile, "\tmovw %%ax,%%dx\n" );
-        fprintf( outfile, "\tmovl %%edx,%%eax\n" );
+        fprintf( outfile, "\torl %%edx,%%eax\n" );
     }
     else
     {
@@ -563,7 +533,7 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
 
     /* Function exit sequence */
     fprintf( outfile, "\tpopl %%ebp\n" );
-    fprintf( outfile, "\tret $8\n" );
+    fprintf( outfile, "\tret $12\n" );
 
 
     /* Start of the actual CallTo16 routine */
@@ -585,21 +555,6 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
 
     /* Add the specified offset to the new sp */
     fprintf( outfile, "\tsubw %d(%%edx), %%sp\n", STACK32OFFSET(nb_args) );
-
-    /* Push the return address
-     * With sreg suffix, we push 16:16 address (normal lret)
-     * With lreg suffix, we push 16:32 address (0x66 lret, for KERNEL32_45)
-     */
-    if (reg_func != 2)
-        fprintf( outfile, "\tpushl %%ecx\n" );
-    else
-    {
-        fprintf( outfile, "\tshldl $16, %%ecx, %%eax\n" );
-        fprintf( outfile, "\tpushw $0\n" );
-        fprintf( outfile, "\tpushw %%ax\n" );
-        fprintf( outfile, "\tpushw $0\n" );
-        fprintf( outfile, "\tpushw %%cx\n" );
-    }
 
     if (reg_func)
     {
@@ -700,8 +655,6 @@ static void BuildRet16Func( FILE *outfile )
     fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
     fprintf( outfile, "\t.globl " __ASM_NAME("CallTo16_DataSelector") "\n" );
     fprintf( outfile, __ASM_NAME("CallTo16_DataSelector") ":\t.long 0\n" );
-    fprintf( outfile, "\t.globl " __ASM_NAME("CallTo16_RetAddr") "\n" );
-    fprintf( outfile, __ASM_NAME("CallTo16_RetAddr") ":\t.long 0\n" );
 }
 
 
@@ -1139,11 +1092,8 @@ void BuildRelays16( FILE *outfile )
     /* Standard CallTo16 routine */
     BuildCallTo16Core( outfile, 0 );
 
-    /* Register CallTo16 routine (16:16 retf) */
+    /* Register CallTo16 routine */
     BuildCallTo16Core( outfile, 1 );
-
-    /* Register CallTo16 routine (16:32 retf) */
-    BuildCallTo16Core( outfile, 2 );
 
     /* CBClientThunkSL routine */
     BuildCallTo32CBClient( outfile, FALSE );

@@ -810,24 +810,6 @@ DWORD INSTR_EmulateInstruction( CONTEXT86 *context )
             }
             return 0;
     }
-
-
-    /* Check for Win16 __GP handler */
-    if (!IS_SELECTOR_SYSTEM(context->SegCs))
-    {
-        SEGPTR gpHandler = HasGPHandler16( MAKESEGPTR( context->SegCs, context->Eip ) );
-        if (gpHandler)
-        {
-            WORD *stack = get_stack( context );
-            *--stack = context->SegCs;
-            *--stack = context->Eip;
-            add_stack(context, -2*sizeof(WORD));
-
-            context->SegCs = SELECTOROF( gpHandler );
-            context->Eip   = OFFSETOF( gpHandler );
-            return 0;
-        }
-    }
     return ret;  /* Unable to emulate it */
 }
 

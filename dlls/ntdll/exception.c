@@ -27,10 +27,7 @@
 
 #include "windef.h"
 #include "winternl.h"
-#include "global.h"
 #include "wine/exception.h"
-#include "stackframe.h"
-#include "miscemu.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 #include "excpt.h"
@@ -407,25 +404,6 @@ DWORD __wine_finally_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
     {
         __WINE_FRAME *wine_frame = (__WINE_FRAME *)frame;
         wine_frame->u.finally_func( FALSE );
-    }
-    return ExceptionContinueSearch;
-}
-
-
-/*************************************************************
- *            __wine_callto16_handler
- *
- * Handler for exceptions occurring in 16-bit code.
- */
-DWORD __wine_callto16_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
-                               CONTEXT *context, LPVOID pdispatcher )
-{
-    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
-    {
-        /* unwinding: restore the stack pointer in the TEB, and leave the Win16 mutex */
-        STACK32FRAME *frame32 = (STACK32FRAME *)((char *)frame - offsetof(STACK32FRAME,frame));
-        NtCurrentTeb()->cur_stack = frame32->frame16;
-        _LeaveWin16Lock();
     }
     return ExceptionContinueSearch;
 }

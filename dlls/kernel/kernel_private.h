@@ -49,4 +49,6 @@ static inline HANDLE console_handle_unmap(HANDLE h)
 extern HANDLE dos_handles[DOS_TABLE_SIZE];
 void FILE_ConvertOFMode( INT mode, DWORD *access, DWORD *sharing );
 
+extern BOOL WOWTHUNK_Init(void);
+
 #endif

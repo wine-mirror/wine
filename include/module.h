@@ -181,7 +181,6 @@ extern NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved );
 extern WINE_MODREF *MODULE_FindModule( LPCSTR path );
 extern enum binary_type MODULE_GetBinaryType( HANDLE hfile );
 extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE hmodule, LPCSTR name );
-extern SEGPTR WINAPI HasGPHandler16( SEGPTR address );
 extern void MODULE_WalkModref( DWORD id );
 
 /* loader/ne/module.c */

@@ -37,43 +37,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(relay);
 
-/***********************************************************************
- *           RELAY_Init
- */
-BOOL RELAY_Init(void)
-{
-#ifdef __i386__
-    WORD codesel;
-
-      /* Allocate the code selector for CallTo16 routines */
-
-    extern void Call16_Ret_Start(), Call16_Ret_End();
-    extern void CallTo16_Ret();
-    extern void CALL32_CBClient_Ret();
-    extern void CALL32_CBClientEx_Ret();
-    extern SEGPTR CallTo16_RetAddr;
-    extern DWORD CallTo16_DataSelector;
-    extern SEGPTR CALL32_CBClient_RetAddr;
-    extern SEGPTR CALL32_CBClientEx_RetAddr;
-
-    codesel = SELECTOR_AllocBlock( (void *)Call16_Ret_Start,
-                                   (char *)Call16_Ret_End - (char *)Call16_Ret_Start,
-                                   WINE_LDT_FLAGS_CODE | WINE_LDT_FLAGS_32BIT );
-    if (!codesel) return FALSE;
-
-      /* Patch the return addresses for CallTo16 routines */
-
-    CallTo16_DataSelector = wine_get_ds();
-    CallTo16_RetAddr =
-        MAKESEGPTR( codesel, (char*)CallTo16_Ret - (char*)Call16_Ret_Start );
-    CALL32_CBClient_RetAddr =
-        MAKESEGPTR( codesel, (char*)CALL32_CBClient_Ret - (char*)Call16_Ret_Start );
-    CALL32_CBClientEx_RetAddr =
-        MAKESEGPTR( codesel, (char*)CALL32_CBClientEx_Ret - (char*)Call16_Ret_Start );
-#endif
-    return TRUE;
-}
-
 /*
  * Stubs for the CallTo16/CallFrom16 routines on non-Intel architectures
  * (these will never be called but need to be present to satisfy the linker ...)

@@ -27,12 +27,14 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "wownt32.h"
+#include "excpt.h"
 #include "winternl.h"
 #include "syslevel.h"
 #include "file.h"
 #include "task.h"
 #include "miscemu.h"
 #include "stackframe.h"
+#include "wine/exception.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thunk);
@@ -69,6 +71,86 @@ static DWORD CALLBACK start_thread16( LPVOID threadArgs )
     HeapFree( GetProcessHeap(), 0, threadArgs );
     return K32WOWCallback16( (DWORD)args.proc, args.param );
 }
+
+
+#ifdef __i386__
+/* symbols exported from relay16.s */
+extern DWORD WINAPI wine_call_to_16( FARPROC16 target, DWORD cbArgs, PEXCEPTION_HANDLER handler );
+extern void WINAPI wine_call_to_16_regs( CONTEXT86 *context, DWORD cbArgs, PEXCEPTION_HANDLER handler );
+extern void Call16_Ret_Start(), Call16_Ret_End();
+extern void CallTo16_Ret();
+extern void CALL32_CBClient_Ret();
+extern void CALL32_CBClientEx_Ret();
+extern DWORD CallTo16_DataSelector;
+extern SEGPTR CALL32_CBClient_RetAddr;
+extern SEGPTR CALL32_CBClientEx_RetAddr;
+
+static SEGPTR call16_ret_addr;  /* segptr to CallTo16_Ret routine */
+#endif
+
+/***********************************************************************
+ *           WOWTHUNK_Init
+ */
+BOOL WOWTHUNK_Init(void)
+{
+#ifdef __i386__
+    /* allocate the code selector for CallTo16 routines */
+    WORD codesel = SELECTOR_AllocBlock( (void *)Call16_Ret_Start,
+                                        (char *)Call16_Ret_End - (char *)Call16_Ret_Start,
+                                        WINE_LDT_FLAGS_CODE | WINE_LDT_FLAGS_32BIT );
+    if (!codesel) return FALSE;
+
+      /* Patch the return addresses for CallTo16 routines */
+
+    CallTo16_DataSelector = wine_get_ds();
+    call16_ret_addr = MAKESEGPTR( codesel, (char*)CallTo16_Ret - (char*)Call16_Ret_Start );
+    CALL32_CBClient_RetAddr =
+        MAKESEGPTR( codesel, (char*)CALL32_CBClient_Ret - (char*)Call16_Ret_Start );
+    CALL32_CBClientEx_RetAddr =
+        MAKESEGPTR( codesel, (char*)CALL32_CBClientEx_Ret - (char*)Call16_Ret_Start );
+#endif
+    return TRUE;
+}
+
+
+/*************************************************************
+ *            call16_handler
+ *
+ * Handler for exceptions occurring in 16-bit code.
+ */
+static DWORD call16_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
+                             CONTEXT *context, EXCEPTION_FRAME **pdispatcher )
+{
+    if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
+    {
+        /* unwinding: restore the stack pointer in the TEB, and leave the Win16 mutex */
+        STACK32FRAME *frame32 = (STACK32FRAME *)((char *)frame - offsetof(STACK32FRAME,frame));
+        NtCurrentTeb()->cur_stack = frame32->frame16;
+        _LeaveWin16Lock();
+    }
+    else if (!IS_SELECTOR_SYSTEM(context->SegCs))  /* check for Win16 __GP handler */
+    {
+        SEGPTR gpHandler = HasGPHandler16( MAKESEGPTR( context->SegCs, context->Eip ) );
+        if (gpHandler)
+        {
+            WORD *stack = wine_ldt_get_ptr( context->SegSs, context->Esp );
+            *--stack = context->SegCs;
+            *--stack = context->Eip;
+
+            if (!IS_SELECTOR_32BIT(context->SegSs))
+                context->Esp = MAKELONG( LOWORD(context->Esp - 2*sizeof(WORD)),
+                                         HIWORD(context->Esp) );
+            else
+                context->Esp -= 2*sizeof(WORD);
+
+            context->SegCs = SELECTOROF( gpHandler );
+            context->Eip   = OFFSETOF( gpHandler );
+            return ExceptionContinueExecution;
+        }
+    }
+    return ExceptionContinueSearch;
+}
+
 
 /*
  *  32-bit WOW routines (in WOW32, but actually forwarded to KERNEL32)
@@ -295,16 +377,14 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
                                 DWORD cbArgs, LPVOID pArgs, LPDWORD pdwRetCode )
 {
 #ifdef __i386__
-    extern DWORD WINAPI wine_call_to_16( FARPROC16 target, DWORD cbArgs );
-    extern void WINAPI wine_call_to_16_regs_short( CONTEXT86 *context, DWORD cbArgs );
-    extern void WINAPI wine_call_to_16_regs_long ( CONTEXT86 *context, DWORD cbArgs );
-
     /*
      * Arguments must be prepared in the correct order by the caller
      * (both for PASCAL and CDECL calling convention), so we simply
      * copy them to the 16-bit stack ...
      */
-    memcpy( (LPBYTE)CURRENT_STACK16 - cbArgs, (LPBYTE)pArgs, cbArgs );
+    WORD *stack = (WORD *)CURRENT_STACK16 - cbArgs / sizeof(WORD);
+
+    memcpy( stack, pArgs, cbArgs );
 
     if (dwFlags & (WCB16_REGS|WCB16_REGS_LONG))
     {
@@ -312,13 +392,12 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
 
         if (TRACE_ON(relay))
         {
-            WORD *stack16 = (WORD *)CURRENT_STACK16;
             DWORD count = cbArgs / sizeof(WORD);
 
             DPRINTF("%04lx:CallTo16(func=%04lx:%04x,ds=%04lx",
                     GetCurrentThreadId(),
                     context->SegCs, LOWORD(context->Eip), context->SegDs );
-            while (count--) DPRINTF( ",%04x", *--stack16 );
+            while (count) DPRINTF( ",%04x", stack[--count] );
             DPRINTF(") ss:sp=%04x:%04x",
                     SELECTOROF(NtCurrentTeb()->cur_stack), OFFSETOF(NtCurrentTeb()->cur_stack) );
             DPRINTF(" ax=%04x bx=%04x cx=%04x dx=%04x si=%04x di=%04x bp=%04x es=%04x fs=%04x\n",
@@ -328,11 +407,21 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
             SYSLEVEL_CheckNotLevel( 2 );
         }
 
-        _EnterWin16Lock();
+        /* push return address */
         if (dwFlags & WCB16_REGS_LONG)
-            wine_call_to_16_regs_long( context, cbArgs );
+        {
+            *((DWORD *)stack - 1) = HIWORD(call16_ret_addr);
+            *((DWORD *)stack - 2) = LOWORD(call16_ret_addr);
+            cbArgs += 2 * sizeof(DWORD);
+        }
         else
-            wine_call_to_16_regs_short( context, cbArgs );
+        {
+            *((SEGPTR *)stack - 1) = call16_ret_addr;
+            cbArgs += sizeof(SEGPTR);
+        }
+
+        _EnterWin16Lock();
+        wine_call_to_16_regs( context, cbArgs, call16_handler );
         _LeaveWin16Lock();
 
         if (TRACE_ON(relay))
@@ -352,17 +441,20 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
 
         if (TRACE_ON(relay))
         {
-            WORD *stack16 = (WORD *)CURRENT_STACK16;
             DWORD count = cbArgs / sizeof(WORD);
 
             DPRINTF("%04lx:CallTo16(func=%04x:%04x,ds=%04x",
                     GetCurrentThreadId(), HIWORD(vpfn16), LOWORD(vpfn16),
                     SELECTOROF(NtCurrentTeb()->cur_stack) );
-            while (count--) DPRINTF( ",%04x", *--stack16 );
+            while (count) DPRINTF( ",%04x", stack[--count] );
             DPRINTF(") ss:sp=%04x:%04x\n",
                     SELECTOROF(NtCurrentTeb()->cur_stack), OFFSETOF(NtCurrentTeb()->cur_stack) );
             SYSLEVEL_CheckNotLevel( 2 );
         }
+
+        /* push return address */
+        *((SEGPTR *)stack - 1) = call16_ret_addr;
+        cbArgs += sizeof(SEGPTR);
 
         /*
          * Actually, we should take care whether the called routine cleans up
@@ -371,7 +463,7 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
          * stack pointer is always reset to the position it had before.
          */
         _EnterWin16Lock();
-        ret = wine_call_to_16( (FARPROC16)vpfn16, cbArgs );
+        ret = wine_call_to_16( (FARPROC16)vpfn16, cbArgs, call16_handler );
         if (pdwRetCode) *pdwRetCode = ret;
         _LeaveWin16Lock();
 
