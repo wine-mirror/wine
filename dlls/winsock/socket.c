@@ -21,11 +21,8 @@
 #ifdef HAVE_SYS_FILIO_H
 # include <sys/filio.h>
 #endif
-#if defined(__svr4__) || defined(__sun)
-#include <sys/ioccom.h>
 #ifdef HAVE_SYS_SOCKIO_H
 # include <sys/sockio.h>
-#endif
 #endif
 
 #if defined(__EMX__)
@@ -1384,11 +1381,28 @@ INT WINAPI WSAIoctl (SOCKET s,
                }
                else
                {
-                  struct ws_sockaddr_in *ipTemp = (struct ws_sockaddr_in *)&ifInfo.ifr_netmask;
+                  /* Trying to avoid some compile problems across platforms.
+                     (Linux, FreeBSD, Solaris...) */
+                  #ifndef ifr_netmask
+                    #ifndef ifr_addr
+                       intArray->iiNetmask.AddressIn.sin_family = AF_INET; 
+                       intArray->iiNetmask.AddressIn.sin_port = 0;
+                       intArray->iiNetmask.AddressIn.sin_addr.ws_addr = 0; 
+                       ERR ("Unable to determine Netmask on your platform!\n");
+                    #else
+                       struct ws_sockaddr_in *ipTemp = (struct ws_sockaddr_in *)&ifInfo.ifr_addr;
             
-                  intArray->iiNetmask.AddressIn.sin_family = AF_INET; 
-                  intArray->iiNetmask.AddressIn.sin_port = ipTemp->sin_port;
-                  intArray->iiNetmask.AddressIn.sin_addr.ws_addr = ipTemp->sin_addr.S_un.S_addr; 
+                       intArray->iiNetmask.AddressIn.sin_family = AF_INET; 
+                       intArray->iiNetmask.AddressIn.sin_port = ipTemp->sin_port;
+                       intArray->iiNetmask.AddressIn.sin_addr.ws_addr = ipTemp->sin_addr.S_un.S_addr; 
+                    #endif
+                  #else
+                     struct ws_sockaddr_in *ipTemp = (struct ws_sockaddr_in *)&ifInfo.ifr_netmask;
+            
+                     intArray->iiNetmask.AddressIn.sin_family = AF_INET; 
+                     intArray->iiNetmask.AddressIn.sin_port = ipTemp->sin_port;
+                     intArray->iiNetmask.AddressIn.sin_addr.ws_addr = ipTemp->sin_addr.S_un.S_addr; 
+                  #endif
                }
                
                /* Socket Status Flags */

@@ -22,7 +22,7 @@ typedef unsigned char uchar; /* This doesn't seem to be in any standard headers 
 /* WsControl Helper Functions */
 int WSCNTL_GetInterfaceCount(void); /* Obtains the number of network interfaces */
 int WSCNTL_GetInterfaceName(int, char *); /* Obtains the name of an interface */
-int WSCNTL_GetTransRecvStat(int intNumber, ulong *transBytes, ulong *recvBytes); /* Obtains bytes
+int WSCNTL_GetTransRecvStat(int intNumber, unsigned long *transBytes, unsigned long *recvBytes); /* Obtains bytes
                                                                          recv'd/trans by interface */
 
 /*
@@ -37,55 +37,55 @@ int WSCNTL_GetTransRecvStat(int intNumber, ulong *transBytes, ulong *recvBytes);
 /* Structure of an entity ID */
 typedef struct TDIEntityID 
 {
-   ulong tei_entity;
-   ulong tei_instance;
+   unsigned long tei_entity;
+   unsigned long tei_instance;
 } TDIEntityID;
 
 /* Structure of an object ID */
 typedef struct TDIObjectID 
 {
-   TDIEntityID  toi_entity;
-   ulong        toi_class;
-   ulong        toi_type;
-   ulong        toi_id;
+   TDIEntityID   toi_entity;
+   unsigned long toi_class;
+   unsigned long toi_type;
+   unsigned long toi_id;
 } TDIObjectID;
 
 typedef struct IPSNMPInfo 
 {
-   ulong  ipsi_forwarding;
-   ulong  ipsi_defaultttl;
-   ulong  ipsi_inreceives;
-   ulong  ipsi_inhdrerrors;
-   ulong  ipsi_inaddrerrors;
-   ulong  ipsi_forwdatagrams;
-   ulong  ipsi_inunknownprotos;
-   ulong  ipsi_indiscards;
-   ulong  ipsi_indelivers;
-   ulong  ipsi_outrequests;
-   ulong  ipsi_routingdiscards;
-   ulong  ipsi_outdiscards;
-   ulong  ipsi_outnoroutes;
-   ulong  ipsi_reasmtimeout;
-   ulong  ipsi_reasmreqds;
-   ulong  ipsi_reasmoks;
-   ulong  ipsi_reasmfails;
-   ulong  ipsi_fragoks;
-   ulong  ipsi_fragfails;
-   ulong  ipsi_fragcreates;
-   ulong  ipsi_numif;
-   ulong  ipsi_numaddr;
-   ulong  ipsi_numroutes;
+   unsigned long  ipsi_forwarding;
+   unsigned long  ipsi_defaultttl;
+   unsigned long  ipsi_inreceives;
+   unsigned long  ipsi_inhdrerrors;
+   unsigned long  ipsi_inaddrerrors;
+   unsigned long  ipsi_forwdatagrams;
+   unsigned long  ipsi_inunknownprotos;
+   unsigned long  ipsi_indiscards;
+   unsigned long  ipsi_indelivers;
+   unsigned long  ipsi_outrequests;
+   unsigned long  ipsi_routingdiscards;
+   unsigned long  ipsi_outdiscards;
+   unsigned long  ipsi_outnoroutes;
+   unsigned long  ipsi_reasmtimeout;
+   unsigned long  ipsi_reasmreqds;
+   unsigned long  ipsi_reasmoks;
+   unsigned long  ipsi_reasmfails;
+   unsigned long  ipsi_fragoks;
+   unsigned long  ipsi_fragfails;
+   unsigned long  ipsi_fragcreates;
+   unsigned long  ipsi_numif;
+   unsigned long  ipsi_numaddr;
+   unsigned long  ipsi_numroutes;
 } IPSNMPInfo;
 
 typedef struct IPAddrEntry 
 {
-   ulong  iae_addr;
-   ulong  iae_index;
-   ulong  iae_mask;
-   ulong  iae_bcastaddr;
-   ulong  iae_reasmsize;
-   ushort iae_context;
-   ushort iae_pad;
+   unsigned long  iae_addr;
+   unsigned long  iae_index;
+   unsigned long  iae_mask;
+   unsigned long  iae_bcastaddr;
+   unsigned long  iae_reasmsize;
+   ushort         iae_context;
+   ushort         iae_pad;
 } IPAddrEntry;
 
 
@@ -93,29 +93,29 @@ typedef struct IPAddrEntry
 #define	MAX_IFDESCR_LEN      256
 typedef struct IFEntry 
 {
-   ulong if_index;
-   ulong if_type;
-   ulong if_mtu;
-   ulong if_speed;
-   ulong if_physaddrlen;
-   uchar if_physaddr[MAX_PHYSADDR_SIZE];
-   ulong if_adminstatus;
-   ulong if_operstatus;
-   ulong if_lastchange;
-   ulong if_inoctets;
-   ulong if_inucastpkts;
-   ulong if_innucastpkts;
-   ulong if_indiscards;
-   ulong if_inerrors;
-   ulong if_inunknownprotos;
-   ulong if_outoctets;
-   ulong if_outucastpkts;
-   ulong if_outnucastpkts;
-   ulong if_outdiscards;
-   ulong if_outerrors;
-   ulong if_outqlen;
-   ulong if_descrlen;
-   uchar if_descr[1];
+   unsigned long if_index;
+   unsigned long if_type;
+   unsigned long if_mtu;
+   unsigned long if_speed;
+   unsigned long if_physaddrlen;
+   uchar         if_physaddr[MAX_PHYSADDR_SIZE];
+   unsigned long if_adminstatus;
+   unsigned long if_operstatus;
+   unsigned long if_lastchange;
+   unsigned long if_inoctets;
+   unsigned long if_inucastpkts;
+   unsigned long if_innucastpkts;
+   unsigned long if_indiscards;
+   unsigned long if_inerrors;
+   unsigned long if_inunknownprotos;
+   unsigned long if_outoctets;
+   unsigned long if_outucastpkts;
+   unsigned long if_outnucastpkts;
+   unsigned long if_outdiscards;
+   unsigned long if_outerrors;
+   unsigned long if_outqlen;
+   unsigned long if_descrlen;
+   uchar         if_descr[1];
 } IFEntry;
 
 

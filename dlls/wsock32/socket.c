@@ -17,6 +17,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#ifdef HAVE_SYS_SOCKIO_H
+# include <sys/sockio.h>
+#endif
 #ifdef HAVE_NET_IF_H
 # include <net/if.h>
 #endif
@@ -176,20 +179,39 @@ DWORD WINAPI WsControl(DWORD protocoll,
                      /* Interface ID */
                      IntInfo->if_index = pcommand->toi_entity.tei_instance;
                      
-                     /* MAC Address */
-                     strcpy(ifInfo.ifr_name, ifName);
-                     if (ioctl(sock, SIOCGIFHWADDR, &ifInfo) < 0)
-                     {
-                        ERR ("Error obtaining MAC Address!\n");
-                        close(sock);
-                        return (-1);
-                     }
-                     else
-                     {
-                        /* FIXME: Is it correct to assume size of 6? */
-                        memcpy(IntInfo->if_physaddr, ifInfo.ifr_hwaddr.sa_data, 6);
-                        IntInfo->if_physaddrlen=6;
-                     }
+                     /* MAC Address - Let's try to do this in a cross-platform way... */
+                     #if defined(SIOCGIFHWADDR) /* Linux */
+                        strcpy(ifInfo.ifr_name, ifName);
+                        if (ioctl(sock, SIOCGIFHWADDR, &ifInfo) < 0)
+                        {
+                           ERR ("Error obtaining MAC Address!\n");
+                           close(sock);
+                           return (-1);
+                        }
+                        else
+                        {
+                           /* FIXME: Is it correct to assume size of 6? */
+                           memcpy(IntInfo->if_physaddr, ifInfo.ifr_hwaddr.sa_data, 6);
+                           IntInfo->if_physaddrlen=6;
+                        }
+                     #elif defined(SIOCGENADDR) /* Solaris */
+                        if (ioctl(sock, SIOCGENADDR, &ifInfo) < 0)
+                        {
+                           ERR ("Error obtaining MAC Address!\n");
+                           close(sock);
+                           return (-1);
+                        }
+                        else
+                        {
+                           /* FIXME: Is it correct to assume size of 6? */
+		           memcpy(IntInfo->if_physaddr, ifInfo.ifr_enaddr, 6);
+                           IntInfo->if_physaddrlen=6;
+                        }
+                     #else
+                        memset (IntInfo->if_physaddr, 0, 6);
+                        ERR ("Unable to determine MAC Address on your platform!\n");
+                     #endif
+
                      
                      /* Interface name and length */
                      strcpy (IntInfo->if_descr, ifName);
@@ -349,8 +371,20 @@ DWORD WINAPI WsControl(DWORD protocoll,
 	       }
                else
 	       {
-                  struct ws_sockaddr_in *ipTemp = (struct ws_sockaddr_in *)&ifInfo.ifr_netmask;
-                  baseIPInfo->iae_mask = ipTemp->sin_addr.S_un.S_addr; 
+                  /* Trying to avoid some compile problems across platforms.
+                     (Linux, FreeBSD, Solaris...) */
+                  #ifndef ifr_netmask
+                     #ifndef ifr_addr
+                        baseIPInfo->iae_mask = 0;
+                        ERR ("Unable to determine Netmask on your platform!\n");
+                     #else
+                        struct ws_sockaddr_in *ipTemp = (struct ws_sockaddr_in *)&ifInfo.ifr_addr;
+                        baseIPInfo->iae_mask = ipTemp->sin_addr.S_un.S_addr; 
+                     #endif
+                  #else  
+                     struct ws_sockaddr_in *ipTemp = (struct ws_sockaddr_in *)&ifInfo.ifr_netmask;
+                     baseIPInfo->iae_mask = ipTemp->sin_addr.S_un.S_addr; 
+                  #endif
                }
 
                /* FIXME: How should the below be properly calculated? ******************/
@@ -536,7 +570,7 @@ int WSCNTL_GetInterfaceName(int intNumber, char *intName)
    Helper function for WsControl - This function returns the bytes (octets) transmitted
    and received for the supplied interface number from the /proc fs. 
 */
-int WSCNTL_GetTransRecvStat(int intNumber, ulong *transBytes, ulong *recvBytes)
+int WSCNTL_GetTransRecvStat(int intNumber, unsigned long *transBytes, unsigned long *recvBytes)
 {
    FILE *procfs;
    char buf[512], result[512]; /* Size doesn't matter, something big */
@@ -616,7 +650,7 @@ int WSCNTL_GetTransRecvStat(int intNumber, ulong *transBytes, ulong *recvBytes)
       result[resultPos+1]='\0';
       resultPos++; bufPos++;
    }
-   *recvBytes = strtoul (result, NULL, 10); /* convert string to ulong, using base 10 */
+   *recvBytes = strtoul (result, NULL, 10); /* convert string to unsigned long, using base 10 */
 
    
    /* Skip columns #3 to #9 (Don't need them) */
@@ -640,7 +674,7 @@ int WSCNTL_GetTransRecvStat(int intNumber, ulong *transBytes, ulong *recvBytes)
       result[resultPos+1]='\0';
       resultPos++; bufPos++;
    }
-   *transBytes = strtoul (result, NULL, 10); /* convert string to ulong, using base 10 */
+   *transBytes = strtoul (result, NULL, 10); /* convert string to unsigned long, using base 10 */
 
 
    fclose(procfs);
