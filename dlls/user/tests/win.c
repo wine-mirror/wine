@@ -48,6 +48,7 @@
 static HWND (WINAPI *pGetAncestor)(HWND,UINT);
 static BOOL (WINAPI *pGetWindowInfo)(HWND,WINDOWINFO*);
 
+static BOOL test_lbuttondown_flag;
 static HWND hwndMessage;
 static HWND hwndMain, hwndMain2;
 static HHOOK hhook;
@@ -521,6 +522,10 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 		ok(!got_getminmaxinfo, "main: WM_GETMINMAXINFO should NOT have been received before WM_NCCREATE\n");
 	    break;
 	}
+        case WM_COMMAND:
+            if (test_lbuttondown_flag)
+                ShowWindow((HWND)wparam, SW_SHOW);
+            break;
     }
 
     return DefWindowProcA(hwnd, msg, wparam, lparam);
@@ -569,7 +574,7 @@ static BOOL RegisterWindowClasses(void)
 {
     WNDCLASSA cls;
 
-    cls.style = 0;
+    cls.style = CS_DBLCLKS;
     cls.lpfnWndProc = main_window_procA;
     cls.cbClsExtra = 0;
     cls.cbWndExtra = 0;
@@ -2240,6 +2245,53 @@ static void test_mouse_input(HWND hwnd)
     ShowWindow(hwnd, SW_HIDE);
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
     ok( !ret, "message %04x available\n", msg.message);
+
+    /* test mouse clicks */
+
+    ShowWindow(hwnd, SW_SHOW);
+    ShowWindow(popup, SW_SHOW);
+
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+
+    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+
+    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ok(msg.hwnd == popup && msg.message == WM_LBUTTONDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ok(msg.hwnd == popup && msg.message == WM_LBUTTONUP, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ok(msg.hwnd == popup && msg.message == WM_LBUTTONDBLCLK, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ok(msg.hwnd == popup && msg.message == WM_LBUTTONUP, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+
+    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    ok(!ret, "message %04x available\n", msg.message);
+
+    ShowWindow(popup, SW_HIDE);
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+
+    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+
+    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ok(msg.hwnd == hwnd && msg.message == WM_LBUTTONDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ok(msg.hwnd == hwnd && msg.message == WM_LBUTTONUP, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+
+    test_lbuttondown_flag = TRUE;
+    SendMessageA(hwnd, WM_COMMAND, (WPARAM)popup, 0);
+    test_lbuttondown_flag = FALSE;
+
+    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ok(msg.hwnd == popup && msg.message == WM_LBUTTONDOWN, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ok(msg.hwnd == popup && msg.message == WM_LBUTTONUP, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
 
     DestroyWindow(popup);
 }

@@ -285,6 +285,8 @@ static void queue_mouse_event( const MOUSEINPUT *mi, UINT flags )
     if (mi->dwFlags & MOUSEEVENTF_MOVE)
     {
         queue_raw_mouse_message( WM_MOUSEMOVE, flags, PosX, PosY, mi );
+        if (flags & LLMHF_INJECTED)  /* we have to actually move the cursor */
+            SetCursorPos( PosX, PosY );
     }
     if (mi->dwFlags & MOUSEEVENTF_LEFTDOWN)
     {
@@ -327,8 +329,6 @@ static void queue_mouse_event( const MOUSEINPUT *mi, UINT flags )
     {
         queue_raw_mouse_message( WM_MOUSEWHEEL, flags, PosX, PosY, mi );
     }
-    if (flags & LLMHF_INJECTED)  /* we have to actually move the cursor */
-        SetCursorPos( PosX, PosY );
 }
 
 
