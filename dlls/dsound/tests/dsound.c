@@ -299,12 +299,6 @@ static void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
     }
 
     if (primary) {
-        /* We must call SetCooperativeLevel to be allowed to call SetFormat */
-        rc=IDirectSound_SetCooperativeLevel(dso,get_hwnd(),DSSCL_PRIORITY);
-        ok(rc==DS_OK,"SetCooperativeLevel failed: 0x%lx\n",rc);
-        if (rc!=DS_OK)
-            return;
-
         init_format(&wfx2,11025,16,2);
         rc=IDirectSoundBuffer_SetFormat(dsbo,&wfx2);
         ok(rc==DS_OK,"SetFormat failed: 0x%lx\n",rc);
@@ -319,11 +313,7 @@ static void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
             trace("    tag=0x%04x %ldx%dx%d avg.B/s=%ld align=%d\n",
                   wfx.wFormatTag,wfx.nSamplesPerSec,wfx.wBitsPerSample,
                   wfx.nChannels,wfx.nAvgBytesPerSec,wfx.nBlockAlign);
-    }
-
-        /* Set the CooperativeLevel back to normal */
-        rc=IDirectSound_SetCooperativeLevel(dso,get_hwnd(),DSSCL_NORMAL);
-        ok(rc==DS_OK,"SetCooperativeLevel failed: 0x%lx\n",rc);
+	}
     }
 
     if (play) {
@@ -332,14 +322,6 @@ static void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
 
         trace("    Playing 440Hz LA at %ldx%2dx%d\n",
               wfx.nSamplesPerSec, wfx.wBitsPerSample,wfx.nChannels);
-
-        if (primary) {
-            /* We must call SetCooperativeLevel to be allowed to call Lock */
-            rc=IDirectSound_SetCooperativeLevel(dso,get_hwnd(),DSSCL_WRITEPRIMARY);
-            ok(rc==DS_OK,"SetCooperativeLevel failed: 0x%lx\n",rc);
-            if (rc!=DS_OK)
-                return;
-        }
 
         if (dsbcaps.dwFlags & DSBCAPS_CTRLVOLUME) {
             rc=IDirectSoundBuffer_GetVolume(dsbo,&volume);
@@ -380,11 +362,6 @@ static void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER dsbo,
         }
 
         free(state.wave);
-        if (primary) {
-            /* Set the CooperativeLevel back to normal */
-            rc=IDirectSound_SetCooperativeLevel(dso,get_hwnd(),DSSCL_NORMAL);
-            ok(rc==DS_OK,"SetCooperativeLevel failed: 0x%lx\n",rc);
-        }
     }
 }
 
@@ -397,7 +374,7 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     DSBUFFERDESC bufdesc;
     WAVEFORMATEX wfx;
     DSCAPS dscaps;
-    int f;
+    int f,ref;
 
     trace("Testing %s - %s\n",lpcstrDescription,lpcstrModule);
     rc=DirectSoundCreate(lpGuid,&dso,NULL);
@@ -435,9 +412,25 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     ok(rc==DS_OK,"CreateSoundBuffer failed to create a primary buffer 0x%lx\n",rc);
     if (rc==DS_OK) {
         test_buffer(dso,dsbo,1,winetest_interactive && !(dscaps.dwFlags & DSCAPS_EMULDRIVER));
-        IDirectSoundBuffer_Release(dsbo);
+        ref=IDirectSoundBuffer_Release(dsbo);
+        ok(ref==0,"IDirectSoundBuffer_Release has %d references\n",ref); 
     }
 
+    /* Testing 3D primary buffer */
+    bufdesc.dwSize=sizeof(bufdesc);
+    bufdesc.dwFlags=DSBCAPS_PRIMARYBUFFER|DSBCAPS_CTRL3D;
+    bufdesc.dwBufferBytes=0;
+    bufdesc.dwReserved=0;
+    bufdesc.lpwfxFormat=NULL;
+    trace("  Testing 3D primary buffer\n");
+    rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&dsbo,NULL);
+    ok(rc==DS_OK,"CreateSoundBuffer failed to create a 3D primary buffer 0x%lx\n",rc);
+    if (rc==DS_OK) {
+        test_buffer(dso,dsbo,1,winetest_interactive && !(dscaps.dwFlags & DSCAPS_EMULDRIVER));
+        ref=IDirectSoundBuffer_Release(dsbo);
+        ok(ref==0,"IDirectSoundBuffer_Release has %d references\n",ref); 
+    }
+    
     /* Set the CooperativeLevel back to normal */
     rc=IDirectSound_SetCooperativeLevel(dso,get_hwnd(),DSSCL_NORMAL);
     ok(rc==DS_OK,"SetCooperativeLevel failed: 0x%lx\n",rc);
@@ -458,13 +451,35 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 	ok(rc==DS_OK,"CreateSoundBuffer failed to create a secondary buffer 0x%lx\n",rc);
 	if (rc==DS_OK) {
 	    test_buffer(dso,dsbo,0,winetest_interactive);
-	    IDirectSoundBuffer_Release(dsbo);
+            ref=IDirectSoundBuffer_Release(dsbo);
+            ok(ref==0,"IDirectSoundBuffer_Release has %d references\n",ref); 
+	}
+    }
+
+    /* Testing 3D secondary buffers */
+    for (f=0;f<NB_FORMATS;f++) {
+	init_format(&wfx,formats[f][0],formats[f][1],formats[f][2]);
+	bufdesc.dwSize=sizeof(bufdesc);
+	bufdesc.dwFlags=DSBCAPS_CTRLDEFAULT|DSBCAPS_GETCURRENTPOSITION2|DSBCAPS_CTRL3D;
+	bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
+	bufdesc.dwReserved=0;
+	bufdesc.lpwfxFormat=&wfx;
+	trace("  Testing a 3D secondary buffer at %ldx%dx%d\n",
+	    wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
+	rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&dsbo,NULL);
+	ok(rc==DS_OK,"CreateSoundBuffer failed to create a 3D secondary buffer 0x%lx\n",rc);
+	if (rc==DS_OK) {
+	    test_buffer(dso,dsbo,0,winetest_interactive);
+            ref=IDirectSoundBuffer_Release(dsbo);
+            ok(ref==0,"IDirectSoundBuffer_Release has %d references\n",ref); 
 	}
     }
 
 EXIT:
-    if (dso!=NULL)
-        IDirectSound_Release(dso);
+    if (dso!=NULL) {
+        ref=IDirectSound_Release(dso);
+	ok(ref==0,"IDirectSound_Release has %d references\n",ref);
+    }
     return 1;
 }
 
@@ -614,7 +629,7 @@ static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco, LPDIRECTSOUNDCAPTUREB
 
     /* wait for the notifications */
     for (i = 0; i < (NOTIFICATIONS * 2); i++) {
-        rc=MsgWaitForMultipleObjects( 1, &(state.event), FALSE, 1000, QS_ALLEVENTS );
+        rc=MsgWaitForMultipleObjects( 1, &(state.event), FALSE, 3000, QS_ALLEVENTS );
         ok(rc==WAIT_OBJECT_0,"MsgWaitForMultipleObjects failed: 0x%lx\n",rc);
         if (rc!=WAIT_OBJECT_0)
             break;
@@ -642,14 +657,16 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     DSCBUFFERDESC bufdesc;
     WAVEFORMATEX wfx;
     DSCCAPS dsccaps;
-    int f;
+    int f, ref;
 
     /* Private dsound.dll: Error: Invalid interface buffer */
     trace("Testing %s - %s\n",lpcstrDescription,lpcstrModule);
     rc=DirectSoundCaptureCreate(lpGuid,NULL,NULL);
     ok(rc==DSERR_INVALIDPARAM,"DirectSoundCaptureCreate didn't fail: 0x%lx\n",rc);
-    if (rc==DS_OK)
-        IDirectSoundCapture_Release(dsco);
+    if (rc==DS_OK) {
+	ref=IDirectSoundCapture_Release(dsco);
+	ok(ref==0,"IDirectSoundCapture_Release has %d references\n",ref);
+    }
 
     rc=DirectSoundCaptureCreate(lpGuid,&dsco,NULL);
     ok((rc==DS_OK)||(rc==DSERR_NODRIVER),"DirectSoundCaptureCreate failed: 0x%lx\n",rc);
@@ -684,7 +701,8 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
     ok(rc==DSERR_INVALIDPARAM,"CreateCaptureBuffer should have failed to create a capture buffer 0x%lx\n",rc);
     if (rc==DS_OK) {
-        IDirectSoundCaptureBuffer_Release(dscbo);
+        ref=IDirectSoundCaptureBuffer_Release(dscbo);
+	ok(ref==0,"IDirectSoundCaptureBuffer_Release has %d references\n",ref);
     }
 
     /* Private dsound.dll: Error: Invalid buffer size */
@@ -698,7 +716,8 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
     ok(rc==DSERR_INVALIDPARAM,"CreateCaptureBuffer should have failed to create a capture buffer 0x%lx\n",rc);
     if (rc==DS_OK) {
-        IDirectSoundCaptureBuffer_Release(dscbo);
+        ref=IDirectSoundCaptureBuffer_Release(dscbo);
+	ok(ref==0,"IDirectSoundCaptureBuffer_Release has %d references\n",ref);
     }
 
     /* Private dsound.dll: Error: Invalid buffer size */
@@ -713,7 +732,8 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
     ok(rc==DSERR_INVALIDPARAM,"CreateCaptureBuffer should have failed to create a capture buffer 0x%lx\n",rc);
     if (rc==DS_OK) {
-        IDirectSoundCaptureBuffer_Release(dscbo);
+        ref=IDirectSoundCaptureBuffer_Release(dscbo);
+	ok(ref==0,"IDirectSoundCaptureBuffer_Release has %d references\n",ref);
     }
 
     /* Private dsound.dll: Error: Invalid buffer size */
@@ -728,7 +748,8 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
     ok(rc==DSERR_INVALIDPARAM,"CreateCaptureBuffer should have failed to create a capture buffer 0x%lx\n",rc);
     if (rc==DS_OK) {
-        IDirectSoundCaptureBuffer_Release(dscbo);
+        ref=IDirectSoundCaptureBuffer_Release(dscbo);
+	ok(ref==0,"IDirectSoundCaptureBuffer_Release has %d references\n",ref);
     }
 
     for (f=0;f<NB_FORMATS;f++) {
@@ -745,7 +766,8 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 	ok(rc==DS_OK,"CreateCaptureBuffer failed to create a capture buffer 0x%lx\n",rc);
 	if (rc==DS_OK) {
 	    test_capture_buffer(dsco, dscbo);
-	    IDirectSoundCaptureBuffer_Release(dscbo);
+	    ref=IDirectSoundCaptureBuffer_Release(dscbo);
+	    ok(ref==0,"IDirectSoundCaptureBuffer_Release has %d references\n",ref);
 	}
     }
 
@@ -765,8 +787,10 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 #endif
 
 EXIT:
-    if (dsco!=NULL)
-        IDirectSoundCapture_Release(dsco);
+    if (dsco!=NULL) {
+        ref=IDirectSoundCapture_Release(dsco);
+	ok(ref==0,"IDirectSoundCapture_Release has %d references\n",ref);
+    }
 
     return TRUE;
 }
