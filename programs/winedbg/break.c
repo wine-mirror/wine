@@ -421,9 +421,14 @@ void	DEBUG_AddBreakpointFromId(const char *name, int lineno)
     DBG_VALUE 	value;
     int		i;
 
-    if (DEBUG_GetSymbolValue(name, lineno, &value, TRUE))
+    switch (DEBUG_GetSymbolValue(name, lineno, &value, TRUE))
     {
+    case gsv_found:
         DEBUG_AddBreakpoint(&value, NULL, TRUE);
+        return;
+    case gsv_unknown:
+        break;
+    case gsv_aborted: /* user aborted symbol lookup */
         return;
     }
 
@@ -487,7 +492,7 @@ void		DEBUG_CheckDelayedBP(void)
     {
         if (dbp[i].is_symbol)
         {
-            if (!DEBUG_GetSymbolValue(dbp[i].u.symbol.name, dbp[i].u.symbol.lineno, &value, TRUE))
+            if (DEBUG_GetSymbolValue(dbp[i].u.symbol.name, dbp[i].u.symbol.lineno, &value, TRUE) != gsv_found)
                 continue;
         }
         else
@@ -586,10 +591,17 @@ void	DEBUG_AddWatchpointFromId(const char *name)
 {
    DBG_VALUE value;
 
-   if( DEBUG_GetSymbolValue(name, -1, &value, TRUE) )
+   switch (DEBUG_GetSymbolValue(name, -1, &value, TRUE))
+   {
+   case gsv_found:
       DEBUG_AddWatchpoint( &value, 1 );
-   else
+      break;
+   case gsv_unknown:
       DEBUG_Printf(DBG_CHN_MESG, "Unable to add watchpoint\n");
+      break;
+   case gsv_aborted: /* user aborted symbol lookup */
+       break;
+   }
 }
 
 /***********************************************************************

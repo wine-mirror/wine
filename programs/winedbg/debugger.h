@@ -291,6 +291,8 @@ typedef struct {
 
 #define	OFFSET_OF(__c,__f)		((int)(((char*)&(((__c*)0)->__f))-((char*)0)))
 
+enum get_sym_val {gsv_found, gsv_unknown, gsv_aborted};
+
   /* from winelib.so */
 extern void DEBUG_ExternalDebugger(void);
 
@@ -358,8 +360,7 @@ extern struct name_hash * DEBUG_AddSymbol( const char *name,
 					   const DBG_VALUE *addr,
 					   const char *sourcefile,
 					   int flags);
-extern int DEBUG_GetSymbolValue( const char * name, const int lineno,
-				 DBG_VALUE *addr, int );
+extern enum get_sym_val DEBUG_GetSymbolValue( const char * name, const int lineno, DBG_VALUE *addr, int );
 extern BOOL DEBUG_SetSymbolValue( const char * name, const DBG_VALUE *addr );
 extern const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 					     struct name_hash ** rtn,
@@ -582,6 +583,7 @@ inline static LPSTR DBG_strdup( LPCSTR str )
 #define	DEBUG_STATUS_DIV_BY_ZERO	(DEBUG_STATUS_OFFSET+2)
 #define	DEBUG_STATUS_BAD_TYPE		(DEBUG_STATUS_OFFSET+3)
 #define DEBUG_STATUS_NO_FIELD		(DEBUG_STATUS_OFFSET+4)
+#define DEBUG_STATUS_ABORT              (DEBUG_STATUS_OFFSET+5)
 
 extern DBG_INTVAR		DEBUG_IntVars[];
 

@@ -346,6 +346,11 @@ BOOL DEBUG_Normalize(struct name_hash * nh )
  *           DEBUG_GetSymbolValue
  *
  * Get the address of a named symbol.
+ * Return values:
+ *      gsv_found:   if the symbol is found
+ *      gsv_unknown: if the symbol isn't found
+ *      gsv_aborted: some error occured (likely, many symbols of same name exist, 
+ *          and user didn't pick one of them)
  */
 static int    DEBUG_GSV_Helper(const char* name, const int lineno,
 			       DBG_VALUE* value, int num, int bp_flag)
@@ -369,8 +374,9 @@ static int    DEBUG_GSV_Helper(const char* name, const int lineno,
    return i;
 }
 
-BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
-			   DBG_VALUE *rtn, int bp_flag )
+enum get_sym_val DEBUG_GetSymbolValue( const char * name, 
+                                       const int lineno,
+                                       DBG_VALUE *rtn, int bp_flag )
 {
 #define NUMDBGV 10
    /* FIXME: NUMDBGV should be made variable */
@@ -398,7 +404,7 @@ BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
    }
 
    if (num == 0) {
-      return FALSE;
+      return gsv_unknown;
    } else if (!DEBUG_InteractiveP || num == 1) {
       i = 0;
    } else {
@@ -429,6 +435,7 @@ BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
 	  i = 0;
 	  if (DEBUG_ReadLine("=> ", buffer, sizeof(buffer)))
 	  {
+              if (buffer[0] == '\0') return gsv_aborted;
 	      i = atoi(buffer);
 	      if (i < 1 || i > num)
 		  DEBUG_Printf(DBG_CHN_MESG, "Invalid choice %d\n", i);
@@ -439,7 +446,7 @@ BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
       i--;
    }
    *rtn = value[i];
-   return TRUE;
+   return gsv_found;
 }
 
 /***********************************************************************

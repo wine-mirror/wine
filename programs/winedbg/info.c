@@ -709,7 +709,7 @@ void DEBUG_DbgChannel(BOOL turn_on, const char* chnl, const char* name)
     BOOL                        bAll;
     void*                       addr;
 
-    if (!DEBUG_GetSymbolValue("first_dll", -1, &val, FALSE))
+    if (DEBUG_GetSymbolValue("first_dll", -1, &val, FALSE) != gsv_found)
     {
         DEBUG_Printf(DBG_CHN_MESG, "Can't get first_option symbol");
         return;

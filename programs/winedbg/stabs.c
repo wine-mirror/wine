@@ -1070,7 +1070,7 @@ static int DEBUG_ProcessElfSymtab(DBG_MODULE* module, char* addr,
        * we will have to keep the darned thing, because there can be
        * multiple local symbols by the same name.
        */
-      if(    (DEBUG_GetSymbolValue(symname, -1, &new_value, FALSE ) == TRUE)
+      if(    (DEBUG_GetSymbolValue(symname, -1, &new_value, FALSE ) == gsv_found)
 	  && (new_value.addr.off == (load_addr + symp->st_value)) )
 	  continue;
 

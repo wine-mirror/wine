@@ -350,10 +350,16 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
       rtn.addr.seg = 0;
       break;
     case EXPR_TYPE_SYMBOL:
-      if( !DEBUG_GetSymbolValue(exp->un.symbol.name, -1, &rtn, FALSE) )
+      switch (DEBUG_GetSymbolValue(exp->un.symbol.name, -1, &rtn, FALSE))
       {
-	  DEBUG_Printf(DBG_CHN_MESG, "%s\n", exp->un.symbol.name);
+      case gsv_found:
+          break;
+      case gsv_unknown:
 	  RaiseException(DEBUG_STATUS_NO_SYMBOL, 0, 0, NULL);
+          /* should never be here */
+      case gsv_aborted:
+          RaiseException(DEBUG_STATUS_ABORT, 0, 0, NULL);
+          /* should never be here */
       }
       break;
     case EXPR_TYPE_PSTRUCT:
@@ -408,10 +414,17 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
       /*
        * Now look up the address of the function itself.
        */
-      if( !DEBUG_GetSymbolValue(exp->un.call.funcname, -1, &rtn, FALSE ) )
-	{
+      switch (DEBUG_GetSymbolValue(exp->un.call.funcname, -1, &rtn, FALSE ))
+      {
+      case gsv_found:
+          break;
+      case gsv_unknown:
 	  RaiseException(DEBUG_STATUS_NO_SYMBOL, 0, 0, NULL);
-	}
+          /* should never be here */
+      case gsv_aborted:
+          RaiseException(DEBUG_STATUS_ABORT, 0, 0, NULL);
+          /* should never be here */
+      }
 
 #if 0
       /* FIXME: NEWDBG NIY */

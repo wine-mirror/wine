@@ -405,6 +405,8 @@ static WINE_EXCEPTION_FILTER(wine_dbg_cmd)
    case DEBUG_STATUS_NO_FIELD:
       DEBUG_Printf(DBG_CHN_MESG, "No such field in structure or union\n");
       break;
+   case DEBUG_STATUS_ABORT:
+       break;
    default:
       DEBUG_Printf(DBG_CHN_MESG, "Exception %lx\n", GetExceptionCode());
       DEBUG_ExternalDebugger();
