@@ -35,9 +35,10 @@ HMODULE SHLWAPI_hcomdlg32 = 0;
 HMODULE SHLWAPI_hcomctl32 = 0;
 HMODULE SHLWAPI_hmpr = 0;
 HMODULE SHLWAPI_hmlang = 0;
+HMODULE SHLWAPI_hurlmon = 0;
 HMODULE SHLWAPI_hversion = 0;
 
-DWORD SHLWAPI_ThreadRef_index = -1;
+DWORD SHLWAPI_ThreadRef_index = TLS_OUT_OF_INDEXES;
 
 /*************************************************************************
  * SHLWAPI {SHLWAPI}
@@ -76,8 +77,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	    if (SHLWAPI_hcomctl32) FreeLibrary(SHLWAPI_hcomctl32);
 	    if (SHLWAPI_hmpr)      FreeLibrary(SHLWAPI_hmpr);
 	    if (SHLWAPI_hmlang)    FreeLibrary(SHLWAPI_hmlang);
+	    if (SHLWAPI_hurlmon)   FreeLibrary(SHLWAPI_hurlmon);
 	    if (SHLWAPI_hversion)  FreeLibrary(SHLWAPI_hversion);
-	    if (SHLWAPI_ThreadRef_index >= 0) TlsFree(SHLWAPI_ThreadRef_index);
+	    if (SHLWAPI_ThreadRef_index != TLS_OUT_OF_INDEXES) TlsFree(SHLWAPI_ThreadRef_index);
 	    break;
 	}
 	return TRUE;
