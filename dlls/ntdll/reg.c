@@ -19,7 +19,7 @@
 #include "ntddk.h"
 #include "ntdll_misc.h"
 
-DEFAULT_DEBUG_CHANNEL(ntdll);
+DEFAULT_DEBUG_CHANNEL(reg);
 
 static const WCHAR root_name[] = { '\\','R','e','g','i','s','t','r','y','\\',0 };
 static const UNICODE_STRING root_path =
