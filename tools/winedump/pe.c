@@ -291,7 +291,7 @@ static	void	dump_sections(void* addr, unsigned num_sect)
 static	void	dump_dir_exported_functions(void)
 {
     IMAGE_EXPORT_DIRECTORY	*exportDir = get_dir(IMAGE_FILE_EXPORT_DIRECTORY);
-    unsigned			i, j;
+    unsigned int		i;
     DWORD*			pFunc;
     DWORD*			pName;
     WORD*			pOrdl;
@@ -327,19 +327,19 @@ static	void	dump_dir_exported_functions(void)
     map = calloc(((exportDir->NumberOfFunctions + 31) & ~31) / 32, sizeof(DWORD));
     if (!map) fatal("no memory");
     
-    for (i = 0; i < exportDir->NumberOfNames; i++)
+    for (i = 0; i < exportDir->NumberOfNames; i++, pName++, pOrdl++)
     {
 	char*	name;
 	
 	map[*pOrdl / 32] |= 1 << (*pOrdl % 32);
 	
-	name = (char*)RVA(*pName++, sizeof(DWORD));
+	name = (char*)RVA(*pName, sizeof(DWORD));
 	if (name && globals.do_demangle)
 	{
 	    symbol.symbol = strdup(name);
 	    symbol_demangle (&symbol);
 	    
-	    printf("  %08lX  %4lu ", *pFunc++, exportDir->Base + *pOrdl++);
+	    printf("  %08lX  %4lu ", pFunc[*pOrdl], exportDir->Base + *pOrdl);
 	    if (symbol.flags & SYM_DATA)
 		printf (symbol.arg_text[0]);
 	    else
@@ -348,17 +348,16 @@ static	void	dump_dir_exported_functions(void)
 	}
 	else
 	{
-	    printf("  %08lX  %4lu %s\n", *pFunc++, exportDir->Base + *pOrdl++, name);
+	    printf("  %08lX  %4lu %s\n", pFunc[*pOrdl], exportDir->Base + *pOrdl, name);
 	}
     }
     pFunc = RVA(exportDir->AddressOfFunctions, exportDir->NumberOfFunctions * sizeof(DWORD));
     if (!pFunc) {printf("Can't grab functions' address table\n"); return;}
-    j = exportDir->NumberOfNames;
     for (i = 0; i < exportDir->NumberOfFunctions; i++)
     {
-	if (!(map[i / 32] & (1 << (i % 32))))
+	if (pFunc[i] && !(map[i / 32] & (1 << (i % 32))))
 	{
-	    printf("  %08lX  %4lu <by ordinal>\n", pFunc[j++], exportDir->Base + i);
+	    printf("  %08lX  %4lu <by ordinal>\n", pFunc[i], exportDir->Base + i);
 	}
     }
     free(map);
