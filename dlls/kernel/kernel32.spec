@@ -956,7 +956,9 @@
 @ stdcall SetThreadExecutionState(long) SetThreadExecutionState
 
 # Windows 2000, Terminal Server 4.0 SP4 functions
+@ stdcall CreateTimerQueue () CreateTimerQueue
 @ stdcall CreateTimerQueueTimer(ptr long ptr ptr long long long) CreateTimerQueueTimer
+@ stdcall DeleteTimerQueueEx (long long) DeleteTimerQueueEx
 @ stdcall DeleteTimerQueueTimer(long long long) DeleteTimerQueueTimer
 @ stdcall GetCalendarInfoA(long long long ptr long ptr) GetCalendarInfoA
 @ stdcall GetCalendarInfoW(long long long ptr long ptr) GetCalendarInfoW

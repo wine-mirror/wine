@@ -183,6 +183,27 @@ BOOL WINAPI CancelWaitableTimer( HANDLE handle )
 
 
 /***********************************************************************
+ *           CreateTimerQueue  (KERNEL32.@)
+ */
+HANDLE WINAPI CreateTimerQueue()
+{
+    FIXME("stub\n");
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
+}
+
+
+/***********************************************************************
+ *           DeleteTimerQueueEx  (KERNEL32.@)
+ */
+BOOL WINAPI DeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
+{
+    FIXME("(%p, %p): stub\n", TimerQueue, CompletionEvent);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+/***********************************************************************
  *           CreateTimerQueueTimer  (KERNEL32.@)
  *
  * Creates a timer-queue timer. This timer expires at the specified due
