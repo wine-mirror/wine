@@ -752,6 +752,10 @@ static int encode_type(
         *alignment = 4;
         break;
 
+    case VT_VARIANT:
+        *encoded_type = default_type;
+        break;
+
     case VT_PTR:
       {
         int next_vt;
@@ -919,8 +923,9 @@ static int encode_var(
     *decoded_size = 0;
 
     chat("encode_var: var %p var->tname %s var->type %p var->ptr_level %d var->type->ref %p\n", var, var->tname, var->type, var->ptr_level, var->type->ref);
-    if(var->ptr_level--) {
+    if(var->ptr_level) {
         int skip_ptr;
+        var->ptr_level--;
 	skip_ptr = encode_var(typelib, var, &target_type, NULL, NULL, &child_size);
         var->ptr_level++;
 
@@ -1808,7 +1813,10 @@ static int save_all_changes(msft_typelib_t *typelib)
     ctl2_finalize_typeinfos(typelib, filepos);
 
     if (!ctl2_write_chunk(fd, &typelib->typelib_header, sizeof(typelib->typelib_header))) return retval;
-    if (!ctl2_write_chunk(fd, &typelib->help_string_dll_offset, sizeof(typelib->help_string_dll_offset))) return retval;    
+    if(typelib->typelib_header.varflags & 0x100)
+        if (!ctl2_write_chunk(fd, &typelib->help_string_dll_offset, sizeof(typelib->help_string_dll_offset)))
+            return retval;
+
     if (!ctl2_write_chunk(fd, typelib->typelib_typeinfo_offsets, typelib->typelib_header.nrtypeinfos * 4)) return retval;
     if (!ctl2_write_chunk(fd, &typelib->typelib_segdir, sizeof(typelib->typelib_segdir))) return retval;
     if (!ctl2_write_segment(typelib, fd, MSFT_SEG_TYPEINFO    )) return retval;
