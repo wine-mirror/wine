@@ -44,6 +44,64 @@ DDRAW_XSHM_Available(void) {
     return FALSE;
 }
 
+#ifdef HAVE_XVIDEO
+static BOOL
+DDRAW_XVIDEO_Available(x11_dd_private *x11ddp) {
+  unsigned int p_version, p_release, p_request_base, p_event_base, p_error_base;
+  
+  if (TSXvQueryExtension(display, &p_version, &p_release, &p_request_base,
+		       &p_event_base, &p_error_base) == Success) {
+    XvAdaptorInfo *ai;
+    int num_adaptators, i, default_port;
+    
+    if ((p_version < 2) || ((p_version == 2) && (p_release < 2))) {
+      TRACE("XVideo extension does NOT support needed features (need version 2.2) !\n");
+      return FALSE;
+    }
+
+    if (TSXvQueryAdaptors(display, X11DRV_GetXRootWindow(), &num_adaptators, &ai) != Success) {
+      TRACE("Failed to get list of adaptators.\n");
+      return FALSE;
+    }
+    if (num_adaptators == 0) {
+      TRACE("No XVideo supporting adaptators found.\n");
+      return FALSE;
+    }
+
+    default_port = PROFILE_GetWineIniInt("x11drv", "XVideoPort", -1);
+    for (i = 0; i < num_adaptators; i++) {
+      if ((ai[i].type & XvInputMask) && (ai[i].type & XvImageMask)) {
+	/* This supports everything I want : XvImages and the possibility to put something */
+	if (default_port == -1) {
+	  default_port = ai[i].base_id;
+	  break;
+	} else {
+	  if ((ai[i].base_id <= default_port) &&
+	      ((ai[i].base_id + ai[i].num_ports) > default_port)) {
+	    break;
+	  }
+	}
+      }
+    }
+    if (i == num_adaptators) {
+      if (default_port != -1) {
+	ERR("User specified port (%d) not found.\n", default_port);
+      } else {
+	TRACE("No input + image capable device found.\n");
+      }
+      TSXvFreeAdaptorInfo(ai);
+      return FALSE;
+    }
+    x11ddp->port_id = default_port;
+
+    TRACE("XVideo support available (using version %d.%d)\n", p_version, p_release);
+    TSXvFreeAdaptorInfo(ai);
+    return TRUE;
+  }
+  return FALSE;
+}
+#endif
+
 static HRESULT X11_Create( LPDIRECTDRAW *lplpDD ) {
     IDirectDrawImpl*	ddraw;
     int			depth;
@@ -86,6 +144,13 @@ static HRESULT X11_Create( LPDIRECTDRAW *lplpDD ) {
     if ((x11priv->xshm_active = DDRAW_XSHM_Available())) {
 	x11priv->xshm_compl = 0;
 	TRACE("Using XShm extension.\n");
+    }
+#endif
+
+#ifdef HAVE_XVIDEO
+    /* Test if XVideo support is available */
+    if ((x11priv->xvideo_active = DDRAW_XVIDEO_Available(x11priv))) {
+      TRACE("Using XVideo extension on port '%ld'.\n", x11priv->port_id);
     }
 #endif
     return DD_OK;

@@ -811,6 +811,31 @@ typedef struct _DDPIXELFORMAT {
 #define DDOVERFX_MIRRORLEFTRIGHT	0x00000002
 #define DDOVERFX_MIRRORUPDOWN		0x00000004
 
+/* UpdateOverlay flags */
+#define DDOVER_ALPHADEST                        0x00000001
+#define DDOVER_ALPHADESTCONSTOVERRIDE           0x00000002
+#define DDOVER_ALPHADESTNEG                     0x00000004
+#define DDOVER_ALPHADESTSURFACEOVERRIDE         0x00000008
+#define DDOVER_ALPHAEDGEBLEND                   0x00000010
+#define DDOVER_ALPHASRC                         0x00000020
+#define DDOVER_ALPHASRCCONSTOVERRIDE            0x00000040
+#define DDOVER_ALPHASRCNEG                      0x00000080
+#define DDOVER_ALPHASRCSURFACEOVERRIDE          0x00000100
+#define DDOVER_HIDE                             0x00000200
+#define DDOVER_KEYDEST                          0x00000400
+#define DDOVER_KEYDESTOVERRIDE                  0x00000800
+#define DDOVER_KEYSRC                           0x00001000
+#define DDOVER_KEYSRCOVERRIDE                   0x00002000
+#define DDOVER_SHOW                             0x00004000
+#define DDOVER_ADDDIRTYRECT                     0x00008000
+#define DDOVER_REFRESHDIRTYRECTS                0x00010000
+#define DDOVER_REFRESHALL                       0x00020000
+#define DDOVER_DDFX                             0x00080000
+#define DDOVER_AUTOFLIP                         0x00100000
+#define DDOVER_BOB                              0x00200000
+#define DDOVER_OVERRIDEBOBWEAVE                 0x00400000
+#define DDOVER_INTERLEAVED                      0x00800000
+
 /* DDCOLORKEY.dwFlags */
 #define DDPF_ALPHAPIXELS		0x00000001
 #define DDPF_ALPHA			0x00000002

@@ -267,7 +267,7 @@ static XImage *create_ximage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl* lp
     void *img_data;
     int bpp = PFGET_BPP(This->d->directdraw_pixelformat);
     int screen_bpp = PFGET_BPP(This->d->screen_pixelformat);
-    
+
 #ifdef HAVE_LIBXXSHM
     if (ddpriv->xshm_active)
 	img = create_xshmimage(This, lpdsf);
@@ -318,6 +318,164 @@ static XImage *create_ximage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl* lp
     return img;
 }
 
+#ifdef HAVE_XVIDEO
+#ifdef HAVE_LIBXXSHM
+static XvImage *create_xvshmimage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl* lpdsf) {
+    DSPRIVATE(lpdsf);
+    DDPRIVATE(This);
+    XvImage *img;
+    int (*WineXHandler)(Display *, XErrorEvent *);
+
+    img = TSXvShmCreateImage(display,
+			     ddpriv->port_id,
+			     (int) lpdsf->s.surface_desc.ddpfPixelFormat.dwFourCC,
+			     NULL,
+			     lpdsf->s.surface_desc.dwWidth,
+			     lpdsf->s.surface_desc.dwHeight,
+			     &(dspriv->shminfo));
+    
+    if (img == NULL) {
+	FIXME("Couldn't create XShm XvImage (due to X11 remote display or failure).\nReverting to standard X images !\n");
+	ddpriv->xshm_active = 0;
+	return NULL;
+    }
+
+    dspriv->shminfo.shmid = shmget( IPC_PRIVATE, img->data_size, IPC_CREAT|0777 );
+
+    if (dspriv->shminfo.shmid < 0) {
+	FIXME("Couldn't create shared memory segment (due to X11 remote display or failure).\nReverting to standard X images !\n");
+	ddpriv->xshm_active = 0;
+	TSXFree(img);
+	return NULL;
+    }
+
+    dspriv->shminfo.shmaddr=img->data=(char*)shmat(dspriv->shminfo.shmid,0,0);
+
+    if (img->data == (char *) -1) {
+	FIXME("Couldn't attach shared memory segment (due to X11 remote display or failure).\nReverting to standard X images !\n");
+	ddpriv->xshm_active = 0;
+	TSXFree(img);
+	shmctl(dspriv->shminfo.shmid, IPC_RMID, 0);
+	return NULL;
+    }
+    dspriv->shminfo.readOnly = False;
+
+    /* This is where things start to get trickier....
+     * First, we flush the current X connections to be sure to catch all
+     * non-XShm related errors
+     */
+    TSXSync(display, False);
+    /* Then we enter in the non-thread safe part of the tests */
+    EnterCriticalSection( &X11DRV_CritSection );
+
+    /* Reset the error flag, sets our new error handler and try to attach
+     * the surface
+     */
+    XShmErrorFlag = 0;
+    WineXHandler = XSetErrorHandler(XShmErrorHandler);
+    XShmAttach(display, &(dspriv->shminfo));
+    XSync(display, False);
+
+    /* Check the error flag */
+    if (XShmErrorFlag) {
+	/* An error occured */
+	XFlush(display);
+	XShmErrorFlag = 0;
+	XFree(img);
+	shmdt(dspriv->shminfo.shmaddr);
+	shmctl(dspriv->shminfo.shmid, IPC_RMID, 0);
+	XSetErrorHandler(WineXHandler);
+
+	FIXME("Couldn't attach shared memory segment to X server (due to X11 remote display or failure).\nReverting to standard X images !\n");
+	ddpriv->xshm_active = 0;
+
+	/* Leave the critical section */
+	LeaveCriticalSection( &X11DRV_CritSection );
+	return NULL;
+    }
+    /* Here, to be REALLY sure, I should do a XShmPutImage to check if
+     * this works, but it may be a bit overkill....
+     */
+    XSetErrorHandler(WineXHandler);
+    LeaveCriticalSection( &X11DRV_CritSection );
+
+    shmctl(dspriv->shminfo.shmid, IPC_RMID, 0);
+
+    lpdsf->s.surface_desc.u1.lpSurface = img->data;
+    VirtualAlloc(img->data, img->data_size, MEM_RESERVE|MEM_SYSTEM, PAGE_READWRITE);
+
+    return img;
+}
+#endif
+
+static XvImage *create_xvimage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl* lpdsf, HRESULT *err_code) {
+    XvImage *img = NULL;
+    DDPRIVATE(This);
+    void *img_data;
+    XvImageFormatValues	*fo;
+    int formats, i;
+    int bpp = PFGET_BPP(lpdsf->s.surface_desc.ddpfPixelFormat);
+    
+    *err_code = DDERR_OUTOFVIDEOMEMORY;
+    
+    if (!(lpdsf->s.surface_desc.ddpfPixelFormat.dwFlags & DDPF_FOURCC)) {
+      /* Hmmm, overlay without FOURCC code.. Baaaaaad */
+      ERR("Overlay without a FOURCC pixel format !\n");
+      *err_code = DDERR_INVALIDPIXELFORMAT;
+      return NULL;
+    }
+      
+    /* First, find out if we support this PixelFormat.
+       I make the assumption here that the id of the XvImage format is the
+       same as the Windows FOURCC code. */
+    fo = TSXvListImageFormats(display, ddpriv->port_id, &formats);
+    for (i = 0; i < formats; i++)
+      if (fo[i].id == lpdsf->s.surface_desc.ddpfPixelFormat.dwFourCC) break;
+    if (fo)
+      TSXFree(fo);
+    
+    if (i == formats) {
+      ERR("FOURCC code not supported by the video card !\n");
+      *err_code = DDERR_INVALIDPIXELFORMAT;
+      return NULL;
+    }
+    
+#ifdef HAVE_LIBXXSHM
+    if (ddpriv->xshm_active)
+	img = create_xvshmimage(This, lpdsf);
+
+    if (img == NULL) {
+#endif
+      /* Allocate surface memory */
+      lpdsf->s.surface_desc.u1.lpSurface =
+	VirtualAlloc(NULL,
+		     lpdsf->s.surface_desc.dwWidth *
+		     lpdsf->s.surface_desc.dwHeight *
+		     bpp,
+		     MEM_RESERVE | MEM_COMMIT,
+		     PAGE_READWRITE);
+      img_data = lpdsf->s.surface_desc.u1.lpSurface;
+
+      /* In this case, create an XvImage */
+      img = TSXvCreateImage(display,
+			    ddpriv->port_id,
+			    (int) lpdsf->s.surface_desc.ddpfPixelFormat.dwFourCC,
+			    img_data,
+			    lpdsf->s.surface_desc.dwWidth,
+			    lpdsf->s.surface_desc.dwHeight);
+#ifdef HAVE_LIBXXSHM
+    }
+#endif
+    lpdsf->s.surface_desc.lPitch = ((XvImage *) img)->pitches[0];
+    return img;
+}
+#else
+static XvImage *create_xvimage(IDirectDraw2Impl* This, IDirectDrawSurface4Impl* lpdsf, HRESULT *err_code) {
+  *err_code = DDERR_INVALIDPIXELFORMAT;
+  return NULL;
+}
+#endif
+
 static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreateSurface(
     LPDIRECTDRAW2 iface,LPDDSURFACEDESC lpddsd,LPDIRECTDRAWSURFACE *lpdsf,
     IUnknown *lpunk
@@ -350,7 +508,8 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreateSurface(
 
     dsurf->s.palette	= NULL;
     dsurf->s.lpClipper	= NULL;
-    dspriv->image	= NULL; /* This is for off-screen buffers */
+    dspriv->is_overlay  = FALSE;
+    dspriv->info.image	= NULL; /* This is for off-screen buffers */
 
     /* Copy the surface description */
     dsurf->s.surface_desc = *lpddsd;
@@ -361,30 +520,43 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreateSurface(
 	dsurf->s.surface_desc.dwHeight = This->d->height;
     dsurf->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT;
 
-    /* Check if this a 'primary surface' or not */
+    /* Check if this a 'primary surface' or an overlay */
     if ((lpddsd->dwFlags & DDSD_CAPS) && 
-	(lpddsd->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+	((lpddsd->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) ||
+	 (lpddsd->ddsCaps.dwCaps & DDSCAPS_OVERLAY))
     ) {
-	XImage *img;
-
 	/* Add flags if there were not present */
 	dsurf->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT|DDSD_PITCH|DDSD_LPSURFACE|DDSD_PIXELFORMAT;
-	dsurf->s.surface_desc.dwWidth = This->d->width;
-	dsurf->s.surface_desc.dwHeight = This->d->height;
-	dsurf->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_VISIBLE|DDSCAPS_VIDEOMEMORY;
-	dsurf->s.surface_desc.ddpfPixelFormat = This->d->directdraw_pixelformat;
+	dsurf->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_VIDEOMEMORY;
 
-	TRACE("using standard XImage for a primary surface (%p)\n", dsurf);
-	/* Create the XImage */
-	img = create_ximage(This,(IDirectDrawSurface4Impl*)dsurf);
-	if (img == NULL)
+	if (lpddsd->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) {
+	  dsurf->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_VISIBLE;
+	  dsurf->s.surface_desc.ddpfPixelFormat = This->d->directdraw_pixelformat;
+	  dsurf->s.surface_desc.dwWidth = This->d->width;
+	  dsurf->s.surface_desc.dwHeight = This->d->height;
+	} else {
+	  dspriv->is_overlay = TRUE;
+	  /* In the case of Overlay surfaces, copy the one provided by the application */
+	  dsurf->s.surface_desc.ddpfPixelFormat = lpddsd->ddpfPixelFormat;
+	}
+	
+	if (lpddsd->ddsCaps.dwCaps & DDSCAPS_OVERLAY) {
+	  HRESULT err_code;
+	  TRACE("using an XvImage for the overlay (%p)\n", dsurf);
+	  dspriv->info.overlay.image = create_xvimage(This,(IDirectDrawSurface4Impl*)dsurf, &err_code);
+	  if (dspriv->info.overlay.image == NULL)
+	    return err_code;
+	} else {
+	  TRACE("using standard XImage for a primary surface (%p)\n", dsurf);
+	  /* Create the XImage */
+	  dspriv->info.image = create_ximage(This,(IDirectDrawSurface4Impl*)dsurf);
+	  if (dspriv->info.image == NULL)
 	    return DDERR_OUTOFMEMORY;
-	dspriv->image = img;
+	}
 
 	/* Check for backbuffers */
 	if (lpddsd->dwFlags & DDSD_BACKBUFFERCOUNT) {
 	    IDirectDrawSurface4Impl*	back;
-	    XImage *img;
 	    int	i;
 
 	    for (i=lpddsd->dwBackBufferCount;i--;) {
@@ -413,11 +585,18 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreateSurface(
 		bspriv = (x11_ds_private*)back->private;
 
 		/* Create the XImage. */
-		img = create_ximage(This, back);
-		if (img == NULL)
+		if (lpddsd->ddsCaps.dwCaps & DDSCAPS_OVERLAY) {
+		  HRESULT err_code;
+		  dspriv->is_overlay = TRUE;
+		  bspriv->info.overlay.image = create_xvimage(This, back, &err_code);
+		  if (bspriv->info.overlay.image == NULL)
+		    return err_code;
+		} else {
+		  bspriv->info.image = create_ximage(This, back);
+		  if (bspriv->info.image == NULL)
 		    return DDERR_OUTOFMEMORY;
+		}
 		TRACE("bspriv = %p\n",bspriv);
-		bspriv->image = img;
 
 		/* Add relevant info to front and back buffers */
 		/* FIXME: backbuffer/frontbuffer handling broken here, but
@@ -521,7 +700,7 @@ static HRESULT WINAPI Xlib_IDirectDrawImpl_SetDisplayMode(
     return DD_OK;
 }
 
-static void fill_caps(LPDDCAPS caps) {
+static void fill_caps(LPDDCAPS caps, x11_dd_private *x11ddp) {
   /* This function tries to fill the capabilities of Wine's DDraw implementation.
      Need to be fixed, though.. */
   if (caps == NULL)
@@ -545,12 +724,26 @@ static void fill_caps(LPDDCAPS caps) {
   /* These are all the supported capabilities of the surfaces */
   caps->ddsCaps.dwCaps = DDSCAPS_ALPHA | DDSCAPS_BACKBUFFER | DDSCAPS_COMPLEX | DDSCAPS_FLIP |
     DDSCAPS_FRONTBUFFER | DDSCAPS_LOCALVIDMEM | DDSCAPS_NONLOCALVIDMEM | DDSCAPS_OFFSCREENPLAIN |
-      /*DDSCAPS_OVERLAY |*/ DDSCAPS_PALETTE | DDSCAPS_PRIMARYSURFACE | DDSCAPS_SYSTEMMEMORY |
+      DDSCAPS_PALETTE | DDSCAPS_PRIMARYSURFACE | DDSCAPS_SYSTEMMEMORY |
 	DDSCAPS_VIDEOMEMORY | DDSCAPS_VISIBLE;
 #ifdef HAVE_OPENGL
   caps->dwCaps |= DDCAPS_3D | DDCAPS_ZBLTS;
   caps->dwCaps2 |=  DDCAPS2_NO2DDURING3DSCENE;
   caps->ddsCaps.dwCaps |= DDSCAPS_3DDEVICE | DDSCAPS_MIPMAP | DDSCAPS_TEXTURE | DDSCAPS_ZBUFFER;
+#endif
+
+#ifdef HAVE_XVIDEO
+  if (x11ddp->xvideo_active) {
+    caps->dwCaps |= DDCAPS_OVERLAY | DDCAPS_OVERLAYFOURCC | DDCAPS_OVERLAYSTRETCH | DDCAPS_BLTFOURCC;
+    caps->dwCaps2 |= DDCAPS2_VIDEOPORT;
+    caps->dwMaxVisibleOverlays = 16;
+    caps->dwCurrVisibleOverlays = 0;
+    caps->dwMinOverlayStretch = 1; /* Apparently there is no 'down' stretching in XVideo, but well, Windows
+				      Media player refuses to work when I put 1000 here :-/ */
+    caps->dwMaxOverlayStretch = 100000; /* This is a 'bogus' value, I do not know the maximum stretching */
+    TSXvListImageFormats(display, x11ddp->port_id, (unsigned int *) &(caps->dwNumFourCCCodes));
+    caps->ddsCaps.dwCaps |= DDSCAPS_OVERLAY;
+  }
 #endif
 }
 
@@ -558,11 +751,12 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_GetCaps(
     LPDIRECTDRAW2 iface,LPDDCAPS caps1,LPDDCAPS caps2
 )  {
     ICOM_THIS(IDirectDraw2Impl,iface);
+    DDPRIVATE(This);
     TRACE("(%p)->GetCaps(%p,%p)\n",This,caps1,caps2);
 
     /* Put the same caps for the two capabilities */
-    fill_caps(caps1);
-    fill_caps(caps2);
+    fill_caps(caps1, ddpriv);
+    fill_caps(caps2, ddpriv);
 
     return DD_OK;
 }
@@ -843,6 +1037,18 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
   return DD_OK;
 }
 
+HRESULT WINAPI Xlib_IDirectDraw2Impl_GetFourCCCodes(
+    LPDIRECTDRAW2 iface,LPDWORD x,LPDWORD y
+) {
+#ifdef HAVE_XVIDEO
+  ICOM_THIS(IDirectDraw2Impl,iface);
+  FIXME("(%p,%p,%p), stub\n",This,x,y);
+  return DD_OK;
+#else
+  return IDirectDraw2Impl_GetFourCCCodes(iface, x, y);
+#endif
+}
+
 /* Note: Hack so we can reuse the old functions without compiler warnings */
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
 # define XCAST(fun)	(typeof(xlib_ddvt.fn##fun))
@@ -865,7 +1071,7 @@ ICOM_VTABLE(IDirectDraw) xlib_ddvt = {
     XCAST(FlipToGDISurface)IDirectDraw2Impl_FlipToGDISurface,
     XCAST(GetCaps)Xlib_IDirectDraw2Impl_GetCaps,
     XCAST(GetDisplayMode)IDirectDraw2Impl_GetDisplayMode,
-    XCAST(GetFourCCCodes)IDirectDraw2Impl_GetFourCCCodes,
+    XCAST(GetFourCCCodes)Xlib_IDirectDraw2Impl_GetFourCCCodes,
     XCAST(GetGDISurface)IDirectDraw2Impl_GetGDISurface,
     XCAST(GetMonitorFrequency)IDirectDraw2Impl_GetMonitorFrequency,
     XCAST(GetScanLine)IDirectDraw2Impl_GetScanLine,
@@ -916,7 +1122,7 @@ ICOM_VTABLE(IDirectDraw2) xlib_dd2vt = {
     IDirectDraw2Impl_FlipToGDISurface,
     Xlib_IDirectDraw2Impl_GetCaps,
     IDirectDraw2Impl_GetDisplayMode,
-    IDirectDraw2Impl_GetFourCCCodes,
+    Xlib_IDirectDraw2Impl_GetFourCCCodes,
     IDirectDraw2Impl_GetGDISurface,
     IDirectDraw2Impl_GetMonitorFrequency,
     IDirectDraw2Impl_GetScanLine,
@@ -950,7 +1156,7 @@ ICOM_VTABLE(IDirectDraw4) xlib_dd4vt = {
     XCAST(FlipToGDISurface)IDirectDraw2Impl_FlipToGDISurface,
     XCAST(GetCaps)Xlib_IDirectDraw2Impl_GetCaps,
     XCAST(GetDisplayMode)IDirectDraw2Impl_GetDisplayMode,
-    XCAST(GetFourCCCodes)IDirectDraw2Impl_GetFourCCCodes,
+    XCAST(GetFourCCCodes)Xlib_IDirectDraw2Impl_GetFourCCCodes,
     XCAST(GetGDISurface)IDirectDraw2Impl_GetGDISurface,
     XCAST(GetMonitorFrequency)IDirectDraw2Impl_GetMonitorFrequency,
     XCAST(GetScanLine)IDirectDraw2Impl_GetScanLine,

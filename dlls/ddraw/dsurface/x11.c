@@ -133,7 +133,7 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Lock(
 	assert(This->s.surface_desc.u1.lpSurface);
     /* wait for any previous operations to complete */
 #ifdef HAVE_LIBXXSHM
-    if (dspriv->image && VISIBLE(This) && ddpriv->xshm_active) {
+    if (dspriv->info.image && VISIBLE(This) && ddpriv->xshm_active) {
 /*
 	int compl = InterlockedExchange( &(ddpriv->xshm_compl), 0 );
 	if (compl) X11DRV_EVENT_WaitShmCompletion( compl );
@@ -144,7 +144,7 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Lock(
 
     /* If part of a visible 'clipped' surface, copy what is seen on the
        screen to the surface */
-    if ((dspriv->image && VISIBLE(This)) &&
+    if ((dspriv->info.image && VISIBLE(This)) &&
 	(This->s.lpClipper)) {
           HWND hWnd = ((IDirectDrawClipperImpl *) This->s.lpClipper)->hWnd;
 	  WND *wndPtr = WIN_FindWndPtr(hWnd);
@@ -164,7 +164,7 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Lock(
 	  }
 
 	  TSXGetSubImage(display, drawable, 0, 0, width, height, 0xFFFFFFFF,
-		       ZPixmap, dspriv->image, dest_x, dest_y);
+		       ZPixmap, dspriv->info.image, dest_x, dest_y);
 	  
 	  WIN_ReleaseWndPtr(wndPtr);
     }
@@ -180,8 +180,8 @@ static void Xlib_copy_surface_on_screen(IDirectDrawSurface4Impl* This) {
   SIZE imgsiz;
 
   /* Get XImage size */
-  imgsiz.cx = dspriv->image->width;
-  imgsiz.cy = dspriv->image->height;
+  imgsiz.cx = dspriv->info.image->width;
+  imgsiz.cy = dspriv->info.image->height;
 
   if (This->s.lpClipper) {
     HWND hWnd = ((IDirectDrawClipperImpl *) This->s.lpClipper)->hWnd;
@@ -225,7 +225,7 @@ static void Xlib_copy_surface_on_screen(IDirectDrawSurface4Impl* This) {
   
   if (This->s.ddraw->d->pixel_convert != NULL)
     This->s.ddraw->d->pixel_convert(This->s.surface_desc.u1.lpSurface,
-				   dspriv->image->data,
+				   dspriv->info.image->data,
 				   This->s.surface_desc.dwWidth,
 				   This->s.surface_desc.dwHeight,
 				   This->s.surface_desc.lPitch,
@@ -233,7 +233,7 @@ static void Xlib_copy_surface_on_screen(IDirectDrawSurface4Impl* This) {
 
   /* if the DIB section is in GdiMod state, we must
    * touch the surface to get any updates from the DIB */
-  Xlib_TouchData(dspriv->image->data);
+  Xlib_TouchData(dspriv->info.image->data);
 #ifdef HAVE_LIBXXSHM
     if (ddpriv->xshm_active) {
 /*
@@ -246,7 +246,7 @@ static void Xlib_copy_surface_on_screen(IDirectDrawSurface4Impl* This) {
 	TSXShmPutImage(display,
 		       drawable,
 		       DefaultGCOfScreen(X11DRV_GetXScreen()),
-		       dspriv->image,
+		       dspriv->info.image,
 		       adjust[0].x, adjust[0].y, adjust[1].x, adjust[1].y,
 		       imgsiz.cx, imgsiz.cy,
 		       True
@@ -258,7 +258,7 @@ static void Xlib_copy_surface_on_screen(IDirectDrawSurface4Impl* This) {
 	TSXPutImage(display,
 		    drawable,
 		    DefaultGCOfScreen(X11DRV_GetXScreen()),
-		    dspriv->image,
+		    dspriv->info.image,
 		    adjust[0].x, adjust[0].y, adjust[1].x, adjust[1].y,
 		    imgsiz.cx, imgsiz.cy
 		    );
@@ -276,7 +276,7 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Unlock(
 	return DD_OK; */
 
     /* Only redraw the screen when unlocking the buffer that is on screen */
-    if (dspriv->image && VISIBLE(This)) {
+    if (dspriv->info.image && VISIBLE(This)) {
 	Xlib_copy_surface_on_screen(This);
 	if (This->s.palette) {
     	    DPPRIVATE(This->s.palette);
@@ -288,6 +288,56 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Unlock(
      * matched pairs! - Marcus Meissner 20000509 */
     return DD_OK;
 }
+
+#ifdef HAVE_XVIDEO
+static void Xlib_copy_overlay_on_screen(IDirectDrawSurface4Impl* This) {
+  DSPRIVATE(This);
+  DDPRIVATE(This->s.ddraw);
+  Drawable drawable = ddpriv->drawable;
+
+  if (!drawable) {
+    WND *tmpWnd = WIN_FindWndPtr(This->s.ddraw->d->window);
+    drawable = X11DRV_WND_GetXWindow(tmpWnd);
+    WIN_ReleaseWndPtr(tmpWnd);
+
+    /* We don't have a context for this window. Host off the desktop */
+    if( !drawable ) {
+	FIXME("Have to use Desktop Root Window??? Bummer.\n");
+	drawable = X11DRV_WND_GetXWindow(WIN_GetDesktop());
+	WIN_ReleaseDesktop();
+    }
+    ddpriv->drawable = drawable;
+  }
+
+#ifdef HAVE_LIBXXSHM
+    if (ddpriv->xshm_active) {
+	/* let WaitShmCompletions track 'em for now */
+	/* (you may want to track it again whenever you implement DX7's partial
+	* surface locking, where threads have concurrent access) */
+	X11DRV_EVENT_PrepareShmCompletion( ddpriv->drawable );
+	TSXvShmPutImage(display, ddpriv->port_id, drawable, DefaultGCOfScreen(X11DRV_GetXScreen()),
+			dspriv->info.overlay.image,
+			dspriv->info.overlay.src_rect.left, dspriv->info.overlay.src_rect.top,
+			dspriv->info.overlay.src_rect.right - dspriv->info.overlay.src_rect.left,
+			dspriv->info.overlay.src_rect.bottom - dspriv->info.overlay.src_rect.top,
+			dspriv->info.overlay.dst_rect.left, dspriv->info.overlay.dst_rect.top,
+			dspriv->info.overlay.dst_rect.right - dspriv->info.overlay.dst_rect.left,
+			dspriv->info.overlay.dst_rect.bottom - dspriv->info.overlay.dst_rect.top,
+			True);
+	/* make sure the image is transferred ASAP */
+	TSXFlush(display);
+    } else
+#endif
+      TSXvPutImage(display, ddpriv->port_id, drawable, DefaultGCOfScreen(X11DRV_GetXScreen()),
+		   dspriv->info.overlay.image,
+		   dspriv->info.overlay.src_rect.left, dspriv->info.overlay.src_rect.top,
+		   dspriv->info.overlay.src_rect.right - dspriv->info.overlay.src_rect.left,
+		   dspriv->info.overlay.src_rect.bottom - dspriv->info.overlay.src_rect.top,
+		   dspriv->info.overlay.dst_rect.left, dspriv->info.overlay.dst_rect.top,
+		   dspriv->info.overlay.dst_rect.right - dspriv->info.overlay.dst_rect.left,
+		   dspriv->info.overlay.dst_rect.bottom - dspriv->info.overlay.dst_rect.top);
+}
+#endif
 
 HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Flip(
     LPDIRECTDRAWSURFACE4 iface,LPDIRECTDRAWSURFACE4 flipto,DWORD dwFlags
@@ -301,9 +351,9 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Flip(
     IDirectDrawSurface4Impl* iflipto=(IDirectDrawSurface4Impl*)flipto;
 
     TRACE("(%p)->Flip(%p,%08lx)\n",This,iflipto,dwFlags);
-    if (!This->s.ddraw->d->paintable)
+    if ((!This->s.ddraw->d->paintable) && (dspriv->is_overlay == FALSE))
 	return DD_OK;
-
+    
     iflipto = _common_find_flipto(This,iflipto);
     fspriv = (x11_ds_private*)iflipto->private;
 
@@ -313,16 +363,28 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Flip(
     This->s.surface_desc.u1.lpSurface	= iflipto->s.surface_desc.u1.lpSurface;
     iflipto->s.surface_desc.u1.lpSurface	= surf;
 
-    /* the associated ximage */
-    image		= dspriv->image;
-    dspriv->image	= fspriv->image;
-    fspriv->image	= image;
+    /* the associated ximage
+
+       NOTE : for XVideo, the pointer to the XvImage is at the same position
+              in memory than the standard XImage. This means that this code
+	      still works :-)
+    */
+    image		= dspriv->info.image;
+    dspriv->info.image	= fspriv->info.image;
+    fspriv->info.image	= image;
 
     if (dspriv->opengl_flip) {
 #ifdef HAVE_OPENGL
       ENTER_GL();
       glXSwapBuffers(display, ddpriv->drawable);
       LEAVE_GL();
+#endif
+    } else if (dspriv->is_overlay) {
+#ifdef HAVE_XVIDEO
+      if (dspriv->info.overlay.shown)
+	Xlib_copy_overlay_on_screen(This);
+#else
+      ERR("Why was this code activated WITHOUT XVideo support ?\n");
 #endif
     } else {
 #ifdef HAVE_LIBXXSHM
@@ -432,24 +494,32 @@ ULONG WINAPI Xlib_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 iface) {
     VirtualFree(This->s.surface_desc.u1.lpSurface, 0, MEM_RELEASE);
 
     /* Now free the XImages and the respective screen-side surfaces */
-    if (dspriv->image != NULL) {
-	if (dspriv->image->data != This->s.surface_desc.u1.lpSurface)
-	    VirtualFree(dspriv->image->data, 0, MEM_RELEASE);
+    if (dspriv->info.image != NULL) {
+	if (dspriv->info.image->data != This->s.surface_desc.u1.lpSurface)
+	    VirtualFree(dspriv->info.image->data, 0, MEM_RELEASE);
 #ifdef HAVE_LIBXXSHM
 	if (ddpriv->xshm_active) {
 	    TSXShmDetach(display, &(dspriv->shminfo));
-	    TSXDestroyImage(dspriv->image);
+	    if (This->s.surface_desc.ddsCaps.dwCaps & DDSCAPS_OVERLAY) {
+	      TSXFree(dspriv->info.image);
+	    } else {
+	      TSXDestroyImage(dspriv->info.image);
+	    }
 	    shmdt(dspriv->shminfo.shmaddr);
 	} else 
 #endif
 	{
+	  if (This->s.surface_desc.ddsCaps.dwCaps & DDSCAPS_OVERLAY) {
+	    TSXFree(dspriv->info.image);
+	  } else {
 	    /* normal X Image memory was never allocated by X, but always by 
 	     * ourselves -> Don't let X free our imagedata.
 	     */
-	    dspriv->image->data = NULL;
-	    TSXDestroyImage(dspriv->image);
+	    dspriv->info.image->data = NULL;
+	    TSXDestroyImage(dspriv->info.image);
+	  }
 	}
-	dspriv->image = 0;
+	dspriv->info.image = 0;
     }
 
     if (This->s.palette)
@@ -492,6 +562,108 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_GetDC(LPDIRECTDRAWSURFACE4 iface,HDC
     return result;
 }
 
+#ifdef HAVE_XVIDEO
+typedef struct {
+  BOOL shown;
+  LPRECT src_rect;
+  LPRECT dst_rect;
+  LPDIRECTDRAWSURFACE dest_surface;
+} UpdateOverlayEnumerate;
+
+static HRESULT WINAPI enum_func(LPDIRECTDRAWSURFACE lpDDSurface,
+				LPDDSURFACEDESC lpDDSurfaceDesc,  
+				LPVOID lpContext) {
+  ICOM_THIS(IDirectDrawSurface4Impl,lpDDSurface);
+  DSPRIVATE(This);
+  UpdateOverlayEnumerate *ctx = (UpdateOverlayEnumerate *) lpContext;
+
+  if ((lpDDSurfaceDesc->ddsCaps.dwCaps) & DDSCAPS_BACKBUFFER) {
+    TRACE("Upgrading surface %p\n", lpDDSurface);
+
+    if (ctx->shown) {
+      dspriv->info.overlay.shown = TRUE;
+      dspriv->info.overlay.src_rect = *(ctx->src_rect);
+      dspriv->info.overlay.dst_rect = *(ctx->dst_rect);
+      dspriv->info.overlay.dest_surface = ctx->dest_surface;
+    } else {
+      dspriv->info.overlay.shown = FALSE;
+    }
+  }
+  
+  return DDENUMRET_OK;
+}
+#endif
+
+HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_UpdateOverlay(
+    LPDIRECTDRAWSURFACE4 iface, LPRECT lpSrcRect,
+    LPDIRECTDRAWSURFACE4 lpDDDestSurface, LPRECT lpDestRect, DWORD dwFlags,
+    LPDDOVERLAYFX lpDDOverlayFx
+) {
+  ICOM_THIS(IDirectDrawSurface4Impl,iface);
+#ifdef HAVE_XVIDEO
+  DSPRIVATE(This);
+  DDPRIVATE(This->s.ddraw);
+
+  if (ddpriv->xvideo_active) {
+    TRACE("(%p)->(%p,%p,%p,0x%08lx,%p)\n", This,
+	  lpSrcRect, lpDDDestSurface, lpDestRect, dwFlags, lpDDOverlayFx );
+
+    if (TRACE_ON(ddraw)) {
+      DPRINTF(" - dwFlags : ");
+      _dump_DDOVERLAY(dwFlags);
+      
+      if (lpSrcRect)  DPRINTF(" - src  rectangle :%dx%d-%dx%d\n",lpSrcRect->left,lpSrcRect->top,
+			      lpSrcRect->right,lpSrcRect->bottom);
+      if (lpDestRect) DPRINTF(" - dest rectangle :%dx%d-%dx%d\n",lpDestRect->left,lpDestRect->top,
+			      lpDestRect->right,lpDestRect->bottom);
+    }
+    
+    if (dwFlags & DDOVER_SHOW) {
+      UpdateOverlayEnumerate ctx;
+      
+      dwFlags &= ~DDOVER_SHOW;
+
+      if ((lpSrcRect == NULL) || (lpDestRect == NULL)) {
+	FIXME("This is NOT supported yet...\n");
+	return DD_OK;
+      }
+      
+      /* Set the shown BOOL to TRUE and update the rectangles */
+      dspriv->info.overlay.shown = TRUE;
+      dspriv->info.overlay.src_rect = *lpSrcRect;
+      dspriv->info.overlay.dst_rect = *lpDestRect;
+      dspriv->info.overlay.dest_surface = (LPDIRECTDRAWSURFACE) lpDDDestSurface;
+
+      /* Now the same for the backbuffers */
+      ctx.shown = TRUE;
+      ctx.src_rect = lpSrcRect;
+      ctx.dst_rect = lpDestRect;
+      ctx.dest_surface = (LPDIRECTDRAWSURFACE) lpDDDestSurface;
+
+      IDirectDrawSurface4Impl_EnumAttachedSurfaces(iface, &ctx, enum_func);
+    } else if (dwFlags & DDOVER_HIDE) {
+      UpdateOverlayEnumerate ctx;
+      
+      dwFlags &= ~DDOVER_HIDE;
+
+      /* Set the shown BOOL to FALSE for all overlays */
+      dspriv->info.overlay.shown = FALSE;
+      ctx.shown = FALSE;
+      IDirectDrawSurface4Impl_EnumAttachedSurfaces(iface, &ctx, enum_func);
+    }
+
+    if (dwFlags && TRACE_ON(ddraw)) {
+      WARN("Unsupported flags : ");
+      _dump_DDOVERLAY(dwFlags);   
+    }
+  } else
+#endif
+    FIXME("(%p)->(%p,%p,%p,0x%08lx,%p) not supported without XVideo !\n", This,
+	  lpSrcRect, lpDDDestSurface, lpDestRect, dwFlags, lpDDOverlayFx );  
+
+  return DD_OK;
+}
+
 ICOM_VTABLE(IDirectDrawSurface4) xlib_dds4vt = 
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
@@ -528,7 +700,7 @@ ICOM_VTABLE(IDirectDrawSurface4) xlib_dds4vt =
     IDirectDrawSurface4Impl_SetOverlayPosition,
     Xlib_IDirectDrawSurface4Impl_SetPalette,
     Xlib_IDirectDrawSurface4Impl_Unlock,
-    IDirectDrawSurface4Impl_UpdateOverlay,
+    Xlib_IDirectDrawSurface4Impl_UpdateOverlay,
     IDirectDrawSurface4Impl_UpdateOverlayDisplay,
     IDirectDrawSurface4Impl_UpdateOverlayZOrder,
     IDirectDrawSurface4Impl_GetDDInterface,

@@ -51,6 +51,44 @@ void _dump_DDBLTFX(DWORD flagmask) {
     DPRINTF("\n");
 }
 
+void _dump_DDOVERLAY(DWORD flagmask) {
+    int	i;
+    const struct {
+	DWORD	mask;
+	char	*name;
+    } flags[] = {
+#define FE(x) { x, #x},
+	FE(DDOVER_ALPHADEST)
+	FE(DDOVER_ALPHADESTCONSTOVERRIDE)
+	FE(DDOVER_ALPHADESTNEG)
+	FE(DDOVER_ALPHADESTSURFACEOVERRIDE)
+	FE(DDOVER_ALPHAEDGEBLEND)
+	FE(DDOVER_ALPHASRC)
+	FE(DDOVER_ALPHASRCCONSTOVERRIDE)
+	FE(DDOVER_ALPHASRCNEG)
+	FE(DDOVER_ALPHASRCSURFACEOVERRIDE)
+	FE(DDOVER_HIDE)
+	FE(DDOVER_KEYDEST)
+	FE(DDOVER_KEYDESTOVERRIDE)
+	FE(DDOVER_KEYSRC)
+	FE(DDOVER_KEYSRCOVERRIDE)
+	FE(DDOVER_SHOW)
+	FE(DDOVER_ADDDIRTYRECT)
+	FE(DDOVER_REFRESHDIRTYRECTS)
+	FE(DDOVER_REFRESHALL)
+	FE(DDOVER_DDFX)
+	FE(DDOVER_AUTOFLIP)
+	FE(DDOVER_BOB)
+	FE(DDOVER_OVERRIDEBOBWEAVE)
+	FE(DDOVER_INTERLEAVED)
+#undef FE
+    };
+    for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
+	if (flags[i].mask & flagmask)
+	    DPRINTF("%s ",flags[i].name);
+    DPRINTF("\n");
+}
+
 void _dump_DDBLTFAST(DWORD flagmask) {
     int	i;
     const struct {
@@ -216,12 +254,13 @@ void _dump_pixelformat(void *in) {
     DPRINTF("( ");
     _dump_pixelformat_flag(pf->dwFlags);
     if (pf->dwFlags & DDPF_FOURCC) {
-	DPRINTF(", dwFourCC (%08lx) : %c%c%c%c",
-		pf->dwFourCC,
+	DPRINTF(", dwFourCC code '%c%c%c%c' (0x%08lx) - %ld bits per pixel",
 		(unsigned char)( pf->dwFourCC     &0xff),
 		(unsigned char)((pf->dwFourCC>> 8)&0xff),
 		(unsigned char)((pf->dwFourCC>>16)&0xff),
-		(unsigned char)((pf->dwFourCC>>24)&0xff)
+		(unsigned char)((pf->dwFourCC>>24)&0xff),
+		pf->dwFourCC,
+		pf->u.dwYUVBitCount
 	);
     }
     if (pf->dwFlags & DDPF_RGB) {

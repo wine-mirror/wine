@@ -402,4 +402,5 @@ extern void _dump_surface_desc(DDSURFACEDESC *lpddsd);
 extern void _dump_cooperativelevel(DWORD cooplevel);
 extern void _dump_surface_desc(DDSURFACEDESC *lpddsd);
 extern void _dump_DDCOLORKEY(void *in);
+extern void _dump_DDOVERLAY(DWORD flagmask) ;
 #endif /* __WINE_DLLS_DDRAW_DDRAW_PRIVATE_H */

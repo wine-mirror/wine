@@ -18,6 +18,13 @@
 # include "ts_xshm.h"
 #endif /* defined(HAVE_LIBXXSHM) */
 
+#ifdef HAVE_XVIDEO
+#include "ts_xvideo.h"
+#else
+/* Fake type so that NOT to have too many #ifdef XVideo lying around */
+typedef int XvImage;
+#endif
+
 #include "x11drv.h"
 
 #include "ddraw_private.h"
@@ -34,6 +41,10 @@ typedef struct x11_dd_private {
 #ifdef HAVE_LIBXXSHM
     int xshm_active, xshm_compl;
 #endif /* defined(HAVE_LIBXXSHM) */
+#ifdef HAVE_XVIDEO
+    BOOL xvideo_active;
+    XvPortID port_id;
+#endif
     Window drawable;
     void *device_capabilities;
 } x11_dd_private;
@@ -47,7 +58,18 @@ extern HRESULT WINAPI Xlib_IDirectDrawPaletteImpl_SetEntries(LPDIRECTDRAWPALETTE
 extern ULONG WINAPI Xlib_IDirectDrawPaletteImpl_Release(LPDIRECTDRAWPALETTE iface);
 
 typedef struct x11_ds_private {
-    XImage	*image;
+    BOOL is_overlay;
+    union {
+      XImage	*image;
+      struct {
+	/* The 'image' field should be in FIRST !!!! The Flip function depends on that... */
+	XvImage *image;
+	BOOL shown;
+	RECT src_rect;
+	RECT dst_rect;
+	LPDIRECTDRAWSURFACE dest_surface;
+      } overlay;
+    } info; 
 #ifdef HAVE_LIBXXSHM
     XShmSegmentInfo	shminfo;
 #endif
