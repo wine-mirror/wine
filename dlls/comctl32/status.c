@@ -848,6 +848,7 @@ STATUSBAR_WMCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     LPCREATESTRUCTA lpCreate = (LPCREATESTRUCTA)lParam;
     NONCLIENTMETRICSA nclm;
+    DWORD dwStyle;
     RECT	rect;
     int	        width, len;
     HDC	hdc;
@@ -898,6 +899,13 @@ STATUSBAR_WMCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	}
     }
 
+    dwStyle = GetWindowLongA(hwnd, GWL_STYLE);
+
+    /* statusbars on managed windows should not have SIZEGRIP style */
+    if ((dwStyle & SBARS_SIZEGRIP) && lpCreate->hwndParent)
+        if (GetWindowLongA(lpCreate->hwndParent, GWL_EXSTYLE) & WS_EX_MANAGED)
+            SetWindowLongA (hwnd, GWL_STYLE, dwStyle & ~SBARS_SIZEGRIP);
+
     if ((hdc = GetDC (0))) {
 	TEXTMETRICA tm;
 	HFONT hOldFont;
@@ -909,7 +917,7 @@ STATUSBAR_WMCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	ReleaseDC(0, hdc);
     }
 
-    if (GetWindowLongA (hwnd, GWL_STYLE) & SBT_TOOLTIPS) {
+    if (dwStyle & SBT_TOOLTIPS) {
 	self->hwndToolTip =
 	    CreateWindowExA (0, TOOLTIPS_CLASSA, NULL, 0,
 			       CW_USEDEFAULT, CW_USEDEFAULT,

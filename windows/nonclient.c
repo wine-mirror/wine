@@ -592,7 +592,7 @@ static void NC_GetInsideRect( HWND hwnd, RECT *rect )
     rect->right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
     rect->bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
-    if ((wndPtr->dwStyle & WS_ICONIC) || (wndPtr->flags & WIN_MANAGED)) goto END;
+    if ((wndPtr->dwStyle & WS_ICONIC) || (wndPtr->dwExStyle & WS_EX_MANAGED)) goto END;
 
     /* Remove frame from rectangle */
     if (HAS_THICKFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
@@ -631,7 +631,7 @@ NC_GetInsideRect95 (HWND hwnd, RECT *rect)
     rect->right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
     rect->bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
-    if ((wndPtr->dwStyle & WS_ICONIC) || (wndPtr->flags & WIN_MANAGED)) goto END;
+    if ((wndPtr->dwStyle & WS_ICONIC) || (wndPtr->dwExStyle & WS_EX_MANAGED)) goto END;
 
     /* Remove frame from rectangle */
     if (HAS_THICKFRAME (wndPtr->dwStyle, wndPtr->dwExStyle))
@@ -681,7 +681,7 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT pt )
 
     if (wndPtr->dwStyle & WS_MINIMIZE) return HTCAPTION;
 
-    if (!(wndPtr->flags & WIN_MANAGED))
+    if (!(wndPtr->dwExStyle & WS_EX_MANAGED))
     {
         /* Check borders */
         if (HAS_THICKFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
@@ -816,7 +816,7 @@ static LONG NC_DoNCHitTest95 (WND *wndPtr, POINT pt )
 
     if (wndPtr->dwStyle & WS_MINIMIZE) return HTCAPTION;
 
-    if (!(wndPtr->flags & WIN_MANAGED))
+    if (!(wndPtr->dwExStyle & WS_EX_MANAGED))
     {
         /* Check borders */
         if (HAS_THICKFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
@@ -978,7 +978,7 @@ void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
     HBITMAP hbitmap;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-    if( !(wndPtr->flags & WIN_MANAGED) )
+    if( !(wndPtr->dwExStyle & WS_EX_MANAGED) )
     {
       NC_GetInsideRect( hwnd, &rect );
       hdcMem = CreateCompatibleDC( hdc );
@@ -1002,7 +1002,7 @@ static void NC_DrawMaxButton( HWND hwnd, HDC16 hdc, BOOL down )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     HDC hdcMem;
 
-    if( !(wndPtr->flags & WIN_MANAGED) )
+    if( !(wndPtr->dwExStyle & WS_EX_MANAGED) )
     {
       NC_GetInsideRect( hwnd, &rect );
       hdcMem = CreateCompatibleDC( hdc );
@@ -1028,7 +1028,7 @@ static void NC_DrawMinButton( HWND hwnd, HDC16 hdc, BOOL down )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     HDC hdcMem;
 
-    if( !(wndPtr->flags & WIN_MANAGED) )
+    if( !(wndPtr->dwExStyle & WS_EX_MANAGED) )
     {
       NC_GetInsideRect( hwnd, &rect );
       hdcMem = CreateCompatibleDC( hdc );
@@ -1065,7 +1065,7 @@ NC_DrawSysButton95 (HWND hwnd, HDC hdc, BOOL down)
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-    if( !(wndPtr->flags & WIN_MANAGED) )
+    if( !(wndPtr->dwExStyle & WS_EX_MANAGED) )
     {
 	HICON  hIcon;
 	RECT rect;
@@ -1112,7 +1112,7 @@ static void NC_DrawCloseButton95 (HWND hwnd, HDC hdc, BOOL down, BOOL bGrayed)
     HDC hdcMem;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-    if( !(wndPtr->flags & WIN_MANAGED) )
+    if( !(wndPtr->dwExStyle & WS_EX_MANAGED) )
     {
 	BITMAP bmp;
 	HBITMAP hBmp, hOldBmp;
@@ -1187,7 +1187,7 @@ static void NC_DrawMaxButton95(HWND hwnd,HDC16 hdc,BOOL down, BOOL bGrayed)
     HDC hdcMem;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-    if( !(wndPtr->flags & WIN_MANAGED))
+    if( !(wndPtr->dwExStyle & WS_EX_MANAGED))
     {
         BITMAP  bmp;
         HBITMAP  hBmp,hOldBmp;
@@ -1246,7 +1246,7 @@ static void  NC_DrawMinButton95(HWND hwnd,HDC16 hdc,BOOL down, BOOL bGrayed)
     HDC hdcMem;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-    if( !(wndPtr->flags & WIN_MANAGED))
+    if( !(wndPtr->dwExStyle & WS_EX_MANAGED))
         
     {
        BITMAP  bmp;
@@ -1460,7 +1460,7 @@ static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     char buffer[256];
 
-    if (wndPtr->flags & WIN_MANAGED)
+    if (wndPtr->dwExStyle & WS_EX_MANAGED)
     {
         WIN_ReleaseWndPtr(wndPtr);
         return;
@@ -1566,7 +1566,7 @@ static void  NC_DrawCaption95(
     HPEN  hPrevPen;
     HMENU hSysMenu;
 
-    if (wndPtr->flags & WIN_MANAGED)
+    if (wndPtr->dwExStyle & WS_EX_MANAGED)
     {
         WIN_ReleaseWndPtr(wndPtr);
         return;
@@ -1685,7 +1685,7 @@ static void NC_DoNCPaint( WND* wndPtr, HRGN clip, BOOL suppress_menupaint )
 
     SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
 
-    if (!(wndPtr->flags & WIN_MANAGED))
+    if (!(wndPtr->dwExStyle & WS_EX_MANAGED))
     {
         if (HAS_ANYFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
 	{
@@ -1816,7 +1816,7 @@ static void  NC_DoNCPaint95(
 
     SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
 
-    if(!(wndPtr->flags & WIN_MANAGED)) {
+    if(!(wndPtr->dwExStyle & WS_EX_MANAGED)) {
         if (HAS_BIGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle)) {
             DrawEdge (hdc, &rect, EDGE_RAISED, BF_RECT | BF_ADJUST);
         }
@@ -2139,7 +2139,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
     capturePoint = pt;
 
     if (IsZoomed(hwnd) || !IsWindowVisible(hwnd) ||
-        (wndPtr->flags & WIN_MANAGED)) goto END;
+        (wndPtr->dwExStyle & WS_EX_MANAGED)) goto END;
 
     if ((wParam & 0xfff0) == SC_MOVE)
     {

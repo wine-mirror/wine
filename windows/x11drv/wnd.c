@@ -320,7 +320,7 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
 	    ButtonPressMask | ButtonReleaseMask |
 	    FocusChangeMask | StructureNotifyMask;
 	  win_attr.override_redirect = FALSE;
-	  wndPtr->flags |= WIN_MANAGED;
+          wndPtr->dwExStyle |= WS_EX_MANAGED;
 	} else {
 	  win_attr.event_mask = ExposureMask | KeyPressMask |
 	    KeyReleaseMask | PointerMotionMask |
@@ -365,7 +365,7 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
       if (wndPtr->dwExStyle & WS_EX_TRAYWINDOW)
 	X11DRV_WND_DockWindow(wndPtr);
 
-      if (wndPtr->flags & WIN_MANAGED) 
+      if (wndPtr->dwExStyle & WS_EX_MANAGED) 
       {
 	  XClassHint *class_hints = TSXAllocClassHint();
 	  XSizeHints* size_hints = TSXAllocSizeHints();
@@ -417,7 +417,7 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
 	  wm_hints->flags = InputHint | StateHint | WindowGroupHint;
 	  wm_hints->input = True;
 
-	  if( wndPtr->flags & WIN_MANAGED )
+	  if (wndPtr->dwExStyle & WS_EX_MANAGED) 
 	  {
 	      X11DRV_WND_IconChanged(wndPtr);
 	      X11DRV_WND_SetIconHints(wndPtr, wm_hints);
@@ -555,7 +555,7 @@ void X11DRV_WND_ForceWindowRaise(WND *wndPtr)
     return;
   }
   
-  if( !wndPtr || !X11DRV_WND_GetXWindow(wndPtr) || (wndPtr->flags & WIN_MANAGED) )
+  if( !wndPtr || !X11DRV_WND_GetXWindow(wndPtr) || (wndPtr->dwExStyle & WS_EX_MANAGED) )
   {
       WIN_ReleaseDesktop();
     return;
@@ -589,7 +589,7 @@ void X11DRV_WND_ForceWindowRaise(WND *wndPtr)
  */
 static Window X11DRV_WND_FindDesktopXWindow( WND *wndPtr )
 {
-  if (!(wndPtr->flags & WIN_MANAGED))
+  if (!(wndPtr->dwExStyle & WS_EX_MANAGED))
     return X11DRV_WND_GetXWindow(wndPtr);
   else
     {
@@ -658,7 +658,7 @@ void X11DRV_WND_SetWindowPos(WND *wndPtr, const WINDOWPOS *winpos, BOOL bChangeP
 	  
 	  /* Tweak dialog window size hints */
 	  
-	  if ((winposPtr->flags & WIN_MANAGED) &&
+	  if ((winposPtr->dwExStyle & WS_EX_MANAGED) &&
                HAS_DLGFRAME(winposPtr->dwStyle,winposPtr->dwExStyle))
 	    {
 	      XSizeHints *size_hints = TSXAllocSizeHints();
@@ -821,7 +821,7 @@ void X11DRV_WND_SetFocus(WND *wndPtr)
   while (w && !((X11DRV_WND_DATA *) w->pDriverData)->window)
       w = w->parent;
   if (!w) w = wndPtr;
-  if (w->flags & WIN_MANAGED) return;
+  if (w->dwExStyle & WS_EX_MANAGED) return;
 
   if (!hwnd)	/* If setting the focus to 0, uninstall the colormap */
     {
@@ -1038,7 +1038,7 @@ BOOL X11DRV_WND_SetHostAttr(WND* wnd, INT ha, INT value)
             if (X11DRV_WND_IsZeroSizeWnd(wnd))
                 return TRUE;
 
-		    if( (wnd->flags & WIN_MANAGED) )
+		    if( (wnd->dwExStyle & WS_EX_MANAGED) )
 		    {
 			if( value )
 			{
@@ -1095,13 +1095,13 @@ BOOL X11DRV_WND_SetHostAttr(WND* wnd, INT ha, INT value)
 		   return TRUE;
 
 	case HAK_ICONS:	/* called when the icons change */
-	    if ( (wnd->flags & WIN_MANAGED) )
+	    if ( (wnd->dwExStyle & WS_EX_MANAGED) )
 		X11DRV_WND_UpdateIconHints(wnd);
 	    return TRUE;
 
 	case HAK_ACCEPTFOCUS: /* called when a window is disabled/enabled */
 
-		if( (wnd->flags & WIN_MANAGED) )
+		if( (wnd->dwExStyle & WS_EX_MANAGED) )
 		    return X11DRV_SetWMHint( display, wnd, InputHint, value );
 	}
     }

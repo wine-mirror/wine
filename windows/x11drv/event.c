@@ -487,12 +487,12 @@ static BOOL __check_query_condition( WND** pWndA, WND** pWndB )
   /* return TRUE if we have at least two managed windows */
   
   for( *pWndB = NULL; *pWndA; *pWndA = (*pWndA)->next )
-    if( (*pWndA)->flags & WIN_MANAGED &&
-	(*pWndA)->dwStyle & WS_VISIBLE ) break;
+    if( ((*pWndA)->dwExStyle & WS_EX_MANAGED) &&
+	((*pWndA)->dwStyle & WS_VISIBLE )) break;
   if( *pWndA )
     for( *pWndB = (*pWndA)->next; *pWndB; *pWndB = (*pWndB)->next )
-      if( (*pWndB)->flags & WIN_MANAGED &&
-	  (*pWndB)->dwStyle & WS_VISIBLE ) break;
+      if( ((*pWndB)->dwExStyle & WS_EX_MANAGED) &&
+	  ((*pWndB)->dwStyle & WS_VISIBLE )) break;
   return ((*pWndB) != NULL);
 }
 
@@ -584,7 +584,7 @@ static HWND EVENT_QueryZOrder( HWND hWndCheck)
 
 	      if( pWnd != pWndCheck )
               {
-		  if( !(pWnd->flags & WIN_MANAGED) ||
+		  if( !(pWnd->dwExStyle & WS_EX_MANAGED) ||
 		      !(w = __get_top_decoration( X11DRV_WND_GetXWindow(pWnd), parent )) )
 		    continue;
 		  pos = __td_lookup( w, children, total );
@@ -1827,7 +1827,7 @@ void EVENT_MapNotify( HWND hWnd, XMapEvent *event )
   HWND hwndFocus = GetFocus();
   WND *wndFocus = WIN_FindWndPtr(hwndFocus);
   WND *pWnd = WIN_FindWndPtr(hWnd);
-  if (pWnd && (pWnd->flags & WIN_MANAGED))
+  if (pWnd && (pWnd->dwExStyle & WS_EX_MANAGED))
   {
       DCE_InvalidateDCE( pWnd, &pWnd->rectWindow );
       pWnd->dwStyle &= ~WS_MINIMIZE;
@@ -1851,7 +1851,7 @@ void EVENT_MapNotify( HWND hWnd, XMapEvent *event )
 void EVENT_UnmapNotify( HWND hWnd, XUnmapEvent *event )
 {
   WND *pWnd = WIN_FindWndPtr(hWnd);
-  if (pWnd && (pWnd->flags & WIN_MANAGED))
+  if (pWnd && (pWnd->dwExStyle & WS_EX_MANAGED))
   {
       EndMenu();
       if( pWnd->dwStyle & WS_VISIBLE )

@@ -2441,6 +2441,7 @@ DECL_WINELIB_TYPE_AW(LPICONMETRICS)
 
 /* WINE internal... */
 #define WS_EX_TRAYWINDOW	0x80000000L
+#define WS_EX_MANAGED		0x40000000L /* Window managed by the window system */
 
 /* Window scrolling */
 #define SW_SCROLLCHILDREN      0x0001

@@ -154,7 +154,6 @@ typedef struct
 #define WIN_NATIVE	       0x0020 /* Directly mapped to the window provided by the driver */
 #define WIN_NEED_SIZE          0x0040 /* Internal WM_SIZE is needed */
 #define WIN_NCACTIVATED        0x0080 /* last WM_NCACTIVATE was positive */
-#define WIN_MANAGED            0x0100 /* Window managed by the window system */
 #define WIN_ISDIALOG           0x0200 /* Window is a dialog */
 #define WIN_ISWIN32            0x0400 /* Understands Win32 messages */
 #define WIN_NEEDS_SHOW_OWNEDPOPUP 0x0800 /* WM_SHOWWINDOW:SC_SHOW must be sent in the next ShowOwnedPopup call */

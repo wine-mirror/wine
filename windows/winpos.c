@@ -461,7 +461,7 @@ INT16 WINPOS_WindowFromPoint( WND* wndScope, POINT16 pt, WND **ppWnd )
 	    goto end;
     }
    
-    if( wndScope->flags & WIN_MANAGED )
+    if( wndScope->dwExStyle & WS_EX_MANAGED)
     {
 	/* In managed mode we have to check wndScope first as it is also
 	 * a window which received the mouse event. */
@@ -1112,7 +1112,7 @@ BOOL WINPOS_ShowIconTitle( WND* pWnd, BOOL bShow )
 {
     LPINTERNALPOS lpPos = (LPINTERNALPOS)GetPropA( pWnd->hwndSelf, atomInternalPos );
 
-    if( lpPos && !(pWnd->flags & WIN_MANAGED))
+    if( lpPos && !(pWnd->dwExStyle & WS_EX_MANAGED))
     {
 	HWND16 hWnd = lpPos->hwndIconTitle;
 
@@ -1159,7 +1159,7 @@ void WINPOS_GetMinMaxInfo( WND *wndPtr, POINT *maxSize, POINT *maxPos,
     MinMax.ptMaxTrackSize.x = GetSystemMetrics(SM_CXSCREEN);
     MinMax.ptMaxTrackSize.y = GetSystemMetrics(SM_CYSCREEN);
 
-    if (wndPtr->flags & WIN_MANAGED) xinc = yinc = 0;
+    if (wndPtr->dwExStyle & WS_EX_MANAGED) xinc = yinc = 0;
     else if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
     {
         xinc = GetSystemMetrics(SM_CXDLGFRAME);
@@ -1824,7 +1824,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
     if( IsIconic( hwndPrevActive ) ) WINPOS_RedrawIconTitle(hwndPrevActive);
 
     /* managed windows will get ConfigureNotify event */  
-    if (wndPtr && !(wndPtr->dwStyle & WS_CHILD) && !(wndPtr->flags & WIN_MANAGED))
+    if (wndPtr && !(wndPtr->dwStyle & WS_CHILD) && !(wndPtr->dwExStyle & WS_EX_MANAGED))
     {
 	/* check Z-order and bring hWnd to the top */
 	for (wndTemp = WIN_LockWndPtr(WIN_GetDesktop()->child); wndTemp; WIN_UpdateWndPtr(&wndTemp,wndTemp->next))
@@ -2785,7 +2785,7 @@ Pos:  /* -----------------------------------------------------------------------
 		   * only the nonclient area by setting bit gravity hint for the host window system.
 		   */
 
-		    if( !(wndPtr->flags & WIN_MANAGED) )
+		    if( !(wndPtr->dwExStyle & WS_EX_MANAGED) )
 		    {
 			HRGN hrgn = CreateRectRgn( 0, 0, newWindowRect.right - newWindowRect.left,
 						     newWindowRect.bottom - newWindowRect.top);
@@ -2816,7 +2816,7 @@ Pos:  /* -----------------------------------------------------------------------
 
 		wndPtr->dwStyle |= WS_VISIBLE;
 
-		if (wndPtr->flags & WIN_MANAGED) resync = TRUE; 
+		if (wndPtr->dwExStyle & WS_EX_MANAGED) resync = TRUE; 
 
 		/* focus was set to unmapped window, reset host focus 
 		 * since the window is now visible */

@@ -2675,7 +2675,7 @@ BOOL WIN_InternalShowOwnedPopups( HWND owner, BOOL fShow, BOOL unmanagedOnly )
             {
                 if ( IsWindowVisible(pWnd[count]->hwndSelf) &&                   /* hide only if window is visible */
                      !( pWnd[count]->flags & WIN_NEEDS_INTERNALSOP ) &&          /* don't hide if previous call already did it */
-                     !( unmanagedOnly && (pWnd[count]->flags & WIN_MANAGED ) ) ) /* don't hide managed windows if unmanagedOnly is TRUE */
+                     !( unmanagedOnly && (pWnd[count]->dwExStyle & WS_EX_MANAGED) ) ) /* don't hide managed windows if unmanagedOnly is TRUE */
                 {
                     /*
                      * Call ShowWindow directly because an application can intercept WM_SHOWWINDOW messages
