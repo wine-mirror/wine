@@ -1,7 +1,7 @@
 /*		DirectDraw - IDirectPalette base interface
  *
  * Copyright 1997-2000 Marcus Meissner
- * Copyright 2000 TransGaming Technologies Inc.
+ * Copyright 2000-2001 TransGaming Technologies Inc.
  */
 
 #include "config.h"
@@ -38,6 +38,12 @@ HRESULT Main_DirectDrawPalette_Construct(IDirectDrawPaletteImpl* This,
     This->flags = dwFlags;
     This->palNumEntries = Main_DirectDrawPalette_Size(dwFlags);
     This->ref = 1;
+
+    This->local.lpGbl = &This->global;
+    This->local.lpDD_lcl = &pDD->local;
+    This->global.lpDD_lcl = &pDD->local;
+    This->global.dwProcessId = GetCurrentProcessId();
+
     This->final_release = Main_DirectDrawPalette_final_release;
     ICOM_INIT_INTERFACE(This, IDirectDrawPalette, DDRAW_Main_Palette_VTable);
 
