@@ -480,6 +480,10 @@ static void BUTTON_DrawPushButton(
 	    
 	    imageWidth  = bm.bmWidth;
 	    imageHeight = bm.bmHeight;
+
+            DeleteObject(iconInfo.hbmColor);
+            DeleteObject(iconInfo.hbmMask);
+
 	}
 	else
 	{
@@ -495,17 +499,15 @@ static void BUTTON_DrawPushButton(
 	xOffset = (((rc.right - rc.left) - 2*xBorderOffset) - imageWidth ) / 2;
 	yOffset = (((rc.bottom - rc.top) - 2*yBorderOffset) - imageHeight) / 2;
 
-	/* If the image is to big for the button */
-	if (xOffset < 0)
+	/* If the image is too big for the button then create a region*/
+        if(xOffset < 0 || yOffset < 0)
 	{
-	    imageWidth = rc.right - rc.left - 2*xBorderOffset -1;
-	    xOffset = xBorderOffset;
-	}
-
-	if (yOffset < 0)
-	{
-	    imageHeight = rc.bottom - rc.top - 2*yBorderOffset -1;
-	    yOffset = yBorderOffset;
+            HRGN hBitmapRgn = NULL;
+            hBitmapRgn = CreateRectRgn(
+                rc.left + xBorderOffset, rc.top +yBorderOffset, 
+                rc.right - xBorderOffset, rc.bottom - yBorderOffset);
+            SelectClipRgn(hDC, hBitmapRgn);
+            DeleteObject(hBitmapRgn);
 	}
 
 	/* Let minimum 1 space from border */
@@ -517,8 +519,7 @@ static void BUTTON_DrawPushButton(
 	if (wndPtr->dwStyle & BS_ICON)
 	{
   	    DrawIcon(hDC,
-		     rc.left + xOffset, 
-		     rc.top  + yOffset, 
+                rc.left + xOffset, rc.top + yOffset,
 		     (HICON)infoPtr->hImage);
 	}
 	else
@@ -535,6 +536,11 @@ static void BUTTON_DrawPushButton(
 	    
 	    DeleteDC (hdcMem);
 	}
+
+        if(xOffset < 0 || yOffset < 0)
+        {
+            SelectClipRgn(hDC, NULL);
+        }
     }
 
     if (TWEAK_WineLook != WIN31_LOOK
