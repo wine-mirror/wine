@@ -1,5 +1,3 @@
-/* TODO : WS_CLIPCHILDREN in cdlg*.h
-   fix CHOOSECOLORW (lpCustColor) */
 /*
  * COMMDLG - Color Dialog
  *
@@ -1451,9 +1449,7 @@ BOOL WINAPI ChooseColorA( LPCHOOSECOLORA lpChCol )
 
 {
   BOOL ret;
-  WCHAR *wstr = NULL;
-  LPCHOOSECOLORW lpcc = HeapAlloc( GetProcessHeap(), 0, sizeof(CHOOSECOLORW));
-
+  LPCHOOSECOLORW lpcc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CHOOSECOLORW));
   lpcc->lStructSize = sizeof(*lpcc);
   lpcc->hwndOwner = lpChCol->hwndOwner;
   lpcc->hInstance = lpChCol->hInstance;
@@ -1462,15 +1458,14 @@ BOOL WINAPI ChooseColorA( LPCHOOSECOLORA lpChCol )
   lpcc->Flags = lpChCol->Flags;
   lpcc->lCustData = lpChCol->lCustData;
   lpcc->lpfnHook = (LPCCHOOKPROC) lpChCol->lpfnHook;
-  if (lpChCol->lpTemplateName)
-    wstr = HEAP_strdupAtoW( GetProcessHeap(), 0, lpChCol->lpTemplateName);
-  lpcc->lpTemplateName = wstr;
+  if ((lpcc->Flags & CC_ENABLETEMPLATE) && (lpChCol->lpTemplateName))
+      lpcc->lpTemplateName = HEAP_strdupAtoW(GetProcessHeap(), 0, lpChCol->lpTemplateName);
   
   ret = ChooseColorW(lpcc);
 
-  if ( ret )
+  if (ret)
       lpChCol->rgbResult = lpcc->rgbResult;
-  if ( wstr ) HeapFree( GetProcessHeap(), 0, wstr);
-  HeapFree( GetProcessHeap(), 0, lpcc );
+  if (lpcc->lpTemplateName) HeapFree(GetProcessHeap(), 0, lpcc->lpTemplateName);
+  HeapFree(GetProcessHeap(), 0, lpcc);
   return ret;
 }
