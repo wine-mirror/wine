@@ -4,13 +4,14 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = shell32
 SOVERSION = 1.0
-ALTNAMES  = shell shlwapi
+ALTNAMES  = shell shlwapi shfolder
 IMPORTS   = ole32
 
 SPEC_SRCS = \
 	shell.spec \
 	shell32.spec \
-	shlwapi.spec
+	shlwapi.spec \
+	shfolder.spec
 
 C_SRCS = \
 	brsfolder.c \

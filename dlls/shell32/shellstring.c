@@ -126,7 +126,7 @@ HRESULT WINAPI StrRetToBufW (LPSTRRET src, LPITEMIDLIST pidl, LPWSTR dest, DWORD
  */
 LPSTR WINAPI StrChrA (LPCSTR str, INT c)
 {
-	TRACE("%s %i stub\n", str,c);
+	TRACE("%s %i\n", str,c);
 	return strchr(str, c);
 }
 

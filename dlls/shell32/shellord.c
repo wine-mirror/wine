@@ -1069,9 +1069,12 @@ DWORD WINAPI SHLWAPI_193 ()
 
 /*************************************************************************
  *      SHLWAPI_219	[SHLWAPI]
+ *
+ * NOTES
+ *  error codes: E_POINTER, E_NOINTERFACE
  */
 HRESULT WINAPI SHLWAPI_219 (
-	LPVOID w, /* returned by LocalAlloc */
+	LPVOID w, /* returned by LocalAlloc, 0x450 bytes, iface */
 	LPVOID x,
 	LPVOID y,
 	LPWSTR z) /* OUT: path */
@@ -1100,26 +1103,36 @@ HANDLE WINAPI SHLWAPI_222 (LPCLSID guid)
  *      SHLWAPI_223	[SHLWAPI]
  *
  * NOTES
- *  function guessed 
-*/
+ *  get the count of the semaphore
+ */
 DWORD WINAPI SHLWAPI_223 (HANDLE handle)
 {
 	DWORD oldCount;
 	
 	FIXME("(0x%08x) stub\n",handle);
 
-	ReleaseSemaphore( handle, 1, &oldCount);
-	WaitForSingleObject( handle, 0 );
-	return 0;
+	ReleaseSemaphore( handle, 1, &oldCount);	/* +1 */
+	WaitForSingleObject( handle, 0 );		/* -1 */
+	return oldCount;
 }
 
 /*************************************************************************
  *      SHLWAPI_237	[SHLWAPI]
+ *
+ * NOTES
+ *  checks if a class is registered, if not it registers it
  */
-DWORD WINAPI SHLWAPI_237 (LPVOID x)
+DWORD WINAPI SHLWAPI_237 (WNDCLASSW * lpWndClass)
 {
-	FIXME("(ptr=%p str=%s wstr=%s)\n",x,debugstr_a(x),debugstr_w(x));
-	return 0xabba1234;
+	WNDCLASSW WndClass;
+	
+	TRACE("(0x%08x %s)\n",lpWndClass->hInstance, debugstr_w(lpWndClass->lpszClassName));
+
+	if (!GetClassInfoW(lpWndClass->hInstance, lpWndClass->lpszClassName, &WndClass))
+	{
+	  return RegisterClassW(lpWndClass);
+	}
+	return TRUE;
 }
 
 /*************************************************************************

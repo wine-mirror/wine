@@ -588,10 +588,10 @@ LPWSTR WINAPI PathRemoveBlanksW(LPWSTR lpszPath);
 #define  PathRemoveBlanks WINELIB_NAME_AW(PathRemoveBlanks)
 LPVOID WINAPI PathRemoveBlanksAW(LPVOID lpszPath);
 
-LPSTR  WINAPI PathQuoteSpacesA(LPCSTR path);	
-LPWSTR WINAPI PathQuoteSpacesW(LPCWSTR path);	
+LPSTR  WINAPI PathQuoteSpacesA(LPSTR path);	
+LPWSTR WINAPI PathQuoteSpacesW(LPWSTR path);	
 #define  PathQuoteSpaces WINELIB_NAME_AW(PathQuoteSpaces)
-LPVOID  WINAPI PathQuoteSpacesAW(LPCVOID path);	
+LPVOID  WINAPI PathQuoteSpacesAW(LPVOID path);	
 
 void WINAPI PathUnquoteSpaces(LPSTR lpszPath);
 

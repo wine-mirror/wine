@@ -60,6 +60,7 @@ static struct tagDllOverride {
 	{"glide2x",			"so,native"},
 	{"odbc32",			"builtin"},
 	{"opengl32",                    "builtin,native"},
+	{"shfolder",                    "builtin,native"},
 	{NULL,NULL},
 };
 

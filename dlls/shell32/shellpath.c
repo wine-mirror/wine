@@ -417,7 +417,6 @@ LPSTR WINAPI PathGetArgsA(LPCSTR lpszPath)
 	  lpszPath++;
 	}
 	return (LPSTR)lpszPath;
-
 }
 
 /*************************************************************************
@@ -571,7 +570,7 @@ void WINAPI PathStripPathA(LPSTR lpszPath)
 	TRACE("%s\n", lpszPath);
 
 	if(lpszFileName)
-	  RtlMoveMemory(lpszPath, lpszFileName, strlen(lpszFileName)); 
+	  RtlMoveMemory(lpszPath, lpszFileName, strlen(lpszFileName)+1); 
 }
 
 /*************************************************************************
@@ -583,7 +582,7 @@ void WINAPI PathStripPathW(LPWSTR lpszPath)
 
 	TRACE("%s\n", debugstr_w(lpszPath));
 	if(lpszFileName)
-	  RtlMoveMemory(lpszPath, lpszFileName, lstrlenW(lpszFileName)*sizeof(WCHAR)); 
+	  RtlMoveMemory(lpszPath, lpszFileName, (lstrlenW(lpszFileName)+1)*sizeof(WCHAR)); 
 }
 
 /*************************************************************************
@@ -604,20 +603,18 @@ BOOL WINAPI PathStripToRootA(LPSTR lpszPath)
 	TRACE("%s\n", lpszPath);
 
 	/* X:\ */
-	if (lpszPath[1]==':' && lpszPath[2]=='\\')
+	if (lpszPath[1]==':' )
 	{
-	  lpszPath[3]='\0';
-	  return TRUE;
+	  if(lpszPath[2]=='\\')
+	  {
+	    lpszPath[3]='\0';
+	    return TRUE;
+	  }
+	  lpszPath[2]='\0';
+	  return FALSE;
 	}
 
-	/* "\" */
-	if (lpszPath[0]=='\\')
-	{
-	  lpszPath[1]='\0';
-	  return TRUE;
-	}
-
-	/* UNC "\\<computer>\<share>" */
+	/* UNC "\\<computer>\<share>" FIXME: not complete*/
 	if (lpszPath[0]=='\\' && lpszPath[1]=='\\')		
 	{
 	  int foundbackslash = 0;
@@ -634,6 +631,14 @@ BOOL WINAPI PathStripToRootA(LPSTR lpszPath)
 	  }
 	}
 
+	/* "\" */
+	if (lpszPath[0]=='\\')
+	{
+	  lpszPath[1]='\0';
+	  return TRUE;
+	}
+
+	lpszPath[0]='\0';
 	return FALSE;
 }
 
@@ -645,18 +650,17 @@ BOOL WINAPI PathStripToRootW(LPWSTR lpszPath)
 	TRACE("%s\n", debugstr_w(lpszPath));
 
 	/* X:\ */
-	if (lpszPath[1]==':' && lpszPath[2]=='\\')
+	if (lpszPath[1]==':' )
 	{
-	  lpszPath[3]='\0';
-	  return TRUE;
+	  if(lpszPath[2]=='\\')
+	  {
+	    lpszPath[3]='\0';
+	    return TRUE;
+	  }
+	  lpszPath[2]='\0';
+	  return FALSE;
 	}
 
-	/* "\" */
-	if (lpszPath[0]=='\\')
-	{
-	  lpszPath[1]='\0';
-	  return TRUE;
-	}
 
 	/* UNC "\\<computer>\<share>" */
 	if (lpszPath[0]=='\\' && lpszPath[1]=='\\')		
@@ -675,6 +679,14 @@ BOOL WINAPI PathStripToRootW(LPWSTR lpszPath)
 	  }
 	}
 
+	/* "\" */
+	if (lpszPath[0]=='\\')
+	{
+	  lpszPath[1]='\0';
+	  return TRUE;
+	}
+
+	lpszPath[0]=(WCHAR)'\0';
 	return FALSE;
 }
 
@@ -690,32 +702,54 @@ BOOL WINAPI PathStripToRootAW(LPVOID lpszPath)
 
 /*************************************************************************
  * PathRemoveArgsA	[SHLWAPI.@]
+ *
+ * NOTES
+ *  returns pointer to last character, not void
  */
-void WINAPI PathRemoveArgsA(LPSTR lpszPath)
+LPSTR WINAPI PathRemoveArgsA(LPSTR lpszPath)
 {
-	LPSTR lpszArgs = PathGetArgsA(lpszPath);
+	BOOL	qflag = FALSE;
+	LPSTR	pPos = lpszPath;
+	
+	TRACE("%s\n",lpszPath);
 
-	TRACE("%s\n", lpszPath);
-
-	if (lpszArgs) *(--lpszArgs)='\0';
+	while (*lpszPath) 
+	{
+	  if (!qflag && *lpszPath==' ') break;
+	  if (*lpszPath=='"') qflag=!qflag;
+	  lpszPath++;
+	  if (*lpszPath) pPos++;
+	};
+	*lpszPath = '\0';
+	return pPos;
 }
 
 /*************************************************************************
  * PathRemoveArgsW	[SHLWAPI.@]
  */
-void WINAPI PathRemoveArgsW(LPWSTR lpszPath)
+LPWSTR WINAPI PathRemoveArgsW(LPWSTR lpszPath)
 {
-	LPWSTR lpszArgs = PathGetArgsW(lpszPath);
+	BOOL	qflag = FALSE;
+	LPWSTR	pPos = lpszPath;
+	
 
 	TRACE("%s\n", debugstr_w(lpszPath));
 
-	if (lpszArgs) *(--lpszArgs)='\0';
+	while (*lpszPath) 
+	{
+	  if (!qflag && *lpszPath==(WCHAR)' ') break;
+	  if (*lpszPath==(WCHAR)'"') qflag=!qflag;
+	  lpszPath++;
+	  if (*lpszPath) pPos++;
+	};
+	*lpszPath = (WCHAR)'\0';
+	return pPos;
 }
 
 /*************************************************************************
  * PathRemoveArgsAW	[SHELL32.251]
  */
-void WINAPI PathRemoveArgsAW(LPVOID lpszPath) 
+LPVOID WINAPI PathRemoveArgsAW(LPVOID lpszPath) 
 {
 	if (VERSION_OsIsUnicode())
 	  return PathRemoveArgsW(lpszPath);
@@ -764,6 +798,8 @@ void WINAPI PathRemoveExtensionAW(LPVOID lpszPath)
  * Otherwise 
  * the address of the last character is returned.
  *
+ * FIXME
+ *  "c:\": keep backslash
  */
 LPSTR WINAPI PathRemoveBackslashA( LPSTR lpszPath )
 {
@@ -878,27 +914,48 @@ LPVOID WINAPI PathRemoveBlanksAW(LPVOID str)
 /*************************************************************************
  * PathQuoteSpacesA [SHLWAPI.@]
  * 
- * NOTES
  */
-LPSTR WINAPI PathQuoteSpacesA(LPCSTR lpszPath)
+LPSTR WINAPI PathQuoteSpacesA(LPSTR lpszPath)
 {
-	FIXME("%s\n",lpszPath);
+	TRACE("%s\n",lpszPath);
+
+	if(StrChrA(lpszPath,' '))
+	{
+	  int len = strlen(lpszPath);
+	  RtlMoveMemory(lpszPath+1, lpszPath, len);
+	  *(lpszPath++) = '"';
+	  lpszPath += len;
+	  *(lpszPath++) = '"';
+	  *(lpszPath) = '\0';
+	  return --lpszPath;
+	}
 	return 0;
 }
 
 /*************************************************************************
  * PathQuoteSpacesW [SHLWAPI.@]
  */
-LPWSTR WINAPI PathQuoteSpacesW(LPCWSTR lpszPath)
+LPWSTR WINAPI PathQuoteSpacesW(LPWSTR lpszPath)
 {
-	FIXME("%s\n",debugstr_w(lpszPath));
-	return 0;	
+	TRACE("%s\n",debugstr_w(lpszPath));
+
+	if(StrChrW(lpszPath,' '))
+	{
+	  int len = lstrlenW(lpszPath);
+	  RtlMoveMemory(lpszPath+1, lpszPath, len*sizeof(WCHAR));
+	  *(lpszPath++) = '"';
+	  lpszPath += len;
+	  *(lpszPath++) = '"';
+	  *(lpszPath) = '\0';
+	  return --lpszPath;
+	}
+	return 0;
 }
 
 /*************************************************************************
  * PathQuoteSpacesAW [SHELL32.55]
  */
-LPVOID WINAPI PathQuoteSpacesAW (LPCVOID lpszPath)
+LPVOID WINAPI PathQuoteSpacesAW (LPVOID lpszPath)
 {
 	if(VERSION_OsIsUnicode())
 	  return PathQuoteSpacesW(lpszPath);
@@ -969,6 +1026,8 @@ int WINAPI PathParseIconLocationA(LPSTR lpszPath)
 	  lpstrComma[0]='\0';
 /*	  return atoi(&lpstrComma[1]);	FIXME */
 	}
+	
+	PathUnquoteSpacesA(lpszPath);
 	return 0;
 }
 
@@ -986,6 +1045,7 @@ int WINAPI PathParseIconLocationW(LPWSTR lpszPath)
 	  lpstrComma[0]='\0';
 /*	  return _wtoi(&lpstrComma[1]);	FIXME */
 	}
+	PathUnquoteSpacesW(lpszPath);
 	return 0;
 }
 
@@ -1092,7 +1152,7 @@ BOOL WINAPI PathIsRootA(LPCSTR lpszPath)
 	  {
 	    if (*(lpszPath++)=='\\') foundbackslash++;
 	  }
-	  if (foundbackslash==1)
+	  if (foundbackslash <= 1)
 	    return TRUE;
 	}
 	return FALSE;
@@ -1122,7 +1182,7 @@ BOOL WINAPI PathIsRootW(LPCWSTR lpszPath)
 	  {
 	    if (*(lpszPath++)=='\\') foundbackslash++;
 	  }
-	  if (foundbackslash==1)
+	  if (foundbackslash <= 1)
 	    return TRUE;
 	}
 	return FALSE;
@@ -1480,7 +1540,7 @@ BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
 	while(SupportedProtocol[i])
 	{
 	  if (iSize == strlen(SupportedProtocol[i]))
-	    if(!strncasecmp(lpstrPath, SupportedProtocol[i], iSize));
+	    if(!strncasecmp(lpstrPath, SupportedProtocol[i], iSize))
 	      return TRUE;
 	  i++;
 	}
@@ -1510,7 +1570,7 @@ BOOL WINAPI PathIsURLW(LPCWSTR lpstrPath)
 	while(SupportedProtocol[i])
 	{
 	  if (iSize == strlenW(SupportedProtocol[i]))
-	    if(!strncmpiW(lpstrPath, SupportedProtocol[i], iSize));
+	    if(!strncmpiW(lpstrPath, SupportedProtocol[i], iSize))
 	      return TRUE;
 	  i++;
 	}
@@ -1987,11 +2047,21 @@ BOOL WINAPI SHGetSpecialFolderPathA (
 	}
 	RegCloseKey(hKey);
 
-	if (bCreate && CreateDirectoryA(szPath,NULL))
+	/* if we don't care about existing directorys we are ready */
+	if(csidl & CSIDL_FLAG_DONT_VERIFY) return TRUE;
+
+	if (PathFileExistsA(szPath)) return TRUE;
+
+	/* not existing but we not allowed to create it */
+	if (!bCreate) return FALSE;
+	
+	if (!CreateDirectoryA(szPath,NULL))
 	{
-	    MESSAGE("Created not existing system directory '%s'\n", szPath);
+	  ERR("Failed to create directory '%s'.\n", szPath);
+	  return FALSE;
 	}
 
+	MESSAGE("Created not existing system directory '%s'\n", szPath);
 	return TRUE;
 }
 
@@ -2029,6 +2099,40 @@ BOOL WINAPI SHGetSpecialFolderPathAW (
 	if (VERSION_OsIsUnicode())
 	  return SHGetSpecialFolderPathW (hwndOwner, szPath, csidl, bCreate);
 	return SHGetSpecialFolderPathA (hwndOwner, szPath, csidl, bCreate);
+}
+
+/*************************************************************************
+ * SHGetFolderPathA			[SHFOLDER.@]
+ */
+HRESULT SHGetFolderPathA(
+	HWND hwndOwner,
+	int nFolder,
+	HANDLE hToken,	/* FIXME: get paths for specific user */
+	DWORD dwFlags,	/* FIXME: SHGFP_TYPE_CURRENT|SHGFP_TYPE_DEFAULT */
+	LPSTR pszPath)
+{
+	return (SHGetSpecialFolderPathA(
+		hwndOwner,
+		pszPath,
+		CSIDL_FOLDER_MASK & nFolder,
+		CSIDL_FLAG_CREATE & nFolder )) ? S_OK : E_FAIL;
+}
+
+/*************************************************************************
+ * SHGetFolderPathW			[SHFOLDER.@]
+ */
+HRESULT SHGetFolderPathW(
+	HWND hwndOwner,
+	int nFolder,
+	HANDLE hToken,
+	DWORD dwFlags,
+	LPWSTR pszPath)
+{
+	return (SHGetSpecialFolderPathW(
+		hwndOwner,
+		pszPath,
+		CSIDL_FOLDER_MASK & nFolder,
+		CSIDL_FLAG_CREATE & nFolder )) ? S_OK : E_FAIL;
 }
 
 /*************************************************************************
@@ -2178,16 +2282,30 @@ BOOL WINAPI PathCanonicalizeW(LPWSTR pszBuf, LPCWSTR pszPath)
 /*************************************************************************
  * PathFindNextComponentA
  *
- * Windows returns a pointer NULL (BO 000605)
- */
+ * NOTES
+ * special cases:
+ *	""              null
+ *	aa              "" (pointer to traling NULL)
+ *	aa\             "" (pointer to traling NULL)
+ *	aa\\            "" (pointer to traling NULL)
+ *	aa\\bb          bb
+ *	aa\\\bb         \bb
+ *	c:\aa\          "aa\"
+ *	\\aa            aa
+ *	\\aa\b          aa\b
+*/
 LPSTR WINAPI PathFindNextComponentA(LPCSTR pszPath)
 {
-	while( *pszPath )
-	{
-	  if(*pszPath++=='\\')
-	    return (LPSTR) pszPath;
-	}
-	return (LPSTR) pszPath;
+	LPSTR pos;
+
+	TRACE("%s\n", pszPath);
+
+	if(!pszPath || !*pszPath) return NULL;
+	if(!(pos = StrChrA(pszPath, '\\')))
+	  return (LPSTR) pszPath + strlen(pszPath);
+	pos++;
+	if(pos[0] == '\\') pos++;
+	return pos;
 }
 
 /*************************************************************************
@@ -2195,12 +2313,16 @@ LPSTR WINAPI PathFindNextComponentA(LPCSTR pszPath)
  */
 LPWSTR WINAPI PathFindNextComponentW(LPCWSTR pszPath)
 {
-	while( *pszPath )
-	{
-	  if(*pszPath++=='\\')
-	    return (LPWSTR) pszPath;
-	}
-	return (LPWSTR) pszPath;
+	LPWSTR pos;
+
+	TRACE("%s\n", debugstr_w(pszPath));
+	
+	if(!pszPath || !*pszPath) return NULL;
+	if (!(pos = StrChrW(pszPath, '\\')))
+	  return (LPWSTR) pszPath + lstrlenW(pszPath);
+	pos++;
+	if(pos[0] == '\\') pos++;
+	return pos;
 }
 
 /*************************************************************************
@@ -2332,4 +2454,29 @@ BOOL WINAPI PathMakePrettyW(
 {
 	FIXME("%s\n", debugstr_w(lpPath));
 	return TRUE;
+
+}
+
+/*************************************************************************
+ *	PathCommonPrefixA
+ */
+int WINAPI PathCommonPrefixA(
+	LPCSTR pszFile1,
+	LPCSTR pszFile2,
+	LPSTR achPath)
+{
+	FIXME("%s %s %p\n", pszFile1, pszFile2, achPath);
+	return 0;
+}
+
+/*************************************************************************
+ *	PathCommonPrefixW
+ */
+int WINAPI PathCommonPrefixW(
+	LPCWSTR pszFile1,
+	LPCWSTR pszFile2,
+	LPWSTR achPath)
+{
+	FIXME("%s %s %p\n", debugstr_w(pszFile1), debugstr_w(pszFile2),achPath );
+	return 0;
 }

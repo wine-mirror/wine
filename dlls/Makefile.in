@@ -97,6 +97,7 @@ EXTRADLLNAMES = \
 	olesvr \
 	rasapi16 \
 	shell \
+	shfolder \
 	shlwapi \
 	storage \
 	system \
@@ -286,7 +287,7 @@ libriched32.@LIBEXT@: richedit/libriched32.@LIBEXT@
 libsetupx.@LIBEXT@: setupx/libsetupx.@LIBEXT@
 	$(RM) $@ && $(LN_S) setupx/libsetupx.@LIBEXT@ $@
 
-libshell32.@LIBEXT@ libshell.@LIBEXT@ libshlwapi.@LIBEXT@: shell32/libshell32.@LIBEXT@
+libshell32.@LIBEXT@ libshell.@LIBEXT@ libshlwapi.@LIBEXT@ libshfolder.@LIBEXT@: shell32/libshell32.@LIBEXT@
 	$(RM) $@ && $(LN_S) shell32/libshell32.@LIBEXT@ $@
 
 libsound.@LIBEXT@: sound/libsound.@LIBEXT@

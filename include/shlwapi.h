@@ -37,6 +37,10 @@ BOOL WINAPI PathStripToRootA(LPSTR pszPath);
 BOOL WINAPI PathStripToRootW(LPWSTR pszPath);
 #define PathStripToRoot WINELIB_NAME_AW(PathStripToRoot)
 
+LPSTR WINAPI StrChrA(LPCSTR lpStart, WORD wMatch);
+LPWSTR WINAPI StrChrW(LPCWSTR lpStart, WCHAR wMatch); 
+#define StrChr WINELIB_NAME_AW(StrChr)
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */

@@ -20,13 +20,10 @@ import	ole32.dll
    5 stub SHChangeNotifyUpdateEntryList@16
    6 stub CheckEscapesW@8
    7 stdcall CommandLineToArgvW(wstr ptr) CommandLineToArgvW
-   8 stdcall Control_FillCache_RunDLL (long long long long) Control_FillCache_RunDLL
    9 stub PifMgr_OpenProperties@16
   10 stub PifMgr_GetProperties@20
   11 stub PifMgr_SetProperties@20
-  12 stub Control_FillCache_RunDLLA@16
   13 stub PifMgr_CloseProperties@8
-  14 stub Control_FillCache_RunDLLW@16
   15 stdcall ILGetDisplayName(ptr ptr) ILGetDisplayName
   16 stdcall ILFindLastID(ptr) ILFindLastID
   17 stdcall ILRemoveLastID(ptr) ILRemoveLastID
@@ -34,7 +31,6 @@ import	ole32.dll
   19 stdcall ILCloneFirst (ptr) ILCloneFirst
   20 stdcall ILGlobalClone (ptr) ILGlobalClone
   21 stdcall ILIsEqual (ptr ptr) ILIsEqual
-  22 stdcall Control_RunDLL(long long long long) Control_RunDLL # exported by name
   23 stdcall ILIsParent (long long long) ILIsParent
   24 stdcall ILFindChild (long long) ILFindChild
   25 stdcall ILCombine(ptr ptr) ILCombine
@@ -53,8 +49,6 @@ import	ole32.dll
   38 stdcall PathStripPath(ptr)PathStripPathAW
   39 stdcall PathIsUNC (ptr) PathIsUNCAW
   40 stdcall PathIsRelative (ptr) PathIsRelativeAW
-  41 stub Control_RunDLLA@16
-  42 stub Control_RunDLLW@16
   43 stdcall PathIsExe (ptr) PathIsExeAW
   44 stub DoEnvironmentSubstA@8
   45 stdcall PathFileExists(ptr) PathFileExistsAW
@@ -113,7 +107,6 @@ import	ole32.dll
   98 stdcall SHGetRealIDL (long long long) SHGetRealIDL
   99 stdcall SetAppStartingCursor (long long) SetAppStartingCursor
  100 stdcall SHRestricted(long) SHRestricted
- 101 stub DragQueryFileAorW   # exported by name
  102 stdcall SHCoCreateInstance(ptr ptr long ptr ptr) SHCoCreateInstance
  103 stdcall SignalFileOpen(long) SignalFileOpen
  104 stdcall FileMenu_DeleteAllItems(long)FileMenu_DeleteAllItems
@@ -150,7 +143,6 @@ import	ole32.dll
  135 stdcall DragQueryPoint(long ptr) DragQueryPoint
  136 stdcall DAD_SetDragImage(long long) DAD_SetDragImage
  137 stdcall DAD_ShowDragImage (long) DAD_ShowDragImage
- 138 stub DuplicateIcon   # exported by name
  139 stub Desktop_UpdateBriefcaseOnEvent
  140 stdcall FileMenu_DeleteItemByIndex(long long) FileMenu_DeleteItemByIndex
  141 stdcall FileMenu_DeleteItemByFirstID(long long)FileMenu_DeleteItemByFirstID
@@ -217,48 +209,13 @@ import	ole32.dll
  213 stub Printers_RegisterWindowW
  214 stub Printers_UnregisterWindow
  215 stub SHStartNetConnectionDialog@12
- 216 stub ExtractVersionResource16W   # exported by name
- 217 stub FindExeDlgProc   # exported by name
- 218 stdcall FindExecutableA(ptr ptr ptr) FindExecutableA   # exported by name
- 219 stdcall FindExecutableW(wstr wstr wstr) FindExecutableW   # exported by name
- 220 stdcall FreeIconList(long) FreeIconList   # exported by name
- 221 stub InternalExtractIconListA   # exported by name
- 222 stub InternalExtractIconListW   # exported by name
- 223 stub OpenAs_RunDLL   # exported by name
- 224 stub OpenAs_RunDLLA   # exported by name
- 225 stub OpenAs_RunDLLW   # exported by name
- 226 stub PrintersGetCommand_RunDLL   # exported by name
- 227 stub PrintersGetCommand_RunDLLA   # exported by name
- 228 stub PrintersGetCommand_RunDLLW   # exported by name
- 229 stub RealShellExecuteA   # exported by name
- 230 stub RealShellExecuteExA   # exported by name
- 231 stub RealShellExecuteExW   # exported by name
- 232 stub RealShellExecuteW   # exported by name
- 233 stub RegenerateUserEnvironment   # exported by name
- 234 stdcall SHAddToRecentDocs (long ptr) SHAddToRecentDocs  # exported by name
- 235 stdcall SHAppBarMessage(long ptr) SHAppBarMessage   # exported by name
- 236 stdcall SHBrowseForFolder(ptr) SHBrowseForFolderA   # exported by name
- 237 stdcall SHBrowseForFolderA(ptr) SHBrowseForFolderA   # exported by name
- 238 stub SHBrowseForFolderW@4   # exported by name
- 239 stdcall SHChangeNotify (long long ptr ptr) SHChangeNotifyAW  # exported by name
- 240 stub SHEmptyRecycleBinA@12   # exported by name
- 241 stub SHEmptyRecycleBinW@12   # exported by name
  243 stdcall shell32_243(long long) shell32_243
- 244 stdcall SHInitRestricted(ptr ptr) SHInitRestricted # win98+ only, by ordinal
- 245 stub SHFormatDrive@16   # exported by name
- 246 stub SHFreeNameMappings@4   # exported by name
+ 244 stdcall SHInitRestricted(ptr ptr) SHInitRestricted
  247 stdcall SHGetDataFromIDListA (ptr ptr long ptr long) SHGetDataFromIDListA
  248 stdcall SHGetDataFromIDListW (ptr ptr long ptr long) SHGetDataFromIDListW
  249 stdcall PathParseIconLocation (ptr) PathParseIconLocationAW
  250 stdcall PathRemoveExtension (ptr) PathRemoveExtensionAW
  251 stdcall PathRemoveArgs (ptr) PathRemoveArgsAW
- 264 stdcall SHHelpShortcuts_RunDLL(long long long long) SHHelpShortcuts_RunDLL   # exported by name
- 265 stub SHHelpShortcuts_RunDLLA@16   # exported by name
- 266 stub SHHelpShortcuts_RunDLLW@16   # exported by name
- 267 stdcall SHLoadInProc(long) SHLoadInProc   # exported by name
- 268 stub SHQueryRecycleBinA@8   # exported by name
- 269 stub SHQueryRecycleBinW@8   # exported by name
- 270 stub SHUpdateRecycleBinIcon@0   # exported by name
  271 stub SheChangeDirA
  272 stub SheChangeDirExA
  273 stub SheChangeDirExW
@@ -283,7 +240,6 @@ import	ole32.dll
  292 stdcall ShellExecuteExA (long) ShellExecuteExA
  293 stdcall ShellExecuteExW (long) ShellExecuteExW
  294 stdcall ShellExecuteW (long wstr wstr wstr wstr long) ShellExecuteW
- 295 stub ShellHookProc   # exported by name
  296 stdcall Shell_NotifyIcon(long ptr) Shell_NotifyIcon
  297 stdcall Shell_NotifyIconA(long ptr) Shell_NotifyIconA
  298 stdcall Shell_NotifyIconW(long ptr) Shell_NotifyIconW
@@ -317,7 +273,6 @@ import	ole32.dll
  326 stdcall StrStrIA(str str)StrStrIA
  327 stdcall StrStrIW(wstr wstr)StrStrIW
  328 stdcall StrStrW(wstr wstr)StrStrW
- 329 stub WOWShellExecute # proper ordinal unknown
 
  505 stdcall SHRegCloseKey (long) SHRegCloseKey
  506 stdcall SHRegOpenKeyA (long str long) SHRegOpenKeyA
@@ -348,58 +303,122 @@ import	ole32.dll
  650 stdcall PathIsSameRoot(ptr ptr)PathIsSameRootAW
 
 # nt40/win98
- 651 stdcall ReadCabinetState (long long) ReadCabinetState 
+ 651 stdcall ReadCabinetState (long long) ReadCabinetState # OldReadCabinetState
  652 stdcall WriteCabinetState (long) WriteCabinetState
  653 stdcall PathProcessCommand (long long long long) PathProcessCommandAW
 
 # win98
- 654 stdcall shell32_654 (long long) shell32_654
-
- 660 stdcall FileIconInit (long) FileIconInit
-
- 680 stdcall IsUserAdmin () IsUserAdmin
+ 654 stdcall shell32_654(long long)shell32_654 # ReadCabinetState@8
+ 660 stdcall FileIconInit(long)FileIconInit
+ 680 stdcall IsUserAdmin()IsUserAdmin
 
 # >= NT5
- 714 stdcall SHELL32_714(ptr)SHELL32_714
-@    stdcall SHGetFolderLocation(long long long long ptr)SHGetFolderLocation
+ 714 stdcall SHELL32_714(ptr)SHELL32_714 # PathIsTemporaryW
 
 1217 stub FOOBAR1217   # no joke! This is the real name!!
 
-# later additions ... FIXME: incorrect ordinals
-# win 98 uses 2...330, 505..511, 520..526, 640..654, 660, 680, 700..707, 711
+#
+# version 4.0 (win95)
+# _WIN32_IE >= 0x0200
+#
+@ stdcall Control_FillCache_RunDLL(long long long long)Control_FillCache_RunDLL
+@ stub Control_FillCache_RunDLLA@16
+@ stub Control_FillCache_RunDLLW@16
+@ stdcall Control_RunDLL(long long long long)Control_RunDLL
+@ stub Control_RunDLLA@16
+@ stub Control_RunDLLW@16
+@ stdcall DllInstall(long wstr)SHELL32_DllInstall
+@ stdcall DoEnvironmentSubstA(str str)DoEnvironmentSubstA
+@ stdcall DoEnvironmentSubstW(wstr wstr)DoEnvironmentSubstW
+@ stub DragQueryFileAorW
+@ stub DuplicateIcon
+@ stdcall ExtractAssociatedIconA(long ptr long)ExtractAssociatedIconA 
+@ stub ExtractAssociatedIconExA 
+@ stub ExtractAssociatedIconExW 
+@ stub ExtractAssociatedIconW 
+@ stdcall ExtractIconA(long str long)ExtractIconA 
+@ stdcall ExtractIconEx(ptr long ptr ptr long)ExtractIconExAW
+@ stdcall ExtractIconExA(str long ptr ptr long)ExtractIconExA
+@ stdcall ExtractIconExW(wstr long ptr ptr long)ExtractIconExW
+@ stdcall ExtractIconW(long wstr long)ExtractIconW 
+@ stub ExtractIconResInfoA 
+@ stub ExtractIconResInfoW 
+@ stub ExtractVersionResource16W 
+@ stub FindExeDlgProc 
+@ stdcall FindExecutableA(ptr ptr ptr) FindExecutableA 
+@ stdcall FindExecutableW(wstr wstr wstr) FindExecutableW 
+@ stdcall FreeIconList(long) FreeIconList 
+@ stub InternalExtractIconListA
+@ stub InternalExtractIconListW
+@ stub OpenAs_RunDLL
+@ stub OpenAs_RunDLLA
+@ stub OpenAs_RunDLLW
+@ stub PrintersGetCommand_RunDLL
+@ stub PrintersGetCommand_RunDLLA
+@ stub PrintersGetCommand_RunDLLW
+@ stub RealShellExecuteA 
+@ stub RealShellExecuteExA 
+@ stub RealShellExecuteExW 
+@ stub RealShellExecuteW 
+@ stub RegenerateUserEnvironment 
+@ stdcall SHAddToRecentDocs (long ptr) SHAddToRecentDocs 
+@ stdcall SHAppBarMessage(long ptr) SHAppBarMessage 
+@ stdcall SHBrowseForFolder(ptr) SHBrowseForFolderA 
+@ stdcall SHBrowseForFolderA(ptr) SHBrowseForFolderA 
+@ stub SHBrowseForFolderW@4 
+@ stdcall SHChangeNotify (long long ptr ptr) SHChangeNotifyAW 
+@ stub ShellHookProc
+@ stub SHEmptyRecycleBinA@12 
+@ stub SHEmptyRecycleBinW@12 
+@ stdcall SHFileOperation(ptr)SHFileOperationAW
+@ stdcall SHFileOperationA(ptr)SHFileOperationA
+@ stdcall SHFileOperationW(ptr)SHFileOperationW
+@ stub SHFormatDrive@16 
+@ stub SHFreeNameMappings@4 
+@ stdcall SHGetDesktopFolder(ptr)SHGetDesktopFolder
+@ stdcall SHGetFileInfo(ptr long ptr long long)SHGetFileInfoAW
+@ stdcall SHGetFileInfoA(ptr long ptr long long)SHGetFileInfoA
+@ stdcall SHGetFileInfoW(ptr long ptr long long)SHGetFileInfoW
+@ stdcall SHGetInstanceExplorer(long)SHGetInstanceExplorer
+@ stdcall SHGetMalloc(ptr)SHGetMalloc
+@ stub SHGetNewLinkInfo@20
+@ stdcall SHGetPathFromIDList(ptr ptr)SHGetPathFromIDListAW
+@ stdcall SHGetPathFromIDListA(long long)SHGetPathFromIDListA
+@ stdcall SHGetPathFromIDListW(long long)SHGetPathFromIDListW
+@ stdcall SHGetSpecialFolderLocation(long long ptr)SHGetSpecialFolderLocation 
+@ stdcall SHHelpShortcuts_RunDLL(long long long long) SHHelpShortcuts_RunDLL 
+@ stub SHHelpShortcuts_RunDLLA@16 
+@ stub SHHelpShortcuts_RunDLLW@16 
+@ stdcall SHLoadInProc(long) SHLoadInProc 
+@ stub SHQueryRecycleBinA@8 
+@ stub SHQueryRecycleBinW@8 
+@ stub SHUpdateRecycleBinIcon@0 
+@ stub WOWShellExecute@28
 
+#
+# version 4.70 (IE3.0)
+# _WIN32_IE >= 0x0300
+#
 
-1220 stdcall DllGetVersion (ptr) SHELL32_DllGetVersion	# win98:201
-1221 stdcall SHGetSpecialFolderPathA(long ptr long long) SHGetSpecialFolderPathA	# win98:292
-1222 stdcall DoEnvironmentSubstA (str str) DoEnvironmentSubstA		# win98:293
-1223 stdcall DoEnvironmentSubstW (wstr wstr) DoEnvironmentSubstW	# win98:204
+#
+# version 4.71 (IE4.0)
+# _WIN32_IE >= 0x0400
+#
+@ stub DllCanUnloadNow
+@ stdcall DllGetVersion(ptr)SHELL32_DllGetVersion
+@ stub SHGetFreeDiskSpace
+@ stdcall SHGetSpecialFolderPathA(long ptr long long) SHGetSpecialFolderPathA
 
-# by-name routines
+#
+# version 4.72 (IE4.01)
+# _WIN32_IE >= 0x0401
+# no new exports
+#
 
- @ stdcall DllInstall (long wstr) SHELL32_DllInstall
-
- @ stdcall ExtractAssociatedIconA(long ptr long) ExtractAssociatedIconA   # exported by name
- @ stub ExtractAssociatedIconExA   # exported by name
- @ stub ExtractAssociatedIconExW   # exported by name
- @ stub ExtractAssociatedIconW   # exported by name
- @ stdcall ExtractIconA(long str long) ExtractIconA   # exported by name
- @ stdcall ExtractIconEx(ptr long ptr ptr long) ExtractIconExAW
- @ stdcall ExtractIconExA(str long ptr ptr long) ExtractIconExA
- @ stdcall ExtractIconExW(wstr long ptr ptr long) ExtractIconExW
- @ stdcall ExtractIconW(long wstr long) ExtractIconW   # exported by name
- @ stub ExtractIconResInfoA   # exported by name
- @ stub ExtractIconResInfoW   # exported by name
- @ stdcall SHFileOperation (ptr) SHFileOperationAW
- @ stdcall SHFileOperationA (ptr) SHFileOperationA
- @ stdcall SHFileOperationW (ptr) SHFileOperationW
- @ stdcall SHGetDesktopFolder(ptr) SHGetDesktopFolder
- @ stdcall SHGetFileInfo(ptr long ptr long long) SHGetFileInfoAW
- @ stdcall SHGetFileInfoA(ptr long ptr long long) SHGetFileInfoA
- @ stdcall SHGetFileInfoW(ptr long ptr long long) SHGetFileInfoW
- @ stdcall SHGetInstanceExplorer (long) SHGetInstanceExplorer
- @ stdcall SHGetMalloc(ptr) SHGetMalloc
- @ stub SHGetNewLinkInfo@20
- @ stdcall SHGetPathFromIDList(ptr ptr) SHGetPathFromIDListAW
- @ stdcall SHGetPathFromIDListA (long long) SHGetPathFromIDListA
- @ stdcall SHGetPathFromIDListW (long long) SHGetPathFromIDListW
- @ stdcall SHGetSpecialFolderLocation(long long ptr) SHGetSpecialFolderLocation   # exported by name
+#
+# version 5.00 (Win2K)
+# _WIN32_IE >= 0x0500
+#
+@ stdcall SHGetFolderPathA(long long long long ptr)SHGetFolderPathA
+@ stdcall SHGetFolderPathW(long long long long ptr)SHGetFolderPathW
+@ stdcall SHGetFolderLocation(long long long long ptr)SHGetFolderLocation

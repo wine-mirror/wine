@@ -465,8 +465,8 @@ type win32
 @ stdcall PathCanonicalizeW (ptr wstr) PathCanonicalizeW
 @ stdcall PathCombineA (ptr ptr ptr) PathCombineA
 @ stdcall PathCombineW (ptr ptr ptr) PathCombineW
-@ stub    PathCommonPrefixA
-@ stub    PathCommonPrefixW
+@ stdcall PathCommonPrefixA(str str ptr)PathCommonPrefixA
+@ stdcall PathCommonPrefixW(wstr wstr ptr)PathCommonPrefixW
 @ stub    PathCompactPathA
 @ stub    PathCompactPathExA
 @ stub    PathCompactPathExW
