@@ -129,6 +129,8 @@ typedef struct
     DWORD      dwDTFlags;       /* DrawText flags */
 
     COLORREF   clrInsertMark;   /* insert mark color */
+    COLORREF   clrBtnHighlight; /* color for Flat Separator */
+    COLORREF   clrBtnShadow;    /* color for Flag Separator */
     RECT     rcBound;         /* bounding rectangle */
     INT      iVersion;
 
@@ -168,6 +170,8 @@ typedef struct
                         TBSTYLE_EX_MIXEDBUTTONS | \
                         TBSTYLE_EX_HIDECLIPPEDBUTTONS)
 
+static LRESULT
+TOOLBAR_NotifyFormat(TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam);
 
 
 static LPWSTR
@@ -372,19 +376,28 @@ TOOLBAR_TestImageExist (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HIMAGELIST 
 
 
 static void
-TOOLBAR_DrawFlatSeparator (LPRECT lpRect, HDC hdc)
+TOOLBAR_DrawFlatSeparator (LPRECT lpRect, HDC hdc, TOOLBAR_INFO *infoPtr)
 {
-    INT x = (lpRect->left + lpRect->right) / 2 - 1;
-    INT yBottom = lpRect->bottom - 3;
-    INT yTop = lpRect->top + 1;
+    RECT myrect;
+    COLORREF oldcolor, newcolor;
 
-    SelectObject ( hdc, GetSysColorPen (COLOR_3DSHADOW));
-    MoveToEx (hdc, x, yBottom, NULL);
-    LineTo (hdc, x, yTop);
-    x++;
-    SelectObject ( hdc, GetSysColorPen (COLOR_3DHILIGHT));
-    MoveToEx (hdc, x, yBottom, NULL);
-    LineTo (hdc, x, yTop);
+    myrect.left = (lpRect->left + lpRect->right) / 2 - 1;
+    myrect.right = myrect.left + 1;
+    myrect.top = lpRect->top + 2;
+    myrect.bottom = lpRect->bottom - 2;
+
+    newcolor = infoPtr->clrBtnShadow;
+    oldcolor = SetBkColor (hdc, newcolor);
+    ExtTextOutA (hdc, 0, 0, ETO_OPAQUE, &myrect, 0, 0, 0);
+
+    myrect.left = myrect.right;
+    myrect.right = myrect.left + 1;
+
+    newcolor = infoPtr->clrBtnHighlight;
+    SetBkColor (hdc, newcolor);
+    ExtTextOutA (hdc, 0, 0, ETO_OPAQUE, &myrect, 0, 0, 0);
+
+    SetBkColor (hdc, oldcolor);
 }
 
 
@@ -400,7 +413,7 @@ TOOLBAR_DrawFlatSeparator (LPRECT lpRect, HDC hdc)
 * FIXME: It is possible that the height of each line is really SM_CYBORDER.
 */
 static void
-TOOLBAR_DrawDDFlatSeparator (LPRECT lpRect, HDC hdc, TBUTTON_INFO *btnPtr)
+TOOLBAR_DrawDDFlatSeparator (LPRECT lpRect, HDC hdc, TBUTTON_INFO *btnPtr, TOOLBAR_INFO *infoPtr)
 {
     RECT myrect;
     COLORREF oldcolor, newcolor;
@@ -415,14 +428,14 @@ TOOLBAR_DrawDDFlatSeparator (LPRECT lpRect, HDC hdc, TBUTTON_INFO *btnPtr)
     TRACE("rect=(%d,%d)-(%d,%d)\n",
 	  myrect.left, myrect.top, myrect.right, myrect.bottom);
 
-    newcolor = GetSysColor (COLOR_BTNSHADOW);
+    newcolor = infoPtr->clrBtnShadow;
     oldcolor = SetBkColor (hdc, newcolor);
     ExtTextOutA (hdc, 0, 0, ETO_OPAQUE, &myrect, 0, 0, 0);
 
     myrect.top = myrect.bottom;
     myrect.bottom = myrect.top + 1;
 
-    newcolor = GetSysColor (COLOR_BTNHIGHLIGHT);
+    newcolor = infoPtr->clrBtnHighlight;
     SetBkColor (hdc, newcolor);
     ExtTextOutA (hdc, 0, 0, ETO_OPAQUE, &myrect, 0, 0, 0);
 
@@ -636,9 +649,9 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
         /* when drawing the vertical bar...      */
         if ((dwStyle & TBSTYLE_FLAT) /* && (btnPtr->iBitmap == 0) */) {
 	    if (btnPtr->fsStyle & TBSTYLE_DROPDOWN)
-		TOOLBAR_DrawDDFlatSeparator (&rc, hdc, btnPtr);
+		TOOLBAR_DrawDDFlatSeparator (&rc, hdc, btnPtr, infoPtr);
 	    else
-		TOOLBAR_DrawFlatSeparator (&rc, hdc);
+		TOOLBAR_DrawFlatSeparator (&rc, hdc, infoPtr);
 	}
 	else if (btnPtr->fsStyle != TBSTYLE_SEP) {
 	    FIXME("Draw some kind of separator: fsStyle=%x\n",
@@ -1306,6 +1319,10 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 		nSepRows++;
 	    }
 	    x = infoPtr->nIndent;
+
+	    /* Increment row number unless this is the last button    */
+	    /* and it has Wrap set.                                   */
+	    if (i != infoPtr->nNumButtons-1)
 		nRows++;
 	}
 	else
@@ -2856,9 +2873,6 @@ TOOLBAR_GetButtonTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-/* << TOOLBAR_GetColorScheme >> */
-
-
 static LRESULT
 TOOLBAR_GetDisabledImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
@@ -3740,9 +3754,6 @@ TOOLBAR_SetCmdId (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-/* << TOOLBAR_SetColorScheme >> */
-
-
 static LRESULT
 TOOLBAR_SetDisabledImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
@@ -4098,6 +4109,33 @@ TOOLBAR_SetUnicodeFormat (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
+TOOLBAR_GetColorScheme (HWND hwnd, LPCOLORSCHEME lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+
+    lParam->clrBtnHighlight = infoPtr->clrBtnHighlight;
+    lParam->clrBtnShadow = infoPtr->clrBtnShadow;
+    return 1;
+}
+
+
+static LRESULT
+TOOLBAR_SetColorScheme (HWND hwnd, LPCOLORSCHEME lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+
+    TRACE("new colors Hl=%lx Shd=%lx, old colors Hl=%lx Shd=%lx\n",
+	  lParam->clrBtnHighlight, lParam->clrBtnShadow,
+	  infoPtr->clrBtnHighlight, infoPtr->clrBtnShadow);
+
+    infoPtr->clrBtnHighlight = lParam->clrBtnHighlight;
+    infoPtr->clrBtnShadow = lParam->clrBtnShadow;
+    InvalidateRect(hwnd, 0, 0);
+    return 0;
+}
+
+
+static LRESULT
 TOOLBAR_SetVersion (HWND hwnd, INT iVersion)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
@@ -4151,6 +4189,7 @@ TOOLBAR_Unkwn463 (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	break;
     case 1:
 	lpsize->cy = infoPtr->rcBound.bottom - infoPtr->rcBound.top;
+	/* lpsize->cy = infoPtr->nHeight; */
 	break;
     default:
 	ERR("Unknown wParam %d for Toolbar message [0463]. Please report\n",
@@ -4195,9 +4234,11 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->dwDTFlags = (dwStyle & TBSTYLE_LIST) ? DT_LEFT | DT_VCENTER | DT_SINGLELINE : DT_CENTER;
     infoPtr->bAnchor = FALSE; /* no anchor highlighting */
     infoPtr->iVersion = 0;
-    infoPtr->bNtfUnicode = FALSE;
     infoPtr->hwndSelf = hwnd;
     infoPtr->bDoRedraw = TRUE;
+    infoPtr->clrBtnHighlight = GetSysColor (COLOR_BTNHIGHLIGHT);
+    infoPtr->clrBtnShadow = GetSysColor (COLOR_BTNSHADOW);
+    TOOLBAR_NotifyFormat(infoPtr, (WPARAM)hwnd, (LPARAM)NF_REQUERY);
 
     SystemParametersInfoA (SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
     infoPtr->hFont = infoPtr->hDefaultFont = CreateFontIndirectA (&logFont);
@@ -4841,8 +4882,9 @@ TOOLBAR_Notify (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	}
 	else {
 	    lppgc->iHeight = infoPtr->nHeight;
-	    TRACE("processed PGN_CALCSIZE, returning vert size = %d\n", 
-		  infoPtr->nHeight);
+	    lppgc->iHeight = infoPtr->rcBound.bottom - infoPtr->rcBound.top;
+	    TRACE("processed PGN_CALCSIZE, returning vert size = %d or %d\n", 
+		  lppgc->iHeight, infoPtr->nHeight);
 	}
 	return 0;
     }
@@ -4851,7 +4893,12 @@ TOOLBAR_Notify (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TRACE("passing WM_NOTIFY!\n");
 
     if ((infoPtr->hwndToolTip) && (lpnmh->hwndFrom == infoPtr->hwndToolTip)) {
-	SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,	wParam, lParam);
+	if (infoPtr->bNtfUnicode)
+	    return SendMessageW (infoPtr->hwndNotify, WM_NOTIFY, 
+				 wParam, lParam);
+	else
+	    return SendMessageA (infoPtr->hwndNotify, WM_NOTIFY, 
+				 wParam, lParam);
 
 #if 0
 	if (lpnmh->code == TTN_GETDISPINFOA) {
@@ -4870,6 +4917,37 @@ TOOLBAR_Notify (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
 
     return 0;
+}
+
+
+static LRESULT
+TOOLBAR_NotifyFormatFake(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    /* remove this routine when Toolbar is improved to pass infoPtr
+     * around instead of hwnd.
+     */
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
+    return TOOLBAR_NotifyFormat(infoPtr, wParam, lParam);
+}
+
+
+static LRESULT
+TOOLBAR_NotifyFormat(TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+{
+    INT i;
+
+    if (lParam == NF_REQUERY) {
+	i = SendMessageA(GetParent(infoPtr->hwndSelf),
+			 WM_NOTIFYFORMAT, infoPtr->hwndSelf, NF_QUERY);
+	if ((i < NFR_ANSI) || (i > NFR_UNICODE)) {
+	    ERR("wrong response to WM_NOTIFYFORMAT (%d), assuming ANSI\n",
+		i);
+	    i = NFR_ANSI;
+	}
+	infoPtr->bNtfUnicode = (i == NFR_UNICODE) ? 1 : 0;
+	return (LRESULT)i;
+    }
+    return (LRESULT)((infoPtr->bUnicode) ? NFR_UNICODE : NFR_ANSI);
 }
 
 
@@ -5119,8 +5197,6 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case TB_GETBUTTONTEXTW:
 	    return TOOLBAR_GetButtonTextW (hwnd, wParam, lParam);
 
-/*	case TB_GETCOLORSCHEME:			*/ /* 4.71 */
-
 	case TB_GETDISABLEDIMAGELIST:
 	    return TOOLBAR_GetDisabledImageList (hwnd, wParam, lParam);
 
@@ -5170,9 +5246,6 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case TB_GETUNICODEFORMAT:
 	    return TOOLBAR_GetUnicodeFormat (hwnd, wParam, lParam);
-
-	case CCM_GETVERSION:
-	    return TOOLBAR_GetVersion (hwnd);
 
 	case TB_HIDEBUTTON:
 	    return TOOLBAR_HideButton (hwnd, wParam, lParam);
@@ -5250,8 +5323,6 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case TB_SETCMDID:
 	    return TOOLBAR_SetCmdId (hwnd, wParam, lParam);
 
-/*	case TB_SETCOLORSCHEME:			*/ /* 4.71 */
-
 	case TB_SETDISABLEDIMAGELIST:
 	    return TOOLBAR_SetDisabledImageList (hwnd, wParam, lParam);
 
@@ -5304,6 +5375,20 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case TB_UNKWN463:
 	    return TOOLBAR_Unkwn463 (hwnd, wParam, lParam);
+
+
+/* Common Control Messages */
+
+/*	case TB_GETCOLORSCHEME:			*/ /* identical to CCM_ */
+	case CCM_GETCOLORSCHEME:
+	    return TOOLBAR_GetColorScheme (hwnd, (LPCOLORSCHEME)lParam);
+
+/*	case TB_SETCOLORSCHEME:			*/ /* identical to CCM_ */
+	case CCM_SETCOLORSCHEME:
+	    return TOOLBAR_SetColorScheme (hwnd, (LPCOLORSCHEME)lParam);
+
+	case CCM_GETVERSION:
+	    return TOOLBAR_GetVersion (hwnd);
 
 	case CCM_SETVERSION:
 	    return TOOLBAR_SetVersion (hwnd, (INT)wParam);
@@ -5359,7 +5444,8 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_NOTIFY:
 	    return TOOLBAR_Notify (hwnd, wParam, lParam);
 
-/*	case WM_NOTIFYFORMAT: */
+	case WM_NOTIFYFORMAT:
+	    TOOLBAR_NotifyFormatFake (hwnd, wParam, lParam);
 
 	case WM_PAINT:
 	    return TOOLBAR_Paint (hwnd, wParam);
@@ -5389,6 +5475,10 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 else
                     return SendMessageA (GetParent (hwnd), uMsg, wParam, lParam);
             }
+
+	/* We see this in Outlook Express 5.x and just does DefWindowProc */
+        case PGM_FORWARDMOUSE:
+	    return DefWindowProcA (hwnd, uMsg, wParam, lParam);
 
 	default:
 	    if (uMsg >= WM_USER)
