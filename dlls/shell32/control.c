@@ -382,7 +382,7 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
 	end++;
     }
     while ((ptr = StrChrW(buffer, '"')))
-	memmove(ptr, ptr+1, lstrlenW(ptr));
+	memmove(ptr, ptr+1, lstrlenW(ptr)*sizeof(WCHAR));
 
     TRACE("cmd %s, extra %s, sp %d\n", debugstr_w(buffer), debugstr_w(extraPmts), sp);
 
