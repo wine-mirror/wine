@@ -28,6 +28,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winuser.h"
 #include "ddraw.h"
 #include "ddraw_private.h"
 #include "ddraw/main.h"
@@ -98,10 +99,6 @@ static BOOL
 IsValidDisplayMode(DWORD dwWidth, DWORD dwHeight, DWORD dwBPP,
 		   DWORD dwRefreshRate, DWORD dwFlags)
 {
-    if (dwWidth > GetSystemMetrics(SM_CXSCREEN)
-	|| dwHeight > GetSystemMetrics(SM_CYSCREEN))
-	return FALSE;
-
     switch (dwBPP)
     {
     case 8:
@@ -303,11 +300,7 @@ User_DirectDraw_create_backbuffer(IDirectDrawImpl* This,
 
 /* DuplicateSurface: generic */
 
-/* Derived from Xlib_IDirectDraw2Impl_EnumDisplayModes.
- * Very fake: just enumerate some arbitrary modes.
- *
- * The screen sizes are plausible-looking screen sizes and will be limited
- * by (virtual) screen size.
+/* Originally derived from Xlib_IDirectDraw2Impl_EnumDisplayModes.
  *
  * The depths are whatever DIBsections support on the client side.
  * Should they be limited by screen depth?
@@ -317,33 +310,15 @@ User_DirectDraw_EnumDisplayModes(LPDIRECTDRAW7 iface, DWORD dwFlags,
 				 LPDDSURFACEDESC2 pDDSD, LPVOID context,
 				 LPDDENUMMODESCALLBACK2 callback)
 {
-    struct mode
-    {
-	int width;
-	int height;
-    };
-
-    static const struct mode modes[] =
-    {
-	{ 512, 384 }, { 640, 400 }, { 640, 480 }, { 800, 600 }, { 1024, 768 },
-	{ 1152, 864 }, { 1280, 1024 }, { 1600, 1200 }
-    };
-
-    static const int num_modes = sizeof(modes)/sizeof(modes[0]);
-
     static const int num_pixelformats
 	= sizeof(pixelformats)/sizeof(pixelformats[0]);
 
     DDSURFACEDESC2 callback_sd;
+    DEVMODEW DevModeW;
 
-    int max_width, max_height;
     int i, j;
 
     TRACE("(%p)->(0x%08lx,%p,%p,%p)\n",iface,dwFlags,pDDSD,context,callback);
-
-    /* Unfortunately this is the virtual screen size, not physical. */
-    max_width = GetSystemMetrics(SM_CXSCREEN);
-    max_height = GetSystemMetrics(SM_CYSCREEN);
 
     ZeroMemory(&callback_sd, sizeof(callback_sd));
     callback_sd.dwSize = sizeof(callback_sd);
@@ -356,19 +331,17 @@ User_DirectDraw_EnumDisplayModes(LPDIRECTDRAW7 iface, DWORD dwFlags,
 
     callback_sd.u2.dwRefreshRate = 60.0;
 
-    for (i = 0; i < num_modes; i++)
+    i = 0;
+    while (EnumDisplaySettingsExW(NULL, i, &DevModeW, 0))
     {
-	if (modes[i].width > max_width || modes[i].height > max_height)
-	    continue;
-
-	callback_sd.dwHeight = modes[i].height;
-	callback_sd.dwWidth = modes[i].width;
+	callback_sd.dwHeight = DevModeW.dmPelsHeight;
+	callback_sd.dwWidth = DevModeW.dmPelsWidth;
 
 	TRACE("- mode: %ldx%ld\n", callback_sd.dwWidth, callback_sd.dwHeight);
 	for (j = 0; j < num_pixelformats; j++)
 	{
 	    callback_sd.u1.lPitch
-		= DDRAW_width_bpp_to_pitch(modes[i].width,
+		= DDRAW_width_bpp_to_pitch(DevModeW.dmPelsWidth,
 					   pixelformats[j].u1.dwRGBBitCount);
 
 	    callback_sd.u4.ddpfPixelFormat = pixelformats[j];
@@ -390,6 +363,7 @@ User_DirectDraw_EnumDisplayModes(LPDIRECTDRAW7 iface, DWORD dwFlags,
 	    if (callback(&callback_sd, context) == DDENUMRET_CANCEL)
 		return DD_OK;
 	}
+        i++;
     }
 
     return DD_OK;
@@ -550,10 +524,16 @@ User_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
     ICOM_THIS(IDirectDrawImpl, iface);
 
     const DDPIXELFORMAT* pixelformat;
+    DEVMODEW devmode;
     LONG pitch;
 
     TRACE("(%p)->(%ldx%ldx%ld,%ld Hz,%08lx)\n",This,dwWidth,dwHeight,dwBPP,dwRefreshRate,dwFlags);
-    if (!IsValidDisplayMode(dwWidth, dwHeight, dwBPP, dwRefreshRate, dwFlags))
+    devmode.dmFields = /* DM_BITSPERPEL | */ DM_PELSWIDTH | DM_PELSHEIGHT;
+    FIXME("Ignoring requested BPP (%ld)\n", dwBPP);
+    devmode.dmBitsPerPel = dwBPP;
+    devmode.dmPelsWidth  = dwWidth;
+    devmode.dmPelsHeight = dwHeight;
+    if (ChangeDisplaySettingsExW(NULL, &devmode, NULL, CDS_FULLSCREEN, NULL) != DISP_CHANGE_SUCCESSFUL)
 	return DDERR_INVALIDMODE;
 
     pixelformat = pixelformat_for_depth(dwBPP);
@@ -564,7 +544,6 @@ User_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
     }
 
     pitch = DDRAW_width_bpp_to_pitch(dwWidth, dwBPP);
-
     return Main_DirectDraw_SetDisplayMode(iface, dwWidth, dwHeight, pitch,
 					  dwRefreshRate, dwFlags, pixelformat);
 }
