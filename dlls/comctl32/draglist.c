@@ -19,7 +19,6 @@
  *
  * NOTES
  *   This is just a dummy control. An author is needed! Any volunteers?
- *   I will only improve this control once in a while.
  *     Eric <ekohl@abo.rhein-zeitung.de>
  *
  * TODO:
@@ -43,6 +42,12 @@ static DWORD dwLastScrollTime = 0;
 
 /***********************************************************************
  *		MakeDragList (COMCTL32.13)
+ *
+ * Makes a normal ListBox into a DragList by subclassing it.
+ *
+ * RETURNS
+ *      Success: Non-zero
+ *      Failure: Zero
  */
 BOOL WINAPI MakeDragList (HWND hwndLB)
 {
@@ -54,6 +59,11 @@ BOOL WINAPI MakeDragList (HWND hwndLB)
 
 /***********************************************************************
  *		DrawInsert (COMCTL32.15)
+ *
+ * Draws insert arrow by the side of the ListBox item in the parent window.
+ *
+ * RETURNS
+ *      Nothing.
  */
 VOID WINAPI DrawInsert (HWND hwndParent, HWND hwndLB, INT nItem)
 {
@@ -64,6 +74,12 @@ VOID WINAPI DrawInsert (HWND hwndParent, HWND hwndLB, INT nItem)
 
 /***********************************************************************
  *		LBItemFromPt (COMCTL32.14)
+ *
+ * Gets the index of the ListBox item under the specified point,
+ * scrolling if bAutoScroll is TRUE and pt is outside of the ListBox.
+ *
+ * RETURNS
+ *      The ListBox item ID if pt is over a list item or -1 otherwise.
  */
 INT WINAPI LBItemFromPt (HWND hwndLB, POINT pt, BOOL bAutoScroll)
 {
@@ -128,6 +144,3 @@ DRAGLIST_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 #endif
-
-
-

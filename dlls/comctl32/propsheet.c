@@ -2477,6 +2477,15 @@ static void PROPSHEET_CleanUp(HWND hwndDlg)
 /******************************************************************************
  *            PropertySheet    (COMCTL32.@)
  *            PropertySheetA   (COMCTL32.@)
+ *
+ * Creates a property sheet in the specified property sheet header.
+ *
+ * RETURNS
+ *     Modal property sheets: Positive if successful or -1 otherwise.
+ *     Modeless property sheets: Property sheet handle.
+ *     Or:
+ *| ID_PSREBOOTSYSTEM - The user must reboot the computer for the changes to take effect.
+ *| ID_PSRESTARTWINDOWS - The user must restart Windows for the changes to take effect.
  */
 INT WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
 {
@@ -2522,6 +2531,8 @@ INT WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
 
 /******************************************************************************
  *            PropertySheetW   (COMCTL32.@)
+ *
+ * See PropertySheetA.
  */
 INT WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
 {
@@ -2568,6 +2579,16 @@ INT WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
 /******************************************************************************
  *            CreatePropertySheetPage    (COMCTL32.@)
  *            CreatePropertySheetPageA   (COMCTL32.@)
+ *
+ * Creates a new property sheet page.
+ *
+ * RETURNS
+ *     Success: Handle to new property sheet page.
+ *     Failure: NULL.
+ *
+ * NOTES
+ *     An application must use the PSM_ADDPAGE message to add the new page to
+ *     an existing property sheet.
  */
 HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
                           LPCPROPSHEETPAGEA lpPropSheetPage)
@@ -2601,6 +2622,8 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
 
 /******************************************************************************
  *            CreatePropertySheetPageW   (COMCTL32.@)
+ *
+ * See CreatePropertySheetA.
  */
 HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage)
 {
@@ -2638,6 +2661,14 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW lpPropSheetPage
 
 /******************************************************************************
  *            DestroyPropertySheetPage   (COMCTL32.@)
+ *
+ * Destroys a property sheet page previously created with
+ * CreatePropertySheetA() or CreatePropertySheetW() and frees the associated
+ * memory.
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
  */
 BOOL WINAPI DestroyPropertySheetPage(HPROPSHEETPAGE hPropPage)
 {

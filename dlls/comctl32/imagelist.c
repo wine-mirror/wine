@@ -33,6 +33,7 @@
  *  TODO:
  *    - Add support for ILD_PRESERVEALPHA, ILD_SCALE, ILD_DPISCALE
  *    - Add support for ILS_GLOW, ILS_SHADOW, ILS_SATURATE, ILS_ALPHA
+ *    - Thread-safe locking
  *
  *  FIXME:
  *    - Hotspot handling still not correct. The Hotspot passed to BeginDrag
@@ -530,7 +531,9 @@ ImageList_Copy (HIMAGELIST himlDst, INT iDst,	HIMAGELIST himlSrc,
 
 
 /*************************************************************************
- * ImageList_Create [COMCTL32.@]  Creates a new image list.
+ * ImageList_Create [COMCTL32.@]
+ *
+ * Creates a new image list.
  *
  * PARAMS
  *     cx       [I] image height
@@ -543,7 +546,6 @@ ImageList_Copy (HIMAGELIST himlDst, INT iDst,	HIMAGELIST himlSrc,
  *     Success: Handle to the created image list
  *     Failure: NULL
  */
-
 HIMAGELIST WINAPI
 ImageList_Create (INT cx, INT cy, UINT flags,
 		  INT cInitial, INT cGrow)
@@ -960,7 +962,9 @@ ImageList_DragShowNolock (BOOL bShow)
 
 
 /*************************************************************************
- * ImageList_Draw [COMCTL32.@] Draws an image.
+ * ImageList_Draw [COMCTL32.@]
+ *
+ * Draws an image.
  *
  * PARAMS
  *     himl   [I] handle to image list
@@ -1041,7 +1045,7 @@ ImageList_DrawEx (HIMAGELIST himl, INT i, HDC hdc, INT x, INT y,
 /*************************************************************************
  * ImageList_DrawIndirect [COMCTL32.@]
  *
- * Draws an image using ...
+ * Draws an image using various parameters specified in pimldp.
  *
  * PARAMS
  *     pimldp [I] pointer to IMAGELISTDRAWPARAMS structure.
@@ -1207,7 +1211,9 @@ cleanup:
 
 
 /*************************************************************************
- * ImageList_Duplicate [COMCTL32.@] Duplicates an image list.
+ * ImageList_Duplicate [COMCTL32.@]
+ *
+ * Duplicates an image list.
  *
  * PARAMS
  *     himlSrc [I] source image list handle
@@ -1247,7 +1253,7 @@ ImageList_Duplicate (HIMAGELIST himlSrc)
 
 
 /*************************************************************************
- * ImageList_EndDrag [COMCTL32.@] Finishes a drag operation.
+ * ImageList_EndDrag [COMCTL32.@]
  *
  * Finishes a drag operation.
  *
@@ -1332,6 +1338,14 @@ ImageList_GetDragImage (POINT *ppt, POINT *pptHotspot)
 
 /*************************************************************************
  * ImageList_GetFlags [COMCTL32.@]
+ *
+ * Gets the flags of the specified image list.
+ *
+ * PARAMS
+ *     himl [I] Handle to image list
+ *
+ * RETURNS
+ *     Image list flags.
  *
  * BUGS
  *    Stub.
@@ -2019,7 +2033,9 @@ HIMAGELIST WINAPI ImageList_Read (LPSTREAM pstm)
 
 
 /*************************************************************************
- * ImageList_Remove [COMCTL32.@] Removes an image from an image list
+ * ImageList_Remove [COMCTL32.@]
+ *
+ * Removes an image from an image list
  *
  * PARAMS
  *     himl [I] image list handle
@@ -2443,6 +2459,15 @@ ImageList_SetFilter (HIMAGELIST himl, INT i, DWORD dwFilter)
 
 /*************************************************************************
  * ImageList_SetFlags [COMCTL32.@]
+ *
+ * Sets the image list flags.
+ *
+ * PARAMS
+ *     himl  [I] Handle to image list
+ *     flags [I] Flags to set
+ *
+ * RETURNS
+ *     Old flags?
  *
  * BUGS
  *    Stub.
