@@ -34,7 +34,7 @@ DECLARE_DEBUG_CHANNEL(fixup)
 DECLARE_DEBUG_CHANNEL(module)
 DECLARE_DEBUG_CHANNEL(segment)
 
-#define SEL(x) GlobalHandleToSel16(x)
+#define SEL(x) ((x)|1)
 
 /***********************************************************************
  *           NE_GetRelocAddrName
@@ -742,46 +742,6 @@ void NE_InitializeDLLs( HMODULE16 hModule )
 
 
 /***********************************************************************
- *           NE_CreateInstance
- *
- * If lib_only is TRUE, handle the module like a library even if it is a .EXE
- */
-HINSTANCE16 NE_CreateInstance( NE_MODULE *pModule, HINSTANCE16 *prev,
-                               BOOL lib_only )
-{
-    SEGTABLEENTRY *pSegment;
-    int minsize;
-    HINSTANCE16 hNewInstance;
-
-    if (pModule->dgroup == 0)
-    {
-        if (prev) *prev = pModule->self;
-        return pModule->self;
-    }
-
-    pSegment = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
-    if (prev) *prev = SEL(pSegment->hSeg);
-
-      /* if it's a library, create a new instance only the first time */
-    if (pSegment->hSeg)
-    {
-        if (pModule->flags & NE_FFLAGS_LIBMODULE) return SEL(pSegment->hSeg);
-        if (lib_only) return SEL(pSegment->hSeg);
-    }
-
-    minsize = pSegment->minsize ? pSegment->minsize : 0x10000;
-    if (pModule->ss == pModule->dgroup) minsize += pModule->stack_size;
-    minsize += pModule->heap_size;
-    hNewInstance = GLOBAL_Alloc( GMEM_ZEROINIT | GMEM_FIXED, minsize,
-                                 pModule->self, FALSE, FALSE, FALSE );
-    if (!hNewInstance) return 0;
-    pSegment->hSeg = hNewInstance;
-    pSegment->flags |= NE_SEGFLAGS_ALLOCATED;
-    return hNewInstance;
-}
-
-
-/***********************************************************************
  *           NE_Ne2MemFlags
  *
  * This function translates NE segment flags to GlobalAlloc flags
@@ -805,6 +765,49 @@ static WORD NE_Ne2MemFlags(WORD flags)
 #endif
     return memflags;
 }
+
+
+/***********************************************************************
+ *           NE_CreateInstance
+ *
+ * If lib_only is TRUE, handle the module like a library even if it is a .EXE
+ */
+HINSTANCE16 NE_CreateInstance( NE_MODULE *pModule, HINSTANCE16 *prev,
+                               BOOL lib_only )
+{
+    SEGTABLEENTRY *pSegment;
+    int minsize;
+    HINSTANCE16 hNewSeg;
+
+    if (pModule->dgroup == 0)
+    {
+        if (prev) *prev = pModule->self;
+        return pModule->self;
+    }
+
+    pSegment = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
+    if (prev) *prev = SEL(pSegment->hSeg);
+
+      /* if it's a library, create a new instance only the first time */
+    if (pSegment->hSeg)
+    {
+        if (pModule->flags & NE_FFLAGS_LIBMODULE) return SEL(pSegment->hSeg);
+        if (lib_only) return SEL(pSegment->hSeg);
+    }
+
+    minsize = pSegment->minsize ? pSegment->minsize : 0x10000;
+    if (pModule->ss == pModule->dgroup) minsize += pModule->stack_size;
+    minsize += pModule->heap_size;
+    hNewSeg = GLOBAL_Alloc( NE_Ne2MemFlags(pSegment->flags), minsize,
+                                 pModule->self, FALSE, FALSE, FALSE );
+    if (!hNewSeg) return 0;
+    pSegment->hSeg = hNewSeg;
+    pSegment->flags |= NE_SEGFLAGS_ALLOCATED;
+
+    /* a HINSTANCE is the selector of the DSEG */
+    return (HINSTANCE16)SEL(hNewSeg);
+}
+
 
 /***********************************************************************
  *           NE_AllocateSegment (WPROCS.26)
