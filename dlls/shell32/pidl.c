@@ -1503,7 +1503,7 @@ DWORD _ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize)
 	  ERR("-- no text\n");
 	}
 
-	TRACE("-- (%p=%s 0x%08lx)\n",szOut,(char*)szOut,dwReturn);
+	TRACE("-- (%p=%s 0x%08lx)\n",szOut,debugstr_a(szOut),dwReturn);
 	return dwReturn;
 }
 

@@ -260,7 +260,7 @@ HDRVR16 WINAPI OpenDriver16(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lP
     LPWINE_DRIVER	lpDrv = NULL;
     char		drvName[128];
 
-    TRACE("('%s', '%s', %08lX);\n", lpDriverName, lpSectionName, lParam2);
+    TRACE("(%s, %s, %08lX);\n", debugstr_a(lpDriverName), debugstr_a(lpSectionName), lParam2);
 
     if (!lpDriverName || !*lpDriverName) return 0;
 
@@ -277,7 +277,7 @@ HDRVR16 WINAPI OpenDriver16(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lP
 	lpDrv = DRIVER_TryOpenDriver16(drvName, lParam2);
     }
     if (!lpDrv) {
-	TRACE("Failed to open driver %s from system.ini file, section %s\n", lpDriverName, lpSectionName);
+	TRACE("Failed to open driver %s from system.ini file, section %s\n", debugstr_a(lpDriverName), debugstr_a(lpSectionName));
 	return 0;
     }
  the_end:

@@ -149,8 +149,8 @@ void COMM_Init(void)
 			else {
 				COM[x].handle = 0;
 				strcpy(COM[x].devicename, temp);
+				TRACE("%s = %s\n", option, COM[x].devicename);
 			}
-			TRACE("%s = %s\n", option, COM[x].devicename);
  		}
 
 		strcpy(option, "LPTx");
@@ -176,8 +176,8 @@ void COMM_Init(void)
 			else {
 				LPT[x].handle = 0;
 				strcpy(LPT[x].devicename, temp);
+				TRACE("%s = %s\n", option, LPT[x].devicename);
 			}
-			TRACE("%s = %s\n", option, LPT[x].devicename);
 		}
 
 	}

@@ -329,7 +329,7 @@ LPWINE_DRIVER	DRIVER_TryOpenDriver32(LPCSTR fn, LPARAM lParam2)
     LPSTR		ptr;
     LPCSTR		cause = 0;
 
-    TRACE("('%s', %08lX);\n", fn, lParam2);
+    TRACE("(%s, %08lX);\n", debugstr_a(fn), lParam2);
     
     if ((ptr = strchr(fn, ' ')) != NULL) {
 	*ptr++ = '\0';
@@ -349,14 +349,14 @@ LPWINE_DRIVER	DRIVER_TryOpenDriver32(LPCSTR fn, LPARAM lParam2)
     lpDrv->d.d32.hModule    = hModule;
     lpDrv->d.d32.dwDriverID = 0;
 
-    if (!DRIVER_AddToList(lpDrv, (LPARAM)ptr, lParam2)) {cause = "load faile"; goto exit;}
+    if (!DRIVER_AddToList(lpDrv, (LPARAM)ptr, lParam2)) {cause = "load failed"; goto exit;}
 
     TRACE("=> %p\n", lpDrv);
     return lpDrv;
  exit:
     FreeLibrary(hModule);
     HeapFree(GetProcessHeap(), 0, lpDrv);
-    TRACE("Unable to load 32 bit module \"%s\": %s\n", fn, cause);
+    TRACE("Unable to load 32 bit module %s: %s\n", debugstr_a(fn), cause);
     return NULL;
 }
 
@@ -370,7 +370,7 @@ static	LPWINE_DRIVER	DRIVER_TryOpenDriver16(LPCSTR fn, LPCSTR sn, LPARAM lParam2
     LPWINE_DRIVER 	lpDrv = NULL;
     LPCSTR		cause = 0;
 
-    TRACE("('%s', %08lX);\n", sn, lParam2);
+    TRACE("(%s, %08lX);\n", debugstr_a(sn), lParam2);
     
     lpDrv = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_DRIVER));
     if (lpDrv == NULL) {cause = "OOM"; goto exit;}
@@ -384,13 +384,13 @@ static	LPWINE_DRIVER	DRIVER_TryOpenDriver16(LPCSTR fn, LPCSTR sn, LPARAM lParam2
     if (lpDrv->d.d16.hDriver16 == 0) {cause = "Not a 16 bit driver"; goto exit;}
     lpDrv->dwFlags = WINE_GDF_16BIT;
 
-    if (!DRIVER_AddToList(lpDrv, 0, lParam2)) {cause = "load faile"; goto exit;}
+    if (!DRIVER_AddToList(lpDrv, 0, lParam2)) {cause = "load failed"; goto exit;}
 
     TRACE("=> %p\n", lpDrv);
     return lpDrv;
  exit:
     HeapFree(GetProcessHeap(), 0, lpDrv);
-    TRACE("Unable to load 32 bit module \"%s\": %s\n", fn, cause);
+    TRACE("Unable to load 32 bit module %s: %s\n", debugstr_a(fn), cause);
     return NULL;
 }
 
@@ -421,7 +421,7 @@ HDRVR WINAPI OpenDriverA(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lPara
 	goto the_end;
 
     if (!(lpDrv = DRIVER_TryOpenDriver16(lpDriverName, lpSectionName, lParam2)))
-	TRACE("Failed to open driver %s from system.ini file, section %s\n", lpDriverName, lpSectionName);
+	TRACE("Failed to open driver %s from system.ini file, section %s\n", debugstr_a(lpDriverName), debugstr_a(lpSectionName));
  the_end:
     if (lpDrv)	TRACE("=> %08lx\n", (DWORD)lpDrv);
     return (DWORD)lpDrv;

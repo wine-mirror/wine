@@ -1737,7 +1737,8 @@ BOOL WINAPI CreateScalableFontResourceA( DWORD fHidden,
      * lpszCurrentPath can be NULL
      */
     FIXME("(%ld,%s,%s,%s): stub\n",
-	  fHidden, lpszResourceFile, lpszFontFile, lpszCurrentPath );
+          fHidden, debugstr_a(lpszResourceFile), debugstr_a(lpszFontFile),
+          debugstr_a(lpszCurrentPath) );
     return FALSE; /* create failed */
 }
 

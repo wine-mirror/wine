@@ -2395,14 +2395,14 @@ BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
     DRIVER_INFO_3A di3;
     HKEY hkeyDrivers, hkeyName;
 
-    TRACE("(%s,%ld,%p)\n",pName,level,pDriverInfo);
+    TRACE("(%s,%ld,%p)\n",debugstr_a(pName),level,pDriverInfo);
 
     if(level != 2 && level != 3) {
         SetLastError(ERROR_INVALID_LEVEL);
 	return FALSE;
     }
     if(pName != NULL) {
-        FIXME("pName= `%s' - unsupported\n", pName);
+        FIXME("pName= %s - unsupported\n", debugstr_a(pName));
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
@@ -2440,7 +2440,7 @@ BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
         if(RegOpenKeyA(hkeyDrivers, di3.pName, &hkeyName) == ERROR_SUCCESS) {
 	    RegCloseKey(hkeyName);
 	    RegCloseKey(hkeyDrivers);
-	    WARN("Trying to create existing printer driver `%s'\n", di3.pName);
+	    WARN("Trying to create existing printer driver %s\n", debugstr_a(di3.pName));
 	    SetLastError(ERROR_PRINTER_DRIVER_ALREADY_INSTALLED);
 	    return FALSE;
 	}

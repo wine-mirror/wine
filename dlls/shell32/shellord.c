@@ -37,7 +37,7 @@ DWORD WINAPI ParseFieldA(
 	LPSTR dst,
 	DWORD len) 
 {
-	WARN("('%s',0x%08lx,%p,%ld) semi-stub.\n",src,nField,dst,len);
+	WARN("(%s,0x%08lx,%p,%ld) semi-stub.\n",debugstr_a(src),nField,dst,len);
 
 	if (!src || !src[0] || !dst || !len)
 	  return 0;
@@ -973,9 +973,10 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 	PROCESS_INFORMATION info;
 			
 	WARN("mask=0x%08lx hwnd=0x%04x verb=%s file=%s parm=%s dir=%s show=0x%08x class=%s incomplete\n",
-		sei->fMask, sei->hwnd, sei->lpVerb, sei->lpFile,
-		sei->lpParameters, sei->lpDirectory, sei->nShow, 
-		(sei->fMask & SEE_MASK_CLASSNAME) ? sei->lpClass : "not used");
+	     sei->fMask, sei->hwnd, debugstr_a(sei->lpVerb),
+	     debugstr_a(sei->lpFile), debugstr_a(sei->lpParameters),
+	     debugstr_a(sei->lpDirectory), sei->nShow, 
+	     (sei->fMask & SEE_MASK_CLASSNAME) ? debugstr_a(sei->lpClass) : "not used");
 
 	ZeroMemory(szApplicationName,MAX_PATH);
 	if (sei->lpFile)
@@ -996,8 +997,9 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 	/* launch a document by fileclass like 'Wordpad.Document.1' */
 	if (sei->fMask & SEE_MASK_CLASSNAME)
 	{
+	  /* FIXME: szCommandline should not be of a fixed size. Plus MAX_PATH is way too short! */
 	  /* the commandline contains 'c:\Path\wordpad.exe "%1"' */
-	  HCR_GetExecuteCommand(sei->lpClass, (sei->lpVerb) ? sei->lpVerb : "open", szCommandline, 256);
+	  HCR_GetExecuteCommand(sei->lpClass, (sei->lpVerb) ? sei->lpVerb : "open", szCommandline, sizeof(szCommandline));
 	  /* fixme: get the extension of lpFile, check if it fits to the lpClass */
 	  TRACE("SEE_MASK_CLASSNAME->'%s'\n", szCommandline);
 	}

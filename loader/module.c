@@ -1045,7 +1045,7 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 
     /* Process the AppName and/or CmdLine to get module name and path */
 
-    TRACE("app '%s' cmdline '%s'\n", lpApplicationName, lpCommandLine );
+    TRACE("app %s cmdline %s\n", debugstr_a(lpApplicationName), debugstr_a(lpCommandLine) );
 
     if (!(tidy_cmdline = get_file_name( lpApplicationName, lpCommandLine, name, sizeof(name) )))
         return FALSE;
