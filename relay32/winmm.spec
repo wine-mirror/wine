@@ -7,12 +7,12 @@ type win32
   4 stdcall CloseDriver(long long long) CloseDriver
   5 stdcall DefDriverProc(long long long long long) DefDriverProc
   6 stub DriverCallback
-  7 stub DrvClose
-  8 stub DrvDefDriverProc
+  7 stdcall DrvClose(long long long) CloseDriver
+  8 stdcall DrvDefDriverProc(long long long long long) DefDriverProc
   9 stdcall DrvGetModuleHandle(long) GetDriverModuleHandle
- 10 stub DrvOpen
- 11 stub DrvOpenA
- 12 stub DrvSendMessage
+ 10 stdcall DrvOpen(wstr wstr long) OpenDriverW
+ 11 stdcall DrvOpenA(str str long) OpenDriverA
+ 12 stdcall DrvSendMessage(long long long long) SendDriverMessage
  13 stub GetDriverFlags
  14 stdcall GetDriverModuleHandle(long) GetDriverModuleHandle
  15 stdcall OpenDriver(wstr wstr long) OpenDriverW
