@@ -1180,14 +1180,11 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
         }
     }
 
-    chat("num of params %d\n", num_params);
+    chat("add_func_desc: num of params %d\n", num_params);
 
     for(attr = func->def->attrs; attr; attr = NEXT_LINK(attr)) {
         expr_t *expr = attr->u.pval; 
         switch(attr->type) {
-        case ATTR_ID:
-            id = expr->u.lval;
-            break;
         case ATTR_HELPCONTEXT:
             extra_attr = 1;
             help_context = expr->u.lval;
@@ -1200,6 +1197,12 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
             extra_attr = 6;
             help_string_context = expr->u.lval;
             break;
+        case ATTR_HIDDEN:
+            funcflags |= 0x40; /* FUNCFLAG_FHIDDEN */
+            break;
+        case ATTR_ID:
+            id = expr->u.lval;
+            break;
         case ATTR_OUT:
             break;
         case ATTR_PROPGET:
@@ -1208,8 +1211,11 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
         case ATTR_PROPPUT:
             invokekind = 0x4; /* INVOKE_PROPERTYPUT */
             break;
+        case ATTR_RESTRICTED:
+            funcflags |= 0x1; /* FUNCFLAG_FRESTRICTED */
+            break;
         default:
-            warning("ignoring attr %d\n", attr->type);
+            warning("add_func_desc: ignoring attr %d\n", attr->type);
             break;
         }
     }
@@ -1582,6 +1588,9 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, typelib_en
           }
         case ATTR_HIDDEN:
             typeinfo->flags |= 0x10; /* TYPEFLAG_FHIDDEN */
+            break;
+
+        case ATTR_ODL:
             break;
 
         case ATTR_RESTRICTED:
