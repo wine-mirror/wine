@@ -116,7 +116,9 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     NULL,                            /* pSetBitmapBits */
     EMFDRV_SetBkColor,               /* pSetBkColor */
     EMFDRV_SetBkMode,                /* pSetBkMode */
+    NULL,                            /* pSetDCBrushColor */
     NULL,                            /* pSetDCOrg */
+    NULL,                            /* pSetDCPenColor */
     NULL,                            /* pSetDIBColorTable */
     NULL,                            /* pSetDIBits */
     EMFDRV_SetDIBitsToDevice,        /* pSetDIBitsToDevice */

@@ -350,6 +350,7 @@
 @ stdcall SetColorAdjustment(long ptr)
 @ stdcall SetColorSpace(long long)
 @ stdcall SetDCBrushColor(long long)
+@ stdcall SetDCPenColor(long long)
 @ stdcall SetDIBColorTable(long long long ptr)
 @ stdcall SetDIBits(long long long long ptr ptr long)
 @ stdcall SetDIBitsToDevice(long long long long long long long long long ptr ptr long)

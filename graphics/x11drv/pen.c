@@ -50,6 +50,8 @@ HPEN X11DRV_SelectPen( X11DRV_PDEVICE *physDev, HPEN hpen )
                                    dc->xformWorld2Vport.eM11);
     if (physDev->pen.width < 0) physDev->pen.width = -physDev->pen.width;
     if (physDev->pen.width == 1) physDev->pen.width = 0;  /* Faster */
+    if (hpen == GetStockObject( DC_PEN ))
+        logpen.lopnColor = dc->dcPenColor;
     physDev->pen.pixel = X11DRV_PALETTE_ToPhysical( physDev, logpen.lopnColor );
     switch(logpen.lopnStyle & PS_STYLE_MASK)
     {
@@ -78,4 +80,16 @@ HPEN X11DRV_SelectPen( X11DRV_PDEVICE *physDev, HPEN hpen )
 	break;
     }
     return hpen;
+}
+
+
+/***********************************************************************
+ *           SetDCPenColor (X11DRV.@)
+ */
+COLORREF X11DRV_SetDCPenColor( X11DRV_PDEVICE *physDev, COLORREF crColor )
+{
+    if (GetCurrentObject(physDev->hdc, OBJ_PEN) == GetStockObject( DC_PEN ))
+        physDev->pen.pixel = X11DRV_PALETTE_ToPhysical( physDev, crColor );
+
+    return crColor;
 }

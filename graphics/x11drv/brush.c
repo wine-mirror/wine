@@ -218,8 +218,6 @@ static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 }
 
 
-
-
 /***********************************************************************
  *           SelectBrush   (X11DRV.@)
  */
@@ -239,6 +237,8 @@ HBRUSH X11DRV_SelectBrush( X11DRV_PDEVICE *physDev, HBRUSH hbrush )
 	physDev->brush.pixmap = 0;
     }
     physDev->brush.style = logbrush.lbStyle;
+    if (hbrush == GetStockObject( DC_BRUSH ))
+        logbrush.lbColor = physDev->dc->dcBrushColor;
 
     switch(logbrush.lbStyle)
     {
@@ -281,4 +281,16 @@ HBRUSH X11DRV_SelectBrush( X11DRV_PDEVICE *physDev, HBRUSH hbrush )
 	break;
     }
     return hbrush;
+}
+
+
+/***********************************************************************
+ *           SetDCBrushColor (X11DRV.@)
+ */
+COLORREF X11DRV_SetDCBrushColor( X11DRV_PDEVICE *physDev, COLORREF crColor )
+{
+    if (GetCurrentObject(physDev->hdc, OBJ_BRUSH) == GetStockObject( DC_BRUSH ))
+        BRUSH_SelectSolidBrush( physDev, crColor );
+
+    return crColor;
 }

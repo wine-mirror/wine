@@ -139,6 +139,8 @@ typedef struct tagDC
     WORD          backgroundMode;
     COLORREF      backgroundColor;
     COLORREF      textColor;
+    COLORREF      dcBrushColor;
+    COLORREF      dcPenColor;
     short         brushOrgX;
     short         brushOrgY;
 
@@ -256,7 +258,9 @@ typedef struct tagDC_FUNCS
     LONG     (*pSetBitmapBits)(HBITMAP,const void*,LONG);
     COLORREF (*pSetBkColor)(PHYSDEV,COLORREF);
     INT      (*pSetBkMode)(PHYSDEV,INT);
+    COLORREF (*pSetDCBrushColor)(PHYSDEV, COLORREF);
     DWORD    (*pSetDCOrg)(PHYSDEV,INT,INT);
+    COLORREF (*pSetDCPenColor)(PHYSDEV, COLORREF);
     UINT     (*pSetDIBColorTable)(PHYSDEV,UINT,UINT,const RGBQUAD*);
     INT      (*pSetDIBits)(PHYSDEV,HBITMAP,UINT,UINT,LPCVOID,const BITMAPINFO*,UINT);
     INT      (*pSetDIBitsToDevice)(PHYSDEV,INT,INT,DWORD,DWORD,INT,INT,UINT,UINT,LPCVOID,

@@ -46,7 +46,9 @@
 @ cdecl SelectPen(ptr long) X11DRV_SelectPen
 @ cdecl SetBitmapBits(long ptr long) X11DRV_SetBitmapBits
 @ cdecl SetBkColor(ptr long) X11DRV_SetBkColor
+@ cdecl SetDCBrushColor(ptr long) X11DRV_SetDCBrushColor
 @ cdecl SetDCOrg(ptr long long) X11DRV_SetDCOrg
+@ cdecl SetDCPenColor(ptr long) X11DRV_SetDCPenColor
 @ cdecl SetDIBColorTable(ptr long long ptr) X11DRV_SetDIBColorTable
 @ cdecl SetDIBits(ptr long long long ptr ptr long) X11DRV_SetDIBits
 @ cdecl SetDIBitsToDevice(ptr long long long long long long long long ptr ptr long) X11DRV_SetDIBitsToDevice

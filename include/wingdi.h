@@ -1830,8 +1830,10 @@ typedef struct
 #define DEFAULT_PALETTE     15
 #define SYSTEM_FIXED_FONT   16
 #define DEFAULT_GUI_FONT    17
+#define DC_BRUSH            18
+#define DC_PEN              19
 
-#define STOCK_LAST          17
+#define STOCK_LAST          19
 
 #define CLR_INVALID         0xffffffff
 /* Metafile header structure */

@@ -61,6 +61,8 @@ static const LOGPEN WhitePen = { PS_SOLID, { 0, 0 }, RGB(255,255,255) };
 static const LOGPEN BlackPen = { PS_SOLID, { 0, 0 }, RGB(0,0,0) };
 static const LOGPEN NullPen  = { PS_NULL,  { 0, 0 }, 0 };
 
+static const LOGBRUSH DCBrush = { BS_SOLID, RGB(255,255,255), 0 };
+static const LOGPEN DCPen     = { PS_SOLID, { 0, 0 }, RGB(0,0,0) };
 
 /* reserve one extra entry for the stock default bitmap */
 /* this is what Windows does too */
@@ -619,6 +621,8 @@ BOOL GDI_Init(void)
     stock_objects[SYSTEM_FIXED_FONT]   = create_stock_font( "SystemFixed", &deffonts->SystemFixedFont, hkey );
     stock_objects[DEFAULT_GUI_FONT]    = create_stock_font( "DefaultGui", &deffonts->DefaultGuiFont, hkey );
 
+    stock_objects[DC_BRUSH]     = CreateBrushIndirect( &DCBrush );
+    stock_objects[DC_PEN]       = CreatePenIndirect( &DCPen );
 
     /* clear the NOSYSTEM bit on all stock objects*/
     for (i = 0; i < NB_STOCK_OBJECTS; i++)

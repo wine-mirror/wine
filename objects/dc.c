@@ -92,6 +92,8 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs, WORD magic )
     dc->relAbsMode          = ABSOLUTE;
     dc->backgroundMode      = OPAQUE;
     dc->backgroundColor     = RGB( 255, 255, 255 );
+    dc->dcBrushColor        = RGB( 255, 255, 255 );
+    dc->dcPenColor          = RGB( 0, 0, 0 );
     dc->textColor           = RGB( 0, 0, 0 );
     dc->brushOrgX           = 0;
     dc->brushOrgY           = 0;
@@ -301,6 +303,8 @@ HDC WINAPI GetDCState( HDC hdc )
     newdc->backgroundMode   = dc->backgroundMode;
     newdc->backgroundColor  = dc->backgroundColor;
     newdc->textColor        = dc->textColor;
+    newdc->dcBrushColor     = dc->dcBrushColor;
+    newdc->dcPenColor       = dc->dcPenColor;
     newdc->brushOrgX        = dc->brushOrgX;
     newdc->brushOrgY        = dc->brushOrgY;
     newdc->textAlign        = dc->textAlign;
@@ -389,6 +393,8 @@ void WINAPI SetDCState( HDC hdc, HDC hdcs )
     dc->backgroundMode   = dcs->backgroundMode;
     dc->backgroundColor  = dcs->backgroundColor;
     dc->textColor        = dcs->textColor;
+    dc->dcBrushColor     = dcs->dcBrushColor;
+    dc->dcPenColor       = dcs->dcPenColor;
     dc->brushOrgX        = dcs->brushOrgX;
     dc->brushOrgY        = dcs->brushOrgY;
     dc->textAlign        = dcs->textAlign;
@@ -855,6 +861,8 @@ COLORREF WINAPI SetBkColor( HDC hdc, COLORREF color )
     COLORREF oldColor;
     DC * dc = DC_GetDCPtr( hdc );
 
+    TRACE("hdc=%p color=0x%08lx\n", hdc, color);
+
     if (!dc) return CLR_INVALID;
     oldColor = dc->backgroundColor;
     if (dc->funcs->pSetBkColor)
@@ -880,6 +888,8 @@ COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
     COLORREF oldColor;
     DC * dc = DC_GetDCPtr( hdc );
 
+    TRACE(" hdc=%p color=0x%08lx\n", hdc, color);
+
     if (!dc) return CLR_INVALID;
     oldColor = dc->textColor;
     if (dc->funcs->pSetTextColor)
@@ -904,6 +914,9 @@ UINT WINAPI SetTextAlign( HDC hdc, UINT align )
 {
     UINT prevAlign;
     DC *dc = DC_GetDCPtr( hdc );
+
+    TRACE("hdc=%p align=%d\n", hdc, align);
+
     if (!dc) return 0x0;
     if (dc->funcs->pSetTextAlign)
         prevAlign = dc->funcs->pSetTextAlign(dc->physDev, align);
@@ -1455,9 +1468,75 @@ DWORD WINAPI SetLayout(HDC hdc, DWORD layout)
  */
 COLORREF WINAPI SetDCBrushColor(HDC hdc, COLORREF crColor)
 {
-    FIXME("(%p, %08lx): stub\n", hdc, crColor);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return CLR_INVALID;
+    DC *dc;
+    COLORREF oldClr = CLR_INVALID;
+
+    TRACE("hdc(%p) crColor(%08lx)\n", hdc, crColor);
+
+    dc = DC_GetDCPtr( hdc );
+    if (dc)
+    {
+        if (dc->funcs->pSetDCBrushColor)
+            crColor = dc->funcs->pSetDCBrushColor( dc->physDev, crColor );
+        else if (dc->hBrush == GetStockObject( DC_BRUSH ))
+        {
+            /* If DC_BRUSH is selected, update driver pen color */
+            HBRUSH hBrush = CreateSolidBrush( crColor );
+            dc->funcs->pSelectBrush( dc->physDev, hBrush );
+	    DeleteObject( hBrush );
+	}
+
+        if (crColor != CLR_INVALID)
+        {
+            oldClr = dc->dcBrushColor;
+            dc->dcBrushColor = crColor;
+        }
+
+        GDI_ReleaseObj( hdc );
+    }
+
+    return oldClr;
+}
+
+/***********************************************************************
+ *           SetDCPenColor    (GDI32.@)
+ *
+ * Sets the current device context (DC) pen color to the specified
+ * color value. If the device cannot represent the specified color
+ * value, the color is set to the nearest physical color.
+ *
+ */
+COLORREF WINAPI SetDCPenColor(HDC hdc, COLORREF crColor)
+{
+    DC *dc;
+    COLORREF oldClr = CLR_INVALID;
+
+    TRACE("hdc(%p) crColor(%08lx)\n", hdc, crColor);
+
+    dc = DC_GetDCPtr( hdc );
+    if (dc)
+    {
+        if (dc->funcs->pSetDCPenColor)
+            crColor = dc->funcs->pSetDCPenColor( dc->physDev, crColor );
+        else if (dc->hPen == GetStockObject( DC_PEN ))
+        {
+            /* If DC_PEN is selected, update the driver pen color */
+            LOGPEN logpen = { PS_SOLID, { 0, 0 }, crColor };
+            HPEN hPen = CreatePenIndirect( &logpen );
+            dc->funcs->pSelectPen( dc->physDev, hPen );
+	    DeleteObject( hPen );
+	}
+
+        if (crColor != CLR_INVALID)
+        {
+            oldClr = dc->dcPenColor;
+            dc->dcPenColor = crColor;
+        }
+
+        GDI_ReleaseObj( hdc );
+    }
+
+    return oldClr;
 }
 
 /***********************************************************************
