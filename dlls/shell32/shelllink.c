@@ -896,6 +896,9 @@ HRESULT WINAPI IShellLink_ConstructFromFile (
             else
                 hr = E_FAIL;
 
+	    if (SUCCEEDED(hr))
+		*ppv = (IUnknown*) psl;
+
 	    IPersistFile_Release(ppf);
 	}
 
