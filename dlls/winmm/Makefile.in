@@ -29,6 +29,8 @@ RC_SRCS = winmm_res.rc
 
 EXTRA_OBJS16 = $(MODULE).glue.o
 
+SUBDIRS = tests
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:

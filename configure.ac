@@ -1469,6 +1469,7 @@ dlls/winmm/mcicda/Makefile
 dlls/winmm/mciseq/Makefile
 dlls/winmm/mciwave/Makefile
 dlls/winmm/midimap/Makefile
+dlls/winmm/tests/Makefile
 dlls/winmm/wavemap/Makefile
 dlls/winmm/winealsa/Makefile
 dlls/winmm/winearts/Makefile

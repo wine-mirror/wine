@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = winmm.dll
+IMPORTS   = winmm kernel32
+
+CTESTS = \
+	wave.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:
