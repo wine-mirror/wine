@@ -143,24 +143,24 @@ START_TEST(listbox)
 /*   {add_style} */
     {{0},
      {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
-     {     1,      1,      1, LB_ERR}, {0,1,0,0},
-     {     2,      2,      2, LB_ERR}, {0,1,0,0}};
+     {     1,      1,      1, LB_ERR}, {0,0,0,0},
+     {     2,      2,      2, LB_ERR}, {0,0,0,0}};
 /* {selected, anchor,  caret, selcount}{TODO fields} */
   const struct listbox_test SS_NS =
     {{LBS_NOSEL},
      {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
-     {     1,      1,      1, LB_ERR}, {1,1,0,0},
-     {     2,      2,      2, LB_ERR}, {1,1,1,0}};
+     {     1,      1,      1, LB_ERR}, {0,0,0,0},
+     {     2,      2,      2, LB_ERR}, {0,0,0,0}};
   const struct listbox_test MS =
     {{LBS_MULTIPLESEL},
      {     0, LB_ERR,      0,      0}, {0,0,0,0},
-     {     1,      1,      1,      1}, {0,1,0,0},
-     {     2,      1,      2,      1}, {0,1,0,1}};
+     {     1,      1,      1,      1}, {0,0,0,0},
+     {     2,      1,      2,      1}, {0,0,0,0}};
   const struct listbox_test MS_NS =
     {{LBS_MULTIPLESEL | LBS_NOSEL},
-     {LB_ERR, LB_ERR,      0, LB_ERR}, {1,0,0,1},
-     {     1,      1,      1, LB_ERR}, {0,1,0,1},
-     {     2,      2,      2, LB_ERR}, {0,1,0,1}};
+     {LB_ERR, LB_ERR,      0, LB_ERR}, {0,0,0,0},
+     {     1,      1,      1, LB_ERR}, {0,0,0,0},
+     {     2,      2,      2, LB_ERR}, {0,0,0,0}};
 
   trace (" Testing single selection...\n");
   check (SS);
