@@ -7850,7 +7850,7 @@ static LRESULT LISTVIEW_Paint(LISTVIEW_INFO *infoPtr, HDC hdc)
 {
     TRACE("(hdc=%p)\n", hdc);
 
-    if (infoPtr->bFirstPaint)
+    if (infoPtr->bFirstPaint && infoPtr->nItemCount)
     {
 	UINT uView =  infoPtr->dwStyle & LVS_TYPEMASK;
 	
