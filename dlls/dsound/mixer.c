@@ -91,12 +91,10 @@ void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan)
 
 void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 {
-	DWORD sw;
 	TRACE("(%p)\n",dsb);
 
-	sw = dsb->pwfx->nChannels * (dsb->pwfx->wBitsPerSample / 8);
 	/* calculate the 10ms write lead */
-	dsb->writelead = (dsb->freq / 100) * sw;
+	dsb->writelead = (dsb->freq / 100) * dsb->pwfx->nBlockAlign;
 }
 
 void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len)
@@ -374,7 +372,7 @@ static LPBYTE DSOUND_tmpbuffer(IDirectSoundImpl *dsound, DWORD len)
 
 static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD fraglen)
 {
-	INT	i, len, ilen, field, nBlockAlign, todo;
+	INT	i, len, ilen, field, todo;
 	BYTE	*buf, *ibuf;
 
 	TRACE("(%p,%ld,%ld)\n",dsb,writepos,fraglen);
@@ -387,8 +385,12 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 			dsb->nAvgBytesPerSec);
 		len = min(len, temp);
 	}
-	nBlockAlign = dsb->dsound->pwfx->nBlockAlign;
-	len = (len / nBlockAlign) * nBlockAlign;	/* data alignment */
+
+	if (len % dsb->dsound->pwfx->nBlockAlign) {
+		INT nBlockAlign = dsb->dsound->pwfx->nBlockAlign;
+		len = (len / nBlockAlign) * nBlockAlign;	/* data alignment */
+		ERR("length not a multiple of block size, len = %d, block size = %d\n", len, nBlockAlign);
+	}
 
 	if (len == 0) {
 		/* This should only happen if we aren't looping and temp < nBlockAlign */
@@ -495,14 +497,17 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 
 static void DSOUND_PhaseCancel(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD len)
 {
-	INT     ilen, field, nBlockAlign;
+	INT     ilen, field;
 	UINT    i, todo;
 	BYTE	*buf, *ibuf;
 
 	TRACE("(%p,%ld,%ld)\n",dsb,writepos,len);
 
-	nBlockAlign = dsb->dsound->pwfx->nBlockAlign;
-	len = (len / nBlockAlign) * nBlockAlign;  /* data alignment */
+	if (len % dsb->dsound->pwfx->nBlockAlign) {
+		INT nBlockAlign = dsb->dsound->pwfx->nBlockAlign;
+		len = (len / nBlockAlign) * nBlockAlign;	/* data alignment */
+		ERR("length not a multiple of block size, len = %ld, block size = %d\n", len, nBlockAlign);
+	}
 
 	if ((buf = ibuf = DSOUND_tmpbuffer(dsb->dsound, len)) == NULL)
 		return;
