@@ -337,7 +337,7 @@ static inline LPWSTR textdupTtoW(LPCWSTR text, BOOL isW)
 	wstr = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
 	if (wstr) MultiByteToWideChar(CP_ACP, 0, (LPCSTR)text, -1, wstr, len);
     }
-    TRACE("   wstr=%s\n", debugstr_w(wstr));
+    TRACE("   wstr=%s\n", text == LPSTR_TEXTCALLBACKW ?  "(callback)" : debugstr_w(wstr));
     return wstr;
 }
 
@@ -423,7 +423,7 @@ static char* debuglvitem_t(LPLVITEMW lpLVItem, BOOL isW)
              " pszText=%s, cchTextMax=%d, iImage=%d, lParam=%lx, iIndent=%d}",
 	     lpLVItem->mask, lpLVItem->iItem, lpLVItem->iSubItem,
 	     lpLVItem->state, lpLVItem->stateMask,
-	     debugtext_tn(lpLVItem->pszText, isW, 80),
+	     lpLVItem->mask & LVIF_TEXT ? debugtext_tn(lpLVItem->pszText, isW, 80) : 0,
 	     lpLVItem->cchTextMax, lpLVItem->iImage, lpLVItem->lParam,
 	     lpLVItem->iIndent);
     return buf;
@@ -605,6 +605,7 @@ static BOOL notify_customdrawitem (LISTVIEW_INFO *infoPtr, HDC hdc, UINT iItem, 
     BOOL bReturn;
 
     item.iItem = iItem;
+    item.iSubItem = 0;
     item.mask = LVIF_PARAM;
     LISTVIEW_GetItemT(infoPtr, &item, TRUE, TRUE);
 
@@ -865,7 +866,6 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
         }
 
         /* get item */
-        ZeroMemory(&item, sizeof(item));
         item.mask = LVIF_TEXT;
         item.iItem = idx;
         item.iSubItem = 0;
@@ -1557,7 +1557,6 @@ static BOOL add_selection_range(LISTVIEW_INFO *infoPtr, INT lower, INT upper, BO
     if (adj_sel_only) return TRUE;
    
     /* set the selection on items */
-    ZeroMemory(&lvItem, sizeof(lvItem));
     lvItem.state = LVIS_SELECTED;
     lvItem.stateMask = LVIS_SELECTED;
     for(i = lower; i <= upper; i++)
@@ -1576,7 +1575,7 @@ static BOOL remove_selection_range(LISTVIEW_INFO *infoPtr, INT lower, INT upper,
     LVITEMW lvItem;
     INT index, i;
 
-    ZeroMemory(&lvItem, sizeof(lvItem));
+    lvItem.state = 0;
     lvItem.stateMask = LVIS_SELECTED;
     
     remsel.lower = lower;
@@ -1734,7 +1733,6 @@ static inline BOOL LISTVIEW_SetItemFocus(LISTVIEW_INFO *infoPtr, INT nItem)
     INT oldFocus = infoPtr->nFocusedItem;
     LVITEMW lvItem;
 
-    ZeroMemory(&lvItem, sizeof(lvItem));
     lvItem.state =  LVIS_FOCUSED;
     lvItem.stateMask = LVIS_FOCUSED;
     LISTVIEW_SetItemState(infoPtr, nItem, &lvItem);
@@ -1830,8 +1828,8 @@ static void LISTVIEW_AddGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
   if (nFirst == -1)
     nFirst = nItem;
 
-  item.stateMask = LVIS_SELECTED;
   item.state = LVIS_SELECTED;
+  item.stateMask = LVIS_SELECTED;
 
   /* FIXME: this is not correct LVS_OWNERDATA
    * See docu for LVN_ITEMCHANGED. Is there something similar for
@@ -1889,8 +1887,6 @@ static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
     POINT ptItem;
     RECT rcSel;
 
-    item.stateMask = LVIS_SELECTED;
-
     if ((uView == LVS_LIST) || (uView == LVS_REPORT))
     {
 	if (infoPtr->nSelectionMark == -1)
@@ -1909,6 +1905,8 @@ static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 	UnionRect(&rcSel, &rcItem, &rcSelMark);
 	nFirst = nLast = -1;
     }
+
+    item.stateMask = LVIS_SELECTED;
 
     for (i = 0; i <= GETITEMCOUNT(infoPtr); i++)
     {
@@ -2397,8 +2395,6 @@ static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
 
 	lpSubItem = (LISTVIEW_SUBITEM *)COMCTL32_Alloc(sizeof(LISTVIEW_SUBITEM));
 	if (!lpSubItem) return FALSE;
-	ZeroMemory(lpSubItem, sizeof(LISTVIEW_SUBITEM));
-
 	/* we could binary search here, if need be...*/
   	for (i = 1; i < hdpaSubItems->nItemCount; i++)
   	{
@@ -2692,7 +2688,6 @@ static void LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, RECT r
   TRACE("(hdc=%x, nItem=%d)\n", hdc, nItem);
 
   /* get information needed for drawing the item */
-  ZeroMemory(&lvItem, sizeof(lvItem));
   lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_STATE | LVIF_INDENT;
   lvItem.stateMask = LVIS_SELECTED |  LVIS_STATEIMAGEMASK;
   lvItem.iItem = nItem;
@@ -2874,7 +2869,6 @@ static void LISTVIEW_DrawLargeItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, R
         hdc, nItem, rcItem.left, rcItem.top, rcItem.right, rcItem.bottom);
 
   /* get information needed for drawing the item */
-  ZeroMemory(&lvItem, sizeof(lvItem));
   lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_STATE;
   lvItem.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
   lvItem.iItem = nItem;
@@ -3752,7 +3746,7 @@ static LRESULT LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
 
 
   /* remove it from the selection range */
-  ZeroMemory(&item,sizeof(item));
+  item.state = LVIS_SELECTED;
   item.stateMask = LVIS_SELECTED;
   LISTVIEW_SetItemState(infoPtr,nItem,&item);
 
@@ -3858,10 +3852,10 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, BOOL 
   else
   {
     ZeroMemory(&lvItemRef,sizeof(LISTVIEW_ITEM));
-    ZeroMemory(&item,sizeof(item));
     item.iItem = nItem;
     item.iSubItem = 0;
     item.mask = LVIF_PARAM | LVIF_STATE;
+    item.stateMask = ~0;
     ListView_GetItemW(infoPtr->hwndSelf, &item);
     lvItemRef.hdr.iImage = item.iImage;
     lvItemRef.state = item.state;
@@ -3873,7 +3867,7 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, BOOL 
   dispInfo.item.mask = 0;
   dispInfo.item.iItem = nItem;
   dispInfo.item.state = lpItem->state;
-  dispInfo.item.stateMask = 0;
+  dispInfo.item.stateMask = 0; /* FIXME: why not copy the state mask in here? */
   dispInfo.item.pszText = pszText;
   dispInfo.item.cchTextMax = textlenT(pszText, isW);
   dispInfo.item.iImage = lpItem->hdr.iImage;
@@ -3940,11 +3934,10 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
   else
   {
     LVITEMW item;
-    ZeroMemory(&lvItemRef,sizeof(LISTVIEW_ITEM));
-    ZeroMemory(&item, sizeof(item));
     item.iItem = nItem;
     item.iSubItem = 0;
     item.mask = LVIF_PARAM | LVIF_STATE;
+    item.stateMask = ~0;
     ListView_GetItemW(infoPtr->hwndSelf, &item);
     lvItemRef.hdr.iImage = item.iImage;
     lvItemRef.state = item.state;
@@ -3953,7 +3946,6 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
   }
 
   /* get information needed for drawing the item */
-  ZeroMemory(&lvItem, sizeof(lvItem));
   lvItem.mask = LVIF_TEXT;
   lvItem.iItem = nItem;
   lvItem.iSubItem = 0;
@@ -3966,7 +3958,7 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
   dispInfo.item.mask = 0;
   dispInfo.item.iItem = nItem;
   dispInfo.item.state = lpItem->state;
-  dispInfo.item.stateMask = 0;
+  dispInfo.item.stateMask = 0; /* FIXME: why not copy the state mask in here? */
   dispInfo.item.pszText = lvItem.pszText;
   dispInfo.item.cchTextMax = lstrlenW(lvItem.pszText);
   dispInfo.item.iImage = lpItem->hdr.iImage;
@@ -4218,8 +4210,6 @@ static LRESULT LISTVIEW_FindItemW(LISTVIEW_INFO *infoPtr, INT nStart,
 
   if ((nItem >= -1) && (lpFindInfo != NULL))
   {
-    ZeroMemory(&lvItem, sizeof(lvItem));
-
     if (lpFindInfo->flags & LVFI_PARAM)
     {
       lvItem.mask |= LVIF_PARAM;
@@ -5131,7 +5121,6 @@ static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
 
   if (uView & LVS_REPORT)
   {
-    ZeroMemory(&lvItem, sizeof(lvItem));
     lvItem.mask = LVIF_INDENT;
     lvItem.iItem = nItem;
     lvItem.iSubItem = 0;
@@ -5544,9 +5533,9 @@ static INT LISTVIEW_GetLabelWidth(LISTVIEW_INFO *infoPtr, INT nItem)
 
   TRACE("(nItem=%d)\n", nItem);
 
-  ZeroMemory(&lvItem, sizeof(lvItem));
   lvItem.mask = LVIF_TEXT;
   lvItem.iItem = nItem;
+  lvItem.iSubItem = 0;
   lvItem.cchTextMax = DISP_TEXT_SIZE;
   lvItem.pszText = szDispText;
   if (LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE))
@@ -5603,10 +5592,10 @@ static LRESULT LISTVIEW_GetItemState(LISTVIEW_INFO *infoPtr, INT nItem, UINT uMa
 
   if ((nItem >= 0) && (nItem < GETITEMCOUNT(infoPtr)))
   {
-    ZeroMemory(&lvItem, sizeof(lvItem));
     lvItem.iItem = nItem;
-    lvItem.stateMask = uMask;
+    lvItem.iSubItem = 0;
     lvItem.mask = LVIF_STATE;
+    lvItem.stateMask = uMask;
     if (LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE))
       uState = lvItem.state & uMask;
   }
@@ -6352,8 +6341,6 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     if ( !(lpItem = (LISTVIEW_ITEM *)COMCTL32_Alloc(sizeof(LISTVIEW_ITEM))) )
 	return -1;
     
-    ZeroMemory(lpItem, sizeof(LISTVIEW_ITEM));
-    
     /* insert item in listview control data structure */
     if ( (hdpaSubItems = DPA_Create(8)) )
 	nItem = DPA_InsertPtr(hdpaSubItems, 0, lpItem);
@@ -6718,7 +6705,6 @@ static LRESULT LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT iCol, INT cx)
       }
       else
       {
-        ZeroMemory(&lvItem, sizeof(lvItem));
         lvItem.iSubItem = iCol;
         lvItem.mask = LVIF_TEXT;
         lvItem.cchTextMax = DISP_TEXT_SIZE;
@@ -6783,7 +6769,6 @@ static LRESULT LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT iCol, INT cx)
         SelectObject(hdc, old_font); /* restore the old font */
         ReleaseDC(infoPtr->hwndSelf, hdc);
 
-        ZeroMemory(&lvItem, sizeof(lvItem));
         lvItem.iSubItem = iCol;
         lvItem.mask = LVIF_TEXT;
         lvItem.cchTextMax = DISP_TEXT_SIZE;
@@ -7190,14 +7175,13 @@ static LRESULT LISTVIEW_SetItemState(LISTVIEW_INFO *infoPtr, INT nItem, LPLVITEM
   BOOL bResult = TRUE;
   LVITEMW lvItem;
 
-  TRACE("(nItem=%d, lpLVItem=%s)\n",
-	nItem, debuglvitem_t(lpLVItem, TRUE));
+  TRACE("(nItem=%d, lpLVItem=%s)\n", nItem, debuglvitem_t(lpLVItem, TRUE));
 
-  ZeroMemory(&lvItem, sizeof(lvItem));
+  lvItem.iItem = nItem;
+  lvItem.iSubItem = 0;
   lvItem.mask = LVIF_STATE;
   lvItem.state = lpLVItem->state;
   lvItem.stateMask = lpLVItem->stateMask ;
-  lvItem.iItem = nItem;
 
   if (nItem == -1)
   {
@@ -7227,24 +7211,18 @@ static LRESULT LISTVIEW_SetItemState(LISTVIEW_INFO *infoPtr, INT nItem, LPLVITEM
  */
 static BOOL LISTVIEW_SetItemTextT(LISTVIEW_INFO *infoPtr, INT nItem, LPLVITEMW lpLVItem, BOOL isW)
 {
-  BOOL bResult = FALSE;
-  LVITEMW lvItem;
+    LVITEMW lvItem;
 
-  TRACE("(nItem=%d, lpLVItem=%s, isW=%d)\n",
-	nItem, debuglvitem_t(lpLVItem, isW), isW);
+    TRACE("(nItem=%d, lpLVItem=%s, isW=%d)\n", nItem, debuglvitem_t(lpLVItem, isW), isW);
 
-  if ((nItem >= 0) && (nItem < GETITEMCOUNT(infoPtr)))
-  {
-    ZeroMemory(&lvItem, sizeof(LVITEMW));
-    lvItem.mask = LVIF_TEXT;
-    lvItem.pszText = lpLVItem->pszText;
+    if ((nItem < 0) && (nItem >= GETITEMCOUNT(infoPtr))) return FALSE;
+    
     lvItem.iItem = nItem;
     lvItem.iSubItem = lpLVItem->iSubItem;
-    if(isW) bResult = ListView_SetItemW(infoPtr->hwndSelf, &lvItem);
-    else    bResult = ListView_SetItemA(infoPtr->hwndSelf, &lvItem);
-  }
-
-  return bResult;
+    lvItem.mask = LVIF_TEXT;
+    lvItem.pszText = lpLVItem->pszText;
+    
+    return LISTVIEW_SetItemT(infoPtr, &lvItem, isW); 
 }
 
 /***
@@ -7489,7 +7467,6 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   if (!infoPtr) return -1;
 
   SetWindowLongW(hwnd, 0, (LONG)infoPtr);
-  ZeroMemory(infoPtr, sizeof(LISTVIEW_INFO));
 
   infoPtr->hwndSelf = hwnd;
   /* determine the type of structures to use */
@@ -8097,9 +8074,8 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
 
 	bGroupSelect = (LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED) == 0);
 	
-        ZeroMemory(&item, sizeof(item));
+	item.state = bGroupSelect ? LVIS_SELECTED : 0;
         item.stateMask = LVIS_SELECTED;
-	if(bGroupSelect) item.state = LVIS_SELECTED;
 	LISTVIEW_SetItemState(infoPtr, nItem, &item);
 
         LISTVIEW_SetItemFocus(infoPtr, nItem);
