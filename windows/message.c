@@ -2432,17 +2432,6 @@ WORD WINAPI RegisterWindowMessageW( LPCWSTR str )
 
 
 /***********************************************************************
- *		GetCurrentTime (USER.15)
- *
- * (effectively identical to GetTickCount)
- */
-DWORD WINAPI GetCurrentTime16(void)
-{
-    return GetTickCount();
-}
-
-
-/***********************************************************************
  *		InSendMessage (USER.192)
  */
 BOOL16 WINAPI InSendMessage16(void)

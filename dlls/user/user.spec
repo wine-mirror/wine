@@ -17,7 +17,8 @@ rsrc	resources/version16.res
 12  pascal16 KillTimer(word word) KillTimer16
 13  pascal   GetTickCount() GetTickCount
 14  pascal   GetTimerResolution() GetTimerResolution16
-15  pascal   GetCurrentTime() GetCurrentTime16
+# GetCurrentTime is effectively identical to GetTickCount
+15  pascal   GetCurrentTime() GetTickCount
 16  pascal16 ClipCursor(ptr) ClipCursor16
 17  pascal16 GetCursorPos(ptr) GetCursorPos16
 18  pascal16 SetCapture(word) SetCapture16
