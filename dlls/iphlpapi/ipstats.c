@@ -565,8 +565,8 @@ RouteTable *getRouteTable(void)
   DWORD numRoutes = getNumRoutes();
   RouteTable *ret;
 
-  ret = (RouteTable *)calloc(1, sizeof(RouteTable) +
-   (numRoutes - 1) * sizeof(RouteEntry));
+  ret = (RouteTable *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+   sizeof(RouteTable) + (numRoutes - 1) * sizeof(RouteEntry));
   if (ret) {
     FILE *fp;
 
@@ -638,8 +638,8 @@ PMIB_IPNETTABLE getArpTable(void)
   DWORD numEntries = getNumArpEntries();
   PMIB_IPNETTABLE ret;
 
-  ret = (PMIB_IPNETTABLE)calloc(1, sizeof(MIB_IPNETTABLE) +
-   (numEntries - 1) * sizeof(MIB_IPNETROW));
+  ret = (PMIB_IPNETTABLE)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+   sizeof(MIB_IPNETTABLE) + (numEntries - 1) * sizeof(MIB_IPNETROW));
   if (ret) {
     FILE *fp;
 
@@ -716,8 +716,8 @@ PMIB_UDPTABLE getUdpTable(void)
   DWORD numEntries = getNumUdpEntries();
   PMIB_UDPTABLE ret;
 
-  ret = (PMIB_UDPTABLE)calloc(1, sizeof(MIB_UDPTABLE) +
-   (numEntries - 1) * sizeof(MIB_UDPROW));
+  ret = (PMIB_UDPTABLE)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+   sizeof(MIB_UDPTABLE) + (numEntries - 1) * sizeof(MIB_UDPROW));
   if (ret) {
     FILE *fp;
 
@@ -768,8 +768,8 @@ PMIB_TCPTABLE getTcpTable(void)
   DWORD numEntries = getNumTcpEntries();
   PMIB_TCPTABLE ret;
 
-  ret = (PMIB_TCPTABLE)calloc(1, sizeof(MIB_TCPTABLE) +
-   (numEntries - 1) * sizeof(MIB_TCPROW));
+  ret = (PMIB_TCPTABLE)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+   sizeof(MIB_TCPTABLE) + (numEntries - 1) * sizeof(MIB_TCPROW));
   if (ret) {
     FILE *fp;
 

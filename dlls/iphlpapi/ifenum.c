@@ -33,7 +33,6 @@
  * than my current mess would probably be better.
  * FIXME:
  * - I don't support IPv6 addresses here, since SIOCGIFCONF can't return them
- * - the memory interface uses malloc/free; it should be using HeapAlloc instead
  *
  * There are three implemened methods for determining the MAC address of an
  * interface:
@@ -154,9 +153,9 @@ void interfaceMapFree(void)
 {
     DeleteCriticalSection(&mapCS);
     if (gNonLoopbackInterfaceMap)
-        free(gNonLoopbackInterfaceMap);
+        HeapFree(GetProcessHeap(), 0, gNonLoopbackInterfaceMap);
     if (gLoopbackInterfaceMap)
-        free(gLoopbackInterfaceMap);
+        HeapFree(GetProcessHeap(), 0, gLoopbackInterfaceMap);
 }
 
 /* Sizes the passed-in map to have enough space for numInterfaces interfaces.
@@ -168,14 +167,16 @@ static InterfaceNameMap *sizeMap(InterfaceNameMap *map, DWORD numInterfaces)
 {
   if (!map) {
     numInterfaces = max(numInterfaces, INITIAL_INTERFACES_ASSUMED);
-    map = (InterfaceNameMap *)calloc(1, sizeof(InterfaceNameMap) +
+    map = (InterfaceNameMap *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+     sizeof(InterfaceNameMap) +
      (numInterfaces - 1) * sizeof(InterfaceNameMapEntry));
     if (map)
       map->numAllocated = numInterfaces;
   }
   else {
     if (map->numAllocated < numInterfaces) {
-      map = (InterfaceNameMap *)realloc(map, sizeof(InterfaceNameMap) +
+      map = (InterfaceNameMap *)HeapReAlloc(GetProcessHeap(), 0, map,
+       sizeof(InterfaceNameMap) +
        (numInterfaces - 1) * sizeof(InterfaceNameMapEntry));
       if (map)
         memset(&map->table[map->numAllocated], 0,
@@ -321,9 +322,9 @@ static void enumerateInterfaces(void)
       else
         guessedNumInterfaces *= 2;
       if (ifc.ifc_buf)
-        free(ifc.ifc_buf);
+        HeapFree(GetProcessHeap(), 0, ifc.ifc_buf);
       ifc.ifc_len = sizeof(struct ifreq) * guessedNumInterfaces;
-      ifc.ifc_buf = (char *)malloc(ifc.ifc_len);
+      ifc.ifc_buf = (char *)HeapAlloc(GetProcessHeap(), 0, ifc.ifc_len);
       ret = ioctl(fd, SIOCGIFCONF, &ifc);
     } while (ret == 0 &&
      ifc.ifc_len == (sizeof(struct ifreq) * guessedNumInterfaces));
@@ -336,7 +337,7 @@ static void enumerateInterfaces(void)
     }
 
     if (ifc.ifc_buf)
-      free(ifc.ifc_buf);
+      HeapFree(GetProcessHeap(), 0, ifc.ifc_buf);
     close(fd);
   }
 }
@@ -432,7 +433,7 @@ InterfaceIndexTable *getInterfaceIndexTable(void)
  
   EnterCriticalSection(&mapCS);
   numInterfaces = getNumInterfaces();
-  ret = (InterfaceIndexTable *)calloc(1,
+  ret = (InterfaceIndexTable *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
    sizeof(InterfaceIndexTable) + (numInterfaces - 1) * sizeof(DWORD));
   if (ret) {
     ret->numAllocated = numInterfaces;
@@ -450,7 +451,7 @@ InterfaceIndexTable *getNonLoopbackInterfaceIndexTable(void)
 
   EnterCriticalSection(&mapCS);
   numInterfaces = getNumNonLoopbackInterfaces();
-  ret = (InterfaceIndexTable *)calloc(1,
+  ret = (InterfaceIndexTable *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
    sizeof(InterfaceIndexTable) + (numInterfaces - 1) * sizeof(DWORD));
   if (ret) {
     ret->numAllocated = numInterfaces;
@@ -719,12 +720,12 @@ DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
   if (sysctl(mib, 6, NULL, &mibLen, NULL, 0) < 0)
     return ERROR_NO_MORE_FILES;
 
-  buf = (u_char *)malloc(mibLen);
+  buf = (u_char *)HeapAlloc(GetProcessHeap(), 0, mibLen);
   if (!buf)
     return ERROR_NOT_ENOUGH_MEMORY;
 
   if (sysctl(mib, 6, buf, &mibLen, NULL, 0) < 0) {
-    free(buf);
+    HeapFree(GetProcessHeap(), 0, buf);
     return ERROR_NO_MORE_FILES;
   }
 
@@ -786,7 +787,7 @@ DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
       ret = NO_ERROR;
     }
   }
-  free(buf);
+  HeapFree(GetProcessHeap(), 0, buf);
   return ret;
 }
 #endif

@@ -62,7 +62,7 @@ typedef struct _InterfaceIndexTable {
 } InterfaceIndexTable;
 
 /* Returns a table with all known interface indexes, or NULL if one could not
- * be allocated.  free() the returned table.
+ * be allocated.  HeapFree() the returned table.
  */
 InterfaceIndexTable *getInterfaceIndexTable(void);
 

@@ -74,7 +74,7 @@ typedef struct _RouteTable {
 } RouteTable;
 
 /* Allocates and returns to you the route table, or NULL if it can't allocate
- * enough memory.  free() the returned table.
+ * enough memory.  HeapFree() the returned table.
  */
 RouteTable *getRouteTable(void);
 
@@ -82,7 +82,7 @@ RouteTable *getRouteTable(void);
 DWORD getNumArpEntries(void);
 
 /* Allocates and returns to you the arp table, or NULL if it can't allocate
- * enough memory.  free() the returned table.
+ * enough memory.  HeapFree() the returned table.
  */
 PMIB_IPNETTABLE getArpTable(void);
 
@@ -90,7 +90,7 @@ PMIB_IPNETTABLE getArpTable(void);
 DWORD getNumUdpEntries(void);
 
 /* Allocates and returns to you the UDP state table, or NULL if it can't
- * allocate enough memory.  free() the returned table.
+ * allocate enough memory.  HeapFree() the returned table.
  */
 PMIB_UDPTABLE getUdpTable(void);
 
@@ -98,7 +98,7 @@ PMIB_UDPTABLE getUdpTable(void);
 DWORD getNumTcpEntries(void);
 
 /* Allocates and returns to you the TCP state table, or NULL if it can't
- * allocate enough memory.  free() the returned table.
+ * allocate enough memory.  HeapFree() the returned table.
  */
 PMIB_TCPTABLE getTcpTable(void);
 
