@@ -359,6 +359,14 @@ DECL_HANDLER(set_serial_info)
         if(req->flags & SERIALINFO_SET_MASK)
         {
             serial->eventmask = req->eventmask;
+            if(!serial->eventmask)
+            {
+                while(serial->wait_q.head)
+                {
+                    async_notify(serial->wait_q.head, STATUS_SUCCESS);
+                    destroy_async(serial->wait_q.head);
+                }
+            }
         }
 
         /* comm port error status */
