@@ -1358,7 +1358,7 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 		    gl_state = GL_LINEAR;
 		    break;
 		default:
-		    if (TRACE_ON(ddraw)) DPRINTF(" state unhandled.\n");
+		    if (TRACE_ON(ddraw)) DPRINTF(" state unhandled (%ld).\n", dwState);
 		    gl_state = GL_LINEAR;
 		    break;
 	    }
@@ -1377,7 +1377,7 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 		    gl_state = GL_LINEAR;
 		    break;
 		default:
-		    if (TRACE_ON(ddraw)) DPRINTF(" state unhandled.\n");
+		    if (TRACE_ON(ddraw)) DPRINTF(" state unhandled (%ld).\n", dwState);
 		    gl_state = GL_LINEAR;
 		    break;
 	    }
@@ -1393,7 +1393,7 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 	        case D3DTADDRESS_WRAP:   if (TRACE_ON(ddraw)) DPRINTF("D3DTADDRESS_WRAP\n"); arg = GL_REPEAT; break;
 	        case D3DTADDRESS_CLAMP:  if (TRACE_ON(ddraw)) DPRINTF("D3DTADDRESS_CLAMP\n"); arg = GL_CLAMP; break;
 	        case D3DTADDRESS_BORDER: if (TRACE_ON(ddraw)) DPRINTF("D3DTADDRESS_BORDER\n"); arg = GL_CLAMP_TO_EDGE; break;
-	        default: ERR("Unhandled TEXTUREADDRESS mode %ld !\n", dwState);
+	        default: DPRINTF(" state unhandled (%ld).\n", dwState);
 	    }
 	    if ((d3dTexStageStateType == D3DTSS_ADDRESS) ||
 		(d3dTexStageStateType == D3DTSS_ADDRESSU))
@@ -1503,7 +1503,7 @@ ICOM_VTABLE(IDirect3DDevice7) VTABLE_IDirect3DDevice7 =
     XCAST(DrawPrimitiveVB) GL_IDirect3DDeviceImpl_7_3T_DrawPrimitiveVB,
     XCAST(DrawIndexedPrimitiveVB) GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitiveVB,
     XCAST(ComputeSphereVisibility) Main_IDirect3DDeviceImpl_7_3T_ComputeSphereVisibility,
-    XCAST(GetTexture) Main_IDirect3DDeviceImpl_7_GetTexture,
+    XCAST(GetTexture) Main_IDirect3DDeviceImpl_7_3T_GetTexture,
     XCAST(SetTexture) GL_IDirect3DDeviceImpl_7_3T_SetTexture,
     XCAST(GetTextureStageState) Main_IDirect3DDeviceImpl_7_3T_GetTextureStageState,
     XCAST(SetTextureStageState) GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState,
@@ -1571,7 +1571,7 @@ ICOM_VTABLE(IDirect3DDevice3) VTABLE_IDirect3DDevice3 =
     XCAST(DrawPrimitiveVB) Thunk_IDirect3DDeviceImpl_3_DrawPrimitiveVB,
     XCAST(DrawIndexedPrimitiveVB) Thunk_IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB,
     XCAST(ComputeSphereVisibility) Thunk_IDirect3DDeviceImpl_3_ComputeSphereVisibility,
-    XCAST(GetTexture) Main_IDirect3DDeviceImpl_3_GetTexture,
+    XCAST(GetTexture) Thunk_IDirect3DDeviceImpl_3_GetTexture,
     XCAST(SetTexture) Thunk_IDirect3DDeviceImpl_3_SetTexture,
     XCAST(GetTextureStageState) Thunk_IDirect3DDeviceImpl_3_GetTextureStageState,
     XCAST(SetTextureStageState) Thunk_IDirect3DDeviceImpl_3_SetTextureStageState,

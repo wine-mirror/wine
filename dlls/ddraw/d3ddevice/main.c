@@ -468,12 +468,23 @@ Main_IDirect3DDeviceImpl_7_3T_ComputeSphereVisibility(LPDIRECT3DDEVICE7 iface,
 }
 
 HRESULT WINAPI
-Main_IDirect3DDeviceImpl_7_GetTexture(LPDIRECT3DDEVICE7 iface,
-                                      DWORD dwStage,
-                                      LPDIRECTDRAWSURFACE7* lpTexture)
+Main_IDirect3DDeviceImpl_7_3T_GetTexture(LPDIRECT3DDEVICE7 iface,
+					 DWORD dwStage,
+					 LPDIRECTDRAWSURFACE7* lpTexture)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p/%p)->(%08lx,%p): stub!\n", This, iface, dwStage, lpTexture);
+    TRACE("(%p/%p)->(%08lx,%p)\n", This, iface, dwStage, lpTexture);
+
+    if (This->current_texture[dwStage] != NULL) {
+        *lpTexture = ICOM_INTERFACE(This->current_texture[dwStage], IDirectDrawSurface7);
+    } else {
+        *lpTexture = NULL;
+    }
+
+    TRACE(" returning interface at %p (for implementation at %p).\n", *lpTexture, This->current_texture[dwStage]);
+
+    /* Note: should this method increase the reference count for this ?? */
+
     return DD_OK;
 }
 
@@ -514,7 +525,11 @@ Main_IDirect3DDeviceImpl_7_3T_ValidateDevice(LPDIRECT3DDEVICE7 iface,
                                              LPDWORD lpdwPasses)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p/%p)->(%p): stub!\n", This, iface, lpdwPasses);
+    FIXME("(%p/%p)->(%p): semi-stub!\n", This, iface, lpdwPasses);
+
+    /* For the moment, we have a VERY good hardware which does everything in one pass :-) */
+    *lpdwPasses = 1;
+
     return DD_OK;
 }
 
@@ -829,16 +844,6 @@ Main_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
     FIXME("(%p/%p)->(%08x,%08lx): stub!\n", This, iface, dwLightStateType, dwLightState);
-    return DD_OK;
-}
-
-HRESULT WINAPI
-Main_IDirect3DDeviceImpl_3_GetTexture(LPDIRECT3DDEVICE3 iface,
-                                      DWORD dwStage,
-                                      LPDIRECT3DTEXTURE2* lplpTexture2)
-{
-    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
-    FIXME("(%p/%p)->(%08lx,%p): stub!\n", This, iface, dwStage, lplpTexture2);
     return DD_OK;
 }
 
@@ -1782,4 +1787,24 @@ Thunk_IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB(LPDIRECT3DDEVICE3 iface,
 						   lpwIndices,
 						   dwIndexCount,
 						   dwFlags);
+}
+
+HRESULT WINAPI
+Thunk_IDirect3DDeviceImpl_3_GetTexture(LPDIRECT3DDEVICE3 iface,
+				       DWORD dwStage,
+				       LPDIRECT3DTEXTURE2* lplpTexture2)
+{
+    HRESULT ret;
+    LPDIRECTDRAWSURFACE7 ret_val;
+
+    TRACE("(%p)->(%ld,%p) thunking to IDirect3DDevice7 interface.\n", iface, dwStage, lplpTexture2);
+    ret = IDirect3DDevice7_GetTexture(COM_INTERFACE_CAST(IDirect3DDeviceImpl, IDirect3DDevice3, IDirect3DDevice7, iface),
+				      dwStage,
+				      &ret_val);
+
+    *lplpTexture2 = COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirectDrawSurface7, IDirect3DTexture2, ret_val);
+
+    TRACE(" returning interface %p.\n", *lplpTexture2);
+    
+    return ret;
 }

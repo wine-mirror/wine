@@ -201,9 +201,9 @@ Main_IDirect3DDeviceImpl_7_3T_ComputeSphereVisibility(LPDIRECT3DDEVICE7 iface,
                                                       LPDWORD lpdwReturnValues);
 
 HRESULT WINAPI
-Main_IDirect3DDeviceImpl_7_GetTexture(LPDIRECT3DDEVICE7 iface,
-                                      DWORD dwStage,
-                                      LPDIRECTDRAWSURFACE7* lpTexture);
+Main_IDirect3DDeviceImpl_7_3T_GetTexture(LPDIRECT3DDEVICE7 iface,
+					 DWORD dwStage,
+					 LPDIRECTDRAWSURFACE7* lpTexture);
 
 HRESULT WINAPI
 Main_IDirect3DDeviceImpl_7_3T_SetTexture(LPDIRECT3DDEVICE7 iface,
@@ -343,11 +343,6 @@ HRESULT WINAPI
 Main_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
                                             D3DLIGHTSTATETYPE dwLightStateType,
                                             DWORD dwLightState);
-
-HRESULT WINAPI
-Main_IDirect3DDeviceImpl_3_GetTexture(LPDIRECT3DDEVICE3 iface,
-                                      DWORD dwStage,
-                                      LPDIRECT3DTEXTURE2* lplpTexture2);
 
 HRESULT WINAPI
 Main_IDirect3DDeviceImpl_2_SwapTextureHandles(LPDIRECT3DDEVICE2 iface,
@@ -757,3 +752,8 @@ Thunk_IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB(LPDIRECT3DDEVICE3 iface,
 						   LPWORD lpwIndices,
 						   DWORD dwIndexCount,
 						   DWORD dwFlags);
+
+HRESULT WINAPI
+Thunk_IDirect3DDeviceImpl_3_GetTexture(LPDIRECT3DDEVICE3 iface,
+				       DWORD dwStage,
+				       LPDIRECT3DTEXTURE2* lplpTexture2);
