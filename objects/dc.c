@@ -376,7 +376,7 @@ void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
     }
     TRACE("%04x %04x\n", hdc, hdcs );
 
-    dc->flags            = dcs->flags & ~DC_SAVED;
+    dc->flags            = dcs->flags & ~(DC_SAVED | DC_DIRTY);
     dc->hDevice          = dcs->hDevice;
     dc->totalExtent      = dcs->totalExtent;
     dc->ROPmode          = dcs->ROPmode;
