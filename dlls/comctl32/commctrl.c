@@ -1288,9 +1288,9 @@ LRESULT WINAPI COMCTL32_SubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
    /* Save our old stackpos to properly handle nested messages */
    proc = stack->stackpos;
    stack->stackpos = stack->SubclassProcs;
-   stack->running = TRUE;
+   stack->running++;
    ret = DefSubclassProc(hWnd, uMsg, wParam, lParam);
-   stack->running = FALSE;
+   stack->running--;
    stack->stackpos = proc;
     
    if (!stack->SubclassProcs) {
@@ -1344,12 +1344,11 @@ LRESULT WINAPI DefSubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
       else
          ret = CallWindowProcA (stack->origproc, hWnd, uMsg, wParam, lParam);
    } else {
-      SUBCLASSPROCS proc;
-      memcpy(&proc, stack->stackpos, sizeof(proc));
+      LPSUBCLASSPROCS proc = stack->stackpos;
       stack->stackpos = stack->stackpos->next; 
       /* call the Subclass procedure from the stack */
-      ret = proc.subproc (hWnd, uMsg, wParam, lParam,
-            proc.id, proc.ref);
+      ret = proc->subproc (hWnd, uMsg, wParam, lParam,
+            proc->id, proc->ref);
    }
 
    return ret;

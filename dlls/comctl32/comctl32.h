@@ -158,7 +158,7 @@ typedef struct
    SUBCLASSPROCS *SubclassProcs;
    SUBCLASSPROCS *stackpos;
    WNDPROC origproc;
-   BOOL running;
+   int running;
 } SUBCLASS_INFO, *LPSUBCLASS_INFO;
 
 /* undocumented functions */
