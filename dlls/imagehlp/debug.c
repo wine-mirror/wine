@@ -75,7 +75,7 @@ PIMAGE_DEBUG_INFORMATION WINAPI MapDebugInformation(
  */
 BOOL WINAPI StackWalk(
   DWORD MachineType, HANDLE hProcess, HANDLE hThread,
-  PSTACKFRAME StackFrame, PVOID ContextRecord,
+  LPSTACKFRAME StackFrame, LPVOID ContextRecord,
   PREAD_PROCESS_MEMORY_ROUTINE ReadMemoryRoutine,
   PFUNCTION_TABLE_ACCESS_ROUTINE FunctionTableAccessRoutine,
   PGET_MODULE_BASE_ROUTINE GetModuleBaseRoutine,

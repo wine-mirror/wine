@@ -58,7 +58,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 /***********************************************************************
  *           ImagehlpApiVersion (IMAGEHLP.@)
  */
-PAPI_VERSION WINAPI ImagehlpApiVersion()
+LPAPI_VERSION WINAPI ImagehlpApiVersion(VOID)
 {
   return &IMAGEHLP_ApiVersion;
 }
@@ -66,7 +66,7 @@ PAPI_VERSION WINAPI ImagehlpApiVersion()
 /***********************************************************************
  *           ImagehlpApiVersionEx (IMAGEHLP.@)
  */
-PAPI_VERSION WINAPI ImagehlpApiVersionEx(PAPI_VERSION AppVersion)
+LPAPI_VERSION WINAPI ImagehlpApiVersionEx(LPAPI_VERSION AppVersion)
 {
   if(!AppVersion)
     return NULL;

@@ -25,6 +25,8 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
+#define API_VERSION_NUMBER 7 		/* 7 is the default */
+
 /***********************************************************************
  * Types
  */
@@ -168,7 +170,7 @@ typedef struct _API_VERSION {
   USHORT  MinorVersion;
   USHORT  Revision;
   USHORT  Reserved;
-} API_VERSION, *PAPI_VERSION;
+} API_VERSION, *LPAPI_VERSION;
 
 typedef struct _IMAGE_DEBUG_INFORMATION {
   LIST_ENTRY List;
@@ -240,7 +242,7 @@ typedef struct _STACKFRAME {
   BOOL    Virtual;
   DWORD     Reserved[3];
   KDHELP  KdHelp;
-} STACKFRAME, *PSTACKFRAME, *LPSTACKFRAME;
+} STACKFRAME, *LPSTACKFRAME;
 
 typedef struct _IMAGEHLP_SYMBOL {
   DWORD SizeOfStruct;
@@ -414,11 +416,11 @@ PVOID WINAPI ImageRvaToVa(
 BOOL WINAPI ImageUnload(
   PLOADED_IMAGE LoadedImage
 );
-PAPI_VERSION WINAPI ImagehlpApiVersion(
+LPAPI_VERSION WINAPI ImagehlpApiVersion(
   void
 );
-PAPI_VERSION WINAPI ImagehlpApiVersionEx(
-  PAPI_VERSION AppVersion
+LPAPI_VERSION WINAPI ImagehlpApiVersionEx(
+  LPAPI_VERSION AppVersion
 );
 BOOL WINAPI MakeSureDirectoryPathExists(
   LPCSTR DirPath
@@ -462,7 +464,7 @@ BOOL WINAPI SplitSymbols(
 );
 BOOL WINAPI StackWalk(
   DWORD MachineType, HANDLE hProcess, HANDLE hThread,
-  PSTACKFRAME StackFrame, PVOID ContextRecord,
+  LPSTACKFRAME StackFrame, PVOID ContextRecord,
   PREAD_PROCESS_MEMORY_ROUTINE ReadMemoryRoutine,
   PFUNCTION_TABLE_ACCESS_ROUTINE FunctionTableAccessRoutine,
   PGET_MODULE_BASE_ROUTINE GetModuleBaseRoutine,
