@@ -21,7 +21,7 @@
 DEFAULT_DEBUG_CHANNEL(ntdll);
 
 
-static RTL_CRITICAL_SECTION peb_lock = CRITICAL_SECTION_INIT;
+static RTL_CRITICAL_SECTION peb_lock = CRITICAL_SECTION_INIT("peb_lock");
 
 /*
  *	resource functions

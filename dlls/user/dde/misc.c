@@ -27,7 +27,7 @@ DEFAULT_DEBUG_CHANNEL(ddeml);
 static WDML_INSTANCE*	WDML_InstanceList = NULL;
 static DWORD		WDML_MaxInstanceID = 0;  /* OK for present, have to worry about wrap-around later */
 const char		WDML_szEventClass[] = "DdeEventClass";
-CRITICAL_SECTION	WDML_CritSect = CRITICAL_SECTION_INIT;
+CRITICAL_SECTION	WDML_CritSect = CRITICAL_SECTION_INIT("WDML_CritSect");
 
 /* ================================================================
  *

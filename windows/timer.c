@@ -35,7 +35,7 @@ typedef struct tagTIMER
 
 static TIMER TimersArray[NB_TIMERS];
 
-static CRITICAL_SECTION csTimer = CRITICAL_SECTION_INIT;
+static CRITICAL_SECTION csTimer = CRITICAL_SECTION_INIT("csTimer");
 
 
 /***********************************************************************

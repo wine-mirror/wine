@@ -170,7 +170,7 @@ static GDIOBJHDR * StockObjects[NB_STOCK_OBJECTS] =
 
 HBITMAP hPseudoStockBitmap; /* 1x1 bitmap for memory DCs */
 
-static SYSLEVEL GDI_level = { CRITICAL_SECTION_INIT, 3 };
+static SYSLEVEL GDI_level = { CRITICAL_SECTION_INIT("GDI_level"), 3 };
 static WORD GDI_HeapSel;
 
 static BOOL get_bool(char *buffer, BOOL def_value)

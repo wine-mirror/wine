@@ -14,7 +14,7 @@
 
 DEFAULT_DEBUG_CHANNEL(win32);
 
-static SYSLEVEL Win16Mutex = { CRITICAL_SECTION_INIT, 1 };
+static SYSLEVEL Win16Mutex = { CRITICAL_SECTION_INIT("Win16Mutex"), 1 };
 
 /* Global variable to save current TEB while in 16-bit code */
 WORD SYSLEVEL_Win16CurrentTeb = 0;

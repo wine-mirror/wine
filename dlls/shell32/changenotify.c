@@ -14,7 +14,7 @@
 
 DEFAULT_DEBUG_CHANNEL(shell);
 
-static CRITICAL_SECTION SHELL32_ChangenotifyCS = CRITICAL_SECTION_INIT;
+static CRITICAL_SECTION SHELL32_ChangenotifyCS = CRITICAL_SECTION_INIT("SHELL32_ChangenotifyCS");
 
 /* internal list of notification clients (internal) */
 typedef struct _NOTIFICATIONLIST

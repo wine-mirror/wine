@@ -78,7 +78,7 @@ typedef struct tagICONCACHE
 } ICONCACHE;
 
 static ICONCACHE *IconAnchor = NULL;
-static CRITICAL_SECTION IconCrst = CRITICAL_SECTION_INIT;
+static CRITICAL_SECTION IconCrst = CRITICAL_SECTION_INIT("IconCrst");
 static WORD ICON_HOTSPOT = 0x4242;
 
 

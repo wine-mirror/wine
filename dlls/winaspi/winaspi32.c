@@ -30,7 +30,7 @@ DEFAULT_DEBUG_CHANNEL(aspi);
 #ifdef linux
 
 static ASPI_DEVICE_INFO *ASPI_open_devices = NULL;
-static CRITICAL_SECTION ASPI_CritSection = CRITICAL_SECTION_INIT;
+static CRITICAL_SECTION ASPI_CritSection = CRITICAL_SECTION_INIT("ASPI_CritSection");
 
 #endif /* defined(linux) */
 

@@ -47,7 +47,7 @@ DEFAULT_DEBUG_CHANNEL(x11drv);
 static void (*old_tsx11_lock)(void);
 static void (*old_tsx11_unlock)(void);
 
-static CRITICAL_SECTION X11DRV_CritSection = CRITICAL_SECTION_INIT;
+static CRITICAL_SECTION X11DRV_CritSection = CRITICAL_SECTION_INIT("X11DRV_CritSection");
 
 Screen *screen;
 Visual *visual;

@@ -37,7 +37,7 @@ typedef struct
 } SIC_ENTRY, * LPSIC_ENTRY;
 
 static HDPA		sic_hdpa = 0;
-static CRITICAL_SECTION	SHELL32_SicCS = CRITICAL_SECTION_INIT;
+static CRITICAL_SECTION SHELL32_SicCS = CRITICAL_SECTION_INIT("SHELL32_SicCS");
 
 /*****************************************************************************
  * SIC_CompareEntrys			[called by comctl32.dll]

@@ -121,7 +121,7 @@ strong_alias(__pthread_kill_other_threads_np, pthread_kill_other_threads_np);
 
 #define MAX_ATFORK 8  /* libc doesn't need that many anyway */
 
-static CRITICAL_SECTION atfork_section = CRITICAL_SECTION_INIT;
+static CRITICAL_SECTION atfork_section = CRITICAL_SECTION_INIT("atfork_section");
 typedef void (*atfork_handler)();
 static atfork_handler atfork_prepare[MAX_ATFORK];
 static atfork_handler atfork_parent[MAX_ATFORK];

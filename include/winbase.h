@@ -986,7 +986,7 @@ typedef DWORD CALLBACK (*LPPROGRESS_ROUTINE)(LARGE_INTEGER, LARGE_INTEGER, LARGE
 #define	FORMAT_MESSAGE_MAX_WIDTH_MASK	0x000000FF
 
 #ifdef __WINE__
-#define CRITICAL_SECTION_INIT { 0, -1, 0, 0, 0, 0 }
+#define CRITICAL_SECTION_INIT(name) { (void *)(__FILE__ ": " name), -1, 0, 0, 0, 0 }
 #endif
 
 typedef struct {

@@ -91,7 +91,7 @@ DEFAULT_DEBUG_CHANNEL(winsock);
 
 
 /* critical section to protect some non-rentrant net function */
-CRITICAL_SECTION csWSgetXXXbyYYY = CRITICAL_SECTION_INIT;
+CRITICAL_SECTION csWSgetXXXbyYYY = CRITICAL_SECTION_INIT("csWSgetXXXbyYYY");
 
 /* protoptypes of some functions in socket.c
  */

@@ -79,7 +79,7 @@ static char PROFILE_WineIniUsed[MAX_PATHNAME_LEN] = "";
 
 static const WCHAR wininiW[] = { 'w','i','n','.','i','n','i',0 };
 
-static CRITICAL_SECTION PROFILE_CritSect = CRITICAL_SECTION_INIT;
+static CRITICAL_SECTION PROFILE_CritSect = CRITICAL_SECTION_INIT("PROFILE_CritSect");
 
 static const char hex[16] = "0123456789ABCDEF";
 

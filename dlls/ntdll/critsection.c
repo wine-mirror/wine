@@ -141,6 +141,7 @@ static inline HANDLE get_semaphore( RTL_CRITICAL_SECTION *crit )
  */
 NTSTATUS WINAPI RtlInitializeCriticalSection( RTL_CRITICAL_SECTION *crit )
 {
+    crit->DebugInfo      = NULL;
     crit->LockCount      = -1;
     crit->RecursionCount = 0;
     crit->OwningThread   = 0;
@@ -190,11 +191,15 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
         DWORD res = WaitForSingleObject( sem, 5000L );
         if ( res == WAIT_TIMEOUT )
         {
-            ERR("Critical section %p wait timed out, retrying (60 sec) fs=%04x\n", crit, __get_fs() );
+            const char *name = (char *)crit->DebugInfo;
+            if (!name || IsBadStringPtrA(name,80)) name = "?";
+            ERR( "section %p %s wait timed out, retrying (60 sec) fs=%04x\n",
+                 crit, debugstr_a(name), __get_fs() );
             res = WaitForSingleObject( sem, 60000L );
             if ( res == WAIT_TIMEOUT && TRACE_ON(relay) )
             {
-                ERR("Critical section %p wait timed out, retrying (5 min) fs=%04x\n", crit, __get_fs() );
+                ERR( "section %p %s wait timed out, retrying (5 min) fs=%04x\n",
+                     crit, debugstr_a(name), __get_fs() );
                 res = WaitForSingleObject( sem, 300000L );
             }
         }
