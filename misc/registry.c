@@ -3203,7 +3203,7 @@ DWORD WINAPI RegFlushKey( HKEY hkey )
 
     lpkey = lookup_hkey( hkey );
     if (!lpkey)
-        return ERROR_INVALID_HANDLE;
+        return ERROR_BADKEY;
 
     ERR(reg, "What is the correct filename?\n");
 
