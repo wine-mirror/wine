@@ -1,24 +1,16 @@
 <!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
 
-<!-- *** Include list of authors *** -->
-<!entity % authors SYSTEM "authors.ent">
-%authors;
-
-<!entity build SYSTEM "build.sgml">
 <!entity debugger SYSTEM "debugger.sgml">
 <!entity documentation SYSTEM "documentation.sgml">
 <!entity patches SYSTEM "patches.sgml">
 <!entity testing SYSTEM "testing.sgml">
 <!entity i18n SYSTEM "i18n.sgml">
-<!entity tools SYSTEM "tools.sgml">
 
 <!entity architecture SYSTEM "architecture.sgml">
 <!entity debugging SYSTEM "debugging.sgml">
 <!entity ole SYSTEM "ole.sgml">
 <!entity opengl SYSTEM "opengl.sgml">
 <!entity multimedia SYSTEM "multimedia.sgml">
-
-<!entity cvs SYSTEM "cvs.sgml">
 
 <!entity implementation SYSTEM "implementation.sgml">
 <!entity porting SYSTEM "porting.sgml">
@@ -112,13 +104,11 @@
   <part id="part-one">
     <title>Developing Wine</title>
 
-    &build;
     &debugger;
     &documentation;
     &patches;
     &testing;
     &i18n;
-    &tools;
   </part>
 
   <part id="part-two">
@@ -132,11 +122,6 @@
   </part>
 
   <part id="part-three">
-    <title>Using CVS</title>
-    &cvs;
-  </part>
- 
-  <part id="part-four">
     <title>Advanced Topics</title>
     &implementation;
     &porting;

@@ -24,10 +24,8 @@ WINE_USER_SRCS = \
 
 WINE_DEVEL_SRCS = \
 	architecture.sgml \
-	build.sgml \
 	consoles.sgml \
 	cvs-regression.sgml \
-	cvs.sgml \
 	debugger.sgml \
 	debugging.sgml \
 	documentation.sgml \
@@ -38,8 +36,7 @@ WINE_DEVEL_SRCS = \
 	opengl.sgml \
 	patches.sgml \
 	porting.sgml \
-	testing.sgml \
-	tools.sgml
+	testing.sgml
 
 WINELIB_USER_SRCS = \
 	winelib-bindlls.sgml \
