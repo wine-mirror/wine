@@ -113,7 +113,7 @@ HRESULT WINAPI DirectInputCreateA(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPU
  *	IDirectInputA_EnumDevices
  */
 static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
-	LPDIRECTINPUTA iface, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback,
+	LPDIRECTINPUT7A iface, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback,
 	LPVOID pvRef, DWORD dwFlags
 )
 {
@@ -133,13 +133,13 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
 	return 0;
 }
 
-static ULONG WINAPI IDirectInputAImpl_AddRef(LPDIRECTINPUTA iface)
+static ULONG WINAPI IDirectInputAImpl_AddRef(LPDIRECTINPUT7A iface)
 {
 	ICOM_THIS(IDirectInputAImpl,iface);
 	return ++(This->ref);
 }
 
-static ULONG WINAPI IDirectInputAImpl_Release(LPDIRECTINPUTA iface)
+static ULONG WINAPI IDirectInputAImpl_Release(LPDIRECTINPUT7A iface)
 {
 	ICOM_THIS(IDirectInputAImpl,iface);
 	if (!(--This->ref)) {
@@ -150,7 +150,7 @@ static ULONG WINAPI IDirectInputAImpl_Release(LPDIRECTINPUTA iface)
 }
 
 static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
-	LPDIRECTINPUTA iface,REFGUID rguid,LPDIRECTINPUTDEVICEA* pdev,
+	LPDIRECTINPUT7A iface,REFGUID rguid,LPDIRECTINPUTDEVICEA* pdev,
 	LPUNKNOWN punk
 ) {
 	ICOM_THIS(IDirectInputAImpl,iface);
@@ -173,7 +173,7 @@ static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
 }
 
 static HRESULT WINAPI IDirectInputAImpl_QueryInterface(
-	LPDIRECTINPUTA iface,REFIID riid,LPVOID *ppobj
+	LPDIRECTINPUT7A iface,REFIID riid,LPVOID *ppobj
 ) {
 	ICOM_THIS(IDirectInputAImpl,iface);
 
@@ -193,12 +193,12 @@ static HRESULT WINAPI IDirectInputAImpl_QueryInterface(
 }
 
 static HRESULT WINAPI IDirectInputAImpl_Initialize(
-	LPDIRECTINPUTA iface,HINSTANCE hinst,DWORD x
+	LPDIRECTINPUT7A iface,HINSTANCE hinst,DWORD x
 ) {
 	return DIERR_ALREADYINITIALIZED;
 }
 
-static HRESULT WINAPI IDirectInputAImpl_GetDeviceStatus(LPDIRECTINPUTA iface,
+static HRESULT WINAPI IDirectInputAImpl_GetDeviceStatus(LPDIRECTINPUT7A iface,
 							REFGUID rguid) {
   ICOM_THIS(IDirectInputAImpl,iface);
   
@@ -207,7 +207,7 @@ static HRESULT WINAPI IDirectInputAImpl_GetDeviceStatus(LPDIRECTINPUTA iface,
   return DI_OK;
 }
 
-static HRESULT WINAPI IDirectInputAImpl_RunControlPanel(LPDIRECTINPUTA iface,
+static HRESULT WINAPI IDirectInputAImpl_RunControlPanel(LPDIRECTINPUT7A iface,
 							HWND hwndOwner,
 							DWORD dwFlags) {
   ICOM_THIS(IDirectInputAImpl,iface);

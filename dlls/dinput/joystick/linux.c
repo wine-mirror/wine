@@ -59,7 +59,7 @@ struct JoystickAImpl
         HANDLE				hEvent;
 	LONG				lMin,lMax,deadzone;
         LPDIDEVICEOBJECTDATA 		data_queue;
-        int				queue_pos, queue_len;
+        int				queue_head, queue_tail, queue_len;
 	DIJOYSTATE			js;
 };
 
@@ -287,7 +287,8 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceState(
     	FIXME("len %ld is not sizeof(DIJOYSTATE), unsupported format.\n",len);
     }
     memcpy(ptr,&(This->js),len);
-    This->queue_pos = 0;
+    This->queue_head = 0;
+    This->queue_tail = 0;
     return 0;
 }
 

@@ -109,9 +109,10 @@ struct SysMouseAImpl
         LPMOUSE_EVENT_PROC		prev_handler;
         HWND				win;
         DWORD				dwCoopLevel;
+        POINT      			mapped_center;
         DWORD				win_centerX, win_centerY;
         LPDIDEVICEOBJECTDATA 		data_queue;
-        int				queue_pos, queue_len;
+        int				queue_head, queue_tail, queue_len;
         WARP_STATUS		        need_warp;
         int				acquired;
         HANDLE				hEvent;
@@ -259,6 +260,8 @@ static HRESULT WINAPI SysMouseAImpl_SetCooperativeLevel(
     _dump_cooperativelevel_DI(dwflags);
 
   /* Store the window which asks for the mouse */
+  if (!hwnd)
+    hwnd = GetDesktopWindow();
   This->win = hwnd;
   This->dwCoopLevel = dwflags;
   
@@ -349,7 +352,7 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
 	} else {
 	  /* Now, warp handling */
 	  if ((This->need_warp == WARP_STARTED) &&
-	      (posX == This->win_centerX) && (posX == This->win_centerX)) {
+	      (posX == This->mapped_center.x) && (posY == This->mapped_center.y)) {
 	    /* Warp has been done... */
 	    This->need_warp = WARP_DONE;
 	    goto end;
@@ -365,13 +368,13 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
 	  } else {
 	    /* This is the first time the event handler has been called after a
 	       GetData of GetState. */
-	    if (posX != This->win_centerX) {
-	      GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], posX - This->win_centerX, xtime, (This->dinput->evsequence)++);
+	    if (posX != This->mapped_center.x) {
+	      GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], posX - This->mapped_center.x, xtime, (This->dinput->evsequence)++);
 	      This->need_warp = WARP_NEEDED;
 	    }
 	    
-	    if (posY != This->win_centerY) {
-	      GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], posY - This->win_centerY, xtime, (This->dinput->evsequence)++);
+	    if (posY != This->mapped_center.y) {
+	      GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], posY - This->mapped_center.y, xtime, (This->dinput->evsequence)++);
 	      This->need_warp = WARP_NEEDED;
 	    }
 	  }
@@ -384,8 +387,8 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
 	  This->m_state.lX = posX;
 	  This->m_state.lY = posY;
 	} else {
-	  This->m_state.lX = posX - This->win_centerX;
-	  This->m_state.lY = posY - This->win_centerY;
+	  This->m_state.lX = posX - This->mapped_center.x;
+	  This->m_state.lY = posY - This->mapped_center.y;
 	}
       } else {
 	/* Mouse reporting is in relative mode */
@@ -500,7 +503,7 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
   TRACE("(this=%p)\n",This);
 
   if (This->acquired == 0) {
-    POINT       point;
+    POINT point;
     
     /* This stores the current mouse handler. */
     This->prev_handler = mouse_event;
@@ -533,11 +536,11 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 
     /* Warp the mouse to the center of the window */
     if (This->absolute == 0) {
-      TRACE("Warping mouse to %ld - %ld\n", This->win_centerX, This->win_centerY);
-      point.x = This->win_centerX;
-      point.y = This->win_centerY;
-      MapWindowPoints(This->win, HWND_DESKTOP, &point, 1);
-      SetCursorPos( point.x, point.y );
+      This->mapped_center.x = This->win_centerX;
+      This->mapped_center.y = This->win_centerY;
+      MapWindowPoints(This->win, HWND_DESKTOP, &This->mapped_center, 1);
+      TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y); 
+      SetCursorPos( This->mapped_center.x, This->mapped_center.y );
 #ifdef MOUSE_HACK
       This->need_warp = WARP_DONE;
 #else
@@ -599,16 +602,14 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
     This->m_state.lX = 0;
     This->m_state.lY = 0;
   }
-  
+
   /* Check if we need to do a mouse warping */
   if (This->need_warp == WARP_NEEDED) {
-    POINT point;
-
-    TRACE("Warping mouse to %ld - %ld\n", This->win_centerX, This->win_centerY);
-    point.x = This->win_centerX;
-    point.y = This->win_centerY;
-    MapWindowPoints(This->win, HWND_DESKTOP, &point, 1);
-    SetCursorPos( point.x, point.y );
+    This->mapped_center.x = This->win_centerX;
+    This->mapped_center.y = This->win_centerY;
+    MapWindowPoints(This->win, HWND_DESKTOP, &This->mapped_center, 1);
+    TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y); 
+    SetCursorPos( This->mapped_center.x, This->mapped_center.y );
 
 #ifdef MOUSE_HACK
     This->need_warp = WARP_DONE;
@@ -636,52 +637,56 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE2A iface,
 					      DWORD flags
 ) {
   ICOM_THIS(SysMouseAImpl,iface);
-  DWORD	nqpos = 0;
+  DWORD len, nqtail;
   
   EnterCriticalSection(&(This->crit));
-  TRACE("(%p)->(dods=%ld,dod=%p,entries=%ld,fl=0x%08lx)\n",This,dodsize,dod,*entries,flags);
+  TRACE("(%p)->(dods=%ld,entries=%ld,fl=0x%08lx)\n",This,dodsize,*entries,flags);
+
+  len = ((This->queue_head < This->queue_tail) ? This->queue_len : 0)
+      + (This->queue_head - This->queue_tail);
+  if (len > *entries) len = *entries;
 
   if (dod == NULL) {
-    *entries = This->queue_pos;
-    nqpos = 0;
+    *entries = len;
+    nqtail = This->queue_tail + len;
+    while (nqtail >= This->queue_len) nqtail -= This->queue_len;
   } else {
-    /* Check for buffer overflow */
-    if (This->queue_pos > dodsize) {
-      FIXME("Buffer overflow not handled properly yet...\n");
-      This->queue_pos = dodsize;
-    }
     if (dodsize != sizeof(DIDEVICEOBJECTDATA)) {
       ERR("Wrong structure size !\n");
       LeaveCriticalSection(&(This->crit));
       return DIERR_INVALIDPARAM;
     }
 
-    if (This->queue_pos)
-    	TRACE("Application retrieving %d event(s).\n", This->queue_pos); 
-    
-    /* Copy the buffered data into the application queue */
-    memcpy(dod, This->data_queue, This->queue_pos * dodsize);
-    *entries = This->queue_pos;
+    if (len)
+    	TRACE("Application retrieving %ld event(s).\n", len); 
 
-    /* Reset the event queue */
-    nqpos = 0;
+    *entries = 0;
+    nqtail = This->queue_tail;
+    while (len) {
+      DWORD span = ((This->queue_head < nqtail) ? This->queue_len : This->queue_head)
+                 - nqtail;
+      if (span > len) span = len;
+      /* Copy the buffered data into the application queue */
+      memcpy(dod + *entries, This->data_queue + nqtail, span * dodsize);
+      /* Advance position */
+      nqtail += span;
+      if (nqtail >= This->queue_len) nqtail -= This->queue_len;
+      *entries += span;
+      len -= span;
+    }
   }
   if (!(flags & DIGDD_PEEK))
-    This->queue_pos = nqpos;
+    This->queue_tail = nqtail;
 
   LeaveCriticalSection(&(This->crit));
 
-  TRACE("returing *entries = %ld\n",*entries);
-
   /* Check if we need to do a mouse warping */
   if (This->need_warp == WARP_NEEDED) {
-    POINT point;
-
-    TRACE("Warping mouse to %ld - %ld\n", This->win_centerX, This->win_centerY);
-    point.x = This->win_centerX;
-    point.y = This->win_centerY;
-    MapWindowPoints(This->win, HWND_DESKTOP, &point, 1);
-    SetCursorPos( point.x, point.y );
+    This->mapped_center.x = This->win_centerX;
+    This->mapped_center.y = This->win_centerY;
+    MapWindowPoints(This->win, HWND_DESKTOP, &This->mapped_center, 1);
+    TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y); 
+    SetCursorPos( This->mapped_center.x, This->mapped_center.y );
 
 #ifdef MOUSE_HACK
     This->need_warp = WARP_DONE;
@@ -712,7 +717,8 @@ static HRESULT WINAPI SysMouseAImpl_SetProperty(LPDIRECTINPUTDEVICE2A iface,
 
       This->data_queue = (LPDIDEVICEOBJECTDATA)HeapAlloc(GetProcessHeap(),0,
 							  pd->dwData * sizeof(DIDEVICEOBJECTDATA));
-      This->queue_pos  = 0;
+      This->queue_head = 0;
+      This->queue_tail = 0;
       This->queue_len  = pd->dwData;
       break;
     }

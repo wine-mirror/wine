@@ -34,16 +34,19 @@ extern DataFormat *create_DataFormat(DIDATAFORMAT *wine_format, LPCDIDATAFORMAT 
 {										\
   /* If queue_len > 0, queuing is requested -> TRACE the event queued */	\
   if (This->queue_len > 0) {							\
-    TRACE(" queueing %d at offset %d (queue pos %d / size %d)\n", 		\
+    DWORD nq;									\
+    TRACE(" queueing %d at offset %d (queue head %d / size %d)\n", 		\
 	  (int) (data), (int) (offset),                           		\
-	  (int) (This->queue_pos), (int) (This->queue_len));			\
+	  (int) (This->queue_head), (int) (This->queue_len));			\
 										\
-    if ((offset >= 0) && (This->queue_pos < This->queue_len)) {			\
-      This->data_queue[This->queue_pos].dwOfs = offset;				\
-      This->data_queue[This->queue_pos].dwData = data;				\
-      This->data_queue[This->queue_pos].dwTimeStamp = xtime;			\
-      This->data_queue[This->queue_pos].dwSequence = seq;			\
-      This->queue_pos++;							\
+    nq = This->queue_head+1;							\
+    while (nq >= This->queue_len) nq -= This->queue_len;			\
+    if ((offset >= 0) && (nq != This->queue_tail)) {				\
+      This->data_queue[This->queue_head].dwOfs = offset;			\
+      This->data_queue[This->queue_head].dwData = data;				\
+      This->data_queue[This->queue_head].dwTimeStamp = xtime;			\
+      This->data_queue[This->queue_head].dwSequence = seq;			\
+      This->queue_head = nq;							\
     }										\
   }										\
 }
