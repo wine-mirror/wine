@@ -3918,7 +3918,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 
     for(pFDesc=This->funclist; pFDesc; pFDesc=pFDesc->next)
 	if (pFDesc->funcdesc.memid == memid) {
-	    if (pFDesc->funcdesc.invkind & (dwFlags & ~DISPATCH_METHOD))
+	    if (pFDesc->funcdesc.invkind & dwFlags)
 		break;
 	}
     if (pFDesc) {
