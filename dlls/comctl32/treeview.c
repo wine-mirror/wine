@@ -30,8 +30,8 @@
  *   missing notifications: NM_SETCURSOR, TVN_GETINFOTIP, TVN_KEYDOWN,
  *      TVN_SETDISPINFO, TVN_SINGLEEXPAND
  *
- *   missing styles: TVS_FULLROWSELECT, TVS_INFOTIP, TVS_NOSCROLL,
- *      TVS_RTLREADING, TVS_TRACKSELECT
+ *   missing styles: TVS_FULLROWSELECT, TVS_INFOTIP, TVS_RTLREADING,
+ *      TVS_TRACKSELECT
  *
  *   missing item styles: TVIS_CUT, TVIS_EXPANDPARTIAL
  *
@@ -4333,7 +4333,7 @@ TREEVIEW_EnsureVisible(TREEVIEW_INFO *infoPtr, HTREEITEM item, BOOL bHScroll)
     else if (visible_pos >= viscount
 	     /* Sometimes, before we are displayed, GVC is 0, causing us to
 	      * spuriously scroll up. */
-	     && visible_pos > 0)
+	     && visible_pos > 0 && !(infoPtr->dwStyle & TVS_NOSCROLL) )
     {
 	/* item is past the end of the list. */
 	int scroll = visible_pos - viscount;
