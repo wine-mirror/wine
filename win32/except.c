@@ -72,8 +72,12 @@ void WINAPI RaiseException( DWORD code, DWORD flags, DWORD nbargs, const LPDWORD
 DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 {
     struct exception_event_request *req = get_req_buffer();
-    char message[80];
-    PDB *pdb = PROCESS_Current();
+    PDB*		pdb = PROCESS_Current();
+    char 		format[256];
+    char 		buffer[256];
+    HKEY		hDbgConf;
+    DWORD		bAuto;
+    DWORD		ret = EXCEPTION_EXECUTE_HANDLER;
 
     /* send a last chance event to the debugger */
     req->record  = *epointers->ExceptionRecord;
@@ -90,11 +94,61 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 
     /* FIXME: Should check the current error mode */
 
-    sprintf( message, "Unhandled exception 0x%08lx at address 0x%08lx.",
-             epointers->ExceptionRecord->ExceptionCode,
-             (DWORD)epointers->ExceptionRecord->ExceptionAddress );
-    Callout.MessageBoxA( 0, message, "Error", MB_OK | MB_ICONHAND );
-    return EXCEPTION_EXECUTE_HANDLER;
+    if (!RegOpenKeyA(HKEY_LOCAL_MACHINE, 
+		     "Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug", 
+		     &hDbgConf)) {
+       DWORD 	type;
+       DWORD 	count;
+       
+       count = sizeof(format);
+       if (RegQueryValueExA(hDbgConf, "Debugger", 0, &type, format, &count))
+	  format[0] = 0;
+
+       count = sizeof(bAuto);
+       if (RegQueryValueExA(hDbgConf, "Auto", 0, &type, (char*)&bAuto, &count))
+	  bAuto = FALSE;
+       
+       RegCloseKey(hDbgConf);
+    } else {
+       format[0] = 0;
+    }
+
+    if (!bAuto) {
+       sprintf( buffer, "Unhandled exception 0x%08lx at address 0x%08lx.\n"
+	                "Do you wish to debug it ?",
+		epointers->ExceptionRecord->ExceptionCode,
+		(DWORD)epointers->ExceptionRecord->ExceptionAddress );
+       if (Callout.MessageBoxA( 0, buffer, "Error", MB_YESNO | MB_ICONHAND ) == IDNO) {
+	  TRACE("Killing process\n");
+	  return EXCEPTION_EXECUTE_HANDLER;
+       }
+    }
+    
+    if (format[0]) {
+       HANDLE			hEvent;
+       PROCESS_INFORMATION	info;
+       STARTUPINFOA		startup;
+
+       TRACE("Starting debugger (fmt=%s)\n", format);
+       hEvent = ConvertToGlobalHandle(CreateEventA(NULL, FALSE, FALSE, NULL));
+       sprintf(buffer, format, (unsigned long)pdb->server_pid, hEvent);
+       memset(&startup, 0, sizeof(startup));
+       startup.cb = sizeof(startup);
+       startup.dwFlags = STARTF_USESHOWWINDOW;
+       startup.wShowWindow = SW_SHOWNORMAL;
+       if (CreateProcessA(NULL, buffer, NULL, NULL, 
+			  TRUE, 0, NULL, NULL, &startup, &info)) {
+	  WaitForSingleObject(hEvent, INFINITE);
+	  ret = EXCEPTION_CONTINUE_SEARCH;
+       } else {
+	  ERR("Couldn't start debugger (%s)\n", buffer);
+       }
+       CloseHandle(hEvent);
+    } else {
+       ERR("No standard debugger defined in the registry => no debugging session\n");
+    }
+    
+    return ret;
 }
 
 
