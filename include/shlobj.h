@@ -841,6 +841,11 @@ typedef struct _FILEGROUPDESCRIPTORW {
 DECL_WINELIB_TYPE_AW(FILEGROUPDESCRIPTOR)
 DECL_WINELIB_TYPE_AW(LPFILEGROUPDESCRIPTOR)
 
+/****************************************************************************
+ * Path Manipulation Routines
+ */
+VOID WINAPI PathGetShortPath(LPWSTR pszPath);
+
 #include <poppack.h>
 
 /*****************************************************************************
