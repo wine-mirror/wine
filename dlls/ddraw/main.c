@@ -402,7 +402,7 @@ DWORD WINAPI DDRAW_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
     int i;
     IClassFactoryImpl *factory;
 
-    TRACE("(%p,%p,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+    TRACE("(%s,%s,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
     if ( !IsEqualGUID( &IID_IClassFactory, riid )
 	 && ! IsEqualGUID( &IID_IUnknown, riid) )
