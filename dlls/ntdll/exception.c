@@ -233,8 +233,16 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
     TRACE( "code=%lx flags=%lx addr=%p\n", rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
     for (c=0; c<rec->NumberParameters; c++) TRACE(" info[%ld]=%08lx\n", c, rec->ExceptionInformation[c]);
     if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
-        FIXME( "call to unimplemented function %s.%s\n",
-               (char*)rec->ExceptionInformation[0], (char*)rec->ExceptionInformation[1] );
+    {
+        if (HIWORD(rec->ExceptionInformation[1]))
+            FIXME( "call (from %p) to unimplemented function %s.%s\n",
+                   rec->ExceptionAddress,
+                   (char*)rec->ExceptionInformation[0], (char*)rec->ExceptionInformation[1] );
+        else
+            FIXME( "call (from %p) to unimplemented function %s.%ld\n",
+                   rec->ExceptionAddress,
+                   (char*)rec->ExceptionInformation[0], rec->ExceptionInformation[1] );
+    }
 #ifdef __i386__
     else
     {

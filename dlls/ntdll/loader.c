@@ -158,6 +158,83 @@ static inline BOOL call_dll_entry_point( DLLENTRYPROC proc, void *module,
 #endif /* __i386__ */
 
 
+#ifdef __i386__
+/*************************************************************************
+ *		stub_entry_point
+ *
+ * Entry point for stub functions.
+ */
+static void stub_entry_point( const char *dll, const char *name, ... )
+{
+    EXCEPTION_RECORD rec;
+
+    rec.ExceptionCode           = EXCEPTION_WINE_STUB;
+    rec.ExceptionFlags          = EH_NONCONTINUABLE;
+    rec.ExceptionRecord         = NULL;
+#ifdef __GNUC__
+    rec.ExceptionAddress        = __builtin_return_address(0);
+#else
+    rec.ExceptionAddress        = *((void **)&dll - 1);
+#endif
+    rec.NumberParameters        = 2;
+    rec.ExceptionInformation[0] = (DWORD)dll;
+    rec.ExceptionInformation[1] = (DWORD)name;
+    for (;;) RtlRaiseException( &rec );
+}
+
+
+#include <pshpack1.h>
+struct stub
+{
+    BYTE        popl_eax;   /* popl %eax */
+    BYTE        pushl1;     /* pushl $name */
+    const char *name;
+    BYTE        pushl2;     /* pushl $dll */
+    const char *dll;
+    BYTE        pushl_eax;  /* pushl %eax */
+    BYTE        jmp;        /* jmp stub_entry_point */
+    DWORD       entry;
+};
+#include <poppack.h>
+
+/*************************************************************************
+ *		allocate_stub
+ *
+ * Allocate a stub entry point.
+ */
+static void *allocate_stub( const char *dll, const char *name )
+{
+#define MAX_SIZE 65536
+    static struct stub *stubs;
+    static unsigned int nb_stubs;
+    struct stub *stub;
+
+    if (nb_stubs >= MAX_SIZE / sizeof(*stub)) return (void *)0xdeadbeef;
+
+    if (!stubs)
+    {
+        ULONG size = MAX_SIZE;
+        if (NtAllocateVirtualMemory( GetCurrentProcess(), (void **)&stubs, 0, &size,
+                                     MEM_COMMIT, PAGE_EXECUTE_WRITECOPY ) != STATUS_SUCCESS)
+            return (void *)0xdeadbeef;
+    }
+    stub = &stubs[nb_stubs++];
+    stub->popl_eax  = 0x58;  /* popl %eax */
+    stub->pushl1    = 0x68;  /* pushl $name */
+    stub->name      = name;
+    stub->pushl2    = 0x68;  /* pushl $dll */
+    stub->dll       = dll;
+    stub->pushl_eax = 0x50;  /* pushl %eax */
+    stub->jmp       = 0xe9;  /* jmp stub_entry_point */
+    stub->entry     = (BYTE *)stub_entry_point - (BYTE *)(&stub->entry + 1);
+    return stub;
+}
+
+#else  /* __i386__ */
+static inline void *allocate_stub( const char *dll, const char *name ) { return (void *)0xdeadbeef; }
+#endif  /* __i386__ */
+
+
 /*************************************************************************
  *		get_modref
  *
@@ -426,17 +503,19 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
         {
             if (IMAGE_SNAP_BY_ORDINAL(import_list->u1.Ordinal))
             {
-                ERR("No implementation for %s.%ld", name, IMAGE_ORDINAL(import_list->u1.Ordinal));
+                int ordinal = IMAGE_ORDINAL(import_list->u1.Ordinal);
+                WARN("No implementation for %s.%d", name, ordinal );
+                thunk_list->u1.Function = allocate_stub( name, (const char *)ordinal );
             }
             else
             {
                 IMAGE_IMPORT_BY_NAME *pe_name = get_rva( module, (DWORD)import_list->u1.AddressOfData );
-                ERR("No implementation for %s.%s", name, pe_name->Name );
+                WARN("No implementation for %s.%s", name, pe_name->Name );
+                thunk_list->u1.Function = allocate_stub( name, pe_name->Name );
             }
-            ERR(" imported from %s, setting to 0xdeadbeef\n",
-                debugstr_w(current_modref->ldr.FullDllName.Buffer) );
-            thunk_list->u1.Function = (PDWORD)0xdeadbeef;
-
+            WARN(" imported from %s, allocating stub %p\n",
+                debugstr_w(current_modref->ldr.FullDllName.Buffer),
+                thunk_list->u1.Function );
             import_list++;
             thunk_list++;
         }
@@ -453,9 +532,10 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
                                                                    ordinal - exports->Base );
             if (!thunk_list->u1.Function)
             {
-                ERR("No implementation for %s.%d imported from %s, setting to 0xdeadbeef\n",
-                    name, ordinal, debugstr_w(current_modref->ldr.FullDllName.Buffer) );
-                thunk_list->u1.Function = (PDWORD)0xdeadbeef;
+                thunk_list->u1.Function = allocate_stub( name, (const char *)ordinal );
+                WARN("No implementation for %s.%d imported from %s, setting to %p\n",
+                    name, ordinal, debugstr_w(current_modref->ldr.FullDllName.Buffer),
+                    thunk_list->u1.Function );
             }
             TRACE("--- Ordinal %s.%d = %p\n", name, ordinal, thunk_list->u1.Function );
         }
@@ -467,9 +547,10 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
                                                                  pe_name->Name, pe_name->Hint );
             if (!thunk_list->u1.Function)
             {
-                ERR("No implementation for %s.%s imported from %s, setting to 0xdeadbeef\n",
-                    name, pe_name->Name, debugstr_w(current_modref->ldr.FullDllName.Buffer) );
-                thunk_list->u1.Function = (PDWORD)0xdeadbeef;
+                thunk_list->u1.Function = allocate_stub( name, pe_name->Name );
+                WARN("No implementation for %s.%s imported from %s, setting to %p\n",
+                    name, pe_name->Name, debugstr_w(current_modref->ldr.FullDllName.Buffer),
+                    thunk_list->u1.Function );
             }
             TRACE("--- %s %s.%d = %p\n", pe_name->Name, name, pe_name->Hint, thunk_list->u1.Function);
         }

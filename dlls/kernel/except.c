@@ -135,8 +135,12 @@ static int format_exception_msg( const EXCEPTION_POINTERS *ptr, char *buffer, in
                  rec->ExceptionInformation[0]);
         break;
     case EXCEPTION_WINE_STUB:
-        len = snprintf( buffer, size, "Unimplemented function %s.%s called",
-                 (char *)rec->ExceptionInformation[0], (char *)rec->ExceptionInformation[1] );
+        if (HIWORD(rec->ExceptionInformation[1]))
+            len = snprintf( buffer, size, "Unimplemented function %s.%s called",
+                            (char *)rec->ExceptionInformation[0], (char *)rec->ExceptionInformation[1] );
+        else
+            len = snprintf( buffer, size, "Unimplemented function %s.%ld called",
+                            (char *)rec->ExceptionInformation[0], rec->ExceptionInformation[1] );
         break;
     case EXCEPTION_WINE_ASSERTION:
         len = snprintf( buffer, size, "Assertion failed" );

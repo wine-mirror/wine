@@ -640,9 +640,12 @@ static DWORD dbg_handle_exception(EXCEPTION_RECORD* rec, BOOL first_chance)
             memory_get_string(dbg_curr_process->handle,
                               (void*)rec->ExceptionInformation[0], TRUE, FALSE,
                               dll, sizeof(dll));
-            memory_get_string(dbg_curr_process->handle,
-                              (void*)rec->ExceptionInformation[1], TRUE, FALSE,
-                              name, sizeof(name));
+            if (HIWORD(rec->ExceptionInformation[1]))
+                memory_get_string(dbg_curr_process->handle,
+                                  (void*)rec->ExceptionInformation[1], TRUE, FALSE,
+                                  name, sizeof(name));
+            else
+                sprintf( name, "%ld", rec->ExceptionInformation[1] );
             dbg_printf("unimplemented function %s.%s called", dll, name);
         }
         break;
