@@ -37,6 +37,8 @@ INSTALLED_INCLUDES = \
 	dplobby.h \
 	dshow.h \
 	dsound.h \
+	fci.h \
+	fdi.h \
 	guiddef.h \
 	imagehlp.h \
 	imm.h \

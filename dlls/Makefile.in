@@ -18,6 +18,7 @@ BASEDIRS = \
 	advapi32 \
 	avicap32 \
 	avifil32 \
+	cabinet \
 	comcat \
 	comctl32 \
 	commdlg \
@@ -177,6 +178,7 @@ all: \
 	advapi32.dll$(DLLEXT) \
 	avicap32.dll$(DLLEXT) \
 	avifil32.dll$(DLLEXT) \
+	cabinet.dll$(DLLEXT) \
 	comcat.dll$(DLLEXT) \
 	comctl32.dll$(DLLEXT) \
 	comdlg32.dll$(DLLEXT) \
@@ -276,6 +278,9 @@ avicap32.dll$(DLLEXT): avicap32/avicap32.dll$(DLLEXT)
 
 avifil32.dll$(DLLEXT) avifile.dll$(DLLEXT): avifil32/avifil32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) avifil32/avifil32.dll$(DLLEXT) $@
+
+cabinet.dll$(DLLEXT): cabinet/cabinet.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) cabinet/cabinet.dll$(DLLEXT) $@
 
 comcat.dll$(DLLEXT): comcat/comcat.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) comcat/comcat.dll$(DLLEXT) $@
@@ -567,6 +572,7 @@ x11drv.dll$(DLLEXT): x11drv/x11drv.dll$(DLLEXT)
 advapi32/advapi32.dll$(DLLEXT): advapi32
 avicap32/avicap32.dll$(DLLEXT): avicap32
 avifil32/avifil32.dll$(DLLEXT): avifil32
+cabinet/cabinet.dll$(DLLEXT): cabinet
 comcat/comcat.dll$(DLLEXT): comcat
 comctl32/comctl32.dll$(DLLEXT): comctl32
 commdlg/comdlg32.dll$(DLLEXT): commdlg
@@ -666,6 +672,7 @@ x11drv/x11drv.dll$(DLLEXT): x11drv
 advapi32/__install__: advapi32.dll$(DLLEXT)
 avicap32/__install__: avicap32.dll$(DLLEXT)
 avifil32/__install__: avifil32.dll$(DLLEXT)
+cabinet/__install__: cabinet.dll$(DLLEXT)
 comcat/__install__: comcat.dll$(DLLEXT)
 comctl32/__install__: comctl32.dll$(DLLEXT)
 commdlg/__install__: comdlg32.dll$(DLLEXT)
@@ -766,6 +773,7 @@ advapi32: kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 avicap32: ntdll.dll$(DLLEXT)
 avifil32: msacm32.dll$(DLLEXT) msvfw32.dll$(DLLEXT) shell32.dll$(DLLEXT) winmm.dll$(DLLEXT) \
           user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
+cabinet:  kernel32.dll$(DLLEXT)
 comcat:   ole32.dll$(DLLEXT) user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
 comctl32: user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
           winmm.dll$(DLLEXT)

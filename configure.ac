@@ -1389,6 +1389,7 @@ dlls/advapi32/Makefile
 dlls/advapi32/tests/Makefile
 dlls/avicap32/Makefile
 dlls/avifil32/Makefile
+dlls/cabinet/Makefile
 dlls/comcat/Makefile
 dlls/comctl32/Makefile
 dlls/commdlg/Makefile
