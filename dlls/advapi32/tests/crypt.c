@@ -34,6 +34,26 @@ static const char szKeySet[] = "wine_test_keyset";
 static const char szBadKeySet[] = "wine_test_bad_keyset";
 #define NON_DEF_PROV_TYPE 999
 
+static HMODULE hadvapi32;
+static BOOL (WINAPI *pCryptEnumProviderTypesA)(DWORD, DWORD*, DWORD, DWORD*, LPSTR, DWORD*);
+static BOOL (WINAPI *pCryptEnumProvidersA)(DWORD, DWORD*, DWORD, DWORD*, LPSTR, DWORD*);
+static BOOL (WINAPI *pCryptGetDefaultProviderA)(DWORD, DWORD*, DWORD, LPSTR, DWORD*);
+static BOOL (WINAPI *pCryptSetProviderExA)(LPCSTR, DWORD, DWORD*, DWORD);
+
+static void init_function_pointers(void)
+{
+    hadvapi32 = GetModuleHandleA("advapi32.dll");
+
+    if(hadvapi32)
+    {
+	pCryptEnumProviderTypesA = (void*)GetProcAddress(hadvapi32, "CryptEnumProviderTypesA");
+	pCryptEnumProvidersA = (void*)GetProcAddress(hadvapi32, "CryptEnumProvidersA");
+	pCryptGetDefaultProviderA = (void*)GetProcAddress(hadvapi32, "CryptGetDefaultProviderA");
+	pCryptSetProviderExA = (void*)GetProcAddress(hadvapi32, "CryptSetProviderExA");
+    }
+}
+
+
 static void init_environment(void)
 {
 	HCRYPTPROV hProv;
@@ -176,15 +196,21 @@ static void test_enum_providers(void)
 	DWORD notNull = 5;
 	DWORD notZeroFlags = 5;
 	
+	if(!pCryptEnumProvidersA)
+	{
+	    trace("skipping CryptEnumProviders tests\n");
+	    return;
+	}
+	
 	if (!FindProvRegVals(dwIndex, &dwType, &pszProvName, &cbName, &provCount))
 		return;
 	
 	/* check pdwReserved flag for NULL */
-	result = CryptEnumProviders(dwIndex, &notNull, 0, &type, NULL, &providerLen);
+	result = pCryptEnumProvidersA(dwIndex, &notNull, 0, &type, NULL, &providerLen);
 	ok(!result && GetLastError()==ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
 	
 	/* check dwFlags == 0 */
-	result = CryptEnumProviders(dwIndex, NULL, notZeroFlags, &type, NULL, &providerLen);
+	result = pCryptEnumProvidersA(dwIndex, NULL, notZeroFlags, &type, NULL, &providerLen);
 	ok(!result && GetLastError()==NTE_BAD_FLAGS, "%ld\n", GetLastError());
 	
 	/* alloc provider to half the size required
@@ -193,7 +219,7 @@ static void test_enum_providers(void)
 	if (!(provider = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, providerLen))))
 		return;
 
-	result = CryptEnumProviders(dwIndex, NULL, 0, &type, provider, &providerLen);
+	result = pCryptEnumProvidersA(dwIndex, NULL, 0, &type, provider, &providerLen);
 	ok(!result && GetLastError()==ERROR_MORE_DATA, "expected %i, got %ld\n",
 		ERROR_MORE_DATA, GetLastError());
 
@@ -203,7 +229,7 @@ static void test_enum_providers(void)
 	 * after loop ends, count should be provCount + 1 so subtract 1
 	 * to get actual number of providers */
 	count = 0;
-	while(CryptEnumProviders(count++, NULL, 0, &type, NULL, &providerLen))
+	while(pCryptEnumProvidersA(count++, NULL, 0, &type, NULL, &providerLen))
 		;
 	count--;
 	ok(count==provCount, "expected %i, got %i\n", (int)provCount, (int)count);
@@ -211,17 +237,17 @@ static void test_enum_providers(void)
 	/* loop past the actual number of providers to get the error
 	 * ERROR_NO_MORE_ITEMS */
 	for (count = 0; count < provCount + 1; count++)
-		result = CryptEnumProviders(count, NULL, 0, &type, NULL, &providerLen);
+		result = pCryptEnumProvidersA(count, NULL, 0, &type, NULL, &providerLen);
 	ok(!result && GetLastError()==ERROR_NO_MORE_ITEMS, "expected %i, got %ld\n", 
 			ERROR_NO_MORE_ITEMS, GetLastError());
 	
 	/* check expected versus actual values returned */
-	result = CryptEnumProviders(dwIndex, NULL, 0, &type, NULL, &providerLen);
+	result = pCryptEnumProvidersA(dwIndex, NULL, 0, &type, NULL, &providerLen);
 	ok(result && providerLen==cbName, "expected %i, got %i\n", (int)cbName, (int)providerLen);
 	if (!(provider = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, providerLen))))
 		return;
 		
-	result = CryptEnumProviders(dwIndex, NULL, 0, &type, provider, &providerLen);
+	result = pCryptEnumProvidersA(dwIndex, NULL, 0, &type, provider, &providerLen);
 	ok(result && type==dwType, "expected %ld, got %ld\n", 
 		dwType, type);
 	ok(result && !strcmp(pszProvName, provider), "expected %s, got %s\n", pszProvName, provider);
@@ -294,6 +320,12 @@ static void test_enum_provider_types()
 	DWORD notNull = 5;
 	DWORD notZeroFlags = 5;
 	
+	if(!pCryptEnumProviderTypesA)
+	{
+	    trace("skipping CryptEnumProviderTypes tests\n");
+	    return;
+	}
+	
 	if (!FindProvTypesRegVals(index, &dwProvType, &pszTypeName, &cbTypeName, &dwTypeCount))
 	{
 	    trace("could not find provider types in registry, skipping the test\n");
@@ -301,12 +333,12 @@ static void test_enum_provider_types()
 	}
 	
 	/* check pdwReserved for NULL */
-	result = CryptEnumProviderTypes(index, &notNull, 0, &provType, typeName, &typeNameSize);
+	result = pCryptEnumProviderTypesA(index, &notNull, 0, &provType, typeName, &typeNameSize);
 	ok(!result && GetLastError()==ERROR_INVALID_PARAMETER, "expected %i, got %ld\n", 
 		ERROR_INVALID_PARAMETER, GetLastError());
 	
 	/* check dwFlags == zero */
-	result = CryptEnumProviderTypes(index, NULL, notZeroFlags, &provType, typeName, &typeNameSize);
+	result = pCryptEnumProviderTypesA(index, NULL, notZeroFlags, &provType, typeName, &typeNameSize);
 	ok(!result && GetLastError()==NTE_BAD_FLAGS, "expected %i, got %ld\n",
 		ERROR_INVALID_PARAMETER, GetLastError());
 	
@@ -319,7 +351,7 @@ static void test_enum_provider_types()
 	/* This test fails under Win2k SP4:
 	   result = TRUE, GetLastError() == 0xdeadbeef
 	SetLastError(0xdeadbeef);
-	result = CryptEnumProviderTypes(index, NULL, 0, &provType, typeName, &typeNameSize);
+	result = pCryptEnumProviderTypesA(index, NULL, 0, &provType, typeName, &typeNameSize);
 	ok(!result && GetLastError()==ERROR_MORE_DATA, "expected 0/ERROR_MORE_DATA, got %d/%08lx\n",
 		result, GetLastError());
 	*/
@@ -330,7 +362,7 @@ static void test_enum_provider_types()
 	 * after loop ends, count should be dwTypeCount + 1 so subtract 1
 	 * to get actual number of provider types */
 	typeCount = 0;
-	while(CryptEnumProviderTypes(typeCount++, NULL, 0, &provType, NULL, &typeNameSize))
+	while(pCryptEnumProviderTypesA(typeCount++, NULL, 0, &provType, NULL, &typeNameSize))
 		;
 	typeCount--;
 	ok(typeCount==dwTypeCount, "expected %ld, got %ld\n", dwTypeCount, typeCount);
@@ -338,19 +370,19 @@ static void test_enum_provider_types()
 	/* loop past the actual number of provider types to get the error
 	 * ERROR_NO_MORE_ITEMS */
 	for (typeCount = 0; typeCount < dwTypeCount + 1; typeCount++)
-		result = CryptEnumProviderTypes(typeCount, NULL, 0, &provType, NULL, &typeNameSize);
+		result = pCryptEnumProviderTypesA(typeCount, NULL, 0, &provType, NULL, &typeNameSize);
 	ok(!result && GetLastError()==ERROR_NO_MORE_ITEMS, "expected %i, got %ld\n", 
 			ERROR_NO_MORE_ITEMS, GetLastError());
 	
 
 	/* check expected versus actual values returned */
-	result = CryptEnumProviderTypes(index, NULL, 0, &provType, NULL, &typeNameSize);
+	result = pCryptEnumProviderTypesA(index, NULL, 0, &provType, NULL, &typeNameSize);
 	ok(result && typeNameSize==cbTypeName, "expected %ld, got %ld\n", cbTypeName, typeNameSize);
 	if (!(typeName = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, typeNameSize))))
 		return;
 		
 	typeNameSize = 0xdeadbeef;
-	result = CryptEnumProviderTypes(index, NULL, 0, &provType, typeName, &typeNameSize);
+	result = pCryptEnumProviderTypesA(index, NULL, 0, &provType, typeName, &typeNameSize);
 	ok(result, "expected TRUE, got %ld\n", result);
 	ok(provType==dwProvType, "expected %ld, got %ld\n", dwProvType, provType);
 	if (pszTypeName)
@@ -426,23 +458,29 @@ static void test_get_default_provider()
 	DWORD result;
 	DWORD notNull = 5;
 	
+	if(!pCryptGetDefaultProviderA)
+	{
+	    trace("skipping CryptGetDefaultProvider tests\n");
+	    return;
+	}
+	
 	FindDfltProvRegVals(dwProvType, dwFlags, &pszProvName, &cbProvName);
 	
 	/* check pdwReserved for NULL */
-	result = CryptGetDefaultProvider(provType, &notNull, flags, provName, &provNameSize);
+	result = pCryptGetDefaultProviderA(provType, &notNull, flags, provName, &provNameSize);
 	ok(!result && GetLastError()==ERROR_INVALID_PARAMETER, "expected %i, got %ld\n",
 		ERROR_INVALID_PARAMETER, GetLastError());
 	
 	/* check for invalid flag */
 	flags = 0xdeadbeef;
-	result = CryptGetDefaultProvider(provType, NULL, flags, provName, &provNameSize);
+	result = pCryptGetDefaultProviderA(provType, NULL, flags, provName, &provNameSize);
 	ok(!result && GetLastError()==NTE_BAD_FLAGS, "expected %ld, got %ld\n",
 		NTE_BAD_FLAGS, GetLastError());
 	flags = CRYPT_MACHINE_DEFAULT;
 	
 	/* check for invalid prov type */
 	provType = 0xdeadbeef;
-	result = CryptGetDefaultProvider(provType, NULL, flags, provName, &provNameSize);
+	result = pCryptGetDefaultProviderA(provType, NULL, flags, provName, &provNameSize);
 	ok(!result && (GetLastError() == NTE_BAD_PROV_TYPE ||
 	               GetLastError() == ERROR_INVALID_PARAMETER),
 		"expected NTE_BAD_PROV_TYPE or ERROR_INVALID_PARAMETER, got %ld/%ld\n",
@@ -457,21 +495,21 @@ static void test_get_default_provider()
 	if (!(provName = LocalAlloc(LMEM_ZEROINIT, provNameSize)))
 		return;
 	
-	result = CryptGetDefaultProvider(provType, NULL, flags, provName, &provNameSize);
+	result = pCryptGetDefaultProviderA(provType, NULL, flags, provName, &provNameSize);
 	ok(!result && GetLastError()==ERROR_MORE_DATA, "expected %i, got %ld\n",
 		ERROR_MORE_DATA, GetLastError());
 		
 	LocalFree(provName);
 	
 	/* check expected versus actual values returned */
-	result = CryptGetDefaultProvider(provType, NULL, flags, NULL, &provNameSize);
+	result = pCryptGetDefaultProviderA(provType, NULL, flags, NULL, &provNameSize);
 	ok(result && provNameSize==cbProvName, "expected %ld, got %ld\n", cbProvName, provNameSize);
 	provNameSize = cbProvName;
 	
 	if (!(provName = LocalAlloc(LMEM_ZEROINIT, provNameSize)))
 		return;
 	
-	result = CryptGetDefaultProvider(provType, NULL, flags, provName, &provNameSize);
+	result = pCryptGetDefaultProviderA(provType, NULL, flags, provName, &provNameSize);
 	ok(result && !strcmp(pszProvName, provName), "expected %s, got %s\n", pszProvName, provName);
 	ok(result && provNameSize==cbProvName, "expected %ld, got %ld\n", cbProvName, provNameSize);
 
@@ -487,24 +525,30 @@ static void test_set_provider_ex()
 	LPSTR pszProvName = NULL;
 	DWORD cbProvName;
 	
+	if(!pCryptGetDefaultProviderA || !pCryptSetProviderExA)
+	{
+	    trace("skipping CryptSetProviderEx tests\n");
+	    return;
+	}
+
 	/* check pdwReserved for NULL */
-	result = CryptSetProviderEx(MS_DEF_PROV, PROV_RSA_FULL, &notNull, CRYPT_MACHINE_DEFAULT);
+	result = pCryptSetProviderExA(MS_DEF_PROV, PROV_RSA_FULL, &notNull, CRYPT_MACHINE_DEFAULT);
 	ok(!result && GetLastError()==ERROR_INVALID_PARAMETER, "expected %i, got %ld\n",
 		ERROR_INVALID_PARAMETER, GetLastError());
 
 	/* remove the default provider and then set it to MS_DEF_PROV/PROV_RSA_FULL */
-	result = CryptSetProviderEx(MS_DEF_PROV, PROV_RSA_FULL, NULL, CRYPT_MACHINE_DEFAULT | CRYPT_DELETE_DEFAULT);
+	result = pCryptSetProviderExA(MS_DEF_PROV, PROV_RSA_FULL, NULL, CRYPT_MACHINE_DEFAULT | CRYPT_DELETE_DEFAULT);
 	ok(result, "%ld\n", GetLastError());
 
-	result = CryptSetProviderEx(MS_DEF_PROV, PROV_RSA_FULL, NULL, CRYPT_MACHINE_DEFAULT);
+	result = pCryptSetProviderExA(MS_DEF_PROV, PROV_RSA_FULL, NULL, CRYPT_MACHINE_DEFAULT);
 	ok(result, "%ld\n", GetLastError());
 	
 	/* call CryptGetDefaultProvider to see if they match */
-	result = CryptGetDefaultProvider(PROV_RSA_FULL, NULL, CRYPT_MACHINE_DEFAULT, NULL, &cbProvName);
+	result = pCryptGetDefaultProviderA(PROV_RSA_FULL, NULL, CRYPT_MACHINE_DEFAULT, NULL, &cbProvName);
 	if (!(pszProvName = LocalAlloc(LMEM_ZEROINIT, cbProvName)))
 		return;
 
-	result = CryptGetDefaultProvider(PROV_RSA_FULL, NULL, CRYPT_MACHINE_DEFAULT, pszProvName, &cbProvName);
+	result = pCryptGetDefaultProviderA(PROV_RSA_FULL, NULL, CRYPT_MACHINE_DEFAULT, pszProvName, &cbProvName);
 	ok(result && !strcmp(MS_DEF_PROV, pszProvName), "expected %s, got %s\n", MS_DEF_PROV, pszProvName);
 	ok(result && cbProvName==(strlen(MS_DEF_PROV) + 1), "expected %i, got %ld\n", (strlen(MS_DEF_PROV) + 1), cbProvName);
 
@@ -513,6 +557,7 @@ static void test_set_provider_ex()
 
 START_TEST(crypt)
 {
+	init_function_pointers();
 	init_environment();
 	test_acquire_context();
 	clean_up_environment();
