@@ -682,6 +682,7 @@
 
 
 # exported in later versions
+@ stdcall AssocIsDangerous(long)
 @ stdcall StrRetToBufA (ptr ptr ptr long)
 @ stdcall StrRetToBufW (ptr ptr ptr long)
 @ stdcall StrRetToStrA (ptr ptr ptr)

@@ -403,6 +403,16 @@ HRESULT WINAPI AssocQueryStringByKeyA(ASSOCF cfFlags, ASSOCSTR str, HKEY hkAssoc
   return hRet;
 }
 
+
+/**************************************************************************
+ *  AssocIsDangerous  (SHLWAPI.@)
+ */
+HRESULT WINAPI AssocIsDangerous( ASSOCSTR str )
+{
+    FIXME("%08x\n", str);
+    return S_FALSE;
+}
+
 /**************************************************************************
  *  IQueryAssociations_QueryInterface {SHLWAPI}
  *
