@@ -950,6 +950,17 @@ static const char * const CCMMessageTypeNames[SPY_MAX_CCMMSGNUM + 1] =
     "CCM_GETUNICODEFORMAT"
 };
 
+#define SPY_MAX_WINEMSGNUM   6
+static const char * const WINEMessageTypeNames[SPY_MAX_WINEMSGNUM + 1] =
+{
+    "WM_WINE_DESTROYWINDOW",
+    "WM_WINE_SETWINDOWPOS",
+    "WM_WINE_SHOWWINDOW",
+    "WM_WINE_SETPARENT",
+    "WM_WINE_SETWINDOWLONG",
+    "WM_WINE_ENABLEWINDOW"
+};
+
 /* Virtual key names */
 #define SPY_MAX_VKKEYSNUM 255
 static const char * const VK_KeyNames[SPY_MAX_VKKEYSNUM + 1] =
@@ -1630,6 +1641,12 @@ static const char *SPY_GetMsgInternal( UINT msg )
     {
         if (!CCMMessageTypeNames[msg-CCM_FIRST]) return "???";
         return CCMMessageTypeNames[msg-CCM_FIRST];
+    }
+
+    if (msg >= WM_WINE_DESTROYWINDOW && msg <= WM_WINE_DESTROYWINDOW + SPY_MAX_WINEMSGNUM)
+    {
+        if (!WINEMessageTypeNames[msg-WM_WINE_DESTROYWINDOW]) return "???";
+        return WINEMessageTypeNames[msg-WM_WINE_DESTROYWINDOW];
     }
 
     sprintf( msg_buffer, "WM_USER+%04x", msg - WM_USER );
