@@ -3397,6 +3397,12 @@ static int INT21_GetFreeDiskSpace( CONTEXT86 *context )
     root[0] += INT21_MapDrive(DL_reg(context));
     if (!GetDiskFreeSpaceW( root, &cluster_sectors, &sector_bytes,
                             &free_clusters, &total_clusters )) return 0;
+    /* make sure that the number of clusters fits in a 16 bits value */
+    while( total_clusters & 0xffff0000) {
+        cluster_sectors <<= 1;
+        free_clusters >>= 1;
+        total_clusters >>= 1;
+    }
     SET_AX( context, cluster_sectors );
     SET_BX( context, free_clusters );
     SET_CX( context, sector_bytes );
