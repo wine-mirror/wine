@@ -2,151 +2,34 @@
     <title>Low-level Implementation</title>
     <para>Details of Wine's Low-level Implementation...</para>
 
-    <sect1 id="builtin-dlls">
-      <title>Builtin DLLs</title>
-
-      <para>
-        Written by &name-juergen-schmied; <email>&email-juergen-schmied;</email>
-      </para>
-      <para>
-        (Extracted from <filename>wine/documentation/internal-dll</filename>)
-      </para>
-
-      <para>
-        This document describes some points you should know before
-        implementing the internal counterparts to external DLL's.
-        Only 32 bit DLL's are considered.
-      </para>
-
-      <sect2>
-        <title>1. The LibMain function</title>
-
-        <para>
-          This is the way to do some initializing when a process or
-          thread is attached to the DLL. The function name is taken
-          from a <filename>*.spec</filename> file line:
-        </para>
-        <programlisting>
-init    YourFunctionName
-        </programlisting>
-        <para>
-          Then, you have to implement the function:
-        </para>
-        <programlisting>
-BOOL32 WINAPI YourLibMain(HINSTANCE32 hinstDLL,
-			 DWORD fdwReason, LPVOID lpvReserved)
-{ if (fdwReason==DLL_PROCESS_ATTACH)
-  { ...
-  } 
-  ....
-}
-        </programlisting>
-      </sect2>
-
-      <sect2>
-        <title>2. Using functions from other built-in DLL's</title>
-
-        <para>
-          The problem here is, that you can't know if you have to call
-          the function from the internal or the external DLL. If you
-          just call the function you will get the internal
-          implementation. If the external DLL is loaded the executed
-          program will use the external DLL and you the internal one.
-          When you -as an example- fill an iconlist placed in the
-          internal DLL the application won't get the icons from the
-          external DLL.
-        </para>
-        <para>
-          To work around this, you should always use a pointer to call
-          such functions:
-        </para>
-        <programlisting>
-/* definition of the pointer type*/
-void (CALLBACK* pDLLInitComctl)();
-
-/* getting the function address  this should be done in the
- LibMain function when called with DLL_PROCESS_ATTACH*/
- 
-BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason,
-							 LPVOID lpvReserved)
-{ HINSTANCE32 hComctl32;
-  if (fdwReason==DLL_PROCESS_ATTACH)
-  { /* load the external / internal DLL*/
-    hComctl32 = LoadLibrary32A("COMCTL32.DLL"); 
-    if (hComctl32)
-    { /* get the function pointer */
-      pDLLInitComctl=GetProcAddress32(hComctl32,"InitCommonControlsEx");
-
-	  /* check it */
-      if (pDLLInitComctl)
-      { /* use it */
-        pDLLInitComctl();
-      }
-      
-      /* free the DLL / decrease the ref count */
-      FreeLibrary32(hComctl32);
-    }
-    else
-    { /* do some panic*/
-      ERR(shell,"P A N I C error getting functionpointers\n");
-      exit (1);
-    }
-  }
- ....
-        </programlisting>
-      </sect2>
-
-      <sect2>
-        <title>3. Getting resources from a <filename>*.rc</filename> file linked to the DLL</title>
-
-        <para>
-          &lt; If you know how, write some lines&gt;
-        </para>
-      </sect2>
-    </sect1>
-
     <sect1 id="accel-impl">
       <title>Accelerators</title>
 
       <para>
-        Findings researched by Uwe Bonnes, Ulrich Weigand and Marcus Meissner.
-      </para>
-      <para>
-        (Extracted from <filename>wine/documentation/accelerators</filename>)
-      </para>
-
-      <para>
-        Some notes concerning accelerators.
-      </para>
-      <para>
         There are <emphasis>three</emphasis> differently sized
-        accelerator structures exposed to the user. The general layout
-        is:
+        accelerator structures exposed to the user: 
       </para>
-      <programlisting>
-BYTE   fVirt;
-WORD   key;
-WORD   cmd;
-      </programlisting>
-      <para>
-        We now have three different appearances:
-      </para>
-
       <orderedlist>
         <listitem>
           <para>
-            Accelerators in NE resources. These have a size of 5 byte
-            and do not have any padding. This is also the internal
+            Accelerators in NE resources.  This is also the internal
             layout of the global handle <type>HACCEL</type> (16 and
             32) in Windows 95 and Wine. Exposed to the user as Win16
             global handles <type>HACCEL16</type> and
             <type>HACCEL32</type> by the Win16/Win32 API.
+	    These are 5 bytes long, with no padding:
+            <programlisting>
+BYTE   fVirt;
+WORD   key;
+WORD   cmd;
+            </programlisting>
           </para>
         </listitem>
         <listitem>
           <para>
-            Accelerators in PE resources. These have a size of 8 byte.
-            Layout is:
+            Accelerators in PE resources. They are exposed to the user 
+	    only by direct accessing PE resources. 
+	    These have a size of 8 bytes:
           </para>
           <programlisting>
 BYTE   fVirt;
@@ -155,15 +38,14 @@ WORD   key;
 WORD   cmd;
 WORD   pad1;
           </programlisting>
-          <para>
-            They are exposed to the user only by direct accessing PE
-            resources.
-          </para>
         </listitem>
         <listitem>
           <para>
-            Accelerators in the Win32 API. These have a size of 6
-            bytes. Layout is:
+            Accelerators in the Win32 API.  These are exposed to the 
+            user by the  <function>CopyAcceleratorTable</function>
+	    and  <function>CreateAcceleratorTable</function> functions
+	    in the Win32 API.
+	    These have a size of 6 bytes:
           </para>
           <programlisting>
 BYTE   fVirt;
@@ -171,12 +53,6 @@ BYTE   pad0;
 WORD   key;
 WORD   cmd;
           </programlisting>
-          <para>
-            These are exposed to the user by the
-            <function>CopyAcceleratorTable</function> and
-            <function>CreateAcceleratorTable</function> functions in
-            the Win32 API.
-          </para>
         </listitem>
       </orderedlist>
 
@@ -191,80 +67,8 @@ WORD   cmd;
 
     </sect1>
 
-    <sect1 id="file-handles">
-      <title>File Handles</title>
-
-      <para>
-        Written by (???)
-      </para>
-      <para>
-        (Extracted from <filename>wine/documentation/filehandles</filename>)
-      </para>
-
-      <para>
-        DOS treats the first 5 file handles as special cases.  They
-        map directly to <filename>stdin</filename>,
-        <filename>stdout</filename>, <filename>stderr</filename>,
-        <filename>stdaux</filename> and <filename>stdprn</filename>.
-        Windows 16 inherits this behavior, and in fact, win16 handles
-        are interchangeable with DOS handles. Some nasty windows
-        programs even do this!
-      </para>
-      <para>
-        Windows32 issues file handles starting from
-        <literal>1</literal>, on the grounds that most GUI processes
-        don't need a <filename>stdin</filename>,
-        <filename>stdout</filename>, etc.
-      </para>
-      <para>
-        The Wine handle code is implemented in the Win32 style, and
-        the Win16 functions use two macros to convert to and from the
-        two types.
-      </para>
-
-      <para>
-        The macros are defined in <filename>file.h</filename> as follows:
-      </para>
-      <programlisting>
-#define HFILE16_TO_HFILE32(handle) \
-(((handle)==0) ? GetStdHandle(STD_INPUT_HANDLE) : \
- ((handle)==1) ? GetStdHandle(STD_OUTPUT_HANDLE) : \
- ((handle)==2) ? GetStdHandle(STD_ERROR_HANDLE) : \
- ((handle)>0x400) ? handle : \
- (handle)-5)
-
-#define HFILE32_TO_HFILE16(handle) ({ HFILE32 hnd=handle; \
-      ((hnd==HFILE_ERROR32) ? HFILE_ERROR16 : \
-      ((handle>0x400) ? handle : \
-       (HFILE16)hnd+5); })
-      </programlisting>
-
-      <warning>
-        <para>
-          Be careful not to use the macro
-          <function>HFILE16_TO_HFILE32</function> on functions with
-          side-effects, as it will cause them to be evaluated several
-          times.  This could be considered a bug, but the use of this
-          macro is limited enough not to need a rewrite.
-        </para>
-      </warning>
-      <note>
-        <para>
-          The <literal>0x400</literal> special case above deals with
-          LZW filehandles (see <filename>misc/lzexpand.c</filename>).
-        </para>
-      </note>
-    </sect1>
-
     <sect1 id="hardware-trace">
-      <title>Doing A Hardware Trace In Wine</title>
-
-      <para>
-        Written by &name-jonathan-buzzard; <email>&email-jonathan-buzzard;</email>
-      </para>
-      <para>
-        (Extracted from <filename>wine/documentation/ioport-trace-hints</filename>)
-      </para>
+      <title>Doing A Hardware Trace</title>
 
       <para>
         The primary reason to do this is to reverse engineer a
@@ -281,20 +85,10 @@ WORD   cmd;
         as the scanners invariably only have drivers for Windows.
       </para>
       <para>
-        Please note that I have not been able to get my scanner
-        working properly (a UMAX Astra 600P), but a couple of people
-        have reported success with at least the Artec AS6e scanner. I
-        am not in the process of developing any driver nor do I intend
-        to, so don't bug me about it. My time is now spent writing
-        programs to set things like battery save options under Linux
-        on Toshiba laptops, and as such I don't have any spare time
-        for writing a driver for a parallel port scanner etc.
-      </para>
-      <para>
         Presuming that you have compiled and installed wine the first
         thing to do is is to enable direct hardware access to your
-        parallel port. To do this edit <filename>wine.conf</filename>
-        (usually in <filename>/usr/local/etc</filename>) and in the
+        parallel port. To do this edit <filename>config</filename>
+        (usually in <filename>~/.wine/</filename>) and in the
         ports section add the following two lines
       </para>
       <programlisting>
@@ -321,22 +115,14 @@ wine -debugmsg +io XXXX 2&gt; &gt;(sed 's/^[^:]*:io:[^ ]* //' &gt; YYYY)
         performance a really fast processor and lots of RAM.
       </para>
       <para>
-        You might well find the log compression program that <email>David
-        Campbell campbell@torque.net</email> wrote helpful in
-        reducing the size of the log files. This can be obtained by
-        the following command:
-      </para>
-      <programlisting>
-sh ioport-trace-hints
-      </programlisting>
-      <para>
-        This should extract <filename>shrink.c</filename> (which is
-        located at the end of this file. Compile the log compression
-        program by:
-      </para>
+	You will need to postprocess the output into a more manageable
+	format, using the <command>shrink</command> program. First
+        you need to compile the source (which is located at the end of
+	this section):
       <programlisting>
 cc shrink.c -o shrink
       </programlisting>
+      </para>
       <para>
         Use the <command>shrink</command> program to reduce the
         physical size of the raw log as follows:
@@ -418,24 +204,22 @@ XXXX &gt; YY @ ZZZZ:ZZZZ
 #define w_str(x,y)      outb(y, x+1)
 #define w_ctr(x,y)      outb(y, x+2)
 
-/*
- * Seems to be sending a command byte to the scanner
- *
- */
+/* Seems to be sending a command byte to the scanner */
 int udpp_put(int udpp_base, unsigned char command)
 {
-        int loop,value;
+    int loop, value;
 
-        w_dtr(udpp_base, command);
-        w_ctr(udpp_base, 0x05);
+    w_dtr(udpp_base, command);
+    w_ctr(udpp_base, 0x05);
 
-        for (loop=0;loop&lt;10;loop++)
-                if (((value=r_str(udpp_base)) & 0x80)!=0x00) {
-                        w_ctr(udpp_base, 0x04);
-                        return value & 0xf8;
-                        }
+    for (loop=0; loop &lt; 10; loop++)
+        if ((value = r_str(udpp_base)) & 0x80) 
+	{
+            w_ctr(udpp_base, 0x04);
+            return value & 0xf8;
+        }
 
-        return (value & 0xf8) | 0x01;
+    return (value & 0xf8) | 0x01;
 }
       </programlisting>
       <para>
@@ -487,11 +271,9 @@ wait: ff
       </para>
 
       <para>
-        The following is the <filename>shrink.c</filename> program.
-      </para>
-
+        The following is the <filename>shrink.c</filename> program:
       <programlisting>
-cat &gt; shrink.c &lt;&lt;EOF
+/* Copyright David Campbell &lt;campbell@torque.net&gt; */
 #include &lt;stdio.h&gt;
 #include &lt;string.h&gt;
 
@@ -521,8 +303,8 @@ main (void)
 	}
     }
 }
-EOF
       </programlisting>
+      </para>
     </sect1>
 
   </chapter>
