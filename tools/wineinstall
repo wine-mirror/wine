@@ -78,6 +78,30 @@ then {
 }
 fi
 
+# check whether RPM installed, and if it is, remove any old wine rpm.
+hash rpm; RET=$? &>/dev/null
+if [ $RET -eq 0 ]; then
+  if [ -n "`rpm -qi wine 2>/dev/null|grep "^Name"`" ]; then
+    echo "Warning: Old Wine RPM install detected. We want to get rid of it first."
+    echo -n "ok (Y/n) ? "
+    read DOWINE
+    if [ "$DOWINE" != 'n' -a "$DOWINE" != 'N' ]; then
+      echo Starting wine rpm removal...
+      rpm -e wine; RET=$?
+      if [ $RET -eq 0 ]; then
+        echo Done.
+      else
+        echo FAILED. Probably you aren't installing as root.
+      fi
+    else
+      echo "Sorry, I won't install Wine when an rpm version is still installed."
+      echo "(Wine support suffered from way too many conflicts)"
+      echo "Have a nice day !"
+      exit
+    fi 
+  fi
+fi
+
 # run the configure script, if necessary
 
 if [ -f config.cache ] && [ -f Makefile ] && [ Makefile -nt configure ]
