@@ -696,7 +696,7 @@ BOOL WINAPI ConnectNamedPipe(HANDLE hPipe, LPOVERLAPPED overlapped)
     OVERLAPPED ov;
     BOOL ret;
 
-    TRACE("(%d,%p)\n",hPipe, overlapped);
+    TRACE("(%p,%p)\n",hPipe, overlapped);
 
     if(overlapped)
         return SYNC_ConnectNamedPipe(hPipe,overlapped);
@@ -728,7 +728,7 @@ BOOL WINAPI DisconnectNamedPipe(HANDLE hPipe)
 {
     BOOL ret;
 
-    TRACE("(%d)\n",hPipe);
+    TRACE("(%p)\n",hPipe);
 
     SERVER_START_REQ( disconnect_named_pipe )
     {
@@ -747,7 +747,7 @@ BOOL WINAPI TransactNamedPipe(
     HANDLE hPipe, LPVOID lpInput, DWORD dwInputSize, LPVOID lpOutput,
     DWORD dwOutputSize, LPDWORD lpBytesRead, LPOVERLAPPED lpOverlapped)
 {
-    FIXME("%d %p %ld %p %ld %p %p\n",
+    FIXME("%p %p %ld %p %ld %p %p\n",
           hPipe, lpInput, dwInputSize, lpOutput,
           dwOutputSize, lpBytesRead, lpOverlapped);
     if(lpBytesRead)
@@ -764,7 +764,7 @@ BOOL WINAPI GetNamedPipeInfo(
 {
     BOOL ret;
 
-    TRACE("%d %p %p %p %p\n", hNamedPipe, lpFlags,
+    TRACE("%p %p %p %p %p\n", hNamedPipe, lpFlags,
           lpOutputBufferSize, lpInputBufferSize, lpMaxInstances);
 
     SERVER_START_REQ( get_named_pipe_info )
@@ -789,7 +789,7 @@ BOOL WINAPI GetNamedPipeHandleStateA(
     LPDWORD lpMaxCollectionCount, LPDWORD lpCollectDataTimeout,
     LPSTR lpUsername, DWORD nUsernameMaxSize)
 {
-    FIXME("%d %p %p %p %p %p %ld\n",
+    FIXME("%p %p %p %p %p %p %ld\n",
           hNamedPipe, lpState, lpCurInstances,
           lpMaxCollectionCount, lpCollectDataTimeout,
           lpUsername, nUsernameMaxSize);
@@ -805,7 +805,7 @@ BOOL WINAPI GetNamedPipeHandleStateW(
     LPDWORD lpMaxCollectionCount, LPDWORD lpCollectDataTimeout,
     LPWSTR lpUsername, DWORD nUsernameMaxSize)
 {
-    FIXME("%d %p %p %p %p %p %ld\n",
+    FIXME("%p %p %p %p %p %p %ld\n",
           hNamedPipe, lpState, lpCurInstances,
           lpMaxCollectionCount, lpCollectDataTimeout,
           lpUsername, nUsernameMaxSize);
@@ -820,7 +820,7 @@ BOOL WINAPI SetNamedPipeHandleState(
     HANDLE hNamedPipe, LPDWORD lpMode, LPDWORD lpMaxCollectionCount,
     LPDWORD lpCollectDataTimeout)
 {
-    FIXME("%d %p %p %p\n",
+    FIXME("%p %p %p %p\n",
           hNamedPipe, lpMode, lpMaxCollectionCount, lpCollectDataTimeout);
     return FALSE;
 }

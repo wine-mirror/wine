@@ -239,7 +239,7 @@ HANDLE WINAPI K32WOWHandle32( WORD handle, WOW_HANDLE_TYPE type )
 WORD WINAPI K32WOWHandle16( HANDLE handle, WOW_HANDLE_TYPE type )
 {
     if ( HIWORD(handle ) )
-        ERR( "handle 0x%08x of type %d has non-zero HIWORD\n", handle, type );
+        ERR( "handle %p of type %d has non-zero HIWORD\n", handle, type );
 
     switch ( type )
     {
@@ -266,7 +266,7 @@ WORD WINAPI K32WOWHandle16( HANDLE handle, WOW_HANDLE_TYPE type )
         return THREAD_IdToTEB((DWORD)handle)->htask16;
 
     default:
-        ERR( "handle 0x%08x of unknown type %d\n", handle, type );
+        ERR( "handle %p of unknown type %d\n", handle, type );
         return LOWORD(handle);
     }
 }

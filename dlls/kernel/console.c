@@ -190,7 +190,7 @@ BOOL WINAPI WriteConsoleInputW( HANDLE handle, const INPUT_RECORD *buffer,
 {
     BOOL ret;
 
-    TRACE("(%d,%p,%ld,%p)\n", handle, buffer, count, written);
+    TRACE("(%p,%p,%ld,%p)\n", handle, buffer, count, written);
 
     if (written) *written = 0;
     SERVER_START_REQ( write_console_input )
@@ -253,7 +253,7 @@ BOOL WINAPI WriteConsoleOutputW( HANDLE hConsoleOutput, const CHAR_INFO *lpBuffe
     int width, height, y;
     BOOL ret = TRUE;
 
-    TRACE("(%x,%p,(%d,%d),(%d,%d),(%d,%dx%d,%d)\n",
+    TRACE("(%p,%p,(%d,%d),(%d,%d),(%d,%dx%d,%d)\n",
           hConsoleOutput, lpBuffer, size.X, size.Y, coord.X, coord.Y,
           region->Left, region->Top, region->Right, region->Bottom);
 
@@ -307,7 +307,7 @@ BOOL WINAPI WriteConsoleOutputCharacterA( HANDLE hConsoleOutput, LPCSTR str, DWO
     LPWSTR strW;
     DWORD lenW;
 
-    TRACE("(%d,%s,%ld,%dx%d,%p)\n", hConsoleOutput,
+    TRACE("(%p,%s,%ld,%dx%d,%p)\n", hConsoleOutput,
           debugstr_an(str, length), length, coord.X, coord.Y, lpNumCharsWritten);
 
     lenW = MultiByteToWideChar( GetConsoleOutputCP(), 0, str, length, NULL, 0 );
@@ -344,7 +344,7 @@ BOOL WINAPI WriteConsoleOutputAttribute( HANDLE hConsoleOutput, CONST WORD *attr
 {
     BOOL ret;
 
-    TRACE("(%d,%p,%ld,%dx%d,%p)\n", hConsoleOutput,attr,length,coord.X,coord.Y,lpNumAttrsWritten);
+    TRACE("(%p,%p,%ld,%dx%d,%p)\n", hConsoleOutput,attr,length,coord.X,coord.Y,lpNumAttrsWritten);
 
     SERVER_START_REQ( write_console_output )
     {
@@ -407,7 +407,7 @@ BOOL WINAPI FillConsoleOutputCharacterW( HANDLE hConsoleOutput, WCHAR ch, DWORD 
 {
     BOOL ret;
 
-    TRACE("(%d,%s,%ld,(%dx%d),%p)\n",
+    TRACE("(%p,%s,%ld,(%dx%d),%p)\n",
           hConsoleOutput, debugstr_wn(&ch, 1), length, coord.X, coord.Y, lpNumCharsWritten);
 
     SERVER_START_REQ( fill_console_output )
@@ -448,7 +448,7 @@ BOOL WINAPI FillConsoleOutputAttribute( HANDLE hConsoleOutput, WORD attr, DWORD 
 {
     BOOL ret;
 
-    TRACE("(%d,%d,%ld,(%dx%d),%p)\n",
+    TRACE("(%p,%d,%ld,(%dx%d),%p)\n",
           hConsoleOutput, attr, length, coord.X, coord.Y, lpNumAttrsWritten);
 
     SERVER_START_REQ( fill_console_output )
@@ -503,7 +503,7 @@ BOOL WINAPI ReadConsoleOutputCharacterW( HANDLE hConsoleOutput, LPWSTR buffer, D
 {
     BOOL ret;
 
-    TRACE( "(%d,%p,%ld,%dx%d,%p)\n", hConsoleOutput, buffer, count, coord.X, coord.Y, read_count );
+    TRACE( "(%p,%p,%ld,%dx%d,%p)\n", hConsoleOutput, buffer, count, coord.X, coord.Y, read_count );
 
     SERVER_START_REQ( read_console_output )
     {
@@ -531,7 +531,7 @@ BOOL WINAPI ReadConsoleOutputAttribute(HANDLE hConsoleOutput, LPWORD lpAttribute
 {
     BOOL ret;
 
-    TRACE("(%d,%p,%ld,%dx%d,%p)\n",
+    TRACE("(%p,%p,%ld,%dx%d,%p)\n",
           hConsoleOutput, lpAttribute, length, coord.X, coord.Y, read_count);
 
     SERVER_START_REQ( read_console_output )
@@ -855,7 +855,7 @@ static  BOOL    start_console_renderer_helper(const char* appname, STARTUPINFOA*
     PROCESS_INFORMATION	pi;
 
     /* FIXME: use dynamic allocation for most of the buffers below */
-    ret = snprintf(buffer, sizeof(buffer), "%s --use-event=%d", appname, hEvent);
+    ret = snprintf(buffer, sizeof(buffer), "%s --use-event=%d", appname, (INT)hEvent);
     if ((ret > -1) && (ret < sizeof(buffer)) &&
         CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS,
                        NULL, NULL, si, &pi))
@@ -1039,7 +1039,7 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
     LPWSTR	xbuf = (LPWSTR)lpBuffer;
     DWORD	mode;
 
-    TRACE("(%d,%p,%ld,%p,%p)\n",
+    TRACE("(%p,%p,%ld,%p,%p)\n",
 	  hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, lpReserved);
 
     if (!GetConsoleMode(hConsoleInput, &mode))
@@ -1137,7 +1137,7 @@ BOOL WINAPI WriteConsoleOutputCharacterW( HANDLE hConsoleOutput, LPCWSTR str, DW
 {
     BOOL ret;
 
-    TRACE("(%d,%s,%ld,%dx%d,%p)\n", hConsoleOutput,
+    TRACE("(%p,%s,%ld,%dx%d,%p)\n", hConsoleOutput,
           debugstr_wn(str, length), length, coord.X, coord.Y, lpNumCharsWritten);
 
     SERVER_START_REQ( write_console_output )
@@ -1503,7 +1503,7 @@ BOOL WINAPI SetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
 {
     BOOL ret;
 
-    TRACE("(%x)\n", hConsoleOutput);
+    TRACE("(%p)\n", hConsoleOutput);
 
     SERVER_START_REQ( set_console_input_info )
     {
@@ -1568,7 +1568,7 @@ BOOL WINAPI SetConsoleMode(HANDLE hcon, DWORD mode)
      * empty the S_EditString buffer
      */
 
-    TRACE("(%x,%lx) retval == %d\n", hcon, mode, ret);
+    TRACE("(%p,%lx) retval == %d\n", hcon, mode, ret);
 
     return ret;
 }
@@ -1697,7 +1697,7 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
     CONSOLE_SCREEN_BUFFER_INFO	csbi;
     int				k, first = 0;
 
-    TRACE("%d %s %ld %p %p\n",
+    TRACE("%p %s %ld %p %p\n",
 	  hConsoleOutput, debugstr_wn(lpBuffer, nNumberOfCharsToWrite),
 	  nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
 
@@ -1814,7 +1814,7 @@ BOOL WINAPI SetConsoleCursorPosition(HANDLE hcon, COORD pos)
     int				do_move = 0;
     int				w, h;
 
-    TRACE("%x %d %d\n", hcon, pos.X, pos.Y);
+    TRACE("%p %d %d\n", hcon, pos.X, pos.Y);
 
     SERVER_START_REQ(set_console_output_info)
     {
@@ -2072,14 +2072,14 @@ BOOL WINAPI ScrollConsoleScreenBufferW(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
     BOOL			inside;
 
     if (lpClipRect)
-	TRACE("(%d,(%d,%d-%d,%d),(%d,%d-%d,%d),%d-%d,%p)\n", hConsoleOutput,
+	TRACE("(%p,(%d,%d-%d,%d),(%d,%d-%d,%d),%d-%d,%p)\n", hConsoleOutput,
 	      lpScrollRect->Left, lpScrollRect->Top,
 	      lpScrollRect->Right, lpScrollRect->Bottom,
 	      lpClipRect->Left, lpClipRect->Top,
 	      lpClipRect->Right, lpClipRect->Bottom,
 	      dwDestOrigin.X, dwDestOrigin.Y, lpFill);
     else
-	TRACE("(%d,(%d,%d-%d,%d),(nil),%d-%d,%p)\n", hConsoleOutput,
+	TRACE("(%p,(%d,%d-%d,%d),(nil),%d-%d,%p)\n", hConsoleOutput,
 	      lpScrollRect->Left, lpScrollRect->Top,
 	      lpScrollRect->Right, lpScrollRect->Bottom,
 	      dwDestOrigin.X, dwDestOrigin.Y, lpFill);

@@ -2013,7 +2013,7 @@ void WINAPI HouseCleanLogicallyDeadHandles(void)
  */
 BOOL WINAPI _KERNEL32_100(HANDLE threadid,DWORD exitcode,DWORD x)
 {
-	FIXME("(%d,%ld,0x%08lx): stub\n",threadid,exitcode,x);
+	FIXME("(%p,%ld,0x%08lx): stub\n",threadid,exitcode,x);
 	return TRUE;
 }
 

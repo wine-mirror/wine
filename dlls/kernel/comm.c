@@ -589,10 +589,10 @@ BOOL WINAPI EscapeCommFunction(
 	int fd,direct=FALSE,result=FALSE;
 	struct termios	port;
 
-    	TRACE("handle %d, function=%d\n", handle, nFunction);
+    	TRACE("handle %p, function=%d\n", handle, nFunction);
 	fd = FILE_GetUnixHandle( handle, GENERIC_READ );
 	if(fd<0) {
-		FIXME("handle %d not found.\n",handle);
+		FIXME("handle %p not found.\n",handle);
 		return FALSE;
 	}
 
@@ -663,7 +663,7 @@ BOOL WINAPI EscapeCommFunction(
 			break;
 #endif
 		default:
-			WARN("(handle=%d,nFunction=%d): Unknown function\n",
+			WARN("(handle=%p,nFunction=%d): Unknown function\n",
 			handle, nFunction);
 			break;
 	}
@@ -705,11 +705,11 @@ BOOL WINAPI PurgeComm(
 {
      int fd;
 
-     TRACE("handle %d, flags %lx\n", handle, flags);
+     TRACE("handle %p, flags %lx\n", handle, flags);
 
      fd = FILE_GetUnixHandle( handle, GENERIC_READ );
      if(fd<0) {
-	FIXME("no handle %d found\n",handle);
+	FIXME("no handle %p found\n",handle);
 	return FALSE;
      }
 
@@ -751,7 +751,7 @@ BOOL WINAPI ClearCommError(
     fd=FILE_GetUnixHandle( handle, GENERIC_READ );
     if(0>fd)
     {
-	FIXME("no handle %d found\n",handle);
+	FIXME("no handle %p found\n",handle);
         return FALSE;
     }
 
@@ -778,7 +778,7 @@ BOOL WINAPI ClearCommError(
 	    WARN("ioctl returned error\n");
 #endif
 
-	TRACE("handle %d cbInQue = %ld cbOutQue = %ld\n",
+	TRACE("handle %p cbInQue = %ld cbOutQue = %ld\n",
 	      handle, lpStat->cbInQue, lpStat->cbOutQue);
     }
 
@@ -814,7 +814,7 @@ BOOL WINAPI SetupComm(
     FIXME("insize %ld outsize %ld unimplemented stub\n", insize, outsize);
     fd=FILE_GetUnixHandle( handle, GENERIC_READ );
     if(0>fd) {
-	FIXME("handle %d not found?\n",handle);
+	FIXME("handle %p not found?\n",handle);
         return FALSE;
     }
     close(fd);
@@ -837,7 +837,7 @@ BOOL WINAPI GetCommMask(
 {
     BOOL ret;
 
-    TRACE("handle %d, mask %p\n", handle, evtmask);
+    TRACE("handle %p, mask %p\n", handle, evtmask);
 
     SERVER_START_REQ( get_serial_info )
     {
@@ -868,7 +868,7 @@ BOOL WINAPI SetCommMask(
 {
     BOOL ret;
 
-    TRACE("handle %d, mask %lx\n", handle, evtmask);
+    TRACE("handle %p, mask %lx\n", handle, evtmask);
 
     SERVER_START_REQ( set_serial_info )
     {
@@ -899,7 +899,7 @@ BOOL WINAPI SetCommState(
      struct termios port;
      int fd, bytesize, stopbits;
 
-     TRACE("handle %d, ptr %p\n", handle, lpdcb);
+     TRACE("handle %p, ptr %p\n", handle, lpdcb);
      TRACE("bytesize %d baudrate %ld fParity %d Parity %d stopbits %d\n",
 	   lpdcb->ByteSize,lpdcb->BaudRate,lpdcb->fParity, lpdcb->Parity,
 	   (lpdcb->StopBits == ONESTOPBIT)?1:
@@ -909,7 +909,7 @@ BOOL WINAPI SetCommState(
 
      fd = FILE_GetUnixHandle( handle, GENERIC_READ );
      if (fd < 0)  {
-	FIXME("no handle %d found\n",handle);
+	FIXME("no handle %p found\n",handle);
 	return FALSE;
      }
 
@@ -1250,7 +1250,7 @@ BOOL WINAPI GetCommState(
      struct termios port;
      int fd,speed;
 
-     TRACE("handle %d, ptr %p\n", handle, lpdcb);
+     TRACE("handle %p, ptr %p\n", handle, lpdcb);
 
      fd = FILE_GetUnixHandle( handle, GENERIC_READ );
      if (fd < 0)
@@ -1457,7 +1457,7 @@ BOOL WINAPI TransmitCommChar(
     BOOL r = FALSE;
     int fd;
 
-    WARN("(%x,'%c') not perfect!\n",hComm,chTransmit);
+    WARN("(%p,'%c') not perfect!\n",hComm,chTransmit);
 
     fd = FILE_GetUnixHandle( hComm, GENERIC_READ );
     if ( fd < 0 )
@@ -1488,7 +1488,7 @@ BOOL WINAPI GetCommTimeouts(
 {
     BOOL ret;
 
-    TRACE("(%x,%p)\n",hComm,lptimeouts);
+    TRACE("(%p,%p)\n",hComm,lptimeouts);
 
     if(!lptimeouts)
     {
@@ -1536,7 +1536,7 @@ BOOL WINAPI SetCommTimeouts(
     int fd;
     struct termios tios;
 
-    TRACE("(%x,%p)\n",hComm,lptimeouts);
+    TRACE("(%p,%p)\n",hComm,lptimeouts);
 
     if(!lptimeouts)
     {
@@ -1561,7 +1561,7 @@ BOOL WINAPI SetCommTimeouts(
     /* FIXME: move this stuff to the server */
     fd = FILE_GetUnixHandle( hComm, GENERIC_READ );
     if (fd < 0) {
-       FIXME("no fd for handle = %0x!.\n",hComm);
+       FIXME("no fd for handle = %p!.\n",hComm);
        return FALSE;
     }
 
@@ -1750,7 +1750,7 @@ BOOL WINAPI WaitCommEvent(
     OVERLAPPED ov;
     int ret;
 
-    TRACE("(%x %p %p )\n",hFile, lpdwEvents,lpOverlapped);
+    TRACE("(%p %p %p )\n",hFile, lpdwEvents,lpOverlapped);
 
     if(lpOverlapped)
         return COMM_WaitCommEvent(hFile, lpdwEvents, lpOverlapped);
@@ -1789,7 +1789,7 @@ BOOL WINAPI GetCommProperties(
     HANDLE hFile,          /* [in] handle of the comm port */
     LPCOMMPROP lpCommProp) /* [out] pointer to struct to be filled */
 {
-    FIXME("(%d %p )\n",hFile,lpCommProp);
+    FIXME("(%p %p )\n",hFile,lpCommProp);
     if(!lpCommProp)
         return FALSE;
 
@@ -1864,7 +1864,7 @@ BOOL WINAPI CommConfigDialogA(
     HMODULE hConfigModule;
     BOOL r;
 
-    TRACE("(%p %x %p)\n",lpszDevice, hWnd, lpCommConfig);
+    TRACE("(%p %p %p)\n",lpszDevice, hWnd, lpCommConfig);
 
     hConfigModule = LoadLibraryA(lpszSerialUI);
     if(!hConfigModule)
@@ -1925,7 +1925,7 @@ BOOL WINAPI GetCommConfig(
 {
     BOOL r;
 
-    TRACE("(%x %p)\n",hFile,lpCommConfig);
+    TRACE("(%p %p)\n",hFile,lpCommConfig);
 
     if(lpCommConfig == NULL)
         return FALSE;
@@ -1960,7 +1960,7 @@ BOOL WINAPI SetCommConfig(
     LPCOMMCONFIG lpCommConfig,	/* [in] The desired configuration. */
     DWORD dwSize) 		/* [in] size of the lpCommConfig struct */
 {
-    TRACE("(%x %p)\n",hFile,lpCommConfig);
+    TRACE("(%p %p)\n",hFile,lpCommConfig);
     return SetCommState(hFile,&lpCommConfig->dcb);
 }
 

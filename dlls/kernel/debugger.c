@@ -282,7 +282,7 @@ BOOL WINAPI DebugBreakProcess(HANDLE hProc)
 {
     BOOL ret, self;
 
-    TRACE("(%08x)\n", hProc);
+    TRACE("(%p)\n", hProc);
 
     SERVER_START_REQ( debug_break )
     {
