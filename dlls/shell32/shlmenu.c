@@ -8,7 +8,7 @@
 #include "wine/obj_enumidlist.h"
 #include "wine/obj_shellfolder.h"
 #include "wine/undocshell.h"
-
+#include "shlwapi.h"
 #include "heap.h"
 #include "debugtools.h"
 #include "shell32_main.h"

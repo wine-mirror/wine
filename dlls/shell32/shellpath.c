@@ -19,7 +19,6 @@
 
 DEFAULT_DEBUG_CHANNEL(shell);
 
-#define isSlash(x) ((x)=='\\' || (x)=='/')
 /*
 	########## Combining and Constructing paths ##########
 */
@@ -493,7 +492,7 @@ BOOL WINAPI PathFindOnPathAW(LPVOID sFile, LPCVOID sOtherDirs)
 /*************************************************************************
  * PathCleanupSpecAW	[SHELL32]
  */
-DWORD WINAPI PathCleanupSpecAW (LPVOID x, LPVOID y)
+DWORD WINAPI PathCleanupSpecAW (LPCVOID x, LPVOID y)
 {
     FIXME("(%p, %p) stub\n",x,y);
     return TRUE;

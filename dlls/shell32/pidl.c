@@ -19,6 +19,7 @@
 #include "wine/undocshell.h"
 #include "shell32_main.h"
 #include "shellapi.h"
+#include "shlwapi.h"
 
 #include "pidl.h"
 
@@ -1412,7 +1413,7 @@ BOOL _ILIsPidlSimple ( LPCITEMIDLIST pidl)
  *
  * gets the text for the first item in the pidl (eg. simple pidl)
  *
- * returns the lenght of the string
+ * returns the length of the string
  */
 DWORD _ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize)
 {

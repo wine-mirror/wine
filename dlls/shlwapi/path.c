@@ -7,9 +7,12 @@
 
 #include "winerror.h"
 #include "wine/unicode.h"
-#include "wine/undocshell.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "shlwapi.h"
 #include "debugtools.h"
+
 
 DEFAULT_DEBUG_CHANNEL(shell);
 

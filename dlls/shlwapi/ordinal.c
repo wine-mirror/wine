@@ -8,8 +8,12 @@
 #include <stdio.h>
 
 #include "windef.h"
-#include "wine/undocshell.h"
+#include "winnls.h"
+#include "winbase.h"
 #include "wine/unicode.h"
+#include "wine/obj_base.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);

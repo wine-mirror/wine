@@ -5,8 +5,8 @@
 #include "windef.h"
 #include "winerror.h"
 #include "winreg.h"
-#include "wine/undocshell.h"
 #include "debugtools.h"
+#include "shlwapi.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 

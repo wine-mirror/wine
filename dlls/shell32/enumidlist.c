@@ -9,6 +9,7 @@
 #include "debugtools.h"
 #include "winreg.h"
 #include "wine/undocshell.h"
+#include "shlwapi.h"
 #include "winerror.h"
 #include "wine/obj_base.h"
 #include "wine/obj_enumidlist.h"

@@ -531,94 +531,62 @@ HRESULT WINAPI CIDLData_CreateFromIDArray(
  * Path Manipulation Routines
  */
 
-LPSTR WINAPI PathAppend(
-	LPSTR lpszPath1,
-	LPCSTR lpszPath2);
+BOOL WINAPI PathAppendAW(LPVOID lpszPath1, LPCVOID lpszPath2);
 
-LPSTR  WINAPI PathCombineA(LPSTR szDest, LPCSTR lpszDir, LPCSTR lpszFile);
-LPWSTR WINAPI PathCombineW(LPWSTR szDest, LPCWSTR lpszDir, LPCWSTR lpszFile);
-#define  PathCombine WINELIB_NAME_AW(PathCombine)
 LPVOID WINAPI PathCombineAW(LPVOID szDest, LPCVOID lpszDir, LPCVOID lpszFile);
 
-LPSTR  WINAPI PathAddBackslashA(LPSTR path);	
-LPWSTR WINAPI PathAddBackslashW(LPWSTR path);	
-#define  PathAddBackslash WINELIB_NAME_AW(PathAddBackslash)
 LPVOID  WINAPI PathAddBackslashAW(LPVOID path);	
 
-LPSTR WINAPI PathRemoveBackslashA(LPSTR lpszPath);
-LPWSTR WINAPI PathRemoveBackslashW(LPWSTR lpszPath);
-#define  PathRemoveBackslash WINELIB_NAME_AW(PathRemoveBackslash)
+LPVOID WINAPI PathBuildRootAW(LPVOID lpszPath, int drive);
 
-LPSTR WINAPI PathBuildRoot(
-	LPSTR lpszPath,
-	int drive);
-
-LPSTR WINAPI PathFindExtensionA(LPCSTR path);
-LPWSTR WINAPI PathFindExtensionW(LPCWSTR path);
-#define  PathFindExtension WINELIB_NAME_AW(PathFindExtension)
 LPVOID WINAPI PathFindExtensionAW(LPCVOID path); 
+
+LPVOID WINAPI PathFindFileNameAW(LPCVOID path); 
 
 LPVOID WINAPI PathGetExtensionAW(LPCVOID lpszPath); 
 
-LPSTR WINAPI PathGetArgs(LPCSTR lpszPath);
+LPVOID WINAPI PathGetArgsAW(LPVOID lpszPath);
 
-BOOL WINAPI PathRemoveFileSpec(LPSTR lpszPath);
+BOOL WINAPI PathRemoveFileSpecAW(LPVOID lpszPath);
 
-LPSTR WINAPI PathGetShortPath(LPSTR lpszPath);
+LPVOID WINAPI PathGetShortPathAW(LPVOID lpszPath);
 
-LPSTR  WINAPI PathQuoteSpacesA(LPSTR path);	
-LPWSTR WINAPI PathQuoteSpacesW(LPWSTR path);	
-#define  PathQuoteSpaces WINELIB_NAME_AW(PathQuoteSpaces)
+void WINAPI PathRemoveBlanksAW(LPVOID lpszPath);
+
 LPVOID  WINAPI PathQuoteSpacesAW(LPVOID path);	
 
-void WINAPI PathUnquoteSpaces(LPSTR lpszPath);
+void WINAPI PathUnquoteSpacesAW(LPVOID lpszPath);
 
-BOOL WINAPI PathIsUNCA(LPCSTR lpszPath);
-BOOL WINAPI PathIsUNCW(LPCWSTR lpszPath);
-#define  PathIsUNC WINELIB_NAME_AW(PathIsUNC)
 BOOL WINAPI PathIsUNCAW(LPCVOID lpszPath);
 
-BOOL WINAPI PathIsRelativeA(LPCSTR lpszPath);
-BOOL WINAPI PathIsRelativeW(LPCWSTR lpszPath);
-#define  PathIsRelative WINELIB_NAME_AW(PathIsRelative)
 BOOL WINAPI PathIsRelativeAW(LPCVOID lpszPath);
 
-BOOL WINAPI PathIsRootA(LPCSTR x);
-BOOL WINAPI PathIsRootW(LPCWSTR x);
-#define  PathIsRoot WINELIB_NAME_AW(PathIsRoot)
 BOOL WINAPI PathIsRootAW(LPCVOID x);
 
-BOOL WINAPI PathIsExe(LPCSTR lpszPath);
+BOOL WINAPI PathIsExeAW(LPCVOID lpszPath);
 
-BOOL WINAPI PathIsDirectory(LPCSTR lpszPath);
+BOOL WINAPI PathIsDirectoryAW(LPCVOID lpszPath);
 
-BOOL WINAPI PathFileExists(LPCSTR lpszPath);
+BOOL WINAPI PathFileExistsAW(LPCVOID lpszPath);
 
-BOOL WINAPI PathMatchSpecA(
-	LPCSTR lpszPath,
-	LPCSTR lpszSpec);
-BOOL WINAPI PathMatchSpecW(
-	LPCWSTR lpszPath,
-	LPCWSTR lpszSpec);
-#define  PathMatchSpec WINELIB_NAME_AW(PathMatchSpec)
 BOOL WINAPI PathMatchSpecAW(LPVOID lpszPath, LPVOID lpszSpec);
 
-BOOL WINAPI PathMakeUniqueName(
-	LPSTR lpszBuffer, 
+BOOL WINAPI PathMakeUniqueNameAW(
+	LPVOID lpszBuffer, 
 	DWORD dwBuffSize,
-	LPCSTR lpszShortName,
-	LPCSTR lpszLongName, 
-	LPCSTR lpszPathName);
+	LPCVOID lpszShortName,
+	LPCVOID lpszLongName, 
+	LPCVOID lpszPathName);
 
-BOOL WINAPI PathYetAnotherMakeUniqueName(
+BOOL WINAPI PathYetAnotherMakeUniqueNameA(
 	LPSTR lpszBuffer,
 	LPCSTR lpszPathName,
 	LPCSTR lpszShortName,
 	LPCSTR lpszLongName);
 
-BOOL WINAPI PathFindOnPath(
-	LPSTR lpszFile, 
-	LPCSTR *alpszPaths);
+BOOL WINAPI PathFindOnPathAW(
+	LPVOID lpszFile, 
+	LPCVOID alpszPaths);
 
 /* PathCleanupSpec return values */
 #define PCS_REPLACEDCHARS  0x00000001
@@ -626,13 +594,11 @@ BOOL WINAPI PathFindOnPath(
 #define PCS_SHORTENED      0x00000004
 #define PCS_PATHTOOLONG    0x80000008
 
-DWORD WINAPI PathCleanupSpec(
-	LPCSTR lpszPath, 
-	LPSTR lpszFile);
+DWORD WINAPI PathCleanupSpecAW(LPCVOID lpszPath, LPVOID lpszFile);
 
-BOOL  WINAPI PathQualifyA(LPCSTR path);	
+BOOL WINAPI PathQualifyA(LPCSTR path);	
 BOOL WINAPI PathQualifyW(LPCWSTR path);	
-#define  PathQualify WINELIB_NAME_AW(PathQualify)
+#define PathQualify WINELIB_NAME_AW(PathQualify)
 BOOL  WINAPI PathQualifyAW(LPCVOID path);	
 
 
@@ -642,15 +608,9 @@ BOOL  WINAPI PathQualifyAW(LPCVOID path);
 #define PRF_QUALIFYONPATH   0x04
 #define PRF_WINDOWS31       0x08
 
-BOOL WINAPI PathResolve(
-	LPSTR lpszPath,
-	LPCSTR *alpszPaths, 
-	DWORD dwFlags);
+BOOL WINAPI PathResolveAW(LPVOID lpszPath, LPCVOID *alpszPaths, DWORD dwFlags);
 
-BOOL WINAPI PathSetDlgItemPath(
-	HWND hDlg,
-	int nIDDlgItem, 
-	LPCSTR lpszPath);
+BOOL WINAPI PathSetDlgItemPathAW(HWND hDlg, int nIDDlgItem, LPCVOID lpszPath);
 
 /* PathProcessCommand flags */
 #define PPCF_QUOTEPATH        0x01 /* implies PPCF_INCLUDEARGS */
@@ -659,34 +619,22 @@ BOOL WINAPI PathSetDlgItemPath(
 #define PPCF_DONTRESOLVE      0x20
 #define PPCF_PATHISRELATIVE   0x40
 
-int WINAPI PathProcessCommand(
-	LPCWSTR lpszPath,
-	LPWSTR lpszBuff, 
-	DWORD dwBuffSize,
-	DWORD dwFlags);
+HRESULT WINAPI PathProcessCommandAW(LPCVOID lpszPath, LPVOID lpszBuff,
+				DWORD dwBuffSize, DWORD dwFlags);
 
-void WINAPI PathStripPath(LPWSTR lpszPath);
+void WINAPI PathStripPathAW(LPVOID lpszPath);
 
 BOOL WINAPI PathStripToRootAW(LPVOID lpszPath);
 
-void WINAPI PathRemoveArgs(LPWSTR lpszPath);
+void WINAPI PathRemoveArgsAW(LPVOID lpszPath);
 
-void WINAPI PathRemoveExtension(LPWSTR lpszPath);
+void WINAPI PathRemoveExtensionAW(LPVOID lpszPath);
 
-int WINAPI PathParseIconLocation(LPWSTR lpszPath);
+int WINAPI PathParseIconLocationAW(LPVOID lpszPath);
 
-BOOL WINAPI PathIsSameRoot(
-	LPCWSTR lpszPath1,
-	LPCWSTR lpszPath2);
+BOOL WINAPI PathIsSameRootAW(LPCVOID lpszPath1, LPCVOID lpszPath2);
 
-BOOL WINAPI PathFindOnPathA(LPSTR sFile, LPCSTR sOtherDirs);
-BOOL WINAPI PathFindOnPathW(LPWSTR sFile, LPCWSTR sOtherDirs);
-#define PathFindOnPath WINELIB_NAME_AW(PathFindOnPath)
 BOOL WINAPI PathFindOnPathAW(LPVOID sFile, LPCVOID sOtherDirs);
-
-LPSTR WINAPI StrFormatByteSizeA ( DWORD dw, LPSTR pszBuf, UINT cchBuf );
-LPWSTR WINAPI StrFormatByteSizeW ( DWORD dw, LPWSTR pszBuf, UINT cchBuf );
-#define  StrFormatByteSize WINELIB_NAME_AW(StrFormatByteSize)
 
 /****************************************************************************
  * Shell Namespace Routines
@@ -943,4 +891,4 @@ BOOL WINAPI SHInitRestricted(LPSTR, LPSTR);
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#endif /* __WINE_SHLOBJ_H */
+#endif /* __WINE_UNDOCSHELL_H */
