@@ -49,20 +49,22 @@ int WINAPI MMSYSTEM_WEP(HINSTANCE16 hInstance, WORD wDataSeg,
     return(TRUE);
 }
 
-static void MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, LPMMTIME mmt32) 
+static void MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32) 
 {
     mmt16->wType = mmt32->wType;
-    /* layout of rest is the same for 32/16 */
-    memcpy(&(mmt32->u), &(mmt16->u), sizeof(mmt16->u));
+    /* layout of rest is the same for 32/16,
+     * Note: mmt16->u is 2 bytes smaller than mmt32->u, which has padding
+     */
+    memcpy(&(mmt16->u), &(mmt32->u), sizeof(mmt16->u));
 }
 
-static void MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, LPMMTIME16 mmt16) 
+static void MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16) 
 {
     mmt32->wType = mmt16->wType;
     /* layout of rest is the same for 32/16,
-     * Note: mmt16->u is 2 bytes smaller than mmt32->u
+     * Note: mmt16->u is 2 bytes smaller than mmt32->u, which has padding
      */
-    memcpy(&(mmt16->u), &(mmt32->u), sizeof(mmt16->u));
+    memcpy(&(mmt32->u), &(mmt16->u), sizeof(mmt16->u));
 }
 
 static HANDLE		PlaySound_hThread = 0;
@@ -170,7 +172,7 @@ static BOOL16 WINAPI proc_PlaySound(LPCSTR lpszSoundName, UINT uFlags)
 			  (LPSTR)&mmckInfo.ckid, (LPSTR)&mmckInfo.fccType, mmckInfo.cksize);
 		    
 		    if (mmioRead(hmmio, (HPSTR)&pcmWaveFormat,
-				   (long) sizeof(PCMWAVEFORMAT)) == (long) sizeof(PCMWAVEFORMAT)) {
+				 (long) sizeof(PCMWAVEFORMAT)) == (long) sizeof(PCMWAVEFORMAT)) {
 			TRACE(mmsys, "wFormatTag=%04X !\n", pcmWaveFormat.wf.wFormatTag);
 			TRACE(mmsys, "nChannels=%d \n", pcmWaveFormat.wf.nChannels);
 			TRACE(mmsys, "nSamplesPerSec=%ld\n", pcmWaveFormat.wf.nSamplesPerSec);
@@ -436,27 +438,30 @@ BOOL16 WINAPI DriverCallback16(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev,
 	      dwCallBack, hDev);
 	if (!IsWindow(dwCallBack) || USER_HEAP_LIN_ADDR(hDev) == NULL)
 	    return FALSE;
-	
-	PostMessageA((HWND16)dwCallBack, wMsg, hDev, dwParam1);
+	Callout.PostMessageA((HWND16)dwCallBack, wMsg, hDev, dwParam1);
 	break;
     case DCB_TASK:
 	TRACE(mmsys, "CALLBACK_TASK !\n");
-	return FALSE;
+	Callout.PostThreadMessageA(dwCallBack, wMsg, hDev, dwParam1);
+	break;
     case DCB_FUNCTION:
 	TRACE(mmsys, "CALLBACK_FUNCTION !\n");
-	Callbacks->CallDriverCallback((FARPROC16)dwCallBack,
-				       hDev, wMsg, dwUser,
-				       dwParam1, dwParam2 );
+	Callbacks->CallDriverCallback((FARPROC16)dwCallBack, hDev, wMsg, dwUser,
+				       dwParam1, dwParam2);
+	break;
+    case DCB_EVENT:
+	TRACE(mmsys, "CALLBACK_EVENT !\n");
+	SetEvent((HANDLE)dwCallBack);
 	break;
     case DCB_FUNC32:
-	TRACE(mmsys, "CALLBACK_FUNCTION !\n");
-	((LPDRVCALLBACK)dwCallBack)(hDev, wMsg, dwUser,
-				       dwParam1, dwParam2 );
+	TRACE(mmsys, "CALLBACK_FUNCTION 32bit !\n");
+	((LPDRVCALLBACK)dwCallBack)(hDev, wMsg, dwUser, dwParam1, dwParam2);
 	break;
     default:
 	WARN(mmsys, "Unknown callback type\n");
-	break;
+	return FALSE;
     }
+    TRACE(mmsys, "Done\n");
     return TRUE;
 }
 
@@ -483,7 +488,7 @@ UINT WINAPI mixerGetNumDevs(void)
 {
     UINT16	count = mixMessage(0, MXDM_GETNUMDEVS, 0L, 0L, 0L);
     
-    TRACE(mmaux,"mixerGetNumDevs returns %d\n",count);
+    TRACE(mmaux,"mixerGetNumDevs returns %d\n", count);
     return count;
 }
 
@@ -550,9 +555,9 @@ UINT WINAPI mixerOpen(LPHMIXER lphmix, UINT uDeviceID, DWORD dwCallback,
     HMIXER16	hmix16;
     UINT	ret;
     
-    FIXME(mmsys,"(%p,%d,%08lx,%08lx,%08lx): semi stub?\n",
-	  lphmix,uDeviceID, dwCallback, dwInstance, fdwOpen);
-    ret = mixerOpen16(&hmix16,uDeviceID, dwCallback, dwInstance,fdwOpen);
+    FIXME(mmsys,"(%p, %d, %08lx, %08lx, %08lx): semi stub?\n",
+	  lphmix, uDeviceID, dwCallback, dwInstance, fdwOpen);
+    ret = mixerOpen16(&hmix16, uDeviceID, dwCallback, dwInstance,fdwOpen);
     if (lphmix) *lphmix = hmix16;
     return ret;
 }
@@ -565,11 +570,11 @@ UINT16 WINAPI mixerOpen16(LPHMIXER16 lphmix, UINT16 uDeviceID, DWORD dwCallback,
 {
     HMIXER16		hmix;
     LPMIXEROPENDESC	lpmod;
-    BOOL		mapperflag = (uDeviceID==0);
-    DWORD		dwRet=0;
+    BOOL		mapperflag = (uDeviceID == 0);
+    DWORD		dwRet = 0;
     
-    TRACE(mmsys,"(%p,%d,%08lx,%08lx,%08lx)\n",
-	  lphmix,uDeviceID, dwCallback, dwInstance, fdwOpen);
+    TRACE(mmsys,"(%p, %d, %08lx, %08lx, %08lx)\n",
+	  lphmix, uDeviceID, dwCallback, dwInstance, fdwOpen);
     hmix = USER_HEAP_ALLOC(sizeof(MIXEROPENDESC));
     if (lphmix) *lphmix = hmix;
     lpmod = (LPMIXEROPENDESC)USER_HEAP_LIN_ADDR(hmix);
@@ -650,7 +655,7 @@ UINT16 WINAPI mixerGetID16(HMIXEROBJ16 hmix, LPUINT16 lpid, DWORD fdwID)
  */
 UINT WINAPI mixerGetControlDetailsA(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd, DWORD fdwDetails) 
 {
-    FIXME(mmsys,"(%04x,%p,%08lx): stub!\n", hmix, lpmcd, fdwDetails);
+    FIXME(mmsys,"(%04x, %p, %08lx): stub!\n", hmix, lpmcd, fdwDetails);
     return MMSYSERR_NOTENABLED;
 }
 
@@ -659,7 +664,7 @@ UINT WINAPI mixerGetControlDetailsA(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd,
  */
 UINT WINAPI mixerGetControlDetailsW(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd, DWORD fdwDetails) 
 {
-    FIXME(mmsys,"(%04x,%p,%08lx): stub!\n", hmix, lpmcd, fdwDetails);
+    FIXME(mmsys,"(%04x, %p, %08lx): stub!\n", hmix, lpmcd, fdwDetails);
     return MMSYSERR_NOTENABLED;
 }
 
@@ -668,7 +673,7 @@ UINT WINAPI mixerGetControlDetailsW(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd,
  */
 UINT16 WINAPI mixerGetControlDetails16(HMIXEROBJ16 hmix, LPMIXERCONTROLDETAILS16 lpmcd, DWORD fdwDetails) 
 {
-    FIXME(mmsys,"(%04x,%p,%08lx): stub!\n", hmix, lpmcd, fdwDetails);
+    FIXME(mmsys,"(%04x, %p, %08lx): stub!\n", hmix, lpmcd, fdwDetails);
     return MMSYSERR_NOTENABLED;
 }
 
@@ -679,7 +684,7 @@ UINT WINAPI mixerGetLineControlsA(HMIXEROBJ hmix, LPMIXERLINECONTROLSA lpmlc, DW
 {
     UINT	uDevID;
 
-    FIXME(mmsys,"(%04x,%p,%08lx): stub!\n", hmix, lpmlc, fdwControls);
+    FIXME(mmsys,"(%04x, %p, %08lx): stub!\n", hmix, lpmlc, fdwControls);
 
     uDevID = MIXER_GetDevID(hmix, 0);
 
@@ -691,7 +696,7 @@ UINT WINAPI mixerGetLineControlsA(HMIXEROBJ hmix, LPMIXERLINECONTROLSA lpmlc, DW
  */
 UINT WINAPI mixerGetLineControlsW(HMIXEROBJ hmix, LPMIXERLINECONTROLSW lpmlc, DWORD fdwControls) 
 {
-    FIXME(mmsys,"(%04x,%p,%08lx): stub!\n", hmix, lpmlc, fdwControls);
+    FIXME(mmsys,"(%04x, %p, %08lx): stub!\n", hmix, lpmlc, fdwControls);
     return MMSYSERR_NOTENABLED;
 }
 
@@ -700,7 +705,7 @@ UINT WINAPI mixerGetLineControlsW(HMIXEROBJ hmix, LPMIXERLINECONTROLSW lpmlc, DW
  */
 UINT16 WINAPI mixerGetLineControls16(HMIXEROBJ16 hmix, LPMIXERLINECONTROLS16 lpmlc, DWORD fdwControls) 
 {
-    FIXME(mmsys,"(%04x,%p,%08lx): stub!\n", hmix, lpmlc, fdwControls);
+    FIXME(mmsys,"(%04x, %p, %08lx): stub!\n", hmix, lpmlc, fdwControls);
     return MMSYSERR_NOTENABLED;
 }
 
@@ -726,7 +731,7 @@ UINT WINAPI mixerGetLineInfoW(HMIXEROBJ hmix, LPMIXERLINEW lpml, DWORD fdwInfo)
     MIXERLINEA		mlA;
     UINT		ret;
     
-    TRACE(mmsys,"(%04x,%p,%08lx)\n", hmix, lpml, fdwInfo);
+    TRACE(mmsys,"(%04x, %p, %08lx)\n", hmix, lpml, fdwInfo);
 
     if (lpml == NULL || lpml->cbStruct != sizeof(*lpml)) 
 	return MMSYSERR_INVALPARAM;
@@ -772,7 +777,7 @@ UINT16 WINAPI mixerGetLineInfo16(HMIXEROBJ16 hmix, LPMIXERLINE16 lpml, DWORD fdw
     MIXERLINEA		mlA;
     UINT		ret;
     
-    TRACE(mmsys, "(%04x,%p,%08lx)\n", hmix, lpml, fdwInfo);
+    TRACE(mmsys, "(%04x, %p, %08lx)\n", hmix, lpml, fdwInfo);
 
     if (lpml == NULL || lpml->cbStruct != sizeof(*lpml)) 
 	return MMSYSERR_INVALPARAM;
@@ -814,7 +819,7 @@ UINT16 WINAPI mixerGetLineInfo16(HMIXEROBJ16 hmix, LPMIXERLINE16 lpml, DWORD fdw
  */
 UINT WINAPI mixerSetControlDetails(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd, DWORD fdwDetails) 
 {
-    FIXME(mmsys,"(%04x,%p,%08lx): stub!\n", hmix, lpmcd, fdwDetails);
+    FIXME(mmsys,"(%04x, %p, %08lx): stub!\n", hmix, lpmcd, fdwDetails);
     return MMSYSERR_NOTENABLED;
 }
 
@@ -823,7 +828,7 @@ UINT WINAPI mixerSetControlDetails(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd, 
  */
 UINT16 WINAPI mixerSetControlDetails16(HMIXEROBJ16 hmix, LPMIXERCONTROLDETAILS16 lpmcd, DWORD fdwDetails) 
 {
-    FIXME(mmsys,"(%04x,%p,%08lx): stub!\n", hmix, lpmcd, fdwDetails);
+    FIXME(mmsys,"(%04x, %p, %08lx): stub!\n", hmix, lpmcd, fdwDetails);
     return MMSYSERR_NOTENABLED;
 }
 
@@ -840,9 +845,9 @@ UINT WINAPI mixerMessage(HMIXER hmix, UINT uMsg, DWORD dwParam1, DWORD dwParam2)
 	uDeviceID = lpmod->uDeviceID;
     else
 	uDeviceID = 0;
-    FIXME(mmsys,"(%04lx,%d,%08lx,%08lx): semi-stub?\n",
-	  (DWORD)hmix,uMsg, dwParam1, dwParam2);
-    return mixMessage(uDeviceID,uMsg, 0L, dwParam1, dwParam2);
+    FIXME(mmsys,"(%04lx, %d, %08lx, %08lx): semi-stub?\n",
+	  (DWORD)hmix, uMsg, dwParam1, dwParam2);
+    return mixMessage(uDeviceID, uMsg, 0L, dwParam1, dwParam2);
 }
 
 /**************************************************************************
@@ -855,9 +860,9 @@ UINT16 WINAPI mixerMessage16(HMIXER16 hmix, UINT16 uMsg, DWORD dwParam1, DWORD d
     
     lpmod = (LPMIXEROPENDESC)USER_HEAP_LIN_ADDR(hmix);
     uDeviceID = (lpmod) ? lpmod->uDeviceID : 0;
-    FIXME(mmsys,"(%04x,%d,%08lx,%08lx) - semi-stub?\n",
-	  hmix,uMsg, dwParam1, dwParam2);
-    return mixMessage(uDeviceID,uMsg, 0L, dwParam1, dwParam2);
+    FIXME(mmsys,"(%04x, %d, %08lx, %08lx) - semi-stub?\n",
+	  hmix, uMsg, dwParam1, dwParam2);
+    return mixMessage(uDeviceID, uMsg, 0L, dwParam1, dwParam2);
 }
 
 /**************************************************************************
@@ -892,7 +897,7 @@ UINT WINAPI auxGetDevCapsW(UINT uDeviceID, LPAUXCAPSW lpCaps, UINT uSize)
     lpCaps->wMid = ac16.wMid;
     lpCaps->wPid = ac16.wPid;
     lpCaps->vDriverVersion = ac16.vDriverVersion;
-    lstrcpyAtoW(lpCaps->szPname,ac16.szPname);
+    lstrcpyAtoW(lpCaps->szPname, ac16.szPname);
     lpCaps->wTechnology = ac16.wTechnology;
     lpCaps->dwSupport = ac16.dwSupport;
     return ret;
@@ -909,7 +914,7 @@ UINT WINAPI auxGetDevCapsA(UINT uDeviceID, LPAUXCAPSA lpCaps, UINT uSize)
     lpCaps->wMid = ac16.wMid;
     lpCaps->wPid = ac16.wPid;
     lpCaps->vDriverVersion = ac16.vDriverVersion;
-    strcpy(lpCaps->szPname,ac16.szPname);
+    strcpy(lpCaps->szPname, ac16.szPname);
     lpCaps->wTechnology = ac16.wTechnology;
     lpCaps->dwSupport = ac16.dwSupport;
     return ret;
@@ -976,11 +981,11 @@ DWORD WINAPI auxOutMessage(UINT uDeviceID, UINT uMessage, DWORD dw1, DWORD dw2)
     case AUXDM_GETDEVCAPS:
 	return auxGetDevCapsA(uDeviceID, (LPAUXCAPSA)dw1, dw2);
     default:
-	ERR(mmsys,"(%04x,%04x,%08lx,%08lx): unhandled message\n",
-	    uDeviceID,uMessage, dw1, dw2);
+	ERR(mmsys,"(%04x, %04x, %08lx, %08lx): unhandled message\n",
+	    uDeviceID, uMessage, dw1, dw2);
 	break;
     }
-    return auxMessage(uDeviceID,uMessage, 0L, dw1, dw2);
+    return auxMessage(uDeviceID, uMessage, 0L, dw1, dw2);
 }
 
 /**************************************************************************
@@ -1000,8 +1005,8 @@ DWORD WINAPI auxOutMessage16(UINT16 uDeviceID, UINT16 uMessage, DWORD dw1, DWORD
     case AUXDM_GETDEVCAPS:
 	return auxGetDevCaps16(uDeviceID, (LPAUXCAPS16)PTR_SEG_TO_LIN(dw1), dw2);
     default:
-	ERR(mmsys,"(%04x,%04x,%08lx,%08lx): unhandled message\n",
-	    uDeviceID,uMessage, dw1, dw2);
+	ERR(mmsys,"(%04x, %04x, %08lx, %08lx): unhandled message\n",
+	    uDeviceID, uMessage, dw1, dw2);
 	break;
     }
     return auxMessage(uDeviceID, uMessage, 0L, dw1, dw2);
@@ -1012,7 +1017,7 @@ DWORD WINAPI auxOutMessage16(UINT16 uDeviceID, UINT16 uMessage, DWORD dw1, DWORD
  */
 BOOL WINAPI mciGetErrorStringW(DWORD wError, LPWSTR lpstrBuffer, UINT uLength)
 {
-    LPSTR	bufstr = HeapAlloc(GetProcessHeap(), 0,uLength);
+    LPSTR	bufstr = HeapAlloc(GetProcessHeap(), 0, uLength);
     BOOL	ret = mciGetErrorStringA(wError, bufstr, uLength);
     
     lstrcpyAtoW(lpstrBuffer, bufstr);
@@ -1025,25 +1030,24 @@ BOOL WINAPI mciGetErrorStringW(DWORD wError, LPWSTR lpstrBuffer, UINT uLength)
  */
 BOOL WINAPI mciGetErrorStringA(DWORD wError, LPSTR lpstrBuffer, UINT uLength)
 {
-    return mciGetErrorString16(wError, lpstrBuffer,uLength);
+    return mciGetErrorString16(wError, lpstrBuffer, uLength);
 }
 
 /**************************************************************************
  * 				mciGetErrorString		[MMSYSTEM.706]
  */
-BOOL16 WINAPI mciGetErrorString16(DWORD wError, LPSTR lpstrBuffer, UINT16 uLength)
+BOOL16 WINAPI mciGetErrorString16(DWORD dwError, LPSTR lpstrBuffer, UINT16 uLength)
 {
-    LPSTR	msgptr;
-    BOOL16	ret = TRUE;
+    LPSTR	msgptr = NULL;
 
-    TRACE(mmsys, "(%08lX, %p, %d);\n", wError, lpstrBuffer, uLength);
+    TRACE(mmsys, "(%08lX, %p, %d);\n", dwError, lpstrBuffer, uLength);
 
     if ((lpstrBuffer == NULL) || (uLength < 1)) 
 	return FALSE;
 
     lpstrBuffer[0] = '\0';
 
-    switch (wError) {
+    switch (dwError) {
     case 0:
 	msgptr = "The specified command has been executed.";
 	break;
@@ -1304,13 +1308,12 @@ BOOL16 WINAPI mciGetErrorString16(DWORD wError, LPSTR lpstrBuffer, UINT16 uLengt
 	   msg# 543 : tmsf
 	*/
     default:
-	msgptr = "Unknown MCI Error !\n";
-	ret = FALSE;
-	break;
+	TRACE(mmsys, "Unknown MCI Error %ld!\n", dwError);
+	return FALSE;
     }
     lstrcpynA(lpstrBuffer, msgptr, uLength);
-    TRACE(mmsys, "msg = %s;\n", msgptr);
-    return ret;
+    TRACE(mmsys, "msg = \"%s\";\n", lpstrBuffer);
+    return TRUE;
 }
 
 /**************************************************************************
@@ -1321,11 +1324,11 @@ BOOL16 WINAPI mciDriverNotify16(HWND16 hWndCallBack, UINT16 wDevID, UINT16 wStat
     TRACE(mmsys, "(%04X, %04x, %04X)\n", hWndCallBack, wDevID, wStatus);
 
     if (!IsWindow(hWndCallBack)) {
-	WARN(mmsys, "bad hWnd for call back\n");
+	WARN(mmsys, "bad hWnd for call back (0x%04x)\n", hWndCallBack);
 	return FALSE;
     }
     TRACE(mmsys, "before PostMessage\n");
-    PostMessageA(hWndCallBack, MM_MCINOTIFY, wStatus, wDevID);
+    Callout.PostMessageA(hWndCallBack, MM_MCINOTIFY, wStatus, wDevID);
     return TRUE;
 }
 
@@ -1337,11 +1340,11 @@ BOOL WINAPI mciDriverNotify(HWND hWndCallBack, UINT wDevID, UINT wStatus)
     FIXME(mmsys, "(%08X, %04x, %04X)\n", hWndCallBack, wDevID, wStatus);
 
     if (!IsWindow(hWndCallBack)) {
-	WARN(mmsys, "bad hWnd for call back\n");
+	WARN(mmsys, "bad hWnd for call back (0x%04x)\n", hWndCallBack);
 	return FALSE;
     }
     TRACE(mmsys, "before PostMessage\n");
-    PostMessageA(hWndCallBack, MM_MCINOTIFY, wStatus, wDevID);
+    Callout.PostMessageA(hWndCallBack, MM_MCINOTIFY, wStatus, wDevID);
     return TRUE;
 }
 
@@ -1380,7 +1383,7 @@ BOOL16 WINAPI mciSetDriverData16(UINT16 uDeviceID, DWORD data)
  */
 BOOL WINAPI mciSetDriverData(UINT uDeviceID, DWORD data) 
 {
-    TRACE(mmsys, "(%04x,%08lx)\n", uDeviceID, data);
+    TRACE(mmsys, "(%04x, %08lx)\n", uDeviceID, data);
     if (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0) {
 	WARN(mmsys, "Bad uDeviceID\n");
 	return FALSE;
@@ -1405,7 +1408,7 @@ UINT16 WINAPI mciLoadCommandResource16(HANDLE16 hinst, LPCSTR resname, UINT16 ty
     LPBYTE          lmem;
     static UINT16   mcidevtype = 0;
     
-    FIXME(mmsys,"(%04x,%s,%d): stub!\n", hinst, resname, type);
+    FIXME(mmsys,"(%04x, %s, %d): stub!\n", hinst, resname, type);
     if (!lstrcmpiA(resname, "core")) {
 	FIXME(mmsys, "(...,\"core\",...), have to use internal tables... (not there yet)\n");
 	return 0;
@@ -1450,7 +1453,7 @@ UINT16 WINAPI mciLoadCommandResource16(HANDLE16 hinst, LPCSTR resname, UINT16 ty
  */
 BOOL16 WINAPI mciFreeCommandResource16(UINT16 uTable)
 {
-    FIXME(mci, "(%04x) stub\n", uTable);
+    FIXME(mmsys, "(%04x) stub\n", uTable);
     return 0;
 }
  
@@ -1459,7 +1462,7 @@ BOOL16 WINAPI mciFreeCommandResource16(UINT16 uTable)
  */
 BOOL WINAPI mciFreeCommandResource(UINT uTable)
 {
-    FIXME(mci, "(%08x) stub\n", uTable);
+    FIXME(mmsys, "(%08x) stub\n", uTable);
     return 0;
 }
 
@@ -1468,7 +1471,7 @@ BOOL WINAPI mciFreeCommandResource(UINT uTable)
  */
 UINT WINAPI mciLoadCommandResource(HANDLE hinst, LPCWSTR resname, UINT type)
 {
-    FIXME(mci, "(%04x,%s,%d): stub!\n", hinst, debugstr_w(resname), type);
+    FIXME(mmsys, "(%04x, %s, %d): stub!\n", hinst, debugstr_w(resname), type);
     return 0;
 }
 
@@ -1479,7 +1482,7 @@ DWORD WINAPI mciSendCommandA(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwPar
 {
     DWORD	dwRet;
 
-    TRACE(mci, "(%08x,%s,%08lx,%08lx)\n", wDevID, MCI_CommandToString(wMsg), dwParam1, dwParam2);
+    TRACE(mmsys, "(%08x, %s, %08lx, %08lx)\n", wDevID, MCI_CommandToString(wMsg), dwParam1, dwParam2);
 
     switch (wMsg) {
     case MCI_OPEN:
@@ -1493,7 +1496,7 @@ DWORD WINAPI mciSendCommandA(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwPar
 	break;
     default:
 	if (wDevID == MCI_ALL_DEVICE_ID) {
-	    FIXME(mci, "unhandled MCI_ALL_DEVICE_ID\n");
+	    FIXME(mmsys, "unhandled MCI_ALL_DEVICE_ID\n");
 	    dwRet = MCIERR_CANNOT_USE_ALL;
 	} else {
 	    dwRet = MCI_SendCommand(wDevID, wMsg, dwParam1, dwParam2);
@@ -1501,7 +1504,7 @@ DWORD WINAPI mciSendCommandA(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwPar
 	break;
     }
     dwRet = MCI_CleanUp(dwRet, wMsg, dwParam2, TRUE);
-    TRACE(mci, "=> %08lx\n", dwRet);
+    TRACE(mmsys, "=> %08lx\n", dwRet);
     return dwRet;
 }
 
@@ -1532,7 +1535,7 @@ DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD 
 	break;
     case MCI_CLOSE:
 	if (wDevID == MCI_ALL_DEVICE_ID) {
-	    FIXME(mci, "unhandled MCI_ALL_DEVICE_ID\n");
+	    FIXME(mmsys, "unhandled MCI_ALL_DEVICE_ID\n");
 	    dwRet = MCIERR_CANNOT_USE_ALL;
 	} else if (!MCI_DevIDValid(wDevID)) {
 	    dwRet = MCIERR_INVALID_DEVICE_ID;
@@ -1550,7 +1553,7 @@ DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD 
     /* FIXME: it seems that MCI_BREAK and MCI_SOUND need the same handling */
     default:
 	if (wDevID == MCI_ALL_DEVICE_ID) {
-	    FIXME(mci, "unhandled MCI_ALL_DEVICE_ID\n");
+	    FIXME(mmsys, "unhandled MCI_ALL_DEVICE_ID\n");
 	    dwRet = MCIERR_CANNOT_USE_ALL;
 	} else if (!MCI_DevIDValid(wDevID)) {
 	    dwRet = MCIERR_INVALID_DEVICE_ID;
@@ -1564,11 +1567,11 @@ DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD 
 	    case WINE_DI_TYPE_32:
 		switch (res = MCI_MapMsg16To32A(MCI_GetDrv(wDevID)->modp.wType, wMsg, &dwParam2)) {
 		case -1:
-		    TRACE(mci, "Not handled yet (%s)\n", MCI_CommandToString(wMsg));
+		    TRACE(mmsys, "Not handled yet (%s)\n", MCI_CommandToString(wMsg));
 		    dwRet = MCIERR_DRIVER_INTERNAL;
 		    break;
 		case -2:
-		    TRACE(mci, "Problem mapping msg=%s from 16 to 32a\n", MCI_CommandToString(wMsg));
+		    TRACE(mmsys, "Problem mapping msg=%s from 16 to 32a\n", MCI_CommandToString(wMsg));
 		    dwRet = MCIERR_OUT_OF_MEMORY;
 		    break;
 		case 0:
@@ -1645,12 +1648,33 @@ UINT WINAPI mciGetDeviceIDW(LPCWSTR lpwstrName)
     return ret;
 }
 
+UINT16	MCI_DefYieldProc(UINT16 wDevID, DWORD data)
+{
+    MSG		msg;
+    INT16	ret;
+    
+    TRACE(mmsys, "(0x%04x, 0x%08lx)\n", wDevID, data);
+
+    if ((HIWORD(data) != 0 && GetActiveWindow16() != HIWORD(data)) ||
+	(GetAsyncKeyState(LOWORD(data)) & 1) == 0) {
+	UserYield16();
+	ret = 0;
+    } else {
+	msg.hwnd = HIWORD(data);
+
+	while (!PeekMessageA(&msg, HIWORD(data), WM_KEYFIRST, WM_KEYLAST, PM_REMOVE));
+	ret = 0xFFFF;
+    }
+    return ret;
+}
+
 /**************************************************************************
  * 				mciSetYieldProc			[MMSYSTEM.714]
  */
 BOOL16 WINAPI mciSetYieldProc16(UINT16 uDeviceID, YIELDPROC fpYieldProc, DWORD dwYieldData)
 {
     TRACE(mmsys, "(%u, %p, %08lx)\n", uDeviceID, fpYieldProc, dwYieldData);
+
     if (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0) {
 	WARN(mmsys, "Bad uDeviceID\n");
 	return FALSE;
@@ -1669,6 +1693,7 @@ BOOL16 WINAPI mciSetYieldProc16(UINT16 uDeviceID, YIELDPROC fpYieldProc, DWORD d
 BOOL WINAPI mciSetYieldProc(UINT uDeviceID, YIELDPROC fpYieldProc, DWORD dwYieldData)
 {
     TRACE(mmsys, "(%u, %p, %08lx)\n", uDeviceID, fpYieldProc, dwYieldData);
+
     if (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0) {
 	WARN(mmsys, "Bad uDeviceID\n");
 	return FALSE;
@@ -1686,7 +1711,7 @@ BOOL WINAPI mciSetYieldProc(UINT uDeviceID, YIELDPROC fpYieldProc, DWORD dwYield
  */
 UINT16 WINAPI mciGetDeviceIDFromElementID16(DWORD dwElementID, LPCSTR lpstrType)
 {
-    FIXME(mci, "(%lu, %s) stub\n", dwElementID, lpstrType);
+    FIXME(mmsys, "(%lu, %s) stub\n", dwElementID, lpstrType);
     return 0;
 }
 	
@@ -1698,7 +1723,7 @@ UINT WINAPI mciGetDeviceIDFromElementIDW(DWORD dwElementID, LPCWSTR lpstrType)
     /* FIXME: that's rather strange, there is no 
      * mciGetDeviceIDFromElementID32A in winmm.spec
      */
-    FIXME(mci, "(%lu, %p) stub\n", dwElementID, lpstrType);
+    FIXME(mmsys, "(%lu, %p) stub\n", dwElementID, lpstrType);
     return 0;
 }
 	
@@ -1708,6 +1733,7 @@ UINT WINAPI mciGetDeviceIDFromElementIDW(DWORD dwElementID, LPCWSTR lpstrType)
 YIELDPROC WINAPI mciGetYieldProc16(UINT16 uDeviceID, DWORD* lpdwYieldData)
 {
     TRACE(mmsys, "(%u, %p)\n", uDeviceID, lpdwYieldData);
+
     if (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0) {
 	WARN(mmsys, "Bad uDeviceID\n");
 	return NULL;
@@ -1729,6 +1755,7 @@ YIELDPROC WINAPI mciGetYieldProc16(UINT16 uDeviceID, DWORD* lpdwYieldData)
 YIELDPROC WINAPI mciGetYieldProc(UINT uDeviceID, DWORD* lpdwYieldData)
 {
     TRACE(mmsys, "(%u, %p)\n", uDeviceID, lpdwYieldData);
+
     if (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0) {
 	WARN(mmsys, "Bad uDeviceID\n");
 	return NULL;
@@ -1759,12 +1786,12 @@ HTASK WINAPI mciGetCreatorTask(UINT uDeviceID)
 {
     HTASK	ret;
 
-    TRACE(mci, "(%u)\n", uDeviceID);
+    TRACE(mmsys, "(%u)\n", uDeviceID);
 
     ret = (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0) ?
 	0 : MCI_GetDrv(uDeviceID)->hCreatorTask;
 
-    TRACE(mci, "=> %04x\n", ret);
+    TRACE(mmsys, "=> %04x\n", ret);
     return ret;
 }
 
@@ -1775,7 +1802,8 @@ UINT16 WINAPI mciDriverYield16(UINT16 uDeviceID)
 {
     UINT16	ret = 0;
 
-    TRACE(mmsys,"(%04x)\n", uDeviceID);
+    /*    TRACE(mmsys,"(%04x)\n", uDeviceID); */
+
     if (!MCI_DevIDValid(uDeviceID) || MCI_GetDrv(uDeviceID)->modp.wType == 0 ||
 	!MCI_GetDrv(uDeviceID)->lpfnYieldProc || MCI_GetDrv(uDeviceID)->bIs32) {
 	UserYield16();
@@ -1871,7 +1899,7 @@ UINT WINAPI midiOutGetDevCapsA(UINT uDeviceID, LPMIDIOUTCAPSA lpCaps, UINT uSize
 UINT16 WINAPI midiOutGetDevCaps16(UINT16 uDeviceID, LPMIDIOUTCAPS16 lpCaps, UINT16 uSize)
 {
     TRACE(mmsys, "midiOutGetDevCaps\n");
-    return modMessage(uDeviceID, MODM_GETDEVCAPS, 0, (DWORD)lpCaps,uSize);
+    return modMessage(uDeviceID, MODM_GETDEVCAPS, 0, (DWORD)lpCaps, uSize);
 }
 
 /**************************************************************************
@@ -1888,13 +1916,13 @@ UINT WINAPI midiOutGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
  */
 UINT WINAPI midiOutGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
 {
-    LPSTR	xstr = HeapAlloc(GetProcessHeap(), 0,uSize);
+    LPSTR	xstr = HeapAlloc(GetProcessHeap(), 0, uSize);
     UINT	ret;
     
     TRACE(mmsys, "midiOutGetErrorText\n");
     ret = midiGetErrorText(uError, xstr, uSize);
-    lstrcpyAtoW(lpText,xstr);
-    HeapFree(GetProcessHeap(), 0,xstr);
+    lstrcpyAtoW(lpText, xstr);
+    HeapFree(GetProcessHeap(), 0, xstr);
     return ret;
 }
 
@@ -1952,6 +1980,30 @@ UINT16 WINAPI midiGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize)
     return TRUE;
 }
 
+static	LPMIDIOPENDESC	MIDI_OutAlloc(HMIDIOUT16* lphMidiOut, DWORD dwCallback, 
+				      DWORD dwInstance, DWORD cIDs, MIDIOPENSTRMID* lpIDs)
+{
+    HMIDI16			hMidiOut;
+    LPMIDIOPENDESC		lpDesc;
+
+    hMidiOut = USER_HEAP_ALLOC(sizeof(MIDIOPENDESC) + (cIDs ? (cIDs - 1) : 0) * sizeof(MIDIOPENSTRMID));
+
+    if (lphMidiOut != NULL) 
+	*lphMidiOut = hMidiOut;
+    lpDesc = (LPMIDIOPENDESC) USER_HEAP_LIN_ADDR(hMidiOut);
+
+    if (lpDesc) {
+	lpDesc->hMidi = hMidiOut;
+	lpDesc->dwCallback = dwCallback;
+	lpDesc->dwInstance = dwInstance;
+	lpDesc->dnDevNode = 0;
+	lpDesc->cIds = cIDs;
+	if (cIDs)
+	    memcpy(&(lpDesc->rgIds), lpIDs, cIDs * sizeof(MIDIOPENSTRMID));
+    }
+    return lpDesc;
+}
+
 /**************************************************************************
  * 				midiOutOpen    		[WINM.84]
  */
@@ -1961,7 +2013,7 @@ UINT WINAPI midiOutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID,
     HMIDIOUT16	hmo16;
     UINT	ret;
     
-    ret = midiOutOpen16(&hmo16,uDeviceID, dwCallback, dwInstance,
+    ret = midiOutOpen16(&hmo16, uDeviceID, dwCallback, dwInstance,
 			CALLBACK32CONV(dwFlags));
     if (lphMidiOut) *lphMidiOut = hmo16;
     return ret;
@@ -1973,45 +2025,43 @@ UINT WINAPI midiOutOpen(HMIDIOUT* lphMidiOut, UINT uDeviceID,
 UINT16 WINAPI midiOutOpen16(HMIDIOUT16* lphMidiOut, UINT16 uDeviceID,
                             DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
 {
-    HMIDI16			hMidiOut;
     LPMIDIOPENDESC		lpDesc;
-    DWORD			dwRet = 0;
+    UINT16			ret = 0;
     BOOL			bMapperFlg = FALSE;
     
-    if (lphMidiOut != NULL) *lphMidiOut = 0;
     TRACE(mmsys, "(%p, %d, %08lX, %08lX, %08lX);\n", 
 	  lphMidiOut, uDeviceID, dwCallback, dwInstance, dwFlags);
+
+    if (lphMidiOut != NULL) *lphMidiOut = 0;
+
     if (uDeviceID == (UINT16)MIDI_MAPPER) {
 	TRACE(mmsys, "MIDI_MAPPER mode requested !\n");
 	bMapperFlg = TRUE;
 	uDeviceID = 0;
     }
-    hMidiOut = USER_HEAP_ALLOC(sizeof(MIDIOPENDESC));
-    if (lphMidiOut != NULL) 
-	*lphMidiOut = hMidiOut;
-    lpDesc = (LPMIDIOPENDESC) USER_HEAP_LIN_ADDR(hMidiOut);
+
+    lpDesc = MIDI_OutAlloc(lphMidiOut, dwCallback, dwInstance, 0, NULL);
+
     if (lpDesc == NULL)
 	return MMSYSERR_NOMEM;
-    lpDesc->hMidi = hMidiOut;
-    lpDesc->dwCallback = dwCallback;
-    lpDesc->dwInstance = dwInstance;
     
     while (uDeviceID < MAXMIDIDRIVERS) {
-	dwRet = modMessage(uDeviceID, MODM_OPEN, 
-			   lpDesc->dwInstance, (DWORD)lpDesc, dwFlags);
-	if (dwRet == MMSYSERR_NOERROR) break;
+	ret = modMessage(uDeviceID, MODM_OPEN, 
+			 lpDesc->dwInstance, (DWORD)lpDesc, dwFlags);
+	if (ret == MMSYSERR_NOERROR) break;
 	if (!bMapperFlg) break;
 	uDeviceID++;
 	TRACE(mmsys, "MIDI_MAPPER mode ! try next driver...\n");
     }
-    lpDesc->wDevID = uDeviceID;
-    
-    if (dwRet != MMSYSERR_NOERROR) {
-	USER_HEAP_FREE(hMidiOut);
+    TRACE(mmsys, "=> wDevID=%u (%d)\n", uDeviceID, ret);
+    if (ret != MMSYSERR_NOERROR) {
+	HeapFree(GetProcessHeap(), 0, lpDesc);
 	if (lphMidiOut) *lphMidiOut = 0;
+    } else {
+	lpDesc->wDevID = uDeviceID;
     }
 
-    return dwRet;
+    return ret;
 }
 
 /**************************************************************************
@@ -2033,9 +2083,10 @@ UINT16 WINAPI midiOutClose16(HMIDIOUT16 hMidiOut)
     TRACE(mmsys, "(%04X)\n", hMidiOut);
 
     lpDesc = (LPMIDIOPENDESC) USER_HEAP_LIN_ADDR(hMidiOut);
+
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
     dwRet = modMessage(lpDesc->wDevID, MODM_CLOSE, lpDesc->dwInstance, 0L, 0L);
-    USER_HEAP_FREE(hMidiOut);
+    HeapFree(GetProcessHeap(), 0, lpDesc);
     return dwRet;
 }
 
@@ -2043,15 +2094,16 @@ UINT16 WINAPI midiOutClose16(HMIDIOUT16 hMidiOut)
  * 				midiOutPrepareHeader	[WINMM.85]
  */
 UINT WINAPI midiOutPrepareHeader(HMIDIOUT hMidiOut,
-				 MIDIHDR16* lpMidiOutHdr, UINT uSize)
+				 MIDIHDR* lpMidiOutHdr, UINT uSize)
 {
     LPMIDIOPENDESC	lpDesc;
 
     TRACE(mmsys, "(%04X, %p, %d)\n", hMidiOut, lpMidiOutHdr, uSize);
 
-    lpDesc = (LPMIDIOPENDESC) USER_HEAP_LIN_ADDR(hMidiOut);
-    if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-    lpMidiOutHdr->reserved = (DWORD)lpMidiOutHdr->lpData;
+    lpDesc = (LPMIDIOPENDESC)USER_HEAP_LIN_ADDR(hMidiOut);
+    if (lpDesc == NULL) 
+	return MMSYSERR_INVALHANDLE;
+    lpMidiOutHdr->reserved = (DWORD)lpMidiOutHdr;
     return modMessage(lpDesc->wDevID, MODM_PREPARE, lpDesc->dwInstance, 
 		      (DWORD)lpMidiOutHdr, (DWORD)uSize);
 }
@@ -2060,15 +2112,17 @@ UINT WINAPI midiOutPrepareHeader(HMIDIOUT hMidiOut,
  * 				midiOutPrepareHeader	[MMSYSTEM.206]
  */
 UINT16 WINAPI midiOutPrepareHeader16(HMIDIOUT16 hMidiOut,
-                                     MIDIHDR16* lpMidiOutHdr, UINT16 uSize)
+                                     LPMIDIHDR16 /*SEGPTR*/ _lpMidiOutHdr, UINT16 uSize)
 {
     LPMIDIOPENDESC	lpDesc;
+    LPMIDIHDR16		lpMidiOutHdr = (LPMIDIHDR16)PTR_SEG_TO_LIN(_lpMidiOutHdr);
 
     TRACE(mmsys, "(%04X, %p, %d)\n", hMidiOut, lpMidiOutHdr, uSize);
 
-    lpDesc = (LPMIDIOPENDESC) USER_HEAP_LIN_ADDR(hMidiOut);
-    if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-    lpMidiOutHdr->reserved = (DWORD)PTR_SEG_TO_LIN(lpMidiOutHdr->lpData);
+    lpDesc = (LPMIDIOPENDESC)USER_HEAP_LIN_ADDR(hMidiOut);
+    if (lpDesc == NULL) 
+	return MMSYSERR_INVALHANDLE;
+    lpMidiOutHdr->reserved = (DWORD)_lpMidiOutHdr;
     return modMessage(lpDesc->wDevID, MODM_PREPARE, lpDesc->dwInstance, 
 		      (DWORD)lpMidiOutHdr, (DWORD)uSize);
 }
@@ -2077,9 +2131,9 @@ UINT16 WINAPI midiOutPrepareHeader16(HMIDIOUT16 hMidiOut,
  * 				midiOutUnprepareHeader	[WINMM.89]
  */
 UINT WINAPI midiOutUnprepareHeader(HMIDIOUT hMidiOut,
-				   MIDIHDR16* lpMidiOutHdr, UINT uSize)
+				   MIDIHDR* lpMidiOutHdr, UINT uSize)
 {
-    return midiOutUnprepareHeader16(hMidiOut, lpMidiOutHdr,uSize);
+    return midiOutUnprepareHeader16(hMidiOut, (MIDIHDR16*)lpMidiOutHdr, uSize);
 }
 
 /**************************************************************************
@@ -2124,9 +2178,9 @@ UINT16 WINAPI midiOutShortMsg16(HMIDIOUT16 hMidiOut, DWORD dwMsg)
  * 				midiOutLongMsg		[WINMM.82]
  */
 UINT WINAPI midiOutLongMsg(HMIDIOUT hMidiOut,
-			   MIDIHDR16* lpMidiOutHdr, UINT uSize)
+			   MIDIHDR* lpMidiOutHdr, UINT uSize)
 {
-    return midiOutLongMsg16(hMidiOut, lpMidiOutHdr,uSize);
+    return midiOutLongMsg16(hMidiOut, (MIDIHDR16*)lpMidiOutHdr, uSize);
 }
 
 /**************************************************************************
@@ -2207,7 +2261,7 @@ UINT16 WINAPI midiOutSetVolume16(UINT16 uDeviceID, DWORD dwVolume)
 UINT WINAPI midiOutCachePatches(HMIDIOUT hMidiOut, UINT uBank,
 				WORD* lpwPatchArray, UINT uFlags)
 {
-    return midiOutCachePatches16(hMidiOut,uBank, lpwPatchArray,uFlags);
+    return midiOutCachePatches16(hMidiOut, uBank, lpwPatchArray, uFlags);
 }
 
 /**************************************************************************
@@ -2227,7 +2281,7 @@ UINT16 WINAPI midiOutCachePatches16(HMIDIOUT16 hMidiOut, UINT16 uBank,
 UINT WINAPI midiOutCacheDrumPatches(HMIDIOUT hMidiOut, UINT uPatch,
 				    WORD* lpwKeyArray, UINT uFlags)
 {
-    return midiOutCacheDrumPatches16(hMidiOut,uPatch, lpwKeyArray,uFlags);
+    return midiOutCacheDrumPatches16(hMidiOut, uPatch, lpwKeyArray, uFlags);
 }
 
 /**************************************************************************
@@ -2269,9 +2323,16 @@ DWORD WINAPI midiOutMessage(HMIDIOUT hMidiOut, UINT uMessage,
 			    DWORD dwParam1, DWORD dwParam2)
 {
     LPMIDIOPENDESC	lpDesc;
-    
+
+    /* Shouldn't we anyway use the functions midiOutXXX ?
+     * M$ doc says: This function is used only for driver-specific 
+     * messages that are not supported by the MIDI API. 
+     * Clearly not what we are currently doing
+     */
+
     TRACE(mmsys, "(%04X, %04X, %08lX, %08lX)\n", 
 	  hMidiOut, uMessage, dwParam1, dwParam2);
+
     lpDesc = (LPMIDIOPENDESC) USER_HEAP_LIN_ADDR(hMidiOut);
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
     switch (uMessage) {
@@ -2291,8 +2352,8 @@ DWORD WINAPI midiOutMessage(HMIDIOUT hMidiOut, UINT uMessage,
 	/* no argument conversion needed */
 	break;
     default:
-	ERR(mmsys,"(%04x,%04x,%08lx,%08lx): unhandled message\n",
-	    hMidiOut,uMessage, dwParam1, dwParam2);
+	ERR(mmsys,"(%04x, %04x, %08lx, %08lx): unhandled message\n",
+	    hMidiOut, uMessage, dwParam1, dwParam2);
 	break;
     }
     return modMessage(lpDesc->wDevID, uMessage, lpDesc->dwInstance, dwParam1, dwParam2);
@@ -2325,12 +2386,13 @@ DWORD WINAPI midiOutMessage16(HMIDIOUT16 hMidiOut, UINT16 uMessage,
     case MODM_LONGDATA:
 	return midiOutLongMsg16(hMidiOut, (LPMIDIHDR16)PTR_SEG_TO_LIN(dwParam1), dwParam2);
     case MODM_PREPARE:
-	return midiOutPrepareHeader16(hMidiOut, (LPMIDIHDR16)PTR_SEG_TO_LIN(dwParam1), dwParam2);
+	/* lpMidiOutHdr is still a segmented pointer for this function */
+	return midiOutPrepareHeader16(hMidiOut, (LPMIDIHDR16)dwParam1, dwParam2);
     case MODM_UNPREPARE:
 	return midiOutUnprepareHeader16(hMidiOut, (LPMIDIHDR16)PTR_SEG_TO_LIN(dwParam1), dwParam2);
     default:
-	ERR(mmsys,"(%04x,%04x,%08lx,%08lx): unhandled message\n",
-	    hMidiOut,uMessage, dwParam1, dwParam2);
+	ERR(mmsys,"(%04x, %04x, %08lx, %08lx): unhandled message\n",
+	    hMidiOut, uMessage, dwParam1, dwParam2);
 	break;
     }
     return modMessage(lpDesc->wDevID, uMessage, lpDesc->dwInstance, dwParam1, dwParam2);
@@ -2362,7 +2424,7 @@ UINT16 WINAPI midiInGetNumDevs16(void)
 UINT WINAPI midiInGetDevCapsW(UINT uDeviceID, LPMIDIINCAPSW lpCaps, UINT uSize)
 {
     MIDIINCAPS16	mic16;
-    UINT		ret = midiInGetDevCaps16(uDeviceID, &mic16,uSize);
+    UINT		ret = midiInGetDevCaps16(uDeviceID, &mic16, uSize);
     
     lpCaps->wMid = mic16.wMid;
     lpCaps->wPid = mic16.wPid;
@@ -2378,7 +2440,7 @@ UINT WINAPI midiInGetDevCapsW(UINT uDeviceID, LPMIDIINCAPSW lpCaps, UINT uSize)
 UINT WINAPI midiInGetDevCapsA(UINT uDeviceID, LPMIDIINCAPSA lpCaps, UINT uSize)
 {
     MIDIINCAPS16	mic16;
-    UINT		ret = midiInGetDevCaps16(uDeviceID, &mic16,uSize);
+    UINT		ret = midiInGetDevCaps16(uDeviceID, &mic16, uSize);
     
     lpCaps->wMid = mic16.wMid;
     lpCaps->wPid = mic16.wPid;
@@ -2403,10 +2465,10 @@ UINT16 WINAPI midiInGetDevCaps16(UINT16 uDeviceID,
  */
 UINT WINAPI midiInGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
 {
-    LPSTR	xstr = HeapAlloc(GetProcessHeap(), 0,uSize);
-    UINT	ret = midiInGetErrorText16(uError,xstr,uSize);
-    lstrcpyAtoW(lpText,xstr);
-    HeapFree(GetProcessHeap(), 0,xstr);
+    LPSTR	xstr = HeapAlloc(GetProcessHeap(), 0, uSize);
+    UINT	ret = midiInGetErrorText16(uError, xstr, uSize);
+    lstrcpyAtoW(lpText, xstr);
+    HeapFree(GetProcessHeap(), 0, xstr);
     return ret;
 }
 
@@ -2415,7 +2477,7 @@ UINT WINAPI midiInGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
  */
 UINT WINAPI midiInGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
 {
-    return midiInGetErrorText16(uError, lpText,uSize);
+    return midiInGetErrorText16(uError, lpText, uSize);
 }
 
 /**************************************************************************
@@ -2434,7 +2496,7 @@ UINT WINAPI midiInOpen(HMIDIIN* lphMidiIn, UINT uDeviceID,
 		       DWORD dwCallback, DWORD dwInstance, DWORD dwFlags)
 {
     HMIDIIN16	xhmid16;
-    UINT 		ret = midiInOpen16(&xhmid16,uDeviceID, dwCallback, dwInstance,
+    UINT 		ret = midiInOpen16(&xhmid16, uDeviceID, dwCallback, dwInstance,
 					   CALLBACK32CONV(dwFlags));
     if (lphMidiIn) 
 	*lphMidiIn = xhmid16;
@@ -2509,6 +2571,7 @@ UINT16 WINAPI midiInClose16(HMIDIIN16 hMidiIn)
 
     TRACE(mmsys, "(%04X)\n", hMidiIn);
     lpDesc = (LPMIDIOPENDESC) USER_HEAP_LIN_ADDR(hMidiIn);
+
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
     dwRet = midMessage(lpDesc->wDevID, MIDM_CLOSE, lpDesc->dwInstance, 0L, 0L);
     USER_HEAP_FREE(hMidiIn);
@@ -2518,16 +2581,17 @@ UINT16 WINAPI midiInClose16(HMIDIIN16 hMidiIn)
 /**************************************************************************
  * 				midiInPrepareHeader	[WINMM.67]
  */
-UINT WINAPI midiInPrepareHeader(HMIDIIN hMidiIn,
-				MIDIHDR16* lpMidiInHdr, UINT uSize)
+UINT WINAPI midiInPrepareHeader(HMIDIIN hMidiIn, 
+				MIDIHDR* lpMidiInHdr, UINT uSize)
 {
     LPMIDIOPENDESC	lpDesc;
     
-    TRACE(mmsys, "(%04X, %p, %d)\n", 
-	  hMidiIn, lpMidiInHdr, uSize);
+    TRACE(mmsys, "(%04X, %p, %d)\n", hMidiIn, lpMidiInHdr, uSize);
+
     lpDesc = (LPMIDIOPENDESC) USER_HEAP_LIN_ADDR(hMidiIn);
-    if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-    lpMidiInHdr->reserved = (DWORD)lpMidiInHdr->lpData;
+    if (lpDesc == NULL) 
+	return MMSYSERR_INVALHANDLE;
+    lpMidiInHdr->reserved = (DWORD)lpMidiInHdr;
     return midMessage(lpDesc->wDevID, MIDM_PREPARE, lpDesc->dwInstance, 
 		      (DWORD)lpMidiInHdr, (DWORD)uSize);
 }
@@ -2536,15 +2600,17 @@ UINT WINAPI midiInPrepareHeader(HMIDIIN hMidiIn,
  * 				midiInPrepareHeader	[MMSYSTEM.306]
  */
 UINT16 WINAPI midiInPrepareHeader16(HMIDIIN16 hMidiIn,
-                                    MIDIHDR16* lpMidiInHdr, UINT16 uSize)
+                                    MIDIHDR16* /*SEGPTR*/ _lpMidiInHdr, UINT16 uSize)
 {
     LPMIDIOPENDESC	lpDesc;
-    
-    TRACE(mmsys, "(%04X, %p, %d)\n", 
-	  hMidiIn, lpMidiInHdr, uSize);
+    LPMIDIHDR16		lpMidiInHdr = (LPMIDIHDR16)PTR_SEG_TO_LIN(_lpMidiInHdr);
+
+    TRACE(mmsys, "(%04X, %p, %d)\n", hMidiIn, lpMidiInHdr, uSize);
+
     lpDesc = (LPMIDIOPENDESC) USER_HEAP_LIN_ADDR(hMidiIn);
-    if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-    lpMidiInHdr->reserved = (DWORD)PTR_SEG_TO_LIN(lpMidiInHdr->lpData);
+    if (lpDesc == NULL) 
+	return MMSYSERR_INVALHANDLE;
+    lpMidiInHdr->reserved = (DWORD)_lpMidiInHdr;
     return midMessage(lpDesc->wDevID, MIDM_PREPARE, lpDesc->dwInstance, 
 		      (DWORD)lpMidiInHdr, (DWORD)uSize);
 }
@@ -2553,9 +2619,9 @@ UINT16 WINAPI midiInPrepareHeader16(HMIDIIN16 hMidiIn,
  * 				midiInUnprepareHeader	[WINMM.71]
  */
 UINT WINAPI midiInUnprepareHeader(HMIDIIN hMidiIn,
-				  MIDIHDR16* lpMidiInHdr, UINT uSize)
+				  MIDIHDR* lpMidiInHdr, UINT uSize)
 {
-    return midiInUnprepareHeader16(hMidiIn, lpMidiInHdr,uSize);
+    return midiInUnprepareHeader16(hMidiIn, (MIDIHDR16*)lpMidiInHdr, uSize);
 }
 
 /**************************************************************************
@@ -2565,10 +2631,12 @@ UINT16 WINAPI midiInUnprepareHeader16(HMIDIIN16 hMidiIn,
                                       MIDIHDR16* lpMidiInHdr, UINT16 uSize)
 {
     LPMIDIOPENDESC	lpDesc;
-    TRACE(mmsys, "(%04X, %p, %d)\n", 
-	  hMidiIn, lpMidiInHdr, uSize);
+
+    TRACE(mmsys, "(%04X, %p, %d)\n", hMidiIn, lpMidiInHdr, uSize);
+
     lpDesc = (LPMIDIOPENDESC) USER_HEAP_LIN_ADDR(hMidiIn);
-    if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
+    if (lpDesc == NULL) 
+	return MMSYSERR_INVALHANDLE;
     return midMessage(lpDesc->wDevID, MIDM_UNPREPARE, lpDesc->dwInstance, 
 		      (DWORD)lpMidiInHdr, (DWORD)uSize);
 }
@@ -2577,9 +2645,9 @@ UINT16 WINAPI midiInUnprepareHeader16(HMIDIIN16 hMidiIn,
  * 				midiInAddBuffer		[WINMM.57]
  */
 UINT WINAPI midiInAddBuffer(HMIDIIN hMidiIn,
-			    MIDIHDR16* lpMidiInHdr, UINT uSize)
+			    MIDIHDR* lpMidiInHdr, UINT uSize)
 {
-    return midiInAddBuffer16(hMidiIn, lpMidiInHdr,uSize);
+    return midiInAddBuffer16(hMidiIn, (MIDIHDR16*)lpMidiInHdr, uSize);
 }
 
 /**************************************************************************
@@ -2722,14 +2790,14 @@ DWORD WINAPI midiInMessage(HMIDIIN hMidiIn, UINT uMessage,
 	/* no argument conversion needed */
 	break;
     case MIDM_PREPARE:
-	return midiInPrepareHeader(hMidiIn, (LPMIDIHDR16)dwParam1, dwParam2);
+	return midiInPrepareHeader(hMidiIn, (LPMIDIHDR)dwParam1, dwParam2);
     case MIDM_UNPREPARE:
-	return midiInUnprepareHeader(hMidiIn, (LPMIDIHDR16)dwParam1, dwParam2);
+	return midiInUnprepareHeader(hMidiIn, (LPMIDIHDR)dwParam1, dwParam2);
     case MIDM_ADDBUFFER:
-	return midiInAddBuffer(hMidiIn, (LPMIDIHDR16)dwParam1, dwParam2);
+	return midiInAddBuffer(hMidiIn, (LPMIDIHDR)dwParam1, dwParam2);
     default:
-	ERR(mmsys,"(%04x,%04x,%08lx,%08lx): unhandled message\n",
-	    hMidiIn,uMessage, dwParam1, dwParam2);
+	ERR(mmsys,"(%04x, %04x, %08lx, %08lx): unhandled message\n",
+	    hMidiIn, uMessage, dwParam1, dwParam2);
 	break;
     }
     return midMessage(0, uMessage, lpDesc->dwInstance, dwParam1, dwParam2);
@@ -2767,177 +2835,380 @@ DWORD WINAPI midiInMessage16(HMIDIIN16 hMidiIn, UINT16 uMessage,
     case MIDM_ADDBUFFER:
 	return midiInAddBuffer16(hMidiIn, (LPMIDIHDR16)PTR_SEG_TO_LIN(dwParam1), dwParam2);
     default:
-	ERR(mmsys,"(%04x,%04x,%08lx,%08lx): unhandled message\n",
-	    hMidiIn,uMessage, dwParam1, dwParam2);
+	ERR(mmsys,"(%04x, %04x, %08lx, %08lx): unhandled message\n",
+	    hMidiIn, uMessage, dwParam1, dwParam2);
 	break;
     }
     return midMessage(0, uMessage, lpDesc->dwInstance, dwParam1, dwParam2);
 }
 
-#define	MIDI_STREAM_MAGIC	0xC9080F17
-
-typedef struct {
-    DWORD		dwMagic;
-    HMIDIOUT		hDevice;
-    /*     thread ID */
-    DWORD		dwTempo;
-    DWORD		dwTimeDiv;
-    DWORD		dwMS;
-    DWORD		dwStatus; 
-    LPMIDIHDR	lpMidiHdr;
+typedef struct WINE_MIDIStream{
+    HMIDIOUT			hDevice;
+    HANDLE			hThread;
+    DWORD			dwThreadID;
+    DWORD			dwTempo;
+    DWORD			dwTimeDiv;
+    DWORD			dwPositionMS;
+    DWORD			dwPulses;
+    DWORD			dwStartTicks;
+    WORD			wFlags;
+    BOOL			bFlag;
 } WINE_MIDIStream;
+
+/**************************************************************************
+ * 				MMSYSTEM_GetMidiStream		[internal]
+ */
+static	BOOL	MMSYSTEM_GetMidiStream(HMIDISTRM hMidiStrm, WINE_MIDIStream** lpMidiStrm, MIDIOPENDESC** lplpDesc)
+{
+    MIDIOPENDESC* lpDesc = (LPMIDIOPENDESC)USER_HEAP_LIN_ADDR(hMidiStrm);
+
+    if (lplpDesc)
+	*lplpDesc = lpDesc;
+
+    if (lpDesc == NULL) {
+	return FALSE;
+    }
+
+    *lpMidiStrm = (WINE_MIDIStream*)lpDesc->rgIds.dwStreamID;
+
+    return *lpMidiStrm != NULL;
+}
+
+/**************************************************************************
+ * 				MMSYSTEM_MidiStreamConvert	[internal]
+ */
+static	DWORD	MMSYSTEM_MidiStreamConvert(WINE_MIDIStream* lpMidiStrm, DWORD pulse)
+{
+    DWORD	ret = 0;
+    
+    if (lpMidiStrm->dwTimeDiv == 0) {
+	FIXME(mmsys, "Shouldn't happen. lpMidiStrm->dwTimeDiv = 0\n");
+    } else if (lpMidiStrm->dwTimeDiv > 0x8000) { /* SMPTE, unchecked FIXME? */
+	int	nf = -(char)HIBYTE(lpMidiStrm->dwTimeDiv);	/* number of frames     */
+	int	nsf = LOBYTE(lpMidiStrm->dwTimeDiv);		/* number of sub-frames */
+	ret = (pulse * 1000) / (nf * nsf);
+    } else {
+	ret = (DWORD)((double)pulse * ((double)lpMidiStrm->dwTempo / 1000) /	
+		      (double)lpMidiStrm->dwTimeDiv);
+    }
+    
+    return ret;
+}
 
 /**************************************************************************
  * 				MMSYSTEM_MidiStreamPlayer	[internal]
  */
-static	void	WINE_UNUSED MMSYSTEM_MidiStreamPlayer(WINE_MIDIStream* ms)
+static	DWORD	WINAPI	MMSYSTEM_MidiStreamPlayer(LPVOID pmt)
 {
-    /* FIXME: should I sleep a bit when there is no pending lpMidiHdr ? 
-     * => provide a better synchronization system
-     * midiStreamPause/midiStreamRestart should freeze/thaw this thread
-     * global resource should guard access to ms->lpMidiHdr list, or 
-     * use a MB to send new LPMIDIHDR
-     * an empty ms->lpMidiHdr list should freeze this thread 
-     */
-    for (;;) {
-	if (ms->dwStatus && ms->lpMidiHdr) {
-	    LPMIDIEVENT 	me = (LPMIDIEVENT)(ms->lpMidiHdr->lpData + ms->lpMidiHdr->dwOffset);
+    WINE_MIDIStream* 	lpMidiStrm = pmt;
+    MIDIOPENDESC*	lpDesc = USER_HEAP_LIN_ADDR(lpMidiStrm->hDevice);
+    MSG			msg;
+    DWORD		dwToGo;
+    DWORD		dwCurrTC;
 
-	    FIXME(mmsys, "Should wait for current time to be in sync with me->dwDeltaTime\n");
+    TRACE(mmsys, "(%p)!\n", lpMidiStrm);
 
-	    if (me->dwEvent & MEVT_F_CALLBACK) {
-		WARN(mmsys, "Should generate callback when encountering F_CALLBACK flagged midi events...\n");
+    /* force thread's queue creation */
+    /* Used to be InitThreadInput16(0, 5); */
+    /* but following works also with hack in midiStreamOpen */
+    Callout.PeekMessageA(&msg, 0, 0, 0, 0);
+
+    /* FIXME: this next line must be called before midiStreamOut or midiStreamRestart are called */
+    lpMidiStrm->bFlag = TRUE;
+    TRACE(mmsys, "Ready to go 1\n");
+    SuspendThread(lpMidiStrm->hThread);
+    TRACE(mmsys, "Ready to go 2\n");
+
+    lpMidiStrm->dwStartTicks = 0;    
+    lpMidiStrm->dwPulses = 0;
+
+    while (Callout.GetMessageA(&msg, 0, 0, 0)) {
+	LPMIDIHDR	lpMidiHdr = (LPMIDIHDR)msg.lParam;
+	LPMIDIEVENT 	me;
+	LPBYTE		lpData;
+
+	switch (msg.message) {
+	case WM_USER:
+	    TRACE(mmsys, "%s lpMidiHdr=%p [lpData=0x%08lx dwBufferLength=%lu/%lu dwFlags=0x%08lx]\n", 
+		  (lpMidiHdr->dwFlags & MHDR_ISSTRM) ? "stream" : "regular", lpMidiHdr, 
+		  lpMidiHdr->reserved, lpMidiHdr->dwBufferLength, lpMidiHdr->dwBytesRecorded, lpMidiHdr->dwFlags);
+
+	    /* <HACK>
+	     * midiOutPrepareHeader(), in Wine, sets the 'reserved' field of MIDIHDR to the
+	     * 16 or 32 bit address of lpMidiHdr (depending if called from 16 to 32 bit code)
+	     */
+	    lpData = ((DWORD)lpMidiHdr == lpMidiHdr->reserved) ?
+		(LPBYTE)lpMidiHdr->lpData : (LPBYTE)PTR_SEG_TO_LIN(lpMidiHdr->lpData);
+
+#if 0
+	    /* dumps content of lpMidiHdr->lpData
+	     * FIXME: there should be a debug routine somewhere that already does this
+	     * I hate spreading this type of shit all around the code 
+	     */ 
+	    for (dwToGo = 0; dwToGo < lpMidiHdr->dwBufferLength; dwToGo += 16) {
+		DWORD	i;
+		BYTE	ch;
+
+		for (i = 0; i < MIN(16, lpMidiHdr->dwBufferLength - dwToGo); i++)
+		    printf("%02x ", lpData[dwToGo + i]);
+		for (; i < 16; i++)
+		    printf("   ");
+		for (i = 0; i < MIN(16, lpMidiHdr->dwBufferLength - dwToGo); i++) {
+		    ch = lpData[dwToGo + i];
+		    printf("%c", (ch >= 0x20 && ch <= 0x7F) ? ch : '.');
+		}
+		printf("\n");
 	    }
-	    switch (MEVT_EVENTTYPE(me->dwEvent)) {
-	    case MEVT_COMMENT:
-		/* do nothing, skip bytes */
-		break;
-	    case MEVT_LONGMSG:
-		WARN(mmsys, "NIY: sending Sysex Event");
-		break;
-	    case MEVT_NOP:
-		break;
-	    case MEVT_SHORTMSG:
-		midiOutShortMsg(ms->hDevice, MEVT_EVENTPARM(me->dwEvent));
-		break;
-	    case MEVT_TEMPO:
-		ms->dwTempo = MEVT_EVENTPARM(me->dwEvent);
-		break;
-	    case MEVT_VERSION:
-		break;    
+#endif
+	    /* FIXME: EPP says "I don't understand the content of the first MIDIHDR sent
+	     * by native mcimidi, it doesn't look like a correct one".
+	     * this trick allows to throw it away... but I don't like it. 
+	     * It looks like part of the file I'm trying to play and definitively looks 
+	     * like raw midi content
+	     * I'd really like to understand why native mcimidi sends it. Perhaps a bad
+	     * synchronization issue where native mcimidi is still processing raw MIDI 
+	     * content before generating MIDIEVENTs ?
+	     *
+	     * 4c 04 89 3b 00 81 7c 99 3b 43 00 99 23 5e 04 89 L..;..|.;C..#^..
+	     * 3b 00 00 89 23 00 7c 99 3b 45 00 99 28 62 04 89 ;...#.|.;E..(b..
+	     * 3b 00 00 89 28 00 81 7c 99 3b 4e 00 99 23 5e 04 ;...(..|.;N..#^.
+	     * 89 3b 00 00 89 23 00 7c 99 3b 45 00 99 23 78 04 .;...#.|.;E..#x.
+	     * 89 3b 00 00 89 23 00 81 7c 99 3b 48 00 99 23 5e .;...#..|.;H..#^
+	     * 04 89 3b 00 00 89 23 00 7c 99 3b 4e 00 99 28 62 ..;...#.|.;N..(b
+	     * 04 89 3b 00 00 89 28 00 81 7c 99 39 4c 00 99 23 ..;...(..|.9L..#
+	     * 5e 04 89 39 00 00 89 23 00 82 7c 99 3b 4c 00 99 ^..9...#..|.;L..
+	     * 23 5e 04 89 3b 00 00 89 23 00 7c 99 3b 48 00 99 #^..;...#.|.;H..
+	     * 28 62 04 89 3b 00 00 89 28 00 81 7c 99 3b 3f 04 (b..;...(..|.;?.
+	     * 89 3b 00 1c 99 23 5e 04 89 23 00 5c 99 3b 45 00 .;...#^..#.\.;E.
+	     * 99 23 78 04 89 3b 00 00 89 23 00 81 7c 99 3b 46 .#x..;...#..|.;F
+	     * 00 99 23 5e 04 89 3b 00 00 89 23 00 7c 99 3b 48 ..#^..;...#.|.;H
+	     * 00 99 28 62 04 89 3b 00 00 89 28 00 81 7c 99 3b ..(b..;...(..|.;
+	     * 46 00 99 23 5e 04 89 3b 00 00 89 23 00 7c 99 3b F..#^..;...#.|.;
+	     * 48 00 99 23 78 04 89 3b 00 00 89 23 00 81 7c 99 H..#x..;...#..|.
+	     * 3b 4c 00 99 23 5e 04 89 3b 00 00 89 23 00 7c 99 ;L..#^..;...#.|.
+	     */
+	    if (((LPMIDIEVENT)lpData)->dwStreamID != 0 && 
+		((LPMIDIEVENT)lpData)->dwStreamID != 0xFFFFFFFF &&
+		((LPMIDIEVENT)lpData)->dwStreamID != (DWORD)lpMidiStrm) {
+		FIXME(mmsys, "Dropping bad lpMidiHdr (streamID=%08lx)\n", ((LPMIDIEVENT)lpData)->dwStreamID);
+	    } else {
+		/* sets initial tick count for first MIDIHDR */
+		if (!lpMidiStrm->dwStartTicks)
+		    lpMidiStrm->dwStartTicks = GetTickCount();
+		
+		for (lpMidiHdr->dwOffset = 0; lpMidiHdr->dwOffset < lpMidiHdr->dwBufferLength; ) {
+		    me = (LPMIDIEVENT)(lpData + lpMidiHdr->dwOffset);
+		    
+		    if (me->dwDeltaTime) {
+			lpMidiStrm->dwPositionMS += MMSYSTEM_MidiStreamConvert(lpMidiStrm, me->dwDeltaTime);
+			dwToGo = lpMidiStrm->dwStartTicks + lpMidiStrm->dwPositionMS;
+			dwCurrTC = GetTickCount();
+			
+			lpMidiStrm->dwPulses += me->dwDeltaTime;
+			
+			TRACE(mmsys, "%ld/%ld/%ld\n", dwToGo, dwCurrTC, me->dwDeltaTime);
+			if (dwCurrTC < dwToGo)	
+			    Sleep(dwToGo - dwCurrTC);
+		    }
+		    switch (MEVT_EVENTTYPE(me->dwEvent & ~MEVT_F_CALLBACK)) {
+		    case MEVT_COMMENT:
+			FIXME(mmsys, "NIY: MEVT_COMMENT\n");
+			/* do nothing, skip bytes */
+			break;
+		    case MEVT_LONGMSG:
+			FIXME(mmsys, "NIY: MEVT_LONGMSG, aka sending Sysex event\n");
+			break;
+		    case MEVT_NOP:
+			break;
+		    case MEVT_SHORTMSG:
+			midiOutShortMsg(lpMidiStrm->hDevice, MEVT_EVENTPARM(me->dwEvent));
+			break;
+		    case MEVT_TEMPO:
+			lpMidiStrm->dwTempo = MEVT_EVENTPARM(me->dwEvent);
+			break;
+		    case MEVT_VERSION:
+			break;
+		    default:
+			FIXME(mmsys, "Unknown MEVT (0x%02x)\n", MEVT_EVENTTYPE(me->dwEvent & ~MEVT_F_CALLBACK));
+			break;
+		    }
+		    lpMidiHdr->dwOffset += sizeof(MIDIEVENT) + ((me->dwEvent & MEVT_F_LONG) ? ((MEVT_EVENTPARM(me->dwEvent) + 3) & ~3): 0);
+		    if (me->dwEvent & MEVT_F_CALLBACK) {
+			DriverCallback16(lpDesc->dwCallback, lpMidiStrm->wFlags, lpMidiStrm->hDevice, 
+					 MM_MOM_POSITIONCB, lpDesc->dwInstance, (LPARAM)lpMidiHdr, 0L);
+		    }
+		}
 	    }
-	    ms->lpMidiHdr->dwOffset += sizeof(MIDIEVENT);
-	    if (me->dwEvent & MEVT_F_LONG) {
-		ms->lpMidiHdr->dwOffset += MEVT_EVENTPARM(me->dwEvent);
-	    }
-	    if (ms->lpMidiHdr->dwOffset >= ms->lpMidiHdr->dwBufferLength) {
-		ms->lpMidiHdr->dwFlags |= MHDR_DONE;
-		ms->lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
-		ms->lpMidiHdr = (LPMIDIHDR)ms->lpMidiHdr->lpNext; 
-		WARN(mmsys, "Should generate callback when done with MIDIHDR...\n");
-	    }
-	    FIXME(mmsys, "Should accordingly update ms->dwMS with me->dwDeltaTime\n");
+	    lpMidiHdr->dwFlags |= MHDR_DONE;
+	    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
+	    
+	    DriverCallback16(lpDesc->dwCallback, lpMidiStrm->wFlags, lpMidiStrm->hDevice, 
+			     MM_MOM_DONE, lpDesc->dwInstance, lpMidiHdr->reserved, 0L);
+	    break;
+	default:
+	    WARN(mmsys, "Unknown message %d\n", msg.message);
+	    break;
 	}
     }
+    return msg.wParam;
 }
 
 /**************************************************************************
  * 				midiStreamClose			[WINMM.90]
  */
-MMRESULT WINAPI midiStreamClose(HMIDISTRM hms)
+MMRESULT WINAPI midiStreamClose(HMIDISTRM hMidiStrm)
 {
-    WINE_MIDIStream*	ms;
+    WINE_MIDIStream*	lpMidiStrm;
 
-    TRACE(midi, "(%08x)!\n", hms);
+    TRACE(mmsys, "(%08x)!\n", hMidiStrm);
 
-    ms = (WINE_MIDIStream*)hms;
-    if (!ms || ms->dwMagic != MIDI_STREAM_MAGIC) 	
+    if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL))
 	return MMSYSERR_INVALHANDLE;
 
-    free(ms);
+    midiStreamStop(hMidiStrm);
 
-    return MMSYSERR_NOTSUPPORTED;
+    HeapFree(GetProcessHeap(), 0, lpMidiStrm);
+
+    return midiOutClose(hMidiStrm);
 }
 
 /**************************************************************************
  * 				midiStreamOpen			[WINMM.91]
  */
-MMRESULT WINAPI midiStreamOpen(HMIDISTRM* phms, LPUINT lpuDeviceID, 
+MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID, 
 			       DWORD cMidi, DWORD dwCallback, 
 			       DWORD dwInstance, DWORD fdwOpen) 
 {
-    WINE_MIDIStream*	ms;
+    WINE_MIDIStream*	lpMidiStrm;
+    MMRESULT		ret;
+    MIDIOPENSTRMID	mosm;
+    MIDIOPENDESC*	lpDesc;
+    HMIDIOUT16		hMidiOut16;
 
-    TRACE(midi, "(%p,%p,%ld, 0x%08lx, 0x%08lx, 0x%08lx), stub!\n",
-	  phms, lpuDeviceID,cMidi, dwCallback, dwInstance, fdwOpen);
+    TRACE(mmsys, "(%p, %p, %ld, 0x%08lx, 0x%08lx, 0x%08lx)!\n",
+	  lphMidiStrm, lpuDeviceID, cMidi, dwCallback, dwInstance, fdwOpen);
 
-    if (cMidi != 1 || phms == NULL || lpuDeviceID == NULL)
+    if (cMidi != 1 || lphMidiStrm == NULL || lpuDeviceID == NULL)
 	return MMSYSERR_INVALPARAM;
-    
-    ms = malloc(sizeof(WINE_MIDIStream));
-    *phms = (HMIDISTRM)ms;
-    ms->dwMagic = MIDI_STREAM_MAGIC;
-    ms->dwTempo = 50000;	/* FIXME */
-    ms->dwTimeDiv = 1;		/* FIXME */
-    ms->dwMS = 0;
-    ms->dwStatus = 0;
 
-    /* FIXME is this correct ? */
-    *lpuDeviceID = 0;
-    /* FIXME is this correct ? */
-    return midiOutOpen(&(ms->hDevice), *lpuDeviceID, dwCallback, dwInstance, fdwOpen);
+    if (*lpuDeviceID == (UINT16)MIDI_MAPPER) {
+	FIXME(mmsys, "MIDI_MAPPER mode requested ! => forcing devID to 0\n");
+	*lpuDeviceID = 0;
+    }
+
+    lpMidiStrm = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_MIDIStream));
+    lpMidiStrm->dwTempo = 500000;
+    lpMidiStrm->dwTimeDiv = 480; 	/* 480 is 120 quater notes per minute *//* FIXME ??*/
+    lpMidiStrm->dwPositionMS = 0;
+
+    mosm.dwStreamID = (DWORD)lpMidiStrm;
+    /* FIXME: the correct value is not allocated yet for MAPPER */
+    mosm.wDeviceID  = *lpuDeviceID;
+    lpDesc = MIDI_OutAlloc(&hMidiOut16, dwCallback, dwInstance, 1, &mosm);
+    lpMidiStrm->hDevice = hMidiOut16;
+    if (lphMidiStrm)
+	*lphMidiStrm = hMidiOut16;
+
+    lpDesc->wDevID = *lpuDeviceID;
+    ret = modMessage(lpDesc->wDevID, MODM_OPEN, 
+		     lpDesc->dwInstance, (DWORD)lpDesc, fdwOpen);
+    lpMidiStrm->bFlag = FALSE;
+    lpMidiStrm->wFlags = HIWORD(fdwOpen);
+
+    lpMidiStrm->hThread = CreateThread(NULL, 0, MMSYSTEM_MidiStreamPlayer, 
+				       lpMidiStrm, 0, &(lpMidiStrm->dwThreadID));
+
+    if (!lpMidiStrm->hThread) {
+	midiStreamClose((HMIDISTRM)hMidiOut16);
+	return MMSYSERR_NOMEM;	
+    }
+
+    /* wait for thread to have started, and for it's queue to be created */
+    while (!((volatile WINE_MIDIStream*)lpMidiStrm)->bFlag) {
+	DWORD	count;
+       
+	/* (Release|Restore)ThunkLock() is needed when this method is called from 16 bit code, 
+	 * (meaning the Win16Lock is set), so that it's released and the 32 bit thread running 
+	 * MMSYSTEM_MidiStreamPlayer can acquire Win16Lock to create its queue.
+	 */
+	ReleaseThunkLock(&count);
+	Sleep(1);
+	RestoreThunkLock(count);
+    }
+
+    TRACE(mmsys, "=> (%u/%d) hMidi=0x%04x ret=%d lpMidiStrm=%p\n", *lpuDeviceID, lpDesc->wDevID, *lphMidiStrm, ret, lpMidiStrm);	
+    return ret;
 }
 
 /**************************************************************************
  * 				midiStreamOut			[WINMM.92]
  */
-MMRESULT WINAPI midiStreamOut(HMIDISTRM hms, LPMIDIHDR16 lpMidiHdr, UINT cbMidiHdr) 
+MMRESULT WINAPI midiStreamOut(HMIDISTRM hMidiStrm, LPMIDIHDR lpMidiHdr, UINT cbMidiHdr) 
 {
-    FIXME(midi, "(%08x, %p, %u) stub!\n", hms, lpMidiHdr, cbMidiHdr);
-    return MMSYSERR_NOTSUPPORTED;
+    WINE_MIDIStream*	lpMidiStrm;
+    DWORD		ret = MMSYSERR_NOERROR;
+
+    TRACE(mmsys, "(%08x, %p, %u)!\n", hMidiStrm, lpMidiHdr, cbMidiHdr);
+
+    if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL)) {
+	ret = MMSYSERR_INVALHANDLE;
+    } else {
+	if (!Callout.PostThreadMessageA(lpMidiStrm->dwThreadID, WM_USER, 0, (DWORD)lpMidiHdr)) {
+	    WARN(mmsys, "bad PostThreadMessageA\n");
+	}
+    }
+    return ret;
 }
 
 /**************************************************************************
  * 				midiStreamPause			[WINMM.93]
  */
-MMRESULT WINAPI midiStreamPause(HMIDISTRM hms) 
+MMRESULT WINAPI midiStreamPause(HMIDISTRM hMidiStrm) 
 {
-    WINE_MIDIStream*	ms;
+    WINE_MIDIStream*	lpMidiStrm;
+    DWORD		ret = MMSYSERR_NOERROR;
 
-    TRACE(midi, "(%08x)!\n", hms);
+    TRACE(mmsys, "(%08x)!\n", hMidiStrm);
 
-    ms = (WINE_MIDIStream*)hms;
-    if (!ms || ms->dwMagic != MIDI_STREAM_MAGIC) 	
-	return MMSYSERR_INVALHANDLE;
-
-    ms->dwStatus = 0;
-    return MMSYSERR_NOERROR;
+    if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL)) {
+	ret = MMSYSERR_INVALHANDLE;
+    } else {
+	if (SuspendThread(lpMidiStrm->hThread) == 0xFFFFFFFF) {
+	    WARN(mmsys, "bad Suspend (%ld)\n", GetLastError());
+	}
+    }
+    return ret;
 }
 
 /**************************************************************************
  * 				midiStreamPosition		[WINMM.94]
  */
-MMRESULT WINAPI midiStreamPosition(HMIDISTRM hms, LPMMTIME lpMMT, UINT cbmmt) 
+MMRESULT WINAPI midiStreamPosition(HMIDISTRM hMidiStrm, LPMMTIME lpMMT, UINT cbmmt) 
 {
-    WINE_MIDIStream*	ms;
+    WINE_MIDIStream*	lpMidiStrm;
     DWORD		ret = MMSYSERR_NOERROR;
 
-    FIXME(midi, "(%08x, %p, %u) stub!\n", hms, lpMMT, cbmmt);
+    TRACE(mmsys, "(%08x, %p, %u)!\n", hMidiStrm, lpMMT, cbmmt);
 
-    ms = (WINE_MIDIStream*)hms;
-
-    if (!ms || ms->dwMagic != MIDI_STREAM_MAGIC) {
+    if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL)) {
 	ret = MMSYSERR_INVALHANDLE;
     } else if (lpMMT == NULL || cbmmt != sizeof(MMTIME)) {
 	ret = MMSYSERR_INVALPARAM;
     } else {
 	switch (lpMMT->wType) {
 	case TIME_MS:	
-	    lpMMT->u.ms = ms->dwMS;	
+	    lpMMT->u.ms = lpMidiStrm->dwPositionMS;	
+	    TRACE(mmsys, "=> %ld ms\n", lpMMT->u.ms);
 	    break;
-	default:		
+	case TIME_TICKS:
+	    lpMMT->u.ticks = lpMidiStrm->dwPulses;	
+	    TRACE(mmsys, "=> %ld ticks\n", lpMMT->u.ticks);
+	    break;
+	default:
+	    WARN(mmsys, "Unsupported time type %d\n", lpMMT->wType);
 	    lpMMT->wType = TIME_MS;
 	    ret = MMSYSERR_INVALPARAM;
+	    break;
 	}
     }
     return ret;
@@ -2946,36 +3217,40 @@ MMRESULT WINAPI midiStreamPosition(HMIDISTRM hms, LPMMTIME lpMMT, UINT cbmmt)
 /**************************************************************************
  * 				midiStreamProperty		[WINMM.95]
  */
-MMRESULT WINAPI midiStreamProperty(HMIDISTRM hms, LPBYTE lpPropData, DWORD dwProperty) 
+MMRESULT WINAPI midiStreamProperty(HMIDISTRM hMidiStrm, LPBYTE lpPropData, DWORD dwProperty) 
 {
-    WINE_MIDIStream*	ms = (WINE_MIDIStream*)hms;
+    WINE_MIDIStream*	lpMidiStrm;
     MMRESULT		ret = MMSYSERR_NOERROR;
 
-    TRACE(midi, "(%08x, %p, %lx)\n", hms, lpPropData, dwProperty);
+    TRACE(mmsys, "(%08x, %p, %lx)\n", hMidiStrm, lpPropData, dwProperty);
 
-    if (!ms || ms->dwMagic != MIDI_STREAM_MAGIC) {	
+    if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL)) {
 	ret = MMSYSERR_INVALHANDLE;
     } else if ((dwProperty & (MIDIPROP_GET|MIDIPROP_SET)) == 0) {
-	return MMSYSERR_INVALPARAM;
+	ret = MMSYSERR_INVALPARAM;
     } else if (dwProperty & MIDIPROP_TEMPO) {
 	MIDIPROPTEMPO*	mpt = (MIDIPROPTEMPO*)lpPropData;
 	
 	if (sizeof(MIDIPROPTEMPO) != mpt->cbStruct) {
 	    ret = MMSYSERR_INVALPARAM;
-	} else if (dwProperty & MIDIPROP_GET) {
-	    ms->dwTempo = mpt->dwTempo;
 	} else if (dwProperty & MIDIPROP_SET) {
-	    mpt->dwTempo = ms->dwTempo;
+	    lpMidiStrm->dwTempo = mpt->dwTempo;
+	    TRACE(mmsys, "Setting tempo to %ld\n", mpt->dwTempo);
+	} else if (dwProperty & MIDIPROP_GET) {
+	    mpt->dwTempo = lpMidiStrm->dwTempo;
+	    TRACE(mmsys, "Getting tempo <= %ld\n", mpt->dwTempo);
 	}
     } else if (dwProperty & MIDIPROP_TIMEDIV) {
 	MIDIPROPTIMEDIV*	mptd = (MIDIPROPTIMEDIV*)lpPropData;
 	
 	if (sizeof(MIDIPROPTIMEDIV) != mptd->cbStruct) {
 	    ret = MMSYSERR_INVALPARAM;
-	} else if (dwProperty & MIDIPROP_GET) {
-	    ms->dwTimeDiv = mptd->dwTimeDiv;
 	} else if (dwProperty & MIDIPROP_SET) {
-	    mptd->dwTimeDiv = ms->dwTimeDiv;
+	    lpMidiStrm->dwTimeDiv = mptd->dwTimeDiv;
+	    TRACE(mmsys, "Setting time div to %ld\n", mptd->dwTimeDiv);
+	} else if (dwProperty & MIDIPROP_GET) {
+	    mptd->dwTimeDiv = lpMidiStrm->dwTimeDiv;
+	    TRACE(mmsys, "Getting time div <= %ld\n", mptd->dwTimeDiv);
 	}    
     } else {
 	ret = MMSYSERR_INVALPARAM;
@@ -2987,53 +3262,67 @@ MMRESULT WINAPI midiStreamProperty(HMIDISTRM hms, LPBYTE lpPropData, DWORD dwPro
 /**************************************************************************
  * 				midiStreamRestart		[WINMM.96]
  */
-MMRESULT WINAPI midiStreamRestart(HMIDISTRM hms) 
+MMRESULT WINAPI midiStreamRestart(HMIDISTRM hMidiStrm) 
 {
-    WINE_MIDIStream*	ms;
+    WINE_MIDIStream*	lpMidiStrm;
+    MMRESULT		ret = MMSYSERR_NOERROR;
 
-    TRACE(midi, "(%08x)!\n", hms);
+    TRACE(mmsys, "(%08x)!\n", hMidiStrm);
 
-    ms = (WINE_MIDIStream*)hms;
-    if (!ms || ms->dwMagic != MIDI_STREAM_MAGIC) 	
-	return MMSYSERR_INVALHANDLE;
-
-    ms->dwStatus = 1;
-    return MMSYSERR_NOERROR;
+    if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL)) {
+	ret = MMSYSERR_INVALHANDLE;
+    } else {
+	if (ResumeThread(lpMidiStrm->hThread) == 0xFFFFFFFF) {
+	    WARN(mmsys, "bad Resume (%ld)\n", GetLastError());
+	}
+    }
+    return ret;
 }
 
 /**************************************************************************
  * 				midiStreamStop			[WINMM.97]
  */
-MMRESULT WINAPI midiStreamStop(HMIDISTRM hms) 
+MMRESULT WINAPI midiStreamStop(HMIDISTRM hMidiStrm) 
 {
-    FIXME(midi, "(%08x stub!)\n", hms);
-	return MMSYSERR_NOTSUPPORTED;
+    WINE_MIDIStream*	lpMidiStrm;
+    MMRESULT		ret = MMSYSERR_NOERROR;
+
+    FIXME(mmsys, "(%08x) stub!\n", hMidiStrm);
+
+    if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL)) {
+	ret = MMSYSERR_INVALHANDLE;
+    } else {
+	/* FIXME: should turn off all notes, and return all buffers to
+	 * calling application
+	 */
+    }
+    return ret;
 }
 
 /**************************************************************************
  * 				midiStreamClose			[MMSYSTEM.252]
  */
-MMRESULT16 WINAPI midiStreamClose16(HMIDISTRM16 hms)
+MMRESULT16 WINAPI midiStreamClose16(HMIDISTRM16 hMidiStrm)
 {
-    return midiStreamClose(hms);
+    return midiStreamClose(hMidiStrm);
 }
 
 /**************************************************************************
  * 				midiStreamOpen			[MMSYSTEM.251]
  */
-MMRESULT16 WINAPI midiStreamOpen16(HMIDISTRM16* phms, LPUINT16 devid, 
+MMRESULT16 WINAPI midiStreamOpen16(HMIDISTRM16* phMidiStrm, LPUINT16 devid, 
 				   DWORD cMidi, DWORD dwCallback, 
 				   DWORD dwInstance, DWORD fdwOpen) 
 {
-    HMIDISTRM	hms32;
+    HMIDISTRM	hMidiStrm32;
     MMRESULT 	ret;
     UINT	devid32;
 
-    if (!phms || !devid)
+    if (!phMidiStrm || !devid)
 	return MMSYSERR_INVALPARAM;
     devid32 = *devid;
-    ret = midiStreamOpen(&hms32, &devid32, cMidi, dwCallback, dwInstance, fdwOpen);
-    *phms = hms32;
+    ret = midiStreamOpen(&hMidiStrm32, &devid32, cMidi, dwCallback, dwInstance, fdwOpen);
+    *phMidiStrm = hMidiStrm32;
     *devid = devid32;
     return ret;
 }
@@ -3041,57 +3330,57 @@ MMRESULT16 WINAPI midiStreamOpen16(HMIDISTRM16* phms, LPUINT16 devid,
 /**************************************************************************
  * 				midiStreamOut			[MMSYSTEM.254]
  */
-MMRESULT16 WINAPI midiStreamOut16(HMIDISTRM16 hms, LPMIDIHDR16 lpMidiHdr, UINT16 cbMidiHdr) 
+MMRESULT16 WINAPI midiStreamOut16(HMIDISTRM16 hMidiStrm, LPMIDIHDR16 lpMidiHdr, UINT16 cbMidiHdr) 
 {
-    return midiStreamOut(hms, lpMidiHdr, cbMidiHdr);
+    return midiStreamOut(hMidiStrm, (LPMIDIHDR)lpMidiHdr, cbMidiHdr);
 }
 
 /**************************************************************************
  * 				midiStreamPause			[MMSYSTEM.255]
  */
-MMRESULT16 WINAPI midiStreamPause16(HMIDISTRM16 hms) 
+MMRESULT16 WINAPI midiStreamPause16(HMIDISTRM16 hMidiStrm) 
 {
-    return midiStreamPause(hms);
+    return midiStreamPause(hMidiStrm);
 }
 
 /**************************************************************************
  * 				midiStreamPosition		[MMSYSTEM.253]
  */
-MMRESULT16 WINAPI midiStreamPosition16(HMIDISTRM16 hms, LPMMTIME16 lpmmt, UINT16 cbmmt) 
+MMRESULT16 WINAPI midiStreamPosition16(HMIDISTRM16 hMidiStrm, LPMMTIME16 lpmmt16, UINT16 cbmmt) 
 {
     MMTIME	mmt32;
     MMRESULT	ret;
 
-    if (!lpmmt)
+    if (!lpmmt16)
 	return MMSYSERR_INVALPARAM;
-    MMSYSTEM_MMTIME16to32(&mmt32, lpmmt);
-    ret = midiStreamPosition(hms, &mmt32, cbmmt);
-    MMSYSTEM_MMTIME32to16(lpmmt, &mmt32);
+    MMSYSTEM_MMTIME16to32(&mmt32, lpmmt16);
+    ret = midiStreamPosition(hMidiStrm, &mmt32, sizeof(MMTIME));
+    MMSYSTEM_MMTIME32to16(lpmmt16, &mmt32);
     return ret;
 }
 
 /**************************************************************************
  * 				midiStreamProperty		[MMSYSTEM.250]
  */
-MMRESULT16 WINAPI midiStreamProperty16(HMIDISTRM16 hms, LPBYTE lpPropData, DWORD dwProperty) 
+MMRESULT16 WINAPI midiStreamProperty16(HMIDISTRM16 hMidiStrm, LPBYTE lpPropData, DWORD dwProperty) 
 {
-    return midiStreamProperty(hms, lpPropData, dwProperty);
+    return midiStreamProperty(hMidiStrm, lpPropData, dwProperty);
 }
 
 /**************************************************************************
  * 				midiStreamRestart		[MMSYSTEM.256]
  */
-MMRESULT16 WINAPI midiStreamRestart16(HMIDISTRM16 hms) 
+MMRESULT16 WINAPI midiStreamRestart16(HMIDISTRM16 hMidiStrm) 
 {
-    return midiStreamRestart(hms);
+    return midiStreamRestart(hMidiStrm);
 }
 
 /**************************************************************************
  * 				midiStreamStop			[MMSYSTEM.257]
  */
-MMRESULT16 WINAPI midiStreamStop16(HMIDISTRM16 hms) 
+MMRESULT16 WINAPI midiStreamStop16(HMIDISTRM16 hMidiStrm) 
 {
-    return midiStreamStop(hms);
+    return midiStreamStop(hMidiStrm);
 }
 
 /**************************************************************************
@@ -3171,7 +3460,7 @@ UINT WINAPI waveOutGetDevCapsW(UINT uDeviceID, LPWAVEOUTCAPSW lpCaps,
 UINT16 WINAPI waveOutGetErrorText16(UINT16 uError, LPSTR lpText, UINT16 uSize)
 {
     TRACE(mmsys, "waveOutGetErrorText\n");
-    return(waveGetErrorText(uError, lpText, uSize));
+    return waveGetErrorText(uError, lpText, uSize);
 }
 
 /**************************************************************************
@@ -3179,7 +3468,7 @@ UINT16 WINAPI waveOutGetErrorText16(UINT16 uError, LPSTR lpText, UINT16 uSize)
  */
 UINT WINAPI waveOutGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
 {
-    return(waveOutGetErrorText16(uError, lpText, uSize));
+    return waveOutGetErrorText16(uError, lpText, uSize);
 }
 
 /**************************************************************************
@@ -3187,11 +3476,11 @@ UINT WINAPI waveOutGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
  */
 UINT WINAPI waveOutGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
 {
-    LPSTR	xstr = HeapAlloc(GetProcessHeap(), 0,uSize);
+    LPSTR	xstr = HeapAlloc(GetProcessHeap(), 0, uSize);
     UINT	ret = waveOutGetErrorTextA(uError, xstr, uSize);
     
-    lstrcpyAtoW(lpText,xstr);
-    HeapFree(GetProcessHeap(), 0,xstr);
+    lstrcpyAtoW(lpText, xstr);
+    HeapFree(GetProcessHeap(), 0, xstr);
     return ret;
 }
 
@@ -3271,7 +3560,7 @@ UINT WINAPI waveOutOpen(HWAVEOUT* lphWaveOut, UINT uDeviceID,
 			DWORD dwInstance, DWORD dwFlags)
 {
     HWAVEOUT16	hwo16;
-    UINT	ret = waveOutOpen16(&hwo16,uDeviceID, lpFormat, dwCallback, dwInstance,
+    UINT	ret = waveOutOpen16(&hwo16, uDeviceID, lpFormat, dwCallback, dwInstance,
 				    CALLBACK32CONV(dwFlags));
 
     if (lphWaveOut) *lphWaveOut=hwo16;
@@ -3369,30 +3658,31 @@ UINT WINAPI waveOutPrepareHeader(HWAVEOUT hWaveOut,
     TRACE(mmsys, "(%04X, %p, %u);\n", hWaveOut, lpWaveOutHdr, uSize);
 
     lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
-    if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-    lpWaveOutHdr->reserved = (DWORD)lpWaveOutHdr->lpData;
+    if (lpDesc == NULL) 
+	return MMSYSERR_INVALHANDLE;
+    lpWaveOutHdr->reserved = (DWORD)lpWaveOutHdr;
     return wodMessage(lpDesc->uDeviceID, WODM_PREPARE, lpDesc->dwInstance, 
-		       (DWORD)lpWaveOutHdr,uSize);
+		      (DWORD)lpWaveOutHdr, uSize);
 }
 
 /**************************************************************************
  * 				waveOutPrepareHeader	[MMSYSTEM.406]
  */
 UINT16 WINAPI waveOutPrepareHeader16(HWAVEOUT16 hWaveOut,
-                                     WAVEHDR* lpWaveOutHdr, UINT16 uSize)
+                                     WAVEHDR* /*SEGPTR*/ _lpWaveOutHdr, UINT16 uSize)
 {
     LPWAVEOPENDESC	lpDesc;
+    LPWAVEHDR		lpWaveOutHdr = (LPWAVEHDR)PTR_SEG_TO_LIN(_lpWaveOutHdr);
     UINT16		ret;
     
     TRACE(mmsys, "(%04X, %p, %u);\n", hWaveOut, lpWaveOutHdr, uSize);
 
     lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
-    if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-    lpWaveOutHdr->reserved = (DWORD)lpWaveOutHdr->lpData;
-    lpWaveOutHdr->lpData = PTR_SEG_TO_LIN(lpWaveOutHdr->lpData);
+    if (lpDesc == NULL) 
+	return MMSYSERR_INVALHANDLE;
+    lpWaveOutHdr->reserved = (DWORD)_lpWaveOutHdr;
     ret = wodMessage(lpDesc->uDeviceID, WODM_PREPARE, lpDesc->dwInstance, 
-		      (DWORD)lpWaveOutHdr,uSize);
-    lpWaveOutHdr->lpData = lpWaveOutHdr->lpData;
+		     (DWORD)lpWaveOutHdr, uSize);
     return ret;
 }
 
@@ -3408,7 +3698,7 @@ UINT WINAPI waveOutUnprepareHeader(HWAVEOUT hWaveOut,
 
     lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-    lpWaveOutHdr->reserved = (DWORD)lpWaveOutHdr->lpData;
+    lpWaveOutHdr->reserved = (DWORD)lpWaveOutHdr;
     return wodMessage(lpDesc->uDeviceID, WODM_UNPREPARE, lpDesc->dwInstance, 
 		      (DWORD)lpWaveOutHdr, uSize);
 }
@@ -3425,12 +3715,10 @@ UINT16 WINAPI waveOutUnprepareHeader16(HWAVEOUT16 hWaveOut,
     TRACE(mmsys, "(%04X, %p, %u);\n", hWaveOut, lpWaveOutHdr, uSize);
 
     lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
-    if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-    lpWaveOutHdr->reserved = (DWORD)lpWaveOutHdr->lpData;
-    lpWaveOutHdr->lpData = PTR_SEG_TO_LIN(lpWaveOutHdr->lpData);
+    if (lpDesc == NULL) 
+	return MMSYSERR_INVALHANDLE;
     ret = wodMessage(lpDesc->uDeviceID, WODM_UNPREPARE, lpDesc->dwInstance, 
 		     (DWORD)lpWaveOutHdr, uSize);
-    lpWaveOutHdr->lpData = (LPBYTE)lpWaveOutHdr->reserved;
     return ret;
 }
 
@@ -3445,15 +3733,16 @@ UINT WINAPI waveOutWrite(HWAVEOUT hWaveOut, WAVEHDR* lpWaveOutHdr,
     TRACE(mmsys, "(%04X, %p, %u);\n", hWaveOut, lpWaveOutHdr, uSize);
 
     lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
-    if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-    lpWaveOutHdr->reserved = (DWORD)lpWaveOutHdr->lpData;
-    return wodMessage(lpDesc->uDeviceID, WODM_WRITE, lpDesc->dwInstance, (DWORD)lpWaveOutHdr, uSize);
+    if (lpDesc == NULL) 
+	return MMSYSERR_INVALHANDLE;
+    return wodMessage(lpDesc->uDeviceID, WODM_WRITE, lpDesc->dwInstance, 
+		      (DWORD)lpWaveOutHdr, uSize);
 }
 
 /**************************************************************************
  * 				waveOutWrite		[MMSYSTEM.408]
  */
-UINT16 WINAPI waveOutWrite16(HWAVEOUT16 hWaveOut, WAVEHDR * lpWaveOutHdr,
+UINT16 WINAPI waveOutWrite16(HWAVEOUT16 hWaveOut, WAVEHDR* lpWaveOutHdr,
 			     UINT16 uSize)
 {
     LPWAVEOPENDESC	lpDesc;
@@ -3462,11 +3751,9 @@ UINT16 WINAPI waveOutWrite16(HWAVEOUT16 hWaveOut, WAVEHDR * lpWaveOutHdr,
     TRACE(mmsys, "(%04X, %p, %u);\n", hWaveOut, lpWaveOutHdr, uSize);
 
     lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
-    if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
-    lpWaveOutHdr->reserved =(DWORD)lpWaveOutHdr->lpData;/*save original ptr*/
-    lpWaveOutHdr->lpData = PTR_SEG_TO_LIN(lpWaveOutHdr->lpData);
+    if (lpDesc == NULL) 
+	return MMSYSERR_INVALHANDLE;
     ret = wodMessage(lpDesc->uDeviceID, WODM_WRITE, lpDesc->dwInstance, (DWORD)lpWaveOutHdr, uSize);
-    lpWaveOutHdr->lpData = (LPBYTE)lpWaveOutHdr->reserved;
     return ret;
 }
 
@@ -3565,10 +3852,10 @@ UINT16 WINAPI waveOutGetPosition16(HWAVEOUT16 hWaveOut, LPMMTIME16 lpTime,
 		       (DWORD)lpTime, (DWORD)uSize);
 }
 
-#define WAVEOUT_SHORTCUT_1(xx,XX,atype) \
-	UINT WINAPI waveOut##xx(HWAVEOUT hWaveOut, atype x)	\
+#define WAVEOUT_SHORTCUT_1(xx, XX, atype) 				\
+	UINT WINAPI waveOut##xx(HWAVEOUT hWaveOut, atype x)		\
 {									\
-	return waveOut##xx##16(hWaveOut,x);				\
+	return waveOut##xx##16(hWaveOut, x);				\
 }									\
 UINT16 WINAPI waveOut##xx##16(HWAVEOUT16 hWaveOut, atype x)		\
 {									\
@@ -3580,15 +3867,15 @@ UINT16 WINAPI waveOut##xx##16(HWAVEOUT16 hWaveOut, atype x)		\
 			  lpDesc->dwInstance, (DWORD)x, 0L);		\
 }
 
-WAVEOUT_SHORTCUT_1(GetPitch,GETPITCH, DWORD*)
-WAVEOUT_SHORTCUT_1(SetPitch,SETPITCH, DWORD)
-WAVEOUT_SHORTCUT_1(GetPlaybackRate,GETPLAYBACKRATE, DWORD*)
-WAVEOUT_SHORTCUT_1(SetPlaybackRate,SETPLAYBACKRATE, DWORD)
+WAVEOUT_SHORTCUT_1(GetPitch, GETPITCH, DWORD*)
+WAVEOUT_SHORTCUT_1(SetPitch, SETPITCH, DWORD)
+WAVEOUT_SHORTCUT_1(GetPlaybackRate, GETPLAYBACKRATE, DWORD*)
+WAVEOUT_SHORTCUT_1(SetPlaybackRate, SETPLAYBACKRATE, DWORD)
     
-#define WAVEOUT_SHORTCUT_2(xx,XX,atype) \
-	UINT WINAPI waveOut##xx(UINT devid, atype x)		\
+#define WAVEOUT_SHORTCUT_2(xx, XX, atype) 				\
+	UINT WINAPI waveOut##xx(UINT devid, atype x)			\
 {									\
-	return waveOut##xx##16(devid,x);				\
+	return waveOut##xx##16(devid, x);				\
 }									\
 UINT16 WINAPI waveOut##xx##16(UINT16 devid, atype x)			\
 {									\
@@ -3596,8 +3883,8 @@ UINT16 WINAPI waveOut##xx##16(UINT16 devid, atype x)			\
 	return wodMessage(devid, WODM_##XX, 0L,	(DWORD)x, 0L);		\
 }
     
-WAVEOUT_SHORTCUT_2(GetVolume,GETVOLUME, DWORD*)
-WAVEOUT_SHORTCUT_2(SetVolume,SETVOLUME, DWORD)
+WAVEOUT_SHORTCUT_2(GetVolume, GETVOLUME, DWORD*)
+WAVEOUT_SHORTCUT_2(SetVolume, SETVOLUME, DWORD)
     
 /**************************************************************************
  * 				waveOutBreakLoop 	[MMSYSTEM.419]
@@ -3684,8 +3971,8 @@ DWORD WINAPI waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage,
 	FIXME(mmsys,"can't handle WODM_OPEN, please report.\n");
 	break;
     default:
-	ERR(mmsys,"(0x%04x, 0x%04x,%08lx,%08lx): unhandled message\n",
-	    hWaveOut,uMessage, dwParam1, dwParam2);
+	ERR(mmsys,"(0x%04x, 0x%04x, %08lx, %08lx): unhandled message\n",
+	    hWaveOut, uMessage, dwParam1, dwParam2);
 	break;
     }
     return wodMessage(lpDesc->uDeviceID, uMessage, lpDesc->dwInstance, dwParam1, dwParam2);
@@ -3732,8 +4019,8 @@ DWORD WINAPI waveOutMessage16(HWAVEOUT16 hWaveOut, UINT16 uMessage,
 	FIXME(mmsys,"can't handle WODM_OPEN, please report.\n");
 	break;
     default:
-	ERR(mmsys,"(0x%04x, 0x%04x,%08lx,%08lx): unhandled message\n",
-	    hWaveOut,uMessage, dwParam1, dwParam2);
+	ERR(mmsys,"(0x%04x, 0x%04x, %08lx, %08lx): unhandled message\n",
+	    hWaveOut, uMessage, dwParam1, dwParam2);
     }
     return wodMessage(lpDesc->uDeviceID, uMessage, lpDesc->dwInstance, dwParam1, dwParam2);
 }
@@ -3765,7 +4052,7 @@ UINT16 WINAPI waveInGetNumDevs16()
 UINT WINAPI waveInGetDevCapsW(UINT uDeviceID, LPWAVEINCAPSW lpCaps, UINT uSize)
 {
     WAVEINCAPS16	wic16;
-    UINT		ret = waveInGetDevCaps16(uDeviceID, &wic16,uSize);
+    UINT		ret = waveInGetDevCaps16(uDeviceID, &wic16, uSize);
     
     lpCaps->wMid = wic16.wMid;
     lpCaps->wPid = wic16.wPid;
@@ -3783,7 +4070,7 @@ UINT WINAPI waveInGetDevCapsW(UINT uDeviceID, LPWAVEINCAPSW lpCaps, UINT uSize)
 UINT WINAPI waveInGetDevCapsA(UINT uDeviceID, LPWAVEINCAPSA lpCaps, UINT uSize)
 {
     WAVEINCAPS16	wic16;
-    UINT		ret = waveInGetDevCaps16(uDeviceID, &wic16,uSize);
+    UINT		ret = waveInGetDevCaps16(uDeviceID, &wic16, uSize);
     
     lpCaps->wMid = wic16.wMid;
     lpCaps->wPid = wic16.wPid;
@@ -3810,7 +4097,7 @@ UINT16 WINAPI waveInGetDevCaps16(UINT16 uDeviceID, LPWAVEINCAPS16 lpCaps, UINT16
 UINT WINAPI waveInGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
 {
     TRACE(mmsys, "waveInGetErrorText\n");
-    return(waveGetErrorText(uError, lpText, uSize));
+    return waveGetErrorText(uError, lpText, uSize);
 }
 
 /**************************************************************************
@@ -3818,7 +4105,7 @@ UINT WINAPI waveInGetErrorTextA(UINT uError, LPSTR lpText, UINT uSize)
  */
 UINT WINAPI waveInGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
 {
-    LPSTR txt = HeapAlloc(GetProcessHeap(), 0,uSize);
+    LPSTR txt = HeapAlloc(GetProcessHeap(), 0, uSize);
     UINT	ret = waveGetErrorText(uError, txt, uSize);
     
     lstrcpyAtoW(lpText, txt);
@@ -3832,7 +4119,7 @@ UINT WINAPI waveInGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
 UINT16 WINAPI waveInGetErrorText16(UINT16 uError, LPSTR lpText, UINT16 uSize)
 {
     TRACE(mmsys, "waveInGetErrorText\n");
-    return(waveGetErrorText(uError, lpText, uSize));
+    return waveGetErrorText(uError, lpText, uSize);
 }
 
 /**************************************************************************
@@ -3843,7 +4130,7 @@ UINT WINAPI waveInOpen(HWAVEIN* lphWaveIn, UINT uDeviceID,
 		       DWORD dwInstance, DWORD dwFlags)
 {
     HWAVEIN16	hwin16;
-    UINT	ret = waveInOpen16(&hwin16,uDeviceID, lpFormat, dwCallback, dwInstance,
+    UINT	ret = waveInOpen16(&hwin16, uDeviceID, lpFormat, dwCallback, dwInstance,
 				 CALLBACK32CONV(dwFlags));
     if (lphWaveIn) *lphWaveIn = hwin16;
     return ret;
@@ -3932,16 +4219,14 @@ UINT WINAPI waveInPrepareHeader(HWAVEIN hWaveIn,
 {
     LPWAVEOPENDESC	lpDesc;
     
-    TRACE(mmsys, "(%04X, %p, %u);\n", 
-	  hWaveIn, lpWaveInHdr, uSize);
+    TRACE(mmsys, "(%04X, %p, %u);\n", hWaveIn, lpWaveInHdr, uSize);
     lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveIn);
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
     if (lpWaveInHdr == NULL) return MMSYSERR_INVALHANDLE;
-    lpWaveInHdr = lpWaveInHdr;
     lpWaveInHdr->lpNext = NULL;
     lpWaveInHdr->dwBytesRecorded = 0;
-    TRACE(mmsys, "lpData=%p size=%lu \n", 
-	  lpWaveInHdr->lpData, lpWaveInHdr->dwBufferLength);
+    lpWaveInHdr->reserved = (DWORD)lpWaveInHdr;
+
     return widMessage(lpDesc->uDeviceID, WIDM_PREPARE, lpDesc->dwInstance, 
 		      (DWORD)lpWaveInHdr, uSize);
 }
@@ -3950,27 +4235,25 @@ UINT WINAPI waveInPrepareHeader(HWAVEIN hWaveIn,
  * 				waveInPrepareHeader		[MMSYSTEM.506]
  */
 UINT16 WINAPI waveInPrepareHeader16(HWAVEIN16 hWaveIn,
-				    WAVEHDR* lpWaveInHdr, UINT16 uSize)
+				    WAVEHDR* /* SEGPTR */ _lpWaveInHdr, UINT16 uSize)
 {
     LPWAVEOPENDESC	lpDesc;
-    LPBYTE		saveddata = lpWaveInHdr->lpData;
+    LPWAVEHDR		lpWaveInHdr = (LPWAVEHDR)PTR_SEG_TO_LIN(_lpWaveInHdr);
     UINT16		ret;
     
-    TRACE(mmsys, "(%04X, %p, %u);\n", 
-	  hWaveIn, lpWaveInHdr, uSize);
+    TRACE(mmsys, "(%04X, %p, %u);\n", hWaveIn, lpWaveInHdr, uSize);
+
     lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveIn);
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
     if (lpWaveInHdr == NULL) return MMSYSERR_INVALHANDLE;
-    lpWaveInHdr = lpWaveInHdr;
+
     lpWaveInHdr->lpNext = NULL;
     lpWaveInHdr->dwBytesRecorded = 0;
     
-    TRACE(mmsys, "lpData=%p size=%lu \n", 
-	  lpWaveInHdr->lpData, lpWaveInHdr->dwBufferLength);
-    lpWaveInHdr->lpData = PTR_SEG_TO_LIN(lpWaveInHdr->lpData);
+    lpWaveInHdr->reserved = (DWORD)_lpWaveInHdr;
+
     ret = widMessage(lpDesc->uDeviceID, WIDM_PREPARE, lpDesc->dwInstance, 
-		     (DWORD)lpWaveInHdr,uSize);
-    lpWaveInHdr->lpData = saveddata;
+		     (DWORD)lpWaveInHdr, uSize);
     return ret;
 }
 
@@ -3987,8 +4270,7 @@ UINT WINAPI waveInUnprepareHeader(HWAVEIN hWaveIn,
     lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveIn);
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
     if (lpWaveInHdr == NULL) return MMSYSERR_INVALHANDLE;
-    /*USER_HEAP_FREE(HIWORD((DWORD)lpWaveInHdr->lpData)); FIXME */
-    lpWaveInHdr->lpData = NULL;
+
     lpWaveInHdr->lpNext = NULL;
     return widMessage(lpDesc->uDeviceID, WIDM_UNPREPARE, lpDesc->dwInstance, 
 		      (DWORD)lpWaveInHdr, uSize);
@@ -4007,9 +4289,7 @@ UINT16 WINAPI waveInUnprepareHeader16(HWAVEIN16 hWaveIn,
     lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveIn);
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
     if (lpWaveInHdr == NULL) return MMSYSERR_INVALHANDLE;
-    /*USER_HEAP_FREE(HIWORD((DWORD)lpWaveInHdr->lpData)); FIXME */
-    lpWaveInHdr->lpData = NULL;
-    lpWaveInHdr->lpNext = NULL;
+
     return widMessage(lpDesc->uDeviceID, WIDM_UNPREPARE, lpDesc->dwInstance, 
 		      (DWORD)lpWaveInHdr, uSize);
 }
@@ -4023,13 +4303,14 @@ UINT WINAPI waveInAddBuffer(HWAVEIN hWaveIn,
     LPWAVEOPENDESC	lpDesc;
     
     TRACE(mmsys, "(%04X, %p, %u);\n", hWaveIn, lpWaveInHdr, uSize);
+
     lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveIn);
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
     if (lpWaveInHdr == NULL) return MMSYSERR_INVALHANDLE;
+
     lpWaveInHdr->lpNext = NULL;
     lpWaveInHdr->dwBytesRecorded = 0;
-    TRACE(mmsys, "lpData=%p size=%lu \n", 
-	  lpWaveInHdr->lpData, lpWaveInHdr->dwBufferLength);
+
     return widMessage(lpDesc->uDeviceID, WIDM_ADDBUFFER, lpDesc->dwInstance,
 		      (DWORD)lpWaveInHdr, uSize);
     
@@ -4045,17 +4326,15 @@ UINT16 WINAPI waveInAddBuffer16(HWAVEIN16 hWaveIn,
     UINT16		ret;
     
     TRACE(mmsys, "(%04X, %p, %u);\n", hWaveIn, lpWaveInHdr, uSize);
+
     lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveIn);
     if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
     if (lpWaveInHdr == NULL) return MMSYSERR_INVALHANDLE;
     lpWaveInHdr->lpNext = NULL;
     lpWaveInHdr->dwBytesRecorded = 0;
-    lpWaveInHdr->lpData = PTR_SEG_TO_LIN(lpWaveInHdr->lpData);
-    TRACE(mmsys, "lpData=%p size=%lu \n", 
-	  lpWaveInHdr->lpData, lpWaveInHdr->dwBufferLength);
+
     ret = widMessage(lpDesc->uDeviceID, WIDM_ADDBUFFER, lpDesc->dwInstance,
 		     (DWORD)lpWaveInHdr, uSize);
-    /*lpWaveInHdr->lpData = saveddata;*/
     return ret;
 }
 
@@ -4132,7 +4411,7 @@ UINT WINAPI waveInGetPosition(HWAVEIN hWaveIn, LPMMTIME lpTime,
     UINT 	ret;
     
     mmt16.wType = lpTime->wType;
-    ret = waveInGetPosition16(hWaveIn, &mmt16,uSize);
+    ret = waveInGetPosition16(hWaveIn, &mmt16, uSize);
     
     MMSYSTEM_MMTIME16to32(lpTime, &mmt16);
     return ret;
@@ -4215,8 +4494,8 @@ DWORD WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
 	/*FIXME: ANSI/UNICODE */
 	return waveInGetDevCapsA(hWaveIn, (LPWAVEINCAPSA)dwParam1, dwParam2);
     default:
-	ERR(mmsys,"(%04x,%04x,%08lx,%08lx): unhandled message\n",
-	    hWaveIn,uMessage, dwParam1, dwParam2);
+	ERR(mmsys,"(%04x, %04x, %08lx, %08lx): unhandled message\n",
+	    hWaveIn, uMessage, dwParam1, dwParam2);
 	break;
     }
     return widMessage(lpDesc->uDeviceID, uMessage, lpDesc->dwInstance, dwParam1, dwParam2);
@@ -4257,8 +4536,8 @@ DWORD WINAPI waveInMessage16(HWAVEIN16 hWaveIn, UINT16 uMessage,
     case WIDM_ADDBUFFER:
 	return waveInAddBuffer16(hWaveIn, (LPWAVEHDR)PTR_SEG_TO_LIN(dwParam1), dwParam2);
     default:
-	ERR(mmsys,"(%04x,%04x,%08lx,%08lx): unhandled message\n",
-	    hWaveIn,uMessage, dwParam1, dwParam2);
+	ERR(mmsys,"(%04x, %04x, %08lx, %08lx): unhandled message\n",
+	    hWaveIn, uMessage, dwParam1, dwParam2);
 	break;
     }
     return widMessage(lpDesc->uDeviceID, uMessage, lpDesc->dwInstance, dwParam1, dwParam2);
@@ -4269,7 +4548,7 @@ DWORD WINAPI waveInMessage16(HWAVEIN16 hWaveIn, UINT16 uMessage,
  */
 HDRVR16 WINAPI DrvOpen(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
 {
-    TRACE(mmsys,"('%s','%s',%08lX);\n", lpDriverName, lpSectionName, lParam);
+    TRACE(mmsys,"('%s','%s', %08lX);\n", lpDriverName, lpSectionName, lParam);
 
     return OpenDriver16(lpDriverName, lpSectionName, lParam);
 }
@@ -4290,13 +4569,7 @@ LRESULT WINAPI DrvClose(HDRVR16 hDrv, LPARAM lParam1, LPARAM lParam2)
 LRESULT WINAPI DrvSendMessage(HDRVR16 hDrv, WORD msg, LPARAM lParam1,
                               LPARAM lParam2)
 {
-    /* DWORD 	dwDriverID = 0; */
-
-    FIXME(mmsys, "(%04X, %04X, %08lX, %08lX);\n", hDrv, msg, lParam1, lParam2);
-    return MMSYSERR_NOTENABLED;
-    /* FIXME: wrong ... */
-    /* should known the mapping between hDrv and wDevIDs */
-    /* MCICDAUDIO_DriverProc16(dwDriverID, hDrv, msg, lParam1, lParam2); */
+    return SendDriverMessage(hDrv, msg, lParam1, lParam2);
 }
 
 /**************************************************************************
@@ -4338,66 +4611,12 @@ LRESULT WINAPI DefDriverProc(DWORD dwDriverIdentifier, HDRVR hDrv,
 }
 
 /**************************************************************************
- * 				mmThreadCreate		[MMSYSTEM.1120]
- */
-LRESULT WINAPI mmThreadCreate16(LPVOID x1, LPWORD x2, DWORD x3, DWORD x4) 
-{
-    FIXME(mmsys, "(%p,%p,%08lx,%08lx): stub!\n",x1,x2,x3,x4);
-    *x2 = 0xbabe;
-    return 0;
-}
-
-/**************************************************************************
- * 				mmThreadSignal		[MMSYSTEM.1121]
- */
-LRESULT WINAPI mmThreadSignal16(HANDLE16 hnd) 
-{
-    FIXME(mmsys,"(%04x): stub!\n", hnd);
-    return 0;
-}
-
-/**************************************************************************
- * 				mmThreadBlock		[MMSYSTEM.1122]
- */
-void	WINAPI mmThreadBlock16(HANDLE16 hnd) 
-{
-    FIXME(mmsys,"(%04x): stub!\n", hnd);
-}
-
-/**************************************************************************
- * 				mmThreadIsCurrent	[MMSYSTEM.1123]
- */
-BOOL16	WINAPI mmThreadIsCurrent16(HANDLE16 hnd) 
-{
-    FIXME(mmsys,"(%04x): stub!\n", hnd);
-    return FALSE;
-}
-
-/**************************************************************************
- * 				mmThreadGetTask		[MMSYSTEM.1125]
- */
-LRESULT WINAPI mmThreadGetTask16(HANDLE16 hnd) 
-{
-    FIXME(mmsys,"(%04x): stub!\n", hnd);
-    return GetCurrentTask();
-}
-
-/**************************************************************************
- * 				mmThreadIsValid		[MMSYSTEM.1124]
- */
-BOOL16	WINAPI	mmThreadIsValid16(HANDLE16 handle)
-{
-    FIXME(mmsys, "(%04x): stub!\n", handle);
-    return 0;
-}
-
-/**************************************************************************
  * 				mmTaskCreate		[MMSYSTEM.900]
  *
  * Creates a 16 bit MM task. It's entry point is lpFunc, and it should be
  * called upon creation with dwPmt as parameter.
  */
-HINSTANCE16 WINAPI mmTaskCreate16(SEGPTR lphnd, HINSTANCE16 *hMmTask, DWORD dwPmt)
+HINSTANCE16 WINAPI mmTaskCreate16(SEGPTR spProc, HINSTANCE16 *lphMmTask, DWORD dwPmt)
 {
     DWORD 		showCmd = 0x40002;
     LPSTR 		cmdline;
@@ -4406,10 +4625,11 @@ HINSTANCE16 WINAPI mmTaskCreate16(SEGPTR lphnd, HINSTANCE16 *hMmTask, DWORD dwPm
     HINSTANCE16 	ret;
     HINSTANCE16		handle;
     
-    TRACE(mmsys, "(%08lx,%p,%08lx);\n", lphnd, hMmTask, dwPmt);
+    TRACE(mmsys, "(%08lx, %p, %08lx);\n", spProc, lphMmTask, dwPmt);
+
     cmdline = (LPSTR)HeapAlloc(GetProcessHeap(), 0, 0x0d);
     cmdline[0] = 0x0d;
-    *(LPDWORD)(cmdline + 1) = (DWORD)lphnd;
+    *(LPDWORD)(cmdline + 1) = (DWORD)spProc;
     *(LPDWORD)(cmdline + 5) = dwPmt;
     *(LPDWORD)(cmdline + 9) = 0;
     
@@ -4417,7 +4637,7 @@ HINSTANCE16 WINAPI mmTaskCreate16(SEGPTR lphnd, HINSTANCE16 *hMmTask, DWORD dwPm
     sel2 = SELECTOR_AllocBlock(&showCmd, sizeof(showCmd),
 			       SEGMENT_DATA, FALSE, FALSE);
     
-    lp = (LOADPARAMS16 *)HeapAlloc(GetProcessHeap(), 0, sizeof(LOADPARAMS16));
+    lp = (LOADPARAMS16*)HeapAlloc(GetProcessHeap(), 0, sizeof(LOADPARAMS16));
     lp->hEnvironment = 0;
     lp->cmdLine = PTR_SEG_OFF_TO_SEGPTR(sel1, 0);
     lp->showCmd = PTR_SEG_OFF_TO_SEGPTR(sel2, 0);
@@ -4430,8 +4650,8 @@ HINSTANCE16 WINAPI mmTaskCreate16(SEGPTR lphnd, HINSTANCE16 *hMmTask, DWORD dwPm
     } else {
 	ret = 0;
     }
-    if (hMmTask)
-	*hMmTask = handle;
+    if (lphMmTask)
+	*lphMmTask = handle;
     
     UnMapLS(PTR_SEG_OFF_TO_SEGPTR(sel2, 0));
     UnMapLS(PTR_SEG_OFF_TO_SEGPTR(sel1, 0));
@@ -4442,6 +4662,34 @@ HINSTANCE16 WINAPI mmTaskCreate16(SEGPTR lphnd, HINSTANCE16 *hMmTask, DWORD dwPm
     TRACE(mmsys, "=> 0x%04x/%d\n", handle, ret);
     return ret;
 }
+
+#if 0
+/* C equivalent to mmtask.tsk binary content */
+void	mmTaskEntryPoint(LPSTR cmdLine, WORD di, WORD si)
+{
+    int	len = cmdLine[0x80];
+
+    if (len/2 == 6) {
+	void	(*fpProc)(DWORD) = (void (*)(DWORD))SEG_PTR_TO_LIN(*((DWORD*)(cmdLine + 1)));
+	DWORD	dwPmt  = *((DWORD*)(cmdLine + 5));
+
+	InitTask16(); /* fixme: pmts / from context ? */
+	InitApp(di);
+	if (SetMessageQueue16(0x40)) {
+	    WaitEvent16(0);
+	    if (HIWORD(fpProc)) {
+		OldYield16();
+		StackEnter16();
+		(fpProc)(dwPmt);
+	    }
+	}
+    }
+    OldYield16();
+    OldYield16();
+    OldYield16();
+    ExitProcess(0);
+}
+#endif
 
 /**************************************************************************
  * 				mmTaskBlock		[MMSYSTEM.902]
@@ -4462,10 +4710,10 @@ void	WINAPI	mmTaskBlock16(HINSTANCE16 WINE_UNUSED hInst)
 /**************************************************************************
  * 				mmTaskSignal		[MMSYSTEM.903]
  */
-LRESULT WINAPI mmTaskSignal16(HTASK16 ht) 
+LRESULT	WINAPI mmTaskSignal16(HTASK16 ht) 
 {
     TRACE(mmsys,"(%04x);\n", ht);
-    return PostAppMessageA(ht, WM_USER, 0, 0);
+    return Callout.PostAppMessage16(ht, WM_USER, 0, 0);
 }
 
 /**************************************************************************
@@ -4480,12 +4728,266 @@ void	WINAPI	mmTaskYield16(void)
     }
 }
 
+void	WINAPI	WINE_mmThreadingEntryPoint(DWORD _pmt);
+
+DWORD	WINAPI	GetProcessFlags(DWORD);
+
+/**************************************************************************
+ * 				mmThreadCreate		[MMSYSTEM.1120]
+ */
+LRESULT	WINAPI mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE lpHndl, DWORD dwPmt, DWORD dwFlags) 
+{
+    HANDLE16		hndl;
+    LRESULT		ret;
+    FARPROC16		fp;
+
+    FIXME(mmsys, "(%p, %p, %08lx, %08lx): semi-stub!\n", fpThreadAddr, lpHndl, dwPmt, dwFlags);
+
+    hndl = GlobalAlloc16(sizeof(WINE_MMTHREAD), GMEM_SHARE|GMEM_ZEROINIT);
+
+    if (hndl == 0) {
+	ret = 2;
+    } else {
+	WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
+
+	lpMMThd->dwSignature = WINE_MMTHREAD_CREATED;
+	lpMMThd->dwCounter   = 0;
+	lpMMThd->hThread     = 0;
+	lpMMThd->dwThreadId  = 0;
+	lpMMThd->fpThread    = fpThreadAddr;
+	lpMMThd->dwThreadPmt = dwPmt;
+	/* FIXME     lpMMThd->dwUnknown3; */
+	lpMMThd->hEvent = 0;
+	/* FIXME     lpMMThd->dwUnknown5; */
+	lpMMThd->dwStatus    = 0;
+	lpMMThd->dwFlags     = dwFlags;
+	lpMMThd->hTask       = 0;
+
+	/* FIXME: Since main task in Wine is 16 bit (not 32, which is the case for 
+	 * win 9x the test below may not work.
+	 */
+#ifdef WINE_MAIN_TASK_IS_32BIT
+	if ((dwFlags & 1) == 0 && (GetProcessFlags(GetCurrentThreadId()) & 8) != 0)
+	    FIXME(mmsys, "(NIY) Oooch: seems to require a real thread, not a 16 bit task !!\n");
+#else
+	if ((dwFlags & 1) == 0) 
+	    FIXME(mmsys, "(NIY) Oooch: seems to require a real thread, not a 16 bit task !!\n");
+#endif
+
+#if 0
+	if ((dwFlags & 1) == 0 && (GetProcessFlags(GetCurrentThreadId()) & 8)) {
+	    leavewin16lock();
+	    lpMMThd->hEvent = CreateEventA(0, 0, 1, 0);
+	    if (lpMMThd->dwFlags & 2)
+		lpMMThd->dwUnknown5 = OpenVxDHandle(lpMMThd->hEvent);
+	    if (!CreateThread(0, 0, proc, SEGPTR(hndl, 0), 4, x)) {
+		clean-up(event, VxDhandle...);
+	    } else {
+		lpMMThd->hThread = return from CreateThread;
+	    }
+	}
+	else; /* do what's below */
+#endif
+
+	/* get WINE_mmThreadingEntryPoint() 
+	 * 2047 is its ordinal in mmsystem.spec
+	 */
+	fp = GetProcAddress16(GetModuleHandle16("MMSYSTEM"), (SEGPTR)2047);
+	TRACE(mmsys, "farproc seg=0x%08lx lin=%p\n", (DWORD)fp, PTR_SEG_TO_LIN(fp));
+
+	if (fp == 0 || mmTaskCreate16((DWORD)fp, 0, hndl) != 0) {
+	    GlobalFree16(hndl);
+	    hndl = 0;
+	    ret = 1;
+	} else {
+	    ret = 0;
+	    while (lpMMThd->dwStatus < 10) {
+		UserYield16();
+	    }
+	}
+    }
+#if 0
+    if (lpMMThd->hThread)
+	ResumeThread(lpMMThd->hThread);
+#endif
+
+
+    if (lpHndl)
+	*lpHndl = hndl;
+
+    return ret;
+}
+
+/**************************************************************************
+ * 				mmThreadSignal		[MMSYSTEM.1121]
+ */
+void WINAPI mmThreadSignal16(HANDLE16 hndl) 
+{
+    TRACE(mmsys,"(%04x)!\n", hndl);
+
+    if (hndl) {
+	WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
+
+	lpMMThd->dwCounter++;
+#if 0
+	if (lpMMThd->hThread != 0) {
+	    /* FIXME ??
+	     * SYSLEVEL_ReleaseWin16Lock();
+	     * InterlockedIncrement(lpMMThd->hThread [18]);
+	     * SetEvent(lpMMThd->hThread [1C]);
+	     * SYSLEVEL_RestoreWin16Lock();
+	     */
+	} else {
+	    mmTaskSignal16(lpMMThd->hTask);
+	}
+#else
+	mmTaskSignal16(lpMMThd->hTask);
+#endif
+	lpMMThd->dwCounter--;
+    }
+}
+
+/**************************************************************************
+ * 				mmThreadBlock		[MMSYSTEM.1122]
+ */
+void	WINAPI mmThreadBlock16(HANDLE16 hndl) 
+{
+    TRACE(mmsys,"(%04x)!\n", hndl);
+
+    if (hndl) {
+	WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
+	
+#if 0
+	if (lpMMThd->hThread != 0) {
+	    /* FIXME
+	     * DPMI: lock linear region lpMMThd
+	     */
+	} else {
+	    mmTaskBlock16(lpMMThd->hTask);
+	}
+#else
+	mmTaskBlock16(lpMMThd->hTask);
+#endif
+    }
+}
+
+HANDLE16 WINAPI mmThreadGetTask16(HANDLE16 hndl);
+BOOL16	 WINAPI	mmThreadIsValid16(HANDLE16 hndl);
+
+/**************************************************************************
+ * 				mmThreadIsCurrent	[MMSYSTEM.1123]
+ */
+BOOL16	WINAPI mmThreadIsCurrent16(HANDLE16 hndl) 
+{
+    WINE_MMTHREAD*	lpMMThd;
+
+    TRACE(mmsys, "(%04x)! stub\n", hndl);
+
+    if (!hndl)
+	return FALSE;
+
+    if (!mmThreadIsValid16(hndl))
+	return FALSE;
+
+    lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
+
+    return GetCurrentThreadId() == lpMMThd->dwThreadId;
+}
+
+/**************************************************************************
+ * 				mmThreadIsValid		[MMSYSTEM.1124]
+ */
+BOOL16	WINAPI	mmThreadIsValid16(HANDLE16 hndl)
+{
+    WINE_MMTHREAD*	lpMMThd;
+    BOOL16		ret = TRUE;
+
+    TRACE(mmsys, "(%04x)!\n", hndl);
+
+    if (!hndl)
+	return FALSE;
+    lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
+
+    if (IsBadWritePtr(lpMMThd, sizeof(WINE_MMTHREAD)) ||
+	lpMMThd->dwSignature != WINE_MMTHREAD_CREATED ||
+	!IsTask16(lpMMThd->hTask))
+	return FALSE;
+
+#if 0
+    lpMMThd->dwCounter++;
+    if (lpMMThd->hThread != 0) {
+	DWORD	dwThreadRet;
+
+	SYSLEVEL_ReleaseWin16Lock();
+	if (!GetExitCodeThread(lpMMThd->hThread, &locvar) ||
+	    dwThreadRet != STATUS_PENDING) {
+	    ret = FALSE;
+	}
+	SYSLEVEL_RestoreWin16Lock();
+    }
+    lpMMThd->dwCounter--;
+#endif
+    return ret;
+}
+
+/**************************************************************************
+ * 				mmThreadGetTask		[MMSYSTEM.1125]
+ */
+HANDLE16 WINAPI mmThreadGetTask16(HANDLE16 hndl) 
+{
+    HANDLE16	ret = 0;
+
+    TRACE(mmsys,"(%04x)\n", hndl);
+
+    if (mmThreadIsValid16(hndl)) {
+	WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
+	ret = lpMMThd->hTask;
+    }
+    return ret;
+}
+
+void	WINAPI	WINE_mmThreadingEntryPoint(DWORD _pmt)
+{
+    HANDLE16		hndl = (HANDLE16)_pmt;
+    WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
+
+    TRACE(mmsys, "(%04x %p)\n", hndl, lpMMThd);
+
+    lpMMThd->hTask = LOWORD(GetCurrentTask());
+    lpMMThd->dwStatus = 0x10;
+    mmThreadBlock16(hndl);
+    lpMMThd->dwStatus = 0x20;
+    if (lpMMThd->fpThread) 
+	Callbacks->CallWOWCallbackProc(lpMMThd->fpThread, lpMMThd->dwThreadPmt);
+    lpMMThd->dwStatus = 0x30;
+    while (lpMMThd->dwCounter) {
+	Yield16();
+    }
+    lpMMThd->dwSignature = WINE_MMTHREAD_DELETED;
+    GlobalFree16(hndl);
+}
+
 /**************************************************************************
  * 			mmShowMMCPLPropertySheet	[MMSYSTEM.1150]
  */
 BOOL16	WINAPI	mmShowMMCPLPropertySheet16(WORD w1, WORD w2, WORD w3, WORD w4, WORD w5, WORD w6, WORD w7)
 {
-    FIXME(mmsys, "%04x %04x %04x %04x %04x %04x %04x\n", w1, w2, w3, w4, w5, w6, w7);
+    FIXME(mmsys, "(%04x %04x %04x %04x %04x %04x %04x): stub!\n", w1, w2, w3, w4, w5, w6, w7);
+
+#if 0
+    HANDLE	hndl;
+    FARPROC	fp;
+    BOOL16	ret = FALSE;
+
+    /* to be tested */
+    if ((hndl = LoadLibraryA("MMSYS.CPL")) != 0) {
+	if ((fp = GetProcAddressA(hndl, "ShowMMCPLPropertySheet")) != NULL) {
+	    ret = ((BOOL16 (WINAPI *)(WORD, WORD, WORD, WORD, WORD, WORD, WORD, WORD))fp)(0, w1, w2, w3, w4, w5, w6, w7);
+	}
+	FreeLibraryA(hndl);
+    }
+#endif
+    
     return TRUE;
 }
 
