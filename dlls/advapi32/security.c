@@ -26,6 +26,7 @@
 #include "heap.h"
 #include "winternl.h"
 #include "ntsecapi.h"
+#include "accctrl.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -1091,4 +1092,18 @@ BOOL WINAPI PrivilegeCheck( HANDLE ClientToken, PPRIVILEGE_SET RequiredPrivilege
 	if (pfResult)
 		*pfResult=TRUE;
         return TRUE;
+}
+
+/******************************************************************************
+ * GetSecurityInfoExW [ADVAPI32.@]
+ */
+DWORD WINAPI GetSecurityInfoExW(
+	HANDLE hObject, SE_OBJECT_TYPE ObjectType, 
+	SECURITY_INFORMATION SecurityInfo, LPCWSTR lpProvider,
+	LPCWSTR lpProperty, PACTRL_ACCESSW *ppAccessList, 
+	PACTRL_AUDITW *ppAuditList, LPWSTR *lppOwner, LPWSTR *lppGroup
+)
+{
+  FIXME("stub!\n");
+  return ERROR_BAD_PROVIDER; 
 }
