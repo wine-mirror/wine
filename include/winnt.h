@@ -310,14 +310,23 @@ typedef unsigned short  WCHAR,      *PWCHAR;
 
 /* 'Extended/Wide' numerical types */
 #ifndef _ULONGLONG_
-#define _ULONGLONG_
+# define _ULONGLONG_
+# ifdef _MSC_VER
+typedef signed __int64   LONGLONG,  *PLONGLONG;
+typedef unsigned __int64 ULONGLONG, *PULONGLONG;
+# else
 typedef signed __int64   DECLSPEC_ALIGN(8) LONGLONG,   *PLONGLONG;
 typedef unsigned __int64 DECLSPEC_ALIGN(8) ULONGLONG,  *PULONGLONG;
+# endif
 #endif
 
 #ifndef _DWORDLONG_
-#define _DWORDLONG_
-typedef ULONGLONG DECLSPEC_ALIGN(8) DWORDLONG,  *PDWORDLONG;
+# define _DWORDLONG_
+# ifdef _MSC_VER
+typedef ULONGLONG DWORDLONG, *PDWORDLONG;
+# else
+typedef ULONGLONG   DECLSPEC_ALIGN(8) DWORDLONG,   *PDWORDLONG;
+# endif
 #endif
 
 /* ANSI string types */

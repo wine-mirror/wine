@@ -73,17 +73,26 @@ extern "C" {
 typedef signed char      INT8, *PINT8;
 typedef signed short     INT16, *PINT16;
 typedef signed int       INT32, *PINT32;
-typedef signed __int64   DECLSPEC_ALIGN(8) INT64, *PINT64;
 typedef unsigned char    UINT8, *PUINT8;
 typedef unsigned short   UINT16, *PUINT16;
 typedef unsigned int     UINT32, *PUINT32;
-typedef unsigned __int64 DECLSPEC_ALIGN(8) UINT64, *PUINT64;
 typedef signed int       LONG32, *PLONG32;
 typedef unsigned int     ULONG32, *PULONG32;
 typedef unsigned int     DWORD32, *PDWORD32;
+
+#ifdef _MSC_VER
+typedef signed __int64   INT64, *PINT64;
+typedef unsigned __int64 UINT64, *PUINT64;
+typedef signed __int64   LONG64, *PLONG64;
+typedef unsigned __int64 ULONG64, *PULONG64;
+typedef unsigned __int64 DWORD64, *PDWORD64;
+#else
+typedef signed __int64   DECLSPEC_ALIGN(8) INT64, *PINT64;
+typedef unsigned __int64 DECLSPEC_ALIGN(8) UINT64, *PUINT64;
 typedef signed __int64   DECLSPEC_ALIGN(8) LONG64, *PLONG64;
 typedef unsigned __int64 DECLSPEC_ALIGN(8) ULONG64, *PULONG64;
 typedef unsigned __int64 DECLSPEC_ALIGN(8) DWORD64, *PDWORD64;
+#endif
 
 /* Win32 or Win64 dependent typedef/defines. */
 
