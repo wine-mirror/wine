@@ -1465,12 +1465,11 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
     object->presentParms.FullScreen_RefreshRateInHz     = *(pPresentationParameters->FullScreen_RefreshRateInHz); 
     object->presentParms.PresentationInterval           = *(pPresentationParameters->PresentationInterval);       
 
-/* TODO:
-    * Creating the startup stateBlock *
-    object->StateBlock = NULL;
-    IWineD3DDevice_CreateStateBlock(object, D3DSBT_ALL, NULL);
-    object->UpdateStateBlock = object->StateBlock;
-*/    
+    /* Creating the startup stateBlock - Note Special Case: 0 => Dont fill in yet! */
+    IWineD3DDevice_CreateStateBlock((IWineD3DDevice *)object, 
+                                    (D3DSTATEBLOCKTYPE) 0, 
+                                    (IWineD3DStateBlock **)&object->stateBlock); 
+    object->updateStateBlock = object->stateBlock;
 
     /* Setup surfaces for the backbuffer, frontbuffer and depthstencil buffer */
     TRACE("Creating initial device surfaces\n");
@@ -1551,9 +1550,7 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
     This->isGLInfoValid = IWineD3DImpl_FillGLCaps(&This->gl_info, object->display);
 
     /* Setup all the devices defaults */
-/* TODO: 
-    IDirect3DDeviceImpl_InitStartupStateBlock(object); 
-*/
+    IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *)object->stateBlock); 
 
     LEAVE_GL();
 
@@ -1595,7 +1592,7 @@ HRESULT WINAPI IWineD3DImpl_QueryInterface(IWineD3D *iface,REFIID riid,LPVOID *p
 
 ULONG WINAPI IWineD3DImpl_AddRef(IWineD3D *iface) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    FIXME("(%p) : AddRef increasing from %ld\n", This, This->ref);
+    TRACE("(%p) : AddRef increasing from %ld\n", This, This->ref);
     return InterlockedIncrement(&This->ref);
 }
 

@@ -37,7 +37,7 @@
 
 
 /*****************************************************************************
- * WineD3D Structures 
+ * WineD3D Structures to be used when d3d8 and d3d9 are incompatible
  */
 
 typedef struct _WINED3DADAPTER_IDENTIFIER {
@@ -74,6 +74,7 @@ typedef struct IWineD3D               IWineD3D;
 typedef struct IWineD3DDevice         IWineD3DDevice;
 typedef struct IWineD3DResource       IWineD3DResource;
 typedef struct IWineD3DVertexBuffer   IWineD3DVertexBuffer;
+typedef struct IWineD3DStateBlock     IWineD3DStateBlock;
 
 /*****************************************************************************
  * WineD3D interface 
@@ -141,6 +142,9 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IWineD3D methods ***/
     STDMETHOD(CreateVertexBuffer)(THIS_ UINT  Length,DWORD  Usage,DWORD  FVF,D3DPOOL  Pool,IWineD3DVertexBuffer **ppVertexBuffer, HANDLE *sharedHandle) PURE;
+    STDMETHOD(CreateStateBlock)(THIS_ D3DSTATEBLOCKTYPE Type, IWineD3DStateBlock **ppStateBlock) PURE;
+    STDMETHOD(SetFVF)(THIS_ DWORD  fvf) PURE;
+    STDMETHOD(GetFVF)(THIS_ DWORD * pfvf) PURE;
 };
 #undef INTERFACE
 
@@ -151,6 +155,9 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
 #define IWineD3DDevice_Release(p)                               (p)->lpVtbl->Release(p)
 /*** IWineD3DDevice methods ***/
 #define IWineD3DDevice_CreateVertexBuffer(p,a,b,c,d,e,f)        (p)->lpVtbl->CreateVertexBuffer(p,a,b,c,d,e,f)
+#define IWineD3DDevice_CreateStateBlock(p,a,b)                  (p)->lpVtbl->CreateStateBlock(p,a,b)
+#define IWineD3DDevice_SetFVF(p,a)                              (p)->lpVtbl->SetFVF(p,a)
+#define IWineD3DDevice_GetFVF(p,a)                              (p)->lpVtbl->GetFVF(p,a)
 #endif
 
 /*****************************************************************************
@@ -236,6 +243,31 @@ DECLARE_INTERFACE_(IWineD3DVertexBuffer,IDirect3DResource8)
 #define IWineD3DVertexBuffer_Unlock(p)                    (p)->lpVtbl->Unlock(p)
 #define IWineD3DVertexBuffer_GetDesc(p,a)                 (p)->lpVtbl->GetDesc(p,a)
 #endif
+
+/*****************************************************************************
+ * WineD3DStateBlock interface 
+ */
+#define INTERFACE IWineD3DStateBlock
+DECLARE_INTERFACE_(IWineD3DStateBlock,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IWineD3DStateBlock methods ***/
+    STDMETHOD(InitStartupStateBlock)(THIS) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IWineD3DStateBlock_QueryInterface(p,a,b)                (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWineD3DStateBlock_AddRef(p)                            (p)->lpVtbl->AddRef(p)
+#define IWineD3DStateBlock_Release(p)                           (p)->lpVtbl->Release(p)
+/*** IWineD3DStateBlock methods ***/
+#define IWineD3DStateBlock_InitStartupStateBlock(p)             (p)->lpVtbl->InitStartupStateBlock(p)
+#endif
+
 
 #if 0 /* FIXME: During porting in from d3d8 - the following will be used */
 /*****************************************************************

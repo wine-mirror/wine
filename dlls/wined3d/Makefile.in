@@ -11,6 +11,7 @@ C_SRCS = \
 	device.c \
 	directx.c \
 	resource.c \
+	stateblock.c \
 	utils.c \
 	vertexbuffer.c \
 	vertexshader.c \

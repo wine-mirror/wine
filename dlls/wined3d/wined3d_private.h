@@ -86,6 +86,8 @@ extern int num_lock;
     } \
 }
 
+typedef struct IWineD3DStateBlockImpl IWineD3DStateBlockImpl;
+
 /*****************************************************************************
  * IWineD3D implementation structure
  */
@@ -132,6 +134,11 @@ typedef struct IWineD3DDeviceImpl
     BOOL                    proj_valid;
     BOOL                    view_ident;        /* true iff view matrix is identity                */
     BOOL                    last_was_rhw;      /* true iff last draw_primitive was in xyzrhw mode */
+
+    /* State block related */
+    BOOL                    isRecordingState;
+    IWineD3DStateBlockImpl *stateBlock;
+    IWineD3DStateBlockImpl *updateStateBlock;
 
     /* Internal use fields  */
     D3DDEVICE_CREATION_PARAMETERS   createParms;
@@ -184,13 +191,45 @@ typedef struct IWineD3DVertexBufferImpl
 
 extern IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl;
 
-/* Utility function prototypes */
+/*****************************************************************************
+ * IWineD3DStateBlock implementation structure
+ */
+
+/* Internal state Block for Begin/End/Capture/Create/Apply info  */
+/*   Note: Very long winded but gl Lists are not flexible enough */
+/*   to resolve everything we need, so doing it manually for now */
+typedef struct SAVEDSTATES {
+        BOOL                      fvf;
+} SAVEDSTATES;
+
+struct IWineD3DStateBlockImpl
+{
+    /* IUnknown fields */
+    IWineD3DStateBlockVtbl   *lpVtbl;
+    DWORD                     ref;     /* Note: Ref counting not required */
+    
+    /* IWineD3DStateBlock information */
+    IWineD3DDevice           *wineD3DDevice;
+    D3DSTATEBLOCKTYPE         blockType;
+
+    /* Array indicating whether things have been set or changed */
+    SAVEDSTATES               changed;
+    SAVEDSTATES               set;
+  
+    /* Drawing - Vertex Shader or FVF related */
+    DWORD                     fvf;
+
+};
+
+extern IWineD3DStateBlockVtbl IWineD3DStateBlock_Vtbl;
+
+/*****************************************************************************
+ * Utility function prototypes 
+ */
 const char* debug_d3dformat(D3DFORMAT fmt);
 const char* debug_d3ddevicetype(D3DDEVTYPE devtype);
 const char* debug_d3dresourcetype(D3DRESOURCETYPE res);
 const char* debug_d3dusage(DWORD usage);
-
-
 
 #if 0 /* Needs fixing during rework */
 /*****************************************************************************

@@ -58,6 +58,56 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT
     return D3D_OK;
 }
 
+HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, D3DSTATEBLOCKTYPE Type, IWineD3DStateBlock** ppStateBlock) {
+  
+    IWineD3DDeviceImpl     *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DStateBlockImpl *object;
+  
+    /* Allocate Storage for the state block */
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DStateBlockImpl));
+    object->lpVtbl        = &IWineD3DStateBlock_Vtbl;
+    object->wineD3DDevice = iface;
+    object->ref           = 1;
+    object->blockType     = Type;
+    *ppStateBlock         = (IWineD3DStateBlock *)object;
+
+    /* Special case - Used during initialization to produce a placeholder stateblock
+          so other functions called can update a state block                         */
+    if (Type == (D3DSTATEBLOCKTYPE) 0) {
+        /* Dont bother increasing the reference count otherwise a device will never
+           be freed due to circular dependencies                                   */
+        return D3D_OK;
+    }
+
+    /* Otherwise, might as well set the whole state block to the appropriate values */
+    IWineD3DDevice_AddRef(iface);
+    memcpy(object, This->stateBlock, sizeof(IWineD3DStateBlockImpl));
+    FIXME("unfinished - needs to set up changed and set attributes\n");
+    return D3D_OK;
+}
+
+/*****
+ * Get / Set FVF
+ *****/
+HRESULT WINAPI IWineD3DDeviceImpl_SetFVF(IWineD3DDevice *iface, DWORD fvf) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    /* Update the current statte block */
+    This->updateStateBlock->fvf              = fvf;
+    This->updateStateBlock->changed.fvf      = TRUE;
+    This->updateStateBlock->set.fvf          = TRUE;
+
+    TRACE("(%p) : FVF Shader FVF set to %lx\n", This, fvf);
+    
+    /* No difference if recording or not */
+    return D3D_OK;
+}
+HRESULT WINAPI IWineD3DDeviceImpl_GetFVF(IWineD3DDevice *iface, DWORD *pfvf) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    TRACE("(%p) : GetFVF returning %lx\n", This, This->stateBlock->fvf);
+    *pfvf = This->stateBlock->fvf;
+    return D3D_OK;
+}
 
 /**********************************************************
  * IUnknown parts follows
@@ -95,5 +145,8 @@ IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_QueryInterface,
     IWineD3DDeviceImpl_AddRef,
     IWineD3DDeviceImpl_Release,
-    IWineD3DDeviceImpl_CreateVertexBuffer
+    IWineD3DDeviceImpl_CreateVertexBuffer,
+    IWineD3DDeviceImpl_CreateStateBlock,
+    IWineD3DDeviceImpl_SetFVF,
+    IWineD3DDeviceImpl_GetFVF
 };
