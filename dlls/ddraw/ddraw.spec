@@ -4,7 +4,6 @@ init DDRAW_DllMain
 rsrc version.res
 
 import user32.dll
-import x11drv.dll
 import gdi32.dll
 import kernel32.dll
 
