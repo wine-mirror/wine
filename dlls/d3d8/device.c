@@ -1056,9 +1056,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface,
             TRACE("Locked src and dst\n");
 
             /* Find where to start */
-	    for (j = 0; j < (r->bottom - r->top); j++) {
+            for (j = 0; j < (r->bottom - r->top - 1); j++) {
                memcpy((char*) lrDst.pBits + (j * lrDst.Pitch), (char*) lrSrc.pBits + (j * lrSrc.Pitch), copyperline);
-	    }
+            }
 
             IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) src);
             rc = IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) dst);
@@ -1352,8 +1352,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
     glEnable(GL_SCISSOR_TEST);
     checkGLcall("glEnable GL_SCISSOR_TEST");
     if (Count > 0 && pRects) {
-        glEnable(GL_SCISSOR_TEST);
-        checkGLcall("glEnable GL_SCISSOR_TEST");
         curRect = pRects;
     } else {
         curRect = NULL;
@@ -1430,10 +1428,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
                      old_color_clear_value[3]);
     }
 
-    if (Count > 0 && pRects) {
-        glDisable(GL_SCISSOR_TEST);
-        checkGLcall("glDisable");
-    }
+    glDisable(GL_SCISSOR_TEST);
+    checkGLcall("glDisable");
     LEAVE_GL();
 
     return D3D_OK;
