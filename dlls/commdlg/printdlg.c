@@ -1311,7 +1311,7 @@ static BOOL PRINTDLG_CreateDC16(LPPRINTDLG16 lppd)
 }
 
 /***********************************************************************
- *           PrintDlgA   (COMDLG32.17)
+ *           PrintDlgA   (COMDLG32.@)
  *
  *  Displays the the PRINT dialog box, which enables the user to specify
  *  specific properties of the print job.
@@ -1663,7 +1663,7 @@ BOOL16 WINAPI PrintDlg16(
 
 
 /***********************************************************************
- *           PrintDlgW   (COMDLG32.18)
+ *           PrintDlgW   (COMDLG32.@)
  */
 BOOL WINAPI PrintDlgW( LPPRINTDLGW printdlg )
 {
@@ -1967,7 +1967,7 @@ PageDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /***********************************************************************
- *            PageSetupDlgA  (COMDLG32.15)
+ *            PageSetupDlgA  (COMDLG32.@)
  */
 BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
     HGLOBAL		hDlgTmpl;
@@ -2033,7 +2033,7 @@ BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
     return bRet;
 }
 /***********************************************************************
- *            PageSetupDlgW  (COMDLG32.16)
+ *            PageSetupDlgW  (COMDLG32.@)
  */
 BOOL WINAPI PageSetupDlgW(LPPAGESETUPDLGW setupdlg) {
 	FIXME("(%p), stub!\n",setupdlg);
@@ -2131,7 +2131,7 @@ LRESULT WINAPI PrintSetupDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 
 
 /***********************************************************************
- *	PrintDlgExA
+ *	PrintDlgExA (COMDLG32.@)
  */
 HRESULT WINAPI PrintDlgExA(LPVOID lpPrintDlgExA) /* [???] FIXME: LPPRINTDLGEXA */
 {
@@ -2139,7 +2139,7 @@ HRESULT WINAPI PrintDlgExA(LPVOID lpPrintDlgExA) /* [???] FIXME: LPPRINTDLGEXA *
 	return E_NOTIMPL;
 }
 /***********************************************************************
- *	PrintDlgExW
+ *	PrintDlgExW (COMDLG32.@)
  */
 HRESULT WINAPI PrintDlgExW(LPVOID lpPrintDlgExW) /* [???] FIXME: LPPRINTDLGEXW */
 {

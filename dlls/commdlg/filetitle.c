@@ -19,7 +19,7 @@ DEFAULT_DEBUG_CHANNEL(commdlg);
 #include "cdlg.h"
 
 /***********************************************************************
- *	GetFileTitleA		(COMDLG32.8)
+ *	GetFileTitleA		(COMDLG32.@)
  *
  */
 short WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
@@ -68,7 +68,7 @@ short WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 
 
 /***********************************************************************
- *	GetFileTitleW		(COMDLG32.9)
+ *	GetFileTitleW		(COMDLG32.@)
  *
  */
 short WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, UINT cbBuf)

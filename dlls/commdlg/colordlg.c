@@ -1432,7 +1432,7 @@ BOOL16 WINAPI ChooseColor16( LPCHOOSECOLOR16 lpChCol )
 }
 
 /***********************************************************************
- *            ChooseColorW  (COMDLG32.2)
+ *            ChooseColorW  (COMDLG32.@)
  */
 BOOL WINAPI ChooseColorW( LPCHOOSECOLORW lpChCol )
 
@@ -1492,7 +1492,7 @@ BOOL WINAPI ChooseColorW( LPCHOOSECOLORW lpChCol )
 }
 
 /***********************************************************************
- *            ChooseColorA  (COMDLG32.1)
+ *            ChooseColorA  (COMDLG32.@)
  */
 BOOL WINAPI ChooseColorA( LPCHOOSECOLORA lpChCol )
 

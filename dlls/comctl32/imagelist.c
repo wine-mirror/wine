@@ -464,7 +464,7 @@ IMAGELIST_InternalDrawOverlay(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
 
 
 /*************************************************************************
- * ImageList_Add [COMCTL32.39]
+ * ImageList_Add [COMCTL32.40]
  *
  * Add an image or images to an image list.
  *
@@ -552,7 +552,7 @@ ImageList_Add (HIMAGELIST himl,	HBITMAP hbmImage, HBITMAP hbmMask)
 
 
 /*************************************************************************
- * ImageList_AddIcon [COMCTL32.40]
+ * ImageList_AddIcon [COMCTL32.41]
  *
  * Adds an icon to an image list.
  *
@@ -573,7 +573,7 @@ ImageList_AddIcon (HIMAGELIST himl, HICON hIcon)
 
 
 /*************************************************************************
- * ImageList_AddMasked [COMCTL32.41] 
+ * ImageList_AddMasked [COMCTL32.42] 
  *
  * Adds an image or images to an image list and creates a mask from the
  * specified bitmap using the mask color.
@@ -685,7 +685,7 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
 
 
 /*************************************************************************
- * ImageList_BeginDrag [COMCTL32.42] 
+ * ImageList_BeginDrag [COMCTL32.43] 
  *
  * Creates a temporary image list that contains one image. It will be used
  * as a drag image.
@@ -751,7 +751,7 @@ ImageList_BeginDrag (HIMAGELIST himlTrack, INT iTrack,
 
 
 /*************************************************************************
- * ImageList_Copy [COMCTL32.43] 
+ * ImageList_Copy [COMCTL32.44] 
  *
  *  Copies an image of the source image list to an image of the 
  *  destination image list. Images can be copied or swapped.
@@ -879,7 +879,7 @@ ImageList_Copy (HIMAGELIST himlDst, INT iDst,	HIMAGELIST himlSrc,
 
 
 /*************************************************************************
- * ImageList_Create [COMCTL32.44]  Creates a new image list.
+ * ImageList_Create [COMCTL32.45]  Creates a new image list.
  *
  * PARAMS
  *     cx       [I] image height
@@ -973,7 +973,7 @@ ImageList_Create (INT cx, INT cy, UINT flags,
 
 
 /*************************************************************************
- * ImageList_Destroy [COMCTL32.45] 
+ * ImageList_Destroy [COMCTL32.46] 
  *
  * Destroys an image list.
  *
@@ -1010,7 +1010,7 @@ ImageList_Destroy (HIMAGELIST himl)
 
 
 /*************************************************************************
- * ImageList_DragEnter [COMCTL32.46] 
+ * ImageList_DragEnter [COMCTL32.47] 
  *
  * Locks window update and displays the drag image at the given position.
  *
@@ -1053,7 +1053,7 @@ ImageList_DragEnter (HWND hwndLock, INT x, INT y)
 
 
 /*************************************************************************
- * ImageList_DragLeave [COMCTL32.47] 
+ * ImageList_DragLeave [COMCTL32.48] 
  *
  * Unlocks window update and hides the drag image.
  *
@@ -1083,7 +1083,7 @@ ImageList_DragLeave (HWND hwndLock)
 
 
 /*************************************************************************
- * ImageList_DragMove [COMCTL32.48] 
+ * ImageList_DragMove [COMCTL32.49] 
  *
  * Moves the drag image.
  *
@@ -1115,7 +1115,7 @@ ImageList_DragMove (INT x, INT y)
 
 
 /*************************************************************************
- * ImageList_DragShowNolock [COMCTL32.49] 
+ * ImageList_DragShowNolock [COMCTL32.50] 
  *
  * Shows or hides the drag image.
  *
@@ -1163,7 +1163,7 @@ ImageList_DragShowNolock (BOOL bShow)
 
 
 /*************************************************************************
- * ImageList_Draw [COMCTL32.50] Draws an image.
+ * ImageList_Draw [COMCTL32.51] Draws an image.
  *
  * PARAMS
  *     himl   [I] handle to image list
@@ -1210,7 +1210,7 @@ ImageList_Draw (HIMAGELIST himl, INT i, HDC hdc,
 
 
 /*************************************************************************
- * ImageList_DrawEx [COMCTL32.51]
+ * ImageList_DrawEx [COMCTL32.52]
  *
  * Draws an image and allows to use extended drawing features.
  *
@@ -1264,7 +1264,7 @@ ImageList_DrawEx (HIMAGELIST himl, INT i, HDC hdc, INT x, INT y,
 
 
 /*************************************************************************
- * ImageList_DrawIndirect [COMCTL32.52] 
+ * ImageList_DrawIndirect [COMCTL32.53] 
  *
  * Draws an image using ...
  *
@@ -1330,7 +1330,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
 
 
 /*************************************************************************
- * ImageList_Duplicate [COMCTL32.53] Duplicates an image list.
+ * ImageList_Duplicate [COMCTL32.54] Duplicates an image list.
  *
  * PARAMS
  *     himlSrc [I] source image list handle
@@ -1382,7 +1382,7 @@ ImageList_Duplicate (HIMAGELIST himlSrc)
 
 
 /*************************************************************************
- * ImageList_EndDrag [COMCTL32.54] Finishes a drag operation.
+ * ImageList_EndDrag [COMCTL32.55] Finishes a drag operation.
  *
  * Finishes a drag operation.
  *
@@ -1418,7 +1418,7 @@ ImageList_EndDrag (void)
 
 
 /*************************************************************************
- * ImageList_GetBkColor [COMCTL32.55]
+ * ImageList_GetBkColor [COMCTL32.56]
  *
  * Returns the background color of an image list.
  *
@@ -1441,7 +1441,7 @@ ImageList_GetBkColor (HIMAGELIST himl)
 
 
 /*************************************************************************
- * ImageList_GetDragImage [COMCTL32.56]
+ * ImageList_GetDragImage [COMCTL32.57]
  *
  * Returns the handle to the internal drag image list.
  *
@@ -1470,7 +1470,7 @@ ImageList_GetDragImage (POINT *ppt, POINT *pptHotspot)
 
 
 /*************************************************************************
- * ImageList_GetIcon [COMCTL32.57] 
+ * ImageList_GetIcon [COMCTL32.59] 
  *
  * Creates an icon from a masked image of an image list.
  *
@@ -1539,7 +1539,7 @@ ImageList_GetIcon (HIMAGELIST himl, INT i, UINT fStyle)
 
 
 /*************************************************************************
- * ImageList_GetIconSize [COMCTL32.58]
+ * ImageList_GetIconSize [COMCTL32.60]
  *
  * Retrieves the size of an image in an image list.
  *
@@ -1574,7 +1574,7 @@ ImageList_GetIconSize (HIMAGELIST himl, INT *cx, INT *cy)
 
 
 /*************************************************************************
- * ImageList_GetImageCount [COMCTL32.59]
+ * ImageList_GetImageCount [COMCTL32.61]
  *
  * Returns the number of images in an image list.
  *
@@ -1597,7 +1597,7 @@ ImageList_GetImageCount (HIMAGELIST himl)
 
 
 /*************************************************************************
- * ImageList_GetImageInfo [COMCTL32.60]
+ * ImageList_GetImageInfo [COMCTL32.62]
  *
  * Returns information about an image in an image list.
  *
@@ -1632,7 +1632,7 @@ ImageList_GetImageInfo (HIMAGELIST himl, INT i, IMAGEINFO *pImageInfo)
 
 
 /*************************************************************************
- * ImageList_GetImageRect [COMCTL32.61] 
+ * ImageList_GetImageRect [COMCTL32.63] 
  *
  * Retrieves the rectangle of the specified image in an image list.
  *
@@ -1667,7 +1667,8 @@ ImageList_GetImageRect (HIMAGELIST himl, INT i, LPRECT lpRect)
 
 
 /*************************************************************************
- * ImageList_LoadImageA [COMCTL32.63][COMCTL32.62]
+ * ImageList_LoadImageA [COMCTL32.65]
+ * ImageList_LoadImageA [COMCTL32.65]
  *
  * Creates an image list from a bitmap, icon or cursor.
  *
@@ -1744,7 +1745,7 @@ ImageList_LoadImageA (HINSTANCE hi, LPCSTR lpbmp, INT cx, INT cGrow,
 
 
 /*************************************************************************
- * ImageList_LoadImageW [COMCTL32.64]
+ * ImageList_LoadImageW [COMCTL32.66]
  *
  * Creates an image list from a bitmap, icon or cursor.
  *
@@ -1808,7 +1809,7 @@ ImageList_LoadImageW (HINSTANCE hi, LPCWSTR lpbmp, INT cx, INT cGrow,
 
 
 /*************************************************************************
- * ImageList_Merge [COMCTL32.65] 
+ * ImageList_Merge [COMCTL32.67] 
  *
  * Creates a new image list that contains a merged image from the specified
  * images of both source image lists.
@@ -2036,7 +2037,7 @@ ret1:
 }
 
 /*************************************************************************
- * ImageList_Read [COMCTL32.66]
+ * ImageList_Read [COMCTL32.68]
  *
  * Reads an image list from a stream.
  *
@@ -2132,7 +2133,7 @@ HIMAGELIST WINAPI ImageList_Read (LPSTREAM pstm)
 
 
 /*************************************************************************
- * ImageList_Remove [COMCTL32.67] Removes an image from an image list
+ * ImageList_Remove [COMCTL32.69] Removes an image from an image list
  *
  * PARAMS
  *     himl [I] image list handle
@@ -2263,7 +2264,7 @@ ImageList_Remove (HIMAGELIST himl, INT i)
 
 
 /*************************************************************************
- * ImageList_Replace [COMCTL32.68] 
+ * ImageList_Replace [COMCTL32.70] 
  *
  * Replaces an image in an image list with a new image.
  *
@@ -2334,7 +2335,7 @@ ImageList_Replace (HIMAGELIST himl, INT i, HBITMAP hbmImage,
 
 
 /*************************************************************************
- * ImageList_ReplaceIcon [COMCTL32.69]
+ * ImageList_ReplaceIcon [COMCTL32.75]
  *
  * Replaces an image in an image list using an icon.
  *
@@ -2430,7 +2431,7 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT i, HICON hIcon)
 
 
 /*************************************************************************
- * ImageList_SetBkColor [COMCTL32.70] 
+ * ImageList_SetBkColor [COMCTL32.76] 
  *
  * Sets the background color of an image list.
  *
@@ -2458,7 +2459,7 @@ ImageList_SetBkColor (HIMAGELIST himl, COLORREF clrBk)
 
 
 /*************************************************************************
- * ImageList_SetDragCursorImage [COMCTL32.75]
+ * ImageList_SetDragCursorImage [COMCTL32.77]
  *
  * Combines the specified image with the current drag image
  *
@@ -2504,7 +2505,7 @@ ImageList_SetDragCursorImage (HIMAGELIST himlDrag, INT iDrag,
 
 
 /*************************************************************************
- * ImageList_SetFilter [COMCTL32.76] 
+ * ImageList_SetFilter [COMCTL32.78] 
  *
  * Sets a filter (or does something completely different)!!???
  *
@@ -2533,7 +2534,7 @@ ImageList_SetFilter (HIMAGELIST himl, INT i, DWORD dwFilter)
 
 
 /*************************************************************************
- * ImageList_SetIconSize [COMCTL32.77]
+ * ImageList_SetIconSize [COMCTL32.80]
  *
  * Sets the image size of the bitmap and deletes all images.
  *
@@ -2582,7 +2583,7 @@ ImageList_SetIconSize (HIMAGELIST himl, INT cx, INT cy)
 
 
 /*************************************************************************
- * ImageList_SetImageCount [COMCTL32.78]
+ * ImageList_SetImageCount [COMCTL32.81]
  *
  * Resizes an image list to the specified number of images.
  *
@@ -2677,7 +2678,7 @@ ImageList_SetImageCount (HIMAGELIST himl, INT iImageCount)
 
 
 /*************************************************************************
- * ImageList_SetOverlayImage [COMCTL32.79]
+ * ImageList_SetOverlayImage [COMCTL32.82]
  *
  * Assigns an overlay mask index to an existing image in an image list.
  *
@@ -2706,7 +2707,7 @@ ImageList_SetOverlayImage (HIMAGELIST himl, INT iImage, INT iOverlay)
 
 
 /*************************************************************************
- * ImageList_Write [COMCTL32.80]
+ * ImageList_Write [COMCTL32.83]
  *
  * Writes an image list to a stream.
  *

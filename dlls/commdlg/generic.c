@@ -20,7 +20,7 @@ HINSTANCE	COMMDLG_hInstance32 = 0;
 static int	COMMDLG_Attach = 0;
 
 /***********************************************************************
- *	COMMDLG_DllEntryPoint			[COMMDLG.entry]
+ *	COMMDLG_DllEntryPoint			[COMMDLG.32]
  *
  *    Initialization code for the COMMDLG DLL
  *

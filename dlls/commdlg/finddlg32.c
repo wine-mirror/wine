@@ -424,7 +424,7 @@ cleanup:
 }
 
 /***********************************************************************
- *	FindTextA 				[COMDLG32.6]
+ *	FindTextA 				[COMDLG32.@]
  *	RETURNS
  *		Window handle to created dialog: Success
  *		NULL: Failure
@@ -448,7 +448,7 @@ HWND WINAPI FindTextA(
 }
 
 /***********************************************************************
- *	ReplaceTextA 				[COMDLG32.19]
+ *	ReplaceTextA 				[COMDLG32.@]
  *	RETURNS
  *		Window handle to created dialog: Success
  *		NULL: Failure
@@ -473,7 +473,7 @@ HWND WINAPI ReplaceTextA(
 }
 
 /***********************************************************************
- *	FindTextW 				[COMDLG32.7]
+ *	FindTextW 				[COMDLG32.@]
  *	RETURNS
  *		Window handle to created dialog: Success
  *		NULL: Failure
@@ -504,7 +504,7 @@ HWND WINAPI FindTextW(
 }
 
 /***********************************************************************
- *	ReplaceTextW 				[COMDLG32.20]
+ *	ReplaceTextW 				[COMDLG32.@]
  *	RETURNS
  *		Window handle to created dialog: Success
  *		NULL: Failure

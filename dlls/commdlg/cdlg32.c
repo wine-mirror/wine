@@ -37,7 +37,7 @@ DWORD WINAPI (*COMDLG32_SHFree)(LPVOID);
 BOOL WINAPI (*COMDLG32_SHGetFolderPathA)(HWND,int,HANDLE,DWORD,LPSTR);
 
 /***********************************************************************
- *	COMDLG32_DllEntryPoint			(COMDLG32.entry)
+ *	COMDLG32_DllEntryPoint			(COMDLG32.init)
  *
  *    Initialization code for the COMDLG32 DLL
  *
@@ -153,7 +153,8 @@ void COMDLG32_SetCommDlgExtendedError(DWORD err)
 
 
 /***********************************************************************
- *	CommDlgExtendedError			(COMDLG32.5)
+ *	CommDlgExtendedError			(COMMDLG.26)
+ *	CommDlgExtendedError			(COMDLG32.@)
  *
  * Get the thread's local error value if a comdlg32 function fails.
  *	RETURNS

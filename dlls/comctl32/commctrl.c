@@ -375,7 +375,8 @@ GetEffectiveClientRect (HWND hwnd, LPRECT lpRect, LPINT lpInfo)
 
 
 /***********************************************************************
- * DrawStatusTextA [COMCTL32.5][COMCTL32.27]
+ * DrawStatusText  [COMCTL32.27]
+ * DrawStatusTextA [COMCTL32.5]
  *
  * Draws text with borders, like in a status bar.
  *
@@ -443,7 +444,8 @@ DrawStatusTextW (HDC hdc, LPRECT lprc, LPCWSTR text, UINT style)
 
 
 /***********************************************************************
- * CreateStatusWindowA [COMCTL32.6][COMCTL32.21]
+ * CreateStatusWindow  [COMCTL32.21]
+ * CreateStatusWindowA [COMCTL32.6]
  *
  * Creates a status bar
  *
@@ -556,7 +558,7 @@ InitCommonControls (void)
 
 
 /***********************************************************************
- * InitCommonControlsEx [COMCTL32.81]
+ * InitCommonControlsEx [COMCTL32.84]
  *
  * Registers the common controls.
  *
@@ -639,7 +641,7 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
 
 
 /***********************************************************************
- * CreateToolbarEx [COMCTL32.32] Creates a tool bar window
+ * CreateToolbarEx [COMCTL32.23] Creates a tool bar window
  *
  * PARAMS
  *     hwnd
@@ -896,7 +898,7 @@ COMCTL32_DllGetVersion (DLLVERSIONINFO *pdvi)
 }
 
 /***********************************************************************
- *		DllInstall (COMCTL32.@)
+ *		DllInstall (COMCTL32.26)
  */
 HRESULT WINAPI COMCTL32_DllInstall(BOOL bInstall, LPCWSTR cmdline)
 {
@@ -988,7 +990,7 @@ static void CALLBACK TrackMouseEventProc(HWND hwndUnused, UINT uMsg, UINT_PTR id
 }
 
 /***********************************************************************
- * _TrackMouseEvent [COMCTL32.25]
+ * _TrackMouseEvent [COMCTL32.91]
  *
  * Requests notification of mouse events
  *

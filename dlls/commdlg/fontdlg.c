@@ -241,7 +241,7 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
 
 
 /***********************************************************************
- *           ChooseFontA   (COMDLG32.3)
+ *           ChooseFontA   (COMDLG32.@)
  */
 BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
 {
@@ -269,7 +269,7 @@ BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
 }
 
 /***********************************************************************
- *           ChooseFontW   (COMDLG32.4)
+ *           ChooseFontW   (COMDLG32.@)
  *
  *  NOTES:
  *
@@ -380,7 +380,7 @@ BOOL WINAPI ChooseFontW(LPCHOOSEFONTW lpChFont)
 
 #if 0
 /***********************************************************************
- *           ChooseFontW   (COMDLG32.4)
+ *           ChooseFontW   (COMDLG32.@)
  */
 BOOL WINAPI ChooseFontW(LPCHOOSEFONTW lpChFont)
 {

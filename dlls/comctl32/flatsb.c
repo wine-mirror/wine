@@ -32,7 +32,7 @@ typedef struct
 
 
 /***********************************************************************
- *		InitializeFlatSB
+ *		InitializeFlatSB (COMCTL32.86)
  *
  *	returns nonzero if successful, zero otherwise
  *
@@ -45,7 +45,7 @@ BOOL WINAPI InitializeFlatSB(HWND hwnd)
 }
 
 /***********************************************************************
- *		UninitializeFlatSB
+ *		UninitializeFlatSB (COMCTL32.90)
  *
  *	returns:
  *	E_FAIL		if one of the scroll bars is currently in use
@@ -61,7 +61,7 @@ HRESULT WINAPI UninitializeFlatSB(HWND hwnd)
 }
 
 /***********************************************************************
- *		FlatSB_GetScrollProp
+ *		FlatSB_GetScrollProp (COMCTL32.32)
  *
  *	Returns nonzero if successful, or zero otherwise. If index is WSB_PROP_HSTYLE,
  *	the return is nonzero if InitializeFlatSB has been called for this window, or
@@ -77,7 +77,7 @@ FlatSB_GetScrollProp(HWND hwnd, INT propIndex, LPINT prop)
 }
 
 /***********************************************************************
- *		FlatSB_SetScrollProp
+ *		FlatSB_SetScrollProp (COMCTL32.36)
  */
 BOOL WINAPI 
 FlatSB_SetScrollProp(HWND hwnd, UINT index, INT newValue, BOOL flag)
@@ -104,7 +104,7 @@ FlatSB_SetScrollProp(HWND hwnd, UINT index, INT newValue, BOOL flag)
  */
 
 /***********************************************************************
- *		FlatSB_EnableScrollBar
+ *		FlatSB_EnableScrollBar (COMCTL32.29)
  */
 BOOL WINAPI 
 FlatSB_EnableScrollBar(HWND hwnd, int nBar, UINT flags)
@@ -113,7 +113,7 @@ FlatSB_EnableScrollBar(HWND hwnd, int nBar, UINT flags)
 }
 
 /***********************************************************************
- *		FlatSB_ShowScrollBar
+ *		FlatSB_ShowScrollBar (COMCTL32.38)
  */
 BOOL WINAPI 
 FlatSB_ShowScrollBar(HWND hwnd, int nBar, BOOL fShow)
@@ -122,7 +122,7 @@ FlatSB_ShowScrollBar(HWND hwnd, int nBar, BOOL fShow)
 }
 
 /***********************************************************************
- *		FlatSB_GetScrollRange
+ *		FlatSB_GetScrollRange (COMCTL32.33)
  */
 BOOL WINAPI 
 FlatSB_GetScrollRange(HWND hwnd, int nBar, LPINT min, LPINT max)
@@ -131,7 +131,7 @@ FlatSB_GetScrollRange(HWND hwnd, int nBar, LPINT min, LPINT max)
 }
 
 /***********************************************************************
- *		FlatSB_GetScrollInfo
+ *		FlatSB_GetScrollInfo (COMCTL32.30)
  */
 BOOL WINAPI 
 FlatSB_GetScrollInfo(HWND hwnd, int nBar, LPSCROLLINFO info)
@@ -140,7 +140,7 @@ FlatSB_GetScrollInfo(HWND hwnd, int nBar, LPSCROLLINFO info)
 }
 
 /***********************************************************************
- *		FlatSB_GetScrollPos
+ *		FlatSB_GetScrollPos (COMCTL32.31)
  */
 INT WINAPI 
 FlatSB_GetScrollPos(HWND hwnd, int nBar)
@@ -149,7 +149,7 @@ FlatSB_GetScrollPos(HWND hwnd, int nBar)
 }
 
 /***********************************************************************
- *		FlatSB_SetScrollPos
+ *		FlatSB_SetScrollPos (COMCTL32.35)
  */
 INT WINAPI 
 FlatSB_SetScrollPos(HWND hwnd, int nBar, INT pos, BOOL bRedraw)
@@ -158,7 +158,7 @@ FlatSB_SetScrollPos(HWND hwnd, int nBar, INT pos, BOOL bRedraw)
 }
 
 /***********************************************************************
- *		FlatSB_SetScrollInfo
+ *		FlatSB_SetScrollInfo (COMCTL32.34)
  */
 INT WINAPI 
 FlatSB_SetScrollInfo(HWND hwnd, int nBar, LPSCROLLINFO info, BOOL bRedraw)
@@ -167,7 +167,7 @@ FlatSB_SetScrollInfo(HWND hwnd, int nBar, LPSCROLLINFO info, BOOL bRedraw)
 }
 
 /***********************************************************************
- *		FlatSB_SetScrollRange
+ *		FlatSB_SetScrollRange (COMCTL32.37)
  */
 INT WINAPI 
 FlatSB_SetScrollRange(HWND hwnd, int nBar, INT min, INT max, BOOL bRedraw)

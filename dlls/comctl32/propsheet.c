@@ -1900,7 +1900,8 @@ static void PROPSHEET_CleanUp(HWND hwndDlg)
 }
 
 /******************************************************************************
- *            PropertySheetA   (COMCTL32.84)(COMCTL32.83)
+ *            PropertySheet    (COMCTL32.87)
+ *            PropertySheetA   (COMCTL32.88)
  */
 INT WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
 {
@@ -1942,7 +1943,7 @@ INT WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
 }
 
 /******************************************************************************
- *            PropertySheetW   (COMCTL32.85)
+ *            PropertySheetW   (COMCTL32.89)
  */
 INT WINAPI PropertySheetW(LPCPROPSHEETHEADERW propertySheetHeader)
 {
@@ -1952,7 +1953,8 @@ INT WINAPI PropertySheetW(LPCPROPSHEETHEADERW propertySheetHeader)
 }
 
 /******************************************************************************
- *            CreatePropertySheetPageA   (COMCTL32.19)(COMCTL32.18)
+ *            CreatePropertySheetPage    (COMCTL32.18)
+ *            CreatePropertySheetPageA   (COMCTL32.19)
  */
 HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
                           LPCPROPSHEETPAGEA lpPropSheetPage)

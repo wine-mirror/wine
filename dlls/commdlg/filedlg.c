@@ -1550,7 +1550,7 @@ BOOL16 WINAPI GetSaveFileName16(
 }
 
 /***********************************************************************
- *            GetOpenFileNameA  (COMDLG32.10)
+ *            GetOpenFileNameA  (COMDLG32.@)
  *
  * Creates a dialog box for the user to select a file to open.
  *
@@ -1581,7 +1581,7 @@ BOOL WINAPI GetOpenFileNameA(
 }
 
 /***********************************************************************
- *            GetOpenFileNameW (COMDLG32.11)
+ *            GetOpenFileNameW (COMDLG32.@)
  *
  * Creates a dialog box for the user to select a file to open.
  *
@@ -1612,7 +1612,7 @@ BOOL WINAPI GetOpenFileNameW(
 }
 
 /***********************************************************************
- *            GetSaveFileNameA  (COMDLG32.12)
+ *            GetSaveFileNameA  (COMDLG32.@)
  *
  * Creates a dialog box for the user to select a file to save.
  *
@@ -1643,7 +1643,7 @@ BOOL WINAPI GetSaveFileNameA(
 }
 
 /***********************************************************************
- *            GetSaveFileNameW  (COMDLG32.13)
+ *            GetSaveFileNameW  (COMDLG32.@)
  *
  * Creates a dialog box for the user to select a file to save.
  *

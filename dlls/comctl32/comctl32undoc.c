@@ -1086,7 +1086,7 @@ DSA_SetItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 
 
 /**************************************************************************
- * DSA_InsertItem [COMCTL32.325] 
+ * DSA_InsertItem [COMCTL32.324] 
  *
  * PARAMS
  *     hdsa   [I] pointer to the array control structure
@@ -1210,7 +1210,7 @@ DSA_DeleteItem (const HDSA hdsa, INT nIndex)
 
 
 /**************************************************************************
- * DSA_DeleteAllItems [COMCTL32.326]
+ * DSA_DeleteAllItems [COMCTL32.327]
  *
  * Removes all items and reinitializes the array.
  *

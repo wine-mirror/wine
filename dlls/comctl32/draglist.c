@@ -21,7 +21,7 @@ DEFAULT_DEBUG_CHANNEL(commctrl);
 static DWORD dwLastScrollTime = 0;
 
 /***********************************************************************
- *		MakeDragList
+ *		MakeDragList (COMCTL32.13)
  */
 BOOL WINAPI MakeDragList (HWND hwndLB)
 {
@@ -32,7 +32,7 @@ BOOL WINAPI MakeDragList (HWND hwndLB)
 }
 
 /***********************************************************************
- *		DrawInsert
+ *		DrawInsert (COMCTL32.15)
  */
 VOID WINAPI DrawInsert (HWND hwndParent, HWND hwndLB, INT nItem)
 {
@@ -42,7 +42,7 @@ VOID WINAPI DrawInsert (HWND hwndParent, HWND hwndLB, INT nItem)
 }
 
 /***********************************************************************
- *		LBItemFromPt
+ *		LBItemFromPt (COMCTL32.14)
  */
 INT WINAPI LBItemFromPt (HWND hwndLB, POINT pt, BOOL bAutoScroll)
 {
