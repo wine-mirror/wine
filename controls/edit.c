@@ -972,7 +972,9 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 	}
 	
 	if (es) EDIT_UnlockBuffer(es, FALSE);
-	
+
+        TRACE("hwnd=%p msg=%x (%s) -- 0x%08lx\n", hwnd, msg, SPY_GetMsgName(msg, hwnd), result);
+
 	return result;
 }
 
@@ -3848,23 +3850,8 @@ static LRESULT EDIT_WM_Destroy(EDITSTATE *es)
  */
 static LRESULT EDIT_WM_EraseBkGnd(EDITSTATE *es, HDC dc)
 {
-	HBRUSH brush;
-	RECT rc;
-
-        if (!(brush = EDIT_NotifyCtlColor(es, dc)))
-                brush = (HBRUSH)GetStockObject(WHITE_BRUSH);
-
-	GetClientRect(es->hwndSelf, &rc);
-	IntersectClipRect(dc, rc.left, rc.top, rc.right, rc.bottom);
-	GetClipBox(dc, &rc);
-	/*
-	 *	FIXME:	specs say that we should UnrealizeObject() the brush,
-	 *		but the specs of UnrealizeObject() say that we shouldn't
-	 *		unrealize a stock object.  The default brush that
-	 *		DefWndProc() returns is ... a stock object.
-	 */
-	FillRect(dc, &rc, brush);
-	return -1;
+    /* we do the proper erase in EDIT_WM_Paint */
+    return -1;
 }
 
 
@@ -4447,8 +4434,10 @@ static void EDIT_WM_Paint(EDITSTATE *es, WPARAM wParam)
 	HDC dc;
 	HFONT old_font = 0;
 	RECT rc;
+	RECT rcClient;
 	RECT rcLine;
 	RECT rcRgn;
+	HBRUSH brush;
 	BOOL rev = es->bEnableState &&
 				((es->flags & EF_FOCUSED) ||
 					(es->style & ES_NOHIDESEL));
@@ -4456,8 +4445,19 @@ static void EDIT_WM_Paint(EDITSTATE *es, WPARAM wParam)
             dc = BeginPaint(es->hwndSelf, &ps);
         else
             dc = (HDC) wParam;
+
+	GetClientRect(es->hwndSelf, &rcClient);
+
+	/* paint the background */
+	if (!(brush = EDIT_NotifyCtlColor(es, dc)))
+		brush = (HBRUSH)GetStockObject(WHITE_BRUSH);
+	IntersectClipRect(dc, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom);
+	GetClipBox(dc, &rc);
+	FillRect(dc, &rc, brush);
+
+	/* draw the border */
 	if(es->style & WS_BORDER) {
-		GetClientRect(es->hwndSelf, &rc);
+		rc = rcClient;
 		if(es->style & ES_MULTILINE) {
 			if(es->style & WS_HSCROLL) rc.bottom++;
 			if(es->style & WS_VSCROLL) rc.right++;
@@ -4469,7 +4469,7 @@ static void EDIT_WM_Paint(EDITSTATE *es, WPARAM wParam)
 				es->format_rect.right,
 				es->format_rect.bottom);
 	if (es->style & ES_MULTILINE) {
-		GetClientRect(es->hwndSelf, &rc);
+		rc = rcClient;
 		IntersectClipRect(dc, rc.left, rc.top, rc.right, rc.bottom);
 	}
 	if (es->font)
