@@ -1061,9 +1061,9 @@ TREEVIEW_InsertItemA(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     switch ((DWORD)insertAfter)
     {
     case (DWORD)TVI_FIRST:
+	TREEVIEW_InsertBefore(newItem, parentItem->firstChild, parentItem);
 	if (infoPtr->firstVisible == parentItem->firstChild)
 	    TREEVIEW_SetFirstVisible(infoPtr, newItem, TRUE);
-	TREEVIEW_InsertBefore(newItem, parentItem->firstChild, parentItem);
 	break;
 
     case (DWORD)TVI_LAST:
