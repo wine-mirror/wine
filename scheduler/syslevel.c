@@ -25,8 +25,9 @@
 #endif
 #include <sys/types.h>
 #include "winternl.h"
+#include "wine/winbase16.h"
 #include "syslevel.h"
-#include "stackframe.h"
+#include "thread.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 

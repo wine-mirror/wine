@@ -19,7 +19,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #include "dosexe.h"
-#include "stackframe.h"
+#include "thread.h"
 #include "wine/debug.h"
 #include "builtin16.h"
 

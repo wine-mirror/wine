@@ -26,7 +26,6 @@
 #include <stdio.h>
 
 #include "winternl.h"
-#include "stackframe.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
@@ -525,7 +524,8 @@ void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context )
     WORD nb_args = relay->args / sizeof(int);
 
     /* remove extra stuff from the stack */
-    context->Eip = stack32_pop(context);
+    context->Eip = *(DWORD *)context->Esp;
+    context->Esp += sizeof(DWORD);
     args = (int *)context->Esp;
     if (relay->ret == 0xc2) /* stdcall */
         context->Esp += nb_args * sizeof(int);

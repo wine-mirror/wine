@@ -36,12 +36,12 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winerror.h"
+#include "winnls.h"
 #include "file.h"
 #include "winioctl.h"
 #include "winnt.h"
 #include "msdos.h"
 #include "miscemu.h"
-#include "stackframe.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 #include "callback.h"
@@ -334,6 +334,13 @@ LPCSTR VMM_Service_Name[N_VMM_SERVICE] =
 #define PCC_NOLIN   0x10000000	/* don't map to any linear address */
 
 
+/* Pop a DWORD from the 32-bit stack */
+static inline DWORD stack32_pop( CONTEXT86 *context )
+{
+    DWORD ret = *(DWORD *)context->Esp;
+    context->Esp += sizeof(DWORD);
+    return ret;
+}
 
 HANDLE DEVICE_Open( LPCWSTR filenameW, DWORD access, LPSECURITY_ATTRIBUTES sa )
 {

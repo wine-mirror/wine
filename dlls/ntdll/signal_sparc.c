@@ -36,7 +36,6 @@
 
 #include "wine/exception.h"
 #include "global.h"
-#include "stackframe.h"
 #include "ntdll_misc.h"
 
 #include "wine/debug.h"

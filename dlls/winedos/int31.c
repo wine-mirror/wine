@@ -32,7 +32,7 @@
 #include "excpt.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
-#include "stackframe.h"
+#include "thread.h"
 #include "toolhelp.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int31);

@@ -54,7 +54,6 @@
 #include "wine/library.h"
 #include "wine/exception.h"
 #include "selectors.h"
-#include "stackframe.h"
 #include "global.h"
 #include "ntdll_misc.h"
 #include "miscemu.h"

@@ -50,7 +50,7 @@
 #include "miscemu.h"
 #include "dosexe.h"
 #include "dosvm.h"
-#include "stackframe.h"
+#include "thread.h"
 #include "wine/debug.h"
 #include "excpt.h"
 

@@ -40,7 +40,6 @@
 #include "selectors.h"
 #include "winnt.h"
 #include "wine/server.h"
-#include "stackframe.h"
 #include "wine/debug.h"
 #include "winnls.h"
 
