@@ -2,7 +2,7 @@
     <title>Documenting Wine</title>
 
     <para>
-      This chapter describes how you can help improve Wines documentation.
+      This chapter describes how you can help improve Wine's documentation.
     </para>
 
     <para>
@@ -19,7 +19,7 @@
       a successful experience in installing, setting up and using software. Because Wine is a
       complicated, evolving entity, providing quality up to date documentation is vital to
       encourage more people to persevere with using and contributing to the project.
-      The following sections describe in detail how to go about adding to or updating Wines
+      The following sections describe in detail how to go about adding to or updating Wine's
       existing documentation.
     </para>
 
@@ -60,8 +60,10 @@
           </para></listitem>
 
           <listItem><para>
-          The <emphasis>Wine Packagers Guide</emphasis>. This book contains information for
-          anyone who will be distributing Wine to end users in a prepackaged format.
+          The <emphasis>Wine Packager's Guide</emphasis>. This book contains
+          information for anyone who will be distributing Wine to end users
+          in a prepackaged format. It is also the exception to the rule as
+          it has intentionally been kept in text format.
           </para></listitem>
 
           <listItem><para>
@@ -139,7 +141,7 @@
 
           <listItem><para>
           Additional notes such as interaction with other parts of the system, differences
-          between Wines implementation and Win32s, errors in MSDN documentation,
+          between Wine's implementation and Win32s, errors in MSDN documentation,
           undocumented cases and bugs that Wine corrects or is compatible with.
           </para></listitem>
 
@@ -571,7 +573,7 @@ BOOL WINAPI PathRelativePathToA(
       </para>
 
       <para>
-        An easier way is to use Wines build system. To create man pages for a given
+        An easier way is to use Wine's build system. To create man pages for a given
         dll, just type <command>make man</command> from within the dlls directory
         or type <command>make manpages</command> in the root directory of the Wine
         source tree. You can then check that a man page was generated for your function,
@@ -621,8 +623,8 @@ BOOL WINAPI PathRelativePathToA(
               <para>
                The simple answer to that is that SGML allows you
                to create multiple formats of a given document from a single
-	       source. Currently it is used to create HTML, PDF and PS
-	       (PostScript) versions of the Wine books.
+	       source. Currently it is used to create HTML, PDF, PS
+	       (PostScript) and Text versions of the Wine books.
               </para>
             </note>
 
@@ -746,7 +748,7 @@ BOOL WINAPI PathRelativePathToA(
         <sect4>
           <title>SGML on Debian</title>
           <para>
-           This is not a definitive listing yet, but it seems
+           This is not a definitive list yet, but it seems
 	   you might need the following packages:
             <itemizedlist>
               <listitem>
@@ -927,15 +929,15 @@ BOOL WINAPI PathRelativePathToA(
             example, it doesn't make sense to put a <sgmltag
             class="starttag">book</sgmltag> element inside a <sgmltag
             class="starttag">para</sgmltag> paragraph element -- only
-            the reverse.
+            the reverse makes sense.
           </para>
           <para>
             The DTD thus defines the legal structure of the document.
             It also declares which attributes can be used with which
             tags.  The SGML processing system can use the DTD to make
             sure the document is laid out properly before attempting
-            to process it.  SGML-aware text editors like <link
-            linkend="emacs-psgml">Emacs</link> can also use the DTD to
+            to process it.  SGML-aware text editors like
+            Emacs can also use the DTD to
             guide you while you write, offering you choices about
             which tags you can add in different places in the
             document, and beeping at you when you try to add a tag
@@ -1674,63 +1676,16 @@ BOOL WINAPI PathRelativePathToA(
             </varlistentry>
           </variablelist>
         </sect3>
-
-        <!--sect3>
-          <title>Multiple SGML files</title>
-          <para>
-            How to split an SGML document into multiple files...
-          </para>
-        </sect3-->
       </sect2>
 
       <sect2 id="sgml-environment">
-        <title>The SGML Environment</title>
+        <title>Editing SGML Documents</title>
 
         <para>
           You can write SGML/DocBook documents in any text editor you
-          might find (although as we'll find in <xref
-          linkend="emacs-psgml">, some editors are more friendly for
-          this task than others).  However, if you want to convert
-          those documents into a more friendly form for reading, such
-          as HTML, PostScript, or PDF, you will need a working SGML
-          environment.  This section attempts to lay out the various
-          SGML rendering systems, and how they are set up on the
-          popular Linux distributions.
+          might find although some editors are more friendly for
+          this task than others.
         </para>
-
-        <!--sect3>
-          <title>DSSSL Environment</title>
-          <para>
-            Explain tools and methodologies..
-          </para>
-        </sect3-->
-
-        <!--sect3>
-          <title>XSLT Environment</title>
-          <para>
-            Explain tools and methodologies...
-          </para>
-        </sect3-->
-
-      </sect2>
-
-      <sect2 id="emacs-psgml">
-        <title>PSGML Mode in Emacs</title>
-        <para>
-          Although you can write SGML documentation in any simple text
-          editor, some editors provide extra support for entering SGML
-          tags, and for verifying that the SGML you create is valid.
-          SGML has been around for a long time, and many commercial
-          editors exist for it; however, until recently open source
-          SGML editors have been scarce.
-        </para>
-        <!--note>
-          <title>FIXME</title>
-          <para>
-            List the available commercial and open source SGML
-            editors.
-          </para>
-        </note-->
         <para>
           The most commonly used open source SGML editor is Emacs,
           with the PSGML <firstterm>mode</firstterm>, or extension.
@@ -1739,46 +1694,9 @@ BOOL WINAPI PathRelativePathToA(
           shortcuts for creating SGML, as well as automatic
           formatting, validity checking, and the ability to create
           your own macros to simplify complex, repetitive actions.
-          We'll touch briefly on each of these points.
-        </para>
-        <para>
-          The first thing you need is a working installation of Emacs
-          (or XEmacs), with the PSGML package.  Most Linux
-          distributions provide both as easy-to-install packages.
-        </para>
-        <para>
-          Next, you'll need a working SGML environment.  See <xref
-          linkend="sgml-environment"> for more info on setting that
-          up.
         </para>
       </sect2>
 
-      <!--sect2 id="docbook-build">
-        <title>The DocBook Build System</title>
-
-        <sect3 id="docbook-infrastructure">
-          <title>Basic Infrastructure</title>
-          <para>
-            FIXME: How the build/make system works (makefiles, db2html,
-            jade, stylesheets).
-          </para>
-        </sect3>
-
-        <sect3 id="docbook-tweaking">
-          <title>Tweaking the DSSSL stylesheets</title>
-          <para>
-            FIXME: Things you can tweak, and how to do it (examples from
-            default.dsl and print.dsl).
-          </para>
-        </sect3>
-
-        <sect3 id="docbook-generating">
-          <title>Generating docs for Wine web sites</title>
-          <para>
-            FIXME: Explain make, rsync, etc.
-          </para>
-        </sect3>
-      </sect2-->
     </sect1>
   </chapter>
 
