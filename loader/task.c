@@ -475,7 +475,7 @@ void TASK_KillTask( HTASK16 hTask )
  * during task creation and deletion) in one of two states: either it
  * is the one currently running, then the global variable hCurrentTask
  * contains its task handle, or it is not currently running, then it
- * is blocked on a special scheduler event, a global handle to which
+ * is blocked on a special scheduler event, a global handle which
  * is stored in the task struct.
  *
  * When the current task yields control, this routine gets called. Its
@@ -871,7 +871,7 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 
     if (!HIWORD(func)) {
       /* Win95 actually protects via SEH, but this is better for debugging */
-      ERR("Ouch ! Called with invalid func 0x%08lx !\n", (DWORD)func);
+      WARN("Ouch ! Called with invalid func 0x%08lx !\n", (DWORD)func);
       return (FARPROC16)0;
     }
 
@@ -880,18 +880,18 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 	if ( (!(hInstance & 4)) ||
 	     ((hInstance != 0xffff) && IS_SELECTOR_FREE(hInstance|7)) )
  	{
-	    ERR("Invalid hInstance (%04x) passed to MakeProcInstance !\n",
+	    WARN("Invalid hInstance (%04x) passed to MakeProcInstance !\n",
 		hInstance);
 	    return 0;
 	}
     }
 
-    if ( (CURRENT_DS != hInstanceSelector)
+    if ( (GlobalHandleToSel16(CURRENT_DS) != hInstanceSelector)
       && (hInstance != 0)
       && (hInstance != 0xffff) )
     {
 	/* calling MPI with a foreign DSEG is invalid ! */
-        ERR("Problem with hInstance? Got %04x, using %04x instead\n",
+        WARN("Problem with hInstance? Got %04x, using %04x instead\n",
                    hInstance,CURRENT_DS);
     }
 
@@ -916,7 +916,7 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
     if (((lfunc[0]==0x8c) && (lfunc[1]==0xd8)) || /* movw %ds, %ax */
     	((lfunc[0]==0x1e) && (lfunc[1]==0x58))    /* pushw %ds, popw %ax */
     ) {
-    	FIXME("This was the (in)famous \"thunk useless\" warning. We thought we have to overwrite with nop;nop;, but this isn't true.\n");
+    	WARN("This was the (in)famous \"thunk useless\" warning. We thought we have to overwrite with nop;nop;, but this isn't true.\n");
     }
 
     *thunk++ = 0xb8;    /* movw instance, %ax */
