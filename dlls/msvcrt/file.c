@@ -891,6 +891,14 @@ int __cdecl MSVCRT__wopen(const WCHAR *path,int flags)
 }
 
 /*********************************************************************
+ *		_sopen (MSVCRT.@)
+ */
+int __cdecl MSVCRT__sopen(const char *path,int oflags,int shflags)
+{
+  return MSVCRT__open(path, oflags | shflags);
+}
+
+/*********************************************************************
  *		_creat (MSVCRT.@)
  */
 int __cdecl MSVCRT__creat(const char *path, int flags)

@@ -232,6 +232,15 @@ int __cdecl MSVCRT__setjmp(LPDWORD *jmpbuf)
   return 0;
 }
 
+/*******************************************************************
+ *		_setjmp3 (MSVCRT.@)
+ */
+int __cdecl MSVCRT__setjmp3(LPDWORD *jmpbuf, int x)
+{
+  FIXME(":(%p %x): stub\n",jmpbuf,x);
+  return 0;
+}
+
 /*********************************************************************
  *		longjmp (MSVCRT.@)
  */

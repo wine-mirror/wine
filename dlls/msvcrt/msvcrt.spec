@@ -432,7 +432,7 @@ debug_channels (msvcrt)
 @ stub _set_sbh_threshold #(long)
 @ stub _seterrormode #(long)
 @ cdecl _setjmp(ptr) MSVCRT__setjmp
-@ stub _setjmp3
+@ cdecl _setjmp3(ptr long) MSVCRT__setjmp3
 @ stub _setmaxstdio #(long)
 @ cdecl _setmbcp(long) MSVCRT__setmbcp
 @ cdecl _setmode(long long) MSVCRT__setmode
@@ -440,7 +440,7 @@ debug_channels (msvcrt)
 @ cdecl _sleep(long) MSVCRT__sleep
 @ varargs _snprintf(str long str) snprintf
 @ forward -noimport _snwprintf ntdll._snwprintf
-@ stub _sopen
+@ cdecl _sopen(str long long) MSVCRT__sopen
 @ stub _spawnl #(str str) varargs
 @ stub _spawnle #(str str) varargs
 @ stub _spawnlp #(str str) varargs
