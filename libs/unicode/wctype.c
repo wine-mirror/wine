@@ -3,7 +3,7 @@
 
 #include "wine/unicode.h"
 
-const unsigned short wctype_table[13568] =
+const unsigned short wine_wctype_table[13568] =
 {
     /* offsets */
     0x0100, 0x0200, 0x0300, 0x0400, 0x0500, 0x0600, 0x0700, 0x0800,

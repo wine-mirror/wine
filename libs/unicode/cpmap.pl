@@ -738,8 +738,8 @@ sub DUMP_CASE_MAPPINGS
     printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
     printf OUTPUT "#include \"wine/unicode.h\"\n\n";
 
-    DUMP_CASE_TABLE( "casemap_lower", @tolower_table );
-    DUMP_CASE_TABLE( "casemap_upper", @toupper_table );
+    DUMP_CASE_TABLE( "wine_casemap_lower", @tolower_table );
+    DUMP_CASE_TABLE( "wine_casemap_upper", @toupper_table );
     close OUTPUT;
 }
 
@@ -820,7 +820,7 @@ sub DUMP_CTYPE_TABLES
         }
     }
 
-    printf OUTPUT "const unsigned short wctype_table[%d] =\n{\n", $#array+1;
+    printf OUTPUT "const unsigned short wine_wctype_table[%d] =\n{\n", $#array+1;
     printf OUTPUT "    /* offsets */\n%s,\n", DUMP_ARRAY( "0x%04x", 0, @array[0..255] );
     printf OUTPUT "    /* values */\n%s\n};\n", DUMP_ARRAY( "0x%04x", 0, @array[256..$#array] );
 

@@ -99,7 +99,7 @@ static char *dup_u2c(int cp, const WCHAR *uc)
 	const union cptable *cpdef = find_codepage(cp);
 	if(!cpdef)
 		internal_error(__FILE__, __LINE__, "Codepage %d not found (vanished?)", cp);
-	if((len = cp_wcstombs(cpdef, 0, uc, unistrlen(uc)+1, cptr, len+1, NULL, NULL)) < 0)
+	if((len = wine_cp_wcstombs(cpdef, 0, uc, unistrlen(uc)+1, cptr, len+1, NULL, NULL)) < 0)
 		internal_error(__FILE__, __LINE__, "Buffer overflow? code %d.", len);
 	return cptr;
 }
@@ -382,7 +382,7 @@ static char *make_string(WCHAR *uc, int len, int codepage)
 		const union cptable *cpdef = find_codepage(codepage);
 
 		assert(cpdef != NULL);
-		if((i = cp_wcstombs(cpdef, 0, uc, unistrlen(uc)+1, tmp, 2*len+1, NULL, NULL)) < 0)
+		if((i = wine_cp_wcstombs(cpdef, 0, uc, unistrlen(uc)+1, tmp, 2*len+1, NULL, NULL)) < 0)
 			internal_error(__FILE__, __LINE__, "Buffer overflow? code %d.", i);
 		*cptr++ = ' ';
 		*cptr++ = '"';
@@ -506,4 +506,3 @@ void write_bin_files(void)
 {
 	assert(rcinline == 0);
 }
-

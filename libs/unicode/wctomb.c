@@ -420,9 +420,9 @@ static int wcstombs_dbcs_slow( const struct dbcs_table *table, int flags,
 
 /* wide char to multi byte string conversion */
 /* return -1 on dst buffer overflow */
-int cp_wcstombs( const union cptable *table, int flags,
-                 const WCHAR *src, int srclen,
-                 char *dst, int dstlen, const char *defchar, int *used )
+int wine_cp_wcstombs( const union cptable *table, int flags,
+                      const WCHAR *src, int srclen,
+                      char *dst, int dstlen, const char *defchar, int *used )
 {
     if (table->info.char_size == 1)
     {

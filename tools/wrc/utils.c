@@ -247,7 +247,7 @@ int compare_name_id(name_id_t *n1, name_id_t *n2)
 
 string_t *convert_string(const string_t *str, enum str_e type, int codepage)
 {
-    const union cptable *cptable = codepage ? cp_get_table( codepage ) : NULL;
+    const union cptable *cptable = codepage ? wine_cp_get_table( codepage ) : NULL;
     string_t *ret = xmalloc(sizeof(*ret));
 
     if (!cptable && str->type != type)
@@ -256,18 +256,18 @@ string_t *convert_string(const string_t *str, enum str_e type, int codepage)
     if((str->type == str_char) && (type == str_unicode))
     {
         ret->type     = str_unicode;
-        ret->size     = cp_mbstowcs( cptable, 0, str->str.cstr, str->size, NULL, 0 );
+        ret->size     = wine_cp_mbstowcs( cptable, 0, str->str.cstr, str->size, NULL, 0 );
         ret->str.wstr = xmalloc( (ret->size+1) * sizeof(WCHAR) );
-        cp_mbstowcs( cptable, 0, str->str.cstr, str->size, ret->str.wstr, ret->size );
+        wine_cp_mbstowcs( cptable, 0, str->str.cstr, str->size, ret->str.wstr, ret->size );
         ret->str.wstr[ret->size] = 0;
     }
     else if((str->type == str_unicode) && (type == str_char))
     {
         ret->type     = str_char;
-        ret->size     = cp_wcstombs( cptable, 0, str->str.wstr, str->size,
-                                     NULL, 0, NULL, NULL );
+        ret->size     = wine_cp_wcstombs( cptable, 0, str->str.wstr, str->size,
+                                          NULL, 0, NULL, NULL );
         ret->str.cstr = xmalloc( ret->size + 1 );
-        cp_wcstombs( cptable, 0, str->str.wstr, str->size, ret->str.cstr, ret->size,
+        wine_cp_wcstombs( cptable, 0, str->str.wstr, str->size, ret->str.cstr, ret->size,
                      NULL, NULL );
         ret->str.cstr[ret->size] = 0;
     }
@@ -436,6 +436,6 @@ int get_language_codepage( unsigned short lang, unsigned short sublang )
     }
 
     if (cp == -1) cp = defcp;
-    assert( cp <= 0 || cp_get_table(cp) );
+    assert( cp <= 0 || wine_cp_get_table(cp) );
     return cp;
 }

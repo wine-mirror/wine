@@ -59,17 +59,17 @@ union cptable
     struct dbcs_table dbcs;
 };
 
-extern const union cptable *cp_get_table( unsigned int codepage );
-extern const union cptable *cp_enum_table( unsigned int index );
+extern const union cptable *wine_cp_get_table( unsigned int codepage );
+extern const union cptable *wine_cp_enum_table( unsigned int index );
 
-extern int cp_mbstowcs( const union cptable *table, int flags,
-                        const char *src, int srclen,
-                        WCHAR *dst, int dstlen );
-extern int cp_wcstombs( const union cptable *table, int flags,
-                        const WCHAR *src, int srclen,
-                        char *dst, int dstlen, const char *defchar, int *used );
-extern int utf8_wcstombs( const WCHAR *src, int srclen, char *dst, int dstlen );
-extern int utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen );
+extern int wine_cp_mbstowcs( const union cptable *table, int flags,
+                             const char *src, int srclen,
+                             WCHAR *dst, int dstlen );
+extern int wine_cp_wcstombs( const union cptable *table, int flags,
+                             const WCHAR *src, int srclen,
+                             char *dst, int dstlen, const char *defchar, int *used );
+extern int wine_utf8_wcstombs( const WCHAR *src, int srclen, char *dst, int dstlen );
+extern int wine_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen );
 
 extern int strcmpiW( const WCHAR *str1, const WCHAR *str2 );
 extern int strncmpiW( const WCHAR *str1, const WCHAR *str2, int n );
@@ -88,22 +88,22 @@ static inline int is_dbcs_leadbyte( const union cptable *table, unsigned char ch
 
 static inline WCHAR tolowerW( WCHAR ch )
 {
-    extern const WCHAR casemap_lower[];
-    return ch + casemap_lower[casemap_lower[ch >> 8] + (ch & 0xff)];
+    extern const WCHAR wine_casemap_lower[];
+    return ch + wine_casemap_lower[wine_casemap_lower[ch >> 8] + (ch & 0xff)];
 }
 
 static inline WCHAR toupperW( WCHAR ch )
 {
-    extern const WCHAR casemap_upper[];
-    return ch + casemap_upper[casemap_upper[ch >> 8] + (ch & 0xff)];
+    extern const WCHAR wine_casemap_upper[];
+    return ch + wine_casemap_upper[wine_casemap_upper[ch >> 8] + (ch & 0xff)];
 }
 
 /* the character type contains the C1_* flags in the low 12 bits */
 /* and the C2_* type in the high 4 bits */
 static inline unsigned short get_char_typeW( WCHAR ch )
 {
-    extern const unsigned short wctype_table[];
-    return wctype_table[wctype_table[ch >> 8] + (ch & 0xff)];
+    extern const unsigned short wine_wctype_table[];
+    return wine_wctype_table[wine_wctype_table[ch >> 8] + (ch & 0xff)];
 }
 
 inline static int iscntrlW( WCHAR wc )

@@ -201,7 +201,7 @@ try_again:
 		else if(!cptr)
 			return 0;
 		assert(codepage_def != NULL);
-		n = cp_mbstowcs(codepage_def, 0, xlatebuffer, strlen(xlatebuffer)+1, inputbuffer, INPUTBUFFER_SIZE);
+		n = wine_cp_mbstowcs(codepage_def, 0, xlatebuffer, strlen(xlatebuffer)+1, inputbuffer, INPUTBUFFER_SIZE);
 		if(n < 0)
 			internal_error(__FILE__, __LINE__, "Could not translate to unicode (%d)", n);
 		if(n <= 1)
@@ -745,4 +745,3 @@ int yylex(void)
 		}
 	}
 }
-

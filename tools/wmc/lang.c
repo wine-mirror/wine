@@ -152,7 +152,7 @@ void show_codepages(void)
 	unsigned i;
 	const union cptable *cpp;
 	printf("Codepages:\n");
-	for(i = 0; (cpp = cp_enum_table(i)); i++)
+	for(i = 0; (cpp = wine_cp_enum_table(i)); i++)
 	{
 		printf("%-5d %s\n", cpp->info.codepage, cpp->info.name);
 	}
@@ -160,5 +160,5 @@ void show_codepages(void)
 
 const union cptable *find_codepage(int id)
 {
-	return cp_get_table(id);
+	return wine_cp_get_table(id);
 }

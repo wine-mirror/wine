@@ -60,7 +60,7 @@ inline static int get_length_wcs_utf8( const WCHAR *src, unsigned int srclen )
 
 /* wide char to UTF-8 string conversion */
 /* return -1 on dst buffer overflow */
-int utf8_wcstombs( const WCHAR *src, int srclen, char *dst, int dstlen )
+int wine_utf8_wcstombs( const WCHAR *src, int srclen, char *dst, int dstlen )
 {
     int ret = srclen;
 
@@ -140,7 +140,7 @@ inline static int get_length_mbs_utf8( const unsigned char *src, int srclen )
 
 /* UTF-8 to wide char string conversion */
 /* return -1 on dst buffer overflow, -2 on invalid input char */
-int utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
+int wine_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen )
 {
     int len, count;
     unsigned int res;

@@ -353,7 +353,7 @@ static struct keyword *iskeyword(char *kw)
         yy_pop_state();
         while (*p < '0' || *p > '9') p++;
         current_codepage = strtol( p, NULL, 10 );
-        if (current_codepage && !cp_get_table( current_codepage ))
+        if (current_codepage && !wine_cp_get_table( current_codepage ))
         {
             yyerror("Codepage %d not supported", current_codepage);
             current_codepage = 0;
