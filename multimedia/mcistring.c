@@ -29,16 +29,10 @@
 #include "debug.h"
 #include "xmalloc.h"
 
-
 extern struct WINE_MCIDRIVER mciDrv[MAXMCIDRIVERS];
 
-#define mciGetDrv(wDevID) 	(&mciDrv[MMSYSTEM_DevIDToIndex(wDevID)])
-#define mciGetOpenDrv(wDevID) 	(&(mciGetDrv(wDevID)->mop))
-
-extern int MMSYSTEM_DevIDToIndex(UINT16 wDevID);
-extern UINT16 MMSYSTEM_FirstDevID(void);
-extern UINT16 MMSYSTEM_NextDevID(UINT16 wDevID);
-extern BOOL32 MMSYSTEM_DevIDValid(UINT16 wDevID);
+#define MCI_GetDrv(wDevID) 	(&mciDrv[MCI_DevIDToIndex(wDevID)])
+#define MCI_GetOpenDrv(wDevID) 	(&(MCI_GetDrv(wDevID)->mop))
 
 LONG WINAPI DrvDefDriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
                              DWORD dwParam1, DWORD dwParam2);
@@ -65,31 +59,13 @@ LONG WINAPI DrvDefDriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 	}\
 } while(0)
 
-/* calling DriverProc. We need to pass the struct as linear pointer. */
+/* calling DriverProc. */
 #define _MCI_CALL_DRIVER(cmd,params) \
-	switch(uDevTyp) {\
-	case MCI_DEVTYPE_CD_AUDIO:\
-		res=CDAUDIO_DriverProc32(mciGetDrv(wDevID)->modp.wDeviceID,0,cmd,dwFlags, (DWORD)(params));\
-		break;\
-	case MCI_DEVTYPE_WAVEFORM_AUDIO:\
-		res=WAVE_DriverProc32(mciGetDrv(wDevID)->modp.wDeviceID,0,cmd,dwFlags,(DWORD)(params));\
-		break;\
-	case MCI_DEVTYPE_SEQUENCER:\
-		res=MIDI_DriverProc32(mciGetDrv(wDevID)->modp.wDeviceID,0,cmd,dwFlags,(DWORD)(params));\
-		break;\
-	case MCI_DEVTYPE_ANIMATION:\
-		res=ANIM_DriverProc32(mciGetDrv(wDevID)->modp.wDeviceID,0,cmd,dwFlags,(DWORD)(params));\
-		break;\
-	case MCI_DEVTYPE_DIGITAL_VIDEO:\
-		FIXME(mci,"_MCI_CALL_DRIVER: No DIGITAL_VIDEO yet !\n");\
-		res=MCIERR_DEVICE_NOT_INSTALLED;\
-		break;\
-	default:\
-		/*res = Callbacks->CallDriverProc(mciGetDrv(wDevID)->driverproc,mciGetDrv(wDevID)->modp.wDeviceID,mciGetDrv(wDevID)->hdrv,cmd,dwFlags,(DWORD)(params));\
-		  break;*/\
-		res = MCIERR_DEVICE_NOT_INSTALLED;\
-		break;\
+ 	{ \
+	    MCIPROC32	proc = MCI_GetProc32(uDevTyp); \
+            res = (proc) ? (*proc)(MCI_GetDrv(wDevID)->modp.wDeviceID, 0, cmd, dwFlags, (DWORD)(params)) : MCIERR_DEVICE_NOT_INSTALLED;	\
 	}
+
 /* print a DWORD in the specified timeformat */
 static void
 _MCISTR_printtf(char *buf,UINT16 uDevType,DWORD timef,DWORD val) {
@@ -310,33 +286,24 @@ MCISTR_Open(_MCISTR_PROTO_) {
 	pU->openParams.lpstrElementName=strdup(s);
 	dwFlags |= MCI_OPEN_ELEMENT;
     }
-    if (!STRCMP(dev,"cdaudio")) {
-	uDevTyp=MCI_DEVTYPE_CD_AUDIO;
-    } else if (!STRCMP(dev,"waveaudio")) {
-	uDevTyp=MCI_DEVTYPE_WAVEFORM_AUDIO;
-    } else if (!STRCMP(dev,"sequencer")) {
-	uDevTyp=MCI_DEVTYPE_SEQUENCER;
-    } else if (!STRCMP(dev,"animation1")) {
-	uDevTyp=MCI_DEVTYPE_ANIMATION;
-    } else if (!STRCMP(dev,"avivideo")) {
-	uDevTyp=MCI_DEVTYPE_DIGITAL_VIDEO;
-    } else {
+    uDevTyp = MCI_GetDevType(dev);
+    if (uDevTyp == 0) {
 	free(pU->openParams.lpstrElementName);
 	free(pU);
 	return MCIERR_INVALID_DEVICE_NAME;
     }
-    wDevID=MMSYSTEM_FirstDevID();
-    while(mciGetDrv(wDevID)->modp.wType) {
-	wDevID = MMSYSTEM_NextDevID(wDevID);
-	if (!MMSYSTEM_DevIDValid(wDevID)) {
+    wDevID=MCI_FirstDevID();
+    while(MCI_GetDrv(wDevID)->modp.wType) {
+	wDevID = MCI_NextDevID(wDevID);
+	if (!MCI_DevIDValid(wDevID)) {
 	    TRACE(mci, "MAXMCIDRIVERS reached (%x) !\n", wDevID);
 	    free(pU->openParams.lpstrElementName);
 	    free(pU);
 	    return MCIERR_INTERNAL;
 	}
     }
-    mciGetDrv(wDevID)->modp.wType	= uDevTyp;
-    mciGetDrv(wDevID)->modp.wDeviceID	= 0;  /* FIXME? for multiple devices */
+    MCI_GetDrv(wDevID)->modp.wType	= uDevTyp;
+    MCI_GetDrv(wDevID)->modp.wDeviceID	= 0;  /* FIXME? for multiple devices */
     pU->openParams.dwCallback	= hwndCallback ;
     pU->openParams.wDeviceID	= wDevID;
     pU->openParams.wReserved0   = 0;
@@ -427,7 +394,7 @@ MCISTR_Open(_MCISTR_PROTO_) {
     }
     _MCI_CALL_DRIVER(MCI_OPEN, pU);
     if (res==0)
-	memcpy(mciGetOpenDrv(wDevID),&pU->openParams,sizeof(MCI_OPEN_PARMS16));
+	memcpy(MCI_GetOpenDrv(wDevID),&pU->openParams,sizeof(MCI_OPEN_PARMS16));
     else {
  	free(pU->openParams.lpstrElementName);
 	free(pU->openParams.lpstrDeviceType);
@@ -1363,7 +1330,7 @@ MCISTR_Sysinfo(_MCISTR_PROTO_) {
 	    i++;
 	}
     }
-    res = mciSendCommand(0, MCI_SYSINFO, dwFlags, (DWORD)&sysinfoParams);
+    res = mciSendCommand16(0, MCI_SYSINFO, dwFlags, (DWORD)&sysinfoParams);
 
     if (dwFlags & MCI_SYSINFO_QUANTITY) {
 	char	buf[100];
@@ -2085,8 +2052,9 @@ struct	_MCISTR_cmdtable {
     {"window",		MCISTR_Window},
     {NULL,		NULL}
 };
+
 /**************************************************************************
- * 				mciSendString			[MMSYSTEM.702]
+ * 				mciSendString16			[MMSYSTEM.702]
  */
 /* The usercode sends a string with a command (and flags) expressed in 
  * words in it... We do our best to call aprobiate drivers,
@@ -2096,7 +2064,7 @@ struct	_MCISTR_cmdtable {
 /* FIXME: "all" is a valid devicetype and we should access all devices if
  * it is used. (imagine "close all"). Not implemented yet.
  */
-DWORD WINAPI mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString, 
+DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrReturnString, 
                             UINT16 uReturnLength, HWND16 hwndCallback)
 {
     char	*cmd,*dev,*args,**keywords,*filename;
@@ -2104,9 +2072,9 @@ DWORD WINAPI mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
     DWORD	dwFlags;
     int	res=0,i,nrofkeywords;
     
-    TRACE(mci,"('%s', %p, %d, %X)\n", lpstrCommand, 
-	  lpstrReturnString, uReturnLength, hwndCallback
-	  );
+    TRACE(mci,"('%s', %p, %d, %X)\n", 
+	  lpstrCommand, lpstrReturnString, uReturnLength, hwndCallback);
+
     /* format is <command> <device> <optargs> */
     cmd=strdup(lpstrCommand);
     dev=strchr(cmd,' ');
@@ -2163,23 +2131,23 @@ DWORD WINAPI mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
     
     /* determine wDevID and uDevTyp for all commands except "open" */
     if (STRCMP(cmd,"open")!=0) {
-	wDevID = MMSYSTEM_FirstDevID();
+	wDevID = MCI_FirstDevID();
 	while (1) {
 	    LPSTR	dname;
 	    
-	    dname=mciGetOpenDrv(wDevID)->lpstrAlias;
+	    dname=MCI_GetOpenDrv(wDevID)->lpstrAlias;
 	    if (dname==NULL) 
-		dname=mciGetOpenDrv(wDevID)->lpstrDeviceType;
+		dname=MCI_GetOpenDrv(wDevID)->lpstrDeviceType;
 	    if (dname != NULL && !STRCMP(dname,dev))
 		break;
-	    wDevID = MMSYSTEM_NextDevID(wDevID);
-	    if (!MMSYSTEM_DevIDValid(wDevID)) {
+	    wDevID = MCI_NextDevID(wDevID);
+	    if (!MCI_DevIDValid(wDevID)) {
 		TRACE(mci, "MAXMCIDRIVERS reached!\n");
 		free(keywords);free(cmd);
 		return MCIERR_INVALID_DEVICE_NAME;
 	    }
 	}
-	uDevTyp=mciGetDrv(wDevID)->modp.wType;
+	uDevTyp=MCI_GetDrv(wDevID)->modp.wType;
     }
     
     for (i=0;MCISTR_cmdtable[i].cmd!=NULL;i++) {
@@ -2200,4 +2168,29 @@ DWORD WINAPI mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 	  lpstrCommand, lpstrReturnString, uReturnLength, hwndCallback);
     free(keywords);free(cmd);
     return MCIERR_MISSING_COMMAND_STRING;
+}
+
+/**************************************************************************
+ * 				mciSendString32A	[MMSYSTEM.702][WINMM.51]
+ */
+DWORD WINAPI mciSendString32A(LPCSTR lpstrCommand, LPSTR lpstrReturnString, 
+			      UINT32 uReturnLength, HWND32 hwndCallback)
+{
+    return mciSendString16(lpstrCommand, lpstrReturnString, uReturnLength, hwndCallback);
+}
+
+/**************************************************************************
+ * 				mciSendString32W	[WINMM.52]
+ */
+DWORD WINAPI mciSendString32W(LPCWSTR lpwstrCommand, LPSTR lpstrReturnString, 
+			      UINT32 uReturnLength, HWND32 hwndCallback)
+{
+    LPSTR 	lpstrCommand;
+    UINT32	ret;
+
+    /* FIXME: is there something to do with lpstrReturnString ? */
+    lpstrCommand = HEAP_strdupWtoA(GetProcessHeap(), 0, lpwstrCommand);
+    ret = mciSendString16(lpstrCommand, lpstrReturnString, uReturnLength, hwndCallback);
+    HeapFree(GetProcessHeap(), 0, lpstrCommand);
+    return ret;
 }
