@@ -14,6 +14,7 @@
 #include "winuser.h"
 #include "wine/unicode.h"
 #include "oleauto.h"    /* for SysAllocString(....) */
+#include "wine/obj_base.h"
 #include "wine/obj_olefont.h"
 #include "wine/obj_storage.h"
 #include "ole2.h"
@@ -1588,3 +1589,76 @@ static HRESULT WINAPI OLEFontImpl_FindConnectionPoint(
   }
 }
 
+/*******************************************************************************
+ * StdFont ClassFactory
+ */
+typedef struct
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IClassFactory);
+    DWORD                       ref;
+} IClassFactoryImpl;
+
+static HRESULT WINAPI 
+SFCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static ULONG WINAPI
+SFCF_AddRef(LPCLASSFACTORY iface) {
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
+}
+
+static ULONG WINAPI SFCF_Release(LPCLASSFACTORY iface) {
+	ICOM_THIS(IClassFactoryImpl,iface);
+	/* static class, won't be  freed */
+	return --(This->ref);
+}
+
+static HRESULT WINAPI SFCF_CreateInstance(
+	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
+) {
+	ICOM_THIS(IClassFactoryImpl,iface);
+
+	if (IsEqualGUID(riid,&IID_IFont)) {
+	    FONTDESC fd;
+
+	    WCHAR fname[] = { 'S','y','s','t','e','m',0 };
+
+	    fd.cbSizeofstruct = sizeof(fd);
+	    fd.lpstrName      = fname;
+	    fd.cySize.s.Lo    = 80000;
+	    fd.cySize.s.Hi    = 0;
+	    fd.sWeight 	      = 0;
+	    fd.sCharset       = 0;
+	    fd.fItalic	      = 0;
+	    fd.fUnderline     = 0;
+	    fd.fStrikethrough = 0;
+	    return OleCreateFontIndirect(&fd,riid,ppobj);
+	}
+
+	FIXME("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
+	return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI SFCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME("(%p)->(%d),stub!\n",This,dolock);
+	return S_OK;
+}
+
+static ICOM_VTABLE(IClassFactory) SFCF_Vtbl = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	SFCF_QueryInterface,
+	SFCF_AddRef,
+	SFCF_Release,
+	SFCF_CreateInstance,
+	SFCF_LockServer
+};
+static IClassFactoryImpl STDFONT_CF = {&SFCF_Vtbl, 1 };
+
+void _get_STDFONT_CF(LPVOID *ppv) { *ppv = (LPVOID)&STDFONT_CF; }

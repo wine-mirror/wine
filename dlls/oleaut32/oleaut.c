@@ -11,6 +11,9 @@
 #include "winerror.h"
 
 #include "ole2.h"
+#include "olectl.h"
+#include "wine/obj_oleaut.h"
+#include "wine/obj_olefont.h"
 #include "heap.h"
 #include "debugtools.h"
 
@@ -134,4 +137,25 @@ HRESULT WINAPI OLEAUT32_DllRegisterServer() {
 HRESULT WINAPI OLEAUT32_DllUnregisterServer() {
     FIXME("stub!\n");
     return S_OK;
+}
+
+extern void _get_STDFONT_CF(LPVOID);
+
+HRESULT WINAPI OLEAUT32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv)
+{
+    *ppv = NULL;
+    if (IsEqualGUID(rclsid,&CLSID_StdFont)) {
+	if (IsEqualGUID(iid,&IID_IClassFactory)) {
+	    _get_STDFONT_CF(ppv);
+	    IClassFactory_AddRef((IClassFactory*)*ppv);
+	    return S_OK;
+	}
+    }
+    FIXME("\n\tCLSID:\t%s,\n\tIID:\t%s\n",debugstr_guid(rclsid),debugstr_guid(iid));
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+HRESULT WINAPI OLEAUT32_DllCanUnloadNow() {
+    FIXME("(), stub!\n");
+    return S_FALSE;
 }

@@ -11,7 +11,7 @@ import ntdll.dll
 
 debug_channels (ole typelib)
 
-1 stub DllGetClassObject
+1 stdcall DllGetClassObject(ptr ptr ptr) OLEAUT32_DllGetClassObject
 2 stdcall SysAllocString(wstr) SysAllocString
 3 stdcall SysReAllocString(ptr wstr) SysReAllocString
 4 stdcall SysAllocStringLen(wstr long) SysAllocStringLen
@@ -286,7 +286,7 @@ debug_channels (ole typelib)
 397 stub UserMSG_to_local
 398 stub UserMSG_free_inst
 399 stub UserMSG_free_local
-410 stub DllCanUnloadNow
+410 stdcall DllCanUnloadNow() OLEAUT32_DllCanUnloadNow
 411 stdcall SafeArrayCreateVector(long long long) SafeArrayCreateVector
 412 stdcall SafeArrayCopyData(ptr ptr) SafeArrayCopyData
 413 stub VectorFromBstr
