@@ -9,6 +9,10 @@
 
 #include "windef.h"
 
+#ifndef RC_INVOKED
+#include <string.h>
+#endif
+
 #include "pshpack1.h"
 /* Defines */
 
