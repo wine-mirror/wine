@@ -54,8 +54,8 @@
 #include "mmddk.h"
 #include "dsound.h"
 #include "dsdriver.h"
-#define ALSA_PCM_OLD_HW_PARAMS_API
-#define ALSA_PCM_OLD_SW_PARAMS_API
+#define ALSA_PCM_NEW_HW_PARAMS_API
+#define ALSA_PCM_NEW_SW_PARAMS_API
 #include "alsa.h"
 #include "wine/library.h"
 #include "wine/debug.h"
@@ -391,8 +391,12 @@ static int ALSA_XRUNRecovery(WINE_WAVEOUT * wwo, int err)
  */
 static void ALSA_TraceParameters(snd_pcm_hw_params_t * hw_params, snd_pcm_sw_params_t * sw, int full)
 {
-    snd_pcm_format_t   format = snd_pcm_hw_params_get_format(hw_params);
-    snd_pcm_access_t   access = snd_pcm_hw_params_get_access(hw_params);
+    int err;
+    snd_pcm_format_t   format;
+    snd_pcm_access_t   access;
+
+    err = snd_pcm_hw_params_get_access(hw_params, &access);
+    err = snd_pcm_hw_params_get_format(hw_params, &format);
 
 #define X(x) ((x)? "true" : "false")
     if (full)
@@ -438,32 +442,69 @@ static void ALSA_TraceParameters(snd_pcm_hw_params_t * hw_params, snd_pcm_sw_par
 		TRACE("format=%s\n", snd_pcm_format_name(format));
     }
 
-#define X(x) do { \
-int n = snd_pcm_hw_params_get_##x(hw_params); \
-if (n<0) \
-    TRACE(#x "_min=%ld " #x "_max=%ld\n", \
-        (long int)snd_pcm_hw_params_get_##x##_min(hw_params), \
-	(long int)snd_pcm_hw_params_get_##x##_max(hw_params)); \
-else \
-    TRACE(#x "=%d\n", n); \
-} while(0)
-    X(channels);
-    X(buffer_size);
-#undef X
+    do {
+      int err=0;
+      unsigned int val=0;
+      err = snd_pcm_hw_params_get_channels(hw_params, &val); 
+      if (err<0) {
+        unsigned int min = 0;
+        unsigned int max = 0;
+        err = snd_pcm_hw_params_get_channels_min(hw_params, &min), 
+	err = snd_pcm_hw_params_get_channels_max(hw_params, &max); 
+        TRACE("channels_min=%u, channels_min_max=%u\n", min, max);
+      } else {
+        TRACE("channels_min=%d\n", val);
+      }
+    } while(0);
+    do {
+      int err=0;
+      snd_pcm_uframes_t val=0;
+      err = snd_pcm_hw_params_get_buffer_size(hw_params, &val); 
+      if (err<0) {
+        snd_pcm_uframes_t min = 0;
+        snd_pcm_uframes_t max = 0;
+        err = snd_pcm_hw_params_get_buffer_size_min(hw_params, &min), 
+	err = snd_pcm_hw_params_get_buffer_size_max(hw_params, &max); 
+        TRACE("buffer_size_min=%lu, buffer_size_min_max=%lu\n", min, max);
+      } else {
+        TRACE("buffer_size_min=%lu\n", val);
+      }
+    } while(0);
 
 #define X(x) do { \
-int n = snd_pcm_hw_params_get_##x(hw_params,0); \
-if (n<0) \
-    TRACE(#x "_min=%ld " #x "_max=%ld\n", \
-        (long int)snd_pcm_hw_params_get_##x##_min(hw_params,0), \
-	(long int)snd_pcm_hw_params_get_##x##_max(hw_params,0)); \
-else \
-    TRACE(#x "=%d\n", n); \
+int err=0; \
+int dir=0; \
+unsigned int val=0; \
+err = snd_pcm_hw_params_get_##x(hw_params,&val, &dir); \
+if (err<0) { \
+  unsigned int min = 0; \
+  unsigned int max = 0; \
+  err = snd_pcm_hw_params_get_##x##_min(hw_params, &min, &dir); \
+  err = snd_pcm_hw_params_get_##x##_max(hw_params, &max, &dir); \
+  TRACE(#x "_min=%u " #x "_max=%u\n", min, max); \
+} else \
+    TRACE(#x "=%d\n", val); \
 } while(0)
+
     X(rate);
     X(buffer_time);
     X(periods);
-    X(period_size);
+    do {
+      int err=0;
+      int dir=0;
+      snd_pcm_uframes_t val=0;
+      err = snd_pcm_hw_params_get_period_size(hw_params, &val, &dir); 
+      if (err<0) {
+        snd_pcm_uframes_t min = 0;
+        snd_pcm_uframes_t max = 0;
+        err = snd_pcm_hw_params_get_period_size_min(hw_params, &min, &dir), 
+	err = snd_pcm_hw_params_get_period_size_max(hw_params, &max, &dir); 
+        TRACE("period_size_min=%lu, period_size_min_max=%lu\n", min, max);
+      } else {
+        TRACE("period_size_min=%lu\n", val);
+      }
+    } while(0);
+
     X(period_time);
     X(tick_time);
 #undef X
@@ -525,6 +566,12 @@ LONG ALSA_WaveInit(void)
     snd_pcm_t*                  h;
     snd_pcm_info_t *            info;
     snd_pcm_hw_params_t *       hw_params;
+    unsigned int ratemin=0;
+    unsigned int ratemax=0;
+    unsigned int chmin=0;
+    unsigned int chmax=0;
+    int dir=0;
+    int err=0;
     WINE_WAVEOUT*	        wwo;
     WINE_WAVEIN*	        wwi;
 
@@ -577,15 +624,15 @@ LONG ALSA_WaveInit(void)
     EXIT_ON_ERROR( snd_pcm_hw_params_any(h, hw_params) , "pcm hw params" );
 #undef EXIT_ON_ERROR
 
+    err = snd_pcm_hw_params_get_rate_min(hw_params, &ratemin, &dir);
+    err = snd_pcm_hw_params_get_rate_max(hw_params, &ratemax, &dir);
+    err = snd_pcm_hw_params_get_channels_min(hw_params, &chmin);
+    err = snd_pcm_hw_params_get_channels_max(hw_params, &chmax);
     if (TRACE_ON(wave))
 	ALSA_TraceParameters(hw_params, NULL, TRUE);
 
     {
 	snd_pcm_format_mask_t *     fmask;
-	int ratemin = snd_pcm_hw_params_get_rate_min(hw_params, 0);
-	int ratemax = snd_pcm_hw_params_get_rate_max(hw_params, 0);
-	int chmin = snd_pcm_hw_params_get_channels_min(hw_params); \
-	int chmax = snd_pcm_hw_params_get_channels_max(hw_params); \
 
 	snd_pcm_format_mask_alloca(&fmask);
 	snd_pcm_hw_params_get_format_mask(hw_params, fmask);
@@ -616,9 +663,9 @@ LONG ALSA_WaveInit(void)
 #undef X
     }
 
-    if ( snd_pcm_hw_params_get_channels_min(hw_params) > 1) FIXME("-\n");
-    wwo->caps.wChannels = (snd_pcm_hw_params_get_channels_max(hw_params) >= 2) ? 2 : 1;
-    if (snd_pcm_hw_params_get_channels_min(hw_params) <= 2 && 2 <= snd_pcm_hw_params_get_channels_max(hw_params))
+    if ( chmin > 1) FIXME("-\n");
+    wwo->caps.wChannels = (chmax >= 2) ? 2 : 1;
+    if (chmin <= 2 && 2 <= chmax)
         wwo->caps.dwSupport |= WAVECAPS_LRVOLUME;
 
     /* FIXME: always true ? */
@@ -683,16 +730,16 @@ LONG ALSA_WaveInit(void)
 
     EXIT_ON_ERROR( snd_pcm_hw_params_any(h, hw_params) , "pcm hw params" );
 #undef EXIT_ON_ERROR
+    err = snd_pcm_hw_params_get_rate_min(hw_params, &ratemin, &dir);
+    err = snd_pcm_hw_params_get_rate_max(hw_params, &ratemax, &dir);
+    err = snd_pcm_hw_params_get_channels_min(hw_params, &chmin);
+    err = snd_pcm_hw_params_get_channels_max(hw_params, &chmax);
 
     if (TRACE_ON(wave))
 	ALSA_TraceParameters(hw_params, NULL, TRUE);
 
     {
 	snd_pcm_format_mask_t *     fmask;
-	int ratemin = snd_pcm_hw_params_get_rate_min(hw_params, 0);
-	int ratemax = snd_pcm_hw_params_get_rate_max(hw_params, 0);
-	int chmin = snd_pcm_hw_params_get_channels_min(hw_params); \
-	int chmax = snd_pcm_hw_params_get_channels_max(hw_params); \
 
 	snd_pcm_format_mask_alloca(&fmask);
 	snd_pcm_hw_params_get_format_mask(hw_params, fmask);
@@ -723,9 +770,9 @@ LONG ALSA_WaveInit(void)
 #undef X
     }
 
-    if ( snd_pcm_hw_params_get_channels_min(hw_params) > 1) FIXME("-\n");
-    wwi->caps.wChannels = (snd_pcm_hw_params_get_channels_max(hw_params) >= 2) ? 2 : 1;
-    if (snd_pcm_hw_params_get_channels_min(hw_params) <= 2 && 2 <= snd_pcm_hw_params_get_channels_max(hw_params))
+    if ( chmin > 1) FIXME("-\n");
+    wwi->caps.wChannels = (chmax >= 2) ? 2 : 1;
+    if (chmin <= 2 && 2 <= chmax)
         wwi->caps.dwSupport |= WAVECAPS_LRVOLUME;
 
     /* FIXME: always true ? */
@@ -1022,7 +1069,11 @@ static LPWAVEHDR wodPlayer_PlayPtrNext(WINE_WAVEOUT* wwo)
 static DWORD wodPlayer_DSPWait(const WINE_WAVEOUT *wwo)
 {
     /* time for one period to be played */
-    return snd_pcm_hw_params_get_period_time(wwo->hw_params, 0) / 1000;
+    unsigned int val=0;
+    int dir=0;
+    int err=0;
+    err = snd_pcm_hw_params_get_period_time(wwo->hw_params, &val, &dir);
+    return val / 1000;
 }
 
 /**************************************************************************
@@ -1413,14 +1464,15 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     snd_pcm_sw_params_t *       sw_params;
     snd_pcm_access_t            access;
     snd_pcm_format_t            format;
-    int                         rate;
+    unsigned int                rate;
     unsigned int                buffer_time = 500000;
     unsigned int                period_time = 10000;
-    int                         buffer_size;
+    snd_pcm_uframes_t           buffer_size;
     snd_pcm_uframes_t           period_size;
     int                         flags;
     snd_pcm_t *                 pcm;
-    int                         err;
+    int                         err=0;
+    int                         dir=0;
 
     snd_pcm_hw_params_alloca(&hw_params);
     snd_pcm_sw_params_alloca(&sw_params);
@@ -1512,8 +1564,10 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     format = (wwo->format.wBitsPerSample == 16) ? SND_PCM_FORMAT_S16_LE : SND_PCM_FORMAT_U8;
     EXIT_ON_ERROR( snd_pcm_hw_params_set_format(pcm, hw_params, format), MMSYSERR_INVALPARAM, "unable to set required format");
 
-    rate = snd_pcm_hw_params_set_rate_near(pcm, hw_params, wwo->format.wf.nSamplesPerSec, 0);
-    if (rate < 0) {
+    rate = wwo->format.wf.nSamplesPerSec;
+    dir=0;
+    err = snd_pcm_hw_params_set_rate_near(pcm, hw_params, &rate, &dir);
+    if (err < 0) {
 	ERR("Rate %ld Hz not available for playback: %s\n", wwo->format.wf.nSamplesPerSec, snd_strerror(rate));
 	snd_pcm_close(pcm);
         return WAVERR_BADFORMAT;
@@ -1523,14 +1577,15 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	snd_pcm_close(pcm);
         return WAVERR_BADFORMAT;
     }
-    
-    EXIT_ON_ERROR( snd_pcm_hw_params_set_buffer_time_near(pcm, hw_params, buffer_time, 0), MMSYSERR_INVALPARAM, "unable to set buffer time");
-    EXIT_ON_ERROR( snd_pcm_hw_params_set_period_time_near(pcm, hw_params, period_time, 0), MMSYSERR_INVALPARAM, "unable to set period time");
+    dir=0; 
+    EXIT_ON_ERROR( snd_pcm_hw_params_set_buffer_time_near(pcm, hw_params, &buffer_time, &dir), MMSYSERR_INVALPARAM, "unable to set buffer time");
+    dir=0; 
+    EXIT_ON_ERROR( snd_pcm_hw_params_set_period_time_near(pcm, hw_params, &period_time, &dir), MMSYSERR_INVALPARAM, "unable to set period time");
 
     EXIT_ON_ERROR( snd_pcm_hw_params(pcm, hw_params), MMSYSERR_INVALPARAM, "unable to set hw params for playback");
     
-    period_size = snd_pcm_hw_params_get_period_size(hw_params, 0);
-    buffer_size = snd_pcm_hw_params_get_buffer_size(hw_params);
+    err = snd_pcm_hw_params_get_period_size(hw_params, &period_size, &dir);
+    err = snd_pcm_hw_params_get_buffer_size(hw_params, &buffer_size);
 
     snd_pcm_sw_params_current(pcm, sw_params);
     EXIT_ON_ERROR( snd_pcm_sw_params_set_start_threshold(pcm, sw_params, dwFlags & WAVE_DIRECTSOUND ? INT_MAX : 1 ), MMSYSERR_ERROR, "unable to set start threshold");
@@ -2071,17 +2126,20 @@ static void DSDB_CheckXRUN(IDsDriverBufferImpl* pdbi)
 static void DSDB_MMAPCopy(IDsDriverBufferImpl* pdbi)
 {
     WINE_WAVEOUT *     wwo = &(WOutDev[pdbi->drv->wDevID]);
-    int                channels;
+    unsigned int       channels;
     snd_pcm_format_t   format;
     snd_pcm_uframes_t  period_size;
     snd_pcm_sframes_t  avail;
+    int err;
+    int dir=0;
 
     if ( !pdbi->mmap_buffer || !wwo->hw_params || !wwo->p_handle)
     	return;
 
-    channels = snd_pcm_hw_params_get_channels(wwo->hw_params);
-    format = snd_pcm_hw_params_get_format(wwo->hw_params);
-    period_size = snd_pcm_hw_params_get_period_size(wwo->hw_params, 0);
+    err = snd_pcm_hw_params_get_channels(wwo->hw_params, &channels);
+    err = snd_pcm_hw_params_get_format(wwo->hw_params, &format);
+    dir=0;
+    err = snd_pcm_hw_params_get_period_size(wwo->hw_params, &period_size, &dir);
     avail = snd_pcm_avail_update(wwo->p_handle);
 
     DSDB_CheckXRUN(pdbi);
@@ -2123,14 +2181,21 @@ static void DSDB_PCMCallback(snd_async_handler_t *ahandler)
 static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
  {
     WINE_WAVEOUT *            wwo = &(WOutDev[pdbi->drv->wDevID]);
-    snd_pcm_format_t          format = snd_pcm_hw_params_get_format(wwo->hw_params);
-    snd_pcm_uframes_t         frames = snd_pcm_hw_params_get_buffer_size(wwo->hw_params);
-    int                       channels = snd_pcm_hw_params_get_channels(wwo->hw_params);
-    unsigned int              bits_per_sample = snd_pcm_format_physical_width(format);
-    unsigned int              bits_per_frame = bits_per_sample * channels;
+    snd_pcm_format_t          format;
+    snd_pcm_uframes_t         frames;
+    unsigned int              channels;
+    unsigned int              bits_per_sample;
+    unsigned int              bits_per_frame;
     snd_pcm_channel_area_t *  a;
     unsigned int              c;
     int                       err;
+
+    err = snd_pcm_hw_params_get_format(wwo->hw_params, &format);
+    err = snd_pcm_hw_params_get_buffer_size(wwo->hw_params, &frames);
+    err = snd_pcm_hw_params_get_channels(wwo->hw_params, &channels);
+    bits_per_sample = snd_pcm_format_physical_width(format);
+    bits_per_frame = bits_per_sample * channels;
+
 
     if (TRACE_ON(wave))
 	ALSA_TraceParameters(wwo->hw_params, NULL, FALSE);
@@ -2276,16 +2341,21 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
     WINE_WAVEOUT *      wwo = &(WOutDev[This->drv->wDevID]);
     snd_pcm_uframes_t   hw_ptr;
     snd_pcm_uframes_t   period_size;
+    int dir;
+    int err;
 
     if (wwo->hw_params == NULL) return DSERR_GENERIC;
 
-    period_size  = snd_pcm_hw_params_get_period_size(wwo->hw_params, 0);
+    dir=0;
+    err = snd_pcm_hw_params_get_period_size(wwo->hw_params, &period_size, &dir);
 
     if (wwo->p_handle == NULL) return DSERR_GENERIC;
     /** we need to track down buffer underruns */
     DSDB_CheckXRUN(This);
 
     EnterCriticalSection(&This->mmap_crst);
+    /* FIXME: snd_pcm_mmap_hw_ptr() should not be accessed by a user app. */
+    /*        It will NOT return what why want anyway. */
     hw_ptr = _snd_pcm_mmap_hw_ptr(wwo->p_handle);
     if (lpdwPlay)
 	*lpdwPlay = snd_pcm_frames_to_bytes(wwo->p_handle, hw_ptr/ period_size  * period_size) % This->mmap_buflen_bytes;
@@ -2899,14 +2969,15 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     snd_pcm_sw_params_t *       sw_params;
     snd_pcm_access_t            access;
     snd_pcm_format_t            format;
-    int                         rate;
+    unsigned int                rate;
     unsigned int                buffer_time = 500000;
     unsigned int                period_time = 10000;
-    int                         buffer_size;
+    snd_pcm_uframes_t           buffer_size;
     snd_pcm_uframes_t           period_size;
     int                         flags;
     snd_pcm_t *                 pcm;
     int                         err;
+    int                         dir;
 
     snd_pcm_hw_params_alloca(&hw_params);
     snd_pcm_sw_params_alloca(&sw_params);
@@ -2998,8 +3069,10 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     format = (wwi->format.wBitsPerSample == 16) ? SND_PCM_FORMAT_S16_LE : SND_PCM_FORMAT_U8;
     EXIT_ON_ERROR( snd_pcm_hw_params_set_format(pcm, hw_params, format), MMSYSERR_INVALPARAM, "unable to set required format");
 
-    rate = snd_pcm_hw_params_set_rate_near(pcm, hw_params, wwi->format.wf.nSamplesPerSec, 0);
-    if (rate < 0) {
+    rate = wwi->format.wf.nSamplesPerSec;
+    dir = 0;
+    err = snd_pcm_hw_params_set_rate_near(pcm, hw_params, &rate, &dir);
+    if (err < 0) {
 	ERR("Rate %ld Hz not available for playback: %s\n", wwi->format.wf.nSamplesPerSec, snd_strerror(rate));
 	snd_pcm_close(pcm);
         return WAVERR_BADFORMAT;
@@ -3010,13 +3083,16 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         return WAVERR_BADFORMAT;
     }
     
-    EXIT_ON_ERROR( snd_pcm_hw_params_set_buffer_time_near(pcm, hw_params, buffer_time, 0), MMSYSERR_INVALPARAM, "unable to set buffer time");
-    EXIT_ON_ERROR( snd_pcm_hw_params_set_period_time_near(pcm, hw_params, period_time, 0), MMSYSERR_INVALPARAM, "unable to set period time");
+    dir=0; 
+    EXIT_ON_ERROR( snd_pcm_hw_params_set_buffer_time_near(pcm, hw_params, &buffer_time, &dir), MMSYSERR_INVALPARAM, "unable to set buffer time");
+    dir=0; 
+    EXIT_ON_ERROR( snd_pcm_hw_params_set_period_time_near(pcm, hw_params, &period_time, &dir), MMSYSERR_INVALPARAM, "unable to set period time");
 
     EXIT_ON_ERROR( snd_pcm_hw_params(pcm, hw_params), MMSYSERR_INVALPARAM, "unable to set hw params for playback");
     
-    period_size = snd_pcm_hw_params_get_period_size(hw_params, 0);
-    buffer_size = snd_pcm_hw_params_get_buffer_size(hw_params);
+    dir=0;
+    err = snd_pcm_hw_params_get_period_size(hw_params, &period_size, &dir);
+    err = snd_pcm_hw_params_get_buffer_size(hw_params, &buffer_size);
 
     snd_pcm_sw_params_current(pcm, sw_params);
     EXIT_ON_ERROR( snd_pcm_sw_params_set_start_threshold(pcm, sw_params, dwFlags & WAVE_DIRECTSOUND ? INT_MAX : 1 ), MMSYSERR_ERROR, "unable to set start threshold");
