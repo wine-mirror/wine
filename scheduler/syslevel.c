@@ -15,28 +15,11 @@
 
 DEFAULT_DEBUG_CHANNEL(win32);
 
-static SYSLEVEL Win16Mutex;
-static SEGPTR segpWin16Mutex;
+static SYSLEVEL Win16Mutex = { CRITICAL_SECTION_INIT, 1 };
 
 /* Global variable to save current TEB while in 16-bit code */
 WORD SYSLEVEL_Win16CurrentTeb = 0;
 
-/* TEB of initial process for emergency use */
-WORD SYSLEVEL_EmergencyTeb = 0;
-
-
-/************************************************************************
- *           SYSLEVEL_Init
- */
-void SYSLEVEL_Init(void)
-{
-    SYSLEVEL **w16Mutex = SEGPTR_ALLOC(sizeof(SYSLEVEL *));
-
-    *w16Mutex = &Win16Mutex;
-    segpWin16Mutex = SEGPTR_GET(w16Mutex);
-
-    _CreateSysLevel( &Win16Mutex, 1 );
-}
 
 /************************************************************************
  *           GetpWin16Lock    (KERNEL32.93)
@@ -49,8 +32,15 @@ VOID WINAPI GetpWin16Lock(SYSLEVEL **lock)
 /************************************************************************
  *           GetpWin16Lock16    (KERNEL.449)
  */
-SEGPTR WINAPI GetpWin16Lock16(void) 
-{ 
+SEGPTR WINAPI GetpWin16Lock16(void)
+{
+    static SEGPTR segpWin16Mutex;
+    if (!segpWin16Mutex)
+    {
+        SYSLEVEL **w16Mutex = SEGPTR_ALLOC(sizeof(SYSLEVEL *));
+        *w16Mutex = &Win16Mutex;
+        segpWin16Mutex = SEGPTR_GET(w16Mutex);
+    }
     return segpWin16Mutex;
 }
 
@@ -157,20 +147,21 @@ VOID WINAPI _CheckNotSysLevel(SYSLEVEL *lock)
 
 
 /************************************************************************
- *           SYSLEVEL_EnterWin16Lock			[KERNEL.480]
+ *           _EnterWin16Lock			[KERNEL.480]
  */
-VOID WINAPI SYSLEVEL_EnterWin16Lock(VOID)
+VOID WINAPI _EnterWin16Lock(void)
 {
     _EnterSysLevel(&Win16Mutex);
 }
 
 /************************************************************************
- *           SYSLEVEL_LeaveWin16Lock		[KERNEL.481]
+ *           _LeaveWin16Lock		[KERNEL.481]
  */
-VOID WINAPI SYSLEVEL_LeaveWin16Lock(VOID)
+VOID WINAPI _LeaveWin16Lock(void)
 {
     _LeaveSysLevel(&Win16Mutex);
 }
+
 /************************************************************************
  *           _ConfirmWin16Lock    (KERNEL32.96)
  */
@@ -201,25 +192,6 @@ VOID WINAPI RestoreThunkLock(DWORD mutex_count)
 }
 
 /************************************************************************
- *           SYSLEVEL_ReleaseWin16Lock
- */
-VOID SYSLEVEL_ReleaseWin16Lock(VOID)
-{
-    /* entry_point is never used again once the entry point has
-       been called.  Thus we re-use it to hold the Win16Lock count */
-
-    ReleaseThunkLock(&CURRENT_STACK16->entry_point);
-}
-
-/************************************************************************
- *           SYSLEVEL_RestoreWin16Lock
- */
-VOID SYSLEVEL_RestoreWin16Lock(VOID)
-{
-    RestoreThunkLock(CURRENT_STACK16->entry_point);
-}
-
-/************************************************************************
  *           SYSLEVEL_CheckNotLevel
  */
 VOID SYSLEVEL_CheckNotLevel( INT level )
@@ -235,4 +207,3 @@ VOID SYSLEVEL_CheckNotLevel( INT level )
             break;
         }
 }
-

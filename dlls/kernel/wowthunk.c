@@ -10,7 +10,6 @@
 #include "file.h"
 #include "heap.h"
 #include "miscemu.h"
-#include "syslevel.h"
 #include "stackframe.h"
 #include "builtin16.h"
 #include "debugtools.h"
@@ -315,6 +314,7 @@ DWORD WINAPI LoadLibraryEx32W16( LPCSTR lpszLibFile, DWORD hFile, DWORD dwFlags 
 {
     HMODULE hModule;
     DOS_FULL_NAME full_name; 
+    DWORD mutex_count;
 
     /* if the file can not be found, call LoadLibraryExA anyway, since it might be
        a buildin module. This case is handled in MODULE_LoadLibraryExA */
@@ -323,10 +323,9 @@ DWORD WINAPI LoadLibraryEx32W16( LPCSTR lpszLibFile, DWORD hFile, DWORD dwFlags 
       strcpy ( full_name.short_name, lpszLibFile );
     }
 
-    SYSLEVEL_ReleaseWin16Lock();
+    ReleaseThunkLock( &mutex_count );
     hModule = LoadLibraryExA( full_name.short_name, (HANDLE)hFile, dwFlags );
-    SYSLEVEL_RestoreWin16Lock();
-
+    RestoreThunkLock( mutex_count );
     return (DWORD)hModule;
 }
 
@@ -344,11 +343,11 @@ DWORD WINAPI GetProcAddress32W16( DWORD hModule, LPCSTR lpszProc )
 DWORD WINAPI FreeLibrary32W16( DWORD hLibModule )
 {
     BOOL retv;
+    DWORD mutex_count;
 
-    SYSLEVEL_ReleaseWin16Lock();
+    ReleaseThunkLock( &mutex_count );
     retv = FreeLibrary( (HMODULE)hLibModule );
-    SYSLEVEL_RestoreWin16Lock();
-
+    RestoreThunkLock( mutex_count );
     return (DWORD)retv;
 }
 
@@ -361,11 +360,12 @@ static DWORD WOW_CallProc32W16( BOOL Ex )
     DWORD nrofargs, argconvmask;
     FARPROC proc32;
     DWORD *args, ret;
+    DWORD mutex_count;
     VA_LIST16 valist;
     int i;
     int aix;
 
-    SYSLEVEL_ReleaseWin16Lock();
+    ReleaseThunkLock( &mutex_count );
 
     VA_START16( valist );
     nrofargs    = VA_ARG16( valist, DWORD );
@@ -446,8 +446,7 @@ static DWORD WOW_CallProc32W16( BOOL Ex )
     TRACE("returns %08lx\n",ret);
     HeapFree( GetProcessHeap(), 0, args );
 
-    SYSLEVEL_RestoreWin16Lock();
-
+    RestoreThunkLock( mutex_count );
     return ret;
 }
 

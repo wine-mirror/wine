@@ -27,8 +27,8 @@
 #include "thread.h"
 #include "toolhelp.h"
 #include "winnt.h"
-#include "winsock.h"
 #include "syslevel.h"
+#include "winsock.h"
 #include "debugtools.h"
 #include "services.h"
 #include "server.h"
@@ -336,9 +336,9 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
 
     /* Add the task to the linked list */
 
-    SYSLEVEL_EnterWin16Lock();
+    _EnterWin16Lock();
     TASK_LinkTask( hTask );
-    SYSLEVEL_LeaveWin16Lock();
+    _LeaveWin16Lock();
 
     return TRUE;
 }
@@ -384,12 +384,12 @@ void TASK_ExitTask(void)
     DWORD lockCount;
 
     /* Enter the Win16Lock to protect global data structures */
-    SYSLEVEL_EnterWin16Lock();
+    _EnterWin16Lock();
 
     pTask = (TDB *)GlobalLock16( GetCurrentTask() );
     if ( !pTask ) 
     {
-        SYSLEVEL_LeaveWin16Lock();
+        _LeaveWin16Lock();
         return;
     }
 
@@ -486,7 +486,7 @@ void TASK_Reschedule(void)
     enum { MODE_YIELD, MODE_SLEEP, MODE_WAKEUP } mode;
     DWORD lockCount;
 
-    SYSLEVEL_EnterWin16Lock();
+    _EnterWin16Lock();
 
     /* Check what we need to do */
     hOldTask = GetCurrentTask();
@@ -521,7 +521,7 @@ void TASK_Reschedule(void)
         else
         {
             /* nothing to do */
-            SYSLEVEL_LeaveWin16Lock();
+            _LeaveWin16Lock();
             return;
         }
     }
@@ -555,7 +555,7 @@ void TASK_Reschedule(void)
     if ( mode == MODE_YIELD && hNewTask && hNewTask == hCurrentTask )
     {
         TRACE("returning to the current task (%04x)\n", hCurrentTask );
-        SYSLEVEL_LeaveWin16Lock();
+        _LeaveWin16Lock();
 
         /* Allow Win32 threads to thunk down even while a Win16 task is
            in a tight PeekMessage() or Yield() loop ... */
@@ -600,7 +600,7 @@ void TASK_Reschedule(void)
         RestoreThunkLock( lockCount );
     }
 
-    SYSLEVEL_LeaveWin16Lock();
+    _LeaveWin16Lock();
 }
 
 /***********************************************************************

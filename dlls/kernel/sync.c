@@ -8,7 +8,6 @@
 #include "winerror.h"
 #include "winnls.h"
 #include "wine/unicode.h"
-#include "syslevel.h"
 #include "server.h"
 #include "debugtools.h"
 
@@ -222,9 +221,11 @@ VOID WINAPI VWin32_EventDestroy(HANDLE event)
  */
 VOID WINAPI VWin32_EventWait(HANDLE event)
 {
-    SYSLEVEL_ReleaseWin16Lock();
+    DWORD mutex_count;
+
+    ReleaseThunkLock( &mutex_count );
     WaitForSingleObject( event, INFINITE );
-    SYSLEVEL_RestoreWin16Lock();
+    RestoreThunkLock( mutex_count );
 }
 
 /***********************************************************************

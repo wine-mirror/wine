@@ -174,7 +174,6 @@ typedef struct
 #define UNC_IN_BEGINPAINT       0x0020
 
   /* Window functions */
-extern void   WIN_Init( void );
 extern void   WIN_LockWnds( void );
 extern void   WIN_UnlockWnds( void );
 extern int    WIN_SuspendWndsLock( void );

@@ -12,7 +12,6 @@
 #include "file.h"  /* for DOSFS_UnixTimeToFileTime */
 #include "thread.h"
 #include "winerror.h"
-#include "syslevel.h"
 #include "server.h"
 
 
@@ -154,12 +153,11 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
  */
 DWORD WINAPI WIN16_WaitForSingleObject( HANDLE handle, DWORD timeout )
 {
-    DWORD retval;
+    DWORD retval, mutex_count;
 
-    SYSLEVEL_ReleaseWin16Lock();
+    ReleaseThunkLock( &mutex_count );
     retval = WaitForSingleObject( handle, timeout );
-    SYSLEVEL_RestoreWin16Lock();
-
+    RestoreThunkLock( mutex_count );
     return retval;
 }
 
@@ -169,12 +167,11 @@ DWORD WINAPI WIN16_WaitForSingleObject( HANDLE handle, DWORD timeout )
 DWORD WINAPI WIN16_WaitForMultipleObjects( DWORD count, const HANDLE *handles,
                                            BOOL wait_all, DWORD timeout )
 {
-    DWORD retval;
+    DWORD retval, mutex_count;
 
-    SYSLEVEL_ReleaseWin16Lock();
+    ReleaseThunkLock( &mutex_count );
     retval = WaitForMultipleObjects( count, handles, wait_all, timeout );
-    SYSLEVEL_RestoreWin16Lock();
-
+    RestoreThunkLock( mutex_count );
     return retval;
 }
 
@@ -186,13 +183,11 @@ DWORD WINAPI WIN16_WaitForMultipleObjectsEx( DWORD count,
                                              BOOL wait_all, DWORD timeout,
                                              BOOL alertable )
 {
-    DWORD retval;
+    DWORD retval, mutex_count;
 
-    SYSLEVEL_ReleaseWin16Lock();
-    retval = WaitForMultipleObjectsEx( count, handles, 
-                                       wait_all, timeout, alertable );
-    SYSLEVEL_RestoreWin16Lock();
-
+    ReleaseThunkLock( &mutex_count );
+    retval = WaitForMultipleObjectsEx( count, handles, wait_all, timeout, alertable );
+    RestoreThunkLock( mutex_count );
     return retval;
 }
 

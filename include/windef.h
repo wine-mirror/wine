@@ -234,14 +234,6 @@ typedef FLOAT          *LPFLOAT;
 typedef BOOL           *PBOOL;
 typedef BOOL           *LPBOOL;
 
-/* Special case: a segmented pointer is just a pointer in the user's code. */
-
-#ifdef __WINE__
-typedef DWORD SEGPTR;
-#else
-typedef void* SEGPTR;
-#endif /* __WINE__ */
-
 /* Handle types that exist both in Win16 and Win32. */
 
 #ifdef STRICT

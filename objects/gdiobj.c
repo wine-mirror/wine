@@ -26,7 +26,6 @@
 #include "debugtools.h"
 #include "gdi.h"
 #include "tweak.h"
-#include "syslevel.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi);
 
@@ -178,7 +177,7 @@ static GDIOBJHDR * StockObjects[NB_STOCK_OBJECTS] =
 
 HBITMAP hPseudoStockBitmap; /* 1x1 bitmap for memory DCs */
 
-static SYSLEVEL GDI_level;
+static SYSLEVEL GDI_level = { CRITICAL_SECTION_INIT, 3 };
 static WORD GDI_HeapSel;
 
 
@@ -326,8 +325,6 @@ BOOL GDI_Init(void)
     BOOL systemIsBold = (TWEAK_WineLook == WIN31_LOOK);
     HPALETTE16 hpalette;
     HINSTANCE16 instance;
-
-    _CreateSysLevel( &GDI_level, 3 );
 
     /* create GDI heap */
     if ((instance = LoadLibrary16( "GDI.EXE" )) < 32) return FALSE;

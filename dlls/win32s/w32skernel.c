@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "winbase.h"
+#include "wine/windef16.h"
 
 /***********************************************************************
  *		GetWin32sDirectory

@@ -24,7 +24,6 @@
 #include "module.h"
 #include "selectors.h"
 #include "stackframe.h"
-#include "syslevel.h"
 #include "task.h"
 
 DEFAULT_DEBUG_CHANNEL(thunk);
@@ -1134,7 +1133,9 @@ void WINAPI K32Thk1632Prolog( CONTEXT86 *context )
                    context->Ebp, context->Esp, NtCurrentTeb()->cur_stack);
    }
 
-   SYSLEVEL_ReleaseWin16Lock();
+    /* entry_point is never used again once the entry point has
+       been called.  Thus we re-use it to hold the Win16Lock count */
+   ReleaseThunkLock(&CURRENT_STACK16->entry_point);
 }
 
 /***********************************************************************
@@ -1144,7 +1145,7 @@ void WINAPI K32Thk1632Epilog( CONTEXT86 *context )
 {
    LPBYTE code = (LPBYTE)context->Eip - 13;
 
-   SYSLEVEL_RestoreWin16Lock();
+   RestoreThunkLock(CURRENT_STACK16->entry_point);
 
    /* We undo the SYSTHUNK hack if necessary. See K32Thk1632Prolog. */
 

@@ -25,7 +25,6 @@
 #include "heap.h"
 #include "task.h"
 #include "ldt.h"
-#include "syslevel.h"
 #include "thread.h"
 #include "winerror.h"
 #include "server.h"
@@ -211,9 +210,6 @@ static BOOL process_init( char *argv[] )
     SERVER_END_REQ;
     if (!ret) return FALSE;
 
-    /* Remember TEB selector of initial process for emergency use */
-    SYSLEVEL_EmergencyTeb = NtCurrentTeb()->teb_sel;
-
     /* Create the system and process heaps */
     if (!HEAP_CreateSystemHeap()) return FALSE;
     current_process.heap = HeapCreate( HEAP_GROWABLE, 0, 0 );
@@ -226,9 +222,6 @@ static BOOL process_init( char *argv[] )
 
     /* Initialize the critical sections */
     InitializeCriticalSection( &current_process.crit_section );
-
-    /* Initialize syslevel handling */
-    SYSLEVEL_Init();
 
     /* Parse command line arguments */
     OPTIONS_ParseOptions( argv );
@@ -456,7 +449,7 @@ void PROCESS_InitWine( int argc, char *argv[] )
     main_exe_name[0] = 0;
     CloseHandle( main_exe_file );
     main_exe_file = INVALID_HANDLE_VALUE;
-    SYSLEVEL_EnterWin16Lock();
+    _EnterWin16Lock();
 
  found:
     /* allocate main thread stack */
@@ -846,7 +839,8 @@ void WINAPI ExitProcess( DWORD status )
  */
 void WINAPI ExitProcess16( WORD status )
 {
-    SYSLEVEL_ReleaseWin16Lock();
+    DWORD count;
+    ReleaseThunkLock( &count );
     ExitProcess( status );
 }
 

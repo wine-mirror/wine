@@ -13,7 +13,6 @@
 #include "wine/winbase16.h"
 #include "heap.h"
 #include "ldt.h"
-#include "syslevel.h"
 
 DEFAULT_DEBUG_CHANNEL(win);
 
@@ -36,8 +35,10 @@ BOOL16 WINAPI WinHelp16( HWND16 hWnd, LPCSTR lpHelpFile, UINT16 wCommand,
                          DWORD dwData )
 {
   BOOL ret;
+  DWORD mutex_count;
+
   /* We might call WinExec() */
-  SYSLEVEL_ReleaseWin16Lock();
+  ReleaseThunkLock( &mutex_count );
 
   if (!(ret = WinHelpA( hWnd, lpHelpFile, wCommand, (DWORD)PTR_SEG_TO_LIN(dwData) )))
   {
@@ -49,7 +50,7 @@ BOOL16 WINAPI WinHelp16( HWND16 hWnd, LPCSTR lpHelpFile, UINT16 wCommand,
       }
   }
 
-  SYSLEVEL_RestoreWin16Lock();
+  RestoreThunkLock( mutex_count );
   return ret;
 }
 

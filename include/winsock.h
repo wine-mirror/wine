@@ -153,7 +153,7 @@ typedef struct WSAData {
         char                    szSystemStatus[WSASYS_STATUS_LEN+1];
         WORD                    iMaxSockets;
         WORD                    iMaxUdpDg;
-        SEGPTR			lpVendorInfo;
+        char                   *lpVendorInfo;
 } WSADATA, *LPWSADATA;
 
 #include "poppack.h"

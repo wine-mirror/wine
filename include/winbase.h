@@ -1476,8 +1476,6 @@ BOOL        WINAPI LookupPrivilegeValueW(LPCWSTR,LPCWSTR,LPVOID);
 BOOL        WINAPI MakeSelfRelativeSD(PSECURITY_DESCRIPTOR,PSECURITY_DESCRIPTOR,LPDWORD);
 HMODULE     WINAPI MapHModuleSL(WORD);
 WORD        WINAPI MapHModuleLS(HMODULE);
-SEGPTR      WINAPI MapLS(LPVOID);
-LPVOID      WINAPI MapSL(SEGPTR);
 LPVOID      WINAPI MapViewOfFile(HANDLE,DWORD,DWORD,DWORD,DWORD);
 LPVOID      WINAPI MapViewOfFileEx(HANDLE,DWORD,DWORD,DWORD,DWORD,LPVOID);
 BOOL      WINAPI MoveFileA(LPCSTR,LPCSTR);
@@ -1599,7 +1597,6 @@ BOOL        WINAPI TlsFree(DWORD);
 LPVOID      WINAPI TlsGetValue(DWORD);
 BOOL        WINAPI TlsSetValue(DWORD,LPVOID);
 BOOL        WINAPI TransmitCommChar(HANDLE,CHAR);
-VOID        WINAPI UnMapLS(SEGPTR);
 BOOL        WINAPI UnlockFile(HANDLE,DWORD,DWORD,DWORD,DWORD);
 BOOL        WINAPI UnmapViewOfFile(LPVOID);
 LPVOID      WINAPI VirtualAlloc(LPVOID,DWORD,DWORD,DWORD);
@@ -1874,6 +1871,25 @@ INT       WINAPI lstrcmpiW(LPCWSTR,LPCWSTR);
 #define     MoveMemory RtlMoveMemory
 #define     ZeroMemory RtlZeroMemory
 #define     CopyMemory RtlCopyMemory
+
+/* undocumented functions */
+
+typedef struct tagSYSLEVEL
+{
+    CRITICAL_SECTION crst;
+    INT              level;
+} SYSLEVEL;
+
+VOID        WINAPI GetpWin16Lock(SYSLEVEL**);
+DWORD       WINAPI MapLS(LPVOID);
+LPVOID      WINAPI MapSL(DWORD);
+VOID        WINAPI ReleaseThunkLock(DWORD*);
+VOID        WINAPI RestoreThunkLock(DWORD);
+VOID        WINAPI UnMapLS(DWORD);
+DWORD       WINAPI _ConfirmWin16Lock(void);
+DWORD       WINAPI _ConfirmSysLevel(SYSLEVEL*);
+VOID        WINAPI _EnterSysLevel(SYSLEVEL*);
+VOID        WINAPI _LeaveSysLevel(SYSLEVEL*);
 
 /* a few optimizations for i386/gcc */
 

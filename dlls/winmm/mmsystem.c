@@ -27,7 +27,6 @@
 #include "wine/winestring.h"
 #include "heap.h"
 #include "winemm.h"
-#include "syslevel.h"
 #include "selectors.h"
 #include "module.h"
 #include "debugtools.h"

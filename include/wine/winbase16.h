@@ -78,6 +78,7 @@ INT16       WINAPI GetInstanceData16(HINSTANCE16,WORD,INT16);
 BOOL16      WINAPI GetModuleName16(HINSTANCE16,LPSTR,INT16);
 INT16       WINAPI GetModuleUsage16(HINSTANCE16);
 UINT16      WINAPI GetNumTasks16(void);
+SEGPTR      WINAPI GetpWin16Lock16(void);
 DWORD       WINAPI GetSelectorLimit16(WORD);
 FARPROC16   WINAPI GetSetKernelDOSProc16(FARPROC16 DosProc);
 HINSTANCE16 WINAPI GetTaskDS16(void);
@@ -117,6 +118,9 @@ VOID        WINAPI SwitchStackTo16(WORD,WORD,WORD);
 BOOL16      WINAPI WaitEvent16(HTASK16);
 VOID        WINAPI WriteOutProfiles16(void);
 VOID        WINAPI hmemcpy16(LPVOID,LPCVOID,LONG);
+VOID        WINAPI _CreateSysLevel(SYSLEVEL*,INT);
+VOID        WINAPI _EnterWin16Lock(void);
+VOID        WINAPI _LeaveWin16Lock(void);
 
 
 INT16       WINAPI AccessResource16(HINSTANCE16,HRSRC16);

@@ -14,6 +14,7 @@
 typedef short           INT16;
 typedef unsigned short  UINT16;
 typedef unsigned short  BOOL16;
+typedef DWORD           SEGPTR;
 
 typedef UINT16          HANDLE16;
 typedef HANDLE16       *LPHANDLE16;

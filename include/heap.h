@@ -10,6 +10,7 @@
 #include "config.h"
 
 #include "winbase.h"
+#include "wine/windef16.h"  /* for SEGPTR */
 
 extern HANDLE SystemHeap;
 extern HANDLE SegptrHeap;

@@ -31,7 +31,6 @@
 #include "file.h"
 #include "heap.h"
 #include "msdos.h"
-#include "syslevel.h"
 #include "server.h"
 #include "options.h"
 #include "debugtools.h"
@@ -1501,7 +1500,7 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
     LPCSTR short_name, long_name;
     int count;
 
-    SYSLEVEL_EnterWin16Lock();
+    _EnterWin16Lock();
 
     /* Check the cached directory */
     if (!(info.dir && info.path == path && info.short_mask == short_mask
@@ -1538,7 +1537,7 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
         memset( &info, '\0', sizeof(info) );
     }
 
-    SYSLEVEL_LeaveWin16Lock();
+    _LeaveWin16Lock();
 
     return count;
 }

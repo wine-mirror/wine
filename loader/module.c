@@ -17,7 +17,6 @@
 #include "heap.h"
 #include "neexe.h"
 #include "process.h"
-#include "syslevel.h"
 #include "selectors.h"
 #include "debugtools.h"
 #include "callback.h"
@@ -798,9 +797,10 @@ HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
 
     if (ret == 21)  /* 32-bit module */
     {
-        SYSLEVEL_ReleaseWin16Lock();
+        DWORD count;
+        ReleaseThunkLock( &count );
         ret = WinExec( lpCmdLine, nCmdShow );
-        SYSLEVEL_RestoreWin16Lock();
+        RestoreThunkLock( count );
     }
     return ret;
 }
@@ -1452,11 +1452,11 @@ HMODULE WINAPI LoadLibraryW(LPCWSTR libnameW)
 HMODULE WINAPI LoadLibrary32_16( LPCSTR libname )
 {
     HMODULE hModule;
+    DWORD count;
 
-    SYSLEVEL_ReleaseWin16Lock();
+    ReleaseThunkLock( &count );
     hModule = LoadLibraryA( libname );
-    SYSLEVEL_RestoreWin16Lock();
-
+    RestoreThunkLock( count );
     return hModule;
 }
 

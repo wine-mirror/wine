@@ -13,10 +13,9 @@
 #include "winuser.h"
 #include "winemm.h"
 #include "services.h"
-#include "syslevel.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(mmtime)
+DEFAULT_DEBUG_CHANNEL(mmtime);
 
 /*
  * FIXME
@@ -383,10 +382,8 @@ DWORD WINAPI timeGetTime(void)
     /* FIXME: releasing the win16 lock here is a temporary hack (I hope)
      * that lets mciavi.drv run correctly
      */
-    if ( _ConfirmWin16Lock() ) {
-	SYSLEVEL_ReleaseWin16Lock();
-	SYSLEVEL_RestoreWin16Lock();
-    }
-
+    DWORD count;
+    ReleaseThunkLock(&count);
+    RestoreThunkLock(count);
     return MULTIMEDIA_MMTimeStart()->mmSysTimeMS;
 }

@@ -135,9 +135,6 @@ BOOL WINAPI USER_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     /* Load the graphics driver */
     if (!load_driver()) return FALSE;
 
-    /* Initialize window handling (critical section) */
-    WIN_Init();
-
     /* Initialize system colors and metrics*/
     SYSMETRICS_Init();
     SYSCOLOR_Init();

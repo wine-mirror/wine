@@ -22,7 +22,6 @@
 #include "global.h"
 #include "process.h"
 #include "snoop.h"
-#include "syslevel.h"
 #include "builtin16.h"
 #include "stackframe.h"
 #include "debugtools.h"
@@ -1120,7 +1119,7 @@ static void NE_InitProcess(void)
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
     WORD sp;
 
-    SYSLEVEL_EnterWin16Lock();
+    _EnterWin16Lock();
 
     if ( pModule->count > 0 )
     {
@@ -1197,7 +1196,7 @@ static void NE_InitProcess(void)
         ExitThread( LOWORD(context.Eax) );
     }
 
-    SYSLEVEL_LeaveWin16Lock();
+    _LeaveWin16Lock();
     ExitThread( hInstance );
 }
 

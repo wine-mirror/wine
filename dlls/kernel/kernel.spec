@@ -389,8 +389,8 @@ owner	kernel32
 477 stub WOAFullScreen
 478 stub WOATerminateProcess
 479 pascal KERNEL_479(long) VWin32_EventSet  # ???
-480 pascal16 _EnterWin16Lock() SYSLEVEL_EnterWin16Lock
-481 pascal16 _LeaveWin16Lock() SYSLEVEL_LeaveWin16Lock
+480 pascal16 _EnterWin16Lock() _EnterWin16Lock
+481 pascal16 _LeaveWin16Lock() _LeaveWin16Lock
 482 pascal LoadSystemLibrary32(str) LoadLibrary32_16   # FIXME!
 483 pascal MapProcessHandle(long) MapProcessHandle
 484 pascal SetProcessDWORD(long s_word long) SetProcessDword

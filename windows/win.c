@@ -31,7 +31,6 @@
 #include "winerror.h"
 #include "mdi.h"
 #include "local.h"
-#include "syslevel.h"
 #include "stackframe.h"
 #include "debugtools.h"
 
@@ -51,16 +50,7 @@ static WORD wDragWidth = 4;
 static WORD wDragHeight= 3;
 
 /* thread safeness */
-static SYSLEVEL WIN_SysLevel;
-
-/***********************************************************************
- *           WIN_Init
- */ 
-void WIN_Init( void )
-{
-    /* Initialisation of the critical section for thread safeness */
-    _CreateSysLevel( &WIN_SysLevel, 2 );
-}
+static SYSLEVEL WIN_SysLevel = { CRITICAL_SECTION_INIT, 2 };
 
 /***********************************************************************
  *           WIN_LockWnds

@@ -478,9 +478,9 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
 
     /* Enter Win16 Mutex */
     if ( UsePIC )
-        fprintf( outfile, "\tcall " PREFIX "SYSLEVEL_EnterWin16Lock@PLT\n" );
+        fprintf( outfile, "\tcall " PREFIX "_EnterWin16Lock@PLT\n" );
     else
-        fprintf( outfile, "\tcall " PREFIX "SYSLEVEL_EnterWin16Lock\n" );
+        fprintf( outfile, "\tcall " PREFIX "_EnterWin16Lock\n" );
 
     /* Print debugging info */
     if (debugging)
@@ -574,9 +574,9 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
 
     /* Leave Win16 Mutex */
     if ( UsePIC )
-        fprintf( outfile, "\tcall " PREFIX "SYSLEVEL_LeaveWin16Lock@PLT\n" );
+        fprintf( outfile, "\tcall " PREFIX "_LeaveWin16Lock@PLT\n" );
     else
-        fprintf( outfile, "\tcall " PREFIX "SYSLEVEL_LeaveWin16Lock\n" );
+        fprintf( outfile, "\tcall " PREFIX "_LeaveWin16Lock\n" );
 
     /* Get return value */
     fprintf( outfile, "\tpopl %%eax\n" );

@@ -432,12 +432,6 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
     }
 #endif  /* linux */
 
-    if (!fs)
-    {
-        fs = SYSLEVEL_EmergencyTeb;
-        __set_fs(fs);
-        ERR("fallback to emergency TEB\n");
-    }
     __set_fs(fs);
 
     context->Eax    = EAX_sig(sigcontext);
