@@ -1,7 +1,9 @@
 /*
  * Win32 advapi functions
  *
- * Copyright 1995 Sven Verdoolaege, 1998 Juergen Schmied
+ * Copyright 1995 Sven Verdoolaege
+ * Copyright 1998 Juergen Schmied
+ * Copyright 2003 Mike Hearn
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,6 +31,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(advapi);
+WINE_DECLARE_DEBUG_CHANNEL(eventlog);
 
 /******************************************************************************
  * BackupEventLogA [ADVAPI32.@]
@@ -257,8 +260,28 @@ RegisterEventSourceW( LPCWSTR lpUNCServerName, LPCWSTR lpSourceName )
 BOOL WINAPI ReportEventA ( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD dwEventID,
     PSID lpUserSid, WORD wNumStrings, DWORD dwDataSize, LPCSTR *lpStrings, LPVOID lpRawData)
 {
-	FIXME("stub\n");
-	return TRUE;
+    LPCWSTR *wideStrArray;
+    UNICODE_STRING str;
+    int i;
+    BOOL ret;
+
+    if (wNumStrings == 0) return TRUE;
+    if (!lpStrings) return TRUE;
+
+    wideStrArray = HeapAlloc(GetProcessHeap(), 0, sizeof(LPCWSTR) * wNumStrings);
+    for (i = 0; i < wNumStrings; i++)
+    {
+        RtlCreateUnicodeStringFromAsciiz(&str, lpStrings[i]);
+        wideStrArray[i] = str.Buffer;
+    }
+    ret = ReportEventW(hEventLog, wType, wCategory, dwEventID, lpUserSid,
+                       wNumStrings, dwDataSize, wideStrArray, lpRawData);
+    for (i = 0; i < wNumStrings; i++)
+    {
+        if (wideStrArray[i]) HeapFree( GetProcessHeap(), 0, (LPSTR)wideStrArray[i] );
+    }
+    HeapFree(GetProcessHeap(), 0, wideStrArray);
+    return ret;
 }
 
 /******************************************************************************
@@ -280,6 +303,31 @@ ReportEventW( HANDLE hEventLog, WORD wType, WORD wCategory,
                 DWORD dwEventID, PSID lpUserSid, WORD wNumStrings,
                 DWORD dwDataSize, LPCWSTR *lpStrings, LPVOID lpRawData )
 {
-	FIXME("stub\n");
-	return TRUE;
+    int i;
+
+    /* partial stub */
+
+    if (wNumStrings == 0) return TRUE;
+    if (!lpStrings) return TRUE;
+
+    for (i = 0; i < wNumStrings; i++)
+    {
+        switch (wType)
+        {
+        case EVENTLOG_SUCCESS:
+            TRACE_(eventlog)("%s\n", debugstr_w(lpStrings[i]));
+            break;
+        case EVENTLOG_ERROR_TYPE:
+            ERR_(eventlog)("%s\n", debugstr_w(lpStrings[i]));
+            break;
+        case EVENTLOG_WARNING_TYPE:
+            WARN_(eventlog)("%s\n", debugstr_w(lpStrings[i]));
+            break;
+        default:
+            TRACE_(eventlog)("%s\n", debugstr_w(lpStrings[i]));
+            break;
+        }
+    }
+    return TRUE;
+
 }
