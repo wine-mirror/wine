@@ -2749,6 +2749,8 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVM_GETNUMBEROFWORKAREAS (LVM_FIRST+73)
 #define LVM_SETTOOLTIPS         (LVM_FIRST+74)
 #define LVM_GETTOOLTIPS         (LVM_FIRST+78)
+#define LVM_GETUNICODEFORMAT    (CCM_GETUNICODEFORMAT)
+#define LVM_SETUNICODEFORMAT    (CCM_SETUNICODEFORMAT)
 
 #define LVN_FIRST               (0U-100U)
 #define LVN_LAST                (0U-199U)
@@ -3103,6 +3105,8 @@ typedef struct tagNMLVODSTATECHANGE
     (INT)SendMessageA((hwnd),LVM_FINDITEMA,(WPARAM)(INT)(nItem),(LPARAM)(LVFINDINFOA*)(plvfi))
 #define ListView_FindItemW(hwnd,nItem,plvfi) \
     (INT)SendMessageW((hwnd),LVM_FINDITEMW,(WPARAM)(INT)(nItem),(LPARAM)(LVFINDINFOW*)(plvfi))
+#define ListView_FindItem WINELIB_NAME_AW(ListView_FindItem)
+
 #define ListView_Arrange(hwnd,code) \
     (INT)SendMessageA((hwnd),LVM_ARRANGE,(WPARAM)(INT)(code),0L)
 #define ListView_GetItemPosition(hwnd,i,ppt) \
@@ -4157,5 +4161,3 @@ LRESULT WINAPI COMCTL32_SendNotifyEx (HWND, HWND, UINT, LPNMHDR, DWORD);
 #endif
 
 #endif  /* __WINE_COMMCTRL_H */
-
-
