@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <pwd.h>
 #include "object.h"
 #include "handle.h"
 #include "request.h"
@@ -826,7 +827,7 @@ static struct key *create_root_key( int hkey )
                           { 'S','O','F','T','W','A','R','E','\\','C','l','a','s','s','e','s',0 };
 
             struct key *root = get_hkey_obj( HKEY_LOCAL_MACHINE, 0 );
-            if (!root) return NULL;
+            assert( root );
             key = create_key( root, name, sizeof(name), NULL, 0, time(NULL), &dummy );
             release_object( root );
         }
@@ -839,19 +840,38 @@ static struct key *create_root_key( int hkey )
 		'H','A','R','D','W','A','R','E','P','R','O','F','I','L','E','S','\\',
 		'C','U','R','R','E','N','T',0};
             struct key *root = get_hkey_obj( HKEY_LOCAL_MACHINE, 0 );
-            if (!root) return NULL;
+            assert( root );
             key = create_key( root, name, sizeof(name), NULL, 0, time(NULL), &dummy );
             release_object( root );
 	}
 	break;
     case HKEY_CURRENT_USER:
         {
-            /* FIXME: should be HKEY_USERS\\the_current_user_SID */
-            static const WCHAR name[] = { '.','D','e','f','a','u','l','t',0 };
-            struct key *root = get_hkey_obj( HKEY_USERS, 0 );
-            if (!root) return NULL;
-            key = create_key( root, name, sizeof(name), NULL, 0, time(NULL), &dummy );
-            release_object( root );
+            /* get the current user name */
+            int i, len;
+            WCHAR *name;
+            char buffer[10];
+            const char *p;
+            struct passwd *pwd = getpwuid( getuid() );
+
+            if (pwd) p = pwd->pw_name;
+            else
+            {
+                sprintf( buffer, "%d", getuid() );
+                p = buffer;
+            }
+            len = strlen(p);
+            if ((name = mem_alloc( (len+1) * sizeof(WCHAR) )))
+            {
+                struct key *root = get_hkey_obj( HKEY_USERS, 0 );
+                assert( root );
+                for (i = 0; i <= len; i++) name[i] = p[i];
+                key = create_key( root, name, (len+1) * sizeof(WCHAR),
+                                  NULL, 0, time(NULL), &dummy );
+                release_object( root );
+                free( name );
+            }
+            else key = NULL;
         }
         break;
     /* dynamically generated keys */
