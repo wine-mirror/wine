@@ -1552,17 +1552,17 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 			break;
 		      }
 
-		    if (short_addr) {
+		    if (size == WORD) {
 			/* offset only affects low 16 bits */
 		        displ = (addr->off & 0xffff0000)
 			      | ((addr->off + displ) & 0xffff);
 		    }
 		    else displ += addr->off;
-		    db_task_printsym(displ, short_addr ? WORD : LONG);
+		    db_task_printsym(displ, size);
 		    break;
 
 		case Dl:
-		    if (short_addr) {
+		    if (size == WORD) {
 			get_value_inc(displ, addr, 2, TRUE);
 			/* offset only affects low 16 bits */
 		        displ = (addr->off & 0xffff0000)
@@ -1576,7 +1576,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		      {
 			break;
 		      }
-		    db_task_printsym( displ, short_addr ? WORD : LONG);
+		    db_task_printsym( displ, size );
 		    break;
 
 		case o1:
