@@ -1230,13 +1230,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     }
 
     if (cs->style & WS_VISIBLE)
-    {
-        /* in case WS_VISIBLE got set in the meantime */
-        if (!(wndPtr = WIN_GetPtr( hwnd ))) return 0;
-        WIN_SetStyle( hwnd, wndPtr->dwStyle & ~WS_VISIBLE );
-        WIN_ReleasePtr( wndPtr );
         ShowWindow( hwnd, sw );
-    }
 
     /* Call WH_SHELL hook */
 

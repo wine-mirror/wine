@@ -1116,13 +1116,8 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
                       newPos.right, newPos.bottom, swFlag );
     }
 
-    /* if the window was made visible set create struct flag so that
-     * we do a proper ShowWindow later on */
-    if (wndPtr->dwStyle & WS_VISIBLE) cs->style |= WS_VISIBLE;
-
     WIN_ReleaseWndPtr( wndPtr );
     return TRUE;
-
 
  failed:
     X11DRV_DestroyWindow( hwnd );
