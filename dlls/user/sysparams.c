@@ -1491,17 +1491,29 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         MINIMIZEDMETRICS * lpMm = pvParam;
 	if (lpMm && lpMm->cbSize == sizeof(*lpMm))
 	{
-	    /* these taken from Win2k SP3 */
-	    lpMm->iWidth = 154;
-	    lpMm->iHorzGap = 0;
-	    lpMm->iVertGap = 0;
-	    lpMm->iArrange = 8;
+	    lpMm->iWidth = sysMetrics[SM_CXMINIMIZED] - 6;
+	    lpMm->iHorzGap = sysMetrics[SM_CXMINSPACING] - sysMetrics[SM_CXMINIMIZED];
+	    lpMm->iVertGap = sysMetrics[SM_CYMINSPACING] - sysMetrics[SM_CYMINIMIZED];
+	    lpMm->iArrange = sysMetrics[SM_ARRANGE];
 	}
 	else
 	    ret = FALSE;
 	break;
     }
-    WINE_SPI_FIXME(SPI_SETMINIMIZEDMETRICS);	/*     44  WINVER >= 0x400 */
+    case SPI_SETMINIMIZEDMETRICS: 		/*     44  WINVER >= 0x400 */
+    {
+        MINIMIZEDMETRICS * lpMm = pvParam;
+	if (lpMm && lpMm->cbSize == sizeof(*lpMm))
+	{
+	    sysMetrics[SM_CXMINIMIZED] = lpMm->iWidth + 6;
+	    sysMetrics[SM_CXMINSPACING] = lpMm->iHorzGap + sysMetrics[SM_CXMINIMIZED];
+	    sysMetrics[SM_CYMINSPACING] = lpMm->iVertGap + sysMetrics[SM_CYMINIMIZED];
+	    sysMetrics[SM_ARRANGE] = lpMm->iArrange;
+	}
+	else
+	    ret = FALSE;
+	break;
+    }
 
     case SPI_GETICONMETRICS:			/*     45  WINVER >= 0x400 */
     {
