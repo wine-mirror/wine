@@ -940,11 +940,11 @@ DEFINE_GUID(IID_IFileSystemBindData, 0x01e18d10, 0x4d8b, 0x11d2, 0x85,0x5d, 0x00
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IFileSystemBindData : public IUnknown
 {
-    virtual HRESULT STDMETHODCALLTYPE GetFindData(
-        WIN32_FIND_DATAW* pfd) = 0;
-
     virtual HRESULT STDMETHODCALLTYPE SetFindData(
         const WIN32_FIND_DATAW* pfd) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE GetFindData(
+        WIN32_FIND_DATAW* pfd) = 0;
 
 };
 #else
@@ -968,13 +968,13 @@ struct IFileSystemBindDataVtbl {
         IFileSystemBindData* This);
 
     /*** IFileSystemBindData methods ***/
-    HRESULT (STDMETHODCALLTYPE *GetFindData)(
-        IFileSystemBindData* This,
-        WIN32_FIND_DATAW* pfd);
-
     HRESULT (STDMETHODCALLTYPE *SetFindData)(
         IFileSystemBindData* This,
         const WIN32_FIND_DATAW* pfd);
+
+    HRESULT (STDMETHODCALLTYPE *GetFindData)(
+        IFileSystemBindData* This,
+        WIN32_FIND_DATAW* pfd);
 
 };
 
