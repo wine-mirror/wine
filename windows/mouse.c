@@ -58,6 +58,7 @@ void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
 {
     int width  = MONITOR_GetWidth (&MONITOR_PrimaryMonitor);
     int height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+    int iWndsLocks;
     WINE_MOUSEEVENT wme;
     BOOL bOldWarpPointer;
 
@@ -75,6 +76,10 @@ void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
     wme.hWnd     = hWnd;
 
     bOldWarpPointer = MOUSE_Driver->pEnableWarpPointer(FALSE);
+    /* To avoid deadlocks, we have to suspend all locks on windows structures
+       before the program control is passed to the mouse driver */
+    iWndsLocks = WIN_SuspendWndsLock();
     DefMouseEventProc( mouseStatus, posX, posY, 0, (DWORD)&wme );
+    WIN_RestoreWndsLock(iWndsLocks);
     MOUSE_Driver->pEnableWarpPointer(bOldWarpPointer);
 }

@@ -79,6 +79,7 @@ void KEYBOARD_SendEvent( BYTE bVk, BYTE bScan, DWORD dwFlags,
                          DWORD posX, DWORD posY, DWORD time )
 {
   WINE_KEYBDEVENT wke;
+  int iWndsLocks;
   
   if ( !DefKeybEventProc ) return;
   
@@ -89,7 +90,11 @@ void KEYBOARD_SendEvent( BYTE bVk, BYTE bScan, DWORD dwFlags,
   wke.posY  = posY;
   wke.time  = time;
   
+  /* To avoid deadlocks, we have to suspend all locks on windows structures
+     before the program control is passed to the keyboard driver */
+  iWndsLocks = WIN_SuspendWndsLock();
   DefKeybEventProc( bVk, bScan, dwFlags, (DWORD)&wke );
+  WIN_RestoreWndsLock(iWndsLocks);
 }
 
 /**********************************************************************
