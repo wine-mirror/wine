@@ -34,8 +34,10 @@ http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/stand
 #include "winerror.h"
 #include "winreg.h"
 #include "wine/debug.h"
+#include "fdi.h"
 #include "msi.h"
 #include "msiquery.h"
+#include "msvcrt/fcntl.h"
 #include "objbase.h"
 #include "objidl.h"
 #include "msipriv.h"
@@ -2237,97 +2239,161 @@ end:
 }
 
 
+/* Support functions for FDI functions */
+
+static void * cabinet_alloc(ULONG cb)
+{
+    return HeapAlloc(GetProcessHeap(), 0, cb);
+}
+
+static void cabinet_free(void *pv)
+{
+    HeapFree(GetProcessHeap(), 0, pv);
+}
+
+static INT_PTR cabinet_open(char *pszFile, int oflag, int pmode)
+{
+    DWORD dwAccess = 0;
+    DWORD dwShareMode = 0;
+    DWORD dwCreateDisposition = OPEN_EXISTING;
+    switch (oflag & _O_ACCMODE)
+    {
+    case _O_RDONLY:
+        dwAccess = GENERIC_READ;
+        dwShareMode = FILE_SHARE_READ | FILE_SHARE_DELETE;
+        break;
+    case _O_WRONLY:
+        dwAccess = GENERIC_WRITE;
+        dwShareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+        break;
+    case _O_RDWR:
+        dwAccess = GENERIC_READ | GENERIC_WRITE;
+        dwShareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+        break;
+    }
+    if ((oflag & (_O_CREAT | _O_EXCL)) == (_O_CREAT | _O_EXCL))
+        dwCreateDisposition = CREATE_NEW;
+    else if (oflag & _O_CREAT)
+        dwCreateDisposition = CREATE_ALWAYS;
+    return (INT_PTR)CreateFileA(pszFile, dwAccess, dwShareMode, NULL, dwCreateDisposition, 0, NULL);
+}
+
+static UINT cabinet_read(INT_PTR hf, void *pv, UINT cb)
+{
+    DWORD dwRead;
+    if (ReadFile((HANDLE)hf, pv, cb, &dwRead, NULL))
+        return dwRead;
+    return 0;
+}
+
+static UINT cabinet_write(INT_PTR hf, void *pv, UINT cb)
+{
+    DWORD dwWritten;
+    if (WriteFile((HANDLE)hf, pv, cb, &dwWritten, NULL))
+        return dwWritten;
+    return 0;
+}
+
+static int cabinet_close(INT_PTR hf)
+{
+    return CloseHandle((HANDLE)hf) ? 0 : -1;
+}
+
+static long cabinet_seek(INT_PTR hf, long dist, int seektype)
+{
+    /* flags are compatible and so are passed straight through */
+    return SetFilePointer((HANDLE)hf, dist, NULL, seektype);
+}
+
+static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
+{
+    /* FIXME: try to do more processing in this function */
+    switch (fdint)
+    {
+    case fdintCOPY_FILE:
+    {
+        ULONG len = strlen((char*)pfdin->pv) + strlen(pfdin->psz1);
+        char *file = cabinet_alloc((len+1)*sizeof(char));
+
+        strcpy(file, (char*)pfdin->pv);
+        strcat(file, pfdin->psz1);
+
+        TRACE("file: %s\n", debugstr_a(file));
+
+        return cabinet_open(file, _O_WRONLY | _O_CREAT, 0);
+    }
+    case fdintCLOSE_FILE_INFO:
+    {
+        FILETIME ft;
+	    FILETIME ftLocal;
+        if (!DosDateTimeToFileTime(pfdin->date, pfdin->time, &ft))
+            return -1;
+        if (!LocalFileTimeToFileTime(&ft, &ftLocal))
+            return -1;
+        if (!SetFileTime((HANDLE)pfdin->hf, &ftLocal, 0, &ftLocal))
+            return -1;
+
+        cabinet_close(pfdin->hf);
+        return 1;
+    }
+    default:
+        return 0;
+    }
+}
+
 /***********************************************************************
  *            extract_cabinet_file
  *
- * Extract  files from a cab file.
+ * Extract files from a cab file.
  */
-static void (WINAPI *pExtractFiles)( LPSTR, LPSTR, DWORD, DWORD, DWORD, DWORD );
-
-static BOOL extract_cabinet_file_advpack( const WCHAR *cabinet, 
-                                          const WCHAR *root)
-{
-    static HMODULE advpack;
-
-    char *cab_path, *cab_file;
-
-    if (!pExtractFiles)
-    {
-        if (!advpack && !(advpack = LoadLibraryA( "advpack.dll" )))
-        {
-            ERR( "could not load advpack.dll\n" );
-            return FALSE;
-        }
-        if (!(pExtractFiles = (void *)GetProcAddress( advpack, "ExtractFiles"
-)))
-        {
-            ERR( "could not find ExtractFiles in advpack.dll\n" );
-            return FALSE;
-        }
-    }
-
-    if (!(cab_file = strdupWtoA( cabinet ))) return FALSE;
-    if (!(cab_path = strdupWtoA( root ))) return FALSE;
-
-    FIXME( "awful hack: extracting cabinet %s\n", debugstr_a(cab_file) );
-    pExtractFiles( cab_file, cab_path, 0, 0, 0, 0 );
-    HeapFree( GetProcessHeap(), 0, cab_file );
-    HeapFree( GetProcessHeap(), 0, cab_path );
-    return TRUE;
-}
-
-static BOOL extract_cabinet_file_cabinet( const WCHAR *cabinet, 
-                                          const WCHAR *root)
-                                  
-{
-    /* from cabinet.h */
-
-    struct ExtractFileList {
-        LPSTR  filename;
-        struct ExtractFileList *next;
-        BOOL   unknown;  /* always 1L */
-    } ;
-
-    typedef struct {
-        long  result1;          /* 0x000 */
-        long  unknown1[3];      /* 0x004 */
-        struct ExtractFileList* filelist;         /* 0x010 */
-        long  filecount;        /* 0x014 */
-        long  unknown2;         /* 0x018 */
-        char  directory[0x104]; /* 0x01c */
-        char  lastfile[0x20c];  /* 0x120 */
-    } EXTRACTdest;
-
-    HRESULT WINAPI Extract(EXTRACTdest *dest, LPCSTR what);
-
-    char *cab_path, *src_path;
-    EXTRACTdest exd;
-    struct ExtractFileList fl;
-
-    if (!(cab_path = strdupWtoA( cabinet ))) return FALSE;
-    if (!(src_path = strdupWtoA( root ))) return FALSE;
-
-    memset(&exd,0,sizeof(exd));
-    strcpy(exd.directory,src_path);
-    exd.unknown2 = 0x1;
-    fl.filename = cab_path;
-    fl.next = NULL;
-    fl.unknown = 1;
-    exd.filelist = &fl;
-    FIXME( "more aweful hack: extracting cabinet %s\n", debugstr_a(cab_path) );
-    Extract(&exd,cab_path);
-
-    HeapFree( GetProcessHeap(), 0, cab_path );
-    HeapFree( GetProcessHeap(), 0, src_path );
-    return TRUE;
-}
-
 static BOOL extract_cabinet_file(const WCHAR* source, const WCHAR* path)
 {
+    HFDI hfdi;
+    ERF erf;
+    BOOL ret;
+    char *cabinet;
+    char *cab_path;
+
     TRACE("Extracting %s to %s\n",debugstr_w(source), debugstr_w(path));
-    if (!extract_cabinet_file_advpack(source,path))
-        return extract_cabinet_file_cabinet(source,path);
-    return TRUE;
+
+    hfdi = FDICreate(cabinet_alloc,
+                     cabinet_free,
+                     cabinet_open,
+                     cabinet_read,
+                     cabinet_write,
+                     cabinet_close,
+                     cabinet_seek,
+                     0,
+                     &erf);
+    if (!hfdi)
+    {
+        ERR("FDICreate failed\n");
+        return FALSE;
+    }
+
+    if (!(cabinet = strdupWtoA( source )))
+    {
+        FDIDestroy(hfdi);
+        return FALSE;
+    }
+    if (!(cab_path = strdupWtoA( path )))
+    {
+        FDIDestroy(hfdi);
+        HeapFree(GetProcessHeap(), 0, cabinet);
+        return FALSE;
+    }
+
+    ret = FDICopy(hfdi, cabinet, "", 0, cabinet_notify, NULL, cab_path);
+
+    if (!ret)
+        ERR("FDICopy failed\n");
+
+    FDIDestroy(hfdi);
+
+    HeapFree(GetProcessHeap(), 0, cabinet);
+    HeapFree(GetProcessHeap(), 0, cab_path);
+
+    return ret;
 }
 
 static UINT ready_media_for_file(MSIPACKAGE *package, UINT sequence, 
@@ -2505,16 +2571,16 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
             ui_actiondata(package,szInstallFiles,uirow);
             msiobj_release( &uirow->hdr );
 
-            rc = !MoveFileW(file->SourcePath,file->TargetPath);
-            ui_progress(package,2,0,0,0);
-
-            if (rc)
+            if (!MoveFileW(file->SourcePath,file->TargetPath))
             {
-                ERR("Unable to move file (error %li)\n",GetLastError());
-                rc = ERROR_SUCCESS;
+                rc = GetLastError();
+                ERR("Unable to move file (error %d)\n", rc);
+                break;
             }
             else
                 file->State = 4;
+
+            ui_progress(package,2,0,0,0);
         }
     }
 
