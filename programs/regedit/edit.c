@@ -199,6 +199,8 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName)
     if (lRet != ERROR_SUCCESS) return FALSE;
 
     editValueName = valueName;
+    if (!lstrcmp(valueName, _T("(Default)")))
+        valueName = NULL;
     if(!(stringValueData = read_value(hwnd, hKey, valueName, &type, 0))) goto done;
 
     if ( (type == REG_SZ) || (type == REG_EXPAND_SZ) ) {
