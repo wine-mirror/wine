@@ -1494,7 +1494,6 @@ static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className,
 {
     WND *pWnd;
     HWND retvalue;
-    CLASS *pClass = NULL;
 
     if (child)
     {
@@ -1529,30 +1528,9 @@ static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className,
         goto end;
     }
 
-    /* For a child window, all siblings will have the same hInstance, */
-    /* so we can look for the class once and for all. */
-
-    if (className && (pWnd->dwStyle & WS_CHILD))
-    {
-        if (!(pClass = CLASS_FindClassByAtom( className, pWnd->hInstance )))
-        {
-            retvalue = 0;
-            goto end;
-        }
-    }
-
-
     for ( ; pWnd ; WIN_UpdateWndPtr(&pWnd,pWnd->next))
     {
-        if (className && !(pWnd->dwStyle & WS_CHILD))
-        {
-            if (!((pClass = CLASS_FindClassByAtom( className, pWnd->hInstance))
-                ||(pClass = CLASS_FindClassByAtom( className, GetExePtr(pWnd->hInstance))))
-               )
-                continue;  /* Skip this window */
-        }
-
-        if (pClass && (pWnd->class != pClass))
+        if (className && (pWnd->class->atomName != className))
             continue;  /* Not the right class */
 
         /* Now check the title */
