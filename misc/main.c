@@ -301,9 +301,10 @@ int MAIN_GetLanguageID(LPCSTR Lang,LPCSTR Country,LPCSTR Charset,LPCSTR Dialect)
 					ret=LANG_##y ; \
 					goto end_MAIN_GetLanguageID; \
 				    }
-#define LANG_SUB_ENTRY(x,y,z)	    if (!strcmp(country, x )) \
+#define LANG_SUB_ENTRY(x,y,z)	    if (!strcmp(country, x )) { \
 					ret = MAKELANGID( LANG_##y , SUBLANG_##z ); \
-					goto end_MAIN_GetLanguageID;
+					goto end_MAIN_GetLanguageID; \
+				    }
 #define LANG_DIALECT_ENTRY(x,y)	    { ret = MAKELANGID(LANG_##x , SUBLANG_##y ); \
 				    goto end_MAIN_GetLanguageID; }
 #define LANG_ENTRY_END(x)	    ret = MAKELANGID(LANG_##x , SUBLANG_DEFAULT); \
@@ -355,6 +356,7 @@ int MAIN_GetLanguageID(LPCSTR Lang,LPCSTR Country,LPCSTR Charset,LPCSTR Dialect)
 /*x09*/ LANG_ENTRY_BEGIN( "en", ENGLISH )
 	LANG_SUB_ENTRY( "US", ENGLISH, ENGLISH_US )
 	LANG_SUB_ENTRY( "UK", ENGLISH, ENGLISH_UK )
+	LANG_SUB_ENTRY( "GB", ENGLISH, ENGLISH_UK )
 	LANG_SUB_ENTRY( "AU", ENGLISH, ENGLISH_AUS )
 	LANG_SUB_ENTRY( "CA", ENGLISH, ENGLISH_CAN )
 	LANG_SUB_ENTRY( "NZ", ENGLISH, ENGLISH_NZ )

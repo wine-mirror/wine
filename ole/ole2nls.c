@@ -92,7 +92,7 @@ LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_NZ)		/*0x1409*/
 #include "nls/enz.nls"
 LANG_END
 LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_EIRE)		/*0x1809*/
-#include "nls/irl.nls"
+#include "nls/eni.nls"
 LANG_END
 LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_SAFRICA)	/*0x1C09*/
 #include "nls/ens.nls"
@@ -443,15 +443,15 @@ const struct map_lcid2str {
 	{0x0408,"Greek"},
 	{0x0409,"English (United States)"},
 	{0x0809,"English (United Kingdom)"},
-	{0x0c09,"English (Australia)"},
-	{0x1009,"English (Canada)"},
+	{0x0c09,"English (Australian)"},
+	{0x1009,"English (Canadian)"},
 	{0x1409,"English (New Zealand)"},
 	{0x1809,"English (Ireland)"},
 	{0x1c09,"English (South Africa)"},
 	{0x2009,"English (Jamaica)"},
 	{0x2409,"English (Caribbean)"},
 	{0x2809,"English (Belize)"},
-	{0x2c09,"English (Trinidad)"},
+	{0x2c09,"English (Trinidad & Tobago)"},
 	{0x3009,"English (Zimbabwe)"},
 	{0x3409,"English (Philippines)"},
 	{0x040a,"Spanish (Spain, traditional sorting)"},
