@@ -1,5 +1,6 @@
 @ stub DbgHelpCreateUserDump
 @ stub DbgHelpCreateUserDumpW
+@ stdcall EnumDirTree(long str str ptr ptr ptr)
 @ stdcall EnumerateLoadedModules(long ptr ptr)
 @ stub EnumerateLoadedModules64
 @ stub ExtensionApiVersion
@@ -35,7 +36,7 @@
 @ stub SymEnumerateSymbols64
 @ stub SymEnumerateSymbolsW
 @ stub SymEnumerateSymbolsW64
-@ stub SymFindFileInPath
+@ stdcall SymFindFileInPath(long str str ptr long long long ptr ptr ptr)
 @ stdcall SymFromAddr(long long ptr ptr)
 @ stdcall SymFromName(long str ptr)
 @ stdcall SymFunctionTableAccess(long long)
@@ -71,7 +72,7 @@
 @ stdcall SymLoadModule(long long str str long long)
 @ stub SymLoadModule64
 @ stub SymLoadModuleEx
-@ stub SymMatchFileName
+@ stdcall SymMatchFileName(str str ptr ptr)
 @ stub SymMatchString
 @ stdcall SymRegisterCallback(long ptr ptr)
 @ stub SymRegisterCallback64

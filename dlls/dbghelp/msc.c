@@ -2676,12 +2676,10 @@ static void pdb_convert_symbols_header(PDB_SYMBOLS* symbols,
     }
 }
 
-static const char*  get_last_sep(const char* str)
+static BOOL CALLBACK pdb_match(char* file, void* user)
 {
-    char*       a;
-
-    if ((a = strrchr(str, '/'))) str = a;
-    return (a = strrchr(str, '\\')) ? a : str;
+    /* accept first file */
+    return FALSE;
 }
 
 static HANDLE open_pdb_file(const struct process* pcs, struct module* module,
@@ -2692,23 +2690,13 @@ static HANDLE open_pdb_file(const struct process* pcs, struct module* module,
 
     h = CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ, NULL, 
                     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (h == INVALID_HANDLE_VALUE)
+    /* FIXME: should give more bits on the file to look at */
+    if (h == INVALID_HANDLE_VALUE &&
+        SymFindFileInPath(pcs->handle, NULL, (char*)filename, NULL, 0, 0, 0,
+                          dbg_file_path, pdb_match, NULL))
     {
-        h = FindDebugInfoFile((char*)filename, pcs->search_path, dbg_file_path);
-        if (h == NULL)
-        {
-            const char* p;
-            const char* q;
-
-            strcpy(dbg_file_path, module->module.LoadedImageName);
-            if ((p = get_last_sep(dbg_file_path)))
-            {
-                if ((q = get_last_sep(filename))) q++; else q = filename;
-                strcpy((char*)p + 1, q);
-                h = CreateFileA(dbg_file_path, GENERIC_READ, FILE_SHARE_READ, NULL, 
-                                OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-            }
-        }
+        h = CreateFileA(dbg_file_path, GENERIC_READ, FILE_SHARE_READ, NULL, 
+                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     }
     return (h == INVALID_HANDLE_VALUE) ? NULL : h;
 }

@@ -749,6 +749,10 @@ BOOL WINAPI SymSetSearchPath(HANDLE,PSTR);
 DWORD WINAPI GetTimestampForLoadedLibrary(HMODULE);
 BOOL WINAPI MakeSureDirectoryPathExists(PCSTR);
 BOOL WINAPI SearchTreeForFile(PSTR,PSTR,PSTR);
+typedef BOOL (CALLBACK *PENUMDIRTREE_CALLBACK)(LPCSTR path, PVOID user);
+BOOL WINAPI EnumDirTree(HANDLE hProcess, PCSTR root, PCSTR file,
+                        LPSTR buffer, PENUMDIRTREE_CALLBACK cb, void* user);
+BOOL WINAPI SymMatchFileName(LPSTR file, LPSTR match, LPSTR* filestop, LPSTR* matchstop);
 
 /*************************
  *   Context management  *

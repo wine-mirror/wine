@@ -72,6 +72,12 @@ static SYM_TYPE pe_load_stabs(const struct process* pcs, struct module* module,
     return sym_type;
 }
 
+static BOOL CALLBACK dbg_match(char* file, void* user)
+{
+    /* accept first file */
+    return FALSE;
+}
+
 /******************************************************************
  *		pe_load_dbg_file
  *
@@ -81,7 +87,7 @@ static SYM_TYPE pe_load_dbg_file(const struct process* pcs, struct module* modul
                                  const char* dbg_name, DWORD timestamp)
 {
     char                                tmp[MAX_PATH];
-    HANDLE                              hFile, hMap = 0;
+    HANDLE                              hFile = INVALID_HANDLE_VALUE, hMap = 0;
     const BYTE*                         dbg_mapping = NULL;
     const IMAGE_SEPARATE_DEBUG_HEADER*  hdr;
     const IMAGE_DEBUG_DIRECTORY*        dbg;
@@ -89,8 +95,11 @@ static SYM_TYPE pe_load_dbg_file(const struct process* pcs, struct module* modul
 
     WINE_TRACE("Processing DBG file %s\n", dbg_name);
 
-    tmp[0] = '\0';
-    if ((hFile = FindDebugInfoFile((char*)dbg_name, pcs->search_path, tmp)) != NULL &&
+    if (SymFindFileInPath(pcs->handle, NULL, (char*)dbg_name, 
+                          NULL, 0, 0, 0,
+                          tmp, dbg_match, NULL) &&
+        (hFile = CreateFileA(tmp, GENERIC_READ, FILE_SHARE_READ, NULL, 
+                             OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) != INVALID_HANDLE_VALUE &&
         ((hMap = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != 0) &&
         ((dbg_mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL))
     {

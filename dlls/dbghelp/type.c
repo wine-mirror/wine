@@ -238,7 +238,7 @@ struct symt_enum* symt_new_enum(struct module* module, const char* typename)
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag            = SymTagEnum;
-        sym->name = pool_strdup(&module->pool, typename);
+        sym->name = (typename) ? pool_strdup(&module->pool, typename) : NULL;
         vector_init(&sym->vchildren, sizeof(struct symt*), 8);
     }
     return sym;
