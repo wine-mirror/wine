@@ -10,7 +10,6 @@
 #include "winuser.h"
 #include "winerror.h"
 
-#include "queue.h"
 #include "winproc.h"
 #include "message.h"
 #include "server.h"

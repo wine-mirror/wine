@@ -31,7 +31,6 @@
 #include "wine/winbase16.h"
 #include "heap.h"
 #include "message.h"
-#include "queue.h"
 #include "user.h"
 #include "clipboard.h"
 #include "debugtools.h"

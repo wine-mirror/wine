@@ -13,7 +13,6 @@
 #include "winuser.h"
 #include "heap.h"
 #include "user.h"
-#include "queue.h"
 #include "win.h"
 #include "controls.h"
 #include "cursoricon.h"

@@ -19,7 +19,6 @@
 #include "winpos.h"
 #include "hook.h"
 #include "nonclient.h"
-#include "queue.h"
 #include "debugtools.h"
 #include "options.h"
 #include "shellapi.h"

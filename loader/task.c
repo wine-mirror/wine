@@ -19,7 +19,6 @@
 #include "instance.h"
 #include "miscemu.h"
 #include "module.h"
-#include "queue.h"
 #include "selectors.h"
 #include "stackframe.h"
 #include "task.h"
