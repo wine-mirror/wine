@@ -504,25 +504,7 @@ SPEC_TYPE ParseTopLevel( FILE *file, int def_only )
 
     while ((token = GetToken(1)) != NULL)
     {
-	if (strcmp(token, "name") == 0)
-	{
-	    strcpy(DLLName, GetToken(0));
-	}
-	else if (strcmp(token, "file") == 0)
-	{
-	    strcpy(DLLFileName, GetToken(0));
-	}
-        else if (strcmp(token, "mode") == 0)
-        {
-            token = GetToken(0);
-            if (!strcmp(token, "dll" )) SpecMode = SPEC_MODE_DLL;
-            else if (!strcmp(token, "guiexe" )) SpecMode = SPEC_MODE_GUIEXE;
-            else if (!strcmp(token, "cuiexe" )) SpecMode = SPEC_MODE_CUIEXE;
-            else if (!strcmp(token, "guiexe_unicode" )) SpecMode = SPEC_MODE_GUIEXE_UNICODE;
-            else if (!strcmp(token, "cuiexe_unicode" )) SpecMode = SPEC_MODE_CUIEXE_UNICODE;
-            else fatal_error( "Mode must be 'dll', 'guiexe', 'cuiexe', 'guiexe_unicode' or 'cuiexe_unicode'\n" );
-        }
-	else if (strcmp(token, "heap") == 0)
+	if (strcmp(token, "heap") == 0)
 	{
             token = GetToken(0);
             if (!IsNumberString(token)) fatal_error( "Expected number after heap\n" );
