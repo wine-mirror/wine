@@ -88,6 +88,13 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
         /* add write permission */
         buf.st_mode |= 0600 | ((buf.st_mode & 044) >> 1);
     }
+    if (attributes & FILE_ATTRIBUTE_DIRECTORY)
+    {
+        if (!S_ISDIR(buf.st_mode))
+            FIXME(file,"SetFileAttributes expected the file '%s' to be a directory",
+                  lpFileName);
+	attributes &= ~FILE_ATTRIBUTE_DIRECTORY;
+    }
     attributes &= ~(FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM);
     if (attributes)
         FIXME(file,"(%s):%lx attribute(s) not implemented.\n",
