@@ -24,6 +24,7 @@
 
 /* Language resources */
 
+#include "De.rc"
 #include "En.rc"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
