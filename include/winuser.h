@@ -2825,7 +2825,7 @@ LONG        WINAPI GetMessageTime(void);
 DWORD       WINAPI GetTickCount(void);
 ATOM        WINAPI GlobalDeleteAtom(ATOM);
 DWORD       WINAPI OemKeyScan(WORD);
-VOID        WINAPI ReleaseCapture(void);
+BOOL        WINAPI ReleaseCapture(void);
 VOID        WINAPI SetKeyboardState(LPBYTE);
 VOID        WINAPI WaitMessage(VOID);
 

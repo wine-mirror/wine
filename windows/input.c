@@ -371,9 +371,9 @@ HWND WINAPI SetCapture( HWND hwnd )
 /**********************************************************************
  *              ReleaseCapture   (USER.19) (USER32.439)
  */
-void WINAPI ReleaseCapture(void)
+BOOL WINAPI ReleaseCapture(void)
 {
-    EVENT_Capture( 0, 0 );
+    return (EVENT_Capture( 0, 0 ) != 0);
 }
 
 
