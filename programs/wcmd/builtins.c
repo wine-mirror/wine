@@ -166,7 +166,7 @@ char *p;
 
   hff = FindFirstFile (param1, &fd);
   if (hff == INVALID_HANDLE_VALUE) {
-    WCMD_output ("File Not Found\n");
+    WCMD_output ("%s :File Not Found\n",param1);
     return;
   }
   if ((strchr(param1,'*') == NULL) && (strchr(param1,'?') == NULL)
@@ -530,7 +530,7 @@ char flags[9] = {"        "};
 
   hff = FindFirstFile (param1, &fd);
   if (hff == INVALID_HANDLE_VALUE) {
-    WCMD_output ("File Not Found\n");
+    WCMD_output ("%s: File Not Found\n",param1);
   }
   else {
     do {
