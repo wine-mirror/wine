@@ -186,7 +186,12 @@ void select_loop(void)
             int event = 0;
             if (FD_ISSET( i, &write )) event |= WRITE_EVENT;
             if (FD_ISSET( i, &read ))  event |= READ_EVENT;
-            if (event) users[i]->ops->event( i, event, users[i]->private );
+
+            /* Note: users[i] might be NULL here, because an event routine
+               called in an earlier pass of this loop might have removed 
+               the current user ... */
+            if (event && users[i]) 
+                users[i]->ops->event( i, event, users[i]->private );
         }
     }
 }
