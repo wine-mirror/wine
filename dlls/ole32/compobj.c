@@ -2125,11 +2125,11 @@ done:
  */
 HRESULT WINAPI OleSetAutoConvert(REFCLSID clsidOld, REFCLSID clsidNew)
 {
-    HKEY hkey = 0, hkeyConvert = 0;
+    HKEY hkey = 0;
     char buf[200], szClsidNew[200];
     HRESULT res = S_OK;
 
-    TRACE("(%p,%p);\n", clsidOld, clsidNew);
+    TRACE("(%s,%s)\n", debugstr_guid(clsidOld), debugstr_guid(clsidNew));
     sprintf(buf,"CLSID\\");WINE_StringFromCLSID(clsidOld,&buf[6]);
     WINE_StringFromCLSID(clsidNew, szClsidNew);
     if (RegOpenKeyA(HKEY_CLASSES_ROOT,buf,&hkey))
@@ -2137,24 +2137,45 @@ HRESULT WINAPI OleSetAutoConvert(REFCLSID clsidOld, REFCLSID clsidNew)
         res = REGDB_E_CLASSNOTREG;
 	goto done;
     }
-    if (RegCreateKeyA(hkey, "AutoConvertTo", &hkeyConvert))
-    {
-        res = REGDB_E_WRITEREGDB;
-	goto done;
-    }
-    if (RegSetValueExA(hkeyConvert, NULL, 0,
-                            REG_SZ, (LPBYTE)szClsidNew, strlen(szClsidNew)+1))
+    if (RegSetValueA(hkey, "AutoConvertTo", REG_SZ, szClsidNew, strlen(szClsidNew)+1))
     {
         res = REGDB_E_WRITEREGDB;
 	goto done;
     }
 
 done:
-    if (hkeyConvert) RegCloseKey(hkeyConvert);
     if (hkey) RegCloseKey(hkey);
-
     return res;
 }
+
+/******************************************************************************
+ *              CoTreatAsClass        [OLE32.46]
+ */
+HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
+{
+    HKEY hkey = 0;
+    char buf[200], szClsidNew[200];
+    HRESULT res = S_OK;
+
+    FIXME("(%s,%s)\n", debugstr_guid(clsidOld), debugstr_guid(clsidNew));
+    sprintf(buf,"CLSID\\");WINE_StringFromCLSID(clsidOld,&buf[6]);
+    WINE_StringFromCLSID(clsidNew, szClsidNew);
+    if (RegOpenKeyA(HKEY_CLASSES_ROOT,buf,&hkey))
+    {
+        res = REGDB_E_CLASSNOTREG;
+	goto done;
+    }
+    if (RegSetValueA(hkey, "AutoTreatAs", REG_SZ, szClsidNew, strlen(szClsidNew)+1))
+    {
+        res = REGDB_E_WRITEREGDB;
+	goto done;
+    }
+
+done:
+    if (hkey) RegCloseKey(hkey);
+    return res;
+}
+
 
 /***********************************************************************
  *           IsEqualGUID [OLE32.76]

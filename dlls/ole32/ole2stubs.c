@@ -58,15 +58,6 @@ HRESULT WINAPI OleTranslateAccelerator (LPOLEINPLACEFRAME lpFrame,
 }
 
 /******************************************************************************
- *              CoTreatAsClass        [OLE32.46]
- */
-HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
-{
-  FIXME("(%p,%p), stub!\n", clsidOld, clsidNew);
-  return S_OK;
-}
-
-/******************************************************************************
  *              SetConvertStg        [OLE32.142]
  */
 HRESULT WINAPI SetConvertStg(LPSTORAGE pStg, BOOL fConvert)
