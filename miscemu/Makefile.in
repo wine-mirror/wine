@@ -14,7 +14,7 @@ all: $(MODULE)
 LDEXECFLAGS = @LDEXECFLAGS@
 
 $(MODULE): $(OBJS)
-	$(CC) -o $@ $(LDEXECFLAGS) $(OBJS) $(LIBWINE) $(LIBPORT) $(LDFLAGS)
+	$(CC) -o $@ $(LDEXECFLAGS) $(OBJS) -L$(DLLDIR) -lntdll.dll $(LIBWINE) $(LIBUNICODE) $(LIBPORT) $(LDFLAGS)
 
 install:: $(MODULE)
 	$(MKINSTALLDIRS) $(bindir)
