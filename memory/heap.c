@@ -102,7 +102,7 @@ HANDLE SegptrHeap = 0;
 
 
 #ifdef __GNUC__
-#define GET_EIP()    (__builtin_return_address(1))
+#define GET_EIP()    (__builtin_return_address(0))
 #define SET_EIP(ptr) ((ARENA_INUSE*)(ptr) - 1)->callerEIP = GET_EIP()
 #else
 #define GET_EIP()    0
