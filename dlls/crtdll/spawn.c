@@ -41,7 +41,6 @@
 #include "crtdll.h"
 #include <errno.h>
 #include "process.h"
-#include "options.h"
 #include <stdlib.h>
 
 
@@ -182,44 +181,6 @@ HANDLE __cdecl CRTDLL__spawnve(INT flags, LPSTR name, LPSTR *argv, LPSTR *envv)
  */
 INT __cdecl CRTDLL_system(LPSTR x)
 {
-#define SYSBUF_LENGTH 1500
-  char buffer[SYSBUF_LENGTH];
-  unsigned char *y = x;
-  unsigned char *bp;
-  int i;
-
-  strcpy(buffer, argv0);
-  bp = buffer + strlen(buffer);
-  *bp++ = ' ';
-  *bp++ = '"';
-  *bp++ = 0;
-  i = strlen(buffer) + strlen(x) +2;
-
-  /* Calculate needed buffer size to prevent overflow.  */
-  while (*y) {
-    if (*y =='\\') i++;
-    y++;
-  }
-  /* If buffer too short, exit.  */
-  if (i > SYSBUF_LENGTH) {
-    TRACE("_system buffer to small\n");
-    return 127;
-  }
-
-  y =x;
-
-  while (*y) {
-    *bp = *y;
-    bp++; y++;
-    if (*(y-1) =='\\') *bp++ = '\\';
-  }
-  /* Remove spaces from end of string.  */
-  while (*(y-1) == ' ') {
-    bp--;y--;
-  }
-  *bp++ = '"';
-  *bp = 0;
-  TRACE("_system got '%s', executing '%s'\n",x,buffer);
-
-  return system(buffer);
+    /* FIXME: should probably launch cmd interpreter in COMSPEC */
+    return __CRTDLL__spawn(_P_WAIT, NULL, x, NULL);
 }

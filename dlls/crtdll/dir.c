@@ -14,9 +14,8 @@
 #include "crtdll.h"
 #include <errno.h>
 
-#include "drive.h"
+#include "ntddk.h"
 #include <time.h>
-#include "file.h"
 
 DEFAULT_DEBUG_CHANNEL(crtdll);
 
@@ -24,7 +23,7 @@ DEFAULT_DEBUG_CHANNEL(crtdll);
 static void __CRTDLL__fttofd(LPWIN32_FIND_DATAA fd, find_t* ft);
 static void __CRTDLL__fttofd(LPWIN32_FIND_DATAA fd, find_t* ft)
 {
-  static DWORD dummy;
+  DWORD dw;
 
   /* Tested with crtdll.dll Version 2.50.4170 (NT) from win98 SE:
    * attrib 0x80 (FILE_ATTRIBUTE_NORMAL)is returned as 0.
@@ -34,9 +33,12 @@ static void __CRTDLL__fttofd(LPWIN32_FIND_DATAA fd, find_t* ft)
   else
     ft->attrib = fd->dwFileAttributes;
 
-  ft->time_create = DOSFS_FileTimeToUnixTime(&fd->ftCreationTime,&dummy);
-  ft->time_access = DOSFS_FileTimeToUnixTime(&fd->ftLastAccessTime,&dummy);
-  ft->time_write = DOSFS_FileTimeToUnixTime(&fd->ftLastWriteTime,&dummy);
+  RtlTimeToSecondsSince1970( &fd->ftCreationTime, &dw );
+  ft->time_create = dw;
+  RtlTimeToSecondsSince1970( &fd->ftLastAccessTime, &dw );
+  ft->time_access = dw;
+  RtlTimeToSecondsSince1970( &fd->ftLastWriteTime, &dw );
+  ft->time_write = dw;
   ft->size = fd->nFileSizeLow;
   strcpy(ft->name, fd->cFileName);
 }
@@ -81,7 +83,9 @@ INT __cdecl CRTDLL__chdir(LPCSTR newdir)
  */
 BOOL __cdecl CRTDLL__chdrive(INT newdrive)
 {
-  if (!DRIVE_SetCurrentDrive(newdrive-1))
+  char buffer[3] = "A:";
+  buffer[0] += newdrive - 1;
+  if (!SetCurrentDirectoryA( buffer ))
   {
     __CRTDLL__set_errno(GetLastError());
     if (newdrive <= 0)
@@ -233,7 +237,7 @@ CHAR* __cdecl CRTDLL__getdcwd(INT drive,LPSTR buf, INT size)
 {
   static CHAR* dummy;
 
-  if (!drive || --drive == DRIVE_GetCurrentDrive())
+  if (!drive || drive == CRTDLL__getdrive())
     return CRTDLL__getcwd(buf,size); /* current */
   else
   {
@@ -241,7 +245,7 @@ CHAR* __cdecl CRTDLL__getdcwd(INT drive,LPSTR buf, INT size)
     char drivespec[4] = {'A', ':', '\\', 0};
     int dir_len;
 
-    drivespec[0] += drive;
+    drivespec[0] += drive - 1;
     if (GetDriveTypeA(drivespec) < DRIVE_REMOVABLE)
     {
       CRTDLL_errno = EACCES;
@@ -302,7 +306,10 @@ UINT __cdecl CRTDLL__getdiskfree(UINT disk, diskfree_t* d)
  */
 INT __cdecl CRTDLL__getdrive(VOID)
 {
-  return DRIVE_GetCurrentDrive() + 1;
+    char buffer[MAX_PATH];
+    if (!GetCurrentDirectoryA( sizeof(buffer), buffer )) return 0;
+    if (buffer[1] != ':') return 0;
+    return toupper(buffer[0]) - 'A' + 1;
 }
 
 

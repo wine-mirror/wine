@@ -40,8 +40,8 @@ debug_channels (crtdll)
 @ cdecl __iscsymf(long) CRTDLL___iscsymf
 @ stub __mb_cur_max_dll
 @ stub __pxcptinfoptrs
-@ cdecl __threadhandle() GetCurrentThread
-@ cdecl __threadid() GetCurrentThreadId
+@ forward __threadhandle kernel32.GetCurrentThread
+@ forward __threadid kernel32.GetCurrentThreadId
 @ cdecl __toascii(long) CRTDLL___toascii
 @ cdecl _abnormal_termination() CRTDLL__abnormal_termination
 @ cdecl _access(str long) CRTDLL__access
@@ -467,7 +467,7 @@ debug_channels (crtdll)
 @ cdecl sinh(double) sinh
 @ varargs sprintf() sprintf
 @ cdecl sqrt(double) sqrt
-@ cdecl srand(long) CRTDLL_srand
+@ cdecl srand(long) srand
 @ varargs sscanf() sscanf
 @ cdecl strcat(str str) strcat
 @ cdecl strchr(str long) strchr

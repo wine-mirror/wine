@@ -39,9 +39,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include "drive.h"
-#include "file.h"
-
+#include "ntddk.h"
 
 DEFAULT_DEBUG_CHANNEL(crtdll);
 
@@ -470,7 +468,7 @@ CRTDLL_FILE*  __cdecl CRTDLL__fsopen(LPCSTR path, LPCSTR mode, INT share)
  */
 int __cdecl CRTDLL__fstat(int fd, struct _stat* buf)
 {
-  static DWORD dummy;
+  DWORD dw;
   BY_HANDLE_FILE_INFORMATION hfi;
   HANDLE hand = __CRTDLL__fdtoh(fd);
 
@@ -496,9 +494,10 @@ int __cdecl CRTDLL__fstat(int fd, struct _stat* buf)
   FIXME(":dwFileAttributes = %d, mode set to 0",hfi.dwFileAttributes);
   buf->st_nlink = hfi.nNumberOfLinks;
   buf->st_size  = hfi.nFileSizeLow;
-  buf->st_atime = DOSFS_FileTimeToUnixTime(&hfi.ftCreationTime,&dummy);
-  buf->st_mtime = DOSFS_FileTimeToUnixTime(&hfi.ftLastAccessTime,&dummy);
-  buf->st_ctime = DOSFS_FileTimeToUnixTime(&hfi.ftLastWriteTime,&dummy);
+  RtlTimeToSecondsSince1970( &hfi.ftLastAccessTime, &dw );
+  buf->st_atime = dw;
+  RtlTimeToSecondsSince1970( &hfi.ftLastWriteTime, &dw );
+  buf->st_mtime = buf->st_ctime = dw;
   return 0;
 }
 
@@ -763,27 +762,18 @@ INT __cdecl CRTDLL__setmode(INT fd,INT mode)
  */
 INT __cdecl CRTDLL__stat(const char* path, struct _stat * buf)
 {
-  static DWORD dummy;
-  DOS_FULL_NAME full_name;
-  BY_HANDLE_FILE_INFORMATION hfi;
+  DWORD dw;
+  WIN32_FILE_ATTRIBUTE_DATA hfi;
   unsigned short mode = CRTDLL_S_IREAD;
   int plen;
 
   TRACE(":file (%s) buf(%p)\n",path,buf);
-  if (!DOSFS_GetFullName( path, TRUE, &full_name ))
-  {
-    TRACE("failed-last error (%ld)\n",GetLastError());
-    __CRTDLL__set_errno(ERROR_FILE_NOT_FOUND);
-    return -1;
-  }
- 
-  memset(&hfi,0,sizeof(hfi));
 
-  if (!FILE_Stat(full_name.long_name,&hfi))
+  if (!GetFileAttributesExA( path, GetFileExInfoStandard, &hfi ))
   {
-    TRACE("failed-last error (%ld)\n",GetLastError());
-    __CRTDLL__set_errno(ERROR_FILE_NOT_FOUND);
-    return -1;
+      TRACE("failed-last error (%ld)\n",GetLastError());
+      __CRTDLL__set_errno(ERROR_FILE_NOT_FOUND);
+      return -1;
   }
 
   memset(buf,0,sizeof(struct _stat));
@@ -792,7 +782,7 @@ INT __cdecl CRTDLL__stat(const char* path, struct _stat * buf)
   if (isalpha(*path))
     buf->st_dev = buf->st_rdev = toupper(*path - 'A'); /* drive num */
   else
-    buf->st_dev = buf->st_rdev = DRIVE_GetCurrentDrive();
+    buf->st_dev = buf->st_rdev = CRTDLL__getdrive() - 1;
 
   plen = strlen(path);
 
@@ -817,11 +807,12 @@ INT __cdecl CRTDLL__stat(const char* path, struct _stat * buf)
     mode |= CRTDLL_S_IWRITE;
 
   buf->st_mode  = mode;
-  buf->st_nlink = hfi.nNumberOfLinks;
+  buf->st_nlink = 1;
   buf->st_size  = hfi.nFileSizeLow;
-  buf->st_atime = DOSFS_FileTimeToUnixTime(&hfi.ftCreationTime,&dummy);
-  buf->st_mtime =
-  buf->st_ctime = DOSFS_FileTimeToUnixTime(&hfi.ftLastWriteTime,&dummy);
+  RtlTimeToSecondsSince1970( &hfi.ftLastAccessTime, &dw );
+  buf->st_atime = dw;
+  RtlTimeToSecondsSince1970( &hfi.ftLastWriteTime, &dw );
+  buf->st_mtime = buf->st_ctime = dw;
   TRACE("\n%d %d %d %d %d %d\n", buf->st_mode,buf->st_nlink,buf->st_size,
 	buf->st_atime,buf->st_mtime, buf->st_ctime);
   return 0;

@@ -28,7 +28,6 @@ UB 000416:
 #include <math.h>
 #include <errno.h>
 #include <stdlib.h>
-#include "file.h"
 #include "ntddk.h"
 #include "wingdi.h"
 #include "winuser.h"
@@ -258,16 +257,6 @@ INT __cdecl CRTDLL__setjmp(LPDWORD *jmpbuf)
 
 
 /*********************************************************************
- *                  srand         (CRTDLL.460)
- */
-void __cdecl CRTDLL_srand(DWORD seed)
-{
-	/* FIXME: should of course be thread? process? local */
-	srand(seed);
-}
-
-
-/*********************************************************************
  *                  _beep          (CRTDLL.045)
  *
  * Output a tone using the PC speaker.
@@ -301,10 +290,8 @@ INT __cdecl CRTDLL_rand()
  */
 UINT __cdecl CRTDLL__rotl(UINT x,INT shift)
 {
-   unsigned int ret = (x >> shift)|( x >>((sizeof(x))-shift));
-
-   TRACE("got 0x%08x rot %d ret 0x%08x\n", x,shift,ret);
-   return ret;
+    shift &= 31;
+    return (x << shift) | (x >> (32-shift));
 }
 
 
@@ -313,10 +300,8 @@ UINT __cdecl CRTDLL__rotl(UINT x,INT shift)
  */
 DWORD __cdecl CRTDLL__lrotl(DWORD x,INT shift)
 {
-   unsigned long ret = (x >> shift)|( x >>((sizeof(x))-shift));
-
-   TRACE("got 0x%08lx rot %d ret 0x%08lx\n", x,shift,ret);
-   return ret;
+    shift &= 31;
+    return (x << shift) | (x >> (32-shift));
 }
 
 
@@ -325,10 +310,8 @@ DWORD __cdecl CRTDLL__lrotl(DWORD x,INT shift)
  */
 DWORD __cdecl CRTDLL__lrotr(DWORD x,INT shift)
 {
-  /* Depends on "long long" being 64 bit or greater */
-  unsigned long long arg = x;
-  unsigned long long ret = (arg << 32 | (x & 0xFFFFFFFF)) >> (shift & 0x1f);
-  return ret & 0xFFFFFFFF;
+    shift &= 0x1f;
+    return (x >> shift) | (x << (32-shift));
 }
 
 
@@ -337,10 +320,8 @@ DWORD __cdecl CRTDLL__lrotr(DWORD x,INT shift)
  */
 DWORD __cdecl CRTDLL__rotr(UINT x,INT shift)
 {
-  /* Depends on "long long" being 64 bit or greater */
-  unsigned long long arg = x;
-  unsigned long long ret = (arg << 32 | (x & 0xFFFFFFFF)) >> (shift & 0x1f);
-  return ret & 0xFFFFFFFF;
+    shift &= 0x1f;
+    return (x >> shift) | (x << (32-shift));
 }
 
 
@@ -413,15 +394,12 @@ BOOL __cdecl CRTDLL__isctype(CHAR x,CHAR type)
  */
 LPSTR __cdecl CRTDLL__fullpath(LPSTR buf, LPCSTR name, INT size)
 {
-  DOS_FULL_NAME full_name;
-
   if (!buf)
   {
       size = 256;
       if(!(buf = CRTDLL_malloc(size))) return NULL;
   }
-  if (!DOSFS_GetFullName( name, FALSE, &full_name )) return NULL;
-  lstrcpynA(buf,full_name.short_name,size);
+  if (!GetFullPathNameA( name, size, buf, NULL )) return NULL;
   TRACE("CRTDLL_fullpath got %s\n",buf);
   return buf;
 }
