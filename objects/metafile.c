@@ -1056,16 +1056,20 @@ UINT32 WINAPI GetMetaFileBitsEx(
      LPVOID buf   /* buffer to receive raw metafile data */  
 ) {
   METAHEADER *h = GlobalLock16(hmf);
+  UINT32 mfSize;
+
   TRACE(metafile, "(%08x,%d,%p)\n", hmf, nSize, buf);
   if (!h) return 0;  /* FIXME: error code */
+  mfSize = h->mtSize * 2;
   if (!buf) {
     GlobalUnlock16(hmf);
-    TRACE(metafile,"returning size %ld\n", h->mtSize);
-    return h->mtSize;
+    TRACE(metafile,"returning size %d\n", mfSize);
+    return mfSize;
   }
-  memmove(buf, h, MIN(nSize, h->mtSize));
+  if(mfSize > nSize) mfSize = nSize;
+  memmove(buf, h, mfSize);
   GlobalUnlock16(hmf);
-  return MIN(nSize, h->mtSize);
+  return mfSize;
 }
 
 /******************************************************************
