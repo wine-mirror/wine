@@ -291,10 +291,9 @@ static void preloader_exec( char **argv, char **envp, int use_preloader )
         free( full_name );
         return;
     }
-#else
+#endif
     if (envp) execve( argv[0], argv, envp );
     else execv( argv[0], argv );
-#endif
 }
 
 /* exec a wine internal binary (either the wine loader or the wine server) */
