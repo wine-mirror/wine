@@ -2,6 +2,7 @@
  * Win32 kernel functions
  *
  * Copyright 1995 Martin von Loewis and Cameron Heide
+ * 1999 Peter Ganten
  */
 
 #include <string.h>
@@ -13,23 +14,28 @@
 #include "heap.h"
 #include "task.h"
 #include "debug.h"
+#include "process.h"
   
 /***********************************************************************
  *              GetStartupInfoA         (KERNEL32.273)
  */
 VOID WINAPI GetStartupInfoA(LPSTARTUPINFOA lpStartupInfo)
 {
-    lpStartupInfo->cb = sizeof(STARTUPINFOA);
-    lpStartupInfo->lpReserved = "<Reserved>";
-    lpStartupInfo->lpDesktop = "Desktop";
-    lpStartupInfo->lpTitle = "Title";
+  
+  LPSTARTUPINFOA  startup;
 
-    lpStartupInfo->cbReserved2 = 0;
-    lpStartupInfo->lpReserved2 = NULL; /* must be NULL for VC runtime */
-    lpStartupInfo->dwFlags    = STARTF_USESTDHANDLES;
-    lpStartupInfo->hStdInput  = (HANDLE)0;
-    lpStartupInfo->hStdOutput = (HANDLE)1;
-    lpStartupInfo->hStdError  = (HANDLE)2;
+  startup = ((LPSTARTUPINFOA )PROCESS_Current()->env_db->startup_info);
+  memcpy ( lpStartupInfo, startup, sizeof (STARTUPINFOA) );
+
+  TRACE ( win32, "size: %ld\n"
+	  "\tlpReserverd: %s, lpDesktop: %s, lpTitle: %s\n"
+	  "\tdwX: %ld, dwY: %ld, dwXSize: %ld, dwYSize: %ld\n"
+	  "\tdwFlags: %lx, wShowWindow: %x\n", lpStartupInfo->cb, 
+	  lpStartupInfo->lpReserved, lpStartupInfo->lpDesktop, 
+	  lpStartupInfo->lpTitle, lpStartupInfo->dwX, 
+	  lpStartupInfo->dwY, lpStartupInfo->dwXSize, 
+	  lpStartupInfo->dwYSize, lpStartupInfo->dwFlags, 
+	  lpStartupInfo->wShowWindow );
 }
 
 /***********************************************************************
@@ -37,16 +43,30 @@ VOID WINAPI GetStartupInfoA(LPSTARTUPINFOA lpStartupInfo)
  */
 VOID WINAPI GetStartupInfoW(LPSTARTUPINFOW lpStartupInfo)
 {
-    lpStartupInfo->cb = sizeof(STARTUPINFOW);
-    lpStartupInfo->lpReserved = HEAP_strdupAtoW(GetProcessHeap(),0,"<Reserved>");
-    lpStartupInfo->lpDesktop = HEAP_strdupAtoW(GetProcessHeap(), 0, "Desktop");
-    lpStartupInfo->lpTitle = HEAP_strdupAtoW(GetProcessHeap(), 0, "Title");
 
-    lpStartupInfo->cbReserved2 = 0;
-    lpStartupInfo->lpReserved2 = NULL; /* must be NULL for VC runtime */
-    lpStartupInfo->hStdInput  = (HANDLE)0;
-    lpStartupInfo->hStdOutput = (HANDLE)1;
-    lpStartupInfo->hStdError  = (HANDLE)2;
+  STARTUPINFOA startup;
+  GetStartupInfoA ( &startup );
+
+  lpStartupInfo->cb = sizeof(STARTUPINFOW);
+  lpStartupInfo->lpReserved = 
+    HEAP_strdupAtoW (GetProcessHeap(), 0, startup.lpReserved );
+  lpStartupInfo->lpDesktop = 
+    HEAP_strdupAtoW (GetProcessHeap(), 0, startup.lpDesktop );
+  lpStartupInfo->lpTitle = 
+    HEAP_strdupAtoW (GetProcessHeap(), 0, startup.lpTitle );
+  lpStartupInfo->dwX = startup.dwX;
+  lpStartupInfo->dwY = startup.dwY;
+  lpStartupInfo->dwXSize = startup.dwXSize;
+  lpStartupInfo->dwXCountChars = startup.dwXCountChars;
+  lpStartupInfo->dwYCountChars = startup.dwYCountChars;
+  lpStartupInfo->dwFillAttribute = startup.dwFillAttribute;
+  lpStartupInfo->dwFlags = startup.dwFlags;
+  lpStartupInfo->wShowWindow = startup.wShowWindow;
+  lpStartupInfo->cbReserved2 = startup.cbReserved2;
+  lpStartupInfo->lpReserved2 = startup.lpReserved2;
+  lpStartupInfo->hStdInput = startup.hStdInput;
+  lpStartupInfo->hStdOutput = startup.hStdOutput;
+  lpStartupInfo->hStdError = startup.hStdError;
 }
 
 /***********************************************************************
