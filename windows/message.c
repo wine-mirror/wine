@@ -504,7 +504,8 @@ static BOOL process_raw_mouse_message( MSG *msg, ULONG_PTR extra_info )
     }
 
     pt = msg->pt;
-    if (hittest != HTCLIENT)
+    /* Note: windows has no concept of a non-client wheel message */
+    if (hittest != HTCLIENT && msg->message != WM_MOUSEWHEEL)
     {
         msg->message += WM_NCMOUSEMOVE - WM_MOUSEMOVE;
         msg->wParam = hittest;
