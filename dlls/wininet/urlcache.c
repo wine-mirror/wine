@@ -203,3 +203,20 @@ BOOL WINAPI SetUrlCacheEntryInfoW(LPCWSTR lpszUrlName, LPINTERNET_CACHE_ENTRY_IN
     FIXME("stub\n");
     return FALSE;
 }
+
+/***********************************************************************
+ *           CreateUrlCacheEntryA (WININET.@)
+ *
+ */
+BOOL WINAPI CreateUrlCacheEntryA(
+    LPCSTR lpszUrlName,
+    DWORD dwExpectedFileSize,
+    LPCSTR lpszFileExtension,
+    LPSTR lpszFileName,
+    DWORD dwReserved)
+{
+    FIXME("url=%s, size=%ld, ext=%s: stub\n",debugstr_a(lpszUrlName),
+	  dwExpectedFileSize, debugstr_a(lpszFileExtension));
+    INTERNET_SetLastError(ERROR_FILE_NOT_FOUND);
+    return FALSE;
+}

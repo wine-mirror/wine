@@ -4,7 +4,7 @@
 @ stub CommitUrlCacheEntryW
 @ stub CreateUrlCacheContainerA
 @ stub CreateUrlCacheContainerW
-@ stub CreateUrlCacheEntryA
+@ stdcall CreateUrlCacheEntryA(str long str ptr long)
 @ stub CreateUrlCacheEntryW
 @ stdcall CreateUrlCacheGroup(long ptr)
 @ stub DeleteIE3Cache
@@ -97,8 +97,8 @@
 @ stdcall InternetConnectW(ptr wstr long wstr wstr long long long)
 @ stdcall InternetCrackUrlA(str long long ptr)
 @ stdcall InternetCrackUrlW(wstr long long ptr)
-@ stub InternetCreateUrlA
-@ stub InternetCreateUrlW
+@ stdcall InternetCreateUrlA(ptr long ptr ptr)
+@ stdcall InternetCreateUrlW(ptr long ptr ptr)
 @ stub InternetDebugGetLocalTime
 @ stub InternetDial
 @ stub InternetErrorDlg
