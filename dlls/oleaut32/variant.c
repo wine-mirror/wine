@@ -2467,6 +2467,7 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
 	HRESULT hres;
 
         V_VT(out) = VT_BSTR;
+        VariantInit(&bstrvar);
         hres = VariantChangeTypeEx(&bstrvar,right,0,0,VT_BSTR);
 	if (hres) {
 	    FIXME("Failed to convert right side from vt %d to VT_BSTR?\n",V_VT(right));
@@ -2480,6 +2481,7 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
 	HRESULT hres;
 
         V_VT(out) = VT_BSTR;
+        VariantInit(&bstrvar);
         hres = VariantChangeTypeEx(&bstrvar,left,0,0,VT_BSTR);
 	if (hres) {
 	    FIXME("Failed to convert right side from vt %d to VT_BSTR?\n",V_VT(right));
