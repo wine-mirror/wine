@@ -45,7 +45,7 @@ Window Edge Styles (Win31/Win95/98 look), in order of precedence:
 
 typedef enum { 
     sent=0x1, posted=0x2, parent=0x4, wparam=0x8, lparam=0x10,
-    defwinproc=0x20, optional=0x40
+    defwinproc=0x20, optional=0x40, hook=0x80
 } msg_flags_t;
 
 struct message {
@@ -57,6 +57,7 @@ struct message {
 
 /* CreateWindow (for overlapped window, not initially visible) (16/32) */
 static const struct message WmCreateOverlappedSeq[] = {
+    { HCBT_CREATEWND, hook },
     { WM_GETMINMAXINFO, sent },
     { WM_NCCREATE, sent },
     { WM_NCCALCSIZE, sent|wparam, 0 },
@@ -72,11 +73,13 @@ static const struct message WmShowOverlappedSeq[] = {
     { WM_NCPAINT, sent|wparam|optional, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
+    { HCBT_ACTIVATE, hook },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_ACTIVATEAPP, sent|wparam, 1 },
     { WM_NCACTIVATE, sent|wparam, 1 },
     { WM_GETTEXT, sent|defwinproc },
     { WM_ACTIVATE, sent|wparam, 1 },
+    { HCBT_SETFOCUS, hook },
     { WM_IME_SETCONTEXT, sent|optional },
     { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
     { WM_NCPAINT, sent|wparam|optional, 1 },
@@ -90,6 +93,7 @@ static const struct message WmShowOverlappedSeq[] = {
 
 /* DestroyWindow (for overlapped window) (32) */
 static const struct message WmDestroyOverlappedSeq[] = {
+    { HCBT_DESTROYWND, hook },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
     { WM_NCACTIVATE, sent|wparam, 0 },
@@ -103,6 +107,7 @@ static const struct message WmDestroyOverlappedSeq[] = {
 };
 /* CreateWindow (for child window, not initially visible) */
 static const struct message WmCreateChildSeq[] = {
+    { HCBT_CREATEWND, hook },
     { WM_NCCREATE, sent }, 
     /* child is inserted into parent's child list after WM_NCCREATE returns */
     { WM_NCCALCSIZE, sent|wparam, 0 },
@@ -122,6 +127,7 @@ static const struct message WmShowChildSeq[] = {
 };
 /* DestroyWindow (for child window) */
 static const struct message WmDestroyChildSeq[] = {
+    { HCBT_DESTROYWND, hook },
     { WM_PARENTNOTIFY, sent|parent|wparam, 2 },
     { WM_SHOWWINDOW, sent|wparam, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
@@ -406,6 +412,9 @@ static void ok_sequence(const struct message *expected, const char *context)
 	    ok ((expected->flags & parent) == (actual->flags & parent),
 		"%s: the msg 0x%04x was expected in %s\n",
 		context, expected->message, (expected->flags & parent) ? "parent" : "child");
+	    ok ((expected->flags & hook) == (actual->flags & hook),
+		"%s: the msg 0x%04x should have been hooked\n",
+		context, expected->message);
 	    expected++;
 	    actual++;
 	}
@@ -563,9 +572,40 @@ static BOOL RegisterWindowClasses(void)
     return TRUE;
 }
 
+static HHOOK hCBT_hook;
+
+static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam) 
+{ 
+    char buf[256];
+
+    trace("CBT: %d, %08x, %08lx\n", nCode, wParam, lParam);
+
+    if (GetClassNameA((HWND)wParam, buf, sizeof(buf)))
+    {
+	if (!strcmp(buf, "TestWindowClass") ||
+	    !strcmp(buf, "TestParentClass") ||
+	    !strcmp(buf, "SimpleWindowClass"))
+	{
+	    struct message msg;
+
+	    msg.message = nCode;
+	    msg.flags = hook;
+	    msg.wParam = wParam;
+	    msg.lParam = lParam;
+	    add_message(&msg);
+	}
+    }
+    return CallNextHookEx(hCBT_hook, nCode, wParam, lParam);
+}
+
 START_TEST(msg)
 {
     if (!RegisterWindowClasses()) assert(0);
 
+    hCBT_hook = SetWindowsHookExA(WH_CBT, cbt_hook_proc, 0, GetCurrentThreadId());
+    assert(hCBT_hook);
+
     test_messages();
+
+    UnhookWindowsHookEx(hCBT_hook);
 }
