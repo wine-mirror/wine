@@ -3,9 +3,9 @@ type    win16
 owner	setupapi
 
 1    stub     WEP
-2    stub     IPOPEN
+2    pascal16 IpOpen(str ptr) IpOpen16
 3    stub     IPOPENAPPEND
-4    stub     IPCLOSE
+4    pascal16 IpClose(word) IpClose16
 5    stub     IPGETLONGFIELD
 6    stub     IPGETSTRINGFIELD
 7    stub     IPFINDFIRSTLINE
@@ -39,7 +39,7 @@ owner	setupapi
 35   stub     CTLFINDLDD
 36   stub     CTLADDLDD
 37   stub     CTLDELLDD
-38   stub     CTLGETLDDPATH
+38   pascal16 CtlGetLddPath(word ptr) CtlGetLddPath16
 39   stub     SUREGCLOSEKEY
 40   stub     SUREGCREATEKEY
 41   stub     SUREGDELETEKEY
@@ -48,7 +48,7 @@ owner	setupapi
 44   stub     SUREGENUMVALUE
 45   stub     SUREGFLUSH
 46   stub     SUREGINIT
-47   pascal   SUregOpenKey(word str ptr) SURegOpenKey
+47   pascal   SURegOpenKey(word str ptr) SURegOpenKey
 48   stub     SUREGQUERYVALUE
 49   stub     SUREGQUERYVALUE16
 50   pascal   SURegQueryValueEx(long str ptr ptr ptr ptr) SURegQueryValueEx
@@ -64,9 +64,9 @@ owner	setupapi
 63   stub     SURPLSETUP
 64   stub     SUSTORELDIDPATH
 65   stub     WILDCARDSTRCMPI
-101  stub     GENINSTALL
+101  pascal16 GenInstall(word str word) GenInstall16
 102  stub     GENWININITRENAME
-103  stub     GENFORMSTRWITHOUTPLACEHOLDERS
+103  pascal   GenFormStrWithoutPlaceHolders(str str word) GenFormStrWithoutPlaceHolders16
 104  stub     SETUPX
 105  stub     CFGSETUPMERGE
 106  stub     INITDEPENDANTLDIDS
@@ -113,8 +113,8 @@ owner	setupapi
 160  stub     SXUPDATEDS
 170  stub     SUSETMEM
 171  stub     WRITEDMFBOOTDATA
-200  stub     VCPOPEN
-201  stub     VCPCLOSE
+200  pascal   vcpOpen(ptr str) vcpOpen16
+201  pascal   vcpClose(word word word) vcpClose16
 202  stub     VCPDEFCALLBACKPROC
 203  stub     VCPENUMFILES
 204  stub     VCPQUEUERENAME
@@ -123,7 +123,7 @@ owner	setupapi
 207  stub     VSMSTRINGADD
 208  stub     VSMGETSTRINGRAWNAME
 209  stub     IPSAVERESTOREPOSITION
-210  stub     IPGETPROFILESTRING
+210  pascal16 IpGetProfileString(word str str ptr word) IpGetProfileString16
 211  stub     IPOPENEX
 212  stub     IPOPENAPPENDEX
 213  stub     VCPUICALLBACKPROC
@@ -204,7 +204,7 @@ owner	setupapi
 504  stub     SXOCPAGEDLG
 506  stub     SXOCBATCHSETTINGS
 507  stub     SXOCFIXNEEDS
-508  stub     CTLSETLDDPATH
+508  pascal16 CtlSetLddPath(word str) CtlSetLddPath16
 509  stub     SXCALLOCPROC
 520  stub     DIBUILDCLASSDRVINFOLIST
 521  stub     DIBUILDCOMPATDRVINFOLIST

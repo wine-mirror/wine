@@ -8,6 +8,7 @@ ALTNAMES  = setupx
 IMPORTS   = advapi32 kernel32
 
 C_SRCS = \
+	infparse.c \
 	setupx_main.c \
 	stubs.c
 
