@@ -296,6 +296,8 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
 
     if (!(ci = get_client_info( hwnd ))) return 0;
 
+    if (hmenuFrame == ci->hFrameMenu) return (LRESULT)hmenuFrame;
+
     if( IsZoomed(ci->hwndActiveChild) && hmenuFrame && hmenuFrame!= ci->hFrameMenu )
         MDI_RestoreFrameMenu( hwndFrame, ci->hwndActiveChild );
 
