@@ -288,6 +288,7 @@ extern BOOL PSDRV_WriteGSave(DC *dc);
 extern BOOL PSDRV_WriteGRestore(DC *dc);
 extern BOOL PSDRV_WriteClosePath(DC *dc);
 extern BOOL PSDRV_WriteClip(DC *dc);
+extern BOOL PSDRV_WriteRectClip(DC *dc, CHAR *pszArrayName);
 extern BOOL PSDRV_WriteEOClip(DC *dc);
 extern BOOL PSDRV_WriteHatch(DC *dc);
 extern BOOL PSDRV_WriteRotate(DC *dc, float ang);
@@ -303,6 +304,8 @@ extern BOOL PSDRV_WriteDIBits24(DC *dc, const BYTE *bits, int number);
 extern BOOL PSDRV_WriteDIBits32(DC *dc, const BYTE *bits, int number);
 extern int PSDRV_WriteSpool(DC *dc, LPSTR lpData, WORD cch);
 extern BOOL PSDRV_WritePatternDict(DC *dc, BITMAP *bm, BYTE *bits);
+extern BOOL PSDRV_WriteArrayPut(DC *dc, CHAR *pszArrayName, INT nIndex, LONG lCoord);
+extern BOOL PSDRV_WriteArrayDef(DC *dc, CHAR *pszArrayName, INT nSize);
 
 extern BOOL PSDRV_Arc( DC *dc, INT left, INT top, INT right,
 			 INT bottom, INT xstart, INT ystart,
@@ -343,6 +346,7 @@ extern BOOL PSDRV_RoundRect(DC *dc, INT left, INT top, INT right,
 			      INT bottom, INT ell_width, INT ell_height);
 extern HGDIOBJ PSDRV_SelectObject( DC *dc, HGDIOBJ handle );
 extern COLORREF PSDRV_SetBkColor( DC *dc, COLORREF color );
+extern VOID PSDRV_SetDeviceClipping( DC *dc );
 extern COLORREF PSDRV_SetPixel( DC *dc, INT x, INT y, COLORREF color );
 extern COLORREF PSDRV_SetTextColor( DC *dc, COLORREF color );
 extern INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst,

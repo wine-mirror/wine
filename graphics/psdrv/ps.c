@@ -161,11 +161,23 @@ static char psclip[] =
 static char pseoclip[] =
 "eoclip\n";
 
+static char psrectclip[] =
+"%s rectclip\n"; 
+
 static char pshatch[] =
 "hatch\n";
 
 static char psrotate[] = /* ang */
 "%.1f rotate\n";
+
+static char psarrayget[] = 
+"%s %d get\n";
+
+static char psarrayput[] = 
+"%s %d %ld put\n";
+
+static char psarraydef[] = 
+"/%s %d array def\n";
 
 char *PSDRV_ANSIVector[256] = {
 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, /* 0x00 */
@@ -552,9 +564,6 @@ BOOL PSDRV_WriteSetColor(DC *dc, PSCOLOR *color)
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     char buf[256];
 
-    if(PSDRV_CmpColor(&physDev->inkColor, color))
-        return TRUE;
-
     PSDRV_CopyColor(&physDev->inkColor, color);
     switch(color->type) {
     case PSCOLOR_RGB:
@@ -878,6 +887,38 @@ BOOL PSDRV_WriteDIBits32(DC *dc, const BYTE *bits, int number)
 
     HeapFree(PSDRV_Heap, 0, buf);
     return TRUE;
+}
+
+BOOL PSDRV_WriteArrayGet(DC *dc, CHAR *pszArrayName, INT nIndex)
+{
+    char buf[100];
+
+    sprintf(buf, psarrayget, pszArrayName, nIndex);
+    return PSDRV_WriteSpool(dc, buf, strlen(buf));
+}
+
+BOOL PSDRV_WriteArrayPut(DC *dc, CHAR *pszArrayName, INT nIndex, LONG lObject)
+{
+    char buf[100];
+
+    sprintf(buf, psarrayput, pszArrayName, nIndex, lObject);
+    return PSDRV_WriteSpool(dc, buf, strlen(buf));
+}
+
+BOOL PSDRV_WriteArrayDef(DC *dc, CHAR *pszArrayName, INT nSize)
+{
+    char buf[100];
+
+    sprintf(buf, psarraydef, pszArrayName, nSize);
+    return PSDRV_WriteSpool(dc, buf, strlen(buf));
+}
+
+BOOL PSDRV_WriteRectClip(DC *dc, CHAR *pszArrayName)
+{
+    char buf[100];
+
+    sprintf(buf, psrectclip, pszArrayName);
+    return PSDRV_WriteSpool(dc, buf, strlen(buf));
 }
 
 

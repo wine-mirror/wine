@@ -10,6 +10,7 @@ C_SRCS = \
 	bitblt.c \
 	bitmap.c \
 	brush.c \
+	clipping.c \
 	color.c \
 	driver.c \
 	escape.c \

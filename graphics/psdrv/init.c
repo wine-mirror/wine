@@ -149,10 +149,9 @@ static PSDRV_DEVMODEA DefaultDevmode =
 /* dmDriverVersion */	0x001,
 /* dmSize */		sizeof(DEVMODEA),
 /* dmDriverExtra */	0,
-/* dmFields */		DM_ORIENTATION | DM_PAPERSIZE | DM_PAPERLENGTH |
-			DM_PAPERWIDTH | DM_SCALE | DM_COPIES | 
-			DM_DEFAULTSOURCE | DM_COLOR | DM_DUPLEX | 
-			DM_YRESOLUTION | DM_TTOPTION,
+/* dmFields */		DM_ORIENTATION | DM_PAPERSIZE | DM_SCALE | 
+			DM_COPIES | DM_DEFAULTSOURCE | DM_COLOR | 
+			DM_DUPLEX | DM_YRESOLUTION | DM_TTOPTION,
    { /* u1 */
      { /* s1 */
 /* dmOrientation */	DMORIENT_PORTRAIT,
