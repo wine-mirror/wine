@@ -269,7 +269,8 @@ void BuildSpec32File( FILE *outfile )
 {
     ORDDEF *odp;
     int i, fwd_size = 0, have_regs = FALSE;
-    int nr_exports;
+    int nr_exports, nr_imports;
+    int characteristics, subsystem;
     const char *init_func;
     DWORD page_size;
 
@@ -370,24 +371,17 @@ void BuildSpec32File( FILE *outfile )
 
     /* Output the DLL imports */
 
-    if (nb_imports)
-    {
-        fprintf( outfile, "static const char * const Imports[%d] =\n{\n", nb_imports );
-        for (i = 0; i < nb_imports; i++)
-        {
-            fprintf( outfile, "    \"%s\"", DLLImports[i] );
-            if (i < nb_imports-1) fprintf( outfile, ",\n" );
-        }
-        fprintf( outfile, "\n};\n\n" );
-    }
+    nr_imports = output_imports( outfile );
 
     /* Output LibMain function */
 
     init_func = DLLInitFunc[0] ? DLLInitFunc : NULL;
+    characteristics = subsystem = 0;
     switch(SpecMode)
     {
     case SPEC_MODE_DLL:
         if (init_func) fprintf( outfile, "extern void %s();\n", init_func );
+        characteristics = IMAGE_FILE_DLL;
         break;
     case SPEC_MODE_GUIEXE:
         if (!init_func) init_func = "WinMain";
@@ -412,6 +406,7 @@ void BuildSpec32File( FILE *outfile )
                  "    return 1;\n"
                  "}\n\n" );
         init_func = "exe_main";
+        subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
         break;
     case SPEC_MODE_CUIEXE:
         if (!init_func) init_func = "wine_main";
@@ -432,6 +427,15 @@ void BuildSpec32File( FILE *outfile )
                  "    return 1;\n"
                  "}\n\n" );
         init_func = "exe_main";
+        subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+        break;
+    case SPEC_MODE_GUIEXE_NO_MAIN:
+        if (init_func) fprintf( outfile, "extern void %s();\n", init_func );
+        subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
+        break;
+    case SPEC_MODE_CUIEXE_NO_MAIN:
+        if (init_func) fprintf( outfile, "extern void %s();\n", init_func );
+        subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
         break;
     }
 
@@ -439,28 +443,87 @@ void BuildSpec32File( FILE *outfile )
 
     if (rsrc_name[0]) fprintf( outfile, "extern char %s[];\n\n", rsrc_name );
 
-    /* Warning: this must match the definition in builtin32.h */
-    fprintf( outfile, "static const struct dll_descriptor\n{\n" );
-    fprintf( outfile, "    const char*           filename;\n" );
-    fprintf( outfile, "    int                   nb_imports;\n" );
-    fprintf( outfile, "    void                 *pe_header;\n" );
-    fprintf( outfile, "    void                 *exports;\n" );
-    fprintf( outfile, "    unsigned int          exports_size;\n" );
-    fprintf( outfile, "    const char * const   *imports;\n" );
-    fprintf( outfile, "    void                (*dllentrypoint)();\n" );
-    fprintf( outfile, "    int                   characteristics;\n" );
-    fprintf( outfile, "    void                 *rsrc;\n" );
-    fprintf( outfile, "} descriptor = {\n" );
-    fprintf( outfile, "    \"%s\",\n", DLLFileName );
-    fprintf( outfile, "    %d,\n", nb_imports );
-    fprintf( outfile, "    pe_header,\n" );
-    fprintf( outfile, "    %s,\n", nr_exports ? "&exports" : "0" );
-    fprintf( outfile, "    %s,\n", nr_exports ? "sizeof(exports.exp)" : "0" );
-    fprintf( outfile, "    %s,\n", nb_imports ? "Imports" : "0" );
-    fprintf( outfile, "    %s,\n", init_func ? init_func : "0" );
-    fprintf( outfile, "    %d,\n", SpecMode == SPEC_MODE_DLL ? IMAGE_FILE_DLL : 0 );
-    fprintf( outfile, "    %s\n", rsrc_name[0] ? rsrc_name : "0" );
-    fprintf( outfile, "};\n" );
+    /* Output the NT header */
+
+    /* this is the IMAGE_NT_HEADERS structure, but we cannot include winnt.h here */
+    fprintf( outfile, "static const struct image_nt_headers\n{\n" );
+    fprintf( outfile, "  int Signature;\n" );
+    fprintf( outfile, "  struct file_header {\n" );
+    fprintf( outfile, "    short Machine;\n" );
+    fprintf( outfile, "    short NumberOfSections;\n" );
+    fprintf( outfile, "    int   TimeDateStamp;\n" );
+    fprintf( outfile, "    void *PointerToSymbolTable;\n" );
+    fprintf( outfile, "    int   NumberOfSymbols;\n" );
+    fprintf( outfile, "    short SizeOfOptionalHeader;\n" );
+    fprintf( outfile, "    short Characteristics;\n" );
+    fprintf( outfile, "  } FileHeader;\n" );
+    fprintf( outfile, "  struct opt_header {\n" );
+    fprintf( outfile, "    short Magic;\n" );
+    fprintf( outfile, "    char  MajorLinkerVersion, MinorLinkerVersion;\n" );
+    fprintf( outfile, "    int   SizeOfCode;\n" );
+    fprintf( outfile, "    int   SizeOfInitializedData;\n" );
+    fprintf( outfile, "    int   SizeOfUninitializedData;\n" );
+    fprintf( outfile, "    void *AddressOfEntryPoint;\n" );
+    fprintf( outfile, "    void *BaseOfCode;\n" );
+    fprintf( outfile, "    void *BaseOfData;\n" );
+    fprintf( outfile, "    void *ImageBase;\n" );
+    fprintf( outfile, "    int   SectionAlignment;\n" );
+    fprintf( outfile, "    int   FileAlignment;\n" );
+    fprintf( outfile, "    short MajorOperatingSystemVersion;\n" );
+    fprintf( outfile, "    short MinorOperatingSystemVersion;\n" );
+    fprintf( outfile, "    short MajorImageVersion;\n" );
+    fprintf( outfile, "    short MinorImageVersion;\n" );
+    fprintf( outfile, "    short MajorSubsystemVersion;\n" );
+    fprintf( outfile, "    short MinorSubsystemVersion;\n" );
+    fprintf( outfile, "    int   Win32VersionValue;\n" );
+    fprintf( outfile, "    int   SizeOfImage;\n" );
+    fprintf( outfile, "    int   SizeOfHeaders;\n" );
+    fprintf( outfile, "    int   CheckSum;\n" );
+    fprintf( outfile, "    short Subsystem;\n" );
+    fprintf( outfile, "    short DllCharacteristics;\n" );
+    fprintf( outfile, "    int   SizeOfStackReserve;\n" );
+    fprintf( outfile, "    int   SizeOfStackCommit;\n" );
+    fprintf( outfile, "    int   SizeOfHeapReserve;\n" );
+    fprintf( outfile, "    int   SizeOfHeapCommit;\n" );
+    fprintf( outfile, "    int   LoaderFlags;\n" );
+    fprintf( outfile, "    int   NumberOfRvaAndSizes;\n" );
+    fprintf( outfile, "    struct { void *VirtualAddress; int Size; } DataDirectory[%d];\n",
+             IMAGE_NUMBEROF_DIRECTORY_ENTRIES );
+    fprintf( outfile, "  } OptionalHeader;\n" );
+    fprintf( outfile, "} nt_header = {\n" );
+    fprintf( outfile, "  0x%04x,\n", IMAGE_NT_SIGNATURE );   /* Signature */
+
+    fprintf( outfile, "  { 0x%04x,\n", IMAGE_FILE_MACHINE_I386 );  /* Machine */
+    fprintf( outfile, "    0, 0, 0, 0,\n" );
+    fprintf( outfile, "    sizeof(nt_header.OptionalHeader),\n" ); /* SizeOfOptionalHeader */
+    fprintf( outfile, "    0x%04x },\n", characteristics );        /* Characteristics */
+
+    fprintf( outfile, "  { 0x%04x,\n", IMAGE_NT_OPTIONAL_HDR_MAGIC );  /* Magic */
+    fprintf( outfile, "    0, 0,\n" );                   /* Major/MinorLinkerVersion */
+    fprintf( outfile, "    0, 0, 0,\n" );                /* SizeOfCode/Data */
+    fprintf( outfile, "    %s,\n", init_func ? init_func : "0" );  /* AddressOfEntryPoint */
+    fprintf( outfile, "    0, 0,\n" );                   /* BaseOfCode/Data */
+    fprintf( outfile, "    pe_header,\n" );              /* ImageBase */
+    fprintf( outfile, "    %ld,\n", page_size );         /* SectionAlignment */
+    fprintf( outfile, "    %ld,\n", page_size );         /* FileAlignment */
+    fprintf( outfile, "    1, 0,\n" );                   /* Major/MinorOperatingSystemVersion */
+    fprintf( outfile, "    0, 0,\n" );                   /* Major/MinorImageVersion */
+    fprintf( outfile, "    4, 0,\n" );                   /* Major/MinorSubsystemVersion */
+    fprintf( outfile, "    0,\n" );                      /* Win32VersionValue */
+    fprintf( outfile, "    %ld,\n", page_size );         /* SizeOfImage */
+    fprintf( outfile, "    %ld,\n", page_size );         /* SizeOfHeaders */
+    fprintf( outfile, "    0,\n" );                      /* CheckSum */
+    fprintf( outfile, "    0x%04x,\n", subsystem );      /* Subsystem */
+    fprintf( outfile, "    0, 0, 0, 0, 0, 0,\n" );
+    fprintf( outfile, "    %d,\n", IMAGE_NUMBEROF_DIRECTORY_ENTRIES );  /* NumberOfRvaAndSizes */
+    fprintf( outfile, "    {\n" );
+    fprintf( outfile, "      { %s, %s },\n",  /* IMAGE_DIRECTORY_ENTRY_EXPORT */
+             nr_exports ? "&exports" : "0", nr_exports ? "sizeof(exports.exp)" : "0" );
+    fprintf( outfile, "      { %s, %s },\n",  /* IMAGE_DIRECTORY_ENTRY_IMPORT */
+             nr_imports ? "&imports" : "0", nr_imports ? "sizeof(imports)" : "0" );
+    fprintf( outfile, "      { %s, 0 },\n",   /* IMAGE_DIRECTORY_ENTRY_RESOURCE */
+             rsrc_name[0] ? rsrc_name : "0" );
+    fprintf( outfile, "    }\n  }\n};\n\n" );
 
     /* Output the DLL constructor */
 
@@ -474,6 +537,6 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif /* defined(__GNUC__) */\n" );
     fprintf( outfile, "static void %s_init(void)\n{\n", DLLName );
-    fprintf( outfile, "    extern void BUILTIN32_RegisterDLL( const struct dll_descriptor * );\n" );
-    fprintf( outfile, "    BUILTIN32_RegisterDLL( &descriptor );\n}\n" );
+    fprintf( outfile, "    extern void BUILTIN32_RegisterDLL( const struct image_nt_headers *, const char * );\n" );
+    fprintf( outfile, "    BUILTIN32_RegisterDLL( &nt_header, \"%s\" );\n}\n", DLLFileName );
 }

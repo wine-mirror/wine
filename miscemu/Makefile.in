@@ -5,6 +5,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = miscemu
 
+SPEC_SRCS = wine.spec
+
 C_SRCS = \
 	main.c
 

@@ -61,7 +61,9 @@ typedef enum
 {
     SPEC_MODE_DLL,
     SPEC_MODE_GUIEXE,
-    SPEC_MODE_CUIEXE
+    SPEC_MODE_CUIEXE,
+    SPEC_MODE_GUIEXE_NO_MAIN,
+    SPEC_MODE_CUIEXE_NO_MAIN
 } SPEC_MODE;
 
 typedef struct
@@ -126,7 +128,6 @@ typedef struct
 
 
 #define MAX_ORDINALS	2048
-#define MAX_IMPORTS       16
 
 /* global functions */
 
@@ -135,7 +136,11 @@ extern void *xrealloc (void *ptr, size_t size);
 extern char *xstrdup( const char *str );
 extern char *strupper(char *s);
 extern void fatal_error( const char *msg, ... );
+extern void warning( const char *msg, ... );
 extern void dump_bytes( FILE *outfile, const unsigned char *data, int len, const char *label );
+extern void add_import_dll( const char *name );
+extern void resolve_imports( FILE *outfile );
+extern int output_imports( FILE *outfile );
 
 extern void BuildGlue( FILE *outfile, FILE *infile );
 extern void BuildRelays( FILE *outfile );
@@ -148,7 +153,6 @@ extern SPEC_TYPE ParseTopLevel( FILE *file );
 extern int current_line;
 extern int nb_entry_points;
 extern int nb_names;
-extern int nb_imports;
 extern int Base;
 extern int Limit;
 extern int DLLHeapSize;
@@ -163,7 +167,6 @@ extern char DLLFileName[80];
 extern char DLLInitFunc[80];
 extern char rsrc_name[80];
 extern char owner_name[80];
-extern char *DLLImports[MAX_IMPORTS];
 extern const char *input_file_name;
 extern const char *output_file_name;
 

@@ -8,7 +8,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 
-#include "builtin32.h"
 #include "callback.h"
 #include "options.h"
 #include "process.h"
@@ -17,7 +16,7 @@
 /***********************************************************************
  *           Main loop of initial task
  */
-static void initial_task(void)
+void wine_initial_task(void)
 {
     MSG msg;
     HINSTANCE16 instance;
@@ -55,13 +54,6 @@ static void initial_task(void)
  */
 int main( int argc, char *argv[] )
 {
-    BUILTIN32_DESCRIPTOR descriptor;
-
-    memset( &descriptor, 0, sizeof(descriptor) );
-    descriptor.filename = argv[0];
-    descriptor.dllentrypoint = initial_task;
-    BUILTIN32_RegisterDLL( &descriptor );
-
     PROCESS_InitWine( argc, argv );
     return 1;  /* not reached */
 }

@@ -38,13 +38,11 @@ int DLLHeapSize = 0;
 int UsePIC = 0;
 int nb_entry_points = 0;
 int nb_names = 0;
-int nb_imports = 0;
 int debugging = 1;
 
 char DLLName[80];
 char DLLFileName[80];
 char DLLInitFunc[80];
-char *DLLImports[MAX_IMPORTS];
 char rsrc_name[80];
 char owner_name[80];
 

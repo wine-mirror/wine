@@ -55,11 +55,32 @@ void fatal_error( const char *msg, ... )
 {
     va_list valist;
     va_start( valist, msg );
-    if (input_file_name && current_line)
-        fprintf( stderr, "%s:%d: ", input_file_name, current_line );
+    if (input_file_name)
+    {
+        fprintf( stderr, "%s:", input_file_name );
+        if (current_line)
+            fprintf( stderr, "%d:", current_line );
+        fputc( ' ', stderr );
+    }
     vfprintf( stderr, msg, valist );
     va_end( valist );
     exit(1);
+}
+
+void warning( const char *msg, ... )
+{
+    va_list valist;
+    va_start( valist, msg );
+    if (input_file_name)
+    {
+        fprintf( stderr, "%s:", input_file_name );
+        if (current_line)
+            fprintf( stderr, "%d:", current_line );
+        fputc( ' ', stderr );
+    }
+    fprintf( stderr, "warning: " );
+    vfprintf( stderr, msg, valist );
+    va_end( valist );
 }
 
 /* dump a byte stream into the assembly code */

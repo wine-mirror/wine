@@ -20,7 +20,6 @@
 
 #include "windef.h"
 #include "wine/winbase16.h"
-#include "builtin32.h"
 #include "elfdll.h"
 #include "global.h"
 #include "neexe.h"
@@ -43,7 +42,15 @@ typedef struct
 
 #define MAX_DLLS 100
 
-static const BUILTIN32_DESCRIPTOR *builtin_dlls[MAX_DLLS];
+typedef struct
+{
+    const IMAGE_NT_HEADERS *nt;           /* NT header */
+    const char             *filename;     /* DLL file name */
+} BUILTIN32_DESCRIPTOR;
+
+extern void RELAY_SetupDLL( const char *module );
+
+static BUILTIN32_DESCRIPTOR builtin_dlls[MAX_DLLS];
 static int nb_dlls;
 
 
@@ -119,8 +126,6 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
     IMAGE_SECTION_HEADER *sec;
-    IMAGE_IMPORT_DESCRIPTOR *imp;
-    IMAGE_EXPORT_DIRECTORY *exports = descr->exports;
     INT i, size, nb_sections;
     BYTE *addr, *code_start, *data_start;
     int page_size = VIRTUAL_GetPageSize();
@@ -131,17 +136,17 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
 
     size = (sizeof(IMAGE_DOS_HEADER)
             + sizeof(IMAGE_NT_HEADERS)
-            + nb_sections * sizeof(IMAGE_SECTION_HEADER)
-            + (descr->nb_imports+1) * sizeof(IMAGE_IMPORT_DESCRIPTOR));
+            + nb_sections * sizeof(IMAGE_SECTION_HEADER));
 
     assert( size <= page_size );
 
-    if (descr->pe_header)
+    if (descr->nt->OptionalHeader.ImageBase)
     {
-        if ((addr = VIRTUAL_mmap( -1, descr->pe_header, page_size, 0,
-                                  PROT_READ|PROT_WRITE, MAP_FIXED )) != descr->pe_header)
+        void *base = (void *)descr->nt->OptionalHeader.ImageBase;
+        if ((addr = VIRTUAL_mmap( -1, base, page_size, 0,
+                                  PROT_READ|PROT_WRITE, MAP_FIXED )) != base)
         {
-            ERR("failed to map over PE header for %s at %p\n", descr->filename, descr->pe_header );
+            ERR("failed to map over PE header for %s at %p\n", descr->filename, base );
             return 0;
         }
     }
@@ -153,7 +158,6 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
     dos    = (IMAGE_DOS_HEADER *)addr;
     nt     = (IMAGE_NT_HEADERS *)(dos + 1);
     sec    = (IMAGE_SECTION_HEADER *)(nt + 1);
-    imp    = (IMAGE_IMPORT_DESCRIPTOR *)(sec + nb_sections);
     code_start = addr + page_size;
 
     /* HACK! */
@@ -164,29 +168,16 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
     dos->e_magic  = IMAGE_DOS_SIGNATURE;
     dos->e_lfanew = sizeof(*dos);
 
-    nt->Signature                       = IMAGE_NT_SIGNATURE;
-    nt->FileHeader.Machine              = IMAGE_FILE_MACHINE_I386;
-    nt->FileHeader.NumberOfSections     = nb_sections;
-    nt->FileHeader.SizeOfOptionalHeader = sizeof(nt->OptionalHeader);
-    nt->FileHeader.Characteristics      = descr->characteristics;
+    *nt = *descr->nt;
 
-    nt->OptionalHeader.Magic = IMAGE_NT_OPTIONAL_HDR_MAGIC;
+    nt->FileHeader.NumberOfSections                = nb_sections;
     nt->OptionalHeader.SizeOfCode                  = data_start - code_start;
     nt->OptionalHeader.SizeOfInitializedData       = 0;
     nt->OptionalHeader.SizeOfUninitializedData     = 0;
     nt->OptionalHeader.ImageBase                   = (DWORD)addr;
-    nt->OptionalHeader.SectionAlignment            = page_size;
-    nt->OptionalHeader.FileAlignment               = page_size;
-    nt->OptionalHeader.MajorOperatingSystemVersion = 1;
-    nt->OptionalHeader.MinorOperatingSystemVersion = 0;
-    nt->OptionalHeader.MajorSubsystemVersion       = 4;
-    nt->OptionalHeader.MinorSubsystemVersion       = 0;
-    nt->OptionalHeader.SizeOfImage                 = page_size;
-    nt->OptionalHeader.SizeOfHeaders               = page_size;
-    nt->OptionalHeader.NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
-    if (descr->dllentrypoint) 
-        nt->OptionalHeader.AddressOfEntryPoint = (DWORD)descr->dllentrypoint - (DWORD)addr;
-    
+
+    fixup_rva_ptrs( &nt->OptionalHeader.AddressOfEntryPoint, addr, 1 );
+
     /* Build the code section */
 
     strcpy( sec->Name, ".text" );
@@ -210,44 +201,34 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
 
     /* Build the import directory */
 
-    if (descr->nb_imports)
+    dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY];
+    if (dir->Size)
     {
-        dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY];
-        dir->VirtualAddress = (BYTE *)imp - addr;
-        dir->Size = sizeof(*imp) * (descr->nb_imports + 1);
-
-        /* Build the imports */
-        for (i = 0; i < descr->nb_imports; i++)
-        {
-            imp[i].u.Characteristics = 0;
-            imp[i].ForwarderChain = -1;
-            imp[i].Name = (BYTE *)descr->imports[i] - addr;
-            /* hack: make first thunk point to some zero value */
-            imp[i].FirstThunk = (PIMAGE_THUNK_DATA)((BYTE *)&imp[i].u.Characteristics - addr);
-        }
+        IMAGE_IMPORT_DESCRIPTOR *imports = (void *)dir->VirtualAddress;
+        fixup_rva_ptrs( &dir->VirtualAddress, addr, 1 );
+        /* we can fixup everything at once since we only have pointers and 0 values */
+        fixup_rva_ptrs( imports, addr, dir->Size / sizeof(void*) );
     }
 
     /* Build the resource directory */
 
-    if (descr->rsrc)
+    dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
+    if (dir->VirtualAddress)
     {
-        BUILTIN32_RESOURCE *rsrc = descr->rsrc;
-	IMAGE_RESOURCE_DATA_ENTRY *rdep;
-	dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
-	dir->VirtualAddress = (BYTE *)rsrc->restab - addr;
-	dir->Size = rsrc->restabsize;
-	rdep = rsrc->entries;
-	for (i = 0; i < rsrc->nresources; i++) rdep[i].OffsetToData += dir->VirtualAddress;
+        BUILTIN32_RESOURCE *rsrc = (BUILTIN32_RESOURCE *)dir->VirtualAddress;
+        IMAGE_RESOURCE_DATA_ENTRY *rdep = rsrc->entries;
+        dir->VirtualAddress = (BYTE *)rsrc->restab - addr;
+        dir->Size = rsrc->restabsize;
+        for (i = 0; i < rsrc->nresources; i++) rdep[i].OffsetToData += dir->VirtualAddress;
     }
 
     /* Build the export directory */
 
-    if (exports)
+    dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
+    if (dir->Size)
     {
-        dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
-        dir->VirtualAddress = (BYTE *)exports - addr;
-        dir->Size = descr->exports_size;
-
+        IMAGE_EXPORT_DIRECTORY *exports = (void *)dir->VirtualAddress;
+        fixup_rva_ptrs( &dir->VirtualAddress, addr, 1 );
         fixup_rva_ptrs( (void *)exports->AddressOfFunctions, addr, exports->NumberOfFunctions );
         fixup_rva_ptrs( (void *)exports->AddressOfNames, addr, exports->NumberOfNames );
         fixup_rva_ptrs( &exports->Name, addr, 1 );
@@ -290,12 +271,12 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
 
     /* Search built-in descriptor */
     for (i = 0; i < nb_dlls; i++)
-        if (!strcasecmp( builtin_dlls[i]->filename, dllname )) goto found;
+        if (!strcasecmp( builtin_dlls[i].filename, dllname )) goto found;
 
     if ((handle = BUILTIN32_dlopen( dllname )))
     {
         for (i = 0; i < nb_dlls; i++)
-            if (!strcasecmp( builtin_dlls[i]->filename, dllname )) goto found;
+            if (!strcasecmp( builtin_dlls[i].filename, dllname )) goto found;
         ERR( "loaded .so but dll %s still not found\n", dllname );
         BUILTIN32_dlclose( handle );
     }
@@ -306,7 +287,7 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
 
  found:
     /* Load built-in module */
-    if (!(module = BUILTIN32_DoLoadImage( builtin_dlls[i] ))) return NULL;
+    if (!(module = BUILTIN32_DoLoadImage( &builtin_dlls[i] ))) return NULL;
 
     /* Create 32-bit MODREF */
     if ( !(wm = PE_CreateModule( module, path, flags, -1, TRUE )) )
@@ -329,7 +310,7 @@ HMODULE BUILTIN32_LoadExeModule(void)
 
     /* Search built-in EXE descriptor */
     for ( i = 0; i < nb_dlls; i++ )
-        if ( !(builtin_dlls[i]->characteristics & IMAGE_FILE_DLL) ) 
+        if ( !(builtin_dlls[i].nt->FileHeader.Characteristics & IMAGE_FILE_DLL) )
         {
             if ( exe != -1 )
             {
@@ -347,7 +328,7 @@ HMODULE BUILTIN32_LoadExeModule(void)
     }
 
     /* Load built-in module */
-    return BUILTIN32_DoLoadImage( builtin_dlls[exe] );
+    return BUILTIN32_DoLoadImage( &builtin_dlls[exe] );
 }
 
 
@@ -356,10 +337,12 @@ HMODULE BUILTIN32_LoadExeModule(void)
  *
  * Register a built-in DLL descriptor.
  */
-void BUILTIN32_RegisterDLL( const BUILTIN32_DESCRIPTOR *descr )
+void BUILTIN32_RegisterDLL( const IMAGE_NT_HEADERS *header, const char *filename )
 {
     assert( nb_dlls < MAX_DLLS );
-    builtin_dlls[nb_dlls++] = descr;
+    builtin_dlls[nb_dlls].nt = header;
+    builtin_dlls[nb_dlls].filename = filename;
+    nb_dlls++;
 }
 
 /***********************************************************************

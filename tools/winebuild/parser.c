@@ -311,6 +311,20 @@ static void ParseForward( ORDDEF *odp )
 
 
 /*******************************************************************
+ *         fix_export_name
+ *
+ * Fix an exported function name by removing a possible @xx suffix
+ */
+static void fix_export_name( char *name )
+{
+    char *p, *end = strrchr( name, '@' );
+    if (!end || !end[1] || end == name) return;
+    /* make sure all the rest is digits */
+    for (p = end + 1; *p; p++) if (!isdigit(*p)) return;
+    *end = 0;
+}
+
+/*******************************************************************
  *         ParseOrdinal
  *
  * Parse an ordinal definition.
@@ -333,6 +347,7 @@ static void ParseOrdinal(int ordinal)
     if (!(token = GetToken())) fatal_error( "Expected name after type\n" );
 
     strcpy( odp->name, token );
+    fix_export_name( odp->name );
     odp->lineno = current_line;
     odp->ordinal = ordinal;
 
@@ -436,7 +451,9 @@ SPEC_TYPE ParseTopLevel( FILE *file )
             if (!strcmp(token, "dll" )) SpecMode = SPEC_MODE_DLL;
             else if (!strcmp(token, "guiexe" )) SpecMode = SPEC_MODE_GUIEXE;
             else if (!strcmp(token, "cuiexe" )) SpecMode = SPEC_MODE_CUIEXE;
-            else fatal_error( "Mode must be 'dll', 'guiexe' or 'cuiexe'\n" );
+            else if (!strcmp(token, "guiexe_no_main" )) SpecMode = SPEC_MODE_GUIEXE_NO_MAIN;
+            else if (!strcmp(token, "cuiexe_no_main" )) SpecMode = SPEC_MODE_CUIEXE_NO_MAIN;
+            else fatal_error( "Mode must be 'dll', 'guiexe', 'cuiexe', 'guiexe_no_main' or 'cuiexe_no_main'\n" );
         }
 	else if (strcmp(token, "heap") == 0)
 	{
@@ -456,11 +473,9 @@ SPEC_TYPE ParseTopLevel( FILE *file )
         }
         else if (strcmp(token, "import") == 0)
         {
-            if (nb_imports >= MAX_IMPORTS)
-                fatal_error( "Too many imports (limit %d)\n", MAX_IMPORTS );
             if (SpecType != SPEC_WIN32)
                 fatal_error( "Imports not supported for Win16\n" );
-            DLLImports[nb_imports++] = xstrdup(GetToken());
+            add_import_dll( GetToken() );
         }
         else if (strcmp(token, "rsrc") == 0)
         {
