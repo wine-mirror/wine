@@ -1349,6 +1349,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
           Count, pRects, Flags, Z, Stencil);
 
     ENTER_GL();
+    glEnable(GL_SCISSOR_TEST);
+    checkGLcall("glEnable GL_SCISSOR_TEST");
     if (Count > 0 && pRects) {
         glEnable(GL_SCISSOR_TEST);
         checkGLcall("glEnable GL_SCISSOR_TEST");
@@ -1396,6 +1398,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
                   curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
             glScissor(curRect->x1, (This->PresentParms.BackBufferHeight - curRect->y2), 
                       curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
+            checkGLcall("glScissor");
+        } else {
+            glScissor(This->StateBlock->viewport.X, 
+                      (This->PresentParms.BackBufferHeight - (This->StateBlock->viewport.Y + This->StateBlock->viewport.Height)), 
+                      This->StateBlock->viewport.Width, 
+                      This->StateBlock->viewport.Height);
             checkGLcall("glScissor");
         }
 
