@@ -355,6 +355,7 @@ typedef struct _TMProxyImpl {
     IRpcChannelBuffer*			chanbuf;
     IID					iid;
     CRITICAL_SECTION	crit;
+    IUnknown				*outerunknown;
 } TMProxyImpl;
 
 static HRESULT WINAPI
@@ -1426,6 +1427,43 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
     return status;
 }
 
+HRESULT WINAPI ProxyIUnknown_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    TMProxyImpl *proxy = (TMProxyImpl *)iface;
+
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
+
+    if (proxy->outerunknown)
+        return IUnknown_QueryInterface(proxy->outerunknown, riid, ppv);
+
+    FIXME("No interface\n");
+    return E_NOINTERFACE;
+}
+
+ULONG WINAPI ProxyIUnknown_AddRef(IUnknown *iface)
+{
+    TMProxyImpl *proxy = (TMProxyImpl *)iface;
+
+    TRACE("\n");
+
+    if (proxy->outerunknown)
+        return IUnknown_AddRef(proxy->outerunknown);
+
+    return 2; /* FIXME */
+}
+
+ULONG WINAPI ProxyIUnknown_Release(IUnknown *iface)
+{
+    TMProxyImpl *proxy = (TMProxyImpl *)iface;
+
+    TRACE("\n");
+
+    if (proxy->outerunknown)
+        return IUnknown_Release(proxy->outerunknown);
+
+    return 1; /* FIXME */
+}
+
 static HRESULT WINAPI
 PSFacBuf_CreateProxy(
     LPPSFACTORYBUFFER iface, IUnknown* pUnkOuter, REFIID riid,
@@ -1449,6 +1487,7 @@ PSFacBuf_CreateProxy(
 
     assert(sizeof(TMAsmProxy) == 12);
 
+    proxy->outerunknown = pUnkOuter;
     proxy->asmstubs = VirtualAlloc(NULL, sizeof(TMAsmProxy) * nroffuncs, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     if (!proxy->asmstubs) {
         ERR("Could not commit pages for proxy thunks\n");
@@ -1460,17 +1499,22 @@ PSFacBuf_CreateProxy(
 
     proxy->lpvtbl = HeapAlloc(GetProcessHeap(),0,sizeof(LPBYTE)*nroffuncs);
     for (i=0;i<nroffuncs;i++) {
-	int		nrofargs;
 	TMAsmProxy	*xasm = proxy->asmstubs+i;
 
-	/* nrofargs without This */
 	switch (i) {
-	case 0: nrofargs = 2;
+	case 0:
+		proxy->lpvtbl[i] = ProxyIUnknown_QueryInterface;
 		break;
-	case 1: case 2: nrofargs = 0;
+	case 1:
+		proxy->lpvtbl[i] = ProxyIUnknown_AddRef;
+		break;
+	case 2:
+		proxy->lpvtbl[i] = ProxyIUnknown_Release;
 		break;
 	default: {
 		int j;
+		/* nrofargs without This */
+		int nrofargs;
 		hres = _get_funcdesc(tinfo,i,&fdesc,NULL,NULL);
 		if (hres) {
 		    ERR("GetFuncDesc %lx should not fail here.\n",hres);
@@ -1485,9 +1529,6 @@ PSFacBuf_CreateProxy(
 		    ERR("calling convention is not stdcall????\n");
 		    return E_FAIL;
 		}
-		break;
-	    }
-	}
 /* popl %eax	-	return ptr
  * pushl <nr>
  * pushl %eax
@@ -1497,16 +1538,19 @@ PSFacBuf_CreateProxy(
  *
  * arg3 arg2 arg1 <method> <returnptr>
  */
-	xasm->popleax	= 0x58;
-	xasm->pushlval	= 0x6a;
-	xasm->nr	= i;
-	xasm->pushleax	= 0x50;
-	xasm->lcall	= 0xe8;	/* relative jump */
-	xasm->xcall	= (DWORD)xCall;
-	xasm->xcall     -= (DWORD)&(xasm->lret);
-	xasm->lret	= 0xc2;
-	xasm->bytestopop= (nrofargs+2)*4; /* pop args, This, iMethod */
-	proxy->lpvtbl[i] = xasm;
+		xasm->popleax	= 0x58;
+		xasm->pushlval	= 0x6a;
+		xasm->nr	= i;
+		xasm->pushleax	= 0x50;
+		xasm->lcall	= 0xe8;	/* relative jump */
+		xasm->xcall	= (DWORD)xCall;
+		xasm->xcall     -= (DWORD)&(xasm->lret);
+		xasm->lret	= 0xc2;
+		xasm->bytestopop= (nrofargs+2)*4; /* pop args, This, iMethod */
+		proxy->lpvtbl[i] = xasm;
+		break;
+	    }
+	}
     }
     proxy->lpvtbl2	= &tmproxyvtable;
     /* 1 reference for the proxy and 1 for the object */
