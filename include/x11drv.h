@@ -286,7 +286,6 @@ extern void X11DRV_PALETTE_Cleanup(void);
 
 extern COLORREF X11DRV_PALETTE_ToLogical(int pixel);
 extern int X11DRV_PALETTE_ToPhysical(struct tagDC *dc, COLORREF color);
-extern int X11DRV_PALETTE_LookupSystemXPixel(COLORREF col);
 
 extern struct tagPALETTE_DRIVER X11DRV_PALETTE_Driver;
 

@@ -125,6 +125,8 @@ BOOL X11DRV_USER_Initialize(void)
   X11DRV_USER_ParseOptions( Options.argc, Options.argv );
   X11DRV_USER_Create();
   X11DRV_USER_SaveSetup();
+
+  return TRUE;
 }
 
 /***********************************************************************

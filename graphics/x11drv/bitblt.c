@@ -1293,7 +1293,7 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
         {
             XSetFunction( display, physDevDst->gc, GXcopy );
             XSetForeground( display, physDevDst->gc, 
-                            X11DRV_PALETTE_PaletteToXPixel[X11DRV_DevCaps.sizePalette - 1]);
+                            WhitePixelOfScreen( X11DRV_GetXScreen() ));
             XSetFillStyle( display, physDevDst->gc, FillSolid );
         }
         XFillRectangle( display, physDevDst->drawable, physDevDst->gc,

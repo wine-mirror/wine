@@ -88,6 +88,7 @@ static void X11DRV_PALETTE_ComputeShifts(unsigned long maskbits, int *shift, int
 static void X11DRV_PALETTE_FillDefaultColors(void);
 static void X11DRV_PALETTE_FormatSystemPalette(void);
 static BOOL X11DRV_PALETTE_CheckSysColor(COLORREF c);
+static int X11DRV_PALETTE_LookupSystemXPixel(COLORREF col);
 
 /***********************************************************************
  *           COLOR_Init
@@ -788,7 +789,7 @@ int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
 /***********************************************************************
  *           X11DRV_PALETTE_LookupSystemXPixel
  */
-int X11DRV_PALETTE_LookupSystemXPixel(COLORREF col)
+static int X11DRV_PALETTE_LookupSystemXPixel(COLORREF col)
 {
  int            i, best = 0, diff = 0x7fffffff;
  int            size = X11DRV_DevCaps.sizePalette;
@@ -955,6 +956,9 @@ int X11DRV_PALETTE_UpdateMapping(PALETTEOBJ *palPtr)
 {
   int i, index, realized = 0;    
   
+  if (!X11DRV_DevCaps.sizePalette)
+    return 0;
+
   for( i = 0; i < 20; i++ )
     {
       index = X11DRV_PALETTE_LookupSystemXPixel(*(COLORREF*)(palPtr->logpalette.palPalEntry + i));
