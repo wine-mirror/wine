@@ -32,6 +32,8 @@ struct NLS_langlocale {
 	} locvars[150];
 };
 
+static LPVOID lpNLSInfo = NULL;
+
 #define LANG_BEGIN(l,s)	{	MAKELANGID(l,s), {
 
 #define LOCVAL(type,value)					{type,value},
@@ -257,7 +259,7 @@ LANG_END
 	    };
 
 
-/* Locale name to id map. used by EnumSystemLocales, GetLocalInfoA 
+/* Locale name to id map. used by EnumSystemLocales, GetLocaleInfoA 
  * MUST contain all #defines from winnls.h
  * last entry has NULL name, 0 id.
  */ 
@@ -2475,6 +2477,30 @@ UINT WINAPI CompareStringW(DWORD lcid, DWORD fdwStyle,
 	/* the longer one is lexically greater */
 	return (l1<l2)? 1 : 3;
 }
+
+/******************************************************************************
+ *      RegisterNLSInfoChanged  [OLE2NLS.10]
+ */
+BOOL16 WINAPI RegisterNLSInfoChanged16(LPVOID/*FIXME*/ lpNewNLSInfo)
+{
+	FIXME_(ole)("Fully implemented, but doesn't effect anything.\n");
+
+	if (!lpNewNLSInfo)
+	{
+		lpNLSInfo = NULL;
+		return TRUE;
+	}
+	else
+	{
+		if (!lpNLSInfo)
+		{
+			lpNLSInfo = lpNewNLSInfo;
+			return TRUE;
+		}
+	}
+
+	return FALSE; /* ptr not set */
+} 
 
 /******************************************************************************
  *		OLE_GetFormatA	[Internal]
