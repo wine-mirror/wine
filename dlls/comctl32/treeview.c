@@ -988,6 +988,16 @@ TREEVIEW_FreeItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item)
     COMCTL32_Free(item);
     if (infoPtr->selectedItem == item)
         infoPtr->selectedItem = NULL;
+    if (infoPtr->hotItem == item)
+        infoPtr->hotItem = NULL;
+    if (infoPtr->focusedItem == item)
+        infoPtr->focusedItem = NULL;
+    if (infoPtr->firstVisible == item)
+        infoPtr->firstVisible = NULL;
+    if (infoPtr->dropItem == item)
+        infoPtr->dropItem = NULL;
+    if (infoPtr->insertMarkItem == item)
+        infoPtr->insertMarkItem = NULL;
 }
 
 
@@ -1216,9 +1226,12 @@ TREEVIEW_InsertItemA(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     switch ((DWORD)insertAfter)
     {
     case (DWORD)TVI_FIRST:
-	TREEVIEW_InsertBefore(newItem, parentItem->firstChild, parentItem);
-	if (infoPtr->firstVisible == parentItem->firstChild)
-	    TREEVIEW_SetFirstVisible(infoPtr, newItem, TRUE);
+        {
+           TREEVIEW_ITEM *originalFirst = parentItem->firstChild;
+           TREEVIEW_InsertBefore(newItem, parentItem->firstChild, parentItem);
+           if (infoPtr->firstVisible == originalFirst)
+              TREEVIEW_SetFirstVisible(infoPtr, newItem, TRUE);
+        }
 	break;
 
     case (DWORD)TVI_LAST:
@@ -1531,6 +1544,7 @@ TREEVIEW_DeleteItem(TREEVIEW_INFO *infoPtr, HTREEITEM wineItem)
 	       newFirstVisible = wineItem->prevSibling;
 	    else if (wineItem->parent != infoPtr->root)
 	       newFirstVisible = wineItem->parent;
+	       TREEVIEW_SetFirstVisible(infoPtr, NULL, TRUE);
 	}
 	else
 	    newFirstVisible = infoPtr->firstVisible;
@@ -1564,8 +1578,8 @@ TREEVIEW_DeleteItem(TREEVIEW_INFO *infoPtr, HTREEITEM wineItem)
 
     if (visible)
     {
-       TREEVIEW_RecalculateVisibleOrder(infoPtr, prev);
        TREEVIEW_SetFirstVisible(infoPtr, newFirstVisible, TRUE);
+       TREEVIEW_RecalculateVisibleOrder(infoPtr, prev);
        TREEVIEW_UpdateScrollBars(infoPtr);
        TREEVIEW_Invalidate(infoPtr, NULL);
     }
